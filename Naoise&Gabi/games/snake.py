@@ -63,7 +63,8 @@ WIDTH = HEIGHT = 0
 MARGIN = HUD_H = 0
 BOARD_X = BOARD_Y = BOARD_W = BOARD_H = 0
 HIGHSCORE_FILE = os.path.join(os.path.expanduser("~"), ".snake_highscore.txt")
-OLD_HIGHSCORE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "snake_highscore.txt")
+OLD_HIGHSCORE_FILES = (os.path.join(os.path.dirname(os.path.abspath(__file__)), "snake_highscore.txt"),
+                       os.path.join(os.path.expanduser("~"), "Desktop", "games", "snake_highscore.txt"))
 
 WHITE, BLACK = (255, 255, 255), (0, 0, 0)
 UP, DOWN, LEFT, RIGHT = (0, -1), (0, 1), (-1, 0), (1, 0)
@@ -136,7 +137,7 @@ def cell_center(cell):
 
 def load_highscore():
     best = 0
-    for path in (HIGHSCORE_FILE, OLD_HIGHSCORE_FILE):
+    for path in (HIGHSCORE_FILE,) + OLD_HIGHSCORE_FILES:
         try:
             with open(path) as f:
                 best = max(best, int(f.read().strip() or 0))
