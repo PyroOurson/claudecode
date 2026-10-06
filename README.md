@@ -2,7 +2,7 @@
 
 | Folder | Contents |
 | --- | --- |
-| [`Naoise&Gabi/`](Naoise%26Gabi/) | Our Python projects: games, solvers and art. See its README. |
+| [`NaoiseGabi/`](NaoiseGabi/) | Our Python projects: games, solvers and art. See its README. |
 | [`ClaudeScripts/`](ClaudeScripts/) | Everything Claude makes from scratch, including `update.py`. |
 
 ## Get the latest version

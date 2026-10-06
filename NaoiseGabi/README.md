@@ -1,4 +1,4 @@
-# Naoise&Gabi
+# NaoiseGabi
 
 Everything here is Python 3.9+. Go into a folder and run a script with `python`. Add `--help` to any script to see all its options.
 
