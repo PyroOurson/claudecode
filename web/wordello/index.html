@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wordello</title>
+<link rel="icon" href="logo.png">
+<style>
+:root{--bg:#fff;--fg:#1a1a1b;--border:#d3d6da;--filled:#878a8c;--key:#d3d6da;--green:#6aaa64;--yellow:#c9b458;--grey:#787c7e}
+@media (prefers-color-scheme:dark){:root{--bg:#121213;--fg:#d7dadc;--border:#3a3a3c;--filled:#565758;--key:#818384;--grey:#3a3a3c}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:"Helvetica Neue",Arial,sans-serif}
+body{display:flex;flex-direction:column;align-items:center}
+header{width:100%;max-width:500px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border)}
+h1{margin:0;font-size:1.8rem;letter-spacing:.1em}
+header button{background:none;border:1px solid var(--border);color:var(--fg);border-radius:6px;padding:6px 10px;cursor:pointer;font-weight:bold}
+#board{display:grid;gap:5px;margin:auto;padding:10px}
+.row{display:grid;gap:5px}
+.tile{width:min(62px,13vw);aspect-ratio:1;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:bold;text-transform:uppercase;user-select:none}
+.tile.filled{border-color:var(--filled);animation:pop .1s}
+.tile.correct,.tile.present,.tile.absent{color:#fff;border-color:transparent}
+.correct{background:var(--green)!important}.present{background:var(--yellow)!important}.absent{background:var(--grey)!important}
+.tile.flip{animation:flip .5s ease forwards}
+.row.shake{animation:shake .4s}
+@keyframes pop{50%{transform:scale(1.1)}}
+@keyframes flip{0%{transform:rotateX(0)}50%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+#keyboard{width:100%;max-width:500px;padding:0 8px 16px}
+.krow{display:flex;justify-content:center;gap:6px;margin-bottom:8px}
+.key{flex:1;height:56px;border:0;border-radius:4px;background:var(--key);color:var(--fg);font-weight:bold;font-size:.9rem;text-transform:uppercase;cursor:pointer;padding:0}
+.key.wide{flex:1.5}
+.key.correct,.key.present,.key.absent{color:#fff}
+#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:12px 16px;border-radius:6px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+<button id="mode" title="Cambia modalità">Oggi</button>
+<h1>WORDELLO</h1>
+<button id="share" title="Condividi">Condividi</button>
+</header>
+<div id="board"></div>
+<div id="keyboard"></div>
+<div id="toast"></div>
+<script>
+const WORDS=["abito", "acqua", "acque", "aerei", "aereo", "aiuta", "aiuto", "amica", "amici", "amico", "bagni", "bagno", "banca", "bassa", "basse", "bassi", "basso", "bella", "belle", "belli", "bello", "birra", "birre", "bocca", "bocce", "buffa", "buffe", "buffi", "buffo", "burri", "burro", "caffe", "campi", "campo", "carne", "carni", "carta", "carte", "citta", "citte", "colli", "collo", "corpi", "corpo", "corta", "corte", "corti", "corto", "costa", "coste", "cuoca", "cuoco", "cuoio", "cuore", "cuori", "danni", "danno", "della", "delle", "denti", "detto", "dieta", "diete", "ditta", "ditte", "dolce", "dolci", "esame", "esami", "fanno", "fatto", "felpa", "felpe", "ferie", "festa", "feste", "forma", "forme", "forni", "forno", "fuoco", "gamba", "gambe", "gente", "gioca", "gioco", "gonna", "guida", "guide", "hanno", "jeans", "larga", "largo", "latte", "latti", "leale", "leali", "legge", "leggi", "leggo", "letti", "letto", "libri", "libro", "licei", "liceo", "lunga", "lungo", "luogo", "madre", "madri", "magra", "magre", "magri", "magro", "mamma", "mamme", "manzo", "marca", "mensa", "menti", "mento", "metri", "metro", "mezzi", "miele", "molta", "molte", "molti", "molto", "morti", "musei", "museo", "nella", "nonna", "nonne", "nonni", "nonno", "occhi", "padre", "padri", "paese", "paesi", "parco", "parla", "parli", "parlo", "pasta", "pazza", "pazze", "pazzi", "pazzo", "pelle", "pelli", "pesce", "pesci", "petto", "piace", "piani", "piano", "piede", "piedi", "pieno", "pigra", "pigre", "pigri", "pigro", "pista", "piste", "pizza", "polli", "pollo", "polsi", "polso", "ponte", "ponti", "porti", "porto", "possa", "possi", "posso", "posti", "posto", "preso", "prima", "primo", "russa", "russe", "russi", "russo", "santi", "santo", "sarei", "scala", "scale", "scema", "sceme", "scemi", "scemo", "sedia", "sedie", "sensi", "senso", "sente", "senti", "sento", "serie", "soldi", "spero", "sport", "stare", "stata", "stato", "succo", "tanta", "tante", "tanti", "tanto", "tempi", "tempo", "tenda", "tende", "terra", "terre", "testa", "teste", "tetti", "tetto", "torre", "torri", "torta", "torte", "tosse", "trama", "trame", "treni", "treno", "tutti", "tutto", "unica", "unici", "unico", "utile", "vasca", "visto", "volta", "volte", "zaini", "zaino", "zuppa", "zuppe"];
+const LENGTH=5,TRIES=6,START=new Date(2022,0,3);
+const board=document.getElementById("board"),keyboard=document.getElementById("keyboard"),toast=document.getElementById("toast"),modeButton=document.getElementById("mode");
+let state;
+
+function dayIndex(){const now=new Date();now.setHours(0,0,0,0);return Math.round((now-START)/864e5)}
+function dailyWord(){return WORDS[(dayIndex()*7919)%WORDS.length]}
+function storageKey(){return "wordello-"+dayIndex()}
+function load(){try{return JSON.parse(localStorage.getItem(storageKey()))}catch(e){return null}}
+function save(){if(state.mode==="daily"){try{localStorage.setItem(storageKey(),JSON.stringify(state))}catch(e){}}}
+
+function newGame(mode){
+  const saved=mode==="daily"?load():null;
+  state=saved||{mode,answer:mode==="daily"?dailyWord():WORDS[Math.floor(Math.random()*WORDS.length)],guesses:[],current:"",over:false};
+  modeButton.textContent=mode==="daily"?"Oggi":"Pratica";
+  render(false);
+}
+
+function evaluate(guess,answer){
+  const result=Array(LENGTH).fill("absent"),left={};
+  for(let i=0;i<LENGTH;i++){if(guess[i]===answer[i])result[i]="correct";else left[answer[i]]=(left[answer[i]]||0)+1}
+  for(let i=0;i<LENGTH;i++){if(result[i]!=="correct"&&left[guess[i]]){result[i]="present";left[guess[i]]--}}
+  return result;
+}
+
+function render(animateLast){
+  board.innerHTML="";
+  for(let r=0;r<TRIES;r++){
+    const row=document.createElement("div");row.className="row";row.style.gridTemplateColumns="repeat("+LENGTH+",1fr)";
+    const guess=state.guesses[r]||(r===state.guesses.length?state.current:"");
+    const marks=state.guesses[r]?evaluate(guess,state.answer):null;
+    for(let c=0;c<LENGTH;c++){
+      const tile=document.createElement("div");tile.className="tile";
+      if(guess[c]){tile.textContent=guess[c];tile.classList.add("filled")}
+      if(marks){
+        if(animateLast&&r===state.guesses.length-1){tile.style.animationDelay=c*0.25+"s";tile.classList.add("flip");setTimeout(()=>tile.classList.add(marks[c]),c*250+250)}
+        else tile.classList.add(marks[c]);
+      }
+      row.appendChild(tile);
+    }
+    board.appendChild(row);
+  }
+  const best={};
+  const rank={absent:1,present:2,correct:3};
+  state.guesses.forEach(g=>evaluate(g,state.answer).forEach((m,i)=>{if(!best[g[i]]||rank[m]>rank[best[g[i]]])best[g[i]]=m}));
+  keyboard.querySelectorAll(".key").forEach(k=>{k.classList.remove("correct","present","absent");if(best[k.dataset.key])k.classList.add(best[k.dataset.key])});
+}
+
+function show(message,ms=1500){toast.textContent=message;toast.classList.add("show");clearTimeout(show.t);show.t=setTimeout(()=>toast.classList.remove("show"),ms)}
+
+function press(key){
+  if(state.over)return;
+  if(key==="enter"){
+    if(state.current.length<LENGTH){board.children[state.guesses.length].classList.add("shake");setTimeout(()=>board.children[state.guesses.length]?.classList.remove("shake"),400);show("Troppo corta");return}
+    state.guesses.push(state.current);state.current="";
+    const won=state.guesses.at(-1)===state.answer;
+    if(won||state.guesses.length===TRIES){state.over=true;setTimeout(()=>show(won?["Geniale!","Magnifico!","Splendido!","Bravo!","Bene!","Fiuu!"][state.guesses.length-1]:state.answer.toUpperCase(),3000),LENGTH*250+300)}
+    save();render(true);return;
+  }
+  if(key==="back")state.current=state.current.slice(0,-1);
+  else if(/^[a-z]$/.test(key)&&state.current.length<LENGTH)state.current+=key;
+  render(false);
+}
+
+[["q","w","e","r","t","y","u","i","o","p"],["a","s","d","f","g","h","j","k","l"],["enter","z","x","c","v","b","n","m","back"]].forEach(keys=>{
+  const row=document.createElement("div");row.className="krow";
+  keys.forEach(k=>{const b=document.createElement("button");b.className="key"+(k.length>1?" wide":"");b.dataset.key=k;b.textContent=k==="back"?"⌫":k==="enter"?"invio":k;b.onclick=()=>{press(k);b.blur()};row.appendChild(b)});
+  keyboard.appendChild(row);
+});
+
+document.addEventListener("keydown",e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toLowerCase();if(k==="enter")press("enter");else if(k==="backspace")press("back");else if(/^[a-z]$/.test(k))press(k)});
+modeButton.onclick=()=>newGame(state.mode==="daily"?"practice":"daily");
+document.getElementById("share").onclick=async()=>{
+  if(!state.over){show("Finisci prima la partita");return}
+  const emoji={correct:"🟩",present:"🟨",absent:"⬜"};
+  const won=state.guesses.at(-1)===state.answer;
+  const text="Wordello "+(state.mode==="daily"?"#"+dayIndex():"pratica")+" "+(won?state.guesses.length:"X")+"/"+TRIES+"\n\n"+state.guesses.map(g=>evaluate(g,state.answer).map(m=>emoji[m]).join("")).join("\n");
+  try{await navigator.clipboard.writeText(text);show("Copiato!")}catch(e){show(text,4000)}
+};
+newGame("daily");
+</script>
+</body>
+</html>
