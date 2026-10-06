@@ -14,16 +14,18 @@ MAPS = np.array([
 WEIGHTS = [0.01, 0.85, 0.07, 0.07]
 
 
-def fern(iterations, seed=None):
+def fern(iterations, seed=None, walkers=2000, burn_in=20):
     rng = np.random.default_rng(seed)
-    choices = rng.choice(len(MAPS), size=iterations, p=WEIGHTS)
-    points = np.empty((iterations, 2))
-    x = y = 0.0
-    for i, k in enumerate(choices):
-        a, b, c, d, e, f = MAPS[k]
+    steps = -(-iterations // walkers) + burn_in
+    x = rng.random(walkers)
+    y = rng.random(walkers)
+    out = []
+    for step in range(steps):
+        a, b, c, d, e, f = MAPS[rng.choice(len(MAPS), size=walkers, p=WEIGHTS)].T
         x, y = a * x + b * y + e, c * x + d * y + f
-        points[i] = x, y
-    return points
+        if step >= burn_in:
+            out.append(np.column_stack((x, y)))
+    return np.concatenate(out)[:iterations]
 
 
 def main():

@@ -42,7 +42,7 @@ Every script supports `--help`. Scripts that draw something accept `--save file.
 | --- | --- | --- |
 | `cellular_automaton_1d.py` | `python cellular_automaton_1d.py 30` | Wolfram elementary cellular automata (rules 0 to 255). |
 | `game_of_life.py` | `python game_of_life.py --image me.jpg` | Conway's Game of Life. It can start from random cells, a text file of 0s and 1s, or any image, and can export a GIF. |
-| `strange_attractors.py` | `python strange_attractors.py lorenz --spin` | Lorenz and Rössler strange attractors, with adjustable a, b and c. |
+| `strange_attractors.py` | `python strange_attractors.py lorenz --spin` | Lorenz and Rössler strange attractors, with adjustable a, b and c. Runs about 10 times faster again if `numba` is installed (`pip install numba`). |
 | `self_avoiding_walk.py` | `python self_avoiding_walk.py --walks 20` | Random self-avoiding walks. |
 | `seaweed_spread_model.py` | `python seaweed_spread_model.py --years 20 --start 25 54 --gif spread.gif` | Seaweed spreading month by month along the Marseille coast, using a real depth map (`marseille_depth.tif`) and monthly sea temperatures. Use `--map` with any GeoTIFF, or `--map synthetic` for an imaginary island. |
 | `seaweed_depth_map.py` | `python seaweed_depth_map.py marseille_depth.tif` | Shows the depth map that the seaweed model uses. |

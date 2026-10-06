@@ -1,28 +1,53 @@
 import argparse
+import functools
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from plot_output import finish
 
-SYSTEMS = {
-    "lorenz": (lambda p, a, b, c: np.array([a * (p[1] - p[0]), p[0] * (b - p[2]) - p[1], p[0] * p[1] - c * p[2]]), (10, 28, 8 / 3)),
-    "rossler": (lambda p, a, b, c: np.array([-p[1] - p[2], p[0] + a * p[1], b + p[2] * (p[0] - c)]), (0.2, 0.2, 5.7)),
-}
+def lorenz(x, y, z, a, b, c):
+    return a * (y - x), x * (b - z) - y, x * y - c * z
+
+
+def rossler(x, y, z, a, b, c):
+    return -y - z, x + a * y, b + z * (x - c)
+
+
+SYSTEMS = {"lorenz": (lorenz, (10, 28, 8 / 3)), "rossler": (rossler, (0.2, 0.2, 5.7))}
+
+try:
+    from numba import njit
+    SYSTEMS = {name: (njit(f), d) for name, (f, d) in SYSTEMS.items()}
+except ImportError:
+    def njit(**_):
+        return lambda f: f
+
+
+@functools.cache
+def make_integrator(f):
+    @njit()
+    def integrate(params, steps, dt, x, y, z):
+        a, b, c = params
+        out = np.empty((steps, 3))
+        h = dt / 2
+        for i in range(steps):
+            k1 = f(x, y, z, a, b, c)
+            k2 = f(x + h * k1[0], y + h * k1[1], z + h * k1[2], a, b, c)
+            k3 = f(x + h * k2[0], y + h * k2[1], z + h * k2[2], a, b, c)
+            k4 = f(x + dt * k3[0], y + dt * k3[1], z + dt * k3[2], a, b, c)
+            x += dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
+            y += dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
+            z += dt / 6 * (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2])
+            out[i, 0] = x
+            out[i, 1] = y
+            out[i, 2] = z
+        return out
+    return integrate
 
 
 def integrate(system, params, steps, dt, start):
-    f = SYSTEMS[system][0]
-    points = np.empty((steps, 3))
-    p = np.array(start, float)
-    for i in range(steps):
-        k1 = f(p, *params)
-        k2 = f(p + dt / 2 * k1, *params)
-        k3 = f(p + dt / 2 * k2, *params)
-        k4 = f(p + dt * k3, *params)
-        p = p + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
-        points[i] = p
-    return points
+    return make_integrator(SYSTEMS[system][0])(tuple(map(float, params)), steps, dt, *map(float, start))
 
 
 def main():

@@ -28,7 +28,7 @@ def main():
 
     fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(projection="3d")
-    ax.scatter(*points[20:].T, s=0.1, c=points[20:, 2], cmap="viridis", linewidths=0)
+    ax.scatter(*points[20:].T, s=0.4, c=points[20:, 2], cmap="viridis", linewidths=0)
     ax.set_box_aspect((1, 1, 1))
     ax.axis("off")
     if args.spin and not args.save:

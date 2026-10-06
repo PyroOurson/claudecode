@@ -17,33 +17,41 @@ def regular_polygon(sides, radius=1.0):
     return np.column_stack((radius * np.cos(angles), radius * np.sin(angles)))
 
 
-def next_vertex(rng, n, previous, rule, jump):
+def vertex_sequence(rng, n, iterations, rule, jump):
     if rule == "none":
-        return int(rng.integers(n))
+        return rng.integers(n, size=iterations)
     if rule == "no-repeat":
-        while True:
-            m = int(rng.integers(n))
-            if m != previous:
-                return m
-    if rule == "avoid-jump":
-        banned = {(previous + jump) % n, (previous - jump) % n}
-        options = [m for m in range(n) if m not in banned]
-        return int(rng.choice(options)) if options else int(rng.integers(n))
-    if rule == "only-jump":
-        return (previous + jump * int(rng.choice((-1, 1)))) % n
-    raise ValueError(rule)
+        steps = rng.integers(1, n, size=iterations)
+    elif rule == "avoid-jump":
+        banned = {jump % n, -jump % n}
+        allowed = np.array([k for k in range(n) if k not in banned] or list(range(n)))
+        steps = rng.choice(allowed, size=iterations)
+    elif rule == "only-jump":
+        steps = jump * rng.choice((-1, 1), size=iterations)
+    else:
+        raise ValueError(rule)
+    return np.cumsum(steps) % n
 
 
 def chaos_game(vertices, iterations, ratio, rule="none", jump=1, seed=None):
     rng = np.random.default_rng(seed)
-    n = len(vertices)
-    points = np.empty((iterations, vertices.shape[1]))
-    point = vertices.mean(axis=0)
-    vertex = 0
-    for i in range(iterations):
-        vertex = next_vertex(rng, n, vertex, rule, jump)
-        point = point + (vertices[vertex] - point) * ratio
-        points[i] = point
+    targets = vertices[vertex_sequence(rng, len(vertices), iterations, rule, jump)]
+    keep = 1 - ratio
+    start = vertices.mean(axis=0)
+    if not 0 < abs(keep) < 1:
+        points = np.empty_like(targets)
+        point = start
+        for i, target in enumerate(targets):
+            point = point + (target - point) * ratio
+            points[i] = point
+        return points
+    terms = min(iterations, int(np.ceil(np.log(1e-12) / np.log(abs(keep)))) + 1)
+    points = np.zeros_like(targets)
+    weight = ratio
+    for j in range(terms):
+        points[j:] += weight * targets[:iterations - j]
+        weight *= keep
+    points += np.power(keep, np.arange(1, iterations + 1))[:, None] * start
     return points
 
 
