@@ -52,7 +52,7 @@ def ask_pattern(length):
 
 def main():
     parser = argparse.ArgumentParser(description="Interactive Wordle helper.")
-    parser.add_argument("--words", default=os.path.join(HERE, "words.txt"), help="word list, one word per line")
+    parser.add_argument("--words", default=os.path.join(HERE, "wordle_words.txt"), help="word list, one word per line")
     parser.add_argument("--length", type=int, default=5)
     parser.add_argument("--first", default=None, help="opening guess (default: computed)")
     parser.add_argument("--tries", type=int, default=6)

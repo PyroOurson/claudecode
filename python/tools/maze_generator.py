@@ -4,7 +4,7 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-from common import finish
+from plot_output import finish
 
 
 def generate(width, height, seed=None):

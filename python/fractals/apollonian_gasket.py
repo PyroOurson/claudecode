@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Circle
 
-from common import finish
+from plot_output import finish
 
 
 def tangent_circles(c1, c2, c3):

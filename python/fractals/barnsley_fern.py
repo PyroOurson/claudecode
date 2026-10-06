@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
-from common import finish
+from plot_output import finish
 
 MAPS = np.array([
     [0.00, 0.00, 0.00, 0.16, 0.00, 0.00],

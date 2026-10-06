@@ -3,7 +3,7 @@ import random
 
 import matplotlib.pyplot as plt
 
-from common import finish
+from plot_output import finish
 
 DIRECTIONS = ((1, 0), (-1, 0), (0, 1), (0, -1))
 

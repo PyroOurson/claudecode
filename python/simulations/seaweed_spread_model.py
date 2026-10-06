@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
 
-from depth import load_depth, synthetic_depth
+from seaweed_depth_map import load_depth, synthetic_depth
 
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 MARSEILLE_SEA_TEMPERATURE = [13.3, 12.8, 13.1, 14.4, 17.3, 20.9, 21.9, 22.5, 21.9, 19.3, 17.4, 15.0]

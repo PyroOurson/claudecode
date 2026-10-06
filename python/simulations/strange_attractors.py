@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
-from common import finish
+from plot_output import finish
 
 SYSTEMS = {
     "lorenz": (lambda p, a, b, c: np.array([a * (p[1] - p[0]), p[0] * (b - p[2]) - p[1], p[0] * p[1] - c * p[2]]), (10, 28, 8 / 3)),

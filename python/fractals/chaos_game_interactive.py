@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
-from chaos_game import chaos_game, optimal_ratio, regular_polygon
+from chaos_game_polygon import chaos_game, optimal_ratio, regular_polygon
 
 
 class InteractiveChaosGame:

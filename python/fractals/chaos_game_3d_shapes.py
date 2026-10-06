@@ -4,8 +4,8 @@ import itertools
 import numpy as np
 import matplotlib.pyplot as plt
 
-from chaos_game import chaos_game
-from common import finish
+from chaos_game_polygon import chaos_game
+from plot_output import finish
 
 SHAPES = {
     "tetrahedron": (np.array([[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]], float), 0.5),

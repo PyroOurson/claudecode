@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 
-from common import finish
+from plot_output import finish
 
 PRESETS = {
     "koch": ("F", {"F": "F+F--F+F"}, 60),

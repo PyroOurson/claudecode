@@ -4,7 +4,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-from common import finish
+from plot_output import finish
 
 
 def optimal_ratio(sides):

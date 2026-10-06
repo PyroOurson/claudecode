@@ -3,7 +3,7 @@ import csv
 
 import matplotlib.pyplot as plt
 
-from common import finish
+from plot_output import finish
 
 
 def median(values):

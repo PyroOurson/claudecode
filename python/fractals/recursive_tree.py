@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 
-from common import finish
+from plot_output import finish
 
 
 def tree(depth, left, right, scale):

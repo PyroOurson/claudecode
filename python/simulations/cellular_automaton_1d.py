@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
-from common import finish
+from plot_output import finish
 
 
 def run(rule, width, steps, random_start=False, seed=None):
