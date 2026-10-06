@@ -1,6 +1,7 @@
 import os
 import ssl
 import sys
+import time
 import urllib.parse
 import urllib.request
 
@@ -18,7 +19,7 @@ def context():
 
 
 def download(path):
-    url = BASE + urllib.parse.quote(path)
+    url = BASE + urllib.parse.quote(path) + "?nocache=" + str(int(time.time()))
     request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Cache-Control": "no-cache"})
     with urllib.request.urlopen(request, timeout=30, context=context()) as response:
         return response.read()
