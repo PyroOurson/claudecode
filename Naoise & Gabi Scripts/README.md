@@ -18,12 +18,12 @@ Hello page: https://pyroourson.github.io/claudecode/
 Requires Python 3.10+. Install everything once:
 
 ```bash
-pip install -r "Naoise pip install -r python/ Gabi Scripts/python/"requirements.txt
+pip install -r "Naoise & Gabi Scripts/python/requirements.txt"
 ```
 
 Every script supports `--help`. Scripts that draw something accept `--save file.png` to write an image instead of opening a window. Run each script from inside its own folder.
 
-### `Naoise `python/ Gabi Scripts/python/fractals/`
+### `python/fractals/`
 
 | Script | Example | What it does |
 | --- | --- | --- |
@@ -36,7 +36,7 @@ Every script supports `--help`. Scripts that draw something accept `--save file.
 | `apollonian_gasket.py` | `python apollonian_gasket.py` | Apollonian gasket built with the Descartes circle theorem. |
 | `recursive_tree.py` | `python recursive_tree.py -l 20 -r 30` | Recursive tree with separate left and right angles. |
 
-### `Naoise `python/ Gabi Scripts/python/simulations/`
+### `python/simulations/`
 
 | Script | Example | What it does |
 | --- | --- | --- |
@@ -47,7 +47,7 @@ Every script supports `--help`. Scripts that draw something accept `--save file.
 | `seaweed_spread_model.py` | `python seaweed_spread_model.py --years 20 --start 25 54 --gif spread.gif` | Seaweed spreading month by month along the Marseille coast, using a real depth map (`marseille_depth.tif`) and monthly sea temperatures. Use `--map` with any GeoTIFF, or `--map synthetic` for an imaginary island. |
 | `seaweed_depth_map.py` | `python seaweed_depth_map.py marseille_depth.tif` | Shows the depth map that the seaweed model uses. |
 
-### `Naoise `python/ Gabi Scripts/python/tools/`
+### `python/tools/`
 
 | Script | Example | What it does |
 | --- | --- | --- |
@@ -57,7 +57,7 @@ Every script supports `--help`. Scripts that draw something accept `--save file.
 | `box_plot_summary.py` | `python box_plot_summary.py --group A 1 2 3 --group B 2 4 8` | Box plots with min, Q1, median, Q3 and max marked. It also reads CSV files. |
 | `number_theory.py` | `python number_theory.py fib 1000` | Fast Fibonacci, multiplicative persistence (including record holders) and a fast prime test. |
 
-### `Naoise `python/ Gabi Scripts/python/games/`
+### `python/games/`
 
 | Script | Example | What it does |
 | --- | --- | --- |
