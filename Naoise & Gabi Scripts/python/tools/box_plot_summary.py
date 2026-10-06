@@ -1,9 +1,13 @@
 import argparse
 import csv
 
+import matplotlib
 import matplotlib.pyplot as plt
 
 from plot_output import finish
+
+
+HORIZONTAL = {"orientation": "horizontal"} if tuple(int(v) for v in matplotlib.__version__.split(".")[:2]) >= (3, 10) else {"vert": False}
 
 
 def median(values):
@@ -54,7 +58,7 @@ def main():
     for ax, (name, data) in zip(axes[0], groups.items()):
         summary = five_numbers(data)
         print(name, dict(zip(labels, summary)))
-        ax.boxplot(data, orientation="horizontal")
+        ax.boxplot(data, **HORIZONTAL)
         for value, color, label in zip(summary, colors, labels):
             ax.axvline(value, color=color, linestyle="--", label=f"{label} = {value:g}")
         ax.set_title(name)

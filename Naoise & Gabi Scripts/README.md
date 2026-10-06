@@ -15,7 +15,7 @@ Hello page: https://pyroourson.github.io/claudecode/
 
 ## Python
 
-Requires Python 3.10+. Install everything once:
+Requires Python 3.9+. Install everything once:
 
 ```bash
 pip install -r "Naoise & Gabi Scripts/python/requirements.txt"
