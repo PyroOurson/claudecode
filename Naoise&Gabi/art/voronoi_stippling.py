@@ -1,4 +1,7 @@
 import argparse
+import os
+import subprocess
+import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,7 +22,35 @@ def demo_image(size=600):
     return image
 
 
+def pick_image():
+    if sys.platform == "darwin":
+        script = 'POSIX path of (choose file of type {"public.image"} with prompt "Choose a picture to stipple")'
+        try:
+            result = subprocess.run(["osascript", "-e", script], capture_output=True, text=True, timeout=600)
+            return result.stdout.strip() or None
+        except (OSError, subprocess.SubprocessError):
+            return None
+    try:
+        import tkinter
+        from tkinter import filedialog
+        root = tkinter.Tk()
+        root.withdraw()
+        path = filedialog.askopenfilename(title="Choose a picture to stipple",
+                                          filetypes=[("Images", "*.png *.jpg *.jpeg *.gif *.bmp *.tif *.tiff *.webp"), ("All files", "*")])
+        root.destroy()
+        return path or None
+    except Exception:
+        return None
+
+
+def default_output(path):
+    stem, _ = os.path.splitext(path)
+    return stem + "_stippled.png"
+
+
 def load_weights(image, width, contrast):
+    if image.mode in ("RGBA", "LA", "P"):
+        image = Image.alpha_composite(Image.new("RGBA", image.size, "white"), image.convert("RGBA"))
     image = image.convert("L")
     height = round(width * image.height / image.width)
     pixels = np.asarray(image.resize((width, height)), dtype=float) / 255
@@ -51,7 +82,8 @@ def relax(points, pixels, pixel_weights, shape, iteration, rng):
 
 def main():
     parser = argparse.ArgumentParser(description="Redraw a picture as dots using weighted Voronoi stippling.")
-    parser.add_argument("image", nargs="?", help="any picture (a demo image is used if omitted)")
+    parser.add_argument("image", nargs="?", help="any picture (a file picker opens if omitted)")
+    parser.add_argument("--demo", action="store_true", help="use the built-in demo image instead of choosing a file")
     parser.add_argument("--width", type=int, default=600, help="working width in pixels")
     parser.add_argument("--density", type=float, default=1.0, help="number of dots multiplier")
     parser.add_argument("--contrast", type=float, default=2.5)
@@ -60,12 +92,21 @@ def main():
     parser.add_argument("--iterations", type=int, default=60)
     parser.add_argument("--background", default="white")
     parser.add_argument("--color", default="black")
-    parser.add_argument("--save", help="save the final picture instead of only showing it")
+    parser.add_argument("--save", help="where to save the result (default: next to the picture, ending in _stippled.png)")
+    parser.add_argument("--no-window", action="store_true", help="just save the result without opening a window")
     parser.add_argument("--seed", type=int)
     args = parser.parse_args()
 
     rng = np.random.default_rng(args.seed)
-    image = Image.open(args.image) if args.image else demo_image()
+    path = args.image or (None if args.demo else pick_image())
+    if path:
+        path = os.path.expanduser(path)
+        image = Image.open(path)
+        print(f"Stippling {path}")
+    else:
+        image = demo_image()
+        print("No picture chosen, using the demo image.")
+    output = args.save or (default_output(path) if path else None)
     weights = load_weights(image, args.width, args.contrast)
     shape = weights.shape
     n = max(1, round(shape[0] * shape[1] / 40 * args.density))
@@ -83,7 +124,7 @@ def main():
     ax.axis("off")
     scale = (fig.get_figwidth() * 72 / shape[1]) ** 2
     dots = ax.scatter(points[:, 0], points[:, 1], s=1, color=args.color, linewidths=0)
-    live = not args.save
+    live = not args.no_window
 
     for i in range(args.iterations):
         strength = relax(points, pixels, pixel_weights, shape, i, rng)
@@ -99,10 +140,10 @@ def main():
     dots.set_offsets(points)
     dots.set_sizes(np.pi * radius ** 2 * scale)
     ax.set_title("")
-    if args.save:
-        fig.savefig(args.save, dpi=200, facecolor=args.background)
-        print(f"Saved {args.save}")
-    else:
+    if output:
+        fig.savefig(output, dpi=200, facecolor=args.background)
+        print(f"Saved {output}")
+    if live:
         plt.show()
 
 

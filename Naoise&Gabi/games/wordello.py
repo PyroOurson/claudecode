@@ -2,6 +2,8 @@ import datetime
 import json
 import os
 import random
+import shutil
+import subprocess
 
 import pygame
 
@@ -48,12 +50,39 @@ def evaluate(guess, answer):
     return result
 
 
+def new_stats():
+    return {"played": 0, "wins": 0, "streak": 0, "best": 0, "last_win": None, "spread": [0] * TRIES}
+
+
 def read_save():
     try:
         with open(SAVE_FILE) as f:
-            return json.load(f)
+            data = json.load(f)
     except (OSError, ValueError):
-        return {}
+        data = {}
+    if "games" not in data:
+        data = {"games": {k: v for k, v in data.items() if k.isdigit()}, "stats": new_stats()}
+    data.setdefault("stats", new_stats())
+    return data
+
+
+def write_save(data):
+    try:
+        with open(SAVE_FILE, "w") as f:
+            json.dump(data, f)
+    except OSError:
+        pass
+
+
+def copy_to_clipboard(text):
+    for command in (["pbcopy"], ["clip"], ["wl-copy"], ["xclip", "-selection", "clipboard"]):
+        if shutil.which(command[0]):
+            try:
+                subprocess.run(command, input=text.encode("utf-8"), check=True, timeout=5)
+                return True
+            except (OSError, subprocess.SubprocessError):
+                pass
+    return False
 
 
 class Game:
@@ -63,7 +92,9 @@ class Game:
 
     def new(self, mode):
         self.mode = mode
-        saved = read_save().get(str(day_index())) if mode == "daily" else None
+        data = read_save()
+        self.stats = data["stats"]
+        saved = data["games"].get(str(day_index())) if mode == "daily" else None
         if saved:
             self.answer, self.guesses, self.over = saved["answer"], saved["guesses"], saved["over"]
         else:
@@ -74,15 +105,25 @@ class Game:
         self.reveal_start = None
         self.shake_until = 0
 
-    def save(self):
+    def save(self, finished=False):
         if self.mode != "daily":
             return
-        data = {str(day_index()): {"answer": self.answer, "guesses": self.guesses, "over": self.over}}
-        try:
-            with open(SAVE_FILE, "w") as f:
-                json.dump(data, f)
-        except OSError:
-            pass
+        data = read_save()
+        today = day_index()
+        data["games"] = {str(today): {"answer": self.answer, "guesses": self.guesses, "over": self.over}}
+        if finished:
+            stats = data["stats"]
+            stats["played"] += 1
+            if self.guesses[-1] == self.answer:
+                stats["wins"] += 1
+                stats["streak"] = stats["streak"] + 1 if stats["last_win"] == today - 1 else 1
+                stats["best"] = max(stats["best"], stats["streak"])
+                stats["last_win"] = today
+                stats["spread"][len(self.guesses) - 1] += 1
+            else:
+                stats["streak"] = 0
+        self.stats = data["stats"]
+        write_save(data)
 
     def say(self, text, ms=1500):
         self.message, self.message_until = text, pygame.time.get_ticks() + ms
@@ -102,7 +143,7 @@ class Game:
             if won or len(self.guesses) == TRIES:
                 self.over = True
                 self.message, self.message_until = (PRAISE[len(self.guesses) - 1] if won else self.answer.upper()), 0
-            self.save()
+            self.save(finished=self.over)
         elif key == "⌫":
             self.current = self.current[:-1]
         elif len(key) == 1 and key.isalpha() and len(self.current) < LENGTH:
@@ -129,6 +170,7 @@ class View:
         self.big = pygame.font.SysFont("helveticaneue,arial", 36, bold=True)
         self.title = pygame.font.SysFont("helveticaneue,arial", 34, bold=True)
         self.small = pygame.font.SysFont("helveticaneue,arial", 18, bold=True)
+        self.tiny = pygame.font.SysFont("helveticaneue,arial", 15)
         self.keys = []
         self.buttons = {}
 
@@ -195,6 +237,13 @@ class View:
                 self.keys.append((rect, key))
                 x += w * unit + 6
 
+        stats = game.stats
+        rate = round(100 * stats["wins"] / stats["played"]) if stats["played"] else 0
+        line = f"Giocate {stats['played']}  ·  Vittorie {rate}%  ·  Serie {stats['streak']}  ·  Record {stats['best']}"
+        self.text(self.tiny, line, FILLED, (WIDTH // 2, HEIGHT - 44))
+        if game.over:
+            self.text(self.tiny, "Invio: nuova parola  ·  Esc: esci", FILLED, (WIDTH // 2, HEIGHT - 20))
+
         if game.message and (game.message_until == 0 or now < game.message_until):
             if game.message_until or game.reveal_start is None or now - game.reveal_start > LENGTH * 250 + 300:
                 surface = self.small.render(game.message, True, WHITE)
@@ -231,19 +280,22 @@ def main():
             action = None
             if event.type == pygame.KEYDOWN:
                 if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-                    action = "invio"
+                    action = "again" if game.over else "invio"
                 elif event.key == pygame.K_BACKSPACE:
                     action = "⌫"
                 elif event.unicode and event.unicode.isalpha() and event.unicode.isascii():
                     action = event.unicode.lower()
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 action = view.click(event.pos)
-            if action == "mode":
+            if action == "again" or (action == "invio" and game.over):
+                game.new("practice")
+            elif action == "mode":
                 game.new("practice" if game.mode == "daily" else "daily")
             elif action == "share":
                 if game.over:
-                    print("\n" + game.share_text() + "\n")
-                    game.say("Risultato stampato nel terminale")
+                    text = game.share_text()
+                    print("\n" + text + "\n")
+                    game.say("Copiato!" if copy_to_clipboard(text) else "Risultato stampato nel terminale")
                 else:
                     game.say("Finisci prima la partita")
             elif action:

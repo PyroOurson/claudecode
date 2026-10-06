@@ -1,0 +1,16 @@
+.gitignore
+CLAUDE.md
+ClaudeScripts/hello-page/index.html
+ClaudeScripts/update.py
+Naoise&Gabi/README.md
+Naoise&Gabi/art/voronoi_stippling.py
+Naoise&Gabi/games/snake.py
+Naoise&Gabi/games/wordello.py
+Naoise&Gabi/games/wordello_logo.png
+Naoise&Gabi/games/wordello_words.txt
+Naoise&Gabi/requirements.txt
+Naoise&Gabi/solvers/connections_answers.py
+Naoise&Gabi/solvers/wordle_solver.py
+Naoise&Gabi/solvers/wordle_words.txt
+README.md
+index.html
