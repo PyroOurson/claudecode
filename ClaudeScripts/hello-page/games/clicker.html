@@ -4,9 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Cosmic Clicker</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../common.css">
   <style>
     .game.wide {
@@ -14,443 +11,313 @@
     }
     .cosmos {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
-      gap: 16px;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+      gap: 20px;
       text-align: left;
       align-items: start;
+    }
+    .left {
+      min-width: 0;
+    }
+    .left .stats {
+      margin: 0 0 14px;
+      gap: 12px 28px;
+      text-align: center;
+    }
+    .stat-value.big {
+      font-size: 2rem;
+      line-height: 1.1;
     }
     .sky {
       position: relative;
       overflow: hidden;
       border-radius: var(--radius);
-      min-height: 600px;
-      padding: 24px 16px 20px;
+      background: #1f2a44;
+      color: #eef0f6;
+      padding: 28px 16px 18px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      color: #f4f1ff;
-      background-color: #0d0f2b;
-      background-image:
-        radial-gradient(1.5px 1.5px at 12% 18%, #ffffff 50%, transparent 51%),
-        radial-gradient(1px 1px at 28% 72%, #ffffffcc 50%, transparent 51%),
-        radial-gradient(1.5px 1.5px at 44% 34%, #ffe9b0 50%, transparent 51%),
-        radial-gradient(1px 1px at 63% 12%, #ffffff 50%, transparent 51%),
-        radial-gradient(2px 2px at 82% 58%, #cfd8ff 50%, transparent 51%),
-        radial-gradient(1px 1px at 91% 22%, #ffffff 50%, transparent 51%),
-        radial-gradient(1px 1px at 7% 86%, #ffffff 50%, transparent 51%),
-        radial-gradient(1.5px 1.5px at 72% 88%, #ffffffaa 50%, transparent 51%),
-        radial-gradient(1px 1px at 52% 94%, #ffffff 50%, transparent 51%),
-        radial-gradient(1px 1px at 36% 8%, #ffffff 50%, transparent 51%),
-        radial-gradient(ellipse at 20% 0%, #3b1f7a 0%, transparent 60%),
-        radial-gradient(ellipse at 100% 100%, #5a1a5e 0%, transparent 55%),
-        linear-gradient(160deg, #0d0f2b 0%, #181046 100%);
       user-select: none;
       -webkit-user-select: none;
     }
-    .bank {
-      text-align: center;
-      position: relative;
-      z-index: 2;
-    }
-    .dust {
-      font-size: clamp(2rem, 7vw, 3.2rem);
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      line-height: 1.05;
-      font-variant-numeric: tabular-nums;
-      text-shadow: 0 0 24px rgba(255, 196, 120, 0.45);
-    }
-    .dust-label {
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: #c9c3f0;
-      margin-top: 2px;
-    }
-    .rates {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 12px;
-    }
-    .rates span {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 999px;
-      padding: 4px 12px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      font-variant-numeric: tabular-nums;
-    }
-    .orb-wrap {
-      position: relative;
-      width: min(240px, 56vw);
-      height: min(240px, 56vw);
-      margin: 44px auto 36px;
-      animation: bob 6s ease-in-out infinite;
-    }
-    @keyframes bob {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-    .ring {
+    .stars {
       position: absolute;
-      left: -22%;
-      top: 32%;
-      width: 144%;
-      height: 36%;
-      border-radius: 50%;
-      border: 7px solid rgba(255, 214, 140, 0.75);
-      box-shadow: 0 0 18px rgba(255, 196, 120, 0.4);
-      transform: rotate(-16deg);
+      inset: 0;
+      width: 100%;
+      height: 100%;
       pointer-events: none;
-    }
-    .ring.front {
-      clip-path: inset(50% 0 0 0);
-      z-index: 3;
     }
     .orb {
       position: relative;
-      z-index: 2;
-      width: 100%;
-      height: 100%;
+      display: block;
+      width: min(280px, 70vw);
+      height: min(280px, 70vw);
+      margin: 8px auto 14px;
       border: 0;
       padding: 0;
+      background: transparent;
       border-radius: 50%;
       cursor: pointer;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
-      background:
-        radial-gradient(circle at 34% 28%, #fff7da 0%, #ffd56b 16%, #ff9147 42%, #e0457b 72%, #6a2c91 100%);
-      box-shadow: 0 0 50px rgba(255, 145, 71, 0.55), 0 0 120px rgba(224, 69, 123, 0.35), inset -18px -22px 40px rgba(60, 10, 80, 0.45);
-      transition: filter 0.15s;
-      overflow: hidden;
     }
-    .orb::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      background:
-        radial-gradient(circle at 70% 62%, rgba(120, 30, 90, 0.35) 0 9%, transparent 10%),
-        radial-gradient(circle at 46% 78%, rgba(120, 30, 90, 0.28) 0 6%, transparent 7%),
-        radial-gradient(circle at 62% 36%, rgba(255, 255, 255, 0.18) 0 5%, transparent 6%),
-        repeating-linear-gradient(170deg, transparent 0 18px, rgba(255, 255, 255, 0.07) 18px 26px);
-      animation: spin 40s linear infinite;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    .orb:hover {
-      filter: brightness(1.08) saturate(1.1);
+    .orb svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
     }
     .orb:focus-visible {
-      outline: 3px solid #ffd56b;
-      outline-offset: 6px;
+      outline: 3px solid #f1d488;
+      outline-offset: 2px;
     }
     .orb.squash {
-      animation: squash 0.22s ease-out;
+      animation: squash 0.18s ease-out;
     }
     @keyframes squash {
       0% { transform: scale(1, 1); }
-      35% { transform: scale(1.07, 0.9); }
-      70% { transform: scale(0.96, 1.04); }
+      40% { transform: scale(1.04, 0.94); }
       100% { transform: scale(1, 1); }
     }
-    .float {
-      position: absolute;
-      z-index: 5;
-      pointer-events: none;
-      font-weight: 800;
-      font-size: 1.3rem;
-      color: #fff3c4;
-      text-shadow: 0 0 10px rgba(255, 180, 90, 0.9);
-      white-space: nowrap;
-      animation: rise 1s ease-out forwards;
-    }
-    @keyframes rise {
-      0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
-      100% { transform: translate(calc(-50% + var(--dx)), calc(-50% - 90px)) scale(1.1); opacity: 0; }
-    }
-    .mote {
-      position: absolute;
-      z-index: 4;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #ffd56b;
-      box-shadow: 0 0 8px #ffd56b;
-      pointer-events: none;
-      animation: mote 0.7s ease-out forwards;
-    }
-    @keyframes mote {
-      0% { transform: translate(-50%, -50%); opacity: 1; }
-      100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.2); opacity: 0; }
-    }
-    .milestone {
+    .status {
       position: relative;
-      z-index: 2;
       text-align: center;
-      max-width: 420px;
-      margin: 0 auto 16px;
-      color: #e6e1ff;
-      font-weight: 600;
-      min-height: 3em;
+      margin: 0;
+      min-height: 1.45em;
+      color: #c9cfdf;
+      font-size: 0.95rem;
     }
-    .milestone.flash {
-      animation: flash 1.2s ease;
-    }
-    @keyframes flash {
-      0% { color: #ffd56b; transform: scale(1.06); }
-      100% { color: #e6e1ff; transform: scale(1); }
-    }
-    .sky-foot {
-      margin-top: auto;
+    .left-foot {
       display: flex;
-      gap: 10px;
-      align-items: center;
       justify-content: center;
-      flex-wrap: wrap;
-      position: relative;
-      z-index: 2;
-      color: #b9b3e0;
-      font-size: 0.85rem;
-    }
-    .sky-foot .btn {
-      background: rgba(255, 255, 255, 0.12);
-      color: #f4f1ff;
-      min-height: 40px;
+      margin-top: 14px;
     }
     .shop {
-      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 16px;
-      max-height: 600px;
+      padding: 14px 16px 16px;
+      max-height: 640px;
       overflow-y: auto;
     }
     .shop-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
-      margin: 4px 0 10px;
+      flex-wrap: wrap;
+      gap: 8px 10px;
+      margin: 0 0 8px;
     }
     .shop-head h2 {
       font-size: 1.05rem;
       font-weight: 800;
       margin: 0;
     }
+    .shop-head + .shop-head,
+    .upgrades + .shop-head,
+    .none + .shop-head {
+      margin-top: 22px;
+    }
     .seg {
-      display: inline-flex;
-      background: var(--surface-2);
-      border-radius: 999px;
-      padding: 3px;
+      display: flex;
+      gap: 6px;
     }
     .seg button {
       appearance: none;
-      border: 0;
+      border: 1px solid var(--border);
       background: transparent;
-      color: var(--muted);
+      color: var(--text);
       font: inherit;
       font-weight: 600;
       font-size: 0.85rem;
-      border-radius: 999px;
-      min-width: 44px;
-      min-height: 34px;
+      border-radius: 6px;
+      min-width: 48px;
+      min-height: 40px;
       cursor: pointer;
+    }
+    .seg button:hover {
+      background: var(--surface);
     }
     .seg button.on {
       background: var(--accent);
+      border-color: var(--accent);
       color: var(--accent-text);
     }
-    .upgrades {
+    .cols, .upg, .gen {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      grid-template-columns: minmax(0, 1fr) 6.8rem 3rem;
       gap: 8px;
-      margin-bottom: 18px;
+      align-items: center;
+    }
+    .cols {
+      font-size: 0.8rem;
+      color: var(--muted);
+      padding: 0 8px 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .cols span:nth-child(n+2), .cs, .own {
+      text-align: right;
     }
     .none {
       color: var(--muted);
       font-size: 0.9rem;
-      margin: 0 0 18px;
+      margin: 0;
+      padding: 10px 8px;
+      border-top: 1px solid var(--border);
+    }
+    .upgrades {
+      border-top: 1px solid var(--border);
     }
     .upg, .gen {
       appearance: none;
-      border: 1px solid var(--border);
-      background: var(--bg);
+      width: 100%;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
+      background: transparent;
       color: var(--text);
       font: inherit;
       text-align: left;
-      border-radius: 12px;
+      padding: 10px 8px;
+      min-height: 56px;
       cursor: pointer;
-      transition: transform 0.1s, border-color 0.15s, opacity 0.15s, box-shadow 0.15s;
     }
     .upg:hover:not(.cant), .gen:hover:not(.cant) {
-      border-color: var(--accent);
-      box-shadow: var(--shadow);
+      background: var(--surface);
     }
-    .upg:active:not(.cant), .gen:active:not(.cant) {
-      transform: scale(0.98);
+    .upg:focus-visible, .gen:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
     }
     .upg.cant, .gen.cant {
-      opacity: 0.55;
       cursor: not-allowed;
     }
-    .upg {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 2px 10px;
-      padding: 10px 12px;
-      min-height: 64px;
-      align-items: center;
-      animation: appear 0.4s cubic-bezier(0.3, 1.5, 0.5, 1);
-    }
-    @keyframes appear {
-      0% { transform: scale(0.7); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .upg .ico {
-      grid-row: span 3;
-      font-size: 1.6rem;
-    }
-    .upg .nm {
-      font-weight: 700;
-      font-size: 0.9rem;
-      line-height: 1.2;
-    }
-    .upg .ds {
-      font-size: 0.78rem;
+    .upg.cant .nm, .gen.cant .nm, .upg.cant .cs, .gen.cant .cs {
       color: var(--muted);
-      line-height: 1.25;
     }
-    .upg .cs, .gen .cs {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--accent);
-      font-variant-numeric: tabular-nums;
-    }
-    .upg.cant .cs, .gen.cant .cs {
-      color: var(--bad);
-    }
-    .gens {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .gen {
-      display: grid;
-      grid-template-columns: 44px minmax(0, 1fr) auto;
-      gap: 10px;
-      align-items: center;
-      padding: 10px 12px;
-      min-height: 64px;
-      width: 100%;
-    }
-    .gen .ico {
-      font-size: 1.9rem;
-      text-align: center;
-    }
-    .gen .mid {
+    .mid {
       min-width: 0;
     }
-    .gen .mid span {
+    .mid span {
       display: block;
     }
-    .gen .nm {
+    .nm {
       font-weight: 700;
-      line-height: 1.2;
+      line-height: 1.25;
     }
-    .gen .ds {
-      font-size: 0.78rem;
+    .ds {
+      font-size: 0.8rem;
       color: var(--muted);
       line-height: 1.3;
     }
-    .gen .own {
-      font-size: 1.6rem;
-      font-weight: 800;
-      color: var(--muted);
+    .cs {
+      font-size: 0.9rem;
+      font-weight: 600;
       font-variant-numeric: tabular-nums;
-      min-width: 2ch;
-      text-align: right;
     }
-    .gen.locked .ico {
-      filter: grayscale(1) brightness(0.3);
+    .own {
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
     }
-    .gen.bought {
-      animation: bought 0.35s ease;
+    .gen.locked .nm {
+      color: var(--muted);
+    }
+    .gen.bought, .upg.bought {
+      animation: bought 0.3s linear;
     }
     @keyframes bought {
-      0% { box-shadow: 0 0 0 0 var(--good); }
-      40% { box-shadow: 0 0 0 4px var(--good); }
-      100% { box-shadow: 0 0 0 0 var(--good); }
-    }
-    .toast {
-      position: fixed;
-      left: 50%;
-      bottom: 24px;
-      transform: translate(-50%, calc(100% + 40px));
-      opacity: 0;
-      visibility: hidden;
-      background: var(--text);
-      color: var(--bg);
-      padding: 12px 20px;
-      border-radius: 18px;
-      font-weight: 600;
-      box-shadow: var(--shadow);
-      z-index: 200;
-      width: max-content;
-      max-width: calc(100vw - 32px);
-      text-align: center;
-      transition: transform 0.35s cubic-bezier(0.3, 1.4, 0.5, 1), opacity 0.25s, visibility 0.35s;
-      pointer-events: none;
-    }
-    .toast.show {
-      transform: translate(-50%, 0);
-      opacity: 1;
-      visibility: visible;
+      0% { background: var(--surface-2); }
+      100% { background: transparent; }
     }
     @media (max-width: 820px) {
       .cosmos {
         grid-template-columns: minmax(0, 1fr);
-      }
-      .sky {
-        min-height: 0;
       }
       .shop {
         max-height: none;
         overflow: visible;
       }
     }
+    @media (max-width: 420px) {
+      .shop {
+        padding: 12px 10px 14px;
+      }
+      .cols, .upg, .gen {
+        grid-template-columns: minmax(0, 1fr) 6rem 2.8rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <nav class="topbar"><a class="back" href="../../../index.html">← all games</a></nav>
+  <nav class="topbar"><a class="logo" href="../../../index.html">hello</a></nav>
   <main class="game wide">
     <h1 class="game-title">Cosmic Clicker</h1>
-    <p class="lede">Click the star to gather stardust, then build machines that gather it for you.</p>
+    <p class="lede">Click the planet for stardust, then buy generators that collect it for you.</p>
     <div class="cosmos">
-      <section class="sky" id="sky">
-        <div class="bank">
-          <div class="dust" id="dust">0</div>
-          <div class="dust-label">stardust</div>
-          <div class="rates"><span id="pps">0 per second</span><span id="ppc">1 per click</span></div>
+      <section class="left">
+        <div class="stats">
+          <div class="stat"><div class="stat-value big" id="dust">0</div><div class="stat-label">Stardust</div></div>
+          <div class="stat"><div class="stat-value" id="pps">0</div><div class="stat-label">Per second</div></div>
+          <div class="stat"><div class="stat-value" id="ppc">1</div><div class="stat-label">Per click</div></div>
+          <div class="stat"><div class="stat-value" id="totalLine">0</div><div class="stat-label">All time</div></div>
         </div>
-        <div class="orb-wrap">
-          <div class="ring"></div>
-          <button class="orb" id="orb" type="button" aria-label="Collect stardust"></button>
-          <div class="ring front"></div>
+        <div class="sky" id="sky">
+          <svg class="stars" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <g fill="#c9cfdf">
+              <circle cx="40" cy="52" r="2"/>
+              <circle cx="96" cy="300" r="1.5"/>
+              <circle cx="150" cy="30" r="1.5"/>
+              <circle cx="330" cy="70" r="2"/>
+              <circle cx="372" cy="210" r="1.5"/>
+              <circle cx="352" cy="300" r="2"/>
+              <circle cx="24" cy="220" r="1.5"/>
+              <circle cx="384" cy="372" r="1.5"/>
+              <circle cx="262" cy="22" r="1.5"/>
+              <circle cx="18" cy="330" r="2"/>
+            </g>
+            <g fill="#f1d488">
+              <path d="M352 140 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z"/>
+              <path d="M62 140 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5 -6 -6 -2.5 6 -2.5z"/>
+            </g>
+          </svg>
+          <button class="orb" id="orb" type="button" aria-label="Collect stardust">
+            <svg viewBox="0 0 240 240" aria-hidden="true">
+              <defs>
+                <clipPath id="planetClip"><circle cx="120" cy="120" r="70"/></clipPath>
+                <clipPath id="frontClip"><rect x="0" y="120" width="240" height="120"/></clipPath>
+              </defs>
+              <g transform="rotate(-16 120 120)">
+                <ellipse cx="120" cy="120" rx="108" ry="28" fill="none" stroke="#1b1b1b" stroke-width="15"/>
+                <ellipse cx="120" cy="120" rx="108" ry="28" fill="none" stroke="#f1d488" stroke-width="9"/>
+              </g>
+              <circle cx="120" cy="120" r="70" fill="#ef8f3a"/>
+              <g clip-path="url(#planetClip)">
+                <circle cx="120" cy="120" r="70" fill="#cf6427"/>
+                <circle cx="131" cy="110" r="68" fill="#ef8f3a"/>
+                <path d="M40 92 C80 80 150 104 200 88 L200 106 C150 122 80 98 40 110 Z" fill="#dd7630"/>
+                <path d="M40 150 C90 140 140 162 200 146 L200 158 C140 174 90 152 40 162 Z" fill="#dd7630"/>
+                <circle cx="150" cy="128" r="9" fill="#dd7630"/>
+                <circle cx="96" cy="132" r="5" fill="#dd7630"/>
+              </g>
+              <circle cx="120" cy="120" r="70" fill="none" stroke="#1b1b1b" stroke-width="3"/>
+              <g transform="rotate(-16 120 120)">
+                <g clip-path="url(#frontClip)">
+                  <ellipse cx="120" cy="120" rx="108" ry="28" fill="none" stroke="#1b1b1b" stroke-width="15"/>
+                  <ellipse cx="120" cy="120" rx="108" ry="28" fill="none" stroke="#f1d488" stroke-width="9"/>
+                </g>
+              </g>
+            </svg>
+          </button>
+          <p class="status" id="milestone" role="status" aria-live="polite">Click the planet to collect stardust.</p>
         </div>
-        <p class="milestone" id="milestone">Every universe starts with a single speck. Click the star!</p>
-        <div class="sky-foot">
-          <span id="totalLine">0 collected all time</span>
-          <button class="btn" id="reset" type="button">Reset</button>
+        <div class="left-foot">
+          <button class="btn secondary" id="reset" type="button">Reset</button>
         </div>
       </section>
       <section class="shop">
         <div class="shop-head"><h2>Upgrades</h2></div>
         <div class="upgrades" id="upgrades"></div>
-        <p class="none" id="noUpg">Upgrades show up here as your empire grows.</p>
+        <p class="none" id="noUpg">None available yet.</p>
         <div class="shop-head">
           <h2>Generators</h2>
           <div class="seg" id="seg" role="group" aria-label="Buy amount">
@@ -459,56 +326,57 @@
             <button type="button" data-n="100">×100</button>
           </div>
         </div>
+        <div class="cols" aria-hidden="true"><span>Generator</span><span>Cost</span><span>Owned</span></div>
         <div class="gens" id="gens"></div>
       </section>
     </div>
   </main>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script>
     const KEY = "hello-clicker-save";
     const OFFLINE_CAP = 8 * 3600;
     const GENS = [
-      { id: "probe", name: "Space Probe", icon: "📡", base: 15, rate: 0.1, desc: "Drifts about, scooping up specks." },
-      { id: "satellite", name: "Satellite", icon: "🛰️", base: 100, rate: 1, desc: "Orbits with a very small net." },
-      { id: "moonbase", name: "Moon Base", icon: "🌙", base: 1100, rate: 8, desc: "Sweeps moondust around the clock." },
-      { id: "miner", name: "Asteroid Miner", icon: "☄️", base: 12000, rate: 47, desc: "Cracks open rocks full of sparkle." },
-      { id: "dyson", name: "Dyson Swarm", icon: "🌞", base: 130000, rate: 260, desc: "Wraps a sun in shimmering panels." },
-      { id: "forge", name: "Star Forge", icon: "⭐", base: 1400000, rate: 1400, desc: "Hammers fresh stars out of nothing." },
-      { id: "nebula", name: "Nebula Refinery", icon: "🌌", base: 20000000, rate: 7800, desc: "Distils glowing gas clouds." },
-      { id: "harvester", name: "Galaxy Harvester", icon: "🌀", base: 330000000, rate: 44000, desc: "Combs whole spiral arms." },
-      { id: "wormhole", name: "Wormhole", icon: "🕳️", base: 5100000000, rate: 260000, desc: "Borrows stardust from elsewhere." },
-      { id: "printer", name: "Universe Printer", icon: "🖨️", base: 75000000000, rate: 1600000, desc: "Prints brand new universes. Low on ink." }
+      { id: "probe", name: "Space Probe", base: 15, rate: 0.1, desc: "Drifts about scooping up specks." },
+      { id: "satellite", name: "Satellite", base: 100, rate: 1, desc: "Orbits with a very small net." },
+      { id: "moonbase", name: "Moon Base", base: 1100, rate: 8, desc: "Sweeps up moondust." },
+      { id: "miner", name: "Asteroid Miner", base: 12000, rate: 47, desc: "Cracks open asteroids." },
+      { id: "dyson", name: "Dyson Swarm", base: 130000, rate: 260, desc: "Panels wrapped around a sun." },
+      { id: "forge", name: "Star Forge", base: 1400000, rate: 1400, desc: "Makes new stars." },
+      { id: "nebula", name: "Nebula Refinery", base: 20000000, rate: 7800, desc: "Refines gas clouds." },
+      { id: "harvester", name: "Galaxy Harvester", base: 330000000, rate: 44000, desc: "Combs whole spiral arms." },
+      { id: "wormhole", name: "Wormhole", base: 5100000000, rate: 260000, desc: "Borrows stardust from elsewhere." },
+      { id: "printer", name: "Universe Printer", base: 75000000000, rate: 1600000, desc: "Prints new universes. Low on ink." }
     ];
     const UPGS = [
-      { id: "gloves", name: "Stardust Gloves", icon: "🧤", cost: 100, desc: "Clicks are twice as strong.", unlock: () => state.total >= 50, click: 2 },
-      { id: "antennas", name: "Probe Antennas", icon: "📶", cost: 750, desc: "Space Probes gather twice as much.", unlock: () => owned("probe") >= 5, gen: "probe", mult: 2 },
-      { id: "panels", name: "Solar Panels", icon: "🔆", cost: 5000, desc: "Satellites gather twice as much.", unlock: () => owned("satellite") >= 5, gen: "satellite", mult: 2 },
-      { id: "gauntlet", name: "Gravity Gauntlet", icon: "🥊", cost: 25000, desc: "Clicks are twice as strong again.", unlock: () => state.total >= 10000, click: 2 },
-      { id: "cheese", name: "Moon Cheese Drills", icon: "🧀", cost: 60000, desc: "Moon Bases gather twice as much.", unlock: () => owned("moonbase") >= 5, gen: "moonbase", mult: 2 },
-      { id: "touch", name: "Cosmic Touch", icon: "✋", cost: 150000, desc: "Each click also adds 2% of your per-second rate.", unlock: () => state.total >= 60000, share: 0.02 },
-      { id: "magnets", name: "Asteroid Magnets", icon: "🧲", cost: 600000, desc: "Asteroid Miners gather twice as much.", unlock: () => owned("miner") >= 5, gen: "miner", mult: 2 },
-      { id: "mirrors", name: "Dyson Mirrors", icon: "🪞", cost: 6500000, desc: "Dyson Swarms gather twice as much.", unlock: () => owned("dyson") >= 5, gen: "dyson", mult: 2 },
-      { id: "hammers", name: "Neutron Hammers", icon: "🔨", cost: 70000000, desc: "Star Forges gather twice as much.", unlock: () => owned("forge") >= 5, gen: "forge", mult: 2 },
-      { id: "darkmatter", name: "Dark Matter Engine", icon: "🌑", cost: 50000000, desc: "Everything gathers 50% more.", unlock: () => state.total >= 20000000, all: 1.5 }
+      { id: "gloves", name: "Stardust Gloves", cost: 100, desc: "Clicks are twice as strong.", unlock: () => state.total >= 50, click: 2 },
+      { id: "antennas", name: "Probe Antennas", cost: 750, desc: "Space Probes gather twice as much.", unlock: () => owned("probe") >= 5, gen: "probe", mult: 2 },
+      { id: "panels", name: "Solar Panels", cost: 5000, desc: "Satellites gather twice as much.", unlock: () => owned("satellite") >= 5, gen: "satellite", mult: 2 },
+      { id: "gauntlet", name: "Gravity Gauntlet", cost: 25000, desc: "Clicks are twice as strong again.", unlock: () => state.total >= 10000, click: 2 },
+      { id: "cheese", name: "Moon Cheese Drills", cost: 60000, desc: "Moon Bases gather twice as much.", unlock: () => owned("moonbase") >= 5, gen: "moonbase", mult: 2 },
+      { id: "touch", name: "Cosmic Touch", cost: 150000, desc: "Each click also adds 2% of your per-second rate.", unlock: () => state.total >= 60000, share: 0.02 },
+      { id: "magnets", name: "Asteroid Magnets", cost: 600000, desc: "Asteroid Miners gather twice as much.", unlock: () => owned("miner") >= 5, gen: "miner", mult: 2 },
+      { id: "mirrors", name: "Dyson Mirrors", cost: 6500000, desc: "Dyson Swarms gather twice as much.", unlock: () => owned("dyson") >= 5, gen: "dyson", mult: 2 },
+      { id: "hammers", name: "Neutron Hammers", cost: 70000000, desc: "Star Forges gather twice as much.", unlock: () => owned("forge") >= 5, gen: "forge", mult: 2 },
+      { id: "darkmatter", name: "Dark Matter Engine", cost: 50000000, desc: "Everything gathers 50% more.", unlock: () => state.total >= 20000000, all: 1.5 }
     ];
     const MILESTONES = [
-      [10, "a pinch of glitter ✨"],
-      [100, "a pebble 🪨"],
-      [1000, "a boulder 🗿"],
-      [10000, "a mountain ⛰️"],
-      [100000, "an asteroid ☄️"],
-      [1000000, "a moon 🌙"],
-      [10000000, "a small planet 🌍"],
-      [100000000, "a gas giant 🪐"],
-      [1000000000, "a star ⭐"],
-      [10000000000, "a whole solar system ☀️"],
-      [100000000000, "a nebula 🌌"],
-      [1000000000000, "a star cluster 💫"],
-      [10000000000000, "a whole galaxy 🌀"],
-      [1000000000000000, "a galaxy cluster 🔭"],
-      [1000000000000000000, "an entire universe 🌠"]
+      [10, "a pinch of dust"],
+      [100, "a pebble"],
+      [1000, "a boulder"],
+      [10000, "a mountain"],
+      [100000, "an asteroid"],
+      [1000000, "a moon"],
+      [10000000, "a small planet"],
+      [100000000, "a gas giant"],
+      [1000000000, "a star"],
+      [10000000000, "a solar system"],
+      [100000000000, "a nebula"],
+      [1000000000000, "a star cluster"],
+      [10000000000000, "a galaxy"],
+      [1000000000000000, "a galaxy cluster"],
+      [1000000000000000000, "a universe"]
     ];
     const NAMES = ["million", "billion", "trillion", "quadrillion", "quintillion", "sextillion", "septillion", "octillion", "nonillion", "decillion"];
+    const START_TEXT = "Click the planet to collect stardust.";
 
     function fresh() {
       return { dust: 0, total: 0, clicks: 0, owned: {}, upgrades: [], milestone: -1, last: Date.now() };
@@ -587,20 +455,14 @@
     const ppcEl = document.getElementById("ppc");
     const totalLine = document.getElementById("totalLine");
     const orb = document.getElementById("orb");
-    const sky = document.getElementById("sky");
     const milestoneEl = document.getElementById("milestone");
     const gensEl = document.getElementById("gens");
     const upgEl = document.getElementById("upgrades");
     const noUpg = document.getElementById("noUpg");
-    const toastEl = document.getElementById("toast");
     let buyN = 1;
 
-    let toastTimer = null;
-    function toast(text, ms) {
-      toastEl.textContent = text;
-      toastEl.classList.add("show");
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toastEl.classList.remove("show"), ms || 3200);
+    function note(text) {
+      milestoneEl.textContent = text;
     }
 
     function earn(x) {
@@ -609,68 +471,34 @@
     }
 
     function milestoneText(i) {
-      return "You've collected enough stardust to make " + MILESTONES[i][1];
+      return "Enough stardust for " + MILESTONES[i][1] + ".";
     }
-    function checkMilestones(announce) {
+    function checkMilestones() {
       let i = state.milestone;
       while (i + 1 < MILESTONES.length && state.total >= MILESTONES[i + 1][0]) i++;
       if (i !== state.milestone) {
         state.milestone = i;
-        milestoneEl.textContent = milestoneText(i);
-        if (announce) {
-          milestoneEl.classList.remove("flash");
-          void milestoneEl.offsetWidth;
-          milestoneEl.classList.add("flash");
-          toast("🏆 " + milestoneText(i));
-        }
+        note(milestoneText(i));
       }
     }
 
-    function spawnFloat(x, y, text) {
-      const f = document.createElement("div");
-      f.className = "float";
-      f.textContent = text;
-      f.style.left = x + "px";
-      f.style.top = y + "px";
-      f.style.setProperty("--dx", (Math.random() - 0.5) * 60 + "px");
-      sky.appendChild(f);
-      setTimeout(() => f.remove(), 1000);
-      for (let i = 0; i < 5; i++) {
-        const m = document.createElement("div");
-        m.className = "mote";
-        const a = Math.random() * Math.PI * 2;
-        const d = 30 + Math.random() * 40;
-        m.style.left = x + "px";
-        m.style.top = y + "px";
-        m.style.setProperty("--dx", Math.cos(a) * d + "px");
-        m.style.setProperty("--dy", Math.sin(a) * d + "px");
-        sky.appendChild(m);
-        setTimeout(() => m.remove(), 700);
-      }
-    }
-
-    function clickOrb(clientX, clientY) {
+    function clickOrb() {
       const gain = perClick();
       earn(gain);
       state.clicks++;
       orb.classList.remove("squash");
       void orb.offsetWidth;
       orb.classList.add("squash");
-      const r = sky.getBoundingClientRect();
-      const o = orb.getBoundingClientRect();
-      const x = clientX == null ? o.left + o.width / 2 : clientX;
-      const y = clientY == null ? o.top + o.height / 3 : clientY;
-      spawnFloat(x - r.left, y - r.top, "+" + fmt(gain, true));
-      checkMilestones(true);
+      checkMilestones();
       render();
     }
     orb.addEventListener("pointerdown", (e) => {
       if (e.button > 0) return;
       e.preventDefault();
-      clickOrb(e.clientX, e.clientY);
+      clickOrb();
     });
     orb.addEventListener("click", (e) => {
-      if (e.detail === 0) clickOrb(null, null);
+      if (e.detail === 0) clickOrb();
     });
     orb.addEventListener("keydown", (e) => {
       if (e.repeat && (e.key === "Enter" || e.key === " ")) e.preventDefault();
@@ -684,13 +512,12 @@
         const b = document.createElement("button");
         b.type = "button";
         b.className = "gen";
-        b.innerHTML = '<span class="ico"></span><span class="mid"><span class="nm"></span><span class="ds"></span><span class="cs"></span></span><span class="own"></span>';
+        b.innerHTML = '<span class="mid"><span class="nm"></span><span class="ds"></span></span><span class="cs"></span><span class="own"></span>';
         b.addEventListener("click", () => buy(g));
         b.addEventListener("animationend", () => b.classList.remove("bought"));
         gensEl.appendChild(b);
         genRows[g.id] = {
           el: b,
-          ico: b.querySelector(".ico"),
           nm: b.querySelector(".nm"),
           ds: b.querySelector(".ds"),
           cs: b.querySelector(".cs"),
@@ -718,7 +545,7 @@
       return owned(g.id) > 0 || owned(GENS[i - 1].id) > 0 || state.total >= g.base * 0.5;
     }
 
-    let upgSig = "";
+    let upgSig = null;
     function renderUpgrades() {
       const avail = UPGS.filter((u) => !has(u.id) && u.unlock()).sort((a, b) => a.cost - b.cost);
       const sig = avail.map((u) => u.id).join(",");
@@ -730,16 +557,15 @@
           b.type = "button";
           b.className = "upg";
           b.dataset.id = u.id;
-          b.innerHTML = '<span class="ico"></span><span class="nm"></span><span class="ds"></span><span class="cs"></span>';
-          b.querySelector(".ico").textContent = u.icon;
+          b.innerHTML = '<span class="mid"><span class="nm"></span><span class="ds"></span></span><span class="cs"></span><span class="own"></span>';
           b.querySelector(".nm").textContent = u.name;
           b.querySelector(".ds").textContent = u.desc;
-          b.querySelector(".cs").textContent = fmt(u.cost) + " stardust";
+          b.querySelector(".cs").textContent = fmt(u.cost);
           b.addEventListener("click", () => {
             if (has(u.id) || state.dust < u.cost) return;
             state.dust -= u.cost;
             state.upgrades.push(u.id);
-            toast(u.icon + " " + u.name + " installed!", 2000);
+            note("Bought " + u.name + ".");
             render();
           });
           upgEl.appendChild(b);
@@ -756,9 +582,9 @@
     function render() {
       const pps = perSecond();
       dustEl.textContent = fmt(state.dust);
-      ppsEl.textContent = fmt(pps, true) + " per second";
-      ppcEl.textContent = fmt(perClick(), true) + " per click";
-      totalLine.textContent = fmt(state.total) + " collected all time";
+      ppsEl.textContent = fmt(pps, true);
+      ppcEl.textContent = fmt(perClick(), true);
+      totalLine.textContent = fmt(state.total);
       let shownLocked = false;
       GENS.forEach((g, i) => {
         const row = genRows[g.id];
@@ -772,21 +598,19 @@
         if (!show) {
           shownLocked = true;
           row.el.classList.add("locked", "cant");
-          row.ico.textContent = g.icon;
           row.nm.textContent = "???";
-          row.ds.textContent = "Keep collecting to discover this.";
-          row.cs.textContent = fmt(c) + " stardust";
+          row.ds.textContent = "Keep collecting to reveal.";
+          row.cs.textContent = fmt(c);
           row.own.textContent = "";
           return;
         }
         row.el.classList.remove("locked");
         row.el.classList.toggle("cant", state.dust < c);
-        row.ico.textContent = g.icon;
         row.nm.textContent = buyN > 1 ? g.name + " ×" + buyN : g.name;
         const each = g.rate * genMult(g);
         row.ds.textContent = g.desc + " " + fmt(each, true) + "/s each.";
-        row.cs.textContent = fmt(c) + " stardust";
-        row.own.textContent = owned(g.id) || "";
+        row.cs.textContent = fmt(c);
+        row.own.textContent = owned(g.id);
       });
       renderUpgrades();
     }
@@ -795,14 +619,13 @@
       const now = Date.now();
       const secs = Math.min(Math.max(0, (now - state.last) / 1000), OFFLINE_CAP);
       state.last = now;
-      if (secs < 1) return;
+      if (secs < 1) return "";
       const gain = perSecond() * secs;
-      if (gain <= 0) return;
+      if (gain <= 0) return "";
       earn(gain);
-      if (secs >= 10 && gain >= 1) {
-        toast("🌙 While you were away you earned " + fmt(gain) + " stardust", 4500);
-      }
-      checkMilestones(false);
+      checkMilestones();
+      if (secs >= 10 && gain >= 1) return "Earned " + fmt(gain) + " stardust while away.";
+      return "";
     }
 
     document.getElementById("seg").addEventListener("click", (e) => {
@@ -814,13 +637,12 @@
     });
 
     document.getElementById("reset").addEventListener("click", () => {
-      if (!window.confirm("Reset your stardust, generators and upgrades and start a brand new universe?")) return;
+      if (!window.confirm("Reset your stardust, generators and upgrades?")) return;
       state = fresh();
       save();
-      upgSig = "";
-      milestoneEl.textContent = "Every universe starts with a single speck. Click the star!";
+      upgSig = null;
+      note("Reset. " + START_TEXT);
       render();
-      toast("💥 A brand new universe begins.", 2200);
     });
 
     let lastFrame = performance.now();
@@ -833,7 +655,7 @@
       if (dt > 0) earn(perSecond() * dt);
       if (t - lastRender > 100) {
         lastRender = t;
-        checkMilestones(true);
+        checkMilestones();
         render();
       }
       if (t - lastSave > 5000) {
@@ -847,7 +669,8 @@
       if (document.visibilityState === "hidden") {
         save();
       } else {
-        applyOffline();
+        const msg = applyOffline();
+        if (msg) note(msg);
         lastFrame = performance.now();
         render();
       }
@@ -855,9 +678,10 @@
     window.addEventListener("pagehide", save);
 
     buildGens();
-    applyOffline();
-    if (state.milestone >= 0 && state.milestone < MILESTONES.length) milestoneEl.textContent = milestoneText(state.milestone);
-    checkMilestones(false);
+    if (state.milestone >= 0 && state.milestone < MILESTONES.length) note(milestoneText(state.milestone));
+    const awayMsg = applyOffline();
+    checkMilestones();
+    if (awayMsg) note(awayMsg);
     render();
     requestAnimationFrame((t) => { lastFrame = t; requestAnimationFrame(frame); });
   </script>

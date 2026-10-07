@@ -4,9 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Element Crafter</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../common.css">
   <style>
     .game.wide {
@@ -39,14 +36,14 @@
       position: relative;
       height: min(68vh, 600px);
       min-height: 380px;
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       overflow: hidden;
-      background-color: var(--surface);
-      background-image: radial-gradient(var(--border) 1.2px, transparent 1.2px);
-      background-size: 22px 22px;
+      background-color: var(--bg);
+      background-image: radial-gradient(circle, var(--surface-2) 1.2px, transparent 1.6px);
+      background-size: 24px 24px;
       outline: 2px dashed transparent;
       outline-offset: -2px;
-      transition: outline-color 0.15s;
       user-select: none;
       -webkit-user-select: none;
     }
@@ -57,26 +54,18 @@
       position: absolute;
       inset: 0;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 6px;
       text-align: center;
       color: var(--muted);
       padding: 24px;
       pointer-events: none;
-      font-weight: 600;
-      transition: opacity 0.25s;
-    }
-    .hint .big {
-      font-size: 2.4rem;
-      opacity: 0.8;
     }
     .hint.gone {
-      opacity: 0;
+      display: none;
     }
     .sidebar {
-      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       display: flex;
       flex-direction: column;
@@ -97,19 +86,20 @@
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      font-weight: 800;
-      padding: 0 4px;
+      font-weight: 700;
+      padding: 0 2px;
     }
     .side-title small {
       color: var(--muted);
-      font-weight: 600;
+      font-weight: 400;
+      font-size: 0.85rem;
     }
     .search {
       width: 100%;
       font: inherit;
       font-size: 16px;
-      padding: 8px 14px;
-      border-radius: 999px;
+      padding: 8px 10px;
+      border-radius: 6px;
       border: 1px solid var(--border);
       background: var(--bg);
       color: var(--text);
@@ -124,21 +114,21 @@
       overflow-y: auto;
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
       align-content: flex-start;
       flex: 1;
       -webkit-overflow-scrolling: touch;
     }
     .empty-search {
       color: var(--muted);
-      padding: 8px 4px;
+      padding: 8px 2px;
     }
     .pill, .inst, .ghost {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 7px 14px;
-      border-radius: 999px;
+      padding: 6px 10px;
+      border-radius: 6px;
       background: var(--bg);
       border: 1px solid var(--border);
       font: inherit;
@@ -151,76 +141,57 @@
       white-space: nowrap;
       min-height: 40px;
       cursor: grab;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
     }
     .pill .em, .inst .em, .ghost .em {
-      font-size: 1.15rem;
+      font-size: 1.1rem;
     }
     .pill {
       touch-action: none;
-      transition: transform 0.12s, border-color 0.12s;
     }
     .pill:hover {
-      border-color: var(--accent);
-      transform: translateY(-1px);
+      border-color: var(--text);
     }
     .pill:focus-visible {
       outline: 2px solid var(--accent);
       outline-offset: 2px;
     }
     .pill.fresh {
-      animation: fresh 1.6s ease;
-    }
-    @keyframes fresh {
-      0% { transform: scale(0.5); background: var(--warn); }
-      30% { transform: scale(1.15); }
-      100% { transform: scale(1); background: var(--bg); }
+      background: var(--surface-2);
+      border-color: var(--text);
     }
     .inst {
       position: absolute;
       left: 0;
       top: 0;
       touch-action: none;
-      transition: box-shadow 0.15s, transform 0.12s, opacity 0.2s;
+      transition: opacity 0.15s;
     }
     .inst.dragging {
       cursor: grabbing;
-      box-shadow: var(--shadow);
-      transform: scale(1.07);
+      border-color: var(--text);
+      box-shadow: 0 2px 0 var(--text);
     }
     .inst.target {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent);
-    }
-    .inst.pop {
-      animation: pop 0.38s cubic-bezier(0.3, 1.6, 0.5, 1);
+      box-shadow: 0 0 0 2px var(--accent);
     }
     .inst.new {
-      animation: pop 0.38s cubic-bezier(0.3, 1.6, 0.5, 1), glow 1.6s ease;
+      animation: newmark 1.4s steps(1, end);
+    }
+    @keyframes newmark {
+      0% { background: var(--surface-2); border-color: var(--text); }
+      100% { background: var(--bg); border-color: var(--border); }
     }
     .inst.shake {
-      animation: shake 0.4s ease;
+      animation: nomatch 0.5s steps(1, end);
+    }
+    @keyframes nomatch {
+      0% { border-color: var(--bad); }
+      100% { border-color: var(--border); }
     }
     .inst.dying {
       opacity: 0;
-      transform: scale(0.6);
       pointer-events: none;
-    }
-    @keyframes pop {
-      0% { transform: scale(0.3); }
-      60% { transform: scale(1.18); }
-      100% { transform: scale(1); }
-    }
-    @keyframes glow {
-      0%, 60% { box-shadow: 0 0 0 4px var(--warn), 0 0 24px var(--warn); }
-      100% { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); }
-    }
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20% { transform: translateX(-6px) rotate(-3deg); }
-      40% { transform: translateX(6px) rotate(3deg); }
-      60% { transform: translateX(-4px); }
-      80% { transform: translateX(4px); }
     }
     .ghost {
       position: fixed;
@@ -228,48 +199,30 @@
       top: 0;
       z-index: 100;
       pointer-events: none;
-      box-shadow: var(--shadow);
-      transform: scale(1.07);
+      border-color: var(--text);
+      box-shadow: 0 2px 0 var(--text);
     }
-    .spark {
+    .notice {
       position: absolute;
-      pointer-events: none;
-      font-size: 1rem;
-      color: var(--warn);
-      animation: spark 0.8s ease-out forwards;
-      z-index: 60;
-    }
-    @keyframes spark {
-      0% { transform: translate(-50%, -50%) scale(0.4); opacity: 1; }
-      100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.1) rotate(90deg); opacity: 0; }
-    }
-    .toast {
-      position: fixed;
-      left: 50%;
-      bottom: 24px;
-      transform: translate(-50%, calc(100% + 40px));
+      left: 10px;
+      bottom: 10px;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      z-index: 9000;
+      max-width: calc(100% - 20px);
+      text-align: left;
       opacity: 0;
       visibility: hidden;
-      background: var(--text);
-      color: var(--bg);
-      padding: 12px 20px;
-      border-radius: 999px;
-      font-weight: 600;
-      box-shadow: var(--shadow);
-      z-index: 200;
-      max-width: calc(100vw - 32px);
-      text-align: center;
-      transition: transform 0.35s cubic-bezier(0.3, 1.4, 0.5, 1), opacity 0.25s, visibility 0.35s;
+      transition: opacity 0.2s, visibility 0.2s;
       pointer-events: none;
     }
-    .toast.show {
-      transform: translate(-50%, 0);
+    .notice.show {
       opacity: 1;
       visibility: visible;
-    }
-    .toast b {
-      color: var(--warn);
-      margin-right: 6px;
     }
     @media (max-width: 760px) {
       .craft {
@@ -293,10 +246,10 @@
   </style>
 </head>
 <body>
-  <nav class="topbar"><a class="back" href="../../../index.html">← all games</a></nav>
+  <nav class="topbar"><a class="logo" href="../../../index.html">hello</a></nav>
   <main class="game wide">
     <h1 class="game-title">Element Crafter</h1>
-    <p class="lede">Drop one element on another to craft something new. Tap or drag from the list, double-tap to copy, drag back to the list to remove.</p>
+    <p class="lede">Drag one element onto another to make something new.</p>
     <div class="toolbar">
       <div class="stats">
         <div class="stat"><div class="stat-value" id="count">4 / 4</div><div class="stat-label">Discovered</div></div>
@@ -308,7 +261,8 @@
     </div>
     <div class="craft">
       <div class="workspace" id="ws">
-        <div class="hint" id="hint"><div class="big">💧 + 🔥 = ?</div><div>Drag elements here and drop one onto another</div></div>
+        <div class="hint" id="hint">Tap or drag elements from the list, then drop one onto another. Double-tap to copy, drag back to the list to remove.</div>
+        <div class="notice" id="toast" role="status" aria-live="polite"></div>
       </div>
       <aside class="sidebar" id="sidebar">
         <div class="side-head">
@@ -319,7 +273,6 @@
       </aside>
     </div>
   </main>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script>
     const E = {
       "Water": "💧", "Fire": "🔥", "Earth": "🌍", "Wind": "💨",
@@ -480,7 +433,7 @@
       if (!shown) {
         const p = document.createElement("div");
         p.className = "empty-search";
-        p.textContent = "Nothing matches “" + search.value.trim() + "” yet.";
+        p.textContent = "Nothing matches “" + search.value.trim() + "”.";
         pillsEl.appendChild(p);
       }
       countEl.textContent = discovered.length + " / " + TOTAL;
@@ -488,14 +441,8 @@
     }
 
     let toastTimer = null;
-    function toast(title, text) {
-      toastEl.textContent = "";
-      if (title) {
-        const b = document.createElement("b");
-        b.textContent = title;
-        toastEl.appendChild(b);
-      }
-      toastEl.appendChild(document.createTextNode(text));
+    function toast(text) {
+      toastEl.textContent = text;
       toastEl.classList.add("show");
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2400);
@@ -537,33 +484,15 @@
       updateHint();
     }
 
-    function sparkle(cx, cy) {
-      const glyphs = ["✦", "✧", "★", "✨"];
-      for (let i = 0; i < 10; i++) {
-        const s = document.createElement("span");
-        s.className = "spark";
-        s.textContent = glyphs[i % glyphs.length];
-        const ang = (Math.PI * 2 * i) / 10 + Math.random() * 0.4;
-        const dist = 40 + Math.random() * 30;
-        s.style.left = cx + "px";
-        s.style.top = cy + "px";
-        s.style.setProperty("--dx", Math.cos(ang) * dist + "px");
-        s.style.setProperty("--dy", Math.sin(ang) * dist + "px");
-        ws.appendChild(s);
-        setTimeout(() => s.remove(), 850);
-      }
-    }
-
     function discover(name, cx, cy) {
       discovered.push(name);
       found.add(name);
       save();
       renderPills(name);
-      sparkle(cx, cy);
       if (discovered.length === TOTAL) {
-        toast("You found everything!", (E[name] || "") + " " + name + " was the last one. 🎉");
+        toast("New: " + name + ". That was the last one, all " + TOTAL + " found.");
       } else {
-        toast("New discovery!", (E[name] || "") + " " + name);
+        toast("New: " + name);
       }
     }
 
@@ -721,14 +650,14 @@
       ws.querySelectorAll(".inst").forEach(removeInst);
     });
     document.getElementById("reset").addEventListener("click", () => {
-      if (!window.confirm("Forget all your discoveries and start again with the four elements?")) return;
+      if (!window.confirm("Forget all discoveries and start again with the four elements?")) return;
       discovered = STARTERS.slice();
       found = new Set(discovered);
       save();
       search.value = "";
       ws.querySelectorAll(".inst").forEach(removeInst);
       renderPills();
-      toast("", "Progress reset. Back to the four elements!");
+      toast("Progress reset.");
     });
     search.addEventListener("input", () => renderPills());
     window.addEventListener("resize", () => {
