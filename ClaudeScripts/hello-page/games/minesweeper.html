@@ -4,15 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Minesweeper</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../common.css">
   <style>
     :root {
       --hid-a: #aad751;
       --hid-b: #a2d149;
-      --hid-hover: #c3e57f;
+      --hid-hover: #bde06e;
+      --hid-press: #93bf3e;
+      --flag: #d1433a;
+      --ink: #1b1b1b;
       --open-a: #e8cba9;
       --open-b: #dcbd98;
       --n1: #1565c0;
@@ -28,9 +28,12 @@
       :root {
         --hid-a: #4b7a2b;
         --hid-b: #436e26;
-        --hid-hover: #5f9437;
-        --open-a: #2b2b33;
-        --open-b: #25252c;
+        --hid-hover: #578a32;
+        --hid-press: #3a6121;
+        --flag: #ec6a5f;
+        --ink: #101010;
+        --open-a: #2c2b29;
+        --open-b: #262523;
         --n1: #74a9ff;
         --n2: #6fd685;
         --n3: #ff7272;
@@ -45,30 +48,31 @@
       max-width: 1020px;
     }
     .diffs {
-      display: inline-flex;
-      background: var(--surface);
-      border-radius: 999px;
-      padding: 4px;
-      gap: 2px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
       margin: 0 auto 14px;
     }
     .diffs button {
       appearance: none;
-      border: 0;
+      border: 1px solid var(--border);
       background: transparent;
-      color: var(--muted);
+      color: var(--text);
       font: inherit;
       font-weight: 600;
       padding: 8px 16px;
       min-height: 40px;
-      border-radius: 999px;
+      border-radius: 6px;
       cursor: pointer;
-      transition: background 0.15s, color 0.15s;
+    }
+    .diffs button:hover {
+      background: var(--surface);
     }
     .diffs button[aria-pressed="true"] {
-      background: var(--bg);
-      color: var(--text);
-      box-shadow: var(--shadow);
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-text);
     }
     .hud {
       display: flex;
@@ -81,24 +85,9 @@
       min-width: 84px;
       padding: 6px 14px;
     }
-    .face {
-      appearance: none;
-      border: 0;
-      width: 56px;
-      height: 56px;
-      border-radius: 16px;
-      background: var(--surface);
-      font-size: 30px;
-      line-height: 1;
-      cursor: pointer;
-      transition: transform 0.1s, background 0.15s;
+    .hud .btn {
+      min-height: 40px;
       flex: none;
-    }
-    .face:hover {
-      background: var(--surface-2);
-    }
-    .face:active {
-      transform: scale(0.93);
     }
     .tools {
       margin: 0 auto 14px;
@@ -108,8 +97,9 @@
       min-height: 40px;
     }
     .flagmode[aria-pressed="true"] {
-      background: var(--bad);
-      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-text);
     }
     .best-line {
       color: var(--muted);
@@ -127,9 +117,8 @@
       display: grid;
       width: max-content;
       margin: 0 auto;
-      border-radius: 12px;
+      border-radius: 6px;
       overflow: hidden;
-      box-shadow: var(--shadow);
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
@@ -150,7 +139,6 @@
       background: var(--hid-a);
       cursor: pointer;
       position: relative;
-      transition: background 0.12s;
     }
     .cell.alt {
       background: var(--hid-b);
@@ -161,7 +149,6 @@
     .cell.open {
       background: var(--open-a);
       cursor: default;
-      animation: open 0.22s ease-out backwards;
     }
     .cell.open.alt {
       background: var(--open-b);
@@ -169,41 +156,39 @@
     .cell.open.num {
       cursor: pointer;
     }
-    .cell.press {
-      background: var(--hid-hover);
-      filter: brightness(0.92);
+    .cell.press,
+    .board:not(.lost):not(.won) .cell.press:hover {
+      background: var(--hid-press);
     }
-    @keyframes open {
-      from { transform: scale(0.6); opacity: 0.2; }
-      to { transform: scale(1); opacity: 1; }
+    .cell.flag::before {
+      content: "";
+      position: absolute;
+      left: 34%;
+      top: 18%;
+      width: 3px;
+      height: 64%;
+      background: var(--ink);
     }
     .cell.flag::after {
-      content: "🚩";
-      font-size: calc(var(--cell) * 0.55);
-      animation: plant 0.18s ease-out;
-    }
-    @keyframes plant {
-      from { transform: translateY(-40%) scale(0.4); opacity: 0; }
-      to { transform: none; opacity: 1; }
+      content: "";
+      position: absolute;
+      left: calc(34% + 3px);
+      top: 18%;
+      width: 0;
+      height: 0;
+      border-left: calc(var(--cell) * 0.38) solid var(--flag);
+      border-top: calc(var(--cell) * 0.19) solid transparent;
+      border-bottom: calc(var(--cell) * 0.19) solid transparent;
     }
     .cell.mine::after {
-      content: "💣";
-      font-size: calc(var(--cell) * 0.55);
-      animation: boom 0.3s ease-out backwards;
-      animation-delay: var(--d, 0s);
-    }
-    @keyframes boom {
-      from { transform: scale(0); }
-      70% { transform: scale(1.25); }
-      to { transform: scale(1); }
+      content: "";
+      width: 46%;
+      height: 46%;
+      border-radius: 50%;
+      background: var(--ink);
     }
     .cell.hit {
       background: var(--bad) !important;
-    }
-    .cell.wrong::after {
-      content: "🚩";
-      opacity: 0.5;
-      font-size: calc(var(--cell) * 0.55);
     }
     .cell.wrong::before {
       content: "✕";
@@ -225,16 +210,6 @@
     .n6 { color: var(--n6); }
     .n7 { color: var(--n7); }
     .n8 { color: var(--n8); }
-    .board.shake {
-      animation: shake 0.4s ease-in-out;
-    }
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20% { transform: translateX(-6px); }
-      40% { transform: translateX(6px); }
-      60% { transform: translateX(-4px); }
-      80% { transform: translateX(3px); }
-    }
     .banner {
       margin: 16px auto 0;
       max-width: 420px;
@@ -242,7 +217,6 @@
       flex-direction: column;
       align-items: center;
       gap: 10px;
-      animation: rise 0.35s ease-out;
     }
     .banner strong {
       font-size: 1.5rem;
@@ -255,10 +229,6 @@
     .banner.lose strong {
       color: var(--bad);
     }
-    @keyframes rise {
-      from { transform: translateY(10px); opacity: 0; }
-      to { transform: none; opacity: 1; }
-    }
     .hint {
       color: var(--muted);
       font-size: 0.9rem;
@@ -268,7 +238,7 @@
   </style>
 </head>
 <body>
-  <nav class="topbar"><a class="back" href="../../../index.html">← all games</a></nav>
+  <nav class="topbar"><a class="logo" href="../../../index.html">hello</a></nav>
   <main class="game">
     <h1 class="game-title">Minesweeper</h1>
     <p class="lede">Clear every safe square. Numbers count the mines touching them.</p>
@@ -279,12 +249,12 @@
     </div>
     <div class="hud">
       <div class="stat"><div class="stat-value" id="mines">10</div><div class="stat-label">Mines</div></div>
-      <button class="face" id="face" type="button" aria-label="New game">🙂</button>
+      <button class="btn secondary" id="face" type="button">New game</button>
       <div class="stat"><div class="stat-value" id="time">0</div><div class="stat-label">Time</div></div>
     </div>
     <div class="row tools">
-      <button class="btn secondary flagmode" id="flagBtn" type="button" aria-pressed="false">🚩 Flag mode: off</button>
-      <span class="best-line" id="bestLine">Best: –</span>
+      <button class="btn secondary flagmode" id="flagBtn" type="button" aria-pressed="false">Flag mode</button>
+      <span class="best-line" id="bestLine">Best: none</span>
     </div>
     <div class="scroller" id="scroller">
       <div class="board" id="board"></div>
@@ -343,7 +313,7 @@
     }
     function showBest() {
       const b = getBest();
-      bestLine.textContent = "Best " + diff + ": " + (b ? b + "s" : "–");
+      bestLine.textContent = "Best on " + diff + ": " + (b ? b + " s" : "none");
     }
 
     function availableWidth() {
@@ -393,7 +363,6 @@
       flags = 0;
       opened = 0;
       timeEl.textContent = "0";
-      face.textContent = "🙂";
       banner.classList.add("hidden");
       boardEl.className = "board";
       boardEl.style.gridTemplateColumns = "repeat(" + cols + ", var(--cell))";
@@ -447,12 +416,11 @@
       minesEl.textContent = mineCount - flags;
     }
 
-    function paintOpen(i, delay) {
+    function paintOpen(i) {
       const cell = cells[i];
       const el = els[i];
       el.classList.add("open");
       el.classList.remove("flag");
-      if (delay) el.style.animationDelay = delay + "ms";
       if (cell.n) {
         el.textContent = cell.n;
         el.classList.add("num", "n" + cell.n);
@@ -476,20 +444,18 @@
     }
 
     function flood(starts) {
-      const queue = starts.map((s) => [s, 0]);
+      const queue = starts.slice();
       let head = 0;
       while (head < queue.length) {
-        const item = queue[head++];
-        const i = item[0];
-        const depth = item[1];
+        const i = queue[head++];
         const cell = cells[i];
         if (cell.open || cell.flag || cell.mine) continue;
         cell.open = true;
         opened++;
-        paintOpen(i, Math.min(depth * 18, 400));
+        paintOpen(i);
         if (cell.n === 0) {
           neighbors(i).forEach((j) => {
-            if (!cells[j].open && !cells[j].flag) queue.push([j, depth + 1]);
+            if (!cells[j].open && !cells[j].flag) queue.push(j);
           });
         }
       }
@@ -541,17 +507,10 @@
     function lose(i) {
       state = "lost";
       stopTimer();
-      face.textContent = "😵";
       boardEl.classList.add("lost");
-      const hr = Math.floor(i / cols);
-      const hc = i % cols;
       cells.forEach((cell, j) => {
         const el = els[j];
         if (cell.mine && !cell.flag) {
-          const r = Math.floor(j / cols);
-          const c = j % cols;
-          const dist = Math.hypot(r - hr, c - hc);
-          el.style.setProperty("--d", (j === i ? 0 : Math.min(60 + dist * 35, 900)) + "ms");
           el.classList.add("mine");
         } else if (!cell.mine && cell.flag) {
           el.classList.remove("flag");
@@ -559,14 +518,11 @@
         }
       });
       els[i].classList.add("hit");
-      boardEl.classList.remove("shake");
-      void boardEl.offsetWidth;
-      boardEl.classList.add("shake");
       if (navigator.vibrate) {
         try { navigator.vibrate([40, 40, 80]); } catch (e) {}
       }
-      bannerTitle.textContent = "Boom!";
-      bannerText.textContent = "You cleared " + opened + " of " + (cells.length - mineCount) + " safe squares.";
+      bannerTitle.textContent = "Game over";
+      bannerText.textContent = "You hit a mine. Cleared " + opened + " of " + (cells.length - mineCount) + " safe squares.";
       banner.className = "banner lose";
     }
 
@@ -574,7 +530,6 @@
       if (opened !== cells.length - mineCount || state === "lost") return;
       state = "won";
       const secs = stopTimer();
-      face.textContent = "😎";
       boardEl.classList.add("won");
       cells.forEach((cell, j) => {
         if (cell.mine && !cell.flag) {
@@ -590,8 +545,8 @@
       const isBest = !prev || secs < prev;
       if (isBest) writeStore(bestKey(), String(secs));
       showBest();
-      bannerTitle.textContent = isBest ? "New best time!" : "Cleared!";
-      bannerText.textContent = "You swept " + diff + " in " + secs + "s" + (isBest || !prev ? "." : " · best is " + prev + "s.");
+      bannerTitle.textContent = isBest ? "New best" : "Cleared";
+      bannerText.textContent = "Cleared " + diff + " in " + secs + " s." + (isBest || !prev ? "" : " Best: " + prev + " s.");
       banner.className = "banner win";
     }
 
@@ -630,7 +585,6 @@
       longTimer = null;
       press = null;
       clearPressed();
-      if (state === "ready" || state === "playing") face.textContent = "🙂";
     }
 
     boardEl.addEventListener("pointerdown", (e) => {
@@ -640,7 +594,6 @@
       if (i < 0 || state === "won" || state === "lost") return;
       suppressClick = false;
       press = { i: i, x: e.clientX, y: e.clientY, id: e.pointerId };
-      face.textContent = "😮";
       showPressed(i);
       if (e.pointerType !== "mouse") {
         longTimer = setTimeout(() => {
@@ -666,7 +619,6 @@
       clearTimeout(longTimer);
       longTimer = null;
       clearPressed();
-      if (state === "ready" || state === "playing") face.textContent = "🙂";
     });
     boardEl.addEventListener("pointercancel", endPress);
     boardEl.addEventListener("pointerleave", (e) => {
@@ -714,7 +666,6 @@
     flagBtn.addEventListener("click", () => {
       flagMode = !flagMode;
       flagBtn.setAttribute("aria-pressed", String(flagMode));
-      flagBtn.textContent = "🚩 Flag mode: " + (flagMode ? "on" : "off");
     });
 
     let resizeTimer = null;

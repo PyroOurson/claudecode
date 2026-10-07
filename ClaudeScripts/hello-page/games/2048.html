@@ -4,23 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>2048</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../common.css">
   <style>
     :root {
       --board-bg: #bbada0;
       --cell-bg: #cdc1b4;
-      --overlay-bg: rgba(238, 228, 218, 0.9);
-      --overlay-text: #5b5148;
+      --overlay-bg: rgba(255, 255, 255, 0.86);
+      --overlay-text: #1b1b1b;
     }
     @media (prefers-color-scheme: dark) {
       :root {
         --board-bg: #4a423b;
         --cell-bg: #5c534a;
-        --overlay-bg: rgba(28, 24, 21, 0.88);
-        --overlay-text: #f2ebe3;
+        --overlay-bg: rgba(20, 20, 20, 0.86);
+        --overlay-text: #ecebe8;
       }
     }
     .topline {
@@ -33,23 +30,8 @@
       max-width: 440px;
     }
     .topline .stat {
-      position: relative;
       flex: 1 1 0;
       min-width: 0;
-    }
-    .gain {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 6px;
-      font-weight: 800;
-      color: var(--good);
-      pointer-events: none;
-      animation: gain 0.7s ease-out forwards;
-    }
-    @keyframes gain {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(-34px); opacity: 0; }
     }
     .controls {
       margin: 0 auto 16px;
@@ -68,7 +50,6 @@
       user-select: none;
       -webkit-user-select: none;
       container-type: inline-size;
-      box-shadow: var(--shadow);
     }
     .grid, .tiles {
       position: absolute;
@@ -82,7 +63,7 @@
     }
     .grid div {
       background: var(--cell-bg);
-      border-radius: 8px;
+      border-radius: 6px;
     }
     .tile {
       position: absolute;
@@ -100,7 +81,7 @@
     .tile-inner {
       width: 100%;
       height: 100%;
-      border-radius: 8px;
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -115,21 +96,22 @@
     .tile.d4 .tile-inner { font-size: 8.2cqw; }
     .tile.d5 .tile-inner { font-size: 6.6cqw; }
     .tile.new .tile-inner {
-      animation: appear 0.2s ease-out 0.1s backwards;
+      animation: appear 0.14s ease-out 0.1s backwards;
     }
     .tile.merged {
       z-index: 2;
     }
     .tile.merged .tile-inner {
-      animation: pop 0.22s ease-out 0.08s backwards;
+      animation: pop 0.16s ease-out 0.1s backwards;
     }
     @keyframes appear {
       from { transform: scale(0); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
     @keyframes pop {
-      0% { transform: scale(0.5); opacity: 0; }
-      55% { transform: scale(1.18); opacity: 1; }
+      0% { transform: scale(1); opacity: 0; }
+      1% { opacity: 1; }
+      50% { transform: scale(1.08); }
       100% { transform: scale(1); }
     }
     .v2 .tile-inner { background: #eee4da; color: #776e65; }
@@ -138,12 +120,12 @@
     .v16 .tile-inner { background: #f59563; color: #f9f6f2; }
     .v32 .tile-inner { background: #f67c5f; color: #f9f6f2; }
     .v64 .tile-inner { background: #f65e3b; color: #f9f6f2; }
-    .v128 .tile-inner { background: #edcf72; color: #f9f6f2; box-shadow: 0 0 18px 2px rgba(243, 215, 116, 0.35); }
-    .v256 .tile-inner { background: #edcc61; color: #f9f6f2; box-shadow: 0 0 20px 3px rgba(243, 215, 116, 0.45); }
-    .v512 .tile-inner { background: #edc850; color: #f9f6f2; box-shadow: 0 0 22px 4px rgba(243, 215, 116, 0.55); }
-    .v1024 .tile-inner { background: #edc53f; color: #f9f6f2; box-shadow: 0 0 24px 5px rgba(243, 215, 116, 0.6); }
-    .v2048 .tile-inner { background: #edc22e; color: #f9f6f2; box-shadow: 0 0 28px 6px rgba(243, 215, 116, 0.7); }
-    .vbig .tile-inner { background: #3c3a32; color: #f9f6f2; box-shadow: 0 0 0 2px #edc22e inset; }
+    .v128 .tile-inner { background: #edcf72; color: #f9f6f2; }
+    .v256 .tile-inner { background: #edcc61; color: #f9f6f2; }
+    .v512 .tile-inner { background: #edc850; color: #f9f6f2; }
+    .v1024 .tile-inner { background: #edc53f; color: #f9f6f2; }
+    .v2048 .tile-inner { background: #edc22e; color: #f9f6f2; }
+    .vbig .tile-inner { background: #3c3a32; color: #f9f6f2; outline: 2px solid #edc22e; outline-offset: -2px; }
     .overlay {
       position: absolute;
       inset: 0;
@@ -157,26 +139,14 @@
       justify-content: center;
       gap: 14px;
       padding: 16px;
-      animation: fade 0.4s ease-out;
+      animation: fade 0.2s ease-out;
     }
-    .overlay.win {
-      background: rgba(237, 194, 46, 0.9);
-      color: #ffffff;
-      text-shadow: 0 1px 2px rgba(120, 80, 0, 0.35);
-    }
-    .overlay.win .btn.secondary {
-      background: rgba(255, 255, 255, 0.92);
-      color: #6b4f00;
-      text-shadow: none;
-    }
-    .overlay.win .btn:not(.secondary) {
-      background: #3c3a32;
-      color: #ffffff;
-      text-shadow: none;
+    .overlay .btn.secondary {
+      background: var(--bg);
     }
     .overlay h2 {
       margin: 0;
-      font-size: clamp(2rem, 11cqw, 3.2rem);
+      font-size: clamp(1.6rem, 9cqw, 2.4rem);
       font-weight: 800;
       letter-spacing: -0.03em;
       line-height: 1.1;
@@ -200,24 +170,24 @@
   </style>
 </head>
 <body>
-  <nav class="topbar"><a class="back" href="../../../index.html">← all games</a></nav>
+  <nav class="topbar"><a class="logo" href="../../../index.html">hello</a></nav>
   <main class="game">
     <h1 class="game-title">2048</h1>
     <p class="lede">Slide the tiles. Equal numbers merge. Reach the 2048 tile.</p>
     <div class="topline">
-      <div class="stat" id="scoreBox"><div class="stat-value" id="score">0</div><div class="stat-label">Score</div></div>
+      <div class="stat"><div class="stat-value" id="score">0</div><div class="stat-label">Score</div></div>
       <div class="stat"><div class="stat-value" id="best">0</div><div class="stat-label">Best</div></div>
     </div>
     <div class="row controls">
       <button class="btn" id="newBtn" type="button">New game</button>
-      <button class="btn secondary" id="undoBtn" type="button" disabled>↶ Undo</button>
+      <button class="btn secondary" id="undoBtn" type="button" disabled>Undo</button>
     </div>
     <div class="board" id="board">
       <div class="grid" id="grid"></div>
       <div class="tiles" id="tiles"></div>
       <div class="overlay win hidden" id="winOverlay">
-        <h2>You did it!</h2>
-        <p>2048 reached. How far can you go?</p>
+        <h2>2048</h2>
+        <p>You made the 2048 tile.</p>
         <div class="row">
           <button class="btn" id="keepBtn" type="button">Keep going</button>
           <button class="btn secondary" id="winNewBtn" type="button">New game</button>
@@ -239,7 +209,6 @@
     const gridEl = document.getElementById("grid");
     const tilesEl = document.getElementById("tiles");
     const scoreEl = document.getElementById("score");
-    const scoreBox = document.getElementById("scoreBox");
     const bestEl = document.getElementById("best");
     const undoBtn = document.getElementById("undoBtn");
     const winOverlay = document.getElementById("winOverlay");
@@ -362,14 +331,6 @@
       undoBtn.disabled = !undoState;
     }
 
-    function showGain(n) {
-      const g = document.createElement("div");
-      g.className = "gain";
-      g.textContent = "+" + n;
-      scoreBox.appendChild(g);
-      setTimeout(() => g.remove(), 750);
-    }
-
     function canMove() {
       if (tiles.length < SIZE * SIZE) return true;
       const g = grid();
@@ -471,7 +432,6 @@
       render(false);
       ghosts = pending;
       ghostTimer = setTimeout(clearGhosts, 130);
-      if (gained) showGain(gained);
       if (!won && tiles.some((t) => t.v >= 2048)) {
         won = true;
         if (!keepGoing) setTimeout(() => winOverlay.classList.remove("hidden"), 260);
@@ -486,7 +446,7 @@
     function showOver() {
       if (!over) return;
       const top = Math.max.apply(null, tiles.map((t) => t.v));
-      overText.textContent = "Biggest tile: " + top + " · Score: " + score;
+      overText.textContent = "Biggest tile " + top + ". Score " + score + ".";
       overOverlay.classList.remove("hidden");
     }
 
