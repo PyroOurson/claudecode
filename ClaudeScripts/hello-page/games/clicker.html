@@ -1,0 +1,865 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cosmic Clicker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../common.css">
+  <style>
+    .game.wide {
+      max-width: 1100px;
+    }
+    .cosmos {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+      gap: 16px;
+      text-align: left;
+      align-items: start;
+    }
+    .sky {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius);
+      min-height: 600px;
+      padding: 24px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #f4f1ff;
+      background-color: #0d0f2b;
+      background-image:
+        radial-gradient(1.5px 1.5px at 12% 18%, #ffffff 50%, transparent 51%),
+        radial-gradient(1px 1px at 28% 72%, #ffffffcc 50%, transparent 51%),
+        radial-gradient(1.5px 1.5px at 44% 34%, #ffe9b0 50%, transparent 51%),
+        radial-gradient(1px 1px at 63% 12%, #ffffff 50%, transparent 51%),
+        radial-gradient(2px 2px at 82% 58%, #cfd8ff 50%, transparent 51%),
+        radial-gradient(1px 1px at 91% 22%, #ffffff 50%, transparent 51%),
+        radial-gradient(1px 1px at 7% 86%, #ffffff 50%, transparent 51%),
+        radial-gradient(1.5px 1.5px at 72% 88%, #ffffffaa 50%, transparent 51%),
+        radial-gradient(1px 1px at 52% 94%, #ffffff 50%, transparent 51%),
+        radial-gradient(1px 1px at 36% 8%, #ffffff 50%, transparent 51%),
+        radial-gradient(ellipse at 20% 0%, #3b1f7a 0%, transparent 60%),
+        radial-gradient(ellipse at 100% 100%, #5a1a5e 0%, transparent 55%),
+        linear-gradient(160deg, #0d0f2b 0%, #181046 100%);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .bank {
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+    .dust {
+      font-size: clamp(2rem, 7vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 24px rgba(255, 196, 120, 0.45);
+    }
+    .dust-label {
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #c9c3f0;
+      margin-top: 2px;
+    }
+    .rates {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .rates span {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .orb-wrap {
+      position: relative;
+      width: min(240px, 56vw);
+      height: min(240px, 56vw);
+      margin: 44px auto 36px;
+      animation: bob 6s ease-in-out infinite;
+    }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .ring {
+      position: absolute;
+      left: -22%;
+      top: 32%;
+      width: 144%;
+      height: 36%;
+      border-radius: 50%;
+      border: 7px solid rgba(255, 214, 140, 0.75);
+      box-shadow: 0 0 18px rgba(255, 196, 120, 0.4);
+      transform: rotate(-16deg);
+      pointer-events: none;
+    }
+    .ring.front {
+      clip-path: inset(50% 0 0 0);
+      z-index: 3;
+    }
+    .orb {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      padding: 0;
+      border-radius: 50%;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      background:
+        radial-gradient(circle at 34% 28%, #fff7da 0%, #ffd56b 16%, #ff9147 42%, #e0457b 72%, #6a2c91 100%);
+      box-shadow: 0 0 50px rgba(255, 145, 71, 0.55), 0 0 120px rgba(224, 69, 123, 0.35), inset -18px -22px 40px rgba(60, 10, 80, 0.45);
+      transition: filter 0.15s;
+      overflow: hidden;
+    }
+    .orb::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 70% 62%, rgba(120, 30, 90, 0.35) 0 9%, transparent 10%),
+        radial-gradient(circle at 46% 78%, rgba(120, 30, 90, 0.28) 0 6%, transparent 7%),
+        radial-gradient(circle at 62% 36%, rgba(255, 255, 255, 0.18) 0 5%, transparent 6%),
+        repeating-linear-gradient(170deg, transparent 0 18px, rgba(255, 255, 255, 0.07) 18px 26px);
+      animation: spin 40s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .orb:hover {
+      filter: brightness(1.08) saturate(1.1);
+    }
+    .orb:focus-visible {
+      outline: 3px solid #ffd56b;
+      outline-offset: 6px;
+    }
+    .orb.squash {
+      animation: squash 0.22s ease-out;
+    }
+    @keyframes squash {
+      0% { transform: scale(1, 1); }
+      35% { transform: scale(1.07, 0.9); }
+      70% { transform: scale(0.96, 1.04); }
+      100% { transform: scale(1, 1); }
+    }
+    .float {
+      position: absolute;
+      z-index: 5;
+      pointer-events: none;
+      font-weight: 800;
+      font-size: 1.3rem;
+      color: #fff3c4;
+      text-shadow: 0 0 10px rgba(255, 180, 90, 0.9);
+      white-space: nowrap;
+      animation: rise 1s ease-out forwards;
+    }
+    @keyframes rise {
+      0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
+      100% { transform: translate(calc(-50% + var(--dx)), calc(-50% - 90px)) scale(1.1); opacity: 0; }
+    }
+    .mote {
+      position: absolute;
+      z-index: 4;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ffd56b;
+      box-shadow: 0 0 8px #ffd56b;
+      pointer-events: none;
+      animation: mote 0.7s ease-out forwards;
+    }
+    @keyframes mote {
+      0% { transform: translate(-50%, -50%); opacity: 1; }
+      100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.2); opacity: 0; }
+    }
+    .milestone {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      max-width: 420px;
+      margin: 0 auto 16px;
+      color: #e6e1ff;
+      font-weight: 600;
+      min-height: 3em;
+    }
+    .milestone.flash {
+      animation: flash 1.2s ease;
+    }
+    @keyframes flash {
+      0% { color: #ffd56b; transform: scale(1.06); }
+      100% { color: #e6e1ff; transform: scale(1); }
+    }
+    .sky-foot {
+      margin-top: auto;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 2;
+      color: #b9b3e0;
+      font-size: 0.85rem;
+    }
+    .sky-foot .btn {
+      background: rgba(255, 255, 255, 0.12);
+      color: #f4f1ff;
+      min-height: 40px;
+    }
+    .shop {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 16px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    .shop-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin: 4px 0 10px;
+    }
+    .shop-head h2 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      margin: 0;
+    }
+    .seg {
+      display: inline-flex;
+      background: var(--surface-2);
+      border-radius: 999px;
+      padding: 3px;
+    }
+    .seg button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-weight: 600;
+      font-size: 0.85rem;
+      border-radius: 999px;
+      min-width: 44px;
+      min-height: 34px;
+      cursor: pointer;
+    }
+    .seg button.on {
+      background: var(--accent);
+      color: var(--accent-text);
+    }
+    .upgrades {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .none {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: 0 0 18px;
+    }
+    .upg, .gen {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font: inherit;
+      text-align: left;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.1s, border-color 0.15s, opacity 0.15s, box-shadow 0.15s;
+    }
+    .upg:hover:not(.cant), .gen:hover:not(.cant) {
+      border-color: var(--accent);
+      box-shadow: var(--shadow);
+    }
+    .upg:active:not(.cant), .gen:active:not(.cant) {
+      transform: scale(0.98);
+    }
+    .upg.cant, .gen.cant {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .upg {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 2px 10px;
+      padding: 10px 12px;
+      min-height: 64px;
+      align-items: center;
+      animation: appear 0.4s cubic-bezier(0.3, 1.5, 0.5, 1);
+    }
+    @keyframes appear {
+      0% { transform: scale(0.7); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .upg .ico {
+      grid-row: span 3;
+      font-size: 1.6rem;
+    }
+    .upg .nm {
+      font-weight: 700;
+      font-size: 0.9rem;
+      line-height: 1.2;
+    }
+    .upg .ds {
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.25;
+    }
+    .upg .cs, .gen .cs {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+    .upg.cant .cs, .gen.cant .cs {
+      color: var(--bad);
+    }
+    .gens {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .gen {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      min-height: 64px;
+      width: 100%;
+    }
+    .gen .ico {
+      font-size: 1.9rem;
+      text-align: center;
+    }
+    .gen .mid {
+      min-width: 0;
+    }
+    .gen .mid span {
+      display: block;
+    }
+    .gen .nm {
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .gen .ds {
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+    .gen .own {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      min-width: 2ch;
+      text-align: right;
+    }
+    .gen.locked .ico {
+      filter: grayscale(1) brightness(0.3);
+    }
+    .gen.bought {
+      animation: bought 0.35s ease;
+    }
+    @keyframes bought {
+      0% { box-shadow: 0 0 0 0 var(--good); }
+      40% { box-shadow: 0 0 0 4px var(--good); }
+      100% { box-shadow: 0 0 0 0 var(--good); }
+    }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translate(-50%, calc(100% + 40px));
+      opacity: 0;
+      visibility: hidden;
+      background: var(--text);
+      color: var(--bg);
+      padding: 12px 20px;
+      border-radius: 18px;
+      font-weight: 600;
+      box-shadow: var(--shadow);
+      z-index: 200;
+      width: max-content;
+      max-width: calc(100vw - 32px);
+      text-align: center;
+      transition: transform 0.35s cubic-bezier(0.3, 1.4, 0.5, 1), opacity 0.25s, visibility 0.35s;
+      pointer-events: none;
+    }
+    .toast.show {
+      transform: translate(-50%, 0);
+      opacity: 1;
+      visibility: visible;
+    }
+    @media (max-width: 820px) {
+      .cosmos {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .sky {
+        min-height: 0;
+      }
+      .shop {
+        max-height: none;
+        overflow: visible;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topbar"><a class="back" href="../../../index.html">← all games</a></nav>
+  <main class="game wide">
+    <h1 class="game-title">Cosmic Clicker</h1>
+    <p class="lede">Click the star to gather stardust, then build machines that gather it for you.</p>
+    <div class="cosmos">
+      <section class="sky" id="sky">
+        <div class="bank">
+          <div class="dust" id="dust">0</div>
+          <div class="dust-label">stardust</div>
+          <div class="rates"><span id="pps">0 per second</span><span id="ppc">1 per click</span></div>
+        </div>
+        <div class="orb-wrap">
+          <div class="ring"></div>
+          <button class="orb" id="orb" type="button" aria-label="Collect stardust"></button>
+          <div class="ring front"></div>
+        </div>
+        <p class="milestone" id="milestone">Every universe starts with a single speck. Click the star!</p>
+        <div class="sky-foot">
+          <span id="totalLine">0 collected all time</span>
+          <button class="btn" id="reset" type="button">Reset</button>
+        </div>
+      </section>
+      <section class="shop">
+        <div class="shop-head"><h2>Upgrades</h2></div>
+        <div class="upgrades" id="upgrades"></div>
+        <p class="none" id="noUpg">Upgrades show up here as your empire grows.</p>
+        <div class="shop-head">
+          <h2>Generators</h2>
+          <div class="seg" id="seg" role="group" aria-label="Buy amount">
+            <button type="button" data-n="1" class="on">×1</button>
+            <button type="button" data-n="10">×10</button>
+            <button type="button" data-n="100">×100</button>
+          </div>
+        </div>
+        <div class="gens" id="gens"></div>
+      </section>
+    </div>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script>
+    const KEY = "hello-clicker-save";
+    const OFFLINE_CAP = 8 * 3600;
+    const GENS = [
+      { id: "probe", name: "Space Probe", icon: "📡", base: 15, rate: 0.1, desc: "Drifts about, scooping up specks." },
+      { id: "satellite", name: "Satellite", icon: "🛰️", base: 100, rate: 1, desc: "Orbits with a very small net." },
+      { id: "moonbase", name: "Moon Base", icon: "🌙", base: 1100, rate: 8, desc: "Sweeps moondust around the clock." },
+      { id: "miner", name: "Asteroid Miner", icon: "☄️", base: 12000, rate: 47, desc: "Cracks open rocks full of sparkle." },
+      { id: "dyson", name: "Dyson Swarm", icon: "🌞", base: 130000, rate: 260, desc: "Wraps a sun in shimmering panels." },
+      { id: "forge", name: "Star Forge", icon: "⭐", base: 1400000, rate: 1400, desc: "Hammers fresh stars out of nothing." },
+      { id: "nebula", name: "Nebula Refinery", icon: "🌌", base: 20000000, rate: 7800, desc: "Distils glowing gas clouds." },
+      { id: "harvester", name: "Galaxy Harvester", icon: "🌀", base: 330000000, rate: 44000, desc: "Combs whole spiral arms." },
+      { id: "wormhole", name: "Wormhole", icon: "🕳️", base: 5100000000, rate: 260000, desc: "Borrows stardust from elsewhere." },
+      { id: "printer", name: "Universe Printer", icon: "🖨️", base: 75000000000, rate: 1600000, desc: "Prints brand new universes. Low on ink." }
+    ];
+    const UPGS = [
+      { id: "gloves", name: "Stardust Gloves", icon: "🧤", cost: 100, desc: "Clicks are twice as strong.", unlock: () => state.total >= 50, click: 2 },
+      { id: "antennas", name: "Probe Antennas", icon: "📶", cost: 750, desc: "Space Probes gather twice as much.", unlock: () => owned("probe") >= 5, gen: "probe", mult: 2 },
+      { id: "panels", name: "Solar Panels", icon: "🔆", cost: 5000, desc: "Satellites gather twice as much.", unlock: () => owned("satellite") >= 5, gen: "satellite", mult: 2 },
+      { id: "gauntlet", name: "Gravity Gauntlet", icon: "🥊", cost: 25000, desc: "Clicks are twice as strong again.", unlock: () => state.total >= 10000, click: 2 },
+      { id: "cheese", name: "Moon Cheese Drills", icon: "🧀", cost: 60000, desc: "Moon Bases gather twice as much.", unlock: () => owned("moonbase") >= 5, gen: "moonbase", mult: 2 },
+      { id: "touch", name: "Cosmic Touch", icon: "✋", cost: 150000, desc: "Each click also adds 2% of your per-second rate.", unlock: () => state.total >= 60000, share: 0.02 },
+      { id: "magnets", name: "Asteroid Magnets", icon: "🧲", cost: 600000, desc: "Asteroid Miners gather twice as much.", unlock: () => owned("miner") >= 5, gen: "miner", mult: 2 },
+      { id: "mirrors", name: "Dyson Mirrors", icon: "🪞", cost: 6500000, desc: "Dyson Swarms gather twice as much.", unlock: () => owned("dyson") >= 5, gen: "dyson", mult: 2 },
+      { id: "hammers", name: "Neutron Hammers", icon: "🔨", cost: 70000000, desc: "Star Forges gather twice as much.", unlock: () => owned("forge") >= 5, gen: "forge", mult: 2 },
+      { id: "darkmatter", name: "Dark Matter Engine", icon: "🌑", cost: 50000000, desc: "Everything gathers 50% more.", unlock: () => state.total >= 20000000, all: 1.5 }
+    ];
+    const MILESTONES = [
+      [10, "a pinch of glitter ✨"],
+      [100, "a pebble 🪨"],
+      [1000, "a boulder 🗿"],
+      [10000, "a mountain ⛰️"],
+      [100000, "an asteroid ☄️"],
+      [1000000, "a moon 🌙"],
+      [10000000, "a small planet 🌍"],
+      [100000000, "a gas giant 🪐"],
+      [1000000000, "a star ⭐"],
+      [10000000000, "a whole solar system ☀️"],
+      [100000000000, "a nebula 🌌"],
+      [1000000000000, "a star cluster 💫"],
+      [10000000000000, "a whole galaxy 🌀"],
+      [1000000000000000, "a galaxy cluster 🔭"],
+      [1000000000000000000, "an entire universe 🌠"]
+    ];
+    const NAMES = ["million", "billion", "trillion", "quadrillion", "quintillion", "sextillion", "septillion", "octillion", "nonillion", "decillion"];
+
+    function fresh() {
+      return { dust: 0, total: 0, clicks: 0, owned: {}, upgrades: [], milestone: -1, last: Date.now() };
+    }
+    function load() {
+      try {
+        const raw = localStorage.getItem(KEY);
+        if (!raw) return fresh();
+        const s = JSON.parse(raw);
+        const f = fresh();
+        if (!s || typeof s !== "object") return f;
+        f.dust = Number(s.dust) || 0;
+        f.total = Math.max(Number(s.total) || 0, f.dust);
+        f.clicks = Number(s.clicks) || 0;
+        f.owned = s.owned && typeof s.owned === "object" ? s.owned : {};
+        f.upgrades = Array.isArray(s.upgrades) ? s.upgrades : [];
+        f.milestone = Number.isFinite(s.milestone) ? s.milestone : -1;
+        f.last = Number(s.last) || Date.now();
+        return f;
+      } catch (e) {
+        return fresh();
+      }
+    }
+    function save() {
+      state.last = Date.now();
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    }
+
+    let state = load();
+
+    function owned(id) { return Number(state.owned[id]) || 0; }
+    function has(id) { return state.upgrades.includes(id); }
+
+    function fmt(n, decimals) {
+      if (!Number.isFinite(n)) return "∞";
+      if (n < 1e6) {
+        if (decimals && n < 100 && Math.abs(n - Math.round(n)) > 1e-9) return n.toFixed(1);
+        return Math.floor(n).toLocaleString("en-US");
+      }
+      let i = Math.floor(Math.log10(n) / 3) - 2;
+      let v = n / Math.pow(1000, i + 2);
+      if (v >= 999.995) { i++; v /= 1000; }
+      if (i >= NAMES.length) return n.toExponential(2).replace("e+", "e");
+      return v.toFixed(2) + " " + NAMES[i];
+    }
+
+    function genMult(g) {
+      let m = 1;
+      UPGS.forEach((u) => {
+        if (!has(u.id)) return;
+        if (u.gen === g.id) m *= u.mult;
+        if (u.all) m *= u.all;
+      });
+      return m;
+    }
+    function perSecond() {
+      return GENS.reduce((sum, g) => sum + owned(g.id) * g.rate * genMult(g), 0);
+    }
+    function perClick() {
+      let c = 1;
+      let share = 0;
+      UPGS.forEach((u) => {
+        if (!has(u.id)) return;
+        if (u.click) c *= u.click;
+        if (u.share) share += u.share;
+      });
+      return c + perSecond() * share;
+    }
+    function costOf(g, n) {
+      const k = owned(g.id);
+      return Math.ceil(g.base * Math.pow(1.15, k) * (Math.pow(1.15, n) - 1) / 0.15);
+    }
+
+    const dustEl = document.getElementById("dust");
+    const ppsEl = document.getElementById("pps");
+    const ppcEl = document.getElementById("ppc");
+    const totalLine = document.getElementById("totalLine");
+    const orb = document.getElementById("orb");
+    const sky = document.getElementById("sky");
+    const milestoneEl = document.getElementById("milestone");
+    const gensEl = document.getElementById("gens");
+    const upgEl = document.getElementById("upgrades");
+    const noUpg = document.getElementById("noUpg");
+    const toastEl = document.getElementById("toast");
+    let buyN = 1;
+
+    let toastTimer = null;
+    function toast(text, ms) {
+      toastEl.textContent = text;
+      toastEl.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove("show"), ms || 3200);
+    }
+
+    function earn(x) {
+      state.dust += x;
+      state.total += x;
+    }
+
+    function milestoneText(i) {
+      return "You've collected enough stardust to make " + MILESTONES[i][1];
+    }
+    function checkMilestones(announce) {
+      let i = state.milestone;
+      while (i + 1 < MILESTONES.length && state.total >= MILESTONES[i + 1][0]) i++;
+      if (i !== state.milestone) {
+        state.milestone = i;
+        milestoneEl.textContent = milestoneText(i);
+        if (announce) {
+          milestoneEl.classList.remove("flash");
+          void milestoneEl.offsetWidth;
+          milestoneEl.classList.add("flash");
+          toast("🏆 " + milestoneText(i));
+        }
+      }
+    }
+
+    function spawnFloat(x, y, text) {
+      const f = document.createElement("div");
+      f.className = "float";
+      f.textContent = text;
+      f.style.left = x + "px";
+      f.style.top = y + "px";
+      f.style.setProperty("--dx", (Math.random() - 0.5) * 60 + "px");
+      sky.appendChild(f);
+      setTimeout(() => f.remove(), 1000);
+      for (let i = 0; i < 5; i++) {
+        const m = document.createElement("div");
+        m.className = "mote";
+        const a = Math.random() * Math.PI * 2;
+        const d = 30 + Math.random() * 40;
+        m.style.left = x + "px";
+        m.style.top = y + "px";
+        m.style.setProperty("--dx", Math.cos(a) * d + "px");
+        m.style.setProperty("--dy", Math.sin(a) * d + "px");
+        sky.appendChild(m);
+        setTimeout(() => m.remove(), 700);
+      }
+    }
+
+    function clickOrb(clientX, clientY) {
+      const gain = perClick();
+      earn(gain);
+      state.clicks++;
+      orb.classList.remove("squash");
+      void orb.offsetWidth;
+      orb.classList.add("squash");
+      const r = sky.getBoundingClientRect();
+      const o = orb.getBoundingClientRect();
+      const x = clientX == null ? o.left + o.width / 2 : clientX;
+      const y = clientY == null ? o.top + o.height / 3 : clientY;
+      spawnFloat(x - r.left, y - r.top, "+" + fmt(gain, true));
+      checkMilestones(true);
+      render();
+    }
+    orb.addEventListener("pointerdown", (e) => {
+      if (e.button > 0) return;
+      e.preventDefault();
+      clickOrb(e.clientX, e.clientY);
+    });
+    orb.addEventListener("click", (e) => {
+      if (e.detail === 0) clickOrb(null, null);
+    });
+    orb.addEventListener("keydown", (e) => {
+      if (e.repeat && (e.key === "Enter" || e.key === " ")) e.preventDefault();
+    });
+    orb.addEventListener("animationend", () => orb.classList.remove("squash"));
+
+    const genRows = {};
+    function buildGens() {
+      gensEl.textContent = "";
+      GENS.forEach((g) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "gen";
+        b.innerHTML = '<span class="ico"></span><span class="mid"><span class="nm"></span><span class="ds"></span><span class="cs"></span></span><span class="own"></span>';
+        b.addEventListener("click", () => buy(g));
+        b.addEventListener("animationend", () => b.classList.remove("bought"));
+        gensEl.appendChild(b);
+        genRows[g.id] = {
+          el: b,
+          ico: b.querySelector(".ico"),
+          nm: b.querySelector(".nm"),
+          ds: b.querySelector(".ds"),
+          cs: b.querySelector(".cs"),
+          own: b.querySelector(".own")
+        };
+      });
+    }
+
+    function buy(g) {
+      const row = genRows[g.id];
+      if (row.el.classList.contains("locked")) return;
+      const c = costOf(g, buyN);
+      if (state.dust < c) return;
+      state.dust -= c;
+      state.owned[g.id] = owned(g.id) + buyN;
+      row.el.classList.remove("bought");
+      void row.el.offsetWidth;
+      row.el.classList.add("bought");
+      render();
+    }
+
+    function revealed(i) {
+      if (i === 0) return true;
+      const g = GENS[i];
+      return owned(g.id) > 0 || owned(GENS[i - 1].id) > 0 || state.total >= g.base * 0.5;
+    }
+
+    let upgSig = "";
+    function renderUpgrades() {
+      const avail = UPGS.filter((u) => !has(u.id) && u.unlock()).sort((a, b) => a.cost - b.cost);
+      const sig = avail.map((u) => u.id).join(",");
+      if (sig !== upgSig) {
+        upgSig = sig;
+        upgEl.textContent = "";
+        avail.forEach((u) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "upg";
+          b.dataset.id = u.id;
+          b.innerHTML = '<span class="ico"></span><span class="nm"></span><span class="ds"></span><span class="cs"></span>';
+          b.querySelector(".ico").textContent = u.icon;
+          b.querySelector(".nm").textContent = u.name;
+          b.querySelector(".ds").textContent = u.desc;
+          b.querySelector(".cs").textContent = fmt(u.cost) + " stardust";
+          b.addEventListener("click", () => {
+            if (has(u.id) || state.dust < u.cost) return;
+            state.dust -= u.cost;
+            state.upgrades.push(u.id);
+            toast(u.icon + " " + u.name + " installed!", 2000);
+            render();
+          });
+          upgEl.appendChild(b);
+        });
+        noUpg.classList.toggle("hidden", avail.length > 0);
+        upgEl.classList.toggle("hidden", avail.length === 0);
+      }
+      upgEl.querySelectorAll(".upg").forEach((b) => {
+        const u = UPGS.find((x) => x.id === b.dataset.id);
+        b.classList.toggle("cant", state.dust < u.cost);
+      });
+    }
+
+    function render() {
+      const pps = perSecond();
+      dustEl.textContent = fmt(state.dust);
+      ppsEl.textContent = fmt(pps, true) + " per second";
+      ppcEl.textContent = fmt(perClick(), true) + " per click";
+      totalLine.textContent = fmt(state.total) + " collected all time";
+      let shownLocked = false;
+      GENS.forEach((g, i) => {
+        const row = genRows[g.id];
+        const show = revealed(i);
+        if (!show && shownLocked) {
+          row.el.classList.add("hidden");
+          return;
+        }
+        row.el.classList.remove("hidden");
+        const c = costOf(g, buyN);
+        if (!show) {
+          shownLocked = true;
+          row.el.classList.add("locked", "cant");
+          row.ico.textContent = g.icon;
+          row.nm.textContent = "???";
+          row.ds.textContent = "Keep collecting to discover this.";
+          row.cs.textContent = fmt(c) + " stardust";
+          row.own.textContent = "";
+          return;
+        }
+        row.el.classList.remove("locked");
+        row.el.classList.toggle("cant", state.dust < c);
+        row.ico.textContent = g.icon;
+        row.nm.textContent = buyN > 1 ? g.name + " ×" + buyN : g.name;
+        const each = g.rate * genMult(g);
+        row.ds.textContent = g.desc + " " + fmt(each, true) + "/s each.";
+        row.cs.textContent = fmt(c) + " stardust";
+        row.own.textContent = owned(g.id) || "";
+      });
+      renderUpgrades();
+    }
+
+    function applyOffline() {
+      const now = Date.now();
+      const secs = Math.min(Math.max(0, (now - state.last) / 1000), OFFLINE_CAP);
+      state.last = now;
+      if (secs < 1) return;
+      const gain = perSecond() * secs;
+      if (gain <= 0) return;
+      earn(gain);
+      if (secs >= 10 && gain >= 1) {
+        toast("🌙 While you were away you earned " + fmt(gain) + " stardust", 4500);
+      }
+      checkMilestones(false);
+    }
+
+    document.getElementById("seg").addEventListener("click", (e) => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      buyN = Number(b.dataset.n);
+      document.querySelectorAll("#seg button").forEach((x) => x.classList.toggle("on", x === b));
+      render();
+    });
+
+    document.getElementById("reset").addEventListener("click", () => {
+      if (!window.confirm("Reset your stardust, generators and upgrades and start a brand new universe?")) return;
+      state = fresh();
+      save();
+      upgSig = "";
+      milestoneEl.textContent = "Every universe starts with a single speck. Click the star!";
+      render();
+      toast("💥 A brand new universe begins.", 2200);
+    });
+
+    let lastFrame = performance.now();
+    let lastRender = 0;
+    let lastSave = performance.now();
+    function frame(t) {
+      let dt = (t - lastFrame) / 1000;
+      lastFrame = t;
+      if (dt > 1) dt = 1;
+      if (dt > 0) earn(perSecond() * dt);
+      if (t - lastRender > 100) {
+        lastRender = t;
+        checkMilestones(true);
+        render();
+      }
+      if (t - lastSave > 5000) {
+        lastSave = t;
+        save();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        save();
+      } else {
+        applyOffline();
+        lastFrame = performance.now();
+        render();
+      }
+    });
+    window.addEventListener("pagehide", save);
+
+    buildGens();
+    applyOffline();
+    if (state.milestone >= 0 && state.milestone < MILESTONES.length) milestoneEl.textContent = milestoneText(state.milestone);
+    checkMilestones(false);
+    render();
+    requestAnimationFrame((t) => { lastFrame = t; requestAnimationFrame(frame); });
+  </script>
+</body>
+</html>
