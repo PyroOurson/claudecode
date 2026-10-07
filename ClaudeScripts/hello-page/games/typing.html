@@ -4,36 +4,42 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Typing Speed</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../common.css">
   <style>
+    :root {
+      --caret: #1f63d6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --caret: #6e9cf0;
+      }
+    }
     .modes {
       display: inline-flex;
-      gap: 4px;
-      padding: 4px;
-      border-radius: 999px;
-      background: var(--surface);
+      gap: 6px;
       margin-bottom: 18px;
     }
     .mode {
       appearance: none;
-      border: 0;
+      border: 1px solid var(--border);
       min-width: 56px;
       min-height: 40px;
       padding: 6px 14px;
-      border-radius: 999px;
+      border-radius: 6px;
       background: transparent;
-      color: var(--muted);
+      color: var(--text);
       font: inherit;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.15s, color 0.15s;
     }
-    .mode:hover { color: var(--text); }
+    .mode:hover { background: var(--surface); }
+    .mode:focus-visible {
+      outline: 2px solid var(--caret);
+      outline-offset: 2px;
+    }
     .mode.active {
       background: var(--accent);
+      border-color: var(--accent);
       color: var(--accent-text);
     }
     .box {
@@ -41,6 +47,7 @@
       text-align: left;
       border-radius: var(--radius);
       background: var(--surface);
+      border: 1px solid var(--border);
       padding: 18px 18px;
       cursor: text;
     }
@@ -52,7 +59,7 @@
     }
     .words {
       position: relative;
-      font-family: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
       font-size: clamp(1.15rem, 4.6vw, 1.5rem);
       line-height: var(--lh);
       color: var(--muted);
@@ -74,10 +81,10 @@
     .extra { color: var(--bad); opacity: 0.7; }
     .caret {
       position: absolute;
-      width: 2px;
+      width: 3px;
       height: 1.7rem;
-      border-radius: 2px;
-      background: var(--accent);
+      border-radius: 1px;
+      background: var(--caret);
       left: 0;
       top: 0;
       transition: left 0.08s ease, top 0.08s ease;
@@ -88,7 +95,7 @@
     @keyframes blink {
       50% { opacity: 0; }
     }
-    .box.blurred .words { filter: blur(4px); opacity: 0.6; }
+    .box.blurred .words { opacity: 0.2; }
     .box.blurred .caret { display: none; }
     .focus-note {
       position: absolute;
@@ -100,7 +107,12 @@
       color: var(--text);
       pointer-events: none;
       opacity: 0;
-      transition: opacity 0.15s;
+    }
+    .focus-note span {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 14px;
     }
     .box.blurred .focus-note { opacity: 1; }
     .trap {
@@ -133,13 +145,6 @@
       padding: 1px 7px;
       border: 1px solid var(--border);
     }
-    .result {
-      animation: pop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-    @keyframes pop {
-      from { transform: scale(0.95); opacity: 0.3; }
-      to { transform: scale(1); opacity: 1; }
-    }
     .big-wpm {
       font-size: clamp(3.4rem, 15vw, 5rem);
       font-weight: 800;
@@ -159,7 +164,7 @@
       margin: 8px 0 18px;
     }
     .verdict.good { color: var(--good); }
-    .stat-value.timer { color: var(--accent); }
+    .stat-value.timer { color: var(--caret); }
     @media (max-width: 520px) {
       #liveStats {
         flex-wrap: nowrap;
@@ -168,20 +173,19 @@
       #liveStats .stat {
         flex: 1 1 0;
         min-width: 0;
-        padding: 8px 4px;
+        padding: 4px 2px;
       }
       #liveStats .stat-label {
-        font-size: 0.65rem;
-        letter-spacing: 0.03em;
+        font-size: 0.75rem;
       }
     }
   </style>
 </head>
 <body>
-  <nav class="topbar"><a class="back" href="../../../index.html">← all games</a></nav>
+  <nav class="topbar"><a class="logo" href="../../../index.html">hello</a></nav>
   <main class="game">
     <h1 class="game-title">Typing Speed</h1>
-    <p class="lede">Type the words as fast and accurately as you can. The clock starts with your first key.</p>
+    <p class="lede">Type the words as fast as you can. The clock starts on your first key.</p>
     <div class="modes" role="group" aria-label="Test length">
       <button class="mode" data-sec="15">15s</button>
       <button class="mode" data-sec="30">30s</button>
@@ -201,7 +205,7 @@
           <div class="words" id="words"></div>
           <div class="caret" id="caret"></div>
         </div>
-        <div class="focus-note" id="focusNote">Click or tap here to start typing</div>
+        <div class="focus-note" id="focusNote"><span>Click or tap here to type</span></div>
       </div>
       <div class="controls row"><button class="btn secondary" id="restartBtn">Restart</button></div>
       <p class="hint"><kbd>Space</kbd> next word · <kbd>Tab</kbd> then <kbd>Enter</kbd> to restart</p>
@@ -473,12 +477,12 @@
       $("resBest").textContent = Math.max(wpm, prevBest);
       $("resSec").textContent = duration;
       let line;
-      if (isBest && prevBest) line = "New best score! +" + (wpm - prevBest) + " wpm";
-      else if (isBest) line = "New best score!";
-      else if (wpm >= 80) line = "Blazing fast";
-      else if (wpm >= 60) line = "Speedy fingers";
-      else if (wpm >= 40) line = "Solid, above average";
-      else line = "Keep practising";
+      if (isBest && prevBest) line = "New best, up " + (wpm - prevBest) + " wpm";
+      else if (isBest) line = "New best";
+      else if (wpm >= 80) line = "Very fast";
+      else if (wpm >= 60) line = "Fast";
+      else if (wpm >= 40) line = "Above average";
+      else line = prevBest ? "Best: " + prevBest + " wpm" : "No correct words";
       $("resVerdict").textContent = line;
       $("resVerdict").className = "verdict" + (isBest || wpm >= 60 ? " good" : "");
       updateBest();

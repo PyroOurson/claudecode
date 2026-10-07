@@ -4,9 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Spend a Hundred Billion</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../common.css">
   <style>
     .game { max-width: 1040px; }
@@ -15,14 +12,14 @@
       top: 0;
       z-index: 10;
       margin: 0 -16px 20px;
-      padding: 12px 16px;
-      background: linear-gradient(90deg, #1a9a55, #16b56a);
+      padding: 10px 16px;
+      background: #2e8b4f;
       color: #fff;
-      box-shadow: var(--shadow);
-      border-radius: 0 0 var(--radius) var(--radius);
+      border-radius: 0 0 6px 6px;
     }
+    .money.broke { background: #c23b33; }
     .money-value {
-      font-size: clamp(1.4rem, 6.4vw, 2.4rem);
+      font-size: clamp(1.4rem, 6.4vw, 2.2rem);
       font-weight: 800;
       letter-spacing: -0.02em;
       font-variant-numeric: tabular-nums;
@@ -30,38 +27,26 @@
     }
     .money-sub {
       font-size: 0.85rem;
-      opacity: 0.92;
-      font-weight: 600;
       font-variant-numeric: tabular-nums;
-    }
-    .money.broke { background: linear-gradient(90deg, #e0393e, #f0565a); }
-    .money.pulse .money-value { animation: pulse 0.3s; }
-    @keyframes pulse {
-      50% { transform: scale(1.04); }
     }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 12px;
+      gap: 10px;
     }
     .item {
-      background: var(--surface);
+      background: var(--bg);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 16px 10px 12px;
+      padding: 14px 10px 10px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 2px;
-      border: 2px solid transparent;
-      transition: border-color 0.2s, transform 0.15s;
     }
-    .item.owned { border-color: color-mix(in srgb, var(--good) 55%, transparent); }
-    .item.pop { animation: pop 0.25s; }
-    @keyframes pop {
-      40% { transform: scale(1.04); }
-    }
+    .item.owned { border-color: var(--good); }
     .icon {
-      font-size: 2.6rem;
+      font-size: 2.4rem;
       line-height: 1.2;
       user-select: none;
     }
@@ -74,7 +59,7 @@
     }
     .price {
       color: var(--good);
-      font-weight: 800;
+      font-weight: 600;
       font-variant-numeric: tabular-nums;
       margin-bottom: 8px;
     }
@@ -89,14 +74,12 @@
       min-height: 40px;
       font-size: 0.9rem;
     }
-    .controls .sell { background: #e0393e; color: #fff; }
-    .controls .buy { background: #1a9a55; color: #fff; }
     .qty {
       width: 100%;
       min-width: 0;
       min-height: 40px;
-      border: 2px solid var(--border);
-      border-radius: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
       background: var(--bg);
       color: var(--text);
       font: inherit;
@@ -107,20 +90,20 @@
       -moz-appearance: textfield;
     }
     .qty::-webkit-outer-spin-button, .qty::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    .qty:focus { outline: none; border-color: var(--accent); }
+    .qty:focus { outline: none; border-color: var(--text); }
     .receipt {
       margin: 32px auto 0;
       max-width: 460px;
-      background: var(--surface);
+      background: var(--bg);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 22px 20px;
+      padding: 20px;
       text-align: left;
       font-variant-numeric: tabular-nums;
     }
     .receipt h2 {
-      text-align: center;
-      margin: 0 0 12px;
-      font-size: 1.3rem;
+      margin: 0 0 10px;
+      font-size: 1.15rem;
       font-weight: 800;
     }
     .receipt .line {
@@ -132,24 +115,23 @@
     .receipt .line span:first-child { min-width: 0; overflow-wrap: anywhere; }
     .receipt .line span:last-child { font-weight: 600; white-space: nowrap; }
     .receipt .total {
-      border-top: 2px dashed var(--border);
+      border-top: 1px dashed var(--border);
       margin-top: 8px;
       padding-top: 10px;
       font-weight: 800;
-      font-size: 1.1rem;
     }
-    .receipt .empty { color: var(--muted); text-align: center; }
-    .receipt .actions { text-align: center; margin-top: 16px; }
+    .receipt .empty { color: var(--muted); margin: 0; }
+    .receipt .actions { margin-top: 16px; }
   </style>
 </head>
 <body>
-  <nav class="topbar"><a class="back" href="../../../index.html">← all games</a></nav>
+  <nav class="topbar"><a class="logo" href="../../../index.html">hello</a></nav>
   <main class="game">
     <h1 class="game-title">Spend a Hundred Billion</h1>
-    <p class="lede">You just got $100,000,000,000. Go shopping until there's nothing left.</p>
+    <p class="lede">You have $100,000,000,000. Buy things until it is all gone.</p>
     <div class="money" id="money">
       <div class="money-value" id="moneyValue">$100,000,000,000</div>
-      <div class="money-sub" id="moneySub">You've spent 0% of your fortune</div>
+      <div class="money-sub" id="moneySub">0% spent</div>
     </div>
     <div class="grid" id="grid"></div>
     <section class="receipt" id="receipt"></section>
@@ -224,7 +206,7 @@
       el.className = "item";
       el.innerHTML =
         "<div class=\"icon\"></div><div class=\"name\"></div><div class=\"price\"></div>" +
-        "<div class=\"controls\"><button class=\"btn sell\">Sell</button>" +
+        "<div class=\"controls\"><button class=\"btn secondary sell\">Sell</button>" +
         "<input class=\"qty\" type=\"number\" inputmode=\"numeric\" min=\"0\" step=\"1\" value=\"0\">" +
         "<button class=\"btn buy\">Buy</button></div>";
       el.querySelector(".icon").textContent = it.icon;
@@ -249,19 +231,10 @@
       const others = spent() - qty[id] * it.price;
       const max = Math.floor((START - others) / it.price);
       n = Math.max(0, Math.min(max, n));
-      const changed = n !== qty[id];
       qty[id] = n;
       const el = cardEls[id];
       const input = el.querySelector(".qty");
       if (!fromInput || Number(input.value) !== n) input.value = n;
-      if (changed) {
-        el.classList.remove("pop");
-        void el.offsetWidth;
-        el.classList.add("pop");
-        moneyEl.classList.remove("pulse");
-        void moneyEl.offsetWidth;
-        moneyEl.classList.add("pulse");
-      }
       save();
       refresh();
     }
@@ -294,7 +267,7 @@
       animateMoney();
       const pct = (spent() / START) * 100;
       const pctText = pct === 0 ? "0" : pct < 0.001 ? "less than 0.001" : pct < 1 ? pct.toFixed(3) : pct.toFixed(2);
-      moneySub.textContent = l === 0 ? "Congratulations, you spent it all! 🎉" : "You've spent " + pctText + "% of your fortune";
+      moneySub.textContent = l === 0 ? "All of it spent." : pctText + "% spent";
       moneyEl.classList.toggle("broke", l === 0);
       ITEMS.forEach((it, i) => {
         const el = cardEls[i];
@@ -309,11 +282,11 @@
 
     function renderReceipt() {
       const lines = ITEMS.filter((it, i) => qty[it.id] > 0);
-      receipt.innerHTML = "<h2>Your Receipt</h2>";
+      receipt.innerHTML = "<h2>Receipt</h2>";
       if (!lines.length) {
         const p = document.createElement("p");
         p.className = "empty";
-        p.textContent = "Nothing yet. Start buying things!";
+        p.textContent = "Nothing bought yet.";
         receipt.appendChild(p);
         return;
       }

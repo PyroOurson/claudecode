@@ -4,9 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Perfect Circle</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../common.css">
   <style>
     .board {
@@ -16,6 +13,7 @@
       margin: 0 auto;
       border-radius: var(--radius);
       background: var(--surface);
+      border: 1px solid var(--border);
       overflow: hidden;
       user-select: none;
       -webkit-user-select: none;
@@ -49,10 +47,10 @@
       transform: translate(-50%, 18px);
       max-width: 90%;
       width: max-content;
-      padding: 6px 16px;
-      border-radius: 999px;
-      background: var(--surface);
-      box-shadow: var(--shadow);
+      padding: 5px 12px;
+      border-radius: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
       font-size: clamp(1rem, 3.6vw, 1.15rem);
       font-weight: 600;
       color: var(--muted);
@@ -69,20 +67,20 @@
   </style>
 </head>
 <body>
-  <nav class="topbar"><a class="back" href="../../../index.html">← all games</a></nav>
+  <nav class="topbar"><a class="logo" href="../../../index.html">hello</a></nav>
   <main class="game">
     <h1 class="game-title">Draw a Perfect Circle</h1>
-    <p class="lede">Draw one full loop around the dot in a single stroke. The rounder it is, the higher your score.</p>
+    <p class="lede">Draw one loop around the dot in a single stroke. Rounder scores higher.</p>
     <div class="stats">
       <div class="stat"><div class="stat-value" id="last">–</div><div class="stat-label">Last</div></div>
-      <div class="stat"><div class="stat-value" id="best">–</div><div class="stat-label">Best ever</div></div>
+      <div class="stat"><div class="stat-value" id="best">–</div><div class="stat-label">Best</div></div>
     </div>
     <div class="board" id="board">
       <canvas id="canvas"></canvas>
       <div class="readout" id="readout"></div>
       <div class="msg" id="msg">Draw around the dot</div>
     </div>
-    <p class="hint">Mouse, finger or pen. Keep going in one direction and finish within 8 seconds.</p>
+    <p class="hint">Mouse, finger or pen. Go one direction and finish within 8 seconds.</p>
   </main>
   <script>
     const board = document.getElementById("board");
@@ -156,8 +154,8 @@
     }
 
     function hueFor(q) {
-      const l = dark.matches ? 58 : 46;
-      return "hsl(" + Math.round(Math.max(0, Math.min(1, q)) * 125) + ", 80%, " + l + "%)";
+      const l = dark.matches ? 55 : 44;
+      return "hsl(" + Math.round(Math.max(0, Math.min(1, q)) * 125) + ", 68%, " + l + "%)";
     }
 
     function draw() {
@@ -239,15 +237,15 @@
         best = score;
         save(best);
         bestEl.textContent = best.toFixed(1) + "%";
-        setMsg("New best score!", "good");
+        setMsg("New best", "good");
       } else if (score >= 95) {
-        setMsg("Incredible. Practically a compass.", "good");
+        setMsg("Excellent", "good");
       } else if (score >= 90) {
-        setMsg("Great circle!", "good");
+        setMsg("Very good", "good");
       } else if (score >= 80) {
-        setMsg("Nice, try once more");
+        setMsg("Good");
       } else {
-        setMsg("Keep practising");
+        setMsg("Best: " + best.toFixed(1) + "%");
       }
       draw();
     }
@@ -280,7 +278,7 @@
           const progress = dir * total;
           if (progress > maxProgress) maxProgress = progress;
           if (maxProgress - progress > BACK) {
-            fail("Keep going one way, no going backwards");
+            fail("Don't go backwards");
             return false;
           }
         }

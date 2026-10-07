@@ -4,9 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Color Match</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../common.css">
   <style>
     .stage {
@@ -17,7 +14,6 @@
       position: relative;
       height: min(46vh, 300px);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -25,22 +21,27 @@
       transition: background-color 0.12s;
     }
     .swatch.intro {
-      background: linear-gradient(135deg, #ff6b6b, #ffd166, #06d6a0, #4cc9f0, #9b5de5);
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: stretch;
+      border: 2px solid #1b1b1b;
     }
-    .swatch .label {
-      font-size: clamp(1.6rem, 7vw, 2.4rem);
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      color: #fff;
-      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+    .swatch.intro div:nth-child(1) { background: #d1433a; }
+    .swatch.intro div:nth-child(2) { background: #e8b018; }
+    .swatch.intro div:nth-child(3) { background: #2e8b4f; }
+    .swatch.intro div:nth-child(4) { background: #2f5fd0; }
+    .swatch.intro div:nth-child(5) { background: #7a4fb8; }
+    .track {
+      height: 6px;
+      margin-top: 10px;
+      border-radius: 3px;
+      background: var(--surface-2);
+      overflow: hidden;
     }
     .countdown {
-      position: absolute;
-      left: 0;
-      bottom: 0;
-      height: 6px;
+      height: 100%;
       width: 100%;
-      background: rgba(255, 255, 255, 0.75);
+      background: var(--text);
       transform-origin: left center;
     }
     .countdown.run {
@@ -49,13 +50,6 @@
     @keyframes shrink {
       from { transform: scaleX(1); }
       to { transform: scaleX(0); }
-    }
-    .pop {
-      animation: pop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-    @keyframes pop {
-      from { transform: scale(0.94); opacity: 0.4; }
-      to { transform: scale(1); opacity: 1; }
     }
     #preview {
       height: min(26vh, 200px);
@@ -84,48 +78,45 @@
       width: 100%;
       height: 34px;
       margin: 0;
-      border-radius: 999px;
+      border-radius: 6px;
       background: var(--surface-2);
       outline: none;
       cursor: pointer;
-      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
       touch-action: pan-y;
     }
     input[type="range"]::-webkit-slider-runnable-track {
       height: 34px;
       background: transparent;
-      border-radius: 999px;
+      border-radius: 6px;
     }
     input[type="range"]::-moz-range-track {
       height: 34px;
       background: transparent;
-      border-radius: 999px;
+      border-radius: 6px;
     }
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: 30px;
-      height: 30px;
-      margin-top: 2px;
-      border-radius: 50%;
+      width: 20px;
+      height: 34px;
+      margin-top: 0;
+      border-radius: 5px;
       background: var(--thumb, #fff);
-      border: 4px solid #fff;
-      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
-      transition: transform 0.1s;
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 2px #1b1b1b;
     }
     input[type="range"]::-moz-range-thumb {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
+      width: 14px;
+      height: 28px;
+      border-radius: 5px;
       background: var(--thumb, #fff);
-      border: 4px solid #fff;
-      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
-    }
-    input[type="range"]:active::-webkit-slider-thumb {
-      transform: scale(1.12);
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 2px #1b1b1b;
     }
     input[type="range"]:focus-visible {
-      box-shadow: 0 0 0 3px var(--accent);
+      outline: 2px solid var(--text);
+      outline-offset: 3px;
     }
     .actions {
       margin-top: 24px;
@@ -181,9 +172,9 @@
       margin-top: 22px;
     }
     .mini {
-      border-radius: 10px;
+      border-radius: 6px;
       overflow: hidden;
-      background: var(--surface);
+      border: 1px solid var(--border);
     }
     .mini .pair {
       display: grid;
@@ -199,10 +190,10 @@
   </style>
 </head>
 <body>
-  <nav class="topbar"><a class="back" href="../../../index.html">← all games</a></nav>
+  <nav class="topbar"><a class="logo" href="../../../index.html">hello</a></nav>
   <main class="game">
     <h1 class="game-title">Color Match</h1>
-    <p class="lede">Memorise the color for three seconds, then rebuild it from memory with hue, saturation and lightness.</p>
+    <p class="lede">Look at a color for three seconds, then rebuild it with hue, saturation and lightness.</p>
     <div class="stats">
       <div class="stat"><div class="stat-value" id="round">–</div><div class="stat-label">Round</div></div>
       <div class="stat"><div class="stat-value" id="total">0.0</div><div class="stat-label">Score</div></div>
@@ -210,13 +201,14 @@
     </div>
 
     <section class="stage" id="startView">
-      <div class="swatch intro"><div class="label">5 colors</div></div>
+      <div class="swatch intro" aria-label="5 rounds"><div></div><div></div><div></div><div></div><div></div></div>
       <div class="actions row"><button class="btn big" id="startBtn">Start</button></div>
     </section>
 
     <section class="stage hidden" id="showView">
-      <div class="swatch" id="target"><div class="countdown" id="countdown"></div></div>
-      <p class="verdict">Remember this color…</p>
+      <div class="swatch" id="target"></div>
+      <div class="track"><div class="countdown" id="countdown"></div></div>
+      <p class="verdict">Remember this color</p>
     </section>
 
     <section class="stage hidden" id="guessView">
@@ -280,10 +272,6 @@
 
     function show(id) {
       views.forEach((v) => v.classList.toggle("hidden", v.id !== id));
-      const v = $(id);
-      v.classList.remove("pop");
-      void v.offsetWidth;
-      v.classList.add("pop");
     }
 
     function hsl(c) {
@@ -322,11 +310,11 @@
     }
 
     function verdict(sc) {
-      if (sc >= 9.5) return "Perfect eye!";
-      if (sc >= 8.5) return "So close!";
-      if (sc >= 7) return "Pretty good";
-      if (sc >= 5) return "Not bad";
-      if (sc >= 3) return "Hmm, a bit off";
+      if (sc >= 9.5) return "Near perfect";
+      if (sc >= 8.5) return "Very close";
+      if (sc >= 7) return "Close";
+      if (sc >= 5) return "Fair";
+      if (sc >= 3) return "A bit off";
       return "Way off";
     }
 
@@ -436,10 +424,10 @@
       }
       $("finalScore").innerHTML = total.toFixed(1) + " <small>/ 50</small>";
       let line;
-      if (isBest) line = "New best score!";
-      else if (total >= 42) line = "Superb color memory";
-      else if (total >= 32) line = "Solid eye for color";
-      else line = "Best is " + best.toFixed(1) + ". Have another go!";
+      if (isBest) line = "New best";
+      else if (total >= 42) line = "Excellent";
+      else if (total >= 32) line = "Good";
+      else line = "Best: " + best.toFixed(1);
       $("finalVerdict").textContent = line;
       $("finalVerdict").className = "verdict" + (isBest || total >= 42 ? " good" : "");
       const hist = $("history");
