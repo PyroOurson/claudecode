@@ -2,7 +2,9 @@
 CLAUDE.md
 ClaudeScripts/hello-page/common.css
 ClaudeScripts/hello-page/games/2048.html
+ClaudeScripts/hello-page/games/circle.html
 ClaudeScripts/hello-page/games/clicker.html
+ClaudeScripts/hello-page/games/color.html
 ClaudeScripts/hello-page/games/crafter.html
 ClaudeScripts/hello-page/games/higher-lower.html
 ClaudeScripts/hello-page/games/minesweeper.html
@@ -10,6 +12,7 @@ ClaudeScripts/hello-page/games/password.html
 ClaudeScripts/hello-page/games/reaction.html
 ClaudeScripts/hello-page/games/snake.html
 ClaudeScripts/hello-page/games/spend.html
+ClaudeScripts/hello-page/games/typing.html
 ClaudeScripts/update.py
 NaoiseGabi/README.md
 NaoiseGabi/art/voronoi_stippling.py
