@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2048</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../common.css">
+  <style>
+    :root {
+      --board-bg: #bbada0;
+      --cell-bg: #cdc1b4;
+      --overlay-bg: rgba(238, 228, 218, 0.9);
+      --overlay-text: #5b5148;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --board-bg: #4a423b;
+        --cell-bg: #5c534a;
+        --overlay-bg: rgba(28, 24, 21, 0.88);
+        --overlay-text: #f2ebe3;
+      }
+    }
+    .topline {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 0 auto 14px;
+      max-width: 440px;
+    }
+    .topline .stat {
+      position: relative;
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    .gain {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 6px;
+      font-weight: 800;
+      color: var(--good);
+      pointer-events: none;
+      animation: gain 0.7s ease-out forwards;
+    }
+    @keyframes gain {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-34px); opacity: 0; }
+    }
+    .controls {
+      margin: 0 auto 16px;
+    }
+    .board {
+      --gap: clamp(8px, 2.6vw, 14px);
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+      aspect-ratio: 1 / 1;
+      margin: 0 auto;
+      padding: var(--gap);
+      background: var(--board-bg);
+      border-radius: var(--radius);
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      container-type: inline-size;
+      box-shadow: var(--shadow);
+    }
+    .grid, .tiles {
+      position: absolute;
+      inset: var(--gap);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: var(--gap);
+    }
+    .grid div {
+      background: var(--cell-bg);
+      border-radius: 8px;
+    }
+    .tile {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: calc((100% - 3 * var(--gap)) / 4);
+      height: calc((100% - 3 * var(--gap)) / 4);
+      transform: translate(calc(var(--x) * (100% + var(--gap))), calc(var(--y) * (100% + var(--gap))));
+      transition: transform 0.11s ease-in-out;
+      z-index: 1;
+    }
+    .tile.ghost {
+      z-index: 0;
+    }
+    .tile-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13cqw;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+      background: #eee4da;
+      color: #776e65;
+    }
+    .tile.d3 .tile-inner { font-size: 10.5cqw; }
+    .tile.d4 .tile-inner { font-size: 8.2cqw; }
+    .tile.d5 .tile-inner { font-size: 6.6cqw; }
+    .tile.new .tile-inner {
+      animation: appear 0.2s ease-out 0.1s backwards;
+    }
+    .tile.merged {
+      z-index: 2;
+    }
+    .tile.merged .tile-inner {
+      animation: pop 0.22s ease-out 0.08s backwards;
+    }
+    @keyframes appear {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    @keyframes pop {
+      0% { transform: scale(0.5); opacity: 0; }
+      55% { transform: scale(1.18); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+    .v2 .tile-inner { background: #eee4da; color: #776e65; }
+    .v4 .tile-inner { background: #ede0c8; color: #776e65; }
+    .v8 .tile-inner { background: #f2b179; color: #f9f6f2; }
+    .v16 .tile-inner { background: #f59563; color: #f9f6f2; }
+    .v32 .tile-inner { background: #f67c5f; color: #f9f6f2; }
+    .v64 .tile-inner { background: #f65e3b; color: #f9f6f2; }
+    .v128 .tile-inner { background: #edcf72; color: #f9f6f2; box-shadow: 0 0 18px 2px rgba(243, 215, 116, 0.35); }
+    .v256 .tile-inner { background: #edcc61; color: #f9f6f2; box-shadow: 0 0 20px 3px rgba(243, 215, 116, 0.45); }
+    .v512 .tile-inner { background: #edc850; color: #f9f6f2; box-shadow: 0 0 22px 4px rgba(243, 215, 116, 0.55); }
+    .v1024 .tile-inner { background: #edc53f; color: #f9f6f2; box-shadow: 0 0 24px 5px rgba(243, 215, 116, 0.6); }
+    .v2048 .tile-inner { background: #edc22e; color: #f9f6f2; box-shadow: 0 0 28px 6px rgba(243, 215, 116, 0.7); }
+    .vbig .tile-inner { background: #3c3a32; color: #f9f6f2; box-shadow: 0 0 0 2px #edc22e inset; }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      border-radius: var(--radius);
+      background: var(--overlay-bg);
+      color: var(--overlay-text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 16px;
+      animation: fade 0.4s ease-out;
+    }
+    .overlay.win {
+      background: rgba(237, 194, 46, 0.9);
+      color: #ffffff;
+      text-shadow: 0 1px 2px rgba(120, 80, 0, 0.35);
+    }
+    .overlay.win .btn.secondary {
+      background: rgba(255, 255, 255, 0.92);
+      color: #6b4f00;
+      text-shadow: none;
+    }
+    .overlay.win .btn:not(.secondary) {
+      background: #3c3a32;
+      color: #ffffff;
+      text-shadow: none;
+    }
+    .overlay h2 {
+      margin: 0;
+      font-size: clamp(2rem, 11cqw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .overlay p {
+      margin: 0;
+      font-weight: 600;
+    }
+    @keyframes fade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: 16px 0 0;
+    }
+    .controls .btn {
+      min-height: 40px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="topbar"><a class="back" href="../../../index.html">← all games</a></nav>
+  <main class="game">
+    <h1 class="game-title">2048</h1>
+    <p class="lede">Slide the tiles. Equal numbers merge. Reach the 2048 tile.</p>
+    <div class="topline">
+      <div class="stat" id="scoreBox"><div class="stat-value" id="score">0</div><div class="stat-label">Score</div></div>
+      <div class="stat"><div class="stat-value" id="best">0</div><div class="stat-label">Best</div></div>
+    </div>
+    <div class="row controls">
+      <button class="btn" id="newBtn" type="button">New game</button>
+      <button class="btn secondary" id="undoBtn" type="button" disabled>↶ Undo</button>
+    </div>
+    <div class="board" id="board">
+      <div class="grid" id="grid"></div>
+      <div class="tiles" id="tiles"></div>
+      <div class="overlay win hidden" id="winOverlay">
+        <h2>You did it!</h2>
+        <p>2048 reached. How far can you go?</p>
+        <div class="row">
+          <button class="btn" id="keepBtn" type="button">Keep going</button>
+          <button class="btn secondary" id="winNewBtn" type="button">New game</button>
+        </div>
+      </div>
+      <div class="overlay hidden" id="overOverlay">
+        <h2>Game over</h2>
+        <p id="overText">No more moves.</p>
+        <button class="btn" id="retryBtn" type="button">Try again</button>
+      </div>
+    </div>
+    <p class="hint">Arrow keys or WASD on a keyboard, swipe on touch screens. U undoes a move.</p>
+  </main>
+  <script>
+    const SIZE = 4;
+    const STATE_KEY = "hello-2048-state";
+    const BEST_KEY = "hello-2048-best";
+    const boardEl = document.getElementById("board");
+    const gridEl = document.getElementById("grid");
+    const tilesEl = document.getElementById("tiles");
+    const scoreEl = document.getElementById("score");
+    const scoreBox = document.getElementById("scoreBox");
+    const bestEl = document.getElementById("best");
+    const undoBtn = document.getElementById("undoBtn");
+    const winOverlay = document.getElementById("winOverlay");
+    const overOverlay = document.getElementById("overOverlay");
+    const overText = document.getElementById("overText");
+
+    for (let i = 0; i < SIZE * SIZE; i++) gridEl.appendChild(document.createElement("div"));
+
+    let tiles = [];
+    let nextId = 1;
+    let score = 0;
+    let best = 0;
+    let won = false;
+    let keepGoing = false;
+    let over = false;
+    let undoState = null;
+    const els = new Map();
+    let ghosts = [];
+    let ghostTimer = null;
+
+    function readStore(key) {
+      try { return localStorage.getItem(key); } catch (e) { return null; }
+    }
+    function writeStore(key, value) {
+      try { localStorage.setItem(key, value); } catch (e) {}
+    }
+
+    function snapshot() {
+      return { cells: tiles.map((t) => [t.r, t.c, t.v]), score: score, won: won };
+    }
+
+    function save() {
+      writeStore(STATE_KEY, JSON.stringify({
+        cells: tiles.map((t) => [t.r, t.c, t.v]),
+        score: score,
+        won: won,
+        keepGoing: keepGoing,
+        over: over,
+        undo: undoState
+      }));
+    }
+
+    function emptyCells() {
+      const taken = new Set(tiles.map((t) => t.r * SIZE + t.c));
+      const out = [];
+      for (let i = 0; i < SIZE * SIZE; i++) if (!taken.has(i)) out.push(i);
+      return out;
+    }
+
+    function spawn() {
+      const free = emptyCells();
+      if (!free.length) return null;
+      const idx = free[Math.floor(Math.random() * free.length)];
+      const t = { id: nextId++, r: Math.floor(idx / SIZE), c: idx % SIZE, v: Math.random() < 0.9 ? 2 : 4, fresh: true };
+      tiles.push(t);
+      return t;
+    }
+
+    function tileClass(t) {
+      const digits = String(t.v).length;
+      let cls = "tile " + (t.v > 2048 ? "vbig" : "v" + t.v);
+      if (digits >= 3) cls += " d" + Math.min(digits, 5);
+      if (t.fresh) cls += " new";
+      if (t.merged) cls += " merged";
+      return cls;
+    }
+
+    function place(el, r, c) {
+      el.style.setProperty("--x", c);
+      el.style.setProperty("--y", r);
+    }
+
+    function makeEl(t) {
+      const el = document.createElement("div");
+      const inner = document.createElement("div");
+      inner.className = "tile-inner";
+      inner.textContent = t.v;
+      el.appendChild(inner);
+      el.className = tileClass(t);
+      place(el, t.r, t.c);
+      tilesEl.appendChild(el);
+      els.set(t.id, el);
+      return el;
+    }
+
+    function clearGhosts() {
+      clearTimeout(ghostTimer);
+      ghosts.forEach((g) => g.remove());
+      ghosts = [];
+    }
+
+    function render(full) {
+      clearGhosts();
+      if (full) {
+        tilesEl.innerHTML = "";
+        els.clear();
+      }
+      const alive = new Set(tiles.map((t) => t.id));
+      els.forEach((el, id) => {
+        if (!alive.has(id)) {
+          el.remove();
+          els.delete(id);
+        }
+      });
+      tiles.forEach((t) => {
+        const el = els.get(t.id);
+        if (el) place(el, t.r, t.c);
+        else makeEl(t);
+      });
+      updateStats();
+    }
+
+    function updateStats() {
+      scoreEl.textContent = score;
+      if (score > best) {
+        best = score;
+        writeStore(BEST_KEY, String(best));
+      }
+      bestEl.textContent = best;
+      undoBtn.disabled = !undoState;
+    }
+
+    function showGain(n) {
+      const g = document.createElement("div");
+      g.className = "gain";
+      g.textContent = "+" + n;
+      scoreBox.appendChild(g);
+      setTimeout(() => g.remove(), 750);
+    }
+
+    function canMove() {
+      if (tiles.length < SIZE * SIZE) return true;
+      const g = grid();
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          const v = g[r][c].v;
+          if (c + 1 < SIZE && g[r][c + 1].v === v) return true;
+          if (r + 1 < SIZE && g[r + 1][c].v === v) return true;
+        }
+      }
+      return false;
+    }
+
+    function grid() {
+      const g = [];
+      for (let r = 0; r < SIZE; r++) g.push(new Array(SIZE).fill(null));
+      tiles.forEach((t) => { g[t.r][t.c] = t; });
+      return g;
+    }
+
+    const DIRS = {
+      up: { dr: -1, dc: 0 },
+      down: { dr: 1, dc: 0 },
+      left: { dr: 0, dc: -1 },
+      right: { dr: 0, dc: 1 }
+    };
+
+    function move(name) {
+      if (over || !winOverlay.classList.contains("hidden")) return;
+      const d = DIRS[name];
+      const before = snapshot();
+      clearGhosts();
+      tiles.forEach((t) => { t.fresh = false; t.merged = false; });
+      const g = grid();
+      const rows = [0, 1, 2, 3];
+      const cols = [0, 1, 2, 3];
+      if (d.dr === 1) rows.reverse();
+      if (d.dc === 1) cols.reverse();
+      const mergedInto = new Set();
+      const dying = [];
+      let moved = false;
+      let gained = 0;
+      rows.forEach((r) => {
+        cols.forEach((c) => {
+          const t = g[r][c];
+          if (!t) return;
+          let nr = r;
+          let nc = c;
+          while (true) {
+            const tr = nr + d.dr;
+            const tc = nc + d.dc;
+            if (tr < 0 || tr >= SIZE || tc < 0 || tc >= SIZE) break;
+            const other = g[tr][tc];
+            if (!other) {
+              nr = tr;
+              nc = tc;
+              continue;
+            }
+            if (other.v === t.v && !mergedInto.has(other.id)) {
+              const m = { id: nextId++, r: tr, c: tc, v: t.v * 2, merged: true };
+              g[r][c] = null;
+              g[tr][tc] = m;
+              mergedInto.add(m.id);
+              dying.push({ tile: t, r: tr, c: tc });
+              dying.push({ tile: other, r: tr, c: tc });
+              gained += m.v;
+              moved = true;
+              nr = -1;
+            }
+            break;
+          }
+          if (nr === -1) return;
+          if (nr !== r || nc !== c) {
+            g[r][c] = null;
+            g[nr][nc] = t;
+            t.r = nr;
+            t.c = nc;
+            moved = true;
+          }
+        });
+      });
+      if (!moved) return;
+      undoState = before;
+      tiles = [];
+      for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (g[r][c]) tiles.push(g[r][c]);
+      score += gained;
+      spawn();
+      dying.forEach((dd) => {
+        const el = els.get(dd.tile.id);
+        if (!el) return;
+        els.delete(dd.tile.id);
+        el.classList.add("ghost");
+        el.classList.remove("new", "merged");
+        place(el, dd.r, dd.c);
+        ghosts.push(el);
+      });
+      const pending = ghosts.slice();
+      ghosts = [];
+      render(false);
+      ghosts = pending;
+      ghostTimer = setTimeout(clearGhosts, 130);
+      if (gained) showGain(gained);
+      if (!won && tiles.some((t) => t.v >= 2048)) {
+        won = true;
+        if (!keepGoing) setTimeout(() => winOverlay.classList.remove("hidden"), 260);
+      }
+      if (!canMove()) {
+        over = true;
+        setTimeout(showOver, 420);
+      }
+      save();
+    }
+
+    function showOver() {
+      if (!over) return;
+      const top = Math.max.apply(null, tiles.map((t) => t.v));
+      overText.textContent = "Biggest tile: " + top + " · Score: " + score;
+      overOverlay.classList.remove("hidden");
+    }
+
+    function newGame() {
+      tiles = [];
+      score = 0;
+      won = false;
+      keepGoing = false;
+      over = false;
+      undoState = null;
+      winOverlay.classList.add("hidden");
+      overOverlay.classList.add("hidden");
+      spawn();
+      spawn();
+      render(true);
+      save();
+    }
+
+    function undo() {
+      if (!undoState) return;
+      tiles = undoState.cells.map((a) => ({ id: nextId++, r: a[0], c: a[1], v: a[2] }));
+      score = undoState.score;
+      won = undoState.won;
+      over = false;
+      undoState = null;
+      winOverlay.classList.add("hidden");
+      overOverlay.classList.add("hidden");
+      render(true);
+      save();
+    }
+
+    function restore() {
+      const b = Number(readStore(BEST_KEY));
+      best = isFinite(b) && b > 0 ? b : 0;
+      let data = null;
+      try { data = JSON.parse(readStore(STATE_KEY) || "null"); } catch (e) { data = null; }
+      if (!data || !Array.isArray(data.cells) || !data.cells.length) {
+        newGame();
+        return;
+      }
+      tiles = data.cells.map((a) => ({ id: nextId++, r: a[0], c: a[1], v: a[2] }));
+      score = Number(data.score) || 0;
+      won = !!data.won;
+      keepGoing = !!data.keepGoing;
+      over = !!data.over;
+      undoState = data.undo && Array.isArray(data.undo.cells) ? data.undo : null;
+      render(true);
+      if (over) showOver();
+      else if (won && !keepGoing) winOverlay.classList.remove("hidden");
+    }
+
+    document.getElementById("newBtn").addEventListener("click", newGame);
+    document.getElementById("winNewBtn").addEventListener("click", newGame);
+    document.getElementById("retryBtn").addEventListener("click", newGame);
+    undoBtn.addEventListener("click", undo);
+    document.getElementById("keepBtn").addEventListener("click", () => {
+      keepGoing = true;
+      winOverlay.classList.add("hidden");
+      save();
+    });
+
+    const KEYS = {
+      ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
+      w: "up", s: "down", a: "left", d: "right",
+      W: "up", S: "down", A: "left", D: "right",
+      z: "up", Z: "up", q: "left", Q: "left"
+    };
+    document.addEventListener("keydown", (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const dir = KEYS[e.key];
+      if (dir) {
+        e.preventDefault();
+        move(dir);
+      } else if ((e.key === "u" || e.key === "U" || e.key === "Backspace") && !e.repeat) {
+        undo();
+      }
+    });
+
+    let start = null;
+    boardEl.addEventListener("pointerdown", (e) => {
+      if (e.target.closest("button")) return;
+      start = { x: e.clientX, y: e.clientY, id: e.pointerId };
+      try { boardEl.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    function endSwipe(e) {
+      if (!start || e.pointerId !== start.id) return;
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      start = null;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+      if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? "right" : "left");
+      else move(dy > 0 ? "down" : "up");
+    }
+    boardEl.addEventListener("pointerup", endSwipe);
+    boardEl.addEventListener("pointercancel", () => { start = null; });
+
+    restore();
+  </script>
+</body>
+</html>
