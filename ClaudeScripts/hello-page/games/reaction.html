@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reaction Time</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../common.css">
+  <style>
+    .pad {
+      height: min(60vh, 420px);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      color: #fff;
+      transition: background 0.08s;
+      padding: 16px;
+    }
+    .pad .big {
+      font-size: clamp(2rem, 8vw, 3.5rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .pad .small {
+      font-size: 1.05rem;
+      opacity: 0.9;
+    }
+    .pad.idle { background: #3b5bfd; }
+    .pad.waiting { background: #e0393e; }
+    .pad.go { background: #1a9a55; }
+    .pad.early { background: #e6a100; }
+    .pad.result { background: #3b5bfd; }
+    .history {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-height: 32px;
+    }
+    .history span {
+      background: var(--surface);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <nav class="topbar"><a class="back" href="../../../index.html">← all games</a></nav>
+  <main class="game">
+    <h1 class="game-title">Reaction Time</h1>
+    <p class="lede">Wait for green, then click as fast as you can. Five tries make a round.</p>
+    <div class="stats">
+      <div class="stat"><div class="stat-value" id="avg">–</div><div class="stat-label">Round avg</div></div>
+      <div class="stat"><div class="stat-value" id="best">–</div><div class="stat-label">Best ever</div></div>
+    </div>
+    <div class="pad idle" id="pad" role="button" tabindex="0">
+      <div class="big" id="big">Click to start</div>
+      <div class="small" id="small">Space works too</div>
+    </div>
+    <div class="history" id="history"></div>
+  </main>
+  <script>
+    const pad = document.getElementById("pad");
+    const big = document.getElementById("big");
+    const small = document.getElementById("small");
+    const historyEl = document.getElementById("history");
+    const avgEl = document.getElementById("avg");
+    const bestEl = document.getElementById("best");
+    const KEY = "hello-reaction-best";
+    let state = "idle";
+    let timer = null;
+    let goAt = 0;
+    let times = [];
+
+    function load() {
+      try { return Number(localStorage.getItem(KEY)) || 0; } catch (e) { return 0; }
+    }
+    function save(v) {
+      try { localStorage.setItem(KEY, String(v)); } catch (e) {}
+    }
+    let best = load();
+    if (best) bestEl.textContent = best + " ms";
+
+    function set(cls, a, b) {
+      pad.className = "pad " + cls;
+      big.textContent = a;
+      small.textContent = b;
+      state = cls;
+    }
+
+    function rating(ms) {
+      if (ms < 180) return "Lightning ⚡";
+      if (ms < 230) return "Excellent";
+      if (ms < 280) return "Good";
+      if (ms < 350) return "Average";
+      return "Keep practising";
+    }
+
+    function arm() {
+      set("waiting", "Wait for green…", "");
+      timer = setTimeout(() => {
+        set("go", "CLICK!", "");
+        goAt = performance.now();
+      }, 1200 + Math.random() * 2800);
+    }
+
+    function renderHistory() {
+      historyEl.innerHTML = "";
+      times.forEach((t) => {
+        const s = document.createElement("span");
+        s.textContent = t + " ms";
+        historyEl.appendChild(s);
+      });
+    }
+
+    function press() {
+      if (state === "idle" || state === "result" || state === "early") {
+        if (state === "result" && times.length >= 5) {
+          times = [];
+          renderHistory();
+          avgEl.textContent = "–";
+        }
+        arm();
+      } else if (state === "waiting") {
+        clearTimeout(timer);
+        set("early", "Too soon!", "Click to try again");
+      } else if (state === "go") {
+        const ms = Math.round(performance.now() - goAt);
+        times.push(ms);
+        renderHistory();
+        const avg = Math.round(times.reduce((a, b) => a + b, 0) / times.length);
+        avgEl.textContent = avg + " ms";
+        if (!best || ms < best) {
+          best = ms;
+          save(best);
+          bestEl.textContent = best + " ms";
+        }
+        if (times.length >= 5) {
+          set("result", avg + " ms average", rating(avg) + " · click to play again");
+        } else {
+          set("result", ms + " ms", rating(ms) + " · " + (5 - times.length) + " to go, click to continue");
+        }
+      }
+    }
+
+    pad.addEventListener("pointerdown", (e) => { e.preventDefault(); press(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space" || e.code === "Enter") {
+        e.preventDefault();
+        if (!e.repeat) press();
+      }
+    });
+  </script>
+</body>
+</html>

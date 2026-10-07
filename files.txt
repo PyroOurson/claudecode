@@ -1,6 +1,7 @@
 .gitignore
 CLAUDE.md
-ClaudeScripts/hello-page/index.html
+ClaudeScripts/hello-page/common.css
+ClaudeScripts/hello-page/games/reaction.html
 ClaudeScripts/update.py
 NaoiseGabi/README.md
 NaoiseGabi/art/voronoi_stippling.py

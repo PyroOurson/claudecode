@@ -3,30 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hello</title>
+  <title>hello</title>
+  <meta name="description" content="A little website of games, toys and other fun things.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ClaudeScripts/hello-page/common.css">
   <style>
-    html, body {
-      margin: 0;
-      height: 100%;
-      background: #ffffff;
-    }
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-      color: #111;
-      overflow: hidden;
+    header {
+      text-align: center;
+      padding: clamp(40px, 9vw, 88px) 16px 12px;
     }
     h1 {
       margin: 0;
-      font-size: clamp(3.5rem, 14vw, 9rem);
-      font-weight: 600;
-      letter-spacing: -0.04em;
-      display: flex;
+      font-size: clamp(3.5rem, 14vw, 7.5rem);
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      line-height: 1;
+      display: inline-flex;
     }
     h1 span {
       display: inline-block;
@@ -40,16 +34,196 @@
     h1 span:nth-child(3) { animation-delay: 0.35s; }
     h1 span:nth-child(4) { animation-delay: 0.45s; }
     h1 span:nth-child(5) { animation-delay: 0.55s; }
+    h1 span:nth-child(6) { animation-delay: 0.7s; color: var(--accent); }
     @keyframes rise {
       to { opacity: 1; transform: translateY(0); filter: blur(0); }
     }
+    .tagline {
+      margin: 14px auto 0;
+      color: var(--muted);
+      font-size: 1.1rem;
+      max-width: 460px;
+      opacity: 0;
+      animation: fade 0.8s ease 0.9s forwards;
+    }
+    .surprise {
+      margin-top: 22px;
+      opacity: 0;
+      animation: fade 0.8s ease 1.05s forwards;
+    }
+    @keyframes fade {
+      to { opacity: 1; }
+    }
+    .grid {
+      list-style: none;
+      margin: 0 auto;
+      padding: 32px 16px 48px;
+      max-width: 1100px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 22px;
+    }
+    .grid li {
+      opacity: 0;
+      transform: translateY(16px);
+      animation: card-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation-delay: calc(0.9s + var(--i) * 0.05s);
+    }
+    @keyframes card-in {
+      to { opacity: 1; transform: none; }
+    }
+    .card {
+      display: block;
+      height: 100%;
+      text-decoration: none;
+      color: var(--text);
+      border-radius: 18px;
+      outline-offset: 4px;
+    }
+    .thumb {
+      position: relative;
+      aspect-ratio: 4 / 3;
+      border-radius: 18px;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--c1), var(--c2));
+      box-shadow: var(--shadow);
+      transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s;
+    }
+    .thumb::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 25% 20%, rgba(255, 255, 255, 0.45), transparent 45%),
+        radial-gradient(circle at 80% 90%, rgba(0, 0, 0, 0.12), transparent 50%);
+    }
+    .thumb::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.22) 1.5px, transparent 1.5px);
+      background-size: 18px 18px;
+      mask-image: linear-gradient(to bottom, black, transparent 80%);
+      -webkit-mask-image: linear-gradient(to bottom, black, transparent 80%);
+    }
+    .emoji {
+      position: relative;
+      z-index: 1;
+      font-size: 4.6rem;
+      line-height: 1;
+      filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.22));
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .card:hover .thumb,
+    .card:focus-visible .thumb {
+      transform: translateY(-4px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08), 0 18px 36px rgba(0, 0, 0, 0.14);
+    }
+    .card:hover .emoji,
+    .card:focus-visible .emoji {
+      transform: scale(1.14) rotate(-6deg);
+    }
+    .card h2 {
+      margin: 14px 4px 2px;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+    .card p {
+      margin: 0 4px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      padding: 0 16px 40px;
+    }
+    @media (max-width: 560px) {
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px 14px;
+        padding-top: 28px;
+      }
+      .thumb, .card {
+        border-radius: 14px;
+      }
+      .emoji {
+        font-size: 3rem;
+      }
+      .card h2 {
+        font-size: 1rem;
+        margin-top: 10px;
+      }
+      .card p {
+        font-size: 0.85rem;
+      }
+    }
     @media (prefers-reduced-motion: reduce) {
       h1 span { animation: fade 0.8s ease forwards; transform: none; filter: none; }
-      @keyframes fade { to { opacity: 1; } }
+      .grid li { transform: none; }
     }
   </style>
 </head>
 <body>
-  <h1 aria-label="hello"><span>h</span><span>e</span><span>l</span><span>l</span><span>o</span></h1>
+  <header>
+    <h1 aria-label="hello!"><span>h</span><span>e</span><span>l</span><span>l</span><span>o</span><span>!</span></h1>
+    <p class="tagline">A little website of games, toys and other fun things to do on the internet.</p>
+    <button class="btn surprise" id="surprise" type="button">🎲 Surprise me</button>
+  </header>
+
+  <ul class="grid" id="grid"></ul>
+
+  <footer>Your scores are saved in this browser.</footer>
+
+  <script>
+    const GAMES = [
+      { slug: "circle", emoji: "⭕", name: "Draw a Perfect Circle", text: "How round can you really draw?", c1: "#ff8a5b", c2: "#ff4d6d" },
+      { slug: "password", emoji: "🔐", name: "The Password Gauntlet", text: "Pick a password. Follow the rules. All of them.", c1: "#7b6cff", c2: "#4b3ad6" },
+      { slug: "spend", emoji: "💸", name: "Spend a Hundred Billion", text: "You're absurdly rich. Go shopping.", c1: "#3ecf8e", c2: "#16a36b" },
+      { slug: "higher-lower", emoji: "🌍", name: "Higher or Lower", text: "Which country has more people?", c1: "#4fb8ff", c2: "#2f6bff" },
+      { slug: "crafter", emoji: "🧪", name: "Element Crafter", text: "Start with four elements. Make a dragon.", c1: "#ffcf4a", c2: "#ff9a1f" },
+      { slug: "clicker", emoji: "🪐", name: "Cosmic Clicker", text: "Click a planet. Build an empire of stardust.", c1: "#5b3cc4", c2: "#1d1b4f" },
+      { slug: "reaction", emoji: "⚡", name: "Reaction Time", text: "Wait for green. Click. How fast are you?", c1: "#2ad17c", c2: "#0f9b5a" },
+      { slug: "2048", emoji: "🔢", name: "2048", text: "Slide, merge, and reach the 2048 tile.", c1: "#f7c873", c2: "#e8984a" },
+      { slug: "minesweeper", emoji: "💣", name: "Minesweeper", text: "The classic. Don't click the mines.", c1: "#9aa5b8", c2: "#5a6680" },
+      { slug: "typing", emoji: "⌨️", name: "Typing Speed", text: "How many words per minute can you type?", c1: "#ff7eb6", c2: "#d6408a" },
+      { slug: "color", emoji: "🎨", name: "Color Match", text: "Memorise a color, then recreate it.", c1: "#ffd93d", c2: "#ff6bcb" },
+      { slug: "snake", emoji: "🐍", name: "Snake", text: "Eat apples. Grow longer. Don't bite yourself.", c1: "#8be04e", c2: "#3a9d23" }
+    ];
+
+    const grid = document.getElementById("grid");
+    GAMES.forEach((g, i) => {
+      const li = document.createElement("li");
+      li.style.setProperty("--i", i);
+      const a = document.createElement("a");
+      a.className = "card";
+      a.href = "ClaudeScripts/hello-page/games/" + g.slug + ".html";
+      const thumb = document.createElement("div");
+      thumb.className = "thumb";
+      thumb.style.setProperty("--c1", g.c1);
+      thumb.style.setProperty("--c2", g.c2);
+      const emoji = document.createElement("span");
+      emoji.className = "emoji";
+      emoji.setAttribute("aria-hidden", "true");
+      emoji.textContent = g.emoji;
+      thumb.appendChild(emoji);
+      const h2 = document.createElement("h2");
+      h2.textContent = g.name;
+      const p = document.createElement("p");
+      p.textContent = g.text;
+      a.append(thumb, h2, p);
+      li.appendChild(a);
+      grid.appendChild(li);
+    });
+
+    document.getElementById("surprise").addEventListener("click", () => {
+      const g = GAMES[Math.floor(Math.random() * GAMES.length)];
+      location.href = "ClaudeScripts/hello-page/games/" + g.slug + ".html";
+    });
+  </script>
 </body>
 </html>
