@@ -310,3 +310,37 @@ fn a_plugin_can_carry_a_change_between_its_own_vehicles() {
         .collect();
     assert_eq!(lines, vec![&json!("TER"), &json!("TGV")], "{}", reply.raw);
 }
+
+#[test]
+fn source_code_points_to_the_real_repository_and_can_be_changed() {
+    let reply = send(Vec::new(), vec![request("POST", "/", &walk())]);
+    assert_eq!(
+        reply.header("Source-Code"),
+        Some("\"https://gitlab.com/buphagidae/maps-server\"")
+    );
+    let config = Config::from_lookup(&|key| {
+        (key == "MAPS_SOURCE_URL").then(|| "https://example.org/fork".to_string())
+    })
+    .unwrap();
+    let reply = exchange(
+        serve_state(state_with(Vec::new(), config)),
+        vec![request("POST", "/", "{")],
+    );
+    assert_eq!(reply.status, 400);
+    assert_eq!(
+        reply.header("Source-Code"),
+        Some("\"https://example.org/fork\"")
+    );
+}
+
+#[test]
+fn attribution_credits_openstreetmap() {
+    let reply = send(Vec::new(), vec![request("POST", "/", &walk())]);
+    let header = reply.header("Attribution").unwrap_or_default();
+    let decoded = urlencoding::decode(header.trim_matches('"')).unwrap_or_default();
+    assert!(
+        decoded.contains("Map data \u{a9} OpenStreetMap contributors, ODbL."),
+        "{}",
+        decoded
+    );
+}

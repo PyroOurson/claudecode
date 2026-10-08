@@ -20,7 +20,7 @@ use serde_json::{Value, json};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, LazyLock, Mutex};
 
-const SOURCE_URL: &str = "https://gitlab.com/buphagidae/buphagus";
+pub const OSM_ATTRIBUTION: &str = "Map data © OpenStreetMap contributors, ODbL.";
 
 pub struct AppState {
     pub config: Config,
@@ -68,7 +68,10 @@ pub fn router(state: Arc<AppState>) -> Router {
         .fallback(not_found)
         .method_not_allowed_fallback(method_not_allowed)
         .layer(DefaultBodyLimit::max(max_body_bytes))
-        .layer(middleware::map_response(common_headers))
+        .layer(middleware::map_response_with_state(
+            state.clone(),
+            common_headers,
+        ))
         .with_state(state)
 }
 
@@ -95,7 +98,7 @@ async fn preflight() -> Response {
         .unwrap_or_default()
 }
 
-async fn common_headers(mut response: Response) -> Response {
+async fn common_headers(State(state): State<Arc<AppState>>, mut response: Response) -> Response {
     let headers = response.headers_mut();
     if !headers.contains_key(header::ACCESS_CONTROL_ALLOW_ORIGIN) {
         headers.insert(
@@ -106,7 +109,7 @@ async fn common_headers(mut response: Response) -> Response {
             header::ACCESS_CONTROL_EXPOSE_HEADERS,
             HeaderValue::from_static("Attribution, Source-Code"),
         );
-        if let Ok(value) = HeaderValue::from_str(&format!("\"{}\"", SOURCE_URL)) {
+        if let Ok(value) = HeaderValue::from_str(&format!("\"{}\"", state.config.source_url)) {
             headers.insert(HeaderName::from_static("source-code"), value);
         }
     }
@@ -323,8 +326,8 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
         .join("\n");
 
     let attributions = format!(
-        "Realtime and Schedule data has been provided by the following organisations, under various licenses. It has been provided as-is, and these organisations are not responsible for any errors or inaccuracies. The various data formats have been translated by various individuals. \n {}",
-        plugin_attributions
+        "{}\nRealtime and Schedule data has been provided by the following organisations, under various licenses. It has been provided as-is, and these organisations are not responsible for any errors or inaccuracies. The various data formats have been translated by various individuals. \n {}",
+        OSM_ATTRIBUTION, plugin_attributions
     );
     let attributions = urlencoding::encode(attributions.as_str());
 

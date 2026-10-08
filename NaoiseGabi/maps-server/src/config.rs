@@ -3,6 +3,7 @@
 use std::env;
 
 pub const DEFAULT_OVERPASS_IMAGE: &str = "wiktorn/overpass-api:v0.7.62.9";
+pub const DEFAULT_SOURCE_URL: &str = "https://gitlab.com/buphagidae/maps-server";
 
 pub struct Config {
     pub bind: String,
@@ -10,6 +11,7 @@ pub struct Config {
     pub max_required_nodes: usize,
     pub max_speed_kmh: f64,
     pub overpass_image: String,
+    pub source_url: String,
 }
 
 impl Default for Config {
@@ -33,6 +35,7 @@ impl Config {
                 "MAPS_MAX_SPEED_KMH",
             )?,
             overpass_image: text(lookup, "MAPS_OVERPASS_IMAGE", DEFAULT_OVERPASS_IMAGE),
+            source_url: text(lookup, "MAPS_SOURCE_URL", DEFAULT_SOURCE_URL),
         })
     }
 }

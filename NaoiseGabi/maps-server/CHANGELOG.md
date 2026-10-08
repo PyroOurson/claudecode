@@ -15,6 +15,8 @@ All notable changes to maps-server. The format follows [Keep a Changelog](https:
 - Only the path `/` is served: other paths get `404` and other methods on `/` get `405`. `OPTIONS /` is answered as before.
 - Connections are kept alive between requests instead of being closed after each response. Send `Connection: close` to get the old behaviour.
 - Header names are sent in lower case, which HTTP treats the same, and the `204` preflight answer no longer carries `Content-Length: 0`, which RFC 9110 forbids on `204`.
+- The `Source-Code` header points to `MAPS_SOURCE_URL`, default `https://gitlab.com/buphagidae/maps-server`. It used to point to `https://gitlab.com/buphagidae/buphagus`, which returns 404 to anonymous users; under the AGPL this header is how network users are offered the source.
+- The `Attribution` header starts with "Map data © OpenStreetMap contributors, ODbL.", since the walking graph and every node ID come from OpenStreetMap.
 - Every response, errors included, carries `Access-Control-Allow-Origin`, `Access-Control-Expose-Headers` and `Source-Code`.
 - A failure while computing a route answers `500` instead of dropping the connection.
 - Bad requests get `400` with `{"error": "<message>"}` instead of a dropped connection or a silent default: invalid JSON, a body that is not an object, `required_nodes` missing, not an array of integers, shorter than 2 or longer than `MAPS_MAX_REQUIRED_NODES` (default 25), a `time` that does not parse, and a `walking_speed` outside 0.0003 to 0.01 km/s.
