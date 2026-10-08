@@ -90,6 +90,10 @@ impl Stations {
         self.access.contains_key(&node)
     }
 
+    pub fn is_known(&self, node: i64) -> bool {
+        self.access.contains_key(&node) || self.entrances.contains_key(&node)
+    }
+
     pub fn entrances_of(&self, station: i64) -> &[i64] {
         self.access.get(&station).map_or(&[], Vec::as_slice)
     }
@@ -106,9 +110,18 @@ pub struct SearchParams<'a> {
     pub min_transfer: Duration,
 }
 
-pub struct RouteResult {
+pub struct Itinerary {
     pub route: Vec<RouteSegment>,
     pub arrival_time: DateTime<Utc>,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum RouteError {
+    NoRoute { from: i64, to: i64 },
+}
+
+#[derive(Default)]
+pub struct SearchStats {
     pub expanded: usize,
 }
 
@@ -118,44 +131,51 @@ pub fn route_with_schedule<F>(
     required_nodes: &[i64],
     start_time: DateTime<Utc>,
     fetch_outgoing: &mut F,
-) -> RouteResult
+    stats: &mut SearchStats,
+) -> Result<Itinerary, RouteError>
 where
     F: FnMut(i64, DateTime<Utc>) -> Vec<OutgoingJourney>,
 {
-    let mut result = RouteResult {
+    let mut itinerary = Itinerary {
         route: Vec::new(),
         arrival_time: start_time,
-        expanded: 0,
     };
 
     for window in required_nodes.windows(2) {
-        match a_star_time_dependent(
+        let (from, to) = (window[0], window[1]);
+        let known = |node: i64| graph.contains(node) || params.stations.is_known(node);
+        if !known(from) || !known(to) {
+            return Err(RouteError::NoRoute { from, to });
+        }
+        let (segment, arrival_time) = a_star_time_dependent(
             graph,
             params,
-            window[0],
-            window[1],
-            result.arrival_time,
+            from,
+            to,
+            itinerary.arrival_time,
             fetch_outgoing,
-            &mut result.expanded,
-        ) {
-            Some((segment, arrival_time)) => {
-                result.route.extend(segment);
-                result.arrival_time = arrival_time;
-            }
-            None => {
-                result.route.clear();
-                return result;
-            }
-        }
+            stats,
+        )
+        .ok_or(RouteError::NoRoute { from, to })?;
+        itinerary.route.extend(segment);
+        itinerary.arrival_time = arrival_time;
     }
 
-    result
+    Ok(itinerary)
 }
 
 pub fn parse_journey_departure(value: &str) -> Result<DateTime<Utc>, chrono::ParseError> {
     NaiveDateTime::parse_from_str(value, "%Y%m%dT%H%M%S")
         .or_else(|_| NaiveDateTime::parse_from_str(value, "%Y-%m-%dT%H:%M:%S"))
         .map(|naive| naive.and_utc())
+}
+
+pub fn parse_request_time(value: &str) -> Option<DateTime<Utc>> {
+    parse_journey_departure(value).ok().or_else(|| {
+        DateTime::parse_from_rfc3339(value)
+            .ok()
+            .map(|time| time.with_timezone(&Utc))
+    })
 }
 
 fn a_star_time_dependent<F>(
@@ -165,7 +185,7 @@ fn a_star_time_dependent<F>(
     end_node: i64,
     start_time: DateTime<Utc>,
     fetch_outgoing: &mut F,
-    expanded: &mut usize,
+    stats: &mut SearchStats,
 ) -> Option<(Vec<RouteSegment>, DateTime<Utc>)>
 where
     F: FnMut(i64, DateTime<Utc>) -> Vec<OutgoingJourney>,
@@ -186,7 +206,7 @@ where
     best_arrival.insert(start_key, start_time);
 
     if start_node == end_node {
-        *expanded += 1;
+        stats.expanded += 1;
         return Some((Vec::new(), start_time));
     }
 
@@ -201,7 +221,7 @@ where
         {
             continue;
         }
-        *expanded += 1;
+        stats.expanded += 1;
 
         if current_node == end_node {
             let path = reconstruct_path(&predecessors, start_key, current_key);
@@ -567,6 +587,10 @@ impl Graph {
             coordinates,
             adjacency,
         }
+    }
+
+    pub fn contains(&self, node: i64) -> bool {
+        self.coordinates.contains_key(&node) || self.adjacency.contains_key(&node)
     }
 
     pub fn coords_from_id(&self, node: i64) -> Option<(f64, f64)> {

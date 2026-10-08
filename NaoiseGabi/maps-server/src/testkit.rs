@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0
 // Copyright (C) 2026 Naoise McG
+use crate::config::Config;
 use crate::http::{AppState, router};
 use crate::route::{Graph, Stations};
 use crate::{Plugin, build_station_access_map};
@@ -52,16 +53,21 @@ pub struct Reply {
 pub static FIXTURE: LazyLock<Graph> =
     LazyLock::new(|| Graph::from_pbfs(&[kit().join("fixtures").join("fixture.osm.pbf")]).unwrap());
 
-pub fn state(mut plugins: Vec<Plugin>) -> Arc<AppState> {
+pub fn state(plugins: Vec<Plugin>) -> Arc<AppState> {
+    state_with(plugins, Config::default())
+}
+
+pub fn state_with(mut plugins: Vec<Plugin>, config: Config) -> Arc<AppState> {
     let stations = Stations::new(build_station_access_map(&mut plugins));
     Arc::new(AppState {
+        config,
         graph: &FIXTURE,
         plugins: Mutex::new(plugins),
         stations,
     })
 }
 
-pub fn serve_state(state: Arc<AppState>, max_body_bytes: usize) -> SocketAddr {
+pub fn serve_state(state: Arc<AppState>) -> SocketAddr {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     listener.set_nonblocking(true).unwrap();
     let address = listener.local_addr().unwrap();
@@ -73,16 +79,14 @@ pub fn serve_state(state: Arc<AppState>, max_body_bytes: usize) -> SocketAddr {
             .unwrap();
         runtime.block_on(async move {
             let listener = tokio::net::TcpListener::from_std(listener).unwrap();
-            axum::serve(listener, router(state, max_body_bytes))
-                .await
-                .unwrap();
+            axum::serve(listener, router(state)).await.unwrap();
         });
     });
     address
 }
 
 pub fn serve(plugins: Vec<Plugin>) -> SocketAddr {
-    serve_state(state(plugins), 65536)
+    serve_state(state(plugins))
 }
 
 pub fn request(method: &str, path: &str, body: &str) -> Vec<u8> {

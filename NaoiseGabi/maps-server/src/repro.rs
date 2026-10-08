@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Naoise McG
 use super::{Plugin, build_station_access_map};
 use crate::route::{
-    Graph, OutgoingJourney, RouteSegment, SearchParams, StationAccessMap, Stations,
+    Graph, OutgoingJourney, RouteSegment, SearchParams, SearchStats, StationAccessMap, Stations,
     route_with_schedule,
 };
 use crate::testkit::{has_route, plugin, post, send};
@@ -68,8 +68,18 @@ fn plan(
         use_heuristic: estimate_off,
         min_transfer: Duration::seconds(60),
     };
-    let result = route_with_schedule(&fixture_graph(), &params, &nodes, start(), &mut fetch);
-    (result.route, result.arrival_time)
+    let mut stats = SearchStats::default();
+    match route_with_schedule(
+        &fixture_graph(),
+        &params,
+        &nodes,
+        start(),
+        &mut fetch,
+        &mut stats,
+    ) {
+        Ok(itinerary) => (itinerary.route, itinerary.arrival_time),
+        Err(_) => (Vec::new(), start()),
+    }
 }
 
 fn train_behind_start(station: i64) -> Vec<OutgoingJourney> {
@@ -265,7 +275,6 @@ fn heuristic_true_and_heuristic_1_mean_the_same() {
 }
 
 #[test]
-#[ignore = "B3"]
 fn invalid_json_gets_400() {
     let reply = send(Vec::new(), vec![post("{")]);
     assert_eq!(
@@ -276,7 +285,6 @@ fn invalid_json_gets_400() {
 }
 
 #[test]
-#[ignore = "B3"]
 fn missing_required_nodes_gets_400() {
     let reply = send(Vec::new(), vec![post(&json!({"time": START}).to_string())]);
     assert_eq!(
@@ -287,7 +295,6 @@ fn missing_required_nodes_gets_400() {
 }
 
 #[test]
-#[ignore = "B3"]
 fn zero_walking_speed_gets_400() {
     let reply = send(
         Vec::new(),
@@ -301,7 +308,6 @@ fn zero_walking_speed_gets_400() {
 }
 
 #[test]
-#[ignore = "B3"]
 fn unparsable_time_gets_400() {
     let reply = send(
         Vec::new(),
@@ -315,7 +321,6 @@ fn unparsable_time_gets_400() {
 }
 
 #[test]
-#[ignore = "B3"]
 fn unreachable_destination_gets_404() {
     let reply = send(
         Vec::new(),

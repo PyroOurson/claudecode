@@ -459,16 +459,18 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     let mut plugins = load_plugins();
     let stations = Stations::new(build_station_access_map(&mut plugins));
+    let bind = config.bind.clone();
     let state = Arc::new(AppState {
+        config,
         graph: &GRAPH,
         plugins: Mutex::new(plugins),
         stations,
     });
-    let listener = tokio::net::TcpListener::bind(&config.bind).await?;
+    let listener = tokio::net::TcpListener::bind(&bind).await?;
 
-    println!("Server listening on http://{}", config.bind);
+    println!("Server listening on http://{}", bind);
 
-    axum::serve(listener, http::router(state, config.max_body_bytes)).await?;
+    axum::serve(listener, http::router(state)).await?;
 
     Ok(())
 }

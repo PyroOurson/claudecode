@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 // Copyright (C) 2026 Naoise McG
-use crate::testkit::{exchange, request, send, serve, serve_state, state};
+use crate::config::Config;
+use crate::testkit::{exchange, request, send, serve, serve_state, state_with};
 use serde_json::json;
 
 fn walk() -> String {
@@ -48,7 +49,10 @@ fn routes_carry_cors_attribution_and_source_headers() {
 
 #[test]
 fn bodies_over_the_limit_get_413_with_cors_headers() {
-    let address = serve_state(state(Vec::new()), 64);
+    let config =
+        Config::from_lookup(&|key| (key == "MAPS_MAX_BODY_BYTES").then(|| "64".to_string()))
+            .unwrap();
+    let address = serve_state(state_with(Vec::new(), config));
     let reply = exchange(address, vec![request("POST", "/", &walk().repeat(4))]);
     assert_eq!(reply.status, 413, "{}", reply.raw);
     assert!(reply.json["error"].is_string(), "{}", reply.raw);
@@ -59,4 +63,76 @@ fn bodies_over_the_limit_get_413_with_cors_headers() {
 fn other_methods_get_405() {
     let reply = exchange(serve(Vec::new()), vec![request("GET", "/", "")]);
     assert_eq!(reply.status, 405, "{}", reply.raw);
+}
+
+fn post_json(body: serde_json::Value) -> crate::testkit::Reply {
+    send(Vec::new(), vec![request("POST", "/", &body.to_string())])
+}
+
+#[test]
+fn malformed_required_nodes_get_400_with_a_precise_message() {
+    let cases = [
+        (json!({"required_nodes": "1,2"}), "array"),
+        (json!({"required_nodes": [1, "2"]}), "required_nodes[1]"),
+        (json!({"required_nodes": [1, 2.5]}), "required_nodes[1]"),
+        (json!({"required_nodes": [1]}), "at least 2"),
+        (
+            json!({"required_nodes": (0..26).collect::<Vec<i64>>()}),
+            "limit is 25",
+        ),
+        (json!([1, 2]), "JSON object"),
+    ];
+    for (body, expected) in cases {
+        let reply = post_json(body.clone());
+        assert_eq!(reply.status, 400, "{} -> {}", body, reply.raw);
+        let message = reply.json["error"].as_str().unwrap_or_default();
+        assert!(message.contains(expected), "{} -> {}", body, message);
+    }
+}
+
+#[test]
+fn walking_speed_outside_the_range_gets_400() {
+    for speed in [json!(0.0002), json!(0.02), json!(-1), json!("fast")] {
+        let reply = post_json(json!({"required_nodes": [1, 2], "walking_speed": speed}));
+        assert_eq!(reply.status, 400, "{} -> {}", speed, reply.raw);
+    }
+    let reply = post_json(json!({"required_nodes": [1, 2], "walking_speed": 0.01}));
+    assert_eq!(reply.status, 200, "{}", reply.raw);
+}
+
+#[test]
+fn every_documented_time_format_is_accepted() {
+    for time in [
+        "20260808T120000",
+        "2026-08-08T12:00:00",
+        "2026-08-08T14:00:00+02:00",
+    ] {
+        let reply = post_json(json!({"required_nodes": [3, 1], "time": time}));
+        assert_eq!(reply.status, 200, "{} -> {}", time, reply.raw);
+        assert_eq!(
+            reply.json["route"][0]["departure_time"], "2026-08-08T12:00:00Z",
+            "{}",
+            time
+        );
+    }
+}
+
+#[test]
+fn a_leg_without_route_names_the_failed_leg() {
+    let reply = post_json(json!({"required_nodes": [3, 2, 700], "time": "20260808T120000"}));
+    assert_eq!(reply.status, 404, "{}", reply.raw);
+    assert_eq!(
+        reply.json,
+        json!({"error": "no route", "failed_leg": [2, 700]})
+    );
+}
+
+#[test]
+fn unknown_paths_get_a_json_404() {
+    let reply = exchange(
+        serve(Vec::new()),
+        vec![request("POST", "/nowhere", &walk())],
+    );
+    assert_eq!(reply.status, 404, "{}", reply.raw);
+    assert!(reply.json["error"].is_string(), "{}", reply.raw);
 }

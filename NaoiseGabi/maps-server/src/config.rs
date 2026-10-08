@@ -7,7 +7,14 @@ pub const DEFAULT_OVERPASS_IMAGE: &str = "wiktorn/overpass-api:v0.7.62.9";
 pub struct Config {
     pub bind: String,
     pub max_body_bytes: usize,
+    pub max_required_nodes: usize,
     pub overpass_image: String,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config::from_lookup(&|_| None).unwrap_or_else(|error| panic!("{}", error))
+    }
 }
 
 impl Config {
@@ -19,6 +26,7 @@ impl Config {
         Ok(Config {
             bind: text(lookup, "MAPS_BIND", "0.0.0.0:6767"),
             max_body_bytes: number(lookup, "MAPS_MAX_BODY_BYTES", 65536)?,
+            max_required_nodes: number(lookup, "MAPS_MAX_REQUIRED_NODES", 25)?,
             overpass_image: text(lookup, "MAPS_OVERPASS_IMAGE", DEFAULT_OVERPASS_IMAGE),
         })
     }

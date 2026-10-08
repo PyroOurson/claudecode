@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0
 // Copyright (C) 2026 Naoise McG
 use crate::Plugin;
+use crate::config::Config;
 use crate::route::{
-    Graph, Line, OutgoingJourney, SearchParams, Stations, parse_journey_departure,
-    route_with_schedule,
+    Graph, Line, OutgoingJourney, RouteError, SearchParams, SearchStats, Stations,
+    parse_journey_departure, parse_request_time, route_with_schedule,
 };
 use axum::Router;
 use axum::body::{Body, Bytes};
@@ -13,25 +14,72 @@ use axum::http::{HeaderName, HeaderValue, StatusCode, header};
 use axum::middleware;
 use axum::response::{IntoResponse, Response};
 use axum::routing::post;
-use chrono::{DateTime, NaiveDateTime, Utc};
-use serde_json::Value;
+use chrono::{DateTime, Utc};
+use serde_json::{Value, json};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, LazyLock, Mutex};
 
 const SOURCE_URL: &str = "https://gitlab.com/buphagidae/buphagus";
 
 pub struct AppState {
+    pub config: Config,
     pub graph: &'static LazyLock<Graph>,
     pub plugins: Mutex<Vec<Plugin>>,
     pub stations: Stations,
 }
 
-pub fn router(state: Arc<AppState>, max_body_bytes: usize) -> Router {
+pub struct ApiError {
+    status: StatusCode,
+    body: Value,
+}
+
+impl ApiError {
+    fn new(status: StatusCode, body: Value) -> Self {
+        ApiError { status, body }
+    }
+
+    fn bad_request(message: impl Into<String>) -> Self {
+        ApiError::new(StatusCode::BAD_REQUEST, json!({ "error": message.into() }))
+    }
+}
+
+impl IntoResponse for ApiError {
+    fn into_response(self) -> Response {
+        json_response(self.status, &self.body)
+    }
+}
+
+impl From<RouteError> for ApiError {
+    fn from(error: RouteError) -> Self {
+        match error {
+            RouteError::NoRoute { from, to } => ApiError::new(
+                StatusCode::NOT_FOUND,
+                json!({ "error": "no route", "failed_leg": [from, to] }),
+            ),
+        }
+    }
+}
+
+pub fn router(state: Arc<AppState>) -> Router {
+    let max_body_bytes = state.config.max_body_bytes;
     Router::new()
         .route("/", post(plan).options(preflight))
+        .fallback(not_found)
+        .method_not_allowed_fallback(method_not_allowed)
         .layer(DefaultBodyLimit::max(max_body_bytes))
         .layer(middleware::map_response(common_headers))
         .with_state(state)
+}
+
+async fn not_found() -> ApiError {
+    ApiError::new(StatusCode::NOT_FOUND, json!({ "error": "not found" }))
+}
+
+async fn method_not_allowed() -> ApiError {
+    ApiError::new(
+        StatusCode::METHOD_NOT_ALLOWED,
+        json!({ "error": "method not allowed, use POST /" }),
+    )
 }
 
 async fn preflight() -> Response {
@@ -77,19 +125,103 @@ async fn plan(State(state): State<Arc<AppState>>, body: Result<Bytes, BytesRejec
     let body = match body {
         Ok(body) => body,
         Err(rejection) => {
-            return json_response(
+            return ApiError::new(
                 rejection.status(),
-                &serde_json::json!({ "error": rejection.body_text() }),
-            );
+                json!({ "error": rejection.body_text() }),
+            )
+            .into_response();
         }
     };
     match tokio::task::spawn_blocking(move || compute(&state, &body)).await {
-        Ok(response) => response,
-        Err(_) => json_response(
+        Ok(Ok(response)) => response,
+        Ok(Err(error)) => error.into_response(),
+        Err(_) => ApiError::new(
             StatusCode::INTERNAL_SERVER_ERROR,
-            &serde_json::json!({ "error": "internal error" }),
-        ),
+            json!({ "error": "internal error" }),
+        )
+        .into_response(),
     }
+}
+
+pub const DEFAULT_WALKING_SPEED: f64 = 0.00138;
+const WALKING_SPEED_RANGE: (f64, f64) = (0.0003, 0.01);
+
+#[derive(Debug)]
+pub struct RouteRequest {
+    pub required_nodes: Vec<i64>,
+    pub start_time: DateTime<Utc>,
+    pub walking_speed: f64,
+    pub use_heuristic: bool,
+}
+
+pub fn parse_request(body: &[u8], config: &Config) -> Result<RouteRequest, ApiError> {
+    let data: Value = serde_json::from_slice(body)
+        .map_err(|error| ApiError::bad_request(format!("invalid JSON: {}", error)))?;
+    let fields = data
+        .as_object()
+        .ok_or_else(|| ApiError::bad_request("the body must be a JSON object"))?;
+    let present = |key: &str| fields.get(key).filter(|value| !value.is_null());
+
+    let nodes = present("required_nodes")
+        .ok_or_else(|| ApiError::bad_request("required_nodes is missing"))?
+        .as_array()
+        .ok_or_else(|| ApiError::bad_request("required_nodes must be an array of integers"))?;
+    let required_nodes = nodes
+        .iter()
+        .enumerate()
+        .map(|(index, node)| {
+            node.as_i64().ok_or_else(|| {
+                ApiError::bad_request(format!(
+                    "required_nodes[{}] must be an integer OSM ID, got {}",
+                    index, node
+                ))
+            })
+        })
+        .collect::<Result<Vec<i64>, ApiError>>()?;
+    if required_nodes.len() < 2 {
+        return Err(ApiError::bad_request(
+            "required_nodes needs at least 2 nodes",
+        ));
+    }
+    if required_nodes.len() > config.max_required_nodes {
+        return Err(ApiError::bad_request(format!(
+            "required_nodes has {} nodes, the limit is {}",
+            required_nodes.len(),
+            config.max_required_nodes
+        )));
+    }
+
+    let start_time = match present("time") {
+        None => Utc::now(),
+        Some(time) => time.as_str().and_then(parse_request_time).ok_or_else(|| {
+            ApiError::bad_request(format!(
+                "time must be a UTC time like 20260808T131000 or 2026-08-08T13:10:00, got {}",
+                time
+            ))
+        })?,
+    };
+
+    let walking_speed = match present("walking_speed") {
+        None => DEFAULT_WALKING_SPEED,
+        Some(speed) => speed
+            .as_f64()
+            .filter(|speed| (WALKING_SPEED_RANGE.0..=WALKING_SPEED_RANGE.1).contains(speed))
+            .ok_or_else(|| {
+                ApiError::bad_request(format!(
+                    "walking_speed must be a number of km/s between {} and {}, got {}",
+                    WALKING_SPEED_RANGE.0, WALKING_SPEED_RANGE.1, speed
+                ))
+            })?,
+    };
+
+    let use_heuristic = serde_json::from_value(data["heuristic"].clone()).unwrap_or(0) != 0;
+
+    Ok(RouteRequest {
+        required_nodes,
+        start_time,
+        walking_speed,
+        use_heuristic,
+    })
 }
 
 fn explore_station(
@@ -145,14 +277,10 @@ fn explore_station(
     journeys
 }
 
-fn compute(state: &AppState, body: &[u8]) -> Response {
-    let data: Value = serde_json::from_slice(body).expect("No data");
+fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
+    let request = parse_request(body, &state.config)?;
 
-    println!("Received payload: {:?}", data);
-
-    let node_ids: Vec<i64> =
-        serde_json::from_value(data["required_nodes"].clone()).expect("No data");
-    let heuristic: bool = serde_json::from_value(data["heuristic"].clone()).unwrap_or(0) != 0;
+    println!("Received request: {:?}", request);
 
     let mut cached_explorations: HashMap<(i64, DateTime<Utc>), Vec<OutgoingJourney>> =
         HashMap::new();
@@ -165,25 +293,19 @@ fn compute(state: &AppState, body: &[u8]) -> Response {
 
     let params = SearchParams {
         stations: &state.stations,
-        walking_speed: data["walking_speed"].as_f64().unwrap_or(0.00138),
-        use_heuristic: heuristic,
+        walking_speed: request.walking_speed,
+        use_heuristic: request.use_heuristic,
         min_transfer: chrono::Duration::seconds(60),
     };
-    let start_time = NaiveDateTime::parse_from_str(
-        data["time"]
-            .as_str()
-            .unwrap_or(Utc::now().format("%Y%m%dT%H%M%S").to_string().as_str()),
-        "%Y%m%dT%H%M%S",
-    )
-    .unwrap_or(Utc::now().naive_utc())
-    .and_utc();
+    let mut stats = SearchStats::default();
     let result = route_with_schedule(
         state.graph,
         &params,
-        &node_ids,
-        start_time,
+        &request.required_nodes,
+        request.start_time,
         &mut fetch_outgoing,
-    );
+        &mut stats,
+    )?;
 
     let plugin_attributions = state
         .plugins
@@ -212,7 +334,7 @@ fn compute(state: &AppState, body: &[u8]) -> Response {
 
     let mut response = json_response(
         StatusCode::OK,
-        &serde_json::json!({
+        &json!({
             "route": result.route,
             "arrival_time": result.arrival_time
         }),
@@ -222,5 +344,5 @@ fn compute(state: &AppState, body: &[u8]) -> Response {
             .headers_mut()
             .insert(HeaderName::from_static("attribution"), value);
     }
-    response
+    Ok(response)
 }
