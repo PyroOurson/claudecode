@@ -750,3 +750,77 @@ fn a_failed_exploration_is_not_cached() {
     exchange(address, vec![request("POST", "/", &body)]);
     assert_eq!(log.explored_stations(), vec![300, 300]);
 }
+
+fn health(address: std::net::SocketAddr) -> crate::testkit::Reply {
+    exchange(address, vec![request("GET", "/health", "")])
+}
+
+#[test]
+fn health_is_ok_when_everything_is_up() {
+    let plugins = vec![plugin(
+        "train",
+        json!({"mode": "train", "available": {"300": []}}),
+    )];
+    let reply = health(serve_state(state_with(plugins, Config::default())));
+    assert_eq!(reply.status, 200, "{}", reply.raw);
+    assert_eq!(reply.json["status"], "ok");
+    assert_eq!(reply.json["overpass"], "up");
+    assert_eq!(reply.json["graph"], json!({"nodes": 5, "edges": 6}));
+    assert!(reply.json["uptime_s"].is_u64());
+    assert_eq!(
+        reply.json["plugins"],
+        json!([{"name": "train", "mode": "train", "alive": true, "calls": 0, "errors": 0, "avg_ms": 0.0}])
+    );
+}
+
+#[test]
+fn a_killed_plugin_makes_health_503() {
+    let doomed = plugin("doomed", json!({"available": {"300": []}}));
+    let address = serve_state(state_with(vec![doomed.clone()], Config::default()));
+    let pid = doomed.process_id().expect("running");
+    let killed = std::process::Command::new("kill")
+        .args(["-9", &pid.to_string()])
+        .status()
+        .unwrap();
+    assert!(killed.success());
+    assert!(wait_until(|| !doomed.is_alive()));
+    let reply = health(address);
+    assert_eq!(reply.status, 503, "{}", reply.raw);
+    assert_eq!(reply.json["status"], "degraded");
+    assert_eq!(reply.json["plugins"][0]["alive"], false);
+}
+
+#[test]
+fn health_counts_plugin_calls_and_errors() {
+    let plugins = vec![plugin(
+        "train",
+        json!({"available": {"300": [], "400": []},
+               "explore": {"300": [{"to": 400, "offset": 120, "cost": 600}]}}),
+    )];
+    let state = state_with(plugins, Config::default());
+    let address = serve_state(state.clone());
+    let body = json!({"required_nodes": [300, 400], "time": "20260808T120000"}).to_string();
+    exchange(address, vec![request("POST", "/", &body)]);
+    let _ = state.network().unwrap().plugins[0].call("unknown", &json!([]));
+    let reply = health(address);
+    assert_eq!(reply.json["plugins"][0]["calls"], 2, "{}", reply.raw);
+    assert_eq!(reply.json["plugins"][0]["errors"], 1, "{}", reply.raw);
+}
+
+#[test]
+fn health_is_503_while_starting_or_without_overpass() {
+    let starting = Arc::new(AppState::new(Config::default(), FIXTURE.clone()));
+    let reply = health(serve_state(starting));
+    assert_eq!(reply.status, 503, "{}", reply.raw);
+    assert_eq!(reply.json["ready"], false);
+    let mut no_overpass = AppState::new(Config::default(), FIXTURE.clone());
+    let closed = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    no_overpass.overpass_address = closed.local_addr().unwrap().to_string();
+    drop(closed);
+    let no_overpass = Arc::new(no_overpass);
+    no_overpass.set_ready(Vec::new(), crate::build_station_access_map(&[]));
+    let reply = health(serve_state(no_overpass));
+    assert_eq!(reply.status, 503, "{}", reply.raw);
+    assert_eq!(reply.json["overpass"], "down");
+    assert_eq!(reply.json["ready"], true);
+}

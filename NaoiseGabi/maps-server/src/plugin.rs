@@ -6,10 +6,11 @@ use serde_json::{Value, json};
 use std::fmt;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, ChildStdin, Command, Stdio};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::mpsc::{Receiver, RecvTimeoutError, channel};
 use std::sync::{Arc, Mutex, Weak};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 #[derive(Clone, Debug)]
 pub struct PluginSpec {
@@ -171,6 +172,15 @@ struct Shared {
     plugin_license: String,
     available: Value,
     slot: Mutex<Slot>,
+    calls: AtomicU64,
+    errors: AtomicU64,
+    busy_micros: AtomicU64,
+}
+
+pub struct PluginStats {
+    pub calls: u64,
+    pub errors: u64,
+    pub average_ms: f64,
 }
 
 #[derive(Clone)]
@@ -201,6 +211,9 @@ impl Plugin {
             spec,
             timeouts,
             slot: Mutex::new(Slot::Running(process)),
+            calls: AtomicU64::new(0),
+            errors: AtomicU64::new(0),
+            busy_micros: AtomicU64::new(0),
         });
         if let Ok(mut started) = STARTED.lock() {
             started.retain(|plugin| plugin.strong_count() > 0);
@@ -237,6 +250,28 @@ impl Plugin {
         &self.shared.available
     }
 
+    pub fn stats(&self) -> PluginStats {
+        let calls = self.shared.calls.load(Ordering::Relaxed);
+        let busy = self.shared.busy_micros.load(Ordering::Relaxed);
+        PluginStats {
+            calls,
+            errors: self.shared.errors.load(Ordering::Relaxed),
+            average_ms: if calls == 0 {
+                0.0
+            } else {
+                busy as f64 / calls as f64 / 1000.0
+            },
+        }
+    }
+
+    #[cfg(test)]
+    pub fn process_id(&self) -> Option<u32> {
+        match &*self.shared.slot.lock().unwrap_or_else(|e| e.into_inner()) {
+            Slot::Running(process) => Some(process.child.id()),
+            _ => None,
+        }
+    }
+
     pub fn is_alive(&self) -> bool {
         match self.shared.slot.try_lock() {
             Ok(mut slot) => match &mut *slot {
@@ -252,7 +287,15 @@ impl Plugin {
         let Slot::Running(process) = &mut *slot else {
             return Err(PluginError::Unavailable);
         };
+        let started = Instant::now();
         let result = process.request(action, data, self.shared.timeouts.call);
+        self.shared.calls.fetch_add(1, Ordering::Relaxed);
+        self.shared
+            .busy_micros
+            .fetch_add(started.elapsed().as_micros() as u64, Ordering::Relaxed);
+        if result.is_err() {
+            self.shared.errors.fetch_add(1, Ordering::Relaxed);
+        }
         if matches!(
             result,
             Err(PluginError::Timeout | PluginError::Exited | PluginError::Malformed(_))

@@ -3,6 +3,7 @@
 use crate::Plugin;
 use crate::cache::{ExploreCache, Journeys};
 use crate::config::Config;
+use crate::overpass;
 use crate::plugin::parse_journeys;
 use crate::route::{
     Graph, OutgoingJourney, RouteError, SearchMode, SearchParams, SearchStats, Stations,
@@ -15,11 +16,12 @@ use axum::extract::{DefaultBodyLimit, State};
 use axum::http::{HeaderName, HeaderValue, StatusCode, header};
 use axum::middleware;
 use axum::response::{IntoResponse, Response};
-use axum::routing::post;
+use axum::routing::{get, post};
 use chrono::{DateTime, Utc};
 use serde_json::{Value, json};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, OnceLock};
+use std::time::Instant;
 
 pub const OSM_ATTRIBUTION: &str = "Map data © OpenStreetMap contributors, ODbL.";
 
@@ -27,6 +29,8 @@ pub struct AppState {
     pub config: Config,
     pub graph: Arc<Graph>,
     pub cache: ExploreCache,
+    pub overpass_address: String,
+    started: Instant,
     network: OnceLock<Network>,
 }
 
@@ -39,6 +43,8 @@ impl AppState {
     pub fn new(config: Config, graph: Arc<Graph>) -> Self {
         AppState {
             cache: ExploreCache::new(std::time::Duration::from_secs(config.cache_ttl_s)),
+            overpass_address: overpass::ADDRESS.to_string(),
+            started: Instant::now(),
             config,
             graph,
             network: OnceLock::new(),
@@ -94,6 +100,7 @@ pub fn router(state: Arc<AppState>) -> Router {
     let max_body_bytes = state.config.max_body_bytes;
     Router::new()
         .route("/", post(plan).options(preflight))
+        .route("/health", get(health))
         .fallback(not_found)
         .method_not_allowed_fallback(method_not_allowed)
         .layer(DefaultBodyLimit::max(max_body_bytes))
@@ -112,6 +119,48 @@ async fn method_not_allowed() -> ApiError {
     ApiError::new(
         StatusCode::METHOD_NOT_ALLOWED,
         json!({ "error": "method not allowed, use POST /" }),
+    )
+}
+
+async fn health(State(state): State<Arc<AppState>>) -> Response {
+    let overpass_up = overpass::answers(&state.overpass_address).await;
+    let plugins: Vec<Value> = state
+        .network()
+        .map(|network| {
+            network
+                .plugins
+                .iter()
+                .map(|plugin| {
+                    let stats = plugin.stats();
+                    json!({
+                        "name": plugin.name(),
+                        "mode": plugin.mode(),
+                        "alive": plugin.is_alive(),
+                        "calls": stats.calls,
+                        "errors": stats.errors,
+                        "avg_ms": (stats.average_ms * 10.0).round() / 10.0,
+                    })
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    let ready = state.network().is_some();
+    let healthy =
+        ready && overpass_up && plugins.iter().all(|plugin| plugin["alive"] == json!(true));
+    json_response(
+        if healthy {
+            StatusCode::OK
+        } else {
+            StatusCode::SERVICE_UNAVAILABLE
+        },
+        &json!({
+            "status": if healthy { "ok" } else { "degraded" },
+            "ready": ready,
+            "uptime_s": state.started.elapsed().as_secs(),
+            "graph": {"nodes": state.graph.node_count(), "edges": state.graph.edge_count()},
+            "overpass": if overpass_up { "up" } else { "down" },
+            "plugins": plugins,
+        }),
     )
 }
 

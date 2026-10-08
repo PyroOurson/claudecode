@@ -141,6 +141,25 @@ A successful answer is `200`:
 * Times are RFC 3339 in UTC, to the millisecond.
 * Consecutive walking edges form one segment, and each vehicle leg is its own segment, so a change between vehicles is always visible.
 
+### `GET /health`
+
+Reports whether the server can answer routes. `200` when the graph is loaded, Overpass answers and every plugin is running; `503` otherwise.
+
+```json
+{
+  "status": "ok",
+  "ready": true,
+  "uptime_s": 5321,
+  "graph": {"nodes": 37524, "edges": 75706},
+  "overpass": "up",
+  "plugins": [{"name": "sncf-plugin", "mode": "train", "alive": true, "calls": 412, "errors": 3, "avg_ms": 84.2}]
+}
+```
+
+* `status` is `ok` or `degraded`; `ready` is `false` while Overpass and the plugins start.
+* `graph.edges` counts each direction of a footway.
+* For each plugin: `alive` is `false` while it restarts or after it died, `calls` and `errors` count its requests since the server started, and `avg_ms` is their average duration.
+
 ### Errors
 
 Every error has a JSON body `{"error": "<message>"}`, sometimes with more fields.
@@ -149,7 +168,7 @@ Every error has a JSON body `{"error": "<message>"}`, sometimes with more fields
 | --- | --- |
 | `400` | Invalid JSON, a body that is not an object, `required_nodes` missing or malformed or with too few or too many entries, a `time` that does not parse, a `walking_speed` out of range, or a bad `fast`/`heuristic`. The message names the problem. |
 | `404` | `{"error": "no route", "failed_leg": [from, to]}`: no route for that pair of consecutive nodes, or one of them is unknown. `{"error": "no route within limits", "limit": "max_expanded" \| "max_plugin_calls" \| "horizon_h"}`: a search limit stopped the search. Unknown paths get `404` too. |
-| `405` | A method other than `POST` or `OPTIONS` on `/`. |
+| `405` | A method other than `POST` or `OPTIONS` on `/`, or other than `GET` on `/health`. |
 | `413` | A body larger than `MAPS_MAX_BODY_BYTES`. |
 | `500` | An internal error. The connection is never dropped without an answer. |
 | `503` | The server is still starting: Overpass or the plugins are not ready yet. |

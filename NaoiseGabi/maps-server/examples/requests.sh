@@ -40,6 +40,7 @@ post 400 '{"required_nodes": "1813442462,12486470822"}'
 post 400 '{"required_nodes": [1813442462, 12486470822'
 check 204 "OPTIONS / (CORS preflight)" -X OPTIONS "$BASE/" -H "Origin: https://example.org" -H "Access-Control-Request-Method: POST"
 check 405 "GET /" "$BASE/"
+check 200 "GET /health" "$BASE/health"
 
 if [ "$failures" -gt 0 ]; then
 	echo "$failures request(s) did not get the expected status."

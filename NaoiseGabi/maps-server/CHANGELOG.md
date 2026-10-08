@@ -34,6 +34,7 @@ These change what clients or plugins see. Read them before upgrading.
 
 ### Added
 
+- `GET /health`: `{"status": "ok" | "degraded", "ready", "uptime_s", "graph": {"nodes", "edges"}, "overpass": "up" | "down", "plugins": [{"name", "mode", "alive", "calls", "errors", "avg_ms"}]}`, with `200` when everything is up and `503` otherwise.
 - Configuration variables, each defaulting to the old behaviour: `MAPS_BIND`, `MAPS_MAX_BODY_BYTES`, `MAPS_MAX_REQUIRED_NODES`, `MAPS_MAX_SPEED_KMH`, `MAPS_MAX_EXPANDED`, `MAPS_MAX_PLUGIN_CALLS`, `MAPS_HORIZON_H`, `MAPS_CACHE_TTL_S`, `MAPS_PLUGIN_TIMEOUT_S`, `MAPS_PLUGIN_STARTUP_TIMEOUT_S`, `MAPS_OVERPASS_IMAGE`, `MAPS_OVERPASS_READY_TIMEOUT_S`, `MAPS_SOURCE_URL`. `OSM_PBF_FILES` and `OSM_PBF_FILE_NAME` still work.
 - `"fast": true` in requests, for the walking-estimate search.
 - `time` also accepts `YYYY-mm-ddTHH:MM:SS` (UTC) and RFC 3339 with an offset.

@@ -62,9 +62,27 @@ pub fn state(plugins: Vec<Plugin>) -> Arc<AppState> {
 
 pub fn state_with(plugins: Vec<Plugin>, config: Config) -> Arc<AppState> {
     let stations = build_station_access_map(&plugins);
-    let state = Arc::new(AppState::new(config, FIXTURE.clone()));
+    let mut state = AppState::new(config, FIXTURE.clone());
+    state.overpass_address = fake_overpass();
+    let state = Arc::new(state);
     state.set_ready(plugins, stations);
     state
+}
+
+pub fn fake_overpass() -> String {
+    static ADDRESS: LazyLock<String> = LazyLock::new(|| {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap().to_string();
+        thread::spawn(move || {
+            for mut stream in listener.incoming().flatten() {
+                let mut buffer = [0u8; 1024];
+                let _ = stream.read(&mut buffer);
+                let _ = stream.write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
+            }
+        });
+        address
+    });
+    ADDRESS.clone()
 }
 
 pub fn serve_state(state: Arc<AppState>) -> SocketAddr {
