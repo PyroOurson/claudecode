@@ -16,6 +16,7 @@ ClaudeScripts/hello-page/games/spend.html
 ClaudeScripts/hello-page/games/typing.html
 ClaudeScripts/maps-server-review/README.md
 ClaudeScripts/maps-server-review/prompt.md
+ClaudeScripts/maps-server-review/report.md
 ClaudeScripts/maps-server-review/repro/fake_plugin.py
 ClaudeScripts/maps-server-review/repro/fixture.osm
 ClaudeScripts/maps-server-review/repro/fixture.osm.pbf
