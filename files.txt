@@ -37,8 +37,12 @@ NaoiseGabi/maps-server/README.md
 NaoiseGabi/maps-server/flake.lock
 NaoiseGabi/maps-server/flake.nix
 NaoiseGabi/maps-server/src/main.rs
+NaoiseGabi/maps-server/src/repro.rs
 NaoiseGabi/maps-server/src/route.rs
 NaoiseGabi/maps-server/test
+NaoiseGabi/maps-server/tests/fake_plugin.py
+NaoiseGabi/maps-server/tests/fixtures/fixture.osm
+NaoiseGabi/maps-server/tests/fixtures/fixture.osm.pbf
 NaoiseGabi/requirements.txt
 NaoiseGabi/solvers/connections_answers.py
 NaoiseGabi/solvers/wordle_solver.py

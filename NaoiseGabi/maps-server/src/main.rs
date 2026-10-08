@@ -25,6 +25,9 @@ use std::thread;
 
 mod route;
 
+#[cfg(test)]
+mod repro;
+
 pub static OSM_PBF_FILES: LazyLock<Vec<String>> = LazyLock::new(|| {
     env::var("OSM_PBF_FILES")
         .or_else(|_| env::var("OSM_PBF_FILE_NAME"))

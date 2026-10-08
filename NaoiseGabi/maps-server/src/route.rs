@@ -72,10 +72,17 @@ impl PartialOrd for SearchState {
 }
 
 pub static GRAPH: LazyLock<Graph> = LazyLock::new(|| {
-    let file_paths: Vec<String> = crate::OSM_PBF_FILES
-        .iter()
-        .map(|f| format!("assets/{}", f))
-        .collect();
+    let file_paths: Vec<String> = if cfg!(test) {
+        vec![format!(
+            "{}/tests/fixtures/fixture.osm.pbf",
+            env!("CARGO_MANIFEST_DIR")
+        )]
+    } else {
+        crate::OSM_PBF_FILES
+            .iter()
+            .map(|f| format!("assets/{}", f))
+            .collect()
+    };
 
     Graph::from_pbfs(&file_paths).expect("Failed to load OSM PBF files")
 });
