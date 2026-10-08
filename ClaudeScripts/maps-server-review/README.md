@@ -23,6 +23,8 @@ It builds a copy in a temporary folder and prints one line per check: `BUG`, `fi
 
 What was done with this handoff, task by task, is in `report.md`.
 
+Ideas for what could be added next, including the designed proposals F8 to F16, are in [`IDEAS.md`](IDEAS.md).
+
 ## Hand it to another AI
 
 1. Give the AI the maps-server repository (`NaoiseGabi/maps-server/`) and this whole folder.

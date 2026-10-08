@@ -1,7 +1,6 @@
 .gitignore
 .nojekyll
 CLAUDE.md
-ClaudeScripts/hello-page/IDEAS.md
 ClaudeScripts/hello-page/common.css
 ClaudeScripts/hello-page/games/2048.html
 ClaudeScripts/hello-page/games/circle.html
@@ -15,6 +14,7 @@ ClaudeScripts/hello-page/games/reaction.html
 ClaudeScripts/hello-page/games/snake.html
 ClaudeScripts/hello-page/games/spend.html
 ClaudeScripts/hello-page/games/typing.html
+ClaudeScripts/maps-server-review/IDEAS.md
 ClaudeScripts/maps-server-review/README.md
 ClaudeScripts/maps-server-review/prompt.md
 ClaudeScripts/maps-server-review/report.md
