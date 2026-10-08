@@ -16,7 +16,7 @@ use std::fs;
 use std::future::Future;
 use std::hash::{Hash, Hasher};
 use std::path::Path;
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, UNIX_EPOCH};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 pub const CONTAINER: &str = "overpass_api";
@@ -29,7 +29,43 @@ const STATE_FILES: [&str; 5] = [
     "/db/diffs",
 ];
 
-fn calculate_pbf_hash(assets_path: &Path, files: &[String]) -> String {
+const HASH_PREFIX: &str = "fnv1a-";
+
+fn fnv1a64(bytes: &[u8]) -> u64 {
+    bytes.iter().fold(0xcbf2_9ce4_8422_2325, |hash, &byte| {
+        (hash ^ u64::from(byte)).wrapping_mul(0x0000_0100_0000_01b3)
+    })
+}
+
+fn describe_files(assets_path: &Path, files: &[String]) -> String {
+    files
+        .iter()
+        .map(
+            |file_name| match fs::metadata(assets_path.join(file_name)) {
+                Ok(metadata) => {
+                    let modified = metadata
+                        .modified()
+                        .ok()
+                        .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
+                        .map(|time| format!("{}.{:09}", time.as_secs(), time.subsec_nanos()))
+                        .unwrap_or_else(|| "unknown".to_string());
+                    format!("{}\t{}\t{}\n", file_name, metadata.len(), modified)
+                }
+                Err(_) => format!("{}\tmissing\n", file_name),
+            },
+        )
+        .collect()
+}
+
+pub fn pbf_hash(assets_path: &Path, files: &[String]) -> String {
+    format!(
+        "{}{:016x}",
+        HASH_PREFIX,
+        fnv1a64(describe_files(assets_path, files).as_bytes())
+    )
+}
+
+fn legacy_pbf_hash(assets_path: &Path, files: &[String]) -> String {
     let mut hasher = DefaultHasher::new();
     for file_name in files {
         let path = assets_path.join(file_name);
@@ -42,6 +78,26 @@ fn calculate_pbf_hash(assets_path: &Path, files: &[String]) -> String {
         }
     }
     format!("{:x}", hasher.finish())
+}
+
+#[derive(Debug, PartialEq)]
+pub enum LabelMatch {
+    Current,
+    Legacy,
+    Changed,
+}
+
+pub fn match_label(label: &str, assets_path: &Path, files: &[String]) -> LabelMatch {
+    if label == pbf_hash(assets_path, files) {
+        LabelMatch::Current
+    } else if !label.is_empty()
+        && !label.starts_with(HASH_PREFIX)
+        && label == legacy_pbf_hash(assets_path, files)
+    {
+        LabelMatch::Legacy
+    } else {
+        LabelMatch::Changed
+    }
 }
 
 const OVERPASS_HOST_IP: &str = "127.0.0.1";
@@ -91,7 +147,7 @@ pub async fn start_overpass_container(
     let container_name = CONTAINER;
     let current_dir = env::current_dir()?;
     let assets_dir = current_dir.join("assets");
-    let current_hash = calculate_pbf_hash(&assets_dir, &config.osm_pbf_files);
+    let current_hash = pbf_hash(&assets_dir, &config.osm_pbf_files);
     let mut kept_state = Vec::new();
 
     if let Ok(inspect) = docker.inspect_container(container_name, None).await {
@@ -120,15 +176,20 @@ pub async fn start_overpass_container(
             .unwrap_or(false);
         let imported = copy_out(docker, "/db/init_done").await.is_some();
 
-        if existing_hash != current_hash {
+        let label = match_label(&existing_hash, &assets_dir, &config.osm_pbf_files);
+
+        if label == LabelMatch::Changed {
             println!(
                 "Detected changes in PBF files. Removing container and database volume to force rebuild..."
             );
             remove_container(docker, true).await?;
-        } else if existing_image != config.overpass_image || published_on != OVERPASS_HOST_IP {
+        } else if existing_image != config.overpass_image
+            || published_on != OVERPASS_HOST_IP
+            || label == LabelMatch::Legacy
+        {
             if imported {
                 println!(
-                    "Recreating the Overpass container with image {} on {}, keeping its database (it used {} on {}).",
+                    "Recreating the Overpass container with image {} on {} and a stable map-file label, keeping its database (it used {} on {}).",
                     config.overpass_image, OVERPASS_HOST_IP, existing_image, published_on
                 );
                 for path in STATE_FILES {
@@ -363,6 +424,42 @@ pub async fn cleanup(docker: &Docker) {
 mod tests {
     use super::*;
     use std::sync::atomic::{AtomicUsize, Ordering};
+
+    #[test]
+    fn fnv1a_matches_the_reference_values() {
+        assert_eq!(fnv1a64(b""), 0xcbf2_9ce4_8422_2325);
+        assert_eq!(fnv1a64(b"a"), 0xaf63_dc4c_8601_ec8c);
+        assert_eq!(fnv1a64(b"foobar"), 0x8594_4171_f739_67e8);
+    }
+
+    #[test]
+    fn the_label_is_stable_and_follows_the_files() {
+        let folder = std::env::temp_dir().join(format!("maps-server-hash-{}", std::process::id()));
+        fs::create_dir_all(&folder).unwrap();
+        let files = vec!["a.osm.pbf".to_string()];
+        fs::write(folder.join("a.osm.pbf"), b"first").unwrap();
+        let first = pbf_hash(&folder, &files);
+        assert!(
+            first.starts_with("fnv1a-") && first.len() == 22,
+            "{}",
+            first
+        );
+        assert_eq!(first, pbf_hash(&folder, &files));
+        assert_eq!(match_label(&first, &folder, &files), LabelMatch::Current);
+        let legacy = legacy_pbf_hash(&folder, &files);
+        assert_eq!(match_label(&legacy, &folder, &files), LabelMatch::Legacy);
+        assert_eq!(match_label("", &folder, &files), LabelMatch::Changed);
+        assert_eq!(
+            match_label("1234abcd", &folder, &files),
+            LabelMatch::Changed
+        );
+        fs::write(folder.join("a.osm.pbf"), b"second, longer").unwrap();
+        let second = pbf_hash(&folder, &files);
+        let _ = fs::remove_dir_all(&folder);
+        assert_ne!(first, second);
+        assert_eq!(match_label(&first, &folder, &files), LabelMatch::Changed);
+        assert_eq!(match_label(&legacy, &folder, &files), LabelMatch::Changed);
+    }
 
     fn fast(timeout_ms: u64) -> (Duration, Duration, Duration) {
         (

@@ -43,5 +43,6 @@ All notable changes to maps-server. The format follows [Keep a Changelog](https:
 
 - The Overpass container is created from `MAPS_OVERPASS_IMAGE`, default `wiktorn/overpass-api:v0.7.62.9`, instead of `wiktorn/overpass-api:latest`. The Nix wrapper loads exactly that image once and exports the variable. An existing container built from another image is recreated, and its `overpass_db` volume and its "import finished" marker (`/db/init_done`, which the image keeps outside the volume) are carried over, so no re-import happens.
 - Overpass is published on `127.0.0.1:12345` only, instead of every network interface. An existing container published elsewhere is recreated the same way.
+- The `pbf_hash` label that decides whether the map files changed is now FNV-1a over each file's name, size and modification time (`fnv1a-` plus 16 hex digits), which no Rust upgrade can change. A container with the old label is accepted when the old hash still matches, and is recreated once with the new label, keeping its database.
 - A stopped Overpass container whose first import never finished is removed with its volume and the import starts again. Restarting it used to re-run the import on top of the old files, which fails.
 - The flake no longer lists `armv7l-linux`: the pinned Overpass image has no 32-bit ARM build. `aarch64-linux` and `aarch64-darwin` get their own image hash.
