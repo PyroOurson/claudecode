@@ -23,6 +23,7 @@ use std::sync::{Arc, Mutex};
 
 mod config;
 mod http;
+mod plugin;
 mod route;
 
 #[cfg(test)]
@@ -301,21 +302,42 @@ fn build_station_access_map(plugins: &mut [Plugin]) -> StationAccessMap {
 
     for plugin in plugins.iter_mut() {
         println!("Fetching available nodes from plugin: {}", plugin.name);
-        if let Ok(value) = plugin.available_nodes()
-            && let Some(map) = value.as_object()
-        {
-            for (key, value) in map {
-                if let Ok(station_id) = key.parse::<i64>()
-                    && let Some(entries) = value.as_array()
-                {
-                    let entrance_nodes: Vec<i64> =
-                        entries.iter().filter_map(|v| v.as_i64()).collect();
-                    station_access
-                        .entry(station_id)
-                        .or_default()
-                        .extend(entrance_nodes);
+        let Ok(value) = plugin.available_nodes() else {
+            continue;
+        };
+        let Some(map) = value.as_object() else {
+            eprintln!(
+                "Plugin {} answered available with something other than an object",
+                plugin.name
+            );
+            continue;
+        };
+        let mut skipped = Vec::new();
+        for (key, value) in map {
+            let (Ok(station_id), Some(entries)) = (key.trim().parse::<i64>(), value.as_array())
+            else {
+                skipped.push(format!("{}: {}", key, value));
+                continue;
+            };
+            let mut entrance_nodes = Vec::with_capacity(entries.len());
+            for entry in entries {
+                match plugin::parse_id(entry) {
+                    Some(id) => entrance_nodes.push(id),
+                    None => skipped.push(format!("{}: entrance {}", key, entry)),
                 }
             }
+            station_access
+                .entry(station_id)
+                .or_default()
+                .extend(entrance_nodes);
+        }
+        if let Some(first) = skipped.first() {
+            eprintln!(
+                "Plugin {} listed {} invalid stations or entrances, skipped; the first one: {}",
+                plugin.name,
+                skipped.len(),
+                first
+            );
         }
     }
 

@@ -2,9 +2,10 @@
 // Copyright (C) 2026 Naoise McG
 use crate::Plugin;
 use crate::config::Config;
+use crate::plugin::parse_journeys;
 use crate::route::{
-    Graph, Line, OutgoingJourney, RouteError, SearchParams, SearchStats, Stations,
-    parse_journey_departure, parse_request_time, route_with_schedule,
+    Graph, OutgoingJourney, RouteError, SearchParams, SearchStats, Stations, parse_request_time,
+    route_with_schedule,
 };
 use axum::Router;
 use axum::body::{Body, Bytes};
@@ -232,43 +233,15 @@ fn explore_station(
     let mut journeys = Vec::new();
     let mut plugins = plugins.lock().unwrap();
 
-    for (p_idx, plugin) in plugins.iter_mut().enumerate() {
-        if let Ok(value) = plugin.explore(station, time)
-            && let Some(array) = value.as_array()
-        {
-            for entry in array {
-                if let (Some(to_node), Some(cost), Some(time_str)) = (
-                    entry.get("to").and_then(|v| v.as_i64()),
-                    entry.get("cost").and_then(|v| v.as_i64()),
-                    entry.get("time").and_then(|v| v.as_str()),
-                ) {
-                    let line = entry.get("line").and_then(|l| {
-                        let id = l.get("id").and_then(|v| v.as_str()).map(|s| s.to_string());
-                        let preferred_colour = l
-                            .get("preferred_colour")
-                            .and_then(|v| v.as_str())
-                            .map(|s| s.to_string());
-                        if id.is_some() || preferred_colour.is_some() {
-                            Some(Line {
-                                id,
-                                preferred_colour,
-                            })
-                        } else {
-                            None
-                        }
-                    });
-                    if let Ok(departure) = parse_journey_departure(time_str) {
-                        journeys.push(OutgoingJourney {
-                            target_station: to_node,
-                            departure,
-                            cost_seconds: cost as u64,
-                            plugin_id: Some(p_idx),
-                            mode: plugin.mode.clone(),
-                            line,
-                        });
-                    }
-                }
-            }
+    for (index, plugin) in plugins.iter_mut().enumerate() {
+        if let Ok(value) = plugin.explore(station, time) {
+            journeys.extend(parse_journeys(
+                &plugin.name,
+                index,
+                &plugin.mode,
+                station,
+                &value,
+            ));
         }
         if !journeys.is_empty() {
             break;

@@ -226,7 +226,6 @@ fn control_bus_plugin_is_asked_when_the_train_plugin_has_nothing() {
 }
 
 #[test]
-#[ignore = "B4"]
 fn string_ids_from_plugins_are_accepted() {
     let plugins = vec![plugin(
         "readme",
@@ -246,7 +245,6 @@ fn string_ids_from_plugins_are_accepted() {
 }
 
 #[test]
-#[ignore = "B4"]
 fn string_entrance_ids_from_plugins_are_accepted() {
     let mut plugins = vec![plugin("readme", json!({"available": {"100": ["3"]}}))];
     let stations = build_station_access_map(&mut plugins);
@@ -368,7 +366,6 @@ fn long_headers_do_not_cut_the_body() {
 }
 
 #[test]
-#[ignore = "B4"]
 fn negative_costs_never_arrive_before_departing() {
     let plugins = vec![plugin(
         "broken",

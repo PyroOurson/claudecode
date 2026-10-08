@@ -18,6 +18,9 @@ All notable changes to maps-server. The format follows [Keep a Changelog](https:
 - `time` accepts `YYYYmmddTHHMMSS`, `YYYY-mm-ddTHH:MM:SS` (both UTC) and RFC 3339 with an offset. A malformed time used to become "now" silently.
 - When a leg has no route the answer is `404` with `{"error": "no route", "failed_leg": [from, to]}` instead of `200` with an empty route. A node that is neither in the walking graph nor a station gets this answer at once, without searching.
 - Unknown paths get `404` and other methods `405`, both with a JSON error.
+- Station, entrance and `to` IDs from plugins are accepted as integers or numeric strings. String IDs used to be dropped silently.
+- Plugin journeys whose `cost` is negative or not an integer, whose `time` does not parse, or whose `to` is not an ID are skipped and logged with the plugin's name, once per plugin call. A negative cost used to produce a journey that arrived before it left.
+- A line `id` sent as a number is kept, as a string.
 
 - The Overpass container is created from `MAPS_OVERPASS_IMAGE`, default `wiktorn/overpass-api:v0.7.62.9`, instead of `wiktorn/overpass-api:latest`. The Nix wrapper loads exactly that image once and exports the variable. An existing container built from another image is recreated, and its `overpass_db` volume is kept, so no re-import happens.
 - Overpass is published on `127.0.0.1:12345` only, instead of every network interface. An existing container published elsewhere is recreated the same way.
