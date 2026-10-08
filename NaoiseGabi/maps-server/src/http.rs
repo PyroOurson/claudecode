@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 // Copyright (C) 2026 Naoise McG
 use crate::Plugin;
+use crate::cache::{ExploreCache, Journeys};
 use crate::config::Config;
 use crate::plugin::parse_journeys;
 use crate::route::{
@@ -25,6 +26,7 @@ pub const OSM_ATTRIBUTION: &str = "Map data © OpenStreetMap contributors, ODbL.
 pub struct AppState {
     pub config: Config,
     pub graph: Arc<Graph>,
+    pub cache: ExploreCache,
     network: OnceLock<Network>,
 }
 
@@ -36,6 +38,7 @@ pub struct Network {
 impl AppState {
     pub fn new(config: Config, graph: Arc<Graph>) -> Self {
         AppState {
+            cache: ExploreCache::new(std::time::Duration::from_secs(config.cache_ttl_s)),
             config,
             graph,
             network: OnceLock::new(),
@@ -280,9 +283,18 @@ pub fn parse_request(body: &[u8], config: &Config) -> Result<RouteRequest, ApiEr
     })
 }
 
-fn explore_with(plugin: &Plugin, station: i64, time: DateTime<Utc>) -> Vec<OutgoingJourney> {
+fn explore_with(
+    plugin: &Plugin,
+    station: i64,
+    time: DateTime<Utc>,
+) -> Option<Vec<OutgoingJourney>> {
     match plugin.explore(station, time) {
-        Ok(value) => parse_journeys(plugin.name(), plugin.mode(), station, &value),
+        Ok(value) => Some(parse_journeys(
+            plugin.name(),
+            plugin.mode(),
+            station,
+            &value,
+        )),
         Err(error) => {
             eprintln!(
                 "Plugin {} could not explore station {}: {}",
@@ -290,7 +302,7 @@ fn explore_with(plugin: &Plugin, station: i64, time: DateTime<Utc>) -> Vec<Outgo
                 station,
                 error
             );
-            Vec::new()
+            None
         }
     }
 }
@@ -300,12 +312,11 @@ fn explore_all(
     indexes: &[usize],
     station: i64,
     time: DateTime<Utc>,
-) -> Vec<(usize, Vec<OutgoingJourney>)> {
+) -> Vec<(usize, Option<Vec<OutgoingJourney>>)> {
     let explore = |index: usize| {
         let journeys = plugins
             .get(index)
-            .map(|plugin| explore_with(plugin, station, time))
-            .unwrap_or_default();
+            .and_then(|plugin| explore_with(plugin, station, time));
         (index, journeys)
     };
     if indexes.len() < 2 {
@@ -334,22 +345,37 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
 
     println!("Received request: {:?}", request);
 
-    let mut cached_explorations: HashMap<(i64, usize, DateTime<Utc>), Vec<OutgoingJourney>> =
-        HashMap::new();
+    let mut seen: HashMap<(i64, usize, DateTime<Utc>), Journeys> = HashMap::new();
     let mut fetch_outgoing = |station: i64, time: DateTime<Utc>| {
-        let serving = network.stations.plugins_serving(station);
-        let missing: Vec<usize> = serving
-            .iter()
-            .copied()
-            .filter(|&index| !cached_explorations.contains_key(&(station, index, time)))
-            .collect();
-        for (index, journeys) in explore_all(&network.plugins, &missing, station, time) {
-            cached_explorations.insert((station, index, time), journeys);
+        let window = ExploreCache::window_start(time);
+        let mut found = Vec::new();
+        let mut missing = Vec::new();
+        for &index in network.stations.plugins_serving(station) {
+            let cached = seen
+                .get(&(station, index, window))
+                .cloned()
+                .or_else(|| state.cache.get(station, index, window));
+            match cached {
+                Some(journeys) => {
+                    seen.insert((station, index, window), journeys.clone());
+                    found.push(journeys);
+                }
+                None => missing.push(index),
+            }
         }
-        let journeys = serving
+        for (index, result) in explore_all(&network.plugins, &missing, station, window) {
+            let succeeded = result.is_some();
+            let journeys: Journeys = Arc::new(result.unwrap_or_default());
+            if succeeded {
+                state.cache.insert(station, index, window, journeys.clone());
+            }
+            seen.insert((station, index, window), journeys.clone());
+            found.push(journeys);
+        }
+        let journeys = found
             .iter()
-            .filter_map(|&index| cached_explorations.get(&(station, index, time)))
-            .flatten()
+            .flat_map(|journeys| journeys.iter())
+            .filter(|journey| journey.departure >= time)
             .cloned()
             .collect();
         (journeys, missing.len())
@@ -371,7 +397,15 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
         request.start_time,
         &mut fetch_outgoing,
         &mut stats,
-    )?;
+    );
+    println!(
+        "Searched {} states with {} plugin calls; cache {} hits, {} misses since start",
+        stats.expanded,
+        stats.plugin_calls,
+        state.cache.hits(),
+        state.cache.misses()
+    );
+    let result = result?;
 
     let plugin_attributions = network
         .plugins

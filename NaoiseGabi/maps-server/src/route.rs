@@ -374,15 +374,15 @@ where
             if stats.plugin_calls >= params.limits.max_plugin_calls {
                 return Err(Stop::Limit("max_plugin_calls"));
             }
-            let (journeys, calls) =
-                fetch_outgoing(current_node, current_time + params.min_transfer);
+            let query_time = current_time + params.min_transfer;
+            let (journeys, calls) = fetch_outgoing(current_node, query_time);
             stats.plugin_calls += calls;
             for journey in journeys {
                 if journey.target_station == current_node {
                     continue;
                 }
 
-                if journey.departure < current_time {
+                if journey.departure < query_time {
                     continue;
                 }
 

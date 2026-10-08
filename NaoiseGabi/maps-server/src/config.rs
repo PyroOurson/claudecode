@@ -21,6 +21,7 @@ pub struct Config {
     pub max_expanded: usize,
     pub max_plugin_calls: usize,
     pub horizon_h: f64,
+    pub cache_ttl_s: u64,
     pub plugin_timeout_s: u64,
     pub plugin_startup_timeout_s: u64,
 }
@@ -78,6 +79,7 @@ impl Config {
             max_expanded: number(lookup, "MAPS_MAX_EXPANDED", 5_000_000)?,
             max_plugin_calls: number(lookup, "MAPS_MAX_PLUGIN_CALLS", 1000)?,
             horizon_h: non_negative(number(lookup, "MAPS_HORIZON_H", 24.0)?, "MAPS_HORIZON_H")?,
+            cache_ttl_s: number(lookup, "MAPS_CACHE_TTL_S", 120)?,
             plugin_timeout_s: number(lookup, "MAPS_PLUGIN_TIMEOUT_S", 30)?,
             plugin_startup_timeout_s: number(lookup, "MAPS_PLUGIN_STARTUP_TIMEOUT_S", 900)?,
         })

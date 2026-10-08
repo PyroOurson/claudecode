@@ -211,7 +211,7 @@ fn arrival_with(extra: serde_json::Value) -> crate::testkit::Reply {
 
 #[test]
 fn search_flags_map_onto_exact_and_fast_modes() {
-    let train = "2026-08-08T12:19:37Z";
+    let train = "2026-08-08T12:15:00Z";
     let walk = "2026-08-08T12:36:15.553Z";
     let cases = [
         (json!({}), train),
@@ -515,8 +515,8 @@ fn big_network(log: &CallLog) -> crate::Plugin {
         .map(|station| {
             (
                 station.to_string(),
-                json!([{"to": station + 1, "offset": 60, "cost": 300},
-                       {"to": station + 2, "offset": 60, "cost": 300}]),
+                json!([{"to": station + 1, "offset": 300, "cost": 60},
+                       {"to": station + 2, "offset": 300, "cost": 60}]),
             )
         })
         .collect();
@@ -665,4 +665,88 @@ fn trunk_roads_are_walkable_only_with_a_sidewalk() {
 #[test]
 fn ordinary_footways_stay_walkable() {
     assert!(walkable(15));
+}
+
+fn logged_train_and_bus(train_log: &CallLog, bus_log: &CallLog) -> Vec<crate::Plugin> {
+    vec![
+        plugin(
+            "train",
+            json!({"mode": "train", "log": train_log.path(), "available": {"300": [], "400": []},
+                   "explore": {"300": [{"to": 400, "offset": 120, "cost": 600}]}}),
+        ),
+        plugin(
+            "bus",
+            json!({"mode": "bus", "log": bus_log.path(), "available": {"400": [], "500": []},
+                   "explore": {"400": [{"to": 500, "offset": 300, "cost": 600}]}}),
+        ),
+    ]
+}
+
+fn explore_calls(logs: &[&CallLog]) -> usize {
+    logs.iter().map(|log| log.explored_stations().len()).sum()
+}
+
+#[test]
+fn a_repeated_request_is_served_from_the_cache() {
+    let (train_log, bus_log) = (CallLog::new("cache-train"), CallLog::new("cache-bus"));
+    let state = state_with(
+        logged_train_and_bus(&train_log, &bus_log),
+        Config::default(),
+    );
+    let address = serve_state(state.clone());
+    let body = json!({"required_nodes": [300, 500], "time": "20260808T120000"}).to_string();
+    let first = exchange(address, vec![request("POST", "/", &body)]);
+    let calls = explore_calls(&[&train_log, &bus_log]);
+    let misses = state.cache.misses();
+    let second = exchange(address, vec![request("POST", "/", &body)]);
+    assert!(has_route(&first), "{}", first.raw);
+    assert_eq!(first.json, second.json);
+    assert!(calls > 0);
+    assert_eq!(
+        explore_calls(&[&train_log, &bus_log]),
+        calls,
+        "the second request called the plugins"
+    );
+    assert_eq!(state.cache.misses(), misses);
+    assert_eq!(
+        state.cache.hits(),
+        misses,
+        "every lookup of the second request should hit"
+    );
+}
+
+#[test]
+fn a_zero_ttl_asks_the_plugins_every_time() {
+    let (train_log, bus_log) = (CallLog::new("nocache-train"), CallLog::new("nocache-bus"));
+    let state = state_with(
+        logged_train_and_bus(&train_log, &bus_log),
+        config_with(&[("MAPS_CACHE_TTL_S", "0")]),
+    );
+    let address = serve_state(state);
+    let body = json!({"required_nodes": [300, 500], "time": "20260808T120000"}).to_string();
+    exchange(address, vec![request("POST", "/", &body)]);
+    let calls = explore_calls(&[&train_log, &bus_log]);
+    exchange(address, vec![request("POST", "/", &body)]);
+    assert_eq!(explore_calls(&[&train_log, &bus_log]), 2 * calls);
+}
+
+#[test]
+fn a_failed_exploration_is_not_cached() {
+    let log = CallLog::new("crash-cache");
+    let crashing = plugin_with(
+        "crashing",
+        json!({"crash": ["explore"], "log": log.path(), "available": {"300": [], "400": []}}),
+        short_timeouts(),
+    );
+    let state = state_with(vec![crashing.clone()], Config::default());
+    let address = serve_state(state);
+    let body = json!({"required_nodes": [300, 400], "time": "20260808T120000"}).to_string();
+    let first = exchange(address, vec![request("POST", "/", &body)]);
+    assert_eq!(first.status, 404, "{}", first.raw);
+    assert!(
+        wait_until(|| crashing.is_alive()),
+        "the plugin never came back"
+    );
+    exchange(address, vec![request("POST", "/", &body)]);
+    assert_eq!(log.explored_stations(), vec![300, 300]);
 }

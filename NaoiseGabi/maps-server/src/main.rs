@@ -14,6 +14,7 @@ use std::process::{Command, ExitCode};
 use std::sync::Arc;
 use std::time::Instant;
 
+mod cache;
 mod config;
 mod graph;
 mod http;
