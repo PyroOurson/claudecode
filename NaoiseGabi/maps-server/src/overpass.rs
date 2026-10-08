@@ -179,7 +179,7 @@ pub async fn start_overpass_container(
         let label = match_label(&existing_hash, &assets_dir, &config.osm_pbf_files);
 
         if label == LabelMatch::Changed {
-            println!(
+            tracing::info!(
                 "Detected changes in PBF files. Removing container and database volume to force rebuild..."
             );
             remove_container(docker, true).await?;
@@ -188,9 +188,12 @@ pub async fn start_overpass_container(
             || label == LabelMatch::Legacy
         {
             if imported {
-                println!(
+                tracing::info!(
                     "Recreating the Overpass container with image {} on {} and a stable map-file label, keeping its database (it used {} on {}).",
-                    config.overpass_image, OVERPASS_HOST_IP, existing_image, published_on
+                    config.overpass_image,
+                    OVERPASS_HOST_IP,
+                    existing_image,
+                    published_on
                 );
                 for path in STATE_FILES {
                     if let Some(archive) = copy_out(docker, path).await {
@@ -199,31 +202,32 @@ pub async fn start_overpass_container(
                 }
                 remove_container(docker, false).await?;
             } else {
-                println!(
+                tracing::info!(
                     "Recreating the Overpass container with image {} on {}. Its first import never finished, so it starts again.",
-                    config.overpass_image, OVERPASS_HOST_IP
+                    config.overpass_image,
+                    OVERPASS_HOST_IP
                 );
                 remove_container(docker, true).await?;
             }
         } else if !running && !imported {
-            println!(
+            tracing::info!(
                 "The Overpass container stopped before its first import finished. Removing it and its database volume to import again..."
             );
             remove_container(docker, true).await?;
         } else {
             if !running {
-                println!("Container exists but is stopped. Starting...");
+                tracing::info!("Container exists but is stopped. Starting...");
                 docker
                     .start_container(container_name, None::<StartContainerOptions>)
                     .await?;
             } else {
-                println!("Container is already running and up to date.");
+                tracing::info!("Container is already running and up to date.");
             }
             return Ok(());
         }
     }
 
-    println!("Creating and starting Overpass container...");
+    tracing::info!("Creating and starting Overpass container...");
 
     let mut port_bindings = HashMap::new();
     port_bindings.insert(
@@ -363,7 +367,7 @@ where
             ));
         }
         if elapsed >= next_progress {
-            println!(
+            tracing::info!(
                 "Still waiting for Overpass after {} min; the first import of a large region can take hours.",
                 elapsed.as_secs() / 60
             );
@@ -403,7 +407,7 @@ async fn container_state(docker: &Docker) -> ContainerState {
 }
 
 pub async fn wait_for_overpass_ready(docker: &Docker, config: &Config) -> Result<(), String> {
-    println!("Waiting for Overpass API initialization to complete...");
+    tracing::info!("Waiting for Overpass API initialization to complete...");
     let elapsed = wait_until_ready(
         || answers(ADDRESS),
         || container_state(docker),
@@ -412,7 +416,7 @@ pub async fn wait_for_overpass_ready(docker: &Docker, config: &Config) -> Result
         Duration::from_secs(60),
     )
     .await?;
-    println!("Overpass API is operational after {} s.", elapsed.as_secs());
+    tracing::info!("Overpass API is operational after {} s.", elapsed.as_secs());
     Ok(())
 }
 

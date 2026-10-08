@@ -19,6 +19,7 @@ mod checker;
 mod config;
 mod graph;
 mod http;
+mod metrics;
 mod overpass;
 mod plugin;
 mod route;
@@ -70,7 +71,7 @@ fn build_station_access_map(plugins: &[Plugin]) -> Stations {
 
     for (index, plugin) in plugins.iter().enumerate() {
         let Some(map) = plugin.available().as_object() else {
-            eprintln!(
+            tracing::warn!(
                 "Plugin {} answered available with something other than an object",
                 plugin.name()
             );
@@ -100,7 +101,7 @@ fn build_station_access_map(plugins: &[Plugin]) -> Stations {
             }
         }
         if let Some(first) = skipped.first() {
-            eprintln!(
+            tracing::warn!(
                 "Plugin {} listed {} invalid stations or entrances, skipped; the first one: {}",
                 plugin.name(),
                 skipped.len(),
@@ -127,11 +128,11 @@ fn plugin_names() -> Vec<String> {
     let output = match output {
         Ok(out) if out.status.success() => out,
         Ok(out) => {
-            eprintln!("Nix error: {}", String::from_utf8_lossy(&out.stderr));
+            tracing::warn!("Nix error: {}", String::from_utf8_lossy(&out.stderr));
             return Vec::new();
         }
         Err(e) => {
-            eprintln!("Failed to execute nix command: {}", e);
+            tracing::warn!("Failed to execute nix command: {}", e);
             return Vec::new();
         }
     };
@@ -139,7 +140,7 @@ fn plugin_names() -> Vec<String> {
     match parse_plugin_names(&output.stdout) {
         Ok(names) => names,
         Err(error) => {
-            eprintln!("Could not read the plugin list from nix eval: {}", error);
+            tracing::warn!("Could not read the plugin list from nix eval: {}", error);
             Vec::new()
         }
     }
@@ -219,6 +220,13 @@ fn main() -> ExitCode {
             return ExitCode::from(2);
         }
     }
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+        )
+        .with_target(false)
+        .init();
     let runtime = match tokio::runtime::Runtime::new() {
         Ok(runtime) => runtime,
         Err(error) => {
@@ -237,11 +245,11 @@ fn main() -> ExitCode {
 
 async fn serve() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let loaded = Config::load()?;
-    println!("{}", loaded.summary());
+    tracing::info!("{}", loaded.summary());
     let config = loaded.config;
     let assets = env::current_dir()?.join("assets");
 
-    println!(
+    tracing::info!(
         "Loading the walking graph from {} in {}...",
         config.osm_pbf_files.join(", "),
         assets.display()
@@ -249,7 +257,7 @@ async fn serve() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let started = Instant::now();
     let files = config.osm_pbf_files.clone();
     let graph = tokio::task::spawn_blocking(move || load_graph(&assets, &files)).await??;
-    println!(
+    tracing::info!(
         "Walking graph ready in {:.1} s.",
         started.elapsed().as_secs_f64()
     );
@@ -258,7 +266,7 @@ async fn serve() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let docker_signal = docker.clone();
     tokio::spawn(async move {
         shutdown_signal().await;
-        println!("Shutting down...");
+        tracing::info!("Shutting down...");
         plugin::stop_all();
         overpass::cleanup(&docker_signal).await;
         std::process::exit(0);
@@ -267,7 +275,7 @@ async fn serve() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let bind = config.bind.clone();
     let state = Arc::new(AppState::new(config, Arc::new(graph)));
     let listener = tokio::net::TcpListener::bind(&bind).await?;
-    println!(
+    tracing::info!(
         "Server listening on http://{}, answering 503 until Overpass and the plugins are ready",
         bind
     );
@@ -284,7 +292,7 @@ async fn serve() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let plugins = tokio::task::spawn_blocking(move || plugin::start_all(specs, timeouts)).await?;
     let stations = build_station_access_map(&plugins);
     state.set_ready(plugins, stations);
-    println!("Ready.");
+    tracing::info!("Ready.");
 
     server.await??;
 

@@ -1399,3 +1399,139 @@ fn the_flake_pins_the_image_the_server_uses_by_default() {
     );
     assert_eq!(pinned, crate::config::DEFAULT_OVERPASS_IMAGE);
 }
+
+mod observability {
+    use super::*;
+
+    fn scrape(address: std::net::SocketAddr) -> String {
+        let reply = exchange(address, vec![request("GET", "/metrics", "")]);
+        assert_eq!(reply.status, 200, "{}", reply.raw);
+        assert!(
+            reply
+                .header("Content-Type")
+                .is_some_and(|value| value.starts_with("text/plain; version=0.0.4"))
+        );
+        reply
+            .raw
+            .split_once("\r\n\r\n")
+            .map(|(_, body)| body.to_string())
+            .unwrap_or_default()
+    }
+
+    fn value(metrics: &str, series: &str) -> f64 {
+        metrics
+            .lines()
+            .find_map(|line| {
+                line.strip_prefix(series)
+                    .and_then(|rest| rest.strip_prefix(' '))
+            })
+            .and_then(|number| number.trim().parse().ok())
+            .unwrap_or(0.0)
+    }
+
+    #[test]
+    fn metrics_change_after_a_request() {
+        let plugins = vec![plugin(
+            "train",
+            json!({"available": {"300": [], "400": []},
+                   "explore": {"300": [{"to": 400, "offset": 120, "cost": 600}]}}),
+        )];
+        let address = serve_state(state_with(plugins, Config::default()));
+        let before = scrape(address);
+        let body = json!({"required_nodes": [300, 400], "time": "20260808T120000"}).to_string();
+        let reply = exchange(address, vec![request("POST", "/", &body)]);
+        assert_eq!(reply.status, 200, "{}", reply.raw);
+        exchange(address, vec![request("POST", "/", &body)]);
+        let after = scrape(address);
+        let ok = "maps_http_requests_total{path=\"/\",status=\"200\"}";
+        assert_eq!(value(&before, ok), 0.0);
+        assert_eq!(value(&after, ok), 2.0, "{}", after);
+        assert_eq!(
+            value(
+                &after,
+                "maps_http_requests_total{path=\"/metrics\",status=\"200\"}"
+            ),
+            1.0
+        );
+        assert_eq!(value(&after, "maps_searches_total"), 2.0);
+        assert!(
+            value(&after, "maps_search_expanded_states_total") >= 4.0,
+            "{}",
+            after
+        );
+        assert_eq!(
+            value(&after, "maps_plugin_calls_total{plugin=\"train\"}"),
+            1.0,
+            "{}",
+            after
+        );
+        assert_eq!(value(&after, "maps_cache_hits_total"), 1.0);
+        assert_eq!(value(&after, "maps_cache_misses_total"), 1.0);
+        assert_eq!(value(&after, "maps_cache_hit_ratio"), 0.5);
+        assert_eq!(value(&after, "maps_plugin_alive{plugin=\"train\"}"), 1.0);
+        assert_eq!(value(&after, "maps_graph_nodes"), 5.0);
+        assert!(
+            value(&after, "maps_http_request_duration_seconds_count")
+                > value(&before, "maps_http_request_duration_seconds_count")
+        );
+    }
+
+    #[test]
+    fn metrics_are_valid_prometheus_text() {
+        let address = serve_state(state_with(
+            vec![plugin("train", json!({"available": {"300": []}}))],
+            Config::default(),
+        ));
+        exchange(address, vec![request("POST", "/", &walk())]);
+        let metrics = scrape(address);
+        let mut declared = std::collections::HashSet::new();
+        for line in metrics.lines() {
+            if let Some(rest) = line.strip_prefix("# TYPE ") {
+                let mut parts = rest.split(' ');
+                declared.insert(parts.next().unwrap_or_default().to_string());
+                assert!(
+                    matches!(parts.next(), Some("counter" | "gauge" | "histogram")),
+                    "{}",
+                    line
+                );
+                continue;
+            }
+            if line.starts_with("# HELP ") || line.is_empty() {
+                continue;
+            }
+            let (series, number) = line.rsplit_once(' ').unwrap_or_default();
+            assert!(number.parse::<f64>().is_ok(), "{}", line);
+            let name = series.split('{').next().unwrap_or_default();
+            let family = ["_bucket", "_sum", "_count"]
+                .iter()
+                .find_map(|suffix| name.strip_suffix(suffix))
+                .filter(|base| declared.contains(*base))
+                .unwrap_or(name);
+            assert!(declared.contains(family), "{} has no TYPE line", line);
+            assert!(
+                name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_'),
+                "{}",
+                line
+            );
+        }
+    }
+
+    #[test]
+    fn every_answer_carries_a_request_id() {
+        let address = serve(Vec::new());
+        let first = exchange(address, vec![request("GET", "/health", "")]);
+        let second = exchange(address, vec![request("GET", "/health", "")]);
+        let (a, b) = (first.header("X-Request-Id"), second.header("X-Request-Id"));
+        assert!(a.is_some() && b.is_some() && a != b, "{:?} {:?}", a, b);
+        let chosen = exchange(
+            address,
+            vec![b"GET /health HTTP/1.1\r\nHost: x\r\nConnection: close\r\nX-Request-Id: trace-42\r\n\r\n".to_vec()],
+        );
+        assert_eq!(chosen.header("X-Request-Id"), Some("trace-42"));
+        let rejected = exchange(
+            address,
+            vec![b"GET /health HTTP/1.1\r\nHost: x\r\nConnection: close\r\nX-Request-Id: bad id!\r\n\r\n".to_vec()],
+        );
+        assert_ne!(rejected.header("X-Request-Id"), Some("bad id!"));
+    }
+}

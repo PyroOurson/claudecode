@@ -243,7 +243,7 @@ impl Graph {
             }
         });
 
-        println!(
+        tracing::info!(
             "Loaded graph with {} nodes ({} walkable) and {} edges from {} file(s), using {:.1} MB.",
             graph.node_count(),
             graph.walkable_node_count(),

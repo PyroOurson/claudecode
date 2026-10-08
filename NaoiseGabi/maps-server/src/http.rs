@@ -3,6 +3,7 @@
 use crate::Plugin;
 use crate::cache::{ExploreCache, Journeys};
 use crate::config::Config;
+use crate::metrics::{Metrics, escape, gauge, path_label};
 use crate::overpass;
 use crate::plugin::parse_journeys;
 use crate::route::{
@@ -11,18 +12,22 @@ use crate::route::{
 };
 use axum::Router;
 use axum::body::{Body, Bytes};
+use axum::extract::Request;
 use axum::extract::rejection::BytesRejection;
 use axum::extract::{DefaultBodyLimit, State};
 use axum::http::{HeaderName, HeaderValue, StatusCode, header};
-use axum::middleware;
+use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::collections::HashMap;
+use std::fmt::Write;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, OnceLock};
 use std::time::Instant;
+use tracing::Instrument;
 
 pub const OSM_ATTRIBUTION: &str = "Map data © OpenStreetMap contributors, ODbL.";
 
@@ -30,6 +35,7 @@ pub struct AppState {
     pub config: Config,
     pub graph: Arc<Graph>,
     pub cache: ExploreCache,
+    pub metrics: Metrics,
     pub overpass_address: String,
     started: Instant,
     network: OnceLock<Network>,
@@ -45,6 +51,7 @@ impl AppState {
         AppState {
             cache: ExploreCache::new(std::time::Duration::from_secs(config.cache_ttl_s)),
             overpass_address: overpass::ADDRESS.to_string(),
+            metrics: Metrics::default(),
             started: Instant::now(),
             config,
             graph,
@@ -102,6 +109,7 @@ pub fn router(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/", post(plan).options(preflight))
         .route("/health", get(health))
+        .route("/metrics", get(metrics))
         .fallback(not_found)
         .method_not_allowed_fallback(method_not_allowed)
         .layer(DefaultBodyLimit::max(max_body_bytes))
@@ -109,6 +117,7 @@ pub fn router(state: Arc<AppState>) -> Router {
             state.clone(),
             common_headers,
         ))
+        .layer(middleware::from_fn_with_state(state.clone(), observe))
         .with_state(state)
 }
 
@@ -121,6 +130,168 @@ async fn method_not_allowed() -> ApiError {
         StatusCode::METHOD_NOT_ALLOWED,
         json!({ "error": "method not allowed, use POST /" }),
     )
+}
+
+static REQUESTS: AtomicU64 = AtomicU64::new(0);
+
+type PluginFamily = (
+    &'static str,
+    &'static str,
+    &'static str,
+    fn(&crate::plugin::PluginStats, bool) -> f64,
+);
+
+fn request_id(request: &Request) -> String {
+    request
+        .headers()
+        .get("x-request-id")
+        .and_then(|value| value.to_str().ok())
+        .filter(|id| {
+            !id.is_empty()
+                && id.len() <= 64
+                && id
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+        })
+        .map(str::to_string)
+        .unwrap_or_else(|| format!("{:08x}", REQUESTS.fetch_add(1, Ordering::Relaxed)))
+}
+
+async fn observe(State(state): State<Arc<AppState>>, request: Request, next: Next) -> Response {
+    let started = Instant::now();
+    let id = request_id(&request);
+    let path = path_label(request.uri().path());
+    let span = tracing::info_span!("request", id = %id, method = %request.method(), path = %request.uri().path());
+    let mut response = next.run(request).instrument(span.clone()).await;
+    let elapsed = started.elapsed();
+    let status = response.status().as_u16();
+    state.metrics.record_request(path, status, elapsed);
+    span.in_scope(|| tracing::info!(status, ms = elapsed.as_secs_f64() * 1000.0, "answered"));
+    if let Ok(value) = HeaderValue::from_str(&id) {
+        response
+            .headers_mut()
+            .insert(HeaderName::from_static("x-request-id"), value);
+    }
+    response
+}
+
+async fn metrics(State(state): State<Arc<AppState>>) -> Response {
+    let mut out = String::new();
+    state.metrics.render(&mut out);
+    let (hits, misses) = (state.cache.hits(), state.cache.misses());
+    for (name, help, value) in [
+        (
+            "maps_cache_hits_total",
+            "Plugin explorations served from the cache.",
+            hits,
+        ),
+        (
+            "maps_cache_misses_total",
+            "Plugin explorations not in the cache.",
+            misses,
+        ),
+    ] {
+        let _ = writeln!(
+            out,
+            "# HELP {} {}\n# TYPE {} counter\n{} {}",
+            name, help, name, name, value
+        );
+    }
+    let lookups = hits + misses;
+    gauge(
+        &mut out,
+        "maps_cache_hit_ratio",
+        "Share of cache lookups that hit since the server started.",
+        if lookups == 0 {
+            0.0
+        } else {
+            hits as f64 / lookups as f64
+        },
+    );
+    gauge(
+        &mut out,
+        "maps_uptime_seconds",
+        "Seconds since the server started.",
+        state.started.elapsed().as_secs_f64().floor(),
+    );
+    gauge(
+        &mut out,
+        "maps_ready",
+        "1 once Overpass and the plugins are ready.",
+        if state.network().is_some() { 1.0 } else { 0.0 },
+    );
+    gauge(
+        &mut out,
+        "maps_graph_nodes",
+        "Nodes in the walking graph.",
+        state.graph.node_count() as f64,
+    );
+    gauge(
+        &mut out,
+        "maps_graph_edges",
+        "Directed edges in the walking graph.",
+        state.graph.edge_count() as f64,
+    );
+    if let Some(network) = state.network() {
+        let plugins: Vec<(String, crate::plugin::PluginStats, bool)> = network
+            .plugins
+            .iter()
+            .map(|plugin| (escape(plugin.name()), plugin.stats(), plugin.is_alive()))
+            .collect();
+        let families: [PluginFamily; 5] = [
+            (
+                "maps_plugin_calls_total",
+                "counter",
+                "Requests sent to each plugin.",
+                |stats, _| stats.calls as f64,
+            ),
+            (
+                "maps_plugin_errors_total",
+                "counter",
+                "Requests that failed or got an error reply.",
+                |stats, _| stats.errors as f64,
+            ),
+            (
+                "maps_plugin_call_duration_seconds_sum",
+                "counter",
+                "Total time spent waiting for each plugin.",
+                |stats, _| stats.busy_seconds,
+            ),
+            (
+                "maps_plugin_call_duration_seconds_count",
+                "counter",
+                "Requests timed for each plugin.",
+                |stats, _| stats.calls as f64,
+            ),
+            (
+                "maps_plugin_alive",
+                "gauge",
+                "1 when the plugin process is running.",
+                |_, alive| if alive { 1.0 } else { 0.0 },
+            ),
+        ];
+        for (name, kind, help, value) in families {
+            let _ = writeln!(out, "# HELP {} {}\n# TYPE {} {}", name, help, name, kind);
+            for (plugin, stats, alive) in &plugins {
+                let _ = writeln!(
+                    out,
+                    "{}{{plugin=\"{}\"}} {}",
+                    name,
+                    plugin,
+                    value(stats, *alive)
+                );
+            }
+        }
+    }
+    (
+        StatusCode::OK,
+        [(
+            header::CONTENT_TYPE,
+            "text/plain; version=0.0.4; charset=utf-8",
+        )],
+        out,
+    )
+        .into_response()
 }
 
 async fn health(State(state): State<Arc<AppState>>) -> Response {
@@ -215,7 +386,8 @@ async fn plan(State(state): State<Arc<AppState>>, body: Result<Bytes, BytesRejec
             .into_response();
         }
     };
-    match tokio::task::spawn_blocking(move || compute(&state, &body)).await {
+    let span = tracing::Span::current();
+    match tokio::task::spawn_blocking(move || span.in_scope(|| compute(&state, &body))).await {
         Ok(Ok(response)) => response,
         Ok(Err(error)) => error.into_response(),
         Err(_) => ApiError::new(
@@ -522,7 +694,7 @@ fn explore_with(
             &value,
         )),
         Err(error) => {
-            eprintln!(
+            tracing::warn!(
                 "Plugin {} could not explore station {}: {}",
                 plugin.name(),
                 station,
@@ -659,7 +831,7 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
         )
     })?;
 
-    println!("Received request: {:?}", request);
+    tracing::info!(request = ?request, "route request");
 
     let (required_nodes, snapped) = match &request.targets {
         Targets::Nodes(nodes) => (nodes.clone(), None),
@@ -736,12 +908,13 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
         &mut fetch_outgoing,
         &mut stats,
     );
-    println!(
-        "Searched {} states with {} plugin calls; cache {} hits, {} misses since start",
-        stats.expanded,
-        stats.plugin_calls,
-        state.cache.hits(),
-        state.cache.misses()
+    state
+        .metrics
+        .record_search(stats.expanded, stats.plugin_calls);
+    tracing::info!(
+        expanded = stats.expanded,
+        plugin_calls = stats.plugin_calls,
+        "searched"
     );
     let result = result?;
 

@@ -115,6 +115,8 @@ Unknown names in the file stop startup, so typos do not go unnoticed. At startup
 
 Overpass is published on `127.0.0.1:12345` only.
 
+Logs go to standard output, one line per event, with the request ID on every line about a request. Set `RUST_LOG` to change the detail, for example `RUST_LOG=warn` for problems only or `RUST_LOG=debug` for more.
+
 ## HTTP API
 
 ### `POST /`
@@ -189,6 +191,16 @@ Reports whether the server can answer routes. `200` when the graph is loaded, Ov
 * `graph.edges` counts each direction of a footway.
 * For each plugin: `alive` is `false` while it restarts or after it died, `calls` and `errors` count its requests since the server started, and `avg_ms` is their average duration.
 
+### `GET /metrics`
+
+Counters and gauges in the Prometheus text format, for a Prometheus server or any compatible scraper:
+
+* `maps_http_requests_total{path, status}` and the `maps_http_request_duration_seconds` histogram;
+* `maps_searches_total`, `maps_search_expanded_states_total` and `maps_search_plugin_calls_total`;
+* `maps_plugin_calls_total{plugin}`, `maps_plugin_errors_total{plugin}`, `maps_plugin_call_duration_seconds_sum{plugin}` and `_count{plugin}` (average latency is sum divided by count), and `maps_plugin_alive{plugin}`;
+* `maps_cache_hits_total`, `maps_cache_misses_total` and `maps_cache_hit_ratio`;
+* `maps_uptime_seconds`, `maps_ready`, `maps_graph_nodes` and `maps_graph_edges`.
+
 ### Errors
 
 Every error has a JSON body `{"error": "<message>"}`, sometimes with more fields.
@@ -197,7 +209,7 @@ Every error has a JSON body `{"error": "<message>"}`, sometimes with more fields
 | --- | --- |
 | `400` | Invalid JSON, a body that is not an object, `required_nodes` or `waypoints` missing, both sent, malformed, or with too few or too many entries, a waypoint further than `max_snap_m` from any walkable node, a `time` that does not parse, a `walking_speed` out of range, or a bad `fast`, `heuristic`, `max_snap_m`, `format`, `min_transfer_s`, `max_walk_m`, `transfer_penalty_s`, `exclude_modes` or `avoid_steps`. The message names the problem. |
 | `404` | `{"error": "no route", "failed_leg": [from, to]}`: no route for that pair of consecutive nodes, or one of them is unknown. `{"error": "no route within limits", "limit": "max_expanded" \| "max_plugin_calls" \| "horizon_h"}`: a search limit stopped the search. Unknown paths get `404` too. |
-| `405` | A method other than `POST` or `OPTIONS` on `/`, or other than `GET` on `/health`. |
+| `405` | A method other than `POST` or `OPTIONS` on `/`, or other than `GET` on `/health` or `/metrics`. |
 | `413` | A body larger than `MAPS_MAX_BODY_BYTES`. |
 | `500` | An internal error. The connection is never dropped without an answer. |
 | `503` | The server is still starting: Overpass or the plugins are not ready yet. |
@@ -210,6 +222,8 @@ Every response carries:
 * `Source-Code: "<MAPS_SOURCE_URL>"`.
 
 A route also carries `Attribution: "<text>"`, URL-encoded: the same credits as the `attribution` field, as sentences.
+
+Every response also carries `X-Request-Id`: the request's own `X-Request-Id` if it sent a short one made of letters, digits, `-` and `_`, otherwise a new one. The same ID tags the server's log lines for that request.
 
 `OPTIONS /` answers `204` with `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Methods: POST, OPTIONS`, `Access-Control-Allow-Headers: Content-Type` and `Access-Control-Max-Age: 86400`.
 

@@ -52,6 +52,7 @@ NaoiseGabi/maps-server/src/config.rs
 NaoiseGabi/maps-server/src/graph.rs
 NaoiseGabi/maps-server/src/http.rs
 NaoiseGabi/maps-server/src/main.rs
+NaoiseGabi/maps-server/src/metrics.rs
 NaoiseGabi/maps-server/src/overpass.rs
 NaoiseGabi/maps-server/src/plugin.rs
 NaoiseGabi/maps-server/src/repro.rs

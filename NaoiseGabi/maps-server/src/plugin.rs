@@ -86,7 +86,7 @@ impl Process {
             let name = spec.name.clone();
             thread::spawn(move || {
                 for line in BufReader::new(stderr).lines().map_while(Result::ok) {
-                    eprintln!("[plugin {}] {}", name, line);
+                    tracing::warn!(plugin = %name, "{}", line);
                 }
             });
         }
@@ -181,6 +181,7 @@ pub struct PluginStats {
     pub calls: u64,
     pub errors: u64,
     pub average_ms: f64,
+    pub busy_seconds: f64,
 }
 
 #[derive(Clone)]
@@ -255,6 +256,7 @@ impl Plugin {
         let busy = self.shared.busy_micros.load(Ordering::Relaxed);
         PluginStats {
             calls,
+            busy_seconds: busy as f64 / 1e6,
             errors: self.shared.errors.load(Ordering::Relaxed),
             average_ms: if calls == 0 {
                 0.0
@@ -300,7 +302,7 @@ impl Plugin {
             result,
             Err(PluginError::Timeout | PluginError::Exited | PluginError::Malformed(_))
         ) {
-            eprintln!(
+            tracing::warn!(
                 "Plugin {} failed ({}), restarting it",
                 self.name(),
                 result
@@ -341,12 +343,12 @@ impl Plugin {
                         let mut slot = plugin.slot.lock().unwrap_or_else(|e| e.into_inner());
                         if matches!(*slot, Slot::Restarting) {
                             *slot = Slot::Running(process);
-                            eprintln!("Plugin {} restarted", plugin.spec.name);
+                            tracing::info!("Plugin {} restarted", plugin.spec.name);
                         }
                         return;
                     }
                     Err(error) => {
-                        eprintln!(
+                        tracing::warn!(
                             "Plugin {} could not restart ({}), trying again in {} s",
                             plugin.spec.name,
                             error,
@@ -387,7 +389,7 @@ pub fn start_all(specs: Vec<PluginSpec>, timeouts: Timeouts) -> Vec<Plugin> {
     let handles: Vec<_> = specs
         .into_iter()
         .map(|spec| {
-            println!(
+            tracing::info!(
                 "Starting plugin {}: {} {}",
                 spec.name,
                 spec.program,
@@ -401,7 +403,7 @@ pub fn start_all(specs: Vec<PluginSpec>, timeouts: Timeouts) -> Vec<Plugin> {
         .filter_map(|handle| match handle.join() {
             Ok(Ok(plugin)) => Some(plugin),
             Ok(Err(error)) => {
-                eprintln!("{}", error);
+                tracing::warn!("{}", error);
                 None
             }
             Err(_) => None,
@@ -475,9 +477,11 @@ pub fn parse_journeys(
     response: &Value,
 ) -> Vec<OutgoingJourney> {
     let Some(entries) = response.as_array() else {
-        eprintln!(
+        tracing::warn!(
             "Plugin {} answered explore for station {} with something other than a list: {}",
-            plugin_name, station, response
+            plugin_name,
+            station,
+            response
         );
         return Vec::new();
     };
@@ -494,9 +498,13 @@ pub fn parse_journeys(
         }
     }
     if let Some((reason, entry)) = first_problem {
-        eprintln!(
+        tracing::warn!(
             "Plugin {} sent {} invalid journeys from station {}, skipped; the first one: {} ({})",
-            plugin_name, skipped, station, entry, reason
+            plugin_name,
+            skipped,
+            station,
+            entry,
+            reason
         );
     }
     journeys

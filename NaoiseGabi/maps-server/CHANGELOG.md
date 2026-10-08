@@ -34,6 +34,8 @@ These change what clients or plugins see. Read them before upgrading.
 
 ### Added
 
+- `GET /metrics` in the Prometheus text format: requests by path and status, a latency histogram, searches, expanded states and plugin calls, per-plugin calls, errors, latency and liveness, cache hits, misses and hit ratio, uptime, readiness and graph size.
+- Logs use `tracing` with one span per request and its request ID, which is also returned in `X-Request-Id`; a request's own short `X-Request-Id` is reused. `RUST_LOG` sets the level.
 - An optional `maps-server.toml` (or the file in `MAPS_CONFIG`) holding any setting, written in lower case without the `MAPS_` prefix. The environment wins over the file, the file over the defaults. Startup prints the effective configuration and where each value came from, hiding secrets.
 - `maps-server check-plugin <flake attribute>` (or `check-plugin -- <command> [args]`) runs a plugin through `mode`, `attribution`, `available` and three `explore` calls, reports problems and warnings, and exits with status 1 on problems. JSON Schemas for every request and reply are in `docs/plugin-protocol/`.
 - Routing options, all optional and defaulting to the old behaviour: `min_transfer_s` (overrides `MAPS_MIN_TRANSFER_S`, default 60), `max_walk_m` (longest single walk), `transfer_penalty_s` (added per change when comparing routes), `exclude_modes` (plugins of those modes are not asked) and `avoid_steps` (no `highway=steps`; the graph stores a steps flag per edge).
@@ -49,7 +51,7 @@ These change what clients or plugins see. Read them before upgrading.
 - A cache of plugin explorations shared by all requests, keyed by station, plugin and 5-minute window, for `MAPS_CACHE_TTL_S` (default 120 s; `0` turns it off). Failed explorations are not cached. A repeated request makes no plugin calls.
 - Plugin timeouts: `MAPS_PLUGIN_TIMEOUT_S` (default 30 s) for `explore`, and `MAPS_PLUGIN_STARTUP_TIMEOUT_S` (default 900 s) for `mode`, `attribution` and `available`, where plugins load their data.
 - A plugin that times out, exits or sends something other than JSON is killed and restarted in the background, and `mode`, `attribution` and `available` are replayed; retries back off from 1 s to 5 minutes. Routes are computed without it meanwhile. An `{"error": ...}` reply does not restart it.
-- Plugin stderr is logged line by line, prefixed with `[plugin <name>]`.
+- Plugin stderr is logged line by line, tagged with the plugin's name.
 - The server stops on SIGTERM as well as Ctrl-C, and kills the plugin processes before stopping Overpass.
 - Waiting for Overpass gives up after `MAPS_OVERPASS_READY_TIMEOUT_S` (default 21600 s, six hours), or as soon as the container exits, and shows the container's last 20 log lines. Progress is printed every minute.
 - `examples/requests.sh`: sample requests with their expected status codes.
