@@ -1199,6 +1199,20 @@ mod options {
     }
 
     #[test]
+    fn a_ramp_beside_a_staircase_keeps_the_edge_usable() {
+        for edges in [
+            [(10, 11, true), (11, 10, false)],
+            [(10, 11, false), (11, 10, true)],
+        ] {
+            let graph = Graph::from_parts_with_steps(&[(10, 0.0, 0.0), (11, 0.0, 0.001)], &edges);
+            for node in [10, 11] {
+                let steps: Vec<bool> = graph.neighbours(node).map(|step| step.steps).collect();
+                assert_eq!(steps, vec![false], "{:?} from {}", edges, node);
+            }
+        }
+    }
+
+    #[test]
     fn excluded_plugins_are_not_even_asked() {
         let (train_log, bus_log) = (CallLog::new("exclude-train"), CallLog::new("exclude-bus"));
         let reply = send(
