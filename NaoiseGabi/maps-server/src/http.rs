@@ -262,7 +262,7 @@ fn explore_with(
         return Vec::new();
     };
     match plugin.explore(station, time) {
-        Ok(value) => parse_journeys(&plugin.name, index, &plugin.mode, station, &value),
+        Ok(value) => parse_journeys(&plugin.name, &plugin.mode, station, &value),
         Err(_) => Vec::new(),
     }
 }
@@ -274,12 +274,9 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
 
     let mut cached_explorations: HashMap<(i64, usize, DateTime<Utc>), Vec<OutgoingJourney>> =
         HashMap::new();
-    let mut fetch_outgoing = |station: i64, time: DateTime<Utc>, exclude: Option<usize>| {
+    let mut fetch_outgoing = |station: i64, time: DateTime<Utc>| {
         let mut journeys = Vec::new();
         for &index in state.stations.plugins_serving(station) {
-            if Some(index) == exclude {
-                continue;
-            }
             journeys.extend_from_slice(
                 cached_explorations
                     .entry((station, index, time))

@@ -35,8 +35,7 @@ fn leg(to: i64, departure: i64, cost: u64, plugin: usize) -> OutgoingJourney {
         target_station: to,
         departure: at(departure),
         cost_seconds: cost,
-        plugin_id: Some(plugin),
-        mode: "train".to_string(),
+        mode: format!("train of plugin {}", plugin),
         line: None,
     }
 }
@@ -60,12 +59,7 @@ fn plan(
     legs: fn(i64) -> Vec<OutgoingJourney>,
     estimate_off: bool,
 ) -> (Vec<RouteSegment>, DateTime<Utc>) {
-    let mut fetch = |station: i64, _time: DateTime<Utc>, exclude: Option<usize>| {
-        legs(station)
-            .into_iter()
-            .filter(|journey| journey.plugin_id.is_none() || journey.plugin_id != exclude)
-            .collect()
-    };
+    let mut fetch = |station: i64, _time: DateTime<Utc>| legs(station);
     let stations = Stations::new(stations.clone());
     let params = SearchParams {
         stations: &stations,
@@ -145,7 +139,6 @@ fn a_change_between_vehicles_stays_visible() {
 }
 
 #[test]
-#[ignore = "B8"]
 fn a_change_between_two_vehicles_of_one_plugin_is_possible() {
     let stations = access(&[(300, &[]), (400, &[]), (500, &[])]);
     let (route, arrival) = plan(vec![300, 500], &stations, one_plugin, true);

@@ -32,7 +32,6 @@ pub struct OutgoingJourney {
     pub target_station: i64,
     pub departure: DateTime<Utc>,
     pub cost_seconds: u64,
-    pub plugin_id: Option<usize>,
     pub mode: String,
     pub line: Option<Line>,
 }
@@ -51,7 +50,7 @@ struct SearchState {
     estimated_total: f64,
     node: i64,
     arrival_time: DateTime<Utc>,
-    last_plugin_id: Option<usize>,
+    transit: bool,
 }
 
 impl Eq for SearchState {}
@@ -157,7 +156,7 @@ pub fn route_with_schedule<F>(
     stats: &mut SearchStats,
 ) -> Result<Itinerary, RouteError>
 where
-    F: FnMut(i64, DateTime<Utc>, Option<usize>) -> Vec<OutgoingJourney>,
+    F: FnMut(i64, DateTime<Utc>) -> Vec<OutgoingJourney>,
 {
     let mut itinerary = Itinerary {
         route: Vec::new(),
@@ -211,7 +210,7 @@ fn a_star_time_dependent<F>(
     stats: &mut SearchStats,
 ) -> Option<(Vec<RouteSegment>, DateTime<Utc>)>
 where
-    F: FnMut(i64, DateTime<Utc>, Option<usize>) -> Vec<OutgoingJourney>,
+    F: FnMut(i64, DateTime<Utc>) -> Vec<OutgoingJourney>,
 {
     let stations = params.stations;
     let estimate = |node: i64| heuristic_seconds(graph, params, node, end_node);
@@ -224,7 +223,7 @@ where
         estimated_total: seconds(start_time) + estimate(start_node),
         node: start_node,
         arrival_time: start_time,
-        last_plugin_id: None,
+        transit: false,
     });
     best_arrival.insert(start_key, start_time);
 
@@ -236,7 +235,7 @@ where
     while let Some(state) = open_set.pop() {
         let current_node = state.node;
         let current_time = state.arrival_time;
-        let current_is_transit = state.last_plugin_id.is_some();
+        let current_is_transit = state.transit;
         let current_key = (current_node, current_is_transit);
 
         if let Some(&best_time) = best_arrival.get(&current_key)
@@ -274,7 +273,7 @@ where
                     estimated_total: seconds(arrival_time) + estimate(next_node),
                     node: next_node,
                     arrival_time,
-                    last_plugin_id: None,
+                    transit: false,
                 });
             }
         }
@@ -298,7 +297,7 @@ where
                     estimated_total: seconds(current_time) + estimate(entrance_node),
                     node: entrance_node,
                     arrival_time: current_time,
-                    last_plugin_id: None,
+                    transit: false,
                 });
             }
         }
@@ -327,17 +326,13 @@ where
                     estimated_total: seconds(current_time) + estimate(station_node),
                     node: station_node,
                     arrival_time: current_time,
-                    last_plugin_id: None,
+                    transit: false,
                 });
             }
         }
 
         if stations.is_station(current_node) {
-            let journeys = fetch_outgoing(
-                current_node,
-                current_time + params.min_transfer,
-                state.last_plugin_id,
-            );
+            let journeys = fetch_outgoing(current_node, current_time + params.min_transfer);
             for journey in journeys {
                 if journey.target_station == current_node {
                     continue;
@@ -368,7 +363,7 @@ where
                         estimated_total: seconds(arrival_time) + estimate(journey.target_station),
                         node: journey.target_station,
                         arrival_time,
-                        last_plugin_id: journey.plugin_id,
+                        transit: true,
                     });
                 }
             }

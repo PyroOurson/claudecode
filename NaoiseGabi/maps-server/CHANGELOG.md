@@ -26,6 +26,7 @@ All notable changes to maps-server. The format follows [Keep a Changelog](https:
 - A line `id` sent as a number is kept, as a string.
 - Every plugin that listed a station in `available` is asked about it, and their departures are merged. The search used to stop at the first plugin with departures, so a train-to-bus change failed when the train plugin also left that station.
 - A plugin is only asked about stations it listed in `available`. It used to be asked about every station.
+- A change between two vehicles of the same plugin (TER to TGV, both from one plugin) is possible. It used to work only when the station node lay on a footway. This costs one more plugin call per vehicle arrival.
 - Every vehicle leg is its own segment in `route`; only consecutive walking edges are merged. Two vehicles in a row with the same line ID, or with none, used to be merged into one segment, which hid the change and the wait.
 
 - The Overpass container is created from `MAPS_OVERPASS_IMAGE`, default `wiktorn/overpass-api:v0.7.62.9`, instead of `wiktorn/overpass-api:latest`. The Nix wrapper loads exactly that image once and exports the variable. An existing container built from another image is recreated, and its `overpass_db` volume is kept, so no re-import happens.

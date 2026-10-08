@@ -284,3 +284,29 @@ fn two_vehicles_of_the_same_line_stay_two_segments() {
         .collect();
     assert_eq!(nodes, vec![&json!([300, 400]), &json!([400, 500])]);
 }
+
+#[test]
+fn a_plugin_can_carry_a_change_between_its_own_vehicles() {
+    let plugins = vec![plugin(
+        "sncf",
+        json!({"available": {"300": [], "400": [], "500": []},
+               "explore": {"300": [{"to": 400, "offset": 120, "cost": 600, "line": {"id": "TER"}}],
+                           "400": [{"to": 500, "offset": 300, "cost": 600, "line": {"id": "TGV"}}]}}),
+    )];
+    let reply = send(
+        plugins,
+        vec![request(
+            "POST",
+            "/",
+            &json!({"required_nodes": [300, 500], "time": "20260808T120000"}).to_string(),
+        )],
+    );
+    assert_eq!(reply.status, 200, "{}", reply.raw);
+    let lines: Vec<&serde_json::Value> = reply.json["route"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|segment| &segment["line"]["id"])
+        .collect();
+    assert_eq!(lines, vec![&json!("TER"), &json!("TGV")], "{}", reply.raw);
+}
