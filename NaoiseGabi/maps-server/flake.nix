@@ -50,8 +50,8 @@
 						git
 						rust-bin.stable.latest.default
 						osmium-tool
-						bugstalker
-					];
+						python3
+					] ++ lib.optional (lib.meta.availableOn stdenv.hostPlatform bugstalker) bugstalker;
 				};
 
 				packages.default = maps-server;
@@ -59,6 +59,7 @@
 				apps = {
 					default = {
 						type = "app";
+						meta.description = "maps-server, with the pinned Overpass image loaded into Docker";
 						program = "${pkgs.writeShellScriptBin "maps-server-wrapper" ''
 							if [ -z "''${MAPS_OVERPASS_IMAGE:-}" ]; then
 								export MAPS_OVERPASS_IMAGE="${overpassImageRef}"
