@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0
 // Copyright (C) 2026 Naoise McG
+use crate::plugin::Timeouts;
 use std::env;
+use std::time::Duration;
 
 pub const DEFAULT_OVERPASS_IMAGE: &str = "wiktorn/overpass-api:v0.7.62.9";
 pub const DEFAULT_OSM_PBF_FILE: &str = "provence-alpes-cote-d-azur-260718.osm.pbf";
@@ -14,6 +16,8 @@ pub struct Config {
     pub max_speed_kmh: f64,
     pub overpass_image: String,
     pub source_url: String,
+    pub plugin_timeout_s: u64,
+    pub plugin_startup_timeout_s: u64,
 }
 
 impl Default for Config {
@@ -23,6 +27,13 @@ impl Default for Config {
 }
 
 impl Config {
+    pub fn plugin_timeouts(&self) -> Timeouts {
+        Timeouts {
+            call: Duration::from_secs(self.plugin_timeout_s.max(1)),
+            startup: Duration::from_secs(self.plugin_startup_timeout_s.max(1)),
+        }
+    }
+
     pub fn from_env() -> Result<Self, String> {
         Self::from_lookup(&|key| env::var(key).ok())
     }
@@ -50,6 +61,8 @@ impl Config {
             )?,
             overpass_image: text(lookup, "MAPS_OVERPASS_IMAGE", DEFAULT_OVERPASS_IMAGE),
             source_url: text(lookup, "MAPS_SOURCE_URL", DEFAULT_SOURCE_URL),
+            plugin_timeout_s: number(lookup, "MAPS_PLUGIN_TIMEOUT_S", 30)?,
+            plugin_startup_timeout_s: number(lookup, "MAPS_PLUGIN_STARTUP_TIMEOUT_S", 900)?,
         })
     }
 }

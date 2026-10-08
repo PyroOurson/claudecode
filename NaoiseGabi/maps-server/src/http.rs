@@ -18,7 +18,7 @@ use axum::routing::post;
 use chrono::{DateTime, Utc};
 use serde_json::{Value, json};
 use std::collections::{HashMap, HashSet};
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, OnceLock};
 
 pub const OSM_ATTRIBUTION: &str = "Map data © OpenStreetMap contributors, ODbL.";
 
@@ -29,7 +29,7 @@ pub struct AppState {
 }
 
 pub struct Network {
-    pub plugins: Mutex<Vec<Plugin>>,
+    pub plugins: Vec<Plugin>,
     pub stations: Stations,
 }
 
@@ -43,10 +43,7 @@ impl AppState {
     }
 
     pub fn set_ready(&self, plugins: Vec<Plugin>, stations: Stations) {
-        let _ = self.network.set(Network {
-            plugins: Mutex::new(plugins),
-            stations,
-        });
+        let _ = self.network.set(Network { plugins, stations });
     }
 
     pub fn network(&self) -> Option<&Network> {
@@ -279,20 +276,47 @@ pub fn parse_request(body: &[u8], config: &Config) -> Result<RouteRequest, ApiEr
     })
 }
 
-fn explore_with(
-    plugins: &Mutex<Vec<Plugin>>,
-    index: usize,
+fn explore_with(plugin: &Plugin, station: i64, time: DateTime<Utc>) -> Vec<OutgoingJourney> {
+    match plugin.explore(station, time) {
+        Ok(value) => parse_journeys(plugin.name(), plugin.mode(), station, &value),
+        Err(error) => {
+            eprintln!(
+                "Plugin {} could not explore station {}: {}",
+                plugin.name(),
+                station,
+                error
+            );
+            Vec::new()
+        }
+    }
+}
+
+fn explore_all(
+    plugins: &[Plugin],
+    indexes: &[usize],
     station: i64,
     time: DateTime<Utc>,
-) -> Vec<OutgoingJourney> {
-    let mut plugins = plugins.lock().unwrap();
-    let Some(plugin) = plugins.get_mut(index) else {
-        return Vec::new();
+) -> Vec<(usize, Vec<OutgoingJourney>)> {
+    let explore = |index: usize| {
+        let journeys = plugins
+            .get(index)
+            .map(|plugin| explore_with(plugin, station, time))
+            .unwrap_or_default();
+        (index, journeys)
     };
-    match plugin.explore(station, time) {
-        Ok(value) => parse_journeys(&plugin.name, &plugin.mode, station, &value),
-        Err(_) => Vec::new(),
+    if indexes.len() < 2 {
+        return indexes.iter().map(|&index| explore(index)).collect();
     }
+    std::thread::scope(|scope| {
+        let handles: Vec<_> = indexes
+            .iter()
+            .map(|&index| scope.spawn(move || explore(index)))
+            .collect();
+        handles
+            .into_iter()
+            .filter_map(|handle| handle.join().ok())
+            .collect()
+    })
 }
 
 fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
@@ -309,15 +333,21 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
     let mut cached_explorations: HashMap<(i64, usize, DateTime<Utc>), Vec<OutgoingJourney>> =
         HashMap::new();
     let mut fetch_outgoing = |station: i64, time: DateTime<Utc>| {
-        let mut journeys = Vec::new();
-        for &index in network.stations.plugins_serving(station) {
-            journeys.extend_from_slice(
-                cached_explorations
-                    .entry((station, index, time))
-                    .or_insert_with(|| explore_with(&network.plugins, index, station, time)),
-            );
+        let serving = network.stations.plugins_serving(station);
+        let missing: Vec<usize> = serving
+            .iter()
+            .copied()
+            .filter(|&index| !cached_explorations.contains_key(&(station, index, time)))
+            .collect();
+        for (index, journeys) in explore_all(&network.plugins, &missing, station, time) {
+            cached_explorations.insert((station, index, time), journeys);
         }
-        journeys
+        serving
+            .iter()
+            .filter_map(|&index| cached_explorations.get(&(station, index, time)))
+            .flatten()
+            .cloned()
+            .collect()
     };
 
     let params = SearchParams {
@@ -339,16 +369,14 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
 
     let plugin_attributions = network
         .plugins
-        .lock()
-        .unwrap()
         .iter()
         .map(|plugin| {
             format!(
                 "{}, provided under the {}, translated by {}, under the {}.",
-                plugin.data_attribution,
-                plugin.data_license,
-                plugin.plugin_attribution,
-                plugin.plugin_license
+                plugin.data_owner(),
+                plugin.data_license(),
+                plugin.plugin_owner(),
+                plugin.plugin_license()
             )
         })
         .collect::<HashSet<String>>()

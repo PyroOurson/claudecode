@@ -2,42 +2,44 @@
 // Copyright (C) 2026 Naoise McG
 use crate::config::Config;
 use crate::http::{AppState, router};
+use crate::plugin::{PluginSpec, Timeouts};
 use crate::route::Graph;
 use crate::{Plugin, build_station_access_map};
 use serde_json::Value;
-use std::io::{BufReader, Read, Write};
+use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
 use std::sync::{Arc, LazyLock};
 use std::thread;
+use std::time::Duration;
 
 pub fn kit() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests")
 }
 
 pub fn plugin(name: &str, scenario: Value) -> Plugin {
+    plugin_with(
+        name,
+        scenario,
+        Timeouts {
+            call: Duration::from_secs(30),
+            startup: Duration::from_secs(30),
+        },
+    )
+}
+
+pub fn plugin_with(name: &str, scenario: Value, timeouts: Timeouts) -> Plugin {
     let python = std::env::var("REPRO_PYTHON").unwrap_or_else(|_| "python3".to_string());
-    let mut child = Command::new(python)
-        .arg("-I")
-        .arg(kit().join("fake_plugin.py"))
-        .arg(scenario.to_string())
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .spawn()
-        .expect("could not start fake_plugin.py");
-    let plugin = Plugin {
+    let spec = PluginSpec {
         name: name.to_string(),
-        mode: scenario["mode"].as_str().unwrap_or("train").to_string(),
-        data_attribution: "Fake data".to_string(),
-        data_license: "CC0".to_string(),
-        plugin_attribution: "maps-server-review".to_string(),
-        plugin_license: "CC0".to_string(),
-        stdin: child.stdin.take().unwrap(),
-        stdout: BufReader::new(child.stdout.take().unwrap()),
+        program: python,
+        args: vec![
+            "-I".to_string(),
+            kit().join("fake_plugin.py").to_string_lossy().to_string(),
+            scenario.to_string(),
+        ],
     };
-    thread::spawn(move || child.wait());
-    plugin
+    Plugin::start(spec, timeouts).expect("could not start fake_plugin.py")
 }
 
 pub fn post(body: &str) -> Vec<u8> {
@@ -58,8 +60,8 @@ pub fn state(plugins: Vec<Plugin>) -> Arc<AppState> {
     state_with(plugins, Config::default())
 }
 
-pub fn state_with(mut plugins: Vec<Plugin>, config: Config) -> Arc<AppState> {
-    let stations = build_station_access_map(&mut plugins);
+pub fn state_with(plugins: Vec<Plugin>, config: Config) -> Arc<AppState> {
+    let stations = build_station_access_map(&plugins);
     let state = Arc::new(AppState::new(config, FIXTURE.clone()));
     state.set_ready(plugins, stations);
     state
@@ -166,6 +168,15 @@ impl CallLog {
 
     pub fn path(&self) -> String {
         self.path.to_string_lossy().to_string()
+    }
+
+    pub fn actions(&self) -> Vec<String> {
+        std::fs::read_to_string(&self.path)
+            .unwrap_or_default()
+            .lines()
+            .filter_map(|line| serde_json::from_str::<Value>(line).ok())
+            .filter_map(|request| request["action"].as_str().map(str::to_string))
+            .collect()
     }
 
     pub fn explored_stations(&self) -> Vec<i64> {

@@ -2,6 +2,7 @@
 # Copyright (C) 2026 Naoise McG
 import json
 import sys
+import time
 from datetime import datetime, timedelta
 
 TIME_FORMAT = "%Y%m%dT%H%M%S"
@@ -24,6 +25,10 @@ def explore(scenario, data):
 
 def answer(scenario, request):
     action = request.get("action")
+    if action in scenario.get("hang", []):
+        time.sleep(3600)
+    if action in scenario.get("crash", []):
+        sys.exit(1)
     if action == "mode":
         return scenario.get("mode", "train")
     if action == "attribution":

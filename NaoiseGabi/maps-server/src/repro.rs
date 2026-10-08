@@ -242,8 +242,8 @@ fn string_ids_from_plugins_are_accepted() {
 
 #[test]
 fn string_entrance_ids_from_plugins_are_accepted() {
-    let mut plugins = vec![plugin("readme", json!({"available": {"100": ["3"]}}))];
-    let stations = build_station_access_map(&mut plugins);
+    let plugins = vec![plugin("readme", json!({"available": {"100": ["3"]}}))];
+    let stations = build_station_access_map(&plugins);
     assert_eq!(
         stations.entrances_of(100),
         &[3],

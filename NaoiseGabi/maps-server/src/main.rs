@@ -5,21 +5,19 @@ use bollard::models::{ContainerCreateBody, HostConfig, PortBinding};
 use bollard::query_parameters::{
     CreateContainerOptionsBuilder, RemoveVolumeOptions, StartContainerOptions, StopContainerOptions,
 };
-use chrono::{DateTime, Utc};
 use config::Config;
 use http::AppState;
+pub use plugin::Plugin;
+use plugin::PluginSpec;
 use route::{Graph, StationAccessMap, Stations};
-use serde_core::de::Error;
-use serde_json::{Result, Value};
 use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
 use std::env;
 use std::fs;
 use std::future::IntoFuture;
 use std::hash::{Hash, Hasher};
-use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
-use std::process::{ChildStdin, ChildStdout, Command, Stdio};
+use std::process::Command;
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -80,97 +78,6 @@ fn calculate_pbf_hash(assets_path: &Path, files: &[String]) -> String {
         }
     }
     format!("{:x}", hasher.finish())
-}
-
-pub struct Plugin {
-    pub name: String,
-    pub mode: String,
-    pub data_attribution: String,
-    pub data_license: String,
-    pub plugin_attribution: String,
-    pub plugin_license: String,
-    stdin: ChildStdin,
-    stdout: BufReader<ChildStdout>,
-}
-
-impl Plugin {
-    fn send_request(&mut self, action: &str, data: &str) -> String {
-        let request = format!("{{\"action\": \"{}\", \"data\": {}}}\n", action, data);
-        let _ = self.stdin.write_all(request.as_bytes());
-        let _ = self.stdin.flush();
-
-        let mut response = String::new();
-        let n = self.stdout.read_line(&mut response);
-        match n {
-            Ok(0) => String::new(),
-            Ok(_) => response,
-            Err(e) => {
-                eprintln!("Error reading line from plugin {}: {}", self.name, e);
-                String::new()
-            }
-        }
-    }
-
-    pub fn available_nodes(&mut self) -> Result<Value> {
-        let response = self.send_request("available", "[]");
-        let response: Result<Value> = serde_json::from_str(response.as_str());
-
-        match response {
-            Ok(r) => {
-                if r["response"] != serde_json::Value::Null {
-                    Ok(r["response"].clone())
-                } else {
-                    eprintln!(
-                        "Failed to fetch available nodes from plugin {}, received: {}",
-                        self.name, r["error"]
-                    );
-                    Err(serde_json::error::Error::custom(
-                        r["error"].as_str().unwrap_or("Unknown Error"),
-                    ))
-                }
-            }
-            Err(e) => {
-                eprintln!(
-                    "Failed to fetch available nodes from plugin {}, malformed response: {}",
-                    self.name, e
-                );
-                Err(e)
-            }
-        }
-    }
-
-    pub fn explore(&mut self, station: i64, datetime: DateTime<Utc>) -> Result<Value> {
-        let time_str = datetime.format("%Y%m%dT%H%M%S").to_string();
-        let payload = format!(
-            "{{\"station\": {}, \"datetime\": \"{}\"}}",
-            station, time_str
-        );
-        let response = self.send_request("explore", &payload);
-        let response: Result<Value> = serde_json::from_str(response.as_str());
-
-        match response {
-            Ok(r) => {
-                if r["response"] != serde_json::Value::Null {
-                    Ok(r["response"].clone())
-                } else {
-                    eprintln!(
-                        "Failed to explore station {} from plugin {}, {}",
-                        station, self.name, r["error"]
-                    );
-                    Err(serde_json::error::Error::custom(
-                        r["error"].as_str().unwrap_or("Unknown Error"),
-                    ))
-                }
-            }
-            Err(e) => {
-                eprintln!(
-                    "Failed to explore station {} from plugin {}, malformed response: {}",
-                    station, self.name, e
-                );
-                Err(e)
-            }
-        }
-    }
 }
 
 const OVERPASS_HOST_IP: &str = "127.0.0.1";
@@ -314,19 +221,15 @@ async fn stop_overpass_container(
     Ok(())
 }
 
-fn build_station_access_map(plugins: &mut [Plugin]) -> Stations {
+fn build_station_access_map(plugins: &[Plugin]) -> Stations {
     let mut station_access = StationAccessMap::new();
     let mut served_by: HashMap<i64, Vec<usize>> = HashMap::new();
 
-    for (index, plugin) in plugins.iter_mut().enumerate() {
-        println!("Fetching available nodes from plugin: {}", plugin.name);
-        let Ok(value) = plugin.available_nodes() else {
-            continue;
-        };
-        let Some(map) = value.as_object() else {
+    for (index, plugin) in plugins.iter().enumerate() {
+        let Some(map) = plugin.available().as_object() else {
             eprintln!(
                 "Plugin {} answered available with something other than an object",
-                plugin.name
+                plugin.name()
             );
             continue;
         };
@@ -356,7 +259,7 @@ fn build_station_access_map(plugins: &mut [Plugin]) -> Stations {
         if let Some(first) = skipped.first() {
             eprintln!(
                 "Plugin {} listed {} invalid stations or entrances, skipped; the first one: {}",
-                plugin.name,
+                plugin.name(),
                 skipped.len(),
                 first
             );
@@ -366,7 +269,7 @@ fn build_station_access_map(plugins: &mut [Plugin]) -> Stations {
     Stations::with_plugins(station_access, served_by)
 }
 
-fn load_plugins() -> Vec<Plugin> {
+fn plugin_names() -> Vec<String> {
     let output = Command::new("nix")
         .args([
             "eval",
@@ -392,70 +295,32 @@ fn load_plugins() -> Vec<Plugin> {
 
     let stdout = String::from_utf8_lossy(&output.stdout);
 
-    let plugins: Vec<&str> = stdout
+    stdout
         .trim()
         .trim_matches(|c| c == '[' || c == ']' || c == '\n' || c == ' ')
         .split(',')
-        .map(|s| s.trim().trim_matches('"'))
+        .map(|s| s.trim().trim_matches('"').to_string())
         .filter(|s| !s.is_empty())
-        .collect();
+        .collect()
+}
 
-    let mut loaded_plugins: Vec<Plugin> = Vec::new();
-
-    for plugin in plugins {
-        let target = format!(".#plugins.{}", plugin);
-        println!("Spawning plugin: nix run {}", target);
-
-        match Command::new("nix")
-            .args(["run", &target])
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .spawn()
-        {
-            Ok(mut child) => {
-                let mut loaded_plugin = Plugin {
-                    name: plugin.to_string(),
-                    mode: "".to_string(),
-                    plugin_attribution: "".to_string(),
-                    plugin_license: "".to_string(),
-                    data_attribution: "".to_string(),
-                    data_license: "".to_string(),
-                    stdin: child.stdin.take().expect(""),
-                    stdout: BufReader::new(child.stdout.take().expect("")),
-                };
-
-                let mode_resp = loaded_plugin.send_request("mode", "[]");
-                let attr_lice = loaded_plugin.send_request("attribution", "[]");
-                if let Ok(r) = serde_json::from_str::<Value>(&attr_lice) {
-                    loaded_plugin.plugin_attribution = r["response"]["plugin_owner"]
-                        .as_str()
-                        .unwrap_or("unknown")
-                        .to_string();
-                    loaded_plugin.plugin_license = r["response"]["plugin_license"]
-                        .as_str()
-                        .unwrap_or("unknown")
-                        .to_string();
-                    loaded_plugin.data_attribution = r["response"]["data_owner"]
-                        .as_str()
-                        .unwrap_or("unknown")
-                        .to_string();
-                    loaded_plugin.data_license = r["response"]["data_license"]
-                        .as_str()
-                        .unwrap_or("unknown")
-                        .to_string();
-                };
-
-                if let Ok(r) = serde_json::from_str::<Value>(&mode_resp) {
-                    loaded_plugin.mode = r["response"].as_str().unwrap_or("unknown").to_string();
-                };
-
-                loaded_plugins.push(loaded_plugin);
+async fn shutdown_signal() {
+    let interrupt = tokio::signal::ctrl_c();
+    #[cfg(unix)]
+    let terminate = async {
+        match tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()) {
+            Ok(mut signal) => {
+                signal.recv().await;
             }
-            Err(e) => eprintln!("Failed to spawn plugin '{}': {}", plugin, e),
+            Err(_) => std::future::pending::<()>().await,
         }
+    };
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+    tokio::select! {
+        _ = interrupt => {}
+        _ = terminate => {}
     }
-
-    loaded_plugins
 }
 
 async fn wait_for_overpass_ready() {
@@ -505,13 +370,13 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     let docker = Docker::connect_with_socket_defaults()?;
     let docker_signal = docker.clone();
-    let runtime_handle = tokio::runtime::Handle::current();
-
-    ctrlc::set_handler(move || {
+    tokio::spawn(async move {
+        shutdown_signal().await;
         println!("Shutting down...");
-        runtime_handle.block_on(cleanup(&docker_signal));
+        plugin::stop_all();
+        cleanup(&docker_signal).await;
         std::process::exit(0);
-    })?;
+    });
 
     let bind = config.bind.clone();
     let state = Arc::new(AppState::new(config, Arc::new(graph)));
@@ -525,8 +390,13 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     start_overpass_container(&docker, &state.config).await?;
     wait_for_overpass_ready().await;
 
-    let mut plugins = load_plugins();
-    let stations = build_station_access_map(&mut plugins);
+    let specs = plugin_names()
+        .iter()
+        .map(|name| PluginSpec::nix(name))
+        .collect();
+    let timeouts = state.config.plugin_timeouts();
+    let plugins = tokio::task::spawn_blocking(move || plugin::start_all(specs, timeouts)).await?;
+    let stations = build_station_access_map(&plugins);
     state.set_ready(plugins, stations);
     println!("Ready.");
 

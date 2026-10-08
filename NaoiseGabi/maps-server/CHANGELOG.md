@@ -32,6 +32,11 @@ All notable changes to maps-server. The format follows [Keep a Changelog](https:
 - Every plugin that listed a station in `available` is asked about it, and their departures are merged. The search used to stop at the first plugin with departures, so a train-to-bus change failed when the train plugin also left that station.
 - A plugin is only asked about stations it listed in `available`. It used to be asked about every station.
 - A change between two vehicles of the same plugin (TER to TGV, both from one plugin) is possible. It used to work only when the station node lay on a footway. This costs one more plugin call per vehicle arrival.
+- Plugin replies have a timeout, `MAPS_PLUGIN_TIMEOUT_S` (default 30 s). The startup calls `mode`, `attribution` and `available` get `MAPS_PLUGIN_STARTUP_TIMEOUT_S` (default 900 s), because `available` is where plugins load their data. A stuck plugin no longer freezes the server.
+- A plugin that times out, exits or sends something other than JSON is killed and restarted in the background, and `mode`, `attribution` and `available` are replayed; retries back off from 1 s to 5 minutes. While it restarts, routes are computed without it. An `{"error": ...}` reply does not restart it.
+- Each plugin has its own lock, so plugins are called in parallel, both across requests and for a station served by several plugins. Plugins are started in parallel too.
+- Plugin stderr is logged line by line, prefixed with `[plugin <name>]`.
+- The server stops on SIGTERM as well as Ctrl-C, and kills the plugin processes before stopping the Overpass container.
 - Every vehicle leg is its own segment in `route`; only consecutive walking edges are merged. Two vehicles in a row with the same line ID, or with none, used to be merged into one segment, which hid the change and the wait.
 
 - The Overpass container is created from `MAPS_OVERPASS_IMAGE`, default `wiktorn/overpass-api:v0.7.62.9`, instead of `wiktorn/overpass-api:latest`. The Nix wrapper loads exactly that image once and exports the variable. An existing container built from another image is recreated, and its `overpass_db` volume is kept, so no re-import happens.

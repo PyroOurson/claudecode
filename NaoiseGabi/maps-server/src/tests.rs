@@ -2,12 +2,15 @@
 // Copyright (C) 2026 Naoise McG
 use crate::config::Config;
 use crate::http::AppState;
+use crate::plugin::{PluginError, Timeouts};
 use crate::testkit::{
-    CallLog, exchange, has_route, plugin, request, send, serve, serve_state, state_with,
+    CallLog, exchange, has_route, plugin, plugin_with, request, send, serve, serve_state,
+    state_with,
 };
 use crate::testkit::{FIXTURE, kit};
 use serde_json::json;
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 fn walk() -> String {
     json!({"required_nodes": [1, 2], "time": "20260808T120000"}).to_string()
@@ -400,4 +403,89 @@ fn the_fixture_loads_through_the_startup_path() {
     let graph =
         crate::load_graph(&kit().join("fixtures"), &["fixture.osm.pbf".to_string()]).unwrap();
     assert!(graph.contains(1) && graph.contains(701));
+}
+
+fn short_timeouts() -> Timeouts {
+    Timeouts {
+        call: Duration::from_secs(1),
+        startup: Duration::from_secs(10),
+    }
+}
+
+fn wait_until(condition: impl Fn() -> bool) -> bool {
+    let deadline = Instant::now() + Duration::from_secs(15);
+    while Instant::now() < deadline {
+        if condition() {
+            return true;
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    false
+}
+
+#[test]
+fn a_plugin_that_never_answers_times_out_and_the_others_keep_answering() {
+    let stuck = plugin_with(
+        "stuck",
+        json!({"hang": ["explore"], "available": {"300": []}}),
+        short_timeouts(),
+    );
+    let working = plugin_with(
+        "working",
+        json!({"available": {"300": [], "400": []},
+               "explore": {"300": [{"to": 400, "offset": 120, "cost": 600}]}}),
+        short_timeouts(),
+    );
+    let address = serve_state(state_with(vec![stuck, working], Config::default()));
+    let body = json!({"required_nodes": [300, 400], "time": "20260808T120000"}).to_string();
+    for attempt in 0..2 {
+        let started = Instant::now();
+        let reply = exchange(address, vec![request("POST", "/", &body)]);
+        assert!(has_route(&reply), "attempt {}: {}", attempt, reply.raw);
+        assert!(
+            started.elapsed() < Duration::from_secs(5),
+            "attempt {} took {:?}",
+            attempt,
+            started.elapsed()
+        );
+    }
+}
+
+#[test]
+fn a_crashed_plugin_restarts_and_replays_its_handshake() {
+    let log = CallLog::new("crash");
+    let crashing = plugin_with(
+        "crashing",
+        json!({"crash": ["explore"], "log": log.path(), "available": {"300": []}}),
+        short_timeouts(),
+    );
+    let time = chrono::Utc::now();
+    assert_eq!(crashing.explore(300, time), Err(PluginError::Exited));
+    assert_eq!(crashing.explore(300, time), Err(PluginError::Unavailable));
+    assert!(
+        wait_until(|| crashing.is_alive()),
+        "the plugin never came back"
+    );
+    let actions = log.actions();
+    assert_eq!(
+        actions,
+        vec![
+            "mode",
+            "attribution",
+            "available",
+            "explore",
+            "mode",
+            "attribution",
+            "available"
+        ],
+    );
+}
+
+#[test]
+fn an_error_reply_keeps_the_plugin_running() {
+    let plugin = plugin_with("plain", json!({"available": {}}), short_timeouts());
+    let reply = plugin.call("unknown", &json!([]));
+    assert!(matches!(reply, Err(PluginError::Replied(_))), "{:?}", reply);
+    assert!(plugin.is_alive());
+    assert_eq!(plugin.explore(300, chrono::Utc::now()), Ok(json!([])));
 }
