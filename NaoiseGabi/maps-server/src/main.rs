@@ -1,23 +1,27 @@
 // SPDX-License-Identifier: AGPL-3.0
 // Copyright (C) 2026 Naoise McG
-use chrono::{NaiveDateTime, Utc, DateTime};
-use route::{Line, route_with_schedule, parse_journey_departure, OutgoingJourney, StationAccessMap};
-use serde_json::{Result, Value};
+use bollard::Docker;
+use bollard::models::{ContainerCreateBody, HostConfig, PortBinding};
+use bollard::query_parameters::{
+    CreateContainerOptionsBuilder, RemoveVolumeOptions, StartContainerOptions, StopContainerOptions,
+};
+use chrono::{DateTime, NaiveDateTime, Utc};
+use route::{
+    Line, OutgoingJourney, StationAccessMap, parse_journey_departure, route_with_schedule,
+};
 use serde_core::de::Error;
+use serde_json::{Result, Value};
+use std::collections::hash_map::DefaultHasher;
 use std::collections::{HashMap, HashSet};
-use std::io::{Read, Write, BufReader, BufRead};
+use std::env;
+use std::fs;
+use std::hash::{Hash, Hasher};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::process::{ChildStdin, ChildStdout, Command, Stdio};
+use std::sync::LazyLock;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::env;
-use bollard::models::{ContainerCreateBody, HostConfig, PortBinding};
-use bollard::query_parameters::{CreateContainerOptionsBuilder, RemoveVolumeOptions, StartContainerOptions, StopContainerOptions};
-use bollard::Docker;
-use std::sync::LazyLock;
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
-use std::fs;
 
 mod route;
 
@@ -84,14 +88,22 @@ impl Plugin {
         match response {
             Ok(r) => {
                 if r["response"] != serde_json::Value::Null {
-                    return Ok(r["response"].clone());
+                    Ok(r["response"].clone())
                 } else {
-                    eprintln!("Failed to fetch available nodes from plugin {}, received: {}", self.name, r["error"]);
-                    return Err(serde_json::error::Error::custom(r["error"].as_str().unwrap_or("Unknown Error")));
+                    eprintln!(
+                        "Failed to fetch available nodes from plugin {}, received: {}",
+                        self.name, r["error"]
+                    );
+                    Err(serde_json::error::Error::custom(
+                        r["error"].as_str().unwrap_or("Unknown Error"),
+                    ))
                 }
             }
             Err(e) => {
-                eprintln!("Failed to fetch available nodes from plugin {}, malformed response: {}", self.name, e);
+                eprintln!(
+                    "Failed to fetch available nodes from plugin {}, malformed response: {}",
+                    self.name, e
+                );
                 Err(e)
             }
         }
@@ -99,7 +111,10 @@ impl Plugin {
 
     pub fn explore(&mut self, station: i64, datetime: DateTime<Utc>) -> Result<Value> {
         let time_str = datetime.format("%Y%m%dT%H%M%S").to_string();
-        let payload = format!("{{\"station\": {}, \"datetime\": \"{}\"}}", station, time_str);
+        let payload = format!(
+            "{{\"station\": {}, \"datetime\": \"{}\"}}",
+            station, time_str
+        );
         let response = self.send_request("explore", &payload);
         let response: Result<Value> = serde_json::from_str(response.as_str());
 
@@ -108,19 +123,29 @@ impl Plugin {
                 if r["response"] != serde_json::Value::Null {
                     Ok(r["response"].clone())
                 } else {
-                    eprintln!("Failed to explore station {} from plugin {}, {}", station, self.name, r["error"]);
-                    Err(serde_json::error::Error::custom(r["error"].as_str().unwrap_or("Unknown Error")))
+                    eprintln!(
+                        "Failed to explore station {} from plugin {}, {}",
+                        station, self.name, r["error"]
+                    );
+                    Err(serde_json::error::Error::custom(
+                        r["error"].as_str().unwrap_or("Unknown Error"),
+                    ))
                 }
             }
             Err(e) => {
-                eprintln!("Failed to explore station {} from plugin {}, malformed response: {}", station, self.name, e);
+                eprintln!(
+                    "Failed to explore station {} from plugin {}, malformed response: {}",
+                    station, self.name, e
+                );
                 Err(e)
             }
         }
     }
 }
 
-async fn start_overpass_container(docker: &Docker) -> std::result::Result<(), Box<dyn std::error::Error>> {
+async fn start_overpass_container(
+    docker: &Docker,
+) -> std::result::Result<(), Box<dyn std::error::Error>> {
     let container_name = "overpass_api";
     let current_dir = env::current_dir()?;
     let assets_dir = current_dir.join("assets");
@@ -134,15 +159,23 @@ async fn start_overpass_container(docker: &Docker) -> std::result::Result<(), Bo
             .unwrap_or_default();
 
         if existing_hash != current_hash {
-            println!("Detected changes in PBF files. Removing container and database volume to force rebuild...");
-            let _ = docker.stop_container(container_name, None::<StopContainerOptions>).await;
+            println!(
+                "Detected changes in PBF files. Removing container and database volume to force rebuild..."
+            );
+            let _ = docker
+                .stop_container(container_name, None::<StopContainerOptions>)
+                .await;
             let _ = docker.remove_container(container_name, None).await;
-            let _ = docker.remove_volume("overpass_db", None::<RemoveVolumeOptions>).await;
+            let _ = docker
+                .remove_volume("overpass_db", None::<RemoveVolumeOptions>)
+                .await;
         } else {
             let is_running = inspect.state.and_then(|s| s.running).unwrap_or(false);
             if !is_running {
                 println!("Container exists but is stopped. Starting...");
-                docker.start_container(container_name, None::<StartContainerOptions>).await?;
+                docker
+                    .start_container(container_name, None::<StartContainerOptions>)
+                    .await?;
             } else {
                 println!("Container is already running and up to date.");
             }
@@ -206,21 +239,31 @@ async fn start_overpass_container(docker: &Docker) -> std::result::Result<(), Bo
         .build();
 
     docker.create_container(Some(options), config).await?;
-    docker.start_container(container_name, None::<StartContainerOptions>).await?;
+    docker
+        .start_container(container_name, None::<StartContainerOptions>)
+        .await?;
 
     Ok(())
 }
 
-async fn stop_overpass_container(docker: &Docker) -> std::result::Result<(), Box<dyn std::error::Error>> {
-    docker.stop_container("overpass_api", None::<StopContainerOptions>).await?;
+async fn stop_overpass_container(
+    docker: &Docker,
+) -> std::result::Result<(), Box<dyn std::error::Error>> {
+    docker
+        .stop_container("overpass_api", None::<StopContainerOptions>)
+        .await?;
     Ok(())
 }
 
-fn handle_client(mut stream: TcpStream, plugins: Arc<Mutex<Vec<Plugin>>>, station_access: Arc<StationAccessMap>) {
+fn handle_client(
+    mut stream: TcpStream,
+    plugins: Arc<Mutex<Vec<Plugin>>>,
+    station_access: Arc<StationAccessMap>,
+) {
     let mut buffer = [0u8; 2048];
 
     match stream.read(&mut buffer) {
-        Ok(0) => return,
+        Ok(0) => (),
         Ok(n) => {
             let request = match std::str::from_utf8(&buffer[..n]) {
                 Ok(req) => req,
@@ -249,34 +292,47 @@ fn handle_client(mut stream: TcpStream, plugins: Arc<Mutex<Vec<Plugin>>>, statio
 
                 println!("Received payload: {:?}", data);
 
-                let node_ids: Vec<i64> = serde_json::from_value(data["required_nodes"].clone()).expect("No data");
-                let heuristic: bool = serde_json::from_value(data["heuristic"].clone()).unwrap_or(0) != 0;
+                let node_ids: Vec<i64> =
+                    serde_json::from_value(data["required_nodes"].clone()).expect("No data");
+                let heuristic: bool =
+                    serde_json::from_value(data["heuristic"].clone()).unwrap_or(0) != 0;
 
-                let mut cached_explorations: HashMap<(i64, DateTime<Utc>), Vec<OutgoingJourney>> = HashMap::new();
+                let mut cached_explorations: HashMap<(i64, DateTime<Utc>), Vec<OutgoingJourney>> =
+                    HashMap::new();
 
-                let mut fetch_outgoing = |from_station: i64, time: DateTime<Utc>| -> Vec<OutgoingJourney> {
-                    if let Some(journeys) = cached_explorations.get(&(from_station, time)) {
-                        return journeys.clone();
-                    }
+                let mut fetch_outgoing =
+                    |from_station: i64, time: DateTime<Utc>| -> Vec<OutgoingJourney> {
+                        if let Some(journeys) = cached_explorations.get(&(from_station, time)) {
+                            return journeys.clone();
+                        }
 
-                    let mut journeys = Vec::new();
-                    let mut plugins = plugins.lock().unwrap();
+                        let mut journeys = Vec::new();
+                        let mut plugins = plugins.lock().unwrap();
 
-                    for (p_idx, plugin) in plugins.iter_mut().enumerate() {
-                        if let Ok(value) = plugin.explore(from_station, time) {
-                            if let Some(array) = value.as_array() {
+                        for (p_idx, plugin) in plugins.iter_mut().enumerate() {
+                            if let Ok(value) = plugin.explore(from_station, time)
+                                && let Some(array) = value.as_array()
+                            {
                                 for entry in array {
                                     if let (Some(to_node), Some(cost), Some(time_str)) = (
                                         entry.get("to").and_then(|v| v.as_i64()),
                                         entry.get("cost").and_then(|v| v.as_i64()),
                                         entry.get("time").and_then(|v| v.as_str()),
-                                        
                                     ) {
                                         let line = entry.get("line").and_then(|l| {
-                                            let id = l.get("id").and_then(|v| v.as_str()).map(|s| s.to_string());
-                                            let preferred_colour = l.get("preferred_colour").and_then(|v| v.as_str()).map(|s| s.to_string());
+                                            let id = l
+                                                .get("id")
+                                                .and_then(|v| v.as_str())
+                                                .map(|s| s.to_string());
+                                            let preferred_colour = l
+                                                .get("preferred_colour")
+                                                .and_then(|v| v.as_str())
+                                                .map(|s| s.to_string());
                                             if id.is_some() || preferred_colour.is_some() {
-                                                Some(Line { id, preferred_colour })
+                                                Some(Line {
+                                                    id,
+                                                    preferred_colour,
+                                                })
                                             } else {
                                                 None
                                             }
@@ -294,21 +350,27 @@ fn handle_client(mut stream: TcpStream, plugins: Arc<Mutex<Vec<Plugin>>>, statio
                                     }
                                 }
                             }
+                            if !journeys.is_empty() {
+                                break;
+                            }
                         }
-                        if !journeys.is_empty() {
-                            break;
-                        }
-                    }
 
-                    cached_explorations.insert((from_station, time), journeys.clone());
-                    journeys
-                };
+                        cached_explorations.insert((from_station, time), journeys.clone());
+                        journeys
+                    };
 
                 let (computed_route, _, arrival_time) = route_with_schedule(
                     node_ids,
                     &station_access,
                     &mut fetch_outgoing,
-                    NaiveDateTime::parse_from_str(data["time"].as_str().unwrap_or(Utc::now().format("%Y%m%dT%H%M%S").to_string().as_str()), "%Y%m%dT%H%M%S").unwrap_or(Utc::now().naive_utc()).and_utc(),
+                    NaiveDateTime::parse_from_str(
+                        data["time"]
+                            .as_str()
+                            .unwrap_or(Utc::now().format("%Y%m%dT%H%M%S").to_string().as_str()),
+                        "%Y%m%dT%H%M%S",
+                    )
+                    .unwrap_or(Utc::now().naive_utc())
+                    .and_utc(),
                     data["walking_speed"].as_f64().unwrap_or(0.00138),
                     heuristic,
                 );
@@ -327,7 +389,7 @@ fn handle_client(mut stream: TcpStream, plugins: Arc<Mutex<Vec<Plugin>>>, statio
                     })
                     .collect::<HashSet<String>>()
                     .iter()
-                    .map(|attr| {attr.to_string()})
+                    .map(|attr| attr.to_string())
                     .collect::<Vec<_>>()
                     .join("\n");
 
@@ -340,7 +402,8 @@ fn handle_client(mut stream: TcpStream, plugins: Arc<Mutex<Vec<Plugin>>>, statio
                 let response_body = serde_json::json!({
                     "route": computed_route,
                     "arrival_time": arrival_time
-                }).to_string();
+                })
+                .to_string();
 
                 let response = format!(
                     "HTTP/1.1 200 OK\r\n\
@@ -371,26 +434,24 @@ fn handle_client(mut stream: TcpStream, plugins: Arc<Mutex<Vec<Plugin>>>, statio
     }
 }
 
-fn build_station_access_map(plugins: &mut Vec<Plugin>) -> StationAccessMap {
+fn build_station_access_map(plugins: &mut [Plugin]) -> StationAccessMap {
     let mut station_access = StationAccessMap::new();
 
     for plugin in plugins.iter_mut() {
         println!("Fetching available nodes from plugin: {}", plugin.name);
-        if let Ok(value) = plugin.available_nodes() {
-            if let Some(map) = value.as_object() {
-                for (key, value) in map {
-                    if let Ok(station_id) = key.parse::<i64>() {
-                        if let Some(entries) = value.as_array() {
-                            let entrance_nodes: Vec<i64> = entries
-                                .iter()
-                                .filter_map(|v| v.as_i64())
-                                .collect();
-                            station_access
-                                .entry(station_id)
-                                .or_default()
-                                .extend(entrance_nodes);
-                        }
-                    }
+        if let Ok(value) = plugin.available_nodes()
+            && let Some(map) = value.as_object()
+        {
+            for (key, value) in map {
+                if let Ok(station_id) = key.parse::<i64>()
+                    && let Some(entries) = value.as_array()
+                {
+                    let entrance_nodes: Vec<i64> =
+                        entries.iter().filter_map(|v| v.as_i64()).collect();
+                    station_access
+                        .entry(station_id)
+                        .or_default()
+                        .extend(entrance_nodes);
                 }
             }
         }
@@ -400,7 +461,16 @@ fn build_station_access_map(plugins: &mut Vec<Plugin>) -> StationAccessMap {
 }
 
 fn load_plugins() -> Vec<Plugin> {
-    let output = Command::new("nix").args(["eval", "--json", "--impure", ".#apps", "--apply", "apps: builtins.attrNames (apps.${builtins.currentSystem}.plugins)"]).output();
+    let output = Command::new("nix")
+        .args([
+            "eval",
+            "--json",
+            "--impure",
+            ".#apps",
+            "--apply",
+            "apps: builtins.attrNames (apps.${builtins.currentSystem}.plugins)",
+        ])
+        .output();
 
     let output = match output {
         Ok(out) if out.status.success() => out,
@@ -434,17 +504,39 @@ fn load_plugins() -> Vec<Plugin> {
             .args(["run", &target])
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .spawn() {
+            .spawn()
+        {
             Ok(mut child) => {
-                let mut loaded_plugin = Plugin { name: plugin.to_string(), mode: "".to_string(), plugin_attribution: "".to_string(), plugin_license: "".to_string(), data_attribution: "".to_string(), data_license: "".to_string(), stdin: child.stdin.take().expect(""), stdout: BufReader::new(child.stdout.take().expect("")) };
+                let mut loaded_plugin = Plugin {
+                    name: plugin.to_string(),
+                    mode: "".to_string(),
+                    plugin_attribution: "".to_string(),
+                    plugin_license: "".to_string(),
+                    data_attribution: "".to_string(),
+                    data_license: "".to_string(),
+                    stdin: child.stdin.take().expect(""),
+                    stdout: BufReader::new(child.stdout.take().expect("")),
+                };
 
                 let mode_resp = loaded_plugin.send_request("mode", "[]");
                 let attr_lice = loaded_plugin.send_request("attribution", "[]");
                 if let Ok(r) = serde_json::from_str::<Value>(&attr_lice) {
-                    loaded_plugin.plugin_attribution = r["response"]["plugin_owner"].as_str().unwrap_or("unknown").to_string();
-                    loaded_plugin.plugin_license = r["response"]["plugin_license"].as_str().unwrap_or("unknown").to_string();
-                    loaded_plugin.data_attribution = r["response"]["data_owner"].as_str().unwrap_or("unknown").to_string();
-                    loaded_plugin.data_license = r["response"]["data_license"].as_str().unwrap_or("unknown").to_string();
+                    loaded_plugin.plugin_attribution = r["response"]["plugin_owner"]
+                        .as_str()
+                        .unwrap_or("unknown")
+                        .to_string();
+                    loaded_plugin.plugin_license = r["response"]["plugin_license"]
+                        .as_str()
+                        .unwrap_or("unknown")
+                        .to_string();
+                    loaded_plugin.data_attribution = r["response"]["data_owner"]
+                        .as_str()
+                        .unwrap_or("unknown")
+                        .to_string();
+                    loaded_plugin.data_license = r["response"]["data_license"]
+                        .as_str()
+                        .unwrap_or("unknown")
+                        .to_string();
                 };
 
                 if let Ok(r) = serde_json::from_str::<Value>(&mode_resp) {
@@ -452,10 +544,10 @@ fn load_plugins() -> Vec<Plugin> {
                 };
 
                 loaded_plugins.push(loaded_plugin);
-            },
-            Err(e) => eprintln!("Failed to spawn plugin '{}': {}", plugin, e)
+            }
+            Err(e) => eprintln!("Failed to spawn plugin '{}': {}", plugin, e),
         }
-    };
+    }
 
     loaded_plugins
 }
@@ -495,7 +587,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     ctrlc::set_handler(move || {
         println!("Shutting down...");
-        let _ = runtime_handle.block_on(cleanup(&docker_signal));
+        runtime_handle.block_on(cleanup(&docker_signal));
         std::process::exit(0);
     })?;
 
