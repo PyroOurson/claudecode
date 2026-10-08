@@ -35,6 +35,7 @@ NaoiseGabi/maps-server/Cargo.lock
 NaoiseGabi/maps-server/Cargo.toml
 NaoiseGabi/maps-server/LICENSE
 NaoiseGabi/maps-server/README.md
+NaoiseGabi/maps-server/examples/requests.sh
 NaoiseGabi/maps-server/flake.lock
 NaoiseGabi/maps-server/flake.nix
 NaoiseGabi/maps-server/src/cache.rs
@@ -48,7 +49,6 @@ NaoiseGabi/maps-server/src/repro.rs
 NaoiseGabi/maps-server/src/route.rs
 NaoiseGabi/maps-server/src/testkit.rs
 NaoiseGabi/maps-server/src/tests.rs
-NaoiseGabi/maps-server/test
 NaoiseGabi/maps-server/tests/fake_plugin.py
 NaoiseGabi/maps-server/tests/fixtures/fixture.osm
 NaoiseGabi/maps-server/tests/fixtures/fixture.osm.pbf
