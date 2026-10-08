@@ -30,6 +30,7 @@ NaoiseGabi/games/wordello.py
 NaoiseGabi/games/wordello_logo.png
 NaoiseGabi/games/wordello_words.txt
 NaoiseGabi/maps-server/.gitignore
+NaoiseGabi/maps-server/.gitlab-ci.yml
 NaoiseGabi/maps-server/CHANGELOG.md
 NaoiseGabi/maps-server/Cargo.lock
 NaoiseGabi/maps-server/Cargo.toml
