@@ -21,6 +21,8 @@ All notable changes to maps-server. The format follows [Keep a Changelog](https:
 - Station, entrance and `to` IDs from plugins are accepted as integers or numeric strings. String IDs used to be dropped silently.
 - Plugin journeys whose `cost` is negative or not an integer, whose `time` does not parse, or whose `to` is not an ID are skipped and logged with the plugin's name, once per plugin call. A negative cost used to produce a journey that arrived before it left.
 - A line `id` sent as a number is kept, as a string.
+- Every plugin that listed a station in `available` is asked about it, and their departures are merged. The search used to stop at the first plugin with departures, so a train-to-bus change failed when the train plugin also left that station.
+- A plugin is only asked about stations it listed in `available`. It used to be asked about every station.
 
 - The Overpass container is created from `MAPS_OVERPASS_IMAGE`, default `wiktorn/overpass-api:v0.7.62.9`, instead of `wiktorn/overpass-api:latest`. The Nix wrapper loads exactly that image once and exports the variable. An existing container built from another image is recreated, and its `overpass_db` volume is kept, so no re-import happens.
 - Overpass is published on `127.0.0.1:12345` only, instead of every network interface. An existing container published elsewhere is recreated the same way.

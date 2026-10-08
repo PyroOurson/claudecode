@@ -73,17 +73,31 @@ impl PartialOrd for SearchState {
 pub struct Stations {
     access: StationAccessMap,
     entrances: HashMap<i64, Vec<i64>>,
+    served_by: HashMap<i64, Vec<usize>>,
 }
 
 impl Stations {
+    #[cfg(test)]
     pub fn new(access: StationAccessMap) -> Self {
+        Stations::with_plugins(access, HashMap::new())
+    }
+
+    pub fn with_plugins(access: StationAccessMap, served_by: HashMap<i64, Vec<usize>>) -> Self {
         let mut entrances: HashMap<i64, Vec<i64>> = HashMap::new();
         for (&station, station_entrances) in &access {
             for &entrance in station_entrances {
                 entrances.entry(entrance).or_default().push(station);
             }
         }
-        Stations { access, entrances }
+        Stations {
+            access,
+            entrances,
+            served_by,
+        }
+    }
+
+    pub fn plugins_serving(&self, station: i64) -> &[usize] {
+        self.served_by.get(&station).map_or(&[], Vec::as_slice)
     }
 
     pub fn is_station(&self, node: i64) -> bool {
@@ -134,7 +148,7 @@ pub fn route_with_schedule<F>(
     stats: &mut SearchStats,
 ) -> Result<Itinerary, RouteError>
 where
-    F: FnMut(i64, DateTime<Utc>) -> Vec<OutgoingJourney>,
+    F: FnMut(i64, DateTime<Utc>, Option<usize>) -> Vec<OutgoingJourney>,
 {
     let mut itinerary = Itinerary {
         route: Vec::new(),
@@ -188,7 +202,7 @@ fn a_star_time_dependent<F>(
     stats: &mut SearchStats,
 ) -> Option<(Vec<RouteSegment>, DateTime<Utc>)>
 where
-    F: FnMut(i64, DateTime<Utc>) -> Vec<OutgoingJourney>,
+    F: FnMut(i64, DateTime<Utc>, Option<usize>) -> Vec<OutgoingJourney>,
 {
     let stations = params.stations;
     let estimate = |node: i64| heuristic_seconds(graph, params, node, end_node);
@@ -307,15 +321,13 @@ where
         }
 
         if stations.is_station(current_node) {
-            let journeys = fetch_outgoing(current_node, current_time + params.min_transfer);
+            let journeys = fetch_outgoing(
+                current_node,
+                current_time + params.min_transfer,
+                state.last_plugin_id,
+            );
             for journey in journeys {
                 if journey.target_station == current_node {
-                    continue;
-                }
-
-                if let (Some(last_p), Some(leg_p)) = (state.last_plugin_id, journey.plugin_id)
-                    && last_p == leg_p
-                {
                     continue;
                 }
 

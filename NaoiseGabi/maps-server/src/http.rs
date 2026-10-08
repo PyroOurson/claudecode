@@ -225,29 +225,20 @@ pub fn parse_request(body: &[u8], config: &Config) -> Result<RouteRequest, ApiEr
     })
 }
 
-fn explore_station(
+fn explore_with(
     plugins: &Mutex<Vec<Plugin>>,
+    index: usize,
     station: i64,
     time: DateTime<Utc>,
 ) -> Vec<OutgoingJourney> {
-    let mut journeys = Vec::new();
     let mut plugins = plugins.lock().unwrap();
-
-    for (index, plugin) in plugins.iter_mut().enumerate() {
-        if let Ok(value) = plugin.explore(station, time) {
-            journeys.extend(parse_journeys(
-                &plugin.name,
-                index,
-                &plugin.mode,
-                station,
-                &value,
-            ));
-        }
-        if !journeys.is_empty() {
-            break;
-        }
+    let Some(plugin) = plugins.get_mut(index) else {
+        return Vec::new();
+    };
+    match plugin.explore(station, time) {
+        Ok(value) => parse_journeys(&plugin.name, index, &plugin.mode, station, &value),
+        Err(_) => Vec::new(),
     }
-    journeys
 }
 
 fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
@@ -255,13 +246,21 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
 
     println!("Received request: {:?}", request);
 
-    let mut cached_explorations: HashMap<(i64, DateTime<Utc>), Vec<OutgoingJourney>> =
+    let mut cached_explorations: HashMap<(i64, usize, DateTime<Utc>), Vec<OutgoingJourney>> =
         HashMap::new();
-    let mut fetch_outgoing = |from_station: i64, time: DateTime<Utc>| -> Vec<OutgoingJourney> {
-        cached_explorations
-            .entry((from_station, time))
-            .or_insert_with(|| explore_station(&state.plugins, from_station, time))
-            .clone()
+    let mut fetch_outgoing = |station: i64, time: DateTime<Utc>, exclude: Option<usize>| {
+        let mut journeys = Vec::new();
+        for &index in state.stations.plugins_serving(station) {
+            if Some(index) == exclude {
+                continue;
+            }
+            journeys.extend_from_slice(
+                cached_explorations
+                    .entry((station, index, time))
+                    .or_insert_with(|| explore_with(&state.plugins, index, station, time)),
+            );
+        }
+        journeys
     };
 
     let params = SearchParams {

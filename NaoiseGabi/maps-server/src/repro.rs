@@ -60,7 +60,12 @@ fn plan(
     legs: fn(i64) -> Vec<OutgoingJourney>,
     estimate_off: bool,
 ) -> (Vec<RouteSegment>, DateTime<Utc>) {
-    let mut fetch = |station: i64, _time: DateTime<Utc>| legs(station);
+    let mut fetch = |station: i64, _time: DateTime<Utc>, exclude: Option<usize>| {
+        legs(station)
+            .into_iter()
+            .filter(|journey| journey.plugin_id.is_none() || journey.plugin_id != exclude)
+            .collect()
+    };
     let stations = Stations::new(stations.clone());
     let params = SearchParams {
         stations: &stations,
@@ -199,7 +204,6 @@ fn control_walking_route_works() {
 }
 
 #[test]
-#[ignore = "B5"]
 fn every_plugin_serving_a_station_is_asked() {
     let reply = send(
         shared_station(true),
@@ -249,8 +253,8 @@ fn string_entrance_ids_from_plugins_are_accepted() {
     let mut plugins = vec![plugin("readme", json!({"available": {"100": ["3"]}}))];
     let stations = build_station_access_map(&mut plugins);
     assert_eq!(
-        stations.get(&100),
-        Some(&vec![3]),
+        stations.entrances_of(100),
+        &[3],
         "entrances given as strings, as the README shows, were dropped"
     );
 }

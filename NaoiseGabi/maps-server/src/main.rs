@@ -297,10 +297,11 @@ async fn stop_overpass_container(
     Ok(())
 }
 
-fn build_station_access_map(plugins: &mut [Plugin]) -> StationAccessMap {
+fn build_station_access_map(plugins: &mut [Plugin]) -> Stations {
     let mut station_access = StationAccessMap::new();
+    let mut served_by: HashMap<i64, Vec<usize>> = HashMap::new();
 
-    for plugin in plugins.iter_mut() {
+    for (index, plugin) in plugins.iter_mut().enumerate() {
         println!("Fetching available nodes from plugin: {}", plugin.name);
         let Ok(value) = plugin.available_nodes() else {
             continue;
@@ -330,6 +331,10 @@ fn build_station_access_map(plugins: &mut [Plugin]) -> StationAccessMap {
                 .entry(station_id)
                 .or_default()
                 .extend(entrance_nodes);
+            let serving = served_by.entry(station_id).or_default();
+            if !serving.contains(&index) {
+                serving.push(index);
+            }
         }
         if let Some(first) = skipped.first() {
             eprintln!(
@@ -341,7 +346,7 @@ fn build_station_access_map(plugins: &mut [Plugin]) -> StationAccessMap {
         }
     }
 
-    station_access
+    Stations::with_plugins(station_access, served_by)
 }
 
 fn load_plugins() -> Vec<Plugin> {
@@ -480,7 +485,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     wait_for_overpass_ready().await;
 
     let mut plugins = load_plugins();
-    let stations = Stations::new(build_station_access_map(&mut plugins));
+    let stations = build_station_access_map(&mut plugins);
     let bind = config.bind.clone();
     let state = Arc::new(AppState {
         config,

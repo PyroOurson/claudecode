@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0
 // Copyright (C) 2026 Naoise McG
 use crate::config::Config;
-use crate::testkit::{exchange, request, send, serve, serve_state, state_with};
+use crate::testkit::{
+    CallLog, exchange, has_route, plugin, request, send, serve, serve_state, state_with,
+};
 use serde_json::json;
 
 fn walk() -> String {
@@ -135,4 +137,49 @@ fn unknown_paths_get_a_json_404() {
     );
     assert_eq!(reply.status, 404, "{}", reply.raw);
     assert!(reply.json["error"].is_string(), "{}", reply.raw);
+}
+
+#[test]
+fn plugins_are_only_asked_about_stations_they_listed() {
+    let train_log = CallLog::new("train");
+    let bus_log = CallLog::new("bus");
+    let plugins = vec![
+        plugin(
+            "train",
+            json!({"mode": "train", "log": train_log.path(), "available": {"300": [], "400": []},
+                   "explore": {"300": [{"to": 400, "offset": 120, "cost": 600}]}}),
+        ),
+        plugin(
+            "bus",
+            json!({"mode": "bus", "log": bus_log.path(), "available": {"400": [], "500": []},
+                   "explore": {"400": [{"to": 500, "offset": 300, "cost": 600}]}}),
+        ),
+    ];
+    let reply = send(
+        plugins,
+        vec![request(
+            "POST",
+            "/",
+            &json!({"required_nodes": [300, 500], "time": "20260808T120000"}).to_string(),
+        )],
+    );
+    assert!(has_route(&reply), "{}", reply.raw);
+    let train = train_log.explored_stations();
+    let bus = bus_log.explored_stations();
+    assert!(
+        train.iter().all(|s| [300, 400].contains(s)),
+        "train asked about {:?}",
+        train
+    );
+    assert!(
+        bus.iter().all(|s| [400, 500].contains(s)),
+        "bus asked about {:?}",
+        bus
+    );
+    assert!(
+        train.contains(&300) && bus.contains(&400),
+        "train {:?}, bus {:?}",
+        train,
+        bus
+    );
 }

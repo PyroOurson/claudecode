@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Naoise McG
 use crate::config::Config;
 use crate::http::{AppState, router};
-use crate::route::{Graph, Stations};
+use crate::route::Graph;
 use crate::{Plugin, build_station_access_map};
 use serde_json::Value;
 use std::io::{BufReader, Read, Write};
@@ -58,7 +58,7 @@ pub fn state(plugins: Vec<Plugin>) -> Arc<AppState> {
 }
 
 pub fn state_with(mut plugins: Vec<Plugin>, config: Config) -> Arc<AppState> {
-    let stations = Stations::new(build_station_access_map(&mut plugins));
+    let stations = build_station_access_map(&mut plugins);
     Arc::new(AppState {
         config,
         graph: &FIXTURE,
@@ -146,4 +146,43 @@ pub fn has_route(reply: &Reply) -> bool {
         && reply.json["route"]
             .as_array()
             .is_some_and(|route| !route.is_empty())
+}
+
+pub struct CallLog {
+    path: PathBuf,
+}
+
+impl CallLog {
+    pub fn new(name: &str) -> Self {
+        static COUNTER: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+        let unique = COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!(
+            "maps-server-{}-{}-{}.log",
+            std::process::id(),
+            name,
+            unique
+        ));
+        let _ = std::fs::remove_file(&path);
+        CallLog { path }
+    }
+
+    pub fn path(&self) -> String {
+        self.path.to_string_lossy().to_string()
+    }
+
+    pub fn explored_stations(&self) -> Vec<i64> {
+        std::fs::read_to_string(&self.path)
+            .unwrap_or_default()
+            .lines()
+            .filter_map(|line| serde_json::from_str::<Value>(line).ok())
+            .filter(|request| request["action"] == "explore")
+            .filter_map(|request| request["data"]["station"].as_i64())
+            .collect()
+    }
+}
+
+impl Drop for CallLog {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.path);
+    }
 }

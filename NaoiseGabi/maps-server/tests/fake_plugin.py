@@ -40,11 +40,19 @@ def answer(scenario, request):
     raise ValueError("unknown action: " + str(action))
 
 
+def record(scenario, line):
+    path = scenario.get("log")
+    if path:
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(line.strip() + "\n")
+
+
 def main():
     scenario = json.loads(sys.argv[1])
     for line in sys.stdin:
         if not line.strip():
             continue
+        record(scenario, line)
         try:
             reply = {"response": answer(scenario, json.loads(line))}
         except Exception as error:
