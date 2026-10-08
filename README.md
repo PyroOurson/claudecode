@@ -35,3 +35,5 @@ https://pyroourson.github.io/claudecode/ is a little website of browser games. `
 | Snake | `games/snake.html` | Snake for the browser, with swipe and D-pad controls on phones. |
 
 Scores and progress are saved in the browser you play in. To play offline, open `index.html` from the downloaded folder.
+
+The site also hosts a **maps-server demo**, https://pyroourson.github.io/claudecode/ClaudeScripts/maps-demo/: maps-server's routing code running in the browser on a map of Monaco, with its real bus lines and made-up bus times. It lives in `ClaudeScripts/maps-demo/`; see its README.

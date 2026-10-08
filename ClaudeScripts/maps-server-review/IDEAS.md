@@ -10,6 +10,7 @@ Ideas for what could be added to maps-server next. None of them is built. Sizes 
   - `GET /health` and `GET /metrics` show its state.
 - Opening `http://localhost:6767/` in a browser gives `405`, because there is no page to show yet. The demo page (F14) would add one.
 - It has no public address. Anyone else could only use it if it ran on a machine that is always on, with Docker, the map files and the plugins, and with F16's protection in front.
+- Its routing code can also be tried in a browser, with nothing to install, at https://pyroourson.github.io/claudecode/ClaudeScripts/maps-demo/: Monaco, real bus lines, made-up bus times (`ClaudeScripts/maps-demo/`).
 
 ## Top picks
 
