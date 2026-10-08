@@ -237,3 +237,50 @@ fn malformed_search_flags_get_400() {
         assert_eq!(reply.status, 400, "{} -> {}", flags, reply.raw);
     }
 }
+
+#[test]
+fn consecutive_walking_edges_form_one_segment() {
+    let reply = post_json(json!({"required_nodes": [3, 2], "time": "20260808T120000"}));
+    assert_eq!(reply.status, 200, "{}", reply.raw);
+    assert_eq!(
+        reply.json["route"].as_array().map(Vec::len),
+        Some(1),
+        "{}",
+        reply.raw
+    );
+    assert_eq!(reply.json["route"][0]["nodes"], json!([3, 1, 2]));
+    assert_eq!(reply.json["route"][0]["mode"], "walking");
+}
+
+#[test]
+fn two_vehicles_of_the_same_line_stay_two_segments() {
+    let line = json!({"id": "4", "preferred_colour": "#FF0000"});
+    let plugins = vec![
+        plugin(
+            "first",
+            json!({"available": {"300": [], "400": []},
+                   "explore": {"300": [{"to": 400, "offset": 120, "cost": 600, "line": line}]}}),
+        ),
+        plugin(
+            "second",
+            json!({"available": {"400": [], "500": []},
+                   "explore": {"400": [{"to": 500, "offset": 300, "cost": 600, "line": line}]}}),
+        ),
+    ];
+    let reply = send(
+        plugins,
+        vec![request(
+            "POST",
+            "/",
+            &json!({"required_nodes": [300, 500], "time": "20260808T120000"}).to_string(),
+        )],
+    );
+    assert_eq!(reply.status, 200, "{}", reply.raw);
+    let nodes: Vec<&serde_json::Value> = reply.json["route"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|segment| &segment["nodes"])
+        .collect();
+    assert_eq!(nodes, vec![&json!([300, 400]), &json!([400, 500])]);
+}

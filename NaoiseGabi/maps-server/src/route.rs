@@ -20,6 +20,7 @@ pub struct Line {
 #[derive(Clone, Debug)]
 struct TransitionEdge {
     from_key: StateKey,
+    transit: bool,
     mode: String,
     line: Option<Line>,
     departure: DateTime<Utc>,
@@ -262,6 +263,7 @@ where
                     next_key,
                     TransitionEdge {
                         from_key: current_key,
+                        transit: false,
                         mode: "walking".to_string(),
                         line: None,
                         departure: current_time,
@@ -285,6 +287,7 @@ where
                     next_key,
                     TransitionEdge {
                         from_key: current_key,
+                        transit: false,
                         mode: "walking".to_string(),
                         line: None,
                         departure: current_time,
@@ -313,6 +316,7 @@ where
                     next_key,
                     TransitionEdge {
                         from_key: current_key,
+                        transit: false,
                         mode: "walking".to_string(),
                         line: None,
                         departure: current_time,
@@ -353,6 +357,7 @@ where
                         next_key,
                         TransitionEdge {
                             from_key: current_key,
+                            transit: true,
                             mode: journey.mode.clone(),
                             line: journey.line.clone(),
                             departure: journey.departure,
@@ -392,17 +397,13 @@ fn reconstruct_path(
     edges.reverse();
 
     let mut segments: Vec<RouteSegment> = Vec::new();
+    let mut last_was_walking = false;
     for (to_node, edge) in edges {
-        let match_last = segments
-            .last_mut()
-            .map(|s| {
-                s.mode == edge.mode
-                    && s.line.as_ref().map(|l| &l.id) == edge.line.as_ref().map(|l| &l.id)
-            })
-            .unwrap_or(false);
-
-        if match_last {
-            let last = segments.last_mut().unwrap();
+        let walking = !edge.transit;
+        if walking
+            && last_was_walking
+            && let Some(last) = segments.last_mut()
+        {
             last.nodes.push(to_node);
             last.arrival_time = edge.arrival;
         } else {
@@ -415,6 +416,7 @@ fn reconstruct_path(
                 arrival_time: edge.arrival,
             });
         }
+        last_was_walking = walking;
     }
     segments
 }

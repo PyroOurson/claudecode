@@ -133,7 +133,6 @@ fn control_search_without_estimate_takes_the_train() {
 }
 
 #[test]
-#[ignore = "B7"]
 fn a_change_between_vehicles_stays_visible() {
     let stations = access(&[(300, &[]), (400, &[]), (500, &[])]);
     let (route, _) = plan(vec![300, 500], &stations, two_plugins, true);
