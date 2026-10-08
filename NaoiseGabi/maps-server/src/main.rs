@@ -133,15 +133,18 @@ fn plugin_names() -> Vec<String> {
         }
     };
 
-    let stdout = String::from_utf8_lossy(&output.stdout);
+    match parse_plugin_names(&output.stdout) {
+        Ok(names) => names,
+        Err(error) => {
+            eprintln!("Could not read the plugin list from nix eval: {}", error);
+            Vec::new()
+        }
+    }
+}
 
-    stdout
-        .trim()
-        .trim_matches(|c| c == '[' || c == ']' || c == '\n' || c == ' ')
-        .split(',')
-        .map(|s| s.trim().trim_matches('"').to_string())
-        .filter(|s| !s.is_empty())
-        .collect()
+fn parse_plugin_names(output: &[u8]) -> std::result::Result<Vec<String>, String> {
+    serde_json::from_slice::<Vec<String>>(output)
+        .map_err(|error| format!("{} in {:?}", error, String::from_utf8_lossy(output).trim()))
 }
 
 async fn shutdown_signal() {

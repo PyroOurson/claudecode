@@ -602,3 +602,20 @@ fn states_past_the_horizon_are_not_expanded() {
     let reply = exchange(long, vec![request("POST", "/", &body)]);
     assert_eq!(reply.status, 200, "{}", reply.raw);
 }
+
+#[test]
+fn the_plugin_list_is_read_as_json() {
+    assert_eq!(
+        crate::parse_plugin_names(b"[\"cam-plugin-bus\",\"sncf-plugin\"]\n"),
+        Ok(vec![
+            "cam-plugin-bus".to_string(),
+            "sncf-plugin".to_string()
+        ])
+    );
+    assert_eq!(crate::parse_plugin_names(b"[]"), Ok(Vec::new()));
+    assert_eq!(
+        crate::parse_plugin_names(b"[\"a,b\", \"c]d\"]"),
+        Ok(vec!["a,b".to_string(), "c]d".to_string()])
+    );
+    assert!(crate::parse_plugin_names(b"error: flake has no apps").is_err());
+}
