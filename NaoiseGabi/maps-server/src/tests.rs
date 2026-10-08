@@ -1377,3 +1377,25 @@ mod checker {
         assert!(crate::checked_spec(&args(&["a", "b"])).is_none());
     }
 }
+
+#[test]
+fn the_flake_pins_the_image_the_server_uses_by_default() {
+    let flake = std::fs::read_to_string(kit().join("..").join("flake.nix")).unwrap();
+    let field = |name: &str| {
+        flake
+            .lines()
+            .find_map(|line| {
+                line.trim()
+                    .strip_prefix(&format!("{} = \"", name))
+                    .and_then(|rest| rest.strip_suffix("\";"))
+            })
+            .unwrap_or_default()
+            .to_string()
+    };
+    let pinned = format!(
+        "{}:{}",
+        field("overpassImageName"),
+        field("overpassImageTag")
+    );
+    assert_eq!(pinned, crate::config::DEFAULT_OVERPASS_IMAGE);
+}

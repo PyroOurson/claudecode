@@ -236,7 +236,9 @@ fn main() -> ExitCode {
 }
 
 async fn serve() -> std::result::Result<(), Box<dyn std::error::Error>> {
-    let config = Config::from_env()?;
+    let loaded = Config::load()?;
+    println!("{}", loaded.summary());
+    let config = loaded.config;
     let assets = env::current_dir()?.join("assets");
 
     println!(

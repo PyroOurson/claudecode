@@ -34,6 +34,7 @@ These change what clients or plugins see. Read them before upgrading.
 
 ### Added
 
+- An optional `maps-server.toml` (or the file in `MAPS_CONFIG`) holding any setting, written in lower case without the `MAPS_` prefix. The environment wins over the file, the file over the defaults. Startup prints the effective configuration and where each value came from, hiding secrets.
 - `maps-server check-plugin <flake attribute>` (or `check-plugin -- <command> [args]`) runs a plugin through `mode`, `attribution`, `available` and three `explore` calls, reports problems and warnings, and exits with status 1 on problems. JSON Schemas for every request and reply are in `docs/plugin-protocol/`.
 - Routing options, all optional and defaulting to the old behaviour: `min_transfer_s` (overrides `MAPS_MIN_TRANSFER_S`, default 60), `max_walk_m` (longest single walk), `transfer_penalty_s` (added per change when comparing routes), `exclude_modes` (plugins of those modes are not asked) and `avoid_steps` (no `highway=steps`; the graph stores a steps flag per edge).
 - `"waypoints": [[lat, lon], ...]` instead of `required_nodes`: each point snaps to the nearest walkable node (an R-tree built on first use), and points further than `max_snap_m` (default 500) get `400`. The answer then carries `"snapped": [{"input", "node", "distance_m"}]`.
@@ -62,7 +63,7 @@ These change what clients or plugins see. Read them before upgrading.
 - A train-to-bus change works when the train plugin also has departures from the change station.
 - A change between two vehicles of the same plugin (TER to TGV) is possible. It used to work only when the station node lay on a footway. This costs one more plugin call per vehicle arrival.
 - A stuck plugin no longer freezes the server: each plugin has its own lock and a timeout, and plugins are called in parallel.
-- The Overpass image is found on a fresh machine. The Nix wrapper loads the pinned image once instead of on every run and exports `MAPS_OVERPASS_IMAGE`; the code used to ask for `:latest`, which Docker never pulled.
+- The Overpass image is found on a fresh machine. The Nix wrapper loads the pinned image once instead of on every run, and the server's default image is that same pinned tag; the code used to ask for `:latest`, which Docker never pulled.
 - An existing Overpass container built from another image or published on another address is recreated, and its `overpass_db` volume and its "import finished" marker (`/db/init_done`, which the image keeps outside the volume) are carried over, so no re-import happens.
 - A stopped Overpass container whose first import never finished is removed with its volume and the import starts again. Restarting it used to re-run the import on top of the old files, which fails.
 - The walking graph is built at startup. Missing map files are listed by name before Docker is touched, and an unreadable file stops startup with a clear message instead of making every request panic.

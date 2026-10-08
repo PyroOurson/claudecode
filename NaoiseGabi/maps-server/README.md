@@ -84,7 +84,16 @@ The wrapper loads the pinned Overpass image (`wiktorn/overpass-api:v0.7.62.9`) i
 
 ## Configuration
 
-Everything is set with environment variables. Each one defaults to the behaviour described here.
+Every setting can come from an environment variable or from a `maps-server.toml` file in the folder you start the server from (or the file named by `MAPS_CONFIG`). The environment wins over the file, and the file wins over the defaults. In the file, write the names in lower case without the `MAPS_` prefix:
+
+```toml
+osm_pbf_files = ["provence-alpes-cote-d-azur-260718.osm.pbf", "florida-260819.osm.pbf"]
+bind = "127.0.0.1:6767"
+cache_ttl_s = 60
+max_speed_kmh = 350
+```
+
+Unknown names in the file stop startup, so typos do not go unnoticed. At startup the server prints every setting with its value and where it came from (`environment`, the file, or `default`); settings whose name contains `KEY`, `TOKEN`, `SECRET` or `PASSWORD` are shown as `(hidden)`.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
@@ -100,7 +109,7 @@ Everything is set with environment variables. Each one defaults to the behaviour
 | `MAPS_CACHE_TTL_S` | `120` | How long a plugin's answer for a station and a 5-minute window is reused. `0` turns the cache off. |
 | `MAPS_PLUGIN_TIMEOUT_S` | `30` | How long to wait for a plugin's answer to `explore`. |
 | `MAPS_PLUGIN_STARTUP_TIMEOUT_S` | `900` | How long to wait for `mode`, `attribution` and `available`, at startup and after a restart. |
-| `MAPS_OVERPASS_IMAGE` | `wiktorn/overpass-api:v0.7.62.9` | Docker image for Overpass. The Nix wrapper sets it and loads the image; set it yourself to use another image. |
+| `MAPS_OVERPASS_IMAGE` | `wiktorn/overpass-api:v0.7.62.9` | Docker image for Overpass. The Nix wrapper loads the pinned default into Docker; set this to use another image, which Docker must already have. |
 | `MAPS_OVERPASS_READY_TIMEOUT_S` | `21600` | How long to wait for the Overpass import before giving up. |
 | `MAPS_SOURCE_URL` | `https://gitlab.com/buphagidae/maps-server` | Sent in the `Source-Code` header. Change it if you run modified code: the AGPL asks you to offer your version's source to its users. |
 

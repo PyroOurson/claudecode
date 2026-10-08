@@ -61,12 +61,9 @@
 						type = "app";
 						meta.description = "maps-server, with the pinned Overpass image loaded into Docker";
 						program = "${pkgs.writeShellScriptBin "maps-server-wrapper" ''
-							if [ -z "''${MAPS_OVERPASS_IMAGE:-}" ]; then
-								export MAPS_OVERPASS_IMAGE="${overpassImageRef}"
-								if ! ${pkgs.docker}/bin/docker image inspect "${overpassImageRef}" >/dev/null 2>&1; then
-									echo "Loading Overpass image ${overpassImageRef} into Docker daemon from Nix store..."
-									${pkgs.docker}/bin/docker load -i ${overpassImage}
-								fi
+							if ! ${pkgs.docker}/bin/docker image inspect "${overpassImageRef}" >/dev/null 2>&1; then
+								echo "Loading Overpass image ${overpassImageRef} into Docker daemon from Nix store..."
+								${pkgs.docker}/bin/docker load -i ${overpassImage}
 							fi
 							exec ${self.packages.${system}.default}/bin/maps-server "$@"
 						''}/bin/maps-server-wrapper";
