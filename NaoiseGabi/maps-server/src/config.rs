@@ -3,9 +3,11 @@
 use std::env;
 
 pub const DEFAULT_OVERPASS_IMAGE: &str = "wiktorn/overpass-api:v0.7.62.9";
+pub const DEFAULT_OSM_PBF_FILE: &str = "provence-alpes-cote-d-azur-260718.osm.pbf";
 pub const DEFAULT_SOURCE_URL: &str = "https://gitlab.com/buphagidae/maps-server";
 
 pub struct Config {
+    pub osm_pbf_files: Vec<String>,
     pub bind: String,
     pub max_body_bytes: usize,
     pub max_required_nodes: usize,
@@ -26,7 +28,19 @@ impl Config {
     }
 
     pub fn from_lookup(lookup: &dyn Fn(&str) -> Option<String>) -> Result<Self, String> {
+        let files = lookup("OSM_PBF_FILES")
+            .or_else(|| lookup("OSM_PBF_FILE_NAME"))
+            .unwrap_or_default();
+        let mut osm_pbf_files: Vec<String> = files
+            .split(',')
+            .map(|item| item.trim().to_string())
+            .filter(|item| !item.is_empty())
+            .collect();
+        if osm_pbf_files.is_empty() {
+            osm_pbf_files.push(DEFAULT_OSM_PBF_FILE.to_string());
+        }
         Ok(Config {
+            osm_pbf_files,
             bind: text(lookup, "MAPS_BIND", "0.0.0.0:6767"),
             max_body_bytes: number(lookup, "MAPS_MAX_BODY_BYTES", 65536)?,
             max_required_nodes: number(lookup, "MAPS_MAX_REQUIRED_NODES", 25)?,

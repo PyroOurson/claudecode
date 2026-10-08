@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0
 // Copyright (C) 2026 Naoise McG
 use crate::config::Config;
+use crate::http::AppState;
 use crate::testkit::{
     CallLog, exchange, has_route, plugin, request, send, serve, serve_state, state_with,
 };
+use crate::testkit::{FIXTURE, kit};
 use serde_json::json;
+use std::sync::Arc;
 
 fn walk() -> String {
     json!({"required_nodes": [1, 2], "time": "20260808T120000"}).to_string()
@@ -343,4 +346,58 @@ fn attribution_credits_openstreetmap() {
         "{}",
         decoded
     );
+}
+
+#[test]
+fn routes_get_503_until_the_plugins_are_ready() {
+    let state = Arc::new(AppState::new(Config::default(), FIXTURE.clone()));
+    let reply = exchange(serve_state(state), vec![request("POST", "/", &walk())]);
+    assert_eq!(reply.status, 503, "{}", reply.raw);
+    assert!(
+        reply.json["error"]
+            .as_str()
+            .is_some_and(|e| e.contains("starting"))
+    );
+}
+
+#[test]
+fn missing_map_files_are_listed_before_anything_starts() {
+    let assets = kit().join("fixtures");
+    let files = vec![
+        "fixture.osm.pbf".to_string(),
+        "france.osm.pbf".to_string(),
+        "belgium.osm.pbf".to_string(),
+    ];
+    assert_eq!(
+        crate::missing_files(&assets, &files),
+        vec!["france.osm.pbf".to_string(), "belgium.osm.pbf".to_string()]
+    );
+    let error = crate::load_graph(&assets, &files).err().unwrap_or_default();
+    assert!(
+        error.contains("france.osm.pbf, belgium.osm.pbf"),
+        "{}",
+        error
+    );
+}
+
+#[test]
+fn a_corrupt_map_file_stops_startup_with_a_clear_message() {
+    let folder = std::env::temp_dir().join(format!("maps-server-corrupt-{}", std::process::id()));
+    std::fs::create_dir_all(&folder).unwrap();
+    std::fs::write(folder.join("broken.osm.pbf"), b"this is not a PBF file").unwrap();
+    let result = crate::load_graph(&folder, &["broken.osm.pbf".to_string()]);
+    let _ = std::fs::remove_dir_all(&folder);
+    let error = result.err().unwrap_or_default();
+    assert!(
+        error.starts_with("Could not read the map files broken.osm.pbf"),
+        "{}",
+        error
+    );
+}
+
+#[test]
+fn the_fixture_loads_through_the_startup_path() {
+    let graph =
+        crate::load_graph(&kit().join("fixtures"), &["fixture.osm.pbf".to_string()]).unwrap();
+    assert!(graph.contains(1) && graph.contains(701));
 }

@@ -6,6 +6,9 @@ All notable changes to maps-server. The format follows [Keep a Changelog](https:
 
 ### Changed
 
+- The walking graph is built at startup, before anything else, instead of on the first request. Missing map files are listed by name and stop startup before Docker is touched; an unreadable file stops startup with a clear message instead of making every request panic.
+- The server starts listening as soon as the graph is built and answers `503` with `{"error": "starting: ..."}` until Overpass and the plugins are ready. It used to listen only once everything was up.
+
 - **The default search is exact.** It always returns the earliest arrival, using a safe estimate (straight-line distance at `MAPS_MAX_SPEED_KMH`, default 300 km/h; `0` turns the estimate off). The old default used the walking-speed estimate, which could return a 36-minute walk when a 20-minute train existed. Send `"fast": true` to get the old, quicker search. On Andorra a 9.4-hour walk expands 29,319 states in exact mode and 15,763 in fast mode, with the same answer.
 - `heuristic` accepts `true`/`false` as well as integers, with its old meaning: `1` or `true` turns the walking estimate off (exact), `0` or `false` turns it on (fast). `true` used to be read as `0`. `fast` wins when both are sent. Any other value gets `400`.
 

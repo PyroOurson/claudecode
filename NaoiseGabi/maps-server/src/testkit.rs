@@ -9,7 +9,7 @@ use std::io::{BufReader, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
-use std::sync::{Arc, LazyLock, Mutex};
+use std::sync::{Arc, LazyLock};
 use std::thread;
 
 pub fn kit() -> PathBuf {
@@ -50,8 +50,9 @@ pub struct Reply {
     pub raw: String,
 }
 
-pub static FIXTURE: LazyLock<Graph> =
-    LazyLock::new(|| Graph::from_pbfs(&[kit().join("fixtures").join("fixture.osm.pbf")]).unwrap());
+pub static FIXTURE: LazyLock<Arc<Graph>> = LazyLock::new(|| {
+    Arc::new(Graph::from_pbfs(&[kit().join("fixtures").join("fixture.osm.pbf")]).unwrap())
+});
 
 pub fn state(plugins: Vec<Plugin>) -> Arc<AppState> {
     state_with(plugins, Config::default())
@@ -59,12 +60,9 @@ pub fn state(plugins: Vec<Plugin>) -> Arc<AppState> {
 
 pub fn state_with(mut plugins: Vec<Plugin>, config: Config) -> Arc<AppState> {
     let stations = build_station_access_map(&mut plugins);
-    Arc::new(AppState {
-        config,
-        graph: &FIXTURE,
-        plugins: Mutex::new(plugins),
-        stations,
-    })
+    let state = Arc::new(AppState::new(config, FIXTURE.clone()));
+    state.set_ready(plugins, stations);
+    state
 }
 
 pub fn serve_state(state: Arc<AppState>) -> SocketAddr {

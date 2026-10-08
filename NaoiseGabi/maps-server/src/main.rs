@@ -15,11 +15,13 @@ use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
 use std::env;
 use std::fs;
+use std::future::IntoFuture;
 use std::hash::{Hash, Hasher};
 use std::io::{BufRead, BufReader, Write};
+use std::path::{Path, PathBuf};
 use std::process::{ChildStdin, ChildStdout, Command, Stdio};
-use std::sync::LazyLock;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use std::time::Instant;
 
 mod config;
 mod http;
@@ -33,30 +35,41 @@ mod testkit;
 #[cfg(test)]
 mod tests;
 
-pub static OSM_PBF_FILES: LazyLock<Vec<String>> = LazyLock::new(|| {
-    env::var("OSM_PBF_FILES")
-        .or_else(|_| env::var("OSM_PBF_FILE_NAME"))
-        .map(|s| {
-            s.split(',')
-                .map(|item| item.trim().to_string())
-                .filter(|item| !item.is_empty())
-                .collect()
-        })
-        .unwrap_or_else(|_| vec!["provence-alpes-cote-d-azur-260718.osm.pbf".to_string()])
-});
-
-static GRAPH: LazyLock<Graph> = LazyLock::new(|| {
-    let file_paths: Vec<String> = OSM_PBF_FILES
+fn missing_files(assets: &Path, files: &[String]) -> Vec<String> {
+    files
         .iter()
-        .map(|f| format!("assets/{}", f))
-        .collect();
+        .filter(|file| !assets.join(file).is_file())
+        .cloned()
+        .collect()
+}
 
-    Graph::from_pbfs(&file_paths).expect("Failed to load OSM PBF files")
-});
+fn load_graph(assets: &Path, files: &[String]) -> std::result::Result<Graph, String> {
+    let missing = missing_files(assets, files);
+    if !missing.is_empty() {
+        return Err(format!(
+            "{} missing from {}: {}. Download them (for example from https://download.geofabrik.de/) or fix OSM_PBF_FILES.",
+            if missing.len() == 1 {
+                "This map file is"
+            } else {
+                "These map files are"
+            },
+            assets.display(),
+            missing.join(", ")
+        ));
+    }
+    let paths: Vec<PathBuf> = files.iter().map(|file| assets.join(file)).collect();
+    Graph::from_pbfs(&paths).map_err(|error| {
+        format!(
+            "Could not read the map files {}: {}",
+            files.join(", "),
+            error
+        )
+    })
+}
 
-fn calculate_pbf_hash(assets_path: &std::path::Path) -> String {
+fn calculate_pbf_hash(assets_path: &Path, files: &[String]) -> String {
     let mut hasher = DefaultHasher::new();
-    for file_name in OSM_PBF_FILES.iter() {
+    for file_name in files {
         let path = assets_path.join(file_name);
         file_name.hash(&mut hasher);
         if let Ok(metadata) = fs::metadata(&path) {
@@ -169,7 +182,7 @@ async fn start_overpass_container(
     let container_name = "overpass_api";
     let current_dir = env::current_dir()?;
     let assets_dir = current_dir.join("assets");
-    let current_hash = calculate_pbf_hash(&assets_dir);
+    let current_hash = calculate_pbf_hash(&assets_dir, &config.osm_pbf_files);
 
     if let Ok(inspect) = docker.inspect_container(container_name, None).await {
         let existing_hash = inspect
@@ -246,13 +259,17 @@ async fn start_overpass_container(
         ..Default::default()
     };
 
-    let input_paths = OSM_PBF_FILES
+    let input_paths = config
+        .osm_pbf_files
         .iter()
         .map(|f| format!("/assets/{}", f))
         .collect::<Vec<_>>()
         .join(" ");
 
-    let planet_url = format!("OVERPASS_PLANET_URL=file:///assets/{}", OSM_PBF_FILES[0]);
+    let planet_url = format!(
+        "OVERPASS_PLANET_URL=file:///assets/{}",
+        config.osm_pbf_files[0]
+    );
     let planet_preprocess = format!(
         "OVERPASS_PLANET_PREPROCESS=rm -f /db/planet.osm.bz2 && osmium merge {} -o /db/planet.osm.bz2 && chmod -R 777 /db",
         input_paths
@@ -261,7 +278,7 @@ async fn start_overpass_container(
     let mut labels = HashMap::new();
     labels.insert("pbf_hash".to_string(), current_hash);
 
-    let config = ContainerCreateBody {
+    let container = ContainerCreateBody {
         image: Some(config.overpass_image.clone()),
         labels: Some(labels),
         env: Some(vec![
@@ -280,7 +297,7 @@ async fn start_overpass_container(
         .name(container_name)
         .build();
 
-    docker.create_container(Some(options), config).await?;
+    docker.create_container(Some(options), container).await?;
     docker
         .start_container(container_name, None::<StartContainerOptions>)
         .await?;
@@ -470,6 +487,22 @@ async fn cleanup(docker: &Docker) {
 
 #[tokio::main]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    let config = Config::from_env()?;
+    let assets = env::current_dir()?.join("assets");
+
+    println!(
+        "Loading the walking graph from {} in {}...",
+        config.osm_pbf_files.join(", "),
+        assets.display()
+    );
+    let started = Instant::now();
+    let files = config.osm_pbf_files.clone();
+    let graph = tokio::task::spawn_blocking(move || load_graph(&assets, &files)).await??;
+    println!(
+        "Walking graph ready in {:.1} s.",
+        started.elapsed().as_secs_f64()
+    );
+
     let docker = Docker::connect_with_socket_defaults()?;
     let docker_signal = docker.clone();
     let runtime_handle = tokio::runtime::Handle::current();
@@ -480,24 +513,24 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         std::process::exit(0);
     })?;
 
-    let config = Config::from_env()?;
-    start_overpass_container(&docker, &config).await?;
+    let bind = config.bind.clone();
+    let state = Arc::new(AppState::new(config, Arc::new(graph)));
+    let listener = tokio::net::TcpListener::bind(&bind).await?;
+    println!(
+        "Server listening on http://{}, answering 503 until Overpass and the plugins are ready",
+        bind
+    );
+    let server = tokio::spawn(axum::serve(listener, http::router(state.clone())).into_future());
+
+    start_overpass_container(&docker, &state.config).await?;
     wait_for_overpass_ready().await;
 
     let mut plugins = load_plugins();
     let stations = build_station_access_map(&mut plugins);
-    let bind = config.bind.clone();
-    let state = Arc::new(AppState {
-        config,
-        graph: &GRAPH,
-        plugins: Mutex::new(plugins),
-        stations,
-    });
-    let listener = tokio::net::TcpListener::bind(&bind).await?;
+    state.set_ready(plugins, stations);
+    println!("Ready.");
 
-    println!("Server listening on http://{}", bind);
-
-    axum::serve(listener, http::router(state)).await?;
+    server.await??;
 
     Ok(())
 }

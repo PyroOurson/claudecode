@@ -18,15 +18,40 @@ use axum::routing::post;
 use chrono::{DateTime, Utc};
 use serde_json::{Value, json};
 use std::collections::{HashMap, HashSet};
-use std::sync::{Arc, LazyLock, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 
 pub const OSM_ATTRIBUTION: &str = "Map data © OpenStreetMap contributors, ODbL.";
 
 pub struct AppState {
     pub config: Config,
-    pub graph: &'static LazyLock<Graph>,
+    pub graph: Arc<Graph>,
+    network: OnceLock<Network>,
+}
+
+pub struct Network {
     pub plugins: Mutex<Vec<Plugin>>,
     pub stations: Stations,
+}
+
+impl AppState {
+    pub fn new(config: Config, graph: Arc<Graph>) -> Self {
+        AppState {
+            config,
+            graph,
+            network: OnceLock::new(),
+        }
+    }
+
+    pub fn set_ready(&self, plugins: Vec<Plugin>, stations: Stations) {
+        let _ = self.network.set(Network {
+            plugins: Mutex::new(plugins),
+            stations,
+        });
+    }
+
+    pub fn network(&self) -> Option<&Network> {
+        self.network.get()
+    }
 }
 
 pub struct ApiError {
@@ -272,6 +297,12 @@ fn explore_with(
 
 fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
     let request = parse_request(body, &state.config)?;
+    let network = state.network().ok_or_else(|| {
+        ApiError::new(
+            StatusCode::SERVICE_UNAVAILABLE,
+            json!({ "error": "starting: waiting for Overpass and the plugins" }),
+        )
+    })?;
 
     println!("Received request: {:?}", request);
 
@@ -279,18 +310,18 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
         HashMap::new();
     let mut fetch_outgoing = |station: i64, time: DateTime<Utc>| {
         let mut journeys = Vec::new();
-        for &index in state.stations.plugins_serving(station) {
+        for &index in network.stations.plugins_serving(station) {
             journeys.extend_from_slice(
                 cached_explorations
                     .entry((station, index, time))
-                    .or_insert_with(|| explore_with(&state.plugins, index, station, time)),
+                    .or_insert_with(|| explore_with(&network.plugins, index, station, time)),
             );
         }
         journeys
     };
 
     let params = SearchParams {
-        stations: &state.stations,
+        stations: &network.stations,
         walking_speed: request.walking_speed,
         mode: request.mode,
         max_speed_kmh: state.config.max_speed_kmh,
@@ -298,7 +329,7 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
     };
     let mut stats = SearchStats::default();
     let result = route_with_schedule(
-        state.graph,
+        &state.graph,
         &params,
         &request.required_nodes,
         request.start_time,
@@ -306,7 +337,7 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
         &mut stats,
     )?;
 
-    let plugin_attributions = state
+    let plugin_attributions = network
         .plugins
         .lock()
         .unwrap()
