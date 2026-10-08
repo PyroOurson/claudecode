@@ -183,3 +183,57 @@ fn plugins_are_only_asked_about_stations_they_listed() {
         bus
     );
 }
+
+fn train_behind_start() -> Vec<crate::Plugin> {
+    vec![plugin(
+        "train",
+        json!({"available": {"100": [3], "200": [2]},
+               "explore": {"100": [{"to": 200, "offset": 600, "cost": 300}]}}),
+    )]
+}
+
+fn arrival_with(extra: serde_json::Value) -> crate::testkit::Reply {
+    let mut body = json!({"required_nodes": [1, 2], "time": "20260808T120000"});
+    body.as_object_mut()
+        .unwrap()
+        .extend(extra.as_object().unwrap().clone());
+    send(
+        train_behind_start(),
+        vec![request("POST", "/", &body.to_string())],
+    )
+}
+
+#[test]
+fn search_flags_map_onto_exact_and_fast_modes() {
+    let train = "2026-08-08T12:19:37Z";
+    let walk = "2026-08-08T12:36:15.553Z";
+    let cases = [
+        (json!({}), train),
+        (json!({"heuristic": 1}), train),
+        (json!({"heuristic": true}), train),
+        (json!({"heuristic": 7}), train),
+        (json!({"fast": false}), train),
+        (json!({"fast": true}), walk),
+        (json!({"heuristic": 0}), walk),
+        (json!({"heuristic": false}), walk),
+        (json!({"heuristic": 0, "fast": false}), train),
+    ];
+    for (flags, expected) in cases {
+        let reply = arrival_with(flags.clone());
+        assert_eq!(reply.status, 200, "{} -> {}", flags, reply.raw);
+        assert_eq!(reply.json["arrival_time"], expected, "{}", flags);
+    }
+}
+
+#[test]
+fn malformed_search_flags_get_400() {
+    for flags in [
+        json!({"fast": 1}),
+        json!({"fast": "yes"}),
+        json!({"heuristic": "off"}),
+        json!({"heuristic": 0.5}),
+    ] {
+        let reply = arrival_with(flags.clone());
+        assert_eq!(reply.status, 400, "{} -> {}", flags, reply.raw);
+    }
+}

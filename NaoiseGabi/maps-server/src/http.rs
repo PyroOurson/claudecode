@@ -4,8 +4,8 @@ use crate::Plugin;
 use crate::config::Config;
 use crate::plugin::parse_journeys;
 use crate::route::{
-    Graph, OutgoingJourney, RouteError, SearchParams, SearchStats, Stations, parse_request_time,
-    route_with_schedule,
+    Graph, OutgoingJourney, RouteError, SearchMode, SearchParams, SearchStats, Stations,
+    parse_request_time, route_with_schedule,
 };
 use axum::Router;
 use axum::body::{Body, Bytes};
@@ -152,7 +152,7 @@ pub struct RouteRequest {
     pub required_nodes: Vec<i64>,
     pub start_time: DateTime<Utc>,
     pub walking_speed: f64,
-    pub use_heuristic: bool,
+    pub mode: SearchMode,
 }
 
 pub fn parse_request(body: &[u8], config: &Config) -> Result<RouteRequest, ApiError> {
@@ -215,13 +215,39 @@ pub fn parse_request(body: &[u8], config: &Config) -> Result<RouteRequest, ApiEr
             })?,
     };
 
-    let use_heuristic = serde_json::from_value(data["heuristic"].clone()).unwrap_or(0) != 0;
+    let estimate_off = match present("heuristic") {
+        None => None,
+        Some(Value::Bool(flag)) => Some(*flag),
+        Some(Value::Number(number)) if number.is_i64() || number.is_u64() => {
+            Some(number.as_f64() != Some(0.0))
+        }
+        Some(other) => {
+            return Err(ApiError::bad_request(format!(
+                "heuristic must be true, false or an integer, got {}",
+                other
+            )));
+        }
+    };
+    let fast = match present("fast") {
+        None => None,
+        Some(Value::Bool(flag)) => Some(*flag),
+        Some(other) => {
+            return Err(ApiError::bad_request(format!(
+                "fast must be true or false, got {}",
+                other
+            )));
+        }
+    };
+    let mode = match (fast, estimate_off) {
+        (Some(true), _) | (None, Some(false)) => SearchMode::Fast,
+        _ => SearchMode::Exact,
+    };
 
     Ok(RouteRequest {
         required_nodes,
         start_time,
         walking_speed,
-        use_heuristic,
+        mode,
     })
 }
 
@@ -266,7 +292,8 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
     let params = SearchParams {
         stations: &state.stations,
         walking_speed: request.walking_speed,
-        use_heuristic: request.use_heuristic,
+        mode: request.mode,
+        max_speed_kmh: state.config.max_speed_kmh,
         min_transfer: chrono::Duration::seconds(60),
     };
     let mut stats = SearchStats::default();

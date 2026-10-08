@@ -8,6 +8,7 @@ pub struct Config {
     pub bind: String,
     pub max_body_bytes: usize,
     pub max_required_nodes: usize,
+    pub max_speed_kmh: f64,
     pub overpass_image: String,
 }
 
@@ -27,6 +28,10 @@ impl Config {
             bind: text(lookup, "MAPS_BIND", "0.0.0.0:6767"),
             max_body_bytes: number(lookup, "MAPS_MAX_BODY_BYTES", 65536)?,
             max_required_nodes: number(lookup, "MAPS_MAX_REQUIRED_NODES", 25)?,
+            max_speed_kmh: non_negative(
+                number(lookup, "MAPS_MAX_SPEED_KMH", 300.0)?,
+                "MAPS_MAX_SPEED_KMH",
+            )?,
             overpass_image: text(lookup, "MAPS_OVERPASS_IMAGE", DEFAULT_OVERPASS_IMAGE),
         })
     }
@@ -49,5 +54,16 @@ fn number<T: std::str::FromStr>(
             .parse()
             .map_err(|_| format!("{} must be a number, got {:?}", key, value)),
         _ => Ok(default),
+    }
+}
+
+fn non_negative(value: f64, key: &str) -> Result<f64, String> {
+    if value.is_finite() && value >= 0.0 {
+        Ok(value)
+    } else {
+        Err(format!(
+            "{} must be a number of at least 0, got {}",
+            key, value
+        ))
     }
 }

@@ -117,10 +117,18 @@ impl Stations {
     }
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SearchMode {
+    #[default]
+    Exact,
+    Fast,
+}
+
 pub struct SearchParams<'a> {
     pub stations: &'a Stations,
     pub walking_speed: f64,
-    pub use_heuristic: bool,
+    pub mode: SearchMode,
+    pub max_speed_kmh: f64,
     pub min_transfer: Duration,
 }
 
@@ -212,7 +220,7 @@ where
 
     let start_key = (start_node, false);
     open_set.push(SearchState {
-        estimated_total: start_time.timestamp() as f64 + estimate(start_node),
+        estimated_total: seconds(start_time) + estimate(start_node),
         node: start_node,
         arrival_time: start_time,
         last_plugin_id: None,
@@ -261,7 +269,7 @@ where
                     },
                 );
                 open_set.push(SearchState {
-                    estimated_total: arrival_time.timestamp() as f64 + estimate(next_node),
+                    estimated_total: seconds(arrival_time) + estimate(next_node),
                     node: next_node,
                     arrival_time,
                     last_plugin_id: None,
@@ -284,7 +292,7 @@ where
                     },
                 );
                 open_set.push(SearchState {
-                    estimated_total: current_time.timestamp() as f64 + estimate(entrance_node),
+                    estimated_total: seconds(current_time) + estimate(entrance_node),
                     node: entrance_node,
                     arrival_time: current_time,
                     last_plugin_id: None,
@@ -312,7 +320,7 @@ where
                     },
                 );
                 open_set.push(SearchState {
-                    estimated_total: current_time.timestamp() as f64 + estimate(station_node),
+                    estimated_total: seconds(current_time) + estimate(station_node),
                     node: station_node,
                     arrival_time: current_time,
                     last_plugin_id: None,
@@ -352,8 +360,7 @@ where
                         },
                     );
                     open_set.push(SearchState {
-                        estimated_total: arrival_time.timestamp() as f64
-                            + estimate(journey.target_station),
+                        estimated_total: seconds(arrival_time) + estimate(journey.target_station),
                         node: journey.target_station,
                         arrival_time,
                         last_plugin_id: journey.plugin_id,
@@ -440,15 +447,23 @@ fn haversine_km((lat1, lon1): (f64, f64), (lat2, lon2): (f64, f64)) -> f64 {
     6371.0 * 2.0 * h.sqrt().atan2((1.0 - h).sqrt())
 }
 
+fn seconds(time: DateTime<Utc>) -> f64 {
+    time.timestamp_millis() as f64 / 1000.0
+}
+
 fn heuristic_seconds(graph: &Graph, params: &SearchParams, origin: i64, target: i64) -> f64 {
-    if params.use_heuristic {
-        return 0f64;
+    let speed_km_per_s = match params.mode {
+        SearchMode::Fast => params.walking_speed,
+        SearchMode::Exact => params.max_speed_kmh / 3600.0,
+    };
+    if speed_km_per_s <= 0.0 {
+        return 0.0;
     }
     match (
         position(graph, params.stations, origin),
         position(graph, params.stations, target),
     ) {
-        (Some(from), Some(to)) => haversine_km(from, to) / params.walking_speed,
+        (Some(from), Some(to)) => haversine_km(from, to) / speed_km_per_s,
         _ => 0.0,
     }
 }

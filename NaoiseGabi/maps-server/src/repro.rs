@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Naoise McG
 use super::{Plugin, build_station_access_map};
 use crate::route::{
-    Graph, OutgoingJourney, RouteSegment, SearchParams, SearchStats, StationAccessMap, Stations,
-    route_with_schedule,
+    Graph, OutgoingJourney, RouteSegment, SearchMode, SearchParams, SearchStats, StationAccessMap,
+    Stations, route_with_schedule,
 };
 use crate::testkit::{has_route, plugin, post, send};
 use chrono::{DateTime, Duration, NaiveDateTime, Utc};
@@ -70,7 +70,8 @@ fn plan(
     let params = SearchParams {
         stations: &stations,
         walking_speed: WALKING_SPEED,
-        use_heuristic: estimate_off,
+        mode: SearchMode::Exact,
+        max_speed_kmh: if estimate_off { 0.0 } else { 300.0 },
         min_transfer: Duration::seconds(60),
     };
     let mut stats = SearchStats::default();
@@ -114,7 +115,6 @@ fn one_plugin(station: i64) -> Vec<OutgoingJourney> {
 }
 
 #[test]
-#[ignore = "B6"]
 fn default_search_takes_the_faster_train() {
     let stations = access(&[(100, &[3]), (200, &[2])]);
     let (_, arrival) = plan(vec![1, 2], &stations, train_behind_start, false);
@@ -260,7 +260,6 @@ fn string_entrance_ids_from_plugins_are_accepted() {
 }
 
 #[test]
-#[ignore = "B6"]
 fn heuristic_true_and_heuristic_1_mean_the_same() {
     let number = send(
         train_plugin_behind_start(),

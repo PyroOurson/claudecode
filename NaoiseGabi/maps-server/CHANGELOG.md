@@ -6,6 +6,9 @@ All notable changes to maps-server. The format follows [Keep a Changelog](https:
 
 ### Changed
 
+- **The default search is exact.** It always returns the earliest arrival, using a safe estimate (straight-line distance at `MAPS_MAX_SPEED_KMH`, default 300 km/h; `0` turns the estimate off). The old default used the walking-speed estimate, which could return a 36-minute walk when a 20-minute train existed. Send `"fast": true` to get the old, quicker search. On Andorra a 9.4-hour walk expands 29,319 states in exact mode and 15,763 in fast mode, with the same answer.
+- `heuristic` accepts `true`/`false` as well as integers, with its old meaning: `1` or `true` turns the walking estimate off (exact), `0` or `false` turns it on (fast). `true` used to be read as `0`. `fast` wins when both are sent. Any other value gets `400`.
+
 - The HTTP layer is axum instead of a single 2 KB `read`. Requests are read in full, so a body that arrives in a second TCP packet, or a request over 2 KB, no longer crashes the handler.
 - Request bodies over `MAPS_MAX_BODY_BYTES` (default 65536) get `413` with a JSON `{"error": ...}` body.
 - The listen address is `MAPS_BIND`, default `0.0.0.0:6767`.
