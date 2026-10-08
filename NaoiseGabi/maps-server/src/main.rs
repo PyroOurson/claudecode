@@ -1,0 +1,527 @@
+// SPDX-License-Identifier: AGPL-3.0
+// Copyright (C) 2026 Naoise McG
+use chrono::{NaiveDateTime, Utc, DateTime};
+use route::{Line, route_with_schedule, parse_journey_departure, OutgoingJourney, StationAccessMap};
+use serde_json::{Result, Value};
+use serde_core::de::Error;
+use std::collections::{HashMap, HashSet};
+use std::io::{Read, Write, BufReader, BufRead};
+use std::net::{TcpListener, TcpStream};
+use std::process::{ChildStdin, ChildStdout, Command, Stdio};
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::env;
+use bollard::models::{ContainerCreateBody, HostConfig, PortBinding};
+use bollard::query_parameters::{CreateContainerOptionsBuilder, RemoveVolumeOptions, StartContainerOptions, StopContainerOptions};
+use bollard::Docker;
+use std::sync::LazyLock;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+use std::fs;
+
+mod route;
+
+pub static OSM_PBF_FILES: LazyLock<Vec<String>> = LazyLock::new(|| {
+    env::var("OSM_PBF_FILES")
+        .or_else(|_| env::var("OSM_PBF_FILE_NAME"))
+        .map(|s| {
+            s.split(',')
+                .map(|item| item.trim().to_string())
+                .filter(|item| !item.is_empty())
+                .collect()
+        })
+        .unwrap_or_else(|_| vec!["provence-alpes-cote-d-azur-260718.osm.pbf".to_string()])
+});
+
+fn calculate_pbf_hash(assets_path: &std::path::Path) -> String {
+    let mut hasher = DefaultHasher::new();
+    for file_name in OSM_PBF_FILES.iter() {
+        let path = assets_path.join(file_name);
+        file_name.hash(&mut hasher);
+        if let Ok(metadata) = fs::metadata(&path) {
+            if let Ok(mtime) = metadata.modified() {
+                mtime.hash(&mut hasher);
+            }
+            metadata.len().hash(&mut hasher);
+        }
+    }
+    format!("{:x}", hasher.finish())
+}
+
+struct Plugin {
+    pub name: String,
+    pub mode: String,
+    pub data_attribution: String,
+    pub data_license: String,
+    pub plugin_attribution: String,
+    pub plugin_license: String,
+    stdin: ChildStdin,
+    stdout: BufReader<ChildStdout>,
+}
+
+impl Plugin {
+    fn send_request(&mut self, action: &str, data: &str) -> String {
+        let request = format!("{{\"action\": \"{}\", \"data\": {}}}\n", action, data);
+        let _ = self.stdin.write_all(request.as_bytes());
+        let _ = self.stdin.flush();
+
+        let mut response = String::new();
+        let n = self.stdout.read_line(&mut response);
+        match n {
+            Ok(0) => String::new(),
+            Ok(_) => response,
+            Err(e) => {
+                eprintln!("Error reading line from plugin {}: {}", self.name, e);
+                String::new()
+            }
+        }
+    }
+
+    pub fn available_nodes(&mut self) -> Result<Value> {
+        let response = self.send_request("available", "[]");
+        let response: Result<Value> = serde_json::from_str(response.as_str());
+
+        match response {
+            Ok(r) => {
+                if r["response"] != serde_json::Value::Null {
+                    return Ok(r["response"].clone());
+                } else {
+                    eprintln!("Failed to fetch available nodes from plugin {}, received: {}", self.name, r["error"]);
+                    return Err(serde_json::error::Error::custom(r["error"].as_str().unwrap_or("Unknown Error")));
+                }
+            }
+            Err(e) => {
+                eprintln!("Failed to fetch available nodes from plugin {}, malformed response: {}", self.name, e);
+                Err(e)
+            }
+        }
+    }
+
+    pub fn explore(&mut self, station: i64, datetime: DateTime<Utc>) -> Result<Value> {
+        let time_str = datetime.format("%Y%m%dT%H%M%S").to_string();
+        let payload = format!("{{\"station\": {}, \"datetime\": \"{}\"}}", station, time_str);
+        let response = self.send_request("explore", &payload);
+        let response: Result<Value> = serde_json::from_str(response.as_str());
+
+        match response {
+            Ok(r) => {
+                if r["response"] != serde_json::Value::Null {
+                    Ok(r["response"].clone())
+                } else {
+                    eprintln!("Failed to explore station {} from plugin {}, {}", station, self.name, r["error"]);
+                    Err(serde_json::error::Error::custom(r["error"].as_str().unwrap_or("Unknown Error")))
+                }
+            }
+            Err(e) => {
+                eprintln!("Failed to explore station {} from plugin {}, malformed response: {}", station, self.name, e);
+                Err(e)
+            }
+        }
+    }
+}
+
+async fn start_overpass_container(docker: &Docker) -> std::result::Result<(), Box<dyn std::error::Error>> {
+    let container_name = "overpass_api";
+    let current_dir = env::current_dir()?;
+    let assets_dir = current_dir.join("assets");
+    let current_hash = calculate_pbf_hash(&assets_dir);
+
+    if let Ok(inspect) = docker.inspect_container(container_name, None).await {
+        let existing_hash = inspect
+            .config
+            .and_then(|c| c.labels)
+            .and_then(|l| l.get("pbf_hash").cloned())
+            .unwrap_or_default();
+
+        if existing_hash != current_hash {
+            println!("Detected changes in PBF files. Removing container and database volume to force rebuild...");
+            let _ = docker.stop_container(container_name, None::<StopContainerOptions>).await;
+            let _ = docker.remove_container(container_name, None).await;
+            let _ = docker.remove_volume("overpass_db", None::<RemoveVolumeOptions>).await;
+        } else {
+            let is_running = inspect.state.and_then(|s| s.running).unwrap_or(false);
+            if !is_running {
+                println!("Container exists but is stopped. Starting...");
+                docker.start_container(container_name, None::<StartContainerOptions>).await?;
+            } else {
+                println!("Container is already running and up to date.");
+            }
+            return Ok(());
+        }
+    }
+
+    println!("Creating and starting Overpass container...");
+
+    let mut port_bindings = HashMap::new();
+    port_bindings.insert(
+        "80/tcp".to_string(),
+        Some(vec![PortBinding {
+            host_ip: Some("0.0.0.0".to_string()),
+            host_port: Some("12345".to_string()),
+        }]),
+    );
+
+    let host_config = HostConfig {
+        binds: Some(vec![
+            format!("{}:/assets:ro", assets_dir.to_string_lossy()),
+            "overpass_db:/db/db".to_string(),
+        ]),
+        port_bindings: Some(port_bindings),
+        auto_remove: Some(false),
+        ..Default::default()
+    };
+
+    let input_paths = OSM_PBF_FILES
+        .iter()
+        .map(|f| format!("/assets/{}", f))
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    let planet_url = format!("OVERPASS_PLANET_URL=file:///assets/{}", OSM_PBF_FILES[0]);
+    let planet_preprocess = format!(
+        "OVERPASS_PLANET_PREPROCESS=rm -f /db/planet.osm.bz2 && osmium merge {} -o /db/planet.osm.bz2 && chmod -R 777 /db",
+        input_paths
+    );
+
+    let mut labels = HashMap::new();
+    labels.insert("pbf_hash".to_string(), current_hash);
+
+    let config = ContainerCreateBody {
+        image: Some("wiktorn/overpass-api:latest".to_string()),
+        labels: Some(labels),
+        env: Some(vec![
+            "OVERPASS_MODE=init".to_string(),
+            planet_url,
+            planet_preprocess,
+            "OVERPASS_STOP_AFTER_INIT=false".to_string(),
+            "OVERPASS_META=no".to_string(),
+            "OVERPASS_USE_AREAS=false".to_string(),
+        ]),
+        host_config: Some(host_config),
+        ..Default::default()
+    };
+
+    let options = CreateContainerOptionsBuilder::default()
+        .name(container_name)
+        .build();
+
+    docker.create_container(Some(options), config).await?;
+    docker.start_container(container_name, None::<StartContainerOptions>).await?;
+
+    Ok(())
+}
+
+async fn stop_overpass_container(docker: &Docker) -> std::result::Result<(), Box<dyn std::error::Error>> {
+    docker.stop_container("overpass_api", None::<StopContainerOptions>).await?;
+    Ok(())
+}
+
+fn handle_client(mut stream: TcpStream, plugins: Arc<Mutex<Vec<Plugin>>>, station_access: Arc<StationAccessMap>) {
+    let mut buffer = [0u8; 2048];
+
+    match stream.read(&mut buffer) {
+        Ok(0) => return,
+        Ok(n) => {
+            let request = match std::str::from_utf8(&buffer[..n]) {
+                Ok(req) => req,
+                Err(_) => {
+                    eprintln!("Failed to parse UTF-8 request");
+                    return;
+                }
+            };
+
+            if request.starts_with("OPTIONS") {
+                let resp = "HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\nAccess-Control-Max-Age: 86400\r\nContent-Length: 0\r\n\r\n";
+                let _ = stream.write_all(resp.as_bytes());
+                return;
+            }
+
+            if !request.starts_with("POST") {
+                let err_resp = "HTTP/1.1 405 Method Not Allowed\r\nConnection: close\r\n\r\n";
+                let _ = stream.write_all(err_resp.as_bytes());
+                return;
+            }
+
+            if let Some(body_start) = request.find("\r\n\r\n") {
+                let body = &request[body_start + 4..];
+
+                let data: Value = serde_json::from_str(body.trim()).expect("No data");
+
+                println!("Received payload: {:?}", data);
+
+                let node_ids: Vec<i64> = serde_json::from_value(data["required_nodes"].clone()).expect("No data");
+                let heuristic: bool = serde_json::from_value(data["heuristic"].clone()).unwrap_or(0) != 0;
+
+                let mut cached_explorations: HashMap<(i64, DateTime<Utc>), Vec<OutgoingJourney>> = HashMap::new();
+
+                let mut fetch_outgoing = |from_station: i64, time: DateTime<Utc>| -> Vec<OutgoingJourney> {
+                    if let Some(journeys) = cached_explorations.get(&(from_station, time)) {
+                        return journeys.clone();
+                    }
+
+                    let mut journeys = Vec::new();
+                    let mut plugins = plugins.lock().unwrap();
+
+                    for (p_idx, plugin) in plugins.iter_mut().enumerate() {
+                        if let Ok(value) = plugin.explore(from_station, time) {
+                            if let Some(array) = value.as_array() {
+                                for entry in array {
+                                    if let (Some(to_node), Some(cost), Some(time_str)) = (
+                                        entry.get("to").and_then(|v| v.as_i64()),
+                                        entry.get("cost").and_then(|v| v.as_i64()),
+                                        entry.get("time").and_then(|v| v.as_str()),
+                                        
+                                    ) {
+                                        let line = entry.get("line").and_then(|l| {
+                                            let id = l.get("id").and_then(|v| v.as_str()).map(|s| s.to_string());
+                                            let preferred_colour = l.get("preferred_colour").and_then(|v| v.as_str()).map(|s| s.to_string());
+                                            if id.is_some() || preferred_colour.is_some() {
+                                                Some(Line { id, preferred_colour })
+                                            } else {
+                                                None
+                                            }
+                                        });
+                                        if let Ok(departure) = parse_journey_departure(time_str) {
+                                            journeys.push(OutgoingJourney {
+                                                target_station: to_node,
+                                                departure,
+                                                cost_seconds: cost as u64,
+                                                plugin_id: Some(p_idx),
+                                                mode: plugin.mode.clone(),
+                                                line,
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if !journeys.is_empty() {
+                            break;
+                        }
+                    }
+
+                    cached_explorations.insert((from_station, time), journeys.clone());
+                    journeys
+                };
+
+                let (computed_route, _, arrival_time) = route_with_schedule(
+                    node_ids,
+                    &station_access,
+                    &mut fetch_outgoing,
+                    NaiveDateTime::parse_from_str(data["time"].as_str().unwrap_or(Utc::now().format("%Y%m%dT%H%M%S").to_string().as_str()), "%Y%m%dT%H%M%S").unwrap_or(Utc::now().naive_utc()).and_utc(),
+                    data["walking_speed"].as_f64().unwrap_or(0.00138),
+                    heuristic,
+                );
+
+                let plugins_guard = plugins.lock().unwrap();
+                let plugin_attributions = plugins_guard
+                    .iter()
+                    .map(|plugin| {
+                        format!(
+                            "{}, provided under the {}, translated by {}, under the {}.",
+                            plugin.data_attribution,
+                            plugin.data_license,
+                            plugin.plugin_attribution,
+                            plugin.plugin_license
+                        )
+                    })
+                    .collect::<HashSet<String>>()
+                    .iter()
+                    .map(|attr| {attr.to_string()})
+                    .collect::<Vec<_>>()
+                    .join("\n");
+
+                let attributions = format!(
+                    "Realtime and Schedule data has been provided by the following organisations, under various licenses. It has been provided as-is, and these organisations are not responsible for any errors or inaccuracies. The various data formats have been translated by various individuals. \n {}",
+                    plugin_attributions
+                );
+                let attributions = urlencoding::encode(attributions.as_str());
+
+                let response_body = serde_json::json!({
+                    "route": computed_route,
+                    "arrival_time": arrival_time
+                }).to_string();
+
+                let response = format!(
+                    "HTTP/1.1 200 OK\r\n\
+                     Content-Type: application/json\r\n\
+                     Access-Control-Allow-Origin: *\r\n\
+                     Access-Control-Expose-Headers: Attribution, Source-Code\r\n\
+                     Attribution: \"{}\"\r\n\
+                     Content-Length: {}\r\n\
+                     Source-Code: \"https://gitlab.com/buphagidae/buphagus\"\r\n\
+                     Connection: close\r\n\r\n\
+                     {}",
+                    attributions,
+                    response_body.len(),
+                    response_body
+                );
+
+                if let Err(e) = stream.write_all(response.as_bytes()) {
+                    eprintln!("Failed to send response: {}", e);
+                }
+            } else {
+                let err_resp = "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n";
+                let _ = stream.write_all(err_resp.as_bytes());
+            }
+        }
+        Err(e) => {
+            eprintln!("Read error: {}", e);
+        }
+    }
+}
+
+fn build_station_access_map(plugins: &mut Vec<Plugin>) -> StationAccessMap {
+    let mut station_access = StationAccessMap::new();
+
+    for plugin in plugins.iter_mut() {
+        println!("Fetching available nodes from plugin: {}", plugin.name);
+        if let Ok(value) = plugin.available_nodes() {
+            if let Some(map) = value.as_object() {
+                for (key, value) in map {
+                    if let Ok(station_id) = key.parse::<i64>() {
+                        if let Some(entries) = value.as_array() {
+                            let entrance_nodes: Vec<i64> = entries
+                                .iter()
+                                .filter_map(|v| v.as_i64())
+                                .collect();
+                            station_access
+                                .entry(station_id)
+                                .or_default()
+                                .extend(entrance_nodes);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    station_access
+}
+
+fn load_plugins() -> Vec<Plugin> {
+    let output = Command::new("nix").args(["eval", "--json", "--impure", ".#apps", "--apply", "apps: builtins.attrNames (apps.${builtins.currentSystem}.plugins)"]).output();
+
+    let output = match output {
+        Ok(out) if out.status.success() => out,
+        Ok(out) => {
+            eprintln!("Nix error: {}", String::from_utf8_lossy(&out.stderr));
+            return Vec::new();
+        }
+        Err(e) => {
+            eprintln!("Failed to execute nix command: {}", e);
+            return Vec::new();
+        }
+    };
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    let plugins: Vec<&str> = stdout
+        .trim()
+        .trim_matches(|c| c == '[' || c == ']' || c == '\n' || c == ' ')
+        .split(',')
+        .map(|s| s.trim().trim_matches('"'))
+        .filter(|s| !s.is_empty())
+        .collect();
+
+    let mut loaded_plugins: Vec<Plugin> = Vec::new();
+
+    for plugin in plugins {
+        let target = format!(".#plugins.{}", plugin);
+        println!("Spawning plugin: nix run {}", target);
+
+        match Command::new("nix")
+            .args(["run", &target])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn() {
+            Ok(mut child) => {
+                let mut loaded_plugin = Plugin { name: plugin.to_string(), mode: "".to_string(), plugin_attribution: "".to_string(), plugin_license: "".to_string(), data_attribution: "".to_string(), data_license: "".to_string(), stdin: child.stdin.take().expect(""), stdout: BufReader::new(child.stdout.take().expect("")) };
+
+                let mode_resp = loaded_plugin.send_request("mode", "[]");
+                let attr_lice = loaded_plugin.send_request("attribution", "[]");
+                if let Ok(r) = serde_json::from_str::<Value>(&attr_lice) {
+                    loaded_plugin.plugin_attribution = r["response"]["plugin_owner"].as_str().unwrap_or("unknown").to_string();
+                    loaded_plugin.plugin_license = r["response"]["plugin_license"].as_str().unwrap_or("unknown").to_string();
+                    loaded_plugin.data_attribution = r["response"]["data_owner"].as_str().unwrap_or("unknown").to_string();
+                    loaded_plugin.data_license = r["response"]["data_license"].as_str().unwrap_or("unknown").to_string();
+                };
+
+                if let Ok(r) = serde_json::from_str::<Value>(&mode_resp) {
+                    loaded_plugin.mode = r["response"].as_str().unwrap_or("unknown").to_string();
+                };
+
+                loaded_plugins.push(loaded_plugin);
+            },
+            Err(e) => eprintln!("Failed to spawn plugin '{}': {}", plugin, e)
+        }
+    };
+
+    loaded_plugins
+}
+
+async fn wait_for_overpass_ready() {
+    println!("Waiting for Overpass API initialization to complete...");
+    let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(3));
+
+    loop {
+        interval.tick().await;
+        if let Ok(mut stream) = tokio::net::TcpStream::connect("127.0.0.1:12345").await {
+            use tokio::io::{AsyncReadExt, AsyncWriteExt};
+            let req = "GET /api/interpreter?data=%5Bout%3Ajson%5D%3Bnode(1)%3Bout%3B HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n";
+            if stream.write_all(req.as_bytes()).await.is_ok() {
+                let mut buf = [0u8; 1024];
+                if let Ok(n) = stream.read(&mut buf).await {
+                    let response = String::from_utf8_lossy(&buf[..n]);
+                    if response.contains("200 OK") {
+                        println!("Overpass API is operational!");
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+async fn cleanup(docker: &Docker) {
+    let _ = stop_overpass_container(docker).await;
+}
+
+#[tokio::main]
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    let docker = Docker::connect_with_socket_defaults()?;
+    let docker_signal = docker.clone();
+    let runtime_handle = tokio::runtime::Handle::current();
+
+    ctrlc::set_handler(move || {
+        println!("Shutting down...");
+        let _ = runtime_handle.block_on(cleanup(&docker_signal));
+        std::process::exit(0);
+    })?;
+
+    start_overpass_container(&docker).await?;
+    wait_for_overpass_ready().await;
+
+    let plugins = Arc::new(Mutex::new(load_plugins()));
+    let station_access = Arc::new(build_station_access_map(&mut plugins.lock().unwrap()));
+    let listener = TcpListener::bind("0.0.0.0:6767").expect("Failed to bind to port 6767");
+
+    println!("Server listening on http:6767");
+
+    for stream in listener.incoming() {
+        match stream {
+            Ok(stream) => {
+                let plugins = Arc::clone(&plugins);
+                let station_access = Arc::clone(&station_access);
+                thread::spawn(move || {
+                    handle_client(stream, plugins, station_access);
+                });
+            }
+            Err(e) => {
+                eprintln!("Connection failed: {}", e);
+            }
+        }
+    }
+
+    Ok(())
+}
