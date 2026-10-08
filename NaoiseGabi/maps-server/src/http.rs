@@ -231,25 +231,32 @@ const WALKING_SPEED_RANGE: (f64, f64) = (0.0003, 0.01);
 
 #[derive(Debug)]
 pub struct RouteRequest {
-    pub required_nodes: Vec<i64>,
+    pub targets: Targets,
     pub start_time: DateTime<Utc>,
     pub walking_speed: f64,
     pub mode: SearchMode,
+    pub max_snap_m: f64,
+    pub format: Format,
 }
 
-pub fn parse_request(body: &[u8], config: &Config) -> Result<RouteRequest, ApiError> {
-    let data: Value = serde_json::from_slice(body)
-        .map_err(|error| ApiError::bad_request(format!("invalid JSON: {}", error)))?;
-    let fields = data
-        .as_object()
-        .ok_or_else(|| ApiError::bad_request("the body must be a JSON object"))?;
-    let present = |key: &str| fields.get(key).filter(|value| !value.is_null());
+#[derive(Debug)]
+pub enum Targets {
+    Nodes(Vec<i64>),
+    Points(Vec<(f64, f64)>),
+}
 
-    let nodes = present("required_nodes")
-        .ok_or_else(|| ApiError::bad_request("required_nodes is missing"))?
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Format {
+    Json,
+    GeoJson,
+}
+
+pub const DEFAULT_MAX_SNAP_M: f64 = 500.0;
+
+fn parse_nodes(nodes: &Value) -> Result<Vec<i64>, ApiError> {
+    nodes
         .as_array()
-        .ok_or_else(|| ApiError::bad_request("required_nodes must be an array of integers"))?;
-    let required_nodes = nodes
+        .ok_or_else(|| ApiError::bad_request("required_nodes must be an array of integers"))?
         .iter()
         .enumerate()
         .map(|(index, node)| {
@@ -260,19 +267,97 @@ pub fn parse_request(body: &[u8], config: &Config) -> Result<RouteRequest, ApiEr
                 ))
             })
         })
-        .collect::<Result<Vec<i64>, ApiError>>()?;
-    if required_nodes.len() < 2 {
-        return Err(ApiError::bad_request(
-            "required_nodes needs at least 2 nodes",
-        ));
-    }
-    if required_nodes.len() > config.max_required_nodes {
+        .collect()
+}
+
+fn parse_waypoints(points: &Value) -> Result<Vec<(f64, f64)>, ApiError> {
+    points
+        .as_array()
+        .ok_or_else(|| {
+            ApiError::bad_request("waypoints must be an array of [latitude, longitude] pairs")
+        })?
+        .iter()
+        .enumerate()
+        .map(|(index, point)| {
+            let pair = point.as_array().filter(|pair| pair.len() == 2);
+            let lat = pair.and_then(|pair| pair[0].as_f64());
+            let lon = pair.and_then(|pair| pair[1].as_f64());
+            match (lat, lon) {
+                (Some(lat), Some(lon))
+                    if (-90.0..=90.0).contains(&lat) && (-180.0..=180.0).contains(&lon) =>
+                {
+                    Ok((lat, lon))
+                }
+                _ => Err(ApiError::bad_request(format!(
+                    "waypoints[{}] must be [latitude, longitude] in degrees, got {}",
+                    index, point
+                ))),
+            }
+        })
+        .collect()
+}
+
+pub fn parse_request(body: &[u8], config: &Config) -> Result<RouteRequest, ApiError> {
+    let data: Value = serde_json::from_slice(body)
+        .map_err(|error| ApiError::bad_request(format!("invalid JSON: {}", error)))?;
+    let fields = data
+        .as_object()
+        .ok_or_else(|| ApiError::bad_request("the body must be a JSON object"))?;
+    let present = |key: &str| fields.get(key).filter(|value| !value.is_null());
+
+    let targets = match (present("required_nodes"), present("waypoints")) {
+        (Some(_), Some(_)) => {
+            return Err(ApiError::bad_request(
+                "send either required_nodes or waypoints, not both",
+            ));
+        }
+        (None, None) => {
+            return Err(ApiError::bad_request(
+                "required_nodes is missing (or send waypoints)",
+            ));
+        }
+        (Some(nodes), None) => Targets::Nodes(parse_nodes(nodes)?),
+        (None, Some(points)) => Targets::Points(parse_waypoints(points)?),
+    };
+    let (count, field) = match &targets {
+        Targets::Nodes(nodes) => (nodes.len(), "required_nodes"),
+        Targets::Points(points) => (points.len(), "waypoints"),
+    };
+    if count < 2 {
         return Err(ApiError::bad_request(format!(
-            "required_nodes has {} nodes, the limit is {}",
-            required_nodes.len(),
-            config.max_required_nodes
+            "{} needs at least 2 nodes",
+            field
         )));
     }
+    if count > config.max_required_nodes {
+        return Err(ApiError::bad_request(format!(
+            "{} has {} nodes, the limit is {}",
+            field, count, config.max_required_nodes
+        )));
+    }
+
+    let max_snap_m = match present("max_snap_m") {
+        None => DEFAULT_MAX_SNAP_M,
+        Some(value) => value
+            .as_f64()
+            .filter(|metres| *metres > 0.0)
+            .ok_or_else(|| {
+                ApiError::bad_request(format!(
+                    "max_snap_m must be a positive number of metres, got {}",
+                    value
+                ))
+            })?,
+    };
+
+    let format = match present("format").map(|value| value.as_str()) {
+        None | Some(Some("json")) => Format::Json,
+        Some(Some("geojson")) => Format::GeoJson,
+        Some(_) => {
+            return Err(ApiError::bad_request(
+                "format must be \"json\" or \"geojson\"",
+            ));
+        }
+    };
 
     let start_time = match present("time") {
         None => Utc::now(),
@@ -326,10 +411,12 @@ pub fn parse_request(body: &[u8], config: &Config) -> Result<RouteRequest, ApiEr
     };
 
     Ok(RouteRequest {
-        required_nodes,
+        targets,
         start_time,
         walking_speed,
         mode,
+        max_snap_m,
+        format,
     })
 }
 
@@ -440,6 +527,42 @@ fn attribution_header(credits: &[Credit]) -> String {
     urlencoding::encode(&text).into_owned()
 }
 
+fn node_position(graph: &Graph, stations: &Stations, node: i64) -> Option<(f64, f64)> {
+    graph.position(node).or_else(|| {
+        stations
+            .entrances_of(node)
+            .iter()
+            .find_map(|&entrance| graph.position(entrance))
+    })
+}
+
+fn snap(
+    graph: &Graph,
+    points: &[(f64, f64)],
+    max_snap_m: f64,
+) -> Result<(Vec<i64>, Value), ApiError> {
+    let mut nodes = Vec::with_capacity(points.len());
+    let mut snapped = Vec::with_capacity(points.len());
+    for (index, &(lat, lon)) in points.iter().enumerate() {
+        let (node, metres) = graph
+            .nearest_walkable(lat, lon)
+            .filter(|&(_, metres)| metres <= max_snap_m)
+            .ok_or_else(|| {
+                ApiError::bad_request(format!(
+                    "waypoints[{}] is more than {} m from any walkable node (max_snap_m)",
+                    index, max_snap_m
+                ))
+            })?;
+        nodes.push(node);
+        snapped.push(json!({
+            "input": [lat, lon],
+            "node": node,
+            "distance_m": (metres * 10.0).round() / 10.0,
+        }));
+    }
+    Ok((nodes, Value::Array(snapped)))
+}
+
 fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
     let request = parse_request(body, &state.config)?;
     let network = state.network().ok_or_else(|| {
@@ -450,6 +573,14 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
     })?;
 
     println!("Received request: {:?}", request);
+
+    let (required_nodes, snapped) = match &request.targets {
+        Targets::Nodes(nodes) => (nodes.clone(), None),
+        Targets::Points(points) => {
+            let (nodes, snapped) = snap(&state.graph, points, request.max_snap_m)?;
+            (nodes, Some(snapped))
+        }
+    };
 
     let mut seen: HashMap<(i64, usize, DateTime<Utc>), Journeys> = HashMap::new();
     let mut fetch_outgoing = |station: i64, time: DateTime<Utc>| {
@@ -499,7 +630,7 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
     let result = route_with_schedule(
         &state.graph,
         &params,
-        &request.required_nodes,
+        &required_nodes,
         request.start_time,
         &mut fetch_outgoing,
         &mut stats,
@@ -516,14 +647,77 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
     let attribution = attribution_for(state, network, &result.route);
     let header = attribution_header(&attribution);
 
-    let mut response = json_response(
-        StatusCode::OK,
-        &json!({
-            "route": result.route,
-            "arrival_time": result.arrival_time,
-            "attribution": attribution,
-        }),
-    );
+    let positions: Vec<Vec<(f64, f64)>> = result
+        .route
+        .iter()
+        .map(|segment| {
+            segment
+                .nodes
+                .iter()
+                .filter_map(|&node| node_position(&state.graph, &network.stations, node))
+                .collect()
+        })
+        .collect();
+    let mut response = match request.format {
+        Format::Json => {
+            let route: Vec<Value> = result
+                .route
+                .iter()
+                .zip(&positions)
+                .map(|(segment, points)| {
+                    let mut value = json!(segment);
+                    value["coordinates"] = json!(
+                        points
+                            .iter()
+                            .map(|&(lat, lon)| [lat, lon])
+                            .collect::<Vec<_>>()
+                    );
+                    value
+                })
+                .collect();
+            let mut body = json!({
+                "route": route,
+                "arrival_time": result.arrival_time,
+                "attribution": attribution,
+            });
+            if let Some(snapped) = snapped {
+                body["snapped"] = snapped;
+            }
+            json_response(StatusCode::OK, &body)
+        }
+        Format::GeoJson => {
+            let features: Vec<Value> = result
+                .route
+                .iter()
+                .zip(&positions)
+                .map(|(segment, points)| {
+                    let coordinates: Vec<[f64; 2]> =
+                        points.iter().map(|&(lat, lon)| [lon, lat]).collect();
+                    let geometry = match coordinates.len() {
+                        0 => Value::Null,
+                        1 => json!({"type": "Point", "coordinates": coordinates[0]}),
+                        _ => json!({"type": "LineString", "coordinates": coordinates}),
+                    };
+                    json!({"type": "Feature", "geometry": geometry, "properties": segment})
+                })
+                .collect();
+            let mut body = json!({
+                "type": "FeatureCollection",
+                "features": features,
+                "arrival_time": result.arrival_time,
+                "attribution": attribution,
+            });
+            if let Some(snapped) = snapped {
+                body["snapped"] = snapped;
+            }
+            (
+                StatusCode::OK,
+                [(header::CONTENT_TYPE, "application/geo+json")],
+                body.to_string(),
+            )
+                .into_response()
+        }
+    };
     if let Ok(value) = HeaderValue::from_str(&format!("\"{}\"", header)) {
         response
             .headers_mut()

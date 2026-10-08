@@ -2,7 +2,10 @@
 // Copyright (C) 2026 Naoise McG
 use osmpbf::{BlobDecode, BlobReader, Element};
 use rayon::prelude::*;
+use rstar::RTree;
+use rstar::primitives::GeomWithData;
 use std::path::Path;
+use std::sync::OnceLock;
 
 const EARTH_RADIUS_KM: f64 = 6371.0;
 const DEGREES_PER_UNIT: f64 = 1e-7;
@@ -86,11 +89,23 @@ struct Edge {
     length_m: f32,
 }
 
+type Located = GeomWithData<[f32; 3], u32>;
+
 pub struct Graph {
     ids: Vec<i64>,
     coordinates: Vec<[i32; 2]>,
     offsets: Vec<u32>,
     edges: Vec<Edge>,
+    nearest: OnceLock<RTree<Located>>,
+}
+
+fn on_unit_sphere(lat: f64, lon: f64) -> [f32; 3] {
+    let (lat, lon) = (lat.to_radians(), lon.to_radians());
+    [
+        (lat.cos() * lon.cos()) as f32,
+        (lat.cos() * lon.sin()) as f32,
+        lat.sin() as f32,
+    ]
 }
 
 #[derive(Default)]
@@ -257,6 +272,7 @@ impl Graph {
             coordinates,
             offsets,
             edges,
+            nearest: OnceLock::new(),
         }
     }
 
@@ -306,6 +322,38 @@ impl Graph {
 
     pub fn contains(&self, node: i64) -> bool {
         self.index(node).is_some()
+    }
+
+    pub fn position(&self, node: i64) -> Option<(f64, f64)> {
+        let [lat, lon] = self.coordinates[self.index(node)?];
+        Some((degrees(lat), degrees(lon)))
+    }
+
+    pub fn nearest_walkable(&self, lat: f64, lon: f64) -> Option<(i64, f64)> {
+        let tree = self.nearest.get_or_init(|| {
+            RTree::bulk_load(
+                (0..self.ids.len())
+                    .filter(|&index| self.offsets[index + 1] > self.offsets[index])
+                    .map(|index| {
+                        let [node_lat, node_lon] = self.coordinates[index];
+                        GeomWithData::new(
+                            on_unit_sphere(degrees(node_lat), degrees(node_lon)),
+                            index as u32,
+                        )
+                    })
+                    .collect(),
+            )
+        });
+        let index = tree.nearest_neighbor(on_unit_sphere(lat, lon))?.data as usize;
+        let [node_lat, node_lon] = self.coordinates[index];
+        let metres = haversine_km(
+            (lat.to_radians(), lon.to_radians()),
+            (
+                degrees(node_lat).to_radians(),
+                degrees(node_lon).to_radians(),
+            ),
+        ) * 1000.0;
+        Some((self.ids[index], metres))
     }
 
     pub fn coords_from_id(&self, node: i64) -> Option<(f64, f64)> {

@@ -34,6 +34,9 @@ These change what clients or plugins see. Read them before upgrading.
 
 ### Added
 
+- `"waypoints": [[lat, lon], ...]` instead of `required_nodes`: each point snaps to the nearest walkable node (an R-tree built on first use), and points further than `max_snap_m` (default 500) get `400`. The answer then carries `"snapped": [{"input", "node", "distance_m"}]`.
+- Every segment carries `"coordinates": [[lat, lon], ...]`; a station without a position of its own uses its first entrance.
+- `"format": "geojson"` returns a FeatureCollection with one LineString per segment and the segment fields as properties.
 - Routes carry `"attribution": [{"plugin", "data_owner", "data_license", "plugin_owner", "plugin_license"}]`, sorted by `plugin`: OpenStreetMap plus the plugins the route used.
 - `GET /health`: `{"status": "ok" | "degraded", "ready", "uptime_s", "graph": {"nodes", "edges"}, "overpass": "up" | "down", "plugins": [{"name", "mode", "alive", "calls", "errors", "avg_ms"}]}`, with `200` when everything is up and `503` otherwise.
 - Configuration variables, each defaulting to the old behaviour: `MAPS_BIND`, `MAPS_MAX_BODY_BYTES`, `MAPS_MAX_REQUIRED_NODES`, `MAPS_MAX_SPEED_KMH`, `MAPS_MAX_EXPANDED`, `MAPS_MAX_PLUGIN_CALLS`, `MAPS_HORIZON_H`, `MAPS_CACHE_TTL_S`, `MAPS_PLUGIN_TIMEOUT_S`, `MAPS_PLUGIN_STARTUP_TIMEOUT_S`, `MAPS_OVERPASS_IMAGE`, `MAPS_OVERPASS_READY_TIMEOUT_S`, `MAPS_SOURCE_URL`. `OSM_PBF_FILES` and `OSM_PBF_FILE_NAME` still work.

@@ -880,3 +880,148 @@ fn a_walk_is_credited_to_openstreetmap_only() {
     assert_eq!(reply.json["attribution"].as_array().map(Vec::len), Some(1));
     assert_eq!(reply.json["attribution"][0]["plugin"], "OpenStreetMap");
 }
+
+fn close(value: &serde_json::Value, expected: f64) -> bool {
+    value
+        .as_f64()
+        .is_some_and(|actual| (actual - expected).abs() < 1e-6)
+}
+
+fn points(value: &serde_json::Value) -> Vec<(f64, f64)> {
+    value
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|pair| (pair[0].as_f64().unwrap(), pair[1].as_f64().unwrap()))
+        .collect()
+}
+
+fn same_points(actual: &[(f64, f64)], expected: &[(f64, f64)]) -> bool {
+    actual.len() == expected.len()
+        && actual
+            .iter()
+            .zip(expected)
+            .all(|(a, b)| (a.0 - b.0).abs() < 1e-6 && (a.1 - b.1).abs() < 1e-6)
+}
+
+#[test]
+fn waypoints_snap_to_the_nearest_walkable_node() {
+    let reply = post_json(
+        json!({"waypoints": [[0.0001, 0.0001], [0.0, 0.0269]], "time": "20260808T120000"}),
+    );
+    assert_eq!(reply.status, 200, "{}", reply.raw);
+    let snapped = &reply.json["snapped"];
+    assert_eq!(snapped[0]["node"], 1);
+    assert_eq!(snapped[1]["node"], 2);
+    assert_eq!(snapped[0]["input"], json!([0.0001, 0.0001]));
+    assert!(close(&snapped[0]["distance_m"], 15.7), "{}", snapped);
+    assert!(close(&snapped[1]["distance_m"], 11.1), "{}", snapped);
+    assert_eq!(reply.json["route"][0]["nodes"], json!([1, 2]));
+}
+
+#[test]
+fn waypoints_too_far_from_any_footway_get_400() {
+    let far = json!({"waypoints": [[0.01, 0.01], [0.0, 0.0]], "time": "20260808T120000"});
+    let reply = post_json(far.clone());
+    assert_eq!(reply.status, 400, "{}", reply.raw);
+    assert!(
+        reply.json["error"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("waypoints[0]"),
+        "{}",
+        reply.raw
+    );
+    let mut generous = far;
+    generous["max_snap_m"] = json!(2000);
+    let reply = post_json(generous);
+    assert_eq!(reply.status, 200, "{}", reply.raw);
+    assert_eq!(reply.json["snapped"][0]["node"], 1);
+}
+
+#[test]
+fn malformed_waypoint_requests_get_400() {
+    for body in [
+        json!({"waypoints": [[0.0, 0.0], [0.0, 0.027]], "required_nodes": [1, 2]}),
+        json!({"waypoints": [[0.0, 0.0]]}),
+        json!({"waypoints": [[0.0, 0.0], [91.0, 0.0]]}),
+        json!({"waypoints": [[0.0, 0.0], [0.0]]}),
+        json!({"waypoints": "0,0;0,0.027"}),
+        json!({"waypoints": [[0.0, 0.0], [0.0, 0.027]], "max_snap_m": 0}),
+        json!({"required_nodes": [1, 2], "format": "kml"}),
+    ] {
+        let reply = post_json(body.clone());
+        assert_eq!(reply.status, 400, "{} -> {}", body, reply.raw);
+    }
+}
+
+#[test]
+fn every_segment_has_coordinates() {
+    let reply = post_json(json!({"required_nodes": [3, 2], "time": "20260808T120000"}));
+    assert_eq!(reply.status, 200, "{}", reply.raw);
+    assert!(
+        same_points(
+            &points(&reply.json["route"][0]["coordinates"]),
+            &[(0.0, -0.0027), (0.0, 0.0), (0.0, 0.027)]
+        ),
+        "{}",
+        reply.raw
+    );
+}
+
+#[test]
+fn a_station_without_coordinates_is_placed_at_its_first_entrance() {
+    let reply = arrival_with(json!({}));
+    assert_eq!(reply.status, 200, "{}", reply.raw);
+    let train = reply.json["route"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|segment| segment["mode"] == "train")
+        .cloned()
+        .unwrap();
+    assert_eq!(train["nodes"], json!([100, 200]));
+    assert!(
+        same_points(
+            &points(&train["coordinates"]),
+            &[(0.0, -0.0027), (0.0, 0.027)]
+        ),
+        "{}",
+        train
+    );
+}
+
+#[test]
+fn geojson_output_is_a_valid_feature_collection() {
+    let reply = arrival_with(json!({"format": "geojson"}));
+    assert_eq!(reply.status, 200, "{}", reply.raw);
+    assert_eq!(reply.header("Content-Type"), Some("application/geo+json"));
+    let body = &reply.json;
+    assert_eq!(body["type"], "FeatureCollection");
+    assert!(body["arrival_time"].is_string() && body["attribution"].is_array());
+    let features = body["features"].as_array().unwrap();
+    assert_eq!(features.len(), 3, "{}", body);
+    for feature in features {
+        assert_eq!(feature["type"], "Feature");
+        let geometry = &feature["geometry"];
+        assert_eq!(geometry["type"], "LineString", "{}", feature);
+        let coordinates = geometry["coordinates"].as_array().unwrap();
+        assert!(coordinates.len() >= 2);
+        for position in coordinates {
+            let position = position.as_array().unwrap();
+            assert_eq!(position.len(), 2);
+            let (lon, lat) = (position[0].as_f64().unwrap(), position[1].as_f64().unwrap());
+            assert!((-180.0..=180.0).contains(&lon) && (-90.0..=90.0).contains(&lat));
+        }
+        assert!(feature["properties"]["mode"].is_string());
+        assert!(feature["properties"]["departure_time"].is_string());
+    }
+    assert!(
+        same_points(
+            &points(&features[1]["geometry"]["coordinates"]),
+            &[(-0.0027, 0.0), (0.027, 0.0)]
+        ),
+        "longitude comes first in GeoJSON: {}",
+        features[1]
+    );
+}

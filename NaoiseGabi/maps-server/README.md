@@ -11,7 +11,7 @@ A route request lists two or more OSM node IDs (a footway node, a station node, 
 * Nix with flakes enabled (`nix.settings.experimental-features = ["nix-command" "flakes"]`).
 * Docker, with your user in the `docker` group (`users.users.<user>.extraGroups = ["docker"]`) and the daemon running. The server runs a local [Overpass API](https://wiki.openstreetmap.org/wiki/Overpass_API) in a container called `overpass_api`; plugins use it to match their stops to OSM nodes.
 * One of the systems the flake builds for: `x86_64-linux`, `aarch64-linux` or `aarch64-darwin`. The pinned Overpass image has no 32-bit ARM build.
-* Memory for the walking graph. It keeps about 36 bytes per walkable node: 1.3 MB for Andorra (37,522 walkable nodes), 0.5 MB for north Bayreuth (13,341). As a rough guide, plan for about the size of your `.osm.pbf` files in RAM for the graph, up to three times that while it loads, and a few MB per CPU core while it decodes large files. Overpass, in Docker, needs its own memory and disk on top of that.
+* Memory for the walking graph. The first request with `waypoints` also builds a spatial index, about 20 more bytes per walkable node. The graph itself keeps about 36 bytes per walkable node: 1.3 MB for Andorra (37,522 walkable nodes), 0.5 MB for north Bayreuth (13,341). As a rough guide, plan for about the size of your `.osm.pbf` files in RAM for the graph, up to three times that while it loads, and a few MB per CPU core while it decodes large files. Overpass, in Docker, needs its own memory and disk on top of that.
 * SSH access only for private plugins: every input below is public and fetched over HTTPS. If you add a private plugin through a `git+ssh://` URL, configure an SSH key for that host.
 
 ## First run
@@ -113,7 +113,10 @@ The body is a JSON object. Unknown fields are ignored.
 
 | Field | Type | Unit and default | Meaning |
 | --- | --- | --- | --- |
-| `required_nodes` | array of integers | required, 2 to `MAPS_MAX_REQUIRED_NODES` entries | OSM node IDs to visit in order: walkable nodes, station nodes or station entrances. |
+| `required_nodes` | array of integers | 2 to `MAPS_MAX_REQUIRED_NODES` entries | OSM node IDs to visit in order: walkable nodes, station nodes or station entrances. Send this or `waypoints`. |
+| `waypoints` | array of `[latitude, longitude]` | degrees, 2 to `MAPS_MAX_REQUIRED_NODES` entries | Places to visit in order, instead of `required_nodes`. Each one snaps to the nearest walkable node. |
+| `max_snap_m` | number | metres, default `500` | A waypoint further than this from any walkable node gets `400`. |
+| `format` | string | `json` (default) or `geojson` | `geojson` returns a GeoJSON FeatureCollection instead. |
 | `time` | string | UTC, default now | Departure time, as `YYYYmmddTHHMMSS`, `YYYY-mm-ddTHH:MM:SS`, or RFC 3339 with an offset (`2026-08-08T15:10:00+02:00`). |
 | `walking_speed` | number | km/s, `0.0003` to `0.01`, default `0.00138` (about 5 km/h) | Walking speed. |
 | `fast` | boolean | default `false` | `true` uses the walking-speed estimate: about half the work, but it can miss a faster vehicle (see below). |
@@ -144,7 +147,11 @@ A successful answer is `200`:
 * `nodes` lists the nodes from the first to the last.
 * Times are RFC 3339 in UTC, to the millisecond.
 * Consecutive walking edges form one segment, and each vehicle leg is its own segment, so a change between vehicles is always visible.
+* `coordinates` lists `[latitude, longitude]` for each node of the segment that has a position. A station without a position of its own is placed at its first entrance.
+* `snapped` is present when the request used `waypoints`: `[{"input": [lat, lon], "node": <id>, "distance_m": <metres>}]`, one per waypoint.
 * `attribution` credits the data behind this route: OpenStreetMap, plus each plugin whose vehicles the route uses, sorted by `plugin`. Show it next to the route.
+
+With `"format": "geojson"` the answer is a `FeatureCollection` (`Content-Type: application/geo+json`) with one `Feature` per segment: a `LineString` geometry in GeoJSON's `[longitude, latitude]` order (a `Point` or `null` when fewer than two positions are known), and the segment's `mode`, `line`, `nodes`, `departure_time` and `arrival_time` as properties. `arrival_time`, `attribution` and `snapped` sit next to `features`.
 
 ### `GET /health`
 
@@ -171,7 +178,7 @@ Every error has a JSON body `{"error": "<message>"}`, sometimes with more fields
 
 | Status | When |
 | --- | --- |
-| `400` | Invalid JSON, a body that is not an object, `required_nodes` missing or malformed or with too few or too many entries, a `time` that does not parse, a `walking_speed` out of range, or a bad `fast`/`heuristic`. The message names the problem. |
+| `400` | Invalid JSON, a body that is not an object, `required_nodes` or `waypoints` missing, both sent, malformed, or with too few or too many entries, a waypoint further than `max_snap_m` from any walkable node, a `time` that does not parse, a `walking_speed` out of range, or a bad `fast`, `heuristic`, `max_snap_m` or `format`. The message names the problem. |
 | `404` | `{"error": "no route", "failed_leg": [from, to]}`: no route for that pair of consecutive nodes, or one of them is unknown. `{"error": "no route within limits", "limit": "max_expanded" \| "max_plugin_calls" \| "horizon_h"}`: a search limit stopped the search. Unknown paths get `404` too. |
 | `405` | A method other than `POST` or `OPTIONS` on `/`, or other than `GET` on `/health`. |
 | `413` | A body larger than `MAPS_MAX_BODY_BYTES`. |
