@@ -10,7 +10,20 @@ use std::{
 };
 
 pub type StationAccessMap = HashMap<i64, Vec<i64>>;
-type StateKey = (i64, bool);
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+struct StateKey {
+    node: i64,
+    transit: bool,
+    boarded: bool,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct Label {
+    arrival: DateTime<Utc>,
+    cost: DateTime<Utc>,
+    walked_m: f64,
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Line {
@@ -49,12 +62,17 @@ pub struct RouteSegment {
     pub arrival_time: DateTime<Utc>,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 struct SearchState {
     estimated_total: f64,
-    node: i64,
-    arrival_time: DateTime<Utc>,
-    transit: bool,
+    key: StateKey,
+    label: Label,
+}
+
+impl PartialEq for SearchState {
+    fn eq(&self, other: &Self) -> bool {
+        self.estimated_total == other.estimated_total
+    }
 }
 
 impl Eq for SearchState {}
@@ -128,6 +146,14 @@ pub enum SearchMode {
     Fast,
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct RouteOptions {
+    pub max_walk_m: Option<f64>,
+    pub transfer_penalty: Duration,
+    pub exclude_modes: Vec<String>,
+    pub avoid_steps: bool,
+}
+
 pub struct SearchParams<'a> {
     pub stations: &'a Stations,
     pub walking_speed: f64,
@@ -135,6 +161,7 @@ pub struct SearchParams<'a> {
     pub max_speed_kmh: f64,
     pub min_transfer: Duration,
     pub limits: SearchLimits,
+    pub options: RouteOptions,
 }
 
 pub struct Itinerary {
@@ -232,6 +259,44 @@ pub fn parse_request_time(value: &str) -> Option<DateTime<Utc>> {
     })
 }
 
+struct Frontier {
+    open: BinaryHeap<SearchState>,
+    best: HashMap<StateKey, DateTime<Utc>>,
+    predecessors: HashMap<StateKey, TransitionEdge>,
+}
+
+impl Frontier {
+    fn offer(
+        &mut self,
+        key: StateKey,
+        label: Label,
+        edge: impl FnOnce() -> TransitionEdge,
+        estimate: impl FnOnce() -> f64,
+    ) {
+        if self.best.get(&key).is_some_and(|&best| label.cost >= best) {
+            return;
+        }
+        self.best.insert(key, label.cost);
+        self.predecessors.insert(key, edge());
+        self.open.push(SearchState {
+            estimated_total: seconds(label.cost) + estimate(),
+            key,
+            label,
+        });
+    }
+}
+
+fn walk(from_key: StateKey, departure: DateTime<Utc>, arrival: DateTime<Utc>) -> TransitionEdge {
+    TransitionEdge {
+        from_key,
+        plugin: None,
+        mode: "walking".to_string(),
+        line: None,
+        departure,
+        arrival,
+    }
+}
+
 fn a_star_time_dependent<F>(
     graph: &Graph,
     params: &SearchParams,
@@ -245,19 +310,31 @@ where
     F: FnMut(i64, DateTime<Utc>) -> (Vec<OutgoingJourney>, usize),
 {
     let stations = params.stations;
+    let options = &params.options;
+    let penalised = options.transfer_penalty > Duration::zero();
     let estimate = |node: i64| heuristic_seconds(graph, params, node, end_node);
-    let mut open_set = BinaryHeap::new();
-    let mut best_arrival: HashMap<StateKey, DateTime<Utc>> = HashMap::new();
-    let mut predecessors: HashMap<StateKey, TransitionEdge> = HashMap::new();
+    let mut frontier = Frontier {
+        open: BinaryHeap::new(),
+        best: HashMap::new(),
+        predecessors: HashMap::new(),
+    };
 
-    let start_key = (start_node, false);
-    open_set.push(SearchState {
-        estimated_total: seconds(start_time) + estimate(start_node),
+    let start_key = StateKey {
         node: start_node,
-        arrival_time: start_time,
         transit: false,
+        boarded: false,
+    };
+    let start_label = Label {
+        arrival: start_time,
+        cost: start_time,
+        walked_m: 0.0,
+    };
+    frontier.best.insert(start_key, start_time);
+    frontier.open.push(SearchState {
+        estimated_total: seconds(start_time) + estimate(start_node),
+        key: start_key,
+        label: start_label,
     });
-    best_arrival.insert(start_key, start_time);
 
     if start_node == end_node {
         stats.expanded += 1;
@@ -267,18 +344,15 @@ where
     let deadline = start_time + params.limits.horizon;
     let mut pruned_by_horizon = false;
 
-    while let Some(state) = open_set.pop() {
-        let current_node = state.node;
-        let current_time = state.arrival_time;
-        let current_is_transit = state.transit;
-        let current_key = (current_node, current_is_transit);
-
-        if let Some(&best_time) = best_arrival.get(&current_key)
-            && current_time > best_time
+    while let Some(SearchState { key, label, .. }) = frontier.open.pop() {
+        if frontier
+            .best
+            .get(&key)
+            .is_some_and(|&best| label.cost > best)
         {
             continue;
         }
-        if current_time > deadline {
+        if label.arrival > deadline {
             pruned_by_horizon = true;
             continue;
         }
@@ -287,132 +361,107 @@ where
         }
         stats.expanded += 1;
 
-        if current_node == end_node {
-            let path = reconstruct_path(&predecessors, start_key, current_key);
-            return Ok((path, current_time));
+        if key.node == end_node {
+            let path = reconstruct_path(&frontier.predecessors, start_key, key);
+            return Ok((path, label.arrival));
         }
 
-        for (next_node, distance) in graph.neighbours(current_node) {
-            let travel_seconds = distance / params.walking_speed;
-            let arrival_time =
-                current_time + Duration::milliseconds((travel_seconds * 1000.0).round() as i64);
-            let next_key = (next_node, false);
-
-            if is_better_arrival(&best_arrival, next_key, arrival_time) {
-                best_arrival.insert(next_key, arrival_time);
-                predecessors.insert(
-                    next_key,
-                    TransitionEdge {
-                        from_key: current_key,
-                        plugin: None,
-                        mode: "walking".to_string(),
-                        line: None,
-                        departure: current_time,
-                        arrival: arrival_time,
-                    },
-                );
-                open_set.push(SearchState {
-                    estimated_total: seconds(arrival_time) + estimate(next_node),
-                    node: next_node,
-                    arrival_time,
-                    transit: false,
-                });
-            }
-        }
-
-        for &entrance_node in stations.entrances_of(current_node) {
-            let next_key = (entrance_node, false);
-            if is_better_arrival(&best_arrival, next_key, current_time) {
-                best_arrival.insert(next_key, current_time);
-                predecessors.insert(
-                    next_key,
-                    TransitionEdge {
-                        from_key: current_key,
-                        plugin: None,
-                        mode: "walking".to_string(),
-                        line: None,
-                        departure: current_time,
-                        arrival: current_time,
-                    },
-                );
-                open_set.push(SearchState {
-                    estimated_total: seconds(current_time) + estimate(entrance_node),
-                    node: entrance_node,
-                    arrival_time: current_time,
-                    transit: false,
-                });
-            }
-        }
-
-        let prev_node = predecessors.get(&current_key).map(|k| k.from_key.0);
-        for &station_node in stations.stations_at(current_node) {
-            if Some(station_node) == prev_node {
+        for step in graph.neighbours(key.node) {
+            if options.avoid_steps && step.steps {
                 continue;
             }
-
-            let next_key = (station_node, false);
-            if is_better_arrival(&best_arrival, next_key, current_time) {
-                best_arrival.insert(next_key, current_time);
-                predecessors.insert(
-                    next_key,
-                    TransitionEdge {
-                        from_key: current_key,
-                        plugin: None,
-                        mode: "walking".to_string(),
-                        line: None,
-                        departure: current_time,
-                        arrival: current_time,
-                    },
-                );
-                open_set.push(SearchState {
-                    estimated_total: seconds(current_time) + estimate(station_node),
-                    node: station_node,
-                    arrival_time: current_time,
-                    transit: false,
-                });
+            let walked_m = label.walked_m + step.length_m;
+            if options.max_walk_m.is_some_and(|max| walked_m > max) {
+                continue;
             }
+            let travel = Duration::milliseconds(
+                (step.length_m / 1000.0 / params.walking_speed * 1000.0).round() as i64,
+            );
+            let next = Label {
+                arrival: label.arrival + travel,
+                cost: label.cost + travel,
+                walked_m,
+            };
+            let next_key = StateKey {
+                node: step.node,
+                transit: false,
+                boarded: key.boarded,
+            };
+            frontier.offer(
+                next_key,
+                next,
+                || walk(key, label.arrival, next.arrival),
+                || estimate(step.node),
+            );
         }
 
-        if stations.is_station(current_node) {
+        let came_from = frontier
+            .predecessors
+            .get(&key)
+            .map(|edge| edge.from_key.node);
+        let moves = stations.entrances_of(key.node).iter().chain(
+            stations
+                .stations_at(key.node)
+                .iter()
+                .filter(|&&station| Some(station) != came_from),
+        );
+        for &next_node in moves {
+            let next_key = StateKey {
+                node: next_node,
+                transit: false,
+                boarded: key.boarded,
+            };
+            frontier.offer(
+                next_key,
+                label,
+                || walk(key, label.arrival, label.arrival),
+                || estimate(next_node),
+            );
+        }
+
+        if stations.is_station(key.node) {
             if stats.plugin_calls >= params.limits.max_plugin_calls {
                 return Err(Stop::Limit("max_plugin_calls"));
             }
-            let query_time = current_time + params.min_transfer;
-            let (journeys, calls) = fetch_outgoing(current_node, query_time);
+            let query_time = label.arrival + params.min_transfer;
+            let (journeys, calls) = fetch_outgoing(key.node, query_time);
             stats.plugin_calls += calls;
+            let penalty = if key.boarded {
+                options.transfer_penalty
+            } else {
+                Duration::zero()
+            };
             for journey in journeys {
-                if journey.target_station == current_node {
+                if journey.target_station == key.node
+                    || journey.departure < query_time
+                    || options.exclude_modes.contains(&journey.mode)
+                {
                     continue;
                 }
-
-                if journey.departure < query_time {
-                    continue;
-                }
-
-                let arrival_time =
-                    journey.departure + Duration::seconds(journey.cost_seconds as i64);
-                let next_key = (journey.target_station, true);
-
-                if is_better_arrival(&best_arrival, next_key, arrival_time) {
-                    best_arrival.insert(next_key, arrival_time);
-                    predecessors.insert(
-                        next_key,
-                        TransitionEdge {
-                            from_key: current_key,
-                            plugin: Some(journey.plugin),
-                            mode: journey.mode.clone(),
-                            line: journey.line.clone(),
-                            departure: journey.departure,
-                            arrival: arrival_time,
-                        },
-                    );
-                    open_set.push(SearchState {
-                        estimated_total: seconds(arrival_time) + estimate(journey.target_station),
-                        node: journey.target_station,
-                        arrival_time,
-                        transit: true,
-                    });
-                }
+                let arrival = journey.departure + Duration::seconds(journey.cost_seconds as i64);
+                let next = Label {
+                    arrival,
+                    cost: arrival + (label.cost - label.arrival) + penalty,
+                    walked_m: 0.0,
+                };
+                let next_key = StateKey {
+                    node: journey.target_station,
+                    transit: true,
+                    boarded: penalised,
+                };
+                frontier.offer(
+                    next_key,
+                    next,
+                    || TransitionEdge {
+                        from_key: key,
+                        plugin: Some(journey.plugin),
+                        mode: journey.mode.clone(),
+                        line: journey.line.clone(),
+                        departure: journey.departure,
+                        arrival,
+                    },
+                    || estimate(journey.target_station),
+                );
             }
         }
     }
@@ -434,7 +483,7 @@ fn reconstruct_path(
 
     while curr != start_key {
         if let Some(edge) = predecessors.get(&curr) {
-            edges.push((curr.0, edge.clone()));
+            edges.push((curr.node, edge.clone()));
             curr = edge.from_key;
         } else {
             return Vec::new();
@@ -453,12 +502,11 @@ fn reconstruct_path(
             last.nodes.push(to_node);
             last.arrival_time = edge.arrival;
         } else {
-            let from_node = edge.from_key.0;
             segments.push(RouteSegment {
                 plugin: edge.plugin,
                 mode: edge.mode,
                 line: edge.line,
-                nodes: vec![from_node, to_node],
+                nodes: vec![edge.from_key.node, to_node],
                 departure_time: edge.departure,
                 arrival_time: edge.arrival,
             });
@@ -466,17 +514,6 @@ fn reconstruct_path(
         last_was_walking = walking;
     }
     segments
-}
-
-fn is_better_arrival(
-    best_arrival: &HashMap<StateKey, DateTime<Utc>>,
-    key: StateKey,
-    arrival_time: DateTime<Utc>,
-) -> bool {
-    match best_arrival.get(&key) {
-        Some(best_time) => arrival_time < *best_time,
-        None => true,
-    }
 }
 
 fn position(graph: &Graph, stations: &Stations, node: i64) -> Option<(f64, f64)> {

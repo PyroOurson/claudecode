@@ -92,6 +92,7 @@ Everything is set with environment variables. Each one defaults to the behaviour
 | `MAPS_BIND` | `0.0.0.0:6767` | Address and port the HTTP server listens on. |
 | `MAPS_MAX_BODY_BYTES` | `65536` | Largest request body; larger ones get `413`. |
 | `MAPS_MAX_REQUIRED_NODES` | `25` | Most entries allowed in `required_nodes`. |
+| `MAPS_MIN_TRANSFER_S` | `60` | Default for `min_transfer_s`: seconds between arriving at a station and leaving it on another vehicle. |
 | `MAPS_MAX_SPEED_KMH` | `300` | Speed used by the exact search's estimate. Keep it above the fastest vehicle's average speed between stations; `0` turns the estimate off (plain Dijkstra). |
 | `MAPS_MAX_EXPANDED` | `5000000` | Most search states expanded per request. |
 | `MAPS_MAX_PLUGIN_CALLS` | `1000` | Most plugin calls per request. |
@@ -121,6 +122,13 @@ The body is a JSON object. Unknown fields are ignored.
 | `walking_speed` | number | km/s, `0.0003` to `0.01`, default `0.00138` (about 5 km/h) | Walking speed. |
 | `fast` | boolean | default `false` | `true` uses the walking-speed estimate: about half the work, but it can miss a faster vehicle (see below). |
 | `heuristic` | boolean or integer | legacy | `1`/`true` means exact, `0`/`false` means fast. `fast` wins when both are sent. |
+| `min_transfer_s` | integer | seconds, default `MAPS_MIN_TRANSFER_S` (60) | Time allowed between arriving at a station and leaving it on another vehicle. |
+| `max_walk_m` | number | metres, default no limit | Longest single walk: from the start to the first vehicle, between two vehicles, or from the last vehicle to the end. |
+| `transfer_penalty_s` | number | seconds, default `0` | Added to the journey time of each change between vehicles when comparing routes, so a slightly slower route with fewer changes can win. Reported times are real times. |
+| `exclude_modes` | array of strings | default `[]` | Plugin modes never to use, such as `["bus"]`. Those plugins are not even asked. |
+| `avoid_steps` | boolean | default `false` | Never walk on `highway=steps`. |
+
+With every option at its default the search behaves exactly as without them. The search keeps one best arrival per node, so with `max_walk_m` it can, rarely, miss a slower route that walks less before a later change.
 
 **Search modes.** The default, exact search always returns the earliest arrival. `"fast": true` estimates the remaining time at walking speed, which explores far fewer nodes but treats vehicles as no faster than walking, so it can return a 36-minute walk when a 20-minute train exists. On Andorra, a 9 h 26 min walk expands 29,319 states in exact mode and 15,763 in fast mode, with the same answer.
 
@@ -178,7 +186,7 @@ Every error has a JSON body `{"error": "<message>"}`, sometimes with more fields
 
 | Status | When |
 | --- | --- |
-| `400` | Invalid JSON, a body that is not an object, `required_nodes` or `waypoints` missing, both sent, malformed, or with too few or too many entries, a waypoint further than `max_snap_m` from any walkable node, a `time` that does not parse, a `walking_speed` out of range, or a bad `fast`, `heuristic`, `max_snap_m` or `format`. The message names the problem. |
+| `400` | Invalid JSON, a body that is not an object, `required_nodes` or `waypoints` missing, both sent, malformed, or with too few or too many entries, a waypoint further than `max_snap_m` from any walkable node, a `time` that does not parse, a `walking_speed` out of range, or a bad `fast`, `heuristic`, `max_snap_m`, `format`, `min_transfer_s`, `max_walk_m`, `transfer_penalty_s`, `exclude_modes` or `avoid_steps`. The message names the problem. |
 | `404` | `{"error": "no route", "failed_leg": [from, to]}`: no route for that pair of consecutive nodes, or one of them is unknown. `{"error": "no route within limits", "limit": "max_expanded" \| "max_plugin_calls" \| "horizon_h"}`: a search limit stopped the search. Unknown paths get `404` too. |
 | `405` | A method other than `POST` or `OPTIONS` on `/`, or other than `GET` on `/health`. |
 | `413` | A body larger than `MAPS_MAX_BODY_BYTES`. |

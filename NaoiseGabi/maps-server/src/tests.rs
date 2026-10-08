@@ -1025,3 +1025,221 @@ fn geojson_output_is_a_valid_feature_collection() {
         features[1]
     );
 }
+
+mod options {
+    use super::*;
+    use crate::route::{
+        Graph, OutgoingJourney, RouteOptions, SearchMode, SearchParams, SearchStats, Stations,
+        route_with_schedule,
+    };
+    use chrono::{DateTime, Duration, NaiveDateTime, Utc};
+
+    fn start() -> DateTime<Utc> {
+        NaiveDateTime::parse_from_str("20260808T120000", "%Y%m%dT%H%M%S")
+            .unwrap()
+            .and_utc()
+    }
+
+    fn leg(to: i64, departure: i64, cost: u64, plugin: usize, mode: &str) -> OutgoingJourney {
+        OutgoingJourney {
+            target_station: to,
+            departure: start() + Duration::seconds(departure),
+            cost_seconds: cost,
+            plugin,
+            mode: mode.to_string(),
+            line: None,
+        }
+    }
+
+    fn timetable(station: i64) -> Vec<OutgoingJourney> {
+        match station {
+            300 => vec![
+                leg(400, 120, 600, 0, "train"),
+                leg(500, 600, 1800, 2, "coach"),
+            ],
+            400 => vec![leg(500, 900, 600, 1, "bus")],
+            100 => vec![leg(200, 900, 3000, 0, "train")],
+            _ => Vec::new(),
+        }
+    }
+
+    fn arrival(
+        graph: &Graph,
+        stations: &[(i64, &[i64])],
+        nodes: &[i64],
+        min_transfer_s: i64,
+        options: RouteOptions,
+    ) -> Option<i64> {
+        let stations = Stations::new(
+            stations
+                .iter()
+                .map(|(station, entrances)| (*station, entrances.to_vec()))
+                .collect(),
+        );
+        let params = SearchParams {
+            stations: &stations,
+            walking_speed: 0.00138,
+            mode: SearchMode::Exact,
+            max_speed_kmh: 300.0,
+            min_transfer: Duration::seconds(min_transfer_s),
+            limits: Default::default(),
+            options,
+        };
+        let mut fetch = |station: i64, _time: DateTime<Utc>| (timetable(station), 1);
+        route_with_schedule(
+            graph,
+            &params,
+            nodes,
+            start(),
+            &mut fetch,
+            &mut SearchStats::default(),
+        )
+        .ok()
+        .map(|itinerary| (itinerary.arrival_time - start()).num_seconds())
+    }
+
+    fn network(min_transfer_s: i64, options: RouteOptions) -> Option<i64> {
+        let graph = Graph::from_parts(&[], &[]);
+        arrival(
+            &graph,
+            &[(300, &[]), (400, &[]), (500, &[])],
+            &[300, 500],
+            min_transfer_s,
+            options,
+        )
+    }
+
+    #[test]
+    fn min_transfer_decides_whether_a_tight_change_is_made() {
+        assert_eq!(network(60, RouteOptions::default()), Some(1500));
+        assert_eq!(network(300, RouteOptions::default()), Some(2400));
+    }
+
+    #[test]
+    fn a_transfer_penalty_prefers_a_direct_vehicle() {
+        let penalty = |seconds| RouteOptions {
+            transfer_penalty: Duration::seconds(seconds),
+            ..Default::default()
+        };
+        assert_eq!(network(60, penalty(600)), Some(1500));
+        assert_eq!(network(60, penalty(1200)), Some(2400));
+    }
+
+    #[test]
+    fn excluded_modes_are_never_boarded() {
+        let excluding = |modes: &[&str]| RouteOptions {
+            exclude_modes: modes.iter().map(|mode| mode.to_string()).collect(),
+            ..Default::default()
+        };
+        assert_eq!(network(60, excluding(&["bus"])), Some(2400));
+        assert_eq!(network(60, excluding(&["bus", "coach"])), None);
+    }
+
+    #[test]
+    fn max_walk_limits_each_walk() {
+        let graph = Graph::from_parts(
+            &[(1, 0.0, 0.0), (2, 0.0, 0.027), (3, 0.0, -0.0027)],
+            &[(3, 1), (1, 2)],
+        );
+        let walk_limit = |metres| RouteOptions {
+            max_walk_m: metres,
+            ..Default::default()
+        };
+        let stations: &[(i64, &[i64])] = &[(100, &[3]), (200, &[2])];
+        assert_eq!(
+            arrival(&graph, stations, &[1, 2], 60, walk_limit(None)),
+            Some(2175)
+        );
+        assert_eq!(
+            arrival(&graph, stations, &[1, 2], 60, walk_limit(Some(1000.0))),
+            Some(3900)
+        );
+        assert_eq!(
+            arrival(&graph, stations, &[1, 2], 60, walk_limit(Some(200.0))),
+            None
+        );
+    }
+
+    #[test]
+    fn avoid_steps_takes_the_level_detour() {
+        let graph = Graph::from_parts_with_steps(
+            &[(10, 0.0, 0.0), (11, 0.0, 0.001), (12, 0.0005, 0.0005)],
+            &[(10, 11, true), (10, 12, false), (12, 11, false)],
+        );
+        let stations = Stations::new(Default::default());
+        let route = |avoid_steps| {
+            let params = SearchParams {
+                stations: &stations,
+                walking_speed: 0.00138,
+                mode: SearchMode::Exact,
+                max_speed_kmh: 300.0,
+                min_transfer: Duration::seconds(60),
+                limits: Default::default(),
+                options: RouteOptions {
+                    avoid_steps,
+                    ..Default::default()
+                },
+            };
+            let mut fetch = |_: i64, _: DateTime<Utc>| (Vec::new(), 0);
+            route_with_schedule(
+                &graph,
+                &params,
+                &[10, 11],
+                start(),
+                &mut fetch,
+                &mut SearchStats::default(),
+            )
+            .unwrap()
+            .route[0]
+                .nodes
+                .clone()
+        };
+        assert_eq!(route(false), vec![10, 11]);
+        assert_eq!(route(true), vec![10, 12, 11]);
+    }
+
+    #[test]
+    fn excluded_plugins_are_not_even_asked() {
+        let (train_log, bus_log) = (CallLog::new("exclude-train"), CallLog::new("exclude-bus"));
+        let reply = send(
+            logged_train_and_bus(&train_log, &bus_log),
+            vec![request(
+                "POST",
+                "/",
+                &json!({"required_nodes": [300, 500], "time": "20260808T120000", "exclude_modes": ["bus"]})
+                    .to_string(),
+            )],
+        );
+        assert_eq!(reply.status, 404, "{}", reply.raw);
+        assert!(bus_log.explored_stations().is_empty());
+        assert_eq!(train_log.explored_stations(), vec![300, 400]);
+    }
+
+    #[test]
+    fn malformed_options_get_400() {
+        for options in [
+            json!({"min_transfer_s": -1}),
+            json!({"min_transfer_s": 1.5}),
+            json!({"max_walk_m": 0}),
+            json!({"transfer_penalty_s": -5}),
+            json!({"exclude_modes": "bus"}),
+            json!({"exclude_modes": [1]}),
+            json!({"avoid_steps": "yes"}),
+        ] {
+            let mut body = json!({"required_nodes": [1, 2]});
+            body.as_object_mut()
+                .unwrap()
+                .extend(options.as_object().unwrap().clone());
+            let reply = post_json(body.clone());
+            assert_eq!(reply.status, 400, "{} -> {}", body, reply.raw);
+        }
+    }
+
+    #[test]
+    fn options_with_their_defaults_change_nothing() {
+        let plain = post_json(json!({"required_nodes": [3, 2], "time": "20260808T120000"}));
+        let explicit = post_json(json!({"required_nodes": [3, 2], "time": "20260808T120000",
+            "min_transfer_s": 60, "transfer_penalty_s": 0, "exclude_modes": [], "avoid_steps": false}));
+        assert_eq!(plain.json, explicit.json);
+    }
+}

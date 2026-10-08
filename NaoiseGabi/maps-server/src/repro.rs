@@ -68,6 +68,7 @@ fn plan(
         mode: SearchMode::Exact,
         max_speed_kmh: if estimate_off { 0.0 } else { 300.0 },
         limits: Default::default(),
+        options: Default::default(),
         min_transfer: Duration::seconds(60),
     };
     let mut stats = SearchStats::default();

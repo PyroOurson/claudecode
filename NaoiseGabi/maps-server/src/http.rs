@@ -6,8 +6,8 @@ use crate::config::Config;
 use crate::overpass;
 use crate::plugin::parse_journeys;
 use crate::route::{
-    Graph, OutgoingJourney, RouteError, RouteSegment, SearchMode, SearchParams, SearchStats,
-    Stations, parse_request_time, route_with_schedule,
+    Graph, OutgoingJourney, RouteError, RouteOptions, RouteSegment, SearchMode, SearchParams,
+    SearchStats, Stations, parse_request_time, route_with_schedule,
 };
 use axum::Router;
 use axum::body::{Body, Bytes};
@@ -237,6 +237,8 @@ pub struct RouteRequest {
     pub mode: SearchMode,
     pub max_snap_m: f64,
     pub format: Format,
+    pub min_transfer_s: Option<u64>,
+    pub options: RouteOptions,
 }
 
 #[derive(Debug)]
@@ -410,7 +412,92 @@ pub fn parse_request(body: &[u8], config: &Config) -> Result<RouteRequest, ApiEr
         _ => SearchMode::Exact,
     };
 
+    let seconds_field = |key: &str, allow_zero: bool| -> Result<Option<f64>, ApiError> {
+        match present(key) {
+            None => Ok(None),
+            Some(value) => value
+                .as_f64()
+                .filter(|seconds| {
+                    (if allow_zero {
+                        *seconds >= 0.0
+                    } else {
+                        *seconds > 0.0
+                    }) && *seconds <= 86_400.0
+                })
+                .map(Some)
+                .ok_or_else(|| {
+                    ApiError::bad_request(format!(
+                        "{} must be a number between {} and 86400, got {}",
+                        key,
+                        if allow_zero { "0" } else { "above 0" },
+                        value
+                    ))
+                }),
+        }
+    };
+    let min_transfer_s = match present("min_transfer_s") {
+        None => None,
+        Some(value) => Some(
+            value
+                .as_u64()
+                .filter(|seconds| *seconds <= 86_400)
+                .ok_or_else(|| {
+                    ApiError::bad_request(format!(
+                        "min_transfer_s must be a whole number of seconds between 0 and 86400, got {}",
+                        value
+                    ))
+                })?,
+        ),
+    };
+    let max_walk_m =
+        match present("max_walk_m") {
+            None => None,
+            Some(value) => Some(value.as_f64().filter(|metres| *metres > 0.0).ok_or_else(
+                || {
+                    ApiError::bad_request(format!(
+                        "max_walk_m must be a positive number of metres, got {}",
+                        value
+                    ))
+                },
+            )?),
+        };
+    let transfer_penalty_s = seconds_field("transfer_penalty_s", true)?.unwrap_or(0.0);
+    let exclude_modes = match present("exclude_modes") {
+        None => Vec::new(),
+        Some(value) => value
+            .as_array()
+            .and_then(|modes| {
+                modes
+                    .iter()
+                    .map(|mode| mode.as_str().map(str::to_string))
+                    .collect::<Option<Vec<String>>>()
+            })
+            .ok_or_else(|| {
+                ApiError::bad_request(format!(
+                    "exclude_modes must be an array of mode names, got {}",
+                    value
+                ))
+            })?,
+    };
+    let avoid_steps = match present("avoid_steps") {
+        None => false,
+        Some(Value::Bool(flag)) => *flag,
+        Some(other) => {
+            return Err(ApiError::bad_request(format!(
+                "avoid_steps must be true or false, got {}",
+                other
+            )));
+        }
+    };
+
     Ok(RouteRequest {
+        min_transfer_s,
+        options: RouteOptions {
+            max_walk_m,
+            transfer_penalty: chrono::Duration::milliseconds((transfer_penalty_s * 1000.0) as i64),
+            exclude_modes,
+            avoid_steps,
+        },
         targets,
         start_time,
         walking_speed,
@@ -588,6 +675,15 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
         let mut found = Vec::new();
         let mut missing = Vec::new();
         for &index in network.stations.plugins_serving(station) {
+            if network.plugins.get(index).is_some_and(|plugin| {
+                request
+                    .options
+                    .exclude_modes
+                    .iter()
+                    .any(|mode| mode == plugin.mode())
+            }) {
+                continue;
+            }
             let cached = seen
                 .get(&(station, index, window))
                 .cloned()
@@ -624,7 +720,12 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
         mode: request.mode,
         max_speed_kmh: state.config.max_speed_kmh,
         limits: state.config.search_limits(),
-        min_transfer: chrono::Duration::seconds(60),
+        min_transfer: chrono::Duration::seconds(
+            request
+                .min_transfer_s
+                .unwrap_or(state.config.min_transfer_s) as i64,
+        ),
+        options: request.options.clone(),
     };
     let mut stats = SearchStats::default();
     let result = route_with_schedule(

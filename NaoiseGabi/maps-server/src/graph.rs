@@ -83,13 +83,36 @@ fn is_station_like<'a>(mut tags: impl Iterator<Item = (&'a str, &'a str)>) -> bo
     tags.any(|(key, _)| matches!(key, "public_transport" | "railway" | "entrance"))
 }
 
+const STEPS: u32 = 1 << 31;
+
 #[derive(Clone, Copy)]
 struct Edge {
     target: u32,
     length_m: f32,
 }
 
+impl Edge {
+    fn index(self) -> usize {
+        (self.target & !STEPS) as usize
+    }
+
+    fn is_steps(self) -> bool {
+        self.target & STEPS != 0
+    }
+}
+
+fn is_steps<'a>(mut tags: impl Iterator<Item = (&'a str, &'a str)>) -> bool {
+    tags.any(|(key, value)| key == "highway" && value == "steps")
+}
+
 type Located = GeomWithData<[f32; 3], u32>;
+
+#[derive(Clone, Copy, Debug)]
+pub struct Step {
+    pub node: i64,
+    pub length_m: f64,
+    pub steps: bool,
+}
 
 pub struct Graph {
     ids: Vec<i64>,
@@ -112,12 +135,14 @@ fn on_unit_sphere(lat: f64, lon: f64) -> [f32; 3] {
 struct Ways {
     refs: Vec<i64>,
     lengths: Vec<u32>,
+    steps: Vec<bool>,
 }
 
 impl Ways {
     fn merge(mut self, other: Ways) -> Ways {
         self.refs.extend(other.refs);
         self.lengths.extend(other.lengths);
+        self.steps.extend(other.steps);
         self
     }
 }
@@ -175,6 +200,7 @@ impl Graph {
                         let before = found.refs.len();
                         found.refs.extend(way.refs());
                         found.lengths.push((found.refs.len() - before) as u32);
+                        found.steps.push(is_steps(way.tags()));
                     }
                 }
             })?;
@@ -208,10 +234,10 @@ impl Graph {
 
         let graph = Graph::build(nodes, |emit| {
             let mut start = 0;
-            for &length in &ways.lengths {
+            for (&length, &steps) in ways.lengths.iter().zip(&ways.steps) {
                 let end = start + length as usize;
                 for pair in ways.refs[start..end].windows(2) {
-                    emit(pair[0], pair[1]);
+                    emit(pair[0], pair[1], steps);
                 }
                 start = end;
             }
@@ -228,7 +254,10 @@ impl Graph {
         Ok(graph)
     }
 
-    fn build(mut nodes: Vec<(i64, [i32; 2])>, ways: impl FnOnce(&mut dyn FnMut(i64, i64))) -> Self {
+    fn build(
+        mut nodes: Vec<(i64, [i32; 2])>,
+        ways: impl FnOnce(&mut dyn FnMut(i64, i64, bool)),
+    ) -> Self {
         nodes.par_sort_unstable_by_key(|&(id, _)| id);
         nodes.dedup_by_key(|&mut (id, _)| id);
         let ids: Vec<i64> = nodes.iter().map(|&(id, _)| id).collect();
@@ -236,7 +265,7 @@ impl Graph {
         drop(nodes);
 
         let mut directed: Vec<(u32, u32, f32)> = Vec::new();
-        ways(&mut |a, b| {
+        ways(&mut |a, b, steps| {
             if a == b {
                 return;
             }
@@ -248,11 +277,12 @@ impl Graph {
                 (degrees(lat).to_radians(), degrees(lon).to_radians())
             };
             let length_m = (haversine_km(radians(from), radians(to)) * 1000.0) as f32;
-            directed.push((from as u32, to as u32, length_m));
-            directed.push((to as u32, from as u32, length_m));
+            let flag = if steps { STEPS } else { 0 };
+            directed.push((from as u32, to as u32 | flag, length_m));
+            directed.push((to as u32, from as u32 | flag, length_m));
         });
-        directed.par_sort_unstable_by_key(|&(from, to, _)| (from, to));
-        directed.dedup_by_key(|&mut (from, to, _)| (from, to));
+        directed.par_sort_unstable_by_key(|&(from, to, _)| (from, to & !STEPS, to & STEPS));
+        directed.dedup_by_key(|&mut (from, to, _)| (from, to & !STEPS));
 
         let mut offsets = vec![0u32; ids.len() + 1];
         for &(from, _, _) in &directed {
@@ -278,6 +308,12 @@ impl Graph {
 
     #[cfg(test)]
     pub fn from_parts(nodes: &[(i64, f64, f64)], edges: &[(i64, i64)]) -> Self {
+        let edges: Vec<(i64, i64, bool)> = edges.iter().map(|&(a, b)| (a, b, false)).collect();
+        Graph::from_parts_with_steps(nodes, &edges)
+    }
+
+    #[cfg(test)]
+    pub fn from_parts_with_steps(nodes: &[(i64, f64, f64)], edges: &[(i64, i64, bool)]) -> Self {
         let nodes = nodes
             .iter()
             .map(|&(id, lat, lon)| {
@@ -291,8 +327,8 @@ impl Graph {
             })
             .collect();
         Graph::build(nodes, |emit| {
-            for &(a, b) in edges {
-                emit(a, b);
+            for &(a, b, steps) in edges {
+                emit(a, b, steps);
             }
         })
     }
@@ -361,15 +397,14 @@ impl Graph {
         Some((degrees(lat).to_radians(), degrees(lon).to_radians()))
     }
 
-    pub fn neighbours(&self, node: i64) -> impl Iterator<Item = (i64, f64)> + '_ {
+    pub fn neighbours(&self, node: i64) -> impl Iterator<Item = Step> + '_ {
         let range = self.index(node).map_or(0..0, |index| {
             self.offsets[index] as usize..self.offsets[index + 1] as usize
         });
-        self.edges[range].iter().map(|edge| {
-            (
-                self.ids[edge.target as usize],
-                f64::from(edge.length_m) / 1000.0,
-            )
+        self.edges[range].iter().map(|&edge| Step {
+            node: self.ids[edge.index()],
+            length_m: f64::from(edge.length_m),
+            steps: edge.is_steps(),
         })
     }
 }
