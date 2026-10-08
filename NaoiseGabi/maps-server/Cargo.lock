@@ -695,6 +695,7 @@ dependencies = [
  "axum",
  "bollard",
  "chrono",
+ "futures-util",
  "osmpbf",
  "serde",
  "serde_core",

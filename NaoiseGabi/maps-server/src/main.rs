@@ -1,28 +1,22 @@
 // SPDX-License-Identifier: AGPL-3.0
 // Copyright (C) 2026 Naoise McG
 use bollard::Docker;
-use bollard::models::{ContainerCreateBody, HostConfig, PortBinding};
-use bollard::query_parameters::{
-    CreateContainerOptionsBuilder, RemoveVolumeOptions, StartContainerOptions, StopContainerOptions,
-};
 use config::Config;
 use http::AppState;
 pub use plugin::Plugin;
 use plugin::PluginSpec;
 use route::{Graph, StationAccessMap, Stations};
 use std::collections::HashMap;
-use std::collections::hash_map::DefaultHasher;
 use std::env;
-use std::fs;
 use std::future::IntoFuture;
-use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, ExitCode};
 use std::sync::Arc;
 use std::time::Instant;
 
 mod config;
 mod http;
+mod overpass;
 mod plugin;
 mod route;
 
@@ -44,15 +38,17 @@ fn missing_files(assets: &Path, files: &[String]) -> Vec<String> {
 fn load_graph(assets: &Path, files: &[String]) -> std::result::Result<Graph, String> {
     let missing = missing_files(assets, files);
     if !missing.is_empty() {
+        let (subject, pronoun) = if missing.len() == 1 {
+            ("This map file is", "it")
+        } else {
+            ("These map files are", "them")
+        };
         return Err(format!(
-            "{} missing from {}: {}. Download them (for example from https://download.geofabrik.de/) or fix OSM_PBF_FILES.",
-            if missing.len() == 1 {
-                "This map file is"
-            } else {
-                "These map files are"
-            },
+            "{} missing from {}: {}. Download {} (for example from https://download.geofabrik.de/) or fix OSM_PBF_FILES.",
+            subject,
             assets.display(),
-            missing.join(", ")
+            missing.join(", "),
+            pronoun
         ));
     }
     let paths: Vec<PathBuf> = files.iter().map(|file| assets.join(file)).collect();
@@ -63,162 +59,6 @@ fn load_graph(assets: &Path, files: &[String]) -> std::result::Result<Graph, Str
             error
         )
     })
-}
-
-fn calculate_pbf_hash(assets_path: &Path, files: &[String]) -> String {
-    let mut hasher = DefaultHasher::new();
-    for file_name in files {
-        let path = assets_path.join(file_name);
-        file_name.hash(&mut hasher);
-        if let Ok(metadata) = fs::metadata(&path) {
-            if let Ok(mtime) = metadata.modified() {
-                mtime.hash(&mut hasher);
-            }
-            metadata.len().hash(&mut hasher);
-        }
-    }
-    format!("{:x}", hasher.finish())
-}
-
-const OVERPASS_HOST_IP: &str = "127.0.0.1";
-
-async fn start_overpass_container(
-    docker: &Docker,
-    config: &Config,
-) -> std::result::Result<(), Box<dyn std::error::Error>> {
-    let container_name = "overpass_api";
-    let current_dir = env::current_dir()?;
-    let assets_dir = current_dir.join("assets");
-    let current_hash = calculate_pbf_hash(&assets_dir, &config.osm_pbf_files);
-
-    if let Ok(inspect) = docker.inspect_container(container_name, None).await {
-        let existing_hash = inspect
-            .config
-            .as_ref()
-            .and_then(|c| c.labels.as_ref())
-            .and_then(|l| l.get("pbf_hash").cloned())
-            .unwrap_or_default();
-        let existing_image = inspect
-            .config
-            .as_ref()
-            .and_then(|c| c.image.clone())
-            .unwrap_or_default();
-        let published_on = inspect
-            .host_config
-            .as_ref()
-            .and_then(|h| h.port_bindings.as_ref())
-            .and_then(|bindings| bindings.get("80/tcp").cloned().flatten())
-            .and_then(|bindings| bindings.into_iter().find_map(|b| b.host_ip))
-            .unwrap_or_default();
-
-        if existing_hash != current_hash {
-            println!(
-                "Detected changes in PBF files. Removing container and database volume to force rebuild..."
-            );
-            let _ = docker
-                .stop_container(container_name, None::<StopContainerOptions>)
-                .await;
-            let _ = docker.remove_container(container_name, None).await;
-            let _ = docker
-                .remove_volume("overpass_db", None::<RemoveVolumeOptions>)
-                .await;
-        } else if existing_image != config.overpass_image || published_on != OVERPASS_HOST_IP {
-            println!(
-                "Recreating the Overpass container with image {} on {}, keeping its database (it used {} on {}).",
-                config.overpass_image, OVERPASS_HOST_IP, existing_image, published_on
-            );
-            let _ = docker
-                .stop_container(container_name, None::<StopContainerOptions>)
-                .await;
-            docker.remove_container(container_name, None).await?;
-        } else {
-            let is_running = inspect.state.and_then(|s| s.running).unwrap_or(false);
-            if !is_running {
-                println!("Container exists but is stopped. Starting...");
-                docker
-                    .start_container(container_name, None::<StartContainerOptions>)
-                    .await?;
-            } else {
-                println!("Container is already running and up to date.");
-            }
-            return Ok(());
-        }
-    }
-
-    println!("Creating and starting Overpass container...");
-
-    let mut port_bindings = HashMap::new();
-    port_bindings.insert(
-        "80/tcp".to_string(),
-        Some(vec![PortBinding {
-            host_ip: Some(OVERPASS_HOST_IP.to_string()),
-            host_port: Some("12345".to_string()),
-        }]),
-    );
-
-    let host_config = HostConfig {
-        binds: Some(vec![
-            format!("{}:/assets:ro", assets_dir.to_string_lossy()),
-            "overpass_db:/db/db".to_string(),
-        ]),
-        port_bindings: Some(port_bindings),
-        auto_remove: Some(false),
-        ..Default::default()
-    };
-
-    let input_paths = config
-        .osm_pbf_files
-        .iter()
-        .map(|f| format!("/assets/{}", f))
-        .collect::<Vec<_>>()
-        .join(" ");
-
-    let planet_url = format!(
-        "OVERPASS_PLANET_URL=file:///assets/{}",
-        config.osm_pbf_files[0]
-    );
-    let planet_preprocess = format!(
-        "OVERPASS_PLANET_PREPROCESS=rm -f /db/planet.osm.bz2 && osmium merge {} -o /db/planet.osm.bz2 && chmod -R 777 /db",
-        input_paths
-    );
-
-    let mut labels = HashMap::new();
-    labels.insert("pbf_hash".to_string(), current_hash);
-
-    let container = ContainerCreateBody {
-        image: Some(config.overpass_image.clone()),
-        labels: Some(labels),
-        env: Some(vec![
-            "OVERPASS_MODE=init".to_string(),
-            planet_url,
-            planet_preprocess,
-            "OVERPASS_STOP_AFTER_INIT=false".to_string(),
-            "OVERPASS_META=no".to_string(),
-            "OVERPASS_USE_AREAS=false".to_string(),
-        ]),
-        host_config: Some(host_config),
-        ..Default::default()
-    };
-
-    let options = CreateContainerOptionsBuilder::default()
-        .name(container_name)
-        .build();
-
-    docker.create_container(Some(options), container).await?;
-    docker
-        .start_container(container_name, None::<StartContainerOptions>)
-        .await?;
-
-    Ok(())
-}
-
-async fn stop_overpass_container(
-    docker: &Docker,
-) -> std::result::Result<(), Box<dyn std::error::Error>> {
-    docker
-        .stop_container("overpass_api", None::<StopContainerOptions>)
-        .await?;
-    Ok(())
 }
 
 fn build_station_access_map(plugins: &[Plugin]) -> Stations {
@@ -323,35 +163,18 @@ async fn shutdown_signal() {
     }
 }
 
-async fn wait_for_overpass_ready() {
-    println!("Waiting for Overpass API initialization to complete...");
-    let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(3));
-
-    loop {
-        interval.tick().await;
-        if let Ok(mut stream) = tokio::net::TcpStream::connect("127.0.0.1:12345").await {
-            use tokio::io::{AsyncReadExt, AsyncWriteExt};
-            let req = "GET /api/interpreter?data=%5Bout%3Ajson%5D%3Bnode(1)%3Bout%3B HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n";
-            if stream.write_all(req.as_bytes()).await.is_ok() {
-                let mut buf = [0u8; 1024];
-                if let Ok(n) = stream.read(&mut buf).await {
-                    let response = String::from_utf8_lossy(&buf[..n]);
-                    if response.contains("200 OK") {
-                        println!("Overpass API is operational!");
-                        break;
-                    }
-                }
-            }
+#[tokio::main]
+async fn main() -> ExitCode {
+    match serve().await {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            eprintln!("Error: {}", error);
+            ExitCode::FAILURE
         }
     }
 }
 
-async fn cleanup(docker: &Docker) {
-    let _ = stop_overpass_container(docker).await;
-}
-
-#[tokio::main]
-async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
+async fn serve() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let config = Config::from_env()?;
     let assets = env::current_dir()?.join("assets");
 
@@ -374,7 +197,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         shutdown_signal().await;
         println!("Shutting down...");
         plugin::stop_all();
-        cleanup(&docker_signal).await;
+        overpass::cleanup(&docker_signal).await;
         std::process::exit(0);
     });
 
@@ -387,8 +210,8 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     );
     let server = tokio::spawn(axum::serve(listener, http::router(state.clone())).into_future());
 
-    start_overpass_container(&docker, &state.config).await?;
-    wait_for_overpass_ready().await;
+    overpass::start_overpass_container(&docker, &state.config).await?;
+    overpass::wait_for_overpass_ready(&docker, &state.config).await?;
 
     let specs = plugin_names()
         .iter()

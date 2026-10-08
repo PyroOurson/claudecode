@@ -40,6 +40,7 @@ NaoiseGabi/maps-server/flake.nix
 NaoiseGabi/maps-server/src/config.rs
 NaoiseGabi/maps-server/src/http.rs
 NaoiseGabi/maps-server/src/main.rs
+NaoiseGabi/maps-server/src/overpass.rs
 NaoiseGabi/maps-server/src/plugin.rs
 NaoiseGabi/maps-server/src/repro.rs
 NaoiseGabi/maps-server/src/route.rs

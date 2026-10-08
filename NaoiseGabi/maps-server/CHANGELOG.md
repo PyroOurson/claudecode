@@ -36,6 +36,8 @@ All notable changes to maps-server. The format follows [Keep a Changelog](https:
 - A plugin that times out, exits or sends something other than JSON is killed and restarted in the background, and `mode`, `attribution` and `available` are replayed; retries back off from 1 s to 5 minutes. While it restarts, routes are computed without it. An `{"error": ...}` reply does not restart it.
 - Each plugin has its own lock, so plugins are called in parallel, both across requests and for a station served by several plugins. Plugins are started in parallel too.
 - Plugin stderr is logged line by line, prefixed with `[plugin <name>]`.
+- Waiting for Overpass stops with an error after `MAPS_OVERPASS_READY_TIMEOUT_S` (default 21600 s, six hours), or as soon as the container exits, and shows the container's last 20 log lines. It used to wait forever. Progress is printed every minute.
+- Startup errors are printed as plain text and the process exits with status 1.
 - The server stops on SIGTERM as well as Ctrl-C, and kills the plugin processes before stopping the Overpass container.
 - Every vehicle leg is its own segment in `route`; only consecutive walking edges are merged. Two vehicles in a row with the same line ID, or with none, used to be merged into one segment, which hid the change and the wait.
 

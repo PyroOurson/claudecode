@@ -7,6 +7,7 @@ edition = "2024"
 axum = { version = "0.8.9", default-features = false, features = ["http1", "tokio"] }
 bollard = "0.21.0"
 chrono = { version = "0.4.45", features = ["serde"] }
+futures-util = { version = "0.3.33", default-features = false }
 osmpbf = "0.3.8"
 serde = "1.0.229"
 serde_core = "1.0.229"
