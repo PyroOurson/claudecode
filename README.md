@@ -35,3 +35,5 @@ https://pyroourson.github.io/claudecode/ is a little website of browser games. `
 | Snake | `games/snake.html` | Snake for the browser, with swipe and D-pad controls on phones. |
 
 Scores and progress are saved in the browser you play in. To play offline, open `index.html` from the downloaded folder.
+
+Ideas for new features and games are listed in [`ClaudeScripts/hello-page/IDEAS.md`](ClaudeScripts/hello-page/IDEAS.md).
