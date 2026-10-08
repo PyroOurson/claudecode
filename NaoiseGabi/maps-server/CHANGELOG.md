@@ -41,6 +41,7 @@ All notable changes to maps-server. The format follows [Keep a Changelog](https:
 - The server stops on SIGTERM as well as Ctrl-C, and kills the plugin processes before stopping the Overpass container.
 - Every vehicle leg is its own segment in `route`; only consecutive walking edges are merged. Two vehicles in a row with the same line ID, or with none, used to be merged into one segment, which hid the change and the wait.
 
-- The Overpass container is created from `MAPS_OVERPASS_IMAGE`, default `wiktorn/overpass-api:v0.7.62.9`, instead of `wiktorn/overpass-api:latest`. The Nix wrapper loads exactly that image once and exports the variable. An existing container built from another image is recreated, and its `overpass_db` volume is kept, so no re-import happens.
+- The Overpass container is created from `MAPS_OVERPASS_IMAGE`, default `wiktorn/overpass-api:v0.7.62.9`, instead of `wiktorn/overpass-api:latest`. The Nix wrapper loads exactly that image once and exports the variable. An existing container built from another image is recreated, and its `overpass_db` volume and its "import finished" marker (`/db/init_done`, which the image keeps outside the volume) are carried over, so no re-import happens.
 - Overpass is published on `127.0.0.1:12345` only, instead of every network interface. An existing container published elsewhere is recreated the same way.
+- A stopped Overpass container whose first import never finished is removed with its volume and the import starts again. Restarting it used to re-run the import on top of the old files, which fails.
 - The flake no longer lists `armv7l-linux`: the pinned Overpass image has no 32-bit ARM build. `aarch64-linux` and `aarch64-darwin` get their own image hash.

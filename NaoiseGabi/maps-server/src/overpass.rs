@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0
 // Copyright (C) 2026 Naoise McG
 use crate::config::Config;
-use bollard::Docker;
+use axum::body::Bytes;
 use bollard::models::{ContainerCreateBody, HostConfig, PortBinding};
 use bollard::query_parameters::{
-    CreateContainerOptionsBuilder, LogsOptionsBuilder, RemoveVolumeOptions, StartContainerOptions,
-    StopContainerOptions,
+    CreateContainerOptionsBuilder, DownloadFromContainerOptions, LogsOptionsBuilder,
+    RemoveVolumeOptions, StartContainerOptions, StopContainerOptions, UploadToContainerOptions,
 };
+use bollard::{Docker, body_full};
 use futures_util::StreamExt;
 use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
@@ -20,6 +21,13 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 pub const CONTAINER: &str = "overpass_api";
 pub const ADDRESS: &str = "127.0.0.1:12345";
+const STATE_FILES: [&str; 5] = [
+    "/db/init_done",
+    "/db/replicate_id",
+    "/db/changes.log",
+    "/db/cookie.jar",
+    "/db/diffs",
+];
 
 fn calculate_pbf_hash(assets_path: &Path, files: &[String]) -> String {
     let mut hasher = DefaultHasher::new();
@@ -38,6 +46,44 @@ fn calculate_pbf_hash(assets_path: &Path, files: &[String]) -> String {
 
 const OVERPASS_HOST_IP: &str = "127.0.0.1";
 
+async fn remove_container(
+    docker: &Docker,
+    with_database: bool,
+) -> Result<(), bollard::errors::Error> {
+    let _ = docker
+        .stop_container(CONTAINER, None::<StopContainerOptions>)
+        .await;
+    docker.remove_container(CONTAINER, None).await?;
+    if with_database {
+        let _ = docker
+            .remove_volume("overpass_db", None::<RemoveVolumeOptions>)
+            .await;
+    }
+    Ok(())
+}
+
+async fn copy_out(docker: &Docker, path: &str) -> Option<Vec<u8>> {
+    let options = DownloadFromContainerOptions {
+        path: path.to_string(),
+    };
+    let mut stream = docker.download_from_container(CONTAINER, Some(options));
+    let mut archive = Vec::new();
+    while let Some(chunk) = stream.next().await {
+        archive.extend_from_slice(&chunk.ok()?);
+    }
+    (!archive.is_empty()).then_some(archive)
+}
+
+async fn copy_in(docker: &Docker, archive: Vec<u8>) -> Result<(), bollard::errors::Error> {
+    let options = UploadToContainerOptions {
+        path: "/db".to_string(),
+        ..Default::default()
+    };
+    docker
+        .upload_to_container(CONTAINER, Some(options), body_full(Bytes::from(archive)))
+        .await
+}
+
 pub async fn start_overpass_container(
     docker: &Docker,
     config: &Config,
@@ -46,6 +92,7 @@ pub async fn start_overpass_container(
     let current_dir = env::current_dir()?;
     let assets_dir = current_dir.join("assets");
     let current_hash = calculate_pbf_hash(&assets_dir, &config.osm_pbf_files);
+    let mut kept_state = Vec::new();
 
     if let Ok(inspect) = docker.inspect_container(container_name, None).await {
         let existing_hash = inspect
@@ -66,30 +113,44 @@ pub async fn start_overpass_container(
             .and_then(|bindings| bindings.get("80/tcp").cloned().flatten())
             .and_then(|bindings| bindings.into_iter().find_map(|b| b.host_ip))
             .unwrap_or_default();
+        let running = inspect
+            .state
+            .as_ref()
+            .and_then(|s| s.running)
+            .unwrap_or(false);
+        let imported = copy_out(docker, "/db/init_done").await.is_some();
 
         if existing_hash != current_hash {
             println!(
                 "Detected changes in PBF files. Removing container and database volume to force rebuild..."
             );
-            let _ = docker
-                .stop_container(container_name, None::<StopContainerOptions>)
-                .await;
-            let _ = docker.remove_container(container_name, None).await;
-            let _ = docker
-                .remove_volume("overpass_db", None::<RemoveVolumeOptions>)
-                .await;
+            remove_container(docker, true).await?;
         } else if existing_image != config.overpass_image || published_on != OVERPASS_HOST_IP {
+            if imported {
+                println!(
+                    "Recreating the Overpass container with image {} on {}, keeping its database (it used {} on {}).",
+                    config.overpass_image, OVERPASS_HOST_IP, existing_image, published_on
+                );
+                for path in STATE_FILES {
+                    if let Some(archive) = copy_out(docker, path).await {
+                        kept_state.push(archive);
+                    }
+                }
+                remove_container(docker, false).await?;
+            } else {
+                println!(
+                    "Recreating the Overpass container with image {} on {}. Its first import never finished, so it starts again.",
+                    config.overpass_image, OVERPASS_HOST_IP
+                );
+                remove_container(docker, true).await?;
+            }
+        } else if !running && !imported {
             println!(
-                "Recreating the Overpass container with image {} on {}, keeping its database (it used {} on {}).",
-                config.overpass_image, OVERPASS_HOST_IP, existing_image, published_on
+                "The Overpass container stopped before its first import finished. Removing it and its database volume to import again..."
             );
-            let _ = docker
-                .stop_container(container_name, None::<StopContainerOptions>)
-                .await;
-            docker.remove_container(container_name, None).await?;
+            remove_container(docker, true).await?;
         } else {
-            let is_running = inspect.state.and_then(|s| s.running).unwrap_or(false);
-            if !is_running {
+            if !running {
                 println!("Container exists but is stopped. Starting...");
                 docker
                     .start_container(container_name, None::<StartContainerOptions>)
@@ -161,6 +222,9 @@ pub async fn start_overpass_container(
         .build();
 
     docker.create_container(Some(options), container).await?;
+    for archive in kept_state {
+        copy_in(docker, archive).await?;
+    }
     docker
         .start_container(container_name, None::<StartContainerOptions>)
         .await?;
