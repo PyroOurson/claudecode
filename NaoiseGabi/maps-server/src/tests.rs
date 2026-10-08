@@ -619,3 +619,50 @@ fn the_plugin_list_is_read_as_json() {
     );
     assert!(crate::parse_plugin_names(b"error: flake has no apps").is_err());
 }
+
+static WALKABILITY: std::sync::LazyLock<crate::route::Graph> = std::sync::LazyLock::new(|| {
+    crate::route::Graph::from_pbfs(&[kit().join("fixtures").join("walkability.osm.pbf")]).unwrap()
+});
+
+fn walkable(way: i64) -> bool {
+    WALKABILITY.neighbours(way * 2 - 1).next().is_some()
+}
+
+#[test]
+fn bus_only_and_dead_roads_are_not_walkable() {
+    for (way, name) in [
+        (1, "busway"),
+        (2, "bus_guideway"),
+        (3, "razed"),
+        (4, "disused"),
+        (5, "no"),
+    ] {
+        assert!(!walkable(way), "highway={} counted as walkable", name);
+    }
+}
+
+#[test]
+fn foot_yes_still_opens_a_bus_only_road() {
+    assert!(walkable(6));
+}
+
+#[test]
+fn station_corridors_without_a_highway_tag_are_walkable() {
+    assert!(walkable(7), "indoor=corridor");
+    assert!(!walkable(8), "indoor=corridor with access=private");
+}
+
+#[test]
+fn trunk_roads_are_walkable_only_with_a_sidewalk() {
+    assert!(walkable(9), "trunk with sidewalk=both");
+    assert!(walkable(10), "trunk with sidewalk:left=yes");
+    assert!(walkable(11), "trunk_link with sidewalk=right");
+    assert!(!walkable(12), "trunk without sidewalk");
+    assert!(!walkable(13), "trunk with sidewalk=separate");
+    assert!(!walkable(14), "motorway with sidewalk=both");
+}
+
+#[test]
+fn ordinary_footways_stay_walkable() {
+    assert!(walkable(15));
+}

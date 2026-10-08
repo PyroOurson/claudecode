@@ -50,6 +50,8 @@ NaoiseGabi/maps-server/test
 NaoiseGabi/maps-server/tests/fake_plugin.py
 NaoiseGabi/maps-server/tests/fixtures/fixture.osm
 NaoiseGabi/maps-server/tests/fixtures/fixture.osm.pbf
+NaoiseGabi/maps-server/tests/fixtures/walkability.osm
+NaoiseGabi/maps-server/tests/fixtures/walkability.osm.pbf
 NaoiseGabi/requirements.txt
 NaoiseGabi/solvers/connections_answers.py
 NaoiseGabi/solvers/wordle_solver.py

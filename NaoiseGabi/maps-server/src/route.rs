@@ -513,20 +513,31 @@ fn heuristic_seconds(graph: &Graph, params: &SearchParams, origin: i64, target: 
 }
 
 fn is_pedestrian_accessible(way: &Way) -> bool {
+    is_walkable(way.tags())
+}
+
+fn is_walkable<'a>(tags: impl IntoIterator<Item = (&'a str, &'a str)>) -> bool {
     let mut highway_type = None;
     let mut foot_tag = None;
     let mut access_tag = None;
     let mut railway_tag = None;
     let mut public_transport_tag = None;
+    let mut indoor_tag = None;
+    let mut has_sidewalk = false;
     let mut is_building = false;
 
-    for (key, value) in way.tags() {
+    for (key, value) in tags {
         match key {
             "highway" => highway_type = Some(value),
             "foot" => foot_tag = Some(value),
             "access" => access_tag = Some(value),
             "railway" => railway_tag = Some(value),
             "public_transport" => public_transport_tag = Some(value),
+            "indoor" => indoor_tag = Some(value),
+            "sidewalk" if matches!(value, "both" | "left" | "right" | "yes") => has_sidewalk = true,
+            "sidewalk:both" | "sidewalk:left" | "sidewalk:right" if value == "yes" => {
+                has_sidewalk = true
+            }
             "building" if value != "no" => is_building = true,
             _ => {}
         }
@@ -555,20 +566,15 @@ fn is_pedestrian_accessible(way: &Way) -> bool {
     }
 
     let Some(highway) = highway_type else {
-        return false;
+        return indoor_tag == Some("corridor");
     };
 
-    !matches!(
-        highway,
-        "motorway"
-            | "motorway_link"
-            | "trunk"
-            | "trunk_link"
-            | "construction"
-            | "proposed"
-            | "raceway"
-            | "abandoned"
-    )
+    match highway {
+        "trunk" | "trunk_link" => has_sidewalk,
+        "motorway" | "motorway_link" | "construction" | "proposed" | "raceway" | "abandoned"
+        | "bus_guideway" | "busway" | "razed" | "disused" | "no" => false,
+        _ => true,
+    }
 }
 
 pub struct Graph {

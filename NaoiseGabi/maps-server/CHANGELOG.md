@@ -40,6 +40,7 @@ All notable changes to maps-server. The format follows [Keep a Changelog](https:
 - Waiting for Overpass stops with an error after `MAPS_OVERPASS_READY_TIMEOUT_S` (default 21600 s, six hours), or as soon as the container exits, and shows the container's last 20 log lines. It used to wait forever. Progress is printed every minute.
 - Startup errors are printed as plain text and the process exits with status 1.
 - The server stops on SIGTERM as well as Ctrl-C, and kills the plugin processes before stopping the Overpass container.
+- Walkability: `highway=busway`, `bus_guideway`, `razed`, `disused` and `no` are no longer walkable (unless `foot=yes` or similar); `indoor=corridor` without a `highway` tag is walkable, which is how many station interiors are mapped; `trunk` and `trunk_link` roads are walkable when they have a sidewalk (`sidewalk=both|left|right|yes` or `sidewalk:<side>=yes`).
 - Every vehicle leg is its own segment in `route`; only consecutive walking edges are merged. Two vehicles in a row with the same line ID, or with none, used to be merged into one segment, which hid the change and the wait.
 
 - The Overpass container is created from `MAPS_OVERPASS_IMAGE`, default `wiktorn/overpass-api:v0.7.62.9`, instead of `wiktorn/overpass-api:latest`. The Nix wrapper loads exactly that image once and exports the variable. An existing container built from another image is recreated, and its `overpass_db` volume and its "import finished" marker (`/db/init_done`, which the image keeps outside the volume) are carried over, so no re-import happens.
