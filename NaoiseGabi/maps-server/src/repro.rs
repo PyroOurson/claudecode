@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0
 // Copyright (C) 2026 Naoise McG
 use super::{Plugin, build_station_access_map, handle_client};
-use crate::route::{OutgoingJourney, RouteSegment, StationAccessMap, route_with_schedule};
+use crate::route::{
+    Graph, OutgoingJourney, RouteSegment, SearchParams, StationAccessMap, Stations,
+    route_with_schedule,
+};
 use chrono::{DateTime, Duration, NaiveDateTime, Utc};
 use serde_json::{Value, json};
 use std::io::{BufReader, Read, Write};
@@ -43,6 +46,19 @@ fn leg(to: i64, departure: i64, cost: u64, plugin: usize) -> OutgoingJourney {
     }
 }
 
+fn fixture_graph() -> Graph {
+    Graph::from_parts(
+        &[
+            (1, 0.0, 0.0),
+            (2, 0.0, 0.027),
+            (3, 0.0, -0.0027),
+            (700, 1.0, 0.0),
+            (701, 1.0, 0.0001),
+        ],
+        &[(3, 1), (1, 2), (700, 701)],
+    )
+}
+
 fn plan(
     nodes: Vec<i64>,
     stations: &StationAccessMap,
@@ -50,15 +66,15 @@ fn plan(
     estimate_off: bool,
 ) -> (Vec<RouteSegment>, DateTime<Utc>) {
     let mut fetch = |station: i64, _time: DateTime<Utc>| legs(station);
-    let (route, _, arrival) = route_with_schedule(
-        nodes,
-        stations,
-        &mut fetch,
-        start(),
-        WALKING_SPEED,
-        estimate_off,
-    );
-    (route, arrival)
+    let stations = Stations::new(stations.clone());
+    let params = SearchParams {
+        stations: &stations,
+        walking_speed: WALKING_SPEED,
+        use_heuristic: estimate_off,
+        min_transfer: Duration::seconds(60),
+    };
+    let result = route_with_schedule(&fixture_graph(), &params, &nodes, start(), &mut fetch);
+    (result.route, result.arrival_time)
 }
 
 fn train_behind_start(station: i64) -> Vec<OutgoingJourney> {
@@ -190,13 +206,14 @@ struct Reply {
 }
 
 fn send(mut plugins: Vec<Plugin>, chunks: Vec<Vec<u8>>) -> Reply {
-    let stations = Arc::new(build_station_access_map(&mut plugins));
+    let stations = Arc::new(Stations::new(build_station_access_map(&mut plugins)));
     let plugins = Arc::new(Mutex::new(plugins));
+    let graph = Graph::from_pbfs(&[kit().join("fixtures").join("fixture.osm.pbf")]).unwrap();
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let address = listener.local_addr().unwrap();
     let server = thread::spawn(move || {
         let (stream, _) = listener.accept().unwrap();
-        handle_client(stream, plugins, stations);
+        handle_client(stream, &graph, plugins, stations);
     });
     let mut client = TcpStream::connect(address).unwrap();
     client.set_nodelay(true).unwrap();

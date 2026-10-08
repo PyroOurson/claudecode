@@ -5,8 +5,7 @@ use osmpbf::{Element, ElementReader, Way};
 use serde::{Deserialize, Serialize};
 use std::{
     cmp::Ordering,
-    collections::{BinaryHeap, HashMap, HashSet},
-    sync::LazyLock,
+    collections::{BinaryHeap, HashMap},
 };
 
 pub type StationAccessMap = HashMap<i64, Vec<i64>>;
@@ -71,68 +70,86 @@ impl PartialOrd for SearchState {
     }
 }
 
-pub static GRAPH: LazyLock<Graph> = LazyLock::new(|| {
-    let file_paths: Vec<String> = if cfg!(test) {
-        vec![format!(
-            "{}/tests/fixtures/fixture.osm.pbf",
-            env!("CARGO_MANIFEST_DIR")
-        )]
-    } else {
-        crate::OSM_PBF_FILES
-            .iter()
-            .map(|f| format!("assets/{}", f))
-            .collect()
-    };
+pub struct Stations {
+    access: StationAccessMap,
+    entrances: HashMap<i64, Vec<i64>>,
+}
 
-    Graph::from_pbfs(&file_paths).expect("Failed to load OSM PBF files")
-});
+impl Stations {
+    pub fn new(access: StationAccessMap) -> Self {
+        let mut entrances: HashMap<i64, Vec<i64>> = HashMap::new();
+        for (&station, station_entrances) in &access {
+            for &entrance in station_entrances {
+                entrances.entry(entrance).or_default().push(station);
+            }
+        }
+        Stations { access, entrances }
+    }
+
+    pub fn is_station(&self, node: i64) -> bool {
+        self.access.contains_key(&node)
+    }
+
+    pub fn entrances_of(&self, station: i64) -> &[i64] {
+        self.access.get(&station).map_or(&[], Vec::as_slice)
+    }
+
+    pub fn stations_at(&self, entrance: i64) -> &[i64] {
+        self.entrances.get(&entrance).map_or(&[], Vec::as_slice)
+    }
+}
+
+pub struct SearchParams<'a> {
+    pub stations: &'a Stations,
+    pub walking_speed: f64,
+    pub use_heuristic: bool,
+    pub min_transfer: Duration,
+}
+
+pub struct RouteResult {
+    pub route: Vec<RouteSegment>,
+    pub arrival_time: DateTime<Utc>,
+    pub expanded: usize,
+}
 
 pub fn route_with_schedule<F>(
-    required_nodes: Vec<i64>,
-    station_access: &StationAccessMap,
-    fetch_outgoing: &mut F,
+    graph: &Graph,
+    params: &SearchParams,
+    required_nodes: &[i64],
     start_time: DateTime<Utc>,
-    walking_speed: f64,
-    use_heuristic: bool,
-) -> (Vec<RouteSegment>, HashSet<i64>, DateTime<Utc>)
+    fetch_outgoing: &mut F,
+) -> RouteResult
 where
     F: FnMut(i64, DateTime<Utc>) -> Vec<OutgoingJourney>,
 {
-    let mut full_route = Vec::new();
-    let mut explored_nodes = HashSet::new();
-    let mut current_time = start_time;
-    let context = SearchContext {
-        station_access,
-        entrance_map: build_entrance_map(station_access),
-        walking_speed,
-        use_heuristic,
+    let mut result = RouteResult {
+        route: Vec::new(),
+        arrival_time: start_time,
+        expanded: 0,
     };
 
-    if required_nodes.is_empty() {
-        return (full_route, explored_nodes, current_time);
-    }
-
     for window in required_nodes.windows(2) {
-        let start_node = window[0];
-        let end_node = window[1];
-
         match a_star_time_dependent(
-            start_node,
-            end_node,
-            &context,
+            graph,
+            params,
+            window[0],
+            window[1],
+            result.arrival_time,
             fetch_outgoing,
-            current_time,
-            &mut explored_nodes,
+            &mut result.expanded,
         ) {
             Some((segment, arrival_time)) => {
-                full_route.extend(segment);
-                current_time = arrival_time;
+                result.route.extend(segment);
+                result.arrival_time = arrival_time;
             }
-            None => return (Vec::new(), explored_nodes, current_time),
+            None => {
+                result.route.clear();
+                return result;
+            }
         }
     }
 
-    (full_route, explored_nodes, current_time)
+    result
 }
 
 pub fn parse_journey_departure(value: &str) -> Result<DateTime<Utc>, chrono::ParseError> {
@@ -141,53 +158,27 @@ pub fn parse_journey_departure(value: &str) -> Result<DateTime<Utc>, chrono::Par
         .map(|naive| naive.and_utc())
 }
 
-fn build_entrance_map(station_access: &StationAccessMap) -> HashMap<i64, Vec<i64>> {
-    let mut entrance_map: HashMap<i64, Vec<i64>> = HashMap::new();
-    for (&station, entrances) in station_access {
-        for &entry in entrances {
-            entrance_map.entry(entry).or_default().push(station);
-        }
-    }
-    entrance_map
-}
-
-struct SearchContext<'a> {
-    station_access: &'a StationAccessMap,
-    entrance_map: HashMap<i64, Vec<i64>>,
-    walking_speed: f64,
-    use_heuristic: bool,
-}
-
 fn a_star_time_dependent<F>(
+    graph: &Graph,
+    params: &SearchParams,
     start_node: i64,
     end_node: i64,
-    context: &SearchContext,
-    fetch_outgoing: &mut F,
     start_time: DateTime<Utc>,
-    explored_nodes: &mut HashSet<i64>,
+    fetch_outgoing: &mut F,
+    expanded: &mut usize,
 ) -> Option<(Vec<RouteSegment>, DateTime<Utc>)>
 where
     F: FnMut(i64, DateTime<Utc>) -> Vec<OutgoingJourney>,
 {
-    let graph = &*GRAPH;
-    let station_access = context.station_access;
-    let entrance_map = &context.entrance_map;
-    let walking_speed = context.walking_speed;
-    let use_heuristic = context.use_heuristic;
+    let stations = params.stations;
+    let estimate = |node: i64| heuristic_seconds(graph, params, node, end_node);
     let mut open_set = BinaryHeap::new();
     let mut best_arrival: HashMap<StateKey, DateTime<Utc>> = HashMap::new();
     let mut predecessors: HashMap<StateKey, TransitionEdge> = HashMap::new();
 
     let start_key = (start_node, false);
-    let start_heuristic = heuristic_seconds(
-        start_node,
-        end_node,
-        station_access,
-        walking_speed,
-        use_heuristic,
-    );
     open_set.push(SearchState {
-        estimated_total: start_time.timestamp() as f64 + start_heuristic,
+        estimated_total: start_time.timestamp() as f64 + estimate(start_node),
         node: start_node,
         arrival_time: start_time,
         last_plugin_id: None,
@@ -195,14 +186,12 @@ where
     best_arrival.insert(start_key, start_time);
 
     if start_node == end_node {
-        explored_nodes.insert(start_node);
+        *expanded += 1;
         return Some((Vec::new(), start_time));
     }
 
     while let Some(state) = open_set.pop() {
         let current_node = state.node;
-        explored_nodes.insert(current_node);
-
         let current_time = state.arrival_time;
         let current_is_transit = state.last_plugin_id.is_some();
         let current_key = (current_node, current_is_transit);
@@ -212,122 +201,93 @@ where
         {
             continue;
         }
+        *expanded += 1;
 
         if current_node == end_node {
             let path = reconstruct_path(&predecessors, start_key, current_key);
             return Some((path, current_time));
         }
 
-        if let Some(neighbors) = graph.ways_from_node(current_node) {
-            for (&next_node, &distance) in neighbors {
-                let travel_seconds = distance / walking_speed;
-                let arrival_time =
-                    current_time + Duration::milliseconds((travel_seconds * 1000.0).round() as i64);
-                let next_key = (next_node, false);
+        for (next_node, distance) in graph.neighbours(current_node) {
+            let travel_seconds = distance / params.walking_speed;
+            let arrival_time =
+                current_time + Duration::milliseconds((travel_seconds * 1000.0).round() as i64);
+            let next_key = (next_node, false);
 
-                if is_better_arrival(&best_arrival, next_key, arrival_time) {
-                    best_arrival.insert(next_key, arrival_time);
-                    predecessors.insert(
-                        next_key,
-                        TransitionEdge {
-                            from_key: current_key,
-                            mode: "walking".to_string(),
-                            line: None,
-                            departure: current_time,
-                            arrival: arrival_time,
-                        },
-                    );
-                    let estimated_total = arrival_time.timestamp() as f64
-                        + heuristic_seconds(
-                            next_node,
-                            end_node,
-                            station_access,
-                            walking_speed,
-                            use_heuristic,
-                        );
-                    open_set.push(SearchState {
-                        estimated_total,
-                        node: next_node,
-                        arrival_time,
-                        last_plugin_id: None,
-                    });
-                }
+            if is_better_arrival(&best_arrival, next_key, arrival_time) {
+                best_arrival.insert(next_key, arrival_time);
+                predecessors.insert(
+                    next_key,
+                    TransitionEdge {
+                        from_key: current_key,
+                        mode: "walking".to_string(),
+                        line: None,
+                        departure: current_time,
+                        arrival: arrival_time,
+                    },
+                );
+                open_set.push(SearchState {
+                    estimated_total: arrival_time.timestamp() as f64 + estimate(next_node),
+                    node: next_node,
+                    arrival_time,
+                    last_plugin_id: None,
+                });
             }
         }
 
-        if let Some(entrances) = station_access.get(&current_node) {
-            for &entrance_node in entrances {
-                let next_key = (entrance_node, false);
-                if is_better_arrival(&best_arrival, next_key, current_time) {
-                    best_arrival.insert(next_key, current_time);
-                    predecessors.insert(
-                        next_key,
-                        TransitionEdge {
-                            from_key: current_key,
-                            mode: "walking".to_string(),
-                            line: None,
-                            departure: current_time,
-                            arrival: current_time,
-                        },
-                    );
-                    let estimated_total = current_time.timestamp() as f64
-                        + heuristic_seconds(
-                            entrance_node,
-                            end_node,
-                            station_access,
-                            walking_speed,
-                            use_heuristic,
-                        );
-                    open_set.push(SearchState {
-                        estimated_total,
-                        node: entrance_node,
-                        arrival_time: current_time,
-                        last_plugin_id: None,
-                    });
-                }
+        for &entrance_node in stations.entrances_of(current_node) {
+            let next_key = (entrance_node, false);
+            if is_better_arrival(&best_arrival, next_key, current_time) {
+                best_arrival.insert(next_key, current_time);
+                predecessors.insert(
+                    next_key,
+                    TransitionEdge {
+                        from_key: current_key,
+                        mode: "walking".to_string(),
+                        line: None,
+                        departure: current_time,
+                        arrival: current_time,
+                    },
+                );
+                open_set.push(SearchState {
+                    estimated_total: current_time.timestamp() as f64 + estimate(entrance_node),
+                    node: entrance_node,
+                    arrival_time: current_time,
+                    last_plugin_id: None,
+                });
             }
         }
 
-        if let Some(stations) = entrance_map.get(&current_node) {
-            let prev_node = predecessors.get(&current_key).map(|k| k.from_key.0);
-            for &station_node in stations {
-                if Some(station_node) == prev_node {
-                    continue;
-                }
+        let prev_node = predecessors.get(&current_key).map(|k| k.from_key.0);
+        for &station_node in stations.stations_at(current_node) {
+            if Some(station_node) == prev_node {
+                continue;
+            }
 
-                let next_key = (station_node, false);
-                if is_better_arrival(&best_arrival, next_key, current_time) {
-                    best_arrival.insert(next_key, current_time);
-                    predecessors.insert(
-                        next_key,
-                        TransitionEdge {
-                            from_key: current_key,
-                            mode: "walking".to_string(),
-                            line: None,
-                            departure: current_time,
-                            arrival: current_time,
-                        },
-                    );
-                    let estimated_total = current_time.timestamp() as f64
-                        + heuristic_seconds(
-                            station_node,
-                            end_node,
-                            station_access,
-                            walking_speed,
-                            use_heuristic,
-                        );
-                    open_set.push(SearchState {
-                        estimated_total,
-                        node: station_node,
-                        arrival_time: current_time,
-                        last_plugin_id: None,
-                    });
-                }
+            let next_key = (station_node, false);
+            if is_better_arrival(&best_arrival, next_key, current_time) {
+                best_arrival.insert(next_key, current_time);
+                predecessors.insert(
+                    next_key,
+                    TransitionEdge {
+                        from_key: current_key,
+                        mode: "walking".to_string(),
+                        line: None,
+                        departure: current_time,
+                        arrival: current_time,
+                    },
+                );
+                open_set.push(SearchState {
+                    estimated_total: current_time.timestamp() as f64 + estimate(station_node),
+                    node: station_node,
+                    arrival_time: current_time,
+                    last_plugin_id: None,
+                });
             }
         }
 
-        if station_access.contains_key(&current_node) {
-            let journeys = fetch_outgoing(current_node, current_time + Duration::seconds(60));
+        if stations.is_station(current_node) {
+            let journeys = fetch_outgoing(current_node, current_time + params.min_transfer);
             for journey in journeys {
                 if journey.target_station == current_node {
                     continue;
@@ -359,16 +319,9 @@ where
                             arrival: arrival_time,
                         },
                     );
-                    let estimated_total = arrival_time.timestamp() as f64
-                        + heuristic_seconds(
-                            journey.target_station,
-                            end_node,
-                            station_access,
-                            walking_speed,
-                            use_heuristic,
-                        );
                     open_set.push(SearchState {
-                        estimated_total,
+                        estimated_total: arrival_time.timestamp() as f64
+                            + estimate(journey.target_station),
                         node: journey.target_station,
                         arrival_time,
                         last_plugin_id: journey.plugin_id,
@@ -438,37 +391,32 @@ fn is_better_arrival(
     }
 }
 
-fn heuristic_seconds(
-    origin: i64,
-    target: i64,
-    station_access: &StationAccessMap,
-    walking_speed: f64,
-    use_heuristic: bool,
-) -> f64 {
-    if use_heuristic {
+fn position(graph: &Graph, stations: &Stations, node: i64) -> Option<(f64, f64)> {
+    graph.coords_from_id(node).or_else(|| {
+        stations
+            .entrances_of(node)
+            .iter()
+            .find_map(|&e| graph.coords_from_id(e))
+    })
+}
+
+fn haversine_km((lat1, lon1): (f64, f64), (lat2, lon2): (f64, f64)) -> f64 {
+    let dlat = lat2 - lat1;
+    let dlon = lon2 - lon1;
+    let h = ((dlat / 2.0).sin().powi(2) + lat1.cos() * lat2.cos() * (dlon / 2.0).sin().powi(2))
+        .clamp(0.0, 1.0);
+    6371.0 * 2.0 * h.sqrt().atan2((1.0 - h).sqrt())
+}
+
+fn heuristic_seconds(graph: &Graph, params: &SearchParams, origin: i64, target: i64) -> f64 {
+    if params.use_heuristic {
         return 0f64;
     }
-    let graph = &*GRAPH;
-    let origin_coords = graph.coords_from_id(origin).or_else(|| {
-        station_access
-            .get(&origin)
-            .and_then(|entrances| entrances.iter().find_map(|&e| graph.coords_from_id(e)))
-    });
-    let target_coords = graph.coords_from_id(target).or_else(|| {
-        station_access
-            .get(&target)
-            .and_then(|entrances| entrances.iter().find_map(|&e| graph.coords_from_id(e)))
-    });
-
-    match (origin_coords, target_coords) {
-        (Some((lat1, lon1)), Some((lat2, lon2))) => {
-            let dlat = lat2 - lat1;
-            let dlon = lon2 - lon1;
-            let h = ((dlat / 2.0).sin().powi(2)
-                + lat1.cos() * lat2.cos() * (dlon / 2.0).sin().powi(2))
-            .clamp(0.0, 1.0);
-            (6371.0 * 2.0 * h.sqrt().atan2((1.0 - h).sqrt())) / walking_speed
-        }
+    match (
+        position(graph, params.stations, origin),
+        position(graph, params.stations, target),
+    ) {
+        (Some(from), Some(to)) => haversine_km(from, to) / params.walking_speed,
         _ => 0.0,
     }
 }
@@ -574,20 +522,11 @@ impl Graph {
                         let a = pair[0];
                         let b = pair[1];
 
-                        let Some(&(lat1, lon1)) = coordinates.get(&a) else {
+                        let (Some(&from), Some(&to)) = (coordinates.get(&a), coordinates.get(&b))
+                        else {
                             continue;
                         };
-                        let Some(&(lat2, lon2)) = coordinates.get(&b) else {
-                            continue;
-                        };
-
-                        let dlat = lat2 - lat1;
-                        let dlon = lon2 - lon1;
-                        let h = ((dlat / 2.0).sin().powi(2)
-                            + lat1.cos() * lat2.cos() * (dlon / 2.0).sin().powi(2))
-                        .clamp(0.0, 1.0);
-
-                        let distance = 6371.0 * 2.0 * h.sqrt().atan2((1.0 - h).sqrt());
+                        let distance = haversine_km(from, to);
 
                         adjacency.entry(a).or_default().insert(b, distance);
                         adjacency.entry(b).or_default().insert(a, distance);
@@ -609,11 +548,35 @@ impl Graph {
         })
     }
 
+    #[cfg(test)]
+    pub fn from_parts(nodes: &[(i64, f64, f64)], edges: &[(i64, i64)]) -> Self {
+        let coordinates: HashMap<i64, (f64, f64)> = nodes
+            .iter()
+            .map(|&(id, lat, lon)| (id, (lat.to_radians(), lon.to_radians())))
+            .collect();
+        let mut adjacency: HashMap<i64, HashMap<i64, f64>> = HashMap::new();
+        for &(a, b) in edges {
+            let (Some(&from), Some(&to)) = (coordinates.get(&a), coordinates.get(&b)) else {
+                continue;
+            };
+            let distance = haversine_km(from, to);
+            adjacency.entry(a).or_default().insert(b, distance);
+            adjacency.entry(b).or_default().insert(a, distance);
+        }
+        Graph {
+            coordinates,
+            adjacency,
+        }
+    }
+
     pub fn coords_from_id(&self, node: i64) -> Option<(f64, f64)> {
         self.coordinates.get(&node).copied()
     }
 
-    pub fn ways_from_node(&self, node: i64) -> Option<&HashMap<i64, f64>> {
-        self.adjacency.get(&node)
+    pub fn neighbours(&self, node: i64) -> impl Iterator<Item = (i64, f64)> + '_ {
+        self.adjacency
+            .get(&node)
+            .into_iter()
+            .flat_map(|edges| edges.iter().map(|(&next, &distance)| (next, distance)))
     }
 }

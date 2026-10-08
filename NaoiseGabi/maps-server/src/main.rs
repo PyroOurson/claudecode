@@ -7,7 +7,8 @@ use bollard::query_parameters::{
 };
 use chrono::{DateTime, NaiveDateTime, Utc};
 use route::{
-    Line, OutgoingJourney, StationAccessMap, parse_journey_departure, route_with_schedule,
+    Graph, Line, OutgoingJourney, SearchParams, StationAccessMap, Stations,
+    parse_journey_departure, route_with_schedule,
 };
 use serde_core::de::Error;
 use serde_json::{Result, Value};
@@ -38,6 +39,15 @@ pub static OSM_PBF_FILES: LazyLock<Vec<String>> = LazyLock::new(|| {
                 .collect()
         })
         .unwrap_or_else(|_| vec!["provence-alpes-cote-d-azur-260718.osm.pbf".to_string()])
+});
+
+static GRAPH: LazyLock<Graph> = LazyLock::new(|| {
+    let file_paths: Vec<String> = OSM_PBF_FILES
+        .iter()
+        .map(|f| format!("assets/{}", f))
+        .collect();
+
+    Graph::from_pbfs(&file_paths).expect("Failed to load OSM PBF files")
 });
 
 fn calculate_pbf_hash(assets_path: &std::path::Path) -> String {
@@ -260,8 +270,9 @@ async fn stop_overpass_container(
 
 fn handle_client(
     mut stream: TcpStream,
+    graph: &Graph,
     plugins: Arc<Mutex<Vec<Plugin>>>,
-    station_access: Arc<StationAccessMap>,
+    stations: Arc<Stations>,
 ) {
     let mut buffer = [0u8; 2048];
 
@@ -362,21 +373,24 @@ fn handle_client(
                         journeys
                     };
 
-                let (computed_route, _, arrival_time) = route_with_schedule(
-                    node_ids,
-                    &station_access,
-                    &mut fetch_outgoing,
-                    NaiveDateTime::parse_from_str(
-                        data["time"]
-                            .as_str()
-                            .unwrap_or(Utc::now().format("%Y%m%dT%H%M%S").to_string().as_str()),
-                        "%Y%m%dT%H%M%S",
-                    )
-                    .unwrap_or(Utc::now().naive_utc())
-                    .and_utc(),
-                    data["walking_speed"].as_f64().unwrap_or(0.00138),
-                    heuristic,
-                );
+                let params = SearchParams {
+                    stations: &stations,
+                    walking_speed: data["walking_speed"].as_f64().unwrap_or(0.00138),
+                    use_heuristic: heuristic,
+                    min_transfer: chrono::Duration::seconds(60),
+                };
+                let start_time = NaiveDateTime::parse_from_str(
+                    data["time"]
+                        .as_str()
+                        .unwrap_or(Utc::now().format("%Y%m%dT%H%M%S").to_string().as_str()),
+                    "%Y%m%dT%H%M%S",
+                )
+                .unwrap_or(Utc::now().naive_utc())
+                .and_utc();
+                let result =
+                    route_with_schedule(graph, &params, &node_ids, start_time, &mut fetch_outgoing);
+                let computed_route = result.route;
+                let arrival_time = result.arrival_time;
 
                 let plugins_guard = plugins.lock().unwrap();
                 let plugin_attributions = plugins_guard
@@ -598,7 +612,9 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     wait_for_overpass_ready().await;
 
     let plugins = Arc::new(Mutex::new(load_plugins()));
-    let station_access = Arc::new(build_station_access_map(&mut plugins.lock().unwrap()));
+    let stations = Arc::new(Stations::new(build_station_access_map(
+        &mut plugins.lock().unwrap(),
+    )));
     let listener = TcpListener::bind("0.0.0.0:6767").expect("Failed to bind to port 6767");
 
     println!("Server listening on http:6767");
@@ -607,9 +623,9 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         match stream {
             Ok(stream) => {
                 let plugins = Arc::clone(&plugins);
-                let station_access = Arc::clone(&station_access);
+                let stations = Arc::clone(&stations);
                 thread::spawn(move || {
-                    handle_client(stream, plugins, station_access);
+                    handle_client(stream, &GRAPH, plugins, stations);
                 });
             }
             Err(e) => {
