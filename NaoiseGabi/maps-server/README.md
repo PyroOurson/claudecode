@@ -131,7 +131,11 @@ A successful answer is `200`:
     {"mode": "train", "line": {"id": "TER", "preferred_colour": "#0055A5"}, "nodes": [100, 200],
      "departure_time": "2026-08-08T12:14:37Z", "arrival_time": "2026-08-08T12:19:37Z"}
   ],
-  "arrival_time": "2026-08-08T12:19:37Z"
+  "arrival_time": "2026-08-08T12:19:37Z",
+  "attribution": [
+    {"plugin": "OpenStreetMap", "data_owner": "[OpenStreetMap contributors](https://www.openstreetmap.org/copyright)", "data_license": "[ODbL](https://opendatacommons.org/licenses/odbl/1-0/)", "plugin_owner": "[maps-server](https://gitlab.com/buphagidae/maps-server)", "plugin_license": "[AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html)"},
+    {"plugin": "sncf-plugin", "data_owner": "[SNCF](sncf.fr)", "data_license": "[ODbL](https://opendatacommons.org/licenses/odbl/1.0/)", "plugin_owner": "Naoise McG", "plugin_license": "[BSD 3-clause](https://gitlab.com/buphagidae/plugins/sncf-plugin/-/raw/main/LICENSE)"}
+  ]
 }
 ```
 
@@ -140,6 +144,7 @@ A successful answer is `200`:
 * `nodes` lists the nodes from the first to the last.
 * Times are RFC 3339 in UTC, to the millisecond.
 * Consecutive walking edges form one segment, and each vehicle leg is its own segment, so a change between vehicles is always visible.
+* `attribution` credits the data behind this route: OpenStreetMap, plus each plugin whose vehicles the route uses, sorted by `plugin`. Show it next to the route.
 
 ### `GET /health`
 
@@ -180,7 +185,7 @@ Every response carries:
 * `Access-Control-Allow-Origin: *` and `Access-Control-Expose-Headers: Attribution, Source-Code`, so pages on any origin can call the server and read both headers.
 * `Source-Code: "<MAPS_SOURCE_URL>"`.
 
-A route also carries `Attribution: "<text>"`, URL-encoded: the OpenStreetMap credit and the data and plugin credits of every plugin.
+A route also carries `Attribution: "<text>"`, URL-encoded: the same credits as the `attribution` field, as sentences.
 
 `OPTIONS /` answers `204` with `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Methods: POST, OPTIONS`, `Access-Control-Allow-Headers: Content-Type` and `Access-Control-Max-Age: 86400`.
 

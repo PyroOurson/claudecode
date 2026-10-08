@@ -35,7 +35,8 @@ fn leg(to: i64, departure: i64, cost: u64, plugin: usize) -> OutgoingJourney {
         target_station: to,
         departure: at(departure),
         cost_seconds: cost,
-        mode: format!("train of plugin {}", plugin),
+        plugin,
+        mode: "train".to_string(),
         line: None,
     }
 }

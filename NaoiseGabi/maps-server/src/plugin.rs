@@ -438,7 +438,11 @@ fn parse_line(value: Option<&Value>) -> Option<Line> {
     }
 }
 
-fn parse_journey(entry: &Value, mode: &str) -> Result<OutgoingJourney, &'static str> {
+fn parse_journey(
+    entry: &Value,
+    plugin: usize,
+    mode: &str,
+) -> Result<OutgoingJourney, &'static str> {
     let target_station = entry
         .get("to")
         .and_then(parse_id)
@@ -457,6 +461,7 @@ fn parse_journey(entry: &Value, mode: &str) -> Result<OutgoingJourney, &'static 
         target_station,
         departure,
         cost_seconds,
+        plugin,
         mode: mode.to_string(),
         line: parse_line(entry.get("line")),
     })
@@ -464,6 +469,7 @@ fn parse_journey(entry: &Value, mode: &str) -> Result<OutgoingJourney, &'static 
 
 pub fn parse_journeys(
     plugin_name: &str,
+    plugin_index: usize,
     mode: &str,
     station: i64,
     response: &Value,
@@ -479,7 +485,7 @@ pub fn parse_journeys(
     let mut skipped = 0;
     let mut first_problem = None;
     for entry in entries {
-        match parse_journey(entry, mode) {
+        match parse_journey(entry, plugin_index, mode) {
             Ok(journey) => journeys.push(journey),
             Err(reason) => {
                 skipped += 1;
@@ -523,13 +529,13 @@ mod tests {
             {"to": null, "cost": 600, "time": "20260808T120200"},
             "nonsense"
         ]);
-        let journeys = parse_journeys("test", "bus", 300, &response);
+        let journeys = parse_journeys("test", 2, "bus", 300, &response);
         let targets: Vec<i64> = journeys.iter().map(|j| j.target_station).collect();
         assert_eq!(targets, vec![400, 500]);
         assert_eq!(
             journeys[1].line.as_ref().and_then(|l| l.id.clone()),
             Some("7".to_string())
         );
-        assert!(journeys.iter().all(|j| j.mode == "bus"));
+        assert!(journeys.iter().all(|j| j.plugin == 2 && j.mode == "bus"));
     }
 }

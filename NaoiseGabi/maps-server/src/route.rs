@@ -21,7 +21,7 @@ pub struct Line {
 #[derive(Clone, Debug)]
 struct TransitionEdge {
     from_key: StateKey,
-    transit: bool,
+    plugin: Option<usize>,
     mode: String,
     line: Option<Line>,
     departure: DateTime<Utc>,
@@ -33,12 +33,15 @@ pub struct OutgoingJourney {
     pub target_station: i64,
     pub departure: DateTime<Utc>,
     pub cost_seconds: u64,
+    pub plugin: usize,
     pub mode: String,
     pub line: Option<Line>,
 }
 
 #[derive(Clone, Debug, Serialize)]
 pub struct RouteSegment {
+    #[serde(skip)]
+    pub plugin: Option<usize>,
     pub mode: String,
     pub line: Option<Line>,
     pub nodes: Vec<i64>,
@@ -301,7 +304,7 @@ where
                     next_key,
                     TransitionEdge {
                         from_key: current_key,
-                        transit: false,
+                        plugin: None,
                         mode: "walking".to_string(),
                         line: None,
                         departure: current_time,
@@ -325,7 +328,7 @@ where
                     next_key,
                     TransitionEdge {
                         from_key: current_key,
-                        transit: false,
+                        plugin: None,
                         mode: "walking".to_string(),
                         line: None,
                         departure: current_time,
@@ -354,7 +357,7 @@ where
                     next_key,
                     TransitionEdge {
                         from_key: current_key,
-                        transit: false,
+                        plugin: None,
                         mode: "walking".to_string(),
                         line: None,
                         departure: current_time,
@@ -396,7 +399,7 @@ where
                         next_key,
                         TransitionEdge {
                             from_key: current_key,
-                            transit: true,
+                            plugin: Some(journey.plugin),
                             mode: journey.mode.clone(),
                             line: journey.line.clone(),
                             departure: journey.departure,
@@ -442,7 +445,7 @@ fn reconstruct_path(
     let mut segments: Vec<RouteSegment> = Vec::new();
     let mut last_was_walking = false;
     for (to_node, edge) in edges {
-        let walking = !edge.transit;
+        let walking = edge.plugin.is_none();
         if walking
             && last_was_walking
             && let Some(last) = segments.last_mut()
@@ -452,6 +455,7 @@ fn reconstruct_path(
         } else {
             let from_node = edge.from_key.0;
             segments.push(RouteSegment {
+                plugin: edge.plugin,
                 mode: edge.mode,
                 line: edge.line,
                 nodes: vec![from_node, to_node],

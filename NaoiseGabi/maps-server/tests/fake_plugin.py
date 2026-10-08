@@ -32,12 +32,12 @@ def answer(scenario, request):
     if action == "mode":
         return scenario.get("mode", "train")
     if action == "attribution":
-        return {
+        return scenario.get("attribution", {
             "data_owner": "Fake data",
             "data_license": "CC0",
             "plugin_owner": "maps-server-review",
             "plugin_license": "CC0",
-        }
+        })
     if action == "available":
         return scenario.get("available", {})
     if action == "explore":

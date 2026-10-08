@@ -824,3 +824,59 @@ fn health_is_503_while_starting_or_without_overpass() {
     assert_eq!(reply.json["overpass"], "down");
     assert_eq!(reply.json["ready"], true);
 }
+
+#[test]
+fn attribution_lists_only_the_plugins_the_route_used() {
+    let credit = |owner: &str| json!({"data_owner": owner, "data_license": "CC-BY", "plugin_owner": "Tester", "plugin_license": "MIT"});
+    let plugins = vec![
+        plugin(
+            "train",
+            json!({"attribution": credit("Rail Co"), "available": {"300": [], "400": []},
+                   "explore": {"300": [{"to": 400, "offset": 120, "cost": 600}]}}),
+        ),
+        plugin(
+            "bus",
+            json!({"attribution": credit("Bus Co"), "available": {"300": [], "400": []},
+                   "explore": {"300": [{"to": 400, "offset": 2400, "cost": 600}]}}),
+        ),
+    ];
+    let reply = send(
+        plugins,
+        vec![request(
+            "POST",
+            "/",
+            &json!({"required_nodes": [300, 400], "time": "20260808T120000"}).to_string(),
+        )],
+    );
+    assert_eq!(reply.status, 200, "{}", reply.raw);
+    let names: Vec<&str> = reply.json["attribution"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|credit| credit["plugin"].as_str())
+        .collect();
+    assert_eq!(names, vec!["OpenStreetMap", "train"]);
+    assert_eq!(reply.json["attribution"][1]["data_owner"], "Rail Co");
+    let header = urlencoding::decode(
+        reply
+            .header("Attribution")
+            .unwrap_or_default()
+            .trim_matches('"'),
+    )
+    .unwrap_or_default()
+    .to_string();
+    assert!(
+        header.contains("Rail Co, provided under the CC-BY, translated by Tester, under the MIT."),
+        "{}",
+        header
+    );
+    assert!(header.contains("OpenStreetMap contributors"), "{}", header);
+    assert!(!header.contains("Bus Co"), "{}", header);
+}
+
+#[test]
+fn a_walk_is_credited_to_openstreetmap_only() {
+    let reply = send(Vec::new(), vec![request("POST", "/", &walk())]);
+    assert_eq!(reply.json["attribution"].as_array().map(Vec::len), Some(1));
+    assert_eq!(reply.json["attribution"][0]["plugin"], "OpenStreetMap");
+}

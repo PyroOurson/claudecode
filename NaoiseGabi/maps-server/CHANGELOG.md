@@ -20,7 +20,7 @@ These change what clients or plugins see. Read them before upgrading.
 - **Overpass is published on `127.0.0.1:12345` only**, instead of every network interface.
 - The server listens as soon as the walking graph is built and answers `503` until it is ready. It used to listen only once everything was up.
 - The `Source-Code` header points to `MAPS_SOURCE_URL`, default `https://gitlab.com/buphagidae/maps-server`. It used to point to `https://gitlab.com/buphagidae/buphagus`, which anonymous users cannot see; under the AGPL this header is how network users are offered the source. It is now on every response, errors included, together with `Access-Control-Allow-Origin` and `Access-Control-Expose-Headers`.
-- The `Attribution` header starts with "Map data © OpenStreetMap contributors, ODbL.".
+- The `Attribution` header starts with "Map data © OpenStreetMap contributors, ODbL." and credits only OpenStreetMap and the plugins the route used, instead of every plugin.
 - Every vehicle leg is its own segment in `route`; only consecutive walking edges are merged. Two vehicles in a row with the same line ID, or with none, used to be merged into one segment, which hid the change and the wait.
 - Connections are kept alive between requests instead of being closed after each response. Header names are sent in lower case, which HTTP treats the same, and the `204` preflight answer no longer carries `Content-Length: 0`, which RFC 9110 forbids on `204`.
 - **Plugins** are only asked about stations they listed in `available` (they used to be asked about every station), and every plugin that listed a station is asked (the search used to stop at the first plugin with departures).
@@ -34,6 +34,7 @@ These change what clients or plugins see. Read them before upgrading.
 
 ### Added
 
+- Routes carry `"attribution": [{"plugin", "data_owner", "data_license", "plugin_owner", "plugin_license"}]`, sorted by `plugin`: OpenStreetMap plus the plugins the route used.
 - `GET /health`: `{"status": "ok" | "degraded", "ready", "uptime_s", "graph": {"nodes", "edges"}, "overpass": "up" | "down", "plugins": [{"name", "mode", "alive", "calls", "errors", "avg_ms"}]}`, with `200` when everything is up and `503` otherwise.
 - Configuration variables, each defaulting to the old behaviour: `MAPS_BIND`, `MAPS_MAX_BODY_BYTES`, `MAPS_MAX_REQUIRED_NODES`, `MAPS_MAX_SPEED_KMH`, `MAPS_MAX_EXPANDED`, `MAPS_MAX_PLUGIN_CALLS`, `MAPS_HORIZON_H`, `MAPS_CACHE_TTL_S`, `MAPS_PLUGIN_TIMEOUT_S`, `MAPS_PLUGIN_STARTUP_TIMEOUT_S`, `MAPS_OVERPASS_IMAGE`, `MAPS_OVERPASS_READY_TIMEOUT_S`, `MAPS_SOURCE_URL`. `OSM_PBF_FILES` and `OSM_PBF_FILE_NAME` still work.
 - `"fast": true` in requests, for the walking-estimate search.

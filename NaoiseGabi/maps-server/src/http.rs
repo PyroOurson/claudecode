@@ -6,8 +6,8 @@ use crate::config::Config;
 use crate::overpass;
 use crate::plugin::parse_journeys;
 use crate::route::{
-    Graph, OutgoingJourney, RouteError, SearchMode, SearchParams, SearchStats, Stations,
-    parse_request_time, route_with_schedule,
+    Graph, OutgoingJourney, RouteError, RouteSegment, SearchMode, SearchParams, SearchStats,
+    Stations, parse_request_time, route_with_schedule,
 };
 use axum::Router;
 use axum::body::{Body, Bytes};
@@ -18,8 +18,9 @@ use axum::middleware;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use chrono::{DateTime, Utc};
+use serde::Serialize;
 use serde_json::{Value, json};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 use std::time::Instant;
 
@@ -334,12 +335,14 @@ pub fn parse_request(body: &[u8], config: &Config) -> Result<RouteRequest, ApiEr
 
 fn explore_with(
     plugin: &Plugin,
+    index: usize,
     station: i64,
     time: DateTime<Utc>,
 ) -> Option<Vec<OutgoingJourney>> {
     match plugin.explore(station, time) {
         Ok(value) => Some(parse_journeys(
             plugin.name(),
+            index,
             plugin.mode(),
             station,
             &value,
@@ -365,7 +368,7 @@ fn explore_all(
     let explore = |index: usize| {
         let journeys = plugins
             .get(index)
-            .and_then(|plugin| explore_with(plugin, station, time));
+            .and_then(|plugin| explore_with(plugin, index, station, time));
         (index, journeys)
     };
     if indexes.len() < 2 {
@@ -381,6 +384,60 @@ fn explore_all(
             .filter_map(|handle| handle.join().ok())
             .collect()
     })
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+pub struct Credit {
+    pub plugin: String,
+    pub data_owner: String,
+    pub data_license: String,
+    pub plugin_owner: String,
+    pub plugin_license: String,
+}
+
+fn attribution_for(state: &AppState, network: &Network, route: &[RouteSegment]) -> Vec<Credit> {
+    let mut credits = vec![Credit {
+        plugin: "OpenStreetMap".to_string(),
+        data_owner: "[OpenStreetMap contributors](https://www.openstreetmap.org/copyright)"
+            .to_string(),
+        data_license: "[ODbL](https://opendatacommons.org/licenses/odbl/1-0/)".to_string(),
+        plugin_owner: format!("[maps-server]({})", state.config.source_url),
+        plugin_license: "[AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html)".to_string(),
+    }];
+    credits.extend(
+        route
+            .iter()
+            .filter_map(|segment| segment.plugin)
+            .filter_map(|index| network.plugins.get(index))
+            .map(|plugin| Credit {
+                plugin: plugin.name().to_string(),
+                data_owner: plugin.data_owner().to_string(),
+                data_license: plugin.data_license().to_string(),
+                plugin_owner: plugin.plugin_owner().to_string(),
+                plugin_license: plugin.plugin_license().to_string(),
+            }),
+    );
+    credits.sort();
+    credits.dedup();
+    credits
+}
+
+fn attribution_header(credits: &[Credit]) -> String {
+    let lines = credits
+        .iter()
+        .map(|credit| {
+            format!(
+                "{}, provided under the {}, translated by {}, under the {}.",
+                credit.data_owner, credit.data_license, credit.plugin_owner, credit.plugin_license
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    let text = format!(
+        "{}\nRealtime and Schedule data has been provided by the following organisations, under various licenses. It has been provided as-is, and these organisations are not responsible for any errors or inaccuracies. The various data formats have been translated by various individuals. \n {}",
+        OSM_ATTRIBUTION, lines
+    );
+    urlencoding::encode(&text).into_owned()
 }
 
 fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
@@ -456,37 +513,18 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
     );
     let result = result?;
 
-    let plugin_attributions = network
-        .plugins
-        .iter()
-        .map(|plugin| {
-            format!(
-                "{}, provided under the {}, translated by {}, under the {}.",
-                plugin.data_owner(),
-                plugin.data_license(),
-                plugin.plugin_owner(),
-                plugin.plugin_license()
-            )
-        })
-        .collect::<HashSet<String>>()
-        .into_iter()
-        .collect::<Vec<_>>()
-        .join("\n");
-
-    let attributions = format!(
-        "{}\nRealtime and Schedule data has been provided by the following organisations, under various licenses. It has been provided as-is, and these organisations are not responsible for any errors or inaccuracies. The various data formats have been translated by various individuals. \n {}",
-        OSM_ATTRIBUTION, plugin_attributions
-    );
-    let attributions = urlencoding::encode(attributions.as_str());
+    let attribution = attribution_for(state, network, &result.route);
+    let header = attribution_header(&attribution);
 
     let mut response = json_response(
         StatusCode::OK,
         &json!({
             "route": result.route,
-            "arrival_time": result.arrival_time
+            "arrival_time": result.arrival_time,
+            "attribution": attribution,
         }),
     );
-    if let Ok(value) = HeaderValue::from_str(&format!("\"{}\"", attributions)) {
+    if let Ok(value) = HeaderValue::from_str(&format!("\"{}\"", header)) {
         response
             .headers_mut()
             .insert(HeaderName::from_static("attribution"), value);
