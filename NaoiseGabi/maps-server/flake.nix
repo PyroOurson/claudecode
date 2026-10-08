@@ -25,6 +25,8 @@
 					cargoLock = {
 						lockFile = ./Cargo.lock;
 					};
+
+					nativeCheckInputs = [ pkgs.python3 ];
 				};
 
 				overpassImageName = "wiktorn/overpass-api";
