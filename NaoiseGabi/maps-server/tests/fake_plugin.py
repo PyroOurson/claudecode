@@ -15,7 +15,7 @@ def explore(scenario, data):
         journey = {
             "to": leg["to"],
             "cost": leg["cost"],
-            "time": (start + timedelta(seconds=leg["offset"])).strftime(TIME_FORMAT),
+            "time": leg.get("time") or (start + timedelta(seconds=leg["offset"])).strftime(TIME_FORMAT),
         }
         if "line" in leg:
             journey["line"] = leg["line"]
@@ -29,6 +29,8 @@ def answer(scenario, request):
         time.sleep(3600)
     if action in scenario.get("crash", []):
         sys.exit(1)
+    if action in scenario.get("replies", {}):
+        return scenario["replies"][action]
     if action == "mode":
         return scenario.get("mode", "train")
     if action == "attribution":

@@ -15,6 +15,7 @@ use std::sync::Arc;
 use std::time::Instant;
 
 mod cache;
+mod checker;
 mod config;
 mod graph;
 mod http;
@@ -168,9 +169,64 @@ async fn shutdown_signal() {
     }
 }
 
-#[tokio::main]
-async fn main() -> ExitCode {
-    match serve().await {
+const USAGE: &str = "Usage:\n  maps-server                                  run the server\n  maps-server check-plugin <flake attribute>   check a plugin started with nix run\n  maps-server check-plugin -- <command> [args] check a plugin started with any command";
+
+fn checked_spec(args: &[String]) -> Option<PluginSpec> {
+    match args {
+        [separator, program, rest @ ..] if separator == "--" => Some(PluginSpec {
+            name: program.clone(),
+            program: program.clone(),
+            args: rest.to_vec(),
+        }),
+        [attribute] => Some(PluginSpec {
+            name: attribute.clone(),
+            program: "nix".to_string(),
+            args: vec!["run".to_string(), attribute.clone()],
+        }),
+        _ => None,
+    }
+}
+
+fn check_plugin(args: &[String]) -> ExitCode {
+    let Some(spec) = checked_spec(args) else {
+        eprintln!("{}", USAGE);
+        return ExitCode::from(2);
+    };
+    let config = match Config::from_env() {
+        Ok(config) => config,
+        Err(error) => {
+            eprintln!("Error: {}", error);
+            return ExitCode::FAILURE;
+        }
+    };
+    println!("Checking plugin: {} {}", spec.program, spec.args.join(" "));
+    let report = checker::check(&spec, config.plugin_timeouts(), chrono::Utc::now());
+    println!("{}", report);
+    if report.passed() {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::FAILURE
+    }
+}
+
+fn main() -> ExitCode {
+    let args: Vec<String> = env::args().skip(1).collect();
+    match args.first().map(String::as_str) {
+        None => {}
+        Some("check-plugin") => return check_plugin(&args[1..]),
+        Some(_) => {
+            eprintln!("{}", USAGE);
+            return ExitCode::from(2);
+        }
+    }
+    let runtime = match tokio::runtime::Runtime::new() {
+        Ok(runtime) => runtime,
+        Err(error) => {
+            eprintln!("Error: {}", error);
+            return ExitCode::FAILURE;
+        }
+    };
+    match runtime.block_on(serve()) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("Error: {}", error);

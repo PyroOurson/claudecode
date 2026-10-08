@@ -56,14 +56,14 @@ impl fmt::Display for PluginError {
     }
 }
 
-struct Process {
+pub struct Process {
     child: Child,
     stdin: ChildStdin,
     replies: Receiver<String>,
 }
 
 impl Process {
-    fn spawn(spec: &PluginSpec) -> Result<Process, String> {
+    pub fn spawn(spec: &PluginSpec) -> Result<Process, String> {
         let mut child = Command::new(&spec.program)
             .args(&spec.args)
             .stdin(Stdio::piped())
@@ -97,7 +97,7 @@ impl Process {
         })
     }
 
-    fn request(
+    pub fn request(
         &mut self,
         action: &str,
         data: &Value,

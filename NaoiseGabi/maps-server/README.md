@@ -245,6 +245,27 @@ Success is `{"response": <value>}`:
 
 On failure, reply `{"error": "<message>"}` and keep running. An error reply does not restart the plugin.
 
+### Checking a plugin
+
+`maps-server check-plugin <flake attribute>` starts a plugin with `nix run`, sends `mode`, `attribution` and `available`, then `explore` for the first three stations at the current time, and prints a report. It checks the types, the time format, that `cost` is 0 or more, that every `to` is a station from `available`, that each `preferred_colour` is a hex colour, and how long each answer takes. It exits with status 1 when it finds a problem. Use `maps-server check-plugin -- <command> [args...]` for a plugin that is not packaged with Nix.
+
+For example, on the test suite's fake plugin given a broken timetable:
+
+```
+$ maps-server check-plugin -- python3 tests/fake_plugin.py '{"available": {"300": [3], "400": ["2"]}, "explore": {"300": [{"to": 999, "offset": 120, "cost": -1}]}}'
+ok       mode: train
+ok       attribution: all four fields present
+warning  available: station 400 entrance "2" is a string; send integers
+ok       available: 2 station(s)
+PROBLEM  explore 300: journey 0: to 999 is not a station listed by available
+PROBLEM  explore 300: journey 0: cost -1 is negative
+ok       explore 300: 1 journey(s) in 7 ms
+ok       explore 400: 0 journey(s) in 0 ms
+2 problem(s), 1 warning(s).
+```
+
+JSON Schemas for every request and reply are in `docs/plugin-protocol/`.
+
 ## Attribution and licence
 
 maps-server is free software under the GNU Affero General Public License v3.0 (`LICENSE`). If you run a modified version for other people, the AGPL requires you to offer them its source; point `MAPS_SOURCE_URL` at it.

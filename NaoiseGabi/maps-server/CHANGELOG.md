@@ -34,6 +34,7 @@ These change what clients or plugins see. Read them before upgrading.
 
 ### Added
 
+- `maps-server check-plugin <flake attribute>` (or `check-plugin -- <command> [args]`) runs a plugin through `mode`, `attribution`, `available` and three `explore` calls, reports problems and warnings, and exits with status 1 on problems. JSON Schemas for every request and reply are in `docs/plugin-protocol/`.
 - Routing options, all optional and defaulting to the old behaviour: `min_transfer_s` (overrides `MAPS_MIN_TRANSFER_S`, default 60), `max_walk_m` (longest single walk), `transfer_penalty_s` (added per change when comparing routes), `exclude_modes` (plugins of those modes are not asked) and `avoid_steps` (no `highway=steps`; the graph stores a steps flag per edge).
 - `"waypoints": [[lat, lon], ...]` instead of `required_nodes`: each point snaps to the nearest walkable node (an R-tree built on first use), and points further than `max_snap_m` (default 500) get `400`. The answer then carries `"snapped": [{"input", "node", "distance_m"}]`.
 - Every segment carries `"coordinates": [[lat, lon], ...]`; a station without a position of its own uses its first entrance.

@@ -1243,3 +1243,137 @@ mod options {
         assert_eq!(plain.json, explicit.json);
     }
 }
+
+mod checker {
+    use super::*;
+    use crate::checker::{Level, check};
+    use crate::plugin::PluginSpec;
+
+    fn fake(scenario: serde_json::Value) -> PluginSpec {
+        PluginSpec {
+            name: "fake".to_string(),
+            program: "python3".to_string(),
+            args: vec![
+                "-I".to_string(),
+                kit().join("fake_plugin.py").to_string_lossy().to_string(),
+                scenario.to_string(),
+            ],
+        }
+    }
+
+    fn run(scenario: serde_json::Value) -> crate::checker::Report {
+        check(&fake(scenario), short_timeouts(), chrono::Utc::now())
+    }
+
+    #[test]
+    fn a_correct_plugin_passes() {
+        let report = run(json!({
+            "available": {"300": [3], "400": [2]},
+            "explore": {"300": [{"to": 400, "offset": 120, "cost": 600,
+                                 "line": {"id": "TER", "preferred_colour": "#0055A5", "ways": [10]}}]}
+        }));
+        assert!(report.passed(), "{}", report);
+        assert_eq!(report.count(Level::Warning), 0, "{}", report);
+    }
+
+    #[test]
+    fn a_broken_plugin_is_flagged() {
+        let report = run(json!({
+            "replies": {"attribution": {"data_owner": "Somebody"}},
+            "available": {"300": [3, "4"], "400": [], "bus-stop": []},
+            "explore": {"300": [
+                {"to": 400, "offset": 120, "cost": -500},
+                {"to": 999, "offset": 120, "cost": 600},
+                {"to": 400, "offset": 120, "cost": 600, "time": "tomorrow"},
+                {"to": 400, "offset": 120, "cost": 600, "line": {"preferred_colour": "red"}}
+            ]}
+        }));
+        let text = report.to_string();
+        assert!(!report.passed(), "{}", text);
+        for expected in [
+            "attribution needs a non-empty string data_license",
+            "station key \"bus-stop\" is not an integer ID",
+            "entrance \"4\" is a string",
+            "cost -500 is negative",
+            "to 999 is not a station listed by available",
+            "time must be YYYYmmddTHHMMSS",
+            "preferred_colour must be a hex colour",
+        ] {
+            assert!(
+                text.contains(expected),
+                "missing {:?} in:\n{}",
+                expected,
+                text
+            );
+        }
+    }
+
+    #[test]
+    fn a_plugin_that_never_answers_is_a_problem() {
+        let report = run(json!({"hang": ["explore"], "available": {"300": []}}));
+        assert!(!report.passed());
+        assert!(
+            report
+                .to_string()
+                .contains("explore: no answer within the timeout"),
+            "{}",
+            report
+        );
+    }
+
+    #[test]
+    fn a_missing_program_is_reported() {
+        let spec = PluginSpec {
+            name: "missing".to_string(),
+            program: "/nonexistent/plugin".to_string(),
+            args: Vec::new(),
+        };
+        let report = check(&spec, short_timeouts(), chrono::Utc::now());
+        assert!(!report.passed());
+    }
+
+    #[test]
+    fn the_protocol_schemas_are_valid_json() {
+        let folder = kit().join("..").join("docs").join("plugin-protocol");
+        for name in [
+            "request",
+            "mode-reply",
+            "attribution-reply",
+            "available-reply",
+            "explore-reply",
+            "error-reply",
+        ] {
+            let path = folder.join(format!("{}.schema.json", name));
+            let text = std::fs::read_to_string(&path).unwrap();
+            let schema: serde_json::Value = serde_json::from_str(&text).unwrap();
+            assert_eq!(
+                schema["$schema"], "https://json-schema.org/draft/2020-12/schema",
+                "{}",
+                name
+            );
+            assert!(schema["title"].is_string(), "{}", name);
+        }
+    }
+
+    #[test]
+    fn the_command_line_picks_nix_or_a_command() {
+        let args = |items: &[&str]| {
+            items
+                .iter()
+                .map(|item| item.to_string())
+                .collect::<Vec<_>>()
+        };
+        let nix = crate::checked_spec(&args(&[".#plugins.sncf-plugin"])).unwrap();
+        assert_eq!(
+            (nix.program.as_str(), nix.args),
+            ("nix", args(&["run", ".#plugins.sncf-plugin"]))
+        );
+        let direct = crate::checked_spec(&args(&["--", "python3", "main.py"])).unwrap();
+        assert_eq!(
+            (direct.program.as_str(), direct.args),
+            ("python3", args(&["main.py"]))
+        );
+        assert!(crate::checked_spec(&[]).is_none());
+        assert!(crate::checked_spec(&args(&["a", "b"])).is_none());
+    }
+}
