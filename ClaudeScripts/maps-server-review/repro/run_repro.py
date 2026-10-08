@@ -12,10 +12,16 @@ SECTION = re.compile(r"^---- repro::(\w+) stdout ----$")
 PANIC = re.compile(r"^thread '([^']*)' \([^)]*\) panicked at ([^:]+:\d+):\d+:$|^thread '([^']*)' panicked at ([^:]+:\d+):\d+:$")
 
 
+def has_own_tests(source):
+    return os.path.isfile(os.path.join(source, "src", "repro.rs"))
+
+
 def prepare(source):
     work = tempfile.mkdtemp(prefix="maps-server-repro-")
     project = os.path.join(work, "maps-server")
     shutil.copytree(source, project, ignore=IGNORED)
+    if has_own_tests(source):
+        return project
     shutil.copy(os.path.join(HERE, "repro.rs"), os.path.join(project, "src", "repro.rs"))
     with open(os.path.join(project, "src", "main.rs"), "a", encoding="utf-8") as f:
         f.write("\n#[cfg(test)]\nmod repro;\n")
@@ -57,11 +63,14 @@ def main():
     if shutil.which("cargo") is None:
         print("cargo was not found. Install Rust, or run this inside `nix develop` in the maps-server folder.")
         sys.exit(2)
+    own = has_own_tests(source)
     project = prepare(source)
     env = dict(os.environ, OSM_PBF_FILES="fixture.osm.pbf", REPRO_KIT=HERE, REPRO_PYTHON=sys.executable)
+    if own:
+        print("This checkout carries the reproduction tests itself (src/repro.rs); running them, ignored ones included.")
     print("Building a copy in " + project + " and running the reproduction tests...")
     run = subprocess.run(
-        ["cargo", "test", "repro::", "--", "--test-threads=1"],
+        ["cargo", "test", "repro::", "--", "--include-ignored", "--test-threads=1"],
         cwd=project,
         env=env,
         stdout=subprocess.PIPE,

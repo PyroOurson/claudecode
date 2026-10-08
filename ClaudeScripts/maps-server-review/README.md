@@ -19,7 +19,9 @@ You need Rust (`cargo`). Inside the maps-server folder, `nix develop` provides i
 python3 ClaudeScripts/maps-server-review/repro/run_repro.py NaoiseGabi/maps-server
 ```
 
-It builds a copy in a temporary folder and prints one line per check: `BUG`, `fixed` or `control ok`. On commit `51779c0` it reports 15 bugs, and all 4 controls pass. Run it again after the other AI's changes to see what got fixed.
+It builds a copy in a temporary folder and prints one line per check: `BUG`, `fixed` or `control ok`. On commit `51779c0` it reports 15 bugs, and all 4 controls pass. Run it again after the other AI's changes to see what got fixed: a checkout that already carries the tests in `src/repro.rs`, as `NaoiseGabi/maps-server` now does, has them run as they are, ignored ones included. On the current version it reports 0 bugs.
+
+What was done with this handoff, task by task, is in `report.md`.
 
 ## Hand it to another AI
 

@@ -2,7 +2,7 @@
 
 | Folder | Contents |
 | --- | --- |
-| [`NaoiseGabi/`](NaoiseGabi/) | Our Python projects: games, solvers and art. See its README. |
+| [`NaoiseGabi/`](NaoiseGabi/) | Our projects: Python games, solvers and art, and `maps-server`, Naoise's public-transport routing engine in Rust. See its README. |
 | [`ClaudeScripts/`](ClaudeScripts/) | Everything Claude makes from scratch, including `update.py`. |
 
 ## Get the latest version
