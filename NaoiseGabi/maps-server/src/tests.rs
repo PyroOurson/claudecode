@@ -489,3 +489,116 @@ fn an_error_reply_keeps_the_plugin_running() {
     assert!(plugin.is_alive());
     assert_eq!(plugin.explore(300, chrono::Utc::now()), Ok(json!([])));
 }
+
+fn config_with(pairs: &[(&str, &str)]) -> Config {
+    let pairs: Vec<(String, String)> = pairs
+        .iter()
+        .map(|(key, value)| (key.to_string(), value.to_string()))
+        .collect();
+    Config::from_lookup(&|key| {
+        pairs
+            .iter()
+            .find(|(name, _)| name == key)
+            .map(|(_, value)| value.clone())
+    })
+    .unwrap()
+}
+
+fn big_network(log: &CallLog) -> crate::Plugin {
+    let stations: Vec<i64> = (1000..1200).collect();
+    let available: serde_json::Map<String, serde_json::Value> = stations
+        .iter()
+        .map(|station| (station.to_string(), json!([])))
+        .collect();
+    let explore: serde_json::Map<String, serde_json::Value> = stations
+        .iter()
+        .map(|station| {
+            (
+                station.to_string(),
+                json!([{"to": station + 1, "offset": 60, "cost": 300},
+                       {"to": station + 2, "offset": 60, "cost": 300}]),
+            )
+        })
+        .collect();
+    plugin(
+        "network",
+        json!({"log": log.path(), "available": available, "explore": explore}),
+    )
+}
+
+fn unreachable_reply(config: Config, log: &CallLog) -> crate::testkit::Reply {
+    exchange(
+        serve_state(state_with(vec![big_network(log)], config)),
+        vec![request(
+            "POST",
+            "/",
+            &json!({"required_nodes": [1000, 700], "time": "20260808T120000"}).to_string(),
+        )],
+    )
+}
+
+#[test]
+fn an_unreachable_destination_stays_within_the_plugin_call_limit() {
+    let log = CallLog::new("limit");
+    let reply = unreachable_reply(config_with(&[("MAPS_MAX_PLUGIN_CALLS", "10")]), &log);
+    assert_eq!(reply.status, 404, "{}", reply.raw);
+    assert_eq!(
+        reply.json,
+        json!({"error": "no route within limits", "limit": "max_plugin_calls"})
+    );
+    assert_eq!(log.explored_stations().len(), 10);
+}
+
+#[test]
+fn without_a_limit_each_station_is_explored_once() {
+    let log = CallLog::new("nolimit");
+    let reply = unreachable_reply(Config::default(), &log);
+    assert_eq!(reply.status, 404, "{}", reply.raw);
+    assert_eq!(reply.json["error"], "no route");
+    let explored = log.explored_stations();
+    let mut unique = explored.clone();
+    unique.sort();
+    unique.dedup();
+    assert!(
+        explored.len() <= 2 * unique.len(),
+        "{} calls for {} stations",
+        explored.len(),
+        unique.len()
+    );
+}
+
+#[test]
+fn the_expanded_state_limit_stops_the_search() {
+    let address = serve_state(state_with(
+        Vec::new(),
+        config_with(&[("MAPS_MAX_EXPANDED", "2")]),
+    ));
+    let reply = exchange(address, vec![request("POST", "/", &walk())]);
+    assert_eq!(reply.status, 404, "{}", reply.raw);
+    assert_eq!(reply.json["limit"], "max_expanded");
+}
+
+#[test]
+fn states_past_the_horizon_are_not_expanded() {
+    let late_train = || {
+        plugin(
+            "late",
+            json!({"available": {"300": [], "400": []},
+                   "explore": {"300": [{"to": 400, "offset": 7200, "cost": 600}]}}),
+        )
+    };
+    let body = json!({"required_nodes": [300, 400], "time": "20260808T120000"}).to_string();
+    let short = serve_state(state_with(
+        vec![late_train()],
+        config_with(&[("MAPS_HORIZON_H", "1")]),
+    ));
+    let reply = exchange(short, vec![request("POST", "/", &body)]);
+    assert_eq!(reply.status, 404, "{}", reply.raw);
+    assert_eq!(reply.json["limit"], "horizon_h");
+    let long = serve_state(state_with(
+        vec![late_train()],
+        config_with(&[("MAPS_HORIZON_H", "3")]),
+    ));
+    let reply = exchange(long, vec![request("POST", "/", &body)]);
+    assert_eq!(reply.status, 200, "{}", reply.raw);
+}

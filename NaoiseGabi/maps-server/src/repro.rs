@@ -59,13 +59,14 @@ fn plan(
     legs: fn(i64) -> Vec<OutgoingJourney>,
     estimate_off: bool,
 ) -> (Vec<RouteSegment>, DateTime<Utc>) {
-    let mut fetch = |station: i64, _time: DateTime<Utc>| legs(station);
+    let mut fetch = |station: i64, _time: DateTime<Utc>| (legs(station), 1);
     let stations = Stations::new(stations.clone());
     let params = SearchParams {
         stations: &stations,
         walking_speed: WALKING_SPEED,
         mode: SearchMode::Exact,
         max_speed_kmh: if estimate_off { 0.0 } else { 300.0 },
+        limits: Default::default(),
         min_transfer: Duration::seconds(60),
     };
     let mut stats = SearchStats::default();

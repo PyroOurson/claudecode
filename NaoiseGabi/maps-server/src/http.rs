@@ -79,6 +79,10 @@ impl From<RouteError> for ApiError {
                 StatusCode::NOT_FOUND,
                 json!({ "error": "no route", "failed_leg": [from, to] }),
             ),
+            RouteError::LimitReached { limit } => ApiError::new(
+                StatusCode::NOT_FOUND,
+                json!({ "error": "no route within limits", "limit": limit }),
+            ),
         }
     }
 }
@@ -342,12 +346,13 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
         for (index, journeys) in explore_all(&network.plugins, &missing, station, time) {
             cached_explorations.insert((station, index, time), journeys);
         }
-        serving
+        let journeys = serving
             .iter()
             .filter_map(|&index| cached_explorations.get(&(station, index, time)))
             .flatten()
             .cloned()
-            .collect()
+            .collect();
+        (journeys, missing.len())
     };
 
     let params = SearchParams {
@@ -355,6 +360,7 @@ fn compute(state: &AppState, body: &[u8]) -> Result<Response, ApiError> {
         walking_speed: request.walking_speed,
         mode: request.mode,
         max_speed_kmh: state.config.max_speed_kmh,
+        limits: state.config.search_limits(),
         min_transfer: chrono::Duration::seconds(60),
     };
     let mut stats = SearchStats::default();

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 // Copyright (C) 2026 Naoise McG
 use crate::plugin::Timeouts;
+use crate::route::SearchLimits;
 use std::env;
 use std::time::Duration;
 
@@ -17,6 +18,9 @@ pub struct Config {
     pub overpass_image: String,
     pub overpass_ready_timeout_s: u64,
     pub source_url: String,
+    pub max_expanded: usize,
+    pub max_plugin_calls: usize,
+    pub horizon_h: f64,
     pub plugin_timeout_s: u64,
     pub plugin_startup_timeout_s: u64,
 }
@@ -28,6 +32,14 @@ impl Default for Config {
 }
 
 impl Config {
+    pub fn search_limits(&self) -> SearchLimits {
+        SearchLimits {
+            max_expanded: self.max_expanded,
+            max_plugin_calls: self.max_plugin_calls,
+            horizon: chrono::Duration::milliseconds((self.horizon_h * 3_600_000.0) as i64),
+        }
+    }
+
     pub fn plugin_timeouts(&self) -> Timeouts {
         Timeouts {
             call: Duration::from_secs(self.plugin_timeout_s.max(1)),
@@ -63,6 +75,9 @@ impl Config {
             overpass_image: text(lookup, "MAPS_OVERPASS_IMAGE", DEFAULT_OVERPASS_IMAGE),
             overpass_ready_timeout_s: number(lookup, "MAPS_OVERPASS_READY_TIMEOUT_S", 21600)?,
             source_url: text(lookup, "MAPS_SOURCE_URL", DEFAULT_SOURCE_URL),
+            max_expanded: number(lookup, "MAPS_MAX_EXPANDED", 5_000_000)?,
+            max_plugin_calls: number(lookup, "MAPS_MAX_PLUGIN_CALLS", 1000)?,
+            horizon_h: non_negative(number(lookup, "MAPS_HORIZON_H", 24.0)?, "MAPS_HORIZON_H")?,
             plugin_timeout_s: number(lookup, "MAPS_PLUGIN_TIMEOUT_S", 30)?,
             plugin_startup_timeout_s: number(lookup, "MAPS_PLUGIN_STARTUP_TIMEOUT_S", 900)?,
         })

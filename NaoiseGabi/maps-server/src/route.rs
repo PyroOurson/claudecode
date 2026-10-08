@@ -130,6 +130,7 @@ pub struct SearchParams<'a> {
     pub mode: SearchMode,
     pub max_speed_kmh: f64,
     pub min_transfer: Duration,
+    pub limits: SearchLimits,
 }
 
 pub struct Itinerary {
@@ -140,11 +141,35 @@ pub struct Itinerary {
 #[derive(Debug, PartialEq)]
 pub enum RouteError {
     NoRoute { from: i64, to: i64 },
+    LimitReached { limit: &'static str },
 }
 
 #[derive(Default)]
 pub struct SearchStats {
     pub expanded: usize,
+    pub plugin_calls: usize,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct SearchLimits {
+    pub max_expanded: usize,
+    pub max_plugin_calls: usize,
+    pub horizon: Duration,
+}
+
+impl Default for SearchLimits {
+    fn default() -> Self {
+        SearchLimits {
+            max_expanded: 5_000_000,
+            max_plugin_calls: 1000,
+            horizon: Duration::hours(24),
+        }
+    }
+}
+
+enum Stop {
+    Exhausted,
+    Limit(&'static str),
 }
 
 pub fn route_with_schedule<F>(
@@ -156,7 +181,7 @@ pub fn route_with_schedule<F>(
     stats: &mut SearchStats,
 ) -> Result<Itinerary, RouteError>
 where
-    F: FnMut(i64, DateTime<Utc>) -> Vec<OutgoingJourney>,
+    F: FnMut(i64, DateTime<Utc>) -> (Vec<OutgoingJourney>, usize),
 {
     let mut itinerary = Itinerary {
         route: Vec::new(),
@@ -178,7 +203,10 @@ where
             fetch_outgoing,
             stats,
         )
-        .ok_or(RouteError::NoRoute { from, to })?;
+        .map_err(|stop| match stop {
+            Stop::Exhausted => RouteError::NoRoute { from, to },
+            Stop::Limit(limit) => RouteError::LimitReached { limit },
+        })?;
         itinerary.route.extend(segment);
         itinerary.arrival_time = arrival_time;
     }
@@ -208,9 +236,9 @@ fn a_star_time_dependent<F>(
     start_time: DateTime<Utc>,
     fetch_outgoing: &mut F,
     stats: &mut SearchStats,
-) -> Option<(Vec<RouteSegment>, DateTime<Utc>)>
+) -> Result<(Vec<RouteSegment>, DateTime<Utc>), Stop>
 where
-    F: FnMut(i64, DateTime<Utc>) -> Vec<OutgoingJourney>,
+    F: FnMut(i64, DateTime<Utc>) -> (Vec<OutgoingJourney>, usize),
 {
     let stations = params.stations;
     let estimate = |node: i64| heuristic_seconds(graph, params, node, end_node);
@@ -229,8 +257,11 @@ where
 
     if start_node == end_node {
         stats.expanded += 1;
-        return Some((Vec::new(), start_time));
+        return Ok((Vec::new(), start_time));
     }
+
+    let deadline = start_time + params.limits.horizon;
+    let mut pruned_by_horizon = false;
 
     while let Some(state) = open_set.pop() {
         let current_node = state.node;
@@ -243,11 +274,18 @@ where
         {
             continue;
         }
+        if current_time > deadline {
+            pruned_by_horizon = true;
+            continue;
+        }
+        if stats.expanded >= params.limits.max_expanded {
+            return Err(Stop::Limit("max_expanded"));
+        }
         stats.expanded += 1;
 
         if current_node == end_node {
             let path = reconstruct_path(&predecessors, start_key, current_key);
-            return Some((path, current_time));
+            return Ok((path, current_time));
         }
 
         for (next_node, distance) in graph.neighbours(current_node) {
@@ -332,7 +370,12 @@ where
         }
 
         if stations.is_station(current_node) {
-            let journeys = fetch_outgoing(current_node, current_time + params.min_transfer);
+            if stats.plugin_calls >= params.limits.max_plugin_calls {
+                return Err(Stop::Limit("max_plugin_calls"));
+            }
+            let (journeys, calls) =
+                fetch_outgoing(current_node, current_time + params.min_transfer);
+            stats.plugin_calls += calls;
             for journey in journeys {
                 if journey.target_station == current_node {
                     continue;
@@ -370,7 +413,11 @@ where
         }
     }
 
-    None
+    if pruned_by_horizon {
+        Err(Stop::Limit("horizon_h"))
+    } else {
+        Err(Stop::Exhausted)
+    }
 }
 
 fn reconstruct_path(
