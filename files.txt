@@ -43,6 +43,15 @@ NaoiseGabi/maps-server/docs/plugin-protocol/error-reply.schema.json
 NaoiseGabi/maps-server/docs/plugin-protocol/explore-reply.schema.json
 NaoiseGabi/maps-server/docs/plugin-protocol/mode-reply.schema.json
 NaoiseGabi/maps-server/docs/plugin-protocol/request.schema.json
+NaoiseGabi/maps-server/docs/proposals/F10.md
+NaoiseGabi/maps-server/docs/proposals/F11.md
+NaoiseGabi/maps-server/docs/proposals/F12.md
+NaoiseGabi/maps-server/docs/proposals/F13.md
+NaoiseGabi/maps-server/docs/proposals/F14.md
+NaoiseGabi/maps-server/docs/proposals/F15.md
+NaoiseGabi/maps-server/docs/proposals/F16.md
+NaoiseGabi/maps-server/docs/proposals/F9.md
+NaoiseGabi/maps-server/docs/proposals/README.md
 NaoiseGabi/maps-server/examples/requests.sh
 NaoiseGabi/maps-server/flake.lock
 NaoiseGabi/maps-server/flake.nix
