@@ -5,31 +5,32 @@ use bollard::models::{ContainerCreateBody, HostConfig, PortBinding};
 use bollard::query_parameters::{
     CreateContainerOptionsBuilder, RemoveVolumeOptions, StartContainerOptions, StopContainerOptions,
 };
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 use config::Config;
-use route::{
-    Graph, Line, OutgoingJourney, SearchParams, StationAccessMap, Stations,
-    parse_journey_departure, route_with_schedule,
-};
+use http::AppState;
+use route::{Graph, StationAccessMap, Stations};
 use serde_core::de::Error;
 use serde_json::{Result, Value};
+use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
-use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs;
 use std::hash::{Hash, Hasher};
-use std::io::{BufRead, BufReader, Read, Write};
-use std::net::{TcpListener, TcpStream};
+use std::io::{BufRead, BufReader, Write};
 use std::process::{ChildStdin, ChildStdout, Command, Stdio};
 use std::sync::LazyLock;
 use std::sync::{Arc, Mutex};
-use std::thread;
 
 mod config;
+mod http;
 mod route;
 
 #[cfg(test)]
 mod repro;
+#[cfg(test)]
+mod testkit;
+#[cfg(test)]
+mod tests;
 
 pub static OSM_PBF_FILES: LazyLock<Vec<String>> = LazyLock::new(|| {
     env::var("OSM_PBF_FILES")
@@ -67,7 +68,7 @@ fn calculate_pbf_hash(assets_path: &std::path::Path) -> String {
     format!("{:x}", hasher.finish())
 }
 
-struct Plugin {
+pub struct Plugin {
     pub name: String,
     pub mode: String,
     pub data_attribution: String,
@@ -295,189 +296,6 @@ async fn stop_overpass_container(
     Ok(())
 }
 
-fn handle_client(
-    mut stream: TcpStream,
-    graph: &Graph,
-    plugins: Arc<Mutex<Vec<Plugin>>>,
-    stations: Arc<Stations>,
-) {
-    let mut buffer = [0u8; 2048];
-
-    match stream.read(&mut buffer) {
-        Ok(0) => (),
-        Ok(n) => {
-            let request = match std::str::from_utf8(&buffer[..n]) {
-                Ok(req) => req,
-                Err(_) => {
-                    eprintln!("Failed to parse UTF-8 request");
-                    return;
-                }
-            };
-
-            if request.starts_with("OPTIONS") {
-                let resp = "HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\nAccess-Control-Max-Age: 86400\r\nContent-Length: 0\r\n\r\n";
-                let _ = stream.write_all(resp.as_bytes());
-                return;
-            }
-
-            if !request.starts_with("POST") {
-                let err_resp = "HTTP/1.1 405 Method Not Allowed\r\nConnection: close\r\n\r\n";
-                let _ = stream.write_all(err_resp.as_bytes());
-                return;
-            }
-
-            if let Some(body_start) = request.find("\r\n\r\n") {
-                let body = &request[body_start + 4..];
-
-                let data: Value = serde_json::from_str(body.trim()).expect("No data");
-
-                println!("Received payload: {:?}", data);
-
-                let node_ids: Vec<i64> =
-                    serde_json::from_value(data["required_nodes"].clone()).expect("No data");
-                let heuristic: bool =
-                    serde_json::from_value(data["heuristic"].clone()).unwrap_or(0) != 0;
-
-                let mut cached_explorations: HashMap<(i64, DateTime<Utc>), Vec<OutgoingJourney>> =
-                    HashMap::new();
-
-                let mut fetch_outgoing =
-                    |from_station: i64, time: DateTime<Utc>| -> Vec<OutgoingJourney> {
-                        if let Some(journeys) = cached_explorations.get(&(from_station, time)) {
-                            return journeys.clone();
-                        }
-
-                        let mut journeys = Vec::new();
-                        let mut plugins = plugins.lock().unwrap();
-
-                        for (p_idx, plugin) in plugins.iter_mut().enumerate() {
-                            if let Ok(value) = plugin.explore(from_station, time)
-                                && let Some(array) = value.as_array()
-                            {
-                                for entry in array {
-                                    if let (Some(to_node), Some(cost), Some(time_str)) = (
-                                        entry.get("to").and_then(|v| v.as_i64()),
-                                        entry.get("cost").and_then(|v| v.as_i64()),
-                                        entry.get("time").and_then(|v| v.as_str()),
-                                    ) {
-                                        let line = entry.get("line").and_then(|l| {
-                                            let id = l
-                                                .get("id")
-                                                .and_then(|v| v.as_str())
-                                                .map(|s| s.to_string());
-                                            let preferred_colour = l
-                                                .get("preferred_colour")
-                                                .and_then(|v| v.as_str())
-                                                .map(|s| s.to_string());
-                                            if id.is_some() || preferred_colour.is_some() {
-                                                Some(Line {
-                                                    id,
-                                                    preferred_colour,
-                                                })
-                                            } else {
-                                                None
-                                            }
-                                        });
-                                        if let Ok(departure) = parse_journey_departure(time_str) {
-                                            journeys.push(OutgoingJourney {
-                                                target_station: to_node,
-                                                departure,
-                                                cost_seconds: cost as u64,
-                                                plugin_id: Some(p_idx),
-                                                mode: plugin.mode.clone(),
-                                                line,
-                                            });
-                                        }
-                                    }
-                                }
-                            }
-                            if !journeys.is_empty() {
-                                break;
-                            }
-                        }
-
-                        cached_explorations.insert((from_station, time), journeys.clone());
-                        journeys
-                    };
-
-                let params = SearchParams {
-                    stations: &stations,
-                    walking_speed: data["walking_speed"].as_f64().unwrap_or(0.00138),
-                    use_heuristic: heuristic,
-                    min_transfer: chrono::Duration::seconds(60),
-                };
-                let start_time = NaiveDateTime::parse_from_str(
-                    data["time"]
-                        .as_str()
-                        .unwrap_or(Utc::now().format("%Y%m%dT%H%M%S").to_string().as_str()),
-                    "%Y%m%dT%H%M%S",
-                )
-                .unwrap_or(Utc::now().naive_utc())
-                .and_utc();
-                let result =
-                    route_with_schedule(graph, &params, &node_ids, start_time, &mut fetch_outgoing);
-                let computed_route = result.route;
-                let arrival_time = result.arrival_time;
-
-                let plugins_guard = plugins.lock().unwrap();
-                let plugin_attributions = plugins_guard
-                    .iter()
-                    .map(|plugin| {
-                        format!(
-                            "{}, provided under the {}, translated by {}, under the {}.",
-                            plugin.data_attribution,
-                            plugin.data_license,
-                            plugin.plugin_attribution,
-                            plugin.plugin_license
-                        )
-                    })
-                    .collect::<HashSet<String>>()
-                    .iter()
-                    .map(|attr| attr.to_string())
-                    .collect::<Vec<_>>()
-                    .join("\n");
-
-                let attributions = format!(
-                    "Realtime and Schedule data has been provided by the following organisations, under various licenses. It has been provided as-is, and these organisations are not responsible for any errors or inaccuracies. The various data formats have been translated by various individuals. \n {}",
-                    plugin_attributions
-                );
-                let attributions = urlencoding::encode(attributions.as_str());
-
-                let response_body = serde_json::json!({
-                    "route": computed_route,
-                    "arrival_time": arrival_time
-                })
-                .to_string();
-
-                let response = format!(
-                    "HTTP/1.1 200 OK\r\n\
-                     Content-Type: application/json\r\n\
-                     Access-Control-Allow-Origin: *\r\n\
-                     Access-Control-Expose-Headers: Attribution, Source-Code\r\n\
-                     Attribution: \"{}\"\r\n\
-                     Content-Length: {}\r\n\
-                     Source-Code: \"https://gitlab.com/buphagidae/buphagus\"\r\n\
-                     Connection: close\r\n\r\n\
-                     {}",
-                    attributions,
-                    response_body.len(),
-                    response_body
-                );
-
-                if let Err(e) = stream.write_all(response.as_bytes()) {
-                    eprintln!("Failed to send response: {}", e);
-                }
-            } else {
-                let err_resp = "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n";
-                let _ = stream.write_all(err_resp.as_bytes());
-            }
-        }
-        Err(e) => {
-            eprintln!("Read error: {}", e);
-        }
-    }
-}
-
 fn build_station_access_map(plugins: &mut [Plugin]) -> StationAccessMap {
     let mut station_access = StationAccessMap::new();
 
@@ -639,28 +457,18 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     start_overpass_container(&docker, &config).await?;
     wait_for_overpass_ready().await;
 
-    let plugins = Arc::new(Mutex::new(load_plugins()));
-    let stations = Arc::new(Stations::new(build_station_access_map(
-        &mut plugins.lock().unwrap(),
-    )));
-    let listener = TcpListener::bind("0.0.0.0:6767").expect("Failed to bind to port 6767");
+    let mut plugins = load_plugins();
+    let stations = Stations::new(build_station_access_map(&mut plugins));
+    let state = Arc::new(AppState {
+        graph: &GRAPH,
+        plugins: Mutex::new(plugins),
+        stations,
+    });
+    let listener = tokio::net::TcpListener::bind(&config.bind).await?;
 
-    println!("Server listening on http:6767");
+    println!("Server listening on http://{}", config.bind);
 
-    for stream in listener.incoming() {
-        match stream {
-            Ok(stream) => {
-                let plugins = Arc::clone(&plugins);
-                let stations = Arc::clone(&stations);
-                thread::spawn(move || {
-                    handle_client(stream, &GRAPH, plugins, stations);
-                });
-            }
-            Err(e) => {
-                eprintln!("Connection failed: {}", e);
-            }
-        }
-    }
+    axum::serve(listener, http::router(state, config.max_body_bytes)).await?;
 
     Ok(())
 }

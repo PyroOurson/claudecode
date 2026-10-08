@@ -1,18 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0
 // Copyright (C) 2026 Naoise McG
-use super::{Plugin, build_station_access_map, handle_client};
+use super::{Plugin, build_station_access_map};
 use crate::route::{
     Graph, OutgoingJourney, RouteSegment, SearchParams, StationAccessMap, Stations,
     route_with_schedule,
 };
+use crate::testkit::{has_route, plugin, post, send};
 use chrono::{DateTime, Duration, NaiveDateTime, Utc};
 use serde_json::{Value, json};
-use std::io::{BufReader, Read, Write};
-use std::net::{TcpListener, TcpStream};
-use std::path::PathBuf;
-use std::process::{Command, Stdio};
-use std::sync::{Arc, Mutex};
-use std::thread;
 
 const TIME_FORMAT: &str = "%Y%m%dT%H%M%S";
 const START: &str = "20260808T120000";
@@ -154,99 +149,12 @@ fn control_same_plugin_change_works_when_the_station_node_is_on_a_footway() {
     assert_eq!(arrival, at(1800));
 }
 
-fn kit() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests")
-}
-
-fn plugin(name: &str, scenario: Value) -> Plugin {
-    let python = std::env::var("REPRO_PYTHON").unwrap_or_else(|_| "python3".to_string());
-    let mut child = Command::new(python)
-        .arg("-I")
-        .arg(kit().join("fake_plugin.py"))
-        .arg(scenario.to_string())
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .spawn()
-        .expect("could not start fake_plugin.py");
-    let plugin = Plugin {
-        name: name.to_string(),
-        mode: scenario["mode"].as_str().unwrap_or("train").to_string(),
-        data_attribution: "Fake data".to_string(),
-        data_license: "CC0".to_string(),
-        plugin_attribution: "maps-server-review".to_string(),
-        plugin_license: "CC0".to_string(),
-        stdin: child.stdin.take().unwrap(),
-        stdout: BufReader::new(child.stdout.take().unwrap()),
-    };
-    thread::spawn(move || child.wait());
-    plugin
-}
-
-fn post(body: &str) -> Vec<u8> {
-    format!(
-        "POST / HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}",
-        body.len(),
-        body
-    )
-    .into_bytes()
-}
-
 fn walk_body(extra: Value) -> String {
     let mut body = json!({"required_nodes": [1, 2], "time": START});
     if let (Some(fields), Some(more)) = (body.as_object_mut(), extra.as_object()) {
         fields.extend(more.clone());
     }
     body.to_string()
-}
-
-struct Reply {
-    status: u16,
-    json: Value,
-    raw: String,
-}
-
-fn send(mut plugins: Vec<Plugin>, chunks: Vec<Vec<u8>>) -> Reply {
-    let stations = Arc::new(Stations::new(build_station_access_map(&mut plugins)));
-    let plugins = Arc::new(Mutex::new(plugins));
-    let graph = Graph::from_pbfs(&[kit().join("fixtures").join("fixture.osm.pbf")]).unwrap();
-    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-    let address = listener.local_addr().unwrap();
-    let server = thread::spawn(move || {
-        let (stream, _) = listener.accept().unwrap();
-        handle_client(stream, &graph, plugins, stations);
-    });
-    let mut client = TcpStream::connect(address).unwrap();
-    client.set_nodelay(true).unwrap();
-    client
-        .set_read_timeout(Some(std::time::Duration::from_secs(30)))
-        .unwrap();
-    for (index, chunk) in chunks.iter().enumerate() {
-        if index > 0 {
-            thread::sleep(std::time::Duration::from_millis(300));
-        }
-        let _ = client.write_all(chunk);
-    }
-    let mut bytes = Vec::new();
-    let _ = client.read_to_end(&mut bytes);
-    let _ = server.join();
-    let raw = String::from_utf8_lossy(&bytes).to_string();
-    let status = raw
-        .split(' ')
-        .nth(1)
-        .and_then(|code| code.parse().ok())
-        .unwrap_or(0);
-    let json = raw
-        .split_once("\r\n\r\n")
-        .and_then(|(_, body)| serde_json::from_str(body).ok())
-        .unwrap_or(Value::Null);
-    Reply { status, json, raw }
-}
-
-fn has_route(reply: &Reply) -> bool {
-    reply.status == 200
-        && reply.json["route"]
-            .as_array()
-            .is_some_and(|route| !route.is_empty())
 }
 
 fn shared_station(train_also_leaves_400: bool) -> Vec<Plugin> {
@@ -423,7 +331,6 @@ fn unreachable_destination_gets_404() {
 }
 
 #[test]
-#[ignore = "B2"]
 fn a_body_sent_in_a_second_packet_is_read() {
     let request = post(&walk_body(json!({})));
     let split = request.windows(4).position(|w| w == b"\r\n\r\n").unwrap() + 4;
@@ -439,11 +346,10 @@ fn a_body_sent_in_a_second_packet_is_read() {
 }
 
 #[test]
-#[ignore = "B2"]
 fn long_headers_do_not_cut_the_body() {
     let body = walk_body(json!({"note": "x".repeat(300)}));
     let request = format!(
-        "POST / HTTP/1.1\r\nHost: localhost\r\nX-Padding: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}",
+        "POST / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nX-Padding: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}",
         "a".repeat(1850),
         body.len(),
         body
