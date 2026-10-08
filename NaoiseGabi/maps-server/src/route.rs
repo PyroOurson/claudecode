@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0
 // Copyright (C) 2026 Naoise McG
+pub use crate::graph::Graph;
+use crate::graph::haversine_km;
 use chrono::{DateTime, Duration, NaiveDateTime, Utc};
-use osmpbf::{Element, ElementReader, Way};
 use serde::{Deserialize, Serialize};
 use std::{
     cmp::Ordering,
@@ -483,14 +484,6 @@ fn position(graph: &Graph, stations: &Stations, node: i64) -> Option<(f64, f64)>
     })
 }
 
-fn haversine_km((lat1, lon1): (f64, f64), (lat2, lon2): (f64, f64)) -> f64 {
-    let dlat = lat2 - lat1;
-    let dlon = lon2 - lon1;
-    let h = ((dlat / 2.0).sin().powi(2) + lat1.cos() * lat2.cos() * (dlon / 2.0).sin().powi(2))
-        .clamp(0.0, 1.0);
-    6371.0 * 2.0 * h.sqrt().atan2((1.0 - h).sqrt())
-}
-
 fn seconds(time: DateTime<Utc>) -> f64 {
     time.timestamp_millis() as f64 / 1000.0
 }
@@ -509,175 +502,5 @@ fn heuristic_seconds(graph: &Graph, params: &SearchParams, origin: i64, target: 
     ) {
         (Some(from), Some(to)) => haversine_km(from, to) / speed_km_per_s,
         _ => 0.0,
-    }
-}
-
-fn is_pedestrian_accessible(way: &Way) -> bool {
-    is_walkable(way.tags())
-}
-
-fn is_walkable<'a>(tags: impl IntoIterator<Item = (&'a str, &'a str)>) -> bool {
-    let mut highway_type = None;
-    let mut foot_tag = None;
-    let mut access_tag = None;
-    let mut railway_tag = None;
-    let mut public_transport_tag = None;
-    let mut indoor_tag = None;
-    let mut has_sidewalk = false;
-    let mut is_building = false;
-
-    for (key, value) in tags {
-        match key {
-            "highway" => highway_type = Some(value),
-            "foot" => foot_tag = Some(value),
-            "access" => access_tag = Some(value),
-            "railway" => railway_tag = Some(value),
-            "public_transport" => public_transport_tag = Some(value),
-            "indoor" => indoor_tag = Some(value),
-            "sidewalk" if matches!(value, "both" | "left" | "right" | "yes") => has_sidewalk = true,
-            "sidewalk:both" | "sidewalk:left" | "sidewalk:right" if value == "yes" => {
-                has_sidewalk = true
-            }
-            "building" if value != "no" => is_building = true,
-            _ => {}
-        }
-    }
-
-    if let Some(foot) = foot_tag {
-        match foot {
-            "no" | "private" | "use_sidepath" => return false,
-            "yes" | "designated" | "permissive" | "official" => return true,
-            _ => {}
-        }
-    }
-
-    if is_building && highway_type.is_none() && railway_tag.is_none() {
-        return false;
-    }
-
-    if let Some(access) = access_tag
-        && (access == "no" || access == "private")
-    {
-        return false;
-    }
-
-    if railway_tag == Some("platform") || public_transport_tag == Some("platform") {
-        return true;
-    }
-
-    let Some(highway) = highway_type else {
-        return indoor_tag == Some("corridor");
-    };
-
-    match highway {
-        "trunk" | "trunk_link" => has_sidewalk,
-        "motorway" | "motorway_link" | "construction" | "proposed" | "raceway" | "abandoned"
-        | "bus_guideway" | "busway" | "razed" | "disused" | "no" => false,
-        _ => true,
-    }
-}
-
-pub struct Graph {
-    coordinates: HashMap<i64, (f64, f64)>,
-    adjacency: HashMap<i64, HashMap<i64, f64>>,
-}
-
-impl Graph {
-    pub fn from_pbfs<P: AsRef<std::path::Path>>(paths: &[P]) -> Result<Self, osmpbf::Error> {
-        let mut coordinates = HashMap::new();
-
-        for path in paths {
-            ElementReader::from_path(path)?.for_each(|element| match element {
-                Element::Node(node) => {
-                    coordinates.insert(
-                        node.id(),
-                        (node.lat().to_radians(), node.lon().to_radians()),
-                    );
-                }
-                Element::DenseNode(dense_node) => {
-                    coordinates.insert(
-                        dense_node.id(),
-                        (dense_node.lat().to_radians(), dense_node.lon().to_radians()),
-                    );
-                }
-                _ => {}
-            })?;
-        }
-
-        let mut adjacency: HashMap<i64, HashMap<i64, f64>> = HashMap::new();
-
-        for path in paths {
-            ElementReader::from_path(path)?.for_each(|element| {
-                if let Element::Way(way) = element {
-                    if !is_pedestrian_accessible(&way) {
-                        return;
-                    }
-
-                    let refs: Vec<i64> = way.refs().collect();
-
-                    for pair in refs.windows(2) {
-                        let a = pair[0];
-                        let b = pair[1];
-
-                        let (Some(&from), Some(&to)) = (coordinates.get(&a), coordinates.get(&b))
-                        else {
-                            continue;
-                        };
-                        let distance = haversine_km(from, to);
-
-                        adjacency.entry(a).or_default().insert(b, distance);
-                        adjacency.entry(b).or_default().insert(a, distance);
-                    }
-                }
-            })?;
-        }
-
-        println!(
-            "Loaded graph with {} coordinates and {} pedestrian nodes across {} file(s).",
-            coordinates.len(),
-            adjacency.len(),
-            paths.len()
-        );
-
-        Ok(Graph {
-            coordinates,
-            adjacency,
-        })
-    }
-
-    #[cfg(test)]
-    pub fn from_parts(nodes: &[(i64, f64, f64)], edges: &[(i64, i64)]) -> Self {
-        let coordinates: HashMap<i64, (f64, f64)> = nodes
-            .iter()
-            .map(|&(id, lat, lon)| (id, (lat.to_radians(), lon.to_radians())))
-            .collect();
-        let mut adjacency: HashMap<i64, HashMap<i64, f64>> = HashMap::new();
-        for &(a, b) in edges {
-            let (Some(&from), Some(&to)) = (coordinates.get(&a), coordinates.get(&b)) else {
-                continue;
-            };
-            let distance = haversine_km(from, to);
-            adjacency.entry(a).or_default().insert(b, distance);
-            adjacency.entry(b).or_default().insert(a, distance);
-        }
-        Graph {
-            coordinates,
-            adjacency,
-        }
-    }
-
-    pub fn contains(&self, node: i64) -> bool {
-        self.coordinates.contains_key(&node) || self.adjacency.contains_key(&node)
-    }
-
-    pub fn coords_from_id(&self, node: i64) -> Option<(f64, f64)> {
-        self.coordinates.get(&node).copied()
-    }
-
-    pub fn neighbours(&self, node: i64) -> impl Iterator<Item = (i64, f64)> + '_ {
-        self.adjacency
-            .get(&node)
-            .into_iter()
-            .flat_map(|edges| edges.iter().map(|(&next, &distance)| (next, distance)))
     }
 }

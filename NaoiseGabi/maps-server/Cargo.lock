@@ -697,6 +697,7 @@ dependencies = [
  "chrono",
  "futures-util",
  "osmpbf",
+ "rayon",
  "serde",
  "serde_core",
  "serde_json",

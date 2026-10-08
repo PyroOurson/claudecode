@@ -15,6 +15,7 @@ use std::sync::Arc;
 use std::time::Instant;
 
 mod config;
+mod graph;
 mod http;
 mod overpass;
 mod plugin;
