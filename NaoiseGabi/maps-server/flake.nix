@@ -11,7 +11,7 @@
 	};
 
 	outputs = { self, nixpkgs, rust-overlay, flake-utils}:
-		flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "armv7l-linux" ] (system:
+		flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ] (system:
 			let
 				overlays = [ (import rust-overlay) ];
 				pkgs = import nixpkgs { inherit system overlays; };
@@ -27,12 +27,19 @@
 					};
 				};
 
+				overpassImageName = "wiktorn/overpass-api";
+				overpassImageTag = "v0.7.62.9";
+				overpassImageRef = "${overpassImageName}:${overpassImageTag}";
 				overpassImage = pkgs.dockerTools.pullImage {
-					imageName = "wiktorn/overpass-api";
+					imageName = overpassImageName;
 					imageDigest = "sha256:24452bbe5a82562b0df04beffeca97b7ce3b41ce2b5d30e6839fe705a67b1e6f";
-					sha256 = "sha256-9ZndUVwzElf8C79EUkzY7mKGD5tUy9hJ3izj3nbz+RM";
-					finalImageName = "wiktorn/overpass-api";
-					finalImageTag = "v0.7.62.9";
+					sha256 = {
+						x86_64-linux = "sha256-9ZndUVwzElf8C79EUkzY7mKGD5tUy9hJ3izj3nbz+RM=";
+						aarch64-linux = "sha256-4wG0FibS4BLUsMMhNf3BBBg5FBwTqol5qL21EAQFa2o=";
+						aarch64-darwin = "sha256-4wG0FibS4BLUsMMhNf3BBBg5FBwTqol5qL21EAQFa2o=";
+					}.${system};
+					finalImageName = overpassImageName;
+					finalImageTag = overpassImageTag;
 				};
 
 			in {
@@ -51,9 +58,12 @@
 					default = {
 						type = "app";
 						program = "${pkgs.writeShellScriptBin "maps-server-wrapper" ''
-							if ! ${pkgs.docker}/bin/docker image inspect wiktorn/overpass-api >/dev/null 2>&1; then
-								echo "Loading Overpass image into Docker daemon from Nix store..."
-								${pkgs.docker}/bin/docker load -i ${overpassImage}
+							if [ -z "''${MAPS_OVERPASS_IMAGE:-}" ]; then
+								export MAPS_OVERPASS_IMAGE="${overpassImageRef}"
+								if ! ${pkgs.docker}/bin/docker image inspect "${overpassImageRef}" >/dev/null 2>&1; then
+									echo "Loading Overpass image ${overpassImageRef} into Docker daemon from Nix store..."
+									${pkgs.docker}/bin/docker load -i ${overpassImage}
+								fi
 							fi
 							exec ${self.packages.${system}.default}/bin/maps-server "$@"
 						''}/bin/maps-server-wrapper";

@@ -6,6 +6,7 @@ use bollard::query_parameters::{
     CreateContainerOptionsBuilder, RemoveVolumeOptions, StartContainerOptions, StopContainerOptions,
 };
 use chrono::{DateTime, NaiveDateTime, Utc};
+use config::Config;
 use route::{
     Graph, Line, OutgoingJourney, SearchParams, StationAccessMap, Stations,
     parse_journey_departure, route_with_schedule,
@@ -24,6 +25,7 @@ use std::sync::LazyLock;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+mod config;
 mod route;
 
 #[cfg(test)]
@@ -156,8 +158,11 @@ impl Plugin {
     }
 }
 
+const OVERPASS_HOST_IP: &str = "127.0.0.1";
+
 async fn start_overpass_container(
     docker: &Docker,
+    config: &Config,
 ) -> std::result::Result<(), Box<dyn std::error::Error>> {
     let container_name = "overpass_api";
     let current_dir = env::current_dir()?;
@@ -167,8 +172,21 @@ async fn start_overpass_container(
     if let Ok(inspect) = docker.inspect_container(container_name, None).await {
         let existing_hash = inspect
             .config
-            .and_then(|c| c.labels)
+            .as_ref()
+            .and_then(|c| c.labels.as_ref())
             .and_then(|l| l.get("pbf_hash").cloned())
+            .unwrap_or_default();
+        let existing_image = inspect
+            .config
+            .as_ref()
+            .and_then(|c| c.image.clone())
+            .unwrap_or_default();
+        let published_on = inspect
+            .host_config
+            .as_ref()
+            .and_then(|h| h.port_bindings.as_ref())
+            .and_then(|bindings| bindings.get("80/tcp").cloned().flatten())
+            .and_then(|bindings| bindings.into_iter().find_map(|b| b.host_ip))
             .unwrap_or_default();
 
         if existing_hash != current_hash {
@@ -182,6 +200,15 @@ async fn start_overpass_container(
             let _ = docker
                 .remove_volume("overpass_db", None::<RemoveVolumeOptions>)
                 .await;
+        } else if existing_image != config.overpass_image || published_on != OVERPASS_HOST_IP {
+            println!(
+                "Recreating the Overpass container with image {} on {}, keeping its database (it used {} on {}).",
+                config.overpass_image, OVERPASS_HOST_IP, existing_image, published_on
+            );
+            let _ = docker
+                .stop_container(container_name, None::<StopContainerOptions>)
+                .await;
+            docker.remove_container(container_name, None).await?;
         } else {
             let is_running = inspect.state.and_then(|s| s.running).unwrap_or(false);
             if !is_running {
@@ -202,7 +229,7 @@ async fn start_overpass_container(
     port_bindings.insert(
         "80/tcp".to_string(),
         Some(vec![PortBinding {
-            host_ip: Some("0.0.0.0".to_string()),
+            host_ip: Some(OVERPASS_HOST_IP.to_string()),
             host_port: Some("12345".to_string()),
         }]),
     );
@@ -233,7 +260,7 @@ async fn start_overpass_container(
     labels.insert("pbf_hash".to_string(), current_hash);
 
     let config = ContainerCreateBody {
-        image: Some("wiktorn/overpass-api:latest".to_string()),
+        image: Some(config.overpass_image.clone()),
         labels: Some(labels),
         env: Some(vec![
             "OVERPASS_MODE=init".to_string(),
@@ -608,7 +635,8 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         std::process::exit(0);
     })?;
 
-    start_overpass_container(&docker).await?;
+    let config = Config::from_env()?;
+    start_overpass_container(&docker, &config).await?;
     wait_for_overpass_ready().await;
 
     let plugins = Arc::new(Mutex::new(load_plugins()));

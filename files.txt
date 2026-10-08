@@ -30,12 +30,14 @@ NaoiseGabi/games/wordello.py
 NaoiseGabi/games/wordello_logo.png
 NaoiseGabi/games/wordello_words.txt
 NaoiseGabi/maps-server/.gitignore
+NaoiseGabi/maps-server/CHANGELOG.md
 NaoiseGabi/maps-server/Cargo.lock
 NaoiseGabi/maps-server/Cargo.toml
 NaoiseGabi/maps-server/LICENSE
 NaoiseGabi/maps-server/README.md
 NaoiseGabi/maps-server/flake.lock
 NaoiseGabi/maps-server/flake.nix
+NaoiseGabi/maps-server/src/config.rs
 NaoiseGabi/maps-server/src/main.rs
 NaoiseGabi/maps-server/src/repro.rs
 NaoiseGabi/maps-server/src/route.rs
