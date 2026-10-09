@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gitlab.com/buphagidae/maps-server/-/raw/main/docs/plugin-protocol/request.schema.json",
+  "title": "Request from maps-server to a plugin",
+  "description": "One JSON object per line on the plugin's stdin.",
+  "type": "object",
+  "required": [
+    "action",
+    "data"
+  ],
+  "oneOf": [
+    {
+      "properties": {
+        "action": {
+          "const": "mode"
+        },
+        "data": {
+          "const": []
+        }
+      }
+    },
+    {
+      "properties": {
+        "action": {
+          "const": "attribution"
+        },
+        "data": {
+          "const": []
+        }
+      }
+    },
+    {
+      "properties": {
+        "action": {
+          "const": "available"
+        },
+        "data": {
+          "const": []
+        }
+      }
+    },
+    {
+      "properties": {
+        "action": {
+          "const": "explore"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "station",
+            "datetime"
+          ],
+          "properties": {
+            "station": {
+              "type": "integer",
+              "description": "A station ID the plugin listed in available."
+            },
+            "datetime": {
+              "type": "string",
+              "pattern": "^[0-9]{8}T[0-9]{6}$",
+              "description": "Start of the window, rounded down to 5 minutes, in UTC."
+            },
+            "duration": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Window length in seconds. Not sent today; plugins pick a default."
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}
