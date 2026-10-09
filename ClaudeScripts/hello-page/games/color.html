@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Color Match</title>
+  <link rel="stylesheet" href="../common.css">
+  <style>
+    .stage {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .swatch {
+      position: relative;
+      height: min(46vh, 300px);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      transition: background-color 0.12s;
+    }
+    .swatch.intro {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: stretch;
+      border: 2px solid #1b1b1b;
+    }
+    .swatch.intro div:nth-child(1) { background: #d1433a; }
+    .swatch.intro div:nth-child(2) { background: #e8b018; }
+    .swatch.intro div:nth-child(3) { background: #2e8b4f; }
+    .swatch.intro div:nth-child(4) { background: #2f5fd0; }
+    .swatch.intro div:nth-child(5) { background: #7a4fb8; }
+    .track {
+      height: 6px;
+      margin-top: 10px;
+      border-radius: 3px;
+      background: var(--surface-2);
+      overflow: hidden;
+    }
+    .countdown {
+      height: 100%;
+      width: 100%;
+      background: var(--text);
+      transform-origin: left center;
+    }
+    .countdown.run {
+      animation: shrink 3s linear forwards;
+    }
+    @keyframes shrink {
+      from { transform: scaleX(1); }
+      to { transform: scaleX(0); }
+    }
+    #preview {
+      height: min(26vh, 200px);
+    }
+    .sliders {
+      margin-top: 20px;
+      display: grid;
+      gap: 14px;
+      text-align: left;
+    }
+    .slider-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .slider-head span:last-child {
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 34px;
+      margin: 0;
+      border-radius: 6px;
+      background: var(--surface-2);
+      outline: none;
+      cursor: pointer;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+      touch-action: pan-y;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 34px;
+      background: transparent;
+      border-radius: 6px;
+    }
+    input[type="range"]::-moz-range-track {
+      height: 34px;
+      background: transparent;
+      border-radius: 6px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 34px;
+      margin-top: 0;
+      border-radius: 5px;
+      background: var(--thumb, #fff);
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 2px #1b1b1b;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 28px;
+      border-radius: 5px;
+      background: var(--thumb, #fff);
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 2px #1b1b1b;
+    }
+    input[type="range"]:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: 3px;
+    }
+    .actions {
+      margin-top: 24px;
+    }
+    .btn.big {
+      min-height: 46px;
+      padding: 12px 30px;
+      font-size: 1.05rem;
+    }
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .compare .swatch {
+      height: min(36vh, 220px);
+      flex-direction: column;
+      gap: 4px;
+    }
+    .tag {
+      font-weight: 800;
+      font-size: 1.05rem;
+    }
+    .hsl {
+      font-size: 0.8rem;
+      font-variant-numeric: tabular-nums;
+      opacity: 0.9;
+    }
+    .result-score {
+      font-size: clamp(2.6rem, 11vw, 3.6rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      margin-top: 22px;
+      font-variant-numeric: tabular-nums;
+    }
+    .result-score small {
+      font-size: 0.45em;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+    .verdict {
+      color: var(--muted);
+      font-weight: 600;
+      margin: 4px 0 0;
+    }
+    .verdict.good { color: var(--good); }
+    .history {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-top: 22px;
+    }
+    .mini {
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .mini .pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      height: 48px;
+    }
+    .mini .pts {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 0;
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body>
+  <nav class="topbar"><a class="logo" href="../../../index.html">hello</a></nav>
+  <main class="game">
+    <h1 class="game-title">Color Match</h1>
+    <p class="lede">Look at a color for three seconds, then rebuild it with hue, saturation and lightness.</p>
+    <div class="stats">
+      <div class="stat"><div class="stat-value" id="round">–</div><div class="stat-label">Round</div></div>
+      <div class="stat"><div class="stat-value" id="total">0.0</div><div class="stat-label">Score</div></div>
+      <div class="stat"><div class="stat-value" id="best">–</div><div class="stat-label">Best / 50</div></div>
+    </div>
+
+    <section class="stage" id="startView">
+      <div class="swatch intro" aria-label="5 rounds"><div></div><div></div><div></div><div></div><div></div></div>
+      <div class="actions row"><button class="btn big" id="startBtn">Start</button></div>
+    </section>
+
+    <section class="stage hidden" id="showView">
+      <div class="swatch" id="target"></div>
+      <div class="track"><div class="countdown" id="countdown"></div></div>
+      <p class="verdict">Remember this color</p>
+    </section>
+
+    <section class="stage hidden" id="guessView">
+      <div class="swatch" id="preview"></div>
+      <div class="sliders">
+        <label>
+          <div class="slider-head"><span>Hue</span><span id="hVal">180</span></div>
+          <input type="range" id="h" min="0" max="360" step="1" value="180">
+        </label>
+        <label>
+          <div class="slider-head"><span>Saturation</span><span id="sVal">50%</span></div>
+          <input type="range" id="s" min="0" max="100" step="1" value="50">
+        </label>
+        <label>
+          <div class="slider-head"><span>Lightness</span><span id="lVal">50%</span></div>
+          <input type="range" id="l" min="0" max="100" step="1" value="50">
+        </label>
+      </div>
+      <div class="actions row"><button class="btn big" id="submitBtn">Submit</button></div>
+    </section>
+
+    <section class="stage hidden" id="revealView">
+      <div class="compare">
+        <div class="swatch" id="cmpTarget"><div class="tag">Target</div><div class="hsl" id="cmpTargetHsl"></div></div>
+        <div class="swatch" id="cmpGuess"><div class="tag">You</div><div class="hsl" id="cmpGuessHsl"></div></div>
+      </div>
+      <div class="result-score" id="roundScore"></div>
+      <p class="verdict" id="roundVerdict"></p>
+      <div class="actions row"><button class="btn big" id="nextBtn">Next color</button></div>
+    </section>
+
+    <section class="stage hidden" id="endView">
+      <div class="result-score" id="finalScore"></div>
+      <p class="verdict" id="finalVerdict"></p>
+      <div class="history" id="history"></div>
+      <div class="actions row"><button class="btn big" id="againBtn">Play again</button></div>
+    </section>
+  </main>
+  <script>
+    const ROUNDS = 5;
+    const SHOW_MS = 3000;
+    const KEY = "hello-color-best";
+    const $ = (id) => document.getElementById(id);
+    const views = ["startView", "showView", "guessView", "revealView", "endView"].map($);
+    const sliders = { h: $("h"), s: $("s"), l: $("l") };
+    let round = 0;
+    let total = 0;
+    let target = null;
+    let results = [];
+    let showTimer = null;
+    let phase = "start";
+
+    function load() {
+      try { return Number(localStorage.getItem(KEY)) || 0; } catch (e) { return 0; }
+    }
+    function save(v) {
+      try { localStorage.setItem(KEY, String(v)); } catch (e) {}
+    }
+    let best = load();
+    if (best) $("best").textContent = best.toFixed(1);
+
+    function show(id) {
+      views.forEach((v) => v.classList.toggle("hidden", v.id !== id));
+    }
+
+    function hsl(c) {
+      return "hsl(" + c.h + ", " + c.s + "%, " + c.l + "%)";
+    }
+
+    function hslToRgb(c) {
+      const s = c.s / 100;
+      const l = c.l / 100;
+      const k = (n) => (n + c.h / 30) % 12;
+      const a = s * Math.min(l, 1 - l);
+      const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+      return [f(0), f(8), f(4)];
+    }
+
+    function toLab(c) {
+      const lin = hslToRgb(c).map((v) => (v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)));
+      const x = (lin[0] * 0.4124 + lin[1] * 0.3576 + lin[2] * 0.1805) / 0.95047;
+      const y = lin[0] * 0.2126 + lin[1] * 0.7152 + lin[2] * 0.0722;
+      const z = (lin[0] * 0.0193 + lin[1] * 0.1192 + lin[2] * 0.9505) / 1.08883;
+      const f = (t) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+      const fx = f(x);
+      const fy = f(y);
+      const fz = f(z);
+      return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+    }
+
+    function deltaE(a, b) {
+      const p = toLab(a);
+      const q = toLab(b);
+      return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
+    }
+
+    function scoreFor(dE) {
+      return Math.round(10 * Math.exp(-Math.pow(dE / 30, 1.6)) * 10) / 10;
+    }
+
+    function verdict(sc) {
+      if (sc >= 9.5) return "Near perfect";
+      if (sc >= 8.5) return "Very close";
+      if (sc >= 7) return "Close";
+      if (sc >= 5) return "Fair";
+      if (sc >= 3) return "A bit off";
+      return "Way off";
+    }
+
+    function textOn(c) {
+      return c.l > 62 ? "#111114" : "#ffffff";
+    }
+
+    function randomColor() {
+      return {
+        h: Math.floor(Math.random() * 360),
+        s: 35 + Math.floor(Math.random() * 61),
+        l: 30 + Math.floor(Math.random() * 46)
+      };
+    }
+
+    function guess() {
+      return { h: Number(sliders.h.value), s: Number(sliders.s.value), l: Number(sliders.l.value) };
+    }
+
+    function paintSliders() {
+      const g = guess();
+      const hueStops = [];
+      for (let i = 0; i <= 12; i++) hueStops.push("hsl(" + i * 30 + ", " + g.s + "%, " + g.l + "%)");
+      sliders.h.style.background = "linear-gradient(90deg, " + hueStops.join(", ") + ")";
+      sliders.s.style.background = "linear-gradient(90deg, hsl(" + g.h + ", 0%, " + g.l + "%), hsl(" + g.h + ", 100%, " + g.l + "%))";
+      sliders.l.style.background = "linear-gradient(90deg, hsl(" + g.h + ", " + g.s + "%, 0%), hsl(" + g.h + ", " + g.s + "%, 50%), hsl(" + g.h + ", " + g.s + "%, 100%))";
+      Object.values(sliders).forEach((el) => el.style.setProperty("--thumb", hsl(g)));
+      $("hVal").textContent = g.h + "°";
+      $("sVal").textContent = g.s + "%";
+      $("lVal").textContent = g.l + "%";
+      $("preview").style.backgroundColor = hsl(g);
+    }
+
+    function updateStats() {
+      $("round").textContent = round ? Math.min(round, ROUNDS) + "/" + ROUNDS : "–";
+      $("total").textContent = total.toFixed(1);
+    }
+
+    function startGame() {
+      round = 0;
+      total = 0;
+      results = [];
+      nextRound();
+    }
+
+    function nextRound() {
+      round += 1;
+      updateStats();
+      target = randomColor();
+      phase = "show";
+      $("target").style.backgroundColor = hsl(target);
+      show("showView");
+      const cd = $("countdown");
+      cd.classList.remove("run");
+      void cd.offsetWidth;
+      cd.classList.add("run");
+      clearTimeout(showTimer);
+      showTimer = setTimeout(startGuess, SHOW_MS);
+    }
+
+    function startGuess() {
+      phase = "guess";
+      sliders.h.value = 180;
+      sliders.s.value = 50;
+      sliders.l.value = 50;
+      paintSliders();
+      show("guessView");
+    }
+
+    function submit() {
+      if (phase !== "guess") return;
+      phase = "reveal";
+      const g = guess();
+      const sc = scoreFor(deltaE(target, g));
+      total = Math.round((total + sc) * 10) / 10;
+      results.push({ target, guess: g, score: sc });
+      updateStats();
+      const t = $("cmpTarget");
+      const u = $("cmpGuess");
+      t.style.backgroundColor = hsl(target);
+      u.style.backgroundColor = hsl(g);
+      t.style.color = textOn(target);
+      u.style.color = textOn(g);
+      $("cmpTargetHsl").textContent = "H" + target.h + " S" + target.s + " L" + target.l;
+      $("cmpGuessHsl").textContent = "H" + g.h + " S" + g.s + " L" + g.l;
+      $("roundScore").innerHTML = sc.toFixed(1) + " <small>/ 10</small>";
+      $("roundVerdict").textContent = verdict(sc);
+      $("roundVerdict").className = "verdict" + (sc >= 8.5 ? " good" : "");
+      $("nextBtn").textContent = round >= ROUNDS ? "See results" : "Next color";
+      show("revealView");
+      $("nextBtn").focus({ preventScroll: true });
+    }
+
+    function next() {
+      if (phase !== "reveal") return;
+      if (round >= ROUNDS) return finishGame();
+      nextRound();
+    }
+
+    function finishGame() {
+      phase = "end";
+      const isBest = total > best;
+      if (isBest) {
+        best = total;
+        save(best);
+        $("best").textContent = best.toFixed(1);
+      }
+      $("finalScore").innerHTML = total.toFixed(1) + " <small>/ 50</small>";
+      let line;
+      if (isBest) line = "New best";
+      else if (total >= 42) line = "Excellent";
+      else if (total >= 32) line = "Good";
+      else line = "Best: " + best.toFixed(1);
+      $("finalVerdict").textContent = line;
+      $("finalVerdict").className = "verdict" + (isBest || total >= 42 ? " good" : "");
+      const hist = $("history");
+      hist.innerHTML = "";
+      results.forEach((r) => {
+        const m = document.createElement("div");
+        m.className = "mini";
+        const pair = document.createElement("div");
+        pair.className = "pair";
+        const a = document.createElement("div");
+        const b = document.createElement("div");
+        a.style.backgroundColor = hsl(r.target);
+        b.style.backgroundColor = hsl(r.guess);
+        a.title = "Target";
+        b.title = "You";
+        pair.append(a, b);
+        const p = document.createElement("div");
+        p.className = "pts";
+        p.textContent = r.score.toFixed(1);
+        m.append(pair, p);
+        hist.appendChild(m);
+      });
+      show("endView");
+      $("againBtn").focus({ preventScroll: true });
+    }
+
+    Object.values(sliders).forEach((el) => el.addEventListener("input", paintSliders));
+    $("startBtn").addEventListener("click", startGame);
+    $("submitBtn").addEventListener("click", submit);
+    $("nextBtn").addEventListener("click", next);
+    $("againBtn").addEventListener("click", startGame);
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" || e.repeat) return;
+      if (phase === "guess") {
+        e.preventDefault();
+        submit();
+      }
+    });
+    paintSliders();
+  </script>
+</body>
+</html>
