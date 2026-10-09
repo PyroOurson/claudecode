@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.DS_Store
+*.gif
+ClaudeScripts/typing-bot/chrome-profile/
+ClaudeScripts/typing-bot/last_choices.json
