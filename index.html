@@ -28,7 +28,8 @@
 }
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
-html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:90px}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:90px;touch-action:manipulation}
+@media (pointer:coarse){.am-search input,.g-root input,.g-root textarea,.g-overlay input{font-size:max(16px,1em)!important}}
 body{margin:0;background:var(--bg);color:var(--ink);font:500 15px/1.5 var(--sans);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 button{font:inherit;color:inherit}
 img,svg{max-width:100%}
@@ -168,8 +169,12 @@ kbd{font-family:var(--mono);font-size:11px;min-width:22px;height:22px;display:in
 .am-gamebox.enter .play-frame{animation:viewIn .6s var(--ease) both}
 .play-frame.swap .g-root{animation:fade .5s var(--ease)}
 @keyframes fade{from{opacity:0}}
-.am-gamebox:fullscreen{border-radius:0;border:0;display:flex;flex-direction:column}
-.am-gamebox:fullscreen .play-stage{flex:1;display:flex;align-items:center;overflow:auto}
+.am-gamebox:fullscreen{border-radius:0;border:0;display:flex;flex-direction:column;background:#eceef4}
+.am-gamebox:fullscreen .play-bar{padding:8px 14px;box-shadow:0 1px 0 var(--line)}
+.am-gamebox:fullscreen .play-stage{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;background:radial-gradient(ellipse at 50% 40%,#fbfbfe 0%,#e8eaf1 70%,#dfe2ea 100%)}
+.am-gamebox:fullscreen .play-frame{--goff:-99999px;flex:none;transform-origin:0 0;transition:transform .45s var(--ease);will-change:transform}
+.am-gamebox:fullscreen .play-frame.no-anim{transition:none}
+.am-gamebox:fullscreen [data-fs] .fs-in,.am-gamebox:not(:fullscreen) [data-fs] .fs-out{display:none}
 .am-about{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;margin:18px 0 44px}
 .am-card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:20px 22px}
 .am-card h3{margin:0 0 8px;font-size:16px;font-weight:900;letter-spacing:-.01em}
@@ -356,7 +361,7 @@ kbd{font-family:var(--mono);font-size:11px;min-width:22px;height:22px;display:in
                 <div class="am-pstat"><span>Best</span><b id="pBest">—</b></div>
                 <button class="am-icon-btn" id="pRestart" title="Restart" aria-label="Restart game"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
                 <button class="am-icon-btn" data-sound aria-pressed="true" title="Sound" aria-label="Toggle sound"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg></button>
-                <button class="am-icon-btn" data-fs title="Fullscreen" aria-label="Toggle fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
+                <button class="am-icon-btn" data-fs title="Fullscreen" aria-label="Toggle fullscreen"><svg class="fs-in" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="fs-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>
               </div>
             </div>
             <div class="play-stage"><div class="play-frame" id="frame" tabindex="-1"></div></div>
@@ -409,6 +414,44 @@ if (!S || typeof S !== 'object') S = {};
 S.best = S.best || {}; S.plays = S.plays || {}; S.recent = Array.isArray(S.recent) ? S.recent : []; S.muted = !!S.muted;
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 
+(() => {
+  const rr = function (x, y, w, h, r) {
+    const a = Array.isArray(r) ? r : [r == null ? 0 : r], v = q => typeof q === 'number' ? q : (q && q.x) || 0;
+    let tl, tr, br, bl;
+    if (a.length === 1) tl = tr = br = bl = v(a[0]);
+    else if (a.length === 2) { tl = br = v(a[0]); tr = bl = v(a[1]); }
+    else if (a.length === 3) { tl = v(a[0]); tr = bl = v(a[1]); br = v(a[2]); }
+    else { tl = v(a[0]); tr = v(a[1]); br = v(a[2]); bl = v(a[3]); }
+    if (w < 0) { x += w; w = -w; }
+    if (h < 0) { y += h; h = -h; }
+    const m = Math.min(w, h) / 2;
+    tl = Math.min(tl, m); tr = Math.min(tr, m); br = Math.min(br, m); bl = Math.min(bl, m);
+    this.moveTo(x + tl, y);
+    this.arcTo(x + w, y, x + w, y + h, tr);
+    this.arcTo(x + w, y + h, x, y + h, br);
+    this.arcTo(x, y + h, x, y, bl);
+    this.arcTo(x, y, x + w, y, tl);
+    this.closePath();
+  };
+  if (window.CanvasRenderingContext2D && !CanvasRenderingContext2D.prototype.roundRect) CanvasRenderingContext2D.prototype.roundRect = rr;
+  if (window.Path2D && !Path2D.prototype.roundRect) Path2D.prototype.roundRect = rr;
+  if (!Element.prototype.requestPointerLock) Element.prototype.requestPointerLock = function () {
+    setTimeout(() => document.dispatchEvent(new Event('pointerlockerror')), 0);
+    const p = Promise.reject(new Error('Pointer lock is not supported')); p.catch(() => {}); return p;
+  };
+  if (!document.exitPointerLock) document.exitPointerLock = () => {};
+  try { if (!navigator.vibrate) navigator.vibrate = () => false; } catch (e) {}
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (AC) {
+    const live = new Set();
+    const Tracked = function (...a) { const c = new AC(...a); live.add(c); return c; };
+    Tracked.prototype = AC.prototype;
+    window.AudioContext = Tracked; window.webkitAudioContext = Tracked;
+    const unlock = () => live.forEach(c => { if (c.state === 'closed') live.delete(c); else if (c.state !== 'running') c.resume().catch(() => {}); });
+    ['pointerdown', 'touchend', 'keydown', 'click'].forEach(t => addEventListener(t, unlock, { capture: true, passive: true }));
+  }
+})();
+
 const games = [], byId = new Map();
 const Ameplay = window.Ameplay = {
   colors: C,
@@ -457,6 +500,45 @@ function setBest(g, bump) {
   const b = $('#pBest'); b.textContent = fmt(g, S.best[g.id]);
   if (bump) { b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); }
 }
+
+const glSet = new Set();
+let fsScale = 1, fsT = [0, 0], fitRaf = 0, fitTimer = 0;
+function applyGlScale(s) {
+  const pr = Math.min(2.5, Math.min(window.devicePixelRatio || 1, 2) * Math.max(1, s));
+  glSet.forEach(({ renderer, THREE }) => {
+    try {
+      if (Math.abs(renderer.getPixelRatio() - pr) < 0.01) return;
+      const v = renderer.getSize(new THREE.Vector2());
+      renderer.setPixelRatio(pr); renderer.setSize(v.x, v.y, false);
+    } catch (e) {}
+  });
+}
+function fitFullscreen() {
+  const frameEl = document.getElementById('frame'), box = document.getElementById('gamebox');
+  if (document.fullscreenElement !== box) {
+    if (fsScale !== 1) { frameEl.style.transform = ''; fsScale = 1; applyGlScale(1); }
+    return;
+  }
+  const st = box.querySelector('.play-stage'), root = frameEl.querySelector('.g-root');
+  if (!root || !frameEl.offsetWidth) return;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const el of root.children) {
+    if (!el.offsetWidth || !el.offsetHeight) continue;
+    const pos = getComputedStyle(el).position;
+    if (pos === 'absolute' || pos === 'fixed') continue;
+    x0 = Math.min(x0, el.offsetLeft); y0 = Math.min(y0, el.offsetTop);
+    x1 = Math.max(x1, el.offsetLeft + el.offsetWidth); y1 = Math.max(y1, el.offsetTop + el.offsetHeight);
+  }
+  if (!isFinite(x0)) { x0 = 0; y0 = 0; x1 = root.offsetWidth; y1 = root.offsetHeight; }
+  const cx = root.offsetLeft + x0, cy = root.offsetTop + y0, cw = x1 - x0, ch = y1 - y0;
+  const pad = 18, sw = st.clientWidth, sh = st.clientHeight;
+  const s = Math.max(0.3, Math.min((sw - pad * 2) / cw, (sh - pad * 2) / ch, 4));
+  const tx = (sw - cw * s) / 2 - frameEl.offsetLeft - cx * s, ty = (sh - ch * s) / 2 - frameEl.offsetTop - cy * s;
+  if (fsScale !== 1 && Math.abs(s / fsScale - 1) < 0.03 && Math.abs(tx - fsT[0]) < 10 && Math.abs(ty - fsT[1]) < 10) return;
+  frameEl.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${s.toFixed(4)})`;
+  fsScale = s; fsT = [tx, ty]; applyGlScale(s);
+}
+const queueFit = () => { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(fitFullscreen); };
 
 let threeP = null;
 function loadThree() {
@@ -534,7 +616,7 @@ function makeApi(g, root) {
       const c = document.createElement('canvas'), dpr = Math.min(window.devicePixelRatio || 1, 2);
       c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
       c.className = 'g-canvas';
-      c.style.width = `min(100%, ${w}px, calc((100dvh - 250px) * ${(w / h).toFixed(4)}))`;
+      c.style.width = `min(100%, ${w}px, calc((100dvh - var(--goff, 250px)) * ${(w / h).toFixed(4)}))`;
       c.style.aspectRatio = `${w} / ${h}`;
       const ctx = c.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       parent.append(c);
@@ -566,10 +648,13 @@ function makeApi(g, root) {
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       const c = renderer.domElement;
       c.className = 'g-canvas';
-      c.style.width = `min(100%, ${w}px, calc((100dvh - 250px) * ${(w / h).toFixed(4)}))`;
+      c.style.width = `min(100%, ${w}px, calc((100dvh - var(--goff, 250px)) * ${(w / h).toFixed(4)}))`;
       c.style.aspectRatio = `${w} / ${h}`;
       root.append(c);
       add(() => { try { renderer.dispose(); renderer.forceContextLoss(); } catch (e) {} c.remove(); });
+      const glEntry = { renderer, THREE };
+      glSet.add(glEntry); add(() => glSet.delete(glEntry));
+      if (fsScale !== 1) applyGlScale(fsScale);
       const toLocal = e => {
         const r = c.getBoundingClientRect(), p = e.touches ? (e.touches[0] || e.changedTouches[0]) : e;
         return { x: (p.clientX - r.left) * w / r.width, y: (p.clientY - r.top) * h / r.height, nx: ((p.clientX - r.left) / r.width) * 2 - 1, ny: -((p.clientY - r.top) / r.height) * 2 + 1 };
@@ -794,6 +879,14 @@ function boot() {
   const fs = $('[data-fs]');
   if (!document.fullscreenEnabled) fs.hidden = true;
   fs.addEventListener('click', () => { fs.blur(); document.fullscreenElement ? document.exitFullscreen() : gamebox.requestFullscreen().catch(() => {}); });
+  document.addEventListener('fullscreenchange', () => {
+    clearInterval(fitTimer);
+    if (document.fullscreenElement === gamebox) { requestAnimationFrame(() => requestAnimationFrame(fitFullscreen)); fitTimer = setInterval(fitFullscreen, 700); }
+    else fitFullscreen();
+    frame.focus({ preventScroll: true });
+  });
+  addEventListener('resize', queueFit);
+  if (window.ResizeObserver) new ResizeObserver(() => { if (document.fullscreenElement === gamebox) queueFit(); }).observe(frame);
   $('#pRestart').addEventListener('click', e => { e.currentTarget.blur(); restartCurrent(); });
   $('#reset').addEventListener('click', () => {
     if (!confirm('Reset every record, play count and saved game on this device?')) return;
@@ -35374,7 +35467,8 @@ void main() { vec4 t = texture2D(map, gl_PointCoord); float a = t.a * vA; if (a 
     const at = (x, y, z) => x < 0 || z < 0 || x >= SX || z >= SZ || y < 0 || y >= SY ? AIR : world[x + z * SX + y * LAYER];
     const solidAt = (x, y, z) => x < 0 || z < 0 || x >= SX || z >= SZ || y < 0 ? 1 : y >= SY ? 0 : SOLID[world[x + z * SX + y * LAYER]];
     const locked = () => document.pointerLockElement === canvas;
-    const isActive = () => started && !ovOpen && (touch || locked());
+    let freeMouse = false, drag = null;
+    const isActive = () => started && !ovOpen && (touch || locked() || freeMouse);
     const gemPos = i => [i % SX, i / LAYER | 0, (i / SX | 0) % SZ];
 
     function loadWorld(s, sv) {
@@ -35505,10 +35599,19 @@ void main() { vec4 t = texture2D(map, gl_PointCoord); float a = t.a * vA; if (a 
       api.overlay({ ...o, onAction: () => { ovOpen = false; if (o.onAction) o.onAction(); hud(); }, onSecondary: () => { ovOpen = false; if (o.onSecondary) o.onSecondary(); hud(); } });
       hud();
     }
+    function freeLook() {
+      if (touch || locked()) return;
+      if (!freeMouse) { freeMouse = true; api.toast('Drag to look · click to break · right-click to place'); }
+      hud();
+    }
     function lock() {
       started = true;
-      if (!touch && !locked()) {
-        try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+      if (!touch && !locked() && !freeMouse) {
+        if (!canvas.requestPointerLock) freeLook();
+        else {
+          try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(freeLook); } catch (e) { freeLook(); }
+          api.timeout(() => { if (started && !ovOpen && !locked()) freeLook(); }, 600);
+        }
       }
       hud();
     }
@@ -35550,7 +35653,7 @@ void main() { vec4 t = texture2D(map, gl_PointCoord); float a = t.a * vA; if (a 
       hud();
     }
     function hud() {
-      hint.hidden = !started || ovOpen || touch || locked();
+      hint.hidden = !started || ovOpen || touch || locked() || freeMouse;
       gemsB.textContent = found + '/' + GEMS;
       flyBtn.classList.toggle('on', fly);
       flyBtn.textContent = fly ? 'Flying' : 'Fly';
@@ -35620,19 +35723,39 @@ void main() { vec4 t = texture2D(map, gl_PointCoord); float a = t.a * vA; if (a 
 
     canvas.addEventListener('mousedown', e => {
       if (touch || ovOpen || !started) return;
+      if (freeMouse && !locked()) {
+        if (e.button === 0) drag = { x: e.clientX, y: e.clientY, moved: false };
+        else if (e.button === 2) doPlace();
+        return;
+      }
       if (!locked()) { lock(); return; }
       if (e.button === 0) { doBreak(); mB = true; holdB = .3; }
       else if (e.button === 2) { doPlace(); mP = true; holdP = .3; }
     });
-    api.on(window, 'mouseup', e => { if (e.button === 0) mB = false; if (e.button === 2) mP = false; });
+    api.on(window, 'mouseup', e => {
+      if (e.button === 0) { mB = false; if (drag && !drag.moved && freeMouse && !ovOpen) doBreak(); drag = null; }
+      if (e.button === 2) mP = false;
+    });
     wrap.addEventListener('contextmenu', e => e.preventDefault());
     api.on(document, 'mousemove', e => {
+      if (drag && freeMouse && !locked()) {
+        const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+        if (!drag.moved && Math.hypot(dx, dy) > 4) drag.moved = true;
+        if (drag.moved) {
+          const k = 3.2 / wrap.getBoundingClientRect().width;
+          yaw -= dx * k;
+          pitch = clamp(pitch - dy * k, -1.55, 1.55);
+          drag.x = e.clientX; drag.y = e.clientY;
+        }
+        return;
+      }
       if (!locked() || Math.abs(e.movementX) > 300 || Math.abs(e.movementY) > 300) return;
       yaw -= e.movementX * .0022;
       pitch = clamp(pitch - e.movementY * .0022, -1.55, 1.55);
     });
-    api.on(document, 'pointerlockchange', () => { if (!locked()) mB = mP = false; hud(); });
-    canvas.addEventListener('wheel', e => { if (!locked()) return; e.preventDefault(); pick((slot + (e.deltaY > 0 ? 1 : 8)) % 9); }, { passive: false });
+    api.on(document, 'pointerlockchange', () => { if (!locked()) mB = mP = false; else freeMouse = false; hud(); });
+    api.on(document, 'pointerlockerror', () => { if (started && !ovOpen) freeLook(); });
+    canvas.addEventListener('wheel', e => { if (!locked() && !freeMouse) return; e.preventDefault(); pick((slot + (e.deltaY > 0 ? 1 : 8)) % 9); }, { passive: false });
     api.on(window, 'keydown', e => {
       if (e.target && e.target.tagName === 'INPUT') return;
       const d = /^Digit([1-9])$/.exec(e.code);
