@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gitlab.com/buphagidae/maps-server/-/raw/main/docs/plugin-protocol/explore-reply.schema.json",
+  "title": "Reply to explore",
+  "description": "Journeys that break the rules are skipped by the server and reported by maps-server check-plugin.",
+  "type": "object",
+  "required": [
+    "response"
+  ],
+  "properties": {
+    "response": {
+      "type": "array",
+      "description": "Every journey leaving the station in the window, one entry per later stop of each vehicle.",
+      "items": {
+        "type": "object",
+        "required": [
+          "to",
+          "cost",
+          "time"
+        ],
+        "properties": {
+          "to": {
+            "oneOf": [
+              {
+                "type": "integer",
+                "description": "OpenStreetMap node ID."
+              },
+              {
+                "type": "string",
+                "pattern": "^-?[0-9]+$"
+              }
+            ],
+            "description": "A station listed by available."
+          },
+          "cost": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Travel time in seconds."
+          },
+          "time": {
+            "type": "string",
+            "pattern": "^[0-9]{8}T[0-9]{6}$",
+            "description": "Departure time in UTC, at or after the requested datetime."
+          },
+          "line": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": [
+                  "string",
+                  "number",
+                  "null"
+                ],
+                "description": "Public line name, such as \"4\" or \"TER\"."
+              },
+              "preferred_colour": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$"
+              },
+              "ways": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "OSM way IDs the line runs on. Not used yet."
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

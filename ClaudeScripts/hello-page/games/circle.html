@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Perfect Circle</title>
+  <link rel="stylesheet" href="../common.css">
+  <style>
+    .board {
+      position: relative;
+      width: min(100%, 560px, max(300px, 100vh - 370px));
+      aspect-ratio: 1 / 1;
+      margin: 0 auto;
+      border-radius: var(--radius);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .board canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+      cursor: crosshair;
+    }
+    .readout {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, calc(-100% - 22px));
+      font-size: clamp(2.6rem, 11vw, 4.4rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .msg {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, 18px);
+      max-width: 90%;
+      width: max-content;
+      padding: 5px 12px;
+      border-radius: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      font-size: clamp(1rem, 3.6vw, 1.15rem);
+      font-weight: 600;
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .msg:empty { display: none; }
+    .msg.bad { color: var(--bad); }
+    .msg.good { color: var(--good); }
+    .hint {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 14px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="topbar"><a class="logo" href="../../../index.html">hello</a></nav>
+  <main class="game">
+    <h1 class="game-title">Draw a Perfect Circle</h1>
+    <p class="lede">Draw one loop around the dot in a single stroke. Rounder scores higher.</p>
+    <div class="stats">
+      <div class="stat"><div class="stat-value" id="last">–</div><div class="stat-label">Last</div></div>
+      <div class="stat"><div class="stat-value" id="best">–</div><div class="stat-label">Best</div></div>
+    </div>
+    <div class="board" id="board">
+      <canvas id="canvas"></canvas>
+      <div class="readout" id="readout"></div>
+      <div class="msg" id="msg">Draw around the dot</div>
+    </div>
+    <p class="hint">Mouse, finger or pen. Go one direction and finish within 8 seconds.</p>
+  </main>
+  <script>
+    const board = document.getElementById("board");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const readout = document.getElementById("readout");
+    const msg = document.getElementById("msg");
+    const lastEl = document.getElementById("last");
+    const bestEl = document.getElementById("best");
+    const KEY = "hello-circle-best";
+    const K = 5;
+    const MIN_R = 0.13;
+    const DOT_R = 0.06;
+    const MAX_MS = 8000;
+    const FULL = Math.PI * 2;
+    const NEED = (330 / 360) * FULL;
+    const BACK = 0.45;
+    const dark = window.matchMedia("(prefers-color-scheme: dark)");
+
+    let size = 0;
+    let state = "idle";
+    let points = [];
+    let pointerId = null;
+    let startAt = 0;
+    let total = 0;
+    let dir = 0;
+    let maxProgress = 0;
+    let lastAngle = 0;
+    let finalMeanR = 0;
+    let frame = 0;
+    let slowTimer = null;
+
+    function load() {
+      try { return Number(localStorage.getItem(KEY)) || 0; } catch (e) { return 0; }
+    }
+    function save(v) {
+      try { localStorage.setItem(KEY, String(v)); } catch (e) {}
+    }
+    let best = load();
+    if (best) bestEl.textContent = best.toFixed(1) + "%";
+
+    function css(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function resize() {
+      const rect = board.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      size = rect.width;
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.width * dpr);
+      ctx.setTransform(canvas.width / rect.width, 0, 0, canvas.height / rect.width, 0, 0);
+      draw();
+    }
+
+    function stats(pts) {
+      let wSum = 0;
+      let rSum = 0;
+      for (let i = 0; i < pts.length; i++) {
+        const w = pts[i].w;
+        wSum += w;
+        rSum += pts[i].r * w;
+      }
+      if (wSum <= 0) return null;
+      const meanR = rSum / wSum;
+      let dSum = 0;
+      for (let i = 0; i < pts.length; i++) dSum += Math.abs(pts[i].r - meanR) * pts[i].w;
+      const mad = dSum / wSum;
+      const score = Math.max(0, 100 * (1 - (mad / meanR) * K));
+      return { meanR, score };
+    }
+
+    function hueFor(q) {
+      const l = dark.matches ? 55 : 44;
+      return "hsl(" + Math.round(Math.max(0, Math.min(1, q)) * 125) + ", 68%, " + l + "%)";
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, size, size);
+      const c = size / 2;
+      const s = stats(points);
+      if (state === "done" && finalMeanR) {
+        ctx.save();
+        ctx.setLineDash([6, 8]);
+        ctx.strokeStyle = css("--border");
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(c, c, finalMeanR * size, 0, FULL);
+        ctx.stroke();
+        ctx.restore();
+      }
+      if (points.length > 1 && s) {
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.lineWidth = Math.max(5, size * 0.013);
+        for (let i = 1; i < points.length; i++) {
+          const a = points[i - 1];
+          const b = points[i];
+          const dev = Math.abs((a.r + b.r) / 2 - s.meanR) / s.meanR;
+          ctx.strokeStyle = state === "failed" ? css("--muted") : hueFor(1 - dev * K * 1.2);
+          ctx.beginPath();
+          ctx.moveTo(a.x * size, a.y * size);
+          ctx.lineTo(b.x * size, b.y * size);
+          ctx.stroke();
+        }
+      }
+      ctx.fillStyle = css("--text");
+      ctx.beginPath();
+      ctx.arc(c, c, Math.max(4, size * 0.009), 0, FULL);
+      ctx.fill();
+    }
+
+    function schedule() {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        draw();
+      });
+    }
+
+    function setMsg(text, cls) {
+      msg.textContent = text;
+      msg.className = "msg" + (cls ? " " + cls : "");
+    }
+
+    function fail(text) {
+      state = "failed";
+      clearTimeout(slowTimer);
+      readout.textContent = "";
+      setMsg(text, "bad");
+      release();
+      draw();
+    }
+
+    function release() {
+      if (pointerId !== null) {
+        try { canvas.releasePointerCapture(pointerId); } catch (e) {}
+      }
+      pointerId = null;
+    }
+
+    function finish() {
+      clearTimeout(slowTimer);
+      release();
+      const s = stats(points);
+      if (!s || s.meanR < MIN_R) return fail("Too small, draw bigger");
+      if (dir * total < NEED) return fail("Draw a full circle");
+      state = "done";
+      finalMeanR = s.meanR;
+      const score = Math.round(s.score * 10) / 10;
+      readout.textContent = score.toFixed(1) + "%";
+      lastEl.textContent = score.toFixed(1) + "%";
+      if (score > best) {
+        best = score;
+        save(best);
+        bestEl.textContent = best.toFixed(1) + "%";
+        setMsg("New best", "good");
+      } else if (score >= 95) {
+        setMsg("Excellent", "good");
+      } else if (score >= 90) {
+        setMsg("Very good", "good");
+      } else if (score >= 80) {
+        setMsg("Good");
+      } else {
+        setMsg("Best: " + best.toFixed(1) + "%");
+      }
+      draw();
+    }
+
+    function toPoint(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;
+      const y = (e.clientY - rect.top) / rect.height;
+      const dx = x - 0.5;
+      const dy = y - 0.5;
+      return { x, y, r: Math.hypot(dx, dy), a: Math.atan2(dy, dx), w: 0 };
+    }
+
+    function addPoint(p) {
+      const prev = points[points.length - 1];
+      if (prev && Math.hypot(p.x - prev.x, p.y - prev.y) < 0.002) return true;
+      if (p.r < DOT_R) {
+        fail("Too close to the dot");
+        return false;
+      }
+      if (prev) {
+        let d = p.a - lastAngle;
+        if (d > Math.PI) d -= FULL;
+        if (d < -Math.PI) d += FULL;
+        total += d;
+        lastAngle = p.a;
+        p.w = Math.abs(d);
+        if (!dir && Math.abs(total) > 0.3) dir = Math.sign(total);
+        if (dir) {
+          const progress = dir * total;
+          if (progress > maxProgress) maxProgress = progress;
+          if (maxProgress - progress > BACK) {
+            fail("Don't go backwards");
+            return false;
+          }
+        }
+        if (points.length === 1) points[0].w = p.w;
+      } else {
+        lastAngle = p.a;
+      }
+      points.push(p);
+      return true;
+    }
+
+    canvas.addEventListener("pointerdown", (e) => {
+      if (!e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) return;
+      e.preventDefault();
+      clearTimeout(slowTimer);
+      state = "drawing";
+      points = [];
+      total = 0;
+      dir = 0;
+      maxProgress = 0;
+      finalMeanR = 0;
+      startAt = performance.now();
+      pointerId = e.pointerId;
+      try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+      readout.textContent = "";
+      setMsg("");
+      slowTimer = setTimeout(() => { if (state === "drawing") fail("Too slow"); }, MAX_MS);
+      if (addPoint(toPoint(e))) schedule();
+    });
+
+    canvas.addEventListener("pointermove", (e) => {
+      if (state !== "drawing" || e.pointerId !== pointerId) return;
+      if (performance.now() - startAt > MAX_MS) return fail("Too slow");
+      const list = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+      const events = list.length ? list : [e];
+      for (const ev of events) {
+        if (!addPoint(toPoint(ev))) return;
+      }
+      const s = stats(points);
+      if (s && dir) readout.textContent = s.score.toFixed(1) + "%";
+      if (dir * total >= FULL) return finish();
+      schedule();
+    });
+
+    function end(e) {
+      if (state !== "drawing" || e.pointerId !== pointerId) return;
+      if (points.length < 3 || !dir) {
+        state = "idle";
+        release();
+        clearTimeout(slowTimer);
+        points = [];
+        readout.textContent = "";
+        setMsg("Draw around the dot");
+        draw();
+        return;
+      }
+      finish();
+    }
+
+    canvas.addEventListener("pointerup", end);
+    canvas.addEventListener("pointercancel", end);
+    window.addEventListener("resize", resize);
+    if (window.ResizeObserver) new ResizeObserver(resize).observe(board);
+    dark.addEventListener && dark.addEventListener("change", draw);
+    resize();
+  </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gitlab.com/buphagidae/maps-server/-/raw/main/docs/plugin-protocol/error-reply.schema.json",
+  "title": "Error reply",
+  "description": "Any request may be answered with an error. The plugin must keep running; an error reply does not restart it.",
+  "type": "object",
+  "required": [
+    "error"
+  ],
+  "properties": {
+    "error": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}
