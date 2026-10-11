@@ -17,9 +17,9 @@ It downloads only what changed and removes files that were deleted on GitHub. Yo
 
 ## The website
 
-https://pyroourson.github.io/claudecode/ is **gameplay**, a portal of 75 browser games, 15 of them in 3D: arcade, action, racing, sports, puzzle, board, reflex, timing, memory, quiz, skill and idle games. The whole site is the single file `index.html` at the root (GitHub Pages needs it there).
+https://pyroourson.github.io/claudecode/ is **gameplay**, a portal of 100 browser games, 22 of them in 3D, including faithful remakes of famous games (block building, geometry jumping, road crossing, rail running and more). Fifteen games can be played by two people, either on the same device or online with a 4-letter room code. The whole site is the single file `index.html` at the root (GitHub Pages needs it there).
 
-The 3D games download three.js from a CDN the first time one is opened, so they need an internet connection; everything else also works offline if you open `index.html` from the downloaded folder. Scores, settings and saved games are kept in the browser you play in.
+The 3D games download three.js from a CDN the first time one is opened, and online play downloads PeerJS (peer-to-peer WebRTC, using the free PeerJS server only to connect the two players), so both need an internet connection; everything else also works offline if you open `index.html` from the downloaded folder. Scores, settings and saved games are kept in the browser you play in.
 
 The older hello-page games are still in `ClaudeScripts/hello-page/`:
 
