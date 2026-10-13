@@ -24,7 +24,9 @@ What the portal does:
 - **Search** looks at names, old names, genres and synonyms, so "shooting" finds the shooters, "car" finds every driving game and "chees" still finds Chess. Results replace the page and show a count.
 - **Filters** combine genre, players (solo, two on one screen, online), session length, 2D or 3D, keyboard or touch, and famous remakes. **Sort** by popular, A to Z, newest, most played by you or shortest session. The filters and sort live in the address, so a filtered view can be shared.
 - Each game page opens in a large "theater" stage by default (the button next to fullscreen turns it off), counts a play only once you start playing, and suggests similar games by shared tags.
-- The thumbnails are screenshots of the real games.
+- Search is letter accurate for short input: typing "d" lists only the games whose name starts with D. Longer searches also match old names, genres and synonyms.
+- 28 games have a real two-player mode on one screen (Snake, Tetris, Flappy Bird, Galaga and more) and 15 can be played online with a room code. Every other solo game has a "two players, take turns" button on its page: each player plays one run and the higher score wins.
+- The 3D models, characters, vehicles and scenery of most games were redrawn with more detail.
 
 The 3D games download three.js from a CDN the first time one is opened, and online play downloads PeerJS (peer-to-peer WebRTC, using the free PeerJS server only to connect the two players), so both need an internet connection; everything else also works offline if you open `index.html` from the downloaded folder. Scores, settings and saved games are kept in the browser you play in.
 
