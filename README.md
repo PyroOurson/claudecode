@@ -17,9 +17,28 @@ It downloads only what changed and removes files that were deleted on GitHub. Yo
 
 ## The website
 
-https://pyroourson.github.io/claudecode/ is **gameplay**, a portal of 100 browser games, 22 of them in 3D, including faithful remakes of famous games (block building, geometry jumping, road crossing, rail running and more). Fifteen games can be played by two people, either on the same device or online with a 4-letter room code. The whole site is the single file `index.html` at the root (GitHub Pages needs it there).
+https://pyroourson.github.io/claudecode/ is **gameplay**, a portal of 100 browser games, 22 of them in 3D. Many are remakes of famous games and carry the original names (Minecraft, Subway Surfers, Rocket League, Tetris and more); the old names are still searchable. Fifteen games can be played by two people, either on the same device or online with a 4-letter room code. The whole site is the single file `index.html` at the root (GitHub Pages needs it there).
+
+What the portal does:
+
+- **Search** looks at names, old names, genres and synonyms, so "shooting" finds the shooters, "car" finds every driving game and "chees" still finds Chess. Results replace the page and show a count.
+- **Filters** combine genre, players (solo, two on one screen, online), session length, 2D or 3D, keyboard or touch, and famous remakes. **Sort** by popular, A to Z, newest, most played by you or shortest session. The filters and sort live in the address, so a filtered view can be shared.
+- Each game page opens in a large "theater" stage by default (the button next to fullscreen turns it off), counts a play only once you start playing, and suggests similar games by shared tags.
+- The thumbnails are screenshots of the real games.
 
 The 3D games download three.js from a CDN the first time one is opened, and online play downloads PeerJS (peer-to-peer WebRTC, using the free PeerJS server only to connect the two players), so both need an internet connection; everything else also works offline if you open `index.html` from the downloaded folder. Scores, settings and saved games are kept in the browser you play in.
+
+When a game is added or removed, update the count in the `<title>`, the meta descriptions and the `<noscript>` list at the top of `index.html`, and add its row to the `ROWS` table (name, genres, players, minutes, keywords) in the portal script. `ClaudeScripts/gameplay-site/deploy.py` warns if the title count no longer matches.
+
+### Publishing on Firebase Hosting
+
+Open Cloud Shell for the project at https://shell.cloud.google.com/?project=claudecode-7e172&show=terminal and run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/PyroOurson/claudecode/claude/upbeat-bell-n1e54q/ClaudeScripts/gameplay-site/deploy.py | python3 - claude/upbeat-bell-n1e54q
+```
+
+It downloads `index.html` from the branch named at the end, writes the Firebase config (every game gets its own address such as `/block-roll`), a sitemap and `robots.txt`, creates the `gameplaygames` site if needed and deploys it to https://gameplaygames.web.app. The repository's default branch is `claude/peaceful-thompson-u1uxhi`, so once this work is merged there, use that name in both places.
 
 The older hello-page games are still in `ClaudeScripts/hello-page/`:
 
