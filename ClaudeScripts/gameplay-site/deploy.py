@@ -28,8 +28,8 @@ CONFIG = {
 }
 
 
-def write_search_files(page):
-    ids = re.findall(rb'^\s*\["([a-z0-9-]+)", "', page, re.M)
+def write_search_files(page, private):
+    ids = [] if private else re.findall(rb'^\s*\["([a-z0-9-]+)", "', page, re.M)
     base = "https://%s.web.app/" % SITE
     lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">', "  <url><loc>%s</loc></url>" % base]
     for game in ids:
@@ -38,7 +38,10 @@ def write_search_files(page):
     with open(os.path.join(FOLDER, "sitemap.xml"), "w") as handle:
         handle.write("\n".join(lines) + "\n")
     with open(os.path.join(FOLDER, "robots.txt"), "w") as handle:
-        handle.write("User-agent: *\nAllow: /\nSitemap: %ssitemap.xml\n" % base)
+        if private:
+            handle.write("User-agent: *\nDisallow: /\n")
+        else:
+            handle.write("User-agent: *\nAllow: /\nSitemap: %ssitemap.xml\n" % base)
     return len(ids)
 
 
@@ -54,7 +57,8 @@ def main():
     print("Downloading index.html from " + ref)
     with urllib.request.urlopen(url, timeout=120) as response:
         page = response.read()
-    if len(page) < 1000000 or b"Ameplay" not in page:
+    private = b"gameplay:gate" in page
+    if len(page) < 1000000 or (b"Ameplay" not in page and not private):
         print("The download does not look like the gameplay site (%d bytes). Check the branch name." % len(page))
         sys.exit(1)
     with open(os.path.join(FOLDER, "index.html"), "wb") as handle:
@@ -62,11 +66,14 @@ def main():
     with open(os.path.join(FOLDER, "firebase.json"), "w") as handle:
         json.dump(CONFIG, handle, indent=2)
     count = len(re.findall(rb"Ameplay\.register\(", page))
-    listed = write_search_files(page)
+    listed = write_search_files(page, private)
     stated = re.search(rb"<title>[^<]*?(\d+) free browser games", page)
-    if stated and int(stated.group(1)) != count:
+    if private:
+        print("The site is password protected; search engines are told not to index it.")
+    elif stated and int(stated.group(1)) != count:
         print("Note: the page says %s games but %d are registered. Update the title, description and noscript list." % (stated.group(1).decode(), count))
-    print("Downloaded %.1f MB, %d games, %d in the sitemap" % (len(page) / 1e6, count, listed))
+    if not private:
+        print("Downloaded %.1f MB, %d games, %d in the sitemap" % (len(page) / 1e6, count, listed))
     os.chdir(FOLDER)
     made = run(["firebase", "hosting:sites:create", SITE, "--project", PROJECT])
     if made.returncode != 0 and "already exists" not in made.stdout.lower():
