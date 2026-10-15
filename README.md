@@ -25,6 +25,9 @@ What the portal does:
 - **Filters** combine genre, players (solo, two on one screen, online), session length, 2D or 3D, keyboard or touch, and famous remakes. **Sort** by popular, A to Z, newest, most played by you or shortest session. The filters and sort live in the address, so a filtered view can be shared.
 - Each game page opens in a large "theater" stage by default (the button next to fullscreen turns it off), counts a play only once you start playing, and suggests similar games by shared tags.
 - Search is letter accurate for short input: typing "d" lists only the games whose name starts with D. Longer searches also match old names, genres and synonyms.
+- The site asks for a password before anything else. The whole page is encrypted with it, so the games cannot be opened without it. Five wrong tries lock that browser, and a browser that unlocked once stays unlocked.
+- Pressing Esc pauses any game (Resume, Restart or back to all games). Online matches are not frozen, so the other players are not affected.
+- UNO, Bomberman and Tank Trouble can be played online by up to 4 players and Rocket League by up to 6: one player creates a lobby, the others join with its code or invite link, and the host presses Play. Empty seats are filled by computer players.
 - 28 games have a real two-player mode on one screen (Snake, Tetris, Flappy Bird, Galaga and more) and 15 can be played online with a room code. Every other solo game has a "two players, take turns" button on its page: each player plays one run and the higher score wins.
 - The 3D models, characters, vehicles and scenery of most games were redrawn with more detail.
 - **Rocket League** is rebuilt to follow the real game:
