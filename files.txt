@@ -1,5 +1,6 @@
 .gitignore
 CLAUDE.md
+ClaudeScripts/gameplay-site/GAMES.md
 ClaudeScripts/gameplay-site/deploy.py
 ClaudeScripts/hello-page/common.css
 ClaudeScripts/hello-page/games/2048.html
