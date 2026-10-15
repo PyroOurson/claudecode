@@ -70,4 +70,5 @@ NaoiseGabi/solvers/connections_answers.py
 NaoiseGabi/solvers/wordle_solver.py
 NaoiseGabi/solvers/wordle_words.txt
 README.md
+files.txt
 index.html

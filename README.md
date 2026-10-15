@@ -27,6 +27,11 @@ What the portal does:
 - Search is letter accurate for short input: typing "d" lists only the games whose name starts with D. Longer searches also match old names, genres and synonyms.
 - 28 games have a real two-player mode on one screen (Snake, Tetris, Flappy Bird, Galaga and more) and 15 can be played online with a room code. Every other solo game has a "two players, take turns" button on its page: each player plays one run and the higher score wins.
 - The 3D models, characters, vehicles and scenery of most games were redrawn with more detail.
+- **Rocket League** is rebuilt to follow the real game:
+  - Physics come from RocketSim (the open-source Rocket League simulator): four-wheel suspension, real hitboxes, jumps, flips, flip resets, wall and ceiling driving, boost pads, bumps and demolitions, the 0:00 rule and overtime.
+  - Six cars (Octane, Fennec, Dominus, Breakout, Merc, Venom) in a DFH Stadium style arena.
+  - 1v1, 2v2 and 3v3 against Rookie, Semi-Pro or All-Star bots that rotate like real players.
+  - The real game's scoreboard and boost meter, Tab scoreboard, quick chat on 1 to 4, goal explosions and goal replays, and the real game's default camera settings.
 
 The 3D games download three.js from a CDN the first time one is opened, and online play downloads PeerJS (peer-to-peer WebRTC, using the free PeerJS server only to connect the two players), so both need an internet connection; everything else also works offline if you open `index.html` from the downloaded folder. Scores, settings and saved games are kept in the browser you play in.
 
