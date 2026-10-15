@@ -17,7 +17,7 @@ It downloads only what changed and removes files that were deleted on GitHub. Yo
 
 ## The website
 
-https://pyroourson.github.io/claudecode/ is **gameplay**, a portal of 100 browser games, 22 of them in 3D. Many are remakes of famous games and carry the original names (Minecraft, Subway Surfers, Rocket League, Tetris and more); the old names are still searchable. Fifteen games can be played by two people, either on the same device or online with a 4-letter room code. The whole site is the single file `index.html` at the root (GitHub Pages needs it there).
+https://pyroourson.github.io/claudecode/ is **gameplay**, a portal of 100 browser games, 22 of them in 3D. Many are remakes of famous games and carry the original names (Minecraft, Subway Surfers, Rocket League, Tetris and more); the old names are still searchable. Fifteen games can be played by two people, either on the same device or online with a 4-letter room code. The site is `index.html` at the root (GitHub Pages needs it there) plus the `gameplay/` folder: `index.html` holds the password screen, the menus and the game list, and each game is its own encrypted file in `gameplay/`, downloaded only when it is opened, so the site opens fast and can grow to about 1000 games (see `ClaudeScripts/gameplay-site/GAMES.md`).
 
 What the portal does:
 
