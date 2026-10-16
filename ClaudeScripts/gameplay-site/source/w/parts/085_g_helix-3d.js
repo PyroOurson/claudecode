@@ -5,8 +5,8 @@
   const CFG = {
     HZ: 120,
     SEG: 12,
-    RIN: .58, ROUT: 2.5, TH: .32, GAP: 3.1,
-    BR: .3, BZ: 1.55,
+    RIN: 1.02, ROUT: 2.5, TH: .46, GAP: 3.1,
+    BR: .3, BZ: 1.76,
     BOUNCE_H: 1.55, BOUNCE_T: .62,
     VMAX: 17,
     FIRE: 3,
@@ -24,6 +24,7 @@
   const rng = s => () => { s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 
   const PAL = [
+    { top: '#6e6e76', bot: '#e2e2e6', pole: '#ffffff', plat: '#26262b', ball: '#ffb21a' },
     { top: '#8fd3ff', bot: '#eaf7ff', pole: '#fff6ea', plat: '#ffc23a', ball: '#ff4f86' },
     { top: '#ffb3d1', bot: '#fff1f7', pole: '#fffaf4', plat: '#8a78ff', ball: '#ffc83a' },
     { top: '#94ecc4', bot: '#ecfff6', pole: '#ffffff', plat: '#3d9cff', ball: '#ff7a3a' },
@@ -119,7 +120,7 @@
 .gm-${ID} .lv b.a{background:var(--ball);color:#fff}
 .gm-${ID} .bar{flex:1;height:clamp(10px,3cqw,15px);border-radius:99px;background:rgba(255,255,255,.75);overflow:hidden;box-shadow:inset 0 1px 3px rgba(31,29,43,.15)}
 .gm-${ID} .bar i{display:block;height:100%;width:0;border-radius:inherit;background:var(--ball)}
-.gm-${ID} .sc{font:900 clamp(30px,12cqw,64px)/1 var(--sans);color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 .05em 0 rgba(31,29,43,.18),0 .1em .4em rgba(31,29,43,.18)}
+.gm-${ID} .sc{font:600 clamp(34px,13cqw,70px)/1 var(--sans);color:#38383e;font-variant-numeric:tabular-nums}
 .gm-${ID} .pop{position:absolute;font:900 clamp(15px,6cqw,30px)/1 var(--sans);color:#fff;white-space:nowrap;pointer-events:none;text-shadow:0 2px 0 rgba(31,29,43,.25),0 4px 14px rgba(31,29,43,.2)}
 .gm-${ID} .pop.x{color:var(--ball);font-size:clamp(13px,4.6cqw,24px);text-shadow:0 2px 0 #fff,0 0 8px #fff}
 .gm-${ID} .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
@@ -214,23 +215,15 @@
       };
       const poleTex = tex(128, 128, (g, w, h) => {
         g.fillStyle = '#fff'; g.fillRect(0, 0, w, h);
-        for (let i = 0; i < 16; i++) { g.fillStyle = i % 2 ? 'rgba(120,100,140,.07)' : 'rgba(255,255,255,.0)'; g.fillRect(i * w / 16, 0, w / 16, h); }
-        const gr = g.createLinearGradient(0, 0, 0, h);
-        gr.addColorStop(0, 'rgba(90,70,120,.28)'); gr.addColorStop(.06, 'rgba(90,70,120,0)'); gr.addColorStop(.94, 'rgba(90,70,120,0)'); gr.addColorStop(1, 'rgba(90,70,120,.28)');
-        g.fillStyle = gr; g.fillRect(0, 0, w, h);
-        g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect(0, h * .5 - 1, w, 2);
       }, true);
       const platTex = tex(256, 256, (g, w, h) => {
         g.fillStyle = '#fff'; g.fillRect(0, 0, w, h);
         const sc = w / (2 * CFG.ROUT);
         const ring = (r, lw, col) => { g.strokeStyle = col; g.lineWidth = lw * sc; g.beginPath(); g.arc(w / 2, h / 2, r * sc, 0, TAU); g.stroke(); };
-        ring(1.05, .035, 'rgba(70,40,110,.16)'); ring(1.95, .03, 'rgba(70,40,110,.14)'); ring(2.42, .07, 'rgba(255,255,255,.55)'); ring(.9, .05, 'rgba(255,255,255,.3)');
+        ring(2.44, .05, 'rgba(255,255,255,.22)');
       });
       const redTex = tex(128, 128, (g, w, h) => {
-        g.fillStyle = '#ff3d55'; g.fillRect(0, 0, w, h);
-        g.fillStyle = '#b3122a';
-        for (let i = -4; i < 12; i++) { g.beginPath(); g.moveTo(i * 16, 0); g.lineTo(i * 16 + 8, 0); g.lineTo(i * 16 + 8 + h, h); g.lineTo(i * 16 + h, h); g.fill(); }
-        g.fillStyle = '#ff3d55'; g.fillRect(0, 0, 10, 10);
+        g.fillStyle = '#ff3a22'; g.fillRect(0, 0, w, h);
       }, true);
       redTex.repeat.set(2.4, 2.4);
       const mPole = keep(new THREE.MeshPhongMaterial({ map: poleTex, shininess: 55, specular: 0x777777 }));
@@ -251,7 +244,7 @@
       pole.receiveShadow = true; tower.add(pole);
       const collarGeo = keep(new THREE.LatheGeometry([[.5, -.1], [.6, -.1], [.66, -.06], [.68, -.02], [.66, .04], [.62, .09], [.56, .12], [.5, .12]].map(q => new THREE.Vector2(q[0], q[1])), 28));
       const collars = new THREE.InstancedMesh(collarGeo, mCollar, 64);
-      collars.count = 0; collars.frustumCulled = false; collars.receiveShadow = true; tower.add(collars);
+      collars.count = 0; collars.frustumCulled = false; collars.visible = false; tower.add(collars);
       const uvGen = {
         generateTopUV: (g, v, a, b, c) => [a, b, c].map(i => new THREE.Vector2(v[i * 3] / (2 * CFG.ROUT) + .5, v[i * 3 + 1] / (2 * CFG.ROUT) + .5)),
         generateSideWallUV: () => [0, 1, 2, 3].map(() => new THREE.Vector2(.02, .02))
@@ -277,10 +270,10 @@
         return g;
       })()));
       const splatGeos = [0, 1, 2].map(k => {
-        const r = rng(k * 31 + 5), shapes = [], main = new THREE.Shape(), N = 20;
-        for (let i = 0; i < N; i++) { const a = i / N * TAU, d = .24 + r() * .1 + (i % 5 === 0 ? .1 : 0); i ? main.lineTo(Math.cos(a) * d, Math.sin(a) * d) : main.moveTo(Math.cos(a) * d, Math.sin(a) * d); }
+        const r = rng(k * 31 + 5), shapes = [], main = new THREE.Shape(), N = 30;
+        for (let i = 0; i < N; i++) { const a = i / N * TAU, d = .2 + r() * .07 + (r() < .3 ? .05 + r() * .12 : 0); i ? main.lineTo(Math.cos(a) * d, Math.sin(a) * d) : main.moveTo(Math.cos(a) * d, Math.sin(a) * d); }
         shapes.push(main);
-        for (let i = 0; i < 8; i++) { const a = r() * TAU, d = .38 + r() * .24, s = new THREE.Shape(); s.absarc(Math.cos(a) * d, Math.sin(a) * d, .025 + r() * .05, 0, TAU, false); shapes.push(s); }
+        for (let i = 0; i < 14; i++) { const a = r() * TAU, d = .3 + r() * .3, s = new THREE.Shape(); s.absarc(Math.cos(a) * d, Math.sin(a) * d, .015 + r() * .04, 0, TAU, false); shapes.push(s); }
         return keep(new THREE.ShapeGeometry(shapes, 4));
       });
       const ballGeo = keep(new THREE.SphereGeometry(CFG.BR, 40, 26));
@@ -308,10 +301,10 @@
       const trail = [];
       for (let i = 0; i < 12; i++) { const m = new THREE.Mesh(trailGeo, mTrail); m.visible = false; scene.add(m); trail.push({ m, life: 0 }); }
       const BUBN = 40, BUBH = 28;
-      const bubMesh = new THREE.InstancedMesh(keep(new THREE.CircleGeometry(1, 28)), keep(new THREE.MeshBasicMaterial({ transparent: true, opacity: .2, depthWrite: false })), BUBN);
+      const bubMesh = new THREE.InstancedMesh(keep(new THREE.CircleGeometry(1, 28)), keep(new THREE.MeshBasicMaterial({ transparent: true, opacity: .6, depthWrite: false })), BUBN);
       bubMesh.frustumCulled = false; bubMesh.renderOrder = -1; scene.add(bubMesh);
       const BUB = [];
-      { const r = rng(77); for (let i = 0; i < BUBN; i++) BUB.push({ x: (r() - .5) * 13, y: r() * BUBH, z: -5 - r() * 7, s: .3 + r() * r() * 1.9, p: r() * TAU, w: .2 + r() * .4, tint: r() < .4 }); }
+      { const r = rng(77); for (let i = 0; i < BUBN; i++) BUB.push({ x: (r() - .5) * 13, y: r() * BUBH, z: -5 - r() * 7, s: .05 + r() * r() * .14, p: r() * TAU, w: .2 + r() * .4, tint: r() < .4 }); }
       let trailT = 0;
 
       const tmpO = new THREE.Object3D(), bubTint = new THREE.Color();

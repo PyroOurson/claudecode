@@ -43,6 +43,7 @@
     { c: [17, 15, 12], w: 3 }, { c: [9, 11], w: 2 }, { c: [10, 9, 10, 16], w: 2 }, { c: [20, 1], w: 3 }, { c: [15, 9], w: 2 }
   ];
   const NAMES = ['Noodle', 'Danger Noodle', 'SlinkyPro', 'xX_Viper_Xx', 'Coil King', 'Sneky', 'Hiss', 'Zigzag', 'Kaa', 'Mamba', 'Spaghetti', 'Bob', 'Lucas', 'Mia', 'Tiny', 'BIG BOI', 'Wiggles', 'Slurp', 'nom nom', 'Pixel', 'Ramen', 'Glowworm', 'Twisty', 'Snek Lord', 'Lil Hiss', 'Captain', 'Boop', 'Zoe', 'Leo', 'Nugget', 'Banana', 'TurboTail', 'Orbit', 'Neon', 'Comet', 'Pretzel', 'Lasso', 'Cobra', 'Python', 'Rattler', 'Slither Me', 'Mochi', 'Taco', 'Unagi', 'Ribbon', 'Hose', 'Sir Coils', 'Speedy', 'Gus', 'Ivy', 'Max', 'Nova', 'Echo', 'Fuzzy', 'Jelly', 'Marble', 'Domino', 'Rocket', 'Shadow', 'Ghost', 'Ziggy', 'Lemon', 'Mango', 'Kiwi', 'Pickle', 'Biscuit', 'Waffle', 'Zap', 'Swirl', 'Loop'];
+  const QUOTES = ['hi', 'gg', 'dont trap me pls', 'I am the snek king', 'Most of the snakes are bots. Not clever ones.', 'circle me if you dare', 'stay hungry', 'hello from the top'];
   const MSC = 411, FM = new Float64Array(MSC), FP = new Float64Array(MSC);
   for (let i = 0; i < MSC; i++) FM[i] = Math.pow(1 - i / MSC, 2.25);
   for (let i = 1; i < MSC; i++) FP[i] = FP[i - 1] + 1 / FM[i - 1];
@@ -67,8 +68,8 @@
       }));
       SPR.f.push(mk(64, (x, h) => {
         const g = x.createRadialGradient(h, h, 0, h, h, h);
-        g.addColorStop(0, '#ffffff'); g.addColorStop(0.09, mix(col, 0.4)); g.addColorStop(0.2, rgba(col, 0.95)); g.addColorStop(0.27, rgba(col, 0.42));
-        g.addColorStop(0.55, rgba(col, 0.13)); g.addColorStop(1, rgba(col, 0));
+        g.addColorStop(0, mix(col, 0.6)); g.addColorStop(0.1, mix(col, 0.25)); g.addColorStop(0.2, rgba(col, 0.9)); g.addColorStop(0.27, rgba(col, 0.36));
+        g.addColorStop(0.55, rgba(col, 0.1)); g.addColorStop(1, rgba(col, 0));
         x.fillStyle = g; x.fillRect(0, 0, h * 2, h * 2);
       }));
       SPR.g.push(mk(64, (x, h) => {
@@ -86,19 +87,19 @@
   }
   function hexTile() {
     if (HEX) return HEX;
-    const a = 32, hw = a * 3, hh = Math.sqrt(3) * a, cols = 4, rows = 7, tw = hw * cols, th = hh * rows;
+    const a = 44, hw = a * 3, hh = Math.sqrt(3) * a, cols = 4, rows = 7, tw = hw * cols, th = hh * rows;
     const c = document.createElement('canvas'); c.width = Math.round(tw * 1.5); c.height = Math.round(th * 1.5);
     const x = c.getContext('2d'); x.scale(c.width / tw, c.height / th);
     x.fillStyle = '#0a0e13'; x.fillRect(0, 0, tw, th);
     for (let i = -1; i <= cols; i++) for (let j = -1; j <= rows; j++) for (let o = 0; o < 2; o++) {
       const cx = i * hw + o * hw / 2, cy = j * hh + o * hh / 2;
       x.beginPath();
-      for (let k = 0; k < 6; k++) { const t = k * Math.PI / 3; x.lineTo(cx + Math.cos(t) * (a - 2.4), cy + Math.sin(t) * (a - 2.4)); }
+      for (let k = 0; k < 6; k++) { const t = k * Math.PI / 3; x.lineTo(cx + Math.cos(t) * (a - 3.2), cy + Math.sin(t) * (a - 3.2)); }
       x.closePath();
       const g = x.createLinearGradient(cx - a * 0.5, cy - a * 0.85, cx + a * 0.5, cy + a * 0.85);
-      g.addColorStop(0, '#202a35'); g.addColorStop(1, '#141a22');
+      g.addColorStop(0, '#232b35'); g.addColorStop(0.5, '#181e26'); g.addColorStop(1, '#12161c');
       x.fillStyle = g; x.fill();
-      x.strokeStyle = 'rgba(255,255,255,.04)'; x.lineWidth = 1.2; x.stroke();
+      x.strokeStyle = 'rgba(255,255,255,.05)'; x.lineWidth = 1.6; x.stroke();
     }
     HEX = { c, tw, th };
     return HEX;
@@ -783,6 +784,14 @@
           ctx.textAlign = 'right'; ctx.fillText(String(lengthOf(s.m)), x0 + lw, y);
         }
         ctx.globalAlpha = 1;
+        if (board.length && !tall) {
+          const b0 = board[0], qf = Math.round(12.5 * F), qx = Math.round(12 * F), qy = Math.round(18 * F);
+          ctx.textAlign = 'left'; ctx.font = `bold ${qf}px Arial, Helvetica, sans-serif`; ctx.fillStyle = 'rgba(255,255,255,.85)';
+          ctx.fillText('"' + QUOTES[(b0.skin + b0.name.length) % QUOTES.length] + '"', qx, qy);
+          ctx.font = `${Math.round(11 * F)}px Arial, Helvetica, sans-serif`; ctx.fillStyle = 'rgba(255,255,255,.5)';
+          ctx.fillText('- ' + b0.name + ", today's longest snake", qx + 6, qy + Math.round(17 * F));
+          ctx.fillText('with a length of ' + lengthOf(b0.m), qx + 6, qy + Math.round(31 * F));
+        }
         if (player) {
           const L = lengthOf(player.m), fs = Math.round(14 * F), y1 = H - Math.round(32 * F), y2 = H - Math.round(13 * F);
           ctx.textAlign = 'left';

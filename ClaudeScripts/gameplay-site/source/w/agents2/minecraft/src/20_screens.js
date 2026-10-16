@@ -21,7 +21,7 @@
       g.drawImage(BT[2], 0, 0, w >> 1, 20, x, y, w >> 1, h); g.drawImage(BT[2], 200 - (w - (w >> 1)), 0, w - (w >> 1), 20, x + (w >> 1), y, w - (w >> 1), h);
       const kx = x + Math.round(f * (w - 8)), hov = !touch && mx >= x && my >= y && mx < x + w && my < y + h, t = BT[hov || activeSlider && activeSlider.x === x && activeSlider.y === y ? 1 : 0];
       g.drawImage(t, 0, 0, 4, 20, kx, y, 4, h); g.drawImage(t, 196, 0, 4, 20, kx + 4, y, 4, h);
-      textC(label, x + w / 2, y + (h - 8) / 2, '#e0e0e0');
+      textC(label, x + w / 2, y + (h - 8) / 2, '#ffffff');
       sliders.push({ x, y, w, h, set });
     }
     function drawTitleBg() {
@@ -29,35 +29,31 @@
       else { const gr = g.createLinearGradient(0, 0, 0, GH); gr.addColorStop(0, 'rgba(0,0,0,.15)'); gr.addColorStop(1, 'rgba(0,0,0,.35)'); g.fillStyle = gr; g.fillRect(0, 0, GW, GH); }
     }
     function drawLogo(y) {
-      const lw = Math.min(GW - 20, 274), k = lw / LOGO.width, lh = LOGO.height * k, lx = (GW - lw) / 2;
+      const k = Math.min(1, (GW - 16) / LOGO.width), lw = LOGO.width * k, lh = LOGO.height * k, lx = (GW - lw) / 2 | 0;
       g.drawImage(LOGO, lx, y, lw, lh);
-      const ew = Math.min(lw * .45, 100), eh = ew * EDITION.height / EDITION.width;
-      g.drawImage(EDITION, (GW - ew) / 2, y + lh - 4, ew, eh);
-      textC('JAVA EDITION', GW / 2, y + lh - 4 + (eh - 8) / 2, '#f0d8a8', true);
-      return y + lh + eh;
+      const ew = EDITION.width * k, eh = EDITION.height * k;
+      g.drawImage(EDITION, (GW - ew) / 2 | 0, y + lh - 4 * k | 0, ew, eh);
+      return y + lh + eh - 4 * k;
     }
     function drawTitle(now) {
       drawTitleBg();
-      const by = Math.max(drawLogo(Math.max(8, GH / 4 - 50 | 0)) + 12, GH / 4 + 36 | 0);
-      g.save(); g.translate(GW / 2 + Math.min(130, GW / 2 - 40), Math.max(50, GH / 4 - 4)); g.rotate(-20 * Math.PI / 180);
-      const sc = 1.8 - Math.abs(Math.sin((now % 1000) / 1000 * Math.PI * 2)) * .1, sw2 = tw(SPLASH);
-      const k = Math.min(sc, (GW / 2 - 10) / Math.max(1, sw2)); g.scale(k, k); textC(SPLASH, 0, -4, '#ffff00'); g.restore();
-      const step = touch ? 28 : 24;
+      const ly = GH < 250 ? Math.max(6, GH / 4 - 40 | 0) : 30, by = Math.max(drawLogo(ly) + 10, GH / 4 + 48 | 0), step = touch ? 28 : 24;
+      g.save(); g.translate(GW / 2 + Math.min(112, GW / 2 - 30), ly + 36); g.rotate(-20 * Math.PI / 180);
+      const sc = (1.8 - Math.abs(Math.sin((now % 1000) / 1000 * Math.PI * 2)) * .1) * 100 / (tw(SPLASH) + 32);
+      g.scale(sc, sc); textC(SPLASH, 0, -8, '#ffff00'); g.restore();
       button(GW / 2 - 100, by, 200, 20, 'Singleplayer', () => { mpMode = null; goWorlds(); });
-      button(GW / 2 - 100, by + step, 200, 20, ['Multiplayer (LAN / Online)', 'Multiplayer'], () => { scr = 'mp'; FIELDV.uname = FIELDV.uname || (validName(loadProfile().username) ? loadProfile().username : ''); });
+      button(GW / 2 - 100, by + step, 200, 20, 'Multiplayer', () => { scr = 'mp'; FIELDV.uname = FIELDV.uname || (validName(loadProfile().username) ? loadProfile().username : ''); });
       button(GW / 2 - 100, by + step * 2 + 12, 98, 20, 'Options...', () => { optBack = 'title'; scr = 'options'; });
-      button(GW / 2 + 2, by + step * 2 + 12, 98, 20, 'Controls...', () => { optBack = 'title'; scr = 'controls'; });
-      const l1 = 'Minecraft Java Edition 26.3', l2 = 'Fan remake. Not an official Minecraft product.';
-      if (tw(l1) + tw(l2) + 12 < GW) { text(l1, 2, GH - 10, '#ffffff'); textR(l2, GW - 2, GH - 10, '#ffffff'); }
-      else { text(l1, 2, GH - 20, '#ffffff'); textR(tw(l2) < GW - 4 ? l2 : 'Not an official Minecraft product.', GW - 2, GH - 10, '#ffffff'); }
+      button(GW / 2 + 2, by + step * 2 + 12, 98, 20, 'Quit Game', () => { location.hash = '#/'; });
+      text('Minecraft 26.3', 2, GH - 10, '#ffffff');
     }
     function goWorlds() { scr = 'worlds'; selWorld = -1; wScroll = 0; worldsLoaded = false; listWorlds().then(l => { worldsMeta = l; worldsLoaded = true; if (l.length) selWorld = 0; }); }
     function drawWorlds() {
       drawDirt(0);
       textC(mpMode === 'host' ? 'Select World to Host' : 'Select World', GW / 2, 8, '#ffffff');
       const top = 24, bot = GH - (touch ? 64 : 56), rowH = 36, lw = Math.min(270, GW - 20), lx = (GW - lw) >> 1;
-      g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(0, top, GW, bot - top);
-      g.fillStyle = '#000'; g.fillRect(0, top, GW, 1); g.fillRect(0, bot - 1, GW, 1);
+      g.fillStyle = 'rgba(0,0,0,.45)'; g.fillRect(0, top, GW, bot - top);
+      sep(top - 2, false); sep(bot, true);
       const maxS = Math.max(0, worldsMeta.length * rowH - (bot - top - 8));
       wScroll = clamp(wScroll, 0, maxS);
       g.save(); g.beginPath(); g.rect(0, top, GW, bot - top); g.clip();
@@ -87,13 +83,14 @@
       button(GW / 2 + 2, y0 + step, qw, 20, 'Re-Create', () => { newCW(worldsMeta[selWorld]); scr = 'create'; }, has);
       button(GW / 2 + qw + 6, y0 + step, qw, 20, 'Back', () => { scr = mpMode ? 'mp' : 'title'; });
     }
-    function playSel() { const w = worldsMeta[selWorld]; if (!w) return; openWorld(w.id, mpMode === 'host'); }
+    function playSel() { const w = worldsMeta[selWorld]; if (!w) return; grab(); openWorld(w.id, mpMode === 'host'); }
     function drawDelete() {
       drawDirt(0);
       textC('Are you sure you want to delete this world?', GW / 2, GH / 2 - 40, '#ffffff');
       textC("'" + (confirmDel ? confirmDel.name : '') + "' will be lost forever! (A long time!)", GW / 2, GH / 2 - 26, '#a0a0a0');
-      button(GW / 2 - 154, GH / 2 + 10, 150, 20, 'Delete', () => { const w = confirmDel; confirmDel = null; deleteWorld(w.id).then(goWorlds); });
-      button(GW / 2 + 4, GH / 2 + 10, 150, 20, 'Cancel', () => { scr = 'worlds'; });
+      const dw = Math.min(150, (GW - 12) / 2 | 0);
+      button(GW / 2 - dw - 4, GH / 2 + 10, dw, 20, 'Delete', () => { const w = confirmDel; confirmDel = null; deleteWorld(w.id).then(goWorlds); });
+      button(GW / 2 + 4, GH / 2 + 10, dw, 20, 'Cancel', () => { scr = 'worlds'; });
     }
     function drawEdit() {
       drawDirt(0);
@@ -130,8 +127,9 @@
         RULES.forEach(([k, l], i) => { const col = two && i >= half ? 1 : 0, r = two ? i % half : i, bx2 = two ? GW / 2 - 214 + col * 218 : x0, by2 = y + r * (touch ? 26 : 22); if (by2 > GH - 60) return; button(bx2, by2, cw2, 20, l + ': ' + (CW.rules[k] ? 'ON' : 'OFF'), () => { CW.rules[k] = !CW.rules[k]; }); });
       }
       const yb = GH - (touch ? 30 : 26);
-      button(GW / 2 - 154, yb, 150, 20, 'Create New World', () => { CW.name = (FIELDV.wname || '').trim() || 'New World'; CW.seed = FIELDV.wseed || ''; createWorld(CW, mpMode === 'host'); });
-      button(GW / 2 + 4, yb, 150, 20, 'Cancel', () => { blurField(); goWorlds(); });
+      const cw3 = Math.min(150, (GW - 12) / 2 | 0);
+      button(GW / 2 - cw3 - 4, yb, cw3, 20, ['Create New World', 'Create'], () => { CW.name = (FIELDV.wname || '').trim() || 'New World'; CW.seed = FIELDV.wseed || ''; grab(); createWorld(CW, mpMode === 'host'); });
+      button(GW / 2 + 4, yb, cw3, 20, 'Cancel', () => { blurField(); goWorlds(); });
     }
     function drawMP() {
       drawDirt(0);
@@ -208,15 +206,17 @@
       button(GW / 2 - 100, GH / 2 + 20, 200, 20, 'Back to Title Screen', () => { scr = 'title'; });
     }
     function drawPause() {
-      g.fillStyle = 'rgba(16,16,16,.6)'; g.fillRect(0, 0, GW, GH);
-      textC('Game Menu', GW / 2, Math.max(10, GH / 4 - 32), '#ffffff');
-      const y = Math.max(26, GH / 4 - 16 | 0), step = touch ? 28 : 24;
-      button(GW / 2 - 102, y, 204, 20, 'Back to Game', () => closeGui());
-      button(GW / 2 - 102, y + step, 100, 20, 'Options...', () => { gui = 'options'; });
-      const host = NET.role === 'host', guest = NET.role === 'guest';
-      button(GW / 2 + 2, y + step, 100, 20, host ? ['Invite Players', 'Invite'] : 'Open to LAN', () => { openToLan(); }, !guest);
-      button(GW / 2 - 102, y + step * 2, 204, 20, 'Player List' + (NET.role ? ' (' + playersList().length + ')' : ''), () => { gui = 'plist'; }, !!NET.role);
-      button(GW / 2 - 102, y + step * 3 + 8, 204, 20, guest ? 'Disconnect' : 'Save and Quit to Title', () => { quitToTitle(); });
+      g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(0, 0, GW, GH);
+      const step = touch ? 28 : 24, host = NET.role === 'host', guest = NET.role === 'guest', n = NET.role ? 5 : 4, y = Math.max(22, Math.min(GH / 4 + 8 | 0, GH - n * step - 4));
+      textC('Game Menu', GW / 2, Math.max(8, Math.min(40, y - 26)), '#ffffff');
+      let r = y;
+      button(GW / 2 - 102, r, 204, 20, 'Back to Game', () => closeGui()); r += step;
+      button(GW / 2 - 102, r, 98, 20, 'Advancements', () => { gui = 'adv'; });
+      button(GW / 2 + 4, r, 98, 20, 'Statistics', () => { gui = 'stats'; statScroll = 0; }); r += step;
+      if (NET.role) { button(GW / 2 - 102, r, 204, 20, 'Player List (' + playersList().length + ')', () => { gui = 'plist'; }); r += step; }
+      button(GW / 2 - 102, r, 98, 20, 'Options...', () => { gui = 'options'; });
+      button(GW / 2 + 4, r, 98, 20, host ? ['Invite Players', 'Invite'] : 'Open to LAN', () => { openToLan(); }, !guest); r += step;
+      button(GW / 2 - 102, r, 204, 20, guest ? 'Disconnect' : 'Save and Quit to Title', () => { quitToTitle(); });
       if (NET.role) text('Party code: ' + (api.net.code || '-'), 4, GH - 12, '#a0a0a0');
     }
     function drawPList() {
@@ -227,11 +227,12 @@
       button(GW / 2 - 100, GH - 30, 200, 20, 'Done', () => { gui = 'pause'; });
     }
     function drawDead() {
-      g.fillStyle = 'rgba(120,0,0,.45)'; g.fillRect(0, 0, GW, GH);
-      textC(W.hardcore ? 'Game Over!' : 'You Died!', GW / 2, GH / 4 - 10, '#ffffff', true, 2);
-      if (P.deathMsg) textC(P.deathMsg, GW / 2, GH / 4 + 16, '#ffffff');
-      textC('Score: ', GW / 2 - tw(String(P.scoreAtDeath || 0)) / 2, GH / 4 + 30, '#ffffff'); text(String(P.scoreAtDeath || 0), GW / 2 + tw('Score: ') / 2 - tw(String(P.scoreAtDeath || 0)) / 2, GH / 4 + 30, '#ffff55');
-      const en = deadT > 20, y = GH / 4 + 56;
+      shadeAll('rgba(80,0,0,.376)', 'rgba(128,48,48,.627)');
+      const ty = Math.max(8, Math.min(60, GH / 4 - 10 | 0)), sc = String(P.scoreAtDeath || 0);
+      textC(W.hardcore ? 'Game Over!' : 'You Died!', GW / 2, ty, '#ffffff', true, 2);
+      if (P.deathMsg) textC(P.deathMsg, GW / 2, ty + 25, '#ffffff');
+      text('Score: ', GW / 2 - tw('Score: ' + sc) / 2, ty + 40, '#ffffff'); text(sc, GW / 2 - tw('Score: ' + sc) / 2 + tw('Score: '), ty + 40, '#ffff55');
+      const en = deadT > 20, y = Math.max(ty + 56, Math.min(GH / 4 + 72 | 0, GH - 50));
       if (W.hardcore) button(GW / 2 - 100, y, 200, 20, 'Spectate World', () => { respawn(); }, en);
       else button(GW / 2 - 100, y, 200, 20, 'Respawn', () => { respawn(); }, en);
       button(GW / 2 - 100, y + 24, 200, 20, NET.role === 'guest' ? 'Disconnect' : 'Title Screen', () => { quitToTitle(); }, en);
@@ -255,6 +256,8 @@
       else if (gui === 'options') drawOptions(true);
       else if (gui === 'controls') drawControls(true);
       else if (gui === 'plist') drawPList();
+      else if (gui === 'stats') drawStats();
+      else if (gui === 'adv') drawAdv();
       else if (gui === 'dead') drawDead();
       else if (gui === 'sign') drawSign();
       else if (INVG.has(gui)) drawInv(now);

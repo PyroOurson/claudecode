@@ -17,6 +17,7 @@ void main() { vQ = length(position.xy); vec4 mv = modelViewMatrix * vec4(positio
   const FXHF = `uniform vec3 color; uniform float op; uniform float ring; varying float vR; varying float vQ;
 void main() { float a = ring > 0.5 ? pow(sin(clamp((vQ - 0.55) / 0.45, 0.0, 1.0) * 3.1416), 1.5) : pow(1.0 - vR, 1.4) * 0.42 + pow(vR, 3.0) * 0.3; a *= op; if (a < 0.004) discard; gl_FragColor = vec4(mix(color, vec3(1.0), ring > 0.5 ? 0.25 : pow(1.0 - vR, 3.0) * 0.55), a); }`;
   const CSS_FX = `
+$ .wrap .menu{top:0;background:none;border:0;border-radius:0;box-shadow:none;padding:0}
 $ .fxrp{position:absolute;inset:0;pointer-events:none;overflow:hidden;--tc:#3f8cff;--td:#123a8c}
 $ .fxw{position:absolute;inset:0;overflow:hidden;visibility:hidden}
 $ .fxw.fxgo{visibility:visible}

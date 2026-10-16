@@ -76,6 +76,9 @@
       R.tunnel = alloc(256, 256); paintTunnel(g, R.tunnel, city);
       R.portal = alloc(512, 256); paintPortal(g, R.portal, city);
       R.platform = alloc(256, 64); paintPlatform(g, R.platform);
+      R.arch = alloc(1020, 330); paintArch(g, R.arch, city);
+      R.chev = alloc(256, 96); paintChev(g, R.chev);
+      R.sig = alloc(64, 128); stripes(g, ...R.sig, '#ffffff', '#e8323a', 14);
       R.sign = alloc(256, 96); paintSign(g, R.sign, city);
       R.neon = alloc(128, 256); paintNeon(g, R.neon, city);
       const tex = canvasTex(c);
@@ -87,8 +90,8 @@
       const [x, y, w, h] = r, base = lv[0], band = lv[1];
       const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, shade(base, 0.18)); gr.addColorStop(0.55, base); gr.addColorStop(1, shade(base, -0.25));
       g.fillStyle = gr; g.fillRect(x, y, w, h);
-      g.fillStyle = band; g.fillRect(x, y + h * 0.6, w, h * 0.09);
-      g.fillStyle = shade(band, -0.2); g.fillRect(x, y + h * 0.69, w, h * 0.02);
+      if (lv[2] === 'low') { const lg = g.createLinearGradient(0, y + h * 0.6, 0, y + h); lg.addColorStop(0, shade(band, 0.12)); lg.addColorStop(1, shade(band, -0.22)); g.fillStyle = lg; g.fillRect(x, y + h * 0.6, w, h * 0.4); g.fillStyle = shade(base, -0.3); g.fillRect(x, y + h * 0.6, w, 4); }
+      else { g.fillStyle = band; g.fillRect(x, y + h * 0.6, w, h * 0.09); g.fillStyle = shade(band, -0.2); g.fillRect(x, y + h * 0.69, w, h * 0.02); }
       const doors = [0.2, 0.5, 0.8];
       for (const d of doors) {
         const dx = x + w * d - 34;
@@ -246,6 +249,40 @@
       graffiti(g, pick(GWORDS), x + w * 0.22, y + h * 0.5, 54, pick(GCOLS), -0.1);
       graffiti(g, pick(GWORDS), x + w * 0.78, y + h * 0.55, 54, pick(GCOLS), 0.08);
     }
+    function paintArch(g, r, city) {
+      const [x, y, w, h] = r, a = city.arch || city.wall, n = 3, aw = w / n;
+      g.fillStyle = a; g.fillRect(x, y, w, h);
+      for (let yy = 0; yy < h; yy += 14) for (let xx = (yy / 14) % 2 ? 0 : 18; xx < w; xx += 36) { g.fillStyle = shade(a, -0.1); g.fillRect(x + xx, y + yy, 34, 1.5); g.fillRect(x + xx, y + yy, 1.5, 14); }
+      noise(g, x, y, w, h, 2200, 0.07);
+      for (let k = 0; k < n; k++) {
+        const cx = x + aw * (k + 0.5), ow = aw * 0.62, top = y + h * 0.16, bot = y + h, rx = ow / 2;
+        g.fillStyle = shade(a, -0.22); g.beginPath(); g.moveTo(cx - rx - 16, bot); g.lineTo(cx - rx - 16, top + rx); g.arc(cx, top + rx, rx + 16, Math.PI, 0); g.lineTo(cx + rx + 16, bot); g.closePath(); g.fill();
+        const ig = g.createLinearGradient(0, top, 0, bot); ig.addColorStop(0, shade(a, -0.48)); ig.addColorStop(1, shade(a, -0.28));
+        g.fillStyle = ig; g.beginPath(); g.moveTo(cx - rx, bot); g.lineTo(cx - rx, top + rx); g.arc(cx, top + rx, rx, Math.PI, 0); g.lineTo(cx + rx, bot); g.closePath(); g.fill();
+        g.fillStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.arc(cx, top + rx, rx + 16, Math.PI * 1.02, Math.PI * 1.45); g.arc(cx, top + rx, rx + 6, Math.PI * 1.45, Math.PI * 1.02, true); g.fill();
+        for (let q = 0; q < 4; q++) { g.fillStyle = q % 2 ? city.leaf[0] : city.leaf[1]; g.beginPath(); g.ellipse(cx - rx * 0.6 + q * rx * 0.42, bot - 8, rx * 0.34, h * 0.13, 0, Math.PI, 0); g.fill(); }
+        g.fillStyle = shade(a, 0.12); g.fillRect(x + aw * k, y, 10, h);
+      }
+      g.fillStyle = shade(a, -0.12); g.fillRect(x, y, w, 16);
+      g.fillStyle = shade(a, 0.15); g.fillRect(x, y + 16, w, 5);
+      if (city.id === 'subway' || city.id === 'london') { graffiti(g, pick(GWORDS), x + aw * 1.0 + rnd(-40, 40), y + h * 0.82, 52, pick(GCOLS), rnd(-0.1, 0.1)); }
+    }
+    function paintChev(g, r) {
+      const [x, y, w, h] = r;
+      g.fillStyle = '#ffffff'; g.fillRect(x, y, w, h);
+      g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+      g.fillStyle = '#e8323a';
+      for (let k = -1; k < 3; k++) { const yy = y + h * 0.15 + k * h * 0.42; g.beginPath(); g.moveTo(x + 10, yy + h * 0.5); g.lineTo(x + w / 2, yy); g.lineTo(x + w - 10, yy + h * 0.5); g.lineTo(x + w - 10, yy + h * 0.72); g.lineTo(x + w / 2, yy + h * 0.22); g.lineTo(x + 10, yy + h * 0.72); g.closePath(); g.fill(); }
+      g.restore();
+      g.strokeStyle = '#b81f22'; g.lineWidth = 6; g.strokeRect(x + 3, y + 3, w - 6, h - 6);
+    }
+    function patch() {
+      const c = cv(128, 128), g = c.getContext('2d');
+      g.fillStyle = '#2f6fd9'; g.beginPath(); for (let k = 0; k < 14; k++) { const a = k * TAU / 14, rr2 = k % 2 ? 50 : 60; g.lineTo(64 + Math.cos(a) * rr2, 64 + Math.sin(a) * rr2 * 0.8); } g.closePath(); g.fill();
+      g.strokeStyle = '#12224a'; g.lineWidth = 4; g.stroke();
+      graffiti(g, 'SS', 64, 66, 64, ['#fff36a', '#ff9a1a'], -0.08);
+      return canvasTex(c);
+    }
     function paintPlatform(g, r) {
       const [x, y, w, h] = r;
       g.fillStyle = '#d6d2c8'; g.fillRect(x, y, w, h);
@@ -365,5 +402,5 @@
       const t = new THREE.CanvasTexture(c); t.minFilter = t.magFilter = THREE.NearestFilter; t.generateMipmaps = false;
       return t;
     }
-    return { atlas, track, fence, sky, skyline, coin, blob, glow, label, toon };
+    return { atlas, track, fence, sky, skyline, coin, blob, glow, label, toon, patch };
   }

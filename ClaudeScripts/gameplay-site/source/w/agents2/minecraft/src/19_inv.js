@@ -270,6 +270,7 @@
       }
     }
     let TIPQ = null;
+    const EMPTYI = [['................', '................', '....########....', '...#........#...', '...#........#...', '...#........#...', '...#..####..#...', '...#.#....#.#...', '...###....###...'], ['..###......###..', '.#...######...#.', '.#............#.', '.##.#......#.##.', '..#.#......#.#..', '....#......#....', '....#......#....', '....#......#....', '....#......#....', '....#......#....', '....########....'], ['....########....', '....#......#....', '....#......#....', '....#..##..#....', '....#.#..#.#....', '....#.#..#.#....', '....#.#..#.#....', '....#.#..#.#....', '....#.#..#.#....', '....###..###....'], ['................', '................', '................', '................', '...###....###...', '...#.#....#.#...', '...#.#....#.#...', '..##.#....#.##..', '..#..#....#..#..', '..####....####..'], ['...##########...', '...#........#...', '...#........#...', '...#........#...', '...#........#...', '...#........#...', '....#......#....', '.....#....#.....', '......#..#......', '.......##.......']].map(r => { while (r.length < 14) r = r.length % 2 ? r.concat(['................']) : ['................'].concat(r); return tplC(r.concat(['................', '................']).slice(0, 16), ch => ch === '#' ? '#5c5c5c' : null); });
     function drawSlotBg(sl) { frame(sl.x, sl.y, 18); }
     function drawInv(now) {
       const [ox, oy, pw, ph] = layout();
@@ -280,8 +281,8 @@
       const T = (s, x, y) => text(s, ox + x, oy + y, '#404040', false);
       if (gui === 'inv') {
         T('Crafting', 97, 8);
-        g.fillStyle = '#000'; g.fillRect(ox + 25, oy + 7, 52, 72); g.fillStyle = '#2a2a2a'; g.fillRect(ox + 26, oy + 8, 50, 70);
-        drawPlayerModel(ox + 51, oy + 24, 1.7);
+        g.fillStyle = '#373737'; g.fillRect(ox + 25, oy + 7, 51, 1); g.fillRect(ox + 25, oy + 7, 1, 72); g.fillStyle = '#fff'; g.fillRect(ox + 26, oy + 78, 51, 1); g.fillRect(ox + 76, oy + 8, 1, 71); g.fillStyle = '#000'; g.fillRect(ox + 26, oy + 8, 50, 70);
+        g.save(); g.beginPath(); g.rect(ox + 26, oy + 8, 50, 70); g.clip(); drawPlayerModel(ox + 51, oy + 27, 1.75); g.restore();
         arrowGlyph(ox + 135, oy + 29, 0);
       } else if (gui === 'table') { T('Crafting', 28, 6); arrowGlyph(ox + 90, oy + 35, 0); }
       else if (gui === 'furnace' && guiBE) {
@@ -313,17 +314,17 @@
           const ty = oy + 18 + (mxs ? cScroll / mxs : 0) * 95;
           g.fillStyle = mxs ? '#c6c6c6' : '#9a9a9a'; g.fillRect(ox + 175, ty, 12, 15); g.fillStyle = '#fff'; g.fillRect(ox + 175, ty, 11, 1); g.fillRect(ox + 175, ty, 1, 14); g.fillStyle = '#555'; g.fillRect(ox + 176, ty + 14, 11, 1); g.fillRect(ox + 186, ty + 1, 1, 14);
         } else {
-          g.fillStyle = '#000'; g.fillRect(ox + 72, oy + 5, 34, 45); g.fillStyle = '#2a2a2a'; g.fillRect(ox + 73, oy + 6, 32, 43);
-          drawPlayerModel(ox + 89, oy + 16, 1);
+          g.fillStyle = '#000'; g.fillRect(ox + 73, oy + 6, 32, 43);
+          g.save(); g.beginPath(); g.rect(ox + 73, oy + 6, 32, 43); g.clip(); drawPlayerModel(ox + 89, oy + 18, 1); g.restore();
         }
       }
       for (const sl of slots) {
         if (sl.g === 'trash') { frame(sl.x, sl.y, 18); g.strokeStyle = '#a03030'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(sl.x + 3, sl.y + 3); g.lineTo(sl.x + 13, sl.y + 13); g.moveTo(sl.x + 13, sl.y + 3); g.lineTo(sl.x + 3, sl.y + 13); g.stroke(); continue; }
-        if (sl.g === 'out' || sl.g === 'scout' || sl.g === 'fout') { g.fillStyle = '#373737'; g.fillRect(sl.x - 5, sl.y - 5, 26, 26); g.fillStyle = '#fff'; g.fillRect(sl.x - 4, sl.y - 4, 25, 25); g.fillStyle = '#8b8b8b'; g.fillRect(sl.x - 4, sl.y - 4, 24, 24); }
+        if (sl.g === 'out' && gui === 'inv') drawSlotBg(sl);
+        else if (sl.g === 'out' || sl.g === 'scout' || sl.g === 'fout') { g.fillStyle = '#373737'; g.fillRect(sl.x - 5, sl.y - 5, 26, 26); g.fillStyle = '#fff'; g.fillRect(sl.x - 4, sl.y - 4, 25, 25); g.fillStyle = '#8b8b8b'; g.fillRect(sl.x - 4, sl.y - 4, 24, 24); }
         else drawSlotBg(sl);
         const st = sl.get();
-        if (!st && sl.g === 'armor') { g.globalAlpha = .35; g.drawImage(I.aC, sl.x + 4, sl.y + 4); g.globalAlpha = 1; }
-        if (!st && sl.g === 'off') { g.fillStyle = 'rgba(60,60,60,.4)'; g.fillRect(sl.x + 4, sl.y + 2, 8, 11); }
+        if (!st && (sl.g === 'armor' || sl.g === 'off')) g.drawImage(EMPTYI[sl.g === 'off' ? 4 : sl.i & 3], sl.x, sl.y);
         drawItem(st, sl.x, sl.y);
         if (drag && drag.list && drag.list.includes(sl)) { g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(sl.x, sl.y, 16, 16); }
       }
@@ -377,20 +378,22 @@
       if (!keepMouse && scr === 'game') lockMouse();
     }
     let signDirty = true;
+    let signTC = null;
     function drawSign() {
       g.fillStyle = 'rgba(16,16,16,.6)'; g.fillRect(0, 0, GW, GH);
       textC('Edit Sign Message', GW / 2, 20, '#ffffff');
-      const w = 104, x = (GW - w) >> 1, y = 44;
-      const s = guiPos ? getS(guiPos[0], guiPos[1], guiPos[2]) : 0, t = TT[STT[s]], tl = t && TIL[t.base * 6 + 4] >= 0 ? TIL[t.base * 6 + 4] : 0, col = tileAvg(tl);
-      g.fillStyle = `rgb(${col[0] | 0},${col[1] | 0},${col[2] | 0})`; g.fillRect(x, y, w, 56); ring(x, y, w, 56, 1, 'rgba(0,0,0,.5)');
-      if (!/hanging/.test(t ? t.id : '')) { g.fillStyle = `rgb(${col[0] * .6 | 0},${col[1] * .6 | 0},${col[2] * .6 | 0})`; g.fillRect(x + w / 2 - 4, y + 56, 8, 40); }
+      const w = 96, x = (GW - w) >> 1, y = 44;
+      const s = guiPos ? getS(guiPos[0], guiPos[1], guiPos[2]) : 0, t = TT[STT[s]], id = t ? t.id : 'oak_sign', wn = id.replace(/_(wall_)?(hanging_)?sign$/, '').replace(/_wall$/, ''), pl = TN[wn + '_planks'] ? wn + '_planks' : 'oak_planks';
+      if (!signTC || signTC.n !== pl) { const d = get(pl), c = cv(16, 16), q = c.getContext('2d'), im = q.createImageData(16, 16); im.data.set(d); q.putImageData(im, 0, 0); signTC = { n: pl, c }; }
+      if (!/hanging/.test(id) && !/wall/.test(id)) { g.drawImage(signTC.c, 7, 0, 2, 7, x + w / 2 - 6, y + 48, 12, 42); g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(x + w / 2 - 6, y + 48, 12, 42); }
+      g.drawImage(signTC.c, 0, 0, 16, 8, x, y, w, 48); ring(x, y, w, 48, 1, 'rgba(0,0,0,.35)');
       if (focusKey === 'sign') signLines[signLine] = inp.value.slice(0, 15);
       for (let i = 0; i < 4; i++) {
         const v = signLines[i] + (i === signLine && (performance.now() / 300 | 0) % 2 ? '_' : '');
-        textC(v, GW / 2, y + 6 + i * 12, '#000000', false);
+        textC(v, GW / 2, y + 5 + i * 10, '#000000', false);
         if (inR(mx, my, { x, y: y + 4 + i * 12, w, h: 12 })) { }
       }
-      fields.push({ key: 'sign', x, y: y + 4 + signLine * 12, w, h: 12, maxLen: 15, onEnter: () => { signLine = (signLine + 1) % 4; focusField('sign', signLines[signLine], 15); } });
+      fields.push({ key: 'sign', x, y: y + 4 + signLine * 10, w, h: 10, maxLen: 15, onEnter: () => { signLine = (signLine + 1) % 4; focusField('sign', signLines[signLine], 15); } });
       button(GW / 2 - 100, GH - 40, 200, 20, 'Done', () => closeGui());
-      for (let i = 0; i < 4; i++) btns.push({ x, y: y + 4 + i * 12, w, h: 12, en: true, fn: () => { signLines[signLine] = inp.value.slice(0, 15); signLine = i; focusField('sign', signLines[i], 15); } });
+      for (let i = 0; i < 4; i++) btns.push({ x, y: y + 4 + i * 10, w, h: 10, en: true, fn: () => { signLines[signLine] = inp.value.slice(0, 15); signLine = i; focusField('sign', signLines[i], 15); } });
     }

@@ -1295,6 +1295,37 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     shadowEll(x, 53, 92, 34, 6.5, .42);
     return c;
   }
+  function neoSprite(t, white, S) {
+    const def = STAUNTON[t], c = cnv(S, S), x = c.getContext('2d'), P = def.body.map(q => new Path2D(q));
+    const fill = white ? '#f9f9f9' : '#5c5956', line = white ? '#4a4744' : '#22201e';
+    x.scale(S / 100, S / 100); x.lineJoin = 'round'; x.lineCap = 'round';
+    x.strokeStyle = line; x.lineWidth = 5.2; P.forEach(p => x.stroke(p));
+    x.fillStyle = fill; P.forEach(p => x.fill(p));
+    x.globalCompositeOperation = 'source-atop';
+    const g = x.createLinearGradient(0, 0, 0, 100);
+    g.addColorStop(0, white ? 'rgba(255,255,255,0)' : 'rgba(255,255,255,.1)'); g.addColorStop(.62, 'rgba(0,0,0,0)'); g.addColorStop(1, white ? 'rgba(0,0,0,.16)' : 'rgba(0,0,0,.32)');
+    x.fillStyle = g; x.fillRect(0, 0, 100, 100);
+    x.globalCompositeOperation = 'source-over';
+    x.strokeStyle = line; x.lineWidth = 2.4;
+    (def.det || []).forEach(q => x.stroke(new Path2D(q)));
+    x.lineWidth = 3.4; (def.thick || []).forEach(q => x.stroke(new Path2D(q)));
+    x.lineWidth = 2.4;
+    for (const [y, r] of def.rings || []) { x.beginPath(); x.ellipse(50, y - 1, r * .92, r * .16, 0, .2, Math.PI - .2); x.stroke(); }
+    x.fillStyle = white ? line : '#f9f9f9'; (def.dots || []).forEach(q => x.fill(new Path2D(q)));
+    return c;
+  }
+  const CC_L = '#ebecd0', CC_D = '#779556';
+  function greenTex(flip) {
+    const d = dprOf(), c = cnv(SZ * d, SZ * d), x = c.getContext('2d');
+    x.scale(d, d); x.fillStyle = '#312e2b'; x.fillRect(0, 0, SZ, SZ);
+    for (let r = 0; r < 8; r++) for (let q = 0; q < 8; q++) { x.fillStyle = (r + q) & 1 ? CC_D : CC_L; x.fillRect(FR + q * SQ, FR + r * SQ, SQ, SQ); }
+    x.font = '800 15px Nunito, system-ui, sans-serif';
+    for (let i = 0; i < 8; i++) {
+      x.textBaseline = 'top'; x.textAlign = 'left'; x.fillStyle = i & 1 ? CC_L : CC_D; x.fillText(String(flip ? i + 1 : 8 - i), FR + 4, FR + i * SQ + 3);
+      x.textBaseline = 'bottom'; x.textAlign = 'right'; x.fillStyle = (7 + i) & 1 ? CC_L : CC_D; x.fillText(FILES[flip ? 7 - i : i], FR + (i + 1) * SQ - 4, FR + 8 * SQ - 2);
+    }
+    return c;
+  }
   const marbleSquares = (light, dark) => (x, rand, d) => {
     for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
       const dk = (r + c) & 1, t = dk ? dark : light, X = FR + c * SQ, Y = FR + r * SQ;
@@ -1349,8 +1380,9 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
   const MAT = [0, 1, 3, 3, 5, 9, 0];
 
   function mountChess(root, api) {
-    const E = chessEngine(), d = dprOf(), spr = {}, img = {}, texs = [null, null];
-    for (let t = 1; t <= 6; t++) { spr[t] = stauntonSprite(t, true, Math.round(SQ * d * 1.25)); spr[-t] = stauntonSprite(t, false, Math.round(SQ * d * 1.25)); }
+    const E = chessEngine(), d = dprOf(), sets = {}, texs = [null, null];
+    let spr = null, img = {};
+    const useSet = neo => { const key = neo ? 'n' : 's'; if (!sets[key]) { const o2 = {}, mk = neo ? neoSprite : stauntonSprite; for (let t = 1; t <= 6; t++) { o2[t] = mk(t, true, Math.round(SQ * d * 1.25)); o2[-t] = mk(t, false, Math.round(SQ * d * 1.25)); } sets[key] = o2; } if (spr !== sets[key]) { spr = sets[key]; img = {}; } };
     const imgOf = p => img[p] || (img[p] = spr[p].toDataURL());
     let flip = false, hist = [], keys = [], sel = -1, targets = [], legalNow = [], promo = null, anims = [], last = null, thinking = false, aiTok = 0, worker = null, wurl = '';
     const pend = new Map();
@@ -1384,19 +1416,31 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       return worker;
     };
     const k = kit(root, api, {
-      title: 'Chess', elo: eloName, keep: ['board'], onOpt: () => { texs[0] = texs[1] = null; k.dirty(); },
-      segs: [{ key: 'side', opts: ['White', 'Black'], only: 'CPU', txt: { White: 'Play White', Black: 'Play Black' } }, { key: 'board', opts: ['Wood', 'Marble', 'Green'] }],
+      title: 'Chess', elo: eloName, keep: ['board'], onOpt: () => { texs[0] = texs[1] = null; useSet(k.opt.board === 'Green'); refresh(); },
+      segs: [{ key: 'side', opts: ['White', 'Black'], only: 'CPU', txt: { White: 'Play White', Black: 'Play Black' } }, { key: 'board', opts: ['Green', 'Wood', 'Marble'] }],
       sides: { 1: ['White', CHIP_W], '-1': ['Black', CHIP_B] }, cpuSide: () => k.opt.side === 'Black' ? -1 : 1,
       flip: f => { if (flip !== f) { flip = f; k.dirty(); } },
       newGame, undo, draw, down, drop, remote, load, ai: aiTurn, ply: () => hist.length, list: () => hist.map(h => h.m),
       busy: () => anims.length > 0, started: () => hist.some(h => h.by === k.me)
     });
     const ctx = k.ctx, hide = new Uint8Array(128);
+    useSet(k.opt.board === 'Green');
+    const clk = { 1: 0, '-1': 0 }, clkEl = {};
+    let clkT = now();
+    for (const [w, s] of [['you', 1], ['ai', -1]]) { const pcEl = root.querySelector('.pc.' + w), sp = document.createElement('span'); sp.className = 'clk'; pcEl.append(sp); clkEl[w] = sp; }
+    const fmtT = ms => { const t = Math.floor(ms / 1000); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+    const clkShow = () => { clkEl.you.textContent = fmtT(clk[k.me]); clkEl.ai.textContent = fmtT(clk[-k.me]); clkEl.you.classList.toggle('run', !k.over && E.side === k.me && hist.length > 0); clkEl.ai.classList.toggle('run', !k.over && E.side === -k.me && hist.length > 0); };
+    api.interval(() => { const t = now(); if (!k.over && hist.length) clk[E.side] += t - clkT; clkT = t; clkShow(); }, 250);
+    const ccDot = (x, y, cap) => {
+      ctx.fillStyle = 'rgba(0,0,0,.14)'; ctx.strokeStyle = 'rgba(0,0,0,.14)';
+      if (cap) { ctx.lineWidth = SQ * .09; ctx.beginPath(); ctx.arc(x + SQ / 2, y + SQ / 2, SQ / 2 - SQ * .045, 0, 7); ctx.stroke(); }
+      else { ctx.beginPath(); ctx.arc(x + SQ / 2, y + SQ / 2, SQ * .165, 0, 7); ctx.fill(); }
+    };
     const sx = sq => FR + (flip ? 7 - (sq & 7) : sq & 7) * SQ;
     const sy = sq => FR + (flip ? sq >> 4 : 7 - (sq >> 4)) * SQ;
     const sqOf = cell => flip ? cell.r * 16 + 7 - cell.c : (7 - cell.r) * 16 + cell.c;
     const myTurn = () => !k.over && !thinking && k.local(E.side);
-    const makeTex = () => frameTex(7, BOARDS[k.opt.board] || BOARDS.Wood, x => {
+    const makeTex = () => k.opt.board === 'Green' ? greenTex(flip) : frameTex(7, BOARDS[k.opt.board] || BOARDS.Wood, x => {
       for (let i = 0; i < 8; i++) { x.fillText(FILES[flip ? 7 - i : i], FR + i * SQ + SQ / 2, SZ - FR / 2 + 1); x.fillText(String(flip ? i + 1 : 8 - i), FR / 2, FR + i * SQ + SQ / 2); }
     });
     const tex = () => texs[+flip] || (texs[+flip] = makeTex());
@@ -1404,6 +1448,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     function newGame(me) {
       E.load(START); aiTok++;
       hist = []; keys = [E.key()]; sel = -1; targets = []; promo = null; anims = []; last = null; thinking = false;
+      clk[1] = clk[-1] = 0; clkT = now();
       k.turnTo(E.side, k.mode === 'CPU' ? 'you play ' + (me === 1 ? 'White' : 'Black') : '');
       refresh();
     }
@@ -1525,8 +1570,8 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     function draw() {
       const t = now();
       ctx.drawImage(tex(), 0, 0, SZ, SZ);
-      if (last) { k.shade(sx(last.from), sy(last.from), 'rgba(255,214,70,.36)'); k.shade(sx(last.to), sy(last.to), 'rgba(255,214,70,.5)'); }
-      if (sel >= 0) k.shade(sx(sel), sy(sel), 'rgba(110,200,80,.5)');
+      if (last) { k.shade(sx(last.from), sy(last.from), 'rgba(255,255,51,.5)'); k.shade(sx(last.to), sy(last.to), 'rgba(255,255,51,.5)'); }
+      if (sel >= 0 && !(last && (sel === last.to || sel === last.from))) k.shade(sx(sel), sy(sel), 'rgba(255,255,51,.5)');
       if (E.inCheck()) {
         const kq = E.king(E.side), cx = sx(kq) + SQ / 2, cy = sy(kq) + SQ / 2, g = ctx.createRadialGradient(cx, cy, 4, cx, cy, SQ * .62);
         g.addColorStop(0, 'rgba(255,30,30,.95)'); g.addColorStop(.55, 'rgba(255,40,40,.5)'); g.addColorStop(1, 'rgba(255,40,40,0)');
@@ -1536,7 +1581,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       hide.fill(0);
       for (const a of anims) if (a.hide != null) hide[a.hide] = 1;
       if (dg) hide[sel] = 1;
-      for (const q of targets) if (E.at(q)) k.dot(sx(q), sy(q), true);
+      for (const q of targets) if (E.at(q)) ccDot(sx(q), sy(q), true);
       for (let sq = 0; sq < 120; sq++) {
         if (sq & 0x88) { sq += 7; continue; }
         const p = E.at(sq);
@@ -1548,7 +1593,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
         const hc = { c: Math.floor((dg.x - FR) / SQ), r: Math.floor((dg.y - FR) / SQ) };
         if (hc.c >= 0 && hc.c < 8 && hc.r >= 0 && hc.r < 8 && targets.includes(sqOf(hc))) { ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.strokeRect(FR + hc.c * SQ + 2, FR + hc.r * SQ + 2, SQ - 4, SQ - 4); }
       }
-      for (const q of targets) if (!E.at(q)) k.dot(sx(q), sy(q), false);
+      for (const q of targets) if (!E.at(q)) ccDot(sx(q), sy(q), false);
       let done = 0;
       for (const a of anims) {
         const u = clamp01((t - a.t0) / a.d);
@@ -1862,7 +1907,38 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     width: 760,
     engine: { chessEngine, START },
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 56h28M21 50h22"/><path d="M23 50c0-7 3-12 8-16-4 1-9 2-12-1-2-2-1-5 1-7 4-4 7-9 9-14l1-6 4 5c9 2 14 10 14 22 0 6-1 11-2 17"/><circle cx="30" cy="20" r="1.6" fill="currentColor"/></svg>',
-    css: kitCss('.gm-chess'),
+    css: kitCss('.gm-chess') + `
+.gm-chess{padding:12px;border-radius:16px;background:#312e2b;color:#fff}
+.gm-chess .main>canvas{background:#312e2b;box-shadow:none;border-radius:6px}
+.gm-chess .seg,.gm-chess .elo,.gm-chess .hist,.gm-chess .pc{background:#262421}
+.gm-chess .seg button{color:#bababa}
+.gm-chess .seg button:hover{color:#fff}
+.gm-chess .seg button.on{background:#454240;color:#fff;box-shadow:none}
+.gm-chess .elo-h{color:#bababa}
+.gm-chess .elo-h b{color:#fff}
+.gm-chess .elo-s{color:#8b8987}
+.gm-chess .elo input{accent-color:#81b64c}
+.gm-chess .pc{border-radius:8px;border-color:transparent}
+.gm-chess .pc.on{background:#262421;border-color:#81b64c;box-shadow:none}
+.gm-chess .pc b{color:#fff}
+.gm-chess .pc small{color:#989795}
+.gm-chess .pc small em{color:#bababa}
+.gm-chess .chip{border-radius:4px}
+.gm-chess .dots i{background:#81b64c}
+.gm-chess .clk{flex:none;margin-left:auto;padding:5px 8px;border-radius:4px;background:#2b2926;color:#7c7b79;font:800 15px/1 var(--mono);box-shadow:inset 0 0 0 1px #3c3a37}
+.gm-chess .clk.run{background:#fff;color:#262421;box-shadow:none}
+.gm-chess .st{color:#fff}
+.gm-chess .st.turn{background:#81b64c;box-shadow:0 4px 0 #45753c}
+.gm-chess .st.warn{color:#ffb347}
+.gm-chess .hist{color:#c3c2c1}
+.gm-chess .hist em{color:#8b8987}
+.gm-chess .hist .cur{color:#fff;background:#454240;border-radius:3px}
+.gm-chess .hist .none{color:#8b8987}
+.gm-chess .btns .g-btn{background:#81b64c;color:#fff;border:0;box-shadow:0 4px 0 #45753c}
+.gm-chess .btns .g-btn.ghost{background:#454240;color:#fff;box-shadow:0 4px 0 #2b2926}
+.gm-chess .btns .g-btn:disabled{opacity:.45}
+.gm-chess .cn{color:#bababa}
+@media (max-width:760px){.gm-chess{padding:8px}.gm-chess .clk{font-size:12px;padding:4px 5px}.gm-chess .pc{gap:6px;padding:6px 7px}}`,
     mount: mountChess
   });
   Ameplay.register({

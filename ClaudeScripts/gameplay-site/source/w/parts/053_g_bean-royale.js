@@ -212,12 +212,12 @@ ${G} .tb svg{width:46%;height:46%}
     const persist = () => api.save(prefs);
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0xd8ecff, 110, 420);
+    scene.fog = new THREE.Fog(0xcde9ff, 150, 620);
     const cam = new THREE.PerspectiveCamera(h > w ? 68 : 58, w / h, 0.1, 1000);
     cam.rotation.order = 'YXZ';
     {
       const g = own(new THREE.SphereGeometry(700, 24, 14)), p = g.attributes.position, cs = [];
-      const c0 = col('#ffe3f3'), c1 = col('#a8e1ff'), c2 = col('#58b6ff'), tc = new THREE.Color();
+      const c0 = col('#e4f4ff'), c1 = col('#8fd0ff'), c2 = col('#3c97ff'), tc = new THREE.Color();
       for (let i = 0; i < p.count; i++) { const y = p.getY(i) / 700, t = clamp(y * 1.4 + 0.08, 0, 1); if (t < 0.35) tc.copy(c0).lerp(c1, t / 0.35); else tc.copy(c1).lerp(c2, (t - 0.35) / 0.65); cs.push(tc.r, tc.g, tc.b); }
       g.setAttribute('color', new THREE.Float32BufferAttribute(cs, 3));
       var sky = new THREE.Mesh(g, own(new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false })));
@@ -560,6 +560,30 @@ ${G} .tb svg{width:46%;height:46%}
         const a = rnd(0, TAU), r = rnd(120, 300), cx = Math.cos(a) * r, cz = 90 + Math.sin(a) * r, cy = rnd(40, 110), cl = new THREE.Group();
         for (let k = 0; k < 7; k++) { const s = new THREE.Mesh(UG.sph, MAT.cloud), sz = rnd(5, 12) * (k === 2 || k === 3 ? 1.25 : 1); s.scale.set(sz * 1.3, sz * 0.8, sz); s.position.set(k * 5.5 - 16 + rnd(-2, 2), rnd(-2, 3) + (k === 2 || k === 3 ? 2 : 0), rnd(-4, 4)); cl.add(s); }
         cl.position.set(cx, cy, cz); cl.rotation.y = rnd(0, TAU); deco.add(cl);
+      }
+      const hillT = ctex(512, 512, (x, W) => {
+        x.fillStyle = '#86d64a'; x.fillRect(0, 0, W, W);
+        x.strokeStyle = '#a6e866'; x.lineWidth = 7; x.lineJoin = 'round';
+        for (let k = 0; k < 9; k++) {
+          const cx = rnd(0, W), cy = rnd(0, W), b = rnd(40, 150), ph = rnd(0, TAU);
+          for (let r = 1; r <= 3; r++) for (const dx of [-W, 0, W]) for (const dy of [-W, 0, W]) {
+            x.beginPath();
+            for (let j = 0; j <= 48; j++) { const t = j / 48 * TAU, rr = b * (0.45 + r * 0.28) * (1 + 0.22 * Math.sin(t * 3 + ph) + 0.12 * Math.sin(t * 5 - ph)); x.lineTo(cx + dx + Math.cos(t) * rr, cy + dy + Math.sin(t) * rr * 0.8); }
+            x.stroke();
+          }
+        }
+      }, true);
+      hillT.repeat.set(3, 2);
+      var farG = new THREE.Group(); farG.visible = false; scene.add(farG);
+      const hillM = mat('#ffffff', { map: hillT, roughness: 0.9 }), mtM = mat('#c58bd8', { roughness: 0.85 }), capM = mat('#ffd6ec', { roughness: 0.7, emissive: col('#ffb3d9'), emissiveIntensity: 0.25 });
+      for (let i = 0; i < 26; i++) {
+        const a = (i / 26) * TAU + rnd(-0.08, 0.08), r = rnd(330, 400), hw = rnd(70, 120), hh = rnd(22, 46);
+        const hl = new THREE.Mesh(UG.sph, hillM); hl.scale.set(hw, hh, hw * rnd(0.6, 0.9)); hl.position.set(Math.cos(a) * r, -8, 90 + Math.sin(a) * r); hl.rotation.y = -a; farG.add(hl);
+      }
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * TAU + rnd(-0.12, 0.12), r = rnd(470, 540), mr = rnd(60, 95), mh = rnd(110, 190);
+        const mt = new THREE.Mesh(UG.cone, mtM); mt.scale.set(mr, mh, mr); mt.position.set(Math.cos(a) * r, mh / 2 - 12, 90 + Math.sin(a) * r); farG.add(mt);
+        const cp = new THREE.Mesh(UG.cone, capM), k = 0.36; cp.scale.set(mr * k * 1.06, mh * k, mr * k * 1.06); cp.position.set(mt.position.x, mh - 12 - mh * k / 2 + 0.5, mt.position.z); farG.add(cp);
       }
       for (let i = 0; i < 6; i++) {
         const tor = new THREE.Mesh(own(new THREE.TorusGeometry(9, 3, 14, 36)), mat(DC[i % 6], { map: candyT, roughness: 0.32 }));
@@ -1274,7 +1298,7 @@ ${G} .tb svg{width:46%;height:46%}
     function toLobby() {
       endRound(); phase = 'lobby'; phaseT = 0; paused = false; unlock();
       musicWanted = true; audio.music(true);
-      hud.hidden = true; tc.hidden = true; lobby.visible = true;
+      hud.hidden = true; tc.hidden = true; lobby.visible = true; farG.visible = false;
       for (const b of beans) { b.gone = true; b.mesh.visible = false; }
       player.gone = false; player.p.copy(LOB); player.v.set(0, 0, 0); player.state = 'run'; player.ground = true; player.yaw = 0.4; player.q.identity();
       slime.position.y = -6;
@@ -1313,7 +1337,7 @@ ${G} .tb svg{width:46%;height:46%}
       show = { rounds: [Math.random() < 0.5 ? 'whirl' : 'doors', 'slime', 'hex', 'crown'], idx: 0, points: 10, log: [], submitted: false, best: false, winner: null };
       for (const b of beans) b.out = false;
       prefs.shows++; persist(); api.score(show.points);
-      lobby.visible = false; startRound(0);
+      lobby.visible = false; farG.visible = true; startRound(0);
     }
     function startRound(i) {
       endRound(); newRound(); confetti.clear();

@@ -284,30 +284,39 @@
 
   const LEVEL_DEFS = [
     {
-      name: 'Neon Steps', diff: 1, stars: 1, bpm: 120, end: 140, speeds: [[0, 1]], song: 0, proof: [8, 6],
-      pal: [['#2a5cff', '#1a3fd6'], ['#4a2cff', '#2c1cc8'], ['#b42cff', '#7a1cd6'], ['#ff2c8c', '#c81c62'], ['#2cb8ff', '#1c7ed6'], ['#2a5cff', '#1a3fd6']],
+      name: 'Stereo Madness', diff: 1, stars: 1, bpm: 160, end: 236, speeds: [[0, 1]], song: 0, proof: [8, 6],
+      pal: [['#2a6cff', '#1a46e0'], ['#7a2cff', '#4c1cc8'], ['#2a6cff', '#1a46e0'], ['#c42cff', '#8a1cd6'], ['#ff2c6e', '#c81c4a'], ['#ff3a3a', '#b81c1c']],
       map: `~0
-        @8 ^ @12 ^ @16 ^ @18 ^ @20 ^x2 @24 ^ @25 ^ @26 ^x2
-        ~1 @28 #0x3 ^x2 #0x3 ^x2 #0x3
-        @32 #0x2 #0,2x2 #0,3x3 ^x4 #0,2x3 #0x2 ^
-        ~2 @40 ^ @41 ^x2 @42 ^ @43 ^x2
-        @44 y 1.5 #0,4x8 -5 ^4 4 6 ^
-        @50 _1x2 ^x3 _1x2 ^x3 _1x2 ^x2
-        @54 ^ @55 #0x2|$3 @56 ^x2
-        ~3 @60 #0x2 ^x3 #0x2 ^x3 #0,2x2 ^x3 #0,2x2
-        @65 y 2 ^x4 #0x3 ^x2
-        @68 ^ @69 ^ @70 #0x4 -2 ^1 2 ^x2 #0x2
-        ~4 @74 _1x3 2 _2x3 2 _3x3 ^x3 #0,2x2 ^
-        @80 . 2 . @82 ^ . @84 ^x2
-        @86 #0,1x2 ^x2 #0,2x2 ^x2 #0,3x2 ^x3 #0,2x3
-        ~2 @92 y 1 ^x5 #0x4 ^x2 #0x3
-        @97 ^ @98 ^x2 @99 ^ @100 ^x2
-        @102 #0x3 Y3|^x3 ^x2 #0x3|$4
-        ~3 @106 #0,2x3 ^x2 #0,2x3 ^x2 #0,3x3 ^x3 #0,3x2
-        @112 y 1.5 #0,4x5 ^x2 #0,4x4 6 ^
-        @117 ^ @118 ^x2 @119 . @120 ^x2
-        ~5 @122 #0x2 #0,2x2 1 _3x3 -1 $5 1 4 ^x3
-        @128 ^ @130 ^ @132 ^x2 @135 ^`
+        @6 ^ @10 ^ @14 ^x2
+        @18 #0x2 ^x2 #0,2x2 ^x2 #0x2
+        @24 ^ @26 ^x2 @28.5 ^
+        @31 _1x3 2 _2x3 2 _3x3 -13 3 ^x2 3 ^x2 3 ^x3
+        ~1 @40 #0x1 ^x3 #0x1
+        @44 ^ @45.5 ^x2
+        @48 #0,2x3 ^x2 #0,2x3 ^x2 #0,3x3 ^x3
+        ~2 @57 #0x1 _2x5|^x5 ^x2
+        @62 ^ @63 ^x2 @65 #0x1 #0,2x2
+        ~1 @68 %S 6 #0,2x4|^2x4 6 #7,3x4|v6x4 6 #0,3x4|^3x4 6 #6,4x4|v5x4 6 #0,4x4|^4x4 6 #7,3x4|v6x4
+        @86 #0,3x20|#7,3x20 -20 3 ^3 4 v6 4 ^3 4 v6
+        @93 #5,5x6|v4x6 5 #0,5x6|^5x6 5 #4,6x4|v3x4
+        @101 #0,2x6|^2x6 4 #8,2x6 4 #0,3x4|^3x4 5 %C5,5
+        ~2 @110 ^ @112 ^x2
+        @116 #0x2 1 #0,2x2 1 #0,3x2|$5 ^x3
+        @124 ^ @125.5 ^x2
+        ~3 @130 #0,1x3 ^x2 #0,2x3 ^x2 #0,1x3
+        @138 ^ @139.5 ^ @141 ^x2
+        @144 #0x1 ^x3 #0x1 ^x3 #0x1
+        ~2 @150 ^x18 -18 _1x4 2 _2x4 2 _1x4 2 _2x4
+        @157 #0,2x2 ^x2 #0,2x2
+        @161 ^ @162.5 ^x2
+        ~3 @167 ^x14 -14 _1x2 2 _2x2 2 _3x2 2 _3x2 #0,4x2 #0,3x2 #0,2x2|$5 #0,1x2 2 .
+        ~4 @181 ^ @182.5 ^x2
+        @185 #0x3 ^x2 #0,2x3 ^x2 #0,3x3 ^x3
+        @193 ^ @194.5 ^x2 @197 #0x1 #0,2x1
+        ~5 @200 %S 6 #0,3x4|^3x4 5 #7,3x4|v6x4 5 #0,4x4|^4x4 5 #6,4x4|v5x4 5
+        @211.5 #0,3x14|#7,3x14 -14 3 ^3 4 v6 4 ^3
+        @217 #0,4x4|^4x4 5 #6,4x4|v5x4 5
+        @224 #8,2x12 #6,2x3|v5x3 4 #6,2x3|v5x3 -6 $6 2 6 #0,2x4|^2x4`
     },
     {
       name: 'Skyline Drift', diff: 2, stars: 3, bpm: 128, end: 160, speeds: [[0, 1]], song: 1, proof: [8, 6],
@@ -392,7 +401,7 @@
   ];
   const SCALES = { min: [0, 2, 3, 5, 7, 8, 10], maj: [0, 2, 4, 5, 7, 9, 11], dor: [0, 2, 3, 5, 7, 9, 10] };
   const SONGS = [
-    { bpm: 120, root: 57, sc: 'min', prog: [0, 5, 3, 4], lw: 'square', sec: [[2, 'pa'], [6, 'khbpac'], [4, 'khsbplc'], [4, 'khsbpl'], [2, 'pa'], [2, 'paSr'], [8, 'khsBpLc'], [4, 'khsbpl'], [3, 'pac']],
+    { bpm: 160, root: 57, sc: 'min', prog: [0, 5, 3, 4], lw: 'square', sec: [[2, 'pa'], [6, 'khbpac'], [8, 'khsbpl'], [1, 'paSr'], [10, 'khsBpLc'], [8, 'khsbplc'], [8, 'khsBpl'], [6, 'khsbpL'], [1, 'paSr'], [8, 'khsBpLc'], [1, 'pac']],
       l: '0.4.7.4.9.7.4.2.0.4.7.9.b-9.7...', L: '7.7.9.7.6.4.2.4.7.7.9.a.b-a.9.7.' },
     { bpm: 128, root: 50, sc: 'dor', prog: [0, 6, 5, 6], lw: 'sawtooth', sec: [[2, 'pa'], [6, 'khbpa'], [8, 'khsBpLc'], [4, 'khbpl'], [3, 'khsbpl'], [1, 'paSr'], [8, 'khsBpLc'], [8, 'khsbplc']],
       l: '4-.4.6.7-.6.4.2.4-.4.6.7.9-.7.6.', L: '9.7.9.b.9.7.6.4.6.7.9.7.6-4-2-..' },
@@ -690,6 +699,7 @@
     better: 'high',
     format: v => v + '%',
     width: 960,
+    ownPause: true,
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-20 22 28)"><rect x="10" y="16" width="24" height="24" rx="2"/><rect x="16" y="22" width="12" height="12" rx="1"/></g><path d="M36 52l7-13 7 13zM48 52l5-9 5 9zM4 52h56"/><path d="M2 26h5M2 34h8" opacity=".6"/></svg>',
     css: '.gm-dash-cube{touch-action:none}.gm-dash-cube .g-canvas{background:#1a3fd6}',
     mount(root, api) {
@@ -1310,8 +1320,7 @@
         camX = menuX; camY = -90;
         drawBg(bgc, grc, menuX, -90, beat, 0, 1e9);
         ctx.save(); ctx.translate(((T * 150) % (W + 120)) - 60, sy(menuCube.y)); ctx.rotate(menuCube.r); cubeIcon(ctx, sv.icon, col1(), col2(), 30 * SC); ctx.restore();
-        goldTxt('GEOMETRY', W / 2, 74, narrow ? 54 : 64);
-        goldTxt('DASH', W / 2, 140, narrow ? 54 : 64);
+        goldTxt('GEOMETRY DASH', W / 2, 100, narrow ? 50 : 68);
         const y = 238, gap = narrow ? 170 : 200;
         if (!infoOpen) {
         btn(W / 2, y, 74, '#5ad100', r => { ctx.beginPath(); ctx.arc(0, 0, r * 0.66, 0, 7); ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fill(); ico.play(r * 0.95); }, () => { music.sfx('click'); scr = 'levels'; });
@@ -1429,13 +1438,15 @@
         music.init();
         if (scr === 'play' || scr === 'dead') {
           if (isJump(c)) { keyHeld = true; if (!e.repeat) onPress(); return; }
-          if (c === 'KeyP' && scr === 'play') { pause(); return; }
+          if ((c === 'KeyP' || c === 'Escape') && scr === 'play') { e.preventDefault(); pause(); return; }
           if (c === 'KeyZ' && !e.repeat) { addCp(false); return; }
           if (c === 'KeyX' && !e.repeat && practice) { cps.pop(); return; }
           return;
         }
         if (e.repeat) return;
-        if (scr === 'pause') { if (c === 'KeyP' || c === 'Enter' || c === 'Space') resume(); return; }
+        if (scr === 'pause') { if (c === 'KeyP' || c === 'Enter' || c === 'Space' || c === 'Escape') { e.preventDefault(); resume(); } return; }
+        if (c === 'Escape' && (scr === 'levels' || scr === 'kit')) { e.preventDefault(); scr = 'menu'; persist(); return; }
+        if (c === 'Escape' && scr === 'done') { e.preventDefault(); goLevels(); return; }
         if (scr === 'menu') { if (!music.on) music.play(5, true); if (c === 'Enter' || c === 'Space') { infoOpen = false; scr = 'levels'; } return; }
         if (scr === 'levels') {
           if (c === 'ArrowLeft' && li > 0) { li--; sv.li = li; persist(); }

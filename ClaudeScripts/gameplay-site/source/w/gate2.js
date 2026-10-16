@@ -43,8 +43,8 @@ const { gz, iv, ct } = seal(Buffer.from(html, 'utf8'));
 const page = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>gameplay</title>
 ${fonts ? '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' : ''}<style>
-:root{color-scheme:light dark;--bg:#f6f4ff;--card:#fff;--ink:#17142b;--muted:#6b6785;--accent:#6d4cf5;--ink-a:#fff;--line:#e6e2f6;--bad:#d93a4a}
-@media (prefers-color-scheme:dark){:root{--bg:#12101f;--card:#1b182d;--ink:#f0eeff;--muted:#a29fc0;--accent:#8e74ff;--ink-a:#12101f;--line:#2f2a50;--bad:#ff6b7a}}
+:root{color-scheme:light;--bg:#f6f4ff;--card:#fff;--ink:#17142b;--muted:#6b6785;--accent:#6d4cf5;--ink-a:#fff;--line:#e6e2f6;--bad:#d93a4a;--soft:#ece8ff}
+:root.dk{color-scheme:dark;--bg:#12101f;--card:#1b182d;--ink:#f0eeff;--muted:#a29fc0;--accent:#8e74ff;--ink-a:#12101f;--line:#2f2a50;--bad:#ff6b7a;--soft:#2b2552}
 *{box-sizing:border-box}html,body{height:100%;margin:0}
 body{display:grid;place-items:center;padding:16px;background:var(--bg);color:var(--ink);font:16px/1.4 "Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .c{width:100%;max-width:360px;padding:32px 24px;border-radius:22px;background:var(--card);border:1px solid var(--line);box-shadow:0 24px 60px -30px rgba(31,29,43,.45);text-align:center}
@@ -56,9 +56,13 @@ input{font-family:inherit}input:focus{border-color:var(--accent);box-shadow:0 0 
 button{width:100%;margin-top:12px;padding:13px;border:0;border-radius:12px;background:var(--accent);color:var(--ink-a);font-weight:800;font-size:16px;font-family:inherit;cursor:pointer}
 button:disabled{opacity:.6;cursor:default}
 .m{min-height:20px;margin:12px 0 0;font-size:14px;color:var(--muted)}.m.b{color:var(--bad)}
+.c{animation:in .45s cubic-bezier(.22,.8,.2,1)}@keyframes in{from{opacity:0;transform:translateY(12px) scale(.97)}}
+button{transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s}button:active{transform:scale(.97)}
+.sp{position:fixed;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:4px solid var(--soft);border-top-color:var(--accent);animation:spin .8s linear infinite,fade .3s .25s backwards}
+.sp[hidden]{display:none}@keyframes spin{to{transform:rotate(360deg)}}@keyframes fade{from{opacity:0}}
 .shake{animation:sh .35s}@keyframes sh{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
-</style></head><body>
-<form class="c" id="f" autocomplete="off"><div class="lg"><i>&#9654;</i>gameplay</div><h1 id="h">Enter the password</h1><p id="t">This site is private.</p><input id="p" type="password" placeholder="Password" autofocus aria-label="Password"><button id="b">Unlock</button><div class="m" id="m"></div></form>
+</style><script>try{var t=(JSON.parse(localStorage.getItem('gameplay:v1')||'{}')||{}).prefs||{};if(t.theme==='dark'||(t.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.className='dk'}catch(e){}</script></head><body>
+<div class="sp" id="sp" hidden></div><form class="c" id="f" autocomplete="off"><div class="lg"><i>&#9654;</i>gameplay</div><h1 id="h">Enter the password</h1><p id="t">This site is private.</p><input id="p" type="password" placeholder="Password" autofocus aria-label="Password"><button id="b">Unlock</button><div class="m" id="m"></div></form>
 <script>
 (() => {
   const D = { s: '${salt.toString('base64')}', i: '${iv.toString('base64')}', n: ${iter}, c: '${ct.toString('base64')}', d: ${JSON.stringify(plan.dir)}, p: ${JSON.stringify(pre)} };
@@ -95,7 +99,7 @@ button:disabled{opacity:.6;cursor:default}
   if ((st.f || 0) >= MAX) { lock(); return; }
   const left = () => { const n = MAX - (st.f || 0); return n + (n === 1 ? ' try' : ' tries') + ' left'; };
   if (st.f) $('m').textContent = left();
-  if (st.k) { $('f').style.visibility = 'hidden'; const raw = b64(st.k); warm(); show(raw).then(t => put(t, raw), () => { delete st.k; wr(st); $('f').style.visibility = ''; }); }
+  if (st.k) { $('f').style.visibility = 'hidden'; $('sp').hidden = false; const raw = b64(st.k); warm(); show(raw).then(t => put(t, raw), () => { delete st.k; wr(st); $('f').style.visibility = ''; $('sp').hidden = true; }); }
   $('f').addEventListener('submit', async e => {
     e.preventDefault();
     const pw = $('p').value;

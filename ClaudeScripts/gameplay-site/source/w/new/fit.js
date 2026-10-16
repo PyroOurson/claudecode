@@ -1,4 +1,5 @@
-const stageMode = () => document.fullscreenElement === gamebox ? 'fs' : (view === 'game' && gamebox.classList.contains('theater')) ? 'theater' : 'off';
+const shortQuery = window.matchMedia ? matchMedia('(max-height: 520px) and (orientation: landscape)') : { matches: false };
+const stageMode = () => gamebox.classList.contains('fs') ? 'fs' : (view === 'game' && gamebox.classList.contains('theater')) ? 'theater' : 'off';
 function fitStage() {
   const mode = stageMode();
   const frameEl = document.getElementById('frame'), st = document.getElementById('stage');
@@ -22,15 +23,16 @@ function fitStage() {
   const sw = st.clientWidth;
   let s, sh;
   if (mode === 'fs') {
-    const pad = 18;
     sh = st.clientHeight;
+    const pad = root.querySelector('canvas') ? 0 : 20;
     s = Math.max(0.3, Math.min((sw - pad * 2) / cw, (sh - pad * 2) / ch, 4));
   } else {
     const pad = 12, bar = gamebox.querySelector('.play-bar');
-    const availH = Math.max(380, innerHeight - 64 - 8 - (bar ? bar.offsetHeight : 60) - 30);
-    const minS = root.querySelector('canvas') ? 0.55 : 1;
+    const short = shortQuery.matches;
+    const availH = short ? Math.max(150, innerHeight - (bar ? bar.offsetHeight : 50) - 2) : Math.max(380, innerHeight - 64 - 8 - (bar ? bar.offsetHeight : 60) - 30);
+    const minS = short ? 0.3 : root.querySelector('canvas') ? 0.55 : 1;
     s = Math.max(minS, Math.min((sw - pad * 2) / cw, (availH - pad * 2) / ch, 2.4));
-    sh = Math.max(440, Math.ceil(ch * s + pad * 2));
+    sh = short ? availH : Math.max(440, Math.ceil(ch * s + pad * 2));
     if (st.style.height !== sh + 'px') st.style.height = sh + 'px';
   }
   const fl = (sw - frameEl.offsetWidth) / 2, ft = (sh - frameEl.offsetHeight) / 2;
@@ -41,4 +43,4 @@ function fitStage() {
   fsScale = s; fsT = [tx, ty]; applyGlScale(s);
 }
 const queueFit = () => { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(fitStage); };
-function startFitTimer() { clearInterval(fitTimer); fitTimer = setInterval(() => { if (stageMode() !== 'off') fitStage(); }, 700); }
+function startFitTimer() { clearInterval(fitTimer); fitTimer = setInterval(() => { if (stageMode() !== 'off') fitStage(); }, 1500); }

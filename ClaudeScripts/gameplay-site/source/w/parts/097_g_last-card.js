@@ -549,7 +549,9 @@
     { bg: '#ff9db0', skin: '#f6d2b5', hair: '#d9822b', shirt: '#1d6fc8', h: 2 },
     { bg: '#b9a5ff', skin: '#8d5a3b', hair: '#121212', shirt: '#fcc916', h: 3 },
     { bg: '#8ee09a', skin: '#efc19d', hair: '#7a4a24', shirt: '#7a3fd0', h: 1 },
-    { bg: '#ffb27a', skin: '#d9a07a', hair: '#2a2a33', shirt: '#14a3a3', h: 0 }
+    { bg: '#ffb27a', skin: '#d9a07a', hair: '#2a2a33', shirt: '#14a3a3', h: 0 },
+    { bg: '#9fe3e0', skin: '#f1c7a5', hair: '#a8452a', shirt: '#e85d9a', h: 2 },
+    { bg: '#ffe08a', skin: '#6e4630', hair: '#151515', shirt: '#3b5bdb', h: 3 }
   ];
   function avatar(x, cx, cy, r, i) {
     const a = AV[i % AV.length];
@@ -573,7 +575,7 @@
   }
 
   const ICON_MENU = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>';
-  const CPU_NAMES = ['Rosa', 'Theo', 'Kai', 'Mila', 'Otto', 'Jade'];
+  const CPU_NAMES = ['Rosa', 'Theo', 'Kai', 'Mila', 'Otto', 'Jade', 'Leo', 'Nora', 'Ivy'];
   const RULES = `<h3>How to play</h3><div class="lc-rules">
 <p><b>Goal:</b> be the first to play every card in your hand. Each player starts with 7 cards.</p>
 <p><b>On your turn</b> play one card that matches the top card by <b>colour</b>, <b>number</b> or <b>symbol</b>, or play a Wild. If you can't (or don't want to), tap the deck to draw one card. If the drawn card fits you may play it straight away, otherwise your turn ends.</p>
@@ -647,8 +649,9 @@
 .gm-last-card .lc-seg button{flex:1;min-height:44px;border-radius:12px;border:2px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font:900 14px var(--sans);padding:0 4px}
 .gm-last-card .lc-seg button.on{background:#fcc916;border-color:#fff;color:#1b1b1f}
 .gm-last-card .lc-title{width:100%;max-width:380px;text-align:center;margin-top:auto}
-.gm-last-card .lc-logo{font:900 54px/0.92 var(--sans);font-style:italic;letter-spacing:1px;color:#fff;-webkit-text-stroke:2.5px #121214;paint-order:stroke fill;text-shadow:0 5px 0 #121214,0 10px 22px rgba(0,0,0,.4);transform:rotate(-5deg);margin:0 0 6px}
-.gm-last-card .lc-logo b{color:#fcc916;font-weight:900}
+.gm-last-card .lc-logo{position:relative;display:inline-block;padding:14px 34px 16px;font:900 60px/0.92 var(--sans);font-style:italic;letter-spacing:-1px;color:#ffe11b;-webkit-text-stroke:3px #121214;paint-order:stroke fill;text-shadow:2px 2px 0 #121214,4px 4px 0 #121214,6px 6px 0 #121214,7px 8px 0 #3a3a3e;transform:rotate(-14deg);margin:4px 0 14px;isolation:isolate}
+.gm-last-card .lc-logo::before{content:'';position:absolute;inset:0;z-index:-1;border-radius:50%;background:radial-gradient(ellipse at 45% 35%,#ff3b30,#e2131a 55%,#b40d12);border:4px solid #121214;box-shadow:0 0 0 3px #ffe11b,0 10px 24px rgba(0,0,0,.45)}
+.gm-last-card .lc-logo b{color:#ffe11b;font-weight:900}
 .gm-last-card .lc-tag{font:800 13px var(--sans);color:rgba(255,255,255,.85);margin:6px 0 8px;text-shadow:0 1px 2px rgba(0,0,0,.5)}
 .gm-last-card .lc-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 6px}
 .gm-last-card .lc-cols button{height:74px;border-radius:18px;border:4px solid #fff;font:900 17px var(--sans);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.3);box-shadow:inset 0 -6px 0 rgba(0,0,0,.2),0 6px 14px rgba(0,0,0,.3)}
@@ -683,14 +686,14 @@
       ui.innerHTML = `<button class="lc-ico" data-u="menu" aria-label="Menu" hidden>${ICON_MENU}</button>
 <button class="lc-keep" data-u="keep" hidden>Keep</button>
 <button class="lc-last" data-u="last" disabled hidden>UNO!</button>
-<button class="lc-catch" data-u="c1" hidden>Catch!</button><button class="lc-catch" data-u="c2" hidden>Catch!</button><button class="lc-catch" data-u="c3" hidden>Catch!</button>
+${[1, 2, 3, 4, 5, 6, 7].map(i => `<button class="lc-catch" data-u="c${i}" hidden>Catch!</button>`).join('')}
 <div class="lc-net" hidden><i></i><span>Online</span></div>
 <div class="lc-pane" hidden></div>`;
       wrap.append(cv, ui); root.append(wrap);
       const ctx = cv.getContext('2d');
       const $u = s => ui.querySelector(s);
       const bMenu = $u('[data-u=menu]'), bKeep = $u('[data-u=keep]'), bLast = $u('[data-u=last]'), pane = $u('.lc-pane'), netEl = $u('.lc-net');
-      const bCatch = [null, $u('[data-u=c1]'), $u('[data-u=c2]'), $u('[data-u=c3]')];
+      const bCatch = [null, 1, 2, 3, 4, 5, 6, 7].map(i => i && $u('[data-u=c' + i + ']'));
 
       let W = 960, H = 600, PORT = null, DPR = 1, L = null, SP = null, feltC = null, scene = 'title';
       const D = { n: 2, hand: [], counts: [0, 0], pile: [], deckN: 108, col: -1, dir: 1, turn: -1, scores: [0, 0], reveal: null, focus: -1, ringRot: 0, spin: 0 };
@@ -780,16 +783,19 @@
       }
       function layout() {
         const P = PORT, n = D.n;
-        L = { cw: P ? 64 : 84, ch: P ? 96 : 126, av: P ? 23 : 32 };
+        const many = n > 4;
+        L = { cw: P ? 64 : 84, ch: P ? 96 : 126, av: P ? (many ? 19 : 23) : (many ? 27 : 32), many };
         L.ring = P ? { x: 180, y: 282, r: 106 } : { x: 480, y: 262, r: 146 };
         L.deck = { x: L.ring.x - (P ? 50 : 66), y: L.ring.y };
         L.pile = { x: L.ring.x + (P ? 50 : 66), y: L.ring.y };
         L.status = { x: L.ring.x, y: L.ring.y + (P ? 74 : 96) };
         const SEATS = P ? { 2: [[180, 60]], 3: [[92, 66], [268, 66]], 4: [[58, 92], [180, 54], [302, 92]] }
           : { 2: [[480, 64]], 3: [[170, 100], [790, 100]], 4: [[78, 238], [480, 62], [882, 238]] };
-        L.seat = [{ x: P ? 30 : 70, y: P ? 418 : 530 }].concat((SEATS[n] || SEATS[2]).map(([x, y]) => ({ x, y })));
+        const arc = m => [...Array(m).keys()].map(i => { const a = Math.PI * (P ? 1.04 : 1.07) + Math.PI * (P ? .92 : .86) * i / (m - 1); return P ? [180 + 148 * Math.cos(a), 206 + 160 * Math.sin(a)] : [480 + 408 * Math.cos(a), 292 + 236 * Math.sin(a)]; });
+        L.seat = [{ x: P ? 30 : 70, y: P ? 418 : 530 }].concat((SEATS[n] || arc(n - 1)).map(([x, y]) => ({ x, y })));
         L.fan = L.seat.map((s, r) => {
           if (!r) return s;
+          if (many) return P ? { x: s.x, y: s.y, ang: 0 } : { x: s.x, y: s.y + L.av + 58, ang: 0 };
           if (P) return { x: s.x, y: s.y + L.av + 50, ang: 0 };
           if (n === 4 && r !== 2) return { x: s.x, y: s.y + 88, ang: 0 };
           return { x: s.x + (s.x > W / 2 ? -100 : 100), y: s.y + 4, ang: 0 };
@@ -814,7 +820,7 @@
         if (!L) return;
         if (PORT) { bMenu.style.left = '8px'; bMenu.style.top = `calc(${L.row / H * 100}% - 23px)`; pct(bLast, 278, L.row); pct(bKeep, 112, L.row); }
         else { bMenu.style.left = '10px'; bMenu.style.top = '10px'; pct(bLast, 878, 538); pct(bKeep, 878, 468); }
-        for (let r = 1; r < 4; r++) { const s = L.seat[r]; if (s) pct(bCatch[r], s.x, s.y + (PORT ? 6 : 10)); }
+        for (let r = 1; r < 8; r++) { const s = L.seat[r]; if (s) pct(bCatch[r], s.x, s.y + (PORT ? 6 : 10)); }
       }
 
       const rel = p => ((p - viewer) % D.n + D.n) % D.n;
@@ -864,7 +870,7 @@
         return -1;
       }
       const hitDeck = (x, y) => Math.abs(x - L.deck.x) < L.cw / 2 + 6 && Math.abs(y - L.deck.y) < L.ch / 2 + 6;
-      const fanPos = p => { const f = L.fan[rel(p)] || L.fan[0]; return { x: f.x, y: f.y, r: 0, s: .42 }; };
+      const fanPos = p => { const f = L.fan[rel(p)] || L.fan[0]; return { x: f.x, y: f.y, r: 0, s: L.many ? (PORT ? .3 : .36) : .42 }; };
       const anchor = (p, dy = 0) => rel(p) ? { x: seatXY(p).x, y: seatXY(p).y + L.av + 30 + dy } : { x: W / 2, y: (PORT ? L.row - 40 : H - 175) + dy };
       const jit = id => ({ id, dx: rnd(-7, 7), dy: rnd(-6, 6), r: rnd(-.38, .38) });
 
@@ -1228,8 +1234,8 @@
         api.score('—');
         const l = m => opt.mode === m ? ' last' : '';
         showPane('title', `<div class="lc-title"><div class="lc-logo">UN<b>O</b></div><p class="lc-tag">Match the colour or number. Call it at one card.</p>
-<button class="lc-big red${l('cpu')}" data-a="m:cpu">vs CPU<small>Play 1-3 computer opponents</small></button>
-<button class="lc-big green${l('online')}" data-a="m:online">Online party<small>2-4 players, each on their own device</small></button>
+<button class="lc-big red${l('cpu')}" data-a="m:cpu">vs CPU<small>Play 1-7 computer opponents</small></button>
+<button class="lc-big green${l('online')}" data-a="m:online">Online party<small>2-8 players, each on their own device</small></button>
 <div class="lc-row"><button class="lc-sm" data-a="house">House rules</button><button class="lc-sm" data-a="rules">How to play</button></div></div>`, a => {
           if (a.startsWith('m:')) { opt.mode = a.slice(2); saveOpt(); setup(); }
           else if (a === 'house') house(showTitle);
@@ -1239,8 +1245,8 @@
       function setup() {
         const m = opt.mode;
         const body = m === 'cpu'
-          ? `<h3>vs CPU</h3><div class="lc-opt"><span>Opponents</span>${seg('cpus', [1, 2, 3])}</div><div class="lc-opt"><span>CPU skill</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Expert'])}</div>`
-          : `<h3>Online party</h3><div class="lc-opt"><span>Add bots</span>${seg('obots', [0, 1, 2], ['None', '1 bot', '2 bots'])}</div>${+opt.obots ? `<div class="lc-opt"><span>Bot skill</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Expert'])}</div>` : ''}<p>Party of 2-4 players, each on their own device. Pick the party size in the lobby. Only real players join unless you add bots. The host's house rules are used.</p>`;
+          ? `<h3>vs CPU</h3><div class="lc-opt"><span>Opponents</span>${seg('cpus', [1, 2, 3, 4, 5, 6, 7])}</div><div class="lc-opt"><span>CPU skill</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Expert'])}</div>`
+          : `<h3>Online party</h3><div class="lc-opt"><span>Bot skill</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Expert'])}</div><p>Party of 2-8 players, each on their own device. Pick the party size and turn on bots for empty seats in the party screen. The host's house rules are used.</p>`;
         showPane('setup', `<div class="lc-box">${body}<div class="lc-opt"><span>Points to win</span>${seg('target', [0, 100, 200, 500], ['1 round', '100', '200', '500'])}</div>
 <button class="lc-big ${m === 'cpu' ? 'red' : 'green'}" data-a="go">${m === 'online' ? 'Create or join a party' : 'Deal!'}</button>
 <div class="lc-row"><button class="lc-sm" data-a="house">House rules</button><button class="lc-sm" data-a="back">Back</button></div></div>`, (a, b) => {
@@ -1366,7 +1372,7 @@ ${ones.map(q => `<div class="lc-row"><button class="lc-sm" data-a="pc${q}">Catch
       function hud() {
         const g = scene === 'game';
         bMenu.hidden = !g; bLast.hidden = !g; netEl.hidden = !(g && M.mode === 'online');
-        if (!g) { bKeep.hidden = true; for (let r = 1; r < 4; r++) bCatch[r].hidden = true; }
+        if (!g) { bKeep.hidden = true; for (let r = 1; r < 8; r++) bCatch[r].hidden = true; }
       }
       function refreshUI() {
         hud();
@@ -1379,7 +1385,7 @@ ${ones.map(q => `<div class="lc-row"><button class="lc-sm" data-a="pc${q}">Catch
         bLast.classList.toggle('hot', !bLast.disabled && (V.vul === viewer || (V.turn === viewer && mine === 2)));
         const act = canAct();
         bKeep.hidden = !(act && V.phase === 'drawn' && !V.rules.force);
-        for (let r = 1; r < 4; r++) {
+        for (let r = 1; r < 8; r++) {
           const p = (viewer + r) % D.n;
           bCatch[r].hidden = !(live && r < D.n && V.vul === p && p !== viewer);
         }
@@ -1407,8 +1413,8 @@ ${ones.map(q => `<div class="lc-row"><button class="lc-sm" data-a="pc${q}">Catch
         if (online) {
           const live = M.players.filter((x, i) => !i || api.net.players.some(q => q.id === x.id && !q.away));
           M.players = live;
-          const k = Math.max(1, Math.min(4, live.length));
-          n = Math.max(2, Math.min(4, k + (+opt.obots || 0)));
+          const k = Math.max(1, Math.min(8, live.length));
+          n = Math.max(2, Math.min(8, M.bots ? Math.max(k, M.size || k) : k));
           humans = live.slice(0, k).map((x, i) => Math.round(i * n / k));
           M.pids = Array(n).fill(null); humans.forEach((q, i) => { M.pids[q] = live[i].id; });
         }
@@ -1494,10 +1500,10 @@ ${ones.map(q => `<div class="lc-row"><button class="lc-sm" data-a="pc${q}">Catch
         hidePane(); scene = 'title'; hud(); paused = false;
         Q.length = 0; fly.length = 0; fx.length = 0;
         M.mode = 'online'; M.role = null; M.eng = null; M.lastV = null; opt.mode = 'online'; saveOpt();
-        const r = await api.net.room({ title: 'UNO', text: 'A party of 2-4 players, each on their own device. Create a party and share the code, or type a friend’s code to join.', sizes: [2, 3, 4], defaultSize: 4, min: 2, max: 4 });
+        const r = await api.net.room({ title: 'UNO', sizes: [2, 3, 4, 5, 6, 7, 8], defaultSize: 4, min: 2, max: 8, bots: true });
         if (!api.alive || tok !== M.tok) return;
         if (!r) { M.mode = 'cpu'; return showTitle(); }
-        M.role = r.role; M.players = r.players.slice(0, 4);
+        M.role = r.role; M.players = r.players.slice(0, 8); M.bots = !!r.bots; M.size = +r.size || r.players.length;
         if (r.role === 'host') { viewer = 0; newMatch(); }
         else showPane('wait', `<div class="lc-box"><p class="lc-kick">Online</p><h3>Connected!</h3><p>Waiting for the host to deal…</p><div class="lc-row"><button class="lc-sm" data-a="leave">Leave</button></div></div>`, a => { if (a === 'leave') leaveOnline(); });
       }
@@ -1565,7 +1571,7 @@ ${ones.map(q => `<div class="lc-row"><button class="lc-sm" data-a="pc${q}">Catch
       api.on(cv, 'pointerleave', e => { if (e.pointerType === 'mouse' && !drag) { hover = -1; D.focus = -1; } });
       const press = (el, fn) => api.on(el, 'pointerdown', e => { e.preventDefault(); if (!el.disabled && !el.hidden) fn(); });
       press(bLast, doCall); press(bKeep, doKeep);
-      for (let r = 1; r < 4; r++) press(bCatch[r], () => doCatch((viewer + r) % D.n));
+      for (let r = 1; r < 8; r++) press(bCatch[r], () => doCatch((viewer + r) % D.n));
       api.on(bMenu, 'click', () => { sfx('tap'); menu(); });
       api.on(window, 'keydown', e => {
         if (e.target && e.target.closest && e.target.closest('input,textarea,select')) return;
@@ -1653,10 +1659,10 @@ ${ones.map(q => `<div class="lc-row"><button class="lc-sm" data-a="pc${q}">Catch
         const on = D.turn === p;
         if (!r) return;
         const f = L.fan[r], cnt = D.counts[p] || 0, rv = D.reveal && D.reveal[p];
-        const k = rv ? rv.length : Math.min(cnt, 12), spread = PORT ? 7 : 9;
+        const k = rv ? rv.length : L.many && PORT ? 0 : Math.min(cnt, L.many ? 8 : 12), spread = L.many ? (PORT ? 4 : 6) : PORT ? 7 : 9, fs = L.many ? (PORT ? .3 : .36) : .42;
         for (let i = 0; i < k; i++) {
           const o = i - (k - 1) / 2;
-          card(rv ? rv[i] : -1, f.x + o * spread * (rv ? 1.6 : 1), f.y + Math.abs(o) * .6, o * .06, rv ? .5 : .42);
+          card(rv ? rv[i] : -1, f.x + o * spread * (rv ? 1.6 : 1), f.y + Math.abs(o) * .6, o * .06, rv ? fs + .08 : fs);
         }
         if (on) {
           ctx.save(); ctx.shadowColor = '#fff36b'; ctx.shadowBlur = 16;
@@ -1765,7 +1771,7 @@ ${ones.map(q => `<div class="lc-row"><button class="lc-sm" data-a="pc${q}">Catch
             label(f.txt, 0, 0, f.big ? (PORT ? 26 : 34) : (PORT ? 16 : 19), f.col, 'center', '#121214');
             ctx.restore();
           } else if (f.k === 'bub') {
-            const s = seatXY(f.p), r = rel(f.p), up = !r || (!PORT && D.n === 4 && r !== 2);
+            const s = seatXY(f.p), r = rel(f.p), up = !r || (!PORT && ((D.n === 4 && r !== 2) || (L.many && s.y > 170)));
             const bx = r ? s.x : (PORT ? 250 : 760), by = r ? (PORT ? s.y + L.av + 30 : (up ? s.y - L.av - 30 : s.y + L.av + 40)) : (PORT ? L.row - 44 : 440);
             const sc = a < .12 ? .4 + a / .12 * .6 : 1;
             ctx.save(); ctx.globalAlpha = a > .8 ? (1 - a) / .2 : 1; ctx.translate(bx, by); ctx.scale(sc, sc); ctx.rotate(-.05);

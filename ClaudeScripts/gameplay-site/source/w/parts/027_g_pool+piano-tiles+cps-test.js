@@ -294,15 +294,15 @@
     const g = cv.getContext('2d');
     g.scale(dpr, dpr);
     const RW = 36, OX = X0 - RW, OY = Y0 - RW, OW = TL + 2 * RW, OH = Y1 - Y0 + 2 * RW;
-    let gr = g.createRadialGradient(PW / 2, PH / 2, 80, PW / 2, PH / 2, PW * 0.62);
-    gr.addColorStop(0, '#f7f4ef'); gr.addColorStop(1, '#e3ddd3');
+    let gr = g.createRadialGradient(PW / 2, PH / 2, 60, PW / 2, PH / 2, Math.hypot(PW, PH) / 2);
+    gr.addColorStop(0, '#1d3354'); gr.addColorStop(1, '#12213a');
     g.fillStyle = gr; g.fillRect(0, 0, PW, PH);
-    g.save(); g.shadowColor = 'rgba(52,32,12,.5)'; g.shadowBlur = 30; g.shadowOffsetY = 14;
-    rrect(g, OX, OY, OW, OH, 22); g.fillStyle = '#5c3519'; g.fill(); g.restore();
+    g.save(); g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 30; g.shadowOffsetY = 14;
+    rrect(g, OX, OY, OW, OH, 22); g.fillStyle = '#4a0d0d'; g.fill(); g.restore();
 
     g.save(); rrect(g, OX, OY, OW, OH, 22); g.clip();
     gr = g.createLinearGradient(0, OY, 0, OY + OH);
-    gr.addColorStop(0, '#8d5732'); gr.addColorStop(0.5, '#6e3d1d'); gr.addColorStop(1, '#7f4826');
+    gr.addColorStop(0, '#9a2a26'); gr.addColorStop(0.5, '#6e1515'); gr.addColorStop(1, '#841f1c');
     g.fillStyle = gr; g.fillRect(OX, OY, OW, OH);
     const quads = [
       [OX, OY, OX + OW, OY, X1 + 12, Y0 - 12, X0 - 12, Y0 - 12, 0, 0, OY, 0, Y0 - 12],
@@ -316,7 +316,7 @@
       const lo = vert ? Math.min(...xs) : Math.min(...ys), hi = vert ? Math.max(...xs) : Math.max(...ys);
       for (let i = 0; i < 34; i++) {
         const o = rand(lo, hi), f = rand(0.004, 0.02), ph = rand(0, TAU), amp = rand(0.4, 2.2);
-        g.strokeStyle = Math.random() < 0.72 ? `rgba(40,18,6,${rand(0.07, 0.22).toFixed(3)})` : `rgba(255,210,160,${rand(0.04, 0.1).toFixed(3)})`;
+        g.strokeStyle = Math.random() < 0.72 ? `rgba(40,4,4,${rand(0.07, 0.22).toFixed(3)})` : `rgba(255,170,150,${rand(0.04, 0.1).toFixed(3)})`;
         g.lineWidth = rand(0.5, 1.8);
         g.beginPath();
         const len = vert ? OH : OW;
@@ -338,7 +338,7 @@
 
     const bx = X0 - 12, by = Y0 - 12, bw = TL + 24, bh = Y1 - Y0 + 24;
     gr = g.createRadialGradient(MX, MY, 30, MX, MY, 480);
-    gr.addColorStop(0, '#2fa266'); gr.addColorStop(1, '#1b6b41');
+    gr.addColorStop(0, '#45a9de'); gr.addColorStop(0.6, '#2b87c2'); gr.addColorStop(1, '#1b5f94');
     g.fillStyle = gr; g.fillRect(bx, by, bw, bh);
     const nz = document.createElement('canvas');
     nz.width = nz.height = 128;
@@ -350,7 +350,7 @@
     ng.putImageData(id, 0, 0);
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = g.createPattern(nz, 'repeat'); g.fillRect(bx * dpr, by * dpr, bw * dpr, bh * dpr); g.restore();
 
-    g.strokeStyle = 'rgba(255,255,255,.13)'; g.lineWidth = 1;
+    g.strokeStyle = 'rgba(200,235,255,.28)'; g.lineWidth = 1.2;
     g.beginPath(); g.moveTo(HEADX, Y0); g.lineTo(HEADX, Y1); g.stroke();
     g.fillStyle = 'rgba(255,255,255,.4)';
     for (const x of [HEADX, FOOTX]) { g.beginPath(); g.arc(x, MY, 2.2, 0, TAU); g.fill(); }
@@ -368,10 +368,10 @@
     for (const c of cu) {
       const [a, b, p2, p3, nx, ny] = c;
       gr = g.createLinearGradient(a[0] - nx * 12, a[1] - ny * 12, a[0], a[1]);
-      gr.addColorStop(0, '#145433'); gr.addColorStop(0.7, '#1f7c4b'); gr.addColorStop(1, '#279458');
+      gr.addColorStop(0, '#11466f'); gr.addColorStop(0.7, '#1e6ea6'); gr.addColorStop(1, '#2a86c2');
       g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.lineTo(p2[0], p2[1]); g.lineTo(p3[0], p3[1]); g.closePath();
       g.fillStyle = gr; g.fill();
-      g.strokeStyle = 'rgba(200,255,215,.28)'; g.lineWidth = 1.1;
+      g.strokeStyle = 'rgba(190,230,255,.35)'; g.lineWidth = 1.1;
       g.beginPath(); g.moveTo(a[0] - nx * 1.6, a[1] - ny * 1.6); g.lineTo(b[0] - nx * 1.6, b[1] - ny * 1.6); g.stroke();
       gr = g.createLinearGradient(a[0], a[1], a[0] + nx * 10, a[1] + ny * 10);
       gr.addColorStop(0, 'rgba(0,0,0,.3)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
@@ -387,7 +387,7 @@
     for (let i = 0; i < 6; i++) {
       const [px, py] = POCK[i], r = i === 1 || i === 4 ? 17 : 21;
       gr = g.createRadialGradient(px, py, r, px, py, r + 7);
-      gr.addColorStop(0, '#1a110b'); gr.addColorStop(0.7, '#3a2618'); gr.addColorStop(1, 'rgba(58,38,24,0)');
+      gr.addColorStop(0, '#15171c'); gr.addColorStop(0.55, '#5d6470'); gr.addColorStop(0.8, '#a9b0bb'); gr.addColorStop(1, 'rgba(120,128,140,0)');
       g.fillStyle = gr; g.beginPath(); g.arc(px, py, r + 7, 0, TAU); g.fill();
     }
     g.restore();
@@ -398,12 +398,9 @@
       g.fillStyle = gr; g.beginPath(); g.arc(px, py, r, 0, TAU); g.fill();
     }
     const dia = (x, y) => {
-      g.save(); g.translate(x, y); g.rotate(Math.PI / 4);
-      const dg = g.createLinearGradient(-3, -3, 3, 3);
-      dg.addColorStop(0, '#fffdf6'); dg.addColorStop(1, '#cdbf9f');
-      g.fillStyle = dg; g.fillRect(-3.2, -3.2, 6.4, 6.4);
-      g.strokeStyle = 'rgba(40,20,5,.35)'; g.lineWidth = 0.6; g.strokeRect(-3.2, -3.2, 6.4, 6.4);
-      g.restore();
+      g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.arc(x, y + 0.8, 2.9, 0, TAU); g.fill();
+      const dg = g.createRadialGradient(x - 0.8, y - 0.8, 0.2, x, y, 2.8); dg.addColorStop(0, '#ffffff'); dg.addColorStop(1, '#c9c6e6');
+      g.fillStyle = dg; g.beginPath(); g.arc(x, y, 2.6, 0, TAU); g.fill();
     };
     for (const k of [1, 2, 3, 5, 6, 7]) { dia(X0 + TL * k / 8, Y0 - 24); dia(X0 + TL * k / 8, Y1 + 24); }
     for (const k of [1, 2, 3]) { dia(X0 - 24, Y0 + (Y1 - Y0) * k / 4); dia(X1 + 24, Y0 + (Y1 - Y0) * k / 4); }
@@ -457,27 +454,27 @@
     width: 960,
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="25" cy="39" r="16"/><circle cx="25" cy="39" r="7"/><circle cx="25" cy="36.6" r="2" /><circle cx="25" cy="41.4" r="2.4"/><path d="M42 24 58 8"/><circle cx="50" cy="48" r="5"/></svg>',
     css: `
-.gm-pool{gap:12px}
+.gm-pool{gap:10px;padding:12px;border-radius:18px;background:#12213a;color:#fff}
 .gm-pool .pl-top{width:100%;max-width:960px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
-.gm-pool .pl-pl{display:flex;align-items:center;gap:10px;min-width:0;padding:5px 12px 5px 5px;border-radius:18px;background:var(--sunk);border:2px solid transparent;transition:border-color .25s,background .25s,box-shadow .25s}
+.gm-pool .pl-pl{display:flex;align-items:center;gap:10px;min-width:0;padding:5px 12px 5px 5px;border-radius:14px;background:#08101e;border:2px solid #1f3150;transition:border-color .25s,background .25s,box-shadow .25s}
 .gm-pool .pl-pl.r{flex-direction:row-reverse;text-align:right;padding:5px 5px 5px 12px}
 .gm-pool .pl-pl.r .pl-balls{justify-content:flex-end}
 .gm-pool .pl-pl>div{min-width:0;flex:1}
-.gm-pool .pl-pl.on{border-color:var(--accent);background:#fff;box-shadow:0 8px 20px -12px rgba(108,92,231,.75)}
-.gm-pool .pl-ring{--t:0;--rc:#22b07d;width:46px;height:46px;flex:none;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--rc) calc(var(--t) * 1turn),rgba(31,29,43,.07) 0)}
+.gm-pool .pl-pl.on{border-color:#3fd16b;background:#0c1a2f;box-shadow:0 0 0 3px rgba(63,209,107,.18)}
+.gm-pool .pl-ring{--t:0;--rc:#22b07d;width:46px;height:46px;flex:none;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--rc) calc(var(--t) * 1turn),rgba(255,255,255,.08) 0)}
 .gm-pool .pl-av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:12px;color:#fff;background:linear-gradient(135deg,#8a7cf5,#5a49d6);box-shadow:inset 0 -3px 0 rgba(0,0,0,.15),0 0 0 2px #fff}
 .gm-pool .pl-pl.r .pl-av{background:linear-gradient(135deg,#ff9a6b,#e5533d)}
 .gm-pool .pl-nm{font-weight:900;font-size:14px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gm-pool .pl-nm small{margin-left:6px;font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.gm-pool .pl-balls{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;min-height:13px}
-.gm-pool .pl-balls i{width:13px;height:13px;border-radius:50%;background:var(--c);box-shadow:inset -2px -2px 3px rgba(0,0,0,.28),inset 1px 1px 2px rgba(255,255,255,.45)}
+.gm-pool .pl-nm small{margin-left:6px;font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#8fa6c8}
+.gm-pool .pl-balls{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;min-height:17px}
+.gm-pool .pl-balls i{width:17px;height:17px;border-radius:50%;background:var(--c);box-shadow:inset -2px -2px 3px rgba(0,0,0,.28),inset 1px 1px 2px rgba(255,255,255,.45)}
 .gm-pool .pl-balls i.s{background:linear-gradient(#f6f4ec 28%,var(--c) 28% 72%,#f6f4ec 72%)}
-.gm-pool .pl-balls i.off{opacity:.16}
-.gm-pool .pl-balls em{font-style:normal;font-size:11.5px;font-weight:800;color:var(--muted);line-height:13px}
-.gm-pool .pl-msg{max-width:260px;padding:9px 16px;border-radius:999px;background:var(--ink);color:#fff;font-weight:900;font-size:13.5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gm-pool .pl-balls i.off,.gm-pool .pl-balls i.e{background:#03070f;box-shadow:inset 0 2px 4px rgba(0,0,0,.9),0 0 0 1px #22344f}
+.gm-pool .pl-balls em{font-style:normal;font-size:11.5px;font-weight:800;color:#8fa6c8;line-height:17px}
+.gm-pool .pl-msg{max-width:260px;padding:9px 16px;border-radius:999px;background:#050b16;border:1px solid #22344f;color:#fff;font-weight:900;font-size:13.5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gm-pool .pl-mid{width:100%;max-width:960px;display:flex;align-items:stretch;justify-content:center;gap:10px}
 .gm-pool .pl-tab{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center}
-.gm-pool .pl-canvas{cursor:crosshair;touch-action:none}
+.gm-pool .pl-canvas{cursor:crosshair;touch-action:none;background:#12213a;border-radius:0}
 .gm-pool .pl-pow{position:relative;width:52px;flex:none;border-radius:18px;background:linear-gradient(90deg,#2a2838,#403d56 50%,#2a2838);box-shadow:inset 0 3px 8px rgba(0,0,0,.45);overflow:hidden;cursor:ns-resize;touch-action:none}
 .gm-pool .pl-pow b{position:absolute;inset:0;transform-origin:center top;transform:scaleY(var(--p,0));background:linear-gradient(180deg,#22b07d,#ffc86e 55%,#ef4f4f);opacity:.92}
 .gm-pool .pl-pow i{position:absolute;left:50%;top:38px;height:130%;width:12px;margin-left:-6px;border-radius:6px 6px 3px 3px;background:linear-gradient(180deg,#3f74c9 0 7px,#f8f4ea 7px 12px,#f2e1b8 12px 34%,#5e2c13 34% 56%,#141414 56%);box-shadow:0 3px 8px rgba(0,0,0,.45);transform:translateY(calc(var(--p,0) * 26%))}
@@ -486,11 +483,11 @@
 .gm-pool .pl-spin{position:relative;width:52px;height:52px;flex:none;border-radius:50%;background:radial-gradient(circle at 34% 28%,#fff,#ece9e0 55%,#b9b4a6);box-shadow:0 6px 14px -6px rgba(0,0,0,.45);cursor:crosshair;touch-action:none}
 .gm-pool .pl-spin::after{content:"";position:absolute;inset:50% auto auto 50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:rgba(0,0,0,.18)}
 .gm-pool .pl-spin i{position:absolute;z-index:1;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:#e53935;box-shadow:0 0 0 2px #fff,0 2px 4px rgba(0,0,0,.3);left:calc(50% + var(--x,0) * 50%);top:calc(50% + var(--y,0) * 50%)}
-.gm-pool .pl-tip{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.2}
-.gm-pool .pl-roll{position:relative;flex:1;min-width:0;height:46px;border-radius:14px;border:1px solid var(--line-2);background:repeating-linear-gradient(90deg,#cbc6b8 0 2px,#f4f2eb 2px 10px);background-position:var(--o,0px) 0;box-shadow:inset 0 12px 10px -8px rgba(255,255,255,.95),inset 0 -12px 12px -8px rgba(0,0,0,.3);cursor:ew-resize;touch-action:none;overflow:hidden}
-.gm-pool .pl-roll span{position:absolute;inset:0;display:grid;place-items:center;font-weight:900;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);pointer-events:none;text-shadow:0 1px 0 #fff}
-.gm-pool .pl-fine{width:46px;height:46px;flex:none;border-radius:50%;border:2px solid var(--line-2);background:#fff;color:var(--ink);font:900 22px/1 var(--sans);cursor:pointer;touch-action:none;display:grid;place-items:center;padding:0}
-.gm-pool .pl-fine:active{background:var(--accent-soft);border-color:var(--accent)}
+.gm-pool .pl-tip{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#8fa6c8;text-align:center;line-height:1.2}
+.gm-pool .pl-roll{position:relative;flex:1;min-width:0;height:46px;border-radius:14px;border:1px solid #22344f;background:repeating-linear-gradient(90deg,#0d1626 0 2px,#2a3a57 2px 10px);background-position:var(--o,0px) 0;box-shadow:inset 0 12px 10px -8px rgba(255,255,255,.18),inset 0 -12px 12px -8px rgba(0,0,0,.6);cursor:ew-resize;touch-action:none;overflow:hidden}
+.gm-pool .pl-roll span{position:absolute;inset:0;display:grid;place-items:center;font-weight:900;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#d6e4ff;pointer-events:none;text-shadow:0 1px 2px #000}
+.gm-pool .pl-fine{width:46px;height:46px;flex:none;border-radius:50%;border:2px solid #2a3e62;background:#12203a;color:#fff;font:900 22px/1 var(--sans);cursor:pointer;touch-action:none;display:grid;place-items:center;padding:0}
+.gm-pool .pl-fine:active{background:#1d3a66;border-color:#3fd16b}
 @media (max-width:640px){
 .gm-pool{gap:8px}
 .gm-pool .pl-ctl,.gm-pool .pl-mid{gap:8px}
@@ -499,7 +496,7 @@
 .gm-pool .pl-msg{grid-column:1/-1;order:-1;justify-self:center;max-width:100%;padding:7px 14px;font-size:12.5px}
 .gm-pool .pl-ring{width:36px;height:36px}
 .gm-pool .pl-av{width:30px;height:30px;font-size:10px}
-.gm-pool .pl-balls i{width:10px;height:10px}
+.gm-pool .pl-balls{gap:2px}.gm-pool .pl-balls i{width:11px;height:11px}
 .gm-pool .pl-nm small{display:block;margin:1px 0 0;font-size:9.5px}
 .gm-pool .pl-pl{padding:4px 8px 4px 4px;gap:6px}
 .gm-pool .pl-pl.r{padding:4px 4px 4px 8px}
@@ -685,7 +682,7 @@
           const who = mode === 'ai' ? (p ? 'CPU' : 'You') : p === me ? 'You' : 'Friend';
           const sub = (mode === 'ai' && p ? DIFFS[diff] + ' · ' : '') + GNAME[g] + (mode === 'net' && p !== me && online && net.rtt ? ' · ' + net.rtt + ' ms' : '');
           nm.innerHTML = who + `<small>${sub}</small>`;
-          if (!g) { bl.innerHTML = '<em>' + (brk ? 'Break' : 'Pot any ball') + '</em>'; return; }
+          if (!g) { bl.innerHTML = '<i class="e"></i>'.repeat(7); return; }
           const ns = g === 1 ? [1, 2, 3, 4, 5, 6, 7] : [9, 10, 11, 12, 13, 14, 15], cleared = left(balls, g) === 0;
           bl.innerHTML = ns.map(n => `<i class="${n > 8 ? 's' : ''}${balls[n].on ? '' : ' off'}" style="--c:${bhex(n)}"></i>`).join('') + `<i class="${cleared ? '' : 'off'}" style="--c:${BHEX[8]}"></i>`;
         });
@@ -1251,28 +1248,28 @@
         const ty = dy > 1e-9 ? (Y1 - BR - c.y) / dy : dy < -1e-9 ? (Y0 + BR - c.y) / dy : 1e9;
         const tw = Math.max(0, Math.min(tx, ty));
         ctx.save();
-        ctx.lineCap = 'round'; ctx.lineWidth = 1.6; ctx.strokeStyle = 'rgba(255,255,255,.8)';
+        ctx.lineCap = 'round'; ctx.lineWidth = 2; ctx.strokeStyle = '#fff';
         if (!hb || tw < tb) {
           const ex = c.x + dx * tw, ey = c.y + dy * tw;
           line(c.x + dx * BR, c.y + dy * BR, ex, ey);
-          ctx.beginPath(); ctx.arc(ex, ey, BR, 0, TAU); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.stroke();
+          ctx.beginPath(); ctx.arc(ex, ey, BR, 0, TAU); ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
           const rx = tx < ty ? -dx : dx, ry = tx < ty ? dy : -dy;
-          ctx.globalAlpha = 0.45; ctx.setLineDash([4, 5]); line(ex, ey, ex + rx * 70, ey + ry * 70);
+          ctx.globalAlpha = 0.7; line(ex, ey, ex + rx * 70, ey + ry * 70);
         } else {
           const gx = c.x + dx * tb, gy = c.y + dy * tb, nx = (hb.x - gx) / (2 * BR), ny = (hb.y - gy) / (2 * BR), full = dx * nx + dy * ny, ok = legal(hb.n);
           line(c.x + dx * BR, c.y + dy * BR, gx - dx * BR, gy - dy * BR);
           ctx.beginPath(); ctx.arc(gx, gy, BR, 0, TAU);
-          ctx.fillStyle = ok ? 'rgba(255,255,255,.16)' : 'rgba(239,79,79,.25)'; ctx.fill();
-          ctx.strokeStyle = ok ? 'rgba(255,255,255,.9)' : '#ff6b6b'; ctx.stroke();
+          if (!ok) { ctx.fillStyle = 'rgba(239,79,79,.25)'; ctx.fill(); }
+          ctx.lineWidth = 2; ctx.strokeStyle = ok ? '#fff' : '#ff6b6b'; ctx.stroke();
           if (!ok) { const q = BR * 0.5; line(gx - q, gy - q, gx + q, gy + q); line(gx + q, gy - q, gx - q, gy + q); }
           else {
-            ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 2;
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
             line(hb.x + nx * BR, hb.y + ny * BR, hb.x + nx * (BR + 24 + 150 * full), hb.y + ny * (BR + 24 + 150 * full));
             let ux = dx - nx * full, uy = dy - ny * full;
             const ul = Math.hypot(ux, uy);
             if (ul > 0.03) {
               ux /= ul; uy /= ul;
-              ctx.lineWidth = 1.4; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.setLineDash([3, 4]);
+              ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,.9)';
               line(gx + ux * BR, gy + uy * BR, gx + ux * (BR + 18 + 80 * (1 - full)), gy + uy * (BR + 18 + 80 * (1 - full)));
             }
           }

@@ -59,7 +59,7 @@
   const DK = '#1d1b26', GLASS = '#34466a', OR = '#ff9f1c', W = '#ffffff', PI4 = Math.PI / 4;
   const CHARS = [
     ['HOPPER', (B, S) => {
-      const bl = '#2f80ed', cr = '#ff3b4e';
+      const bl = '#eef0f6', cr = '#ff3b4e';
       S(.07, .14, .07, .1, 0, .02, OR); S(.09, .03, .09, .1, .1, .02, '#e8860f');
       S(.13, .03, .17, .1, 0, -.04, OR); S(.035, .03, .06, .06, 0, -.15, '#e8860f'); S(.035, .03, .06, .14, 0, -.15, '#e8860f');
       B(.52, .46, .56, 0, .14, .04, W); B(.54, .07, .58, 0, .14, .04, '#e3e6ee'); B(.38, .24, .05, 0, .2, -.26, '#f4f6fb');
@@ -72,7 +72,7 @@
       B(.15, .045, .14, 0, .805, -.3, '#ffb53a'); B(.12, .045, .11, 0, .76, -.285, '#e8860f');
       B(.07, .1, .05, 0, .65, -.27, cr);
       B(.46, .08, .42, 0, .58, -.05, bl); B(.465, .02, .425, 0, .61, -.05, W);
-      B(.1, .18, .04, .15, .42, -.285, bl); B(.1, .02, .045, .15, .5, -.285, W); B(.1, .03, .04, .15, .4, -.285, '#1f63c4');
+      B(.1, .18, .04, .15, .42, -.285, bl); B(.1, .02, .045, .15, .5, -.285, W); B(.1, .03, .04, .15, .4, -.285, '#dfe3ec');
     }],
     ['DUCKLING', (B, S) => {
       const y = '#ffd23f', d = '#ffbf1a';
@@ -332,7 +332,7 @@ ${G} .rh-stage>canvas{display:block;border-radius:0}
 ${G} .rh-px{display:block;width:auto;image-rendering:pixelated}
 ${G} .rh-hud{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:flex-start;padding:clamp(10px,2.6cqw,24px) clamp(12px,3cqw,28px);pointer-events:none}
 ${G} .rh-l{display:flex;flex-direction:column;align-items:flex-start;gap:clamp(4px,1cqw,10px)}
-${G} .rh-score{height:clamp(38px,9cqw,74px)}
+${G} .rh-score{height:clamp(30px,6.6cqw,54px)}
 ${G} .rh-top{height:clamp(14px,3.2cqw,27px)}
 ${G} .rh-r{margin-left:auto;display:flex;align-items:center;gap:clamp(5px,1.2cqw,10px)}
 ${G} .rh-coins{height:clamp(20px,4.6cqw,38px)}
@@ -625,7 +625,7 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
         gift: () => [784, 988, 1175, 1568].forEach((f, i) => tone('square', f, 0, 0.12, 0.04, i * 0.07))
       };
 
-      const TOP = { grass: 0, road: -0.03, rail: 0.04, river: -0.06, pads: -0.27 };
+      const TOP = { grass: 0, road: -0.03, rail: 0.04, river: -0.11, pads: -0.27 };
       const WATER = '#55c9f5', FOAM = '#d8f4ff';
       const rows = new Map();
       const GEN = { chunk: 'grass', left: 0, path: 0, rdir: 1 };
@@ -648,17 +648,10 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
       function deco(p, x, kind) {
         kind = kind || (Math.random() < 0.66 ? 'tree' : Math.random() < 0.6 ? 'rock' : 'stump');
         if (kind === 'tree') {
-          const hh = pick([0.5, 0.8, 1.15]), c = pick(['#3fae49', '#47b84f', '#38a043']), c2 = shade(c, 1.14), c3 = shade(c, .82);
-          p.push(box(.3, .3, .3, x, 0, 0, '#8b5a3c'), box(.38, .06, .38, x, 0, 0, '#6e4630'), box(.04, .26, .32, x + .1, .04, 0, '#a06a46'), box(.32, .02, .32, x, .3, 0, '#5e3b28'));
-          p.push(box(.74, .5, .74, x, .3, 0, c), box(.76, .1, .76, x, .3, 0, c3));
-          if (hh < 0.7) {
-            p.push(box(.5, .08, .5, x, .8, 0, c2), box(.2, .18, .08, x + .16, .5, .37, c2), box(.2, .16, .08, x - .2, .42, .37, c2));
-            if (Math.random() < 0.6) p.push(box(.08, .08, .06, x + .1, .6, .4, '#ff5a5a'), box(.08, .08, .06, x - .22, .48, .4, '#ff7b7b'), box(.08, .08, .06, x + .26, .42, .4, '#ff5a5a'));
-          } else if (hh < 1) {
-            p.push(box(.56, .36, .56, x, .8, 0, c2), box(.58, .06, .58, x, .8, 0, c), box(.34, .08, .34, x, 1.16, 0, shade(c, 1.26)));
-          } else {
-            p.push(box(.6, .45, .6, x, .8, 0, c2), box(.62, .07, .62, x, .8, 0, c), box(.44, .3, .44, x, 1.25, 0, shade(c, 1.2)), box(.46, .05, .46, x, 1.25, 0, c2), box(.24, .08, .24, x, 1.55, 0, shade(c, 1.34)));
-          }
+          const hh = pick([1, 1, 2, 2, 3]), c = pick(['#a5cf3a', '#9cc834', '#acd443']), H = .5 + .35 * hh;
+          p.push(box(.32, .36, .32, x, 0, 0, '#6b4630'), box(.36, .05, .36, x, 0, 0, '#523422'));
+          p.push(box(.8, H, .8, x, .36, 0, c), box(.82, .06, .82, x, .36, 0, shade(c, .78)));
+          for (let i = 1; i < hh; i++) p.push(box(.81, .025, .81, x, .36 + i * H / hh, 0, shade(c, .92)));
         } else if (kind === 'rock') {
           p.push(box(.76, .14, .66, x, 0, 0, '#7f889c'), box(.68, .28, .58, x, .14, 0, '#9aa3b5'), box(.5, .14, .44, x - .04, .42, -.02, '#b9c0ce'), box(.2, .04, .18, x - .1, .56, -.04, '#d3d8e3'));
           p.push(box(.22, .14, .18, x + .3, 0, .22, '#8c95a8'), box(.12, .02, .12, x + .3, .14, .22, '#a9b1c2'), box(.22, .03, .2, x + .15, .42, .1, '#6fbf5a'), box(.04, .26, .02, x - .2, .14, .3, '#8a93a7'));
@@ -691,7 +684,6 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
         if (type === 'grass') {
           const gc = r & 1 ? '#a2e05f' : '#99da58';
           ground(gc, 0, '#8a6a46');
-          for (let x = -CFG.half; x <= CFG.half; x++) if ((x + r) & 1) p.push(box(1, .012, 1, x, 0, 0, shade(gc, 1.045)));
           if (r <= -4) for (let x = -CFG.cols; x <= CFG.cols; x++) row.blocked.add(x);
           else if (r < 0) for (let i = rint(2, 4); i > 0; i--) row.blocked.add(rint(-CFG.cols, CFG.cols));
           else if (r <= 3) { for (const x of [-4, -3, 3, 4]) if (Math.random() < 0.3) row.blocked.add(x); }
@@ -705,7 +697,7 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
             }
           }
           for (const x of row.blocked) deco(p, x);
-          for (let x = CFG.cols + 1; x <= CFG.half; x++) for (const sx of [-x, x]) if (Math.random() < (x <= CFG.cols + 2 ? 0.8 : 0.42)) deco(p, sx, Math.random() < 0.85 ? 'tree' : 'rock');
+          for (let x = CFG.cols + 1; x <= CFG.half; x++) for (const sx of [-x, x]) if (Math.random() < (x <= CFG.cols + 2 ? 0.8 : 0.42)) deco(p, sx, Math.random() < 0.9 ? 'tree' : 'rock');
           for (let i = 0; i < 4; i++) { const x = rnd(-CFG.half, CFG.half), z = rnd(-.4, .4); if (!row.blocked.has(Math.round(x))) p.push(box(.05, .12, .05, x, 0, z, '#6fb83e'), box(.05, .09, .05, x + .06, 0, z + .02, '#86cf4b'), box(.05, .08, .05, x - .05, 0, z + .03, '#5fa636')); }
           for (let i = 0; i < 3; i++) { const x = rnd(-CFG.half, CFG.half), z = rnd(-.4, .4); if (!row.blocked.has(Math.round(x))) p.push(box(.03, .1, .03, x, 0, z, '#4f9a35'), box(.1, .05, .1, x, .1, z, pick(['#ffffff', '#ffe066', '#ff8fb1', '#b9a3ff'])), box(.04, .03, .04, x, .15, z, '#ffd23f')); }
           for (let i = 0; i < 3; i++) { const x = rnd(-CFG.half, CFG.half), z = rnd(-.4, .4); if (!row.blocked.has(Math.round(x))) p.push(box(.08, .04, .07, x, 0, z, pick(['#b8ec7a', '#86c94b', '#cfd6e4']))); }
@@ -731,7 +723,7 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
           for (let i = 0; i < 9; i++) { const rx = rnd(-CFG.half, CFG.half), rz = rnd(-.4, .4), rl = rnd(.3, .8); p.push(box(rl, .012, .05, rx, -.3, rz, '#a8ecff'), box(rl * .5, .012, .04, rx + rl * .3, -.3, rz + .1, '#8fe0fa')); }
           GEN.rdir = -GEN.rdir; row.dir = GEN.rdir;
           row.speed = rnd(CFG.log[0], CFG.log[1]) + d * CFG.log[2];
-          fill(row, 1.2 + d * 0.6, 2.6 + d * 1.4, () => { const L = rint(2, d > 0.55 ? 3 : 4); return { len: L, mesh: take('log' + L, () => build(B => logParts(B, L))) }; });
+          fill(row, 1.6 + d * 0.6, 3.4 + d * 1.4, () => { const L = rint(2, d > 0.55 ? 3 : 4); return { len: L, mesh: take('log' + L, () => build(B => logParts(B, L))) }; });
         } else if (type === 'pads') {
           ground(WATER, -0.3);
           row.pads.add(GEN.path);
@@ -762,7 +754,7 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
         row.mesh = new THREE.Mesh(merge(p), vlam);
         row.mesh.position.z = -r; row.mesh.castShadow = true; row.mesh.receiveShadow = true;
         scene.add(row.mesh);
-        for (const m of row.movers) m.mesh.position.set(m.x, type === 'river' ? -0.08 : row.top, -r);
+        for (const m of row.movers) m.mesh.position.set(m.x, type === 'river' ? -0.15 : row.top, -r);
         rows.set(r, row);
       }
       function dropRow(row) {
@@ -783,7 +775,7 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
 
       const hudScore = () => { pix(el.score, score, { dp: 4 }); api.score(score); };
       const hudTop = () => pix(el.top, 'TOP ' + top, { dp: 2 });
-      const hudCoins = () => pix(el.coins, coins, { dp: 3 });
+      const hudCoins = () => pix(el.coins, coins, { dp: 3, fill: '#ffd23f' });
       const bumpCoin = () => { el.ci.classList.remove('pop'); void el.ci.offsetWidth; el.ci.classList.add('pop'); };
 
       function resetWorld() {

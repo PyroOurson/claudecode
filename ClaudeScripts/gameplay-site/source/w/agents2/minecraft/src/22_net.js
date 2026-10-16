@@ -28,11 +28,13 @@
       const c = colAt(x >> 4, z >> 4);
       if (c && c.st >= 1) setBlock(x, y, z, s, flags); else editDirect(x, y, z, s);
     }
-    function playerData() { return { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch, hp: P.hp, food: P.food, sat: P.sat, xp: P.xp, lvl: P.lvl, score: P.score, inv: inv.map(encS), armor: armor.map(encS), offhand: encS(offhand), ender: ender.map(encS), mode: W.mode, spawn: P.spawn, effects: P.effects, fly: P.fly, air: P.air, dead: P.dead, sel }; }
+    function playerData() { return { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch, hp: P.hp, food: P.food, sat: P.sat, xp: P.xp, lvl: P.lvl, score: P.score, inv: inv.map(encS), armor: armor.map(encS), offhand: encS(offhand), ender: ender.map(encS), mode: W.mode, spawn: P.spawn, effects: P.effects, fly: P.fly, air: P.air, dead: P.dead, sel, st: P.st, adv: P.adv }; }
     function applyPlayerData(d) {
       if (!d) return false;
       if ([d.x, d.y, d.z].every(fin)) { P.x = d.x; P.y = d.y; P.z = d.z; P.px = P.x; P.py = P.y; P.pz = P.z; P.place = false; }
       for (const k of ['yaw', 'pitch', 'hp', 'food', 'sat', 'xp', 'lvl', 'score', 'air']) if (fin(d[k])) P[k] = d[k];
+      if (d.st && typeof d.st === 'object') P.st = d.st;
+      if (d.adv && typeof d.adv === 'object') P.adv = d.adv;
       if (Array.isArray(d.inv)) inv = d.inv.slice(0, 36).map(decS).concat(new Array(36).fill(null)).slice(0, 36);
       if (Array.isArray(d.armor)) armor = d.armor.slice(0, 4).map(decS).concat([null, null, null, null]).slice(0, 4);
       offhand = decS(d.offhand);

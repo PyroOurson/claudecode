@@ -593,24 +593,10 @@ float f=smoothstep(uFog.x,uFog.y,vD);gl_FragColor=vec4(mix(col,uLine*0.045,f),1.
   const BALL_VS = `varying vec3 vN;varying vec2 vUv;varying vec3 vV;
 void main(){vN=normalize(normalMatrix*normal);vUv=uv;vec4 mv=modelViewMatrix*vec4(position,1.0);vV=-mv.xyz;gl_Position=projectionMatrix*mv;}`;
   const BALL_FS = `uniform vec3 uCol;uniform float uTime;varying vec3 vN;varying vec2 vUv;varying vec3 vV;
-void main(){vec3 n=normalize(vN);vec3 v=normalize(vV);vec3 L=normalize(vec3(-0.35,0.85,0.45));
-float dl=dot(n,L);float wrap=dl*0.5+0.5;float ndv=max(dot(n,v),0.0);float fre=pow(1.0-ndv,3.0);
-vec3 r=reflect(-v,n);
-vec3 hot=mix(uCol,vec3(1.0),0.55);
-vec3 col=uCol*(0.22+0.62*wrap*wrap);
-col+=uCol*exp(-abs(r.y+0.1)*7.0)*0.55;
-col+=hot*pow(max(r.y,0.0),2.0)*0.28;
-col+=vec3(1.0)*pow(max(dot(r,L),0.0),70.0)*1.3;
-col+=hot*pow(max(dot(r,normalize(vec3(0.7,0.25,0.65))),0.0),24.0)*0.28;
-col+=vec3(1.0)*pow(max(dot(r,normalize(vec3(-0.15,0.95,0.2))),0.0),160.0)*0.5;
-vec2 g=vec2(vUv.x*10.0,vUv.y*6.0);vec2 fw=max(fwidth(g),vec2(1e-4));
-vec2 d=abs(fract(g)-0.5)/fw;float dm=min(d.x,d.y);float ok=1.0-smoothstep(0.25,0.7,max(fw.x,fw.y));
-float line=(1.0-clamp(dm-0.7,0.0,1.0))*ok;float halo=exp(-dm*0.45)*ok;
-col=mix(col,col*0.4,line*0.55);
-col+=uCol*halo*0.22+hot*line*0.45+uCol*line*0.35;
-col+=hot*fre*(0.45+0.45*max(n.y,0.0))*0.85;
-col+=vec3(1.0)*pow(1.0-ndv,6.0)*0.35;
-col*=0.95+0.07*sin(uTime*5.0);
+void main(){vec3 n=normalize(vN);vec3 v=normalize(vV);float ndv=max(dot(n,v),0.0);float fre=pow(1.0-ndv,2.5);
+vec2 g=vec2(vUv.x*8.0,vUv.y*5.0);vec2 fw=max(fwidth(g),vec2(1e-4));vec2 d=abs(fract(g)-0.5)/fw;float dm=min(d.x,d.y);
+float ok=1.0-smoothstep(0.3,0.8,max(fw.x,fw.y));float line=(1.0-clamp(dm-2.2,0.0,1.0))*ok;
+vec3 col=vec3(0.0)+uCol*fre*0.22+uCol*line*(0.75+0.35*ndv);
 gl_FragColor=vec4(col,1.0);}`;
   const TRAIL_VS = `attribute float aA;uniform float uPx;varying float vA;
 void main(){vec4 mv=modelViewMatrix*vec4(position,1.0);gl_PointSize=uPx*(0.25+0.75*aA)/max(-mv.z,0.1);vA=aA;gl_Position=projectionMatrix*mv;}`;
@@ -653,17 +639,23 @@ void main(){vec2 g=vW.xz/30.0;vec2 fw=max(fwidth(g),vec2(1e-4));vec2 d=abs(fract
 float l=1.0-clamp(min(d.x,d.y)-0.8,0.0,1.0);float dist=length(vW.xz-uCam.xz);
 float fade=exp(-dist/520.0)*(1.0-smoothstep(0.25,0.9,max(fw.x,fw.y)));gl_FragColor=vec4(uLine*l*fade*0.26,1.0);}`;
 
+  const TW_FS = `uniform vec3 uLine;uniform vec2 uFog;varying vec3 vP;varying vec3 vN;varying vec3 vS;varying float vD;
+void main(){vec3 a=abs(vN);vec2 p;vec2 hs;float sh;if(a.y>0.5){p=vP.xz;hs=vS.xz*0.5;sh=1.0;}else if(a.x>0.5){p=vP.zy;hs=vS.zy*0.5;sh=0.8;}else{p=vP.xy;hs=vS.xy*0.5;sh=0.92;}
+vec2 g=(p+hs)/1.7;vec2 fw=max(fwidth(g),vec2(1e-4));vec2 d=abs(fract(g+0.5)-0.5)/fw;float fade=1.0-smoothstep(0.1,0.4,max(fw.x,fw.y));
+float l=(1.0-clamp(min(d.x,d.y)-0.8,0.0,1.0))*fade;vec2 e2=hs-abs(p);float e=min(e2.x,e2.y);float b=1.0-smoothstep(0.0,max(fwidth(e),0.002)*2.2,e);
+float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*sh*(1.0-f),1.0);}`;
+
   const ICON = '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 50 L22 30 H42 L60 50 Z"/><path d="M13 40 H51 M18 35 H46 M32 30 V50 M24 30 L18 50 M40 30 L46 50"/><circle cx="32" cy="20" r="7"/><path d="M48 12 h8 M50 18 h6"/></svg>';
 
   const CSS = `.gm-slope-3d [hidden]{display:none!important}
 .gm-slope-3d .stage{position:relative;max-width:100%;border-radius:var(--r);overflow:hidden;container-type:inline-size;touch-action:none;background:#000;box-shadow:0 22px 44px -30px rgba(31,29,43,.7);--neon:#2bff5a}
 .gm-slope-3d .stage .g-canvas{border-radius:0;background:#000}
-.gm-slope-3d .hud{position:absolute;left:3.2%;top:3.4%;pointer-events:none;color:#fff;font-family:var(--sans);line-height:1;display:flex;flex-direction:column;gap:.35em;font-size:clamp(11px,1.9cqw,18px)}
+.gm-slope-3d .hud{position:absolute;left:0;right:0;top:3.4%;pointer-events:none;color:var(--neon);font-family:'Lucida Console','Courier New',monospace;line-height:1;display:flex;flex-direction:column;align-items:center;gap:.35em;font-size:clamp(11px,1.9cqw,18px)}
 .gm-slope-3d .zt{position:absolute;left:0;right:0;top:20%;text-align:center;pointer-events:none;color:#fff;font:900 clamp(22px,6cqw,58px)/1 var(--sans);font-style:italic;letter-spacing:.14em;text-transform:uppercase;text-shadow:0 0 .25em var(--neon),0 0 .6em var(--neon);opacity:0}
 .gm-slope-3d .zt.on{animation:slz 2.2s ease-out forwards}
 @keyframes slz{0%{opacity:0;transform:scale(1.5)}12%{opacity:1;transform:scale(1)}70%{opacity:1}100%{opacity:0;transform:scale(.96)}}
-.gm-slope-3d .sc{font-size:2.9em;font-weight:900;letter-spacing:.01em;font-variant-numeric:tabular-nums;text-shadow:0 0 .3em var(--neon),0 .05em 0 rgba(0,0,0,.6)}
-.gm-slope-3d .sp{font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--neon);opacity:.9;font-variant-numeric:tabular-nums}
+.gm-slope-3d .sc{font-size:2.6em;font-weight:700;letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.gm-slope-3d .sp{display:none;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--neon);opacity:.9;font-variant-numeric:tabular-nums}
 .gm-slope-3d .pz{position:absolute;right:2.6%;top:3%;width:44px;height:44px;border-radius:50%;border:2px solid var(--neon);background:rgba(0,0,0,.45);cursor:pointer;display:grid;place-items:center;padding:0}
 .gm-slope-3d .pz::before{content:"";width:12px;height:14px;border-left:4px solid var(--neon);border-right:4px solid var(--neon);box-sizing:border-box}
 .gm-slope-3d .tz{position:absolute;bottom:4%;width:56px;height:56px;border-radius:50%;border:2px solid var(--neon);opacity:.28;pointer-events:none;display:grid;place-items:center}
@@ -765,7 +757,7 @@ float fade=exp(-dist/520.0)*(1.0-smoothstep(0.25,0.9,max(fw.x,fw.y)));gl_FragCol
         vertexShader: TILE_VS, fragmentShader: TILE_FS, extensions: { derivatives: true }
       });
       const redMat = new THREE.ShaderMaterial({
-        uniforms: { uLine: { value: new THREE.Color(1, 0.5, 0.45) }, uFill: { value: new THREE.Color(0.86, 0.05, 0.06) }, uRed: { value: 1 }, uFog, uCell: { value: CFG.CELL }, uTime },
+        uniforms: { uLine: { value: new THREE.Color(1, 0.12, 0.1) }, uFill: { value: new THREE.Color(0.1, 0.0, 0.01) }, uRed: { value: 1 }, uFog, uCell: { value: CFG.CELL }, uTime },
         vertexShader: TILE_VS, fragmentShader: TILE_FS, extensions: { derivatives: true }
       });
       const skyMat = new THREE.ShaderMaterial({ uniforms: { uLine: { value: neon }, uTime }, vertexShader: SKY_VS, fragmentShader: SKY_FS, side: THREE.BackSide, depthTest: false, depthWrite: false });
@@ -786,6 +778,10 @@ float fade=exp(-dist/520.0)*(1.0-smoothstep(0.25,0.9,max(fw.x,fw.y)));gl_FragCol
       const starMat = new THREE.PointsMaterial({ color: 0x9fb4c8, size: 1.6, sizeAttenuation: false, depthTest: false, depthWrite: false });
       const stars = new THREE.Points(starGeo, starMat);
       stars.renderOrder = -9; stars.frustumCulled = false; scene.add(stars);
+      sky.visible = grid.visible = stars.visible = false;
+      const towMat = new THREE.ShaderMaterial({ uniforms: { uLine: { value: neon }, uFog }, vertexShader: TILE_VS, fragmentShader: TW_FS, extensions: { derivatives: true } });
+      const towPool = [];
+      let towZ = 1e9, towRnd = mulberry(7);
 
       const ballMat = new THREE.ShaderMaterial({ uniforms: { uCol: { value: neon }, uTime }, vertexShader: BALL_VS, fragmentShader: BALL_FS, extensions: { derivatives: true } });
       const ballGeo = new THREE.SphereGeometry(CFG.R, 36, 24);
@@ -843,11 +839,25 @@ float fade=exp(-dist/520.0)*(1.0-smoothstep(0.25,0.9,max(fw.x,fw.y)));gl_FragCol
         let m = pool.pop();
         if (!m) { m = new THREE.Mesh(unitBox, p.k === 'T' ? tileMat : redMat); m.matrixAutoUpdate = false; scene.add(m); }
         m.visible = true; p.mesh = m; setMat(m, p);
+        if (p.k === 'T' && p.h[0] > 1 && p.c[2] < towZ - 5) {
+          towZ = p.c[2];
+          p.tw = [];
+          for (const sd of [-1, 1]) for (let k = 0; k < 2; k++) {
+            if (towRnd() < 0.18) continue;
+            let t = towPool.pop();
+            if (!t) { t = new THREE.Mesh(unitBox, towMat); scene.add(t); }
+            const wx = 2.5 + towRnd() * 4.5, wz = 3 + towRnd() * 3, top = p.c[1] + (k ? -6 + towRnd() * 14 : 1 + towRnd() * 24), bot = p.c[1] - 40;
+            t.scale.set(wx, top - bot, wz);
+            t.position.set(p.c[0] + sd * (p.h[0] + 2.2 + wx / 2 + k * (5 + towRnd() * 6)), (top + bot) / 2, p.c[2] + (towRnd() - 0.5) * 3);
+            t.visible = true; p.tw.push(t);
+          }
+        }
       };
       sim.onRemove = p => {
         const m = p.mesh;
         if (!m) return;
         m.visible = false; (p.k === 'T' ? poolT : poolX).push(m); p.mesh = null;
+        if (p.tw) { for (const t of p.tw) { t.visible = false; towPool.push(t); } p.tw = null; }
       };
       const B = sim.ball;
 
@@ -855,7 +865,7 @@ float fade=exp(-dist/520.0)*(1.0-smoothstep(0.25,0.9,max(fw.x,fw.y)));gl_FragCol
       let zone = 0, zoneT = 0;
       function tint() {
         glowMat.color.copy(neon); flashMat.color.copy(neon); shardMat.color.copy(neon); poolMat.color.copy(neon);
-        fill.copy(neon).multiplyScalar(0.075).add(FILLB);
+        fill.copy(neon).multiplyScalar(0.025).add(FILLB);
         wrap.style.setProperty('--neon', '#' + neon.getHexString());
       }
       function setZone(z, snap) {
@@ -970,6 +980,7 @@ float fade=exp(-dist/520.0)*(1.0-smoothstep(0.25,0.9,max(fw.x,fw.y)));gl_FragCol
         px = B.x; py = B.y; pz = B.z;
       }
       function newCourse() {
+        towZ = 1e9;
         sim.reset((Math.random() * 4294967296) >>> 0);
         snapCam();
         if (zone) { zone = 0; neon.set(THEMES[setg.col]); tint(); }
@@ -1126,7 +1137,7 @@ float fade=exp(-dist/520.0)*(1.0-smoothstep(0.25,0.9,max(fw.x,fw.y)));gl_FragCol
         if (ball.visible) {
           ball.position.set(bx, by, bz);
           glow.position.set(bx, by, bz);
-          glowMat.opacity = 0.62 + 0.08 * Math.sin(performance.now() * 0.006);
+          glowMat.opacity = 0.08;
           if (state === 'play' || state === 'dead') {
             const hv = Math.hypot(B.vx, B.vz);
             if (hv > 0.01) {
@@ -1138,7 +1149,7 @@ float fade=exp(-dist/520.0)*(1.0-smoothstep(0.25,0.9,max(fw.x,fw.y)));gl_FragCol
             axTmp.set(-1, 0, 0); qTmp.setFromAxisAngle(axTmp, dt * 1.2); ball.quaternion.premultiply(qTmp);
           }
         }
-        trail.visible = ball.visible;
+        trail.visible = false;
         if (ball.visible) {
           trAcc += dt;
           if (!trPrim || Math.abs(trP[0] - bx) + Math.abs(trP[2] - bz) > 15) { for (let i = 0; i < NTR; i++) { trP[i * 3] = bx; trP[i * 3 + 1] = by; trP[i * 3 + 2] = bz; } trPrim = true; trAcc = 0; }
@@ -1150,7 +1161,7 @@ float fade=exp(-dist/520.0)*(1.0-smoothstep(0.25,0.9,max(fw.x,fw.y)));gl_FragCol
           trGeo.attributes.position.needsUpdate = true;
           trMat.uniforms.uPx.value = CFG.R * 2 * 1.15 * renderer.domElement.height / (2 * Math.tan(cam.fov * D2R / 2));
           const pg = B.gt > 0 && state !== 'menu' ? 1 : 0;
-          poolMat.opacity += ((state === 'menu' ? 0.5 : pg * 0.6) - poolMat.opacity) * (1 - Math.exp(-14 * dt));
+          poolMat.opacity += ((state === 'menu' ? 0.2 : pg * 0.22) - poolMat.opacity) * (1 - Math.exp(-14 * dt));
           pool.visible = poolMat.opacity > 0.02;
           if (pool.visible) {
             if (pg || state === 'menu') { poolN.x += (B.n[0] - poolN.x) * 0.5; poolN.y += (B.n[1] - poolN.y) * 0.5; poolN.z += (B.n[2] - poolN.z) * 0.5; poolN.normalize(); }

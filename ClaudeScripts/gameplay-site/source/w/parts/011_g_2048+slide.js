@@ -78,7 +78,7 @@ ${p} .seg button[aria-checked="true"]{background:#fff;color:var(--accent);box-sh
   };
   let left2048 = -1e9;
   const validGrid = v => Array.isArray(v) && SIZES.includes(Math.sqrt(v.length)) && v.every(x => x === 0 || (Number.isInteger(x) && x >= 2 && (x & (x - 1)) === 0));
-  const TILE = { 2: ['#eee4da', '#776e65'], 4: ['#ede0c8', '#776e65'], 8: ['#f2b179', '#fff'], 16: ['#f59563', '#fff'], 32: ['#f67c5f', '#fff'], 64: ['#f65e3b', '#fff'], 128: ['#edcf72', '#fff'], 256: ['#edcc61', '#fff'], 512: ['#edc850', '#fff'], 1024: ['#edc53f', '#fff'], 2048: ['#edc22e', '#fff'], 4096: ['#b46ef0', '#fff'], 8192: ['#7c5cf0', '#fff'] };
+  const TILE = { 2: ['#eee4da', '#776e65'], 4: ['#ede0c8', '#776e65'], 8: ['#f2b179', '#f9f6f2'], 16: ['#f59563', '#f9f6f2'], 32: ['#f67c5f', '#f9f6f2'], 64: ['#f65e3b', '#f9f6f2'], 128: ['#edcf72', '#f9f6f2'], 256: ['#edcc61', '#f9f6f2'], 512: ['#edc850', '#f9f6f2'], 1024: ['#edc53f', '#f9f6f2'], 2048: ['#edc22e', '#f9f6f2'] };
 
   Ameplay.register({
     id: '2048',
@@ -90,29 +90,38 @@ ${p} .seg button[aria-checked="true"]{background:#fff;color:var(--accent);box-sh
     help: '<kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> or swipe to slide · <kbd>Z</kbd> undo · pick a board size up top',
     icon: ICON('<rect x="8" y="8" width="21" height="21" rx="5"/><rect x="35" y="8" width="21" height="21" rx="5"/><rect x="8" y="35" width="21" height="21" rx="5" fill="currentColor" opacity=".3"/><rect x="35" y="35" width="21" height="21" rx="5" fill="currentColor"/>'),
     css: segCss('.gm-2048') + `
-.gm-2048{gap:14px}
-.gm-2048 .top{width:min(460px,100%);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.gm-2048 .boxes,.gm-2048 .btns{display:flex;gap:8px}
-.gm-2048 .box{position:relative;min-width:74px;padding:7px 12px 6px;border-radius:12px;background:#bbada0;color:#fff;text-align:center;box-shadow:inset 0 -3px 0 rgba(0,0,0,.12),inset 0 2px 0 rgba(255,255,255,.2)}
-.gm-2048 .box .k{display:block;font:900 10.5px/1.2 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:#f6eee4}
-.gm-2048 .box .v{display:block;font:900 21px/1.15 var(--sans);font-variant-numeric:tabular-nums}
-.gm-2048 .plus{position:absolute;left:50%;top:6px;margin-left:-.6em;font:900 18px/1 var(--sans);color:#8f7a66;pointer-events:none;animation:gm2048-plus .7s var(--ease) both}
-@keyframes gm2048-plus{0%{opacity:0;transform:translateY(0)}20%{opacity:1}100%{opacity:0;transform:translateY(-36px)}}
-.gm-2048 .board{position:relative;width:min(460px,100%);aspect-ratio:1;background:linear-gradient(#c2b3a5,#ad9e8f);border-radius:18px;box-shadow:inset 0 2px 0 rgba(255,255,255,.25),inset 0 -4px 0 rgba(0,0,0,.1),0 16px 30px -16px rgba(120,90,60,.6);container-type:inline-size;--g:calc(10.5cqw / var(--n))}
+.gm-2048{gap:14px;background:#faf8ef;border-radius:14px;padding:18px 14px 20px;color:#776e65;font-family:"Clear Sans","Helvetica Neue",Arial,sans-serif}
+.gm-2048 .sizes .seg{background:#e9e1d4}
+.gm-2048 .sizes .seg button{color:#8f7a66}
+.gm-2048 .sizes .seg button[aria-checked="true"]{background:#8f7a66;color:#f9f6f2}
+.gm-2048{--bw:min(460px,100%,max(300px,calc(100dvh - var(--goff,250px) - 170px)))}
+.gm-2048 .top{width:var(--bw);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.gm-2048 .ttl{margin:0;font:700 clamp(44px,13vw,64px)/1 "Clear Sans","Helvetica Neue",Arial,sans-serif;color:#776e65;letter-spacing:-.02em}
+.gm-2048 .row{flex-basis:100%;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.gm-2048 .row p{margin:0;font-size:16px;line-height:1.3;color:#776e65}
+.gm-2048 .boxes,.gm-2048 .btns{display:flex;gap:6px}
+.gm-2048 .box{position:relative;min-width:70px;padding:6px 14px 5px;border-radius:3px;background:#bbada0;color:#fff;text-align:center}
+.gm-2048 .box .k{display:block;font:700 12px/1.3 "Clear Sans","Helvetica Neue",Arial,sans-serif;text-transform:uppercase;color:#eee4da}
+.gm-2048 .box .v{display:block;font:700 23px/1.1 "Clear Sans","Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums}
+.gm-2048 .btns button{height:40px;padding:0 16px;border:0;border-radius:3px;background:#8f7a66;color:#f9f6f2;font:700 15px/40px "Clear Sans","Helvetica Neue",Arial,sans-serif;cursor:pointer;white-space:nowrap}
+.gm-2048 .btns button:disabled{opacity:.45;cursor:default}
+.gm-2048 .plus{position:absolute;right:30px;top:6px;font:700 22px/1 "Clear Sans","Helvetica Neue",Arial,sans-serif;color:rgba(119,110,101,.9);pointer-events:none;animation:gm2048-plus .6s ease-in both;z-index:3}
+@keyframes gm2048-plus{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-50px)}}
+.gm-2048 .board{position:relative;width:var(--bw);aspect-ratio:1;background:#bbada0;border-radius:6px;container-type:inline-size;--g:calc(12cqw / var(--n))}
 .gm-2048 .cells{position:absolute;inset:0;display:grid;grid-template:repeat(var(--n),minmax(0,1fr))/repeat(var(--n),minmax(0,1fr));gap:var(--g);padding:var(--g)}
-.gm-2048 .cells i{border-radius:calc(9cqw / var(--n));background:rgba(238,228,218,.4);box-shadow:inset 0 2px 5px rgba(90,70,50,.14)}
-.gm-2048 .t{position:absolute;left:var(--g);top:var(--g);z-index:1;width:calc((100% - (var(--n) + 1) * var(--g)) / var(--n));aspect-ratio:1;border-radius:calc(9cqw / var(--n));display:grid;place-items:center;background:linear-gradient(rgba(255,255,255,.22),rgba(255,255,255,0) 55%) var(--bg);color:var(--fg);font:900 calc(var(--k) * 38cqw / var(--n))/1 var(--sans);letter-spacing:-.03em;font-variant-numeric:tabular-nums;text-shadow:0 2px 0 rgba(0,0,0,.1);box-shadow:inset 0 calc(-3.4cqw / var(--n)) 0 rgba(0,0,0,.14),inset 0 calc(2cqw / var(--n)) 0 rgba(255,255,255,.45),0 calc(2.4cqw / var(--n)) calc(5cqw / var(--n)) rgba(110,80,50,.3),var(--gl,0 0 0 transparent);transition:translate .1s ease-out}
+.gm-2048 .cells i{border-radius:3px;background:rgba(238,228,218,.35)}
+.gm-2048 .t{position:absolute;left:var(--g);top:var(--g);z-index:1;width:calc((100% - (var(--n) + 1) * var(--g)) / var(--n));aspect-ratio:1;border-radius:3px;display:grid;place-items:center;background:var(--bg);color:var(--fg);font:700 calc(var(--k) * 44cqw / var(--n))/1 "Clear Sans","Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums;box-shadow:var(--gl,0 0 0 transparent);transition:translate .1s ease-in-out}
 .gm-2048 .t.gone{z-index:0}
-.gm-2048 .t.new{animation:gm2048-in .16s var(--ease) .08s both}
-.gm-2048 .t.pop{z-index:2;animation:gm2048-pop .2s var(--ease) .07s both}
-.gm-2048 .t.fade{animation:gm2048-fade .22s var(--ease) both}
+.gm-2048 .t.new{animation:gm2048-in .2s ease .1s both}
+.gm-2048 .t.pop{z-index:2;animation:gm2048-pop .2s ease .1s both}
+.gm-2048 .t.fade{animation:gm2048-fade .22s ease both}
 .gm-2048 .board.snap .t{transition:none!important;animation:none!important}
-@keyframes gm2048-in{0%{opacity:0;scale:.2}100%{opacity:1;scale:1}}
-@keyframes gm2048-pop{0%{opacity:0;scale:1}1%{opacity:1}50%{scale:1.17}100%{opacity:1;scale:1}}
+@keyframes gm2048-in{0%{opacity:0;scale:0}100%{opacity:1;scale:1}}
+@keyframes gm2048-pop{0%{scale:0}50%{scale:1.2}100%{scale:1}}
 @keyframes gm2048-fade{0%{opacity:0}}
-.gm-2048 .board.nope{animation:gm2048-nope .22s var(--ease)}
+.gm-2048 .board.nope{animation:gm2048-nope .22s ease}
 @keyframes gm2048-nope{35%{translate:var(--nx) var(--ny)}}
-@media (max-width:520px){.gm-2048 .box{min-width:62px;padding:6px 9px 5px}.gm-2048 .box .v{font-size:18px}.gm-2048 .seg button{padding:8px 10px}}
+@media (max-width:520px){.gm-2048 .box{min-width:58px;padding:5px 9px 4px}.gm-2048 .box .v{font-size:19px}.gm-2048 .seg button{padding:8px 10px}.gm-2048 .row p{font-size:13px}.gm-2048 .btns button{padding:0 11px;font-size:14px}}
 `,
     mount(root, api) {
       const saved = api.load() || {};
@@ -123,17 +132,17 @@ ${p} .seg button[aria-checked="true"]{background:#fff;color:var(--accent);box-sh
       };
       if (validGrid(saved.vals) && saved.vals.length === 16 && !st.g[4]) st.g[4] = { vals: saved.vals, score: saved.score, prev: saved.prev, won: saved.won };
       const sizes = el('div', 'sizes', seg('size', SIZES.map(n => [n, n + '×' + n]), st.size));
-      const top = el('div', 'top', '<div class="boxes"><div class="box sc"><span class="k">Score</span><span class="v">0</span></div><div class="box bt"><span class="k">Best</span><span class="v">0</span></div></div><div class="btns"><button type="button" class="g-btn ghost sm" data-u>Undo</button><button type="button" class="g-btn ghost sm" data-n>New game</button></div>');
+      const top = el('div', 'top', '<h1 class="ttl">2048</h1><div class="boxes"><div class="box sc"><span class="k">Score</span><span class="v">0</span></div><div class="box bt"><span class="k">Best</span><span class="v">0</span></div></div><div class="row"><p>Join the tiles, get to <b class="tg">2048!</b></p><div class="btns"><button type="button" data-u>Undo</button><button type="button" data-n>New Game</button></div></div>');
       const board = el('div', 'board', '<div class="cells"></div>');
-      root.append(sizes, top, board);
+      root.append(top, board, sizes);
       const scBox = top.querySelector('.sc'), scEl = scBox.querySelector('.v'), btEl = top.querySelector('.bt .v');
       const undoBtn = top.querySelector('[data-u]'), newBtn = top.querySelector('[data-n]'), cellsEl = board.firstChild;
       let n = st.size, vals, score, prev, won, over, busy, tiles = [], animEnd = 0;
 
       function make(v, i, anim) {
         const t = el('div', 't' + (anim ? ' ' + anim : ''), v);
-        const [bg, fg] = TILE[v] || ['#3c3a32', '#fff'], d = String(v).length;
-        t.style.cssText = `--bg:${bg};--fg:${fg};--k:${d < 3 ? 1 : d === 3 ? .8 : d === 4 ? .64 : .52};translate:${pos(i, n)}` + (v >= 128 ? `;--gl:0 0 calc(${v >= 1024 ? 14 : 9}cqw / var(--n)) rgba(243,205,90,${v >= 1024 ? .75 : .5})` : '');
+        const [bg, fg] = TILE[v] || ['#3c3a32', '#f9f6f2'], d = String(v).length, gk = { 128: .238, 256: .317, 512: .397, 1024: .476, 2048: .556 }[v];
+        t.style.cssText = `--bg:${bg};--fg:${fg};--k:${d < 3 ? 1 : d === 3 ? .82 : d === 4 ? .64 : .55};translate:${pos(i, n)}` + (gk ? `;--gl:0 0 calc(28cqw / var(--n)) calc(9cqw / var(--n)) rgba(243,215,116,${gk}),inset 0 0 0 1px rgba(255,255,255,${(gk * .6).toFixed(3)})` : '');
         board.append(t);
         return t;
       }
@@ -171,6 +180,7 @@ ${p} .seg button[aria-checked="true"]{background:#fff;color:var(--accent);box-sh
       function setSize(m, fresh) {
         n = m;
         board.style.setProperty('--n', n);
+        top.querySelector('.ttl').textContent = TARGET[n]; top.querySelector('.tg').textContent = TARGET[n] + '!';
         cellsEl.innerHTML = '<i></i>'.repeat(n * n);
         const s = st.g[n];
         if (fresh && s && +s.score > 0) api.submit(+s.score);

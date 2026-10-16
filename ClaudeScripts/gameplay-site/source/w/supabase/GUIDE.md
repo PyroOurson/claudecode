@@ -6,8 +6,8 @@ When you are done, you give Claude **4 or 5 things** (listed at the end). Claude
 
 What players get once it is on:
 
-- Sign in with Google, or with an email and a password (optional, guests keep playing as before).
-- A username that friends can find, and a display name.
+- Sign up with a username, an email and a password (a confirmation email is sent), then log in with the email or the username. Google sign-in appears as soon as you turn it on (Part C). Guests keep playing as before.
+- A username that friends can find (the search shows matching usernames as you type), friend requests, and a display name.
 - Records, play counts, time played and saved games kept in their account, on every device.
 - Change email, change password, reset a forgotten password, sign out, download their data, delete their account.
 - If they accept analytics cookies, anonymous usage counts are sent to your database so you can see which games are popular.
@@ -137,7 +137,7 @@ Open your project at **https://supabase.com/dashboard**.
   - `game_stats`: plays, time played and best score per player and game.
   - `game_saves`: saved progress.
   - `analytics_events`: the raw usage events (only from players who accepted analytics cookies).
-  - `friends`, `friend_requests`: used later for the friends feature.
+  - `friends`, `friend_requests`: who is friends with whom, and pending friend requests.
   - `account_deletion_requests`: normally empty (see below).
 - **SQL Editor** > **New query**, paste one line and click **Run**. Ready-made dashboards (days use the Paris time zone):
 
@@ -183,7 +183,7 @@ You can change the email texts in **Authentication > Emails > Templates**.
 
 - **Passwords are never stored by the website or by us.** When a player types a password, it goes over an encrypted connection straight to **Supabase Auth**, the sign-in service. Supabase keeps only a **hash** of it (a one-way scramble, bcrypt). Nobody can read a password back, not you, not Claude, not Supabase staff. If players forget it, they reset it by email.
 - **Google sign-in** players have no password with us at all: Google confirms who they are and tells us only their email, name and profile picture.
-- **Emails** are stored by Supabase Auth in its own protected area (`auth.users`). You can see them in **Authentication > Users**, but they are never shown to other players and never readable from the website. Players find each other by **username**, not by email.
+- **Emails** are stored by Supabase Auth in its own protected area (`auth.users`). You can see them in **Authentication > Users**, but they are never shown to other players and never readable from the website. Players find each other by **username**, not by email. Logging in with a username works through a small database function (`login_email`) that only answers when the password is right, and is limited to 10 tries per username every 15 minutes; the friend search (`search_profiles`) only works for signed-in players, needs at least 2 letters, returns at most 20 usernames with display names and pictures (never emails), and is limited to 120 searches per minute per player.
 - Our own tables only hold game data (username, display name, records, saves, friends) and, if players accept, anonymous usage counts.
 - When a player deletes their account (Settings > Account > Delete my account), their account, profile, records, saves and friends are removed from the database, and their analytics events are made anonymous. If Supabase ever refuses the automatic removal, the request shows up in `admin.pending_account_deletions`: delete that user in **Authentication > Users**.
 - Keep your own Supabase login safe: turn on two-factor authentication in **Account preferences > Security**.

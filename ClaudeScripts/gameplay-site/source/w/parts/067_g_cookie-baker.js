@@ -753,7 +753,8 @@
 .gm-cookie-baker .cb-btn.big{font-size:18px;padding:10px 26px}
 .gm-cookie-baker .cb-tick{flex:1;min-width:0;min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;padding:4px 10px;cursor:pointer;font:700 13px/1.35 var(--cbB);color:#fff;text-shadow:0 0 3px #000,0 1px 0 #000;position:relative}
 .gm-cookie-baker .cb-tick span{display:block}
-.gm-cookie-baker .cb-tickM span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;max-height:4.1em}
+.gm-cookie-baker .cb-tickM{padding:2px 4px;font-size:12px;line-height:1.24}
+.gm-cookie-baker .cb-tickM span{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;max-height:5em}
 .gm-cookie-baker .cb-tick span.a{animation:gmCbTick .7s cubic-bezier(.2,.8,.2,1)}
 .gm-cookie-baker .cb-tick em{font-style:normal;color:#fff;opacity:.85}
 @keyframes gmCbTick{from{transform:translateX(50px);opacity:0}to{transform:none;opacity:1}}
@@ -779,6 +780,7 @@
 .gm-cookie-baker .cb-R{grid-column:5;display:flex;flex-direction:column;background:#120d09}
 .gm-cookie-baker .cb-st-title{flex:none;font:400 30px/1 var(--cbT);letter-spacing:.5px;text-align:center;padding:10px 0 8px;text-shadow:0 0 4px #000,0 2px 0 #000,0 3px 8px #000;background:radial-gradient(ellipse at 50% 100%,rgba(255,200,120,.18),rgba(0,0,0,0) 70%),linear-gradient(#2a1c10,#120c07)}
 .gm-cookie-baker .cb-ups{flex:none;display:flex;flex-wrap:wrap;align-content:flex-start;justify-content:center;gap:0;padding:4px;min-height:64px;max-height:176px;overflow-y:auto;background:radial-gradient(ellipse at 50% 0,rgba(60,45,30,.6),rgba(0,0,0,0) 80%),#0c0806;scrollbar-width:thin;scrollbar-color:#6a4a2a transparent}
+@media (hover:hover) and (pointer:fine){.gm-cookie-baker:not(.cb-nar) .cb-ups{max-height:64px;overflow:hidden;transition:max-height .18s ease-out}.gm-cookie-baker:not(.cb-nar) .cb-ups:hover{max-height:176px;overflow-y:auto}}
 .gm-cookie-baker .cb-ups:empty::after{content:'No upgrades available yet';margin:auto;color:rgba(255,255,255,.3);font-style:italic;font-size:12px}
 .gm-cookie-baker .cb-up{width:56px;height:56px;padding:0;border:0;border-radius:0;background:var(--cb-crate) 0 0/100% 100%;cursor:pointer;display:grid;place-items:center;position:relative}
 .gm-cookie-baker .cb-up img{width:48px;height:48px;pointer-events:none}

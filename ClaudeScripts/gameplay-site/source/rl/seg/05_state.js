@@ -5,7 +5,8 @@
         if (![1, 2, 3].includes(saved.size)) saved.size = 1;
         if (![180, 300, 600].includes(saved.len)) saved.len = 300;
         if (!['cpu', 'train', 'online'].includes(saved.play)) saved.play = 'cpu';
-        if (typeof saved.name !== 'string' || !saved.name.trim() || saved.name === 'Player') { try { const pf = JSON.parse(localStorage.getItem('gameplay:profile') || 'null'); const pn = pf && (pf.displayName || pf.username); if (typeof pn === 'string' && pn.trim()) saved.name = pn; } catch (e) {   } }
+        const uiProfName = () => { try { const pf = JSON.parse(localStorage.getItem('gameplay:profile') || 'null'), pn = pf && (pf.username || pf.displayName); return typeof pn === 'string' ? pn.replace(/[^\w .\-!?]/g, '').trim().slice(0, 16) : ''; } catch (e) { return ''; } };
+        saved.name = uiProfName() || saved.name;
         if (typeof saved.name !== 'string' || !saved.name.trim()) saved.name = 'Player';
         saved.name = saved.name.replace(/[^\w .\-!?]/g, '').slice(0, 16) || 'Player';
         for (const k of ['xp', 'wins', 'games', 'pxp']) saved[k] = Number.isFinite(saved[k]) && saved[k] > 0 ? Math.floor(saved[k]) : 0;

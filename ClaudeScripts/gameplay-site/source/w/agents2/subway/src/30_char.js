@@ -79,6 +79,11 @@
       mesh(rbox(0.46, 0.26, 0.4, 0.8), M(P.hair), 0, 0.31, 0.045, head);
       for (const sx of [-1, 1]) mesh(rbox(0.06, 0.14, 0.12, 0.8), M(P.hair), sx * 0.2, 0.27, -0.06, head);
       if (P.extra === 'pony') { mesh(rbox(0.17, 0.36, 0.17, 0.8), M(P.hair), 0, 0.18, 0.27, head); }
+      if (P.hood) {
+        mesh(rbox(0.46, 0.2, 0.2, 0.8), M(P.hood), 0, 0.0, 0.17, head);
+        mesh(rbox(0.36, 0.2, 0.2, 0.8), M(P.hood), 0, 0.5, 0.2, torso);
+      }
+      if (P.scarf) { mesh(rbox(0.34, 0.12, 0.14, 0.8), M(P.scarf), 0, 0.555, -0.13, torso); const sc = mesh(rbox(0.16, 0.16, 0.05, 0.6), M(P.scarf), 0, 0.47, -0.2, torso); sc.rotation.z = Math.PI / 4; }
       if (P.extra === 'phones') { const t = new THREE.Mesh(G('torus', () => new THREE.TorusGeometry(0.17, 0.035, 6, 16)), M('#2f2f3a')); t.rotation.x = Math.PI / 2; t.position.set(0, 0.0, 0); neck.add(t); for (const s of [-1, 1]) mesh(rbox(0.08, 0.12, 0.12), M('#ff4fa3'), s * 0.17, 0.0, -0.02, neck); }
       if (P.hat === 'cap') {
         const dome = G('dome', () => new THREE.SphereGeometry(0.245, 20, 10, 0, TAU, 0, Math.PI / 2));
@@ -129,8 +134,8 @@
       board.visible = false;
       const jet = grp(0, 0.26, 0.2, torso);
       for (const s of [-1, 1]) {
-        mesh(cyl(0.1, 0.1, 0.42, 12), M('#e8323a'), s * 0.12, 0.25, 0, jet);
-        mesh(ball(0.1, 10), M('#e8323a'), s * 0.12, 0.25, 0, jet);
+        mesh(cyl(0.1, 0.1, 0.42, 12), M('#7cd23a'), s * 0.12, 0.25, 0, jet);
+        mesh(ball(0.1, 10), M('#ff8a1a'), s * 0.12, 0.27, 0, jet);
         mesh(cyl(0.06, 0.09, 0.1, 10), M('#9aa0aa'), s * 0.12, -0.17, 0, jet);
         const fl = mesh(G('flame', () => { const g = new THREE.ConeGeometry(0.09, 0.5, 8); g.rotateX(Math.PI); g.translate(0, -0.25, 0); return g; }), M('#ffb31a', { emissive: new THREE.Color('#ff7a1a') }), s * 0.12, -0.27, 0, jet);
         fl.name = 'fl';
@@ -144,38 +149,38 @@
     function guard() {
       const root = new THREE.Group();
       const body = grp(0, 0, 0, root);
-      const pelvis = grp(0, 0.74, 0, body);
-      const navy = '#2a3f73', navy2 = '#1f2f58', skin = '#f2b48c';
-      mesh(rbox(0.64, 0.34, 0.48, 0.78), M(navy2), 0, 0, 0, pelvis);
-      mesh(rbox(0.66, 0.08, 0.5, 0.8), M('#1d1b26'), 0, 0.13, 0, pelvis);
-      mesh(rbox(0.12, 0.08, 0.04, 0.8), M('#ffd23f'), 0, 0.13, -0.25, pelvis);
+      const pelvis = grp(0, 0.72, 0, body);
+      const ol = '#7c8a3a', ol2 = '#5f6c2c', skin = '#e8a77c';
+      mesh(rbox(0.7, 0.34, 0.54, 0.78), M(ol2), 0, 0, 0, pelvis);
+      mesh(rbox(0.72, 0.08, 0.56, 0.8), M('#3a2a1e'), 0, 0.14, 0, pelvis);
+      mesh(rbox(0.13, 0.09, 0.04, 0.8), M('#ffd23f'), 0, 0.14, -0.28, pelvis);
       const torso = grp(0, 0.06, 0, pelvis);
-      mesh(rbox(0.76, 0.7, 0.62, 0.78), M(navy), 0, 0.34, 0, torso);
-      mesh(ball(0.34, 18), M(navy), 0, 0.22, -0.14, torso, 1.12, 0.95, 1);
-      for (let k = 0; k < 3; k++) mesh(ball(0.028, 8), M('#ffd23f'), 0, 0.46 - k * 0.15, -0.44 + Math.abs(k - 1) * 0.04, torso);
-      mesh(rbox(0.26, 0.2, 0.06, 0.8), M('#bfe0ff'), 0, 0.6, -0.27, torso);
-      mesh(rbox(0.07, 0.16, 0.03, 0.8), M('#1d1b26'), 0, 0.56, -0.3, torso);
-      mesh(rbox(0.13, 0.15, 0.04, 0.8), M('#ffd23f'), -0.22, 0.5, -0.31, torso);
-      for (const sx of [-1, 1]) mesh(rbox(0.22, 0.08, 0.24, 0.8), M('#ffd23f'), sx * 0.36, 0.66, 0, torso);
-      const neck = grp(0, 0.7, 0, torso);
+      mesh(rbox(0.86, 0.72, 0.66, 0.74), M(ol), 0, 0.34, 0, torso);
+      mesh(ball(0.4, 18), M(ol), 0, 0.2, -0.16, torso, 1.08, 0.95, 1);
+      for (let k = 0; k < 3; k++) mesh(ball(0.03, 8), M('#ffd23f'), 0, 0.44 - k * 0.16, -0.5 + Math.abs(k - 1) * 0.05, torso);
+      for (const sx of [-1, 1]) { mesh(rbox(0.2, 0.14, 0.05, 0.8), M(ol2), sx * 0.22, 0.52, -0.33, torso); mesh(rbox(0.24, 0.08, 0.26, 0.8), M(ol2), sx * 0.4, 0.68, 0, torso); }
+      mesh(rbox(0.12, 0.14, 0.04, 0.8), M('#ffd23f'), -0.22, 0.42, -0.36, torso);
+      mesh(rbox(0.3, 0.12, 0.08, 0.8), M('#e8d9b0'), 0, 0.7, -0.24, torso);
+      const neck = grp(0, 0.72, 0, torso);
       const head = grp(0, 0, 0, neck);
       head.scale.setScalar(1.1);
-      mesh(rbox(0.46, 0.46, 0.44, 0.84), M(skin), 0, 0.2, 0, head);
-      mesh(ball(0.15, 12), M(skin), 0, 0.08, -0.06, head, 1.4, 0.8, 1.1);
-      mesh(ball(0.08, 12), M('#e8907a'), 0, 0.17, -0.235, head, 1, 0.9, 1);
-      for (const sx of [-1, 1]) { mesh(ball(0.075, 10), M('#9a9aa2'), sx * 0.08, 0.095, -0.21, head, 1.3, 0.6, 0.8); }
-      for (const sx of [-1, 1]) { mesh(ball(0.045, 10), M('#ffffff'), sx * 0.09, 0.26, -0.195, head, 1, 1.15, 0.6); mesh(ball(0.024, 8), M('#1d1b26'), sx * 0.09, 0.26, -0.22, head); const br = mesh(rbox(0.13, 0.035, 0.035, 0.8), M('#7a7a82'), sx * 0.09, 0.33, -0.2, head); br.rotation.z = sx * 0.25; mesh(ball(0.065, 10), M(skin), sx * 0.23, 0.2, 0, head, 0.55, 1, 0.9); }
-      mesh(cyl(0.26, 0.235, 0.12, 20), M(navy2), 0, 0.44, 0.01, head);
-      mesh(rbox(0.56, 0.12, 0.54, 0.85), M(navy2), 0, 0.53, 0.0, head);
-      mesh(cyl(0.262, 0.262, 0.045, 20), M('#ffd23f'), 0, 0.37, 0.01, head);
-      const vz = mesh(rbox(0.36, 0.035, 0.2, 0.8), M('#111522'), 0, 0.355, -0.24, head); vz.rotation.x = -0.2;
-      mesh(rbox(0.09, 0.09, 0.03, 0.8), M('#ffd23f'), 0, 0.5, -0.27, head);
-      const handG = ball(0.1, 12), handM = M(skin);
-      const armR = limb(torso, 0.45, 0.58, 0.3, 0.27, 0.11, 0.1, navy, navy, handG, handM, [0, -0.03, 0]);
-      const armL = limb(torso, -0.45, 0.58, 0.3, 0.27, 0.11, 0.1, navy, navy, handG, handM, [0, -0.03, 0]);
-      const boot = () => { const g = grp(0, 0, 0); mesh(rbox(0.22, 0.15, 0.36, 0.75), M('#1d1b26'), 0, -0.03, -0.07, g); mesh(rbox(0.24, 0.05, 0.38, 0.8), M('#3a3a42'), 0, -0.1, -0.07, g); return g; };
-      const legR = limb(pelvis, 0.17, -0.04, 0.32, 0.3, 0.14, 0.12, navy2, navy2, null, null, null, 1.05);
-      const legL = limb(pelvis, -0.17, -0.04, 0.32, 0.3, 0.14, 0.12, navy2, navy2, null, null, null, 1.05);
+      mesh(rbox(0.48, 0.46, 0.46, 0.84), M(skin), 0, 0.2, 0, head);
+      mesh(ball(0.17, 12), M(skin), 0, 0.06, -0.06, head, 1.45, 0.8, 1.15);
+      mesh(ball(0.085, 12), M('#d98a66'), 0, 0.18, -0.245, head, 1, 0.95, 1);
+      const mu = mesh(rbox(0.34, 0.08, 0.1, 0.7), M('#3a2416'), 0, 0.1, -0.23, head); mu.rotation.x = 0.1;
+      for (const sx of [-1, 1]) { const m2 = mesh(rbox(0.14, 0.07, 0.08, 0.7), M('#3a2416'), sx * 0.17, 0.07, -0.21, head); m2.rotation.z = sx * 0.5; }
+      for (const sx of [-1, 1]) { mesh(ball(0.042, 10), M('#ffffff'), sx * 0.09, 0.27, -0.2, head, 1, 1.15, 0.6); mesh(ball(0.022, 8), M('#1d1b26'), sx * 0.09, 0.27, -0.225, head); const br = mesh(rbox(0.14, 0.045, 0.04, 0.8), M('#3a2416'), sx * 0.09, 0.335, -0.205, head); br.rotation.z = sx * 0.3; mesh(ball(0.065, 10), M(skin), sx * 0.24, 0.2, 0, head, 0.55, 1, 0.9); }
+      mesh(cyl(0.27, 0.25, 0.14, 20), M(ol), 0, 0.46, 0.01, head);
+      mesh(rbox(0.6, 0.13, 0.58, 0.85), M(ol), 0, 0.55, 0.02, head);
+      mesh(cyl(0.272, 0.272, 0.05, 20), M('#3a2a1e'), 0, 0.38, 0.01, head);
+      const vz = mesh(rbox(0.4, 0.04, 0.22, 0.8), M('#16140f'), 0, 0.36, -0.25, head); vz.rotation.x = -0.18;
+      mesh(rbox(0.12, 0.1, 0.03, 0.8), M('#ffd23f'), 0, 0.5, -0.29, head);
+      const handG = ball(0.11, 12), handM = M(skin);
+      const armR = limb(torso, 0.5, 0.58, 0.3, 0.27, 0.12, 0.11, ol, ol, handG, handM, [0, -0.03, 0]);
+      const armL = limb(torso, -0.5, 0.58, 0.3, 0.27, 0.12, 0.11, ol, ol, handG, handM, [0, -0.03, 0]);
+      const boot = () => { const g = grp(0, 0, 0); mesh(rbox(0.24, 0.16, 0.38, 0.75), M('#3a2416'), 0, -0.03, -0.07, g); mesh(rbox(0.26, 0.05, 0.4, 0.8), M('#22160e'), 0, -0.1, -0.07, g); return g; };
+      const legR = limb(pelvis, 0.18, -0.04, 0.32, 0.3, 0.15, 0.13, ol2, ol2, null, null, null, 1.05);
+      const legL = limb(pelvis, -0.18, -0.04, 0.32, 0.3, 0.15, 0.13, ol2, ol2, null, null, null, 1.05);
       legR.end.add(boot()); legL.end.add(boot());
       return { root, body, pelvis, torso, head, neck, armL, armR, legL, legR, ph: 0 };
     }
@@ -183,7 +188,7 @@
     function dog() {
       const root = new THREE.Group();
       const body = grp(0, 0.52, 0, root);
-      const c = '#c27a3c', c2 = '#8a5228', cream = '#f0d4aa';
+      const c = '#d9b07a', c2 = '#a87a4a', cream = '#f6ead2';
       mesh(rbox(0.36, 0.36, 0.82, 0.8), M(c), 0, 0, 0, body);
       mesh(rbox(0.3, 0.2, 0.56, 0.8), M(cream), 0, -0.1, -0.06, body);
       mesh(ball(0.2, 14), M(c), 0, 0.04, -0.3, body, 1, 1.05, 1);
@@ -282,12 +287,12 @@
         Gd.armL.top.rotation.x = -0.8 * s; Gd.armR.top.rotation.x = 0.8 * s + (Gd.grab ? 1.2 : 0);
         Gd.armL.mid.rotation.x = 1.2; Gd.armR.mid.rotation.x = 1.2;
         Gd.armL.top.rotation.z = 0.35; Gd.armR.top.rotation.z = -0.35;
-        Gd.torso.rotation.x = -0.2; Gd.pelvis.position.y = 0.74 + 0.06 * Math.abs(c);
+        Gd.torso.rotation.x = -0.2; Gd.pelvis.position.y = 0.72 + 0.06 * Math.abs(c);
         Gd.head.rotation.y = 0;
       } else {
         Gd.legL.top.rotation.x = 0; Gd.legR.top.rotation.x = 0; Gd.legL.mid.rotation.x = 0; Gd.legR.mid.rotation.x = 0;
         Gd.armR.top.rotation.x = 1.9 + 0.2 * Math.sin(t * 8); Gd.armR.mid.rotation.x = 0.4; Gd.armL.top.rotation.x = 0.2; Gd.armL.top.rotation.z = 0.5; Gd.armL.mid.rotation.x = 1.6;
-        Gd.torso.rotation.x = 0.05; Gd.pelvis.position.y = 0.74; Gd.head.rotation.y = 0.3 * Math.sin(t * 4);
+        Gd.torso.rotation.x = 0.05; Gd.pelvis.position.y = 0.72; Gd.head.rotation.y = 0.3 * Math.sin(t * 4);
       }
     }
     function animDog(D, sp, dt, t, mode) {

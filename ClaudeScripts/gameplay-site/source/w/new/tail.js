@@ -354,8 +354,8 @@ const thumbsOn = () => S.prefs.thumbs !== false;
 const tint = g => g.cc || TINT[g.id] || '#6c5ce7';
 const img = (g, pri) => { if (!thumbsOn()) return ''; const u = coverUrl(g); return `<img src="${u}"${u === BLANK ? ` data-cv="${g.id}"` : ''} alt="" width="16" height="10"${pri ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async" draggable="false">`; };
 let sel = null;
-const card = (g, src, i) => `<a class="card${sel === g.id && src === 'grid' ? ' sel' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="${src}" style="--c:${tint(g)}"><div class="art">${img(g, i != null && i < 10)}</div><div class="name">${esc(g.title)}</div></a>`;
-const srow = g => `<a class="srow${sel === g.id ? ' sel' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="side" style="--c:${tint(g)}"><span class="t">${img(g)}</span><span class="n">${esc(g.title)}</span></a>`;
+const card = (g, src, i) => `<a class="card${sel === g.id && src === 'grid' ? ' sel' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="${src}" style="--c:${tint(g)};--i:${i || 0}"><div class="art">${img(g, i != null && i < 10)}</div><div class="name">${esc(g.title)}</div></a>`;
+const srow = g => `<a class="srow${sel === g.id ? ' sel' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="side" ><span class="n">${esc(g.title)}</span></a>`;
 function related(g) {
   const mine = new Set(g.info.genres);
   const scored = games.filter(x => x !== g).map(x => {
@@ -372,21 +372,13 @@ function related(g) {
   });
   return scored.sort((a, b) => b[0] - a[0]).map(x => x[1]);
 }
-const playedText = n => n ? `Played ${n}×` : 'Not played yet';
-function openGameTags(g) {
-  const m = g.info;
-  const tags = m.genres.map(k => `<a class="badge" href="${(PATH_MODE ? '/' : '#/') + '?g=' + k}" data-genre="${k}">${esc(gname(k))}</a>`);
-  tags.push(`<span class="badge">${g.is3d ? '3D' : '2D'}</span>`, `<span class="badge">${esc(playersText(m.pl))}</span>`, `<span class="badge">${g.kb ? 'Keyboard or touch' : 'Mouse or touch'}</span>`);
-  tags.push(`<span class="badge" id="pPlayed"></span>`);
-  return tags.join('');
-}
 
 const SB = { on: !!(SUPABASE_URL && SUPABASE_ANON_KEY), c: null, p: null, lib: null, user: null, session: null, prof: null, syncing: false, again: false, fail: 0, t: 0, loud: false, mode: 'in', choosing: false, view: 'main' };
 const AN_KEY = 'gameplay:analytics', CK_KEY = 'gameplay:consent', AN_MAX = 2000;
 const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 let consent = null;
 try { consent = JSON.parse(localStorage.getItem(CK_KEY)); } catch (e) {}
-if (!consent || typeof consent !== 'object') consent = null;
+if (!consent || typeof consent !== 'object' || consent.v !== 2) consent = null;
 const anOk = () => !!(consent && consent.analytics);
 let anQ = [];
 try { anQ = JSON.parse(localStorage.getItem(AN_KEY)) || []; } catch (e) {}
@@ -479,12 +471,13 @@ Ameplay.analytics = {
   get consent() { return consent ? { analytics: anOk(), at: consent.at } : null; },
   get session() { return SID; }
 };
-function setConsent(an) {
-  consent = { v: 1, analytics: !!an, at: Date.now() };
+function setConsent(an, lv) {
+  consent = { v: 2, analytics: !!an, level: lv || (an ? 'all' : 'essential'), terms: true, at: Date.now() };
   try { localStorage.setItem(CK_KEY, JSON.stringify(consent)); } catch (e) {}
   if (an) { anQ = anQ.concat(anHold); anHold = []; track('consent', { analytics: true }); anSave(); }
   else { anQ = []; anHold = []; try { localStorage.removeItem(AN_KEY); if (SB.on) localStorage.removeItem(VIDK); } catch (e) {} }
   $('#ckbar').hidden = true;
+  document.documentElement.classList.remove('ck-open');
   syncSwitches();
 }
 const TT = { g: null, since: 0, acc: 0 };
@@ -528,7 +521,7 @@ function start(g) {
   ttSync();
   const mark = e => {
     if (!cur || cur.g !== g || cur.counted) return;
-    if (e && e.type === 'keydown' && (isField(e.target) || (e.target.closest && e.target.closest('.top, .side, .modal, .menu, .ckbar')))) return;
+    if (e && e.type === 'keydown' && (isField(e.target) || (e.target.closest && !e.target.closest('.g-root') && e.target.closest('.top, .side, .modal, .menu, .ckbar')))) return;
     markPlayed(g);
   };
   ctl.api.on(frame, 'pointerdown', mark, true);
@@ -556,7 +549,6 @@ function markPlayed(g) {
   d.p++;
   save();
   track('game_play', { game: g.id, n: S.plays[g.id] });
-  const el = $('#pPlayed'); if (el) el.textContent = playedText(S.plays[g.id]);
 }
 let pauseEl = null;
 function setPause(on) {
@@ -604,7 +596,7 @@ function waitStart(g) {
   const box = document.createElement('div');
   box.style.cssText = 'position:relative;width:min(100%,' + (g.width || 880) + 'px);aspect-ratio:16/10;max-height:calc(100dvh - var(--goff, 250px));margin:0 auto';
   frame.append(box);
-  const t = setTimeout(() => { if (pend !== g || !box.isConnected) return; const el = document.createElement('div'); el.className = 'g-loading'; el.innerHTML = '<i></i><span>Loading…</span>'; box.append(el); }, 120);
+  const t = setTimeout(() => { if (pend !== g || !box.isConnected) return; const el = document.createElement('div'); el.className = 'g-loading'; el.innerHTML = '<i></i><span>Loading…</span>'; box.append(el); }, 200);
   need(g).then(r => {
     clearTimeout(t);
     if (pend !== g) return;
@@ -635,17 +627,14 @@ function openGame(g) {
   $('#pSub').textContent = gname(g.info.genres[0]) + ' · ' + playersText(g.info.pl);
   $('#pScoreK').textContent = g.info.stat || 'Score';
   $('#pThumb').innerHTML = img(g, true); $('#pThumb').style.setProperty('--c', tint(g));
-  $('#pHelp').innerHTML = g.help || '';
-  $('#pBlurb').textContent = g.blurb || '';
-  $('#pTags').innerHTML = openGameTags(g);
-  $('#pPlayed').textContent = playedText(S.plays[g.id] || 0);
   gamebox.style.setProperty('--fw', (g.width || 880) + 'px');
-  $('#more').innerHTML = related(g).slice(0, 8).map(x => card(x, 'more')).join('');
+  $('#more').innerHTML = related(g).slice(0, 10).map(x => card(x, 'more')).join('');
   showView('game');
   if (!$('#slist').children.length) renderResults();
   scrollTo({ top: 0, behavior: 'instant' });
   gamebox.classList.remove('enter'); void gamebox.offsetWidth; gamebox.classList.add('enter');
   syncTheater();
+  if (shortQuery.matches) requestAnimationFrame(toStage);
   if (g.mount) { start(g); track('game_launch', { game: g.id, ms: 0, lazy: false }); } else waitStart(g);
   markSide();
   lzScan();
@@ -657,7 +646,7 @@ function closeGame() {
   setPause(false);
   if (cur) { cur.kill(); cur = null; }
   ttSync();
-  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  if (gamebox.classList.contains('fs')) fsExit();
   frame.textContent = '';
   $('#stage').style.height = '';
   frame.style.transform = '';
@@ -806,9 +795,31 @@ function openLegal(k) {
 
 const MENUS = { filters: ['#fpanel', '#fbtn'], friends: ['#fmodal', '#abtn'], profile: ['#pmenu', '#pbtn'], settings: ['#smenu', '#sbtn'], mprofile: ['#prmodal'], mstats: ['#stmodal'], msettings: ['#semodal'], msignout: ['#sgmodal'], cookies: ['#ckmodal'], mauth: ['#aumodal'] };
 let openK = null;
+const motionOK = () => !S.prefs.motion && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+function vis(el, on) {
+  clearTimeout(el._vt);
+  if (on) { el.classList.remove('out'); el.hidden = false; return; }
+  if (el.hidden) return;
+  if (!motionOK()) { el.classList.remove('out'); el.hidden = true; return; }
+  el.classList.add('out');
+  el._vt = setTimeout(() => { el.hidden = true; el.classList.remove('out'); }, 170);
+}
+function countUp(box) {
+  const els = [...box.querySelectorAll('[data-n]')];
+  if (!els.length || !motionOK()) return;
+  const f = el => el.dataset.f === 'd' ? fmtDur : x => String(Math.round(x));
+  const t0 = performance.now() + 120, D = 900;
+  els.forEach(el => { el.textContent = f(el)(0); });
+  const step = t => {
+    const k = Math.max(0, Math.min(1, (t - t0) / D)), e = 1 - Math.pow(1 - k, 3);
+    els.forEach(el => { if (el.isConnected) el.textContent = f(el)(+el.dataset.n * e); });
+    if (k < 1 && els[0].isConnected) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
 function setOpen(k) {
   openK = openK === k ? null : k;
-  Object.keys(MENUS).forEach(m => { const on = m === openK; const el = $(MENUS[m][0]); if (el) el.hidden = !on; if (MENUS[m][1]) $(MENUS[m][1]).setAttribute('aria-expanded', String(on)); });
+  Object.keys(MENUS).forEach(m => { const on = m === openK; const el = $(MENUS[m][0]); if (el) vis(el, on); if (MENUS[m][1]) $(MENUS[m][1]).setAttribute('aria-expanded', String(on)); });
   const modal = !!openK && /modal/.test(MENUS[openK][0]);
   document.body.classList.toggle('modal-open', modal);
   if (openK && (modal || openK === 'filters') && cur && !PAUSE.on && canPause()) setPause(true);
@@ -824,7 +835,7 @@ function setOpen(k) {
 }
 function closeAll() { if (openK) setOpen(openK); }
 function showPane(p) {
-  document.querySelectorAll('.pane').forEach(x => { x.hidden = x.dataset.pane !== p; });
+  document.querySelectorAll('.pane').forEach(x => { const on = x.dataset.pane === p; if (on && !x.hidden) { x.style.animation = 'none'; void x.offsetWidth; x.style.animation = ''; } x.hidden = !on; });
   document.querySelectorAll('#snav button').forEach(b => b.setAttribute('aria-current', String(b.dataset.p === p)));
 }
 
@@ -850,8 +861,9 @@ function fillProfile() {
   if (SB.user) p.username = SB.prof && SB.prof.username || '';
   $('#pcun').textContent = p.username ? '@' + p.username : 'No username yet';
   $('#pcsince').textContent = 'Player since ' + new Date(S.since).toLocaleDateString('en', { month: 'long', year: 'numeric' });
-  $('#pcg').textContent = Object.keys(S.plays).filter(id => byId.has(id)).length;
-  $('#pcr').textContent = Object.keys(S.best).filter(id => byId.has(id)).length;
+  $('#pcg').textContent = $('#pcg').dataset.n = Object.keys(S.plays).filter(id => byId.has(id)).length;
+  $('#pcr').textContent = $('#pcr').dataset.n = Object.keys(S.best).filter(id => byId.has(id)).length;
+  countUp($('#prmodal'));
   $('#un').value = p.username || '';
   $('#dn').value = p.displayName || '';
   $('#unedit').textContent = p.username ? 'Change' : 'Choose';
@@ -860,11 +872,7 @@ function fillProfile() {
 function say(id, m, ok) { const n = $('#' + id); n.textContent = m; n.className = 'note' + (ok ? ' ok' : ''); }
 let unStep = 1, unPending = '';
 function unClose() { $('#unmodal').hidden = true; }
-function renderFriends(q = '') {
-  const none = '<div class="nofr">No friends yet</div>';
-  $('#on-l').innerHTML = none; $('#off-l').innerHTML = none;
-  $('#on-n').textContent = 0; $('#off-n').textContent = 0;
-}
+function renderFriends() { frOpen(); }
 const fmtDur = s => { s = Math.round(s || 0); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + 'h ' + m + 'm' : m ? m + 'm' : s + 's'; };
 function ago(t) {
   if (!t) return '—';
@@ -885,14 +893,15 @@ function renderStats() {
   const tmax = top.length ? S.time[top[0]] : 1;
   const recs = Object.keys(S.best).filter(id => byId.has(id)).sort((a, b) => (S.last[b] || 0) - (S.last[a] || 0));
   const DN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  $('#stbody').innerHTML = `<div class="tiles"><div class="tile"><small>Games played</small><b>${plays}</b><em>+${wkP} this week</em></div><div class="tile"><small>Time played</small><b>${fmtDur(time)}</b><em>+${fmtDur(wkS)} this week</em></div><div class="tile"><small>Records</small><b>${recs.length}</b><em>in ${ids.length} ${ids.length === 1 ? 'game' : 'games'} played</em></div><div class="tile"><small>Days played</small><b>${played.length}</b><em>Current streak: ${streak}</em></div></div>
-<div class="two"><div class="grp"><h4>Playtime this week</h4><div class="wk">${wk.map((x, i) => `<div${i === 6 ? ' class="hi"' : ''}><i style="height:${Math.round(x.s / max * 100)}%"></i>${DN[days[i].getDay()]}</div>`).join('')}</div></div>
-<div class="grp"><h4>Most played</h4>${top.length ? `<div class="tg">${top.map(id => `<div><b>${esc(byId.get(id).title)}</b><i style="--w:${Math.max(4, Math.round(S.time[id] / tmax * 100))}%"></i><span>${fmtDur(S.time[id])}</span></div>`).join('')}</div>` : '<div class="nofr">No games played yet</div>'}</div></div>
-<div class="grp"><h4>Personal records</h4>${recs.length ? `<div class="tw"><table class="rec"><thead><tr><th>Game</th><th>Best</th><th>Played</th><th>Last</th></tr></thead><tbody>${recs.map(id => { const g = byId.get(id); return `<tr><td>${esc(g.title)}</td><td>${esc(fmt(g, S.best[id]))}</td><td>${S.plays[id] || 0}</td><td>${ago(S.last[id])}</td></tr>`; }).join('')}</tbody></table></div>` : '<div class="nofr">No records yet</div>'}</div>`;
+  $('#stbody').innerHTML = `<div class="tiles"><div class="tile" style="--i:0"><small>Games played</small><b data-n="${plays}">${plays}</b><em>+${wkP} this week</em></div><div class="tile" style="--i:1"><small>Time played</small><b data-n="${Math.round(time)}" data-f="d">${fmtDur(time)}</b><em>+${fmtDur(wkS)} this week</em></div><div class="tile" style="--i:2"><small>Records</small><b data-n="${recs.length}">${recs.length}</b><em>in ${ids.length} ${ids.length === 1 ? 'game' : 'games'} played</em></div><div class="tile" style="--i:3"><small>Days played</small><b data-n="${played.length}">${played.length}</b><em>Current streak: ${streak}</em></div></div>
+<div class="two"><div class="grp"><h4>Playtime this week</h4><div class="wk">${wk.map((x, i) => `<div${i === 6 ? ' class="hi"' : ''} style="--i:${i}"><i style="height:${Math.round(x.s / max * 100)}%"></i>${DN[days[i].getDay()]}</div>`).join('')}</div></div>
+<div class="grp"><h4>Most played</h4>${top.length ? `<div class="tg">${top.map((id, i) => `<div style="--i:${i}"><b>${esc(byId.get(id).title)}</b><i style="--w:${Math.max(4, Math.round(S.time[id] / tmax * 100))}%"></i><span>${fmtDur(S.time[id])}</span></div>`).join('')}</div>` : '<div class="nofr">No games played yet</div>'}</div></div>
+<div class="grp"><h4>Personal records</h4>${recs.length ? `<div class="tw"><table class="rec"><thead><tr><th>Game</th><th>Best</th><th>Played</th><th>Last</th></tr></thead><tbody>${recs.map((id, i) => { const g = byId.get(id); return `<tr style="--i:${Math.min(i, 14)}"><td>${esc(g.title)}</td><td>${esc(fmt(g, S.best[id]))}</td><td>${S.plays[id] || 0}</td><td>${ago(S.last[id])}</td></tr>`; }).join('')}</tbody></table></div>` : '<div class="nofr">No records yet</div>'}</div>`;
+  countUp($('#stbody'));
 }
 
 function applyTheme() {
-  const t = S.prefs.theme || 'system', r = document.documentElement;
+  const t = S.prefs.theme || 'light', r = document.documentElement;
   if (t === 'system') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', t);
   document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === t)));
   const dark = t === 'dark' || (t === 'system' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
@@ -918,7 +927,7 @@ function setSwitch(k) {
   else {
     S.prefs[k] = v; save();
     if (k === 'motion') document.documentElement.classList.toggle('rm', v);
-    if (k === 'thumbs') { document.documentElement.classList.toggle('nothumb', !v); coverCache.clear(); if (view === 'home') renderHome(); else if (cur || pend) { const g = (cur && cur.g) || pend; $('#pThumb').innerHTML = img(g, true); $('#more').innerHTML = related(g).slice(0, 8).map(x => card(x, 'more')).join(''); renderSide(lastList); } }
+    if (k === 'thumbs') { document.documentElement.classList.toggle('nothumb', !v); coverCache.clear(); if (view === 'home') renderHome(); else if (cur || pend) { const g = (cur && cur.g) || pend; $('#pThumb').innerHTML = img(g, true); $('#more').innerHTML = related(g).slice(0, 10).map(x => card(x, 'more')).join(''); renderSide(lastList); } }
   }
   track('setting', { k, v });
   syncSwitches();
@@ -932,7 +941,7 @@ function resetRecords() {
   S.best = {}; S.plays = {}; S.recent = []; S.time = {}; S.daily = {}; S.last = {}; save();
   if (SB.on) { SY.base = { p: {}, t: {}, b: {} }; SY.pend = null; SY.saves = {}; sySave(); }
   games.forEach(g => { try { localStorage.removeItem('gameplay:save:' + g.id); } catch (e) {} });
-  if (view === 'home') renderHome(); else if (cur) { setBest(cur.g); const el = $('#pPlayed'); if (el) el.textContent = playedText(0); }
+  if (view === 'home') renderHome(); else if (cur) setBest(cur.g);
 }
 function downloadData(extra) {
   const out = {};
@@ -952,13 +961,14 @@ function deleteData() {
   setTimeout(() => location.reload(), 600);
 }
 
-let fromPop = false, progNav = false;
+let fromPop = false, progNav = false, navFromHome = false;
 function route() {
   const pop = fromPop; fromPop = false;
   const loc = parseLocation();
   if (loc.legal) return openLegal(loc.legal);
   if (loc.game) {
     const g = loc.game;
+    if (view !== 'game') navFromHome = view === 'home' && !pop; else if (!(cur && cur.g === g) && !(pend && pend.id === g.id)) navFromHome = false;
     if (loc.code) { invite = { id: g.id, code: loc.code.toUpperCase() }; history.replaceState(null, '', href(g.id)); if (cur && cur.g === g) return restartCurrent(); }
     return openGame(g);
   }
@@ -968,20 +978,42 @@ function route() {
   applyLocState(loc.state);
   if (loc.missing) { history.replaceState(null, '', homeHref()); toast('That game is not available any more'); track('error', { where: 'route', msg: 'missing game', game: loc.missing }); }
   renderHome();
+  if (changed && motionOK()) { const gr = $('#grid'); gr.classList.remove('anim'); void gr.offsetWidth; gr.classList.add('anim'); clearTimeout(gr._at); gr._at = setTimeout(() => gr.classList.remove('anim'), 1400); }
   setHead(BASE_TITLE, BASE_DESC, '/');
   if (loc.toAll) toAll(!changed);
   else scrollTo({ top: changed && wasGame && pop ? homeY : 0, behavior: 'instant' });
 }
-function randomGame() {
-  const base = view === 'home' && lastList.length ? lastList : games;
-  const pool = base.filter(g => !cur || g !== cur.g);
-  const g = pool[Math.floor(Math.random() * pool.length)];
-  if (g) { clickSrc = 'random'; go(href(g.id), false); }
-}
 const wideQuery = window.matchMedia ? window.matchMedia('(min-width: 900px)') : { matches: true };
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+function fsEnter() {
+  track('fullscreen', { game: cur ? cur.g.id : pend ? pend.id : null });
+  const rq = gamebox.requestFullscreen || gamebox.webkitRequestFullscreen;
+  if (rq && (document.fullscreenEnabled || document.webkitFullscreenEnabled)) {
+    try { const r = rq.call(gamebox, { navigationUI: 'hide' }); if (r && r.catch) r.catch(() => { gamebox.classList.add('pfs'); fsSync(); }); return; } catch (e) {}
+  }
+  gamebox.classList.add('pfs'); fsSync();
+}
+function fsExit() {
+  if (gamebox.classList.contains('pfs')) { gamebox.classList.remove('pfs'); fsSync(); return; }
+  const ex = document.exitFullscreen || document.webkitExitFullscreen;
+  if (fsEl() && ex) { try { const r = ex.call(document); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+}
+function fsSync() {
+  const on = fsEl() === gamebox || gamebox.classList.contains('pfs');
+  if (on === gamebox.classList.contains('fs')) return;
+  gamebox.classList.toggle('fs', on); gamebox.classList.remove('fs-ui');
+  document.body.classList.toggle('fs-on', on);
+  document.querySelectorAll('[data-fs]').forEach(b => { b.setAttribute('aria-label', on ? 'Exit fullscreen' : 'Fullscreen'); b.title = on ? 'Exit fullscreen' : 'Fullscreen'; });
+  clearInterval(fitTimer);
+  frame.classList.add('no-anim');
+  if (on) { frame.style.transform = ''; fsScale = 1; fsT = [0, 0]; requestAnimationFrame(() => requestAnimationFrame(() => { fitStage(); frame.classList.remove('no-anim'); })); fitTimer = setInterval(fitStage, 1500); }
+  else { $('#stage').style.height = ''; frame.style.transform = ''; fsScale = 1; fsT = [0, 0]; applyGlScale(1); requestAnimationFrame(() => { frame.classList.remove('no-anim'); startFitTimer(); queueFit(); }); }
+  frame.focus({ preventScroll: true });
+}
+const toStage = () => { let y = 0; for (let el = gamebox; el; el = el.offsetParent) y += el.offsetTop; scrollTo({ top: Math.max(0, y), behavior: 'instant' }); };
 function syncTheater() {
   const on = S.theater !== false;
-  gamebox.classList.toggle('theater', on && wideQuery.matches);
+  gamebox.classList.toggle('theater', (on && wideQuery.matches) || shortQuery.matches);
   document.querySelectorAll('[data-theater]').forEach(b => b.setAttribute('aria-pressed', String(on)));
   queueFit();
 }
@@ -1038,7 +1070,9 @@ function boot() {
   ['fbtn', 'abtn', 'sbtn', 'pbtn'].forEach((id, i) => $('#' + id).addEventListener('click', e => { e.stopPropagation(); setOpen(['filters', 'friends', 'settings', 'profile'][i]); }));
   document.addEventListener('click', e => {
     const t = e.target;
-    if (openK && !t.closest('.menu, .mc, [data-go], [data-cookieset], [data-legal], #unmodal')) closeAll();
+    if (t.closest('.g-root')) { if (openK) closeAll(); return; }
+    if (openK && !t.closest('.menu, .mc, [data-go], [data-cookieset], [data-legal], #unmodal')) { const was = openK; closeAll(); if (!/modal/.test(MENUS[was][0]) && t.closest('a[href], button')) { e.preventDefault(); return; } }
+    if (t.closest('.am-back') && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); if (navFromHome) history.back(); else go(homeHref(), false); return; }
     const lg = t.closest('[data-legal]');
     if (lg && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); if (openK) closeAll(); if (!$('#unmodal').hidden) unClose(); go(legalHref(lg.dataset.legal), false); return; }
     if (t.closest('[data-cookieset]')) { e.stopPropagation(); if (openK !== 'cookies') setOpen('cookies'); return; }
@@ -1071,14 +1105,13 @@ function boot() {
       if (u.startsWith('/')) { e.preventDefault(); const gm = a.dataset.genre; if (gm) { resetState(); state.g.add(gm); go(homeHref(), false); toAll(false); } else go(u, false); return; }
     }
     if (a && !PATH_MODE && a.hasAttribute('data-home')) { e.preventDefault(); resetState(); $('#q').value = ''; sel = null; go('#/', false); return; }
-    if (a && a.dataset.genre && a.closest('#pTags')) { e.preventDefault(); resetState(); state.g.add(a.dataset.genre); track('filter', { k: 'g', v: a.dataset.genre, on: true, from: 'game' }); go(homeHref(), false); toAll(false); return; }
     const fb = t.closest('[data-f]');
     if (fb) { e.stopPropagation(); toggleFilter(fb.dataset.f, fb.dataset.v); return; }
     const sb = t.closest('[data-sort]');
     if (sb) { e.stopPropagation(); const v = sb.dataset.sort; changeState(() => { state.sort = v === defSort() ? '' : v; }); track('sort', { v }); return; }
     const x = t.closest('[data-x]');
     if (x) { const [k, v] = x.dataset.x.split(':'); if (k === 's') changeState(() => { state.sort = ''; }); else toggleFilter(k, v); return; }
-    if (t.closest('[data-random]')) { randomGame(); return; }
+    if (a && !PATH_MODE && !e.defaultPrevented && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && a.target !== '_blank') { const u = a.getAttribute('href'); if (u && u[0] === '#' && u !== location.hash) progNav = true; }
   });
   $('#slist').addEventListener('dblclick', e => { const r = e.target.closest('.srow'); if (r && view === 'home') { clickSrc = 'side'; go(href(r.dataset.id), false); } });
   $('#play').addEventListener('click', () => { if (sel && byId.get(sel)) { clickSrc = 'side_play'; go(href(sel), false); } });
@@ -1088,8 +1121,6 @@ function boot() {
   $('#snav').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showPane(b.dataset.p); });
   showPane('account');
   document.querySelectorAll('.sech').forEach(b => b.addEventListener('click', () => { const g = $('#' + b.dataset.sec), c = g.classList.toggle('collapsed'); b.setAttribute('aria-expanded', String(!c)); }));
-  $('#fname').addEventListener('keydown', e => { if (e.key !== 'Enter') return; e.preventDefault(); const v = e.target.value.trim(); if (!v) return; say('anote', 'Friend requests are coming soon.'); track('soon', { what: 'friend_request' }); });
-  $('#fname').addEventListener('input', () => say('anote', ''));
   document.querySelectorAll('[data-sel]').forEach(s => s.addEventListener('change', () => { S.prefs[s.dataset.sel] = s.value; save(); track('setting', { k: s.dataset.sel, v: s.value }); }));
   $('#dnsave').addEventListener('click', () => { const v = $('#dn').value.trim().replace(/\s+/g, ' '); if (!v) { say('dnnote', 'Enter a display name.'); return; } if (SB.user) { auDisplayName(v.slice(0, 24)); return; } setProfile({ displayName: v.slice(0, 24) }); say('dnnote', 'Display name saved.', 1); });
   $('#dn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#dnsave').click(); } });
@@ -1116,25 +1147,22 @@ function boot() {
   document.querySelectorAll('[data-sound]').forEach(b => b.addEventListener('click', () => { setMuted(!S.muted); b.blur(); if (!S.muted) sfx('tap'); }));
   const th = $('[data-theater]');
   th.addEventListener('click', () => { th.blur(); S.theater = S.theater === false; save(); syncTheater(); track('setting', { k: 'theater', v: S.theater }); });
-  if (wideQuery.addEventListener) wideQuery.addEventListener('change', syncTheater);
-  const fs = $('[data-fs]');
-  if (!document.fullscreenEnabled) fs.hidden = true;
-  fs.addEventListener('click', () => { fs.blur(); if (document.fullscreenElement) document.exitFullscreen(); else { gamebox.requestFullscreen().catch(() => {}); track('fullscreen', { game: cur ? cur.g.id : null }); } });
-  document.addEventListener('fullscreenchange', () => {
-    clearInterval(fitTimer);
-    if (document.fullscreenElement === gamebox) { requestAnimationFrame(() => requestAnimationFrame(fitStage)); fitTimer = setInterval(fitStage, 700); }
-    else { gamebox.querySelector('#stage').style.height = ''; frame.classList.add('no-anim'); frame.style.transform = ''; fsScale = 1; fsT = [0, 0]; applyGlScale(1); requestAnimationFrame(() => { frame.classList.remove('no-anim'); startFitTimer(); queueFit(); }); }
-    frame.focus({ preventScroll: true });
-  });
+  if (wideQuery.addEventListener) { wideQuery.addEventListener('change', syncTheater); shortQuery.addEventListener('change', () => { syncTheater(); if (shortQuery.matches && view === 'game') toStage(); }); }
+  document.querySelectorAll('[data-fs]').forEach(b => b.addEventListener('click', () => { b.blur(); if (gamebox.classList.contains('fs')) fsExit(); else fsEnter(); }));
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(t => document.addEventListener(t, () => { if (!fsEl() && gamebox.classList.contains('pfs')) return; fsSync(); }));
+  let fsUiT = 0;
+  gamebox.addEventListener('pointermove', e => { if (!gamebox.classList.contains('fs') || e.pointerType === 'touch') return; if (!gamebox.classList.contains('fs-ui')) gamebox.classList.add('fs-ui'); clearTimeout(fsUiT); fsUiT = setTimeout(() => gamebox.classList.remove('fs-ui'), 2200); }, { passive: true });
   addEventListener('resize', queueFit);
   if (window.ResizeObserver) new ResizeObserver(() => { if (stageMode() !== 'off') queueFit(); }).observe(frame);
   startFitTimer();
   $('#pRestart').addEventListener('click', e => { e.currentTarget.blur(); restartCurrent(); track('restart', { game: cur ? cur.g.id : null }); });
   addEventListener('storage', e => { if (e.key === PKEY) renderProfileBits(); });
   addEventListener('keyup', e => { if (PAUSE.on && !isField(e.target) && !openK) e.stopImmediatePropagation(); }, true);
+  const unmodal = $('#unmodal');
   addEventListener('keydown', e => {
-    if (!$('#unmodal').hidden) { if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); unClose(); } return; }
+    if (!unmodal.hidden) { if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); unClose(); } return; }
     if (openK) { if (e.key === 'Escape' && !e.repeat) { e.preventDefault(); e.stopImmediatePropagation(); closeAll(); } return; }
+    if (e.key === 'Escape' && gamebox.classList.contains('pfs')) { e.preventDefault(); e.stopImmediatePropagation(); fsExit(); return; }
     if (e.key === '/' && !isField(e.target) && !cur && !pend && view === 'home') { e.preventDefault(); q.focus(); return; }
     if (!cur && !pend) return;
     if (PAUSE.on) {
@@ -1161,652 +1189,3 @@ function boot() {
   if (S.recent.some(id => byId.get(id) && byId.get(id).is3d)) { const warmUp = () => loadThree().catch(() => {}); if (window.requestIdleCallback) requestIdleCallback(warmUp, { timeout: 4000 }); else setTimeout(warmUp, 1500); }
 }
 
-function gpNetWrap(g, net) {
-  if (!net || typeof net !== 'object' || net.__gpt) return net;
-  try {
-    ['room', 'lobby'].forEach(k => {
-      const f = net[k];
-      if (typeof f !== 'function') return;
-      net[k] = function (...a) {
-        const r = f.apply(this, a);
-        if (r && typeof r.then === 'function') r.then(v => { if (!v) return; const pl = v.players; track('online_party', { game: g.id, kind: k, role: typeof v === 'string' ? v : v.role || null, size: v.size || (k === 'lobby' ? 2 : null), players: Array.isArray(pl) ? pl.length : typeof pl === 'number' ? pl : null }); }, () => {});
-        return r;
-      };
-    });
-    net.__gpt = 1;
-  } catch (e) {}
-  return net;
-}
-
-const SB_STORE = 'sb-gameplay-auth', SYK = 'gameplay:sync', VIDK = 'gameplay:vid', SAVE_P = 'gameplay:save:';
-const UN_RE = /^[a-z0-9_.]{3,20}$/, GID_RE = /^[a-z0-9][a-z0-9-]{0,39}$/, EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const sbBase = () => PATH_MODE ? location.origin + '/' : location.origin + location.pathname;
-const sbRedirect = kind => sbBase() + '?gpauth=' + kind;
-const SB_RET = (() => {
-  if (!SB.on) return null;
-  try {
-    const u = new URL(location.href), q = u.searchParams;
-    if (!q.has('gpauth')) return null;
-    const hp = new URLSearchParams(/^#[a-z_]+=/.test(location.hash) ? location.hash.slice(1) : '');
-    const r = { kind: q.get('gpauth'), code: q.get('code'), err: q.get('error_description') || q.get('error') || hp.get('error_description') || hp.get('error') };
-    ['gpauth', 'code', 'error', 'error_code', 'error_description', 'state'].forEach(k => q.delete(k));
-    let back = null;
-    try { back = sessionStorage.getItem('gameplay:authback'); sessionStorage.removeItem('gameplay:authback'); } catch (e) {}
-    const qs = q.toString();
-    let url = u.pathname + (qs ? '?' + qs : '') + (hp.toString() ? '' : u.hash);
-    if (back && back.charAt(0) === '/' && back.charAt(1) !== '/' && (PATH_MODE || back.split('#')[0].split('?')[0] === u.pathname)) url = back;
-    history.replaceState(null, '', url);
-    return r;
-  } catch (e) { return null; }
-})();
-const syNew = () => ({ base: { p: {}, t: {}, b: {} }, saves: {}, pend: null, uid: null, at: 0 });
-let SY = syNew();
-if (SB.on) { try { const o = JSON.parse(localStorage.getItem(SYK)); if (o && typeof o === 'object' && o.base && typeof o.base === 'object') { SY = Object.assign(syNew(), o); ['p', 't', 'b'].forEach(k => { if (!SY.base[k] || typeof SY.base[k] !== 'object') SY.base[k] = {}; }); if (!SY.saves || typeof SY.saves !== 'object') SY.saves = {}; } } catch (e) {} }
-function sySave() { if (!SB.on) return; try { localStorage.setItem(SYK, JSON.stringify(SY)); } catch (e) {} }
-const syNum = v => typeof v === 'number' && isFinite(v) ? v : 0;
-const syUuid = () => {
-  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-  const b = crypto.getRandomValues(new Uint8Array(16));
-  b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
-  const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
-  return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
-};
-function syHash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36) + '.' + s.length; }
-const utf8Len = s => { try { return new TextEncoder().encode(s).length; } catch (e) { return s.length * 3; } };
-const sbHasSession = () => { try { return !!localStorage.getItem(SB_STORE); } catch (e) { return false; } };
-const sbTok = () => { const s = SB.session; return s && s.access_token && (!s.expires_at || s.expires_at * 1000 > Date.now() + 20000) ? s.access_token : null; };
-
-function sbLib() {
-  if (window.supabase && window.supabase.createClient) return Promise.resolve(window.supabase);
-  if (SB.lib) return SB.lib;
-  return SB.lib = new Promise((res, rej) => {
-    const tryAt = i => {
-      if (i >= SUPABASE_JS.length) { SB.lib = null; rej(new Error('Sign-in could not load')); return; }
-      const s = document.createElement('script');
-      s.src = SUPABASE_JS[i]; s.async = true; s.crossOrigin = 'anonymous';
-      if (SUPABASE_SRI) s.integrity = SUPABASE_SRI;
-      s.onload = () => { if (window.supabase && window.supabase.createClient) res(window.supabase); else { s.remove(); tryAt(i + 1); } };
-      s.onerror = () => { s.remove(); tryAt(i + 1); };
-      document.head.append(s);
-    };
-    tryAt(0);
-  });
-}
-function sbClient() {
-  if (SB.p) return SB.p;
-  const p = SB.p = sbLib().then(lib => {
-    if (!SB.c) {
-      SB.c = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'pkce', detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storageKey: SB_STORE } });
-      SB.c.auth.onAuthStateChange((ev, s) => setTimeout(() => auSession(ev, s), 0));
-    }
-    return SB.c;
-  });
-  p.catch(() => { if (SB.p === p) SB.p = null; });
-  return p;
-}
-async function sbRest(path, o = {}) {
-  let tok = null;
-  if (o.auth !== false && SB.c) {
-    if (o.keep) tok = sbTok();
-    else { try { const r = await SB.c.auth.getSession(); tok = r && r.data && r.data.session ? r.data.session.access_token : null; } catch (e) { tok = sbTok(); } }
-  }
-  const h = { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json', Accept: 'application/json' };
-  if (tok) h.Authorization = 'Bearer ' + tok;
-  else if (/^eyJ/.test(SUPABASE_ANON_KEY)) h.Authorization = 'Bearer ' + SUPABASE_ANON_KEY;
-  if (o.prefer) h.Prefer = o.prefer;
-  const body = o.body === undefined ? undefined : JSON.stringify(o.body);
-  const r = await fetch(SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/' + path, { method: o.method || 'GET', headers: h, body, keepalive: !!o.keep && (!body || body.length < 60000), credentials: 'omit', cache: 'no-store' });
-  if (!r.ok) {
-    let j = null;
-    try { j = await r.json(); } catch (e) {}
-    const err = new Error((j && (j.message || j.msg || j.error)) || 'HTTP ' + r.status);
-    err.status = r.status; err.code = j && j.code;
-    throw err;
-  }
-  if (r.status === 204) return null;
-  const t = await r.text();
-  return t ? JSON.parse(t) : null;
-}
-
-function sbVid() {
-  try {
-    let v = localStorage.getItem(VIDK);
-    if (!/^[a-z0-9]{4,40}$/.test(v || '')) { v = (rid() + rid()).replace(/[^a-z0-9]/g, '').slice(0, 32); localStorage.setItem(VIDK, v); }
-    return v;
-  } catch (e) { return null; }
-}
-function sbRow(x, uid, vid, dv) {
-  const p = x.p && typeof x.p === 'object' && !Array.isArray(x.p) ? x.p : {};
-  const js = JSON.stringify(p);
-  const props = utf8Len(js) + 4 * Object.keys(p).length > 3600 ? { truncated: true, keys: Object.keys(p).slice(0, 24).join(',').slice(0, 300) } : p;
-  const sid = String(x.s || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 40);
-  const ev = String(x.e || '').toLowerCase().replace(/[^a-z0-9_]+/g, '_').slice(0, 40);
-  if (sid.length < 4 || !ev) return null;
-  const t = syNum(x.t), at = t > 0 && t < 8.6e15 ? t : Date.now();
-  return { client_at: new Date(at).toISOString(), session_id: sid, visitor_id: vid, user_id: uid && x.u === uid ? uid : null, event: ev, game_id: typeof p.game === 'string' && GID_RE.test(p.game) ? p.game : null, props, device: dv };
-}
-async function sbSink(batch) {
-  const uid = SB.user && sbTok() ? SB.user.id : null;
-  const vid = sbVid(), dv = device().type;
-  const rows = batch.map(x => sbRow(x, uid, vid, dv)).filter(Boolean);
-  if (!rows.length) return;
-  try { await sbRest('analytics_events', { method: 'POST', body: rows, prefer: 'return=minimal', auth: !!uid, keep: true }); }
-  catch (e) { if (e.status === 400 || e.status === 409 || e.status === 413 || e.status === 422) return; throw e; }
-}
-
-function syRows() {
-  const B = SY.base, rows = [];
-  new Set([...Object.keys(S.plays), ...Object.keys(S.time), ...Object.keys(S.best)]).forEach(id => {
-    if (!GID_RE.test(id)) return;
-    const dp = Math.max(0, Math.floor(syNum(S.plays[id]) - syNum(B.p[id])));
-    const dt = Math.max(0, Math.floor((syNum(S.time[id]) - syNum(B.t[id])) * 10) / 10);
-    const b = S.best[id], nb = typeof b === 'number' && isFinite(b) && Math.abs(b) < 1e15 && b !== B.b[id] ? b : null;
-    if (!dp && dt < 1 && nb == null) return;
-    const g = byId.get(id), last = syNum(S.last[id]);
-    rows.push({ game_id: id, plays: Math.min(dp, 100000), seconds: Math.min(dt, 604800), best: nb, better: g && g.better === 'low' ? 'low' : 'high', last_played: last > 0 ? new Date(Math.min(last, Date.now())).toISOString() : null });
-  });
-  return rows.slice(0, 300);
-}
-function syAck(pend) {
-  const B = SY.base;
-  (pend.rows || []).forEach(r => {
-    B.p[r.game_id] = syNum(B.p[r.game_id]) + syNum(r.plays);
-    B.t[r.game_id] = syNum(B.t[r.game_id]) + syNum(r.seconds);
-    if (r.best != null) B.b[r.game_id] = r.best;
-  });
-}
-function syApply(sent, rows) {
-  const B = SY.base, sentBy = {}, srv = {};
-  sent.forEach(r => { sentBy[r.game_id] = r; });
-  rows.forEach(r => { if (r && typeof r.game_id === 'string' && GID_RE.test(r.game_id)) srv[r.game_id] = r; });
-  const ids = new Set([...Object.keys(S.plays), ...Object.keys(S.time), ...Object.keys(S.best), ...Object.keys(B.p), ...Object.keys(B.t), ...Object.keys(B.b), ...Object.keys(srv)]);
-  ids.forEach(id => {
-    const r = srv[id], s = sentBy[id] || {};
-    const sp = r ? syNum(r.plays) : 0, st = r ? syNum(r.seconds_played) : 0;
-    const up = Math.max(0, syNum(S.plays[id]) - syNum(B.p[id]) - syNum(s.plays));
-    const ut = Math.max(0, syNum(S.time[id]) - syNum(B.t[id]) - syNum(s.seconds));
-    if (sp + up > 0) S.plays[id] = sp + up; else delete S.plays[id];
-    if (st + ut > 0) S.time[id] = st + ut; else delete S.time[id];
-    if (sp) B.p[id] = sp; else delete B.p[id];
-    if (st) B.t[id] = st; else delete B.t[id];
-    const lb = S.best[id], rb = r && typeof r.best_score === 'number' ? r.best_score : null;
-    const g = byId.get(id), low = r ? r.best_better === 'low' : !!(g && g.better === 'low');
-    const unsent = typeof lb === 'number' && lb !== B.b[id] && lb !== s.best;
-    if (rb != null) { S.best[id] = unsent ? (low ? Math.min(lb, rb) : Math.max(lb, rb)) : rb; B.b[id] = rb; }
-    else { if (!unsent) delete S.best[id]; delete B.b[id]; }
-    if (r && r.last_played) { const t = Date.parse(r.last_played); if (t && t > syNum(S.last[id])) S.last[id] = t; }
-  });
-  const keep = id => S.plays[id] || S.time[id] || S.best[id] != null;
-  S.recent = uniq(S.recent.concat(Object.keys(S.last).filter(id => S.last[id]))).filter(id => keep(id) && byId.has(id)).sort((a, b) => syNum(S.last[b]) - syNum(S.last[a])).slice(0, 8);
-  save();
-}
-function syLocalSaves() {
-  const out = {};
-  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(SAVE_P)) { const id = k.slice(SAVE_P.length); if (GID_RE.test(id)) out[id] = localStorage.getItem(k); } } } catch (e) {}
-  return out;
-}
-function syUpBody(uid, ids, loc) {
-  const body = [], M = SY.saves;
-  ids.forEach(id => {
-    const s = loc[id];
-    let data;
-    try { data = JSON.parse(s); } catch (e) { return; }
-    if (data === null || data === undefined) return;
-    if (utf8Len(s) > 240000) { M[id] = Object.assign(M[id] || {}, { big: syHash(s) }); return; }
-    body.push({ user_id: uid, game_id: id, data });
-  });
-  return body;
-}
-function sySavesKeep(uid) {
-  const loc = syLocalSaves(), M = SY.saves;
-  const ids = Object.keys(loc).filter(id => { const h = syHash(loc[id]), m = M[id]; return !(m && (m.h === h || m.big === h)); });
-  const body = syUpBody(uid, ids, loc);
-  if (!body.length || JSON.stringify(body).length > 50000) return;
-  sbRest('game_saves?on_conflict=user_id,game_id', { method: 'POST', body, prefer: 'resolution=merge-duplicates,return=minimal', keep: true }).catch(() => {});
-}
-async function sySaves(uid) {
-  const loc = syLocalSaves(), M = SY.saves, now = Date.now();
-  Object.keys(loc).forEach(id => {
-    const h = syHash(loc[id]), m = M[id];
-    if (!m) M[id] = { h: '', at: 0, d: syNum(S.last[id]) || 1 };
-    else if (m.h === h) m.d = 0;
-    else if (!m.d) m.d = now;
-  });
-  const remote = await sbRest('game_saves?select=game_id,updated_at');
-  if (!SB.user || SB.user.id !== uid) return;
-  const R = {};
-  (remote || []).forEach(r => { const t = Date.parse(r.updated_at); if (r && GID_RE.test(r.game_id) && t) R[r.game_id] = t; });
-  const up = [], down = [];
-  new Set([...Object.keys(loc), ...Object.keys(R), ...Object.keys(M)]).forEach(id => {
-    const m = M[id], has = id in loc, h = has ? syHash(loc[id]) : '', r = R[id];
-    if (has && m && m.big === h) return;
-    const dirty = has && (!m || m.h !== h), rnew = !!r && (!m || r > syNum(m.at) + 1);
-    if (dirty && rnew) { const lt = (m && m.d) || syNum(S.last[id]); (lt >= r ? up : down).push(id); }
-    else if (dirty) up.push(id);
-    else if (rnew) down.push(id);
-    else if (!r && m && m.at && has && !dirty && !(cur && cur.g.id === id)) { try { localStorage.removeItem(SAVE_P + id); } catch (e) {} delete M[id]; }
-    else if (!r && !has && m) delete M[id];
-  });
-  const dl = down.filter(id => !(cur && cur.g.id === id));
-  if (dl.length) {
-    const rows = await sbRest('game_saves?select=game_id,data,updated_at&game_id=in.(' + dl.join(',') + ')');
-    (rows || []).forEach(r => {
-      if (!r || !GID_RE.test(r.game_id)) return;
-      const s = JSON.stringify(r.data);
-      try { localStorage.setItem(SAVE_P + r.game_id, s); } catch (e) { return; }
-      M[r.game_id] = { h: syHash(s), at: Date.parse(r.updated_at) || now, d: 0 };
-    });
-  }
-  const body = syUpBody(uid, up, loc);
-  for (let i = 0; i < body.length; i += 20) {
-    const part = body.slice(i, i + 20);
-    const res = await sbRest('game_saves?on_conflict=user_id,game_id&select=game_id,updated_at', { method: 'POST', body: part, prefer: 'resolution=merge-duplicates,return=representation' });
-    (res || []).forEach(r => { if (r && loc[r.game_id] != null) M[r.game_id] = { h: syHash(loc[r.game_id]), at: Date.parse(r.updated_at) || now, d: 0 }; });
-  }
-}
-function syRefresh(before) {
-  if (JSON.stringify(S.recent) !== before && view === 'home' && !cur && !pend) renderHome();
-  if (cur) { setBest(cur.g); const el = $('#pPlayed'); if (el) el.textContent = playedText(S.plays[cur.g.id] || 0); }
-  if (openK === 'mstats') renderStats();
-  if (openK === 'mprofile') { $('#pcg').textContent = Object.keys(S.plays).filter(id => byId.has(id)).length; $('#pcr').textContent = Object.keys(S.best).filter(id => byId.has(id)).length; }
-}
-function syNudge(ms = 4000) { if (!SB.user) return; clearTimeout(SB.t); SB.t = setTimeout(() => sySync(), ms); }
-async function sySync(o = {}) {
-  if (!SB.user || !SB.c) return;
-  if (SB.syncing) { SB.again = true; return; }
-  const uid = SB.user.id;
-  if (o.keep && !sbTok()) return;
-  SB.syncing = true; clearTimeout(SB.t);
-  const before = JSON.stringify(S.recent);
-  try {
-    if (cur && !o.keep) ttCommit(false);
-    if (SY.uid !== uid) { if (SY.pend && SY.pend.uid !== uid) syAck(SY.pend); SY.pend = null; SY.uid = uid; SY.saves = {}; SY.at = 0; }
-    if (!SY.pend) { const rows = syRows(); if (rows.length) SY.pend = { id: syUuid(), uid, rows }; }
-    sySave();
-    if (o.keep) {
-      sySavesKeep(uid);
-      if (!SY.pend) return;
-    }
-    const sent = SY.pend;
-    const res = await sbRest('rpc/sync_game_stats', { method: 'POST', body: { p_batch: sent ? sent.id : null, p_rows: sent ? sent.rows : [] }, keep: !!o.keep });
-    if (!SB.user || SB.user.id !== uid) return;
-    syApply(sent ? sent.rows : [], Array.isArray(res) ? res : []);
-    if (SY.pend === sent) SY.pend = null;
-    sySave();
-    if (!o.keep) await sySaves(uid);
-    SY.at = Date.now(); SB.fail = 0; sySave();
-    syRefresh(before);
-  } catch (e) {
-    SB.fail = Math.min(SB.fail + 1, 6);
-    sySave();
-    if (SB.user && !o.keep) { clearTimeout(SB.t); SB.t = setTimeout(() => sySync(), 5000 * Math.pow(2, SB.fail)); }
-  } finally {
-    SB.syncing = false;
-    if (SB.again) { SB.again = false; syNudge(1500); }
-    auSyncNote();
-  }
-}
-
-const auState = () => !SB.on ? 'off' : SB.user ? 'in' : 'out';
-function auMsg(id, m, kind) { const n = $('#' + id); if (!n) return; n.textContent = m || ''; n.className = 'note' + (kind ? ' ' + kind : ''); }
-function auErrText(e) {
-  const m = String(e && (e.message || e.error_description || e) || ''), c = String(e && e.code || '');
-  if (c === 'invalid_credentials' || /invalid login credentials/i.test(m)) return 'Wrong email or password.';
-  if (c === 'email_not_confirmed' || /email not confirmed/i.test(m)) return 'Confirm your email first: open the link we sent you.';
-  if (c === 'user_already_exists' || /already registered|already exists/i.test(m)) return 'An account with this email already exists. Sign in instead.';
-  if (c === 'same_password' || /different from the old/i.test(m)) return 'Choose a password that is different from your current one.';
-  if (c === 'weak_password' || /password should/i.test(m)) return 'Choose a stronger password: at least 8 characters.';
-  if (c === 'email_address_invalid' || /invalid format|email address .* is invalid/i.test(m)) return 'This email address is not valid.';
-  if (c === 'email_exists' || /email address has already been registered/i.test(m)) return 'Another account already uses this email.';
-  if (/rate limit|too many|429/i.test(m + c) || (e && e.status === 429)) return 'Too many attempts. Wait a few minutes and try again.';
-  if (/not authorized|email_address_not_authorized/i.test(m + ' ' + c)) return 'We cannot send emails to this address yet. Please use Continue with Google for now.';
-  if (c === 'over_email_send_rate_limit' || /email rate limit/i.test(m)) return 'Too many emails were sent in the last hour. Try again later or use Continue with Google.';
-  if (c === 'provider_disabled' || /provider is not enabled|unsupported provider/i.test(m)) return 'This sign-in method is not available yet.';
-  if (/access_denied|cancel/i.test(m)) return 'Sign-in was cancelled.';
-  if (/failed to fetch|networkerror|load failed|could not load|network/i.test(m)) return 'Cannot reach the sign-in service. Check your connection and try again.';
-  return 'Something went wrong. Please try again.';
-}
-function auSyncNote() {
-  const el = $('#ausync');
-  if (!el || !SB.user) return;
-  el.textContent = SB.fail ? 'Waiting for a connection. Your progress is kept on this device until then.' : SY.at ? 'Records and saves synced ' + new Date(SY.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '.' : 'Your records and saves are kept in your account.';
-}
-function auRender() {
-  if (!SB.on) return;
-  const st = auState();
-  document.querySelectorAll('[data-au]').forEach(el => { el.hidden = !el.dataset.au.split(' ').includes(st); });
-  if (SB.user) {
-    const u = SB.user, am = u.app_metadata || {}, provs = Array.isArray(am.providers) ? am.providers : [am.provider || 'email'];
-    $('#auwho').textContent = u.email || 'Signed in';
-    $('#auvia').textContent = provs.includes('google') ? (provs.includes('email') ? 'Google and email password' : 'Signed in with Google') : 'Signed in with email';
-    if (document.activeElement !== $('#auem2')) $('#auem2').value = u.email || '';
-    $('#aupwl').textContent = provs.includes('email') ? 'New password' : 'Set a password';
-    auSyncNote();
-  }
-  renderProfileBits();
-}
-function auView(v) {
-  SB.view = v;
-  document.querySelectorAll('[data-auview]').forEach(el => { el.hidden = el.dataset.auview !== v; });
-  const up = SB.mode === 'up';
-  $('#aut').textContent = v === 'reset' ? 'Reset password' : v === 'newpass' ? 'New password' : up ? 'Create account' : 'Sign in';
-  $('#augo').textContent = up ? 'Create account' : 'Sign in';
-  $('#aupass').setAttribute('autocomplete', up ? 'new-password' : 'current-password');
-  $('#aupass').placeholder = up ? 'At least 8 characters' : '';
-  $('#ausw').textContent = up ? 'I already have an account' : 'Create an account';
-  $('#auforgot').hidden = up;
-}
-function auShow() {
-  if (!SB.on) return;
-  sbClient().catch(() => {});
-  ['aunote', 'arnote', 'annote'].forEach(id => auMsg(id, ''));
-  auView(SB.view === 'newpass' || SB.view === 'reset' ? SB.view : 'main');
-  setTimeout(() => { const f = SB.view === 'newpass' ? $('#anpass') : SB.view === 'reset' ? $('#aremail') : null; if (f && !matchMedia('(pointer: coarse)').matches) f.focus(); }, 60);
-}
-function auOpen(v, msg, kind) {
-  SB.view = v;
-  if (openK !== 'mauth') setOpen('mauth'); else auView(v);
-  if (msg) auMsg(v === 'reset' ? 'arnote' : v === 'newpass' ? 'annote' : 'aunote', msg, kind);
-}
-const auBusy = (on, sel) => document.querySelectorAll(sel || '#aumodal button, #aumodal input').forEach(b => { b.disabled = on; });
-async function auGoogle() {
-  const inModal = openK === 'mauth';
-  if (inModal) auMsg('aunote', 'Opening Google…');
-  try {
-    try { sessionStorage.setItem('gameplay:authback', location.pathname + location.search + location.hash); } catch (e) {}
-    const c = await sbClient();
-    track('auth', { act: 'google' });
-    const { error } = await c.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: sbRedirect('google'), queryParams: { prompt: 'select_account' } } });
-    if (error) throw error;
-  } catch (e) {
-    if (inModal) auMsg('aunote', auErrText(e), 'bad'); else toast(auErrText(e));
-  }
-}
-async function auSubmit() {
-  const email = $('#auemail').value.trim(), pw = $('#aupass').value, up = SB.mode === 'up';
-  if (!EMAIL_RE.test(email)) { auMsg('aunote', 'Enter a valid email address.', 'bad'); $('#auemail').focus(); return; }
-  if (pw.length < (up ? 8 : 1)) { auMsg('aunote', up ? 'Use at least 8 characters for your password.' : 'Enter your password.', 'bad'); $('#aupass').focus(); return; }
-  auBusy(true); auMsg('aunote', up ? 'Creating your account…' : 'Signing in…');
-  try {
-    const c = await sbClient();
-    if (up) {
-      const lp = getProfile(), un = String(lp.username || '').toLowerCase(), data = {};
-      if (lp.displayName) data.display_name = String(lp.displayName).slice(0, 32);
-      if (UN_RE.test(un)) data.username = un;
-      SB.loud = true;
-      const r = await c.auth.signUp({ email, password: pw, options: { emailRedirectTo: sbRedirect('signup'), data } });
-      if (r.error) throw r.error;
-      track('auth', { act: 'signup' });
-      if (r.data && r.data.session) { $('#aupass').value = ''; closeAll(); }
-      else { SB.loud = false; $('#aupass').value = ''; auMsg('aunote', 'Almost done: open the link we sent to ' + email + ' to confirm your account.', 'ok'); }
-    } else {
-      SB.loud = true;
-      const r = await c.auth.signInWithPassword({ email, password: pw });
-      if (r.error) throw r.error;
-      track('auth', { act: 'signin' });
-      $('#aupass').value = ''; closeAll();
-    }
-  } catch (e) { SB.loud = false; auMsg('aunote', auErrText(e), 'bad'); }
-  finally { auBusy(false); }
-}
-async function auReset() {
-  const email = $('#aremail').value.trim();
-  if (!EMAIL_RE.test(email)) { auMsg('arnote', 'Enter a valid email address.', 'bad'); return; }
-  auBusy(true); auMsg('arnote', 'Sending…');
-  try {
-    const c = await sbClient();
-    const { error } = await c.auth.resetPasswordForEmail(email, { redirectTo: sbRedirect('recovery') });
-    if (error) throw error;
-    track('auth', { act: 'reset' });
-    auMsg('arnote', 'If an account uses this email, we sent it a link to choose a new password.', 'ok');
-  } catch (e) { auMsg('arnote', auErrText(e), 'bad'); }
-  finally { auBusy(false); }
-}
-async function auNewPass() {
-  const pw = $('#anpass').value;
-  if (pw.length < 8) { auMsg('annote', 'Use at least 8 characters.', 'bad'); return; }
-  auBusy(true); auMsg('annote', 'Saving…');
-  try {
-    const c = await sbClient();
-    const { error } = await c.auth.updateUser({ password: pw });
-    if (error) throw error;
-    $('#anpass').value = ''; SB.view = 'main';
-    auMsg('annote', 'Password saved. You are signed in.', 'ok');
-    setTimeout(() => { if (openK === 'mauth') closeAll(); }, 1400);
-  } catch (e) { auMsg('annote', auErrText(e), 'bad'); }
-  finally { auBusy(false); }
-}
-async function auChangeEmail() {
-  const email = $('#auem2').value.trim();
-  if (!EMAIL_RE.test(email)) { auMsg('auemnote', 'Enter a valid email address.', 'bad'); return; }
-  if (SB.user && email.toLowerCase() === String(SB.user.email || '').toLowerCase()) { auMsg('auemnote', 'That is already your email address.', 'bad'); return; }
-  const b = $('#auemsave'); b.disabled = true; auMsg('auemnote', 'Sending…');
-  try {
-    const { error } = await SB.c.auth.updateUser({ email }, { emailRedirectTo: sbRedirect('email') });
-    if (error) throw error;
-    auMsg('auemnote', 'Check your inbox: open the link we sent to confirm the change. You may get a link at your old address too.', 'ok');
-  } catch (e) { auMsg('auemnote', auErrText(e), 'bad'); }
-  finally { b.disabled = false; }
-}
-async function auChangePass() {
-  const pw = $('#aupw2').value;
-  if (pw.length < 8) { auMsg('aupwnote', 'Use at least 8 characters.', 'bad'); return; }
-  const b = $('#aupwsave'); b.disabled = true; auMsg('aupwnote', 'Saving…');
-  try {
-    const { error } = await SB.c.auth.updateUser({ password: pw });
-    if (error) throw error;
-    $('#aupw2').value = '';
-    auMsg('aupwnote', 'Password saved.', 'ok');
-  } catch (e) { auMsg('aupwnote', auErrText(e), 'bad'); }
-  finally { b.disabled = false; }
-}
-async function auSignOut() {
-  if (!SB.c) return;
-  toast('Signing out…');
-  try { await Promise.race([sySync(), new Promise(r => setTimeout(r, 4000))]); } catch (e) {}
-  try { await SB.c.auth.signOut({ scope: 'local' }); } catch (e) {}
-  track('auth', { act: 'signout' });
-  toast('Signed out. You are playing as a guest.');
-}
-async function auDeleteAccount() {
-  const b = $('#adelbtn'); b.disabled = true; auMsg('adelnote', 'Deleting your account…');
-  try {
-    const r = await sbRest('rpc/delete_my_account', { method: 'POST', body: {} });
-    SY = syNew(); sySave();
-    try { await SB.c.auth.signOut({ scope: 'local' }); } catch (e) {}
-    $('#adelc').value = '';
-    auMsg('adelnote', '');
-    closeAll();
-    toast(r === 'requested' ? 'Your account will be deleted. You are now playing as a guest.' : 'Your account was deleted. You are now playing as a guest.');
-  } catch (e) { auMsg('adelnote', 'Could not delete your account. Check your connection and try again.', 'bad'); b.disabled = false; }
-}
-async function auResetCloud() {
-  const uid = SB.user.id;
-  await sbRest('game_stats?user_id=eq.' + uid, { method: 'DELETE' });
-  await sbRest('game_saves?user_id=eq.' + uid, { method: 'DELETE' });
-  SY.base = { p: {}, t: {}, b: {} }; SY.pend = null; SY.saves = {}; sySave();
-}
-const AU_SEL = 'id,username,display_name,avatar_url,created_at';
-async function auLoadProfile() {
-  const uid = SB.user.id;
-  let rows = await sbRest('profiles?select=' + AU_SEL + '&id=eq.' + uid);
-  let p = rows && rows[0];
-  if (!p) {
-    const m = SB.user.user_metadata || {}, dn = String(m.full_name || m.name || '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 32);
-    try { rows = await sbRest('profiles?select=' + AU_SEL, { method: 'POST', body: { id: uid, display_name: dn || null }, prefer: 'return=representation' }); }
-    catch (e) { rows = await sbRest('profiles?select=' + AU_SEL + '&id=eq.' + uid); }
-    p = rows && rows[0];
-  }
-  if (!p || !SB.user || SB.user.id !== uid) return;
-  SB.prof = p;
-  const loc = getProfile();
-  if (!p.display_name && loc.displayName) {
-    try { const r = await sbRest('profiles?id=eq.' + uid + '&select=' + AU_SEL, { method: 'PATCH', body: { display_name: String(loc.displayName).slice(0, 32) }, prefer: 'return=representation' }); if (r && r[0]) SB.prof = r[0]; } catch (e) {}
-  }
-  auToLocal();
-  const t = Date.parse(p.created_at);
-  if (t && t < syNum(S.since)) { S.since = t; save(); }
-}
-function auToLocal() {
-  const p = SB.prof;
-  if (!p) return;
-  const loc = getProfile(), o = Object.assign({}, loc);
-  if (p.username) o.username = p.username;
-  if (p.display_name) o.displayName = p.display_name;
-  if (o.username !== loc.username || o.displayName !== loc.displayName) { try { localStorage.setItem(PKEY, JSON.stringify(o)); } catch (e) {} }
-  renderProfileBits();
-}
-function auChoose() {
-  if (!SB.user || !SB.prof || SB.prof.username || !$('#unmodal').hidden) return;
-  SB.choosing = true;
-  unStep = 1; $('#un1').hidden = false; $('#un2').hidden = true;
-  $('#unt').textContent = 'Choose a username'; $('#uncont').textContent = 'Save';
-  const sug = String(getProfile().username || '').toLowerCase().replace(/[^a-z0-9_.]/g, '').slice(0, 20);
-  $('#unew').value = UN_RE.test(sug) ? sug : '';
-  $('label[for="unew"]').textContent = 'Username';
-  auMsg('unerr', 'Friends find you by your username: 3 to 20 lowercase letters, numbers, dots or underscores.');
-  $('#unmodal').hidden = false;
-  if (!matchMedia('(pointer: coarse)').matches) $('#unew').focus();
-}
-async function auUsername() {
-  const raw = unStep === 2 ? unPending : $('#unew').value.trim().toLowerCase();
-  if (!UN_RE.test(raw) || /^\.|\.$|\.\./.test(raw)) { auMsg('unerr', 'Use 3 to 20 lowercase letters, numbers, dots or underscores.', 'bad'); return; }
-  const old = SB.prof && SB.prof.username;
-  if (raw === old) { auMsg('unerr', 'That is already your username.', 'bad'); return; }
-  if (unStep === 1 && old) {
-    unPending = raw; $('#uno').textContent = old; $('#unn').textContent = raw;
-    $('#un1').hidden = true; $('#un2').hidden = false; $('#unt').textContent = 'Are you sure?'; $('#uncont').textContent = 'Yes, change it'; unStep = 2;
-    return;
-  }
-  const b = $('#uncont'), back = m => { unStep = 1; $('#un1').hidden = false; $('#un2').hidden = true; $('#unt').textContent = old ? 'Change username' : 'Choose a username'; $('#uncont').textContent = old ? 'Continue' : 'Save'; auMsg('unerr', m, 'bad'); };
-  b.disabled = true;
-  try {
-    const free = await sbRest('rpc/username_available', { method: 'POST', body: { p_name: raw } });
-    if (!free) { back('That username is taken or not allowed. Try another one.'); return; }
-    const r = await sbRest('profiles?id=eq.' + SB.user.id + '&select=' + AU_SEL, { method: 'PATCH', body: { username: raw }, prefer: 'return=representation' });
-    if (r && r[0]) SB.prof = r[0]; else if (SB.prof) SB.prof.username = raw;
-    setProfile({ username: raw });
-    SB.choosing = false;
-    unClose();
-    if (openK === 'mprofile') fillProfile();
-    say('unnote', old ? 'Username changed.' : 'Username saved.', 1);
-    if (!old) toast('Welcome, @' + raw);
-  } catch (e) {
-    back(e.code === '23505' ? 'That username is taken. Try another one.' : e.code === '23514' ? 'That username is not allowed.' : 'Could not save. Check your connection and try again.');
-  } finally { b.disabled = false; }
-}
-async function auDisplayName(v) {
-  const b = $('#dnsave'); b.disabled = true;
-  try {
-    const r = await sbRest('profiles?id=eq.' + SB.user.id + '&select=' + AU_SEL, { method: 'PATCH', body: { display_name: v }, prefer: 'return=representation' });
-    if (r && r[0]) SB.prof = r[0];
-    setProfile({ displayName: v });
-    say('dnnote', 'Display name saved.', 1);
-  } catch (e) { say('dnnote', 'Could not save. Check your connection and try again.'); }
-  finally { b.disabled = false; }
-}
-async function auSignedIn(ev) {
-  const uid = SB.user.id, loud = SB.loud;
-  SB.loud = false;
-  SB.prof = null;
-  auRender();
-  if (openK === 'mauth' && SB.view !== 'newpass') closeAll();
-  try { await auLoadProfile(); } catch (e) {}
-  if (!SB.user || SB.user.id !== uid) return;
-  auRender();
-  if (loud) toast('Signed in as ' + (SB.prof && SB.prof.username ? '@' + SB.prof.username : SB.user.email || 'you'));
-  sySync();
-  if (loud && SB.prof && !SB.prof.username) setTimeout(auChoose, 400);
-}
-function auSignedOut() {
-  SB.prof = null; SB.fail = 0;
-  clearTimeout(SB.t);
-  if (SB.choosing && !$('#unmodal').hidden) unClose();
-  SB.choosing = false;
-  auRender();
-}
-function auSession(ev, s) {
-  SB.session = s || null;
-  const u = s && s.user || null, was = SB.user;
-  if (u && was && u.id === was.id) { SB.user = u; if (ev === 'USER_UPDATED') auRender(); return; }
-  if (!u && !was) { auRender(); return; }
-  SB.user = u;
-  if (u) auSignedIn(ev); else auSignedOut();
-}
-async function auReturn() {
-  const r = SB_RET;
-  if (!r) return;
-  if (r.err) { auOpen('main', auErrText({ message: r.err }), 'bad'); return; }
-  if (!r.code) return;
-  SB.loud = r.kind !== 'recovery' && r.kind !== 'email';
-  let error = null;
-  try { const x = await SB.c.auth.exchangeCodeForSession(r.code); error = x.error; } catch (e) { error = e; }
-  if (error) {
-    SB.loud = false;
-    auOpen(r.kind === 'recovery' ? 'reset' : 'main', r.kind === 'signup' ? 'Your email is probably confirmed already. Sign in with your email and password.' : r.kind === 'recovery' ? 'This link has expired or was opened in another browser. Ask for a new one.' : r.kind === 'email' ? 'Open the link in the browser where you are signed in, or sign in again.' : 'Sign-in did not finish. Please try again.', 'bad');
-    return;
-  }
-  track('auth', { act: 'return', kind: String(r.kind || '').slice(0, 12) });
-  if (r.kind === 'recovery') { const em = SB.session && SB.session.user && SB.session.user.email; if (em) $('#anuser').value = em; auOpen('newpass'); }
-  else if (r.kind === 'email') toast('Your email address was updated');
-}
-function auPatchLegal() {
-  const lp = (k, a, b) => { if (LEGAL[k] && LEGAL[k][1].includes(a)) LEGAL[k][1] = LEGAL[k][1].replace(a, b); };
-  lp('terms', '<p>Today you play without an account and your data stays in your browser. We plan to add optional sign-in with Google. When we do, these terms will be updated.</p>', '<p>An account is optional. You can sign in with Google or with an email address and a password. Keep your password safe and do not share your account. You can delete your account at any time in Settings, Account. We may suspend accounts that break these terms.</p>');
-  lp('terms', '<p>Records, saves and settings are kept in your browser.', '<p>Records, saves and settings are kept in your browser. If you sign in, your records and saves are also copied to your account.');
-  lp('privacy', '<p>In short: you do not need an account, there are no ads, we do not sell data, and what the site remembers about you is stored in your own browser.</p>', '<p>In short: you do not need an account, there are no ads and we do not sell data. Without an account, what the site remembers about you is stored in your own browser. If you sign in, your profile, records and saves are also kept in our database so you can use them on every device.</p>');
-  lp('privacy', '<tr><td><code>gameplay:analytics</code>, <code>gameplay:sid</code></td><td>Usage events and a random session ID, only if you accept analytics</td><td>Analytics</td></tr>', '<tr><td><code>sb-gameplay-auth</code>, <code>gameplay:sync</code></td><td>Your sign-in session and what was already copied to your account, only if you sign in</td><td>Essential</td></tr>\n<tr><td><code>gameplay:analytics</code>, <code>gameplay:sid</code>, <code>gameplay:vid</code></td><td>Usage events, a random session ID and a random device ID, only if you accept analytics</td><td>Analytics</td></tr>');
-  lp('privacy', 'Events are linked to a random session ID, not to your name or email.</p><p>Right now these events stay in your browser and are not sent anywhere. We plan to send them to our own database (hosted on Supabase) to learn which games people enjoy. We will update this policy before that starts. If you reject analytics, nothing is recorded.</p>', 'Events are linked to a random session ID and a random device ID, so we can count returning players. If you are signed in, they are also linked to your account. They are not linked to your name or email.</p><p>These events are sent to our database, hosted by Supabase in the European Union, and are used only to learn which games people enjoy and to fix bugs. They are deleted after two years. If you reject analytics, nothing is recorded or sent.</p>');
-  lp('privacy', '<li>Firebase Hosting (Google)', '<li>Supabase hosts our database and the sign-in service in the European Union. It receives your IP address when your browser contacts it.</li><li>If you sign in with Google, Google tells us your email address, your name and a link to your profile picture.</li><li>Firebase Hosting (Google)');
-  LEGAL.privacy[1] = LEGAL.privacy[1].replace(/<h2>Accounts, coming later<\/h2><p>[^<]*<\/p>/, '<h2>Accounts</h2><p>Signing in is optional. If you create an account, our database on Supabase (European Union) stores your email address; your username and display name; and, if you use Google, your name and the link to your Google profile picture; your best scores, play counts, time played and saved progress; and, later, your friends. Passwords are handled by Supabase Auth: they are stored only as a secure hash and nobody, including us, can read them. Emails about your account (confirmation, password reset, email change) are sent by Supabase. We keep this data until you delete your account in Settings, Account, which removes it from our database.</p>');
-  lp('privacy', 'Because today we hold no personal data on our servers, most requests can be handled directly in your browser with the tools above.', 'If you are signed in, Download my data also includes what your account stores, and Delete my account in Settings, Account removes it from our database. For anything else, email us.');
-  lp('cookies', 'They stay in your browser and are never used to track you.', 'If you sign in, your sign-in session (<code>sb-gameplay-auth</code>) is stored too. They are never used to track you.');
-  lp('cookies', 'with a random session ID (<code>gameplay:analytics</code>, <code>gameplay:sid</code>). They help us understand which games people play. For now they stay on your device.', 'with a random session ID and a random device ID (<code>gameplay:analytics</code>, <code>gameplay:sid</code>, <code>gameplay:vid</code>). They help us understand which games people play and are sent to our database on Supabase in the European Union.');
-  lp('cookies', 'and online games use the PeerJS service.', 'online games use the PeerJS service, and accounts and analytics use Supabase.');
-}
-if (SB.on) auPatchLegal();
-function auBoot() {
-  if (!SB.on) return;
-  Ameplay.analytics.sink = sbSink;
-  [[$('#delc').closest('.scard').querySelector('p'), ' You will also be signed out on this device.', 'Type DELETE'], [$('#dl').closest('.srw').querySelector('small'), ' Includes your account data.'], [$('#rr').closest('.srw').querySelector('small'), ' Your account records are cleared too.']].forEach(([el, t, before]) => { if (!el) return; const sp = document.createElement('span'); sp.dataset.au = 'in'; sp.hidden = true; sp.textContent = t; const n = before && [...el.childNodes].find(x => x.nodeType === 3 && x.nodeValue.includes(before)); if (n) { const i = n.nodeValue.indexOf(before); const rest = n.splitText(i); el.insertBefore(sp, rest); sp.textContent = t.trim() + ' '; } else el.append(sp); });
-  auRender();
-  $('#auform').addEventListener('submit', e => { e.preventDefault(); auSubmit(); });
-  $('#aurform').addEventListener('submit', e => { e.preventDefault(); auReset(); });
-  $('#anform').addEventListener('submit', e => { e.preventDefault(); auNewPass(); });
-  $('#ausw').addEventListener('click', () => { SB.mode = SB.mode === 'up' ? 'in' : 'up'; auMsg('aunote', ''); auView('main'); });
-  $('#auforgot').addEventListener('click', () => { $('#aremail').value = $('#auemail').value.trim(); auView('reset'); auMsg('arnote', ''); });
-  $('#auemsave').addEventListener('click', auChangeEmail);
-  $('#aupwsave').addEventListener('click', auChangePass);
-  $('#auem2').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); auChangeEmail(); } });
-  $('#aupw2').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); auChangePass(); } });
-  $('#aunow').addEventListener('click', () => { $('#ausync').textContent = 'Syncing…'; sySync(); });
-  $('#adelc').addEventListener('input', e => { $('#adelbtn').disabled = e.target.value !== 'DELETE'; });
-  $('#adelbtn').addEventListener('click', () => { if ($('#adelc').value === 'DELETE' && SB.user) auDeleteAccount(); });
-  document.addEventListener('click', e => {
-    const t = e.target;
-    const g = t.closest && t.closest('[data-auth="google"]');
-    if (g) { e.preventDefault(); auGoogle(); return; }
-    const v = t.closest && t.closest('[data-auv]');
-    if (v) { auView(v.dataset.auv); return; }
-  });
-  $('#unmodal').addEventListener('click', e => { if (e.target === e.currentTarget || e.target.closest('[data-unclose]')) SB.choosing = false; });
-  $('#uncancel').addEventListener('click', () => { SB.choosing = false; });
-  $('#unedit').addEventListener('click', () => { $('label[for="unew"]').textContent = 'New username'; if (SB.user) $('#uncont').textContent = SB.prof && SB.prof.username ? 'Continue' : 'Save'; });
-  addEventListener('online', () => { if (SB.user) sySync(); });
-  document.addEventListener('visibilitychange', () => { if (!SB.user) return; if (document.visibilityState === 'hidden') sySync({ keep: true }); else if (Date.now() - syNum(SY.at) > 180000) sySync(); });
-  addEventListener('pagehide', () => { if (SB.user) sySync({ keep: true }); });
-  setInterval(() => { if (SB.user && cur && document.visibilityState !== 'hidden') sySync(); }, 120000);
-  if (SB_RET || sbHasSession()) sbClient().then(() => auReturn()).catch(() => { if (SB_RET) toast('Sign-in could not load. Check your connection and reload the page.'); });
-}
-Ameplay.account = {
-  get enabled() { return SB.on; },
-  get signedIn() { return !!SB.user; },
-  get id() { return SB.user ? SB.user.id : null; },
-  get username() { return SB.prof && SB.prof.username || null; },
-  signIn() { if (SB.on) auOpen('main'); },
-  sync() { return sySync(); }
-};
-
-Ameplay.debug = { open: id => go(href(id), false), close: () => go(PATH_MODE ? '/' : '#/', false), games, fire: () => ov && ov.fire(), state, compute, q: t => { const o = state.q; state.q = t; const r = compute().list.map(g => g.id); state.q = o; return r; }, info: INFO, fit: () => fitStage(), pause: () => PAUSE.on };
-document.addEventListener('DOMContentLoaded', boot);
-})();

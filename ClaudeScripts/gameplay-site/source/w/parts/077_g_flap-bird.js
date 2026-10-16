@@ -147,27 +147,25 @@
   const bands = (top, bot, cut = .5) => (x, y, h) => y < h * cut ? top : bot;
 
   const BIRD_PAL = [
-    { main: '#f8c22e', shade: '#e0861c', light: '#fde27a', belly: '#fff3c4', wing: '#fffdf0', wingS: '#f2dca0', beak: '#ff9a2a', beak2: '#ef6a1e', cheek: '#ff9c8a' },
-    { main: '#4fb6e8', shade: '#2a78bd', light: '#9ddcf8', belly: '#dff5ff', wing: '#f6fcff', wingS: '#b9def0', beak: '#ffb02e', beak2: '#f07c1e', cheek: '#ff9fb0' },
-    { main: '#f05a3a', shade: '#b63327', light: '#ff9070', belly: '#ffd9c7', wing: '#fff4ee', wingS: '#f4c2b0', beak: '#ffc23a', beak2: '#f39121', cheek: '#ffb0a0' }
+    { main: '#f8c22e', shade: '#e88a2c', light: '#fde27a', belly: '#fff3c4', wing: '#fffdf0', wingS: '#f2dca0', beak: '#ff9a2a', beak2: '#ef6a1e', cheek: '#ff9c8a', lip: '#f8501c' },
+    { main: '#4fb6e8', shade: '#2a78bd', light: '#9ddcf8', belly: '#dff5ff', wing: '#f6fcff', wingS: '#b9def0', beak: '#ffb02e', beak2: '#f07c1e', cheek: '#ff9fb0', lip: '#f8501c' },
+    { main: '#f05a3a', shade: '#b63327', light: '#ff9070', belly: '#ffd9c7', wing: '#fff4ee', wingS: '#f4c2b0', beak: '#ffc23a', beak2: '#f39121', cheek: '#ffb0a0', lip: '#fbb12e' }
   ];
-  const GHOST = { main: '#d9d9d9', shade: '#a9a9a9', light: '#f1f1f1', belly: '#f5f5f5', wing: '#ffffff', wingS: '#d0d0d0', beak: '#cfcfcf', beak2: '#b5b5b5', cheek: '#e3e3e3' };
+  const GHOST = { main: '#d9d9d9', shade: '#a9a9a9', light: '#f1f1f1', belly: '#f5f5f5', wing: '#ffffff', wingS: '#d0d0d0', beak: '#cfcfcf', beak2: '#b5b5b5', cheek: '#e3e3e3', lip: '#c4c4c4' };
 
   function birdSprite(p, frame) {
-    const g = grid(48, 48);
-    const body = ell(23, 24.5, 16, 12);
-    rast(g, ell(19.5, 12.6, 3.4, 1.7, -0.6), p.main, O);
-    rast(g, ell(23.4, 12.2, 2.8, 1.5, -1.1), p.main, O);
-    const belly = ell(28, 31, 11, 6);
-    rast(g, body, (x, y) => !body(x + .5, y + 3.5) ? p.shade : !body(x + .5, y - 1.5) && x < 27 ? p.light : belly(x + .5, y + .5) ? p.belly : p.main, O);
-    const wing = [ell(13, 19.5, 7.5, 4.3, -0.55), ell(12.5, 24.5, 8, 4.3), ell(13.5, 28.5, 7.5, 4.3, 0.55)][frame];
-    rast(g, wing, (x, y) => wing(x + .5, y + 2.5) ? p.wing : p.wingS, O);
-    rast(g, ell(31, 18, 6.4, 6.4), '#ffffff', O);
-    rast(g, box(33, 15, 35, 20), O);
-    rast(g, box(26, 25, 29, 26), p.cheek);
-    rast(g, (x, y) => x >= 32 && x <= 43.5 && Math.abs(y - 27.5) <= (43.5 - x) * 0.45 + 1, (x, y) => y < 27 ? p.beak : p.beak2, O);
-    rast(g, box(34, 27, 40, 28), O);
-    return toCanvas(g);
+    const g = grid(18, 13);
+    const body = ell(7.6, 6.6, 7.4, 5.9);
+    rast(g, body, (x, y) => y >= 9 && x < 10 ? p.shade : (y < 3 && x < 7) || (y < 5 && x < 3) ? p.light : p.main, O);
+    rast(g, ell(11.2, 3.6, 3.6, 3.4), (x, y) => x < 10 && y > 3 ? '#e6eedc' : '#ffffff', O);
+    rast(g, box(12, 2, 13, 5), O);
+    rast(g, box(9, 6, 17, 8.6), p.lip, O);
+    rast(g, box(9, 8, 16, 10.6), p.lip, O);
+    const wy = [4.6, 6.6, 8.4][frame];
+    rast(g, ell(3.8, wy, 3.8, 2.3), (x, y) => y > wy + .2 && (x < 1.5 || x > 4.5) ? p.wingS : p.wing, O);
+    const [c, x] = canvasOf(48, 48);
+    for (let i = 0; i < g.d.length; i++) if (g.d[i]) { x.fillStyle = g.d[i]; x.fillRect(6 + (i % g.w) * 2, 11 + (i / g.w | 0) * 2, 2, 2); }
+    return c;
   }
 
   function makeBg(night) {
@@ -307,6 +305,14 @@
     return c;
   }
 
+  function makePause(resume) {
+    const g = grid(26, 28);
+    rast(g, box(0, 0, 26, 28), (x, y) => x < 2 || y < 2 || x > 23 || y > 25 ? '#ffffff' : y < 13 ? '#fca048' : '#e86101', O);
+    if (resume) rast(g, poly([[9, 7], [9, 21], [19, 14]]), '#ffffff', O);
+    else { rast(g, box(7, 7, 12, 21), '#ffffff', O); rast(g, box(14, 7, 19, 21), '#ffffff', O); }
+    return toCanvas(g);
+  }
+
   let SPR = null;
   function sprites() {
     if (SPR) return SPR;
@@ -331,7 +337,7 @@
       ready: text('Get Ready!', 3, 4, (x, y, h) => y < 4 ? '#c9f78e' : y < h * .45 ? '#7bdc4f' : '#3fae3c', [['#ffffff', 2], [O, 2]]),
       over: text('Game Over', 4, 5, (x, y, h) => y < h * .45 ? '#fca048' : '#e86101', [['#ffffff', 2], [O, 2]]),
       tutorial: makeTutorial(ghost),
-      play: makeButton('play'), board: makeButton('board'),
+      play: makeButton('play'), board: makeButton('board'), pause: [makePause(false), makePause(true)],
       panel: makePanel(), newTag,
       medals: [0, 1, 2, 3].map(makeMedal),
       spark: [0, 1, 2].map(makeSpark)
@@ -442,7 +448,9 @@
       const play = { x: 20, y: 340, w: 116, h: 70 }, board = { x: 152, y: 340, w: 116, h: 70 };
       const evq = [];
       let menu = true, score = 0, speed = 0, hidden = 1, land = 0, night = false, fadeEvent = 0, buttons = false;
-      let best = api.best || 0, sparkIdx = 0, pressed = null, submitted = false, acc = 0;
+      let best = api.best || 0, sparkIdx = 0, pressed = null, submitted = false, acc = 0, paused = false;
+      const pbtn = { x: 14, y: 14, w: 26, h: 28 };
+      const canPause = () => !menu && !bird.idle && !bird.dead && speed > 0;
 
       const rnd = (a, b) => a + Math.floor(Math.random() * (b - a));
       const queue = (id, d) => evq.push({ id, d });
@@ -645,6 +653,7 @@
           if (over.on) blitIn(S.over, 0, 130 + over.y, W, 54, over.tw.value);
           else bigNumber(score);
           drawBird();
+          if (canPause()) c.drawImage(S.pause[paused ? 1 : 0], pbtn.x, pbtn.y);
         }
         c.drawImage(S.land, land, CFG.LAND_Y);
         if (ready.on && ready.tw.value > 0) {
@@ -694,6 +703,9 @@
         e.preventDefault();
         audio();
         if (buttons) { pressed = inside(board, local(e)) ? 'board' : 'play'; return; }
+        const lp = local(e);
+        if (canPause() && lp.x > pbtn.x - 6 && lp.x < pbtn.x + pbtn.w + 6 && lp.y > pbtn.y - 6 && lp.y < pbtn.y + pbtn.h + 6) { paused = !paused; acc = 0; return; }
+        if (paused) return;
         flapInput();
       });
       api.on(window, 'pointerup', e => {
@@ -713,13 +725,14 @@
         e.preventDefault();
         if (e.repeat) return;
         audio();
+        if (paused) { paused = false; acc = 0; return; }
         if (buttons) startPlay(); else flapInput();
       });
       menuReset();
       transition(false, 0, .5);
       api.score(0);
       api.loop(dt => {
-        acc += dt;
+        if (!paused) acc += dt;
         while (acc >= STEP - .001) { tick(); acc -= STEP; }
         draw();
         present();

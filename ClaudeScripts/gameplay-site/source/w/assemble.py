@@ -53,13 +53,53 @@ old = rep(old, "    get alive() { return alive; },", "    get alive() { return a
 old = rep(old, "S.best[g.id] = v; save(); setBest(g, true); toast('New best · ' + fmt(g, v));", "S.best[g.id] = v; save(); setBest(g, true); toast('New best · ' + fmt(g, v)); track('record', { game: g.id });")
 old = rep(old, "    get net() { return net || (net = makeNet(g, add)); },", "    get net() { return net || (net = gpNetWrap(g, makeNet(g, add))); },")
 ca = old.index("const coverCache = new Map();")
-old = old[:ca] + open('new/tail.js', encoding='utf-8').read()
+old = old[:ca] + open('new/tail.js', encoding='utf-8').read() + open('new/auth.js', encoding='utf-8').read() + chr(10) + open('new/i18n.js', encoding='utf-8').read()
 open('parts/001_portal.js', 'w', encoding='utf-8', newline='').write(old)
 
-am = open('new/am.css', encoding='utf-8').read()
+SC = ':where(:not(.g-root *))'
+def split_top(s, ch=','):
+    out, d, cur = [], 0, ''
+    for c in s:
+        if c in '([': d += 1
+        elif c in ')]': d -= 1
+        if c == ch and d == 0: out.append(cur); cur = ''
+        else: cur += c
+    out.append(cur)
+    return out
+def scope_sel(sel):
+    t = sel.strip()
+    if not re.search(r'[.#]', t) or re.search(r'\.g-|\.play-stage|\.play-frame|^\*|^:root|^html|^body', t):
+        return sel
+    m = re.search(r'::[\w-]+(\([^)]*\))?\s*$', t)
+    if m: return t[:m.start()] + SC + t[m.start():]
+    return t + SC
+def scope(css):
+    out, i, n = [], 0, len(css)
+    while i < n:
+        j = css.find('{', i)
+        if j < 0: out.append(css[i:]); break
+        head = css[i:j]
+        d, k = 1, j + 1
+        while d:
+            if css[k] == '{': d += 1
+            elif css[k] == '}': d -= 1
+            k += 1
+        body = css[j + 1:k - 1]
+        h = head.strip()
+        if h.startswith('@media') or h.startswith('@supports'):
+            out.append(head + '{' + scope(body) + '}')
+        elif h.startswith('@'):
+            out.append(head + '{' + body + '}')
+        else:
+            lead = head[:len(head) - len(head.lstrip())]
+            out.append(lead + ','.join(scope_sel(x) for x in split_top(h)) + '{' + body + '}')
+        i = k
+    return ''.join(out)
+am = scope(open('new/am.css', encoding='utf-8').read())
 gcss = open('new/gcss.css', encoding='utf-8').read()
 toast = open('new/toast.css', encoding='utf-8').read()
-media = open('new/media.css', encoding='utf-8').read()
+media = scope(open('new/media.css', encoding='utf-8').read())
+media += chr(10) + open('new/auth.css', encoding='utf-8').read()
 count = len(ROWS)
 desc = f'gameplay: {count} free browser games. Famous remakes, 3D, arcade, racing, puzzles, sports and online multiplayer games. No downloads, just click and play.'
 nos = '<noscript><div style="max-width:900px;margin:0 auto;padding:24px;font-family:system-ui,sans-serif"><h1>gameplay: ' + str(count) + ' free browser games</h1><p>gameplay needs JavaScript to run the games. Turn it on and reload this page.</p><ul>' + ''.join('<li><a href="/%s">%s</a></li>' % (r[0], r[1].replace('&', '&amp;')) for r in ROWS) + '</ul></div></noscript>\n'
@@ -85,7 +125,7 @@ head = f'''<!doctype html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-<script>try{{var t=(JSON.parse(localStorage.getItem('gameplay:v1')||'{{}}')||{{}}).prefs||{{}};if(t.theme==='light'||t.theme==='dark')document.documentElement.setAttribute('data-theme',t.theme);if(t.motion)document.documentElement.classList.add('rm');if(t.thumbs===false)document.documentElement.classList.add('nothumb')}}catch(e){{}}</script>
+<script>document.documentElement.setAttribute('data-theme','light');try{{var t=(JSON.parse(localStorage.getItem('gameplay:v1')||'{{}}')||{{}}).prefs||{{}};if(t.theme==='dark')document.documentElement.setAttribute('data-theme','dark');if(t.theme==='system')document.documentElement.removeAttribute('data-theme');if(t.motion)document.documentElement.classList.add('rm');if(t.thumbs===false)document.documentElement.classList.add('nothumb')}}catch(e){{}}</script>
 <style>
 '''
 body = open('new/body.html', encoding='utf-8').read().replace('{{NOSCRIPT}}', nos)

@@ -4,7 +4,8 @@
     let freeMouse = false, unlockIntent = false, persp = 0, hideHud = false, fovDirty = true, lastW = 0, lastSpace = 0, lastJumpTap = 0, sneakToggle = false, aimT = null, tl = { id: null }, lastTouch = 0, mDrag = null;
     const tbs = new Map();
     const locked = () => document.pointerLockElement === canvas;
-    let gestT = 0, lockT = 0, uiT = 0;
+    let gestT = 0, lockT = 0, uiT = 0, wantLock = -1e9;
+    function grab() { if (touch || locked()) return; wantLock = performance.now(); try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => { }); } catch (e) { } }
     function lockMouse(gest) {
       if (touch || locked() || scr !== 'game' || freeMouse && !gest) return;
       if (gest) gestT = performance.now();
@@ -14,7 +15,7 @@
     function releaseMouse() { uiT = performance.now(); attackHeld = useHeld = false; mine = null; tJump = false; if (locked()) { unlockIntent = true; try { document.exitPointerLock(); } catch (e) { } } }
     api.on(document, 'pointerlockchange', () => {
       const t = performance.now();
-      if (locked()) { freeMouse = false; lockT = t; if (gui || chatOpen || scr !== 'game' || P.dead) releaseMouse(); return; }
+      if (locked()) { freeMouse = false; lockT = t; if (gui || chatOpen || scr !== 'game' && t - wantLock > 4000 || P.dead) releaseMouse(); return; }
       attackHeld = useHeld = false;
       if (unlockIntent) { unlockIntent = false; return; }
       if (t - lockT < 600 || t - uiT < 900) return;
@@ -46,7 +47,7 @@
       for (let i = 0; i < 9; i++) if (inv[i] && inv[i].id === id) { sel = i; return; }
       let k = inv.findIndex((s2, i) => i < 9 && !s2); if (k < 0) k = sel; sel = k; inv[k] = { id, n: IT[id].stack, d: 0 };
     }
-    function dropHeld(all) { const s = held(); if (!s || P.dead || gui) return; const n = all ? s.n : 1; throwStack({ id: s.id, n, d: s.d, x: s.x }, true); s.n -= n; if (s.n <= 0) inv[sel] = null; swing(); }
+    function dropHeld(all) { const s = held(); if (!s || P.dead || gui) return; const n = all ? s.n : 1; stat('drop', n); throwStack({ id: s.id, n, d: s.d, x: s.x }, true); s.n -= n; if (s.n <= 0) inv[sel] = null; swing(); }
     function swapHands() { const a = inv[sel]; inv[sel] = offhand; offhand = a; }
     wrap.addEventListener('contextmenu', e => e.preventDefault());
     wrap.addEventListener('mousedown', e => {
@@ -85,7 +86,7 @@
       const d = e.deltaY || e.deltaX;
       if (!d) return;
       if (scr === 'game' && !gui && !chatOpen) { sel = (sel + (d > 0 ? 1 : 8)) % 9; return; }
-      if (scr === 'game' && gui) { if (gui === 'controls') ctrlScroll += d > 0 ? 20 : -20; else invWheel(d); return; }
+      if (scr === 'game' && gui) { if (gui === 'controls') ctrlScroll += d > 0 ? 20 : -20; else if (gui === 'stats') statScroll += d > 0 ? 20 : -20; else invWheel(d); return; }
       if (scr === 'worlds') wScroll += d > 0 ? 24 : -24;
       if (scr === 'controls') ctrlScroll += d > 0 ? 20 : -20;
     }, { passive: false });
@@ -178,8 +179,8 @@
         return;
       }
       if (gui === 'dead') return;
-      if (c === 'Escape') { if (gui === 'options' || gui === 'controls' || gui === 'plist') { persistSet(); gui = 'pause'; } else if (gui) closeGui(); else { gui = 'pause'; releaseMouse(); saveSoon(); } return; }
-      if (gui === 'pause' || gui === 'options' || gui === 'controls' || gui === 'plist' || gui === 'sign') return;
+      if (c === 'Escape') { if (gui === 'options' || gui === 'controls' || gui === 'plist' || gui === 'stats' || gui === 'adv') { persistSet(); gui = 'pause'; } else if (gui) closeGui(); else { gui = 'pause'; releaseMouse(); saveSoon(); } return; }
+      if (gui === 'pause' || gui === 'options' || gui === 'controls' || gui === 'plist' || gui === 'stats' || gui === 'adv' || gui === 'sign') return;
       if (c === KB.inv && !e.repeat) { if (gui) closeGui(); else if (!chatOpen && !P.dead) openGui('inv'); return; }
       if (gui) { invKey(c); return; }
       if (chatOpen) return;

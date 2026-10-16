@@ -15,7 +15,7 @@
     gravity: 30, step: 1 / 60,
     carSpeed: 7.5, busSpeed: 6.5, walkSpeed: 1.25,
     cars: 40, buses: 7, walkers: 5,
-    fov: 40, camTilt: 1.0, camBase: 16, camPerR: 10, menuCam: 75,
+    fov: 14, camTilt: 1.08, camBase: 60, camPerR: 36, menuCam: 240,
     seed: 20180601
   };
 
@@ -1468,7 +1468,7 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
         cam.lookAt(camX, 0, camZ);
         const nr = Math.max(0.5, camD * 0.05);
         if (Math.abs(nr - cam.near) > 0.05) { cam.near = nr; cam.updateProjectionMatrix(); }
-        const ext = Math.ceil((camD * 0.75 + 12) / 4) * 4;
+        const ext = Math.ceil((camD * 0.26 + 12) / 4) * 4;
         if (ext !== shadowExt) {
           shadowExt = ext;
           const sc = sun.shadow.camera;
@@ -1476,7 +1476,7 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
         }
         const fh = player && phase !== 'menu' ? player : null;
         if (fh && fh.alive) { seeU.value.set(fh.x, fh.R * 0.95, fh.z, fh.R * 1.3 + 1.5); camU.value.copy(cam.position); } else seeU.value.w = 0;
-        sun.target.position.set(camX, 0, camZ - camD * 0.12);
+        sun.target.position.set(camX, 0, camZ - camD * 0.041);
         sun.position.copy(sun.target.position).addScaledVector(SUN_DIR, 200);
       }
       function updateHoles() {

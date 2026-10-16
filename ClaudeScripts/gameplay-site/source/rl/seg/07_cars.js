@@ -29,7 +29,10 @@
             { id: 'none', n: 'None', t: 0, r: 0 },
             { id: 'stripes', n: 'Twin Stripes', b: 'octane', t: 2, r: 2 }, { id: 'flames', n: 'Hot Rod', b: 'octane', t: 9, r: 2 }, { id: 'bolt', n: 'Thunderbolt', b: 'octane', t: 19, r: 3 }, { id: 'tiger', n: 'Tiger Claw', b: 'octane', t: 33, r: 4 },
             { id: 'hex', n: 'Hexed', b: 'fennec', t: 4, r: 2 }, { id: 'splat', n: 'Paint Splat', b: 'fennec', t: 13, r: 3 }, { id: 'pixel', n: 'Pixel Camo', b: 'fennec', t: 23, r: 3 }, { id: 'eight', n: 'Lucky 8', b: 'fennec', t: 37, r: 4 },
-            { id: 'chevron', n: 'Chevron', b: 'dominus', t: 7, r: 2 }, { id: 'wings', n: 'Wings', b: 'dominus', t: 17, r: 3 }, { id: 'shark', n: 'Shark Bite', b: 'dominus', t: 29, r: 4 }, { id: 'checker', n: 'Checkered', b: 'dominus', t: 41, r: 5 }
+            { id: 'chevron', n: 'Chevron', b: 'dominus', t: 7, r: 2 }, { id: 'wings', n: 'Wings', b: 'dominus', t: 17, r: 3 }, { id: 'shark', n: 'Shark Bite', b: 'dominus', t: 29, r: 4 }, { id: 'checker', n: 'Checkered', b: 'dominus', t: 41, r: 5 },
+            { id: 'bstripes', n: 'Stripes', b: 'breakout', t: 2, r: 2 }, { id: 'bflames', n: 'Flames', b: 'breakout', t: 9, r: 2 }, { id: 'vector', n: 'Vector', b: 'breakout', t: 24, r: 3 },
+            { id: 'mstripes', n: 'Stripes', b: 'merc', t: 2, r: 2 }, { id: 'mflames', n: 'Flames', b: 'merc', t: 9, r: 2 }, { id: 'mdots', n: 'Paint Party', b: 'merc', t: 32, r: 3 },
+            { id: 'vstripes', n: 'Stripes', b: 'venom', t: 2, r: 2 }, { id: 'vflames', n: 'Flames', b: 'venom', t: 9, r: 2 }, { id: 'vwings', n: 'Wings', b: 'venom', t: 40, r: 3 }
           ],
           wheel: [
             { id: 'stock', n: 'OEM', t: 0, r: 0 }, { id: 'star', n: 'Five Star', t: 3, r: 2 }, { id: 'mesh', n: 'Goldmesh', t: 11, r: 3 }, { id: 'dish', n: 'Dish', t: 21, r: 3 },
@@ -130,13 +133,13 @@
           const M = (c, op) => own(new THREE.MeshBasicMaterial({ color: c, map: crFl.ft, transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false, fog: false }));
           return crFlMs[key] = { o: M(o[0], 0.85), c: M(o[1], 1), g: own(new THREE.SpriteMaterial({ map: crFl.gt, color: o[2], blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false, fog: false })), B };
         };
-        const crFCT = [[[0.3, 0.55, 1], [0.78, 0.92, 1]], [[1, 0.42, 0.06], [1, 0.86, 0.42]]];
+        const crFCT = [[[0.16, 0.32, 1], [0.62, 0.58, 1]], [[1, 0.34, 0.05], [1, 0.78, 0.3]]], crFSM = [[0.4, 0.46, 0.64], [0.52, 0.45, 0.4]];
         const crRbC = [1, 0, 0];
         const crHue = (h, o) => { const f = k => { const x = (k + h * 6) % 6; return Math.max(0, Math.min(1, Math.abs(x - 3) - 1)); }; o[0] = f(0); o[1] = f(4); o[2] = f(2); return o; };
         const crBoostCol = c => {
           const cv = c && visOf(c), B = cv && cv.bs || crCat.boost[0], t = c ? c.team : 0;
           if (B.rb) { crHue(performance.now() / 1600 % 1, crRbC); return { a: crRbC, b: [1, 1, 1], smoke: null, B }; }
-          return B.p ? { a: B.p[0], b: B.p[1], smoke: B.sm, B } : { a: crFCT[t][0], b: crFCT[t][1], smoke: [0.5, 0.5, 0.54], B };
+          return B.p ? { a: B.p[0], b: B.p[1], smoke: B.sm, B } : { a: crFCT[t][0], b: crFCT[t][1], smoke: crFSM[t], B };
         };
         const crTrM = own(new THREE.MeshBasicMaterial({
           map: tex(8, 32, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }),
@@ -187,7 +190,7 @@
         const crFit = (mid, bid) => {
           const key = mid + '|' + bid;
           if (crFits[key]) return crFits[key];
-          const MD = crModel(mid), B = BODIES[bid] || BODIES[BODY_IDS[0]], zf = -CFG.carRest, [f, r] = MD.m.wh;
+          const MD = crModel(mid), B = BODIES[bid] || BODIES[BODY_IDS[0]], zf = -(B.rz || CFG.carRest), [f, r] = MD.m.wh;
           const s = (B.wf[0] - B.wb[0]) / (f[0] - r[0]), tx = B.wf[0] - s * f[0], tz = (B.wf[2] + zf - s * f[2] + B.wb[2] + zf - s * r[2]) / 2;
           const geo = own(MD.body.clone()).applyMatrix4(new THREE.Matrix4().makeScale(s, s, s).setPosition(tx, 0, tz));
           geo.computeBoundingBox(); geo.computeBoundingSphere();
@@ -207,8 +210,8 @@
             if (q.k === 'paint') return mk(q, { color: lin(T.a), metalness: Math.min(q.m, 0.4), roughness: Math.min(Math.max(0.35, q.r), 0.6), clearcoat: 0.5, clearcoatRoughness: 0.1 });
             if (q.k === 'chassis') return mk(q, tx.mr ? { map: crTex(tx.chassis), metalnessMap: crTex(tx.mr, false), roughnessMap: crTex(tx.mr, false), metalness: 0.7, roughness: q.r * 1.1 } : { map: crTex(tx.chassis), metalness: Math.min(q.m, 0.55), roughness: Math.max(0.4, q.r) });
             if (q.k === 'glass') return mk(q, { color: lin('#06080c'), metalness: 0.1, roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 1.6 });
-            if (q.k === 'light') return own(new THREE.MeshBasicMaterial({ color: lin('#fff4e6', 1.6), toneMapped: false }));
-            return mk(q, { color: lin('#3a3d44') });
+            if (q.k === 'light') return own(new THREE.MeshBasicMaterial({ color: lin(q.hex || '#fff4e6', 1.6), toneMapped: false }));
+            return mk(q, { color: lin(q.hex || '#3a3d44') });
           });
         };
         const crDV = 'varying vec3 vDP;\nvarying vec3 vDN;\n';
@@ -258,6 +261,7 @@ diffuseColor.rgb = dc;
             checker: g => { const s = 20; for (let q = 0; q < 2; q++) for (let x = 0; x < 512; x += s) for (let y = q * 256; y < q * 256 + 256; y += s) { const u = x / 512, h = ((x * 73 + y * 151) % 101) / 101; if (h < u * 1.6 - 0.25) continue; g.fillStyle = ((x + y) / s) % 2 ? Wh : K; g.fillRect(x, y, s, s); } }
           };
         })();
+        Object.assign(crDP, { bstripes: crDP.stripes, bflames: crDP.flames, vector: crDP.chevron, mstripes: crDP.stripes, mflames: crDP.flames, mdots: crDP.splat, vstripes: crDP.stripes, vflames: crDP.flames, vwings: crDP.wings });
         const crDTs = {};
         const crDecalTex = id => crDTs[id] || (crDTs[id] = tex(512, 512, g => { g.fillStyle = '#000'; g.fillRect(0, 0, 512, 512); if (crDP[id]) crDP[id](g); }));
         const crPM = (o, mid, bid) => {
@@ -385,12 +389,12 @@ diffuseColor.rgb = dc;
           const mb = new THREE.Mesh(F ? F.geo : FB.body, F ? o.pm.arr : FB.mat); mb.castShadow = true; o.bg.add(mb);
           o.wheels = [];
           for (const [Wd, front] of [[B.wf, true], [B.wb, false]]) for (const s of [1, -1]) {
-            const piv = new THREE.Group(); piv.position.set(Wd[0], Wd[1] * s, Wd[2] - CFG.carRest); o.g.add(piv);
+            const piv = new THREE.Group(); piv.position.set(Wd[0], Wd[1] * s, Wd[2] - (B.rz || CFG.carRest)); o.g.add(piv);
             const spin = new THREE.Group(); piv.add(spin);
             const m = new THREE.Mesh(crFallback().wheel, crFallback().mat); m.scale.set(Wd[2], Wd[2] * s, Wd[2]); m.castShadow = true; spin.add(m);
-            o.wheels.push({ piv, spin, m, front, z: Wd[2] - CFG.carRest });
+            o.wheels.push({ piv, spin, m, front, z: Wd[2] - (B.rz || CFG.carRest) });
           }
-          o.rf = B.wf[2]; o.rb = B.wb[2]; o.tr = [B.wb[0] + 2, B.wb[1] + 4, B.wb[2] - CFG.carRest + B.wb[2] * 0.5]; o.tz0 = o.tz = F ? F.tz : 60; o.body = id; o.roof = F ? F.roof : [0, 0, 40];
+          o.rf = B.wf[2]; o.rb = B.wb[2]; o.tr = [B.wb[0] + 2, B.wb[1] + 4, B.wb[2] - (B.rz || CFG.carRest) + B.wb[2] * 0.5]; o.tz0 = o.tz = F ? F.tz : 60; o.body = id; o.roof = F ? F.roof : [0, 0, 40];
           o.fl = flames ? crFlames(o, F ? F.nz : [[-48, 0, 4, 6]]) : [];
           crApplyCos(o, o.car && o.car.cos || o.cos || null);
         };

@@ -37,7 +37,7 @@
             }
           };
         };
-        const fire = particles(2600, true), smoke = particles(900, false);
+        const fire = particles(2600, true), smoke = particles(1800, false);
         const FXK = [0, -1, 0, 1, 1, -1, 1, 1];
         const fxStreaks = n => {
           const geo = own(new THREE.BufferGeometry());
@@ -121,8 +121,8 @@
             fxM4.compose(fxVb.set(p[i3], p[i3 + 1], p[i3 + 2]), fxDb.q[i], fxVa.set(sc, sc * 0.7, sc * 0.45)); fxDeb.setMatrixAt(i, fxM4);
             if (fxDb.hot[i] > 0) {
               fxDb.hot[i] -= dt;
-              if (Math.random() < 0.55) smoke.emit(p[i3], p[i3 + 1], p[i3 + 2], R() * 20, R() * 20, 30, 0.7 + Math.random() * 0.4, 0.13, 0.12, 0.12, 30, 120, -40, 1.5);
-              if (Math.random() < 0.5) fire.emit(p[i3], p[i3 + 1], p[i3 + 2], R() * 40, R() * 40, R() * 40, 0.22, 1, 0.5, 0.15, 34, 6, 0, 2);
+              if (Math.random() < 0.16) smoke.emit(p[i3], p[i3 + 1], p[i3 + 2], R() * 20, R() * 20, 30, 0.7 + Math.random() * 0.4, 0.13, 0.12, 0.12, 30, 120, -40, 1.5);
+              if (Math.random() < 0.3) fire.emit(p[i3], p[i3 + 1], p[i3 + 2], R() * 40, R() * 40, R() * 40, 0.22, 1, 0.5, 0.15, 34, 6, 0, 2);
             }
           }
           fxDeb.instanceMatrix.needsUpdate = true;
@@ -187,17 +187,17 @@
         const fxGoalClassic = (p, team) => {
           const c = TEAMC[team], x = p.x, y = p.y, z = p.z, sy = y > 0 ? -1 : 1;
           fxTc.set(c); fxTc2.setRGB(fxTc.r + (1 - fxTc.r) * 0.55, fxTc.g + (1 - fxTc.g) * 0.55, fxTc.b + (1 - fxTc.b) * 0.55);
-          fxFlash(x, y, z, 0xfff4dc, 300, 3600, 0.45, 1);
-          fxFlash(x, y, z, 0xff8a24, 800, 6200, 1.3, 1);
-          fxFlash(x, y + sy * 250, z + 100, c, 1200, 7000, 1.6, 0.35);
+          fxFlash(x, y, z, 0xffe2b0, 300, 2600, 0.3, 0.75);
+          fxFlash(x, y, z, 0xff7a1a, 700, 5200, 1.1, 0.6);
+          fxFlash(x, y + sy * 250, z + 100, c, 1200, 7000, 1.6, 0.3);
           fxLightAt(x, y + sy * 500, Math.max(z, 250), 0xffa040, 9, 1.9);
-          fxShock(x, y, z, 0xffffff, 60, 1300, 0.32, 0.9, false);
-          fxShock(x, y, z, 0xff8a2a, 140, 2900, 0.95, 0.8, false);
+          fxShock(x, y, z, 0xffc880, 60, 1300, 0.32, 0.5, false);
+          fxShock(x, y, z, 0xff7a1a, 140, 2900, 0.95, 0.55, false);
           fxShock(x, y, 28, c, 150, 3600, 1.3, 0.75, true, 0, 0, 1);
-          for (let i = 0; i < 120; i++) { const d = fxDir(0, sy * 0.45, 0.15, false), sp = 2600 + Math.random() * 5200, wt = Math.random() < 0.4; fxSpark.emit(x, y, z, d.x * sp, d.y * sp, d.z * sp, 0.45 + Math.random() * 0.7, 1, wt ? 0.9 : 0.55, wt ? 0.6 : 0.15, 16 + Math.random() * 22, 0.11, 200, 2.4); }
-          for (let i = 0; i < 240; i++) { const d = fxDir(0, sy * 0.3, 0.2, false), sp = 500 + Math.random() * 3400, k = Math.random(), big = i < 80; fire.emit(x, y, z, d.x * sp, d.y * sp, d.z * sp, 0.5 + Math.random() * 1, 1, 0.3 + k * 0.55, 0.05 + k * k * 0.35, big ? 300 + Math.random() * 180 : 150 + Math.random() * 90, 20, 300, 1.9); }
-          for (let i = 0; i < 110; i++) { const d = fxDir(0, sy * 0.55, 0.5, false), sp = 500 + Math.random() * 1900, k = Math.random(); smoke.emit(x + d.x * 120, y + d.y * 120, z + d.z * 80, d.x * sp, d.y * sp, d.z * sp + 150, 1.1 + Math.random() * 1, 1, 0.42 + k * 0.4, 0.08 + k * 0.2, 360 + Math.random() * 220, 1150 + Math.random() * 600, -90, 1.5); }
-          for (let i = 0; i < 70; i++) { const d = fxDir(0, sy * 0.6, 0.45, false), sp = 300 + Math.random() * 1200, dk = 0.1 + Math.random() * 0.08; smoke.emit(x + d.x * 160, y + d.y * 160, z + d.z * 100, d.x * sp, d.y * sp, d.z * sp + 120, 2.8 + Math.random() * 1.8, dk * 1.5, dk * 1.05, dk * 0.8, 320 + Math.random() * 160, 1100 + Math.random() * 500, -60, 1.2); }
+          for (let i = 0; i < 90; i++) { const d = fxDir(0, sy * 0.45, 0.15, false), sp = 2600 + Math.random() * 5200, wt = Math.random() < 0.2; fxSpark.emit(x, y, z, d.x * sp, d.y * sp, d.z * sp, 0.45 + Math.random() * 0.7, 1, wt ? 0.9 : 0.55, wt ? 0.6 : 0.15, 16 + Math.random() * 22, 0.11, 200, 2.4); }
+          for (let i = 0; i < 170; i++) { const d = fxDir(0, sy * 0.3, 0.2, false), sp = 500 + Math.random() * 3400, k = Math.random(), big = i < 50, q = big ? 0.42 : 0.75; fire.emit(x, y, z, d.x * sp, d.y * sp, d.z * sp, 0.5 + Math.random() * 1, q, (0.3 + k * 0.5) * q, (0.04 + k * k * 0.25) * q, big ? 300 + Math.random() * 180 : 150 + Math.random() * 90, 20, 300, 1.9); }
+          for (let i = 0; i < 130; i++) { const d = fxDir(0, sy * 0.55, 0.5, false), sp = 500 + Math.random() * 1900, k = Math.random(); smoke.emit(x + d.x * 120, y + d.y * 120, z + d.z * 80, d.x * sp, d.y * sp, d.z * sp + 150, 1.4 + Math.random() * 1, 1, 0.4 + k * 0.38, 0.07 + k * 0.16, 360 + Math.random() * 220, 1150 + Math.random() * 600, -90, 1.5); }
+          for (let i = 0; i < 95; i++) { const d = fxDir(0, sy * 0.6, 0.45, false), sp = 300 + Math.random() * 1300, dk = 0.11 + Math.random() * 0.09; smoke.emit(x + d.x * 160, y + d.y * 160, z + d.z * 100, d.x * sp, d.y * sp, d.z * sp + 120, 3.2 + Math.random() * 1.8, dk * 1.9, dk * 1.25, dk * 0.85, 380 + Math.random() * 180, 1300 + Math.random() * 600, -70, 1.25); }
           fxDebris(x, y, z, 22, 2400, 0x2a2622, true, 0.4);
           fxQuake(x, y, z, 1.4, 1.7, 8000);
         };

@@ -59,7 +59,7 @@
       if (P.absorb > 0) { const a = Math.min(P.absorb, d); P.absorb -= a; d -= a; }
       P.lastDmg = d + (P.lastDmg && P.hurtT > 10 ? P.lastDmg : 0);
       if (d <= 0 && kind !== 'void') { if (sx != null) knock(sx, sz); return; }
-      P.hp -= d; P.hurtT = 20; P.shake = 10; exhaust(CFG.EXH_HURT);
+      P.hp -= d; stat('dmgT', d); P.hurtT = 20; P.shake = 10; exhaust(CFG.EXH_HURT);
       if (sx != null) knock(sx, sz);
       snd(kind === 'fall' && d > 4 ? 'fall_big' : kind === 'fall' ? 'fall_small' : 'hurt');
       P.lastKind = kind;
@@ -76,7 +76,7 @@
       P.dead = true; P.hp = 0; deadT = 0; P.sprint = false; attackHeld = useHeld = false; eating = null; mine = null; drawing = null;
       const msg = (P.name || 'Player') + ' ' + (DEATHMSG[kind] || 'died');
       chatSys(msg); netSend({ t: 'chat', s: 1, m: msg });
-      P.deathMsg = msg; P.scoreAtDeath = P.score;
+      P.deathMsg = msg; P.scoreAtDeath = P.score; stat('deaths'); P.st.sinceDeath = 0;
       if (W.rules.keepInventory !== true && mode() !== 'creative') {
         for (const arr of [inv, armor, craft2, craft3]) for (let i = 0; i < arr.length; i++) if (arr[i]) { const s = arr[i]; arr[i] = null; spawnItem(s, P.x, P.y + 1, P.z, (RNG() - .5) * .5, .2 + RNG() * .2, (RNG() - .5) * .5, 40); }
         if (offhand) { spawnItem(offhand, P.x, P.y + 1, P.z); offhand = null; }
@@ -154,6 +154,7 @@
       if (!s) return;
       const t = TT[STT[s]];
       if (FLU[s] || (t.hard < 0 && !creative())) return;
+      if (byP) stat('mined');
       burst(x, y, z, s, 16);
       playBlockSnd(s, 'break', x, y, z);
       const tl = toolOf(held());
@@ -277,7 +278,7 @@
       const kbS = P.sprint && charge > .9;
       const kx = -Math.sin(P.yaw), kz = -Math.cos(P.yaw);
       if (e.kind === 'player') { netSendTo(e.pid, { t: 'hurt', d: dmg, sx: P.x, sz: P.z, k: 'player', by: P.name }); }
-      else hurtEnt(e, dmg, P, 'player', kx, kz);
+      else { stat('dmgD', dmg); e.pHit = tickN; hurtEnt(e, dmg, P, 'player', kx, kz); }
       if (kbS && e.kind === 'mob') { e.vx += kx * .5; e.vz += kz * .5; e.vy += .1; P.vx *= .6; P.vz *= .6; P.sprint = false; }
       if (crit) for (let i = 0; i < 12; i++) particle(e.x, e.y + e.h * .7, e.z, (RNG() - .5) * 4, RNG() * 3, (RNG() - .5) * 4, [255, 255, 230], .5, .06, 6, 1);
       if (it && it.dur) damageTool(it.tool && it.tool.k === 'sword' ? 1 : 2);

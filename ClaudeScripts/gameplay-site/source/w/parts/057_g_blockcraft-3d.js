@@ -539,7 +539,7 @@
     blk(w.n + '_sign', woodO(w, { props: [['rotation', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]]], shape: 'model', opq: false, solid: false, att: 0, hard: 1, tab: 'func', sign: 1, icon: 'i_' + w.n + '_sign', use: 'sign',
       model: s => { const q = Math.round(sv(s, 'rotation') / 4) & 3; return rotY([bx(0, 7, 7, 16, 15, 9, t), bx(7, 0, 7, 9, 7, 9, w.n === 'bamboo' ? 'bamboo_planks' : (w.nether ? 'stripped_' + w.n + '_stem' : w.n + '_log'))], q); }, sel: () => [cb(4, 0, 4, 12, 16, 12)] }));
     blk(w.n + '_wall_sign', woodO(w, { props: [P4], shape: 'model', opq: false, solid: false, att: 0, hard: 1, item: w.n + '_sign', name: title(w.n + '_sign'), sign: 1, use: 'sign', drop: w.n + '_sign',
-      model: s => rotY([bx(0, 4.5, 14, 16, 12.5, 16, t)], fq(s) + 2), sel: s => rotCB([cb(0, 4.5, 14, 16, 12.5, 16)], fq(s) + 2) }));
+      model: s => rotY([bx(0, 4.5, 14, 16, 12.5, 16, t)], fq(s)), sel: s => rotCB([cb(0, 4.5, 14, 16, 12.5, 16)], fq(s)) }));
     blk(w.n + '_hanging_sign', woodO(w, { props: [P4], shape: 'model', opq: false, solid: false, att: 0, hard: 1, tab: 'func', sign: 1, icon: 'i_' + w.n + '_hanging_sign', use: 'sign',
       model: s => rotY([bx(1, 0, 7, 15, 10, 9, 'stripped_' + (w.nether ? w.n + '_stem' : w.n === 'bamboo' ? 'bamboo_block' : w.n + '_log')), bx(3, 10, 8, 4, 16, 8, 'chain', { no: 'ewud' }), bx(12, 10, 8, 13, 16, 8, 'chain', { no: 'ewud' })], fq(s)), sel: () => [cb(1, 0, 7, 15, 10, 9)] }));
   };
@@ -4005,14 +4005,13 @@
     shGr.addColorStop(0, 'rgba(0,0,0,.5)'); shGr.addColorStop(.6, 'rgba(0,0,0,.3)'); shGr.addColorStop(1, 'rgba(0,0,0,0)'); shg.fillStyle = shGr; shg.fillRect(0, 0, 32, 32);
     const shGeo = keep(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2)), shMat = keep(new THREE.MeshBasicMaterial({ map: tex(shC), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, toneMapped: false }));
     function nameTag(name) {
-      const c = cv(256, 40), x = c.getContext('2d');
-      x.font = 'bold 26px monospace';
-      const w = Math.min(250, x.measureText(name).width + 16);
-      x.fillStyle = 'rgba(0,0,0,.35)'; x.fillRect((256 - w) / 2, 4, w, 32);
-      x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(name, 128, 21);
-      const t = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearFilter;
+      name = String(name).slice(0, 32);
+      const w = tw(name) + 2, K = 4, c = cv(w * K, 10 * K), x = c.getContext('2d'); let px = 1;
+      x.imageSmoothingEnabled = false; x.fillStyle = 'rgba(0,0,0,.25)'; x.fillRect(0, 0, c.width, c.height);
+      for (const ch of name) { const i = ch.charCodeAt(0) - 32; if (i < 0 || i >= 95) { px += 4; continue; } x.drawImage(fontC, (i & 15) * 8, (i >> 4) * 9, 8, 8, px * K, K, 8 * K, 8 * K); px += fontW[i] + 1; }
+      const t = new THREE.CanvasTexture(c); t.minFilter = t.magFilter = THREE.NearestFilter; t.generateMipmaps = false;
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true }));
-      s.scale.set(1.6, .25, 1); s.renderOrder = 5;
+      s.scale.set(w * .025, .25, 1); s.renderOrder = 5;
       return s;
     }
     const WOOLW = { white: .818, black: .05, gray: .05, light_gray: .05, brown: .03, pink: .002 };
@@ -4269,6 +4268,7 @@
       if (o.hp <= 0) { o.dead = 1; snd(T.snd + '_death', o); }
     }
     function killMob(e) {
+      if (e.pHit && tickN - e.pHit < 200) { stat('kills'); stat('k_' + e.type); }
       for (let i = 0; i < 14; i++) particle(e.x + (RNG() - .5) * e.w, e.y + RNG() * e.h, e.z + (RNG() - .5) * e.w, (RNG() - .5) * 1.2, RNG() * 1.5, (RNG() - .5) * 1.2, [230, 230, 230], .6 + RNG() * .5, .1 + RNG() * .1, -1, 1);
       const T = MT[e.type], cooked = e.fire > 0, r = n => ri(n + 1), D = [];
       if (!e.baby) {
@@ -4541,7 +4541,7 @@
       if (P.absorb > 0) { const a = Math.min(P.absorb, d); P.absorb -= a; d -= a; }
       P.lastDmg = d + (P.lastDmg && P.hurtT > 10 ? P.lastDmg : 0);
       if (d <= 0 && kind !== 'void') { if (sx != null) knock(sx, sz); return; }
-      P.hp -= d; P.hurtT = 20; P.shake = 10; exhaust(CFG.EXH_HURT);
+      P.hp -= d; stat('dmgT', d); P.hurtT = 20; P.shake = 10; exhaust(CFG.EXH_HURT);
       if (sx != null) knock(sx, sz);
       snd(kind === 'fall' && d > 4 ? 'fall_big' : kind === 'fall' ? 'fall_small' : 'hurt');
       P.lastKind = kind;
@@ -4558,7 +4558,7 @@
       P.dead = true; P.hp = 0; deadT = 0; P.sprint = false; attackHeld = useHeld = false; eating = null; mine = null; drawing = null;
       const msg = (P.name || 'Player') + ' ' + (DEATHMSG[kind] || 'died');
       chatSys(msg); netSend({ t: 'chat', s: 1, m: msg });
-      P.deathMsg = msg; P.scoreAtDeath = P.score;
+      P.deathMsg = msg; P.scoreAtDeath = P.score; stat('deaths'); P.st.sinceDeath = 0;
       if (W.rules.keepInventory !== true && mode() !== 'creative') {
         for (const arr of [inv, armor, craft2, craft3]) for (let i = 0; i < arr.length; i++) if (arr[i]) { const s = arr[i]; arr[i] = null; spawnItem(s, P.x, P.y + 1, P.z, (RNG() - .5) * .5, .2 + RNG() * .2, (RNG() - .5) * .5, 40); }
         if (offhand) { spawnItem(offhand, P.x, P.y + 1, P.z); offhand = null; }
@@ -4636,6 +4636,7 @@
       if (!s) return;
       const t = TT[STT[s]];
       if (FLU[s] || (t.hard < 0 && !creative())) return;
+      if (byP) stat('mined');
       burst(x, y, z, s, 16);
       playBlockSnd(s, 'break', x, y, z);
       const tl = toolOf(held());
@@ -4759,7 +4760,7 @@
       const kbS = P.sprint && charge > .9;
       const kx = -Math.sin(P.yaw), kz = -Math.cos(P.yaw);
       if (e.kind === 'player') { netSendTo(e.pid, { t: 'hurt', d: dmg, sx: P.x, sz: P.z, k: 'player', by: P.name }); }
-      else hurtEnt(e, dmg, P, 'player', kx, kz);
+      else { stat('dmgD', dmg); e.pHit = tickN; hurtEnt(e, dmg, P, 'player', kx, kz); }
       if (kbS && e.kind === 'mob') { e.vx += kx * .5; e.vz += kz * .5; e.vy += .1; P.vx *= .6; P.vz *= .6; P.sprint = false; }
       if (crit) for (let i = 0; i < 12; i++) particle(e.x, e.y + e.h * .7, e.z, (RNG() - .5) * 4, RNG() * 3, (RNG() - .5) * 4, [255, 255, 230], .5, .06, 6, 1);
       if (it && it.dur) damageTool(it.tool && it.tool.k === 'sword' ? 1 : 2);
@@ -5032,10 +5033,10 @@
       if (P.place) {
         P.place = false;
         let bx = Math.floor(P.x), bz = Math.floor(P.z);
-        const dryTop = (x, z) => { let y = H - 2; while (y > 1 && ((!SOL[getS(x, y, z)] && !FLU[getS(x, y, z)]) || LEAF[getS(x, y, z)] || TT[STT[getS(x, y, z)]].tags.has('log'))) y--; return FLU[getS(x, y, z)] ? -1 : y; };
-        if (!P.spawn && dryTop(bx, bz) < 0) { let found = false; for (let r = 1; r <= 24 && !found; r++) for (let k = 0; k < 8 * r && !found; k++) { const a = k / (8 * r) * Math.PI * 2, x = bx + Math.round(Math.cos(a) * r), z = bz + Math.round(Math.sin(a) * r); const c = colAt(x >> 4, z >> 4); if (!c || c.st < 1) continue; if (dryTop(x, z) > 0) { bx = x; bz = z; P.x = x + .5; P.z = z + .5; found = true; if (W && !W.remote && W.spawn && Math.abs(W.spawn[0] - .5) < 1e-6) W.spawn = [P.x, W.spawn[1], P.z]; } } }
-        let y = H - 2;
-        while (y > 1 && ((!SOL[getS(bx, y, bz)] && !FLU[getS(bx, y, bz)]) || LEAF[getS(bx, y, bz)] || TT[STT[getS(bx, y, bz)]].tags.has('log'))) y--;
+        const openTop = (x, z) => { let y = H - 2; while (y > 1 && !SOL[getS(x, y, z)] && !FLU[getS(x, y, z)]) y--; const b = getS(x, y, z); return FLU[b] || LEAF[b] || TT[STT[b]].tags.has('log') ? -1 : y; };
+        if (!P.spawn && openTop(bx, bz) < 0) { let found = false; for (let r = 1; r <= 24 && !found; r++) for (let k = 0; k < 8 * r && !found; k++) { const a = k / (8 * r) * Math.PI * 2, x = bx + Math.round(Math.cos(a) * r), z = bz + Math.round(Math.sin(a) * r); const c = colAt(x >> 4, z >> 4); if (!c || c.st < 1) continue; if (openTop(x, z) > 0) { bx = x; bz = z; P.x = x + .5; P.z = z + .5; found = true; if (W && !W.remote && W.spawn && Math.abs(W.spawn[0] - .5) < 1e-6) W.spawn = [P.x, W.spawn[1], P.z]; } } }
+        let y = openTop(bx, bz);
+        if (y < 0) { y = H - 2; while (y > 1 && !SOL[getS(bx, y, bz)] && !FLU[getS(bx, y, bz)]) y--; }
         if (P.y < y + 1 || !boxFree(P, 0, 0, 0)) P.y = y + 1;
         P.py = P.y;
       }
@@ -5072,7 +5073,7 @@
       else if (jump && P.onGround && P.jumpT === 0) {
         P.vy = CFG.JUMP * (isT(getS(Math.floor(P.x), Math.floor(P.y - .2), Math.floor(P.z)), 'honey_block') ? .5 : 1);
         if (P.sprint) { P.vx -= sy2 * CFG.SPRINT_JUMP; P.vz -= cy2 * CFG.SPRINT_JUMP; }
-        P.jumpT = CFG.JUMP_TICKS; exhaust(P.sprint ? CFG.EXH_SPRINT_JUMP : CFG.EXH_JUMP);
+        P.jumpT = CFG.JUMP_TICKS; stat('jump'); exhaust(P.sprint ? CFG.EXH_SPRINT_JUMP : CFG.EXH_JUMP);
         const fb = getS(Math.floor(P.x), Math.floor(P.y - .2), Math.floor(P.z)); if (isT(fb, 'farmland') && mode() !== 'creative' && RNG() < .3) setBlock(Math.floor(P.x), Math.floor(P.y - .2), Math.floor(P.z), S('dirt'));
       }
       if (!jump) P.jumpT = 0; else if (P.jumpT > 0) P.jumpT--;
@@ -5808,7 +5809,7 @@
       if (hud.width !== pw || hud.height !== ph) { hud.width = pw; hud.height = ph; }
       const auto = touch ? Math.max(1, Math.min(pw / 220, ph / 220, dpr * 2.6)) : Math.max(1, Math.min(Math.floor(pw / 320), Math.floor(ph / 240)));
       GK = SET.gui ? Math.min(SET.gui * (touch ? .9 : 1) * (dpr > 1.5 ? 1.5 : 1), auto * 1.5) : auto;
-      if (!touch) GK = Math.max(1, Math.round(GK)); else GK = Math.max(1, GK);
+      GK = Math.max(1, Math.round(GK)); if (pw / GK < 214 && GK > 1) GK--;
       GW = Math.floor(pw / GK); GH = Math.floor(ph / GK);
     }
     const toGui = e => { const r = hud.getBoundingClientRect(); return [(e.clientX - r.left) / (r.width || 1) * GW, (e.clientY - r.top) / (r.height || 1) * GH]; };
@@ -5840,26 +5841,79 @@
     const flame = lit => { const c = cv(14, 14), x = c.getContext('2d'); for (let y = 0; y < 14; y++) for (let i = 0; i < 14; i++) { const hw = 6.5 * Math.sqrt((y + 1) / 14) * (y > 10 ? (14 - y) / 4 : 1) + Math.sin(y * 1.7) * .6, d = Math.abs(i - 6.5); if (d < hw) { x.fillStyle = lit ? (d < hw * .4 && y > 6 ? '#fff6b0' : d < hw * .72 ? '#ffbe20' : '#e05a10') : (d < hw * .7 ? '#7a7a7a' : '#646464'); x.fillRect(i, y, 1, 1); } } return c; };
     const arrowI = col => { const c = cv(24, 17), x = c.getContext('2d'); x.fillStyle = col; for (let y = 0; y < 17; y++) for (let i = 0; i < 24; i++) if ((i < 15 && y >= 6 && y <= 10) || (i >= 14 && Math.abs(y - 8) <= 22 - i)) x.fillRect(i, y, 1, 1); return c; };
     I.flL = flame(1); I.flU = flame(0); I.arB = arrowI('#8b8b8b'); I.arF = arrowI('#ffffff');
-    const BT = [[111, 111, 111, 168, 168, 168, 84, 84, 84], [118, 128, 186, 188, 198, 255, 82, 92, 150], [46, 46, 46, 62, 62, 62, 32, 32, 32]].map(p => {
+    const BT = [[111, 111, 111, 170, 170, 170, 86, 86, 86, 0, 0, 0], [111, 111, 111, 170, 170, 170, 86, 86, 86, 255, 255, 255], [44, 44, 44, 44, 44, 44, 44, 44, 44, 0, 0, 0]].map(p => {
       const c = cv(200, 20), x = c.getContext('2d'), im = x.createImageData(200, 20), R = rng(5);
-      for (let y = 0; y < 20; y++) for (let i = 0; i < 200; i++) { const o = (y * 200 + i) * 4, edge = y === 0 || y === 19 || i === 0 || i === 199, hi = y === 1 || i === 1, lo = y >= 17 || i === 198, n = .93 + R() * .14; const c3 = edge ? [0, 0, 0] : hi ? p.slice(3, 6) : lo ? p.slice(6, 9) : p.slice(0, 3).map(v => v * n); im.data[o] = c3[0]; im.data[o + 1] = c3[1]; im.data[o + 2] = c3[2]; im.data[o + 3] = 255; }
+      for (let y = 0; y < 20; y++) for (let i = 0; i < 200; i++) { const o = (y * 200 + i) * 4, edge = y === 0 || y === 19 || i === 0 || i === 199, hi = y === 1 || i === 1, lo = y >= 17 || i === 198, n = .93 + R() * .14; const c3 = edge ? p.slice(9, 12) : hi ? p.slice(3, 6) : lo ? p.slice(6, 9) : p.slice(0, 3).map(v => v * n); im.data[o] = c3[0]; im.data[o + 1] = c3[1]; im.data[o + 2] = c3[2]; im.data[o + 3] = 255; }
       x.putImageData(im, 0, 0); return c;
     });
+    const HOTBAR = (() => {
+      const c = cv(182, 22), x = c.getContext('2d'), im = x.createImageData(182, 22), d = im.data, R = rng(9);
+      for (let j = 0; j < 22; j++) for (let i = 0; i < 182; i++) {
+        const o = (j * 182 + i) * 4, k = (i - 3) % 20, inX = i >= 3 && i <= 178 && k < 16, inY = j >= 3 && j <= 18, n = R() * 14 - 7 | 0;
+        let v = 93, a = 255, r0, g0, b0;
+        if (i === 0 || j === 0 || i === 181 || j === 21) v = 0;
+        else if (inX && inY) { a = 186; if (j === 3 || k === 0) r0 = g0 = b0 = 4; else { r0 = 39 + n; g0 = 37 + n; b0 = 5; } }
+        else if (j === 1 || i === 1) v = (i < 8 && j < 3 ? 190 : 147) + n;
+        else if (i === 180) v = 71;
+        else if (j === 19 || (inY || j === 20 ? (k === 16 || k === 18) : false) || i === 179) v = j === 20 ? 93 + n : 126 + n;
+        else v = 93 + n;
+        if (r0 === undefined) r0 = g0 = b0 = v;
+        d[o] = r0; d[o + 1] = g0; d[o + 2] = b0; d[o + 3] = a;
+      }
+      x.putImageData(im, 0, 0); return c;
+    })();
+    const HSEL = (() => {
+      const c = cv(24, 24), x = c.getContext('2d'), T = ['#d5d5d5', '#a1a1a1', '#5f5f5f'], B = ['#5f5f5f', '#a1a1a1', '#d5d5d5'];
+      x.fillStyle = '#000'; x.fillRect(0, 0, 24, 1); x.fillRect(0, 23, 24, 1); x.fillRect(0, 0, 1, 24); x.fillRect(23, 0, 1, 24);
+      for (let k = 0; k < 3; k++) { const o = k + 1, w = 22 - k * 2; x.fillStyle = B[k]; x.fillRect(o, o + w - 1, w, 1); x.fillRect(o + w - 1, o, 1, w); x.fillStyle = T[k]; x.fillRect(o, o, w - 1, 1); x.fillRect(o, o, 1, w - 1); }
+      x.fillStyle = '#fff'; x.fillRect(1, 1, 2, 1); x.fillRect(1, 1, 1, 2); return c;
+    })();
     const dirtBg = (() => { const c = cv(16, 16), x = c.getContext('2d'), d = get('dirt'), im = x.createImageData(16, 16); for (let i = 0; i < 1024; i += 4) { im.data[i] = d[i] * .25; im.data[i + 1] = d[i + 1] * .25; im.data[i + 2] = d[i + 2] * .25; im.data[i + 3] = 255; } x.putImageData(im, 0, 0); return c; })();
     const LOGO = (() => {
-      const word = 'MINECRAFT', S2 = 6, pts = new Set(); let x0 = 0;
-      for (const ch of word) { const i = ch.charCodeAt(0) - 32; for (let r = 0; r < 8; r++) { const v = parseInt(FONT[i * 8 + r], 32); for (let k = 0; k < 5; k++) if (v & (16 >> k)) pts.add((x0 + k) + ',' + r); } x0 += fontW[i] + 2; }
-      const c = cv(x0 * S2 + 10, 7 * S2 + 12), q = c.getContext('2d'), sd = get('stone'), dd = get('cobblestone');
-      const list = [...pts].map(p => p.split(',').map(Number));
-      for (const [px, py] of list) { q.fillStyle = '#121212'; q.fillRect(px * S2 + 5, py * S2 + 7, S2, S2); q.fillStyle = '#2e2e2e'; q.fillRect(px * S2 + 3, py * S2 + 5, S2, S2); q.fillStyle = '#4a4a4a'; q.fillRect(px * S2 + 1.5, py * S2 + 3, S2, S2); }
-      for (const [px, py] of list) for (let j = 0; j < S2; j++) for (let i = 0; i < S2; i++) {
-        const X = px * S2 + i, Y = py * S2 + j, src = (j + py) % 3 === 0 ? dd : sd, o = ((Y % 16) * 16 + (X % 16)) * 4;
-        let f = 1.15; if (j === 0 && !pts.has(px + ',' + (py - 1))) f = 1.65; else if (i === 0 && !pts.has((px - 1) + ',' + py)) f = 1.4; else if (j === S2 - 1 && !pts.has(px + ',' + (py + 1))) f = .75; else if (i === S2 - 1 && !pts.has((px + 1) + ',' + py)) f = .9;
-        q.fillStyle = `rgb(${Math.min(255, src[o] * f) | 0},${Math.min(255, src[o + 1] * f) | 0},${Math.min(255, src[o + 2] * f) | 0})`; q.fillRect(X, Y, 1, 1);
+      const U = 2, L = [['M', 16, [[0, 0, 4, 16], [12, 0, 4, 16], [[4, 0], [8, 5], [12, 0], [12, 6.5], [8, 11.5], [4, 6.5]]]], ['I', 4, [[0, 0, 4, 16]]], ['N', 14, [[0, 0, 4, 16], [10, 0, 4, 16], [[4, 0], [10, 9], [10, 16], [4, 7]]]], ['E', 12, [[0, 0, 4, 16], [0, 0, 12, 4], [0, 6, 10, 4], [0, 12, 12, 4]]], ['C', 12, [[0, 0, 4, 16], [0, 0, 12, 4], [0, 12, 12, 4]]], ['R', 13, [[0, 0, 4, 16], [0, 0, 13, 4], [9, 0, 4, 10], [0, 6, 13, 4], [[8, 11.5], [11, 11.5], [13, 13], [13, 16], [9, 16], [8, 14.5]]]], ['A', 15, [[0, 0, 4, 16], [11, 0, 4, 16], [0, 0, 15, 11.5]]], ['F', 12, [[0, 0, 4, 16], [0, 0, 12, 4], [0, 6, 10, 4]]], ['T', 12, [[0, 0, 12, 4], [4, 0, 4, 16]]]];
+      const GAP = 1, tot = L.reduce((a, l) => a + l[1], 0) + GAP * (L.length - 1), P0 = 2, EX = 4, w = Math.ceil(tot * U) + P0 * 2, h = 16 * U + P0 * 2 + EX;
+      const m = cv(w, h), q = m.getContext('2d'); q.fillStyle = '#fff'; let ox = 0, ax = 0;
+      for (const [ch, lw, parts] of L) {
+        for (const pt of parts) { q.beginPath(); if (typeof pt[0] === 'number') q.rect(P0 + (ox + pt[0]) * U, P0 + pt[1] * U, pt[2] * U, pt[3] * U); else pt.forEach(([x, y], i) => q[i ? 'lineTo' : 'moveTo'](P0 + (ox + x) * U, P0 + y * U)); q.fill(); }
+        if (ch === 'A') ax = P0 + ox * U;
+        ox += lw + GAP;
       }
-      return c;
+      const md = q.getImageData(0, 0, w, h).data, M = new Uint8Array(w * h);
+      for (let i = 0; i < w * h; i++) M[i] = md[i * 4 + 3] > 127 ? 1 : 0;
+      const FACE = ['.##..##.', '.##..##.', '...##...', '..####..', '..####..', '..#..#..'];
+      for (let j = 0; j < 9; j++) for (let i = 0; i < 12; i++) if (FACE[j / 1.5 | 0][i / 1.5 | 0] === '#') M[(P0 + 10 + j) * w + ax + 9 + i] = 0;
+      const c = cv(w, h), x = c.getContext('2d'), im = x.createImageData(w, h), d = im.data, R = rng(77), at = (i, j) => i >= 0 && j >= 0 && i < w && j < h && M[j * w + i];
+      const crack = new Uint8Array(w * h);
+      for (let k = 0; k < 70; k++) { let i = R() * w | 0, j = R() * h | 0; const hz = R() < .6, n = 3 + R() * 9 | 0; for (let t = 0; t < n; t++) { crack[j * w + i] = 1; if (hz) i++; else j++; if (R() < .15) { if (hz) j += R() < .5 ? 1 : -1; else i++; } if (i >= w || j >= h || j < 0) break; } }
+      const put = (o, r, g2, b) => { d[o] = r; d[o + 1] = g2; d[o + 2] = b; d[o + 3] = 255; };
+      for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+        const o = (j * w + i) * 4;
+        if (at(i, j)) {
+          const fy = (j - P0) / (16 * U), n = (R() - .5) * 6, top = !at(i, j - 1), lft = !at(i - 1, j), bot = !at(i, j + 1), rgt = !at(i + 1, j);
+          let v = 214 - fy * 34 + n;
+          if (top || lft) v = 236; else if (bot || rgt) v = 150 - fy * 10; else if (crack[j * w + i] && at(i, j - 2) && at(i, j + 2)) v -= 46; else if (j > 0 && crack[(j - 1) * w + i] && at(i, j - 3)) v += 14;
+          put(o, v + 6, v - 1, v - 5);
+        } else {
+          let e = 0; for (let k = 1; k <= EX; k++) if (at(i, j - k)) { e = k; break; }
+          if (e) { const v = 92 - e * 14; put(o, v, v, v + 2); }
+          else { let n2 = false; for (let dj = -1; dj <= 1 && !n2; dj++) for (let di = -1; di <= 1; di++) { if (at(i + di, j + dj)) { n2 = true; break; } let ee = false; for (let k = 1; k <= EX; k++) if (at(i + di, j + dj - k)) { ee = true; break; } if (ee) { n2 = true; break; } } if (n2) put(o, 0, 0, 0); }
+        }
+      }
+      x.putImageData(im, 0, 0); return c;
     })();
-    const EDITION = (() => { const s = 'JAVA EDITION', c = cv(tw(s) * 2 + 8, 22), q = c.getContext('2d'); q.fillStyle = '#5a3a1a'; q.fillRect(0, 2, c.width, 18); q.fillStyle = '#8a5a2a'; q.fillRect(1, 3, c.width - 2, 16); return c; })();
+    const EDITION = (() => {
+      const s = 'JAVA EDITION', S2 = 2, W0 = tw(s) * S2 + s.length * 2 + 8, H0 = 8 * S2 + 7, m = new Uint8Array(W0 * H0); let x0 = 3;
+      for (const ch of s) { const i = ch.charCodeAt(0) - 32; for (let r = 0; r < 8; r++) { const v = parseInt(FONT[i * 8 + r], 32); for (let k = 0; k < 5; k++) if (v & (16 >> k)) for (let a = 0; a <= S2 + 1; a++) for (let b = 0; b < S2; b++) m[(2 + r * S2 + b) * W0 + x0 + k * S2 + a] = 1; } x0 += (fontW[i] + 1) * S2 + 2; }
+      const c = cv(W0, H0), q = c.getContext('2d'), im = q.createImageData(W0, H0), d = im.data, at = (i, j) => i >= 0 && j >= 0 && i < W0 && j < H0 && m[j * W0 + i];
+      for (let j = 0; j < H0; j++) for (let i = 0; i < W0; i++) {
+        const o = (j * W0 + i) * 4; let v = -1;
+        if (at(i, j)) v = !at(i, j - 1) ? 250 : 222 - (j - 2) * 2.2;
+        else if (at(i, j - 1) || at(i, j - 2)) v = at(i, j - 1) ? 70 : 52;
+        else if (at(i - 1, j) || at(i + 1, j) || at(i, j + 1) || at(i - 1, j - 1) || at(i + 1, j - 1) || at(i - 1, j + 1) || at(i + 1, j + 1) || at(i, j - 3) || at(i - 1, j - 2) || at(i + 1, j - 2)) v = 0;
+        if (v >= 0) { d[o] = v; d[o + 1] = v - (v > 100 ? 4 : 0); d[o + 2] = v - (v > 100 ? 8 : 0); d[o + 3] = 255; }
+      }
+      q.putImageData(im, 0, 0); return c;
+    })();
     const SPLASHES = ['Also try Terraria!', 'Now with poplar trees!', 'Wilderness Bound!', '100% blocks!', 'Punch a tree!', 'Mind the creepers!', 'Diamonds below!', 'Pixel perfect!', 'Bring a pickaxe!', 'Infinite worlds!', 'Pigs included!', 'Sulfur caves?!', 'Cushions!', 'Cinnabar!', 'LAN party!', 'Made in a browser!', 'Water flows!', 'Sand falls!', 'Redstone!', 'Craft away!', 'Golden dandelion!', 'Over 1500 items!'];
     const SPLASH = SPLASHES[ri(SPLASHES.length)];
     let btns = [], slots = [], hovSlot = null, mx = -1, my = -1, pRect = [0, 0, 0, 0], fields = [], focusKey = null;
@@ -5871,12 +5925,13 @@
       g.drawImage(t, 0, 0, hw, 20, x, y, hw, h); g.drawImage(t, 200 - (w - hw), 0, w - hw, 20, x + hw, y, w - hw, h);
       const lb = Array.isArray(label) ? (tw(label[0]) > w - 8 ? label[1] : label[0]) : label;
       let lbs = lb; while (lbs.length > 3 && tw(lbs) > w - 6) lbs = lbs.slice(0, -1);
-      textC(lbs, x + w / 2, y + (h - 8) / 2, en ? (hov ? '#ffffa0' : '#e0e0e0') : '#a0a0a0');
+      textC(lbs, x + w / 2, y + (h - 8) / 2, en ? '#ffffff' : '#a0a0a0');
       btns.push({ x, y, w, h, fn, en, l: lb });
     }
     function rows(list, y, tot) { tot = Math.min(tot || 308, GW - 8); const n = list.length, bw = (tot - (n - 1) * 4) / n | 0, x0 = (GW - (bw * n + (n - 1) * 4)) / 2 | 0; list.forEach(([l, fn, en], i) => button(x0 + i * (bw + 4), y, bw, 20, l, fn, en !== false)); }
+    function sep(y, foot) { g.fillStyle = foot ? 'rgba(0,0,0,.65)' : 'rgba(255,255,255,.22)'; g.fillRect(0, y, GW, 1); g.fillStyle = foot ? 'rgba(255,255,255,.22)' : 'rgba(0,0,0,.65)'; g.fillRect(0, y + 1, GW, 1); }
     function ring(x, y, w, h, t, c) { g.fillStyle = c; g.fillRect(x, y, w, t); g.fillRect(x, y + h - t, w, t); g.fillRect(x, y, t, h); g.fillRect(x + w - t, y, t, h); }
-    function drawDirt(dark) { for (let y = 0; y < GH; y += 32) for (let x = 0; x < GW; x += 32) g.drawImage(dirtBg, x, y, 32, 32); if (dark) { g.fillStyle = 'rgba(0,0,0,' + dark + ')'; g.fillRect(0, 0, GW, GH); } }
+    function drawDirt(dark) { if (W && W.pano && panoReady) { g.fillStyle = 'rgba(0,0,0,' + (.32 + (dark || 0)) + ')'; g.fillRect(0, 0, GW, GH); return; } for (let y = 0; y < GH; y += 32) for (let x = 0; x < GW; x += 32) g.drawImage(dirtBg, x, y, 32, 32); if (dark) { g.fillStyle = 'rgba(0,0,0,' + dark + ')'; g.fillRect(0, 0, GW, GH); } }
     function shadeAll(a, b) { const gr = g.createLinearGradient(0, 0, 0, GH); gr.addColorStop(0, a); gr.addColorStop(1, b); g.fillStyle = gr; g.fillRect(0, 0, GW, GH); }
     function panel(x, y, w, h) {
       g.fillStyle = '#000'; g.fillRect(x + 2, y, w - 4, h); g.fillRect(x, y + 2, w, h - 4); g.fillRect(x + 1, y + 1, w - 2, h - 2);
@@ -5887,7 +5942,7 @@
     function frame(x, y, s) { g.fillStyle = '#373737'; g.fillRect(x - 1, y - 1, s, s); g.fillStyle = '#fff'; g.fillRect(x, y, s - 1, s - 1); g.fillStyle = '#8b8b8b'; g.fillRect(x, y, s - 2, s - 2); }
     function field(key, x, y, w, h, val, ph, onEnter, maxLen) {
       const focus = focusKey === key && document.activeElement === inp;
-      g.fillStyle = focus ? '#ffffff' : '#a0a0a0'; g.fillRect(x - 1, y - 1, w + 2, h + 2); g.fillStyle = '#000'; g.fillRect(x, y, w, h);
+      if (key !== 'chat') { g.fillStyle = focus ? '#ffffff' : '#a0a0a0'; g.fillRect(x - 1, y - 1, w + 2, h + 2); g.fillStyle = '#000'; g.fillRect(x, y, w, h); }
       let st = val; while (st && tw(st) > w - 10) st = st.slice(1);
       if (!val && ph && !focus) text(ph, x + 4, y + (h - 8) / 2, '#707070', false);
       text(st + (focus && (performance.now() / 300 | 0) % 2 ? '_' : ''), x + 4, y + (h - 8) / 2, '#e0e0e0');
@@ -5931,15 +5986,37 @@
     }
     let SHOWADV = false;
     function drawPlayerModel(x, y, sc) {
-      const r = (c, a, b, w, h) => { g.fillStyle = c; g.fillRect(x + a * sc, y + b * sc, w * sc, h * sc); };
-      const sk = '#c8946c', sh = '#00afaf', pa = '#3c3aa0', hr = '#462e18';
-      r(pa, -4, 12, 8, 12); r('#2a2870', -.5, 12, 1, 12); r('#464650', -4, 22, 8, 2);
-      r(sh, -4, 0, 8, 12); r(sk, -8, 0, 4, 12); r(sk, 4, 0, 4, 12); r(sh, -8, 0, 4, 4); r(sh, 4, 0, 4, 4);
-      r(sk, -4, -8, 8, 8); r(hr, -4, -8, 8, 2); r(hr, -4, -6, 1, 1); r(hr, 3, -6, 1, 1); r('#fff', -3, -4, 1, 1); r('#fff', 2, -4, 1, 1); r('#503ca0', -2, -4, 1, 1); r('#503ca0', 1, -4, 1, 1); r('#8a5a40', -1, -2, 2, 1);
-      if (armor[0]) r(matCol(armor[0]), -4.5, -8.5, 9, 3); if (armor[1]) { r(matCol(armor[1]), -4.5, -.5, 9, 10); r(matCol(armor[1]), -8.5, -.5, 4, 5); r(matCol(armor[1]), 4.5, -.5, 4, 5); } if (armor[2]) r(matCol(armor[2]), -4.5, 9, 9, 10); if (armor[3]) r(matCol(armor[3]), -4.5, 20, 9, 4);
+      const sk = playerSkinTex(P.name), img = (sk.t || sk).image, al = !!sk.alex, aw = al ? 3 : 4, fx = Math.atan((mx - x) / 40), fy = Math.atan((my - (y - 4 * sc)) / 40);
+      const by = fx * 20 * Math.PI / 180, hy = fx * 40 * Math.PI / 180, hp = -fy * 20 * Math.PI / 180, cy = y + 24 * sc;
+      const BX = [[-4, 0, -2, 4, 12, 4, 0, 16, 0], [0, 0, -2, 4, 12, 4, 16, 48, 0], [-4, 12, -2, 8, 12, 4, 16, 16, 0], [-4 - aw, 12, -2, aw, 12, 4, 40, 16, 0], [4, 12, -2, aw, 12, 4, 32, 48, 0], [-4, 24, -4, 8, 8, 8, 0, 0, 1], [-4, 0, -2, 4, 12, 4, 0, 32, 0, .25], [0, 0, -2, 4, 12, 4, 0, 48, 0, .25], [-4, 12, -2, 8, 12, 4, 16, 32, 0, .25], [-4 - aw, 12, -2, aw, 12, 4, 40, 32, 0, .25], [4, 12, -2, aw, 12, 4, 48, 48, 0, .25], [-4, 24, -4, 8, 8, 8, 32, 0, 1, .5]];
+      const AC = [armor[0] && [[-4, 24, -4, 8, 8, 8, 1.1], matCol(armor[0])], armor[1] && [[-4, 12, -2, 8, 12, 4, 1], matCol(armor[1])], armor[1] && [[-4 - aw, 18, -2, aw, 6, 4, 1], matCol(armor[1])], armor[1] && [[4, 18, -2, aw, 6, 4, 1], matCol(armor[1])], armor[2] && [[-4, 3, -2, 8, 10, 4, .6], matCol(armor[2])], armor[3] && [[-4, 0, -2, 8, 4, 4, .9], matCol(armor[3])]].filter(Boolean);
+      const tf = (px, py, pz, head) => { let X = px, Y = py, Z = pz; if (head) { const yy = Y - 24, c1 = Math.cos(hp), s1 = Math.sin(hp); Y = 24 + yy * c1 + Z * s1; Z = -yy * s1 + Z * c1; } const a = head ? hy : by, c = Math.cos(a), s2 = Math.sin(a); return [X * c + Z * s2, Y, -X * s2 + Z * c]; };
+      const F = [];
+      const addBox = (x0, y0, z0, w, h, d, head, inf, tex2) => {
+        x0 -= inf; y0 -= inf; z0 -= inf; const x1 = x0 + w + inf * 2, y1 = y0 + h + inf * 2, z1 = z0 + d + inf * 2;
+        const fs = [['f', [x0, y1, z1], [x1 - x0, 0, 0], [0, y0 - y1, 0], [0, 0, 1], 1], ['b', [x1, y1, z0], [x0 - x1, 0, 0], [0, y0 - y1, 0], [0, 0, -1], .7], ['r', [x0, y1, z0], [0, 0, z1 - z0], [0, y0 - y1, 0], [-1, 0, 0], .8], ['l', [x1, y1, z1], [0, 0, z0 - z1], [0, y0 - y1, 0], [1, 0, 0], .8], ['t', [x0, y1, z0], [x1 - x0, 0, 0], [0, 0, z1 - z0], [0, 1, 0], 1.05]];
+        for (const [k, o, e1, e2, n, br] of fs) {
+          const nn = tf(n[0], n[1] + (head ? 24 : 0), n[2], head), n0 = tf(0, head ? 24 : 0, 0, head);
+          if (nn[2] - n0[2] <= .02) continue;
+          const P0 = tf(o[0], o[1], o[2], head), P1 = tf(o[0] + e1[0], o[1] + e1[1], o[2] + e1[2], head), P2 = tf(o[0] + e2[0], o[1] + e2[1], o[2] + e2[2], head);
+          F.push({ k, P0, P1, P2, br, z: (P1[2] + P2[2]) / 2 + (inf ? .01 : 0), tex2 });
+        }
+      };
+      for (const [x0, y0, z0, w, h, d, u, v, head, inf] of BX) addBox(x0, y0, z0, w, h, d, head, inf || 0, { u, v, w, h, d, ov: !!inf });
+      for (const [[x0, y0, z0, w, h, d, inf], col] of AC) addBox(x0, y0, z0, w, h, d, y0 >= 24, inf, { col });
+      F.sort((a, b) => a.z - b.z);
+      for (const f of F) {
+        const { P0, P1, P2, k, br, tex2: T } = f, sx = q => x + q[0] * sc, sy = q => cy - q[1] * sc;
+        let tu, tv, tw2, th2;
+        if (T.col) { tw2 = th2 = 1; } else { const { u, v, w, h, d } = T; [tu, tv, tw2, th2] = k === 'f' ? [u + d, v + d, w, h] : k === 'b' ? [u + 2 * d + w, v + d, w, h] : k === 'r' ? [u, v + d, d, h] : k === 'l' ? [u + d + w, v + d, d, h] : [u + d, v, w, d]; }
+        g.save(); g.transform((sx(P1) - sx(P0)) / tw2, (sy(P1) - sy(P0)) / tw2, (sx(P2) - sx(P0)) / th2, (sy(P2) - sy(P0)) / th2, sx(P0), sy(P0));
+        if (T.col) { g.fillStyle = T.col; g.fillRect(0, 0, 1, 1); if (br < 1) { g.fillStyle = 'rgba(0,0,0,' + (1 - br) + ')'; g.fillRect(0, 0, 1, 1); } }
+        else { g.drawImage(img, tu, tv, tw2, th2, 0, 0, tw2, th2); if (br < 1 && !T.ov) { g.fillStyle = 'rgba(0,0,0,' + (1 - br) + ')'; g.fillRect(0, 0, tw2, th2); } }
+        g.restore();
+      }
     }
     const matCol = s => { const m = IT[s.id].armor && IT[s.id].armor.mat; return m === 'leather' ? '#a0623a' : m === 'golden' ? '#f0d030' : m === 'diamond' ? '#33d8d0' : m === 'netherite' ? '#4f474f' : m === 'copper' ? '#c96a44' : m === 'turtle' ? '#3a8a3a' : '#c8c8c8'; };
-    let showF3 = false, fps = 60, chatOpen = false, chatLog = [], chatHist = [], chatHi = -1, titleMsg = null;
+    let showF3 = false, F3G = null, fT = 0, fps = 60, chatOpen = false, chatLog = [], chatHist = [], chatHi = -1, titleMsg = null;
     function chatSys(m, col) { chatLog.push({ m: String(m), c: col || '#ffffff', t: performance.now() }); if (chatLog.length > 100) chatLog.shift(); }
     function drawChat(now) {
       const max = chatOpen ? 20 : 10, base = GH - (touch ? 70 : 48), w = Math.min(320, GW - 8);
@@ -5955,6 +6032,7 @@
     }
     function drawHUD(now) {
       const md = mode();
+      if (md !== 'spectator' && !P.dead) { const hb = getS(Math.floor(P.x), Math.floor(P.y + P.eye), Math.floor(P.z)); if (OPQ[hb] && SOL[hb] === 1) { g.fillStyle = 'rgba(10,10,10,.93)'; g.fillRect(0, 0, GW, GH); } }
       if (P.eyeW) { g.fillStyle = 'rgba(20,40,150,.18)'; g.fillRect(0, 0, GW, GH); }
       if (P.eyeL) { g.fillStyle = 'rgba(220,80,10,.75)'; g.fillRect(0, 0, GW, GH); }
       if (P.fire > 0 && md !== 'creative' && md !== 'spectator') { const t = now / 80; for (let i = 0; i < 6; i++) { g.fillStyle = `rgba(255,${120 + (i * 20)},20,${.25})`; const fx = (i * 73 % GW), fh = 30 + Math.sin(t + i) * 10; g.fillRect(i < 3 ? 0 : GW - 60, GH - fh - i * 6, 60, fh); } }
@@ -5967,13 +6045,10 @@
         if (cdk < 1) { g.fillStyle = '#444'; g.fillRect(cx - 8, cy + 9, 16, 2); g.fillStyle = '#ddd'; g.fillRect(cx - 8, cy + 9, Math.round(16 * cdk), 2); }
       }
       const hx = (GW - 182) >> 1, hy = GH - 22;
-      g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(hx, hy, 182, 22);
-      g.fillStyle = 'rgba(130,130,130,.95)'; g.fillRect(hx, hy, 182, 1); g.fillRect(hx, hy + 21, 182, 1); g.fillRect(hx, hy, 1, 22); g.fillRect(hx + 181, hy, 1, 22);
-      for (let i = 1; i < 9; i++) g.fillRect(hx + i * 20 + 1, hy + 1, 1, 20);
-      const sx = hx - 1 + sel * 20;
-      ring(sx, hy - 1, 24, 24, 1, '#000'); ring(sx + 1, hy, 22, 22, 2, '#e8e8e8'); ring(sx + 3, hy + 2, 18, 18, 1, '#000');
+      g.drawImage(HOTBAR, hx, hy);
+      g.drawImage(HSEL, hx - 1 + sel * 20, hy - 1);
       for (let i = 0; i < 9; i++) drawItem(inv[i], hx + 3 + i * 20, hy + 3);
-      if (offhand) { g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(hx - 29, hy, 22, 22); ring(hx - 29, hy, 22, 22, 1, '#828282'); drawItem(offhand, hx - 26, hy + 3); }
+      if (offhand) { g.drawImage(HOTBAR, 0, 0, 20, 22, hx - 29, hy, 20, 22); g.drawImage(HOTBAR, 180, 0, 2, 22, hx - 9, hy, 2, 22); drawItem(offhand, hx - 26, hy + 3); }
       if (md === 'survival' || md === 'adventure') {
         const y0 = GH - 39, hc = W.hardcore, pois = P.effects.poison > 0, hung = P.effects.hunger > 0;
         const hpMax = 20, rowsH = 1;
@@ -6006,9 +6081,14 @@
         const lx = -Math.sin(P.yaw), lz = -Math.cos(P.yaw), L = getL(Math.floor(P.x), Math.floor(P.y), Math.floor(P.z));
         const face = Math.abs(lx) > Math.abs(lz) ? (lx > 0 ? 'east (Towards positive X)' : 'west (Towards negative X)') : (lz > 0 ? 'south (Towards positive Z)' : 'north (Towards negative Z)');
         const B2 = W.gen.BIO[bio(Math.floor(P.x), Math.floor(P.z))] || {};
-        const lines = ['Minecraft 26.3 (' + fps + ' fps, ' + W.cols.size + ' chunks)', 'XYZ: ' + P.x.toFixed(3) + ' / ' + (P.y - CFG.YOFF).toFixed(5) + ' / ' + P.z.toFixed(3), 'Block: ' + Math.floor(P.x) + ' ' + (Math.floor(P.y) - CFG.YOFF) + ' ' + Math.floor(P.z), 'Chunk: ' + (Math.floor(P.x) & 15) + ' ' + (Math.floor(P.y) & 15) + ' ' + (Math.floor(P.z) & 15) + ' in ' + (Math.floor(P.x) >> 4) + ' ' + (Math.floor(P.y) >> 4) + ' ' + (Math.floor(P.z) >> 4), 'Facing: ' + face, 'Light: ' + (L >> 4) + ' sky, ' + (L & 15) + ' block', 'Biome: minecraft:' + (B2.n || '').toLowerCase().replace(/ /g, '_'), 'Day ' + Math.floor(W.time / CFG.DAY) + ', time ' + Math.floor(W.time % CFG.DAY), 'Entities: ' + ENTS.length, 'Seed: ' + W.seed, NET.role ? 'Multiplayer: ' + NET.role + ' (' + (playersList().length) + ' players' + (NET.role === 'guest' ? ', ping ' + (api.net.rtt || 0) + ' ms' : '') + ')' : ''];
-        if (HIT.b) { const s = getS(HIT.x, HIT.y, HIT.z), t = TT[STT[s]]; lines.push('', 'Targeted Block: ' + HIT.x + ', ' + (HIT.y - CFG.YOFF) + ', ' + HIT.z, 'minecraft:' + t.id); for (const [k, vals] of t.props) lines.push(k + ': ' + vals[sv(s, k)]); }
-        lines.forEach((l, i) => { if (!l) return; g.fillStyle = 'rgba(80,80,80,.5)'; g.fillRect(1, 1 + i * 9, tw(l) + 2, 9); text(l, 2, 2 + i * 9, '#e0e0e0', false); });
+        const bx = Math.floor(P.x), by = Math.floor(P.y), bz = Math.floor(P.z), yd = ((180 - P.yaw * 180 / Math.PI) % 360 + 540) % 360 - 180, md2 = performance.memory;
+        if (!F3G) { F3G = ['WebGL', 'WebGL']; try { const gl2 = renderer.getContext(), ex = gl2.getExtension('WEBGL_debug_renderer_info'); F3G = [ex ? gl2.getParameter(ex.UNMASKED_VENDOR_WEBGL) : gl2.getParameter(gl2.VENDOR), ex ? gl2.getParameter(ex.UNMASKED_RENDERER_WEBGL) : gl2.getParameter(gl2.RENDERER), gl2.getParameter(gl2.VERSION)]; const m = /ANGLE \(([^,]+),\s*(.+?)(?:\s*\(0x[0-9a-f]+\))?\s*(?:Direct3D|OpenGL|Vulkan|Metal|,)/i.exec(F3G[1]); if (m) { F3G[0] = m[1]; F3G[1] = m[2]; } F3G = F3G.map(v => String(v).slice(0, 48)); } catch (e) { } }
+        const lines = ['Minecraft 26.3 (26.3/' + (NET.role ? 'multiplayer' : 'vanilla') + ')', fps + ' fps T: ' + (SET.fps || 'inf') + ' vsync ' + (SET.fancy ? 'fancy' : 'fast') + (SET.clouds ? '-clouds' : '') + ' B: 2', (NET.role === 'guest' ? 'Remote server @ ' + (api.net.rtt || 0) + ' ms ping' : 'Integrated server @ ' + fT.toFixed(1) + '/50.0 ms') + ', ' + (NET.role ? playersList().length + ' players' : '20 tps'), 'C: ' + W.cols.size + ' D: ' + SET.rd + ', pC: 000, pU: 00', 'E: ' + ENTS.length + '/' + ENTS.length + ', P: ' + (ENTS.filter(e => e.kind === 'mob').length), 'minecraft:overworld FC: 0', '', 'XYZ: ' + P.x.toFixed(3) + ' / ' + (P.y - CFG.YOFF).toFixed(5) + ' / ' + P.z.toFixed(3), 'Block: ' + bx + ' ' + (by - CFG.YOFF) + ' ' + bz + ' [' + (bx & 15) + ' ' + (by & 15) + ' ' + (bz & 15) + ']', 'Chunk: ' + (bx >> 4) + ' ' + ((by - CFG.YOFF) >> 4) + ' ' + (bz >> 4) + ' [' + ((bx >> 4) & 31) + ' ' + ((bz >> 4) & 31) + ' in r.' + (bx >> 9) + '.' + (bz >> 9) + '.mca]', 'Facing: ' + face + ' (' + yd.toFixed(1) + ' / ' + (-P.pitch * 180 / Math.PI).toFixed(1) + ')', 'Client Light: ' + Math.max(L >> 4, L & 15) + ' (' + (L >> 4) + ' sky, ' + (L & 15) + ' block)', 'Biome: minecraft:' + (B2.n || '').toLowerCase().replace(/ /g, '_'), 'Local Difficulty: ' + (W.diff * .75 + .75).toFixed(2) + ' // 0.00 (Day ' + Math.floor(W.time / CFG.DAY) + ')', '', 'For help: press F3 + Q'];
+        const right = ['Java: 21.0.8 64bit', md2 ? 'Mem: ' + Math.round(md2.usedJSHeapSize / md2.jsHeapSizeLimit * 100) + '% ' + Math.round(md2.usedJSHeapSize / 1048576) + '/' + Math.round(md2.jsHeapSizeLimit / 1048576) + 'MB' : 'Mem: n/a', md2 ? 'Allocated: ' + Math.round(md2.totalJSHeapSize / md2.jsHeapSizeLimit * 100) + '% ' + Math.round(md2.totalJSHeapSize / 1048576) + 'MB' : '', '', 'CPU: ' + (navigator.hardwareConcurrency || 1) + 'x', '', 'Display: ' + hud.width + 'x' + hud.height + ' (' + F3G[0] + ')', F3G[1], F3G[2] || ''];
+        if (HIT.b) { const s = getS(HIT.x, HIT.y, HIT.z), t = TT[STT[s]]; right.push('', 'Targeted Block: ' + HIT.x + ', ' + (HIT.y - CFG.YOFF) + ', ' + HIT.z, 'minecraft:' + t.id); for (const [k, vals] of t.props) right.push(k + ': ' + vals[sv(s, k)]); for (const tg of t.tags) right.push('#minecraft:' + tg); }
+        const bg = 'rgba(80,80,80,.565)';
+        lines.forEach((l, i) => { if (!l) return; g.fillStyle = bg; g.fillRect(1, 1 + i * 9, tw(l) + 2, 9); text(l, 2, 2 + i * 9, '#e0e0e0', false); });
+        right.forEach((l, i) => { if (!l) return; const w = tw(l); g.fillStyle = bg; g.fillRect(GW - w - 3, 1 + i * 9, w + 2, 9); text(l, GW - w - 2, 2 + i * 9, '#e0e0e0', false); });
       }
       if (keys.has('Tab') && NET.role && !gui) { const pl = api.net.players || []; const w = 160, x = (GW - w) / 2; g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(x, 10, w, 12 + pl.length * 10); pl.forEach((p, i) => { text(p.name + (p.host ? ' (host)' : ''), x + 4, 14 + i * 10, '#ffffff', false); if (p.ping) textR(p.ping + 'ms', x + w - 4, 14 + i * 10, '#80ff80', false); }); }
     }
@@ -6284,6 +6364,7 @@
       }
     }
     let TIPQ = null;
+    const EMPTYI = [['................', '................', '....########....', '...#........#...', '...#........#...', '...#........#...', '...#..####..#...', '...#.#....#.#...', '...###....###...'], ['..###......###..', '.#...######...#.', '.#............#.', '.##.#......#.##.', '..#.#......#.#..', '....#......#....', '....#......#....', '....#......#....', '....#......#....', '....#......#....', '....########....'], ['....########....', '....#......#....', '....#......#....', '....#..##..#....', '....#.#..#.#....', '....#.#..#.#....', '....#.#..#.#....', '....#.#..#.#....', '....#.#..#.#....', '....###..###....'], ['................', '................', '................', '................', '...###....###...', '...#.#....#.#...', '...#.#....#.#...', '..##.#....#.##..', '..#..#....#..#..', '..####....####..'], ['...##########...', '...#........#...', '...#........#...', '...#........#...', '...#........#...', '...#........#...', '....#......#....', '.....#....#.....', '......#..#......', '.......##.......']].map(r => { while (r.length < 14) r = r.length % 2 ? r.concat(['................']) : ['................'].concat(r); return tplC(r.concat(['................', '................']).slice(0, 16), ch => ch === '#' ? '#5c5c5c' : null); });
     function drawSlotBg(sl) { frame(sl.x, sl.y, 18); }
     function drawInv(now) {
       const [ox, oy, pw, ph] = layout();
@@ -6294,8 +6375,8 @@
       const T = (s, x, y) => text(s, ox + x, oy + y, '#404040', false);
       if (gui === 'inv') {
         T('Crafting', 97, 8);
-        g.fillStyle = '#000'; g.fillRect(ox + 25, oy + 7, 52, 72); g.fillStyle = '#2a2a2a'; g.fillRect(ox + 26, oy + 8, 50, 70);
-        drawPlayerModel(ox + 51, oy + 24, 1.7);
+        g.fillStyle = '#373737'; g.fillRect(ox + 25, oy + 7, 51, 1); g.fillRect(ox + 25, oy + 7, 1, 72); g.fillStyle = '#fff'; g.fillRect(ox + 26, oy + 78, 51, 1); g.fillRect(ox + 76, oy + 8, 1, 71); g.fillStyle = '#000'; g.fillRect(ox + 26, oy + 8, 50, 70);
+        g.save(); g.beginPath(); g.rect(ox + 26, oy + 8, 50, 70); g.clip(); drawPlayerModel(ox + 51, oy + 27, 1.75); g.restore();
         arrowGlyph(ox + 135, oy + 29, 0);
       } else if (gui === 'table') { T('Crafting', 28, 6); arrowGlyph(ox + 90, oy + 35, 0); }
       else if (gui === 'furnace' && guiBE) {
@@ -6327,17 +6408,17 @@
           const ty = oy + 18 + (mxs ? cScroll / mxs : 0) * 95;
           g.fillStyle = mxs ? '#c6c6c6' : '#9a9a9a'; g.fillRect(ox + 175, ty, 12, 15); g.fillStyle = '#fff'; g.fillRect(ox + 175, ty, 11, 1); g.fillRect(ox + 175, ty, 1, 14); g.fillStyle = '#555'; g.fillRect(ox + 176, ty + 14, 11, 1); g.fillRect(ox + 186, ty + 1, 1, 14);
         } else {
-          g.fillStyle = '#000'; g.fillRect(ox + 72, oy + 5, 34, 45); g.fillStyle = '#2a2a2a'; g.fillRect(ox + 73, oy + 6, 32, 43);
-          drawPlayerModel(ox + 89, oy + 16, 1);
+          g.fillStyle = '#000'; g.fillRect(ox + 73, oy + 6, 32, 43);
+          g.save(); g.beginPath(); g.rect(ox + 73, oy + 6, 32, 43); g.clip(); drawPlayerModel(ox + 89, oy + 18, 1); g.restore();
         }
       }
       for (const sl of slots) {
         if (sl.g === 'trash') { frame(sl.x, sl.y, 18); g.strokeStyle = '#a03030'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(sl.x + 3, sl.y + 3); g.lineTo(sl.x + 13, sl.y + 13); g.moveTo(sl.x + 13, sl.y + 3); g.lineTo(sl.x + 3, sl.y + 13); g.stroke(); continue; }
-        if (sl.g === 'out' || sl.g === 'scout' || sl.g === 'fout') { g.fillStyle = '#373737'; g.fillRect(sl.x - 5, sl.y - 5, 26, 26); g.fillStyle = '#fff'; g.fillRect(sl.x - 4, sl.y - 4, 25, 25); g.fillStyle = '#8b8b8b'; g.fillRect(sl.x - 4, sl.y - 4, 24, 24); }
+        if (sl.g === 'out' && gui === 'inv') drawSlotBg(sl);
+        else if (sl.g === 'out' || sl.g === 'scout' || sl.g === 'fout') { g.fillStyle = '#373737'; g.fillRect(sl.x - 5, sl.y - 5, 26, 26); g.fillStyle = '#fff'; g.fillRect(sl.x - 4, sl.y - 4, 25, 25); g.fillStyle = '#8b8b8b'; g.fillRect(sl.x - 4, sl.y - 4, 24, 24); }
         else drawSlotBg(sl);
         const st = sl.get();
-        if (!st && sl.g === 'armor') { g.globalAlpha = .35; g.drawImage(I.aC, sl.x + 4, sl.y + 4); g.globalAlpha = 1; }
-        if (!st && sl.g === 'off') { g.fillStyle = 'rgba(60,60,60,.4)'; g.fillRect(sl.x + 4, sl.y + 2, 8, 11); }
+        if (!st && (sl.g === 'armor' || sl.g === 'off')) g.drawImage(EMPTYI[sl.g === 'off' ? 4 : sl.i & 3], sl.x, sl.y);
         drawItem(st, sl.x, sl.y);
         if (drag && drag.list && drag.list.includes(sl)) { g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(sl.x, sl.y, 16, 16); }
       }
@@ -6391,22 +6472,24 @@
       if (!keepMouse && scr === 'game') lockMouse();
     }
     let signDirty = true;
+    let signTC = null;
     function drawSign() {
       g.fillStyle = 'rgba(16,16,16,.6)'; g.fillRect(0, 0, GW, GH);
       textC('Edit Sign Message', GW / 2, 20, '#ffffff');
-      const w = 104, x = (GW - w) >> 1, y = 44;
-      const s = guiPos ? getS(guiPos[0], guiPos[1], guiPos[2]) : 0, t = TT[STT[s]], tl = t && TIL[t.base * 6 + 4] >= 0 ? TIL[t.base * 6 + 4] : 0, col = tileAvg(tl);
-      g.fillStyle = `rgb(${col[0] | 0},${col[1] | 0},${col[2] | 0})`; g.fillRect(x, y, w, 56); ring(x, y, w, 56, 1, 'rgba(0,0,0,.5)');
-      if (!/hanging/.test(t ? t.id : '')) { g.fillStyle = `rgb(${col[0] * .6 | 0},${col[1] * .6 | 0},${col[2] * .6 | 0})`; g.fillRect(x + w / 2 - 4, y + 56, 8, 40); }
+      const w = 96, x = (GW - w) >> 1, y = 44;
+      const s = guiPos ? getS(guiPos[0], guiPos[1], guiPos[2]) : 0, t = TT[STT[s]], id = t ? t.id : 'oak_sign', wn = id.replace(/_(wall_)?(hanging_)?sign$/, '').replace(/_wall$/, ''), pl = TN[wn + '_planks'] ? wn + '_planks' : 'oak_planks';
+      if (!signTC || signTC.n !== pl) { const d = get(pl), c = cv(16, 16), q = c.getContext('2d'), im = q.createImageData(16, 16); im.data.set(d); q.putImageData(im, 0, 0); signTC = { n: pl, c }; }
+      if (!/hanging/.test(id) && !/wall/.test(id)) { g.drawImage(signTC.c, 7, 0, 2, 7, x + w / 2 - 6, y + 48, 12, 42); g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(x + w / 2 - 6, y + 48, 12, 42); }
+      g.drawImage(signTC.c, 0, 0, 16, 8, x, y, w, 48); ring(x, y, w, 48, 1, 'rgba(0,0,0,.35)');
       if (focusKey === 'sign') signLines[signLine] = inp.value.slice(0, 15);
       for (let i = 0; i < 4; i++) {
         const v = signLines[i] + (i === signLine && (performance.now() / 300 | 0) % 2 ? '_' : '');
-        textC(v, GW / 2, y + 6 + i * 12, '#000000', false);
+        textC(v, GW / 2, y + 5 + i * 10, '#000000', false);
         if (inR(mx, my, { x, y: y + 4 + i * 12, w, h: 12 })) { }
       }
-      fields.push({ key: 'sign', x, y: y + 4 + signLine * 12, w, h: 12, maxLen: 15, onEnter: () => { signLine = (signLine + 1) % 4; focusField('sign', signLines[signLine], 15); } });
+      fields.push({ key: 'sign', x, y: y + 4 + signLine * 10, w, h: 10, maxLen: 15, onEnter: () => { signLine = (signLine + 1) % 4; focusField('sign', signLines[signLine], 15); } });
       button(GW / 2 - 100, GH - 40, 200, 20, 'Done', () => closeGui());
-      for (let i = 0; i < 4; i++) btns.push({ x, y: y + 4 + i * 12, w, h: 12, en: true, fn: () => { signLines[signLine] = inp.value.slice(0, 15); signLine = i; focusField('sign', signLines[i], 15); } });
+      for (let i = 0; i < 4; i++) btns.push({ x, y: y + 4 + i * 10, w, h: 10, en: true, fn: () => { signLines[signLine] = inp.value.slice(0, 15); signLine = i; focusField('sign', signLines[i], 15); } });
     }
     let worldsMeta = [], worldsLoaded = false, selWorld = -1, wScroll = 0, mpMode = null, loadMsg = '', loadP = 0, discMsg = '', confirmDel = null, optBack = 'title', ctrlWait = null, ctrlScroll = 0;
     let sliders = [], activeSlider = null;
@@ -6431,7 +6514,7 @@
       g.drawImage(BT[2], 0, 0, w >> 1, 20, x, y, w >> 1, h); g.drawImage(BT[2], 200 - (w - (w >> 1)), 0, w - (w >> 1), 20, x + (w >> 1), y, w - (w >> 1), h);
       const kx = x + Math.round(f * (w - 8)), hov = !touch && mx >= x && my >= y && mx < x + w && my < y + h, t = BT[hov || activeSlider && activeSlider.x === x && activeSlider.y === y ? 1 : 0];
       g.drawImage(t, 0, 0, 4, 20, kx, y, 4, h); g.drawImage(t, 196, 0, 4, 20, kx + 4, y, 4, h);
-      textC(label, x + w / 2, y + (h - 8) / 2, '#e0e0e0');
+      textC(label, x + w / 2, y + (h - 8) / 2, '#ffffff');
       sliders.push({ x, y, w, h, set });
     }
     function drawTitleBg() {
@@ -6439,35 +6522,31 @@
       else { const gr = g.createLinearGradient(0, 0, 0, GH); gr.addColorStop(0, 'rgba(0,0,0,.15)'); gr.addColorStop(1, 'rgba(0,0,0,.35)'); g.fillStyle = gr; g.fillRect(0, 0, GW, GH); }
     }
     function drawLogo(y) {
-      const lw = Math.min(GW - 20, 274), k = lw / LOGO.width, lh = LOGO.height * k, lx = (GW - lw) / 2;
+      const k = Math.min(1, (GW - 16) / LOGO.width), lw = LOGO.width * k, lh = LOGO.height * k, lx = (GW - lw) / 2 | 0;
       g.drawImage(LOGO, lx, y, lw, lh);
-      const ew = Math.min(lw * .45, 100), eh = ew * EDITION.height / EDITION.width;
-      g.drawImage(EDITION, (GW - ew) / 2, y + lh - 4, ew, eh);
-      textC('JAVA EDITION', GW / 2, y + lh - 4 + (eh - 8) / 2, '#f0d8a8', true);
-      return y + lh + eh;
+      const ew = EDITION.width * k, eh = EDITION.height * k;
+      g.drawImage(EDITION, (GW - ew) / 2 | 0, y + lh - 4 * k | 0, ew, eh);
+      return y + lh + eh - 4 * k;
     }
     function drawTitle(now) {
       drawTitleBg();
-      const by = Math.max(drawLogo(Math.max(8, GH / 4 - 50 | 0)) + 12, GH / 4 + 36 | 0);
-      g.save(); g.translate(GW / 2 + Math.min(130, GW / 2 - 40), Math.max(50, GH / 4 - 4)); g.rotate(-20 * Math.PI / 180);
-      const sc = 1.8 - Math.abs(Math.sin((now % 1000) / 1000 * Math.PI * 2)) * .1, sw2 = tw(SPLASH);
-      const k = Math.min(sc, (GW / 2 - 10) / Math.max(1, sw2)); g.scale(k, k); textC(SPLASH, 0, -4, '#ffff00'); g.restore();
-      const step = touch ? 28 : 24;
+      const ly = GH < 250 ? Math.max(6, GH / 4 - 40 | 0) : 30, by = Math.max(drawLogo(ly) + 10, GH / 4 + 48 | 0), step = touch ? 28 : 24;
+      g.save(); g.translate(GW / 2 + Math.min(112, GW / 2 - 30), ly + 36); g.rotate(-20 * Math.PI / 180);
+      const sc = (1.8 - Math.abs(Math.sin((now % 1000) / 1000 * Math.PI * 2)) * .1) * 100 / (tw(SPLASH) + 32);
+      g.scale(sc, sc); textC(SPLASH, 0, -8, '#ffff00'); g.restore();
       button(GW / 2 - 100, by, 200, 20, 'Singleplayer', () => { mpMode = null; goWorlds(); });
-      button(GW / 2 - 100, by + step, 200, 20, ['Multiplayer (LAN / Online)', 'Multiplayer'], () => { scr = 'mp'; FIELDV.uname = FIELDV.uname || (validName(loadProfile().username) ? loadProfile().username : ''); });
+      button(GW / 2 - 100, by + step, 200, 20, 'Multiplayer', () => { scr = 'mp'; FIELDV.uname = FIELDV.uname || (validName(loadProfile().username) ? loadProfile().username : ''); });
       button(GW / 2 - 100, by + step * 2 + 12, 98, 20, 'Options...', () => { optBack = 'title'; scr = 'options'; });
-      button(GW / 2 + 2, by + step * 2 + 12, 98, 20, 'Controls...', () => { optBack = 'title'; scr = 'controls'; });
-      const l1 = 'Minecraft Java Edition 26.3', l2 = 'Fan remake. Not an official Minecraft product.';
-      if (tw(l1) + tw(l2) + 12 < GW) { text(l1, 2, GH - 10, '#ffffff'); textR(l2, GW - 2, GH - 10, '#ffffff'); }
-      else { text(l1, 2, GH - 20, '#ffffff'); textR(tw(l2) < GW - 4 ? l2 : 'Not an official Minecraft product.', GW - 2, GH - 10, '#ffffff'); }
+      button(GW / 2 + 2, by + step * 2 + 12, 98, 20, 'Quit Game', () => { location.hash = '#/'; });
+      text('Minecraft 26.3', 2, GH - 10, '#ffffff');
     }
     function goWorlds() { scr = 'worlds'; selWorld = -1; wScroll = 0; worldsLoaded = false; listWorlds().then(l => { worldsMeta = l; worldsLoaded = true; if (l.length) selWorld = 0; }); }
     function drawWorlds() {
       drawDirt(0);
       textC(mpMode === 'host' ? 'Select World to Host' : 'Select World', GW / 2, 8, '#ffffff');
       const top = 24, bot = GH - (touch ? 64 : 56), rowH = 36, lw = Math.min(270, GW - 20), lx = (GW - lw) >> 1;
-      g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(0, top, GW, bot - top);
-      g.fillStyle = '#000'; g.fillRect(0, top, GW, 1); g.fillRect(0, bot - 1, GW, 1);
+      g.fillStyle = 'rgba(0,0,0,.45)'; g.fillRect(0, top, GW, bot - top);
+      sep(top - 2, false); sep(bot, true);
       const maxS = Math.max(0, worldsMeta.length * rowH - (bot - top - 8));
       wScroll = clamp(wScroll, 0, maxS);
       g.save(); g.beginPath(); g.rect(0, top, GW, bot - top); g.clip();
@@ -6497,13 +6576,14 @@
       button(GW / 2 + 2, y0 + step, qw, 20, 'Re-Create', () => { newCW(worldsMeta[selWorld]); scr = 'create'; }, has);
       button(GW / 2 + qw + 6, y0 + step, qw, 20, 'Back', () => { scr = mpMode ? 'mp' : 'title'; });
     }
-    function playSel() { const w = worldsMeta[selWorld]; if (!w) return; openWorld(w.id, mpMode === 'host'); }
+    function playSel() { const w = worldsMeta[selWorld]; if (!w) return; grab(); openWorld(w.id, mpMode === 'host'); }
     function drawDelete() {
       drawDirt(0);
       textC('Are you sure you want to delete this world?', GW / 2, GH / 2 - 40, '#ffffff');
       textC("'" + (confirmDel ? confirmDel.name : '') + "' will be lost forever! (A long time!)", GW / 2, GH / 2 - 26, '#a0a0a0');
-      button(GW / 2 - 154, GH / 2 + 10, 150, 20, 'Delete', () => { const w = confirmDel; confirmDel = null; deleteWorld(w.id).then(goWorlds); });
-      button(GW / 2 + 4, GH / 2 + 10, 150, 20, 'Cancel', () => { scr = 'worlds'; });
+      const dw = Math.min(150, (GW - 12) / 2 | 0);
+      button(GW / 2 - dw - 4, GH / 2 + 10, dw, 20, 'Delete', () => { const w = confirmDel; confirmDel = null; deleteWorld(w.id).then(goWorlds); });
+      button(GW / 2 + 4, GH / 2 + 10, dw, 20, 'Cancel', () => { scr = 'worlds'; });
     }
     function drawEdit() {
       drawDirt(0);
@@ -6540,8 +6620,9 @@
         RULES.forEach(([k, l], i) => { const col = two && i >= half ? 1 : 0, r = two ? i % half : i, bx2 = two ? GW / 2 - 214 + col * 218 : x0, by2 = y + r * (touch ? 26 : 22); if (by2 > GH - 60) return; button(bx2, by2, cw2, 20, l + ': ' + (CW.rules[k] ? 'ON' : 'OFF'), () => { CW.rules[k] = !CW.rules[k]; }); });
       }
       const yb = GH - (touch ? 30 : 26);
-      button(GW / 2 - 154, yb, 150, 20, 'Create New World', () => { CW.name = (FIELDV.wname || '').trim() || 'New World'; CW.seed = FIELDV.wseed || ''; createWorld(CW, mpMode === 'host'); });
-      button(GW / 2 + 4, yb, 150, 20, 'Cancel', () => { blurField(); goWorlds(); });
+      const cw3 = Math.min(150, (GW - 12) / 2 | 0);
+      button(GW / 2 - cw3 - 4, yb, cw3, 20, ['Create New World', 'Create'], () => { CW.name = (FIELDV.wname || '').trim() || 'New World'; CW.seed = FIELDV.wseed || ''; grab(); createWorld(CW, mpMode === 'host'); });
+      button(GW / 2 + 4, yb, cw3, 20, 'Cancel', () => { blurField(); goWorlds(); });
     }
     function drawMP() {
       drawDirt(0);
@@ -6618,15 +6699,17 @@
       button(GW / 2 - 100, GH / 2 + 20, 200, 20, 'Back to Title Screen', () => { scr = 'title'; });
     }
     function drawPause() {
-      g.fillStyle = 'rgba(16,16,16,.6)'; g.fillRect(0, 0, GW, GH);
-      textC('Game Menu', GW / 2, Math.max(10, GH / 4 - 32), '#ffffff');
-      const y = Math.max(26, GH / 4 - 16 | 0), step = touch ? 28 : 24;
-      button(GW / 2 - 102, y, 204, 20, 'Back to Game', () => closeGui());
-      button(GW / 2 - 102, y + step, 100, 20, 'Options...', () => { gui = 'options'; });
-      const host = NET.role === 'host', guest = NET.role === 'guest';
-      button(GW / 2 + 2, y + step, 100, 20, host ? ['Invite Players', 'Invite'] : 'Open to LAN', () => { openToLan(); }, !guest);
-      button(GW / 2 - 102, y + step * 2, 204, 20, 'Player List' + (NET.role ? ' (' + playersList().length + ')' : ''), () => { gui = 'plist'; }, !!NET.role);
-      button(GW / 2 - 102, y + step * 3 + 8, 204, 20, guest ? 'Disconnect' : 'Save and Quit to Title', () => { quitToTitle(); });
+      g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(0, 0, GW, GH);
+      const step = touch ? 28 : 24, host = NET.role === 'host', guest = NET.role === 'guest', n = NET.role ? 5 : 4, y = Math.max(22, Math.min(GH / 4 + 8 | 0, GH - n * step - 4));
+      textC('Game Menu', GW / 2, Math.max(8, Math.min(40, y - 26)), '#ffffff');
+      let r = y;
+      button(GW / 2 - 102, r, 204, 20, 'Back to Game', () => closeGui()); r += step;
+      button(GW / 2 - 102, r, 98, 20, 'Advancements', () => { gui = 'adv'; });
+      button(GW / 2 + 4, r, 98, 20, 'Statistics', () => { gui = 'stats'; statScroll = 0; }); r += step;
+      if (NET.role) { button(GW / 2 - 102, r, 204, 20, 'Player List (' + playersList().length + ')', () => { gui = 'plist'; }); r += step; }
+      button(GW / 2 - 102, r, 98, 20, 'Options...', () => { gui = 'options'; });
+      button(GW / 2 + 4, r, 98, 20, host ? ['Invite Players', 'Invite'] : 'Open to LAN', () => { openToLan(); }, !guest); r += step;
+      button(GW / 2 - 102, r, 204, 20, guest ? 'Disconnect' : 'Save and Quit to Title', () => { quitToTitle(); });
       if (NET.role) text('Party code: ' + (api.net.code || '-'), 4, GH - 12, '#a0a0a0');
     }
     function drawPList() {
@@ -6637,11 +6720,12 @@
       button(GW / 2 - 100, GH - 30, 200, 20, 'Done', () => { gui = 'pause'; });
     }
     function drawDead() {
-      g.fillStyle = 'rgba(120,0,0,.45)'; g.fillRect(0, 0, GW, GH);
-      textC(W.hardcore ? 'Game Over!' : 'You Died!', GW / 2, GH / 4 - 10, '#ffffff', true, 2);
-      if (P.deathMsg) textC(P.deathMsg, GW / 2, GH / 4 + 16, '#ffffff');
-      textC('Score: ', GW / 2 - tw(String(P.scoreAtDeath || 0)) / 2, GH / 4 + 30, '#ffffff'); text(String(P.scoreAtDeath || 0), GW / 2 + tw('Score: ') / 2 - tw(String(P.scoreAtDeath || 0)) / 2, GH / 4 + 30, '#ffff55');
-      const en = deadT > 20, y = GH / 4 + 56;
+      shadeAll('rgba(80,0,0,.376)', 'rgba(128,48,48,.627)');
+      const ty = Math.max(8, Math.min(60, GH / 4 - 10 | 0)), sc = String(P.scoreAtDeath || 0);
+      textC(W.hardcore ? 'Game Over!' : 'You Died!', GW / 2, ty, '#ffffff', true, 2);
+      if (P.deathMsg) textC(P.deathMsg, GW / 2, ty + 25, '#ffffff');
+      text('Score: ', GW / 2 - tw('Score: ' + sc) / 2, ty + 40, '#ffffff'); text(sc, GW / 2 - tw('Score: ' + sc) / 2 + tw('Score: '), ty + 40, '#ffff55');
+      const en = deadT > 20, y = Math.max(ty + 56, Math.min(GH / 4 + 72 | 0, GH - 50));
       if (W.hardcore) button(GW / 2 - 100, y, 200, 20, 'Spectate World', () => { respawn(); }, en);
       else button(GW / 2 - 100, y, 200, 20, 'Respawn', () => { respawn(); }, en);
       button(GW / 2 - 100, y + 24, 200, 20, NET.role === 'guest' ? 'Disconnect' : 'Title Screen', () => { quitToTitle(); }, en);
@@ -6665,17 +6749,137 @@
       else if (gui === 'options') drawOptions(true);
       else if (gui === 'controls') drawControls(true);
       else if (gui === 'plist') drawPList();
+      else if (gui === 'stats') drawStats();
+      else if (gui === 'adv') drawAdv();
       else if (gui === 'dead') drawDead();
       else if (gui === 'sign') drawSign();
       else if (INVG.has(gui)) drawInv(now);
     }
+    const ADV = [
+      ['root', 'Minecraft', 'The heart and story of the game', 'grass_block', 0, 1, null, () => has('crafting_table')],
+      ['stone', 'Stone Age', 'Mine Stone with your new Pickaxe', 'wooden_pickaxe', 1, 1, 'root', () => has('cobblestone') || has('cobbled_deepslate')],
+      ['upgrade', 'Getting an Upgrade', 'Construct a better Pickaxe', 'stone_pickaxe', 2, 1, 'stone', () => has('stone_pickaxe')],
+      ['iron', 'Acquire Hardware', 'Smelt an Iron Ingot', 'iron_ingot', 3, 1, 'upgrade', () => has('iron_ingot')],
+      ['suit', 'Suit Up', 'Protect yourself with a piece of iron armor', 'iron_chestplate', 4, 0, 'iron', () => armor.some(s => s && /^iron_/.test(IT[s.id].id))],
+      ['lava', 'Hot Stuff', 'Fill a Bucket with lava', 'lava_bucket', 4, 1, 'iron', () => has('lava_bucket')],
+      ['ironpick', 'Isn\'t It Iron Pick', 'Upgrade your Pickaxe', 'iron_pickaxe', 4, 2, 'iron', () => has('iron_pickaxe')],
+      ['obsidian', 'Ice Bucket Challenge', 'Obtain a block of Obsidian', 'obsidian', 5, 1, 'lava', () => has('obsidian')],
+      ['diamond', 'Diamonds!', 'Acquire diamonds', 'diamond', 5, 2, 'ironpick', () => has('diamond')],
+      ['diaarmor', 'Cover Me with Diamonds', 'Diamond armor saves lives', 'diamond_chestplate', 6, 2, 'diamond', () => armor.some(s => s && /^diamond_/.test(IT[s.id].id))]
+    ].filter(a => IN[a[3]]);
+    const has = n => { const t = IN[n]; if (!t) return false; const k = t.idx; return inv.some(s => s && s.id === k) || armor.some(s => s && s.id === k) || offhand && offhand.id === k || cursor && cursor.id === k; };
+    const stat = (k, n) => { if (!P.st) P.st = {}; P.st[k] = (P.st[k] || 0) + (n == null ? 1 : n); };
+    let toasts = [], statTab = 0, statScroll = 0, advHov = null;
+    function advTick() {
+      if (tickN % 20 || P.dead || mode() === 'spectator' || !W || W.pano) return;
+      if (!P.adv) P.adv = {};
+      for (const a of ADV) if (!P.adv[a[0]] && a[7]()) {
+        P.adv[a[0]] = 1; toasts.push({ a, t: performance.now() });
+        const m = P.name + ' has made the advancement [' + a[1] + ']';
+        chatSys(m); netSend({ t: 'chat', s: 1, m });
+      }
+    }
+    function drawToasts(now) {
+      if (!toasts.length) return;
+      let y = 0;
+      toasts = toasts.filter(o => now - o.t < 5600);
+      for (const o of toasts.slice(0, 5)) {
+        const age = now - o.t, k = age < 600 ? 1 - age / 600 : age > 5000 ? (age - 5000) / 600 : 0, x = GW - 160 + Math.round(160 * k * k);
+        g.fillStyle = '#000'; g.fillRect(x + 1, y, 158, 32); g.fillRect(x, y + 1, 160, 30);
+        g.fillStyle = '#555555'; g.fillRect(x + 1, y + 1, 158, 30);
+        g.fillStyle = '#212121'; g.fillRect(x + 3, y + 3, 154, 26);
+        drawItem({ id: IN[o.a[3]].idx, n: 1 }, x + 8, y + 8, true);
+        text('Advancement Made!', x + 30, y + 7, '#ffff00', false);
+        text(o.a[1], x + 30, y + 18, '#ffffff', false);
+        y += 32;
+      }
+    }
+    const fmtDist = cm => cm >= 100000 ? (cm / 100000).toFixed(2) + ' km' : cm >= 100 ? (cm / 100).toFixed(2) + ' m' : (cm | 0) + ' cm';
+    const fmtTime = t => { const s = t / 20; return s >= 86400 ? (s / 86400).toFixed(2) + ' d' : s >= 3600 ? (s / 3600).toFixed(2) + ' h' : s >= 60 ? (s / 60).toFixed(2) + ' m' : s.toFixed(2) + ' s'; };
+    function drawStats() {
+      const S2 = P.st || {}, top = 32, bot = GH - 56, rowH = 10, lw = Math.min(280, GW - 20), lx = (GW - lw) >> 1;
+      g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(0, 0, GW, GH);
+      textC('Statistics', GW / 2, 12, '#ffffff');
+      g.fillStyle = 'rgba(0,0,0,.45)'; g.fillRect(0, top, GW, bot - top); sep(top - 2, false); sep(bot, true);
+      let L;
+      if (statTab === 0) L = [['Damage Dealt', ((S2.dmgD || 0) / 1).toFixed(2)], ['Damage Taken', ((S2.dmgT || 0) / 1).toFixed(2)], ['Distance by Elytra', fmtDist(0)], ['Distance Fallen', fmtDist(S2.fallCm || 0)], ['Distance Flown', fmtDist(S2.flyCm || 0)], ['Distance Sprinted', fmtDist(S2.sprintCm || 0)], ['Distance Swum', fmtDist(S2.swimCm || 0)], ['Distance Walked', fmtDist(S2.walkCm || 0)], ['Items Dropped', S2.drop || 0], ['Jumps', S2.jump || 0], ['Blocks Mined', S2.mined || 0], ['Mob Kills', S2.kills || 0], ['Number of Deaths', S2.deaths || 0], ['Time Since Last Death', fmtTime(S2.sinceDeath || 0)], ['Time Played', fmtTime(S2.play || 0)]];
+      else { L = Object.keys(S2).filter(k => k.slice(0, 2) === 'k_').sort().map(k => ['You killed ' + S2[k] + ' ' + title(k.slice(2)) + (S2[k] === 1 ? '' : 's'), '']); if (!L.length) L = [['Nothing to show here', '']]; }
+      const maxS = Math.max(0, L.length * rowH - (bot - top - 8)); statScroll = clamp(statScroll, 0, maxS);
+      g.save(); g.beginPath(); g.rect(0, top, GW, bot - top); g.clip();
+      L.forEach(([k, v], i) => { const y = top + 4 + i * rowH - statScroll, c = i % 2 ? '#a0a0a0' : '#ffffff'; text(k, lx, y, c); if (v !== '') textR(String(v), lx + lw, y, c); });
+      g.restore();
+      if (maxS > 0) { const sh = Math.max(16, (bot - top) * (bot - top) / (L.length * rowH + 8)), sy = top + (bot - top - sh) * statScroll / maxS; g.fillStyle = '#000'; g.fillRect(lx + lw + 6, top, 6, bot - top); g.fillStyle = '#808080'; g.fillRect(lx + lw + 6, sy, 6, sh); g.fillStyle = '#c0c0c0'; g.fillRect(lx + lw + 6, sy, 5, sh - 1); }
+      const bw = Math.min(120, (GW - 24) / 2 | 0);
+      button(GW / 2 - bw - 2, GH - 50, bw, 20, 'General', () => { statTab = 0; statScroll = 0; }, statTab !== 0);
+      button(GW / 2 + 2, GH - 50, bw, 20, 'Mobs', () => { statTab = 1; statScroll = 0; }, statTab !== 1);
+      button(GW / 2 - 100, GH - 26, 200, 20, 'Done', () => { gui = 'pause'; });
+    }
+    let ADVBG = null;
+    function advFrame(x, y, got) {
+      g.fillStyle = '#000'; g.fillRect(x + 1, y, 24, 26); g.fillRect(x, y + 1, 26, 24);
+      g.fillStyle = got ? '#dba213' : '#ffffff'; g.fillRect(x + 1, y + 1, 24, 24);
+      g.fillStyle = got ? '#aa7e0f' : '#c6c6c6'; g.fillRect(x + 2, y + 2, 23, 23);
+      g.fillStyle = got ? '#6e520a' : '#8b8b8b'; g.fillRect(x + 2, y + 24, 23, 1); g.fillRect(x + 24, y + 2, 1, 23);
+    }
+    function drawAdv() {
+      g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(0, 0, GW, GH);
+      const ww = Math.min(252, GW - 8), wh = Math.min(140, GH - 54), wx = (GW - ww) >> 1, wy = Math.max(30, (GH - wh) / 2 + 10 | 0), got = P.adv || {};
+      textC('Advancements', GW / 2, wy - 30, '#ffffff');
+      const tx = wx + 4, ty = wy - 26;
+      g.fillStyle = '#000'; g.fillRect(tx + 1, ty, 26, 30); g.fillRect(tx, ty + 1, 28, 29); g.fillStyle = '#fff'; g.fillRect(tx + 1, ty + 1, 25, 29); g.fillStyle = '#c6c6c6'; g.fillRect(tx + 3, ty + 3, 23, 29);
+      panel(wx, wy, ww, wh);
+      g.fillStyle = '#c6c6c6'; g.fillRect(tx + 3, wy, 23, 4);
+      drawItem({ id: IN.grass_block.idx, n: 1 }, tx + 6, ty + 7, true);
+      text('Minecraft', wx + 8, wy + 6, '#404040', false);
+      const ix = wx + 9, iy = wy + 18, iw = ww - 18, ih = wh - 27;
+      if (!ADVBG) { const st = get('stone'), c = cv(16, 16), q = c.getContext('2d'), im = q.createImageData(16, 16); for (let i = 0; i < 1024; i += 4) { im.data[i] = st[i] * .55; im.data[i + 1] = st[i + 1] * .55; im.data[i + 2] = st[i + 2] * .55; im.data[i + 3] = 255; } q.putImageData(im, 0, 0); ADVBG = g.createPattern(c, 'repeat'); }
+      g.save(); g.beginPath(); g.rect(ix, iy, iw, ih); g.clip();
+      g.fillStyle = ADVBG; g.fillRect(ix, iy, iw, ih);
+      const pos = a => [ix + 6 + a[4] * 32, iy + 6 + a[5] * 30];
+      for (const a of ADV) if (a[6]) { const b = ADV.find(q => q[0] === a[6]); if (!b) continue; const [x1, y1] = pos(b), [x2, y2] = pos(a), mx2 = x2 - 3; for (const [c, w2] of [['#000', 3], ['#fff', 1]]) { g.fillStyle = c; const o = (w2 - 1) / 2; g.fillRect(x1 + 26, y1 + 13 - o, mx2 - x1 - 26 + o + 1, w2); g.fillRect(mx2 - o, Math.min(y1, y2) + 13 - o, w2, Math.abs(y2 - y1) + w2); g.fillRect(mx2 - o, y2 + 13 - o, x2 - mx2 + o, w2); } }
+      advHov = null;
+      for (const a of ADV) { const [x, y] = pos(a); advFrame(x, y, got[a[0]]); drawItem({ id: IN[a[3]].idx, n: 1 }, x + 5, y + 5, true); if (mx >= x && my >= y && mx < x + 26 && my < y + 26 && mx >= ix && my >= iy && mx < ix + iw && my < iy + ih) advHov = [a, x, y]; }
+      g.restore();
+      if (advHov) {
+        const [a, x, y] = advHov, gt = got[a[0]], w = Math.max(tw(a[1]) + 40, tw(a[2]) + 12), bx = Math.min(x, GW - w - 2);
+        g.fillStyle = '#000'; g.fillRect(bx, y + 1, w, 24); g.fillStyle = gt ? '#dba213' : '#0489c1'; g.fillRect(bx + 1, y + 2, w - 2, 22); g.fillStyle = gt ? '#aa7e0f' : '#036a96'; g.fillRect(bx + 2, y + 3, w - 4, 20);
+        g.fillStyle = '#000'; g.fillRect(bx, y + 24, w, 16); g.fillStyle = '#212121'; g.fillRect(bx + 1, y + 24, w - 2, 15);
+        text(a[1], bx + 32, y + 9, '#ffffff'); text(a[2], bx + 6, y + 28, '#55ff55');
+        advFrame(x, y, gt); drawItem({ id: IN[a[3]].idx, n: 1 }, x + 5, y + 5, true);
+      }
+      button(GW / 2 - 100, Math.min(GH - 22, wy + wh + 6), 200, 20, 'Done', () => { gui = 'pause'; });
+    }
+    const signG = new THREE.Group(); scene.add(signG);
+    let signSig = '', signW = null;
+    function updSigns() {
+      if (!W || W.pano) { if (signG.children.length) clearSigns(); return; }
+      let sig = '';
+      const L = [];
+      for (const [k, b] of W.be) if (b && Array.isArray(b.text) && b.text.some(Boolean)) { const p = k.split(',').map(Number); if (Math.abs(p[0] - P.x) > 64 || Math.abs(p[2] - P.z) > 64) continue; const s = getS(p[0], p[1], p[2]), t = TT[STT[s]]; if (!t.sign) continue; sig += k + s + b.text.join('\u0001') + ';'; L.push([p, s, t, b.text]); }
+      if (sig === signSig && signW === W) return;
+      signSig = sig; signW = W; clearSigns();
+      for (const [[x, y, z], s, t, txt] of L) {
+        const K = 4, c = cv(96 * K, 48 * K), q = c.getContext('2d'); q.imageSmoothingEnabled = false;
+        const f = fontTint('#000000');
+        txt.slice(0, 4).forEach((ln, i) => { ln = String(ln || ''); let px = (96 - tw(ln)) / 2 | 0; for (const ch of ln) { const j = ch.charCodeAt(0) - 32; if (j < 0 || j >= 95) { px += 4; continue; } q.drawImage(f, (j & 15) * 8, (j >> 4) * 9, 8, 8, px * K, (4 + i * 10) * K, 8 * K, 8 * K); px += fontW[j] + 1; } });
+        const tx = new THREE.CanvasTexture(c); tx.magFilter = THREE.NearestFilter; tx.minFilter = THREE.LinearFilter; tx.generateMipmaps = false;
+        const hang = /hanging/.test(t.id), wall = /wall/.test(t.id) && !hang, pw = hang ? .875 : 1, ph = pw / 2;
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), new THREE.MeshBasicMaterial({ map: tx, transparent: true, alphaTest: .3, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, toneMapped: false }));
+        let nx, nz; if (hang || wall) { const f = F4D[sv(s, 'facing')]; nx = f[0]; nz = f[1]; } else { const a = -(Math.round(sv(s, 'rotation') / 4) & 3) * Math.PI / 2; nx = Math.sin(a); nz = Math.cos(a); }
+        const B = t.model ? t.model(s)[0] : null, A = B && B.a ? B.a : [0, 7, 7], Z = B && B.b ? B.b : [16, 15, 9], ry = Math.atan2(nx, nz), e = .02 / 16;
+        m.position.set(x + (nx > .5 ? Z[0] / 16 + e : nx < -.5 ? A[0] / 16 - e : (A[0] + Z[0]) / 32), y + (A[1] + Z[1]) / 32, z + (nz > .5 ? Z[2] / 16 + e : nz < -.5 ? A[2] / 16 - e : (A[2] + Z[2]) / 32));
+        m.rotation.y = ry; m.renderOrder = 3; signG.add(m);
+      }
+    }
+    function clearSigns() { for (const m of signG.children.slice()) { signG.remove(m); m.geometry.dispose(); m.material.map.dispose(); m.material.dispose(); } }
     const KBD = { fwd: 'KeyW', left: 'KeyA', back: 'KeyS', right: 'KeyD', jump: 'Space', sneak: 'ShiftLeft', sprint: 'ControlLeft', inv: 'KeyE', drop: 'KeyQ', swap: 'KeyF', chat: 'KeyT', cmd: 'Slash', list: 'Tab', pick: 'Mouse2', persp: 'F5', f3: 'F3', hide: 'F1' };
     const KB = Object.assign({}, KBD, SV.kb && typeof SV.kb === 'object' ? SV.kb : {});
     const saveKB = () => { SV.kb = KB; api.save(SV); };
     let freeMouse = false, unlockIntent = false, persp = 0, hideHud = false, fovDirty = true, lastW = 0, lastSpace = 0, lastJumpTap = 0, sneakToggle = false, aimT = null, tl = { id: null }, lastTouch = 0, mDrag = null;
     const tbs = new Map();
     const locked = () => document.pointerLockElement === canvas;
-    let gestT = 0, lockT = 0, uiT = 0;
+    let gestT = 0, lockT = 0, uiT = 0, wantLock = -1e9;
+    function grab() { if (touch || locked()) return; wantLock = performance.now(); try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => { }); } catch (e) { } }
     function lockMouse(gest) {
       if (touch || locked() || scr !== 'game' || freeMouse && !gest) return;
       if (gest) gestT = performance.now();
@@ -6685,7 +6889,7 @@
     function releaseMouse() { uiT = performance.now(); attackHeld = useHeld = false; mine = null; tJump = false; if (locked()) { unlockIntent = true; try { document.exitPointerLock(); } catch (e) { } } }
     api.on(document, 'pointerlockchange', () => {
       const t = performance.now();
-      if (locked()) { freeMouse = false; lockT = t; if (gui || chatOpen || scr !== 'game' || P.dead) releaseMouse(); return; }
+      if (locked()) { freeMouse = false; lockT = t; if (gui || chatOpen || scr !== 'game' && t - wantLock > 4000 || P.dead) releaseMouse(); return; }
       attackHeld = useHeld = false;
       if (unlockIntent) { unlockIntent = false; return; }
       if (t - lockT < 600 || t - uiT < 900) return;
@@ -6717,7 +6921,7 @@
       for (let i = 0; i < 9; i++) if (inv[i] && inv[i].id === id) { sel = i; return; }
       let k = inv.findIndex((s2, i) => i < 9 && !s2); if (k < 0) k = sel; sel = k; inv[k] = { id, n: IT[id].stack, d: 0 };
     }
-    function dropHeld(all) { const s = held(); if (!s || P.dead || gui) return; const n = all ? s.n : 1; throwStack({ id: s.id, n, d: s.d, x: s.x }, true); s.n -= n; if (s.n <= 0) inv[sel] = null; swing(); }
+    function dropHeld(all) { const s = held(); if (!s || P.dead || gui) return; const n = all ? s.n : 1; stat('drop', n); throwStack({ id: s.id, n, d: s.d, x: s.x }, true); s.n -= n; if (s.n <= 0) inv[sel] = null; swing(); }
     function swapHands() { const a = inv[sel]; inv[sel] = offhand; offhand = a; }
     wrap.addEventListener('contextmenu', e => e.preventDefault());
     wrap.addEventListener('mousedown', e => {
@@ -6756,7 +6960,7 @@
       const d = e.deltaY || e.deltaX;
       if (!d) return;
       if (scr === 'game' && !gui && !chatOpen) { sel = (sel + (d > 0 ? 1 : 8)) % 9; return; }
-      if (scr === 'game' && gui) { if (gui === 'controls') ctrlScroll += d > 0 ? 20 : -20; else invWheel(d); return; }
+      if (scr === 'game' && gui) { if (gui === 'controls') ctrlScroll += d > 0 ? 20 : -20; else if (gui === 'stats') statScroll += d > 0 ? 20 : -20; else invWheel(d); return; }
       if (scr === 'worlds') wScroll += d > 0 ? 24 : -24;
       if (scr === 'controls') ctrlScroll += d > 0 ? 20 : -20;
     }, { passive: false });
@@ -6849,8 +7053,8 @@
         return;
       }
       if (gui === 'dead') return;
-      if (c === 'Escape') { if (gui === 'options' || gui === 'controls' || gui === 'plist') { persistSet(); gui = 'pause'; } else if (gui) closeGui(); else { gui = 'pause'; releaseMouse(); saveSoon(); } return; }
-      if (gui === 'pause' || gui === 'options' || gui === 'controls' || gui === 'plist' || gui === 'sign') return;
+      if (c === 'Escape') { if (gui === 'options' || gui === 'controls' || gui === 'plist' || gui === 'stats' || gui === 'adv') { persistSet(); gui = 'pause'; } else if (gui) closeGui(); else { gui = 'pause'; releaseMouse(); saveSoon(); } return; }
+      if (gui === 'pause' || gui === 'options' || gui === 'controls' || gui === 'plist' || gui === 'stats' || gui === 'adv' || gui === 'sign') return;
       if (c === KB.inv && !e.repeat) { if (gui) closeGui(); else if (!chatOpen && !P.dead) openGui('inv'); return; }
       if (gui) { invKey(c); return; }
       if (chatOpen) return;
@@ -7020,11 +7224,13 @@
       const c = colAt(x >> 4, z >> 4);
       if (c && c.st >= 1) setBlock(x, y, z, s, flags); else editDirect(x, y, z, s);
     }
-    function playerData() { return { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch, hp: P.hp, food: P.food, sat: P.sat, xp: P.xp, lvl: P.lvl, score: P.score, inv: inv.map(encS), armor: armor.map(encS), offhand: encS(offhand), ender: ender.map(encS), mode: W.mode, spawn: P.spawn, effects: P.effects, fly: P.fly, air: P.air, dead: P.dead, sel }; }
+    function playerData() { return { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch, hp: P.hp, food: P.food, sat: P.sat, xp: P.xp, lvl: P.lvl, score: P.score, inv: inv.map(encS), armor: armor.map(encS), offhand: encS(offhand), ender: ender.map(encS), mode: W.mode, spawn: P.spawn, effects: P.effects, fly: P.fly, air: P.air, dead: P.dead, sel, st: P.st, adv: P.adv }; }
     function applyPlayerData(d) {
       if (!d) return false;
       if ([d.x, d.y, d.z].every(fin)) { P.x = d.x; P.y = d.y; P.z = d.z; P.px = P.x; P.py = P.y; P.pz = P.z; P.place = false; }
       for (const k of ['yaw', 'pitch', 'hp', 'food', 'sat', 'xp', 'lvl', 'score', 'air']) if (fin(d[k])) P[k] = d[k];
+      if (d.st && typeof d.st === 'object') P.st = d.st;
+      if (d.adv && typeof d.adv === 'object') P.adv = d.adv;
       if (Array.isArray(d.inv)) inv = d.inv.slice(0, 36).map(decS).concat(new Array(36).fill(null)).slice(0, 36);
       if (Array.isArray(d.armor)) armor = d.armor.slice(0, 4).map(decS).concat([null, null, null, null]).slice(0, 4);
       offhand = decS(d.offhand);
@@ -7413,14 +7619,14 @@
         else if (o.k === 'xp') spawnXp(o.v | 0, o.x, o.y, o.z);
       }
     }
-    let panoReady = false, panoA = 0, acc = 0, fpsN = 0, fpsT = 0, loadT0 = 0, selfE = null, handG = null, handArm = null, handItem = null, handId = -2, lightF = 0, rainP = null, flash = 0;
+    let blurOn = false, panoReady = false, panoA = 0, acc = 0, fpsN = 0, fpsT = 0, loadT0 = 0, selfE = null, handG = null, handArm = null, handItem = null, handId = -2, lightF = 0, rainP = null, flash = 0;
     const V3 = new THREE.Vector3(), V3b = new THREE.Vector3();
     const stopMusic = () => { };
     function burstAt(x, y, z, rgb, n) { for (let i = 0; i < n * 3; i++) particle(x, y + .2, z, (RNG() - .5) * 2, RNG() * 2, (RNG() - .5) * 2, rgb, .6, .08, 6); }
     P.name = myName();
     function remeshAll() { if (!W) return; FANCY = SET.fancy; W.cols.forEach(c => { if (c.meshed) for (let s = 0; s < NSEC; s++) if (c.s[s] || c.m[s]) { c.md[s] = 1; W.dirty.add(c); } }); }
     function resetPlayer() {
-      Object.assign(P, { x: .5, y: 100, z: .5, px: .5, py: 100, pz: .5, vx: 0, vy: 0, vz: 0, hp: 20, food: 20, sat: 5, exh: 0, air: 300, fall: 0, fly: false, xp: 0, lvl: 0, score: 0, dead: false, sleeping: 0, effects: {}, fire: 0, absorb: 0, spawn: null, hurtT: 0, place: true, yaw: 0, pitch: 0 });
+      Object.assign(P, { st: {}, adv: {}, x: .5, y: 100, z: .5, px: .5, py: 100, pz: .5, vx: 0, vy: 0, vz: 0, hp: 20, food: 20, sat: 5, exh: 0, air: 300, fall: 0, fly: false, xp: 0, lvl: 0, score: 0, dead: false, sleeping: 0, effects: {}, fire: 0, absorb: 0, spawn: null, hurtT: 0, place: true, yaw: 0, pitch: 0 });
       inv = new Array(36).fill(null); armor = [null, null, null, null]; offhand = null; craft2.fill(null); craft3.fill(null); cursor = null; sel = 0; ender = new Array(27).fill(null);
       gui = null; mine = null; eating = null; drawing = null; attackHeld = useHeld = false; chatOpen = false;
     }
@@ -7445,7 +7651,7 @@
       P.name = NET.role ? P.name : myName();
       startWorkers();
       tickN = 0; simT = 0; acc = 0; loadT0 = performance.now(); NET.ready = !o.remote; FANCY = SET.fancy;
-      if (!o.pano) { scr = 'loading'; loadMsg = 'Loading terrain...'; loadP = 0; }
+      if (!o.pano) { grab(); scr = 'loading'; loadMsg = 'Loading terrain...'; loadP = 0; }
       return W;
     }
     function startPano() {
@@ -7612,6 +7818,8 @@
       if (host) weatherTick();
       if (P.dead) { deadT++; if (W.rules.doImmediateRespawn && deadT > 2 && !W.hardcore) respawn(); }
       tickPlayer();
+      if (!P.dead && !W.pano && scr === 'game') { stat('play'); stat('sinceDeath'); const dh = Math.hypot(P.x - P.px, P.z - P.pz) * 100; if (dh > 0 && dh < 300) stat(P.fly ? 'flyCm' : P.eyeW ? 'swimCm' : P.sprint ? 'sprintCm' : 'walkCm', dh); if (P.y < P.py && !P.fly) stat('fallCm', (P.py - P.y) * 100); }
+      advTick();
       tickInteract();
       if (host) { tickEnts(); tickSched(); randomTicks(); tickFurnaces(); if (tickN % 2 === 0) checkPlates(); spawnTick(); if (W.pendSpawn) flushPendSpawn(); if (W.pendEnts && nearMeshed(1) >= 1) spawnSaved(); }
       tickMirrors();
@@ -7677,7 +7885,7 @@
       cloudU.off.value.set((W.time + alpha) * .03 - Math.round(ex) * 0 + 0, 0); cloudU.col.value.setScalar(.25 + st.b * .75); cloudU.far.value = Math.max(120, SET.rd * 24);
       clouds.position.set(0, 0, 0);
       let yaw = P.yaw, pitch = P.pitch;
-      if (W.pano) { panoA += .0006; yaw = panoA; pitch = -.12; }
+      if (W.pano) { panoA = now * 3e-5; yaw = panoA; pitch = -.12; }
       let cx = ex, cy = ey, cz = ez;
       if (SET.bob && !P.fly && !W.pano && persp === 0) { const wb = lerp(P.walkP, P.walk, alpha), bb = lerp(P.bobP, P.bob, alpha); cx += Math.cos(yaw) * Math.sin(wb * Math.PI) * bb * .5; cy -= Math.abs(Math.cos(wb * Math.PI) * bb) * .6; cz -= Math.sin(yaw) * Math.sin(wb * Math.PI) * bb * .5; }
       if (P.sleeping && P.bedPos) { cy = P.bedPos[1] + .7; }
@@ -7784,6 +7992,7 @@
       const dt = lastNow ? clamp((now - lastNow) / 1000, 0, .25) : dt0; lastNow = now;
       frameN++;
       if (frameN % 15 === 1) resize();
+      if (frameN % 20 === 3) updSigns();
       fpsN++; fpsT += dt; if (fpsT >= 1) { fps = fpsN; fpsN = 0; fpsT = 0; }
       if (!W && (scr === 'title')) startPano();
       touchTick();
@@ -7805,34 +8014,35 @@
           }
         }
         if (scr === 'game') {
-          const paused = !NET.role && (gui === 'pause' || gui === 'options' || gui === 'controls');
-          if (!paused) { acc += Math.min(dt, .25); let n = 0; while (acc >= .05 && n < 5) { tick(); acc -= .05; n++; } if (n >= 5) acc = 0; }
+          const paused = !NET.role && (gui === 'pause' || gui === 'options' || gui === 'controls' || gui === 'stats' || gui === 'adv');
+          if (!paused) { acc += Math.min(dt, .25); let n = 0; while (acc >= .05 && n < 5) { const t0 = performance.now(); tick(); fT += (performance.now() - t0 - fT) * .1; acc -= .05; n++; } if (n >= 5) acc = 0; }
           alpha = paused ? 1 : clamp(acc / .05, 0, 1);
           lightF = alpha;
           if (!gui && !chatOpen) updTarget(); else { HIT.b = false; HIT.ent = null; }
         }
-        const show3d = scr === 'game' || scr === 'title' && W.pano;
+        const show3d = scr === 'game' || W.pano;
         if (show3d) render(now, alpha);
       }
       g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, hud.width, hud.height);
       g.imageSmoothingEnabled = false;
       g.setTransform(GK, 0, 0, GK, 0, 0);
       btns = []; fields = []; sliders = [];
-      if (!W || !(scr === 'game' || scr === 'title' && W.pano)) { renderer.setClearColor(0, 1); renderer.clear(); }
+      if (!W || !(scr === 'game' || W.pano)) { renderer.setClearColor(0, 1); renderer.clear(); }
+      const wb = scr === 'game' ? gui === 'pause' || gui === 'options' || gui === 'controls' || gui === 'plist' || gui === 'stats' || gui === 'adv' : scr !== 'title' && !!W && !!W.pano && panoReady;
+      if (wb !== blurOn) { blurOn = wb; canvas.style.filter = wb ? 'blur(' + Math.max(3, Math.round(GK * 2.5 / (window.devicePixelRatio || 1))) + 'px)' : ''; }
       if (scr === 'game' && W) {
-        if (!hideHud || gui) {
-          if (!hideHud) { drawHUD(now); drawChat(now); }
+        if (!hideHud || gui || chatOpen) {
+          if (!hideHud && !blurOn) { drawHUD(now); drawChat(now); } else if (chatOpen) drawChat(now);
           if (touch && !gui && !hideHud && !P.dead) drawTouch();
-          if (!touch && !gui && !locked() && !freeMouse && !chatOpen && !P.dead && !P.sleeping) { g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(0, GH / 2 + 14, GW, 14); textC('Click to play', GW / 2, GH / 2 + 17, '#ffffff'); }
-          try { drawGameGui(now); } catch (e) { if (!frameLoop.gerr) { frameLoop.gerr = 1; if (window.console) console.error(e); } gui = null; }
+          try { drawGameGui(now); drawToasts(now); } catch (e) { if (!frameLoop.gerr) { frameLoop.gerr = 1; if (window.console) console.error(e); } gui = null; }
         }
         if (W.rules.showCoordinates && !showF3 && !hideHud) text('XYZ: ' + Math.floor(P.x) + ' / ' + Math.floor(P.y - CFG.YOFF) + ' / ' + Math.floor(P.z), 2, 2, '#ffffff');
-      } else drawScreen(now);
+      } else { if (locked() && scr !== 'loading' && now - wantLock > 4000) releaseMouse(); drawScreen(now); }
       if (focusKey && !fields.some(f => f.key === focusKey) && focusKey !== 'sign') blurField();
       else if (focusKey) { const f = fields.find(q => q.key === focusKey); if (f) { const k = cssW / hud.width * GK; inp.style.left = f.x * k + 'px'; inp.style.top = f.y * k + 'px'; inp.style.width = f.w * k + 'px'; inp.style.height = f.h * k + 'px'; } }
       if (focusKey === 'chat') FIELDV.chat = inp.value;
     }
-    wrap.__mc = () => ({ scr, gui, GK, GW, GH, pRect, chatOpen, btns: btns.map(b => [b.l, b.x, b.y, b.w, b.h, b.en]), P: { x: P.x, y: P.y, z: P.z, hp: P.hp, food: P.food, yaw: P.yaw, pitch: P.pitch }, ents: (() => { const o = {}; for (const e of ENTS) { const k = e.kind + ':' + (e.type || (e.st ? IT[e.st.id].id : '')); o[k] = (o[k] || 0) + 1; } return o; })(), keysDown: [...keys], focus: focusKey, mobs: ENTS.filter(e => e.kind === 'mob').map(e => [e.type, +e.x.toFixed(1), +(e.y - CFG.YOFF).toFixed(1), +e.z.toFixed(1), e.root.visible, e.hp, !!e.dead, e.root.parent ? 1 : 0]), fps, cols: W ? W.cols.size : 0, mode: W && W.mode, role: NET.role, time: W && W.time, chat: chatLog.slice(-8).map(c => c.m), hit: HIT.b ? [HIT.x, HIT.y, HIT.z] : null, sel, inv: inv.map(s => s && IT[s.id].id + 'x' + s.n), slots: slots.map(q => { const v = q.get(); return [q.g, q.i, q.x, q.y, v ? IT[v.id].id + 'x' + v.n : null]; }), cursor: cursor && IT[cursor.id].id + 'x' + cursor.n });
+    wrap.__mc = () => ({ signs: signG.children.map(m => [+m.position.x.toFixed(3), +(m.position.y - CFG.YOFF).toFixed(3), +m.position.z.toFixed(3), +m.rotation.y.toFixed(2)]), scr, gui, GK, GW, GH, pRect, chatOpen, btns: btns.map(b => [b.l, b.x, b.y, b.w, b.h, b.en]), P: { x: P.x, y: P.y, z: P.z, hp: P.hp, food: P.food, yaw: P.yaw, pitch: P.pitch }, ents: (() => { const o = {}; for (const e of ENTS) { const k = e.kind + ':' + (e.type || (e.st ? IT[e.st.id].id : '')); o[k] = (o[k] || 0) + 1; } return o; })(), keysDown: [...keys], focus: focusKey, mobs: ENTS.filter(e => e.kind === 'mob').map(e => [e.type, +e.x.toFixed(1), +(e.y - CFG.YOFF).toFixed(1), +e.z.toFixed(1), e.root.visible, e.hp, !!e.dead, e.root.parent ? 1 : 0]), fps, cols: W ? W.cols.size : 0, mode: W && W.mode, role: NET.role, time: W && W.time, chat: chatLog.slice(-8).map(c => c.m), hit: HIT.b ? [HIT.x, HIT.y, HIT.z] : null, sel, inv: inv.map(s => s && IT[s.id].id + 'x' + s.n), slots: slots.map(q => { const v = q.get(); return [q.g, q.i, q.x, q.y, v ? IT[v.id].id + 'x' + v.n : null]; }), cursor: cursor && IT[cursor.id].id + 'x' + cursor.n });
     resize();
     api.loop((dt, now) => { try { frameLoop(dt, now); } catch (e) { if (!frameLoop.err) { frameLoop.err = 1; if (window.console) console.error(e); } } });
     const sizeObs = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => resize()) : null;

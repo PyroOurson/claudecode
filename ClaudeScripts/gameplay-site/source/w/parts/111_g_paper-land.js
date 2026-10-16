@@ -351,7 +351,8 @@
         if (killer) {
           killer.kills++;
           if (killer === human) {
-            banner = { text: 'You killed ' + p.name + '!', col: p.col.base, t: 0 };
+            const streak = banner && banner.t < 1.4 && banner.n ? Math.min(5, banner.n + 1) : 1;
+            banner = { text: ['KILL!', 'DOUBLE KILL!', 'TRIPLE KILL!', 'MEGA KILL!', 'MONSTER KILL!'][streak - 1], sub: 'You killed ' + p.name, col: p.col.base, n: streak, t: 0 };
             floats.push({ x: human.x, y: human.y - 3, text: '+1 kill', col: '#ffffff', oc: '#e8344a', t: 0, life: 1.2, size: 22 });
             sfx.kill(); shake = Math.max(shake, 0.6);
           }
@@ -851,7 +852,7 @@
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         const ns = portrait ? 11.5 : 13;
         for (const p of drawList) {
-          if (p === human) continue;
+          if (p === human) { const sx = (p.x - cam.x) * s + W / 2, sy = (p.y - cam.y) * s + H / 2 - (CFG.unit * 0.5 + CFG.blockDepth) * s - (p === king ? 26 : 11); text('You', sx, sy, ns + 3, '#ffffff', 'center', 900, '#2b2f7a', 5); continue; }
           const sx = (p.x - cam.x) * s + W / 2, sy = (p.y - cam.y) * s + H / 2 - (CFG.unit * 0.5 + CFG.blockDepth) * s - (p === king ? 26 : 9);
           text(p.name, sx, sy, ns, p.col.dark, 'center', 900, 'rgba(255,255,255,.85)', 3.5);
         }
@@ -927,7 +928,12 @@
         if (banner) {
           const k = banner.t / 1.8, sc = k < 0.12 ? easeBack(k / 0.12) : 1;
           ctx.globalAlpha = k > 0.75 ? (1 - k) / 0.25 : 1;
-          text(banner.text, W / 2, H * (ph ? 0.2 : 0.22), (ph ? 24 : 30) * sc, banner.col, 'center', 900, '#ffffff', 7);
+          const by = H * (ph ? 0.2 : 0.22), bs = (ph ? 34 : 46) * sc;
+          ctx.save(); ctx.translate(W / 2, by); ctx.rotate(-0.06);
+          text(banner.text, 0, 3, bs, '#1f2a8a', 'center', 900, '#1f2a8a', bs * 0.32);
+          text(banner.text, 0, 0, bs, '#ffd23a', 'center', 900, '#1f2a8a', bs * 0.22);
+          ctx.restore();
+          text(banner.sub, W / 2, by + bs * 0.85, ph ? 15 : 18, banner.col, 'center', 900, '#ffffff', 5);
           ctx.globalAlpha = 1;
         }
       }

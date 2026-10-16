@@ -18,7 +18,8 @@ const PL_KW = {
   s: 'solo single player alone',
   o: 'online multiplayer friend friends party room code remote lobby',
   4: '3 4 three four player players party lobby',
-  6: '3 4 6 three four six player players party lobby'
+  6: '3 4 6 three four six player players party lobby',
+  8: '3 4 6 8 three four six eight player players party lobby'
 };
 const STOP = new Set(['the', 'a', 'an', 'of', 'game', 'games', 'play', 'free', 'to', 'and', 'for', 'i', 'want']);
 const CAT_TINT = { Action: '#d62828', Arcade: '#ff6b6b', Racing: '#3a86ff', Runner: '#ff7a59', Puzzle: '#4361ee', Sports: '#2a9d8f', Board: '#495057', Brain: '#06a77d', Skill: '#e08a00', Strategy: '#a8641c' };
@@ -34,8 +35,8 @@ const SORTS = [['rel', 'Best match'], ['rec', 'Popular'], ['az', 'A to Z'], ['ne
 const PATH_MODE = /(^|\.)(web\.app|firebaseapp\.com)$/i.test(location.hostname) || (() => { try { return sessionStorage.getItem('gameplay:paths') === '1'; } catch (e) { return false; } })();
 const PAUSE = { on: false };
 (() => { try { if (localStorage.getItem('gameplay:reset') !== '2') { localStorage.removeItem('gameplay:profile'); localStorage.removeItem('gameplay:analytics'); localStorage.removeItem('gameplay:sid'); const o = JSON.parse(localStorage.getItem('gameplay:v1') || '{}') || {}; o.best = {}; o.plays = {}; o.recent = []; o.time = {}; localStorage.setItem('gameplay:v1', JSON.stringify(o)); localStorage.setItem('gameplay:reset', '2'); } } catch (e) {} })();
-const SUPABASE_URL = '';
-const SUPABASE_ANON_KEY = '';
+const SUPABASE_URL = 'https://uafouyvtcijptspjbsqf.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Lry5e9J350lXelAUPHU1rg_3YYvTuAf';
 const SUPABASE_JS = ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js', 'https://unpkg.com/@supabase/supabase-js@2.117.2/dist/umd/supabase.js'];
 const SUPABASE_SRI = 'sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok';
 const ROWS = [
@@ -55,8 +56,8 @@ const ROWS = [
   ["garden-defense", "Plants vs. Zombies", "Strategy,Action", "s", 15, "plants zombies pvz tower defense lawn garden peashooter sunflower shoot shooting", "r"],
   ["bean-royale", "Fall Guys", "Arcade,Racing,Action", "s", 8, "fall guys bean jellybean party royale obstacle course race crown battle", "rn"],
   ["hoop-flop", "Basket Random", "Sports,Arcade", "so", 5, "basket random basketball hoops ragdoll dunk ball two player 2v2 versus", "r"],
-  ["maze-tanks", "Tank Trouble", "Action,Arcade", "so4", 8, "tank trouble tanks maze bullets bounce duel shooting versus", "r"],
-  ["last-card", "UNO", "Board", "so4", 10, "uno cards card game match colour color number pass play", "r"],
+  ["maze-tanks", "Tank Trouble", "Action,Arcade", "so8", 8, "tank trouble tanks maze bullets bounce duel shooting versus", "r"],
+  ["last-card", "UNO", "Board", "so8", 10, "uno cards card game match colour color number pass play", "r"],
   ["moto-stunts", "Moto X3M", "Racing,Skill", "s", 15, "moto x3m bike motorcycle motorbike dirt trial trials stunt stunts flip desert car", "r"],
   ["cookie-baker", "Cookie Clicker", "Strategy", "s", 30, "cookie clicker idle incremental grandma bake baking upgrades", "r"],
   ["block-roll", "Bloxorz", "Puzzle", "s", 15, "bloxorz block roll rolling tiles hole stages puzzle", "rn"],
@@ -119,7 +120,7 @@ const ROWS = [
   ["true-false", "True or False", "Brain", "s", 3, "true false quiz facts trivia questions", ""]
 ];
 const NEWEST = ["slope-3d", "tunnel-run", "rocket-soccer", "hole-city", "bean-royale", "block-roll", "flap-bird", "slither", "cell-feast", "paper-land", "brick-bros", "garden-defense", "last-card", "maze-tanks", "hoop-flop", "sea-battle", "moto-stunts", "cookie-baker", "blockcraft-3d", "asteroids-3d", "cube-3d", "tanks-3d", "maze-3d", "target-range-3d", "penalty-3d", "hoops-3d", "sky-pilot", "highway-3d", "marble-3d", "helix-3d", "road-hopper", "sky-runner", "true-false", "hangman", "solitaire", "reversi", "checkers", "chess", "sudoku", "pipe-connect", "box-pusher", "gem-swap", "bubble-pop", "tetra", "chimp-test", "fruit-slice", "cps-test", "piano-tiles", "pool", "archery", "air-hockey", "pinball", "maze-muncher", "invaders", "knife-throw", "dash-cube", "dino-run", "typing", "word-guess", "math-sprint", "trivia", "number-memory", "sequence", "pairs", "connect-four", "tictactoe", "slide", "minesweeper", "2048", "pong", "breakout", "snake", "rhythm", "stack", "perfect-stop", "whack", "aim", "reaction"];
-const STAT = {"block-roll": "Stages", "tunnel-run": "Levels", "reaction": "Last", "minesweeper": "Time", "sudoku": "Time", "solitaire": "Time", "marble-3d": "Time", "maze-3d": "Time", "slide": "Moves", "cube-3d": "Moves", "pairs": "Moves", "chess": "Wins", "checkers": "Wins", "reversi": "Wins", "connect-four": "Wins", "tictactoe": "Wins", "pool": "Wins", "word-guess": "Streak", "hangman": "Streak", "true-false": "Streak", "moto-stunts": "Stars", "garden-defense": "Stage", "paper-land": "Territory", "slither": "Length", "cell-feast": "Mass", "highway-3d": "Distance", "dash-cube": "Progress", "sea-battle": "Shots", "chimp-test": "Level", "piano-tiles": "Tiles"};
+const STAT = {"block-roll": "Stages", "tunnel-run": "Distance", "reaction": "Last", "minesweeper": "Time", "sudoku": "Time", "solitaire": "Time", "marble-3d": "Time", "maze-3d": "Time", "slide": "Moves", "cube-3d": "Moves", "pairs": "Moves", "chess": "Wins", "checkers": "Wins", "reversi": "Wins", "connect-four": "Wins", "tictactoe": "Wins", "pool": "Wins", "word-guess": "Streak", "hangman": "Streak", "true-false": "Streak", "moto-stunts": "Stars", "garden-defense": "Stage", "paper-land": "Territory", "slither": "Length", "cell-feast": "Mass", "highway-3d": "Distance", "dash-cube": "Progress", "sea-battle": "Shots", "chimp-test": "Level", "piano-tiles": "Tiles"};
 const DELETED = new Set(["demon-halls", "night-survivors", "fire-water", "bomb-blast", "marble-chain", "clicker", "glide", "jetpack", "sky-jump", "lights-out", "deep-miner", "fling-birds", "candy-rope", "racer", "shooter", "hill-climb", "golf", "asteroids", "bowling-3d", "kart-circuit", "tower-defense", "stick-bridge"]);
 const TINT = { reaction: '#ff6b6b', snake: '#4cc38a', '2048': '#f5a623', racer: '#5b8def', 'perfect-stop': '#a06cd5', pairs: '#ff8fab', trivia: '#ffd166', aim: '#ef476f', golf: '#7bd389', minesweeper: '#8d99ae', shooter: '#3d348b', stack: '#ff9f68', sequence: '#06d6a0', 'math-sprint': '#118ab2', whack: '#9bc53d', breakout: '#e76f51', tictactoe: '#48cae4', typing: '#6d597a', glide: '#90e0ef', rhythm: '#7209b7', 'word-guess': '#6aaa64', slide: '#f28482', pong: '#2b2d42', 'connect-four': '#4361ee', 'number-memory': '#f72585', clicker: '#e9c46a', 'lights-out': '#22223b',
   'sky-runner': '#ff7a59', 'road-hopper': '#7ed957', 'helix-3d': '#ff4d8d', 'highway-3d': '#3a86ff', 'sky-pilot': '#4cc9f0', 'marble-3d': '#9b5de5', 'hoops-3d': '#f77f00', 'bowling-3d': '#8338ec', 'penalty-3d': '#2a9d8f', 'maze-3d': '#577590', 'target-range-3d': '#d62828', 'tanks-3d': '#6a994e', 'cube-3d': '#ffbe0b', 'asteroids-3d': '#14213d', 'blockcraft-3d': '#52b788',
@@ -242,7 +243,8 @@ function applyGlScale(s) {
     } catch (e) {}
   });
 }
-const stageMode = () => document.fullscreenElement === gamebox ? 'fs' : (view === 'game' && gamebox.classList.contains('theater')) ? 'theater' : 'off';
+const shortQuery = window.matchMedia ? matchMedia('(max-height: 520px) and (orientation: landscape)') : { matches: false };
+const stageMode = () => gamebox.classList.contains('fs') ? 'fs' : (view === 'game' && gamebox.classList.contains('theater')) ? 'theater' : 'off';
 function fitStage() {
   const mode = stageMode();
   const frameEl = document.getElementById('frame'), st = document.getElementById('stage');
@@ -266,15 +268,16 @@ function fitStage() {
   const sw = st.clientWidth;
   let s, sh;
   if (mode === 'fs') {
-    const pad = 18;
     sh = st.clientHeight;
+    const pad = root.querySelector('canvas') ? 0 : 20;
     s = Math.max(0.3, Math.min((sw - pad * 2) / cw, (sh - pad * 2) / ch, 4));
   } else {
     const pad = 12, bar = gamebox.querySelector('.play-bar');
-    const availH = Math.max(380, innerHeight - 64 - 8 - (bar ? bar.offsetHeight : 60) - 30);
-    const minS = root.querySelector('canvas') ? 0.55 : 1;
+    const short = shortQuery.matches;
+    const availH = short ? Math.max(150, innerHeight - (bar ? bar.offsetHeight : 50) - 2) : Math.max(380, innerHeight - 64 - 8 - (bar ? bar.offsetHeight : 60) - 30);
+    const minS = short ? 0.3 : root.querySelector('canvas') ? 0.55 : 1;
     s = Math.max(minS, Math.min((sw - pad * 2) / cw, (availH - pad * 2) / ch, 2.4));
-    sh = Math.max(440, Math.ceil(ch * s + pad * 2));
+    sh = short ? availH : Math.max(440, Math.ceil(ch * s + pad * 2));
     if (st.style.height !== sh + 'px') st.style.height = sh + 'px';
   }
   const fl = (sw - frameEl.offsetWidth) / 2, ft = (sh - frameEl.offsetHeight) / 2;
@@ -285,7 +288,7 @@ function fitStage() {
   fsScale = s; fsT = [tx, ty]; applyGlScale(s);
 }
 const queueFit = () => { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(fitStage); };
-function startFitTimer() { clearInterval(fitTimer); fitTimer = setInterval(() => { if (stageMode() !== 'off') fitStage(); }, 700); }
+function startFitTimer() { clearInterval(fitTimer); fitTimer = setInterval(() => { if (stageMode() !== 'off') fitStage(); }, 1500); }
 
 const libP = {};
 function loadLib(name, urls) {
@@ -314,145 +317,167 @@ function netErr(e) {
   if (t === 'network' || t === 'server-error' || t === 'socket-error' || t === 'socket-closed' || t === 'load') return 'Can’t reach the online server. Check your internet connection.';
   return 'Connection failed. Try again.';
 }
-const NET_DARK = '--gl-page:#0f0d1c;--gl-card:#1a1730;--gl-band:#221e3d;--gl-line:#2d2850;--gl-fg:#f1efff;--gl-muted:#9f9cc0;--gl-accent:#8f5cf2;--gl-accent-ink:#ffffff;--gl-accent-soft:#2f2556;--gl-danger:#ff6b80;--gl-danger-soft:#3a1e2c;--gl-live:#3ad596;--gl-live-soft:#143328;--gl-chip:#2a2548;--gl-shadow:0 24px 60px rgba(0,0,0,.55);--gl-veil:rgba(4,3,12,.72);color-scheme:dark';
-const NET_CSS = `html.gl-lock,html.gl-lock body{overflow:hidden!important}
-.g-lobby{position:fixed;inset:0;z-index:150;overflow:hidden;opacity:0;transition:opacity .25s ease;text-align:left;--gl-page:#ebe8f7;--gl-card:#ffffff;--gl-band:#f4f1ff;--gl-line:#ece9f6;--gl-fg:#17142b;--gl-muted:#8a87a3;--gl-accent:#7b3aed;--gl-accent-ink:#ffffff;--gl-accent-soft:#efe9ff;--gl-danger:#e5384f;--gl-danger-soft:#fdecef;--gl-live:#16a561;--gl-live-soft:#e8f8ef;--gl-chip:#f0eff5;--gl-shadow:0 24px 60px rgba(60,30,140,.18);--gl-veil:rgba(23,20,43,.55);--gl-font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--gl-veil);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:var(--gl-fg);font:400 16px/1.4 var(--gl-font);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;text-size-adjust:100%}
-.g-lobby.show{opacity:1}
+const NET_DARK = '--gl-page:#0f0d1c;--gl-card:#1a1730;--gl-band:#221e3d;--gl-line:#2d2850;--gl-fg:#f1efff;--gl-muted:#9f9cc0;--gl-accent:#8f5cf2;--gl-accent-ink:#ffffff;--gl-accent-soft:#2f2556;--gl-danger:#ff6b80;--gl-danger-soft:#3a1e2c;--gl-live:#3ad596;--gl-live-soft:#143328;--gl-chip:#2a2548;--gl-shadow:0 24px 60px rgba(0,0,0,.55);--gl-veil:rgba(4,3,12,.66);color-scheme:dark';
+const NET_CSS = `.g-lobby{position:absolute;inset:0;z-index:200;display:flex;overflow:hidden;opacity:0;transition:opacity .22s ease;text-align:left;border-radius:inherit;--gl-page:#ebe8f7;--gl-card:#ffffff;--gl-band:#f4f1ff;--gl-line:#ece9f6;--gl-fg:#17142b;--gl-muted:#8a87a3;--gl-accent:#7b3aed;--gl-accent-ink:#ffffff;--gl-accent-soft:#efe9ff;--gl-danger:#e5384f;--gl-danger-soft:#fdecef;--gl-live:#16a561;--gl-live-soft:#e8f8ef;--gl-chip:#f0eff5;--gl-shadow:0 24px 60px rgba(60,30,140,.18);--gl-veil:rgba(23,20,43,.5);--gl-font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--gl-veil);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:var(--gl-fg);font:400 16px/1.4 var(--gl-font);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;text-size-adjust:100%;user-select:text;-webkit-user-select:text;touch-action:manipulation;cursor:default}
+.g-lobby.gl-fixed{position:fixed}
+.g-lobby.gl-on{opacity:1}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .g-lobby{${NET_DARK}}}
 :root[data-theme="dark"] .g-lobby{${NET_DARK}}
 .g-lobby *{box-sizing:border-box}
 .g-lobby button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0;margin:0;-webkit-tap-highlight-color:transparent}
+.g-lobby button:disabled{cursor:default}
 .g-lobby svg{display:block;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .g-lobby :focus-visible{outline:2px solid var(--gl-accent);outline-offset:2px}
-.g-lobby .gl-card{position:absolute;left:50%;top:50%;width:1040px;background:var(--gl-card);border-radius:32px;box-shadow:var(--gl-shadow);overflow:hidden;display:flex;flex-direction:column;transform:translate(-50%,-50%) scale(var(--gls,1));outline:0}
-.g-lobby .gl-head{background:var(--gl-band);padding:36px 40px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;min-height:154px}
+.g-lobby .gl-card{margin:auto;flex:none;width:1040px;background:var(--gl-card);border-radius:32px;box-shadow:var(--gl-shadow);overflow:hidden;display:flex;flex-direction:column;outline:0;transform:translateY(10px) scale(.97);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+.g-lobby.gl-on .gl-card{transform:none}
+.g-lobby .gl-head{flex:none;background:var(--gl-band);padding:36px 40px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px}
 .g-lobby .gl-head h1{grid-column:2;grid-row:1;margin:0;max-width:520px;font-size:46px;line-height:1.1;font-weight:800;letter-spacing:-.03em;text-align:center;color:var(--gl-fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .g-lobby .gl-leave{grid-column:1;grid-row:1;justify-self:start;display:flex;align-items:center;gap:6px;height:40px;padding:0 14px 0 8px;margin-left:-8px;border-radius:12px;color:var(--gl-muted);font-weight:600;font-size:16px;transition:background .15s,color .15s}
 .g-lobby .gl-leave:hover{color:var(--gl-fg);background:var(--gl-card)}
 .g-lobby .gl-leave svg{width:18px;height:18px;stroke-width:2.2}
 .g-lobby .gl-code{grid-column:3;grid-row:1;justify-self:end;min-width:0}
-.g-lobby .gl-code small,.g-lobby .gl-lbl{display:block;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gl-muted);margin:0 0 8px}
-.g-lobby .gl-codebox{display:flex;align-items:center;justify-content:space-between;gap:20px;background:var(--gl-card);border-radius:16px;padding:12px 12px 12px 20px;min-width:230px;min-height:62px}
+.g-lobby .gl-code small{display:block;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gl-muted);margin:0 0 8px}
+.g-lobby .gl-codebox{display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--gl-card);border-radius:16px;padding:12px 12px 12px 20px;min-width:230px;min-height:62px}
 .g-lobby .gl-codebox b{font-size:28px;font-weight:800;letter-spacing:.04em;font-variant-numeric:tabular-nums;color:var(--gl-fg);min-width:3.4em;white-space:nowrap}
+.g-lobby .gl-codebox b.gl-pend{color:var(--gl-muted);animation:glpulse 1.4s ease-in-out infinite}
 .g-lobby .gl-tools{display:flex;align-items:center;gap:8px;flex:none}
 .g-lobby .gl-hide{display:flex;align-items:center;gap:8px;height:38px;padding:0 6px;color:var(--gl-accent);font-weight:600;font-size:16px}
 .g-lobby .gl-hide svg{width:20px;height:20px;stroke-width:1.8}
-.g-lobby .gl-body{display:grid;grid-template-columns:minmax(0,1fr) 1px 330px;gap:0 40px;padding:36px 40px 40px}
+.g-lobby .gl-tools button:disabled{opacity:.4}
+.g-lobby .gl-body{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 1px var(--glc,330px);gap:0 40px;padding:36px 40px 40px}
 .g-lobby .gl-rule{background:var(--gl-line)}
-.g-lobby .gl-sec{display:flex;flex-direction:column;min-width:0}
+.g-lobby .gl-sec{display:flex;flex-direction:column;min-width:0;min-height:0}
 .g-lobby .gl-sec-h{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;min-height:32px;flex:none}
 .g-lobby .gl-sec-h h2{margin:0;font-size:22px;line-height:1.3;font-weight:700;letter-spacing:-.02em;color:var(--gl-fg);white-space:nowrap}
 .g-lobby .gl-pill{position:relative;display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--gl-muted);background:var(--gl-chip);border-radius:99px;padding:6px 14px;font-variant-numeric:tabular-nums;white-space:nowrap;flex:none}
-.g-lobby .gl-pill.pick{padding-right:10px;cursor:pointer}
-.g-lobby .gl-pill.pick:hover,.g-lobby .gl-pill.pick:focus-within{color:var(--gl-accent)}
+.g-lobby .gl-pill.gl-pick{padding-right:10px;cursor:pointer;color:var(--gl-accent);background:var(--gl-accent-soft);transition:transform .12s}
+.g-lobby .gl-pill.gl-pick:hover{transform:scale(1.04)}
 .g-lobby .gl-pill select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;border:0;margin:0;-webkit-appearance:none;appearance:none}
 .g-lobby .gl-pill svg{width:14px;height:14px;stroke-width:2.4}
 .g-lobby .gl-pill.gl-live{color:var(--gl-live);background:var(--gl-live-soft);gap:7px;padding:4px 12px}
 .g-lobby .gl-pill.gl-live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--gl-live)}
-.g-lobby .gl-players{list-style:none;margin:0;padding:0;min-height:568px}
+.g-lobby .gl-players{list-style:none;margin:0;padding:0;flex:1 1 auto;min-height:calc(var(--rows,4) * 71px);overflow-y:auto;overscroll-behavior:contain}
+.g-lobby.gl-fixh .gl-players{min-height:0}
 .g-lobby .gl-pl{display:flex;align-items:center;gap:14px;height:71px;padding:14px 0;border-bottom:1px solid var(--gl-line)}
-.g-lobby .gl-pl.away{opacity:.55}
+.g-lobby .gl-new{animation:glin .3s ease both}
+.g-lobby .gl-pl.gl-away{opacity:.55}
 .g-lobby .gl-av{width:42px;height:42px;border-radius:12px;background:var(--gl-accent-soft);color:var(--gl-accent);font-weight:700;font-size:15px;display:grid;place-items:center;flex:none}
-.g-lobby .gl-pl.lead .gl-av{background:var(--gl-accent);color:var(--gl-accent-ink)}
+.g-lobby .gl-av svg{width:22px;height:22px;stroke-width:1.8}
+.g-lobby .gl-pl.gl-lead .gl-av{background:var(--gl-accent);color:var(--gl-accent-ink)}
+.g-lobby .gl-pl.gl-seat .gl-av{background:none;border:1.5px dashed var(--gl-line);color:var(--gl-muted)}
+.g-lobby .gl-pl.gl-seat.gl-botseat .gl-av{border-style:solid;background:var(--gl-chip)}
+.g-lobby .gl-pl.gl-seat .gl-who b{color:var(--gl-muted);font-weight:500}
 .g-lobby .gl-who{flex:1;min-width:0}
 .g-lobby .gl-who b{display:flex;align-items:center;gap:8px;font-weight:600;font-size:17px;line-height:1.4;color:var(--gl-fg);min-width:0}
 .g-lobby .gl-who b i{font-style:normal;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .g-lobby .gl-who>span{display:block;color:var(--gl-muted);font-size:14px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.g-lobby .gl-rn{display:flex;align-items:center;gap:6px;min-width:0;max-width:100%;border-radius:8px;font-weight:600}
+.g-lobby .gl-rn svg{width:14px;height:14px;stroke-width:2;color:var(--gl-muted);opacity:.7;flex:none}
+.g-lobby .gl-rn:hover svg{opacity:1;color:var(--gl-accent)}
+.g-lobby .gl-rnin{width:100%;max-width:220px;height:30px;border:1px solid var(--gl-accent);border-radius:8px;padding:0 8px;font:600 16px var(--gl-font);color:var(--gl-fg);background:var(--gl-card);outline:0;margin:0}
 .g-lobby .gl-badge{flex:none;font-size:11px;font-weight:700;letter-spacing:.05em;line-height:1.5;background:var(--gl-accent);color:var(--gl-accent-ink);border-radius:99px;padding:1px 9px}
 .g-lobby .gl-sq{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none;transition:transform .12s}
-.g-lobby button.gl-sq:hover{transform:scale(1.08)}
+.g-lobby button.gl-sq:hover:not(:disabled){transform:scale(1.08)}
+.g-lobby button.gl-sq:active:not(:disabled){transform:scale(.94)}
 .g-lobby .gl-sq svg{width:19px;height:19px;stroke-width:1.8}
 .g-lobby .gl-crown{background:var(--gl-accent-soft);color:var(--gl-accent)}
-.g-lobby .gl-pl.lead .gl-crown{background:var(--gl-accent);color:var(--gl-accent-ink)}
+.g-lobby .gl-pl.gl-lead .gl-crown{background:var(--gl-accent);color:var(--gl-accent-ink)}
 .g-lobby .gl-kick{background:var(--gl-danger-soft);color:var(--gl-danger)}
 .g-lobby .gl-ph{visibility:hidden}
-.g-lobby .gl-chat{min-height:520px}
-.g-lobby .gl-msgs{flex:1 1 0;min-height:0;contain:size;display:flex;flex-direction:column;gap:18px;overflow-y:auto;overscroll-behavior:contain;padding-bottom:16px}
+.g-lobby .gl-bots{flex:none;display:flex;align-items:center;gap:14px;padding-top:16px;min-height:0}
+.g-lobby .gl-bots:empty{display:none}
+.g-lobby .gl-bots .gl-who b{font-size:16px}
+.g-lobby .gl-bots .gl-who b i{white-space:normal;line-height:1.25}
+.g-lobby .gl-sw{position:relative;flex:none;width:48px;height:28px;border-radius:99px;background:var(--gl-chip);border:1px solid var(--gl-line);transition:background .2s,border-color .2s}
+.g-lobby .gl-sw::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:transform .2s cubic-bezier(.2,.8,.2,1)}
+.g-lobby .gl-sw[aria-checked="true"]{background:var(--gl-accent);border-color:var(--gl-accent)}
+.g-lobby .gl-sw[aria-checked="true"]::after{transform:translateX(20px)}
+.g-lobby .gl-sw:disabled{opacity:.55}
+.g-lobby .gl-msgs{flex:1 1 0;min-height:140px;contain:size;display:flex;flex-direction:column;gap:18px;overflow-y:auto;overscroll-behavior:contain;padding-bottom:16px}
 .g-lobby .gl-msgs>*{flex:none}
 .g-lobby .gl-m b{font-weight:700;color:var(--gl-fg);overflow-wrap:anywhere}
 .g-lobby .gl-m time{margin-left:8px;color:var(--gl-muted);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .g-lobby .gl-m p{margin:3px 0 0;color:var(--gl-muted);overflow-wrap:anywhere}
-.g-lobby .gl-m.sys p{margin:0;font-size:14px;font-weight:500}
-.g-lobby .gl-m.sys time{margin-left:0}
+.g-lobby .gl-m.gl-sys p{margin:0;font-size:14px;font-weight:500}
+.g-lobby .gl-m.gl-sys time{margin-left:0}
 .g-lobby .gl-empty{margin:0;color:var(--gl-muted);font-size:15px}
 .g-lobby .gl-send{display:flex;align-items:center;gap:8px;border:1px solid var(--gl-line);border-radius:14px;padding:6px 6px 6px 18px;background:var(--gl-card);flex:none;margin:0}
-.g-lobby .gl-send:focus-within{border-color:var(--gl-accent)}
-.g-lobby .gl-send input{flex:1;min-width:0;border:0;outline:0;background:none;font:inherit;color:var(--gl-fg);height:36px;padding:0;margin:0;box-shadow:none;border-radius:0}
-.g-lobby .gl-send input::placeholder{color:var(--gl-muted);opacity:1}
-.g-lobby .gl-send.slow{border-color:var(--gl-danger)}
-.g-lobby .gl-go{width:42px;height:42px;border-radius:11px;background:var(--gl-accent);color:var(--gl-accent-ink);display:grid;place-items:center;flex:none}
+.g-lobby .gl-send:focus-within,.g-lobby .gl-join:focus-within{border-color:var(--gl-accent)}
+.g-lobby .gl-send input,.g-lobby .gl-join input{flex:1;min-width:0;border:0;outline:0;background:none;font:inherit;color:var(--gl-fg);height:36px;padding:0;margin:0;box-shadow:none;border-radius:0}
+.g-lobby .gl-send input::placeholder,.g-lobby .gl-join input::placeholder{color:var(--gl-muted);opacity:1;letter-spacing:0;font-weight:400;text-transform:none}
+.g-lobby .gl-send.gl-slow{border-color:var(--gl-danger)}
+.g-lobby .gl-go{width:42px;height:42px;border-radius:11px;background:var(--gl-accent);color:var(--gl-accent-ink);display:grid;place-items:center;flex:none;transition:transform .12s}
+.g-lobby .gl-go:active{transform:scale(.92)}
 .g-lobby .gl-go svg{width:20px;height:20px;stroke-width:2.2}
-.g-lobby .gl-foot{position:relative;background:var(--gl-band);padding:44px 40px;display:flex;justify-content:center;align-items:center;gap:12px;min-height:150px}
-.g-lobby .gl-play{display:flex;align-items:center;justify-content:center;gap:10px;min-width:330px;height:62px;padding:0 28px;border-radius:16px;background:var(--gl-accent);color:var(--gl-accent-ink);font-size:19px;font-weight:700;box-shadow:0 12px 28px rgba(123,58,237,.38);transition:transform .12s,opacity .2s;white-space:nowrap}
+.g-lobby .gl-foot{flex:none;background:var(--gl-band);padding:44px 40px;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:20px}
+.g-lobby .gl-join{grid-column:1;justify-self:start;display:flex;align-items:center;gap:6px;width:250px;max-width:100%;border:1px solid var(--gl-line);border-radius:14px;padding:5px 5px 5px 16px;background:var(--gl-card);margin:0;transition:border-color .15s}
+.g-lobby .gl-join input{font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.g-lobby .gl-join.gl-bad{border-color:var(--gl-danger)}
+.g-lobby .gl-jbtn{flex:none;height:38px;padding:0 14px;border-radius:10px;background:var(--gl-accent-soft);color:var(--gl-accent);font-weight:700;font-size:15px;transition:transform .12s}
+.g-lobby .gl-jbtn:active{transform:scale(.95)}
+.g-lobby .gl-act{grid-column:2;display:flex;flex-direction:column;align-items:center;gap:10px;min-width:0}
+.g-lobby .gl-hint{grid-column:3;justify-self:end;margin:0;max-width:100%;font-size:14px;font-weight:500;color:var(--gl-muted);text-align:right}
+.g-lobby .gl-hint.gl-bad{color:var(--gl-danger);font-weight:600}
+.g-lobby .gl-play{display:flex;align-items:center;justify-content:center;gap:10px;min-width:330px;height:62px;padding:0 28px;border-radius:16px;background:var(--gl-accent);color:var(--gl-accent-ink);font-size:19px;font-weight:700;box-shadow:0 12px 28px rgba(123,58,237,.38);transition:transform .12s,opacity .2s,box-shadow .2s;white-space:nowrap}
 .g-lobby .gl-play:hover:not(:disabled){transform:translateY(-2px)}
-.g-lobby .gl-play:disabled{opacity:.45;cursor:default;box-shadow:none}
-.g-lobby .gl-play.ghost{background:var(--gl-card);color:var(--gl-accent);box-shadow:none}
+.g-lobby .gl-play:active:not(:disabled){transform:scale(.97)}
+.g-lobby .gl-play:disabled{opacity:.45;box-shadow:none}
+.g-lobby .gl-play.gl-ghost{background:var(--gl-card);color:var(--gl-accent);box-shadow:none}
 .g-lobby .gl-play svg{width:20px;height:20px;stroke-width:2}
 .g-lobby .gl-wait{display:flex;align-items:center;justify-content:center;gap:12px;min-width:330px;max-width:100%;min-height:62px;padding:10px 28px;border-radius:16px;background:var(--gl-card);color:var(--gl-muted);font-size:17px;font-weight:600;text-align:center}
 .g-lobby .gl-wait::before{content:"";flex:none;width:9px;height:9px;border-radius:50%;background:var(--gl-accent);animation:glpulse 1.4s ease-in-out infinite}
-.g-lobby .gl-hint{position:absolute;left:40px;right:40px;bottom:14px;margin:0;font-size:14px;font-weight:500;color:var(--gl-muted);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.g-lobby .gl-hint:empty{display:none}
-.g-lobby .gl-st{margin:0;min-height:1.4em;font-size:15px;font-weight:600;color:var(--gl-muted);text-align:center}
-.g-lobby .gl-st.bad{color:var(--gl-danger)}
-.g-lobby .gl-foot .gl-st{position:absolute;left:40px;right:40px;bottom:12px;min-height:0}
-.g-lobby .gl-foot.sm{flex-direction:column;min-height:0;padding:22px 40px}
-.g-lobby .gl-foot.sm .gl-st{position:static}
-.g-lobby .gl-urow{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) 1px 330px;gap:0 40px;align-items:end;padding-bottom:30px;margin-bottom:30px;border-bottom:1px solid var(--gl-line)}
-.g-lobby .gl-urow>div{min-width:0}
-.g-lobby .gl-urow p{grid-column:3;margin:0 0 14px;color:var(--gl-muted);font-size:15px}
-.g-lobby .gl-in{display:block;width:100%;height:56px;margin:0;border:1px solid var(--gl-line);border-radius:14px;padding:0 18px;background:var(--gl-card);color:var(--gl-fg);font:500 18px var(--gl-font);outline:0;box-shadow:none;transition:border-color .15s}
-.g-lobby .gl-in:focus{border-color:var(--gl-accent)}
-.g-lobby .gl-in.bad{border-color:var(--gl-danger)}
-.g-lobby .gl-in::placeholder{color:var(--gl-muted);opacity:1;font-weight:400}
-.g-lobby .gl-in.gl-code-in{text-align:center;font-weight:800;font-size:26px;letter-spacing:.2em;text-transform:uppercase}
-.g-lobby .gl-in.gl-code-in::placeholder{letter-spacing:.2em;font-weight:700;opacity:.5}
-.g-lobby .gl-opt{display:flex;flex-direction:column;min-width:0}
-.g-lobby .gl-opt p{margin:0 0 22px;color:var(--gl-muted);font-size:15px}
-.g-lobby .gl-sizes{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:28px}
-.g-lobby .gl-size{width:56px;height:56px;border-radius:14px;background:var(--gl-accent-soft);color:var(--gl-accent);font-weight:700;font-size:19px;display:grid;place-items:center;transition:transform .12s}
-.g-lobby .gl-size:hover{transform:scale(1.06)}
-.g-lobby .gl-size[aria-checked="true"]{background:var(--gl-accent);color:var(--gl-accent-ink)}
-.g-lobby .gl-sizes span{margin-left:6px;color:var(--gl-muted);font-size:15px;font-weight:500}
-.g-lobby .gl-opt .gl-in{margin-bottom:28px}
-.g-lobby .gl-btn{display:flex;align-items:center;justify-content:center;gap:10px;height:62px;margin-top:auto;padding:0 24px;border-radius:16px;background:var(--gl-accent);color:var(--gl-accent-ink);font-size:19px;font-weight:700;box-shadow:0 12px 28px rgba(123,58,237,.38);transition:transform .12s;white-space:nowrap}
-.g-lobby .gl-btn:hover{transform:translateY(-2px)}
-.g-lobby .gl-btn.ghost{background:var(--gl-accent-soft);color:var(--gl-accent);box-shadow:none}
-.g-lobby .gl-center{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;text-align:center}
-.g-lobby .gl-spin{width:46px;height:46px;margin:0 auto 22px;border-radius:50%;border:4px solid var(--gl-accent-soft);border-top-color:var(--gl-accent);animation:glspin .8s linear infinite}
+.g-lobby .gl-center{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;padding:20px;text-align:center}
 .g-lobby .gl-msg{margin:0;font-size:30px;line-height:1.25;font-weight:800;letter-spacing:-.02em;color:var(--gl-fg);text-align:center;overflow-wrap:anywhere}
 .g-lobby .gl-txt{margin:12px auto 0;max-width:520px;color:var(--gl-muted);text-align:center;font-size:17px}
-.g-lobby .gl-center .gl-st{margin-top:14px}
+.g-lobby.gl-cmp .gl-head{padding:18px 32px}
+.g-lobby.gl-cmp .gl-head h1{font-size:36px}
+.g-lobby.gl-cmp .gl-code small{margin-bottom:5px}
+.g-lobby.gl-cmp .gl-codebox{min-height:52px;padding:7px 8px 7px 18px}
+.g-lobby.gl-cmp .gl-codebox b{font-size:24px}
+.g-lobby.gl-cmp .gl-body{padding:22px 32px 22px}
+.g-lobby.gl-cmp .gl-sec-h{margin-bottom:10px}
+.g-lobby.gl-cmp .gl-players{min-height:calc(var(--rows,4) * 58px)}
+.g-lobby.gl-cmp.gl-fixh .gl-players{min-height:0}
+.g-lobby.gl-cmp .gl-pl{height:58px;padding:8px 0}
+.g-lobby.gl-cmp .gl-av{width:38px;height:38px}
+.g-lobby.gl-cmp .gl-bots{padding-top:10px}
+.g-lobby.gl-cmp .gl-msgs{gap:12px}
+.g-lobby.gl-cmp .gl-foot{padding:16px 32px}
+.g-lobby.gl-cmp .gl-play,.g-lobby.gl-cmp .gl-wait{height:54px;min-height:54px;min-width:290px}
+.g-lobby.gl-mid .gl-play,.g-lobby.gl-mid .gl-wait{min-width:220px}
+.g-lobby.gl-mid .gl-head{grid-template-columns:auto minmax(0,1fr) auto}
+.g-lobby.gl-mid .gl-head h1{font-size:36px;max-width:100%}
+.g-lobby.gl-mid .gl-codebox{min-width:0}
+.g-lobby.gl-mid .gl-foot{grid-template-columns:minmax(220px,1fr) auto minmax(0,1fr);gap:16px}
+.g-lobby.gl-mid .gl-join{width:220px}
+.g-lobby.gl-stack{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.g-lobby.gl-stack .gl-card{margin:0 auto auto;border-radius:24px}
+.g-lobby.gl-stack .gl-head{grid-template-columns:minmax(0,1fr);justify-items:center;padding:12px 16px 20px;gap:10px}
+.g-lobby.gl-stack .gl-head h1{grid-column:1;grid-row:2;font-size:30px;max-width:100%}
+.g-lobby.gl-stack .gl-leave{grid-column:1;grid-row:1}
+.g-lobby.gl-stack .gl-code{grid-column:1;grid-row:3;justify-self:center;text-align:center;max-width:100%}
+.g-lobby.gl-stack .gl-codebox{text-align:left;min-width:0;min-height:54px;padding:8px 8px 8px 16px;gap:10px}
+.g-lobby.gl-stack .gl-codebox b{font-size:24px}
+.g-lobby.gl-stack .gl-body{display:contents}
+.g-lobby.gl-stack .gl-body>.gl-rule{display:none}
+.g-lobby.gl-stack .gl-plsec{order:1;padding:20px 16px 18px}
+.g-lobby.gl-stack .gl-sec-h{margin-bottom:8px}
+.g-lobby.gl-stack .gl-players{min-height:0;overflow:visible;flex:none}
+.g-lobby.gl-stack .gl-pl{height:60px;padding:9px 0;gap:12px}
+.g-lobby.gl-stack .gl-av{width:38px;height:38px}
+.g-lobby.gl-stack .gl-foot{order:2;display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:18px 16px}
+.g-lobby.gl-stack .gl-act{order:-1;align-items:stretch}
+.g-lobby.gl-stack .gl-play,.g-lobby.gl-stack .gl-wait{min-width:0;width:100%;height:54px;min-height:54px}
+.g-lobby.gl-stack .gl-hint{order:-1;text-align:center;justify-self:auto}
+.g-lobby.gl-stack .gl-hint:empty{display:none}
+.g-lobby.gl-stack .gl-join{width:100%}
+.g-lobby.gl-stack .gl-chat{order:3;height:320px;padding:20px 16px 16px}
+.g-lobby.gl-stack .gl-msgs{overscroll-behavior:auto}
+.g-lobby.gl-stack .gl-center{order:1;min-height:200px}
+.g-lobby.gl-stack .gl-msg{font-size:24px}
 @keyframes glspin{to{transform:rotate(360deg)}}
-@keyframes glpulse{50%{opacity:.25;transform:scale(.7)}}
-@media (max-width:859px){
-.g-lobby{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-.g-lobby .gl-card{position:relative;left:auto;top:auto;width:auto;max-width:1040px;margin:16px auto;transform:none;border-radius:28px}
-.g-lobby .gl-head{grid-template-columns:minmax(0,1fr);justify-items:center;padding:16px 20px 28px;gap:14px;min-height:0}
-.g-lobby .gl-head h1{grid-column:1;grid-row:2;font-size:34px;max-width:100%}
-.g-lobby .gl-leave{grid-column:1;grid-row:1}
-.g-lobby .gl-code{grid-column:1;grid-row:3;justify-self:center;text-align:center;max-width:100%}
-.g-lobby .gl-codebox{text-align:left;min-width:0}
-.g-lobby .gl-body{grid-template-columns:minmax(0,1fr);gap:32px;padding:28px 20px}
-.g-lobby .gl-body>.gl-rule{display:none}
-.g-lobby .gl-players{min-height:0}
-.g-lobby .gl-chat{min-height:380px}
-.g-lobby .gl-foot{flex-direction:column;padding:28px 20px;min-height:0;gap:10px}
-.g-lobby .gl-play,.g-lobby .gl-wait,.g-lobby .gl-btn{min-width:0;width:100%}
-.g-lobby .gl-hint,.g-lobby .gl-foot .gl-st{position:static;white-space:normal}
-.g-lobby .gl-urow{grid-template-columns:minmax(0,1fr);gap:8px;padding-bottom:24px;margin-bottom:0}
-.g-lobby .gl-urow>.gl-rule,.g-lobby .gl-urow p{display:none}
-.g-lobby .gl-opt .gl-btn{margin-top:0}
-.g-lobby .gl-center{min-height:220px}
-.g-lobby .gl-msg{font-size:24px}
-}
-@media (max-width:400px){
-.g-lobby .gl-card{border-radius:22px}
-.g-lobby .gl-head{padding:12px 16px 24px}
-.g-lobby .gl-body{padding:24px 16px}
-.g-lobby .gl-foot{padding:22px 16px}
-.g-lobby .gl-codebox{gap:12px;padding-left:16px}
-.g-lobby .gl-pl{gap:12px}
-}
+@keyframes glpulse{50%{opacity:.3;transform:scale(.75)}}
+@keyframes glin{from{opacity:0;transform:translateY(6px)}}
 @media (prefers-reduced-motion:reduce){.g-lobby,.g-lobby *{transition:none!important;animation:none!important}}`;
 const NET_I = {
   crown: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5zM5 21h14"/></svg>',
@@ -463,7 +488,10 @@ const NET_I = {
   play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>',
   link: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4L11.6 6M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4l1.6-1.6"/></svg>',
   back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
-  down: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'
+  down: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  pen: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></svg>',
+  bot: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4M9 13v1M15 13v1M9.5 17h5"/><circle cx="12" cy="3.5" r=".5"/></svg>'
 };
 const netEsc = s => String(s == null ? '' : s).replace(/[&<>"'`]/g, c => '&#' + c.charCodeAt(0) + ';');
 const netName = s => String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f<>&"'`\\\u202a-\u202e\u2066-\u2069]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16);
@@ -472,15 +500,9 @@ const netUid = () => Array.from({ length: 10 }, () => CODE_ABC[Math.floor(Math.r
 const netLs = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} return null; };
 const netProfile = () => { try { const p = JSON.parse(netLs('gameplay:profile') || 'null'); return p && typeof p === 'object' && !Array.isArray(p) ? p : {}; } catch (e) { return {}; } };
 const netLoadName = () => { const p = netProfile(); return netName(p.username) || netName(p.displayName) || netName(netLs('gameplay:netname')); };
-const netSaveName = n => {
-  n = netName(n);
-  if (!n) return;
-  const p = netProfile();
-  if (p.username === n) return;
-  p.username = n;
-  netLs('gameplay:profile', JSON.stringify(p));
-  try { window.dispatchEvent(new CustomEvent('gameplay:profile', { detail: Object.assign({}, p) })); } catch (e) {}
-};
+const netSaveName = n => { n = netName(n); if (n) netLs('gameplay:netname', n); };
+const netGuest = () => { let n = netName(netLs('gameplay:netguest')); if (!n) { n = 'Player ' + (1000 + Math.floor(Math.random() * 9000)); netLs('gameplay:netguest', n); } return n; };
+const netT = s => { try { return window.gpI18n && typeof gpI18n.t === 'function' ? gpI18n.t(s) || s : s; } catch (e) { return s; } };
 const netInit = n => {
   const w = String(n || '').trim().split(/\s+/).filter(Boolean).map(x => Array.from(x));
   if (!w.length) return '?';
@@ -520,12 +542,12 @@ const netIce = () => {
 const NET_SOFT = ['network', 'server-error', 'socket-error', 'socket-closed', 'load'];
 const netWhy = (e, code) => {
   const t = e && e.type;
-  if (t === 'peer-unavailable') return code ? `Party ${code} not found. Check the code and try again.` : 'Party not found. Check the code and try again.';
-  if (t === 'ice') return 'Could not connect to the other player. A school, office or mobile network may be blocking game connections. Try again, or switch networks (for example Wi-Fi instead of mobile data).';
-  if (t === 'timeout') return 'The other player did not answer. Try again.';
-  if (t === 'load') return 'Could not load the online player. Check your internet connection and try again.';
-  if (NET_SOFT.indexOf(t) >= 0) return 'Can’t reach the online server right now (it may be busy or blocked on this network). Try again in a moment.';
-  return netErr(e);
+  if (t === 'peer-unavailable') return code ? netT('Party {code} not found. Check the code and try again.').replace('{code}', code) : netT('Party not found. Check the code and try again.');
+  if (t === 'ice') return netT('Could not connect to the other player. A school, office or mobile network may be blocking game connections. Try again, or switch networks (for example Wi-Fi instead of mobile data).');
+  if (t === 'timeout') return netT('The other player did not answer. Try again.');
+  if (t === 'load') return netT('Could not load the online player. Check your internet connection and try again.');
+  if (NET_SOFT.indexOf(t) >= 0) return netT('Can’t reach the online server right now (it may be busy or blocked on this network). Try again in a moment.');
+  return netT(netErr(e));
 };
 const netTe = new TextEncoder();
 function makeNet(g, add) {
@@ -539,15 +561,13 @@ function makeNet(g, add) {
     const t = setTimeout(() => rej({ type }), ms);
     p(v => { clearTimeout(t); res(v); }, e => { clearTimeout(t); rej(e); });
   });
-  const tx = (c, m, s) => {
+  const tx = (c, m, s, b) => {
     if (!c || !c.open) return false;
     const dc = c.dataChannel;
     try {
       if (!dc || dc.readyState !== 'open' || c.serialization !== 'json') { c.send(m); return true; }
       if (s == null) s = JSON.stringify(m);
-      if (s.length < 5000) { dc.send(netTe.encode(s)); return true; }
-      const b = netTe.encode(s);
-      if (b.byteLength < 16000) { dc.send(b); return true; }
+      if (s.length < 16000) { if (!b) b = netTe.encode(s); if (b.byteLength < 16000) { dc.send(b); return true; } }
       const id = ++ckId, n = Math.ceil(s.length / 2500);
       for (let i = 0; i < n; i++) dc.send(netTe.encode(JSON.stringify({ __ck: [id, i, n, s.slice(i * 2500, i * 2500 + 2500)] })));
       return true;
@@ -643,7 +663,7 @@ function makeNet(g, add) {
     let last = null;
     for (let i = 0; i < 3; i++) {
       if (i) {
-        if (note) note(`Server busy, trying again (${i + 1}/3)…`);
+        if (note) note(netT('Server busy, trying again ({n}/3)…').replace('{n}', i + 1));
         await sleepMs(1500 * i);
       }
       if (my != null && my !== gen) throw { type: 'cancel' };
@@ -691,7 +711,7 @@ function makeNet(g, add) {
     try { return await dial1(p, code, my, hello, done); }
     catch (e) { if (e && e.type === 'timeout' && hello && my === gen && p && !p.destroyed) return dial1(p, code, my, hello, done); throw e; }
   };
-  const rm = { me: null, key: null, name: '', hostId: null, list: [], guests: new Map(), seq: 0, min: 2, max: 4, sizes: [2, 3, 4], state: 'lobby', conn: null, lastRx: 0, hb: 0, ui: null, busy: false, reconn: false, pendingGo: null, inGame: false, leader: null, chat: [], rate: new Map(), compat: false, compatO: null, tick: 0, lastTick: 0 };
+  const rm = { me: null, key: null, name: '', hostId: null, list: [], guests: new Map(), seq: 0, min: 2, max: 4, sizes: [2, 3, 4], state: 'lobby', conn: null, lastRx: 0, hb: 0, ui: null, busy: false, reconn: false, pendingGo: null, inGame: false, leader: null, chat: [], rate: new Map(), compat: false, compatO: null, tick: 0, lastTick: 0, bots: false, botsOk: false, renamed: false };
   const leaderId = () => {
     if (net.role === 'host') return rm.leader && (rm.leader === rm.me || rm.guests.has(rm.leader)) ? rm.leader : rm.me;
     return rm.leader || rm.hostId;
@@ -710,22 +730,26 @@ function makeNet(g, add) {
   };
   const cleanList = l => Array.isArray(l) ? l.slice(0, 8).filter(p => p && typeof p.id === 'string').map(p => ({ id: p.id.slice(0, 16), name: netName(p.name) || 'Player', host: !!p.host, leader: !!p.leader, ping: Math.max(0, Math.min(9999, +p.ping || 0)), away: !!p.away, inGame: !!p.inGame })) : [];
   const cleanSizes = l => Array.isArray(l) ? l.map(n => Math.round(+n)).filter(n => n >= 2 && n <= 8).slice(0, 7) : [];
-  const cleanMsg = m => m && typeof m === 'object' ? { i: typeof m.i === 'string' ? m.i.slice(0, 16) : '', n: netName(m.n), x: netMsg(m.x), t: +m.t || Date.now(), s: m.s ? 1 : 0 } : null;
+  const cleanMsg = m => m && typeof m === 'object' ? { i: typeof m.i === 'string' ? m.i.slice(0, 16) : '', n: netName(m.n), x: netMsg(m.x), k: m.s && typeof m.k === 'string' ? netMsg(m.k).slice(0, 60) : '', a: netName(m.a), t: +m.t || Date.now(), s: m.s ? 1 : 0 } : null;
   const cleanChat = l => Array.isArray(l) ? l.slice(-100).map(cleanMsg).filter(m => m && m.x) : [];
+  const txAll = m => {
+    if (!rm.guests.size) return;
+    const s = JSON.stringify(m), b = s.length < 16000 ? netTe.encode(s) : null;
+    rm.guests.forEach(gs => tx(gs.conn, m, s, b));
+  };
   const pushList = () => {
     rm.list = hostPlayers();
-    const m = { __pl: rm.list, busy: rm.state === 'game', min: rm.min, max: rm.max, sizes: rm.sizes, leader: leaderId() };
-    rm.guests.forEach(gs => tx(gs.conn, m));
+    const m = { __pl: rm.list, busy: rm.state === 'game', min: rm.min, max: rm.max, sizes: rm.sizes, leader: leaderId(), bots: rm.bots, canBots: rm.botsOk };
+    txAll(m);
     if (rm.ui) rm.ui.update();
   };
   const chatAdd = m => {
     rm.chat.push(m);
     if (rm.chat.length > 100) rm.chat.splice(0, rm.chat.length - 100);
-    const pk = { __cm: m };
-    rm.guests.forEach(gs => tx(gs.conn, pk));
+    txAll({ __cm: m });
     if (rm.ui) rm.ui.chat();
   };
-  const sysLine = x => chatAdd({ i: '', n: '', x: netMsg(x), t: Date.now(), s: 1 });
+  const sysLine = (k, a = '') => chatAdd({ i: '', n: '', x: netMsg(k.replace('{name}', a)), k, a, t: Date.now(), s: 1 });
   const chatFrom = (id, nm, x) => {
     x = netMsg(x);
     if (!x) return;
@@ -735,7 +759,7 @@ function makeNet(g, add) {
     r.push(t);
     chatAdd({ i: id, n: nm, x, t, s: 0 });
   };
-  const welOf = gs => ({ __wel: { id: gs.id, host: rm.me, code: net.code, busy: rm.state === 'game', inGame: gs.inGame, min: rm.min, max: rm.max, sizes: rm.sizes, leader: leaderId(), chat: rm.chat } });
+  const welOf = gs => ({ __wel: { id: gs.id, host: rm.me, code: net.code, busy: rm.state === 'game', inGame: gs.inGame, min: rm.min, max: rm.max, sizes: rm.sizes, leader: leaderId(), bots: rm.bots, canBots: rm.botsOk, chat: rm.chat } });
   const removeGuest = (id, why) => {
     const gs = rm.guests.get(id);
     if (!gs) return;
@@ -744,16 +768,16 @@ function makeNet(g, add) {
     if (c) { if (why === 'kick') tx(c, { __kick: 1 }); setTimeout(() => { try { c.close(); } catch (e) {} }, why === 'kick' ? 400 : 0); }
     emit('leave', pubOf(gs));
     if (rm.compat && rm.state === 'game' && gs.inGame) emit('close');
-    sysLine(gs.name + (why === 'kick' ? ' was removed from the party' : ' left the party'));
-    if (rm.leader === id) { rm.leader = rm.me; sysLine(rm.name + ' is now the host'); }
+    sysLine(why === 'kick' ? '{name} was removed from the party' : '{name} left the party', gs.name);
+    if (rm.leader === id) { rm.leader = rm.me; sysLine('{name} is now the host', rm.name); }
     pushList();
   };
   const setLeader = id => {
     const p = hostPlayers().find(q => q.id === id && !q.away);
     if (!p || leaderId() === id) return;
     rm.leader = id;
-    sysLine(p.name + ' is now the host');
-    if (id === rm.me) toast('You are now the host');
+    sysLine('{name} is now the host', p.name);
+    if (id === rm.me && !rm.ui) toast('You are now the host');
     pushList();
   };
   const setSize = n => {
@@ -762,10 +786,18 @@ function makeNet(g, add) {
     rm.max = n;
     pushList();
   };
+  const setBots = v => {
+    v = !!v;
+    if (!rm.botsOk || rm.state === 'game' || rm.bots === v) return;
+    rm.bots = v;
+    sysLine(v ? 'Bots will fill the empty seats' : 'Bots are off');
+    pushList();
+  };
   const ctl = (a, id, n) => {
     if (a === 'kick') { if (typeof id === 'string' && rm.guests.has(id)) removeGuest(id, 'kick'); }
     else if (a === 'lead') { if (typeof id === 'string') setLeader(id); }
     else if (a === 'size') setSize(n);
+    else if (a === 'bots') setBots(n);
     else if (a === 'play') { if (rm.ui && rm.ui.play) rm.ui.play(); }
   };
   const leadAct = (a, id, n) => {
@@ -824,7 +856,7 @@ function makeNet(g, add) {
         tx(c, welOf(gs));
         emit('join', pubOf(gs));
         if (rm.state === 'game' && !rm.ui) toast(gs.name + ' is waiting in the lobby');
-        sysLine(gs.name + ' joined the party');
+        sysLine('{name} joined the party', gs.name);
         pushList();
         return;
       }
@@ -867,8 +899,9 @@ function makeNet(g, add) {
       if (+d.min) rm.min = +d.min;
       if (+d.max) rm.max = +d.max;
       const s = cleanSizes(d.sizes); if (s.length) rm.sizes = s;
+      rm.bots = !!d.bots; rm.botsOk = !!d.canBots;
       const L = typeof d.leader === 'string' ? d.leader.slice(0, 16) : rm.hostId;
-      if (L !== rm.leader) { const was = rm.leader; rm.leader = L; if (was && L === rm.me) toast('You are now the host'); }
+      if (L !== rm.leader) { const was = rm.leader; rm.leader = L; if (was && L === rm.me && !rm.ui) toast('You are now the host'); }
       if (rm.ui) rm.ui.update();
       return;
     }
@@ -880,7 +913,7 @@ function makeNet(g, add) {
     if (d.__go) {
       rm.state = 'game'; rm.inGame = true; rm.busy = true;
       const players = cleanList(d.__go).map(p => ({ id: p.id, name: p.name, host: p.host, leader: p.leader }));
-      const r = { role: 'guest', id: rm.me, players, size: Math.round(+d.size) || players.length, leader: typeof d.leader === 'string' ? d.leader.slice(0, 16) : rm.hostId };
+      const r = { role: 'guest', id: rm.me, players, size: Math.round(+d.size) || players.length, leader: typeof d.leader === 'string' ? d.leader.slice(0, 16) : rm.hostId, bots: !!d.bots };
       if (rm.ui) rm.ui.finish(r);
       else rm.pendingGo = r;
       return;
@@ -912,6 +945,7 @@ function makeNet(g, add) {
     if (+w.min) rm.min = +w.min;
     if (+w.max) rm.max = +w.max;
     const s = cleanSizes(w.sizes); if (s.length) rm.sizes = s;
+    rm.bots = !!w.bots; rm.botsOk = !!w.canBots;
     rm.leader = typeof w.leader === 'string' ? w.leader.slice(0, 16) : rm.hostId;
     if (Array.isArray(w.chat)) rm.chat = cleanChat(w.chat);
     c.on('data', d0 => { const d = unck(c, d0); if (d !== null) guestData(c, d, false); });
@@ -1017,7 +1051,7 @@ function makeNet(g, add) {
     o = o && typeof o === 'object' ? o : {};
     const cfg = netSizes(o);
     rm.compat = !!compat; rm.compatO = compat ? o : null;
-    if (mode !== 'room') rm.name = netLoadName() || rm.name || netName(o.name);
+    if (mode !== 'room') { rm.name = (rm.renamed && rm.name) || netLoadName() || netName(o.name) || netGuest(); rm.botsOk = !!o.bots && !compat; rm.bots = false; }
     if (mode === 'room' && net.role === 'guest' && rm.pendingGo) {
       const r = rm.pendingGo; rm.pendingGo = null;
       if (rm.compat) emit('open', 'guest');
@@ -1029,237 +1063,310 @@ function makeNet(g, add) {
       el.setAttribute('role', 'dialog');
       el.setAttribute('aria-modal', 'true');
       el.setAttribute('aria-label', (g.title || 'Online') + ' party');
-      (document.fullscreenElement || document.body).append(el); void el.offsetWidth; el.classList.add('show');
-      document.documentElement.classList.add('gl-lock');
-      const narrow = window.matchMedia('(max-width:859px)');
+      const box = () => { const r = document.querySelector('.g-root.gm-' + g.id); return r && r.isConnected ? r : null; };
+      const place = () => { const r = box(), p = r || document.fullscreenElement || document.body; el.classList.toggle('gl-fixed', !r); if (el.parentNode !== p) p.append(el); return p; };
+      place(); void el.offsetWidth; el.classList.add('gl-on');
+      let note0 = '', done = false, screen = '', phase = '', err = '', again = null, op = 0, pick = 0, hidden = netLs('gameplay:hidecode') === '1', sent = [], cache = {}, playT = 0, slowT = 0, editing = false, lastFit = '', rows = 0, seen = new Set(), chatN = 0, flashT = 0, flashM = '';
+      const saved = Math.round(+netLs('gameplay:partysize:' + g.id));
+      pick = cfg.sizes.indexOf(saved) >= 0 ? saved : cfg.def;
       const fit = () => {
         const c = !done && el.querySelector('.gl-card');
         if (!c) return;
-        if (narrow.matches) { c.style.removeProperty('--gls'); return; }
-        const s = Math.min(1, (window.innerWidth - 48) / c.offsetWidth, (window.innerHeight - 48) / c.offsetHeight);
-        c.style.setProperty('--gls', String(Math.max(.3, Math.floor(s * 1000) / 1000)));
+        const p = place(), vp = el.classList.contains('gl-fixed');
+        const W = vp ? innerWidth : p.clientWidth, H = vp ? innerHeight : p.clientHeight;
+        if (!W || !H) return;
+        const k = vp ? 1 : (p.getBoundingClientRect().width / W) || 1, Wv = W * k, Hv = H * k;
+        lastFit = [W, H, k.toFixed(3), screen, rows].join();
+        const stack = Wv < 600 || Hv < 340;
+        el.classList.toggle('gl-stack', stack);
+        el.classList.remove('gl-cmp', 'gl-fixh', 'gl-mid');
+        c.style.zoom = ''; c.style.width = ''; c.style.height = '';
+        if (stack) {
+          const pv = 10, sv = Math.min(1, (Wv - pv * 2) / 340), s = sv / k;
+          el.style.padding = (pv / k) + 'px';
+          c.style.width = ((W - pv * 2 / k) / s) + 'px'; c.style.zoom = String(s);
+          return;
+        }
+        const pv = 16, av = Wv - pv * 2, bw = Math.min(1040, Math.max(760, av)), aw = av / bw, ah = Hv - pv * 2;
+        el.style.padding = (pv / k) + 'px';
+        el.classList.toggle('gl-mid', bw < 900);
+        el.style.setProperty('--glc', (bw >= 960 ? 330 : Math.round(.36 * (bw - 80))) + 'px');
+        c.style.width = bw + 'px';
+        let h = c.offsetHeight;
+        if (Math.min(1, aw) * h > ah * 1.02 || ah / h < .9) { el.classList.add('gl-cmp'); h = c.offsetHeight; }
+        const sv = Math.min(1, aw, Math.max(.62, ah / h));
+        if (h * sv > ah + 1) { el.classList.add('gl-fixh'); c.style.height = (ah / sv) + 'px'; }
+        c.style.zoom = String(sv / k);
       };
-      const ro = window.ResizeObserver ? new ResizeObserver(() => fit()) : null;
-      const onFs = () => { const p = document.fullscreenElement || document.body; if (el.parentNode !== p) p.append(el); fit(); };
+      const tick = setInterval(() => {
+        if (done) return;
+        const p = el.parentNode;
+        if (!p || !el.isConnected) return place(), fit();
+        const vp = el.classList.contains('gl-fixed'), W = vp ? innerWidth : p.clientWidth, H = vp ? innerHeight : p.clientHeight, k = vp ? 1 : (p.getBoundingClientRect().width / (W || 1)) || 1;
+        if ([W, H, k.toFixed(3), screen, rows].join() !== lastFit || (!vp && !box())) fit();
+      }, 400);
+      const onFs = () => { setTimeout(fit, 60); setTimeout(fit, 450); };
       const guard = e => { if (!el.contains(e.target)) e.stopPropagation(); };
-      window.addEventListener('resize', fit);
+      window.addEventListener('resize', onFs);
       window.addEventListener('keydown', guard, true);
       window.addEventListener('keyup', guard, true);
       document.addEventListener('fullscreenchange', onFs);
-      const saved = Math.round(+netLs('gameplay:partysize:' + g.id));
-      let done = false, screen = '', again = null, op = 0, pick = cfg.sizes.indexOf(saved) >= 0 ? saved : cfg.def, hidden = netLs('gameplay:hidecode') === '1', sent = [], cache = {}, playT = 0, slowT = 0;
       const ui = {};
       const finish = (r, keep) => {
         if (done) return;
-        done = true; note = null; clearTimeout(playT); clearTimeout(slowT);
-        if (ro) ro.disconnect();
-        window.removeEventListener('resize', fit);
+        done = true; note = null; clearTimeout(playT); clearTimeout(slowT); clearTimeout(flashT); clearInterval(tick);
+        window.removeEventListener('resize', onFs);
         window.removeEventListener('keydown', guard, true);
         window.removeEventListener('keyup', guard, true);
         document.removeEventListener('fullscreenchange', onFs);
-        document.documentElement.classList.remove('gl-lock');
         if (rm.ui === ui) rm.ui = null;
-        el.classList.remove('show'); el.style.pointerEvents = 'none';
-        setTimeout(() => el.remove(), 400);
+        el.classList.remove('gl-on'); el.style.pointerEvents = 'none';
+        setTimeout(() => el.remove(), 300);
         if (r === null && !keep) shut(true);
         if (r && rm.compat) emit('open', r.role);
         resolve(r);
       };
-      const shareLbl = navigator.share ? 'Share invite link' : 'Copy invite link';
-      const eye = () => `<svg viewBox="0 0 24 24" aria-hidden="true">${hidden ? NET_I.eyeOff : NET_I.eye}</svg><span>${hidden ? 'Show' : 'Hide'}</span>`;
-      const codeHtml = () => `<div class="gl-code"><small>Party code</small><div class="gl-codebox"><b class="gl-codetxt">${hidden ? '••••' : netEsc(net.code)}</b><span class="gl-tools"><button class="gl-hide" type="button" data-n="hide" aria-pressed="${hidden}" aria-label="${hidden ? 'Show' : 'Hide'} party code">${eye()}</button><button class="gl-sq gl-crown" type="button" data-n="share" title="${shareLbl}" aria-label="${shareLbl}">${NET_I.link}</button></span></div></div>`;
-      const head = (back, code) => `<header class="gl-head"><button class="gl-leave" type="button" data-n="${back}">${NET_I.back}<span>${back === 'cancel' ? 'Cancel' : code ? 'Leave' : 'Back'}</span></button><h1>${netEsc(g.title || o.title || 'Online party')}</h1>${code ? codeHtml() : ''}</header>`;
+      const T = netT;
+      const ready = () => phase === 'ready' && mode === 'room';
+      const shareLbl = T(navigator.share ? 'Share invite link' : 'Copy invite link');
+      const eye = () => `<svg viewBox="0 0 24 24" aria-hidden="true">${hidden ? NET_I.eyeOff : NET_I.eye}</svg><span>${T(hidden ? 'Show' : 'Hide')}</span>`;
+      const codeHtml = () => {
+        const c = ready() ? net.code : phase === 'joining' || phase === 'error' && again && again.code ? (again && again.code) || '' : '';
+        const on = ready();
+        return `<small>${T('Party code')}</small><div class="gl-codebox"><b class="gl-codetxt${on ? '' : ' gl-pend'}">${on && hidden ? '••••' : c ? netEsc(c) : '····'}</b><span class="gl-tools"><button class="gl-hide" type="button" data-n="hide" aria-pressed="${hidden}" aria-label="${T(hidden ? 'Show party code' : 'Hide party code')}"${on ? '' : ' disabled'}>${eye()}</button><button class="gl-sq gl-crown" type="button" data-n="share" title="${shareLbl}" aria-label="${shareLbl}"${on ? '' : ' disabled'}>${NET_I.link}</button></span></div>`;
+      };
+      const head = (lbl, code) => `<header class="gl-head"><button class="gl-leave" type="button" data-n="back">${NET_I.back}<span>${T(lbl)}</span></button><h1>${netEsc(g.title || o.title || 'Online party')}</h1>${code ? '<div class="gl-code"></div>' : ''}</header>`;
+      const joinForm = () => `<form class="gl-join" autocomplete="off"><input class="gl-code-in" maxlength="4" placeholder="${T('Join with a code')}" aria-label="${T('Join with a code')}" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go"><button class="gl-jbtn" type="submit">${T('Join')}</button></form>`;
       const row = (p, lead, amLead) => {
         const isL = p.id === lead, me = p.id === rm.me, nm = netEsc(p.name);
-        let sub = (isL ? 'Party leader' : 'Member') + (me ? ' · You' : '');
-        if (p.away) sub += ' · Reconnecting…';
-        else if (rm.busy && !p.inGame) sub += ' · Waiting';
-        else if (rm.busy) sub += ' · In game';
+        let sub = T(isL ? 'Party leader' : 'Member') + (me ? ' · ' + T('You') : '');
+        if (p.away) sub += ' · ' + T('Reconnecting…');
+        else if (rm.busy && !p.inGame) sub += ' · ' + T('Waiting');
+        else if (rm.busy) sub += ' · ' + T('In game');
         let b = '';
-        if (amLead) {
-          b = isL ? `<span class="gl-sq gl-crown" title="Party leader">${NET_I.crown}</span>` : `<button class="gl-sq gl-crown" type="button" data-n="lead" data-id="${netEsc(p.id)}" title="Make host" aria-label="Make ${nm} the host"${p.away ? ' disabled' : ''}>${NET_I.crown}</button>`;
-          b += me || p.host ? '<span class="gl-sq gl-ph"></span>' : `<button class="gl-sq gl-kick" type="button" data-n="kick" data-id="${netEsc(p.id)}" title="Remove" aria-label="Remove ${nm}">${NET_I.x}</button>`;
-        } else if (isL) b = `<span class="gl-sq gl-crown" title="Party leader">${NET_I.crown}</span>`;
-        return `<li class="gl-pl${isL ? ' lead' : ''}${p.away ? ' away' : ''}"><span class="gl-av" aria-hidden="true">${netEsc(netInit(p.name))}</span><div class="gl-who"><b><i>${nm}</i>${isL ? '<span class="gl-badge">HOST</span>' : ''}</b><span>${sub}</span></div>${b}</li>`;
+        if (amLead && ready()) {
+          b = isL ? `<span class="gl-sq gl-crown" title="${T('Party leader')}">${NET_I.crown}</span>` : `<button class="gl-sq gl-crown" type="button" data-n="lead" data-id="${netEsc(p.id)}" title="${T('Make host')}" aria-label="${T('Make host')}: ${nm}"${p.away ? ' disabled' : ''}>${NET_I.crown}</button>`;
+          b += me || p.host ? '<span class="gl-sq gl-ph"></span>' : `<button class="gl-sq gl-kick" type="button" data-n="kick" data-id="${netEsc(p.id)}" title="${T('Remove')}" aria-label="${T('Remove')}: ${nm}">${NET_I.x}</button>`;
+        } else if (isL) b = `<span class="gl-sq gl-crown" title="${T('Party leader')}">${NET_I.crown}</span>`;
+        const name = me && editing ? `<input class="gl-rnin" maxlength="16" value="${nm}" aria-label="${T('Your name')}" autocomplete="off" spellcheck="false" enterkeyhint="done">` : me ? `<button class="gl-rn" type="button" data-n="rename" title="${T('Change your name')}"><i>${nm}</i>${NET_I.pen}</button>` : `<i>${nm}</i>`;
+        const nw = !seen.has(p.id);
+        return `<li class="gl-pl${nw ? ' gl-new' : ''}${isL ? ' gl-lead' : ''}${p.away ? ' gl-away' : ''}"><span class="gl-av" aria-hidden="true">${netEsc(netInit(p.name))}</span><div class="gl-who"><b>${name}${isL ? '<span class="gl-badge">HOST</span>' : ''}</b><span>${sub}</span></div>${b}</li>`;
       };
-      const put = (k, sel, html) => { if (cache[k] === html) return; const x = el.querySelector(sel); if (!x) return; cache[k] = html; x.innerHTML = html; };
-      const show = (s, a = {}) => {
-        screen = s; again = a.retry || null; note = null; cache = {};
-        const foot = (m, bad) => `<footer class="gl-foot sm"><p class="gl-st${bad ? ' bad' : ''}" role="status">${netEsc(m)}</p>${a.retry ? '<button class="gl-play" type="button" data-n="retry">Try again</button>' : ''}</footer>`;
-        if (s === 'start') {
-          const sz = cfg.sizes.map(n => `<button class="gl-size" type="button" role="radio" aria-checked="${n === pick}" data-n="size" data-v="${n}">${n}</button>`).join('');
-          el.innerHTML = `<div class="gl-card" tabindex="-1">${head('back')}<div class="gl-body"><div class="gl-urow"><div><label class="gl-lbl" for="gl-nm-${g.id}">Username</label><input id="gl-nm-${g.id}" class="gl-in gl-name" maxlength="16" placeholder="Choose a username" autocomplete="nickname" autocapitalize="off" spellcheck="false" enterkeyhint="done" value="${netEsc(rm.name)}"></div><div class="gl-rule"></div><p>Everyone in the party sees this name.</p></div><section class="gl-sec gl-opt" aria-label="Create party"><div class="gl-sec-h"><h2>Create party</h2></div><p>Pick the party size, then share the code with your friends.</p><span class="gl-lbl">Party size</span><div class="gl-sizes" role="radiogroup" aria-label="Party size">${sz}<span>players</span></div><button class="gl-btn" type="button" data-n="host">Create party</button></section><div class="gl-rule"></div><section class="gl-sec gl-opt" aria-label="Join party"><div class="gl-sec-h"><h2>Join party</h2></div><p>Type the code a friend shared with you.</p><label class="gl-lbl" for="gl-cd-${g.id}">Party code</label><input id="gl-cd-${g.id}" class="gl-in gl-code-in" maxlength="4" placeholder="ABCD" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go" value="${netEsc(a.code || '')}"><button class="gl-btn ghost" type="button" data-n="join">Join party</button></section></div>${foot(a.msg || 'Only real players join: share the code or the invite link.', a.bad)}</div>`;
-        } else if (s === 'wait') {
-          el.innerHTML = `<div class="gl-card" tabindex="-1">${head('cancel')}<div class="gl-body"><div class="gl-center"><div class="gl-spin" aria-hidden="true"></div><p class="gl-msg">${netEsc(a.msg)}</p><p class="gl-st" role="status">${netEsc(a.sub || 'Connecting to the server…')}</p></div></div><footer class="gl-foot"><button class="gl-play ghost" type="button" data-n="cancel">Cancel</button></footer></div>`;
-          note = t => { const x = !done && screen === 'wait' && el.querySelector('.gl-st'); if (x) x.textContent = t; };
-        } else if (s === 'lobby') {
-          el.innerHTML = `<div class="gl-card gl-lob" tabindex="-1">${head('back', true)}<div class="gl-body"><section class="gl-sec" aria-label="Players"><div class="gl-sec-h"><h2>Players</h2><span class="gl-cnt"></span></div><ul class="gl-players"></ul></section><div class="gl-rule"></div><section class="gl-sec gl-chat" aria-label="Live chat"><div class="gl-sec-h"><h2>Live chat</h2><span class="gl-pill gl-live">Live</span></div><div class="gl-msgs" role="log" aria-live="polite"></div><form class="gl-send"><input class="gl-chat-in" maxlength="200" placeholder="Type a message..." autocomplete="off" enterkeyhint="send" aria-label="Message"><button class="gl-go" type="submit" aria-label="Send">${NET_I.send}</button></form></section></div><footer class="gl-foot"></footer></div>`;
+      const seat = () => `<li class="gl-pl gl-seat${rm.bots ? ' gl-botseat' : ''}"><span class="gl-av" aria-hidden="true">${rm.bots ? NET_I.bot : NET_I.plus}</span><div class="gl-who"><b><i>${T(rm.bots ? 'Bot' : 'Empty seat')}</i></b><span>${T(rm.bots ? 'A bot plays this seat' : 'Waiting for a player…')}</span></div></li>`;
+      const put = (k, sel, html) => {
+        if (cache[k] === html) return false;
+        const x = el.querySelector(sel);
+        if (!x) return false;
+        cache[k] = html;
+        const a = document.activeElement, keepIn = a && a.classList && a.classList.contains('gl-rnin') && x.contains(a) ? [a.value, a.selectionStart, a.selectionEnd] : null;
+        x.innerHTML = html;
+        if (keepIn) { const n = x.querySelector('.gl-rnin'); if (n) { n.value = keepIn[0]; try { n.focus({ preventScroll: true }); n.setSelectionRange(keepIn[1], keepIn[2]); } catch (e) {} } }
+        return true;
+      };
+      const show = s => {
+        screen = s; note = null; cache = {}; editing = false;
+        if (s === 'lobby') {
+          el.innerHTML = `<div class="gl-card gl-lob" tabindex="-1">${head('Leave', true)}<div class="gl-body"><section class="gl-sec gl-plsec" aria-label="${T('Players')}"><div class="gl-sec-h"><h2>${T('Players')}</h2><span class="gl-cnt"></span></div><ul class="gl-players"></ul><div class="gl-bots"></div></section><div class="gl-rule"></div><section class="gl-sec gl-chat" aria-label="${T('Live chat')}"><div class="gl-sec-h"><h2>${T('Live chat')}</h2><span class="gl-pill gl-live">${T('Live')}</span></div><div class="gl-msgs" role="log" aria-live="polite"></div><form class="gl-send" autocomplete="off"><input class="gl-chat-in" maxlength="200" placeholder="${T('Type a message...')}" autocomplete="off" enterkeyhint="send" aria-label="${T('Message')}"><button class="gl-go" type="submit" aria-label="${T('Send')}">${NET_I.send}</button></form></section></div><footer class="gl-foot">${joinForm()}<div class="gl-act"></div><p class="gl-hint" role="status"></p></footer></div>`;
           ui.update(); ui.chat(true);
         } else if (s === 'ended') {
-          el.innerHTML = `<div class="gl-card" tabindex="-1">${head('back')}<div class="gl-body"><div class="gl-center"><p class="gl-msg">${netEsc(a.msg)}</p><p class="gl-txt">${netEsc(a.sub)}</p></div></div><footer class="gl-foot"><button class="gl-play" type="button" data-n="menu">OK</button></footer></div>`;
+          el.innerHTML = `<div class="gl-card" tabindex="-1">${head('Close')}<div class="gl-body"><div class="gl-center"><p class="gl-msg">${netEsc(ui.endMsg[0])}</p><p class="gl-txt">${netEsc(ui.endMsg[1])}</p></div></div><footer class="gl-foot">${joinForm()}<div class="gl-act"><button class="gl-play" type="button" data-n="new">${NET_I.plus}${T('New party')}</button></div><p class="gl-hint"></p></footer></div>`;
         }
         const c = el.querySelector('.gl-card');
-        if (ro) { ro.disconnect(); ro.observe(c); }
         fit();
         if (!el.contains(document.activeElement)) { try { c.focus({ preventScroll: true }); } catch (e) {} }
       };
       ui.finish = finish;
       ui.update = () => {
         if (done || screen !== 'lobby') return;
-        const L = rm.list, lead = leaderId(), amLead = lead === rm.me, n = L.filter(p => !p.away).length;
-        put('pl', '.gl-players', L.map(p => row(p, lead, amLead)).join(''));
-        const opts = amLead && !rm.busy && !rm.reconn ? rm.sizes.filter(s => s >= L.length) : [];
-        put('cnt', '.gl-cnt', opts.length > 1 ? `<label class="gl-pill pick">${L.length} / ${rm.max} joined${NET_I.down}<select data-n="sizesel" aria-label="Party size">${opts.map(s => `<option value="${s}"${s === rm.max ? ' selected' : ''}>${s} players</option>`).join('')}</select></label>` : `<span class="gl-pill">${L.length} / ${rm.max} joined</span>`);
-        let f;
-        if (amLead) {
+        const jn = phase === 'joining' || (phase === 'error' && !!(again && again.code));
+        const on = ready(), lead = on ? leaderId() : rm.me, amLead = on ? lead === rm.me : !jn;
+        const L = on ? rm.list : jn ? [] : [{ id: rm.me, name: rm.name, host: true, leader: true }];
+        const size = on ? rm.max : pick, n = L.filter(p => !p.away).length;
+        put('code', '.gl-code', codeHtml());
+        let pl = L.map(p => row(p, lead, amLead)).join('');
+        if (jn) pl = `<li class="gl-pl gl-seat"><span class="gl-av" aria-hidden="true">${phase === 'error' ? NET_I.x : NET_I.plus}</span><div class="gl-who"><b><i>${netEsc(phase === 'error' ? T('Party {code}').replace('{code}', again.code) : T('Joining party…'))}</i></b><span>${netEsc(T(phase === 'error' ? 'Could not join this party' : 'Connecting to the party…'))}</span></div></li>`;
+        else for (let i = L.length; i < size; i++) pl += seat();
+        if (put('pl', '.gl-players', pl)) L.forEach(p => seen.add(p.id));
+        const nr = Math.max(size, L.length, 1);
+        if (nr !== rows) { rows = nr; el.style.setProperty('--rows', String(nr)); fit(); }
+        const jt = netEsc(T('{n} / {m} joined').replace('{n}', L.length).replace('{m}', size));
+        const opts = amLead && !rm.busy && !rm.reconn && !jn ? (on ? rm.sizes : cfg.sizes).filter(s => s >= L.length) : [];
+        put('cnt', '.gl-cnt', opts.length > 1 ? `<label class="gl-pill gl-pick">${jt}${NET_I.down}<select data-n="sizesel" aria-label="${T('Party size')}">${opts.map(s => `<option value="${s}"${s === size ? ' selected' : ''}>${T('{n} players').replace('{n}', s)}</option>`).join('')}</select></label>` : `<span class="gl-pill">${jt}</span>`);
+        const botsOk = on ? rm.botsOk : !jn && rm.botsOk;
+        put('bots', '.gl-bots', botsOk ? `<span class="gl-av" aria-hidden="true">${NET_I.bot}</span><div class="gl-who"><b><i>${T('Fill empty seats with bots')}</i></b><span>${T(!amLead ? (rm.bots ? 'On · set by the host' : 'Off · set by the host') : rm.bots ? 'Bots play the empty seats' : 'Only real players play')}</span></div><button class="gl-sw" type="button" role="switch" data-n="bots" aria-checked="${rm.bots}" aria-label="${T('Fill empty seats with bots')}"${amLead && !rm.busy && !rm.reconn ? '' : ' disabled'}></button>` : '');
+        const need = rm.bots ? 1 : on ? rm.min : cfg.min;
+        let f, hint = '', bad = false;
+        if (phase === 'creating') { f = `<div class="gl-wait" role="status">${T('Creating party…')}</div>`; hint = note0 || ''; }
+        else if (phase === 'joining') { f = `<div class="gl-wait" role="status">${netEsc(T('Joining party {code}…').replace('{code}', (again && again.code) || ''))}</div>`; hint = note0 || ''; }
+        else if (phase === 'error') { f = `<button class="gl-play" type="button" data-n="retry">${T('Try again')}</button>${again && again.code ? `<button class="gl-play gl-ghost" type="button" data-n="new">${T('Create my own party')}</button>` : ''}`; hint = err; bad = true; }
+        else if (amLead) {
           const blocked = rm.busy && net.role !== 'host';
-          const hint = rm.reconn ? 'Connection lost. Reconnecting…' : blocked ? 'A game is in progress. You can start when it ends.' : n < rm.min ? `Waiting for ${rm.min - n} more player${rm.min - n > 1 ? 's' : ''}…` : '';
-          f = `<button class="gl-play" type="button" data-n="play"${n < rm.min || blocked || rm.reconn ? ' disabled' : ''}>${NET_I.play}Play</button><p class="gl-hint" role="status">${netEsc(hint)}</p>`;
-        } else f = `<div class="gl-wait" role="status">${rm.reconn ? 'Connection lost. Reconnecting…' : rm.busy ? 'A game is in progress. You will join the next one.' : 'Waiting for the host…'}</div>`;
-        put('ft', '.gl-foot', f);
+          hint = rm.reconn ? T('Connection lost. Reconnecting…') : blocked ? T('A game is in progress. You can start when it ends.') : n < need ? T(need - n > 1 ? 'Waiting for {n} more players…' : 'Waiting for 1 more player…').replace('{n}', need - n) : '';
+          f = `<button class="gl-play" type="button" data-n="play"${n < need || blocked || rm.reconn ? ' disabled' : ''}>${NET_I.play}${T('Play')}</button>`;
+        } else f = `<div class="gl-wait" role="status">${T(rm.reconn ? 'Connection lost. Reconnecting…' : rm.busy ? 'A game is in progress. You will join the next one.' : 'Waiting for the host…')}</div>`;
+        put('ft', '.gl-act', f);
+        const h = el.querySelector('.gl-hint');
+        if (flashM) { hint = flashM; bad = false; }
+        if (h && h.textContent !== hint) h.textContent = hint;
+        if (h) h.classList.toggle('gl-bad', bad);
       };
       ui.chat = force => {
         if (done || screen !== 'lobby') return;
-        const box = el.querySelector('.gl-msgs');
-        if (!box) return;
-        const stick = force === true || box.scrollTop + box.clientHeight >= box.scrollHeight - 40;
-        box.innerHTML = rm.chat.length ? rm.chat.map(m => m.s ? `<div class="gl-m sys"><p>${netEsc(m.x)} · <time>${netHm(m.t)}</time></p></div>` : `<div class="gl-m${m.i === rm.me ? ' me' : ''}"><b>${netEsc(m.n)}</b><time>${netHm(m.t)}</time><p>${netEsc(m.x)}</p></div>`).join('') : '<p class="gl-empty">No messages yet. Say hi!</p>';
-        if (stick) box.scrollTop = box.scrollHeight;
+        const bx = el.querySelector('.gl-msgs');
+        if (!bx) return;
+        const stick = force === true || bx.scrollTop + bx.clientHeight >= bx.scrollHeight - 40;
+        const n0 = force === true ? rm.chat.length : chatN;
+        chatN = rm.chat.length;
+        bx.innerHTML = rm.chat.length ? rm.chat.map((m, i) => m.s ? `<div class="gl-m gl-sys${i >= n0 ? ' gl-new' : ''}"><p>${netEsc(m.k ? T(m.k).replace('{name}', m.a) : m.x)} · <time>${netHm(m.t)}</time></p></div>` : `<div class="gl-m${m.i === rm.me ? ' gl-me' : ''}${i >= n0 ? ' gl-new' : ''}"><b>${netEsc(m.n)}</b><time>${netHm(m.t)}</time><p>${netEsc(m.x)}</p></div>`).join('') : `<p class="gl-empty">${T('No messages yet. Say hi!')}</p>`;
+        if (stick) bx.scrollTop = bx.scrollHeight;
       };
+      ui.flash = m => { flashM = m; clearTimeout(flashT); flashT = setTimeout(() => { flashM = ''; ui.update(); }, 2600); ui.update(); };
+      ui.endMsg = ['', ''];
       ui.ended = reason => {
         if (done) return;
         const k = reason === 'kicked', h = reason === 'host-left';
-        show('ended', { msg: k ? 'You were removed from the party' : h ? 'The party was closed' : 'Lost connection to the party', sub: k ? 'The host removed you from this party. You can create a new party or join another one.' : h ? 'The host left, so the party ended. You can create a new party or join another one.' : 'Check your internet connection, then join the party again.' });
+        ui.endMsg = [T(k ? 'You were removed from the party' : h ? 'The party was closed' : 'Lost connection to the party'), T(k ? 'The host removed you from this party. Start a new party or join another one with a code.' : h ? 'The host left, so the party ended. Start a new party or join another one with a code.' : 'Check your internet connection, then join the party again.')];
+        show('ended');
       };
       rm.ui = ui;
-      const status = (m, bad) => { const s = el.querySelector('.gl-st'); if (s) { s.textContent = m; s.classList.toggle('bad', !!bad); } };
-      const nameIn = () => el.querySelector('.gl-name');
-      const readName = () => { const i = nameIn(); return i ? netName(i.value) : rm.name; };
-      const needName = m => { status(m || 'Type a username first.', true); const i = nameIn(); if (i) { i.classList.add('bad'); try { i.focus({ preventScroll: true }); } catch (e) {} } };
-      const canRetry = e => { const t = e && e.type; return t === 'ice' || t === 'timeout' || NET_SOFT.indexOf(t) >= 0; };
+      const canRetry = e => { const t = e && e.type; return t === 'ice' || t === 'timeout' || t === 'peer-unavailable' || NET_SOFT.indexOf(t) >= 0; };
+      const fail = (m, fn) => { phase = 'error'; err = m; again = fn; if (screen !== 'lobby') show('lobby'); else { cache = {}; ui.update(); } };
       const hosting = async () => {
-        const nm = readName();
-        if (!nm) return needName();
-        rm.name = nm; netSaveName(nm); netLs('gameplay:partysize:' + g.id, String(pick));
         const my = ++op;
-        show('wait', { msg: 'Creating party…' });
+        phase = 'creating'; err = ''; again = null; note0 = '';
+        note = t => { if (!done && my === op) { note0 = t; ui.update(); } };
+        show('lobby');
         try {
           rm.min = cfg.min; rm.max = pick; rm.sizes = cfg.sizes;
           const code = await roomHost();
           if (done || my !== op || !code) return;
-          rm.min = cfg.min; rm.max = pick; rm.sizes = cfg.sizes; pushList();
+          note = null; note0 = '';
+          rm.min = cfg.min; rm.max = pick; rm.sizes = cfg.sizes; phase = 'ready'; cache = {};
+          pushList();
           netTrack('party_create', { game: g.id, size: pick });
-          show('lobby');
-        } catch (e) { if (!done && my === op && !(e && e.type === 'cancel')) show('start', { msg: netWhy(e), bad: true, retry: canRetry(e) ? hosting : null }); }
+        } catch (e) { if (!done && my === op && !(e && e.type === 'cancel')) { note = null; fail(netWhy(e), hosting); } }
       };
       const joining = async code => {
         code = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-        if (!/^[A-Z0-9]{4}$/.test(code)) { status('Type the 4-character party code.', true); const i = el.querySelector('.gl-code-in'); if (i) i.focus({ preventScroll: true }); return; }
-        const nm = readName();
-        if (!nm) return needName(`Choose a username to join party ${code}.`);
-        rm.name = nm; netSaveName(nm);
-        const my = ++op;
-        show('wait', { msg: `Joining party ${code}…`, sub: 'Connecting to the party…' });
+        if (!/^[A-Z0-9]{4}$/.test(code)) { const f = el.querySelector('.gl-join'), i = f && f.querySelector('input'); if (f) { f.classList.add('gl-bad'); try { i.focus({ preventScroll: true }); } catch (e) {} } return; }
+        if (ready() && code === net.code) { const i = el.querySelector('.gl-code-in'); if (i) i.value = ''; return; }
+        const my = ++op, fn = () => joining(code);
+        fn.code = code;
+        phase = 'joining'; err = ''; again = fn; note0 = '';
+        note = t => { if (!done && my === op) { note0 = t; ui.update(); } };
+        rm.botsOk = false; rm.bots = false;
+        if (screen !== 'lobby') show('lobby'); else { cache = {}; ui.update(); }
         try {
           const ok = await roomJoin(code);
           if (done || my !== op || !ok) return;
+          note = null; note0 = ''; phase = 'ready'; cache = {};
+          el.querySelectorAll('.gl-code-in').forEach(i => { i.value = ''; });
           netTrack('party_join', { game: g.id });
-          show('lobby');
+          ui.update(); ui.chat(true); fit();
         } catch (e) {
           const t = e && e.type;
           if (done || my !== op || t === 'cancel') return;
-          show('start', { msg: t === 'room-full' ? `Party ${code} is full.` : netWhy(e, code), bad: true, retry: canRetry(e) ? () => joining(code) : null, code });
+          note = null;
+          fail(t === 'room-full' ? T('Party {code} is full.').replace('{code}', code) : netWhy(e, code), canRetry(e) ? fn : Object.assign(() => joining(code), { code }));
         }
       };
+      const fresh = () => { rm.botsOk = !!o.bots && !rm.compat; rm.bots = false; rows = 0; hosting(); };
       const play = () => {
         if (done || screen !== 'lobby' || net.role !== 'host' || mode !== 'room' || rm.state === 'game') return;
         const players = hostPlayers().filter(p => !p.away);
-        if (players.length < rm.min) return;
+        if (players.length < (rm.bots ? 1 : rm.min)) return;
         rm.state = 'game';
         const ids = new Set(players.map(p => p.id));
         rm.guests.forEach(gs => { gs.inGame = ids.has(gs.id); });
-        const lead = leaderId();
+        const lead = leaderId(), bots = !!(rm.botsOk && rm.bots);
         const out = players.map(p => ({ id: p.id, name: p.name, host: p.host, leader: p.id === lead }));
-        rm.guests.forEach(gs => { if (gs.inGame) tx(gs.conn, { __go: out, size: rm.max, leader: lead }); });
+        rm.guests.forEach(gs => { if (gs.inGame) tx(gs.conn, { __go: out, size: rm.max, leader: lead, bots }); });
         pushList();
-        netTrack('party_play', { game: g.id, players: out.length, size: rm.max });
-        finish({ role: 'host', id: rm.me, players: out, size: rm.max, leader: lead });
+        netTrack('party_play', { game: g.id, players: out.length, size: rm.max, bots });
+        finish({ role: 'host', id: rm.me, players: out, size: rm.max, leader: lead, bots });
       };
       ui.play = play;
       const toggleHide = () => {
         hidden = !hidden; netLs('gameplay:hidecode', hidden ? '1' : null);
-        const b = el.querySelector('.gl-codetxt'), h = el.querySelector('.gl-hide');
-        if (b) b.textContent = hidden ? '••••' : net.code;
-        if (h) { h.setAttribute('aria-pressed', String(hidden)); h.setAttribute('aria-label', (hidden ? 'Show' : 'Hide') + ' party code'); h.innerHTML = eye(); }
+        cache.code = ''; ui.update();
       };
       const slow = i => {
         const f = i.closest('.gl-send');
-        f.classList.add('slow'); i.placeholder = 'Slow down a little…';
-        clearTimeout(slowT); slowT = setTimeout(() => { f.classList.remove('slow'); i.placeholder = 'Type a message...'; }, 2500);
+        f.classList.add('gl-slow'); i.placeholder = T('Slow down a little…');
+        clearTimeout(slowT); slowT = setTimeout(() => { f.classList.remove('gl-slow'); i.placeholder = T('Type a message...'); }, 2500);
       };
       const sendChat = () => {
         const i = el.querySelector('.gl-chat-in');
         if (!i) return;
         const v = netMsg(i.value);
-        if (!v || mode !== 'room' || (net.role === 'guest' && !rm.conn)) return;
+        if (!v || !ready() || (net.role === 'guest' && !rm.conn)) return;
         const t = Date.now();
         sent = sent.filter(x => t - x < 5000);
         if (sent.length >= 5) return slow(i);
         sent.push(t); i.value = '';
         if (net.role === 'host') chatFrom(rm.me, rm.name, v); else tx(rm.conn, { __chat: v });
       };
+      const rename = v => {
+        editing = false;
+        v = netName(v);
+        if (v && v !== rm.name) {
+          netSaveName(v); rm.renamed = true;
+          if (ready() && net.role === 'host') { rm.name = uniqueName(v, rm.me); pushList(); }
+          else { rm.name = v; if (ready()) tx(rm.conn, { __name: v }); }
+        }
+        cache.pl = ''; ui.update();
+      };
       el.addEventListener('click', e => {
         const b = e.target.closest('[data-n]');
         if (!b || done || b.disabled || b.tagName === 'SELECT') return;
         const n = b.dataset.n;
         sfx('tap');
-        if (n === 'host') hosting();
-        else if (n === 'join') joining(el.querySelector('.gl-code-in').value);
-        else if (n === 'size') { pick = +b.dataset.v; el.querySelectorAll('.gl-size').forEach(x => x.setAttribute('aria-checked', String(+x.dataset.v === pick))); }
-        else if (n === 'back') finish(null);
-        else if (n === 'cancel') { op++; shut(true); show('start'); }
-        else if (n === 'menu') show('start');
+        if (n === 'back') finish(null);
+        else if (n === 'new') { op++; shut(true); fresh(); }
         else if (n === 'retry' && again) again();
         else if (n === 'share') shareLink();
         else if (n === 'hide') toggleHide();
+        else if (n === 'rename') { editing = true; cache.pl = ''; ui.update(); const i = el.querySelector('.gl-rnin'); if (i) { try { i.focus({ preventScroll: true }); i.select(); } catch (x) {} } }
         else if (n === 'kick' || n === 'lead') leadAct(n, b.dataset.id);
+        else if (n === 'bots') { if (ready()) leadAct('bots', null, !rm.bots); else { rm.bots = !rm.bots; ui.update(); } }
         else if (n === 'play') {
           if (net.role === 'host') return leadAct('play');
           leadAct('play'); b.disabled = true; cache.ft = '';
           clearTimeout(playT); playT = setTimeout(() => ui.update(), 3000);
         }
       });
-      el.addEventListener('submit', e => { e.preventDefault(); sendChat(); });
-      ['keydown', 'keyup', 'keypress', 'pointerdown', 'pointermove', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchmove', 'touchend', 'wheel', 'contextmenu'].forEach(t => el.addEventListener(t, e => e.stopPropagation(), { passive: true }));
-      el.addEventListener('keydown', e => {
-        if (e.key !== 'Enter' || !e.target.matches('input')) return;
-        if (e.target.matches('.gl-code-in')) { e.preventDefault(); joining(e.target.value); }
-        else if (e.target.matches('.gl-name')) { e.preventDefault(); const c = el.querySelector('.gl-code-in'); if (c && c.value.length === 4) joining(c.value); else e.target.blur(); }
+      el.addEventListener('submit', e => {
+        e.preventDefault();
+        if (e.target.matches('.gl-send')) sendChat();
+        else if (e.target.matches('.gl-join')) joining(e.target.querySelector('input').value);
       });
+      ['keydown', 'keyup', 'keypress', 'pointerdown', 'pointermove', 'pointerup', 'mousedown', 'mouseup', 'click', 'dblclick', 'touchstart', 'touchmove', 'touchend', 'wheel', 'contextmenu'].forEach(t => el.addEventListener(t, e => e.stopPropagation(), { passive: true }));
+      el.addEventListener('keydown', e => {
+        if (!e.target.matches('.gl-rnin')) return;
+        if (e.key === 'Enter') { e.preventDefault(); rename(e.target.value); }
+        else if (e.key === 'Escape') { e.preventDefault(); editing = false; cache.pl = ''; ui.update(); }
+      });
+      el.addEventListener('focusout', e => { if (editing && e.target.matches('.gl-rnin')) { const v = e.target.value; setTimeout(() => { if (editing && !done) rename(v); }, 0); } });
       el.addEventListener('input', e => {
-        if (e.target.matches('.gl-code-in')) e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-        else if (e.target.matches('.gl-name')) { e.target.classList.remove('bad'); const v = netName(e.target.value); if (v) { rm.name = v; netSaveName(v); } }
+        if (e.target.matches('.gl-code-in')) { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); e.target.closest('.gl-join').classList.remove('gl-bad'); }
       });
       el.addEventListener('change', e => {
         if (!e.target.matches('select[data-n=sizesel]')) return;
         const v = Math.round(+e.target.value);
         netLs('gameplay:partysize:' + g.id, String(v));
-        leadAct('size', null, v);
+        if (ready()) leadAct('size', null, v); else if (cfg.sizes.indexOf(v) >= 0) { pick = v; rm.max = v; ui.update(); }
       });
       add(() => finish(null, true));
-      loadPeer().catch(() => {}); netIce();
       if (mode === 'room' && net.role === 'host' && peer && !peer.destroyed) {
-        rm.min = cfg.min; rm.sizes = cfg.sizes; rm.state = 'lobby';
+        rm.min = cfg.min; rm.sizes = cfg.sizes; rm.state = 'lobby'; phase = 'ready';
         if (cfg.sizes.indexOf(rm.max) < 0) rm.max = cfg.sizes.find(s => s >= rm.guests.size + 1) || cfg.sizes[cfg.sizes.length - 1];
         rm.guests.forEach(gs => { gs.inGame = false; tx(gs.conn, { __lob: 1 }); });
         pushList();
         show('lobby');
-      } else if (mode === 'room' && net.role === 'guest' && (rm.conn || rm.reconn)) show('lobby');
-      else if (net.invite) {
-        const c = net.invite;
-        show('start', { code: c });
-        if (readName()) joining(c); else needName(`Choose a username to join party ${c}.`);
-      } else show('start');
+      } else if (mode === 'room' && net.role === 'guest' && (rm.conn || rm.reconn)) { phase = 'ready'; show('lobby'); }
+      else if (net.invite) joining(net.invite);
+      else hosting();
+      loadPeer().catch(() => {}); netIce();
     });
   };
   const net = {
@@ -1268,6 +1375,7 @@ function makeNet(g, add) {
     get players() { return mode === 'room' ? rm.list.map(p => Object.assign({}, p)) : []; },
     get leader() { return mode === 'room' ? leaderId() : null; },
     get size() { return mode === 'room' ? rm.max : mode === 'pair' ? 2 : null; },
+    get bots() { return mode === 'room' && rm.botsOk && rm.bots; },
     get connected() {
       if (mode === 'room') {
         if (net.role !== 'host') return !!(rm.conn && rm.conn.open);
@@ -1282,7 +1390,8 @@ function makeNet(g, add) {
       let s;
       try { s = JSON.stringify(msg); } catch (e) { return; }
       if (s === undefined) return;
-      const one = c => (fast && fastTx(c, s)) || tx(c, msg, s);
+      let b = null;
+      const one = c => { if (fast && fastTx(c, s)) return; if (!b && s.length < 16000) b = netTe.encode(s); tx(c, msg, s, b); };
       if (mode === 'room') {
         if (net.role === 'host') rm.guests.forEach(gs => { if (gs.inGame) one(gs.conn); });
         else one(rm.conn);
@@ -1338,11 +1447,12 @@ function makeNet(g, add) {
     lobby(o = {}) { return roomUi(Object.assign({}, o, { sizes: [2], min: 2, max: 2, defaultSize: 2 }), true).then(r => r ? r.role : null); },
     room(o = {}) { return roomUi(o, false); }
   };
+  const say = m => { if (rm.ui && rm.ui.flash) rm.ui.flash(netT(m)); else toast(m); };
   const shareLink = () => {
     const url = net.link();
-    if (navigator.share) navigator.share({ title: g.title + ' on gameplay', text: `Join my ${g.title} party on gameplay! Party code ${net.code}`, url }).catch(() => {});
-    else if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast('Invite link copied'), () => toast(url));
-    else toast(url);
+    const copy = () => { if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => say('Invite link copied'), () => say(url)); else say(url); };
+    if (navigator.share) navigator.share({ title: g.title + ' on gameplay', text: `Join my ${g.title} party on gameplay! Party code ${net.code}`, url }).catch(e => { if (!e || e.name !== 'AbortError') copy(); });
+    else copy();
   };
   const onHide = () => { if (mode) shut(true); };
   window.addEventListener('pagehide', onHide);
@@ -1842,8 +1952,8 @@ const thumbsOn = () => S.prefs.thumbs !== false;
 const tint = g => g.cc || TINT[g.id] || '#6c5ce7';
 const img = (g, pri) => { if (!thumbsOn()) return ''; const u = coverUrl(g); return `<img src="${u}"${u === BLANK ? ` data-cv="${g.id}"` : ''} alt="" width="16" height="10"${pri ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async" draggable="false">`; };
 let sel = null;
-const card = (g, src, i) => `<a class="card${sel === g.id && src === 'grid' ? ' sel' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="${src}" style="--c:${tint(g)}"><div class="art">${img(g, i != null && i < 10)}</div><div class="name">${esc(g.title)}</div></a>`;
-const srow = g => `<a class="srow${sel === g.id ? ' sel' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="side" style="--c:${tint(g)}"><span class="t">${img(g)}</span><span class="n">${esc(g.title)}</span></a>`;
+const card = (g, src, i) => `<a class="card${sel === g.id && src === 'grid' ? ' sel' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="${src}" style="--c:${tint(g)};--i:${i || 0}"><div class="art">${img(g, i != null && i < 10)}</div><div class="name">${esc(g.title)}</div></a>`;
+const srow = g => `<a class="srow${sel === g.id ? ' sel' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="side" ><span class="n">${esc(g.title)}</span></a>`;
 function related(g) {
   const mine = new Set(g.info.genres);
   const scored = games.filter(x => x !== g).map(x => {
@@ -1860,21 +1970,13 @@ function related(g) {
   });
   return scored.sort((a, b) => b[0] - a[0]).map(x => x[1]);
 }
-const playedText = n => n ? `Played ${n}×` : 'Not played yet';
-function openGameTags(g) {
-  const m = g.info;
-  const tags = m.genres.map(k => `<a class="badge" href="${(PATH_MODE ? '/' : '#/') + '?g=' + k}" data-genre="${k}">${esc(gname(k))}</a>`);
-  tags.push(`<span class="badge">${g.is3d ? '3D' : '2D'}</span>`, `<span class="badge">${esc(playersText(m.pl))}</span>`, `<span class="badge">${g.kb ? 'Keyboard or touch' : 'Mouse or touch'}</span>`);
-  tags.push(`<span class="badge" id="pPlayed"></span>`);
-  return tags.join('');
-}
 
 const SB = { on: !!(SUPABASE_URL && SUPABASE_ANON_KEY), c: null, p: null, lib: null, user: null, session: null, prof: null, syncing: false, again: false, fail: 0, t: 0, loud: false, mode: 'in', choosing: false, view: 'main' };
 const AN_KEY = 'gameplay:analytics', CK_KEY = 'gameplay:consent', AN_MAX = 2000;
 const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 let consent = null;
 try { consent = JSON.parse(localStorage.getItem(CK_KEY)); } catch (e) {}
-if (!consent || typeof consent !== 'object') consent = null;
+if (!consent || typeof consent !== 'object' || consent.v !== 2) consent = null;
 const anOk = () => !!(consent && consent.analytics);
 let anQ = [];
 try { anQ = JSON.parse(localStorage.getItem(AN_KEY)) || []; } catch (e) {}
@@ -1967,12 +2069,13 @@ Ameplay.analytics = {
   get consent() { return consent ? { analytics: anOk(), at: consent.at } : null; },
   get session() { return SID; }
 };
-function setConsent(an) {
-  consent = { v: 1, analytics: !!an, at: Date.now() };
+function setConsent(an, lv) {
+  consent = { v: 2, analytics: !!an, level: lv || (an ? 'all' : 'essential'), terms: true, at: Date.now() };
   try { localStorage.setItem(CK_KEY, JSON.stringify(consent)); } catch (e) {}
   if (an) { anQ = anQ.concat(anHold); anHold = []; track('consent', { analytics: true }); anSave(); }
   else { anQ = []; anHold = []; try { localStorage.removeItem(AN_KEY); if (SB.on) localStorage.removeItem(VIDK); } catch (e) {} }
   $('#ckbar').hidden = true;
+  document.documentElement.classList.remove('ck-open');
   syncSwitches();
 }
 const TT = { g: null, since: 0, acc: 0 };
@@ -2016,7 +2119,7 @@ function start(g) {
   ttSync();
   const mark = e => {
     if (!cur || cur.g !== g || cur.counted) return;
-    if (e && e.type === 'keydown' && (isField(e.target) || (e.target.closest && e.target.closest('.top, .side, .modal, .menu, .ckbar')))) return;
+    if (e && e.type === 'keydown' && (isField(e.target) || (e.target.closest && !e.target.closest('.g-root') && e.target.closest('.top, .side, .modal, .menu, .ckbar')))) return;
     markPlayed(g);
   };
   ctl.api.on(frame, 'pointerdown', mark, true);
@@ -2044,7 +2147,6 @@ function markPlayed(g) {
   d.p++;
   save();
   track('game_play', { game: g.id, n: S.plays[g.id] });
-  const el = $('#pPlayed'); if (el) el.textContent = playedText(S.plays[g.id]);
 }
 let pauseEl = null;
 function setPause(on) {
@@ -2092,7 +2194,7 @@ function waitStart(g) {
   const box = document.createElement('div');
   box.style.cssText = 'position:relative;width:min(100%,' + (g.width || 880) + 'px);aspect-ratio:16/10;max-height:calc(100dvh - var(--goff, 250px));margin:0 auto';
   frame.append(box);
-  const t = setTimeout(() => { if (pend !== g || !box.isConnected) return; const el = document.createElement('div'); el.className = 'g-loading'; el.innerHTML = '<i></i><span>Loading…</span>'; box.append(el); }, 120);
+  const t = setTimeout(() => { if (pend !== g || !box.isConnected) return; const el = document.createElement('div'); el.className = 'g-loading'; el.innerHTML = '<i></i><span>Loading…</span>'; box.append(el); }, 200);
   need(g).then(r => {
     clearTimeout(t);
     if (pend !== g) return;
@@ -2123,17 +2225,14 @@ function openGame(g) {
   $('#pSub').textContent = gname(g.info.genres[0]) + ' · ' + playersText(g.info.pl);
   $('#pScoreK').textContent = g.info.stat || 'Score';
   $('#pThumb').innerHTML = img(g, true); $('#pThumb').style.setProperty('--c', tint(g));
-  $('#pHelp').innerHTML = g.help || '';
-  $('#pBlurb').textContent = g.blurb || '';
-  $('#pTags').innerHTML = openGameTags(g);
-  $('#pPlayed').textContent = playedText(S.plays[g.id] || 0);
   gamebox.style.setProperty('--fw', (g.width || 880) + 'px');
-  $('#more').innerHTML = related(g).slice(0, 8).map(x => card(x, 'more')).join('');
+  $('#more').innerHTML = related(g).slice(0, 10).map(x => card(x, 'more')).join('');
   showView('game');
   if (!$('#slist').children.length) renderResults();
   scrollTo({ top: 0, behavior: 'instant' });
   gamebox.classList.remove('enter'); void gamebox.offsetWidth; gamebox.classList.add('enter');
   syncTheater();
+  if (shortQuery.matches) requestAnimationFrame(toStage);
   if (g.mount) { start(g); track('game_launch', { game: g.id, ms: 0, lazy: false }); } else waitStart(g);
   markSide();
   lzScan();
@@ -2145,7 +2244,7 @@ function closeGame() {
   setPause(false);
   if (cur) { cur.kill(); cur = null; }
   ttSync();
-  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  if (gamebox.classList.contains('fs')) fsExit();
   frame.textContent = '';
   $('#stage').style.height = '';
   frame.style.transform = '';
@@ -2294,9 +2393,31 @@ function openLegal(k) {
 
 const MENUS = { filters: ['#fpanel', '#fbtn'], friends: ['#fmodal', '#abtn'], profile: ['#pmenu', '#pbtn'], settings: ['#smenu', '#sbtn'], mprofile: ['#prmodal'], mstats: ['#stmodal'], msettings: ['#semodal'], msignout: ['#sgmodal'], cookies: ['#ckmodal'], mauth: ['#aumodal'] };
 let openK = null;
+const motionOK = () => !S.prefs.motion && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+function vis(el, on) {
+  clearTimeout(el._vt);
+  if (on) { el.classList.remove('out'); el.hidden = false; return; }
+  if (el.hidden) return;
+  if (!motionOK()) { el.classList.remove('out'); el.hidden = true; return; }
+  el.classList.add('out');
+  el._vt = setTimeout(() => { el.hidden = true; el.classList.remove('out'); }, 170);
+}
+function countUp(box) {
+  const els = [...box.querySelectorAll('[data-n]')];
+  if (!els.length || !motionOK()) return;
+  const f = el => el.dataset.f === 'd' ? fmtDur : x => String(Math.round(x));
+  const t0 = performance.now() + 120, D = 900;
+  els.forEach(el => { el.textContent = f(el)(0); });
+  const step = t => {
+    const k = Math.max(0, Math.min(1, (t - t0) / D)), e = 1 - Math.pow(1 - k, 3);
+    els.forEach(el => { if (el.isConnected) el.textContent = f(el)(+el.dataset.n * e); });
+    if (k < 1 && els[0].isConnected) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
 function setOpen(k) {
   openK = openK === k ? null : k;
-  Object.keys(MENUS).forEach(m => { const on = m === openK; const el = $(MENUS[m][0]); if (el) el.hidden = !on; if (MENUS[m][1]) $(MENUS[m][1]).setAttribute('aria-expanded', String(on)); });
+  Object.keys(MENUS).forEach(m => { const on = m === openK; const el = $(MENUS[m][0]); if (el) vis(el, on); if (MENUS[m][1]) $(MENUS[m][1]).setAttribute('aria-expanded', String(on)); });
   const modal = !!openK && /modal/.test(MENUS[openK][0]);
   document.body.classList.toggle('modal-open', modal);
   if (openK && (modal || openK === 'filters') && cur && !PAUSE.on && canPause()) setPause(true);
@@ -2312,7 +2433,7 @@ function setOpen(k) {
 }
 function closeAll() { if (openK) setOpen(openK); }
 function showPane(p) {
-  document.querySelectorAll('.pane').forEach(x => { x.hidden = x.dataset.pane !== p; });
+  document.querySelectorAll('.pane').forEach(x => { const on = x.dataset.pane === p; if (on && !x.hidden) { x.style.animation = 'none'; void x.offsetWidth; x.style.animation = ''; } x.hidden = !on; });
   document.querySelectorAll('#snav button').forEach(b => b.setAttribute('aria-current', String(b.dataset.p === p)));
 }
 
@@ -2338,8 +2459,9 @@ function fillProfile() {
   if (SB.user) p.username = SB.prof && SB.prof.username || '';
   $('#pcun').textContent = p.username ? '@' + p.username : 'No username yet';
   $('#pcsince').textContent = 'Player since ' + new Date(S.since).toLocaleDateString('en', { month: 'long', year: 'numeric' });
-  $('#pcg').textContent = Object.keys(S.plays).filter(id => byId.has(id)).length;
-  $('#pcr').textContent = Object.keys(S.best).filter(id => byId.has(id)).length;
+  $('#pcg').textContent = $('#pcg').dataset.n = Object.keys(S.plays).filter(id => byId.has(id)).length;
+  $('#pcr').textContent = $('#pcr').dataset.n = Object.keys(S.best).filter(id => byId.has(id)).length;
+  countUp($('#prmodal'));
   $('#un').value = p.username || '';
   $('#dn').value = p.displayName || '';
   $('#unedit').textContent = p.username ? 'Change' : 'Choose';
@@ -2348,11 +2470,7 @@ function fillProfile() {
 function say(id, m, ok) { const n = $('#' + id); n.textContent = m; n.className = 'note' + (ok ? ' ok' : ''); }
 let unStep = 1, unPending = '';
 function unClose() { $('#unmodal').hidden = true; }
-function renderFriends(q = '') {
-  const none = '<div class="nofr">No friends yet</div>';
-  $('#on-l').innerHTML = none; $('#off-l').innerHTML = none;
-  $('#on-n').textContent = 0; $('#off-n').textContent = 0;
-}
+function renderFriends() { frOpen(); }
 const fmtDur = s => { s = Math.round(s || 0); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + 'h ' + m + 'm' : m ? m + 'm' : s + 's'; };
 function ago(t) {
   if (!t) return '—';
@@ -2373,14 +2491,15 @@ function renderStats() {
   const tmax = top.length ? S.time[top[0]] : 1;
   const recs = Object.keys(S.best).filter(id => byId.has(id)).sort((a, b) => (S.last[b] || 0) - (S.last[a] || 0));
   const DN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  $('#stbody').innerHTML = `<div class="tiles"><div class="tile"><small>Games played</small><b>${plays}</b><em>+${wkP} this week</em></div><div class="tile"><small>Time played</small><b>${fmtDur(time)}</b><em>+${fmtDur(wkS)} this week</em></div><div class="tile"><small>Records</small><b>${recs.length}</b><em>in ${ids.length} ${ids.length === 1 ? 'game' : 'games'} played</em></div><div class="tile"><small>Days played</small><b>${played.length}</b><em>Current streak: ${streak}</em></div></div>
-<div class="two"><div class="grp"><h4>Playtime this week</h4><div class="wk">${wk.map((x, i) => `<div${i === 6 ? ' class="hi"' : ''}><i style="height:${Math.round(x.s / max * 100)}%"></i>${DN[days[i].getDay()]}</div>`).join('')}</div></div>
-<div class="grp"><h4>Most played</h4>${top.length ? `<div class="tg">${top.map(id => `<div><b>${esc(byId.get(id).title)}</b><i style="--w:${Math.max(4, Math.round(S.time[id] / tmax * 100))}%"></i><span>${fmtDur(S.time[id])}</span></div>`).join('')}</div>` : '<div class="nofr">No games played yet</div>'}</div></div>
-<div class="grp"><h4>Personal records</h4>${recs.length ? `<div class="tw"><table class="rec"><thead><tr><th>Game</th><th>Best</th><th>Played</th><th>Last</th></tr></thead><tbody>${recs.map(id => { const g = byId.get(id); return `<tr><td>${esc(g.title)}</td><td>${esc(fmt(g, S.best[id]))}</td><td>${S.plays[id] || 0}</td><td>${ago(S.last[id])}</td></tr>`; }).join('')}</tbody></table></div>` : '<div class="nofr">No records yet</div>'}</div>`;
+  $('#stbody').innerHTML = `<div class="tiles"><div class="tile" style="--i:0"><small>Games played</small><b data-n="${plays}">${plays}</b><em>+${wkP} this week</em></div><div class="tile" style="--i:1"><small>Time played</small><b data-n="${Math.round(time)}" data-f="d">${fmtDur(time)}</b><em>+${fmtDur(wkS)} this week</em></div><div class="tile" style="--i:2"><small>Records</small><b data-n="${recs.length}">${recs.length}</b><em>in ${ids.length} ${ids.length === 1 ? 'game' : 'games'} played</em></div><div class="tile" style="--i:3"><small>Days played</small><b data-n="${played.length}">${played.length}</b><em>Current streak: ${streak}</em></div></div>
+<div class="two"><div class="grp"><h4>Playtime this week</h4><div class="wk">${wk.map((x, i) => `<div${i === 6 ? ' class="hi"' : ''} style="--i:${i}"><i style="height:${Math.round(x.s / max * 100)}%"></i>${DN[days[i].getDay()]}</div>`).join('')}</div></div>
+<div class="grp"><h4>Most played</h4>${top.length ? `<div class="tg">${top.map((id, i) => `<div style="--i:${i}"><b>${esc(byId.get(id).title)}</b><i style="--w:${Math.max(4, Math.round(S.time[id] / tmax * 100))}%"></i><span>${fmtDur(S.time[id])}</span></div>`).join('')}</div>` : '<div class="nofr">No games played yet</div>'}</div></div>
+<div class="grp"><h4>Personal records</h4>${recs.length ? `<div class="tw"><table class="rec"><thead><tr><th>Game</th><th>Best</th><th>Played</th><th>Last</th></tr></thead><tbody>${recs.map((id, i) => { const g = byId.get(id); return `<tr style="--i:${Math.min(i, 14)}"><td>${esc(g.title)}</td><td>${esc(fmt(g, S.best[id]))}</td><td>${S.plays[id] || 0}</td><td>${ago(S.last[id])}</td></tr>`; }).join('')}</tbody></table></div>` : '<div class="nofr">No records yet</div>'}</div>`;
+  countUp($('#stbody'));
 }
 
 function applyTheme() {
-  const t = S.prefs.theme || 'system', r = document.documentElement;
+  const t = S.prefs.theme || 'light', r = document.documentElement;
   if (t === 'system') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', t);
   document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === t)));
   const dark = t === 'dark' || (t === 'system' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
@@ -2406,7 +2525,7 @@ function setSwitch(k) {
   else {
     S.prefs[k] = v; save();
     if (k === 'motion') document.documentElement.classList.toggle('rm', v);
-    if (k === 'thumbs') { document.documentElement.classList.toggle('nothumb', !v); coverCache.clear(); if (view === 'home') renderHome(); else if (cur || pend) { const g = (cur && cur.g) || pend; $('#pThumb').innerHTML = img(g, true); $('#more').innerHTML = related(g).slice(0, 8).map(x => card(x, 'more')).join(''); renderSide(lastList); } }
+    if (k === 'thumbs') { document.documentElement.classList.toggle('nothumb', !v); coverCache.clear(); if (view === 'home') renderHome(); else if (cur || pend) { const g = (cur && cur.g) || pend; $('#pThumb').innerHTML = img(g, true); $('#more').innerHTML = related(g).slice(0, 10).map(x => card(x, 'more')).join(''); renderSide(lastList); } }
   }
   track('setting', { k, v });
   syncSwitches();
@@ -2420,7 +2539,7 @@ function resetRecords() {
   S.best = {}; S.plays = {}; S.recent = []; S.time = {}; S.daily = {}; S.last = {}; save();
   if (SB.on) { SY.base = { p: {}, t: {}, b: {} }; SY.pend = null; SY.saves = {}; sySave(); }
   games.forEach(g => { try { localStorage.removeItem('gameplay:save:' + g.id); } catch (e) {} });
-  if (view === 'home') renderHome(); else if (cur) { setBest(cur.g); const el = $('#pPlayed'); if (el) el.textContent = playedText(0); }
+  if (view === 'home') renderHome(); else if (cur) setBest(cur.g);
 }
 function downloadData(extra) {
   const out = {};
@@ -2440,13 +2559,14 @@ function deleteData() {
   setTimeout(() => location.reload(), 600);
 }
 
-let fromPop = false, progNav = false;
+let fromPop = false, progNav = false, navFromHome = false;
 function route() {
   const pop = fromPop; fromPop = false;
   const loc = parseLocation();
   if (loc.legal) return openLegal(loc.legal);
   if (loc.game) {
     const g = loc.game;
+    if (view !== 'game') navFromHome = view === 'home' && !pop; else if (!(cur && cur.g === g) && !(pend && pend.id === g.id)) navFromHome = false;
     if (loc.code) { invite = { id: g.id, code: loc.code.toUpperCase() }; history.replaceState(null, '', href(g.id)); if (cur && cur.g === g) return restartCurrent(); }
     return openGame(g);
   }
@@ -2456,20 +2576,42 @@ function route() {
   applyLocState(loc.state);
   if (loc.missing) { history.replaceState(null, '', homeHref()); toast('That game is not available any more'); track('error', { where: 'route', msg: 'missing game', game: loc.missing }); }
   renderHome();
+  if (changed && motionOK()) { const gr = $('#grid'); gr.classList.remove('anim'); void gr.offsetWidth; gr.classList.add('anim'); clearTimeout(gr._at); gr._at = setTimeout(() => gr.classList.remove('anim'), 1400); }
   setHead(BASE_TITLE, BASE_DESC, '/');
   if (loc.toAll) toAll(!changed);
   else scrollTo({ top: changed && wasGame && pop ? homeY : 0, behavior: 'instant' });
 }
-function randomGame() {
-  const base = view === 'home' && lastList.length ? lastList : games;
-  const pool = base.filter(g => !cur || g !== cur.g);
-  const g = pool[Math.floor(Math.random() * pool.length)];
-  if (g) { clickSrc = 'random'; go(href(g.id), false); }
-}
 const wideQuery = window.matchMedia ? window.matchMedia('(min-width: 900px)') : { matches: true };
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+function fsEnter() {
+  track('fullscreen', { game: cur ? cur.g.id : pend ? pend.id : null });
+  const rq = gamebox.requestFullscreen || gamebox.webkitRequestFullscreen;
+  if (rq && (document.fullscreenEnabled || document.webkitFullscreenEnabled)) {
+    try { const r = rq.call(gamebox, { navigationUI: 'hide' }); if (r && r.catch) r.catch(() => { gamebox.classList.add('pfs'); fsSync(); }); return; } catch (e) {}
+  }
+  gamebox.classList.add('pfs'); fsSync();
+}
+function fsExit() {
+  if (gamebox.classList.contains('pfs')) { gamebox.classList.remove('pfs'); fsSync(); return; }
+  const ex = document.exitFullscreen || document.webkitExitFullscreen;
+  if (fsEl() && ex) { try { const r = ex.call(document); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+}
+function fsSync() {
+  const on = fsEl() === gamebox || gamebox.classList.contains('pfs');
+  if (on === gamebox.classList.contains('fs')) return;
+  gamebox.classList.toggle('fs', on); gamebox.classList.remove('fs-ui');
+  document.body.classList.toggle('fs-on', on);
+  document.querySelectorAll('[data-fs]').forEach(b => { b.setAttribute('aria-label', on ? 'Exit fullscreen' : 'Fullscreen'); b.title = on ? 'Exit fullscreen' : 'Fullscreen'; });
+  clearInterval(fitTimer);
+  frame.classList.add('no-anim');
+  if (on) { frame.style.transform = ''; fsScale = 1; fsT = [0, 0]; requestAnimationFrame(() => requestAnimationFrame(() => { fitStage(); frame.classList.remove('no-anim'); })); fitTimer = setInterval(fitStage, 1500); }
+  else { $('#stage').style.height = ''; frame.style.transform = ''; fsScale = 1; fsT = [0, 0]; applyGlScale(1); requestAnimationFrame(() => { frame.classList.remove('no-anim'); startFitTimer(); queueFit(); }); }
+  frame.focus({ preventScroll: true });
+}
+const toStage = () => { let y = 0; for (let el = gamebox; el; el = el.offsetParent) y += el.offsetTop; scrollTo({ top: Math.max(0, y), behavior: 'instant' }); };
 function syncTheater() {
   const on = S.theater !== false;
-  gamebox.classList.toggle('theater', on && wideQuery.matches);
+  gamebox.classList.toggle('theater', (on && wideQuery.matches) || shortQuery.matches);
   document.querySelectorAll('[data-theater]').forEach(b => b.setAttribute('aria-pressed', String(on)));
   queueFit();
 }
@@ -2526,7 +2668,9 @@ function boot() {
   ['fbtn', 'abtn', 'sbtn', 'pbtn'].forEach((id, i) => $('#' + id).addEventListener('click', e => { e.stopPropagation(); setOpen(['filters', 'friends', 'settings', 'profile'][i]); }));
   document.addEventListener('click', e => {
     const t = e.target;
-    if (openK && !t.closest('.menu, .mc, [data-go], [data-cookieset], [data-legal], #unmodal')) closeAll();
+    if (t.closest('.g-root')) { if (openK) closeAll(); return; }
+    if (openK && !t.closest('.menu, .mc, [data-go], [data-cookieset], [data-legal], #unmodal')) { const was = openK; closeAll(); if (!/modal/.test(MENUS[was][0]) && t.closest('a[href], button')) { e.preventDefault(); return; } }
+    if (t.closest('.am-back') && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); if (navFromHome) history.back(); else go(homeHref(), false); return; }
     const lg = t.closest('[data-legal]');
     if (lg && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); if (openK) closeAll(); if (!$('#unmodal').hidden) unClose(); go(legalHref(lg.dataset.legal), false); return; }
     if (t.closest('[data-cookieset]')) { e.stopPropagation(); if (openK !== 'cookies') setOpen('cookies'); return; }
@@ -2559,14 +2703,13 @@ function boot() {
       if (u.startsWith('/')) { e.preventDefault(); const gm = a.dataset.genre; if (gm) { resetState(); state.g.add(gm); go(homeHref(), false); toAll(false); } else go(u, false); return; }
     }
     if (a && !PATH_MODE && a.hasAttribute('data-home')) { e.preventDefault(); resetState(); $('#q').value = ''; sel = null; go('#/', false); return; }
-    if (a && a.dataset.genre && a.closest('#pTags')) { e.preventDefault(); resetState(); state.g.add(a.dataset.genre); track('filter', { k: 'g', v: a.dataset.genre, on: true, from: 'game' }); go(homeHref(), false); toAll(false); return; }
     const fb = t.closest('[data-f]');
     if (fb) { e.stopPropagation(); toggleFilter(fb.dataset.f, fb.dataset.v); return; }
     const sb = t.closest('[data-sort]');
     if (sb) { e.stopPropagation(); const v = sb.dataset.sort; changeState(() => { state.sort = v === defSort() ? '' : v; }); track('sort', { v }); return; }
     const x = t.closest('[data-x]');
     if (x) { const [k, v] = x.dataset.x.split(':'); if (k === 's') changeState(() => { state.sort = ''; }); else toggleFilter(k, v); return; }
-    if (t.closest('[data-random]')) { randomGame(); return; }
+    if (a && !PATH_MODE && !e.defaultPrevented && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && a.target !== '_blank') { const u = a.getAttribute('href'); if (u && u[0] === '#' && u !== location.hash) progNav = true; }
   });
   $('#slist').addEventListener('dblclick', e => { const r = e.target.closest('.srow'); if (r && view === 'home') { clickSrc = 'side'; go(href(r.dataset.id), false); } });
   $('#play').addEventListener('click', () => { if (sel && byId.get(sel)) { clickSrc = 'side_play'; go(href(sel), false); } });
@@ -2576,8 +2719,6 @@ function boot() {
   $('#snav').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showPane(b.dataset.p); });
   showPane('account');
   document.querySelectorAll('.sech').forEach(b => b.addEventListener('click', () => { const g = $('#' + b.dataset.sec), c = g.classList.toggle('collapsed'); b.setAttribute('aria-expanded', String(!c)); }));
-  $('#fname').addEventListener('keydown', e => { if (e.key !== 'Enter') return; e.preventDefault(); const v = e.target.value.trim(); if (!v) return; say('anote', 'Friend requests are coming soon.'); track('soon', { what: 'friend_request' }); });
-  $('#fname').addEventListener('input', () => say('anote', ''));
   document.querySelectorAll('[data-sel]').forEach(s => s.addEventListener('change', () => { S.prefs[s.dataset.sel] = s.value; save(); track('setting', { k: s.dataset.sel, v: s.value }); }));
   $('#dnsave').addEventListener('click', () => { const v = $('#dn').value.trim().replace(/\s+/g, ' '); if (!v) { say('dnnote', 'Enter a display name.'); return; } if (SB.user) { auDisplayName(v.slice(0, 24)); return; } setProfile({ displayName: v.slice(0, 24) }); say('dnnote', 'Display name saved.', 1); });
   $('#dn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#dnsave').click(); } });
@@ -2604,25 +2745,22 @@ function boot() {
   document.querySelectorAll('[data-sound]').forEach(b => b.addEventListener('click', () => { setMuted(!S.muted); b.blur(); if (!S.muted) sfx('tap'); }));
   const th = $('[data-theater]');
   th.addEventListener('click', () => { th.blur(); S.theater = S.theater === false; save(); syncTheater(); track('setting', { k: 'theater', v: S.theater }); });
-  if (wideQuery.addEventListener) wideQuery.addEventListener('change', syncTheater);
-  const fs = $('[data-fs]');
-  if (!document.fullscreenEnabled) fs.hidden = true;
-  fs.addEventListener('click', () => { fs.blur(); if (document.fullscreenElement) document.exitFullscreen(); else { gamebox.requestFullscreen().catch(() => {}); track('fullscreen', { game: cur ? cur.g.id : null }); } });
-  document.addEventListener('fullscreenchange', () => {
-    clearInterval(fitTimer);
-    if (document.fullscreenElement === gamebox) { requestAnimationFrame(() => requestAnimationFrame(fitStage)); fitTimer = setInterval(fitStage, 700); }
-    else { gamebox.querySelector('#stage').style.height = ''; frame.classList.add('no-anim'); frame.style.transform = ''; fsScale = 1; fsT = [0, 0]; applyGlScale(1); requestAnimationFrame(() => { frame.classList.remove('no-anim'); startFitTimer(); queueFit(); }); }
-    frame.focus({ preventScroll: true });
-  });
+  if (wideQuery.addEventListener) { wideQuery.addEventListener('change', syncTheater); shortQuery.addEventListener('change', () => { syncTheater(); if (shortQuery.matches && view === 'game') toStage(); }); }
+  document.querySelectorAll('[data-fs]').forEach(b => b.addEventListener('click', () => { b.blur(); if (gamebox.classList.contains('fs')) fsExit(); else fsEnter(); }));
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(t => document.addEventListener(t, () => { if (!fsEl() && gamebox.classList.contains('pfs')) return; fsSync(); }));
+  let fsUiT = 0;
+  gamebox.addEventListener('pointermove', e => { if (!gamebox.classList.contains('fs') || e.pointerType === 'touch') return; if (!gamebox.classList.contains('fs-ui')) gamebox.classList.add('fs-ui'); clearTimeout(fsUiT); fsUiT = setTimeout(() => gamebox.classList.remove('fs-ui'), 2200); }, { passive: true });
   addEventListener('resize', queueFit);
   if (window.ResizeObserver) new ResizeObserver(() => { if (stageMode() !== 'off') queueFit(); }).observe(frame);
   startFitTimer();
   $('#pRestart').addEventListener('click', e => { e.currentTarget.blur(); restartCurrent(); track('restart', { game: cur ? cur.g.id : null }); });
   addEventListener('storage', e => { if (e.key === PKEY) renderProfileBits(); });
   addEventListener('keyup', e => { if (PAUSE.on && !isField(e.target) && !openK) e.stopImmediatePropagation(); }, true);
+  const unmodal = $('#unmodal');
   addEventListener('keydown', e => {
-    if (!$('#unmodal').hidden) { if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); unClose(); } return; }
+    if (!unmodal.hidden) { if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); unClose(); } return; }
     if (openK) { if (e.key === 'Escape' && !e.repeat) { e.preventDefault(); e.stopImmediatePropagation(); closeAll(); } return; }
+    if (e.key === 'Escape' && gamebox.classList.contains('pfs')) { e.preventDefault(); e.stopImmediatePropagation(); fsExit(); return; }
     if (e.key === '/' && !isField(e.target) && !cur && !pend && view === 'home') { e.preventDefault(); q.focus(); return; }
     if (!cur && !pend) return;
     if (PAUSE.on) {
@@ -2894,7 +3032,7 @@ async function sySaves(uid) {
 }
 function syRefresh(before) {
   if (JSON.stringify(S.recent) !== before && view === 'home' && !cur && !pend) renderHome();
-  if (cur) { setBest(cur.g); const el = $('#pPlayed'); if (el) el.textContent = playedText(S.plays[cur.g.id] || 0); }
+  if (cur) setBest(cur.g);
   if (openK === 'mstats') renderStats();
   if (openK === 'mprofile') { $('#pcg').textContent = Object.keys(S.plays).filter(id => byId.has(id)).length; $('#pcr').textContent = Object.keys(S.best).filter(id => byId.has(id)).length; }
 }
@@ -2936,19 +3074,24 @@ async function sySync(o = {}) {
 }
 
 const auState = () => !SB.on ? 'off' : SB.user ? 'in' : 'out';
+const auT = s => window.gpI18n ? gpI18n.t(s) : s;
+const GUEST_K = 'gameplay:guest';
+const auCoarse = () => !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
 function auMsg(id, m, kind) { const n = $('#' + id); if (!n) return; n.textContent = m || ''; n.className = 'note' + (kind ? ' ' + kind : ''); }
+function auShake(el) { if (!el) return; el.classList.remove('au-shake'); void el.offsetWidth; el.classList.add('au-shake'); }
 function auErrText(e) {
   const m = String(e && (e.message || e.error_description || e) || ''), c = String(e && e.code || '');
-  if (c === 'invalid_credentials' || /invalid login credentials/i.test(m)) return 'Wrong email or password.';
+  if (c === 'invalid_credentials' || /invalid login credentials/i.test(m)) return 'Wrong email, username or password.';
   if (c === 'email_not_confirmed' || /email not confirmed/i.test(m)) return 'Confirm your email first: open the link we sent you.';
-  if (c === 'user_already_exists' || /already registered|already exists/i.test(m)) return 'An account with this email already exists. Sign in instead.';
+  if (c === 'user_already_exists' || /already registered|already exists/i.test(m)) return 'An account with this email already exists. Log in instead.';
   if (c === 'same_password' || /different from the old/i.test(m)) return 'Choose a password that is different from your current one.';
   if (c === 'weak_password' || /password should/i.test(m)) return 'Choose a stronger password: at least 8 characters.';
   if (c === 'email_address_invalid' || /invalid format|email address .* is invalid/i.test(m)) return 'This email address is not valid.';
   if (c === 'email_exists' || /email address has already been registered/i.test(m)) return 'Another account already uses this email.';
+  if (c === 'otp_expired' || /expired|link is invalid/i.test(m)) return 'This link has expired or was already used. Ask for a new one.';
+  if (c === 'over_email_send_rate_limit' || /email rate limit|after \d+ seconds/i.test(m)) return 'Too many emails were sent. Wait a minute and try again.';
   if (/rate limit|too many|429/i.test(m + c) || (e && e.status === 429)) return 'Too many attempts. Wait a few minutes and try again.';
-  if (/not authorized|email_address_not_authorized/i.test(m + ' ' + c)) return 'We cannot send emails to this address yet. Please use Continue with Google for now.';
-  if (c === 'over_email_send_rate_limit' || /email rate limit/i.test(m)) return 'Too many emails were sent in the last hour. Try again later or use Continue with Google.';
+  if (/not authorized|email_address_not_authorized/i.test(m + ' ' + c)) return 'We cannot send emails to this address yet. Try again later.';
   if (c === 'provider_disabled' || /provider is not enabled|unsupported provider/i.test(m)) return 'This sign-in method is not available yet.';
   if (/access_denied|cancel/i.test(m)) return 'Sign-in was cancelled.';
   if (/failed to fetch|networkerror|load failed|could not load|network/i.test(m)) return 'Cannot reach the sign-in service. Check your connection and try again.';
@@ -2957,10 +3100,9 @@ function auErrText(e) {
 function auSyncNote() {
   const el = $('#ausync');
   if (!el || !SB.user) return;
-  el.textContent = SB.fail ? 'Waiting for a connection. Your progress is kept on this device until then.' : SY.at ? 'Records and saves synced ' + new Date(SY.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '.' : 'Your records and saves are kept in your account.';
+  el.textContent = SB.fail ? 'Waiting for a connection. Your progress is kept on this device until then.' : SY.at ? auT('Records and saves synced {t}.').replace('{t}', new Date(SY.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : 'Your records and saves are kept in your account.';
 }
 function auRender() {
-  if (!SB.on) return;
   const st = auState();
   document.querySelectorAll('[data-au]').forEach(el => { el.hidden = !el.dataset.au.split(' ').includes(st); });
   if (SB.user) {
@@ -2972,32 +3114,73 @@ function auRender() {
     auSyncNote();
   }
   renderProfileBits();
+  if (openK === 'friends') frOpen();
+}
+function auGoogleUi() {
+  const ok = !!(SB.on && SB.set && SB.set.external && SB.set.external.google);
+  document.querySelectorAll('[data-auth="google"]').forEach(b => { b.disabled = !ok; b.title = ok ? '' : 'Coming soon'; if (b.classList.contains('btn2')) b.textContent = ok ? 'Continue' : 'Coming soon'; });
+  $('#ausoon').hidden = ok;
+}
+function auSettings() {
+  if (!SB.on || SB.set) return;
+  if (!SB.gs) SB.gs = fetch(SUPABASE_URL.replace(/\/+$/, '') + '/auth/v1/settings', { headers: { apikey: SUPABASE_ANON_KEY }, credentials: 'omit', cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null).then(j => { SB.gs = null; if (j && j.external) { SB.set = j; auGoogleUi(); } });
 }
 function auView(v) {
   SB.view = v;
-  document.querySelectorAll('[data-auview]').forEach(el => { el.hidden = el.dataset.auview !== v; });
   const up = SB.mode === 'up';
-  $('#aut').textContent = v === 'reset' ? 'Reset password' : v === 'newpass' ? 'New password' : up ? 'Create account' : 'Sign in';
-  $('#augo').textContent = up ? 'Create account' : 'Sign in';
-  $('#aupass').setAttribute('autocomplete', up ? 'new-password' : 'current-password');
+  document.querySelectorAll('[data-auview]').forEach(el => { const on = el.dataset.auview === v; if (on && el.hidden) { el.classList.remove('au-in'); void el.offsetWidth; el.classList.add('au-in'); } el.hidden = !on; });
+  const tabs = $('#autabs');
+  tabs.hidden = v !== 'main'; tabs.dataset.m = SB.mode;
+  tabs.querySelectorAll('[data-aumode]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.aumode === SB.mode)));
+  document.querySelectorAll('#auform [data-up]').forEach(el => { el.hidden = !up; });
+  $('#aut').textContent = up ? 'Create your account' : 'Welcome back';
+  $('#ausub').textContent = up ? 'Keep your records and saves on every device and add friends.' : 'Log in to keep your records and saves on every device.';
+  $('#auel').textContent = up ? 'Email' : 'Email or username';
+  const em = $('#auemail');
+  em.type = up ? 'email' : 'text'; em.autocomplete = up ? 'email' : 'username'; em.inputMode = up ? 'email' : 'text';
+  $('#aupass').autocomplete = up ? 'new-password' : 'current-password';
   $('#aupass').placeholder = up ? 'At least 8 characters' : '';
-  $('#ausw').textContent = up ? 'I already have an account' : 'Create an account';
+  $('#augo').textContent = up ? 'Create account' : 'Log in';
   $('#auforgot').hidden = up;
+  $('#aumodal .au-legal').hidden = (up && v === 'main') || v === 'newpass';
+  $('#aumodal .au-guest').hidden = v === 'newpass' || !!SB.user;
+  document.querySelectorAll('#aumodal .au-eye[aria-pressed="true"]').forEach(b => auEye(b, true));
+  auResendTick();
 }
 function auShow() {
-  if (!SB.on) return;
-  sbClient().catch(() => {});
-  ['aunote', 'arnote', 'annote'].forEach(id => auMsg(id, ''));
-  auView(SB.view === 'newpass' || SB.view === 'reset' ? SB.view : 'main');
-  setTimeout(() => { const f = SB.view === 'newpass' ? $('#anpass') : SB.view === 'reset' ? $('#aremail') : null; if (f && !matchMedia('(pointer: coarse)').matches) f.focus(); }, 60);
+  $('#auoff').hidden = SB.on;
+  if (SB.on) { sbClient().catch(() => {}); auSettings(); }
+  ['aunote', 'arnote', 'annote', 'acnote'].forEach(id => auMsg(id, ''));
+  auView(['newpass', 'reset', 'check'].includes(SB.view) ? SB.view : 'main');
+  auBusy(false);
+  setTimeout(() => { const f = { newpass: '#anpass', reset: '#aremail', main: SB.mode === 'up' ? '#auuser' : '#auemail' }[SB.view]; const n = f && $(f); if (n && SB.on && !auCoarse() && openK === 'mauth') n.focus({ preventScroll: true }); }, 80);
 }
-function auOpen(v, msg, kind) {
+function auOpen(v, msg, kind, mode) {
   SB.view = v;
+  if (mode) SB.mode = mode;
   if (openK !== 'mauth') setOpen('mauth'); else auView(v);
-  if (msg) auMsg(v === 'reset' ? 'arnote' : v === 'newpass' ? 'annote' : 'aunote', msg, kind);
+  if (msg) auMsg(v === 'reset' ? 'arnote' : v === 'newpass' ? 'annote' : v === 'check' ? 'acnote' : 'aunote', msg, kind);
 }
-const auBusy = (on, sel) => document.querySelectorAll(sel || '#aumodal button, #aumodal input').forEach(b => { b.disabled = on; });
+function auBusy(on, sel) {
+  document.querySelectorAll(sel || '#aumodal .au-card button, #aumodal .au-card input').forEach(b => { b.disabled = on || (!SB.on && !b.closest('#autabs, [data-auguest]')); });
+  $('#aumodal').classList.toggle('au-busy', !!on && !sel);
+  if (!on) { auGoogleUi(); auResendTick(); }
+}
+function auBad(id, m) { auMsg('aunote', m, 'bad'); const n = $('#' + id); if (!n) return; auShake(n.closest('.fld, .au-chk') || n); if (!auCoarse() || id !== 'auterms') n.focus({ preventScroll: true }); }
+function auGuest() {
+  try { (SB.on ? localStorage : sessionStorage).setItem(GUEST_K, '1'); } catch (e) {}
+  track('auth', { act: 'guest' });
+  if (openK === 'mauth') closeAll();
+}
+function auFirst() {
+  let seen = false;
+  try { seen = !!(localStorage.getItem(GUEST_K) || sessionStorage.getItem(GUEST_K)); } catch (e) {}
+  if (seen || SB_RET || sbHasSession() || openK || view === 'legal') return;
+  SB.mode = 'up'; SB.view = 'main';
+  setOpen('mauth');
+}
 async function auGoogle() {
+  if (!SB.on) return;
   const inModal = openK === 'mauth';
   if (inModal) auMsg('aunote', 'Opening Google…');
   try {
@@ -3011,55 +3194,107 @@ async function auGoogle() {
   }
 }
 async function auSubmit() {
-  const email = $('#auemail').value.trim(), pw = $('#aupass').value, up = SB.mode === 'up';
-  if (!EMAIL_RE.test(email)) { auMsg('aunote', 'Enter a valid email address.', 'bad'); $('#auemail').focus(); return; }
-  if (pw.length < (up ? 8 : 1)) { auMsg('aunote', up ? 'Use at least 8 characters for your password.' : 'Enter your password.', 'bad'); $('#aupass').focus(); return; }
-  auBusy(true); auMsg('aunote', up ? 'Creating your account…' : 'Signing in…');
+  if (!SB.on) return;
+  const up = SB.mode === 'up', id = $('#auemail').value.trim(), pw = $('#aupass').value;
+  if (up) {
+    const un = $('#auuser').value.trim().toLowerCase().replace(/^@/, '');
+    if (!UN_RE.test(un) || /^\.|\.$|\.\./.test(un)) return auBad('auuser', 'Choose a username: 3 to 20 lowercase letters, numbers, dots or underscores.');
+    if (!EMAIL_RE.test(id)) return auBad('auemail', 'Enter a valid email address.');
+    if (pw.length < 8) return auBad('aupass', 'Use at least 8 characters for your password.');
+    if (pw !== $('#aupass2').value) return auBad('aupass2', 'The two passwords are not the same.');
+    if (!$('#auterms').checked) return auBad('auterms', 'Tick the box to agree to the Terms of Use and the Privacy Policy.');
+    auBusy(true); auMsg('aunote', 'Creating your account…');
+    try {
+      const c = await sbClient();
+      const free = await sbRest('rpc/username_available', { method: 'POST', body: { p_name: un }, auth: false });
+      if (!free) { auBusy(false); auBad('auuser', 'That username is taken or not allowed. Try another one.'); return; }
+      const lp = getProfile(), data = { username: un };
+      if (lp.displayName) data.display_name = String(lp.displayName).slice(0, 32);
+      SB.loud = true;
+      const r = await c.auth.signUp({ email: id, password: pw, options: { emailRedirectTo: sbRedirect('signup'), data } });
+      if (r.error) throw r.error;
+      const u = r.data && r.data.user;
+      if (u && Array.isArray(u.identities) && !u.identities.length) throw { code: 'user_already_exists' };
+      track('auth', { act: 'signup' });
+      $('#aupass').value = ''; $('#aupass2').value = '';
+      if (r.data && r.data.session) { closeAll(); return; }
+      SB.loud = false; SB.cmail = id; SB.rsAt = Date.now() + 60000;
+      $('#aucmail').textContent = id;
+      auView('check'); auMsg('aunote', '');
+    } catch (e) { SB.loud = false; auMsg('aunote', auErrText(e), 'bad'); }
+    finally { auBusy(false); }
+    return;
+  }
+  if (!id) return auBad('auemail', 'Enter your email or username.');
+  if (id.includes('@') && !EMAIL_RE.test(id)) return auBad('auemail', 'Enter a valid email address.');
+  if (!pw) return auBad('aupass', 'Enter your password.');
+  auBusy(true); auMsg('aunote', 'Logging in…');
+  let email = id;
   try {
     const c = await sbClient();
-    if (up) {
-      const lp = getProfile(), un = String(lp.username || '').toLowerCase(), data = {};
-      if (lp.displayName) data.display_name = String(lp.displayName).slice(0, 32);
-      if (UN_RE.test(un)) data.username = un;
-      SB.loud = true;
-      const r = await c.auth.signUp({ email, password: pw, options: { emailRedirectTo: sbRedirect('signup'), data } });
-      if (r.error) throw r.error;
-      track('auth', { act: 'signup' });
-      if (r.data && r.data.session) { $('#aupass').value = ''; closeAll(); }
-      else { SB.loud = false; $('#aupass').value = ''; auMsg('aunote', 'Almost done: open the link we sent to ' + email + ' to confirm your account.', 'ok'); }
-    } else {
-      SB.loud = true;
-      const r = await c.auth.signInWithPassword({ email, password: pw });
-      if (r.error) throw r.error;
-      track('auth', { act: 'signin' });
-      $('#aupass').value = ''; closeAll();
+    if (!id.includes('@')) {
+      const un = id.toLowerCase().replace(/^@/, '');
+      email = UN_RE.test(un) ? await sbRest('rpc/login_email', { method: 'POST', body: { p_login: un, p_password: pw }, auth: false }) : null;
+      if (!email) throw { code: 'invalid_credentials' };
     }
-  } catch (e) { SB.loud = false; auMsg('aunote', auErrText(e), 'bad'); }
+    SB.loud = true;
+    const r = await c.auth.signInWithPassword({ email, password: pw });
+    if (r.error) throw r.error;
+    track('auth', { act: 'signin', by: id.includes('@') ? 'email' : 'username' });
+    $('#aupass').value = ''; closeAll();
+  } catch (e) {
+    SB.loud = false;
+    if (e && (e.code === 'email_not_confirmed' || /email not confirmed/i.test(e.message || ''))) { SB.cmail = email; $('#aucmail').textContent = email; auView('check'); auMsg('acnote', 'Confirm your email first: open the link we sent you, or send a new one.', 'bad'); }
+    else auMsg('aunote', auErrText(e), 'bad');
+  }
   finally { auBusy(false); }
 }
+function auResendTick() {
+  clearTimeout(SB.rsT);
+  const b = $('#auresend'), left = Math.ceil((syNum(SB.rsAt) - Date.now()) / 1000);
+  if (!b) return;
+  if (left > 0 && SB.view === 'check') { b.disabled = true; b.textContent = auT('Resend email in {n} s').replace('{n}', left); SB.rsT = setTimeout(auResendTick, 1000); }
+  else { b.disabled = !SB.on; b.textContent = 'Resend email'; }
+}
+async function auResend() {
+  if (!SB.on || !SB.cmail || syNum(SB.rsAt) > Date.now()) return;
+  $('#auresend').disabled = true; auMsg('acnote', 'Sending…');
+  try {
+    const c = await sbClient();
+    const { error } = await c.auth.resend({ type: 'signup', email: SB.cmail, options: { emailRedirectTo: sbRedirect('signup') } });
+    if (error) throw error;
+    SB.rsAt = Date.now() + 60000;
+    track('auth', { act: 'resend' });
+    auMsg('acnote', 'Sent again. Use the newest email: it replaces the old link.', 'ok');
+  } catch (e) { auMsg('acnote', auErrText(e), 'bad'); }
+  finally { auResendTick(); }
+}
 async function auReset() {
+  if (!SB.on) return;
   const email = $('#aremail').value.trim();
-  if (!EMAIL_RE.test(email)) { auMsg('arnote', 'Enter a valid email address.', 'bad'); return; }
+  if (!EMAIL_RE.test(email)) { auMsg('arnote', 'Enter a valid email address.', 'bad'); auShake($('#aremail').closest('.fld')); return; }
   auBusy(true); auMsg('arnote', 'Sending…');
   try {
     const c = await sbClient();
     const { error } = await c.auth.resetPasswordForEmail(email, { redirectTo: sbRedirect('recovery') });
     if (error) throw error;
     track('auth', { act: 'reset' });
-    auMsg('arnote', 'If an account uses this email, we sent it a link to choose a new password.', 'ok');
+    auMsg('arnote', 'Check your inbox. If an account uses this email, we sent it a link to choose a new password.', 'ok');
   } catch (e) { auMsg('arnote', auErrText(e), 'bad'); }
   finally { auBusy(false); }
 }
 async function auNewPass() {
+  if (!SB.on) return;
   const pw = $('#anpass').value;
-  if (pw.length < 8) { auMsg('annote', 'Use at least 8 characters.', 'bad'); return; }
+  if (pw.length < 8) { auMsg('annote', 'Use at least 8 characters.', 'bad'); auShake($('#anpass').closest('.fld')); return; }
+  if (pw !== $('#anpass2').value) { auMsg('annote', 'The two passwords are not the same.', 'bad'); auShake($('#anpass2').closest('.fld')); return; }
   auBusy(true); auMsg('annote', 'Saving…');
   try {
     const c = await sbClient();
     const { error } = await c.auth.updateUser({ password: pw });
     if (error) throw error;
-    $('#anpass').value = ''; SB.view = 'main';
-    auMsg('annote', 'Password saved. You are signed in.', 'ok');
+    $('#anpass').value = ''; $('#anpass2').value = ''; SB.view = 'main';
+    auMsg('annote', 'Password saved. You are logged in.', 'ok');
     setTimeout(() => { if (openK === 'mauth') closeAll(); }, 1400);
   } catch (e) { auMsg('annote', auErrText(e), 'bad'); }
   finally { auBusy(false); }
@@ -3154,7 +3389,7 @@ function auChoose() {
   $('label[for="unew"]').textContent = 'Username';
   auMsg('unerr', 'Friends find you by your username: 3 to 20 lowercase letters, numbers, dots or underscores.');
   $('#unmodal').hidden = false;
-  if (!matchMedia('(pointer: coarse)').matches) $('#unew').focus();
+  if (!auCoarse()) $('#unew').focus();
 }
 async function auUsername() {
   const raw = unStep === 2 ? unPending : $('#unew').value.trim().toLowerCase();
@@ -3197,17 +3432,19 @@ async function auSignedIn(ev) {
   const uid = SB.user.id, loud = SB.loud;
   SB.loud = false;
   SB.prof = null;
+  FR.list = FR.req = null;
   auRender();
   if (openK === 'mauth' && SB.view !== 'newpass') closeAll();
   try { await auLoadProfile(); } catch (e) {}
   if (!SB.user || SB.user.id !== uid) return;
   auRender();
-  if (loud) toast('Signed in as ' + (SB.prof && SB.prof.username ? '@' + SB.prof.username : SB.user.email || 'you'));
+  if (loud) toast(auT('Logged in as {name}').replace('{name}', SB.prof && SB.prof.username ? '@' + SB.prof.username : SB.user.email || 'you'));
   sySync();
   if (loud && SB.prof && !SB.prof.username) setTimeout(auChoose, 400);
 }
 function auSignedOut() {
   SB.prof = null; SB.fail = 0;
+  FR.list = FR.req = FR.res = null; FR.rq = '';
   clearTimeout(SB.t);
   if (SB.choosing && !$('#unmodal').hidden) unClose();
   SB.choosing = false;
@@ -3224,14 +3461,14 @@ function auSession(ev, s) {
 async function auReturn() {
   const r = SB_RET;
   if (!r) return;
-  if (r.err) { auOpen('main', auErrText({ message: r.err }), 'bad'); return; }
+  if (r.err) { auOpen(r.kind === 'recovery' ? 'reset' : 'main', auErrText({ message: r.err }), 'bad', 'in'); return; }
   if (!r.code) return;
   SB.loud = r.kind !== 'recovery' && r.kind !== 'email';
   let error = null;
   try { const x = await SB.c.auth.exchangeCodeForSession(r.code); error = x.error; } catch (e) { error = e; }
   if (error) {
     SB.loud = false;
-    auOpen(r.kind === 'recovery' ? 'reset' : 'main', r.kind === 'signup' ? 'Your email is probably confirmed already. Sign in with your email and password.' : r.kind === 'recovery' ? 'This link has expired or was opened in another browser. Ask for a new one.' : r.kind === 'email' ? 'Open the link in the browser where you are signed in, or sign in again.' : 'Sign-in did not finish. Please try again.', 'bad');
+    auOpen(r.kind === 'recovery' ? 'reset' : 'main', r.kind === 'signup' ? 'Your email is probably confirmed already. Log in with your email or username and your password.' : r.kind === 'recovery' ? 'This link has expired or was opened in another browser. Ask for a new one.' : r.kind === 'email' ? 'Open the link in the browser where you are logged in, or log in again.' : 'Sign-in did not finish. Please try again.', 'bad', 'in');
     return;
   }
   track('auth', { act: 'return', kind: String(r.kind || '').slice(0, 12) });
@@ -3246,55 +3483,1103 @@ function auPatchLegal() {
   lp('privacy', '<tr><td><code>gameplay:analytics</code>, <code>gameplay:sid</code></td><td>Usage events and a random session ID, only if you accept analytics</td><td>Analytics</td></tr>', '<tr><td><code>sb-gameplay-auth</code>, <code>gameplay:sync</code></td><td>Your sign-in session and what was already copied to your account, only if you sign in</td><td>Essential</td></tr>\n<tr><td><code>gameplay:analytics</code>, <code>gameplay:sid</code>, <code>gameplay:vid</code></td><td>Usage events, a random session ID and a random device ID, only if you accept analytics</td><td>Analytics</td></tr>');
   lp('privacy', 'Events are linked to a random session ID, not to your name or email.</p><p>Right now these events stay in your browser and are not sent anywhere. We plan to send them to our own database (hosted on Supabase) to learn which games people enjoy. We will update this policy before that starts. If you reject analytics, nothing is recorded.</p>', 'Events are linked to a random session ID and a random device ID, so we can count returning players. If you are signed in, they are also linked to your account. They are not linked to your name or email.</p><p>These events are sent to our database, hosted by Supabase in the European Union, and are used only to learn which games people enjoy and to fix bugs. They are deleted after two years. If you reject analytics, nothing is recorded or sent.</p>');
   lp('privacy', '<li>Firebase Hosting (Google)', '<li>Supabase hosts our database and the sign-in service in the European Union. It receives your IP address when your browser contacts it.</li><li>If you sign in with Google, Google tells us your email address, your name and a link to your profile picture.</li><li>Firebase Hosting (Google)');
-  LEGAL.privacy[1] = LEGAL.privacy[1].replace(/<h2>Accounts, coming later<\/h2><p>[^<]*<\/p>/, '<h2>Accounts</h2><p>Signing in is optional. If you create an account, our database on Supabase (European Union) stores your email address; your username and display name; and, if you use Google, your name and the link to your Google profile picture; your best scores, play counts, time played and saved progress; and, later, your friends. Passwords are handled by Supabase Auth: they are stored only as a secure hash and nobody, including us, can read them. Emails about your account (confirmation, password reset, email change) are sent by Supabase. We keep this data until you delete your account in Settings, Account, which removes it from our database.</p>');
+  LEGAL.privacy[1] = LEGAL.privacy[1].replace(/<h2>Accounts, coming later<\/h2><p>[^<]*<\/p>/, '<h2>Accounts</h2><p>Signing in is optional. If you create an account, our database on Supabase (European Union) stores your email address; your username and display name; and, if you use Google, your name and the link to your Google profile picture; your best scores, play counts, time played and saved progress; and your friends and friend requests. Other signed-in players can find you by your username and see your username and display name, never your email. Passwords are handled by Supabase Auth: they are stored only as a secure hash and nobody, including us, can read them. Emails about your account (confirmation, password reset, email change) are sent by Supabase. We keep this data until you delete your account in Settings, Account, which removes it from our database.</p>');
   lp('privacy', 'Because today we hold no personal data on our servers, most requests can be handled directly in your browser with the tools above.', 'If you are signed in, Download my data also includes what your account stores, and Delete my account in Settings, Account removes it from our database. For anything else, email us.');
   lp('cookies', 'They stay in your browser and are never used to track you.', 'If you sign in, your sign-in session (<code>sb-gameplay-auth</code>) is stored too. They are never used to track you.');
   lp('cookies', 'with a random session ID (<code>gameplay:analytics</code>, <code>gameplay:sid</code>). They help us understand which games people play. For now they stay on your device.', 'with a random session ID and a random device ID (<code>gameplay:analytics</code>, <code>gameplay:sid</code>, <code>gameplay:vid</code>). They help us understand which games people play and are sent to our database on Supabase in the European Union.');
   lp('cookies', 'and online games use the PeerJS service.', 'online games use the PeerJS service, and accounts and analytics use Supabase.');
 }
 if (SB.on) auPatchLegal();
+const EYE = '<button class="au-eye" type="button" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24"><g class="o"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></g><path class="c" d="M3 3l18 18M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6A17.4 17.4 0 0 0 2 12s3.6 7 10 7a10 10 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button>';
+function auEye(b, off) {
+  const i = b.parentNode.querySelector('input'), on = !off && b.getAttribute('aria-pressed') !== 'true';
+  i.type = on ? 'text' : 'password';
+  b.setAttribute('aria-pressed', String(on));
+  b.setAttribute('aria-label', on ? 'Hide password' : 'Show password');
+}
+function lgOpen(k) {
+  const d = LEGAL[k];
+  if (!d) return;
+  $('#lgt').textContent = d[0];
+  $('#lgdoc').innerHTML = `<h1>${d[0]}</h1>${d[1]}`;
+  const s = $('#lgsheet');
+  s.hidden = false; s.scrollTop = 0;
+  $('#lgback').focus({ preventScroll: true });
+  track('ui', { open: 'legal_sheet', doc: k });
+}
+function lgClose() { $('#lgsheet').hidden = true; const f = !$('#ckbar').hidden ? $('#ckterms') : openK === 'mauth' ? $('#auterms') : null; if (f && !f.closest('[hidden]') && !auCoarse()) f.focus({ preventScroll: true }); }
+function ckChoose(k) {
+  if (!$('#ckterms').checked) { auMsg('cknote', 'Tick the box first to agree to the Terms of Use and the Privacy Policy.', 'bad'); auShake($('#ckagree')); $('#ckterms').focus({ preventScroll: true }); return; }
+  setConsent(k === 'all', k);
+  toast(k === 'all' ? 'Thanks! Cookie choice saved' : 'Cookie choice saved');
+}
+const FR = { q: '', seq: 0, t: 0, list: null, req: null, res: null, rq: '', rres: [] };
+function frRow(p, acts, hl) {
+  const un = p.username || '', dn = p.display_name || un, n = Math.min(hl || 0, un.length);
+  const u = n ? `<mark>${esc(un.slice(0, n))}</mark>${esc(un.slice(n))}` : esc(un);
+  return `<div class="frow" role="listitem"><span class="pic">${esc((dn || '?').charAt(0).toUpperCase())}</span><div class="fr-n"><b>${esc(dn)}</b><span>@${u}</span></div><div class="fr-a">${acts}</div></div>`;
+}
+function frFill(box, rows, empty) {
+  const old = new Set([...box.children].map(n => n.dataset.k));
+  const t = document.createElement('template');
+  t.innerHTML = rows.length ? rows.map(r => r[1]).join('') : empty;
+  const nodes = [...t.content.children];
+  if (rows.length) nodes.forEach((n, i) => { n.dataset.k = rows[i][0]; if (!old.has(rows[i][0])) { n.classList.add('fr-in'); n.style.setProperty('--i', Math.min(i, 12)); } });
+  box.replaceChildren(...nodes);
+}
+function frDraw() {
+  const q = FR.q, fl = FR.list || [], rq = FR.req || [];
+  const isF = new Set(fl.map(x => x.username)), inc = new Map(), out = new Map();
+  rq.forEach(r => (r.direction === 'incoming' ? inc : out).set(r.username, r));
+  const searching = q.length >= 2;
+  $('#g-res').hidden = !searching;
+  if (searching) {
+    const res = FR.res;
+    $('#res-h').textContent = res == null ? auT('Searching…') : res.length >= 20 ? auT('{n}+ players').replace('{n}', 20) : res.length === 1 ? auT('1 player') : res.length ? auT('{n} players').replace('{n}', res.length) : auT('Players');
+    if (res) frFill($('#fres'), res.map(p => [p.username, frRow(p, isF.has(p.username) ? '<span class="fr-tag">Friend</span>' : inc.has(p.username) ? `<button class="btn2 pri" type="button" data-fr="accept" data-id="${+inc.get(p.username).id}">Accept</button>` : out.has(p.username) ? '<span class="fr-tag">Requested</span>' : `<button class="btn2 pri" type="button" data-fr="add" data-un="${esc(p.username)}">Add friend</button>`, q.length)]), `<div class="nofr">${esc(auT('No player has a username starting with “{q}”.').replace('{q}', q))}</div>`);
+  }
+  $('#g-req').hidden = searching || !rq.length;
+  $('#req-n').textContent = rq.length;
+  frFill($('#req-l'), rq.slice().sort((a, b) => (a.direction === 'incoming' ? 0 : 1) - (b.direction === 'incoming' ? 0 : 1)).map(r => ['r' + r.id, frRow(r, r.direction === 'incoming' ? `<button class="btn2 pri" type="button" data-fr="accept" data-id="${+r.id}">Accept</button><button class="btn2" type="button" data-fr="decline" data-id="${+r.id}">Decline</button>` : `<span class="fr-tag">Sent</span><button class="btn2" type="button" data-fr="cancel" data-id="${+r.id}">Cancel</button>`)]), '');
+  $('#g-fr').hidden = searching;
+  $('#fr-n').textContent = fl.length;
+  frFill($('#fr-l'), fl.map(f => ['f' + f.friend_id, frRow(f, `<button class="btn2" type="button" data-fr="remove" data-id="${esc(f.friend_id)}">Remove</button>`)]), `<div class="nofr">${FR.list ? 'No friends yet. Type a username above to find someone.' : 'Loading…'}</div>`);
+  const pcf = $('#pcf'); if (pcf && FR.list) pcf.textContent = fl.length;
+}
+async function frLoad() {
+  if (!SB.user) return;
+  try {
+    const [f, r] = await Promise.all([sbRest('rpc/my_friends', { method: 'POST', body: {} }), sbRest('rpc/my_friend_requests', { method: 'POST', body: {} })]);
+    if (!SB.user) return;
+    FR.list = Array.isArray(f) ? f : []; FR.req = Array.isArray(r) ? r : [];
+    frDraw();
+  } catch (e) { auMsg('anote', 'Could not load your friends. Check your connection and try again.', 'bad'); }
+}
+function frOpen() {
+  const st = auState(), ok = st === 'in', inp = $('#fname');
+  $('#frgate').hidden = ok;
+  inp.disabled = !ok;
+  if (!ok) {
+    ['g-res', 'g-req', 'g-fr'].forEach(id => { $('#' + id).hidden = true; });
+    $('#frgt').textContent = st === 'off' ? 'Friends are coming soon' : 'Log in to add friends';
+    $('#frgs').textContent = st === 'off' ? 'Accounts are not switched on yet. Then you can find players by their username and add them as friends.' : 'Create a free account or log in, then find players by their username.';
+    return;
+  }
+  FR.q = inp.value.trim().toLowerCase().replace(/^@/, '');
+  frDraw(); frLoad();
+  if (FR.q.length >= 2) frSearch();
+  if (!auCoarse()) setTimeout(() => { if (openK === 'friends') inp.focus({ preventScroll: true }); }, 60);
+}
+function frInput() {
+  const q = $('#fname').value.trim().toLowerCase().replace(/^@/, '');
+  FR.q = q; auMsg('anote', '');
+  clearTimeout(FR.t);
+  if (q.length < 2) { FR.seq++; FR.res = null; frDraw(); if (q.length === 1) auMsg('anote', 'Type at least 2 letters.'); return; }
+  if (!/^[a-z0-9_.]+$/.test(q)) { FR.seq++; FR.res = []; frDraw(); return; }
+  if (FR.rq && q.startsWith(FR.rq) && FR.rres.length < 20) { FR.seq++; FR.res = FR.rres.filter(p => p.username.startsWith(q)); frDraw(); return; }
+  if (FR.res) { FR.res = FR.res.filter(p => p.username.startsWith(q)); frDraw(); }
+  FR.t = setTimeout(frSearch, 150);
+}
+async function frSearch() {
+  const q = FR.q, my = ++FR.seq;
+  if (!SB.user || q.length < 2) return;
+  try {
+    const r = await sbRest('rpc/search_profiles', { method: 'POST', body: { prefix: q } });
+    if (my !== FR.seq) return;
+    FR.rq = q; FR.rres = Array.isArray(r) ? r : []; FR.res = FR.rres;
+    frDraw();
+  } catch (e) { if (my === FR.seq) auMsg('anote', /too many/i.test(e.message || '') ? 'Too many searches. Wait a moment and try again.' : 'Could not search. Check your connection and try again.', 'bad'); }
+}
+async function frAct(k, b) {
+  if (!SB.user) return;
+  if (k === 'remove' && !b.dataset.c) { b.dataset.c = '1'; b.textContent = 'Click again to remove'; b.classList.add('dangerfill'); setTimeout(() => { if (b.isConnected) { delete b.dataset.c; b.textContent = 'Remove'; b.classList.remove('dangerfill'); } }, 4000); return; }
+  b.disabled = true;
+  const id = b.dataset.id, name = (b.closest('.frow').querySelector('.fr-n span') || {}).textContent || '';
+  try {
+    if (k === 'add') {
+      const r = await sbRest('rpc/send_friend_request', { method: 'POST', body: { p_username: b.dataset.un } });
+      toast(r === 'accepted' ? auT('You are now friends with {u}').replace('{u}', name) : r === 'sent' ? auT('Friend request sent to {u}').replace('{u}', name) : r === 'already_friends' ? 'You are already friends' : 'That player was not found');
+      track('friend', { act: 'request', r: String(r || '') });
+    } else if (k === 'accept' || k === 'decline') {
+      const r = await sbRest('rpc/respond_friend_request', { method: 'POST', body: { p_id: +id, p_accept: k === 'accept' } });
+      if (r === 'accepted') toast(auT('You are now friends with {u}').replace('{u}', name));
+      track('friend', { act: k });
+    } else if (k === 'cancel') {
+      await sbRest('friend_requests?id=eq.' + (+id), { method: 'DELETE' });
+      track('friend', { act: 'cancel' });
+    } else if (k === 'remove') {
+      await sbRest('rpc/remove_friend', { method: 'POST', body: { p_friend: id } });
+      toast(auT('{u} was removed from your friends').replace('{u}', name));
+      track('friend', { act: 'remove' });
+    }
+    await frLoad();
+  } catch (e) { b.disabled = false; auMsg('anote', 'Could not update. Check your connection and try again.', 'bad'); }
+}
+addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const s = document.getElementById('lgsheet'), c = document.getElementById('ckbar');
+  if (s && !s.hidden) { e.preventDefault(); e.stopImmediatePropagation(); lgClose(); return; }
+  if (c && !c.hidden) e.stopImmediatePropagation();
+}, true);
 function auBoot() {
-  if (!SB.on) return;
-  Ameplay.analytics.sink = sbSink;
-  [[$('#delc').closest('.scard').querySelector('p'), ' You will also be signed out on this device.', 'Type DELETE'], [$('#dl').closest('.srw').querySelector('small'), ' Includes your account data.'], [$('#rr').closest('.srw').querySelector('small'), ' Your account records are cleared too.']].forEach(([el, t, before]) => { if (!el) return; const sp = document.createElement('span'); sp.dataset.au = 'in'; sp.hidden = true; sp.textContent = t; const n = before && [...el.childNodes].find(x => x.nodeType === 3 && x.nodeValue.includes(before)); if (n) { const i = n.nodeValue.indexOf(before); const rest = n.splitText(i); el.insertBefore(sp, rest); sp.textContent = t.trim() + ' '; } else el.append(sp); });
-  auRender();
+  const ck = $('#ckbar'), ls = $('#lgsheet'), am = $('#aumodal'), fm = $('#fmodal');
+  ck.addEventListener('click', e => {
+    e.stopPropagation();
+    const lg = e.target.closest('[data-aulegal]');
+    if (lg) { e.preventDefault(); lgOpen(lg.dataset.aulegal); return; }
+    const b = e.target.closest('[data-ckc]');
+    if (b) ckChoose(b.dataset.ckc);
+  });
+  $('#ckterms').addEventListener('change', () => auMsg('cknote', ''));
+  ls.addEventListener('click', e => {
+    e.stopPropagation();
+    if (e.target === ls || e.target.closest('#lgback')) { lgClose(); return; }
+    const lg = e.target.closest('[data-aulegal], [data-legal]');
+    if (lg) { e.preventDefault(); lgOpen(lg.dataset.aulegal || lg.dataset.legal); }
+  });
+  ['keydown', 'keyup'].forEach(t => ls.addEventListener(t, e => { if (e.key !== 'Escape') e.stopPropagation(); }));
+  if (!ck.hidden) document.documentElement.classList.add('ck-open');
+  document.querySelectorAll('#aumodal .au-pw').forEach(w => w.insertAdjacentHTML('beforeend', EYE));
+  am.addEventListener('mousedown', e => { if (e.target.closest('.au-eye')) e.preventDefault(); });
+  am.addEventListener('click', e => {
+    const t = e.target, lg = t.closest('[data-aulegal]');
+    if (lg) { e.preventDefault(); e.stopPropagation(); lgOpen(lg.dataset.aulegal); return; }
+    const eye = t.closest('.au-eye');
+    if (eye) { auEye(eye); return; }
+    const md = t.closest('[data-aumode]');
+    if (md) { if (SB.mode !== md.dataset.aumode) { SB.mode = md.dataset.aumode; auMsg('aunote', ''); auView('main'); } return; }
+    if (t.closest('[data-auguest]')) { e.stopPropagation(); auGuest(); }
+  });
+  $('#autabs').addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); SB.mode = SB.mode === 'up' ? 'in' : 'up'; auView('main'); $('#autabs [aria-selected="true"]').focus(); } });
   $('#auform').addEventListener('submit', e => { e.preventDefault(); auSubmit(); });
   $('#aurform').addEventListener('submit', e => { e.preventDefault(); auReset(); });
   $('#anform').addEventListener('submit', e => { e.preventDefault(); auNewPass(); });
-  $('#ausw').addEventListener('click', () => { SB.mode = SB.mode === 'up' ? 'in' : 'up'; auMsg('aunote', ''); auView('main'); });
-  $('#auforgot').addEventListener('click', () => { $('#aremail').value = $('#auemail').value.trim(); auView('reset'); auMsg('arnote', ''); });
-  $('#auemsave').addEventListener('click', auChangeEmail);
-  $('#aupwsave').addEventListener('click', auChangePass);
-  $('#auem2').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); auChangeEmail(); } });
-  $('#aupw2').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); auChangePass(); } });
-  $('#aunow').addEventListener('click', () => { $('#ausync').textContent = 'Syncing…'; sySync(); });
-  $('#adelc').addEventListener('input', e => { $('#adelbtn').disabled = e.target.value !== 'DELETE'; });
-  $('#adelbtn').addEventListener('click', () => { if ($('#adelc').value === 'DELETE' && SB.user) auDeleteAccount(); });
+  $('#auresend').addEventListener('click', auResend);
+  $('#auforgot').addEventListener('click', () => { const v = $('#auemail').value.trim(); if (v.includes('@')) $('#aremail').value = v; auView('reset'); auMsg('arnote', ''); if (!auCoarse()) $('#aremail').focus(); });
+  $('#auuser').addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; });
+  am.querySelectorAll('input').forEach(i => i.addEventListener('input', () => { const f = i.closest('.fld, .au-chk'); if (f) f.classList.remove('au-shake'); }));
+  fm.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'fname') { e.preventDefault(); e.stopPropagation(); clearTimeout(FR.t); frSearch(); } }, true);
+  fm.addEventListener('input', e => { if (e.target.id === 'fname') { e.stopPropagation(); frInput(); } }, true);
+  fm.addEventListener('click', e => { const b = e.target.closest('[data-fr]'); if (b) { e.stopPropagation(); frAct(b.dataset.fr, b); } });
   document.addEventListener('click', e => {
     const t = e.target;
     const g = t.closest && t.closest('[data-auth="google"]');
     if (g) { e.preventDefault(); auGoogle(); return; }
     const v = t.closest && t.closest('[data-auv]');
-    if (v) { auView(v.dataset.auv); return; }
+    if (v) { auView(v.dataset.auv); auMsg('aunote', ''); return; }
   });
-  $('#unmodal').addEventListener('click', e => { if (e.target === e.currentTarget || e.target.closest('[data-unclose]')) SB.choosing = false; });
-  $('#uncancel').addEventListener('click', () => { SB.choosing = false; });
-  $('#unedit').addEventListener('click', () => { $('label[for="unew"]').textContent = 'New username'; if (SB.user) $('#uncont').textContent = SB.prof && SB.prof.username ? 'Continue' : 'Save'; });
-  addEventListener('online', () => { if (SB.user) sySync(); });
-  document.addEventListener('visibilitychange', () => { if (!SB.user) return; if (document.visibilityState === 'hidden') sySync({ keep: true }); else if (Date.now() - syNum(SY.at) > 180000) sySync(); });
-  addEventListener('pagehide', () => { if (SB.user) sySync({ keep: true }); });
-  setInterval(() => { if (SB.user && cur && document.visibilityState !== 'hidden') sySync(); }, 120000);
-  if (SB_RET || sbHasSession()) sbClient().then(() => auReturn()).catch(() => { if (SB_RET) toast('Sign-in could not load. Check your connection and reload the page.'); });
+  auGoogleUi();
+  if (SB.on) {
+    Ameplay.analytics.sink = sbSink;
+    [[$('#delc').closest('.scard').querySelector('p'), ' You will also be signed out on this device.', 'Type DELETE'], [$('#dl').closest('.srw').querySelector('small'), ' Includes your account data.'], [$('#rr').closest('.srw').querySelector('small'), ' Your account records are cleared too.']].forEach(([el, t, before]) => { if (!el) return; const sp = document.createElement('span'); sp.dataset.au = 'in'; sp.hidden = true; sp.textContent = t; const n = before && [...el.childNodes].find(x => x.nodeType === 3 && x.nodeValue.includes(before)); if (n) { const i = n.nodeValue.indexOf(before); const rest = n.splitText(i); el.insertBefore(sp, rest); sp.textContent = t.trim() + ' '; } else el.append(sp); });
+    $('#auemsave').addEventListener('click', auChangeEmail);
+    $('#aupwsave').addEventListener('click', auChangePass);
+    $('#auem2').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); auChangeEmail(); } });
+    $('#aupw2').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); auChangePass(); } });
+    $('#aunow').addEventListener('click', () => { $('#ausync').textContent = 'Syncing…'; sySync(); });
+    $('#adelc').addEventListener('input', e => { $('#adelbtn').disabled = e.target.value !== 'DELETE'; });
+    $('#adelbtn').addEventListener('click', () => { if ($('#adelc').value === 'DELETE' && SB.user) auDeleteAccount(); });
+    $('#unmodal').addEventListener('click', e => { if (e.target === e.currentTarget || e.target.closest('[data-unclose]')) SB.choosing = false; });
+    $('#uncancel').addEventListener('click', () => { SB.choosing = false; });
+    $('#unedit').addEventListener('click', () => { $('label[for="unew"]').textContent = 'New username'; if (SB.user) $('#uncont').textContent = SB.prof && SB.prof.username ? 'Continue' : 'Save'; });
+    addEventListener('online', () => { if (SB.user) sySync(); });
+    document.addEventListener('visibilitychange', () => { if (!SB.user) return; if (document.visibilityState === 'hidden') sySync({ keep: true }); else if (Date.now() - syNum(SY.at) > 180000) sySync(); });
+    addEventListener('pagehide', () => { if (SB.user) sySync({ keep: true }); });
+    setInterval(() => { if (SB.user && cur && document.visibilityState !== 'hidden') sySync(); }, 120000);
+    if (SB_RET || sbHasSession()) sbClient().then(() => auReturn()).catch(() => { if (SB_RET) toast('Sign-in could not load. Check your connection and reload the page.'); });
+    auSettings();
+  }
+  auRender();
+  auFirst();
 }
 Ameplay.account = {
   get enabled() { return SB.on; },
   get signedIn() { return !!SB.user; },
   get id() { return SB.user ? SB.user.id : null; },
   get username() { return SB.prof && SB.prof.username || null; },
-  signIn() { if (SB.on) auOpen('main'); },
+  signIn() { auOpen('main', '', '', 'in'); },
   sync() { return sySync(); }
 };
 
 Ameplay.debug = { open: id => go(href(id), false), close: () => go(PATH_MODE ? '/' : '#/', false), games, fire: () => ov && ov.fire(), state, compute, q: t => { const o = state.q; state.q = t; const r = compute().list.map(g => g.id); state.q = o; return r; }, info: INFO, fit: () => fitStage(), pause: () => PAUSE.on };
 document.addEventListener('DOMContentLoaded', boot);
+})();
+
+(() => {
+const LANGS = ['en', 'fr', 'es', 'de', 'it', 'pt'], NAMES = { en: 'English', fr: 'Français', es: 'Español', de: 'Deutsch', it: 'Italiano', pt: 'Português' }, LKEY = 'gameplay:lang';
+const R = [
+["gameplay home", "Accueil gameplay", "Inicio de gameplay", "gameplay-Startseite", "Home di gameplay", "Início do gameplay"],
+["Friends", "Amis", "Amigos", "Freunde", "Amici", "Amigos"],
+["Settings", "Paramètres", "Ajustes", "Einstellungen", "Impostazioni", "Configurações"],
+["Your account", "Votre compte", "Tu cuenta", "Dein Konto", "Il tuo account", "Sua conta"],
+["Profile", "Profil", "Perfil", "Profil", "Profilo", "Perfil"],
+["Stats", "Statistiques", "Estadísticas", "Statistiken", "Statistiche", "Estatísticas"],
+["Sign in", "Se connecter", "Iniciar sesión", "Anmelden", "Accedi", "Entrar"],
+["Sign out", "Se déconnecter", "Cerrar sesión", "Abmelden", "Esci", "Sair"],
+["All settings", "Tous les paramètres", "Todos los ajustes", "Alle Einstellungen", "Tutte le impostazioni", "Todas as configurações"],
+["Theme", "Thème", "Tema", "Design", "Tema", "Tema"],
+["Auto", "Auto", "Auto", "Auto", "Auto", "Auto"],
+["Light", "Clair", "Claro", "Hell", "Chiaro", "Claro"],
+["Dark", "Sombre", "Oscuro", "Dunkel", "Scuro", "Escuro"],
+["Language", "Langue", "Idioma", "Sprache", "Lingua", "Idioma"],
+["Controls and shortcuts", "Commandes et raccourcis", "Controles y atajos", "Steuerung und Tastenkürzel", "Comandi e scorciatoie", "Controles e atalhos"],
+["Sound effects", "Effets sonores", "Efectos de sonido", "Soundeffekte", "Effetti sonori", "Efeitos sonoros"],
+["Terms and privacy", "Conditions et confidentialité", "Términos y privacidad", "AGB und Datenschutz", "Termini e privacy", "Termos e privacidade"],
+["Help center", "Centre d’aide", "Centro de ayuda", "Hilfe-Center", "Centro assistenza", "Central de ajuda"],
+["Games list", "Liste des jeux", "Lista de juegos", "Spieleliste", "Elenco dei giochi", "Lista de jogos"],
+["Games", "Jeux", "Juegos", "Spiele", "Giochi", "Jogos"],
+["Select a game", "Choisissez un jeu", "Elige un juego", "Wähle ein Spiel", "Scegli un gioco", "Escolha um jogo"],
+["Continue playing", "Continuer à jouer", "Seguir jugando", "Weiterspielen", "Continua a giocare", "Continuar jogando"],
+["All games", "Tous les jeux", "Todos los juegos", "Alle Spiele", "Tutti i giochi", "Todos os jogos"],
+["Results", "Résultats", "Resultados", "Ergebnisse", "Risultati", "Resultados"],
+["Search games", "Rechercher des jeux", "Buscar juegos", "Spiele suchen", "Cerca giochi", "Pesquisar jogos"],
+["Filters", "Filtres", "Filtros", "Filter", "Filtri", "Filtros"],
+["Clear all", "Tout effacer", "Borrar todo", "Alle löschen", "Cancella tutto", "Limpar tudo"],
+["Show games", "Voir les jeux", "Ver juegos", "Spiele zeigen", "Mostra giochi", "Ver jogos"],
+["Random game", "Jeu au hasard", "Juego aleatorio", "Zufälliges Spiel", "Gioco a caso", "Jogo aleatório"],
+["No games match", "Aucun jeu ne correspond", "Ningún juego coincide", "Keine passenden Spiele", "Nessun gioco trovato", "Nenhum jogo encontrado"],
+["Try a different word or remove a filter.", "Essayez un autre mot ou retirez un filtre.", "Prueba otra palabra o quita un filtro.", "Versuche ein anderes Wort oder entferne einen Filter.", "Prova un’altra parola o rimuovi un filtro.", "Tente outra palavra ou remova um filtro."],
+["Clear filters", "Effacer les filtres", "Borrar filtros", "Filter löschen", "Cancella filtri", "Limpar filtros"],
+["Reset sort", "Réinitialiser le tri", "Restablecer orden", "Sortierung zurücksetzen", "Ripristina ordinamento", "Redefinir ordem"],
+["Sort by", "Trier par", "Ordenar por", "Sortieren nach", "Ordina per", "Ordenar por"],
+["Genre", "Genre", "Género", "Genre", "Genere", "Gênero"],
+["Players", "Joueurs", "Jugadores", "Spieler", "Giocatori", "Jogadores"],
+["Look", "Style", "Estilo", "Grafik", "Grafica", "Visual"],
+["Controls", "Commandes", "Controles", "Steuerung", "Comandi", "Controles"],
+["Length", "Durée", "Duración", "Dauer", "Durata", "Duração"],
+["Solo", "Solo", "Individual", "Solo", "Singolo", "Solo"],
+["Online", "En ligne", "En línea", "Online", "Online", "Online"],
+["Offline", "Hors ligne", "Desconectado", "Offline", "Offline", "Offline"],
+["Keyboard", "Clavier", "Teclado", "Tastatur", "Tastiera", "Teclado"],
+["Mouse or touch", "Souris ou tactile", "Ratón o táctil", "Maus oder Touch", "Mouse o touch", "Mouse ou toque"],
+["Keyboard or touch", "Clavier ou tactile", "Teclado o táctil", "Tastatur oder Touch", "Tastiera o touch", "Teclado ou toque"],
+["Quick", "Rapide", "Rápido", "Kurz", "Breve", "Rápido"],
+["Medium", "Moyen", "Medio", "Mittel", "Media", "Médio"],
+["Long", "Long", "Largo", "Lang", "Lunga", "Longo"],
+["Best match", "Pertinence", "Más relevante", "Beste Treffer", "Più pertinenti", "Mais relevantes"],
+["Popular", "Populaires", "Populares", "Beliebt", "Popolari", "Populares"],
+["A to Z", "De A à Z", "De la A a la Z", "A bis Z", "Dalla A alla Z", "De A a Z"],
+["Newest", "Nouveautés", "Más nuevos", "Neueste", "Più recenti", "Mais novos"],
+["Most played", "Les plus joués", "Más jugados", "Meistgespielt", "Più giocati", "Mais jogados"],
+["Shortest", "Les plus courts", "Más cortos", "Kürzeste", "Più brevi", "Mais curtos"],
+["Action", "Action", "Acción", "Action", "Azione", "Ação"],
+["Arcade", "Arcade", "Arcade", "Arcade", "Arcade", "Arcade"],
+["Racing", "Course", "Carreras", "Rennen", "Corse", "Corrida"],
+["Runner", "Course infinie", "Carrera infinita", "Endlos-Runner", "Corsa infinita", "Corrida infinita"],
+["Puzzle", "Réflexion", "Puzles", "Puzzle", "Rompicapo", "Quebra-cabeça"],
+["Sports", "Sport", "Deportes", "Sport", "Sport", "Esportes"],
+["Board & Cards", "Plateau et cartes", "Mesa y cartas", "Brett & Karten", "Tavolo e carte", "Tabuleiro e cartas"],
+["Board", "Plateau", "Mesa", "Brettspiele", "Tavolo", "Tabuleiro"],
+["Brain", "Cerveau", "Mente", "Denksport", "Mente", "Mente"],
+["Skill", "Adresse", "Habilidad", "Geschick", "Abilità", "Habilidade"],
+["Strategy & Idle", "Stratégie et idle", "Estrategia e idle", "Strategie & Idle", "Strategia e idle", "Estratégia e idle"],
+["Strategy", "Stratégie", "Estrategia", "Strategie", "Strategia", "Estratégia"],
+["3D", "3D", "3D", "3D", "3D", "3D"],
+["Back to all games", "Retour à tous les jeux", "Volver a todos los juegos", "Zurück zu allen Spielen", "Torna a tutti i giochi", "Voltar para todos os jogos"],
+["Score", "Score", "Puntos", "Punkte", "Punti", "Pontos"],
+["Best", "Record", "Récord", "Rekord", "Record", "Recorde"],
+["Restart", "Recommencer", "Reiniciar", "Neustart", "Ricomincia", "Reiniciar"],
+["Restart game", "Recommencer la partie", "Reiniciar la partida", "Spiel neu starten", "Ricomincia la partita", "Reiniciar o jogo"],
+["Sound", "Son", "Sonido", "Ton", "Audio", "Som"],
+["Toggle sound", "Activer ou couper le son", "Activar o silenciar el sonido", "Ton ein/aus", "Attiva o disattiva l’audio", "Ativar ou desativar o som"],
+["Large view", "Grand format", "Vista grande", "Große Ansicht", "Vista grande", "Visão ampliada"],
+["Toggle large view", "Activer ou désactiver le grand format", "Activar o desactivar la vista grande", "Große Ansicht ein/aus", "Attiva o disattiva la vista grande", "Ativar ou desativar a visão ampliada"],
+["Fullscreen", "Plein écran", "Pantalla completa", "Vollbild", "Schermo intero", "Tela cheia"],
+["Toggle fullscreen", "Activer ou quitter le plein écran", "Activar o salir de pantalla completa", "Vollbild ein/aus", "Attiva o esci dallo schermo intero", "Ativar ou sair da tela cheia"],
+["Exit fullscreen", "Quitter le plein écran", "Salir de pantalla completa", "Vollbild beenden", "Esci dallo schermo intero", "Sair da tela cheia"],
+["About", "À propos", "Acerca de", "Über", "Info", "Sobre"],
+["More like this", "Dans le même genre", "Más como este", "Ähnliche Spiele", "Altri simili", "Mais como este"],
+["Not played yet", "Pas encore joué", "Aún no jugado", "Noch nicht gespielt", "Non ancora giocato", "Ainda não jogado"],
+["Back to games", "Retour aux jeux", "Volver a los juegos", "Zurück zu den Spielen", "Torna ai giochi", "Voltar aos jogos"],
+["Legal documents", "Documents juridiques", "Documentos legales", "Rechtliche Dokumente", "Documenti legali", "Documentos legais"],
+["Terms of Service", "Conditions d’utilisation", "Términos del servicio", "Nutzungsbedingungen", "Termini di servizio", "Termos de Serviço"],
+["Terms of Use", "Conditions d’utilisation", "Términos de uso", "Nutzungsbedingungen", "Termini d’uso", "Termos de Uso"],
+["Privacy Policy", "Politique de confidentialité", "Política de privacidad", "Datenschutzerklärung", "Politica sulla privacy", "Política de Privacidade"],
+["Cookie Policy", "Politique relative aux cookies", "Política de cookies", "Cookie-Richtlinie", "Politica sui cookie", "Política de Cookies"],
+["Terms", "Conditions", "Términos", "AGB", "Termini", "Termos"],
+["Privacy", "Confidentialité", "Privacidad", "Datenschutz", "Privacy", "Privacidade"],
+["Cookies", "Cookies", "Cookies", "Cookies", "Cookie", "Cookies"],
+["Cookie settings", "Paramètres des cookies", "Configuración de cookies", "Cookie-Einstellungen", "Impostazioni dei cookie", "Configurações de cookies"],
+["Fan-made remakes. Not affiliated with the original games or their publishers.", "Remakes faits par des fans. Sans lien avec les jeux originaux ni leurs éditeurs.", "Remakes hechos por fans. Sin relación con los juegos originales ni sus editores.", "Fan-Remakes. Nicht mit den Originalspielen oder ihren Publishern verbunden.", "Remake fatti dai fan. Non affiliati ai giochi originali né ai loro editori.", "Remakes feitos por fãs. Sem vínculo com os jogos originais ou suas editoras."],
+["Back", "Retour", "Volver", "Zurück", "Indietro", "Voltar"],
+["Search friends or type a username", "Cherchez un ami ou tapez un nom d’utilisateur", "Busca amigos o escribe un nombre de usuario", "Freunde suchen oder Benutzernamen eingeben", "Cerca amici o scrivi un nome utente", "Procure amigos ou digite um nome de usuário"],
+["No friends yet", "Pas encore d’amis", "Aún no tienes amigos", "Noch keine Freunde", "Ancora nessun amico", "Nenhum amigo ainda"],
+["Friend requests are coming soon.", "Les demandes d’ami arrivent bientôt.", "Las solicitudes de amistad llegarán pronto.", "Freundschaftsanfragen kommen bald.", "Le richieste di amicizia arriveranno presto.", "Os pedidos de amizade chegam em breve."],
+["Records", "Records", "Récords", "Rekorde", "Record", "Recordes"],
+["Friend ID", "ID d’ami", "ID de amigo", "Freundes-ID", "ID amico", "ID de amigo"],
+["Coming soon", "Bientôt disponible", "Muy pronto", "Kommt bald", "In arrivo", "Em breve"],
+["Coming soon.", "Bientôt disponible.", "Muy pronto.", "Kommt bald.", "In arrivo.", "Em breve."],
+["Copy", "Copier", "Copiar", "Kopieren", "Copia", "Copiar"],
+["Username", "Nom d’utilisateur", "Nombre de usuario", "Benutzername", "Nome utente", "Nome de usuário"],
+["Change", "Modifier", "Cambiar", "Ändern", "Cambia", "Alterar"],
+["Choose", "Choisir", "Elegir", "Wählen", "Scegli", "Escolher"],
+["Display name", "Nom affiché", "Nombre visible", "Anzeigename", "Nome visualizzato", "Nome de exibição"],
+["Save", "Enregistrer", "Guardar", "Speichern", "Salva", "Salvar"],
+["Guest", "Invité", "Invitado", "Gast", "Ospite", "Convidado"],
+["Playing as a guest", "Vous jouez en invité", "Juegas como invitado", "Du spielst als Gast", "Stai giocando come ospite", "Jogando como convidado"],
+["No username yet", "Pas encore de nom d’utilisateur", "Aún sin nombre de usuario", "Noch kein Benutzername", "Nessun nome utente", "Ainda sem nome de usuário"],
+["Enter a display name.", "Saisissez un nom affiché.", "Escribe un nombre visible.", "Gib einen Anzeigenamen ein.", "Inserisci un nome visualizzato.", "Digite um nome de exibição."],
+["Display name saved.", "Nom affiché enregistré.", "Nombre visible guardado.", "Anzeigename gespeichert.", "Nome visualizzato salvato.", "Nome de exibição salvo."],
+["Change username", "Modifier le nom d’utilisateur", "Cambiar nombre de usuario", "Benutzernamen ändern", "Cambia nome utente", "Alterar nome de usuário"],
+["Choose a username", "Choisissez un nom d’utilisateur", "Elige un nombre de usuario", "Wähle einen Benutzernamen", "Scegli un nome utente", "Escolha um nome de usuário"],
+["New username", "Nouveau nom d’utilisateur", "Nuevo nombre de usuario", "Neuer Benutzername", "Nuovo nome utente", "Novo nome de usuário"],
+["Change your username from", "Changer votre nom d’utilisateur de", "¿Cambiar tu nombre de usuario de", "Benutzernamen ändern von", "Cambiare il nome utente da", "Alterar seu nome de usuário de"],
+["to", "en", "a", "zu", "a", "para"],
+["Cancel", "Annuler", "Cancelar", "Abbrechen", "Annulla", "Cancelar"],
+["Continue", "Continuer", "Continuar", "Weiter", "Continua", "Continuar"],
+["Are you sure?", "Vous êtes sûr ?", "¿Seguro?", "Bist du sicher?", "Sei sicuro?", "Tem certeza?"],
+["Yes, change it", "Oui, le changer", "Sí, cambiarlo", "Ja, ändern", "Sì, cambialo", "Sim, alterar"],
+["Use 3 to 20 letters, numbers, dots, dashes or underscores.", "Utilisez 3 à 20 lettres, chiffres, points, tirets ou tirets bas.", "Usa de 3 a 20 letras, números, puntos, guiones o guiones bajos.", "Verwende 3 bis 20 Buchstaben, Ziffern, Punkte, Bindestriche oder Unterstriche.", "Usa da 3 a 20 lettere, numeri, punti, trattini o trattini bassi.", "Use de 3 a 20 letras, números, pontos, hifens ou sublinhados."],
+["That is already your username.", "C’est déjà votre nom d’utilisateur.", "Ese ya es tu nombre de usuario.", "Das ist bereits dein Benutzername.", "È già il tuo nome utente.", "Esse já é seu nome de usuário."],
+["Username saved.", "Nom d’utilisateur enregistré.", "Nombre de usuario guardado.", "Benutzername gespeichert.", "Nome utente salvato.", "Nome de usuário salvo."],
+["Username changed.", "Nom d’utilisateur modifié.", "Nombre de usuario cambiado.", "Benutzername geändert.", "Nome utente cambiato.", "Nome de usuário alterado."],
+["Close", "Fermer", "Cerrar", "Schließen", "Chiudi", "Fechar"],
+["Settings sections", "Sections des paramètres", "Secciones de ajustes", "Einstellungsbereiche", "Sezioni delle impostazioni", "Seções de configurações"],
+["Account", "Compte", "Cuenta", "Konto", "Account", "Conta"],
+["Appearance and language", "Apparence et langue", "Apariencia e idioma", "Darstellung und Sprache", "Aspetto e lingua", "Aparência e idioma"],
+["Notifications", "Notifications", "Notificaciones", "Benachrichtigungen", "Notifiche", "Notificações"],
+["Privacy and data", "Confidentialité et données", "Privacidad y datos", "Datenschutz und Daten", "Privacy e dati", "Privacidade e dados"],
+["Help and legal", "Aide et mentions légales", "Ayuda e información legal", "Hilfe und Rechtliches", "Assistenza e note legali", "Ajuda e informações legais"],
+["Edit profile", "Modifier le profil", "Editar perfil", "Profil bearbeiten", "Modifica profilo", "Editar perfil"],
+["Signed in", "Connecté", "Sesión iniciada", "Angemeldet", "Accesso eseguito", "Conectado"],
+["Sync", "Synchronisation", "Sincronización", "Synchronisierung", "Sincronizzazione", "Sincronização"],
+["Your records and saves are kept in your account.", "Vos records et sauvegardes sont conservés dans votre compte.", "Tus récords y partidas guardadas se conservan en tu cuenta.", "Deine Rekorde und Spielstände werden in deinem Konto gespeichert.", "I tuoi record e salvataggi sono conservati nel tuo account.", "Seus recordes e jogos salvos ficam guardados na sua conta."],
+["Sync now", "Synchroniser", "Sincronizar ahora", "Jetzt synchronisieren", "Sincronizza ora", "Sincronizar agora"],
+["Syncing…", "Synchronisation…", "Sincronizando…", "Wird synchronisiert…", "Sincronizzazione…", "Sincronizando…"],
+["Email and password", "E-mail et mot de passe", "Correo y contraseña", "E-Mail und Passwort", "Email e password", "E-mail e senha"],
+["Email address", "Adresse e-mail", "Correo electrónico", "E-Mail-Adresse", "Indirizzo email", "Endereço de e-mail"],
+["New password", "Nouveau mot de passe", "Nueva contraseña", "Neues Passwort", "Nuova password", "Nova senha"],
+["Set a password", "Définir un mot de passe", "Crear una contraseña", "Passwort festlegen", "Imposta una password", "Definir uma senha"],
+["At least 8 characters", "Au moins 8 caractères", "Al menos 8 caracteres", "Mindestens 8 Zeichen", "Almeno 8 caratteri", "Pelo menos 8 caracteres"],
+["Optional. Keep your profile, records and saves on every device.", "Facultatif. Retrouvez votre profil, vos records et vos sauvegardes sur tous vos appareils.", "Opcional. Conserva tu perfil, récords y partidas en todos tus dispositivos.", "Optional. Behalte dein Profil, deine Rekorde und Spielstände auf allen Geräten.", "Facoltativo. Ritrova profilo, record e salvataggi su ogni dispositivo.", "Opcional. Mantenha seu perfil, recordes e jogos salvos em todos os dispositivos."],
+["Google", "Google", "Google", "Google", "Google", "Google"],
+["Use your Google account.", "Utilisez votre compte Google.", "Usa tu cuenta de Google.", "Nutze dein Google-Konto.", "Usa il tuo account Google.", "Use sua conta do Google."],
+["Email", "E-mail", "Correo", "E-Mail", "Email", "E-mail"],
+["Sign in or create an account with your email.", "Connectez-vous ou créez un compte avec votre e-mail.", "Inicia sesión o crea una cuenta con tu correo.", "Melde dich an oder erstelle ein Konto mit deiner E-Mail.", "Accedi o crea un account con la tua email.", "Entre ou crie uma conta com seu e-mail."],
+["Use email", "Utiliser l’e-mail", "Usar correo", "E-Mail nutzen", "Usa l’email", "Usar e-mail"],
+["This device", "Cet appareil", "Este dispositivo", "Dieses Gerät", "Questo dispositivo", "Este dispositivo"],
+["Without an account your data stays in this browser.", "Sans compte, vos données restent dans ce navigateur.", "Sin cuenta, tus datos se quedan en este navegador.", "Ohne Konto bleiben deine Daten in diesem Browser.", "Senza account i tuoi dati restano in questo browser.", "Sem conta, seus dados ficam neste navegador."],
+["Current", "Actuel", "Actual", "Aktuell", "Attuale", "Atual"],
+["Keep your profile and records on every device.", "Retrouvez votre profil et vos records sur tous vos appareils.", "Conserva tu perfil y récords en todos tus dispositivos.", "Behalte dein Profil und deine Rekorde auf allen Geräten.", "Ritrova profilo e record su ogni dispositivo.", "Mantenha seu perfil e recordes em todos os dispositivos."],
+["Connect", "Connecter", "Conectar", "Verbinden", "Collega", "Conectar"],
+["Google sign-in", "La connexion Google", "El inicio de sesión con Google", "Google-Anmeldung", "L’accesso con Google", "O login com Google"],
+["Your data is saved in this browser.", "Vos données sont enregistrées dans ce navigateur.", "Tus datos se guardan en este navegador.", "Deine Daten werden in diesem Browser gespeichert.", "I tuoi dati sono salvati in questo browser.", "Seus dados são salvos neste navegador."],
+["Delete my data", "Supprimer mes données", "Borrar mis datos", "Meine Daten löschen", "Elimina i miei dati", "Excluir meus dados"],
+["Removes your profile, records, saves and settings from this browser. Type DELETE to confirm.", "Supprime votre profil, vos records, vos sauvegardes et vos paramètres de ce navigateur. Tapez DELETE pour confirmer.", "Borra tu perfil, récords, partidas guardadas y ajustes de este navegador. Escribe DELETE para confirmar.", "Entfernt dein Profil, deine Rekorde, Spielstände und Einstellungen aus diesem Browser. Gib DELETE ein, um zu bestätigen.", "Rimuove profilo, record, salvataggi e impostazioni da questo browser. Scrivi DELETE per confermare.", "Remove seu perfil, recordes, jogos salvos e configurações deste navegador. Digite DELETE para confirmar."],
+["Removes your profile, records, saves and settings from this browser.", "Supprime votre profil, vos records, vos sauvegardes et vos paramètres de ce navigateur.", "Borra tu perfil, récords, partidas guardadas y ajustes de este navegador.", "Entfernt dein Profil, deine Rekorde, Spielstände und Einstellungen aus diesem Browser.", "Rimuove profilo, record, salvataggi e impostazioni da questo browser.", "Remove seu perfil, recordes, jogos salvos e configurações deste navegador."],
+["Type DELETE to confirm.", "Tapez DELETE pour confirmer.", "Escribe DELETE para confirmar.", "Gib DELETE ein, um zu bestätigen.", "Scrivi DELETE per confermare.", "Digite DELETE para confirmar."],
+["Type DELETE to confirm", "Tapez DELETE pour confirmer", "Escribe DELETE para confirmar", "Gib DELETE ein, um zu bestätigen", "Scrivi DELETE per confermare", "Digite DELETE para confirmar"],
+["Delete", "Supprimer", "Borrar", "Löschen", "Elimina", "Excluir"],
+["Your data was deleted. Reloading…", "Vos données ont été supprimées. Rechargement…", "Tus datos se borraron. Recargando…", "Deine Daten wurden gelöscht. Wird neu geladen…", "I tuoi dati sono stati eliminati. Ricaricamento…", "Seus dados foram excluídos. Recarregando…"],
+["Delete my account", "Supprimer mon compte", "Eliminar mi cuenta", "Mein Konto löschen", "Elimina il mio account", "Excluir minha conta"],
+["Deletes your account, profile, records, saves and friends from our database. What is saved in this browser stays. Type DELETE to confirm.", "Supprime votre compte, votre profil, vos records, vos sauvegardes et vos amis de notre base de données. Ce qui est enregistré dans ce navigateur reste. Tapez DELETE pour confirmer.", "Elimina tu cuenta, perfil, récords, partidas guardadas y amigos de nuestra base de datos. Lo guardado en este navegador se queda. Escribe DELETE para confirmar.", "Löscht dein Konto, Profil, deine Rekorde, Spielstände und Freunde aus unserer Datenbank. Was in diesem Browser gespeichert ist, bleibt erhalten. Gib DELETE ein, um zu bestätigen.", "Elimina account, profilo, record, salvataggi e amici dal nostro database. Ciò che è salvato in questo browser resta. Scrivi DELETE per confermare.", "Exclui sua conta, perfil, recordes, jogos salvos e amigos do nosso banco de dados. O que está salvo neste navegador permanece. Digite DELETE para confirmar."],
+["Deletes your account, profile, records, saves and friends from our database. What is saved in this browser stays.", "Supprime votre compte, votre profil, vos records, vos sauvegardes et vos amis de notre base de données. Ce qui est enregistré dans ce navigateur reste.", "Elimina tu cuenta, perfil, récords, partidas guardadas y amigos de nuestra base de datos. Lo guardado en este navegador se queda.", "Löscht dein Konto, Profil, deine Rekorde, Spielstände und Freunde aus unserer Datenbank. Was in diesem Browser gespeichert ist, bleibt erhalten.", "Elimina account, profilo, record, salvataggi e amici dal nostro database. Ciò che è salvato in questo browser resta.", "Exclui sua conta, perfil, recordes, jogos salvos e amigos do nosso banco de dados. O que está salvo neste navegador permanece."],
+["Delete account", "Supprimer le compte", "Eliminar cuenta", "Konto löschen", "Elimina account", "Excluir conta"],
+["Auto follows your device.", "Auto suit votre appareil.", "Auto sigue tu dispositivo.", "Auto folgt deinem Gerät.", "Auto segue il tuo dispositivo.", "Auto segue seu dispositivo."],
+["Changes the text of the site right away.", "Change immédiatement la langue du site.", "Cambia el idioma del sitio al instante.", "Ändert die Sprache der Seite sofort.", "Cambia subito la lingua del sito.", "Muda o idioma do site na hora."],
+["More languages are coming soon.", "D’autres langues arrivent bientôt.", "Pronto habrá más idiomas.", "Weitere Sprachen folgen bald.", "Altre lingue in arrivo.", "Mais idiomas em breve."],
+["Reduce motion", "Réduire les animations", "Reducir animaciones", "Bewegung reduzieren", "Riduci animazioni", "Reduzir animações"],
+["Turn off hover movement and transitions.", "Désactive les mouvements au survol et les transitions.", "Desactiva el movimiento al pasar el cursor y las transiciones.", "Schaltet Hover-Bewegungen und Übergänge aus.", "Disattiva i movimenti al passaggio del mouse e le transizioni.", "Desativa o movimento ao passar o mouse e as transições."],
+["Show game thumbnails", "Afficher les vignettes des jeux", "Mostrar miniaturas de juegos", "Spielvorschaubilder anzeigen", "Mostra le miniature dei giochi", "Mostrar miniaturas dos jogos"],
+["Hide them to load the page faster.", "Masquez-les pour charger la page plus vite.", "Ocúltalas para que la página cargue más rápido.", "Ausblenden, damit die Seite schneller lädt.", "Nascondile per caricare la pagina più in fretta.", "Oculte-as para carregar a página mais rápido."],
+["Clicks, wins and game sounds.", "Clics, victoires et sons des jeux.", "Clics, victorias y sonidos de juego.", "Klicks, Siege und Spielgeräusche.", "Clic, vittorie e suoni dei giochi.", "Cliques, vitórias e sons dos jogos."],
+["In the app", "Dans l’application", "En la aplicación", "In der App", "Nell’app", "No app"],
+["Coming soon with accounts.", "Bientôt disponible avec les comptes.", "Llegará pronto con las cuentas.", "Kommt bald mit den Konten.", "In arrivo con gli account.", "Em breve com as contas."],
+["Party invites", "Invitations de groupe", "Invitaciones de grupo", "Gruppeneinladungen", "Inviti al gruppo", "Convites de grupo"],
+["When a friend invites you to play.", "Quand un ami vous invite à jouer.", "Cuando un amigo te invita a jugar.", "Wenn dich ein Freund zum Spielen einlädt.", "Quando un amico ti invita a giocare.", "Quando um amigo convida você para jogar."],
+["Friend requests", "Demandes d’ami", "Solicitudes de amistad", "Freundschaftsanfragen", "Richieste di amicizia", "Pedidos de amizade"],
+["When someone adds you.", "Quand quelqu’un vous ajoute.", "Cuando alguien te agrega.", "Wenn dich jemand hinzufügt.", "Quando qualcuno ti aggiunge.", "Quando alguém adiciona você."],
+["Friends coming online", "Amis qui se connectent", "Amigos que se conectan", "Freunde kommen online", "Amici che si connettono", "Amigos ficando online"],
+["Friends online", "Amis en ligne", "Amigos en línea", "Freunde online", "Amici online", "Amigos online"],
+["Only for your favourite friends.", "Seulement pour vos amis favoris.", "Solo para tus amigos favoritos.", "Nur für deine Lieblingsfreunde.", "Solo per i tuoi amici preferiti.", "Só para seus amigos favoritos."],
+["New games", "Nouveaux jeux", "Juegos nuevos", "Neue Spiele", "Nuovi giochi", "Jogos novos"],
+["New games email", "E-mail des nouveaux jeux", "Correo de juegos nuevos", "E-Mail zu neuen Spielen", "Email sui nuovi giochi", "E-mail de jogos novos"],
+["A short email when new games are added.", "Un court e-mail quand de nouveaux jeux arrivent.", "Un correo breve cuando se añaden juegos nuevos.", "Eine kurze E-Mail, wenn neue Spiele dazukommen.", "Una breve email quando arrivano nuovi giochi.", "Um e-mail curto quando novos jogos forem adicionados."],
+["Weekly summary", "Résumé hebdomadaire", "Resumen semanal", "Wochenübersicht", "Riepilogo settimanale", "Resumo semanal"],
+["Your playtime and records.", "Votre temps de jeu et vos records.", "Tu tiempo de juego y tus récords.", "Deine Spielzeit und Rekorde.", "Il tuo tempo di gioco e i tuoi record.", "Seu tempo de jogo e seus recordes."],
+["Who can see and reach you", "Qui peut vous voir et vous contacter", "Quién puede verte y contactarte", "Wer dich sehen und erreichen kann", "Chi può vederti e contattarti", "Quem pode ver e contatar você"],
+["Online status", "Statut en ligne", "Estado en línea", "Online-Status", "Stato online", "Status online"],
+["Who can see when you are online.", "Qui peut voir quand vous êtes en ligne.", "Quién puede ver cuándo estás en línea.", "Wer sehen kann, wann du online bist.", "Chi può vedere quando sei online.", "Quem pode ver quando você está online."],
+["Everyone", "Tout le monde", "Todos", "Alle", "Tutti", "Todos"],
+["Nobody", "Personne", "Nadie", "Niemand", "Nessuno", "Ninguém"],
+["Friends of friends", "Amis d’amis", "Amigos de amigos", "Freunde von Freunden", "Amici di amici", "Amigos de amigos"],
+["Show what I am playing", "Montrer à quoi je joue", "Mostrar a qué estoy jugando", "Zeigen, was ich spiele", "Mostra a cosa sto giocando", "Mostrar o que estou jogando"],
+["Show current game", "Montrer le jeu en cours", "Mostrar el juego actual", "Aktuelles Spiel zeigen", "Mostra il gioco attuale", "Mostrar o jogo atual"],
+["Friends see your current game.", "Vos amis voient votre jeu en cours.", "Tus amigos ven tu juego actual.", "Freunde sehen dein aktuelles Spiel.", "Gli amici vedono il tuo gioco attuale.", "Seus amigos veem seu jogo atual."],
+["Party invites from", "Invitations de groupe de", "Invitaciones de grupo de", "Gruppeneinladungen von", "Inviti al gruppo da", "Convites de grupo de"],
+["Who can invite you to a party.", "Qui peut vous inviter dans un groupe.", "Quién puede invitarte a un grupo.", "Wer dich in eine Gruppe einladen kann.", "Chi può invitarti in un gruppo.", "Quem pode convidar você para um grupo."],
+["Friend requests from", "Demandes d’ami de", "Solicitudes de amistad de", "Freundschaftsanfragen von", "Richieste di amicizia da", "Pedidos de amizade de"],
+["Who can send you a request.", "Qui peut vous envoyer une demande.", "Quién puede enviarte una solicitud.", "Wer dir eine Anfrage senden kann.", "Chi può inviarti una richiesta.", "Quem pode enviar um pedido para você."],
+["Your data", "Vos données", "Tus datos", "Deine Daten", "I tuoi dati", "Seus dados"],
+["Download my data", "Télécharger mes données", "Descargar mis datos", "Meine Daten herunterladen", "Scarica i miei dati", "Baixar meus dados"],
+["A file with your profile, records and settings.", "Un fichier avec votre profil, vos records et vos paramètres.", "Un archivo con tu perfil, récords y ajustes.", "Eine Datei mit deinem Profil, deinen Rekorden und Einstellungen.", "Un file con profilo, record e impostazioni.", "Um arquivo com seu perfil, recordes e configurações."],
+["Download", "Télécharger", "Descargar", "Herunterladen", "Scarica", "Baixar"],
+["Analytics cookies", "Cookies de mesure d’audience", "Cookies de análisis", "Analyse-Cookies", "Cookie di analisi", "Cookies de análise"],
+["Help us see which games people play.", "Aidez-nous à voir à quels jeux les gens jouent.", "Ayúdanos a ver a qué juegos juega la gente.", "Hilf uns zu sehen, welche Spiele gespielt werden.", "Aiutaci a capire a quali giochi si gioca.", "Ajude-nos a ver quais jogos as pessoas jogam."],
+["Change what this site may store.", "Choisissez ce que ce site peut enregistrer.", "Cambia lo que este sitio puede guardar.", "Ändere, was diese Seite speichern darf.", "Cambia ciò che questo sito può salvare.", "Altere o que este site pode armazenar."],
+["Open", "Ouvrir", "Abrir", "Öffnen", "Apri", "Abrir"],
+["Reset my records", "Réinitialiser mes records", "Restablecer mis récords", "Meine Rekorde zurücksetzen", "Azzera i miei record", "Redefinir meus recordes"],
+["Clears best scores, play counts and saved games. This cannot be undone.", "Efface les meilleurs scores, le nombre de parties et les sauvegardes. Action irréversible.", "Borra las mejores puntuaciones, las partidas jugadas y las guardadas. No se puede deshacer.", "Löscht Bestwerte, Spielzähler und gespeicherte Spiele. Das lässt sich nicht rückgängig machen.", "Cancella i punteggi migliori, il numero di partite e i salvataggi. Non si può annullare.", "Apaga os melhores placares, a contagem de partidas e os jogos salvos. Não pode ser desfeito."],
+["Clears best scores, play counts and saved games.", "Efface les meilleurs scores, le nombre de parties et les sauvegardes.", "Borra las mejores puntuaciones, las partidas jugadas y las guardadas.", "Löscht Bestwerte, Spielzähler und gespeicherte Spiele.", "Cancella i punteggi migliori, il numero di partite e i salvataggi.", "Apaga os melhores placares, a contagem de partidas e os jogos salvos."],
+["This cannot be undone.", "Action irréversible.", "No se puede deshacer.", "Das lässt sich nicht rückgängig machen.", "Non si può annullare.", "Não pode ser desfeito."],
+["Reset", "Réinitialiser", "Restablecer", "Zurücksetzen", "Azzera", "Redefinir"],
+["Click again to confirm", "Cliquez à nouveau pour confirmer", "Haz clic de nuevo para confirmar", "Zum Bestätigen erneut klicken", "Clicca di nuovo per confermare", "Clique de novo para confirmar"],
+["Resetting…", "Réinitialisation…", "Restableciendo…", "Wird zurückgesetzt…", "Azzeramento…", "Redefinindo…"],
+["Your records were reset.", "Vos records ont été réinitialisés.", "Tus récords se restablecieron.", "Deine Rekorde wurden zurückgesetzt.", "I tuoi record sono stati azzerati.", "Seus recordes foram redefinidos."],
+["Your records were reset on this device and in your account.", "Vos records ont été réinitialisés sur cet appareil et dans votre compte.", "Tus récords se restablecieron en este dispositivo y en tu cuenta.", "Deine Rekorde wurden auf diesem Gerät und in deinem Konto zurückgesetzt.", "I tuoi record sono stati azzerati su questo dispositivo e nel tuo account.", "Seus recordes foram redefinidos neste dispositivo e na sua conta."],
+["Could not reset your account records. Check your connection and try again.", "Impossible de réinitialiser les records de votre compte. Vérifiez votre connexion et réessayez.", "No se pudieron restablecer los récords de tu cuenta. Revisa tu conexión e inténtalo de nuevo.", "Die Rekorde deines Kontos konnten nicht zurückgesetzt werden. Prüfe deine Verbindung und versuche es erneut.", "Impossibile azzerare i record del tuo account. Controlla la connessione e riprova.", "Não foi possível redefinir os recordes da sua conta. Verifique sua conexão e tente de novo."],
+["Preparing your file…", "Préparation de votre fichier…", "Preparando tu archivo…", "Deine Datei wird vorbereitet…", "Preparazione del file…", "Preparando seu arquivo…"],
+["Your data file was downloaded.", "Votre fichier de données a été téléchargé.", "Se descargó tu archivo de datos.", "Deine Datendatei wurde heruntergeladen.", "Il file dei tuoi dati è stato scaricato.", "Seu arquivo de dados foi baixado."],
+["Could not download your account data. Try again later.", "Impossible de télécharger les données de votre compte. Réessayez plus tard.", "No se pudieron descargar los datos de tu cuenta. Inténtalo más tarde.", "Die Daten deines Kontos konnten nicht heruntergeladen werden. Versuche es später erneut.", "Impossibile scaricare i dati del tuo account. Riprova più tardi.", "Não foi possível baixar os dados da sua conta. Tente mais tarde."],
+["Site", "Site", "Sitio", "Seite", "Sito", "Site"],
+["Focus search", "Aller à la recherche", "Ir a la búsqueda", "Zur Suche springen", "Vai alla ricerca", "Ir para a pesquisa"],
+["Close window or menu", "Fermer la fenêtre ou le menu", "Cerrar ventana o menú", "Fenster oder Menü schließen", "Chiudi finestra o menu", "Fechar janela ou menu"],
+["In games", "Dans les jeux", "En los juegos", "In Spielen", "Nei giochi", "Nos jogos"],
+["Move", "Se déplacer", "Moverse", "Bewegen", "Muoversi", "Mover"],
+["or arrows", "ou flèches", "o flechas", "oder Pfeiltasten", "o frecce", "ou setas"],
+["Pause", "Pause", "Pausa", "Pause", "Pausa", "Pausar"],
+["Fullscreen and exit", "Plein écran et sortie", "Pantalla completa y salir", "Vollbild und Beenden", "Schermo intero e uscita", "Tela cheia e sair"],
+["Documents", "Documents", "Documentos", "Dokumente", "Documenti", "Documentos"],
+["Help", "Aide", "Ayuda", "Hilfe", "Assistenza", "Ajuda"],
+["Contact support", "Contacter l’assistance", "Contactar con soporte", "Support kontaktieren", "Contatta l’assistenza", "Falar com o suporte"],
+["Write to us", "Nous écrire", "Escríbenos", "Schreib uns", "Scrivici", "Fale conosco"],
+["Support", "L’assistance", "El soporte", "Der Support", "L’assistenza", "O suporte"],
+["Report a bug or a player", "Signaler un bug ou un joueur", "Reportar un error o a un jugador", "Fehler oder Spieler melden", "Segnala un bug o un giocatore", "Denunciar um bug ou um jogador"],
+["Report", "Signaler", "Reportar", "Melden", "Segnala", "Denunciar"],
+["Reports", "Les signalements", "Los reportes", "Meldungen", "Le segnalazioni", "As denúncias"],
+["Sign out?", "Se déconnecter ?", "¿Cerrar sesión?", "Abmelden?", "Vuoi uscire?", "Sair?"],
+["You can sign back in any time. Your records stay saved.", "Vous pouvez vous reconnecter à tout moment. Vos records restent enregistrés.", "Puedes volver a iniciar sesión cuando quieras. Tus récords siguen guardados.", "Du kannst dich jederzeit wieder anmelden. Deine Rekorde bleiben gespeichert.", "Puoi accedere di nuovo quando vuoi. I tuoi record restano salvati.", "Você pode entrar de novo quando quiser. Seus recordes continuam salvos."],
+["Accounts are coming soon. You are playing as a guest.", "Les comptes arrivent bientôt. Vous jouez en invité.", "Las cuentas llegarán pronto. Juegas como invitado.", "Konten kommen bald. Du spielst als Gast.", "Gli account arriveranno presto. Stai giocando come ospite.", "As contas chegam em breve. Você está jogando como convidado."],
+["Essential", "Essentiels", "Esenciales", "Notwendig", "Essenziali", "Essenciais"],
+["Your records, saves, settings and this choice. Always on.", "Vos records, sauvegardes, paramètres et ce choix. Toujours actifs.", "Tus récords, partidas guardadas, ajustes y esta elección. Siempre activas.", "Deine Rekorde, Spielstände, Einstellungen und diese Auswahl. Immer aktiv.", "Record, salvataggi, impostazioni e questa scelta. Sempre attivi.", "Seus recordes, jogos salvos, configurações e esta escolha. Sempre ativos."],
+["Analytics", "Mesure d’audience", "Análisis", "Analyse", "Analisi", "Análise"],
+["Anonymous counts of which games are played and for how long.", "Statistiques anonymes des jeux joués et du temps passé.", "Recuento anónimo de qué juegos se juegan y durante cuánto tiempo.", "Anonyme Zählung, welche Spiele wie lange gespielt werden.", "Conteggi anonimi di quali giochi vengono giocati e per quanto tempo.", "Contagem anônima de quais jogos são jogados e por quanto tempo."],
+["Reject non-essential", "Refuser le non essentiel", "Rechazar las no esenciales", "Nicht notwendige ablehnen", "Rifiuta i non essenziali", "Recusar os não essenciais"],
+["We store your records and settings in this browser. With your OK we also count which games are played, anonymously.", "Nous enregistrons vos records et paramètres dans ce navigateur. Avec votre accord, nous comptons aussi anonymement les jeux joués.", "Guardamos tus récords y ajustes en este navegador. Con tu permiso también contamos de forma anónima qué juegos se juegan.", "Wir speichern deine Rekorde und Einstellungen in diesem Browser. Mit deiner Zustimmung zählen wir außerdem anonym, welche Spiele gespielt werden.", "Salviamo record e impostazioni in questo browser. Con il tuo consenso contiamo anche, in forma anonima, quali giochi vengono giocati.", "Guardamos seus recordes e configurações neste navegador. Com sua permissão, também contamos de forma anônima quais jogos são jogados."],
+["Accept", "Accepter", "Aceptar", "Akzeptieren", "Accetta", "Aceitar"],
+["Cookie choice saved", "Choix des cookies enregistré", "Preferencia de cookies guardada", "Cookie-Auswahl gespeichert", "Scelta sui cookie salvata", "Escolha de cookies salva"],
+["That game is not available any more", "Ce jeu n’est plus disponible", "Ese juego ya no está disponible", "Dieses Spiel ist nicht mehr verfügbar", "Questo gioco non è più disponibile", "Esse jogo não está mais disponível"],
+["Loading…", "Chargement…", "Cargando…", "Wird geladen…", "Caricamento…", "Carregando…"],
+["Loading", "Chargement", "Cargando", "Wird geladen", "Caricamento", "Carregando"],
+["Loading 3D…", "Chargement de la 3D…", "Cargando 3D…", "3D wird geladen…", "Caricamento 3D…", "Carregando 3D…"],
+["Couldn’t load the game", "Impossible de charger le jeu", "No se pudo cargar el juego", "Das Spiel konnte nicht geladen werden", "Impossibile caricare il gioco", "Não foi possível carregar o jogo"],
+["Check your connection and try again.", "Vérifiez votre connexion et réessayez.", "Revisa tu conexión e inténtalo de nuevo.", "Prüfe deine Verbindung und versuche es erneut.", "Controlla la connessione e riprova.", "Verifique sua conexão e tente de novo."],
+["Retry", "Réessayer", "Reintentar", "Erneut versuchen", "Riprova", "Tentar de novo"],
+["This game hit an error and could not start.", "Ce jeu a rencontré une erreur et n’a pas pu démarrer.", "Este juego tuvo un error y no pudo iniciarse.", "Dieses Spiel hatte einen Fehler und konnte nicht starten.", "Questo gioco ha avuto un errore e non è partito.", "Este jogo teve um erro e não pôde iniciar."],
+["Connection needed", "Connexion requise", "Se necesita conexión", "Verbindung nötig", "Connessione necessaria", "Conexão necessária"],
+["Couldn’t load 3D", "Impossible de charger la 3D", "No se pudo cargar el 3D", "3D konnte nicht geladen werden", "Impossibile caricare il 3D", "Não foi possível carregar o 3D"],
+["The 3D engine is downloaded the first time you play a 3D game. Check your internet connection and try again.", "Le moteur 3D est téléchargé la première fois que vous jouez à un jeu 3D. Vérifiez votre connexion internet et réessayez.", "El motor 3D se descarga la primera vez que juegas a un juego 3D. Revisa tu conexión a internet e inténtalo de nuevo.", "Die 3D-Engine wird beim ersten 3D-Spiel heruntergeladen. Prüfe deine Internetverbindung und versuche es erneut.", "Il motore 3D viene scaricato la prima volta che giochi a un gioco 3D. Controlla la connessione a internet e riprova.", "O motor 3D é baixado na primeira vez que você joga um jogo 3D. Verifique sua conexão com a internet e tente de novo."],
+["Games played", "Parties jouées", "Partidas jugadas", "Gespielte Partien", "Partite giocate", "Partidas jogadas"],
+["Time played", "Temps de jeu", "Tiempo jugado", "Spielzeit", "Tempo di gioco", "Tempo jogado"],
+["Days played", "Jours de jeu", "Días jugados", "Spieltage", "Giorni di gioco", "Dias jogados"],
+["Playtime this week", "Temps de jeu cette semaine", "Tiempo de juego esta semana", "Spielzeit diese Woche", "Tempo di gioco questa settimana", "Tempo de jogo nesta semana"],
+["No games played yet", "Aucun jeu joué pour l’instant", "Aún no has jugado", "Noch keine Spiele gespielt", "Nessun gioco ancora", "Nenhum jogo jogado ainda"],
+["Personal records", "Records personnels", "Récords personales", "Persönliche Rekorde", "Record personali", "Recordes pessoais"],
+["Game", "Jeu", "Juego", "Spiel", "Gioco", "Jogo"],
+["Played", "Parties", "Partidas", "Gespielt", "Partite", "Partidas"],
+["Last", "Dernière", "Última", "Zuletzt", "Ultima", "Última"],
+["No records yet", "Pas encore de records", "Aún no hay récords", "Noch keine Rekorde", "Ancora nessun record", "Nenhum recorde ainda"],
+["Today", "Aujourd’hui", "Hoy", "Heute", "Oggi", "Hoje"],
+["Yesterday", "Hier", "Ayer", "Gestern", "Ieri", "Ontem"],
+["Last week", "La semaine dernière", "La semana pasada", "Letzte Woche", "La settimana scorsa", "Semana passada"],
+["Sun", "dim.", "dom", "So", "dom", "dom"],
+["Mon", "lun.", "lun", "Mo", "lun", "seg"],
+["Tue", "mar.", "mar", "Di", "mar", "ter"],
+["Wed", "mer.", "mié", "Mi", "mer", "qua"],
+["Thu", "jeu.", "jue", "Do", "gio", "qui"],
+["Fri", "ven.", "vie", "Fr", "ven", "sex"],
+["Sat", "sam.", "sáb", "Sa", "sab", "sáb"],
+["Stages", "Étapes", "Etapas", "Etappen", "Tappe", "Etapas"],
+["Levels", "Niveaux", "Niveles", "Level", "Livelli", "Níveis"],
+["Time", "Temps", "Tiempo", "Zeit", "Tempo", "Tempo"],
+["Moves", "Coups", "Movimientos", "Züge", "Mosse", "Jogadas"],
+["Wins", "Victoires", "Victorias", "Siege", "Vittorie", "Vitórias"],
+["Streak", "Série", "Racha", "Serie", "Serie", "Sequência"],
+["Stars", "Étoiles", "Estrellas", "Sterne", "Stelle", "Estrelas"],
+["Stage", "Étape", "Etapa", "Etappe", "Tappa", "Etapa"],
+["Territory", "Territoire", "Territorio", "Gebiet", "Territorio", "Território"],
+["Mass", "Masse", "Masa", "Masse", "Massa", "Massa"],
+["Distance", "Distance", "Distancia", "Distanz", "Distanza", "Distância"],
+["Progress", "Progression", "Progreso", "Fortschritt", "Progresso", "Progresso"],
+["Shots", "Tirs", "Disparos", "Schüsse", "Colpi", "Tiros"],
+["Level", "Niveau", "Nivel", "Level", "Livello", "Nível"],
+["Tiles", "Tuiles", "Fichas", "Kacheln", "Tessere", "Peças"],
+["#pScoreK|Length", "Longueur", "Longitud", "Länge", "Lunghezza", "Comprimento"],
+["#pScoreK|Last", "Dernier", "Último", "Letzter", "Ultimo", "Último"],
+["2D", "2D", "2D", "2D", "2D", "2D"],
+["DELETE", "DELETE", "DELETE", "DELETE", "DELETE", "DELETE"],
+["Space", "Espace", "Espacio", "Leertaste", "Spazio", "Espaço"],
+["Continue with Google", "Continuer avec Google", "Continuar con Google", "Weiter mit Google", "Continua con Google", "Continuar com o Google"],
+["or with email", "ou avec un e-mail", "o con correo", "oder mit E-Mail", "oppure con l’email", "ou com e-mail"],
+["or", "ou", "o", "oder", "oppure", "ou"],
+["Password", "Mot de passe", "Contraseña", "Passwort", "Password", "Senha"],
+["Forgot password?", "Mot de passe oublié ?", "¿Olvidaste tu contraseña?", "Passwort vergessen?", "Password dimenticata?", "Esqueceu a senha?"],
+["Create an account", "Créer un compte", "Crear una cuenta", "Konto erstellen", "Crea un account", "Criar uma conta"],
+["Create account", "Créer un compte", "Crear cuenta", "Konto erstellen", "Crea account", "Criar conta"],
+["I already have an account", "J’ai déjà un compte", "Ya tengo una cuenta", "Ich habe schon ein Konto", "Ho già un account", "Já tenho uma conta"],
+["Type the email of your account. We will send you a link to choose a new password.", "Saisissez l’e-mail de votre compte. Nous vous enverrons un lien pour choisir un nouveau mot de passe.", "Escribe el correo de tu cuenta. Te enviaremos un enlace para elegir una contraseña nueva.", "Gib die E-Mail deines Kontos ein. Wir schicken dir einen Link, um ein neues Passwort zu wählen.", "Scrivi l’email del tuo account. Ti invieremo un link per scegliere una nuova password.", "Digite o e-mail da sua conta. Enviaremos um link para você escolher uma nova senha."],
+["Send link", "Envoyer le lien", "Enviar enlace", "Link senden", "Invia link", "Enviar link"],
+["Back to sign in", "Retour à la connexion", "Volver a iniciar sesión", "Zurück zur Anmeldung", "Torna all’accesso", "Voltar para entrar"],
+["Back to log in", "Retour à la connexion", "Volver a iniciar sesión", "Zurück zur Anmeldung", "Torna all’accesso", "Voltar para entrar"],
+["Choose a new password for your account.", "Choisissez un nouveau mot de passe pour votre compte.", "Elige una contraseña nueva para tu cuenta.", "Wähle ein neues Passwort für dein Konto.", "Scegli una nuova password per il tuo account.", "Escolha uma nova senha para sua conta."],
+["Save password", "Enregistrer le mot de passe", "Guardar contraseña", "Passwort speichern", "Salva password", "Salvar senha"],
+["By continuing you agree to the", "En continuant, vous acceptez les", "Al continuar aceptas los", "Mit dem Fortfahren akzeptierst du die", "Continuando accetti i", "Ao continuar, você aceita os"],
+["and the", "et la", "y la", "und die", "e la", "e a"],
+["Reset password", "Réinitialiser le mot de passe", "Restablecer contraseña", "Passwort zurücksetzen", "Reimposta password", "Redefinir senha"],
+["Wrong email or password.", "E-mail ou mot de passe incorrect.", "Correo o contraseña incorrectos.", "Falsche E-Mail oder falsches Passwort.", "Email o password errata.", "E-mail ou senha incorretos."],
+["Confirm your email first: open the link we sent you.", "Confirmez d’abord votre e-mail : ouvrez le lien que nous vous avons envoyé.", "Confirma primero tu correo: abre el enlace que te enviamos.", "Bestätige zuerst deine E-Mail: Öffne den Link, den wir dir geschickt haben.", "Prima conferma la tua email: apri il link che ti abbiamo inviato.", "Confirme seu e-mail primeiro: abra o link que enviamos."],
+["An account with this email already exists. Sign in instead.", "Un compte existe déjà avec cet e-mail. Connectez-vous plutôt.", "Ya existe una cuenta con este correo. Inicia sesión.", "Mit dieser E-Mail gibt es schon ein Konto. Melde dich stattdessen an.", "Esiste già un account con questa email. Accedi.", "Já existe uma conta com este e-mail. Entre nela."],
+["Choose a password that is different from your current one.", "Choisissez un mot de passe différent de l’actuel.", "Elige una contraseña distinta de la actual.", "Wähle ein anderes Passwort als dein aktuelles.", "Scegli una password diversa da quella attuale.", "Escolha uma senha diferente da atual."],
+["Choose a stronger password: at least 8 characters.", "Choisissez un mot de passe plus solide : au moins 8 caractères.", "Elige una contraseña más segura: al menos 8 caracteres.", "Wähle ein stärkeres Passwort: mindestens 8 Zeichen.", "Scegli una password più sicura: almeno 8 caratteri.", "Escolha uma senha mais forte: pelo menos 8 caracteres."],
+["This email address is not valid.", "Cette adresse e-mail n’est pas valide.", "Este correo no es válido.", "Diese E-Mail-Adresse ist ungültig.", "Questo indirizzo email non è valido.", "Este endereço de e-mail não é válido."],
+["Another account already uses this email.", "Un autre compte utilise déjà cet e-mail.", "Otra cuenta ya usa este correo.", "Ein anderes Konto nutzt diese E-Mail bereits.", "Un altro account usa già questa email.", "Outra conta já usa este e-mail."],
+["Too many attempts. Wait a few minutes and try again.", "Trop de tentatives. Attendez quelques minutes et réessayez.", "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.", "Zu viele Versuche. Warte ein paar Minuten und versuche es erneut.", "Troppi tentativi. Aspetta qualche minuto e riprova.", "Muitas tentativas. Aguarde alguns minutos e tente de novo."],
+["We cannot send emails to this address yet. Please use Continue with Google for now.", "Nous ne pouvons pas encore envoyer d’e-mails à cette adresse. Utilisez Continuer avec Google pour l’instant.", "Aún no podemos enviar correos a esta dirección. Por ahora usa Continuar con Google.", "An diese Adresse können wir noch keine E-Mails senden. Nutze vorerst Weiter mit Google.", "Non possiamo ancora inviare email a questo indirizzo. Per ora usa Continua con Google.", "Ainda não podemos enviar e-mails para este endereço. Por enquanto, use Continuar com o Google."],
+["Too many emails were sent in the last hour. Try again later or use Continue with Google.", "Trop d’e-mails ont été envoyés dans l’heure. Réessayez plus tard ou utilisez Continuer avec Google.", "Se enviaron demasiados correos en la última hora. Inténtalo más tarde o usa Continuar con Google.", "In der letzten Stunde wurden zu viele E-Mails gesendet. Versuche es später erneut oder nutze Weiter mit Google.", "Sono state inviate troppe email nell’ultima ora. Riprova più tardi o usa Continua con Google.", "Muitos e-mails foram enviados na última hora. Tente mais tarde ou use Continuar com o Google."],
+["This sign-in method is not available yet.", "Ce mode de connexion n’est pas encore disponible.", "Este método de inicio de sesión aún no está disponible.", "Diese Anmeldemethode ist noch nicht verfügbar.", "Questo metodo di accesso non è ancora disponibile.", "Este método de login ainda não está disponível."],
+["Sign-in was cancelled.", "La connexion a été annulée.", "Se canceló el inicio de sesión.", "Die Anmeldung wurde abgebrochen.", "L’accesso è stato annullato.", "O login foi cancelado."],
+["Cannot reach the sign-in service. Check your connection and try again.", "Impossible de joindre le service de connexion. Vérifiez votre connexion et réessayez.", "No se puede contactar con el servicio de inicio de sesión. Revisa tu conexión e inténtalo de nuevo.", "Der Anmeldedienst ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.", "Impossibile raggiungere il servizio di accesso. Controlla la connessione e riprova.", "Não foi possível acessar o serviço de login. Verifique sua conexão e tente de novo."],
+["Something went wrong. Please try again.", "Un problème est survenu. Veuillez réessayer.", "Algo salió mal. Inténtalo de nuevo.", "Etwas ist schiefgelaufen. Bitte versuche es erneut.", "Qualcosa è andato storto. Riprova.", "Algo deu errado. Tente de novo."],
+["Waiting for a connection. Your progress is kept on this device until then.", "En attente de connexion. Votre progression est conservée sur cet appareil en attendant.", "Esperando conexión. Tu progreso se guarda en este dispositivo mientras tanto.", "Warte auf eine Verbindung. Dein Fortschritt bleibt bis dahin auf diesem Gerät.", "In attesa di connessione. Nel frattempo i tuoi progressi restano su questo dispositivo.", "Aguardando conexão. Seu progresso fica neste dispositivo até lá."],
+["Google and email password", "Google et mot de passe e-mail", "Google y contraseña de correo", "Google und E-Mail-Passwort", "Google e password email", "Google e senha de e-mail"],
+["Signed in with Google", "Connecté avec Google", "Sesión iniciada con Google", "Mit Google angemeldet", "Accesso con Google", "Conectado com o Google"],
+["Signed in with email", "Connecté avec un e-mail", "Sesión iniciada con correo", "Mit E-Mail angemeldet", "Accesso con email", "Conectado com e-mail"],
+["Opening Google…", "Ouverture de Google…", "Abriendo Google…", "Google wird geöffnet…", "Apertura di Google…", "Abrindo o Google…"],
+["Enter a valid email address.", "Saisissez une adresse e-mail valide.", "Escribe un correo válido.", "Gib eine gültige E-Mail-Adresse ein.", "Inserisci un indirizzo email valido.", "Digite um endereço de e-mail válido."],
+["Use at least 8 characters for your password.", "Utilisez au moins 8 caractères pour votre mot de passe.", "Usa al menos 8 caracteres para tu contraseña.", "Dein Passwort braucht mindestens 8 Zeichen.", "Usa almeno 8 caratteri per la password.", "Use pelo menos 8 caracteres na sua senha."],
+["Enter your password.", "Saisissez votre mot de passe.", "Escribe tu contraseña.", "Gib dein Passwort ein.", "Inserisci la password.", "Digite sua senha."],
+["Creating your account…", "Création de votre compte…", "Creando tu cuenta…", "Dein Konto wird erstellt…", "Creazione dell’account…", "Criando sua conta…"],
+["Signing in…", "Connexion…", "Iniciando sesión…", "Anmeldung…", "Accesso in corso…", "Entrando…"],
+["Sending…", "Envoi…", "Enviando…", "Wird gesendet…", "Invio…", "Enviando…"],
+["If an account uses this email, we sent it a link to choose a new password.", "Si un compte utilise cet e-mail, nous lui avons envoyé un lien pour choisir un nouveau mot de passe.", "Si alguna cuenta usa este correo, le enviamos un enlace para elegir una contraseña nueva.", "Falls ein Konto diese E-Mail nutzt, haben wir einen Link zum Festlegen eines neuen Passworts geschickt.", "Se un account usa questa email, gli abbiamo inviato un link per scegliere una nuova password.", "Se alguma conta usa este e-mail, enviamos um link para escolher uma nova senha."],
+["Use at least 8 characters.", "Utilisez au moins 8 caractères.", "Usa al menos 8 caracteres.", "Verwende mindestens 8 Zeichen.", "Usa almeno 8 caratteri.", "Use pelo menos 8 caracteres."],
+["Saving…", "Enregistrement…", "Guardando…", "Wird gespeichert…", "Salvataggio…", "Salvando…"],
+["Password saved. You are signed in.", "Mot de passe enregistré. Vous êtes connecté.", "Contraseña guardada. Has iniciado sesión.", "Passwort gespeichert. Du bist angemeldet.", "Password salvata. Hai effettuato l’accesso.", "Senha salva. Você está conectado."],
+["That is already your email address.", "C’est déjà votre adresse e-mail.", "Ese ya es tu correo.", "Das ist bereits deine E-Mail-Adresse.", "È già il tuo indirizzo email.", "Esse já é seu endereço de e-mail."],
+["Check your inbox: open the link we sent to confirm the change. You may get a link at your old address too.", "Consultez votre boîte de réception : ouvrez le lien envoyé pour confirmer le changement. Vous recevrez peut-être aussi un lien à votre ancienne adresse.", "Revisa tu bandeja de entrada: abre el enlace que enviamos para confirmar el cambio. Puede que también recibas un enlace en tu dirección anterior.", "Sieh in dein Postfach: Öffne den Link, um die Änderung zu bestätigen. Eventuell bekommst du auch einen Link an deine alte Adresse.", "Controlla la posta: apri il link che abbiamo inviato per confermare la modifica. Potresti ricevere un link anche al vecchio indirizzo.", "Confira sua caixa de entrada: abra o link que enviamos para confirmar a alteração. Você também pode receber um link no endereço antigo."],
+["Password saved.", "Mot de passe enregistré.", "Contraseña guardada.", "Passwort gespeichert.", "Password salvata.", "Senha salva."],
+["Signing out…", "Déconnexion…", "Cerrando sesión…", "Abmeldung…", "Uscita in corso…", "Saindo…"],
+["Signed out. You are playing as a guest.", "Déconnecté. Vous jouez en invité.", "Sesión cerrada. Juegas como invitado.", "Abgemeldet. Du spielst als Gast.", "Disconnesso. Stai giocando come ospite.", "Você saiu. Está jogando como convidado."],
+["Deleting your account…", "Suppression de votre compte…", "Eliminando tu cuenta…", "Dein Konto wird gelöscht…", "Eliminazione dell’account…", "Excluindo sua conta…"],
+["Your account will be deleted. You are now playing as a guest.", "Votre compte va être supprimé. Vous jouez maintenant en invité.", "Tu cuenta se eliminará. Ahora juegas como invitado.", "Dein Konto wird gelöscht. Du spielst jetzt als Gast.", "Il tuo account verrà eliminato. Ora stai giocando come ospite.", "Sua conta será excluída. Agora você está jogando como convidado."],
+["Your account was deleted. You are now playing as a guest.", "Votre compte a été supprimé. Vous jouez maintenant en invité.", "Tu cuenta se eliminó. Ahora juegas como invitado.", "Dein Konto wurde gelöscht. Du spielst jetzt als Gast.", "Il tuo account è stato eliminato. Ora stai giocando come ospite.", "Sua conta foi excluída. Agora você está jogando como convidado."],
+["Could not delete your account. Check your connection and try again.", "Impossible de supprimer votre compte. Vérifiez votre connexion et réessayez.", "No se pudo eliminar tu cuenta. Revisa tu conexión e inténtalo de nuevo.", "Dein Konto konnte nicht gelöscht werden. Prüfe deine Verbindung und versuche es erneut.", "Impossibile eliminare l’account. Controlla la connessione e riprova.", "Não foi possível excluir sua conta. Verifique sua conexão e tente de novo."],
+["Friends find you by your username: 3 to 20 lowercase letters, numbers, dots or underscores.", "Vos amis vous trouvent grâce à votre nom d’utilisateur : 3 à 20 lettres minuscules, chiffres, points ou tirets bas.", "Tus amigos te encuentran por tu nombre de usuario: de 3 a 20 letras minúsculas, números, puntos o guiones bajos.", "Freunde finden dich über deinen Benutzernamen: 3 bis 20 Kleinbuchstaben, Ziffern, Punkte oder Unterstriche.", "Gli amici ti trovano con il nome utente: da 3 a 20 lettere minuscole, numeri, punti o trattini bassi.", "Seus amigos encontram você pelo nome de usuário: de 3 a 20 letras minúsculas, números, pontos ou sublinhados."],
+["Use 3 to 20 lowercase letters, numbers, dots or underscores.", "Utilisez 3 à 20 lettres minuscules, chiffres, points ou tirets bas.", "Usa de 3 a 20 letras minúsculas, números, puntos o guiones bajos.", "Verwende 3 bis 20 Kleinbuchstaben, Ziffern, Punkte oder Unterstriche.", "Usa da 3 a 20 lettere minuscole, numeri, punti o trattini bassi.", "Use de 3 a 20 letras minúsculas, números, pontos ou sublinhados."],
+["That username is taken or not allowed. Try another one.", "Ce nom d’utilisateur est déjà pris ou interdit. Essayez-en un autre.", "Ese nombre de usuario está ocupado o no está permitido. Prueba otro.", "Dieser Benutzername ist vergeben oder nicht erlaubt. Versuche einen anderen.", "Questo nome utente è già preso o non è consentito. Provane un altro.", "Esse nome de usuário já está em uso ou não é permitido. Tente outro."],
+["That username is taken. Try another one.", "Ce nom d’utilisateur est déjà pris. Essayez-en un autre.", "Ese nombre de usuario está ocupado. Prueba otro.", "Dieser Benutzername ist vergeben. Versuche einen anderen.", "Questo nome utente è già preso. Provane un altro.", "Esse nome de usuário já está em uso. Tente outro."],
+["That username is not allowed.", "Ce nom d’utilisateur n’est pas autorisé.", "Ese nombre de usuario no está permitido.", "Dieser Benutzername ist nicht erlaubt.", "Questo nome utente non è consentito.", "Esse nome de usuário não é permitido."],
+["Could not save. Check your connection and try again.", "Impossible d’enregistrer. Vérifiez votre connexion et réessayez.", "No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.", "Speichern fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.", "Impossibile salvare. Controlla la connessione e riprova.", "Não foi possível salvar. Verifique sua conexão e tente de novo."],
+["Your email is probably confirmed already. Sign in with your email and password.", "Votre e-mail est sans doute déjà confirmé. Connectez-vous avec votre e-mail et votre mot de passe.", "Probablemente tu correo ya está confirmado. Inicia sesión con tu correo y contraseña.", "Deine E-Mail ist wahrscheinlich schon bestätigt. Melde dich mit E-Mail und Passwort an.", "Probabilmente la tua email è già confermata. Accedi con email e password.", "Seu e-mail provavelmente já está confirmado. Entre com seu e-mail e senha."],
+["This link has expired or was opened in another browser. Ask for a new one.", "Ce lien a expiré ou a été ouvert dans un autre navigateur. Demandez-en un nouveau.", "Este enlace caducó o se abrió en otro navegador. Pide uno nuevo.", "Dieser Link ist abgelaufen oder wurde in einem anderen Browser geöffnet. Fordere einen neuen an.", "Questo link è scaduto o è stato aperto in un altro browser. Richiedine uno nuovo.", "Este link expirou ou foi aberto em outro navegador. Peça um novo."],
+["Open the link in the browser where you are signed in, or sign in again.", "Ouvrez le lien dans le navigateur où vous êtes connecté, ou reconnectez-vous.", "Abre el enlace en el navegador donde iniciaste sesión, o vuelve a iniciar sesión.", "Öffne den Link in dem Browser, in dem du angemeldet bist, oder melde dich erneut an.", "Apri il link nel browser in cui hai effettuato l’accesso, oppure accedi di nuovo.", "Abra o link no navegador em que você está conectado ou entre de novo."],
+["Sign-in did not finish. Please try again.", "La connexion n’a pas abouti. Veuillez réessayer.", "El inicio de sesión no terminó. Inténtalo de nuevo.", "Die Anmeldung wurde nicht abgeschlossen. Bitte versuche es erneut.", "L’accesso non è stato completato. Riprova.", "O login não foi concluído. Tente de novo."],
+["Your email address was updated", "Votre adresse e-mail a été mise à jour", "Tu correo se actualizó", "Deine E-Mail-Adresse wurde aktualisiert", "Il tuo indirizzo email è stato aggiornato", "Seu endereço de e-mail foi atualizado"],
+["Sign-in could not load. Check your connection and reload the page.", "La connexion n’a pas pu se charger. Vérifiez votre connexion et rechargez la page.", "No se pudo cargar el inicio de sesión. Revisa tu conexión y recarga la página.", "Die Anmeldung konnte nicht geladen werden. Prüfe deine Verbindung und lade die Seite neu.", "Impossibile caricare l’accesso. Controlla la connessione e ricarica la pagina.", "Não foi possível carregar o login. Verifique sua conexão e recarregue a página."],
+["You will also be signed out on this device.", "Vous serez aussi déconnecté sur cet appareil.", "También se cerrará tu sesión en este dispositivo.", "Du wirst auch auf diesem Gerät abgemeldet.", "Verrai disconnesso anche su questo dispositivo.", "Você também sairá neste dispositivo."],
+["Includes your account data.", "Inclut les données de votre compte.", "Incluye los datos de tu cuenta.", "Enthält die Daten deines Kontos.", "Include i dati del tuo account.", "Inclui os dados da sua conta."],
+["Your account records are cleared too.", "Les records de votre compte sont aussi effacés.", "También se borran los récords de tu cuenta.", "Die Rekorde deines Kontos werden ebenfalls gelöscht.", "Vengono cancellati anche i record del tuo account.", "Os recordes da sua conta também são apagados."],
+["Log in", "Se connecter", "Iniciar sesión", "Anmelden", "Accedi", "Entrar"],
+["Sign up", "S’inscrire", "Registrarse", "Registrieren", "Registrati", "Cadastrar-se"],
+["Log in or sign up", "Connexion ou inscription", "Inicia sesión o regístrate", "Anmelden oder registrieren", "Accedi o registrati", "Entre ou cadastre-se"],
+["Log in or create an account.", "Connectez-vous ou créez un compte.", "Inicia sesión o crea una cuenta.", "Melde dich an oder erstelle ein Konto.", "Accedi o crea un account.", "Entre ou crie uma conta."],
+["Log in or sign up with email, or with Google.", "Connectez-vous ou inscrivez-vous avec un e-mail ou avec Google.", "Inicia sesión o regístrate con tu correo o con Google.", "Melde dich mit E-Mail oder Google an oder registriere dich.", "Accedi o registrati con l’email o con Google.", "Entre ou cadastre-se com e-mail ou com o Google."],
+["Log in to keep your records and saves on every device.", "Connectez-vous pour retrouver vos records et sauvegardes sur tous vos appareils.", "Inicia sesión para conservar tus récords y partidas en todos tus dispositivos.", "Melde dich an, um deine Rekorde und Spielstände auf allen Geräten zu behalten.", "Accedi per ritrovare record e salvataggi su ogni dispositivo.", "Entre para manter seus recordes e jogos salvos em todos os dispositivos."],
+["Keep your records and saves on every device and add friends.", "Retrouvez vos records et sauvegardes sur tous vos appareils et ajoutez des amis.", "Conserva tus récords y partidas en todos tus dispositivos y añade amigos.", "Behalte deine Rekorde und Spielstände auf allen Geräten und füge Freunde hinzu.", "Ritrova record e salvataggi su ogni dispositivo e aggiungi amici.", "Mantenha seus recordes e jogos salvos em todos os dispositivos e adicione amigos."],
+["Welcome back", "Bon retour", "Hola de nuevo", "Willkommen zurück", "Bentornato", "Bem-vindo de volta"],
+["Create your account", "Créez votre compte", "Crea tu cuenta", "Erstelle dein Konto", "Crea il tuo account", "Crie sua conta"],
+["Email or username", "E-mail ou nom d’utilisateur", "Correo o nombre de usuario", "E-Mail oder Benutzername", "Email o nome utente", "E-mail ou nome de usuário"],
+["Enter your email or username.", "Saisissez votre e-mail ou votre nom d’utilisateur.", "Escribe tu correo o tu nombre de usuario.", "Gib deine E-Mail oder deinen Benutzernamen ein.", "Inserisci la tua email o il tuo nome utente.", "Digite seu e-mail ou nome de usuário."],
+["Confirm password", "Confirmer le mot de passe", "Confirmar contraseña", "Passwort bestätigen", "Conferma password", "Confirmar senha"],
+["Confirm new password", "Confirmer le nouveau mot de passe", "Confirmar nueva contraseña", "Neues Passwort bestätigen", "Conferma la nuova password", "Confirmar nova senha"],
+["Show password", "Afficher le mot de passe", "Mostrar contraseña", "Passwort anzeigen", "Mostra password", "Mostrar senha"],
+["Hide password", "Masquer le mot de passe", "Ocultar contraseña", "Passwort verbergen", "Nascondi password", "Ocultar senha"],
+["The two passwords are not the same.", "Les deux mots de passe ne sont pas identiques.", "Las dos contraseñas no coinciden.", "Die beiden Passwörter stimmen nicht überein.", "Le due password non coincidono.", "As duas senhas não são iguais."],
+["3 to 20 lowercase letters, numbers, dots or underscores. Friends find you by it.", "3 à 20 lettres minuscules, chiffres, points ou tirets bas. Vos amis vous trouvent grâce à lui.", "De 3 a 20 letras minúsculas, números, puntos o guiones bajos. Tus amigos te encuentran con él.", "3 bis 20 Kleinbuchstaben, Ziffern, Punkte oder Unterstriche. Freunde finden dich darüber.", "Da 3 a 20 lettere minuscole, numeri, punti o trattini bassi. Gli amici ti trovano così.", "De 3 a 20 letras minúsculas, números, pontos ou sublinhados. Seus amigos encontram você por ele."],
+["Choose a username: 3 to 20 lowercase letters, numbers, dots or underscores.", "Choisissez un nom d’utilisateur : 3 à 20 lettres minuscules, chiffres, points ou tirets bas.", "Elige un nombre de usuario: de 3 a 20 letras minúsculas, números, puntos o guiones bajos.", "Wähle einen Benutzernamen: 3 bis 20 Kleinbuchstaben, Ziffern, Punkte oder Unterstriche.", "Scegli un nome utente: da 3 a 20 lettere minuscole, numeri, punti o trattini bassi.", "Escolha um nome de usuário: de 3 a 20 letras minúsculas, números, pontos ou sublinhados."],
+["e.g. dedpoul", "ex. dedpoul", "p. ej. dedpoul", "z. B. dedpoul", "es. dedpoul", "ex.: dedpoul"],
+["I agree to the", "J’accepte les", "Acepto los", "Ich akzeptiere die", "Accetto i", "Concordo com os"],
+["Tick the box first to agree to the Terms of Use and the Privacy Policy.", "Cochez d’abord la case pour accepter les Conditions d’utilisation et la Politique de confidentialité.", "Marca primero la casilla para aceptar los Términos de uso y la Política de privacidad.", "Setze zuerst das Häkchen, um den Nutzungsbedingungen und der Datenschutzerklärung zuzustimmen.", "Spunta prima la casella per accettare i Termini d’uso e la Politica sulla privacy.", "Marque primeiro a caixa para aceitar os Termos de Uso e a Política de Privacidade."],
+["Tick the box to agree to the Terms of Use and the Privacy Policy.", "Cochez la case pour accepter les Conditions d’utilisation et la Politique de confidentialité.", "Marca la casilla para aceptar los Términos de uso y la Política de privacidad.", "Setze das Häkchen, um den Nutzungsbedingungen und der Datenschutzerklärung zuzustimmen.", "Spunta la casella per accettare i Termini d’uso e la Politica sulla privacy.", "Marque a caixa para aceitar os Termos de Uso e a Política de Privacidade."],
+["Continue as guest", "Continuer en invité", "Continuar como invitado", "Als Gast fortfahren", "Continua come ospite", "Continuar como convidado"],
+["Play as a guest", "Jouer en invité", "Jugar como invitado", "Als Gast spielen", "Gioca come ospite", "Jogar como convidado"],
+["You can still play every game as a guest. Your records and saves stay in this browser.", "Vous pouvez toujours jouer à tous les jeux en invité. Vos records et sauvegardes restent dans ce navigateur.", "Puedes seguir jugando a todos los juegos como invitado. Tus récords y partidas se quedan en este navegador.", "Du kannst weiterhin alle Spiele als Gast spielen. Deine Rekorde und Spielstände bleiben in diesem Browser.", "Puoi comunque giocare a tutti i giochi come ospite. Record e salvataggi restano in questo browser.", "Você ainda pode jogar todos os jogos como convidado. Seus recordes e jogos salvos ficam neste navegador."],
+["Accounts are not switched on yet", "Les comptes ne sont pas encore activés", "Las cuentas aún no están activadas", "Konten sind noch nicht aktiviert", "Gli account non sono ancora attivi", "As contas ainda não estão ativadas"],
+["Accounts are not switched on yet. Soon you can keep your profile, records and saves on every device.", "Les comptes ne sont pas encore activés. Bientôt, vous retrouverez votre profil, vos records et vos sauvegardes sur tous vos appareils.", "Las cuentas aún no están activadas. Pronto podrás conservar tu perfil, récords y partidas en todos tus dispositivos.", "Konten sind noch nicht aktiviert. Bald kannst du dein Profil, deine Rekorde und Spielstände auf allen Geräten behalten.", "Gli account non sono ancora attivi. Presto potrai ritrovare profilo, record e salvataggi su ogni dispositivo.", "As contas ainda não estão ativadas. Em breve você poderá manter seu perfil, recordes e jogos salvos em todos os dispositivos."],
+["Accounts are not switched on yet. Then you can find players by their username and add them as friends.", "Les comptes ne sont pas encore activés. Vous pourrez alors trouver des joueurs par leur nom d’utilisateur et les ajouter en amis.", "Las cuentas aún no están activadas. Entonces podrás buscar jugadores por su nombre de usuario y añadirlos como amigos.", "Konten sind noch nicht aktiviert. Dann kannst du Spieler über ihren Benutzernamen finden und als Freunde hinzufügen.", "Gli account non sono ancora attivi. Allora potrai trovare i giocatori con il loro nome utente e aggiungerli come amici.", "As contas ainda não estão ativadas. Depois você poderá encontrar jogadores pelo nome de usuário e adicioná-los como amigos."],
+["Check your inbox", "Consultez votre boîte de réception", "Revisa tu bandeja de entrada", "Sieh in dein Postfach", "Controlla la posta", "Confira sua caixa de entrada"],
+["We sent a link to", "Nous avons envoyé un lien à", "Enviamos un enlace a", "Wir haben einen Link geschickt an", "Abbiamo inviato un link a", "Enviamos um link para"],
+[". Open it to confirm your account. You can close this page: the link signs you in.", ". Ouvrez-le pour confirmer votre compte. Vous pouvez fermer cette page : le lien vous connecte.", ". Ábrelo para confirmar tu cuenta. Puedes cerrar esta página: el enlace inicia tu sesión.", ". Öffne ihn, um dein Konto zu bestätigen. Du kannst diese Seite schließen: Der Link meldet dich an.", ". Aprilo per confermare il tuo account. Puoi chiudere questa pagina: il link ti fa accedere.", ". Abra-o para confirmar sua conta. Você pode fechar esta página: o link faz seu login."],
+["No email? Check your spam folder, or", "Pas d’e-mail ? Vérifiez vos spams, ou", "¿No te llega? Revisa la carpeta de spam, o", "Keine E-Mail? Sieh im Spam-Ordner nach oder", "Nessuna email? Controlla lo spam, oppure", "Não chegou? Confira a pasta de spam, ou"],
+["use a different email", "utilisez une autre adresse", "usa otro correo", "nutze eine andere E-Mail", "usa un’altra email", "use outro e-mail"],
+["Resend email", "Renvoyer l’e-mail", "Reenviar correo", "E-Mail erneut senden", "Invia di nuovo l’email", "Reenviar e-mail"],
+["Sent again. Use the newest email: it replaces the old link.", "Renvoyé. Utilisez l’e-mail le plus récent : il remplace l’ancien lien.", "Enviado de nuevo. Usa el correo más reciente: sustituye al enlace anterior.", "Erneut gesendet. Nutze die neueste E-Mail: Sie ersetzt den alten Link.", "Inviata di nuovo. Usa l’email più recente: sostituisce il vecchio link.", "Enviado de novo. Use o e-mail mais recente: ele substitui o link antigo."],
+["Reset your password", "Réinitialisez votre mot de passe", "Restablece tu contraseña", "Setze dein Passwort zurück", "Reimposta la password", "Redefina sua senha"],
+["Choose a new password", "Choisissez un nouveau mot de passe", "Elige una contraseña nueva", "Wähle ein neues Passwort", "Scegli una nuova password", "Escolha uma nova senha"],
+["Check your inbox. If an account uses this email, we sent it a link to choose a new password.", "Consultez votre boîte de réception. Si un compte utilise cet e-mail, nous lui avons envoyé un lien pour choisir un nouveau mot de passe.", "Revisa tu bandeja de entrada. Si alguna cuenta usa este correo, le enviamos un enlace para elegir una contraseña nueva.", "Sieh in dein Postfach. Falls ein Konto diese E-Mail nutzt, haben wir einen Link zum Festlegen eines neuen Passworts geschickt.", "Controlla la posta. Se un account usa questa email, gli abbiamo inviato un link per scegliere una nuova password.", "Confira sua caixa de entrada. Se alguma conta usa este e-mail, enviamos um link para escolher uma nova senha."],
+["An account with this email already exists. Log in instead.", "Un compte existe déjà avec cet e-mail. Connectez-vous plutôt.", "Ya existe una cuenta con este correo. Inicia sesión.", "Mit dieser E-Mail gibt es schon ein Konto. Melde dich stattdessen an.", "Esiste già un account con questa email. Accedi.", "Já existe uma conta com este e-mail. Entre nela."],
+["Wrong email, username or password.", "E-mail, nom d’utilisateur ou mot de passe incorrect.", "Correo, nombre de usuario o contraseña incorrectos.", "Falsche E-Mail, falscher Benutzername oder falsches Passwort.", "Email, nome utente o password errati.", "E-mail, nome de usuário ou senha incorretos."],
+["Confirm your email first: open the link we sent you, or send a new one.", "Confirmez d’abord votre e-mail : ouvrez le lien envoyé, ou demandez-en un nouveau.", "Confirma primero tu correo: abre el enlace que te enviamos o pide uno nuevo.", "Bestätige zuerst deine E-Mail: Öffne den Link, den wir dir geschickt haben, oder fordere einen neuen an.", "Prima conferma la tua email: apri il link che ti abbiamo inviato o richiedine uno nuovo.", "Confirme seu e-mail primeiro: abra o link que enviamos ou peça um novo."],
+["Too many emails were sent. Wait a minute and try again.", "Trop d’e-mails envoyés. Attendez une minute et réessayez.", "Se enviaron demasiados correos. Espera un minuto e inténtalo de nuevo.", "Es wurden zu viele E-Mails gesendet. Warte eine Minute und versuche es erneut.", "Sono state inviate troppe email. Aspetta un minuto e riprova.", "Muitos e-mails foram enviados. Aguarde um minuto e tente de novo."],
+["We cannot send emails to this address yet. Try again later.", "Nous ne pouvons pas encore envoyer d’e-mails à cette adresse. Réessayez plus tard.", "Aún no podemos enviar correos a esta dirección. Inténtalo más tarde.", "An diese Adresse können wir noch keine E-Mails senden. Versuche es später erneut.", "Non possiamo ancora inviare email a questo indirizzo. Riprova più tardi.", "Ainda não podemos enviar e-mails para este endereço. Tente mais tarde."],
+["Logging in…", "Connexion…", "Iniciando sesión…", "Anmeldung…", "Accesso in corso…", "Entrando…"],
+["Password saved. You are logged in.", "Mot de passe enregistré. Vous êtes connecté.", "Contraseña guardada. Has iniciado sesión.", "Passwort gespeichert. Du bist angemeldet.", "Password salvata. Hai effettuato l’accesso.", "Senha salva. Você está conectado."],
+["Open the link in the browser where you are logged in, or log in again.", "Ouvrez le lien dans le navigateur où vous êtes connecté, ou reconnectez-vous.", "Abre el enlace en el navegador donde iniciaste sesión, o vuelve a iniciar sesión.", "Öffne den Link in dem Browser, in dem du angemeldet bist, oder melde dich erneut an.", "Apri il link nel browser in cui hai effettuato l’accesso, oppure accedi di nuovo.", "Abra o link no navegador em que você está conectado ou entre de novo."],
+["This link has expired or was already used. Ask for a new one.", "Ce lien a expiré ou a déjà été utilisé. Demandez-en un nouveau.", "Este enlace caducó o ya se usó. Pide uno nuevo.", "Dieser Link ist abgelaufen oder wurde schon benutzt. Fordere einen neuen an.", "Questo link è scaduto o è già stato usato. Richiedine uno nuovo.", "Este link expirou ou já foi usado. Peça um novo."],
+["Your email is confirmed. Welcome!", "Votre e-mail est confirmé. Bienvenue !", "Tu correo está confirmado. ¡Bienvenido!", "Deine E-Mail ist bestätigt. Willkommen!", "La tua email è confermata. Benvenuto!", "Seu e-mail está confirmado. Bem-vindo!"],
+["Your email is probably confirmed already. Log in with your email or username and your password.", "Votre e-mail est sans doute déjà confirmé. Connectez-vous avec votre e-mail ou votre nom d’utilisateur et votre mot de passe.", "Probablemente tu correo ya está confirmado. Inicia sesión con tu correo o nombre de usuario y tu contraseña.", "Deine E-Mail ist wahrscheinlich schon bestätigt. Melde dich mit E-Mail oder Benutzernamen und Passwort an.", "Probabilmente la tua email è già confermata. Accedi con email o nome utente e password.", "Seu e-mail provavelmente já está confirmado. Entre com seu e-mail ou nome de usuário e sua senha."],
+["Cookies and terms", "Cookies et conditions", "Cookies y términos", "Cookies und Bedingungen", "Cookie e termini", "Cookies e termos"],
+["We keep your records, saves and settings in this browser so the site works. With your OK we also count which games are played, to make the site better. No ads, nothing is sold.", "Nous gardons vos records, sauvegardes et paramètres dans ce navigateur pour que le site fonctionne. Avec votre accord, nous comptons aussi les jeux joués pour améliorer le site. Pas de publicité, rien n’est vendu.", "Guardamos tus récords, partidas y ajustes en este navegador para que el sitio funcione. Con tu permiso también contamos qué juegos se juegan para mejorar el sitio. Sin anuncios, no se vende nada.", "Wir speichern deine Rekorde, Spielstände und Einstellungen in diesem Browser, damit die Seite funktioniert. Mit deiner Zustimmung zählen wir außerdem, welche Spiele gespielt werden, um die Seite zu verbessern. Keine Werbung, nichts wird verkauft.", "Conserviamo record, salvataggi e impostazioni in questo browser per far funzionare il sito. Con il tuo consenso contiamo anche quali giochi vengono giocati, per migliorare il sito. Niente pubblicità, non vendiamo nulla.", "Guardamos seus recordes, jogos salvos e configurações neste navegador para o site funcionar. Com sua permissão, também contamos quais jogos são jogados para melhorar o site. Sem anúncios, nada é vendido."],
+["Accept all", "Tout accepter", "Aceptar todo", "Alle akzeptieren", "Accetta tutto", "Aceitar tudo"],
+["Only essentials", "Essentiels uniquement", "Solo esenciales", "Nur notwendige", "Solo essenziali", "Só essenciais"],
+["Decline", "Refuser", "Rechazar", "Ablehnen", "Rifiuta", "Recusar"],
+["Read the", "Lisez la", "Lee la", "Lies die", "Leggi la", "Leia a"],
+[". You can change your choice any time in Cookie settings.", ". Vous pouvez modifier votre choix à tout moment dans Paramètres des cookies.", ". Puedes cambiar tu elección cuando quieras en Configuración de cookies.", ". Du kannst deine Wahl jederzeit in den Cookie-Einstellungen ändern.", ". Puoi cambiare la tua scelta in qualsiasi momento in Impostazioni dei cookie.", ". Você pode mudar sua escolha a qualquer momento em Configurações de cookies."],
+["Thanks! Cookie choice saved", "Merci ! Choix des cookies enregistré", "¡Gracias! Preferencia de cookies guardada", "Danke! Cookie-Auswahl gespeichert", "Grazie! Scelta sui cookie salvata", "Obrigado! Escolha de cookies salva"],
+["Find players by username", "Trouver des joueurs par nom d’utilisateur", "Buscar jugadores por nombre de usuario", "Spieler nach Benutzername suchen", "Trova giocatori per nome utente", "Encontrar jogadores pelo nome de usuário"],
+["Requests", "Demandes", "Solicitudes", "Anfragen", "Richieste", "Pedidos"],
+["Friend", "Ami", "Amigo", "Freund", "Amico", "Amigo"],
+["Friends are coming soon", "Les amis arrivent bientôt", "Los amigos llegarán pronto", "Freunde kommen bald", "Gli amici arriveranno presto", "Amigos chegam em breve"],
+["Log in to add friends", "Connectez-vous pour ajouter des amis", "Inicia sesión para añadir amigos", "Melde dich an, um Freunde hinzuzufügen", "Accedi per aggiungere amici", "Entre para adicionar amigos"],
+["Create a free account or log in, then find players by their username.", "Créez un compte gratuit ou connectez-vous, puis trouvez des joueurs par leur nom d’utilisateur.", "Crea una cuenta gratis o inicia sesión y busca jugadores por su nombre de usuario.", "Erstelle ein kostenloses Konto oder melde dich an und finde Spieler über ihren Benutzernamen.", "Crea un account gratuito o accedi, poi trova i giocatori con il loro nome utente.", "Crie uma conta grátis ou entre e encontre jogadores pelo nome de usuário."],
+["Type at least 2 letters.", "Tapez au moins 2 lettres.", "Escribe al menos 2 letras.", "Gib mindestens 2 Buchstaben ein.", "Scrivi almeno 2 lettere.", "Digite pelo menos 2 letras."],
+["Searching…", "Recherche…", "Buscando…", "Suche…", "Ricerca…", "Pesquisando…"],
+["That player was not found", "Ce joueur est introuvable", "No se encontró a ese jugador", "Dieser Spieler wurde nicht gefunden", "Giocatore non trovato", "Esse jogador não foi encontrado"],
+["You are already friends", "Vous êtes déjà amis", "Ya sois amigos", "Ihr seid schon befreundet", "Siete già amici", "Vocês já são amigos"],
+["Requested", "Demandé", "Solicitado", "Angefragt", "Richiesto", "Solicitado"],
+["Sent", "Envoyée", "Enviada", "Gesendet", "Inviata", "Enviado"],
+["Remove", "Retirer", "Quitar", "Entfernen", "Rimuovi", "Remover"],
+["Click again to remove", "Cliquez à nouveau pour retirer", "Haz clic de nuevo para quitar", "Zum Entfernen erneut klicken", "Clicca di nuovo per rimuovere", "Clique de novo para remover"],
+["Too many searches. Wait a moment and try again.", "Trop de recherches. Attendez un instant et réessayez.", "Demasiadas búsquedas. Espera un momento e inténtalo de nuevo.", "Zu viele Suchen. Warte kurz und versuche es erneut.", "Troppe ricerche. Aspetta un attimo e riprova.", "Muitas pesquisas. Aguarde um momento e tente de novo."],
+["Could not search. Check your connection and try again.", "Recherche impossible. Vérifiez votre connexion et réessayez.", "No se pudo buscar. Revisa tu conexión e inténtalo de nuevo.", "Suche fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.", "Impossibile cercare. Controlla la connessione e riprova.", "Não foi possível pesquisar. Verifique sua conexão e tente de novo."],
+["Could not load your friends. Check your connection and try again.", "Impossible de charger vos amis. Vérifiez votre connexion et réessayez.", "No se pudieron cargar tus amigos. Revisa tu conexión e inténtalo de nuevo.", "Deine Freunde konnten nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.", "Impossibile caricare i tuoi amici. Controlla la connessione e riprova.", "Não foi possível carregar seus amigos. Verifique sua conexão e tente de novo."],
+["Could not update. Check your connection and try again.", "Mise à jour impossible. Vérifiez votre connexion et réessayez.", "No se pudo actualizar. Revisa tu conexión e inténtalo de nuevo.", "Aktualisierung fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.", "Impossibile aggiornare. Controlla la connessione e riprova.", "Não foi possível atualizar. Verifique sua conexão e tente de novo."],
+["Free to play in your browser, no download.", "Gratuit dans votre navigateur, sans téléchargement.", "Gratis en tu navegador, sin descargas.", "Kostenlos im Browser spielbar, ohne Download.", "Gratis nel browser, senza download.", "Grátis no navegador, sem download."],
+["Records and saves synced {t}.", "Records et sauvegardes synchronisés à {t}.", "Récords y partidas sincronizados a las {t}.", "Rekorde und Spielstände um {t} synchronisiert.", "Record e salvataggi sincronizzati alle {t}.", "Recordes e jogos salvos sincronizados às {t}."],
+["Resend email in {n} s", "Renvoyer l’e-mail dans {n} s", "Reenviar correo en {n} s", "E-Mail erneut senden in {n} s", "Invia di nuovo tra {n} s", "Reenviar e-mail em {n} s"],
+["Logged in as {name}", "Connecté en tant que {name}", "Sesión iniciada como {name}", "Angemeldet als {name}", "Accesso eseguito come {name}", "Conectado como {name}"],
+["{n}+ players", "{n}+ joueurs", "{n}+ jugadores", "{n}+ Spieler", "{n}+ giocatori", "{n}+ jogadores"],
+["1 player", "1 joueur", "1 jugador", "1 Spieler", "1 giocatore", "1 jogador"],
+["No player has a username starting with “{q}”.", "Aucun joueur n’a de nom d’utilisateur commençant par « {q} ».", "Ningún jugador tiene un nombre de usuario que empiece por «{q}».", "Kein Spieler hat einen Benutzernamen, der mit „{q}“ beginnt.", "Nessun giocatore ha un nome utente che inizia con «{q}».", "Nenhum jogador tem nome de usuário começando com “{q}”."],
+["You are now friends with {u}", "Vous êtes maintenant ami avec {u}", "Ahora eres amigo de {u}", "Du bist jetzt mit {u} befreundet", "Ora sei amico di {u}", "Agora você é amigo de {u}"],
+["Friend request sent to {u}", "Demande d’ami envoyée à {u}", "Solicitud de amistad enviada a {u}", "Freundschaftsanfrage an {u} gesendet", "Richiesta di amicizia inviata a {u}", "Pedido de amizade enviado para {u}"],
+["{u} was removed from your friends", "{u} a été retiré de vos amis", "{u} se eliminó de tus amigos", "{u} wurde aus deinen Freunden entfernt", "{u} è stato rimosso dai tuoi amici", "{u} foi removido dos seus amigos"],
+["These terms apply when you use gameplay, a free website of browser games. By playing on the site you agree to them. If you do not agree, please do not use the site.", "Ces conditions s’appliquent lorsque vous utilisez gameplay, un site gratuit de jeux par navigateur. En jouant sur le site, vous les acceptez. Si vous n’êtes pas d’accord, merci de ne pas utiliser le site.", "Estos términos se aplican cuando usas gameplay, un sitio web gratuito de juegos para el navegador. Al jugar en el sitio los aceptas. Si no estás de acuerdo, no uses el sitio.", "Diese Bedingungen gelten, wenn du gameplay nutzt, eine kostenlose Website mit Browserspielen. Wenn du auf der Seite spielst, stimmst du ihnen zu. Wenn du nicht einverstanden bist, nutze die Seite bitte nicht.", "Questi termini si applicano quando usi gameplay, un sito gratuito di giochi per browser. Giocando sul sito li accetti. Se non sei d’accordo, non usare il sito.", "Estes termos se aplicam quando você usa o gameplay, um site gratuito de jogos de navegador. Ao jogar no site, você os aceita. Se não concordar, não use o site."],
+["1. What gameplay is", "1. Ce qu’est gameplay", "1. Qué es gameplay", "1. Was gameplay ist", "1. Che cos’è gameplay", "1. O que é o gameplay"],
+["gameplay is a fan-made, non-commercial hobby project. Most games are remakes inspired by well-known games. gameplay is not affiliated with, endorsed by or sponsored by the creators, publishers or owners of the original games. Game names are used only to say which game a remake is inspired by. All trademarks and original works belong to their owners.", "gameplay est un projet de loisir non commercial, créé par des fans. La plupart des jeux sont des remakes inspirés de jeux connus. gameplay n’est ni affilié, ni approuvé, ni sponsorisé par les créateurs, éditeurs ou propriétaires des jeux originaux. Les noms des jeux servent uniquement à indiquer de quel jeu un remake s’inspire. Toutes les marques et œuvres originales appartiennent à leurs propriétaires.", "gameplay es un proyecto aficionado, hecho por fans y sin fines comerciales. La mayoría de los juegos son remakes inspirados en juegos conocidos. gameplay no está afiliado, respaldado ni patrocinado por los creadores, editores o propietarios de los juegos originales. Los nombres de los juegos solo se usan para indicar en qué juego se inspira cada remake. Todas las marcas y obras originales pertenecen a sus propietarios.", "gameplay ist ein nicht kommerzielles Hobbyprojekt von Fans. Die meisten Spiele sind Remakes, die von bekannten Spielen inspiriert sind. gameplay ist nicht mit den Entwicklern, Publishern oder Rechteinhabern der Originalspiele verbunden und wird von ihnen weder unterstützt noch gesponsert. Spielnamen werden nur genannt, um zu zeigen, von welchem Spiel ein Remake inspiriert ist. Alle Marken und Originalwerke gehören ihren Inhabern.", "gameplay è un progetto amatoriale, creato da fan e senza scopo di lucro. La maggior parte dei giochi sono remake ispirati a giochi famosi. gameplay non è affiliato, approvato né sponsorizzato dai creatori, editori o proprietari dei giochi originali. I nomi dei giochi servono solo a indicare a quale gioco si ispira un remake. Tutti i marchi e le opere originali appartengono ai rispettivi proprietari.", "O gameplay é um projeto amador, feito por fãs e sem fins comerciais. A maioria dos jogos são remakes inspirados em jogos conhecidos. O gameplay não é afiliado, endossado nem patrocinado pelos criadores, editoras ou donos dos jogos originais. Os nomes dos jogos são usados apenas para indicar em qual jogo cada remake se inspira. Todas as marcas e obras originais pertencem aos seus donos."],
+["2. Using the site", "2. Utilisation du site", "2. Uso del sitio", "2. Nutzung der Seite", "2. Uso del sito", "2. Uso do site"],
+["The site is free and for personal, non-commercial use.", "Le site est gratuit et réservé à un usage personnel et non commercial.", "El sitio es gratuito y para uso personal, no comercial.", "Die Seite ist kostenlos und für die private, nicht kommerzielle Nutzung bestimmt.", "Il sito è gratuito e destinato a un uso personale e non commerciale.", "O site é gratuito e para uso pessoal, não comercial."],
+["Do not try to break, overload, copy at scale or misuse the site, and do not use it to cheat or harm other players.", "N’essayez pas de casser, surcharger, copier en masse ou détourner le site, et ne l’utilisez pas pour tricher ou nuire à d’autres joueurs.", "No intentes romper, sobrecargar, copiar a gran escala ni hacer un mal uso del sitio, y no lo uses para hacer trampas ni perjudicar a otros jugadores.", "Versuche nicht, die Seite zu beschädigen, zu überlasten, in großem Umfang zu kopieren oder zu missbrauchen, und nutze sie nicht, um zu schummeln oder anderen Spielern zu schaden.", "Non cercare di danneggiare, sovraccaricare, copiare su larga scala o usare in modo improprio il sito, e non usarlo per barare o danneggiare altri giocatori.", "Não tente quebrar, sobrecarregar, copiar em massa ou usar o site de forma indevida, e não o use para trapacear ou prejudicar outros jogadores."],
+["Some versions of the site are protected by a password. Do not share it publicly.", "Certaines versions du site sont protégées par un mot de passe. Ne le partagez pas publiquement.", "Algunas versiones del sitio están protegidas con contraseña. No la compartas públicamente.", "Einige Versionen der Seite sind durch ein Passwort geschützt. Teile es nicht öffentlich.", "Alcune versioni del sito sono protette da password. Non condividerla pubblicamente.", "Algumas versões do site são protegidas por senha. Não a compartilhe publicamente."],
+["3. Online play", "3. Jeu en ligne", "3. Juego en línea", "3. Online spielen", "3. Gioco online", "3. Jogo online"],
+["Online games connect you directly to the other players in your party using a party code. Be respectful: no harassment, hate, threats, spam or sharing other people's personal information. Do not share your own personal details in names or chat. The host of a party can remove players, and you can leave a party at any time.", "Les jeux en ligne vous connectent directement aux autres joueurs de votre groupe grâce à un code de groupe. Soyez respectueux : pas de harcèlement, de haine, de menaces, de spam ni de partage des informations personnelles d’autrui. Ne partagez pas vos propres informations personnelles dans les noms ou le chat. L’hôte d’un groupe peut retirer des joueurs, et vous pouvez quitter un groupe à tout moment.", "Los juegos en línea te conectan directamente con los demás jugadores de tu grupo mediante un código de grupo. Sé respetuoso: nada de acoso, odio, amenazas, spam ni compartir información personal de otras personas. No compartas tus propios datos personales en nombres ni en el chat. El anfitrión de un grupo puede expulsar jugadores y tú puedes salir de un grupo en cualquier momento.", "Online-Spiele verbinden dich über einen Gruppencode direkt mit den anderen Spielern deiner Gruppe. Sei respektvoll: keine Belästigung, kein Hass, keine Drohungen, kein Spam und keine Weitergabe persönlicher Daten anderer. Teile keine eigenen persönlichen Daten in Namen oder im Chat. Der Host einer Gruppe kann Spieler entfernen, und du kannst eine Gruppe jederzeit verlassen.", "I giochi online ti collegano direttamente agli altri giocatori del tuo gruppo tramite un codice gruppo. Sii rispettoso: niente molestie, odio, minacce, spam o condivisione di informazioni personali altrui. Non condividere i tuoi dati personali nei nomi o in chat. L’host di un gruppo può rimuovere giocatori e tu puoi lasciare un gruppo in qualsiasi momento.", "Os jogos online conectam você diretamente aos outros jogadores do seu grupo usando um código de grupo. Seja respeitoso: nada de assédio, ódio, ameaças, spam ou compartilhamento de informações pessoais de outras pessoas. Não compartilhe seus próprios dados pessoais em nomes ou no chat. O anfitrião de um grupo pode remover jogadores, e você pode sair de um grupo a qualquer momento."],
+["4. Names and messages", "4. Noms et messages", "4. Nombres y mensajes", "4. Namen und Nachrichten", "4. Nomi e messaggi", "4. Nomes e mensagens"],
+["Your username, display name and chat messages must not be offensive, misleading or impersonate someone else. We may block names or content that break these terms.", "Votre nom d’utilisateur, votre nom affiché et vos messages de chat ne doivent pas être offensants, trompeurs ni usurper l’identité de quelqu’un. Nous pouvons bloquer les noms ou contenus qui enfreignent ces conditions.", "Tu nombre de usuario, tu nombre visible y tus mensajes de chat no deben ser ofensivos, engañosos ni suplantar a otra persona. Podemos bloquear nombres o contenidos que incumplan estos términos.", "Dein Benutzername, dein Anzeigename und deine Chatnachrichten dürfen nicht beleidigend oder irreführend sein und niemanden nachahmen. Wir können Namen oder Inhalte sperren, die gegen diese Bedingungen verstoßen.", "Il tuo nome utente, il nome visualizzato e i messaggi in chat non devono essere offensivi, ingannevoli né impersonare altre persone. Possiamo bloccare nomi o contenuti che violano questi termini.", "Seu nome de usuário, nome de exibição e mensagens de chat não podem ser ofensivos, enganosos nem se passar por outra pessoa. Podemos bloquear nomes ou conteúdos que violem estes termos."],
+["5. Accounts", "5. Comptes", "5. Cuentas", "5. Konten", "5. Account", "5. Contas"],
+["Today you play without an account and your data stays in your browser. We plan to add optional sign-in with Google. When we do, these terms will be updated.", "Pour l’instant, vous jouez sans compte et vos données restent dans votre navigateur. Nous prévoyons d’ajouter une connexion facultative avec Google. Ces conditions seront alors mises à jour.", "Hoy juegas sin cuenta y tus datos se quedan en tu navegador. Tenemos previsto añadir un inicio de sesión opcional con Google. Cuando lo hagamos, actualizaremos estos términos.", "Derzeit spielst du ohne Konto und deine Daten bleiben in deinem Browser. Wir planen eine optionale Anmeldung mit Google. Dann werden diese Bedingungen aktualisiert.", "Oggi giochi senza account e i tuoi dati restano nel browser. Prevediamo di aggiungere un accesso facoltativo con Google. Quando succederà, questi termini verranno aggiornati.", "Hoje você joga sem conta e seus dados ficam no seu navegador. Planejamos adicionar um login opcional com o Google. Quando isso acontecer, estes termos serão atualizados."],
+["An account is optional. You can sign in with Google or with an email address and a password. Keep your password safe and do not share your account. You can delete your account at any time in Settings, Account. We may suspend accounts that break these terms.", "Un compte est facultatif. Vous pouvez vous connecter avec Google ou avec une adresse e-mail et un mot de passe. Gardez votre mot de passe en sécurité et ne partagez pas votre compte. Vous pouvez supprimer votre compte à tout moment dans Paramètres, Compte. Nous pouvons suspendre les comptes qui enfreignent ces conditions.", "Tener una cuenta es opcional. Puedes iniciar sesión con Google o con un correo y una contraseña. Mantén tu contraseña a salvo y no compartas tu cuenta. Puedes eliminar tu cuenta cuando quieras en Ajustes, Cuenta. Podemos suspender las cuentas que incumplan estos términos.", "Ein Konto ist optional. Du kannst dich mit Google oder mit E-Mail-Adresse und Passwort anmelden. Halte dein Passwort geheim und teile dein Konto nicht. Du kannst dein Konto jederzeit unter Einstellungen, Konto löschen. Wir können Konten sperren, die gegen diese Bedingungen verstoßen.", "L’account è facoltativo. Puoi accedere con Google oppure con un indirizzo email e una password. Tieni al sicuro la password e non condividere l’account. Puoi eliminare l’account in qualsiasi momento in Impostazioni, Account. Possiamo sospendere gli account che violano questi termini.", "Ter uma conta é opcional. Você pode entrar com o Google ou com um endereço de e-mail e uma senha. Mantenha sua senha segura e não compartilhe sua conta. Você pode excluir sua conta a qualquer momento em Configurações, Conta. Podemos suspender contas que violem estes termos."],
+["6. Your data on this device", "6. Vos données sur cet appareil", "6. Tus datos en este dispositivo", "6. Deine Daten auf diesem Gerät", "6. I tuoi dati su questo dispositivo", "6. Seus dados neste dispositivo"],
+["Records, saves and settings are kept in your browser. Clearing your browser data, using private browsing or switching devices can remove them. We cannot restore data that was stored only on your device.", "Les records, sauvegardes et paramètres sont conservés dans votre navigateur. Effacer les données du navigateur, utiliser la navigation privée ou changer d’appareil peut les supprimer. Nous ne pouvons pas restaurer des données stockées uniquement sur votre appareil.", "Los récords, partidas guardadas y ajustes se guardan en tu navegador. Borrar los datos del navegador, usar la navegación privada o cambiar de dispositivo puede eliminarlos. No podemos recuperar datos que solo estaban guardados en tu dispositivo.", "Rekorde, Spielstände und Einstellungen werden in deinem Browser gespeichert. Wenn du Browserdaten löschst, privat surfst oder das Gerät wechselst, können sie verloren gehen. Daten, die nur auf deinem Gerät gespeichert waren, können wir nicht wiederherstellen.", "Record, salvataggi e impostazioni sono conservati nel browser. Cancellare i dati del browser, usare la navigazione privata o cambiare dispositivo può eliminarli. Non possiamo ripristinare dati salvati solo sul tuo dispositivo.", "Recordes, jogos salvos e configurações ficam no seu navegador. Limpar os dados do navegador, usar a navegação privada ou trocar de dispositivo pode apagá-los. Não podemos restaurar dados que estavam salvos apenas no seu dispositivo."],
+["Records, saves and settings are kept in your browser. If you sign in, your records and saves are also copied to your account. Clearing your browser data, using private browsing or switching devices can remove them. We cannot restore data that was stored only on your device.", "Les records, sauvegardes et paramètres sont conservés dans votre navigateur. Si vous vous connectez, vos records et sauvegardes sont aussi copiés dans votre compte. Effacer les données du navigateur, utiliser la navigation privée ou changer d’appareil peut les supprimer. Nous ne pouvons pas restaurer des données stockées uniquement sur votre appareil.", "Los récords, partidas guardadas y ajustes se guardan en tu navegador. Si inicias sesión, tus récords y partidas también se copian en tu cuenta. Borrar los datos del navegador, usar la navegación privada o cambiar de dispositivo puede eliminarlos. No podemos recuperar datos que solo estaban guardados en tu dispositivo.", "Rekorde, Spielstände und Einstellungen werden in deinem Browser gespeichert. Wenn du angemeldet bist, werden deine Rekorde und Spielstände auch in dein Konto kopiert. Wenn du Browserdaten löschst, privat surfst oder das Gerät wechselst, können sie verloren gehen. Daten, die nur auf deinem Gerät gespeichert waren, können wir nicht wiederherstellen.", "Record, salvataggi e impostazioni sono conservati nel browser. Se accedi, record e salvataggi vengono copiati anche nel tuo account. Cancellare i dati del browser, usare la navigazione privata o cambiare dispositivo può eliminarli. Non possiamo ripristinare dati salvati solo sul tuo dispositivo.", "Recordes, jogos salvos e configurações ficam no seu navegador. Se você entrar, seus recordes e jogos salvos também são copiados para sua conta. Limpar os dados do navegador, usar a navegação privada ou trocar de dispositivo pode apagá-los. Não podemos restaurar dados que estavam salvos apenas no seu dispositivo."],
+["7. No warranty", "7. Absence de garantie", "7. Sin garantía", "7. Keine Gewährleistung", "7. Nessuna garanzia", "7. Sem garantia"],
+["The site is provided \"as is\" and \"as available\". Games can change, move or be removed at any time, and the site may sometimes be unavailable or contain bugs.", "Le site est fourni « tel quel » et « selon disponibilité ». Les jeux peuvent changer, être déplacés ou supprimés à tout moment, et le site peut parfois être indisponible ou contenir des bugs.", "El sitio se ofrece «tal cual» y «según disponibilidad». Los juegos pueden cambiar, moverse o eliminarse en cualquier momento, y el sitio puede no estar disponible a veces o contener errores.", "Die Seite wird „wie besehen“ und „wie verfügbar“ bereitgestellt. Spiele können sich jederzeit ändern, verschoben oder entfernt werden, und die Seite kann manchmal nicht erreichbar sein oder Fehler enthalten.", "Il sito è fornito «così com’è» e «come disponibile». I giochi possono cambiare, essere spostati o rimossi in qualsiasi momento e il sito può a volte non essere disponibile o contenere bug.", "O site é fornecido “no estado em que se encontra” e “conforme disponível”. Os jogos podem mudar, ser movidos ou removidos a qualquer momento, e o site pode às vezes ficar indisponível ou ter bugs."],
+["8. Liability", "8. Responsabilité", "8. Responsabilidad", "8. Haftung", "8. Responsabilità", "8. Responsabilidade"],
+["To the extent the law allows, the people who run gameplay are not liable for indirect or consequential losses, or for loss of data, arising from your use of the site. Nothing in these terms limits liability that cannot be limited by law.", "Dans les limites permises par la loi, les personnes qui gèrent gameplay ne sont pas responsables des pertes indirectes ou consécutives, ni des pertes de données, liées à votre utilisation du site. Rien dans ces conditions ne limite une responsabilité qui ne peut pas être limitée par la loi.", "En la medida en que la ley lo permita, las personas que gestionan gameplay no son responsables de pérdidas indirectas o derivadas, ni de pérdidas de datos, que resulten de tu uso del sitio. Nada en estos términos limita la responsabilidad que la ley no permite limitar.", "Soweit gesetzlich zulässig, haften die Betreiber von gameplay nicht für indirekte Schäden, Folgeschäden oder Datenverluste, die durch die Nutzung der Seite entstehen. Nichts in diesen Bedingungen beschränkt eine Haftung, die gesetzlich nicht beschränkt werden kann.", "Nei limiti consentiti dalla legge, chi gestisce gameplay non è responsabile di perdite indirette o consequenziali, né della perdita di dati, derivanti dall’uso del sito. Nulla in questi termini limita una responsabilità che per legge non può essere limitata.", "Na medida em que a lei permitir, as pessoas que administram o gameplay não são responsáveis por perdas indiretas ou consequentes, nem por perda de dados, decorrentes do seu uso do site. Nada nestes termos limita uma responsabilidade que a lei não permita limitar."],
+["9. Rights holders", "9. Titulaires de droits", "9. Titulares de derechos", "9. Rechteinhaber", "9. Titolari dei diritti", "9. Titulares de direitos"],
+["If you own the rights to a game, name or artwork and want something changed or removed, contact us and we will act promptly.", "Si vous détenez les droits d’un jeu, d’un nom ou d’une illustration et souhaitez qu’un élément soit modifié ou retiré, contactez-nous et nous agirons rapidement.", "Si tienes los derechos de un juego, nombre o ilustración y quieres que se cambie o retire algo, contáctanos y actuaremos con rapidez.", "Wenn du die Rechte an einem Spiel, Namen oder Kunstwerk besitzt und etwas geändert oder entfernt haben möchtest, kontaktiere uns und wir handeln umgehend.", "Se possiedi i diritti di un gioco, di un nome o di un’opera grafica e vuoi che qualcosa venga modificato o rimosso, contattaci e interverremo rapidamente.", "Se você detém os direitos de um jogo, nome ou arte e quer que algo seja alterado ou removido, fale conosco e agiremos rapidamente."],
+["10. Changes", "10. Modifications", "10. Cambios", "10. Änderungen", "10. Modifiche", "10. Alterações"],
+["We may update these terms. The date at the top shows the latest version. If you keep using the site after a change, the new terms apply.", "Nous pouvons mettre à jour ces conditions. La date en haut indique la dernière version. Si vous continuez à utiliser le site après une modification, les nouvelles conditions s’appliquent.", "Podemos actualizar estos términos. La fecha de arriba indica la última versión. Si sigues usando el sitio después de un cambio, se aplican los nuevos términos.", "Wir können diese Bedingungen aktualisieren. Das Datum oben zeigt die neueste Version. Wenn du die Seite nach einer Änderung weiter nutzt, gelten die neuen Bedingungen.", "Possiamo aggiornare questi termini. La data in alto indica l’ultima versione. Se continui a usare il sito dopo una modifica, si applicano i nuovi termini.", "Podemos atualizar estes termos. A data no topo mostra a versão mais recente. Se você continuar usando o site após uma alteração, os novos termos se aplicam."],
+["11. Contact", "11. Contact", "11. Contacto", "11. Kontakt", "11. Contatti", "11. Contato"],
+["Questions, requests about your data, or a rights holder asking for a change: email", "Questions, demandes concernant vos données ou titulaire de droits souhaitant une modification : écrivez à", "Preguntas, solicitudes sobre tus datos o titulares de derechos que pidan un cambio: escribe a", "Fragen, Anfragen zu deinen Daten oder Rechteinhaber, die eine Änderung wünschen: E-Mail an", "Domande, richieste sui tuoi dati o titolari dei diritti che chiedono una modifica: scrivi a", "Dúvidas, pedidos sobre seus dados ou titulares de direitos pedindo uma alteração: escreva para"],
+["In short: you do not need an account, there are no ads, we do not sell data, and what the site remembers about you is stored in your own browser.", "En bref : vous n’avez pas besoin de compte, il n’y a pas de publicité, nous ne vendons pas de données, et ce que le site retient de vous est stocké dans votre propre navigateur.", "En resumen: no necesitas cuenta, no hay anuncios, no vendemos datos y lo que el sitio recuerda de ti se guarda en tu propio navegador.", "Kurz gesagt: Du brauchst kein Konto, es gibt keine Werbung, wir verkaufen keine Daten, und was die Seite über dich speichert, liegt in deinem eigenen Browser.", "In breve: non ti serve un account, non ci sono pubblicità, non vendiamo dati e ciò che il sito ricorda di te è salvato nel tuo browser.", "Em resumo: você não precisa de conta, não há anúncios, não vendemos dados e o que o site lembra sobre você fica salvo no seu próprio navegador."],
+["In short: you do not need an account, there are no ads and we do not sell data. Without an account, what the site remembers about you is stored in your own browser. If you sign in, your profile, records and saves are also kept in our database so you can use them on every device.", "En bref : vous n’avez pas besoin de compte, il n’y a pas de publicité et nous ne vendons pas de données. Sans compte, ce que le site retient de vous est stocké dans votre propre navigateur. Si vous vous connectez, votre profil, vos records et vos sauvegardes sont aussi conservés dans notre base de données pour que vous les retrouviez sur tous vos appareils.", "En resumen: no necesitas cuenta, no hay anuncios y no vendemos datos. Sin cuenta, lo que el sitio recuerda de ti se guarda en tu propio navegador. Si inicias sesión, tu perfil, récords y partidas guardadas también se conservan en nuestra base de datos para que puedas usarlos en todos tus dispositivos.", "Kurz gesagt: Du brauchst kein Konto, es gibt keine Werbung und wir verkaufen keine Daten. Ohne Konto liegt, was die Seite über dich speichert, in deinem eigenen Browser. Wenn du dich anmeldest, werden dein Profil, deine Rekorde und Spielstände auch in unserer Datenbank gespeichert, damit du sie auf allen Geräten nutzen kannst.", "In breve: non ti serve un account, non ci sono pubblicità e non vendiamo dati. Senza account, ciò che il sito ricorda di te è salvato nel tuo browser. Se accedi, profilo, record e salvataggi sono conservati anche nel nostro database, così puoi usarli su ogni dispositivo.", "Em resumo: você não precisa de conta, não há anúncios e não vendemos dados. Sem conta, o que o site lembra sobre você fica salvo no seu próprio navegador. Se você entrar, seu perfil, recordes e jogos salvos também ficam no nosso banco de dados para você usá-los em todos os dispositivos."],
+["What is stored on your device", "Ce qui est stocké sur votre appareil", "Qué se guarda en tu dispositivo", "Was auf deinem Gerät gespeichert wird", "Cosa viene salvato sul tuo dispositivo", "O que fica salvo no seu dispositivo"],
+["Name", "Nom", "Nombre", "Name", "Nome", "Nome"],
+["What it holds", "Contenu", "Qué contiene", "Inhalt", "Contenuto", "O que contém"],
+["Kind", "Type", "Tipo", "Art", "Tipo", "Tipo"],
+["Best scores, play counts, time played, recently played games and settings such as theme and sound", "Meilleurs scores, nombre de parties, temps de jeu, jeux récents et paramètres comme le thème et le son", "Mejores puntuaciones, partidas jugadas, tiempo de juego, juegos recientes y ajustes como el tema y el sonido", "Bestwerte, Spielzähler, Spielzeit, zuletzt gespielte Spiele und Einstellungen wie Design und Ton", "Punteggi migliori, numero di partite, tempo di gioco, giochi recenti e impostazioni come tema e audio", "Melhores placares, contagem de partidas, tempo jogado, jogos recentes e configurações como tema e som"],
+["Saved progress for games that support it", "Progression sauvegardée des jeux qui le permettent", "Progreso guardado de los juegos que lo permiten", "Gespeicherter Fortschritt für Spiele, die das unterstützen", "Progressi salvati per i giochi che lo supportano", "Progresso salvo dos jogos que permitem"],
+["The username and display name you choose", "Le nom d’utilisateur et le nom affiché que vous choisissez", "El nombre de usuario y el nombre visible que elijas", "Der Benutzername und Anzeigename, den du wählst", "Il nome utente e il nome visualizzato che scegli", "O nome de usuário e o nome de exibição que você escolher"],
+["Your cookie choice", "Votre choix concernant les cookies", "Tu elección sobre las cookies", "Deine Cookie-Auswahl", "La tua scelta sui cookie", "Sua escolha sobre cookies"],
+["Password unlock and wrong attempts, only on the password-protected version", "Déverrouillage par mot de passe et tentatives erronées, uniquement sur la version protégée par mot de passe", "Desbloqueo con contraseña e intentos fallidos, solo en la versión protegida con contraseña", "Passwort-Entsperrung und Fehlversuche, nur in der passwortgeschützten Version", "Sblocco con password e tentativi errati, solo nella versione protetta da password", "Desbloqueio por senha e tentativas erradas, apenas na versão protegida por senha"],
+["Usage events and a random session ID, only if you accept analytics", "Événements d’utilisation et un identifiant de session aléatoire, seulement si vous acceptez la mesure d’audience", "Eventos de uso y un ID de sesión aleatorio, solo si aceptas el análisis", "Nutzungsereignisse und eine zufällige Sitzungs-ID, nur wenn du der Analyse zustimmst", "Eventi di utilizzo e un ID di sessione casuale, solo se accetti l’analisi", "Eventos de uso e um ID de sessão aleatório, só se você aceitar a análise"],
+["Your sign-in session and what was already copied to your account, only if you sign in", "Votre session de connexion et ce qui a déjà été copié dans votre compte, seulement si vous vous connectez", "Tu sesión iniciada y lo que ya se copió en tu cuenta, solo si inicias sesión", "Deine Anmeldesitzung und was bereits in dein Konto kopiert wurde, nur wenn du dich anmeldest", "La tua sessione di accesso e ciò che è già stato copiato nel tuo account, solo se accedi", "Sua sessão de login e o que já foi copiado para sua conta, só se você entrar"],
+["Usage events, a random session ID and a random device ID, only if you accept analytics", "Événements d’utilisation, un identifiant de session et un identifiant d’appareil aléatoires, seulement si vous acceptez la mesure d’audience", "Eventos de uso, un ID de sesión aleatorio y un ID de dispositivo aleatorio, solo si aceptas el análisis", "Nutzungsereignisse, eine zufällige Sitzungs-ID und eine zufällige Geräte-ID, nur wenn du der Analyse zustimmst", "Eventi di utilizzo, un ID di sessione casuale e un ID dispositivo casuale, solo se accetti l’analisi", "Eventos de uso, um ID de sessão aleatório e um ID de dispositivo aleatório, só se você aceitar a análise"],
+["Only if you accept analytics, the site records events such as which games are opened and clicked, how long they are played (only while the tab is visible and the game is not paused), searches typed in the search box, filters used, online parties started, errors, and basic device information: device type (phone, tablet or computer), operating system and browser family, screen size and language. Events are linked to a random session ID, not to your name or email.", "Seulement si vous acceptez la mesure d’audience, le site enregistre des événements comme les jeux ouverts et cliqués, leur durée de jeu (uniquement quand l’onglet est visible et que le jeu n’est pas en pause), les recherches tapées dans la barre de recherche, les filtres utilisés, les groupes en ligne lancés, les erreurs et des informations de base sur l’appareil : type d’appareil (téléphone, tablette ou ordinateur), système d’exploitation et famille de navigateur, taille d’écran et langue. Les événements sont liés à un identifiant de session aléatoire, pas à votre nom ni à votre e-mail.", "Solo si aceptas el análisis, el sitio registra eventos como qué juegos se abren y se pulsan, cuánto tiempo se juegan (solo mientras la pestaña está visible y el juego no está en pausa), las búsquedas escritas en el buscador, los filtros usados, los grupos en línea creados, los errores e información básica del dispositivo: tipo de dispositivo (teléfono, tableta u ordenador), sistema operativo y familia de navegador, tamaño de pantalla e idioma. Los eventos se vinculan a un ID de sesión aleatorio, no a tu nombre ni a tu correo.", "Nur wenn du der Analyse zustimmst, erfasst die Seite Ereignisse wie geöffnete und angeklickte Spiele, wie lange sie gespielt werden (nur solange der Tab sichtbar und das Spiel nicht pausiert ist), Suchbegriffe im Suchfeld, genutzte Filter, gestartete Online-Gruppen, Fehler und grundlegende Geräteinformationen: Gerätetyp (Handy, Tablet oder Computer), Betriebssystem und Browserfamilie, Bildschirmgröße und Sprache. Die Ereignisse sind mit einer zufälligen Sitzungs-ID verknüpft, nicht mit deinem Namen oder deiner E-Mail.", "Solo se accetti l’analisi, il sito registra eventi come quali giochi vengono aperti e cliccati, per quanto tempo si gioca (solo mentre la scheda è visibile e il gioco non è in pausa), le ricerche scritte nella casella di ricerca, i filtri usati, i gruppi online avviati, gli errori e informazioni di base sul dispositivo: tipo di dispositivo (telefono, tablet o computer), sistema operativo e famiglia di browser, dimensioni dello schermo e lingua. Gli eventi sono collegati a un ID di sessione casuale, non al tuo nome o alla tua email.", "Só se você aceitar a análise, o site registra eventos como quais jogos são abertos e clicados, por quanto tempo são jogados (só enquanto a aba está visível e o jogo não está pausado), as pesquisas digitadas na busca, os filtros usados, os grupos online iniciados, os erros e informações básicas do dispositivo: tipo de dispositivo (celular, tablet ou computador), sistema operacional e família do navegador, tamanho da tela e idioma. Os eventos ficam ligados a um ID de sessão aleatório, não ao seu nome nem ao seu e-mail."],
+["Only if you accept analytics, the site records events such as which games are opened and clicked, how long they are played (only while the tab is visible and the game is not paused), searches typed in the search box, filters used, online parties started, errors, and basic device information: device type (phone, tablet or computer), operating system and browser family, screen size and language. Events are linked to a random session ID and a random device ID, so we can count returning players. If you are signed in, they are also linked to your account. They are not linked to your name or email.", "Seulement si vous acceptez la mesure d’audience, le site enregistre des événements comme les jeux ouverts et cliqués, leur durée de jeu (uniquement quand l’onglet est visible et que le jeu n’est pas en pause), les recherches tapées dans la barre de recherche, les filtres utilisés, les groupes en ligne lancés, les erreurs et des informations de base sur l’appareil : type d’appareil (téléphone, tablette ou ordinateur), système d’exploitation et famille de navigateur, taille d’écran et langue. Les événements sont liés à un identifiant de session et à un identifiant d’appareil aléatoires, pour compter les joueurs qui reviennent. Si vous êtes connecté, ils sont aussi liés à votre compte. Ils ne sont pas liés à votre nom ni à votre e-mail.", "Solo si aceptas el análisis, el sitio registra eventos como qué juegos se abren y se pulsan, cuánto tiempo se juegan (solo mientras la pestaña está visible y el juego no está en pausa), las búsquedas escritas en el buscador, los filtros usados, los grupos en línea creados, los errores e información básica del dispositivo: tipo de dispositivo (teléfono, tableta u ordenador), sistema operativo y familia de navegador, tamaño de pantalla e idioma. Los eventos se vinculan a un ID de sesión aleatorio y a un ID de dispositivo aleatorio, para contar a los jugadores que vuelven. Si iniciaste sesión, también se vinculan a tu cuenta. No se vinculan a tu nombre ni a tu correo.", "Nur wenn du der Analyse zustimmst, erfasst die Seite Ereignisse wie geöffnete und angeklickte Spiele, wie lange sie gespielt werden (nur solange der Tab sichtbar und das Spiel nicht pausiert ist), Suchbegriffe im Suchfeld, genutzte Filter, gestartete Online-Gruppen, Fehler und grundlegende Geräteinformationen: Gerätetyp (Handy, Tablet oder Computer), Betriebssystem und Browserfamilie, Bildschirmgröße und Sprache. Die Ereignisse sind mit einer zufälligen Sitzungs-ID und einer zufälligen Geräte-ID verknüpft, damit wir wiederkehrende Spieler zählen können. Wenn du angemeldet bist, sind sie auch mit deinem Konto verknüpft. Mit deinem Namen oder deiner E-Mail sind sie nicht verknüpft.", "Solo se accetti l’analisi, il sito registra eventi come quali giochi vengono aperti e cliccati, per quanto tempo si gioca (solo mentre la scheda è visibile e il gioco non è in pausa), le ricerche scritte nella casella di ricerca, i filtri usati, i gruppi online avviati, gli errori e informazioni di base sul dispositivo: tipo di dispositivo (telefono, tablet o computer), sistema operativo e famiglia di browser, dimensioni dello schermo e lingua. Gli eventi sono collegati a un ID di sessione casuale e a un ID dispositivo casuale, per contare i giocatori che tornano. Se hai effettuato l’accesso, sono collegati anche al tuo account. Non sono collegati al tuo nome o alla tua email.", "Só se você aceitar a análise, o site registra eventos como quais jogos são abertos e clicados, por quanto tempo são jogados (só enquanto a aba está visível e o jogo não está pausado), as pesquisas digitadas na busca, os filtros usados, os grupos online iniciados, os erros e informações básicas do dispositivo: tipo de dispositivo (celular, tablet ou computador), sistema operacional e família do navegador, tamanho da tela e idioma. Os eventos ficam ligados a um ID de sessão aleatório e a um ID de dispositivo aleatório, para contarmos os jogadores que voltam. Se você estiver conectado, eles também ficam ligados à sua conta. Não ficam ligados ao seu nome nem ao seu e-mail."],
+["Right now these events stay in your browser and are not sent anywhere. We plan to send them to our own database (hosted on Supabase) to learn which games people enjoy. We will update this policy before that starts. If you reject analytics, nothing is recorded.", "Pour l’instant, ces événements restent dans votre navigateur et ne sont envoyés nulle part. Nous prévoyons de les envoyer vers notre propre base de données (hébergée chez Supabase) pour savoir quels jeux plaisent. Nous mettrons cette politique à jour avant que cela commence. Si vous refusez la mesure d’audience, rien n’est enregistré.", "Por ahora estos eventos se quedan en tu navegador y no se envían a ningún sitio. Tenemos previsto enviarlos a nuestra propia base de datos (alojada en Supabase) para saber qué juegos gustan más. Actualizaremos esta política antes de empezar. Si rechazas el análisis, no se registra nada.", "Derzeit bleiben diese Ereignisse in deinem Browser und werden nirgendwohin gesendet. Wir planen, sie an unsere eigene Datenbank (gehostet bei Supabase) zu senden, um zu erfahren, welche Spiele beliebt sind. Vorher aktualisieren wir diese Erklärung. Wenn du die Analyse ablehnst, wird nichts erfasst.", "Per ora questi eventi restano nel browser e non vengono inviati da nessuna parte. Prevediamo di inviarli al nostro database (ospitato su Supabase) per capire quali giochi piacciono. Aggiorneremo questa informativa prima di iniziare. Se rifiuti l’analisi, non viene registrato nulla.", "Por enquanto, esses eventos ficam no seu navegador e não são enviados para lugar nenhum. Planejamos enviá-los ao nosso próprio banco de dados (hospedado no Supabase) para saber quais jogos as pessoas curtem. Atualizaremos esta política antes disso começar. Se você recusar a análise, nada é registrado."],
+["These events are sent to our database, hosted by Supabase in the European Union, and are used only to learn which games people enjoy and to fix bugs. They are deleted after two years. If you reject analytics, nothing is recorded or sent.", "Ces événements sont envoyés vers notre base de données, hébergée par Supabase dans l’Union européenne, et servent uniquement à savoir quels jeux plaisent et à corriger les bugs. Ils sont supprimés au bout de deux ans. Si vous refusez la mesure d’audience, rien n’est enregistré ni envoyé.", "Estos eventos se envían a nuestra base de datos, alojada por Supabase en la Unión Europea, y solo se usan para saber qué juegos gustan y para corregir errores. Se eliminan a los dos años. Si rechazas el análisis, no se registra ni se envía nada.", "Diese Ereignisse werden an unsere Datenbank gesendet, die Supabase in der Europäischen Union hostet, und nur genutzt, um zu erfahren, welche Spiele beliebt sind, und um Fehler zu beheben. Sie werden nach zwei Jahren gelöscht. Wenn du die Analyse ablehnst, wird nichts erfasst oder gesendet.", "Questi eventi vengono inviati al nostro database, ospitato da Supabase nell’Unione europea, e servono solo a capire quali giochi piacciono e a correggere i bug. Vengono eliminati dopo due anni. Se rifiuti l’analisi, non viene registrato né inviato nulla.", "Esses eventos são enviados ao nosso banco de dados, hospedado pelo Supabase na União Europeia, e são usados só para saber quais jogos as pessoas curtem e para corrigir bugs. Eles são apagados após dois anos. Se você recusar a análise, nada é registrado nem enviado."],
+["Online play", "Jeu en ligne", "Juego en línea", "Online spielen", "Gioco online", "Jogo online"],
+["Online games connect players directly using WebRTC. To find each other, browsers use the PeerJS connection service and connection helper (STUN and TURN) servers. Players in your party see the name you enter and your chat messages. As with any direct connection, the other players and these services can see your IP address. We do not store chat messages.", "Les jeux en ligne connectent les joueurs directement grâce à WebRTC. Pour se trouver, les navigateurs utilisent le service de connexion PeerJS et des serveurs d’aide à la connexion (STUN et TURN). Les joueurs de votre groupe voient le nom que vous saisissez et vos messages de chat. Comme pour toute connexion directe, les autres joueurs et ces services peuvent voir votre adresse IP. Nous ne stockons pas les messages de chat.", "Los juegos en línea conectan a los jugadores directamente mediante WebRTC. Para encontrarse, los navegadores usan el servicio de conexión PeerJS y servidores de ayuda a la conexión (STUN y TURN). Los jugadores de tu grupo ven el nombre que escribes y tus mensajes de chat. Como en cualquier conexión directa, los demás jugadores y estos servicios pueden ver tu dirección IP. No guardamos los mensajes de chat.", "Online-Spiele verbinden Spieler direkt über WebRTC. Um sich zu finden, nutzen die Browser den Verbindungsdienst PeerJS und Verbindungshilfe-Server (STUN und TURN). Die Spieler deiner Gruppe sehen den Namen, den du eingibst, und deine Chatnachrichten. Wie bei jeder direkten Verbindung können die anderen Spieler und diese Dienste deine IP-Adresse sehen. Wir speichern keine Chatnachrichten.", "I giochi online collegano i giocatori direttamente tramite WebRTC. Per trovarsi, i browser usano il servizio di connessione PeerJS e server di supporto alla connessione (STUN e TURN). I giocatori del tuo gruppo vedono il nome che inserisci e i tuoi messaggi in chat. Come in ogni connessione diretta, gli altri giocatori e questi servizi possono vedere il tuo indirizzo IP. Non conserviamo i messaggi della chat.", "Os jogos online conectam os jogadores diretamente usando WebRTC. Para se encontrarem, os navegadores usam o serviço de conexão PeerJS e servidores auxiliares de conexão (STUN e TURN). Os jogadores do seu grupo veem o nome que você digita e suas mensagens de chat. Como em qualquer conexão direta, os outros jogadores e esses serviços podem ver seu endereço IP. Não guardamos mensagens de chat."],
+["Other services", "Autres services", "Otros servicios", "Weitere Dienste", "Altri servizi", "Outros serviços"],
+["Firebase Hosting (Google) delivers the website and may keep standard server logs, such as IP address and time of request.", "Firebase Hosting (Google) diffuse le site et peut conserver des journaux de serveur standard, comme l’adresse IP et l’heure de la requête.", "Firebase Hosting (Google) sirve el sitio web y puede guardar registros de servidor estándar, como la dirección IP y la hora de la solicitud.", "Firebase Hosting (Google) stellt die Website bereit und kann übliche Serverprotokolle speichern, etwa IP-Adresse und Zeitpunkt der Anfrage.", "Firebase Hosting (Google) distribuisce il sito e può conservare i normali log del server, come indirizzo IP e ora della richiesta.", "O Firebase Hosting (Google) entrega o site e pode manter registros padrão do servidor, como endereço IP e horário da solicitação."],
+["Google Fonts provides the fonts. Your browser downloads them from Google, which receives your IP address.", "Google Fonts fournit les polices. Votre navigateur les télécharge depuis Google, qui reçoit votre adresse IP.", "Google Fonts proporciona las fuentes. Tu navegador las descarga de Google, que recibe tu dirección IP.", "Google Fonts liefert die Schriftarten. Dein Browser lädt sie von Google herunter, das dabei deine IP-Adresse erhält.", "Google Fonts fornisce i caratteri. Il tuo browser li scarica da Google, che riceve il tuo indirizzo IP.", "O Google Fonts fornece as fontes. Seu navegador as baixa do Google, que recebe seu endereço IP."],
+["The 3D engine and the networking library are downloaded from public content delivery networks (cdnjs and jsDelivr).", "Le moteur 3D et la bibliothèque réseau sont téléchargés depuis des réseaux publics de diffusion de contenu (cdnjs et jsDelivr).", "El motor 3D y la biblioteca de red se descargan de redes públicas de distribución de contenido (cdnjs y jsDelivr).", "Die 3D-Engine und die Netzwerkbibliothek werden aus öffentlichen Content-Delivery-Netzwerken (cdnjs und jsDelivr) geladen.", "Il motore 3D e la libreria di rete vengono scaricati da reti pubbliche di distribuzione di contenuti (cdnjs e jsDelivr).", "O motor 3D e a biblioteca de rede são baixados de redes públicas de distribuição de conteúdo (cdnjs e jsDelivr)."],
+["Supabase hosts our database and the sign-in service in the European Union. It receives your IP address when your browser contacts it.", "Supabase héberge notre base de données et le service de connexion dans l’Union européenne. Il reçoit votre adresse IP quand votre navigateur le contacte.", "Supabase aloja nuestra base de datos y el servicio de inicio de sesión en la Unión Europea. Recibe tu dirección IP cuando tu navegador se conecta.", "Supabase hostet unsere Datenbank und den Anmeldedienst in der Europäischen Union. Es erhält deine IP-Adresse, wenn dein Browser es kontaktiert.", "Supabase ospita il nostro database e il servizio di accesso nell’Unione europea. Riceve il tuo indirizzo IP quando il browser lo contatta.", "O Supabase hospeda nosso banco de dados e o serviço de login na União Europeia. Ele recebe seu endereço IP quando seu navegador o contata."],
+["If you sign in with Google, Google tells us your email address, your name and a link to your profile picture.", "Si vous vous connectez avec Google, Google nous communique votre adresse e-mail, votre nom et un lien vers votre photo de profil.", "Si inicias sesión con Google, Google nos facilita tu correo, tu nombre y un enlace a tu foto de perfil.", "Wenn du dich mit Google anmeldest, teilt uns Google deine E-Mail-Adresse, deinen Namen und einen Link zu deinem Profilbild mit.", "Se accedi con Google, Google ci comunica il tuo indirizzo email, il tuo nome e un link alla tua foto profilo.", "Se você entrar com o Google, o Google nos informa seu e-mail, seu nome e um link para sua foto de perfil."],
+["Accounts, coming later", "Comptes, bientôt", "Cuentas, más adelante", "Konten, später", "Account, in arrivo", "Contas, em breve"],
+["We plan to add optional sign-in with Google, with profiles, friends and records stored in our database on Supabase. Signing in will stay optional. When it launches, this policy will explain exactly what is stored, for how long and why.", "Nous prévoyons d’ajouter une connexion facultative avec Google, avec des profils, des amis et des records stockés dans notre base de données chez Supabase. La connexion restera facultative. À son lancement, cette politique expliquera précisément ce qui est stocké, pour combien de temps et pourquoi.", "Tenemos previsto añadir un inicio de sesión opcional con Google, con perfiles, amigos y récords guardados en nuestra base de datos en Supabase. Iniciar sesión seguirá siendo opcional. Cuando llegue, esta política explicará exactamente qué se guarda, durante cuánto tiempo y por qué.", "Wir planen eine optionale Anmeldung mit Google, mit Profilen, Freunden und Rekorden in unserer Datenbank bei Supabase. Die Anmeldung bleibt optional. Zum Start erklärt diese Erklärung genau, was wie lange und warum gespeichert wird.", "Prevediamo di aggiungere un accesso facoltativo con Google, con profili, amici e record salvati nel nostro database su Supabase. L’accesso resterà facoltativo. Al lancio, questa informativa spiegherà esattamente cosa viene salvato, per quanto tempo e perché.", "Planejamos adicionar um login opcional com o Google, com perfis, amigos e recordes guardados no nosso banco de dados no Supabase. Entrar continuará sendo opcional. No lançamento, esta política vai explicar exatamente o que é guardado, por quanto tempo e por quê."],
+["Accounts", "Comptes", "Cuentas", "Konten", "Account", "Contas"],
+["Signing in is optional. If you create an account, our database on Supabase (European Union) stores your email address; your username and display name; and, if you use Google, your name and the link to your Google profile picture; your best scores, play counts, time played and saved progress; and, later, your friends. Passwords are handled by Supabase Auth: they are stored only as a secure hash and nobody, including us, can read them. Emails about your account (confirmation, password reset, email change) are sent by Supabase. We keep this data until you delete your account in Settings, Account, which removes it from our database.", "La connexion est facultative. Si vous créez un compte, notre base de données chez Supabase (Union européenne) stocke votre adresse e-mail ; votre nom d’utilisateur et votre nom affiché ; et, si vous utilisez Google, votre nom et le lien vers votre photo de profil Google ; vos meilleurs scores, nombres de parties, temps de jeu et progression sauvegardée ; et, plus tard, vos amis. Les mots de passe sont gérés par Supabase Auth : ils sont stockés uniquement sous forme de hachage sécurisé et personne, nous compris, ne peut les lire. Les e-mails liés à votre compte (confirmation, réinitialisation du mot de passe, changement d’e-mail) sont envoyés par Supabase. Nous conservons ces données jusqu’à ce que vous supprimiez votre compte dans Paramètres, Compte, ce qui les efface de notre base de données.", "Iniciar sesión es opcional. Si creas una cuenta, nuestra base de datos en Supabase (Unión Europea) guarda tu correo; tu nombre de usuario y tu nombre visible; y, si usas Google, tu nombre y el enlace a tu foto de perfil de Google; tus mejores puntuaciones, partidas jugadas, tiempo de juego y progreso guardado; y, más adelante, tus amigos. Las contraseñas las gestiona Supabase Auth: solo se guardan como un hash seguro y nadie, ni siquiera nosotros, puede leerlas. Los correos sobre tu cuenta (confirmación, restablecimiento de contraseña, cambio de correo) los envía Supabase. Conservamos estos datos hasta que elimines tu cuenta en Ajustes, Cuenta, lo que los borra de nuestra base de datos.", "Die Anmeldung ist optional. Wenn du ein Konto erstellst, speichert unsere Datenbank bei Supabase (Europäische Union) deine E-Mail-Adresse; deinen Benutzernamen und Anzeigenamen; und, wenn du Google nutzt, deinen Namen und den Link zu deinem Google-Profilbild; deine Bestwerte, Spielzähler, Spielzeit und gespeicherten Fortschritt; und später deine Freunde. Passwörter verwaltet Supabase Auth: Sie werden nur als sicherer Hash gespeichert und niemand, auch wir nicht, kann sie lesen. E-Mails zu deinem Konto (Bestätigung, Passwort zurücksetzen, E-Mail-Änderung) verschickt Supabase. Wir speichern diese Daten, bis du dein Konto unter Einstellungen, Konto löschst, wodurch sie aus unserer Datenbank entfernt werden.", "L’accesso è facoltativo. Se crei un account, il nostro database su Supabase (Unione europea) conserva il tuo indirizzo email; il nome utente e il nome visualizzato; e, se usi Google, il tuo nome e il link alla tua foto profilo Google; i tuoi punteggi migliori, il numero di partite, il tempo di gioco e i progressi salvati; e, in futuro, i tuoi amici. Le password sono gestite da Supabase Auth: vengono salvate solo come hash sicuro e nessuno, nemmeno noi, può leggerle. Le email sul tuo account (conferma, reimpostazione della password, cambio email) sono inviate da Supabase. Conserviamo questi dati finché non elimini l’account in Impostazioni, Account, operazione che li rimuove dal nostro database.", "Entrar é opcional. Se você criar uma conta, nosso banco de dados no Supabase (União Europeia) guarda seu e-mail; seu nome de usuário e nome de exibição; e, se você usar o Google, seu nome e o link para sua foto de perfil do Google; seus melhores placares, contagem de partidas, tempo jogado e progresso salvo; e, mais tarde, seus amigos. As senhas são tratadas pelo Supabase Auth: são guardadas apenas como um hash seguro e ninguém, nem nós, consegue lê-las. Os e-mails sobre sua conta (confirmação, redefinição de senha, troca de e-mail) são enviados pelo Supabase. Guardamos esses dados até você excluir sua conta em Configurações, Conta, o que os remove do nosso banco de dados."],
+["Your choices", "Vos choix", "Tus opciones", "Deine Wahlmöglichkeiten", "Le tue scelte", "Suas escolhas"],
+["Change your cookie choice at any time in Cookie settings.", "Modifiez votre choix concernant les cookies à tout moment dans Paramètres des cookies.", "Cambia tu elección sobre las cookies cuando quieras en Configuración de cookies.", "Ändere deine Cookie-Auswahl jederzeit unter Cookie-Einstellungen.", "Cambia la tua scelta sui cookie in qualsiasi momento in Impostazioni dei cookie.", "Altere sua escolha de cookies a qualquer momento em Configurações de cookies."],
+["Download your data in Settings, Privacy and data.", "Téléchargez vos données dans Paramètres, Confidentialité et données.", "Descarga tus datos en Ajustes, Privacidad y datos.", "Lade deine Daten unter Einstellungen, Datenschutz und Daten herunter.", "Scarica i tuoi dati in Impostazioni, Privacy e dati.", "Baixe seus dados em Configurações, Privacidade e dados."],
+["Delete it in Settings, Account, or by clearing this site's data in your browser.", "Supprimez-les dans Paramètres, Compte, ou en effaçant les données de ce site dans votre navigateur.", "Bórralos en Ajustes, Cuenta, o borrando los datos de este sitio en tu navegador.", "Lösche sie unter Einstellungen, Konto oder indem du die Daten dieser Seite in deinem Browser löschst.", "Eliminali in Impostazioni, Account, oppure cancellando i dati di questo sito nel browser.", "Exclua-os em Configurações, Conta, ou limpando os dados deste site no seu navegador."],
+["Depending on where you live, you may have rights to access, correct, delete or object to the use of your personal data. Because today we hold no personal data on our servers, most requests can be handled directly in your browser with the tools above.", "Selon votre lieu de résidence, vous pouvez avoir le droit d’accéder à vos données personnelles, de les corriger, de les supprimer ou de vous opposer à leur utilisation. Comme nous ne détenons aujourd’hui aucune donnée personnelle sur nos serveurs, la plupart des demandes peuvent être traitées directement dans votre navigateur avec les outils ci-dessus.", "Según dónde vivas, puedes tener derecho a acceder, corregir, borrar u oponerte al uso de tus datos personales. Como hoy no guardamos datos personales en nuestros servidores, la mayoría de las solicitudes se pueden resolver directamente en tu navegador con las herramientas de arriba.", "Je nach Wohnort hast du möglicherweise das Recht, auf deine personenbezogenen Daten zuzugreifen, sie zu berichtigen, zu löschen oder ihrer Nutzung zu widersprechen. Da wir derzeit keine personenbezogenen Daten auf unseren Servern speichern, lassen sich die meisten Anfragen direkt in deinem Browser mit den Werkzeugen oben erledigen.", "A seconda di dove vivi, potresti avere il diritto di accedere, correggere, cancellare i tuoi dati personali o opporti al loro uso. Poiché oggi non conserviamo dati personali sui nostri server, la maggior parte delle richieste si può gestire direttamente nel browser con gli strumenti qui sopra.", "Dependendo de onde você mora, pode ter direito a acessar, corrigir, excluir ou se opor ao uso dos seus dados pessoais. Como hoje não guardamos dados pessoais nos nossos servidores, a maioria dos pedidos pode ser resolvida diretamente no seu navegador com as ferramentas acima."],
+["Depending on where you live, you may have rights to access, correct, delete or object to the use of your personal data. If you are signed in, Download my data also includes what your account stores, and Delete my account in Settings, Account removes it from our database. For anything else, email us.", "Selon votre lieu de résidence, vous pouvez avoir le droit d’accéder à vos données personnelles, de les corriger, de les supprimer ou de vous opposer à leur utilisation. Si vous êtes connecté, Télécharger mes données inclut aussi ce que votre compte stocke, et Supprimer mon compte dans Paramètres, Compte l’efface de notre base de données. Pour toute autre demande, écrivez-nous.", "Según dónde vivas, puedes tener derecho a acceder, corregir, borrar u oponerte al uso de tus datos personales. Si iniciaste sesión, Descargar mis datos también incluye lo que guarda tu cuenta, y Eliminar mi cuenta en Ajustes, Cuenta lo borra de nuestra base de datos. Para cualquier otra cosa, escríbenos.", "Je nach Wohnort hast du möglicherweise das Recht, auf deine personenbezogenen Daten zuzugreifen, sie zu berichtigen, zu löschen oder ihrer Nutzung zu widersprechen. Wenn du angemeldet bist, enthält Meine Daten herunterladen auch, was dein Konto speichert, und Mein Konto löschen unter Einstellungen, Konto entfernt es aus unserer Datenbank. Für alles andere schreib uns eine E-Mail.", "A seconda di dove vivi, potresti avere il diritto di accedere, correggere, cancellare i tuoi dati personali o opporti al loro uso. Se hai effettuato l’accesso, Scarica i miei dati include anche ciò che conserva il tuo account, ed Elimina il mio account in Impostazioni, Account lo rimuove dal nostro database. Per tutto il resto, scrivici.", "Dependendo de onde você mora, pode ter direito a acessar, corrigir, excluir ou se opor ao uso dos seus dados pessoais. Se você estiver conectado, Baixar meus dados também inclui o que sua conta guarda, e Excluir minha conta em Configurações, Conta remove tudo do nosso banco de dados. Para qualquer outra coisa, escreva para nós."],
+["Children", "Enfants", "Menores", "Kinder", "Minori", "Crianças"],
+["The site is meant for a general audience. Children under 13, or under the age of digital consent in their country, should ask a parent or guardian before playing online with others.", "Le site s’adresse à un public général. Les enfants de moins de 13 ans, ou n’ayant pas l’âge du consentement numérique dans leur pays, doivent demander à un parent ou tuteur avant de jouer en ligne avec d’autres.", "El sitio está pensado para todo el público. Los menores de 13 años, o de la edad de consentimiento digital de su país, deben pedir permiso a un padre, madre o tutor antes de jugar en línea con otras personas.", "Die Seite richtet sich an ein allgemeines Publikum. Kinder unter 13 Jahren oder unter dem digitalen Mindestalter ihres Landes sollten vor dem Online-Spielen mit anderen ihre Eltern oder Erziehungsberechtigten fragen.", "Il sito è pensato per un pubblico generale. I minori di 13 anni, o sotto l’età del consenso digitale nel loro paese, devono chiedere a un genitore o tutore prima di giocare online con altri.", "O site é voltado ao público em geral. Crianças com menos de 13 anos, ou abaixo da idade de consentimento digital do seu país, devem pedir a um responsável antes de jogar online com outras pessoas."],
+["Changes", "Modifications", "Cambios", "Änderungen", "Modifiche", "Alterações"],
+["We will update this policy when the site changes, in particular before analytics are sent to a server or accounts are introduced. The date at the top shows the latest version.", "Nous mettrons cette politique à jour quand le site évoluera, notamment avant que les données de mesure d’audience soient envoyées à un serveur ou que les comptes arrivent. La date en haut indique la dernière version.", "Actualizaremos esta política cuando cambie el sitio, sobre todo antes de enviar datos de análisis a un servidor o de introducir cuentas. La fecha de arriba indica la última versión.", "Wir aktualisieren diese Erklärung, wenn sich die Seite ändert, insbesondere bevor Analysedaten an einen Server gesendet oder Konten eingeführt werden. Das Datum oben zeigt die neueste Version.", "Aggiorneremo questa informativa quando il sito cambierà, in particolare prima che i dati di analisi vengano inviati a un server o che arrivino gli account. La data in alto indica l’ultima versione.", "Atualizaremos esta política quando o site mudar, especialmente antes de os dados de análise serem enviados a um servidor ou de as contas serem lançadas. A data no topo mostra a versão mais recente."],
+["Contact", "Contact", "Contacto", "Kontakt", "Contatti", "Contato"],
+["This policy explains the cookies and similar browser storage (local storage and session storage) used by gameplay.", "Cette politique explique les cookies et le stockage similaire du navigateur (stockage local et stockage de session) utilisés par gameplay.", "Esta política explica las cookies y el almacenamiento similar del navegador (almacenamiento local y de sesión) que usa gameplay.", "Diese Richtlinie erklärt die Cookies und ähnlichen Browserspeicher (Local Storage und Session Storage), die gameplay verwendet.", "Questa informativa spiega i cookie e le memorie simili del browser (local storage e session storage) usati da gameplay.", "Esta política explica os cookies e o armazenamento semelhante do navegador (armazenamento local e de sessão) usados pelo gameplay."],
+["These make the site work and are always on: your records, saves, profile, settings, your cookie choice and, on the password-protected version, the password unlock. They stay in your browser and are never used to track you.", "Ils font fonctionner le site et sont toujours actifs : vos records, sauvegardes, profil, paramètres, votre choix concernant les cookies et, sur la version protégée, le déverrouillage par mot de passe. Ils restent dans votre navigateur et ne servent jamais à vous suivre.", "Hacen que el sitio funcione y siempre están activas: tus récords, partidas guardadas, perfil, ajustes, tu elección sobre las cookies y, en la versión protegida con contraseña, el desbloqueo. Se quedan en tu navegador y nunca se usan para rastrearte.", "Sie lassen die Seite funktionieren und sind immer aktiv: deine Rekorde, Spielstände, dein Profil, deine Einstellungen, deine Cookie-Auswahl und in der passwortgeschützten Version die Passwort-Entsperrung. Sie bleiben in deinem Browser und werden nie zum Tracking genutzt.", "Fanno funzionare il sito e sono sempre attivi: record, salvataggi, profilo, impostazioni, la tua scelta sui cookie e, nella versione protetta da password, lo sblocco con password. Restano nel browser e non vengono mai usati per tracciarti.", "Eles fazem o site funcionar e estão sempre ativos: seus recordes, jogos salvos, perfil, configurações, sua escolha de cookies e, na versão protegida por senha, o desbloqueio por senha. Ficam no seu navegador e nunca são usados para rastrear você."],
+["These make the site work and are always on: your records, saves, profile, settings, your cookie choice and, on the password-protected version, the password unlock. If you sign in, your sign-in session (", "Ils font fonctionner le site et sont toujours actifs : vos records, sauvegardes, profil, paramètres, votre choix concernant les cookies et, sur la version protégée, le déverrouillage par mot de passe. Si vous vous connectez, votre session de connexion (", "Hacen que el sitio funcione y siempre están activas: tus récords, partidas guardadas, perfil, ajustes, tu elección sobre las cookies y, en la versión protegida con contraseña, el desbloqueo. Si inicias sesión, también se guarda tu sesión (", "Sie lassen die Seite funktionieren und sind immer aktiv: deine Rekorde, Spielstände, dein Profil, deine Einstellungen, deine Cookie-Auswahl und in der passwortgeschützten Version die Passwort-Entsperrung. Wenn du dich anmeldest, wird auch deine Anmeldesitzung (", "Fanno funzionare il sito e sono sempre attivi: record, salvataggi, profilo, impostazioni, la tua scelta sui cookie e, nella versione protetta da password, lo sblocco con password. Se accedi, viene salvata anche la tua sessione di accesso (", "Eles fazem o site funcionar e estão sempre ativos: seus recordes, jogos salvos, perfil, configurações, sua escolha de cookies e, na versão protegida por senha, o desbloqueio por senha. Se você entrar, sua sessão de login ("],
+[") is stored too. They are never used to track you.", ") est aussi stockée. Ils ne servent jamais à vous suivre.", "). Nunca se usan para rastrearte.", ") gespeichert. Sie werden nie zum Tracking genutzt.", "). Non vengono mai usati per tracciarti.", ") também é guardada. Eles nunca são usados para rastrear você."],
+["Analytics (optional)", "Mesure d’audience (facultative)", "Análisis (opcional)", "Analyse (optional)", "Analisi (facoltativa)", "Análise (opcional)"],
+["If you accept, the site stores anonymous usage events, such as games opened, time played, searches and filters, with a random session ID (", "Si vous acceptez, le site stocke des événements d’utilisation anonymes, comme les jeux ouverts, le temps de jeu, les recherches et les filtres, avec un identifiant de session aléatoire (", "Si aceptas, el sitio guarda eventos de uso anónimos, como juegos abiertos, tiempo de juego, búsquedas y filtros, con un ID de sesión aleatorio (", "Wenn du zustimmst, speichert die Seite anonyme Nutzungsereignisse wie geöffnete Spiele, Spielzeit, Suchen und Filter mit einer zufälligen Sitzungs-ID (", "Se accetti, il sito salva eventi di utilizzo anonimi, come giochi aperti, tempo di gioco, ricerche e filtri, con un ID di sessione casuale (", "Se você aceitar, o site guarda eventos de uso anônimos, como jogos abertos, tempo jogado, pesquisas e filtros, com um ID de sessão aleatório ("],
+["). They help us understand which games people play. For now they stay on your device. Rejecting analytics turns this off and deletes what was stored.", "). Ils nous aident à comprendre à quels jeux les gens jouent. Pour l’instant, ils restent sur votre appareil. Refuser la mesure d’audience la désactive et supprime ce qui a été stocké.", "). Nos ayudan a entender a qué juegos juega la gente. Por ahora se quedan en tu dispositivo. Rechazar el análisis lo desactiva y borra lo guardado.", "). Sie helfen uns zu verstehen, welche Spiele gespielt werden. Vorerst bleiben sie auf deinem Gerät. Wenn du die Analyse ablehnst, wird sie ausgeschaltet und das Gespeicherte gelöscht.", "). Ci aiutano a capire a quali giochi si gioca. Per ora restano sul tuo dispositivo. Rifiutare l’analisi la disattiva ed elimina ciò che era stato salvato.", "). Eles nos ajudam a entender quais jogos as pessoas jogam. Por enquanto ficam no seu dispositivo. Recusar a análise a desativa e apaga o que foi guardado."],
+["If you accept, the site stores anonymous usage events, such as games opened, time played, searches and filters, with a random session ID and a random device ID (", "Si vous acceptez, le site stocke des événements d’utilisation anonymes, comme les jeux ouverts, le temps de jeu, les recherches et les filtres, avec un identifiant de session et un identifiant d’appareil aléatoires (", "Si aceptas, el sitio guarda eventos de uso anónimos, como juegos abiertos, tiempo de juego, búsquedas y filtros, con un ID de sesión aleatorio y un ID de dispositivo aleatorio (", "Wenn du zustimmst, speichert die Seite anonyme Nutzungsereignisse wie geöffnete Spiele, Spielzeit, Suchen und Filter mit einer zufälligen Sitzungs-ID und einer zufälligen Geräte-ID (", "Se accetti, il sito salva eventi di utilizzo anonimi, come giochi aperti, tempo di gioco, ricerche e filtri, con un ID di sessione casuale e un ID dispositivo casuale (", "Se você aceitar, o site guarda eventos de uso anônimos, como jogos abertos, tempo jogado, pesquisas e filtros, com um ID de sessão aleatório e um ID de dispositivo aleatório ("],
+["). They help us understand which games people play and are sent to our database on Supabase in the European Union. Rejecting analytics turns this off and deletes what was stored.", "). Ils nous aident à comprendre à quels jeux les gens jouent et sont envoyés vers notre base de données chez Supabase dans l’Union européenne. Refuser la mesure d’audience la désactive et supprime ce qui a été stocké.", "). Nos ayudan a entender a qué juegos juega la gente y se envían a nuestra base de datos en Supabase, en la Unión Europea. Rechazar el análisis lo desactiva y borra lo guardado.", "). Sie helfen uns zu verstehen, welche Spiele gespielt werden, und werden an unsere Datenbank bei Supabase in der Europäischen Union gesendet. Wenn du die Analyse ablehnst, wird sie ausgeschaltet und das Gespeicherte gelöscht.", "). Ci aiutano a capire a quali giochi si gioca e vengono inviati al nostro database su Supabase nell’Unione europea. Rifiutare l’analisi la disattiva ed elimina ciò che era stato salvato.", "). Eles nos ajudam a entender quais jogos as pessoas jogam e são enviados ao nosso banco de dados no Supabase, na União Europeia. Recusar a análise a desativa e apaga o que foi guardado."],
+["No advertising cookies", "Pas de cookies publicitaires", "Sin cookies publicitarias", "Keine Werbe-Cookies", "Nessun cookie pubblicitario", "Sem cookies de publicidade"],
+["gameplay does not use advertising or cross-site tracking cookies.", "gameplay n’utilise pas de cookies publicitaires ni de suivi entre sites.", "gameplay no usa cookies publicitarias ni de rastreo entre sitios.", "gameplay verwendet keine Werbe- oder seitenübergreifenden Tracking-Cookies.", "gameplay non usa cookie pubblicitari né di tracciamento tra siti.", "O gameplay não usa cookies de publicidade nem de rastreamento entre sites."],
+["Third parties", "Tiers", "Terceros", "Drittanbieter", "Terze parti", "Terceiros"],
+["Fonts, the 3D engine and the networking library are loaded from Google Fonts, cdnjs and jsDelivr, and online games use the PeerJS service. These services receive your IP address when your browser contacts them, but gameplay does not let them set cookies through the site.", "Les polices, le moteur 3D et la bibliothèque réseau sont chargés depuis Google Fonts, cdnjs et jsDelivr, et les jeux en ligne utilisent le service PeerJS. Ces services reçoivent votre adresse IP quand votre navigateur les contacte, mais gameplay ne les laisse pas déposer de cookies via le site.", "Las fuentes, el motor 3D y la biblioteca de red se cargan desde Google Fonts, cdnjs y jsDelivr, y los juegos en línea usan el servicio PeerJS. Estos servicios reciben tu dirección IP cuando tu navegador los contacta, pero gameplay no les permite poner cookies a través del sitio.", "Schriftarten, die 3D-Engine und die Netzwerkbibliothek werden von Google Fonts, cdnjs und jsDelivr geladen, und Online-Spiele nutzen den Dienst PeerJS. Diese Dienste erhalten deine IP-Adresse, wenn dein Browser sie kontaktiert, aber gameplay erlaubt ihnen nicht, über die Seite Cookies zu setzen.", "I caratteri, il motore 3D e la libreria di rete vengono caricati da Google Fonts, cdnjs e jsDelivr, e i giochi online usano il servizio PeerJS. Questi servizi ricevono il tuo indirizzo IP quando il browser li contatta, ma gameplay non permette loro di impostare cookie tramite il sito.", "As fontes, o motor 3D e a biblioteca de rede são carregados do Google Fonts, cdnjs e jsDelivr, e os jogos online usam o serviço PeerJS. Esses serviços recebem seu endereço IP quando seu navegador os contata, mas o gameplay não permite que definam cookies pelo site."],
+["Fonts, the 3D engine and the networking library are loaded from Google Fonts, cdnjs and jsDelivr, online games use the PeerJS service, and accounts and analytics use Supabase. These services receive your IP address when your browser contacts them, but gameplay does not let them set cookies through the site.", "Les polices, le moteur 3D et la bibliothèque réseau sont chargés depuis Google Fonts, cdnjs et jsDelivr, les jeux en ligne utilisent le service PeerJS, et les comptes et la mesure d’audience utilisent Supabase. Ces services reçoivent votre adresse IP quand votre navigateur les contacte, mais gameplay ne les laisse pas déposer de cookies via le site.", "Las fuentes, el motor 3D y la biblioteca de red se cargan desde Google Fonts, cdnjs y jsDelivr, los juegos en línea usan el servicio PeerJS, y las cuentas y el análisis usan Supabase. Estos servicios reciben tu dirección IP cuando tu navegador los contacta, pero gameplay no les permite poner cookies a través del sitio.", "Schriftarten, die 3D-Engine und die Netzwerkbibliothek werden von Google Fonts, cdnjs und jsDelivr geladen, Online-Spiele nutzen den Dienst PeerJS, und Konten und Analyse nutzen Supabase. Diese Dienste erhalten deine IP-Adresse, wenn dein Browser sie kontaktiert, aber gameplay erlaubt ihnen nicht, über die Seite Cookies zu setzen.", "I caratteri, il motore 3D e la libreria di rete vengono caricati da Google Fonts, cdnjs e jsDelivr, i giochi online usano il servizio PeerJS, e account e analisi usano Supabase. Questi servizi ricevono il tuo indirizzo IP quando il browser li contatta, ma gameplay non permette loro di impostare cookie tramite il sito.", "As fontes, o motor 3D e a biblioteca de rede são carregados do Google Fonts, cdnjs e jsDelivr, os jogos online usam o serviço PeerJS, e as contas e a análise usam o Supabase. Esses serviços recebem seu endereço IP quando seu navegador os contata, mas o gameplay não permite que definam cookies pelo site."],
+["Your choice", "Votre choix", "Tu elección", "Deine Wahl", "La tua scelta", "Sua escolha"],
+["You can change your choice at any time:", "Vous pouvez modifier votre choix à tout moment :", "Puedes cambiar tu elección cuando quieras:", "Du kannst deine Wahl jederzeit ändern:", "Puoi cambiare la tua scelta in qualsiasi momento:", "Você pode mudar sua escolha a qualquer momento:"],
+["You can also delete all site data in your browser settings.", "Vous pouvez aussi supprimer toutes les données du site dans les paramètres de votre navigateur.", "También puedes borrar todos los datos del sitio en los ajustes de tu navegador.", "Du kannst auch alle Daten der Seite in deinen Browsereinstellungen löschen.", "Puoi anche eliminare tutti i dati del sito nelle impostazioni del browser.", "Você também pode apagar todos os dados do site nas configurações do navegador."],
+["Signing in is optional. If you create an account, our database on Supabase (European Union) stores your email address; your username and display name; and, if you use Google, your name and the link to your Google profile picture; your best scores, play counts, time played and saved progress; and your friends and friend requests. Other signed-in players can find you by your username and see your username and display name, never your email. Passwords are handled by Supabase Auth: they are stored only as a secure hash and nobody, including us, can read them. Emails about your account (confirmation, password reset, email change) are sent by Supabase. We keep this data until you delete your account in Settings, Account, which removes it from our database.", "La connexion est facultative. Si vous créez un compte, notre base de données chez Supabase (Union européenne) stocke votre adresse e-mail ; votre nom d’utilisateur et votre nom affiché ; et, si vous utilisez Google, votre nom et le lien vers votre photo de profil Google ; vos meilleurs scores, nombres de parties, temps de jeu et progression sauvegardée ; ainsi que vos amis et demandes d’ami. Les autres joueurs connectés peuvent vous trouver par votre nom d’utilisateur et voir votre nom d’utilisateur et votre nom affiché, jamais votre e-mail. Les mots de passe sont gérés par Supabase Auth : ils sont stockés uniquement sous forme de hachage sécurisé et personne, nous compris, ne peut les lire. Les e-mails liés à votre compte (confirmation, réinitialisation du mot de passe, changement d’e-mail) sont envoyés par Supabase. Nous conservons ces données jusqu’à ce que vous supprimiez votre compte dans Paramètres, Compte, ce qui les efface de notre base de données.", "Iniciar sesión es opcional. Si creas una cuenta, nuestra base de datos en Supabase (Unión Europea) guarda tu correo; tu nombre de usuario y tu nombre visible; y, si usas Google, tu nombre y el enlace a tu foto de perfil de Google; tus mejores puntuaciones, partidas jugadas, tiempo de juego y progreso guardado; y tus amigos y solicitudes de amistad. Otros jugadores con sesión iniciada pueden encontrarte por tu nombre de usuario y ver tu nombre de usuario y tu nombre visible, nunca tu correo. Las contraseñas las gestiona Supabase Auth: solo se guardan como un hash seguro y nadie, ni siquiera nosotros, puede leerlas. Los correos sobre tu cuenta (confirmación, restablecimiento de contraseña, cambio de correo) los envía Supabase. Conservamos estos datos hasta que elimines tu cuenta en Ajustes, Cuenta, lo que los borra de nuestra base de datos.", "Die Anmeldung ist optional. Wenn du ein Konto erstellst, speichert unsere Datenbank bei Supabase (Europäische Union) deine E-Mail-Adresse; deinen Benutzernamen und Anzeigenamen; und, wenn du Google nutzt, deinen Namen und den Link zu deinem Google-Profilbild; deine Bestwerte, Spielzähler, Spielzeit und gespeicherten Fortschritt; sowie deine Freunde und Freundschaftsanfragen. Andere angemeldete Spieler können dich über deinen Benutzernamen finden und deinen Benutzernamen und Anzeigenamen sehen, nie deine E-Mail. Passwörter verwaltet Supabase Auth: Sie werden nur als sicherer Hash gespeichert und niemand, auch wir nicht, kann sie lesen. E-Mails zu deinem Konto (Bestätigung, Passwort zurücksetzen, E-Mail-Änderung) verschickt Supabase. Wir speichern diese Daten, bis du dein Konto unter Einstellungen, Konto löschst, wodurch sie aus unserer Datenbank entfernt werden.", "L’accesso è facoltativo. Se crei un account, il nostro database su Supabase (Unione europea) conserva il tuo indirizzo email; il nome utente e il nome visualizzato; e, se usi Google, il tuo nome e il link alla tua foto profilo Google; i tuoi punteggi migliori, il numero di partite, il tempo di gioco e i progressi salvati; e i tuoi amici e le richieste di amicizia. Gli altri giocatori che hanno effettuato l’accesso possono trovarti con il tuo nome utente e vedere nome utente e nome visualizzato, mai la tua email. Le password sono gestite da Supabase Auth: vengono salvate solo come hash sicuro e nessuno, nemmeno noi, può leggerle. Le email sul tuo account (conferma, reimpostazione della password, cambio email) sono inviate da Supabase. Conserviamo questi dati finché non elimini l’account in Impostazioni, Account, operazione che li rimuove dal nostro database.", "Entrar é opcional. Se você criar uma conta, nosso banco de dados no Supabase (União Europeia) guarda seu e-mail; seu nome de usuário e nome de exibição; e, se você usar o Google, seu nome e o link para sua foto de perfil do Google; seus melhores placares, contagem de partidas, tempo jogado e progresso salvo; e seus amigos e pedidos de amizade. Outros jogadores conectados podem encontrar você pelo nome de usuário e ver seu nome de usuário e nome de exibição, nunca seu e-mail. As senhas são tratadas pelo Supabase Auth: são guardadas apenas como um hash seguro e ninguém, nem nós, consegue lê-las. Os e-mails sobre sua conta (confirmação, redefinição de senha, troca de e-mail) são enviados pelo Supabase. Guardamos esses dados até você excluir sua conta em Configurações, Conta, o que os remove do nosso banco de dados."],
+["Play", "Jouer", "Jugar", "Spielen", "Gioca", "Jogar"],
+["Play again", "Rejouer", "Jugar de nuevo", "Nochmal spielen", "Gioca ancora", "Jogar de novo"],
+["Paused", "En pause", "En pausa", "Pausiert", "In pausa", "Pausado"],
+["Resume", "Reprendre", "Continuar", "Fortsetzen", "Riprendi", "Continuar"],
+["Game over", "Partie terminée", "Fin de la partida", "Spiel vorbei", "Partita finita", "Fim de jogo"],
+["Game Over", "Partie terminée", "Fin de la partida", "Spiel vorbei", "Partita finita", "Fim de jogo"],
+["Try again", "Réessayer", "Inténtalo de nuevo", "Nochmal versuchen", "Riprova", "Tentar de novo"],
+["Next level", "Niveau suivant", "Siguiente nivel", "Nächstes Level", "Livello successivo", "Próximo nível"],
+["Menu", "Menu", "Menú", "Menü", "Menu", "Menu"],
+["Back to menu", "Retour au menu", "Volver al menú", "Zurück zum Menü", "Torna al menu", "Voltar ao menu"],
+["Rematch", "Revanche", "Revancha", "Revanche", "Rivincita", "Revanche"],
+["Leave", "Quitter", "Salir", "Verlassen", "Esci", "Sair"],
+["Change mode", "Changer de mode", "Cambiar de modo", "Modus wechseln", "Cambia modalità", "Mudar de modo"],
+["Modes", "Modes", "Modos", "Modi", "Modalità", "Modos"],
+["Free play", "Jeu libre", "Juego libre", "Freies Spiel", "Gioco libero", "Jogo livre"],
+["Your friend left", "Votre ami est parti", "Tu amigo se fue", "Dein Freund ist gegangen", "Il tuo amico è uscito", "Seu amigo saiu"],
+["The connection to your friend was lost.", "La connexion avec votre ami a été perdue.", "Se perdió la conexión con tu amigo.", "Die Verbindung zu deinem Freund wurde unterbrochen.", "La connessione con il tuo amico si è interrotta.", "A conexão com seu amigo caiu."],
+["Waiting for your friend to tap Rematch…", "En attente de votre ami pour la revanche…", "Esperando a que tu amigo pulse Revancha…", "Warte, bis dein Freund Revanche tippt…", "In attesa che il tuo amico tocchi Rivincita…", "Aguardando seu amigo tocar em Revanche…"],
+["New room", "Nouveau salon", "Nueva sala", "Neuer Raum", "Nuova stanza", "Nova sala"],
+["3D unavailable", "3D indisponible", "3D no disponible", "3D nicht verfügbar", "3D non disponibile", "3D indisponível"],
+["WebGL unavailable", "WebGL indisponible", "WebGL no disponible", "WebGL nicht verfügbar", "WebGL non disponibile", "WebGL indisponível"],
+["This game needs WebGL. Try enabling hardware acceleration or another browser.", "Ce jeu a besoin de WebGL. Activez l’accélération matérielle ou essayez un autre navigateur.", "Este juego necesita WebGL. Activa la aceleración por hardware o prueba otro navegador.", "Dieses Spiel braucht WebGL. Aktiviere die Hardwarebeschleunigung oder nutze einen anderen Browser.", "Questo gioco richiede WebGL. Attiva l’accelerazione hardware o prova un altro browser.", "Este jogo precisa de WebGL. Ative a aceleração de hardware ou tente outro navegador."],
+["This game needs WebGL, which your browser could not start.", "Ce jeu a besoin de WebGL, que votre navigateur n’a pas pu démarrer.", "Este juego necesita WebGL, y tu navegador no pudo iniciarlo.", "Dieses Spiel braucht WebGL, das dein Browser nicht starten konnte.", "Questo gioco richiede WebGL, che il tuo browser non è riuscito ad avviare.", "Este jogo precisa de WebGL, que seu navegador não conseguiu iniciar."],
+["Take a breather.", "Faites une pause.", "Tómate un respiro.", "Atme kurz durch.", "Prenditi una pausa.", "Respire um pouco."],
+["Start", "Commencer", "Empezar", "Start", "Inizia", "Começar"],
+["You win!", "Vous avez gagné !", "¡Has ganado!", "Du hast gewonnen!", "Hai vinto!", "Você venceu!"],
+["You lose", "Vous avez perdu", "Has perdido", "Du hast verloren", "Hai perso", "Você perdeu"],
+["You won!", "Vous avez gagné !", "¡Has ganado!", "Du hast gewonnen!", "Hai vinto!", "Você venceu!"],
+["You lost", "Vous avez perdu", "Has perdido", "Du hast verloren", "Hai perso", "Você perdeu"],
+["Draw", "Match nul", "Empate", "Unentschieden", "Pareggio", "Empate"],
+["New best!", "Nouveau record !", "¡Nuevo récord!", "Neuer Rekord!", "Nuovo record!", "Novo recorde!"],
+["New record!", "Nouveau record !", "¡Nuevo récord!", "Neuer Rekord!", "Nuovo record!", "Novo recorde!"],
+["Time's up", "Temps écoulé", "Se acabó el tiempo", "Zeit ist um", "Tempo scaduto", "Acabou o tempo"],
+["Time’s up", "Temps écoulé", "Se acabó el tiempo", "Zeit ist um", "Tempo scaduto", "Acabou o tempo"],
+["Memory", "Mémoire", "Memoria", "Gedächtnis", "Memoria", "Memória"],
+["Timing", "Timing", "Sincronía", "Timing", "Tempismo", "Tempo certo"],
+["Reflex", "Réflexes", "Reflejos", "Reflexe", "Riflessi", "Reflexos"],
+["Pulse", "Pulsation", "Pulso", "Puls", "Pulsazione", "Pulso"],
+["Sequence", "Séquence", "Secuencia", "Sequenz", "Sequenza", "Sequência"],
+["Next word", "Mot suivant", "Siguiente palabra", "Nächstes Wort", "Parola successiva", "Próxima palavra"],
+["New puzzle", "Nouvelle grille", "Nuevo puzle", "Neues Rätsel", "Nuovo rompicapo", "Novo quebra-cabeça"],
+["Full time", "Fin du match", "Final del partido", "Abpfiff", "Fine partita", "Fim de jogo"],
+["Board clear!", "Plateau vidé !", "¡Tablero limpio!", "Brett leer!", "Tabellone ripulito!", "Tabuleiro limpo!"],
+["All pairs found", "Toutes les paires trouvées", "Todas las parejas encontradas", "Alle Paare gefunden", "Tutte le coppie trovate", "Todos os pares encontrados"],
+["Sweet!", "Génial !", "¡Genial!", "Super!", "Fantastico!", "Demais!"],
+["Range closed", "Stand fermé", "Galería cerrada", "Schießstand geschlossen", "Poligono chiuso", "Estande fechado"],
+["Tank destroyed", "Tank détruit", "Tanque destruido", "Panzer zerstört", "Carro armato distrutto", "Tanque destruído"],
+["Topped out", "Plus de place", "Sin espacio", "Oben angestoßen", "Spazio esaurito", "Sem espaço"],
+["The ceiling got you", "Le plafond vous a eu", "El techo te atrapó", "Die Decke hat dich erwischt", "Il soffitto ti ha preso", "O teto pegou você"],
+["Next up: more rows", "Ensuite : plus de rangées", "A continuación: más filas", "Als Nächstes: mehr Reihen", "Prossimamente: più righe", "A seguir: mais fileiras"],
+["The clock is stopped. Resume to keep shooting.", "Le chrono est arrêté. Reprenez pour continuer à tirer.", "El reloj está parado. Continúa para seguir disparando.", "Die Uhr ist angehalten. Setze fort, um weiterzuschießen.", "Il cronometro è fermo. Riprendi per continuare a sparare.", "O relógio está parado. Continue para seguir atirando."],
+["The song picks up one second before where you left it.", "La musique reprend une seconde avant l’endroit où vous l’avez laissée.", "La canción sigue un segundo antes de donde la dejaste.", "Der Song startet eine Sekunde vor der Stelle, an der du aufgehört hast.", "La canzone riparte un secondo prima del punto in cui l’hai lasciata.", "A música volta um segundo antes de onde você parou."],
+["Losses", "Défaites", "Derrotas", "Niederlagen", "Sconfitte", "Derrotas"],
+["Accuracy", "Précision", "Precisión", "Genauigkeit", "Precisione", "Precisão"],
+["Coins", "Pièces", "Monedas", "Münzen", "Monete", "Moedas"],
+["Kills", "Éliminations", "Eliminaciones", "Abschüsse", "Uccisioni", "Abates"],
+["Lines", "Lignes", "Líneas", "Reihen", "Righe", "Linhas"],
+["Round", "Manche", "Ronda", "Runde", "Round", "Rodada"],
+["Rounds", "Manches", "Rondas", "Runden", "Round", "Rodadas"],
+["Total", "Total", "Total", "Gesamt", "Totale", "Total"],
+["Combo", "Combo", "Combo", "Kombo", "Combo", "Combo"],
+["Speed", "Vitesse", "Velocidad", "Tempo", "Velocità", "Velocidade"],
+["Points", "Points", "Puntos", "Punkte", "Punti", "Pontos"],
+["Goals", "Buts", "Goles", "Tore", "Gol", "Gols"],
+["Lives", "Vies", "Vidas", "Leben", "Vite", "Vidas"],
+["Height", "Hauteur", "Altura", "Höhe", "Altezza", "Altura"],
+["Words", "Mots", "Palabras", "Wörter", "Parole", "Palavras"],
+["Average", "Moyenne", "Media", "Durchschnitt", "Media", "Média"],
+["Party code", "Code du groupe", "Código del grupo", "Gruppencode", "Codice gruppo", "Código do grupo"],
+["Show party code", "Afficher le code du groupe", "Mostrar código del grupo", "Gruppencode zeigen", "Mostra codice gruppo", "Mostrar código do grupo"],
+["Hide party code", "Masquer le code du groupe", "Ocultar código del grupo", "Gruppencode verbergen", "Nascondi codice gruppo", "Ocultar código do grupo"],
+["Show", "Afficher", "Mostrar", "Zeigen", "Mostra", "Mostrar"],
+["Hide", "Masquer", "Ocultar", "Verbergen", "Nascondi", "Ocultar"],
+["Share invite link", "Partager le lien d’invitation", "Compartir enlace de invitación", "Einladungslink teilen", "Condividi link d’invito", "Compartilhar link de convite"],
+["Copy invite link", "Copier le lien d’invitation", "Copiar enlace de invitación", "Einladungslink kopieren", "Copia link d’invito", "Copiar link de convite"],
+["Invite link copied", "Lien d’invitation copié", "Enlace de invitación copiado", "Einladungslink kopiert", "Link d’invito copiato", "Link de convite copiado"],
+["Join with a code", "Saisir un code", "Usar un código", "Code eingeben", "Usa un codice", "Usar um código"],
+["Join", "Rejoindre", "Unirse", "Beitreten", "Entra", "Entrar"],
+["Party leader", "Chef du groupe", "Líder del grupo", "Gruppenleiter", "Capo del gruppo", "Líder do grupo"],
+["Member", "Membre", "Miembro", "Mitglied", "Membro", "Membro"],
+["You", "Vous", "Tú", "Du", "Tu", "Você"],
+["Waiting", "En attente", "Esperando", "Wartet", "In attesa", "Aguardando"],
+["In game", "En jeu", "En partida", "Im Spiel", "In partita", "Em jogo"],
+["Make host", "Nommer hôte", "Hacer anfitrión", "Zum Host machen", "Rendi host", "Tornar anfitrião"],
+["Your name", "Votre nom", "Tu nombre", "Dein Name", "Il tuo nome", "Seu nome"],
+["Change your name", "Changer votre nom", "Cambiar tu nombre", "Namen ändern", "Cambia il tuo nome", "Mudar seu nome"],
+["Online party", "Groupe en ligne", "Grupo en línea", "Online-Gruppe", "Gruppo online", "Grupo online"],
+["Party size", "Taille du groupe", "Tamaño del grupo", "Gruppengröße", "Dimensione del gruppo", "Tamanho do grupo"],
+["{n} players", "{n} joueurs", "{n} jugadores", "{n} Spieler", "{n} giocatori", "{n} jogadores"],
+["{n} / {m} joined", "{n} / {m} présents", "{n} / {m} unidos", "{n} / {m} dabei", "{n} / {m} presenti", "{n} / {m} entraram"],
+["Fill empty seats with bots", "Remplir les places vides avec des bots", "Llenar los huecos con bots", "Freie Plätze mit Bots füllen", "Riempi i posti vuoti con i bot", "Preencher vagas com bots"],
+["On · set by the host", "Activé · choisi par l’hôte", "Activado · lo elige el anfitrión", "An · vom Host festgelegt", "Attivo · scelto dall’host", "Ligado · definido pelo anfitrião"],
+["Off · set by the host", "Désactivé · choisi par l’hôte", "Desactivado · lo elige el anfitrión", "Aus · vom Host festgelegt", "Disattivo · scelto dall’host", "Desligado · definido pelo anfitrião"],
+["Bots play the empty seats", "Des bots occupent les places vides", "Los bots ocupan los huecos", "Bots spielen auf den freien Plätzen", "I bot occupano i posti vuoti", "Bots ocupam as vagas"],
+["Only real players play", "Seulement de vrais joueurs", "Solo juegan jugadores reales", "Nur echte Spieler spielen", "Giocano solo giocatori veri", "Só jogadores reais jogam"],
+["Bots are off", "Bots désactivés", "Bots desactivados", "Bots sind aus", "Bot disattivati", "Bots desligados"],
+["Bots will fill the empty seats", "Des bots rempliront les places vides", "Los bots llenarán los huecos", "Bots füllen die freien Plätze", "I bot riempiranno i posti vuoti", "Bots vão preencher as vagas"],
+["Bot", "Bot", "Bot", "Bot", "Bot", "Bot"],
+["Empty seat", "Place libre", "Hueco libre", "Freier Platz", "Posto libero", "Vaga livre"],
+["A bot plays this seat", "Un bot occupe cette place", "Un bot ocupa este hueco", "Ein Bot spielt auf diesem Platz", "Un bot occupa questo posto", "Um bot ocupa esta vaga"],
+["Waiting for a player…", "En attente d’un joueur…", "Esperando a un jugador…", "Warte auf einen Spieler…", "In attesa di un giocatore…", "Aguardando um jogador…"],
+["Waiting for the host…", "En attente de l’hôte…", "Esperando al anfitrión…", "Warte auf den Host…", "In attesa dell’host…", "Aguardando o anfitrião…"],
+["A game is in progress. You will join the next one.", "Une partie est en cours. Vous rejoindrez la suivante.", "Hay una partida en curso. Te unirás a la siguiente.", "Ein Spiel läuft gerade. Du steigst beim nächsten ein.", "C’è una partita in corso. Entrerai nella prossima.", "Há uma partida em andamento. Você entra na próxima."],
+["A game is in progress. You can start when it ends.", "Une partie est en cours. Vous pourrez lancer quand elle sera finie.", "Hay una partida en curso. Podrás empezar cuando termine.", "Ein Spiel läuft gerade. Du kannst starten, wenn es vorbei ist.", "C’è una partita in corso. Potrai iniziare quando finisce.", "Há uma partida em andamento. Você pode começar quando ela acabar."],
+["Waiting for 1 more player…", "En attente d’un joueur de plus…", "Falta 1 jugador…", "Warte auf 1 weiteren Spieler…", "In attesa di 1 altro giocatore…", "Aguardando mais 1 jogador…"],
+["Waiting for {n} more players…", "En attente de {n} joueurs de plus…", "Faltan {n} jugadores…", "Warte auf {n} weitere Spieler…", "In attesa di altri {n} giocatori…", "Aguardando mais {n} jogadores…"],
+["Live chat", "Chat en direct", "Chat en vivo", "Live-Chat", "Chat dal vivo", "Chat ao vivo"],
+["Live", "En direct", "En vivo", "Live", "Live", "Ao vivo"],
+["Message", "Message", "Mensaje", "Nachricht", "Messaggio", "Mensagem"],
+["Send", "Envoyer", "Enviar", "Senden", "Invia", "Enviar"],
+["No messages yet. Say hi!", "Pas encore de messages. Dites bonjour !", "Aún no hay mensajes. ¡Saluda!", "Noch keine Nachrichten. Sag Hallo!", "Ancora nessun messaggio. Saluta!", "Nenhuma mensagem ainda. Diga oi!"],
+["Type a message...", "Écrivez un message…", "Escribe un mensaje…", "Nachricht schreiben…", "Scrivi un messaggio…", "Digite uma mensagem…"],
+["Type a message…", "Écrivez un message…", "Escribe un mensaje…", "Nachricht schreiben…", "Scrivi un messaggio…", "Digite uma mensagem…"],
+["Slow down a little…", "Doucement…", "Más despacio…", "Etwas langsamer…", "Rallenta un po’…", "Vá mais devagar…"],
+["{name} joined the party", "{name} a rejoint le groupe", "{name} se unió al grupo", "{name} ist der Gruppe beigetreten", "{name} è entrato nel gruppo", "{name} entrou no grupo"],
+["{name} left the party", "{name} a quitté le groupe", "{name} salió del grupo", "{name} hat die Gruppe verlassen", "{name} ha lasciato il gruppo", "{name} saiu do grupo"],
+["{name} was removed from the party", "{name} a été retiré du groupe", "{name} fue expulsado del grupo", "{name} wurde aus der Gruppe entfernt", "{name} è stato rimosso dal gruppo", "{name} foi removido do grupo"],
+["{name} is now the host", "{name} est maintenant l’hôte", "{name} es ahora el anfitrión", "{name} ist jetzt der Host", "{name} ora è l’host", "{name} agora é o anfitrião"],
+["You are now the host", "Vous êtes maintenant l’hôte", "Ahora eres el anfitrión", "Du bist jetzt der Host", "Ora sei l’host", "Agora você é o anfitrião"],
+["Party {code}", "Groupe {code}", "Grupo {code}", "Gruppe {code}", "Gruppo {code}", "Grupo {code}"],
+["Party {code} is full.", "Le groupe {code} est complet.", "El grupo {code} está lleno.", "Gruppe {code} ist voll.", "Il gruppo {code} è pieno.", "O grupo {code} está cheio."],
+["Party {code} not found. Check the code and try again.", "Groupe {code} introuvable. Vérifiez le code et réessayez.", "No se encontró el grupo {code}. Revisa el código e inténtalo de nuevo.", "Gruppe {code} nicht gefunden. Prüfe den Code und versuche es erneut.", "Gruppo {code} non trovato. Controlla il codice e riprova.", "Grupo {code} não encontrado. Confira o código e tente de novo."],
+["Party not found. Check the code and try again.", "Groupe introuvable. Vérifiez le code et réessayez.", "No se encontró el grupo. Revisa el código e inténtalo de nuevo.", "Gruppe nicht gefunden. Prüfe den Code und versuche es erneut.", "Gruppo non trovato. Controlla il codice e riprova.", "Grupo não encontrado. Confira o código e tente de novo."],
+["Joining party {code}…", "Connexion au groupe {code}…", "Uniéndote al grupo {code}…", "Trete Gruppe {code} bei…", "Ingresso nel gruppo {code}…", "Entrando no grupo {code}…"],
+["Joining party…", "Connexion au groupe…", "Uniéndote al grupo…", "Trete der Gruppe bei…", "Ingresso nel gruppo…", "Entrando no grupo…"],
+["Creating party…", "Création du groupe…", "Creando grupo…", "Gruppe wird erstellt…", "Creazione del gruppo…", "Criando grupo…"],
+["Connecting to the party…", "Connexion au groupe…", "Conectando con el grupo…", "Verbindung zur Gruppe…", "Connessione al gruppo…", "Conectando ao grupo…"],
+["Could not join this party", "Impossible de rejoindre ce groupe", "No se pudo entrar en este grupo", "Beitritt zur Gruppe fehlgeschlagen", "Impossibile entrare in questo gruppo", "Não foi possível entrar neste grupo"],
+["New party", "Nouveau groupe", "Nuevo grupo", "Neue Gruppe", "Nuovo gruppo", "Novo grupo"],
+["Create my own party", "Créer mon propre groupe", "Crear mi propio grupo", "Eigene Gruppe erstellen", "Crea il mio gruppo", "Criar meu próprio grupo"],
+["Server busy, trying again ({n}/3)…", "Serveur occupé, nouvel essai ({n}/3)…", "Servidor ocupado, reintentando ({n}/3)…", "Server ausgelastet, neuer Versuch ({n}/3)…", "Server occupato, nuovo tentativo ({n}/3)…", "Servidor ocupado, tentando de novo ({n}/3)…"],
+["Connection lost. Reconnecting…", "Connexion perdue. Reconnexion…", "Se perdió la conexión. Reconectando…", "Verbindung verloren. Verbinde neu…", "Connessione persa. Riconnessione…", "Conexão perdida. Reconectando…"],
+["Reconnecting…", "Reconnexion…", "Reconectando…", "Verbinde neu…", "Riconnessione…", "Reconectando…"],
+["Can’t reach the online server right now (it may be busy or blocked on this network). Try again in a moment.", "Impossible de joindre le serveur en ligne pour l’instant (il est peut-être occupé ou bloqué sur ce réseau). Réessayez dans un moment.", "Ahora no se puede contactar con el servidor en línea (puede estar ocupado o bloqueado en esta red). Inténtalo de nuevo en un momento.", "Der Online-Server ist gerade nicht erreichbar (vielleicht ausgelastet oder in diesem Netz gesperrt). Versuche es gleich noch einmal.", "Al momento non si raggiunge il server online (potrebbe essere occupato o bloccato su questa rete). Riprova tra poco.", "Não foi possível acessar o servidor online agora (ele pode estar ocupado ou bloqueado nesta rede). Tente de novo daqui a pouco."],
+["Could not connect to the other player. A school, office or mobile network may be blocking game connections. Try again, or switch networks (for example Wi-Fi instead of mobile data).", "Impossible de se connecter à l’autre joueur. Un réseau d’école, de bureau ou mobile bloque peut-être les connexions de jeu. Réessayez ou changez de réseau (par exemple le Wi-Fi au lieu des données mobiles).", "No se pudo conectar con el otro jugador. Puede que una red escolar, de oficina o móvil bloquee las conexiones de juego. Inténtalo de nuevo o cambia de red (por ejemplo, Wi-Fi en lugar de datos móviles).", "Keine Verbindung zum anderen Spieler. Ein Schul-, Büro- oder Mobilfunknetz blockiert vielleicht Spielverbindungen. Versuche es erneut oder wechsle das Netz (zum Beispiel WLAN statt mobiler Daten).", "Impossibile collegarsi all’altro giocatore. Una rete scolastica, aziendale o mobile potrebbe bloccare le connessioni di gioco. Riprova o cambia rete (per esempio Wi-Fi invece dei dati mobili).", "Não foi possível conectar ao outro jogador. Uma rede de escola, escritório ou celular pode estar bloqueando conexões de jogo. Tente de novo ou troque de rede (por exemplo, Wi-Fi em vez de dados móveis)."],
+["Could not load the online player. Check your internet connection and try again.", "Impossible de charger le module en ligne. Vérifiez votre connexion internet et réessayez.", "No se pudo cargar el módulo en línea. Revisa tu conexión a internet e inténtalo de nuevo.", "Das Online-Modul konnte nicht geladen werden. Prüfe deine Internetverbindung und versuche es erneut.", "Impossibile caricare il modulo online. Controlla la connessione a internet e riprova.", "Não foi possível carregar o módulo online. Verifique sua conexão com a internet e tente de novo."],
+["The other player did not answer. Try again.", "L’autre joueur n’a pas répondu. Réessayez.", "El otro jugador no respondió. Inténtalo de nuevo.", "Der andere Spieler hat nicht geantwortet. Versuche es erneut.", "L’altro giocatore non ha risposto. Riprova.", "O outro jogador não respondeu. Tente de novo."],
+["You were removed from the party", "Vous avez été retiré du groupe", "Te expulsaron del grupo", "Du wurdest aus der Gruppe entfernt", "Sei stato rimosso dal gruppo", "Você foi removido do grupo"],
+["The party was closed", "Le groupe a été fermé", "El grupo se cerró", "Die Gruppe wurde geschlossen", "Il gruppo è stato chiuso", "O grupo foi fechado"],
+["Lost connection to the party", "Connexion au groupe perdue", "Se perdió la conexión con el grupo", "Verbindung zur Gruppe verloren", "Connessione al gruppo persa", "A conexão com o grupo caiu"],
+["The host removed you from this party. Start a new party or join another one with a code.", "L’hôte vous a retiré de ce groupe. Créez un nouveau groupe ou rejoignez-en un autre avec un code.", "El anfitrión te expulsó de este grupo. Crea un grupo nuevo o únete a otro con un código.", "Der Host hat dich aus dieser Gruppe entfernt. Starte eine neue Gruppe oder tritt mit einem Code einer anderen bei.", "L’host ti ha rimosso da questo gruppo. Crea un nuovo gruppo o entra in un altro con un codice.", "O anfitrião removeu você deste grupo. Crie um novo grupo ou entre em outro com um código."],
+["The host left, so the party ended. Start a new party or join another one with a code.", "L’hôte est parti, le groupe est donc terminé. Créez un nouveau groupe ou rejoignez-en un autre avec un code.", "El anfitrión se fue, así que el grupo terminó. Crea un grupo nuevo o únete a otro con un código.", "Der Host ist gegangen, deshalb wurde die Gruppe beendet. Starte eine neue Gruppe oder tritt mit einem Code einer anderen bei.", "L’host è uscito, quindi il gruppo è terminato. Crea un nuovo gruppo o entra in un altro con un codice.", "O anfitrião saiu, então o grupo acabou. Crie um novo grupo ou entre em outro com um código."],
+["Check your internet connection, then join the party again.", "Vérifiez votre connexion internet, puis rejoignez à nouveau le groupe.", "Revisa tu conexión a internet y vuelve a unirte al grupo.", "Prüfe deine Internetverbindung und tritt der Gruppe dann erneut bei.", "Controlla la connessione a internet, poi rientra nel gruppo.", "Verifique sua conexão com a internet e entre no grupo de novo."],
+["Play online", "Jouer en ligne", "Jugar en línea", "Online spielen", "Gioca online", "Jogar online"],
+["HOST", "HÔTE", "ANFITRIÓN", "HOST", "HOST", "ANFITRIÃO"],
+["Room not found. Check the code and try again.", "Salon introuvable. Vérifiez le code et réessayez.", "No se encontró la sala. Revisa el código e inténtalo de nuevo.", "Raum nicht gefunden. Prüfe den Code und versuche es erneut.", "Stanza non trovata. Controlla il codice e riprova.", "Sala não encontrada. Confira o código e tente de novo."],
+["That room already has two players.", "Ce salon a déjà deux joueurs.", "Esa sala ya tiene dos jugadores.", "Dieser Raum hat schon zwei Spieler.", "Questa stanza ha già due giocatori.", "Essa sala já tem dois jogadores."],
+["This browser can’t play online.", "Ce navigateur ne peut pas jouer en ligne.", "Este navegador no puede jugar en línea.", "Mit diesem Browser kannst du nicht online spielen.", "Questo browser non può giocare online.", "Este navegador não pode jogar online."],
+["Can’t reach the online server. Check your internet connection.", "Impossible de joindre le serveur en ligne. Vérifiez votre connexion internet.", "No se puede contactar con el servidor en línea. Revisa tu conexión a internet.", "Der Online-Server ist nicht erreichbar. Prüfe deine Internetverbindung.", "Impossibile raggiungere il server online. Controlla la connessione a internet.", "Não foi possível acessar o servidor online. Verifique sua conexão com a internet."],
+["Connection failed. Try again.", "La connexion a échoué. Réessayez.", "La conexión falló. Inténtalo de nuevo.", "Verbindung fehlgeschlagen. Versuche es erneut.", "Connessione non riuscita. Riprova.", "A conexão falhou. Tente de novo."]
+];
+const MON = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const idf = (o, d) => { try { return new Intl.DateTimeFormat(LANGS[li], o).format(d); } catch (e) { return ''; } };
+const monYear = m => idf({ month: 'long', year: 'numeric' }, new Date(+m[2], MON.indexOf(m[1]), 1));
+const monDay = m => idf({ month: 'short', day: 'numeric' }, new Date(2026, MON.findIndex(x => x.startsWith(m[1])), +m[2]));
+const dayMonYear = m => idf({ day: 'numeric', month: 'long', year: 'numeric' }, new Date(+m[3], MON.indexOf(m[2]), +m[1]));
+const pl = (n, one, many) => +n === 1 ? one : many;
+const P = [
+  [/^Play (.+)$/, 'Jouer à $1', 'Jugar a $1', '$1 spielen', 'Gioca a $1', 'Jogar $1'],
+  [/^Search (\d+) games$/, 'Rechercher parmi $1 jeux', 'Buscar entre $1 juegos', '$1 Spiele durchsuchen', 'Cerca tra $1 giochi', 'Pesquisar entre $1 jogos'],
+  [/^(\d+) games?(, partial matches)?$/, m => m[1] + pl(m[1], ' jeu', ' jeux') + (m[2] ? ', résultats partiels' : ''), m => m[1] + pl(m[1], ' juego', ' juegos') + (m[2] ? ', coincidencias parciales' : ''), m => m[1] + pl(m[1], ' Spiel', ' Spiele') + (m[2] ? ', teilweise Treffer' : ''), m => m[1] + pl(m[1], ' gioco', ' giochi') + (m[2] ? ', risultati parziali' : ''), m => m[1] + pl(m[1], ' jogo', ' jogos') + (m[2] ? ', resultados parciais' : '')],
+  [/^Show (\d+) games?$/, m => 'Voir ' + m[1] + pl(m[1], ' jeu', ' jeux'), m => 'Ver ' + m[1] + pl(m[1], ' juego', ' juegos'), m => m[1] + pl(m[1], ' Spiel', ' Spiele') + ' zeigen', m => 'Mostra ' + m[1] + pl(m[1], ' gioco', ' giochi'), m => 'Ver ' + m[1] + pl(m[1], ' jogo', ' jogos')],
+  [/^Remove (.+)$/, 'Retirer $t1', 'Quitar $t1', '$t1 entfernen', 'Rimuovi $t1', 'Remover $t1'],
+  [/^Played (\d+)×$/, 'Joué $1 fois', 'Jugado $1 veces', '$1× gespielt', 'Giocato $1 volte', 'Jogado $1 vezes'],
+  [/^gameplay, (\d+) games$/, 'gameplay, $1 jeux', 'gameplay, $1 juegos', 'gameplay, $1 Spiele', 'gameplay, $1 giochi', 'gameplay, $1 jogos'],
+  [/^Player since ([A-Z][a-z]+) (\d{4})$/, m => 'Joueur depuis ' + monYear(m), m => 'Jugador desde ' + monYear(m), m => 'Spieler seit ' + monYear(m), m => 'Giocatore da ' + monYear(m), m => 'Jogador desde ' + monYear(m)],
+  [/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{1,2})$/, monDay, monDay, monDay, monDay, monDay],
+  [/^Last updated (\d{1,2}) ([A-Z][a-z]+) (\d{4})$/, m => 'Dernière mise à jour : ' + dayMonYear(m), m => 'Última actualización: ' + dayMonYear(m), m => 'Zuletzt aktualisiert: ' + dayMonYear(m), m => 'Ultimo aggiornamento: ' + dayMonYear(m), m => 'Última atualização: ' + dayMonYear(m)],
+  [/^\+(.+) this week$/, '+$1 cette semaine', '+$1 esta semana', '+$1 diese Woche', '+$1 questa settimana', '+$1 esta semana'],
+  [/^in (\d+) games? played$/, m => 'sur ' + m[1] + pl(m[1], ' jeu joué', ' jeux joués'), m => 'en ' + m[1] + pl(m[1], ' juego jugado', ' juegos jugados'), m => 'in ' + m[1] + pl(m[1], ' gespieltem Spiel', ' gespielten Spielen'), m => 'in ' + m[1] + pl(m[1], ' gioco giocato', ' giochi giocati'), m => 'em ' + m[1] + pl(m[1], ' jogo jogado', ' jogos jogados')],
+  [/^Current streak: (\d+)$/, 'Série actuelle : $1', 'Racha actual: $1', 'Aktuelle Serie: $1', 'Serie attuale: $1', 'Sequência atual: $1'],
+  [/^(\d+) days ago$/, 'Il y a $1 jours', 'Hace $1 días', 'Vor $1 Tagen', '$1 giorni fa', 'Há $1 dias'],
+  [/^Online up to (\d+)$/, 'En ligne jusqu’à $1', 'En línea hasta $1', 'Online bis $1', 'Online fino a $1', 'Online até $1'],
+  [/^(.+) is coming soon$/, '$t1 : bientôt disponible', '$t1: muy pronto', '$t1 kommt bald', '$t1: in arrivo', '$t1: em breve'],
+  [/^Signed in as (.+)$/, 'Connecté en tant que $1', 'Sesión iniciada como $1', 'Angemeldet als $1', 'Accesso eseguito come $1', 'Conectado como $1'],
+  [/^Welcome, (.+)$/, 'Bienvenue, $1', 'Bienvenido, $1', 'Willkommen, $1', 'Benvenuto, $1', 'Bem-vindo, $1'],
+  [/^Almost done: open the link we sent to (.+) to confirm your account\.$/, 'Presque fini : ouvrez le lien envoyé à $1 pour confirmer votre compte.', 'Casi listo: abre el enlace que enviamos a $1 para confirmar tu cuenta.', 'Fast geschafft: Öffne den Link, den wir an $1 geschickt haben, um dein Konto zu bestätigen.', 'Quasi fatto: apri il link che abbiamo inviato a $1 per confermare il tuo account.', 'Quase lá: abra o link que enviamos para $1 para confirmar sua conta.'],
+  [/^Records and saves synced (.+)\.$/, 'Records et sauvegardes synchronisés à $1.', 'Récords y partidas sincronizados a las $1.', 'Rekorde und Spielstände um $1 synchronisiert.', 'Record e salvataggi sincronizzati alle $1.', 'Recordes e jogos salvos sincronizados às $1.'],
+  [/^(.+) — play free online \| gameplay$/, '$1 — jouer gratuitement en ligne | gameplay', '$1 — juega gratis en línea | gameplay', '$1 — kostenlos online spielen | gameplay', '$1 — gioca gratis online | gameplay', '$1 — jogue grátis online | gameplay'],
+  [/^gameplay — (\d+) free browser games$/, 'gameplay — $1 jeux gratuits dans le navigateur', 'gameplay — $1 juegos gratis en el navegador', 'gameplay — $1 kostenlose Browserspiele', 'gameplay — $1 giochi gratis nel browser', 'gameplay — $1 jogos grátis no navegador'],
+  [/^(.+) \| gameplay$/, '$t1 | gameplay', '$t1 | gameplay', '$t1 | gameplay', '$t1 | gameplay', '$t1 | gameplay'],
+  [/^New best · (.+)$/, 'Nouveau record · $1', 'Nuevo récord · $1', 'Neuer Rekord · $1', 'Nuovo record · $1', 'Novo recorde · $1'],
+  [/^(.+) is waiting in the lobby$/, '$1 attend dans le salon', '$1 está esperando en la sala', '$1 wartet in der Lobby', '$1 è in attesa nella lobby', '$1 está esperando no lobby'],
+  [/^(.+) party$/, 'Groupe $t1', 'Grupo de $t1', '$t1-Gruppe', 'Gruppo $t1', 'Grupo de $t1'],
+];
+let lang = 'en';
+try { const v = localStorage.getItem(LKEY); if (NAMES[v]) lang = v; } catch (e) {}
+let li = LANGS.indexOf(lang), D = null, titles = null, frameEl = null, on = false;
+const C = new Map(), TN = new WeakMap(), AN = new WeakMap(), DEEP = new Set(), SH = new WeakSet();
+const sp = s => s.replace(/\s+/g, ' ').trim();
+const ABC = /[A-Za-z]/;
+const SKIP = 'script,style,code,kbd,textarea,svg,#langsel,.card .name,.srow .n,#pTitle,[data-pname],#uno,#unn,#auwho,[translate="no"]';
+const PARTY = '.g-lobby,.g-net,.g-party,.g-loading,[data-i18n]';
+const ATTRS = ['placeholder', 'aria-label', 'title'], PH = new Set(['Guest', 'Space']);
+function isTitle(s) {
+  if (!titles) { const g = window.Ameplay && Ameplay.debug && Ameplay.debug.games; if (!g || !g.length) return false; titles = new Set(); g.forEach(x => { titles.add(x.title); if (x.oldTitle) titles.add(x.oldTitle); }); }
+  return titles.has(s);
+}
+function dict() {
+  if (!D) { D = new Map(); if (li > 0) R.forEach(r => { if (r[li]) D.set(r[0], r[li]); }); }
+  return D;
+}
+function tx(n) {
+  if (C.has(n)) return C.get(n);
+  let v = dict().get(n);
+  if (v === undefined) {
+    v = null;
+    for (const p of P) {
+      const m = p[0].exec(n);
+      if (!m) continue;
+      const x = p[li];
+      if (x == null) break;
+      v = typeof x === 'function' ? x(m) : x.replace(/\$(t?)(\d)/g, (_, k, i) => k ? T(m[i] || '') : m[i] || '');
+      break;
+    }
+    if (v == null && n.includes(' · ')) { const a = n.split(' · '), b = a.map(x => isTitle(x) ? null : tx(x)); if (b.some(x => x != null)) v = b.map((x, i) => x == null ? a[i] : x).join(' · '); }
+  }
+  if (C.size > 5000) C.clear();
+  C.set(n, v);
+  return v;
+}
+function T(s, o) {
+  let v = s;
+  if (li > 0 && typeof s === 'string' && ABC.test(s)) { const n = sp(s); if (!isTitle(n)) { const x = tx(n); if (x != null) v = x; } }
+  return o && typeof v === 'string' ? v.replace(/\{(\w+)\}/g, (m, k) => k in o ? o[k] : m) : v;
+}
+function txt(n) {
+  const v = n.nodeValue, r = TN.get(n), en = r && v === r.o ? r.e : v;
+  let o = en;
+  if (li > 0 && ABC.test(en)) {
+    const p = n.parentElement, c = sp(en);
+    if (p && (PH.has(c) || !p.closest(SKIP))) {
+      if (!isTitle(c)) {
+        const t = (p.id && dict().get('#' + p.id + '|' + c)) || tx(c);
+        if (t != null) { o = en.match(/^\s*/)[0] + t + en.match(/\s*$/)[0]; if (p.tagName === 'OPTION' && !p.hasAttribute('value')) p.setAttribute('value', c); }
+      }
+    }
+  }
+  if (o === en) { if (r) TN.delete(n); } else TN.set(n, { e: en, o });
+  if (v !== o) n.nodeValue = o;
+}
+function att(el, a) {
+  const v = el.getAttribute(a);
+  if (v == null) return;
+  let m = AN.get(el);
+  const r = m && m[a], en = r && v === r.o ? r.e : v;
+  let o = en;
+  if (li > 0 && ABC.test(en) && !el.closest('[translate="no"]')) { const c = sp(en); if (!isTitle(c)) { const t = tx(c); if (t != null) o = t; } }
+  if (o === en) { if (r) delete m[a]; } else { if (!m) AN.set(el, m = {}); m[a] = { e: en, o }; }
+  if (v !== o) el.setAttribute(a, o);
+}
+function ats(el) { ATTRS.forEach(a => att(el, a)); if (el.tagName === 'INPUT' && el.readOnly) att(el, 'value'); }
+function walk(x) {
+  if (x.nodeType === 3) { txt(x); return; }
+  if (x.nodeType !== 1) return;
+  const w = document.createTreeWalker(x, 4);
+  let n;
+  while ((n = w.nextNode())) txt(n);
+  ats(x);
+  x.querySelectorAll('[placeholder],[aria-label],[title],input[readonly][value]').forEach(ats);
+}
+const mo = new MutationObserver(rs => {
+  for (const r of rs) {
+    const t = r.target;
+    if (r.type === 'childList') {
+      if (SH.has(t)) { const gr = t.classList.contains('g-root'); r.addedNodes.forEach(n => { if (n.nodeType !== 1) return; if (gr) { if (n.matches(PARTY)) deep(n); } else cover(n); }); }
+      else r.addedNodes.forEach(walk);
+    } else if (r.type === 'characterData') txt(t);
+    else att(t, r.attributeName);
+  }
+  mo.takeRecords();
+});
+const OPT = { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATTRS.concat('value') };
+function deep(el) {
+  if (DEEP.size > 80) DEEP.forEach(x => { if (!x.isConnected) DEEP.delete(x); });
+  if (!DEEP.has(el)) { DEEP.add(el); mo.observe(el, OPT); }
+  walk(el);
+}
+function shallow(el) { if (!SH.has(el)) { SH.add(el); mo.observe(el, { childList: true }); } }
+function cover(el) {
+  if (el.nodeType !== 1 || /^(SCRIPT|STYLE|LINK|CANVAS|NOSCRIPT|TEMPLATE|IMG|VIDEO|AUDIO)$/.test(el.tagName)) return;
+  if (el.classList.contains('g-root')) { shallow(el); for (const c of el.children) if (c.matches(PARTY)) deep(c); return; }
+  if (frameEl && el.contains(frameEl)) { shallow(el); for (const c of el.children) cover(c); return; }
+  deep(el);
+}
+function ui() {
+  const s = document.getElementById('langsel');
+  if (s && s.value !== lang) s.value = lang;
+  const m = document.querySelector('#smenu [data-pane="appearance"] small');
+  if (m && m.textContent !== NAMES[lang]) m.textContent = NAMES[lang];
+}
+function apply(l) {
+  if (!NAMES[l]) l = 'en';
+  const changed = l !== lang;
+  lang = l; li = LANGS.indexOf(l); D = null; C.clear();
+  document.documentElement.lang = l;
+  if (on) { DEEP.forEach(el => { if (el.isConnected) walk(el); else DEEP.delete(el); }); mo.takeRecords(); ui(); }
+  return changed;
+}
+function set(l) {
+  if (!NAMES[l]) l = 'en';
+  try { localStorage.setItem(LKEY, l); } catch (e) {}
+  if (apply(l) && window.Ameplay && Ameplay.analytics) Ameplay.analytics.track('setting', { k: 'lang', v: l });
+}
+function start() {
+  if (on) return;
+  on = true;
+  frameEl = document.getElementById('frame');
+  document.documentElement.lang = lang;
+  const tl = document.querySelector('title');
+  if (tl) deep(tl);
+  shallow(document.body);
+  for (const c of document.body.children) cover(c);
+  mo.takeRecords();
+  ui();
+  document.addEventListener('change', e => { if (e.target && e.target.id === 'langsel') set(e.target.value); });
+  addEventListener('storage', e => { if (e.key === LKEY) apply(NAMES[e.newValue] ? e.newValue : 'en'); });
+}
+function scan() {
+  const vals = [...dict().values()], rev = new Set(vals), rre = vals.filter(x => x.includes('{')).map(x => new RegExp('^' + x.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace(/\{\w+\}/g, '.+') + '$'));
+  const out = new Set(), keep = v => rev.has(v) || (v.includes(' · ') && v.split(' · ').every(x => keep(x))) || rre.some(r => r.test(v)) || !ABC.test(v) || isTitle(v) || tx(v) != null || /^[\d hms]+$|@|^gameplay$/.test(v) || Object.values(NAMES).includes(v);
+  DEEP.forEach(el => {
+    if (!el.isConnected) return;
+    const w = document.createTreeWalker(el, 4);
+    let n;
+    while ((n = w.nextNode())) { const r = TN.get(n), v = sp(n.nodeValue); if ((r && n.nodeValue === r.o) || keep(v) || (n.parentElement && n.parentElement.closest(SKIP))) continue; out.add(v); }
+    [el, ...el.querySelectorAll('[placeholder],[aria-label],[title]')].forEach(x => ATTRS.forEach(a => { const v = x.getAttribute && x.getAttribute(a), m = AN.get(x); if (v && !(m && m[a] && m[a].o === v) && !keep(sp(v)) && !x.closest('[translate="no"]')) out.add('@' + a + ' ' + sp(v)); }));
+  });
+  return [...out];
+}
+window.gpI18n = { get lang() { return lang; }, set, t: T, names: NAMES, scan };
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

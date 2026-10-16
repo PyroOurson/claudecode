@@ -32,7 +32,11 @@
     { name: 'Green', base: '#4a9c3a', top: '#66bb52', dark: '#2c5e22' },
     { name: 'Red', base: '#c9382b', top: '#e5553f', dark: '#7b2018' },
     { name: 'Blue', base: '#3264c8', top: '#4f86e8', dark: '#1d3c7e' },
-    { name: 'Yellow', base: '#d39a12', top: '#f0b92e', dark: '#7f5a06' }
+    { name: 'Yellow', base: '#d39a12', top: '#f0b92e', dark: '#7f5a06' },
+    { name: 'Purple', base: '#7d45c2', top: '#9a63e0', dark: '#4a2478' },
+    { name: 'Orange', base: '#e0701c', top: '#f78d3a', dark: '#87400c' },
+    { name: 'Cyan', base: '#1f9fae', top: '#3cc2d0', dark: '#105f69' },
+    { name: 'Pink', base: '#d64f94', top: '#ef74b1', dark: '#7f2556' }
   ];
   const nrm = a => { a %= 360; if (a > 180) a -= 360; else if (a <= -180) a += 360; return a; };
   const sx = r => Math.sin(r * DEG), sy = r => -Math.cos(r * DEG);
@@ -454,7 +458,7 @@
       S.crates = S.crates.filter(c => !c.dead);
     };
     S.newRound = () => {
-      const n = S.n, [w0, w1] = S.portrait ? CFG.mazeWp : CFG.mazeW, [h0, h1] = S.portrait ? CFG.mazeHp : CFG.mazeH;
+      const n = S.n, [w1x, w1] = S.portrait ? CFG.mazeWp : CFG.mazeW, [h1x, h1] = S.portrait ? CFG.mazeHp : CFG.mazeH, w0 = Math.min(w1, w1x + Math.max(0, n - 3)), h0 = Math.min(h1, h1x + Math.max(0, n - 3));
       let m, d0, reach, start;
       do {
         m = genMaze(w0 + R(w1 - w0 + 1), h0 + R(h1 - h0 + 1), R);
@@ -756,10 +760,9 @@
   ];
   const GAMEKEYS = new Set(['Space'].concat(...KB.map(k => [k.f, k.b, k.l, k.r, k.fire])));
   const MENU = `<div class="mt-card"><div class="mt-logo">Tank Trouble</div><div class="mt-sub">Bullets bounce. Last tank standing scores.</div>
-<div class="mt-modes"><button class="mt-mode" data-m="cpu"><canvas data-t="01"></canvas><b>vs CPU</b><small data-h="cpu"></small></button><button class="mt-mode" data-m="online"><canvas data-t="01"></canvas><b>Online</b><small>2-4 players</small></button></div>
+<div class="mt-modes"><button class="mt-mode" data-m="cpu"><canvas data-t="01"></canvas><b>vs CPU</b><small data-h="cpu"></small></button><button class="mt-mode" data-m="online"><canvas data-t="01"></canvas><b>Online</b><small>2-8 players</small></button></div>
 <div class="mt-opts"><div class="mt-row"><span>Match</span><div class="mt-seg" data-k="target"><button data-v="0">Endless</button><button data-v="5">First to 5</button><button data-v="10">First to 10</button></div></div>
-<div class="mt-row"><span>CPU</span><div class="mt-seg" data-k="bots"><button data-v="1">1 tank</button><button data-v="2">2 tanks</button></div><div class="mt-seg" data-k="skill"><button data-v="0">Easy</button><button data-v="1">Normal</button><button data-v="2">Hard</button></div></div>
-<div class="mt-row"><span>Online</span><div class="mt-seg" data-k="ocpu"><button data-v="0">No CPU</button><button data-v="1">+ CPU tank</button></div></div></div></div>`;
+<div class="mt-row"><span>CPU</span><div class="mt-seg" data-k="bots"><button data-v="1">1 tank</button><button data-v="2">2 tanks</button></div><div class="mt-seg" data-k="skill"><button data-v="0">Easy</button><button data-v="1">Normal</button><button data-v="2">Hard</button></div></div></div></div>`;
 
   const ENG = { makeSim, makeBot, genMaze, moveTank, inTank, CFG, live: null };
   Ameplay.register({
@@ -822,7 +825,7 @@
       let touchMode = coarse, SW = 712, SH = 490, BS = 1, LAY = null, VS = 1, OX = 0, OY = 0;
       let S = null, demo = null, state = 'menu', acc = 0, humans = [], solo = true, mode = saved.mode === 'online' ? 'online' : 'cpu', labels = [], mouseIdx = -1, ids = [];
       let shake = 0, scorch = [], PT = [], vm = null, submitted = false, lastBn = 0, netIt = null, guestView = null;
-      const pops = [0, 0, 0, 0];
+      const pops = [0, 0, 0, 0, 0, 0, 0, 0];
       const G = { role: null, buf: [], mazes: {}, off: 0, offSet: false, press: 0, lastSend: 0, sig: '', hooked: false, n: 2, target: 0, overShown: false, me: 1, pids: [], players: [], ni: [], lp: [], hi: {}, port: {}, why: '', wait: 0, isq: 0, is: {} };
 
       let AC = null, master = null, NBUF = null;
@@ -1000,7 +1003,7 @@
         }
         PT = PT.filter(p => p.a > 0);
         if (shake > 0) shake = Math.max(0, shake - .5 * u);
-        for (let i = 0; i < 4; i++) pops[i] = Math.max(0, pops[i] - dt * 2.5);
+        for (let i = 0; i < 8; i++) pops[i] = Math.max(0, pops[i] - dt * 2.5);
       }
       function drawParticles() {
         for (const p of PT) {
@@ -1154,22 +1157,22 @@
         }
       }
       function drawScore(V) {
-        const n = V.tanks.length, y = LAY.scoreY, port = LAY.port, gap = port ? Math.min(128, 330 / n) : Math.min(190, 700 / n), sc = port ? .34 : .46;
+        const n = V.tanks.length, y = LAY.scoreY, port = LAY.port, k = n > 4 ? (port ? .62 : .72) : 1, gap = port ? Math.min(128, (SW - (n > 4 ? 70 : 40)) / n) : Math.min(190, (SW - 210) / n), sc = (port ? .34 : .46) * k, x0 = SW / 2 - (n > 4 && port ? 16 : 0);
         ctx.textBaseline = 'middle';
         for (let i = 0; i < n; i++) {
-          const cx = SW / 2 + (i - (n - 1) / 2) * gap, t = V.tanks[i], p = pops[i];
+          const cx = x0 + (i - (n - 1) / 2) * gap, t = V.tanks[i], p = pops[i];
           ctx.globalAlpha = t.alive ? 1 : .4;
-          drawTank(ctx, cx - (port ? 22 : 30), y, 90, TCOL[i], t.w, 0, sc);
+          drawTank(ctx, cx - (port ? 22 : 30) * k, y, 90, TCOL[i], t.w, 0, sc);
           ctx.globalAlpha = 1;
-          ctx.font = `900 ${Math.round((port ? 27 : 36) * (1 + p * .4))}px Nunito, system-ui, sans-serif`;
+          ctx.font = `900 ${Math.round((port ? 27 : 36) * k * (1 + p * .4))}px Nunito, system-ui, sans-serif`;
           ctx.fillStyle = '#4d4d4d'; ctx.textAlign = 'left';
-          ctx.fillText(String(V.scores[i]), cx + (port ? 2 : 4), y + 1);
-          ctx.font = `800 ${port ? 10 : 11}px Nunito, system-ui, sans-serif`; ctx.fillStyle = '#9a9a9a'; ctx.textAlign = 'center';
-          ctx.fillText(labels[i] || '', cx - (port ? 6 : 8), y + (port ? 22 : 28));
+          ctx.fillText(String(V.scores[i]), cx + (port ? 2 : 4) * k, y + 1);
+          ctx.font = `800 ${Math.round((port ? 10 : 11) * (n > 4 ? .9 : 1))}px Nunito, system-ui, sans-serif`; ctx.fillStyle = '#9a9a9a'; ctx.textAlign = 'center';
+          ctx.fillText(String(labels[i] || '').slice(0, n > 4 ? (port ? 6 : 9) : 16), cx - (port ? 6 : 8) * k, y + (port ? 22 : 28) * (n > 4 ? .85 : 1));
         }
         ctx.font = '800 11px Nunito, system-ui, sans-serif'; ctx.fillStyle = '#a0a0a0'; ctx.textAlign = 'left';
         const tg = G.role === 'guest' ? G.target : (S && S.target);
-        if (tg) ctx.fillText('First to ' + tg, 12, y + (port ? 22 : 28));
+        if (tg && n < 4) ctx.fillText('First to ' + tg, 12, y + (port ? 22 : 28));
         if (G.role === 'guest') { ctx.textAlign = 'right'; ctx.fillText((api.net.rtt || 0) + ' ms', SW - 12, y + (port ? 22 : 28) + (port ? 0 : 0)); }
       }
       function padVec(pad) {
@@ -1447,12 +1450,12 @@
       async function goOnline() {
         if (!G.hooked) hookNet();
         state = 'wait'; ui.hidden = true; mb.hidden = true; G.role = null; S = demo; guestView = null;
-        const r = await api.net.room({ title: 'Play Tank Trouble online', text: '2 to 4 players, each on their own device. Create a party, pick its size and share the code, or type a friend’s code to join.', sizes: [2, 3, 4], defaultSize: 2, min: 2, max: 4 });
+        const r = await api.net.room({ title: 'Tank Trouble', sizes: [2, 3, 4, 5, 6, 7, 8], defaultSize: 3, min: 2, max: 8, bots: true });
         if (!api.alive) return;
         if (!r) { showMenu(); return; }
         G.role = r.role; G.press = 0; G.hi = {}; G.port = {}; G.lp = [];
         if (r.role === 'host') {
-          G.players = r.players.slice(0, 4); G.pids = G.players.map(x => x.id);
+          G.players = r.players.slice(0, 8); G.bots = !!r.bots; G.size = +r.size || G.players.length; G.pids = G.players.map(x => x.id);
           state = 'wait';
           panel({ kicker: 'Online', title: 'Everyone is in', text: 'Starting…', buttons: [['Leave', leave, 1]] });
           clearTimeout(G.wait);
@@ -1463,7 +1466,7 @@
         clearTimeout(G.wait);
         G.players = G.players.filter((x, k) => !k || api.net.players.some(q => q.id === x.id && !q.away));
         G.pids = G.players.map(x => x.id);
-        const k = G.players.length, n = Math.min(4, k + (saved.ocpu && k < 4 ? 1 : 0));
+        const k = G.players.length, n = Math.min(8, Math.max(k, G.bots ? G.size : k));
         humans = Array.from({ length: n }, (_, i) => i === 0 ? 'L' : i < k ? 'N' : 'B'); solo = true; mouseIdx = -1; ids = [0];
         layout([0]);
         const ports = G.players.slice(1).filter(x => G.port[x.id]).length + (LAY.port ? 1 : 0);

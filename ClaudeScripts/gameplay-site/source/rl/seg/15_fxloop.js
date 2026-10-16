@@ -30,17 +30,60 @@
             if (Math.abs(B.p.y) > 4300 && Math.abs(B.p.x) < 1500 && B.p.z < 1000 && B.v.y * B.p.y > 0 && Math.abs(B.v.y) > 900 && now > fxMissT) { fxMissT = now + 4000; crowdSwell(0.13, 2.2, 0.5); }
           }
         };
+        const fxBl = { on: !coarse && !!renderer.capabilities.isWebGL2, w: 0, h: 0, rt: [], sz: new THREE.Vector2() };
+        if (fxBl.on) {
+          const VS = 'varying vec2 vU;\nvoid main() { vU = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
+          const SM = (fs, u) => own(new THREE.ShaderMaterial({ uniforms: u, vertexShader: VS, fragmentShader: fs, depthTest: false, depthWrite: false }));
+          fxBl.hi = SM('uniform sampler2D T;\nuniform vec2 px;\nvarying vec2 vU;\nvoid main() {\n  vec3 c = (texture2D(T, vU + px * vec2(-1.0, -1.0)).rgb + texture2D(T, vU + px * vec2(1.0, -1.0)).rgb + texture2D(T, vU + px * vec2(-1.0, 1.0)).rgb + texture2D(T, vU + px * vec2(1.0, 1.0)).rgb) * 0.25;\n  float l = max(c.r, max(c.g, c.b));\n  gl_FragColor = vec4(c * smoothstep(0.74, 1.0, l), 1.0);\n}', { T: { value: null }, px: { value: new THREE.Vector2() } });
+          fxBl.bl = SM('uniform sampler2D T;\nuniform vec2 d;\nvarying vec2 vU;\nvoid main() {\n  vec3 c = texture2D(T, vU).rgb * 0.2270;\n  c += (texture2D(T, vU + d).rgb + texture2D(T, vU - d).rgb) * 0.1945;\n  c += (texture2D(T, vU + d * 2.0).rgb + texture2D(T, vU - d * 2.0).rgb) * 0.1216;\n  c += (texture2D(T, vU + d * 3.0).rgb + texture2D(T, vU - d * 3.0).rgb) * 0.0540;\n  c += (texture2D(T, vU + d * 4.0).rgb + texture2D(T, vU - d * 4.0).rgb) * 0.0162;\n  gl_FragColor = vec4(c, 1.0);\n}', { T: { value: null }, d: { value: new THREE.Vector2() } });
+          fxBl.mix = SM('uniform sampler2D A;\nuniform sampler2D B;\nuniform sampler2D C;\nuniform float k;\nvarying vec2 vU;\nvoid main() {\n  vec3 c = texture2D(A, vU).rgb + (texture2D(B, vU).rgb * 0.55 + texture2D(C, vU).rgb * 0.75) * k;\n  float l = dot(c, vec3(0.299, 0.587, 0.114));\n  c = mix(vec3(l), c, 0.9);\n  gl_FragColor = vec4(c, 1.0);\n}', { A: { value: null }, B: { value: null }, C: { value: null }, k: { value: 0.5 } });
+          fxBl.cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); fxBl.sc = new THREE.Scene();
+          fxBl.q = new THREE.Mesh(own(new THREE.PlaneGeometry(2, 2)), fxBl.mix); fxBl.q.frustumCulled = false; fxBl.sc.add(fxBl.q);
+        }
+        const fxBlSize = (W2, H2) => {
+          for (const r of fxBl.rt) r.dispose();
+          const o = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, depthBuffer: false };
+          const A = own(new THREE.WebGLMultisampleRenderTarget(W2, H2, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat }));
+          A.samples = 4; A.texture.encoding = THREE.sRGBEncoding;
+          const q = d => own(new THREE.WebGLRenderTarget(Math.max(1, Math.round(W2 / d)), Math.max(1, Math.round(H2 / d)), o));
+          fxBl.rt = [A, q(4), q(4), q(8), q(8)]; fxBl.w = W2; fxBl.h = H2;
+        };
+        const fxQ = { on0: fxBl.on, lv: 0, s: 0, n: 0, v: new THREE.Vector2() };
+        const fxQSet = lv => {
+          fxQ.lv = lv; fxBl.on = fxQ.on0 && lv < 1;
+          if (lv >= 2 && sun.castShadow) { sun.castShadow = false; scene.traverse(o => { if (o.isPointLight) o.visible = false; if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.needsUpdate = true; }); }
+          if (lv >= 3) { renderer.getSize(fxQ.v); renderer.setPixelRatio(Math.min(renderer.getPixelRatio(), 0.6)); renderer.setSize(fxQ.v.x, fxQ.v.y, false); for (const m of arHeavy) m.visible = false; }
+        };
+        try { const g = renderer.getContext(), e = g.getExtension('WEBGL_debug_renderer_info'), r = e ? String(g.getParameter(e.UNMASKED_RENDERER_WEBGL)) : ''; if (/swiftshader|llvmpipe|software|basic render/i.test(r)) fxQSet(3); } catch (e) {   }
+        wrap.fxDbg = { scene, renderer, fxQ, fxQSet, fxBl };
+        const fxQTick = dt => {
+          if (fxQ.lv >= 3 || dt <= 0 || dt > 0.25 || ui !== 'play' || paused) return;
+          fxQ.s += dt; fxQ.n++;
+          if (fxQ.s < 2.5) return;
+          const av = fxQ.s / fxQ.n; fxQ.s = 0; fxQ.n = 0;
+          if (av > 1 / 42) fxQSet(fxQ.lv + 1);
+        };
+        const fxPass = (m, dst) => { fxBl.q.material = m; renderer.setRenderTarget(dst); renderer.render(fxBl.sc, fxBl.cam); };
         const renderViews = () => {
           const v = views[0], pr = renderer.getPixelRatio();
           fire.mat.uniforms.scale.value = smoke.mat.uniforms.scale.value = h * pr * 0.5 / Math.tan(v.camera.fov * Math.PI / 360);
-          renderer.render(scene, v.camera);
+          if (!fxBl.on) { renderer.render(scene, v.camera); return; }
+          renderer.getDrawingBufferSize(fxBl.sz);
+          if (fxBl.sz.x !== fxBl.w || fxBl.sz.y !== fxBl.h) fxBlSize(fxBl.sz.x, fxBl.sz.y);
+          const [A, B1, T1, B2, T2] = fxBl.rt, hi = fxBl.hi.uniforms, bl = fxBl.bl.uniforms, mx = fxBl.mix.uniforms;
+          renderer.setRenderTarget(A); renderer.render(scene, v.camera);
+          hi.T.value = A.texture; hi.px.value.set(1 / A.width, 1 / A.height); fxPass(fxBl.hi, B1);
+          bl.T.value = B1.texture; bl.d.value.set(1 / B1.width, 0); fxPass(fxBl.bl, T1);
+          bl.T.value = T1.texture; bl.d.value.set(0, 1 / B1.height); fxPass(fxBl.bl, B1);
+          bl.T.value = B1.texture; bl.d.value.set(2 / B1.width, 0); fxPass(fxBl.bl, T2);
+          bl.T.value = T2.texture; bl.d.value.set(0, 1 / B2.height); fxPass(fxBl.bl, B2);
+          mx.A.value = A.texture; mx.B.value = B1.texture; mx.C.value = B2.texture; fxPass(fxBl.mix, null);
         };
-
-
         const STEP = 1 / CFG.hz;
         let acc = 0;
         api.loop((dt, t) => {
           if (dead) return;
+          fxQTick(dt);
           dt *= uiDbgK;
           if (fxRp.on && (fxRp.W !== W || ui !== 'play')) fxRpAbort();
           if (!paused) {

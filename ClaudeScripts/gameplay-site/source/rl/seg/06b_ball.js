@@ -28,7 +28,7 @@
           const map = crTex(M.tex.map), em = crTex(M.tex.em);
           const mats = M.mats.map(q => q.k === 'glow'
             ? own(new THREE.MeshBasicMaterial({ color: new THREE.Color(q.e[0], q.e[1], q.e[2]).multiplyScalar(2.2), toneMapped: false }))
-            : own(new THREE.MeshPhysicalMaterial({ map, emissiveMap: em, emissive: 0xffffff, emissiveIntensity: 2.4, color: lin(0xffffff, 1.22), roughness: 0.38, metalness: 0.42, clearcoat: 0.35, clearcoatRoughness: 0.3, envMap: arEnv, envMapIntensity: 1.15 })));
+            : own(new THREE.MeshPhysicalMaterial({ map, emissiveMap: em, emissive: 0xffffff, emissiveIntensity: 2.4, color: lin(0xffffff, 1.0), roughness: 0.55, metalness: 0.18, clearcoat: 0.2, clearcoatRoughness: 0.45, envMap: arEnv, envMapIntensity: 0.55 })));
           return new THREE.Mesh(g, mats);
         })();
         ballM.castShadow = true; scene.add(ballM);

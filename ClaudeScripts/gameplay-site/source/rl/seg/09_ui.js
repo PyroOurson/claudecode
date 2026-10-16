@@ -197,7 +197,7 @@
           if (!c || cat > 4 || !uiQCP[cat]) return;
           const txt = tx || (c.bot ? uiQCP[cat][k] : uiQT(cat, k)), team = cat === 0, loc = isLocal(c);
           if (team && !loc && !active().some(v => v.car && v.car.team === c.team) && ui === 'play') return;
-          const html = `${team ? '<b class="tg">[TEAM]</b> ' : ''}<i class="p${c.team}">${esc(c.name)}</i>: ${esc(txt)}`;
+          const html = `${team ? '<b class="tmg">[TEAM]</b> ' : ''}<i class="p${c.team}">${esc(c.name)}</i>: ${esc(txt)}`;
           const ok = loc || saved.chatf === 'all' || (saved.chatf === 'team' && team);
           let shown = false;
           if (ok) { uiLog.push(html); while (uiLog.length > 40) uiLog.shift(); }
@@ -273,7 +273,7 @@
           const cs = W.cars.filter(c => c.team === t).sort((a, b) => b.st.score - a.st.score), me = o.me || [];
           const rows = cs.map(c => {
             const ttl = o.titles && o.titles.get(c), rd = o.ready && o.ready.has(c), ping = c.bot ? '<span class="sv pn bt c6">BOT</span>' : `<span class="sv pn c6">${uiIC.sig}${uiPing(c)}</span>`;
-            return `<div class="srw${me.includes(c) ? ' me' : ''}"><i class="ck">${rd ? uiIC.check : ''}</i><span class="av">${uiAv(c)}</span><span class="snm"><b>${esc(uiNm(c))}</b>${ttl ? `<small>${esc(ttl)}</small>` : ''}</span><span class="mv">${c === o.mvp ? `<span class="ic">${uiIC.star}</span>` : ''}</span><span class="sv">${c.st.score}</span><span class="sv">${uiZ(c.st.goals)}</span><span class="sv">${uiZ(c.st.assists)}</span><span class="sv">${uiZ(c.st.saves)}</span><span class="sv">${uiZ(c.st.shots)}</span>${ping}</div>`;
+            return `<div class="sbr${me.includes(c) ? ' me' : ''}"><i class="ck">${rd ? uiIC.check : ''}</i><span class="av">${uiAv(c)}</span><span class="snm"><b>${esc(uiNm(c))}</b>${ttl ? `<small>${esc(ttl)}</small>` : ''}</span><span class="mv">${c === o.mvp ? `<span class="ic">${uiIC.star}</span>` : ''}</span><span class="sv">${c.st.score}</span><span class="sv">${uiZ(c.st.goals)}</span><span class="sv">${uiZ(c.st.assists)}</span><span class="sv">${uiZ(c.st.saves)}</span><span class="sv">${uiZ(c.st.shots)}</span>${ping}</div>`;
           }).join('');
           return `<div class="stm t${t}"><div class="sth"><div class="tn">${o.win === t ? '<small>Winner</small>' : ''}<div>${uiDigHtml(W.score[t])}<span>${TEAMN[t]}</span></div></div>${uiHD.map((x, j) => `<span${j === 5 ? ' class="c6"' : ''}>${x}</span>`).join('')}</div>${rows}</div>`;
         };
@@ -326,7 +326,7 @@
             const c = views[0].car || W.cars[0], M = c.p, fx = c.f.x, fy = c.f.y, sx = -fy, sy = fx;
             o[0] = M.x + fx * 300 + sx * 190; o[1] = M.y + fy * 300 + sy * 190; o[2] = 62; o[3] = M.x - fx * 30 - sx * (tall ? 0 : 110); o[4] = M.y - fy * 30 - sy * (tall ? 0 : 110); o[5] = 40; o[6] = tall ? 66 : 50; return o;
           }
-          const g = k === 'garage', ps = !g && ui === 'menu' && uiScr === 'pass', z = g ? uiGarZ : 1, a = uiSpot.yaw + (g ? 0.6 + uiGarA : ps ? 0.95 : 0.78), d = (tall ? (g ? 420 : 600) : g ? 360 : ps ? 520 : 470) * z, hh = g ? 75 + (z - 1) * 140 : ps ? 150 : 125, sh = tall ? 0 : g ? 118 * z : ps ? 175 : 150, cx = uiSpot.x + Math.cos(uiSpot.yaw) * 12, cy = uiSpot.y + Math.sin(uiSpot.yaw) * 12;
+          const g = k === 'garage', ps = !g && ui === 'menu' && uiScr === 'pass', z = g ? uiGarZ : 1, a = uiSpot.yaw + (g ? 0.6 + uiGarA : ps ? 0.95 : 0.78), d = (tall ? (g ? 420 : 560) : g ? 360 : ps ? 520 : 330) * z, hh = g ? 75 + (z - 1) * 140 : ps ? 150 : 92, sh = tall ? 0 : g ? 118 * z : ps ? 175 : 112, cx = uiSpot.x + Math.cos(uiSpot.yaw) * 12, cy = uiSpot.y + Math.sin(uiSpot.yaw) * 12;
           o[0] = cx + Math.cos(a) * d; o[1] = cy + Math.sin(a) * d; o[2] = hh;
           o[3] = cx + Math.sin(a) * sh; o[4] = cy - Math.cos(a) * sh; o[5] = tall ? (g ? -110 * z : -150) : g ? 24 + (z - 1) * 60 : ps ? -25 : 50; o[6] = tall ? 64 : g ? 46 : 48;
           return o;
@@ -352,7 +352,7 @@
         };
         const uiPlb = () => { const L = uiLvl(saved.xp); return `<div class="plb" title="Change name"><div class="pav">${uiAv(null, 0)}<b class="plv">${L.l}</b></div><div class="pnm"><span>${esc(saved.name)}<small>${esc(saved.ttl || 'Rocket Pass Tier ' + uiTier())}</small></span>${uiCarW}</div><i class="pxp"><u style="width:${(L.x / L.n * 100).toFixed(1)}%"></u></i></div>`; };
         const uiK = (k, cls) => coarse ? '' : `<kbd${cls ? ` class="${cls}"` : ''}>${k}</kbd>`;
-        const uiMD = { play: 'Play matches against bots, practise in Free Play or challenge your friends online.', garage: 'Customize your car: body, decals, paint, wheels, boost, goal explosion, trail and topper.', pass: 'Rocket Pass: earn XP in every match and unlock new items for your car.', opts: 'Change camera, controls, audio and chat settings.', cred: 'Model credits and licences.', exit: 'Return to the title screen.', cpu: 'Exhibition match against bots: Duel, Doubles or Standard, five difficulty levels.', train: 'Free Play: drive around with the ball and practise shots, aerials and saves. No clock, no score.', online: 'Private match online: 1v1 with a friend or up to 3v3. Only real players, unless the host adds bots.' };
+        const uiMD = { play: 'Play matches against bots, practise in Free Play or challenge your friends online.', garage: 'Customize your car: body, decals, paint, wheels, boost, goal explosion, trail and topper.', pass: 'Rocket Pass: earn XP in every match and unlock new items for your car.', opts: 'Change camera, controls, audio and chat settings.', cred: 'Model credits and licences.', exit: 'Return to the title screen.', cpu: 'Exhibition match against bots: Duel, Doubles or Standard, five difficulty levels.', train: 'Free Play: drive around with the ball and practise shots, aerials and saves. No clock, no score.', online: 'Create a party, invite friends with the code or link and play 1v1, 2v2 or 3v3. Turn on bots in the party to fill the empty seats.' };
         const uiOS = { size: [[1, 'Duel'], [2, 'Doubles'], [3, 'Standard']], diff: uiDIds().map(k => [k, uiDName(k)]), len: [[180, '3 Minutes'], [300, '5 Minutes'], [600, '10 Minutes']] };
         const uiOD = { size: 'Duel 1v1, Doubles 2v2 or Standard 3v3. Empty seats are filled with bots.', diff: 'How good the bots are: ' + uiOS.diff.map(x => x[1]).join(', ') + '.', len: 'Match length. A tie at 0:00 goes to overtime.', go: 'Start the match.' };
         const uiGC = [['body', 'Body'], ['decal', 'Decal'], ['paint', 'Paint'], ['wheel', 'Wheels'], ['boost', 'Rocket Boost'], ['gx', 'Goal Explosion'], ['trail', 'Trail'], ['top', 'Topper']];
@@ -396,7 +396,7 @@
           if (uiPt === 'fin') return `<div class="gpts">${tabs}</div><div class="gg">${crCat.fin.map(it => uiTile('paint', it, uiGf === 'grid' && uiGi === it.id)).join('')}</div>`;
           const hx = L[uiPaintKey()], q = uiHexHsv(hx);
           if (uiHsvHex(uiHSV[0], uiHSV[1], uiHSV[2]) !== hx) { uiHSV[0] = q[0]; uiHSV[1] = q[1]; uiHSV[2] = q[2]; }
-          return `<div class="gpts">${tabs}</div><div class="gcw"><div class="cwh" data-cw="1"><i class="cwv"></i><b class="cwm"></b></div><div class="cws"><label class="cwl">Brightness<input type="range" data-cv="1" min="0" max="100" value="${Math.round(uiHSV[2] * 100)}"></label><div class="cwx"><i></i><input type="text" data-hx="1" value="${hx}" maxlength="7" spellcheck="false" autocomplete="off"></div><button class="gpd" data-pd="1">${uiPt === 'a' ? 'Default Accent' : 'Team Default'}</button></div></div><div class="gpl">${uiPal.map(c => `<button class="sw" data-sw="${c}" style="background:${c}"></button>`).join('')}</div>`;
+          return `<div class="gpts">${tabs}</div><div class="gcw"><div class="cwh" data-cw="1"><i class="cwv"></i><b class="cwm"></b></div><div class="cws"><label class="cwl">Brightness<input type="range" data-cv="1" min="0" max="100" value="${Math.round(uiHSV[2] * 100)}"></label><div class="cwx"><i></i><input type="text" data-hx="1" value="${hx}" maxlength="7" spellcheck="false" autocomplete="off"></div><button class="gpd" data-pd="1">${uiPt === 'a' ? 'Default Accent' : 'Team Default'}</button></div></div><div class="gpl">${uiPal.map(c => `<button class="pls" data-pc="${c}" style="background:${c}"></button>`).join('')}</div>`;
         };
         const uiPaintSync = () => {
           const hx = uiLO(saved.car)[uiPaintKey()], [hh, s, v] = uiHSV, a = hh * TAU, m = menu.querySelector('.cwm');
@@ -405,7 +405,7 @@
           const rg = menu.querySelector('[data-cv]'); if (rg) { if (document.activeElement !== rg) rg.value = Math.round(v * 100); rg.style.setProperty('--c', uiHsvHex(hh, s, 1)); }
           const hi = menu.querySelector('[data-hx]'); if (hi && document.activeElement !== hi) hi.value = hx;
           const xi = menu.querySelector('.cwx i'); if (xi) xi.style.background = hx;
-          for (const b of menu.querySelectorAll('.gpl .sw')) b.classList.toggle('on', b.dataset.sw === hx);
+          for (const b of menu.querySelectorAll('.gpl .pls')) b.classList.toggle('on', b.dataset.pc === hx);
           const cs = menu.querySelector('[data-gc="paint"] small'); if (cs) cs.textContent = uiEqName('paint');
         };
         const uiPaintSet = (hx, save, keep) => {
@@ -536,12 +536,12 @@
           else if (uiScr === 'setup') {
             const f = uiFo || 'go';
             const row = (k, t) => { const L = uiOS[k], it = L.find(x => x[0] === saved[k]) || L[0]; return `<button class="rb so${f === k ? ' on' : ''}" data-o="${k}" data-d="${esc(uiOD[k])}"><span>${t}</span><i data-dd="-1">‹</i><b>${it[1]}</b><i data-dd="1">›</i></button>`; };
-            hh += `<div class="msx"><h2 class="bt">Exhibition</h2><div class="sl">${row('size', 'Playlist')}${row('diff', 'Bot Difficulty')}${row('len', 'Match Length')}<button class="rb sgo${f === 'go' ? ' on' : ''}" data-go="1" data-d="${esc(uiOD.go)}">Start Match</button></div><div class="md">${esc(f === 'go' ? uiOD.go : uiOD[f])}</div><div class="hk"><span data-m="back">${uiK('Esc', 'kb')}Back</span><span data-go="1">${uiK('Enter', 'ka')}Start</span></div></div>`;
+            hh += `<div class="msx"><h2 class="bt">Exhibition</h2><div class="sl">${row('size', 'Playlist')}${row('diff', 'Bot Difficulty')}${row('len', 'Match Length')}<button class="rb sgo${f === 'go' ? ' on' : ''}" data-st="1" data-d="${esc(uiOD.go)}">Start Match</button></div><div class="md">${esc(f === 'go' ? uiOD.go : uiOD[f])}</div><div class="hk"><span data-m="back">${uiK('Esc', 'kb')}Back</span><span data-st="1">${uiK('Enter', 'ka')}Start</span></div></div>`;
           } else {
             const mb = (k, t) => `<button class="rb${!uiFs && uiFm === k ? ' on' : ''}${uiFs && k === 'play' ? ' act' : ''}" data-m="${k}" data-d="${esc(uiMD[k])}">${t}</button>`;
             const sb = (k, t, s) => `<button class="rb${uiFs === k ? ' on' : ''}" data-p="${k}" data-d="${esc(uiMD[k])}">${t}${s ? `<small>${s}</small>` : ''}</button>`;
             const nw = crPass().some((r, i) => i < uiTier() && r.k !== 'title' && !saved.seen.includes((r.k === 'fin' ? 'paint' : r.k) + ':' + r.id));
-            hh += `<div class="mm"><div class="mcol"><div class="ml">${mb('play', 'Play')}${mb('garage', 'Garage' + (nw ? '<em class="gnw">New</em>' : ''))}${mb('pass', 'Rocket Pass<small>Tier ' + uiTier() + '</small>')}${mb('opts', 'Options')}${mb('cred', 'Credits')}${mb('exit', 'Exit Game')}</div><div class="ms"${uiFm === 'play' ? '' : ' hidden'}>${sb('cpu', 'Play vs Bots', 'Exhibition')}${sb('train', 'Free Play', 'Training')}${sb('online', 'Play Online', '1v1 · Friends')}</div></div><div class="md">${esc(uiMD[uiFs || uiFm])}</div></div>`;
+            hh += `<div class="mm"><div class="mcol"><div class="ml">${mb('pass', 'Rocket Pass<small>Tier ' + uiTier() + '</small>')}${mb('play', 'Play')}${mb('garage', 'Garage' + (nw ? '<em class="gnw">New</em>' : ''))}${mb('train', 'Training')}${mb('opts', 'Options')}${mb('cred', 'Credits')}${mb('exit', 'Exit Game')}</div><div class="ms"${uiFm === 'play' ? '' : ' hidden'}>${sb('cpu', 'Play vs Bots', 'Exhibition')}${sb('train', 'Free Play', 'Training')}${sb('online', 'Play Online', 'Party · up to 3v3')}</div></div><div class="md">${esc(uiMD[uiFs || uiFm])}</div></div>`;
           }
           menu.innerHTML = hh + uiPlb();
           if (uiScr === 'garage') uiGarAfter();
@@ -553,7 +553,7 @@
           if (ui !== 'menu' || !b.closest('.menu')) return;
           if (d.m && b.closest('.ml')) { uiFm = d.m; uiFs = null; const ms = menu.querySelector('.ms'); if (ms) ms.hidden = d.m !== 'play'; for (const x of menu.querySelectorAll('.ml .act')) x.classList.remove('act'); }
           if (d.p) { uiFs = d.p; const pb = menu.querySelector('.ml [data-m="play"]'); if (pb) pb.classList.add('act'); }
-          if (d.o || d.go) uiFo = d.o || 'go';
+          if (d.o || d.st) uiFo = d.o || 'go';
         };
         const uiItems = root => [...root.querySelectorAll('.rb')].filter(b => b.offsetParent !== null && !b.classList.contains('dis'));
         const uiSetOn = (root, b) => { for (const x of root.querySelectorAll('.rb.on')) if (x !== b) x.classList.remove('on'); if (b && !b.classList.contains('on')) { b.classList.add('on'); uiOnFocus(b); } };
@@ -590,16 +590,17 @@
         const launch = () => { if (ui !== 'menu') return; audio(); if (saved.play === 'online') startOnline(); else startGame(saved.play === 'train' ? 'train' : 'cpu'); };
         api.on(menu, 'click', e => {
           if (ui !== 'menu') return;
-          const b = e.target.closest('button,[data-m],[data-go],[data-pe]'); if (!b || b.closest('.plb')) return;
+          const b = e.target.closest('button,[data-m],[data-st],[data-pe]'); if (!b || b.closest('.plb')) return;
           const d = b.dataset;
           audio(); api.sfx('tap');
-          if (d.go) { launch(); return; }
+          if (d.st) { launch(); return; }
           if (d.m === 'play') { uiFm = 'play'; uiFs = null; renderMenu(); return; }
           if (d.m === 'garage') { uiScr = 'garage'; uiPrev = null; uiPv = null; uiTC = 0; uiGc = 'body'; uiGf = 'cat'; uiGarAT = uiGarA = 0; renderMenu(); uiPose(); return; }
           if (d.m === 'pass') { uiScr = 'pass'; uiPf = Math.min(crTierN, uiTier() + (uiTier() < crTierN ? 1 : 0)); uiTC = 0; uiPassFocus(uiPf); return; }
           if (d.m === 'opts') { uiFm = 'opts'; if (uiOptTab === 'cred') uiOptTab = 'cam'; uiOptOpen(null); return; }
           if (d.m === 'cred') { uiFm = 'cred'; uiOptTab = 'cred'; uiOptOpen(null); return; }
           if (d.m === 'exit') { showTitle(); return; }
+          if (d.m === 'train') { saved.play = 'train'; api.save(saved); launch(); return; }
           if (d.m === 'back') { uiBack(); return; }
           if (d.m === 'tc') { uiTC = 1 - uiTC; uiPose(); renderMenu(); return; }
           if (d.m === 'gxp') { uiGxT = 0; uiGxPrev(uiGf === 'grid' && uiGi ? uiGi : uiEq('gx')); return; }
@@ -607,7 +608,7 @@
           if (d.gc) { uiGf = 'cat'; uiGarCat(d.gc); return; }
           if (d.gi != null) { if (uiEquip(uiGc, d.gi)) { uiGf = 'grid'; uiGi = d.gi; renderMenu(); } return; }
           if (d.pt) { uiPt = d.pt; uiGf = 'grid'; uiGi = uiEq('paint'); renderMenu(); return; }
-          if (d.sw) { uiPaintSet(d.sw, true); return; }
+          if (d.pc) { uiPaintSet(d.pc, true); return; }
           if (d.pd) { uiPaintSet(uiPt === 'a' ? crTeam[0].a : crTeam[uiTC].p, true); return; }
           if (d.tier) { uiPassFocus(+d.tier); return; }
           if (d.pe) { uiPassEquip(); return; }
@@ -767,6 +768,7 @@
         };
         const uiJoinLog = () => { uiLog.length = 0; for (const c of W.cars) uiLog.push(`<i class="p${c.team}">${esc(c.name)}</i> joined the match`); };
         const startGame = m => {
+          saved.name = uiProfName() || saved.name;
           mode = m === 'train' ? 'train' : 'cpu'; setLayout();
           W = mode === 'train' ? makeWorld({ mode: 'training', size: 1, bodies: [saved.car], names: [saved.name] }) : makeWorld({ size: saved.size, diff: saved.diff, len: saved.len, names: [saved.name], bodies: [saved.car, saved.car] });
           views[0].car = W.cars.find(c => !c.bot) || W.cars[0]; views[1].car = null;
@@ -1014,8 +1016,6 @@
           if (ui === 'lobby') {
             if (uiLbEl.hidden || (e.repeat && !/^Arrow/.test(c))) return;
             if (c === 'Escape' || c === 'Backspace') { uiConfirm('Leave Lobby', 'Are you sure you want to leave this private match?', () => showMenu()); return; }
-            const cur = uiLbEl.querySelector('.rb.on');
-            if (cur && cur.dataset.lo && /^(ArrowLeft|ArrowRight|KeyA|KeyD)$/.test(c)) { if (online && online.role === 'host') { uiLbStep(cur.dataset.lo, /Left|KeyA/.test(c) ? -1 : 1); uiTick(); } return; }
             uiNav(uiLbEl, e); return;
           }
           if (ui === 'end') {
@@ -1138,7 +1138,7 @@
         const uiNetRoom = () => !!(api.net && typeof api.net.room === 'function');
         const uiNetName = s => typeof s === 'string' && s.trim() ? s.replace(/[^\w .\-!?]/g, '').trim().slice(0, 16) || null : null;
         const uiPlClean = l => (Array.isArray(l) ? l : []).filter(p => p && typeof p.id === 'string').slice(0, 6).map(p => ({ id: p.id, name: uiNetName(p.name) || 'Player', host: !!p.host }));
-        const uiRoomOpts = () => ({ title: 'Rocket League · Private Match', text: 'Challenge a friend 1v1 (party of 2) or play 2v2 / 3v3 (party of 4 or 6). Only real players: bots join only if the host adds them in the match setup.', sizes: [2, 4, 6], defaultSize: 2, min: 2, max: 6, name: saved.name });
+        const uiRoomOpts = () => ({ title: 'Rocket League', sizes: [2, 4, 6], defaultSize: 2, min: 2, max: 6, bots: true, name: saved.name });
         const leaveOnline = () => { uiLbEl.hidden = true; if (!online) return; online = null; netGen++; try { api.net.close(); } catch (e) {   } };
         const uiPing = c => {
           if (!online || !online.ids) return 0;
@@ -1158,76 +1158,36 @@
           const o = online, L = o && o.L;
           if (!L) return;
           const ids = o.pl.map(p => p.id);
-          for (const k in L.tm) if (!ids.includes(k)) delete L.tm[k];
-          L.size = L.bots ? clamp(Math.max(L.size, Math.ceil(ids.length / 2)), 1, 3) : clamp(Math.ceil(ids.length / 2), 1, 3);
-          if (L.auto) { ids.forEach((id, i) => { L.tm[id] = i % 2; }); return; }
-          for (const id of ids) if (L.tm[id] !== 0 && L.tm[id] !== 1) { const n0 = ids.filter(x => L.tm[x] === 0).length, n1 = ids.filter(x => L.tm[x] === 1).length; L.tm[id] = n0 <= n1 ? 0 : 1; }
-          for (let t = 0; t < 2; t++) { const on = ids.filter(x => L.tm[x] === t); while (on.length > L.size) L.tm[on.pop()] = 1 - t; }
-          if (!L.bots && ids.length >= 2) for (let t = 0; t < 2; t++) { const on = ids.filter(x => L.tm[x] === t), ot = ids.filter(x => L.tm[x] === 1 - t); if (!on.length && ot.length > 1) L.tm[ot[ot.length - 1]] = t; }
-        };
-        const uiLbSend = back => {
-          const o = online;
-          if (!o || o.role !== 'host' || !o.L) return;
-          api.net.send({ t: 'lb', L: o.L, pl: o.pl, info: o.info, back: back ? 1 : 0 });
+          L.size = clamp(Math.max(L.bots ? Math.ceil((o.psz || 2) / 2) : 1, Math.ceil(ids.length / 2)), 1, 3);
+          L.tm = {}; ids.forEach((id, i) => { L.tm[id] = i % 2; });
         };
         const uiLbRender = () => {
           const o = online;
-          if (!o || ui !== 'lobby' || uiLbEl.hidden) return;
-          const L = o.L, host = o.role === 'host', fo = uiLbEl.querySelector('.rb.on'), fd = fo ? fo.dataset : {};
-          const code = api.net.code ? `<span class="lbc">Code<b>${esc(api.net.code)}</b></span>` : '';
-          if (!L) { uiLbEl.innerHTML = `<div class="lbx pnl"><div class="lbh"><h2 class="pt">Private Match</h2>${code}</div><div class="md">Connecting to the host…</div><div class="lbb" data-h="1"><button class="rb on" data-la="leave">Leave</button></div></div>`; return; }
-          const seat = t => {
-            const hs = o.pl.filter(p => L.tm[p.id] === t);
-            let h = '';
-            for (const p of hs) {
-              const inf = o.info[p.id] || {}, me = p.id === o.id, mv = host && !L.auto, tg = mv ? 'button' : 'div';
-              h += `<${tg} class="lsp${me ? ' me' : ''}${mv ? ' mv' : ''}" data-pid="${esc(p.id)}"><span class="av">${uiAv(null, t)}</span><b>${esc(p.name || inf.name || 'Player')}</b><small>${esc(BODIES[inf.car] ? BODIES[inf.car].name : 'Octane')}${p.host ? ' · Host' : ''}${me ? ' · You' : ''}</small></${tg}>`;
-            }
-            if (L.bots) for (let i = hs.length; i < L.size; i++) h += `<div class="lsp bt"><span class="av">${uiAv({ team: t, bot: true })}</span><b>Bot</b><small>${esc(uiDName(L.diff))}</small></div>`;
-            if (!hs.length && !L.bots) h += `<div class="lsp bt"><b>Empty</b><small>No bots</small></div>`;
-            return `<div class="lbs t${t}"><h3>${TEAMN[t]}</h3>${h}</div>`;
-          };
-          const it = k => (uiOS[k].find(x => x[0] === L[k]) || uiOS[k][0])[1];
-          const row = (k, t, val, ro) => `<button class="rb so${host && !ro ? '' : ' ro'}${fd.lo === k ? ' on' : ''}" data-lo="${k}"><span>${t}</span><i data-dd="-1">‹</i><b>${esc(val)}</b><i data-dd="1">›</i></button>`;
-          const btn = (a, t) => `<button class="rb${fd.la === a ? ' on' : ''}" data-la="${a}">${t}</button>`;
-          const nh = o.pl.length, n0 = o.pl.filter(p => L.tm[p.id] === 0).length, sz = L.bots ? uiSZ[L.size] : Math.max(n0, nh - n0) + 'v' + Math.min(n0, nh - n0) + ' · Humans only';
-          const msg = host ? (L.auto ? 'Teams are balanced automatically. ' : 'Click a player to move them to the other team. ') + (L.bots ? 'Bots fill the empty seats.' : 'No bots: only the players in this party.') : 'Waiting for the host to start the match…';
-          uiLbEl.innerHTML = `<div class="lbx pnl"><div class="lbh"><h2 class="pt">Private Match</h2>${code}</div><div class="lbt">${seat(0)}${seat(1)}</div><div class="lbo">${row('bots', 'Bots', L.bots ? 'On' : 'Off')}${row('size', 'Team Size', sz, !L.bots)}${L.bots ? row('diff', 'Bot Difficulty', it('diff')) : ''}${row('len', 'Match Length', it('len'))}${row('auto', 'Teams', L.auto ? 'Auto-Balance' : 'Host Picks')}</div><div class="lbb" data-h="1">${host ? btn('go', 'Start Match') : ''}${btn('sw', 'Switch Team')}${host && uiNetRoom() ? btn('inv', 'Invite Players') : ''}${btn('leave', 'Leave')}</div><div class="md">${esc(msg)}</div></div>`;
-          if (!uiLbEl.querySelector('.rb.on') && !coarse) { const b = uiLbEl.querySelector(host ? '[data-la="go"]' : '[data-la="sw"]'); if (b) b.classList.add('on'); }
+          if (!o || ui !== 'lobby') return;
+          const host = o.role === 'host', code = api.net.code ? `<span class="lbc">Party<b>${esc(api.net.code)}</b></span>` : '';
+          const L = o.L, n = o.pl.length, sz = L ? uiSZ[L.size] + ' · ' + (L.bots ? 'Bots fill empty seats' : 'Players only') : '';
+          uiLbEl.innerHTML = `<div class="lbx pnl"><div class="lbh"><h2 class="pt">Private Match</h2>${code}</div><div class="md">${host ? 'Starting the match' : 'Waiting for the host to start the match'} · ${n} player${n === 1 ? '' : 's'}${sz ? ' · ' + esc(sz) : ''}<i class="lbw"></i></div><div class="lbb" data-h="1"><button class="rb${coarse ? '' : ' on'}" data-la="leave">Leave</button></div></div>`;
+          uiLbEl.hidden = false;
         };
-        const uiLbStep = (k, d) => {
-          const o = online, L = o && o.L;
-          if (!L || o.role !== 'host') return;
-          if (k === 'auto') L.auto = !L.auto;
-          else if (k === 'bots') { L.bots = !L.bots; if (L.bots) L.size = Math.max(L.size, o.psz ? o.psz / 2 : 1); }
-          else if (k === 'size' && !L.bots) return;
-          else if (uiOS[k]) {
-            const opts = uiOS[k].map(x => x[0]), min = k === 'size' ? Math.ceil(o.pl.length / 2) : 0;
-            let i = Math.max(0, opts.indexOf(L[k]));
-            for (let n = 0; n < opts.length; n++) { i = (i + d + opts.length) % opts.length; if (k !== 'size' || opts[i] >= min) break; }
-            L[k] = opts[i]; saved[k] = L[k]; api.save(saved);
-          }
-          uiLbFix(); uiLbSend(); uiLbRender();
+        let uiLbT = 0;
+        const uiLbTry = force => {
+          const o = online;
+          if (!o || o.role !== 'host' || ui !== 'lobby' || !o.L) return;
+          if (force || o.pl.every(p => o.info[p.id])) hostStart();
         };
-        const uiLbMove = id => {
-          const o = online, L = o && o.L;
-          if (!L || o.role !== 'host' || (L.tm[id] !== 0 && L.tm[id] !== 1)) return;
-          const t = 1 - L.tm[id];
-          if (o.pl.filter(p => L.tm[p.id] === t).length >= L.size) { if (L.size < 3) L.size++; else return; }
-          L.auto = false; L.tm[id] = t;
-          uiLbFix(); uiLbSend(); uiLbRender();
-        };
-        const uiLbEnter = back => {
+        const uiLbEnter = () => {
           const o = online;
           if (!o) return;
           ui = 'lobby'; mode = 'online'; paused = false; uiHideAll(); hideViews(); setLayout(false); uiShowWorld();
           Object.assign(o, { G: null, H: null, votes: new Set(), left: false, evq: [] });
           if (o.role === 'host') {
+            for (const k in o.info) delete o.info[k];
             o.info[o.id] = { car: saved.car, name: saved.name, ld: uiLO(saved.car) };
-            if (!o.L) o.L = { size: clamp(o.psz ? o.psz / 2 : Math.ceil(o.pl.length / 2), 1, 3), diff: saved.diff, len: saved.len, auto: true, bots: false, tm: {} };
-            uiLbFix(); uiLbSend(back);
+            o.L = { size: 1, diff: saved.diff, len: saved.len, auto: true, bots: !!o.rb, tm: {} };
+            uiLbFix();
           } else api.net.send({ t: 'hi', car: saved.car, name: saved.name, ld: uiLO(saved.car) });
-          uiLbEl.hidden = false; uiLbRender();
+          uiLbRender();
+          if (o.role === 'host') { const k = ++uiLbT, w0 = o; uiLbTry(); api.timeout(() => { if (!dead && k === uiLbT && online === w0) uiLbTry(true); }, 2500); }
         };
         const uiRoomAgain = async () => {
           const o = online;
@@ -1239,8 +1199,8 @@
           try { r = await api.net.room(uiRoomOpts()); } catch (e) { r = null; }
           if (dead || gen !== netGen || online !== o) return;
           if (!r) { online = null; showMenu(); return; }
-          o.pl = uiPlClean(r.players); if ([2, 4, 6].includes(r.size)) o.psz = r.size;
-          uiLbEnter();
+          o.pl = uiPlClean(r.players); o.psz = clamp(r.size | 0 || o.pl.length, 2, 6); o.rb = !!r.bots;
+          if (ui === 'lobby') uiLbEnter();
         };
         const uiStartMsg = () => { const o = online; return { t: 'start', mid: o.mid, size: o.L.size, diff: o.L.diff, len: o.L.len, seed: o.seed, roster: o.roster, ids: o.ids }; };
         const hostStart = () => {
@@ -1299,7 +1259,7 @@
           o.votes.add(o.id);
           if (o.role === 'host') uiVoteSync(); else { api.net.send({ t: 'rm' }); uiEndRefresh(); }
         };
-        const uiLbBack = () => { if (online && online.role === 'host') uiLbEnter(true); };
+        const uiLbBack = () => { if (online && online.role === 'host') uiRoomAgain(); };
         const uiNetLeave = p => {
           const o = online;
           if (!o || o.role !== 'host' || !p || typeof p.id !== 'string') return;
@@ -1313,8 +1273,7 @@
             const msg = `<i class="p${c.team}">${esc(c.name)}</i> left the match · a bot takes the seat`;
             if (ui === 'play') feedMsg(msg); uiLog.push(msg); if (ui === 'end') uiEndChat();
           }
-          if (ui === 'lobby') { uiLbFix(); uiLbRender(); }
-          uiLbSend();
+          if (ui === 'lobby') { uiLbFix(); uiLbRender(); uiLbTry(); }
           if (ui === 'end') uiVoteSync();
         };
         const uiNetRejoin = p => {
@@ -1322,7 +1281,6 @@
           if (!o || o.role !== 'host' || !p) return;
           const i = o.ids ? o.ids.indexOf(p.id) : -1;
           if (i >= 0 && o.H && (ui === 'play' || ui === 'end')) { o.H.seat(p.id, W.cars[i]); api.net.sendTo(p.id, uiStartMsg()); }
-          uiLbSend();
         };
         const onNet = (m, from) => {
           if (!online || !m || typeof m !== 'object' || online.left) return;
@@ -1340,23 +1298,15 @@
             if (m.t === 'hi') {
               o.info[fid] = { car: BODIES[m.car] ? m.car : 'octane', name: uiNetName(m.name) || 'Player', ld: crLdClean(m.ld, BODIES[m.car] ? m.car : 'octane') };
               if (!o.room) { const p = o.pl.find(x => x.id === fid); if (p) p.name = o.info[fid].name; }
-              if (ui === 'lobby') { uiLbFix(); uiLbSend(); uiLbRender(); } else uiLbSend();
+              if (ui === 'lobby') uiLbTry();
               if (o.ids && o.ids.includes(fid) && o.H && (ui === 'play' || ui === 'end')) api.net.sendTo(fid, uiStartMsg());
               return;
             }
-            if (m.t === 'sw') { if (ui === 'lobby') uiLbMove(fid); return; }
             if (m.t === 'rm') { if (ui === 'end' && uiHumans().includes(fid)) { o.votes.add(fid); uiVoteSync(); } return; }
             return;
           }
           if (m.t === 's') { if (m.m === o.mid && o.G) { o.G.snap(m); if (Array.isArray(m.e)) for (const x of m.e) o.evq.push(x); if (m.ss) applyStats(m.ss); } return; }
           if (m.t === 'start') { guestStart(m); return; }
-          if (m.t === 'lb') {
-            if (m.L && typeof m.L === 'object') o.L = { size: clamp(m.L.size | 0, 1, 3), diff: DIFF[m.L.diff] ? m.L.diff : 'pro', len: [180, 300, 600].includes(m.L.len) ? m.L.len : 300, auto: !!m.L.auto, bots: !!m.L.bots, tm: m.L.tm && typeof m.L.tm === 'object' ? m.L.tm : {} };
-            if (Array.isArray(m.pl)) o.pl = uiPlClean(m.pl);
-            if (m.info && typeof m.info === 'object') o.info = m.info;
-            if (m.back && ui !== 'lobby') uiLbEnter(); else uiLbRender();
-            return;
-          }
           if (m.t === 'vt') { o.votes = new Set(Array.isArray(m.ids) ? m.ids.filter(x => typeof x === 'string') : []); if (ui === 'end') uiEndRefresh(); }
         };
         const bindNet = () => {
@@ -1375,7 +1325,7 @@
           }
         };
         const startOnline = async () => {
-          leaveOnline();
+          leaveOnline(); saved.name = uiProfName() || saved.name;
           const n = api.net, gen = ++netGen;
           if (!n) { showMenu(); return; }
           bindNet();
@@ -1391,8 +1341,8 @@
           } catch (e) { r = null; }
           if (dead || gen !== netGen || !online) return;
           if (!r || (r.role !== 'host' && r.role !== 'guest')) { online = null; showMenu(); return; }
-          online.role = r.role; online.id = r.id; online.pl = uiPlClean(r.players); online.psz = [2, 4, 6].includes(r.size) ? r.size : 0;
-          uiLbEnter();
+          online.role = r.role; online.id = r.id; online.pl = uiPlClean(r.players); online.psz = clamp(r.size | 0 || online.pl.length, 2, 6); online.rb = !!r.bots;
+          if (ui === 'lobby') uiLbEnter();
         };
         const hostSend = () => {
           const o = online;
@@ -1425,14 +1375,9 @@
         };
         api.on(uiLbEl, 'click', e => {
           if (ui !== 'lobby' || !online) return;
-          const b = e.target.closest('[data-lo],[data-la],[data-pid]');
+          const b = e.target.closest('[data-la]');
           if (!b) return;
           audio(); api.sfx('tap');
-          const d = b.dataset, host = online.role === 'host';
-          if (d.lo) { if (host) { const dd = e.target.closest('[data-dd]'); uiLbStep(d.lo, dd ? +dd.dataset.dd : 1); } return; }
-          if (d.pid) { if (host && online.L && !online.L.auto) uiLbMove(d.pid); return; }
-          if (d.la === 'go') { if (host) hostStart(); return; }
-          if (d.la === 'sw') { if (host) uiLbMove(online.id); else api.net.send({ t: 'sw' }); return; }
-          if (d.la === 'inv') { if (host) uiRoomAgain(); return; }
+          const d = b.dataset;
           if (d.la === 'leave') showMenu();
         });

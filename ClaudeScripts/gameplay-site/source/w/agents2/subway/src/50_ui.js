@@ -4,9 +4,9 @@
     key: '<svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="5" fill="none" stroke="#ff3d3d" stroke-width="3.2"/><path d="M12.5 12H22M19 12v4M16 12v3" stroke="#ff3d3d" stroke-width="3.2" stroke-linecap="round"/><circle cx="8" cy="12" r="5" fill="none" stroke="#8a0f12" stroke-width="1" opacity=".6"/></svg>',
     board: '<svg viewBox="0 0 24 24"><rect x="2" y="8.5" width="20" height="7" rx="3.5" fill="#ff4fa3" stroke="#8a1f5a" stroke-width="1.4"/><rect x="5" y="10.4" width="14" height="3.2" rx="1.6" fill="#ffd23f"/><path d="M7 18h10" stroke="#3ad1ff" stroke-width="2" stroke-linecap="round"/></svg>',
     crown: '<svg viewBox="0 0 24 24"><path d="M3 18l1.5-10 5 4.5L12 5l2.5 7.5 5-4.5L21 18z" fill="#ffd23f" stroke="#a87400" stroke-width="1.5" stroke-linejoin="round"/></svg>',
-    jet: '<svg viewBox="0 0 24 24"><rect x="4.5" y="3" width="6" height="13" rx="3" fill="#ff5a3a" stroke="#8a1f12" stroke-width="1.2"/><rect x="13.5" y="3" width="6" height="13" rx="3" fill="#ff5a3a" stroke="#8a1f12" stroke-width="1.2"/><path d="M5.5 17h4l-2 5zM14.5 17h4l-2 5z" fill="#ffd23f"/></svg>',
-    sneak: '<svg viewBox="0 0 24 24"><path d="M3 15c0-3 1-7 3-8l3 3c2 1 5 1 7 2s5 1 5 4v1H3z" fill="#3ad16b" stroke="#145a2a" stroke-width="1.3" stroke-linejoin="round"/><path d="M3 16h18v2.5H3z" fill="#fff" stroke="#145a2a" stroke-width="1.2"/><path d="M8 4l2-2M11 5l2.5-2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>',
-    mag: '<svg viewBox="0 0 24 24"><path d="M5 4v8a7 7 0 0014 0V4h-4.5v8a2.5 2.5 0 01-5 0V4z" fill="#e8343a" stroke="#7a1015" stroke-width="1.3"/><path d="M5 4h4.5v3H5zM14.5 4H19v3h-4.5z" fill="#e6e9ef"/></svg>',
+    jet: '<svg viewBox="0 0 24 24"><rect x="4.5" y="3" width="6" height="13" rx="3" fill="#7cd23a" stroke="#2f6a12" stroke-width="1.2"/><rect x="13.5" y="3" width="6" height="13" rx="3" fill="#7cd23a" stroke="#2f6a12" stroke-width="1.2"/><path d="M4.5 6a3 3 0 016 0zM13.5 6a3 3 0 016 0z" fill="#ff8a1a"/><path d="M5.5 17h4l-2 5zM14.5 17h4l-2 5z" fill="#ffd23f"/></svg>',
+    sneak: '<svg viewBox="0 0 24 24"><path d="M3 15c0-3 1-7 3-8l3 3c2 1 5 1 7 2s5 1 5 4v1H3z" fill="#ff9a1a" stroke="#8a4a00" stroke-width="1.3" stroke-linejoin="round"/><path d="M3 16h18v2.5H3z" fill="#ffcf3a" stroke="#8a4a00" stroke-width="1.2"/><path d="M7 9l2-2.5 2 2.5M9 6.5V12" stroke="#7cf03a" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>',
+    mag: '<svg viewBox="0 0 24 24"><path d="M5 4v8a7 7 0 0014 0V4h-4.5v8a2.5 2.5 0 01-5 0V4z" fill="#e8343a" stroke="#7a1015" stroke-width="1.3"/><path d="M5 4h4.5v3H5zM14.5 4H19v3h-4.5z" fill="#ffd23f"/></svg>',
     x2: '<svg viewBox="0 0 24 24"><path d="M12 1.5l3 6.3 6.9.9-5 4.8 1.3 6.8L12 17l-6.2 3.3 1.3-6.8-5-4.8 6.9-.9z" fill="#ffc21a" stroke="#a86a00" stroke-width="1.3" stroke-linejoin="round"/><text x="12" y="14.6" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="7" fill="#7a3a00">2X</text></svg>',
     mbox: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="#9a3cff" stroke="#ffd23f" stroke-width="2"/><text x="12" y="17.5" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="14" fill="#ffd23f">?</text></svg>',
     pause: '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4.2" height="14" rx="1.4" fill="#fff"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.4" fill="#fff"/></svg>',
@@ -29,21 +29,23 @@ ${SC} .ss-ic{display:inline-block;width:1.2em;height:1.2em;flex:none;vertical-al
 ${SC} .ss-ic svg{width:100%;height:100%;display:block}
 ${SC} .ss-pause{position:absolute;left:2.4%;top:3.2%;width:3.1em;height:3.1em;border-radius:.8em;background:linear-gradient(#4fb3ff,#1f6fd9);border:.18em solid #fff;box-shadow:0 .25em 0 #12224a;display:grid;place-items:center}
 ${SC} .ss-pause svg{width:62%}
-${SC} .ss-tr{position:absolute;right:2.4%;top:3%;display:flex;flex-direction:column;align-items:flex-end;gap:.45em}
-${SC} .ss-score{display:flex;align-items:center;gap:.4em;font-size:2.35em;${OUT}}
-${SC} .ss-mult{font-size:.62em;background:linear-gradient(#ffe25a,#ffb31a);color:#7a3a00;text-shadow:none;border:.12em solid #fff;border-radius:.5em;padding:.18em .34em .1em;box-shadow:0 .15em 0 #12224a;transition:transform .2s}
-${SC} .ss-mult.x2{background:linear-gradient(#ff8a5a,#e8323a);color:#fff}
+${SC} .ss-tr{position:absolute;right:2%;top:2.6%;display:flex;flex-direction:column;align-items:flex-end;gap:.28em}
+${SC} .ss-score{display:flex;align-items:stretch;gap:.22em;font-size:2.05em;${OUT}}
+${SC} .ss-mult{color:#ffd23f;background:rgba(22,34,52,.52);border-radius:.28em;padding:.16em .32em .08em;transition:transform .2s;font-variant-numeric:tabular-nums}
+${SC} .ss-sv{font-weight:400;background:rgba(22,34,52,.52);border-radius:.28em;padding:.16em .32em .08em;letter-spacing:.04em;font-variant-numeric:tabular-nums;min-width:4.1em;text-align:center}
+${SC} .ss-mult.x2{color:#ff9a3a}
 ${SC} .ss-mult.pop{transform:scale(1.35)}
-${SC} .ss-pill{display:flex;align-items:center;gap:.35em;font-size:1.55em;${OUT}}
+${SC} .ss-pill{display:flex;align-items:center;gap:.3em;font-size:1.55em;background:rgba(22,34,52,.52);border-radius:.28em;padding:.16em .32em .08em;${OUT}}
+${SC} .ss-pill b{font-weight:400;font-variant-numeric:tabular-nums}
 ${SC} .ss-pill .ss-ic{width:1.15em;height:1.15em;filter:drop-shadow(0 2px 0 rgba(0,0,0,.35))}
 ${SC} .ss-keyp{transition:opacity .3s}
 ${SC} .ss-keyp.hide{opacity:0}
-${SC} .ss-pus{position:absolute;right:2.4%;top:28%;display:flex;flex-direction:column;gap:.5em;align-items:flex-end}
-${SC} .ss-pu{display:flex;align-items:center;gap:.4em;background:rgba(18,34,74,.55);border:.12em solid rgba(255,255,255,.85);border-radius:2em;padding:.25em .5em .25em .3em}
-${SC} .ss-pu .ss-ic{width:1.9em;height:1.9em}
-${SC} .ss-pu i{display:block;width:5.2em;height:.62em;border-radius:1em;background:rgba(0,0,0,.4);overflow:hidden}
-${SC} .ss-pu i b{display:block;height:100%;border-radius:1em;background:linear-gradient(#9cff5a,#36c21a)}
-${SC} .ss-pu.low i b{background:linear-gradient(#ffd23f,#ff7a1a)}
+${SC} .ss-pus{position:absolute;left:2%;bottom:4%;display:flex;flex-direction:column-reverse;gap:.45em;align-items:flex-start}
+${SC} .ss-pu{display:flex;align-items:center;gap:.3em}
+${SC} .ss-pu .ss-ic{width:2.1em;height:2.1em;background:linear-gradient(#ffffff,#d9e2ec);border:.12em solid #2a3a52;border-radius:.4em;padding:.15em;box-sizing:border-box;box-shadow:0 .12em 0 rgba(0,0,0,.35)}
+${SC} .ss-pu i{display:block;width:6.4em;height:1.15em;border-radius:.3em;background:#fff;border:.12em solid #2a3a52;padding:.14em;box-sizing:border-box;box-shadow:0 .12em 0 rgba(0,0,0,.35)}
+${SC} .ss-pu i b{display:block;height:100%;border-radius:.12em;background:repeating-linear-gradient(90deg,#4fd12a 0 .3em,#2f9a14 .3em .38em)}
+${SC} .ss-pu.low i b{background:repeating-linear-gradient(90deg,#ffb31a 0 .3em,#d9700a .3em .38em)}
 ${SC} .ss-hb{position:absolute;right:2.4%;bottom:4%;width:5em;height:5em;border-radius:50%;background:radial-gradient(circle at 50% 35%,#ff8ac6,#d61f7c);border:.2em solid #fff;box-shadow:0 .28em 0 #12224a;display:grid;place-items:center;transition:transform .12s,opacity .2s}
 ${SC} .ss-hb .ss-ic{width:64%;height:64%}
 ${SC} .ss-hb b{position:absolute;right:-.3em;bottom:-.25em;min-width:1.6em;height:1.6em;display:grid;place-items:center;border-radius:1em;background:#ffd23f;color:#7a3a00;border:.12em solid #fff;font-size:.95em}
@@ -65,9 +67,10 @@ ${SC} .ss-bar{display:flex;gap:.6em;justify-content:flex-end;width:100%;flex-wra
 ${SC} .ss-chip{display:flex;align-items:center;gap:.35em;background:rgba(18,34,74,.6);border:.13em solid rgba(255,255,255,.9);border-radius:2em;padding:.3em .75em .3em .35em;font-size:1.2em;${OUT}}
 ${SC} .ss-chip .ss-ic{width:1.35em;height:1.35em}
 ${SC} .ss-mid{flex:1;display:flex;align-items:flex-start;justify-content:space-between;width:100%;padding-top:1.2em}
-${SC} .ss-logo{font-size:3.6em;line-height:.86;transform:rotate(-4deg);transform-origin:left;text-shadow:0 .06em 0 #12224a,0 -.06em 0 #12224a,.06em 0 0 #12224a,-.06em 0 0 #12224a,.05em .05em 0 #12224a,-.05em .05em 0 #12224a,.05em -.05em 0 #12224a,-.05em -.05em 0 #12224a,0 .13em 0 rgba(0,0,0,.3)}
-${SC} .ss-logo span{display:block;color:#ffd23f}
-${SC} .ss-logo span+span{color:#ff6a2a;margin-left:.3em}
+${SC} .ss-logo{font-size:3.7em;line-height:.84;transform:rotate(-5deg);transform-origin:left;filter:drop-shadow(0.035em 0em 0 #12224a) drop-shadow(-0.035em 0em 0 #12224a) drop-shadow(0em 0.035em 0 #12224a) drop-shadow(0em -0.035em 0 #12224a) drop-shadow(0.075em 0em 0 #3aa8ff) drop-shadow(-0.075em 0em 0 #3aa8ff) drop-shadow(0em 0.075em 0 #3aa8ff) drop-shadow(0em -0.075em 0 #3aa8ff) drop-shadow(0.03em 0em 0 #12224a) drop-shadow(-0.03em 0em 0 #12224a) drop-shadow(0em 0.03em 0 #12224a) drop-shadow(0em -0.03em 0 #12224a) drop-shadow(0 .09em 0 rgba(0,0,0,.3))}
+${SC} .ss-logo span{display:block;white-space:nowrap}
+${SC} .ss-logo i{display:inline-block;font-style:normal;color:#ffc21a;background:linear-gradient(#fffbb0 8%,#ffd83a 42%,#ff9a1a 92%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;transform:rotate(var(--r)) translateY(var(--y))}
+${SC} .ss-logo span+span{margin-left:.25em;font-size:1.12em}
 ${SC} .ss-tour{background:linear-gradient(#4fb3ff,#1f6fd9);border:.18em solid #fff;border-radius:1em;box-shadow:0 .3em 0 #12224a;padding:.55em .7em .6em;text-align:center;min-width:12em}
 ${SC} .ss-tour small{display:block;font-size:.8em;color:#ffd23f;${OUT};margin-bottom:.3em}
 ${SC} .ss-tour .row{display:flex;align-items:center;justify-content:space-between;gap:.4em}
@@ -143,16 +146,38 @@ ${SC} .ss-ring .k .ss-ic{width:3.6em;height:3.6em}
 ${SC} .ss-small{font-family:"Nunito",system-ui,sans-serif;font-weight:800;font-size:.9em;opacity:.9;letter-spacing:0;margin:.4em 0 0}
 ${SC} .ss-toast{position:absolute;left:50%;bottom:22%;transform:translateX(-50%);background:rgba(18,34,74,.75);border:.13em solid #fff;border-radius:1em;padding:.5em .9em .4em;font-size:1.1em;opacity:0;transition:opacity .25s;white-space:nowrap;${OUT}}
 ${SC} .ss-toast.on{opacity:1}
+${SC} .ss-card{background:repeating-linear-gradient(0deg,rgba(70,100,140,.09) 0 1px,transparent 1px 1.3em),repeating-linear-gradient(90deg,rgba(70,100,140,.09) 0 1px,transparent 1px 1.3em),linear-gradient(#fbfcfd,#e9eef3);border:0;border-radius:.55em;box-shadow:0 .32em 0 #8d99a8,0 1em 2.6em rgba(0,0,0,.4);padding:2.3em 1.1em 1.2em}
+${SC} .ss-card:before{content:"";position:absolute;left:.9em;right:.9em;top:.25em;height:1.5em;background:repeating-linear-gradient(90deg,transparent 0 .32em,#6f7882 .32em .44em,#eef1f4 .44em .6em,#6f7882 .6em .7em,transparent .7em 1.15em);border-radius:.3em;pointer-events:none}
+${SC} .ss-card:after{content:"";position:absolute;left:.9em;right:.9em;top:1.45em;height:.42em;background:radial-gradient(circle at .51em 50%,#3a4250 .17em,transparent .19em) 0 0/1.15em 100% repeat-x;pointer-events:none}
+${SC} .ss-card h3{color:#1f56a8;text-shadow:0 .06em 0 #fff,0 .1em 0 rgba(0,0,0,.12);letter-spacing:.01em}
+${SC} .ss-card .x{right:auto;left:-.2em;top:-.2em;z-index:1}
+${SC} .ss-row{background:linear-gradient(#7189a8,#4b6385);border:.12em solid #33465f;border-radius:.45em;box-shadow:inset 0 .12em 0 rgba(255,255,255,.25)}
+${SC} .ss-row .t b{color:#ffd23f}
+${SC} .ss-row.done{background:linear-gradient(#5fbf3a,#3a9420)}
+${SC} .ss-row.done .t b{color:#fff}
+${SC} .ss-tabs button{background:linear-gradient(#7189a8,#4b6385);border-color:#33465f}
+${SC} .ss-multi{color:#1d3f73;text-shadow:none}
+${SC} .ss-multi b{color:#fff;background:#33465f;border-radius:.4em;padding:.15em .45em .05em;${OUT}}
+${SC} .ss-small{color:#3d5070;opacity:1}
+${SC} .ss-res div{background:linear-gradient(#4a92ea,#1f60c4);border:.14em solid #12407f;box-shadow:inset 0 0 0 .14em rgba(255,255,255,.55)}
+${SC} .ss-res small{color:#ffd23f;${OUT}}
+${SC} .ss-char{background:rgba(75,99,133,.14);border-color:rgba(51,70,95,.45)}
+${SC} .ss-char.sel{border-color:#2e9a1a;background:rgba(95,191,58,.2)}
+${SC} .ss-char b{color:#1f56a8;text-shadow:0 .06em 0 #fff}
+${SC} .ss-btn{background:linear-gradient(#6f86a6,#3d5070);border-color:#fff}
+${SC} .ss-btn.g{background:linear-gradient(#7be04a,#2e9a1a)}
+${SC} .ss-dim{background:rgba(8,18,44,.45)}
 @container (max-width: 640px){${SC} .ss-hud,${SC} .ss-scr{font-size:clamp(10px,3.1cqw,18px)}${SC} .ss-logo{font-size:3em}${SC} .ss-mid{flex-direction:column;gap:1em;align-items:center}${SC} .ss-logo{transform:rotate(-4deg);transform-origin:center;text-align:center}}
 `;
   const ic = k => `<span class="ss-ic">${ICO[k]}</span>`;
+  const logoW = (w, o) => [...w].map((c, i) => `<i style="--r:${[-7, 5, -3, 6, -5, 4, -6][(i + o) % 7]}deg;--y:${[0.03, -0.05, 0.02, -0.03, 0.05, -0.02, 0][(i + o) % 7]}em">${c}</i>`).join('');
   const HTML = `
 <div class="ss-hud off">
   <button class="ss-pause" aria-label="Pause">${ICO.pause}</button>
   <div class="ss-tr">
     <div class="ss-score"><span class="ss-mult">x1</span><b class="ss-sv">0</b></div>
-    <div class="ss-pill">${ic('coin')}<b class="ss-cv">0</b></div>
-    <div class="ss-pill ss-keyp hide">${ic('key')}<b class="ss-kv">0</b></div>
+    <div class="ss-pill"><b class="ss-cv">0</b>${ic('coin')}</div>
+    <div class="ss-pill ss-keyp hide"><b class="ss-kv">0</b>${ic('key')}</div>
   </div>
   <div class="ss-pus"></div>
   <button class="ss-hb" aria-label="Hoverboard">${ic('board')}<b class="ss-hbn">0</b></button>
@@ -164,7 +189,7 @@ ${SC} .ss-toast.on{opacity:1}
 <div class="ss-scr ss-home">
   <div class="ss-bar"><div class="ss-chip">${ic('crown')}<b class="h-best">0</b></div><div class="ss-chip">${ic('coin')}<b class="h-coins">0</b></div><div class="ss-chip">${ic('key')}<b class="h-keys">0</b></div><div class="ss-chip">${ic('board')}<b class="h-boards">0</b></div></div>
   <div class="ss-mid">
-    <div class="ss-logo"><span>SUBWAY</span><span>SURFERS</span></div>
+    <div class="ss-logo"><span>${logoW('SUBWAY', 0)}</span><span>${logoW('SURFERS', 3)}</span></div>
     <div class="ss-tour"><small>WORLD TOUR</small><div class="row"><button class="t-prev" aria-label="Previous city">&#9664;</button><b class="t-name">Subway City</b><button class="t-next" aria-label="Next city">&#9654;</button></div><div class="sub t-sub"></div></div>
   </div>
   <div class="ss-bot">

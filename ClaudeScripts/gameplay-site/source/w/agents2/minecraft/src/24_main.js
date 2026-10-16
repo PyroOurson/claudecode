@@ -1,11 +1,11 @@
-    let panoReady = false, panoA = 0, acc = 0, fpsN = 0, fpsT = 0, loadT0 = 0, selfE = null, handG = null, handArm = null, handItem = null, handId = -2, lightF = 0, rainP = null, flash = 0;
+    let blurOn = false, panoReady = false, panoA = 0, acc = 0, fpsN = 0, fpsT = 0, loadT0 = 0, selfE = null, handG = null, handArm = null, handItem = null, handId = -2, lightF = 0, rainP = null, flash = 0;
     const V3 = new THREE.Vector3(), V3b = new THREE.Vector3();
     const stopMusic = () => { };
     function burstAt(x, y, z, rgb, n) { for (let i = 0; i < n * 3; i++) particle(x, y + .2, z, (RNG() - .5) * 2, RNG() * 2, (RNG() - .5) * 2, rgb, .6, .08, 6); }
     P.name = myName();
     function remeshAll() { if (!W) return; FANCY = SET.fancy; W.cols.forEach(c => { if (c.meshed) for (let s = 0; s < NSEC; s++) if (c.s[s] || c.m[s]) { c.md[s] = 1; W.dirty.add(c); } }); }
     function resetPlayer() {
-      Object.assign(P, { x: .5, y: 100, z: .5, px: .5, py: 100, pz: .5, vx: 0, vy: 0, vz: 0, hp: 20, food: 20, sat: 5, exh: 0, air: 300, fall: 0, fly: false, xp: 0, lvl: 0, score: 0, dead: false, sleeping: 0, effects: {}, fire: 0, absorb: 0, spawn: null, hurtT: 0, place: true, yaw: 0, pitch: 0 });
+      Object.assign(P, { st: {}, adv: {}, x: .5, y: 100, z: .5, px: .5, py: 100, pz: .5, vx: 0, vy: 0, vz: 0, hp: 20, food: 20, sat: 5, exh: 0, air: 300, fall: 0, fly: false, xp: 0, lvl: 0, score: 0, dead: false, sleeping: 0, effects: {}, fire: 0, absorb: 0, spawn: null, hurtT: 0, place: true, yaw: 0, pitch: 0 });
       inv = new Array(36).fill(null); armor = [null, null, null, null]; offhand = null; craft2.fill(null); craft3.fill(null); cursor = null; sel = 0; ender = new Array(27).fill(null);
       gui = null; mine = null; eating = null; drawing = null; attackHeld = useHeld = false; chatOpen = false;
     }
@@ -30,7 +30,7 @@
       P.name = NET.role ? P.name : myName();
       startWorkers();
       tickN = 0; simT = 0; acc = 0; loadT0 = performance.now(); NET.ready = !o.remote; FANCY = SET.fancy;
-      if (!o.pano) { scr = 'loading'; loadMsg = 'Loading terrain...'; loadP = 0; }
+      if (!o.pano) { grab(); scr = 'loading'; loadMsg = 'Loading terrain...'; loadP = 0; }
       return W;
     }
     function startPano() {
@@ -197,6 +197,8 @@
       if (host) weatherTick();
       if (P.dead) { deadT++; if (W.rules.doImmediateRespawn && deadT > 2 && !W.hardcore) respawn(); }
       tickPlayer();
+      if (!P.dead && !W.pano && scr === 'game') { stat('play'); stat('sinceDeath'); const dh = Math.hypot(P.x - P.px, P.z - P.pz) * 100; if (dh > 0 && dh < 300) stat(P.fly ? 'flyCm' : P.eyeW ? 'swimCm' : P.sprint ? 'sprintCm' : 'walkCm', dh); if (P.y < P.py && !P.fly) stat('fallCm', (P.py - P.y) * 100); }
+      advTick();
       tickInteract();
       if (host) { tickEnts(); tickSched(); randomTicks(); tickFurnaces(); if (tickN % 2 === 0) checkPlates(); spawnTick(); if (W.pendSpawn) flushPendSpawn(); if (W.pendEnts && nearMeshed(1) >= 1) spawnSaved(); }
       tickMirrors();
@@ -262,7 +264,7 @@
       cloudU.off.value.set((W.time + alpha) * .03 - Math.round(ex) * 0 + 0, 0); cloudU.col.value.setScalar(.25 + st.b * .75); cloudU.far.value = Math.max(120, SET.rd * 24);
       clouds.position.set(0, 0, 0);
       let yaw = P.yaw, pitch = P.pitch;
-      if (W.pano) { panoA += .0006; yaw = panoA; pitch = -.12; }
+      if (W.pano) { panoA = now * 3e-5; yaw = panoA; pitch = -.12; }
       let cx = ex, cy = ey, cz = ez;
       if (SET.bob && !P.fly && !W.pano && persp === 0) { const wb = lerp(P.walkP, P.walk, alpha), bb = lerp(P.bobP, P.bob, alpha); cx += Math.cos(yaw) * Math.sin(wb * Math.PI) * bb * .5; cy -= Math.abs(Math.cos(wb * Math.PI) * bb) * .6; cz -= Math.sin(yaw) * Math.sin(wb * Math.PI) * bb * .5; }
       if (P.sleeping && P.bedPos) { cy = P.bedPos[1] + .7; }
@@ -369,6 +371,7 @@
       const dt = lastNow ? clamp((now - lastNow) / 1000, 0, .25) : dt0; lastNow = now;
       frameN++;
       if (frameN % 15 === 1) resize();
+      if (frameN % 20 === 3) updSigns();
       fpsN++; fpsT += dt; if (fpsT >= 1) { fps = fpsN; fpsN = 0; fpsT = 0; }
       if (!W && (scr === 'title')) startPano();
       touchTick();
@@ -390,34 +393,35 @@
           }
         }
         if (scr === 'game') {
-          const paused = !NET.role && (gui === 'pause' || gui === 'options' || gui === 'controls');
-          if (!paused) { acc += Math.min(dt, .25); let n = 0; while (acc >= .05 && n < 5) { tick(); acc -= .05; n++; } if (n >= 5) acc = 0; }
+          const paused = !NET.role && (gui === 'pause' || gui === 'options' || gui === 'controls' || gui === 'stats' || gui === 'adv');
+          if (!paused) { acc += Math.min(dt, .25); let n = 0; while (acc >= .05 && n < 5) { const t0 = performance.now(); tick(); fT += (performance.now() - t0 - fT) * .1; acc -= .05; n++; } if (n >= 5) acc = 0; }
           alpha = paused ? 1 : clamp(acc / .05, 0, 1);
           lightF = alpha;
           if (!gui && !chatOpen) updTarget(); else { HIT.b = false; HIT.ent = null; }
         }
-        const show3d = scr === 'game' || scr === 'title' && W.pano;
+        const show3d = scr === 'game' || W.pano;
         if (show3d) render(now, alpha);
       }
       g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, hud.width, hud.height);
       g.imageSmoothingEnabled = false;
       g.setTransform(GK, 0, 0, GK, 0, 0);
       btns = []; fields = []; sliders = [];
-      if (!W || !(scr === 'game' || scr === 'title' && W.pano)) { renderer.setClearColor(0, 1); renderer.clear(); }
+      if (!W || !(scr === 'game' || W.pano)) { renderer.setClearColor(0, 1); renderer.clear(); }
+      const wb = scr === 'game' ? gui === 'pause' || gui === 'options' || gui === 'controls' || gui === 'plist' || gui === 'stats' || gui === 'adv' : scr !== 'title' && !!W && !!W.pano && panoReady;
+      if (wb !== blurOn) { blurOn = wb; canvas.style.filter = wb ? 'blur(' + Math.max(3, Math.round(GK * 2.5 / (window.devicePixelRatio || 1))) + 'px)' : ''; }
       if (scr === 'game' && W) {
-        if (!hideHud || gui) {
-          if (!hideHud) { drawHUD(now); drawChat(now); }
+        if (!hideHud || gui || chatOpen) {
+          if (!hideHud && !blurOn) { drawHUD(now); drawChat(now); } else if (chatOpen) drawChat(now);
           if (touch && !gui && !hideHud && !P.dead) drawTouch();
-          if (!touch && !gui && !locked() && !freeMouse && !chatOpen && !P.dead && !P.sleeping) { g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(0, GH / 2 + 14, GW, 14); textC('Click to play', GW / 2, GH / 2 + 17, '#ffffff'); }
-          try { drawGameGui(now); } catch (e) { if (!frameLoop.gerr) { frameLoop.gerr = 1; if (window.console) console.error(e); } gui = null; }
+          try { drawGameGui(now); drawToasts(now); } catch (e) { if (!frameLoop.gerr) { frameLoop.gerr = 1; if (window.console) console.error(e); } gui = null; }
         }
         if (W.rules.showCoordinates && !showF3 && !hideHud) text('XYZ: ' + Math.floor(P.x) + ' / ' + Math.floor(P.y - CFG.YOFF) + ' / ' + Math.floor(P.z), 2, 2, '#ffffff');
-      } else drawScreen(now);
+      } else { if (locked() && scr !== 'loading' && now - wantLock > 4000) releaseMouse(); drawScreen(now); }
       if (focusKey && !fields.some(f => f.key === focusKey) && focusKey !== 'sign') blurField();
       else if (focusKey) { const f = fields.find(q => q.key === focusKey); if (f) { const k = cssW / hud.width * GK; inp.style.left = f.x * k + 'px'; inp.style.top = f.y * k + 'px'; inp.style.width = f.w * k + 'px'; inp.style.height = f.h * k + 'px'; } }
       if (focusKey === 'chat') FIELDV.chat = inp.value;
     }
-    wrap.__mc = () => ({ scr, gui, GK, GW, GH, pRect, chatOpen, btns: btns.map(b => [b.l, b.x, b.y, b.w, b.h, b.en]), P: { x: P.x, y: P.y, z: P.z, hp: P.hp, food: P.food, yaw: P.yaw, pitch: P.pitch }, ents: (() => { const o = {}; for (const e of ENTS) { const k = e.kind + ':' + (e.type || (e.st ? IT[e.st.id].id : '')); o[k] = (o[k] || 0) + 1; } return o; })(), keysDown: [...keys], focus: focusKey, mobs: ENTS.filter(e => e.kind === 'mob').map(e => [e.type, +e.x.toFixed(1), +(e.y - CFG.YOFF).toFixed(1), +e.z.toFixed(1), e.root.visible, e.hp, !!e.dead, e.root.parent ? 1 : 0]), fps, cols: W ? W.cols.size : 0, mode: W && W.mode, role: NET.role, time: W && W.time, chat: chatLog.slice(-8).map(c => c.m), hit: HIT.b ? [HIT.x, HIT.y, HIT.z] : null, sel, inv: inv.map(s => s && IT[s.id].id + 'x' + s.n), slots: slots.map(q => { const v = q.get(); return [q.g, q.i, q.x, q.y, v ? IT[v.id].id + 'x' + v.n : null]; }), cursor: cursor && IT[cursor.id].id + 'x' + cursor.n });
+    wrap.__mc = () => ({ signs: signG.children.map(m => [+m.position.x.toFixed(3), +(m.position.y - CFG.YOFF).toFixed(3), +m.position.z.toFixed(3), +m.rotation.y.toFixed(2)]), scr, gui, GK, GW, GH, pRect, chatOpen, btns: btns.map(b => [b.l, b.x, b.y, b.w, b.h, b.en]), P: { x: P.x, y: P.y, z: P.z, hp: P.hp, food: P.food, yaw: P.yaw, pitch: P.pitch }, ents: (() => { const o = {}; for (const e of ENTS) { const k = e.kind + ':' + (e.type || (e.st ? IT[e.st.id].id : '')); o[k] = (o[k] || 0) + 1; } return o; })(), keysDown: [...keys], focus: focusKey, mobs: ENTS.filter(e => e.kind === 'mob').map(e => [e.type, +e.x.toFixed(1), +(e.y - CFG.YOFF).toFixed(1), +e.z.toFixed(1), e.root.visible, e.hp, !!e.dead, e.root.parent ? 1 : 0]), fps, cols: W ? W.cols.size : 0, mode: W && W.mode, role: NET.role, time: W && W.time, chat: chatLog.slice(-8).map(c => c.m), hit: HIT.b ? [HIT.x, HIT.y, HIT.z] : null, sel, inv: inv.map(s => s && IT[s.id].id + 'x' + s.n), slots: slots.map(q => { const v = q.get(); return [q.g, q.i, q.x, q.y, v ? IT[v.id].id + 'x' + v.n : null]; }), cursor: cursor && IT[cursor.id].id + 'x' + cursor.n });
     resize();
     api.loop((dt, now) => { try { frameLoop(dt, now); } catch (e) { if (!frameLoop.err) { frameLoop.err = 1; if (window.console) console.error(e); } } });
     const sizeObs = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => resize()) : null;

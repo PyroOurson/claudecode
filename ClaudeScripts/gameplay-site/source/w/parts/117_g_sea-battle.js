@@ -360,20 +360,20 @@
       function renderTray(kind) {
         const b = BD(TM, TM, CELL), sz = b.size + TM * 2, [cv, g] = off(sz, sz), gs = CELL * 10;
         g.save(); g.shadowColor = 'rgba(0,8,24,.6)'; g.shadowBlur = 16; g.shadowOffsetY = 7;
-        g.fillStyle = '#1c3d78'; g.beginPath(); g.roundRect(b.x, b.y, b.size, b.size, 14); g.fill(); g.restore();
+        g.fillStyle = '#5c636c'; g.beginPath(); g.roundRect(b.x, b.y, b.size, b.size, 14); g.fill(); g.restore();
         let gr = g.createLinearGradient(b.x, b.y, b.x + b.size * .3, b.y + b.size);
-        gr.addColorStop(0, kind === 'target' ? '#3a6abb' : '#3565b4'); gr.addColorStop(.5, '#24508f'); gr.addColorStop(1, '#173a73');
+        gr.addColorStop(0, '#cfd3d8'); gr.addColorStop(.5, '#a9afb6'); gr.addColorStop(1, '#858c95');
         g.fillStyle = gr; g.beginPath(); g.roundRect(b.x, b.y, b.size, b.size, 14); g.fill();
         gr = g.createLinearGradient(0, b.y, 0, b.y + b.size);
         gr.addColorStop(0, 'rgba(255,255,255,.5)'); gr.addColorStop(.5, 'rgba(255,255,255,.06)'); gr.addColorStop(1, 'rgba(0,0,0,.45)');
         g.strokeStyle = gr; g.lineWidth = 2.5; g.beginPath(); g.roundRect(b.x + 1.5, b.y + 1.5, b.size - 3, b.size - 3, 12.5); g.stroke();
         const rnd = seeded(kind === 'ocean' ? 7 : 11);
-        for (let n = 0; n < 600; n++) { g.fillStyle = rnd() < .5 ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.06)'; g.fillRect(b.x + 4 + rnd() * (b.size - 8), b.y + 4 + rnd() * (b.size - 8), 1.4, 1.4); }
+        for (let n = 0; n < 900; n++) { g.fillStyle = rnd() < .5 ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.07)'; g.fillRect(b.x + 4 + rnd() * (b.size - 8), b.y + 4 + rnd() * (b.size - 8), 1.4, 1.4); }
         g.font = F(900, 13); g.textAlign = 'center'; g.textBaseline = 'middle';
         for (let k = 0; k < 10; k++) {
           for (const [t, x, y] of [[String(k + 1), b.gx + k * CELL + CELL / 2, b.y + b.pad + b.lab / 2 + 1], [CFG.ROWS[k], b.x + b.pad + b.lab / 2, b.gy + k * CELL + CELL / 2 + 1]]) {
-            g.fillStyle = 'rgba(0,10,30,.6)'; g.fillText(t, x + .8, y + 1.2);
-            g.fillStyle = '#dbe8ff'; g.fillText(t, x, y);
+            g.fillStyle = 'rgba(255,255,255,.65)'; g.fillText(t, x + .6, y + 1);
+            g.fillStyle = '#2a323c'; g.fillText(t, x, y);
           }
         }
         if (kind === 'target') {

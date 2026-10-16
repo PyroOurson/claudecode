@@ -880,35 +880,35 @@
     help: 'Type a word and press <kbd>Enter</kbd> · <kbd>⌫</kbd> deletes · green = right spot · yellow = wrong spot · grey = not in the word',
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="17" width="8" height="8" rx="2"/><rect x="17" y="17" width="8" height="8" rx="2" fill="currentColor" opacity=".3"/><rect x="28" y="17" width="8" height="8" rx="2"/><rect x="39" y="17" width="8" height="8" rx="2"/><rect x="50" y="17" width="8" height="8" rx="2" fill="currentColor" opacity=".3"/><rect x="6" y="28" width="8" height="8" rx="2" fill="currentColor"/><rect x="17" y="28" width="8" height="8" rx="2" fill="currentColor"/><rect x="28" y="28" width="8" height="8" rx="2"/><rect x="39" y="28" width="8" height="8" rx="2" fill="currentColor"/><rect x="50" y="28" width="8" height="8" rx="2"/><rect x="6" y="39" width="8" height="8" rx="2" fill="currentColor"/><rect x="17" y="39" width="8" height="8" rx="2" fill="currentColor"/><rect x="28" y="39" width="8" height="8" rx="2" fill="currentColor"/><rect x="39" y="39" width="8" height="8" rx="2" fill="currentColor"/><rect x="50" y="39" width="8" height="8" rx="2" fill="currentColor"/></svg>',
     css: kitCss('word-guess') + `
-.gm-word-guess{justify-content:flex-start;gap:clamp(8px,1.6vw,12px);padding:clamp(12px,2.4vw,20px);border-radius:20px;background:linear-gradient(180deg,#f1faef 0%,#dcefd7 100%)}
+.gm-word-guess{justify-content:flex-start;gap:clamp(8px,1.6vw,12px);padding:clamp(12px,2.4vw,20px);border-radius:20px;background:#fff;color:#121213;font-family:'Helvetica Neue',Arial,sans-serif}
 .gm-word-guess .wg-bar{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
-.gm-word-guess .seg{background:rgba(255,255,255,.7)}
-.gm-word-guess .seg button[aria-pressed="true"]{color:#3f7d39;box-shadow:0 1px 2px rgba(31,29,43,.08),0 4px 12px -6px rgba(63,125,57,.6)}
-.gm-word-guess .wg-hard{display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px;border:0;border-radius:999px;background:rgba(255,255,255,.7);color:var(--muted);font:800 13.5px/1 var(--sans);cursor:pointer;touch-action:manipulation}
-.gm-word-guess .wg-hard::before{content:"";width:28px;height:16px;border-radius:999px;background:#c9d3c5;box-shadow:inset -12px 0 0 2px #fff;transition:background .2s,box-shadow .2s}
-.gm-word-guess .wg-hard[aria-pressed="true"]{color:#b4541a}
-.gm-word-guess .wg-hard[aria-pressed="true"]::before{background:#f28c28;box-shadow:inset 12px 0 0 2px #fff}
-.gm-word-guess .wg-info{margin:-2px 0 0;font-size:13px;font-weight:800;color:#4e7a49;font-variant-numeric:tabular-nums}
-.gm-word-guess .wg-grid{display:grid;gap:7px;width:clamp(200px,calc((100dvh - 540px) * .83),330px);max-width:100%}
+.gm-word-guess .seg{background:#f0f1f2}
+.gm-word-guess .seg button[aria-pressed="true"]{color:#121213;box-shadow:0 1px 2px rgba(31,29,43,.08),0 4px 12px -6px rgba(63,125,57,.6)}
+.gm-word-guess .wg-hard{display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px;border:0;border-radius:999px;background:#f0f1f2;color:#5b5d60;font:700 13.5px/1 'Helvetica Neue',Arial,sans-serif;cursor:pointer;touch-action:manipulation}
+.gm-word-guess .wg-hard::before{content:"";width:28px;height:16px;border-radius:999px;background:#878a8c;box-shadow:inset -12px 0 0 2px #fff;transition:background .2s,box-shadow .2s}
+.gm-word-guess .wg-hard[aria-pressed="true"]{color:#121213}
+.gm-word-guess .wg-hard[aria-pressed="true"]::before{background:#6aaa64;box-shadow:inset 12px 0 0 2px #fff}
+.gm-word-guess .wg-info{margin:-2px 0 0;padding-bottom:10px;width:100%;text-align:center;border-bottom:1px solid #d3d6da;font-size:13px;font-weight:700;color:#5b5d60;font-variant-numeric:tabular-nums}
+.gm-word-guess .wg-grid{display:grid;gap:5px;width:clamp(200px,calc((100dvh - 540px) * .83),330px);max-width:100%}
 .gm-word-guess .wg-grid.fresh{animation:gmWgIn .4s var(--ease)}
-.gm-word-guess .wg-row{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.gm-word-guess .wg-row{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
 .gm-word-guess .wg-row.shake{animation:gmWgShake .4s}
-.gm-word-guess .wg-tile{aspect-ratio:1;display:grid;place-items:center;border:2px solid #cfdacb;border-radius:12px;background:#fff;color:var(--ink);font:900 clamp(20px,5.6vw,30px)/1 var(--sans);text-transform:uppercase;box-shadow:0 3px 0 #cfdacb}
-.gm-word-guess .wg-tile.filled{border-color:#8f9c8b;box-shadow:0 3px 0 #8f9c8b}
+.gm-word-guess .wg-tile{aspect-ratio:1;display:grid;place-items:center;border:2px solid #d3d6da;border-radius:0;background:#fff;color:#121213;font:700 clamp(22px,5.8vw,32px)/1 'Helvetica Neue',Arial,sans-serif;text-transform:uppercase}
+.gm-word-guess .wg-tile.filled{border-color:#878a8c}
 .gm-word-guess .wg-tile.pop{animation:gmWgPop .1s}
 .gm-word-guess .wg-tile.flip{animation:gmWgFlip .26s linear}
 .gm-word-guess .wg-tile.jump{animation:gmWgJump .55s var(--ease) both}
-.gm-word-guess .wg-tile.correct{background:#6aaa64;border-color:#6aaa64;color:#fff;box-shadow:0 4px 0 #4a8a44}
-.gm-word-guess .wg-tile.present{background:#c9b458;border-color:#c9b458;color:#fff;box-shadow:0 4px 0 #a39037}
-.gm-word-guess .wg-tile.absent{background:#787c7e;border-color:#787c7e;color:#fff;box-shadow:0 4px 0 #5a5e60}
-.gm-word-guess .wg-kb{display:flex;flex-direction:column;gap:6px;width:min(500px,100%)}
-.gm-word-guess .wg-kr{display:flex;justify-content:center;gap:5px}
-.gm-word-guess .wg-kb button{flex:1 1 0;min-width:0;max-width:44px;height:50px;padding:0;display:grid;place-items:center;border:0;border-radius:10px;background:#fff;color:var(--ink);font:900 15px/1 var(--sans);text-transform:uppercase;cursor:pointer;touch-action:manipulation;box-shadow:0 3px 0 #c3cfbf}
-.gm-word-guess .wg-kb button.wide{flex-grow:1.55;max-width:72px;font-size:12px;letter-spacing:.04em}
-.gm-word-guess .wg-kb button:active{transform:translateY(2px);box-shadow:0 1px 0 #c3cfbf}
-.gm-word-guess .wg-kb button.correct{background:#6aaa64;color:#fff;box-shadow:0 3px 0 #4a8a44}
-.gm-word-guess .wg-kb button.present{background:#c9b458;color:#fff;box-shadow:0 3px 0 #a39037}
-.gm-word-guess .wg-kb button.absent{background:#787c7e;color:#fff;box-shadow:0 3px 0 #5a5e60}
+.gm-word-guess .wg-tile.correct{background:#6aaa64;border-color:#6aaa64;color:#fff}
+.gm-word-guess .wg-tile.present{background:#c9b458;border-color:#c9b458;color:#fff}
+.gm-word-guess .wg-tile.absent{background:#787c7e;border-color:#787c7e;color:#fff}
+.gm-word-guess .wg-kb{display:flex;flex-direction:column;gap:8px;width:min(500px,100%)}
+.gm-word-guess .wg-kr{display:flex;justify-content:center;gap:6px}
+.gm-word-guess .wg-kb button{flex:1 1 0;min-width:0;max-width:43px;height:58px;padding:0;display:grid;place-items:center;border:0;border-radius:4px;background:#d3d6da;color:#121213;font:700 14px/1 'Helvetica Neue',Arial,sans-serif;text-transform:uppercase;cursor:pointer;touch-action:manipulation}
+.gm-word-guess .wg-kb button.wide{flex-grow:1.55;max-width:66px;font-size:12px}
+.gm-word-guess .wg-kb button:active{filter:brightness(.9)}
+.gm-word-guess .wg-kb button.correct{background:#6aaa64;color:#fff}
+.gm-word-guess .wg-kb button.present{background:#c9b458;color:#fff}
+.gm-word-guess .wg-kb button.absent{background:#787c7e;color:#fff}
 @media (max-width:640px){.gm-word-guess .wg-grid{width:clamp(200px,calc((100dvh - 500px) * .83),330px)}}
 @media (max-width:420px){.gm-word-guess .wg-kb button{height:48px}.gm-word-guess .wg-kr{gap:4px}.gm-word-guess .seg button{padding:0 11px}.gm-word-guess .wg-hard{padding:0 11px}}
 @keyframes gmWgIn{from{opacity:0;transform:translateY(8px)}}

@@ -1195,16 +1195,10 @@
       const w = big ? 80 : 48, h = big ? 36 : 20;
       const dome = (ins, col) => { x.fillStyle = col; x.beginPath(); x.moveTo(ins, h); x.quadraticCurveTo(w / 2, -h * (0.95 - ins * 0.025), w - ins, h); x.fill(); };
       dome(0, NES.blk); dome(2, NES.grn);
-      x.save(); x.beginPath(); x.moveTo(2, h); x.quadraticCurveTo(w / 2, -h * 0.9, w - 2, h); x.clip();
-      x.fillStyle = '#58C810'; x.beginPath(); x.ellipse(w * 0.3, h * 0.55, w * 0.2, h * 0.5, -0.5, 0, 7); x.fill();
-      x.fillStyle = '#80D818'; x.beginPath(); x.ellipse(w * 0.28, h * 0.42, w * 0.1, h * 0.28, -0.5, 0, 7); x.fill();
-      x.fillStyle = '#006800'; x.beginPath(); x.ellipse(w * 0.9, h * 0.9, w * 0.4, h * 0.95, 0.2, 0, 7); x.fill();
-      x.fillStyle = '#005000'; x.fillRect(0, h - 3, w, 3);
-      x.restore();
       x.fillStyle = NES.blk;
       for (const [a, b] of big ? [[32, 14], [44, 20], [36, 26], [52, 28], [26, 30]] : [[20, 10], [28, 14]]) { x.fillRect(a, b, 2, 4); x.fillRect(a + 2, b + 1, 1, 2); }
-      x.fillStyle = '#B8F818';
-      for (const [a, b] of big ? [[32, 14], [44, 20], [36, 26], [52, 28], [26, 30]] : [[20, 10], [28, 14]]) x.fillRect(a, b, 1, 1);
+      x.fillStyle = NES.grn;
+      for (const [a, b] of big ? [[32, 14], [44, 20], [36, 26], [52, 28], [26, 30]] : [[20, 10], [28, 14]]) x.fillRect(a + 1, b + 1, 1, 2);
       pix(x);
     });
     const puff = (n, cloud) => shape('puff' + n + cloud, 16 + n * 16 + 16, 26, x => {
@@ -1215,40 +1209,15 @@
       if (cloud) {
         lump(x, pts.concat([[16 + n * 16 / 2, 18, 9]]), NES.wht, NES.blk);
         x.save(); x.globalCompositeOperation = 'source-atop';
-        x.fillStyle = '#D4ECFC'; x.fillRect(0, 17, ww, 9);
-        x.fillStyle = '#A8D8FC'; x.fillRect(0, 21, ww, 5);
-        x.fillStyle = NES.blu; x.fillRect(10, 22, n * 16 + 12, 1);
-        x.fillStyle = '#FFFFFF'; for (let i = 0; i <= n; i++) { x.fillRect(11 + i * 16, 5, 6, 1); x.fillRect(9 + i * 16, 7, 2, 2); }
+        x.fillStyle = NES.blu; for (let i = 0; i <= n; i++) { x.fillRect(12 + i * 16, 20, 7, 1); x.fillRect(10 + i * 16, 19, 2, 1); x.fillRect(19 + i * 16, 19, 2, 1); }
         x.restore();
       } else {
         lump(x, pts, NES.lgrn, NES.blk); x.fillStyle = NES.lgrn; x.fillRect(4, 20, n * 16 + 28, 6);
         x.save(); x.globalCompositeOperation = 'source-atop';
-        x.fillStyle = '#58B808'; x.fillRect(0, 19, ww, 7);
-        x.fillStyle = '#389000'; x.fillRect(0, 23, ww, 3);
-        x.fillStyle = '#B8F838'; for (let i = 0; i <= n; i++) { x.fillRect(9 + i * 16, 6, 5, 1); x.fillRect(7 + i * 16, 8, 2, 2); }
         x.fillStyle = NES.grn; for (let i = 0; i <= n; i++) { x.fillRect(12 + i * 16, 11, 3, 2); x.fillRect(18 + i * 16, 14, 2, 2); }
         x.restore();
       }
       pix(x);
-    });
-    const mount = () => shape('mount', 256, 102, x => {
-      const pk = [[0, 40], [24, 26], [44, 44], [70, 8], [96, 40], [118, 28], [150, 54], [176, 16], [202, 48], [230, 30], [256, 40]];
-      x.fillStyle = '#6C9CF0'; x.beginPath(); x.moveTo(0, 102);
-      for (const [a, b] of pk) x.lineTo(a, b);
-      x.lineTo(256, 102); x.fill();
-      x.fillStyle = '#5884E0'; x.beginPath(); x.moveTo(0, 102);
-      for (const [a, b] of pk) x.lineTo(a + 6, b + 10);
-      x.lineTo(256, 102); x.fill();
-      x.fillStyle = '#A8C8FC';
-      for (const [a, b] of [[70, 8], [176, 16], [24, 26]]) { x.beginPath(); x.moveTo(a, b); x.lineTo(a - 8, b + 11); x.lineTo(a - 3, b + 9); x.lineTo(a, b + 13); x.lineTo(a + 4, b + 9); x.lineTo(a + 9, b + 11); x.closePath(); x.fill(); }
-      pix(x);
-    });
-    const skyG = (() => { const g = ctx.createLinearGradient(0, 0, 0, 240); g.addColorStop(0, '#3C74EC'); g.addColorStop(0.5, '#5C94FC'); g.addColorStop(1, '#9CCCFC'); return g; })();
-    const caveWall = kind => shape('wall' + kind, 64, 64, x => {
-      const castle = kind === 'castle', a = castle ? '#1C1014' : '#001428', b = castle ? '#0C0608' : '#000A18';
-      x.fillStyle = b; x.fillRect(0, 0, 64, 64); x.fillStyle = a;
-      if (castle) { for (let r = 0; r < 4; r++) for (let c = 0; c < 2; c++) x.fillRect(c * 32 + (r & 1) * 16 + 1, r * 16 + 1, 30, 14); }
-      else { x.fillRect(4, 0, 10, 64); x.fillRect(36, 0, 14, 64); x.fillRect(22, 0, 3, 64); }
     });
     function decorFor(A) {
       if (A._decor) return A._decor;
@@ -1388,14 +1357,6 @@
       const A = W.A, cam = Math.floor(W.cam), K = KIND[A.kind], tf = (fr >> 3) % 6;
       const qf = [0, 0, 0, 1, 2, 1][tf];
       ctx.fillStyle = K.sky; ctx.fillRect(0, 0, 256, 240);
-      if (A.kind === 'over' || A.kind === 'tree') {
-        ctx.fillStyle = skyG; ctx.fillRect(0, 0, 256, 240);
-        const mo = -Math.floor(cam * 0.25) % 256, mc = mount();
-        for (let mx = mo - 256; mx < 256; mx += 256) if (mx > -256) ctx.drawImage(mc, mx, 138);
-      } else {
-        const wc = caveWall(A.kind), wo = -Math.floor(cam * 0.5) % 64;
-        for (let wx = wo - 64; wx < 256; wx += 64) for (let wy = 0; wy < 240; wy += 64) ctx.drawImage(wc, wx, wy);
-      }
       for (const [n, dx, dy] of decorFor(A)) {
         if (dx - cam > 256 || dx - cam < -96) continue;
         const c = n.startsWith('hill') ? hill(+n[4]) : n.startsWith('cloud') ? puff(+n[5] + 1, true) : puff(+n[4], false);
@@ -1743,8 +1704,9 @@
           c.fillStyle = '#E87C3C'; c.fillRect(42, 34, 172, 1); c.fillRect(42, 34, 1, 84);
           c.fillStyle = '#8C3004'; c.fillRect(42, 116, 172, 2); c.fillRect(212, 34, 2, 84);
           c.fillStyle = NES.blk; for (const [x, y] of [[45, 37], [209, 37], [45, 113], [209, 113]]) { c.fillRect(x, y, 2, 2); c.fillStyle = NES.lt; c.fillRect(x, y, 1, 1); c.fillStyle = NES.blk; }
-          R.text('MARIO', 70, 43, '#5C1800', 3); R.text('MARIO', 69, 41, NES.blk, 3); R.text('MARIO', 68, 40, NES.lt, 3);
-          R.text('BROS.', 70, 81, '#5C1800', 3); R.text('BROS.', 69, 79, NES.blk, 3); R.text('BROS.', 68, 78, NES.lt, 3);
+          R.text('SUPER', 54, 40, NES.blk, 2); R.text('SUPER', 53, 39, NES.lt, 2);
+          R.text('MARIO', 70, 61, '#5C1800', 3); R.text('MARIO', 69, 59, NES.blk, 3); R.text('MARIO', 68, 58, NES.lt, 3);
+          R.text('BROS.', 70, 91, '#5C1800', 3); R.text('BROS.', 69, 89, NES.blk, 3); R.text('BROS.', 68, 88, NES.lt, 3);
           R.text('@2026 GAMEPLAY', 104, 124, NES.lt);
           R.text('1 PLAYER GAME', 88, 142);
           R.draw('bean', { a: NES.red, d: NES.blk }, 74, 143);

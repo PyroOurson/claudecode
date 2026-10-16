@@ -160,10 +160,10 @@
       if (P.place) {
         P.place = false;
         let bx = Math.floor(P.x), bz = Math.floor(P.z);
-        const dryTop = (x, z) => { let y = H - 2; while (y > 1 && ((!SOL[getS(x, y, z)] && !FLU[getS(x, y, z)]) || LEAF[getS(x, y, z)] || TT[STT[getS(x, y, z)]].tags.has('log'))) y--; return FLU[getS(x, y, z)] ? -1 : y; };
-        if (!P.spawn && dryTop(bx, bz) < 0) { let found = false; for (let r = 1; r <= 24 && !found; r++) for (let k = 0; k < 8 * r && !found; k++) { const a = k / (8 * r) * Math.PI * 2, x = bx + Math.round(Math.cos(a) * r), z = bz + Math.round(Math.sin(a) * r); const c = colAt(x >> 4, z >> 4); if (!c || c.st < 1) continue; if (dryTop(x, z) > 0) { bx = x; bz = z; P.x = x + .5; P.z = z + .5; found = true; if (W && !W.remote && W.spawn && Math.abs(W.spawn[0] - .5) < 1e-6) W.spawn = [P.x, W.spawn[1], P.z]; } } }
-        let y = H - 2;
-        while (y > 1 && ((!SOL[getS(bx, y, bz)] && !FLU[getS(bx, y, bz)]) || LEAF[getS(bx, y, bz)] || TT[STT[getS(bx, y, bz)]].tags.has('log'))) y--;
+        const openTop = (x, z) => { let y = H - 2; while (y > 1 && !SOL[getS(x, y, z)] && !FLU[getS(x, y, z)]) y--; const b = getS(x, y, z); return FLU[b] || LEAF[b] || TT[STT[b]].tags.has('log') ? -1 : y; };
+        if (!P.spawn && openTop(bx, bz) < 0) { let found = false; for (let r = 1; r <= 24 && !found; r++) for (let k = 0; k < 8 * r && !found; k++) { const a = k / (8 * r) * Math.PI * 2, x = bx + Math.round(Math.cos(a) * r), z = bz + Math.round(Math.sin(a) * r); const c = colAt(x >> 4, z >> 4); if (!c || c.st < 1) continue; if (openTop(x, z) > 0) { bx = x; bz = z; P.x = x + .5; P.z = z + .5; found = true; if (W && !W.remote && W.spawn && Math.abs(W.spawn[0] - .5) < 1e-6) W.spawn = [P.x, W.spawn[1], P.z]; } } }
+        let y = openTop(bx, bz);
+        if (y < 0) { y = H - 2; while (y > 1 && !SOL[getS(bx, y, bz)] && !FLU[getS(bx, y, bz)]) y--; }
         if (P.y < y + 1 || !boxFree(P, 0, 0, 0)) P.y = y + 1;
         P.py = P.y;
       }
@@ -200,7 +200,7 @@
       else if (jump && P.onGround && P.jumpT === 0) {
         P.vy = CFG.JUMP * (isT(getS(Math.floor(P.x), Math.floor(P.y - .2), Math.floor(P.z)), 'honey_block') ? .5 : 1);
         if (P.sprint) { P.vx -= sy2 * CFG.SPRINT_JUMP; P.vz -= cy2 * CFG.SPRINT_JUMP; }
-        P.jumpT = CFG.JUMP_TICKS; exhaust(P.sprint ? CFG.EXH_SPRINT_JUMP : CFG.EXH_JUMP);
+        P.jumpT = CFG.JUMP_TICKS; stat('jump'); exhaust(P.sprint ? CFG.EXH_SPRINT_JUMP : CFG.EXH_JUMP);
         const fb = getS(Math.floor(P.x), Math.floor(P.y - .2), Math.floor(P.z)); if (isT(fb, 'farmland') && mode() !== 'creative' && RNG() < .3) setBlock(Math.floor(P.x), Math.floor(P.y - .2), Math.floor(P.z), S('dirt'));
       }
       if (!jump) P.jumpT = 0; else if (P.jumpT > 0) P.jumpT--;

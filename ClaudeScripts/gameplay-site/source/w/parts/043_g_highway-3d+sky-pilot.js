@@ -705,18 +705,22 @@
       g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(0, 3, w, 2);
     });
     W.conc.wrapS = W.conc.wrapT = THREE.RepeatWrapping; W.conc.repeat.set(1, .25); W.conc.anisotropy = aniso;
-    const jb = new THREE.Shape();
-    jb.moveTo(0, 0); jb.lineTo(0, .08); jb.lineTo(.17, .32); jb.lineTo(.25, .86); jb.lineTo(.43, .86); jb.lineTo(.5, 0); jb.lineTo(0, 0);
+    const jb = new THREE.Shape(), wy = [[.02, .5], [0, .55], [.08, .61], [0, .67], [.08, .73], [0, .79], [.02, .84]];
+    jb.moveTo(wy[0][0], wy[0][1]); for (const [x, y] of wy) jb.lineTo(x, y); for (let i = wy.length - 1; i >= 0; i--) jb.lineTo(wy[i][0] + .05, wy[i][1]);
     const jbG = new THREE.ExtrudeGeometry(jb, { depth: LEN, bevelEnabled: false });
     jbG.translate(0, 0, -LEN / 2);
-    const concMat = new THREE.MeshStandardMaterial({ map: W.conc, roughness: .92, side: THREE.DoubleSide });
+    const railMat = std('#c3c9d0', { roughness: .32, metalness: .75 });
     for (const s of [-1, 1]) {
-      const b = new THREE.Mesh(jbG, concMat);
+      const b = new THREE.Mesh(jbG, railMat);
       b.position.set(s * 7.75, 0, ZC); b.scale.x = s; b.castShadow = true; b.receiveShadow = true;
       W.posts.add(b);
     }
+    const gpost = [];
+    for (let z = 40; z > -600; z -= 4) for (const s of [-1, 1]) gpost.push([s * 7.98, 0, z]);
+    const gpG = G.acc().box(.12, .8, .14, 0, .4, 0).box(.16, .14, .1, -.0, .67, 0).build();
+    W.posts.add(inst(gpG, std('#8d949c', { roughness: .5, metalness: .6 }), gpost, true));
     const refL = [], refR = [], dels = [];
-    for (let z = 40; z > -600; z -= 4) for (const s of [-1, 1]) (s < 0 ? refL : refR).push([s * 7.93, .62, z]);
+    for (let z = 40; z > -600; z -= 4) for (const s of [-1, 1]) (s < 0 ? refL : refR).push([s * 7.86, .67, z]);
     for (let z = 40; z > -600; z -= 24) for (const s of [-1, 1]) dels.push([s * 8.05, .86 + .3, z]);
     const refG = new THREE.BoxGeometry(.03, .1, .18);
     W.posts.add(inst(refG, std('#ffd24a', { emissive: '#ffb020', emissiveIntensity: .5, roughness: .3 }), refL), inst(refG, std('#f4f4f0', { emissive: '#dfe6f0', emissiveIntensity: .45, roughness: .3 }), refR));
@@ -1099,8 +1103,9 @@
     };
 
 
-    const left = U.row('left:max(10px,1.6cqw);top:max(10px,1.6cqw)');
-    const hDist = U.chip(left, 'Distance'), hNear = U.chip(left, 'Near misses'), hDmg = U.chip(left, 'Damage');
+    const left = U.row('left:max(10px,1.6cqw);top:max(10px,1.6cqw);flex-direction:column;gap:max(3px,.6cqw)');
+    left.className = 'lt';
+    const hDist = U.chip(left, 'Score'), hNear = U.chip(left, 'Near misses'), hDmg = U.chip(left, 'Damage');
     const vig = document.createElement('div'); vig.className = 'vig'; U.hud.prepend(vig);
     const camBtn = document.createElement('button'); camBtn.type = 'button'; camBtn.className = 'cam'; camBtn.innerHTML = '<span>C</span> Camera';
     camBtn.addEventListener('pointerdown', e => { e.stopPropagation(); });
@@ -1109,10 +1114,11 @@
     const toggleCam = () => { cockpit = !cockpit; api.save(Object.assign(api.load() || {}, { cockpit })); applyCam(); };
     const applyCam = () => { cock.visible = cockpit; player.g.visible = !cockpit; speedo.style.display = cockpit ? 'none' : ''; camera.near = cockpit ? .05 : .1; camera.updateProjectionMatrix(); };
     api.on(window, 'keydown', e => { if (e.code === 'KeyC' && !e.repeat && !e.ctrlKey && !e.metaKey) toggleCam(); });
-    const right = U.row('right:max(10px,1.6cqw);top:max(10px,1.6cqw);flex-direction:row-reverse');
-    const hMode = U.chip(right, 'Mode'), hWrong = U.chip(right, 'Oncoming');
-    hWrong.textContent = 'x2 score';
-    hWrong.parentNode.style.background = 'rgba(239,79,79,.78)';
+    const right = U.row('right:max(10px,1.6cqw);top:max(58px,8.6cqw);flex-direction:column;align-items:flex-end;gap:max(3px,.6cqw)');
+    right.className = 'rt';
+    const hKm = U.chip(right, 'Distance'), hMode = U.chip(right, 'Mode'), hWrong = U.chip(right, 'Opposing lane');
+    hWrong.textContent = 'x2';
+    hWrong.parentNode.classList.add('opp'); hMode.parentNode.style.display = 'none';
     const speedo = document.createElement('div');
     speedo.className = 'speedo';
     speedo.innerHTML = '<b>0</b><span>km/h</span>';
@@ -1128,9 +1134,9 @@
 
     function hudAll() {
       const d = mode === 'ready' ? 0 : total();
-      if (d !== S.hd) { S.hd = d; hDist.textContent = fmt(d); hNear.textContent = S.near; }
+      if (d !== S.hd) { S.hd = d; hDist.textContent = d.toLocaleString(); hNear.textContent = S.near; hKm.textContent = ((mode === 'ready' ? 0 : S.dist) / 1000).toFixed(2) + ' km'; }
       const dm = Math.round(S.dmg * 100);
-      if (dm !== S.hdm) { S.hdm = dm; hDmg.textContent = dm + '%'; hDmg.parentNode.style.background = dm > 60 ? 'rgba(220,50,50,.72)' : dm > 25 ? 'rgba(220,140,30,.6)' : ''; }
+      if (dm !== S.hdm) { S.hdm = dm; hDmg.textContent = dm + '%'; hDmg.style.color = dm > 60 ? '#ff5a4a' : dm > 25 ? '#ffb020' : ''; }
       hMode.textContent = twoWay ? 'Two-way' : 'One-way';
       hWrong.parentNode.style.display = twoWay && S.x < 0 && mode === 'run' ? '' : 'none';
       const kmh = Math.round(S.V * 3.6);
@@ -1277,7 +1283,7 @@
         kicker: nb ? 'New best!' : 'Crashed',
         title: 'Game over',
         text: (S.dmg >= 1 ? 'Too much barrier scraping wrecked the car. ' : '') + (S.near ? `${S.near} near miss${S.near > 1 ? 'es' : ''} added ${S.bonus.toLocaleString()} m of bonus.` : 'Skim past cars for near-miss bonuses.'),
-        stats: [['Distance', unit(t.toLocaleString(), 'm')], ['Top speed', unit(Math.round(S.top * 3.6), 'km/h')], ['Near misses', S.near], ['Best', api.best != null ? unit(api.best.toLocaleString(), 'm') : '—']],
+        stats: [['Score', unit(t.toLocaleString(), 'm')], ['Top speed', unit(Math.round(S.top * 3.6), 'km/h')], ['Near misses', S.near], ['Best', api.best != null ? unit(api.best.toLocaleString(), 'm') : '—']],
         button: 'Play again', onAction: () => start(twoWay),
         secondary: 'Change mode', onSecondary: menu
       });
@@ -1402,8 +1408,8 @@
         return;
       }
       camBase.x = damp(camBase.x, S.x * .72, 6, rdt);
-      camBase.y = damp(camBase.y, 2.75 + f * .3, 4, rdt);
-      camBase.z = damp(camBase.z, 7.0 + f * 1.2, 4, rdt);
+      camBase.y = damp(camBase.y, 4.9 + f * .25, 4, rdt);
+      camBase.z = damp(camBase.z, 8.6 + f * .8, 4, rdt);
       camera.position.copy(camBase);
       if (S.shake > 0) {
         camera.position.x += rnd(-.35, .35) * S.shake; camera.position.y += rnd(-.25, .25) * S.shake;
@@ -1411,9 +1417,9 @@
       }
       const hum = f * f * .05 * (mode === 'run' ? 1 : .3);
       camera.position.x += rnd(-hum, hum); camera.position.y += rnd(-hum, hum) * .7;
-      const fov = 58 + f * 24;
+      const fov = 54 + f * 12;
       if (Math.abs(camera.fov - fov) > .01) { camera.fov = damp(camera.fov, fov, 3, rdt); camera.updateProjectionMatrix(); }
-      look.set(S.x * .88, 1.0, -14);
+      look.set(S.x * .9, 0, -9);
       camera.lookAt(look);
       camera.rotateZ(-S.vx * .005);
       sky.mesh.position.copy(camera.position);
@@ -1486,7 +1492,17 @@
 .gm-highway-3d .vig{position:absolute;inset:0;opacity:0;background:radial-gradient(ellipse 62% 58% at 50% 46%,transparent 55%,rgba(8,10,18,.22) 78%,rgba(8,10,18,.55) 100%);pointer-events:none}
 .gm-highway-3d .cam{position:absolute;left:max(10px,1.6cqw);bottom:max(10px,1.6cqw);pointer-events:auto;display:flex;align-items:center;gap:6px;height:max(30px,4.6cqw);padding:0 max(10px,1.6cqw);border:0;border-radius:999px;background:rgba(16,18,40,.5);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;font:800 max(11px,1.5cqw)/1 var(--sans);cursor:pointer}
 .gm-highway-3d .cam span{display:grid;place-items:center;min-width:1.6em;height:1.6em;border-radius:6px;background:rgba(255,255,255,.22);font-size:.85em}
-.gm-highway-3d .speedo span{font-size:max(7px,1.05cqw);font-weight:900;letter-spacing:.12em;text-transform:uppercase;opacity:.7}`,
+.gm-highway-3d .speedo span{font-size:max(7px,1.05cqw);font-weight:900;letter-spacing:.12em;text-transform:uppercase;opacity:.7}
+.gm-highway-3d .chip{background:none;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;padding:0;border-radius:0;text-shadow:0 2px 0 rgba(0,0,0,.85),0 0 5px rgba(0,0,0,.7)}
+.gm-highway-3d .chip .k{color:#ffd21a;opacity:1;font-size:max(9px,1.45cqw);letter-spacing:.05em}
+.gm-highway-3d .chip .v{font-size:max(15px,2.9cqw);letter-spacing:0}
+.gm-highway-3d .lt .chip:first-child .v{color:#b6ff6a;font-size:max(18px,3.6cqw)}
+.gm-highway-3d .chip.opp .v{color:#b6ff6a}
+.gm-highway-3d .rt .chip{align-items:flex-end}
+.gm-highway-3d .speedo{top:max(10px,1.6cqw);bottom:auto;right:max(10px,1.6cqw);left:auto;transform:none;width:auto;aspect-ratio:auto;border-radius:0;background:none!important;box-shadow:none;display:grid;grid-template-columns:auto auto;align-items:baseline;justify-items:end;column-gap:.3em;text-shadow:0 2px 0 rgba(0,0,0,.85),0 0 5px rgba(0,0,0,.7)}
+.gm-highway-3d .speedo::before{content:'SPEED';grid-column:1/3;color:#ffd21a;font-size:max(9px,1.45cqw);font-weight:900;letter-spacing:.05em}
+.gm-highway-3d .speedo b{font-size:max(18px,3.6cqw)}
+.gm-highway-3d .speedo span{opacity:1;font-size:max(9px,1.4cqw);letter-spacing:.04em}`,
     mount(root, api) {
       let cleanup = null;
       api.gl(...glSize(root, 720, 720)).then(v => { if (v && api.alive) { cleanup = highway(api, root, v, kit(v.THREE)); fitPR(api, v); } });

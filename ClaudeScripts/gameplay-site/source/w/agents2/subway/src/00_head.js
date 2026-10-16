@@ -33,8 +33,8 @@
       sky: ['#3a9cf0', '#8fd0ff', '#e3f4ff'], fog: '#cfe9fb', sun: '#fff4dc', hemi: ['#d8eeff', '#8a7a64'], light: 1.0,
       gravel: ['#a99b88', '#8c7e6c'], sleeper: '#6b4a32', side: '#b8ad9c', walk: '#c9c2b6', wall: '#c9c4b8', wallTop: '#a9a397',
       bld: [['#c4553f', '#9c3e2d'], ['#d9a066', '#b07c48'], ['#8e6a5a', '#6e5044'], ['#e3cfa8', '#bba67f'], ['#6f8fb0', '#556f8c']],
-      win: '#a9d4ef', winF: '#efe9dc', style: 'brick', roof: 'flat', tree: 'round', leaf: ['#4cae3c', '#3b8f2e'], props: 'city',
-      trains: [['#3f86d9', '#f2f2f2'], ['#f2a62a', '#3a3a46'], ['#d8443a', '#f2f2f2'], ['#3aa86b', '#f4e9c8'], ['#c9ccd2', '#3f86d9']] },
+      win: '#a9d4ef', winF: '#efe9dc', style: 'brick', roof: 'flat', tree: 'round', leaf: ['#5cb83a', '#3f962c'], props: 'city', arch: '#d9582c',
+      trains: [['#ef6a2c', '#b8d636', 'low'], ['#f5c21f', '#e2412c'], ['#3f7fd0', '#f2f2f2'], ['#b8d636', '#ef6a2c', 'low'], ['#d8443a', '#f2f2f2']] },
     { id: 'neworleans', name: 'New Orleans', sub: 'Halloween in the French Quarter',
       sky: ['#2a1d56', '#7a3f8f', '#f09a5a'], fog: '#b06b8f', sun: '#ffc48a', hemi: ['#c9a2ff', '#4a3550'], light: 0.85,
       gravel: ['#8a7f7a', '#6d625e'], sleeper: '#4c3426', side: '#8f8579', walk: '#9c9184', wall: '#7d7469', wallTop: '#5f574f',
@@ -80,7 +80,7 @@
   ];
 
   const CHARS = [
-    { id: 'jake', name: 'Jake', price: 0, skin: '#f1bf93', hair: '#6b3f22', hat: 'cap', hatA: '#e23a33', hatB: '#f5f5f5', top: '#f4f4f4', vest: '#6fa8dc', under: '#d8322c', pants: '#3f6fb8', shoeA: '#2fbf5a', shoeB: '#e23a33', extra: '' },
+    { id: 'jake', name: 'Jake', price: 0, skin: '#e9b48a', hair: '#5a3420', hat: 'cap', hatA: '#d8322c', hatB: '#ffd23f', top: '#efebe2', vest: '#7fb2e5', under: '#9ea4ab', pants: '#79a6dc', shoeA: '#f2f2f2', shoeB: '#5cc43a', extra: '', hood: '#a7abb2', scarf: '#d8322c' },
     { id: 'tricky', name: 'Tricky', price: 6000, skin: '#f4c7a0', hair: '#e2541f', hat: 'beanie', hatA: '#d8322c', hatB: '#ffffff', top: '#2f6fd9', vest: '', under: '#ffffff', pants: '#3a3f5a', shoeA: '#ffffff', shoeB: '#d8322c', extra: 'pony' },
     { id: 'fresh', name: 'Fresh', price: 12000, skin: '#8a5a3c', hair: '#1f1814', hat: 'beanie', hatA: '#3a3f4a', hatB: '#ffd23f', top: '#ff9a2a', vest: '', under: '#ffffff', pants: '#2f3f5f', shoeA: '#f4f4f4', shoeB: '#2f2f3a', extra: 'phones' },
     { id: 'yutani', name: 'Yutani', price: 20000, skin: '#f0c49c', hair: '#2a1d16', hat: 'alien', hatA: '#6fd25a', hatB: '#ffffff', top: '#a95ad9', vest: '', under: '#ffd23f', pants: '#2a2f45', shoeA: '#ffd23f', shoeB: '#a95ad9', extra: '' }

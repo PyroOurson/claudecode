@@ -19,14 +19,13 @@
     shGr.addColorStop(0, 'rgba(0,0,0,.5)'); shGr.addColorStop(.6, 'rgba(0,0,0,.3)'); shGr.addColorStop(1, 'rgba(0,0,0,0)'); shg.fillStyle = shGr; shg.fillRect(0, 0, 32, 32);
     const shGeo = keep(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2)), shMat = keep(new THREE.MeshBasicMaterial({ map: tex(shC), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, toneMapped: false }));
     function nameTag(name) {
-      const c = cv(256, 40), x = c.getContext('2d');
-      x.font = 'bold 26px monospace';
-      const w = Math.min(250, x.measureText(name).width + 16);
-      x.fillStyle = 'rgba(0,0,0,.35)'; x.fillRect((256 - w) / 2, 4, w, 32);
-      x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(name, 128, 21);
-      const t = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearFilter;
+      name = String(name).slice(0, 32);
+      const w = tw(name) + 2, K = 4, c = cv(w * K, 10 * K), x = c.getContext('2d'); let px = 1;
+      x.imageSmoothingEnabled = false; x.fillStyle = 'rgba(0,0,0,.25)'; x.fillRect(0, 0, c.width, c.height);
+      for (const ch of name) { const i = ch.charCodeAt(0) - 32; if (i < 0 || i >= 95) { px += 4; continue; } x.drawImage(fontC, (i & 15) * 8, (i >> 4) * 9, 8, 8, px * K, K, 8 * K, 8 * K); px += fontW[i] + 1; }
+      const t = new THREE.CanvasTexture(c); t.minFilter = t.magFilter = THREE.NearestFilter; t.generateMipmaps = false;
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true }));
-      s.scale.set(1.6, .25, 1); s.renderOrder = 5;
+      s.scale.set(w * .025, .25, 1); s.renderOrder = 5;
       return s;
     }
     const WOOLW = { white: .818, black: .05, gray: .05, light_gray: .05, brown: .03, pink: .002 };
@@ -283,6 +282,7 @@
       if (o.hp <= 0) { o.dead = 1; snd(T.snd + '_death', o); }
     }
     function killMob(e) {
+      if (e.pHit && tickN - e.pHit < 200) { stat('kills'); stat('k_' + e.type); }
       for (let i = 0; i < 14; i++) particle(e.x + (RNG() - .5) * e.w, e.y + RNG() * e.h, e.z + (RNG() - .5) * e.w, (RNG() - .5) * 1.2, RNG() * 1.5, (RNG() - .5) * 1.2, [230, 230, 230], .6 + RNG() * .5, .1 + RNG() * .1, -1, 1);
       const T = MT[e.type], cooked = e.fire > 0, r = n => ri(n + 1), D = [];
       if (!e.baby) {

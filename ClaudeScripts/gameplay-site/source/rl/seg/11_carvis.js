@@ -1,5 +1,5 @@
         const crM4 = new THREE.Matrix4(), crV1 = new THREE.Vector3(), crV2 = new THREE.Vector3(), crV3 = new THREE.Vector3();
-        const crTC = [[0.62, 0.8, 1], [1, 0.78, 0.5]], crTH = [0, 0, 0];
+        const crTC = [[0.3, 0.56, 1], [1, 0.56, 0.22]], crTH = [0, 0, 0];
         let crClock = 0;
         const crSteerMax = (s, c) => {
           if (!c || !c.length) return 0.4;
@@ -63,13 +63,13 @@
             }
             if (c.boosting) {
               const BC = crBoostCol(c), fc = [BC.a, BC.b], bs = cv.bs || {};
-              S.ea += d * 110; S.es += d * (bs.dense ? 30 : 14);
+              S.ea += d * 240; S.es += d * (bs.dense ? 60 : 40);
               while (S.ea >= 1) {
                 S.ea -= 1;
                 for (const f of cv.fl) {
                   const b = Math.random() * d, ex = c.p.x + fx * f.x + lx * f.y + ux * (f.z + S.z) - vx * b, ey = c.p.y + fy * f.x + ly * f.y + uy * (f.z + S.z) - vy * b, ez = c.p.z + fz * f.x + lz * f.y + uz * (f.z + S.z) - vz * b;
                   const cc = Math.random() < 0.35 ? fc[1] : fc[0], sp = 380 + Math.random() * 300;
-                  fire.emit(ex + R() * 2.5, ey + R() * 2.5, ez + R() * 2.5, vx * 0.25 - fx * sp + R() * 70, vy * 0.25 - fy * sp + R() * 70, vz * 0.25 - fz * sp + R() * 70, 0.14 + Math.random() * 0.14, cc[0], cc[1], cc[2], f.r * 5.8, f.r * 1.4, 0, 3);
+                  fire.emit(ex + R() * 2.5, ey + R() * 2.5, ez + R() * 2.5, vx * 0.25 - fx * sp + R() * 70, vy * 0.25 - fy * sp + R() * 70, vz * 0.25 - fz * sp + R() * 70, 0.14 + Math.random() * 0.14, cc[0] * 0.55, cc[1] * 0.55, cc[2] * 0.55, f.r * 4.6, f.r * 1.2, 0, 3);
                   if (bs.sp && Math.random() < 0.18 * bs.sp) fire.emit(ex, ey, ez, vx * 0.4 - fx * 260 + R() * 160, vy * 0.4 - fy * 260 + R() * 160, vz * 0.4 - fz * 260 + R() * 160 + 60, 0.5 + Math.random() * 0.5, fc[1][0], fc[1][1], fc[1][2], f.r * 1.3, f.r * 0.2, -120, 1.2);
                 }
               }
@@ -79,7 +79,7 @@
                 if (!sm) continue;
                 for (const f of cv.fl) {
                   const ex = c.p.x + fx * (f.x - 14) + lx * f.y + ux * f.z, ey = c.p.y + fy * (f.x - 14) + ly * f.y + uy * f.z, ez = c.p.z + fz * (f.x - 14) + lz * f.y + uz * f.z;
-                  smoke.emit(ex + R() * 4, ey + R() * 4, ez + R() * 4, vx * 0.12 - fx * 160 + R() * 40, vy * 0.12 - fy * 160 + R() * 40, vz * 0.12 - fz * 160 + R() * 40, 0.45 + Math.random() * 0.35, sm[0], sm[1], sm[2], f.r * 3, f.r * (bs.dense ? 12 : 9), -50, 2.2);
+                  smoke.emit(ex + R() * 4, ey + R() * 4, ez + R() * 4, vx * 0.12 - fx * 160 + R() * 40, vy * 0.12 - fy * 160 + R() * 40, vz * 0.12 - fz * 160 + R() * 40, 0.45 + Math.random() * 0.35, sm[0], sm[1], sm[2], f.r * 2.4, f.r * (bs.dense ? 12 : 7.5), -50, 2.2);
                 }
               }
             } else S.ea = S.es = 0;
@@ -92,7 +92,7 @@
               if (tr.n < N) tr.n++;
               let any = false;
               for (let i = 0; i < N; i++) {
-                const j = (h - Math.min(i, tr.n - 1) + N) % N, a = pv ? Math.pow(1 - i / N, 1.5) * 0.6 : tr.hs[j] * Math.pow(Math.max(0, 1 - (crClock - tr.ht[j]) / 0.17), 1.5) * 0.6, w = tw * (1 - 0.6 * i / N), o = i * 12;
+                const j = (h - Math.min(i, tr.n - 1) + N) % N, a = pv ? Math.pow(1 - i / N, 1.5) * 0.6 : tr.hs[j] * Math.pow(Math.max(0, 1 - (crClock - tr.ht[j]) / 0.17), 1.5) * 0.42, w = tw * (1 - 0.6 * i / N), o = i * 12;
                 const X = pv ? tr.hx[h] - fx * i * 14 + (tj ? R() * tj * 6 : 0) : tr.hx[j], Y = pv ? tr.hy[h] - fy * i * 14 + (tj ? R() * tj * 6 : 0) : tr.hy[j], Z = pv ? tr.hz[h] - fz * i * 14 : tr.hz[j];
                 if (a > 0.01) any = true;
                 tr.pos[o] = X + ux * w; tr.pos[o + 1] = Y + uy * w; tr.pos[o + 2] = Z + uz * w;

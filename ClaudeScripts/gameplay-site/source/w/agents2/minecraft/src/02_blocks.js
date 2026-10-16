@@ -333,7 +333,7 @@
     blk(w.n + '_sign', woodO(w, { props: [['rotation', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]]], shape: 'model', opq: false, solid: false, att: 0, hard: 1, tab: 'func', sign: 1, icon: 'i_' + w.n + '_sign', use: 'sign',
       model: s => { const q = Math.round(sv(s, 'rotation') / 4) & 3; return rotY([bx(0, 7, 7, 16, 15, 9, t), bx(7, 0, 7, 9, 7, 9, w.n === 'bamboo' ? 'bamboo_planks' : (w.nether ? 'stripped_' + w.n + '_stem' : w.n + '_log'))], q); }, sel: () => [cb(4, 0, 4, 12, 16, 12)] }));
     blk(w.n + '_wall_sign', woodO(w, { props: [P4], shape: 'model', opq: false, solid: false, att: 0, hard: 1, item: w.n + '_sign', name: title(w.n + '_sign'), sign: 1, use: 'sign', drop: w.n + '_sign',
-      model: s => rotY([bx(0, 4.5, 14, 16, 12.5, 16, t)], fq(s) + 2), sel: s => rotCB([cb(0, 4.5, 14, 16, 12.5, 16)], fq(s) + 2) }));
+      model: s => rotY([bx(0, 4.5, 14, 16, 12.5, 16, t)], fq(s)), sel: s => rotCB([cb(0, 4.5, 14, 16, 12.5, 16)], fq(s)) }));
     blk(w.n + '_hanging_sign', woodO(w, { props: [P4], shape: 'model', opq: false, solid: false, att: 0, hard: 1, tab: 'func', sign: 1, icon: 'i_' + w.n + '_hanging_sign', use: 'sign',
       model: s => rotY([bx(1, 0, 7, 15, 10, 9, 'stripped_' + (w.nether ? w.n + '_stem' : w.n === 'bamboo' ? 'bamboo_block' : w.n + '_log')), bx(3, 10, 8, 4, 16, 8, 'chain', { no: 'ewud' }), bx(12, 10, 8, 13, 16, 8, 'chain', { no: 'ewud' })], fq(s)), sel: () => [cb(1, 0, 7, 15, 10, 9)] }));
   };

@@ -6,8 +6,9 @@ Everything needed to rebuild `index.html` and `gameplay/` at the repo root lives
 
 1. Copy this folder to `/tmp/gameplay-build` (the scripts use that path):
    `rm -rf /tmp/gameplay-build && cp -r ClaudeScripts/gameplay-site/source /tmp/gameplay-build`
-   (On Windows use WSL, or replace `/tmp/gameplay-build` in the scripts with your own folder.)
-2. Install Python 3.9+ and Node.js 18+. For browser tests: `npm i -g playwright && npx playwright install chromium`.
+   On Windows (Git Bash) copy it to `C:\tmp\gameplay-build` instead: Python and Node resolve `/tmp/gameplay-build` to `C:\tmp\gameplay-build`, so the scripts work unchanged (in bash write `/c/tmp/gameplay-build`). Run `git config core.autocrlf false` before checking out, because CRLF line endings break `assemble.py` and `build2.py`. Use `python` if `python3` is not available.
+2. Install Python 3.9+ and Node.js 18+. For browser tests: `npm i -g playwright && npx playwright install chromium`. `t/lib.js` launches the installed Google Chrome (`channel: 'chrome'`) and loads Playwright from `C:/tmp/pw/node_modules/playwright`; adjust that path on other machines.
+3. Round 3 notes for agents: `w/ROUND3.md` (brief, ownership, contracts), `rl/notes/round3.md`, `w/agents_net/API.md`.
 
 ## Build
 

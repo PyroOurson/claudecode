@@ -142,7 +142,7 @@
 
       const chunks = new Map();
       function clearChunks() { for (const arr of chunks.values()) for (const m of arr) scene.remove(m); chunks.clear(); }
-      function chunkKind(i, side) { if (i >= -2 && i <= 0) return side < 0 ? 0 : 1; const h = hash(i * 7.31 + side * 13.7 + save.city * 3.3); return h < 0.34 ? 0 : h < 0.62 ? 1 : h < 0.76 ? 2 : 3; }
+      function chunkKind(i, side) { if (i >= -2 && i <= 0) return side < 0 ? 4 : 1; const h = hash(Math.floor(i / 2) * 7.31 + side * 13.7 + save.city * 3.3); return h < 0.36 ? 4 : h < 0.55 ? 0 : h < 0.72 ? 1 : h < 0.84 ? 2 : 3; }
       function makeChunk(i) {
         const arr = [], s0 = i * CFG.CHUNK, z = -s0, WG = ENV.WG;
         const add = (geo, mat, zz) => { const m = new THREE.Mesh(geo, mat); m.position.set(0, 0, zz); m.matrixAutoUpdate = false; m.updateMatrix(); scene.add(m); arr.push(m); };
@@ -154,6 +154,7 @@
           add(L.geo, atlasMat, z); if (L.fence) add(L.fence, fenceMat, z);
           add(Rr.geo, atlasMat, z); if (Rr.fence) add(Rr.fence, fenceMat, z);
           if (((i % 3) + 3) % 3 === 1) { add(WG.gantry, atlasMat, z - 20); add(WG.gantryLamp, lampMat, z - 20); }
+          add(WG.wires, atlasMat, z);
         }
         return arr;
       }
@@ -195,15 +196,15 @@
       const IM = {};
       const itemModel = k => {
         const g = new THREE.Group(), M = CH.M, m = CH.mesh, rb = CH.rbox, cy = CH.cyl;
-        if (k === 'jet') { for (const s of [-1, 1]) { m(cy(0.17, 0.17, 0.62, 12), M('#ff4a2a'), s * 0.2, 0.31, 0, g); m(CH.ball(0.17, 10), M('#ff4a2a'), s * 0.2, 0.31, 0, g); m(cy(0.1, 0.15, 0.14, 10), M('#c9ccd2'), s * 0.2, -0.31, 0, g); } m(rb(0.18, 0.5, 0.12), M('#ffd23f'), 0, 0.05, 0, g); }
-        else if (k === 'sneak') { m(rb(0.34, 0.24, 0.66, 0.5), M('#3ad16b'), 0, 0.05, 0, g); m(rb(0.38, 0.1, 0.72, 0.5), M('#ffffff'), 0, -0.1, 0, g); m(rb(0.3, 0.3, 0.3, 0.5), M('#2fa84a'), 0, 0.2, 0.2, g); for (const s of [-1, 1]) { const w = m(rb(0.06, 0.24, 0.36, 0.5), M('#ffffff'), s * 0.22, 0.25, 0.15, g); w.rotation.x = 0.5; } }
-        else if (k === 'mag') { const t = new THREE.Mesh(CH.G('magT', () => new THREE.TorusGeometry(0.32, 0.12, 8, 18, Math.PI)), M('#e8343a')); t.rotation.z = Math.PI; g.add(t); for (const s of [-1, 1]) { m(cy(0.12, 0.12, 0.26, 10), M('#e8343a'), s * 0.32, 0.26, 0, g); m(cy(0.125, 0.125, 0.16, 10), M('#e6e9ef'), s * 0.32, 0.4, 0, g); } g.position.y = 0; }
+        if (k === 'jet') { for (const s of [-1, 1]) { m(cy(0.17, 0.17, 0.62, 12), M('#7cd23a'), s * 0.2, 0.31, 0, g); m(CH.ball(0.17, 10), M('#ff8a1a'), s * 0.2, 0.33, 0, g); m(cy(0.1, 0.15, 0.14, 10), M('#c9ccd2'), s * 0.2, -0.31, 0, g); } m(rb(0.18, 0.5, 0.12), M('#ffd23f'), 0, 0.05, 0, g); }
+        else if (k === 'sneak') { m(rb(0.36, 0.26, 0.7, 0.5), M('#ff9a1a'), 0, 0.05, 0, g); m(rb(0.4, 0.12, 0.76, 0.5), M('#ffcf3a'), 0, -0.11, 0, g); m(rb(0.32, 0.36, 0.32, 0.5), M('#ff8a12'), 0, 0.24, 0.18, g); m(rb(0.2, 0.08, 0.26, 0.5), M('#7cd23a'), 0, 0.2, -0.1, g); for (const s of [-1, 1]) { m(rb(0.04, 0.16, 0.08, 0.5), M('#9cff6a', { emissive: new THREE.Color('#2a6a10') }), s * 0.19, 0.22, 0.18, g); m(rb(0.04, 0.08, 0.16, 0.5), M('#9cff6a', { emissive: new THREE.Color('#2a6a10') }), s * 0.19, 0.32, 0.18, g); } }
+        else if (k === 'mag') { const t = new THREE.Mesh(CH.G('magT', () => new THREE.TorusGeometry(0.32, 0.12, 8, 18, Math.PI)), M('#e8343a')); t.rotation.z = Math.PI; g.add(t); for (const s of [-1, 1]) { m(cy(0.12, 0.12, 0.26, 10), M('#e8343a'), s * 0.32, 0.26, 0, g); m(cy(0.125, 0.125, 0.16, 10), M('#ffd23f'), s * 0.32, 0.4, 0, g); } g.position.y = 0; }
         else if (k === 'x2') { const sh = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 0.22 : 0.5; i ? sh.lineTo(Math.cos(a) * r, Math.sin(a) * r) : sh.moveTo(Math.cos(a) * r, Math.sin(a) * r); } const ge = CH.G('star', () => { const e = new THREE.ExtrudeGeometry(sh, { depth: 0.16, bevelEnabled: true, bevelSize: 0.04, bevelThickness: 0.04, bevelSegments: 1 }); e.translate(0, 0, -0.08); return e; }); g.add(new THREE.Mesh(ge, M('#ffc21a'))); const lt = keep(T.label('2X', '#ffffff', null, 128, 64, 52)); const pl = new THREE.Mesh(keep(new THREE.PlaneGeometry(0.62, 0.31)), keep(new THREE.MeshBasicMaterial({ map: lt, transparent: true }))); pl.position.z = 0.15; g.add(pl); const pl2 = pl.clone(); pl2.rotation.y = Math.PI; pl2.position.z = -0.15; g.add(pl2); }
         else if (k === 'key') { const t = new THREE.Mesh(CH.G('keyT', () => new THREE.TorusGeometry(0.17, 0.06, 8, 16)), M('#ff3d3d')); t.position.y = 0.25; g.add(t); m(cy(0.055, 0.055, 0.5, 8), M('#ff3d3d'), 0, 0.1, 0, g); m(rb(0.16, 0.07, 0.06), M('#ff3d3d'), 0.08, -0.28, 0, g); m(rb(0.12, 0.07, 0.06), M('#ff3d3d'), 0.06, -0.16, 0, g); }
         else if (k === 'mbox') { const lt = keep(T.label('?', '#ffd23f', '#8a2fe8', 128, 128, 96)); g.add(new THREE.Mesh(CH.G('mbox', () => new THREE.BoxGeometry(0.75, 0.75, 0.75)), keep(new THREE.MeshLambertMaterial({ map: lt })))); }
         return g;
       };
-      const ITEM_GLOW = { jet: 'r', sneak: 'g', mag: 'r', x2: 'y', key: 'r', mbox: 'p' };
+      const ITEM_GLOW = { jet: 'g', sneak: 'y', mag: 'r', x2: 'y', key: 'r', mbox: 'p' };
       function itemMesh(it) {
         if (!IM[it.k]) IM[it.k] = itemModel(it.k);
         const g = new THREE.Group(); g.add(IM[it.k].clone());
@@ -211,10 +212,13 @@
         g.position.set(it.x, it.y, -it.s); scene.add(g); it.mesh = g;
       }
 
+      const patchGeo = keep(new THREE.PlaneGeometry(0.4, 0.34)), patchMat = keep(new THREE.MeshLambertMaterial({ map: keep(T.patch()), transparent: true, alphaTest: 0.3 }));
       let hero = null, heroBlob = mkBlob(1.0);
       function buildHero() {
         if (hero) scene.remove(hero.root);
-        hero = CH.hero(CHARS.find(c => c.id === save.char) || CHARS[0]);
+        const P = CHARS.find(c => c.id === save.char) || CHARS[0];
+        hero = CH.hero(P);
+        if (P.vest) { const pm = new THREE.Mesh(patchGeo, patchMat); pm.position.set(0, 0.33, 0.212); hero.torso.add(pm); }
         scene.add(hero.root);
       }
       const guard = CH.guard(), dog = CH.dog();
@@ -605,13 +609,13 @@
         if (state === 'home') { target = 40; }
         else if (R.dead === 'caught' || R.dead === 'crash') target = R.dead === 'caught' ? 1.25 : 1.9;
         else if (R.jet > 0) target = 40;
-        else if (R.chase > 0) target = 2.25;
+        else if (R.chase > 0) target = 2.9;
         const k = target < gd ? (R.dead ? 4 : 2.6) : 0.7;
         gd = damp(gd, target, k, dt);
         if (gd > 20) vis = false;
         guard.root.visible = dog.root.visible = gBlob.visible = dBlob.visible = vis;
         if (!vis) return;
-        gx = damp(gx, R.x + (R.dead ? 0.15 : R.x > 0.5 ? -0.6 : 0.6), 5, dt);
+        gx = damp(gx, R.x + (R.dead ? 0.15 : R.x > 0.5 ? -0.85 : 0.85), 5, dt);
         const gs = R.s - gd;
         const sup = supportAt(W, laneOf(gx), gs);
         gy = damp(gy, sup, 10, dt);
@@ -634,11 +638,11 @@
         const tun = inTunnel(W, R.s + 2);
         const sp0 = supportAt(W, laneOf(R.x), R.s), yT = R.jet > 0 || R.grounded ? R.y : lerp(sp0, R.y, 0.6);
         camY = damp(camY, yT, R.jet > 0 ? 3 : 6, dt);
-        const base = portrait ? 4.6 : 3.95, back = portrait ? 6.9 : 5.8;
-        let cy = base + camY * 0.88;
-        if (tun) cy = Math.min(cy, 8.2);
-        out.set(R.x * 0.72, cy, -R.s + back);
-        look.set(R.x * 0.9, 1.05 + camY * 0.85, -R.s - (portrait ? 9 : 10));
+        const base = portrait ? 6.1 : 5.3, back = portrait ? 8.4 : 7.0;
+        let cy = base + camY * 0.9;
+        if (tun) cy = Math.min(cy, 8.6);
+        out.set(R.x * 0.62, cy, -R.s + back);
+        look.set(R.x * 0.85, 0.7 + camY * 0.88, -R.s - (portrait ? 8 : 9));
       }
       function camHome(out, look) {
         out.set(portrait ? 0.55 : 1.05, portrait ? 1.7 : 1.55, -R.s - (portrait ? 4.6 : 3.7));
@@ -647,7 +651,7 @@
 
       function frameUI(dt) {
         const sc = Math.floor(R.score);
-        if (sc !== hudScore) { hudScore = sc; E.sv.textContent = fmt(sc); if (state === 'run') api.score(sc); }
+        if (sc !== hudScore) { hudScore = sc; E.sv.textContent = String(sc).padStart(6, '0'); if (state === 'run') api.score(sc); }
         if (R.coins !== hudCoins) { hudCoins = R.coins; E.cv.textContent = fmt(R.coins); }
         const m = save.ms.lvl * (R.x2 > 0 ? 2 : 1);
         if (m !== hudMult) { hudMult = m; E.mult.textContent = 'x' + m; E.mult.classList.toggle('x2', R.x2 > 0); }

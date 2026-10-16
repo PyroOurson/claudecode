@@ -103,7 +103,7 @@
   }
 
   const T_COLS = 10, T_ROWS = 22, T_HID = 2;
-  const T_COL = { I: '#2ccfff', O: '#ffd23f', T: '#b45cff', S: '#3ddc84', Z: '#ff4d6d', J: '#3d7bff', L: '#ff9a2e' };
+  const T_COL = { I: '#31c7ef', O: '#f7d308', T: '#ad4d9c', S: '#42b642', Z: '#ef2029', J: '#5a65ad', L: '#ef7921' };
   const T_SHAPE = { I: ['....', 'XXXX', '....', '....'], J: ['X..', 'XXX', '...'], L: ['..X', 'XXX', '...'], O: ['XX', 'XX'], S: ['.XX', 'XX.', '...'], T: ['.X.', 'XXX', '...'], Z: ['XX.', '.XX', '...'] };
   const TP = {};
   for (const k in T_SHAPE) {
@@ -150,7 +150,7 @@
     let pts, label, hard;
     if (ts === 2) { pts = [400, 800, 1200, 1600][lines]; label = ['T-SPIN', 'T-SPIN SINGLE', 'T-SPIN DOUBLE', 'T-SPIN TRIPLE'][lines]; hard = lines > 0; }
     else if (ts === 1) { pts = [100, 200, 400, 400][lines]; label = ['MINI T-SPIN', 'MINI T-SPIN SINGLE', 'MINI T-SPIN DOUBLE', 'MINI T-SPIN'][lines]; hard = lines > 0; }
-    else { pts = [0, 100, 300, 500, 800][lines]; label = ['', '', 'DOUBLE', 'TRIPLE', 'TETRA!'][lines]; hard = lines === 4; }
+    else { pts = [0, 100, 300, 500, 800][lines]; label = ['', '', 'DOUBLE', 'TRIPLE', 'TETRIS'][lines]; hard = lines === 4; }
     pts *= st.level;
     let b2b = false;
     if (lines) {
@@ -162,18 +162,14 @@
     return { pts, label, b2b };
   }
   function drawBlock(x, s, col) {
-    const r = s * .22;
-    let g = x.createLinearGradient(0, 0, 0, s);
-    g.addColorStop(0, tint(col, .32)); g.addColorStop(.55, col); g.addColorStop(1, tint(col, -.3));
-    x.fillStyle = g; x.beginPath(); x.roundRect(1, 1, s - 2, s - 2, r); x.fill();
-    x.strokeStyle = tint(col, -.45); x.lineWidth = 1; x.stroke();
-    g = x.createLinearGradient(0, 0, s, s);
-    g.addColorStop(0, 'rgba(255,255,255,.8)'); g.addColorStop(.5, 'rgba(255,255,255,.08)'); g.addColorStop(1, 'rgba(0,0,0,.3)');
-    x.strokeStyle = g; x.lineWidth = s * .08; x.beginPath(); x.roundRect(s * .1, s * .1, s * .8, s * .8, r * .7); x.stroke();
-    g = x.createLinearGradient(0, s * .1, 0, s * .5);
-    g.addColorStop(0, 'rgba(255,255,255,.62)'); g.addColorStop(1, 'rgba(255,255,255,0)');
-    x.fillStyle = g; x.beginPath(); x.roundRect(s * .18, s * .14, s * .64, s * .32, s * .14); x.fill();
-    sparkle(x, s * .3, s * .28, s * .11, .95);
+    const e = s * .16;
+    x.fillStyle = col; x.fillRect(0, 0, s, s);
+    x.fillStyle = tint(col, .45); x.beginPath(); x.moveTo(0, 0); x.lineTo(s, 0); x.lineTo(s - e, e); x.lineTo(e, e); x.lineTo(e, s - e); x.lineTo(0, s); x.fill();
+    x.fillStyle = tint(col, -.38); x.beginPath(); x.moveTo(s, s); x.lineTo(0, s); x.lineTo(e, s - e); x.lineTo(s - e, s - e); x.lineTo(s - e, e); x.lineTo(s, 0); x.fill();
+    const g = x.createLinearGradient(0, e, 0, s - e);
+    g.addColorStop(0, tint(col, .14)); g.addColorStop(1, tint(col, -.1));
+    x.fillStyle = g; x.fillRect(e, e, s - 2 * e, s - 2 * e);
+    x.strokeStyle = 'rgba(0,0,0,.35)'; x.lineWidth = 1; x.strokeRect(.5, .5, s - 1, s - 1);
   }
 
   const PAD_SVG = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
@@ -189,8 +185,8 @@
     width: 720,
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="38" width="14" height="14" rx="3"/><rect x="25" y="38" width="14" height="14" rx="3"/><rect x="41" y="38" width="14" height="14" rx="3"/><rect x="25" y="22" width="14" height="14" rx="3"/><rect x="41" y="8" width="14" height="14" rx="3" fill="currentColor" opacity=".3"/></svg>',
     css: `.gm-tetra .tpad{display:none;gap:6px;width:100%;max-width:560px}
-.gm-tetra .tpad button{flex:1;min-width:0;height:54px;border:0;border-radius:14px;padding:0;display:grid;place-items:center;color:#fff;font:900 12px/1 var(--sans);letter-spacing:.06em;background:linear-gradient(#8b7cff,#5b48dc);box-shadow:0 4px 0 #3e2fa6,0 8px 16px rgba(70,50,170,.28);touch-action:none;-webkit-tap-highlight-color:transparent;cursor:pointer}
-.gm-tetra .tpad button.on{transform:translateY(3px);box-shadow:0 1px 0 #3e2fa6}
+.gm-tetra .tpad button{flex:1;min-width:0;height:54px;border:0;border-radius:14px;padding:0;display:grid;place-items:center;color:#fff;font:900 12px/1 var(--sans);letter-spacing:.06em;background:linear-gradient(#3a4566,#232b45);box-shadow:0 4px 0 #11162a,0 8px 16px rgba(10,16,40,.3);touch-action:none;-webkit-tap-highlight-color:transparent;cursor:pointer}
+.gm-tetra .tpad button.on{transform:translateY(3px);box-shadow:0 1px 0 #11162a}
 .gm-tetra .tpad svg{width:24px;height:24px}
 @media (hover:none),(pointer:coarse),(max-width:640px){.gm-tetra .tpad{display:flex}}
 `,
@@ -202,16 +198,16 @@
       const dpr = canvas.width / W, fx = makeFx();
       const spr = {};
       for (const k in T_COL) spr[k] = sprite(CS, CS, dpr, x => drawBlock(x, CS, T_COL[k]));
-      const grey = sprite(CS, CS, dpr, x => drawBlock(x, CS, '#8c88a8'));
+      const grey = sprite(CS, CS, dpr, x => drawBlock(x, CS, '#6c6c74'));
       const bg = sprite(W, H, dpr, x => {
         let g = x.createLinearGradient(0, 0, W, H);
-        g.addColorStop(0, '#3a2f8f'); g.addColorStop(.55, '#5a35a6'); g.addColorStop(1, '#8a3f9e');
+        g.addColorStop(0, '#0d1a3a'); g.addColorStop(.55, '#0a1026'); g.addColorStop(1, '#160b2c');
         x.fillStyle = g; x.fillRect(0, 0, W, H);
-        blobs(x, W, H, [[60, 560, 200, '#ff7ac8', .35], [520, 110, 210, '#4fd2ff', .3], [280, 320, 280, '#7f6bff', .25]]);
+        blobs(x, W, H, [[60, 560, 220, '#2b6cff', .18], [520, 110, 220, '#31c7ef', .14], [280, 320, 300, '#5a2bd0', .12]]);
         const panel = (px, py, pw, ph, label) => {
-          x.fillStyle = 'rgba(15,10,45,.35)'; x.beginPath(); x.roundRect(px, py, pw, ph, 16); x.fill();
-          x.strokeStyle = 'rgba(255,255,255,.14)'; x.lineWidth = 1.5; x.stroke();
-          if (label) { x.font = font(12, 900); x.letterSpacing = '2px'; x.fillStyle = 'rgba(255,255,255,.7)'; x.textAlign = 'center'; x.fillText(label, px + pw / 2, py + 20); x.letterSpacing = '0px'; }
+          x.fillStyle = 'rgba(0,0,0,.72)'; x.beginPath(); x.roundRect(px, py, pw, ph, 6); x.fill();
+          x.strokeStyle = 'rgba(255,255,255,.28)'; x.lineWidth = 1.5; x.stroke();
+          if (label) { x.font = font(14, 900); x.letterSpacing = '3px'; x.fillStyle = '#ffffff'; x.textAlign = 'center'; x.fillText(label, px + pw / 2, py + 21); x.letterSpacing = '0px'; }
         };
         panel(16, WY, 104, 96, 'HOLD');
         panel(16, 136, 104, 206, '');
@@ -223,14 +219,13 @@
         [['SCORE', 160], ['LEVEL', 226], ['LINES', 292]].forEach(([t, y]) => x.fillText(t, 68, y));
         x.letterSpacing = '0px';
         x.save(); x.shadowColor = 'rgba(10,5,40,.6)'; x.shadowBlur = 24; x.shadowOffsetY = 8;
-        x.fillStyle = '#16123a'; x.beginPath(); x.roundRect(WX - 6, WY - 6, WW + 12, WH + 12, 14); x.fill(); x.restore();
-        g = x.createLinearGradient(0, WY, 0, WY + WH); g.addColorStop(0, '#1e1953'); g.addColorStop(1, '#110e2e');
-        x.fillStyle = g; x.fillRect(WX, WY, WW, WH);
-        x.strokeStyle = 'rgba(255,255,255,.055)'; x.lineWidth = 1; x.beginPath();
+        x.fillStyle = '#cfd6e6'; x.fillRect(WX - 5, WY - 5, WW + 10, WH + 10); x.restore();
+        x.fillStyle = '#000'; x.fillRect(WX, WY, WW, WH);
+        x.strokeStyle = 'rgba(255,255,255,.09)'; x.lineWidth = 1; x.beginPath();
         for (let i = 1; i < T_COLS; i++) { x.moveTo(WX + i * CS + .5, WY); x.lineTo(WX + i * CS + .5, WY + WH); }
         for (let j = 1; j < 20; j++) { x.moveTo(WX, WY + j * CS + .5); x.lineTo(WX + WW, WY + j * CS + .5); }
         x.stroke();
-        x.strokeStyle = 'rgba(170,150,255,.5)'; x.lineWidth = 2; x.beginPath(); x.roundRect(WX - 6, WY - 6, WW + 12, WH + 12, 14); x.stroke();
+        x.strokeStyle = '#6f7a94'; x.lineWidth = 1; x.strokeRect(WX - 5.5, WY - 5.5, WW + 11, WH + 11);
       });
 
       let board = tNewBoard(), cur = null, hold = null, holdUsed = false, queue = [], st = { level: 1, b2b: false, combo: -1 };
@@ -495,16 +490,16 @@
         }
         if (cur && state === 'play') {
           const gy = ghostY(), col = T_COL[cur.type], cells = TP[cur.type][cur.rot];
-          ctx.lineWidth = 2; ctx.strokeStyle = rgba(col, .75); ctx.fillStyle = rgba(col, .16);
-          for (const [cx, cy] of cells) { ctx.beginPath(); ctx.roundRect(WX + (cur.x + cx) * CS + 2, WY + (gy + cy - T_HID) * CS + 2, CS - 4, CS - 4, 6); ctx.fill(); ctx.stroke(); }
+          ctx.lineWidth = 2; ctx.strokeStyle = rgba(col, .9); ctx.fillStyle = rgba(col, .22);
+          for (const [cx, cy] of cells) { ctx.fillRect(WX + (cur.x + cx) * CS + 1, WY + (gy + cy - T_HID) * CS + 1, CS - 2, CS - 2); ctx.strokeRect(WX + (cur.x + cx) * CS + 2, WY + (gy + cy - T_HID) * CS + 2, CS - 4, CS - 4); }
           const lk = grounded() ? lockT / LOCK : 0;
           for (const [cx, cy] of cells) {
             const x = WX + (cur.x + cx) * CS, y = WY + (cur.y + cy - T_HID) * CS;
             ctx.drawImage(spr[cur.type], x, y, CS, CS);
-            if (lk) { ctx.fillStyle = `rgba(255,255,255,${.3 * lk})`; ctx.beginPath(); ctx.roundRect(x + 1, y + 1, CS - 2, CS - 2, 6); ctx.fill(); }
+            if (lk) { ctx.fillStyle = `rgba(255,255,255,${.3 * lk})`; ctx.fillRect(x, y, CS, CS); }
           }
         }
-        for (const f of flash) { ctx.fillStyle = `rgba(255,255,255,${.8 * (1 - f.t / .18)})`; ctx.beginPath(); ctx.roundRect(WX + f.x * CS + 1, WY + (f.y - T_HID) * CS + 1, CS - 2, CS - 2, 6); ctx.fill(); }
+        for (const f of flash) { ctx.fillStyle = `rgba(255,255,255,${.8 * (1 - f.t / .18)})`; ctx.fillRect(WX + f.x * CS, WY + (f.y - T_HID) * CS, CS, CS); }
         ctx.restore();
         fx.draw(ctx);
         ctx.restore();
@@ -512,7 +507,7 @@
       function intro() {
         api.overlay({
           kicker: 'Puzzle', title: 'Tetris',
-          text: 'Move and rotate the falling blocks to fill rows. Full rows vanish; four at once is a Tetra. It speeds up every 10 lines.',
+          text: 'Move and rotate the falling blocks to fill rows. Full rows vanish; four at once is a Tetris. It speeds up every 10 lines.',
           button: 'Play', onAction: () => start(1),
           secondary: 'Start at level 5', onSecondary: () => start(5)
         });

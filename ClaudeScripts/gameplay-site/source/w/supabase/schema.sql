@@ -1,4 +1,5 @@
 create schema if not exists private;
+create extension if not exists pgcrypto with schema extensions;
 create schema if not exists admin;
 revoke all on schema private from public, anon, authenticated;
 revoke all on schema admin from public, anon, authenticated;
@@ -83,6 +84,7 @@ alter table public.profiles drop constraint if exists profiles_avatar_url_check;
 alter table public.profiles add constraint profiles_avatar_url_check check (avatar_url is null or (char_length(avatar_url) <= 500 and avatar_url ~ '^https://'));
 
 create unique index if not exists profiles_username_lower_key on public.profiles (lower(username));
+create index if not exists profiles_username_prefix_idx on public.profiles (lower(username) text_pattern_ops) where username is not null;
 
 drop trigger if exists profiles_touch on public.profiles;
 create trigger profiles_touch before update on public.profiles
@@ -478,19 +480,94 @@ as $$
     and not exists (select 1 from public.profiles p where lower(p.username) = lower(p_name) and p.id is distinct from auth.uid());
 $$;
 
-create or replace function public.find_profiles(p_query text)
-returns table (id uuid, username text, display_name text, avatar_url text)
-language sql
-stable
+drop function if exists public.find_profiles(text);
+
+create or replace function public.search_profiles(prefix text)
+returns table (username text, display_name text, avatar_url text)
+language plpgsql
+volatile
 security definer
 set search_path = ''
 as $$
-  select p.id, p.username, p.display_name, p.avatar_url
+declare
+  v_uid uuid := auth.uid();
+  v_q text := lower(btrim(coalesce(prefix, '')));
+  v_n integer;
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if char_length(v_q) < 2 or char_length(v_q) > 20 or v_q !~ '^[a-z0-9_.]+$' then
+    return;
+  end if;
+  insert into private.analytics_rate as r (k, w, n) values ('q:' || v_uid::text, date_trunc('minute', now()), 1)
+    on conflict (k, w) do update set n = r.n + 1
+    returning r.n into v_n;
+  if v_n > 120 then
+    raise exception 'Too many searches' using errcode = '54000';
+  end if;
+  if random() < 0.01 then
+    delete from private.analytics_rate where w < now() - interval '3 hours';
+  end if;
+  return query
+    select p.username, p.display_name, p.avatar_url
+    from public.profiles p
+    where p.username is not null
+      and p.id <> v_uid
+      and lower(p.username) like replace(v_q, '_', '\_') || '%'
+    order by lower(p.username) = v_q desc, char_length(p.username), lower(p.username)
+    limit 20;
+end;
+$$;
+
+create or replace function public.login_email(p_login text, p_password text)
+returns text
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_key text := lower(btrim(coalesce(p_login, '')));
+  v_ip text := '';
+  v_n integer;
+  v_email text;
+  v_hash text;
+begin
+  if v_key !~ '^[a-z0-9_.]{3,20}$' or coalesce(p_password, '') = '' or char_length(p_password) > 200 then
+    return null;
+  end if;
+  begin
+    v_ip := btrim(split_part(coalesce(nullif(current_setting('request.headers', true), '')::json ->> 'x-forwarded-for', ''), ',', 1));
+  exception when others then
+    v_ip := '';
+  end;
+  insert into private.analytics_rate as r (k, w, n) values ('l:' || v_key, date_trunc('hour', now()) + floor(extract(minute from now()) / 15) * interval '15 minutes', 1)
+    on conflict (k, w) do update set n = r.n + 1
+    returning r.n into v_n;
+  if v_n > 10 then
+    raise exception 'Too many attempts' using errcode = '54000';
+  end if;
+  if v_ip <> '' then
+    insert into private.analytics_rate as r (k, w, n) values ('li:' || md5(v_ip), date_trunc('hour', now()), 1)
+      on conflict (k, w) do update set n = r.n + 1
+      returning r.n into v_n;
+    if v_n > 100 then
+      raise exception 'Too many attempts' using errcode = '54000';
+    end if;
+  end if;
+  select u.email, u.encrypted_password into v_email, v_hash
   from public.profiles p
-  where char_length(regexp_replace(lower(coalesce(p_query, '')), '[^a-z0-9_.]', '', 'g')) >= 3
-    and p.username like replace(regexp_replace(lower(coalesce(p_query, '')), '[^a-z0-9_.]', '', 'g'), '_', '\_') || '%'
-  order by (p.username = regexp_replace(lower(coalesce(p_query, '')), '[^a-z0-9_.]', '', 'g')) desc, p.username
-  limit 10;
+  join auth.users u on u.id = p.id
+  where lower(p.username) = v_key and u.deleted_at is null;
+  if v_email is null or coalesce(v_hash, '') = '' then
+    return null;
+  end if;
+  if extensions.crypt(p_password, v_hash) <> v_hash then
+    return null;
+  end if;
+  return v_email;
+end;
 $$;
 
 create or replace function public.send_friend_request(p_username text)
@@ -651,7 +728,8 @@ end;
 $$;
 
 revoke all on function public.username_available(text) from public;
-revoke all on function public.find_profiles(text) from public;
+revoke all on function public.search_profiles(text) from public;
+revoke all on function public.login_email(text, text) from public;
 revoke all on function public.sync_game_stats(uuid, jsonb) from public;
 revoke all on function public.send_friend_request(text) from public;
 revoke all on function public.respond_friend_request(bigint, boolean) from public;
@@ -661,7 +739,8 @@ revoke all on function public.my_friend_requests() from public;
 revoke all on function public.export_my_data() from public;
 revoke all on function public.delete_my_account() from public;
 revoke all on function public.username_available(text) from anon, authenticated;
-revoke all on function public.find_profiles(text) from anon, authenticated;
+revoke all on function public.search_profiles(text) from anon, authenticated;
+revoke all on function public.login_email(text, text) from anon, authenticated;
 revoke all on function public.sync_game_stats(uuid, jsonb) from anon, authenticated;
 revoke all on function public.send_friend_request(text) from anon, authenticated;
 revoke all on function public.respond_friend_request(bigint, boolean) from anon, authenticated;
@@ -672,7 +751,8 @@ revoke all on function public.export_my_data() from anon, authenticated;
 revoke all on function public.delete_my_account() from anon, authenticated;
 
 grant execute on function public.username_available(text) to anon, authenticated;
-grant execute on function public.find_profiles(text) to anon, authenticated;
+grant execute on function public.search_profiles(text) to authenticated;
+grant execute on function public.login_email(text, text) to anon, authenticated;
 grant execute on function public.sync_game_stats(uuid, jsonb) to authenticated;
 grant execute on function public.send_friend_request(text) to authenticated;
 grant execute on function public.respond_friend_request(bigint, boolean) to authenticated;

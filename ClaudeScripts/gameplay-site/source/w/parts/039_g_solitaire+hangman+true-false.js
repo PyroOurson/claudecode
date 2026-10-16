@@ -211,13 +211,13 @@
         const m = CW * .055;
         g.save();
         g.beginPath(); g.roundRect(m, m, CW - 2 * m, CH - 2 * m, R * .6);
-        const gr = g.createLinearGradient(0, 0, CW, CH); gr.addColorStop(0, '#8172f2'); gr.addColorStop(1, '#4433b8');
+        const gr = g.createLinearGradient(0, 0, CW, CH); gr.addColorStop(0, '#3a7ae0'); gr.addColorStop(1, '#173f9a');
         g.fillStyle = gr; g.fill(); g.clip();
         g.strokeStyle = 'rgba(255,255,255,.16)'; g.lineWidth = 1.1;
         for (let d = -CH; d < CW + CH; d += CW * .1) { line(g, d, 0, d + CH, CH); line(g, d, CH, d + CH, 0); }
         g.beginPath(); g.ellipse(CW / 2, CH / 2, CW * .24, CH * .2, 0, 0, Math.PI * 2);
-        g.fillStyle = '#5b4bd6'; g.fill(); g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 1.6; g.stroke();
-        g.fillStyle = '#ffd36b'; suitPath(g, 2, CW / 2, CH / 2, CW * .2); g.fill();
+        g.fillStyle = '#1f56b8'; g.fill(); g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 1.6; g.stroke();
+        g.fillStyle = '#fff'; suitPath(g, 2, CW / 2, CH / 2, CW * .2); g.fill();
         g.restore();
         g.beginPath(); g.roundRect(m, m, CW - 2 * m, CH - 2 * m, R * .6); g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 1; g.stroke();
         return cvs;
