@@ -17,23 +17,23 @@ It downloads only what changed and removes files that were deleted on GitHub. Yo
 
 ## The website
 
-https://pyroourson.github.io/claudecode/ is **gameplay**, a portal of 100 browser games, 22 of them in 3D. Many are remakes of famous games and carry the original names (Minecraft, Subway Surfers, Rocket League, Tetris and more); the old names are still searchable. Fifteen games can be played by two people, either on the same device or online with a 4-letter room code. The site is `index.html` at the root (GitHub Pages needs it there) plus the `gameplay/` folder: `index.html` holds the password screen, the menus and the game list, and each game is its own encrypted file in `gameplay/`, downloaded only when it is opened, so the site opens fast and can grow to about 1000 games (see `ClaudeScripts/gameplay-site/GAMES.md`).
+https://pyroourson.github.io/claudecode/ is **gameplay**, a portal of 78 browser games. Many are remakes of famous games and carry the original names (Minecraft, Subway Surfers, Rocket League, Tetris and more); the old names are still searchable. Online games use a party code so friends on other devices can join. The site is `index.html` at the root (GitHub Pages needs it there) plus the `gameplay/` folder: `index.html` holds the password screen, the menus and the game list, and each game is its own encrypted file in `gameplay/`, downloaded only when it is opened, so the site opens fast and can grow to about 1000 games (see `ClaudeScripts/gameplay-site/GAMES.md`).
 
 What the portal does:
 
 - **Search** looks at names, old names, genres and synonyms, so "shooting" finds the shooters, "car" finds every driving game and "chees" still finds Chess. Results replace the page and show a count.
-- **Filters** combine genre, players (solo, two on one screen, online), session length, 2D or 3D, keyboard or touch, and famous remakes. **Sort** by popular, A to Z, newest, most played by you or shortest session. The filters and sort live in the address, so a filtered view can be shared.
+- **Filters** open as a compact panel grouped by genre, players (solo or online), look (3D or 2D), controls and length, with sorting. A cookie banner, Terms of Service, Privacy Policy and Cookie Policy pages are linked from the footer and settings, and the site records anonymous play statistics locally (launches and time per game) once cookies are accepted, ready to be connected to Supabase.
 - Each game page opens in a large "theater" stage by default (the button next to fullscreen turns it off), counts a play only once you start playing, and suggests similar games by shared tags.
 - Search is letter accurate for short input: typing "d" lists only the games whose name starts with D. Longer searches also match old names, genres and synonyms.
 - The site asks for a password before anything else. The whole page is encrypted with it, so the games cannot be opened without it. Five wrong tries lock that browser, and a browser that unlocked once stays unlocked.
 - Pressing Esc pauses any game (Resume, Restart or back to all games). Online matches are not frozen, so the other players are not affected.
-- UNO, Bomberman and Tank Trouble can be played online by up to 4 players and Rocket League by up to 6: one player creates a lobby, the others join with its code or invite link, and the host presses Play. Empty seats are filled by computer players.
-- 28 games have a real two-player mode on one screen (Snake, Tetris, Flappy Bird, Galaga and more) and 15 can be played online with a room code. Every other solo game has a "two players, take turns" button on its page: each player plays one run and the higher score wins.
+- UNO and Tank Trouble can be played online by up to 4 players and Rocket League by up to 6: one player creates a lobby, the others join with its code or invite link, and the host presses Play.
+- Multiplayer is online only: every online game uses the same party screen (party size, a code you can show or hide, your saved username, crown and kick, live chat, Play). Only the party's players are in the match.
 - The 3D models, characters, vehicles and scenery of most games were redrawn with more detail.
 - **Rocket League** is rebuilt to follow the real game:
   - Physics come from RocketSim (the open-source Rocket League simulator) and are tuned to match https://car-soccer.com/: four-wheel suspension, real hitboxes, jumps, flips, flip resets, wall and ceiling driving, boost pads, bumps and demolitions, the 0:00 rule and overtime.
-  - Three cars (Octane, Fennec, Dominus) and the ball use detailed 3D models in a DFH Stadium style arena.
-  - 1v1, 2v2 and 3v3 against Rookie, Semi-Pro or All-Star bots that rotate like real players.
+  - Three cars (Octane, Fennec, Dominus) and the ball use detailed 3D models in a DFH Stadium style arena, with a garage (paint, decals, wheels, boosts, goal explosions, trails, toppers), a 50-tier Rocket Pass, free play training and 5 bot levels.
+  - 1v1, 2v2 and 3v3 against Rookie, Semi-Pro, Pro, Veteran or All-Star bots that rotate like real players.
   - The real game's scoreboard and boost meter, Tab scoreboard, quick chat on 1 to 4, goal explosions and goal replays, and the real game's default camera settings.
   - Menus follow the real game: title screen, loading screen, main menu, garage, pause, options, replay card and post-match screen.
   - Model credits (CC BY 4.0, shown in the game under Options > Credits): Octane, Fennec, Dominus and Ball models by fairlight51 on Sketchfab (https://sketchfab.com/fairlight51). Fan-made tribute, not affiliated with Psyonix.
