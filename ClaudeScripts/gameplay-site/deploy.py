@@ -12,8 +12,8 @@ import urllib.request
 
 REPO = "PyroOurson/claudecode"
 DEFAULT_REF = "claude/upbeat-bell-n1e54q"
-PROJECT = os.environ.get("GP_PROJECT", "claudecode-7e172")
-SITE = os.environ.get("GP_SITE", "gameplaygames")
+PROJECT = "claudecode-7e172"
+SITE = "gameplaygames"
 FOLDER = os.path.join(os.path.expanduser("~"), "gameplay-site")
 ASSETS = "gameplay"
 MANIFEST = ASSETS + "/manifest.txt"
