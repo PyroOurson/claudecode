@@ -195,8 +195,13 @@ def main():
     made = run(["firebase", "hosting:sites:create", SITE, "--project", PROJECT])
     if made.returncode != 0 and "already exists" not in made.stdout.lower():
         print(made.stdout.strip().splitlines()[-1] if made.stdout.strip() else "Could not create the site")
-    deployed = run(["firebase", "deploy", "--only", "hosting", "--project", PROJECT])
-    print(deployed.stdout)
+    for attempt in range(1, 5):
+        deployed = run(["firebase", "deploy", "--only", "hosting", "--project", PROJECT])
+        print(deployed.stdout)
+        if deployed.returncode == 0 or "login" in deployed.stdout.lower() or attempt == 4:
+            break
+        print("Upload interrupted, retrying (%d of 3) in %d seconds..." % (attempt, 10 * attempt))
+        time.sleep(10 * attempt)
     if deployed.returncode != 0:
         print("Deploy failed. If it asked you to log in, run: firebase login --no-localhost  and then run this command again.")
         sys.exit(deployed.returncode)
