@@ -1,0 +1,52 @@
+@media (max-width:1100px){
+  .play-side .am-pstat{min-width:64px;padding:0 8px}
+}
+@media (max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr);gap:0}
+  .side{display:none}
+  .row-head{flex-wrap:wrap}
+  .row-head .center{order:3;flex-basis:100%;max-width:none}
+  .am-gamebox.theater .play-stage{display:block;min-height:0;padding:clamp(8px,2vw,22px);height:auto!important;overflow:visible;background:#fbfbfd}
+  .am-gamebox.theater .play-frame{margin:0 auto;transform:none!important;--goff:250px;will-change:auto}
+  [data-theater]{display:none!important}
+  .about{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:760px){
+  .pgrid{grid-template-columns:minmax(0,1fr)}
+  .setgrid{grid-template-columns:minmax(0,1fr)}
+  .snav{flex-direction:row;overflow-x:auto;position:static;padding-bottom:4px}
+  .snav button{white-space:nowrap}
+  .mh-sp{width:0}
+  .ckbar{flex-direction:column;align-items:stretch;gap:12px}
+  .ckbtns{justify-content:stretch}
+  .ckbtns .btn2{flex:1}
+  .play-bar{flex-wrap:wrap;gap:8px}
+  .pb-thumb{display:none}
+  .play-side{width:100%}
+  .play-side .am-pstat{flex:1;min-width:0}
+  .play-side [data-fs]{display:none}
+  .play-stage{padding:8px}
+  .g-root{min-height:320px}
+  .g-overlay{padding:16px}
+  .g-ov-stats div{padding:10px 4px}
+  .g-ov-stats span{font-size:9px;letter-spacing:.06em}
+  .g-ov-stats b{font-size:16px}
+}
+@media (max-width:640px){.two{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:520px){
+  .fbtn .lbl{display:none}.fbtn{padding:0 16px!important}
+  .search kbd{display:none}
+  .brand span:not(.logo){display:none}
+  .menu.r{width:min(280px,calc(100vw - 32px))}
+  #smenu{right:0}
+  .grid,.rail{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:16px 12px}
+  .rail .card:nth-child(n+5){display:none}
+  .fg{grid-template-columns:70px minmax(0,1fr);gap:8px}
+  .fg h4{font-size:10.5px;letter-spacing:.06em}
+  .chip{padding:6px 11px}
+  .panel{position:fixed;left:12px;right:12px;top:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));max-height:calc(100dvh - 120px)}
+  .sitefoot{flex-direction:column;align-items:flex-start}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}

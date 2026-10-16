@@ -1,0 +1,24 @@
+        const saved = Object.assign({ play: 'cpu', size: 1, diff: 'pro', len: 300, cam: true, car: 'octane', name: 'Player', xp: 0, wins: 0, games: 0, vol: 85, mute: false, shake: true, chatf: 'all', qc: null, cs: null, ld: null, pxp: 0, seen: null, tier: 1, ttl: '', tbo: true, tsh: false, tsp: 'center' }, api.load() || {});
+        delete saved.car2;
+        if (!DIFF[saved.diff]) saved.diff = 'pro';
+        if (!BODIES[saved.car]) saved.car = 'octane';
+        if (![1, 2, 3].includes(saved.size)) saved.size = 1;
+        if (![180, 300, 600].includes(saved.len)) saved.len = 300;
+        if (!['cpu', 'train', 'online'].includes(saved.play)) saved.play = 'cpu';
+        if (typeof saved.name !== 'string' || !saved.name.trim() || saved.name === 'Player') { try { const pf = JSON.parse(localStorage.getItem('gameplay:profile') || 'null'); const pn = pf && (pf.displayName || pf.username); if (typeof pn === 'string' && pn.trim()) saved.name = pn; } catch (e) {   } }
+        if (typeof saved.name !== 'string' || !saved.name.trim()) saved.name = 'Player';
+        saved.name = saved.name.replace(/[^\w .\-!?]/g, '').slice(0, 16) || 'Player';
+        for (const k of ['xp', 'wins', 'games', 'pxp']) saved[k] = Number.isFinite(saved[k]) && saved[k] > 0 ? Math.floor(saved[k]) : 0;
+        if (!Number.isFinite(saved.tier) || saved.tier < 1) saved.tier = 1;
+        saved.vol = Number.isFinite(saved.vol) ? Math.max(0, Math.min(100, saved.vol)) : 85;
+        if (!['all', 'team', 'off'].includes(saved.chatf)) saved.chatf = 'all';
+        if (!Array.isArray(saved.qc) || saved.qc.length !== 5) saved.qc = null;
+        if (!saved.cs || typeof saved.cs !== 'object') saved.cs = null;
+        if (!saved.ld || typeof saved.ld !== 'object' || Array.isArray(saved.ld)) saved.ld = {};
+        if (!Array.isArray(saved.seen)) saved.seen = [];
+        saved.seen = saved.seen.filter(x => typeof x === 'string').slice(-400);
+        if (typeof saved.ttl !== 'string') saved.ttl = '';
+        saved.tbo = saved.tbo !== false; saved.tsh = !!saved.tsh;
+        if (typeof saved.tsp !== 'string') saved.tsp = 'center';
+        let W = makeWorld({ size: 1, human: false, bodies: [saved.car, saved.car] });
+        let paused = false, submitted = false, ui = 'title';
