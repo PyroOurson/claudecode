@@ -4,7 +4,7 @@ Target: about 1000 games, added in waves of at most 100. Every game is a remake 
 
 | Wave | Games | Status |
 |---|---|---|
-| 0 | 100 | Live |
+| 0 | 78 | Live (22 removed after player testing) |
 | 1 | 100 | Planned (below), not started |
 | 2 to 9 | about 800 | Idea pool at the bottom |
 
@@ -13,16 +13,25 @@ Target: about 1000 games, added in waves of at most 100. Every game is a remake 
 1. Plays like the original: same rules, controls, goal and feel; a real start menu, game over / win screen and restart.
 2. Polished look: proper models or drawn art, animations, effects and sound; no placeholder shapes.
 3. Works with keyboard and with touch (phones and tablets), at the normal size, in theater and in fullscreen.
-4. Multiplayer games: online lobby (create, share code or link, host presses Play), 2 up to the game's real player count, bots fill empty seats, host leaving and players leaving handled, rematch and back to lobby. Same-screen 2 players where it makes sense.
+4. Multiplayer is online only, never same-screen. Every game uses the same party lobby: the host picks the party size, a code is generated (show/hide), players join by code or link with their saved username, the host can pass the crown or kick, there is a live chat, and the host presses Play. Only the party's real players are in the match; bots only if the host explicitly adds them. Host leaving and players leaving are handled; rematch and back to lobby.
 5. Esc pauses (online games open their menu without freezing others).
 6. No console errors; 60 fps on an ordinary laptop; loads only when opened.
 7. Tested: solo run, multiplayer session with real separate browsers, phone layout.
 
-## Wave 0 (live, 100 games)
+## Removed after testing with 20 players
+
+Doom, Vampire Survivors, Fireboy and Watergirl, Bomberman, Zuma, Atelier, Glide, Jetpack Joyride, Doodle Jump, Lights Out, Deep Miner, Angry Birds, Cut the Rope, Lane Racer, Galaga, Hill Climb Racing, Mini Golf, Asteroids, Strike 3D, Mario Kart, Tower Defense, Stick Hero.
+
+## Wave 0 (live)
 
 Minecraft, Geometry Dash, Subway Surfers, Crossy Road, Slither.io, Flappy Bird, Super Mario Bros., Rocket League, Slope, Tunnel Rush, Angry Birds, Bomberman, Fireboy and Watergirl, Paper.io, Agar.io, Hole.io, Plants vs. Zombies, Vampire Survivors, DOOM, Fall Guys, Basket Random, Tank Trouble, UNO, Cut the Rope, Moto X3M, Cookie Clicker, Bloxorz, Zuma, Battleship, Snake, Traffic Racer, Lane Racer, Tetris, 2048, Galaga, Hill Climb Racing, 8 Ball Pool, Helix Jump, Chrome Dino, Reaction, Chess, Minesweeper, Hoops 3D, Atelier, Fruit Ninja, Wordle, Sky Pilot, Mini Golf, Tank Arena, Bubble Shooter, Pairs, Target Range, Breakout, Asteroids, Penalty Kick, Stack, Sudoku, Marble Roll, Trivia, Space Invaders, Strike 3D, Mario Kart, Aim Trainer, Maze Escape 3D, Connect Four, Bejeweled, Asteroid Field, Glide, Jetpack Joyride, Rubik's Cube, Solitaire, Perfect Stop, Piano Tiles, Math Sprint, Tower Defense, Whack-a-Mole, Air Hockey, Typing Test, Pac-Man, Pulse, Checkers, Pong, Doodle Jump, Tic-Tac-Toe, Archery, Sequence, Pinball, Slide 15, Sokoban, Number Memory, Reversi, Lights Out, Pipe Mania, Knife Hit, Stick Hero, CPS Test, Chimp Test, Hangman, True or False, Deep Miner.
 
-Online today: Rocket League (up to 6), UNO, Bomberman, Tank Trouble (up to 4), and 2-player online for Fireboy and Watergirl, Basket Random, Battleship, 8 Ball Pool, Chess, Connect Four, Air Hockey, Checkers, Pong, Tic-Tac-Toe, Reversi.
+The 22 removed games above are still listed here for history. Online today: Rocket League (up to 6), UNO and Tank Trouble (up to 4), and 2-player online for Basket Random, Battleship, 8 Ball Pool, Chess, Connect Four, Air Hockey, Checkers, Pong, Tic-Tac-Toe, Reversi.
+
+## Later (not started)
+
+- Sign in with Google creating a profile with username and display name.
+- Connect everything to Supabase: accounts (email, username, display name), stats, analytics events (the site already records them locally through `Ameplay.analytics`).
 
 ## Wave 1 plan (100 games, 76 online)
 
