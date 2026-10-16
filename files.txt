@@ -3,6 +3,9 @@ CLAUDE.md
 ClaudeScripts/gameplay-site/COVER_SOURCES.md
 ClaudeScripts/gameplay-site/GAMES.md
 ClaudeScripts/gameplay-site/deploy.py
+ClaudeScripts/gameplay-site/supabase/GUIDE.md
+ClaudeScripts/gameplay-site/supabase/schema.sql
+ClaudeScripts/gameplay-site/supabase/setup.py
 ClaudeScripts/hello-page/common.css
 ClaudeScripts/hello-page/games/2048.html
 ClaudeScripts/hello-page/games/circle.html
