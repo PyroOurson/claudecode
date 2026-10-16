@@ -1782,6 +1782,7 @@ function parseLocation() {
     query = i < 0 ? '' : h.slice(i);
   }
   if (LEGAL_KEYS.includes(path)) return { legal: path };
+  if (path === 'admin') return { admin: true };
   const m = /^([\w-]+)(?:\/([A-Za-z0-9]{4}))?$/.exec(path);
   if (m && m[1] !== 'all' && byId.get(m[1])) return { game: byId.get(m[1]), code: m[2] || null };
   const p = new URLSearchParams(query);
@@ -2219,6 +2220,7 @@ function openGame(g) {
   if (cur) { cur.kill(); cur = null; ttSync(); }
   pend = null;
   track('game_open', { game: g.id, src: clickSrc || 'link' });
+  adSeen(g.id);
   clickSrc = null;
   setHead(g.title + ' — play free online | gameplay', g.title + ' on gameplay: ' + (g.blurb || '') + ' Free to play in your browser, no download.', '/' + g.id);
   $('#pTitle').textContent = g.title;
@@ -2258,7 +2260,8 @@ function showView(v) {
   if (view === v) return false;
   if (view === 'home') homeY = scrollY;
   view = v;
-  ['home', 'game', 'legal'].forEach(k => { const el = $('#v' + k[0].toUpperCase() + k.slice(1)); el.hidden = k !== v; if (k === v) { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; } });
+  ['home', 'game', 'legal', 'admin'].forEach(k => { const el = $('#v' + k[0].toUpperCase() + k.slice(1)); el.hidden = k !== v; if (k === v) { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; } });
+  if (v !== 'home' && !$('#slist').children.length) { lastList = compute().list; renderSide(lastList); markSide(); }
   track('view', { v });
   return true;
 }
@@ -2391,7 +2394,7 @@ function openLegal(k) {
   scrollTo({ top: 0, behavior: 'instant' });
 }
 
-const MENUS = { filters: ['#fpanel', '#fbtn'], friends: ['#fmodal', '#abtn'], profile: ['#pmenu', '#pbtn'], settings: ['#smenu', '#sbtn'], mprofile: ['#prmodal'], mstats: ['#stmodal'], msettings: ['#semodal'], msignout: ['#sgmodal'], cookies: ['#ckmodal'], mauth: ['#aumodal'] };
+const MENUS = { filters: ['#fpanel', '#fbtn'], friends: ['#fmodal', '#abtn'], profile: ['#pmenu', '#pbtn'], settings: ['#smenu', '#sbtn'], mprofile: ['#prmodal'], mstats: ['#stmodal'], msettings: ['#semodal'], msignout: ['#sgmodal'], cookies: ['#ckmodal'], mauth: ['#aumodal'], msupport: ['#tkmodal'] };
 let openK = null;
 const motionOK = () => !S.prefs.motion && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 function vis(el, on) {
@@ -2429,6 +2432,7 @@ function setOpen(k) {
   if (openK === 'cookies') { const b = $('#ckan'); b.classList.toggle('on', consent ? anOk() : true); b.setAttribute('aria-checked', String(b.classList.contains('on'))); }
   if (openK === 'filters') renderPanel();
   if (openK === 'mauth') auShow();
+  if (openK === 'msupport') adSupport();
   fbtnState();
 }
 function closeAll() { if (openK) setOpen(openK); }
@@ -2564,6 +2568,7 @@ function route() {
   const pop = fromPop; fromPop = false;
   const loc = parseLocation();
   if (loc.legal) return openLegal(loc.legal);
+  if (loc.admin) return adRoute();
   if (loc.game) {
     const g = loc.game;
     if (view !== 'game') navFromHome = view === 'home' && !pop; else if (!(cur && cur.g === g) && !(pend && pend.id === g.id)) navFromHome = false;
@@ -2784,6 +2789,7 @@ function boot() {
   route();
   lzIdle();
   auBoot();
+  adBoot();
   if (S.recent.some(id => byId.get(id) && byId.get(id).is3d)) { const warmUp = () => loadThree().catch(() => {}); if (window.requestIdleCallback) requestIdleCallback(warmUp, { timeout: 4000 }); else setTimeout(warmUp, 1500); }
 }
 
@@ -3438,6 +3444,7 @@ async function auSignedIn(ev) {
   try { await auLoadProfile(); } catch (e) {}
   if (!SB.user || SB.user.id !== uid) return;
   auRender();
+  adCheck();
   if (loud) toast(auT('Logged in as {name}').replace('{name}', SB.prof && SB.prof.username ? '@' + SB.prof.username : SB.user.email || 'you'));
   sySync();
   if (loud && SB.prof && !SB.prof.username) setTimeout(auChoose, 400);
@@ -3448,6 +3455,7 @@ function auSignedOut() {
   clearTimeout(SB.t);
   if (SB.choosing && !$('#unmodal').hidden) unClose();
   SB.choosing = false;
+  adSignedOut();
   auRender();
 }
 function auSession(ev, s) {
@@ -3700,6 +3708,428 @@ Ameplay.account = {
   signIn() { auOpen('main', '', '', 'in'); },
   sync() { return sySync(); }
 };
+
+const AD = { role: null, locked: false, reason: null, at: 0, game: null, gat: 0, users: null, q: '', f: 'all', sort: ['created_at', -1], sel: null, tab: 'users', wait: 0, busy: false };
+const adHref = () => (PATH_MODE ? '/' : '#/') + 'admin';
+const adIsAdmin = () => AD.role === 'admin' && !AD.locked;
+const adRpc = (f, b) => sbRest('rpc/' + f, { method: 'POST', body: b || {} });
+const adLang = () => window.gpI18n ? gpI18n.lang : 'en';
+const AD_ICO = {
+  lock: '<svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg>',
+  back: '<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>',
+  x: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  send: '<svg viewBox="0 0 24 24"><path d="M4 12 20 4l-6 16-3-7z"/></svg>'
+};
+function adAgo(t) {
+  const d = Date.parse(t);
+  if (!d) return auT('Never');
+  const s = (d - Date.now()) / 1000, a = Math.abs(s);
+  const [n, u] = a < 60 ? [s, 'second'] : a < 3600 ? [s / 60, 'minute'] : a < 86400 ? [s / 3600, 'hour'] : a < 2592000 ? [s / 86400, 'day'] : a < 31536000 ? [s / 2592000, 'month'] : [s / 31536000, 'year'];
+  try { return new Intl.RelativeTimeFormat(adLang(), { numeric: 'auto' }).format(Math.round(n), u); } catch (e) { return new Date(d).toLocaleString(); }
+}
+function adDate(t, full) {
+  const d = Date.parse(t);
+  if (!d) return auT('Never');
+  try { return new Date(d).toLocaleString(adLang(), full ? { dateStyle: 'medium', timeStyle: 'short' } : { dateStyle: 'medium' }); } catch (e) { return new Date(d).toLocaleString(); }
+}
+function adLangName(c) {
+  if (!c) return '—';
+  try { const n = new Intl.DisplayNames([adLang()], { type: 'language' }).of(c); return n ? n.charAt(0).toUpperCase() + n.slice(1) : c; } catch (e) { return c; }
+}
+const adGame = id => id ? (byId.get(id) ? byId.get(id).title : id) : '—';
+const adProv = u => (u.providers && u.providers.length ? u.providers : ['email']).map(p => p === 'google' ? 'Google' : p === 'email' ? auT('Email') : p).join(' + ');
+const adPill = (t, k) => `<span class="adm-pill${k ? ' ' + k : ''}">${esc(auT(t))}</span>`;
+const adErr = e => { const m = String(e && e.message || ''); return /admins only/i.test(m) ? 'Admins only' : /at least one admin/i.test(m) ? 'There must be at least one admin' : /own account/i.test(m) ? 'You cannot lock your own account' : /at least 8/i.test(m) ? 'Use at least 8 characters.' : /at most 72/i.test(m) ? 'Use at most 72 characters.' : /not found/i.test(m) ? 'Not found. Refresh and try again.' : /too many/i.test(m) ? 'Too many messages. Wait a minute and try again.' : /account locked/i.test(m) ? 'Your account is locked.' : /write a subject/i.test(m) ? 'Write a subject.' : /write a message/i.test(m) ? 'Write a message.' : 'Could not update. Check your connection and try again.'; };
+
+function adStatus(s) {
+  const was = adIsAdmin(), wl = AD.locked;
+  AD.role = s ? s.role : null; AD.locked = !!(s && s.locked); AD.reason = s && s.locked_reason || null; AD.at = Date.now();
+  document.querySelectorAll('[data-admin]').forEach(el => { el.hidden = !adIsAdmin(); });
+  if (AD.locked !== wl || AD.locked) adBlock(AD.locked);
+  if (view === 'admin') { if (adIsAdmin()) { if (!was || !AD.users) adEnter(); } else adBounce(); }
+}
+async function adCheck(game) {
+  if (!SB.user) return;
+  const uid = SB.user.id;
+  try {
+    const r = await adRpc('touch_presence', { p_lang: adLang(), p_game: game || (cur ? cur.g.id : null) });
+    if (!SB.user || SB.user.id !== uid) return;
+    adStatus(Array.isArray(r) ? r[0] : null);
+  } catch (e) { if (view === 'admin' && !AD.at) adBounce(); }
+}
+function adSeen(id) {
+  if (!SB.user || (AD.game === id && Date.now() - AD.gat < 60000)) return;
+  AD.game = id; AD.gat = Date.now();
+  adCheck(id);
+}
+function adSignedOut() {
+  AD.role = null; AD.at = 0; AD.users = null; AD.sel = null;
+  document.querySelectorAll('[data-admin]').forEach(el => { el.hidden = true; });
+  if (AD.locked) { AD.locked = false; adBlock(false); }
+  document.querySelectorAll('.tk').forEach(b => { if (b._tk) { b._tk.list = null; b._tk.cur = null; } });
+  if (view === 'admin') adBounce();
+}
+
+function adBlock(on) {
+  const el = $('#adblock');
+  document.documentElement.classList.toggle('ad-locked', on);
+  ['top', 'side', 'main'].forEach(id => { const n = document.getElementById(id); if (n) n.inert = on; });
+  if (on) {
+    if (openK) closeAll();
+    if (!$('#unmodal').hidden) unClose();
+    if (view !== 'home' || cur || pend) go(homeHref(), true);
+    $('#adbrt').textContent = AD.reason || '';
+    $('#adbr').hidden = !AD.reason;
+    if (el.hidden) { el.hidden = false; const b = tkBox($('#tkb'), 'user'); tkLoad(b); }
+  } else el.hidden = true;
+}
+
+function adBounce() {
+  if (view !== 'admin') return;
+  clearTimeout(AD.wait);
+  toast('Admins only');
+  go(homeHref(), true);
+}
+function adRoute() {
+  closeGame();
+  showView('admin');
+  setHead(auT('Admin dashboard') + ' | gameplay', 'gameplay admin dashboard.', '/admin');
+  scrollTo({ top: 0, behavior: 'instant' });
+  if (!SB.on) return adBounce();
+  if (!SB.user) {
+    if (!sbHasSession()) return adBounce();
+    clearTimeout(AD.wait); AD.wait = setTimeout(() => { if (view === 'admin' && !adIsAdmin()) adBounce(); }, 9000);
+    return;
+  }
+  if (adIsAdmin() && Date.now() - AD.at < 60000) adEnter(); else adCheck();
+}
+async function adEnter() {
+  clearTimeout(AD.wait);
+  adTab(AD.tab);
+  await adLoad();
+  tkLoad(tkBox($('#tka'), 'admin'));
+}
+async function adLoad() {
+  if (!adIsAdmin() || AD.busy) return;
+  AD.busy = true;
+  $('#adref').classList.add('spin');
+  if (!AD.users) $('#adt tbody').innerHTML = `<tr><td colspan="15" class="adm-empty">${esc(auT('Loading…'))}</td></tr>`;
+  try {
+    const r = await adRpc('admin_list_users');
+    AD.users = Array.isArray(r) ? r : [];
+    adTiles(); adDraw();
+    if (AD.sel) { const u = AD.users.find(x => x.id === AD.sel); if (u) adPanel(u, true); }
+  } catch (e) {
+    if (/admins only/i.test(e.message || '')) { AD.role = 'user'; adStatus({ role: 'user', locked: false }); return; }
+    $('#adt tbody').innerHTML = `<tr><td colspan="15" class="adm-empty">${esc(auT('Could not load the users. Check your connection and try again.'))}</td></tr>`;
+  } finally { AD.busy = false; $('#adref').classList.remove('spin'); }
+}
+function adTiles() {
+  const U = AD.users || [], now = Date.now(), tk = ($('#tka')._tk || {}).list || [];
+  const open = tk.filter(t => t.status === 'open').length;
+  const T = [['Accounts', U.length], ['New this week', U.filter(u => now - Date.parse(u.created_at) < 6048e5).length], ['Active today', U.filter(u => now - Date.parse(u.last_seen || 0) < 864e5).length], ['Admins', U.filter(u => u.role === 'admin').length], ['Locked', U.filter(u => u.locked).length], ['Open tickets', open]];
+  const box = $('#adtiles');
+  box.innerHTML = T.map(([k, n], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b data-n="${n}">${n}</b></div>`).join('');
+  countUp(box);
+  const tn = $('#adtn'); tn.textContent = open || ''; tn.hidden = !open;
+}
+const AD_COLS = [
+  ['id', 'User id', u => `<code title="${esc(u.id)}">${esc(u.id.slice(0, 8))}</code>`],
+  ['created_at', 'Account created', u => `<span title="${esc(adDate(u.created_at, 1))}">${esc(adDate(u.created_at))}</span>`],
+  ['last_sign_in_at', 'Last log in', u => `<span title="${esc(adDate(u.last_sign_in_at, 1))}">${esc(adAgo(u.last_sign_in_at))}</span>`],
+  ['last_seen', 'Last used website', u => `<span title="${esc(adDate(u.last_seen, 1))}">${esc(adAgo(u.last_seen))}</span>`],
+  ['providers', 'Log in method', u => esc(adProv(u))],
+  ['email_confirmed', 'Email confirmed', u => u.email_confirmed ? adPill('Yes', 'ok') : adPill('No', 'warn')],
+  ['last_lang', 'Language', u => esc(adLangName(u.last_lang))],
+  ['', 'Password', () => `<span class="adm-mut">${esc(auT('Hidden (hashed)'))}</span>`],
+  ['role', 'Role', u => u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User')],
+  ['email', 'Email', u => esc(u.email || '—')],
+  ['username', 'Username', u => u.username ? '@' + esc(u.username) : '<span class="adm-mut">—</span>'],
+  ['display_name', 'Display name', u => esc(u.display_name || '—')],
+  ['friends', 'Friends', u => String(+u.friends || 0)],
+  ['fav_game', 'Favourite game', u => esc(adGame(u.fav_game))],
+  ['locked', 'Locked', u => u.locked ? `<span title="${esc(u.locked_reason || '')}">${adPill('Locked', 'bad')}</span>` : adPill('No')]
+];
+function adHead() {
+  $('#adt thead').innerHTML = '<tr>' + AD_COLS.map(([k, l]) => k ? `<th><button type="button" data-adsort="${k}" aria-sort="${AD.sort[0] === k ? (AD.sort[1] > 0 ? 'ascending' : 'descending') : 'none'}">${esc(auT(l))}<i></i></button></th>` : `<th><span>${esc(auT(l))}</span></th>`).join('') + '</tr>';
+}
+function adSortVal(u, k) {
+  const v = k === 'providers' ? adProv(u) : u[k];
+  if (/_at$|last_seen/.test(k)) return Date.parse(v) || 0;
+  if (typeof v === 'boolean') return v ? 1 : 0;
+  if (typeof v === 'number') return v;
+  return v == null ? '' : String(v).toLowerCase();
+}
+function adRows() {
+  const q = AD.q.trim().toLowerCase().replace(/^@/, ''), f = AD.f, now = Date.now(), [k, d] = AD.sort;
+  return (AD.users || []).filter(u => {
+    if (q && ![u.id, u.email, u.username, u.display_name].some(x => x && String(x).toLowerCase().includes(q))) return false;
+    if (f === 'admin') return u.role === 'admin';
+    if (f === 'locked') return u.locked;
+    if (f === 'unconfirmed') return !u.email_confirmed;
+    if (f === 'google' || f === 'email') return (u.providers || []).includes(f);
+    if (f === 'active') return now - Date.parse(u.last_seen || 0) < 6048e5;
+    return true;
+  }).sort((a, b) => { const x = adSortVal(a, k), y = adSortVal(b, k); const ex = x === '' || x === 0, ey = y === '' || y === 0; if (ex !== ey) return ex ? 1 : -1; return (x < y ? -1 : x > y ? 1 : 0) * d; });
+}
+function adDraw() {
+  adHead();
+  const rows = adRows(), tb = $('#adt tbody');
+  $('#adcount').textContent = auT('{n} of {t} users').replace('{n}', rows.length).replace('{t}', (AD.users || []).length);
+  tb.innerHTML = rows.length ? rows.map((u, i) => `<tr tabindex="0" data-uid="${esc(u.id)}" class="${u.id === AD.sel ? 'sel' : ''}" style="--i:${Math.min(i, 14)}">${AD_COLS.map(c => `<td>${c[2](u)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="15" class="adm-empty">${esc(auT('No users match.'))}</td></tr>`;
+}
+function adTab(t) {
+  AD.tab = t;
+  const tabs = $('#adtabs');
+  tabs.dataset.m = t;
+  tabs.querySelectorAll('[data-adtab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.adtab === t)));
+  $('#adusers').hidden = t !== 'users'; $('#adtickets').hidden = t !== 'tickets';
+  if (t === 'tickets') tkLoad(tkBox($('#tka'), 'admin'));
+}
+function adPanel(u, keep) {
+  AD.sel = u.id;
+  const p = $('#adpanel'), me = SB.user && SB.user.id === u.id, name = u.display_name || u.username || u.email || '?';
+  document.querySelectorAll('#adt tr.sel').forEach(r => r.classList.remove('sel'));
+  const tr = document.querySelector(`#adt tr[data-uid="${CSS.escape(u.id)}"]`); if (tr) tr.classList.add('sel');
+  p.querySelector('.pic').textContent = name.charAt(0).toUpperCase();
+  $('#adpn').textContent = name;
+  $('#adpu').textContent = u.username ? '@' + u.username : u.email || '';
+  const F = [['User id', `<code>${esc(u.id)}</code>`], ['Email', esc(u.email || '—')], ['Email confirmed', u.email_confirmed ? esc(adDate(u.email_confirmed_at, 1)) : adPill('No', 'warn')], ['Username', u.username ? '@' + esc(u.username) : '—'], ['Display name', esc(u.display_name || '—')], ['Role', u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User')], ['Account created', esc(adDate(u.created_at, 1))], ['Last log in', esc(adDate(u.last_sign_in_at, 1))], ['Last used website', esc(adDate(u.last_seen, 1))], ['Last game opened', esc(adGame(u.last_game))], ['Language', esc(adLangName(u.last_lang))], ['Log in method', esc(adProv(u))], ['Friends', String(+u.friends || 0)], ['Favourite game', esc(adGame(u.fav_game))], ['Password', `<span class="adm-mut">${esc(auT('Hidden (hashed)'))}</span>`], ['Locked', u.locked ? adPill('Locked', 'bad') + (u.locked_reason ? `<div class="adm-why">${esc(u.locked_reason)}</div>` : '') : adPill('No')]];
+  $('#adpdl').innerHTML = F.map(([k, v]) => `<div><dt>${esc(auT(k))}</dt><dd>${v}</dd></div>`).join('');
+  p.querySelectorAll('[data-adrole]').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.adrole === u.role)); adUnconfirm(b); });
+  const lb = $('#adlock');
+  adUnconfirm(lb);
+  lb.textContent = auT(u.locked ? 'Unlock account' : 'Lock account');
+  lb.className = 'btn2 ' + (u.locked ? 'pri' : 'danger');
+  lb.disabled = me && !u.locked;
+  $('#adlr').hidden = u.locked; $('#adlrl').hidden = u.locked;
+  adUnconfirm($('#adpwb'));
+  if (!keep) {
+    ['adprn', 'adpwn', 'adln'].forEach(id => auMsg(id, ''));
+    $('#adpw').value = ''; $('#adlr').value = '';
+    if (me) auMsg('adln', 'You cannot lock your own account');
+    $('#adpw').type = 'password';
+    const eye = p.querySelector('.au-eye'); if (eye) auEye(eye, true);
+  }
+  if (p.hidden) { p.hidden = false; $('#adpback').hidden = false; p.scrollTop = 0; if (!auCoarse()) $('#adpclose').focus({ preventScroll: true }); }
+}
+function adPanelClose() {
+  const p = $('#adpanel');
+  if (p.hidden) return;
+  AD.sel = null;
+  document.querySelectorAll('#adt tr.sel').forEach(r => r.classList.remove('sel'));
+  vis(p, false); vis($('#adpback'), false);
+}
+function adUnconfirm(b) { if (b && b.dataset.c) { delete b.dataset.c; b.textContent = b.dataset.l; b.classList.remove('dangerfill'); } }
+function adConfirm(b) {
+  if (b.dataset.c) { adUnconfirm(b); return true; }
+  b.dataset.l = b.textContent; b.dataset.c = '1';
+  b.textContent = auT('Click again to confirm'); b.classList.add('dangerfill');
+  clearTimeout(b._ct); b._ct = setTimeout(() => adUnconfirm(b), 4000);
+  return false;
+}
+const adCur = () => (AD.users || []).find(x => x.id === AD.sel);
+async function adAct(k, b) {
+  const u = adCur();
+  if (!u || b.disabled) return;
+  if (k === 'role') {
+    const r = b.dataset.adrole;
+    if (r === u.role) return;
+    if (!adConfirm(b)) return;
+    b.disabled = true; auMsg('adprn', 'Saving…');
+    try { await adRpc('admin_set_role', { p_uid: u.id, p_role: r }); u.role = r; auMsg('adprn', r === 'admin' ? 'This user is now an admin.' : 'This user is now a regular user.', 'ok'); track('admin', { act: 'role' }); if (SB.user && u.id === SB.user.id && r !== 'admin') { adCheck(); return; } }
+    catch (e) { auMsg('adprn', adErr(e), 'bad'); }
+    finally { b.disabled = false; }
+  } else if (k === 'pw') {
+    const pw = $('#adpw').value;
+    if (pw.length < 8) { auMsg('adpwn', 'Use at least 8 characters.', 'bad'); auShake($('#adpw').closest('.au-pw')); return; }
+    if (utf8Len(pw) > 72) { auMsg('adpwn', 'Use at most 72 characters.', 'bad'); return; }
+    if (!adConfirm(b)) return;
+    b.disabled = true; auMsg('adpwn', 'Saving…');
+    try { const r = await adRpc('admin_set_password', { p_uid: u.id, p_password: pw }); $('#adpw').value = ''; auMsg('adpwn', r === 'signed_out' ? 'New password saved. They were signed out on their devices.' : 'New password saved.', 'ok'); track('admin', { act: 'password' }); }
+    catch (e) { auMsg('adpwn', adErr(e), 'bad'); }
+    finally { b.disabled = false; }
+    return;
+  } else if (k === 'lock') {
+    const on = !u.locked;
+    if (!adConfirm(b)) return;
+    b.disabled = true; auMsg('adln', 'Saving…');
+    try { await adRpc('admin_lock', { p_uid: u.id, p_locked: on, p_reason: on ? $('#adlr').value : null }); u.locked = on; u.locked_reason = on ? (String($('#adlr').value).replace(/\s+/g, ' ').trim().slice(0, 500) || null) : null; auMsg('adln', on ? 'Account locked. They now only see the blocked page.' : 'Account unlocked.', 'ok'); track('admin', { act: on ? 'lock' : 'unlock' }); }
+    catch (e) { auMsg('adln', adErr(e), 'bad'); }
+    finally { b.disabled = false; }
+  }
+  adTiles(); adDraw(); adPanel(u, true);
+  adLoad();
+}
+
+function tkBox(el, mode) {
+  if (el._tk) return el;
+  el._tk = { mode, list: null, cur: null, n: 0, sig: '', compose: false };
+  el.classList.add('tk');
+  el.dataset.mode = mode;
+  el.innerHTML = `<div class="tk-side">${mode === 'user' ? `<form class="tk-new" novalidate hidden><div class="fld"><label>${esc(auT('Subject'))}</label><input class="tk-subj-in" maxlength="120" autocomplete="off"></div><div class="fld"><label>${esc(auT('Message'))}</label><textarea class="tk-body-in" maxlength="2000" rows="4"></textarea></div><div class="tk-row"><button class="btn2 tk-cancel" type="button" data-tk="cancel">${esc(auT('Cancel'))}</button><button class="btn2 pri" type="submit">${esc(auT('Send ticket'))}</button></div></form><button class="btn2 pri tk-open" type="button" data-tk="new">${esc(auT('New ticket'))}</button>` : ''}<div class="tk-list" role="list"></div></div><div class="tk-main" hidden><div class="tk-h"><button class="back" type="button" data-tk="back">${AD_ICO.back}${esc(auT('All tickets'))}</button><div class="tk-ht"><b class="tk-subj" translate="no"></b><span class="tk-meta"></span></div><button class="btn2 tk-tog" type="button" data-tk="toggle"></button></div><div class="tk-msgs" translate="no" aria-live="polite"></div><form class="tk-comp" novalidate><textarea maxlength="2000" rows="2" placeholder="${esc(auT('Write a message'))}"></textarea><button class="btn2 pri" type="submit" aria-label="${esc(auT('Send'))}">${AD_ICO.send}<span>${esc(auT('Send'))}</span></button></form></div><div class="note tk-note" role="status"></div>`;
+  el.addEventListener('click', e => { const b = e.target.closest('[data-tk]'); if (b) { e.stopPropagation(); tkAct(el, b.dataset.tk, b); } });
+  el.addEventListener('submit', e => { e.preventDefault(); if (e.target.classList.contains('tk-new')) tkCreate(el); else tkSend(el); });
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && e.target.tagName === 'TEXTAREA') { e.preventDefault(); e.target.form.requestSubmit(); } });
+  return el;
+}
+const tkNote = (el, m, k) => { const n = el.querySelector('.tk-note'); n.textContent = m ? auT(m) : ''; n.className = 'note tk-note' + (k ? ' ' + k : ''); };
+async function tkLoad(el) {
+  const T = el._tk;
+  if (!SB.user || (T.mode === 'admin' && !adIsAdmin())) return;
+  if (!T.list) el.querySelector('.tk-list').innerHTML = `<div class="adm-empty">${esc(auT('Loading…'))}</div>`;
+  try {
+    const r = await adRpc(T.mode === 'admin' ? 'admin_tickets' : 'my_tickets');
+    T.list = Array.isArray(r) ? r : [];
+    tkList(el);
+    if (T.mode === 'admin' && view === 'admin') adTiles();
+  } catch (e) { if (!T.list) el.querySelector('.tk-list').innerHTML = `<div class="adm-empty">${esc(auT('Could not load the tickets. Check your connection and try again.'))}</div>`; }
+}
+function tkList(el) {
+  const T = el._tk, L = T.list || [], adm = T.mode === 'admin';
+  const nf = el.querySelector('.tk-new'), ob = el.querySelector('.tk-open');
+  if (nf) { const show = T.compose || !L.length; nf.hidden = !show; ob.hidden = show; nf.querySelector('.tk-cancel').hidden = !L.length; }
+  el.querySelector('.tk-list').innerHTML = L.length ? L.map((t, i) => {
+    const who = adm ? (t.username ? '@' + t.username : t.email || '') : '';
+    const flag = t.status === 'open' ? (adm ? (!t.last_admin ? adPill('Needs a reply', 'warn') : '') : (t.last_admin ? adPill('New reply', 'acc') : '')) : '';
+    return `<button type="button" class="tk-item${t.id === T.cur ? ' on' : ''}" data-tk="open" data-id="${+t.id}" role="listitem" style="--i:${Math.min(i, 12)}"><span class="tk-it"><b translate="no">${esc(t.subject)}</b>${t.status === 'open' ? adPill('Open', 'ok') : adPill('Closed')}</span><span class="tk-is">${who ? `<span translate="no">${esc(who)}</span>` : ''}${adm && t.locked ? adPill('Locked', 'bad') : ''}${flag}<span>${esc(adAgo(t.updated_at))}</span><span>${esc(auT(t.messages === 1 ? '1 message' : '{n} messages').replace('{n}', +t.messages))}</span></span></button>`;
+  }).join('') : adm ? `<div class="adm-empty">${esc(auT('No tickets yet.'))}</div>` : '';
+}
+function tkShow(el, main) {
+  el.classList.toggle('tk-in', main);
+  el.querySelector('.tk-main').hidden = !main;
+  if (el._tk.mode === 'user') el.querySelector('.tk-side').hidden = main;
+}
+async function tkOpen(el, id) {
+  const T = el._tk;
+  T.cur = id; T.sig = '';
+  const t = (T.list || []).find(x => x.id === id);
+  el.querySelector('.tk-subj').textContent = t ? t.subject : '';
+  el.querySelector('.tk-msgs').innerHTML = `<div class="adm-empty">${esc(auT('Loading…'))}</div>`;
+  tkHead(el);
+  tkShow(el, true); tkNote(el, '');
+  el.querySelectorAll('.tk-item').forEach(b => b.classList.toggle('on', +b.dataset.id === id));
+  await tkThread(el);
+  if (!auCoarse()) el.querySelector('.tk-comp textarea').focus({ preventScroll: true });
+}
+function tkHead(el) {
+  const T = el._tk, t = (T.list || []).find(x => x.id === T.cur);
+  if (!t) return;
+  el.querySelector('.tk-meta').innerHTML = (T.mode === 'admin' ? `<span translate="no">${esc(t.username ? '@' + t.username : t.email || '')}</span>` : '') + (t.status === 'open' ? adPill('Open', 'ok') : adPill('Closed')) + `<span>${esc(auT('Opened {d}').replace('{d}', adDate(t.created_at)))}</span>`;
+  const b = el.querySelector('.tk-tog');
+  b.textContent = auT(t.status === 'open' ? 'Close ticket' : 'Reopen');
+}
+async function tkThread(el) {
+  const T = el._tk, id = T.cur;
+  if (!id || !SB.user) return;
+  try {
+    const r = await adRpc('ticket_thread', { p_ticket: id });
+    if (T.cur !== id) return;
+    const ms = Array.isArray(r) ? r : [], sig = ms.length + ':' + (ms.length ? ms[ms.length - 1].id : 0);
+    if (sig === T.sig) return;
+    const box = el.querySelector('.tk-msgs'), near = !T.sig || box.scrollHeight - box.scrollTop - box.clientHeight < 80, old = T.sig ? +T.sig.split(':')[0] : ms.length;
+    T.sig = sig;
+    box.innerHTML = ms.map((m, i) => {
+      const who = m.mine ? auT('You') : m.is_admin ? (T.mode === 'admin' && m.author ? auT('Admin') + ' · @' + m.author : auT('Admin')) : T.mode === 'admin' ? (m.author ? '@' + m.author : auT('User')) : auT('You');
+      return `<div class="tk-m${m.mine ? ' me' : ''}${m.is_admin ? ' tk-adm' : ''}${i >= old ? ' new' : ''}"><div class="tk-b">${esc(m.body)}</div><span class="tk-w">${esc(who)} · ${esc(adAgo(m.created_at))}</span></div>`;
+    }).join('');
+    if (near) box.scrollTop = box.scrollHeight;
+  } catch (e) { tkNote(el, 'Could not load the messages. Check your connection and try again.', 'bad'); }
+}
+async function tkSend(el) {
+  const T = el._tk, ta = el.querySelector('.tk-comp textarea'), b = el.querySelector('.tk-comp button'), v = ta.value.trim();
+  if (!v || !T.cur) { auShake(ta); return; }
+  b.disabled = true; tkNote(el, '');
+  try {
+    await adRpc('ticket_send', { p_ticket: T.cur, p_body: v });
+    ta.value = '';
+    track('ticket', { act: 'send', admin: T.mode === 'admin' });
+    await tkThread(el);
+    await tkLoad(el); tkHead(el);
+  } catch (e) { tkNote(el, adErr(e), 'bad'); }
+  finally { b.disabled = false; }
+}
+async function tkCreate(el) {
+  const f = el.querySelector('.tk-new'), s = f.querySelector('.tk-subj-in'), m = f.querySelector('.tk-body-in'), b = f.querySelector('[type=submit]');
+  if (!s.value.trim()) { tkNote(el, 'Write a subject.', 'bad'); auShake(s.closest('.fld')); return; }
+  if (!m.value.trim()) { tkNote(el, 'Write a message.', 'bad'); auShake(m.closest('.fld')); return; }
+  b.disabled = true; tkNote(el, 'Sending…');
+  try {
+    const id = await adRpc('ticket_create', { p_subject: s.value, p_body: m.value });
+    s.value = ''; m.value = ''; el._tk.compose = false;
+    track('ticket', { act: 'create' });
+    tkNote(el, '');
+    await tkLoad(el);
+    tkOpen(el, +id);
+  } catch (e) { tkNote(el, adErr(e) === 'Too many messages. Wait a minute and try again.' ? 'Too many tickets. Wait a while and try again.' : adErr(e), 'bad'); }
+  finally { b.disabled = false; }
+}
+async function tkAct(el, k, b) {
+  const T = el._tk;
+  if (k === 'new') { T.compose = true; tkList(el); if (!auCoarse()) el.querySelector('.tk-subj-in').focus(); return; }
+  if (k === 'cancel') { T.compose = false; tkNote(el, ''); tkList(el); return; }
+  if (k === 'open') { tkOpen(el, +b.dataset.id); return; }
+  if (k === 'back') { T.cur = null; tkShow(el, false); tkNote(el, ''); tkList(el); tkLoad(el); return; }
+  if (k === 'toggle') {
+    const t = (T.list || []).find(x => x.id === T.cur);
+    if (!t) return;
+    b.disabled = true;
+    try { const s = await adRpc('ticket_set_status', { p_ticket: t.id, p_status: t.status === 'open' ? 'closed' : 'open' }); t.status = s; tkHead(el); tkList(el); track('ticket', { act: s }); tkLoad(el); }
+    catch (e) { tkNote(el, adErr(e), 'bad'); }
+    finally { b.disabled = false; }
+  }
+}
+function adSupport() {
+  if (!SB.user) { closeAll(); auOpen('main', '', '', 'in'); return; }
+  const el = tkBox($('#tks'), 'user');
+  tkLoad(el);
+}
+
+addEventListener('keydown', e => {
+  if (!AD.locked) return;
+  const s = document.getElementById('lgsheet');
+  if (s && !s.hidden) return;
+  e.stopImmediatePropagation();
+}, true);
+function adBoot() {
+  $('#adbout').addEventListener('click', () => { auSignOut(); });
+  document.addEventListener('click', e => {
+    const t = e.target;
+    if (t.closest && t.closest('[data-adgo]')) { e.preventDefault(); closeAll(); go(adHref(), false); }
+  });
+  const va = $('#vAdmin');
+  va.addEventListener('click', e => {
+    const t = e.target;
+    const s = t.closest('[data-adsort]');
+    if (s) { const k = s.dataset.adsort; AD.sort = AD.sort[0] === k ? [k, -AD.sort[1]] : [k, /_at$|last_seen|friends|email_confirmed|locked|role/.test(k) ? -1 : 1]; adDraw(); return; }
+    const tb = t.closest('[data-adtab]');
+    if (tb) { adTab(tb.dataset.adtab); return; }
+    if (t.closest('#adref')) { adLoad(); tkLoad(tkBox($('#tka'), 'admin')); return; }
+    if (t.closest('#adpback') || t.closest('#adpclose')) { adPanelClose(); return; }
+    const eye = t.closest('.au-eye');
+    if (eye) { auEye(eye); return; }
+    const a = t.closest('[data-adact]');
+    if (a) { adAct(a.dataset.adact, a); return; }
+    const tr = t.closest('#adt tbody tr[data-uid]');
+    if (tr) { const u = (AD.users || []).find(x => x.id === tr.dataset.uid); if (u) adPanel(u); }
+  });
+  va.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('#adpanel').hidden) { e.preventDefault(); e.stopPropagation(); adPanelClose(); return; }
+    const tr = e.target.closest && e.target.closest('#adt tbody tr[data-uid]');
+    if (tr && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); tr.click(); }
+  });
+  $('#adtabs').addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); adTab(AD.tab === 'users' ? 'tickets' : 'users'); $('#adtabs [aria-selected="true"]').focus(); } });
+  $('#adq').addEventListener('input', e => { AD.q = e.target.value; adDraw(); });
+  $('#adf').addEventListener('change', e => { AD.f = e.target.value; adDraw(); });
+  $('#adpw').parentNode.insertAdjacentHTML('beforeend', EYE);
+  $('#adpw').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); adAct('pw', $('#adpwb')); } });
+  setInterval(() => {
+    if (!SB.user || document.visibilityState === 'hidden') return;
+    document.querySelectorAll('.tk').forEach(el => { if (!el._tk || el.closest('[hidden]')) return; if (el._tk.cur) tkThread(el); if (++el._tk.n % 5 === 0) tkLoad(el); });
+  }, 6000);
+  setInterval(() => { if (SB.user && document.visibilityState !== 'hidden') adCheck(); }, 180000);
+  document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible' && Date.now() - AD.at > 60000) adCheck(); });
+}
 
 Ameplay.debug = { open: id => go(href(id), false), close: () => go(PATH_MODE ? '/' : '#/', false), games, fire: () => ov && ov.fire(), state, compute, q: t => { const o = state.q; state.q = t; const r = compute().list.map(g => g.id); state.q = o; return r; }, info: INFO, fit: () => fitStage(), pause: () => PAUSE.on };
 document.addEventListener('DOMContentLoaded', boot);
@@ -4399,7 +4829,86 @@ const R = [
 ["That room already has two players.", "Ce salon a déjà deux joueurs.", "Esa sala ya tiene dos jugadores.", "Dieser Raum hat schon zwei Spieler.", "Questa stanza ha già due giocatori.", "Essa sala já tem dois jogadores."],
 ["This browser can’t play online.", "Ce navigateur ne peut pas jouer en ligne.", "Este navegador no puede jugar en línea.", "Mit diesem Browser kannst du nicht online spielen.", "Questo browser non può giocare online.", "Este navegador não pode jogar online."],
 ["Can’t reach the online server. Check your internet connection.", "Impossible de joindre le serveur en ligne. Vérifiez votre connexion internet.", "No se puede contactar con el servidor en línea. Revisa tu conexión a internet.", "Der Online-Server ist nicht erreichbar. Prüfe deine Internetverbindung.", "Impossibile raggiungere il server online. Controlla la connessione a internet.", "Não foi possível acessar o servidor online. Verifique sua conexão com a internet."],
-["Connection failed. Try again.", "La connexion a échoué. Réessayez.", "La conexión falló. Inténtalo de nuevo.", "Verbindung fehlgeschlagen. Versuche es erneut.", "Connessione non riuscita. Riprova.", "A conexão falhou. Tente de novo."]
+["Connection failed. Try again.", "La connexion a échoué. Réessayez.", "La conexión falló. Inténtalo de nuevo.", "Verbindung fehlgeschlagen. Versuche es erneut.", "Connessione non riuscita. Riprova.", "A conexão falhou. Tente de novo."],
+["Dashboard", "Tableau de bord", "Panel", "Dashboard", "Dashboard", "Painel"],
+["Admin dashboard", "Tableau de bord admin", "Panel de administración", "Admin-Dashboard", "Dashboard admin", "Painel de administração"],
+["Refresh", "Actualiser", "Actualizar", "Aktualisieren", "Aggiorna", "Atualizar"],
+["Dashboard sections", "Sections du tableau de bord", "Secciones del panel", "Dashboard-Bereiche", "Sezioni della dashboard", "Secções do painel"],
+["Users", "Utilisateurs", "Usuarios", "Benutzer", "Utenti", "Utilizadores"],
+["Tickets", "Tickets", "Tickets", "Tickets", "Ticket", "Pedidos"],
+["Search by email, username, name or id", "Rechercher par e-mail, nom d'utilisateur, nom ou id", "Buscar por correo, nombre de usuario, nombre o id", "Nach E-Mail, Benutzername, Name oder ID suchen", "Cerca per email, nome utente, nome o id", "Pesquisar por email, nome de utilizador, nome ou id"],
+["Search users", "Rechercher des utilisateurs", "Buscar usuarios", "Benutzer suchen", "Cerca utenti", "Pesquisar utilizadores"],
+["Filter users", "Filtrer les utilisateurs", "Filtrar usuarios", "Benutzer filtern", "Filtra utenti", "Filtrar utilizadores"],
+["All users", "Tous les utilisateurs", "Todos los usuarios", "Alle Benutzer", "Tutti gli utenti", "Todos os utilizadores"],
+["Admins", "Admins", "Administradores", "Admins", "Admin", "Administradores"],
+["Locked", "Bloqué", "Bloqueado", "Gesperrt", "Bloccato", "Bloqueado"],
+["Email not confirmed", "E-mail non confirmé", "Correo sin confirmar", "E-Mail nicht bestätigt", "Email non confermata", "Email não confirmado"],
+["Active in the last 7 days", "Actifs ces 7 derniers jours", "Activos en los últimos 7 días", "In den letzten 7 Tagen aktiv", "Attivi negli ultimi 7 giorni", "Ativos nos últimos 7 dias"],
+["Role", "Rôle", "Rol", "Rolle", "Ruolo", "Função"],
+["User", "Utilisateur", "Usuario", "Benutzer", "Utente", "Utilizador"],
+["Admin", "Admin", "Administrador", "Admin", "Admin", "Administrador"],
+["Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them. You can set a new one.", "Masqué (haché). Les mots de passe sont stockés sous forme de hachage à sens unique : personne ne peut les voir. Vous pouvez en définir un nouveau.", "Oculta (cifrada con hash). Las contraseñas se guardan como hash de un solo sentido, así que nadie puede verlas. Puedes poner una nueva.", "Verborgen (gehasht). Passwörter werden als Einweg-Hash gespeichert, niemand kann sie sehen. Du kannst ein neues festlegen.", "Nascosta (hash). Le password sono salvate come hash a senso unico, quindi nessuno può vederle. Puoi impostarne una nuova.", "Oculta (hash). As palavras-passe são guardadas como hash de sentido único, por isso ninguém as pode ver. Pode definir uma nova."],
+["New password, at least 8 characters", "Nouveau mot de passe, 8 caractères minimum", "Nueva contraseña, al menos 8 caracteres", "Neues Passwort, mindestens 8 Zeichen", "Nuova password, almeno 8 caratteri", "Nova palavra-passe, pelo menos 8 caracteres"],
+["Set new password", "Définir un nouveau mot de passe", "Poner nueva contraseña", "Neues Passwort festlegen", "Imposta nuova password", "Definir nova palavra-passe"],
+["Access", "Accès", "Acceso", "Zugang", "Accesso", "Acesso"],
+["Reason shown to the user (optional)", "Raison montrée à l'utilisateur (facultatif)", "Motivo que verá el usuario (opcional)", "Grund, den der Benutzer sieht (optional)", "Motivo mostrato all'utente (facoltativo)", "Motivo mostrado ao utilizador (opcional)"],
+["Lock account", "Bloquer le compte", "Bloquear cuenta", "Konto sperren", "Blocca account", "Bloquear conta"],
+["Unlock account", "Débloquer le compte", "Desbloquear cuenta", "Konto entsperren", "Sblocca account", "Desbloquear conta"],
+["A question, a problem with your account or a game? Open a ticket and the admins will reply here.", "Une question, un problème avec votre compte ou un jeu ? Ouvrez un ticket et les admins vous répondront ici.", "¿Una pregunta, un problema con tu cuenta o con un juego? Abre un ticket y los administradores te responderán aquí.", "Eine Frage, ein Problem mit deinem Konto oder einem Spiel? Öffne ein Ticket, die Admins antworten hier.", "Una domanda, un problema con il tuo account o con un gioco? Apri un ticket e gli admin ti risponderanno qui.", "Uma pergunta, um problema com a sua conta ou com um jogo? Abra um pedido e os administradores respondem aqui."],
+["The admin has blocked you out of this website", "L'administrateur vous a bloqué l'accès à ce site", "El administrador te ha bloqueado el acceso a este sitio", "Der Admin hat dich von dieser Website ausgesperrt", "L'amministratore ti ha bloccato l'accesso a questo sito", "O administrador bloqueou o seu acesso a este site"],
+["You cannot play or use your account for now.", "Vous ne pouvez pas jouer ni utiliser votre compte pour le moment.", "Por ahora no puedes jugar ni usar tu cuenta.", "Du kannst vorerst nicht spielen und dein Konto nicht nutzen.", "Per ora non puoi giocare né usare il tuo account.", "Por agora não pode jogar nem usar a sua conta."],
+["Reason", "Raison", "Motivo", "Grund", "Motivo", "Motivo"],
+["Think this is a mistake? Open a ticket to talk with the admins. Their replies show up here.", "Vous pensez que c'est une erreur ? Ouvrez un ticket pour parler aux admins. Leurs réponses s'affichent ici.", "¿Crees que es un error? Abre un ticket para hablar con los administradores. Sus respuestas aparecen aquí.", "Hältst du das für einen Fehler? Öffne ein Ticket, um mit den Admins zu schreiben. Ihre Antworten erscheinen hier.", "Pensi che sia un errore? Apri un ticket per parlare con gli admin. Le loro risposte compaiono qui.", "Acha que é um erro? Abra um pedido para falar com os administradores. As respostas aparecem aqui."],
+["Never", "Jamais", "Nunca", "Nie", "Mai", "Nunca"],
+["Yes", "Oui", "Sí", "Ja", "Sì", "Sim"],
+["No", "Non", "No", "Nein", "No", "Não"],
+["Hidden (hashed)", "Masqué (haché)", "Oculta (hash)", "Verborgen (gehasht)", "Nascosta (hash)", "Oculta (hash)"],
+["User id", "Id utilisateur", "Id de usuario", "Benutzer-ID", "Id utente", "Id do utilizador"],
+["Account created", "Compte créé", "Cuenta creada", "Konto erstellt", "Account creato", "Conta criada"],
+["Last log in", "Dernière connexion", "Último inicio de sesión", "Letzte Anmeldung", "Ultimo accesso", "Último início de sessão"],
+["Last used website", "Dernière visite du site", "Último uso del sitio", "Zuletzt auf der Website", "Ultimo uso del sito", "Última utilização do site"],
+["Log in method", "Méthode de connexion", "Método de inicio de sesión", "Anmeldemethode", "Metodo di accesso", "Método de início de sessão"],
+["Email confirmed", "E-mail confirmé", "Correo confirmado", "E-Mail bestätigt", "Email confermata", "Email confirmado"],
+["Favourite game", "Jeu préféré", "Juego favorito", "Lieblingsspiel", "Gioco preferito", "Jogo favorito"],
+["Last game opened", "Dernier jeu ouvert", "Último juego abierto", "Zuletzt geöffnetes Spiel", "Ultimo gioco aperto", "Último jogo aberto"],
+["New this week", "Nouveaux cette semaine", "Nuevos esta semana", "Neu diese Woche", "Nuovi questa settimana", "Novos esta semana"],
+["Active today", "Actifs aujourd'hui", "Activos hoy", "Heute aktiv", "Attivi oggi", "Ativos hoje"],
+["Open tickets", "Tickets ouverts", "Tickets abiertos", "Offene Tickets", "Ticket aperti", "Pedidos abertos"],
+["{n} of {t} users", "{n} sur {t} utilisateurs", "{n} de {t} usuarios", "{n} von {t} Benutzern", "{n} di {t} utenti", "{n} de {t} utilizadores"],
+["No users match.", "Aucun utilisateur ne correspond.", "Ningún usuario coincide.", "Kein Benutzer passt.", "Nessun utente corrisponde.", "Nenhum utilizador corresponde."],
+["Could not load the users. Check your connection and try again.", "Impossible de charger les utilisateurs. Vérifiez votre connexion et réessayez.", "No se pudieron cargar los usuarios. Revisa tu conexión e inténtalo de nuevo.", "Die Benutzer konnten nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.", "Impossibile caricare gli utenti. Controlla la connessione e riprova.", "Não foi possível carregar os utilizadores. Verifique a ligação e tente novamente."],
+["Admins only", "Réservé aux admins", "Solo para administradores", "Nur für Admins", "Solo per gli admin", "Apenas para administradores"],
+["You cannot lock your own account", "Vous ne pouvez pas bloquer votre propre compte", "No puedes bloquear tu propia cuenta", "Du kannst dein eigenes Konto nicht sperren", "Non puoi bloccare il tuo account", "Não pode bloquear a sua própria conta"],
+["This user is now an admin.", "Cet utilisateur est maintenant admin.", "Este usuario ahora es administrador.", "Dieser Benutzer ist jetzt Admin.", "Questo utente ora è admin.", "Este utilizador é agora administrador."],
+["This user is now a regular user.", "Cet utilisateur est maintenant un utilisateur normal.", "Este usuario ahora es un usuario normal.", "Dieser Benutzer ist jetzt ein normaler Benutzer.", "Questo utente ora è un utente normale.", "Este utilizador é agora um utilizador normal."],
+["Use at most 72 characters.", "Utilisez 72 caractères au maximum.", "Usa como máximo 72 caracteres.", "Verwende höchstens 72 Zeichen.", "Usa al massimo 72 caratteri.", "Use no máximo 72 caracteres."],
+["New password saved. They were signed out on their devices.", "Nouveau mot de passe enregistré. L'utilisateur a été déconnecté de ses appareils.", "Nueva contraseña guardada. Se ha cerrado su sesión en sus dispositivos.", "Neues Passwort gespeichert. Der Benutzer wurde auf seinen Geräten abgemeldet.", "Nuova password salvata. L'utente è stato disconnesso dai suoi dispositivi.", "Nova palavra-passe guardada. A sessão foi terminada nos dispositivos do utilizador."],
+["New password saved.", "Nouveau mot de passe enregistré.", "Nueva contraseña guardada.", "Neues Passwort gespeichert.", "Nuova password salvata.", "Nova palavra-passe guardada."],
+["Account locked. They now only see the blocked page.", "Compte bloqué. L'utilisateur ne voit plus que la page de blocage.", "Cuenta bloqueada. Ahora solo ve la página de bloqueo.", "Konto gesperrt. Der Benutzer sieht nur noch die Sperrseite.", "Account bloccato. Ora l'utente vede solo la pagina di blocco.", "Conta bloqueada. O utilizador agora só vê a página de bloqueio."],
+["Account unlocked.", "Compte débloqué.", "Cuenta desbloqueada.", "Konto entsperrt.", "Account sbloccato.", "Conta desbloqueada."],
+["There must be at least one admin", "Il doit rester au moins un admin", "Debe haber al menos un administrador", "Es muss mindestens einen Admin geben", "Deve esserci almeno un admin", "Tem de existir pelo menos um administrador"],
+["Not found. Refresh and try again.", "Introuvable. Actualisez et réessayez.", "No encontrado. Actualiza e inténtalo de nuevo.", "Nicht gefunden. Aktualisiere und versuche es erneut.", "Non trovato. Aggiorna e riprova.", "Não encontrado. Atualize e tente novamente."],
+["Too many messages. Wait a minute and try again.", "Trop de messages. Attendez une minute et réessayez.", "Demasiados mensajes. Espera un minuto e inténtalo de nuevo.", "Zu viele Nachrichten. Warte eine Minute und versuche es erneut.", "Troppi messaggi. Aspetta un minuto e riprova.", "Demasiadas mensagens. Aguarde um minuto e tente novamente."],
+["Your account is locked.", "Votre compte est bloqué.", "Tu cuenta está bloqueada.", "Dein Konto ist gesperrt.", "Il tuo account è bloccato.", "A sua conta está bloqueada."],
+["Write a subject.", "Écrivez un sujet.", "Escribe un asunto.", "Gib einen Betreff ein.", "Scrivi un oggetto.", "Escreva um assunto."],
+["Write a message.", "Écrivez un message.", "Escribe un mensaje.", "Schreibe eine Nachricht.", "Scrivi un messaggio.", "Escreva uma mensagem."],
+["Too many tickets. Wait a while and try again.", "Trop de tickets. Patientez un peu et réessayez.", "Demasiados tickets. Espera un rato e inténtalo de nuevo.", "Zu viele Tickets. Warte etwas und versuche es erneut.", "Troppi ticket. Aspetta un po' e riprova.", "Demasiados pedidos. Aguarde um pouco e tente novamente."],
+["Subject", "Sujet", "Asunto", "Betreff", "Oggetto", "Assunto"],
+["Send ticket", "Envoyer le ticket", "Enviar ticket", "Ticket senden", "Invia ticket", "Enviar pedido"],
+["New ticket", "Nouveau ticket", "Nuevo ticket", "Neues Ticket", "Nuovo ticket", "Novo pedido"],
+["All tickets", "Tous les tickets", "Todos los tickets", "Alle Tickets", "Tutti i ticket", "Todos os pedidos"],
+["Write a message", "Écrire un message", "Escribe un mensaje", "Nachricht schreiben", "Scrivi un messaggio", "Escreva uma mensagem"],
+["Could not load the tickets. Check your connection and try again.", "Impossible de charger les tickets. Vérifiez votre connexion et réessayez.", "No se pudieron cargar los tickets. Revisa tu conexión e inténtalo de nuevo.", "Die Tickets konnten nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.", "Impossibile caricare i ticket. Controlla la connessione e riprova.", "Não foi possível carregar os pedidos. Verifique a ligação e tente novamente."],
+["Could not load the messages. Check your connection and try again.", "Impossible de charger les messages. Vérifiez votre connexion et réessayez.", "No se pudieron cargar los mensajes. Revisa tu conexión e inténtalo de nuevo.", "Die Nachrichten konnten nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.", "Impossibile caricare i messaggi. Controlla la connessione e riprova.", "Não foi possível carregar as mensagens. Verifique a ligação e tente novamente."],
+["Needs a reply", "À répondre", "Pendiente de respuesta", "Antwort nötig", "Da rispondere", "Aguarda resposta"],
+["New reply", "Nouvelle réponse", "Nueva respuesta", "Neue Antwort", "Nuova risposta", "Nova resposta"],
+["Closed", "Fermé", "Cerrado", "Geschlossen", "Chiuso", "Fechado"],
+["1 message", "1 message", "1 mensaje", "1 Nachricht", "1 messaggio", "1 mensagem"],
+["{n} messages", "{n} messages", "{n} mensajes", "{n} Nachrichten", "{n} messaggi", "{n} mensagens"],
+["No tickets yet.", "Aucun ticket pour l'instant.", "Todavía no hay tickets.", "Noch keine Tickets.", "Ancora nessun ticket.", "Ainda não há pedidos."],
+["Opened {d}", "Ouvert le {d}", "Abierto el {d}", "Geöffnet am {d}", "Aperto il {d}", "Aberto a {d}"],
+["Close ticket", "Fermer le ticket", "Cerrar ticket", "Ticket schließen", "Chiudi ticket", "Fechar pedido"],
+["Reopen", "Rouvrir", "Reabrir", "Wieder öffnen", "Riapri", "Reabrir"]
 ];
 const MON = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const idf = (o, d) => { try { return new Intl.DateTimeFormat(LANGS[li], o).format(d); } catch (e) { return ''; } };

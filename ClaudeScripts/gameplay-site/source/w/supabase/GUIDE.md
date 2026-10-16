@@ -183,7 +183,34 @@ You can change the email texts in **Authentication > Emails > Templates**.
 
 - **Passwords are never stored by the website or by us.** When a player types a password, it goes over an encrypted connection straight to **Supabase Auth**, the sign-in service. Supabase keeps only a **hash** of it (a one-way scramble, bcrypt). Nobody can read a password back, not you, not Claude, not Supabase staff. If players forget it, they reset it by email.
 - **Google sign-in** players have no password with us at all: Google confirms who they are and tells us only their email, name and profile picture.
-- **Emails** are stored by Supabase Auth in its own protected area (`auth.users`). You can see them in **Authentication > Users**, but they are never shown to other players and never readable from the website. Players find each other by **username**, not by email. Logging in with a username works through a small database function (`login_email`) that only answers when the password is right, and is limited to 10 tries per username every 15 minutes; the friend search (`search_profiles`) only works for signed-in players, needs at least 2 letters, returns at most 20 usernames with display names and pictures (never emails), and is limited to 120 searches per minute per player.
+- **Emails** are stored by Supabase Auth in its own protected area (`auth.users`). You can see them in **Authentication > Users**, but they are never shown to other players. On the website only admins can see them, in the admin dashboard (Part H). Players find each other by **username**, not by email. Logging in with a username works through a small database function (`login_email`) that only answers when the password is right, and is limited to 10 tries per username every 15 minutes; the friend search (`search_profiles`) only works for signed-in players, needs at least 2 letters, returns at most 20 usernames with display names and pictures (never emails), and is limited to 120 searches per minute per player.
 - Our own tables only hold game data (username, display name, records, saves, friends) and, if players accept, anonymous usage counts.
 - When a player deletes their account (Settings > Account > Delete my account), their account, profile, records, saves and friends are removed from the database, and their analytics events are made anonymous. If Supabase ever refuses the automatic removal, the request shows up in `admin.pending_account_deletions`: delete that user in **Authentication > Users**.
 - Keep your own Supabase login safe: turn on two-factor authentication in **Account preferences > Security**.
+
+## Part H. Admins, the dashboard, locking and tickets
+
+Every account has a **role**: `user` (everyone, by default) or `admin`. Players can never change their own role: only you (in the SQL editor) or another admin (in the dashboard) can.
+
+**Make yourself admin** (once, after `schema.sql` has run):
+
+1. On the website, create your account and choose your username (for example `dedpoul`).
+2. In Supabase, open **SQL Editor** > **New query**, paste this line with your own username, and click **Run**:
+
+```sql
+update public.profiles set role = 'admin' where username = 'dedpoul';
+```
+
+3. Reload the website. Your profile picture menu now shows **Dashboard**. It opens the admin dashboard (address `/admin`). Anyone else who opens that address is sent back to the games.
+
+To remove an admin, use the dashboard, or run `update public.profiles set role = 'user' where username = '...';`. The dashboard never lets the last admin remove their own admin role.
+
+**What the dashboard shows**: totals (accounts, new this week, active today, admins, locked accounts, open tickets) and a table of every account with search, sort and filters: user id, account created, last log in, last time the website was used, log in method (email, Google), email confirmed, language, password, role, email, username, display name, friends, favourite game (most time played, else most plays) and locked. Click a row to open the account and:
+
+- **change the role** (user or admin);
+- **set a new password**. Passwords themselves are never visible (only a one-way hash is stored, so the column says "Hidden (hashed)"). Setting a new one replaces the hash and signs the player out of their devices; tell them the new password yourself;
+- **lock or unlock** the account, with an optional reason. A locked player who signs in sees only a page saying the admin has blocked them, the reason, and a **Contact** box to write to the admins. Nothing else of the site works for them, and the database also refuses their friend searches and friend requests. You cannot lock yourself.
+
+**Tickets**: every signed-in player has **Support** in the profile picture menu to open a ticket and chat with the admins (locked players use the Contact box). Admins answer in the dashboard's **Tickets** tab, where open tickets come first, and can close or reopen them; a new message from the player reopens a closed ticket. Limits: 5 new tickets per hour, 20 messages per minute and 2000 characters per message.
+
+Everything in the dashboard goes through database functions that first check that the caller is an admin (`admin_list_users`, `admin_set_role`, `admin_set_password`, `admin_lock`, `admin_tickets`), so changing the website code in a browser does not give anyone admin powers.

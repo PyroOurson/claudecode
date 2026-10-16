@@ -82,6 +82,21 @@ alter table public.profiles drop constraint if exists profiles_display_name_chec
 alter table public.profiles add constraint profiles_display_name_check check (display_name is null or (char_length(display_name) between 1 and 32 and display_name !~ '[[:cntrl:]]'));
 alter table public.profiles drop constraint if exists profiles_avatar_url_check;
 alter table public.profiles add constraint profiles_avatar_url_check check (avatar_url is null or (char_length(avatar_url) <= 500 and avatar_url ~ '^https://'));
+alter table public.profiles add column if not exists role text not null default 'user';
+alter table public.profiles add column if not exists locked boolean not null default false;
+alter table public.profiles add column if not exists locked_reason text;
+alter table public.profiles add column if not exists last_seen timestamptz;
+alter table public.profiles add column if not exists last_lang text;
+alter table public.profiles add column if not exists last_game text;
+alter table public.profiles drop constraint if exists profiles_role_check;
+alter table public.profiles add constraint profiles_role_check check (role in ('user', 'admin'));
+alter table public.profiles drop constraint if exists profiles_locked_reason_check;
+alter table public.profiles add constraint profiles_locked_reason_check check (locked_reason is null or char_length(locked_reason) <= 500);
+alter table public.profiles drop constraint if exists profiles_last_lang_check;
+alter table public.profiles add constraint profiles_last_lang_check check (last_lang is null or last_lang ~ '^[a-z]{2}$');
+alter table public.profiles drop constraint if exists profiles_last_game_check;
+alter table public.profiles add constraint profiles_last_game_check check (last_game is null or last_game ~ '^[a-z0-9][a-z0-9-]{0,39}$');
+create index if not exists profiles_role_idx on public.profiles (role) where role <> 'user';
 
 create unique index if not exists profiles_username_lower_key on public.profiles (lower(username));
 create index if not exists profiles_username_prefix_idx on public.profiles (lower(username) text_pattern_ops) where username is not null;
@@ -497,6 +512,9 @@ begin
   if v_uid is null then
     raise exception 'Not signed in' using errcode = '28000';
   end if;
+  if exists (select 1 from public.profiles where id = v_uid and locked) then
+    raise exception 'Account locked' using errcode = '42501';
+  end if;
   if char_length(v_q) < 2 or char_length(v_q) > 20 or v_q !~ '^[a-z0-9_.]+$' then
     return;
   end if;
@@ -582,6 +600,9 @@ declare
 begin
   if v_uid is null then
     raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if exists (select 1 from public.profiles where id = v_uid and locked) then
+    raise exception 'Account locked' using errcode = '42501';
   end if;
   select id into v_to from public.profiles where lower(username) = lower(btrim(coalesce(p_username, '')));
   if v_to is null then
@@ -923,3 +944,500 @@ $$;
 
 revoke all on all tables in schema admin from public, anon, authenticated;
 revoke all on all functions in schema admin from public, anon, authenticated;
+
+create or replace function private.over(p_key text, p_window timestamptz, p_max integer)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_n integer;
+begin
+  insert into private.analytics_rate as r (k, w, n) values (p_key, p_window, 1)
+    on conflict (k, w) do update set n = r.n + 1
+    returning r.n into v_n;
+  return v_n > p_max;
+end;
+$$;
+
+create or replace function private.need_admin()
+returns uuid
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if not exists (select 1 from public.profiles p where p.id = v_uid and p.role = 'admin' and not p.locked) then
+    raise exception 'Admins only' using errcode = '42501';
+  end if;
+  return v_uid;
+end;
+$$;
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin' and not p.locked);
+$$;
+
+create or replace function public.my_status()
+returns table (role text, locked boolean, locked_reason text)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select p.role, p.locked, p.locked_reason from public.profiles p where p.id = auth.uid();
+$$;
+
+create or replace function public.touch_presence(p_lang text default null, p_game text default null)
+returns table (role text, locked boolean, locked_reason text)
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+#variable_conflict use_column
+declare
+  v_uid uuid := auth.uid();
+  v_lang text := lower(btrim(coalesce(p_lang, '')));
+  v_game text := lower(btrim(coalesce(p_game, '')));
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if v_lang !~ '^[a-z]{2}$' then
+    v_lang := null;
+  end if;
+  if v_game !~ '^[a-z0-9][a-z0-9-]{0,39}$' then
+    v_game := null;
+  end if;
+  if not private.over('pr:' || v_uid::text, date_trunc('minute', now()), 30) then
+    update public.profiles p set last_seen = now(), last_lang = coalesce(v_lang, p.last_lang), last_game = coalesce(v_game, p.last_game) where p.id = v_uid;
+  end if;
+  return query select p.role, p.locked, p.locked_reason from public.profiles p where p.id = v_uid;
+end;
+$$;
+
+create or replace function public.admin_list_users()
+returns table (id uuid, created_at timestamptz, last_sign_in_at timestamptz, last_seen timestamptz, providers text[], email_confirmed boolean, email_confirmed_at timestamptz, last_lang text, last_game text, role text, email text, username text, display_name text, friends integer, fav_game text, locked boolean, locked_reason text)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  perform private.need_admin();
+  return query
+    select u.id, u.created_at::timestamptz, u.last_sign_in_at::timestamptz, p.last_seen,
+      coalesce(
+        (select array_agg(v.value order by v.value) from jsonb_array_elements_text(case when jsonb_typeof(u.raw_app_meta_data -> 'providers') = 'array' then u.raw_app_meta_data -> 'providers' else '[]'::jsonb end) v),
+        case when u.raw_app_meta_data ->> 'provider' is not null then array[u.raw_app_meta_data ->> 'provider'] else array[]::text[] end
+      ),
+      u.email_confirmed_at is not null, u.email_confirmed_at::timestamptz,
+      p.last_lang, p.last_game, coalesce(p.role, 'user'), u.email::text, p.username, p.display_name,
+      (select count(*)::integer from public.friends f where f.user_id = u.id),
+      (select s.game_id from public.game_stats s where s.user_id = u.id and (s.seconds_played > 0 or s.plays > 0) order by s.seconds_played desc, s.plays desc, s.last_played desc nulls last limit 1),
+      coalesce(p.locked, false), p.locked_reason
+    from auth.users u
+    left join public.profiles p on p.id = u.id
+    where u.deleted_at is null
+    order by u.created_at desc
+    limit 10000;
+end;
+$$;
+
+create or replace function public.admin_set_role(p_uid uuid, p_role text)
+returns text
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_old text;
+begin
+  if p_role is null or p_role not in ('user', 'admin') then
+    raise exception 'Role must be user or admin' using errcode = '22023';
+  end if;
+  perform 1 from public.profiles p where p.role = 'admin' for update;
+  select p.role into v_old from public.profiles p where p.id = p_uid for update;
+  if v_old is null then
+    raise exception 'User not found' using errcode = 'P0002';
+  end if;
+  if v_old = 'admin' and p_role <> 'admin' and not exists (select 1 from public.profiles p where p.role = 'admin' and not p.locked and p.id <> p_uid) then
+    raise exception 'There must be at least one admin' using errcode = '42501';
+  end if;
+  update public.profiles p set role = p_role where p.id = p_uid;
+  return p_role;
+end;
+$$;
+
+create or replace function public.admin_set_password(p_uid uuid, p_password text)
+returns text
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_out text := 'signed_out';
+begin
+  if p_password is null or char_length(p_password) < 8 then
+    raise exception 'Password must be at least 8 characters' using errcode = '22023';
+  end if;
+  if octet_length(p_password) > 72 then
+    raise exception 'Password must be at most 72 characters' using errcode = '22023';
+  end if;
+  begin
+    update auth.users set encrypted_password = extensions.crypt(p_password, extensions.gen_salt('bf', 10)), updated_at = now() where id = p_uid and deleted_at is null;
+  exception when insufficient_privilege then
+    raise exception 'The database does not allow changing passwords from SQL' using errcode = '42501';
+  end;
+  if not found then
+    raise exception 'User not found' using errcode = 'P0002';
+  end if;
+  begin
+    delete from auth.refresh_tokens where user_id = p_uid::text;
+  exception when insufficient_privilege or undefined_table or undefined_column then
+    v_out := 'sessions_kept';
+  end;
+  begin
+    delete from auth.sessions where user_id = p_uid;
+  exception when insufficient_privilege or undefined_table or undefined_column then
+    v_out := 'sessions_kept';
+  end;
+  return v_out;
+end;
+$$;
+
+create or replace function public.admin_lock(p_uid uuid, p_locked boolean, p_reason text default null)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+begin
+  if p_uid = v_me and coalesce(p_locked, false) then
+    raise exception 'You cannot lock your own account' using errcode = '42501';
+  end if;
+  update public.profiles p
+    set locked = coalesce(p_locked, false),
+      locked_reason = case when coalesce(p_locked, false) then private.clean_text(p_reason, 500) end
+    where p.id = p_uid;
+  if not found then
+    raise exception 'User not found' using errcode = 'P0002';
+  end if;
+  return coalesce(p_locked, false);
+end;
+$$;
+
+create table if not exists public.tickets (
+  id bigint generated always as identity primary key,
+  user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  subject text not null,
+  status text not null default 'open',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.tickets drop constraint if exists tickets_subject_check;
+alter table public.tickets add constraint tickets_subject_check check (char_length(subject) between 1 and 120 and subject !~ '[[:cntrl:]]');
+alter table public.tickets drop constraint if exists tickets_status_check;
+alter table public.tickets add constraint tickets_status_check check (status in ('open', 'closed'));
+create index if not exists tickets_user_idx on public.tickets (user_id, updated_at desc);
+create index if not exists tickets_status_idx on public.tickets (status, updated_at desc);
+
+create table if not exists public.ticket_messages (
+  id bigint generated always as identity primary key,
+  ticket_id bigint not null references public.tickets (id) on delete cascade,
+  author_id uuid default auth.uid() references auth.users (id) on delete set null,
+  body text not null,
+  is_admin boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+alter table public.ticket_messages drop constraint if exists ticket_messages_body_check;
+alter table public.ticket_messages add constraint ticket_messages_body_check check (char_length(body) between 1 and 2000);
+create index if not exists ticket_messages_ticket_idx on public.ticket_messages (ticket_id, id);
+
+create or replace function private.ticket_guard()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  new.subject := private.clean_text(new.subject, 120);
+  if new.subject is null then
+    raise exception 'Write a subject' using errcode = '22023';
+  end if;
+  if v_uid is null then
+    return new;
+  end if;
+  new.user_id := v_uid;
+  new.status := 'open';
+  new.created_at := now();
+  new.updated_at := now();
+  if private.over('tk:' || v_uid::text, date_trunc('hour', now()), 5) then
+    raise exception 'Too many tickets' using errcode = '54000';
+  end if;
+  return new;
+end;
+$$;
+
+create or replace function private.ticket_message_guard()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_owner uuid;
+  v_admin boolean;
+begin
+  new.body := nullif(btrim(regexp_replace(regexp_replace(replace(left(coalesce(new.body, ''), 4000), E'\r', ''), E'[\\x01-\\x09\\x0b-\\x1f\\x7f]', '', 'g'), E'\n{3,}', E'\n\n', 'g')), '');
+  if new.body is null then
+    raise exception 'Write a message' using errcode = '22023';
+  end if;
+  new.body := left(new.body, 2000);
+  new.created_at := now();
+  select t.user_id into v_owner from public.tickets t where t.id = new.ticket_id;
+  if v_owner is null then
+    raise exception 'Ticket not found' using errcode = 'P0002';
+  end if;
+  if (select count(*) from public.ticket_messages m where m.ticket_id = new.ticket_id) >= 500 then
+    raise exception 'Too many messages in this ticket' using errcode = '54000';
+  end if;
+  if v_uid is null then
+    return new;
+  end if;
+  v_admin := exists (select 1 from public.profiles p where p.id = v_uid and p.role = 'admin' and not p.locked);
+  if v_owner <> v_uid and not v_admin then
+    raise exception 'Not your ticket' using errcode = '42501';
+  end if;
+  new.author_id := v_uid;
+  new.is_admin := v_admin and v_owner <> v_uid;
+  if private.over('tm:' || v_uid::text, date_trunc('minute', now()), 20) or private.over('th:' || v_uid::text, date_trunc('hour', now()), 300) then
+    raise exception 'Too many messages' using errcode = '54000';
+  end if;
+  update public.tickets t set updated_at = now(), status = case when new.is_admin then t.status else 'open' end where t.id = new.ticket_id;
+  return new;
+end;
+$$;
+
+drop trigger if exists tickets_guard on public.tickets;
+create trigger tickets_guard before insert on public.tickets
+  for each row execute function private.ticket_guard();
+drop trigger if exists tickets_cap on public.tickets;
+create trigger tickets_cap before insert on public.tickets
+  for each row execute function private.cap_rows('user_id', '100');
+drop trigger if exists ticket_messages_guard on public.ticket_messages;
+create trigger ticket_messages_guard before insert on public.ticket_messages
+  for each row execute function private.ticket_message_guard();
+drop trigger if exists ticket_messages_cap on public.ticket_messages;
+
+alter table public.tickets enable row level security;
+alter table public.ticket_messages enable row level security;
+
+drop policy if exists "tickets: read own or admin" on public.tickets;
+create policy "tickets: read own or admin" on public.tickets for select to authenticated
+  using (user_id = (select auth.uid()) or (select public.is_admin()));
+drop policy if exists "tickets: insert own" on public.tickets;
+create policy "tickets: insert own" on public.tickets for insert to authenticated
+  with check (user_id = (select auth.uid()));
+drop policy if exists "tickets: update own or admin" on public.tickets;
+create policy "tickets: update own or admin" on public.tickets for update to authenticated
+  using (user_id = (select auth.uid()) or (select public.is_admin()))
+  with check (user_id = (select auth.uid()) or (select public.is_admin()));
+drop policy if exists "ticket_messages: read own or admin" on public.ticket_messages;
+create policy "ticket_messages: read own or admin" on public.ticket_messages for select to authenticated
+  using (exists (select 1 from public.tickets t where t.id = ticket_messages.ticket_id and (t.user_id = (select auth.uid()) or (select public.is_admin()))));
+drop policy if exists "ticket_messages: insert own or admin" on public.ticket_messages;
+create policy "ticket_messages: insert own or admin" on public.ticket_messages for insert to authenticated
+  with check (author_id = (select auth.uid()) and exists (select 1 from public.tickets t where t.id = ticket_messages.ticket_id and (t.user_id = (select auth.uid()) or (select public.is_admin()))));
+
+revoke all on public.tickets, public.ticket_messages from anon, authenticated;
+grant all on public.tickets, public.ticket_messages to service_role;
+grant select on public.tickets, public.ticket_messages to authenticated;
+grant insert (subject) on public.tickets to authenticated;
+grant update (status) on public.tickets to authenticated;
+grant insert (ticket_id, body) on public.ticket_messages to authenticated;
+
+create or replace function public.ticket_create(p_subject text, p_body text)
+returns bigint
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_id bigint;
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  insert into public.tickets (user_id, subject) values (v_uid, p_subject) returning id into v_id;
+  insert into public.ticket_messages (ticket_id, body) values (v_id, p_body);
+  return v_id;
+end;
+$$;
+
+create or replace function public.ticket_send(p_ticket bigint, p_body text)
+returns bigint
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_id bigint;
+begin
+  if auth.uid() is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  insert into public.ticket_messages (ticket_id, body) values (p_ticket, p_body) returning id into v_id;
+  return v_id;
+end;
+$$;
+
+create or replace function public.ticket_set_status(p_ticket bigint, p_status text)
+returns text
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if p_status is null or p_status not in ('open', 'closed') then
+    raise exception 'Status must be open or closed' using errcode = '22023';
+  end if;
+  update public.tickets t set status = p_status, updated_at = now()
+    where t.id = p_ticket and (t.user_id = v_uid or public.is_admin());
+  if not found then
+    raise exception 'Ticket not found' using errcode = 'P0002';
+  end if;
+  return p_status;
+end;
+$$;
+
+create or replace function public.my_tickets()
+returns table (id bigint, subject text, status text, created_at timestamptz, updated_at timestamptz, messages integer, last_admin boolean)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select t.id, t.subject, t.status, t.created_at, t.updated_at,
+    (select count(*)::integer from public.ticket_messages m where m.ticket_id = t.id),
+    coalesce((select m.is_admin from public.ticket_messages m where m.ticket_id = t.id order by m.id desc limit 1), false)
+  from public.tickets t
+  where t.user_id = auth.uid()
+  order by t.status = 'open' desc, t.updated_at desc
+  limit 200;
+$$;
+
+create or replace function public.admin_tickets()
+returns table (id bigint, user_id uuid, username text, display_name text, email text, locked boolean, subject text, status text, created_at timestamptz, updated_at timestamptz, messages integer, last_admin boolean)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  perform private.need_admin();
+  return query
+    select t.id, t.user_id, p.username, p.display_name, u.email::text, coalesce(p.locked, false), t.subject, t.status, t.created_at, t.updated_at,
+      (select count(*)::integer from public.ticket_messages m where m.ticket_id = t.id),
+      coalesce((select m.is_admin from public.ticket_messages m where m.ticket_id = t.id order by m.id desc limit 1), false)
+    from public.tickets t
+    left join public.profiles p on p.id = t.user_id
+    left join auth.users u on u.id = t.user_id
+    order by t.status = 'open' desc, t.updated_at desc
+    limit 1000;
+end;
+$$;
+
+create or replace function public.ticket_thread(p_ticket bigint)
+returns table (id bigint, body text, is_admin boolean, mine boolean, author text, created_at timestamptz)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_admin boolean := public.is_admin();
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if not exists (select 1 from public.tickets t where t.id = p_ticket and (t.user_id = v_uid or v_admin)) then
+    raise exception 'Ticket not found' using errcode = 'P0002';
+  end if;
+  return query
+    select m.id, m.body, m.is_admin, m.author_id = v_uid,
+      case when v_admin then coalesce(p.username, p.display_name) end,
+      m.created_at
+    from public.ticket_messages m
+    left join public.profiles p on p.id = m.author_id
+    where m.ticket_id = p_ticket
+    order by m.id
+    limit 500;
+end;
+$$;
+
+revoke all on function public.is_admin() from public, anon, authenticated;
+revoke all on function public.my_status() from public, anon, authenticated;
+revoke all on function public.touch_presence(text, text) from public, anon, authenticated;
+revoke all on function public.admin_list_users() from public, anon, authenticated;
+revoke all on function public.admin_set_role(uuid, text) from public, anon, authenticated;
+revoke all on function public.admin_set_password(uuid, text) from public, anon, authenticated;
+revoke all on function public.admin_lock(uuid, boolean, text) from public, anon, authenticated;
+revoke all on function public.ticket_create(text, text) from public, anon, authenticated;
+revoke all on function public.ticket_send(bigint, text) from public, anon, authenticated;
+revoke all on function public.ticket_set_status(bigint, text) from public, anon, authenticated;
+revoke all on function public.my_tickets() from public, anon, authenticated;
+revoke all on function public.admin_tickets() from public, anon, authenticated;
+revoke all on function public.ticket_thread(bigint) from public, anon, authenticated;
+
+grant execute on function public.is_admin() to authenticated;
+grant execute on function public.my_status() to authenticated;
+grant execute on function public.touch_presence(text, text) to authenticated;
+grant execute on function public.admin_list_users() to authenticated;
+grant execute on function public.admin_set_role(uuid, text) to authenticated;
+grant execute on function public.admin_set_password(uuid, text) to authenticated;
+grant execute on function public.admin_lock(uuid, boolean, text) to authenticated;
+grant execute on function public.ticket_create(text, text) to authenticated;
+grant execute on function public.ticket_send(bigint, text) to authenticated;
+grant execute on function public.ticket_set_status(bigint, text) to authenticated;
+grant execute on function public.my_tickets() to authenticated;
+grant execute on function public.admin_tickets() to authenticated;
+grant execute on function public.ticket_thread(bigint) to authenticated;
+
+revoke all on all functions in schema private from public, anon, authenticated;

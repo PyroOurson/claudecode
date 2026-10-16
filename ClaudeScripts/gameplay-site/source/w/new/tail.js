@@ -184,6 +184,7 @@ function parseLocation() {
     query = i < 0 ? '' : h.slice(i);
   }
   if (LEGAL_KEYS.includes(path)) return { legal: path };
+  if (path === 'admin') return { admin: true };
   const m = /^([\w-]+)(?:\/([A-Za-z0-9]{4}))?$/.exec(path);
   if (m && m[1] !== 'all' && byId.get(m[1])) return { game: byId.get(m[1]), code: m[2] || null };
   const p = new URLSearchParams(query);
@@ -621,6 +622,7 @@ function openGame(g) {
   if (cur) { cur.kill(); cur = null; ttSync(); }
   pend = null;
   track('game_open', { game: g.id, src: clickSrc || 'link' });
+  adSeen(g.id);
   clickSrc = null;
   setHead(g.title + ' — play free online | gameplay', g.title + ' on gameplay: ' + (g.blurb || '') + ' Free to play in your browser, no download.', '/' + g.id);
   $('#pTitle').textContent = g.title;
@@ -660,7 +662,8 @@ function showView(v) {
   if (view === v) return false;
   if (view === 'home') homeY = scrollY;
   view = v;
-  ['home', 'game', 'legal'].forEach(k => { const el = $('#v' + k[0].toUpperCase() + k.slice(1)); el.hidden = k !== v; if (k === v) { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; } });
+  ['home', 'game', 'legal', 'admin'].forEach(k => { const el = $('#v' + k[0].toUpperCase() + k.slice(1)); el.hidden = k !== v; if (k === v) { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; } });
+  if (v !== 'home' && !$('#slist').children.length) { lastList = compute().list; renderSide(lastList); markSide(); }
   track('view', { v });
   return true;
 }
@@ -793,7 +796,7 @@ function openLegal(k) {
   scrollTo({ top: 0, behavior: 'instant' });
 }
 
-const MENUS = { filters: ['#fpanel', '#fbtn'], friends: ['#fmodal', '#abtn'], profile: ['#pmenu', '#pbtn'], settings: ['#smenu', '#sbtn'], mprofile: ['#prmodal'], mstats: ['#stmodal'], msettings: ['#semodal'], msignout: ['#sgmodal'], cookies: ['#ckmodal'], mauth: ['#aumodal'] };
+const MENUS = { filters: ['#fpanel', '#fbtn'], friends: ['#fmodal', '#abtn'], profile: ['#pmenu', '#pbtn'], settings: ['#smenu', '#sbtn'], mprofile: ['#prmodal'], mstats: ['#stmodal'], msettings: ['#semodal'], msignout: ['#sgmodal'], cookies: ['#ckmodal'], mauth: ['#aumodal'], msupport: ['#tkmodal'] };
 let openK = null;
 const motionOK = () => !S.prefs.motion && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 function vis(el, on) {
@@ -831,6 +834,7 @@ function setOpen(k) {
   if (openK === 'cookies') { const b = $('#ckan'); b.classList.toggle('on', consent ? anOk() : true); b.setAttribute('aria-checked', String(b.classList.contains('on'))); }
   if (openK === 'filters') renderPanel();
   if (openK === 'mauth') auShow();
+  if (openK === 'msupport') adSupport();
   fbtnState();
 }
 function closeAll() { if (openK) setOpen(openK); }
@@ -966,6 +970,7 @@ function route() {
   const pop = fromPop; fromPop = false;
   const loc = parseLocation();
   if (loc.legal) return openLegal(loc.legal);
+  if (loc.admin) return adRoute();
   if (loc.game) {
     const g = loc.game;
     if (view !== 'game') navFromHome = view === 'home' && !pop; else if (!(cur && cur.g === g) && !(pend && pend.id === g.id)) navFromHome = false;
@@ -1186,6 +1191,7 @@ function boot() {
   route();
   lzIdle();
   auBoot();
+  adBoot();
   if (S.recent.some(id => byId.get(id) && byId.get(id).is3d)) { const warmUp = () => loadThree().catch(() => {}); if (window.requestIdleCallback) requestIdleCallback(warmUp, { timeout: 4000 }); else setTimeout(warmUp, 1500); }
 }
 

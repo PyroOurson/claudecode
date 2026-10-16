@@ -228,6 +228,8 @@ ClaudeScripts/gameplay-site/source/w/gate2.js
 ClaudeScripts/gameplay-site/source/w/meta2.js
 ClaudeScripts/gameplay-site/source/w/meta_rows.py
 ClaudeScripts/gameplay-site/source/w/minibuild.py
+ClaudeScripts/gameplay-site/source/w/new/admin.css
+ClaudeScripts/gameplay-site/source/w/new/admin.js
 ClaudeScripts/gameplay-site/source/w/new/am.css
 ClaudeScripts/gameplay-site/source/w/new/auth.css
 ClaudeScripts/gameplay-site/source/w/new/auth.js

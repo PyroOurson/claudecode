@@ -685,6 +685,170 @@ html.ck-open body{overflow:hidden}
   .lg-card{border-radius:0;max-height:none;border:0}
   .fr-a .btn2{padding:0 10px}
 }
+
+.adm{max-width:1400px;margin:0 auto;padding:8px 0 28px;display:flex;flex-direction:column;gap:16px}
+.adm-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.adm-h h2{margin:0;flex:1;font-size:26px;font-weight:800;letter-spacing:-.02em;animation:tw .6s steps(22,end) .08s backwards}
+.adm-ref{gap:8px}
+.adm-ref svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.adm-ref.spin svg{animation:auSpin .8s linear infinite}
+.adm-tiles{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.adm-tiles .tile{background:var(--surface);border:1px solid var(--line);animation:rowIn .45s var(--ease) backwards;animation-delay:calc(var(--i,0) * 60ms)}
+.adm-tabs{width:min(360px,100%)}
+.adm-tabs[data-m="tickets"] i{transform:translateX(100%)}
+.adm-tabs em{font-style:normal;margin-left:6px;font-size:11px;font-weight:800;background:var(--accent);color:var(--accent-ink);border-radius:99px;padding:2px 7px;vertical-align:1px}
+.adm-sec{margin:0;animation:viewIn .3s var(--ease) both}
+.adm-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.adm-tools .search{flex:1 1 320px;height:46px}
+.adm select,.adp textarea,.adp input,.tk input,.tk textarea{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 14px;min-width:0}
+.adm select{height:46px;padding-right:10px;cursor:pointer}
+.adp textarea,.tk textarea{padding:10px 14px;resize:vertical;min-height:44px;line-height:1.45;width:100%}
+.adp input,.tk input{height:44px;width:100%}
+.adm select:focus,.adp textarea:focus,.adp input:focus,.tk input:focus,.tk textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+.adm-tw{overflow:auto;max-height:calc(100vh - 230px);max-height:calc(100dvh - 230px);border:1px solid var(--line);border-radius:18px;background:var(--surface);box-shadow:var(--shadow-sm);overscroll-behavior:contain}
+.adm-t{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:14px}
+.adm-t th{position:sticky;top:0;z-index:2;background:var(--surface-2);text-align:left;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap;border-bottom:1px solid var(--line)}
+.adm-t th>span,.adm-t th>button{display:flex;align-items:center;gap:6px;padding:11px 14px;font:inherit;font-weight:700;letter-spacing:inherit;text-transform:inherit;color:inherit;width:100%}
+.adm-t th>button:hover{color:var(--fg)}
+.adm-t th i{width:0;height:0;border:4px solid transparent;opacity:0;transition:opacity .15s,transform .2s var(--ease)}
+.adm-t th [aria-sort="ascending"] i{opacity:1;border-bottom-color:currentColor;transform:translateY(-2px)}
+.adm-t th [aria-sort="descending"] i{opacity:1;border-top-color:currentColor;transform:translateY(2px)}
+.adm-t th [aria-sort="ascending"],.adm-t th [aria-sort="descending"]{color:var(--accent)}
+.adm-t td{padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap;max-width:280px;overflow:hidden;text-overflow:ellipsis}
+.adm-t tbody tr{cursor:pointer;transition:background-color .15s;animation:rowIn .35s var(--ease) backwards;animation-delay:calc(var(--i,0) * 18ms)}
+.adm-t tbody tr:hover{background:var(--surface-2)}
+.adm-t tbody tr:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.adm-t tbody tr.sel{background:var(--accent-soft)}
+.adm-t tbody tr:last-child td{border-bottom:0}
+.adm-t th:first-child,.adm-t td:first-child{position:sticky;left:0;z-index:1;background:inherit}
+.adm-t th:first-child{z-index:3}
+.adm-t tbody tr{background:var(--surface)}
+.adm-t tbody tr:hover,.adm-t tbody tr.sel{background:var(--surface-2)}
+.adm-t tbody tr.sel{box-shadow:inset 3px 0 0 var(--accent)}
+.adm code,.adp code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border-radius:6px;padding:2px 6px}
+.adm-mut{color:var(--muted)}
+.adm-empty{padding:28px 16px;text-align:center;color:var(--muted);white-space:normal}
+.adm-pill{display:inline-flex;align-items:center;font-size:12px;font-weight:700;border-radius:99px;padding:3px 9px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.adm-pill.ok{background:rgba(34,176,125,.14);color:#168a60}
+.adm-pill.warn{background:rgba(232,155,20,.16);color:#a46600}
+.adm-pill.bad{background:rgba(217,58,74,.13);color:var(--danger)}
+.adm-pill.acc{background:var(--accent-soft);color:var(--accent)}
+:root[data-theme="dark"] .adm-pill.ok{color:#4fd6a2}
+:root[data-theme="dark"] .adm-pill.warn{color:#ffc35c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .adm-pill.ok{color:#4fd6a2}:root:not([data-theme="light"]) .adm-pill.warn{color:#ffc35c}}
+.adp-back{position:fixed;inset:0;z-index:58;background:rgba(14,10,34,.38);animation:ckFade .2s var(--ease) both}
+.adp-back.out{animation:mFadeOut .17s var(--ease) forwards}
+.adp>*{flex:none}
+.adp{position:fixed;z-index:59;top:12px;right:12px;bottom:12px;width:min(460px,calc(100vw - 24px));overflow-y:auto;overscroll-behavior:contain;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:22px;box-shadow:var(--sh-3,var(--shadow));padding:18px 20px 22px;display:flex;flex-direction:column;gap:16px;animation:adpIn .42s var(--ease) both}
+.adp.out{animation:adpOut .17s var(--ease) forwards}
+@keyframes adpIn{from{opacity:0;transform:translateX(40px)}}
+@keyframes adpOut{to{opacity:0;transform:translateX(40px)}}
+.adp-h{display:flex;align-items:center;gap:12px}
+.adp-h .pic{width:46px;height:46px;flex:none;font-size:19px}
+.adp-h>div{flex:1;min-width:0}
+.adp-h div b,.adp-h div span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.adp-h b{font-size:18px;font-weight:800}
+.adp-h div span{color:var(--muted);font-size:14px}
+.adp-dl{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.adp-dl>div{background:var(--surface);padding:9px 12px;min-width:0;animation:rowIn .4s var(--ease) backwards}
+.adp-dl>div:nth-child(-n+2){grid-column:1/-1}
+.adp-dl dt{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.adp-dl dd{margin:2px 0 0;font-size:14px;overflow-wrap:anywhere}
+.adm-why{margin-top:6px;font-size:13px;color:var(--muted);white-space:pre-wrap}
+.adp-sec{display:flex;flex-direction:column;gap:8px;padding-top:14px;border-top:1px solid var(--line)}
+.adp-sec h4{margin:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.adp-sec p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.45}
+.adp-sec>.btn2{align-self:flex-start;height:40px}
+.adp-sec .note{margin-top:0}
+.adp-l{font-size:13px;color:var(--muted)}
+.adp-l[hidden],#adlr[hidden]{display:none}
+.adp-role{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.adp-role .btn2{height:40px}
+.adp-role .btn2[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.adp .au-pw input{padding-right:48px}
+.adblock{position:fixed;inset:0;z-index:85;overflow-y:auto;overscroll-behavior:contain;background:radial-gradient(1200px 520px at 50% -180px,var(--accent-soft),transparent 70%),var(--bg);color:var(--fg);animation:ckFade .3s var(--ease) both}
+.adblock[hidden]{display:none}
+html.ad-locked body{overflow:hidden}
+.adblock .au-wrap{min-height:100%;justify-content:flex-start;padding-top:max(40px,env(safe-area-inset-top,0px))}
+.adb-card{width:min(560px,100%);align-items:center;text-align:center}
+.adb-ico{background:rgba(217,58,74,.12);color:var(--danger)}
+.adb-why{width:100%;text-align:left;padding:12px 14px;border-radius:14px;background:var(--surface-2);font-size:14px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
+.adb-why b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.adb-why[hidden]{display:none}
+.adb-contact{width:min(560px,100%);animation-delay:.08s}
+.adb-out{margin-top:2px;gap:8px;height:42px;animation:auV .5s .15s var(--ease) both}
+.adb-out svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.tkpage{max-width:900px;width:100%;margin:0 auto}
+.tk{display:grid;gap:12px;min-width:0}
+.tk[data-mode="admin"]{grid-template-columns:minmax(260px,360px) 1fr;align-items:start}
+.tk-side,.tk-main{display:flex;flex-direction:column;gap:10px;min-width:0}
+.tk-side[hidden],.tk-main[hidden]{display:none}
+.tk[data-mode="admin"] .tk-main[hidden]{display:flex;visibility:hidden}
+.tk[data-mode="admin"] .tk-main .back{display:none}
+.tk-new{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--surface-2);animation:auV .3s var(--ease) both}
+.tk-new[hidden],.tk-open[hidden],.tk-cancel[hidden]{display:none}
+.tk-new .fld label{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tk-row{display:flex;gap:8px;justify-content:flex-end}
+.tk-open{align-self:flex-start}
+.tk-list{display:flex;flex-direction:column;gap:8px;max-height:min(560px,calc(100dvh - 300px));overflow-y:auto;overscroll-behavior:contain}
+.adblock .tk-list,.tkpage .tk-list{max-height:none}
+.tk-item{display:flex;flex-direction:column;gap:6px;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);font:inherit;color:inherit;transition:border-color .15s,box-shadow .2s,transform .2s var(--spring);animation:rowIn .35s var(--ease) backwards;animation-delay:calc(var(--i,0) * 30ms)}
+.tk-item:hover{border-color:var(--line-2);box-shadow:var(--shadow-sm);transform:translateY(-1px)}
+.tk-item:active{transform:scale(.99)}
+.tk-item.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.tk-it{display:flex;align-items:center;gap:8px;justify-content:space-between;min-width:0}
+.tk-it b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tk-is{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:12.5px;color:var(--muted)}
+.tk-main{border:1px solid var(--line);border-radius:18px;background:var(--surface);padding:12px;min-height:420px;animation:auV .3s var(--ease) both}
+.tk[data-mode="user"] .tk-main{min-height:0}
+.tk-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.tk-h .back{padding:6px 10px 6px 6px}
+.tk-ht{flex:1;min-width:160px;display:flex;flex-direction:column;gap:4px}
+.tk-subj{font-size:16px;overflow-wrap:anywhere}
+.tk-meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:12.5px;color:var(--muted)}
+.tk-tog{height:36px;margin-left:auto}
+.tk[data-mode="user"] .tk-ht{order:3;flex-basis:100%;padding:0 4px}
+.tk-msgs{flex:1;display:flex;flex-direction:column;gap:10px;padding:12px 2px;overflow-y:auto;overscroll-behavior:contain;max-height:min(520px,calc(100dvh - 330px));min-height:180px}
+.tk-m{display:flex;flex-direction:column;align-items:flex-start;gap:3px;max-width:82%}
+.tk-m.me{align-self:flex-end;align-items:flex-end}
+.tk-m.new{animation:tkIn .35s var(--spring) both}
+@keyframes tkIn{from{opacity:0;transform:translateY(8px) scale(.97)}}
+.tk-b{padding:9px 13px;border-radius:16px 16px 16px 5px;background:var(--surface-2);white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.45;font-size:14.5px}
+.tk-m.tk-adm .tk-b{background:var(--accent-soft);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 25%,transparent)}
+.tk-m.me .tk-b{background:var(--accent);color:var(--accent-ink);border-radius:16px 16px 5px 16px}
+.tk-w{font-size:11.5px;color:var(--muted);padding:0 4px}
+.tk-comp{display:flex;gap:8px;align-items:flex-end;padding-top:10px;border-top:1px solid var(--line)}
+.tk-comp textarea{flex:1;max-height:160px}
+.tk-comp .btn2{height:44px;gap:6px}
+.tk-comp svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linejoin:round}
+.tk-note{margin-top:0}
+@media (max-width:900px){
+  .tk[data-mode="admin"]{grid-template-columns:1fr}
+  .tk[data-mode="admin"].tk-in .tk-side{display:none}
+  .tk[data-mode="admin"] .tk-main[hidden]{display:none}
+  .tk[data-mode="admin"] .tk-main .back{display:inline-flex}
+  .tk[data-mode="admin"] .tk-ht{order:3;flex-basis:100%;padding:0 4px}
+  .tk-list{max-height:none}
+}
+@media (max-width:600px){
+  .adm-h h2{font-size:22px;flex-basis:100%;order:3}
+  .adm-h .back{margin-right:auto}
+  .adm-tiles{grid-template-columns:repeat(3,1fr);gap:8px}
+  .adm-tiles .tile{padding:10px 12px}
+  .adm-tiles .tile b{font-size:20px}
+  .adm-tiles .tile small{font-size:12px}
+  .adm-tools .search{flex-basis:100%}
+  .adm select{flex:1}
+  .adm-tw{max-height:none}
+  .adp{top:auto;left:0;right:0;bottom:0;width:100%;max-height:88dvh;border-radius:22px 22px 0 0;padding-bottom:max(22px,env(safe-area-inset-bottom,0px));animation-name:adpUp}
+  .adp.out{animation-name:adpDown}
+  .tk-m{max-width:92%}
+  .tk-msgs{max-height:none;min-height:140px}
+}
+@keyframes adpUp{from{opacity:.4;transform:translateY(60%)}}
+@keyframes adpDown{to{opacity:0;transform:translateY(40%)}}
+@media (prefers-reduced-motion:reduce){.adm *,.adp,.adp *,.tk *,.adblock{animation:none!important}}
+html.rm .adm *,html.rm .adp,html.rm .adp *,html.rm .tk *,html.rm .adblock{animation:none!important}
 </style>
 </head>
 <body>
@@ -699,6 +863,8 @@ html.ck-open body{overflow:hidden}
    <div class="m-head"><span class="pic" data-pic></span><div><b data-pname></b><span data-psub></span></div></div>
    <button class="item" type="button" data-go="mprofile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profile</button>
    <button class="item" type="button" data-go="mstats"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Stats</button>
+   <button class="item" type="button" data-go="msupport" data-au="in" hidden><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/></svg>Support</button>
+   <button class="item" type="button" data-admin data-adgo hidden><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>Dashboard</button>
    <div class="sep"></div>
    <button class="item" type="button" data-go="mauth" data-au="off out"><svg viewBox="0 0 24 24"><path d="M15 3h4v18h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in</button>
    <button class="item danger" type="button" data-go="msignout" data-au="in" hidden><svg viewBox="0 0 24 24"><path d="M9 21H5V3h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>
@@ -783,6 +949,31 @@ html.ck-open body{overflow:hidden}
     <a class="back" href="#" data-home><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back to games</a>
     <nav class="ltabs" aria-label="Legal documents"><a href="#/terms" data-legal="terms">Terms of Service</a><a href="#/privacy" data-legal="privacy">Privacy Policy</a><a href="#/cookies" data-legal="cookies">Cookie Policy</a></nav>
     <article class="doc" id="doc"></article>
+   </div>
+  </div>
+
+  <div class="view" id="vAdmin" hidden>
+   <div class="adm">
+    <div class="adm-h"><a class="back" href="#" data-home><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back to games</a><h2>Admin dashboard</h2><button class="btn2 adm-ref" id="adref" type="button"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>Refresh</button></div>
+    <div class="tiles adm-tiles" id="adtiles"></div>
+    <div class="au-tabs adm-tabs" id="adtabs" role="tablist" aria-label="Dashboard sections" data-m="users"><button type="button" role="tab" data-adtab="users" aria-selected="true">Users</button><button type="button" role="tab" data-adtab="tickets" aria-selected="false">Tickets<em id="adtn" hidden></em></button><i></i></div>
+    <section class="adm-sec" id="adusers">
+     <div class="adm-tools">
+      <label class="search" for="adq"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="adq" type="search" placeholder="Search by email, username, name or id" autocomplete="off" spellcheck="false" aria-label="Search users"></label>
+      <select id="adf" aria-label="Filter users"><option value="all">All users</option><option value="admin">Admins</option><option value="locked">Locked</option><option value="unconfirmed">Email not confirmed</option><option value="google">Google</option><option value="email">Email and password</option><option value="active">Active in the last 7 days</option></select>
+      <span class="count" id="adcount" translate="no"></span>
+     </div>
+     <div class="adm-tw"><table class="adm-t" id="adt"><thead></thead><tbody translate="no"></tbody></table></div>
+    </section>
+    <section class="adm-sec" id="adtickets" hidden><div id="tka"></div></section>
+    <div class="adp-back" id="adpback" hidden></div>
+    <aside class="adp" id="adpanel" hidden role="dialog" aria-modal="true" aria-labelledby="adpn">
+     <div class="adp-h"><span class="pic"></span><div><b id="adpn" translate="no"></b><span id="adpu" translate="no"></span></div><button class="x" type="button" id="adpclose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+     <dl class="adp-dl" id="adpdl" translate="no"></dl>
+     <div class="adp-sec"><h4>Role</h4><div class="adp-role"><button class="btn2" type="button" data-adact="role" data-adrole="user">User</button><button class="btn2" type="button" data-adact="role" data-adrole="admin">Admin</button></div><div class="note" id="adprn" role="status"></div></div>
+     <div class="adp-sec"><h4>Password</h4><p>Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them. You can set a new one.</p><div class="au-pw"><input id="adpw" type="password" autocomplete="new-password" placeholder="New password, at least 8 characters" maxlength="72" aria-label="New password"></div><button class="btn2 pri" type="button" id="adpwb" data-adact="pw">Set new password</button><div class="note" id="adpwn" role="status"></div></div>
+     <div class="adp-sec"><h4>Access</h4><label class="adp-l" for="adlr" id="adlrl">Reason shown to the user (optional)</label><textarea id="adlr" maxlength="500" rows="2"></textarea><button class="btn2 danger" type="button" id="adlock" data-adact="lock">Lock account</button><div class="note" id="adln" role="status"></div></div>
+    </aside>
    </div>
   </div>
 
@@ -923,6 +1114,29 @@ html.ck-open body{overflow:hidden}
     </div>
    </div>
   </div>
+ </div>
+</div>
+
+<div class="modal full" id="tkmodal" hidden role="dialog" aria-modal="true" aria-label="Support">
+ <div class="mc">
+  <div class="mh"><button class="back" type="button" data-close><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back to games</button><h3>Support</h3><span class="mh-sp"></span></div>
+  <div class="mb tkpage"><p class="mtext">A question, a problem with your account or a game? Open a ticket and the admins will reply here.</p><div id="tks"></div></div>
+ </div>
+</div>
+
+<div class="adblock" id="adblock" hidden role="dialog" aria-modal="true" aria-labelledby="adbt">
+ <div class="au-wrap">
+  <div class="au-brand"><span class="logo"><svg viewBox="0 0 16 16"><path d="M2 1.5v13l12-6.5z"/></svg></span><span>gameplay</span></div>
+  <div class="au-card adb-card">
+   <span class="au-ico adb-ico"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg></span>
+   <div class="au-hd"><h3 id="adbt">The admin has blocked you out of this website</h3><p>You cannot play or use your account for now.</p></div>
+   <div class="adb-why" id="adbr" hidden><b>Reason</b><span id="adbrt" translate="no"></span></div>
+  </div>
+  <div class="au-card adb-contact">
+   <div class="au-hd"><h3>Contact</h3><p>Think this is a mistake? Open a ticket to talk with the admins. Their replies show up here.</p></div>
+   <div id="tkb"></div>
+  </div>
+  <button class="btn2 adb-out" type="button" id="adbout"><svg viewBox="0 0 24 24"><path d="M9 21H5V3h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>
  </div>
 </div>
 

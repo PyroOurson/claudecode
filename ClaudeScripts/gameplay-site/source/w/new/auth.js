@@ -649,6 +649,7 @@ async function auSignedIn(ev) {
   try { await auLoadProfile(); } catch (e) {}
   if (!SB.user || SB.user.id !== uid) return;
   auRender();
+  adCheck();
   if (loud) toast(auT('Logged in as {name}').replace('{name}', SB.prof && SB.prof.username ? '@' + SB.prof.username : SB.user.email || 'you'));
   sySync();
   if (loud && SB.prof && !SB.prof.username) setTimeout(auChoose, 400);
@@ -659,6 +660,7 @@ function auSignedOut() {
   clearTimeout(SB.t);
   if (SB.choosing && !$('#unmodal').hidden) unClose();
   SB.choosing = false;
+  adSignedOut();
   auRender();
 }
 function auSession(ev, s) {

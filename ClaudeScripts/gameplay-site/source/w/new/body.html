@@ -10,6 +10,8 @@
    <div class="m-head"><span class="pic" data-pic></span><div><b data-pname></b><span data-psub></span></div></div>
    <button class="item" type="button" data-go="mprofile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profile</button>
    <button class="item" type="button" data-go="mstats"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Stats</button>
+   <button class="item" type="button" data-go="msupport" data-au="in" hidden><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/></svg>Support</button>
+   <button class="item" type="button" data-admin data-adgo hidden><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>Dashboard</button>
    <div class="sep"></div>
    <button class="item" type="button" data-go="mauth" data-au="off out"><svg viewBox="0 0 24 24"><path d="M15 3h4v18h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in</button>
    <button class="item danger" type="button" data-go="msignout" data-au="in" hidden><svg viewBox="0 0 24 24"><path d="M9 21H5V3h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>
@@ -94,6 +96,31 @@
     <a class="back" href="#" data-home><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back to games</a>
     <nav class="ltabs" aria-label="Legal documents"><a href="#/terms" data-legal="terms">Terms of Service</a><a href="#/privacy" data-legal="privacy">Privacy Policy</a><a href="#/cookies" data-legal="cookies">Cookie Policy</a></nav>
     <article class="doc" id="doc"></article>
+   </div>
+  </div>
+
+  <div class="view" id="vAdmin" hidden>
+   <div class="adm">
+    <div class="adm-h"><a class="back" href="#" data-home><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back to games</a><h2>Admin dashboard</h2><button class="btn2 adm-ref" id="adref" type="button"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>Refresh</button></div>
+    <div class="tiles adm-tiles" id="adtiles"></div>
+    <div class="au-tabs adm-tabs" id="adtabs" role="tablist" aria-label="Dashboard sections" data-m="users"><button type="button" role="tab" data-adtab="users" aria-selected="true">Users</button><button type="button" role="tab" data-adtab="tickets" aria-selected="false">Tickets<em id="adtn" hidden></em></button><i></i></div>
+    <section class="adm-sec" id="adusers">
+     <div class="adm-tools">
+      <label class="search" for="adq"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="adq" type="search" placeholder="Search by email, username, name or id" autocomplete="off" spellcheck="false" aria-label="Search users"></label>
+      <select id="adf" aria-label="Filter users"><option value="all">All users</option><option value="admin">Admins</option><option value="locked">Locked</option><option value="unconfirmed">Email not confirmed</option><option value="google">Google</option><option value="email">Email and password</option><option value="active">Active in the last 7 days</option></select>
+      <span class="count" id="adcount" translate="no"></span>
+     </div>
+     <div class="adm-tw"><table class="adm-t" id="adt"><thead></thead><tbody translate="no"></tbody></table></div>
+    </section>
+    <section class="adm-sec" id="adtickets" hidden><div id="tka"></div></section>
+    <div class="adp-back" id="adpback" hidden></div>
+    <aside class="adp" id="adpanel" hidden role="dialog" aria-modal="true" aria-labelledby="adpn">
+     <div class="adp-h"><span class="pic"></span><div><b id="adpn" translate="no"></b><span id="adpu" translate="no"></span></div><button class="x" type="button" id="adpclose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+     <dl class="adp-dl" id="adpdl" translate="no"></dl>
+     <div class="adp-sec"><h4>Role</h4><div class="adp-role"><button class="btn2" type="button" data-adact="role" data-adrole="user">User</button><button class="btn2" type="button" data-adact="role" data-adrole="admin">Admin</button></div><div class="note" id="adprn" role="status"></div></div>
+     <div class="adp-sec"><h4>Password</h4><p>Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them. You can set a new one.</p><div class="au-pw"><input id="adpw" type="password" autocomplete="new-password" placeholder="New password, at least 8 characters" maxlength="72" aria-label="New password"></div><button class="btn2 pri" type="button" id="adpwb" data-adact="pw">Set new password</button><div class="note" id="adpwn" role="status"></div></div>
+     <div class="adp-sec"><h4>Access</h4><label class="adp-l" for="adlr" id="adlrl">Reason shown to the user (optional)</label><textarea id="adlr" maxlength="500" rows="2"></textarea><button class="btn2 danger" type="button" id="adlock" data-adact="lock">Lock account</button><div class="note" id="adln" role="status"></div></div>
+    </aside>
    </div>
   </div>
 
@@ -234,6 +261,29 @@
     </div>
    </div>
   </div>
+ </div>
+</div>
+
+<div class="modal full" id="tkmodal" hidden role="dialog" aria-modal="true" aria-label="Support">
+ <div class="mc">
+  <div class="mh"><button class="back" type="button" data-close><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back to games</button><h3>Support</h3><span class="mh-sp"></span></div>
+  <div class="mb tkpage"><p class="mtext">A question, a problem with your account or a game? Open a ticket and the admins will reply here.</p><div id="tks"></div></div>
+ </div>
+</div>
+
+<div class="adblock" id="adblock" hidden role="dialog" aria-modal="true" aria-labelledby="adbt">
+ <div class="au-wrap">
+  <div class="au-brand"><span class="logo"><svg viewBox="0 0 16 16"><path d="M2 1.5v13l12-6.5z"/></svg></span><span>gameplay</span></div>
+  <div class="au-card adb-card">
+   <span class="au-ico adb-ico"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg></span>
+   <div class="au-hd"><h3 id="adbt">The admin has blocked you out of this website</h3><p>You cannot play or use your account for now.</p></div>
+   <div class="adb-why" id="adbr" hidden><b>Reason</b><span id="adbrt" translate="no"></span></div>
+  </div>
+  <div class="au-card adb-contact">
+   <div class="au-hd"><h3>Contact</h3><p>Think this is a mistake? Open a ticket to talk with the admins. Their replies show up here.</p></div>
+   <div id="tkb"></div>
+  </div>
+  <button class="btn2 adb-out" type="button" id="adbout"><svg viewBox="0 0 24 24"><path d="M9 21H5V3h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>
  </div>
 </div>
 
