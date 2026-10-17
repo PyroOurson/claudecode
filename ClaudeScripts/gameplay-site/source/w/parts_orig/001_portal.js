@@ -115,15 +115,43 @@ function setBest(g, bump) {
 
 const glSet = new Set();
 let fsScale = 1, fsT = [0, 0], fitRaf = 0, fitTimer = 0;
+const c2Set = new Set();
+const gpBudget = () => Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * Math.pow(window.devicePixelRatio || 1, 2) * 1.05);
 function applyGlScale(s) {
-  const pr = Math.min(2.5, Math.min(window.devicePixelRatio || 1, 2) * Math.max(1, s));
-  glSet.forEach(({ renderer, THREE }) => {
+  const want = Math.max(1, Math.min(4, (window.devicePixelRatio || 1) * Math.max(1, s))), B = gpBudget();
+  glSet.forEach(e => {
     try {
+      const { renderer, THREE } = e, v = renderer.getSize(new THREE.Vector2());
+      let pr = Math.min(want, Math.sqrt(B / Math.max(1, v.x * v.y)));
+      if (e.cap) pr = Math.min(pr, e.cap);
       if (Math.abs(renderer.getPixelRatio() - pr) < 0.01) return;
-      const v = renderer.getSize(new THREE.Vector2());
-      renderer.setPixelRatio(pr); renderer.setSize(v.x, v.y, false);
-    } catch (e) {}
+      e.own = true; renderer.setPixelRatio(pr); renderer.setSize(v.x, v.y, false); e.own = false;
+    } catch (x) { e.own = false; }
   });
+  c2Set.forEach(e => { try { gpRaster(e, Math.min(want, Math.sqrt(B / Math.max(1, e.w * e.h)))); } catch (x) {} });
+}
+const GP_CTX = ['fillStyle', 'strokeStyle', 'font', 'lineWidth', 'lineCap', 'lineJoin', 'miterLimit', 'textAlign', 'textBaseline', 'globalAlpha', 'globalCompositeOperation', 'imageSmoothingEnabled', 'imageSmoothingQuality', 'shadowBlur', 'shadowColor', 'shadowOffsetX', 'shadowOffsetY', 'direction', 'letterSpacing', 'filter', 'lineDashOffset'];
+function gpRaster(e, d, force) {
+  if (e.manual && !force) return;
+  d = force ? d : Math.round(d * 20) / 20;
+  if (Math.abs(e.d - d) < 0.05 && !force) return;
+  e.busy = true;
+  try { gpRaster2(e, d); } finally { e.busy = false; }
+}
+function gpRaster2(e, d) {
+  const c = e.canvas, ctx = e.ctx, st = {};
+  GP_CTX.forEach(k => { if (k in ctx) st[k] = ctx[k]; });
+  const dash = ctx.getLineDash ? ctx.getLineDash() : null, m = ctx.getTransform(), tmp = document.createElement('canvas');
+  tmp.width = c.width; tmp.height = c.height;
+  if (c.width && c.height) tmp.getContext('2d').drawImage(c, 0, 0);
+  c.width = Math.round(e.w * d); c.height = Math.round(e.h * d);
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = true;
+  if (tmp.width && tmp.height) ctx.drawImage(tmp, 0, 0, c.width, c.height);
+  GP_CTX.forEach(k => { if (k in st) { try { ctx[k] = st[k]; } catch (x) {} } });
+  if (dash && ctx.setLineDash) ctx.setLineDash(dash);
+  const k = d / e.d;
+  ctx.setTransform(m.a * k, m.b * k, m.c * k, m.d * k, m.e * k, m.f * k);
+  e.d = d;
 }
 function fitFullscreen() {
   const frameEl = document.getElementById('frame'), box = document.getElementById('gamebox');
@@ -399,6 +427,14 @@ function makeApi(g, root) {
       c.style.aspectRatio = `${w} / ${h}`;
       const ctx = c.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       parent.append(c);
+      const c2e = { canvas: c, ctx, w, h, d: dpr, d0: dpr, busy: false, manual: false };
+      ['setTransform', 'resetTransform', 'getImageData', 'putImageData'].forEach(k => {
+        const f = ctx[k];
+        if (typeof f !== 'function') return;
+        ctx[k] = function () { if (!c2e.busy && !c2e.manual) { c2e.manual = true; if (Math.abs(c2e.d - c2e.d0) > 0.01) gpRaster(c2e, c2e.d0, true); } return f.apply(ctx, arguments); };
+      });
+      c2Set.add(c2e); add(() => c2Set.delete(c2e));
+      if (fsScale !== 1) applyGlScale(fsScale);
       const toLocal = e => {
         const r = c.getBoundingClientRect(), p = e.touches ? (e.touches[0] || e.changedTouches[0]) : e;
         return { x: (p.clientX - r.left) * w / r.width, y: (p.clientY - r.top) * h / r.height };
@@ -419,7 +455,7 @@ function makeApi(g, root) {
       wait.remove();
       if (!alive) return null;
       const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', ...opts });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 3));
       renderer.setSize(w, h, false);
       renderer.outputEncoding = THREE.sRGBEncoding;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -431,7 +467,17 @@ function makeApi(g, root) {
       c.style.aspectRatio = `${w} / ${h}`;
       root.append(c);
       add(() => { try { renderer.dispose(); renderer.forceContextLoss(); } catch (e) {} c.remove(); });
-      const glEntry = { renderer, THREE };
+      const glEntry = { renderer, THREE, canvas: c, w0: w, h0: h, cw: w, ch: h, own: false, cap: 0, fill: false };
+      const spr = renderer.setPixelRatio.bind(renderer), rnd = renderer.render.bind(renderer);
+      renderer.setPixelRatio = v => { if (!glEntry.own) glEntry.cap = v < (window.devicePixelRatio || 1) * 0.98 ? v : 0; return spr(v); };
+      renderer.render = (sc, cam) => {
+        if (cam && cam.isPerspectiveCamera && (glEntry.fill || cam.userData.gpA)) {
+          const a = glEntry.cw / glEntry.ch, b = cam.userData.gpA || glEntry.w0 / glEntry.h0;
+          if (Math.abs(cam.aspect - b) < 2e-3 && Math.abs(cam.aspect - a) > 1e-4) { cam.aspect = a; cam.updateProjectionMatrix(); }
+          if (Math.abs(cam.aspect - a) < 1e-4) cam.userData.gpA = a;
+        }
+        return rnd(sc, cam);
+      };
       glSet.add(glEntry); add(() => glSet.delete(glEntry));
       if (fsScale !== 1) applyGlScale(fsScale);
       const toLocal = e => {

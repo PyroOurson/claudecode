@@ -623,6 +623,7 @@ function openGame(g) {
   pend = null;
   track('game_open', { game: g.id, src: clickSrc || 'link' });
   adSeen(g.id);
+  rtTrack();
   clickSrc = null;
   setHead(g.title + ' — play free online | gameplay', g.title + ' on gameplay: ' + (g.blurb || '') + ' Free to play in your browser, no download.', '/' + g.id);
   $('#pTitle').textContent = g.title;
@@ -653,6 +654,7 @@ function closeGame() {
   $('#stage').style.height = '';
   frame.style.transform = '';
   setHead(BASE_TITLE, BASE_DESC, '/');
+  rtTrack();
 }
 
 let view = '', homeY = 0;
@@ -920,7 +922,7 @@ function swVal(k) {
   if (k === 'thumbs') return thumbsOn();
   if (k === 'motion') return !!S.prefs.motion;
   if (k === 'p_game') return S.prefs.p_game !== false;
-  if (k === 'n_inv' || k === 'n_req') return S.prefs[k] !== false;
+  if (k === 'n_inv' || k === 'n_req' || k === 'n_msg' || k === 'n_game') return S.prefs[k] !== false;
   return !!S.prefs[k];
 }
 function syncSwitches() {
@@ -932,7 +934,7 @@ function setSwitch(k) {
   if (k === 'sound') { setMuted(!v); if (v) sfx('tap'); }
   else if (k === 'analytics') setConsent(v);
   else {
-    S.prefs[k] = v; save();
+    S.prefs[k] = v; save(); if (k === 'p_game') rtTrack();
     if (k === 'motion') document.documentElement.classList.toggle('rm', v);
     if (k === 'thumbs') { document.documentElement.classList.toggle('nothumb', !v); coverCache.clear(); if (view === 'home') renderHome(); else if (cur || pend) { const g = (cur && cur.g) || pend; $('#pThumb').innerHTML = img(g, true); $('#more').innerHTML = related(g).slice(0, 10).map(x => card(x, 'more')).join(''); renderSide(lastList); } }
   }
@@ -1130,7 +1132,7 @@ function boot() {
   $('#snav').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showPane(b.dataset.p); });
   showPane('account');
   document.querySelectorAll('.sech').forEach(b => b.addEventListener('click', () => { const g = $('#' + b.dataset.sec), c = g.classList.toggle('collapsed'); b.setAttribute('aria-expanded', String(!c)); }));
-  document.querySelectorAll('[data-sel]').forEach(s => s.addEventListener('change', () => { S.prefs[s.dataset.sel] = s.value; save(); track('setting', { k: s.dataset.sel, v: s.value }); }));
+  document.querySelectorAll('[data-sel]').forEach(s => s.addEventListener('change', () => { S.prefs[s.dataset.sel] = s.value; save(); track('setting', { k: s.dataset.sel, v: s.value }); rtTrack(); }));
   $('#dnsave').addEventListener('click', () => { const v = $('#dn').value.trim().replace(/\s+/g, ' '); if (!v) { say('dnnote', 'Enter a display name.'); return; } if (SB.user) { auDisplayName(v.slice(0, 24)); return; } setProfile({ displayName: v.slice(0, 24) }); say('dnnote', 'Display name saved.', 1); });
   $('#dn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#dnsave').click(); } });
   $('#unedit').addEventListener('click', () => { unStep = 1; $('#un1').hidden = false; $('#un2').hidden = true; $('#unt').textContent = $('#un').value ? 'Change username' : 'Choose a username'; $('#uncont').textContent = 'Continue'; $('#unew').value = $('#un').value; say('unerr', ''); $('#unmodal').hidden = false; $('#unew').focus(); $('#unew').select(); });
@@ -1196,6 +1198,8 @@ function boot() {
   lzIdle();
   auBoot();
   adBoot();
+  soBoot();
+  inBoot();
   if (S.recent.some(id => byId.get(id) && byId.get(id).is3d)) { const warmUp = () => loadThree().catch(() => {}); if (window.requestIdleCallback) requestIdleCallback(warmUp, { timeout: 4000 }); else setTimeout(warmUp, 1500); }
 }
 

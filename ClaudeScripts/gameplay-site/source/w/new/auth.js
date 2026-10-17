@@ -770,6 +770,7 @@ async function auSignedIn(ev) {
   if (!SB.user || SB.user.id !== uid) return;
   auRender();
   adCheck();
+  soStart();
   if (loud) toast(auT('Logged in as {name}').replace('{name}', SB.prof && SB.prof.username ? '@' + SB.prof.username : SB.user.email || 'you'));
   sySync();
   if (loud && SB.prof && !SB.prof.username) setTimeout(auChoose, 400);
@@ -781,6 +782,7 @@ function auSignedOut() {
   if (SB.choosing && !$('#unmodal').hidden) unClose();
   SB.choosing = false;
   adSignedOut();
+  soStop();
   auWait(false);
   auRender();
   if (cur || pend || view === 'game') go(homeHref(), true);
@@ -893,7 +895,8 @@ function frDraw() {
   frFill($('#req-l'), rq.slice().sort((a, b) => (a.direction === 'incoming' ? 0 : 1) - (b.direction === 'incoming' ? 0 : 1)).map(r => ['r' + r.id, frRow(r, r.direction === 'incoming' ? `<button class="btn2 pri" type="button" data-fr="accept" data-id="${+r.id}">Accept</button><button class="btn2" type="button" data-fr="decline" data-id="${+r.id}">Decline</button>` : `<span class="fr-tag">Sent</span><button class="btn2" type="button" data-fr="cancel" data-id="${+r.id}">Cancel</button>`)]), '');
   $('#g-fr').hidden = searching;
   $('#fr-n').textContent = fl.length;
-  frFill($('#fr-l'), fl.map(f => ['f' + f.friend_id, frRow(f, `<button class="btn2" type="button" data-fr="remove" data-id="${esc(f.friend_id)}">Remove</button>`)]), FR.list ? '<div class="nofr">No friends yet. Type a username above to find someone.</div>' : SK_ROWS);
+  const fo = f => (soOn(f.friend_id) ? 2 : 0) + (DM.inbox.some(c => c.other_id === f.friend_id && c.unread) ? 1 : 0);
+  frFill($('#fr-l'), fl.slice().sort((a, b) => fo(b) - fo(a)).map(f => ['f' + f.friend_id + (FR.open === f.friend_id ? 'o' : ''), soFriendRow(f)]), FR.list ? '<div class="nofr">No friends yet. Type a username above to find someone.</div>' : SK_ROWS);
   const pcf = $('#pcf'); if (pcf && FR.list) pcf.textContent = fl.length;
 }
 async function frLoad() {
@@ -951,7 +954,9 @@ async function frAct(k, b) {
       const r = await sbRest('rpc/send_friend_request', { method: 'POST', body: { p_username: b.dataset.un } });
       toast(r === 'accepted' ? auT('You are now friends with {u}').replace('{u}', name) : r === 'sent' ? auT('Friend request sent to {u}').replace('{u}', name) : r === 'already_friends' ? 'You are already friends' : 'That player was not found');
       track('friend', { act: 'request', r: String(r || '') });
+      FR.nudge = b.dataset.un;
     } else if (k === 'accept' || k === 'decline') {
+      const rq = (FR.req || []).find(x => x.id === +id); if (rq && k === 'accept') FR.nudgeId = rq.other_id;
       const r = await sbRest('rpc/respond_friend_request', { method: 'POST', body: { p_id: +id, p_accept: k === 'accept' } });
       if (r === 'accepted') toast(auT('You are now friends with {u}').replace('{u}', name));
       track('friend', { act: k });
@@ -964,6 +969,9 @@ async function frAct(k, b) {
       track('friend', { act: 'remove' });
     }
     await frLoad();
+    if (FR.nudge) { const un = FR.nudge, o = (FR.req || []).find(x => x.username === un) || (FR.list || []).find(x => x.username === un); FR.nudge = null; if (o) rtSend(o.other_id || o.friend_id, { t: 'fr' }); }
+    if (FR.nudgeId) { rtSend(FR.nudgeId, { t: 'fr' }); FR.nudgeId = null; }
+    ntBadge();
   } catch (e) { b.disabled = false; b.classList.remove('is-busy'); auMsg('anote', 'Could not update. Check your connection and try again.', 'bad'); }
 }
 addEventListener('keydown', e => {

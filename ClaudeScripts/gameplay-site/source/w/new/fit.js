@@ -3,7 +3,9 @@ const stageMode = () => gamebox.classList.contains('fs') ? 'fs' : (view === 'gam
 function fitStage() {
   const mode = stageMode();
   const frameEl = document.getElementById('frame'), st = document.getElementById('stage');
+  gpFill(mode === 'fs', frameEl, st);
   if (mode === 'off') {
+    st.style.background = '';
     if (fsScale !== 1) { frameEl.style.transform = ''; fsScale = 1; fsT = [0, 0]; applyGlScale(1); }
     if (st.style.height) st.style.height = '';
     return;
@@ -25,7 +27,8 @@ function fitStage() {
   if (mode === 'fs') {
     sh = st.clientHeight;
     const pad = root.querySelector('canvas') ? 0 : 20;
-    s = Math.max(0.3, Math.min((sw - pad * 2) / cw, (sh - pad * 2) / ch, 4));
+    s = Math.max(0.3, Math.min((sw - pad * 2) / cw, (sh - pad * 2) / ch, 8));
+    gpEdge(root, st);
   } else {
     const pad = 12, bar = gamebox.querySelector('.play-bar');
     const short = shortQuery.matches;
@@ -44,3 +47,34 @@ function fitStage() {
 }
 const queueFit = () => { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(fitStage); };
 function startFitTimer() { clearInterval(fitTimer); fitTimer = setInterval(() => { if (stageMode() !== 'off') fitStage(); }, 1500); }
+function gpMain(frameEl) {
+  let best = null;
+  glSet.forEach(e => { if (e.canvas && frameEl.contains(e.canvas) && (!best || e.w0 * e.h0 > best.w0 * best.h0)) best = e; });
+  return best;
+}
+function gpFill(on, frameEl, st) {
+  const e = gpMain(frameEl);
+  if (!e) return;
+  let w = e.w0, h = e.h0;
+  if (on) {
+    const A = st.clientWidth / Math.max(1, st.clientHeight), a = e.w0 / e.h0;
+    if (Math.abs(A - a) > 0.01) { if (A > a) w = Math.round(e.h0 * A); else h = Math.round(e.w0 / A); }
+  }
+  if (w === e.cw && h === e.ch && e.fill === on) return;
+  e.cw = w; e.ch = h; e.fill = on;
+  try { e.own = true; e.renderer.setSize(w, h, false); } catch (x) {} e.own = false;
+  e.canvas.style.width = `min(100%, ${w}px, calc((100dvh - var(--goff, 250px)) * ${(w / h).toFixed(4)}))`;
+  e.canvas.style.aspectRatio = `${w} / ${h}`;
+  if (on && w > e.w0) { if (frameEl.dataset.fw == null) frameEl.dataset.fw = frameEl.style.getPropertyValue('--fw'); frameEl.style.setProperty('--fw', w + 'px'); }
+  else if (frameEl.dataset.fw != null) { frameEl.style.setProperty('--fw', frameEl.dataset.fw); delete frameEl.dataset.fw; }
+  fsScale = 0;
+}
+function gpEdge(root, st) {
+  let col = '';
+  const c = root.querySelector('canvas');
+  if (c && !gpMain(document.getElementById('frame'))) {
+    try { if (c.width && c.height) { const t = gpEdge.t || (gpEdge.t = document.createElement('canvas')); t.width = 2; t.height = 1; const x = t.getContext('2d', { willReadFrequently: true }), y = Math.floor(c.height / 2); x.clearRect(0, 0, 2, 1); x.drawImage(c, 0, y, 1, 1, 0, 0, 1, 1); x.drawImage(c, c.width - 1, y, 1, 1, 1, 0, 1, 1); const d = x.getImageData(0, 0, 2, 1).data; if (d[3] > 200 && d[7] > 200) col = `rgb(${(d[0] + d[4]) >> 1},${(d[1] + d[5]) >> 1},${(d[2] + d[6]) >> 1})`; } } catch (x) {}
+  }
+  if (!col) { const b = getComputedStyle(root).backgroundColor; if (b && !/rgba\(\s*0,\s*0,\s*0,\s*0\)|transparent/.test(b)) col = b; }
+  st.style.background = col || '#000';
+}

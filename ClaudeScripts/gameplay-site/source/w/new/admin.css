@@ -6,8 +6,13 @@
 .adm-ref.spin svg{animation:auSpin .8s linear infinite}
 .adm-tiles{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 .adm-tiles .tile{background:var(--surface);border:1px solid var(--line);animation:rowIn .45s var(--ease) backwards;animation-delay:calc(var(--i,0) * 60ms)}
-.adm-tabs{width:min(360px,100%)}
+.adm-tabs{position:relative;display:grid;grid-template-columns:repeat(3,1fr);width:min(420px,100%);padding:4px;border-radius:14px;background:var(--surface-2);margin:4px 0 2px}
+.adm-tabs button{position:relative;z-index:1;height:38px;border-radius:10px;font:inherit;font-size:14px;font-weight:700;color:var(--muted);transition:color .2s}
+.adm-tabs button[aria-selected="true"]{color:var(--fg)}
+.adm-tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.adm-tabs i{position:absolute;top:4px;left:4px;bottom:4px;width:calc((100% - 8px) / 3);border-radius:10px;background:var(--surface);box-shadow:var(--shadow-sm);transition:transform .32s var(--ease)}
 .adm-tabs[data-m="tickets"] i{transform:translateX(100%)}
+.adm-tabs[data-m="stats"] i{transform:translateX(200%)}
 .adm-tabs em{font-style:normal;margin-left:6px;font-size:11px;font-weight:800;background:var(--accent);color:var(--accent-ink);border-radius:99px;padding:2px 7px;vertical-align:1px}
 .adm-sec{margin:0;animation:viewIn .3s var(--ease) both}
 .adm-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}

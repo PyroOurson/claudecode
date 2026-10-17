@@ -66,9 +66,9 @@ button{transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s}button
 @keyframes sh{from{background-position:100% 0}to{background-position:0 0}}
 button.bz{position:relative;color:transparent}button.bz::after{content:"";position:absolute;inset:0;margin:auto;width:18px;height:18px;border-radius:50%;border:2.5px solid var(--ink-a);border-right-color:transparent;animation:spin .7s linear infinite}
 @media (prefers-reduced-motion:reduce){.sp i,button.bz::after{animation:none}}
-.shake{animation:sh .35s}@keyframes sh{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.pw{-webkit-text-security:disc;text-security:disc}.shake{animation:sh .35s}@keyframes sh{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 </style><script>try{var t=(JSON.parse(localStorage.getItem('gameplay:v1')||'{}')||{}).prefs||{};if(t.theme==='dark'||(t.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.className='dk'}catch(e){}</script></head><body>
-<div class="sp" id="sp" hidden aria-label="Loading"><div><i></i><i></i><i></i><i></i><i></i></div></div><form class="c" id="f" autocomplete="off"><div class="lg"><i>&#9654;</i>gameplay</div><h1 id="h">Enter the password</h1><p id="t">This site is private.</p><input id="p" type="password" placeholder="Password" autofocus aria-label="Password"><button id="b">Unlock</button><div class="m" id="m"></div></form>
+<div class="sp" id="sp" hidden aria-label="Loading"><div><i></i><i></i><i></i><i></i><i></i></div></div><form class="c" id="f" autocomplete="off"><div class="lg"><i>&#9654;</i>gameplay</div><h1 id="h">Enter the password</h1><p id="t">This site is private.</p><input id="p" class="pw" type="text" name="gp-site-code" placeholder="Password" autofocus aria-label="Password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"><button id="b">Unlock</button><div class="m" id="m"></div></form>
 <script>
 (() => {
   const D = { s: '${salt.toString('base64')}', i: '${iv.toString('base64')}', n: ${iter}, c: '${ct.toString('base64')}', d: ${JSON.stringify(plan.dir)}, p: ${JSON.stringify(pre)} };
@@ -100,6 +100,7 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
     const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
     return new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: b64(D.s), iterations: D.n, hash: 'SHA-256' }, base, 256));
   };
+  if (!(window.CSS && CSS.supports && CSS.supports('-webkit-text-security', 'disc'))) $('p').type = 'password';
   const ok = !!(window.crypto && crypto.subtle && window.DecompressionStream);
   if (!ok) { $('t').textContent = 'Please update your browser to open this site.'; $('p').remove(); $('b').remove(); return; }
   if ((st.f || 0) >= MAX) { lock(); return; }
@@ -115,7 +116,7 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
     let txt;
     try { raw = await derive(pw); txt = await show(raw); }
     catch (x) { txt = null; }
-    if (txt != null) { st.f = 0; st.k = enc(raw); wr(st); warm(); $('f').style.visibility = 'hidden'; $('sp').hidden = false; requestAnimationFrame(() => put(txt, raw)); return; }
+    if (txt != null) { $('p').value = ''; st.f = 0; st.k = enc(raw); wr(st); warm(); $('f').style.visibility = 'hidden'; $('sp').hidden = false; requestAnimationFrame(() => put(txt, raw)); return; }
     $('b').classList.remove('bz');
     {
       st = rd(); st.f = (st.f || 0) + 1; delete st.k; wr(st);
