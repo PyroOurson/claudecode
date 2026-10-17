@@ -15,6 +15,7 @@ ClaudeScripts/gameplay-site/source/rl/models/dominus.json
 ClaudeScripts/gameplay-site/source/rl/models/fennec.json
 ClaudeScripts/gameplay-site/source/rl/models/merc.json
 ClaudeScripts/gameplay-site/source/rl/models/octane.json
+ClaudeScripts/gameplay-site/source/rl/models/paladin.json
 ClaudeScripts/gameplay-site/source/rl/models/venom.json
 ClaudeScripts/gameplay-site/source/rl/notes/README.md
 ClaudeScripts/gameplay-site/source/rl/notes/accuracy_audit.md
@@ -476,6 +477,7 @@ gameplay/14ff9b6582f348b49b95.bin
 gameplay/15bbc0ad86c45c9b1971.bin
 gameplay/18ac7f42424c15164b45.bin
 gameplay/18c673c4263db4ba3c09.bin
+gameplay/18f00ea38421a01d8976.bin
 gameplay/20e32686a2e1bdee10c8.bin
 gameplay/23bcf637aa67b7f86f30.bin
 gameplay/25dab078a6e8e875444e.bin
@@ -572,7 +574,6 @@ gameplay/d87119f2ca54b145974f.bin
 gameplay/dd6e0dfd909c84f294bf.bin
 gameplay/dd8b1dcccb8fef75b933.bin
 gameplay/dedaa6fe1e3519fb01e3.bin
-gameplay/e1bf38bd014a7c4f1bb1.bin
 gameplay/e3713d12f3cc90feca55.bin
 gameplay/e3be93816652e87beabc.bin
 gameplay/e3c1a01acb8d5b94d99c.bin

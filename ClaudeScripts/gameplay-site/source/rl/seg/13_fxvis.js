@@ -2,7 +2,21 @@
           fxDebUpdate(dt); fire.update(dt); smoke.update(dt); fxSpark.update(dt); fxShkUpdate(dt); fxFlUpdate(dt);
           if (fxLt.t >= 0) { fxLt.t += dt; const k = fxLt.t / fxLt.d; if (k >= 1) { fxLt.t = -1; fxLight.intensity = 0; } else fxLight.intensity = fxLt.i * (1 - k) * (1 - k); }
           for (let i = fxQk.length - 1; i >= 0; i--) { fxQk[i].t += dt; if (fxQk[i].t >= fxQk[i].d) fxQk.splice(i, 1); }
-          fxBoostFx(dt);
+          fxBoostFx(dt); fxWheelFx(dt);
+        };
+        const fxWheelFx = dt => {
+          if (ui !== 'play' || W.state === 'menu' || dt <= 0 || fxQ.lv >= 3) return;
+          for (const c of W.cars) {
+            if (c.demoT > 0 || !c.onGround || !c.cfg) continue;
+            const sp = vlen(c.v), slip = Math.abs(c.v.x * c.l.x + c.v.y * c.l.y + c.v.z * c.l.z), sl = c.slide || 0;
+            const k = Math.max(sl > 0.2 ? clamp((slip - 150) / 600, 0, 1) * sl : 0, clamp((slip - 500) / 700, 0, 1), sp > 1250 ? 0.12 * clamp((sp - 1250) / 900, 0, 1) : 0);
+            if (k <= 0) continue;
+            for (let i = 2; i < 4; i++) {
+              if (Math.random() > k * 34 * dt) continue;
+              const q = c.cfg.wh[i], x = c.p.x + c.f.x * q.x + c.l.x * q.y - c.u.x * 14, y = c.p.y + c.f.y * q.x + c.l.y * q.y - c.u.y * 14, z = c.p.z + c.f.z * q.x + c.l.z * q.y - c.u.z * 14, g = 0.55 + Math.random() * 0.12;
+              smoke.emit(x, y, z, c.v.x * 0.18 + R() * 40 + c.u.x * 60, c.v.y * 0.18 + R() * 40 + c.u.y * 60, c.v.z * 0.18 + R() * 40 + c.u.z * 60, 0.45 + Math.random() * 0.4, g, g, g * 0.92, 16 + 10 * k, 60 + 50 * k, -25, 2.6);
+            }
+          }
         };
         let fxWA = 0;
         const fxBoostFx = dt => {
@@ -197,26 +211,25 @@
           let snap = false;
           if (sh !== S.rs) {
             S.rs = sh; snap = true;
-            cmr.fov = (S.fov0 || cmr.fov) * (sh === 0 ? 0.9 : sh === 1 ? 0.56 : 0.74); cmr.updateProjectionMatrix();
+            cmr.fov = (S.fov0 || cmr.fov) * (sh === 0 ? 0.9 : sh === 1 ? 0.85 : 0.74); cmr.updateProjectionMatrix();
             S.rgx = bp.x > 0 ? -1 : 1;
           }
           if (sh === 0) {
             const c = Rp.scorer && Rp.scorer.demoT <= 0 ? Rp.scorer : null;
             if (c) {
               cT.set(bp.x - c.p.x, bp.y - c.p.y, 0); if (cT.lengthSq() < 1) cT.set(c.f.x, c.f.y, 0); cT.normalize();
-              cP.set(c.p.x - cT.x * 560, c.p.y - cT.y * 560, c.p.z + 230);
+              cP.set(c.p.x - cT.x * 420, c.p.y - cT.y * 420, c.p.z + 165);
               cL.set(bp.x * 0.62 + c.p.x * 0.38, bp.y * 0.62 + c.p.y * 0.38, bp.z * 0.62 + c.p.z * 0.38 + 40);
             } else {
               cT.set(B.v.x, B.v.y, 0); if (cT.lengthSq() < 1e4) cT.set(0, gs, 0); cT.normalize();
               cP.set(bp.x - cT.x * 950, bp.y - cT.y * 950, bp.z + 380); cL.copy(bp);
             }
           } else if (sh === 1) {
-            cT.set(B.v.x, B.v.y, 0); if (B.hidden || cT.lengthSq() < 1e4) cT.set(0, gs, 0); cT.normalize();
-            let px = -cT.y, py = cT.x; if (px * bp.x + py * bp.y > 0) { px = -px; py = -py; }
-            cP.set(bp.x + px * 1700 - cT.x * 700, bp.y + py * 1700 - cT.y * 700, Math.max(280, bp.z * 0.6 + 480)); cL.copy(bp);
+            cT.set(-bp.x, gs * 5120 - bp.y, 0); if (cT.lengthSq() < 1e4) cT.set(0, gs, 0); cT.normalize();
+            cP.set(bp.x - cT.x * 680, bp.y - cT.y * 680, Math.max(170, bp.z * 0.5 + 150)); cL.set(bp.x + cT.x * 260, bp.y + cT.y * 260, bp.z);
           } else {
             const k = clamp((Rp.t - (Rp.goalT - 0.8)) / 1.6, 0, 1);
-            cP.set(S.rgx * (1250 - 250 * k), gs * (5120 - 1550 + 250 * k), 110 + Math.max(0, bp.z - 400) * 0.25); cL.copy(bp);
+            cP.set(S.rgx * (620 - 100 * k), gs * (5120 - 1350 + 150 * k), 150 + Math.max(0, bp.z - 400) * 0.25); cL.set(bp.x * 0.35, bp.y * 0.35 + gs * 5120 * 0.65, bp.z * 0.35 + 190);
           }
           fxPush(cP, 70);
           if (snap) { S.rp.copy(cP); S.rl.copy(cL); }

@@ -1,5 +1,5 @@
         const hud = el('div', 'hud', wrap);
-        if (!document.querySelector('link[data-gmrs-f]')) { try { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Saira+Semi+Condensed:wght@300;400;500;600;800&display=swap'; l.setAttribute('data-gmrs-f', '1'); document.head.append(l); } catch (e) {   } }
+        if (!document.querySelector('link[data-gmrs-f]')) { try { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Saira+Semi+Condensed:wght@300;400;500;600;800&display=swap'; l.setAttribute('data-gmrs-f', '1'); document.head.append(l); } catch (e) {   } }
         const uiCSR = { fov: [60, 110, 1], dist: [100, 400, 5], height: [40, 200, 5], angle: [-15, 0, 1], stiff: [0, 1, 0.05], swivel: [1, 10, 0.1], trans: [1, 2, 0.1] };
         const uiCSN = { fov: 'Field of View', dist: 'Distance', height: 'Height', angle: 'Angle', stiff: 'Stiffness', swivel: 'Swivel Speed', trans: 'Transition Speed' };
         const uiCSD = Object.assign({}, fxCam);
@@ -22,7 +22,7 @@
         const uiStarP = (x, y, R, r, n) => { let d = ''; for (let i = 0; i < n * 2; i++) { const a = -Math.PI / 2 + i * Math.PI / n, k = i % 2 ? r : R; d += (i ? 'L' : 'M') + uiF(x + Math.cos(a) * k) + ' ' + uiF(y + Math.sin(a) * k); } return d + 'Z'; };
         const uiSvg = s => `<svg viewBox="0 0 24 24">${s}</svg>`;
         const uiIC = {
-          goal: uiSvg(`<path d="${uiStarP(12, 12, 11.8, 8.4, 12)}"/>${uiBall(12, 12, 6.2)}`),
+          goal: uiSvg(`<path d="M.6 1.4c3.4.6 5.6 2.4 7 4.8-.2-2 .4-3.6 1.8-5 .2 2 1.2 3.2 2.6 4 .4-1.6 1.4-2.8 3-3.6-.6 2 0 3.6 1.4 5L8.6 17.4C5.2 13.4 2.6 8.4.6 1.4z"/>${uiBall(14.4, 14.6, 8.2)}`),
           shot: uiSvg(`<path d="M1 2.5C5 3.2 8.3 5 10.8 7.8 10.2 5.4 11 3.2 12.9 1.4c.3 2.6 1.6 4.3 3.6 5.6L8.4 18C6 14 3.8 9 1 2.5z"/>${uiBall(14.6, 14.6, 7.6)}`),
           save: uiSvg(`<path d="M12 1.2l9 3.3v6.8c0 5.8-3.9 9.9-9 11.5-5.1-1.6-9-5.7-9-11.5V4.5z"/><path d="M12 3.6l6.8 2.5v5.3c0 4.4-2.9 7.6-6.8 8.9-3.9-1.3-6.8-4.5-6.8-8.9V6.1z" ${uiD}/>`),
           epic: uiSvg(`<path d="M12 1.2l9 3.3v6.8c0 5.8-3.9 9.9-9 11.5-5.1-1.6-9-5.7-9-11.5V4.5z"/><path d="${uiStarP(12, 11.6, 6.2, 2.6, 5)}" ${uiD}/>`),
@@ -53,7 +53,7 @@
         const uiRankSh = '<svg viewBox="0 0 52 58"><path d="M26 2L49 9.5V27C49 42 39 51 26 56 13 51 3 42 3 27V9.5z" fill="rgba(30,110,200,.55)" stroke="#9fe6ff" stroke-width="2.4"/><path d="M26 7.5L44 13.4V27C44 39 36 46.5 26 50.5 16 46.5 8 39 8 27V13.4z" fill="none" stroke="rgba(190,240,255,.45)" stroke-width="1.2"/></svg>';
         const uiGL = { 0: '0,0 10,0 10,18 0,18 z', 1: '2,3.5 5.5,0 5.5,18', 2: '0,0 10,0 10,9 0,9 0,18 10,18', 3: '0,0 10,0 10,18 0,18|2.5,9 10,9', 4: '0,0 0,10 10,10|10,0 10,18', 5: '10,0 0,0 0,9 10,9 10,18 0,18', 6: '10,0 0,0 0,18 10,18 10,9 0,9', 7: '0,0 10,0 10,18', 8: '0,0 10,0 10,18 0,18 z|0,9 10,9', 9: '10,9 0,9 0,0 10,0 10,18 0,18', ':': '0,5 0,6|0,12 0,13', '+': '5,4.5 5,13.5|.5,9 9.5,9', '-': '1,9 9,9' };
         const uiGP = {};
-        for (const k in uiGL) uiGP[k] = uiGL[k].split('|').map(s => ({ z: / z$/.test(s), p: s.replace(/ z$/, '').split(' ').map(q => q.split(',').map(Number)) }));
+        for (const k in uiGL) uiGP[k] = uiGL[k].split('|').map(s => ({ z: / z$/.test(s), p: s.replace(/ z$/, '').split(' ').map(q => q.split(',').map((v, j) => j ? +v : v * 1.6)) }));
         const uiPoly = (p, z, ox, r) => {
           const n = p.length, at = i => p[(i + n) % n];
           const cn = i => {
@@ -65,12 +65,14 @@
           for (let i = 1; i < n - 1; i++) d += cn(i);
           return d + 'L' + uiF(ox + p[n - 1][0]) + ' ' + p[n - 1][1];
         };
-        const uiNum = s => { let x = 0, d = ''; for (const ch of String(s)) { const g = uiGP[ch]; if (!g) continue; for (const q of g) d += uiPoly(q.p, q.z, x, 1.5); x += (ch === ':' ? 0 : 10) + 5; } return [d || 'M0 0', Math.max(0, x - 5)]; };
+        const uiNum = s => { let x = 0, d = ''; for (const ch of String(s)) { const g = uiGP[ch]; if (!g) continue; for (const q of g) d += uiPoly(q.p, q.z, x, 1.5); x += (ch === ':' ? 0 : 16) + 5; } return [d || 'M0 0', Math.max(0, x - 5)]; };
         const uiDig = (svg, s) => { const [d, wd] = uiNum(s); svg.setAttribute('viewBox', '-3 -3 ' + (wd + 6) + ' 24'); svg.style.width = ((wd + 6) / 24).toFixed(3) + 'em'; for (const p of svg.children) p.setAttribute('d', d); };
+        let uiHolN = 0, uiCdN = 0;
+        const uiDigHollow = s => { const [d, wd] = uiNum(s), id = 'gmrs-hm' + (++uiHolN); return `<svg class="dg" viewBox="-3 -3 ${wd + 6} 24" style="width:${((wd + 6) / 24).toFixed(3)}em"><defs><mask id="${id}" maskUnits="userSpaceOnUse" x="-3" y="-3" width="${wd + 6}" height="24"><rect x="-3" y="-3" width="${wd + 6}" height="24" fill="#fff"/><path d="${d}" fill="none" stroke="#000" stroke-width=".75"/></mask></defs><path class="h" d="${d}" mask="url(#${id})"/></svg>`; };
         const uiDigHtml = (s, two) => { const [d, wd] = uiNum(s); return `<svg class="dg" viewBox="-3 -3 ${wd + 6} 24" style="width:${((wd + 6) / 24).toFixed(3)}em">${two ? `<path class="o" d="${d}"/><path class="n" d="${d}"/>` : `<path d="${d}"/>`}</svg>`; };
         const uiBN = 44, uiBS = 158, uiBA = 254;
         const uiBP = (deg, r) => { const a = deg * Math.PI / 180; return uiF(60 + Math.sin(a) * r) + ' ' + uiF(60 - Math.cos(a) * r); };
-        const uiBTC = t => { const L = (a, b, k) => a.map((x, j) => Math.round(x + (b[j] - x) * k)); return 'rgb(' + (t < 0.5 ? L([255, 92, 0], [255, 166, 26], t / 0.5) : t < 0.8 ? L([255, 166, 26], [255, 226, 140], (t - 0.5) / 0.3) : L([255, 226, 140], [255, 255, 255], (t - 0.8) / 0.2)) + ')'; };
+        const uiBTC = t => { const L = (a, b, k) => a.map((x, j) => Math.round(x + (b[j] - x) * k)); return 'rgb(' + (t < 0.74 ? L([255, 118, 0], [255, 184, 34], t / 0.74) : L([236, 238, 244], [255, 255, 255], (t - 0.74) / 0.26)) + ')'; };
         const uiBT = (v, bo) => { const n = Math.round(bo / 100 * uiBN); if (!v.bdTk) v.bdTk = v.bd.querySelectorAll('.tk path'); for (let k = 0; k < v.bdTk.length; k++) v.bdTk[k].classList.toggle('on', k < n); };
         const uiKL = {}, uiKn = c => uiKL[c] || c.replace(/^Key|^Digit/, '');
         try { if (navigator.keyboard && navigator.keyboard.getLayoutMap) navigator.keyboard.getLayoutMap().then(m => { if (dead) return; m.forEach((x, k) => { if (/^Key[A-Z]$/.test(k) && /^\S$/.test(x)) uiKL[k] = x.toUpperCase(); }); for (const v of views) if (v.cbk) v.cbk.textContent = uiKn('KeyC'); }).catch(() => {}); } catch (e) {}
@@ -108,16 +110,16 @@
         let mode = 'cpu', split = false, online = null, netGen = 0, netBound = false;
         const BDS = i => {
           let tk = '';
-          for (let k = 0; k < uiBN; k++) { const a = uiBS + (k + 0.5) / uiBN * uiBA; tk += `<path d="M${uiBP(a, 50.5)}L${uiBP(a, 58.5)}" style="stroke:${uiBTC(k / (uiBN - 1))}"/>`; }
-          return `<svg viewBox="0 0 120 120"><defs><radialGradient id="gmrs-bf${i}"><stop offset="0" style="stop-color:var(--bdF0)"/><stop offset=".6" style="stop-color:var(--bdF1)"/><stop offset="1" style="stop-color:var(--bdF2)"/></radialGradient></defs><circle cx="60" cy="60" r="47" fill="url(#gmrs-bf${i})"/><path class="dec" d="M${uiBP(300, 40)}L${uiBP(300, 47)}M${uiBP(0, 40)}L${uiBP(0, 47)}M${uiBP(60, 40)}L${uiBP(60, 47)}" fill="none" stroke-width=".9"/><circle cx="60" cy="60" r="47" fill="none" style="stroke:var(--bdD)" stroke-width=".7"/><path d="M${uiBP(uiBS, 48.6)}A48.6 48.6 0 1 1 ${uiBP(uiBS + uiBA, 48.6)}" fill="none" stroke="rgba(255,236,200,.45)" stroke-width=".7"/><g class="tk" fill="none" stroke-width="3.9">${tk}</g></svg>`;
+          for (let k = 0; k < uiBN; k++) { const a = uiBS + (k + 0.5) / uiBN * uiBA; tk += `<path d="M${uiBP(a, 48.4)}L${uiBP(a, 53.6 + 5.4 * k / (uiBN - 1))}" style="stroke:${uiBTC(k / (uiBN - 1))}"/>`; }
+          return `<svg viewBox="0 0 120 120"><defs><radialGradient id="gmrs-bh${i}"><stop offset=".62" stop-color="#000" stop-opacity=".6"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs><circle cx="60" cy="60" r="62" fill="url(#gmrs-bh${i})"/><defs><radialGradient id="gmrs-bf${i}"><stop offset="0" style="stop-color:var(--bdF0)"/><stop offset=".6" style="stop-color:var(--bdF1)"/><stop offset="1" style="stop-color:var(--bdF2)"/></radialGradient></defs><circle cx="60" cy="60" r="47" fill="url(#gmrs-bf${i})"/><path class="dec" d="M${uiBP(300, 47.5)}L${uiBP(300, 57)}M${uiBP(0, 47.5)}L${uiBP(0, 57)}M${uiBP(60, 47.5)}L${uiBP(60, 57)}M${uiBP(270, 47.5)}L${uiBP(270, 52)}" fill="none" stroke-width="1"/><circle cx="60" cy="60" r="47" fill="none" style="stroke:var(--bdD)" stroke-width=".45" opacity=".6"/><path d="M${uiBP(uiBS, 48.4)}A48.4 48.4 0 1 1 ${uiBP(uiBS + uiBA, 48.4)}" fill="none" stroke="rgba(255,236,200,.3)" stroke-width=".6"/><g class="tk" fill="none" stroke-width="3.9">${tk}</g></svg>`;
         };
-        const uiDGH = '<svg class="dg"><path/></svg>';
+        const uiDGH = '<svg class="dg"><path class="o"/><path class="n"/></svg>';
         const makeView = i => {
           const v = { i, el: el('div', 'vh', hud), camera: i ? new THREE.PerspectiveCamera(78, 1, 10, 90000) : camera, cam: { p: new THREE.Vector3(0, -7000, 1600), look: new THREE.Vector3(0, 1, 0), up: new THREE.Vector3(0, 0, 1), dir: new THREE.Vector3(0, 1, 0), orbit: 0 }, camBall: saved.cam !== false, car: null, flip: false, tall: portrait, rect: [0, 0, 1, 1], banT: 0, banDur: 0, key: '', bkey: -1, ssKey: '', qcCat: -1, qcT: 0, qcLog: [], qcBan: 0, latch: false, T: { boost: false, jump: false, slide: false, id: null, ox: 0, oy: 0, x: 0, y: 0 } };
           v.camera.up.set(0, 0, 1);
-          v.el.innerHTML = `<div class="sb"><div class="sq c0">${uiDGH}</div><div class="clk">${uiDGH}</div><div class="sq r c1">${uiDGH}</div></div><div class="bd">${BDS(i)}<div class="bn"><svg class="dg"><path class="o"/><path class="n"/></svg></div><b class="bl">BOOST</b></div><div class="ban"></div><div class="feed"></div><div class="pops"></div><div class="ss"></div><div class="ping"></div><div class="chat"></div><div class="qc"></div><div class="trn"></div><button class="cb"><b><i></i>Ball Cam</b><small>Press<kbd>${uiKn('KeyC')}</kbd>to toggle</small></button><div class="tl">${i ? '' : '<button class="pb" aria-label="Pause">II</button>'}<button class="cbt">BALL CAM</button><button class="qb" aria-label="Quick chat">${uiIC.chat}</button><button class="trb" data-tr="ball">Reset</button><button class="trb" data-tr="shot">Shot</button></div><div class="tc"><div class="jz"><div class="joy"><i></i></div></div><button class="tb boost">BOOST</button><button class="tb jump">JUMP</button><button class="tb slide">SLIDE</button></div>`;
+          v.el.innerHTML = `<div class="sb"><div class="sq c0">${uiDGH}</div><div class="clk">${uiDGH}<b class="otx">Overtime</b></div><div class="sq r c1">${uiDGH}</div></div><div class="bd">${BDS(i)}<div class="bn"><svg class="dg"><path class="o"/><path class="n"/></svg></div><b class="bl">BOOST</b></div><div class="ban"></div><i class="barw" hidden></i><div class="pzm gmc" hidden><b>Game Mode</b><small>Soccar</small></div><div class="feed"></div><div class="pops"></div><div class="ss"></div><div class="ping"></div><div class="chat"></div><div class="qc"></div><div class="trn"></div><button class="cb"><b><i></i>Ball Cam</b><small>Press<kbd>${uiKn('KeyC')}</kbd>to toggle</small></button><div class="tl">${i ? '' : '<button class="pb" aria-label="Pause">II</button>'}<button class="cbt">BALL CAM</button><button class="qb" aria-label="Quick chat">${uiIC.chat}</button><button class="trb" data-tr="ball">Reset</button><button class="trb" data-tr="shot">Shot</button></div><div class="tc"><div class="jz"><div class="joy"><i></i></div></div><button class="tb boost">BOOST</button><button class="tb jump">JUMP</button><button class="tb slide">SLIDE</button></div>`;
           const q = s => v.el.querySelector(s);
-          Object.assign(v, { sb: q('.sb'), sbL: q('.sb .c0'), sbR: q('.sb .c1'), sbC: q('.clk'), bd: q('.bd'), bdNum: q('.bn svg'), ban: q('.ban'), feed: q('.feed'), pops: q('.pops'), ss: q('.ss'), ping: q('.ping'), chat: q('.chat'), qc: q('.qc'), trn: q('.trn'), trKey: '', cb: q('.cb'), cbk: q('.cb kbd'), tl: q('.tl'), pb: q('.pb'), cbt: q('.cbt'), qb: q('.qb'), tc: q('.tc'), jz: q('.jz'), joy: q('.joy'), knob: q('.joy i') });
+          Object.assign(v, { barw: q('.barw'), gmc: q('.gmc'), sb: q('.sb'), sbL: q('.sb .c0'), sbR: q('.sb .c1'), sbC: q('.clk'), bd: q('.bd'), bdNum: q('.bn svg'), ban: q('.ban'), feed: q('.feed'), pops: q('.pops'), ss: q('.ss'), ping: q('.ping'), chat: q('.chat'), qc: q('.qc'), trn: q('.trn'), trKey: '', cb: q('.cb'), cbk: q('.cb kbd'), tl: q('.tl'), pb: q('.pb'), cbt: q('.cbt'), qb: q('.qb'), tc: q('.tc'), jz: q('.jz'), joy: q('.joy'), knob: q('.joy i') });
           v.sbLd = v.sbL.firstChild; v.sbRd = v.sbR.firstChild; v.sbCd = v.sbC.firstChild;
           v.ban.hidden = true; v.joy.hidden = true; v.qc.hidden = true;
           return v;
@@ -162,7 +164,7 @@
           if (g) uiGoal = null;
           let html, cls = '';
           if (g) { cls = ' gol t' + g.team; html = `<div class="gn">${esc(g.scorer ? g.scorer.name : TEAMN[g.team])} scored!</div>`; }
-          else if (/^\d$/.test(txt)) cls = ' cdn', html = `<div class="cd">${uiDigHtml(txt, 1)}</div>${sub && !/kickoff/i.test(sub) ? `<div class="bs">${esc(sub)}</div>` : ''}`;
+          else if (/^\d{1,2}$/.test(txt)) cls = ' cdn', html = `<div class="cd">${uiDigHollow(txt)}</div>${sub && !/kickoff/i.test(sub) ? `<div class="bs">${esc(sub)}</div>` : ''}`;
           else cls = txt === 'GO!' ? ' cdn' : '', html = `<div class="bt">${esc(txt)}</div>${sub ? `<div class="bs">${esc(sub)}</div>` : ''}`;
           uiBanAll(html, cls, color, dur);
         };
@@ -179,7 +181,7 @@
           const k = uiPK.find(p => p[0].test(lab)), np = /^GOAL$/i.test(lab);
           for (const v of active()) if (v.car === car) {
             for (const o of v.pops.children) o.classList.add('old');
-            const d = el('div', np ? 'np' : '', v.pops, `<span class="ic">${uiIC[k ? k[1] : 'star']}</span>${np ? '' : `<b>${esc(lab)}</b>`}${pts ? `<em>${pts}</em>` : ''}`);
+            const d = el('div', np ? 'pgl' : '', v.pops, `<span class="ic">${uiIC[k ? k[1] : 'star']}</span><b>${esc(lab)}</b>${pts ? `<em>${pts}</em>` : ''}`);
             d.dataset.k = lab.toUpperCase(); d.dataset.t = now;
             api.timeout(() => d.remove(), 2500);
             while (v.pops.children.length > 3) v.pops.firstChild.remove();
@@ -188,6 +190,9 @@
         const nm = c => `<i class="p${c.team}">${esc(label(c))}</i>`;
         const setCam = (v, on) => { v.camBall = on; v.cb.classList.toggle('on', on); v.cbt.classList.toggle('on', on); if (!v.i) { saved.cam = on; api.save(saved); } };
         views.forEach(v => setCam(v, v.camBall));
+        const uiBV = new THREE.Vector3();
+        const uiIfxApply = () => { wrap.classList.toggle('nobci', !saved.ifx.bci); for (const v of views) v.key = ''; };
+        uiIfxApply();
         const resetCam = v => {
           const c = v.car; if (!c) return;
           v.cam.dir.set(c.f.x, c.f.y, 0).normalize(); v.cam.up.set(0, 0, 1);
@@ -223,7 +228,7 @@
         const uiQcOpen = (v, cat) => {
           v.qcCat = cat; v.qcT = 0;
           const items = cat === 9 ? uiQCN.slice(0, 4) : [0, 1, 2, 3].map(k => uiQT(cat, k));
-          v.qc.innerHTML = `<h4>${cat === 9 ? 'Quick Chat' : uiQCN[cat]}</h4>${items.map((t, j) => `<button data-q="${j}"><kbd>${j + 1}</kbd>${esc(t)}</button>`).join('')}`;
+          v.qc.innerHTML = `<small class="qch">Quick Chat</small><h4>${cat === 9 ? 'Quick Chat' : uiQCN[cat]}</h4>${items.map((t, j) => `<button data-q="${j}"><kbd>${j + 1}</kbd>${esc(t)}</button>`).join('')}`;
           v.qc.hidden = false;
         };
         const uiQcClose = v => { v.qcCat = -1; v.qc.hidden = true; };
@@ -272,19 +277,18 @@
         };
 
 
-        const uiHD = ['Score', 'Goals', 'Assists', 'Saves', 'Shots', 'Ping'];
         const uiTeamHtml = (t, o) => {
           const cs = W.cars.filter(c => c.team === t).sort((a, b) => b.st.score - a.st.score), me = o.me || [];
           const rows = cs.map(c => {
             const ttl = o.titles && o.titles.get(c), rd = o.ready && o.ready.has(c), ping = c.bot ? '<span class="sv pn bt c6">BOT</span>' : `<span class="sv pn c6">${uiIC.sig}${uiPing(c)}</span>`;
-            return `<div class="sbr${me.includes(c) ? ' me' : ''}"><i class="ck">${rd ? uiIC.check : ''}</i><span class="av">${uiAv(c)}</span><span class="snm"><b>${esc(uiNm(c))}</b>${ttl ? `<small>${esc(ttl)}</small>` : ''}</span><span class="mv">${c === o.mvp ? `<span class="ic">${uiIC.star}</span>` : ''}</span><span class="sv">${c.st.score}</span><span class="sv">${uiZ(c.st.goals)}</span><span class="sv">${uiZ(c.st.assists)}</span><span class="sv">${uiZ(c.st.saves)}</span><span class="sv">${uiZ(c.st.shots)}</span>${ping}</div>`;
+            return `<div class="sbr${me.includes(c) ? ' me' : ''}"><i class="ck">${rd ? uiIC.check : ''}</i><span class="av">${c.bot ? `<i class="sai t${c.team}">AI</i>` : uiAv(c)}</span><span class="snm"><b>${esc(uiNm(c))}</b>${ttl ? `<small>${esc(ttl)}</small>` : ''}</span><span class="mv">${c === o.mvp ? `<span class="ic">${uiIC.star}</span>` : ''}</span><span class="sv">${c.st.score}</span>${saved.sbc.map(k => `<span class="sv">${uiZ(c.st[k] | 0)}</span>`).join('')}${ping}</div>`;
           }).join('');
-          return `<div class="stm t${t}"><div class="sth"><div class="tn">${o.win === t ? '<small>Winner</small>' : ''}<div>${uiDigHtml(W.score[t])}<span>${TEAMN[t]}</span></div></div>${uiHD.map((x, j) => `<span${j === 5 ? ' class="c6"' : ''}>${x}</span>`).join('')}</div>${rows}</div>`;
+          return `<div class="stm t${t}"><div class="sth"><div class="tn">${o.win === t ? '<small>Winner</small>' : ''}<div>${uiDigHtml(W.score[t])}<span>${TEAMN[t]}</span></div></div>${['Score', ...saved.sbc.map(k => k[0].toUpperCase() + k.slice(1)), 'Ping'].map((x, j) => `<span${j === 5 ? ' class="c6"' : ''}>${x}</span>`).join('')}</div>${rows}</div>`;
         };
         const uiTabRender = () => {
           const o = { me: active().map(v => v.car) }, clk = W.ot ? '+' + mmss(W.otT) : mmss(Math.ceil(W.clock));
           const right = W.ot ? 'Overtime' : mode === 'online' ? 'Private Match' : W.cars.some(c => c.bot) ? uiDName(W.diff) + ' Bots' : 'Exhibition';
-          const hh = `<div class="tm${W.ot ? ' ot' : ''}"><span>${uiSZ[W.size]} · Exhibition</span>${uiDigHtml(clk)}<span>${right}</span></div><div class="sbd">${uiTeamHtml(0, o)}${uiTeamHtml(1, o)}</div>`;
+          const hh = `<div class="tm${W.ot ? ' ot' : ''}"><b>${mode === 'online' ? 'Private Match' : 'Exhibition'}</b><span>${uiSZ[W.size]} · ${right}</span></div><div class="sbd">${uiTeamHtml(0, o)}${uiTeamHtml(1, o)}</div>`;
           if (hh !== uiTabHtml) { uiTabHtml = hh; uiTabEl.innerHTML = hh; }
         };
         const uiTab = on => {
@@ -313,7 +317,7 @@
           'Free Play is the best place to practise aerials: turn on unlimited boost and reset the ball with R.',
           'Paint your car any colour in the Garage. Your primary colour can be different for the Blue and Orange team.'
         ];
-        let uiLoadT = 0, uiTipI = Math.floor(Math.random() * uiTips.length), uiScr = 'main', uiFm = 'play', uiFs = null, uiFo = 'go', uiPrev = null, uiTC = 0, uiCamSnap = true;
+        let uiTeam = 0, uiFarW = false, uiLoadT = 0, uiTipI = Math.floor(Math.random() * uiTips.length), uiScr = 'main', uiFm = 'play', uiFs = null, uiFo = 'go', uiPrev = null, uiTC = 0, uiCamSnap = true;
         let uiGc = 'body', uiGf = 'cat', uiGi = '', uiPt = 'p', uiPv = null, uiGarA = 0, uiGarAT = 0, uiGarZ = 1, uiGxT = 0, uiPf = 1, uiPT = 0, uiDrag = null, uiTrKey = '';
         const uiHSV = [0.6, 0.9, 0.9];
         for (const id of BODY_IDS) saved.ld[id] = crLdClean(saved.ld[id], id);
@@ -325,14 +329,15 @@
         const uiCS = [0, 0, 0, 0, 0, 0, 60];
         const uiCamSpot = k => {
           const o = uiCS, tall = w < h;
+          if (k === 'team') { o[0] = 0; o[1] = -4950; o[2] = 760; o[3] = 0; o[4] = 1500; o[5] = 0; o[6] = tall ? 74 : 58; return o; }
           if (k === 'title') { o[0] = -420; o[1] = -2950; o[2] = 200; o[3] = 140; o[4] = -5120; o[5] = tall ? 230 : 380; o[6] = tall ? 74 : 58; return o; }
           if (k === 'load') {
             const c = views[0].car || W.cars[0], M = c.p, fx = c.f.x, fy = c.f.y, sx = -fy, sy = fx;
             o[0] = M.x + fx * 300 + sx * 190; o[1] = M.y + fy * 300 + sy * 190; o[2] = 62; o[3] = M.x - fx * 30 - sx * (tall ? 0 : 110); o[4] = M.y - fy * 30 - sy * (tall ? 0 : 110); o[5] = 40; o[6] = tall ? 66 : 50; return o;
           }
-          const g = k === 'garage', ps = !g && ui === 'menu' && uiScr === 'pass', z = g ? uiGarZ : 1, a = uiSpot.yaw + (g ? 0.6 + uiGarA : ps ? 0.95 : 0.78), d = (tall ? (g ? 420 : 560) : g ? 360 : ps ? 520 : 330) * z, hh = g ? 75 + (z - 1) * 140 : ps ? 150 : 92, sh = tall ? 0 : g ? 118 * z : ps ? 175 : 112, cx = uiSpot.x + Math.cos(uiSpot.yaw) * 12, cy = uiSpot.y + Math.sin(uiSpot.yaw) * 12;
+          const g = k === 'garage', ps = !g && ui === 'menu' && uiScr === 'pass', z = g ? uiGarZ : 1, a = uiSpot.yaw + (g ? 0.6 + uiGarA : ps ? 0.95 : 0.78), d = (tall ? (g ? 420 : 560) : g ? 300 : ps ? 520 : 190) * z, hh = g ? 75 + (z - 1) * 140 : ps ? 150 : 60, sh = tall ? 0 : g ? 84 * z : ps ? 175 : ui === 'menu' && uiScr === 'groot' ? 62 : 6, cx = uiSpot.x + Math.cos(uiSpot.yaw) * 12, cy = uiSpot.y + Math.sin(uiSpot.yaw) * 12;
           o[0] = cx + Math.cos(a) * d; o[1] = cy + Math.sin(a) * d; o[2] = hh;
-          o[3] = cx + Math.sin(a) * sh; o[4] = cy - Math.cos(a) * sh; o[5] = tall ? (g ? -110 * z : -150) : g ? 24 + (z - 1) * 60 : ps ? -25 : 50; o[6] = tall ? 64 : g ? 46 : 48;
+          o[3] = cx + Math.sin(a) * sh; o[4] = cy - Math.cos(a) * sh; o[5] = tall ? (g ? -110 * z : -150) : g ? 24 + (z - 1) * 60 : ps ? -25 : 36; o[6] = tall ? 64 : g ? 46 : 48;
           return o;
         };
         const uiGarCos = (body, team) => {
@@ -340,9 +345,10 @@
           if (P && P.k !== 'title' && P.k !== 'body') { const it = P.k === 'decal' ? crItem('decal', P.id) : null; if (P.k !== 'decal' || !it || !it.b || it.b === body) L[P.k] = P.id; }
           return crCosOf(L, team);
         };
+        const uiFar = () => uiScr === 'team' || uiScr === 'play' || uiScr === 'setup' || uiScr === 'mut' || uiScr === 'tset';
         const uiPose = () => {
           if (W.state !== 'menu' || W.cars.length < 2) return;
-          const show = ui !== 'title', gar = ui === 'menu' && (uiScr === 'garage' || uiScr === 'pass');
+          const show = ui !== 'title' && !(ui === 'menu' && uiFar()), gar = ui === 'menu' && (uiScr === 'garage' || uiScr === 'pass');
           for (const c of W.cars) {
             if (show && c.team === uiTC && c.slot === 0) {
               c.body = uiPrev || saved.car; c.cos = uiGarCos(c.body, c.team); placeCar(c, uiSpot.x, uiSpot.y, uiSpot.yaw);
@@ -357,8 +363,8 @@
         const uiPlb = () => { const L = uiLvl(saved.xp); return `<div class="plb" title="Change name"><div class="pav">${uiAv(null, 0)}<b class="plv">${L.l}</b></div><div class="pnm"><span>${esc(saved.name)}<small>${esc(saved.ttl || 'Rocket Pass Tier ' + uiTier())}</small></span>${uiCarW}</div><i class="pxp"><u style="width:${(L.x / L.n * 100).toFixed(1)}%"></u></i></div>`; };
         const uiK = (k, cls) => coarse ? '' : `<kbd${cls ? ` class="${cls}"` : ''}>${k}</kbd>`;
         const uiMD = { play: 'Play matches against bots, practise in Free Play or challenge your friends online.', garage: 'Customize your car: body, decals, paint, wheels, boost, goal explosion, trail and topper.', pass: 'Rocket Pass: earn XP in every match and unlock new items for your car.', opts: 'Change camera, controls, audio and chat settings.', cred: 'Model credits and licences.', exit: 'Return to the title screen.', cpu: 'Exhibition match against bots: Duel, Doubles or Standard, five difficulty levels.', train: 'Free Play: drive around with the ball and practise shots, aerials and saves. No clock, no score.', online: 'Create a party, invite friends with the code or link and play 1v1, 2v2 or 3v3. Turn on bots in the party to fill the empty seats.' };
-        const uiOS = { size: [[1, 'Duel'], [2, 'Doubles'], [3, 'Standard']], diff: uiDIds().map(k => [k, uiDName(k)]), len: [[180, '3 Minutes'], [300, '5 Minutes'], [600, '10 Minutes']] };
-        const uiOD = { size: 'Duel 1v1, Doubles 2v2 or Standard 3v3. Empty seats are filled with bots.', diff: 'How good the bots are: ' + uiOS.diff.map(x => x[1]).join(', ') + '.', len: 'Match length. A tie at 0:00 goes to overtime.', go: 'Start the match.' };
+        const uiOS = { gm: [['soccar', 'Soccar']], ar: [['dfh', 'DFH Stadium']], size: [[1, '1v1'], [2, '2v2'], [3, '3v3']], diff: uiDIds().map(k => [k, uiDName(k)]), len: [[180, '3 Minutes'], [300, '5 Minutes'], [600, '10 Minutes']] };
+        const uiOD = { gm: 'Soccar: score more goals than the other team.', ar: 'DFH Stadium.', size: 'Duel 1v1, Doubles 2v2 or Standard 3v3. Empty seats are filled with bots.', diff: 'How good the bots are: ' + uiOS.diff.map(x => x[1]).join(', ') + '.', len: 'Match length. A tie at 0:00 goes to overtime.', go: 'Start the match.' };
         const uiGC = [['body', 'Body'], ['decal', 'Decal'], ['paint', 'Paint'], ['wheel', 'Wheels'], ['boost', 'Rocket Boost'], ['gx', 'Goal Explosion'], ['trail', 'Trail'], ['top', 'Topper']];
         const uiCatN = k => ({ body: 'Body', decal: 'Decal', paint: 'Paint', wheel: 'Wheels', boost: 'Rocket Boost', gx: 'Goal Explosion', trail: 'Trail', top: 'Topper', fin: 'Paint Finish', title: 'Player Title' })[k] || '';
         const uiGItems = k => k === 'body' ? BODY_IDS.filter(id => crModel(id) || crModel(BODIES[id].mdl) || !crM.octane).map(id => ({ id, n: BODIES[id].name, t: 0, r: 0 })) : k === 'decal' ? crCat.decal.filter(d => !d.b || d.b === saved.car) : k === 'paint' ? crCat.fin : crList(k);
@@ -384,7 +390,18 @@
         };
         const uiTile = (k, it, sel) => {
           const own = uiOwn(k, it), eq = uiEq(k) === it.id, nw = own && it.t > 0 && !saved.seen.includes(k + ':' + it.id), R = crRar[it.r] || crRar[0];
-          return `<button class="gi${sel ? ' on' : ''}${eq ? ' eq' : ''}${own ? '' : ' lk'}" data-gi="${esc(it.id)}" style="--rc:${R[1]}"><span class="gim">${uiThumbOf(k, it)}</span><b>${esc(it.n)}</b><small>${own ? esc(it.t ? R[0] : k === 'body' ? BODIES[it.id].hitbox + ' hitbox' : 'Default') : 'Tier ' + it.t}</small>${eq ? `<i class="geq">${uiIC.check}</i>` : ''}${own ? '' : '<i class="glk"></i>'}${nw ? '<em class="gnw">New</em>' : ''}</button>`;
+          return `<button class="gi${sel ? ' on' : ''}${eq ? ' eq' : ''}${own ? '' : ' lk'}" data-gi="${esc(it.id)}" style="--rc:${R[1]}"><span class="gim">${uiThumbOf(k, it)}</span><b${it.r > 1 && own ? ` style="color:${R[1]}"` : ''}>${esc(it.n)}</b><small>${own ? esc(it.t ? R[0] : k === 'body' ? BODIES[it.id].hitbox + ' hitbox' : 'Default') : 'Tier ' + it.t}</small>${eq ? `<i class="geq">${uiIC.check}</i>` : ''}${own ? '' : '<i class="glk"></i>'}${nw ? '<em class="gnw">New</em>' : ''}</button>`;
+        };
+        const uiGIC = { body: '<path d="M2 15.5l1.6-4.2 4.4-1.3 3-3h6.5l2.8 3.3 1.7.6v4.6H2z"/><circle cx="6.5" cy="16.5" r="2.4"/><circle cx="17.5" cy="16.5" r="2.4"/>', decal: '<path d="M3 6h18v12H3z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 16l5-7 3 4 2-2 4 5z"/>', paint: '<path d="M12 2.5c3 4.2 6.5 7.8 6.5 11.7a6.5 6.5 0 01-13 0c0-3.9 3.5-7.5 6.5-11.7z"/>', wheel: '<circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="12" cy="12" r="2.6"/><path d="M12 3.5v6M12 14.5v6M3.5 12h6M14.5 12h6" stroke="currentColor" stroke-width="2"/>', boost: '<path d="M2 12l7-4.5v3h4V7l9 5-9 5v-3.5H9v3z"/>', gx: '<path d="M12 1.5l2.2 6.2 6-2.6-3 5.8 6 2.3-6.3 1.6 2.6 6-5.6-3.4L12 23l-1.9-5.6-5.6 3.4 2.6-6L.8 13.2l6-2.3-3-5.8 6 2.6z"/>', trail: '<path d="M2 15c5 0 9-5 20-6v3c-9 1-14 6-20 6zM2 9.5c4 0 7-2.5 12-3.5v2.4C10 9.3 6 11.8 2 11.8z"/>', top: '<path d="M4 15.5c0-5 3.5-9 8-9s8 4 8 9z"/><path d="M1.5 17h21v2.4h-21z"/>' };
+        const uiGTip = () => {
+          if (uiGc === 'paint' && uiPt !== 'fin') return `<b>${uiPt === 'a' ? 'Accent' : 'Primary'}</b><small>${uiPt === 'a' ? 'Paint' : 'Paint · ' + (uiTC ? 'Orange' : 'Blue') + ' team'}</small><p>${esc(uiGDesc())}</p>`;
+          const k = uiGc === 'paint' ? 'fin' : uiGc, L = uiGItems(uiGc), it = L.find(x => x.id === (uiGf === 'grid' && uiGi ? uiGi : uiEq(uiGc)));
+          if (!it) return '';
+          const R = crRar[it.r] || crRar[0], own = uiOwn(k, it), eq = uiEq(uiGc) === it.id;
+          const ty = k === 'body' ? 'Base Body · ' + BODIES[it.id].hitbox + ' hitbox' : (it.t ? R[0] + ' ' : 'Base ') + uiCatN(uiGc === 'paint' ? 'fin' : uiGc);
+          const st = k === 'body' ? 'Wins: ' + saved.wins : k === 'wheel' ? 'Distance Driven' : k === 'boost' ? 'Boost Time' : k === 'gx' ? 'Goals' : '';
+          const ds = k === 'body' ? uiCD[it.id] || '' : k === 'gx' ? (coarse ? 'Tap Preview' : 'Press P') + ' to preview.' : '';
+          return `<b>${esc(it.n)}</b><small style="color:${it.t ? R[1] : '#9aa6b4'}">${esc(ty)}</small>${st ? `<i>${esc(st)}</i>` : ''}${ds ? `<p>${esc(ds)}</p>` : ''}${it.t ? '' : '<u class="gnt">Cannot be traded in</u>'}<em class="${own ? eq ? 'eq' : 'ok' : 'lk'}">${own ? eq ? 'Equipped' : coarse ? 'Tap to equip' : 'Click or press Enter to equip' : 'Unlocks at Rocket Pass tier ' + it.t}</em>`;
         };
         const uiGDesc = () => {
           if (uiGc === 'paint' && uiPt !== 'fin') return uiPt === 'a' ? 'Accent colour: used on the trim, the skirts and the decals. Any colour you like.' : 'Primary colour of the body for the ' + (uiTC ? 'Orange' : 'Blue') + ' team. Press V to paint the other team\'s car. Nameplates and decal highlights keep the team colour.';
@@ -426,9 +443,18 @@
           uiPaintSet(uiHsvHex(uiHSV[0], uiHSV[1], uiHSV[2]), false, true);
         };
         const uiGarHtml = () => {
-          const cats = uiGC.map(([k, t]) => `<button class="rb gcb${uiGc === k ? uiGf === 'cat' ? ' on' : ' act' : ''}" data-gc="${k}"><span>${t}</span><small>${esc(uiEqName(k))}</small></button>`).join('');
+          const cats = uiGC.map(([k, t]) => `<button class="rb gcb${uiGc === k ? uiGf === 'cat' ? ' on' : ' act' : ''}" data-gc="${k}" title="${t}"><i class="gci"><svg viewBox="0 0 24 24">${uiGIC[k] || ''}</svg></i><span>${t}</span><small>${esc(uiEqName(k))}</small></button>`).join('');
+          const nOwn = uiGItems(uiGc).filter(it => uiOwn(uiGc === 'paint' ? 'fin' : uiGc, it)).length;
           const body = uiGc === 'paint' ? uiPaintHtml() : `<div class="gg">${uiGItems(uiGc).map(it => uiTile(uiGc, it, uiGf === 'grid' && uiGi === it.id)).join('')}</div>`;
-          return `<div class="gsx"><h2 class="bt">Garage</h2><div class="gcl">${cats}</div></div><div class="gpn pnl"><h3 class="gph">${esc(uiCatN(uiGc))}<small>${esc(BODIES[saved.car].name)} · ${uiTC ? 'Orange' : 'Blue'} car</small></h3>${body}<div class="md gmd">${esc(uiGDesc())}</div></div><div class="hk ghk"><span data-m="back">${uiK('Esc', 'kb')}Back</span><span data-m="tc">${uiK('V')}${uiTC ? 'Blue' : 'Orange'} Car</span>${uiGc === 'gx' ? `<span data-m="gxp">${uiK('P')}Preview</span>` : ''}<span class="gdr">${coarse ? 'Drag the car to rotate' : 'Drag or ' + uiKn('KeyQ') + ' / ' + uiKn('KeyE') + ' to rotate'}</span></div>`;
+          return `<div class="gsx"><h2 class="bt">Garage</h2><div class="gcl">${cats}</div></div><div class="gpn pnl"><h3 class="gph">${esc(uiCatN(uiGc))}<small>${nOwn} collected · ${esc(BODIES[saved.car].name)} · ${uiTC ? 'Orange' : 'Blue'} car</small></h3>${body}</div><div class="md gmd">${uiGTip()}</div><div class="hk ghk"><span data-m="back">${uiK('Esc', 'kb')}Back</span><span data-m="tc">${uiK('V')}${uiTC ? 'Blue' : 'Orange'} Car</span>${uiGc === 'gx' ? `<span data-m="gxp">${uiK('P')}Preview</span>` : ''}<span class="gdr">${coarse ? 'Drag the car to rotate' : 'Drag or ' + uiKn('KeyQ') + ' / ' + uiKn('KeyE') + ' to rotate'}</span></div>`;
+        };
+        const uiTipPos = () => {
+          const m = menu.querySelector('.gmd'), t = uiGf === 'grid' && menu.querySelector('.gg .gi.on'); if (!m) return;
+          if (!t || wrap.classList.contains('portrait')) { m.style.left = m.style.top = ''; return; }
+          const R = menu.getBoundingClientRect(), r = t.getBoundingClientRect(), g = t.closest('.gg').getBoundingClientRect(), w = m.offsetWidth || 160, h = m.offsetHeight || 120;
+          let x = r.right - R.left + 6; if (x + w > R.width - 4) x = r.left - R.left - w - 6;
+          const y = clamp(Math.max(r.top, g.top) - R.top, 4, Math.max(4, R.height - h - 4));
+          m.style.left = Math.round(x) + 'px'; m.style.top = Math.round(y) + 'px';
         };
         const uiGarAfter = () => {
           if (uiGc === 'paint' && uiPt !== 'fin') uiPaintSync();
@@ -436,6 +462,7 @@
           for (const it of uiGItems(uiGc)) { const key = (uiGc === 'paint' ? 'paint' : uiGc) + ':' + it.id; if (it.t > 0 && uiOwn(uiGc, it) && !saved.seen.includes(key)) { saved.seen.push(key); ch = true; } }
           if (ch) api.save(saved);
           const on = menu.querySelector('.gg .gi.on'); if (on) uiScrollTo(on);
+          uiTipPos();
         };
         const uiScrollTo = b => { const p = b.parentElement; if (!p) return; if (b.offsetTop < p.scrollTop) p.scrollTop = b.offsetTop - 4; else if (b.offsetTop + b.offsetHeight > p.scrollTop + p.clientHeight) p.scrollTop = b.offsetTop + b.offsetHeight - p.clientHeight + 4; if (b.offsetLeft < p.scrollLeft) p.scrollLeft = b.offsetLeft - 8; else if (b.offsetLeft + b.offsetWidth > p.scrollLeft + p.clientWidth) p.scrollLeft = b.offsetLeft + b.offsetWidth - p.clientWidth + 8; };
         const uiGCols = () => { const t = [...menu.querySelectorAll('.gg .gi')]; let n = 0; for (const x of t) { if (x.offsetTop !== t[0].offsetTop) break; n++; } return n || 1; };
@@ -445,10 +472,11 @@
           for (const b of menu.querySelectorAll('.gcb')) { b.classList.toggle('on', false); b.classList.toggle('act', b.dataset.gc === uiGc); }
           if (uiGc === 'body') { uiPrev = id; uiPv = null; } else { uiPrev = null; uiPv = { k: uiGc === 'paint' ? 'fin' : uiGc, id }; }
           uiPose();
-          const md = menu.querySelector('.gmd'); if (md) md.textContent = uiGDesc();
+          const md = menu.querySelector('.gmd'); if (md) md.innerHTML = uiGTip();
           const b = menu.querySelector('.gg .gi.on'); if (b && scroll) uiScrollTo(b);
+          uiTipPos();
         };
-        const uiGarLeave = () => { uiPv = null; uiPrev = null; uiPose(); if (uiGf === 'grid') { uiGi = uiEq(uiGc); for (const b of menu.querySelectorAll('.gg .gi')) b.classList.toggle('on', b.dataset.gi === uiGi); const md = menu.querySelector('.gmd'); if (md) md.textContent = uiGDesc(); } };
+        const uiGarLeave = () => { uiPv = null; uiPrev = null; uiPose(); if (uiGf === 'grid') { uiGi = uiEq(uiGc); for (const b of menu.querySelectorAll('.gg .gi')) b.classList.toggle('on', b.dataset.gi === uiGi); const md = menu.querySelector('.gmd'); if (md) md.innerHTML = uiGTip(); uiTipPos(); } };
         const uiGxPrev = id => {
           const now = performance.now(), c = W.cars.find(x => x.team === uiTC && x.slot === 0);
           if (!c || now < uiGxT || typeof fxGoalBlast !== 'function') return;
@@ -532,32 +560,53 @@
         const uiRvNext = () => { if (performance.now() - uiRvT < 1000) return; api.sfx('tap'); if (!uiRvShow() && ui === 'menu') renderMenu(); };
         api.on(uiRvEl, 'pointerdown', e => { e.preventDefault(); e.stopPropagation(); uiRvNext(); });
         const uiPassAdd = xp => { const a = uiTier(); saved.pxp += Math.max(0, Math.round(xp)); const b = uiTier(); for (let n = a + 1; n <= b; n++) uiRvQ.push(n); saved.tier = b; api.save(saved); return [a, b]; };
+        const uiMnr = () => {
+          const t = uiTier(), ch = [['Play 5 matches against bots', Math.min(5, saved.games), 5], ['Win 3 matches', Math.min(3, saved.wins), 3], ['Reach Rocket Pass tier ' + Math.min(crTierN, t + 1), t >= crTierN ? 1 : 0, 1]];
+          return `<div class="mnr"><div class="mnc" data-m="pass"><i class="mnb"><u></u><u></u><u></u></i><b>Season 1</b><small>Rocket Pass</small><span class="mnp"><u style="width:${(t / crTierN * 100).toFixed(1)}%"></u></span><em>${t}/${crTierN}</em><span class="mnd"><i class="on"></i><i></i><i></i></span></div><div class="mnch"><h4>Season Challenges<small>Challenges</small></h4>${ch.map(([n, a, b]) => `<div class="mcr"><span>${esc(n)}</span><i><u style="width:${(a / b * 100).toFixed(0)}%"></u></i><em>${a}/${b}</em></div>`).join('')}<button class="mvc" data-m="pass">View Challenges</button></div></div><div class="mnw">News</div>`;
+        };
         const renderMenu = () => {
           let hh = '<div class="mvg"></div>';
-          menu.classList.toggle('gar', uiScr === 'garage'); menu.classList.toggle('pas', uiScr === 'pass');
+          menu.classList.toggle('gar', uiScr === 'garage'); menu.classList.toggle('ctm-on', uiScr === 'team'); menu.classList.toggle('psn', uiScr === 'play'); menu.classList.toggle('pas', uiScr === 'pass');
           if (uiScr === 'garage') hh += uiGarHtml();
           else if (uiScr === 'pass') hh += uiPassHtml();
+          else if (uiScr === 'play') {
+            const tl = (k, t, s) => `<button class="rb ptt${uiFs === k ? ' on' : ''}" data-p="${k}" data-d="${esc(uiMD[k])}"><i class="plx p-${k}"><u></u><u></u></i><b>${t}</b><small>${s}</small></button>`;
+            hh += `<div class="psc"><h2 class="pbt">Play</h2><div class="ptl" data-h="1">${[['cas', 'Casual'], ['cmp', 'Competitive'], ['trn', 'Tournaments']].map(([k, t]) => `<button class="rb ptt dis p-${k}" disabled><i class="plx"></i><b>${t}</b><small>Online matchmaking</small><em class="pun">Unavailable</em></button>`).join('')}${tl('train', 'Training', 'Free Play')}${tl('cpu', 'Play Offline', 'Exhibition vs bots')}${tl('online', 'Private Match', 'Party · up to 3v3')}</div><div class="md">${esc(uiMD[uiFs] || '')}</div><div class="hk"><span data-m="back">${uiK('Esc', 'kb')}Back</span><span data-p="${uiFs || 'cpu'}">${uiK('Enter', 'ka')}Select</span></div></div>`;
+          }
+          else if (uiScr === 'groot') {
+            const gb = (k, t, s, x) => `<button class="rb${uiFm === k ? ' on' : ''}" data-m="${k}">${t}${s ? `<small>${s}</small>` : ''}${x || ''}</button>`;
+            hh += `<div class="mm grt"><h2 class="gbt">Garage</h2><div class="ml">${gb('gcust', 'Customize Car', 'Body, decals, paint, wheels')}${gb('pass', 'Rocket Pass', 'Tier ' + uiTier() + ' rewards', '<i class="dmd"></i>')}${gb('gxp', 'Goal Explosion', 'Preview ' + esc(uiEqName('gx')))}</div><div class="md">${uiFm === 'pass' ? 'Unlock new items for your car.' : uiFm === 'gxp' ? 'Preview your goal explosion.' : 'Customize your vehicle.'}</div><div class="hk"><span data-m="back">${uiK('Esc', 'kb')}Back</span><span data-m="tc">${uiK('V')}View ${uiTC ? 'Blue' : 'Orange'} Car</span></div></div>`;
+          }
+          else if (uiScr === 'team') {
+            const tb = (k, t) => `<button class="rb${(uiFs || '0') === k ? ' on' : ''}" data-tm="${k}">${t}</button>`, hd = '<span>Score</span><span>Goals</span><span>Assists</span><span>Saves</span><span>Shots</span><span>Ping</span>';
+            hh += `<div class="ctm"><h2 class="ctt">Choose Team</h2><div class="ctl">${tb('0', 'Join Blue')}${tb('a', 'Auto')}${tb('1', 'Join Orange')}${tb('x', 'Leave Match')}</div><div class="ctb"><div class="ctr t0"><b><i></i>Blue</b>${hd}</div><div class="ctr t1"><b><i></i>Orange</b>${hd}</div><p>${saved.size}v${saved.size} · ${esc(uiDName(saved.diff))} bots · ${esc(saved.name)} is choosing</p></div></div>`;
+          }
           else if (uiScr === 'setup') {
             const f = uiFo || 'go';
             const row = (k, t) => { const L = uiOS[k], it = L.find(x => x[0] === saved[k]) || L[0]; return `<button class="rb so${f === k ? ' on' : ''}" data-o="${k}" data-d="${esc(uiOD[k])}"><span>${t}</span><i data-dd="-1">‹</i><b>${it[1]}</b><i data-dd="1">›</i></button>`; };
-            hh += `<div class="msx"><h2 class="bt">Exhibition</h2><div class="sl">${row('size', 'Playlist')}${row('diff', 'Bot Difficulty')}${row('len', 'Match Length')}<button class="rb sgo${f === 'go' ? ' on' : ''}" data-st="1" data-d="${esc(uiOD.go)}">Start Match</button></div><div class="md">${esc(f === 'go' ? uiOD.go : uiOD[f])}</div><div class="hk"><span data-m="back">${uiK('Esc', 'kb')}Back</span><span data-st="1">${uiK('Enter', 'ka')}Start</span></div></div>`;
+            hh += `<div class="msx"><h2 class="bt">Exhibition Match</h2><div class="sl">${row('gm', 'Game Mode')}${row('ar', 'Arena')}${row('size', 'Team Size')}${row('diff', 'Bot Difficulty')}<button class="rb sgs${f === 'tset' ? ' on' : ''}" data-m="tset" data-d="Team names and colours.">Team Settings</button><button class="rb sgs${f === 'mut' ? ' on' : ''}" data-m="mut" data-d="Match length and other match rules.">Mutator Settings</button><button class="rb sgo${f === 'go' ? ' on' : ''}" data-st="1" data-d="${esc(uiOD.go)}">Create Match</button></div><div class="md">${esc(f === 'go' ? uiOD.go : uiOD[f] || (f === 'mut' ? 'Match length and other match rules.' : 'Team names and colours.'))}</div><div class="hk"><span data-m="back">${uiK('Esc', 'kb')}Back</span><span data-st="1">${uiK('Enter', 'ka')}Start</span></div></div>`;
+          } else if (uiScr === 'mut' || uiScr === 'tset') {
+            const gr = (t, v) => `<button class="rb so dis" disabled><span>${t}</span><i>‹</i><b>${v}</b><i>›</i></button>`, L = uiOS.len, it = L.find(x => x[0] === saved.len) || L[0];
+            const ln = `<button class="rb so on" data-o="len" data-d="${esc(uiOD.len)}"><span>Match Length</span><i data-dd="-1">‹</i><b>${it[1]}</b><i data-dd="1">›</i></button>`;
+            hh += uiScr === 'mut' ? `<div class="msx mtx"><h2 class="bt">Mutators<small>Soccar</small></h2><div class="mcs"><div class="sl"><h6>Match</h6>${ln}${gr('Max Score', 'Unlimited')}${gr('Overtime', 'Unlimited')}${gr('Series Length', 'Unlimited')}</div><div class="sl"><h6>Game</h6>${gr('Game Speed', 'Default')}${gr('Boost Amount', 'Default')}${gr('Boost Strength', '1x')}${gr('Gravity', 'Default')}${gr('Demolish', 'Default')}${gr('Respawn Time', '3 Seconds')}</div><div class="sl"><h6>Ball</h6>${gr('Ball Max Speed', 'Default')}${gr('Ball Type', 'Default')}${gr('Ball Weight', 'Default')}${gr('Ball Size', 'Default')}${gr('Ball Bounciness', 'Default')}</div></div><div class="md">${esc(uiOD.len)}</div><div class="hk"><span data-m="back">${uiK('Esc', 'kb')}Back</span></div></div>`
+              : `<div class="msx mtx"><h2 class="bt">Team Settings</h2><div class="mcs"><div class="sl"><h6>Team 1</h6>${gr('Name', 'Blue')}${gr('Color', 'Default')}</div><div class="sl"><h6>Team 2</h6>${gr('Name', 'Orange')}${gr('Color', 'Default')}</div></div><div class="hk"><span data-m="back">${uiK('Esc', 'kb')}Back</span></div></div>`;
           } else {
-            const mb = (k, t) => `<button class="rb${!uiFs && uiFm === k ? ' on' : ''}${uiFs && k === 'play' ? ' act' : ''}" data-m="${k}" data-d="${esc(uiMD[k])}">${t}</button>`;
-            const sb = (k, t, s) => `<button class="rb${uiFs === k ? ' on' : ''}" data-p="${k}" data-d="${esc(uiMD[k])}">${t}${s ? `<small>${s}</small>` : ''}</button>`;
+            const mb = (k, t, s, dm) => `<button class="rb${!uiFs && uiFm === k ? ' on' : ''}${uiFs && k === 'play' ? ' act' : ''}" data-m="${k}" data-d="${esc(uiMD[k])}">${t}${s ? `<small>${s}</small>` : ''}${dm ? '<i class="dmd"></i>' : ''}</button>`;
             const nw = crPass().some((r, i) => i < uiTier() && r.k !== 'title' && !saved.seen.includes((r.k === 'fin' ? 'paint' : r.k) + ':' + r.id));
-            hh += `<div class="mm"><div class="mcol"><div class="ml">${mb('pass', 'Rocket Pass<small>Tier ' + uiTier() + '</small>')}${mb('play', 'Play')}${mb('garage', 'Garage' + (nw ? '<em class="gnw">New</em>' : ''))}${mb('train', 'Training')}${mb('opts', 'Options')}${mb('cred', 'Credits')}${mb('exit', 'Exit Game')}</div><div class="ms"${uiFm === 'play' ? '' : ' hidden'}>${sb('cpu', 'Play vs Bots', 'Exhibition')}${sb('train', 'Free Play', 'Training')}${sb('online', 'Play Online', 'Party · up to 3v3')}</div></div><div class="md">${esc(uiMD[uiFs || uiFm])}</div></div>`;
+            hh += `<div class="mm"><div class="mcol"><div class="ml">${mb('play', 'Play', 'Hit the field', 1)}${mb('pass', 'Rocket Pass', 'Tier ' + uiTier(), 1)}${mb('garage', 'Garage', 'Customize your car', nw)}${mb('train', 'Training', 'Free Play')}${mb('opts', 'Settings', 'Camera, controls, audio')}${mb('cred', 'Credits', 'Thanks')}${mb('exit', 'Quit', 'Title screen')}</div></div><div class="md">${esc(uiMD[uiFs || uiFm])}</div></div>${uiMnr()}`;
           }
-          menu.innerHTML = hh + uiPlb();
+          if (ui === 'menu' && uiFar() !== uiFarW) { uiFarW = uiFar(); uiCamSnap = true; uiPose(); }
+          menu.innerHTML = hh + '<div class="mbb"><button class="mcp" data-p="online">Create Party</button><i class="mfr"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.6"/><path d="M2 20c.5-4.5 3.3-7 7-7s6.5 2.5 7 7z"/><circle cx="16.5" cy="7" r="3"/><path d="M15.5 12.2c3.6-.3 6 1.8 6.5 6.3h-4.6c-.3-2.6-1-4.6-1.9-6.3z"/></svg></i></div>' + uiPlb();
           if (uiScr === 'garage') uiGarAfter();
           if (uiScr === 'pass') { const b = menu.querySelector('.pti.on'); if (b) uiScrollTo(b); }
         };
         const uiOnFocus = b => {
-          const d = b.dataset, box = b.closest('.mm,.gsx,.msx'), md = box && box.querySelector('.md');
+          const d = b.dataset, box = b.closest('.mm,.gsx,.msx,.psc'), md = box && box.querySelector('.md');
           if (md && d.d != null) md.textContent = d.d;
           if (ui !== 'menu' || !b.closest('.menu')) return;
           if (d.m && b.closest('.ml')) { uiFm = d.m; uiFs = null; const ms = menu.querySelector('.ms'); if (ms) ms.hidden = d.m !== 'play'; for (const x of menu.querySelectorAll('.ml .act')) x.classList.remove('act'); }
           if (d.p) { uiFs = d.p; const pb = menu.querySelector('.ml [data-m="play"]'); if (pb) pb.classList.add('act'); }
-          if (d.o || d.st) uiFo = d.o || 'go';
+          if (d.o || d.st || d.m === 'mut' || d.m === 'tset') uiFo = d.o || d.m || 'go';
         };
         const uiItems = root => [...root.querySelectorAll('.rb')].filter(b => b.offsetParent !== null && !b.classList.contains('dis'));
         const uiSetOn = (root, b) => { for (const x of root.querySelectorAll('.rb.on')) if (x !== b) x.classList.remove('on'); if (b && !b.classList.contains('on')) { b.classList.add('on'); uiOnFocus(b); } };
@@ -586,26 +635,33 @@
         };
         const uiOptStep = (k, d) => { const L = uiOS[k], i = L.findIndex(x => x[0] === saved[k]); saved[k] = L[(Math.max(0, i) + d + L.length) % L.length][0]; uiFo = k; api.save(saved); renderMenu(); };
         const uiBack = () => {
-          if (uiScr === 'garage') { if (uiGf === 'grid') { uiGf = 'cat'; uiPv = null; uiPrev = null; uiPose(); renderMenu(); return; } uiPrev = null; uiPv = null; uiScr = 'main'; uiFm = 'garage'; uiFs = null; uiTC = 0; uiGarAT = 0; uiPose(); renderMenu(); return; }
+          if (uiScr === 'garage') { if (uiGf === 'grid') { uiGf = 'cat'; uiPv = null; uiPrev = null; uiPose(); renderMenu(); return; } uiPrev = null; uiPv = null; uiScr = 'groot'; uiFm = 'gcust'; uiFs = null; uiGarAT = 0; uiPose(); renderMenu(); return; }
+          if (uiScr === 'groot') { uiScr = 'main'; uiFm = 'garage'; uiFs = null; uiTC = 0; uiPose(); renderMenu(); return; }
           if (uiScr === 'pass') { uiPv = null; uiPrev = null; uiScr = 'main'; uiFm = 'pass'; uiFs = null; uiPose(); renderMenu(); return; }
-          if (uiScr === 'setup') { uiScr = 'main'; uiFm = 'play'; uiFs = saved.play; renderMenu(); return; }
+          if (uiScr === 'mut' || uiScr === 'tset') { uiFo = uiScr; uiScr = 'setup'; renderMenu(); return; }
+          if (uiScr === 'team') { uiScr = 'setup'; uiCamSnap = true; renderMenu(); uiPose(); return; }
+          if (uiScr === 'setup') { uiScr = 'play'; uiFm = 'play'; uiFs = 'cpu'; renderMenu(); return; }
+          if (uiScr === 'play') { uiScr = 'main'; uiFm = 'play'; uiFs = null; renderMenu(); return; }
           if (uiFs) { uiFs = null; uiFm = 'play'; renderMenu(); }
         };
         const launch = () => { if (ui !== 'menu') return; audio(); if (saved.play === 'online') startOnline(); else startGame(saved.play === 'train' ? 'train' : 'cpu'); };
         api.on(menu, 'click', e => {
           if (ui !== 'menu') return;
-          const b = e.target.closest('button,[data-m],[data-st],[data-pe]'); if (!b || b.closest('.plb')) return;
+          const b = e.target.closest('button,[data-m],[data-st],[data-pe],[data-p]'); if (!b || b.closest('.plb')) return;
           const d = b.dataset;
           audio(); api.sfx('tap');
-          if (d.st) { launch(); return; }
-          if (d.m === 'play') { uiFm = 'play'; uiFs = null; renderMenu(); return; }
-          if (d.m === 'garage') { uiScr = 'garage'; uiPrev = null; uiPv = null; uiTC = 0; uiGc = 'body'; uiGf = 'cat'; uiGarAT = uiGarA = 0; renderMenu(); uiPose(); return; }
+          if (d.st) { if (uiScr === 'setup' && saved.play === 'cpu') { uiScr = 'team'; uiFs = '0'; uiCamSnap = true; renderMenu(); uiPose(); return; } launch(); return; }
+          if (d.tm) { if (d.tm === 'x') { uiScr = 'setup'; uiCamSnap = true; renderMenu(); uiPose(); return; } uiTeam = d.tm === 'a' ? (Math.random() < 0.5 ? 0 : 1) : +d.tm; launch(); return; }
+          if (d.m === 'play') { uiFm = 'play'; uiScr = 'play'; uiFs = ['cpu', 'train', 'online'].includes(saved.play) ? saved.play : 'cpu'; renderMenu(); return; }
+          if (d.m === 'garage') { uiScr = 'groot'; uiFm = 'gcust'; uiFs = null; uiPrev = null; uiPv = null; uiTC = 0; renderMenu(); uiPose(); return; }
+          if (d.m === 'gcust') { uiScr = 'garage'; uiPrev = null; uiPv = null; uiTC = 0; uiGc = 'body'; uiGf = 'cat'; uiGarAT = uiGarA = 0; renderMenu(); uiPose(); return; }
           if (d.m === 'pass') { uiScr = 'pass'; uiPf = Math.min(crTierN, uiTier() + (uiTier() < crTierN ? 1 : 0)); uiTC = 0; uiPassFocus(uiPf); return; }
           if (d.m === 'opts') { uiFm = 'opts'; if (uiOptTab === 'cred') uiOptTab = 'cam'; uiOptOpen(null); return; }
           if (d.m === 'cred') { uiFm = 'cred'; uiOptTab = 'cred'; uiOptOpen(null); return; }
           if (d.m === 'exit') { showTitle(); return; }
           if (d.m === 'train') { saved.play = 'train'; api.save(saved); launch(); return; }
           if (d.m === 'back') { uiBack(); return; }
+          if (d.m === 'mut' || d.m === 'tset') { uiScr = d.m; renderMenu(); return; }
           if (d.m === 'tc') { uiTC = 1 - uiTC; uiPose(); renderMenu(); return; }
           if (d.m === 'gxp') { uiGxT = 0; uiGxPrev(uiGf === 'grid' && uiGi ? uiGi : uiEq('gx')); return; }
           if (d.p) { saved.play = d.p; api.save(saved); if (d.p === 'cpu') { uiScr = 'setup'; uiFo = 'go'; renderMenu(); } else launch(); return; }
@@ -661,15 +717,19 @@
 
 
         let uiOptTab = 'cam', uiOptBack = null;
-        const uiTabs = [['game', 'Gameplay'], ['cam', 'Camera'], ['ctl', 'Controls'], ['aud', 'Audio'], ['chat', 'Chat'], ['cred', 'Credits']];
+        const uiTabs = [['game', 'Gameplay'], ['cam', 'Camera'], ['ctl', 'Controls'], ['ifc', 'Interface'], ['sbt', 'Scoreboard'], ['aud', 'Audio'], ['chat', 'Chat'], ['cred', 'Credits']];
         const uiCred = () => `<div class="ocr">${(typeof crCredits !== 'undefined' && Array.isArray(crCredits) ? crCredits : []).map(c => `<p>${esc(String(c)).replace(/(https?:\/\/[^\s,]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>')}</p>`).join('')}<p>Fan-made tribute. Not affiliated with, endorsed or sponsored by Psyonix. Rocket League is a trademark of Psyonix LLC.</p></div>`;
         const uiTg = (k, vals, cur) => `<div class="tg2">${vals.map(([v, t]) => `<button data-${k}="${v}" class="${String(cur) === String(v) ? 'on' : ''}">${t}</button>`).join('')}</div>`;
-        const uiRange = (k, lab, v, r, key) => `<div class="orw"><span>${lab}</span><input type="range" data-${key}="${k}" min="${r[0]}" max="${r[1]}" step="${r[2]}" value="${v}" style="--p:${((v - r[0]) / (r[1] - r[0]) * 100).toFixed(1)}%"><b>${uiF(v)}</b></div>`;
+        const uiVf = (k, v) => k === 'fov' ? Math.round(v) + '°' : k === 'vol' ? String(Math.round(v)) : k === 'nps' ? Math.round(v) + '%' : (+v).toFixed(2);
+        const uiCk = (k, on) => `<button class="ock${on ? ' on' : ''}" data-${k}="${on ? 0 : 1}" aria-pressed="${on ? 'true' : 'false'}"></button>`;
+        const uiRange = (k, lab, v, r, key) => `<div class="orw"><span>${lab}</span><input type="range" data-${key}="${k}" min="${r[0]}" max="${r[1]}" step="${r[2]}" value="${v}" style="--p:${((v - r[0]) / (r[1] - r[0]) * 100).toFixed(1)}%"><b>${uiVf(k, v)}</b></div>`;
         const uiOptBody = () => {
           const t = uiOptTab;
           if (t === 'game') return `<div class="orw"><span>Player Name</span><input type="text" data-name="1" maxlength="16" value="${esc(saved.name)}" spellcheck="false" autocomplete="off"></div><div class="orw"><span>Quick Chat</span>${uiTg('cf', [['all', 'All'], ['team', 'Team Only'], ['off', 'Off']], saved.chatf)}</div><div class="orw"><span>Level ${uiLvl(saved.xp).l} · ${saved.games} matches · ${saved.wins} wins</span></div>`;
-          if (t === 'cam') return `<div class="orw"><span>Camera Shake</span>${uiTg('sh', [[1, 'On'], [0, 'Off']], saved.shake ? 1 : 0)}</div>${Object.keys(uiCSR).map(k => uiRange(k, uiCSN[k], fxCam[k], uiCSR[k], 'cs')).join('')}<div class="orw"><span>Ball Camera</span>${uiTg('bc', [[1, 'On'], [0, 'Off']], saved.cam !== false ? 1 : 0)}</div>`;
+          if (t === 'cam') return `<div class="orw"><span>Camera Preset</span><button class="osel" data-m="odef">${Object.keys(uiCSR).every(k => fxCam[k] === uiCSD[k]) ? 'Default' : 'Custom'}</button></div><div class="orw"><span>Camera Shake</span>${uiCk('sh', saved.shake)}</div><div class="orw"><span>Ball Camera Mode</span><button class="osel">Toggle</button></div>${Object.keys(uiCSR).map(k => uiRange(k, uiCSN[k], fxCam[k], uiCSR[k], 'cs')).join('')}<div class="orw"><span>Ball Camera At Kickoff</span>${uiCk('bc', saved.cam !== false)}</div>`;
           if (t === 'cred') return uiCred();
+          if (t === 'ifc') return `<h6 class="osh">HUD</h6><div class="orw"><span>Team-Colored Boost Meter</span>${uiCk('ik', saved.ifx.tbm).replace('data-ik=', 'data-ikk="tbm" data-ik=')}</div><div class="orw"><span>Ball Cam Indicator</span>${uiCk('ik', saved.ifx.bci).replace('data-ik=', 'data-ikk="bci" data-ik=')}</div><div class="orw"><span>Ball Arrow</span>${uiCk('ik', saved.ifx.arw).replace('data-ik=', 'data-ikk="arw" data-ik=')}</div><h6 class="osh">Nameplates</h6>${uiRange('nps', 'Nameplate Scale', saved.ifx.nps, [50, 150, 5], 'ifr')}`;
+          if (t === 'sbt') return `<h6 class="osh">Soccar</h6><div class="orw osb"><span>Scoreboard Stats</span>${saved.sbc.map((k, i) => `<select data-sbc="${i}">${uiSbK.map(x => `<option value="${x}"${x === k ? ' selected' : ''}>${x[0].toUpperCase() + x.slice(1)}</option>`).join('')}</select>`).join('')}</div>`;
           if (t === 'aud') return `${uiRange('vol', 'Master Volume', saved.vol, [0, 100, 1], 'vol')}<div class="orw"><span>Game Audio</span>${uiTg('mu', [[0, 'On'], [1, 'Muted']], saved.mute ? 1 : 0)}</div>`;
           if (t === 'chat') return uiQCN.map((n, cat) => `<div class="og"><h5><i></i>${n}</h5><div class="oq">${[0, 1, 2, 3].map(k => `<select data-qs="${cat},${k}">${uiQCP[cat].map(s => `<option${s === uiQT(cat, k) ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select>`).join('')}</div></div>`).join('');
           const R = [['Drive / Reverse', uiKn('KeyW') + ' / ' + uiKn('KeyS') + ' · ↑ / ↓', 'Stick'], ['Steer', uiKn('KeyA') + ' / ' + uiKn('KeyD') + ' · ← / →', 'Stick'], ['Boost', 'Shift · Left click', 'Boost'], ['Jump / Flip', 'Space · Right click', 'Jump'], ['Powerslide / Air roll', uiKn('KeyX') + ' · Ctrl', 'Slide'], ['Air roll left / right', uiKn('KeyQ') + ' / ' + uiKn('KeyE'), 'Slide + stick'], ['Ball cam', uiKn('KeyC'), 'Ball cam'], ['Scoreboard', 'Tab', 'Tap the clock'], ['Quick chat', '1 – 4', 'Chat button'], ['Free Play: reset ball / car', 'R / T', 'Reset'], ['Free Play: boost, shots, spawn', 'B / P / 1 – 5', 'Pause menu'], ['Pause / Back', 'Esc · P', 'II']];
@@ -677,7 +737,7 @@
         };
         const uiOptRender = () => {
           const st = uiOptEl.querySelector('.ob'), sc = st ? st.scrollTop : 0;
-          uiOptEl.innerHTML = `<div class="op pnl"><h2 class="pt">Options</h2><div class="otb">${uiK(uiKn('KeyQ'))}${uiTabs.map(([k, t]) => `<button class="ot${k === uiOptTab ? ' on' : ''}" data-tab="${k}">${t}</button>`).join('')}${uiK(uiKn('KeyE'))}</div><div class="ob">${uiOptBody()}</div><div class="hk"><span data-m="oback">${uiK('Esc', 'kb')}Back</span><span data-m="odef">${uiK(uiKn('KeyX'), 'kx')}Default</span></div></div>`;
+          uiOptEl.innerHTML = `<div class="op pnl"><h2 class="pt">Settings</h2><div class="otb">${uiK(uiKn('KeyQ'))}${uiTabs.map(([k, t]) => `<button class="ot${k === uiOptTab ? ' on' : ''}" data-tab="${k}">${t}</button>`).join('')}${uiK(uiKn('KeyE'))}</div><div class="ob">${uiOptBody()}</div><div class="hk"><span data-m="oback">${uiK('Esc', 'kb')}Back</span><span data-m="odef">${uiK(uiKn('KeyX'), 'kx')}Default</span></div></div>`;
           const nb = uiOptEl.querySelector('.ob'); if (nb && st) nb.scrollTop = sc;
         };
         const uiOptOpen = back => { uiOptBack = back; uiOptRender(); uiOptEl.hidden = false; };
@@ -690,9 +750,11 @@
         const uiSaveCam = () => { saved.cs = {}; for (const k in uiCSR) saved.cs[k] = fxCam[k]; api.save(saved); };
         const uiOptDef = () => {
           const t = uiOptTab;
-          if (t === 'cam') { Object.assign(fxCam, uiCSD); saved.cs = null; saved.shake = true; for (const v of views) setCam(v, true); uiFov(); }
+          if (t === 'cam') { Object.assign(fxCam, uiCSD); saved.cs = null; saved.shake = false; for (const v of views) setCam(v, true); uiFov(); }
           else if (t === 'aud') { saved.vol = 85; saved.mute = false; }
           else if (t === 'chat') saved.qc = null;
+          else if (t === 'ifc') { saved.ifx = { tbm: true, bci: true, arw: true, nps: 100 }; uiIfxApply(); }
+          else if (t === 'sbt') saved.sbc = ['goals', 'assists', 'saves', 'shots'];
           else if (t === 'game') saved.chatf = 'all';
           api.save(saved); uiOptRender();
         };
@@ -706,22 +768,25 @@
           else if (d.sh != null) saved.shake = d.sh === '1';
           else if (d.bc != null) { const on = d.bc === '1'; saved.cam = on; for (const v of views) setCam(v, on); }
           else if (d.mu != null) saved.mute = d.mu === '1';
+          else if (d.ikk) { saved.ifx[d.ikk] = d.ik === '1'; uiIfxApply(); }
           else return;
           api.save(saved); uiOptRender();
         });
         api.on(uiOptEl, 'input', e => {
           const t = e.target, d = t.dataset;
+          if (d.ifr) { const v = clamp(+t.value, 50, 150); saved.ifx.nps = v; t.style.setProperty('--p', ((v - 50) / 100 * 100).toFixed(1) + '%'); const lb = t.nextElementSibling; if (lb) lb.textContent = uiVf('nps', v); return; }
           if (d.cs || d.vol) {
             const r = d.cs ? uiCSR[d.cs] : [0, 100], v = clamp(+t.value, r[0], r[1]);
             t.style.setProperty('--p', ((v - r[0]) / (r[1] - r[0]) * 100).toFixed(1) + '%');
-            const lb = t.nextElementSibling; if (lb) lb.textContent = uiF(v);
+            const lb = t.nextElementSibling; if (lb) lb.textContent = uiVf(d.cs || 'vol', v);
             if (d.cs) { fxCam[d.cs] = v; if (d.cs === 'fov' && ui === 'play') uiFov(); } else saved.vol = v;
           }
         });
         api.on(uiOptEl, 'change', e => {
           const t = e.target, d = t.dataset;
           if (d.cs) uiSaveCam();
-          else if (d.vol) api.save(saved);
+          else if (d.vol || d.ifr) api.save(saved);
+          else if (d.sbc != null) { if (uiSbK.includes(t.value)) saved.sbc[+d.sbc] = t.value; api.save(saved); }
           else if (d.name) { const s = t.value.replace(/[^\w .\-!?]/g, '').trim().slice(0, 16); saved.name = s || 'Player'; t.value = saved.name; api.save(saved); }
           else if (d.qs) { const [cat, k] = d.qs.split(',').map(Number); if (!saved.qc) saved.qc = uiQCP.map((p, i) => [0, 1, 2, 3].map(j => uiQT(i, j))); if (uiQCP[cat] && uiQCP[cat].includes(t.value)) saved.qc[cat][k] = t.value; api.save(saved); }
         });
@@ -739,9 +804,9 @@
         const uiExitAsk = () => uiConfirm('Exit to Main Menu', 'Are you sure you want to exit to the main menu?', () => showMenu());
 
 
-        const uiLoadShow = (txt, ttl) => { uiLd.innerHTML = `<div class="mlg">${uiShield}${uiWM}</div><div class="lt"><b>${ttl || 'Pro Tip'}</b><p>${esc(txt)}</p></div><div class="ll">Loading<i></i></div>`; uiLd.hidden = false; };
+        const uiLoadShow = (txt, ttl) => { uiLd.innerHTML = `<div class="mlg">${uiShield}${uiWM}</div><div class="lar"><b>DFH Stadium</b><small>${mode === 'train' ? 'Free Play' : mode === 'online' ? 'Private Match · Soccar' : 'Exhibition · Soccar'}</small></div><div class="lt"><b>${ttl || 'Pro Tip'}</b><p>${esc(txt)}</p></div><div class="ll">Loading<i></i></div>`; uiLd.hidden = false; };
         const hideViews = () => {
-          for (const v of views) { v.ban.hidden = true; v.tc.hidden = v.tl.hidden = v.bd.hidden = v.sb.hidden = v.cb.hidden = true; uiQcClose(v); v.trn.textContent = ''; v.trKey = ''; v.feed.textContent = v.pops.textContent = v.ss.textContent = v.ping.textContent = v.chat.textContent = ''; v.ssKey = ''; }
+          for (const v of views) { v.ban.hidden = true; if (v.gmc) v.gmc.hidden = true; v.tc.hidden = v.tl.hidden = v.bd.hidden = v.sb.hidden = v.cb.hidden = true; uiQcClose(v); v.trn.textContent = ''; v.trKey = ''; v.feed.textContent = v.pops.textContent = v.ss.textContent = v.ping.textContent = v.chat.textContent = ''; v.ssKey = ''; }
           uiTab(false);
         };
         const uiShowWorld = () => { W = makeWorld({ size: 1, human: false, bodies: [saved.car, saved.car] }); views[0].car = views[1].car = null; bindCars(); syncPads(); api.score('—'); uiPose(); uiCamSnap = true; };
@@ -771,10 +836,11 @@
           bindCars(); syncPads(); lastPts = -1; acc = 0;
         };
         const uiJoinLog = () => { uiLog.length = 0; for (const c of W.cars) uiLog.push(`<i class="p${c.team}">${esc(c.name)}</i> joined the match`); };
+        const uiRoster = t => { const pool = BOTNAMES.slice(), r = []; for (let k = 0; k < 2; k++) for (let i = 0; i < saved.size; i++) r.push(k === t && i === 0 ? { team: k, slot: i, name: saved.name, bot: false, body: saved.car } : { team: k, slot: i, name: pool.splice(Math.floor(Math.random() * pool.length), 1)[0] || 'Bot', bot: true, body: BODY_IDS[Math.floor(Math.random() * BODY_IDS.length)] }); return r; };
         const startGame = m => {
           saved.name = uiProfName() || saved.name;
           mode = m === 'train' ? 'train' : 'cpu'; setLayout();
-          W = mode === 'train' ? makeWorld({ mode: 'training', size: 1, bodies: [saved.car], names: [saved.name] }) : makeWorld({ size: saved.size, diff: saved.diff, len: saved.len, names: [saved.name], bodies: [saved.car, saved.car] });
+          W = mode === 'train' ? makeWorld({ mode: 'training', size: 1, bodies: [saved.car], names: [saved.name] }) : uiTeam ? makeWorld({ size: saved.size, diff: saved.diff, len: saved.len, roster: uiRoster(1) }) : makeWorld({ size: saved.size, diff: saved.diff, len: saved.len, names: [saved.name], bodies: [saved.car, saved.car] });
           views[0].car = W.cars.find(c => !c.bot) || W.cars[0]; views[1].car = null;
           for (const c of W.cars) c.cos = c.bot ? crBotCos(c.team, c.body) : crCosOf(uiLO(c.body), c.team);
           if (W.train) { W.train.unlimited = saved.tbo; W.train.shots = saved.tsh; if (uiTrSpawns().includes(saved.tsp)) W.train.spawn = saved.tsp; }
@@ -801,8 +867,8 @@
         };
         const uiPzRender = () => {
           const on = pz.querySelector('.rb.on'), a = on ? on.dataset.a : 'r', T = uiTrOn() ? W.train : null;
-          const it = T ? [['r', 'Resume'], ['tb', 'Reset Ball'], ['tc', 'Reset Car'], ['tu', 'Unlimited Boost: ' + (T.unlimited ? 'On' : 'Off')], ['tp', 'Shot Practice: ' + (T.shots ? 'On' : 'Off')], ['ts', 'Ball Spawn: ' + uiTrSN(T.spawn)], ['o', 'Options'], ['m', 'Exit Free Play']] : [['r', 'Resume Game'], ...(mode === 'online' ? [] : [['s', 'Restart Match']]), ['o', 'Options'], ['m', 'Exit to Main Menu']];
-          pz.innerHTML = `<div class="pzp pnl"><h2 class="pt">${T ? 'Free Play' : 'Paused'}</h2>${it.map(([k, t]) => `<button class="rb${k === a ? ' on' : ''}" data-a="${k}">${t}</button>`).join('')}</div>${uiPlb()}`;
+          const it = T ? [['r', 'Resume Game'], ['tb', 'Reset Ball'], ['tc', 'Reset Car'], ['tu', 'Unlimited Boost: ' + (T.unlimited ? 'On' : 'Off')], ['tp', 'Shot Practice: ' + (T.shots ? 'On' : 'Off')], ['ts', 'Ball Spawn: ' + uiTrSN(T.spawn)], ['cm', 'Change Mode/Match'], ['o', 'Settings'], ['m', 'Exit to Main Menu']] : [['r', 'Resume Game'], ...(mode === 'online' ? [] : [['s', 'Restart Match'], ['ct', 'Change Team'], ['cm', 'Change Mode/Match']]), ['o', 'Settings'], ['m', 'Leave Match']];
+          pz.innerHTML = `<div class="pzp pnl"><h2 class="pt">${T ? 'Paused' : mode === 'online' ? 'Private Match' : 'Exhibition'}</h2>${it.map(([k, t]) => `<button class="rb${k === a ? ' on' : ''}" data-a="${k}">${t}</button>`).join('')}</div><div class="pzm"><b>Game Mode</b><small>${T ? 'Free Play' : 'Soccar'}</small></div><div class="mbb"></div>${uiPlb()}`;
         };
         const togglePause = () => {
           if (ui !== 'play' || W.state === 'end') return;
@@ -817,12 +883,14 @@
           const a = b.dataset.a;
           if (ui === 'left' || a === 'm' && ui !== 'play') { showMenu(); return; }
           if (a === 'r') togglePause(); else if (a === 's') startGame(mode); else if (a === 'o') uiOptOpen(null); else if (a === 'm') { if (mode === 'train') showMenu(); else uiExitAsk(); }
+          else if (a === 'ct') uiConfirm('Change Team', 'Switching team restarts the match. Continue?', () => { const c = views[0].car; uiTeam = c && c.team === 0 ? 1 : 0; startGame(mode); });
+          else if (a === 'cm') { const go = () => { showMenu('play'); uiFs = 'cpu'; renderMenu(); }; if (mode === 'train') go(); else uiConfirm('Change Mode/Match', 'Are you sure you want to leave this match?', go); }
           else if (a === 'tb' || a === 'tc') { uiTrAct(a === 'tb' ? 'ball' : 'car'); togglePause(); }
           else if (a === 'tu' || a === 'tp' || a === 'ts') { uiTrAct(a === 'tu' ? 'boost' : a === 'tp' ? 'shots' : 'spawn'); uiPzRender(); }
         });
 
 
-        const uiEnd = { on: false, ph: 0, t: 0, cd: 40, votes: new Set(), ready: new Set(), bt: [], xp: null, titles: new Map(), mvp: null, win: 0, hid: false, ck: -1, nb: false };
+        const uiEnd = { on: false, pod: 0, ph: 0, t: 0, cd: 40, votes: new Set(), ready: new Set(), bt: [], xp: null, titles: new Map(), mvp: null, win: 0, hid: false, ck: -1, nb: false };
         const uiTitlesOf = () => {
           const m = new Map();
           for (const c of W.cars) {
@@ -861,9 +929,9 @@
           uiEnd.titles = uiTitlesOf();
           uiEnd.bt = W.cars.filter(c => c.bot).map(c => ({ c, v: Math.random() < 0.7 ? 3 + Math.random() * 9 : 1e9, r: 4 + Math.random() * 14 }));
           uiEnd.xp = uiXpCalc();
-          endEl.innerHTML = `<div class="mvg"></div>${online ? '' : '<div class="nmx"><small>Next match in</small><span></span></div>'}<div class="pg"></div><div class="ps" hidden></div>${uiPlb()}`;
-          endEl.hidden = false;
-          uiPgRender(); uiEndClock();
+          endEl.innerHTML = `<div class="mvg"></div>${online ? '' : '<div class="nmx"><small>Next match in</small><span></span></div>'}<div class="pdm"><small>Winner</small><b class="t${win}">${esc(TEAMN[win])}</b></div><div class="pdn"></div><div class="pg"></div><div class="ps" hidden></div>${uiPlb()}`;
+          endEl.hidden = false; uiEnd.pod = 5.5; endEl.classList.add('pod');
+          uiEndClock();
           if (!online) { const bots = W.cars.filter(c => c.bot).sort(() => Math.random() - 0.5).slice(0, 2), w0 = W; bots.forEach((c, i) => api.timeout(() => { if (!dead && W === w0 && ui === 'end') uiSay(c, Math.random() < 0.7 ? 16 : 17, false); }, 1800 + i * 1700 + Math.random() * 1200)); }
         };
         const uiPgRender = () => {
@@ -901,6 +969,7 @@
           }, 350);
         };
         const uiEndShowBoard = () => {
+          if (uiEnd.pod > 0) { uiEnd.pod = 0; endEl.classList.remove('pod'); }
           if (uiEnd.ph === 2) return;
           uiEnd.ph = 2;
           const pg = endEl.querySelector('.pg'), ps = endEl.querySelector('.ps');
@@ -937,6 +1006,7 @@
         };
         const uiEndTick = dt => {
           if (!uiEnd.on) return;
+          if (uiEnd.pod > 0) { uiEnd.pod -= dt; if (uiEnd.pod > 0) return; uiEnd.t = 0; endEl.classList.remove('pod'); uiPgRender(); }
           uiEnd.t += dt;
           if (!uiRvEl.hidden) { uiEnd.cd = Math.max(uiEnd.cd, 4); return; }
           if (uiEnd.ph === 0 && uiEnd.t > 3.9 && uiEnd.xp) { uiEnd.ph = 1; uiRankRender(); }

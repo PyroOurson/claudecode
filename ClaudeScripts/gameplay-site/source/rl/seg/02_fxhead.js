@@ -5,8 +5,8 @@ float fxh(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); 
 float fxn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(fxh(i), fxh(i + vec2(1.0, 0.0)), f.x), mix(fxh(i + vec2(0.0, 1.0)), fxh(i + vec2(1.0, 1.0)), f.x), f.y); }
 void main() {
   vec2 d = gl_PointCoord - 0.5; float r = length(d);
-  if (kind < 0.5) { float a = smoothstep(0.5, 0.04, r) * vA; if (a < 0.01) discard; gl_FragColor = vec4(mix(vC, vec3(1.0), smoothstep(0.16, 0.0, r) * 0.3), a); }
-  else { float c = cos(vS * 6.2832), s = sin(vS * 6.2832); vec2 q = mat2(c, -s, s, c) * d; float m = fxn(q * 4.5 + vS * 31.0) * 0.6 + fxn(q * 10.0 - vS * 17.0) * 0.4; float a = smoothstep(0.5, 0.1, r + (m - 0.5) * 0.32) * vA * (0.38 + m * 0.5); if (a < 0.01) discard; gl_FragColor = vec4(vC * (0.78 + m * 0.5 - r * 0.35), a); }
+  if (kind < 0.5) { float a = smoothstep(0.5, 0.04, r) * vA; if (a < 0.01) discard; gl_FragColor = vec4(mix(vC, vec3(1.0), smoothstep(0.16, 0.0, r) * 0.3 * max(vC.r, max(vC.g, vC.b))), a); }
+  else { float c = cos(vS * 6.2832), s = sin(vS * 6.2832); vec2 q = mat2(c, -s, s, c) * d; float m = fxn(q * 4.5 + vS * 31.0) * 0.6 + fxn(q * 10.0 - vS * 17.0) * 0.4; float a = smoothstep(0.47, 0.36, r + (m - 0.5) * 0.18) * smoothstep(0.5, 0.43, r) * vA * (0.58 + m * 0.42); if (a < 0.01) discard; gl_FragColor = vec4(vC * (0.84 + m * 0.4 - r * 0.5), a); }
 }`;
   const FXSVS = `attribute vec3 tail; attribute vec2 corner; attribute vec3 scol; attribute float salpha; attribute float swid; varying vec3 vC; varying float vA; varying float vE;
 void main() { vec4 h = modelViewMatrix * vec4(position, 1.0); vec4 t = modelViewMatrix * vec4(tail, 1.0); vec3 p = mix(h.xyz, t.xyz, corner.x); vec3 sd = cross(t.xyz - h.xyz, p); float l = length(sd); sd = l > 1e-4 ? sd / l : vec3(1.0, 0.0, 0.0); p += sd * corner.y * swid * (1.0 - corner.x * 0.8); vC = scol; vA = salpha * (1.0 - corner.x * 0.92); vE = corner.y; gl_Position = projectionMatrix * vec4(p, 1.0); }`;
@@ -32,7 +32,7 @@ $ .fxw .shd{position:absolute;left:50%;top:50%;width:calc(var(--u)*13);height:ca
 $ .fxw.fxgo .shd{animation:gmrs-fxt .62s ease both}
 @keyframes gmrs-fxw{0%{transform:translateX(-120%) skewX(-24deg)}100%{transform:translateX(105%) skewX(-24deg)}}
 @keyframes gmrs-fxt{0%,25%{opacity:0;transform:translate(-50%,-50%) scale(1.3)}45%,60%{opacity:1;transform:translate(-50%,-50%) scale(1)}85%,100%{opacity:0;transform:translate(-50%,-50%) scale(.9)}}
-$ .fxl{position:absolute;left:calc(var(--u)*1.6);bottom:calc(var(--u)*1.6);display:flex;align-items:center;gap:calc(var(--u)*.6);font:300 calc(var(--u)*3.3)/1 var(--rf);letter-spacing:.02em;text-transform:uppercase;color:#ff6550;text-shadow:0 0 calc(var(--u)*.7) rgba(255,60,40,.85);opacity:0;transform:translateX(-30%);transition:opacity .25s,transform .35s cubic-bezier(.2,1.3,.4,1)}
+$ .fxl{position:absolute;left:calc(var(--u)*1.6);bottom:calc(var(--u)*1.6);display:flex;align-items:center;gap:calc(var(--u)*.6);font:500 calc(var(--u)*2.3)/1 var(--rf);letter-spacing:.02em;text-transform:uppercase;color:#ff5442;text-shadow:0 0 calc(var(--u)*.6) rgba(255,40,30,.9),0 0 calc(var(--u)*.15) rgba(255,60,40,.9);opacity:0;transform:translateX(-30%);transition:opacity .25s,transform .35s cubic-bezier(.2,1.3,.4,1)}
 $ .fxl i{width:calc(var(--u)*.95);height:calc(var(--u)*.95);border-radius:50%;background:#ff3b30;box-shadow:0 0 calc(var(--u)*.8) #ff3b30;animation:gmrs-fxr 1.2s steps(2) infinite}
 $ .fxrp.fxon .fxl{opacity:1;transform:none}
 @keyframes gmrs-fxr{50%{opacity:.3}}
@@ -46,10 +46,10 @@ $ .fxai{display:flex;width:100%;height:100%;align-items:center;justify-content:c
 $ .fxav{position:absolute;left:calc(var(--u)*-.4);top:50%;width:calc(var(--u)*4.8);height:calc(var(--u)*4.8);padding:calc(var(--u)*.26);box-sizing:border-box;transform:translateY(-50%);border-radius:calc(var(--u)*.45);background:linear-gradient(180deg,#f4f7fb,#aeb7c4);box-shadow:0 2px 6px rgba(0,0,0,.5)}
 $ .fxav svg{border-radius:calc(var(--u)*.2)}
 $ .fxcd>b{position:relative;z-index:1;max-width:72%;font:400 max(13px,calc(var(--u)*2.1))/1 var(--tf);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-$ .fxs{display:flex;gap:calc(var(--u)*2.6);margin-top:calc(var(--u)*.4);font:400 max(12px,calc(var(--u)*1.75))/1 var(--rf);color:#cfeaff;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+$ .fxs{display:flex;gap:calc(var(--u)*2.6);margin-top:calc(var(--u)*.4);font:400 max(12px,calc(var(--u)*1.75))/1 var(--rf);color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85)}
 $ .fxs span{display:flex;align-items:center;gap:calc(var(--u)*.4)}
 $ .fxs svg{width:calc(var(--u)*2.2);height:calc(var(--u)*2.2)}
-$ .fxs b{font-weight:400}
+$ .fxs b{font-weight:500}
 $ .fxs small{font-size:.6em;align-self:flex-end;margin-bottom:.15em}
 $ .fxk{position:absolute;right:calc(var(--u)*1.2);bottom:calc(var(--u)*1.4);display:flex;flex-direction:column;align-items:flex-end;gap:calc(var(--u)*.6);opacity:0;transition:opacity .3s}
 $ .fxk>div:first-child{font:400 max(9px,calc(var(--u)*1.05))/1 var(--rf);letter-spacing:.04em;text-transform:uppercase;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8)}

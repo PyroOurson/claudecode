@@ -21,26 +21,35 @@
           return crTexs[k] = t;
         };
         const arBV = CFG.ballVis || BR;
+        const arBallHub = m => { m.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\nfloat arTq = clamp((diffuseColor.g - diffuseColor.r) * 5.0 - 0.4, 0.0, 1.0);\ndiffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.05, 0.35, 1.0) * (diffuseColor.g + 0.2), arTq);'); }; return m; };
         const ballM = (() => {
           const M = crM.ball;
           if (!M || !M.body) return new THREE.Mesh(own(new THREE.SphereGeometry(arBV, 48, 32)), own(new THREE.MeshStandardMaterial({ color: lin(0xb4bac4), roughness: 0.4, metalness: 0.4, envMap: arEnv })));
           const g = crDec(M.body).scale(arBV, arBV, arBV); g.computeBoundingSphere();
           const map = crTex(M.tex.map), em = crTex(M.tex.em);
           const mats = M.mats.map(q => q.k === 'glow'
-            ? own(new THREE.MeshBasicMaterial({ color: new THREE.Color(q.e[0], q.e[1], q.e[2]).multiplyScalar(2.2), toneMapped: false }))
-            : own(new THREE.MeshPhysicalMaterial({ map, emissiveMap: em, emissive: 0xffffff, emissiveIntensity: 2.4, color: lin(0xffffff, 1.0), roughness: 0.55, metalness: 0.18, clearcoat: 0.2, clearcoatRoughness: 0.45, envMap: arEnv, envMapIntensity: 0.55 })));
+            ? own(new THREE.MeshBasicMaterial({ color: new THREE.Color(0.3, 0.95, 2.4).multiplyScalar(1.8), toneMapped: false }))
+            : arBallHub(own(new THREE.MeshPhysicalMaterial({ map, emissiveMap: em, emissive: new THREE.Color(0.3, 0.85, 2.2), emissiveIntensity: 3, color: lin(0xd2d6da, 1.2), roughness: 0.45, metalness: 0.25, clearcoat: 0.4, clearcoatRoughness: 0.3, envMap: arEnv, envMapIntensity: 0.9 }))));
           return new THREE.Mesh(g, mats);
         })();
         ballM.castShadow = true; scene.add(ballM);
+        if (crM.ball && crM.ball.body) {
+          const hd = new THREE.Vector3(-1, -1, 0).normalize(), hg = mergeG([new THREE.CircleGeometry(arBV * 0.13, 24), new THREE.RingGeometry(arBV * 0.17, arBV * 0.2, 24)]);
+          const hm = new THREE.Mesh(hg, own(new THREE.MeshBasicMaterial({ color: new THREE.Color(0.35, 1.1, 2.6), toneMapped: false })));
+          hm.position.copy(hd).multiplyScalar(arBV * 1.003); hm.lookAt(hd.clone().multiplyScalar(arBV * 2)); ballM.add(hm);
+        }
         ballM.add(new THREE.Mesh(own(new THREE.SphereGeometry(arBV * 1.05, 24, 16)), own(new THREE.MeshBasicMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.035, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.BackSide, fog: false }))));
         const ballGlow = new THREE.Sprite(own(new THREE.SpriteMaterial({ map: glowT, color: 0xdff0ff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.12 })));
         ballGlow.scale.set(330, 330, 1); ballGlow.renderOrder = 4; scene.add(ballGlow);
+        const arBallSh = new THREE.Mesh(own(new THREE.PlaneGeometry(1, 1)), own(new THREE.MeshBasicMaterial({ map: glowT, color: 0x000000, transparent: true, opacity: 0.6, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -12 })));
+        arBallSh.renderOrder = 1; scene.add(arBallSh);
 
 
         const Q = new THREE.Quaternion(), ax = new THREE.Vector3();
         const arBallTick = (dt, t) => {
           const B = W.ball;
-          ballM.visible = ballGlow.visible = !B.hidden;
+          ballM.visible = ballGlow.visible = arBallSh.visible = !B.hidden;
+          { const z = Math.max(0, B.p.z - arBV), k = Math.max(0, 1 - z / 1800), sc = arBV * 2.6 * (1 + z / 1500); arBallSh.position.set(B.p.x, B.p.y, 3); arBallSh.scale.set(sc, sc, 1); arBallSh.material.opacity = 0.62 * k; arBallSh.visible = arBallSh.visible && k > 0 && Math.abs(B.p.x) < CFG.X - 200 && Math.abs(B.p.y) < CFG.Y + 800; }
           ballM.position.set(B.p.x, B.p.y, B.p.z); ballGlow.position.copy(ballM.position);
           const wl = vlen(B.w);
           if (wl > 1e-4) { ax.set(B.w.x / wl, B.w.y / wl, B.w.z / wl); Q.setFromAxisAngle(ax, wl * dt); ballM.quaternion.premultiply(Q); }

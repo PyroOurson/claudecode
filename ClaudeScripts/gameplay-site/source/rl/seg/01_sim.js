@@ -5,7 +5,7 @@
 
   const CFG = {
     hz: 120, g: 650,
-    X: 4096, Y: 5120, H: 2044, corner: 8064, ramp: 256,
+    X: 4096, Y: 5120, H: 2048, corner: 8064, ramp: 256, ceilR: 490, cornerR: 900,
     goalW: 892.755, goalH: 642.775, goalD: 880, postK: 24, goalR: 100, goalLine: 5124.25,
     ballR: 91.25, ballRest: 93.15, ballVis: 92.75, ballMax: 6000, ballDrag: 0.03, ballCR: 0.6, ballMu: 0.35, ballMaxW: 6, ballMass: 30, ballRestV: 15,
     carMass: 180, carRest: 17, carRespawnZ: 36,
@@ -29,7 +29,7 @@
     spawns: [[-2048, -2560, .25], [2048, -2560, .75], [-256, -3840, .5], [256, -3840, .5], [0, -4608, .5]],
     respawns: [[-2304, -4608], [-2688, -4608], [2304, -4608], [2688, -4608]],
     big: [[-3584, 0], [3584, 0], [-3072, 4096], [3072, 4096], [-3072, -4096], [3072, -4096]],
-    small: [[0, -4240], [-1792, -4184], [1792, -4184], [-940, -3308], [940, -3308], [0, -2816], [-3584, -2484], [3584, -2484], [-1788, -2300], [1788, -2300], [-2048, -1036], [0, -1024], [2048, -1036], [-1024, 0], [1024, 0], [-2048, 1036], [0, 1024], [2048, 1036], [-1788, 2300], [1788, 2300], [-3584, 2484], [3584, 2484], [0, 2816], [-940, 3310], [940, 3308], [-1792, 4184], [1792, 4184], [0, 4240]],
+    small: [[0, -4240], [-1792, -4184], [1792, -4184], [-940, -3308], [940, -3308], [0, -2816], [-3584, -2484], [3584, -2484], [-1788, -2300], [1788, -2300], [-2048, -1036], [0, -1024], [2048, -1036], [-1024, 0], [1024, 0], [-2048, 1036], [0, 1024], [2048, 1036], [-1788, 2300], [1788, 2300], [-3584, 2484], [3584, 2484], [0, 2816], [-940, 3308], [940, 3308], [-1792, 4184], [1792, 4184], [0, 4240]],
     cam: { fov: 110, dist: 270, height: 110, angle: -5, stiff: 0.45, swivel: 4.7, trans: 1.2 },
     pts: { goal: 100, assist: 50, save: 50, epicSave: 75, shot: 20, clear: 20, center: 10, aerial: 25, demo: 10, first: 10 }
   };
@@ -71,10 +71,11 @@
     const ex = px - ax - dx * t, ey = py - ay - dy * t;
     return Math.sqrt(ex * ex + ey * ey);
   }
-  function oct(x, y) {
-    const s = Math.max(x - AX, y - AY, (x + y - AC) * Math.SQRT1_2);
+  const RCN = CFG.cornerR, CXN = CFG.X - RCN, CYN = CFG.Y - RCN, CCN = CFG.corner - RCN * Math.SQRT2, W1N = CCN - CXN, W2N = CCN - CYN;
+  function octR(x, y) {
+    const s = Math.max(x - CXN, y - CYN, (x + y - CCN) * Math.SQRT1_2);
     if (s <= 0) return s;
-    return Math.min(segD(x, y, AX, -V1, AX, V1), segD(x, y, AX, V1, V2, AY), segD(x, y, V2, AY, -V2, AY));
+    return Math.min(segD(x, y, CXN, -W1N, CXN, W1N), segD(x, y, CXN, W1N, W2N, CYN), segD(x, y, W2N, CYN, -W2N, CYN));
   }
   const FN = CFG.facets, FT = [], FC = [], FS = [];
   for (let k = 0; k < FN; k++) { const a = Math.PI / 2 * (k + 0.5) / FN; FC.push(Math.cos(a)); FS.push(Math.sin(a)); if (k) FT.push(Math.tan(Math.PI / 2 * k / FN)); }
@@ -88,9 +89,9 @@
   }
   function sdf(x, y, z) {
     const ax = x < 0 ? -x : x, ay = y < 0 ? -y : y;
-    const h = RR - oct(ax, ay), sb = ay - AY - Math.max(ax - AX, (ax + ay - AC) * Math.SQRT1_2);
+    const h = RCN - octR(ax, ay), sb = ay - AY - Math.max(ax - AX, (ax + ay - AC) * Math.SQRT1_2);
     const wb = sb * RBL + 0.5, rf = wb <= 0 ? RR : wb >= 1 ? RBK : RR + (RBK - RR) * wb;
-    const df = fil(h, z, rf), dc = fil(h, HT - z, RR);
+    const df = fil(h, z, rf), dc = fil(h, HT - z, CFG.ceilR);
     let d = df < dc ? df : dc;
     const qa = GR - GW + ax, qb = GR - GB + ay, qc = GR - GH + z, qd = GR - z;
     let dg;
@@ -176,7 +177,7 @@
       wz: [0, 0, 0, 0],
       boost: 0, boosting: false, boostT: 0, boostK: 0, onGround: true, nw: 4, nwW: 4, jumped: false, jumping: false, jumpT: 0, djumped: false, flipped: false, flipping: false, flipT: 0, fdx: 0, fdy: 0,
       airT: 0, ajT: 0, autoF: false, afT: 0, afS: 0, wc: false, steerA: 0,
-      dodgeT: -1, sup: false, supT: 0, slide: 0, prevJump: false, demoT: 0, touch: false, touchT: -9, fs: 0, bumpId: -1, bumpCD: 0, resetT: -9, airHitT: -9, shotT: -9, landT: 0, rc: 0,
+      dodgeT: -1, xiT: -9, sup: false, supT: 0, slide: 0, prevJump: false, demoT: 0, touch: false, touchT: -9, fs: 0, bumpId: -1, bumpCD: 0, resetT: -9, airHitT: -9, shotT: -9, landT: 0, rc: 0,
       ctl: { throttle: 0, steer: 0, pitch: 0, yaw: 0, roll: 0, boost: false, jump: false, slide: false },
       st: newSt(),
       ai: bot ? newAi() : null
@@ -644,9 +645,10 @@
       nx = A.x * s; ny = A.y * s; nz = A.z * s; pen = BR + Math.min(ex, ey, ez);
     } else { nx /= dist; ny /= dist; nz /= dist; pen = BR - dist; }
     const rvx = B.v.x - c.v.x, rvy = B.v.y - c.v.y, rvz = B.v.z - c.v.z, rs = Math.min(Math.sqrt(rvx * rvx + rvy * rvy + rvz * rvz), 4600);
-    const fresh = !c.touch;
+    const fresh = !c.touch, xi = rs > 0 && (fresh || W.tick > c.xiT + 1 || c.xiT > W.tick);
     let ex = 0, ey = 0, ez = 0;
-    if (fresh && rs > 0) {
+    if (xi) {
+      c.xiT = W.tick;
       let dx = B.p.x - p.x, dy = B.p.y - p.y, dz = (B.p.z - p.z) * 0.35;
       let dl = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
       dx /= dl; dy /= dl; dz /= dl;
@@ -681,12 +683,12 @@
     B.p.x += nx * pen * 6 / 7; B.p.y += ny * pen * 6 / 7; B.p.z += nz * pen * 6 / 7;
     p.x -= nx * pen / 7; p.y -= ny * pen / 7; p.z -= nz * pen / 7;
     c.touch = true;
-    if (fresh) {
+    if (xi) {
       B.v.x += ex; B.v.y += ey; B.v.z += ez;
       const sp = vlen(B.v);
       if (sp > CFG.ballMax) vscale(B.v, CFG.ballMax / sp);
-      onTouch(W, c, rs);
     }
+    if (fresh) onTouch(W, c, rs);
   }
 
 

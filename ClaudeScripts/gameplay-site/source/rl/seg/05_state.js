@@ -1,4 +1,4 @@
-        const saved = Object.assign({ play: 'cpu', size: 1, diff: 'pro', len: 300, cam: true, car: 'octane', name: 'Player', xp: 0, wins: 0, games: 0, vol: 85, mute: false, shake: true, chatf: 'all', qc: null, cs: null, ld: null, pxp: 0, seen: null, tier: 1, ttl: '', tbo: true, tsh: false, tsp: 'center' }, api.load() || {});
+        const saved = Object.assign({ play: 'cpu', size: 1, diff: 'pro', len: 300, cam: true, car: 'octane', name: 'Player', xp: 0, wins: 0, games: 0, vol: 85, mute: false, shake: false, chatf: 'all', qc: null, cs: null, ld: null, pxp: 0, seen: null, tier: 1, ttl: '', tbo: true, tsh: false, tsp: 'center', ifx: null, sbc: null }, api.load() || {});
         delete saved.car2;
         if (!DIFF[saved.diff]) saved.diff = 'pro';
         if (!BODIES[saved.car]) saved.car = 'octane';
@@ -20,6 +20,10 @@
         saved.seen = saved.seen.filter(x => typeof x === 'string').slice(-400);
         if (typeof saved.ttl !== 'string') saved.ttl = '';
         saved.tbo = saved.tbo !== false; saved.tsh = !!saved.tsh;
+        const uiIfx = saved.ifx && typeof saved.ifx === 'object' && !Array.isArray(saved.ifx) ? saved.ifx : {};
+        saved.ifx = { tbm: uiIfx.tbm !== false, bci: uiIfx.bci !== false, arw: uiIfx.arw !== false, nps: Number.isFinite(uiIfx.nps) ? Math.max(50, Math.min(150, Math.round(uiIfx.nps))) : 100 };
+        const uiSbK = ['goals', 'assists', 'saves', 'shots', 'demos'];
+        saved.sbc = Array.isArray(saved.sbc) && saved.sbc.length === 4 && saved.sbc.every(x => uiSbK.includes(x)) ? saved.sbc : ['goals', 'assists', 'saves', 'shots'];
         if (typeof saved.tsp !== 'string') saved.tsp = 'center';
         let W = makeWorld({ size: 1, human: false, bodies: [saved.car, saved.car] });
         let paused = false, submitted = false, ui = 'title';

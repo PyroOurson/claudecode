@@ -116,10 +116,25 @@
           cT.multiplyScalar(1000).add(cmr.position); cmr.lookAt(cT);
         };
         const fxSC = { p: new THREE.Vector3(), l: new THREE.Vector3(), f: 50, k: '', t: 0 };
-        const fxShowCam = (v, dt) => {
-          const cmr = v.camera, kind = ui === 'title' ? 'title' : ui === 'load' ? 'load' : ui === 'menu' && uiScr === 'garage' ? 'garage' : 'main', o = uiCamSpot(kind);
+        const fxPV = new THREE.Vector3();
+        const fxPodium = (v, S, dt) => {
+          const cmr = v.camera, win = uiEnd.win, L = W.cars.filter(c => c.team === win), mv = uiEnd.mvp && uiEnd.mvp.team === win ? uiEnd.mvp : L[0], O = mv ? [mv, ...L.filter(c => c !== mv)] : L, X = [0, -250, 250], Y = [0, 110, 110], A = [0, 0.4, -0.4];
+          O.forEach((c, i) => { placeCar(c, X[i] || 0, Y[i] || 0, -Math.PI / 2 + (A[i] || 0)); c.boost = 0; });
+          for (const c of W.cars) if (c.team !== win) { placeCar(c, 0, 4200 + c.slot * 300, 0); c.demoT = 1e9; }
           fxSC.t += dt;
-          const sway = kind === 'load' ? 0 : Math.sin(fxSC.t * 0.23) * (kind === 'title' ? 60 : 22);
+          if (!S.pf) S.pf = cmr.fov;
+          if (cmr.fov !== 46) { cmr.fov = 46; cmr.updateProjectionMatrix(); }
+          const pd0 = [300, 300, 440, 580][O.length] || 580; cmr.position.set(Math.sin(fxSC.t * 0.25) * 30, -pd0, 70 + pd0 * 0.12); cmr.up.set(0, 0, 1); cmr.lookAt(0, 70, 40);
+          v.cam.p.copy(cmr.position); S.snap = true;
+          const pd = endEl.querySelector('.pdn'); if (!pd) return;
+          if (pd.childElementCount !== O.length) pd.innerHTML = O.map(c => `<div class="p${c.team}">${c === uiEnd.mvp ? '<i class="pmv">MVP</i>' : ''}<b>${esc(label(c))}</b></div>`).join('');
+          cmr.updateMatrixWorld();
+          O.forEach((c, i) => { const d = pd.children[i]; if (!d) return; fxPV.set(c.p.x, c.p.y, c.p.z + 62).project(cmr); d.style.left = ((fxPV.x + 1) * 50).toFixed(2) + '%'; d.style.top = ((1 - fxPV.y) * 50).toFixed(2) + '%'; });
+        };
+        const fxShowCam = (v, dt) => {
+          const cmr = v.camera, kind = ui === 'title' ? 'title' : ui === 'menu' && uiFar() ? 'team' : ui === 'load' ? 'load' : ui === 'menu' && uiScr === 'garage' ? 'garage' : 'main', o = uiCamSpot(kind);
+          fxSC.t += dt;
+          const sway = kind === 'load' || kind === 'team' ? 0 : Math.sin(fxSC.t * 0.23) * (kind === 'title' ? 60 : 22);
           cP.set(o[0] + sway, o[1] + sway * 0.4, o[2]); cL.set(o[3], o[4], o[5]);
           const snap = uiCamSnap || !fxSC.k || (fxSC.k !== kind && (kind === 'title' || kind === 'load' || fxSC.k === 'title' || fxSC.k === 'load'));
           uiCamSnap = false; fxSC.k = kind;
@@ -134,6 +149,8 @@
           const cam = v.cam, cmr = v.camera, me = v.car, S = fxCS[v.i];
           if (fxRp.on && fxRp.show) { fxRpCam(v, S, dt); return; }
           if (ui === 'menu' || ui === 'title' || ui === 'load' || ui === 'lobby' || ui === 'wait') { fxShowCam(v, dt); S.snap = true; return; }
+          if (ui === 'end' && uiEnd.on && uiEnd.pod > 0) { fxPodium(v, S, dt); return; }
+          if (S.pf) { cmr.fov = S.pf; S.pf = 0; cmr.updateProjectionMatrix(); }
           if (!me || (W.state === 'end' && W.stateT > 3)) {
             cam.orbit += dt * 0.05;
             const a = cam.orbit + v.i * Math.PI;
@@ -183,7 +200,7 @@
             { const kp = 1 - Math.exp(-Math.min(400, 20 / Math.max(0.05, 1 - fxCam.stiff)) * dt), pz = S.piv.z; S.piv.lerp(cP.set(P.x, P.y, P.z), kp); if (air) S.piv.z = pz + (P.z - pz) * (1 - Math.exp(-2.2 * dt)); }
           }
           S.D.addScaledVector(U, -S.D.dot(U)).normalize();
-          const hgt = fxCam.height + 14, cs = Math.cos(S.th), sn = Math.sin(S.th), d0 = fxCam.dist, dist = sn > 0.01 ? clamp((hgt * cs - 20) / sn, 150, d0) : d0;
+          const hgt = fxCam.height + 44, cs = Math.cos(S.th), sn = Math.sin(S.th), d0 = fxCam.dist, dist = sn > 0.01 ? clamp((hgt * cs - 20) / sn, 150, d0) : d0;
           cF.copy(S.D).multiplyScalar(cs).addScaledVector(U, sn);
           cB.copy(U).multiplyScalar(cs).addScaledVector(S.D, -sn);
           cA.copy(S.piv); if (air) cA.addScaledVector(cB, 40); else cA.addScaledVector(cR.set(me.u.x, me.u.y, me.u.z), 60);
@@ -200,7 +217,7 @@
           if (lift > 0) { if (air) cR.copy(cB); else cR.set(me.u.x, me.u.y, me.u.z); cP.addScaledVector(cR, lift * 330); }
           if (lift > 0) { cR.set(cP.x - P.x, cP.y - P.y, cP.z - P.z); const dd = cR.length(); if (dd < 250 && dd > 1) cP.addScaledVector(cR, (250 - dd) / dd); }
           fxPush(cP, 32);
-          const ang = fxCam.angle * Math.PI / 180;
+          const ang = fxCam.angle * 0.65 * Math.PI / 180;
           cL.copy(cF).multiplyScalar(Math.cos(ang)).addScaledVector(cB, Math.sin(ang) - lift * 0.45).normalize();
           if (ks > 0 && tgt) {
             cT.set(tgt.x - cP.x, tgt.y - cP.y, tgt.z - cP.z).normalize();
@@ -223,6 +240,10 @@
         };
 
 
+        const fxSpawnFx = c => {
+          if (!c || c.demoT > 0) return;
+          for (let i = 0; i < 50; i++) { const a = Math.random() * TAU, sp = 300 + Math.random() * 800, k = Math.random(); fxSpark.emit(c.p.x + Math.cos(a) * 30, c.p.y + Math.sin(a) * 30, c.p.z - 12, Math.cos(a) * sp, Math.sin(a) * sp, 60 + Math.random() * 220, 0.3 + Math.random() * 0.35, 1, 0.66 + k * 0.2, 0.22 + k * 0.15, 2 + Math.random() * 2, 0.07, 700, 2.5); }
+        };
         const FX_RPE = new Set(['touch', 'bounce', 'demo', 'bump', 'goal', 'pad', 'jump', 'djump', 'dodge', 'land', 'respawn']);
         const fxEvent = (e, rp) => {
           switch (e.type) {
@@ -249,7 +270,7 @@
               fxRp.goal = e; fxRp.goalT = W.time;
               const kmh = Math.round(e.speed * 0.036);
               banner('GOAL!', (e.scorer ? label(e.scorer) + (e.assist ? ' · assist ' + label(e.assist) : '') : 'Own goal') + ' · ' + kmh + ' km/h', TEAMCSS[e.team], 2.9);
-              feedMsg(e.scorer ? `${nm(e.scorer)} scored!` : `${TEAMN[e.team]} scores`);
+              feedMsg(e.scorer ? `${nm(e.scorer)} scored!` : `<i class="p${e.team}">${esc(TEAMN[e.team])}</i> scored!`);
               popMsg(e.scorer, 'GOAL +100'); popMsg(e.assist, 'ASSIST +50');
               break;
             }
@@ -267,7 +288,7 @@
             case 'save': if (!rp && e.car) { feedMsg(`${nm(e.car)} saved it`); popMsg(e.car, 'SAVE +50'); } fxOoh(); break;
             case 'shot': if (!rp) popMsg(e.car, 'SHOT ON GOAL +20'); break;
             case 'epicsave': fxOoh(); crowdSwell(0.24, 2.6, 0.6); break;
-            case 'flipreset': if (isLocal(e.car)) { tone(1318.5, 0.12, 'sine', 0.04, 1975.5); tone(1975.5, 0.16, 'triangle', 0.025, 0, 0.06); } break;
+            case 'flipreset': if (isLocal(e.car)) { const c = e.car, x = c.p.x - c.u.x * 22, y = c.p.y - c.u.y * 22, z = c.p.z - c.u.z * 22; tone(1318.5, 0.12, 'sine', 0.04, 1975.5); tone(1975.5, 0.16, 'triangle', 0.025, 0, 0.06); fxFlash(x, y, z, 0xe8ff60, 40, 260, 0.2, 0.7); for (let i = 0; i < 46; i++) { const d = fxDir(-c.u.x * 0.6, -c.u.y * 0.6, -c.u.z * 0.6, false), sp = 500 + Math.random() * 900; fxSpark.emit(x, y, z, d.x * sp + c.v.x, d.y * sp + c.v.y, d.z * sp + c.v.z, 0.18 + Math.random() * 0.22, 0.8, 1, 0.15, 2 + Math.random() * 2.5, 0.06, 0, 4); } } break;
             case 'demo': {
               const a = att(e.p), pn = fxPan(e.p);
               fxDemoBlast(e.p, e.b ? e.b.team : 0);
@@ -309,13 +330,13 @@
               const c = e.car; if (!c) break;
               fxTc.set(TEAMC[c.team]);
               for (let i = 0; i < 36; i++) { const a = Math.random() * Math.PI * 2, r = 40 + Math.random() * 60; fire.emit(c.p.x + Math.cos(a) * r, c.p.y + Math.sin(a) * r, c.p.z + Math.random() * 60, Math.cos(a) * 60, Math.sin(a) * 60, 200 + Math.random() * 300, 0.5 + Math.random() * 0.4, fxTc.r * 0.7 + 0.3, fxTc.g * 0.7 + 0.3, fxTc.b * 0.7 + 0.3, 50, 6, 0, 1.5); }
-              fxFlash(c.p.x, c.p.y, c.p.z + 30, TEAMC[c.team], 120, 520, 0.45, 0.8);
+              fxFlash(c.p.x, c.p.y, c.p.z + 30, TEAMC[c.team], 120, 520, 0.45, 0.8); fxSpawnFx(c);
               if (isLocal(c)) { noise(0.45, 500, 0.06, 'bandpass', 1, 2600); tone(420, 0.35, 'sine', 0.03, 1000); }
               break;
             }
             case 'countdown':
               fxGoal.on = false;
-              if (e.n === 3) for (const S of fxCS) S.snap = true;
+              if (e.n === 3) { for (const S of fxCS) S.snap = true; for (const c of W.cars) fxSpawnFx(c); }
               banner(String(e.n), W.ot ? 'Overtime' : '', 'rgba(255,140,30,.85)', 1.05); fxBeep(false);
               break;
             case 'go': banner('GO!', '', 'rgba(255,170,60,.9)', 0.8); fxBeep(true); crowdSwell(0.12, 1.6, 0.35); fxRec.goT = W.time; break;
