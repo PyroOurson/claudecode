@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>You are invited to gameplay</title>
+<style>
+body{margin:0;padding:0;width:100%!important;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}
+table{border-collapse:separate;mso-table-lspace:0;mso-table-rspace:0}
+a{color:#7047eb}
+.btn a:hover{background:#6038e0!important;border-color:#6038e0!important}
+@media (max-width:620px){.card{border-radius:0!important}.pad{padding-left:24px!important;padding-right:24px!important}.h1{font-size:24px!important}}
+@media (prefers-color-scheme:dark){
+.bg{background:#12101f!important}
+.card{background:#1b182d!important;border-color:#2c2747!important}
+.ink{color:#f0eeff!important}
+.mute{color:#a29fc0!important}
+.code{background:#252140!important;color:#f0eeff!important;border-color:#3a3460!important}
+.line{border-color:#2c2747!important}
+.lnk{color:#a993ff!important}
+}
+[data-ogsc] .bg{background:#12101f!important}
+[data-ogsc] .card{background:#1b182d!important}
+[data-ogsc] .ink{color:#f0eeff!important}
+[data-ogsc] .mute{color:#a29fc0!important}
+</style>
+<!--[if mso]><style>.btn a{padding:14px 30px!important}</style><![endif]-->
+</head>
+<body class="bg" style="margin:0;padding:0;background:#f6f3fc;">
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#f6f3fc;opacity:0">Someone invited you to gameplay. Accept to create your account.&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="bg" style="background:#f6f3fc;">
+<tr><td align="center" style="padding:32px 12px 40px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;">
+<tr><td style="padding:0 8px 22px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+<td width="36" height="36" align="center" valign="middle" style="width:36px;height:36px;background:#7047eb;border-radius:10px;mso-line-height-rule:exactly;line-height:36px;"><div style="display:inline-block;width:0;height:0;margin-left:4px;border-top:8px solid transparent;border-bottom:8px solid transparent;border-left:13px solid #ffffff;vertical-align:middle;line-height:0;font-size:0;"></div></td>
+<td class="ink" style="padding-left:11px;font-family:Inter,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.5px;color:#211a35;">gameplay</td>
+</tr></table>
+</td></tr>
+<tr><td class="card" style="background:#ffffff;border:1px solid #efebf5;border-radius:20px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td class="pad" style="padding:40px 44px 36px;font-family:Inter,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<h1 class="ink h1" style="margin:0 0 12px;font-size:28px;line-height:1.2;font-weight:700;letter-spacing:-0.3px;color:#211a35;">You are invited!</h1>
+<p class="mute" style="margin:0 0 28px;font-size:15px;line-height:1.6;color:#5f5872;">You have been invited to join <b class="ink" style="color:#211a35;">gameplay</b>: free browser games with your records and saves on every device. Tap the button to accept and choose your password.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" class="btn" style="margin:0 0 28px;"><tr><td align="center" bgcolor="#7047eb" style="border-radius:11px;background:#7047eb;">
+<a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block;padding:15px 30px;font-family:Inter,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;line-height:1;color:#ffffff;text-decoration:none;border-radius:11px;border:1px solid #7047eb;background:#7047eb;">Accept the invite &rarr;</a>
+</td></tr></table><p class="mute line" style="margin:0;padding-top:20px;border-top:1px solid #efebf5;font-size:12.5px;line-height:1.6;color:#8b8499;">Button not working? Copy this link into your browser:<br><a class="lnk" href="{{ .ConfirmationURL }}" style="color:#7047eb;word-break:break-all;">{{ .ConfirmationURL }}</a></p>
+</td></tr>
+</table>
+</td></tr>
+<tr><td class="mute" style="padding:24px 8px 0;font-family:Inter,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#8b8499;text-align:center;">
+Not expecting this? You can ignore this email.<br>
+<a class="lnk" href="{{ .SiteURL }}" style="color:#7047eb;text-decoration:none;font-weight:600;">gameplay</a> &middot; free browser games, no ads.<br>
+&copy; 2026 gameplay
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>

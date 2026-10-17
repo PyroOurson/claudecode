@@ -1,0 +1,16 @@
+  const tallBottom = (P) => I => { grassBlades(I, PH([0x2a6a14, 0x3a8a1c, 0x4e9a26]), 10, 13, 501, .15); for (let y = 0; y < 16; y++) I.set(7, y, hx(0x3a7a1a)); };
+  def('sunflower_bottom', I => { for (let y = 0; y < 16; y++) I.set(7, y, hx(0x3a7a1a)); for (const [x, y] of [[5, 6], [6, 6], [9, 10], [10, 10], [4, 12], [11, 4]]) I.set(x, y, hx(0x4e9a26)); });
+  def('sunflower_top', I => { for (let y = 6; y < 16; y++) I.set(7, y, hx(0x3a7a1a)); I.fill((x, y) => { const d = Math.hypot(x - 7.5, y - 5); return d < 2 ? hx(0x5a3a10) : d < 4.6 ? pal(PH([0xe8b818, 0xf8d030, 0xffe860]), nz(x, y, 502)) : null; }); });
+  def('sunflower_front', I => I.fill((x, y) => { const d = Math.hypot(x - 7.5, y - 7.5); return d < 3 ? pal(PH([0x3a2408, 0x5a3a10, 0x7a5018]), nz(x, y, 503)) : d < 7 && (Math.atan2(y - 7.5, x - 7.5) * 4 % 1.2 < .9 || d < 5) ? pal(PH([0xe8b818, 0xf8d030, 0xffe860]), nz(x, y, 504)) : null; }));
+  const bushFlower = (c1, c2, base) => I => { I.fill((x, y) => Math.hypot(x - 7.5, (y - 8) * 1.1) < 7 && nz(x, y, 505) > .2 ? pal(PH([0x2a6a14, 0x3a8a1c, 0x4e9a26]), nz(x, y, 506)) : null); const R = rng(hstr(base)); for (let k = 0; k < 10; k++) { const x = 2 + R() * 12 | 0, y = 1 + R() * 10 | 0; I.set(x, y, hx(c1)); I.set(x + 1, y, hx(c2)); I.set(x, y + 1, hx(c2)); } };
+  def('lilac_top', bushFlower(0xc890d8, 0xa868b8, 'lilac')); def('lilac_bottom', tallBottom());
+  def('rose_bush_top', bushFlower(0xd82020, 0xa01010, 'rose')); def('rose_bush_bottom', I => { tallBottom()(I); for (const [x, y] of [[4, 4], [10, 7]]) { I.set(x, y, hx(0xd82020)); I.set(x + 1, y, hx(0xa01010)); } });
+  def('peony_top', bushFlower(0xf0b0d0, 0xd890b8, 'peony')); def('peony_bottom', tallBottom());
+  def('pitcher_plant_top', I => { I.fill((x, y) => y > 6 && Math.abs(x - 7.5) < 3 + (y - 6) * .2 ? pal(PH([0x2a7a8a, 0x3a9aaa, 0x5ab8c8]), nz(x, y, 507)) : null); I.fill((x, y) => y <= 6 && y > 1 && Math.abs(x - 7.5) < (7 - y) * .8 ? pal(PH([0x7a3aa8, 0x9a5ac8]), nz(x, y, 508)) : null); });
+  def('pitcher_plant_bottom', I => { tallBottom()(I); I.fill((x, y) => y < 6 && Math.abs(x - 7.5) < 3 ? pal(PH([0x2a7a8a, 0x3a9aaa]), nz(x, y, 509)) : null); });
+  const HOP = PH([0x3a3a3a, 0x444444, 0x4e4e4e, 0x585858]);
+  def('hopper_outside', I => I.fill((x, y) => pal(HOP, nz(x, y, 510))));
+  def('hopper_inside', I => I.fill((x, y) => pal(PH([0x222222, 0x2a2a2a, 0x323232]), nz(x, y, 511))));
+  def('hopper_top', I => { I.fill((x, y) => pal(HOP, nz(x, y, 512))); I.rect(2, 2, 13, 13, [0, 0, 0, 0]); });
+  def('i_resin_clump', I => spr(I, (x, y) => ell(x, y, 8, 9, 5, 4.4) + nz(x | 0, y | 0, 513) * .3 < 1.05 ? pal(PH([0xb85a14, 0xd06c18, 0xf0922e, 0xffc070]), clamp(.6 - (x - 8) * .07 - (y - 8) * .07, 0, .99)) : null));
+  pat(/^(.+_leaves)_fast$/, (I, m) => { const f = PAINT[m[1]]; if (f) f(I, m[1], true); else I.copy(get(m[1])); });
