@@ -49,6 +49,8 @@
         const arHaloT = tex(128, 128, (g, tw) => { const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.08, 'rgba(255,255,255,.75)'); gr.addColorStop(0.25, 'rgba(255,255,255,.32)'); gr.addColorStop(0.55, 'rgba(255,255,255,.1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, tw, tw); });
         const arSunH = new THREE.Sprite(own(new THREE.SpriteMaterial({ map: arHaloT, color: 0xffa868, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.5, fog: false, toneMapped: false })));
         arSunH.scale.set(30000, 30000, 1); arSunH.position.copy(arSunD).multiplyScalar(26000); arSunH.renderOrder = 7; scene.add(arSunH);
+        const arRingT = tex(128, 128, (g, tw) => { const gr = g.createRadialGradient(64, 64, 30, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.7, 'rgba(255,255,255,.55)'); gr.addColorStop(0.85, 'rgba(255,255,255,.2)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, tw, tw); });
+        const arFlare = [[0.35, 70, 0xffb070, arHaloT, 0.3], [0.7, 40, 0x9fd0ff, arHaloT, 0.26], [1.15, 120, 0xffc890, arRingT, 0.22], [1.5, 26, 0xc8a0ff, arHaloT, 0.28], [1.85, 90, 0x80ffb0, arRingT, 0.14]].map(([f, sz, c, m, o]) => { const sp = new THREE.Sprite(own(new THREE.SpriteMaterial({ map: m, color: c, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, transparent: true, opacity: o, fog: false, toneMapped: false }))); sp.visible = false; sp.renderOrder = 9; sp.frustumCulled = false; scene.add(sp); return { sp, f, sz, o }; });
         const arSunC = new THREE.Sprite(own(new THREE.SpriteMaterial({ map: glowT, color: 0xfff0d0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.9, fog: false, toneMapped: false }))); arSunC.scale.set(6000, 6000, 1); arSunC.position.copy(arSunG.position); scene.add(arSunC);;
         const arRays = (() => {
           const rp = [], rc = [], S = arSunD.clone().multiplyScalar(30000), RR3 = rngOf(71);
@@ -166,8 +168,8 @@
         const fieldT = tex(1024, 2048, (g, tw, th) => {
           const sx = tw / (2 * CFG.X), sy = th / (2 * GB), X0 = -CFG.X, Wd = 2 * CFG.X;
           g.setTransform(sx, 0, 0, -sy, tw / 2, th / 2);
-          g.fillStyle = '#2c3a1e'; g.fillRect(X0, -GB, Wd, 2 * GB);
-          for (let i = 0, y0 = -GB; y0 < GB; i++, y0 += 512) { g.fillStyle = i % 2 ? 'rgba(0,0,0,.46)' : 'rgba(255,255,200,.06)'; g.fillRect(X0, y0, Wd, 512); }
+          g.fillStyle = '#244222'; g.fillRect(X0, -GB, Wd, 2 * GB);
+          for (let i = 0, y0 = -GB; y0 < GB; i++, y0 += 512) { g.fillStyle = i % 2 ? 'rgba(0,0,0,.4)' : 'rgba(200,255,200,.06)'; g.fillRect(X0, y0, Wd, 512); }
           for (let i = -8; i < 8; i++) for (let j = -10; j < 10; j++) { g.fillStyle = (i + j) & 1 ? 'rgba(0,0,0,.11)' : 'rgba(255,255,210,.035)'; g.fillRect(i * 640 + 320, j * 640, 640, 640); }
           const R = rngOf(11);
           for (let i = 0; i < 26000; i++) { const d = R() < 0.5; g.fillStyle = d ? `rgba(0,0,0,${0.05 + R() * 0.08})` : `rgba(210,230,170,${0.025 + R() * 0.04})`; g.fillRect(X0 + R() * Wd, -GB + R() * 2 * GB, 8 + R() * 12, 6 + R() * 10); }
