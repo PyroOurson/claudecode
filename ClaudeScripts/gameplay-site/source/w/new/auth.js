@@ -295,7 +295,7 @@ function auShake(el) { if (!el) return; el.classList.remove('au-shake'); void el
 function auErrText(e) {
   const m = String(e && (e.message || e.error_description || e) || ''), c = String(e && e.code || '');
   if (c === 'invalid_credentials' || /invalid login credentials/i.test(m)) return 'Wrong email, username or password.';
-  if (c === 'email_not_confirmed' || /email not confirmed/i.test(m)) return 'Confirm your email first: open the link we sent you.';
+  if (c === 'email_not_confirmed' || /email not confirmed/i.test(m)) return 'Confirm your email first: type the code we sent you.';
   if (c === 'user_already_exists' || /already registered|already exists/i.test(m)) return 'An account with this email already exists. Log in instead.';
   if (c === 'same_password' || /different from the old/i.test(m)) return 'Choose a password that is different from your current one.';
   if (c === 'weak_password' || /password should/i.test(m)) return 'Choose a stronger password: at least 8 characters.';
@@ -503,7 +503,7 @@ async function auLogin() {
     $('#aupass').value = ''; closeAll();
   } catch (e) {
     SB.loud = false;
-    if (e && (e.code === 'email_not_confirmed' || /email not confirmed/i.test(e.message || ''))) { SB.cmail = email; SB.otpAt = 0; $('#aucmail').textContent = email; $('#accode').value = ''; auView('check'); auMsg('acnote', 'Confirm your email first: type the code we sent you, or send a new one.', 'bad'); }
+    if (e && (e.code === 'email_not_confirmed' || /email not confirmed/i.test(e.message || ''))) { auCheck(email, 'signup', false); auMsg('acnote', 'Confirm your email first: type the code we sent you, or send a new one.', 'bad'); }
     else auMsg('aunote', auErrText(e), 'bad');
   }
   finally { auBusy(false); }
@@ -532,11 +532,20 @@ async function auSignup() {
     track('auth', { act: 'signup' });
     $('#auuppass').value = ''; auReqs($('#auuppass'));
     if (r.data && r.data.session) { auWait(true); closeAll(); return; }
-    SB.loud = false; SB.cmail = id; SB.rsAt = Date.now() + 60000; SB.otpAt = Date.now();
-    $('#aucmail').textContent = id; $('#accode').value = ''; auMsg('acnote', '');
-    auView('check'); setTimeout(auFocus, 120);
+    SB.loud = false;
+    auCheck(id, 'signup', true);
   } catch (e) { SB.loud = false; auMsg('auupnote', auErrText(e), 'bad'); }
   finally { auBusy(false); }
+}
+function auCheck(email, kind, fresh) {
+  const back = $('#auckback');
+  SB.cmail = email; SB.ck = kind; SB.otpAt = fresh ? Date.now() : 0;
+  if (fresh) SB.rsAt = Date.now() + 60000;
+  $('#aucmail').textContent = email; $('#accode').value = ''; auMsg('acnote', '');
+  document.querySelectorAll('#aumodal [data-ck]').forEach(e => { e.hidden = e.dataset.ck !== kind; });
+  if (kind === 'recovery') { back.removeAttribute('data-aumode'); back.dataset.auv = 'reset'; }
+  else { back.removeAttribute('data-auv'); back.dataset.aumode = SB.mode === 'up' ? 'up' : 'in'; }
+  auView('check'); setTimeout(auFocus, 120);
 }
 function auResendTick() {
   clearTimeout(SB.rsT);
@@ -552,7 +561,7 @@ async function auResend() {
   b.disabled = true; b.classList.add('is-busy'); auMsg('acnote', '');
   try {
     const c = await sbClient();
-    const { error } = await c.auth.resend({ type: 'signup', email: SB.cmail, options: { emailRedirectTo: sbRedirect('signup') } });
+    const { error } = SB.ck === 'recovery' ? await c.auth.resetPasswordForEmail(SB.cmail, { redirectTo: sbRedirect('recovery') }) : await c.auth.resend({ type: 'signup', email: SB.cmail, options: { emailRedirectTo: sbRedirect('signup') } });
     if (error) throw error;
     SB.rsAt = Date.now() + 60000; SB.otpAt = Date.now(); $('#accode').value = '';
     track('auth', { act: 'resend' });
@@ -569,14 +578,16 @@ async function auVerify() {
   let bad = '';
   try {
     const c = await sbClient();
-    SB.loud = true;
-    const { error } = await c.auth.verifyOtp({ email: SB.cmail, token: code, type: 'signup' });
+    const rec = SB.ck === 'recovery';
+    SB.loud = !rec; SB.rec = rec;
+    const { error } = await c.auth.verifyOtp({ email: SB.cmail, token: code, type: rec ? 'recovery' : 'signup' });
     if (error) throw error;
-    track('auth', { act: 'verify' });
+    track('auth', { act: 'verify', kind: rec ? 'recovery' : 'signup' });
     $('#accode').value = '';
-    auWait(true); closeAll();
+    if (rec) { SB.rec = false; $('#anuser').value = SB.cmail; auView('newpass'); setTimeout(auFocus, 120); }
+    else { auWait(true); closeAll(); }
   } catch (e) {
-    SB.loud = false;
+    SB.loud = false; SB.rec = false;
     const m = String(e && (e.message || e) || ''), k = String(e && e.code || '');
     if (k === 'otp_expired' || /expired|invalid/i.test(m)) {
       bad = !SB.otpAt ? 'This code is wrong or has expired. Check the newest email, or click Resend code.' : Date.now() - SB.otpAt > 3600000 ? 'This code has expired. Click Resend code to get a new one.' : 'Wrong code. Check the newest email and try again.';
@@ -595,7 +606,8 @@ async function auReset() {
     const { error } = await c.auth.resetPasswordForEmail(email, { redirectTo: sbRedirect('recovery') });
     if (error) throw error;
     track('auth', { act: 'reset' });
-    auMsg('arnote', 'Check your inbox. If an account uses this email, we sent it a link to choose a new password.', 'ok');
+    auCheck(email, 'recovery', true);
+    auMsg('acnote', 'If an account uses this email, we sent it a code.', 'ok');
   } catch (e) { auMsg('arnote', auErrText(e), 'bad'); }
   finally { auBusy(false); }
 }
