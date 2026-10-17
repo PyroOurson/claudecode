@@ -1,5 +1,5 @@
         const scene = new THREE.Scene();
-        scene.fog = new THREE.Fog(0x8a6c4c, 2600, 19000);
+        scene.fog = new THREE.Fog(0x95704a, 2400, 18000);
         const arSunAz = 0.9, arSunEl = 0.64, arSunD = new THREE.Vector3(Math.cos(arSunEl) * Math.cos(arSunAz), Math.cos(arSunEl) * Math.sin(arSunAz), Math.sin(arSunEl));
         const hemi = new THREE.HemisphereLight(0xa8a8b4, 0x4a3a28, 0.55); hemi.position.set(0, 0, 1); scene.add(hemi);
         const sun = new THREE.DirectionalLight(0xffc890, 1.15);
@@ -38,7 +38,7 @@
             for (let wy = y0 + 4; wy < y1 - 3; wy += 5) for (let wx = x0 + 2; wx < x0 + wd - 2; wx += 4) if (R() < 0.28) { g.fillStyle = R() < 0.7 ? 'rgba(255,214,150,.55)' : 'rgba(170,210,255,.5)'; g.fillRect(wx, wy, 1.6, 2); }
           }
           blob(arSunAz, 0.25, 1.3, 0.5, 'rgba(255,165,90,.42)', 'rgba(255,140,60,0)'); blob(arSunAz, arSunEl, 0.4, 0.3, 'rgba(255,215,150,.5)', 'rgba(255,170,90,0)'); blob(arSunAz, arSunEl, 0.12, 0.09, 'rgba(255,248,225,1)', 'rgba(255,220,160,0)');
-          const hz = g.createLinearGradient(0, PY(0.3), 0, PY(0)); hz.addColorStop(0, 'rgba(90,100,104,0)'); hz.addColorStop(1, 'rgba(120,100,84,.55)'); g.fillStyle = hz; g.fillRect(0, PY(0.3), tw, PY(0) - PY(0.3));
+          const hz = g.createLinearGradient(0, PY(0.35), 0, PY(0)); hz.addColorStop(0, 'rgba(160,120,80,0)'); hz.addColorStop(1, 'rgba(200,148,96,.7)'); g.fillStyle = hz; g.fillRect(0, PY(0.3), tw, PY(0) - PY(0.3));
           
         });
         const arSkyM = own(new THREE.MeshBasicMaterial({ map: skyT, side: THREE.BackSide, fog: false, depthWrite: false }));
@@ -46,15 +46,18 @@
         sky.rotation.x = Math.PI / 2; scene.add(sky);
         const glowT = tex(64, 64, (g, tw) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.3, 'rgba(255,255,255,.42)'); gr.addColorStop(0.65, 'rgba(255,255,255,.1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, tw, tw); });
         const arSunG = { position: arSunD.clone().multiplyScalar(50000) };
+        const arHaloT = tex(128, 128, (g, tw) => { const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.08, 'rgba(255,255,255,.75)'); gr.addColorStop(0.25, 'rgba(255,255,255,.32)'); gr.addColorStop(0.55, 'rgba(255,255,255,.1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, tw, tw); });
+        const arSunH = new THREE.Sprite(own(new THREE.SpriteMaterial({ map: arHaloT, color: 0xffa868, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.5, fog: false, toneMapped: false })));
+        arSunH.scale.set(30000, 30000, 1); arSunH.position.copy(arSunD).multiplyScalar(26000); arSunH.renderOrder = 7; scene.add(arSunH);
         const arSunC = new THREE.Sprite(own(new THREE.SpriteMaterial({ map: glowT, color: 0xfff0d0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.9, fog: false, toneMapped: false }))); arSunC.scale.set(6000, 6000, 1); arSunC.position.copy(arSunG.position); scene.add(arSunC);;
         const arRays = (() => {
           const rp = [], rc = [], S = arSunD.clone().multiplyScalar(30000), RR3 = rngOf(71);
           for (let k = 0; k < 7; k++) {
             const tx = (RR3() - 0.5) * 9000, ty = (RR3() - 0.3) * 9000, w = 500 + RR3() * 900, d = new THREE.Vector3(tx - S.x, ty - S.y, -S.z).normalize(), side = new THREE.Vector3(-d.y, d.x, 0).normalize().multiplyScalar(w);
-            rp.push(S.x, S.y, S.z, tx + side.x, ty + side.y, 0, tx - side.x, ty - side.y, 0); rc.push(1, 0.8, 0.55, 0, 0, 0, 0, 0, 0);
+            rp.push(S.x, S.y, S.z, tx + side.x, ty + side.y, 0, tx - side.x, ty - side.y, 0); rc.push(1, 0.72, 0.4, 0, 0, 0, 0, 0, 0);
           }
           const rg = own(new THREE.BufferGeometry()); rg.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3)); rg.setAttribute('color', new THREE.Float32BufferAttribute(rc, 3));
-          const rm = new THREE.Mesh(rg, own(new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false, toneMapped: false })));
+          const rm = new THREE.Mesh(rg, own(new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.1, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false, toneMapped: false })));
           rm.frustumCulled = false; rm.renderOrder = 6; scene.add(rm); return rm;
         })();
         {

@@ -685,7 +685,10 @@ $ .portrait .mcs{flex-direction:column;gap:calc(var(--u)*.6)}
 $ .portrait .mcs .sl{width:100%}
 $ .otb{flex-wrap:nowrap}
 $ .ot{padding:0 calc(var(--u)*.75);font-size:max(10px,calc(var(--u)*1.15))}
-$ .osb select{width:calc(var(--u)*7.2)}
+$ .osb select{width:calc(var(--u)*6.4)}
+$ .ob .osb>span{flex:0 0 18%}
+$ .ob .orw.osb>span{flex:0 0 22%}
+$ .ob .orw.osb select{flex:1 1 0;min-width:0;width:auto;margin-left:calc(var(--u)*.3)}
 $ .nobci .vh .cb{display:none}
 $ .osh{margin:calc(var(--u)*.6) 0 calc(var(--u)*.3);padding-left:calc(var(--u)*.6);font:600 max(10px,calc(var(--u)*1.1))/1 "Rajdhani",var(--rf);letter-spacing:.06em;text-transform:uppercase;color:#5ab8ff}
 $ .osb select{flex:0 0 auto;width:calc(var(--u)*8.5);height:max(22px,calc(var(--u)*2.3));margin-left:calc(var(--u)*.4);border:0;background:linear-gradient(90deg,#03080f,#0c1726);box-shadow:inset 0 0 0 1px rgba(120,190,240,.55);color:#fff;font:500 max(10px,calc(var(--u)*1.05))/1 var(--tf)}
