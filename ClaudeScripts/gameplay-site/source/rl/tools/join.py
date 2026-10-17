@@ -1,6 +1,6 @@
 import sys, os, json, subprocess, shutil
-R = '/tmp/gameplay-build/rl'
-P = '/tmp/gameplay-build/w/parts'
+R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+P = os.path.join(os.path.dirname(R), 'w', 'parts')
 who = sys.argv[1]
 mode = sys.argv[2] if len(sys.argv) > 2 else 'own'
 own = json.load(open(os.path.join(R, 'seg', '_owners.json')))

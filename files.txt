@@ -17,6 +17,7 @@ ClaudeScripts/gameplay-site/source/rl/models/merc.json
 ClaudeScripts/gameplay-site/source/rl/models/octane.json
 ClaudeScripts/gameplay-site/source/rl/models/venom.json
 ClaudeScripts/gameplay-site/source/rl/notes/README.md
+ClaudeScripts/gameplay-site/source/rl/notes/accuracy_audit.md
 ClaudeScripts/gameplay-site/source/rl/notes/carsoccer.md
 ClaudeScripts/gameplay-site/source/rl/notes/diff.md
 ClaudeScripts/gameplay-site/source/rl/notes/models.md
@@ -234,6 +235,7 @@ ClaudeScripts/gameplay-site/source/w/new/am.css
 ClaudeScripts/gameplay-site/source/w/new/auth.css
 ClaudeScripts/gameplay-site/source/w/new/auth.js
 ClaudeScripts/gameplay-site/source/w/new/body.html
+ClaudeScripts/gameplay-site/source/w/new/changelog.js
 ClaudeScripts/gameplay-site/source/w/new/consts.js
 ClaudeScripts/gameplay-site/source/w/new/fit.js
 ClaudeScripts/gameplay-site/source/w/new/gcss.css
@@ -241,6 +243,8 @@ ClaudeScripts/gameplay-site/source/w/new/i18n.js
 ClaudeScripts/gameplay-site/source/w/new/input.js
 ClaudeScripts/gameplay-site/source/w/new/media.css
 ClaudeScripts/gameplay-site/source/w/new/net.js
+ClaudeScripts/gameplay-site/source/w/new/site.css
+ClaudeScripts/gameplay-site/source/w/new/site.js
 ClaudeScripts/gameplay-site/source/w/new/social.css
 ClaudeScripts/gameplay-site/source/w/new/social.js
 ClaudeScripts/gameplay-site/source/w/new/tail.js
@@ -377,6 +381,8 @@ ClaudeScripts/gameplay-site/source/w/supabase/emails/magic_link.html
 ClaudeScripts/gameplay-site/source/w/supabase/emails/reauthentication.html
 ClaudeScripts/gameplay-site/source/w/supabase/emails/reset_password.html
 ClaudeScripts/gameplay-site/source/w/supabase/emails/subjects.txt
+ClaudeScripts/gameplay-site/source/w/supabase/round5_admin.sql
+ClaudeScripts/gameplay-site/source/w/supabase/round6.sql
 ClaudeScripts/gameplay-site/source/w/supabase/schema.sql
 ClaudeScripts/gameplay-site/source/w/supabase/setup.py
 ClaudeScripts/gameplay-site/supabase/GUIDE.md
@@ -487,7 +493,6 @@ gameplay/3e95a82ff90bc91e333d.bin
 gameplay/3f2ac070eaa6630ee449.bin
 gameplay/40a5bd4028c00f7b44f8.bin
 gameplay/437af4d4baf212fd84cb.bin
-gameplay/43a9c0705ca4f97f5292.bin
 gameplay/43d239e2b4d5ce333926.bin
 gameplay/497a239be38a90710e96.bin
 gameplay/4ad87c2ca45a61c087d2.bin
@@ -567,6 +572,7 @@ gameplay/d87119f2ca54b145974f.bin
 gameplay/dd6e0dfd909c84f294bf.bin
 gameplay/dd8b1dcccb8fef75b933.bin
 gameplay/dedaa6fe1e3519fb01e3.bin
+gameplay/e1bf38bd014a7c4f1bb1.bin
 gameplay/e3713d12f3cc90feca55.bin
 gameplay/e3be93816652e87beabc.bin
 gameplay/e3c1a01acb8d5b94d99c.bin

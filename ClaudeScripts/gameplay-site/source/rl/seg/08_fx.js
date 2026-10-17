@@ -1,4 +1,4 @@
-        const fxCam = Object.assign({ fov: 110, dist: 270, height: 100, angle: -3, stiff: 0.45, swivel: 4.7, trans: 1.2 }, CFG.cam || {});
+        const fxCam = Object.assign({ fov: 110, dist: 270, height: 110, angle: -5, stiff: 0.45, swivel: 4.7, trans: 1.2 }, CFG.cam || {});
         const camera = new THREE.PerspectiveCamera(portrait ? 78 : 2 * Math.atan(Math.tan(fxCam.fov * Math.PI / 360) / (w / h)) * 180 / Math.PI, w / h, 10, 90000);
         camera.up.set(0, 0, 1);
         const particles = (n, additive) => {
@@ -187,8 +187,8 @@
         const fxGoalClassic = (p, team) => {
           const c = TEAMC[team], x = p.x, y = p.y, z = p.z, sy = y > 0 ? -1 : 1;
           fxTc.set(c); fxTc2.setRGB(fxTc.r + (1 - fxTc.r) * 0.55, fxTc.g + (1 - fxTc.g) * 0.55, fxTc.b + (1 - fxTc.b) * 0.55);
-          fxFlash(x, y, z, 0xffe2b0, 300, 2600, 0.3, 0.75);
-          fxFlash(x, y, z, 0xff7a1a, 700, 5200, 1.1, 0.6);
+          fxFlash(x, y, z, 0xffe2b0, 300, 2600, 0.3, 0.4);
+          fxFlash(x, y, z, 0xff7a1a, 700, 5200, 1.1, 0.45);
           fxFlash(x, y + sy * 250, z + 100, c, 1200, 7000, 1.6, 0.3);
           fxLightAt(x, y + sy * 500, Math.max(z, 250), 0xffa040, 9, 1.9);
           fxShock(x, y, z, 0xffc880, 60, 1300, 0.32, 0.5, false);

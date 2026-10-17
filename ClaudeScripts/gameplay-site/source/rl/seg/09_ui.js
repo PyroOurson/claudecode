@@ -68,12 +68,12 @@
         const uiNum = s => { let x = 0, d = ''; for (const ch of String(s)) { const g = uiGP[ch]; if (!g) continue; for (const q of g) d += uiPoly(q.p, q.z, x, 1.5); x += (ch === ':' ? 0 : 10) + 5; } return [d || 'M0 0', Math.max(0, x - 5)]; };
         const uiDig = (svg, s) => { const [d, wd] = uiNum(s); svg.setAttribute('viewBox', '-3 -3 ' + (wd + 6) + ' 24'); svg.style.width = ((wd + 6) / 24).toFixed(3) + 'em'; for (const p of svg.children) p.setAttribute('d', d); };
         const uiDigHtml = (s, two) => { const [d, wd] = uiNum(s); return `<svg class="dg" viewBox="-3 -3 ${wd + 6} 24" style="width:${((wd + 6) / 24).toFixed(3)}em">${two ? `<path class="o" d="${d}"/><path class="n" d="${d}"/>` : `<path d="${d}"/>`}</svg>`; };
-        const uiSec = f => {
-          if (f >= 0.999) return 'M-10 -10H130V130H-10Z';
-          if (f <= 0.001) return 'M60 60Z';
-          const a = Math.PI / 2 + f * Math.PI * 2;
-          return 'M60 60L60 130A70 70 0 ' + (f > 0.5 ? 1 : 0) + ' 1 ' + uiF(60 + 70 * Math.cos(a)) + ' ' + uiF(60 + 70 * Math.sin(a)) + 'Z';
-        };
+        const uiBN = 44, uiBS = 158, uiBA = 254;
+        const uiBP = (deg, r) => { const a = deg * Math.PI / 180; return uiF(60 + Math.sin(a) * r) + ' ' + uiF(60 - Math.cos(a) * r); };
+        const uiBTC = t => { const L = (a, b, k) => a.map((x, j) => Math.round(x + (b[j] - x) * k)); return 'rgb(' + (t < 0.5 ? L([255, 92, 0], [255, 166, 26], t / 0.5) : t < 0.8 ? L([255, 166, 26], [255, 226, 140], (t - 0.5) / 0.3) : L([255, 226, 140], [255, 255, 255], (t - 0.8) / 0.2)) + ')'; };
+        const uiBT = (v, bo) => { const n = Math.round(bo / 100 * uiBN); if (!v.bdTk) v.bdTk = v.bd.querySelectorAll('.tk path'); for (let k = 0; k < v.bdTk.length; k++) v.bdTk[k].classList.toggle('on', k < n); };
+        const uiKL = {}, uiKn = c => uiKL[c] || c.replace(/^Key|^Digit/, '');
+        try { if (navigator.keyboard && navigator.keyboard.getLayoutMap) navigator.keyboard.getLayoutMap().then(m => { if (dead) return; m.forEach((x, k) => { if (/^Key[A-Z]$/.test(k) && /^\S$/.test(x)) uiKL[k] = x.toUpperCase(); }); for (const v of views) if (v.cbk) v.cbk.textContent = uiKn('KeyC'); }).catch(() => {}); } catch (e) {}
         const uiZ = n => n ? String(n) : 'Ø';
         const uiNeed = l => Math.min(5000, 1000 + 250 * (l - 1));
         const uiLvl = xp => { let l = 1; while (xp >= uiNeed(l) && l < 500) { xp -= uiNeed(l); l++; } return { l, x: xp, n: uiNeed(l) }; };
@@ -106,14 +106,18 @@
           all: { up: ['KeyW', 'ArrowUp'], dn: ['KeyS', 'ArrowDown'], lf: ['KeyA', 'ArrowLeft'], rt: ['KeyD', 'ArrowRight'], boost: ['ShiftLeft', 'ShiftRight'], jump: ['Space'], slide: ['KeyX', 'ControlLeft', 'ControlRight'], rl: ['KeyQ'], rr: ['KeyE'], cam: ['KeyC'] }
         };
         let mode = 'cpu', split = false, online = null, netGen = 0, netBound = false;
-        const BDS = i => `<svg viewBox="0 0 120 120"><defs><linearGradient id="gmrs-bg${i}" x1="0" y1="1" x2="1" y2="0"><stop offset="0" style="stop-color:var(--bdA)"/><stop offset=".6" style="stop-color:var(--bdB)"/><stop offset="1" style="stop-color:var(--bdC)"/></linearGradient><radialGradient id="gmrs-bf${i}"><stop offset="0" stop-color="rgba(0,0,0,.62)"/><stop offset=".78" stop-color="rgba(2,4,10,.5)"/><stop offset="1" stop-color="rgba(2,4,10,.18)"/></radialGradient><clipPath id="gmrs-bc${i}"><path class="sec" d="M60 60Z"/></clipPath></defs><circle cx="60" cy="60" r="57" fill="url(#gmrs-bf${i})"/><path class="dec" d="M23.2 28.4A49 49 0 0 1 96.8 28.4M60 3.2V14M31.6 13.4l5.4 9.3M88.4 13.4l-5.4 9.3" fill="none" stroke-width=".8"/><circle cx="60" cy="60" r="58.6" fill="none" stroke="rgba(255,255,255,.2)" stroke-width=".7"/><circle cx="60" cy="60" r="51" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="8" stroke-dasharray="3.2 .8"/><g clip-path="url(#gmrs-bc${i})"><circle cx="60" cy="60" r="51" fill="none" stroke="url(#gmrs-bg${i})" stroke-width="8" stroke-dasharray="3.2 .8"/></g><circle cx="60" cy="60" r="45.6" fill="none" style="stroke:var(--bdD)" stroke-width=".6"/><path d="M53 112.5h14l-2 4.2h-10z" style="fill:var(--bdB)"/></svg>`;
+        const BDS = i => {
+          let tk = '';
+          for (let k = 0; k < uiBN; k++) { const a = uiBS + (k + 0.5) / uiBN * uiBA; tk += `<path d="M${uiBP(a, 50.5)}L${uiBP(a, 58.5)}" style="stroke:${uiBTC(k / (uiBN - 1))}"/>`; }
+          return `<svg viewBox="0 0 120 120"><defs><radialGradient id="gmrs-bf${i}"><stop offset="0" style="stop-color:var(--bdF0)"/><stop offset=".6" style="stop-color:var(--bdF1)"/><stop offset="1" style="stop-color:var(--bdF2)"/></radialGradient></defs><circle cx="60" cy="60" r="47" fill="url(#gmrs-bf${i})"/><path class="dec" d="M${uiBP(300, 40)}L${uiBP(300, 47)}M${uiBP(0, 40)}L${uiBP(0, 47)}M${uiBP(60, 40)}L${uiBP(60, 47)}" fill="none" stroke-width=".9"/><circle cx="60" cy="60" r="47" fill="none" style="stroke:var(--bdD)" stroke-width=".7"/><path d="M${uiBP(uiBS, 48.6)}A48.6 48.6 0 1 1 ${uiBP(uiBS + uiBA, 48.6)}" fill="none" stroke="rgba(255,236,200,.45)" stroke-width=".7"/><g class="tk" fill="none" stroke-width="3.9">${tk}</g></svg>`;
+        };
         const uiDGH = '<svg class="dg"><path/></svg>';
         const makeView = i => {
           const v = { i, el: el('div', 'vh', hud), camera: i ? new THREE.PerspectiveCamera(78, 1, 10, 90000) : camera, cam: { p: new THREE.Vector3(0, -7000, 1600), look: new THREE.Vector3(0, 1, 0), up: new THREE.Vector3(0, 0, 1), dir: new THREE.Vector3(0, 1, 0), orbit: 0 }, camBall: saved.cam !== false, car: null, flip: false, tall: portrait, rect: [0, 0, 1, 1], banT: 0, banDur: 0, key: '', bkey: -1, ssKey: '', qcCat: -1, qcT: 0, qcLog: [], qcBan: 0, latch: false, T: { boost: false, jump: false, slide: false, id: null, ox: 0, oy: 0, x: 0, y: 0 } };
           v.camera.up.set(0, 0, 1);
-          v.el.innerHTML = `<div class="sb"><div class="sq c0">${uiDGH}</div><div class="clk">${uiDGH}</div><div class="sq r c1">${uiDGH}</div></div><div class="bd">${BDS(i)}<div class="bn"><svg class="dg"><path class="o"/><path class="n"/></svg></div><b class="bl">BOOST</b></div><div class="ban"></div><div class="feed"></div><div class="pops"></div><div class="ss"></div><div class="ping"></div><div class="chat"></div><div class="qc"></div><div class="trn"></div><button class="cb"><b><i></i>Ball Cam</b><small>Press<kbd>C</kbd>to toggle</small></button><div class="tl">${i ? '' : '<button class="pb" aria-label="Pause">II</button>'}<button class="cbt">BALL CAM</button><button class="qb" aria-label="Quick chat">${uiIC.chat}</button><button class="trb" data-tr="ball">Reset</button><button class="trb" data-tr="shot">Shot</button></div><div class="tc"><div class="jz"><div class="joy"><i></i></div></div><button class="tb boost">BOOST</button><button class="tb jump">JUMP</button><button class="tb slide">SLIDE</button></div>`;
+          v.el.innerHTML = `<div class="sb"><div class="sq c0">${uiDGH}</div><div class="clk">${uiDGH}</div><div class="sq r c1">${uiDGH}</div></div><div class="bd">${BDS(i)}<div class="bn"><svg class="dg"><path class="o"/><path class="n"/></svg></div><b class="bl">BOOST</b></div><div class="ban"></div><div class="feed"></div><div class="pops"></div><div class="ss"></div><div class="ping"></div><div class="chat"></div><div class="qc"></div><div class="trn"></div><button class="cb"><b><i></i>Ball Cam</b><small>Press<kbd>${uiKn('KeyC')}</kbd>to toggle</small></button><div class="tl">${i ? '' : '<button class="pb" aria-label="Pause">II</button>'}<button class="cbt">BALL CAM</button><button class="qb" aria-label="Quick chat">${uiIC.chat}</button><button class="trb" data-tr="ball">Reset</button><button class="trb" data-tr="shot">Shot</button></div><div class="tc"><div class="jz"><div class="joy"><i></i></div></div><button class="tb boost">BOOST</button><button class="tb jump">JUMP</button><button class="tb slide">SLIDE</button></div>`;
           const q = s => v.el.querySelector(s);
-          Object.assign(v, { sb: q('.sb'), sbL: q('.sb .c0'), sbR: q('.sb .c1'), sbC: q('.clk'), bd: q('.bd'), bdSec: q('.sec'), bdNum: q('.bn svg'), ban: q('.ban'), feed: q('.feed'), pops: q('.pops'), ss: q('.ss'), ping: q('.ping'), chat: q('.chat'), qc: q('.qc'), trn: q('.trn'), trKey: '', cb: q('.cb'), cbk: q('.cb kbd'), tl: q('.tl'), pb: q('.pb'), cbt: q('.cbt'), qb: q('.qb'), tc: q('.tc'), jz: q('.jz'), joy: q('.joy'), knob: q('.joy i') });
+          Object.assign(v, { sb: q('.sb'), sbL: q('.sb .c0'), sbR: q('.sb .c1'), sbC: q('.clk'), bd: q('.bd'), bdNum: q('.bn svg'), ban: q('.ban'), feed: q('.feed'), pops: q('.pops'), ss: q('.ss'), ping: q('.ping'), chat: q('.chat'), qc: q('.qc'), trn: q('.trn'), trKey: '', cb: q('.cb'), cbk: q('.cb kbd'), tl: q('.tl'), pb: q('.pb'), cbt: q('.cbt'), qb: q('.qb'), tc: q('.tc'), jz: q('.jz'), joy: q('.joy'), knob: q('.joy i') });
           v.sbLd = v.sbL.firstChild; v.sbRd = v.sbR.firstChild; v.sbCd = v.sbC.firstChild;
           v.ban.hidden = true; v.joy.hidden = true; v.qc.hidden = true;
           return v;
@@ -157,7 +161,7 @@
           const g = uiGoal && (/GOAL/i.test(txt) || W.state === 'goal') ? uiGoal : null;
           if (g) uiGoal = null;
           let html, cls = '';
-          if (g) { cls = ' gol t' + g.team; html = `<div class="gn">${esc(g.scorer ? g.scorer.name : TEAMN[g.team])} scored!</div><b class="gg">GOAL!</b>`; }
+          if (g) { cls = ' gol t' + g.team; html = `<div class="gn">${esc(g.scorer ? g.scorer.name : TEAMN[g.team])} scored!</div>`; }
           else if (/^\d$/.test(txt)) cls = ' cdn', html = `<div class="cd">${uiDigHtml(txt, 1)}</div>${sub && !/kickoff/i.test(sub) ? `<div class="bs">${esc(sub)}</div>` : ''}`;
           else cls = txt === 'GO!' ? ' cdn' : '', html = `<div class="bt">${esc(txt)}</div>${sub ? `<div class="bs">${esc(sub)}</div>` : ''}`;
           uiBanAll(html, cls, color, dur);
@@ -291,7 +295,7 @@
         };
 
 
-        const uiCD = { octane: 'The fan favourite. Balanced in every way.', fennec: 'Boxy and precise, built on the Octane hitbox.', dominus: 'Long and flat. Great for flicks and power shots.', breakout: 'Long, low and pointy for sharp aerial touches.', merc: 'Tall and tanky. A wall on wheels.', venom: 'Light and curvy, with the Hybrid hitbox.' };
+        const uiCD = { octane: 'The fan favourite. Balanced in every way.', fennec: 'Boxy and precise, built on the Octane hitbox.', dominus: 'Long and flat. Great for flicks and power shots.', breakout: 'Long, low and pointy for sharp aerial touches.', merc: 'Tall and tanky. A wall on wheels.', venom: 'Light and curvy, with the Hybrid hitbox.', paladin: 'The flattest hitbox in the game. Wide, low and made for dribbles.' };
         const uiTips = [
           'Hold Jump longer for a higher jump. Press Jump again in the air to double jump, or tilt the stick while you press it to flip.',
           'At supersonic speed you demolish any opponent you drive into.',
@@ -357,7 +361,7 @@
         const uiOD = { size: 'Duel 1v1, Doubles 2v2 or Standard 3v3. Empty seats are filled with bots.', diff: 'How good the bots are: ' + uiOS.diff.map(x => x[1]).join(', ') + '.', len: 'Match length. A tie at 0:00 goes to overtime.', go: 'Start the match.' };
         const uiGC = [['body', 'Body'], ['decal', 'Decal'], ['paint', 'Paint'], ['wheel', 'Wheels'], ['boost', 'Rocket Boost'], ['gx', 'Goal Explosion'], ['trail', 'Trail'], ['top', 'Topper']];
         const uiCatN = k => ({ body: 'Body', decal: 'Decal', paint: 'Paint', wheel: 'Wheels', boost: 'Rocket Boost', gx: 'Goal Explosion', trail: 'Trail', top: 'Topper', fin: 'Paint Finish', title: 'Player Title' })[k] || '';
-        const uiGItems = k => k === 'body' ? BODY_IDS.filter(id => crModel(id) || !crM.octane).map(id => ({ id, n: BODIES[id].name, t: 0, r: 0 })) : k === 'decal' ? crCat.decal.filter(d => !d.b || d.b === saved.car) : k === 'paint' ? crCat.fin : crList(k);
+        const uiGItems = k => k === 'body' ? BODY_IDS.filter(id => crModel(id) || crModel(BODIES[id].mdl) || !crM.octane).map(id => ({ id, n: BODIES[id].name, t: 0, r: 0 })) : k === 'decal' ? crCat.decal.filter(d => !d.b || d.b === saved.car) : k === 'paint' ? crCat.fin : crList(k);
         const uiEq = k => k === 'body' ? saved.car : uiLO(saved.car)[k === 'paint' ? 'fin' : k];
         const uiEqName = k => { if (k === 'paint') { const L = uiLO(saved.car); return (crItem('fin', L.fin) || crCat.fin[0]).n + ' · ' + L['p' + uiTC].toUpperCase(); } const it = uiGItems(k).find(x => x.id === uiEq(k)); return it ? it.n : ''; };
         const uiHex = n => '#' + ((n >>> 0) & 0xffffff).toString(16).padStart(6, '0');
@@ -424,7 +428,7 @@
         const uiGarHtml = () => {
           const cats = uiGC.map(([k, t]) => `<button class="rb gcb${uiGc === k ? uiGf === 'cat' ? ' on' : ' act' : ''}" data-gc="${k}"><span>${t}</span><small>${esc(uiEqName(k))}</small></button>`).join('');
           const body = uiGc === 'paint' ? uiPaintHtml() : `<div class="gg">${uiGItems(uiGc).map(it => uiTile(uiGc, it, uiGf === 'grid' && uiGi === it.id)).join('')}</div>`;
-          return `<div class="gsx"><h2 class="bt">Garage</h2><div class="gcl">${cats}</div></div><div class="gpn pnl"><h3 class="gph">${esc(uiCatN(uiGc))}<small>${esc(BODIES[saved.car].name)} · ${uiTC ? 'Orange' : 'Blue'} car</small></h3>${body}<div class="md gmd">${esc(uiGDesc())}</div></div><div class="hk ghk"><span data-m="back">${uiK('Esc', 'kb')}Back</span><span data-m="tc">${uiK('V')}${uiTC ? 'Blue' : 'Orange'} Car</span>${uiGc === 'gx' ? `<span data-m="gxp">${uiK('P')}Preview</span>` : ''}<span class="gdr">${coarse ? 'Drag the car to rotate' : 'Drag or Q / E to rotate'}</span></div>`;
+          return `<div class="gsx"><h2 class="bt">Garage</h2><div class="gcl">${cats}</div></div><div class="gpn pnl"><h3 class="gph">${esc(uiCatN(uiGc))}<small>${esc(BODIES[saved.car].name)} · ${uiTC ? 'Orange' : 'Blue'} car</small></h3>${body}<div class="md gmd">${esc(uiGDesc())}</div></div><div class="hk ghk"><span data-m="back">${uiK('Esc', 'kb')}Back</span><span data-m="tc">${uiK('V')}${uiTC ? 'Blue' : 'Orange'} Car</span>${uiGc === 'gx' ? `<span data-m="gxp">${uiK('P')}Preview</span>` : ''}<span class="gdr">${coarse ? 'Drag the car to rotate' : 'Drag or ' + uiKn('KeyQ') + ' / ' + uiKn('KeyE') + ' to rotate'}</span></div>`;
         };
         const uiGarAfter = () => {
           if (uiGc === 'paint' && uiPt !== 'fin') uiPaintSync();
@@ -668,12 +672,12 @@
           if (t === 'cred') return uiCred();
           if (t === 'aud') return `${uiRange('vol', 'Master Volume', saved.vol, [0, 100, 1], 'vol')}<div class="orw"><span>Game Audio</span>${uiTg('mu', [[0, 'On'], [1, 'Muted']], saved.mute ? 1 : 0)}</div>`;
           if (t === 'chat') return uiQCN.map((n, cat) => `<div class="og"><h5><i></i>${n}</h5><div class="oq">${[0, 1, 2, 3].map(k => `<select data-qs="${cat},${k}">${uiQCP[cat].map(s => `<option${s === uiQT(cat, k) ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select>`).join('')}</div></div>`).join('');
-          const R = [['Drive / Reverse', 'W / S · ↑ / ↓', 'Stick'], ['Steer', 'A / D · ← / →', 'Stick'], ['Boost', 'Shift · Left click', 'Boost'], ['Jump / Flip', 'Space · Right click', 'Jump'], ['Powerslide / Air roll', 'X · Ctrl', 'Slide'], ['Air roll left / right', 'Q / E', 'Slide + stick'], ['Ball cam', 'C', 'Ball cam'], ['Scoreboard', 'Tab', 'Tap the clock'], ['Quick chat', '1 – 4', 'Chat button'], ['Free Play: reset ball / car', 'R / T', 'Reset'], ['Free Play: boost, shots, spawn', 'B / P / 1 – 5', 'Pause menu'], ['Pause / Back', 'Esc · P', 'II']];
+          const R = [['Drive / Reverse', uiKn('KeyW') + ' / ' + uiKn('KeyS') + ' · ↑ / ↓', 'Stick'], ['Steer', uiKn('KeyA') + ' / ' + uiKn('KeyD') + ' · ← / →', 'Stick'], ['Boost', 'Shift · Left click', 'Boost'], ['Jump / Flip', 'Space · Right click', 'Jump'], ['Powerslide / Air roll', uiKn('KeyX') + ' · Ctrl', 'Slide'], ['Air roll left / right', uiKn('KeyQ') + ' / ' + uiKn('KeyE'), 'Slide + stick'], ['Ball cam', uiKn('KeyC'), 'Ball cam'], ['Scoreboard', 'Tab', 'Tap the clock'], ['Quick chat', '1 – 4', 'Chat button'], ['Free Play: reset ball / car', 'R / T', 'Reset'], ['Free Play: boost, shots, spawn', 'B / P / 1 – 5', 'Pause menu'], ['Pause / Back', 'Esc · P', 'II']];
           return `<table class="okt"><tr><th>Action</th><th>Keyboard</th><th>Touch</th></tr>${R.map(r => `<tr>${r.map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</table>`;
         };
         const uiOptRender = () => {
           const st = uiOptEl.querySelector('.ob'), sc = st ? st.scrollTop : 0;
-          uiOptEl.innerHTML = `<div class="op pnl"><h2 class="pt">Options</h2><div class="otb">${uiK('Q')}${uiTabs.map(([k, t]) => `<button class="ot${k === uiOptTab ? ' on' : ''}" data-tab="${k}">${t}</button>`).join('')}${uiK('E')}</div><div class="ob">${uiOptBody()}</div><div class="hk"><span data-m="oback">${uiK('Esc', 'kb')}Back</span><span data-m="odef">${uiK('X', 'kx')}Default</span></div></div>`;
+          uiOptEl.innerHTML = `<div class="op pnl"><h2 class="pt">Options</h2><div class="otb">${uiK(uiKn('KeyQ'))}${uiTabs.map(([k, t]) => `<button class="ot${k === uiOptTab ? ' on' : ''}" data-tab="${k}">${t}</button>`).join('')}${uiK(uiKn('KeyE'))}</div><div class="ob">${uiOptBody()}</div><div class="hk"><span data-m="oback">${uiK('Esc', 'kb')}Back</span><span data-m="odef">${uiK(uiKn('KeyX'), 'kx')}Default</span></div></div>`;
           const nb = uiOptEl.querySelector('.ob'); if (nb && st) nb.scrollTop = sc;
         };
         const uiOptOpen = back => { uiOptBack = back; uiOptRender(); uiOptEl.hidden = false; };
@@ -760,7 +764,7 @@
         const beginPlay = () => {
           ui = 'play'; paused = false; submitted = false; uiHideAll();
           setLayout(); hideViews(); wrap.classList.toggle('train', mode === 'train');
-          for (const v of active()) { v.tc.hidden = v.tl.hidden = v.bd.hidden = v.sb.hidden = v.cb.hidden = false; v.key = ''; v.bkey = -1; v.latch = false; v.qcLog = []; v.qcBan = 0; v.cbk.textContent = 'C'; v.trKey = ''; resetCam(v); }
+          for (const v of active()) { v.tc.hidden = v.tl.hidden = v.bd.hidden = v.sb.hidden = v.cb.hidden = false; v.key = ''; v.bkey = -1; v.latch = false; v.qcLog = []; v.qcBan = 0; v.cbk.textContent = uiKn('KeyC'); v.trKey = ''; resetCam(v); }
           uiPT = 0;
           views[0].pb.hidden = false;
           uiGoal = null; uiBotNext = performance.now() + 5000;

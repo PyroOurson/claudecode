@@ -126,14 +126,15 @@ function search(q, pool) {
   return { list, partial, scores };
 }
 
-const state = { q: '', g: new Set(), p: new Set(), t: new Set(), v: new Set(), c: new Set(), sort: '' };
-const FKEYS = ['g', 'p', 't', 'v', 'c'];
+const state = { q: '', f: new Set(), g: new Set(), p: new Set(), t: new Set(), v: new Set(), c: new Set(), sort: '' };
+const FKEYS = ['f', 'g', 'p', 't', 'v', 'c'];
 function resetState() { state.q = ''; FKEYS.forEach(k => state[k].clear()); state.sort = ''; }
 const activeCount = () => FKEYS.reduce((n, k) => n + state[k].size, 0);
 const defSort = () => state.q.trim() ? 'rel' : 'rec';
 const nFilters = () => activeCount() + (state.sort && state.sort !== defSort() ? 1 : 0);
 function passes(g) {
   const m = g.info;
+  if (state.f.size && !fvHas(g.id)) return false;
   if (state.g.size && !m.genres.some(x => state.g.has(x))) return false;
   if (state.p.size && ![...state.p].some(c => m.pl.includes(c))) return false;
   if (state.t.size && !state.t.has(bucket(m.mins))) return false;
@@ -355,7 +356,7 @@ const thumbsOn = () => S.prefs.thumbs !== false;
 const tint = g => g.cc || TINT[g.id] || '#6c5ce7';
 const img = (g, pri) => { if (!thumbsOn()) return ''; const u = coverUrl(g); return `<img src="${u}"${u === BLANK ? ` data-cv="${g.id}"` : ''} alt="" width="16" height="10"${pri ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async" draggable="false">`; };
 let sel = null;
-const card = (g, src, i) => `<a class="card${sel === g.id && src === 'grid' ? ' sel' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="${src}" style="--c:${tint(g)};--i:${i || 0}"><div class="art">${img(g, i != null && i < 10)}</div><div class="name">${esc(g.title)}</div></a>`;
+const card = (g, src, i) => `<a class="card${sel === g.id && src === 'grid' ? ' sel' : ''}${sfOff(g.id) ? ' off' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="${src}" style="--c:${tint(g)};--i:${i || 0}"><div class="art">${img(g, i != null && i < 10)}${sfOff(g.id) ? '<span class="offb">Temporarily unavailable</span>' : ''}</div>${fvBtn(g.id)}<div class="name">${esc(g.title)}</div></a>`;
 const srow = g => `<a class="srow${sel === g.id ? ' sel' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="side" ><span class="n">${esc(g.title)}</span></a>`;
 function related(g) {
   const mine = new Set(g.info.genres);
@@ -630,6 +631,7 @@ function openGame(g) {
   $('#pSub').textContent = gname(g.info.genres[0]) + ' · ' + playersText(g.info.pl);
   $('#pScoreK').textContent = g.info.stat || 'Score';
   $('#pThumb').innerHTML = img(g, true); $('#pThumb').style.setProperty('--c', tint(g));
+  fvBar(g);
   gamebox.style.setProperty('--fw', (g.width || 880) + 'px');
   $('#more').innerHTML = related(g).slice(0, 10).map(x => card(x, 'more')).join('');
   showView('game');
@@ -638,7 +640,8 @@ function openGame(g) {
   gamebox.classList.remove('enter'); void gamebox.offsetWidth; gamebox.classList.add('enter');
   syncTheater();
   if (shortQuery.matches) requestAnimationFrame(toStage);
-  if (g.mount) { start(g); track('game_launch', { game: g.id, ms: 0, lazy: false }); } else waitStart(g);
+  SF.og = null;
+  if (sfBlocked(g)) sfOffFrame(g); else if (g.mount) { start(g); track('game_launch', { game: g.id, ms: 0, lazy: false }); } else waitStart(g);
   markSide();
   lzScan();
 }
@@ -704,6 +707,7 @@ function renderResults() {
   $('#grid').innerHTML = list.map((g, i) => card(g, 'grid', i)).join('');
   $('#grid').hidden = !n; $('#empty').hidden = n > 0;
   $('#continue').hidden = !!(filt || q) || !recentList().length;
+  $('#favs').hidden = !!(filt || q) || !FV.ids.some(id => byId.has(id));
   const chips = [];
   FKEYS.forEach(k => state[k].forEach(v => chips.push(`<button class="chip" type="button" data-x="${k}:${v}" aria-label="Remove ${esc(filterLabel(k, v))}">${esc(filterLabel(k, v))} &times;</button>`)));
   if (state.sort && state.sort !== defSort()) { const s = SORTS.find(x => x[0] === state.sort); chips.push(`<button class="chip" type="button" data-x="s:" aria-label="Reset sort">${esc(s ? s[1] : state.sort)} &times;</button>`); }
@@ -718,6 +722,7 @@ function renderHome() {
   const rec = recentList();
   $('#rail').innerHTML = rec.map((g, i) => card(g, 'rail', i)).join('');
   renderResults();
+  fvRail();
 }
 function renderChrome() {
   $('#q').placeholder = `Search ${games.length} games`;
@@ -1014,6 +1019,7 @@ function fsSync() {
   if (on === gamebox.classList.contains('fs')) return;
   gamebox.classList.toggle('fs', on); gamebox.classList.remove('fs-ui');
   document.body.classList.toggle('fs-on', on);
+  soPlace();
   document.querySelectorAll('[data-fs]').forEach(b => { b.setAttribute('aria-label', on ? 'Exit fullscreen' : 'Fullscreen'); b.title = on ? 'Exit fullscreen' : 'Fullscreen'; });
   clearInterval(fitTimer);
   frame.classList.add('no-anim');
@@ -1200,6 +1206,7 @@ function boot() {
   adBoot();
   soBoot();
   inBoot();
+  siteBoot();
   if (S.recent.some(id => byId.get(id) && byId.get(id).is3d)) { const warmUp = () => loadThree().catch(() => {}); if (window.requestIdleCallback) requestIdleCallback(warmUp, { timeout: 4000 }); else setTimeout(warmUp, 1500); }
 }
 

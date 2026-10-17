@@ -90,7 +90,8 @@
         };
         const fxRq = new THREE.Quaternion(), fxRq2 = new THREE.Quaternion();
         const fxRp = { on: false, show: false, W: null, ph: 0, pt: 0, t: 0, t0: 0, t1: 0, ei: 0, cur: 0, goal: null, goalT: -1, done: -1, live: null, skip: false, scorer: null };
-        const fxRpEls = views.map(v => { const d = el('div', 'fxrp', v.el, `<div class="fxl"><i></i>Replay</div><div class="fxc"><small>Scored by</small><div class="fxcd"><span class="fxav"></span><b></b>${uiCarW}</div><div class="fxs"><span>${uiIC.clock}<b class="fxt"></b></span><span>${uiIC.ballk}<b class="fxv"></b><small>KPH</small></span></div></div><div class="fxk"><div>${coarse ? 'Tap to skip' : 'Press <kbd>' + (v.i ? 'Enter' : 'Space') + '</kbd> to skip'}</div><div class="fxn"></div></div><div class="fxw"><i></i><i></i><i></i>${uiShield}</div>`); return { d, w: d.querySelector('.fxw'), av: d.querySelector('.fxav'), nm: d.querySelector('.fxcd b'), t: d.querySelector('.fxt'), sp: d.querySelector('.fxv'), n: d.querySelector('.fxn'), lb: d.querySelector('.fxc>small') }; });
+        const fxBin = (() => { const r = rngOf(7), o = []; for (let i = 0; i < 4; i++) { let s = ''; for (let j = 0; j < 22; j++) s += r() < 0.3 ? ' ' : r() < 0.5 ? '0' : '1'; o.push(s); } return o.join('\n'); })();
+        const fxRpEls = views.map(v => { const d = el('div', 'fxrp', v.el, `<div class="fxl"><i></i>Replay</div><div class="fxc"><small>Scored by</small><div class="fxcd"><span class="fxav"></span><b></b><i class="fxbin">${fxBin}</i></div><div class="fxs"><span>${uiIC.clock}<b class="fxt"></b></span><span>${uiIC.ballk}<b class="fxv"></b><small>MPH</small></span></div></div><div class="fxk"><div>${coarse ? 'Tap to skip' : 'Press <kbd>' + (v.i ? 'Enter' : 'Space') + '</kbd> to skip'}</div><div class="fxn"></div></div><div class="fxw"><i></i><i></i><i></i>${uiShield}</div>`); return { d, w: d.querySelector('.fxw'), av: d.querySelector('.fxav'), nm: d.querySelector('.fxcd b'), t: d.querySelector('.fxt'), sp: d.querySelector('.fxv'), n: d.querySelector('.fxn'), lb: d.querySelector('.fxc>small') }; });
         const fxWipe = () => { for (const x of fxRpEls) { x.w.classList.remove('fxgo'); void x.w.offsetWidth; x.w.classList.add('fxgo'); } };
         const fxSnap = buf => {
           const R2 = fxRec; let o = 0;
@@ -152,7 +153,7 @@
           const sc = g.scorer, who = sc ? sc.name : TEAMN[g.team];
           const tc = g.team ? ['#ff8a2a', '#9a3a08'] : ['#3f8cff', '#123a8c'];
           for (const x of fxRpEls) {
-            x.av.innerHTML = uiAv(sc, g.team); x.nm.textContent = who; x.t.textContent = g.clk || ''; x.sp.textContent = Math.round(g.speed * 0.036); x.lb.textContent = sc ? 'Scored by' : 'Own goal';
+            x.av.innerHTML = sc && sc.bot ? '<i class="fxai">AI</i>' : uiAv(sc, g.team); x.nm.textContent = who; x.t.textContent = g.clk || ''; x.sp.textContent = Math.round(g.speed * 0.02237); x.lb.textContent = sc ? 'Scored by' : 'Own goal';
             x.n.innerHTML = (g.assist ? `<i class="p${g.assist.team}">${esc(g.assist.name)}</i>, ` : '') + esc(who);
             x.d.classList.toggle('t1', g.team === 1); x.d.style.setProperty('--tc', tc[0]); x.d.style.setProperty('--td', tc[1]);
           }

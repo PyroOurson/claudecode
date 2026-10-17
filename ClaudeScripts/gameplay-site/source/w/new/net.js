@@ -1045,8 +1045,8 @@ function makeNet(g, add) {
         pushList();
         show('lobby');
       } else if (mode === 'room' && net.role === 'guest' && (rm.conn || rm.reconn)) { phase = 'ready'; show('lobby'); }
-      else if (net.invite) joining(net.invite);
-      else hosting();
+      else if (net.invite && !invite.host) joining(net.invite);
+      else { if (invite && invite.host && invite.id === g.id) invite = null; hosting(); }
       loadPeer().catch(() => {}); netIce();
     });
   };
@@ -1065,7 +1065,7 @@ function makeNet(g, add) {
       }
       return !!(conn && conn.open);
     },
-    get invite() { return invite && invite.id === g.id ? invite.code : null; },
+    get invite() { return invite && invite.id === g.id ? invite.host ? 'NEW' : invite.code : null; },
     on(t, fn) { (ls[t] = ls[t] || []).push(fn); const off = () => { ls[t] = (ls[t] || []).filter(f => f !== fn); }; add(off); return off; },
     send(msg, fast) {
       let s;

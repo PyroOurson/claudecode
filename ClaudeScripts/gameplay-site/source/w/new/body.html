@@ -26,6 +26,7 @@
    <button class="item" type="button" id="snd"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg>Sound effects<span class="sw" data-sw="sound"></span></button>
    <div class="sep"></div>
    <button class="item" type="button" data-go="msettings" data-pane="legal"><svg viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6zM14 2v5h5M9 13h6M9 17h6"/></svg>Terms and privacy</button>
+   <button class="item" type="button" id="clopen"><svg viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></svg>What's new</button>
    <button class="item" type="button" data-go="msettings" data-pane="legal"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/></svg>Help center</button>
   </div>
  </div>
@@ -43,6 +44,11 @@
    <section id="continue" hidden>
     <div class="row-head"><h2>Continue playing</h2></div>
     <div class="rail" id="rail"></div>
+   </section>
+
+   <section id="favs" hidden>
+    <div class="row-head"><h2>Favourites</h2></div>
+    <div class="rail" id="favrail"></div>
    </section>
 
    <section id="all">
@@ -77,6 +83,7 @@
      <div class="play-side">
       <div class="am-pstat"><span id="pScoreK">Score</span><b id="pScore">—</b></div>
       <div class="am-pstat"><span id="pBestK">Best</span><b id="pBest">—</b></div>
+      <button class="icon pb-fav" type="button" id="pFav" data-fav="" aria-pressed="false" title="Add to favourites" aria-label="Add to favourites"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-9.3-9.4C1.5 7.8 3.6 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.5 3.3 4.3 6.6-1.8 4.8-9.3 9.4-9.3 9.4z"/></svg></button>
       <button class="icon" type="button" id="pRestart" title="Restart" aria-label="Restart game"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
       <button class="icon" type="button" data-sound aria-pressed="true" title="Sound" aria-label="Toggle sound"><svg class="on" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg><svg class="off" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM22 9l-6 6M16 9l6 6"/></svg></button>
       <button class="icon tgl" type="button" data-theater aria-pressed="true" title="Large view" aria-label="Toggle large view"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="3"/></svg></button>
@@ -104,7 +111,7 @@
    <div class="adm">
     <div class="adm-h"><a class="back" href="#" data-home><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back to games</a><h2>Admin dashboard</h2><button class="btn2 adm-ref" id="adref" type="button"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>Refresh</button></div>
     <div class="tiles adm-tiles" id="adtiles"></div>
-    <div class="au-tabs adm-tabs" id="adtabs" role="tablist" aria-label="Dashboard sections" data-m="users"><button type="button" role="tab" data-adtab="users" aria-selected="true">Users</button><button type="button" role="tab" data-adtab="tickets" aria-selected="false">Tickets<em id="adtn" hidden></em></button><button type="button" role="tab" data-adtab="stats" aria-selected="false">Stats</button><i></i></div>
+    <div class="au-tabs adm-tabs" id="adtabs" role="tablist" aria-label="Dashboard sections" data-m="users"><button type="button" role="tab" data-adtab="users" aria-selected="true">Users</button><button type="button" role="tab" data-adtab="tickets" aria-selected="false">Tickets<em id="adtn" hidden></em></button><button type="button" role="tab" data-adtab="stats" aria-selected="false">Stats</button><button type="button" role="tab" data-adtab="log" aria-selected="false">Log</button><button type="button" role="tab" data-adtab="site" aria-selected="false">Site</button><i></i></div>
     <section class="adm-sec" id="adusers">
      <div class="adm-tools">
       <label class="search" for="adq"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="adq" type="search" placeholder="Search by email, username, name or id" autocomplete="off" spellcheck="false" aria-label="Search users"></label>
@@ -112,22 +119,33 @@
       <span class="count" id="adcount" translate="no"></span>
      </div>
      <div class="adm-tw"><table class="adm-t" id="adt"><thead></thead><tbody translate="no"></tbody></table></div>
+     <section class="apc" id="adpanel" hidden aria-labelledby="adpn" tabindex="-1">
+      <div class="apc-hero">
+       <span class="pic apc-pic" id="adppic" translate="no"></span>
+       <div class="apc-id"><b id="adpn" translate="no"></b><span id="adpu" translate="no"></span><div class="apc-pills" id="adpp"></div><div class="apc-live" id="adplive" translate="no"></div></div>
+       <button class="x apc-x" type="button" id="adpclose" aria-label="Close player card"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div class="apc-q" id="adpq" translate="no"></div>
+      <div class="apc-grid">
+       <div class="apc-col">
+        <div class="apc-card"><h4>Games played</h4><div class="apc-games" id="adpg" translate="no"></div></div>
+        <div class="apc-card"><h4>All details</h4><dl class="apc-dl" id="adpdl" translate="no"></dl></div>
+        <div class="apc-card"><h4>History</h4><div class="al-list apc-hist" id="adph" translate="no"></div></div>
+       </div>
+       <div class="apc-col">
+        <div class="apc-card"><h4>Username</h4><div class="apc-row"><input id="adun" maxlength="20" autocomplete="off" spellcheck="false" autocapitalize="off" aria-label="Username"><button class="btn2 pri" type="button" id="adunb" data-adact="un">Save</button></div><div class="note" id="adunn" role="status"></div></div>
+        <div class="apc-card"><h4>Role</h4><div class="apc-role"><button class="btn2" type="button" data-adact="role" data-adrole="user">User</button><button class="btn2" type="button" data-adact="role" data-adrole="admin">Admin</button></div><div class="note" id="adprn" role="status"></div></div>
+        <div class="apc-card"><h4>Password</h4><p id="adpwt">Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them.</p><button class="btn2" type="button" id="adrst" data-adact="reset">Send password reset email</button><div class="note" id="adrstn" role="status"></div><p>Or set a new password yourself:</p><div class="apc-row"><div class="au-pw"><input id="adpw" type="password" autocomplete="new-password" placeholder="New password, at least 8 characters" maxlength="72" aria-label="New password"></div><button class="btn2 pri" type="button" id="adpwb" data-adact="pw">Set new password</button></div><div class="note" id="adpwn" role="status"></div></div>
+        <div class="apc-card"><h4>Access</h4><p id="adlt" hidden></p><label class="apc-l" for="adld" id="adldl">How long</label><select id="adld"><option value="1">1 hour</option><option value="24">24 hours</option><option value="168">7 days</option><option value="720">30 days</option><option value="0" selected>Permanent</option></select><label class="apc-l" for="adlr" id="adlrl">Reason shown to the user (optional)</label><textarea id="adlr" maxlength="500" rows="2"></textarea><button class="btn2 danger" type="button" id="adlock" data-adact="lock">Lock account</button><div class="note" id="adln" role="status"></div></div>
+        <div class="apc-card apc-danger"><h4>Danger zone</h4><p>Deletes the account, profile, records, saves, friends and messages for good. This cannot be undone.</p><label class="apc-l" for="addel" id="addell">Type the username or email to confirm</label><div class="apc-row"><input id="addel" autocomplete="off" spellcheck="false" autocapitalize="off"><button class="btn2 danger" type="button" id="addelb" data-adact="del">Delete account forever</button></div><div class="note" id="addeln" role="status"></div></div>
+       </div>
+      </div>
+     </section>
     </section>
     <section class="adm-sec" id="adtickets" hidden><div id="tka"></div></section>
     <section class="adm-sec ads" id="adstats" hidden></section>
-    <div class="adp-back" id="adpback" hidden></div>
-    <aside class="adp" id="adpanel" hidden role="dialog" aria-modal="true" aria-labelledby="adpn">
-     <div class="adp-h"><span class="pic"></span><div><b id="adpn" translate="no"></b><span id="adpu" translate="no"></span></div><button class="x" type="button" id="adpclose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
-     <div class="adp-live" id="adplive" translate="no"></div>
-     <div class="adp-q" id="adpq" translate="no"></div>
-     <div class="adp-sec"><h4>Username</h4><div class="adp-row"><input id="adun" maxlength="20" autocomplete="off" spellcheck="false" autocapitalize="off" aria-label="Username"><button class="btn2 pri" type="button" id="adunb" data-adact="un">Save</button></div><div class="note" id="adunn" role="status"></div></div>
-     <div class="adp-sec"><h4>Role</h4><div class="adp-role"><button class="btn2" type="button" data-adact="role" data-adrole="user">User</button><button class="btn2" type="button" data-adact="role" data-adrole="admin">Admin</button></div><div class="note" id="adprn" role="status"></div></div>
-     <div class="adp-sec"><h4>Password</h4><p id="adpwt">Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them.</p><button class="btn2" type="button" id="adrst" data-adact="reset">Send password reset email</button><div class="note" id="adrstn" role="status"></div><p>Or set a new password yourself:</p><div class="au-pw"><input id="adpw" type="password" autocomplete="new-password" placeholder="New password, at least 8 characters" maxlength="72" aria-label="New password"></div><button class="btn2 pri" type="button" id="adpwb" data-adact="pw">Set new password</button><div class="note" id="adpwn" role="status"></div></div>
-     <div class="adp-sec"><h4>Access</h4><label class="adp-l" for="adlr" id="adlrl">Reason shown to the user (optional)</label><textarea id="adlr" maxlength="500" rows="2"></textarea><button class="btn2 danger" type="button" id="adlock" data-adact="lock">Lock account</button><div class="note" id="adln" role="status"></div></div>
-     <div class="adp-sec"><h4>Games played</h4><div class="adp-games" id="adpg" translate="no"></div></div>
-     <div class="adp-sec"><h4>All details</h4><dl class="adp-dl" id="adpdl" translate="no"></dl></div>
-     <div class="adp-sec adp-danger"><h4>Delete account</h4><p>Deletes the account, profile, records, saves, friends and messages for good. This cannot be undone.</p><label class="adp-l" for="addel" id="addell">Type the username or email to confirm</label><input id="addel" autocomplete="off" spellcheck="false" autocapitalize="off"><button class="btn2 danger" type="button" id="addelb" data-adact="del">Delete account forever</button><div class="note" id="addeln" role="status"></div></div>
-    </aside>
+    <section class="adm-sec" id="adlog" hidden></section>
+    <section class="adm-sec" id="adsite" hidden></section>
    </div>
   </div>
 
@@ -276,18 +294,21 @@
 </div>
 
 <div class="adblock" id="adblock" hidden role="dialog" aria-modal="true" aria-labelledby="adbt">
- <div class="au-wrap">
-  <div class="au-brand"><span class="logo"><svg viewBox="0 0 16 16"><path d="M2 1.5v13l12-6.5z"/></svg></span><span>gameplay</span></div>
-  <div class="au-card adb-card">
-   <span class="au-ico adb-ico"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg></span>
-   <div class="au-hd"><h3 id="adbt">The admin has blocked you out of this website</h3><p>You cannot play or use your account for now.</p></div>
+ <div class="adb-wrap">
+  <div class="adb-brand"><span class="logo"><svg viewBox="0 0 16 16"><path d="M2 1.5v13l12-6.5z"/></svg></span><span>gameplay</span></div>
+  <div class="adb-card">
+   <span class="adb-ico"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg></span>
+   <h3 id="adbt">The admin has blocked you out of this website</h3>
+   <p class="adb-sub">You cannot play or use your account for now.</p>
    <div class="adb-why" id="adbr" hidden><b>Reason</b><span id="adbrt" translate="no"></span></div>
+   <div class="adb-why adb-til" id="adbu"><b>Lock ends</b><span id="adbut" translate="no"></span></div>
+   <div class="adb-contact">
+    <h4>Contact</h4>
+    <p>Think this is a mistake? Open a ticket to talk with the admins. Their replies show up here.</p>
+    <div id="tkb"></div>
+   </div>
+   <button class="btn2 adb-out" type="button" id="adbout"><svg viewBox="0 0 24 24"><path d="M9 21H5V3h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>
   </div>
-  <div class="au-card adb-contact">
-   <div class="au-hd"><h3>Contact</h3><p>Think this is a mistake? Open a ticket to talk with the admins. Their replies show up here.</p></div>
-   <div id="tkb"></div>
-  </div>
-  <button class="btn2 adb-out" type="button" id="adbout"><svg viewBox="0 0 24 24"><path d="M9 21H5V3h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>
  </div>
 </div>
 

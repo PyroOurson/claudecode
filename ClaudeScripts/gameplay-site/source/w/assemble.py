@@ -53,7 +53,7 @@ old = rep(old, "    get alive() { return alive; },", "    get alive() { return a
 old = rep(old, "S.best[g.id] = v; save(); setBest(g, true); toast('New best · ' + fmt(g, v));", "S.best[g.id] = v; save(); setBest(g, true); toast('New best · ' + fmt(g, v)); track('record', { game: g.id });")
 old = rep(old, "    get net() { return net || (net = makeNet(g, add)); },", "    get net() { return net || (net = gpNetWrap(g, makeNet(g, add))); },")
 ca = old.index("const coverCache = new Map();")
-old = old[:ca] + open('new/tail.js', encoding='utf-8').read() + open('new/auth.js', encoding='utf-8').read().replace(chr(10) + 'Ameplay.debug = ', chr(10) + open('new/admin.js', encoding='utf-8').read() + chr(10) + open('new/social.js', encoding='utf-8').read() + chr(10) + open('new/input.js', encoding='utf-8').read() + chr(10) + 'Ameplay.debug = ', 1) + chr(10) + open('new/i18n.js', encoding='utf-8').read()
+old = old[:ca] + open('new/tail.js', encoding='utf-8').read() + open('new/auth.js', encoding='utf-8').read().replace(chr(10) + 'Ameplay.debug = ', chr(10) + open('new/admin.js', encoding='utf-8').read() + chr(10) + open('new/social.js', encoding='utf-8').read() + chr(10) + open('new/input.js', encoding='utf-8').read() + chr(10) + open('new/changelog.js', encoding='utf-8').read() + chr(10) + open('new/site.js', encoding='utf-8').read() + chr(10) + 'Ameplay.debug = ', 1) + chr(10) + open('new/i18n.js', encoding='utf-8').read()
 open('parts/001_portal.js', 'w', encoding='utf-8', newline='').write(old)
 
 SC = ':where(:not(.g-root *))'
@@ -99,7 +99,7 @@ am = scope(open('new/am.css', encoding='utf-8').read())
 gcss = open('new/gcss.css', encoding='utf-8').read()
 toast = open('new/toast.css', encoding='utf-8').read()
 media = scope(open('new/media.css', encoding='utf-8').read())
-media += chr(10) + open('new/auth.css', encoding='utf-8').read() + chr(10) + open('new/admin.css', encoding='utf-8').read() + chr(10) + scope(open('new/social.css', encoding='utf-8').read())
+media += chr(10) + open('new/auth.css', encoding='utf-8').read() + chr(10) + open('new/admin.css', encoding='utf-8').read() + chr(10) + scope(open('new/social.css', encoding='utf-8').read()) + chr(10) + scope(open('new/site.css', encoding='utf-8').read())
 count = len(ROWS)
 desc = f'gameplay: {count} free browser games. Famous remakes, 3D, arcade, racing, puzzles, sports and online multiplayer games. No downloads, just click and play.'
 nos = '<noscript><div style="max-width:900px;margin:0 auto;padding:24px;font-family:system-ui,sans-serif"><h1>gameplay: ' + str(count) + ' free browser games</h1><p>gameplay needs JavaScript to run the games. Turn it on and reload this page.</p><ul>' + ''.join('<li><a href="/%s">%s</a></li>' % (r[0], r[1].replace('&', '&amp;')) for r in ROWS) + '</ul></div></noscript>\n'

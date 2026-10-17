@@ -771,6 +771,7 @@ async function auSignedIn(ev) {
   auRender();
   adCheck();
   soStart();
+  siteSignedIn();
   if (loud) toast(auT('Logged in as {name}').replace('{name}', SB.prof && SB.prof.username ? '@' + SB.prof.username : SB.user.email || 'you'));
   sySync();
   if (loud && SB.prof && !SB.prof.username) setTimeout(auChoose, 400);
@@ -783,6 +784,7 @@ function auSignedOut() {
   SB.choosing = false;
   adSignedOut();
   soStop();
+  siteSignedOut();
   auWait(false);
   auRender();
   if (cur || pend || view === 'game') go(homeHref(), true);

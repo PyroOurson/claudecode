@@ -180,7 +180,7 @@
             const rate = fxCam.swivel * 1.35 + (9 - fxCam.swivel * 1.35) * ks;
             fxRotTo(S.D, U, cF, 1 - Math.exp(-rate * dt));
             S.th += (thT - S.th) * (1 - Math.exp(-6.5 * dt));
-            { const kp = 1 - Math.exp(-(17 + 40 * fxCam.stiff) * dt), pz = S.piv.z; S.piv.lerp(cP.set(P.x, P.y, P.z), kp); if (air) S.piv.z = pz + (P.z - pz) * (1 - Math.exp(-2.2 * dt)); }
+            { const kp = 1 - Math.exp(-Math.min(400, 20 / Math.max(0.05, 1 - fxCam.stiff)) * dt), pz = S.piv.z; S.piv.lerp(cP.set(P.x, P.y, P.z), kp); if (air) S.piv.z = pz + (P.z - pz) * (1 - Math.exp(-2.2 * dt)); }
           }
           S.D.addScaledVector(U, -S.D.dot(U)).normalize();
           const hgt = fxCam.height + 14, cs = Math.cos(S.th), sn = Math.sin(S.th), d0 = fxCam.dist, dist = sn > 0.01 ? clamp((hgt * cs - 20) / sn, 150, d0) : d0;
@@ -215,7 +215,7 @@
           cL.copy(S.L);
           cam.p.copy(cP); cam.look.copy(cL); cam.up.copy(U); cam.dir.copy(S.D);
           S.snap = false;
-          { const sp = Math.sqrt(me.v.x * me.v.x + me.v.y * me.v.y + me.v.z * me.v.z), ex = me.sup ? 10 : sp < 500 ? sp / 500 : sp < 1400 ? 1 + (sp - 500) / 450 : 3 + (sp - 1400) / 266;
+          { const sp = Math.sqrt(me.v.x * me.v.x + me.v.y * me.v.y + me.v.z * me.v.z), ex = 5 * Math.min(1, sp / CFG.carMax) + (me.sup ? 5 : 0);
             S.fx = (S.fx || 0) + (Math.min(10, ex) - (S.fx || 0)) * (snap ? 1 : 1 - Math.exp(-2.5 * dt));
             const hf = fxCam.fov + S.fx, asp = cmr.aspect, vf = asp < 1 ? 78 * hf / 110 : Math.min(98, 2 * Math.atan(Math.tan(hf * Math.PI / 360) / asp) * 180 / Math.PI);
             if (Math.abs(cmr.fov - vf) > 0.02) { cmr.fov = vf; cmr.updateProjectionMatrix(); } }

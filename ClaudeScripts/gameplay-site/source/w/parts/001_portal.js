@@ -25,6 +25,7 @@ const STOP = new Set(['the', 'a', 'an', 'of', 'game', 'games', 'play', 'free', '
 const CAT_TINT = { Action: '#d62828', Arcade: '#ff6b6b', Racing: '#3a86ff', Runner: '#ff7a59', Puzzle: '#4361ee', Sports: '#2a9d8f', Board: '#495057', Brain: '#06a77d', Skill: '#e08a00', Strategy: '#a8641c' };
 const POPULAR = ['blockcraft-3d', 'dash-cube', 'sky-runner', 'slither', 'road-hopper', 'flap-bird', 'rocket-soccer', 'brick-bros'];
 const FGROUPS = [
+  { key: 'f', name: 'Favourites', opts: [['fav', 'My favourites']] },
   { key: 'g', name: 'Genre', opts: GENRES.map(k => [k, GENRE_NAME[k] || k]) },
   { key: 'p', name: 'Players', opts: [['s', 'Solo'], ['o', 'Online']] },
   { key: 'v', name: 'Look', opts: [['3d', '3D'], ['2d', '2D']] },
@@ -1440,8 +1441,8 @@ function makeNet(g, add) {
         pushList();
         show('lobby');
       } else if (mode === 'room' && net.role === 'guest' && (rm.conn || rm.reconn)) { phase = 'ready'; show('lobby'); }
-      else if (net.invite) joining(net.invite);
-      else hosting();
+      else if (net.invite && !invite.host) joining(net.invite);
+      else { if (invite && invite.host && invite.id === g.id) invite = null; hosting(); }
       loadPeer().catch(() => {}); netIce();
     });
   };
@@ -1460,7 +1461,7 @@ function makeNet(g, add) {
       }
       return !!(conn && conn.open);
     },
-    get invite() { return invite && invite.id === g.id ? invite.code : null; },
+    get invite() { return invite && invite.id === g.id ? invite.host ? 'NEW' : invite.code : null; },
     on(t, fn) { (ls[t] = ls[t] || []).push(fn); const off = () => { ls[t] = (ls[t] || []).filter(f => f !== fn); }; add(off); return off; },
     send(msg, fast) {
       let s;
@@ -1818,14 +1819,15 @@ function search(q, pool) {
   return { list, partial, scores };
 }
 
-const state = { q: '', g: new Set(), p: new Set(), t: new Set(), v: new Set(), c: new Set(), sort: '' };
-const FKEYS = ['g', 'p', 't', 'v', 'c'];
+const state = { q: '', f: new Set(), g: new Set(), p: new Set(), t: new Set(), v: new Set(), c: new Set(), sort: '' };
+const FKEYS = ['f', 'g', 'p', 't', 'v', 'c'];
 function resetState() { state.q = ''; FKEYS.forEach(k => state[k].clear()); state.sort = ''; }
 const activeCount = () => FKEYS.reduce((n, k) => n + state[k].size, 0);
 const defSort = () => state.q.trim() ? 'rel' : 'rec';
 const nFilters = () => activeCount() + (state.sort && state.sort !== defSort() ? 1 : 0);
 function passes(g) {
   const m = g.info;
+  if (state.f.size && !fvHas(g.id)) return false;
   if (state.g.size && !m.genres.some(x => state.g.has(x))) return false;
   if (state.p.size && ![...state.p].some(c => m.pl.includes(c))) return false;
   if (state.t.size && !state.t.has(bucket(m.mins))) return false;
@@ -2047,7 +2049,7 @@ const thumbsOn = () => S.prefs.thumbs !== false;
 const tint = g => g.cc || TINT[g.id] || '#6c5ce7';
 const img = (g, pri) => { if (!thumbsOn()) return ''; const u = coverUrl(g); return `<img src="${u}"${u === BLANK ? ` data-cv="${g.id}"` : ''} alt="" width="16" height="10"${pri ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async" draggable="false">`; };
 let sel = null;
-const card = (g, src, i) => `<a class="card${sel === g.id && src === 'grid' ? ' sel' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="${src}" style="--c:${tint(g)};--i:${i || 0}"><div class="art">${img(g, i != null && i < 10)}</div><div class="name">${esc(g.title)}</div></a>`;
+const card = (g, src, i) => `<a class="card${sel === g.id && src === 'grid' ? ' sel' : ''}${sfOff(g.id) ? ' off' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="${src}" style="--c:${tint(g)};--i:${i || 0}"><div class="art">${img(g, i != null && i < 10)}${sfOff(g.id) ? '<span class="offb">Temporarily unavailable</span>' : ''}</div>${fvBtn(g.id)}<div class="name">${esc(g.title)}</div></a>`;
 const srow = g => `<a class="srow${sel === g.id ? ' sel' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="side" ><span class="n">${esc(g.title)}</span></a>`;
 function related(g) {
   const mine = new Set(g.info.genres);
@@ -2322,6 +2324,7 @@ function openGame(g) {
   $('#pSub').textContent = gname(g.info.genres[0]) + ' · ' + playersText(g.info.pl);
   $('#pScoreK').textContent = g.info.stat || 'Score';
   $('#pThumb').innerHTML = img(g, true); $('#pThumb').style.setProperty('--c', tint(g));
+  fvBar(g);
   gamebox.style.setProperty('--fw', (g.width || 880) + 'px');
   $('#more').innerHTML = related(g).slice(0, 10).map(x => card(x, 'more')).join('');
   showView('game');
@@ -2330,7 +2333,8 @@ function openGame(g) {
   gamebox.classList.remove('enter'); void gamebox.offsetWidth; gamebox.classList.add('enter');
   syncTheater();
   if (shortQuery.matches) requestAnimationFrame(toStage);
-  if (g.mount) { start(g); track('game_launch', { game: g.id, ms: 0, lazy: false }); } else waitStart(g);
+  SF.og = null;
+  if (sfBlocked(g)) sfOffFrame(g); else if (g.mount) { start(g); track('game_launch', { game: g.id, ms: 0, lazy: false }); } else waitStart(g);
   markSide();
   lzScan();
 }
@@ -2396,6 +2400,7 @@ function renderResults() {
   $('#grid').innerHTML = list.map((g, i) => card(g, 'grid', i)).join('');
   $('#grid').hidden = !n; $('#empty').hidden = n > 0;
   $('#continue').hidden = !!(filt || q) || !recentList().length;
+  $('#favs').hidden = !!(filt || q) || !FV.ids.some(id => byId.has(id));
   const chips = [];
   FKEYS.forEach(k => state[k].forEach(v => chips.push(`<button class="chip" type="button" data-x="${k}:${v}" aria-label="Remove ${esc(filterLabel(k, v))}">${esc(filterLabel(k, v))} &times;</button>`)));
   if (state.sort && state.sort !== defSort()) { const s = SORTS.find(x => x[0] === state.sort); chips.push(`<button class="chip" type="button" data-x="s:" aria-label="Reset sort">${esc(s ? s[1] : state.sort)} &times;</button>`); }
@@ -2410,6 +2415,7 @@ function renderHome() {
   const rec = recentList();
   $('#rail').innerHTML = rec.map((g, i) => card(g, 'rail', i)).join('');
   renderResults();
+  fvRail();
 }
 function renderChrome() {
   $('#q').placeholder = `Search ${games.length} games`;
@@ -2706,6 +2712,7 @@ function fsSync() {
   if (on === gamebox.classList.contains('fs')) return;
   gamebox.classList.toggle('fs', on); gamebox.classList.remove('fs-ui');
   document.body.classList.toggle('fs-on', on);
+  soPlace();
   document.querySelectorAll('[data-fs]').forEach(b => { b.setAttribute('aria-label', on ? 'Exit fullscreen' : 'Fullscreen'); b.title = on ? 'Exit fullscreen' : 'Fullscreen'; });
   clearInterval(fitTimer);
   frame.classList.add('no-anim');
@@ -2892,6 +2899,7 @@ function boot() {
   adBoot();
   soBoot();
   inBoot();
+  siteBoot();
   if (S.recent.some(id => byId.get(id) && byId.get(id).is3d)) { const warmUp = () => loadThree().catch(() => {}); if (window.requestIdleCallback) requestIdleCallback(warmUp, { timeout: 4000 }); else setTimeout(warmUp, 1500); }
 }
 
@@ -3668,6 +3676,7 @@ async function auSignedIn(ev) {
   auRender();
   adCheck();
   soStart();
+  siteSignedIn();
   if (loud) toast(auT('Logged in as {name}').replace('{name}', SB.prof && SB.prof.username ? '@' + SB.prof.username : SB.user.email || 'you'));
   sySync();
   if (loud && SB.prof && !SB.prof.username) setTimeout(auChoose, 400);
@@ -3680,6 +3689,7 @@ function auSignedOut() {
   SB.choosing = false;
   adSignedOut();
   soStop();
+  siteSignedOut();
   auWait(false);
   auRender();
   if (cur || pend || view === 'game') go(homeHref(), true);
@@ -3966,7 +3976,7 @@ Ameplay.account = {
   sync() { return sySync(); }
 };
 
-const AD = { role: null, locked: false, reason: null, at: 0, game: null, gat: 0, users: null, q: '', f: 'all', sort: ['created_at', -1], sel: null, tab: 'users', wait: 0, busy: false };
+const AD = { role: null, locked: false, reason: null, until: null, ut: 0, uti: 0, at: 0, game: null, gat: 0, users: null, q: '', f: 'all', sort: ['created_at', -1], sel: null, tab: 'users', wait: 0, busy: false };
 const adHref = () => (PATH_MODE ? '/' : '#/') + 'admin';
 const adIsAdmin = () => AD.role === 'admin' && !AD.locked;
 const adRpc = (f, b) => sbRest('rpc/' + f, { method: 'POST', body: b || {} });
@@ -3975,7 +3985,22 @@ const AD_ICO = {
   lock: '<svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg>',
   back: '<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>',
   x: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
-  send: '<svg viewBox="0 0 24 24"><path d="M4 12 20 4l-6 16-3-7z"/></svg>'
+  send: '<svg viewBox="0 0 24 24"><path d="M4 12 20 4l-6 16-3-7z"/></svg>',
+  trash: '<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+  chev: '<svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>'
+};
+const AD_SI = {
+  clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  play: '<svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg>',
+  users: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14a6.5 6.5 0 0 1 3.5 6"/></svg>',
+  star: '<svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg>',
+  cake: '<svg viewBox="0 0 24 24"><rect x="3" y="10" width="18" height="10" rx="2"/><path d="M3 15c3 0 3-2 6-2s3 2 6 2 3-2 6-2M12 10V6M12 3v.5"/></svg>',
+  eye: '<svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  rocket: '<svg viewBox="0 0 24 24"><path d="M5 15c-1.5 1.3-2 4-2 6 2 0 4.7-.5 6-2M9 15l-3-3 7-7c2-2 5-2 8-2 0 3 0 6-2 8l-7 7z"/><circle cx="15" cy="9" r="1.5"/></svg>',
+  bug: '<svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="13" rx="5"/><path d="M12 11v9M3 13h4M17 13h4M4 7l3 2M20 7l-3 2M4 19l3-2M20 19l-3-2M9 7a3 3 0 0 1 6 0"/></svg>',
+  trophy: '<svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4a4 4 0 0 0 4 4M16 6h4a4 4 0 0 1-4 4M12 13v4M8 21h8M9 17h6"/></svg>',
+  save: '<svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6"/></svg>',
+  timer: '<svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4M9 2h6"/></svg>'
 };
 function adAgo(t) {
   const d = Date.parse(t);
@@ -3996,13 +4021,16 @@ function adLangName(c) {
 const adGame = id => id ? (byId.get(id) ? byId.get(id).title : id) : '—';
 const adProv = u => (u.providers && u.providers.length ? u.providers : ['email']).map(p => p === 'google' ? 'Google' : p === 'email' ? auT('Email') : p).join(' + ');
 const adPill = (t, k) => `<span class="adm-pill${k ? ' ' + k : ''}">${esc(auT(t))}</span>`;
-const adErr = e => { const m = String(e && e.message || ''); return /admins only/i.test(m) ? 'Admins only' : /at least one admin/i.test(m) ? 'There must be at least one admin' : /own account/i.test(m) ? 'You cannot lock your own account' : /at least 8/i.test(m) ? 'Use at least 8 characters.' : /at most 72/i.test(m) ? 'Use at most 72 characters.' : /not found/i.test(m) ? 'Not found. Refresh and try again.' : /too many/i.test(m) ? 'Too many messages. Wait a minute and try again.' : /account locked/i.test(m) ? 'Your account is locked.' : /write a subject/i.test(m) ? 'Write a subject.' : /write a message/i.test(m) ? 'Write a message.' : 'Could not update. Check your connection and try again.'; };
+const adErr = e => { const m = String(e && e.message || ''); return /admins only/i.test(m) ? 'Admins only' : /at least one admin/i.test(m) ? 'There must be at least one admin' : /own account/i.test(m) ? 'You cannot lock your own account' : /at least 8/i.test(m) ? 'Use at least 8 characters.' : /at most 72/i.test(m) ? 'Use at most 72 characters.' : /not found/i.test(m) ? 'Not found. Refresh and try again.' : /too many/i.test(m) ? 'Too many messages. Wait a minute and try again.' : /account locked/i.test(m) ? 'Your account is locked.' : /end time/i.test(m) ? 'Pick an end time in the future.' : /write a subject/i.test(m) ? 'Write a subject.' : /write a message/i.test(m) ? 'Write a message.' : 'Could not update. Check your connection and try again.'; };
 
 function adStatus(s) {
   const was = adIsAdmin(), wl = AD.locked;
-  AD.role = s ? s.role : null; AD.locked = !!(s && s.locked); AD.reason = s && s.locked_reason || null; AD.at = Date.now();
+  AD.role = s ? s.role : null; AD.locked = !!(s && s.locked); AD.reason = s && s.locked_reason || null; AD.until = AD.locked && s.locked_until || null; AD.at = Date.now();
   document.querySelectorAll('[data-admin]').forEach(el => { el.hidden = !adIsAdmin(); });
+  clearTimeout(AD.ut);
+  if (AD.locked && AD.until) { const d = Date.parse(AD.until) - Date.now(); AD.ut = setTimeout(adCheck, d > 0 ? Math.min(d + 1500, 3600000) : 30000); }
   if (AD.locked !== wl || AD.locked) adBlock(AD.locked);
+  sfPaint();
   if (view === 'admin') { if (adIsAdmin()) { if (!was || !AD.users) adEnter(); } else adBounce(); }
 }
 async function adCheck(game) {
@@ -4022,7 +4050,7 @@ function adSeen(id) {
   adCheck(id);
 }
 function adSignedOut() {
-  AD.role = null; AD.at = 0; AD.users = null; AD.sel = null;
+  AD.role = null; AD.at = 0; AD.users = null; AD.sel = null; AD.until = null; clearTimeout(AD.ut);
   document.querySelectorAll('[data-admin]').forEach(el => { el.hidden = true; });
   if (AD.locked) { AD.locked = false; adBlock(false); }
   document.querySelectorAll('.tk').forEach(b => { if (b._tk) { b._tk.list = null; b._tk.cur = null; } });
@@ -4032,8 +4060,10 @@ function adSignedOut() {
 function adBlock(on) {
   const el = $('#adblock');
   document.documentElement.classList.toggle('ad-locked', on);
-  ['top', 'side', 'main'].forEach(id => { const n = document.getElementById(id); if (n) n.inert = on; });
+  sfLock();
+  clearInterval(AD.uti);
   if (on) {
+    adUntil(); AD.uti = setInterval(adUntil, 30000);
     if (openK) closeAll();
     if (!$('#unmodal').hidden) unClose();
     if (view !== 'home' || cur || pend) go(homeHref(), true);
@@ -4043,6 +4073,13 @@ function adBlock(on) {
   } else el.hidden = true;
 }
 
+function adUntil() {
+  const t = $('#adbut');
+  if (!t) return;
+  t.textContent = AD.until ? auT('{d} ({r})').replace('{d}', adDate(AD.until, 1)).replace('{r}', adAgo(AD.until)) : auT('Permanent');
+  $('#adbu').classList.toggle('perm', !AD.until);
+}
+const adLeft = u => u.locked_until ? auT('ends {t}').replace('{t}', adAgo(u.locked_until)) : auT('Permanent');
 function adBounce() {
   if (view !== 'admin') return;
   clearTimeout(AD.wait);
@@ -4067,6 +4104,7 @@ async function adEnter() {
   adTab(AD.tab);
   await adLoad();
   tkLoad(tkBox($('#tka'), 'admin'));
+  setTimeout(stSample, 15000);
 }
 async function adLoad() {
   if (!adIsAdmin() || AD.busy) return;
@@ -4109,7 +4147,7 @@ const AD_COLS = [
   ['friends', 'Friends', u => String(+u.friends || 0)],
   ['role', 'Role', u => u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User')],
   ['email_confirmed', 'Email confirmed', u => u.email_confirmed ? adPill('Yes', 'ok') : adPill('No', 'warn')],
-  ['locked', 'Locked', u => u.locked ? `<span title="${esc(u.locked_reason || '')}">${adPill('Locked', 'bad')}</span>` : adPill('No')]
+  ['locked', 'Locked', u => u.locked ? `<span title="${esc(u.locked_reason || '')}">${adPill('Locked', 'bad')}</span><small class="adm-left">${esc(adLeft(u))}</small>` : adPill('No')]
 ];
 function adHead() {
   $('#adt thead').innerHTML = '<tr>' + AD_COLS.map(([k, l]) => k ? `<th><button type="button" data-adsort="${k}" aria-sort="${AD.sort[0] === k ? (AD.sort[1] > 0 ? 'ascending' : 'descending') : 'none'}">${esc(auT(l))}<i></i></button></th>` : `<th><span>${esc(auT(l))}</span></th>`).join('') + '</tr>';
@@ -4146,9 +4184,11 @@ function adTab(t) {
   const tabs = $('#adtabs');
   tabs.dataset.m = t;
   tabs.querySelectorAll('[data-adtab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.adtab === t)));
-  $('#adusers').hidden = t !== 'users'; $('#adtickets').hidden = t !== 'tickets'; $('#adstats').hidden = t !== 'stats';
+  $('#adusers').hidden = t !== 'users'; $('#adtickets').hidden = t !== 'tickets'; $('#adstats').hidden = t !== 'stats'; $('#adlog').hidden = t !== 'log'; $('#adsite').hidden = t !== 'site';
   if (t === 'tickets') tkLoad(tkBox($('#tka'), 'admin'));
   if (t === 'stats') stLoad();
+  if (t === 'log') alLoad();
+  if (t === 'site') sfaDraw();
 }
 function adLiveTxt(u) {
   const pr = RT.pres[u.id];
@@ -4160,12 +4200,13 @@ function adPanel(u, keep) {
   const p = $('#adpanel'), me = SB.user && SB.user.id === u.id, name = u.display_name || u.username || u.email || '?';
   document.querySelectorAll('#adt tr.sel').forEach(r => r.classList.remove('sel'));
   const tr = document.querySelector(`#adt tr[data-uid="${CSS.escape(u.id)}"]`); if (tr) tr.classList.add('sel');
-  p.querySelector('.pic').textContent = name.charAt(0).toUpperCase();
+  $('#adppic').textContent = name.charAt(0).toUpperCase();
   $('#adpn').textContent = name;
-  $('#adpu').innerHTML = esc(u.username ? '@' + u.username : u.email || '') + ' ' + (u.role === 'admin' ? adPill('Admin', 'acc') : '') + (u.locked ? adPill('Locked', 'bad') : '') + (u.email_confirmed ? '' : adPill('Email not confirmed', 'warn'));
+  $('#adpu').textContent = [u.username ? '@' + u.username : '', u.email || ''].filter(Boolean).join(' · ');
+  $('#adpp').innerHTML = (u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User')) + (u.locked ? adPill('Locked', 'bad') + adPill(adLeft(u), 'bad') : '') + (u.email_confirmed ? adPill('Email confirmed', 'ok') : adPill('Email not confirmed', 'warn')) + (me ? adPill('You', 'acc') : '');
   $('#adplive').innerHTML = adLiveTxt(u);
-  $('#adpq').innerHTML = [['Time played', adHrs(u.seconds_played)], ['Plays', String(+u.plays || 0)], ['Friends', String(+u.friends || 0)], ['Favourite game', adGame(u.fav_game)]].map(([k, v]) => `<div><small>${esc(auT(k))}</small><b>${esc(v)}</b></div>`).join('');
-  const F = [['User id', `<code>${esc(u.id)}</code>`], ['Email', esc(u.email || '—')], ['Username', u.username ? '@' + esc(u.username) : '—'], ['Display name', esc(u.display_name || '—')], ['Last log in', esc(adDate(u.last_sign_in_at, 1))], ['Last used website', esc(adDate(u.last_seen, 1))], ['Log in method', esc(adProv(u))], ['Account created', esc(adDate(u.created_at, 1))], ['Password', adPw(u)], ['Favourite game', esc(adGame(u.fav_game))], ['Friends', String(+u.friends || 0)], ['Role', u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User')], ['Email confirmed', u.email_confirmed ? esc(adDate(u.email_confirmed_at, 1)) : adPill('No', 'warn')], ['Locked', u.locked ? adPill('Locked', 'bad') + (u.locked_reason ? `<div class="adm-why">${esc(u.locked_reason)}</div>` : '') : adPill('No')], ['Last game opened', esc(adGame(u.last_game))], ['Language', esc(adLangName(u.last_lang))]];
+  $('#adpq').innerHTML = [['Time played', adHrs(u.seconds_played), 'clock'], ['Plays', stN(u.plays), 'play'], ['Friends', stN(u.friends), 'users'], ['Favourite game', adGame(u.fav_game), 'star'], ['Account created', adAgo(u.created_at), 'cake'], ['Last seen', RT.pres[u.id] ? auT('Online now') : adAgo(u.last_seen), 'eye']].map(([k, v, i], n) => `<div style="--i:${n}">${AD_SI[i]}<small>${esc(auT(k))}</small><b title="${esc(v)}">${esc(v)}</b></div>`).join('');
+  const F = [['User id', `<code>${esc(u.id)}</code>`], ['Email', esc(u.email || '—')], ['Username', u.username ? '@' + esc(u.username) : '—'], ['Display name', esc(u.display_name || '—')], ['Last log in', esc(adDate(u.last_sign_in_at, 1))], ['Last used website', esc(adDate(u.last_seen, 1))], ['Log in method', esc(adProv(u))], ['Account created', esc(adDate(u.created_at, 1))], ['Password', adPw(u)], ['Favourite game', esc(adGame(u.fav_game))], ['Friends', String(+u.friends || 0)], ['Role', u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User')], ['Email confirmed', u.email_confirmed ? esc(adDate(u.email_confirmed_at, 1)) : adPill('No', 'warn')], ['Locked', u.locked ? adPill('Locked', 'bad') + ` <span class="adm-mut">${esc(u.locked_until ? auT('until {d}').replace('{d}', adDate(u.locked_until, 1)) : auT('Permanent'))}</span>` + (u.locked_reason ? `<div class="adm-why">${esc(u.locked_reason)}</div>` : '') : adPill('No')], ['Last game opened', esc(adGame(u.last_game))], ['Language', esc(adLangName(u.last_lang))]];
   $('#adpdl').innerHTML = F.map(([k, v]) => `<div><dt>${esc(auT(k))}</dt><dd>${v}</dd></div>`).join('');
   p.querySelectorAll('[data-adrole]').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.adrole === u.role)); adUnconfirm(b); });
   const lb = $('#adlock');
@@ -4173,7 +4214,8 @@ function adPanel(u, keep) {
   lb.textContent = auT(u.locked ? 'Unlock account' : 'Lock account');
   lb.className = 'btn2 ' + (u.locked ? 'pri' : 'danger');
   lb.disabled = me && !u.locked;
-  $('#adlr').hidden = u.locked; $('#adlrl').hidden = u.locked;
+  $('#adlr').hidden = u.locked; $('#adlrl').hidden = u.locked; $('#adld').hidden = u.locked; $('#adldl').hidden = u.locked;
+  const lt = $('#adlt'); lt.hidden = !u.locked; lt.textContent = u.locked ? (u.locked_until ? auT('Locked until {d} ({r}).').replace('{d}', adDate(u.locked_until, 1)).replace('{r}', adAgo(u.locked_until)) : auT('Locked with no end date.')) : '';
   ['adpwb', 'adrst', 'adunb', 'addelb'].forEach(id => adUnconfirm($('#' + id)));
   $('#adrst').disabled = !u.email;
   $('#adpwt').textContent = auT(u.has_password ? 'Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them.' : 'This account has no password: it signs in with Google.');
@@ -4186,25 +4228,32 @@ function adPanel(u, keep) {
     $('#adpw').type = 'password';
     const eye = p.querySelector('.au-eye'); if (eye) auEye(eye, true);
     adGames(u);
+    alHist(u);
+    const was = p.hidden;
+    vis(p, true);
+    p.classList.remove('swap'); void p.offsetWidth; if (!was) p.classList.add('swap');
+    requestAnimationFrame(() => p.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'start' }));
+    if (was && !auCoarse()) p.focus({ preventScroll: true });
   }
-  if (p.hidden) { p.hidden = false; $('#adpback').hidden = false; p.scrollTop = 0; if (!auCoarse()) $('#adpclose').focus({ preventScroll: true }); }
 }
 async function adGames(u) {
   const box = $('#adpg');
-  box.innerHTML = '<i class="sk sk-td"></i><i class="sk sk-td"></i>';
+  box.innerHTML = '<i class="sk sk-td"></i><i class="sk sk-td"></i><i class="sk sk-td"></i>';
   try {
     const r = await adRpc('admin_user_games', { p_uid: u.id });
     if (AD.sel !== u.id) return;
     const L = Array.isArray(r) ? r : [], max = Math.max(1, ...L.map(g => +g.seconds_played || 0));
-    box.innerHTML = L.length ? L.map(g => `<div class="adp-g"><span>${esc(adGame(g.game_id))}</span><b>${esc(adHrs(g.seconds_played))}</b><i style="--w:${Math.max(2, Math.round(100 * (+g.seconds_played || 0) / max))}%"></i><small>${esc(auT('{n} plays').replace('{n}', +g.plays || 0))}${g.best_score != null ? ' · ' + esc(auT('best {s}').replace('{s}', g.best_score)) : ''}</small></div>`).join('') : `<div class="adm-mut">${esc(auT('No games played yet.'))}</div>`;
+    box.innerHTML = L.length ? L.map((g, i) => `<div class="apc-g" style="--i:${Math.min(i, 12)};--c:${esc(TINT[g.game_id] || 'var(--accent)')}"><span class="apc-gi">${esc(adGame(g.game_id).charAt(0))}</span><span class="apc-gn">${esc(adGame(g.game_id))}</span><b>${esc(adHrs(g.seconds_played))}</b><i><s style="width:${Math.max(2, Math.round(100 * (+g.seconds_played || 0) / max))}%"></s></i><small>${esc(auT('{n} plays').replace('{n}', +g.plays || 0))}${g.best_score != null ? ' · ' + esc(auT('best {s}').replace('{s}', g.best_score)) : ''}${g.last_played ? ' · ' + esc(adAgo(g.last_played)) : ''}</small></div>`).join('') : `<div class="adm-mut apc-none">${esc(auT('No games played yet.'))}</div>`;
   } catch (e) { box.innerHTML = `<div class="adm-mut">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; }
 }
 function adPanelClose() {
   const p = $('#adpanel');
   if (p.hidden) return;
+  const tr = document.querySelector('#adt tr.sel');
   AD.sel = null;
   document.querySelectorAll('#adt tr.sel').forEach(r => r.classList.remove('sel'));
-  vis(p, false); vis($('#adpback'), false);
+  vis(p, false);
+  if (tr && p.contains(document.activeElement)) tr.focus({ preventScroll: true });
 }
 function adUnconfirm(b) { if (b && b.dataset.c) { delete b.dataset.c; b.textContent = b.dataset.l; b.classList.remove('dangerfill'); } }
 function adConfirm(b) {
@@ -4232,14 +4281,14 @@ async function adAct(k, b) {
     if (utf8Len(pw) > 72) { auMsg('adpwn', 'Use at most 72 characters.', 'bad'); return; }
     if (!adConfirm(b)) return;
     b.disabled = true; b.classList.add('is-busy'); auMsg('adpwn', '');
-    try { const r = await adRpc('admin_set_password', { p_uid: u.id, p_password: pw }); $('#adpw').value = ''; auMsg('adpwn', r === 'signed_out' ? 'New password saved. They were signed out on their devices.' : 'New password saved.', 'ok'); track('admin', { act: 'password' }); }
+    try { const r = await adRpc('admin_set_password', { p_uid: u.id, p_password: pw }); $('#adpw').value = ''; auMsg('adpwn', r === 'signed_out' ? 'New password saved. They were signed out on their devices.' : 'New password saved.', 'ok'); track('admin', { act: 'password' }); alHist(u); }
     catch (e) { auMsg('adpwn', adErr(e), 'bad'); }
     finally { b.disabled = false; b.classList.remove('is-busy'); }
     return;
   } else if (k === 'reset') {
     if (!adConfirm(b)) return;
     b.disabled = true; b.classList.add('is-busy'); auMsg('adrstn', '');
-    try { const c = await sbClient(); const { error } = await c.auth.resetPasswordForEmail(u.email, { redirectTo: sbRedirect('recovery') }); if (error) throw error; auMsg('adrstn', auT('Sent to {e}. They get a 6-digit code to choose a new password.').replace('{e}', u.email), 'ok'); track('admin', { act: 'reset' }); }
+    try { const c = await sbClient(); const { error } = await c.auth.resetPasswordForEmail(u.email, { redirectTo: sbRedirect('recovery') }); if (error) throw error; auMsg('adrstn', auT('Sent to {e}. They get a 6-digit code to choose a new password.').replace('{e}', u.email), 'ok'); track('admin', { act: 'reset' }); await adRpc('admin_log_reset', { p_uid: u.id }).catch(() => {}); alHist(u); }
     catch (e) { auMsg('adrstn', auErrText(e), 'bad'); }
     finally { b.disabled = false; b.classList.remove('is-busy'); }
     return;
@@ -4268,25 +4317,121 @@ async function adAct(k, b) {
     const on = !u.locked;
     if (!adConfirm(b)) return;
     b.disabled = true; b.classList.add('is-busy'); auMsg('adln', '');
-    try { await adRpc('admin_lock', { p_uid: u.id, p_locked: on, p_reason: on ? $('#adlr').value : null }); u.locked = on; u.locked_reason = on ? (String($('#adlr').value).replace(/\s+/g, ' ').trim().slice(0, 500) || null) : null; auMsg('adln', on ? 'Account locked. They now only see the blocked page.' : 'Account unlocked.', 'ok'); track('admin', { act: on ? 'lock' : 'unlock' }); rtSend(u.id, { t: 'status' }); }
+    const hrs = +$('#adld').value || 0, until = on && hrs ? new Date(Date.now() + hrs * 3600e3).toISOString() : null;
+    try {
+      if (on) await adRpc('admin_lock_until', { p_uid: u.id, p_reason: $('#adlr').value, p_until: until }); else await adRpc('admin_lock', { p_uid: u.id, p_locked: false, p_reason: null });
+      u.locked = on; u.locked_until = until; u.locked_reason = on ? (String($('#adlr').value).replace(/\s+/g, ' ').trim().slice(0, 500) || null) : null;
+      auMsg('adln', on ? (until ? auT('Account locked until {d}. They only see the blocked page until then.').replace('{d}', adDate(until, 1)) : 'Account locked. They now only see the blocked page.') : 'Account unlocked.', 'ok'); track('admin', { act: on ? 'lock' : 'unlock', hrs }); rtSend(u.id, { t: 'status' });
+    }
     catch (e) { auMsg('adln', adErr(e), 'bad'); }
     finally { b.disabled = false; b.classList.remove('is-busy'); }
   }
   adTiles(); adDraw(); adPanel(u, true);
+  alHist(u);
   adLoad();
 }
 
-const ST = { d: null, at: 0, busy: false, sort: ['launches_7d', -1], q: '' };
+const AL = { list: [], more: false, busy: false, seq: 0 };
+const alWho = (un, dn, id) => un ? '@' + un : dn || (id ? id.slice(0, 8) : '');
+const AL_T = { role_admin: '{a} made {t} an admin', role_user: '{a} made {t} a regular user', username: '{a} changed the username of {t} to {n}', lock_until: '{a} locked {t} until {d}', lock: '{a} locked {t} with no end date', unlock: '{a} unlocked {t}', expire: 'The lock on {t} ended', password: '{a} set a new password for {t}', reset_email: '{a} sent a password reset email to {t}', delete_user: '{a} deleted the account of {t}', ticket_delete: '{a} deleted a ticket from {t}', ticket_reply: '{a} replied to a ticket from {t}', ticket_closed: '{a} closed a ticket from {t}', ticket_open: '{a} reopened a ticket from {t}', site: '{a} changed the site switches' };
+function alSite(d) {
+  const a = d.after || {}, b = d.before || {}, out = [], ga = new Set(a.disabled_games || []), gb = new Set(b.disabled_games || []);
+  if (!!a.maintenance !== !!b.maintenance) out.push(auT(a.maintenance ? 'Maintenance mode on' : 'Maintenance mode off'));
+  if ((a.banner || '') !== (b.banner || '')) out.push(a.banner ? auT('Announcement: {b}').replace('{b}', a.banner) : auT('Announcement removed'));
+  const on = [...ga].filter(x => !gb.has(x)), off = [...gb].filter(x => !ga.has(x));
+  if (on.length) out.push(auT('Turned off: {g}').replace('{g}', on.map(adGame).join(', ')));
+  if (off.length) out.push(auT('Turned back on: {g}').replace('{g}', off.map(adGame).join(', ')));
+  return out.length ? out.join(' · ') : auT('Messages updated');
+}
+function alRow(x, i) {
+  const d = x.detail || {}, k = x.action === 'role' ? 'role_' + (d.to === 'admin' ? 'admin' : 'user') : x.action === 'lock' && d.until ? 'lock_until' : x.action === 'ticket_status' ? (d.status === 'closed' ? 'ticket_closed' : 'ticket_open') : x.action;
+  const a = alWho(x.admin_username, x.admin_display, x.admin_id) || auT('An admin'), t = alWho(x.target_username, x.target_display, null) || (d.username ? '@' + d.username : d.display_name) || (x.target_user ? auT('a deleted account') : '');
+  const tt = x.target_user && (AD.users || []).some(u => u.id === x.target_user) ? `<button type="button" class="al-u" data-alu="${esc(x.target_user)}">${esc(t)}</button>` : `<b>${esc(t)}</b>`;
+  const txt = esc(auT(AL_T[k] || '{a} did something ({x})')).replace('{a}', `<b>${esc(a)}</b>`).replace('{t}', tt).replace('{n}', `<b>@${esc(d.to || '')}</b>`).replace('{d}', esc(adDate(d.until, 1))).replace('{x}', esc(x.action));
+  const ex = x.action === 'lock' && d.reason ? auT('Reason: {r}').replace('{r}', d.reason) : /^ticket_/.test(x.action) && d.subject ? '“' + d.subject + '”' : x.action === 'site' ? alSite(d) : x.action === 'username' && d.from ? auT('Was @{u}').replace('{u}', d.from) : '';
+  const ic = { lock: AD_ICO.lock, unlock: AD_ICO.lock, expire: AD_SI.clock, delete_user: AD_ICO.trash, ticket_delete: AD_ICO.trash, site: SF_ICO.tool, ticket_reply: AD_ICO.send, ticket_status: AD_ICO.send, password: AD_SI.eye, reset_email: AD_SI.eye, role: AD_SI.star, username: AD_SI.users }[x.action] || AD_SI.clock;
+  return `<div class="al-r al-${esc(x.action)}" style="--i:${Math.min(i, 14)}"><span class="al-i">${ic}</span><div class="al-t"><span>${txt}</span>${ex ? `<em>${esc(ex)}</em>` : ''}<small title="${esc(adDate(x.at, 1))}">${esc(adAgo(x.at))} · ${esc(adDate(x.at, 1))}</small></div></div>`;
+}
+async function alLoad(more) {
+  if (!adIsAdmin() || AL.busy) return;
+  AL.busy = true;
+  const box = $('#adlog');
+  if (!more && !AL.list.length) box.innerHTML = '<div class="st-card">' + '<i class="sk sk-td"></i>'.repeat(6) + '</div>';
+  try {
+    const r = await adRpc('admin_log_list', { p_limit: 50, p_before: more && AL.list.length ? AL.list[AL.list.length - 1].id : null, p_target: null });
+    const L = Array.isArray(r) ? r : [];
+    AL.list = more ? AL.list.concat(L) : L; AL.more = L.length === 50;
+    box.innerHTML = `<div class="st-card al-card"><div class="sx-ch"><div><h3>${esc(auT('Admin log'))}</h3><p class="sx-note">${esc(auT('Every change made by an admin, newest first.'))}</p></div></div><div class="al-list" translate="no">${AL.list.length ? AL.list.map(alRow).join('') : `<div class="adm-empty">${esc(auT('Nothing here yet.'))}</div>`}</div>${AL.more ? `<button class="btn2 al-more" type="button" data-almore>${esc(auT('Show more'))}</button>` : ''}</div>`;
+  } catch (e) { if (!AL.list.length) box.innerHTML = `<div class="adm-empty">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; }
+  finally { AL.busy = false; }
+}
+async function alHist(u) {
+  const box = $('#adph'), n = ++AL.seq;
+  if (!box) return;
+  if (!box.children.length || box.dataset.u !== u.id) box.innerHTML = '<i class="sk sk-td"></i><i class="sk sk-td"></i>';
+  box.dataset.u = u.id;
+  try {
+    const r = await adRpc('admin_log_list', { p_limit: 20, p_before: null, p_target: u.id });
+    if (n !== AL.seq || AD.sel !== u.id) return;
+    const L = Array.isArray(r) ? r : [];
+    box.innerHTML = L.length ? L.map(alRow).join('') : `<div class="adm-mut apc-none">${esc(auT('No admin changes for this player yet.'))}</div>`;
+  } catch (e) { if (n === AL.seq) box.innerHTML = `<div class="adm-mut">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; }
+}
+
+const sfaLocal = iso => { const t = Date.parse(iso || ''); if (!t) return ''; const d = new Date(t); return new Date(t - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
+function sfaDraw() {
+  const d = SF.d || {}, box = $('#adsite'), off = new Set(d.disabled_games || []);
+  box.innerHTML = `<div class="sfa">
+  <div class="st-card sfa-c"><div class="sfa-row"><div><h3>${esc(auT('Maintenance mode'))}</h3><p class="sx-note">${esc(auT('Players see a maintenance page. Admins can still use the site.'))}</p></div><button class="sw${d.maintenance ? ' on' : ''}" type="button" role="switch" id="sfam" aria-checked="${!!d.maintenance}" aria-label="${esc(auT('Maintenance mode'))}"></button></div>
+   <label class="apc-l" for="sfamm">${esc(auT('Message on the maintenance page (optional)'))}</label><textarea id="sfamm" maxlength="500" rows="2" placeholder="${esc(auT('We are making the site better. Please come back in a little while.'))}">${esc(d.maintenance_msg || '')}</textarea></div>
+  <div class="st-card sfa-c"><h3>${esc(auT('Announcement banner'))}</h3><p class="sx-note">${esc(auT('Shown at the top of the site for everyone. Leave it empty to hide it.'))}</p>
+   <textarea id="sfab" maxlength="300" rows="2">${esc(d.banner || '')}</textarea>
+   <div class="sfa-2"><label class="apc-l">${esc(auT('Style'))}<select id="sfal"><option value="info"${d.banner_level !== 'warning' ? ' selected' : ''}>${esc(auT('Info'))}</option><option value="warning"${d.banner_level === 'warning' ? ' selected' : ''}>${esc(auT('Warning'))}</option></select></label><label class="apc-l">${esc(auT('Ends (optional)'))}<input type="datetime-local" id="sfau" value="${esc(sfaLocal(d.banner_until))}"></label></div></div>
+  <div class="st-card sfa-c"><h3>${esc(auT('Turned off games'))}</h3><p class="sx-note">${esc(auT('These games show as temporarily unavailable and cannot be started.'))}</p>
+   <label class="search sfa-q"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="sfaq" type="search" placeholder="${esc(auT('Search games'))}" autocomplete="off" spellcheck="false" aria-label="${esc(auT('Search games'))}"></label>
+   <div class="sfa-g" id="sfag" translate="no">${games.slice().sort((a, b) => (off.has(b.id) - off.has(a.id)) || a.title.localeCompare(b.title)).map(g => `<button type="button" class="chip" data-sfg="${esc(g.id)}" aria-pressed="${off.has(g.id)}">${esc(g.title)}</button>`).join('')}</div>
+   <label class="apc-l" for="sfadm">${esc(auT('Message for turned off games (optional)'))}</label><textarea id="sfadm" maxlength="300" rows="2" placeholder="${esc(auT('This game is being fixed. Try again a bit later.'))}">${esc(d.disabled_msg || '')}</textarea></div>
+  <div class="sfa-f"><div class="note" id="sfan" role="status"></div><button class="btn2 pri" type="button" id="sfas">${esc(auT('Save and publish'))}</button></div></div>`;
+}
+async function sfaSave(b) {
+  const v = id => $('#' + id).value, au = v('sfau'), until = au ? new Date(au) : null;
+  if (until && !(until.getTime() > Date.now())) { auMsg('sfan', 'Pick an end time in the future.', 'bad'); auShake($('#sfau')); return; }
+  const flags = { maintenance: $('#sfam').classList.contains('on'), maintenance_msg: v('sfamm'), banner: v('sfab'), banner_level: v('sfal'), banner_until: until ? until.toISOString() : null, disabled_games: [...document.querySelectorAll('#sfag [aria-pressed="true"]')].map(x => x.dataset.sfg), disabled_msg: v('sfadm') };
+  b.disabled = true; b.classList.add('is-busy'); auMsg('sfan', '');
+  try {
+    const r = await adRpc('admin_set_site_flags', { p_flags: flags });
+    if (r && typeof r === 'object') { SF.d = r; try { localStorage.setItem(SF_KEY, JSON.stringify(r)); } catch (e) {} }
+    sfPaint(); sfNudge();
+    auMsg('sfan', 'Saved. Every open tab updates right away.', 'ok');
+    track('admin', { act: 'site' });
+    AL.list = [];
+  } catch (e) { auMsg('sfan', adErr(e), 'bad'); }
+  finally { b.disabled = false; b.classList.remove('is-busy'); }
+}
+
+const ST = { d: null, at: 0, busy: false, days: 30, game: null, ci: -1, anim: true, ps: 0, ch: {} };
 const stN = v => (+v || 0).toLocaleString(adLang());
+const stH = v => { const n = +v || 0; return (n < 10 ? n.toFixed(1) : stN(Math.round(n))) + ' h'; };
+const stDay = (t, o) => { const d = Date.parse(String(t).slice(0, 10) + 'T12:00:00'); try { return new Date(d).toLocaleDateString(adLang(), o || { day: 'numeric', month: 'short' }); } catch (e) { return String(t).slice(0, 10); } };
+const stNice = (v, int) => { if (!(v > 0)) return int ? 2 : 1; if (int && v <= 5) return Math.max(2, Math.ceil(v / 2) * 2); const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; };
+const ST_DEV = { desktop: 'Desktop', phone: 'Phone', tablet: 'Tablet', unknown: 'Unknown' }, ST_DK = { desktop: 0, phone: 1, tablet: 2, unknown: 'o' };
 async function stLoad(force) {
   if (!adIsAdmin() || ST.busy) return;
   if (!force && ST.d && Date.now() - ST.at < 20000) { stDraw(); return; }
   ST.busy = true;
   const box = $('#adstats');
-  if (!ST.d) box.innerHTML = '<div class="tiles adm-tiles">' + '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(8) + '</div><i class="sk sk-chart"></i>';
-  try { ST.d = await adRpc('admin_stats'); ST.at = Date.now(); stDraw(); }
-  catch (e) { if (!ST.d) box.innerHTML = `<div class="adm-empty">${esc(auT('Could not load the stats. Check your connection and try again.'))}</div>`; }
-  finally { ST.busy = false; }
+  box.classList.add('sx-busy');
+  if (!ST.d) box.innerHTML = '<div class="tiles adm-tiles">' + '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(4) + '</div><i class="sk sk-chart"></i><i class="sk sk-chart"></i>';
+  try {
+    ST.d = await adRpc('admin_stats_v2', { p_days: ST.days }).catch(e => { if (/admins only/i.test(e.message || '')) throw e; return adRpc('admin_stats'); });
+    ST.at = Date.now(); stDraw();
+  } catch (e) { if (!ST.d) box.innerHTML = `<div class="adm-empty">${esc(auT('Could not load the stats. Check your connection and try again.'))}</div>`; }
+  finally { ST.busy = false; box.classList.remove('sx-busy'); }
+}
+function stSample() {
+  if (view !== 'admin' || !adIsAdmin() || document.visibilityState === 'hidden' || Date.now() - ST.ps < 295000) return;
+  ST.ps = Date.now();
+  adRpc('admin_presence_sample', { p_online: Object.keys(RT.pres).length }).catch(() => {});
 }
 function stLive() {
   const box = $('#stlive');
@@ -4298,13 +4443,90 @@ function stLive() {
   box.innerHTML = P.length ? P.sort((a, b) => (b[1].g ? 1 : 0) - (a[1].g ? 1 : 0)).map(([id, p]) => {
     const u = (AD.users || []).find(x => x.id === id), name = (u && (u.display_name || u.username || u.email)) || id.slice(0, 8);
     return `<button class="st-on" type="button" data-stu="${esc(id)}"><span class="pic">${esc(name.charAt(0).toUpperCase())}<i class="fr-dot on"></i></span><span><b>${esc(name)}</b><small>${esc(u && u.username ? '@' + u.username : '')}${p.h ? ' · ' + esc(auT('hidden from friends')) : ''}</small></span><em>${esc(p.g ? adGame(p.g) : auT('Browsing'))}</em></button>`;
-  }).join('') : `<div class="adm-mut">${esc(auT('Nobody is online right now.'))}</div>`;
+  }).join('') : `<div class="adm-mut sx-nobody">${esc(auT('Nobody is online right now.'))}</div>`;
   $('#stlg').innerHTML = top.map(([g, n]) => `<span class="adm-pill acc">${esc(adGame(g))} · ${n}</span>`).join('');
 }
-function stBars(rows, key, lab, fmt) {
-  if (!rows.length) return `<div class="adm-mut">${esc(auT('No data yet.'))}</div>`;
-  const max = Math.max(1, ...rows.map(r => +r[key] || 0)), W = 600, H = 150, bw = W / rows.length;
-  return `<svg class="st-svg" viewBox="0 0 ${W} ${H + 18}" preserveAspectRatio="none" role="img" aria-label="${esc(auT(lab))}">${rows.map((r, i) => { const v = +r[key] || 0, h = Math.max(v ? 3 : 1, Math.round(H * v / max)); return `<g><title>${esc(adDate(r.day))}: ${esc(fmt ? fmt(v) : stN(v))}</title><rect x="${(i * bw + bw * .14).toFixed(1)}" y="${H - h}" width="${(bw * .72).toFixed(1)}" height="${h}" rx="3"/></g>`; }).join('')}<text x="0" y="${H + 14}">${esc(adDate(rows[0].day))}</text><text x="${W}" y="${H + 14}" text-anchor="end">${esc(adDate(rows[rows.length - 1].day))}</text></svg><div class="st-max">${esc(auT('max {n}').replace('{n}', fmt ? fmt(max) : stN(max)))}</div>`;
+function stSeries() {
+  const D = ST.d || {};
+  if (Array.isArray(D.series)) return D.series;
+  const S = new Map((D.signups || []).map(s => [String(s.day).slice(0, 10), +s.signups || 0]));
+  return (D.daily || []).map(d => ({ day: d.day, active: d.active_players, signed_in: d.signed_in_players, sessions: d.sessions, launches: d.game_launches, hours: d.hours_played, signups: S.get(String(d.day).slice(0, 10)) || 0, peak: null }));
+}
+function stPath(pts, base) {
+  let d = '', a = '', seg = [];
+  const flush = () => { if (!seg.length) return; d += 'M' + seg.map(p => p.join(',')).join('L'); a += 'M' + seg[0][0] + ',' + base + 'L' + seg.map(p => p.join(',')).join('L') + 'L' + seg[seg.length - 1][0] + ',' + base + 'Z'; seg = []; };
+  pts.forEach(p => { if (p) seg.push(p); else flush(); });
+  flush();
+  return [d, a];
+}
+function stChart(id, title, rows, keys, o) {
+  const W = 600, H = 150, n = rows.length, bar = o.type === 'bar', fmt = o.fmt || stN;
+  const vals = keys.map(k => rows.map(r => r[k.k] == null ? null : +r[k.k] || 0));
+  const all = vals.flat().filter(v => v != null), max = stNice(Math.max(0, ...all), !o.dec);
+  ST.ch[id] = { rows, keys, vals, max, bar, fmt };
+  const main = vals[0].filter(v => v != null), kv = o.agg === 'max' ? Math.max(0, ...main) : o.agg === 'avg' ? main.reduce((s, v) => s + v, 0) / Math.max(1, main.length) : main.reduce((s, v) => s + v, 0);
+  const kl = o.agg === 'max' ? 'Highest' : o.agg === 'avg' ? 'Daily average' : 'Total';
+  const X = i => bar ? (i + .5) * W / n : n > 1 ? i * W / (n - 1) : W / 2, Y = v => +(H - H * v / max).toFixed(1);
+  let g = [0, .5, 1].map(f => `<line class="sx-gl" x1="0" x2="${W}" y1="${H * f}" y2="${H * f}"/>`).join('');
+  if (bar && n) { const bw = W / n * (n > 40 ? .78 : .64); g += vals[0].map((v, i) => { const h = Math.max(v ? 2 : 0, H * (v || 0) / max); return `<rect data-i="${i}" style="--i:${i}" x="${(X(i) - bw / 2).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}"/>`; }).join(''); }
+  else g += vals.map((vs, s) => { const [d, a] = stPath(vs.map((v, i) => v == null ? null : [+X(i).toFixed(1), Y(v)]), H); return (s ? '' : `<path class="sx-a" d="${a}" fill="url(#sxg-${id})"/>`) + `<path class="sx-l sx-s${s}" d="${d}"/>`; }).join('');
+  const lab = v => o.dec ? fmt(v) : stN(v);
+  const xl = n ? [0, Math.floor((n - 1) / 2), n - 1].filter((v, i, A) => A.indexOf(v) === i).map(i => `<span style="left:${(100 * X(i) / W).toFixed(2)}%">${esc(stDay(rows[i].day))}</span>`).join('') : '';
+  return `<div class="st-card sx-c${o.wide ? ' sx-wide' : ''}" style="--i:${o.i || 0}">
+   <div class="sx-ch"><div><h3>${esc(auT(title))}</h3>${o.note ? `<p class="sx-note">${esc(auT(o.note))}</p>` : ''}</div><div class="sx-kpi"><b>${esc(o.dec ? fmt(kv) : stN(Math.round(kv * 10) / 10))}</b><small>${esc(auT(kl))}</small></div></div>
+   ${keys.length > 1 ? `<div class="sx-leg">${keys.map((k, s) => `<span><i class="sx-s${s}"></i>${esc(auT(k.l))}</span>`).join('')}</div>` : ''}
+   <div class="sx-plot"><div class="sx-y" aria-hidden="true"><span>${esc(lab(max))}</span><span>${esc(lab(max / 2))}</span><span>0</span></div>
+    <div class="sx-area" data-ch="${id}">
+     <svg class="sx-svg${bar ? ' sx-bars' : ''}${ST.anim ? ' an' : ''}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${esc(auT(title))}"><defs><linearGradient id="sxg-${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sx0);stop-opacity:.32"/><stop offset="1" style="stop-color:var(--sx0);stop-opacity:0"/></linearGradient></defs>${g}</svg>
+     <div class="sx-ov" aria-hidden="true"><i class="sx-x"></i>${bar ? '' : keys.map((k, s) => `<i class="sx-dot sx-s${s}"></i>`).join('')}<div class="sx-tip"></div></div>
+     <div class="sx-xl" aria-hidden="true">${xl}</div>
+    </div>
+   </div>
+  </div>`;
+}
+function stHover(a, e) {
+  const c = ST.ch[a.dataset.ch];
+  if (!c || !c.rows.length) return;
+  const r = a.querySelector('svg').getBoundingClientRect(), n = c.rows.length, f = (e.clientX - r.left) / r.width;
+  if (f < 0 || f > 1) { stUnhover(a); return; }
+  const i = c.bar ? Math.min(n - 1, Math.floor(f * n)) : Math.round(f * (n - 1)), xp = c.bar ? (i + .5) / n : n > 1 ? i / (n - 1) : .5;
+  a.classList.add('hov');
+  a.querySelector('.sx-x').style.left = (xp * 100) + '%';
+  a.querySelectorAll('.sx-dot').forEach((d, s) => { const v = c.vals[s][i]; d.hidden = v == null; d.style.left = (xp * 100) + '%'; d.style.top = (100 - 100 * (v || 0) / c.max) + '%'; });
+  a.querySelectorAll('rect.on').forEach(x => x.classList.remove('on'));
+  if (c.bar) { const b = a.querySelector(`rect[data-i="${i}"]`); if (b) b.classList.add('on'); }
+  const t = a.querySelector('.sx-tip');
+  t.innerHTML = `<small>${esc(stDay(c.rows[i].day, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }))}</small>` + c.keys.map((k, s) => `<span>${c.keys.length > 1 ? `<i class="sx-s${s}"></i>` : ''}${esc(auT(k.l))}<b>${c.vals[s][i] == null ? esc(auT('No data')) : esc(c.fmt(c.vals[s][i]))}</b></span>`).join('');
+  t.style.left = (xp * 100) + '%';
+  t.style.transform = `translateX(${xp < .18 ? -6 : xp > .82 ? -94 : -50}%)`;
+}
+function stUnhover(a) { a.classList.remove('hov'); a.querySelectorAll('rect.on').forEach(x => x.classList.remove('on')); }
+function stDonut() {
+  const D = ST.d || {}, H = D.game_hours || null;
+  const src = H ? Object.entries(H).map(([id, h]) => [id, +h || 0]) : stGames().map(g => [g.game_id, +g.hours || 0]);
+  const L = src.filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]), tot = L.reduce((s, x) => s + x[1], 0);
+  if (!tot) return `<div class="adm-mut sx-empty">${esc(auT('No data yet.'))}</div>`;
+  const top = L.slice(0, 5), rest = L.slice(5).reduce((s, x) => s + x[1], 0);
+  if (rest > 0) top.push(['', rest]);
+  let off = 0;
+  const gap = top.length > 1 ? .8 : 0;
+  const segs = top.map(([id, h], s) => { const p = 100 * h / tot, len = Math.max(.01, p - gap), c = `<circle class="sx-seg sx-k${id ? s : 'o'}" data-seg="${s}" cx="21" cy="21" r="15.915" pathLength="100" stroke-dasharray="${len.toFixed(2)} ${(100 - len).toFixed(2)}" stroke-dashoffset="${(25 - off).toFixed(2)}" style="--i:${s}"><title>${esc(id ? adGame(id) : auT('Other games'))}: ${esc(stH(h))} (${Math.round(p)}%)</title></circle>`; off += p; return c; }).join('');
+  ST.dn = top.map(([id, h]) => ({ n: id ? adGame(id) : auT('Other games'), h, p: Math.round(100 * h / tot) }));
+  return `<div class="sx-dn"><div class="sx-ring"><svg viewBox="0 0 42 42" class="${ST.anim ? 'an' : ''}" role="img" aria-label="${esc(auT('Share of playtime'))}"><circle class="sx-track" cx="21" cy="21" r="15.915"/>${segs}</svg><div class="sx-dc" data-h="${esc(`<b>${esc(stH(tot))}</b><small>${esc(auT('Hours played'))}</small>`)}"><b>${esc(stH(tot))}</b><small>${esc(auT('Hours played'))}</small></div></div>
+   <div class="sx-dl">${top.map(([id, h], s) => `<div class="sx-dr" data-seg="${s}"><i class="sx-k${id ? s : 'o'}"></i><span>${esc(id ? adGame(id) : auT('Other games'))}</span><b>${Math.round(100 * h / tot)}%</b><small>${esc(stH(h))}</small></div>`).join('')}</div></div>`;
+}
+function stSeg(dn, s) {
+  const k = s ? s.dataset.seg : null, d = k != null && ST.dn ? ST.dn[+k] : null, c = dn.querySelector('.sx-dc');
+  dn.querySelectorAll('[data-seg]').forEach(x => x.classList.toggle('dim', k != null && x.dataset.seg !== k));
+  c.innerHTML = d ? `<b>${d.p}%</b><small>${esc(d.n)}</small>` : c.dataset.h;
+}
+function stDevices() {
+  const D = ST.d || {}, by = {};
+  (D.device_split || D.devices || []).forEach(d => { const k = ST_DEV[d.device] ? d.device : 'unknown'; by[k] = (by[k] || 0) + (+d.sessions || 0); });
+  const L = Object.entries(by).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]), tot = L.reduce((s, x) => s + x[1], 0);
+  if (!tot) return `<div class="adm-mut sx-empty">${esc(auT('No data yet.'))}</div>`;
+  const DI = { desktop: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>', phone: '<svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>', tablet: '<svg viewBox="0 0 24 24"><rect x="4" y="2.5" width="16" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>', unknown: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6M12 17h.01"/></svg>' };
+  return `<div class="sx-stack" aria-hidden="true">${L.map(([k, n]) => `<i class="sx-k${ST_DK[k]}" style="flex:${n}"></i>`).join('')}</div><div class="sx-dv">${L.map(([k, n], s) => `<div class="sx-dvr" style="--i:${s}"><span class="sx-dvi sx-k${ST_DK[k]}">${DI[k]}</span><span>${esc(auT(ST_DEV[k]))}</span><b>${Math.round(100 * n / tot)}%</b><small>${esc(auT('{n} sessions').replace('{n}', stN(n)))}</small></div>`).join('')}</div>`;
 }
 function stGames() {
   const D = ST.d || {}, M = new Map((D.games || []).map(g => [g.game_id, g]));
@@ -4317,50 +4539,129 @@ function stHealth(g) {
   if (!+g.launches && !+g.plays) return adPill('Not played yet');
   return adPill('Working', 'ok');
 }
-const ST_GC = [['game_id', 'Game', g => esc(adGame(g.game_id))], ['', 'Status', stHealth], ['launches', 'Launches', g => stN(g.launches)], ['launches_7d', 'Launches 7 days', g => stN(g.launches_7d)], ['players', 'Players', g => stN(g.players)], ['plays', 'Rounds played', g => stN(g.plays)], ['hours', 'Hours played', g => (+g.hours || 0).toFixed(1)], ['hours_7d', 'Hours 7 days', g => (+g.hours_7d || 0).toFixed(1)], ['avg_min', 'Avg minutes per visit', g => (+g.avg_min || 0).toFixed(1)], ['accounts', 'Accounts with records', g => stN(g.accounts)], ['errors_7d', 'Errors 7 days', g => +g.errors_7d ? `<b class="st-bad">${stN(g.errors_7d)}</b>` : '0'], ['last_error', 'Last error', g => g.last_error ? `<span title="${esc(g.last_error)}">${esc(String(g.last_error).slice(0, 60))}</span>` : '<span class="adm-mut">—</span>']];
-function stGameRows() {
-  const [k, d] = ST.sort, q = ST.q.trim().toLowerCase();
-  return stGames().filter(g => !q || adGame(g.game_id).toLowerCase().includes(q) || g.game_id.includes(q)).sort((a, b) => { const x = k === 'game_id' ? adGame(a.game_id).toLowerCase() : +a[k] || 0, y = k === 'game_id' ? adGame(b.game_id).toLowerCase() : +b[k] || 0; return (x < y ? -1 : x > y ? 1 : 0) * d; });
+function stSpark(a) {
+  if (!a || !a.length) return '';
+  const max = Math.max(1, ...a), n = a.length, W = 120, H = 34, X = i => n > 1 ? i * W / (n - 1) : W / 2, P = a.map((v, i) => [+X(i).toFixed(1), +(H - 2 - (H - 4) * v / max).toFixed(1)]), [d, ar] = stPath(P, H);
+  return `<svg class="sx-spark${ST.anim ? ' an' : ''}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path class="sx-a" d="${ar}"/><path class="sx-l sx-s0" d="${d}"/></svg>`;
 }
-function stGameTable() {
-  const t = $('#stgt');
-  if (!t) return;
-  t.querySelector('thead').innerHTML = '<tr>' + ST_GC.map(([k, l]) => k ? `<th><button type="button" data-stsort="${k}" aria-sort="${ST.sort[0] === k ? (ST.sort[1] > 0 ? 'ascending' : 'descending') : 'none'}">${esc(auT(l))}<i></i></button></th>` : `<th><span>${esc(auT(l))}</span></th>`).join('') + '</tr>';
-  t.querySelector('tbody').innerHTML = stGameRows().map(g => `<tr data-stg="${esc(g.game_id)}">${ST_GC.map(c => `<td>${c[2](g)}</td>`).join('')}</tr>`).join('');
+function stOpts(q) {
+  q = (q || '').trim().toLowerCase();
+  const M = new Map(stGames().map(g => [g.game_id, g]));
+  return stGames().map(g => ({ id: g.game_id, t: adGame(g.game_id), l: +g.launches || 0 })).filter(o => !q || o.t.toLowerCase().includes(q) || o.id.includes(q)).sort((a, b) => (q ? (b.t.toLowerCase().startsWith(q) ? 1 : 0) - (a.t.toLowerCase().startsWith(q) ? 1 : 0) : 0) || b.l - a.l || a.t.localeCompare(b.t)).slice(0, 60).map(o => Object.assign(o, { g: M.get(o.id) }));
+}
+function stCombo(open) {
+  const inp = $('#stgq'), ul = $('#stgl');
+  if (!inp) return;
+  if (!open) { ul.hidden = true; inp.setAttribute('aria-expanded', 'false'); inp.removeAttribute('aria-activedescendant'); ST.ci = -1; return; }
+  const q = inp.dataset.typed === '1' ? inp.value : '', O = stOpts(q), ql = q.trim().toLowerCase();
+  ST.opts = O;
+  if (ST.ci >= O.length) ST.ci = O.length - 1;
+  const hl = t => { const i = ql ? t.toLowerCase().indexOf(ql) : -1; return i < 0 ? esc(t) : esc(t.slice(0, i)) + '<mark>' + esc(t.slice(i, i + ql.length)) + '</mark>' + esc(t.slice(i + ql.length)); };
+  ul.innerHTML = O.length ? O.map((o, i) => `<li role="option" id="stgo${i}" data-g="${esc(o.id)}" aria-selected="${o.id === ST.game}" class="${i === ST.ci ? 'act' : ''}"><i style="background:${esc(TINT[o.id] || 'var(--accent)')}"></i><span translate="no">${hl(o.t)}</span><small>${esc(auT('{n} launches').replace('{n}', stN(o.l)))}</small></li>`).join('') : `<li class="sx-cbn" role="presentation">${esc(auT('No games match.'))}</li>`;
+  ul.hidden = false; inp.setAttribute('aria-expanded', 'true');
+  if (ST.ci >= 0) { inp.setAttribute('aria-activedescendant', 'stgo' + ST.ci); const a = $('#stgo' + ST.ci); if (a) a.scrollIntoView({ block: 'nearest' }); } else inp.removeAttribute('aria-activedescendant');
+}
+function stPick(id) {
+  ST.game = id;
+  const inp = $('#stgq');
+  if (inp) { inp.value = adGame(id); inp.dataset.typed = ''; }
+  stCombo(false);
+  stGameCard();
+}
+function stGameCard() {
+  const box = $('#stgd');
+  if (!box) return;
+  const g = stGames().find(x => x.game_id === ST.game);
+  if (!g) { box.innerHTML = ''; return; }
+  const D = ST.d || {}, sp = (D.game_days || {})[g.game_id], gm = byId.get(g.game_id), tint = TINT[g.game_id] || 'var(--accent)';
+  const P = (D.players || []).filter(p => p.game_id === g.game_id).sort((a, b) => (+b.seconds_played || 0) - (+a.seconds_played || 0)).slice(0, 5);
+  const spSum = sp ? sp.reduce((s, v) => s + (+v || 0), 0) : null;
+  const C = [
+    ['Launches', stN(g.launches), 'rocket', spSum != null ? `${stSpark(sp)}<small>${esc(auT('{n} in the last {d} days').replace('{n}', stN(spSum)).replace('{d}', ST.days))}</small>` : `<small>${esc(auT('{n} in the last 7 days').replace('{n}', stN(g.launches_7d)))}</small>`, 'sx-gw'],
+    ['Players', stN(g.players), 'users'],
+    ['Rounds played', stN(g.plays), 'play'],
+    ['Hours played', stH(g.hours), 'clock', `<small>${esc(auT('{n} in the last 7 days').replace('{n}', stH(g.hours_7d)))}</small>`],
+    ['Avg minutes per visit', (+g.avg_min || 0).toFixed(1), 'timer'],
+    ['Accounts with records', stN(g.accounts), 'save'],
+    ['Errors', stN(g.errors), 'bug', `<span class="sx-hp">${stHealth(g)}</span><small>${esc(auT('{n} in the last 7 days').replace('{n}', stN(g.errors_7d)))}</small>`, +g.errors_7d ? 'sx-gbad' : ''],
+    ['Last launch', g.last_launch ? adAgo(g.last_launch) : auT('Never'), 'eye', g.last_launch ? `<small>${esc(adDate(g.last_launch, 1))}</small>` : '', 'sx-gw']
+  ];
+  box.innerHTML = `<div class="sx-gh2" style="--c:${esc(tint)}"><span class="sx-gt">${esc(adGame(g.game_id).charAt(0))}</span><div><b translate="no">${esc(adGame(g.game_id))}</b><span><code>${esc(g.game_id)}</code>${gm && gm.info ? `<small>${esc(gm.info.genres.join(' · '))}</small>` : ''}</span></div>${gm ? `<a class="btn2" href="${esc(href(g.game_id))}" data-stopen="${esc(g.game_id)}">${esc(auT('Open game'))}</a>` : ''}</div>
+   <div class="sx-gc">${C.map(([k, v, ic, x, cl], i) => `<div class="sx-gk ${cl || ''}" style="--i:${i}"><span class="sx-gki">${AD_SI[ic]}</span><small>${esc(auT(k))}</small><b>${esc(v)}</b>${x || ''}</div>`).join('')}</div>
+   <div class="sx-g2">
+    <div class="sx-gb"><h4>${esc(auT('Last error'))}</h4>${g.last_error ? `<div class="sx-err"><code translate="no">${esc(String(g.last_error).slice(0, 400))}</code><small>${esc(g.last_error_at ? adAgo(g.last_error_at) : '')}</small></div>` : `<div class="adm-mut">${esc(auT('No errors. Everything works.'))}</div>`}</div>
+    <div class="sx-gb"><h4>${esc(auT('Top players'))}</h4>${P.length ? `<div class="sx-tp">${P.map((p, i) => `<button type="button" class="sx-tpr" data-stu="${esc(p.user_id)}"><span class="sx-rk">${i + 1}</span><span class="pic">${esc((p.display_name || p.username || '?').charAt(0).toUpperCase())}</span><span class="sx-tpn"><b translate="no">${esc(p.display_name || p.username || '—')}</b><small>${p.username ? '@' + esc(p.username) + ' · ' : ''}${esc(auT('{n} plays').replace('{n}', +p.plays || 0))}${p.best_score != null ? ' · ' + esc(auT('best {s}').replace('{s}', p.best_score)) : ''}</small></span><em>${esc(adHrs(p.seconds_played))}</em></button>`).join('')}</div>` : `<div class="adm-mut">${esc(auT('No games played yet.'))}</div>`}</div>
+   </div>`;
 }
 function stDraw() {
-  const D = ST.d || {}, O = D.overview || {}, box = $('#adstats');
-  const T = [['Accounts', O.accounts], ['New accounts 7 days', O.new_accounts_7d], ['Active today', O.active_today], ['Active 7 days', O.active_7d], ['Active 30 days', O.active_30d], ['Game launches 7 days', O.launches_7d], ['Hours played 7 days', O.hours_played_7d], ['Events recorded', O.events]];
-  const G = stGames(), work = G.filter(g => +g.launches || +g.plays), bad = G.filter(g => +g.errors_7d > 0).length;
+  const D = ST.d || {}, O = D.overview || {}, box = $('#adstats'), S = stSeries(), days = D.series ? ST.days : S.length;
+  const T = [['Active 7 days', O.active_7d], ['Active 30 days', O.active_30d]];
   const PL = (D.players || []).slice(0, 100), ER = D.errors || [], DV = D.devices || [], SQ = D.searches || [], RE = D.retention || [];
+  const peakOk = S.some(r => r.peak != null);
+  if (!ST.game || !stGames().some(g => g.game_id === ST.game)) ST.game = (stGames().slice().sort((a, b) => (+b.launches || 0) - (+a.launches || 0))[0] || {}).game_id || null;
+  const keep = document.activeElement && document.activeElement.id === 'stgq';
+  ST.ch = {};
   box.innerHTML = `
   <div class="st-top"><div class="st-card st-livec"><div class="st-h"><h3><i class="adm-dot"></i>${esc(auT('Live now'))}</h3><b class="st-big" id="stln">0</b></div><div class="st-lg" id="stlg"></div><div class="st-live" id="stlive"></div></div>
-  <div class="tiles adm-tiles st-tiles">${T.map(([k, n], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b${Number.isInteger(+n || 0) ? ` data-n="${+n || 0}"` : ''}>${stN(n)}</b></div>`).join('')}<div class="tile" style="--i:8"><small>${esc(auT('Games played at least once'))}</small><b>${work.length} / ${G.length}</b></div><div class="tile" style="--i:9"><small>${esc(auT('Games with errors (7 days)'))}</small><b class="${bad ? 'st-bad' : ''}">${bad}</b></div></div></div>
-  <div class="st-grid"><div class="st-card"><h3>${esc(auT('Active players per day'))}</h3>${stBars(D.daily || [], 'active_players', 'Active players per day')}</div><div class="st-card"><h3>${esc(auT('Hours played per day'))}</h3>${stBars(D.daily || [], 'hours_played', 'Hours played per day', v => (+v).toFixed(1) + ' h')}</div><div class="st-card"><h3>${esc(auT('New accounts per day'))}</h3>${stBars(D.signups || [], 'signups', 'New accounts per day')}</div></div>
-  <div class="st-card"><div class="st-h"><h3>${esc(auT('Games'))}</h3><label class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="stq" type="search" placeholder="${esc(auT('Search games'))}" autocomplete="off" value="${esc(ST.q)}"></label></div><div class="adm-tw"><table class="adm-t st-t" id="stgt"><thead></thead><tbody translate="no"></tbody></table></div></div>
+  <div class="tiles adm-tiles st-tiles">${T.map(([k, n], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b data-n="${+n || 0}">${stN(n)}</b></div>`).join('')}</div></div>
+  <div class="sx-bar"><h3>${esc(auT('Trends'))}</h3><div class="sx-rng" role="group" aria-label="${esc(auT('Time range'))}">${[7, 30, 90].map(d => `<button type="button" data-strng="${d}" aria-pressed="${d === ST.days}">${esc(auT('{n} days').replace('{n}', d))}</button>`).join('')}</div></div>
+  ${stChart('act', 'Active players per day', S, [{ k: 'active', l: 'Active players' }, { k: 'signed_in', l: 'Signed in' }], { agg: 'avg', wide: true })}
+  <div class="sx-grid">
+   ${peakOk ? stChart('peak', 'Peak online per day', S, [{ k: 'peak', l: 'Peak online' }], { agg: 'max', i: 1, note: 'Most people online at the same time' }) : stChart('ses', 'Sessions per day', S, [{ k: 'sessions', l: 'Sessions' }], { agg: 'sum', i: 1, note: 'Peak online starts recording while an admin has this page open' })}
+   ${peakOk ? stChart('ses', 'Sessions per day', S, [{ k: 'sessions', l: 'Sessions' }], { agg: 'sum', i: 2 }) : ''}
+   ${stChart('hrs', 'Hours played per day', S, [{ k: 'hours', l: 'Hours played' }], { agg: 'sum', dec: true, fmt: stH, i: 3 })}
+   ${stChart('new', 'New accounts per day', S, [{ k: 'signups', l: 'New accounts' }], { agg: 'sum', type: 'bar', i: 4 })}
+   ${stChart('lch', 'Game launches per day', S, [{ k: 'launches', l: 'Game launches' }], { agg: 'sum', type: 'bar', i: 5 })}
+   <div class="st-card sx-c" style="--i:6"><div class="sx-ch"><div><h3>${esc(auT('Share of playtime'))}</h3><p class="sx-note">${esc(D.game_hours ? auT('Last {n} days').replace('{n}', days) : auT('All time'))}</p></div></div>${stDonut()}</div>
+  </div>
+  <div class="st-card sx-gm"><div class="sx-gh"><h3>${esc(auT('Games'))}</h3>
+   <div class="sx-cb"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="stgq" role="combobox" aria-expanded="false" aria-controls="stgl" aria-autocomplete="list" aria-label="${esc(auT('Choose a game'))}" placeholder="${esc(auT('Search games'))}" autocomplete="off" spellcheck="false" value="${esc(ST.game ? adGame(ST.game) : '')}"><button type="button" class="sx-cbt" data-stcb tabindex="-1" aria-label="${esc(auT('Show all games'))}">${AD_ICO.chev}</button><ul id="stgl" role="listbox" aria-label="${esc(auT('Games'))}" hidden></ul></div>
+  </div><div id="stgd"></div></div>
   <div class="st-card"><h3>${esc(auT('Time played per player'))}</h3><div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Player', 'Game', 'Time played', 'Rounds', 'Best', 'Last played'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody translate="no">${PL.length ? PL.map(p => `<tr data-stu="${esc(p.user_id)}"><td>${esc(p.display_name || p.username || '—')}${p.username ? ` <span class="adm-mut">@${esc(p.username)}</span>` : ''}</td><td>${esc(adGame(p.game_id))}</td><td>${esc(adHrs(p.seconds_played))}</td><td>${stN(p.plays)}</td><td>${p.best_score != null ? esc(String(p.best_score)) : '—'}</td><td>${esc(adAgo(p.last_played))}</td></tr>`).join('') : `<tr><td colspan="6" class="adm-empty">${esc(auT('No games played yet.'))}</td></tr>`}</tbody></table></div></div>
   <div class="st-grid">
+   <div class="st-card"><h3>${esc(auT('Devices'))}</h3>${stDevices()}<div class="st-list sx-dvl">${DV.slice(0, 6).map(d => `<div class="st-kv"><span>${esc([auT(ST_DEV[d.device] || d.device || ''), d.os, d.browser].filter(Boolean).join(' · '))}</span><b>${stN(d.sessions)}</b></div>`).join('')}</div></div>
    <div class="st-card"><h3>${esc(auT('Recent errors'))}</h3><div class="st-list">${ER.length ? ER.slice(0, 30).map(e => `<div class="st-err"><b>${esc(adGame(e.game_id))}</b><span>${esc(e.message || '')}</span><small>${esc(e.place || '')} · ${esc(e.device || '')} · ${esc(adAgo(e.created_at))}</small></div>`).join('') : `<div class="adm-mut">${esc(auT('No errors. Everything works.'))}</div>`}</div></div>
-   <div class="st-card"><h3>${esc(auT('Devices'))}</h3><div class="st-list">${DV.length ? DV.map(d => `<div class="st-kv"><span>${esc([d.device, d.os, d.browser].filter(Boolean).join(' · '))}</span><b>${stN(d.sessions)}</b></div>`).join('') : `<div class="adm-mut">${esc(auT('No data yet.'))}</div>`}</div></div>
    <div class="st-card"><h3>${esc(auT('Top searches'))}</h3><div class="st-list">${SQ.length ? SQ.map(s => `<div class="st-kv"><span>${esc(s.query)}${+s.with_no_results ? ` <span class="adm-pill warn">${esc(auT('no result'))}</span>` : ''}</span><b>${stN(s.searches)}</b></div>`).join('') : `<div class="adm-mut">${esc(auT('No data yet.'))}</div>`}</div></div>
    <div class="st-card"><h3>${esc(auT('Players coming back'))}</h3><div class="st-list">${RE.length ? RE.map(r => `<div class="st-kv"><span>${esc(adDate(r.cohort_day))} · ${esc(auT('{n} new').replace('{n}', r.new_players))}</span><b>${esc(auT('next day {a}% · week {b}%').replace('{a}', r.day1_pct).replace('{b}', r.back_within_7d_pct))}</b></div>`).join('') : `<div class="adm-mut">${esc(auT('No data yet.'))}</div>`}</div></div>
   </div>
   <p class="adm-mut st-at">${esc(auT('Updated {t}. Refreshes every 30 seconds; the live list updates instantly.').replace('{t}', new Date(D.at || Date.now()).toLocaleTimeString()))}</p>`;
-  countUp(box.querySelector('.st-tiles'));
-  stGameTable(); stLive();
+  if (ST.anim) countUp(box.querySelector('.st-tiles'));
+  stGameCard(); stLive();
+  if (keep) $('#stgq').focus({ preventScroll: true });
+  ST.anim = false;
 }
 function stBoot() {
   const box = $('#adstats');
   box.addEventListener('click', e => {
-    const s = e.target.closest('[data-stsort]');
-    if (s) { const k = s.dataset.stsort; ST.sort = ST.sort[0] === k ? [k, -ST.sort[1]] : [k, k === 'game_id' ? 1 : -1]; stGameTable(); return; }
+    const r = e.target.closest('[data-strng]');
+    if (r) { const d = +r.dataset.strng; if (d === ST.days) return; ST.days = d; ST.anim = true; box.querySelectorAll('[data-strng]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.strng === d))); stLoad(true); return; }
+    if (e.target.closest('[data-stcb]')) { const inp = $('#stgq'); if ($('#stgl').hidden) { inp.dataset.typed = ''; inp.focus(); stCombo(true); } else stCombo(false); return; }
+    const o = e.target.closest('#stgl [data-g]');
+    if (o) { stPick(o.dataset.g); return; }
     const u = e.target.closest('[data-stu]');
-    if (u) { const x = (AD.users || []).find(y => y.id === u.dataset.stu); if (x) adPanel(x); return; }
-    const g = e.target.closest('[data-stg]');
-    if (g && byId.has(g.dataset.stg)) { go(href(g.dataset.stg), false); }
+    if (u) { const x = (AD.users || []).find(y => y.id === u.dataset.stu); if (x) { adTab('users'); adPanel(x); } return; }
+    const g = e.target.closest('[data-stopen]');
+    if (g) { e.preventDefault(); go(href(g.dataset.stopen), false); }
   });
-  box.addEventListener('input', e => { if (e.target.id === 'stq') { ST.q = e.target.value; stGameTable(); } });
-  setInterval(() => { if (view === 'admin' && AD.tab === 'stats' && document.visibilityState === 'visible') stLoad(true); }, 30000);
+  box.addEventListener('mousedown', e => { if (e.target.closest('#stgl, [data-stcb]')) e.preventDefault(); });
+  box.addEventListener('input', e => { if (e.target.id === 'stgq') { e.target.dataset.typed = '1'; ST.ci = e.target.value.trim() ? 0 : -1; stCombo(true); } });
+  box.addEventListener('focusin', e => { if (e.target.id === 'stgq') { e.target.select(); stCombo(true); } });
+  box.addEventListener('focusout', e => { if (e.target.id === 'stgq') setTimeout(() => { if (document.activeElement !== e.target) { stCombo(false); if (ST.game) e.target.value = adGame(ST.game); e.target.dataset.typed = ''; } }, 120); });
+  box.addEventListener('keydown', e => {
+    if (e.target.id !== 'stgq') return;
+    const ul = $('#stgl'), n = (ST.opts || []).length;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (ul.hidden) { stCombo(true); return; } if (!n) return; ST.ci = e.key === 'ArrowDown' ? (ST.ci + 1) % n : (ST.ci - 1 + n) % n; stCombo(true); }
+    else if (e.key === 'Enter') { e.preventDefault(); const o = (ST.opts || [])[Math.max(0, ST.ci)]; if (!ul.hidden && o) { stPick(o.id); e.target.blur(); } }
+    else if (e.key === 'Escape') { if (!ul.hidden) { e.preventDefault(); e.stopPropagation(); stCombo(false); e.target.value = ST.game ? adGame(ST.game) : ''; e.target.dataset.typed = ''; } }
+    else if (e.key === 'Home' || e.key === 'End') { if (!ul.hidden && n && e.target.dataset.typed !== '1') { e.preventDefault(); ST.ci = e.key === 'Home' ? 0 : n - 1; stCombo(true); } }
+  });
+  box.addEventListener('pointermove', e => { const a = e.target.closest('.sx-area'); if (a) stHover(a, e); });
+  box.addEventListener('pointerdown', e => { const a = e.target.closest('.sx-area'); if (a) stHover(a, e); });
+  box.addEventListener('pointerout', e => { const a = e.target.closest('.sx-area'); if (a && !a.contains(e.relatedTarget)) stUnhover(a); });
+  box.addEventListener('pointerover', e => { const dn = e.target.closest('.sx-dn'); if (dn) stSeg(dn, e.target.closest('[data-seg]')); });
+  box.addEventListener('pointerout', e => { const dn = e.target.closest('.sx-dn'); if (dn && !dn.contains(e.relatedTarget)) stSeg(dn, null); });
+  setInterval(() => { if (view === 'admin' && AD.tab === 'stats' && document.visibilityState === 'visible' && !(document.activeElement && document.activeElement.id === 'stgq')) stLoad(true); }, 30000);
+  setInterval(stSample, 60000);
 }
 
 function tkBox(el, mode) {
@@ -4368,7 +4669,7 @@ function tkBox(el, mode) {
   el._tk = { mode, list: null, cur: null, n: 0, sig: '', compose: false };
   el.classList.add('tk');
   el.dataset.mode = mode;
-  el.innerHTML = `<div class="tk-side">${mode === 'user' ? `<form class="tk-new" novalidate hidden><div class="fld"><label>${esc(auT('Subject'))}</label><input class="tk-subj-in" maxlength="120" autocomplete="off"></div><div class="fld"><label>${esc(auT('Message'))}</label><textarea class="tk-body-in" maxlength="2000" rows="4"></textarea></div><div class="tk-row"><button class="btn2 tk-cancel" type="button" data-tk="cancel">${esc(auT('Cancel'))}</button><button class="btn2 pri" type="submit">${esc(auT('Send ticket'))}</button></div></form><button class="btn2 pri tk-open" type="button" data-tk="new">${esc(auT('New ticket'))}</button>` : ''}<div class="tk-list" role="list"></div></div><div class="tk-main" hidden><div class="tk-h"><button class="back" type="button" data-tk="back">${AD_ICO.back}${esc(auT('All tickets'))}</button><div class="tk-ht"><b class="tk-subj" translate="no"></b><span class="tk-meta"></span></div><button class="btn2 tk-tog" type="button" data-tk="toggle"></button></div><div class="tk-msgs" translate="no" aria-live="polite"></div><form class="tk-comp" novalidate><textarea maxlength="2000" rows="2" placeholder="${esc(auT('Write a message'))}"></textarea><button class="btn2 pri" type="submit" aria-label="${esc(auT('Send'))}">${AD_ICO.send}<span>${esc(auT('Send'))}</span></button></form></div><div class="note tk-note" role="status"></div>`;
+  el.innerHTML = `<div class="tk-side">${mode === 'user' ? `<form class="tk-new" novalidate hidden><div class="fld"><label>${esc(auT('Subject'))}</label><input class="tk-subj-in" maxlength="120" autocomplete="off"></div><div class="fld"><label>${esc(auT('Message'))}</label><textarea class="tk-body-in" maxlength="2000" rows="4"></textarea></div><div class="tk-row"><button class="btn2 tk-cancel" type="button" data-tk="cancel">${esc(auT('Cancel'))}</button><button class="btn2 pri" type="submit">${esc(auT('Send ticket'))}</button></div></form><button class="btn2 pri tk-open" type="button" data-tk="new">${esc(auT('New ticket'))}</button>` : ''}<div class="tk-list" role="list"></div></div><div class="tk-main" hidden><div class="tk-h"><button class="back" type="button" data-tk="back">${AD_ICO.back}${esc(auT('All tickets'))}</button><div class="tk-ht"><b class="tk-subj" translate="no"></b><span class="tk-meta"></span></div><button class="btn2 tk-tog" type="button" data-tk="toggle"></button>${mode === 'admin' ? `<button class="btn2 danger tk-del" type="button" data-tk="del">${esc(auT('Delete ticket'))}</button>` : ''}</div><div class="tk-msgs" translate="no" aria-live="polite"></div><form class="tk-comp" novalidate><textarea maxlength="2000" rows="2" placeholder="${esc(auT('Write a message'))}"></textarea><button class="btn2 pri" type="submit" aria-label="${esc(auT('Send'))}">${AD_ICO.send}<span>${esc(auT('Send'))}</span></button></form></div><div class="note tk-note" role="status"></div>`;
   el.addEventListener('click', e => { const b = e.target.closest('[data-tk]'); if (b) { e.stopPropagation(); tkAct(el, b.dataset.tk, b); } });
   el.addEventListener('submit', e => { e.preventDefault(); if (e.target.classList.contains('tk-new')) tkCreate(el); else tkSend(el); });
   el.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && e.target.tagName === 'TEXTAREA') { e.preventDefault(); e.target.form.requestSubmit(); } });
@@ -4419,6 +4720,7 @@ function tkHead(el) {
   el.querySelector('.tk-meta').innerHTML = (T.mode === 'admin' ? `<span translate="no">${esc(t.username ? '@' + t.username : t.email || '')}</span>` : '') + (t.status === 'open' ? adPill('Open', 'ok') : adPill('Closed')) + `<span>${esc(auT('Opened {d}').replace('{d}', adDate(t.created_at)))}</span>`;
   const b = el.querySelector('.tk-tog');
   b.textContent = auT(t.status === 'open' ? 'Close ticket' : 'Reopen');
+  adUnconfirm(el.querySelector('.tk-del'));
 }
 async function tkThread(el) {
   const T = el._tk, id = T.cur;
@@ -4471,6 +4773,22 @@ async function tkAct(el, k, b) {
   if (k === 'cancel') { T.compose = false; tkNote(el, ''); tkList(el); return; }
   if (k === 'open') { tkOpen(el, +b.dataset.id); return; }
   if (k === 'back') { T.cur = null; tkShow(el, false); tkNote(el, ''); tkList(el); tkLoad(el); return; }
+  if (k === 'del') {
+    const id = T.cur;
+    if (!id || T.mode !== 'admin' || !adConfirm(b)) return;
+    b.disabled = true; b.classList.add('is-busy'); tkNote(el, '');
+    try {
+      await adRpc('admin_delete_ticket', { p_ticket: id });
+      track('ticket', { act: 'delete', admin: true });
+      T.list = (T.list || []).filter(x => x.id !== id);
+      if (T.cur === id) { T.cur = null; T.sig = ''; tkShow(el, false); }
+      tkList(el); tkNote(el, 'Ticket deleted.', 'ok'); toast(auT('Ticket deleted.'));
+      if (view === 'admin') adTiles();
+      tkLoad(el);
+    } catch (e) { tkNote(el, adErr(e), 'bad'); }
+    finally { b.disabled = false; b.classList.remove('is-busy'); }
+    return;
+  }
   if (k === 'toggle') {
     const t = (T.list || []).find(x => x.id === T.cur);
     if (!t) return;
@@ -4506,8 +4824,16 @@ function adBoot() {
     if (s) { const k = s.dataset.adsort; AD.sort = AD.sort[0] === k ? [k, -AD.sort[1]] : [k, /_at$|last_seen|friends|email_confirmed|locked|role|has_password/.test(k) ? -1 : 1]; adDraw(); return; }
     const tb = t.closest('[data-adtab]');
     if (tb) { adTab(tb.dataset.adtab); return; }
-    if (t.closest('#adref')) { adLoad(); tkLoad(tkBox($('#tka'), 'admin')); if (AD.tab === 'stats') stLoad(true); return; }
-    if (t.closest('#adpback') || t.closest('#adpclose')) { adPanelClose(); return; }
+    if (t.closest('#adref')) { adLoad(); tkLoad(tkBox($('#tka'), 'admin')); if (AD.tab === 'stats') stLoad(true); if (AD.tab === 'log') alLoad(); if (AD.tab === 'site') sfLoad(true).then(sfaDraw); return; }
+    if (t.closest('[data-almore]')) { alLoad(true); return; }
+    const alu = t.closest('[data-alu]');
+    if (alu) { const x = (AD.users || []).find(y => y.id === alu.dataset.alu); if (x) { adTab('users'); adPanel(x); } return; }
+    const sg = t.closest('[data-sfg]');
+    if (sg) { sg.setAttribute('aria-pressed', String(sg.getAttribute('aria-pressed') !== 'true')); return; }
+    const sm = t.closest('#sfam');
+    if (sm) { sm.classList.toggle('on'); sm.setAttribute('aria-checked', String(sm.classList.contains('on'))); return; }
+    if (t.closest('#sfas')) { sfaSave(t.closest('#sfas')); return; }
+    if (t.closest('#adpclose')) { adPanelClose(); return; }
     const eye = t.closest('.au-eye');
     if (eye) { auEye(eye); return; }
     const a = t.closest('[data-adact]');
@@ -4516,13 +4842,14 @@ function adBoot() {
     if (tr) { const u = (AD.users || []).find(x => x.id === tr.dataset.uid); if (u) adPanel(u); }
   });
   va.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && !$('#adpanel').hidden) { e.preventDefault(); e.stopPropagation(); adPanelClose(); return; }
+    if (e.key === 'Escape' && AD.tab === 'users' && !$('#adpanel').hidden) { e.preventDefault(); e.stopPropagation(); adPanelClose(); return; }
     const tr = e.target.closest && e.target.closest('#adt tbody tr[data-uid]');
     if (tr && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); tr.click(); }
   });
-  $('#adtabs').addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); const T = ['users', 'tickets', 'stats'], i = T.indexOf(AD.tab); adTab(T[(i + (e.key === 'ArrowRight' ? 1 : 2)) % 3]); $('#adtabs [aria-selected="true"]').focus(); } });
+  $('#adtabs').addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); const T = ['users', 'tickets', 'stats', 'log', 'site'], i = T.indexOf(AD.tab); adTab(T[(i + (e.key === 'ArrowRight' ? 1 : T.length - 1)) % T.length]); $('#adtabs [aria-selected="true"]').focus(); } });
   stBoot();
   $('#adq').addEventListener('input', e => { AD.q = e.target.value; adDraw(); });
+  $('#adsite').addEventListener('input', e => { if (e.target.id !== 'sfaq') return; const q = e.target.value.trim().toLowerCase(); document.querySelectorAll('#sfag [data-sfg]').forEach(c => { c.hidden = !!q && !c.textContent.toLowerCase().includes(q) && !c.dataset.sfg.includes(q); }); });
   $('#adf').addEventListener('change', e => { AD.f = e.target.value; adDraw(); });
   $('#adpw').parentNode.insertAdjacentHTML('beforeend', EYE);
   $('#adpw').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); adAct('pw', $('#adpwb')); } });
@@ -4545,13 +4872,22 @@ const SO_ICO = {
   x: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
   pad: '<svg viewBox="0 0 24 24"><path d="M7 8h10a5 5 0 0 1 4.6 7l-.6 1.4a2.5 2.5 0 0 1-4.3.4L15 15H9l-1.7 1.8a2.5 2.5 0 0 1-4.3-.4L2.4 15A5 5 0 0 1 7 8z"/><path d="M8 11v3M6.5 12.5h3M16 12h.01M18 11h.01"/></svg>',
   user: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
-  star: '<svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>'
+  star: '<svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>',
+  back: '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
+  min: '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
+  add: '<svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="4"/><path d="M3 21a7 7 0 0 1 12.5-4.3M19 14v6M16 17h6"/></svg>',
+  join: '<svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5M15 12H3M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/></svg>',
+  find: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>'
 };
 const soName = id => { const f = (FR.list || []).find(x => x.friend_id === id); return f ? (f.display_name || f.username || '?') : auT('A friend'); };
 const soFriend = id => (FR.list || []).find(x => x.friend_id === id) || null;
 const soOn = id => { const p = RT.pres[id]; return p && !p.h ? p : null; };
 const soParty = () => { try { if (cur && cur.api && cur.api.online) { const n = cur.api.net; if (n && n.code) return { game: cur.g.id, code: String(n.code).toUpperCase() }; } } catch (e) {} return null; };
 const soGameName = id => id ? (byId.get(id) ? byId.get(id).title : id) : '';
+const soCan = id => { const g = id && byId.get(id); return !!(g && g.info && onlineMax(g.info.pl) > 0); };
+const SO = { pend: null, want: null, act: Date.now(), away: false, party: false, ty: {}, tyAt: 0, tyT: 0, v: 'list', last: null, q: '', pt: 0, key: '', gk: '' };
+const soIdle = () => Date.now() - SO.act > 300000 || document.visibilityState === 'hidden' && Date.now() - SO.act > 60000;
+const soDot = on => on ? on.a ? ' away' : ' on' : '';
 
 function rtStart() {
   if (!SB.c || !SB.user || RT.me === SB.user.id) return;
@@ -4572,8 +4908,9 @@ function rtTrack(now) {
   if (!RT.on) return;
   RT.tt = setTimeout(() => {
     if (!RT.on || !SB.user) return;
-    const P = S.prefs, hide = P.p_status === 'Nobody';
-    RT.on.track(hide ? { h: 1 } : { g: P.p_game === false || !cur ? null : cur.g.id, t: Date.now() }).catch(() => {});
+    const P = S.prefs, hide = P.p_status === 'Nobody', g = P.p_game === false || !cur ? null : cur.g.id, pa = soParty();
+    SO.away = soIdle(); SO.party = !!(g && pa && pa.game === g);
+    RT.on.track(hide ? { h: 1 } : { g, t: Date.now(), a: SO.away ? 1 : 0, p: SO.party ? 1 : 0 }).catch(() => {});
   }, now ? 0 : 400);
 }
 function rtSync() {
@@ -4601,8 +4938,23 @@ function rtNudge(p) {
   else if (t === 'profile') auLoadProfile().then(() => { auRender(); renderProfileBits(); }).catch(() => {});
   else if (t === 'dm') dmPoll();
   else if (t === 'fr') frNudge();
+  else if (t === 'ty' || t === 'rd') {
+    const f = typeof p.f === 'string' ? p.f : '';
+    if (!soFriend(f)) return;
+    if (t === 'rd') { if (DM.open === f) dmSeenSync(); return; }
+    SO.ty[f] = Date.now() + 6000;
+    soTyDraw(); soList();
+  }
 }
 
+function soStatus(id) {
+  const on = soOn(id);
+  if (!on) return auT('Offline');
+  const g = on.g ? soGameName(on.g) : '';
+  if (on.p && g) return auT('In a party · {g}').replace('{g}', g);
+  if (g) return on.a ? auT('Away · {g}').replace('{g}', g) : auT('Playing {g}').replace('{g}', g);
+  return on.a ? auT('Away') : auT('Online');
+}
 function soLive() {
   const n = Object.keys(RT.pres).filter(k => !RT.pres[k].h).length, pill = $('#onl');
   if (pill) { pill.hidden = !SB.user || !n; pill.querySelector('b').textContent = n; pill.title = auT(n === 1 ? '1 player online' : '{n} players online').replace('{n}', n); }
@@ -4617,6 +4969,7 @@ function soLive() {
   });
   if (openK === 'friends' && FR.list) frDraw();
   if (DM.open) dmHead();
+  soList(); soDockSync();
   if (view === 'admin') {
     document.querySelectorAll('#adt tbody tr[data-uid]').forEach(tr => tr.classList.toggle('on', !!RT.pres[tr.dataset.uid]));
     const u = adCur(); if (u && !$('#adpanel').hidden) $('#adplive').innerHTML = adLiveTxt(u);
@@ -4636,6 +4989,9 @@ function ntBadge() {
   if (b) { b.textContent = n > 9 ? '9+' : n; b.hidden = !n; }
   const fb = $('#abtn em'), u = DM.unread + (FR.req || []).filter(r => r.direction === 'incoming').length;
   if (fb) { fb.textContent = u > 9 ? '9+' : u; fb.hidden = !u; }
+  const db = $('#sodl em');
+  if (db) { db.textContent = DM.unread > 9 ? '9+' : DM.unread; db.hidden = !DM.unread; $('#sodl').classList.toggle('so-hot', !!DM.unread); }
+  soDockSync();
 }
 function ntPush(n) {
   n.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -4652,7 +5008,7 @@ function ntToast(n) {
   let box = $('#ntst');
   if (!box) { box = document.createElement('div'); box.id = 'ntst'; box.className = 'ntst'; box.setAttribute('aria-live', 'polite'); document.body.append(box); }
   if (AD.locked) return;
-  const host = document.fullscreenElement || document.body;
+  const host = soHostEl();
   if (box.parentNode !== host) host.append(box);
   sfx('pop');
   const el = document.createElement('div'), lab = ntActLabel(n);
@@ -4672,7 +5028,7 @@ async function ntAct(n) {
   const a = n.a || {};
   if (a.type === 'chat') dmOpen(a.uid);
   else if (a.type === 'join') { closeAll(); go(href(a.game, a.code), false); toast(auT('Joining the party…')); }
-  else if (a.type === 'invite') { const p = soParty(); if (p && p.game === a.game) { await dmSend(a.uid, 'invite', null, p); toast(auT('Invite sent')); } else dmOpen(a.uid); }
+  else if (a.type === 'invite') soInvite(a.uid, soCan(a.game) ? a.game : null);
   else if (a.type === 'game') { closeAll(); go(href(a.game), false); }
   else if (a.type === 'friends') { if (openK !== 'friends') setOpen('friends'); }
 }
@@ -4682,7 +5038,7 @@ function ntDraw() {
   box.innerHTML = NT.list.length ? NT.list.map(n => `<button class="nrow${n.r ? '' : ' new'}" type="button" data-nid="${esc(n.id)}"><span class="nt-i">${ntIcon(n.k)}</span><span class="nt-t"><b translate="no">${esc(n.t)}</b>${n.b ? `<span translate="no">${esc(n.b)}</span>` : ''}<small>${esc(adAgo(new Date(n.at).toISOString()))}</small></span></button>`).join('') : `<div class="nofr">${esc(auT('No notifications yet.'))}</div>`;
 }
 
-const DM = { inbox: [], last: {}, open: null, msgs: [], urls: new Map(), unread: 0, first: true, t: 0, busy: false };
+const DM = { inbox: [], last: {}, open: null, msgs: [], urls: new Map(), unread: 0, first: true, t: 0, busy: false, prev: null };
 async function dmPoll() {
   if (!SB.user) return;
   let r;
@@ -4690,15 +5046,36 @@ async function dmPoll() {
   if (!SB.user) return;
   const L = Array.isArray(r) ? r : [];
   L.forEach(c => {
-    const was = DM.last[c.other_id] || 0;
-    if (!DM.first && !c.last_mine && c.last_id > was && c.unread > 0 && !(DM.open === c.other_id && document.visibilityState === 'visible')) dmNotify(c);
+    const was = DM.last[c.other_id] || 0, fresh = !DM.first && !c.last_mine && c.last_id > was;
     DM.last[c.other_id] = c.last_id;
+    if (!fresh) return;
+    delete SO.ty[c.other_id];
+    if (soAuto(c)) return;
+    if (!(DM.open === c.other_id && document.visibilityState === 'visible')) dmNotify(c);
   });
   DM.first = false; DM.inbox = L;
   DM.unread = L.reduce((n, c) => n + (c.other_id === DM.open ? 0 : +c.unread || 0), 0);
   ntBadge();
   if (openK === 'friends' && FR.list) frDraw();
+  soList();
   if (DM.open) dmThread();
+}
+function soAuto(c) {
+  const m = c.last_meta || {}, id = c.other_id;
+  if (c.last_kind === 'invite' && SO.want && SO.want.id === id && Date.now() - SO.want.t < 180000 && m.game && m.code) {
+    SO.want = null;
+    dmClose(); closeAll();
+    go(href(m.game, m.code), false);
+    toast(auT('{u} let you in. Joining the party…').replace('{u}', soName(id)));
+    return true;
+  }
+  if (c.last_kind === 'join') {
+    const p = soParty();
+    if (!p || S.prefs.p_inv === 'Nobody') return false;
+    dmSend(id, 'invite', null, p).then(() => ntPush({ k: 'join', from: id, t: auT('{u} is joining your party').replace('{u}', soName(id)), b: soGameName(p.game) + ' · ' + auT('Code {c}').replace('{c}', p.code), a: { type: 'chat', uid: id } })).catch(() => dmNotify(c));
+    return true;
+  }
+  return false;
 }
 function dmNotify(c) {
   const name = soName(c.other_id), m = c.last_meta || {}, P = S.prefs;
@@ -4711,64 +5088,272 @@ async function dmSend(uid, kind, body, meta) {
   rtSend(uid, { t: 'dm' });
   track('dm', { act: kind });
   if (DM.open === uid) dmThread();
+  else dmPoll();
   return id;
+}
+
+function soHostEl() { return document.fullscreenElement || (gamebox.classList.contains('pfs') ? gamebox : document.body); }
+function soPlace() {
+  const h = soHostEl();
+  ['#sodl', '#chat', '#ntst', '#soLight'].forEach(s => { const el = $(s); if (el && el.parentNode !== h) h.append(el); });
+}
+function soDockSync() {
+  const b = $('#sodl');
+  if (!b) return;
+  b.hidden = !SB.user || !!AD.locked;
+  const n = (FR.list || []).filter(f => soOn(f.friend_id)).length, o = b.querySelector('.so-dlo');
+  o.hidden = !n; o.querySelector('b').textContent = n;
+  b.setAttribute('aria-label', auT('Chat') + (DM.unread ? ' · ' + auT('{n} unread').replace('{n}', DM.unread) : '') + (n ? ' · ' + auT('{n} friends online').replace('{n}', n) : ''));
+}
+function soSave() { if (!SO.key) return; const el = $('#chat'); try { localStorage.setItem(SO.key, JSON.stringify({ o: !!(el && !el.hidden), v: SO.v, u: SO.last })); } catch (e) {} }
+function soView(v) {
+  SO.v = v;
+  const el = soChatEl();
+  el.classList.toggle('so-v-list', v === 'list'); el.classList.toggle('so-v-conv', v === 'conv');
+  el.setAttribute('aria-label', v === 'list' ? auT('Chats') : auT('Chat with {u}').replace('{u}', soName(DM.open)));
+}
+function soShow(on) {
+  const el = soChatEl(), b = $('#sodl');
+  if (on) { soPlace(); vis(el, true); document.body.classList.add('chat-open'); }
+  else { vis(el, false); document.body.classList.remove('chat-open'); }
+  if (b) b.setAttribute('aria-expanded', String(on));
+}
+function soDock() {
+  const el = soChatEl();
+  if (!el.hidden) { dmClose(); return; }
+  closeAll();
+  if (SO.v === 'conv' && SO.last && soFriend(SO.last)) { dmOpen(SO.last); return; }
+  soView('list'); soShow(true); soList(); soSave();
+  if (!FR.list) frLoad().then(soList);
+  if (!auCoarse()) el.querySelector('.so-sr input').focus({ preventScroll: true });
+}
+function dmBack() {
+  clearInterval(DM.t); DM.open = null;
+  soPick(false); soView('list'); soList(); soSave(); dmPoll();
+  DM.unread = DM.inbox.reduce((n, c) => n + (+c.unread || 0), 0); ntBadge();
+  const i = $('#chat .so-sr input'); if (i && !auCoarse()) i.focus({ preventScroll: true });
 }
 function soChatEl() {
   let el = $('#chat');
   if (el) return el;
   el = document.createElement('aside');
-  el.id = 'chat'; el.className = 'chat'; el.hidden = true;
-  el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', auT('Chat'));
-  el.innerHTML = `<div class="ch-h"><span class="pic"></span><div class="ch-n"><b translate="no"></b><span class="ch-s"></span></div><button class="x" type="button" data-ch="close" aria-label="${esc(auT('Close'))}">${SO_ICO.x}</button></div><div class="ch-acts"><button class="btn2" type="button" data-ch="invite"></button><button class="btn2" type="button" data-ch="join"></button></div><div class="ch-m" translate="no" aria-live="polite"></div><div class="note ch-note" role="status"></div><form class="ch-f" novalidate><button class="ch-ib" type="button" data-ch="img" aria-label="${esc(auT('Send a picture'))}">${SO_ICO.img}</button><input type="file" accept="image/*" hidden><textarea rows="1" maxlength="2000"></textarea><button class="ch-sb" type="submit" aria-label="${esc(auT('Send'))}">${SO_ICO.send}</button></form>`;
+  el.id = 'chat'; el.className = 'chat so-v-list'; el.hidden = true;
+  el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', auT('Chats'));
+  const xb = `<button class="x" type="button" data-ch="close" aria-label="${esc(auT('Minimize chat'))}" title="${esc(auT('Minimize chat'))}">${SO_ICO.min}</button>`;
+  el.innerHTML = `<div class="so-lv"><div class="ch-h so-lh"><span class="so-li">${SO_ICO.chat}</span><div class="ch-n"><b>${esc(auT('Chats'))}</b><span class="ch-s so-lc"></span></div><button class="x" type="button" data-ch="find" aria-label="${esc(auT('Add friends'))}" title="${esc(auT('Add friends'))}">${SO_ICO.add}</button>${xb}</div><label class="so-sr">${SO_ICO.find}<input type="search" placeholder="${esc(auT('Search friends'))}" aria-label="${esc(auT('Search friends'))}" autocomplete="off" spellcheck="false" maxlength="40"></label><div class="so-fl"></div></div>` +
+    `<div class="so-cv"><div class="ch-h"><button class="x so-bk" type="button" data-ch="back" aria-label="${esc(auT('Back to chats'))}" title="${esc(auT('Back to chats'))}">${SO_ICO.back}<em hidden></em></button><span class="pic"></span><div class="ch-n"><b translate="no"></b><span class="ch-s"></span></div>${xb}</div><div class="ch-acts"></div><div class="ch-m" translate="no" aria-live="polite"></div><div class="so-ty" aria-live="polite" hidden></div><div class="note ch-note" role="status"></div><form class="ch-f" novalidate><button class="ch-ib" type="button" data-ch="img" aria-label="${esc(auT('Send a picture'))}" title="${esc(auT('Send a picture'))}">${SO_ICO.img}</button><input type="file" accept="image/*" hidden><textarea rows="1" maxlength="2000" aria-label="${esc(auT('Message'))}"></textarea><button class="ch-sb" type="submit" aria-label="${esc(auT('Send'))}">${SO_ICO.send}</button></form>` +
+    `<div class="so-pk" hidden><div class="ch-h"><button class="x" type="button" data-ch="pkx" aria-label="${esc(auT('Back'))}">${SO_ICO.back}</button><div class="ch-n"><b class="so-pt"></b><span class="ch-s">${esc(auT('A party starts and your invite goes out with the code.'))}</span></div></div><div class="so-pl"></div></div></div>`;
   document.body.append(el);
-  const ta = el.querySelector('textarea'), fi = el.querySelector('input[type=file]');
+  const ta = el.querySelector('textarea'), fi = el.querySelector('input[type=file]'), sr = el.querySelector('.so-sr input');
   el.addEventListener('click', e => { const b = e.target.closest('[data-ch]'); if (b) { e.stopPropagation(); dmAct(b.dataset.ch, b); } const im = e.target.closest('.ch-pic img'); if (im && im.src) soLight(im.src); });
   el.addEventListener('submit', e => { e.preventDefault(); dmSendText(); });
-  el.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') { dmClose(); return; } if (e.key === 'Enter' && !e.shiftKey && e.target === ta) { e.preventDefault(); dmSendText(); } });
+  el.addEventListener('keydown', e => {
+    e.stopPropagation();
+    if (e.key === 'Escape') { e.preventDefault(); if (!el.querySelector('.so-pk').hidden) soPick(false); else { dmClose(); const b = $('#sodl'); if (b && !b.hidden) b.focus({ preventScroll: true }); } return; }
+    if (e.key === 'Enter' && !e.shiftKey && e.target === ta) { e.preventDefault(); dmSendText(); }
+    if (e.key === 'ArrowDown' && e.target === sr) { e.preventDefault(); const f = el.querySelector('.so-fl [data-ch="so"]'); if (f) f.focus(); }
+  });
   el.addEventListener('keyup', e => e.stopPropagation());
-  ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px'; });
+  ta.addEventListener('input', () => {
+    ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px';
+    if (ta.value.trim() && DM.open && SB.user && Date.now() - SO.tyAt > 3000) { SO.tyAt = Date.now(); rtSend(DM.open, { t: 'ty', f: SB.user.id }); }
+  });
   ta.addEventListener('paste', e => { const f = [...(e.clipboardData && e.clipboardData.files || [])].find(x => /^image\//.test(x.type)); if (f) { e.preventDefault(); dmImage(f); } });
+  sr.addEventListener('input', () => { SO.q = sr.value.trim().toLowerCase().replace(/^@/, ''); soList(); });
   fi.addEventListener('change', () => { const f = fi.files && fi.files[0]; fi.value = ''; if (f) dmImage(f); });
-  el.addEventListener('dragover', e => { e.preventDefault(); });
-  el.addEventListener('drop', e => { e.preventDefault(); const f = [...(e.dataTransfer && e.dataTransfer.files || [])].find(x => /^image\//.test(x.type)); if (f) dmImage(f); });
+  el.addEventListener('dragover', e => { if (DM.open) { e.preventDefault(); el.classList.add('so-drop'); } });
+  el.addEventListener('dragleave', e => { if (!el.contains(e.relatedTarget)) el.classList.remove('so-drop'); });
+  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('so-drop'); const f = [...(e.dataTransfer && e.dataTransfer.files || [])].find(x => /^image\//.test(x.type)); if (f && DM.open) dmImage(f); });
   return el;
+}
+function soPreview(c) {
+  const m = c.last_meta || {}, k = c.last_kind;
+  const s = k === 'image' ? auT('Picture') : k === 'invite' ? auT('Party invite · {g}').replace('{g}', soGameName(m.game)) : k === 'join' ? auT('Asked to join · {g}').replace('{g}', soGameName(m.game)) : String(c.last_body || '').split('\n')[0];
+  return c.last_mine ? auT('You: {m}').replace('{m}', s) : s;
+}
+function soWhen(t) {
+  const d = new Date(t), n = new Date();
+  if (isNaN(d)) return '';
+  if (d.toDateString() === n.toDateString()) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (n - d < 6 * 864e5) return d.toLocaleDateString([], { weekday: 'short' });
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+function soDay(t) {
+  const d = new Date(t), n = new Date(), y = new Date(n - 864e5);
+  if (d.toDateString() === n.toDateString()) return auT('Today');
+  if (d.toDateString() === y.toDateString()) return auT('Yesterday');
+  return d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: d.getFullYear() === n.getFullYear() ? undefined : 'numeric' });
+}
+function soList() {
+  const el = $('#chat');
+  if (!el || el.hidden || SO.v !== 'list') return;
+  const box = el.querySelector('.so-fl'), q = SO.q, all = FR.list;
+  const req = (FR.req || []).filter(r => r.direction === 'incoming').length;
+  const on = (all || []).filter(f => soOn(f.friend_id)).length;
+  el.querySelector('.so-lc').textContent = all ? auT('{n} online').replace('{n}', on) + ' · ' + auT(all.length === 1 ? '1 friend' : '{n} friends').replace('{n}', all.length) : '';
+  if (!all) { box.innerHTML = '<i class="sk sk-row"></i>'.repeat(3); return; }
+  const conv = id => DM.inbox.find(c => c.other_id === id);
+  const at = f => { const c = conv(f.friend_id); return c ? Date.parse(c.last_at) || 0 : 0; };
+  const un = f => { const c = conv(f.friend_id); return c ? +c.unread || 0 : 0; };
+  const rank = f => { const o = soOn(f.friend_id); return o ? (o.p ? 3 : o.g ? 2 : 1) - (o.a ? 1.5 : 0) : 0; };
+  const L = all.filter(f => !q || (f.username || '').includes(q) || (f.display_name || '').toLowerCase().includes(q));
+  const srt = (a, b) => (un(b) > 0) - (un(a) > 0) || rank(b) - rank(a) || at(b) - at(a) || (a.display_name || a.username || '').localeCompare(b.display_name || b.username || '');
+  const A = L.filter(f => soOn(f.friend_id)).sort(srt), B = L.filter(f => !soOn(f.friend_id)).sort(srt);
+  const row = f => {
+    const id = f.friend_id, o = soOn(id), c = conv(id), n = c ? +c.unread || 0 : 0, name = f.display_name || f.username || '?', ty = SO.ty[id] > Date.now();
+    const pv = ty ? `<span class="so-pv so-typ">${esc(auT('typing…'))}</span>` : c ? `<span class="so-pv">${esc(soPreview(c))}</span>` : `<span class="so-pv">@${esc(f.username || '')}</span>`;
+    return `<button class="so-fr${n ? ' un' : ''}${o ? '' : ' off'}" type="button" data-ch="so" data-id="${esc(id)}" aria-label="${esc(name + ', ' + soStatus(id) + (n ? ', ' + auT('{n} unread').replace('{n}', n) : ''))}"><span class="pic">${esc(name.charAt(0).toUpperCase())}<i class="fr-dot${soDot(o)}"></i></span><span class="so-ft"><span class="so-fn"><b translate="no">${esc(name)}</b>${c ? `<time>${esc(soWhen(c.last_at))}</time>` : ''}</span><small class="so-st${o ? o.a ? ' aw' : ' on' : ''}">${esc(soStatus(id))}</small><span class="so-fn2" translate="no">${pv}${n ? `<em>${n > 9 ? '9+' : n}</em>` : ''}</span></span></button>`;
+  };
+  const sec = (t, a) => a.length ? `<div class="so-sh">${esc(t)} — ${a.length}</div>` + a.map(row).join('') : '';
+  let h = req ? `<button class="so-req" type="button" data-ch="find">${SO_ICO.add}<span>${esc(auT(req === 1 ? '1 friend request' : '{n} friend requests').replace('{n}', req))}</span></button>` : '';
+  if (!all.length) h += `<div class="so-empty">${SO_ICO.user}<b>${esc(auT('No friends yet'))}</b><span>${esc(auT('Add friends to chat and play together.'))}</span><button class="btn2 pri" type="button" data-ch="find">${esc(auT('Find friends'))}</button></div>`;
+  else if (!L.length) h += `<div class="so-empty"><span>${esc(auT('No friend matches “{q}”.').replace('{q}', q))}</span></div>`;
+  else h += sec(auT('Online'), A) + sec(auT('Offline'), B);
+  const f = document.activeElement && document.activeElement.closest && document.activeElement.closest('.so-fr'), fid = f && f.dataset.id;
+  box.innerHTML = h;
+  if (fid) { const g = box.querySelector(`.so-fr[data-id="${CSS.escape(fid)}"]`); if (g) g.focus({ preventScroll: true }); }
 }
 async function dmOpen(uid) {
   if (!SB.user || !uid) return;
   if (!FR.list) await frLoad();
   if (!soFriend(uid)) { toast(auT('You can only chat with friends')); return; }
   const el = soChatEl();
-  if (openK === 'friends') closeAll();
-  if (DM.open !== uid) { DM.open = uid; DM.msgs = []; el.querySelector('.ch-m').innerHTML = '<i class="sk sk-msg"></i>'.repeat(3); el.querySelector('textarea').value = ''; }
-  dmHead(); auMsg2('');
-  const host = document.fullscreenElement || document.body;
-  if (el.parentNode !== host) host.append(el);
-  vis(el, true);
-  document.body.classList.add('chat-open');
+  if (openK) closeAll();
+  if (DM.open !== uid) { DM.open = uid; DM.msgs = []; DM.prev = null; el.querySelector('.ch-m').innerHTML = '<i class="sk sk-msg"></i>'.repeat(3); el.querySelector('textarea').value = ''; soPick(false); }
+  SO.last = uid;
+  soView('conv'); dmHead(); auMsg2(''); soTyDraw();
+  soShow(true); soSave();
+  DM.unread = DM.inbox.reduce((n, c) => n + (c.other_id === uid ? 0 : +c.unread || 0), 0); ntBadge();
   await dmThread();
-  if (!auCoarse()) el.querySelector('textarea').focus({ preventScroll: true });
+  if (!auCoarse() && DM.open === uid) el.querySelector('textarea').focus({ preventScroll: true });
   clearInterval(DM.t); DM.t = setInterval(() => { if (DM.open && document.visibilityState === 'visible') dmThread(); }, 5000);
 }
 function dmClose() {
   const el = $('#chat');
   clearInterval(DM.t); DM.open = null;
-  if (el) vis(el, false);
-  document.body.classList.remove('chat-open');
+  if (el) soShow(false);
+  soSave();
 }
 function auMsg2(m, k) { const n = document.querySelector('#chat .ch-note'); if (n) { n.textContent = m ? auT(m) : ''; n.className = 'note ch-note' + (k ? ' ' + k : ''); } }
+function soSaid(id, m, k) { if (DM.open === id && $('#chat') && !$('#chat').hidden) auMsg2(m, k); else toast(m); }
+function soActs(id) {
+  const f = soFriend(id), name = f ? (f.display_name || f.username || '?') : '', on = soOn(id), party = soParty(), mine = cur && soCan(cur.g.id) ? cur.g.id : null;
+  const inv = party ? { k: 'invite', i: SO_ICO.pad, t: auT('Invite to my party · {g}').replace('{g}', soGameName(party.game)) } : mine ? { k: 'invite', i: SO_ICO.pad, t: auT('Invite to {g}').replace('{g}', soGameName(mine)) } : { k: 'pick', i: SO_ICO.pad, t: auT('Invite to play…') };
+  let j;
+  if (!on) j = { t: auT('Join'), why: auT('{u} is offline. You can still send an invite.').replace('{u}', name) };
+  else if (on.g && on.p) j = { t: auT('Join party · {g}').replace('{g}', soGameName(on.g)) };
+  else if (on.g && soCan(on.g)) j = { t: auT('Ask to join · {g}').replace('{g}', soGameName(on.g)) };
+  else if (on.g) j = { t: auT('Join'), why: auT('{g} has no online mode. Invite {u} to a game that does.').replace('{g}', soGameName(on.g)).replace('{u}', name) };
+  else j = { t: auT('Join'), why: auT('{u} is not in a game right now. Invite them instead.').replace('{u}', name) };
+  j.k = 'join'; j.i = SO_ICO.join;
+  return on && on.g && on.p ? [j, inv] : [inv, j];
+}
+function soActsHtml(id, at) {
+  const A = soActs(id), why = A.map(a => a.why).filter(Boolean)[0];
+  return A.map((a, i) => `<button class="btn2${!i ? ' pri' : ''}${a.why ? ' so-dis' : ''}" type="button" ${at}="${a.k}" data-id="${esc(id)}"${a.why ? ` aria-disabled="true" title="${esc(a.why)}"` : ''}>${a.i}<span>${esc(a.t)}</span></button>`).join('') + (why ? `<small class="so-why">${esc(why)}</small>` : '');
+}
+async function soDo(k, id, b) {
+  if (b && b.getAttribute('aria-disabled') === 'true') { soSaid(id, b.title); return; }
+  if (k === 'chat') { closeAll(); dmOpen(id); }
+  else if (k === 'pick') { closeAll(); await dmOpen(id); soPick(true); }
+  else if (k === 'invite') { if (b) b.disabled = true; await soInvite(id, null); if (b) b.disabled = false; }
+  else if (k === 'join') { if (b) b.disabled = true; await soJoin(id); if (b) b.disabled = false; }
+}
+async function soInvite(id, game) {
+  const p = soParty();
+  if (p && (!game || game === p.game)) {
+    try { await dmSend(id, 'invite', null, p); soSaid(id, auT('Invite sent to {u}. They join with code {c}.').replace('{u}', soName(id)).replace('{c}', p.code), 'ok'); }
+    catch (e) { soSaid(id, auT('Could not send. Check your connection and try again.'), 'bad'); }
+    return;
+  }
+  game = game || (cur && soCan(cur.g.id) ? cur.g.id : null);
+  if (!game) { if (DM.open !== id) await dmOpen(id); soPick(true); return; }
+  soHost(game, id);
+}
+function soHost(game, id) {
+  if (SO.pend && SO.pend.game === game) SO.pend.ids.add(id); else SO.pend = { game, ids: new Set([id]) };
+  SO.pend.t = Date.now();
+  const here = cur && cur.g.id === game;
+  toast(auT('Starting a {g} party. Your invite goes out as soon as it is ready.').replace('{g}', soGameName(game)));
+  if (!(here && cur.api && cur.api.online)) {
+    invite = { id: game, code: null, host: true };
+    soPick(false);
+    dmClose();
+    closeAll();
+    if (here) restartCurrent(); else go(href(game), false);
+  }
+  clearInterval(SO.pt); SO.pt = setInterval(soPendTick, 500);
+}
+async function soPendTick() {
+  const P = SO.pend;
+  if (!P) { clearInterval(SO.pt); return; }
+  const p = soParty();
+  if (p && p.game === P.game) {
+    SO.pend = null; clearInterval(SO.pt);
+    rtTrack(true);
+    for (const id of P.ids) {
+      try { await dmSend(id, 'invite', null, p); toast(auT('Invite sent to {u}. They join with code {c}.').replace('{u}', soName(id)).replace('{c}', p.code)); }
+      catch (e) { toast(auT('Could not send the invite to {u}. Try again.').replace('{u}', soName(id))); }
+    }
+    return;
+  }
+  const away = Date.now() - P.t > 4000 && !(cur && cur.g.id === P.game) && !(pend && pend.id === P.game);
+  if (away || Date.now() - P.t > 120000) {
+    SO.pend = null; clearInterval(SO.pt);
+    if (invite && invite.host) invite = null;
+    if (!away) toast(auT('The party did not start, so the invite was not sent. Try again.'));
+  }
+}
+async function soJoin(id) {
+  const on = soOn(id);
+  if (!on || !on.g) return;
+  try { await dmSend(id, 'join', null, { game: on.g }); }
+  catch (e) { soSaid(id, auT('Could not send. Check your connection and try again.'), 'bad'); return; }
+  SO.want = { id, t: Date.now() };
+  soSaid(id, on.p ? auT('Asked {u} to let you in. You join as soon as they accept.').replace('{u}', soName(id)) : auT('Request sent. {u} gets a notification and can start a party for you.').replace('{u}', soName(id)), 'ok');
+}
+function soPick(on) {
+  const el = $('#chat');
+  if (!el) return;
+  const pk = el.querySelector('.so-pk');
+  if (!on) { pk.hidden = true; return; }
+  const L = games.filter(g => soCan(g.id)).sort((a, b) => (b === (cur && cur.g)) - (a === (cur && cur.g)) || a.title.localeCompare(b.title));
+  pk.querySelector('.so-pt').textContent = auT('Play with {u}').replace('{u}', soName(DM.open));
+  pk.querySelector('.so-pl').innerHTML = L.map(g => `<button class="so-gm" type="button" data-ch="pk" data-g="${esc(g.id)}"><span class="so-gi" style="background:${esc(tint(g))}">${img(g) || esc(g.title.charAt(0))}</span><span class="so-ft"><b>${esc(g.title)}</b><small>${esc(auT(playersText(g.info.pl)))}</small></span>${SO_ICO.pad}</button>`).join('');
+  pk.hidden = false;
+  const f = pk.querySelector('.so-gm'); if (f) f.focus({ preventScroll: true });
+}
 function dmHead() {
   const el = $('#chat'), uid = DM.open, f = soFriend(uid);
   if (!el || !uid || !f) return;
-  const name = f.display_name || f.username || '?', on = soOn(uid), party = soParty();
-  el.querySelector('.pic').textContent = name.charAt(0).toUpperCase();
-  el.querySelector('.ch-n b').textContent = name;
-  el.querySelector('.ch-s').innerHTML = on ? `<i class="fr-dot on"></i>${esc(on.g ? auT('Playing {g}').replace('{g}', soGameName(on.g)) : auT('Online'))}` : `<i class="fr-dot"></i>${esc('@' + (f.username || ''))}`;
-  const ib = el.querySelector('[data-ch="invite"]'), jb = el.querySelector('[data-ch="join"]');
-  ib.textContent = party ? auT('Invite to my party · {g}').replace('{g}', soGameName(party.game)) : auT('Invite to my party');
-  ib.disabled = !party; ib.title = party ? '' : auT('Open online play in a game first');
-  jb.textContent = on && on.g ? auT('Ask to join · {g}').replace('{g}', soGameName(on.g)) : auT('Ask to join their party');
-  jb.disabled = !(on && on.g); jb.title = on && on.g ? '' : auT('They are not playing right now');
+  const name = f.display_name || f.username || '?', on = soOn(uid);
+  el.querySelector('.so-cv .pic').innerHTML = `${esc(name.charAt(0).toUpperCase())}<i class="fr-dot${soDot(on)}"></i>`;
+  el.querySelector('.so-cv .ch-n b').textContent = name;
+  el.querySelector('.so-cv .ch-s').innerHTML = `<span class="so-st${on ? on.a ? ' aw' : ' on' : ''}">${esc(soStatus(uid))}</span><span class="so-un">@${esc(f.username || '')}</span>`;
+  el.querySelector('.ch-acts').innerHTML = soActsHtml(uid, 'data-ch');
   el.querySelector('textarea').placeholder = auT('Message {u}').replace('{u}', '@' + (f.username || name));
+  const o = DM.inbox.reduce((n, c) => n + (c.other_id === uid ? 0 : +c.unread || 0), 0), bk = el.querySelector('.so-bk em');
+  bk.textContent = o > 9 ? '9+' : o; bk.hidden = !o;
+}
+function soTyDraw() {
+  const t = $('#chat .so-ty');
+  if (!t) return;
+  clearTimeout(SO.tyT);
+  const on = DM.open && SO.ty[DM.open] > Date.now();
+  t.hidden = !on;
+  if (on) { t.innerHTML = `<i></i><i></i><i></i><span>${esc(auT('{u} is typing…').replace('{u}', soName(DM.open)))}</span>`; SO.tyT = setTimeout(() => { soTyDraw(); soList(); }, SO.ty[DM.open] - Date.now() + 50); }
+}
+function soSeen() {
+  const box = $('#chat .ch-m');
+  if (!box) return;
+  const s = box.querySelector('.so-seen'); if (s) s.remove();
+  const L = DM.msgs[DM.msgs.length - 1];
+  if (L && L.mine && L.read_at) box.insertAdjacentHTML('beforeend', `<div class="so-seen">${esc(auT('Seen'))}</div>`);
+}
+async function dmSeenSync() {
+  const uid = DM.open, M = DM.msgs.filter(m => m.mine && !m.read_at);
+  if (!uid || !M.length) return;
+  try { const r = await adRpc('dm_thread', { p_with: uid, p_after: M[0].id - 1 }); if (DM.open !== uid) return; (Array.isArray(r) ? r : []).forEach(x => { const m = DM.msgs.find(y => y.id === x.id); if (m && x.read_at) m.read_at = x.read_at; }); soSeen(); } catch (e) {}
 }
 async function dmThread() {
   const uid = DM.open;
@@ -4780,24 +5365,44 @@ async function dmThread() {
     if (DM.open !== uid) return;
     const add = Array.isArray(r) ? r : [];
     const box = $('#chat .ch-m'), first = !after;
-    if (first) box.innerHTML = '';
-    if (!add.length) { if (first) box.innerHTML = `<div class="ch-empty">${esc(auT('Say hi! Messages are only seen by the two of you.'))}</div>`; return; }
+    if (first) { box.innerHTML = ''; DM.prev = null; }
+    if (!add.length) { if (first) box.innerHTML = `<div class="ch-empty">${SO_ICO.chat}<span>${esc(auT('Say hi! Messages are only seen by the two of you.'))}</span></div>`; return; }
     const near = first || box.scrollHeight - box.scrollTop - box.clientHeight < 120;
     const em = box.querySelector('.ch-empty'); if (em) em.remove();
+    const un = first ? add.findIndex(m => !m.mine && !m.read_at) : -1;
     DM.msgs.push(...add);
-    box.insertAdjacentHTML('beforeend', add.map(m => dmRow(m, !first)).join(''));
+    box.insertAdjacentHTML('beforeend', add.map((m, i) => {
+      const p = DM.prev;
+      let s = '';
+      if (!p || new Date(p.created_at).toDateString() !== new Date(m.created_at).toDateString()) s += `<div class="so-sep so-day"><span>${esc(soDay(m.created_at))}</span></div>`;
+      if (i === un && i > 0) s += `<div class="so-sep so-new" id="soNew"><span>${esc(auT('New messages'))}</span></div>`;
+      const card = k => k === 'invite' || k === 'join';
+      const grp = !s && p && p.mine === m.mine && !card(p.kind) && !card(m.kind) && Date.parse(m.created_at) - Date.parse(p.created_at) < 300000;
+      DM.prev = m;
+      return s + dmRow(m, !first, grp);
+    }).join(''));
     box.querySelectorAll('img[data-path]:not([src])').forEach(dmImg);
-    if (near) box.scrollTop = box.scrollHeight;
-    if (add.some(m => !m.mine && !m.read_at)) { await adRpc('dm_read', { p_with: uid }).catch(() => {}); const c = DM.inbox.find(x => x.other_id === uid); if (c) c.unread = 0; DM.unread = DM.inbox.reduce((n, c) => n + (c.other_id === DM.open ? 0 : +c.unread || 0), 0); ntBadge(); }
+    soSeen();
+    const nw = first && box.querySelector('#soNew');
+    if (nw) box.scrollTop = Math.max(0, nw.offsetTop - 12);
+    else if (near || add.some(m => m.mine)) box.scrollTop = box.scrollHeight;
+    if (!first && add.some(m => !m.mine)) { delete SO.ty[uid]; soTyDraw(); sfx('pop'); }
+    if (add.some(m => !m.mine && !m.read_at)) {
+      await adRpc('dm_read', { p_with: uid }).catch(() => {});
+      rtSend(uid, { t: 'rd', f: SB.user.id });
+      const c = DM.inbox.find(x => x.other_id === uid); if (c) c.unread = 0;
+      DM.unread = DM.inbox.reduce((n, c) => n + (c.other_id === DM.open ? 0 : +c.unread || 0), 0); ntBadge();
+    }
   } catch (e) { auMsg2('Could not load the messages. Check your connection and try again.', 'bad'); }
   finally { DM.busy = false; }
 }
-function dmRow(m, anim) {
-  const cls = 'ch-r' + (m.mine ? ' me' : '') + (anim ? ' new' : ''), t = `<small>${esc(new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))}</small>`, g = m.meta || {}, name = soName(DM.open);
-  if (m.kind === 'image') return `<div class="${cls}"><div class="ch-pic"><img data-path="${esc(g.path || '')}" alt="${esc(auT('Picture'))}" width="${+g.w || 320}" height="${+g.h || 240}" loading="lazy"></div>${t}</div>`;
-  if (m.kind === 'invite') return `<div class="${cls}"><div class="ch-card">${SO_ICO.pad}<div><b>${esc(m.mine ? auT('You invited {u} to your party').replace('{u}', name) : auT('{u} invited you to their party').replace('{u}', name))}</b><span>${esc(soGameName(g.game))} · ${esc(auT('Code {c}').replace('{c}', g.code || ''))}</span></div>${m.mine ? '' : `<button class="btn2 pri" type="button" data-ch="go" data-g="${esc(g.game || '')}" data-c="${esc(g.code || '')}">${esc(auT('Join'))}</button>`}</div>${t}</div>`;
-  if (m.kind === 'join') return `<div class="${cls}"><div class="ch-card">${SO_ICO.pad}<div><b>${esc(m.mine ? auT('You asked to join {u}').replace('{u}', name) : auT('{u} wants to join your party').replace('{u}', name))}</b><span>${esc(soGameName(g.game))}</span></div>${m.mine ? '' : `<button class="btn2 pri" type="button" data-ch="invite">${esc(auT('Invite'))}</button>`}</div>${t}</div>`;
-  return `<div class="${cls}"><div class="ch-b">${esc(m.body || '')}</div>${t}</div>`;
+function dmRow(m, anim, grp) {
+  const d = new Date(m.created_at), hm = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const cls = 'ch-r' + (m.mine ? ' me' : '') + (anim ? ' new' : '') + (grp ? ' so-g' : ''), t = grp ? '' : `<small>${esc(hm)}</small>`, g = m.meta || {}, name = soName(DM.open), tt = ` title="${esc(d.toLocaleString())}"`;
+  if (m.kind === 'image') return `<div class="${cls}"${tt}><div class="ch-pic"><img data-path="${esc(g.path || '')}" alt="${esc(auT('Picture'))}" width="${+g.w || 320}" height="${+g.h || 240}" loading="lazy"></div>${t}</div>`;
+  if (m.kind === 'invite') return `<div class="${cls}"${tt}><div class="ch-card">${SO_ICO.pad}<div><b>${esc(m.mine ? auT('You invited {u} to your party').replace('{u}', name) : auT('{u} invited you to their party').replace('{u}', name))}</b><span>${esc(soGameName(g.game))} · ${esc(auT('Code {c}').replace('{c}', g.code || ''))}</span></div>${m.mine ? '' : `<button class="btn2 pri" type="button" data-ch="go" data-g="${esc(g.game || '')}" data-c="${esc(g.code || '')}">${esc(auT('Join'))}</button>`}</div>${t}</div>`;
+  if (m.kind === 'join') return `<div class="${cls}"${tt}><div class="ch-card">${SO_ICO.pad}<div><b>${esc(m.mine ? auT('You asked to join {u}').replace('{u}', name) : auT('{u} wants to join your party').replace('{u}', name))}</b><span>${esc(soGameName(g.game))}</span></div>${m.mine ? '' : `<button class="btn2 pri" type="button" data-ch="invite" data-g="${esc(g.game || '')}">${esc(auT('Invite'))}</button>`}</div>${t}</div>`;
+  return `<div class="${cls}"${tt}><div class="ch-b">${esc(m.body || '')}</div>${t}</div>`;
 }
 async function dmImg(img) {
   const p = img.dataset.path;
@@ -4814,7 +5419,7 @@ async function dmImg(img) {
 async function dmSendText() {
   const el = $('#chat'), ta = el.querySelector('textarea'), v = ta.value.trim(), uid = DM.open;
   if (!v || !uid) return;
-  ta.value = ''; ta.style.height = 'auto'; auMsg2('');
+  ta.value = ''; ta.style.height = 'auto'; auMsg2(''); SO.tyAt = 0;
   try { await dmSend(uid, 'text', v); }
   catch (e) { ta.value = v; auMsg2(/too many/i.test(e.message || '') ? 'Too many messages. Wait a minute and try again.' : /not friends/i.test(e.message || '') ? 'You are no longer friends.' : /locked/i.test(e.message || '') ? 'Your account is locked.' : 'Could not send. Check your connection and try again.', 'bad'); }
 }
@@ -4846,47 +5451,43 @@ async function dmImage(file) {
 }
 async function dmAct(k, b) {
   const uid = DM.open;
-  if (k === 'close') { dmClose(); return; }
+  if (k === 'close') { dmClose(); const l = $('#sodl'); if (l && !l.hidden) l.focus({ preventScroll: true }); return; }
+  if (k === 'back') { dmBack(); return; }
+  if (k === 'so') { dmOpen(b.dataset.id); return; }
+  if (k === 'find') { dmClose(); setOpen('friends'); return; }
   if (k === 'img') { $('#chat input[type=file]').click(); return; }
+  if (k === 'pkx') { soPick(false); return; }
   if (k === 'go') { dmClose(); closeAll(); go(href(b.dataset.g, b.dataset.c), false); toast(auT('Joining the party…')); return; }
   if (!uid) return;
-  if (k === 'invite') {
-    const p = soParty();
-    if (!p) { auMsg2('Open online play in a game first, then invite your friend.', 'bad'); return; }
-    b.disabled = true;
-    try { await dmSend(uid, 'invite', null, p); auMsg2('Invite sent.', 'ok'); } catch (e) { auMsg2('Could not send. Check your connection and try again.', 'bad'); }
-    finally { b.disabled = false; dmHead(); }
-  } else if (k === 'join') {
-    const on = soOn(uid);
-    if (!on || !on.g) return;
-    b.disabled = true;
-    try { await dmSend(uid, 'join', null, { game: on.g }); auMsg2('Request sent. You will get an invite when they accept.', 'ok'); } catch (e) { auMsg2('Could not send. Check your connection and try again.', 'bad'); }
-    finally { dmHead(); }
-  }
+  if (k === 'pk') { soHost(b.dataset.g, uid); return; }
+  if (k === 'invite' && b.dataset.g && !b.dataset.id) { b.disabled = true; await soInvite(uid, soCan(b.dataset.g) ? b.dataset.g : null); b.disabled = false; return; }
+  if (k === 'invite' || k === 'pick' || k === 'join') { await soDo(k, uid, b); if (DM.open === uid) dmHead(); }
 }
 function soLight(src) {
   let lb = $('#soLight');
   if (!lb) { lb = document.createElement('div'); lb.id = 'soLight'; lb.className = 'solight'; lb.innerHTML = '<img alt="">'; lb.addEventListener('click', () => vis(lb, false)); document.body.append(lb); }
+  soPlace();
   lb.querySelector('img').src = src; vis(lb, true);
 }
 
 function soFriendRow(f) {
-  const id = f.friend_id, on = soOn(id), open = FR.open === id, c = DM.inbox.find(x => x.other_id === id), un = c ? +c.unread || 0 : 0, party = soParty();
-  const st = on ? (on.g ? auT('Playing {g}').replace('{g}', soGameName(on.g)) : auT('Online')) : auT('Offline');
+  const id = f.friend_id, on = soOn(id), open = FR.open === id, c = DM.inbox.find(x => x.other_id === id), un = c ? +c.unread || 0 : 0;
   const name = f.display_name || f.username || '?';
-  const x = open ? `<div class="fr-x"><button class="btn2 pri" type="button" data-fr="chat" data-id="${esc(id)}">${SO_ICO.chat}${esc(auT('Chat'))}</button><button class="btn2" type="button" data-fr="invite" data-id="${esc(id)}"${party ? '' : ' disabled'} title="${esc(party ? '' : auT('Open online play in a game first'))}">${SO_ICO.pad}${esc(party ? auT('Invite to my party · {g}').replace('{g}', soGameName(party.game)) : auT('Invite to my party'))}</button><button class="btn2" type="button" data-fr="join" data-id="${esc(id)}"${on && on.g ? '' : ' disabled'} title="${esc(on && on.g ? '' : auT('They are not playing right now'))}">${esc(on && on.g ? auT('Ask to join · {g}').replace('{g}', soGameName(on.g)) : auT('Ask to join their party'))}</button><button class="btn2" type="button" data-fr="remove" data-id="${esc(id)}">${esc(auT('Remove'))}</button></div>` : '';
-  return `<div class="frow fr-f${open ? ' open' : ''}" role="listitem" tabindex="0" data-frc="${esc(id)}"><span class="pic">${esc(name.charAt(0).toUpperCase())}<i class="fr-dot${on ? ' on' : ''}"></i></span><div class="fr-n"><b>${esc(name)}</b><span>@${esc(f.username || '')}</span><em class="fr-st${on ? ' on' : ''}">${esc(st)}</em></div><div class="fr-a">${un ? `<span class="fr-un">${un > 9 ? '9+' : un}</span>` : ''}<button class="btn2 icon2" type="button" data-fr="chat" data-id="${esc(id)}" aria-label="${esc(auT('Chat'))}">${SO_ICO.chat}</button></div>${x}</div>`;
+  const x = open ? `<div class="fr-x"><button class="btn2" type="button" data-fr="chat" data-id="${esc(id)}">${SO_ICO.chat}<span>${esc(auT('Chat'))}</span></button>${soActsHtml(id, 'data-fr')}<button class="btn2" type="button" data-fr="remove" data-id="${esc(id)}">${esc(auT('Remove'))}</button></div>` : '';
+  return `<div class="frow fr-f${open ? ' open' : ''}" role="listitem" tabindex="0" data-frc="${esc(id)}"><span class="pic">${esc(name.charAt(0).toUpperCase())}<i class="fr-dot${soDot(on)}"></i></span><div class="fr-n"><b>${esc(name)}</b><span>@${esc(f.username || '')}</span><em class="fr-st${on ? on.a ? ' aw' : ' on' : ''}">${esc(soStatus(id))}</em></div><div class="fr-a">${un ? `<span class="fr-un">${un > 9 ? '9+' : un}</span>` : ''}<button class="btn2 icon2" type="button" data-fr="chat" data-id="${esc(id)}" aria-label="${esc(auT('Chat'))}">${SO_ICO.chat}</button></div>${x}</div>`;
 }
 async function soFrAct(k, b) {
+  if (!['chat', 'invite', 'pick', 'join'].includes(k)) return false;
   const id = b.dataset.id;
-  if (k === 'chat') { closeAll(); dmOpen(id); return true; }
-  if (k === 'invite') { const p = soParty(); if (!p) return true; b.disabled = true; try { await dmSend(id, 'invite', null, p); toast(auT('Invite sent to {u}').replace('{u}', soName(id))); } catch (e) { toast(auT('Could not send. Check your connection and try again.')); } b.disabled = false; return true; }
-  if (k === 'join') { const on = soOn(id); if (!on || !on.g) return true; b.disabled = true; try { await dmSend(id, 'join', null, { game: on.g }); toast(auT('Request sent to {u}').replace('{u}', soName(id))); } catch (e) { toast(auT('Could not send. Check your connection and try again.')); } return true; }
-  return false;
+  if (b.getAttribute('aria-disabled') === 'true') { toast(b.title); return true; }
+  await soDo(k, id, b);
+  if (openK === 'friends' && FR.list) frDraw();
+  return true;
 }
 async function frNudge() {
   const old = new Set((FR.req || []).filter(r => r.direction === 'incoming').map(r => r.id)), oldF = new Set((FR.list || []).map(f => f.friend_id)), had = !!FR.list;
   await frLoad();
+  soList();
   if (!had) return;
   (FR.req || []).filter(r => r.direction === 'incoming' && !old.has(r.id)).forEach(r => { if (S.prefs.n_req !== false) ntPush({ k: 'fr', from: r.other_id, t: auT('{u} sent you a friend request').replace('{u}', r.display_name || r.username), b: '@' + r.username, a: { type: 'friends' } }); });
   (FR.list || []).filter(f => !oldF.has(f.friend_id)).forEach(f => ntPush({ k: 'fr', from: f.friend_id, t: auT('You are now friends with {u}').replace('{u}', f.display_name || f.username), b: '@' + f.username, a: { type: 'chat', uid: f.friend_id } }));
@@ -4908,13 +5509,23 @@ function soStart() {
   if (!SB.user) return;
   rtStart();
   DM.first = true; DM.last = {};
-  frLoad().then(() => { ntBadge(); rtSync(); });
+  SO.key = 'gameplay:dock:' + SB.user.id;
+  let st = null;
+  try { st = JSON.parse(localStorage.getItem(SO.key) || 'null'); } catch (e) {}
+  if (st) { SO.v = st.v === 'conv' ? 'conv' : 'list'; SO.last = typeof st.u === 'string' ? st.u : null; }
+  soDockSync();
+  frLoad().then(() => {
+    ntBadge(); rtSync();
+    if (st && st.o && !auCoarse() && matchMedia('(min-width:761px)').matches && $('#chat') && $('#chat').hidden) { if (SO.v === 'conv' && soFriend(SO.last)) dmOpen(SO.last); else { soView('list'); soShow(true); soList(); } }
+  });
   dmPoll();
 }
 function soStop() {
   rtStop(); dmClose();
   DM.inbox = []; DM.unread = 0; DM.msgs = []; DM.last = {}; DM.urls.clear();
+  SO.pend = SO.want = null; SO.last = null; SO.v = 'list'; SO.key = ''; SO.ty = {}; clearInterval(SO.pt);
   ntLoad();
+  soDockSync();
 }
 function soBoot() {
   MENUS.notifs = ['#nmenu', '#nbtn'];
@@ -4922,19 +5533,31 @@ function soBoot() {
   right.insertAdjacentHTML('afterbegin', `<span class="onl" id="onl" hidden translate="no"><i></i><b>0</b> ${esc(auT('online'))}</span><button class="icon" id="nbtn" type="button" aria-label="${esc(auT('Notifications'))}" aria-haspopup="true" aria-expanded="false" aria-controls="nmenu">${SO_ICO.bell}<em hidden></em></button>`);
   $('#abtn').insertAdjacentHTML('beforeend', '<em hidden></em>');
   right.insertAdjacentHTML('beforeend', `<div class="menu r nmenu" id="nmenu" hidden><div class="nm-h"><b>${esc(auT('Notifications'))}</b><button class="au-link" type="button" id="nall">${esc(auT('Mark all as read'))}</button></div><div class="nlist" id="nlist"></div></div>`);
+  document.body.insertAdjacentHTML('beforeend', `<button class="so-dl" id="sodl" type="button" hidden aria-expanded="false" aria-controls="chat">${SO_ICO.chat}<span class="so-dlt">${esc(auT('Chat'))}</span><span class="so-dlo" hidden translate="no"><i></i><b>0</b></span><em hidden></em></button>`);
+  $('#sodl').addEventListener('click', e => { e.stopPropagation(); soDock(); });
   $('#nbtn').addEventListener('click', e => { e.stopPropagation(); setOpen('notifs'); if (openK === 'notifs') ntDraw(); });
   $('#nall').addEventListener('click', e => { e.stopPropagation(); NT.list.forEach(n => { n.r = true; }); ntSave(); ntBadge(); ntDraw(); });
   $('#nlist').addEventListener('click', e => { const b = e.target.closest('[data-nid]'); if (!b) return; const n = NT.list.find(x => x.id === b.dataset.nid); if (!n) return; ntRead(n.id); closeAll(); ntAct(n); });
   $('#fr-l').addEventListener('click', async e => {
     const b = e.target.closest('[data-fr]');
-    if (b && ['chat', 'invite', 'join'].includes(b.dataset.fr)) { e.stopPropagation(); await soFrAct(b.dataset.fr, b); return; }
+    if (b && ['chat', 'invite', 'pick', 'join'].includes(b.dataset.fr)) { e.stopPropagation(); await soFrAct(b.dataset.fr, b); return; }
     if (b) return;
     const r = e.target.closest('[data-frc]');
     if (r) { e.stopPropagation(); FR.open = FR.open === r.dataset.frc ? null : r.dataset.frc; frDraw(); }
   }, true);
   $('#fr-l').addEventListener('keydown', e => { const r = e.target.closest && e.target.closest('[data-frc]'); if (r && e.target === r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); r.click(); } });
   setInterval(() => { if (SB.user && document.visibilityState === 'visible') dmPoll(); }, 30000);
-  document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible') { dmPoll(); rtTrack(); } });
+  setInterval(() => {
+    if (!SB.user) return;
+    const pa = soParty(), k = (cur ? cur.g.id : '') + '|' + (pa ? pa.code : '');
+    if (k !== SO.gk) { SO.gk = k; if (DM.open) dmHead(); if (openK === 'friends' && FR.list) frDraw(); rtTrack(true); }
+    else if (RT.on && soIdle() !== SO.away) rtTrack(true);
+  }, 1000);
+  const act = () => { SO.act = Date.now(); if (SO.away && RT.on) { SO.away = false; rtTrack(true); } };
+  ['pointerdown', 'keydown', 'wheel', 'touchstart', 'pointermove'].forEach(t => addEventListener(t, act, { capture: true, passive: true }));
+  document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible') { act(); dmPoll(); rtTrack(); } });
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(t => document.addEventListener(t, () => setTimeout(soPlace, 0)));
+  new MutationObserver(() => { const c = $('#chat'); if (document.body.classList.contains('modal-open') && c && !c.hidden && !c.classList.contains('out')) dmClose(); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   ntLoad();
   setTimeout(soNewGames, 3000);
 }
@@ -5089,6 +5712,256 @@ function inBoot() {
   if (navigator.getGamepads && [...navigator.getGamepads()].some(Boolean)) inPadStart();
 }
 
+const CHANGELOG = [
+  { v: 6, date: '2026-10-17', items: [
+    'Tap the heart on any game to add it to your favourites. They show up in their own row on the home page and in the Favourites filter, and follow your account to every device.',
+    'A chat button now sits at the bottom right of every page, so you can talk with friends while you play.',
+    'Party invites really work now: your friend gets the invite and joins your party in one tap.',
+    'See when a friend is typing, and when they have seen your message.',
+    'Rocket League got a big upgrade: better graphics, boost, cars, goal effects, camera and ball physics.',
+    'Announcements from the team now show at the top of the site, and a game that is being fixed shows as temporarily unavailable instead of breaking.',
+    'When the site updates while you are playing, a small bar tells you a new version is ready, and this What\'s new panel shows you what changed.'
+  ] }
+];
+
+const FV_KEY = 'gameplay:favs', FV_RE = /^[a-z0-9][a-z0-9-]{0,39}$/;
+const FV = { ids: [], uid: null, at: 0, q: Promise.resolve() };
+const FV_ICO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.4C1.5 7.8 3.6 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.5 3.3 4.3 6.6-1.8 4.8-9.3 9.4-9.3 9.4z"/></svg>';
+const fvRead = k => { try { const a = JSON.parse(localStorage.getItem(k) || '[]'); return Array.isArray(a) ? [...new Set(a.filter(x => typeof x === 'string' && FV_RE.test(x)))] : []; } catch (e) { return []; } };
+const fvKey = () => FV.uid ? FV_KEY + ':' + FV.uid : FV_KEY;
+const fvHas = id => FV.ids.includes(id);
+const fvBtn = (id, cls) => `<button class="fav${cls ? ' ' + cls : ''}" type="button" data-fav="${id}" aria-pressed="${fvHas(id)}" aria-label="${fvHas(id) ? 'Remove from favourites' : 'Add to favourites'}">${FV_ICO}</button>`;
+(() => { let uid = null; try { const s = JSON.parse(localStorage.getItem(SB_STORE) || 'null'); uid = s && s.user && s.user.id || null; } catch (e) {} if (SB.on && uid) FV.uid = uid; FV.ids = fvRead(fvKey()); })();
+function fvStore() { try { localStorage.setItem(fvKey(), JSON.stringify(FV.ids)); } catch (e) {} }
+function fvPaint() {
+  document.querySelectorAll('[data-fav]').forEach(b => { const on = fvHas(b.dataset.fav); b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', auT(on ? 'Remove from favourites' : 'Add to favourites')); b.title = auT(on ? 'Remove from favourites' : 'Add to favourites'); });
+  if (view === 'home') { fvRail(); if (state.f.size) renderResults(); }
+}
+function fvRail() {
+  const L = FV.ids.map(id => byId.get(id)).filter(Boolean).slice(0, 10), sec = $('#favs');
+  sec.hidden = !L.length || !!(activeCount() || state.q.trim());
+  $('#favrail').innerHTML = L.map((g, i) => card(g, 'fav', i)).join('');
+  lzScan();
+}
+function fvToggle(id) {
+  if (!byId.get(id)) return;
+  const on = !fvHas(id), uid = FV.uid;
+  FV.ids = on ? [id, ...FV.ids.filter(x => x !== id)] : FV.ids.filter(x => x !== id);
+  fvStore(); fvPaint();
+  toast(auT(on ? 'Added to favourites' : 'Removed from favourites'));
+  track('favourite', { game: id, on });
+  if (!uid || !SB.user || SB.user.id !== uid) return;
+  FV.q = FV.q.then(async () => {
+    try {
+      if (on) await sbRest('favourites', { method: 'POST', body: [{ user_id: uid, game_id: id }], prefer: 'resolution=ignore-duplicates,return=minimal' });
+      else await sbRest('favourites?user_id=eq.' + uid + '&game_id=eq.' + encodeURIComponent(id), { method: 'DELETE', prefer: 'return=minimal' });
+    } catch (e) {
+      if (FV.uid !== uid) return;
+      FV.ids = on ? FV.ids.filter(x => x !== id) : [id, ...FV.ids.filter(x => x !== id)];
+      fvStore(); fvPaint();
+      toast(auT('Could not save your favourite. Check your connection and try again.'));
+    }
+  });
+}
+async function fvSync() {
+  const uid = SB.user && SB.user.id;
+  if (!uid) return;
+  const guest = FV_KEY === fvKey() ? FV.ids.slice() : fvRead(FV_KEY);
+  if (FV.uid !== uid) { FV.uid = uid; FV.ids = fvRead(fvKey()); }
+  FV.ids = [...new Set(guest.concat(FV.ids))];
+  fvStore(); fvPaint();
+  FV.at = Date.now();
+  try {
+    if (guest.length) { await sbRest('favourites', { method: 'POST', body: guest.map(g => ({ user_id: uid, game_id: g })), prefer: 'resolution=ignore-duplicates,return=minimal' }); try { localStorage.removeItem(FV_KEY); } catch (e) {} }
+    await FV.q;
+    const r = await sbRest('favourites?select=game_id&order=created_at.desc&limit=300');
+    if (!SB.user || SB.user.id !== uid || !Array.isArray(r)) return;
+    FV.ids = r.map(x => x.game_id).filter(x => FV_RE.test(x));
+    fvStore(); fvPaint();
+  } catch (e) {}
+}
+function fvBar(g) { const b = $('#pFav'); b.dataset.fav = g.id; fvPaint(); }
+
+const SF = { d: null, at: 0, ch: null, peek: false, shown: false, off: new Set(), gk: null, og: null };
+const SF_KEY = 'gameplay:site', SF_HIDE = 'gameplay:sitehide';
+try { const o = JSON.parse(localStorage.getItem(SF_KEY) || 'null'); if (o && typeof o === 'object') { SF.d = o; SF.off = new Set(Array.isArray(o.disabled_games) ? o.disabled_games : []); } } catch (e) {}
+const sfOff = id => SF.off.has(id);
+const sfBlocked = g => !!g && sfOff(g.id) && !adIsAdmin();
+const SF_ICO = {
+  info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>',
+  warning: '<svg viewBox="0 0 24 24"><path d="M12 3 2 20h20zM12 10v4M12 17h.01"/></svg>',
+  tool: '<svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0 5 5L21 13l-8 8-3-3 8-8-1.3-1.3a4 4 0 0 0-5-5L13 5zM3 21l6-6"/></svg>',
+  x: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  spark: '<svg viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></svg>'
+};
+async function sfLoad(force) {
+  if (!SB.on || (!force && Date.now() - SF.at < 15000)) return;
+  SF.at = Date.now();
+  try {
+    const d = await sbRest('rpc/get_site_flags', { method: 'POST', body: {} });
+    if (!d || typeof d !== 'object' || Array.isArray(d)) return;
+    SF.d = d;
+    try { localStorage.setItem(SF_KEY, JSON.stringify(d)); } catch (e) {}
+    sfPaint();
+  } catch (e) {}
+}
+function sfRt() {
+  if (SF.ch || !SB.c) return;
+  try { SF.ch = SB.c.channel('site').on('broadcast', { event: 'n' }, () => sfLoad(true)).subscribe(); } catch (e) {}
+}
+function sfNudge() {
+  sfRt();
+  try { if (SF.ch) SF.ch.send({ type: 'broadcast', event: 'n', payload: { t: Date.now() } }).catch(() => {}); } catch (e) {}
+}
+function sfLock() { const on = SF.shown || !!AD.locked; ['top', 'side', 'main'].forEach(id => { const n = document.getElementById(id); if (n) n.inert = on; }); }
+function sfOffFrame(g) {
+  SF.og = g;
+  frame.textContent = '';
+  const el = document.createElement('div');
+  el.className = 'g-overlay sf-off';
+  el.innerHTML = `<div class="g-ov-card"><span class="sf-offi">${SF_ICO.tool}</span><h3 class="g-ov-title">${esc(auT('Temporarily unavailable'))}</h3><p class="g-ov-text"${SF.d && SF.d.disabled_msg ? ' translate="no"' : ''}>${esc(SF.d && SF.d.disabled_msg || auT('This game is being fixed. Try again a bit later.'))}</p><div class="g-ov-btns"><button class="g-btn" type="button" data-sfback>${esc(auT('All games'))}</button></div></div>`;
+  el.addEventListener('click', e => { if (e.target.closest('[data-sfback]')) { const a = document.querySelector('.am-back'); if (a) a.click(); } });
+  const box = document.createElement('div');
+  box.style.cssText = 'position:relative;width:min(100%,' + (g.width || 880) + 'px);aspect-ratio:16/10;min-height:340px;max-height:calc(100dvh - var(--goff, 250px));margin:0 auto';
+  box.append(el); frame.append(box); void el.offsetWidth; el.classList.add('show');
+}
+function sfPaint() {
+  const bar = $('#sfbar');
+  if (!bar) return;
+  const d = SF.d || {}, adm = adIsAdmin(), now = Date.now();
+  const until = Date.parse(d.banner_until || '') || 0, txt = d.banner && (!until || until > now) ? String(d.banner) : '';
+  let hid = '';
+  try { hid = localStorage.getItem(SF_HIDE) || ''; } catch (e) {}
+  const lv = d.banner_level === 'warning' ? 'warning' : 'info', showB = !!txt && hid !== syHash(txt), showM = !!d.maintenance && adm;
+  bar.innerHTML = (showM ? `<div class="sfb sfb-adm">${SF_ICO.tool}<span>${esc(auT('Maintenance mode is on. Players see the maintenance page.'))}</span><button class="btn2" type="button" data-adgo="site">${esc(auT('Site switches'))}</button></div>` : '') + (showB ? `<div class="sfb sfb-${lv}" role="status">${SF_ICO[lv]}<span translate="no">${esc(txt)}</span><button class="x" type="button" data-sfhide aria-label="${esc(auT('Hide announcement'))}">${SF_ICO.x}</button></div>` : '');
+  bar.hidden = !showB && !showM;
+  clearTimeout(SF.bt);
+  if (showB && until) SF.bt = setTimeout(sfPaint, Math.min(until - now + 500, 3600000));
+  const m = !!d.maintenance && !adm && !(SB.user && !AD.at) && !SF.peek, el = $('#sfmaint');
+  if (m !== SF.shown) {
+    SF.shown = m;
+    if (m) {
+      if (openK && openK !== 'mauth') closeAll();
+      if (cur || pend || view !== 'home') go(homeHref(), true);
+      el.hidden = false;
+    } else el.hidden = true;
+    sfLock();
+  }
+  if (m) {
+    const mm = $('#sfmm');
+    mm.textContent = d.maintenance_msg || auT('We are making the site better. Please come back in a little while.');
+    if (d.maintenance_msg) mm.setAttribute('translate', 'no'); else mm.removeAttribute('translate');
+    $('#sfmin').hidden = !!SB.user || !SB.on;
+  }
+  const off = new Set(Array.isArray(d.disabled_games) ? d.disabled_games.filter(x => typeof x === 'string') : []), k = [...off].sort().join(',') + '|' + adm;
+  if (k !== SF.gk) {
+    const first = SF.gk == null;
+    SF.off = off; SF.gk = k;
+    if (!first) {
+      if (view === 'home') renderHome();
+      else if (view === 'game') { const g = (cur && cur.g) || pend || SF.og; if (g) { $('#more').innerHTML = related(g).slice(0, 10).map(x => card(x, 'more')).join(''); lzScan(); } }
+    }
+  }
+  if (cur && sfBlocked(cur.g)) { const g = cur.g; setPause(false); cur.kill(); cur = null; ttSync(); sfOffFrame(g); }
+  else if (pend && sfBlocked(pend)) { const g = pend; pend = null; sfOffFrame(g); }
+  else if (SF.og && view === 'game' && !cur && !pend && !sfBlocked(SF.og)) { const g = SF.og, loc = parseLocation(); SF.og = null; if (loc.game && loc.game.id === g.id) { if (g.mount) start(g); else waitStart(g); } }
+}
+
+const CL_KEY = 'gameplay:seen', CL_NEW = Date.now() - (+S.since || 0) < 15000;
+const CL = { open: false, t: 0, done: false };
+const clTop = () => CHANGELOG.reduce((m, c) => Math.max(m, c.v), 0);
+const clSeen = () => { try { return +localStorage.getItem(CL_KEY) || 0; } catch (e) { return 0; } };
+function clMark(remote) {
+  const v = clTop();
+  try { localStorage.setItem(CL_KEY, String(v)); } catch (e) {}
+  if (remote && SB.user) sbRest('profiles?id=eq.' + SB.user.id, { method: 'PATCH', body: { seen_version: v }, prefer: 'return=minimal' }).catch(() => {});
+}
+function clDay(s) { try { return new Date(String(s).slice(0, 10) + 'T12:00:00').toLocaleDateString(adLang(), { day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { return String(s).slice(0, 10); } }
+function clOpen() {
+  clearTimeout(CL.t); CL.done = true;
+  const L = CHANGELOG.slice().sort((a, b) => b.v - a.v);
+  $('#clpb').innerHTML = L.map((c, i) => `<section class="clp-s" style="--i:${i}"><h4>${esc(clDay(c.date))}${i === 0 ? `<em>${esc(auT('New'))}</em>` : ''}</h4><ul>${c.items.map((t, j) => `<li style="--j:${j}">${esc(auT(t))}</li>`).join('')}</ul></section>`).join('');
+  const el = $('#clp');
+  vis(el, true); CL.open = true;
+  el.querySelector('.clp-card').scrollTop = 0;
+  if (!auCoarse()) setTimeout(() => { const b = el.querySelector('.clp-f .btn2'); if (b && CL.open) b.focus({ preventScroll: true }); }, 60);
+}
+function clClose() {
+  if (!CL.open) return;
+  CL.open = false;
+  vis($('#clp'), false);
+  clMark(true);
+}
+function clAuto(seenRemote) {
+  if (CL.done || CL.open) return;
+  const top = clTop();
+  if (clSeen() >= top) { CL.done = true; if (seenRemote !== undefined && (+seenRemote || 0) < top) clMark(true); return; }
+  if (seenRemote != null && +seenRemote >= top) { CL.done = true; clMark(false); return; }
+  if (CL_NEW && !clSeen()) { CL.done = true; clMark(false); return; }
+  clOpen();
+}
+
+const UP = { base: null, at: 0, busy: false, shown: false };
+const upUrl = () => PATH_MODE ? location.origin + '/' : location.origin + location.pathname;
+async function upSig() {
+  let r = await fetch(upUrl(), { method: 'HEAD', cache: 'no-store', credentials: 'omit' });
+  const h = r.ok ? (r.headers.get('etag') || r.headers.get('last-modified')) : null;
+  if (h) return 'h:' + h;
+  r = await fetch(upUrl(), { cache: 'no-store', credentials: 'omit' });
+  return r.ok ? 't:' + syHash(await r.text()) : null;
+}
+async function upCheck(force) {
+  if (UP.busy || UP.shown || !/^https?:$/.test(location.protocol) || (!force && Date.now() - UP.at < 60000)) return;
+  UP.busy = true; UP.at = Date.now();
+  try { const s = await upSig(); if (s) { if (UP.base == null) UP.base = s; else if (s !== UP.base) upShow(); } } catch (e) {}
+  finally { UP.busy = false; }
+}
+function upShow() {
+  UP.shown = true;
+  const el = $('#upbar');
+  vis(el, true);
+  track('update_ready', {});
+}
+
+function siteBoot() {
+  document.body.insertAdjacentHTML('afterbegin', '<div class="sfbar" id="sfbar" hidden></div>');
+  document.body.insertAdjacentHTML('beforeend', `<div class="adblock sfm" id="sfmaint" hidden role="dialog" aria-modal="true" aria-labelledby="sfmt"><div class="adb-wrap"><div class="adb-brand"><span class="logo"><svg viewBox="0 0 16 16"><path d="M2 1.5v13l12-6.5z"/></svg></span><span>gameplay</span></div><div class="adb-card"><span class="adb-ico sfm-ico">${SF_ICO.tool}</span><h3 id="sfmt">${esc(auT('We will be right back'))}</h3><p class="adb-sub" id="sfmm"></p><p class="adb-sub sfm-s">${esc(auT('This page refreshes by itself when the site is back.'))}</p><button class="btn2" type="button" id="sfmin" hidden>${esc(auT('Admin? Log in'))}</button></div></div></div>
+<div class="clp" id="clp" hidden role="dialog" aria-modal="true" aria-labelledby="clpt"><div class="clp-card"><div class="clp-h"><span class="clp-ico">${SF_ICO.spark}</span><div><h3 id="clpt">${esc(auT('What\'s new'))}</h3><p>${esc(auT('The latest changes to gameplay'))}</p></div><button class="x" type="button" data-clx aria-label="${esc(auT('Close'))}">${SF_ICO.x}</button></div><div class="clp-b" id="clpb"></div><div class="clp-f"><button class="btn2 pri" type="button" data-clx>${esc(auT('Got it'))}</button></div></div></div>
+<div class="upbar" id="upbar" hidden role="status"><span>${SF_ICO.spark}</span><b>${esc(auT('A new version is ready.'))}</b><button class="btn2 pri" type="button" id="upgo">${esc(auT('Reload'))}</button><button class="x" type="button" id="upx" aria-label="${esc(auT('Later'))}">${SF_ICO.x}</button></div>`);
+  document.addEventListener('click', e => {
+    const t = e.target, f = t.closest && t.closest('[data-fav]');
+    if (f) { e.preventDefault(); e.stopPropagation(); if (f.dataset.fav) fvToggle(f.dataset.fav); return; }
+    if (t.closest && t.closest('[data-sfhide]')) { e.stopPropagation(); const txt = SF.d && SF.d.banner || ''; try { localStorage.setItem(SF_HIDE, syHash(String(txt))); } catch (x) {} sfPaint(); }
+  }, true);
+  $('#clp').addEventListener('click', e => { e.stopPropagation(); if (e.target === e.currentTarget || e.target.closest('[data-clx]')) clClose(); });
+  $('#upgo').addEventListener('click', () => location.reload());
+  $('#upx').addEventListener('click', e => { e.stopPropagation(); vis($('#upbar'), false); });
+  $('#sfmin').addEventListener('click', e => { e.stopPropagation(); SF.peek = true; sfPaint(); auOpen('main', '', '', 'in'); });
+  $('#clopen').addEventListener('click', e => { e.stopPropagation(); closeAll(); clOpen(); });
+  addEventListener('keydown', e => { if (!CL.open) return; if (e.key === 'Escape') { e.preventDefault(); clClose(); } e.stopImmediatePropagation(); }, true);
+  const wake = () => { if (document.visibilityState === 'hidden') return; sfLoad(); upCheck(); if (SB.user && Date.now() - FV.at > 60000) fvSync(); };
+  document.addEventListener('visibilitychange', wake);
+  addEventListener('focus', wake);
+  setInterval(() => { if (document.visibilityState !== 'hidden') { sfLoad(true); upCheck(true); } }, 300000);
+  setInterval(() => { if (SF.shown) sfLoad(true); }, 60000);
+  setTimeout(() => upCheck(true), 4000);
+  sfPaint(); sfLoad(true);
+  if (SB.on && sbHasSession()) CL.t = setTimeout(() => clAuto(), 8000);
+  else CL.t = setTimeout(() => clAuto(), 1200);
+  Ameplay.debug.site = { check: () => upCheck(true), load: () => sfLoad(true), flags: () => SF.d, favs: () => FV.ids.slice() };
+}
+async function siteSignedIn() {
+  const uid = SB.user.id;
+  SF.peek = false;
+  sfRt(); sfLoad(true); fvSync();
+  if (CL.done || CL.open) return;
+  let sv = null;
+  try { const r = await sbRest('profiles?select=seen_version&id=eq.' + uid); sv = r && r[0] ? r[0].seen_version : null; } catch (e) {}
+  if (!SB.user || SB.user.id !== uid) return;
+  clAuto(sv);
+}
+function siteSignedOut() { FV.uid = null; FV.ids = fvRead(FV_KEY); fvPaint(); sfPaint(); }
+
 Ameplay.debug = { open: id => go(href(id), false), close: () => go(PATH_MODE ? '/' : '#/', false), games, fire: () => ov && ov.fire(), state, compute, q: t => { const o = state.q; state.q = t; const r = compute().list.map(g => g.id); state.q = o; return r; }, info: INFO, fit: () => fitStage(), pause: () => PAUSE.on };
 document.addEventListener('DOMContentLoaded', boot);
 })();
@@ -5096,6 +5969,202 @@ document.addEventListener('DOMContentLoaded', boot);
 (() => {
 const LANGS = ['en', 'fr', 'es', 'de', 'it', 'pt'], NAMES = { en: 'English', fr: 'Français', es: 'Español', de: 'Deutsch', it: 'Italiano', pt: 'Português' }, LKEY = 'gameplay:lang';
 const R = [
+["Tap the heart on any game to add it to your favourites. They show up in their own row on the home page and in the Favourites filter, and follow your account to every device.", "Touche le cœur d’un jeu pour l’ajouter à tes favoris. Ils apparaissent dans leur propre rangée sur l’accueil et dans le filtre Favoris, et suivent ton compte sur tous tes appareils.", "Toca el corazón de cualquier juego para añadirlo a tus favoritos. Aparecen en su propia fila en la página de inicio y en el filtro Favoritos, y siguen a tu cuenta en todos tus dispositivos.", "Tippe bei einem Spiel auf das Herz, um es zu deinen Favoriten hinzuzufügen. Sie erscheinen in einer eigenen Reihe auf der Startseite und im Favoriten-Filter und folgen deinem Konto auf jedes Gerät.", "Tocca il cuore di un gioco per aggiungerlo ai preferiti. Compaiono in una riga tutta loro nella home e nel filtro Preferiti, e seguono il tuo account su ogni dispositivo.", "Toca no coração de qualquer jogo para o adicionar aos favoritos. Aparecem numa fila própria na página inicial e no filtro Favoritos, e acompanham a tua conta em todos os dispositivos."],
+["A chat button now sits at the bottom right of every page, so you can talk with friends while you play.", "Un bouton de discussion se trouve maintenant en bas à droite de chaque page, pour parler avec tes amis pendant que tu joues.", "Ahora hay un botón de chat abajo a la derecha en todas las páginas, para hablar con tus amigos mientras juegas.", "Unten rechts auf jeder Seite gibt es jetzt einen Chat-Button, damit du beim Spielen mit Freunden schreiben kannst.", "Ora c’è un pulsante della chat in basso a destra in ogni pagina, così puoi parlare con gli amici mentre giochi.", "Agora há um botão de conversa no canto inferior direito de todas as páginas, para falares com amigos enquanto jogas."],
+["Party invites really work now: your friend gets the invite and joins your party in one tap.", "Les invitations de groupe fonctionnent vraiment : ton ami reçoit l’invitation et rejoint ton groupe en un geste.", "Las invitaciones de grupo ya funcionan de verdad: tu amigo recibe la invitación y se une a tu grupo con un toque.", "Party-Einladungen funktionieren jetzt richtig: Dein Freund bekommt die Einladung und tritt deiner Gruppe mit einem Tipp bei.", "Gli inviti al gruppo ora funzionano davvero: il tuo amico riceve l’invito ed entra nel tuo gruppo con un tocco.", "Os convites de grupo funcionam mesmo: o teu amigo recebe o convite e entra no teu grupo com um toque."],
+["See when a friend is typing, and when they have seen your message.", "Vois quand un ami est en train d’écrire, et quand il a vu ton message.", "Mira cuándo un amigo está escribiendo y cuándo ha visto tu mensaje.", "Sieh, wann ein Freund gerade schreibt und wann er deine Nachricht gesehen hat.", "Vedi quando un amico sta scrivendo e quando ha visto il tuo messaggio.", "Vê quando um amigo está a escrever e quando viu a tua mensagem."],
+["Rocket League got a big upgrade: better graphics, boost, cars, goal effects, camera and ball physics.", "Rocket League a reçu une grosse mise à jour : meilleurs graphismes, boost, voitures, effets de but, caméra et physique du ballon.", "Rocket League recibió una gran mejora: mejores gráficos, turbo, coches, efectos de gol, cámara y física del balón.", "Rocket League hat ein großes Upgrade bekommen: bessere Grafik, Boost, Autos, Toreffekte, Kamera und Ballphysik.", "Rocket League ha ricevuto un grande aggiornamento: grafica migliore, boost, auto, effetti del gol, telecamera e fisica della palla.", "O Rocket League recebeu uma grande melhoria: melhores gráficos, boost, carros, efeitos de golo, câmara e física da bola."],
+["Announcements from the team now show at the top of the site, and a game that is being fixed shows as temporarily unavailable instead of breaking.", "Les annonces de l’équipe s’affichent maintenant en haut du site, et un jeu en cours de réparation s’affiche comme temporairement indisponible au lieu de planter.", "Los avisos del equipo ahora aparecen arriba del sitio, y un juego que se está arreglando aparece como no disponible temporalmente en lugar de fallar.", "Ankündigungen des Teams erscheinen jetzt oben auf der Seite, und ein Spiel, das gerade repariert wird, wird als vorübergehend nicht verfügbar angezeigt, statt abzustürzen.", "Gli annunci del team ora compaiono in cima al sito, e un gioco in riparazione appare come temporaneamente non disponibile invece di bloccarsi.", "Os avisos da equipa aparecem agora no topo do site, e um jogo que está a ser corrigido aparece como temporariamente indisponível em vez de falhar."],
+["When the site updates while you are playing, a small bar tells you a new version is ready, and this What's new panel shows you what changed.", "Quand le site est mis à jour pendant que tu joues, une petite barre te prévient qu’une nouvelle version est prête, et ce panneau Nouveautés te montre ce qui a changé.", "Cuando el sitio se actualiza mientras juegas, una pequeña barra te avisa de que hay una nueva versión, y este panel de Novedades te muestra qué ha cambiado.", "Wenn die Seite aktualisiert wird, während du spielst, zeigt dir eine kleine Leiste, dass eine neue Version bereit ist, und dieses Neuigkeiten-Fenster zeigt dir, was sich geändert hat.", "Quando il sito si aggiorna mentre giochi, una piccola barra ti avvisa che è pronta una nuova versione, e questo pannello Novità ti mostra cosa è cambiato.", "Quando o site é atualizado enquanto jogas, uma pequena barra avisa-te de que há uma nova versão pronta, e este painel de Novidades mostra-te o que mudou."],
+["Remove from favourites", "Retirer des favoris", "Quitar de favoritos", "Aus Favoriten entfernen", "Rimuovi dai preferiti", "Remover dos favoritos"],
+["Add to favourites", "Ajouter aux favoris", "Añadir a favoritos", "Zu Favoriten hinzufügen", "Aggiungi ai preferiti", "Adicionar aos favoritos"],
+["Added to favourites", "Ajouté aux favoris", "Añadido a favoritos", "Zu Favoriten hinzugefügt", "Aggiunto ai preferiti", "Adicionado aos favoritos"],
+["Removed from favourites", "Retiré des favoris", "Quitado de favoritos", "Aus Favoriten entfernt", "Rimosso dai preferiti", "Removido dos favoritos"],
+["Could not save your favourite. Check your connection and try again.", "Impossible d’enregistrer ton favori. Vérifie ta connexion et réessaie.", "No se pudo guardar tu favorito. Revisa tu conexión e inténtalo de nuevo.", "Dein Favorit konnte nicht gespeichert werden. Prüfe deine Verbindung und versuch es erneut.", "Impossibile salvare il preferito. Controlla la connessione e riprova.", "Não foi possível guardar o favorito. Verifica a ligação e tenta de novo."],
+["Temporarily unavailable", "Temporairement indisponible", "No disponible temporalmente", "Vorübergehend nicht verfügbar", "Temporaneamente non disponibile", "Temporariamente indisponível"],
+["This game is being fixed. Try again a bit later.", "Ce jeu est en cours de réparation. Réessaie un peu plus tard.", "Estamos arreglando este juego. Vuelve a intentarlo un poco más tarde.", "Dieses Spiel wird gerade repariert. Versuch es etwas später noch einmal.", "Stiamo sistemando questo gioco. Riprova un po’ più tardi.", "Este jogo está a ser corrigido. Tenta de novo daqui a pouco."],
+["Maintenance mode is on. Players see the maintenance page.", "Le mode maintenance est activé. Les joueurs voient la page de maintenance.", "El modo mantenimiento está activado. Los jugadores ven la página de mantenimiento.", "Der Wartungsmodus ist an. Spieler sehen die Wartungsseite.", "La modalità manutenzione è attiva. I giocatori vedono la pagina di manutenzione.", "O modo de manutenção está ligado. Os jogadores veem a página de manutenção."],
+["Site switches", "Réglages du site", "Ajustes del sitio", "Seiten-Schalter", "Interruttori del sito", "Interruptores do site"],
+["Hide announcement", "Masquer l’annonce", "Ocultar aviso", "Ankündigung ausblenden", "Nascondi annuncio", "Ocultar aviso"],
+["We are making the site better. Please come back in a little while.", "Nous améliorons le site. Reviens dans un petit moment.", "Estamos mejorando el sitio. Vuelve dentro de un rato.", "Wir machen die Seite besser. Schau bitte in Kürze wieder vorbei.", "Stiamo migliorando il sito. Torna tra un po’.", "Estamos a melhorar o site. Volta daqui a pouco."],
+["New", "Nouveau", "Nuevo", "Neu", "Nuovo", "Novo"],
+["What's new", "Nouveautés", "Novedades", "Neuigkeiten", "Novità", "Novidades"],
+["The latest changes to gameplay", "Les derniers changements de gameplay", "Los últimos cambios en gameplay", "Die neuesten Änderungen an gameplay", "Le ultime novità di gameplay", "As últimas alterações ao gameplay"],
+["Got it", "Compris", "Entendido", "Verstanden", "Ho capito", "Entendido"],
+["A new version is ready.", "Une nouvelle version est prête.", "Hay una nueva versión lista.", "Eine neue Version ist bereit.", "È pronta una nuova versione.", "Há uma nova versão pronta."],
+["Reload", "Recharger", "Recargar", "Neu laden", "Ricarica", "Recarregar"],
+["Later", "Plus tard", "Más tarde", "Später", "Più tardi", "Mais tarde"],
+["We will be right back", "On revient très vite", "Volvemos enseguida", "Wir sind gleich zurück", "Torniamo subito", "Voltamos já"],
+["This page refreshes by itself when the site is back.", "Cette page se met à jour toute seule quand le site revient.", "Esta página se actualiza sola cuando el sitio vuelva.", "Diese Seite aktualisiert sich von selbst, sobald die Seite wieder da ist.", "Questa pagina si aggiorna da sola quando il sito torna attivo.", "Esta página atualiza-se sozinha quando o site voltar."],
+["Admin? Log in", "Admin ? Connecte-toi", "¿Admin? Inicia sesión", "Admin? Anmelden", "Admin? Accedi", "Admin? Inicia sessão"],
+["Favourites", "Favoris", "Favoritos", "Favoriten", "Preferiti", "Favoritos"],
+["My favourites", "Mes favoris", "Mis favoritos", "Meine Favoriten", "I miei preferiti", "Os meus favoritos"],
+["Log", "Journal", "Registro", "Protokoll", "Registro", "Registo"],
+["How long", "Durée", "Duración", "Dauer", "Durata", "Duração"],
+["1 hour", "1 heure", "1 hora", "1 Stunde", "1 ora", "1 hora"],
+["24 hours", "24 heures", "24 horas", "24 Stunden", "24 ore", "24 horas"],
+["7 days", "7 jours", "7 días", "7 Tage", "7 giorni", "7 dias"],
+["30 days", "30 jours", "30 días", "30 Tage", "30 giorni", "30 dias"],
+["Permanent", "Permanent", "Permanente", "Dauerhaft", "Permanente", "Permanente"],
+["History", "Historique", "Historial", "Verlauf", "Cronologia", "Histórico"],
+["Lock ends", "Fin du blocage", "Fin del bloqueo", "Sperre endet", "Fine del blocco", "Fim do bloqueio"],
+["Pick an end time in the future.", "Choisis une date de fin dans le futur.", "Elige una hora de fin en el futuro.", "Wähle ein Ende in der Zukunft.", "Scegli una fine nel futuro.", "Escolhe uma hora de fim no futuro."],
+["ends {t}", "se termine {t}", "termina {t}", "endet {t}", "termina {t}", "termina {t}"],
+["until {d}", "jusqu’au {d}", "hasta el {d}", "bis {d}", "fino al {d}", "até {d}"],
+["Locked until {d} ({r}).", "Bloqué jusqu’au {d} ({r}).", "Bloqueado hasta el {d} ({r}).", "Gesperrt bis {d} ({r}).", "Bloccato fino al {d} ({r}).", "Bloqueado até {d} ({r})."],
+["Locked with no end date.", "Bloqué sans date de fin.", "Bloqueado sin fecha de fin.", "Gesperrt ohne Enddatum.", "Bloccato senza data di fine.", "Bloqueado sem data de fim."],
+["Account locked until {d}. They only see the blocked page until then.", "Compte bloqué jusqu’au {d}. La personne ne voit que la page de blocage d’ici là.", "Cuenta bloqueada hasta el {d}. Hasta entonces solo ve la página de bloqueo.", "Konto gesperrt bis {d}. Bis dahin sieht die Person nur die Sperrseite.", "Account bloccato fino al {d}. Fino ad allora vede solo la pagina di blocco.", "Conta bloqueada até {d}. Até lá só vê a página de bloqueio."],
+["{a} made {t} an admin", "{a} a nommé {t} admin", "{a} hizo admin a {t}", "{a} hat {t} zum Admin gemacht", "{a} ha reso {t} admin", "{a} tornou {t} admin"],
+["{a} made {t} a regular user", "{a} a remis {t} en utilisateur normal", "{a} hizo a {t} usuario normal", "{a} hat {t} zum normalen Nutzer gemacht", "{a} ha reso {t} un utente normale", "{a} tornou {t} um utilizador normal"],
+["{a} changed the username of {t} to {n}", "{a} a changé le nom d’utilisateur de {t} en {n}", "{a} cambió el nombre de usuario de {t} a {n}", "{a} hat den Benutzernamen von {t} in {n} geändert", "{a} ha cambiato il nome utente di {t} in {n}", "{a} mudou o nome de utilizador de {t} para {n}"],
+["{a} locked {t} until {d}", "{a} a bloqué {t} jusqu’au {d}", "{a} bloqueó a {t} hasta el {d}", "{a} hat {t} bis {d} gesperrt", "{a} ha bloccato {t} fino al {d}", "{a} bloqueou {t} até {d}"],
+["{a} locked {t} with no end date", "{a} a bloqué {t} sans date de fin", "{a} bloqueó a {t} sin fecha de fin", "{a} hat {t} ohne Enddatum gesperrt", "{a} ha bloccato {t} senza data di fine", "{a} bloqueou {t} sem data de fim"],
+["{a} unlocked {t}", "{a} a débloqué {t}", "{a} desbloqueó a {t}", "{a} hat {t} entsperrt", "{a} ha sbloccato {t}", "{a} desbloqueou {t}"],
+["The lock on {t} ended", "Le blocage de {t} est terminé", "Terminó el bloqueo de {t}", "Die Sperre von {t} ist abgelaufen", "Il blocco di {t} è terminato", "O bloqueio de {t} terminou"],
+["{a} set a new password for {t}", "{a} a défini un nouveau mot de passe pour {t}", "{a} puso una nueva contraseña a {t}", "{a} hat ein neues Passwort für {t} festgelegt", "{a} ha impostato una nuova password per {t}", "{a} definiu uma nova palavra-passe para {t}"],
+["{a} sent a password reset email to {t}", "{a} a envoyé un e-mail de réinitialisation du mot de passe à {t}", "{a} envió un correo para restablecer la contraseña a {t}", "{a} hat {t} eine E-Mail zum Zurücksetzen des Passworts geschickt", "{a} ha inviato a {t} un’email per reimpostare la password", "{a} enviou a {t} um email para repor a palavra-passe"],
+["{a} deleted the account of {t}", "{a} a supprimé le compte de {t}", "{a} eliminó la cuenta de {t}", "{a} hat das Konto von {t} gelöscht", "{a} ha eliminato l’account di {t}", "{a} eliminou a conta de {t}"],
+["{a} deleted a ticket from {t}", "{a} a supprimé un ticket de {t}", "{a} eliminó un ticket de {t}", "{a} hat ein Ticket von {t} gelöscht", "{a} ha eliminato un ticket di {t}", "{a} eliminou um pedido de {t}"],
+["{a} replied to a ticket from {t}", "{a} a répondu à un ticket de {t}", "{a} respondió a un ticket de {t}", "{a} hat auf ein Ticket von {t} geantwortet", "{a} ha risposto a un ticket di {t}", "{a} respondeu a um pedido de {t}"],
+["{a} closed a ticket from {t}", "{a} a fermé un ticket de {t}", "{a} cerró un ticket de {t}", "{a} hat ein Ticket von {t} geschlossen", "{a} ha chiuso un ticket di {t}", "{a} fechou um pedido de {t}"],
+["{a} reopened a ticket from {t}", "{a} a rouvert un ticket de {t}", "{a} reabrió un ticket de {t}", "{a} hat ein Ticket von {t} wieder geöffnet", "{a} ha riaperto un ticket di {t}", "{a} reabriu um pedido de {t}"],
+["{a} changed the site switches", "{a} a modifié les réglages du site", "{a} cambió los ajustes del sitio", "{a} hat die Seiten-Schalter geändert", "{a} ha cambiato gli interruttori del sito", "{a} alterou os interruptores do site"],
+["{a} did something ({x})", "{a} a fait une action ({x})", "{a} hizo una acción ({x})", "{a} hat etwas getan ({x})", "{a} ha fatto un’azione ({x})", "{a} fez uma ação ({x})"],
+["Maintenance mode on", "Mode maintenance activé", "Modo mantenimiento activado", "Wartungsmodus an", "Modalità manutenzione attiva", "Modo de manutenção ligado"],
+["Maintenance mode off", "Mode maintenance désactivé", "Modo mantenimiento desactivado", "Wartungsmodus aus", "Modalità manutenzione disattivata", "Modo de manutenção desligado"],
+["Announcement: {b}", "Annonce : {b}", "Aviso: {b}", "Ankündigung: {b}", "Annuncio: {b}", "Aviso: {b}"],
+["Announcement removed", "Annonce retirée", "Aviso quitado", "Ankündigung entfernt", "Annuncio rimosso", "Aviso removido"],
+["Turned off: {g}", "Désactivés : {g}", "Desactivados: {g}", "Ausgeschaltet: {g}", "Disattivati: {g}", "Desligados: {g}"],
+["Turned back on: {g}", "Réactivés : {g}", "Reactivados: {g}", "Wieder eingeschaltet: {g}", "Riattivati: {g}", "Religados: {g}"],
+["Messages updated", "Messages mis à jour", "Mensajes actualizados", "Texte aktualisiert", "Messaggi aggiornati", "Mensagens atualizadas"],
+["An admin", "Un admin", "Un admin", "Ein Admin", "Un admin", "Um admin"],
+["a deleted account", "un compte supprimé", "una cuenta eliminada", "ein gelöschtes Konto", "un account eliminato", "uma conta eliminada"],
+["Reason: {r}", "Raison : {r}", "Motivo: {r}", "Grund: {r}", "Motivo: {r}", "Motivo: {r}"],
+["Was @{u}", "Avant : @{u}", "Antes: @{u}", "Vorher: @{u}", "Prima: @{u}", "Antes: @{u}"],
+["Admin log", "Journal des admins", "Registro de admins", "Admin-Protokoll", "Registro admin", "Registo dos admins"],
+["Every change made by an admin, newest first.", "Chaque changement fait par un admin, du plus récent au plus ancien.", "Cada cambio hecho por un admin, del más reciente al más antiguo.", "Jede Änderung durch einen Admin, die neueste zuerst.", "Ogni modifica fatta da un admin, dalla più recente.", "Cada alteração feita por um admin, da mais recente para a mais antiga."],
+["Nothing here yet.", "Rien pour l’instant.", "Aún no hay nada.", "Noch nichts da.", "Ancora niente qui.", "Ainda não há nada."],
+["Show more", "Afficher plus", "Mostrar más", "Mehr anzeigen", "Mostra altro", "Mostrar mais"],
+["No admin changes for this player yet.", "Aucun changement d’admin pour ce joueur pour l’instant.", "Aún no hay cambios de admins para este jugador.", "Noch keine Admin-Änderungen für diesen Spieler.", "Ancora nessuna modifica admin per questo giocatore.", "Ainda não há alterações de admins para este jogador."],
+["Maintenance mode", "Mode maintenance", "Modo mantenimiento", "Wartungsmodus", "Modalità manutenzione", "Modo de manutenção"],
+["Players see a maintenance page. Admins can still use the site.", "Les joueurs voient une page de maintenance. Les admins peuvent toujours utiliser le site.", "Los jugadores ven una página de mantenimiento. Los admins pueden seguir usando el sitio.", "Spieler sehen eine Wartungsseite. Admins können die Seite weiter nutzen.", "I giocatori vedono una pagina di manutenzione. Gli admin possono ancora usare il sito.", "Os jogadores veem uma página de manutenção. Os admins podem continuar a usar o site."],
+["Message on the maintenance page (optional)", "Message sur la page de maintenance (facultatif)", "Mensaje en la página de mantenimiento (opcional)", "Text auf der Wartungsseite (optional)", "Messaggio nella pagina di manutenzione (facoltativo)", "Mensagem na página de manutenção (opcional)"],
+["Announcement banner", "Bannière d’annonce", "Banner de aviso", "Ankündigungsbanner", "Banner degli annunci", "Faixa de aviso"],
+["Shown at the top of the site for everyone. Leave it empty to hide it.", "Affichée en haut du site pour tout le monde. Laisse vide pour la masquer.", "Se muestra arriba del sitio para todos. Déjalo vacío para ocultarlo.", "Wird für alle oben auf der Seite angezeigt. Leer lassen, um es auszublenden.", "Mostrato in cima al sito per tutti. Lascialo vuoto per nasconderlo.", "Aparece no topo do site para todos. Deixa vazio para o ocultar."],
+["Style", "Style", "Estilo", "Stil", "Stile", "Estilo"],
+["Info", "Info", "Info", "Info", "Info", "Info"],
+["Warning", "Avertissement", "Advertencia", "Warnung", "Avviso", "Aviso"],
+["Ends (optional)", "Fin (facultatif)", "Termina (opcional)", "Endet (optional)", "Fine (facoltativo)", "Termina (opcional)"],
+["Turned off games", "Jeux désactivés", "Juegos desactivados", "Ausgeschaltete Spiele", "Giochi disattivati", "Jogos desligados"],
+["These games show as temporarily unavailable and cannot be started.", "Ces jeux s’affichent comme temporairement indisponibles et ne peuvent pas être lancés.", "Estos juegos aparecen como no disponibles temporalmente y no se pueden iniciar.", "Diese Spiele werden als vorübergehend nicht verfügbar angezeigt und lassen sich nicht starten.", "Questi giochi appaiono come temporaneamente non disponibili e non si possono avviare.", "Estes jogos aparecem como temporariamente indisponíveis e não podem ser iniciados."],
+["Message for turned off games (optional)", "Message pour les jeux désactivés (facultatif)", "Mensaje para los juegos desactivados (opcional)", "Text für ausgeschaltete Spiele (optional)", "Messaggio per i giochi disattivati (facoltativo)", "Mensagem para os jogos desligados (opcional)"],
+["Save and publish", "Enregistrer et publier", "Guardar y publicar", "Speichern und veröffentlichen", "Salva e pubblica", "Guardar e publicar"],
+["Saved. Every open tab updates right away.", "Enregistré. Tous les onglets ouverts se mettent à jour tout de suite.", "Guardado. Todas las pestañas abiertas se actualizan al instante.", "Gespeichert. Alle offenen Tabs werden sofort aktualisiert.", "Salvato. Tutte le schede aperte si aggiornano subito.", "Guardado. Todos os separadores abertos atualizam-se logo."],
+["A party starts and your invite goes out with the code.", "Une partie en groupe démarre et ton invitation part avec le code.", "Se crea una partida en grupo y tu invitación sale con el código.", "Eine Party startet und deine Einladung geht mit dem Code raus.", "Parte un party e il tuo invito viene inviato con il codice.", "Uma party começa e o teu convite sai com o código."],
+["Add friends", "Ajouter des amis", "Añadir amigos", "Freunde hinzufügen", "Aggiungi amici", "Adicionar amigos"],
+["Add friends to chat and play together.", "Ajoute des amis pour discuter et jouer ensemble.", "Añade amigos para chatear y jugar juntos.", "Füge Freunde hinzu, um zu chatten und zusammen zu spielen.", "Aggiungi amici per chattare e giocare insieme.", "Adiciona amigos para conversar e jogar juntos."],
+["All time", "Depuis le début", "Desde siempre", "Gesamt", "Da sempre", "Desde sempre"],
+["Asked to join · {g}", "A demandé à rejoindre · {g}", "Pidió unirse · {g}", "Möchte beitreten · {g}", "Ha chiesto di unirsi · {g}", "Pediu para entrar · {g}"],
+["Asked {u} to let you in. You join as soon as they accept.", "Demande envoyée à {u}. Tu rejoins dès que la personne accepte.", "Le pediste a {u} que te deje entrar. Te unirás en cuanto acepte.", "{u} wurde gefragt, dich reinzulassen. Du trittst bei, sobald angenommen wird.", "Hai chiesto a {u} di farti entrare. Entri appena accetta.", "Pediste a {u} para te deixar entrar. Entras assim que aceitar."],
+["Away", "Absent", "Ausente", "Abwesend", "Assente", "Ausente"],
+["Away · {g}", "Absent · {g}", "Ausente · {g}", "Abwesend · {g}", "Assente · {g}", "Ausente · {g}"],
+["Back to chats", "Retour aux discussions", "Volver a los chats", "Zurück zu den Chats", "Torna alle chat", "Voltar às conversas"],
+["Chat with {u}", "Discuter avec {u}", "Chatear con {u}", "Mit {u} chatten", "Chatta con {u}", "Conversar com {u}"],
+["Chats", "Discussions", "Chats", "Chats", "Chat", "Conversas"],
+["Choose a game", "Choisir un jeu", "Elige un juego", "Spiel auswählen", "Scegli un gioco", "Escolhe um jogo"],
+["Close player card", "Fermer la fiche joueur", "Cerrar ficha del jugador", "Spielerkarte schließen", "Chiudi scheda giocatore", "Fechar ficha do jogador"],
+["Could not send the invite to {u}. Try again.", "Impossible d’envoyer l’invitation à {u}. Réessaie.", "No se pudo enviar la invitación a {u}. Inténtalo de nuevo.", "Die Einladung an {u} konnte nicht gesendet werden. Versuch es erneut.", "Impossibile inviare l’invito a {u}. Riprova.", "Não foi possível enviar o convite a {u}. Tenta de novo."],
+["Daily average", "Moyenne par jour", "Media diaria", "Tagesdurchschnitt", "Media giornaliera", "Média diária"],
+["Danger zone", "Zone dangereuse", "Zona de peligro", "Gefahrenzone", "Zona pericolosa", "Zona de perigo"],
+["Delete ticket", "Supprimer le ticket", "Eliminar ticket", "Ticket löschen", "Elimina ticket", "Eliminar ticket"],
+["Find friends", "Trouver des amis", "Buscar amigos", "Freunde finden", "Trova amici", "Encontrar amigos"],
+["In a party · {g}", "En groupe · {g}", "En grupo · {g}", "In einer Party · {g}", "In un party · {g}", "Numa party · {g}"],
+["Invite sent to {u}. They join with code {c}.", "Invitation envoyée à {u}. Code pour rejoindre : {c}.", "Invitación enviada a {u}. Se une con el código {c}.", "Einladung an {u} gesendet. Beitritt mit Code {c}.", "Invito inviato a {u}. Entra con il codice {c}.", "Convite enviado a {u}. Entra com o código {c}."],
+["Invite to play…", "Inviter à jouer…", "Invitar a jugar…", "Zum Spielen einladen…", "Invita a giocare…", "Convidar para jogar…"],
+["Invite to {g}", "Inviter sur {g}", "Invitar a {g}", "Zu {g} einladen", "Invita a {g}", "Convidar para {g}"],
+["Join party · {g}", "Rejoindre le groupe · {g}", "Unirse al grupo · {g}", "Party beitreten · {g}", "Entra nel party · {g}", "Entrar na party · {g}"],
+["Last {n} days", "{n} derniers jours", "Últimos {n} días", "Letzte {n} Tage", "Ultimi {n} giorni", "Últimos {n} dias"],
+["Minimize chat", "Réduire la discussion", "Minimizar chat", "Chat minimieren", "Riduci chat", "Minimizar conversa"],
+["New messages", "Nouveaux messages", "Mensajes nuevos", "Neue Nachrichten", "Nuovi messaggi", "Novas mensagens"],
+["No data", "Aucune donnée", "Sin datos", "Keine Daten", "Nessun dato", "Sem dados"],
+["No friend matches “{q}”.", "Aucun ami ne correspond à « {q} ».", "Ningún amigo coincide con «{q}».", "Kein Freund passt zu „{q}“.", "Nessun amico corrisponde a «{q}».", "Nenhum amigo corresponde a «{q}»."],
+["No games match.", "Aucun jeu ne correspond.", "Ningún juego coincide.", "Kein Spiel passt.", "Nessun gioco corrisponde.", "Nenhum jogo corresponde."],
+["Open game", "Ouvrir le jeu", "Abrir juego", "Spiel öffnen", "Apri gioco", "Abrir jogo"],
+["Other games", "Autres jeux", "Otros juegos", "Andere Spiele", "Altri giochi", "Outros jogos"],
+["Party invite · {g}", "Invitation de groupe · {g}", "Invitación de grupo · {g}", "Party-Einladung · {g}", "Invito al party · {g}", "Convite para party · {g}"],
+["Play with {u}", "Jouer avec {u}", "Jugar con {u}", "Mit {u} spielen", "Gioca con {u}", "Jogar com {u}"],
+["Request sent. {u} gets a notification and can start a party for you.", "Demande envoyée. {u} reçoit une notification et peut lancer un groupe pour toi.", "Solicitud enviada. {u} recibe un aviso y puede crear un grupo para ti.", "Anfrage gesendet. {u} bekommt eine Benachrichtigung und kann eine Party für dich starten.", "Richiesta inviata. {u} riceve una notifica e può avviare un party per te.", "Pedido enviado. {u} recebe uma notificação e pode começar uma party para ti."],
+["Search friends", "Rechercher des amis", "Buscar amigos", "Freunde suchen", "Cerca amici", "Pesquisar amigos"],
+["Seen", "Vu", "Visto", "Gesehen", "Visto", "Visto"],
+["Share of playtime", "Part du temps de jeu", "Reparto del tiempo de juego", "Anteil an der Spielzeit", "Quota del tempo di gioco", "Parte do tempo de jogo"],
+["Show all games", "Afficher tous les jeux", "Mostrar todos los juegos", "Alle Spiele anzeigen", "Mostra tutti i giochi", "Mostrar todos os jogos"],
+["Starting a {g} party. Your invite goes out as soon as it is ready.", "Lancement d’un groupe sur {g}. Ton invitation part dès qu’il est prêt.", "Creando un grupo de {g}. Tu invitación sale en cuanto esté listo.", "Eine {g}-Party wird gestartet. Deine Einladung geht raus, sobald sie bereit ist.", "Avvio di un party di {g}. Il tuo invito parte appena è pronto.", "A começar uma party de {g}. O teu convite sai assim que estiver pronta."],
+["The party did not start, so the invite was not sent. Try again.", "Le groupe n’a pas démarré, l’invitation n’a donc pas été envoyée. Réessaie.", "El grupo no se inició, así que la invitación no se envió. Inténtalo de nuevo.", "Die Party ist nicht gestartet, daher wurde die Einladung nicht gesendet. Versuch es erneut.", "Il party non è partito, quindi l’invito non è stato inviato. Riprova.", "A party não começou, por isso o convite não foi enviado. Tenta de novo."],
+["Ticket deleted.", "Ticket supprimé.", "Ticket eliminado.", "Ticket gelöscht.", "Ticket eliminato.", "Ticket eliminado."],
+["Time range", "Période", "Periodo", "Zeitraum", "Periodo", "Período"],
+["Top players", "Meilleurs joueurs", "Mejores jugadores", "Top-Spieler", "Migliori giocatori", "Melhores jogadores"],
+["Trends", "Tendances", "Tendencias", "Trends", "Tendenze", "Tendências"],
+["You: {m}", "Toi : {m}", "Tú: {m}", "Du: {m}", "Tu: {m}", "Tu: {m}"],
+["typing…", "écrit…", "escribiendo…", "schreibt…", "sta scrivendo…", "a escrever…"],
+["{g} has no online mode. Invite {u} to a game that does.", "{g} n’a pas de mode en ligne. Invite {u} sur un jeu qui en a un.", "{g} no tiene modo en línea. Invita a {u} a un juego que lo tenga.", "{g} hat keinen Online-Modus. Lade {u} zu einem Spiel mit Online-Modus ein.", "{g} non ha la modalità online. Invita {u} a un gioco che ce l’ha.", "{g} não tem modo online. Convida {u} para um jogo que tenha."],
+["{n} days", "{n} jours", "{n} días", "{n} Tage", "{n} giorni", "{n} dias"],
+["{n} friends online", "{n} amis en ligne", "{n} amigos en línea", "{n} Freunde online", "{n} amici online", "{n} amigos online"],
+["{n} in the last 7 days", "{n} ces 7 derniers jours", "{n} en los últimos 7 días", "{n} in den letzten 7 Tagen", "{n} negli ultimi 7 giorni", "{n} nos últimos 7 dias"],
+["{n} in the last {d} days", "{n} ces {d} derniers jours", "{n} en los últimos {d} días", "{n} in den letzten {d} Tagen", "{n} negli ultimi {d} giorni", "{n} nos últimos {d} dias"],
+["{n} launches", "{n} lancements", "{n} inicios", "{n} Starts", "{n} avvii", "{n} inícios"],
+["{n} online", "{n} en ligne", "{n} en línea", "{n} online", "{n} online", "{n} online"],
+["{n} sessions", "{n} sessions", "{n} sesiones", "{n} Sitzungen", "{n} sessioni", "{n} sessões"],
+["{n} unread", "{n} non lus", "{n} sin leer", "{n} ungelesen", "{n} non letti", "{n} por ler"],
+["{u} is joining your party", "{u} rejoint ton groupe", "{u} se está uniendo a tu grupo", "{u} tritt deiner Party bei", "{u} sta entrando nel tuo party", "{u} está a entrar na tua party"],
+["{u} is not in a game right now. Invite them instead.", "{u} n’est pas en jeu en ce moment. Invite-le plutôt.", "{u} no está jugando ahora. Mejor invítale.", "{u} spielt gerade nicht. Lade stattdessen ein.", "{u} non è in gioco ora. Invitalo invece.", "{u} não está a jogar agora. Convida em vez disso."],
+["{u} is offline. You can still send an invite.", "{u} est hors ligne. Tu peux quand même envoyer une invitation.", "{u} está desconectado. Aún puedes enviar una invitación.", "{u} ist offline. Du kannst trotzdem eine Einladung senden.", "{u} è offline. Puoi comunque inviare un invito.", "{u} está offline. Ainda podes enviar um convite."],
+["{u} is typing…", "{u} écrit…", "{u} está escribiendo…", "{u} schreibt…", "{u} sta scrivendo…", "{u} está a escrever…"],
+["{u} let you in. Joining the party…", "{u} t’a accepté. Connexion au groupe…", "{u} te dejó entrar. Uniéndote al grupo…", "{u} hat dich reingelassen. Party wird betreten…", "{u} ti ha fatto entrare. Ingresso nel party…", "{u} deixou-te entrar. A entrar na party…"],
+["Last seen", "Vu pour la dernière fois", "Última vez visto", "Zuletzt gesehen", "Ultimo accesso", "Visto pela última vez"],
+["Desktop", "Ordinateur", "Ordenador", "Computer", "Computer", "Computador"],
+["Phone", "Téléphone", "Teléfono", "Telefon", "Telefono", "Telemóvel"],
+["Tablet", "Tablette", "Tableta", "Tablet", "Tablet", "Tablet"],
+["Unknown", "Inconnu", "Desconocido", "Unbekannt", "Sconosciuto", "Desconhecido"],
+["Highest", "Maximum", "Máximo", "Höchstwert", "Massimo", "Máximo"],
+["Errors", "Erreurs", "Errores", "Fehler", "Errori", "Erros"],
+["Last launch", "Dernier lancement", "Último inicio", "Letzter Start", "Ultimo avvio", "Último início"],
+["Active players", "Joueurs actifs", "Jugadores activos", "Aktive Spieler", "Giocatori attivi", "Jogadores ativos"],
+["Peak online per day", "Pic en ligne par jour", "Pico en línea por día", "Online-Spitze pro Tag", "Picco online al giorno", "Pico online por dia"],
+["Peak online", "Pic en ligne", "Pico en línea", "Online-Spitze", "Picco online", "Pico online"],
+["Most people online at the same time", "Le plus de personnes en ligne en même temps", "Máximo de personas en línea a la vez", "Die meisten gleichzeitig online", "Massimo di persone online contemporaneamente", "Mais pessoas online ao mesmo tempo"],
+["Sessions per day", "Sessions par jour", "Sesiones por día", "Sitzungen pro Tag", "Sessioni al giorno", "Sessões por dia"],
+["Sessions", "Sessions", "Sesiones", "Sitzungen", "Sessioni", "Sessões"],
+["Peak online starts recording while an admin has this page open", "Le pic en ligne s’enregistre tant qu’un admin a cette page ouverte", "El pico en línea se registra mientras un admin tenga esta página abierta", "Die Online-Spitze wird erfasst, solange ein Admin diese Seite offen hat", "Il picco online viene registrato mentre un admin ha questa pagina aperta", "O pico online é registado enquanto um admin tiver esta página aberta"],
+["New accounts", "Nouveaux comptes", "Cuentas nuevas", "Neue Konten", "Nuovi account", "Novas contas"],
+["Game launches per day", "Lancements de jeux par jour", "Inicios de juegos por día", "Spielstarts pro Tag", "Avvii di giochi al giorno", "Inícios de jogos por dia"],
+["Game launches", "Lancements de jeux", "Inicios de juegos", "Spielstarts", "Avvii di giochi", "Inícios de jogos"],
+["1 friend request", "1 demande d’ami", "1 solicitud de amistad", "1 Freundschaftsanfrage", "1 richiesta di amicizia", "1 pedido de amizade"],
+["{n} friend requests", "{n} demandes d’ami", "{n} solicitudes de amistad", "{n} Freundschaftsanfragen", "{n} richieste di amicizia", "{n} pedidos de amizade"],
+["1 friend", "1 ami", "1 amigo", "1 Freund", "1 amico", "1 amigo"],
+["{n} friends", "{n} amis", "{n} amigos", "{n} Freunde", "{n} amici", "{n} amigos"],
+["Device split", "Répartition par appareil", "Reparto por dispositivo", "Geräteverteilung", "Ripartizione per dispositivo", "Distribuição por dispositivo"],
+["Online up to 2", "En ligne jusqu’à 2", "En línea hasta 2", "Online bis zu 2", "Online fino a 2", "Online até 2"],
+["Solo · Online up to 2", "Solo · En ligne jusqu’à 2", "Solo · En línea hasta 2", "Solo · Online bis zu 2", "Solo · Online fino a 2", "Solo · Online até 2"],
+["Online up to 3", "En ligne jusqu’à 3", "En línea hasta 3", "Online bis zu 3", "Online fino a 3", "Online até 3"],
+["Solo · Online up to 3", "Solo · En ligne jusqu’à 3", "Solo · En línea hasta 3", "Solo · Online bis zu 3", "Solo · Online fino a 3", "Solo · Online até 3"],
+["Online up to 4", "En ligne jusqu’à 4", "En línea hasta 4", "Online bis zu 4", "Online fino a 4", "Online até 4"],
+["Solo · Online up to 4", "Solo · En ligne jusqu’à 4", "Solo · En línea hasta 4", "Solo · Online bis zu 4", "Solo · Online fino a 4", "Solo · Online até 4"],
+["Online up to 5", "En ligne jusqu’à 5", "En línea hasta 5", "Online bis zu 5", "Online fino a 5", "Online até 5"],
+["Solo · Online up to 5", "Solo · En ligne jusqu’à 5", "Solo · En línea hasta 5", "Solo · Online bis zu 5", "Solo · Online fino a 5", "Solo · Online até 5"],
+["Online up to 6", "En ligne jusqu’à 6", "En línea hasta 6", "Online bis zu 6", "Online fino a 6", "Online até 6"],
+["Solo · Online up to 6", "Solo · En ligne jusqu’à 6", "Solo · En línea hasta 6", "Solo · Online bis zu 6", "Solo · Online fino a 6", "Solo · Online até 6"],
+["Online up to 7", "En ligne jusqu’à 7", "En línea hasta 7", "Online bis zu 7", "Online fino a 7", "Online até 7"],
+["Solo · Online up to 7", "Solo · En ligne jusqu’à 7", "Solo · En línea hasta 7", "Solo · Online bis zu 7", "Solo · Online fino a 7", "Solo · Online até 7"],
+["Online up to 8", "En ligne jusqu’à 8", "En línea hasta 8", "Online bis zu 8", "Online fino a 8", "Online até 8"],
+["Solo · Online up to 8", "Solo · En ligne jusqu’à 8", "Solo · En línea hasta 8", "Solo · Online bis zu 8", "Solo · Online fino a 8", "Solo · Online até 8"],
+["Online up to 9", "En ligne jusqu’à 9", "En línea hasta 9", "Online bis zu 9", "Online fino a 9", "Online até 9"],
+["Solo · Online up to 9", "Solo · En ligne jusqu’à 9", "Solo · En línea hasta 9", "Solo · Online bis zu 9", "Solo · Online fino a 9", "Solo · Online até 9"],
+["Online up to 10", "En ligne jusqu’à 10", "En línea hasta 10", "Online bis zu 10", "Online fino a 10", "Online até 10"],
+["Solo · Online up to 10", "Solo · En ligne jusqu’à 10", "Solo · En línea hasta 10", "Solo · Online bis zu 10", "Solo · Online fino a 10", "Solo · Online até 10"],
+["Online up to 11", "En ligne jusqu’à 11", "En línea hasta 11", "Online bis zu 11", "Online fino a 11", "Online até 11"],
+["Solo · Online up to 11", "Solo · En ligne jusqu’à 11", "Solo · En línea hasta 11", "Solo · Online bis zu 11", "Solo · Online fino a 11", "Solo · Online até 11"],
+["Online up to 12", "En ligne jusqu’à 12", "En línea hasta 12", "Online bis zu 12", "Online fino a 12", "Online até 12"],
+["Solo · Online up to 12", "Solo · En ligne jusqu’à 12", "Solo · En línea hasta 12", "Solo · Online bis zu 12", "Solo · Online fino a 12", "Solo · Online até 12"],
 ["gameplay home", "Accueil gameplay", "Inicio de gameplay", "gameplay-Startseite", "Home di gameplay", "Início do gameplay"],
 ["Friends", "Amis", "Amigos", "Freunde", "Amici", "Amigos"],
 ["Settings", "Paramètres", "Ajustes", "Einstellungen", "Impostazioni", "Configurações"],

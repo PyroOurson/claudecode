@@ -27,9 +27,9 @@
         const crCat = {
           decal: [
             { id: 'none', n: 'None', t: 0, r: 0 },
-            { id: 'stripes', n: 'Twin Stripes', b: 'octane', t: 2, r: 2 }, { id: 'flames', n: 'Hot Rod', b: 'octane', t: 9, r: 2 }, { id: 'bolt', n: 'Thunderbolt', b: 'octane', t: 19, r: 3 }, { id: 'tiger', n: 'Tiger Claw', b: 'octane', t: 33, r: 4 },
+            { id: 'stripes', n: 'Stripes', b: 'octane', t: 2, r: 2 }, { id: 'flames', n: 'Flames', b: 'octane', t: 9, r: 2 }, { id: 'bolt', n: 'Lightning', b: 'octane', t: 19, r: 3 }, { id: 'tiger', n: 'Tiger Claw', b: 'octane', t: 33, r: 4 },
             { id: 'hex', n: 'Hexed', b: 'fennec', t: 4, r: 2 }, { id: 'splat', n: 'Paint Splat', b: 'fennec', t: 13, r: 3 }, { id: 'pixel', n: 'Pixel Camo', b: 'fennec', t: 23, r: 3 }, { id: 'eight', n: 'Lucky 8', b: 'fennec', t: 37, r: 4 },
-            { id: 'chevron', n: 'Chevron', b: 'dominus', t: 7, r: 2 }, { id: 'wings', n: 'Wings', b: 'dominus', t: 17, r: 3 }, { id: 'shark', n: 'Shark Bite', b: 'dominus', t: 29, r: 4 }, { id: 'checker', n: 'Checkered', b: 'dominus', t: 41, r: 5 },
+            { id: 'chevron', n: 'Chevron', b: 'dominus', t: 7, r: 2 }, { id: 'wings', n: 'Wings', b: 'dominus', t: 17, r: 3 }, { id: 'shark', n: 'Lockjaw', b: 'dominus', t: 29, r: 4 }, { id: 'checker', n: 'Checkered', b: 'dominus', t: 41, r: 5 },
             { id: 'bstripes', n: 'Stripes', b: 'breakout', t: 2, r: 2 }, { id: 'bflames', n: 'Flames', b: 'breakout', t: 9, r: 2 }, { id: 'vector', n: 'Vector', b: 'breakout', t: 24, r: 3 },
             { id: 'mstripes', n: 'Stripes', b: 'merc', t: 2, r: 2 }, { id: 'mflames', n: 'Flames', b: 'merc', t: 9, r: 2 }, { id: 'mdots', n: 'Paint Party', b: 'merc', t: 32, r: 3 },
             { id: 'vstripes', n: 'Stripes', b: 'venom', t: 2, r: 2 }, { id: 'vflames', n: 'Flames', b: 'venom', t: 9, r: 2 }, { id: 'vwings', n: 'Wings', b: 'venom', t: 40, r: 3 }
@@ -48,7 +48,7 @@
             { id: 'rainbow', n: 'Prismatic', t: 49, r: 6, o: [0xff0000, 0xffffff, 0xff8080], p: [[1, 0, 0], [1, 1, 1]], sm: null, rb: 1, sp: 1 }
           ],
           trail: [
-            { id: 'std', n: 'Standard', t: 0, r: 0 }, { id: 'flame', n: 'Afterburner', t: 8, r: 2, c: [1, 0.45, 0.08], w: 1.35, j: 0.15 }, { id: 'neon', n: 'Neon', t: 18, r: 3, c: null, w: 0.8, glow: 1 },
+            { id: 'std', n: 'Classic', t: 0, r: 0, c: [0.52, 0.34, 1] }, { id: 'flame', n: 'Afterburner', t: 8, r: 2, c: [1, 0.45, 0.08], w: 1.35, j: 0.15 }, { id: 'neon', n: 'Neon', t: 18, r: 3, c: null, w: 0.8, glow: 1 },
             { id: 'bolt', n: 'Lightning', t: 28, r: 4, c: [0.55, 0.8, 1], w: 0.75, j: 1 }, { id: 'shadow', n: 'Nightshade', t: 39, r: 5, c: [0.55, 0.15, 1], w: 1.5, j: 0.25 }, { id: 'rainbow', n: 'Rainbow Road', t: 47, r: 6, c: [1, 1, 1], w: 1.2, rb: 1 }
           ],
           top: [{ id: 'none', n: 'None', t: 0, r: 0 }, { id: 'cone', n: 'Traffic Cone', t: 10, r: 2 }, { id: 'party', n: 'Party Hat', t: 15, r: 3 }, { id: 'tophat', n: 'Top Hat', t: 25, r: 3 }, { id: 'halo', n: 'Halo', t: 34, r: 4 }, { id: 'crown', n: 'Crown', t: 45, r: 5 }],
@@ -129,11 +129,11 @@
         const crFlM = (id, team) => {
           const B = crItem('boost', id) || crCat.boost[0], key = B.id + (B.o ? '' : team);
           if (crFlMs[key]) return crFlMs[key];
-          const o = B.o || [[0x1d58ff, 0xe8f6ff, 0x5a9cff], [0xff5208, 0xfff2b8, 0xff9a40]][team];
+          const o = B.o || [0xff5208, 0xfff2b8, 0xff9a40];
           const M = (c, op) => own(new THREE.MeshBasicMaterial({ color: c, map: crFl.ft, transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false, fog: false }));
           return crFlMs[key] = { o: M(o[0], 0.85), c: M(o[1], 1), g: own(new THREE.SpriteMaterial({ map: crFl.gt, color: o[2], blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false, fog: false })), B };
         };
-        const crFCT = [[[0.16, 0.32, 1], [0.62, 0.58, 1]], [[1, 0.34, 0.05], [1, 0.78, 0.3]]], crFSM = [[0.4, 0.46, 0.64], [0.52, 0.45, 0.4]];
+        const crFCT = [[[1, 0.34, 0.05], [1, 0.78, 0.3]], [[1, 0.34, 0.05], [1, 0.78, 0.3]]], crFSM = [[0.86, 0.36, 0.1], [0.86, 0.36, 0.1]];
         const crRbC = [1, 0, 0];
         const crHue = (h, o) => { const f = k => { const x = (k + h * 6) % 6; return Math.max(0, Math.min(1, Math.abs(x - 3) - 1)); }; o[0] = f(0); o[1] = f(4); o[2] = f(2); return o; };
         const crBoostCol = c => {
@@ -185,7 +185,7 @@
           if (!m || !m.body || !m.wheel) return crMD[id] = null;
           return crMD[id] = { m, body: crDec(m.body), wheel: crDec(m.wheel) };
         };
-        const crPick = id => crModel(id) ? id : ['octane', 'fennec', 'dominus', ...Object.keys(crM)].find(k => k !== 'ball' && crModel(k)) || null;
+        const crPick = id => crModel(id) ? id : BODIES[id] && BODIES[id].mdl && crModel(BODIES[id].mdl) ? BODIES[id].mdl : ['octane', 'fennec', 'dominus', ...Object.keys(crM)].find(k => k !== 'ball' && crModel(k)) || null;
         const crFits = {};
         const crFit = (mid, bid) => {
           const key = mid + '|' + bid;

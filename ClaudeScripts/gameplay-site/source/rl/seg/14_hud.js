@@ -35,7 +35,8 @@
               }
             }
             if (tr && v.key !== 'tr') { v.key = 'tr'; v.bd.classList.toggle('b', L === 0); }
-            if (bo !== v.bkey) { v.bkey = bo; uiDig(v.bdNum, bo); v.bdSec.setAttribute('d', uiSec(bo / 100)); }
+            if (bo !== v.bkey) { v.bkey = bo; uiDig(v.bdNum, bo); uiBT(v, bo); }
+            if (me && !!me.boosting !== v.bbo) { v.bbo = !!me.boosting; v.bd.classList.toggle('on', v.bbo); }
             if (me) {
               const dm = me.demoT > 0 ? Math.ceil(me.demoT) : 0, sk = dm ? 'd' + dm : W.state === 'play' && W.timeUp && !tr ? 'tu' : '';
               if (sk !== v.ssKey) {

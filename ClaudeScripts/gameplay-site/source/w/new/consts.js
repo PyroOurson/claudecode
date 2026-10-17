@@ -23,6 +23,7 @@ const STOP = new Set(['the', 'a', 'an', 'of', 'game', 'games', 'play', 'free', '
 const CAT_TINT = { Action: '#d62828', Arcade: '#ff6b6b', Racing: '#3a86ff', Runner: '#ff7a59', Puzzle: '#4361ee', Sports: '#2a9d8f', Board: '#495057', Brain: '#06a77d', Skill: '#e08a00', Strategy: '#a8641c' };
 const POPULAR = ['blockcraft-3d', 'dash-cube', 'sky-runner', 'slither', 'road-hopper', 'flap-bird', 'rocket-soccer', 'brick-bros'];
 const FGROUPS = [
+  { key: 'f', name: 'Favourites', opts: [['fav', 'My favourites']] },
   { key: 'g', name: 'Genre', opts: GENRES.map(k => [k, GENRE_NAME[k] || k]) },
   { key: 'p', name: 'Players', opts: [['s', 'Solo'], ['o', 'Online']] },
   { key: 'v', name: 'Look', opts: [['3d', '3D'], ['2d', '2D']] },
