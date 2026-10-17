@@ -326,10 +326,13 @@
      </div>
      <div class="au-v au-center" data-auview="check" hidden>
       <span class="au-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></span>
-      <div class="au-hd"><h3>Check your inbox</h3><p>We sent a link to <b id="aucmail"></b>. Open it to confirm your account. You can close this page: the link signs you in.</p></div>
-      <div class="note" id="acnote" role="status"></div>
-      <button class="au-go" type="button" id="auresend"><span>Resend email</span></button>
-      <p class="au-sw">No email? Check your spam folder, or <button class="au-link" type="button" data-auv="main">use a different email</button>.</p>
+      <div class="au-hd"><h3>Check your inbox</h3><p>We sent a 6-digit code to <b id="aucmail"></b>. Type it below to confirm your account.</p></div>
+      <form class="au-f" id="acform" novalidate>
+       <div class="fld"><label for="accode">Confirmation code</label><input id="accode" class="au-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" spellcheck="false" placeholder="000000"></div>
+       <div class="note" id="acnote" role="status"></div>
+       <button class="au-go" type="submit" id="acgo"><span>Confirm</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8.5 3.5 13 8l-4.5 4.5"/></svg></button>
+      </form>
+      <p class="au-sw">No code? Check your spam folder, <button class="au-link" type="button" id="auresend"><span>Resend code</span></button> or <button class="au-link" type="button" data-auv="main">use a different email</button>.</p>
      </div>
      <div class="au-v" data-auview="reset" hidden>
       <div class="au-hd"><h3>Reset your password</h3><p>Type the email of your account. We will send you a link to choose a new password.</p></div>

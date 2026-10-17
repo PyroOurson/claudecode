@@ -3181,7 +3181,7 @@ function auView(v) {
   auResendTick();
 }
 function auFocus() {
-  const f = { newpass: '#anpass', reset: '#aremail', main: SB.mode === 'up' ? '#auupemail' : '#auemail' }[SB.view], n = f && $(f);
+  const f = { newpass: '#anpass', reset: '#aremail', check: '#accode', main: SB.mode === 'up' ? '#auupemail' : '#auemail' }[SB.view], n = f && $(f);
   if (n && SB.on && !auCoarse() && openK === 'mauth') n.focus({ preventScroll: true });
 }
 function auShow() {
@@ -3302,7 +3302,7 @@ async function auLogin() {
     $('#aupass').value = ''; closeAll();
   } catch (e) {
     SB.loud = false;
-    if (e && (e.code === 'email_not_confirmed' || /email not confirmed/i.test(e.message || ''))) { SB.cmail = email; $('#aucmail').textContent = email; auView('check'); auMsg('acnote', 'Confirm your email first: open the link we sent you, or send a new one.', 'bad'); }
+    if (e && (e.code === 'email_not_confirmed' || /email not confirmed/i.test(e.message || ''))) { SB.cmail = email; SB.otpAt = 0; $('#aucmail').textContent = email; $('#accode').value = ''; auView('check'); auMsg('acnote', 'Confirm your email first: type the code we sent you, or send a new one.', 'bad'); }
     else auMsg('aunote', auErrText(e), 'bad');
   }
   finally { auBusy(false); }
@@ -3331,9 +3331,9 @@ async function auSignup() {
     track('auth', { act: 'signup' });
     $('#auuppass').value = ''; auReqs($('#auuppass'));
     if (r.data && r.data.session) { auWait(true); closeAll(); return; }
-    SB.loud = false; SB.cmail = id; SB.rsAt = Date.now() + 60000;
-    $('#aucmail').textContent = id;
-    auView('check');
+    SB.loud = false; SB.cmail = id; SB.rsAt = Date.now() + 60000; SB.otpAt = Date.now();
+    $('#aucmail').textContent = id; $('#accode').value = ''; auMsg('acnote', '');
+    auView('check'); setTimeout(auFocus, 120);
   } catch (e) { SB.loud = false; auMsg('auupnote', auErrText(e), 'bad'); }
   finally { auBusy(false); }
 }
@@ -3342,8 +3342,8 @@ function auResendTick() {
   const b = $('#auresend'), left = Math.ceil((syNum(SB.rsAt) - Date.now()) / 1000);
   if (!b || b.classList.contains('is-busy')) return;
   const s = b.firstElementChild;
-  if (left > 0 && SB.view === 'check') { b.disabled = true; s.textContent = auT('Resend email in {n} s').replace('{n}', left); SB.rsT = setTimeout(auResendTick, 1000); }
-  else { b.disabled = !SB.on; s.textContent = 'Resend email'; }
+  if (left > 0 && SB.view === 'check') { b.disabled = true; s.textContent = auT('Resend code in {n} s').replace('{n}', left); SB.rsT = setTimeout(auResendTick, 1000); }
+  else { b.disabled = !SB.on; s.textContent = 'Resend code'; }
 }
 async function auResend() {
   if (!SB.on || !SB.cmail || syNum(SB.rsAt) > Date.now()) return;
@@ -3353,11 +3353,35 @@ async function auResend() {
     const c = await sbClient();
     const { error } = await c.auth.resend({ type: 'signup', email: SB.cmail, options: { emailRedirectTo: sbRedirect('signup') } });
     if (error) throw error;
-    SB.rsAt = Date.now() + 60000;
+    SB.rsAt = Date.now() + 60000; SB.otpAt = Date.now(); $('#accode').value = '';
     track('auth', { act: 'resend' });
-    auMsg('acnote', 'Sent again. Use the newest email: it replaces the old link.', 'ok');
+    auMsg('acnote', 'Sent again. Use the code in the newest email: the old code no longer works.', 'ok');
   } catch (e) { auMsg('acnote', auErrText(e), 'bad'); }
   finally { b.classList.remove('is-busy'); auResendTick(); }
+}
+async function auVerify() {
+  if (!SB.on || !SB.cmail) return;
+  const code = $('#accode').value.replace(/\D/g, '');
+  auMsg('acnote', '');
+  if (code.length !== 6) return auBad('accode', 'Type the 6-digit code from the email.');
+  auBusy(true);
+  let bad = '';
+  try {
+    const c = await sbClient();
+    SB.loud = true;
+    const { error } = await c.auth.verifyOtp({ email: SB.cmail, token: code, type: 'signup' });
+    if (error) throw error;
+    track('auth', { act: 'verify' });
+    $('#accode').value = '';
+    auWait(true); closeAll();
+  } catch (e) {
+    SB.loud = false;
+    const m = String(e && (e.message || e) || ''), k = String(e && e.code || '');
+    if (k === 'otp_expired' || /expired|invalid/i.test(m)) {
+      bad = !SB.otpAt ? 'This code is wrong or has expired. Check the newest email, or click Resend code.' : Date.now() - SB.otpAt > 3600000 ? 'This code has expired. Click Resend code to get a new one.' : 'Wrong code. Check the newest email and try again.';
+    } else auMsg('acnote', auErrText(e), 'bad');
+  }
+  finally { auBusy(false); if (bad) auBad('accode', bad); }
 }
 async function auReset() {
   if (!SB.on) return;
@@ -3771,6 +3795,8 @@ function auBoot() {
   $('#aurform').addEventListener('submit', e => { e.preventDefault(); auReset(); });
   $('#anform').addEventListener('submit', e => { e.preventDefault(); auNewPass(); });
   $('#auresend').addEventListener('click', auResend);
+  $('#acform').addEventListener('submit', e => { e.preventDefault(); auVerify(); });
+  $('#accode').addEventListener('input', e => { const v = e.target.value, n = v.replace(/\D/g, '').slice(0, 6); if (n !== v) e.target.value = n; if (n.length === 6 && !$('#aumodal').classList.contains('au-busy')) auVerify(); });
   $('#auforgot').addEventListener('click', () => { const v = $('#auemail').value.trim(); if (v.includes('@')) $('#aremail').value = v; auMsg('arnote', ''); auView('reset'); setTimeout(auFocus, 120); });
   $('#auuser').addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; auUserCheck(); });
   $('#auuser').addEventListener('blur', e => { const v = e.target.value.trim(); if (v && (!UN_RE.test(v) || /^\.|\.$|\.\./.test(v))) auFieldErr(e.target, 'Use 3 to 20 lowercase letters, numbers, dots or underscores.'); });
@@ -4651,18 +4677,18 @@ const R = [
 ["Accounts are not switched on yet. Soon you can keep your profile, records and saves on every device.", "Les comptes ne sont pas encore activés. Bientôt, vous retrouverez votre profil, vos records et vos sauvegardes sur tous vos appareils.", "Las cuentas aún no están activadas. Pronto podrás conservar tu perfil, récords y partidas en todos tus dispositivos.", "Konten sind noch nicht aktiviert. Bald kannst du dein Profil, deine Rekorde und Spielstände auf allen Geräten behalten.", "Gli account non sono ancora attivi. Presto potrai ritrovare profilo, record e salvataggi su ogni dispositivo.", "As contas ainda não estão ativadas. Em breve você poderá manter seu perfil, recordes e jogos salvos em todos os dispositivos."],
 ["Accounts are not switched on yet. Then you can find players by their username and add them as friends.", "Les comptes ne sont pas encore activés. Vous pourrez alors trouver des joueurs par leur nom d’utilisateur et les ajouter en amis.", "Las cuentas aún no están activadas. Entonces podrás buscar jugadores por su nombre de usuario y añadirlos como amigos.", "Konten sind noch nicht aktiviert. Dann kannst du Spieler über ihren Benutzernamen finden und als Freunde hinzufügen.", "Gli account non sono ancora attivi. Allora potrai trovare i giocatori con il loro nome utente e aggiungerli come amici.", "As contas ainda não estão ativadas. Depois você poderá encontrar jogadores pelo nome de usuário e adicioná-los como amigos."],
 ["Check your inbox", "Consultez votre boîte de réception", "Revisa tu bandeja de entrada", "Sieh in dein Postfach", "Controlla la posta", "Confira sua caixa de entrada"],
-["We sent a link to", "Nous avons envoyé un lien à", "Enviamos un enlace a", "Wir haben einen Link geschickt an", "Abbiamo inviato un link a", "Enviamos um link para"],
-[". Open it to confirm your account. You can close this page: the link signs you in.", ". Ouvrez-le pour confirmer votre compte. Vous pouvez fermer cette page : le lien vous connecte.", ". Ábrelo para confirmar tu cuenta. Puedes cerrar esta página: el enlace inicia tu sesión.", ". Öffne ihn, um dein Konto zu bestätigen. Du kannst diese Seite schließen: Der Link meldet dich an.", ". Aprilo per confermare il tuo account. Puoi chiudere questa pagina: il link ti fa accedere.", ". Abra-o para confirmar sua conta. Você pode fechar esta página: o link faz seu login."],
-["No email? Check your spam folder, or", "Pas d’e-mail ? Vérifiez vos spams, ou", "¿No te llega? Revisa la carpeta de spam, o", "Keine E-Mail? Sieh im Spam-Ordner nach oder", "Nessuna email? Controlla lo spam, oppure", "Não chegou? Confira a pasta de spam, ou"],
+["We sent a 6-digit code to", "Nous avons envoyé un code à 6 chiffres à", "Enviamos un código de 6 dígitos a", "Wir haben einen 6-stelligen Code geschickt an", "Abbiamo inviato un codice di 6 cifre a", "Enviamos um código de 6 dígitos para"],
+[". Type it below to confirm your account.", ". Saisissez-le ci-dessous pour confirmer votre compte.", ". Escríbelo abajo para confirmar tu cuenta.", ". Gib ihn unten ein, um dein Konto zu bestätigen.", ". Inseriscilo qui sotto per confermare il tuo account.", ". Digite-o abaixo para confirmar sua conta."],
+["No code? Check your spam folder,", "Pas de code ? Vérifiez vos spams,", "¿No te llega el código? Revisa la carpeta de spam,", "Kein Code? Sieh im Spam-Ordner nach,", "Nessun codice? Controlla lo spam,", "Não chegou o código? Confira a pasta de spam,"],
 ["use a different email", "utilisez une autre adresse", "usa otro correo", "nutze eine andere E-Mail", "usa un’altra email", "use outro e-mail"],
-["Resend email", "Renvoyer l’e-mail", "Reenviar correo", "E-Mail erneut senden", "Invia di nuovo l’email", "Reenviar e-mail"],
-["Sent again. Use the newest email: it replaces the old link.", "Renvoyé. Utilisez l’e-mail le plus récent : il remplace l’ancien lien.", "Enviado de nuevo. Usa el correo más reciente: sustituye al enlace anterior.", "Erneut gesendet. Nutze die neueste E-Mail: Sie ersetzt den alten Link.", "Inviata di nuovo. Usa l’email più recente: sostituisce il vecchio link.", "Enviado de novo. Use o e-mail mais recente: ele substitui o link antigo."],
+["Resend code", "Renvoyer le code", "Reenviar código", "Code erneut senden", "Invia di nuovo il codice", "Reenviar código"],
+["Sent again. Use the code in the newest email: the old code no longer works.", "Renvoyé. Utilisez le code du dernier e-mail : l’ancien code ne fonctionne plus.", "Enviado de nuevo. Usa el código del correo más reciente: el anterior ya no funciona.", "Erneut gesendet. Nutze den Code aus der neuesten E-Mail: Der alte Code gilt nicht mehr.", "Inviato di nuovo. Usa il codice dell’email più recente: quello vecchio non funziona più.", "Enviado de novo. Use o código do e-mail mais recente: o código antigo não funciona mais."],
 ["Reset your password", "Réinitialisez votre mot de passe", "Restablece tu contraseña", "Setze dein Passwort zurück", "Reimposta la password", "Redefina sua senha"],
 ["Choose a new password", "Choisissez un nouveau mot de passe", "Elige una contraseña nueva", "Wähle ein neues Passwort", "Scegli una nuova password", "Escolha uma nova senha"],
 ["Check your inbox. If an account uses this email, we sent it a link to choose a new password.", "Consultez votre boîte de réception. Si un compte utilise cet e-mail, nous lui avons envoyé un lien pour choisir un nouveau mot de passe.", "Revisa tu bandeja de entrada. Si alguna cuenta usa este correo, le enviamos un enlace para elegir una contraseña nueva.", "Sieh in dein Postfach. Falls ein Konto diese E-Mail nutzt, haben wir einen Link zum Festlegen eines neuen Passworts geschickt.", "Controlla la posta. Se un account usa questa email, gli abbiamo inviato un link per scegliere una nuova password.", "Confira sua caixa de entrada. Se alguma conta usa este e-mail, enviamos um link para escolher uma nova senha."],
 ["An account with this email already exists. Log in instead.", "Un compte existe déjà avec cet e-mail. Connectez-vous plutôt.", "Ya existe una cuenta con este correo. Inicia sesión.", "Mit dieser E-Mail gibt es schon ein Konto. Melde dich stattdessen an.", "Esiste già un account con questa email. Accedi.", "Já existe uma conta com este e-mail. Entre nela."],
 ["Wrong email, username or password.", "E-mail, nom d’utilisateur ou mot de passe incorrect.", "Correo, nombre de usuario o contraseña incorrectos.", "Falsche E-Mail, falscher Benutzername oder falsches Passwort.", "Email, nome utente o password errati.", "E-mail, nome de usuário ou senha incorretos."],
-["Confirm your email first: open the link we sent you, or send a new one.", "Confirmez d’abord votre e-mail : ouvrez le lien envoyé, ou demandez-en un nouveau.", "Confirma primero tu correo: abre el enlace que te enviamos o pide uno nuevo.", "Bestätige zuerst deine E-Mail: Öffne den Link, den wir dir geschickt haben, oder fordere einen neuen an.", "Prima conferma la tua email: apri il link che ti abbiamo inviato o richiedine uno nuovo.", "Confirme seu e-mail primeiro: abra o link que enviamos ou peça um novo."],
+["Confirm your email first: type the code we sent you, or send a new one.", "Confirmez d’abord votre e-mail : saisissez le code envoyé, ou demandez-en un nouveau.", "Confirma primero tu correo: escribe el código que te enviamos o pide uno nuevo.", "Bestätige zuerst deine E-Mail: Gib den Code ein, den wir dir geschickt haben, oder fordere einen neuen an.", "Prima conferma la tua email: inserisci il codice che ti abbiamo inviato, oppure richiedine uno nuovo.", "Confirme seu e-mail primeiro: digite o código que enviamos ou peça um novo."],
 ["Too many emails were sent. Wait a minute and try again.", "Trop d’e-mails envoyés. Attendez une minute et réessayez.", "Se enviaron demasiados correos. Espera un minuto e inténtalo de nuevo.", "Es wurden zu viele E-Mails gesendet. Warte eine Minute und versuche es erneut.", "Sono state inviate troppe email. Aspetta un minuto e riprova.", "Muitos e-mails foram enviados. Aguarde um minuto e tente de novo."],
 ["We cannot send emails to this address yet. Try again later.", "Nous ne pouvons pas encore envoyer d’e-mails à cette adresse. Réessayez plus tard.", "Aún no podemos enviar correos a esta dirección. Inténtalo más tarde.", "An diese Adresse können wir noch keine E-Mails senden. Versuche es später erneut.", "Non possiamo ancora inviare email a questo indirizzo. Riprova più tardi.", "Ainda não podemos enviar e-mails para este endereço. Tente mais tarde."],
 ["Logging in…", "Connexion…", "Iniciando sesión…", "Anmeldung…", "Accesso in corso…", "Entrando…"],
@@ -4699,7 +4725,13 @@ const R = [
 ["Could not update. Check your connection and try again.", "Mise à jour impossible. Vérifiez votre connexion et réessayez.", "No se pudo actualizar. Revisa tu conexión e inténtalo de nuevo.", "Aktualisierung fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.", "Impossibile aggiornare. Controlla la connessione e riprova.", "Não foi possível atualizar. Verifique sua conexão e tente de novo."],
 ["Free to play in your browser, no download.", "Gratuit dans votre navigateur, sans téléchargement.", "Gratis en tu navegador, sin descargas.", "Kostenlos im Browser spielbar, ohne Download.", "Gratis nel browser, senza download.", "Grátis no navegador, sem download."],
 ["Records and saves synced {t}.", "Records et sauvegardes synchronisés à {t}.", "Récords y partidas sincronizados a las {t}.", "Rekorde und Spielstände um {t} synchronisiert.", "Record e salvataggi sincronizzati alle {t}.", "Recordes e jogos salvos sincronizados às {t}."],
-["Resend email in {n} s", "Renvoyer l’e-mail dans {n} s", "Reenviar correo en {n} s", "E-Mail erneut senden in {n} s", "Invia di nuovo tra {n} s", "Reenviar e-mail em {n} s"],
+["Confirmation code", "Code de confirmation", "Código de confirmación", "Bestätigungscode", "Codice di conferma", "Código de confirmação"],
+["Confirm", "Confirmer", "Confirmar", "Bestätigen", "Conferma", "Confirmar"],
+["Type the 6-digit code from the email.", "Saisissez le code à 6 chiffres reçu par e-mail.", "Escribe el código de 6 dígitos del correo.", "Gib den 6-stelligen Code aus der E-Mail ein.", "Inserisci il codice di 6 cifre dell’email.", "Digite o código de 6 dígitos do e-mail."],
+["Wrong code. Check the newest email and try again.", "Code incorrect. Vérifiez le dernier e-mail et réessayez.", "Código incorrecto. Revisa el correo más reciente e inténtalo de nuevo.", "Falscher Code. Sieh in der neuesten E-Mail nach und versuche es erneut.", "Codice errato. Controlla l’email più recente e riprova.", "Código incorreto. Confira o e-mail mais recente e tente de novo."],
+["This code has expired. Click Resend code to get a new one.", "Ce code a expiré. Cliquez sur Renvoyer le code pour en recevoir un nouveau.", "Este código ha caducado. Pulsa Reenviar código para recibir uno nuevo.", "Dieser Code ist abgelaufen. Klicke auf Code erneut senden, um einen neuen zu bekommen.", "Questo codice è scaduto. Clicca su Invia di nuovo il codice per riceverne uno nuovo.", "Este código expirou. Clique em Reenviar código para receber um novo."],
+["This code is wrong or has expired. Check the newest email, or click Resend code.", "Ce code est incorrect ou a expiré. Vérifiez le dernier e-mail, ou cliquez sur Renvoyer le code.", "Este código es incorrecto o ha caducado. Revisa el correo más reciente o pulsa Reenviar código.", "Dieser Code ist falsch oder abgelaufen. Sieh in der neuesten E-Mail nach oder klicke auf Code erneut senden.", "Questo codice è errato o scaduto. Controlla l’email più recente, oppure clicca su Invia di nuovo il codice.", "Este código está incorreto ou expirou. Confira o e-mail mais recente ou clique em Reenviar código."],
+["Resend code in {n} s", "Renvoyer le code dans {n} s", "Reenviar código en {n} s", "Code erneut senden in {n} s", "Invia di nuovo il codice tra {n} s", "Reenviar código em {n} s"],
 ["Logged in as {name}", "Connecté en tant que {name}", "Sesión iniciada como {name}", "Angemeldet als {name}", "Accesso eseguito come {name}", "Conectado como {name}"],
 ["{n}+ players", "{n}+ joueurs", "{n}+ jugadores", "{n}+ Spieler", "{n}+ giocatori", "{n}+ jogadores"],
 ["1 player", "1 joueur", "1 jugador", "1 Spieler", "1 giocatore", "1 jogador"],

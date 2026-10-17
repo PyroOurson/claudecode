@@ -70,6 +70,8 @@ tr:nth-child(2n) .sk-td{width:56%}
 #aumodal .au-f input:focus{border-color:var(--au-acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--au-acc) 18%,transparent)}
 #aumodal .au-f input[aria-invalid="true"]{border-color:var(--au-bad)}
 #aumodal .au-f input[aria-invalid="true"]:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--au-bad) 16%,transparent)}
+#aumodal .au-f input.au-code{height:62px;text-align:center;padding:0 0 0 .45em;font:700 28px/1 'JetBrains Mono',ui-monospace,Consolas,'Courier New',monospace;letter-spacing:.45em;font-variant-numeric:tabular-nums}
+#aumodal .au-f input.au-code::placeholder{color:var(--au-line2)}
 .au-err{font-size:12.5px;line-height:1.35;color:var(--au-bad);margin-top:6px;animation:auV .22s var(--ease) both}
 .au-link{font:600 12.5px/16px var(--au-font);color:var(--au-acc);background:none;border:0;padding:0;cursor:pointer;border-radius:4px}
 .au-link:hover{text-decoration:underline;text-underline-offset:2px}

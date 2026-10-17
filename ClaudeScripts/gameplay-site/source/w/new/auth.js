@@ -382,7 +382,7 @@ function auView(v) {
   auResendTick();
 }
 function auFocus() {
-  const f = { newpass: '#anpass', reset: '#aremail', main: SB.mode === 'up' ? '#auupemail' : '#auemail' }[SB.view], n = f && $(f);
+  const f = { newpass: '#anpass', reset: '#aremail', check: '#accode', main: SB.mode === 'up' ? '#auupemail' : '#auemail' }[SB.view], n = f && $(f);
   if (n && SB.on && !auCoarse() && openK === 'mauth') n.focus({ preventScroll: true });
 }
 function auShow() {
@@ -503,7 +503,7 @@ async function auLogin() {
     $('#aupass').value = ''; closeAll();
   } catch (e) {
     SB.loud = false;
-    if (e && (e.code === 'email_not_confirmed' || /email not confirmed/i.test(e.message || ''))) { SB.cmail = email; $('#aucmail').textContent = email; auView('check'); auMsg('acnote', 'Confirm your email first: open the link we sent you, or send a new one.', 'bad'); }
+    if (e && (e.code === 'email_not_confirmed' || /email not confirmed/i.test(e.message || ''))) { SB.cmail = email; SB.otpAt = 0; $('#aucmail').textContent = email; $('#accode').value = ''; auView('check'); auMsg('acnote', 'Confirm your email first: type the code we sent you, or send a new one.', 'bad'); }
     else auMsg('aunote', auErrText(e), 'bad');
   }
   finally { auBusy(false); }
@@ -532,9 +532,9 @@ async function auSignup() {
     track('auth', { act: 'signup' });
     $('#auuppass').value = ''; auReqs($('#auuppass'));
     if (r.data && r.data.session) { auWait(true); closeAll(); return; }
-    SB.loud = false; SB.cmail = id; SB.rsAt = Date.now() + 60000;
-    $('#aucmail').textContent = id;
-    auView('check');
+    SB.loud = false; SB.cmail = id; SB.rsAt = Date.now() + 60000; SB.otpAt = Date.now();
+    $('#aucmail').textContent = id; $('#accode').value = ''; auMsg('acnote', '');
+    auView('check'); setTimeout(auFocus, 120);
   } catch (e) { SB.loud = false; auMsg('auupnote', auErrText(e), 'bad'); }
   finally { auBusy(false); }
 }
@@ -543,8 +543,8 @@ function auResendTick() {
   const b = $('#auresend'), left = Math.ceil((syNum(SB.rsAt) - Date.now()) / 1000);
   if (!b || b.classList.contains('is-busy')) return;
   const s = b.firstElementChild;
-  if (left > 0 && SB.view === 'check') { b.disabled = true; s.textContent = auT('Resend email in {n} s').replace('{n}', left); SB.rsT = setTimeout(auResendTick, 1000); }
-  else { b.disabled = !SB.on; s.textContent = 'Resend email'; }
+  if (left > 0 && SB.view === 'check') { b.disabled = true; s.textContent = auT('Resend code in {n} s').replace('{n}', left); SB.rsT = setTimeout(auResendTick, 1000); }
+  else { b.disabled = !SB.on; s.textContent = 'Resend code'; }
 }
 async function auResend() {
   if (!SB.on || !SB.cmail || syNum(SB.rsAt) > Date.now()) return;
@@ -554,11 +554,35 @@ async function auResend() {
     const c = await sbClient();
     const { error } = await c.auth.resend({ type: 'signup', email: SB.cmail, options: { emailRedirectTo: sbRedirect('signup') } });
     if (error) throw error;
-    SB.rsAt = Date.now() + 60000;
+    SB.rsAt = Date.now() + 60000; SB.otpAt = Date.now(); $('#accode').value = '';
     track('auth', { act: 'resend' });
-    auMsg('acnote', 'Sent again. Use the newest email: it replaces the old link.', 'ok');
+    auMsg('acnote', 'Sent again. Use the code in the newest email: the old code no longer works.', 'ok');
   } catch (e) { auMsg('acnote', auErrText(e), 'bad'); }
   finally { b.classList.remove('is-busy'); auResendTick(); }
+}
+async function auVerify() {
+  if (!SB.on || !SB.cmail) return;
+  const code = $('#accode').value.replace(/\D/g, '');
+  auMsg('acnote', '');
+  if (code.length !== 6) return auBad('accode', 'Type the 6-digit code from the email.');
+  auBusy(true);
+  let bad = '';
+  try {
+    const c = await sbClient();
+    SB.loud = true;
+    const { error } = await c.auth.verifyOtp({ email: SB.cmail, token: code, type: 'signup' });
+    if (error) throw error;
+    track('auth', { act: 'verify' });
+    $('#accode').value = '';
+    auWait(true); closeAll();
+  } catch (e) {
+    SB.loud = false;
+    const m = String(e && (e.message || e) || ''), k = String(e && e.code || '');
+    if (k === 'otp_expired' || /expired|invalid/i.test(m)) {
+      bad = !SB.otpAt ? 'This code is wrong or has expired. Check the newest email, or click Resend code.' : Date.now() - SB.otpAt > 3600000 ? 'This code has expired. Click Resend code to get a new one.' : 'Wrong code. Check the newest email and try again.';
+    } else auMsg('acnote', auErrText(e), 'bad');
+  }
+  finally { auBusy(false); if (bad) auBad('accode', bad); }
 }
 async function auReset() {
   if (!SB.on) return;
@@ -972,6 +996,8 @@ function auBoot() {
   $('#aurform').addEventListener('submit', e => { e.preventDefault(); auReset(); });
   $('#anform').addEventListener('submit', e => { e.preventDefault(); auNewPass(); });
   $('#auresend').addEventListener('click', auResend);
+  $('#acform').addEventListener('submit', e => { e.preventDefault(); auVerify(); });
+  $('#accode').addEventListener('input', e => { const v = e.target.value, n = v.replace(/\D/g, '').slice(0, 6); if (n !== v) e.target.value = n; if (n.length === 6 && !$('#aumodal').classList.contains('au-busy')) auVerify(); });
   $('#auforgot').addEventListener('click', () => { const v = $('#auemail').value.trim(); if (v.includes('@')) $('#aremail').value = v; auMsg('arnote', ''); auView('reset'); setTimeout(auFocus, 120); });
   $('#auuser').addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; auUserCheck(); });
   $('#auuser').addEventListener('blur', e => { const v = e.target.value.trim(); if (v && (!UN_RE.test(v) || /^\.|\.$|\.\./.test(v))) auFieldErr(e.target, 'Use 3 to 20 lowercase letters, numbers, dots or underscores.'); });
