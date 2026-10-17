@@ -214,3 +214,7 @@ To remove an admin, use the dashboard, or run `update public.profiles set role =
 **Tickets**: every signed-in player has **Support** in the profile picture menu to open a ticket and chat with the admins (locked players use the Contact box). Admins answer in the dashboard's **Tickets** tab, where open tickets come first, and can close or reopen them; a new message from the player reopens a closed ticket. Limits: 5 new tickets per hour, 20 messages per minute and 2000 characters per message.
 
 Everything in the dashboard goes through database functions that first check that the caller is an admin (`admin_list_users`, `admin_set_role`, `admin_set_password`, `admin_lock`, `admin_tickets`), so changing the website code in a browser does not give anyone admin powers.
+
+## Email templates
+
+Branded templates are in `emails/`. In the Supabase dashboard, Authentication, Emails, paste each file into its template (Confirm signup = confirm_signup.html, Reset password = reset_password.html, Magic link = magic_link.html, Change email address = change_email.html, Invite user = invite.html, Reauthentication = reauthentication.html) and set the subject from `emails/subjects.txt`. Site URL must be https://gameplaygames.web.app and the redirect allow list must include https://gameplaygames.web.app/** so the `?gpauth=` return links work.

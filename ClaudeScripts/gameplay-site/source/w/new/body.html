@@ -62,7 +62,7 @@
      <div class="tools"><span class="count" id="count" role="status" aria-live="polite"></span></div>
     </div>
     <div class="active" id="active" hidden></div>
-    <div class="grid" id="grid"><div class="gp-wait" aria-label="Loading"><i></i></div></div>
+    <div class="grid" id="grid"><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div></div>
     <div class="empty" id="empty" hidden><b>No games match</b>Try a different word or remove a filter.<br><button class="cta" type="button" id="reset">Clear filters</button></div>
    </section>
   </div>
@@ -294,53 +294,69 @@
 <div class="modal full au-page" id="aumodal" hidden role="dialog" aria-modal="true" aria-labelledby="aut">
  <div class="mc">
   <div class="au-wrap">
-   <div class="au-brand"><span class="logo"><svg viewBox="0 0 16 16"><path d="M2 1.5v13l12-6.5z"/></svg></span><span>gameplay</span></div>
-   <div class="au-card">
-    <div class="au-off" id="auoff" hidden><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><div><b>Accounts are not switched on yet</b><span>You can still play every game as a guest. Your records and saves stay in this browser.</span><button class="btn2 pri" type="button" data-auguest>Play as a guest</button></div></div>
-    <div class="au-tabs" id="autabs" role="tablist" aria-label="Log in or sign up"><button type="button" role="tab" data-aumode="in" aria-selected="true">Log in</button><button type="button" role="tab" data-aumode="up" aria-selected="false">Sign up</button><i></i></div>
-    <div class="au-v" data-auview="main">
-     <div class="au-hd"><h3 id="aut">Welcome back</h3><p id="ausub">Log in to keep your records and saves on every device.</p></div>
-     <button class="au-g" type="button" data-auth="google" id="aug"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Continue with Google</span><em id="ausoon" hidden>Coming soon</em></button>
-     <div class="au-or"><span>or</span></div>
-     <form class="au-f" id="auform" novalidate>
-      <div class="fld" data-up hidden><label for="auuser">Username</label><input id="auuser" autocomplete="username" maxlength="20" spellcheck="false" autocapitalize="off" placeholder="e.g. dedpoul"><small class="au-hint">3 to 20 lowercase letters, numbers, dots or underscores. Friends find you by it.</small></div>
-      <div class="fld"><label for="auemail" id="auel">Email or username</label><input id="auemail" type="text" autocomplete="username" spellcheck="false" autocapitalize="off"></div>
-      <div class="fld"><div class="au-lrow"><label for="aupass">Password</label><button class="link" type="button" id="auforgot">Forgot password?</button></div><div class="au-pw"><input id="aupass" type="password" autocomplete="current-password"></div></div>
-      <div class="fld" data-up hidden><label for="aupass2">Confirm password</label><div class="au-pw"><input id="aupass2" type="password" autocomplete="new-password"></div></div>
-      <label class="au-chk" data-up hidden><input type="checkbox" id="auterms"><span>I agree to the <a href="#/terms" data-aulegal="terms">Terms of Use</a> and the <a href="#/privacy" data-aulegal="privacy">Privacy Policy</a>.</span></label>
-      <button class="btn2 pri au-go" type="submit" id="augo">Log in</button>
-     </form>
-     <div class="note" id="aunote" role="status"></div>
-    </div>
-    <div class="au-v au-center" data-auview="check" hidden>
-     <span class="au-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></span>
-     <div class="au-hd"><h3>Check your inbox</h3><p>We sent a link to <b id="aucmail"></b>. Open it to confirm your account. You can close this page: the link signs you in.</p></div>
-     <button class="btn2 pri au-go" type="button" id="auresend">Resend email</button>
-     <div class="note" id="acnote" role="status"></div>
-     <p class="au-small">No email? Check your spam folder, or <button class="link" type="button" data-auv="main">use a different email</button>.</p>
-    </div>
-    <div class="au-v" data-auview="reset" hidden>
-     <div class="au-hd"><h3>Reset your password</h3><p>Type the email of your account. We will send you a link to choose a new password.</p></div>
-     <form class="au-f" id="aurform" novalidate>
-      <div class="fld"><label for="aremail">Email</label><input id="aremail" type="email" autocomplete="email" inputmode="email" spellcheck="false" autocapitalize="off"></div>
-      <button class="btn2 pri au-go" type="submit" id="arsend">Send link</button>
-     </form>
-     <div class="note" id="arnote" role="status"></div>
-     <p class="au-small"><button class="link" type="button" data-auv="main">Back to log in</button></p>
-    </div>
-    <div class="au-v" data-auview="newpass" hidden>
-     <div class="au-hd"><h3>Choose a new password</h3><p>Use at least 8 characters.</p></div>
-     <form class="au-f" id="anform" novalidate>
-      <input id="anuser" type="email" autocomplete="username" hidden>
-      <div class="fld"><label for="anpass">New password</label><div class="au-pw"><input id="anpass" type="password" autocomplete="new-password"></div></div>
-      <div class="fld"><label for="anpass2">Confirm new password</label><div class="au-pw"><input id="anpass2" type="password" autocomplete="new-password"></div></div>
-      <button class="btn2 pri au-go" type="submit">Save password</button>
-     </form>
-     <div class="note" id="annote" role="status"></div>
+   <div class="au-top"><span class="au-logo" translate="no"><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.6 4.2v7.6l6-3.8z"/></svg></i>gameplay</span></div>
+   <div class="au-mid">
+    <div class="au-card" id="aucard">
+     <div class="au-off" id="auoff" hidden><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><div><b>Accounts are not switched on yet</b></div></div>
+     <div class="au-v" data-auview="in">
+      <div class="au-hd"><h3 id="aut">Welcome back.</h3><p>Log in to keep your records and saves on every device.</p></div>
+      <form class="au-f" id="auform" novalidate>
+       <div class="fld"><label for="auemail">Email or username</label><input id="auemail" type="text" autocomplete="username" spellcheck="false" autocapitalize="off" placeholder="Enter your email or username"></div>
+       <div class="fld"><div class="au-lrow"><label for="aupass">Password</label><button class="au-link" type="button" id="auforgot">Forgot password?</button></div><div class="au-pw"><input id="aupass" type="password" autocomplete="current-password" placeholder="Enter your password"></div></div>
+       <div class="note" id="aunote" role="status"></div>
+       <button class="au-go" type="submit" id="augo"><span>Log in</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8.5 3.5 13 8l-4.5 4.5"/></svg></button>
+      </form>
+      <div class="au-or"><span>or</span></div>
+      <button class="au-g" type="button" data-auth="google"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Continue with Google</span><em hidden>Coming soon</em></button>
+      <p class="au-sw">Don't have an account? <button class="au-link" type="button" data-aumode="up">Sign up</button></p>
+     </div>
+     <div class="au-v" data-auview="up" hidden>
+      <div class="au-hd"><h3 id="aut2">Make it your game.</h3><p>Create an account to keep your records and saves on every device.</p></div>
+      <form class="au-f" id="auupform" novalidate>
+       <div class="fld"><label for="auupemail">Email</label><input id="auupemail" type="email" autocomplete="email" inputmode="email" spellcheck="false" autocapitalize="off" placeholder="you@example.com"></div>
+       <div class="fld"><label for="auupemail2">Confirm Email</label><input id="auupemail2" type="email" autocomplete="email" inputmode="email" spellcheck="false" autocapitalize="off" placeholder="Enter your email again"></div>
+       <div class="fld"><label for="auuser">Username</label><input id="auuser" autocomplete="username" maxlength="20" spellcheck="false" autocapitalize="off" placeholder="Choose your player name"></div>
+       <div class="fld"><div class="au-lrow"><label for="auuppass">Password</label><span class="au-reqs" data-for="auuppass"></span></div><div class="au-pw"><input id="auuppass" type="password" autocomplete="new-password" placeholder="Create a password"></div></div>
+       <div class="note" id="auupnote" role="status"></div>
+       <button class="au-go" type="submit" id="auupgo"><span>Create account</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8.5 3.5 13 8l-4.5 4.5"/></svg></button>
+      </form>
+      <div class="au-or"><span>or</span></div>
+      <button class="au-g" type="button" data-auth="google"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Continue with Google</span><em hidden>Coming soon</em></button>
+      <p class="au-sw">Already have an account? <button class="au-link" type="button" data-aumode="in">Log in</button></p>
+     </div>
+     <div class="au-v au-center" data-auview="check" hidden>
+      <span class="au-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></span>
+      <div class="au-hd"><h3>Check your inbox</h3><p>We sent a link to <b id="aucmail"></b>. Open it to confirm your account. You can close this page: the link signs you in.</p></div>
+      <div class="note" id="acnote" role="status"></div>
+      <button class="au-go" type="button" id="auresend"><span>Resend email</span></button>
+      <p class="au-sw">No email? Check your spam folder, or <button class="au-link" type="button" data-auv="main">use a different email</button>.</p>
+     </div>
+     <div class="au-v" data-auview="reset" hidden>
+      <div class="au-hd"><h3>Reset your password</h3><p>Type the email of your account. We will send you a link to choose a new password.</p></div>
+      <form class="au-f" id="aurform" novalidate>
+       <div class="fld"><label for="aremail">Email</label><input id="aremail" type="email" autocomplete="email" inputmode="email" spellcheck="false" autocapitalize="off" placeholder="you@example.com"></div>
+       <div class="note" id="arnote" role="status"></div>
+       <button class="au-go" type="submit" id="arsend"><span>Send link</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8.5 3.5 13 8l-4.5 4.5"/></svg></button>
+      </form>
+      <p class="au-sw"><button class="au-link" type="button" data-auv="main">Back to log in</button></p>
+     </div>
+     <div class="au-v" data-auview="newpass" hidden>
+      <div class="au-hd"><h3>Choose a new password</h3><p>Pick a password you do not use on other sites.</p></div>
+      <form class="au-f" id="anform" novalidate>
+       <input id="anuser" type="email" autocomplete="username" hidden>
+       <div class="fld"><div class="au-lrow"><label for="anpass">New password</label><span class="au-reqs" data-for="anpass"></span></div><div class="au-pw"><input id="anpass" type="password" autocomplete="new-password" placeholder="Create a password"></div></div>
+       <div class="fld"><label for="anpass2">Confirm new password</label><div class="au-pw"><input id="anpass2" type="password" autocomplete="new-password" placeholder="Enter your password again"></div></div>
+       <div class="note" id="annote" role="status"></div>
+       <button class="au-go" type="submit" id="ansave"><span>Save password</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8.5 3.5 13 8l-4.5 4.5"/></svg></button>
+      </form>
+     </div>
+     <div class="au-v" data-auview="wait" hidden aria-busy="true" aria-label="Signing you in…">
+      <i class="sk au-sk-h"></i><i class="sk au-sk-p"></i>
+      <i class="sk au-sk-l"></i><i class="sk au-sk-i"></i><i class="sk au-sk-l"></i><i class="sk au-sk-i"></i><i class="sk au-sk-b"></i>
+     </div>
     </div>
    </div>
-   <button class="au-guest" type="button" data-auguest>Continue as guest<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
-   <p class="au-small au-legal" data-in>By continuing you agree to the <a href="#/terms" data-aulegal="terms">Terms of Use</a> and the <a href="#/privacy" data-aulegal="privacy">Privacy Policy</a>.</p>
+   <div class="au-foot"><span translate="no">© 2026 gameplay</span><span>By continuing, you agree to our <a href="#/terms" data-aulegal="terms">Terms of Use</a> and <a href="#/privacy" data-aulegal="privacy">Privacy Policy</a>.</span></div>
   </div>
  </div>
 </div>
@@ -376,10 +392,9 @@
  </div>
 </div>
 
-<div class="ckbar" id="ckbar" hidden role="dialog" aria-modal="true" aria-labelledby="ckt" aria-describedby="ckd">
+<div class="ckbar" id="ckbar" hidden role="region" aria-labelledby="ckt" aria-describedby="ckd">
  <div class="ck-card">
-  <span class="au-ico"><svg viewBox="0 0 24 24"><path d="M21 12.5A9 9 0 1 1 11.5 3a3.5 3.5 0 0 0 4 4 3.5 3.5 0 0 0 5.5 5.5z"/><path d="M8 10h.01M12 15h.01M8 16h.01M16 15.5h.01M12 10.5h.01"/></svg></span>
-  <h3 id="ckt">Cookies and terms</h3>
+  <h3 id="ckt"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.5A9 9 0 1 1 11.5 3a3.5 3.5 0 0 0 4 4 3.5 3.5 0 0 0 5.5 5.5z"/><path d="M8 10h.01M12 15h.01M8 16h.01M16 15.5h.01M12 10.5h.01"/></svg><span>Cookies and terms</span></h3>
   <p id="ckd">We keep your records, saves and settings in this browser so the site works. With your OK we also count which games are played, to make the site better. No ads, nothing is sold.</p>
   <label class="au-chk" id="ckagree"><input type="checkbox" id="ckterms"><span>I agree to the <a href="#/terms" data-aulegal="terms">Terms of Use</a> and the <a href="#/privacy" data-aulegal="privacy">Privacy Policy</a></span></label>
   <div class="note bad" id="cknote" role="alert"></div>

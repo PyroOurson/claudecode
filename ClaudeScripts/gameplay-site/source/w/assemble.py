@@ -124,7 +124,7 @@ head = f'''<!doctype html>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%236d4cf5'/%3E%3Cpath d='M12.5 10v12l10-6z' fill='%23fff' stroke='%23fff' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <script>document.documentElement.setAttribute('data-theme','light');try{{var t=(JSON.parse(localStorage.getItem('gameplay:v1')||'{{}}')||{{}}).prefs||{{}};if(t.theme==='dark')document.documentElement.setAttribute('data-theme','dark');if(t.theme==='system')document.documentElement.removeAttribute('data-theme');if(t.motion)document.documentElement.classList.add('rm');if(t.thumbs===false)document.documentElement.classList.add('nothumb')}}catch(e){{}}</script>
 <style>
 '''

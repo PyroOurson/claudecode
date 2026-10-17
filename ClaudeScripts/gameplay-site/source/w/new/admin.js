@@ -102,7 +102,7 @@ async function adLoad() {
   if (!adIsAdmin() || AD.busy) return;
   AD.busy = true;
   $('#adref').classList.add('spin');
-  if (!AD.users) $('#adt tbody').innerHTML = `<tr><td colspan="15" class="adm-empty">${esc(auT('Loading…'))}</td></tr>`;
+  if (!AD.users) { $('#adt tbody').innerHTML = ('<tr aria-hidden="true">' + '<td><i class="sk sk-td"></i></td>'.repeat(AD_COLS.length) + '</tr>').repeat(7); $('#adtiles').innerHTML = '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(6); }
   try {
     const r = await adRpc('admin_list_users');
     AD.users = Array.isArray(r) ? r : [];
@@ -225,27 +225,27 @@ async function adAct(k, b) {
     const r = b.dataset.adrole;
     if (r === u.role) return;
     if (!adConfirm(b)) return;
-    b.disabled = true; auMsg('adprn', 'Saving…');
+    b.disabled = true; b.classList.add('is-busy'); auMsg('adprn', '');
     try { await adRpc('admin_set_role', { p_uid: u.id, p_role: r }); u.role = r; auMsg('adprn', r === 'admin' ? 'This user is now an admin.' : 'This user is now a regular user.', 'ok'); track('admin', { act: 'role' }); if (SB.user && u.id === SB.user.id && r !== 'admin') { adCheck(); return; } }
     catch (e) { auMsg('adprn', adErr(e), 'bad'); }
-    finally { b.disabled = false; }
+    finally { b.disabled = false; b.classList.remove('is-busy'); }
   } else if (k === 'pw') {
     const pw = $('#adpw').value;
     if (pw.length < 8) { auMsg('adpwn', 'Use at least 8 characters.', 'bad'); auShake($('#adpw').closest('.au-pw')); return; }
     if (utf8Len(pw) > 72) { auMsg('adpwn', 'Use at most 72 characters.', 'bad'); return; }
     if (!adConfirm(b)) return;
-    b.disabled = true; auMsg('adpwn', 'Saving…');
+    b.disabled = true; b.classList.add('is-busy'); auMsg('adpwn', '');
     try { const r = await adRpc('admin_set_password', { p_uid: u.id, p_password: pw }); $('#adpw').value = ''; auMsg('adpwn', r === 'signed_out' ? 'New password saved. They were signed out on their devices.' : 'New password saved.', 'ok'); track('admin', { act: 'password' }); }
     catch (e) { auMsg('adpwn', adErr(e), 'bad'); }
-    finally { b.disabled = false; }
+    finally { b.disabled = false; b.classList.remove('is-busy'); }
     return;
   } else if (k === 'lock') {
     const on = !u.locked;
     if (!adConfirm(b)) return;
-    b.disabled = true; auMsg('adln', 'Saving…');
+    b.disabled = true; b.classList.add('is-busy'); auMsg('adln', '');
     try { await adRpc('admin_lock', { p_uid: u.id, p_locked: on, p_reason: on ? $('#adlr').value : null }); u.locked = on; u.locked_reason = on ? (String($('#adlr').value).replace(/\s+/g, ' ').trim().slice(0, 500) || null) : null; auMsg('adln', on ? 'Account locked. They now only see the blocked page.' : 'Account unlocked.', 'ok'); track('admin', { act: on ? 'lock' : 'unlock' }); }
     catch (e) { auMsg('adln', adErr(e), 'bad'); }
-    finally { b.disabled = false; }
+    finally { b.disabled = false; b.classList.remove('is-busy'); }
   }
   adTiles(); adDraw(); adPanel(u, true);
   adLoad();
@@ -266,7 +266,7 @@ const tkNote = (el, m, k) => { const n = el.querySelector('.tk-note'); n.textCon
 async function tkLoad(el) {
   const T = el._tk;
   if (!SB.user || (T.mode === 'admin' && !adIsAdmin())) return;
-  if (!T.list) el.querySelector('.tk-list').innerHTML = `<div class="adm-empty">${esc(auT('Loading…'))}</div>`;
+  if (!T.list) el.querySelector('.tk-list').innerHTML = '<i class="sk sk-tk" aria-hidden="true"></i>'.repeat(4);
   try {
     const r = await adRpc(T.mode === 'admin' ? 'admin_tickets' : 'my_tickets');
     T.list = Array.isArray(r) ? r : [];
@@ -294,7 +294,7 @@ async function tkOpen(el, id) {
   T.cur = id; T.sig = '';
   const t = (T.list || []).find(x => x.id === id);
   el.querySelector('.tk-subj').textContent = t ? t.subject : '';
-  el.querySelector('.tk-msgs').innerHTML = `<div class="adm-empty">${esc(auT('Loading…'))}</div>`;
+  el.querySelector('.tk-msgs').innerHTML = '<i class="sk sk-msg" aria-hidden="true"></i>'.repeat(4);
   tkHead(el);
   tkShow(el, true); tkNote(el, '');
   el.querySelectorAll('.tk-item').forEach(b => b.classList.toggle('on', +b.dataset.id === id));
@@ -328,7 +328,7 @@ async function tkThread(el) {
 async function tkSend(el) {
   const T = el._tk, ta = el.querySelector('.tk-comp textarea'), b = el.querySelector('.tk-comp button'), v = ta.value.trim();
   if (!v || !T.cur) { auShake(ta); return; }
-  b.disabled = true; tkNote(el, '');
+  b.disabled = true; b.classList.add('is-busy'); tkNote(el, '');
   try {
     await adRpc('ticket_send', { p_ticket: T.cur, p_body: v });
     ta.value = '';
@@ -336,7 +336,7 @@ async function tkSend(el) {
     await tkThread(el);
     await tkLoad(el); tkHead(el);
   } catch (e) { tkNote(el, adErr(e), 'bad'); }
-  finally { b.disabled = false; }
+  finally { b.disabled = false; b.classList.remove('is-busy'); }
 }
 async function tkCreate(el) {
   const f = el.querySelector('.tk-new'), s = f.querySelector('.tk-subj-in'), m = f.querySelector('.tk-body-in'), b = f.querySelector('[type=submit]');
@@ -365,7 +365,7 @@ async function tkAct(el, k, b) {
     b.disabled = true;
     try { const s = await adRpc('ticket_set_status', { p_ticket: t.id, p_status: t.status === 'open' ? 'closed' : 'open' }); t.status = s; tkHead(el); tkList(el); track('ticket', { act: s }); tkLoad(el); }
     catch (e) { tkNote(el, adErr(e), 'bad'); }
-    finally { b.disabled = false; }
+    finally { b.disabled = false; b.classList.remove('is-busy'); }
   }
 }
 function adSupport() {

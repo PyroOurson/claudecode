@@ -58,11 +58,17 @@ button:disabled{opacity:.6;cursor:default}
 .m{min-height:20px;margin:12px 0 0;font-size:14px;color:var(--muted)}.m.b{color:var(--bad)}
 .c{animation:in .45s cubic-bezier(.22,.8,.2,1)}@keyframes in{from{opacity:0;transform:translateY(12px) scale(.97)}}
 button{transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s}button:active{transform:scale(.97)}
-.sp{position:fixed;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:4px solid var(--soft);border-top-color:var(--accent);animation:spin .8s linear infinite,fade .3s .25s backwards}
+.sp{position:fixed;inset:0;display:grid;place-items:center;padding:16px;animation:fade .3s .2s backwards}
 .sp[hidden]{display:none}@keyframes spin{to{transform:rotate(360deg)}}@keyframes fade{from{opacity:0}}
+.sp>div{width:min(481px,100%);padding:40px;border-radius:26px;background:var(--card);border:1px solid var(--line);box-shadow:0 14px 36px -10px rgba(60,40,150,.12)}
+.sp i{display:block;height:52px;margin-top:16px;border-radius:11px;background:var(--soft) linear-gradient(100deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%) 0 0/300% 100% no-repeat;animation:sh 1.5s linear infinite}
+.sp i:first-child{width:62%;height:34px;margin:0}.sp i:nth-child(2){width:88%;height:15px;margin:14px 0 28px}
+@keyframes sh{from{background-position:100% 0}to{background-position:0 0}}
+button.bz{position:relative;color:transparent}button.bz::after{content:"";position:absolute;inset:0;margin:auto;width:18px;height:18px;border-radius:50%;border:2.5px solid var(--ink-a);border-right-color:transparent;animation:spin .7s linear infinite}
+@media (prefers-reduced-motion:reduce){.sp i,button.bz::after{animation:none}}
 .shake{animation:sh .35s}@keyframes sh{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 </style><script>try{var t=(JSON.parse(localStorage.getItem('gameplay:v1')||'{}')||{}).prefs||{};if(t.theme==='dark'||(t.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.className='dk'}catch(e){}</script></head><body>
-<div class="sp" id="sp" hidden></div><form class="c" id="f" autocomplete="off"><div class="lg"><i>&#9654;</i>gameplay</div><h1 id="h">Enter the password</h1><p id="t">This site is private.</p><input id="p" type="password" placeholder="Password" autofocus aria-label="Password"><button id="b">Unlock</button><div class="m" id="m"></div></form>
+<div class="sp" id="sp" hidden aria-label="Loading"><div><i></i><i></i><i></i><i></i><i></i></div></div><form class="c" id="f" autocomplete="off"><div class="lg"><i>&#9654;</i>gameplay</div><h1 id="h">Enter the password</h1><p id="t">This site is private.</p><input id="p" type="password" placeholder="Password" autofocus aria-label="Password"><button id="b">Unlock</button><div class="m" id="m"></div></form>
 <script>
 (() => {
   const D = { s: '${salt.toString('base64')}', i: '${iv.toString('base64')}', n: ${iter}, c: '${ct.toString('base64')}', d: ${JSON.stringify(plan.dir)}, p: ${JSON.stringify(pre)} };
@@ -104,12 +110,13 @@ button{transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s}button
     e.preventDefault();
     const pw = $('p').value;
     if (!pw) return;
-    $('b').disabled = true; $('m').className = 'm'; $('m').textContent = 'Checking…';
+    $('b').disabled = true; $('b').classList.add('bz'); $('m').className = 'm'; $('m').textContent = '';
     let raw;
     let txt;
     try { raw = await derive(pw); txt = await show(raw); }
     catch (x) { txt = null; }
-    if (txt != null) { st.f = 0; st.k = enc(raw); wr(st); warm(); put(txt, raw); return; }
+    if (txt != null) { st.f = 0; st.k = enc(raw); wr(st); warm(); $('f').style.visibility = 'hidden'; $('sp').hidden = false; requestAnimationFrame(() => put(txt, raw)); return; }
+    $('b').classList.remove('bz');
     {
       st = rd(); st.f = (st.f || 0) + 1; delete st.k; wr(st);
       if (st.f >= MAX) { lock(); return; }

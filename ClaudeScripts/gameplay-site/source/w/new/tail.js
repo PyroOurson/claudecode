@@ -597,7 +597,7 @@ function waitStart(g) {
   const box = document.createElement('div');
   box.style.cssText = 'position:relative;width:min(100%,' + (g.width || 880) + 'px);aspect-ratio:16/10;max-height:calc(100dvh - var(--goff, 250px));margin:0 auto';
   frame.append(box);
-  const t = setTimeout(() => { if (pend !== g || !box.isConnected) return; const el = document.createElement('div'); el.className = 'g-loading'; el.innerHTML = '<i></i><span>Loading…</span>'; box.append(el); }, 200);
+  const t = setTimeout(() => { if (pend !== g || !box.isConnected) return; const el = document.createElement('div'); el.className = 'g-loading pg-sk'; el.innerHTML = '<i></i><span>Loading…</span>'; box.append(el); }, 200);
   need(g).then(r => {
     clearTimeout(t);
     if (pend !== g) return;
@@ -821,6 +821,7 @@ function countUp(box) {
   requestAnimationFrame(step);
 }
 function setOpen(k) {
+  if (auLocked() && (openK === 'mauth' || k !== 'mauth')) { if (openK !== 'mauth') auGate(); return; }
   openK = openK === k ? null : k;
   Object.keys(MENUS).forEach(m => { const on = m === openK; const el = $(MENUS[m][0]); if (el) vis(el, on); if (MENUS[m][1]) $(MENUS[m][1]).setAttribute('aria-expanded', String(on)); });
   const modal = !!openK && /modal/.test(MENUS[openK][0]);
@@ -836,6 +837,7 @@ function setOpen(k) {
   if (openK === 'mauth') auShow();
   if (openK === 'msupport') adSupport();
   fbtnState();
+  ckPlace();
 }
 function closeAll() { if (openK) setOpen(openK); }
 function showPane(p) {
@@ -856,7 +858,7 @@ function renderProfileBits() {
   const p = getProfile(), un = String(p.username || '').trim(), dn = String(p.displayName || '').trim(), name = dn || un;
   document.querySelectorAll('[data-pic]').forEach(el => { if (name) el.textContent = name[0].toUpperCase(); else el.innerHTML = USER_ICON; });
   document.querySelectorAll('[data-pname]').forEach(el => { el.textContent = name || 'Guest'; });
-  document.querySelectorAll('[data-psub]').forEach(el => { el.textContent = un ? '@' + un : SB.user ? SB.user.email || 'Signed in' : 'Playing as a guest'; });
+  document.querySelectorAll('[data-psub]').forEach(el => { el.textContent = un ? '@' + un : SB.user ? SB.user.email || 'Signed in' : 'Not signed in'; });
   document.querySelectorAll('[data-pun]').forEach(el => { el.textContent = un ? '@' + un : 'No username yet'; });
 }
 function fillProfile() {
@@ -884,6 +886,7 @@ function ago(t) {
   return d <= 0 ? 'Today' : d === 1 ? 'Yesterday' : d < 7 ? d + ' days ago' : d < 14 ? 'Last week' : new Date(t).toLocaleDateString('en', { month: 'short', day: 'numeric' });
 }
 function renderStats() {
+  if (SB.user && !SY.at && !SB.fail) { $('#stbody').innerHTML = '<div class="tiles" aria-hidden="true">' + '<div class="tile"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(4) + '</div><i class="sk sk-blk"></i><i class="sk sk-blk2"></i>'; return; }
   const ids = Object.keys(S.plays).filter(id => byId.has(id));
   const plays = ids.reduce((n, id) => n + S.plays[id], 0), time = Object.keys(S.time).filter(id => byId.has(id)).reduce((n, id) => n + S.time[id], 0);
   const days = [];
@@ -970,6 +973,7 @@ function route() {
   const pop = fromPop; fromPop = false;
   const loc = parseLocation();
   if (loc.legal) return openLegal(loc.legal);
+  if (auLocked() && (loc.game || loc.admin)) { SB.blk = 1; closeGame(); showView('home'); renderHome(); auGate(); return; }
   if (loc.admin) return adRoute();
   if (loc.game) {
     const g = loc.game;
@@ -1144,7 +1148,7 @@ function boot() {
   $('#uncancel').addEventListener('click', unClose);
   $('#unew').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#uncont').click(); } });
   $('#unmodal').addEventListener('click', e => { e.stopPropagation(); if (e.target === e.currentTarget || e.target.closest('[data-unclose]')) unClose(); });
-  $('#dosignout').addEventListener('click', () => { closeAll(); if (SB.user) { auSignOut(); return; } toast('Accounts are coming soon. You are playing as a guest.'); track('soon', { what: 'sign_out' }); });
+  $('#dosignout').addEventListener('click', () => { closeAll(); if (SB.user) { auSignOut(); return; } toast('Accounts are coming soon.'); track('soon', { what: 'sign_out' }); });
   $('#delc').addEventListener('input', e => { $('#delbtn').disabled = e.target.value !== 'DELETE'; });
   $('#delbtn').addEventListener('click', () => { say('delnote', 'Your data was deleted. Reloading…', 1); deleteData(); });
   $('#dl').addEventListener('click', async () => { let extra = null; if (SB.user) { say('datanote', 'Preparing your file…'); try { extra = await sbRest('rpc/export_my_data', { method: 'POST', body: {} }); } catch (e) { extra = { error: 'Could not download your account data. Try again later.' }; } } downloadData(extra); say('datanote', 'Your data file was downloaded.', 1); track('data_download', {}); });

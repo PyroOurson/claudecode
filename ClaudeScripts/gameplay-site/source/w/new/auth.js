@@ -15,6 +15,7 @@ function gpNetWrap(g, net) {
   return net;
 }
 
+['load', 'error'].forEach(t => document.addEventListener(t, e => { const m = e.target; if (m && m.tagName === 'IMG') m.classList.add('ld'); }, true));
 const SB_STORE = 'sb-gameplay-auth', SYK = 'gameplay:sync', VIDK = 'gameplay:vid', SAVE_P = 'gameplay:save:';
 const UN_RE = /^[a-z0-9_.]{3,20}$/, GID_RE = /^[a-z0-9][a-z0-9-]{0,39}$/, EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const sbBase = () => PATH_MODE ? location.origin + '/' : location.origin + location.pathname;
@@ -280,15 +281,16 @@ async function sySync(o = {}) {
   } finally {
     SB.syncing = false;
     if (SB.again) { SB.again = false; syNudge(1500); }
+    if (openK === 'mstats' && $('#stbody .sk')) renderStats();
     auSyncNote();
   }
 }
 
 const auState = () => !SB.on ? 'off' : SB.user ? 'in' : 'out';
 const auT = s => window.gpI18n ? gpI18n.t(s) : s;
-const GUEST_K = 'gameplay:guest';
+const auLocked = () => SB.on && !SB.user;
 const auCoarse = () => !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
-function auMsg(id, m, kind) { const n = $('#' + id); if (!n) return; n.textContent = m || ''; n.className = 'note' + (kind ? ' ' + kind : ''); }
+function auMsg(id, m, kind) { const n = $('#' + id); if (!n) return; const set = () => { n.textContent = m || ''; n.className = 'note' + (kind ? ' ' + kind : ''); }; if (n.closest('#aucard') && (n.textContent || '') !== (m || '')) auMorph(set); else set(); }
 function auShake(el) { if (!el) return; el.classList.remove('au-shake'); void el.offsetWidth; el.classList.add('au-shake'); }
 function auErrText(e) {
   const m = String(e && (e.message || e.error_description || e) || ''), c = String(e && e.code || '');
@@ -328,118 +330,163 @@ function auRender() {
   if (openK === 'friends') frOpen();
 }
 function auGoogleUi() {
-  const ok = !!(SB.on && SB.set && SB.set.external && SB.set.external.google);
-  document.querySelectorAll('[data-auth="google"]').forEach(b => { b.disabled = !ok; b.title = ok ? '' : 'Coming soon'; if (b.classList.contains('btn2')) b.textContent = ok ? 'Continue' : 'Coming soon'; });
-  $('#ausoon').hidden = ok;
+  const ok = !!(SB.on && !(SB.set && SB.set.external && SB.set.external.google === false));
+  document.querySelectorAll('[data-auth="google"]').forEach(b => { if (!b.classList.contains('is-busy')) b.disabled = !ok; b.title = ok ? '' : 'Coming soon'; const em = b.querySelector('em'); if (em) em.hidden = ok; if (b.classList.contains('btn2')) b.textContent = ok ? 'Continue' : 'Coming soon'; });
 }
 function auSettings() {
   if (!SB.on || SB.set) return;
   if (!SB.gs) SB.gs = fetch(SUPABASE_URL.replace(/\/+$/, '') + '/auth/v1/settings', { headers: { apikey: SUPABASE_ANON_KEY }, credentials: 'omit', cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null).then(j => { SB.gs = null; if (j && j.external) { SB.set = j; auGoogleUi(); } });
 }
+const AU_ORD = ['in', 'up', 'reset', 'check', 'newpass', 'wait'], AU_E = 'cubic-bezier(.22,.8,.2,1)';
+const auKey = v => v === 'main' ? (SB.mode === 'up' ? 'up' : 'in') : v;
+const auNote = () => SB.view === 'main' ? (SB.mode === 'up' ? 'auupnote' : 'aunote') : { reset: 'arnote', newpass: 'annote', check: 'acnote' }[SB.view] || 'aunote';
+function auSettle() {
+  const c = $('#aucard');
+  if (!c) return;
+  clearTimeout(SB.mt);
+  c.getAnimations().forEach(a => a.cancel());
+  c.querySelectorAll('.au-v').forEach(v => { v.getAnimations().forEach(a => a.cancel()); if (v.classList.contains('au-out')) { v.hidden = true; v.classList.remove('au-out'); v.style.top = ''; } });
+  c.classList.remove('au-morph');
+}
+function auMorph(fn) {
+  const c = $('#aucard');
+  if (!c || openK !== 'mauth' || !motionOK() || c.classList.contains('au-morph')) { fn(); return; }
+  const h0 = c.offsetHeight;
+  fn();
+  const h1 = c.offsetHeight;
+  if (Math.abs(h1 - h0) < 2) return;
+  c.classList.add('au-morph');
+  const a = c.animate([{ height: h0 + 'px' }, { height: h1 + 'px' }], { duration: 240, easing: AU_E });
+  a.onfinish = a.oncancel = () => c.classList.remove('au-morph');
+}
 function auView(v) {
   SB.view = v;
-  const up = SB.mode === 'up';
-  document.querySelectorAll('[data-auview]').forEach(el => { const on = el.dataset.auview === v; if (on && el.hidden) { el.classList.remove('au-in'); void el.offsetWidth; el.classList.add('au-in'); } el.hidden = !on; });
-  const tabs = $('#autabs');
-  tabs.hidden = v !== 'main'; tabs.dataset.m = SB.mode;
-  tabs.querySelectorAll('[data-aumode]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.aumode === SB.mode)));
-  document.querySelectorAll('#auform [data-up]').forEach(el => { el.hidden = !up; });
-  $('#aut').textContent = up ? 'Create your account' : 'Welcome back';
-  $('#ausub').textContent = up ? 'Keep your records and saves on every device and add friends.' : 'Log in to keep your records and saves on every device.';
-  $('#auel').textContent = up ? 'Email' : 'Email or username';
-  const em = $('#auemail');
-  em.type = up ? 'email' : 'text'; em.autocomplete = up ? 'email' : 'username'; em.inputMode = up ? 'email' : 'text';
-  $('#aupass').autocomplete = up ? 'new-password' : 'current-password';
-  $('#aupass').placeholder = up ? 'At least 8 characters' : '';
-  $('#augo').textContent = up ? 'Create account' : 'Log in';
-  $('#auforgot').hidden = up;
-  $('#aumodal .au-legal').hidden = (up && v === 'main') || v === 'newpass';
-  $('#aumodal .au-guest').hidden = v === 'newpass' || !!SB.user;
+  const k = auKey(v), c = $('#aucard');
+  const from = c.querySelector('.au-v:not([hidden]):not(.au-out)'), to = c.querySelector('[data-auview="' + k + '"]');
   document.querySelectorAll('#aumodal .au-eye[aria-pressed="true"]').forEach(b => auEye(b, true));
+  if (from !== to) {
+    auSettle();
+    const anim = !!from && motionOK() && openK === 'mauth' && !$('#aumodal').hidden;
+    const h0 = c.offsetHeight, top = from ? from.offsetTop : 0;
+    c.querySelectorAll('.au-v').forEach(el => { el.hidden = el !== to; });
+    if (anim) {
+      const h1 = c.offsetHeight, d = AU_ORD.indexOf(k) > AU_ORD.indexOf(from.dataset.auview) ? 1 : -1;
+      from.hidden = false; from.classList.add('au-out'); from.style.top = top + 'px';
+      c.classList.add('au-morph');
+      c.animate([{ height: h0 + 'px' }, { height: h1 + 'px' }], { duration: 320, easing: AU_E });
+      from.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (-d * 26) + 'px)' }], { duration: 170, easing: 'ease-in', fill: 'forwards' });
+      to.animate([{ opacity: 0, transform: 'translateX(' + (d * 26) + 'px)' }, { opacity: 1, transform: 'none' }], { duration: 290, delay: 60, easing: AU_E, fill: 'backwards' });
+      SB.mt = setTimeout(auSettle, 360);
+    }
+  }
   auResendTick();
+}
+function auFocus() {
+  const f = { newpass: '#anpass', reset: '#aremail', main: SB.mode === 'up' ? '#auupemail' : '#auemail' }[SB.view], n = f && $(f);
+  if (n && SB.on && !auCoarse() && openK === 'mauth') n.focus({ preventScroll: true });
 }
 function auShow() {
   $('#auoff').hidden = SB.on;
   if (SB.on) { sbClient().catch(() => {}); auSettings(); }
-  ['aunote', 'arnote', 'annote', 'acnote'].forEach(id => auMsg(id, ''));
-  auView(['newpass', 'reset', 'check'].includes(SB.view) ? SB.view : 'main');
+  ['aunote', 'auupnote', 'arnote', 'annote', 'acnote'].forEach(id => auMsg(id, ''));
+  document.querySelectorAll('#aumodal .au-err').forEach(e => auFieldErr(e.closest('.fld').querySelector('input'), ''));
+  auView(['newpass', 'reset', 'check', 'wait'].includes(SB.view) ? SB.view : 'main');
   auBusy(false);
-  setTimeout(() => { const f = { newpass: '#anpass', reset: '#aremail', main: SB.mode === 'up' ? '#auuser' : '#auemail' }[SB.view]; const n = f && $(f); if (n && SB.on && !auCoarse() && openK === 'mauth') n.focus({ preventScroll: true }); }, 80);
+  setTimeout(auFocus, 80);
 }
 function auOpen(v, msg, kind, mode) {
-  SB.view = v;
   if (mode) SB.mode = mode;
-  if (openK !== 'mauth') setOpen('mauth'); else auView(v);
-  if (msg) auMsg(v === 'reset' ? 'arnote' : v === 'newpass' ? 'annote' : v === 'check' ? 'acnote' : 'aunote', msg, kind);
+  if (openK !== 'mauth') { SB.view = v; setOpen('mauth'); } else auView(v);
+  if (msg) auMsg(auNote(), msg, kind);
 }
-function auBusy(on, sel) {
-  document.querySelectorAll(sel || '#aumodal .au-card button, #aumodal .au-card input').forEach(b => { b.disabled = on || (!SB.on && !b.closest('#autabs, [data-auguest]')); });
-  $('#aumodal').classList.toggle('au-busy', !!on && !sel);
+function auBusy(on) {
+  const m = $('#aumodal');
+  document.querySelectorAll('#aumodal .au-card button, #aumodal .au-card input').forEach(b => { b.disabled = on || (!SB.on && !b.closest('[data-aumode]')); });
+  m.classList.toggle('au-busy', !!on);
+  m.querySelectorAll('.au-go.is-busy').forEach(b => b.classList.remove('is-busy'));
+  const v = m.querySelector('.au-v:not([hidden]):not(.au-out)'), g = v && v.querySelector('.au-go');
+  if (on && g) { g.classList.add('is-busy'); g.setAttribute('aria-busy', 'true'); } else m.querySelectorAll('.au-go[aria-busy]').forEach(b => b.removeAttribute('aria-busy'));
   if (!on) { auGoogleUi(); auResendTick(); }
 }
-function auBad(id, m) { auMsg('aunote', m, 'bad'); const n = $('#' + id); if (!n) return; auShake(n.closest('.fld, .au-chk') || n); if (!auCoarse() || id !== 'auterms') n.focus({ preventScroll: true }); }
-function auGuest() {
-  try { (SB.on ? localStorage : sessionStorage).setItem(GUEST_K, '1'); } catch (e) {}
-  track('auth', { act: 'guest' });
-  if (openK === 'mauth') closeAll();
+function auFieldErr(inp, m) {
+  if (!inp) return;
+  const f = inp.closest('.fld');
+  let e = f && f.querySelector('.au-err');
+  if (!m && !e && !inp.hasAttribute('aria-invalid')) return;
+  auMorph(() => {
+    if (!m) { if (e) e.remove(); inp.removeAttribute('aria-invalid'); inp.removeAttribute('aria-describedby'); return; }
+    if (!e) { e = document.createElement('div'); e.className = 'au-err'; e.id = inp.id + '-err'; f.append(e); }
+    e.textContent = m;
+    inp.setAttribute('aria-invalid', 'true'); inp.setAttribute('aria-describedby', e.id);
+  });
 }
-function auFirst() {
-  let seen = false;
-  try { seen = !!(localStorage.getItem(GUEST_K) || sessionStorage.getItem(GUEST_K)); } catch (e) {}
-  if (seen || SB_RET || sbHasSession() || openK || view === 'legal') return;
-  SB.mode = 'up'; SB.view = 'main';
+function auBad(id, m) {
+  const n = $('#' + id);
+  if (!n) return;
+  auFieldErr(n, m);
+  auShake(n.closest('.fld') || n);
+  n.focus({ preventScroll: true });
+}
+function auGate() {
+  if (!auLocked() || openK === 'mauth') return;
+  if (openK) { const k = openK; openK = null; const el = $(MENUS[k][0]); if (el) vis(el, false); }
+  const w = SB.rt || (!SB.chk && sbHasSession());
+  if (w && !SB.gw) { SB.gw = 1; setTimeout(auGate, 250); return; }
+  SB.view = w ? 'wait' : 'main';
+  if (SB.view === 'main') SB.mode = SB.mode === 'up' ? 'up' : 'in';
   setOpen('mauth');
+  clearTimeout(SB.gt);
+  if (SB.view === 'wait') SB.gt = setTimeout(() => { if (auLocked() && openK === 'mauth' && SB.view === 'wait') { SB.rt = false; SB.chk = true; auView('main'); } }, 12000);
 }
-async function auGoogle() {
+function auWait(on) {
+  clearTimeout(SB.wt);
+  document.documentElement.classList.toggle('au-wait', !!on);
+  if (on) SB.wt = setTimeout(() => auWait(false), 10000);
+}
+async function auGoogle(b) {
   if (!SB.on) return;
   const inModal = openK === 'mauth';
-  if (inModal) auMsg('aunote', 'Opening Google…');
+  if (b) { b.classList.add('is-busy'); b.disabled = true; }
+  if (inModal) auMsg(auNote(), '');
   try {
     try { sessionStorage.setItem('gameplay:authback', location.pathname + location.search + location.hash); } catch (e) {}
     const c = await sbClient();
     track('auth', { act: 'google' });
     const { error } = await c.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: sbRedirect('google'), queryParams: { prompt: 'select_account' } } });
     if (error) throw error;
+    setTimeout(() => { if (b) { b.classList.remove('is-busy'); auGoogleUi(); } }, 8000);
   } catch (e) {
-    if (inModal) auMsg('aunote', auErrText(e), 'bad'); else toast(auErrText(e));
+    if (b) { b.classList.remove('is-busy'); auGoogleUi(); }
+    if (inModal) auMsg(auNote(), auErrText(e), 'bad'); else toast(auErrText(e));
   }
 }
-async function auSubmit() {
-  if (!SB.on) return;
-  const up = SB.mode === 'up', id = $('#auemail').value.trim(), pw = $('#aupass').value;
-  if (up) {
-    const un = $('#auuser').value.trim().toLowerCase().replace(/^@/, '');
-    if (!UN_RE.test(un) || /^\.|\.$|\.\./.test(un)) return auBad('auuser', 'Choose a username: 3 to 20 lowercase letters, numbers, dots or underscores.');
-    if (!EMAIL_RE.test(id)) return auBad('auemail', 'Enter a valid email address.');
-    if (pw.length < 8) return auBad('aupass', 'Use at least 8 characters for your password.');
-    if (pw !== $('#aupass2').value) return auBad('aupass2', 'The two passwords are not the same.');
-    if (!$('#auterms').checked) return auBad('auterms', 'Tick the box to agree to the Terms of Use and the Privacy Policy.');
-    auBusy(true); auMsg('aunote', 'Creating your account…');
+const AU_REQ = [['8+ characters', v => v.length >= 8], ['1 letter', v => /\p{L}/u.test(v)], ['1 number', v => /\d/.test(v)]];
+const auPwOk = v => AU_REQ.every(r => r[1](v));
+function auReqs(inp) {
+  const box = inp && document.querySelector('.au-reqs[data-for="' + inp.id + '"]');
+  if (!box) return;
+  [...box.children].forEach((el, i) => { const ok = AU_REQ[i][1](inp.value), was = el.classList.contains('ok'); el.classList.toggle('ok', ok); el.classList.toggle('pop', ok && !was); });
+}
+function auUserCheck() {
+  clearTimeout(SB.ut);
+  const inp = $('#auuser'), un = inp.value.trim();
+  if (!SB.on || !un || !UN_RE.test(un) || /^\.|\.$|\.\./.test(un)) return;
+  SB.ut = setTimeout(async () => {
     try {
-      const c = await sbClient();
       const free = await sbRest('rpc/username_available', { method: 'POST', body: { p_name: un }, auth: false });
-      if (!free) { auBusy(false); auBad('auuser', 'That username is taken or not allowed. Try another one.'); return; }
-      const lp = getProfile(), data = { username: un };
-      if (lp.displayName) data.display_name = String(lp.displayName).slice(0, 32);
-      SB.loud = true;
-      const r = await c.auth.signUp({ email: id, password: pw, options: { emailRedirectTo: sbRedirect('signup'), data } });
-      if (r.error) throw r.error;
-      const u = r.data && r.data.user;
-      if (u && Array.isArray(u.identities) && !u.identities.length) throw { code: 'user_already_exists' };
-      track('auth', { act: 'signup' });
-      $('#aupass').value = ''; $('#aupass2').value = '';
-      if (r.data && r.data.session) { closeAll(); return; }
-      SB.loud = false; SB.cmail = id; SB.rsAt = Date.now() + 60000;
-      $('#aucmail').textContent = id;
-      auView('check'); auMsg('aunote', '');
-    } catch (e) { SB.loud = false; auMsg('aunote', auErrText(e), 'bad'); }
-    finally { auBusy(false); }
-    return;
-  }
+      if (inp.value.trim() !== un) return;
+      auFieldErr(inp, free ? '' : 'That username is taken or not allowed. Try another one.');
+    } catch (e) {}
+  }, 350);
+}
+async function auLogin() {
+  if (!SB.on) return;
+  const id = $('#auemail').value.trim(), pw = $('#aupass').value;
+  auMsg('aunote', '');
   if (!id) return auBad('auemail', 'Enter your email or username.');
   if (id.includes('@') && !EMAIL_RE.test(id)) return auBad('auemail', 'Enter a valid email address.');
   if (!pw) return auBad('aupass', 'Enter your password.');
-  auBusy(true); auMsg('aunote', 'Logging in…');
+  auBusy(true);
   let email = id;
   try {
     const c = await sbClient();
@@ -452,6 +499,7 @@ async function auSubmit() {
     const r = await c.auth.signInWithPassword({ email, password: pw });
     if (r.error) throw r.error;
     track('auth', { act: 'signin', by: id.includes('@') ? 'email' : 'username' });
+    auWait(true);
     $('#aupass').value = ''; closeAll();
   } catch (e) {
     SB.loud = false;
@@ -460,16 +508,48 @@ async function auSubmit() {
   }
   finally { auBusy(false); }
 }
+async function auSignup() {
+  if (!SB.on) return;
+  const id = $('#auupemail').value.trim(), id2 = $('#auupemail2').value.trim(), pw = $('#auuppass').value;
+  const un = $('#auuser').value.trim().toLowerCase().replace(/^@/, '');
+  auMsg('auupnote', '');
+  if (!EMAIL_RE.test(id)) return auBad('auupemail', 'Enter a valid email address.');
+  if (id.toLowerCase() !== id2.toLowerCase()) return auBad('auupemail2', 'The two email addresses do not match.');
+  if (!UN_RE.test(un) || /^\.|\.$|\.\./.test(un)) return auBad('auuser', 'Choose a username: 3 to 20 lowercase letters, numbers, dots or underscores.');
+  if (!auPwOk(pw)) return auBad('auuppass', 'Use at least 8 characters with 1 letter and 1 number.');
+  auBusy(true);
+  try {
+    const c = await sbClient();
+    const free = await sbRest('rpc/username_available', { method: 'POST', body: { p_name: un }, auth: false });
+    if (!free) { auBusy(false); auBad('auuser', 'That username is taken or not allowed. Try another one.'); return; }
+    const lp = getProfile(), data = { username: un };
+    if (lp.displayName) data.display_name = String(lp.displayName).slice(0, 32);
+    SB.loud = true;
+    const r = await c.auth.signUp({ email: id, password: pw, options: { emailRedirectTo: sbRedirect('signup'), data } });
+    if (r.error) throw r.error;
+    const u = r.data && r.data.user;
+    if (u && Array.isArray(u.identities) && !u.identities.length) throw { code: 'user_already_exists' };
+    track('auth', { act: 'signup' });
+    $('#auuppass').value = ''; auReqs($('#auuppass'));
+    if (r.data && r.data.session) { auWait(true); closeAll(); return; }
+    SB.loud = false; SB.cmail = id; SB.rsAt = Date.now() + 60000;
+    $('#aucmail').textContent = id;
+    auView('check');
+  } catch (e) { SB.loud = false; auMsg('auupnote', auErrText(e), 'bad'); }
+  finally { auBusy(false); }
+}
 function auResendTick() {
   clearTimeout(SB.rsT);
   const b = $('#auresend'), left = Math.ceil((syNum(SB.rsAt) - Date.now()) / 1000);
-  if (!b) return;
-  if (left > 0 && SB.view === 'check') { b.disabled = true; b.textContent = auT('Resend email in {n} s').replace('{n}', left); SB.rsT = setTimeout(auResendTick, 1000); }
-  else { b.disabled = !SB.on; b.textContent = 'Resend email'; }
+  if (!b || b.classList.contains('is-busy')) return;
+  const s = b.firstElementChild;
+  if (left > 0 && SB.view === 'check') { b.disabled = true; s.textContent = auT('Resend email in {n} s').replace('{n}', left); SB.rsT = setTimeout(auResendTick, 1000); }
+  else { b.disabled = !SB.on; s.textContent = 'Resend email'; }
 }
 async function auResend() {
   if (!SB.on || !SB.cmail || syNum(SB.rsAt) > Date.now()) return;
-  $('#auresend').disabled = true; auMsg('acnote', 'Sending…');
+  const b = $('#auresend');
+  b.disabled = true; b.classList.add('is-busy'); auMsg('acnote', '');
   try {
     const c = await sbClient();
     const { error } = await c.auth.resend({ type: 'signup', email: SB.cmail, options: { emailRedirectTo: sbRedirect('signup') } });
@@ -478,13 +558,14 @@ async function auResend() {
     track('auth', { act: 'resend' });
     auMsg('acnote', 'Sent again. Use the newest email: it replaces the old link.', 'ok');
   } catch (e) { auMsg('acnote', auErrText(e), 'bad'); }
-  finally { auResendTick(); }
+  finally { b.classList.remove('is-busy'); auResendTick(); }
 }
 async function auReset() {
   if (!SB.on) return;
   const email = $('#aremail').value.trim();
-  if (!EMAIL_RE.test(email)) { auMsg('arnote', 'Enter a valid email address.', 'bad'); auShake($('#aremail').closest('.fld')); return; }
-  auBusy(true); auMsg('arnote', 'Sending…');
+  auMsg('arnote', '');
+  if (!EMAIL_RE.test(email)) return auBad('aremail', 'Enter a valid email address.');
+  auBusy(true);
   try {
     const c = await sbClient();
     const { error } = await c.auth.resetPasswordForEmail(email, { redirectTo: sbRedirect('recovery') });
@@ -497,14 +578,15 @@ async function auReset() {
 async function auNewPass() {
   if (!SB.on) return;
   const pw = $('#anpass').value;
-  if (pw.length < 8) { auMsg('annote', 'Use at least 8 characters.', 'bad'); auShake($('#anpass').closest('.fld')); return; }
-  if (pw !== $('#anpass2').value) { auMsg('annote', 'The two passwords are not the same.', 'bad'); auShake($('#anpass2').closest('.fld')); return; }
-  auBusy(true); auMsg('annote', 'Saving…');
+  auMsg('annote', '');
+  if (!auPwOk(pw)) return auBad('anpass', 'Use at least 8 characters with 1 letter and 1 number.');
+  if (pw !== $('#anpass2').value) return auBad('anpass2', 'The two passwords are not the same.');
+  auBusy(true);
   try {
     const c = await sbClient();
     const { error } = await c.auth.updateUser({ password: pw });
     if (error) throw error;
-    $('#anpass').value = ''; $('#anpass2').value = ''; SB.view = 'main';
+    $('#anpass').value = ''; $('#anpass2').value = ''; auReqs($('#anpass')); SB.view = 'main';
     auMsg('annote', 'Password saved. You are logged in.', 'ok');
     setTimeout(() => { if (openK === 'mauth') closeAll(); }, 1400);
   } catch (e) { auMsg('annote', auErrText(e), 'bad'); }
@@ -514,25 +596,25 @@ async function auChangeEmail() {
   const email = $('#auem2').value.trim();
   if (!EMAIL_RE.test(email)) { auMsg('auemnote', 'Enter a valid email address.', 'bad'); return; }
   if (SB.user && email.toLowerCase() === String(SB.user.email || '').toLowerCase()) { auMsg('auemnote', 'That is already your email address.', 'bad'); return; }
-  const b = $('#auemsave'); b.disabled = true; auMsg('auemnote', 'Sending…');
+  const b = $('#auemsave'); b.disabled = true; b.classList.add('is-busy'); auMsg('auemnote', 'Sending…');
   try {
     const { error } = await SB.c.auth.updateUser({ email }, { emailRedirectTo: sbRedirect('email') });
     if (error) throw error;
     auMsg('auemnote', 'Check your inbox: open the link we sent to confirm the change. You may get a link at your old address too.', 'ok');
   } catch (e) { auMsg('auemnote', auErrText(e), 'bad'); }
-  finally { b.disabled = false; }
+  finally { b.disabled = false; b.classList.remove('is-busy'); }
 }
 async function auChangePass() {
   const pw = $('#aupw2').value;
   if (pw.length < 8) { auMsg('aupwnote', 'Use at least 8 characters.', 'bad'); return; }
-  const b = $('#aupwsave'); b.disabled = true; auMsg('aupwnote', 'Saving…');
+  const b = $('#aupwsave'); b.disabled = true; b.classList.add('is-busy'); auMsg('aupwnote', 'Saving…');
   try {
     const { error } = await SB.c.auth.updateUser({ password: pw });
     if (error) throw error;
     $('#aupw2').value = '';
     auMsg('aupwnote', 'Password saved.', 'ok');
   } catch (e) { auMsg('aupwnote', auErrText(e), 'bad'); }
-  finally { b.disabled = false; }
+  finally { b.disabled = false; b.classList.remove('is-busy'); }
 }
 async function auSignOut() {
   if (!SB.c) return;
@@ -540,19 +622,19 @@ async function auSignOut() {
   try { await Promise.race([sySync(), new Promise(r => setTimeout(r, 4000))]); } catch (e) {}
   try { await SB.c.auth.signOut({ scope: 'local' }); } catch (e) {}
   track('auth', { act: 'signout' });
-  toast('Signed out. You are playing as a guest.');
+  toast('Signed out.');
 }
 async function auDeleteAccount() {
-  const b = $('#adelbtn'); b.disabled = true; auMsg('adelnote', 'Deleting your account…');
+  const b = $('#adelbtn'); b.disabled = true; b.classList.add('is-busy'); auMsg('adelnote', 'Deleting your account…');
   try {
     const r = await sbRest('rpc/delete_my_account', { method: 'POST', body: {} });
     SY = syNew(); sySave();
     try { await SB.c.auth.signOut({ scope: 'local' }); } catch (e) {}
-    $('#adelc').value = '';
+    $('#adelc').value = ''; b.classList.remove('is-busy');
     auMsg('adelnote', '');
     closeAll();
-    toast(r === 'requested' ? 'Your account will be deleted. You are now playing as a guest.' : 'Your account was deleted. You are now playing as a guest.');
-  } catch (e) { auMsg('adelnote', 'Could not delete your account. Check your connection and try again.', 'bad'); b.disabled = false; }
+    toast(r === 'requested' ? 'Your account will be deleted.' : 'Your account was deleted.');
+  } catch (e) { auMsg('adelnote', 'Could not delete your account. Check your connection and try again.', 'bad'); b.disabled = false; b.classList.remove('is-busy'); }
 }
 async function auResetCloud() {
   const uid = SB.user.id;
@@ -613,7 +695,7 @@ async function auUsername() {
     return;
   }
   const b = $('#uncont'), back = m => { unStep = 1; $('#un1').hidden = false; $('#un2').hidden = true; $('#unt').textContent = old ? 'Change username' : 'Choose a username'; $('#uncont').textContent = old ? 'Continue' : 'Save'; auMsg('unerr', m, 'bad'); };
-  b.disabled = true;
+  b.disabled = true; b.classList.add('is-busy');
   try {
     const free = await sbRest('rpc/username_available', { method: 'POST', body: { p_name: raw } });
     if (!free) { back('That username is taken or not allowed. Try another one.'); return; }
@@ -627,17 +709,17 @@ async function auUsername() {
     if (!old) toast('Welcome, @' + raw);
   } catch (e) {
     back(e.code === '23505' ? 'That username is taken. Try another one.' : e.code === '23514' ? 'That username is not allowed.' : 'Could not save. Check your connection and try again.');
-  } finally { b.disabled = false; }
+  } finally { b.disabled = false; b.classList.remove('is-busy'); }
 }
 async function auDisplayName(v) {
-  const b = $('#dnsave'); b.disabled = true;
+  const b = $('#dnsave'); b.disabled = true; b.classList.add('is-busy');
   try {
     const r = await sbRest('profiles?id=eq.' + SB.user.id + '&select=' + AU_SEL, { method: 'PATCH', body: { display_name: v }, prefer: 'return=representation' });
     if (r && r[0]) SB.prof = r[0];
     setProfile({ displayName: v });
     say('dnnote', 'Display name saved.', 1);
   } catch (e) { say('dnnote', 'Could not save. Check your connection and try again.'); }
-  finally { b.disabled = false; }
+  finally { b.disabled = false; b.classList.remove('is-busy'); }
 }
 async function auSignedIn(ev) {
   const uid = SB.user.id, loud = SB.loud;
@@ -645,8 +727,10 @@ async function auSignedIn(ev) {
   SB.prof = null;
   FR.list = FR.req = null;
   auRender();
-  if (openK === 'mauth' && SB.view !== 'newpass') closeAll();
+  if (openK === 'mauth' && SB.view !== 'newpass' && !SB.rec) closeAll();
+  if (SB.blk && openK !== 'mauth') { SB.blk = 0; route(); }
   try { await auLoadProfile(); } catch (e) {}
+  auWait(false);
   if (!SB.user || SB.user.id !== uid) return;
   auRender();
   adCheck();
@@ -661,12 +745,17 @@ function auSignedOut() {
   if (SB.choosing && !$('#unmodal').hidden) unClose();
   SB.choosing = false;
   adSignedOut();
+  auWait(false);
   auRender();
+  if (cur || pend || view === 'game') go(homeHref(), true);
+  SB.mode = 'in'; auGate();
 }
 function auSession(ev, s) {
   SB.session = s || null;
   const u = s && s.user || null, was = SB.user;
   if (u && was && u.id === was.id) { SB.user = u; if (ev === 'USER_UPDATED') auRender(); return; }
+  SB.chk = true;
+  if (!u) { auWait(false); if (openK === 'mauth' && SB.view === 'wait' && !SB.rt) auView('main'); }
   if (!u && !was) { auRender(); return; }
   SB.user = u;
   if (u) auSignedIn(ev); else auSignedOut();
@@ -677,8 +766,10 @@ async function auReturn() {
   if (r.err) { auOpen(r.kind === 'recovery' ? 'reset' : 'main', auErrText({ message: r.err }), 'bad', 'in'); return; }
   if (!r.code) return;
   SB.loud = r.kind !== 'recovery' && r.kind !== 'email';
+  SB.rec = r.kind === 'recovery'; SB.rt = true;
   let error = null;
   try { const x = await SB.c.auth.exchangeCodeForSession(r.code); error = x.error; } catch (e) { error = e; }
+  SB.rec = false; SB.rt = false;
   if (error) {
     SB.loud = false;
     auOpen(r.kind === 'recovery' ? 'reset' : 'main', r.kind === 'signup' ? 'Your email is probably confirmed already. Log in with your email or username and your password.' : r.kind === 'recovery' ? 'This link has expired or was opened in another browser. Ask for a new one.' : r.kind === 'email' ? 'Open the link in the browser where you are logged in, or log in again.' : 'Sign-in did not finish. Please try again.', 'bad', 'in');
@@ -686,7 +777,7 @@ async function auReturn() {
   }
   track('auth', { act: 'return', kind: String(r.kind || '').slice(0, 12) });
   if (r.kind === 'recovery') { const em = SB.session && SB.session.user && SB.session.user.email; if (em) $('#anuser').value = em; auOpen('newpass'); }
-  else if (r.kind === 'email') toast('Your email address was updated');
+  else { if (openK === 'mauth' && SB.view === 'wait') closeAll(); if (r.kind === 'email') toast('Your email address was updated'); }
 }
 function auPatchLegal() {
   const lp = (k, a, b) => { if (LEGAL[k] && LEGAL[k][1].includes(a)) LEGAL[k][1] = LEGAL[k][1].replace(a, b); };
@@ -720,13 +811,22 @@ function lgOpen(k) {
   $('#lgback').focus({ preventScroll: true });
   track('ui', { open: 'legal_sheet', doc: k });
 }
-function lgClose() { $('#lgsheet').hidden = true; const f = !$('#ckbar').hidden ? $('#ckterms') : openK === 'mauth' ? $('#auterms') : null; if (f && !f.closest('[hidden]') && !auCoarse()) f.focus({ preventScroll: true }); }
+function lgClose() { $('#lgsheet').hidden = true; const f = !$('#ckbar').hidden ? $('#ckterms') : null; if (f && !f.closest('[hidden]') && !auCoarse()) f.focus({ preventScroll: true }); }
+function ckPlace() {
+  const ck = $('#ckbar'), inl = openK === 'mauth' && !ck.hidden && innerWidth <= 1140, w = $('#aumodal .au-wrap');
+  if (inl === ck.classList.contains('ck-inline')) return;
+  ck.classList.toggle('ck-inline', inl);
+  if (inl) w.insertBefore(ck, w.querySelector('.au-foot')); else document.body.insertBefore(ck, $('#lgsheet'));
+}
 function ckChoose(k) {
-  if (!$('#ckterms').checked) { auMsg('cknote', 'Tick the box first to agree to the Terms of Use and the Privacy Policy.', 'bad'); auShake($('#ckagree')); $('#ckterms').focus({ preventScroll: true }); return; }
-  setConsent(k === 'all', k);
+  if (!$('#ckterms').checked) { auMsg('cknote', 'Tick the box first to agree to the Terms of Use and the Privacy Policy.', 'bad'); const a = $('#ckagree'); a.classList.add('ck-want'); auShake(a); $('#ckterms').focus({ preventScroll: true }); return; }
+  const ck = $('#ckbar');
+  if (motionOK() && !ck.classList.contains('ck-bye')) { ck.classList.add('ck-bye'); setTimeout(() => { ck.classList.remove('ck-bye'); setConsent(k === 'all', k); }, 220); }
+  else setConsent(k === 'all', k);
   toast(k === 'all' ? 'Thanks! Cookie choice saved' : 'Cookie choice saved');
 }
 const FR = { q: '', seq: 0, t: 0, list: null, req: null, res: null, rq: '', rres: [] };
+const SK_ROWS = '<div class="frow sk-row" aria-hidden="true"><i class="sk sk-pic"></i><div class="fr-n"><i class="sk sk-l1"></i><i class="sk sk-l2"></i></div></div>'.repeat(3);
 function frRow(p, acts, hl) {
   const un = p.username || '', dn = p.display_name || un, n = Math.min(hl || 0, un.length);
   const u = n ? `<mark>${esc(un.slice(0, n))}</mark>${esc(un.slice(n))}` : esc(un);
@@ -749,14 +849,15 @@ function frDraw() {
   if (searching) {
     const res = FR.res;
     $('#res-h').textContent = res == null ? auT('Searching…') : res.length >= 20 ? auT('{n}+ players').replace('{n}', 20) : res.length === 1 ? auT('1 player') : res.length ? auT('{n} players').replace('{n}', res.length) : auT('Players');
-    if (res) frFill($('#fres'), res.map(p => [p.username, frRow(p, isF.has(p.username) ? '<span class="fr-tag">Friend</span>' : inc.has(p.username) ? `<button class="btn2 pri" type="button" data-fr="accept" data-id="${+inc.get(p.username).id}">Accept</button>` : out.has(p.username) ? '<span class="fr-tag">Requested</span>' : `<button class="btn2 pri" type="button" data-fr="add" data-un="${esc(p.username)}">Add friend</button>`, q.length)]), `<div class="nofr">${esc(auT('No player has a username starting with “{q}”.').replace('{q}', q))}</div>`);
+    if (!res) $('#fres').innerHTML = SK_ROWS;
+    else frFill($('#fres'), res.map(p => [p.username, frRow(p, isF.has(p.username) ? '<span class="fr-tag">Friend</span>' : inc.has(p.username) ? `<button class="btn2 pri" type="button" data-fr="accept" data-id="${+inc.get(p.username).id}">Accept</button>` : out.has(p.username) ? '<span class="fr-tag">Requested</span>' : `<button class="btn2 pri" type="button" data-fr="add" data-un="${esc(p.username)}">Add friend</button>`, q.length)]), `<div class="nofr">${esc(auT('No player has a username starting with “{q}”.').replace('{q}', q))}</div>`);
   }
   $('#g-req').hidden = searching || !rq.length;
   $('#req-n').textContent = rq.length;
   frFill($('#req-l'), rq.slice().sort((a, b) => (a.direction === 'incoming' ? 0 : 1) - (b.direction === 'incoming' ? 0 : 1)).map(r => ['r' + r.id, frRow(r, r.direction === 'incoming' ? `<button class="btn2 pri" type="button" data-fr="accept" data-id="${+r.id}">Accept</button><button class="btn2" type="button" data-fr="decline" data-id="${+r.id}">Decline</button>` : `<span class="fr-tag">Sent</span><button class="btn2" type="button" data-fr="cancel" data-id="${+r.id}">Cancel</button>`)]), '');
   $('#g-fr').hidden = searching;
   $('#fr-n').textContent = fl.length;
-  frFill($('#fr-l'), fl.map(f => ['f' + f.friend_id, frRow(f, `<button class="btn2" type="button" data-fr="remove" data-id="${esc(f.friend_id)}">Remove</button>`)]), `<div class="nofr">${FR.list ? 'No friends yet. Type a username above to find someone.' : 'Loading…'}</div>`);
+  frFill($('#fr-l'), fl.map(f => ['f' + f.friend_id, frRow(f, `<button class="btn2" type="button" data-fr="remove" data-id="${esc(f.friend_id)}">Remove</button>`)]), FR.list ? '<div class="nofr">No friends yet. Type a username above to find someone.</div>' : SK_ROWS);
   const pcf = $('#pcf'); if (pcf && FR.list) pcf.textContent = fl.length;
 }
 async function frLoad() {
@@ -790,7 +891,8 @@ function frInput() {
   if (q.length < 2) { FR.seq++; FR.res = null; frDraw(); if (q.length === 1) auMsg('anote', 'Type at least 2 letters.'); return; }
   if (!/^[a-z0-9_.]+$/.test(q)) { FR.seq++; FR.res = []; frDraw(); return; }
   if (FR.rq && q.startsWith(FR.rq) && FR.rres.length < 20) { FR.seq++; FR.res = FR.rres.filter(p => p.username.startsWith(q)); frDraw(); return; }
-  if (FR.res) { FR.res = FR.res.filter(p => p.username.startsWith(q)); frDraw(); }
+  if (FR.res) FR.res = FR.res.filter(p => p.username.startsWith(q));
+  frDraw();
   FR.t = setTimeout(frSearch, 150);
 }
 async function frSearch() {
@@ -806,7 +908,7 @@ async function frSearch() {
 async function frAct(k, b) {
   if (!SB.user) return;
   if (k === 'remove' && !b.dataset.c) { b.dataset.c = '1'; b.textContent = 'Click again to remove'; b.classList.add('dangerfill'); setTimeout(() => { if (b.isConnected) { delete b.dataset.c; b.textContent = 'Remove'; b.classList.remove('dangerfill'); } }, 4000); return; }
-  b.disabled = true;
+  b.disabled = true; b.classList.add('is-busy');
   const id = b.dataset.id, name = (b.closest('.frow').querySelector('.fr-n span') || {}).textContent || '';
   try {
     if (k === 'add') {
@@ -826,13 +928,12 @@ async function frAct(k, b) {
       track('friend', { act: 'remove' });
     }
     await frLoad();
-  } catch (e) { b.disabled = false; auMsg('anote', 'Could not update. Check your connection and try again.', 'bad'); }
+  } catch (e) { b.disabled = false; b.classList.remove('is-busy'); auMsg('anote', 'Could not update. Check your connection and try again.', 'bad'); }
 }
 addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
-  const s = document.getElementById('lgsheet'), c = document.getElementById('ckbar');
-  if (s && !s.hidden) { e.preventDefault(); e.stopImmediatePropagation(); lgClose(); return; }
-  if (c && !c.hidden) e.stopImmediatePropagation();
+  const s = document.getElementById('lgsheet');
+  if (s && !s.hidden) { e.preventDefault(); e.stopImmediatePropagation(); lgClose(); }
 }, true);
 function auBoot() {
   const ck = $('#ckbar'), ls = $('#lgsheet'), am = $('#aumodal'), fm = $('#fmodal');
@@ -851,7 +952,11 @@ function auBoot() {
     if (lg) { e.preventDefault(); lgOpen(lg.dataset.aulegal || lg.dataset.legal); }
   });
   ['keydown', 'keyup'].forEach(t => ls.addEventListener(t, e => { if (e.key !== 'Escape') e.stopPropagation(); }));
-  if (!ck.hidden) document.documentElement.classList.add('ck-open');
+  const ckFit = () => { if (!ck.hidden) document.documentElement.style.setProperty('--ckh', (ck.offsetHeight + (innerWidth <= 600 ? 16 : 28)) + 'px'); };
+  if (!ck.hidden) { document.documentElement.classList.add('ck-open'); ckFit(); if (window.ResizeObserver) new ResizeObserver(ckFit).observe(ck); else addEventListener('resize', ckFit); }
+  addEventListener('resize', ckPlace);
+  const req = AU_REQ.map(r => `<span class="au-req"><svg viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5"/><path class="x" d="M3.5 3.5l3 3M6.5 3.5l-3 3"/><path class="k" d="M3 5.2l1.4 1.4L7.1 3.8"/></svg><span>${r[0]}</span></span>`).join('');
+  document.querySelectorAll('#aumodal .au-reqs').forEach(b => { b.innerHTML = req; auReqs($('#' + b.dataset.for)); });
   document.querySelectorAll('#aumodal .au-pw').forEach(w => w.insertAdjacentHTML('beforeend', EYE));
   am.addEventListener('mousedown', e => { if (e.target.closest('.au-eye')) e.preventDefault(); });
   am.addEventListener('click', e => {
@@ -860,26 +965,27 @@ function auBoot() {
     const eye = t.closest('.au-eye');
     if (eye) { auEye(eye); return; }
     const md = t.closest('[data-aumode]');
-    if (md) { if (SB.mode !== md.dataset.aumode) { SB.mode = md.dataset.aumode; auMsg('aunote', ''); auView('main'); } return; }
-    if (t.closest('[data-auguest]')) { e.stopPropagation(); auGuest(); }
+    if (md) { if (SB.mode !== md.dataset.aumode || SB.view !== 'main') { SB.mode = md.dataset.aumode; auMsg(SB.mode === 'up' ? 'auupnote' : 'aunote', ''); auView('main'); setTimeout(auFocus, 120); } return; }
   });
-  $('#autabs').addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); SB.mode = SB.mode === 'up' ? 'in' : 'up'; auView('main'); $('#autabs [aria-selected="true"]').focus(); } });
-  $('#auform').addEventListener('submit', e => { e.preventDefault(); auSubmit(); });
+  $('#auform').addEventListener('submit', e => { e.preventDefault(); auLogin(); });
+  $('#auupform').addEventListener('submit', e => { e.preventDefault(); auSignup(); });
   $('#aurform').addEventListener('submit', e => { e.preventDefault(); auReset(); });
   $('#anform').addEventListener('submit', e => { e.preventDefault(); auNewPass(); });
   $('#auresend').addEventListener('click', auResend);
-  $('#auforgot').addEventListener('click', () => { const v = $('#auemail').value.trim(); if (v.includes('@')) $('#aremail').value = v; auView('reset'); auMsg('arnote', ''); if (!auCoarse()) $('#aremail').focus(); });
-  $('#auuser').addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; });
-  am.querySelectorAll('input').forEach(i => i.addEventListener('input', () => { const f = i.closest('.fld, .au-chk'); if (f) f.classList.remove('au-shake'); }));
+  $('#auforgot').addEventListener('click', () => { const v = $('#auemail').value.trim(); if (v.includes('@')) $('#aremail').value = v; auMsg('arnote', ''); auView('reset'); setTimeout(auFocus, 120); });
+  $('#auuser').addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; auUserCheck(); });
+  $('#auuser').addEventListener('blur', e => { const v = e.target.value.trim(); if (v && (!UN_RE.test(v) || /^\.|\.$|\.\./.test(v))) auFieldErr(e.target, 'Use 3 to 20 lowercase letters, numbers, dots or underscores.'); });
+  $('#auupemail2').addEventListener('blur', e => { const a = $('#auupemail').value.trim(), b = e.target.value.trim(); if (a && b && a.toLowerCase() !== b.toLowerCase()) auFieldErr(e.target, 'The two email addresses do not match.'); });
+  am.querySelectorAll('input').forEach(i => i.addEventListener('input', () => { const f = i.closest('.fld'); if (f) { f.classList.remove('au-shake'); if (i.id !== 'auuser') auFieldErr(i, ''); else if (f.querySelector('.au-err')) auFieldErr(i, ''); } if (i.closest('.au-pw')) auReqs(i); }));
   fm.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'fname') { e.preventDefault(); e.stopPropagation(); clearTimeout(FR.t); frSearch(); } }, true);
   fm.addEventListener('input', e => { if (e.target.id === 'fname') { e.stopPropagation(); frInput(); } }, true);
   fm.addEventListener('click', e => { const b = e.target.closest('[data-fr]'); if (b) { e.stopPropagation(); frAct(b.dataset.fr, b); } });
   document.addEventListener('click', e => {
     const t = e.target;
     const g = t.closest && t.closest('[data-auth="google"]');
-    if (g) { e.preventDefault(); auGoogle(); return; }
+    if (g) { e.preventDefault(); if (!g.disabled) auGoogle(g); return; }
     const v = t.closest && t.closest('[data-auv]');
-    if (v) { auView(v.dataset.auv); auMsg('aunote', ''); return; }
+    if (v) { if (v.dataset.auv === 'main') SB.mode = 'in'; auView(v.dataset.auv); auMsg(auNote(), ''); setTimeout(auFocus, 120); return; }
   });
   auGoogleUi();
   if (SB.on) {
@@ -899,11 +1005,14 @@ function auBoot() {
     document.addEventListener('visibilitychange', () => { if (!SB.user) return; if (document.visibilityState === 'hidden') sySync({ keep: true }); else if (Date.now() - syNum(SY.at) > 180000) sySync(); });
     addEventListener('pagehide', () => { if (SB.user) sySync({ keep: true }); });
     setInterval(() => { if (SB.user && cur && document.visibilityState !== 'hidden') sySync(); }, 120000);
-    if (SB_RET || sbHasSession()) sbClient().then(() => auReturn()).catch(() => { if (SB_RET) toast('Sign-in could not load. Check your connection and reload the page.'); });
+    if (SB_RET && SB_RET.code) SB.rt = true;
+    if (!sbHasSession() && !SB.rt) SB.chk = true;
+    if (SB_RET || sbHasSession()) sbClient().then(() => auReturn()).catch(() => { auWait(false); SB.rt = false; SB.chk = true; if (openK === 'mauth') auOpen('main', 'Sign-in could not load. Check your connection and reload the page.', 'bad', 'in'); else toast('Sign-in could not load. Check your connection and reload the page.'); });
     auSettings();
   }
+  try { localStorage.removeItem('gameplay:guest'); sessionStorage.removeItem('gameplay:guest'); } catch (e) {}
   auRender();
-  auFirst();
+  auGate();
 }
 Ameplay.account = {
   get enabled() { return SB.on; },
