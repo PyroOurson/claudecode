@@ -159,7 +159,6 @@
     <aside class="pcard">
      <span class="pic" data-pic></span><b data-pname></b><span id="pcun"></span><span id="pcsince"></span>
      <div class="tiles"><div class="tile"><small>Games</small><b id="pcg">0</b></div><div class="tile"><small>Records</small><b id="pcr">0</b></div><div class="tile"><small>Friends</small><b id="pcf">0</b></div></div>
-     <div class="fld pfid"><label for="fid">Friend ID</label><div class="unrow"><input id="fid" value="Coming soon" readonly><button class="btn2" type="button" id="cpid" disabled>Copy</button></div></div>
     </aside>
     <div class="pmain">
      <div class="scard"><h4>Username</h4>
@@ -259,8 +258,8 @@
        <div class="srw"><div><b>Privacy Policy</b></div><a class="btn2" href="#/privacy" data-legal="privacy">Open</a></div>
        <div class="srw"><div><b>Cookie Policy</b></div><a class="btn2" href="#/cookies" data-legal="cookies">Open</a></div>
        <h4>Help</h4>
-       <div class="srw"><div><b>Contact support</b><small>Coming soon.</small></div><button class="btn2" type="button" data-soon="Support">Write to us</button></div>
-       <div class="srw"><div><b>Report a bug or a player</b><small>Coming soon.</small></div><button class="btn2" type="button" data-soon="Reports">Report</button></div>
+       <div class="srw"><div><b>Contact support</b><small>Send us a message. Replies show up in Support.</small></div><button class="btn2" type="button" data-go="msupport">Write to us</button></div>
+       <div class="srw"><div><b>Report a bug or a player</b><small>Open a support ticket and tell us what happened.</small></div><button class="btn2" type="button" data-go="msupport">Report</button></div>
        <div class="srw"><div><b>About</b><small id="about"></small></div></div>
       </div></section>
     </div>
@@ -331,7 +330,7 @@
      </div>
      <div class="au-v au-center" data-auview="check" hidden>
       <span class="au-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></span>
-      <div class="au-hd"><h3>Check your inbox</h3><p>We sent a 6-digit code to <b id="aucmail"></b>. <span data-ck="signup">Type it below to confirm your account.</span><span data-ck="recovery" hidden>Type it below to choose a new password.</span></p></div>
+      <div class="au-hd"><h3>Check your inbox</h3><p>We sent a 6-digit code to <b id="aucmail"></b>. <span data-cv="signup">Type it below to confirm your account.</span><span data-cv="recovery" hidden>Type it below to choose a new password.</span></p></div>
       <form class="au-f" id="acform" novalidate>
        <div class="fld"><label for="accode">Confirmation code</label><input id="accode" class="au-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" spellcheck="false" placeholder="000000"></div>
        <div class="note" id="acnote" role="status"></div>

@@ -233,22 +233,52 @@ function setBest(g, bump) {
 
 const glSet = new Set();
 let fsScale = 1, fsT = [0, 0], fitRaf = 0, fitTimer = 0;
+const c2Set = new Set();
+const gpBudget = () => Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * Math.pow(window.devicePixelRatio || 1, 2) * 1.05);
 function applyGlScale(s) {
-  const pr = Math.min(2.5, Math.min(window.devicePixelRatio || 1, 2) * Math.max(1, s));
-  glSet.forEach(({ renderer, THREE }) => {
+  const want = Math.max(1, Math.min(4, (window.devicePixelRatio || 1) * Math.max(1, s))), B = gpBudget();
+  glSet.forEach(e => {
     try {
+      const { renderer, THREE } = e, v = renderer.getSize(new THREE.Vector2());
+      let pr = Math.min(want, Math.sqrt(B / Math.max(1, v.x * v.y)));
+      if (e.cap) pr = Math.min(pr, e.cap);
       if (Math.abs(renderer.getPixelRatio() - pr) < 0.01) return;
-      const v = renderer.getSize(new THREE.Vector2());
-      renderer.setPixelRatio(pr); renderer.setSize(v.x, v.y, false);
-    } catch (e) {}
+      e.own = true; renderer.setPixelRatio(pr); renderer.setSize(v.x, v.y, false); e.own = false;
+    } catch (x) { e.own = false; }
   });
+  c2Set.forEach(e => { try { gpRaster(e, Math.min(want, Math.sqrt(B / Math.max(1, e.w * e.h)))); } catch (x) {} });
+}
+const GP_CTX = ['fillStyle', 'strokeStyle', 'font', 'lineWidth', 'lineCap', 'lineJoin', 'miterLimit', 'textAlign', 'textBaseline', 'globalAlpha', 'globalCompositeOperation', 'imageSmoothingEnabled', 'imageSmoothingQuality', 'shadowBlur', 'shadowColor', 'shadowOffsetX', 'shadowOffsetY', 'direction', 'letterSpacing', 'filter', 'lineDashOffset'];
+function gpRaster(e, d, force) {
+  if (e.manual && !force) return;
+  d = force ? d : Math.round(d * 20) / 20;
+  if (Math.abs(e.d - d) < 0.05 && !force) return;
+  e.busy = true;
+  try { gpRaster2(e, d); } finally { e.busy = false; }
+}
+function gpRaster2(e, d) {
+  const c = e.canvas, ctx = e.ctx, st = {};
+  GP_CTX.forEach(k => { if (k in ctx) st[k] = ctx[k]; });
+  const dash = ctx.getLineDash ? ctx.getLineDash() : null, m = ctx.getTransform(), tmp = document.createElement('canvas');
+  tmp.width = c.width; tmp.height = c.height;
+  if (c.width && c.height) tmp.getContext('2d').drawImage(c, 0, 0);
+  c.width = Math.round(e.w * d); c.height = Math.round(e.h * d);
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = true;
+  if (tmp.width && tmp.height) ctx.drawImage(tmp, 0, 0, c.width, c.height);
+  GP_CTX.forEach(k => { if (k in st) { try { ctx[k] = st[k]; } catch (x) {} } });
+  if (dash && ctx.setLineDash) ctx.setLineDash(dash);
+  const k = d / e.d;
+  ctx.setTransform(m.a * k, m.b * k, m.c * k, m.d * k, m.e * k, m.f * k);
+  e.d = d;
 }
 const shortQuery = window.matchMedia ? matchMedia('(max-height: 520px) and (orientation: landscape)') : { matches: false };
 const stageMode = () => gamebox.classList.contains('fs') ? 'fs' : (view === 'game' && gamebox.classList.contains('theater')) ? 'theater' : 'off';
 function fitStage() {
   const mode = stageMode();
   const frameEl = document.getElementById('frame'), st = document.getElementById('stage');
+  gpFill(mode === 'fs', frameEl, st);
   if (mode === 'off') {
+    st.style.background = '';
     if (fsScale !== 1) { frameEl.style.transform = ''; fsScale = 1; fsT = [0, 0]; applyGlScale(1); }
     if (st.style.height) st.style.height = '';
     return;
@@ -270,7 +300,9 @@ function fitStage() {
   if (mode === 'fs') {
     sh = st.clientHeight;
     const pad = root.querySelector('canvas') ? 0 : 20;
-    s = Math.max(0.3, Math.min((sw - pad * 2) / cw, (sh - pad * 2) / ch, 4));
+    if (gpHud(frameEl, cw, ch)) { requestAnimationFrame(fitStage); return; }
+    s = Math.max(0.3, Math.min((sw - pad * 2) / cw, (sh - pad * 2) / ch, 8));
+    gpEdge(root, st);
   } else {
     const pad = 12, bar = gamebox.querySelector('.play-bar');
     const short = shortQuery.matches;
@@ -289,6 +321,50 @@ function fitStage() {
 }
 const queueFit = () => { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(fitStage); };
 function startFitTimer() { clearInterval(fitTimer); fitTimer = setInterval(() => { if (stageMode() !== 'off') fitStage(); }, 1500); }
+function gpMain(frameEl) {
+  let best = null;
+  glSet.forEach(e => { if (e.canvas && frameEl.contains(e.canvas) && (!best || e.w0 * e.h0 > best.w0 * best.h0)) best = e; });
+  return best;
+}
+function gpFill(on, frameEl, st) {
+  const e = gpMain(frameEl);
+  if (!e) return;
+  if (e.noFill) on = false;
+  let w = e.w0, h = e.h0;
+  if (on) {
+    const A = st.clientWidth / Math.max(1, st.clientHeight), a = e.w0 / e.h0;
+    if (Math.abs(A - a) > 0.01) { if (A > a) w = Math.round(e.h0 * A); else h = Math.round(e.w0 / A); }
+  }
+  if (w === e.cw && h === e.ch && e.fill === on) return;
+  e.cw = w; e.ch = h; e.fill = on;
+  try { e.own = true; e.renderer.setSize(w, h, false); } catch (x) {} e.own = false;
+  e.canvas.style.width = `min(100%, ${w}px, calc((100dvh - var(--goff, 250px)) * ${(w / h).toFixed(4)}))`;
+  e.canvas.style.aspectRatio = `${w} / ${h}`;
+  if (on && w > e.w0) { if (frameEl.dataset.fw == null) frameEl.dataset.fw = frameEl.style.getPropertyValue('--fw'); frameEl.style.setProperty('--fw', w + 'px'); }
+  else if (frameEl.dataset.fw != null) { frameEl.style.setProperty('--fw', frameEl.dataset.fw); delete frameEl.dataset.fw; }
+  fsScale = 0;
+  if (on && (w !== e.w0 || h !== e.h0)) {
+    const r = e.canvas.offsetWidth / Math.max(1, e.canvas.offsetHeight);
+    if (Math.abs(r / (w / h) - 1) > 0.03) { e.noFill = true; gpFill(false, frameEl, st); }
+  }
+}
+function gpHud(frameEl, cw, ch) {
+  const e = gpMain(frameEl);
+  if (!e || !e.fill || e.noFill) return false;
+  if (Math.abs(e.canvas.offsetWidth / cw - 1) < 0.03 && Math.abs(e.canvas.offsetHeight / ch - 1) < 0.03) return false;
+  e.noFill = true;
+  gpFill(false, frameEl, document.getElementById('stage'));
+  return true;
+}
+function gpEdge(root, st) {
+  let col = '';
+  const c = root.querySelector('canvas');
+  if (c && !gpMain(document.getElementById('frame'))) {
+    try { if (c.width && c.height) { const t = gpEdge.t || (gpEdge.t = document.createElement('canvas')); t.width = 2; t.height = 1; const x = t.getContext('2d', { willReadFrequently: true }), y = Math.floor(c.height / 2); x.clearRect(0, 0, 2, 1); x.drawImage(c, 0, y, 1, 1, 0, 0, 1, 1); x.drawImage(c, c.width - 1, y, 1, 1, 1, 0, 1, 1); const d = x.getImageData(0, 0, 2, 1).data; if (d[3] > 200 && d[7] > 200) col = `rgb(${(d[0] + d[4]) >> 1},${(d[1] + d[5]) >> 1},${(d[2] + d[6]) >> 1})`; } } catch (x) {}
+  }
+  if (!col) { const b = getComputedStyle(root).backgroundColor; if (b && !/rgba\(\s*0,\s*0,\s*0,\s*0\)|transparent/.test(b)) col = b; }
+  st.style.background = col || '#000';
+}
 
 const libP = {};
 function loadLib(name, urls) {
@@ -1527,6 +1603,14 @@ function makeApi(g, root) {
       c.style.aspectRatio = `${w} / ${h}`;
       const ctx = c.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       parent.append(c);
+      const c2e = { canvas: c, ctx, w, h, d: dpr, d0: dpr, busy: false, manual: false };
+      ['setTransform', 'resetTransform', 'getImageData', 'putImageData'].forEach(k => {
+        const f = ctx[k];
+        if (typeof f !== 'function') return;
+        ctx[k] = function () { if (!c2e.busy && !c2e.manual) { c2e.manual = true; if (Math.abs(c2e.d - c2e.d0) > 0.01) gpRaster(c2e, c2e.d0, true); } return f.apply(ctx, arguments); };
+      });
+      c2Set.add(c2e); add(() => c2Set.delete(c2e));
+      if (fsScale !== 1) applyGlScale(fsScale);
       const toLocal = e => {
         const r = c.getBoundingClientRect(), p = e.touches ? (e.touches[0] || e.changedTouches[0]) : e;
         return { x: (p.clientX - r.left) * w / r.width, y: (p.clientY - r.top) * h / r.height };
@@ -1547,7 +1631,7 @@ function makeApi(g, root) {
       wait.remove();
       if (!alive) return null;
       const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', ...opts });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 3));
       renderer.setSize(w, h, false);
       renderer.outputEncoding = THREE.sRGBEncoding;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1559,7 +1643,17 @@ function makeApi(g, root) {
       c.style.aspectRatio = `${w} / ${h}`;
       root.append(c);
       add(() => { try { renderer.dispose(); renderer.forceContextLoss(); } catch (e) {} c.remove(); });
-      const glEntry = { renderer, THREE };
+      const glEntry = { renderer, THREE, canvas: c, w0: w, h0: h, cw: w, ch: h, own: false, cap: 0, fill: false };
+      const spr = renderer.setPixelRatio.bind(renderer), rnd = renderer.render.bind(renderer);
+      renderer.setPixelRatio = v => { if (!glEntry.own) glEntry.cap = v < (window.devicePixelRatio || 1) * 0.98 ? v : 0; return spr(v); };
+      renderer.render = (sc, cam) => {
+        if (cam && cam.isPerspectiveCamera && (glEntry.fill || cam.userData.gpA)) {
+          const a = glEntry.cw / glEntry.ch, b = cam.userData.gpA || glEntry.w0 / glEntry.h0;
+          if (Math.abs(cam.aspect - b) < 2e-3 && Math.abs(cam.aspect - a) > 1e-4) { cam.aspect = a; cam.updateProjectionMatrix(); }
+          if (Math.abs(cam.aspect - a) < 1e-4) cam.userData.gpA = a;
+        }
+        return rnd(sc, cam);
+      };
       glSet.add(glEntry); add(() => glSet.delete(glEntry));
       if (fsScale !== 1) applyGlScale(fsScale);
       const toLocal = e => {
@@ -2221,6 +2315,7 @@ function openGame(g) {
   pend = null;
   track('game_open', { game: g.id, src: clickSrc || 'link' });
   adSeen(g.id);
+  rtTrack();
   clickSrc = null;
   setHead(g.title + ' — play free online | gameplay', g.title + ' on gameplay: ' + (g.blurb || '') + ' Free to play in your browser, no download.', '/' + g.id);
   $('#pTitle').textContent = g.title;
@@ -2251,6 +2346,7 @@ function closeGame() {
   $('#stage').style.height = '';
   frame.style.transform = '';
   setHead(BASE_TITLE, BASE_DESC, '/');
+  rtTrack();
 }
 
 let view = '', homeY = 0;
@@ -2518,7 +2614,7 @@ function swVal(k) {
   if (k === 'thumbs') return thumbsOn();
   if (k === 'motion') return !!S.prefs.motion;
   if (k === 'p_game') return S.prefs.p_game !== false;
-  if (k === 'n_inv' || k === 'n_req') return S.prefs[k] !== false;
+  if (k === 'n_inv' || k === 'n_req' || k === 'n_msg' || k === 'n_game') return S.prefs[k] !== false;
   return !!S.prefs[k];
 }
 function syncSwitches() {
@@ -2530,7 +2626,7 @@ function setSwitch(k) {
   if (k === 'sound') { setMuted(!v); if (v) sfx('tap'); }
   else if (k === 'analytics') setConsent(v);
   else {
-    S.prefs[k] = v; save();
+    S.prefs[k] = v; save(); if (k === 'p_game') rtTrack();
     if (k === 'motion') document.documentElement.classList.toggle('rm', v);
     if (k === 'thumbs') { document.documentElement.classList.toggle('nothumb', !v); coverCache.clear(); if (view === 'home') renderHome(); else if (cur || pend) { const g = (cur && cur.g) || pend; $('#pThumb').innerHTML = img(g, true); $('#more').innerHTML = related(g).slice(0, 10).map(x => card(x, 'more')).join(''); renderSide(lastList); } }
   }
@@ -2728,7 +2824,7 @@ function boot() {
   $('#snav').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showPane(b.dataset.p); });
   showPane('account');
   document.querySelectorAll('.sech').forEach(b => b.addEventListener('click', () => { const g = $('#' + b.dataset.sec), c = g.classList.toggle('collapsed'); b.setAttribute('aria-expanded', String(!c)); }));
-  document.querySelectorAll('[data-sel]').forEach(s => s.addEventListener('change', () => { S.prefs[s.dataset.sel] = s.value; save(); track('setting', { k: s.dataset.sel, v: s.value }); }));
+  document.querySelectorAll('[data-sel]').forEach(s => s.addEventListener('change', () => { S.prefs[s.dataset.sel] = s.value; save(); track('setting', { k: s.dataset.sel, v: s.value }); rtTrack(); }));
   $('#dnsave').addEventListener('click', () => { const v = $('#dn').value.trim().replace(/\s+/g, ' '); if (!v) { say('dnnote', 'Enter a display name.'); return; } if (SB.user) { auDisplayName(v.slice(0, 24)); return; } setProfile({ displayName: v.slice(0, 24) }); say('dnnote', 'Display name saved.', 1); });
   $('#dn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#dnsave').click(); } });
   $('#unedit').addEventListener('click', () => { unStep = 1; $('#un1').hidden = false; $('#un2').hidden = true; $('#unt').textContent = $('#un').value ? 'Change username' : 'Choose a username'; $('#uncont').textContent = 'Continue'; $('#unew').value = $('#un').value; say('unerr', ''); $('#unmodal').hidden = false; $('#unew').focus(); $('#unew').select(); });
@@ -2794,6 +2890,8 @@ function boot() {
   lzIdle();
   auBoot();
   adBoot();
+  soBoot();
+  inBoot();
   if (S.recent.some(id => byId.get(id) && byId.get(id).is3d)) { const warmUp = () => loadThree().catch(() => {}); if (window.requestIdleCallback) requestIdleCallback(warmUp, { timeout: 4000 }); else setTimeout(warmUp, 1500); }
 }
 
@@ -3341,7 +3439,7 @@ function auCheck(email, kind, fresh) {
   SB.cmail = email; SB.ck = kind; SB.otpAt = fresh ? Date.now() : 0;
   if (fresh) SB.rsAt = Date.now() + 60000;
   $('#aucmail').textContent = email; $('#accode').value = ''; auMsg('acnote', '');
-  document.querySelectorAll('#aumodal [data-ck]').forEach(e => { e.hidden = e.dataset.ck !== kind; });
+  document.querySelectorAll('#aumodal [data-cv]').forEach(e => { e.hidden = e.dataset.cv !== kind; });
   if (kind === 'recovery') { back.removeAttribute('data-aumode'); back.dataset.auv = 'reset'; }
   else { back.removeAttribute('data-auv'); back.dataset.aumode = SB.mode === 'up' ? 'up' : 'in'; }
   auView('check'); setTimeout(auFocus, 120);
@@ -3569,6 +3667,7 @@ async function auSignedIn(ev) {
   if (!SB.user || SB.user.id !== uid) return;
   auRender();
   adCheck();
+  soStart();
   if (loud) toast(auT('Logged in as {name}').replace('{name}', SB.prof && SB.prof.username ? '@' + SB.prof.username : SB.user.email || 'you'));
   sySync();
   if (loud && SB.prof && !SB.prof.username) setTimeout(auChoose, 400);
@@ -3580,6 +3679,7 @@ function auSignedOut() {
   if (SB.choosing && !$('#unmodal').hidden) unClose();
   SB.choosing = false;
   adSignedOut();
+  soStop();
   auWait(false);
   auRender();
   if (cur || pend || view === 'game') go(homeHref(), true);
@@ -3692,7 +3792,8 @@ function frDraw() {
   frFill($('#req-l'), rq.slice().sort((a, b) => (a.direction === 'incoming' ? 0 : 1) - (b.direction === 'incoming' ? 0 : 1)).map(r => ['r' + r.id, frRow(r, r.direction === 'incoming' ? `<button class="btn2 pri" type="button" data-fr="accept" data-id="${+r.id}">Accept</button><button class="btn2" type="button" data-fr="decline" data-id="${+r.id}">Decline</button>` : `<span class="fr-tag">Sent</span><button class="btn2" type="button" data-fr="cancel" data-id="${+r.id}">Cancel</button>`)]), '');
   $('#g-fr').hidden = searching;
   $('#fr-n').textContent = fl.length;
-  frFill($('#fr-l'), fl.map(f => ['f' + f.friend_id, frRow(f, `<button class="btn2" type="button" data-fr="remove" data-id="${esc(f.friend_id)}">Remove</button>`)]), FR.list ? '<div class="nofr">No friends yet. Type a username above to find someone.</div>' : SK_ROWS);
+  const fo = f => (soOn(f.friend_id) ? 2 : 0) + (DM.inbox.some(c => c.other_id === f.friend_id && c.unread) ? 1 : 0);
+  frFill($('#fr-l'), fl.slice().sort((a, b) => fo(b) - fo(a)).map(f => ['f' + f.friend_id + (FR.open === f.friend_id ? 'o' : ''), soFriendRow(f)]), FR.list ? '<div class="nofr">No friends yet. Type a username above to find someone.</div>' : SK_ROWS);
   const pcf = $('#pcf'); if (pcf && FR.list) pcf.textContent = fl.length;
 }
 async function frLoad() {
@@ -3750,7 +3851,9 @@ async function frAct(k, b) {
       const r = await sbRest('rpc/send_friend_request', { method: 'POST', body: { p_username: b.dataset.un } });
       toast(r === 'accepted' ? auT('You are now friends with {u}').replace('{u}', name) : r === 'sent' ? auT('Friend request sent to {u}').replace('{u}', name) : r === 'already_friends' ? 'You are already friends' : 'That player was not found');
       track('friend', { act: 'request', r: String(r || '') });
+      FR.nudge = b.dataset.un;
     } else if (k === 'accept' || k === 'decline') {
+      const rq = (FR.req || []).find(x => x.id === +id); if (rq && k === 'accept') FR.nudgeId = rq.other_id;
       const r = await sbRest('rpc/respond_friend_request', { method: 'POST', body: { p_id: +id, p_accept: k === 'accept' } });
       if (r === 'accepted') toast(auT('You are now friends with {u}').replace('{u}', name));
       track('friend', { act: k });
@@ -3763,6 +3866,9 @@ async function frAct(k, b) {
       track('friend', { act: 'remove' });
     }
     await frLoad();
+    if (FR.nudge) { const un = FR.nudge, o = (FR.req || []).find(x => x.username === un) || (FR.list || []).find(x => x.username === un); FR.nudge = null; if (o) rtSend(o.other_id || o.friend_id, { t: 'fr' }); }
+    if (FR.nudgeId) { rtSend(FR.nudgeId, { t: 'fr' }); FR.nudgeId = null; }
+    ntBadge();
   } catch (e) { b.disabled = false; b.classList.remove('is-busy'); auMsg('anote', 'Could not update. Check your connection and try again.', 'bad'); }
 }
 addEventListener('keydown', e => {
@@ -3905,6 +4011,8 @@ async function adCheck(game) {
   try {
     const r = await adRpc('touch_presence', { p_lang: adLang(), p_game: game || (cur ? cur.g.id : null) });
     if (!SB.user || SB.user.id !== uid) return;
+    if (AD.del && Array.isArray(r) && !r.length) { AD.del = false; toast(auT('This account was deleted')); auSignOut(); return; }
+    AD.del = false;
     adStatus(Array.isArray(r) ? r[0] : null);
   } catch (e) { if (view === 'admin' && !AD.at) adBounce(); }
 }
@@ -3972,7 +4080,7 @@ async function adLoad() {
     if (AD.sel) { const u = AD.users.find(x => x.id === AD.sel); if (u) adPanel(u, true); }
   } catch (e) {
     if (/admins only/i.test(e.message || '')) { AD.role = 'user'; adStatus({ role: 'user', locked: false }); return; }
-    $('#adt tbody').innerHTML = `<tr><td colspan="15" class="adm-empty">${esc(auT('Could not load the users. Check your connection and try again.'))}</td></tr>`;
+    $('#adt tbody').innerHTML = `<tr><td colspan="${AD_COLS.length}" class="adm-empty">${esc(auT('Could not load the users. Check your connection and try again.'))}</td></tr>`;
   } finally { AD.busy = false; $('#adref').classList.remove('spin'); }
 }
 function adTiles() {
@@ -3984,21 +4092,23 @@ function adTiles() {
   countUp(box);
   const tn = $('#adtn'); tn.textContent = open || ''; tn.hidden = !open;
 }
+const adPw = u => u.has_password ? adPill('Set · hidden', 'ok') : adPill('None · Google only');
+const adHrs = sec => { const m = Math.round((+sec || 0) / 60); return m < 60 ? m + ' min' : (m / 60).toFixed(m < 600 ? 1 : 0) + ' h'; };
+const adDot = () => `<span class="adm-dot" title="${esc(auT('Online now'))}"></span>`;
 const AD_COLS = [
-  ['id', 'User id', u => `<code title="${esc(u.id)}">${esc(u.id.slice(0, 8))}</code>`],
-  ['created_at', 'Account created', u => `<span title="${esc(adDate(u.created_at, 1))}">${esc(adDate(u.created_at))}</span>`],
-  ['last_sign_in_at', 'Last log in', u => `<span title="${esc(adDate(u.last_sign_in_at, 1))}">${esc(adAgo(u.last_sign_in_at))}</span>`],
-  ['last_seen', 'Last used website', u => `<span title="${esc(adDate(u.last_seen, 1))}">${esc(adAgo(u.last_seen))}</span>`],
-  ['providers', 'Log in method', u => esc(adProv(u))],
-  ['email_confirmed', 'Email confirmed', u => u.email_confirmed ? adPill('Yes', 'ok') : adPill('No', 'warn')],
-  ['last_lang', 'Language', u => esc(adLangName(u.last_lang))],
-  ['', 'Password', () => `<span class="adm-mut">${esc(auT('Hidden (hashed)'))}</span>`],
-  ['role', 'Role', u => u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User')],
+  ['id', 'User id', u => `${adDot(u)}<code title="${esc(u.id)}">${esc(u.id.slice(0, 8))}</code>`],
   ['email', 'Email', u => esc(u.email || '—')],
   ['username', 'Username', u => u.username ? '@' + esc(u.username) : '<span class="adm-mut">—</span>'],
   ['display_name', 'Display name', u => esc(u.display_name || '—')],
-  ['friends', 'Friends', u => String(+u.friends || 0)],
+  ['last_sign_in_at', 'Last log in', u => `<span title="${esc(adDate(u.last_sign_in_at, 1))}">${esc(adAgo(u.last_sign_in_at))}</span>`],
+  ['last_seen', 'Last used website', u => `<span class="ls-on">${adPill('Online now', 'ok')}</span><span class="ls-off" title="${esc(adDate(u.last_seen, 1))}">${esc(adAgo(u.last_seen))}</span>`],
+  ['providers', 'Log in method', u => esc(adProv(u))],
+  ['created_at', 'Account created', u => `<span title="${esc(adDate(u.created_at, 1))}">${esc(adDate(u.created_at))}</span>`],
+  ['has_password', 'Password', adPw],
   ['fav_game', 'Favourite game', u => esc(adGame(u.fav_game))],
+  ['friends', 'Friends', u => String(+u.friends || 0)],
+  ['role', 'Role', u => u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User')],
+  ['email_confirmed', 'Email confirmed', u => u.email_confirmed ? adPill('Yes', 'ok') : adPill('No', 'warn')],
   ['locked', 'Locked', u => u.locked ? `<span title="${esc(u.locked_reason || '')}">${adPill('Locked', 'bad')}</span>` : adPill('No')]
 ];
 function adHead() {
@@ -4006,6 +4116,7 @@ function adHead() {
 }
 function adSortVal(u, k) {
   const v = k === 'providers' ? adProv(u) : u[k];
+  if (k === 'last_seen' && RT.pres[u.id]) return Date.now() + 1;
   if (/_at$|last_seen/.test(k)) return Date.parse(v) || 0;
   if (typeof v === 'boolean') return v ? 1 : 0;
   if (typeof v === 'number') return v;
@@ -4020,6 +4131,7 @@ function adRows() {
     if (f === 'unconfirmed') return !u.email_confirmed;
     if (f === 'google' || f === 'email') return (u.providers || []).includes(f);
     if (f === 'active') return now - Date.parse(u.last_seen || 0) < 6048e5;
+    if (f === 'online') return !!RT.pres[u.id];
     return true;
   }).sort((a, b) => { const x = adSortVal(a, k), y = adSortVal(b, k); const ex = x === '' || x === 0, ey = y === '' || y === 0; if (ex !== ey) return ex ? 1 : -1; return (x < y ? -1 : x > y ? 1 : 0) * d; });
 }
@@ -4027,15 +4139,21 @@ function adDraw() {
   adHead();
   const rows = adRows(), tb = $('#adt tbody');
   $('#adcount').textContent = auT('{n} of {t} users').replace('{n}', rows.length).replace('{t}', (AD.users || []).length);
-  tb.innerHTML = rows.length ? rows.map((u, i) => `<tr tabindex="0" data-uid="${esc(u.id)}" class="${u.id === AD.sel ? 'sel' : ''}" style="--i:${Math.min(i, 14)}">${AD_COLS.map(c => `<td>${c[2](u)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="15" class="adm-empty">${esc(auT('No users match.'))}</td></tr>`;
+  tb.innerHTML = rows.length ? rows.map((u, i) => `<tr tabindex="0" data-uid="${esc(u.id)}" class="${u.id === AD.sel ? 'sel' : ''}${RT.pres[u.id] ? ' on' : ''}" style="--i:${Math.min(i, 14)}">${AD_COLS.map(c => `<td>${c[2](u)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${AD_COLS.length}" class="adm-empty">${esc(auT('No users match.'))}</td></tr>`;
 }
 function adTab(t) {
   AD.tab = t;
   const tabs = $('#adtabs');
   tabs.dataset.m = t;
   tabs.querySelectorAll('[data-adtab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.adtab === t)));
-  $('#adusers').hidden = t !== 'users'; $('#adtickets').hidden = t !== 'tickets';
+  $('#adusers').hidden = t !== 'users'; $('#adtickets').hidden = t !== 'tickets'; $('#adstats').hidden = t !== 'stats';
   if (t === 'tickets') tkLoad(tkBox($('#tka'), 'admin'));
+  if (t === 'stats') stLoad();
+}
+function adLiveTxt(u) {
+  const pr = RT.pres[u.id];
+  if (!pr) return `<span class="adm-mut">${esc(auT('Offline'))} · ${esc(auT('last seen {t}').replace('{t}', adAgo(u.last_seen)))}</span>`;
+  return `<span class="adm-dot"></span><b>${esc(auT('Online now'))}</b> · ${esc(pr.g ? auT('playing {g}').replace('{g}', adGame(pr.g)) : auT('browsing'))}`;
 }
 function adPanel(u, keep) {
   AD.sel = u.id;
@@ -4044,8 +4162,10 @@ function adPanel(u, keep) {
   const tr = document.querySelector(`#adt tr[data-uid="${CSS.escape(u.id)}"]`); if (tr) tr.classList.add('sel');
   p.querySelector('.pic').textContent = name.charAt(0).toUpperCase();
   $('#adpn').textContent = name;
-  $('#adpu').textContent = u.username ? '@' + u.username : u.email || '';
-  const F = [['User id', `<code>${esc(u.id)}</code>`], ['Email', esc(u.email || '—')], ['Email confirmed', u.email_confirmed ? esc(adDate(u.email_confirmed_at, 1)) : adPill('No', 'warn')], ['Username', u.username ? '@' + esc(u.username) : '—'], ['Display name', esc(u.display_name || '—')], ['Role', u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User')], ['Account created', esc(adDate(u.created_at, 1))], ['Last log in', esc(adDate(u.last_sign_in_at, 1))], ['Last used website', esc(adDate(u.last_seen, 1))], ['Last game opened', esc(adGame(u.last_game))], ['Language', esc(adLangName(u.last_lang))], ['Log in method', esc(adProv(u))], ['Friends', String(+u.friends || 0)], ['Favourite game', esc(adGame(u.fav_game))], ['Password', `<span class="adm-mut">${esc(auT('Hidden (hashed)'))}</span>`], ['Locked', u.locked ? adPill('Locked', 'bad') + (u.locked_reason ? `<div class="adm-why">${esc(u.locked_reason)}</div>` : '') : adPill('No')]];
+  $('#adpu').innerHTML = esc(u.username ? '@' + u.username : u.email || '') + ' ' + (u.role === 'admin' ? adPill('Admin', 'acc') : '') + (u.locked ? adPill('Locked', 'bad') : '') + (u.email_confirmed ? '' : adPill('Email not confirmed', 'warn'));
+  $('#adplive').innerHTML = adLiveTxt(u);
+  $('#adpq').innerHTML = [['Time played', adHrs(u.seconds_played)], ['Plays', String(+u.plays || 0)], ['Friends', String(+u.friends || 0)], ['Favourite game', adGame(u.fav_game)]].map(([k, v]) => `<div><small>${esc(auT(k))}</small><b>${esc(v)}</b></div>`).join('');
+  const F = [['User id', `<code>${esc(u.id)}</code>`], ['Email', esc(u.email || '—')], ['Username', u.username ? '@' + esc(u.username) : '—'], ['Display name', esc(u.display_name || '—')], ['Last log in', esc(adDate(u.last_sign_in_at, 1))], ['Last used website', esc(adDate(u.last_seen, 1))], ['Log in method', esc(adProv(u))], ['Account created', esc(adDate(u.created_at, 1))], ['Password', adPw(u)], ['Favourite game', esc(adGame(u.fav_game))], ['Friends', String(+u.friends || 0)], ['Role', u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User')], ['Email confirmed', u.email_confirmed ? esc(adDate(u.email_confirmed_at, 1)) : adPill('No', 'warn')], ['Locked', u.locked ? adPill('Locked', 'bad') + (u.locked_reason ? `<div class="adm-why">${esc(u.locked_reason)}</div>` : '') : adPill('No')], ['Last game opened', esc(adGame(u.last_game))], ['Language', esc(adLangName(u.last_lang))]];
   $('#adpdl').innerHTML = F.map(([k, v]) => `<div><dt>${esc(auT(k))}</dt><dd>${v}</dd></div>`).join('');
   p.querySelectorAll('[data-adrole]').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.adrole === u.role)); adUnconfirm(b); });
   const lb = $('#adlock');
@@ -4054,15 +4174,30 @@ function adPanel(u, keep) {
   lb.className = 'btn2 ' + (u.locked ? 'pri' : 'danger');
   lb.disabled = me && !u.locked;
   $('#adlr').hidden = u.locked; $('#adlrl').hidden = u.locked;
-  adUnconfirm($('#adpwb'));
+  ['adpwb', 'adrst', 'adunb', 'addelb'].forEach(id => adUnconfirm($('#' + id)));
+  $('#adrst').disabled = !u.email;
+  $('#adpwt').textContent = auT(u.has_password ? 'Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them.' : 'This account has no password: it signs in with Google.');
+  $('#addelb').disabled = !!me || u.role === 'admin';
   if (!keep) {
-    ['adprn', 'adpwn', 'adln'].forEach(id => auMsg(id, ''));
-    $('#adpw').value = ''; $('#adlr').value = '';
-    if (me) auMsg('adln', 'You cannot lock your own account');
+    ['adprn', 'adpwn', 'adln', 'adrstn', 'adunn', 'addeln'].forEach(id => auMsg(id, ''));
+    $('#adpw').value = ''; $('#adlr').value = ''; $('#addel').value = ''; $('#adun').value = u.username || '';
+    if (me) { auMsg('adln', 'You cannot lock your own account'); auMsg('addeln', 'You cannot delete your own account here.'); }
+    else if (u.role === 'admin') auMsg('addeln', 'Make this admin a regular user first.');
     $('#adpw').type = 'password';
     const eye = p.querySelector('.au-eye'); if (eye) auEye(eye, true);
+    adGames(u);
   }
   if (p.hidden) { p.hidden = false; $('#adpback').hidden = false; p.scrollTop = 0; if (!auCoarse()) $('#adpclose').focus({ preventScroll: true }); }
+}
+async function adGames(u) {
+  const box = $('#adpg');
+  box.innerHTML = '<i class="sk sk-td"></i><i class="sk sk-td"></i>';
+  try {
+    const r = await adRpc('admin_user_games', { p_uid: u.id });
+    if (AD.sel !== u.id) return;
+    const L = Array.isArray(r) ? r : [], max = Math.max(1, ...L.map(g => +g.seconds_played || 0));
+    box.innerHTML = L.length ? L.map(g => `<div class="adp-g"><span>${esc(adGame(g.game_id))}</span><b>${esc(adHrs(g.seconds_played))}</b><i style="--w:${Math.max(2, Math.round(100 * (+g.seconds_played || 0) / max))}%"></i><small>${esc(auT('{n} plays').replace('{n}', +g.plays || 0))}${g.best_score != null ? ' · ' + esc(auT('best {s}').replace('{s}', g.best_score)) : ''}</small></div>`).join('') : `<div class="adm-mut">${esc(auT('No games played yet.'))}</div>`;
+  } catch (e) { box.innerHTML = `<div class="adm-mut">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; }
 }
 function adPanelClose() {
   const p = $('#adpanel');
@@ -4088,7 +4223,7 @@ async function adAct(k, b) {
     if (r === u.role) return;
     if (!adConfirm(b)) return;
     b.disabled = true; b.classList.add('is-busy'); auMsg('adprn', '');
-    try { await adRpc('admin_set_role', { p_uid: u.id, p_role: r }); u.role = r; auMsg('adprn', r === 'admin' ? 'This user is now an admin.' : 'This user is now a regular user.', 'ok'); track('admin', { act: 'role' }); if (SB.user && u.id === SB.user.id && r !== 'admin') { adCheck(); return; } }
+    try { await adRpc('admin_set_role', { p_uid: u.id, p_role: r }); u.role = r; auMsg('adprn', r === 'admin' ? 'This user is now an admin.' : 'This user is now a regular user.', 'ok'); track('admin', { act: 'role' }); rtSend(u.id, { t: 'status' }); if (SB.user && u.id === SB.user.id && r !== 'admin') { adCheck(); return; } }
     catch (e) { auMsg('adprn', adErr(e), 'bad'); }
     finally { b.disabled = false; b.classList.remove('is-busy'); }
   } else if (k === 'pw') {
@@ -4101,16 +4236,131 @@ async function adAct(k, b) {
     catch (e) { auMsg('adpwn', adErr(e), 'bad'); }
     finally { b.disabled = false; b.classList.remove('is-busy'); }
     return;
+  } else if (k === 'reset') {
+    if (!adConfirm(b)) return;
+    b.disabled = true; b.classList.add('is-busy'); auMsg('adrstn', '');
+    try { const c = await sbClient(); const { error } = await c.auth.resetPasswordForEmail(u.email, { redirectTo: sbRedirect('recovery') }); if (error) throw error; auMsg('adrstn', auT('Sent to {e}. They get a 6-digit code to choose a new password.').replace('{e}', u.email), 'ok'); track('admin', { act: 'reset' }); }
+    catch (e) { auMsg('adrstn', auErrText(e), 'bad'); }
+    finally { b.disabled = false; b.classList.remove('is-busy'); }
+    return;
+  } else if (k === 'un') {
+    const v = $('#adun').value.trim().toLowerCase().replace(/^@/, '');
+    if (v === (u.username || '')) return;
+    if (!UN_RE.test(v) || /^\.|\.$|\.\./.test(v)) { auMsg('adunn', 'Use 3 to 20 lowercase letters, numbers, dots or underscores.', 'bad'); auShake($('#adun')); return; }
+    b.disabled = true; b.classList.add('is-busy'); auMsg('adunn', '');
+    try { u.username = await adRpc('admin_set_username', { p_uid: u.id, p_name: v }); auMsg('adunn', 'Username saved.', 'ok'); track('admin', { act: 'username' }); rtSend(u.id, { t: 'profile' }); }
+    catch (e) { auMsg('adunn', /taken/i.test(e.message || '') ? 'That username is taken.' : /not allowed/i.test(e.message || '') ? 'That username is not allowed.' : adErr(e), 'bad'); }
+    finally { b.disabled = false; b.classList.remove('is-busy'); }
+  } else if (k === 'del') {
+    const t = $('#addel').value.trim().toLowerCase().replace(/^@/, '');
+    if (!t || (t !== String(u.username || '').toLowerCase() && t !== String(u.email || '').toLowerCase())) { auMsg('addeln', 'Type the username or email exactly to confirm.', 'bad'); auShake($('#addel')); return; }
+    if (!adConfirm(b)) return;
+    b.disabled = true; b.classList.add('is-busy'); auMsg('addeln', '');
+    try {
+      await adRpc('admin_delete_user', { p_uid: u.id });
+      track('admin', { act: 'delete' });
+      rtSend(u.id, { t: 'deleted' });
+      AD.users = (AD.users || []).filter(x => x.id !== u.id);
+      adPanelClose(); adTiles(); adDraw(); toast(auT('Account deleted'));
+    } catch (e) { auMsg('addeln', /regular user first/i.test(e.message || '') ? 'Make this admin a regular user first.' : /own account/i.test(e.message || '') ? 'You cannot delete your own account here.' : adErr(e), 'bad'); b.disabled = false; b.classList.remove('is-busy'); }
+    return;
   } else if (k === 'lock') {
     const on = !u.locked;
     if (!adConfirm(b)) return;
     b.disabled = true; b.classList.add('is-busy'); auMsg('adln', '');
-    try { await adRpc('admin_lock', { p_uid: u.id, p_locked: on, p_reason: on ? $('#adlr').value : null }); u.locked = on; u.locked_reason = on ? (String($('#adlr').value).replace(/\s+/g, ' ').trim().slice(0, 500) || null) : null; auMsg('adln', on ? 'Account locked. They now only see the blocked page.' : 'Account unlocked.', 'ok'); track('admin', { act: on ? 'lock' : 'unlock' }); }
+    try { await adRpc('admin_lock', { p_uid: u.id, p_locked: on, p_reason: on ? $('#adlr').value : null }); u.locked = on; u.locked_reason = on ? (String($('#adlr').value).replace(/\s+/g, ' ').trim().slice(0, 500) || null) : null; auMsg('adln', on ? 'Account locked. They now only see the blocked page.' : 'Account unlocked.', 'ok'); track('admin', { act: on ? 'lock' : 'unlock' }); rtSend(u.id, { t: 'status' }); }
     catch (e) { auMsg('adln', adErr(e), 'bad'); }
     finally { b.disabled = false; b.classList.remove('is-busy'); }
   }
   adTiles(); adDraw(); adPanel(u, true);
   adLoad();
+}
+
+const ST = { d: null, at: 0, busy: false, sort: ['launches_7d', -1], q: '' };
+const stN = v => (+v || 0).toLocaleString(adLang());
+async function stLoad(force) {
+  if (!adIsAdmin() || ST.busy) return;
+  if (!force && ST.d && Date.now() - ST.at < 20000) { stDraw(); return; }
+  ST.busy = true;
+  const box = $('#adstats');
+  if (!ST.d) box.innerHTML = '<div class="tiles adm-tiles">' + '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(8) + '</div><i class="sk sk-chart"></i>';
+  try { ST.d = await adRpc('admin_stats'); ST.at = Date.now(); stDraw(); }
+  catch (e) { if (!ST.d) box.innerHTML = `<div class="adm-empty">${esc(auT('Could not load the stats. Check your connection and try again.'))}</div>`; }
+  finally { ST.busy = false; }
+}
+function stLive() {
+  const box = $('#stlive');
+  if (!box) return;
+  const P = Object.entries(RT.pres), by = {};
+  P.forEach(([, p]) => { const k = p.g || ''; by[k] = (by[k] || 0) + 1; });
+  const top = Object.entries(by).filter(([k]) => k).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  $('#stln').textContent = P.length;
+  box.innerHTML = P.length ? P.sort((a, b) => (b[1].g ? 1 : 0) - (a[1].g ? 1 : 0)).map(([id, p]) => {
+    const u = (AD.users || []).find(x => x.id === id), name = (u && (u.display_name || u.username || u.email)) || id.slice(0, 8);
+    return `<button class="st-on" type="button" data-stu="${esc(id)}"><span class="pic">${esc(name.charAt(0).toUpperCase())}<i class="fr-dot on"></i></span><span><b>${esc(name)}</b><small>${esc(u && u.username ? '@' + u.username : '')}${p.h ? ' · ' + esc(auT('hidden from friends')) : ''}</small></span><em>${esc(p.g ? adGame(p.g) : auT('Browsing'))}</em></button>`;
+  }).join('') : `<div class="adm-mut">${esc(auT('Nobody is online right now.'))}</div>`;
+  $('#stlg').innerHTML = top.map(([g, n]) => `<span class="adm-pill acc">${esc(adGame(g))} · ${n}</span>`).join('');
+}
+function stBars(rows, key, lab, fmt) {
+  if (!rows.length) return `<div class="adm-mut">${esc(auT('No data yet.'))}</div>`;
+  const max = Math.max(1, ...rows.map(r => +r[key] || 0)), W = 600, H = 150, bw = W / rows.length;
+  return `<svg class="st-svg" viewBox="0 0 ${W} ${H + 18}" preserveAspectRatio="none" role="img" aria-label="${esc(auT(lab))}">${rows.map((r, i) => { const v = +r[key] || 0, h = Math.max(v ? 3 : 1, Math.round(H * v / max)); return `<g><title>${esc(adDate(r.day))}: ${esc(fmt ? fmt(v) : stN(v))}</title><rect x="${(i * bw + bw * .14).toFixed(1)}" y="${H - h}" width="${(bw * .72).toFixed(1)}" height="${h}" rx="3"/></g>`; }).join('')}<text x="0" y="${H + 14}">${esc(adDate(rows[0].day))}</text><text x="${W}" y="${H + 14}" text-anchor="end">${esc(adDate(rows[rows.length - 1].day))}</text></svg><div class="st-max">${esc(auT('max {n}').replace('{n}', fmt ? fmt(max) : stN(max)))}</div>`;
+}
+function stGames() {
+  const D = ST.d || {}, M = new Map((D.games || []).map(g => [g.game_id, g]));
+  const all = games.map(g => g.id).concat([...M.keys()].filter(id => !byId.has(id)));
+  return [...new Set(all)].map(id => Object.assign({ game_id: id, launches: 0, plays: 0, players: 0, launches_7d: 0, hours: 0, hours_7d: 0, avg_min: 0, errors: 0, errors_7d: 0, accounts: 0 }, M.get(id) || {}));
+}
+function stHealth(g) {
+  if (+g.errors_7d >= Math.max(3, (+g.launches_7d || 0) / 2)) return adPill('Broken?', 'bad');
+  if (+g.errors_7d > 0) return adPill('Some errors', 'warn');
+  if (!+g.launches && !+g.plays) return adPill('Not played yet');
+  return adPill('Working', 'ok');
+}
+const ST_GC = [['game_id', 'Game', g => esc(adGame(g.game_id))], ['', 'Status', stHealth], ['launches', 'Launches', g => stN(g.launches)], ['launches_7d', 'Launches 7 days', g => stN(g.launches_7d)], ['players', 'Players', g => stN(g.players)], ['plays', 'Rounds played', g => stN(g.plays)], ['hours', 'Hours played', g => (+g.hours || 0).toFixed(1)], ['hours_7d', 'Hours 7 days', g => (+g.hours_7d || 0).toFixed(1)], ['avg_min', 'Avg minutes per visit', g => (+g.avg_min || 0).toFixed(1)], ['accounts', 'Accounts with records', g => stN(g.accounts)], ['errors_7d', 'Errors 7 days', g => +g.errors_7d ? `<b class="st-bad">${stN(g.errors_7d)}</b>` : '0'], ['last_error', 'Last error', g => g.last_error ? `<span title="${esc(g.last_error)}">${esc(String(g.last_error).slice(0, 60))}</span>` : '<span class="adm-mut">—</span>']];
+function stGameRows() {
+  const [k, d] = ST.sort, q = ST.q.trim().toLowerCase();
+  return stGames().filter(g => !q || adGame(g.game_id).toLowerCase().includes(q) || g.game_id.includes(q)).sort((a, b) => { const x = k === 'game_id' ? adGame(a.game_id).toLowerCase() : +a[k] || 0, y = k === 'game_id' ? adGame(b.game_id).toLowerCase() : +b[k] || 0; return (x < y ? -1 : x > y ? 1 : 0) * d; });
+}
+function stGameTable() {
+  const t = $('#stgt');
+  if (!t) return;
+  t.querySelector('thead').innerHTML = '<tr>' + ST_GC.map(([k, l]) => k ? `<th><button type="button" data-stsort="${k}" aria-sort="${ST.sort[0] === k ? (ST.sort[1] > 0 ? 'ascending' : 'descending') : 'none'}">${esc(auT(l))}<i></i></button></th>` : `<th><span>${esc(auT(l))}</span></th>`).join('') + '</tr>';
+  t.querySelector('tbody').innerHTML = stGameRows().map(g => `<tr data-stg="${esc(g.game_id)}">${ST_GC.map(c => `<td>${c[2](g)}</td>`).join('')}</tr>`).join('');
+}
+function stDraw() {
+  const D = ST.d || {}, O = D.overview || {}, box = $('#adstats');
+  const T = [['Accounts', O.accounts], ['New accounts 7 days', O.new_accounts_7d], ['Active today', O.active_today], ['Active 7 days', O.active_7d], ['Active 30 days', O.active_30d], ['Game launches 7 days', O.launches_7d], ['Hours played 7 days', O.hours_played_7d], ['Events recorded', O.events]];
+  const G = stGames(), work = G.filter(g => +g.launches || +g.plays), bad = G.filter(g => +g.errors_7d > 0).length;
+  const PL = (D.players || []).slice(0, 100), ER = D.errors || [], DV = D.devices || [], SQ = D.searches || [], RE = D.retention || [];
+  box.innerHTML = `
+  <div class="st-top"><div class="st-card st-livec"><div class="st-h"><h3><i class="adm-dot"></i>${esc(auT('Live now'))}</h3><b class="st-big" id="stln">0</b></div><div class="st-lg" id="stlg"></div><div class="st-live" id="stlive"></div></div>
+  <div class="tiles adm-tiles st-tiles">${T.map(([k, n], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b${Number.isInteger(+n || 0) ? ` data-n="${+n || 0}"` : ''}>${stN(n)}</b></div>`).join('')}<div class="tile" style="--i:8"><small>${esc(auT('Games played at least once'))}</small><b>${work.length} / ${G.length}</b></div><div class="tile" style="--i:9"><small>${esc(auT('Games with errors (7 days)'))}</small><b class="${bad ? 'st-bad' : ''}">${bad}</b></div></div></div>
+  <div class="st-grid"><div class="st-card"><h3>${esc(auT('Active players per day'))}</h3>${stBars(D.daily || [], 'active_players', 'Active players per day')}</div><div class="st-card"><h3>${esc(auT('Hours played per day'))}</h3>${stBars(D.daily || [], 'hours_played', 'Hours played per day', v => (+v).toFixed(1) + ' h')}</div><div class="st-card"><h3>${esc(auT('New accounts per day'))}</h3>${stBars(D.signups || [], 'signups', 'New accounts per day')}</div></div>
+  <div class="st-card"><div class="st-h"><h3>${esc(auT('Games'))}</h3><label class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="stq" type="search" placeholder="${esc(auT('Search games'))}" autocomplete="off" value="${esc(ST.q)}"></label></div><div class="adm-tw"><table class="adm-t st-t" id="stgt"><thead></thead><tbody translate="no"></tbody></table></div></div>
+  <div class="st-card"><h3>${esc(auT('Time played per player'))}</h3><div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Player', 'Game', 'Time played', 'Rounds', 'Best', 'Last played'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody translate="no">${PL.length ? PL.map(p => `<tr data-stu="${esc(p.user_id)}"><td>${esc(p.display_name || p.username || '—')}${p.username ? ` <span class="adm-mut">@${esc(p.username)}</span>` : ''}</td><td>${esc(adGame(p.game_id))}</td><td>${esc(adHrs(p.seconds_played))}</td><td>${stN(p.plays)}</td><td>${p.best_score != null ? esc(String(p.best_score)) : '—'}</td><td>${esc(adAgo(p.last_played))}</td></tr>`).join('') : `<tr><td colspan="6" class="adm-empty">${esc(auT('No games played yet.'))}</td></tr>`}</tbody></table></div></div>
+  <div class="st-grid">
+   <div class="st-card"><h3>${esc(auT('Recent errors'))}</h3><div class="st-list">${ER.length ? ER.slice(0, 30).map(e => `<div class="st-err"><b>${esc(adGame(e.game_id))}</b><span>${esc(e.message || '')}</span><small>${esc(e.place || '')} · ${esc(e.device || '')} · ${esc(adAgo(e.created_at))}</small></div>`).join('') : `<div class="adm-mut">${esc(auT('No errors. Everything works.'))}</div>`}</div></div>
+   <div class="st-card"><h3>${esc(auT('Devices'))}</h3><div class="st-list">${DV.length ? DV.map(d => `<div class="st-kv"><span>${esc([d.device, d.os, d.browser].filter(Boolean).join(' · '))}</span><b>${stN(d.sessions)}</b></div>`).join('') : `<div class="adm-mut">${esc(auT('No data yet.'))}</div>`}</div></div>
+   <div class="st-card"><h3>${esc(auT('Top searches'))}</h3><div class="st-list">${SQ.length ? SQ.map(s => `<div class="st-kv"><span>${esc(s.query)}${+s.with_no_results ? ` <span class="adm-pill warn">${esc(auT('no result'))}</span>` : ''}</span><b>${stN(s.searches)}</b></div>`).join('') : `<div class="adm-mut">${esc(auT('No data yet.'))}</div>`}</div></div>
+   <div class="st-card"><h3>${esc(auT('Players coming back'))}</h3><div class="st-list">${RE.length ? RE.map(r => `<div class="st-kv"><span>${esc(adDate(r.cohort_day))} · ${esc(auT('{n} new').replace('{n}', r.new_players))}</span><b>${esc(auT('next day {a}% · week {b}%').replace('{a}', r.day1_pct).replace('{b}', r.back_within_7d_pct))}</b></div>`).join('') : `<div class="adm-mut">${esc(auT('No data yet.'))}</div>`}</div></div>
+  </div>
+  <p class="adm-mut st-at">${esc(auT('Updated {t}. Refreshes every 30 seconds; the live list updates instantly.').replace('{t}', new Date(D.at || Date.now()).toLocaleTimeString()))}</p>`;
+  countUp(box.querySelector('.st-tiles'));
+  stGameTable(); stLive();
+}
+function stBoot() {
+  const box = $('#adstats');
+  box.addEventListener('click', e => {
+    const s = e.target.closest('[data-stsort]');
+    if (s) { const k = s.dataset.stsort; ST.sort = ST.sort[0] === k ? [k, -ST.sort[1]] : [k, k === 'game_id' ? 1 : -1]; stGameTable(); return; }
+    const u = e.target.closest('[data-stu]');
+    if (u) { const x = (AD.users || []).find(y => y.id === u.dataset.stu); if (x) adPanel(x); return; }
+    const g = e.target.closest('[data-stg]');
+    if (g && byId.has(g.dataset.stg)) { go(href(g.dataset.stg), false); }
+  });
+  box.addEventListener('input', e => { if (e.target.id === 'stq') { ST.q = e.target.value; stGameTable(); } });
+  setInterval(() => { if (view === 'admin' && AD.tab === 'stats' && document.visibilityState === 'visible') stLoad(true); }, 30000);
 }
 
 function tkBox(el, mode) {
@@ -4246,16 +4496,17 @@ function adBoot() {
   $('#adbout').addEventListener('click', () => { auSignOut(); });
   document.addEventListener('click', e => {
     const t = e.target;
-    if (t.closest && t.closest('[data-adgo]')) { e.preventDefault(); closeAll(); go(adHref(), false); }
+    const ag = t.closest && t.closest('[data-adgo]');
+    if (ag) { e.preventDefault(); closeAll(); AD.tab = ag.dataset.adgo || 'users'; if (view === 'admin') adTab(AD.tab); else go(adHref(), false); }
   });
   const va = $('#vAdmin');
   va.addEventListener('click', e => {
     const t = e.target;
     const s = t.closest('[data-adsort]');
-    if (s) { const k = s.dataset.adsort; AD.sort = AD.sort[0] === k ? [k, -AD.sort[1]] : [k, /_at$|last_seen|friends|email_confirmed|locked|role/.test(k) ? -1 : 1]; adDraw(); return; }
+    if (s) { const k = s.dataset.adsort; AD.sort = AD.sort[0] === k ? [k, -AD.sort[1]] : [k, /_at$|last_seen|friends|email_confirmed|locked|role|has_password/.test(k) ? -1 : 1]; adDraw(); return; }
     const tb = t.closest('[data-adtab]');
     if (tb) { adTab(tb.dataset.adtab); return; }
-    if (t.closest('#adref')) { adLoad(); tkLoad(tkBox($('#tka'), 'admin')); return; }
+    if (t.closest('#adref')) { adLoad(); tkLoad(tkBox($('#tka'), 'admin')); if (AD.tab === 'stats') stLoad(true); return; }
     if (t.closest('#adpback') || t.closest('#adpclose')) { adPanelClose(); return; }
     const eye = t.closest('.au-eye');
     if (eye) { auEye(eye); return; }
@@ -4269,17 +4520,573 @@ function adBoot() {
     const tr = e.target.closest && e.target.closest('#adt tbody tr[data-uid]');
     if (tr && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); tr.click(); }
   });
-  $('#adtabs').addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); adTab(AD.tab === 'users' ? 'tickets' : 'users'); $('#adtabs [aria-selected="true"]').focus(); } });
+  $('#adtabs').addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); const T = ['users', 'tickets', 'stats'], i = T.indexOf(AD.tab); adTab(T[(i + (e.key === 'ArrowRight' ? 1 : 2)) % 3]); $('#adtabs [aria-selected="true"]').focus(); } });
+  stBoot();
   $('#adq').addEventListener('input', e => { AD.q = e.target.value; adDraw(); });
   $('#adf').addEventListener('change', e => { AD.f = e.target.value; adDraw(); });
   $('#adpw').parentNode.insertAdjacentHTML('beforeend', EYE);
   $('#adpw').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); adAct('pw', $('#adpwb')); } });
+  $('#adun').addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; });
+  $('#adun').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); adAct('un', $('#adunb')); } });
   setInterval(() => {
     if (!SB.user || document.visibilityState === 'hidden') return;
     document.querySelectorAll('.tk').forEach(el => { if (!el._tk || el.closest('[hidden]')) return; if (el._tk.cur) tkThread(el); if (++el._tk.n % 5 === 0) tkLoad(el); });
   }, 6000);
   setInterval(() => { if (SB.user && document.visibilityState !== 'hidden') adCheck(); }, 180000);
   document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible' && Date.now() - AD.at > 60000) adCheck(); });
+}
+
+const RT = { me: null, ch: null, on: null, pres: {}, seen: false, tt: 0 };
+const SO_ICO = {
+  bell: '<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></svg>',
+  chat: '<svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg>',
+  img: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>',
+  send: '<svg viewBox="0 0 24 24"><path d="M4 12 20 4l-6 16-3-7z"/></svg>',
+  x: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  pad: '<svg viewBox="0 0 24 24"><path d="M7 8h10a5 5 0 0 1 4.6 7l-.6 1.4a2.5 2.5 0 0 1-4.3.4L15 15H9l-1.7 1.8a2.5 2.5 0 0 1-4.3-.4L2.4 15A5 5 0 0 1 7 8z"/><path d="M8 11v3M6.5 12.5h3M16 12h.01M18 11h.01"/></svg>',
+  user: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+  star: '<svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>'
+};
+const soName = id => { const f = (FR.list || []).find(x => x.friend_id === id); return f ? (f.display_name || f.username || '?') : auT('A friend'); };
+const soFriend = id => (FR.list || []).find(x => x.friend_id === id) || null;
+const soOn = id => { const p = RT.pres[id]; return p && !p.h ? p : null; };
+const soParty = () => { try { if (cur && cur.api && cur.api.online) { const n = cur.api.net; if (n && n.code) return { game: cur.g.id, code: String(n.code).toUpperCase() }; } } catch (e) {} return null; };
+const soGameName = id => id ? (byId.get(id) ? byId.get(id).title : id) : '';
+
+function rtStart() {
+  if (!SB.c || !SB.user || RT.me === SB.user.id) return;
+  rtStop();
+  const me = RT.me = SB.user.id;
+  try {
+    RT.ch = SB.c.channel('u:' + me).on('broadcast', { event: 'n' }, m => rtNudge(m && m.payload || {})).subscribe();
+    RT.on = SB.c.channel('online', { config: { presence: { key: me } } }).on('presence', { event: 'sync' }, rtSync).subscribe(s => { if (s === 'SUBSCRIBED') rtTrack(true); });
+  } catch (e) {}
+}
+function rtStop() {
+  try { if (RT.ch) SB.c.removeChannel(RT.ch); if (RT.on) SB.c.removeChannel(RT.on); } catch (e) {}
+  RT.ch = RT.on = RT.me = null; RT.seen = false; RT.pres = {};
+  soLive();
+}
+function rtTrack(now) {
+  clearTimeout(RT.tt);
+  if (!RT.on) return;
+  RT.tt = setTimeout(() => {
+    if (!RT.on || !SB.user) return;
+    const P = S.prefs, hide = P.p_status === 'Nobody';
+    RT.on.track(hide ? { h: 1 } : { g: P.p_game === false || !cur ? null : cur.g.id, t: Date.now() }).catch(() => {});
+  }, now ? 0 : 400);
+}
+function rtSync() {
+  const s = RT.on ? RT.on.presenceState() : {}, prev = RT.pres, P = {};
+  for (const k in s) { const a = s[k]; if (a && a.length) P[k] = a[a.length - 1]; }
+  RT.pres = P;
+  if (RT.seen && S.prefs.n_on) (FR.list || []).forEach(f => { const id = f.friend_id; if (P[id] && !P[id].h && !(prev[id] && !prev[id].h)) ntPush({ k: 'online', from: id, t: auT('{u} is online').replace('{u}', soName(id)), b: P[id].g ? auT('Playing {g}').replace('{g}', soGameName(P[id].g)) : '', a: { type: 'chat', uid: id } }); });
+  RT.seen = true;
+  soLive();
+}
+function rtSend(uid, p) {
+  if (!SB.c || !uid) return Promise.resolve();
+  return new Promise(res => {
+    let done = false;
+    const ch = SB.c.channel('u:' + uid);
+    const fin = () => { if (done) return; done = true; try { SB.c.removeChannel(ch); } catch (e) {} res(); };
+    try { ch.subscribe(s => { if (s === 'SUBSCRIBED') ch.send({ type: 'broadcast', event: 'n', payload: p }).then(fin, fin); else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT') fin(); }); } catch (e) { fin(); }
+    setTimeout(fin, 6000);
+  });
+}
+function rtNudge(p) {
+  const t = p && p.t;
+  if (t === 'status') adCheck();
+  else if (t === 'deleted') { AD.del = true; adCheck(); }
+  else if (t === 'profile') auLoadProfile().then(() => { auRender(); renderProfileBits(); }).catch(() => {});
+  else if (t === 'dm') dmPoll();
+  else if (t === 'fr') frNudge();
+}
+
+function soLive() {
+  const n = Object.keys(RT.pres).filter(k => !RT.pres[k].h).length, pill = $('#onl');
+  if (pill) { pill.hidden = !SB.user || !n; pill.querySelector('b').textContent = n; pill.title = auT(n === 1 ? '1 player online' : '{n} players online').replace('{n}', n); }
+  const by = {};
+  Object.values(RT.pres).forEach(p => { if (p.g && !p.h) by[p.g] = (by[p.g] || 0) + 1; });
+  document.querySelectorAll('#grid [data-id]').forEach(el => {
+    const c = by[el.dataset.id] || 0;
+    let b = el.querySelector('.livepill');
+    if (!c) { if (b) b.remove(); return; }
+    if (!b) { b = document.createElement('span'); b.className = 'livepill'; b.setAttribute('translate', 'no'); (el.querySelector('.art') || el).append(b); }
+    b.textContent = auT('{n} playing').replace('{n}', c);
+  });
+  if (openK === 'friends' && FR.list) frDraw();
+  if (DM.open) dmHead();
+  if (view === 'admin') {
+    document.querySelectorAll('#adt tbody tr[data-uid]').forEach(tr => tr.classList.toggle('on', !!RT.pres[tr.dataset.uid]));
+    const u = adCur(); if (u && !$('#adpanel').hidden) $('#adplive').innerHTML = adLiveTxt(u);
+    if (AD.tab === 'stats') stLive();
+  }
+}
+
+const NT = { list: [], key: '' };
+function ntLoad() {
+  NT.key = SB.user ? 'gameplay:notifs:' + SB.user.id : 'gameplay:notifs';
+  try { NT.list = JSON.parse(localStorage.getItem(NT.key) || '[]') || []; } catch (e) { NT.list = []; }
+  ntBadge();
+}
+function ntSave() { try { localStorage.setItem(NT.key, JSON.stringify(NT.list.slice(0, 60))); } catch (e) {} }
+function ntBadge() {
+  const n = NT.list.filter(x => !x.r).length, b = $('#nbtn em');
+  if (b) { b.textContent = n > 9 ? '9+' : n; b.hidden = !n; }
+  const fb = $('#abtn em'), u = DM.unread + (FR.req || []).filter(r => r.direction === 'incoming').length;
+  if (fb) { fb.textContent = u > 9 ? '9+' : u; fb.hidden = !u; }
+}
+function ntPush(n) {
+  n.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  n.at = Date.now(); n.r = false;
+  NT.list.unshift(n);
+  NT.list = NT.list.slice(0, 60);
+  ntSave(); ntBadge();
+  if (openK === 'notifs') ntDraw();
+  ntToast(n);
+}
+function ntIcon(k) { return k === 'dm' ? SO_ICO.chat : k === 'image' ? SO_ICO.img : k === 'invite' || k === 'join' ? SO_ICO.pad : k === 'game' ? SO_ICO.star : SO_ICO.user; }
+function ntActLabel(n) { const a = n.a || {}; return a.type === 'join' ? 'Join' : a.type === 'invite' ? 'Invite' : a.type === 'chat' ? (n.k === 'online' ? 'Say hi' : 'Reply') : a.type === 'game' ? 'Play' : a.type === 'friends' ? 'Open' : ''; }
+function ntToast(n) {
+  let box = $('#ntst');
+  if (!box) { box = document.createElement('div'); box.id = 'ntst'; box.className = 'ntst'; box.setAttribute('aria-live', 'polite'); document.body.append(box); }
+  if (AD.locked) return;
+  const host = document.fullscreenElement || document.body;
+  if (box.parentNode !== host) host.append(box);
+  sfx('pop');
+  const el = document.createElement('div'), lab = ntActLabel(n);
+  el.className = 'nt';
+  el.dataset.k = n.k;
+  el.innerHTML = `<span class="nt-i">${ntIcon(n.k)}</span><div class="nt-t"><b translate="no">${esc(n.t)}</b>${n.b ? `<span translate="no">${esc(n.b)}</span>` : ''}</div>${lab ? `<button class="btn2 pri" type="button" data-nt="go">${esc(auT(lab))}</button>` : ''}<button class="x" type="button" data-nt="x" aria-label="${esc(auT('Close'))}">${SO_ICO.x}</button>`;
+  const kill = () => { if (!el.isConnected) return; el.classList.add('out'); setTimeout(() => el.remove(), motionOK() ? 220 : 0); };
+  let t = setTimeout(kill, n.k === 'invite' || n.k === 'join' ? 25000 : 7000);
+  el.addEventListener('mouseenter', () => clearTimeout(t));
+  el.addEventListener('mouseleave', () => { t = setTimeout(kill, 4000); });
+  el.addEventListener('click', e => { e.stopPropagation(); const b = e.target.closest('[data-nt]'); if (b && b.dataset.nt === 'x') { kill(); return; } ntRead(n.id); ntAct(n); kill(); });
+  box.append(el);
+  while (box.children.length > 4) box.firstElementChild.remove();
+}
+function ntRead(id) { const n = NT.list.find(x => x.id === id); if (n && !n.r) { n.r = true; ntSave(); ntBadge(); } }
+async function ntAct(n) {
+  const a = n.a || {};
+  if (a.type === 'chat') dmOpen(a.uid);
+  else if (a.type === 'join') { closeAll(); go(href(a.game, a.code), false); toast(auT('Joining the party…')); }
+  else if (a.type === 'invite') { const p = soParty(); if (p && p.game === a.game) { await dmSend(a.uid, 'invite', null, p); toast(auT('Invite sent')); } else dmOpen(a.uid); }
+  else if (a.type === 'game') { closeAll(); go(href(a.game), false); }
+  else if (a.type === 'friends') { if (openK !== 'friends') setOpen('friends'); }
+}
+function ntDraw() {
+  const box = $('#nlist');
+  if (!box) return;
+  box.innerHTML = NT.list.length ? NT.list.map(n => `<button class="nrow${n.r ? '' : ' new'}" type="button" data-nid="${esc(n.id)}"><span class="nt-i">${ntIcon(n.k)}</span><span class="nt-t"><b translate="no">${esc(n.t)}</b>${n.b ? `<span translate="no">${esc(n.b)}</span>` : ''}<small>${esc(adAgo(new Date(n.at).toISOString()))}</small></span></button>`).join('') : `<div class="nofr">${esc(auT('No notifications yet.'))}</div>`;
+}
+
+const DM = { inbox: [], last: {}, open: null, msgs: [], urls: new Map(), unread: 0, first: true, t: 0, busy: false };
+async function dmPoll() {
+  if (!SB.user) return;
+  let r;
+  try { r = await adRpc('dm_inbox'); } catch (e) { return; }
+  if (!SB.user) return;
+  const L = Array.isArray(r) ? r : [];
+  L.forEach(c => {
+    const was = DM.last[c.other_id] || 0;
+    if (!DM.first && !c.last_mine && c.last_id > was && c.unread > 0 && !(DM.open === c.other_id && document.visibilityState === 'visible')) dmNotify(c);
+    DM.last[c.other_id] = c.last_id;
+  });
+  DM.first = false; DM.inbox = L;
+  DM.unread = L.reduce((n, c) => n + (c.other_id === DM.open ? 0 : +c.unread || 0), 0);
+  ntBadge();
+  if (openK === 'friends' && FR.list) frDraw();
+  if (DM.open) dmThread();
+}
+function dmNotify(c) {
+  const name = soName(c.other_id), m = c.last_meta || {}, P = S.prefs;
+  if (c.last_kind === 'invite') { if (P.n_inv === false || P.p_inv === 'Nobody') return; ntPush({ k: 'invite', from: c.other_id, t: auT('{u} invited you to play').replace('{u}', name), b: soGameName(m.game), a: { type: 'join', game: m.game, code: m.code, uid: c.other_id } }); }
+  else if (c.last_kind === 'join') { if (P.n_inv === false || P.p_inv === 'Nobody') return; ntPush({ k: 'join', from: c.other_id, t: auT('{u} wants to join your party').replace('{u}', name), b: soGameName(m.game), a: { type: 'invite', game: m.game, uid: c.other_id } }); }
+  else { if (P.n_msg === false) return; ntPush({ k: c.last_kind === 'image' ? 'image' : 'dm', from: c.other_id, t: name, b: c.last_kind === 'image' ? auT('Sent a picture') : String(c.last_body || '').slice(0, 140), a: { type: 'chat', uid: c.other_id } }); }
+}
+async function dmSend(uid, kind, body, meta) {
+  const id = await adRpc('dm_send', { p_to: uid, p_kind: kind, p_body: body || null, p_meta: meta || {} });
+  rtSend(uid, { t: 'dm' });
+  track('dm', { act: kind });
+  if (DM.open === uid) dmThread();
+  return id;
+}
+function soChatEl() {
+  let el = $('#chat');
+  if (el) return el;
+  el = document.createElement('aside');
+  el.id = 'chat'; el.className = 'chat'; el.hidden = true;
+  el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', auT('Chat'));
+  el.innerHTML = `<div class="ch-h"><span class="pic"></span><div class="ch-n"><b translate="no"></b><span class="ch-s"></span></div><button class="x" type="button" data-ch="close" aria-label="${esc(auT('Close'))}">${SO_ICO.x}</button></div><div class="ch-acts"><button class="btn2" type="button" data-ch="invite"></button><button class="btn2" type="button" data-ch="join"></button></div><div class="ch-m" translate="no" aria-live="polite"></div><div class="note ch-note" role="status"></div><form class="ch-f" novalidate><button class="ch-ib" type="button" data-ch="img" aria-label="${esc(auT('Send a picture'))}">${SO_ICO.img}</button><input type="file" accept="image/*" hidden><textarea rows="1" maxlength="2000"></textarea><button class="ch-sb" type="submit" aria-label="${esc(auT('Send'))}">${SO_ICO.send}</button></form>`;
+  document.body.append(el);
+  const ta = el.querySelector('textarea'), fi = el.querySelector('input[type=file]');
+  el.addEventListener('click', e => { const b = e.target.closest('[data-ch]'); if (b) { e.stopPropagation(); dmAct(b.dataset.ch, b); } const im = e.target.closest('.ch-pic img'); if (im && im.src) soLight(im.src); });
+  el.addEventListener('submit', e => { e.preventDefault(); dmSendText(); });
+  el.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') { dmClose(); return; } if (e.key === 'Enter' && !e.shiftKey && e.target === ta) { e.preventDefault(); dmSendText(); } });
+  el.addEventListener('keyup', e => e.stopPropagation());
+  ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px'; });
+  ta.addEventListener('paste', e => { const f = [...(e.clipboardData && e.clipboardData.files || [])].find(x => /^image\//.test(x.type)); if (f) { e.preventDefault(); dmImage(f); } });
+  fi.addEventListener('change', () => { const f = fi.files && fi.files[0]; fi.value = ''; if (f) dmImage(f); });
+  el.addEventListener('dragover', e => { e.preventDefault(); });
+  el.addEventListener('drop', e => { e.preventDefault(); const f = [...(e.dataTransfer && e.dataTransfer.files || [])].find(x => /^image\//.test(x.type)); if (f) dmImage(f); });
+  return el;
+}
+async function dmOpen(uid) {
+  if (!SB.user || !uid) return;
+  if (!FR.list) await frLoad();
+  if (!soFriend(uid)) { toast(auT('You can only chat with friends')); return; }
+  const el = soChatEl();
+  if (openK === 'friends') closeAll();
+  if (DM.open !== uid) { DM.open = uid; DM.msgs = []; el.querySelector('.ch-m').innerHTML = '<i class="sk sk-msg"></i>'.repeat(3); el.querySelector('textarea').value = ''; }
+  dmHead(); auMsg2('');
+  const host = document.fullscreenElement || document.body;
+  if (el.parentNode !== host) host.append(el);
+  vis(el, true);
+  document.body.classList.add('chat-open');
+  await dmThread();
+  if (!auCoarse()) el.querySelector('textarea').focus({ preventScroll: true });
+  clearInterval(DM.t); DM.t = setInterval(() => { if (DM.open && document.visibilityState === 'visible') dmThread(); }, 5000);
+}
+function dmClose() {
+  const el = $('#chat');
+  clearInterval(DM.t); DM.open = null;
+  if (el) vis(el, false);
+  document.body.classList.remove('chat-open');
+}
+function auMsg2(m, k) { const n = document.querySelector('#chat .ch-note'); if (n) { n.textContent = m ? auT(m) : ''; n.className = 'note ch-note' + (k ? ' ' + k : ''); } }
+function dmHead() {
+  const el = $('#chat'), uid = DM.open, f = soFriend(uid);
+  if (!el || !uid || !f) return;
+  const name = f.display_name || f.username || '?', on = soOn(uid), party = soParty();
+  el.querySelector('.pic').textContent = name.charAt(0).toUpperCase();
+  el.querySelector('.ch-n b').textContent = name;
+  el.querySelector('.ch-s').innerHTML = on ? `<i class="fr-dot on"></i>${esc(on.g ? auT('Playing {g}').replace('{g}', soGameName(on.g)) : auT('Online'))}` : `<i class="fr-dot"></i>${esc('@' + (f.username || ''))}`;
+  const ib = el.querySelector('[data-ch="invite"]'), jb = el.querySelector('[data-ch="join"]');
+  ib.textContent = party ? auT('Invite to my party · {g}').replace('{g}', soGameName(party.game)) : auT('Invite to my party');
+  ib.disabled = !party; ib.title = party ? '' : auT('Open online play in a game first');
+  jb.textContent = on && on.g ? auT('Ask to join · {g}').replace('{g}', soGameName(on.g)) : auT('Ask to join their party');
+  jb.disabled = !(on && on.g); jb.title = on && on.g ? '' : auT('They are not playing right now');
+  el.querySelector('textarea').placeholder = auT('Message {u}').replace('{u}', '@' + (f.username || name));
+}
+async function dmThread() {
+  const uid = DM.open;
+  if (!uid || DM.busy) return;
+  DM.busy = true;
+  try {
+    const after = DM.msgs.length ? DM.msgs[DM.msgs.length - 1].id : 0;
+    const r = await adRpc('dm_thread', { p_with: uid, p_after: after });
+    if (DM.open !== uid) return;
+    const add = Array.isArray(r) ? r : [];
+    const box = $('#chat .ch-m'), first = !after;
+    if (first) box.innerHTML = '';
+    if (!add.length) { if (first) box.innerHTML = `<div class="ch-empty">${esc(auT('Say hi! Messages are only seen by the two of you.'))}</div>`; return; }
+    const near = first || box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+    const em = box.querySelector('.ch-empty'); if (em) em.remove();
+    DM.msgs.push(...add);
+    box.insertAdjacentHTML('beforeend', add.map(m => dmRow(m, !first)).join(''));
+    box.querySelectorAll('img[data-path]:not([src])').forEach(dmImg);
+    if (near) box.scrollTop = box.scrollHeight;
+    if (add.some(m => !m.mine && !m.read_at)) { await adRpc('dm_read', { p_with: uid }).catch(() => {}); const c = DM.inbox.find(x => x.other_id === uid); if (c) c.unread = 0; DM.unread = DM.inbox.reduce((n, c) => n + (c.other_id === DM.open ? 0 : +c.unread || 0), 0); ntBadge(); }
+  } catch (e) { auMsg2('Could not load the messages. Check your connection and try again.', 'bad'); }
+  finally { DM.busy = false; }
+}
+function dmRow(m, anim) {
+  const cls = 'ch-r' + (m.mine ? ' me' : '') + (anim ? ' new' : ''), t = `<small>${esc(new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))}</small>`, g = m.meta || {}, name = soName(DM.open);
+  if (m.kind === 'image') return `<div class="${cls}"><div class="ch-pic"><img data-path="${esc(g.path || '')}" alt="${esc(auT('Picture'))}" width="${+g.w || 320}" height="${+g.h || 240}" loading="lazy"></div>${t}</div>`;
+  if (m.kind === 'invite') return `<div class="${cls}"><div class="ch-card">${SO_ICO.pad}<div><b>${esc(m.mine ? auT('You invited {u} to your party').replace('{u}', name) : auT('{u} invited you to their party').replace('{u}', name))}</b><span>${esc(soGameName(g.game))} · ${esc(auT('Code {c}').replace('{c}', g.code || ''))}</span></div>${m.mine ? '' : `<button class="btn2 pri" type="button" data-ch="go" data-g="${esc(g.game || '')}" data-c="${esc(g.code || '')}">${esc(auT('Join'))}</button>`}</div>${t}</div>`;
+  if (m.kind === 'join') return `<div class="${cls}"><div class="ch-card">${SO_ICO.pad}<div><b>${esc(m.mine ? auT('You asked to join {u}').replace('{u}', name) : auT('{u} wants to join your party').replace('{u}', name))}</b><span>${esc(soGameName(g.game))}</span></div>${m.mine ? '' : `<button class="btn2 pri" type="button" data-ch="invite">${esc(auT('Invite'))}</button>`}</div>${t}</div>`;
+  return `<div class="${cls}"><div class="ch-b">${esc(m.body || '')}</div>${t}</div>`;
+}
+async function dmImg(img) {
+  const p = img.dataset.path;
+  if (!p) return;
+  if (DM.urls.has(p)) { img.src = DM.urls.get(p); return; }
+  try {
+    const c = await sbClient();
+    const { data, error } = await c.storage.from('dm').createSignedUrl(p, 3600);
+    if (error || !data) throw error;
+    DM.urls.set(p, data.signedUrl);
+    img.src = data.signedUrl;
+  } catch (e) { img.alt = auT('Picture not available'); img.classList.add('bad'); }
+}
+async function dmSendText() {
+  const el = $('#chat'), ta = el.querySelector('textarea'), v = ta.value.trim(), uid = DM.open;
+  if (!v || !uid) return;
+  ta.value = ''; ta.style.height = 'auto'; auMsg2('');
+  try { await dmSend(uid, 'text', v); }
+  catch (e) { ta.value = v; auMsg2(/too many/i.test(e.message || '') ? 'Too many messages. Wait a minute and try again.' : /not friends/i.test(e.message || '') ? 'You are no longer friends.' : /locked/i.test(e.message || '') ? 'Your account is locked.' : 'Could not send. Check your connection and try again.', 'bad'); }
+}
+async function dmImage(file) {
+  const uid = DM.open;
+  if (!uid || !SB.user) return;
+  if (file.size > 25e6) { auMsg2('That picture is too big. Pick one under 25 MB.', 'bad'); return; }
+  auMsg2('Sending the picture…');
+  try {
+    let blob = file, ext = 'gif', w = 0, h = 0;
+    const bm = await createImageBitmap(file);
+    w = bm.width; h = bm.height;
+    if (file.type !== 'image/gif' || file.size > 3e6) {
+      const k = Math.min(1, 1600 / Math.max(w, h)), cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(h * k));
+      const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+      cv.getContext('2d').drawImage(bm, 0, 0, cw, ch);
+      blob = await new Promise(r => cv.toBlob(r, 'image/webp', .85));
+      if (!blob || blob.type !== 'image/webp') blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', .85));
+      ext = blob.type === 'image/webp' ? 'webp' : 'jpg'; w = cw; h = ch;
+    }
+    bm.close && bm.close();
+    const path = SB.user.id + '/' + uid + '/' + (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)) + '.' + ext;
+    const c = await sbClient();
+    const { error } = await c.storage.from('dm').upload(path, blob, { contentType: blob.type || 'image/' + ext, upsert: false });
+    if (error) throw error;
+    await dmSend(uid, 'image', null, { path, w, h });
+    auMsg2('');
+  } catch (e) { auMsg2('Could not send the picture. Try another one.', 'bad'); }
+}
+async function dmAct(k, b) {
+  const uid = DM.open;
+  if (k === 'close') { dmClose(); return; }
+  if (k === 'img') { $('#chat input[type=file]').click(); return; }
+  if (k === 'go') { dmClose(); closeAll(); go(href(b.dataset.g, b.dataset.c), false); toast(auT('Joining the party…')); return; }
+  if (!uid) return;
+  if (k === 'invite') {
+    const p = soParty();
+    if (!p) { auMsg2('Open online play in a game first, then invite your friend.', 'bad'); return; }
+    b.disabled = true;
+    try { await dmSend(uid, 'invite', null, p); auMsg2('Invite sent.', 'ok'); } catch (e) { auMsg2('Could not send. Check your connection and try again.', 'bad'); }
+    finally { b.disabled = false; dmHead(); }
+  } else if (k === 'join') {
+    const on = soOn(uid);
+    if (!on || !on.g) return;
+    b.disabled = true;
+    try { await dmSend(uid, 'join', null, { game: on.g }); auMsg2('Request sent. You will get an invite when they accept.', 'ok'); } catch (e) { auMsg2('Could not send. Check your connection and try again.', 'bad'); }
+    finally { dmHead(); }
+  }
+}
+function soLight(src) {
+  let lb = $('#soLight');
+  if (!lb) { lb = document.createElement('div'); lb.id = 'soLight'; lb.className = 'solight'; lb.innerHTML = '<img alt="">'; lb.addEventListener('click', () => vis(lb, false)); document.body.append(lb); }
+  lb.querySelector('img').src = src; vis(lb, true);
+}
+
+function soFriendRow(f) {
+  const id = f.friend_id, on = soOn(id), open = FR.open === id, c = DM.inbox.find(x => x.other_id === id), un = c ? +c.unread || 0 : 0, party = soParty();
+  const st = on ? (on.g ? auT('Playing {g}').replace('{g}', soGameName(on.g)) : auT('Online')) : auT('Offline');
+  const name = f.display_name || f.username || '?';
+  const x = open ? `<div class="fr-x"><button class="btn2 pri" type="button" data-fr="chat" data-id="${esc(id)}">${SO_ICO.chat}${esc(auT('Chat'))}</button><button class="btn2" type="button" data-fr="invite" data-id="${esc(id)}"${party ? '' : ' disabled'} title="${esc(party ? '' : auT('Open online play in a game first'))}">${SO_ICO.pad}${esc(party ? auT('Invite to my party · {g}').replace('{g}', soGameName(party.game)) : auT('Invite to my party'))}</button><button class="btn2" type="button" data-fr="join" data-id="${esc(id)}"${on && on.g ? '' : ' disabled'} title="${esc(on && on.g ? '' : auT('They are not playing right now'))}">${esc(on && on.g ? auT('Ask to join · {g}').replace('{g}', soGameName(on.g)) : auT('Ask to join their party'))}</button><button class="btn2" type="button" data-fr="remove" data-id="${esc(id)}">${esc(auT('Remove'))}</button></div>` : '';
+  return `<div class="frow fr-f${open ? ' open' : ''}" role="listitem" tabindex="0" data-frc="${esc(id)}"><span class="pic">${esc(name.charAt(0).toUpperCase())}<i class="fr-dot${on ? ' on' : ''}"></i></span><div class="fr-n"><b>${esc(name)}</b><span>@${esc(f.username || '')}</span><em class="fr-st${on ? ' on' : ''}">${esc(st)}</em></div><div class="fr-a">${un ? `<span class="fr-un">${un > 9 ? '9+' : un}</span>` : ''}<button class="btn2 icon2" type="button" data-fr="chat" data-id="${esc(id)}" aria-label="${esc(auT('Chat'))}">${SO_ICO.chat}</button></div>${x}</div>`;
+}
+async function soFrAct(k, b) {
+  const id = b.dataset.id;
+  if (k === 'chat') { closeAll(); dmOpen(id); return true; }
+  if (k === 'invite') { const p = soParty(); if (!p) return true; b.disabled = true; try { await dmSend(id, 'invite', null, p); toast(auT('Invite sent to {u}').replace('{u}', soName(id))); } catch (e) { toast(auT('Could not send. Check your connection and try again.')); } b.disabled = false; return true; }
+  if (k === 'join') { const on = soOn(id); if (!on || !on.g) return true; b.disabled = true; try { await dmSend(id, 'join', null, { game: on.g }); toast(auT('Request sent to {u}').replace('{u}', soName(id))); } catch (e) { toast(auT('Could not send. Check your connection and try again.')); } return true; }
+  return false;
+}
+async function frNudge() {
+  const old = new Set((FR.req || []).filter(r => r.direction === 'incoming').map(r => r.id)), oldF = new Set((FR.list || []).map(f => f.friend_id)), had = !!FR.list;
+  await frLoad();
+  if (!had) return;
+  (FR.req || []).filter(r => r.direction === 'incoming' && !old.has(r.id)).forEach(r => { if (S.prefs.n_req !== false) ntPush({ k: 'fr', from: r.other_id, t: auT('{u} sent you a friend request').replace('{u}', r.display_name || r.username), b: '@' + r.username, a: { type: 'friends' } }); });
+  (FR.list || []).filter(f => !oldF.has(f.friend_id)).forEach(f => ntPush({ k: 'fr', from: f.friend_id, t: auT('You are now friends with {u}').replace('{u}', f.display_name || f.username), b: '@' + f.username, a: { type: 'chat', uid: f.friend_id } }));
+  ntBadge();
+  rtSync();
+}
+function soNewGames() {
+  const ids = games.map(g => g.id);
+  let known = null;
+  try { known = JSON.parse(localStorage.getItem('gameplay:known') || 'null'); } catch (e) {}
+  try { localStorage.setItem('gameplay:known', JSON.stringify(ids)); } catch (e) {}
+  if (!Array.isArray(known) || S.prefs.n_game === false) return;
+  const K = new Set(known), fresh = ids.filter(id => !K.has(id));
+  fresh.slice(0, 3).forEach(id => ntPush({ k: 'game', t: auT('New game: {g}').replace('{g}', soGameName(id)), b: auT('Just added. Be the first to set a record!'), a: { type: 'game', game: id } }));
+  if (fresh.length > 3) ntPush({ k: 'game', t: auT('{n} new games').replace('{n}', fresh.length), b: auT('Check the home page to see them all.'), a: {} });
+}
+function soStart() {
+  ntLoad();
+  if (!SB.user) return;
+  rtStart();
+  DM.first = true; DM.last = {};
+  frLoad().then(() => { ntBadge(); rtSync(); });
+  dmPoll();
+}
+function soStop() {
+  rtStop(); dmClose();
+  DM.inbox = []; DM.unread = 0; DM.msgs = []; DM.last = {}; DM.urls.clear();
+  ntLoad();
+}
+function soBoot() {
+  MENUS.notifs = ['#nmenu', '#nbtn'];
+  const right = document.querySelector('#top .right');
+  right.insertAdjacentHTML('afterbegin', `<span class="onl" id="onl" hidden translate="no"><i></i><b>0</b> ${esc(auT('online'))}</span><button class="icon" id="nbtn" type="button" aria-label="${esc(auT('Notifications'))}" aria-haspopup="true" aria-expanded="false" aria-controls="nmenu">${SO_ICO.bell}<em hidden></em></button>`);
+  $('#abtn').insertAdjacentHTML('beforeend', '<em hidden></em>');
+  right.insertAdjacentHTML('beforeend', `<div class="menu r nmenu" id="nmenu" hidden><div class="nm-h"><b>${esc(auT('Notifications'))}</b><button class="au-link" type="button" id="nall">${esc(auT('Mark all as read'))}</button></div><div class="nlist" id="nlist"></div></div>`);
+  $('#nbtn').addEventListener('click', e => { e.stopPropagation(); setOpen('notifs'); if (openK === 'notifs') ntDraw(); });
+  $('#nall').addEventListener('click', e => { e.stopPropagation(); NT.list.forEach(n => { n.r = true; }); ntSave(); ntBadge(); ntDraw(); });
+  $('#nlist').addEventListener('click', e => { const b = e.target.closest('[data-nid]'); if (!b) return; const n = NT.list.find(x => x.id === b.dataset.nid); if (!n) return; ntRead(n.id); closeAll(); ntAct(n); });
+  $('#fr-l').addEventListener('click', async e => {
+    const b = e.target.closest('[data-fr]');
+    if (b && ['chat', 'invite', 'join'].includes(b.dataset.fr)) { e.stopPropagation(); await soFrAct(b.dataset.fr, b); return; }
+    if (b) return;
+    const r = e.target.closest('[data-frc]');
+    if (r) { e.stopPropagation(); FR.open = FR.open === r.dataset.frc ? null : r.dataset.frc; frDraw(); }
+  }, true);
+  $('#fr-l').addEventListener('keydown', e => { const r = e.target.closest && e.target.closest('[data-frc]'); if (r && e.target === r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); r.click(); } });
+  setInterval(() => { if (SB.user && document.visibilityState === 'visible') dmPoll(); }, 30000);
+  document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible') { dmPoll(); rtTrack(); } });
+  ntLoad();
+  setTimeout(soNewGames, 3000);
+}
+
+const IN = { used: {}, pads: {}, held: {}, raf: 0, cap: null, tab: 'kb', seen: false, hint: 0 };
+const IN_PAD = [['b0', 'A'], ['b1', 'B'], ['b2', 'X'], ['b3', 'Y'], ['b4', 'LB'], ['b5', 'RB'], ['b6', 'LT'], ['b7', 'RT'], ['b8', 'Back'], ['b9', 'Start'], ['b10', 'Left stick press'], ['b11', 'Right stick press'], ['b12', 'D-pad up'], ['b13', 'D-pad down'], ['b14', 'D-pad left'], ['b15', 'D-pad right'], ['ly-', 'Left stick up'], ['ly+', 'Left stick down'], ['lx-', 'Left stick left'], ['lx+', 'Left stick right'], ['ry-', 'Right stick up'], ['ry+', 'Right stick down'], ['rx-', 'Right stick left'], ['rx+', 'Right stick right']];
+const IN_DEF = { b0: 'Space', b1: 'KeyX', b2: 'KeyZ', b3: 'KeyC', b4: 'KeyQ', b5: 'KeyE', b6: 'ShiftLeft', b7: 'Enter', b9: 'Escape', b12: 'ArrowUp', b13: 'ArrowDown', b14: 'ArrowLeft', b15: 'ArrowRight', 'ly-': 'ArrowUp', 'ly+': 'ArrowDown', 'lx-': 'ArrowLeft', 'lx+': 'ArrowRight' };
+const IN_GAME = {
+  'rocket-soccer': { b0: 'Space', b1: 'ShiftLeft', b2: 'KeyX', b3: 'KeyC', b4: 'KeyQ', b5: 'KeyE', b6: 'KeyS', b7: 'KeyW', b9: 'Escape', b12: 'ArrowUp', b13: 'ArrowDown', b14: 'ArrowLeft', b15: 'ArrowRight', 'ly-': 'KeyW', 'ly+': 'KeyS', 'lx-': 'KeyA', 'lx+': 'KeyD' },
+  'blockcraft-3d': { b0: 'Space', b1: 'ShiftLeft', b4: 'KeyQ', b5: 'KeyE', b9: 'Escape', 'ly-': 'KeyW', 'ly+': 'KeyS', 'lx-': 'KeyA', 'lx+': 'KeyD' }
+};
+const IN_KEYS = { Space: [' ', 32], Enter: ['Enter', 13], Escape: ['Escape', 27], Tab: ['Tab', 9], Backspace: ['Backspace', 8], ShiftLeft: ['Shift', 16], ShiftRight: ['Shift', 16], ControlLeft: ['Control', 17], ControlRight: ['Control', 17], AltLeft: ['Alt', 18], AltRight: ['Alt', 18], ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40], ArrowLeft: ['ArrowLeft', 37], ArrowRight: ['ArrowRight', 39], Minus: ['-', 189], Equal: ['=', 187], Comma: [',', 188], Period: ['.', 190], Slash: ['/', 191], Semicolon: [';', 186], Quote: ["'", 222], BracketLeft: ['[', 219], BracketRight: [']', 221], Backslash: ['\\', 220], Backquote: ['`', 192] };
+function inInfo(code) {
+  if (IN_KEYS[code]) return IN_KEYS[code];
+  let m = /^Key([A-Z])$/.exec(code); if (m) return [m[1].toLowerCase(), m[1].charCodeAt(0)];
+  m = /^Digit(\d)$/.exec(code); if (m) return [m[1], 48 + +m[1]];
+  m = /^Numpad(\d)$/.exec(code); if (m) return [m[1], 96 + +m[1]];
+  m = /^F(\d+)$/.exec(code); if (m) return [code, 111 + +m[1]];
+  return [code, 0];
+}
+function inName(code) {
+  if (!code) return auT('None');
+  const N = { Space: 'Space', Enter: 'Enter', Escape: 'Esc', ShiftLeft: 'Left Shift', ShiftRight: 'Right Shift', ControlLeft: 'Left Ctrl', ControlRight: 'Right Ctrl', AltLeft: 'Left Alt', AltRight: 'Right Alt', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', Backspace: 'Backspace', Tab: 'Tab' };
+  if (N[code]) return N[code];
+  const i = inInfo(code);
+  return /^Key|^Digit/.test(code) ? i[0].toUpperCase() : code.replace(/^Numpad/, 'Num ');
+}
+const inGid = () => cur ? cur.g.id : null;
+function inProf(id) {
+  S.prefs.ctl = S.prefs.ctl && typeof S.prefs.ctl === 'object' ? S.prefs.ctl : {};
+  const p = S.prefs.ctl[id] = S.prefs.ctl[id] || {};
+  p.k = p.k || {}; p.p = p.p || {};
+  return p;
+}
+function inPadMap(id) { const p = inProf(id).p, d = IN_GAME[id] || IN_DEF, m = {}; IN_PAD.forEach(([k]) => { m[k] = k in p ? p[k] : (d[k] || ''); }); return m; }
+function inKeyMap(id) { const k = inProf(id).k, m = {}; Object.keys(k).forEach(from => { m[from] = k[from]; }); return m; }
+const inTyping = t => !!(t && t.closest && t.closest('input, textarea, select, [contenteditable="true"], .chat, .modal, .menu'));
+function inTarget() { const a = document.activeElement; return a && a !== document.body && a.closest && a.closest('.g-root') ? a : (document.querySelector('#frame .g-root') || document.body); }
+function inSend(type, code, rep) {
+  const i = inInfo(code);
+  const ev = new KeyboardEvent(type, { code, key: i[0], bubbles: true, cancelable: true, repeat: !!rep, shiftKey: /^Shift/.test(code) && type === 'keydown', ctrlKey: /^Control/.test(code) && type === 'keydown', altKey: /^Alt/.test(code) && type === 'keydown' });
+  try { Object.defineProperty(ev, 'keyCode', { get: () => i[1] }); Object.defineProperty(ev, 'which', { get: () => i[1] }); } catch (e) {}
+  ev.gpSyn = true;
+  inTarget().dispatchEvent(ev);
+}
+function inLearn(e) {
+  const id = inGid();
+  if (!id || !e.code) return;
+  const u = IN.used[id] = IN.used[id] || new Set();
+  if (!u.has(e.code)) { u.add(e.code); try { const L = JSON.parse(localStorage.getItem('gameplay:keys') || '{}'); L[id] = [...u]; localStorage.setItem('gameplay:keys', JSON.stringify(L)); } catch (x) {} }
+}
+function inUsed(id) {
+  let L = {};
+  try { L = JSON.parse(localStorage.getItem('gameplay:keys') || '{}') || {}; } catch (e) {}
+  const s = new Set([...(L[id] || []), ...(IN.used[id] ? [...IN.used[id]] : [])]);
+  Object.values(inPadMap(id)).forEach(c => { if (c) s.add(c); });
+  Object.values(inKeyMap(id)).forEach(c => { if (c) s.add(c); });
+  return [...s].filter(c => c && c !== 'Escape').sort((a, b) => inName(a).localeCompare(inName(b)));
+}
+function inKey(e) {
+  if (e.gpSyn || !cur || AD.locked) return;
+  if (IN.cap) { e.preventDefault(); e.stopImmediatePropagation(); if (e.type === 'keydown') inCaptured(e.code); return; }
+  if (inTyping(e.target) || openK) return;
+  const m = inKeyMap(cur.g.id);
+  if (e.type === 'keydown') setTimeout(() => { if (e.defaultPrevented && !(e.code in m)) inLearn(e); }, 0);
+  if (!(e.code in m)) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  const to = m[e.code];
+  if (to) inSend(e.type, to, e.repeat);
+}
+function inPadPoll() {
+  IN.raf = 0;
+  const P = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : [];
+  if (!P.length) return;
+  const id = inGid(), map = id ? inPadMap(id) : null, now = {};
+  P.forEach(gp => {
+    const b = i => gp.buttons[i] && (gp.buttons[i].pressed || gp.buttons[i].value > .4);
+    for (let i = 0; i < Math.min(16, gp.buttons.length); i++) if (b(i)) now['b' + i] = 1;
+    const ax = (i, n) => { const v = gp.axes[i] || 0; if (v < -.4) now[n + '-'] = 1; else if (v > .4) now[n + '+'] = 1; };
+    ax(0, 'lx'); ax(1, 'ly'); ax(2, 'rx'); ax(3, 'ry');
+  });
+  if (map && !openK && !AD.locked) {
+    const want = {};
+    Object.keys(now).forEach(k => { const c = map[k]; if (c) want[c] = (want[c] || 0) + 1; });
+    Object.keys(IN.held).forEach(c => { if (!want[c]) { inSend('keyup', c); delete IN.held[c]; } });
+    Object.keys(want).forEach(c => { if (!IN.held[c]) { IN.held[c] = 1; inSend('keydown', c); } });
+  } else inRelease();
+  IN.pads = now;
+  if (!$('#ctlmodal').hidden) inLive(now);
+  IN.raf = requestAnimationFrame(inPadPoll);
+}
+function inRelease() { Object.keys(IN.held).forEach(c => inSend('keyup', c)); IN.held = {}; }
+function inPadStart() { if (!IN.raf) IN.raf = requestAnimationFrame(inPadPoll); }
+function inOpen() {
+  const id = inGid();
+  if (!id) return;
+  if (gamebox.classList.contains('fs')) fsExit();
+  inDraw();
+  if (openK !== 'mctl') setOpen('mctl');
+}
+function inDraw() {
+  const id = inGid(), box = $('#ctlbody');
+  if (!id || !box) return;
+  const g = byId.get(id), P = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : [];
+  $('#ctlt').textContent = auT('Controls · {g}').replace('{g}', g ? g.title : id);
+  const tabs = `<div class="adm-tabs ctl-tabs" data-m="${IN.tab === 'kb' ? 'users' : 'tickets'}"><button type="button" data-ct="kb" aria-selected="${IN.tab === 'kb'}">${esc(auT('Keyboard'))}</button><button type="button" data-ct="pad" aria-selected="${IN.tab === 'pad'}">${esc(auT('Controller'))}</button><i></i></div>`;
+  if (IN.tab === 'kb') {
+    const km = inKeyMap(id), used = inUsed(id);
+    box.innerHTML = tabs + `<p class="ctl-p">${esc(auT('Pick a key the game uses, then press the key you want to use instead. Keys the game uses appear here after you play it for a moment.'))}</p><div class="ctl-l">${used.length ? used.map(c => { const from = Object.keys(km).find(k => km[k] === c && k !== c); return `<div class="ctl-r"><span class="ctl-a"><kbd>${esc(inName(c))}</kbd><small>${esc(auT('game key'))}</small></span><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg><button class="btn2${IN.cap && IN.cap.to === c ? ' cap' : ''}" type="button" data-kb="${esc(c)}">${IN.cap && IN.cap.to === c ? esc(auT('Press a key…')) : `<kbd>${esc(inName(from || c))}</kbd>`}</button>${from ? `<button class="x" type="button" data-kbr="${esc(c)}" aria-label="${esc(auT('Reset'))}">${SO_ICO.x}</button>` : '<span class="x"></span>'}</div>`; }).join('') : `<div class="adm-mut">${esc(auT('Play the game for a moment, then come back: the keys it uses will show up here.'))}</div>`}</div><div class="ctl-f"><button class="btn2" type="button" data-kbadd>${esc(auT('Add a game key'))}</button><button class="btn2" type="button" data-kbclear>${esc(auT('Reset keyboard'))}</button></div>`;
+  } else {
+    const pm = inPadMap(id);
+    box.innerHTML = tabs + `<p class="ctl-p" id="ctlpad">${esc(P.length ? auT('Connected: {n}').replace('{n}', P[0].id.replace(/\(.*?\)/g, '').trim().slice(0, 60)) : auT('Connect a controller (USB or Bluetooth) and press any button.'))}</p><div class="ctl-l">${IN_PAD.map(([k, n]) => `<div class="ctl-r" data-pk="${k}"><span class="ctl-a"><b>${esc(auT(n))}</b></span><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg><button class="btn2${IN.cap && IN.cap.pk === k ? ' cap' : ''}" type="button" data-pb="${k}">${IN.cap && IN.cap.pk === k ? esc(auT('Press a key…')) : `<kbd>${esc(inName(pm[k]))}</kbd>`}</button><button class="x" type="button" data-pbn="${k}" aria-label="${esc(auT('None'))}">${SO_ICO.x}</button></div>`).join('')}</div><div class="ctl-f"><button class="btn2" type="button" data-pbclear>${esc(auT('Reset controller'))}</button></div>`;
+  }
+}
+function inLive(now) { document.querySelectorAll('#ctlbody [data-pk]').forEach(r => r.classList.toggle('on', !!now[r.dataset.pk])); const t = $('#ctlpad'); if (t && Object.keys(now).length && !IN.seen) { IN.seen = true; inDraw(); } }
+function inCaptured(code, pk) {
+  const c = IN.cap, id = inGid();
+  IN.cap = null;
+  if (!c || !id) { inDraw(); return; }
+  const p = inProf(id);
+  if (c.add) { if (code && code !== 'Escape') { (IN.used[id] = IN.used[id] || new Set()).add(code); inLearn({ code }); } }
+  else if (c.to && code && code !== 'Escape') { Object.keys(p.k).forEach(k => { if (p.k[k] === c.to) delete p.k[k]; }); if (code !== c.to) { p.k[code] = c.to; p.k[c.to] = p.k[c.to] || ''; } else delete p.k[c.to]; Object.keys(p.k).forEach(k => { if (p.k[k] === '' && !Object.values(p.k).includes(k)) delete p.k[k]; }); }
+  else if (c.pk && code && code !== 'Escape') p.p[c.pk] = code;
+  save(); inDraw();
+}
+function inBoot() {
+  addEventListener('keydown', inKey, true);
+  addEventListener('keyup', inKey, true);
+  addEventListener('gamepadconnected', e => { inPadStart(); if (Date.now() - IN.hint > 60000) { IN.hint = Date.now(); toast(auT('Controller connected')); } if (openK === 'mctl') inDraw(); });
+  addEventListener('gamepaddisconnected', () => { inRelease(); if (openK === 'mctl') inDraw(); });
+  addEventListener('blur', inRelease);
+  MENUS.mctl = ['#ctlmodal'];
+  document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="ctlmodal" hidden role="dialog" aria-modal="true" aria-labelledby="ctlt"><div class="mc"><div class="mh"><h3 id="ctlt">${esc(auT('Controls'))}</h3><button class="x" type="button" data-close aria-label="${esc(auT('Close'))}"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="mb" id="ctlbody"></div></div></div>`);
+  const rb = $('#pRestart');
+  if (rb) rb.insertAdjacentHTML('beforebegin', `<button class="icon" type="button" id="pCtl" title="${esc(auT('Controls'))}" aria-label="${esc(auT('Change controls'))}">${SO_ICO.pad}</button>`);
+  $('#pCtl').addEventListener('click', e => { e.stopPropagation(); inOpen(); });
+  $('#ctlmodal').addEventListener('click', e => {
+    const t = e.target;
+    if (t === e.currentTarget || t.closest('[data-close]')) { IN.cap = null; closeAll(); return; }
+    e.stopPropagation();
+    const id = inGid(); if (!id) return;
+    const p = inProf(id), b = x => t.closest(x);
+    if (b('[data-ct]')) { IN.tab = b('[data-ct]').dataset.ct; IN.cap = null; inDraw(); return; }
+    if (b('[data-kb]')) { IN.cap = { to: b('[data-kb]').dataset.kb }; inDraw(); return; }
+    if (b('[data-kbr]')) { const to = b('[data-kbr]').dataset.kbr; Object.keys(p.k).forEach(k => { if (p.k[k] === to || k === to) delete p.k[k]; }); save(); inDraw(); return; }
+    if (b('[data-kbadd]')) { IN.cap = { add: true }; b('[data-kbadd]').textContent = auT('Press the game key…'); b('[data-kbadd]').classList.add('cap'); return; }
+    if (b('[data-kbclear]')) { p.k = {}; save(); inDraw(); return; }
+    if (b('[data-pb]')) { IN.cap = { pk: b('[data-pb]').dataset.pb }; inDraw(); return; }
+    if (b('[data-pbn]')) { p.p[b('[data-pbn]').dataset.pbn] = ''; save(); inDraw(); return; }
+    if (b('[data-pbclear]')) { p.p = {}; save(); inDraw(); return; }
+  });
+  if (navigator.getGamepads && [...navigator.getGamepads()].some(Boolean)) inPadStart();
 }
 
 Ameplay.debug = { open: id => go(href(id), false), close: () => go(PATH_MODE ? '/' : '#/', false), games, fire: () => ov && ov.fire(), state, compute, q: t => { const o = state.q; state.q = t; const r = compute().list.map(g => g.id); state.q = o; return r; }, info: INFO, fit: () => fitStage(), pause: () => PAUSE.on };
@@ -4744,7 +5551,172 @@ const R = [
 ["This code has expired. Click Resend code to get a new one.", "Ce code a expiré. Cliquez sur Renvoyer le code pour en recevoir un nouveau.", "Este código ha caducado. Pulsa Reenviar código para recibir uno nuevo.", "Dieser Code ist abgelaufen. Klicke auf Code erneut senden, um einen neuen zu bekommen.", "Questo codice è scaduto. Clicca su Invia di nuovo il codice per riceverne uno nuovo.", "Este código expirou. Clique em Reenviar código para receber um novo."],
 ["This code is wrong or has expired. Check the newest email, or click Resend code.", "Ce code est incorrect ou a expiré. Vérifiez le dernier e-mail, ou cliquez sur Renvoyer le code.", "Este código es incorrecto o ha caducado. Revisa el correo más reciente o pulsa Reenviar código.", "Dieser Code ist falsch oder abgelaufen. Sieh in der neuesten E-Mail nach oder klicke auf Code erneut senden.", "Questo codice è errato o scaduto. Controlla l’email più recente, oppure clicca su Invia di nuovo il codice.", "Este código está incorreto ou expirou. Confira o e-mail mais recente ou clique em Reenviar código."],
 ["Type it below to choose a new password.", "Saisissez-le ci-dessous pour choisir un nouveau mot de passe.", "Escríbelo abajo para elegir una contraseña nueva.", "Gib ihn unten ein, um ein neues Passwort festzulegen.", "Inseriscilo qui sotto per scegliere una nuova password.", "Digite-o abaixo para escolher uma nova senha."],
+["Send us a message. Replies show up in Support.", "Envoyez-nous un message. Les réponses s’affichent dans Assistance.", "Envíanos un mensaje. Las respuestas aparecen en Soporte.", "Schreib uns eine Nachricht. Antworten erscheinen unter Support.", "Inviaci un messaggio. Le risposte compaiono in Assistenza.", "Envie uma mensagem para nós. As respostas aparecem em Suporte."],
+["Open a support ticket and tell us what happened.", "Ouvrez un ticket et racontez-nous ce qui s’est passé.", "Abre un ticket de soporte y cuéntanos qué pasó.", "Öffne ein Support-Ticket und erzähl uns, was passiert ist.", "Apri un ticket di assistenza e raccontaci cosa è successo.", "Abra um chamado de suporte e conte o que aconteceu."],
 ["Resend code in {n} s", "Renvoyer le code dans {n} s", "Reenviar código en {n} s", "Code erneut senden in {n} s", "Invia di nuovo il codice tra {n} s", "Reenviar código em {n} s"],
+["A friend", "Un ami", "Un amigo", "Ein Freund", "Un amico", "Um amigo"],
+["Account deleted", "Compte supprimé", "Cuenta eliminada", "Konto gelöscht", "Account eliminato", "Conta excluída"],
+["Accounts with records", "Comptes avec des records", "Cuentas con récords", "Konten mit Rekorden", "Account con record", "Contas com recordes"],
+["Active players per day", "Joueurs actifs par jour", "Jugadores activos por día", "Aktive Spieler pro Tag", "Giocatori attivi al giorno", "Jogadores ativos por dia"],
+["Add a game key", "Ajouter une touche du jeu", "Añadir una tecla del juego", "Spieltaste hinzufügen", "Aggiungi un tasto del gioco", "Adicionar uma tecla do jogo"],
+["Admin stats", "Statistiques admin", "Estadísticas de administración", "Admin-Statistiken", "Statistiche admin", "Estatísticas de administração"],
+["All details", "Tous les détails", "Todos los detalles", "Alle Details", "Tutti i dettagli", "Todos os detalhes"],
+["Ask to join their party", "Demander à rejoindre son groupe", "Pedir unirte a su grupo", "Beitritt zur Gruppe anfragen", "Chiedi di entrare nel suo gruppo", "Pedir para entrar no grupo"],
+["Ask to join · {g}", "Demander à rejoindre · {g}", "Pedir unirte · {g}", "Beitritt anfragen · {g}", "Chiedi di entrare · {g}", "Pedir para entrar · {g}"],
+["Avg minutes per visit", "Minutes moy. par visite", "Minutos medios por visita", "Ø Minuten pro Besuch", "Minuti medi per visita", "Minutos médios por visita"],
+["Broken?", "Cassé ?", "¿Roto?", "Kaputt?", "Rotto?", "Quebrado?"],
+["Browsing", "Navigue sur le site", "Navegando", "Surft", "Sta navigando", "Navegando"],
+["browsing", "navigue sur le site", "navegando", "surft", "sta navigando", "navegando"],
+["Change controls", "Modifier les commandes", "Cambiar controles", "Steuerung ändern", "Cambia comandi", "Mudar controles"],
+["Chat", "Discuter", "Chatear", "Chatten", "Chatta", "Conversar"],
+["Check the home page to see them all.", "Allez sur l’accueil pour tous les voir.", "Mira la página de inicio para verlos todos.", "Sieh auf der Startseite nach, um alle zu sehen.", "Vai alla home per vederli tutti.", "Veja a página inicial para conferir todos."],
+["Code {c}", "Code {c}", "Código {c}", "Code {c}", "Codice {c}", "Código {c}"],
+["Connect a controller (USB or Bluetooth) and press any button.", "Branchez une manette (USB ou Bluetooth) et appuyez sur n’importe quel bouton.", "Conecta un mando (USB o Bluetooth) y pulsa cualquier botón.", "Verbinde einen Controller (USB oder Bluetooth) und drücke eine beliebige Taste.", "Collega un controller (USB o Bluetooth) e premi un tasto qualsiasi.", "Conecte um controle (USB ou Bluetooth) e aperte qualquer botão."],
+["Connected: {n}", "Connectée : {n}", "Conectado: {n}", "Verbunden: {n}", "Collegato: {n}", "Conectado: {n}"],
+["Controller", "Manette", "Mando", "Controller", "Controller", "Controle"],
+["Controller connected", "Manette connectée", "Mando conectado", "Controller verbunden", "Controller collegato", "Controle conectado"],
+["Controls · {g}", "Commandes · {g}", "Controles · {g}", "Steuerung · {g}", "Comandi · {g}", "Controles · {g}"],
+["Could not load the stats. Check your connection and try again.", "Impossible de charger les statistiques. Vérifiez votre connexion et réessayez.", "No se pudieron cargar las estadísticas. Revisa tu conexión e inténtalo de nuevo.", "Die Statistiken konnten nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.", "Impossibile caricare le statistiche. Controlla la connessione e riprova.", "Não foi possível carregar as estatísticas. Verifique sua conexão e tente de novo."],
+["Could not load. Check your connection and try again.", "Chargement impossible. Vérifiez votre connexion et réessayez.", "No se pudo cargar. Revisa tu conexión e inténtalo de nuevo.", "Laden fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.", "Impossibile caricare. Controlla la connessione e riprova.", "Não foi possível carregar. Verifique sua conexão e tente de novo."],
+["Could not send the picture. Try another one.", "Impossible d’envoyer l’image. Essayez-en une autre.", "No se pudo enviar la imagen. Prueba con otra.", "Das Bild konnte nicht gesendet werden. Versuche ein anderes.", "Impossibile inviare l’immagine. Provane un’altra.", "Não foi possível enviar a imagem. Tente outra."],
+["Could not send. Check your connection and try again.", "Envoi impossible. Vérifiez votre connexion et réessayez.", "No se pudo enviar. Revisa tu conexión e inténtalo de nuevo.", "Senden fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.", "Impossibile inviare. Controlla la connessione e riprova.", "Não foi possível enviar. Verifique sua conexão e tente de novo."],
+["D-pad up", "Croix haut", "Cruceta arriba", "Steuerkreuz oben", "Croce direzionale su", "Direcional cima"],
+["D-pad down", "Croix bas", "Cruceta abajo", "Steuerkreuz unten", "Croce direzionale giù", "Direcional baixo"],
+["D-pad left", "Croix gauche", "Cruceta izquierda", "Steuerkreuz links", "Croce direzionale sinistra", "Direcional esquerda"],
+["D-pad right", "Croix droite", "Cruceta derecha", "Steuerkreuz rechts", "Croce direzionale destra", "Direcional direita"],
+["Left stick up", "Stick gauche haut", "Stick izquierdo arriba", "Linker Stick oben", "Levetta sinistra su", "Analógico esquerdo cima"],
+["Left stick down", "Stick gauche bas", "Stick izquierdo abajo", "Linker Stick unten", "Levetta sinistra giù", "Analógico esquerdo baixo"],
+["Left stick left", "Stick gauche à gauche", "Stick izquierdo izquierda", "Linker Stick links", "Levetta sinistra a sinistra", "Analógico esquerdo esquerda"],
+["Left stick right", "Stick gauche à droite", "Stick izquierdo derecha", "Linker Stick rechts", "Levetta sinistra a destra", "Analógico esquerdo direita"],
+["Left stick press", "Clic stick gauche", "Pulsar stick izquierdo", "Linken Stick drücken", "Pressione levetta sinistra", "Apertar analógico esquerdo"],
+["Right stick up", "Stick droit haut", "Stick derecho arriba", "Rechter Stick oben", "Levetta destra su", "Analógico direito cima"],
+["Right stick down", "Stick droit bas", "Stick derecho abajo", "Rechter Stick unten", "Levetta destra giù", "Analógico direito baixo"],
+["Right stick left", "Stick droit à gauche", "Stick derecho izquierda", "Rechter Stick links", "Levetta destra a sinistra", "Analógico direito esquerda"],
+["Right stick right", "Stick droit à droite", "Stick derecho derecha", "Rechter Stick rechts", "Levetta destra a destra", "Analógico direito direita"],
+["Right stick press", "Clic stick droit", "Pulsar stick derecho", "Rechten Stick drücken", "Pressione levetta destra", "Apertar analógico direito"],
+["Left Shift", "Maj gauche", "Mayús izq.", "Umschalt links", "Maiusc sinistro", "Shift esquerdo"],
+["Right Shift", "Maj droite", "Mayús der.", "Umschalt rechts", "Maiusc destro", "Shift direito"],
+["Left Ctrl", "Ctrl gauche", "Ctrl izq.", "Strg links", "Ctrl sinistro", "Ctrl esquerdo"],
+["Right Ctrl", "Ctrl droite", "Ctrl der.", "Strg rechts", "Ctrl destro", "Ctrl direito"],
+["Left Alt", "Alt gauche", "Alt izq.", "Alt links", "Alt sinistro", "Alt esquerdo"],
+["Right Alt", "Alt droite", "Alt der.", "Alt rechts", "Alt destro", "Alt direito"],
+["Backspace", "Retour arrière", "Retroceso", "Rücktaste", "Backspace", "Backspace"],
+["game key", "touche du jeu", "tecla del juego", "Spieltaste", "tasto del gioco", "tecla do jogo"],
+["Delete account forever", "Supprimer le compte définitivement", "Eliminar la cuenta para siempre", "Konto endgültig löschen", "Elimina l’account per sempre", "Excluir a conta para sempre"],
+["Deletes the account, profile, records, saves, friends and messages for good. This cannot be undone.", "Supprime définitivement le compte, le profil, les records, les sauvegardes, les amis et les messages. Cette action est irréversible.", "Elimina para siempre la cuenta, el perfil, los récords, las partidas guardadas, los amigos y los mensajes. No se puede deshacer.", "Löscht Konto, Profil, Rekorde, Spielstände, Freunde und Nachrichten endgültig. Das kann nicht rückgängig gemacht werden.", "Elimina per sempre account, profilo, record, salvataggi, amici e messaggi. Non si può annullare.", "Exclui para sempre a conta, o perfil, os recordes, os jogos salvos, os amigos e as mensagens. Isso não pode ser desfeito."],
+["Devices", "Appareils", "Dispositivos", "Geräte", "Dispositivi", "Dispositivos"],
+["Errors 7 days", "Erreurs 7 jours", "Errores 7 días", "Fehler 7 Tage", "Errori 7 giorni", "Erros 7 dias"],
+["Games played at least once", "Jeux joués au moins une fois", "Juegos jugados al menos una vez", "Mindestens einmal gespielte Spiele", "Giochi giocati almeno una volta", "Jogos jogados pelo menos uma vez"],
+["Games with errors (7 days)", "Jeux avec des erreurs (7 jours)", "Juegos con errores (7 días)", "Spiele mit Fehlern (7 Tage)", "Giochi con errori (7 giorni)", "Jogos com erros (7 dias)"],
+["Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them.", "Masqué (haché). Les mots de passe sont stockés sous forme de hachage à sens unique : personne ne peut les voir.", "Oculta (cifrada con hash). Las contraseñas se guardan como hash de un solo sentido, así que nadie puede verlas.", "Verborgen (gehasht). Passwörter werden als Einweg-Hash gespeichert, niemand kann sie sehen.", "Nascosta (hash). Le password sono salvate come hash a senso unico, quindi nessuno può vederle.", "Oculta (hash). As senhas são guardadas como hash de sentido único, então ninguém pode vê-las."],
+["Hours 7 days", "Heures 7 jours", "Horas 7 días", "Stunden 7 Tage", "Ore 7 giorni", "Horas 7 dias"],
+["Hours played", "Heures jouées", "Horas jugadas", "Gespielte Stunden", "Ore giocate", "Horas jogadas"],
+["Hours played per day", "Heures jouées par jour", "Horas jugadas por día", "Gespielte Stunden pro Tag", "Ore giocate al giorno", "Horas jogadas por dia"],
+["Hours played 7 days", "Heures jouées 7 jours", "Horas jugadas 7 días", "Gespielte Stunden 7 Tage", "Ore giocate 7 giorni", "Horas jogadas 7 dias"],
+["Invite", "Inviter", "Invitar", "Einladen", "Invita", "Convidar"],
+["Invite sent", "Invitation envoyée", "Invitación enviada", "Einladung gesendet", "Invito inviato", "Convite enviado"],
+["Invite sent.", "Invitation envoyée.", "Invitación enviada.", "Einladung gesendet.", "Invito inviato.", "Convite enviado."],
+["Invite sent to {u}", "Invitation envoyée à {u}", "Invitación enviada a {u}", "Einladung an {u} gesendet", "Invito inviato a {u}", "Convite enviado para {u}"],
+["Invite to my party", "Inviter dans mon groupe", "Invitar a mi grupo", "In meine Gruppe einladen", "Invita nel mio gruppo", "Convidar para meu grupo"],
+["Invite to my party · {g}", "Inviter dans mon groupe · {g}", "Invitar a mi grupo · {g}", "In meine Gruppe einladen · {g}", "Invita nel mio gruppo · {g}", "Convidar para meu grupo · {g}"],
+["Joining the party…", "Connexion au groupe…", "Uniéndote al grupo…", "Trete der Gruppe bei…", "Ingresso nel gruppo…", "Entrando no grupo…"],
+["Just added. Be the first to set a record!", "Tout juste ajouté. Soyez le premier à établir un record !", "Recién añadido. ¡Sé el primero en marcar un récord!", "Gerade hinzugefügt. Stell als Erster einen Rekord auf!", "Appena aggiunto. Sii il primo a fare un record!", "Acabou de chegar. Seja o primeiro a bater um recorde!"],
+["Last error", "Dernière erreur", "Último error", "Letzter Fehler", "Ultimo errore", "Último erro"],
+["Last played", "Dernière partie", "Última partida", "Zuletzt gespielt", "Ultima partita", "Última partida"],
+["Launches", "Lancements", "Inicios", "Starts", "Avvii", "Inícios"],
+["Launches 7 days", "Lancements 7 jours", "Inicios 7 días", "Starts 7 Tage", "Avvii 7 giorni", "Inícios 7 dias"],
+["Game launches 7 days", "Lancements de jeux 7 jours", "Inicios de juegos 7 días", "Spielstarts 7 Tage", "Avvii di giochi 7 giorni", "Inícios de jogos 7 dias"],
+["Live now", "En direct", "En directo", "Jetzt live", "Live ora", "Ao vivo agora"],
+["Online now", "En ligne maintenant", "En línea ahora", "Jetzt online", "Online ora", "Online agora"],
+["Make this admin a regular user first.", "Faites d’abord de cet admin un utilisateur normal.", "Primero convierte a este administrador en usuario normal.", "Mach diesen Admin zuerst zu einem normalen Benutzer.", "Prima rendi questo admin un utente normale.", "Primeiro transforme este administrador em usuário comum."],
+["Mark all as read", "Tout marquer comme lu", "Marcar todo como leído", "Alle als gelesen markieren", "Segna tutto come letto", "Marcar tudo como lido"],
+["Message {u}", "Message à {u}", "Mensaje para {u}", "Nachricht an {u}", "Messaggio a {u}", "Mensagem para {u}"],
+["Messages", "Messages", "Mensajes", "Nachrichten", "Messaggi", "Mensagens"],
+["New accounts per day", "Nouveaux comptes par jour", "Cuentas nuevas por día", "Neue Konten pro Tag", "Nuovi account al giorno", "Novas contas por dia"],
+["New accounts 7 days", "Nouveaux comptes 7 jours", "Cuentas nuevas 7 días", "Neue Konten 7 Tage", "Nuovi account 7 giorni", "Novas contas 7 dias"],
+["Active 7 days", "Actifs 7 jours", "Activos 7 días", "Aktiv 7 Tage", "Attivi 7 giorni", "Ativos 7 dias"],
+["Active 30 days", "Actifs 30 jours", "Activos 30 días", "Aktiv 30 Tage", "Attivi 30 giorni", "Ativos 30 dias"],
+["Events recorded", "Événements enregistrés", "Eventos registrados", "Erfasste Ereignisse", "Eventi registrati", "Eventos registrados"],
+["New game: {g}", "Nouveau jeu : {g}", "Nuevo juego: {g}", "Neues Spiel: {g}", "Nuovo gioco: {g}", "Novo jogo: {g}"],
+["No data yet.", "Pas encore de données.", "Aún no hay datos.", "Noch keine Daten.", "Ancora nessun dato.", "Ainda não há dados."],
+["No errors. Everything works.", "Aucune erreur. Tout fonctionne.", "Sin errores. Todo funciona.", "Keine Fehler. Alles funktioniert.", "Nessun errore. Funziona tutto.", "Nenhum erro. Tudo funciona."],
+["No games played yet.", "Aucun jeu joué pour l’instant.", "Aún no se ha jugado a ningún juego.", "Noch keine Spiele gespielt.", "Nessun gioco giocato finora.", "Nenhum jogo jogado ainda."],
+["No notifications yet.", "Pas encore de notifications.", "Aún no hay notificaciones.", "Noch keine Benachrichtigungen.", "Ancora nessuna notifica.", "Nenhuma notificação ainda."],
+["Nobody is online right now.", "Personne n’est en ligne pour l’instant.", "No hay nadie en línea ahora mismo.", "Gerade ist niemand online.", "Al momento nessuno è online.", "Ninguém está online agora."],
+["None", "Aucune", "Ninguna", "Keine", "Nessuno", "Nenhuma"],
+["None · Google only", "Aucun · Google uniquement", "Ninguna · solo Google", "Keins · nur Google", "Nessuna · solo Google", "Nenhuma · só Google"],
+["Set · hidden", "Défini · masqué", "Establecida · oculta", "Festgelegt · verborgen", "Impostata · nascosta", "Definida · oculta"],
+["Only friends can invite you. Choose Nobody to stop invite pop-ups.", "Seuls vos amis peuvent vous inviter. Choisissez Personne pour ne plus recevoir d’invitations.", "Solo tus amigos pueden invitarte. Elige Nadie para dejar de recibir invitaciones.", "Nur Freunde können dich einladen. Wähle Niemand, um keine Einladungs-Pop-ups mehr zu bekommen.", "Solo gli amici possono invitarti. Scegli Nessuno per non ricevere più inviti.", "Só amigos podem convidar você. Escolha Ninguém para parar os pop-ups de convite."],
+["Open online play in a game first", "Lancez d’abord une partie en ligne", "Primero abre el modo en línea de un juego", "Öffne zuerst den Online-Modus eines Spiels", "Prima apri la modalità online di un gioco", "Primeiro abra o modo online de um jogo"],
+["Open online play in a game first, then invite your friend.", "Lancez d’abord une partie en ligne, puis invitez votre ami.", "Primero abre el modo en línea de un juego y luego invita a tu amigo.", "Öffne zuerst den Online-Modus eines Spiels und lade dann deinen Freund ein.", "Prima apri la modalità online di un gioco, poi invita il tuo amico.", "Primeiro abra o modo online de um jogo e depois convide seu amigo."],
+["Or set a new password yourself:", "Ou définissez vous-même un nouveau mot de passe :", "O establece tú mismo una contraseña nueva:", "Oder lege selbst ein neues Passwort fest:", "Oppure imposta tu una nuova password:", "Ou defina você mesmo uma nova senha:"],
+["Pick a key the game uses, then press the key you want to use instead. Keys the game uses appear here after you play it for a moment.", "Choisissez une touche du jeu, puis appuyez sur la touche que vous voulez utiliser à la place. Les touches du jeu apparaissent ici après quelques instants de jeu.", "Elige una tecla del juego y pulsa la tecla que quieras usar en su lugar. Las teclas del juego aparecen aquí después de jugar un rato.", "Wähle eine Taste des Spiels und drücke dann die Taste, die du stattdessen nutzen willst. Die Tasten des Spiels erscheinen hier, nachdem du kurz gespielt hast.", "Scegli un tasto del gioco, poi premi il tasto che vuoi usare al suo posto. I tasti del gioco compaiono qui dopo che ci hai giocato un po’.", "Escolha uma tecla do jogo e aperte a tecla que você quer usar no lugar dela. As teclas do jogo aparecem aqui depois que você joga um pouco."],
+["Play the game for a moment, then come back: the keys it uses will show up here.", "Jouez un moment, puis revenez : les touches du jeu s’afficheront ici.", "Juega un rato y vuelve: aquí aparecerán las teclas que usa.", "Spiel kurz und komm dann zurück: Die Tasten des Spiels erscheinen dann hier.", "Gioca un po’, poi torna qui: compariranno i tasti che usa.", "Jogue um pouco e volte: as teclas que ele usa vão aparecer aqui."],
+["Press a key…", "Appuyez sur une touche…", "Pulsa una tecla…", "Drücke eine Taste…", "Premi un tasto…", "Aperte uma tecla…"],
+["Press the game key…", "Appuyez sur la touche du jeu…", "Pulsa la tecla del juego…", "Drücke die Spieltaste…", "Premi il tasto del gioco…", "Aperte a tecla do jogo…"],
+["Reset controller", "Réinitialiser la manette", "Restablecer mando", "Controller zurücksetzen", "Ripristina controller", "Redefinir controle"],
+["Reset keyboard", "Réinitialiser le clavier", "Restablecer teclado", "Tastatur zurücksetzen", "Ripristina tastiera", "Redefinir teclado"],
+["Picture", "Image", "Imagen", "Bild", "Immagine", "Imagem"],
+["Picture not available", "Image indisponible", "Imagen no disponible", "Bild nicht verfügbar", "Immagine non disponibile", "Imagem indisponível"],
+["Player", "Joueur", "Jugador", "Spieler", "Giocatore", "Jogador"],
+["Players coming back", "Joueurs qui reviennent", "Jugadores que vuelven", "Wiederkehrende Spieler", "Giocatori che tornano", "Jogadores que voltam"],
+["Playing {g}", "Joue à {g}", "Jugando a {g}", "Spielt {g}", "Sta giocando a {g}", "Jogando {g}"],
+["playing {g}", "joue à {g}", "jugando a {g}", "spielt {g}", "sta giocando a {g}", "jogando {g}"],
+["Plays", "Parties", "Partidas", "Runden", "Partite", "Partidas"],
+["Recent errors", "Erreurs récentes", "Errores recientes", "Letzte Fehler", "Errori recenti", "Erros recentes"],
+["Reply", "Répondre", "Responder", "Antworten", "Rispondi", "Responder"],
+["Request sent to {u}", "Demande envoyée à {u}", "Solicitud enviada a {u}", "Anfrage an {u} gesendet", "Richiesta inviata a {u}", "Pedido enviado para {u}"],
+["Request sent. You will get an invite when they accept.", "Demande envoyée. Vous recevrez une invitation dès qu’elle sera acceptée.", "Solicitud enviada. Recibirás una invitación cuando la acepte.", "Anfrage gesendet. Du bekommst eine Einladung, sobald sie angenommen wird.", "Richiesta inviata. Riceverai un invito quando la accetta.", "Pedido enviado. Você vai receber um convite quando aceitarem."],
+["Rounds played", "Manches jouées", "Rondas jugadas", "Gespielte Runden", "Round giocati", "Rodadas jogadas"],
+["Say hi", "Dire bonjour", "Saludar", "Hallo sagen", "Saluta", "Dizer oi"],
+["Say hi! Messages are only seen by the two of you.", "Dites bonjour ! Seuls vous deux voyez ces messages.", "¡Saluda! Solo vosotros dos veis los mensajes.", "Sag Hallo! Nur ihr beide seht die Nachrichten.", "Saluta! Solo voi due vedete i messaggi.", "Diga oi! Só vocês dois veem as mensagens."],
+["Send a picture", "Envoyer une image", "Enviar una imagen", "Bild senden", "Invia un’immagine", "Enviar uma imagem"],
+["Sending the picture…", "Envoi de l’image…", "Enviando la imagen…", "Bild wird gesendet…", "Invio dell’immagine…", "Enviando a imagem…"],
+["Sent a picture", "A envoyé une image", "Envió una imagen", "Hat ein Bild gesendet", "Ha inviato un’immagine", "Enviou uma imagem"],
+["Send password reset email", "Envoyer l’e-mail de réinitialisation", "Enviar correo para restablecer la contraseña", "E-Mail zum Zurücksetzen des Passworts senden", "Invia email di reimpostazione password", "Enviar e-mail de redefinição de senha"],
+["Sent to {e}. They get a 6-digit code to choose a new password.", "Envoyé à {e}. La personne recevra un code à 6 chiffres pour choisir un nouveau mot de passe.", "Enviado a {e}. Recibirá un código de 6 dígitos para elegir una contraseña nueva.", "An {e} gesendet. Die Person bekommt einen 6-stelligen Code, um ein neues Passwort festzulegen.", "Inviata a {e}. Riceverà un codice di 6 cifre per scegliere una nuova password.", "Enviado para {e}. A pessoa recebe um código de 6 dígitos para escolher uma nova senha."],
+["Shown in the corner of the screen and in the bell menu.", "Affichées dans le coin de l’écran et dans le menu de la cloche.", "Se muestran en la esquina de la pantalla y en el menú de la campana.", "Werden in der Bildschirmecke und im Glockenmenü angezeigt.", "Mostrate nell’angolo dello schermo e nel menu della campanella.", "Aparecem no canto da tela e no menu do sino."],
+["Some errors", "Quelques erreurs", "Algunos errores", "Einige Fehler", "Alcuni errori", "Alguns erros"],
+["Working", "Fonctionne", "Funciona", "Funktioniert", "Funziona", "Funcionando"],
+["Status", "Statut", "Estado", "Status", "Stato", "Status"],
+["That picture is too big. Pick one under 25 MB.", "Cette image est trop lourde. Choisissez-en une de moins de 25 Mo.", "Esa imagen es demasiado grande. Elige una de menos de 25 MB.", "Das Bild ist zu groß. Wähle eins unter 25 MB.", "L’immagine è troppo grande. Scegline una sotto i 25 MB.", "Essa imagem é grande demais. Escolha uma com menos de 25 MB."],
+["That username is taken.", "Ce nom d’utilisateur est déjà pris.", "Ese nombre de usuario está ocupado.", "Dieser Benutzername ist vergeben.", "Questo nome utente è già preso.", "Esse nome de usuário já está em uso."],
+["They are not playing right now", "Ne joue pas en ce moment", "No está jugando ahora", "Spielt gerade nicht", "Non sta giocando adesso", "Não está jogando agora"],
+["This account has no password: it signs in with Google.", "Ce compte n’a pas de mot de passe : il se connecte avec Google.", "Esta cuenta no tiene contraseña: inicia sesión con Google.", "Dieses Konto hat kein Passwort: Es meldet sich mit Google an.", "Questo account non ha password: accede con Google.", "Esta conta não tem senha: ela entra com o Google."],
+["This account was deleted", "Ce compte a été supprimé", "Esta cuenta se ha eliminado", "Dieses Konto wurde gelöscht", "Questo account è stato eliminato", "Esta conta foi excluída"],
+["Time played per player", "Temps de jeu par joueur", "Tiempo jugado por jugador", "Spielzeit pro Spieler", "Tempo di gioco per giocatore", "Tempo jogado por jogador"],
+["Top searches", "Recherches populaires", "Búsquedas más frecuentes", "Häufigste Suchen", "Ricerche più frequenti", "Pesquisas mais feitas"],
+["Type the username or email exactly to confirm.", "Saisissez exactement le nom d’utilisateur ou l’e-mail pour confirmer.", "Escribe exactamente el nombre de usuario o el correo para confirmar.", "Gib zur Bestätigung genau den Benutzernamen oder die E-Mail ein.", "Inserisci esattamente il nome utente o l’email per confermare.", "Digite exatamente o nome de usuário ou o e-mail para confirmar."],
+["Type the username or email to confirm", "Saisissez le nom d’utilisateur ou l’e-mail pour confirmer", "Escribe el nombre de usuario o el correo para confirmar", "Gib zur Bestätigung den Benutzernamen oder die E-Mail ein", "Inserisci il nome utente o l’email per confermare", "Digite o nome de usuário ou o e-mail para confirmar"],
+["Updated {t}. Refreshes every 30 seconds; the live list updates instantly.", "Mis à jour à {t}. Actualisation toutes les 30 secondes ; la liste en direct se met à jour instantanément.", "Actualizado a las {t}. Se actualiza cada 30 segundos; la lista en directo, al instante.", "Aktualisiert um {t}. Wird alle 30 Sekunden aktualisiert, die Live-Liste sofort.", "Aggiornato alle {t}. Si aggiorna ogni 30 secondi; l’elenco live si aggiorna subito.", "Atualizado às {t}. Atualiza a cada 30 segundos; a lista ao vivo atualiza na hora."],
+["When a friend invites you to play or asks to join you.", "Quand un ami vous invite à jouer ou demande à vous rejoindre.", "Cuando un amigo te invita a jugar o pide unirse a ti.", "Wenn ein Freund dich zum Spielen einlädt oder dir beitreten will.", "Quando un amico ti invita a giocare o chiede di unirsi a te.", "Quando um amigo convida você para jogar ou pede para entrar com você."],
+["When a friend opens the site.", "Quand un ami ouvre le site.", "Cuando un amigo abre el sitio.", "Wenn ein Freund die Seite öffnet.", "Quando un amico apre il sito.", "Quando um amigo abre o site."],
+["When a friend sends you a message or a picture.", "Quand un ami vous envoie un message ou une image.", "Cuando un amigo te envía un mensaje o una imagen.", "Wenn ein Freund dir eine Nachricht oder ein Bild schickt.", "Quando un amico ti invia un messaggio o un’immagine.", "Quando um amigo envia uma mensagem ou uma imagem para você."],
+["When new games are added to the site.", "Quand de nouveaux jeux sont ajoutés au site.", "Cuando se añaden juegos nuevos al sitio.", "Wenn neue Spiele zur Seite hinzugefügt werden.", "Quando vengono aggiunti nuovi giochi al sito.", "Quando novos jogos são adicionados ao site."],
+["You asked to join {u}", "Vous avez demandé à rejoindre {u}", "Pediste unirte a {u}", "Du hast {u} um Beitritt gebeten", "Hai chiesto di unirti a {u}", "Você pediu para entrar com {u}"],
+["You can only chat with friends", "Vous ne pouvez discuter qu’avec vos amis", "Solo puedes chatear con amigos", "Du kannst nur mit Freunden chatten", "Puoi chattare solo con gli amici", "Você só pode conversar com amigos"],
+["You cannot delete your own account here.", "Vous ne pouvez pas supprimer votre propre compte ici.", "No puedes eliminar tu propia cuenta aquí.", "Du kannst dein eigenes Konto hier nicht löschen.", "Non puoi eliminare il tuo account da qui.", "Você não pode excluir sua própria conta aqui."],
+["You invited {u} to your party", "Vous avez invité {u} dans votre groupe", "Invitaste a {u} a tu grupo", "Du hast {u} in deine Gruppe eingeladen", "Hai invitato {u} nel tuo gruppo", "Você convidou {u} para o seu grupo"],
+["You are no longer friends.", "Vous n’êtes plus amis.", "Ya no sois amigos.", "Ihr seid nicht mehr befreundet.", "Non siete più amici.", "Vocês não são mais amigos."],
+["Your friends see a green dot when you are online.", "Vos amis voient un point vert quand vous êtes en ligne.", "Tus amigos ven un punto verde cuando estás en línea.", "Deine Freunde sehen einen grünen Punkt, wenn du online bist.", "I tuoi amici vedono un pallino verde quando sei online.", "Seus amigos veem um ponto verde quando você está online."],
+["best {s}", "record {s}", "récord {s}", "Rekord {s}", "record {s}", "recorde {s}"],
+["last seen {t}", "vu {t}", "visto {t}", "zuletzt gesehen {t}", "visto {t}", "visto {t}"],
+["max {n}", "max {n}", "máx. {n}", "max. {n}", "max {n}", "máx. {n}"],
+["next day {a}% · week {b}%", "lendemain {a} % · semaine {b} %", "día siguiente {a}% · semana {b}%", "nächster Tag {a} % · Woche {b} %", "giorno dopo {a}% · settimana {b}%", "dia seguinte {a}% · semana {b}%"],
+["hidden from friends", "masqué aux amis", "oculto a los amigos", "für Freunde verborgen", "nascosto agli amici", "oculto dos amigos"],
+["no result", "aucun résultat", "sin resultados", "kein Ergebnis", "nessun risultato", "sem resultado"],
+["online", "en ligne", "en línea", "online", "online", "online"],
+["1 player online", "1 joueur en ligne", "1 jugador en línea", "1 Spieler online", "1 giocatore online", "1 jogador online"],
+["{n} players online", "{n} joueurs en ligne", "{n} jugadores en línea", "{n} Spieler online", "{n} giocatori online", "{n} jogadores online"],
+["{n} new", "{n} nouveaux", "{n} nuevos", "{n} neu", "{n} nuovi", "{n} novos"],
+["{n} new games", "{n} nouveaux jeux", "{n} juegos nuevos", "{n} neue Spiele", "{n} nuovi giochi", "{n} jogos novos"],
+["{n} playing", "{n} en jeu", "{n} jugando", "{n} spielen", "{n} in gioco", "{n} jogando"],
+["{n} plays", "{n} parties", "{n} partidas", "{n} Runden", "{n} partite", "{n} partidas"],
+["{u} invited you to play", "{u} vous invite à jouer", "{u} te invitó a jugar", "{u} hat dich zum Spielen eingeladen", "{u} ti ha invitato a giocare", "{u} convidou você para jogar"],
+["{u} invited you to their party", "{u} vous a invité dans son groupe", "{u} te invitó a su grupo", "{u} hat dich in die Gruppe eingeladen", "{u} ti ha invitato nel suo gruppo", "{u} convidou você para o grupo"],
+["{u} is online", "{u} est en ligne", "{u} está en línea", "{u} ist online", "{u} è online", "{u} está online"],
+["{u} sent you a friend request", "{u} vous a envoyé une demande d’ami", "{u} te envió una solicitud de amistad", "{u} hat dir eine Freundschaftsanfrage geschickt", "{u} ti ha inviato una richiesta di amicizia", "{u} enviou um pedido de amizade"],
+["{u} wants to join your party", "{u} veut rejoindre votre groupe", "{u} quiere unirse a tu grupo", "{u} möchte deiner Gruppe beitreten", "{u} vuole entrare nel tuo gruppo", "{u} quer entrar no seu grupo"],
 ["Logged in as {name}", "Connecté en tant que {name}", "Sesión iniciada como {name}", "Angemeldet als {name}", "Accesso eseguito come {name}", "Conectado como {name}"],
 ["{n}+ players", "{n}+ joueurs", "{n}+ jugadores", "{n}+ Spieler", "{n}+ giocatori", "{n}+ jogadores"],
 ["1 player", "1 joueur", "1 jugador", "1 Spieler", "1 giocatore", "1 jogador"],

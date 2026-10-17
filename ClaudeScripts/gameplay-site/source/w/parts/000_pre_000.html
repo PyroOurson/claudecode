@@ -809,8 +809,13 @@ html.rm .au-card,html.rm #ckbar{animation:none}
 .adm-ref.spin svg{animation:auSpin .8s linear infinite}
 .adm-tiles{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 .adm-tiles .tile{background:var(--surface);border:1px solid var(--line);animation:rowIn .45s var(--ease) backwards;animation-delay:calc(var(--i,0) * 60ms)}
-.adm-tabs{width:min(360px,100%)}
+.adm-tabs{position:relative;display:grid;grid-template-columns:repeat(3,1fr);width:min(420px,100%);padding:4px;border-radius:14px;background:var(--surface-2);margin:4px 0 2px}
+.adm-tabs button{position:relative;z-index:1;height:38px;border-radius:10px;font:inherit;font-size:14px;font-weight:700;color:var(--muted);transition:color .2s}
+.adm-tabs button[aria-selected="true"]{color:var(--fg)}
+.adm-tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.adm-tabs i{position:absolute;top:4px;left:4px;bottom:4px;width:calc((100% - 8px) / 3);border-radius:10px;background:var(--surface);box-shadow:var(--shadow-sm);transition:transform .32s var(--ease)}
 .adm-tabs[data-m="tickets"] i{transform:translateX(100%)}
+.adm-tabs[data-m="stats"] i{transform:translateX(200%)}
 .adm-tabs em{font-style:normal;margin-left:6px;font-size:11px;font-weight:800;background:var(--accent);color:var(--accent-ink);border-radius:99px;padding:2px 7px;vertical-align:1px}
 .adm-sec{margin:0;animation:viewIn .3s var(--ease) both}
 .adm-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
@@ -964,6 +969,176 @@ html.ad-locked body{overflow:hidden}
 @keyframes adpDown{to{opacity:0;transform:translateY(40%)}}
 @media (prefers-reduced-motion:reduce){.adm *,.adp,.adp *,.tk *,.adblock{animation:none!important}}
 html.rm .adm *,html.rm .adp,html.rm .adp *,html.rm .tk *,html.rm .adblock{animation:none!important}
+
+.top .right:where(:not(.g-root *)){position:relative}
+.onl:where(:not(.g-root *)){display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:99px;background:var(--surface-2);color:var(--muted);font-size:12.5px;font-weight:700;white-space:nowrap;margin-right:4px}
+.onl b:where(:not(.g-root *)){color:var(--fg)}
+.onl i:where(:not(.g-root *)),.adm-dot:where(:not(.g-root *)),.fr-dot.on:where(:not(.g-root *)){width:8px;height:8px;border-radius:50%;background:#22b07d;flex:none;box-shadow:0 0 0 0 rgba(34,176,125,.5);animation:onPulse 2.2s infinite}
+@keyframes onPulse{0%{box-shadow:0 0 0 0 rgba(34,176,125,.45)}70%{box-shadow:0 0 0 7px rgba(34,176,125,0)}100%{box-shadow:0 0 0 0 rgba(34,176,125,0)}}
+#nbtn:where(:not(.g-root *)),#abtn:where(:not(.g-root *)){position:relative}
+#nbtn em:where(:not(.g-root *)),#abtn em:where(:not(.g-root *)){position:absolute;top:1px;right:0;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:var(--danger);color:#fff;font:800 10.5px/17px var(--font,inherit);font-style:normal;text-align:center;box-shadow:0 0 0 2px var(--bg);animation:emPop .35s var(--spring) both}
+@keyframes emPop{from{transform:scale(0)}}
+.nmenu:where(:not(.g-root *)){width:min(380px,calc(100vw - 24px));padding:8px;max-height:min(70vh,560px);display:flex;flex-direction:column}
+.nm-h:where(:not(.g-root *)){display:flex;align-items:center;justify-content:space-between;padding:8px 10px 10px}
+.nm-h b:where(:not(.g-root *)){font-size:15px}
+.nlist:where(:not(.g-root *)){overflow-y:auto;display:flex;flex-direction:column;gap:2px;overscroll-behavior:contain}
+.nrow:where(:not(.g-root *)){display:flex;gap:11px;align-items:flex-start;text-align:left;padding:10px;border-radius:12px;color:var(--fg);width:100%;font:inherit;transition:background .15s}
+.nrow:hover:where(:not(.g-root *)){background:var(--surface-2)}
+.nrow.new:where(:not(.g-root *)){background:var(--accent-soft)}
+.nt-i:where(:not(.g-root *)){width:34px;height:34px;flex:none;border-radius:11px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.nt-i svg:where(:not(.g-root *)){width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.nt-t:where(:not(.g-root *)){display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.nt-t b:where(:not(.g-root *)){font-size:13.5px;line-height:1.3}
+.nt-t span:where(:not(.g-root *)){font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.nt-t small:where(:not(.g-root *)){font-size:11.5px;color:var(--muted)}
+.ntst:where(:not(.g-root *)){position:fixed;z-index:90;top:calc(70px + env(safe-area-inset-top,0px));right:14px;display:flex;flex-direction:column;gap:10px;width:min(370px,calc(100vw - 28px));pointer-events:none}
+.nt:where(:not(.g-root *)){pointer-events:auto;display:flex;align-items:center;gap:11px;padding:12px 12px 12px 14px;border-radius:16px;background:var(--surface);color:var(--fg);border:1px solid var(--line);box-shadow:var(--sh-3,var(--shadow));cursor:pointer;animation:ntIn .42s var(--spring) both}
+.nt.out:where(:not(.g-root *)){animation:ntOut .2s var(--ease) forwards}
+.nt[data-k="invite"]:where(:not(.g-root *)),.nt[data-k="join"]:where(:not(.g-root *)){border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft),var(--sh-3,var(--shadow))}
+.nt .btn2:where(:not(.g-root *)){flex:none;height:34px;padding:0 14px}
+.nt .x:where(:not(.g-root *)){flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.nt .x svg:where(:not(.g-root *)){width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.nt .x:hover:where(:not(.g-root *)){background:var(--surface-2);color:var(--fg)}
+@keyframes ntIn{from{opacity:0;transform:translateX(40px) scale(.96)}}
+@keyframes ntOut{to{opacity:0;transform:translateX(40px) scale(.96)}}
+.chat:where(:not(.g-root *)){position:fixed;z-index:80;right:16px;bottom:16px;width:min(380px,calc(100vw - 24px));height:min(560px,calc(100dvh - 100px));display:flex;flex-direction:column;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:22px;box-shadow:var(--sh-3,var(--shadow));overflow:hidden;animation:chatIn .38s var(--spring) both}
+.chat.out:where(:not(.g-root *)){animation:chatOut .17s var(--ease) forwards}
+@keyframes chatIn{from{opacity:0;transform:translateY(24px) scale(.97)}}
+@keyframes chatOut{to{opacity:0;transform:translateY(24px) scale(.97)}}
+.ch-h:where(:not(.g-root *)){display:flex;align-items:center;gap:11px;padding:12px 12px 10px 14px;border-bottom:1px solid var(--line)}
+.ch-h .pic:where(:not(.g-root *)){width:38px;height:38px;flex:none;font-size:16px}
+.ch-n:where(:not(.g-root *)){flex:1;min-width:0;display:flex;flex-direction:column}
+.ch-n b:where(:not(.g-root *)){font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-s:where(:not(.g-root *)){font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.ch-h .x:where(:not(.g-root *)){width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.ch-h .x:hover:where(:not(.g-root *)){background:var(--surface-2);color:var(--fg)}
+.ch-h .x svg:where(:not(.g-root *)){width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.ch-acts:where(:not(.g-root *)){display:flex;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);overflow-x:auto}
+.ch-acts .btn2:where(:not(.g-root *)){height:34px;padding:0 12px;font-size:12.5px;white-space:nowrap;flex:none}
+.ch-m:where(:not(.g-root *)){flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:8px;overscroll-behavior:contain;background:var(--bg)}
+.ch-empty:where(:not(.g-root *)){margin:auto;text-align:center;color:var(--muted);font-size:13px;max-width:240px}
+.ch-r:where(:not(.g-root *)){display:flex;flex-direction:column;align-items:flex-start;max-width:82%;gap:3px}
+.ch-r.me:where(:not(.g-root *)){align-self:flex-end;align-items:flex-end}
+.ch-r.new:where(:not(.g-root *)){animation:msgIn .3s var(--spring) both}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px) scale(.97)}}
+.ch-r small:where(:not(.g-root *)){font-size:10.5px;color:var(--muted);padding:0 6px}
+.ch-b:where(:not(.g-root *)){padding:9px 13px;border-radius:18px 18px 18px 6px;background:var(--surface);border:1px solid var(--line);font-size:14px;line-height:1.4;white-space:pre-wrap;word-break:break-word}
+.ch-r.me .ch-b:where(:not(.g-root *)){background:var(--accent);color:var(--accent-ink);border-color:transparent;border-radius:18px 18px 6px 18px}
+.ch-pic img:where(:not(.g-root *)){display:block;max-width:100%;width:auto;height:auto;max-height:260px;border-radius:14px;cursor:zoom-in;background:var(--surface-2);object-fit:cover}
+.ch-pic img.bad:where(:not(.g-root *)){min-width:160px;min-height:60px;cursor:default}
+.ch-card:where(:not(.g-root *)){display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:16px;background:var(--surface);border:1.5px solid var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.ch-card>svg:where(:not(.g-root *)){width:26px;height:26px;flex:none;stroke:var(--accent);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ch-card div:where(:not(.g-root *)){display:flex;flex-direction:column;gap:2px;min-width:0}
+.ch-card b:where(:not(.g-root *)){font-size:13.5px}.ch-card span:where(:not(.g-root *)){font-size:12px;color:var(--muted)}
+.ch-card .btn2:where(:not(.g-root *)){flex:none;height:34px;padding:0 14px}
+.ch-note:empty:where(:not(.g-root *)){display:none}.ch-note:where(:not(.g-root *)){padding:6px 14px 0;font-size:12.5px}
+.ch-f:where(:not(.g-root *)){display:flex;align-items:flex-end;gap:8px;padding:10px 10px 12px;border-top:1px solid var(--line)}
+.ch-f textarea:where(:not(.g-root *)){flex:1;min-width:0;resize:none;font:inherit;font-size:14px;line-height:1.4;color:var(--fg);background:var(--surface-2);border:1px solid transparent;border-radius:18px;padding:9px 14px;max-height:120px}
+.ch-f textarea:focus:where(:not(.g-root *)){outline:none;border-color:var(--accent);background:var(--surface)}
+.ch-ib:where(:not(.g-root *)),.ch-sb:where(:not(.g-root *)){width:38px;height:38px;flex:none;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.ch-ib:hover:where(:not(.g-root *)){background:var(--surface-2);color:var(--fg)}
+.ch-sb:where(:not(.g-root *)){background:var(--accent);color:var(--accent-ink)}
+.ch-ib svg:where(:not(.g-root *)),.ch-sb svg:where(:not(.g-root *)){width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.solight:where(:not(.g-root *)){position:fixed;inset:0;z-index:95;background:rgba(10,8,24,.82);display:grid;place-items:center;padding:20px;cursor:zoom-out;animation:ckFade .2s var(--ease) both}
+.solight.out:where(:not(.g-root *)){animation:mFadeOut .17s var(--ease) forwards}
+.solight img:where(:not(.g-root *)){max-width:100%;max-height:100%;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.frow .pic:where(:not(.g-root *)){position:relative}
+.fr-dot:where(:not(.g-root *)){position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;background:var(--muted);border:2px solid var(--surface);opacity:.55}
+.fr-dot.on:where(:not(.g-root *)){opacity:1;width:11px;height:11px}
+.ch-s .fr-dot:where(:not(.g-root *)){position:static;border:0;width:8px;height:8px}
+.fr-f:where(:not(.g-root *)){cursor:pointer;flex-wrap:wrap;transition:background .15s;border-radius:14px}
+.fr-f:hover:where(:not(.g-root *)),.fr-f.open:where(:not(.g-root *)){background:var(--surface-2)}
+.fr-f:focus-visible:where(:not(.g-root *)){outline:2px solid var(--accent);outline-offset:-2px}
+.fr-st:where(:not(.g-root *)){display:block;font-style:normal;font-size:12px;color:var(--muted)}
+.fr-st.on:where(:not(.g-root *)){color:#168a60;font-weight:600}
+:root[data-theme="dark"] .fr-st.on{color:#4fd6a2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .fr-st.on{color:#4fd6a2}}
+.fr-un:where(:not(.g-root *)){min-width:20px;height:20px;border-radius:99px;background:var(--danger);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;padding:0 5px}
+.btn2.icon2:where(:not(.g-root *)){width:38px;padding:0;display:grid;place-items:center}
+.btn2.icon2 svg:where(:not(.g-root *)),.fr-x .btn2 svg:where(:not(.g-root *)){width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.fr-x:where(:not(.g-root *)){flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px;padding:10px 0 4px 54px;animation:rowIn .3s var(--ease) both}
+.fr-x .btn2:where(:not(.g-root *)){display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 13px;font-size:13px}
+.livepill:where(:not(.g-root *)){position:absolute;left:8px;top:8px;display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 8px;border-radius:99px;background:rgba(14,10,34,.72);color:#fff;font-size:11.5px;font-weight:700;backdrop-filter:blur(6px);z-index:2;pointer-events:none}
+.livepill:where(:not(.g-root *))::before{content:"";width:7px;height:7px;border-radius:50%;background:#3ddc97}
+.adm-t .adm-dot:where(:not(.g-root *)){display:none;margin-right:7px;vertical-align:middle}
+.adm-t tr.on .adm-dot:where(:not(.g-root *)){display:inline-block}
+.adm-t .ls-on:where(:not(.g-root *)),.adm-t tr.on .ls-off:where(:not(.g-root *)){display:none}
+.adm-t tr.on .ls-on:where(:not(.g-root *)){display:inline}
+.adp-live:where(:not(.g-root *)){display:flex;align-items:center;gap:7px;font-size:13px;padding:9px 12px;border-radius:12px;background:var(--surface-2)}
+.adp-q:where(:not(.g-root *)){display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.adp-q div:where(:not(.g-root *)){background:var(--surface-2);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.adp-q small:where(:not(.g-root *)){font-size:11px;color:var(--muted)}
+.adp-q b:where(:not(.g-root *)){font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#adpu:where(:not(.g-root *)){display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.adp-row:where(:not(.g-root *)){display:flex;gap:8px}
+.adp-row input:where(:not(.g-root *)){flex:1}
+.adp-row .btn2:where(:not(.g-root *)){flex:none}
+.adp-games:where(:not(.g-root *)){display:flex;flex-direction:column;gap:9px}
+.adp-g:where(:not(.g-root *)){display:grid;grid-template-columns:1fr auto;gap:3px 10px;font-size:13px}
+.adp-g i:where(:not(.g-root *)){grid-column:1/-1;height:6px;border-radius:99px;background:var(--surface-2);position:relative;overflow:hidden}
+.adp-g i:where(:not(.g-root *))::after{content:"";position:absolute;inset:0 auto 0 0;width:var(--w);border-radius:inherit;background:var(--accent)}
+.adp-g small:where(:not(.g-root *)){grid-column:1/-1;color:var(--muted);font-size:11.5px}
+.adp-danger:where(:not(.g-root *)){border:1px solid rgba(217,58,74,.35);border-radius:14px;padding:14px;background:rgba(217,58,74,.04)}
+.adp-danger h4:where(:not(.g-root *)){color:var(--danger)}
+.adp-sec input+.btn2:where(:not(.g-root *)),.adp-sec textarea+.btn2:where(:not(.g-root *)){margin-top:8px}
+.ads:where(:not(.g-root *)){display:flex;flex-direction:column;gap:16px}
+.st-top:where(:not(.g-root *)){display:grid;grid-template-columns:minmax(260px,1fr) 2fr;gap:16px;align-items:start}
+.st-card:where(:not(.g-root *)){background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;min-width:0;animation:rowIn .45s var(--ease) backwards}
+.st-card h3:where(:not(.g-root *)){margin:0 0 12px;font-size:15px;display:flex;align-items:center;gap:8px}
+.st-h:where(:not(.g-root *)){display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.st-h h3:where(:not(.g-root *)){margin:0}
+.st-h .search:where(:not(.g-root *)){max-width:260px}
+.st-big:where(:not(.g-root *)){font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.st-lg:where(:not(.g-root *)){display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.st-lg:empty:where(:not(.g-root *)){display:none}
+.st-live:where(:not(.g-root *)){display:flex;flex-direction:column;gap:4px;max-height:340px;overflow-y:auto}
+.st-on:where(:not(.g-root *)){display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:12px;text-align:left;font:inherit;color:var(--fg);width:100%;animation:rowIn .3s var(--ease) both}
+.st-on:hover:where(:not(.g-root *)){background:var(--surface-2)}
+.st-on .pic:where(:not(.g-root *)){width:32px;height:32px;font-size:13px;flex:none;position:relative}
+.st-on>span:nth-child(2):where(:not(.g-root *)){display:flex;flex-direction:column;flex:1;min-width:0}
+.st-on b:where(:not(.g-root *)){font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-on small:where(:not(.g-root *)){font-size:11.5px;color:var(--muted)}
+.st-on em:where(:not(.g-root *)){font-style:normal;font-size:12px;font-weight:700;color:var(--accent);white-space:nowrap}
+.st-tiles:where(:not(.g-root *)){grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.st-grid:where(:not(.g-root *)){display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.st-svg:where(:not(.g-root *)){width:100%;height:150px;display:block;overflow:visible}
+.st-svg rect:where(:not(.g-root *)){fill:var(--accent);opacity:.85;transition:opacity .15s}
+.st-svg g:hover rect:where(:not(.g-root *)){opacity:1}
+.st-svg text:where(:not(.g-root *)){font-size:11px;fill:var(--muted)}
+.st-max:where(:not(.g-root *)){font-size:11.5px;color:var(--muted);text-align:right;margin-top:4px}
+.st-t td:where(:not(.g-root *)){max-width:220px}
+.st-t tbody tr[data-stg]:where(:not(.g-root *)),.st-t tbody tr[data-stu]:where(:not(.g-root *)){cursor:pointer}
+.st-bad:where(:not(.g-root *)){color:var(--danger)}
+.st-list:where(:not(.g-root *)){display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto}
+.st-kv:where(:not(.g-root *)){display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:6px 2px;border-bottom:1px solid var(--line)}
+.st-kv:last-child:where(:not(.g-root *)){border-bottom:0}
+.st-kv b:where(:not(.g-root *)){white-space:nowrap}
+.st-err:where(:not(.g-root *)){display:flex;flex-direction:column;gap:2px;font-size:12.5px;padding:8px 10px;border-radius:10px;background:var(--surface-2)}
+.st-err span:where(:not(.g-root *)){word-break:break-word}
+.st-err small:where(:not(.g-root *)){color:var(--muted)}
+.st-at:where(:not(.g-root *)){font-size:12px;text-align:center}
+.sk-chart:where(:not(.g-root *)){display:block;height:180px;border-radius:18px}
+@media (max-width:760px){.st-top:where(:not(.g-root *)){grid-template-columns:1fr}.adp-q:where(:not(.g-root *)){grid-template-columns:repeat(2,1fr)}.onl:where(:not(.g-root *)){display:none}.chat:where(:not(.g-root *)){right:8px;left:8px;bottom:8px;width:auto;height:calc(100dvh - 90px)}.fr-x:where(:not(.g-root *)){padding-left:0}.ntst:where(:not(.g-root *)){right:8px;left:8px;width:auto}}
+@media (prefers-reduced-motion:reduce){.onl i:where(:not(.g-root *)),.adm-dot:where(:not(.g-root *)),.fr-dot.on:where(:not(.g-root *)){animation:none}}
+.ctl-tabs:where(:not(.g-root *)){grid-template-columns:repeat(2,1fr);width:100%;margin:0 0 12px}
+.ctl-tabs i:where(:not(.g-root *)){width:calc((100% - 8px) / 2)}
+.ctl-p:where(:not(.g-root *)){margin:0 0 12px;font-size:13px;color:var(--muted)}
+.ctl-l:where(:not(.g-root *)){display:flex;flex-direction:column;gap:6px;max-height:min(52vh,460px);overflow-y:auto;padding-right:4px}
+.ctl-r:where(:not(.g-root *)){display:grid;grid-template-columns:1fr auto minmax(120px,auto) 32px;align-items:center;gap:10px;padding:6px 8px;border-radius:12px;transition:background .15s}
+.ctl-r.on:where(:not(.g-root *)){background:var(--accent-soft)}
+.ctl-r>svg:where(:not(.g-root *)){width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ctl-a:where(:not(.g-root *)){display:flex;align-items:center;gap:8px;font-size:13.5px;min-width:0}
+.ctl-a small:where(:not(.g-root *)){color:var(--muted);font-size:11.5px}
+.ctl-r .btn2:where(:not(.g-root *)){height:36px;justify-content:center}
+.ctl-r .btn2.cap:where(:not(.g-root *)),.ctl-f .btn2.cap:where(:not(.g-root *)){background:var(--accent);color:var(--accent-ink);animation:ctlPulse 1s infinite}
+@keyframes ctlPulse{50%{opacity:.7}}
+.ctl-r .x:where(:not(.g-root *)){width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.ctl-r .x svg:where(:not(.g-root *)){width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.ctl-r button.x:hover:where(:not(.g-root *)){background:var(--surface-2);color:var(--fg)}
+.ctl-f:where(:not(.g-root *)){display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ctl-l kbd:where(:not(.g-root *)){display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 7px;border-radius:7px;border:1px solid var(--line);border-bottom-width:2px;background:var(--surface);font:700 12px/1 var(--mono,monospace);color:var(--fg)}
+.am-gamebox .ntst:where(:not(.g-root *)){position:absolute}
+.am-gamebox .chat:where(:not(.g-root *)){position:absolute}
 </style>
 </head>
 <body>
@@ -979,7 +1154,8 @@ html.rm .adm *,html.rm .adp,html.rm .adp *,html.rm .tk *,html.rm .adblock{animat
    <button class="item" type="button" data-go="mprofile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profile</button>
    <button class="item" type="button" data-go="mstats"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Stats</button>
    <button class="item" type="button" data-go="msupport" data-au="in" hidden><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/></svg>Support</button>
-   <button class="item" type="button" data-admin data-adgo hidden><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>Dashboard</button>
+   <button class="item" type="button" data-admin data-adgo="users" hidden><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>Admin dashboard</button>
+   <button class="item" type="button" data-admin data-adgo="stats" hidden><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/><circle cx="19" cy="5" r="2.5"/></svg>Admin stats</button>
    <div class="sep"></div>
    <button class="item" type="button" data-go="mauth" data-au="off out"><svg viewBox="0 0 24 24"><path d="M15 3h4v18h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in</button>
    <button class="item danger" type="button" data-go="msignout" data-au="in" hidden><svg viewBox="0 0 24 24"><path d="M9 21H5V3h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>
@@ -1071,23 +1247,29 @@ html.rm .adm *,html.rm .adp,html.rm .adp *,html.rm .tk *,html.rm .adblock{animat
    <div class="adm">
     <div class="adm-h"><a class="back" href="#" data-home><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back to games</a><h2>Admin dashboard</h2><button class="btn2 adm-ref" id="adref" type="button"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>Refresh</button></div>
     <div class="tiles adm-tiles" id="adtiles"></div>
-    <div class="au-tabs adm-tabs" id="adtabs" role="tablist" aria-label="Dashboard sections" data-m="users"><button type="button" role="tab" data-adtab="users" aria-selected="true">Users</button><button type="button" role="tab" data-adtab="tickets" aria-selected="false">Tickets<em id="adtn" hidden></em></button><i></i></div>
+    <div class="au-tabs adm-tabs" id="adtabs" role="tablist" aria-label="Dashboard sections" data-m="users"><button type="button" role="tab" data-adtab="users" aria-selected="true">Users</button><button type="button" role="tab" data-adtab="tickets" aria-selected="false">Tickets<em id="adtn" hidden></em></button><button type="button" role="tab" data-adtab="stats" aria-selected="false">Stats</button><i></i></div>
     <section class="adm-sec" id="adusers">
      <div class="adm-tools">
       <label class="search" for="adq"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="adq" type="search" placeholder="Search by email, username, name or id" autocomplete="off" spellcheck="false" aria-label="Search users"></label>
-      <select id="adf" aria-label="Filter users"><option value="all">All users</option><option value="admin">Admins</option><option value="locked">Locked</option><option value="unconfirmed">Email not confirmed</option><option value="google">Google</option><option value="email">Email and password</option><option value="active">Active in the last 7 days</option></select>
+      <select id="adf" aria-label="Filter users"><option value="all">All users</option><option value="admin">Admins</option><option value="locked">Locked</option><option value="unconfirmed">Email not confirmed</option><option value="google">Google</option><option value="email">Email and password</option><option value="online">Online now</option><option value="active">Active in the last 7 days</option></select>
       <span class="count" id="adcount" translate="no"></span>
      </div>
      <div class="adm-tw"><table class="adm-t" id="adt"><thead></thead><tbody translate="no"></tbody></table></div>
     </section>
     <section class="adm-sec" id="adtickets" hidden><div id="tka"></div></section>
+    <section class="adm-sec ads" id="adstats" hidden></section>
     <div class="adp-back" id="adpback" hidden></div>
     <aside class="adp" id="adpanel" hidden role="dialog" aria-modal="true" aria-labelledby="adpn">
      <div class="adp-h"><span class="pic"></span><div><b id="adpn" translate="no"></b><span id="adpu" translate="no"></span></div><button class="x" type="button" id="adpclose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
-     <dl class="adp-dl" id="adpdl" translate="no"></dl>
+     <div class="adp-live" id="adplive" translate="no"></div>
+     <div class="adp-q" id="adpq" translate="no"></div>
+     <div class="adp-sec"><h4>Username</h4><div class="adp-row"><input id="adun" maxlength="20" autocomplete="off" spellcheck="false" autocapitalize="off" aria-label="Username"><button class="btn2 pri" type="button" id="adunb" data-adact="un">Save</button></div><div class="note" id="adunn" role="status"></div></div>
      <div class="adp-sec"><h4>Role</h4><div class="adp-role"><button class="btn2" type="button" data-adact="role" data-adrole="user">User</button><button class="btn2" type="button" data-adact="role" data-adrole="admin">Admin</button></div><div class="note" id="adprn" role="status"></div></div>
-     <div class="adp-sec"><h4>Password</h4><p>Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them. You can set a new one.</p><div class="au-pw"><input id="adpw" type="password" autocomplete="new-password" placeholder="New password, at least 8 characters" maxlength="72" aria-label="New password"></div><button class="btn2 pri" type="button" id="adpwb" data-adact="pw">Set new password</button><div class="note" id="adpwn" role="status"></div></div>
+     <div class="adp-sec"><h4>Password</h4><p id="adpwt">Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them.</p><button class="btn2" type="button" id="adrst" data-adact="reset">Send password reset email</button><div class="note" id="adrstn" role="status"></div><p>Or set a new password yourself:</p><div class="au-pw"><input id="adpw" type="password" autocomplete="new-password" placeholder="New password, at least 8 characters" maxlength="72" aria-label="New password"></div><button class="btn2 pri" type="button" id="adpwb" data-adact="pw">Set new password</button><div class="note" id="adpwn" role="status"></div></div>
      <div class="adp-sec"><h4>Access</h4><label class="adp-l" for="adlr" id="adlrl">Reason shown to the user (optional)</label><textarea id="adlr" maxlength="500" rows="2"></textarea><button class="btn2 danger" type="button" id="adlock" data-adact="lock">Lock account</button><div class="note" id="adln" role="status"></div></div>
+     <div class="adp-sec"><h4>Games played</h4><div class="adp-games" id="adpg" translate="no"></div></div>
+     <div class="adp-sec"><h4>All details</h4><dl class="adp-dl" id="adpdl" translate="no"></dl></div>
+     <div class="adp-sec adp-danger"><h4>Delete account</h4><p>Deletes the account, profile, records, saves, friends and messages for good. This cannot be undone.</p><label class="adp-l" for="addel" id="addell">Type the username or email to confirm</label><input id="addel" autocomplete="off" spellcheck="false" autocapitalize="off"><button class="btn2 danger" type="button" id="addelb" data-adact="del">Delete account forever</button><div class="note" id="addeln" role="status"></div></div>
     </aside>
    </div>
   </div>
@@ -1120,7 +1302,6 @@ html.rm .adm *,html.rm .adp,html.rm .adp *,html.rm .tk *,html.rm .adblock{animat
     <aside class="pcard">
      <span class="pic" data-pic></span><b data-pname></b><span id="pcun"></span><span id="pcsince"></span>
      <div class="tiles"><div class="tile"><small>Games</small><b id="pcg">0</b></div><div class="tile"><small>Records</small><b id="pcr">0</b></div><div class="tile"><small>Friends</small><b id="pcf">0</b></div></div>
-     <div class="fld pfid"><label for="fid">Friend ID</label><div class="unrow"><input id="fid" value="Coming soon" readonly><button class="btn2" type="button" id="cpid" disabled>Copy</button></div></div>
     </aside>
     <div class="pmain">
      <div class="scard"><h4>Username</h4>
@@ -1183,21 +1364,19 @@ html.rm .adm *,html.rm .adp,html.rm .adp *,html.rm .tk *,html.rm .adblock{animat
       </div></section>
 
      <section class="pane" data-pane="notifications" hidden><h2>Notifications</h2>
-      <div class="scard"><h4>In the app</h4><p>Coming soon with accounts.</p>
-       <div class="srw"><div><b>Party invites</b><small>When a friend invites you to play.</small></div><button class="sw" type="button" role="switch" data-sw="n_inv" aria-label="Party invites"></button></div>
+      <div class="scard"><h4>In the app</h4><p>Shown in the corner of the screen and in the bell menu.</p>
+       <div class="srw"><div><b>Messages</b><small>When a friend sends you a message or a picture.</small></div><button class="sw" type="button" role="switch" data-sw="n_msg" aria-label="Messages"></button></div>
+       <div class="srw"><div><b>Party invites</b><small>When a friend invites you to play or asks to join you.</small></div><button class="sw" type="button" role="switch" data-sw="n_inv" aria-label="Party invites"></button></div>
        <div class="srw"><div><b>Friend requests</b><small>When someone adds you.</small></div><button class="sw" type="button" role="switch" data-sw="n_req" aria-label="Friend requests"></button></div>
-       <div class="srw"><div><b>Friends coming online</b><small>Only for your favourite friends.</small></div><button class="sw" type="button" role="switch" data-sw="n_on" aria-label="Friends online"></button></div>
-       <h4>Email</h4>
-       <div class="srw"><div><b>New games</b><small>A short email when new games are added.</small></div><button class="sw" type="button" role="switch" data-sw="n_new" aria-label="New games email"></button></div>
-       <div class="srw"><div><b>Weekly summary</b><small>Your playtime and records.</small></div><button class="sw" type="button" role="switch" data-sw="n_week" aria-label="Weekly summary"></button></div>
+       <div class="srw"><div><b>Friends coming online</b><small>When a friend opens the site.</small></div><button class="sw" type="button" role="switch" data-sw="n_on" aria-label="Friends online"></button></div>
+       <div class="srw"><div><b>New games</b><small>When new games are added to the site.</small></div><button class="sw" type="button" role="switch" data-sw="n_game" aria-label="New games"></button></div>
       </div></section>
 
      <section class="pane" data-pane="privacy" hidden><h2>Privacy and data</h2>
-      <div class="scard"><h4>Who can see and reach you</h4><p>Coming soon with accounts.</p>
-       <div class="srw"><div><b>Online status</b><small>Who can see when you are online.</small></div><select data-sel="p_status" aria-label="Online status"><option>Friends</option><option>Everyone</option><option>Nobody</option></select></div>
+      <div class="scard"><h4>Who can see and reach you</h4>
+       <div class="srw"><div><b>Online status</b><small>Your friends see a green dot when you are online.</small></div><select data-sel="p_status" aria-label="Online status"><option value="Friends">Friends</option><option value="Nobody">Nobody</option></select></div>
        <div class="srw"><div><b>Show what I am playing</b><small>Friends see your current game.</small></div><button class="sw" type="button" role="switch" data-sw="p_game" aria-label="Show current game"></button></div>
-       <div class="srw"><div><b>Party invites from</b><small>Who can invite you to a party.</small></div><select data-sel="p_inv" aria-label="Party invites from"><option>Friends</option><option>Everyone</option><option>Nobody</option></select></div>
-       <div class="srw"><div><b>Friend requests from</b><small>Who can send you a request.</small></div><select data-sel="p_req" aria-label="Friend requests from"><option>Everyone</option><option>Friends of friends</option><option>Nobody</option></select></div>
+       <div class="srw"><div><b>Party invites from</b><small>Only friends can invite you. Choose Nobody to stop invite pop-ups.</small></div><select data-sel="p_inv" aria-label="Party invites from"><option value="Friends">Friends</option><option value="Nobody">Nobody</option></select></div>
       </div>
       <div class="scard"><h4>Your data</h4>
        <div class="srw"><div><b>Download my data</b><small>A file with your profile, records and settings.</small></div><button class="btn2" type="button" id="dl">Download</button></div>
@@ -1222,8 +1401,8 @@ html.rm .adm *,html.rm .adp,html.rm .adp *,html.rm .tk *,html.rm .adblock{animat
        <div class="srw"><div><b>Privacy Policy</b></div><a class="btn2" href="#/privacy" data-legal="privacy">Open</a></div>
        <div class="srw"><div><b>Cookie Policy</b></div><a class="btn2" href="#/cookies" data-legal="cookies">Open</a></div>
        <h4>Help</h4>
-       <div class="srw"><div><b>Contact support</b><small>Coming soon.</small></div><button class="btn2" type="button" data-soon="Support">Write to us</button></div>
-       <div class="srw"><div><b>Report a bug or a player</b><small>Coming soon.</small></div><button class="btn2" type="button" data-soon="Reports">Report</button></div>
+       <div class="srw"><div><b>Contact support</b><small>Send us a message. Replies show up in Support.</small></div><button class="btn2" type="button" data-go="msupport">Write to us</button></div>
+       <div class="srw"><div><b>Report a bug or a player</b><small>Open a support ticket and tell us what happened.</small></div><button class="btn2" type="button" data-go="msupport">Report</button></div>
        <div class="srw"><div><b>About</b><small id="about"></small></div></div>
       </div></section>
     </div>
@@ -1294,7 +1473,7 @@ html.rm .adm *,html.rm .adp,html.rm .adp *,html.rm .tk *,html.rm .adblock{animat
      </div>
      <div class="au-v au-center" data-auview="check" hidden>
       <span class="au-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></span>
-      <div class="au-hd"><h3>Check your inbox</h3><p>We sent a 6-digit code to <b id="aucmail"></b>. <span data-ck="signup">Type it below to confirm your account.</span><span data-ck="recovery" hidden>Type it below to choose a new password.</span></p></div>
+      <div class="au-hd"><h3>Check your inbox</h3><p>We sent a 6-digit code to <b id="aucmail"></b>. <span data-cv="signup">Type it below to confirm your account.</span><span data-cv="recovery" hidden>Type it below to choose a new password.</span></p></div>
       <form class="au-f" id="acform" novalidate>
        <div class="fld"><label for="accode">Confirmation code</label><input id="accode" class="au-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" spellcheck="false" placeholder="000000"></div>
        <div class="note" id="acnote" role="status"></div>

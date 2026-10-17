@@ -238,8 +238,11 @@ ClaudeScripts/gameplay-site/source/w/new/consts.js
 ClaudeScripts/gameplay-site/source/w/new/fit.js
 ClaudeScripts/gameplay-site/source/w/new/gcss.css
 ClaudeScripts/gameplay-site/source/w/new/i18n.js
+ClaudeScripts/gameplay-site/source/w/new/input.js
 ClaudeScripts/gameplay-site/source/w/new/media.css
 ClaudeScripts/gameplay-site/source/w/new/net.js
+ClaudeScripts/gameplay-site/source/w/new/social.css
+ClaudeScripts/gameplay-site/source/w/new/social.js
 ClaudeScripts/gameplay-site/source/w/new/tail.js
 ClaudeScripts/gameplay-site/source/w/new/toast.css
 ClaudeScripts/gameplay-site/source/w/orig_order.txt

@@ -34,8 +34,8 @@ function rtTrack(now) {
   if (!RT.on) return;
   RT.tt = setTimeout(() => {
     if (!RT.on || !SB.user) return;
-    const P = S.prefs, p = SB.prof || {};
-    RT.on.track({ u: p.username || null, d: p.display_name || null, g: P.p_game === false || !cur ? null : cur.g.id, h: P.p_status === 'Nobody' ? 1 : 0, t: Date.now() }).catch(() => {});
+    const P = S.prefs, hide = P.p_status === 'Nobody';
+    RT.on.track(hide ? { h: 1 } : { g: P.p_game === false || !cur ? null : cur.g.id, t: Date.now() }).catch(() => {});
   }, now ? 0 : 400);
 }
 function rtSync() {

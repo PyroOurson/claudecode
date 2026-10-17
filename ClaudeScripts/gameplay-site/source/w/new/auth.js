@@ -542,7 +542,7 @@ function auCheck(email, kind, fresh) {
   SB.cmail = email; SB.ck = kind; SB.otpAt = fresh ? Date.now() : 0;
   if (fresh) SB.rsAt = Date.now() + 60000;
   $('#aucmail').textContent = email; $('#accode').value = ''; auMsg('acnote', '');
-  document.querySelectorAll('#aumodal [data-ck]').forEach(e => { e.hidden = e.dataset.ck !== kind; });
+  document.querySelectorAll('#aumodal [data-cv]').forEach(e => { e.hidden = e.dataset.cv !== kind; });
   if (kind === 'recovery') { back.removeAttribute('data-aumode'); back.dataset.auv = 'reset'; }
   else { back.removeAttribute('data-auv'); back.dataset.aumode = SB.mode === 'up' ? 'up' : 'in'; }
   auView('check'); setTimeout(auFocus, 120);

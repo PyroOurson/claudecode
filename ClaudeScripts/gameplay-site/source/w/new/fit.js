@@ -27,6 +27,7 @@ function fitStage() {
   if (mode === 'fs') {
     sh = st.clientHeight;
     const pad = root.querySelector('canvas') ? 0 : 20;
+    if (gpHud(frameEl, cw, ch)) { requestAnimationFrame(fitStage); return; }
     s = Math.max(0.3, Math.min((sw - pad * 2) / cw, (sh - pad * 2) / ch, 8));
     gpEdge(root, st);
   } else {
@@ -55,6 +56,7 @@ function gpMain(frameEl) {
 function gpFill(on, frameEl, st) {
   const e = gpMain(frameEl);
   if (!e) return;
+  if (e.noFill) on = false;
   let w = e.w0, h = e.h0;
   if (on) {
     const A = st.clientWidth / Math.max(1, st.clientHeight), a = e.w0 / e.h0;
@@ -68,6 +70,18 @@ function gpFill(on, frameEl, st) {
   if (on && w > e.w0) { if (frameEl.dataset.fw == null) frameEl.dataset.fw = frameEl.style.getPropertyValue('--fw'); frameEl.style.setProperty('--fw', w + 'px'); }
   else if (frameEl.dataset.fw != null) { frameEl.style.setProperty('--fw', frameEl.dataset.fw); delete frameEl.dataset.fw; }
   fsScale = 0;
+  if (on && (w !== e.w0 || h !== e.h0)) {
+    const r = e.canvas.offsetWidth / Math.max(1, e.canvas.offsetHeight);
+    if (Math.abs(r / (w / h) - 1) > 0.03) { e.noFill = true; gpFill(false, frameEl, st); }
+  }
+}
+function gpHud(frameEl, cw, ch) {
+  const e = gpMain(frameEl);
+  if (!e || !e.fill || e.noFill) return false;
+  if (Math.abs(e.canvas.offsetWidth / cw - 1) < 0.03 && Math.abs(e.canvas.offsetHeight / ch - 1) < 0.03) return false;
+  e.noFill = true;
+  gpFill(false, frameEl, document.getElementById('stage'));
+  return true;
 }
 function gpEdge(root, st) {
   let col = '';
