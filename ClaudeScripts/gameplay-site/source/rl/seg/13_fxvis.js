@@ -22,7 +22,6 @@
         const fxBoostFx = dt => {
           const c = views[0] && views[0].car;
           if (!c || c.demoT > 0 || ui !== 'play' || (fxRp.on && fxRp.show) || W.state === 'menu') return;
-          if (c.boosting && saved.shake !== false) shake = Math.max(shake, 0.035 * c.boostK + (c.sup ? 0.02 : 0));
           const sp = vlen(c.v);
           if (!c.sup && sp < 1900) { fxWA = 0; return; }
           fxWA += dt * (c.sup ? 90 : 30) * clamp((sp - 1700) / 600, 0, 1);

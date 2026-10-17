@@ -9,7 +9,6 @@ ClaudeScripts/gameplay-site/source/design/gameplay-home.html
 ClaudeScripts/gameplay-site/source/design/lobby.webp
 ClaudeScripts/gameplay-site/source/design/party-lobby.html
 ClaudeScripts/gameplay-site/source/rl/RLBRIEF.md
-ClaudeScripts/gameplay-site/source/rl/models/ball.json
 ClaudeScripts/gameplay-site/source/rl/models/breakout.json
 ClaudeScripts/gameplay-site/source/rl/models/dominus.json
 ClaudeScripts/gameplay-site/source/rl/models/fennec.json
@@ -20,6 +19,7 @@ ClaudeScripts/gameplay-site/source/rl/models/venom.json
 ClaudeScripts/gameplay-site/source/rl/notes/README.md
 ClaudeScripts/gameplay-site/source/rl/notes/accuracy_audit.md
 ClaudeScripts/gameplay-site/source/rl/notes/carsoccer.md
+ClaudeScripts/gameplay-site/source/rl/notes/credits.md
 ClaudeScripts/gameplay-site/source/rl/notes/diff.md
 ClaudeScripts/gameplay-site/source/rl/notes/models.md
 ClaudeScripts/gameplay-site/source/rl/notes/round2.md
@@ -44,7 +44,12 @@ ClaudeScripts/gameplay-site/source/rl/seg/15_fxloop.js
 ClaudeScripts/gameplay-site/source/rl/seg/16_boot.js
 ClaudeScripts/gameplay-site/source/rl/seg/17_tail.js
 ClaudeScripts/gameplay-site/source/rl/seg/_owners.json
+ClaudeScripts/gameplay-site/source/rl/tools/cargen.py
 ClaudeScripts/gameplay-site/source/rl/tools/e2e.js
+ClaudeScripts/gameplay-site/source/rl/tools/gen_breakout.py
+ClaudeScripts/gameplay-site/source/rl/tools/gen_merc.py
+ClaudeScripts/gameplay-site/source/rl/tools/gen_paladin.py
+ClaudeScripts/gameplay-site/source/rl/tools/gen_venom.py
 ClaudeScripts/gameplay-site/source/rl/tools/grid.py
 ClaudeScripts/gameplay-site/source/rl/tools/join.py
 ClaudeScripts/gameplay-site/source/rl/tools/prewire.py
@@ -517,7 +522,6 @@ gameplay/62ca6e10ef0b24742665.bin
 gameplay/62d6680d271338733392.bin
 gameplay/674d9048ee1d011497cb.bin
 gameplay/6c13a5678aad3cfdae58.bin
-gameplay/6c4fb205b757ede9e899.bin
 gameplay/6cd0bdf1379ae3997fbb.bin
 gameplay/6e1c98fbb9a7aef1e317.bin
 gameplay/6f7671563dccece90b54.bin
@@ -543,6 +547,7 @@ gameplay/a25511a235d2aff6edd3.bin
 gameplay/a482ebabba38adfc1687.bin
 gameplay/a9cb17aa7bcc0ee9e288.bin
 gameplay/aac2eed9e81e57f4ef3e.bin
+gameplay/ab1708a3fd29db448b87.bin
 gameplay/afcf80767dfb1092571b.bin
 gameplay/afe470153958433d9047.bin
 gameplay/b2257bb15ce7d3047a5c.bin

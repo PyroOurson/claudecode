@@ -8,6 +8,7 @@
           v.trn.innerHTML = `<div class="trp"><b>Free Play</b><span>Goals<em>${T.goals | 0}</em></span><span>Saves<em>${T.saves | 0}</em></span><span>Shots<em>${T.shotsTaken | 0}</em></span></div>${coarse ? '' : `<div class="trk"><div>${uiK('R')}Reset Ball</div><div>${uiK('T')}Reset Car</div><div>${uiK('G')}Shoot Ball At Me</div><div>${uiK('B')}Unlimited Boost ${tg(T.unlimited)}</div><div>${uiK('P')}Shot Practice ${tg(T.shots)}</div><div>${uiK('1 – ' + L.length)}Ball Spawn <i class="on">${esc(uiTrSN(T.spawn))}</i></div><div>${uiK('Esc', 'kb')}Free Play Menu</div></div>`}`;
         };
         const hudUpdate = dt => {
+          uiPadTick(dt);
           for (const v of views) {
             if (v.banDur && !v.ban.hidden) { v.banT += dt; if (v.banT > v.banDur) v.ban.hidden = true; }
             if (v.qcCat >= 0) { v.qcT += dt; if (v.qcT > (v.qcCat === 4 ? 6 : 4) || ui !== 'play') uiQcClose(v); }

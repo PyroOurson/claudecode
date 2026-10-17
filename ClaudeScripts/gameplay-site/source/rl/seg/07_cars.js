@@ -51,6 +51,7 @@
             { id: 'std', n: 'Classic', t: 0, r: 0, c: [0.42, 0.22, 1] }, { id: 'flame', n: 'Hot Rocks', t: 8, r: 2, c: [1, 0.45, 0.08], w: 1.35, j: 0.15 }, { id: 'neon', n: 'S10 - Silver', t: 18, r: 3, c: [0.9, 0.93, 1], w: 0.8, glow: 1 },
             { id: 'bolt', n: 'Lightning', t: 28, r: 4, c: [0.55, 0.8, 1], w: 0.75, j: 1 }, { id: 'shadow', n: 'Triangulate', t: 39, r: 5, c: [1, 0.25, 0.85], w: 1.3, j: 0.25 }, { id: 'rainbow', n: 'Rainbow Road', t: 47, r: 6, c: [1, 1, 1], w: 1.2, rb: 1 }
           ],
+          ant: [{ id: 'none', n: 'None', t: 0, r: 0 }, { id: 'ball', n: 'Soccer Ball', t: 0, r: 1 }, { id: 'smiley', n: 'Smiley', t: 0, r: 1 }, { id: 'flag', n: 'Rocket Flag', t: 0, r: 1 }, { id: 'leaf', n: 'Green Leaf', t: 0, r: 2 }, { id: 'macaron', n: 'Macaron', t: 0, r: 2 }, { id: 'skull', n: 'Skull', t: 0, r: 2 }],
           top: [{ id: 'none', n: 'None', t: 0, r: 0 }, { id: 'cone', n: 'Fez', t: 10, r: 2 }, { id: 'party', n: 'Deerstalker', t: 15, r: 3 }, { id: 'tophat', n: 'Solar Shields', t: 25, r: 3 }, { id: 'halo', n: 'Halo', t: 34, r: 4 }, { id: 'crown', n: 'Royal Crown', t: 45, r: 5 }],
           fin: [
             { id: 'gloss', n: 'Glossy', t: 0, r: 0, m: 0.3, ro: 0.25, cc: 0.4, ccr: 0.03, e: 0.3 }, { id: 'matte', n: 'Matte', t: 1, r: 1, m: 0, ro: 0.78, cc: 0, ccr: 0.5, e: 0.25 },
@@ -92,15 +93,15 @@
           return crPassC = T;
         };
         const crHex = s => typeof s === 'string' && /^#[0-9a-f]{6}$/i.test(s) ? s.toLowerCase() : null;
-        const crLdDef = () => ({ p0: crTeam[0].p, p1: crTeam[1].p, a: crTeam[0].a, fin: 'gloss', decal: 'none', wheel: 'stock', boost: 'std', gx: crGX()[0].id, trail: 'std', top: 'none' });
+        const crLdDef = () => ({ p0: crTeam[0].p, p1: crTeam[1].p, a: crTeam[0].a, fin: 'gloss', decal: 'none', wheel: 'stock', boost: 'std', gx: crGX()[0].id, trail: 'std', top: 'none', ant: 'none' });
         const crLdClean = (o, body) => {
           const d = crLdDef(), x = o && typeof o === 'object' ? o : {};
           for (const k of ['p0', 'p1', 'a']) d[k] = crOldP[crHex(x[k])] || crHex(x[k]) || d[k];
-          for (const [k, c] of [['fin', 'fin'], ['decal', 'decal'], ['wheel', 'wheel'], ['boost', 'boost'], ['trail', 'trail'], ['top', 'top']]) { const it = crItem(c, x[k]); if (it && (c !== 'decal' || !it.b || !body || it.b === body)) d[k] = it.id; }
+          for (const [k, c] of [['fin', 'fin'], ['decal', 'decal'], ['wheel', 'wheel'], ['boost', 'boost'], ['trail', 'trail'], ['top', 'top'], ['ant', 'ant']]) { const it = crItem(c, x[k]); if (it && (c !== 'decal' || !it.b || !body || it.b === body)) d[k] = it.id; }
           if (typeof x.gx === 'string' && /^[\w-]{1,24}$/.test(x.gx) && (typeof fxGX === 'undefined' || crItem('gx', x.gx))) d.gx = x.gx;
           return d;
         };
-        const crCosOf = (ld, team) => { const L = ld || crLdDef(); return { p: team ? L.p1 : L.p0, a: L.a, fin: L.fin, decal: L.decal, wheel: L.wheel, boost: L.boost, gx: L.gx, trail: L.trail, top: L.top }; };
+        const crCosOf = (ld, team) => { const L = ld || crLdDef(); return { p: team ? L.p1 : L.p0, a: L.a, fin: L.fin, decal: L.decal, wheel: L.wheel, boost: L.boost, gx: L.gx, trail: L.trail, top: L.top, ant: L.ant || 'none' }; };
         const crCosClean = (o, team, body) => { if (!o || typeof o !== 'object') return crCosOf(null, team); const L = crLdClean(Object.assign({}, o, { p0: o.p, p1: o.p }), body); return crCosOf(L, team); };
         const crBotCos = (team, body, rnd) => {
           const R = rnd || Math.random, pick = l => l[Math.floor(R() * l.length)].id, L = crLdDef();
@@ -108,6 +109,7 @@
           const ds = crCat.decal.filter(d => !d.b || d.b === body); if (R() < 0.7) L.decal = pick(ds);
           if (R() < 0.3) L.boost = pick(crCat.boost);
           if (R() < 0.15) L.top = pick(crCat.top);
+          if (R() < 0.3) L.ant = pick(crCat.ant);
           return crCosOf(L, team);
         };
         let crCosV = 0;
@@ -176,8 +178,7 @@
         const crCredits = [
           'Octane - Rocket League Car by fairlight51, https://sketchfab.com/3d-models/octane-rocket-league-car-9910f0a5d158425bbc7deb60c7a81f69, CC BY 4.0',
           'Fennec - Rocket League Car by fairlight51, https://sketchfab.com/3d-models/fennec-rocket-league-car-5b43b50b6eeb4a12a29671df3418f57a, CC BY 4.0',
-          'Dominus - Rocket League Car by fairlight51, https://sketchfab.com/3d-models/dominus-rocket-league-car-f592f249a65f41cd81a0e5aa3d418cb2, CC BY 4.0',
-          'Ball - Rocket League by fairlight51, https://sketchfab.com/3d-models/ball-rocket-league-2c8911aa1dcd4c53bad842f2d354dfe2, CC BY 4.0'
+          'Dominus - Rocket League Car by fairlight51, https://sketchfab.com/3d-models/dominus-rocket-league-car-f592f249a65f41cd81a0e5aa3d418cb2, CC BY 4.0'
         ];
         const crMD = {};
         const crModel = id => {
@@ -198,7 +199,9 @@
           const bb = geo.boundingBox, P = geo.attributes.position.array, L = bb.max.x - bb.min.x, xa = bb.min.x + L * 0.3, xb = bb.min.x + L * 0.72;
           let rz = -1e9, rx = 0, rn = 0;
           for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1]) < 12 && P[i] > xa && P[i] < xb && P[i + 2] > rz - 1.5) { if (P[i + 2] > rz + 1.5) { rz = P[i + 2]; rx = 0; rn = 0; } rx += P[i]; rn++; }
-          return crFits[key] = { geo, B, s, bb, roof: [rn ? rx / rn : 0, 0, rz > -1e8 ? rz : bb.max.z], nz: MD.m.nz.map(([x, y, z, q]) => [x * s + tx, y * s, z * s + tz, q * s]), tz: bb.max.z + 20, cx: (bb.min.x + bb.max.x) / 2 };
+          const ax = (rn ? rx / rn : 0) - L * 0.2, ay = (bb.max.y - bb.min.y) * 0.12; let az = -1e9;
+          for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i] - ax) < 4 && Math.abs(P[i + 1] - ay) < 4 && P[i + 2] > az) az = P[i + 2];
+          return crFits[key] = { geo, B, s, bb, ant: [ax, ay, az > -1e8 ? az - 0.5 : bb.max.z], roof: [rn ? rx / rn : 0, 0, rz > -1e8 ? rz : bb.max.z], nz: MD.m.nz.map(([x, y, z, q]) => [x * s + tx, y * s, z * s + tz, q * s]), tz: bb.max.z + 20, cx: (bb.min.x + bb.max.x) / 2 };
         };
         const crPals = {};
         const crPal = (mid, team) => {
@@ -401,6 +404,31 @@ diffuseColor.rgb = dc;
           const k = { crown: 1.35, party: 1.3, tophat: 1.15 }[id] || 1, g = crGroups(P).scale(k, k, k).rotateX(crPI / 2); g.computeBoundingSphere();
           return crTG[id] = g;
         };
+        const crAG = {};
+        const crAntGeo = id => {
+          if (crAG[id]) return crAG[id];
+          const P = [], add = (g, mi) => P.push([g, mi]), H = 44;
+          add(new THREE.CylinderGeometry(1.3, 1.6, 2.2, 10).translate(0, 1.1, 0), 0);
+          add(new THREE.CylinderGeometry(0.32, 0.42, H, 6).translate(0, H / 2 + 2, 0), 0);
+          const T = H + 2;
+          if (id === 'ball') { add(new THREE.SphereGeometry(6, 18, 12).translate(0, T + 5.5, 0), 1); const ic = new THREE.IcosahedronGeometry(1, 0), v = ic.attributes.position, seen = new Set(); for (let i = 0; i < v.count; i++) { const x = v.getX(i), y = v.getY(i), z = v.getZ(i), k = [x, y, z].map(q => q.toFixed(2)).join(); if (seen.has(k)) continue; seen.add(k); const d = new THREE.Vector3(x, y, z).normalize(), c = new THREE.CylinderGeometry(2.1, 2.1, 0.6, 5).rotateX(crPI / 2); c.lookAt(d); add(c.translate(d.x * 5.75, T + 5.5 + d.y * 5.75, d.z * 5.75), 2); } }
+          else if (id === 'smiley') { add(new THREE.SphereGeometry(6.2, 18, 12).translate(0, T + 5.8, 0), 1); for (const s of [1, -1]) add(new THREE.SphereGeometry(0.75, 8, 6).scale(0.6, 1.8, 1).translate(5.9, T + 7.4, s * 2), 2); add(new THREE.TorusGeometry(3.4, 0.55, 6, 14, crPI * 0.8).rotateZ(crPI * 1.1).rotateY(crPI / 2).translate(5.5, T + 6.2, 0), 2); }
+          else if (id === 'flag') { add(new THREE.BoxGeometry(14, 9, 0.5).translate(7, T - 3.5, 0), 3); add(new THREE.BoxGeometry(4.6, 9.05, 0.55).translate(7, T - 3.5, 0), 1); add(new THREE.SphereGeometry(0.9, 8, 6).translate(0, T + 1, 0), 0); }
+          else if (id === 'leaf') { add(new THREE.SphereGeometry(5, 14, 10).scale(0.55, 1.9, 0.12).rotateZ(-0.35).translate(2.6, T + 8, 0), 3); add(new THREE.CylinderGeometry(0.25, 0.3, 17, 5).rotateZ(-0.35).translate(2.6, T + 8, 0.5), 2); }
+          else if (id === 'macaron') { for (const y of [2.4, 7]) add(new THREE.SphereGeometry(6, 18, 8).scale(1, 0.38, 1).translate(0, T + y, 0), 1); add(new THREE.CylinderGeometry(5.4, 5.4, 2.4, 18).translate(0, T + 4.7, 0), 2); }
+          else if (id === 'skull') { add(new THREE.SphereGeometry(5.5, 16, 12).scale(1, 1.05, 1.08).translate(0, T + 7, 0), 1); add(new THREE.BoxGeometry(5.4, 3.6, 6.2).translate(1.4, T + 2.6, 0), 1); for (const s of [1, -1]) add(new THREE.SphereGeometry(1.5, 8, 6).translate(5.2, T + 6.4, s * 2.1), 2); add(new THREE.ConeGeometry(0.8, 1.6, 4).rotateX(crPI).translate(5.6, T + 4.6, 0), 2); }
+          const g = crGroups(P).rotateX(crPI / 2); g.computeBoundingSphere();
+          return crAG[id] = g;
+        };
+        const crAntMat = (id, team) => {
+          const pole = crMat('#a7abb2', 0.85, 0.3);
+          if (id === 'ball') return [pole, crMat('#f4f4f2', 0, 0.45, 0.4), crMat('#141416', 0, 0.5), pole];
+          if (id === 'smiley') return [pole, crMat('#ffd21a', 0, 0.4, 0.5), crMat('#141416', 0, 0.6), pole];
+          if (id === 'flag') return [pole, crMat('#f4f4f4', 0, 0.7), pole, crMat(crTeam[team].p, 0, 0.6)];
+          if (id === 'leaf') return [pole, pole, crMat('#4d7a23', 0, 0.7), crMat('#6cae2c', 0, 0.55, 0.3)];
+          if (id === 'macaron') return [pole, crMat('#f6a8c4', 0, 0.75), crMat('#fbeef0', 0, 0.6), pole];
+          return [pole, crMat('#ece7da', 0, 0.55), crMat('#1a1716', 0, 0.8), pole];
+        };
         let crCheckM = null;
         const crCheck = () => crCheckM || (crCheckM = own(crWSh(new THREE.MeshStandardMaterial({ color: lin('#b39466'), roughness: 0.9, metalness: 0, envMap: crEnv(), envMapIntensity: 0.4 }), 'float cka = step(0.62, fract(vWP.x * 0.33)), ckb = step(0.62, fract(vWP.y * 0.33 + vWP.z * 0.33)); diffuseColor.rgb *= 1.0 - 0.38 * max(cka, ckb) - 0.15 * cka * ckb;')));
         const crTopMat = (id, team) => {
@@ -434,6 +462,9 @@ diffuseColor.rgb = dc;
           if (o.top) { o.bg.remove(o.top); o.top = null; }
           const tid = crItem('top', C.top) ? C.top : 'none';
           if (tid !== 'none' && o.roof) { const m = new THREE.Mesh(crTopGeo(tid), crTopMat(tid, team)); m.position.set(o.roof[0], o.roof[1], o.roof[2] - 1.5); m.castShadow = true; o.bg.add(m); o.top = m; }
+          if (o.ant) { o.bg.remove(o.ant); o.ant = null; }
+          const aid = crItem('ant', C.ant) ? C.ant : 'none';
+          if (aid !== 'none' && o.antP) { const m = new THREE.Mesh(crAntGeo(aid), crAntMat(aid, team)); m.position.set(o.antP[0], o.antP[1], o.antP[2]); m.castShadow = true; o.bg.add(m); o.ant = m; }
           o.tz = o.tz0 + (o.top ? 26 : 0);
           o.bs = crItem('boost', C.boost) || crCat.boost[0];
           const FM = crFlM(o.bs.id, team);
@@ -446,7 +477,7 @@ diffuseColor.rgb = dc;
           const B = BODIES[id] || BODIES[BODY_IDS[0]], mid = crPick(id), F = mid ? crFit(mid, id) : null, FB = mid ? null : crFallback();
           for (const w of o.wheels || []) o.g.remove(w.piv);
           while (o.bg.children.length) o.bg.remove(o.bg.children[0]);
-          o.top = null; o.team = team; o.mid = mid;
+          o.top = null; o.ant = null; o.team = team; o.mid = mid;
           o.pm = F ? crPM(o, mid, id) : null;
           const mb = new THREE.Mesh(F ? F.geo : FB.body, F ? o.pm.arr : FB.mat); mb.castShadow = true; o.bg.add(mb);
           o.wheels = [];
@@ -457,7 +488,7 @@ diffuseColor.rgb = dc;
             const dk = new THREE.Mesh(crDisc().g, crDisc().m); dk.visible = false; m.add(dk);
             o.wheels.push({ piv, spin, m, dk, front, z: Wd[2] - (B.rz || CFG.carRest) });
           }
-          o.rf = B.wf[2]; o.rb = B.wb[2]; o.tr = [B.wb[0] - 2, B.wb[1], B.wb[2] * 0.12 - (B.rz || CFG.carRest)]; o.tz0 = o.tz = F ? F.tz : 60; o.body = id; o.roof = F ? F.roof : [0, 0, 40];
+          o.rf = B.wf[2]; o.rb = B.wb[2]; o.tr = [B.wb[0] - 2, B.wb[1], B.wb[2] * 0.12 - (B.rz || CFG.carRest)]; o.tz0 = o.tz = F ? F.tz : 60; o.body = id; o.roof = F ? F.roof : [0, 0, 40]; o.antP = F ? F.ant : [-30, 10, 36];
           o.fl = flames ? crFlames(o, F ? F.nz : [[-48, 0, 4, 6]]) : [];
           if (o.sh) { o.sh.position.set(F ? F.cx : 8, 0, 0.6 - (B.rz || CFG.carRest)); o.sh.scale.set(F ? (F.bb.max.x - F.bb.min.x) * 1.08 : 130, F ? (F.bb.max.y - F.bb.min.y) * 1.25 : 90, 1); }
           crApplyCos(o, o.car && o.car.cos || o.cos || null);
@@ -514,7 +545,7 @@ diffuseColor.rgb = dc;
           const g2 = c2.getContext('2d'); g2.imageSmoothingQuality = 'high'; g2.drawImage(c1, 0, 0, 240, 140);
           return c2.toDataURL('image/png');
         };
-        const crCosKey = c => c ? [c.p, c.a, c.fin, c.decal, c.wheel, c.top].join(',') : '';
+        const crCosKey = c => c ? [c.p, c.a, c.fin, c.decal, c.wheel, c.top, c.ant].join(',') : '';
         const crThumb = (body, team = 0, cos = null, view = 0) => {
           if (!BODIES[body]) body = BODIES.octane ? 'octane' : BODY_IDS[0];
           team = team ? 1 : 0;
@@ -542,6 +573,8 @@ diffuseColor.rgb = dc;
               const MD = crModel(crPick('octane'));
               m = new THREE.Mesh(id === 'stock' ? MD ? MD.wheel : crFallback().wheel : crWheelGeo(id), id === 'stock' ? MD ? crWPal(crPick('octane')) : crFallback().mat : crWheelMat(id, team));
               m.scale.setScalar(64); m.rotation.z = 0.5; cam.fov = 30; cam.position.set(0, 300, 50); cam.lookAt(0, 0, 0);
+            } else if (k === 'ant') {
+              m = new THREE.Mesh(crAntGeo(id), crAntMat(id, team)); const cx = id === 'flag' ? 7 : 0, cz = id === 'flag' ? 44 : id === 'leaf' ? 54 : 52; cam.fov = 30; cam.position.set(cx + 30, 14, cz + 8); cam.lookAt(cx, 0, cz);
             } else {
               m = new THREE.Mesh(crTopGeo(id), crTopMat(id, team)); cam.fov = 30; cam.position.set(78, 50, 52); cam.lookAt(0, 0, 13);
             }

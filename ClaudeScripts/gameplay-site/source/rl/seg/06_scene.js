@@ -50,7 +50,7 @@
         const arSunH = new THREE.Sprite(own(new THREE.SpriteMaterial({ map: arHaloT, color: 0xffa868, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.5, fog: false, toneMapped: false })));
         arSunH.scale.set(30000, 30000, 1); arSunH.position.copy(arSunD).multiplyScalar(26000); arSunH.renderOrder = 7; scene.add(arSunH);
         const arRingT = tex(128, 128, (g, tw) => { const gr = g.createRadialGradient(64, 64, 30, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.7, 'rgba(255,255,255,.55)'); gr.addColorStop(0.85, 'rgba(255,255,255,.2)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, tw, tw); });
-        const arFlare = [[0.35, 70, 0xffb070, arHaloT, 0.3], [0.7, 40, 0x9fd0ff, arHaloT, 0.26], [1.15, 120, 0xffc890, arRingT, 0.22], [1.5, 26, 0xc8a0ff, arHaloT, 0.28], [1.85, 90, 0x80ffb0, arRingT, 0.14]].map(([f, sz, c, m, o]) => { const sp = new THREE.Sprite(own(new THREE.SpriteMaterial({ map: m, color: c, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, transparent: true, opacity: o, fog: false, toneMapped: false }))); sp.visible = false; sp.renderOrder = 9; sp.frustumCulled = false; scene.add(sp); return { sp, f, sz, o }; });
+        const arFlare = [[0.35, 95, 0xffb070, arHaloT, 0.62], [0.7, 55, 0x9fd0ff, arHaloT, 0.58], [1.15, 165, 0xffc890, arRingT, 0.55], [1.5, 36, 0xc8a0ff, arHaloT, 0.6], [1.85, 125, 0x80ffb0, arRingT, 0.42]].map(([f, sz, c, m, o]) => { const sp = new THREE.Sprite(own(new THREE.SpriteMaterial({ map: m, color: c, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, transparent: true, opacity: o, fog: false, toneMapped: false }))); sp.visible = false; sp.renderOrder = 9; sp.frustumCulled = false; scene.add(sp); return { sp, f, sz, o }; });
         const arSunC = new THREE.Sprite(own(new THREE.SpriteMaterial({ map: glowT, color: 0xfff0d0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.9, fog: false, toneMapped: false }))); arSunC.scale.set(6000, 6000, 1); arSunC.position.copy(arSunG.position); scene.add(arSunC);;
         const arRays = (() => {
           const rp = [], rc = [], S = arSunD.clone().multiplyScalar(30000), RR3 = rngOf(71);
@@ -115,35 +115,12 @@
         }, true);
         const arGrass = m => { m.onBeforeCompile = sh => { sh.uniforms.arDet = { value: arDetT }; sh.fragmentShader = 'uniform sampler2D arDet;\n' + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\ndiffuseColor.rgb *= 0.6 + 0.8 * texture2D(arDet, vUv * vec2(26.0, 38.0)).r;'); }; return m; };
         const arFL = [], arHeavy = [arRays];
-        const arHR = 104, arHZ = [], arZY = 3560 * CFG.Y / 5120;
+        const arZY = 3560 * CFG.Y / 5120;
         {
           const k3 = Math.sqrt(3), BL = [0.03, 0.17, 1.2], OR = [1.2, 0.22, 0.02], WH = [0.55, 0.57, 0.6];
           const inF = (x, y, m) => Math.abs(x) < AX - m && Math.abs(y) < AY - m && (Math.abs(x) + Math.abs(y)) < CFG.corner - RR * Math.SQRT2 - m * 1.42;
           const vx = (cx, cy, k, r) => [cx + Math.cos(k * Math.PI / 3) * r, cy + Math.sin(k * Math.PI / 3) * r];
-          const zoneOf = (cx, cy) => {
-            if (!inF(cx, cy, 10) && !(Math.abs(cx) < GW && Math.abs(cy) < GB)) return null;
-            for (let k = 0; k < 6; k++) { const [x, y] = vx(cx, cy, k, arHR); if (!inF(x, y, -80) && !(Math.abs(x) < GW + 40 && Math.abs(y) < GB + 40)) return null; }
-            if ((cx / 660) ** 2 + (cy / 560) ** 2 < 1) return { z: 'c', t: cy < 0 ? 0 : 1 };
-            if (Math.abs(cy) > arZY) return { z: 'g', t: cy < 0 ? 0 : 1 };
-            if (Math.abs(cx) > AX - 330 && Math.abs(cy) < 1500) return { z: 's', t: cy < 0 ? 0 : 1 };
-            return null;
-          };
-          const key = (x, y) => Math.round(x) + ',' + Math.round(y), map = new Map();
-          const ni = Math.ceil(CFG.X / (1.5 * arHR)) + 1, nj = Math.ceil(GB / (k3 * arHR)) + 1;
-          for (let i = -ni; i <= ni; i++) for (let j = -nj; j <= nj; j++) {
-            const cx = i * 1.5 * arHR, cy = (j + (i & 1 ? 0.5 : 0)) * k3 * arHR, z = zoneOf(cx, cy);
-            if (!z) continue;
-            const ax = Math.abs(cx), ay = Math.abs(cy);
-            z.x = cx; z.y = cy; z.st = z.z === 'g' && ax > 230 && ax < 900 && ay > 4000 && ay < 4750 && ((i + j) & 3) === 0;
-            arHZ.push(z); map.set(key(cx, cy), z);
-          }
-          for (const z of arHZ) for (let k = 0; k < 6; k++) {
-            const a = (k + 0.5) * Math.PI / 3, n = map.get(key(z.x + Math.cos(a) * k3 * arHR, z.y + Math.sin(a) * k3 * arHR));
-            if (n && n.z === z.z) continue;
-            const p = vx(z.x, z.y, k, arHR), q = vx(z.x, z.y, k + 1, arHR), c = z.z !== 'g' ? [0.8, 0.78, 0.8] : z.t ? OR : BL;
-            arFL.push({ p: [p, q], w: z.z === 'g' ? 20 : 24, c, cap: 1 });
-          }
-          const R = rngOf(57), H = 1000, inZ = (x, y) => (x / 1000) ** 2 + (y / 860) ** 2 < 1 || Math.abs(y) > arZY - 60 || Math.abs(x) < 260 || Math.abs(x) > AX - 420 && Math.abs(y) < 1600;
+          const R = rngOf(57), H = 1000, inZ = (x, y) => (x / 1180) ** 2 + (y / 1180) ** 2 < 1 || Math.abs(y) > arZY - 60;
           for (let i = -7; i <= 7; i++) for (let j = -7; j <= 7; j++) {
             const cx = i * 1.5 * H + 300, cy = (j + (i & 1 ? 0.5 : 0)) * k3 * H;
             for (let k = 0; k < 3; k++) {
@@ -162,7 +139,7 @@
             const x = sx * bx + e * 205, y1 = s * (bx > 2000 ? arZY - 420 : arZY - 20);
             arFL.push({ p: [[x, s * 1250], [x, y1]], w: 12, c: (s < 0 ? BL : OR).map(v => v * 0.8) });
           }
-          for (const s of [-1, 1]) for (const e of [-1, 1]) arFL.push({ p: [[e * 145, s * 790], [e * 145, s * (arZY - 10)]], w: 13, c: s < 0 ? BL : OR });
+          for (const s of [-1, 1]) { const xm = Math.min(AX, CFG.corner - RR * Math.SQRT2 - arZY) - 40; arFL.push({ p: [[-xm, s * arZY], [xm, s * arZY]], w: 22, c: WH }); }
           for (let k = 0; k < 72; k += 2) { const a0 = k / 72 * TAU, a1 = (k + 1.1) / 72 * TAU; arFL.push({ p: [[Math.cos(a0) * 1100, Math.sin(a0) * 1100], [Math.cos(a1) * 1100, Math.sin(a1) * 1100]], w: 16, c: WH }); }
         }
         const fieldT = tex(1024, 2048, (g, tw, th) => {
@@ -182,15 +159,7 @@
               g.fillStyle = TB[t]; g.fillRect(sx * bx - 205, Math.min(y0, y1), 410, Math.abs(y1 - y0));
               g.fillStyle = 'rgba(255,255,255,.12)'; for (let y = 1400; y < Math.abs(y1) - 200; y += 260) g.fillRect(sx * bx - 8, s * y, 16, s * 130);
             }
-            const y0 = Math.min(s * 700, s * arZY), yl = Math.abs(arZY - 700);
-            g.fillStyle = '#7d705a'; g.fillRect(-205, y0, 410, yl);
-            g.fillStyle = '#86847e'; g.fillRect(-178, y0, 356, yl);
-            g.fillStyle = 'rgba(0,0,0,.16)'; for (let y = 700; y < arZY; y += 300) g.fillRect(-178, s * y, 356, s * 6);
-            g.fillStyle = 'rgba(255,255,255,.07)'; for (let y = 700; y < arZY; y += 300) g.fillRect(-178, s * y + s * 6, 356, s * 4);
-            g.fillStyle = 'rgba(60,45,25,.35)'; g.fillRect(-180, y0, 4, yl); g.fillRect(176, y0, 4, yl);
           }
-          g.fillStyle = '#7d705a'; g.fillRect(X0, -125, Wd, 250); g.fillStyle = '#86847e'; g.fillRect(X0, -100, Wd, 200);
-          g.fillStyle = 'rgba(0,0,0,.2)'; for (let x = X0; x < CFG.X; x += 330) g.fillRect(x, -110, 8, 220);
           g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(X0, -10, Wd, 20);
         });
         const floorM = arGrass(own(new THREE.MeshStandardMaterial({ map: fieldT, roughness: 0.92, metalness: 0 })));
@@ -286,58 +255,8 @@
           scene.add(lm);
         }
         {
-          const tileT = tex(256, 128, (g) => {
-            for (const h of [0, 1]) {
-              g.save(); g.translate(64 + h * 128, 64);
-              const hx = r => { g.beginPath(); for (let k = 0; k < 6; k++) g.lineTo(Math.cos(k * Math.PI / 3) * r, Math.sin(k * Math.PI / 3) * r); g.closePath(); };
-              hx(64); g.fillStyle = '#5c6168'; g.fill();
-              hx(58); g.fillStyle = '#383b41'; g.fill();
-              hx(50); g.fillStyle = '#25272b'; g.fill(); g.save(); g.clip();
-              for (let y = -64; y < 64; y += 3) for (let x = -64; x < 64; x += 3) { g.fillStyle = ((x + y) / 3) & 1 ? 'rgba(255,255,255,.018)' : 'rgba(0,0,0,.05)'; g.fillRect(x, y, 3, 1.5); g.fillRect(x + 1.5, y + 1.5, 1.5, 1.5); }
-              if (h) { g.fillStyle = '#e9ecef'; g.save(); g.rotate(-Math.PI / 4); for (let o = -50; o <= 50; o += 16.5) g.fillRect(o - 3.5, -30, 7, 60); g.restore(); }
-              g.restore();
-              hx(50); g.strokeStyle = 'rgba(150,160,175,.5)'; g.lineWidth = 1.5; g.stroke();
-              g.restore();
-            }
-          });
-          const pos = [], uv = [], up = [], uc = [], tr = arHR - 2.8;
-          const SC = [[0.012, 0.09, 0.95], [1.05, 0.16, 0.008]], CS = [0.05, 0.05, 0.055];
-          for (const z of arHZ) {
-            const u0 = z.st ? 0.75 : 0.25, c = SC[z.t].map(v => v * (z.z === 'g' ? 0.42 : z.z === 'c' ? 0.7 : 0.3));
-            for (let k = 0; k < 6; k++) {
-              const a0 = k * Math.PI / 3, a1 = (k + 1) * Math.PI / 3;
-              pos.push(z.x, z.y, 1.6, z.x + Math.cos(a0) * tr, z.y + Math.sin(a0) * tr, 1.6, z.x + Math.cos(a1) * tr, z.y + Math.sin(a1) * tr, 1.6);
-              uv.push(u0, 0.5, u0 + Math.cos(a0) * 0.25, 0.5 + Math.sin(a0) * 0.5, u0 + Math.cos(a1) * 0.25, 0.5 + Math.sin(a1) * 0.5);
-              up.push(z.x, z.y, 0.9, z.x + Math.cos(a0) * arHR, z.y + Math.sin(a0) * arHR, 0.9, z.x + Math.cos(a1) * arHR, z.y + Math.sin(a1) * arHR, 0.9);
-              for (let q = 0; q < 3; q++) uc.push(...c);
-            }
-          }
-          const tg = own(new THREE.BufferGeometry()); tg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); tg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); tg.computeVertexNormals();
-          const ug = own(new THREE.BufferGeometry()); ug.setAttribute('position', new THREE.Float32BufferAttribute(up, 3)); ug.setAttribute('color', new THREE.Float32BufferAttribute(uc, 3));
-          const tm = new THREE.Mesh(tg, own(new THREE.MeshStandardMaterial({ map: tileT, roughness: 0.85, metalness: 0.1, envMap: arEnv, envMapIntensity: 0.3, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 })));
-          tm.receiveShadow = true; scene.add(tm);
-          scene.add(new THREE.Mesh(ug, own(new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }))));
-          const grT = tex(256, 256, (g, tw) => {
-            g.translate(tw / 2, tw / 2);
-            g.fillStyle = '#5e646c'; g.beginPath(); g.arc(0, 0, 128, 0, TAU); g.fill();
-            g.fillStyle = '#121418'; g.beginPath(); g.arc(0, 0, 104, 0, TAU); g.fill();
-            g.save(); g.beginPath(); g.arc(0, 0, 104, 0, TAU); g.clip(); g.fillStyle = 'rgba(120,128,140,.35)'; for (let y = -104; y < 104; y += 5) for (let x = -104; x < 104; x += 5) g.fillRect(x + (y / 5 & 1) * 2.5, y, 2.4, 2.4); g.restore();
-            g.strokeStyle = 'rgba(230,236,244,.9)'; g.lineWidth = 6; g.beginPath(); g.arc(0, 0, 40, 0, TAU); g.stroke();
-            g.fillStyle = '#2a2d33'; for (let k = 0; k < 4; k++) { g.beginPath(); g.arc(Math.cos(k * Math.PI / 2 + 0.8) * 116, Math.sin(k * Math.PI / 2 + 0.8) * 116, 6, 0, TAU); g.fill(); }
-          });
-          const gd = new THREE.Mesh(own(new THREE.CircleGeometry(345, 48)), own(new THREE.MeshStandardMaterial({ map: grT, roughness: 0.5, metalness: 0.5, envMap: arEnv, envMapIntensity: 0.6, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 })));
-          gd.position.z = 2.4; gd.receiveShadow = true; scene.add(gd);
           const rg = [];
           for (const s of [-1, 1]) rg.push(arCol(GX(new THREE.RingGeometry(300, 318, 48, 1, s < 0 ? Math.PI : 0, Math.PI), 0, 0, 2.8), s < 0 ? [0.03, 0.17, 1.2] : [1.2, 0.22, 0.02]));
-          const kp = [];
-          for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-            const x0 = sx * 2048, y0 = sy * 2560, d = Math.hypot(x0, y0), ux = -x0 / d, uy = -y0 / d, cx = x0 + ux * 250, cy = y0 + uy * 250, rot = Math.atan2(uy, ux), c = sy < 0 ? [0.03, 0.17, 1.2] : [1.2, 0.22, 0.02];
-            const ex = (pts, d, b) => new THREE.ExtrudeGeometry(new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y))), { depth: d, bevelEnabled: true, bevelThickness: b, bevelSize: b, bevelSegments: 1 }).translate(0, 0, b);
-            const hp = r => [0, 1, 2, 3, 4, 5].map(k => [Math.cos(rot + k * Math.PI / 3) * r, Math.sin(rot + k * Math.PI / 3) * r]);
-            kp.push(arCol(ex(hp(205), 1.5, 1).translate(cx, cy, 0), [0.34, 0.28, 0.2]), arCol(ex(hp(180), 2.5, 0.8).translate(cx, cy, 0), [0.04, 0.042, 0.048]));
-            for (let k = 0; k < 6; k++) { const a = rot + k * Math.PI / 3; rg.push(arCol(arBox(176, 8, 1, cx + Math.cos(a) * 88, cy + Math.sin(a) * 88, 4.4, a), c)); }
-          }
-          { const km = new THREE.Mesh(mergeG(kp), own(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0, envMap: arEnv, envMapIntensity: 0.2 }))); km.receiveShadow = true; scene.add(km); }
           scene.add(new THREE.Mesh(mergeG(rg), own(new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -8 }))));
         }
         const arWB = 626, arWT = 610, arBP = arPer / Math.round(arPer / 2048), arHW = arPer / Math.round(arPer / 2100), arHH = arHW * 444 / 256;
@@ -353,7 +272,7 @@
           }
           const rampG = mergeG([arBand(arFil, (s, x, y, z, r) => [s / 640, (r + 1) / (arFN + 1)], (x, y) => { const t = arTint(y, 1); return [0.4 * (0.75 + 0.25 * t[0]), 0.39 * (0.75 + 0.25 * t[1]), 0.38 * (0.75 + 0.25 * t[2])]; }, true), ...caps]);
           const rampT = tex(256, 256, (g, tw, th) => { g.fillStyle = '#90959c'; g.fillRect(0, 0, tw, th); const R = rngOf(23); for (let i = 0; i < 1400; i++) { g.fillStyle = R() < 0.5 ? 'rgba(0,0,0,.06)' : 'rgba(255,255,255,.05)'; g.fillRect(R() * tw, R() * th, 2 + R() * 6, 2 + R() * 6); } const gy = th * 0.8; g.fillStyle = '#2c3037'; g.fillRect(0, gy, tw, th - gy); g.strokeStyle = 'rgba(150,158,170,.55)'; g.lineWidth = 1.4; g.beginPath(); for (let x = -th; x < tw + th; x += 7) { g.moveTo(x, gy); g.lineTo(x + (th - gy), th); g.moveTo(x + (th - gy), gy); g.lineTo(x, th); } g.stroke(); g.fillStyle = 'rgba(20,22,26,.9)'; g.fillRect(0, gy - 3, tw, 4); g.fillStyle = 'rgba(40,44,52,.55)'; g.fillRect(0, 0, 3, gy); g.fillRect(tw / 2, 0, 2, gy); g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(4, 0, 2, gy); for (const v of [0.18, 0.5]) { g.fillStyle = 'rgba(30,34,40,.4)'; g.fillRect(0, v * th, tw, 2); } }, true);
-          const ramp = new THREE.Mesh(rampG, own(new THREE.MeshStandardMaterial({ map: rampT, vertexColors: true, roughness: 0.5, metalness: 0.15, envMap: arEnv, envMapIntensity: 0.45, side: THREE.DoubleSide })));
+          const ramp = new THREE.Mesh(rampG, own(new THREE.MeshStandardMaterial({ map: rampT, vertexColors: true, roughness: 0.5, metalness: 0.15, envMap: arEnv, envMapIntensity: 0.45, side: THREE.FrontSide })));
           ramp.receiveShadow = true; scene.add(ramp);
 
           const boardT = tex(1024, 256, (g, tw, th) => {
@@ -389,7 +308,7 @@
             g.fillStyle = '#0a0d14'; g.fillRect(0, 0, tw, y0);
           }, true);
           const boardG = arBand((cx, cy, nx, ny) => [[1, arRw(cx, cy, nx, ny)], [1, arWB]], (s, x, y, z) => [-s / arBP, (z - RR) / (arWB - RR)], null, true);
-          const boards = new THREE.Mesh(own(boardG), own(new THREE.MeshStandardMaterial({ map: boardT, emissive: 0xffffff, emissiveMap: boardT, emissiveIntensity: 0.42, roughness: 0.55, metalness: 0.2, side: THREE.DoubleSide, envMap: arEnv, envMapIntensity: 0.5 })));
+          const boards = new THREE.Mesh(own(boardG), own(new THREE.MeshStandardMaterial({ map: boardT, emissive: 0xffffff, emissiveMap: boardT, emissiveIntensity: 0.42, roughness: 0.55, metalness: 0.2, side: THREE.FrontSide, envMap: arEnv, envMapIntensity: 0.5 })));
           boards.receiveShadow = true; scene.add(boards);
 
           const cin = 1 - 3 / arWR, sL = [];
@@ -427,7 +346,7 @@
               for (let k = 0; k < N; k++) { const q = k * 2; ix.push(q, q + 2, q + 1, q + 1, q + 2, q + 3); }
               g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(ix); g.computeVertexNormals(); dq.push(g);
             }
-            const dm = new THREE.Mesh(mergeG(dq), own(new THREE.MeshStandardMaterial({ map: lgT, roughness: 0.6, metalness: 0.2, side: THREE.DoubleSide, envMap: arEnv, envMapIntensity: 0.4 })));
+            const dm = new THREE.Mesh(mergeG(dq), own(new THREE.MeshStandardMaterial({ map: lgT, roughness: 0.6, metalness: 0.2, side: THREE.FrontSide, envMap: arEnv, envMapIntensity: 0.4 })));
             dm.receiveShadow = true; scene.add(dm);
           }
           const strips = new THREE.Mesh(mergeG(sL), arFlashable(own(new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }))));
@@ -797,11 +716,20 @@
         };
 
         const padVis = [];
+        const arSwT = tex(128, 128, (g, tw) => {
+          g.fillStyle = '#fff'; g.fillRect(0, 0, tw, tw); g.translate(64, 64);
+          const gr = g.createRadialGradient(0, 0, 0, 0, 0, 64); gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.35, '#fff2c0'); gr.addColorStop(0.75, '#e0a050'); gr.addColorStop(0.97, '#b86a20'); gr.addColorStop(1, '#ffffff');
+          g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 63, 0, TAU); g.fill();
+          g.lineCap = 'round';
+          for (let k = 0; k < 3; k++) { g.beginPath(); for (let j = 0; j <= 40; j++) { const f = j / 40, a = k * TAU / 3 + f * 4.2, r = 8 + f * 52; g.lineTo(Math.cos(a) * r, Math.sin(a) * r); } g.strokeStyle = 'rgba(255,255,230,.55)'; g.lineWidth = 5; g.stroke(); g.strokeStyle = 'rgba(150,70,10,.35)'; g.lineWidth = 2; g.stroke(); }
+          for (const r of [22, 40, 54]) { g.beginPath(); g.arc(0, 0, r, 0, TAU); g.strokeStyle = 'rgba(160,80,10,.28)'; g.lineWidth = 2; g.stroke(); }
+        });
+        arSwT.center.set(0.5, 0.5);
         const arPadU = { t: { value: 0 } };
         const arGN = 'float arh2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }\nfloat arn2(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(arh2(i), arh2(i + vec2(1.0, 0.0)), f.x), mix(arh2(i + vec2(0.0, 1.0)), arh2(i + vec2(1.0, 1.0)), f.x), f.y); }\n';
         const arPadM = {
           base: own(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.42, metalness: 0.5, envMap: arEnv, envMapIntensity: 0.7 })),
-          glow: own(new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false })),
+          glow: own(new THREE.MeshBasicMaterial({ map: arSwT, vertexColors: true, toneMapped: false })),
           dec: own(new THREE.MeshBasicMaterial({ map: glowT, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4, toneMapped: false })),
           flame: own(new THREE.ShaderMaterial({
             uniforms: arPadU, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
@@ -815,11 +743,13 @@
             fragmentShader: 'uniform float t;\nvarying vec3 vN;\nvarying vec3 vV;\nvarying vec3 vO;\nfloat arh3(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }\nfloat arn3(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(mix(arh3(i), arh3(i + vec3(1.0, 0.0, 0.0)), f.x), mix(arh3(i + vec3(0.0, 1.0, 0.0)), arh3(i + vec3(1.0, 1.0, 0.0)), f.x), f.y), mix(mix(arh3(i + vec3(0.0, 0.0, 1.0)), arh3(i + vec3(1.0, 0.0, 1.0)), f.x), mix(arh3(i + vec3(0.0, 1.0, 1.0)), arh3(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z); }\nvoid main() {\n  vec3 n = normalize(vN), v = normalize(vV), q = normalize(vO) * 2.4;\n  float f = 1.0 - abs(dot(n, v));\n  float m = arn3(q + vec3(0.0, 0.0, t * 0.4)) * 0.62 + arn3(q * 2.6 - vec3(t * 0.25)) * 0.38;\n  vec3 c = mix(vec3(0.62, 0.24, 0.03), vec3(1.0, 0.78, 0.22), smoothstep(0.28, 0.66, m));\n  c = mix(c, vec3(1.0, 0.96, 0.72), smoothstep(0.7, 0.92, m) * 0.85);\n  c += vec3(1.0, 0.5, 0.06) * pow(f, 2.0) * 0.85;\n  c += vec3(1.0) * pow(max(dot(reflect(-v, n), normalize(vec3(0.3, -0.4, 0.86))), 0.0), 28.0) * 0.55;\n  gl_FragColor = vec4(c * 1.3, 1.0);\n}'
           }))
         };
-        const arPadC = { core: [1.6, 0.86, 0.26], ring: [1.25, 0.44, 0.05], slot: [1.45, 0.62, 0.1], lobe: [0.42, 0.24, 0.05], bar: [1.5, 0.7, 0.14], fill: [0.9, 0.38, 0.05], off: [0.07, 0.06, 0.055], dS: [0.5, 0.2, 0.03], dB: [0.7, 0.28, 0.04], on: [1, 1, 1] };
-        const arPad = { key: '', base: null, glow: null, dec: null, fl: null, orbs: null, gc: null, dc: null, fc: null };
+        const arPadC = { core: [1.6, 0.86, 0.26], ring: [1.25, 0.44, 0.05], slot: [1.45, 0.62, 0.1], lobe: [1.1, 0.58, 0.1], bar: [1.5, 0.7, 0.14], fill: [0.9, 0.38, 0.05], off: [0.07, 0.06, 0.055], dS: [0.5, 0.2, 0.03], dB: [0.7, 0.28, 0.04], on: [1, 1, 1] };
+        const arPad = { hm: [], key: '', base: null, glow: null, dec: null, fl: null, orbs: null, gc: null, dc: null, fc: null };
         const arShp = pts => new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y)));
         const arExt = (pts, d, bv) => new THREE.ExtrudeGeometry(arShp(pts), { depth: d, bevelEnabled: true, bevelThickness: bv, bevelSize: bv, bevelSegments: 1, curveSegments: 4 }).translate(0, 0, bv);
         const arY = (Lr, w) => { const o = [], rv = w / Math.sin(Math.PI / 3); for (let k = 0; k < 3; k++) { const a = k * TAU / 3, ux = Math.cos(a), uy = Math.sin(a); o.push([Math.cos(a - Math.PI / 3) * rv, Math.sin(a - Math.PI / 3) * rv]); for (let j = 0; j <= 8; j++) { const f = -Math.PI / 2 + Math.PI * j / 8, d = Lr - w; o.push([ux * d + (ux * Math.cos(f) - uy * Math.sin(f)) * w, uy * d + (uy * Math.cos(f) + ux * Math.sin(f)) * w]); } } return o; };
+        const arTri = (Rt, r) => { const o = []; for (let k = 0; k < 3; k++) { const a = k * TAU / 3, cx = Math.cos(a) * (Rt - 2 * r), cy = Math.sin(a) * (Rt - 2 * r); for (let j = 0; j <= 6; j++) { const b = a - Math.PI / 3 + j / 6 * TAU / 3; o.push([cx + Math.cos(b) * r, cy + Math.sin(b) * r]); } } return o; };
+        const arUV0 = g => { const u = g.attributes.uv; if (u) for (let i = 0; i < u.count; i++) u.setXY(i, 0.02, 0.02); return g; };
         const arCurt = (pts, z0, hh, c) => {
           const pos = [], uv = [], col = [], idx = [], n = pts.length;
           pts.forEach(([x, y], i) => { pos.push(x, y, z0, x, y, z0 + hh); uv.push(i / (n - 1), 0, i / (n - 1), 1); col.push(...c, ...c); });
@@ -838,36 +768,36 @@
             const bl = [], gl = [], dl = [], fl = [], nb = W.pads.filter(p => p.big).length;
             let gv = 0, dv = 0, fv = 0, bi = 0;
             for (const pd of W.pads) {
-              const pv = { big: pd.big, on: null, n: -1, bars: [], g0: gv, g1: 0, d0: dv, d1: 0, f0: fv, f1: 0, cols: null, orb: -1, halo: null, k: 1 };
+              const pv = { pk: 0, big: pd.big, on: null, n: -1, bars: [], g0: gv, g1: 0, d0: dv, d1: 0, f0: fv, f1: 0, cols: null, orb: -1, halo: null, k: 1 };
               const rot = pd.big ? Math.atan2(pd.y, pd.x) + Math.PI / 3 : 0, cr = Math.cos(rot), sr = Math.sin(rot);
               const T = g => g.rotateZ(rot).translate(pd.x, pd.y, 0), TP = ([x, y]) => [pd.x + x * cr - y * sr, pd.y + x * sr + y * cr];
               const parts = [], fls = [];
               if (pd.big) {
-                bl.push(arCol(T(arExt(arY(250, 74), 6, 3)), [0.42, 0.43, 0.46]), arCol(T(arExt(arY(236, 60), 9, 2.5)), [0.03, 0.032, 0.036]), arCol(T(arExt(arArc(0, 0, 96, 0, TAU, 32), 11, 2)), [0.07, 0.072, 0.08]));
-                parts.push([GX(new THREE.RingGeometry(70, 80, 36), 0, 0, 15.6), 'ring'], [GX(new THREE.CircleGeometry(62, 28), 0, 0, 15.8), 'core']);
+                bl.push(arCol(T(arExt(arTri(178, 52), 4, 3)), [0.3, 0.235, 0.14]), arCol(T(arExt(arTri(160, 44), 7, 2)), [0.05, 0.05, 0.056]), arCol(T(arExt(arY(150, 38), 4.5, 2)), [0.12, 0.125, 0.135]), arCol(T(arExt(arArc(0, 0, 60, 0, TAU, 32), 6, 1.5)), [0.36, 0.3, 0.2]));
+                parts.push([arUV0(GX(new THREE.RingGeometry(44, 52, 36), 0, 0, 9.8)), 'ring'], [GX(new THREE.CircleGeometry(42, 28), 0, 0, 10), 'core']);
                 for (let k = 0; k < 3; k++) {
                   const a = k * TAU / 3, ca = Math.cos(a), sa = Math.sin(a);
-                  for (let j = 0; j < 5; j++) parts.push([arBox(23, 52, 2, ca * (120 + j * 26), sa * (120 + j * 26), 15.2, a), 'bar', j]);
-                  fls.push(arCurt([-24, -8, 8, 24].map(q => TP([ca * 170 - sa * q, sa * 170 + ca * q])), 12, 90, arPadC.on));
+                  for (let j = 0; j < 4; j++) parts.push([arUV0(arBox(16, 44, 2, ca * (72 + j * 19), sa * (72 + j * 19), 8.4, a)), 'bar', j]);
+                  fls.push(arCurt([-18, -6, 6, 18].map(q => TP([ca * 138 - sa * q, sa * 138 + ca * q])), 12, 60, arPadC.on));
                 }
-                fls.push(arCurt(arArc(0, 0, 62, 0, TAU, 14).map(TP), 16, 150, arPadC.on));
+                fls.push(arCurt(arArc(0, 0, 44, 0, TAU, 14).map(TP), 16, 75, arPadC.on));
               } else {
-                const lb = [[-64, -30], [-64, 30], [64, -30], [64, 30]];
-                bl.push(arCol(T(arExt(arArc(0, 0, 58, 0, TAU, 28), 5, 2)), [0.2, 0.14, 0.07]), ...lb.map(([x, y]) => arCol(T(arExt(arArc(x, y, 24, 0, TAU, 6), 3, 2)), [0.2, 0.14, 0.07])));
-                parts.push([GX(new THREE.CircleGeometry(40, 24), 0, 0, 9.4), 'core'], [GX(new THREE.RingGeometry(44, 52, 28), 0, 0, 9.3), 'ring'], ...lb.map(([x, y]) => [GX(new THREE.CircleGeometry(16, 12), x, y, 7.4), 'lobe']));
-                fls.push(arCurt(arArc(0, 0, 44, 0, TAU, 16).map(TP), 8, 26, arPadC.on));
+                const lb = [[-47, -20], [-47, 20], [47, -20], [47, 20]], hx = arArc(0, 0, 42, Math.PI / 6, Math.PI / 6 + TAU, 6).map(([x, y]) => [x * 1.12, y * 0.92]);
+                bl.push(arCol(T(arExt(hx, 3, 2)), [0.36, 0.27, 0.13]), arCol(T(arExt(arArc(0, 0, 33, 0, TAU, 28), 5, 1.5)), [0.3, 0.22, 0.1]), ...lb.map(([x, y]) => arCol(T(arExt(arArc(x, y, 17, Math.PI / 6, Math.PI / 6 + TAU, 6), 4, 2)), [0.36, 0.27, 0.13])));
+                parts.push([GX(new THREE.CircleGeometry(27, 24), 0, 0, 8.6), 'core'], [arUV0(GX(new THREE.RingGeometry(28, 32, 28), 0, 0, 8.5)), 'ring'], ...lb.map(([x, y]) => [arUV0(GX(new THREE.CircleGeometry(11.5, 6), x, y, 8.4)), 'lobe']));
+                fls.push(arCurt(arArc(0, 0, 30, 0, TAU, 16).map(TP), 8, 20, arPadC.on));
               }
               const cols = [];
               for (const [g, kind, sg] of parts) { const n = arCol(T(g), arPadC[kind]); gl.push(n); if (kind === 'bar') pv.bars.push([gv, gv + n.attributes.position.count, sg]); gv += n.attributes.position.count; const c = arPadC[kind]; for (let q = 0; q < n.attributes.position.count; q++) cols.push(c[0], c[1], c[2]); }
               pv.g1 = gv; pv.cols = new Float32Array(cols);
               for (const g of fls) { const n = g.toNonIndexed(); g.dispose(); fl.push(n); fv += n.attributes.position.count; }
               pv.f1 = fv;
-              const ds = pd.big ? 620 : 300;
+              const ds = pd.big ? 460 : 190;
               dl.push(arQuad([pd.x - ds / 2, pd.y - ds / 2, 1.5], [pd.x + ds / 2, pd.y - ds / 2, 1.5], [pd.x + ds / 2, pd.y + ds / 2, 1.5], [pd.x - ds / 2, pd.y + ds / 2, 1.5], null, pd.big ? arPadC.dB : arPadC.dS).toNonIndexed());
               dv += 6; pv.d1 = dv;
               if (pd.big) {
                 pv.orb = bi++;
-                pv.halo = new THREE.Sprite(arPadM.halo); pv.halo.scale.set(520, 520, 1); pv.halo.position.set(pd.x, pd.y, 112); pv.halo.renderOrder = 4; scene.add(pv.halo);
+                pv.halo = new THREE.Sprite(arPad.hm[pv.orb] || (arPad.hm[pv.orb] = own(arPadM.halo.clone()))); pv.halo.scale.set(380, 380, 1); pv.halo.position.set(pd.x, pd.y, 100); pv.halo.renderOrder = 4; scene.add(pv.halo);
               }
               padVis.push(pv);
             }
@@ -876,16 +806,19 @@
             arPad.dec = new THREE.Mesh(mergeG(dl), arPadM.dec); arPad.dec.renderOrder = 1;
             arPad.fl = new THREE.Mesh(mergeG(fl), arPadM.flame); arPad.fl.renderOrder = 6;
             arPad.gc = arPad.glow.geometry.attributes.color; arPad.dc = arPad.dec.geometry.attributes.color; arPad.fc = arPad.fl.geometry.attributes.color;
-            arPad.orbs = new THREE.InstancedMesh(arPad.orbG || (arPad.orbG = own(new THREE.IcosahedronGeometry(54, 3))), arPadM.orb, Math.max(1, nb));
+            arPad.orbs = new THREE.InstancedMesh(arPad.orbG || (arPad.orbG = own(new THREE.IcosahedronGeometry(40, 3))), arPadM.orb, Math.max(1, nb));
             arPad.orbs.instanceMatrix.setUsage(THREE.DynamicDrawUsage); arPad.orbs.frustumCulled = false;
             scene.add(arPad.base, arPad.glow, arPad.dec, arPad.fl, arPad.orbs);
           }
           for (const pv of padVis) pv.on = null;
         };
         const arM4 = new THREE.Matrix4(), arQ4 = new THREE.Quaternion(), arV3 = new THREE.Vector3(), arS3 = new THREE.Vector3(), arEu = new THREE.Euler();
+        let arPadLT = 0;
         const arPadTick = (dt, t) => {
           if (!arPad.glow) return;
+          const arNow = performance.now() / 1000, rd = Math.min(0.1, Math.max(0, arNow - (arPadLT || arNow))); arPadLT = arNow;
           arPadU.t.value = t % 1000;
+          arSwT.rotation = -t * 1.6; arPadM.glow.color.setScalar(0.9 + 0.1 * Math.sin(t * 3.4));
           let dirty = false;
           for (let i = 0; i < padVis.length && i < W.pads.length; i++) {
             const pv = padVis[i], pd = W.pads[i], on = pd.t <= 0;
@@ -896,20 +829,29 @@
               const dc = pv.big ? arPadC.dB : arPadC.dS;
               for (let q = pv.d0; q < pv.d1; q++) { da[q * 3] = on ? dc[0] : 0; da[q * 3 + 1] = on ? dc[1] : 0; da[q * 3 + 2] = on ? dc[2] : 0; }
               for (let q = pv.f0 * 3; q < pv.f1 * 3; q++) fa[q] = on ? 1 : 0;
-              if (pv.big) { pv.halo.visible = on; if (!on) pv.k = 0; pv.n = -1; }
+              if (pv.big) pv.n = -1;
+              if (!on && pv.on !== null) pv.pk = 1;
             }
             if (pv.big && !on) {
               const n = Math.floor(clamp(1 - pd.t / (pd.cd || 10), 0, 1) * 5);
               if (n !== pv.n) { pv.n = n; dirty = true; const ga = arPad.gc.array, fc = arPadC.fill, oc = arPadC.off; for (const [a0, a1, sg] of pv.bars) { const c = sg < n ? fc : oc; for (let q = a0; q < a1; q++) { ga[q * 3] = c[0]; ga[q * 3 + 1] = c[1]; ga[q * 3 + 2] = c[2]; } } }
             }
+            if (pv.pk > 0) {
+              pv.pk = Math.max(0, pv.pk - rd * 3.2); dirty = true;
+              const da = arPad.dc.array, dc = pv.big ? arPadC.dB : arPadC.dS, f = pv.pk * pv.pk * 5;
+              for (let q = pv.d0; q < pv.d1; q++) { da[q * 3] = dc[0] * f; da[q * 3 + 1] = dc[1] * f; da[q * 3 + 2] = dc[2] * f; }
+            }
             if (pv.big) {
+              pv.halo.visible = on || pv.pk > 0;
+              if (!on && pv.pk > 0) { pv.halo.material.opacity = pv.pk * 0.9; const hs = 380 + (1 - pv.pk) * 520; pv.halo.scale.set(hs, hs, 1); }
               if (on) {
                 pv.k = Math.min(1, pv.k + dt * 4);
-                const z = 150 + Math.sin(t * 2.2 + i) * 8, sc = pv.k * (0.97 + 0.03 * Math.sin(t * 6 + i));
+                const z = 100 + Math.sin(t * 2.2 + i) * 6, sc = pv.k * (0.97 + 0.03 * Math.sin(t * 6 + i));
                 arEu.set(t * 0.5, 0, t * 1.1 + i); arQ4.setFromEuler(arEu); arV3.set(pd.x, pd.y, z); arS3.set(sc, sc, sc);
-                pv.halo.position.z = z; arPadM.halo.opacity = 0.5 + 0.1 * Math.sin(t * 5);
-                pv.halo.scale.set(520 * pv.k, 520 * pv.k, 1);
-              } else { arV3.set(pd.x, pd.y, -500); arS3.set(0.001, 0.001, 0.001); }
+                pv.halo.position.z = z; pv.halo.material.opacity = 0.5 + 0.1 * Math.sin(t * 5);
+                pv.halo.scale.set(380 * pv.k, 380 * pv.k, 1);
+              } else if (pv.pk > 0.55) { const e = (pv.pk - 0.55) / 0.45, sc = e * (1.5 - 0.5 * e); arEu.set(t * 0.5, 0, t * 1.1 + i); arQ4.setFromEuler(arEu); arV3.set(pd.x, pd.y, 100 + (1 - e) * 60); arS3.set(sc, sc, sc); pv.k = 0; }
+              else { pv.k = 0; arV3.set(pd.x, pd.y, -500); arS3.set(0.001, 0.001, 0.001); }
               arM4.compose(arV3, arQ4, arS3); arPad.orbs.setMatrixAt(pv.orb, arM4);
             }
           }

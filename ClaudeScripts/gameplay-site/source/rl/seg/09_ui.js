@@ -75,7 +75,27 @@
         const uiBTC = t => { const L = (a, b, k) => a.map((x, j) => Math.round(x + (b[j] - x) * k)); return 'rgb(' + (t < 0.74 ? L([255, 118, 0], [255, 184, 34], t / 0.74) : L([236, 238, 244], [255, 255, 255], (t - 0.74) / 0.26)) + ')'; };
         const uiBT = (v, bo) => { const n = Math.round(bo / 100 * uiBN); if (!v.bdTk) v.bdTk = v.bd.querySelectorAll('.tk path'); for (let k = 0; k < v.bdTk.length; k++) v.bdTk[k].classList.toggle('on', k < n); };
         const uiKL = {}, uiKn = c => uiKL[c] || c.replace(/^Key|^Digit/, '');
-        try { if (navigator.keyboard && navigator.keyboard.getLayoutMap) navigator.keyboard.getLayoutMap().then(m => { if (dead) return; m.forEach((x, k) => { if (/^Key[A-Z]$/.test(k) && /^\S$/.test(x)) uiKL[k] = x.toUpperCase(); }); for (const v of views) if (v.cbk) v.cbk.textContent = uiKn('KeyC'); }).catch(() => {}); } catch (e) {}
+        try { if (navigator.keyboard && navigator.keyboard.getLayoutMap) navigator.keyboard.getLayoutMap().then(m => { if (dead) return; m.forEach((x, k) => { if (/^(Key[A-Z]|Digit\d|Minus|Equal|BracketLeft|BracketRight|Backslash|IntlBackslash|Semicolon|Quote|Backquote|Comma|Period|Slash)$/.test(k) && /^\S$/.test(x)) uiKL[k] = x.toUpperCase(); }); uiCbk(); if (!uiOptEl.hidden) uiOptRender(); }).catch(() => {}); } catch (e) {}
+        const uiKN = { Space: 'Space Bar', ShiftLeft: 'Left Shift', ShiftRight: 'Right Shift', ControlLeft: 'Left Ctrl', ControlRight: 'Right Ctrl', AltLeft: 'Left Alt', AltRight: 'Right Alt', MetaLeft: 'Left Win', MetaRight: 'Right Win', Tab: 'Tab', Enter: 'Enter', NumpadEnter: 'Num Enter', Escape: 'Esc', Backspace: 'Backspace', CapsLock: 'Caps Lock', ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right', Mouse0: 'Left Mouse Button', Mouse1: 'Middle Mouse Button', Mouse2: 'Right Mouse Button', Mouse3: 'Thumb Mouse Button', Mouse4: 'Thumb Mouse Button 2' };
+        const uiPN = { b0: 'A', b1: 'B', b2: 'X', b3: 'Y', b4: 'LB', b5: 'RB', b6: 'LT', b7: 'RT', b8: 'Back', b9: 'Start', b10: 'L3', b11: 'R3', b12: 'D-Pad Up', b13: 'D-Pad Down', b14: 'D-Pad Left', b15: 'D-Pad Right', b16: 'Home', 'lx-': 'Left Stick Left', 'lx+': 'Left Stick Right', 'ly-': 'Left Stick Up', 'ly+': 'Left Stick Down', 'rx-': 'Right Stick Left', 'rx+': 'Right Stick Right', 'ry-': 'Right Stick Up', 'ry+': 'Right Stick Down' };
+        const uiBindName = (c, x) => !x ? 'Unbound' : c === 'p' ? uiPN[x] || x : uiKN[x] || uiKL[x] || x.replace(/^Key|^Digit/, '').replace(/^Numpad/, 'Num ');
+        let uiBM = null;
+        const uiBindSync = () => { uiBM = { k: {}, p: {} }; for (const a of uiACT) for (const c of ['k', 'p']) { const o = saved.bind[c]; uiBM[c][a[0]] = !(a[5] || '').includes(c) && a[0] in o ? o[a[0]] : a[c === 'k' ? 2 : 3]; } };
+        uiBindSync();
+        const uiCbk = () => { for (const v of views) if (v.cbk) v.cbk.textContent = uiBindName('k', uiBM.k.cam); };
+        const uiPad = { v: {}, on: new Set(), rt: {} };
+        const uiVal = a => Math.max(keys.has(uiBM.k[a]) ? 1 : 0, uiPad.v[uiBM.p[a]] || 0);
+        const uiBoundK = c => uiACT.some(a => uiBM.k[a[0]] === c);
+        const uiGps = () => { try { return navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : []; } catch (e) { return []; } };
+        const uiPadRead = () => {
+          const v = {}, dz = saved.dz;
+          for (const gp of uiGps()) {
+            gp.buttons.forEach((b, i) => { const x = b.value || (b.pressed ? 1 : 0); if (i < 17 && x > 0.1) v['b' + i] = Math.max(v['b' + i] || 0, x); });
+            ['lx', 'ly', 'rx', 'ry'].forEach((n, i) => { const a = gp.axes[i] || 0, m = Math.abs(a); if (m > dz) { const k = n + (a < 0 ? '-' : '+'); v[k] = Math.max(v[k] || 0, Math.min(1, (m - dz) / (1 - dz))); } });
+          }
+          return v;
+        };
+        const uiPadBusy = () => uiGps().some(g => g.buttons.some(b => b.pressed || b.value > 0.4) || [0, 1, 2, 3].some(i => Math.abs(g.axes[i] || 0) > 0.4));
         const uiZ = n => n ? String(n) : 'Ø';
         const uiNeed = l => Math.min(5000, 1000 + 250 * (l - 1));
         const uiLvl = xp => { let l = 1; while (xp >= uiNeed(l) && l < 500) { xp -= uiNeed(l); l++; } return { l, x: xp, n: uiNeed(l) }; };
@@ -104,9 +124,6 @@
           else if (t === 'demo') { if (e.b && e.b.bot) uiBot(e.b, Math.random() < 0.6 ? 12 : 9, 0.2); }
           else if (t === 'end') { for (const v of views) uiQcClose(v); uiTab(false); }
         };
-        const KS = {
-          all: { up: ['KeyW', 'ArrowUp'], dn: ['KeyS', 'ArrowDown'], lf: ['KeyA', 'ArrowLeft'], rt: ['KeyD', 'ArrowRight'], boost: ['ShiftLeft', 'ShiftRight'], jump: ['Space'], slide: ['KeyX', 'ControlLeft', 'ControlRight'], rl: ['KeyQ'], rr: ['KeyE'], cam: ['KeyC'] }
-        };
         let mode = 'cpu', split = false, online = null, netGen = 0, netBound = false;
         const BDS = i => {
           let tk = '';
@@ -117,7 +134,7 @@
         const makeView = i => {
           const v = { i, el: el('div', 'vh', hud), camera: i ? new THREE.PerspectiveCamera(78, 1, 10, 90000) : camera, cam: { p: new THREE.Vector3(0, -7000, 1600), look: new THREE.Vector3(0, 1, 0), up: new THREE.Vector3(0, 0, 1), dir: new THREE.Vector3(0, 1, 0), orbit: 0 }, camBall: saved.cam !== false, car: null, flip: false, tall: portrait, rect: [0, 0, 1, 1], banT: 0, banDur: 0, key: '', bkey: -1, ssKey: '', qcCat: -1, qcT: 0, qcLog: [], qcBan: 0, latch: false, T: { boost: false, jump: false, slide: false, id: null, ox: 0, oy: 0, x: 0, y: 0 } };
           v.camera.up.set(0, 0, 1);
-          v.el.innerHTML = `<div class="sb"><div class="sq c0">${uiDGH}</div><div class="clk">${uiDGH}<b class="otx">Overtime</b></div><div class="sq r c1">${uiDGH}</div></div><div class="bd">${BDS(i)}<div class="bn"><svg class="dg"><path class="o"/><path class="n"/></svg></div><b class="bl">BOOST</b></div><div class="ban"></div><i class="barw" hidden></i><div class="pzm gmc" hidden><b>Game Mode</b><small>Soccar</small></div><div class="feed"></div><div class="pops"></div><div class="ss"></div><div class="ping"></div><div class="chat"></div><div class="qc"></div><div class="trn"></div><button class="cb"><b><i></i>Ball Cam</b><small>Press<kbd>${uiKn('KeyC')}</kbd>to toggle</small></button><div class="tl">${i ? '' : '<button class="pb" aria-label="Pause">II</button>'}<button class="cbt">BALL CAM</button><button class="qb" aria-label="Quick chat">${uiIC.chat}</button><button class="trb" data-tr="ball">Reset</button><button class="trb" data-tr="shot">Shot</button></div><div class="tc"><div class="jz"><div class="joy"><i></i></div></div><button class="tb boost">BOOST</button><button class="tb jump">JUMP</button><button class="tb slide">SLIDE</button></div>`;
+          v.el.innerHTML = `<div class="sb"><div class="sq c0">${uiDGH}</div><div class="clk">${uiDGH}<b class="otx">Overtime</b></div><div class="sq r c1">${uiDGH}</div></div><div class="bd">${BDS(i)}<div class="bn"><svg class="dg"><path class="o"/><path class="n"/></svg></div><b class="bl">BOOST</b></div><div class="ban"></div><i class="barw" hidden></i><div class="pzm gmc" hidden><b>Game Mode</b><small>Soccar</small></div><div class="feed"></div><div class="pops"></div><div class="ss"></div><div class="ping"></div><div class="chat"></div><div class="qc"></div><div class="trn"></div><button class="cb"><b><i></i>Ball Cam</b><small>Press<kbd>${esc(uiBindName('k', uiBM.k.cam))}</kbd>to toggle</small></button><div class="tl">${i ? '' : '<button class="pb" aria-label="Pause">II</button>'}<button class="cbt">BALL CAM</button><button class="qb" aria-label="Quick chat">${uiIC.chat}</button><button class="trb" data-tr="ball">Reset</button><button class="trb" data-tr="shot">Shot</button></div><div class="tc"><div class="jz"><div class="joy"><i></i></div></div><button class="tb boost">BOOST</button><button class="tb jump">JUMP</button><button class="tb slide">SLIDE</button></div>`;
           const q = s => v.el.querySelector(s);
           Object.assign(v, { barw: q('.barw'), gmc: q('.gmc'), sb: q('.sb'), sbL: q('.sb .c0'), sbR: q('.sb .c1'), sbC: q('.clk'), bd: q('.bd'), bdNum: q('.bn svg'), ban: q('.ban'), feed: q('.feed'), pops: q('.pops'), ss: q('.ss'), ping: q('.ping'), chat: q('.chat'), qc: q('.qc'), trn: q('.trn'), trKey: '', cb: q('.cb'), cbk: q('.cb kbd'), tl: q('.tl'), pb: q('.pb'), cbt: q('.cbt'), qb: q('.qb'), tc: q('.tc'), jz: q('.jz'), joy: q('.joy'), knob: q('.joy i') });
           v.sbLd = v.sbL.firstChild; v.sbRd = v.sbR.firstChild; v.sbCd = v.sbC.firstChild;
@@ -362,11 +379,11 @@
         };
         const uiPlb = () => { const L = uiLvl(saved.xp); return `<div class="plb" title="Change name"><div class="pav">${uiAv(null, 0)}<b class="plv">${L.l}</b></div><div class="pnm"><span>${esc(saved.name)}<small>${esc(saved.ttl || 'Rocket Pass Tier ' + uiTier())}</small></span>${uiCarW}</div><i class="pxp"><u style="width:${(L.x / L.n * 100).toFixed(1)}%"></u></i></div>`; };
         const uiK = (k, cls) => coarse ? '' : `<kbd${cls ? ` class="${cls}"` : ''}>${k}</kbd>`;
-        const uiMD = { play: 'Play matches against bots, practise in Free Play or challenge your friends online.', garage: 'Customize your car: body, decals, paint, wheels, boost, goal explosion, trail and topper.', pass: 'Rocket Pass: earn XP in every match and unlock new items for your car.', opts: 'Change camera, controls, audio and chat settings.', cred: 'Model credits and licences.', exit: 'Return to the title screen.', cpu: 'Exhibition match against bots: Duel, Doubles or Standard, five difficulty levels.', train: 'Free Play: drive around with the ball and practise shots, aerials and saves. No clock, no score.', online: 'Create a party, invite friends with the code or link and play 1v1, 2v2 or 3v3. Turn on bots in the party to fill the empty seats.' };
+        const uiMD = { play: 'Play matches against bots, practise in Free Play or challenge your friends online.', garage: 'Customize your car: body, decals, paint, wheels, boost, goal explosion, trail, topper and antenna.', pass: 'Rocket Pass: earn XP in every match and unlock new items for your car.', opts: 'Change camera, controls, audio and chat settings.', cred: 'Model credits and licences.', exit: 'Return to the title screen.', cpu: 'Exhibition match against bots: Duel, Doubles or Standard, five difficulty levels.', train: 'Free Play: drive around with the ball and practise shots, aerials and saves. No clock, no score.', online: 'Create a party, invite friends with the code or link and play 1v1, 2v2 or 3v3. Turn on bots in the party to fill the empty seats.' };
         const uiOS = { gm: [['soccar', 'Soccar']], ar: [['dfh', 'DFH Stadium']], size: [[1, '1v1'], [2, '2v2'], [3, '3v3']], diff: uiDIds().map(k => [k, uiDName(k)]), len: [[180, '3 Minutes'], [300, '5 Minutes'], [600, '10 Minutes']] };
         const uiOD = { gm: 'Soccar: score more goals than the other team.', ar: 'DFH Stadium.', size: 'Duel 1v1, Doubles 2v2 or Standard 3v3. Empty seats are filled with bots.', diff: 'How good the bots are: ' + uiOS.diff.map(x => x[1]).join(', ') + '.', len: 'Match length. A tie at 0:00 goes to overtime.', go: 'Start the match.' };
-        const uiGC = [['body', 'Body'], ['decal', 'Decal'], ['paint', 'Paint'], ['wheel', 'Wheels'], ['boost', 'Rocket Boost'], ['gx', 'Goal Explosion'], ['trail', 'Trail'], ['top', 'Topper']];
-        const uiCatN = k => ({ body: 'Body', decal: 'Decal', paint: 'Paint', wheel: 'Wheels', boost: 'Rocket Boost', gx: 'Goal Explosion', trail: 'Trail', top: 'Topper', fin: 'Paint Finish', title: 'Player Title' })[k] || '';
+        const uiGC = [['body', 'Body'], ['decal', 'Decal'], ['paint', 'Paint'], ['wheel', 'Wheels'], ['boost', 'Rocket Boost'], ['gx', 'Goal Explosion'], ['trail', 'Trail'], ['top', 'Topper'], ['ant', 'Antenna']];
+        const uiCatN = k => ({ body: 'Body', decal: 'Decal', paint: 'Paint', wheel: 'Wheels', boost: 'Rocket Boost', gx: 'Goal Explosion', trail: 'Trail', top: 'Topper', ant: 'Antenna', fin: 'Paint Finish', title: 'Player Title' })[k] || '';
         const uiGItems = k => k === 'body' ? BODY_IDS.filter(id => crModel(id) || crModel(BODIES[id].mdl) || !crM.octane).map(id => ({ id, n: BODIES[id].name, t: 0, r: 0 })) : k === 'decal' ? crCat.decal.filter(d => !d.b || d.b === saved.car) : k === 'paint' ? crCat.fin : crList(k);
         const uiEq = k => k === 'body' ? saved.car : uiLO(saved.car)[k === 'paint' ? 'fin' : k];
         const uiEqName = k => { if (k === 'paint') { const L = uiLO(saved.car); return (crItem('fin', L.fin) || crCat.fin[0]).n + ' · ' + L['p' + uiTC].toUpperCase(); } const it = uiGItems(k).find(x => x.id === uiEq(k)); return it ? it.n : ''; };
@@ -381,6 +398,7 @@
           if (k === 'decal') return `<img src="${crThumb(b, t, Object.assign(crCosOf(uiLO(b), t), { decal: it.id, top: 'none' }))}" alt="">`;
           if (k === 'wheel') return `<img src="${crIcon('wheel', it.id, t)}" alt="">`;
           if (k === 'top') return it.id === 'none' ? '<i class="gsw no"></i>' : `<img src="${crIcon('top', it.id, t)}" alt="">`;
+          if (k === 'ant') return it.id === 'none' ? '<i class="gsw no"></i>' : `<img src="${crIcon('ant', it.id, t)}" alt="">`;
           if (k === 'boost') { const o = it.o || [[0x1d58ff, 0xe8f6ff, 0x5a9cff], [0xff5208, 0xfff2b8, 0xff9a40]][t]; return `<i class="gsw bo${it.rb ? ' rbw' : ''}" style="--a:${uiHex(o[0])};--b:${uiHex(o[1])};--c:${uiHex(o[2])}"></i>`; }
           if (k === 'trail') { const c = it.c ? uiRgb(it.c) : it.glow ? uiLO(b)['p' + t] : t ? '#ffc890' : '#a8d4ff'; return `<i class="gsw tr${it.rb ? ' rbw' : ''}${it.j ? ' jt' : ''}" style="--a:${c}"></i>`; }
           if (k === 'gx') return `<i class="gsw gx" style="--a:${(crRar[it.r] || crRar[0])[1]}">${uiIC.goal}</i>`;
@@ -392,7 +410,7 @@
           const own = uiOwn(k, it), eq = uiEq(k) === it.id, nw = own && it.t > 0 && !saved.seen.includes(k + ':' + it.id), R = crRar[it.r] || crRar[0];
           return `<button class="gi${sel ? ' on' : ''}${eq ? ' eq' : ''}${own ? '' : ' lk'}" data-gi="${esc(it.id)}" style="--rc:${R[1]}"><span class="gim">${uiThumbOf(k, it)}</span><b${it.r > 1 && own ? ` style="color:${R[1]}"` : ''}>${esc(it.n)}</b><small>${own ? esc(it.t ? R[0] : k === 'body' ? BODIES[it.id].hitbox + ' hitbox' : 'Default') : 'Tier ' + it.t}</small>${eq ? `<i class="geq">${uiIC.check}</i>` : ''}${own ? '' : '<i class="glk"></i>'}${nw ? '<em class="gnw">New</em>' : ''}</button>`;
         };
-        const uiGIC = { body: '<path d="M2 15.5l1.6-4.2 4.4-1.3 3-3h6.5l2.8 3.3 1.7.6v4.6H2z"/><circle cx="6.5" cy="16.5" r="2.4"/><circle cx="17.5" cy="16.5" r="2.4"/>', decal: '<path d="M3 6h18v12H3z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 16l5-7 3 4 2-2 4 5z"/>', paint: '<path d="M12 2.5c3 4.2 6.5 7.8 6.5 11.7a6.5 6.5 0 01-13 0c0-3.9 3.5-7.5 6.5-11.7z"/>', wheel: '<circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="12" cy="12" r="2.6"/><path d="M12 3.5v6M12 14.5v6M3.5 12h6M14.5 12h6" stroke="currentColor" stroke-width="2"/>', boost: '<path d="M2 12l7-4.5v3h4V7l9 5-9 5v-3.5H9v3z"/>', gx: '<path d="M12 1.5l2.2 6.2 6-2.6-3 5.8 6 2.3-6.3 1.6 2.6 6-5.6-3.4L12 23l-1.9-5.6-5.6 3.4 2.6-6L.8 13.2l6-2.3-3-5.8 6 2.6z"/>', trail: '<path d="M2 15c5 0 9-5 20-6v3c-9 1-14 6-20 6zM2 9.5c4 0 7-2.5 12-3.5v2.4C10 9.3 6 11.8 2 11.8z"/>', top: '<path d="M4 15.5c0-5 3.5-9 8-9s8 4 8 9z"/><path d="M1.5 17h21v2.4h-21z"/>' };
+        const uiGIC = { body: '<path d="M2 15.5l1.6-4.2 4.4-1.3 3-3h6.5l2.8 3.3 1.7.6v4.6H2z"/><circle cx="6.5" cy="16.5" r="2.4"/><circle cx="17.5" cy="16.5" r="2.4"/>', decal: '<path d="M3 6h18v12H3z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 16l5-7 3 4 2-2 4 5z"/>', paint: '<path d="M12 2.5c3 4.2 6.5 7.8 6.5 11.7a6.5 6.5 0 01-13 0c0-3.9 3.5-7.5 6.5-11.7z"/>', wheel: '<circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="12" cy="12" r="2.6"/><path d="M12 3.5v6M12 14.5v6M3.5 12h6M14.5 12h6" stroke="currentColor" stroke-width="2"/>', boost: '<path d="M2 12l7-4.5v3h4V7l9 5-9 5v-3.5H9v3z"/>', gx: '<path d="M12 1.5l2.2 6.2 6-2.6-3 5.8 6 2.3-6.3 1.6 2.6 6-5.6-3.4L12 23l-1.9-5.6-5.6 3.4 2.6-6L.8 13.2l6-2.3-3-5.8 6 2.6z"/>', trail: '<path d="M2 15c5 0 9-5 20-6v3c-9 1-14 6-20 6zM2 9.5c4 0 7-2.5 12-3.5v2.4C10 9.3 6 11.8 2 11.8z"/>', top: '<path d="M4 15.5c0-5 3.5-9 8-9s8 4 8 9z"/><path d="M1.5 17h21v2.4h-21z"/>', ant: '<path d="M11 6.5h2V21h-2z"/><circle cx="12" cy="5" r="3.2"/><path d="M7 20h10v2H7z"/>' };
         const uiGTip = () => {
           if (uiGc === 'paint' && uiPt !== 'fin') return `<b>${uiPt === 'a' ? 'Accent' : 'Primary'}</b><small>${uiPt === 'a' ? 'Paint' : 'Paint · ' + (uiTC ? 'Orange' : 'Blue') + ' team'}</small><p>${esc(uiGDesc())}</p>`;
           const k = uiGc === 'paint' ? 'fin' : uiGc, L = uiGItems(uiGc), it = L.find(x => x.id === (uiGf === 'grid' && uiGi ? uiGi : uiEq(uiGc)));
@@ -716,10 +734,27 @@
         });
 
 
-        let uiOptTab = 'cam', uiOptBack = null;
+        let uiOptTab = 'cam', uiOptBack = null, uiBindOn = false, uiCap = null, uiSwallow = 0;
         const uiTabs = [['game', 'Gameplay'], ['cam', 'Camera'], ['ctl', 'Controls'], ['ifc', 'Interface'], ['sbt', 'Scoreboard'], ['aud', 'Audio'], ['chat', 'Chat'], ['cred', 'Credits']];
-        const uiCred = () => `<div class="ocr">${(typeof crCredits !== 'undefined' && Array.isArray(crCredits) ? crCredits : []).map(c => `<p>${esc(String(c)).replace(/(https?:\/\/[^\s,]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>')}</p>`).join('')}<p>Fan-made tribute. Not affiliated with, endorsed or sponsored by Psyonix. Rocket League is a trademark of Psyonix LLC.</p></div>`;
+        const uiCred = () => `<div class="ocr">${[...(typeof crCredits !== 'undefined' && Array.isArray(crCredits) ? crCredits : []), ...(typeof scCredits !== 'undefined' && Array.isArray(scCredits) ? scCredits : [])].map(c => `<p>${esc(String(c)).replace(/(https?:\/\/[^\s,]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>')}</p>`).join('')}<p>Fan-made tribute. Not affiliated with, endorsed or sponsored by Psyonix. Rocket League is a trademark of Psyonix LLC.</p></div>`;
         const uiTg = (k, vals, cur) => `<div class="tg2">${vals.map(([v, t]) => `<button data-${k}="${v}" class="${String(cur) === String(v) ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+        const uiBindConf = (a, c) => { const x = uiBM[c][a[0]]; if (!x) return []; return uiACT.filter(b => b !== a && uiBM[c][b[0]] === x && (a[4] === b[4] || a[4] === 'x' || b[4] === 'x')).map(b => b[1]); };
+        const uiBindCell = (a, c) => {
+          const x = uiBM[c][a[0]], lk = (a[5] || '').includes(c), cap = uiCap && uiCap.a === a[0] && uiCap.c === c, cf = lk ? [] : uiBindConf(a, c);
+          const lab = cap ? (c === 'p' ? 'Press a controller button…' : 'Press a key or mouse button…') : c === 'p' && /^b[0-3]$/.test(x) ? `<i class="pgb g${x}">${uiPN[x]}</i>` : esc(uiBindName(c, x));
+          return `<button class="obc${cap ? ' cap' : ''}${cf.length ? ' cf' : ''}${lk ? ' lk' : ''}${x ? '' : ' un'}"${lk ? ' disabled' : ` data-ba="${a[0]}" data-bc="${c}"`}${cf.length ? ` title="Also bound to ${esc(cf.join(', '))}"` : ''}><span>${lab}</span>${cf.length ? `<small>Also: ${esc(cf.join(', '))}</small>` : ''}</button>`;
+        };
+        const uiBindHtml = () => {
+          const n = uiACT.reduce((s, a) => s + ((a[5] || '').includes('k') ? 0 : uiBindConf(a, 'k').length ? 1 : 0) + ((a[5] || '').includes('p') ? 0 : uiBindConf(a, 'p').length ? 1 : 0), 0);
+          return `<div class="obh"><button class="obx" data-m="obk">Back</button><p>${uiCap ? 'Press the new input. Esc cancels.' : 'Select a binding, then press a key, mouse button or controller button.'}${n ? ` <em>${n} conflicting binding${n > 1 ? 's' : ''}</em>` : ''}</p><button class="obx" data-m="obr">Reset To Defaults</button></div><table class="okt obt"><tr><th>Action</th><th>Keyboard / Mouse</th><th>Controller</th></tr>${uiACT.map(a => `<tr><td>${a[1]}</td><td>${uiBindCell(a, 'k')}</td><td>${uiBindCell(a, 'p')}</td></tr>`).join('')}</table>`;
+        };
+        const uiCapSet = x => {
+          const q = uiCap; uiCap = null;
+          if (!q) return;
+          const a = uiACT.find(z => z[0] === q.a);
+          if (a && x !== 'Escape' && x !== 'b9') { if (x === a[q.c === 'k' ? 2 : 3]) delete saved.bind[q.c][q.a]; else saved.bind[q.c][q.a] = x; uiBindSync(); uiCbk(); api.save(saved); api.sfx('tap'); }
+          if (!uiOptEl.hidden) uiOptRender();
+        };
         const uiVf = (k, v) => k === 'fov' ? Math.round(v) + '°' : k === 'vol' ? String(Math.round(v)) : k === 'nps' ? Math.round(v) + '%' : (+v).toFixed(2);
         const uiCk = (k, on) => `<button class="ock${on ? ' on' : ''}" data-${k}="${on ? 0 : 1}" aria-pressed="${on ? 'true' : 'false'}"></button>`;
         const uiRange = (k, lab, v, r, key) => `<div class="orw"><span>${lab}</span><input type="range" data-${key}="${k}" min="${r[0]}" max="${r[1]}" step="${r[2]}" value="${v}" style="--p:${((v - r[0]) / (r[1] - r[0]) * 100).toFixed(1)}%"><b>${uiVf(k, v)}</b></div>`;
@@ -732,8 +767,9 @@
           if (t === 'sbt') return `<h6 class="osh">Soccar</h6><div class="orw osb"><span>Scoreboard Stats</span>${saved.sbc.map((k, i) => `<select data-sbc="${i}">${uiSbK.map(x => `<option value="${x}"${x === k ? ' selected' : ''}>${x[0].toUpperCase() + x.slice(1)}</option>`).join('')}</select>`).join('')}</div>`;
           if (t === 'aud') return `${uiRange('vol', 'Master Volume', saved.vol, [0, 100, 1], 'vol')}<div class="orw"><span>Game Audio</span>${uiTg('mu', [[0, 'On'], [1, 'Muted']], saved.mute ? 1 : 0)}</div>`;
           if (t === 'chat') return uiQCN.map((n, cat) => `<div class="og"><h5><i></i>${n}</h5><div class="oq">${[0, 1, 2, 3].map(k => `<select data-qs="${cat},${k}">${uiQCP[cat].map(s => `<option${s === uiQT(cat, k) ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select>`).join('')}</div></div>`).join('');
-          const R = [['Drive / Reverse', uiKn('KeyW') + ' / ' + uiKn('KeyS') + ' · ↑ / ↓', 'Stick'], ['Steer', uiKn('KeyA') + ' / ' + uiKn('KeyD') + ' · ← / →', 'Stick'], ['Boost', 'Shift · Left click', 'Boost'], ['Jump / Flip', 'Space · Right click', 'Jump'], ['Powerslide / Air roll', uiKn('KeyX') + ' · Ctrl', 'Slide'], ['Air roll left / right', uiKn('KeyQ') + ' / ' + uiKn('KeyE'), 'Slide + stick'], ['Ball cam', uiKn('KeyC'), 'Ball cam'], ['Scoreboard', 'Tab', 'Tap the clock'], ['Quick chat', '1 – 4', 'Chat button'], ['Free Play: reset ball / car', 'R / T', 'Reset'], ['Free Play: boost, shots, spawn', 'B / P / 1 – 5', 'Pause menu'], ['Pause / Back', 'Esc · P', 'II']];
-          return `<table class="okt"><tr><th>Action</th><th>Keyboard</th><th>Touch</th></tr>${R.map(r => `<tr>${r.map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</table>`;
+          if (uiBindOn) return uiBindHtml();
+          const R = [['Drive / Steer', 'Joystick'], ['Boost / Jump / Powerslide', 'Buttons'], ['Ball Cam', 'Ball Cam button'], ['Scoreboard', 'Tap the clock'], ['Quick Chat', 'Chat button'], ['Pause', 'II']];
+          return `<div class="orw obn"><button class="obx" data-m="obind">View/Change Bindings</button></div>${uiRange('dz', 'Controller Deadzone', saved.dz, [0.05, 0.9, 0.01], 'dz')}${coarse ? `<table class="okt"><tr><th>Action</th><th>Touch</th></tr>${R.map(r => `<tr>${r.map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</table>` : ''}`;
         };
         const uiOptRender = () => {
           const st = uiOptEl.querySelector('.ob'), sc = st ? st.scrollTop : 0;
@@ -756,12 +792,17 @@
           else if (t === 'ifc') { saved.ifx = { tbm: true, bci: true, arw: true, nps: 100 }; uiIfxApply(); }
           else if (t === 'sbt') saved.sbc = ['goals', 'assists', 'saves', 'shots'];
           else if (t === 'game') saved.chatf = 'all';
+          else if (t === 'ctl') { saved.bind = { k: {}, p: {} }; saved.dz = 0.3; uiCap = null; uiBindSync(); uiCbk(); }
           api.save(saved); uiOptRender();
         };
         api.on(uiOptEl, 'click', e => {
           const b = e.target.closest('button,[data-m]'); if (!b) return;
           const d = b.dataset; api.sfx('tap');
-          if (d.tab) { uiOptTab = d.tab; uiOptRender(); return; }
+          if (d.tab) { uiOptTab = d.tab; uiBindOn = false; uiCap = null; uiOptRender(); return; }
+          if (d.ba) { uiCap = uiCap && uiCap.a === d.ba && uiCap.c === d.bc ? null : { a: d.ba, c: d.bc }; uiOptRender(); return; }
+          if (d.m === 'obind') { uiBindOn = true; uiOptRender(); return; }
+          if (d.m === 'obk') { uiBindOn = false; uiCap = null; uiOptRender(); return; }
+          if (d.m === 'obr') { uiOptDef(); return; }
           if (d.m === 'oback') { uiOptClose(); return; }
           if (d.m === 'odef') { uiOptDef(); return; }
           if (d.cf) saved.chatf = d.cf;
@@ -774,6 +815,7 @@
         });
         api.on(uiOptEl, 'input', e => {
           const t = e.target, d = t.dataset;
+          if (d.dz) { const v = clamp(+t.value, 0.05, 0.9); saved.dz = v; t.style.setProperty('--p', ((v - 0.05) / 0.85 * 100).toFixed(1) + '%'); const lb = t.nextElementSibling; if (lb) lb.textContent = uiVf('dz', v); return; }
           if (d.ifr) { const v = clamp(+t.value, 50, 150); saved.ifx.nps = v; t.style.setProperty('--p', ((v - 50) / 100 * 100).toFixed(1) + '%'); const lb = t.nextElementSibling; if (lb) lb.textContent = uiVf('nps', v); return; }
           if (d.cs || d.vol) {
             const r = d.cs ? uiCSR[d.cs] : [0, 100], v = clamp(+t.value, r[0], r[1]);
@@ -785,7 +827,7 @@
         api.on(uiOptEl, 'change', e => {
           const t = e.target, d = t.dataset;
           if (d.cs) uiSaveCam();
-          else if (d.vol || d.ifr) api.save(saved);
+          else if (d.vol || d.ifr || d.dz) api.save(saved);
           else if (d.sbc != null) { if (uiSbK.includes(t.value)) saved.sbc[+d.sbc] = t.value; api.save(saved); }
           else if (d.name) { const s = t.value.replace(/[^\w .\-!?]/g, '').trim().slice(0, 16); saved.name = s || 'Player'; t.value = saved.name; api.save(saved); }
           else if (d.qs) { const [cat, k] = d.qs.split(',').map(Number); if (!saved.qc) saved.qc = uiQCP.map((p, i) => [0, 1, 2, 3].map(j => uiQT(i, j))); if (uiQCP[cat] && uiQCP[cat].includes(t.value)) saved.qc[cat][k] = t.value; api.save(saved); }
@@ -1058,23 +1100,62 @@
         };
 
 
-        let mBoost = false, mJump = false, lastPts = -1;
+        let lastPts = -1;
         const touchOn = () => { if (!wrap.classList.contains('touch')) wrap.classList.add('touch'); };
-        const has = l => { for (const k of l) if (keys.has(k)) return true; return false; };
-        const schemeOf = () => KS.all;
         const uiTyping = e => { const t = e.target; return !!(t && (t.tagName === 'INPUT' && t.type === 'text' || t.tagName === 'SELECT')); };
-        api.on(window, 'keydown', e => {
+        const uiPress = (x, pad) => {
+          const M = pad ? uiBM.p : uiBM.k;
+          for (const v of active()) { if (M.cam === x) setCam(v, !v.camBall); if (M.jump === x || M.jump2 === x) v.latch = true; }
+          if (M.sb === x) uiTab(true);
+          if (mode !== 'train') for (let i = 0; i < 4; i++) if (M['qc' + i] === x) uiQcKey(views[0], i);
+        };
+        const uiRelease = (x, pad) => { if ((pad ? uiBM.p : uiBM.k).sb === x) uiTab(false); };
+        const uiPadNav = { b12: 'ArrowUp', 'ly-': 'ArrowUp', b13: 'ArrowDown', 'ly+': 'ArrowDown', b14: 'ArrowLeft', 'lx-': 'ArrowLeft', b15: 'ArrowRight', 'lx+': 'ArrowRight', b0: 'Enter', b1: 'Escape', b9: 'Escape', b4: 'KeyQ', b5: 'KeyE', b2: 'KeyX', b3: 'KeyV' };
+        const uiPadKey = (code, rep) => uiKeyDown({ code, repeat: rep, key: '', target: document.body, ctrlKey: false, padNav: true, preventDefault() {} });
+        const uiPadTick = dt => {
           if (dead) return;
+          uiPad.v = uiPadRead();
+          const now = new Set(Object.keys(uiPad.v).filter(k => uiPad.v[k] > 0.5)), nw = [...now].filter(k => !uiPad.on.has(k)), gone = [...uiPad.on].filter(k => !now.has(k));
+          uiPad.on = now;
+          for (const k of gone) delete uiPad.rt[k];
+          if (uiCap) {
+            if (uiCap.c === 'p') { const k = nw.find(x => x !== 'b9'); if (k) uiCapSet(k); else if (nw.includes('b9')) { uiCap = null; uiOptRender(); } }
+            else if (nw.includes('b9') || nw.includes('b1')) { uiCap = null; uiOptRender(); }
+            return;
+          }
+          if (ui === 'play' && !paused && pz.hidden && uiOptEl.hidden && uiDlg.hidden && uiRvEl.hidden) {
+            for (const k of nw) { if (k === 'b9') togglePause(); else uiPress(k, true); }
+            for (const k of gone) uiRelease(k, true);
+            return;
+          }
+          for (const k of nw) if (uiPadNav[k]) { uiPad.rt[k] = -0.45; uiPadKey(uiPadNav[k], false); }
+          for (const k of now) if (/^Arrow/.test(uiPadNav[k] || '') && uiPad.rt[k] !== undefined && !nw.includes(k)) { uiPad.rt[k] += dt; if (uiPad.rt[k] > 0.11) { uiPad.rt[k] = 0; uiPadKey(uiPadNav[k], true); } }
+        };
+        api.on(window, 'keydown', e => { if (!(e.gpSyn && uiPadBusy())) keys.add(e.code); });
+        api.on(window, 'keyup', e => { keys.delete(e.code); uiRelease(e.code, false); });
+        api.on(window, 'blur', () => keys.clear());
+        api.on(window, 'mousedown', e => {
+          if (!uiCap) return;
+          e.preventDefault(); e.stopPropagation(); uiSwallow = e.button === 0 ? performance.now() : 0;
+          if (uiCap.c === 'k') uiCapSet('Mouse' + e.button); else { uiCap = null; uiOptRender(); }
+        }, true);
+        api.on(window, 'click', e => { if (uiSwallow && performance.now() - uiSwallow < 1500) { uiSwallow = 0; e.preventDefault(); e.stopPropagation(); } }, true);
+        api.on(window, 'auxclick', e => { if (!uiOptEl.hidden) e.preventDefault(); }, true);
+        const uiKeyDown = e => {
+          if (dead) return;
+          if (e.gpSyn && uiPadBusy()) return;
+          if (uiCap) { e.preventDefault(); if (e.repeat) return; if (e.code === 'Escape') { uiCap = null; uiOptRender(); } else if (uiCap.c === 'k') uiCapSet(e.code); return; }
           audio();
           const c = e.code;
           if (uiTyping(e)) { if (c === 'Escape') e.target.blur(); return; }
           if (!uiRvEl.hidden) { e.preventDefault(); if (!e.repeat && !/^(Shift|Control|Alt|Meta|Tab)/.test(c)) uiRvNext(); return; }
-          if (/^(Space|Arrow|Shift|Control|Slash|Numpad)/.test(c) || (e.ctrlKey && /^Key[WASDQEXC]$/.test(c)) || (c === 'Backspace' && ui !== 'play') || (c === 'Tab' && ui === 'play')) e.preventDefault();
+          if (/^(Space|Arrow|Shift|Control|Slash|Numpad)/.test(c) || (e.ctrlKey && /^Key[WASDQEXC]$/.test(c)) || (c === 'Backspace' && ui !== 'play') || (c === 'Tab' && ui === 'play') || (ui === 'play' && uiBoundK(c))) e.preventDefault();
           if (!uiDlg.hidden) { if (e.repeat) return; if (c === 'Escape' || c === 'Backspace') uiDlgClose(); else uiNav(uiDlg, e); return; }
           if (!uiOptEl.hidden) {
             if (e.repeat) return;
-            if (c === 'Escape' || c === 'Backspace') uiOptClose();
-            else if (c === 'KeyQ' || c === 'KeyE') { const i = uiTabs.findIndex(t => t[0] === uiOptTab); uiOptTab = uiTabs[(i + (c === 'KeyQ' ? uiTabs.length - 1 : 1)) % uiTabs.length][0]; uiOptRender(); uiTick(); }
+            if ((c === 'Escape' || c === 'Backspace') && uiBindOn && uiOptTab === 'ctl') { uiBindOn = false; uiOptRender(); }
+            else if (c === 'Escape' || c === 'Backspace') uiOptClose();
+            else if (c === 'KeyQ' || c === 'KeyE') { const i = uiTabs.findIndex(t => t[0] === uiOptTab); uiOptTab = uiTabs[(i + (c === 'KeyQ' ? uiTabs.length - 1 : 1)) % uiTabs.length][0]; uiBindOn = false; uiOptRender(); uiTick(); }
             else if (c === 'KeyX') uiOptDef();
             return;
           }
@@ -1108,33 +1189,29 @@
             if (c === 'Escape' || c === 'KeyP' || c === 'Backspace') { togglePause(); return; }
             uiNav(pz, e); return;
           }
-          if (c === 'Tab') { e.preventDefault(); uiTab(true); return; }
           if (c === 'Escape' && !e.repeat && active().some(v => v.qcCat >= 0)) { for (const v of views) uiQcClose(v); return; }
-          if (c === 'KeyP' && mode === 'train' && !e.repeat) { uiTrAct('shots'); return; }
-          if ((c === 'KeyP' || c === 'Escape') && !e.repeat) { togglePause(); return; }
+          if (c === 'KeyP' && mode === 'train' && !e.repeat && !uiBoundK(c)) { uiTrAct('shots'); return; }
+          if (((c === 'KeyP' && !uiBoundK(c)) || c === 'Escape') && !e.repeat) { togglePause(); return; }
           if (e.repeat) return;
           if (mode === 'train') {
             const dt = /^(Digit|Numpad)([1-9])$/.exec(c), map = { KeyR: 'ball', KeyT: 'car', KeyB: 'boost', KeyG: 'shot' };
             if (dt) { const L = uiTrSpawns(), k = L[+dt[2] - 1]; if (k) uiTrAct('sp:' + k); return; }
-            if (map[c]) { uiTrAct(map[c]); return; }
-          } else {
-            const dg = /^(Digit|Numpad)([1-4])$/.exec(c);
-            if (dg) { uiQcKey(views[0], +dg[2] - 1); return; }
+            if (map[c] && !uiBoundK(c)) { uiTrAct(map[c]); return; }
           }
-          for (const v of active()) { const sc = schemeOf(v); if (sc.cam.includes(c)) setCam(v, !v.camBall); if (sc.jump.includes(c)) v.latch = true; }
-        });
-        api.on(window, 'keyup', e => { if (e.code === 'Tab') uiTab(false); });
+          uiPress(c, false);
+        };
+        api.on(window, 'keydown', uiKeyDown);
         api.on(window, 'blur', () => uiTab(false));
         api.on(canvas, 'contextmenu', e => e.preventDefault());
         api.on(wrap, 'contextmenu', e => e.preventDefault());
-        api.on(canvas, 'pointerdown', e => {
-          audio();
-          if (e.pointerType === 'touch') { touchOn(); return; }
+        api.on(canvas, 'pointerdown', e => { audio(); if (e.pointerType === 'touch') touchOn(); });
+        api.on(canvas, 'mousedown', e => {
+          if (e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) return;
+          if (e.button === 1 || e.button > 2) e.preventDefault();
           if (ui !== 'play' || paused) return;
-          if (e.button === 0) mBoost = true;
-          if (e.button === 2) { mJump = true; views[0].latch = true; }
+          const x = 'Mouse' + e.button; keys.add(x); uiPress(x, false);
         });
-        api.on(window, 'pointerup', e => { if (e.pointerType === 'touch') return; if (e.button === 0) mBoost = false; if (e.button === 2) mJump = false; });
+        api.on(window, 'mouseup', e => { if (e.button > 2) e.preventDefault(); const x = 'Mouse' + e.button; if (keys.delete(x)) uiRelease(x, false); });
         api.on(uiTabEl, 'pointerdown', e => { e.preventDefault(); uiTab(false); });
         for (const v of views) {
           const T = v.T;
@@ -1179,16 +1256,16 @@
         }
         const dz = v => Math.abs(v) < 0.15 ? 0 : (v - Math.sign(v) * 0.15) / 0.85;
         const readInput = (v, k) => {
-          const sc = schemeOf(v), T = v.T, m0 = v.i === 0;
-          let thr = (has(sc.up) ? 1 : 0) - (has(sc.dn) ? 1 : 0), str = (has(sc.rt) ? 1 : 0) - (has(sc.lf) ? 1 : 0);
-          if (T.id !== null) { thr = clamp(-dz(T.y) * 1.25, -1, 1); str = clamp(dz(T.x) * 1.25, -1, 1); }
-          const slide = has(sc.slide) || T.slide;
-          k.throttle = thr; k.steer = str; k.pitch = -thr;
-          if (slide) { k.yaw = 0; k.roll = str; } else { k.yaw = str; k.roll = 0; }
-          k.roll = clamp(k.roll + (has(sc.rr) ? 1 : 0) - (has(sc.rl) ? 1 : 0), -1, 1);
-          k.boost = has(sc.boost) || (m0 && mBoost) || T.boost;
-          k.jump = has(sc.jump) || (m0 && mJump) || T.jump || v.latch;
-          k.slide = slide; v.latch = false;
+          const T = v.T, V = uiVal;
+          let thr = V('thr') - V('rev'), str = V('sr') - V('sl'), pit = V('pu') - V('pd'), yaw = V('yr') - V('yl');
+          if (T.id !== null) { thr = clamp(-dz(T.y) * 1.25, -1, 1); str = clamp(dz(T.x) * 1.25, -1, 1); pit = -thr; yaw = str; }
+          const slide = V('slide') > 0.5 || T.slide;
+          k.throttle = thr; k.steer = str; k.pitch = pit;
+          if (slide || V('roll') > 0.5) { k.yaw = 0; k.roll = yaw; } else { k.yaw = yaw; k.roll = 0; }
+          k.roll = clamp(k.roll + V('arr') - V('arl'), -1, 1);
+          k.boost = Math.max(V('boost'), V('boost2')) > 0.5 || T.boost;
+          k.jump = Math.max(V('jump'), V('jump2')) > 0.5 || T.jump || v.latch;
+          k.slide = slide; v.latch = false; v.rear = V('rear') > 0.5;
         };
 
 

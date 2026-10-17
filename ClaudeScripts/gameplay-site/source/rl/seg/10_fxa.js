@@ -104,7 +104,7 @@
         };
         const fxPush = (p, m) => { const d = sdf(p.x, p.y, p.z); if (d < m) { sdfN(p.x, p.y, p.z, cn); p.x += cn.x * (m - d); p.y += cn.y * (m - d); p.z += cn.z * (m - d); } };
         const fxApply = (v, S, P, L, U) => {
-          const cmr = v.camera, sk = saved.shake === false ? 0 : Math.min(1.5, shake + fxQuakeAt(P));
+          const cmr = v.camera, sk = !saved.shake ? 0 : Math.min(1.5, shake + fxQuakeAt(P));
           cmr.position.copy(P); cT.copy(L);
           if (sk > 0.003) {
             const tt = fxNow, n1 = Math.sin(tt * 41 + 1.3) * 0.6 + Math.sin(tt * 73 + 0.4) * 0.4, n2 = Math.sin(tt * 37 + 2.1) * 0.6 + Math.sin(tt * 67 + 4.2) * 0.4, n3 = Math.sin(tt * 53 + 0.7) * 0.7 + Math.sin(tt * 29 + 2.9) * 0.3;
@@ -166,7 +166,6 @@
             cT.set(P.x - cam.p.x, P.y - cam.p.y, P.z + 30 - cam.p.z); const dl = cT.length() || 1; cT.multiplyScalar(1 / dl);
             if (dl < 1050) cam.p.addScaledVector(cT, -(1050 - dl) * Math.min(1, dt * 1.6));
             if (cam.p.z < 700) cam.p.z += dt * 90;
-            fxPush(cam.p, 45);
             cam.look.lerp(cT, 1 - Math.exp(-5 * dt)).normalize();
             fxRollTo(S, fxW, 1 - Math.exp(-3 * dt));
             fxApply(v, S, cam.p, cam.look, S.U);
@@ -174,8 +173,9 @@
           }
           if (S.dead) { S.dead = false; S.snap = true; }
           if (S.piv.distanceToSquared(cP.set(P.x, P.y, P.z)) > 1e6) S.snap = true;
+          if (!!v.rear !== !!S.rear) { S.rear = !!v.rear; S.snap = true; }
           const snap = S.snap, gl = W.state === 'goal' && fxGoal.on, tgt = gl ? fxGoal.p : B.hidden ? null : B.p;
-          const want = tgt && (gl || v.camBall) ? 1 : 0;
+          const want = tgt && (gl || v.camBall) && !v.rear ? 1 : 0;
           if (snap) S.k = want; else { const st = dt * fxCam.trans * 2.2; S.k = S.k < want ? Math.min(want, S.k + st) : Math.max(want, S.k - st); }
           const ks = S.k * S.k * (3 - 2 * S.k), air = !me.onGround, flip = air && me.dodgeT >= 0 && me.dodgeT < 0.9;
           if (air) cU.copy(fxW); else cU.set(me.u.x, me.u.y, me.u.z);
@@ -203,22 +203,9 @@
           const hgt = fxCam.height + 44, cs = Math.cos(S.th), sn = Math.sin(S.th), d0 = fxCam.dist, dist = sn > 0.01 ? clamp((hgt * cs - 20) / sn, 150, d0) : d0;
           cF.copy(S.D).multiplyScalar(cs).addScaledVector(U, sn);
           cB.copy(U).multiplyScalar(cs).addScaledVector(S.D, -sn);
-          cA.copy(S.piv); if (air) cA.addScaledVector(cB, 40); else cA.addScaledVector(cR.set(me.u.x, me.u.y, me.u.z), 60);
-          cT.copy(S.piv).addScaledVector(cF, -dist).addScaledVector(cB, hgt).sub(cA);
-          const L = cT.length() || 1, mg = Math.min(32, sdf(cA.x, cA.y, cA.z) - 4);
-          let hit = 1;
-          if (mg > 12) {
-            let s = 0;
-            for (let i = 0; i < 24; i++) { const q = s / L, d = sdf(cA.x + cT.x * q, cA.y + cT.y * q, cA.z + cT.z * q) - mg; if (d < 2) { hit = q; break; } s += d; if (s >= L) break; }
-          }
-          if (snap || hit < S.arm) S.arm = hit; else S.arm += (hit - S.arm) * (1 - Math.exp(-3 * dt));
-          cP.copy(cA).addScaledVector(cT, S.arm);
-          const lift = Math.max(0, 0.6 - S.arm) / 0.6;
-          if (lift > 0) { if (air) cR.copy(cB); else cR.set(me.u.x, me.u.y, me.u.z); cP.addScaledVector(cR, lift * 330); }
-          if (lift > 0) { cR.set(cP.x - P.x, cP.y - P.y, cP.z - P.z); const dd = cR.length(); if (dd < 250 && dd > 1) cP.addScaledVector(cR, (250 - dd) / dd); }
-          fxPush(cP, 32);
+          cP.copy(S.piv).addScaledVector(cF, -dist).addScaledVector(cB, hgt);
           const ang = fxCam.angle * 0.65 * Math.PI / 180;
-          cL.copy(cF).multiplyScalar(Math.cos(ang)).addScaledVector(cB, Math.sin(ang) - lift * 0.45).normalize();
+          cL.copy(cF).multiplyScalar(Math.cos(ang)).addScaledVector(cB, Math.sin(ang)).normalize();
           if (ks > 0 && tgt) {
             cT.set(tgt.x - cP.x, tgt.y - cP.y, tgt.z - cP.z).normalize();
             const ev = clamp(cT.dot(U), -1, 1);
@@ -230,11 +217,10 @@
           }
           if (snap) S.L.copy(cL); else S.L.lerp(cL, 1 - Math.exp(-14 * dt)).normalize();
           cL.copy(S.L);
+          if (v.rear) { if (!fxProj(cR, me.f.x, me.f.y, me.f.z, U)) cR.copy(S.D); cP.set(P.x, P.y, P.z).addScaledVector(cR, fxCam.dist).addScaledVector(U, hgt); cL.copy(cR).multiplyScalar(-Math.cos(ang)).addScaledVector(U, Math.sin(ang)).normalize(); }
           cam.p.copy(cP); cam.look.copy(cL); cam.up.copy(U); cam.dir.copy(S.D);
           S.snap = false;
-          { const sp = Math.sqrt(me.v.x * me.v.x + me.v.y * me.v.y + me.v.z * me.v.z), ex = 5 * Math.min(1, sp / CFG.carMax) + (me.sup ? 5 : 0);
-            S.fx = (S.fx || 0) + (Math.min(10, ex) - (S.fx || 0)) * (snap ? 1 : 1 - Math.exp(-2.5 * dt));
-            const hf = fxCam.fov + S.fx, asp = cmr.aspect, vf = asp < 1 ? 78 * hf / 110 : Math.min(98, 2 * Math.atan(Math.tan(hf * Math.PI / 360) / asp) * 180 / Math.PI);
+          { const hf = fxCam.fov, asp = cmr.aspect, vf = asp < 1 ? 78 * hf / 110 : Math.min(98, 2 * Math.atan(Math.tan(hf * Math.PI / 360) / asp) * 180 / Math.PI);
             if (Math.abs(cmr.fov - vf) > 0.02) { cmr.fov = vf; cmr.updateProjectionMatrix(); } }
           fxApply(v, S, cP, cL, U);
         };

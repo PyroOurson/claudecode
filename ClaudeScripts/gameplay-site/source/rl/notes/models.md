@@ -1,7 +1,9 @@
 # Models (models agent)
 
 ## What is in the game now
-- Cars: Octane, Fennec and Dominus are the Sketchfab models by fairlight51 (CC BY 4.0). The ball is fairlight51's "Ball - Rocket League". The data lives in `rl/models/<id>.json`, and `crModels` embeds it.
+- Cars: Octane, Fennec and Dominus are the Sketchfab models by fairlight51 (CC BY 4.0). The data lives in `rl/models/<id>.json`, and `crModels` embeds it. The ball is procedural (06b_ball) and `ball.json` is no longer bundled.
+- Merc, Breakout, Venom, Paladin: procedural, regenerate with `cd rl/tools && python gen_<car>.py` (helpers in `cargen.py`: loft of superellipse sections, box, cyl, fender arcs; `finish` writes the JSON with the Octane stock wheel). Model space = game units, +X forward, ground at z 0, axles at the BODIES `wf`/`wb` values. Round 2 rebuilt them against `rlref/real/garage_bodies` (Merc: exposed wheels with trapezoid flares, raked screen, roof visor, twin bronze rear turbines; Venom: narrow hood, high side pods over the rear wheels, open rear frame; Breakout: hood spine and stripes, separate wheel arches, taller cabin; Paladin: wide blue front fenders). No licensed non-ripped models exist for them (see `credits.md`).
+- Antennas: cosmetic key `ant` (none, ball, smiley, flag, leaf, macaron, skull), built in `crAntGeo`/`crAntMat`, mounted at `crFit(...).ant` (highest body point 20 % of the body length behind the roof centre, 12 % of the width to the left). Missing or unknown values clean to 'none'.
 - Pipeline (all in `rl/agents/models/tools/`, run `bash all.sh octane fennec dominus ball`):
   - `extract.py` parses the GLB in numpy. It applies the node transforms in cm, converts glTF (x fwd, y up, z right) to game axes (+X fwd, +Y left, +Z up) and splits the parts by material.
   - `decim.py` decimates in bpy with the Decimate collapse modifier (symmetric about Y). It transfers custom normals back from the full-resolution mesh.
@@ -21,7 +23,7 @@
   - Fennec: two nozzles at the round outlets in the rear bar.
   - Dominus: two nozzles at the twin rectangular rear openings.
 - Ball: own mesh plus the glow part, texture 1024 JPEG. The emissive map is derived from the teal hub lights. The outer skin radius (95th percentile of vertex radii, 0.989) maps to exactly `CFG.ballR`. It casts shadows. `ballM` and `ballGlow` are kept, and the halo shell is reduced to 3.5 %.
-- `crCredits` (07_cars) holds 4 strings: "<name> by fairlight51, <sketchfab url>, CC BY 4.0".
+- `crCredits` (07_cars) holds 3 strings: "<name> by fairlight51, <sketchfab url>, CC BY 4.0".
 - Shared helpers now live in 06b_ball (it runs before 07): `crM`, `crB64`, `crDec` (positions, normals, UVs, groups) and `crTex` (data URL to texture, flipY false, cached).
 
 ## Numbers
@@ -44,6 +46,6 @@
 ## Remaining differences / ideas
 - The cars have no normal maps (dropped for size). The fine panel grain on the Fennec chassis is lost.
 - The Fennec chassis emissive map is ignored. In the GLB it used UV set 1, which is all zeros, so it was effectively unused.
-- There are no team-coloured decals, antenna or topper, and no per-player accent colours. Everything uses the default look.
+- There are no team-coloured decals, and no per-player accent colours. Everything uses the default look.
 - No LOD. Six cars at about 33k triangles is fine on desktop but heavy on weak phones. A decimated about 6k LOD for distant cars would be the next step if needed.
 - The boost flame colour and shape are fx/cars code (11_carvis flames). Only the nozzle positions come from the models.

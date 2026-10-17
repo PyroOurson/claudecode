@@ -27,7 +27,7 @@
             const tp = Math.hypot(c.p.x - S.px, c.p.y - S.py, c.p.z - S.pz) > Math.hypot(vx, vy, vz) * d * 1.5 + 120;
             if (S.reset || tp || d <= 0) {
               S.vx = vx; S.vy = vy; S.vz = vz; S.gr = c.onGround; S.vu = vx * ux + vy * uy + vz * uz;
-              if (S.reset || tp) { S.z = S.zv = S.pi = S.pv = S.ro = S.rv = 0; for (const tr of cv.trails) tr.n = 0; }
+              if (S.reset || tp) { S.z = S.zv = S.pi = S.pv = S.ro = S.rv = S.ap = S.apv = S.ar = S.arv = 0; for (const tr of cv.trails) tr.n = 0; }
               S.reset = false;
             }
             const id = d > 0 ? 1 / d : 0, ax = (vx - S.vx) * id, ay = (vy - S.vy) * id, az = (vz - S.vz) * id;
@@ -43,6 +43,12 @@
             S.gr = gnd; S.vu = vu;
             S.zv += (-S.z * 260 - S.zv * 15) * d; S.z = Math.max(-5, Math.min(3.5, S.z + S.zv * d));
             cv.bg.position.z = S.z; cv.bg.rotation.set(S.ro, S.pi, 0);
+            if (cv.ant) {
+              const tA = Math.max(-0.3, Math.min(0.3, -aF * 5e-5)) - Math.min(0.22, Math.hypot(vx, vy, vz) * 9e-5), tB = Math.max(-0.3, Math.min(0.3, aL * 5e-5));
+              S.apv = (S.apv || 0) + ((tA - (S.ap || 0)) * 110 - (S.apv || 0) * 5) * d; S.ap = Math.max(-0.5, Math.min(0.5, (S.ap || 0) + S.apv * d));
+              S.arv = (S.arv || 0) + ((tB - (S.ar || 0)) * 110 - (S.arv || 0) * 5) * d; S.ar = Math.max(-0.5, Math.min(0.5, (S.ar || 0) + S.arv * d));
+              cv.ant.rotation.set(S.ar, S.ap, 0);
+            }
             const th = c.ctl ? c.ctl.throttle || 0 : 0;
             if (gnd) S.ws = c.fs || 0; else S.ws += (th * 2300 - S.ws) * Math.min(1, d * (th ? 2.5 : 0.5));
             S.af = (S.af + S.ws * d / cv.rf) % TAU; S.ab = (S.ab + S.ws * d / cv.rb) % TAU;
@@ -54,8 +60,8 @@
             for (const f of cv.fl) {
               f.g.visible = true; f.o.visible = f.c.visible = S.bt > 0.04;
               const k = Math.max(S.bt, 0.09), r = f.r, q = 0.88 + Math.random() * 0.24, w = 0.55 + 0.45 * Math.min(1, k * 3);
-              f.o.scale.set(r * k * (8.5 + Math.random() * 2.5), r * 1.7 * q * w, r * 1.7 * q * w);
-              f.c.scale.set(r * k * (4.2 + Math.random() * 1.4), r * 0.62 * q * w, r * 0.62 * q * w);
+              f.o.scale.set(r * k * (10.5 + Math.random() * 2.5), r * 1.7 * q * w, r * 1.7 * q * w);
+              f.c.scale.set(r * k * (5.2 + Math.random() * 1.4), r * 0.62 * q * w, r * 0.62 * q * w);
               f.s.scale.setScalar(r * (0.8 + k * (6.5 + Math.random() * 2)));
             }
             if (c.boosting) {
@@ -75,7 +81,7 @@
                 const sm = BC.smoke;
                 if (!sm) continue;
                 for (const f of cv.fl) {
-                  const ex = c.p.x + fx * (f.x - 14) + lx * f.y + ux * f.z, ey = c.p.y + fy * (f.x - 14) + ly * f.y + uy * f.z, ez = c.p.z + fz * (f.x - 14) + lz * f.y + uz * f.z;
+                  const b = Math.random() * d, ex = c.p.x + fx * (f.x - 14) + lx * f.y + ux * f.z - vx * b, ey = c.p.y + fy * (f.x - 14) + ly * f.y + uy * f.z - vy * b, ez = c.p.z + fz * (f.x - 14) + lz * f.y + uz * f.z - vz * b;
                   smoke.emit(ex + R() * 3, ey + R() * 3, ez + R() * 3, vx * 0.02 - fx * 30 + R() * 10, vy * 0.02 - fy * 30 + R() * 10, vz * 0.02 - fz * 30 + R() * 10, 0.5 + Math.random() * 0.2, sm[0], sm[1], sm[2], f.r * (bs.dense ? 4.6 : 3.8), f.r * 2.6, -6, 3);
                 }
               }

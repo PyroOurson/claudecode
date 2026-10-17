@@ -21,23 +21,21 @@
           return crTexs[k] = t;
         };
         const arBV = CFG.ballVis || BR;
-        const arBallHub = m => { m.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\nfloat arTq = clamp((diffuseColor.g - diffuseColor.r) * 5.0 - 0.4, 0.0, 1.0);\ndiffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.05, 0.35, 1.0) * (diffuseColor.g + 0.2), arTq);'); }; return m; };
+        const arBallPat = 'varying vec3 vOP;\nfloat arHexD(vec2 p) { p = abs(p); return max(dot(p, vec2(0.5, 0.8660254)), p.x); }\nvoid arBall(vec3 q, out float seam, out float groove, out float hub, out float hole, out float light, out float rr) {\n  vec3 n = normalize(q), a = abs(n);\n  float m1 = max(a.x, max(a.y, a.z)), m3 = min(a.x, min(a.y, a.z)), m2 = a.x + a.y + a.z - m1 - m3;\n  vec2 uv = a.x >= m1 ? n.yz / a.x : a.y >= m1 ? n.xz / a.y : n.xy / a.z;\n  float d = m1 - m2; rr = length(uv);\n  seam = 1.0 - smoothstep(0.045, 0.058, d);\n  groove = smoothstep(0.052, 0.06, d) * (1.0 - smoothstep(0.064, 0.085, d)) + (1.0 - smoothstep(0.012, 0.02, d)) * 0.6;\n  float ad = abs(abs(uv.x) - abs(uv.y)) / max(rr, 0.001);\n  float arm = (1.0 - smoothstep(0.16, 0.22, ad)) * smoothstep(0.16, 0.19, rr) * (1.0 - smoothstep(0.46, 0.5, rr));\n  float plate = 1.0 - smoothstep(0.19, 0.215, rr);\n  hub = max(arm, plate);\n  vec2 sv = vec2(1.0, 1.7320508), hp0 = uv * 18.0;\n  vec4 hC = floor(vec4(hp0, hp0 - vec2(0.5, 1.0)) / sv.xyxy) + 0.5;\n  vec4 h = vec4(hp0 - hC.xy * sv, hp0 - (hC.zw + 0.5) * sv);\n  vec2 hp = dot(h.xy, h.xy) < dot(h.zw, h.zw) ? h.xy : h.zw;\n  hole = (1.0 - smoothstep(0.34, 0.4, arHexD(hp))) * (1.0 - seam) * (1.0 - hub) * smoothstep(0.09, 0.11, d);\n  light = 1.0 - smoothstep(0.08, 0.095, rr);\n}\n';
         const ballM = (() => {
-          const M = crM.ball;
-          if (!M || !M.body) return new THREE.Mesh(own(new THREE.SphereGeometry(arBV, 48, 32)), own(new THREE.MeshStandardMaterial({ color: lin(0xb4bac4), roughness: 0.4, metalness: 0.4, envMap: arEnv })));
-          const g = crDec(M.body).scale(arBV, arBV, arBV); g.computeBoundingSphere();
-          const map = crTex(M.tex.map), em = crTex(M.tex.em);
-          const mats = M.mats.map(q => q.k === 'glow'
-            ? own(new THREE.MeshBasicMaterial({ color: new THREE.Color(0.3, 0.95, 2.4).multiplyScalar(1.8), toneMapped: false }))
-            : arBallHub(own(new THREE.MeshPhysicalMaterial({ map, emissiveMap: em, emissive: new THREE.Color(0.3, 0.85, 2.2), emissiveIntensity: 3, color: lin(0xd2d6da, 1.2), roughness: 0.45, metalness: 0.25, clearcoat: 0.4, clearcoatRoughness: 0.3, envMap: arEnv, envMapIntensity: 0.9 }))));
-          return new THREE.Mesh(g, mats);
+          const m = own(new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5, metalness: 0.55, envMap: arEnv, envMapIntensity: 1.0 }));
+          m.extensions = { derivatives: true };
+          m.onBeforeCompile = sh => {
+            sh.vertexShader = 'varying vec3 vOP;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvOP = position;');
+            sh.fragmentShader = arBallPat + sh.fragmentShader
+              .replace('#include <map_fragment>', '#include <map_fragment>\nfloat bS, bG, bH, bO, bL, bR;\narBall(vOP, bS, bG, bH, bO, bL, bR);\nvec3 arPc = mix(vec3(0.5, 0.5, 0.45), vec3(0.33, 0.33, 0.3), bO * 0.75);\narPc = mix(arPc, vec3(0.3, 0.31, 0.33), bH * (1.0 - bL));\narPc = mix(arPc, vec3(0.1, 0.11, 0.12), smoothstep(0.095, 0.11, bR) * (1.0 - smoothstep(0.15, 0.17, bR)));\narPc = mix(arPc, vec3(0.8, 0.82, 0.84), bS);\narPc *= 1.0 - 0.6 * clamp(bG, 0.0, 1.0);\ndiffuseColor.rgb *= arPc;')
+              .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(mix(0.5, 0.75, bO), 0.26, bS);')
+              .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n{ float arH = bS + bH * 0.7 - bO * 0.3 - clamp(bG, 0.0, 1.0) * 0.4; vec3 sX = dFdx(-vViewPosition), sY = dFdy(-vViewPosition); vec3 R1 = cross(sY, normal), R2 = cross(normal, sX); float fD = dot(sX, R1); float hx = dFdx(arH) * 1.4, hy = dFdy(arH) * 1.4; normal = normalize(abs(fD) * normal - sign(fD) * (hx * R1 + hy * R2)); }')
+              .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += mix(vec3(0.2, 0.8, 2.6), vec3(2.4, 2.9, 3.2), 1.0 - smoothstep(0.03, 0.075, bR)) * bL * 1.5 + vec3(0.1, 0.45, 1.2) * smoothstep(0.1, 0.12, bR) * (1.0 - smoothstep(0.13, 0.16, bR)) * 0.8;');
+          };
+          return new THREE.Mesh(own(new THREE.SphereGeometry(arBV, 96, 64)), m);
         })();
         ballM.castShadow = true; scene.add(ballM);
-        if (crM.ball && crM.ball.body) {
-          const hd = new THREE.Vector3(-1, -1, 0).normalize(), hg = mergeG([new THREE.CircleGeometry(arBV * 0.13, 24), new THREE.RingGeometry(arBV * 0.17, arBV * 0.2, 24)]);
-          const hm = new THREE.Mesh(hg, own(new THREE.MeshBasicMaterial({ color: new THREE.Color(0.35, 1.1, 2.6), toneMapped: false })));
-          hm.position.copy(hd).multiplyScalar(arBV * 1.003); hm.lookAt(hd.clone().multiplyScalar(arBV * 2)); ballM.add(hm);
-        }
         ballM.add(new THREE.Mesh(own(new THREE.SphereGeometry(arBV * 1.05, 24, 16)), own(new THREE.MeshBasicMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.035, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.BackSide, fog: false }))));
         const ballGlow = new THREE.Sprite(own(new THREE.SpriteMaterial({ map: glowT, color: 0xdff0ff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.12 })));
         ballGlow.scale.set(330, 330, 1); ballGlow.renderOrder = 4; scene.add(ballGlow);

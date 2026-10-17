@@ -55,7 +55,7 @@
           if (lv >= 3) { renderer.getSize(fxQ.v); renderer.setPixelRatio(Math.min(renderer.getPixelRatio(), 0.6)); renderer.setSize(fxQ.v.x, fxQ.v.y, false); for (const m of arHeavy) m.visible = false; }
         };
         try { const g = renderer.getContext(), e = g.getExtension('WEBGL_debug_renderer_info'), r = e ? String(g.getParameter(e.UNMASKED_RENDERER_WEBGL)) : ''; if (/swiftshader|llvmpipe|software|basic render/i.test(r)) fxQSet(3); } catch (e) {   }
-        wrap.fxDbg = { scene, renderer, fxQ, fxQSet, fxBl };
+        wrap.fxDbg = { scene, renderer, fxQ, fxQSet, fxBl, views };
         const fxQTick = dt => {
           if (fxQ.lv >= 3 || dt <= 0 || dt > 0.25 || ui !== 'play' || paused) return;
           fxQ.s += dt; fxQ.n++;
