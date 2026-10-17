@@ -32,7 +32,7 @@ const FGROUPS = [
 const SORTS = [['rel', 'Best match'], ['rec', 'Popular'], ['az', 'A to Z'], ['new', 'Newest'], ['played', 'Most played'], ['short', 'Shortest']];
 const PATH_MODE = /(^|\.)(web\.app|firebaseapp\.com)$/i.test(location.hostname) || (() => { try { return sessionStorage.getItem('gameplay:paths') === '1'; } catch (e) { return false; } })();
 const PAUSE = { on: false };
-(() => { try { if (localStorage.getItem('gameplay:reset') !== '2') { localStorage.removeItem('gameplay:profile'); localStorage.removeItem('gameplay:analytics'); localStorage.removeItem('gameplay:sid'); const o = JSON.parse(localStorage.getItem('gameplay:v1') || '{}') || {}; o.best = {}; o.plays = {}; o.recent = []; o.time = {}; localStorage.setItem('gameplay:v1', JSON.stringify(o)); localStorage.setItem('gameplay:reset', '2'); } } catch (e) {} })();
+(() => { try { if (localStorage.getItem('gameplay:reset') !== '3') { const keep = k => k === 'gameplay:consent' || k === 'gameplay:lang' || k.indexOf('gameplay:gate') === 0 || k.indexOf('sb-') === 0; let o = {}; try { o = JSON.parse(localStorage.getItem('gameplay:v1') || '{}') || {}; } catch (e) {} const prefs = o.prefs; Object.keys(localStorage).forEach(k => { if (!keep(k)) localStorage.removeItem(k); }); localStorage.setItem('gameplay:v1', JSON.stringify(prefs ? { prefs } : {})); localStorage.setItem('gameplay:reset', '3'); } } catch (e) {} })();
 const SUPABASE_URL = 'https://uafouyvtcijptspjbsqf.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Lry5e9J350lXelAUPHU1rg_3YYvTuAf';
 const SUPABASE_JS = ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js', 'https://unpkg.com/@supabase/supabase-js@2.117.2/dist/umd/supabase.js'];
