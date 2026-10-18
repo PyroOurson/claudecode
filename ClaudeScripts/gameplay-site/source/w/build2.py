@@ -10,6 +10,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 PARTS = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, 'parts')
 OUT = sys.argv[2] if len(sys.argv) > 2 else os.path.join(HERE, 'site')
+KEYTAG = hashlib.sha256(('gameplay-names|' + os.environ.get('GATE_PASS', '').strip()).encode('utf-8')).digest()
 PLAIN = OUT.rstrip('/') + '_plain'
 DIR = 'gameplay/'
 INLINE = int(os.environ.get('INLINE_COVERS', '8'))
@@ -26,7 +27,7 @@ def read(fn):
 
 
 def name_of(data):
-    return hashlib.sha256(data.encode('utf-8')).hexdigest()[:20]
+    return hashlib.sha256(KEYTAG + data.encode('utf-8')).hexdigest()[:20]
 
 
 def find_cover(gid):
@@ -106,7 +107,7 @@ def main():
         return nm
 
     def emit_bin(data, ext):
-        nm = hashlib.sha256(data).hexdigest()[:20]
+        nm = hashlib.sha256(KEYTAG + data).hexdigest()[:20]
         with open(os.path.join(PLAIN, 'files', nm + ext), 'wb') as f:
             f.write(data)
         plan['files'].append(nm + ext)
