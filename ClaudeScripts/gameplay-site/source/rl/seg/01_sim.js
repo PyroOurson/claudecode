@@ -5,10 +5,10 @@
 
   const CFG = {
     hz: 120, g: 650,
-    X: 4096, Y: 5120, H: 2048, corner: 8064, ramp: 256, ceilR: 490, cornerR: 900,
-    goalW: 892.755, goalH: 642.775, goalD: 880, postK: 24, goalR: 100, goalLine: 5124.25,
-    ballR: 91.25, ballRest: 93.15, ballVis: 92.75, ballMax: 6000, ballDrag: 0.03, ballCR: 0.6, ballMu: 0.35, ballMaxW: 6, ballMass: 30, ballRestV: 15,
-    carMass: 180, carRest: 17, carRespawnZ: 36,
+    X: 4144, Y: 5056, H: 2096, corner: 8048, ramp: 256, ceilR: 490, cornerR: 900,
+    goalW: 892.755, goalH: 642.775, goalD: 880, postK: 24, goalR: 100, goalLine: 5060.25,
+    ballR: 91.75, ballRest: 93.65, ballVis: 93.25, ballMax: 6000, ballDrag: 0.03, ballCR: 0.6, ballMu: 0.35, ballMaxW: 6, ballMass: 30, ballRestV: 10, ballGap: 1.915, ballSplit: 0.8,
+    carMass: 180, carRest: 17.02, carRespawnZ: 36,
     carMax: 2300, boostGround: 2975 / 3, boostAir: 3175 / 3, airThrottle: 200 / 3,
     boostUse: 100 / 3, boostMin: 0.1, superStart: 2200, superKeep: 2100, superKeepT: 1,
     facets: 8, rampBack: 160, rampBlend: 400, thrWheel: 400, brakeWheel: 875, rollK: 113.73963 * 60, fricK: 60, stopV: 25, coastBrake: 0.15,
@@ -17,8 +17,8 @@
     airT: [130, 95, 400], airD: [30, 20, 50], torqueK: Math.PI * 2 / 65536 * 1000, maxW: 5.5,
     afImp: 200, afTorque: 50, afTime: 0.4, afNormZ: Math.SQRT1_2, afRoll: 2.8, arForce: 100, arTorque: 80,
     susK: 500, susC: 25, susR: 40, susTravel: 12, susSub: 2.5, susScale: [36 - 1 / 4, 54 + 1 / 4 + 1.5 / 100],
-    sticky: 0.5, slideRise: 5, slideFall: 2, hbLat: 0.1, worldMu: 0.3, worldCR: 0.3, carCarMu: 0.09, carCarCR: 0.1, carBallMu: 2,
-    padBig: [100, 10, 208], padSmall: [12, 4, 144], padH: 95, padZ: [73, 70],
+    sticky: 0.5, slideRise: 5, slideFall: 2, hbLat: 0.1, worldMu: 0.3, worldCR: 0.3, worldRestV: 10, worldSplit: 0.8, splitTurn: 0.1, boxMargin: 2, solverIt: 10, carCarMu: 0.09, carCarCR: 0.1, carCarGap: 1.855, carBallMu: 2,
+    padBig: [100, 10, 208], padSmall: [12, 4, 144], padH: 95, padZ: [73.05, 70.05],
     kickBoost: 100 / 3, demoTime: 3, bumpCD: 0.25, bumpFwd: 64.5,
     steer: [[0, .53356], [500, .3193], [1000, .18203], [1500, .1057], [1750, .08507], [3000, .03454]],
     slideSteer: [[0, .39235], [2500, .1261]],
@@ -26,18 +26,26 @@
     latF: [[0, 1], [1, .2]], hbLong: [[0, .5], [1, .9]], noStick: [[0, .1], [.7075, .5], [1, 1]],
     hit: [[0, .65], [500, .65], [2300, .55], [4600, .3]],
     bumpG: [[0, 5 / 6], [1400, 1100], [2200, 1530]], bumpA: [[0, 5 / 6], [1400, 1390], [2200, 1945]], bumpUp: [[0, 2 / 6], [1400, 278], [2200, 417]],
-    spawns: [[-2048, -2560, .25], [2048, -2560, .75], [-256, -3840, .5], [256, -3840, .5], [0, -4608, .5]],
-    respawns: [[-2304, -4608], [-2688, -4608], [2304, -4608], [2688, -4608]],
-    big: [[-3584, 0], [3584, 0], [-3072, 4096], [3072, 4096], [-3072, -4096], [3072, -4096]],
-    small: [[0, -4240], [-1792, -4184], [1792, -4184], [-940, -3308], [940, -3308], [0, -2816], [-3584, -2484], [3584, -2484], [-1788, -2300], [1788, -2300], [-2048, -1036], [0, -1024], [2048, -1036], [-1024, 0], [1024, 0], [-2048, 1036], [0, 1024], [2048, 1036], [-1788, 2300], [1788, 2300], [-3584, 2484], [3584, 2484], [0, 2816], [-940, 3308], [940, 3308], [-1792, 4184], [1792, 4184], [0, 4240]],
-    cam: { fov: 110, dist: 270, height: 110, angle: -5, stiff: 0.45, swivel: 4.7, trans: 1.2 },
+    spawns: [[-2049.43, -2558.46, .25], [2049.43, -2558.46, .75], [-256.18, -3837.7, .5], [256.18, -3837.7, .5], [0, -4605.2, .5]],
+    respawns: [[-2305.61, -4605.2], [-2689.88, -4605.2], [2305.61, -4605.2], [2689.88, -4605.2]],
+    big: [[-3586.51, 0], [3586.51, 0], [-3074.15, 4093.54], [3074.15, 4093.54], [-3074.15, -4093.54], [3074.15, -4093.54]],
+    small: [[0, -4237.46], [-1793.25, -4181.49], [1793.25, -4181.49], [-940.66, -3306.02], [940.66, -3306.02], [0, -2814.31], [-3586.51, -2482.51], [3586.51, -2482.51], [-1789.25, -2298.62], [1789.25, -2298.62], [-2049.43, -1035.38], [0, -1023.39], [2049.43, -1035.38], [-1024.72, 0], [1024.72, 0], [-2049.43, 1035.38], [0, 1023.39], [2049.43, 1035.38], [-1789.25, 2298.62], [1789.25, 2298.62], [-3586.51, 2482.51], [3586.51, 2482.51], [0, 2814.31], [-940.66, 3306.02], [940.66, 3306.02], [-1793.25, 4181.49], [1793.25, 4181.49], [0, 4237.46]],
+    cam: { fov: 110, dist: 270, height: 100, angle: -3, stiff: 0.35, swivel: 4, trans: 1, invert: true, shake: false, ballCam: true },
+    camK: { rateA: 6.32, rateB: 2.03, rateC: 4.14, nRate: -10.46, stiffK: 2.427, fastRate: -13.39, slowRate: -2.03, ballLift: 0.005, ballPitch: 0.8, ballRate: -8.59,
+      distLag: 0.05, distLagMin: -50, fovSup: 10, fovRateSup: 40, fovSpeed: 5, fovRate: 25, roll: -0.1, swivelBack: 3, lookPitch: Math.PI / 3, lookYaw: -Math.PI * 13 / 18, pitchMax: Math.PI * 17 / 36 },
+    input: { dz: 0.12, trigger: 0.15, lookDz: 0.3 },
+    rules: { countdown: 3, goalT: 3, replayMax: 10, replayLead: 2, replayPre: 4, aftermath: 3, slowPre: 0.25, slowPost: 0.1, slowRate: 0.25, slowDef: 200 },
     pts: { goal: 100, assist: 50, save: 50, epicSave: 75, shot: 20, clear: 20, center: 10, aerial: 25, demo: 10, first: 10 }
   };
 
+  const PHYS = {
+    default: { hb: [60.5, 43.15, 19.4], off: [13.9, 0, 20.82545], gap: 1.855, cz: 20.82545, wf: [51.5208, 25.7003, 12.53], wb: [-33.9722, 29.3003, 15.03], sr: [38.83545, 37.13545] },
+    flat: { hb: [65.5, 42.7, 16.975], off: [9.02, 0, 15.825], gap: 1.615, cz: 15.825, wf: [50.6065, 30.91005, 12.03], wb: [-35.0165, 32.81005, 13.53], sr: [34.035, 33.935] },
+  };
   const BODIES = {
-    octane: { name: 'Octane', hitbox: 'Octane', hb: [60.2535, 43.3497, 19.32955], off: [13.8757, 0, 20.755], cz: 20.755, wf: [51.25, 25.9, 12.5], wb: [-33.75, 29.5, 15], sr: [38.755, 37.055] },
-    fennec: { name: 'Fennec', hitbox: 'Octane', hb: [60.2535, 43.3497, 19.32955], off: [13.8757, 0, 20.755], cz: 20.755, wf: [51.25, 25.9, 12.5], wb: [-33.75, 29.5, 15], sr: [38.755, 37.055] },
-    dominus: { name: 'Dominus', hitbox: 'Dominus', hb: [65.2135, 42.88995, 16.9], off: [9, 0, 15.75], cz: 15.75, wf: [50.3, 31.1, 12], wb: [-34.75, 33, 13.5], sr: [33.95, 33.85] },
+    octane: { name: 'Octane', hitbox: 'Octane', ph: 'default', wf: [51.25, 25.9, 12.5], wb: [-33.75, 29.5, 15] },
+    fennec: { name: 'Fennec', hitbox: 'Octane', ph: 'default', wf: [51.25, 25.9, 12.5], wb: [-33.75, 29.5, 15] },
+    dominus: { name: 'Dominus', hitbox: 'Dominus', ph: 'flat', wf: [50.3, 31.1, 12], wb: [-34.75, 33, 13.5] },
   };
   const BODY_IDS = Object.keys(BODIES);
   const TAU = Math.PI * 2, BR = CFG.ballR, BRW = CFG.ballRest;
@@ -109,59 +117,64 @@
   }
 
 
-  const makeBall = () => ({ p: v3(0, 0, CFG.ballRest), v: v3(), w: v3(), n: v3(0, 0, 1), floor: false, hidden: false });
-  function bounce(b, n, vn) {
-    const v = b.v, w = b.w, e = -vn < CFG.ballRestV ? 0 : CFG.ballCR;
+  const makeBall = () => ({ p: v3(0, 0, CFG.ballRest), v: v3(), w: v3(), v0: v3(), n: v3(0, 0, 1), floor: false, hidden: false, scored: false });
+  function bounce(b, n, vn, vp) {
+    const v = b.v, w = b.w, e = -vp > CFG.ballRestV ? CFG.ballCR : 0, dn = -e * vp - vn;
     const sx = v.x - n.x * vn + BR * (n.y * w.z - n.z * w.y), sy = v.y - n.y * vn + BR * (n.z * w.x - n.x * w.z), sz = v.z - n.z * vn + BR * (n.x * w.y - n.y * w.x);
-    v.x -= (1 + e) * n.x * vn; v.y -= (1 + e) * n.y * vn; v.z -= (1 + e) * n.z * vn;
+    v.x += n.x * dn; v.y += n.y * dn; v.z += n.z * dn;
     const sl = Math.sqrt(sx * sx + sy * sy + sz * sz);
     if (sl > 1e-3) {
-      const k = Math.min(sl / 3.5, CFG.ballMu * (1 + e) * -vn) / sl, fx = -sx * k, fy = -sy * k, fz = -sz * k, A = 2.5 / BR;
+      const k = Math.min(sl / 3.5, CFG.ballMu * dn) / sl, fx = -sx * k, fy = -sy * k, fz = -sz * k, A = 2.5 / BR;
       v.x += fx; v.y += fy; v.z += fz;
       w.x += A * (fy * n.z - fz * n.y); w.y += A * (fz * n.x - fx * n.z); w.z += A * (fx * n.y - fy * n.x);
     }
   }
-  function ballStep(b, dt) {
-    const p = b.p, v = b.v, w = b.w;
-    v.z -= CFG.g * dt;
+  function ballStep(b, dt) { const imp = ballPre(b, dt); ballMove(b, dt); return imp; }
+  function ballPre(b, dt) {
+    const p = b.p, v = b.v;
     vscale(v, Math.pow(1 - CFG.ballDrag, dt));
-    const sp = vlen(v);
-    if (sp > CFG.ballMax) vscale(v, CFG.ballMax / sp);
-    vadd(p, v, dt);
+    const px = v.x, py = v.y, pz = v.z;
+    vset(b.v0, px, py, pz);
+    v.z -= CFG.g * dt;
     b.floor = false;
     let imp = 0;
     const d = sdf(p.x, p.y, p.z);
-    if (d < BRW) {
-      const n = sdfN(p.x, p.y, p.z, b.n);
-      vadd(p, n, BRW - d);
-      const vn = vdot(v, n);
-      if (vn < 0) { imp = -vn; bounce(b, n, vn); }
+    if (d < BR + CFG.ballGap) {
+      const n = sdfN(p.x, p.y, p.z, b.n), vn = vdot(v, n);
+      if (vn < 0) { const vp = px * n.x + py * n.y + pz * n.z; imp = -vp; bounce(b, n, vn, vp); }
+      if (d < BR) vadd(p, n, CFG.ballSplit * (BR - d));
       if (n.z > 0.7 && p.z < BRW + 30) b.floor = true;
     }
+    return imp;
+  }
+  function ballMove(b, dt) {
+    const p = b.p, v = b.v, w = b.w;
+    vadd(p, v, dt);
+    const sp = vlen(v);
+    if (sp > CFG.ballMax) vscale(v, CFG.ballMax / sp);
     const wl = vlen(w);
     if (wl > CFG.ballMaxW) vscale(w, CFG.ballMaxW / wl);
-    return imp;
   }
 
 
   const CC = {};
   function carCfg(id) {
     if (CC[id]) return CC[id];
-    const b = BODIES[id], h = b.hb, o = b.off, m3 = CFG.carMass / 3;
+    const b = PHYS[BODIES[id].ph] || PHYS.default, h = b.hb, o = b.off, m3 = CFG.carMass / 3;
     const I = [m3 * (h[1] * h[1] + h[2] * h[2]), m3 * (h[0] * h[0] + h[2] * h[2]), m3 * (h[0] * h[0] + h[1] * h[1])];
     const wh = [];
     for (let i = 0; i < 4; i++) {
       const fr = i < 2, q = fr ? b.wf : b.wb, rest = b.sr[fr ? 0 : 1] - CFG.susTravel;
       wh.push({ x: q[0], y: i % 2 ? -q[1] : q[1], z: b.cz, r: q[2], rest, len: rest + CFG.susTravel + q[2] - CFG.susSub, push: rest + q[2] - CFG.susSub, k: CFG.susScale[fr ? 0 : 1], fr });
     }
-    const pts = [];
+    const M = CFG.boxMargin, hc = [h[0] - M, h[1] - M, h[2] - M], pts = [];
     let rad = 0;
     for (let sx = -1; sx <= 1; sx++) for (let sy = -1; sy <= 1; sy++) for (let sz = -1; sz <= 1; sz++) {
       if (!sx && !sy && !sz) continue;
-      const q = [o[0] + sx * h[0], sy * h[1], o[2] + sz * h[2]];
+      const q = [o[0] + sx * hc[0], sy * hc[1], o[2] + sz * hc[2]];
       pts.push(q); rad = Math.max(rad, Math.hypot(q[0], q[1], q[2]));
     }
-    return (CC[id] = { b, h, o, I, wh, pts, rad: rad + 2, front: o[0] + h[0] });
+    return (CC[id] = { b, h, hc, o, I, wh, pts, gap: b.gap, rad: rad + M, front: o[0] + h[0] });
   }
   let carSeq = 0;
   const NOCTL = { throttle: 0, steer: 0, pitch: 0, yaw: 0, roll: 0, boost: false, jump: false, slide: false };
@@ -172,13 +185,13 @@
     return {
       id: carSeq++, team, name, bot, slot: 0, body, cfg: carCfg(body),
       p: v3(), v: v3(), w: v3(), f: v3(1, 0, 0), l: v3(0, 1, 0), u: v3(0, 0, 1), n: v3(0, 0, 1),
-      F: v3(), T: v3(), vc: v3(), wcn: v3(0, 0, 1),
-      wh: [0, 1, 2, 3].map(() => ({ hit: 0, t: 0, sl: 0, rv: 0, inv: 1, push: 0, cx: 0, cy: 0, cz: 0, nx: 0, ny: 0, nz: 1, hx: 0, hy: 0, hz: 0, jx: 0, jy: 0, jz: 0 })),
+      F: v3(), T: v3(), vc: v3(), pv: v3(), pw: v3(), v0: v3(), hx: v3(), hit: false, tf: 0, wcn: v3(0, 0, 1),
+      wh: [0, 1, 2, 3].map(() => ({ pf: 0, hit: 0, t: 0, sl: 0, rv: 0, inv: 1, push: 0, cx: 0, cy: 0, cz: 0, nx: 0, ny: 0, nz: 1, hx: 0, hy: 0, hz: 0, jx: 0, jy: 0, jz: 0 })),
       wz: [0, 0, 0, 0],
       boost: 0, boosting: false, boostT: 0, boostK: 0, onGround: true, nw: 4, nwW: 4, jumped: false, jumping: false, jumpT: 0, djumped: false, flipped: false, flipping: false, flipT: 0, fdx: 0, fdy: 0,
       airT: 0, ajT: 0, autoF: false, afT: 0, afS: 0, wc: false, steerA: 0,
       dodgeT: -1, xiT: -9, sup: false, supT: 0, slide: 0, prevJump: false, demoT: 0, touch: false, touchT: -9, fs: 0, bumpId: -1, bumpCD: 0, resetT: -9, airHitT: -9, shotT: -9, landT: 0, rc: 0,
-      ctl: { throttle: 0, steer: 0, pitch: 0, yaw: 0, roll: 0, boost: false, jump: false, slide: false },
+      ctl: { throttle: 0, steer: 0, pitch: 0, yaw: 0, roll: 0, boost: false, jump: false, slide: false }, pk: { thr: 0, eng: 0, brk: 1, steerA: 0, hb: 0 },
       st: newSt(),
       ai: bot ? newAi() : null
     };
@@ -189,7 +202,7 @@
     c.onGround = true; c.nw = c.nwW = 4; c.jumped = c.jumping = c.djumped = c.flipped = c.flipping = c.autoF = false;
     c.jumpT = c.flipT = c.airT = c.ajT = c.afT = 0; c.dodgeT = -1; c.wc = false; c.prevJump = true;
     c.sup = false; c.supT = 0; c.slide = 0; c.boosting = false; c.boostT = 0; c.boostK = 0; c.touch = false; c.demoT = 0; c.fs = 0; c.steerA = 0;
-    c.boost = CFG.kickBoost;
+    c.boost = CFG.kickBoost; Object.assign(c.pk, { thr: 0, eng: 0, brk: 1, steerA: 0, hb: 0 }); for (const s of c.wh) s.pf = 0;
     if (c.ai) { c.ai.seq = null; c.ai.stuck = 0; c.ai.rest = 0; c.ai.mode = 'idle'; c.ai.think = 0; c.ai.pad = null; c.ai.kf = false; }
   }
   function ortho(c) { vnorm(c.f); vnorm(vcross(c.l, c.u, c.f)); vcross(c.u, c.f, c.l); }
@@ -273,24 +286,27 @@
     if (c.onGround && !wasG && nW === 0 && (c.jumped || c.djumped || c.flipped) && W.time - c.resetT > 0.4) { c.resetT = W.time; W.events.push({ type: 'flipreset', car: c }); }
     const fwd = vdot(v, f), af = Math.abs(fwd);
     c.slide = clamp(c.slide + (k.slide ? CFG.slideRise : -CFG.slideFall) * dt, 0, 1);
-    let thr = k.throttle, brk = 0;
-    if (k.boost && c.boost > 0) thr = 1;
-    let eng = thr;
-    if (!k.slide) {
-      if (Math.abs(thr) >= 0.001) { if (af > CFG.stopV && Math.sign(thr) !== Math.sign(fwd)) { brk = 1; eng = 0; } }
-      else { eng = 0; brk = af < CFG.stopV ? 1 : CFG.coastBrake; }
+    const pk = c.pk, thr = pk.thr, eng = pk.eng, brk = pk.brk, hb = pk.hb;
+    c.steerA = pk.steerA;
+    {
+      let t = k.throttle, b = 0;
+      if (k.boost && c.boost > 0) t = 1;
+      let e = t;
+      if (!k.slide) {
+        if (Math.abs(t) >= 0.001) { if (af > CFG.stopV && Math.sign(t) !== Math.sign(fwd)) { b = 1; e = 0; } }
+        else { e = 0; b = af < CFG.stopV ? 1 : CFG.coastBrake; }
+      }
+      let ds = curve(CFG.drive, af);
+      if (nc < 3) ds /= 4;
+      let sa = curve(CFG.steer, af);
+      if (c.slide > 0) sa += (curve(CFG.slideSteer, af) - sa) * c.slide;
+      pk.thr = t; pk.eng = e * ds; pk.brk = b; pk.steerA = sa * k.steer; pk.hb = c.slide;
     }
-    let ds = curve(CFG.drive, af);
-    if (nc < 3) ds /= 4;
-    eng *= ds;
-    let sa = curve(CFG.steer, af);
-    if (c.slide > 0) sa += (curve(CFG.slideSteer, af) - sa) * c.slide;
-    c.steerA = sa * k.steer;
-    const sticky = thr !== 0, cs = Math.cos(c.steerA), sn = Math.sin(c.steerA), hb = c.slide;
+    const sticky = thr !== 0, cs = Math.cos(c.steerA), sn = Math.sin(c.steerA);
     for (let i = 0; i < 4; i++) {
       const s = c.wh[i], wd = cf.wh[i];
       s.jx = s.jy = s.jz = 0;
-      if (!s.hit) continue;
+      if (!s.hit) { s.pf = 0; continue; }
       let ax = l.x, ay = l.y, az = l.z;
       if (wd.fr) { ax = l.x * cs + f.x * sn; ay = l.y * cs + f.y * sn; az = l.z * cs + f.z * sn; }
       const nx = s.nx, ny = s.ny, nz = s.nz;
@@ -299,8 +315,9 @@
       const latV = Math.abs(hvx * ax + hvy * ay + hvz * az);
       const lonV = Math.abs(hvx * (ay * nz - az * ny) + hvy * (az * nx - ax * nz) + hvz * (ax * ny - ay * nx));
       const fci = latV > 5 ? latV / (lonV + latV) : 0;
-      let latF = curve(CFG.latF, fci), lonF = 1;
-      if (hb > 0) { latF *= (CFG.hbLat - 1) * hb + 1; lonF *= (curve(CFG.hbLong, fci) - 1) * hb + 1; }
+      const pf = s.pf; s.pf = fci;
+      let latF = curve(CFG.latF, pf), lonF = 1;
+      if (hb > 0) { latF *= (CFG.hbLat - 1) * hb + 1; lonF *= (curve(CFG.hbLong, pf) - 1) * hb + 1; }
       if (!sticky) { const q = curve(CFG.noStick, nz); latF *= q; lonF *= q; }
       const pa = ax * nx + ay * ny + az * nz;
       let ex = ax - nx * pa, ey = ay - ny * pa, ez = az - nz * pa;
@@ -435,58 +452,69 @@
     vadd(c.F, g, -CFG.arForce);
   }
 
-  function carMove(c, dt) {
-    vadd(c.v, c.F, dt); vadd(c.w, c.T, dt);
-    const wl = vlen(c.w);
-    vadd(c.p, c.v, dt);
-    if (wl > 1e-7) { vset(T2, c.w.x / wl, c.w.y / wl, c.w.z / wl); rotCar(c, T2, wl * dt); }
-  }
-
   const CP = [];
-  for (let i = 0; i < 26; i++) CP.push({ rx: 0, ry: 0, rz: 0, nx: 0, ny: 0, nz: 0, d: 0, tg: 0, dn: 0, j: 0 });
-  function carWorld(W, c) {
+  for (let i = 0; i < 26; i++) CP.push({ rx: 0, ry: 0, rz: 0, nx: 0, ny: 0, nz: 0, d: 0, tg: 0, dn: 0, j: 0, tx: 0, ty: 0, tz: 0, td: 0, jt: 0 });
+  function carWorld(W, c, dt) {
     const cf = c.cfg, p = c.p, f = c.f, l = c.l, u = c.u, v = c.v, w = c.w;
-    if (sdf(p.x, p.y, p.z) > cf.rad) return;
+    const ox = v.x, oy = v.y, oz = v.z, ax = w.x, ay = w.y, az = w.z;
+    vset(c.v0, ox, oy, oz);
+    vadd(v, c.F, dt); vadd(w, c.T, dt);
+    const PV = c.pv, PW = c.pw;
+    vset(PV, 0, 0, 0); vset(PW, 0, 0, 0);
+    if (sdf(p.x, p.y, p.z) > cf.rad + cf.gap) return;
     let n = 0, deep = null;
     for (const o of cf.pts) {
       const rx = f.x * o[0] + l.x * o[1] + u.x * o[2], ry = f.y * o[0] + l.y * o[1] + u.y * o[2], rz = f.z * o[0] + l.z * o[1] + u.z * o[2];
-      const d = sdf(p.x + rx, p.y + ry, p.z + rz);
-      if (d >= 0) continue;
+      const d = sdf(p.x + rx, p.y + ry, p.z + rz) - CFG.boxMargin;
+      if (d >= cf.gap) continue;
       const q = CP[n++];
       sdfN(p.x + rx, p.y + ry, p.z + rz, T1);
-      q.rx = rx; q.ry = ry; q.rz = rz; q.nx = T1.x; q.ny = T1.y; q.nz = T1.z; q.d = -d; q.j = 0;
+      q.rx = rx; q.ry = ry; q.rz = rz; q.nx = T1.x; q.ny = T1.y; q.nz = T1.z; q.d = -d; q.j = 0; q.jt = 0;
       if (!deep || q.d > deep.d) deep = q;
     }
     if (!n) return;
     c.wc = true; vset(c.wcn, deep.nx, deep.ny, deep.nz);
     for (let i = 0; i < n; i++) {
-      const q = CP[i], vn = q.nx * (v.x + w.y * q.rz - w.z * q.ry) + q.ny * (v.y + w.z * q.rx - w.x * q.rz) + q.nz * (v.z + w.x * q.ry - w.y * q.rx);
-      q.tg = vn < -10 ? -CFG.worldCR * vn : 0; q.dn = cDen(c, q.rx, q.ry, q.rz, q.nx, q.ny, q.nz);
-    }
-    for (let it = 0; it < 4; it++) for (let i = 0; i < n; i++) {
-      const q = CP[i], vn = q.nx * (v.x + w.y * q.rz - w.z * q.ry) + q.ny * (v.y + w.z * q.rx - w.x * q.rz) + q.nz * (v.z + w.x * q.ry - w.y * q.rx);
-      const nj = Math.max(0, q.j + (q.tg - vn) / q.dn), dj = nj - q.j;
-      q.j = nj;
-      if (dj) cImp(c, q.nx * dj, q.ny * dj, q.nz * dj, q.rx, q.ry, q.rz);
-    }
-    for (let i = 0; i < n; i++) {
       const q = CP[i];
-      if (q.j <= 0) continue;
+      const vp = q.nx * (ox + ay * q.rz - az * q.ry) + q.ny * (oy + az * q.rx - ax * q.rz) + q.nz * (oz + ax * q.ry - ay * q.rx);
+      q.tg = vp < -CFG.worldRestV ? -CFG.worldCR * vp : 0; q.dn = cDen(c, q.rx, q.ry, q.rz, q.nx, q.ny, q.nz);
       let tx = v.x + w.y * q.rz - w.z * q.ry, ty = v.y + w.z * q.rx - w.x * q.rz, tz = v.z + w.x * q.ry - w.y * q.rx;
       const vn = tx * q.nx + ty * q.ny + tz * q.nz;
       tx -= q.nx * vn; ty -= q.ny * vn; tz -= q.nz * vn;
       const tl = Math.sqrt(tx * tx + ty * ty + tz * tz);
-      if (tl < 1e-3) continue;
-      tx /= tl; ty /= tl; tz /= tl;
-      const jt = Math.min(tl / cDen(c, q.rx, q.ry, q.rz, tx, ty, tz), CFG.worldMu * q.j);
-      cImp(c, -tx * jt, -ty * jt, -tz * jt, q.rx, q.ry, q.rz);
+      if (tl > 1e-6) { q.tx = tx / tl; q.ty = ty / tl; q.tz = tz / tl; }
+      else { const a = Math.abs(q.nz) > Math.SQRT1_2, k = a ? 1 / Math.hypot(q.ny, q.nz) : 1 / Math.hypot(q.nx, q.ny); if (a) { q.tx = 0; q.ty = -q.nz * k; q.tz = q.ny * k; } else { q.tx = -q.ny * k; q.ty = q.nx * k; q.tz = 0; } }
+      q.td = cDen(c, q.rx, q.ry, q.rz, q.tx, q.ty, q.tz);
     }
-    let mx = 0, my = 0, mz = 0;
-    for (let i = 0; i < n; i++) {
-      const q = CP[i], rem = q.d * 0.8 - (mx * q.nx + my * q.ny + mz * q.nz);
-      if (rem > 0) { mx += q.nx * rem; my += q.ny * rem; mz += q.nz * rem; }
+    for (let it = 0; it < CFG.solverIt; it++) {
+      for (let i = 0; i < n; i++) {
+        const q = CP[i], vn = q.nx * (v.x + w.y * q.rz - w.z * q.ry) + q.ny * (v.y + w.z * q.rx - w.x * q.rz) + q.nz * (v.z + w.x * q.ry - w.y * q.rx);
+        const nj = Math.max(0, q.j + (q.tg - vn) / q.dn), dj = nj - q.j;
+        q.j = nj;
+        if (dj) cImp(c, q.nx * dj, q.ny * dj, q.nz * dj, q.rx, q.ry, q.rz);
+      }
+      for (let i = 0; i < n; i++) {
+        const q = CP[i], lim = CFG.worldMu * q.j;
+        const vt = q.tx * (v.x + w.y * q.rz - w.z * q.ry) + q.ty * (v.y + w.z * q.rx - w.x * q.rz) + q.tz * (v.z + w.x * q.ry - w.y * q.rx);
+        const nj = clamp(q.jt - vt / q.td, -lim, lim), dj = nj - q.jt;
+        q.jt = nj;
+        if (dj) cImp(c, q.tx * dj, q.ty * dj, q.tz * dj, q.rx, q.ry, q.rz);
+      }
     }
-    p.x += mx; p.y += my; p.z += mz;
+    for (let it = 0; it < CFG.solverIt; it++) for (let i = 0; i < n; i++) {
+      const q = CP[i];
+      if (q.d <= 0) continue;
+      const pv = q.nx * (PV.x + PW.y * q.rz - PW.z * q.ry) + q.ny * (PV.y + PW.z * q.rx - PW.x * q.rz) + q.nz * (PV.z + PW.x * q.ry - PW.y * q.rx);
+      const nj = Math.max(0, (q.pj || 0) + (q.d * CFG.worldSplit / dt - pv) / q.dn), dj = nj - (q.pj || 0);
+      q.pj = nj;
+      if (dj) { const m = CFG.carMass; PV.x += q.nx * dj / m; PV.y += q.ny * dj / m; PV.z += q.nz * dj / m; const r = iwm(c, q.ry * q.nz - q.rz * q.ny, q.rz * q.nx - q.rx * q.nz, q.rx * q.ny - q.ry * q.nx); PW.x += r.x * dj; PW.y += r.y * dj; PW.z += r.z * dj; }
+    }
+    for (let i = 0; i < n; i++) CP[i].pj = 0;
+  }
+  function carMove(c, dt) {
+    const PV = c.pv, PW = c.pw, w = c.w, tx = w.x + PW.x * CFG.splitTurn, ty = w.y + PW.y * CFG.splitTurn, tz = w.z + PW.z * CFG.splitTurn, wl = Math.sqrt(tx * tx + ty * ty + tz * tz);
+    c.p.x += (c.v.x + PV.x) * dt; c.p.y += (c.v.y + PV.y) * dt; c.p.z += (c.v.z + PV.z) * dt;
+    if (wl > 1e-7) { vset(T2, tx / wl, ty / wl, tz / wl); rotCar(c, T2, wl * dt); }
   }
 
   function carPost(W, c, dt) {
@@ -516,9 +544,9 @@
   }
   function bumpTry(W, a, b, cx, cy, cz) {
     if (a.bumpId === b.id && a.bumpCD > 0) return;
-    const dx = b.p.x - a.p.x, dy = b.p.y - a.p.y, dz = b.p.z - a.p.z, dl = Math.sqrt(dx * dx + dy * dy + dz * dz), sp = vlen(a.v);
-    if (dl < 1e-3 || sp < 1e-3 || a.v.x * dx + a.v.y * dy + a.v.z * dz <= 0) return;
-    const vx = a.v.x / sp, vy = a.v.y / sp, vz = a.v.z / sp, toward = (a.v.x * dx + a.v.y * dy + a.v.z * dz) / dl, away = b.v.x * vx + b.v.y * vy + b.v.z * vz;
+    const av = a.v0, bv = b.v0, dx = b.p.x - a.p.x, dy = b.p.y - a.p.y, dz = b.p.z - a.p.z, dl = Math.sqrt(dx * dx + dy * dy + dz * dz), sp = vlen(av);
+    if (dl < 1e-3 || sp < 1e-3 || av.x * dx + av.y * dy + av.z * dz <= 0) return;
+    const vx = av.x / sp, vy = av.y / sp, vz = av.z / sp, toward = (av.x * dx + av.y * dy + av.z * dz) / dl, away = bv.x * vx + bv.y * vy + bv.z * vz;
     if (toward <= away) return;
     if ((cx - a.p.x) * a.f.x + (cy - a.p.y) * a.f.y + (cz - a.p.z) * a.f.z <= CFG.bumpFwd) return;
     if (a.sup && a.team !== b.team && W.state !== 'end') demolish(W, b, a);
@@ -564,37 +592,61 @@
       if (ll < 1e-3) continue;
       if (!test(lx / ll, ly / ll, lz / ll, 2)) return 0;
     }
-    vset(SN, bx, by, bz);
+    vset(SN, bx, by, bz); SN.k = kind;
     const ov = SN.d;
     if (kind === 0) { support(B, bx, by, bz, -1, SP); vadd(SP, SN, ov / 2); }
     else if (kind === 1) { support(A, bx, by, bz, 1, SP); vadd(SP, SN, -ov / 2); }
     else { support(A, bx, by, bz, 1, SP); support(B, bx, by, bz, -1, T1); vset(SP, (SP.x + T1.x) / 2, (SP.y + T1.y) / 2, (SP.z + T1.z) / 2); }
     return ov;
   }
-  function obbExt(o, tx, ty, tz) {
-    let e = 0;
-    for (let i = 0; i < 3; i++) e += o.h[i] * Math.abs(o.a[i].x * tx + o.a[i].y * ty + o.a[i].z * tz);
-    return e;
-  }
-  const CL = { ax: 0, ay: 0, az: 0, bx: 0, by: 0, bz: 0 };
-  function ccLever(a, b, nx, ny, nz) {
-    let t1x = ny, t1y = -nx, t1z = 0, tl = Math.hypot(t1x, t1y);
-    if (tl < 0.3) { t1x = 0; t1y = nz; t1z = -ny; tl = Math.hypot(t1y, t1z); }
-    t1x /= tl; t1y /= tl; t1z /= tl;
-    const t2x = ny * t1z - nz * t1y, t2y = nz * t1x - nx * t1z, t2z = nx * t1y - ny * t1x;
-    vset(T1, SP.x, SP.y, SP.z); vset(T2, SP.x, SP.y, SP.z);
-    for (let k = 0; k < 2; k++) {
-      const tx = k ? t2x : t1x, ty = k ? t2y : t1y, tz = k ? t2z : t1z;
-      const ca = OA.c.x * tx + OA.c.y * ty + OA.c.z * tz, ea = obbExt(OA, tx, ty, tz), cb = OB.c.x * tx + OB.c.y * ty + OB.c.z * tz, eb = obbExt(OB, tx, ty, tz);
-      let lo = Math.max(ca - ea, cb - eb), hi = Math.min(ca + ea, cb + eb);
-      if (lo > hi) lo = hi = (lo + hi) / 2;
-      const sp = SP.x * tx + SP.y * ty + SP.z * tz;
-      vadd(T1, { x: tx, y: ty, z: tz }, clamp(a.p.x * tx + a.p.y * ty + a.p.z * tz, lo, hi) - sp);
-      vadd(T2, { x: tx, y: ty, z: tz }, clamp(b.p.x * tx + b.p.y * ty + b.p.z * tz, lo, hi) - sp);
+  const CCP = [];
+  for (let i = 0; i < 8; i++) CCP.push({ x: 0, y: 0, z: 0, d: 0, ax: 0, ay: 0, az: 0, bx: 0, by: 0, bz: 0, tg: 0, dn: 0, j: 0, tx: 0, ty: 0, tz: 0, td: 0, jt: 0 });
+  const PG = [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]];
+  function ccManifold(A, B, nx, ny, nz, kind) {
+    if (kind === 2) { CCP[0].x = SP.x; CCP[0].y = SP.y; CCP[0].z = SP.z; CCP[0].d = SN.d; return 1; }
+    const R = kind === 0 ? A : B, I = kind === 0 ? B : A, s = kind === 0 ? 1 : -1, rx = nx * s, ry = ny * s, rz = nz * s;
+    let ri = 0, rd = -1;
+    for (let i = 0; i < 3; i++) { const d = Math.abs(R.a[i].x * rx + R.a[i].y * ry + R.a[i].z * rz); if (d > rd) { rd = d; ri = i; } }
+    let ii = 0, id = -1;
+    for (let i = 0; i < 3; i++) { const d = Math.abs(I.a[i].x * rx + I.a[i].y * ry + I.a[i].z * rz); if (d > id) { id = d; ii = i; } }
+    const ia = I.a[ii], isg = (ia.x * rx + ia.y * ry + ia.z * rz) > 0 ? -1 : 1;
+    const j1 = (ii + 1) % 3, j2 = (ii + 2) % 3, u1 = I.a[j1], u2 = I.a[j2], h1 = I.h[j1], h2 = I.h[j2];
+    const fcx = I.c.x + ia.x * I.h[ii] * isg, fcy = I.c.y + ia.y * I.h[ii] * isg, fcz = I.c.z + ia.z * I.h[ii] * isg;
+    let poly = [[1, 1], [-1, 1], [-1, -1], [1, -1]].map(([a, b], k) => { const p = PG[k]; p[0] = fcx + u1.x * h1 * a + u2.x * h2 * b; p[1] = fcy + u1.y * h1 * a + u2.y * h2 * b; p[2] = fcz + u1.z * h1 * a + u2.z * h2 * b; return p; });
+    let pg = 4;
+    for (let k = 1; k <= 2; k++) {
+      const ax = R.a[(ri + k) % 3], he = R.h[(ri + k) % 3], cc = R.c.x * ax.x + R.c.y * ax.y + R.c.z * ax.z;
+      for (const sg of [1, -1]) {
+        const out = [], lim = he;
+        for (let m = 0; m < poly.length; m++) {
+          const P = poly[m], Q = poly[(m + 1) % poly.length];
+          const dp = (P[0] * ax.x + P[1] * ax.y + P[2] * ax.z - cc) * sg - lim, dq = (Q[0] * ax.x + Q[1] * ax.y + Q[2] * ax.z - cc) * sg - lim;
+          if (dp <= 0) out.push(P);
+          if ((dp <= 0) !== (dq <= 0)) { const t = dp / (dp - dq), X = PG[pg++ & 15]; X[0] = P[0] + (Q[0] - P[0]) * t; X[1] = P[1] + (Q[1] - P[1]) * t; X[2] = P[2] + (Q[2] - P[2]) * t; out.push(X); }
+        }
+        poly = out;
+        if (!poly.length) return 0;
+      }
     }
-    CL.ax = T1.x - a.p.x; CL.ay = T1.y - a.p.y; CL.az = T1.z - a.p.z; CL.bx = T2.x - b.p.x; CL.by = T2.y - b.p.y; CL.bz = T2.z - b.p.z;
+    const ra = R.a[ri], rs = (ra.x * rx + ra.y * ry + ra.z * rz) > 0 ? 1 : -1, face = (R.c.x * ra.x + R.c.y * ra.y + R.c.z * ra.z) * rs + R.h[ri];
+    const cand = [];
+    for (const P of poly) { const d = face - (P[0] * ra.x + P[1] * ra.y + P[2] * ra.z) * rs; if (d > -CFG.carCarGap) cand.push([P[0], P[1], P[2], d]); }
+    if (!cand.length) return 0;
+    cand.sort((a, b) => b[3] - a[3]);
+    const pick = cand.length <= 4 ? cand : [cand[0]];
+    if (cand.length > 4) {
+      while (pick.length < 4) {
+        let best = null, bd = -1;
+        for (const q of cand) { if (pick.includes(q)) continue; let m = Infinity; for (const p of pick) m = Math.min(m, (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 + (p[2] - q[2]) ** 2); if (m > bd) { bd = m; best = q; } }
+        pick.push(best);
+      }
+    }
+    let n = 0;
+    for (const q of pick) { const C = CCP[n++]; C.x = q[0]; C.y = q[1]; C.z = q[2]; C.d = q[3]; }
+    return n;
   }
-  function carCar(W) {
+  const ccVel = (c, rx, ry, rz) => [c.v.x + c.w.y * rz - c.w.z * ry, c.v.y + c.w.z * rx - c.w.x * rz, c.v.z + c.w.x * ry - c.w.y * rx];
+  function carCar(W, dt) {
     const cs = W.cars;
     for (let i = 0; i < cs.length; i++) for (let j = i + 1; j < cs.length; j++) {
       const a = cs[i], b = cs[j];
@@ -604,51 +656,64 @@
       obbOf(a, OA); obbOf(b, OB);
       const pen = sat(OA, OB);
       if (pen <= 0) continue;
-      const nx = SN.x, ny = SN.y, nz = SN.z, cx = SP.x, cy = SP.y, cz = SP.z;
-      bumpTry(W, a, b, cx, cy, cz);
-      if (b.demoT <= 0 && a.demoT <= 0) bumpTry(W, b, a, cx, cy, cz);
-      if (a.demoT > 0 || b.demoT > 0) continue;
-      ccLever(a, b, nx, ny, nz);
-      const rax = CL.ax, ray = CL.ay, raz = CL.az, rbx = CL.bx, rby = CL.by, rbz = CL.bz;
-      let rvx = b.v.x + b.w.y * rbz - b.w.z * rby - (a.v.x + a.w.y * raz - a.w.z * ray);
-      let rvy = b.v.y + b.w.z * rbx - b.w.x * rbz - (a.v.y + a.w.z * rax - a.w.x * raz);
-      let rvz = b.v.z + b.w.x * rby - b.w.y * rbx - (a.v.z + a.w.x * ray - a.w.y * rax);
-      const vn = rvx * nx + rvy * ny + rvz * nz;
-      if (vn < 0) {
-        const jn = -(1 + (vn < -10 ? CFG.carCarCR : 0)) * vn / (cDen(a, rax, ray, raz, nx, ny, nz) + cDen(b, rbx, rby, rbz, nx, ny, nz));
-        cImp(a, -nx * jn, -ny * jn, -nz * jn, rax, ray, raz); cImp(b, nx * jn, ny * jn, nz * jn, rbx, rby, rbz);
-        rvx -= nx * vn; rvy -= ny * vn; rvz -= nz * vn;
-        const tl = Math.sqrt(rvx * rvx + rvy * rvy + rvz * rvz);
-        if (tl > 1e-3) {
-          const tx = rvx / tl, ty = rvy / tl, tz = rvz / tl, jt = Math.min(tl / (cDen(a, rax, ray, raz, tx, ty, tz) + cDen(b, rbx, rby, rbz, tx, ty, tz)), CFG.carCarMu * jn);
-          cImp(a, tx * jt, ty * jt, tz * jt, rax, ray, raz); cImp(b, -tx * jt, -ty * jt, -tz * jt, rbx, rby, rbz);
-        }
+      const nx = SN.x, ny = SN.y, nz = SN.z;
+      bumpTry(W, a, b, SP.x, SP.y, SP.z);
+      if (b.demoT <= 0 && a.demoT <= 0) bumpTry(W, b, a, SP.x, SP.y, SP.z);
+      const n = ccManifold(OA, OB, nx, ny, nz, SN.k);
+      for (let k = 0; k < n; k++) {
+        const C = CCP[k];
+        C.ax = C.x - a.p.x; C.ay = C.y - a.p.y; C.az = C.z - a.p.z; C.bx = C.x - b.p.x; C.by = C.y - b.p.y; C.bz = C.z - b.p.z;
+        const ua = [a.v0.x + a.w.y * C.az - a.w.z * C.ay, a.v0.y + a.w.z * C.ax - a.w.x * C.az, a.v0.z + a.w.x * C.ay - a.w.y * C.ax];
+        const ub = [b.v0.x + b.w.y * C.bz - b.w.z * C.by, b.v0.y + b.w.z * C.bx - b.w.x * C.bz, b.v0.z + b.w.x * C.by - b.w.y * C.bx];
+        const vp = (ub[0] - ua[0]) * nx + (ub[1] - ua[1]) * ny + (ub[2] - ua[2]) * nz;
+        C.tg = vp < -CFG.worldRestV ? -CFG.carCarCR * vp : 0; C.j = 0; C.jt = 0;
+        C.dn = cDen(a, C.ax, C.ay, C.az, nx, ny, nz) + cDen(b, C.bx, C.by, C.bz, nx, ny, nz);
+        const va = ccVel(a, C.ax, C.ay, C.az), vb = ccVel(b, C.bx, C.by, C.bz);
+        let tx = vb[0] - va[0], ty = vb[1] - va[1], tz = vb[2] - va[2];
+        const vn = tx * nx + ty * ny + tz * nz;
+        tx -= nx * vn; ty -= ny * vn; tz -= nz * vn;
+        const tl = Math.sqrt(tx * tx + ty * ty + tz * tz);
+        if (tl > 1e-6) { C.tx = tx / tl; C.ty = ty / tl; C.tz = tz / tl; C.td = cDen(a, C.ax, C.ay, C.az, C.tx, C.ty, C.tz) + cDen(b, C.bx, C.by, C.bz, C.tx, C.ty, C.tz); } else C.td = 0;
       }
-      const pc = pen * 0.4;
+      for (let it = 0; it < CFG.solverIt; it++) for (let k = 0; k < n; k++) {
+        const C = CCP[k];
+        let va = ccVel(a, C.ax, C.ay, C.az), vb = ccVel(b, C.bx, C.by, C.bz);
+        const vn = (vb[0] - va[0]) * nx + (vb[1] - va[1]) * ny + (vb[2] - va[2]) * nz;
+        const nj = Math.max(0, C.j + (C.tg - vn) / C.dn), dj = nj - C.j;
+        C.j = nj;
+        if (dj) { cImp(a, -nx * dj, -ny * dj, -nz * dj, C.ax, C.ay, C.az); cImp(b, nx * dj, ny * dj, nz * dj, C.bx, C.by, C.bz); }
+        if (!C.td) continue;
+        va = ccVel(a, C.ax, C.ay, C.az); vb = ccVel(b, C.bx, C.by, C.bz);
+        const vt = (vb[0] - va[0]) * C.tx + (vb[1] - va[1]) * C.ty + (vb[2] - va[2]) * C.tz, lim = CFG.carCarMu * C.j;
+        const tj = clamp(C.jt - vt / C.td, -lim, lim), dt2 = tj - C.jt;
+        C.jt = tj;
+        if (dt2) { cImp(a, -C.tx * dt2, -C.ty * dt2, -C.tz * dt2, C.ax, C.ay, C.az); cImp(b, C.tx * dt2, C.ty * dt2, C.tz * dt2, C.bx, C.by, C.bz); }
+      }
+      const pc = pen * CFG.worldSplit / 2;
       a.p.x -= nx * pc; a.p.y -= ny * pc; a.p.z -= nz * pc; b.p.x += nx * pc; b.p.y += ny * pc; b.p.z += nz * pc;
     }
   }
 
   function carBall(W, c) {
-    const B = W.ball, cf = c.cfg, H = cf.h, O = cf.o, p = c.p, f = c.f, l = c.l, u = c.u;
+    const B = W.ball, cf = c.cfg, H = cf.hc, O = cf.o, M = CFG.boxMargin, p = c.p, f = c.f, l = c.l, u = c.u;
+    c.hit = false; c.tf = 0;
     const hx = p.x + f.x * O[0] + u.x * O[2], hy = p.y + f.y * O[0] + u.y * O[2], hz = p.z + f.z * O[0] + u.z * O[2];
     const rx = B.p.x - hx, ry = B.p.y - hy, rz = B.p.z - hz;
     if (rx * rx + ry * ry + rz * rz > 250 * 250) { c.touch = false; return; }
     const lx = rx * f.x + ry * f.y + rz * f.z, ly = rx * l.x + ry * l.y + rz * l.z, lz = rx * u.x + ry * u.y + rz * u.z;
     const qx = clamp(lx, -H[0], H[0]), qy = clamp(ly, -H[1], H[1]), qz = clamp(lz, -H[2], H[2]);
-    let cx = hx + f.x * qx + l.x * qy + u.x * qz, cy = hy + f.y * qx + l.y * qy + u.y * qz, cz = hz + f.z * qx + l.z * qy + u.z * qz;
+    const cx = hx + f.x * qx + l.x * qy + u.x * qz, cy = hy + f.y * qx + l.y * qy + u.y * qz, cz = hz + f.z * qx + l.z * qy + u.z * qz;
     let nx = B.p.x - cx, ny = B.p.y - cy, nz = B.p.z - cz, pen;
     const dist = Math.sqrt(nx * nx + ny * ny + nz * nz);
-    if (dist >= BR) { c.touch = false; return; }
+    if (dist - M >= BR + cf.gap) { c.touch = false; return; }
     if (dist < 1e-4) {
       const ex = H[0] - Math.abs(lx), ey = H[1] - Math.abs(ly), ez = H[2] - Math.abs(lz), A = ex < ey && ex < ez ? f : ey < ez ? l : u, s = (A === f ? lx : A === l ? ly : lz) < 0 ? -1 : 1;
-      nx = A.x * s; ny = A.y * s; nz = A.z * s; pen = BR + Math.min(ex, ey, ez);
-    } else { nx /= dist; ny /= dist; nz /= dist; pen = BR - dist; }
-    const rvx = B.v.x - c.v.x, rvy = B.v.y - c.v.y, rvz = B.v.z - c.v.z, rs = Math.min(Math.sqrt(rvx * rvx + rvy * rvy + rvz * rvz), 4600);
-    const fresh = !c.touch, xi = rs > 0 && (fresh || W.tick > c.xiT + 1 || c.xiT > W.tick);
-    let ex = 0, ey = 0, ez = 0;
-    if (xi) {
-      c.xiT = W.tick;
+      nx = A.x * s; ny = A.y * s; nz = A.z * s; pen = BR + M + Math.min(ex, ey, ez);
+    } else { nx /= dist; ny /= dist; nz /= dist; pen = BR + M - dist; }
+    const v0 = c.v0, b0 = B.v0, rvx = b0.x - v0.x, rvy = b0.y - v0.y, rvz = b0.z - v0.z, rs = Math.min(Math.sqrt(rvx * rvx + rvy * rvy + rvz * rvz), 4600);
+    const fresh = !c.touch;
+    if (rs > 0 && (fresh || W.tick > c.xiT + 1 || c.xiT > W.tick)) {
+      c.xiT = W.tick; c.hit = true;
       let dx = B.p.x - p.x, dy = B.p.y - p.y, dz = (B.p.z - p.z) * 0.35;
       let dl = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
       dx /= dl; dy /= dl; dz /= dl;
@@ -656,39 +721,39 @@
       dx -= f.x * fd; dy -= f.y * fd; dz -= f.z * fd;
       dl = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
       const k = rs * curve(CFG.hit, rs) / dl;
-      ex = dx * k; ey = dy * k; ez = dz * k;
+      vset(c.hx, dx * k, dy * k, dz * k);
     }
     const rcx = cx - p.x, rcy = cy - p.y, rcz = cz - p.z, w = c.w, bw = B.w, mb = CFG.ballMass;
-    let vx = B.v.x + BR * (ny * bw.z - nz * bw.y) - (c.v.x + w.y * rcz - w.z * rcy);
-    let vy = B.v.y + BR * (nz * bw.x - nx * bw.z) - (c.v.y + w.z * rcx - w.x * rcz);
-    let vz = B.v.z + BR * (nx * bw.y - ny * bw.x) - (c.v.z + w.x * rcy - w.y * rcx);
-    const vn = vx * nx + vy * ny + vz * nz;
+    const rel = o => vset(o, B.v.x + BR * (ny * bw.z - nz * bw.y) - (c.v.x + w.y * rcz - w.z * rcy), B.v.y + BR * (nz * bw.x - nx * bw.z) - (c.v.y + w.z * rcx - w.x * rcz), B.v.z + BR * (nx * bw.y - ny * bw.x) - (c.v.z + w.x * rcy - w.y * rcx));
+    rel(T1);
+    let vn = T1.x * nx + T1.y * ny + T1.z * nz;
     if (vn < 0) {
-      const jn = -vn / (1 / mb + cDen(c, rcx, rcy, rcz, nx, ny, nz));
-      vadd(B.v, { x: nx, y: ny, z: nz }, jn / mb);
-      cImp(c, -nx * jn, -ny * jn, -nz * jn, rcx, rcy, rcz);
-      vx = B.v.x + BR * (ny * bw.z - nz * bw.y) - (c.v.x + w.y * rcz - w.z * rcy);
-      vy = B.v.y + BR * (nz * bw.x - nx * bw.z) - (c.v.y + w.z * rcx - w.x * rcz);
-      vz = B.v.z + BR * (nx * bw.y - ny * bw.x) - (c.v.z + w.x * rcy - w.y * rcx);
-      const vn2 = vx * nx + vy * ny + vz * nz;
-      vx -= nx * vn2; vy -= ny * vn2; vz -= nz * vn2;
-      const tl = Math.sqrt(vx * vx + vy * vy + vz * vz);
-      if (tl > 1e-3) {
-        const tx = vx / tl, ty = vy / tl, tz = vz / tl, jt = Math.min(tl / (3.5 / mb + cDen(c, rcx, rcy, rcz, tx, ty, tz)), CFG.carBallMu * jn), s = 2.5 * jt / (mb * BR);
-        B.v.x -= tx * jt / mb; B.v.y -= ty * jt / mb; B.v.z -= tz * jt / mb;
-        bw.x += (ny * tz - nz * ty) * s; bw.y += (nz * tx - nx * tz) * s; bw.z += (nx * ty - ny * tx) * s;
-        cImp(c, tx * jt, ty * jt, tz * jt, rcx, rcy, rcz);
+      let tx = T1.x - nx * vn, ty = T1.y - ny * vn, tz = T1.z - nz * vn;
+      const tl = Math.sqrt(tx * tx + ty * ty + tz * tz), ft = tl > 1e-6;
+      if (ft) { tx /= tl; ty /= tl; tz /= tl; }
+      const dn = 1 / mb + cDen(c, rcx, rcy, rcz, nx, ny, nz), dt2 = ft ? 3.5 / mb + cDen(c, rcx, rcy, rcz, tx, ty, tz) : 1;
+      let jn = 0, jt = 0;
+      const app = (x, y, z, j, spin) => {
+        B.v.x += x * j / mb; B.v.y += y * j / mb; B.v.z += z * j / mb; cImp(c, -x * j, -y * j, -z * j, rcx, rcy, rcz);
+        if (spin) { const s = 2.5 * j / (mb * BR); bw.x -= (ny * z - nz * y) * s; bw.y -= (nz * x - nx * z) * s; bw.z -= (nx * y - ny * x) * s; }
+      };
+      for (let it = 0; it < CFG.solverIt; it++) {
+        rel(T1); vn = T1.x * nx + T1.y * ny + T1.z * nz;
+        const nj = Math.max(0, jn - vn / dn); app(nx, ny, nz, nj - jn, false); jn = nj;
+        if (!ft) continue;
+        rel(T1);
+        const vt = T1.x * tx + T1.y * ty + T1.z * tz, lim = CFG.carBallMu * jn, tj = clamp(jt - vt / dt2, -lim, lim);
+        app(tx, ty, tz, tj - jt, true); jt = tj;
       }
     }
-    B.p.x += nx * pen * 6 / 7; B.p.y += ny * pen * 6 / 7; B.p.z += nz * pen * 6 / 7;
-    p.x -= nx * pen / 7; p.y -= ny * pen / 7; p.z -= nz * pen / 7;
+    if (pen > 0) { const k = pen * CFG.worldSplit; B.p.x += nx * k * 6 / 7; B.p.y += ny * k * 6 / 7; B.p.z += nz * k * 6 / 7; p.x -= nx * k / 7; p.y -= ny * k / 7; p.z -= nz * k / 7; }
     c.touch = true;
-    if (xi) {
-      B.v.x += ex; B.v.y += ey; B.v.z += ez;
-      const sp = vlen(B.v);
-      if (sp > CFG.ballMax) vscale(B.v, CFG.ballMax / sp);
-    }
-    if (fresh) onTouch(W, c, rs);
+    if (fresh) c.tf = rs || 1e-9;
+  }
+  function carBallHit(W, c) {
+    const B = W.ball;
+    if (c.hit) { vadd(B.v, c.hx, 1); const sp = vlen(B.v); if (sp > CFG.ballMax) vscale(B.v, CFG.ballMax / sp); c.hit = false; }
+    if (c.tf) { onTouch(W, c, c.tf); c.tf = 0; }
   }
 
 
@@ -749,7 +814,7 @@
       placeCar(c, sp[0] * s, sp[1] * s, sp[2] * Math.PI + (c.team ? Math.PI : 0));
     }
     const B = W.ball;
-    vset(B.p, 0, 0, CFG.ballRest); vset(B.v, 0, 0, 0); vset(B.w, 0, 0, 0); B.hidden = false;
+    vset(B.p, 0, 0, CFG.ballRest); vset(B.v, 0, 0, 0); vset(B.w, 0, 0, 0); B.hidden = false; B.scored = false;
     for (const pd of W.pads) pd.t = 0;
     for (let t = 0; t < 2; t++) {
       const s = t ? -1 : 1;
@@ -769,18 +834,18 @@
   }
   function kickoff(W) {
     kickoffPlace(W);
-    W.state = 'countdown'; W.stateT = 0; W.kickoff = true; W.clockOn = false; W.cd = 3; W.touchHist = []; W.lastTouch = null; W.pend = null;
+    W.state = 'countdown'; W.stateT = 0; W.kickoff = true; W.clockOn = false; W.cd = CFG.rules.countdown; W.touchHist = []; W.lastTouch = null; W.pend = null;
     W.threat[0] = W.threat[1] = Infinity; W.first[0] = W.first[1] = null;
-    W.events.push({ type: 'countdown', n: 3 });
+    W.events.push({ type: 'countdown', n: CFG.rules.countdown });
   }
   function worldStep(W, dt) {
     W.time += dt; W.stateT += dt; W.tick++;
     if (W.state === 'menu') return;
     const cd = W.state === 'countdown';
     if (cd) {
-      const n = 3 - Math.floor(W.stateT);
+      const n = CFG.rules.countdown - Math.floor(W.stateT);
       if (n !== W.cd && n > 0) { W.cd = n; W.events.push({ type: 'countdown', n }); }
-      if (W.stateT >= 3) { W.state = 'play'; W.stateT = 0; W.events.push({ type: 'go' }); if (!W.pr) predict(W); }
+      if (W.stateT >= CFG.rules.countdown) { W.state = 'play'; W.stateT = 0; W.events.push({ type: 'go' }); if (!W.pr) predict(W); }
     } else {
       if (!W.pr) {
         W.predT -= dt;
@@ -792,14 +857,15 @@
       if (c.demoT > 0) { c.demoT -= dt; if (c.demoT <= 0) { if (W.pr) c.demoT = 1e-3; else respawn(W, c); } continue; }
       carPre(W, c, dt);
     }
-    for (const c of W.cars) if (c.demoT <= 0) { carMove(c, dt); carWorld(W, c); }
-    const B = W.ball;
-    if (!B.hidden) {
-      if (!cd) { const imp = ballStep(B, dt); if (imp > 180) W.events.push({ type: 'bounce', v: imp }); }
-      W.flip = !W.flip;
-      for (let i = 0, n = W.cars.length; i < n; i++) { const c = W.cars[W.flip ? n - 1 - i : i]; if (c.demoT <= 0) carBall(W, c); }
-    }
+    const B = W.ball, live = !B.hidden && !cd;
+    if (live) { const imp = ballPre(B, dt); if (imp > 180) W.events.push({ type: 'bounce', v: imp }); }
+    for (const c of W.cars) if (c.demoT <= 0) carWorld(W, c, dt);
+    W.flip = !W.flip;
+    if (!B.hidden) for (let i = 0, n = W.cars.length; i < n; i++) { const c = W.cars[W.flip ? n - 1 - i : i]; if (c.demoT <= 0) carBall(W, c); }
     carCar(W);
+    for (const c of W.cars) if (c.demoT <= 0) carMove(c, dt);
+    if (live) ballMove(B, dt);
+    if (!B.hidden) for (const c of W.cars) if (c.demoT <= 0) carBallHit(W, c);
     for (const c of W.cars) if (c.demoT <= 0) carPost(W, c, dt);
     if (!cd) for (const pd of W.pads) {
       if (pd.t > 0) { pd.t -= dt; continue; }
@@ -815,7 +881,11 @@
     }
     if (W.pr) return;
     if (W.state === 'play') playRules(W, dt);
-    else if (W.state === 'goal' && W.stateT > 3) { if (W.ot || W.timeUp || W.clock <= 0) endMatch(W); else kickoff(W); }
+    else if (W.state === 'goal' && W.stateT > CFG.rules.goalT + 1e-6) {
+      const out = W.timeUp || W.clock <= 0;
+      if (W.ot || (out && W.score[0] !== W.score[1])) endMatch(W);
+      else { if (out) { W.ot = true; W.otT = 0; W.timeUp = false; W.events.push({ type: 'overtime' }); } kickoff(W); }
+    }
   }
   function playRules(W, dt) {
     if (W.mode === 'training') { trainRules(W, dt); return; }
@@ -863,13 +933,8 @@
       if (!scorerShot) { scorer.st.shots++; scorer.st.score += CFG.pts.shot; }
     }
     if (assist) { assist.st.assists++; assist.st.score += CFG.pts.assist; }
-    for (const c of W.cars) {
-      if (c.demoT > 0) continue;
-      const dx = c.p.x - B.p.x, dy = c.p.y - B.p.y, dz = c.p.z - B.p.z, d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      if (d < 1600) { const s = (1 - d / 1600) * 2400 / (d || 1); c.vc.x += dx * s; c.vc.y += dy * s; c.vc.z += (1 - d / 1600) * 700; }
-    }
     W.events.push({ type: 'goal', team, scorer, assist, speed: vlen(B.v), p: v3(B.p.x, B.p.y, B.p.z) });
-    W.state = 'goal'; W.stateT = 0; B.hidden = true; vset(B.v, 0, 0, 0); W.pend = null;
+    W.state = 'goal'; W.stateT = 0; B.scored = true; W.pend = null;
   }
   function endMatch(W) {
     W.state = 'end'; W.stateT = 0; W.ball.hidden = true;

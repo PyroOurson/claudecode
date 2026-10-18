@@ -1,86 +1,101 @@
-# car-soccer.com vs our 01_sim (phys agent)
+# Gameplay layer rebuilt to match car-soccer.com (18 Oct 2026)
 
-## What car-soccer.com is
-- Client bundles saved in `rl/agents/phys/cs/` (index.html, main/sim/worker/bots bundles, `*_glue.js` = bundles with the embedded WASM stripped). Embedded WASM modules extracted to `rl/agents/phys/wasm/`.
-- `main_0.wasm` (598 KB) is **RocketSim** (ZealanL, MIT licence shipped as `rocketsim.txt`) compiled with Emscripten, i.e. Bullet + RocketSim car/ball code, loading the real Rocket League Soccar collision meshes (`/assets/arena/collision/mesh_0..15.cmf`, saved in `cs/collision/`). The same module also contains their camera kernel (`_v0.._v6`).
-- `sim--*.js` + `sim_0.wasm` is a separate 2D side-view mini-mode, not the 3D game.
-- I ran `main_0.wasm` headless in Node with my own minimal imports (no site JS executed): `rl/agents/phys/tools/cs.js`, side-by-side harness `tools/dual.js`, experiments `tools/e*.js`, arena probes `tools/probe2.js`, camera probe `tools/cam.js`. All numbers below are measured, 120 Hz, units uu (1 uu = 1 cm), +z up.
-- Coordinate note: RocketSim is left-handed (+y is the car's right); our sim is mirrored (+y is the car's left). Steer/yaw/roll signs are mirrored, magnitudes compared.
+car-soccer.com runs RocketSim (Bullet physics) compiled to WASM, plus its own camera kernel in the same WASM, and plain JS for input, rules and replays. I pulled the live bundles (`main-C-oNKXJ9.js`, WASM 598,012 bytes, unchanged since the earlier pass), read the JS, decompiled the camera functions, read their car configs out of WASM memory, and ran their physics and camera headless in Node next to ours with identical inputs (tools in `rl/tools/carsoccer/`). Nothing of theirs is shipped: our sim stays our own JS, the camera is a JS port of their algorithm.
 
-## Deliberate changes car-soccer made to RocketSim (all copied)
-- Arena warped: side walls x = +-4144 (RL 4096), back walls y = +-5056 (RL 5120), ceiling 2096 (RL 2044/2048). Their WASM applies the same warp as their stadium model: x += 48 for |x| > 1712, y -= 64 for |y| > 1024, z += 48 above z 1152. Corner bevel becomes x + y = 8048 (RL 8064). Goal (|x| < 1200) is not warped; goal back at 5936.
-- Ball radius 91.75 (RL 91.25), rest height 93.65 (RL 93.15).
-- Goal scored when |ball.y| > 5060.25 + 91.75 = 5152 (RL 5124.25 + 91.25).
-- Hitboxes: Octane 121 x 86.3 x 38.8, offset (13.9, 0, 20.825); "flat" body = Dominus 131 x 85.4 x 33.95, offset (9.02, 0, 15.825). They only have these two physics bodies (Fennec = Octane hitbox).
-- Boost pads, kickoff spawns and demo respawns use slightly scaled RL positions (x * 1.0007, y * 0.9994), e.g. big pads (+-3586.51, 0), (+-3074.15, +-4093.54); kickoff (+-2049.43, -2558.46), (+-256.18, -3837.70), (0, -4605.20); respawn (+-2305.61 / +-2689.88, -4605.20) at z 36.
+How each value was obtained:
+- **code** = read from their JS
+- **wasm** = read from the decompiled WASM
+- **mem** = read from WASM memory at runtime
+- **meas** = measured by running their physics
 
-## Side-by-side (theirs = car-soccer measured, ours = 01_sim after this pass, RL = real game / RocketSim)
+## 1. Audit: where our values live
 
-| item | theirs | ours now | ours before | RL |
-|---|---|---|---|---|
-| tick | 120 Hz | 120 | 120 | 120 |
-| gravity | -650 | -650 | -650 | -650 |
-| side wall x | 4144 | 4144 | 4096 | 4096 |
-| back wall y | 5056 | 5056 | 5120 | 5120 |
-| ceiling z | 2096 | 2096 | 2044 | 2044 |
-| corner bevel x+y | 8048 | 8048 | 8064 | 8064 |
-| floor/side-wall fillet | r 265, faceted (8 flat facets per 90 deg) | r 256, 8 facets | r 300 smooth | same mesh as theirs (unwarped) |
-| floor/back-wall fillet | r 160 | r 160 (blends to 256 near the corners) | r 300 | 160 |
-| floor/corner-bevel fillet | r 256 | r 256 | 300 | 256 |
-| wall/ceiling fillet | r ~490 | r 256 (kept: visual arena uses RR) | 300 | ~490 |
-| vertical corner rounding (bevel to wall) | r ~900 | r 256 (kept: visual arena uses RR) | 300 | ~900 |
-| goal half width / height / depth | 896 / 640 / 880 (back y 5936) | 896 / 640 / 880 | 892.755 / 642.775 / 880 | 892.755 / 642.775 / 880 |
-| goal inner edge rounding | ~96, back r ~225, roof slopes 640 -> ~480 behind y 5280 | 100, flat roof (only matters after the goal line) | 110 | as theirs |
-| goal line (ball centre) | 5152 | 5152 | 5215.5 | 5215.5 |
-| ball radius / rest z | 91.75 / 93.65 | 91.75 / 93.65 | 91.25 / 93.15 | 91.25 / 93.15 |
-| ball drop 1000: bounce peaks | 403, 201, 131, 106 | 400, 198, 130, 106 | 399, 198, 130, 106 | |
-| ball roll 1000: speed at 1/2/5 s | 746 / 549 / 514 | 746 / 549 / 514 | 746 / 546 / 511 | |
-| ball max speed / max spin | 6000 / 6 rad/s | 6000 / 6 | same | same |
-| car rest height | 17.05 (Dominus 17.09) | 17.06 (17.10) | 17.03 | 17.0 |
-| throttle 0->1000 / max | 1.00 s / 1410 | 1.00 s / 1410 | same | same |
-| boost 0->2200 (supersonic) / 2300 | 1.32 s / ~1.41 s | 1.32 / 1.41 | same | same |
-| boost use | 33.3/s | 33.3/s | same | same |
-| coast 1400->0 | 2.67 s | 2.65 s | same | 525 uu/s^2 |
-| brake 1400->0 | 0.33 s, 188 uu | 0.33 s, 180 uu | same | 3500 uu/s^2 |
-| turn radius at 1000 / 2300 (full lock) | 433 / 1172 | 430 / 1162 | same | |
-| powerslide radius at 1000 | 105 | 106 | same | |
-| jump: tap / held 0.2 s / double | 72 / 215 / 446 uu | 72 / 215 / 446 | 72 / 223 (one extra hold tick) / 446 | same |
-| front flip at 1000: horizontal speed | 1394.7 | 1394.7 | same | |
-| flip rotation (car pitch after 0.25 s) | -59 deg | -59 deg | -45 deg (angular clamp applied before rotating) | |
-| air control pitch/yaw/roll accel, damping | identical | identical | same | |
-| ball hit at 1000 / 2300 (ball speed after) | 1537 / 3010 | 1534 / 3019 | same | |
-| car-car side bump at 1000 (victim / attacker after) | 1467 / 490 | 1458 / 486 | 1121 / 635, victim spun 5.5 rad/s | |
-| demo | supersonic, 3 s respawn at z 36; attacker loses ~55% speed (RocketSim artefact) | supersonic, 3 s, z 36, attacker keeps speed (real RL behaviour, not copied) | same | |
-| drive up side wall at 1400: speed when vertical | 1188 | 1185 | 1297 | |
-| boost pads | big 100 / 10 s / r 208, small 12 / 4 s / r 144, pickup below z ~160 | identical | same | same |
-| match rules | 5:00, 3 s countdown, clock starts on first touch, 3 s goal, OT when tied at 0 with ball on ground | same | same | same |
+| Area | Where |
+|---|---|
+| Physics, ball, arena, pads, spawns, rules, camera + input tuning | `seg/01_sim.js` → `CFG` (the one config module) and `PHYS` (the two physics bodies) |
+| Body list per garage car (visual only + which physics body) | `seg/01_sim.js` `BODIES`, `seg/03_style.js` (extra bodies) |
+| Arena visuals | `seg/06_scene.js`, reads `CFG` (unchanged) |
+| Camera | `seg/10b_cscam.js` (new kernel), `seg/10_fxa.js` `cameraUpdate` |
+| Replay timing | `seg/13_fxvis.js`, main loop gate in `seg/15_fxloop.js` |
+| Input bindings and response | `seg/05_state.js` `uiACT` (defaults), `seg/09_ui.js` `uiPadRead` / `readInput` |
 
-## What I changed in 01_sim
-- CFG arena (X 4144, Y 5056, H 2096, corner 8048, ramp 256, goalW 896, goalH 640, goalR 100, postK 24, goalLine 5060.25), ball (91.75 / 93.65), pads, spawns, respawns, padZ (73.05 / 70.05).
-- Arena SDF: floor and ceiling fillets are now 8 flat facets per quarter circle like the RL mesh (this is what makes the car lose the right amount of speed going up a wall); back-wall floor fillet radius 160 (`CFG.rampBack`, blended over `CFG.rampBlend`), side/corner 256.
-- BODIES: octane / fennec (Octane hitbox) / dominus with car-soccer hitboxes; wheel connection height is now its own field `cz` (rest heights match theirs). `BODY_IDS` = octane, fennec, dominus; unknown ids fall back to octane in `makeCar`.
-- Car rotation is integrated with the unclamped angular velocity and clamped afterwards (Bullet order) -> flips rotate as fast as theirs.
-- Jump hold: exactly 24 ticks of hold force (float fix).
-- Car-car contacts: impulse lever arm now clamped to the overlap patch (Bullet's 4-point manifold behaviour) -> correct momentum transfer, no huge spins.
-- Bot kickoff boost-pad lookup no longer depends on exact pad coordinates; bots are stepped in alternating order each tick (removes a small first-car bias).
-- Flip vertical damping lasts exactly to 0.65 s (float fix).
+## 2. Extracted values
 
-## Bot check after the changes (headless, 5:00 matches, `tools/og2.js`, `tools/match.js`)
-- All-Star vs Pro: 1v1 50-25 (9-3 wins), 2v2 54-27 (8-4), 3v3 30-9 (8-2). Pro vs Rookie 2v2 73-2 (8-0). No bot stuck > 2 s. 3v3 runs ~65x real time in Node.
-- Pro vs Pro 1v1 over 96 seeds: 5.2 goals per match (was 8.1), own goals 5% of goals.
+| Name | Value | How |
+|---|---|---|
+| Tick | 120 Hz fixed, max 12 steps per frame | code |
+| Arena | RL 4096 × 5120 × 2048 warped by +48 width (band 1200–1712), −64 length (beyond ±1024), +48 height (band 896–1152) → walls x ±4144, back walls y ±5056, ceiling 2096, corner bevel x+y = 8048 | code |
+| Fillets | floor–side 256, floor–back 160, floor–corner 256 (faceted), wall–ceiling ~490, vertical corners ~900 | code (predictor) + earlier meas |
+| Goal | mouth 892.755 × 642.775 (inside the unwarped band), depth 880 (back at y 5936), scored when \|ball y\| > 5060.25 + 91.75 = 5152 | code + meas |
+| Ball | radius 91.75, rest z 93.65, max speed 6000, max spin 6, drag 0.03 (applied before gravity), restitution 0.6 using the pre-gravity normal speed, no bounce below 10 uu/s, friction 0.35 | mem (radius), meas (rest) |
+| Ball–surface contact | contact inside 1.915 uu of a surface, solved from the start-of-tick position, penetration pushed out 0.8× (position only) | meas |
+| Gravity | −650 | meas |
+| Physics bodies | only two: **default** 121 × 86.3 × 38.8 @ (13.9, 0, 20.825), **flat** 131 × 85.4 × 33.95 @ (9.02, 0, 15.825) | mem |
+| Wheels (default) | front (51.5208, ±25.7003) r 12.53 rest 38.835, back (−33.9722, ±29.3003) r 15.03 rest 37.135, connection z 20.825 | mem |
+| Wheels (flat) | front (50.6065, ±30.91) r 12.03 rest 34.035, back (−35.0165, ±32.81) r 13.53 rest 33.935, z 15.825 | mem |
+| Car rest / spawn height | spawn z 17.02, rests at 17.052 (flat 17.094) | mem, meas |
+| Wheel command latency | engine, brake and steer use the command built on the previous tick (input, speed, handbrake level, tyre-slip friction factors); boost, jump, air control are immediate | meas |
+| Car–ball contact | found from start-of-tick poses inside 1.855 uu (default) / 1.615 uu (flat), box edges rounded by 2 uu, no restitution, friction 2.0, 10 solver passes; the extra hit impulse is added after integration | meas |
+| Car–car | box–box contact up to 4 points, restitution 0.1, friction 0.09; a demo still solves the contact, so the attacker bounces off (2300 → ~1088) | meas |
+| Car body–arena | restitution 0.3, friction 0.3, same contact rules as above | meas |
+| Throttle, boost, jump, flip, air control, supersonic, bump curves | identical to our existing RocketSim values (confirmed: see table 4) | meas |
+| Boost pads | big 100 / 10 s / r 208, small 12 / 4 s / r 144, pickup below z ≈ 168; positions RL × (1.0007, 0.9994), e.g. big (±3586.51, 0), (±3074.15, ±4093.54) | mem, meas |
+| Kickoff spawns | (±2049.43, −2558.46), (±256.18, −3837.70), (0, −4605.20); respawns (±2305.61 / ±2689.88, −4605.20) at z 36; kickoff boost 33.3 | mem |
+| Match | 5:00, 3 s countdown, clock starts on the first touch after kickoff, at 0:00 play continues until the ball touches the ground; tied → unlimited overtime, next goal wins, overtime clock counts up | code |
+| Goal sequence | 3 s celebration with physics running (ball keeps flying into the net, no push on cars), then replay, then kickoff | code + meas |
+| Replay | starts 2 s before the scoring team's last touch (or 4 s before the goal, whichever is earlier), at most 10 s back; 0.25× slow motion from 0.25 s before to 0.1 s after that touch, and in the last 0.25 s if a defender was within 200 of the ball; then the 3 s celebration replays; skippable | code |
+| Camera defaults | FOV 110, distance 270, height 100, angle −3°, stiffness 0.35, swivel 4, transition 1, invert swivel on, shake off, ball cam on; slider ranges identical to ours | code |
+| Camera kernel | follow point smoothed at 6.32/s (max lag 100, 0.001 in ball cam), height offset along the car's up when grounded (2.03/s), distance target = distance + (1 − stiffness) × (velocity·view) × 0.05 (≥ −50) smoothed at 4.14/s; ground mode follows the surface normal (10.46/s) with two rotation smoothers (13.39 and 2.03 × (1 + 2.427 × stiffness)) mixed by wall steepness; air mode turns toward the pivot at min(1, (35 − 25 × speed/2300)/60) per frame; ground/air blend +2/s, −4/s; ball cam 8.59/s, pitch = angle + 0.8 × (elevation − angle) above 4000 units; FOV ramps to +5 × speed/2300 at 25°/s (+10 at 40°/s supersonic); roll −0.1 × car roll; vertical FOV from 16:9 when the screen is portrait | wasm |
+| Swivel | look yaw ±130°, pitch ±60° (invert option), 3× faster when returning, pitch clamp ±85° | wasm |
+| Mode switch | old and new views eased over 0.5 / transition speed s with a square curve | wasm |
+| Kickoff camera | kernel fully reset at every kickoff | code |
+| Replay camera ("cinematic", their default) | focus = ball + velocity × (0.3, 0.3, 0.1 vertical) × (0.25 in slow motion); while a touch is still ahead (up to the scoring team's last touch) it is pulled toward that car, also velocity-led, by 0.5 × (1 − distance/1800), height 35% of the way from car to ball; focus smoothed at lerp(0.1, 4, time since the focus car changed, in replay time, capped at 1)/s; after the goal it drifts to centre field (0, 0, 500) at 1/s. Camera on the line from the focus to a base point (4000·m², goal y − side × 9000, 1000), m = clamp(distance of focus from goal line / 9000), at most 1800 + 1000 × slow-motion blend away; horizontal FOV 75 − 50 × blend, blend ramps 0↔1 over 1 s real time; up is +Z; reset when the replay starts | code |
+| Gamepad | per-axis deadzone 0.12 with linear rescale, linear response, triggers analog (powerslide / air roll on above 0.15), look stick deadzone 0.3, stick-as-button press at 0.5 | code |
+| Air roll logic | Air Roll Left/Right override free roll (roll = right − left, yaw kept); otherwise free roll turns steer into roll and zeroes yaw | code |
 
-## Camera (for qa, measured from their camera kernel)
-- Defaults: horizontal FOV 110, distance 270, height 100, angle -3 deg, stiffness 0.35, swivel speed 4, transition speed 1, invert swivel on, camera shake off, ball cam on by default.
-- At rest (car cam or ball cam with ball ahead): camera 269.6 behind the car origin and 114 above it (height 100 + ~14 pivot), pitch -3 deg.
-- Speed lag: horizontal distance grows with speed (about 0.0325 s x speed): 286 at 500, 315 at 1400, 344 at 2300.
-- FOV widens with speed: horizontal ~111 at 500, ~113 at 1400, ~120 when supersonic (vertical 78.7 / 80.8 / 88.5 at 16:9; base vertical 77.55).
-- Car cam: after an instant 90 deg yaw change the camera is at 82 deg after 0.1 s, settled by 0.2 s.
-- Ball cam toggle transition: 22 / 50 / 70 / 84 / 90 deg of a 90 deg swing at 0.1 / 0.2 / 0.3 / 0.4 / 0.5 s.
-- Vertical follow is soft in the air: when the car rises at 500 uu/s the camera height relative to the car goes 89, 68, 42, 17, -7 ... per 0.1 s (lags ~0.4 s).
-- Ball cam with the ball high above (300 ahead, 800 up): camera drops to about car height, 170 behind, pitched up ~51 deg.
-- `CFG.cam` now holds { fov 110, dist 270, height 100, angle -3, stiff 0.35, swivel 4, trans 1 } (not read by other segments at the moment).
+## 3. Changelog
 
-## Visual follow-ups for whoever owns 06_scene
-- The visual arena already follows CFG.X/Y/H/corner/ramp and goal sizes (it reads RR/AX/AY/AC/GW/GH/GB).
-- Physics now uses a 160 radius for the floor-to-back-wall ramp (blending to 256 within ~400 uu of the corners), while the visual ramp uses RR = 256 everywhere: up to ~40 uu mismatch at the bottom of the back walls. If you rebuild that ramp, use radius `CFG.rampBack` along the back walls.
-- Real RL / car-soccer also has a ~490 radius wall-to-ceiling curve and ~900 radius vertical corners; physics keeps RR there so it matches the current visuals.
+- `CFG`: car-soccer arena, ball, pads, spawns, contact constants; new `camK`, `input`, `rules` blocks. `PHYS` holds the two physics bodies; every garage car maps to one by `ph` (its own wheel layout only places the visual model).
+- Tick order now follows Bullet: forces and all contacts (ball–arena, car–arena, car–ball, car–car) are solved from start-of-tick poses, then everything integrates, then the extra hit impulse and bumps apply.
+- Ball: drag before gravity, contact gap, pre-gravity restitution, 10 uu/s cutoff, 0.8 position correction.
+- Car–arena: contact gap, rounded box, restitution from pre-force velocity, 10-pass solve, split position correction.
+- Car–ball: per-body gap, rounded box, 10-pass normal + friction solve; extra impulse after integration from start-of-tick data.
+- Car–car: box–box contact manifold (up to 4 points), 10-pass solve, bumps measured on start-of-tick velocities; demo tick still solves the contact.
+- Wheels: one-tick command latency as above.
+- Goals: no explosion push; ball keeps simulating (drawn hidden as before). Fixed a bug where a goal that tied the game at 0:00 ended the match (orange won); it now goes to overtime.
+- Camera: new `seg/10b_cscam.js`; `cameraUpdate` uses it for the player car (menus, podium and spectator orbit unchanged). Old follow/demo camera removed.
+- Replay: their window, slow motion and aftermath; replays now also run in overtime / at 0:00.
+- Replay camera: `fxRpCam` (`seg/13_fxvis.js`) is now a port of their cinematic replay camera (bundle class `S0`, called as `Z.update(...)`; focus slot and slow motion from their replay recorder `Op`). Our three-shot replay camera is gone; the overlay/HUD is unchanged.
+- Input: PlayStation defaults, deadzone 0.12, trigger 0.15, look stick, L2 context rule, their air-roll logic, touchpad button readable. Keyboard defaults now theirs: left click boost, right click jump, Shift powerslide/air roll, Q/E air roll, Space ball cam, middle click rear view.
+- Controls help text updated to the new defaults.
+
+## 4. Verification (theirs vs ours, same inputs, 120 Hz)
+
+| Test | Theirs | Ours |
+|---|---|---|
+| Throttle 0→1000 / top speed | 1.000 s / 1410.1 | 1.000 s / 1410.1 |
+| Boost 0→1400 / 0→2200 / top | 0.792 / 1.592 s / 2300 | same |
+| Coast 1400→0, brake 1400→0 | 2.642 s, 0.408 s (284 uu) | same |
+| Turn radius at 500 / 1000 / 1400 / 2300 | 289.2 / 489.2 / 593.1 / 1173.0 | 289.3 / 489.2 / 593.0 / 1172.4 |
+| Powerslide yaw rate at 1000 | 2.993 rad/s | 2.990 |
+| Jump tap / held / double | 72.2 / 214.9 / 469.1 | 72.2 / 215.0 / 469.2 |
+| Front / side flip at 1000 | 1530.2 / 1197.7 | 1530.3 / 1197.7 |
+| Air pitch/yaw/roll response | identical to 3 decimals | |
+| Ball drop from 1000: bounce peaks | 402.8 / 201 / 131.1 / 106.2 | same |
+| Ball roll 1000: speed at 1 / 2 / 5 s | 745.9 / 548.6 / 513.9 | same |
+| Ball hit at 500 / 1000 / 1400 / 2300 | 1788.2 / 1900.4 / 1929.9 / 3052.4 | 1788.4 / 1900.7 / 1930.2 / 3052.9 |
+| Flat body hits | 1755.5 / 1840.8 / 1894.0 / 3002.7 | 1755.4 / 1840.7 / 1893.9 / 3002.7 |
+| Head-on bump at 1200 (victim) | 1464, up 263 | 1463, up 261 |
+| Angled bump 1700 @ 1.2 rad (victim, spin) | 1908 / 319, 3.9 | 1906 / 317, 3.9 |
+| Demo at 2300 (attacker after) | 1088 | 1088 |
+| Pad pickup radius / height edges | small 143–146, big 206–210, z < 168–170 | same |
+| Camera, 16 min of random play, 8 seeds | | worst 0.05 uu / one rotator unit |
+
+## 5. Known differences and open points
+
+- **Tumbling landings** (car hitting the floor nose-first or sideways): their first impact tick comes from Bullet adding contact points one per tick against the RL collision mesh; ours resolves all corners at once. Totals over the impact agree; front flip from standstill lands about 1.5% (default) / 3% (flat) differently. Exact parity would need Bullet plus Psyonix's collision mesh.
+- **Wall driving**: speed when vertical 1188.6 vs 1194.5 (−0.5%), from our analytic arena surface vs their mesh.
+- **Replay camera**: their default cinematic view is ported (verified in `build/harness.html`: slow-motion zoom from the base point, aftermath pull-back, FOV restored after). Their optional "Player view" (V key / button; plays back the scorer's recorded camera, slerped between poses stored every frame) is not ported: it needs a per-car camera kernel running live and a view toggle in the replay HUD.
+- **Bots**: theirs are neural-net bots; ours are unchanged.
+- **Online play**: not tested after the change; the host is authoritative, so new internal fields are not sent.
+- Not ported (outside the brief): their 2D side-view mode, retro mode, training ball controls, second map.

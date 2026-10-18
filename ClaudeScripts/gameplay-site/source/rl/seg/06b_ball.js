@@ -48,7 +48,7 @@
         const Q = new THREE.Quaternion(), ax = new THREE.Vector3();
         const arBallTick = (dt, t) => {
           const B = W.ball;
-          ballM.visible = ballGlow.visible = arBallSh.visible = !B.hidden;
+          ballM.visible = ballGlow.visible = arBallSh.visible = !B.hidden && !B.scored;
           { const z = Math.max(0, B.p.z - arBV), k = Math.max(0, 1 - z / 1800), sc = arBV * 2.6 * (1 + z / 1500); arBallSh.position.set(B.p.x, B.p.y, 3); arBallSh.scale.set(sc, sc, 1); arBallSh.material.opacity = 0.62 * k; arBallSh.visible = arBallSh.visible && k > 0 && Math.abs(B.p.x) < CFG.X - 200 && Math.abs(B.p.y) < CFG.Y + 800; }
           ballM.position.set(B.p.x, B.p.y, B.p.z); ballGlow.position.copy(ballM.position);
           const wl = vlen(B.w);

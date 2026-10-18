@@ -95,7 +95,7 @@
                 acc += dt;
                 let n = 0;
                 const host = online && online.role === 'host' && online.H && online.H.W === W && ui !== 'lobby';
-                while (acc >= STEP && n < 8) {
+                while (acc >= STEP && n < 8 && !fxRpWant()) {
                   if (ui === 'play') { const v = views[0]; if (v.car) { if (online && !(pz.hidden && uiOptEl.hidden)) uiNeutral(v.car.ctl); else readInput(v, v.car.ctl); } }
                   if (host) online.H.pre();
                   worldStep(W, STEP); acc -= STEP; n++;

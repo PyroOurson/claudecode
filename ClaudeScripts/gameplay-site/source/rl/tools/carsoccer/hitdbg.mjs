@@ -1,0 +1,4 @@
+import { csAdapter, ourAdapter } from './adapters.mjs';
+const sp = +(process.argv[2] || 1000), flat = process.argv[3] === 'flat', bz = +(process.argv[4] || 93.65), bx = +(process.argv[5] || 0);
+const r = [csAdapter(flat), ourAdapter(flat)].map(a => { a.reset({ car: { v: [0, sp, 0], p: [0, -600, null], boost: 100 }, ball: { p: [bx, 0, bz], v: [0, 0, bz > 94 ? -0.01 : 0] } }); a.ctl({}); const o = []; let hit = -1; for (let i = 0; i < 90; i++) { a.step(); const b = a.ball(), c = a.car(); if (hit < 0 && Math.hypot(...b.v) > 1) hit = i; if (hit >= 0 && i <= hit + 4) o.push(`${i} bv=${b.v.map(x => x.toFixed(1))} bw=${b.w.map(x => x.toFixed(2))} bp=${b.p.map(x => x.toFixed(1))} cv=${c.v.map(x => x.toFixed(1))} cw=${c.w.map(x => x.toFixed(2))}`); } return o; });
+for (let i = 0; i < Math.max(r[0].length, r[1].length); i++) console.log('T ' + (r[0][i] || '') + '\nO ' + (r[1][i] || ''));

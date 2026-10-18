@@ -88,20 +88,10 @@
         const fxPan = p => { const c = views[0].camera, e = c.matrixWorld.elements, dx = p.x - c.position.x, dy = p.y - c.position.y, dz = p.z - c.position.z, l = Math.hypot(dx, dy, dz) || 1; return clamp((dx * e[0] + dy * e[1] + dz * e[2]) / l * 0.7, -0.7, 0.7); };
 
 
-        const fxCS = views.map(() => ({ car: null, D: new THREE.Vector3(0, 1, 0), U: new THREE.Vector3(0, 0, 1), th: 0, k: 1, piv: new THREE.Vector3(), arm: 1, snap: true, dead: false, rs: -1, rp: new THREE.Vector3(), rl: new THREE.Vector3(), rgx: 1, fov0: 0, L: new THREE.Vector3(0, 1, 0) }));
-        const fxW = new THREE.Vector3(0, 0, 1), cU = new THREE.Vector3(), cD = new THREE.Vector3(), cT = new THREE.Vector3(), cA = new THREE.Vector3(), cB = new THREE.Vector3(), cP = new THREE.Vector3(), cL = new THREE.Vector3(), cF = new THREE.Vector3(), cR = new THREE.Vector3(), cn = v3(), fxPp = v3();
+        const fxCS = views.map(() => ({ car: null, kc: null, kin: null, snap: true, rs: -1, rp: new THREE.Vector3(), rsm: 0, rft: 0, rpf: null, fov0: 0 }));
+        const fxW = new THREE.Vector3(0, 0, 1), cU = new THREE.Vector3(), cT = new THREE.Vector3(), cA = new THREE.Vector3(), cP = new THREE.Vector3(), cL = new THREE.Vector3(), cR = new THREE.Vector3(), cn = v3(), fxPp = v3();
         const fxGoal = { on: false, p: new THREE.Vector3() };
         let fxNow = 0;
-        const fxRotTo = (o, U, t, frac) => { const c = clamp(o.dot(t), -1, 1); cR.crossVectors(o, t); o.applyAxisAngle(U, Math.atan2(cR.dot(U), c) * frac); return o; };
-        const fxProj = (o, x, y, z, U) => { o.set(x, y, z); o.addScaledVector(U, -o.dot(U)); const l = o.length(); if (l < 1e-3) return false; o.multiplyScalar(1 / l); return true; };
-        const fxRollTo = (S, Ut, frac) => {
-          const c = clamp(S.U.dot(Ut), -1, 1); if (c > 0.99999) return;
-          cR.crossVectors(S.U, Ut); let l = cR.length();
-          if (l < 1e-4) { cR.copy(S.D); l = 1; }
-          cR.multiplyScalar(1 / l); const a = Math.acos(c) * frac;
-          S.U.applyAxisAngle(cR, a).normalize(); S.D.applyAxisAngle(cR, a);
-          S.D.addScaledVector(S.U, -S.D.dot(S.U)); if (S.D.lengthSq() < 1e-6) S.D.set(1, 0, 0).addScaledVector(S.U, -S.U.x); S.D.normalize();
-        };
         const fxPush = (p, m) => { const d = sdf(p.x, p.y, p.z); if (d < m) { sdfN(p.x, p.y, p.z, cn); p.x += cn.x * (m - d); p.y += cn.y * (m - d); p.z += cn.z * (m - d); } };
         const fxApply = (v, S, P, L, U) => {
           const cmr = v.camera, sk = !saved.shake ? 0 : Math.min(1.5, shake + fxQuakeAt(P));
@@ -159,72 +149,20 @@
             cam.p.copy(cmr.position); S.snap = true;
             return;
           }
-          const B = W.ball, P = me.p;
-          if (S.car !== me) { S.car = me; S.snap = true; S.dead = false; }
-          if (me.demoT > 0) {
-            if (!S.dead) { S.dead = true; if (S.snap) { cam.p.set(P.x - me.f.x * 600, P.y - me.f.y * 600, P.z + 300); cam.look.set(me.f.x, me.f.y, -0.3).normalize(); S.snap = false; } }
-            cT.set(P.x - cam.p.x, P.y - cam.p.y, P.z + 30 - cam.p.z); const dl = cT.length() || 1; cT.multiplyScalar(1 / dl);
-            if (dl < 1050) cam.p.addScaledVector(cT, -(1050 - dl) * Math.min(1, dt * 1.6));
-            if (cam.p.z < 700) cam.p.z += dt * 90;
-            cam.look.lerp(cT, 1 - Math.exp(-5 * dt)).normalize();
-            fxRollTo(S, fxW, 1 - Math.exp(-3 * dt));
-            fxApply(v, S, cam.p, cam.look, S.U);
-            return;
-          }
-          if (S.dead) { S.dead = false; S.snap = true; }
-          if (S.piv.distanceToSquared(cP.set(P.x, P.y, P.z)) > 1e6) S.snap = true;
-          if (!!v.rear !== !!S.rear) { S.rear = !!v.rear; S.snap = true; }
-          const snap = S.snap, gl = W.state === 'goal' && fxGoal.on, tgt = gl ? fxGoal.p : B.hidden ? null : B.p;
-          const want = tgt && (gl || v.camBall) && !v.rear ? 1 : 0;
-          if (!!v.camBall !== !!S.wb) { S.wb = !!v.camBall; S.fast = 0.3; }
-          S.fast = Math.max(0, (S.fast || 0) - dt);
-          if (snap) S.k = want; else { const st = dt * (S.fast > 0 ? 9 : fxCam.trans * 2.2); S.k = S.k < want ? Math.min(want, S.k + st) : Math.max(want, S.k - st); }
-          const ks = S.k * S.k * (3 - 2 * S.k), air = !me.onGround, flip = air && me.dodgeT >= 0 && me.dodgeT < 0.9;
-          if (air) cU.copy(fxW); else cU.set(me.u.x, me.u.y, me.u.z);
-          cU.lerp(fxW, ks); if (cU.lengthSq() < 1e-4) cU.copy(fxW); cU.normalize();
-          if (snap) { S.U.copy(cU); if (!fxProj(S.D, me.f.x, me.f.y, me.f.z, S.U)) fxProj(S.D, 0, 1, 0, S.U); } else fxRollTo(S, cU, 1 - Math.exp(-4.5 * dt));
-          const U = S.U, okC = !flip && (!air || (me.u.z > -0.25 && Math.abs(me.f.z) < 0.92));
-          if (!(okC && fxProj(cD, me.f.x, me.f.y, me.f.z, U))) cD.copy(S.D);
-          let thC = 0, thB = 0;
-          if (air) thC = okC ? clamp(Math.asin(clamp(me.f.x * U.x + me.f.y * U.y + me.f.z * U.z, -1, 1)) * 0.55, -0.3, 0.45) : S.th * (1 - ks);
-          if (tgt) {
-            cT.set(tgt.x - P.x, tgt.y - P.y, tgt.z - P.z); const up = cT.dot(U); cT.addScaledVector(U, -up); const hz = cT.length();
-            if (hz > 40) cT.multiplyScalar(1 / hz); else cT.copy(S.D);
-            thB = clamp(Math.atan2(up, Math.max(hz, 1)) * 0.45, -0.3, 0.5);
-          } else cT.copy(cD);
-          cF.copy(cD); if (ks > 0) fxRotTo(cF, U, cT, ks);
-          const thT = thC + (thB - thC) * ks;
-          if (snap) { S.D.copy(cF); S.th = thT; S.piv.set(P.x, P.y, P.z); }
-          else {
-            const rate = S.fast > 0 ? 22 : fxCam.swivel * 1.35 + (9 - fxCam.swivel * 1.35) * ks;
-            fxRotTo(S.D, U, cF, 1 - Math.exp(-rate * dt));
-            S.th += (thT - S.th) * (1 - Math.exp(-(S.fast > 0 ? 22 : 6.5) * dt));
-            { const kp = 1 - Math.exp(-Math.min(400, 20 / Math.max(0.05, 1 - fxCam.stiff)) * dt), pz = S.piv.z; S.piv.lerp(cP.set(P.x, P.y, P.z), kp); if (air) S.piv.z = pz + (P.z - pz) * (1 - Math.exp(-2.2 * dt)); }
-          }
-          S.D.addScaledVector(U, -S.D.dot(U)).normalize();
-          const hgt = fxCam.height + 44, cs = Math.cos(S.th), sn = Math.sin(S.th), d0 = fxCam.dist, dist = sn > 0.01 ? clamp((hgt * cs - 20) / sn, 150, d0) : d0;
-          cF.copy(S.D).multiplyScalar(cs).addScaledVector(U, sn);
-          cB.copy(U).multiplyScalar(cs).addScaledVector(S.D, -sn);
-          cP.copy(S.piv).addScaledVector(cF, -dist).addScaledVector(cB, hgt);
-          const ang = fxCam.angle * 0.65 * Math.PI / 180;
-          cL.copy(cF).multiplyScalar(Math.cos(ang)).addScaledVector(cB, Math.sin(ang)).normalize();
-          if (ks > 0 && tgt) {
-            cT.set(tgt.x - cP.x, tgt.y - cP.y, tgt.z - cP.z).normalize();
-            const ev = clamp(cT.dot(U), -1, 1);
-            cA.set(P.x - cP.x, P.y - cP.y, P.z - cP.z).normalize();
-            const ec = Math.asin(clamp(cA.dot(U), -1, 1)), vh = cmr.fov * Math.PI / 360, e3 = clamp(Math.asin(ev) + ang, -1.1, ec + vh + 0.14);
-            cR.copy(cT).addScaledVector(U, -ev); if (cR.lengthSq() < 1e-6) cR.copy(S.D); cR.normalize();
-            cT.copy(cR).multiplyScalar(Math.cos(e3)).addScaledVector(U, Math.sin(e3));
-            cL.lerp(cT, ks).normalize();
-          }
-          if (snap) S.L.copy(cL); else S.L.lerp(cL, 1 - Math.exp(-14 * dt)).normalize();
-          cL.copy(S.L);
-          if (v.rear) { if (!fxProj(cR, me.f.x, me.f.y, me.f.z, U)) cR.copy(S.D); cP.set(P.x, P.y, P.z).addScaledVector(cR, fxCam.dist).addScaledVector(U, hgt); cL.copy(cR).multiplyScalar(-Math.cos(ang)).addScaledVector(U, Math.sin(ang)).normalize(); }
-          cam.p.copy(cP); cam.look.copy(cL); cam.up.copy(U); cam.dir.copy(S.D);
-          S.snap = false;
-          { const hf = fxCam.fov, asp = cmr.aspect, vf = asp < 1 ? 78 * hf / 110 : Math.min(98, 2 * Math.atan(Math.tan(hf * Math.PI / 360) / asp) * 180 / Math.PI);
-            if (Math.abs(cmr.fov - vf) > 0.02) { cmr.fov = vf; cmr.updateProjectionMatrix(); } }
-          fxApply(v, S, cP, cL, U);
+          const B = W.ball, P = me.p, l = me.l;
+          if (!S.kc) S.kc = makeCSCam(Object.assign({ fov: CFG.cam.fov, dist: CFG.cam.dist, height: CFG.cam.height, angle: CFG.cam.angle, stiff: CFG.cam.stiff, trans: CFG.cam.trans }, CFG.camK));
+          if (S.car !== me || S.snap) { S.car = me; S.snap = false; S.kc.reset(); }
+          const I = S.kin || (S.kin = { set: {}, car: [0, 0, 0], F: [0, 0, 0], U: [0, 0, 0], R: [0, 0, 0], ball: [0, 0, 0], normal: [0, 0, 0], vel: [0, 0, 0] });
+          const k3 = (o, x, y, z) => { o[0] = x; o[1] = z; o[2] = -y; return o; };
+          k3(I.car, P.x, P.y, P.z); k3(I.F, me.f.x, me.f.y, me.f.z); k3(I.U, me.u.x, me.u.y, me.u.z); k3(I.R, -l.x, -l.y, -l.z);
+          k3(I.ball, B.p.x, B.p.y, B.p.z); k3(I.normal, me.n.x, me.n.y, me.n.z); k3(I.vel, me.v.x, me.v.y, me.v.z);
+          Object.assign(I.set, { fov: fxCam.fov, dist: fxCam.dist, height: fxCam.height, angle: fxCam.angle, stiff: fxCam.stiff, trans: fxCam.trans, swivel: fxCam.swivel, invert: CFG.cam.invert });
+          I.dt = dt; I.ballCam = !!v.camBall && !B.hidden; I.onGround = me.onGround; I.sup = me.sup; I.aspect = cmr.aspect; I.lookX = v.lookX || 0; I.lookY = v.lookY || 0; I.rear = !!v.rear;
+          const o = S.kc.step(I);
+          cP.set(o.p[0], -o.p[2], o.p[1]); cL.set(o.dir[0], -o.dir[2], o.dir[1]); cU.set(o.up[0], -o.up[2], o.up[1]);
+          cam.p.copy(cP); cam.look.copy(cL); cam.up.copy(cU); cam.dir.set(cL.x, cL.y, 0); if (cam.dir.lengthSq() < 1e-8) cam.dir.set(me.f.x, me.f.y, 0); cam.dir.normalize();
+          if (Math.abs(cmr.fov - o.fov) > 0.001) { cmr.fov = o.fov; cmr.updateProjectionMatrix(); }
+          fxApply(v, S, cP, cL, cU);
         };
 
 
@@ -255,7 +193,7 @@
               if (rp) { crowdSwell(0.36, 3, 0.7); break; }
               fxHorn([155.56, 196, 233.08], 2.1, 0.07, 0.16); crowdSwell(0.5, 5.2, 0.85);
               shake = Math.max(shake, 0.25);
-              fxRp.goal = e; fxRp.goalT = W.time;
+              fxRp.goal = e; fxRp.goalT = W.time; fxRp.slowD = W.cars.some(c => c.team !== e.team && c.demoT <= 0 && Math.hypot(c.p.x - e.p.x, c.p.y - e.p.y, c.p.z - e.p.z) < CFG.rules.slowDef);
               const kmh = Math.round(e.speed * 0.036);
               banner('GOAL!', (e.scorer ? label(e.scorer) + (e.assist ? ' · assist ' + label(e.assist) : '') : 'Own goal') + ' · ' + kmh + ' km/h', TEAMCSS[e.team], 2.9);
               feedMsg(e.scorer ? `${nm(e.scorer)} scored!` : `<i class="p${e.team}">${esc(TEAMN[e.team])}</i> scored!`);
@@ -324,7 +262,7 @@
             }
             case 'countdown':
               fxGoal.on = false;
-              if (e.n === 3) { for (const S of fxCS) S.snap = true; for (const c of W.cars) fxSpawnFx(c); }
+              if (e.n === CFG.rules.countdown) { for (const S of fxCS) S.snap = true; for (const c of W.cars) fxSpawnFx(c); }
               banner(String(e.n), W.ot ? 'Overtime' : '', 'rgba(255,140,30,.85)', 1.05); fxBeep(false);
               break;
             case 'go': banner('GO!', '', 'rgba(255,170,60,.9)', 0.8); fxBeep(true); crowdSwell(0.12, 1.6, 0.35); fxRec.goT = W.time; break;

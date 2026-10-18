@@ -35,7 +35,7 @@
         const visuals = (dt, t) => { carVisuals(dt, t); worldVisuals(dt, t); fxVisuals(dt, t); };
 
 
-        const FX_SKIP = new Set(['id', 'team', 'slot', 'name', 'bot', 'body', 'st', 'bumpT', 'ai']), FX_RPAT = 2.6;
+        const FX_SKIP = new Set(['id', 'team', 'slot', 'name', 'bot', 'body', 'st', 'bumpT', 'ai']);
         const fxSch = o => {
           const s = [];
           for (const k in o) {
@@ -73,7 +73,7 @@
           l.x = u.y * f.z - u.z * f.y; l.y = u.z * f.x - u.x * f.z; l.z = u.x * f.y - u.y * f.x; n = Math.hypot(l.x, l.y, l.z) || 1; l.x /= n; l.y /= n; l.z /= n;
           u.x = f.y * l.z - f.z * l.y; u.y = f.z * l.x - f.x * l.z; u.z = f.x * l.y - f.y * l.x;
         };
-        const fxRec = { W: null, cs: [], bs: [], cw: 0, bw: 0, nc: 0, np: 0, st: 0, cap: 600, t: new Float64Array(600), d: null, head: 0, n: 0, last: -1, goT: -1e9, ev: [], pi: -1 };
+        const fxRec = { W: null, cs: [], bs: [], cw: 0, bw: 0, nc: 0, np: 0, st: 0, cap: 1100, t: new Float64Array(1100), d: null, head: 0, n: 0, last: -1, goT: -1e9, ev: [], pi: -1 };
         const fxRecInit = () => {
           const R2 = fxRec;
           R2.W = W; R2.cs = W.cars.length ? fxSch(W.cars[0]) : []; R2.bs = fxSch(W.ball); R2.cw = fxSz(R2.cs); R2.bw = fxSz(R2.bs); R2.nc = W.cars.length; R2.np = W.pads.length;
@@ -159,8 +159,11 @@
           Rp.done = Rp.goalT;
           if (R2.n < 20 || R2.W !== W) return;
           const cap = R2.cap, first = R2.t[(R2.head - R2.n + cap) % cap], last = R2.t[(R2.head - 1 + cap) % cap];
-          const t0 = Math.max(Rp.goalT - 5, first, R2.goT - 0.3), t1 = Math.min(Rp.goalT + 0.7, last);
+          const R = CFG.rules; let tt = -Infinity;
+          for (const h of W.touchHist) if (h.c.team === g.team && h.t <= Rp.goalT && h.t > tt) tt = h.t;
+          const t0 = Math.max(Rp.goalT - R.replayMax, first, R2.goT, Math.min(tt, Rp.goalT - R.replayPre) - R.replayLead), t1 = Math.min(Rp.goalT + R.aftermath, last);
           if (t1 - t0 < 1.2) return;
+          Rp.slowT = tt;
           Rp.on = true; Rp.show = false; Rp.W = W; Rp.ph = 0; Rp.pt = 0; Rp.t = t0; Rp.t0 = t0; Rp.t1 = t1; Rp.cur = 0; Rp.skip = false; Rp.scorer = g.scorer || W.lastTouch || null;
           Rp.ei = 0; while (Rp.ei < R2.ev.length && R2.ev[Rp.ei].t <= t0) Rp.ei++;
           const sc = g.scorer, who = sc ? sc.name : TEAMN[g.team];
@@ -172,18 +175,19 @@
           }
           fxWipe(); noise(0.5, 300, 0.07, 'bandpass', 0.8, 2600, 0, 0.2);
         };
+        const fxRpWant = () => !!fxRp.goal && fxRp.done !== fxRp.goalT && W.state === 'goal' && W.stateT >= CFG.rules.goalT - 1e-6;
         const fxRpCheck = () => {
-          const g = fxRp.goal;
-          if (!g || fxRp.done === fxRp.goalT || W.state !== 'goal' || W.stateT < FX_RPAT) return;
-          if (online || mode === 'online' || ui !== 'play' || W.ot || W.timeUp || W.clock <= 0 || fxRec.W !== W) { fxRp.done = fxRp.goalT; return; }
+          if (!fxRpWant()) return;
+          if (online || mode === 'online' || ui !== 'play' || fxRec.W !== W) { fxRp.done = fxRp.goalT; return; }
           fxRpBegin();
         };
+        const fxRpRate = t => { const R = CFG.rules, s = fxRp.slowT, g = fxRp.goalT; return (t > s - R.slowPre && t < s + R.slowPost) || (fxRp.slowD && t > g - R.slowPre && t < g) ? R.slowRate : 1; };
         const fxRpTick = dt => {
           const Rp = fxRp;
           Rp.pt += dt;
           if (Rp.ph === 0) { if (Rp.pt >= 0.3) { fxRpShow(true); Rp.ph = 1; Rp.pt = 0; fxRpApply(Rp.t); } return; }
           if (Rp.ph === 1) {
-            const a = Rp.t; Rp.t = Math.min(Rp.t1, Rp.t + dt);
+            const a = Rp.t; Rp.t = Math.min(Rp.t1, Rp.t + dt * fxRpRate(Rp.t));
             fxRpApply(Rp.t); fxRpEvents(a, Rp.t);
             if (Rp.t >= Rp.t1 || Rp.skip) { Rp.ph = 2; Rp.pt = 0; fxWipe(); noise(0.45, 2400, 0.06, 'bandpass', 0.8, 300, 0, 0.2); }
             return;
@@ -204,37 +208,29 @@
         api.on(window, 'keydown', e => { if (fxRp.on && !paused && !e.repeat && /^(Space|Enter|NumpadEnter|KeyO)$/.test(e.code)) { fxSkip(); for (const v of views) v.latch = false; } });
         api.on(wrap, 'pointerdown', e => { if (fxRp.on && !paused && !(e.target && e.target.closest && e.target.closest('.pb,.cb'))) { fxSkip(); for (const v of views) v.latch = false; } });
         const fxRpCam = (v, S, dt) => {
-          const cmr = v.camera, Rp = fxRp, B = W.ball, g = Rp.goal, gs = g && g.p.y > 0 ? 1 : -1, pre = Rp.goalT - Rp.t;
-          const bp = B.hidden ? fxGoal.p : B.p;
-          const sh = Rp.t1 - Rp.t0 > 3.2 && pre > 2.1 ? 0 : pre > 0.8 ? 1 : 2;
-          let snap = false;
-          if (sh !== S.rs) {
-            S.rs = sh; snap = true;
-            cmr.fov = (S.fov0 || cmr.fov) * (sh === 0 ? 0.9 : sh === 1 ? 0.85 : 0.74); cmr.updateProjectionMatrix();
-            S.rgx = bp.x > 0 ? -1 : 1;
-          }
-          if (sh === 0) {
-            const c = Rp.scorer && Rp.scorer.demoT <= 0 ? Rp.scorer : null;
-            if (c) {
-              cT.set(bp.x - c.p.x, bp.y - c.p.y, 0); if (cT.lengthSq() < 1) cT.set(c.f.x, c.f.y, 0); cT.normalize();
-              cP.set(c.p.x - cT.x * 420, c.p.y - cT.y * 420, c.p.z + 165);
-              cL.set(bp.x * 0.62 + c.p.x * 0.38, bp.y * 0.62 + c.p.y * 0.38, bp.z * 0.62 + c.p.z * 0.38 + 40);
-            } else {
-              cT.set(B.v.x, B.v.y, 0); if (cT.lengthSq() < 1e4) cT.set(0, gs, 0); cT.normalize();
-              cP.set(bp.x - cT.x * 950, bp.y - cT.y * 950, bp.z + 380); cL.copy(bp);
-            }
-          } else if (sh === 1) {
-            cT.set(-bp.x, gs * 5120 - bp.y, 0); if (cT.lengthSq() < 1e4) cT.set(0, gs, 0); cT.normalize();
-            cP.set(bp.x - cT.x * 680, bp.y - cT.y * 680, Math.max(170, bp.z * 0.5 + 150)); cL.set(bp.x + cT.x * 260, bp.y + cT.y * 260, bp.z);
-          } else {
-            const k = clamp((Rp.t - (Rp.goalT - 0.8)) / 1.6, 0, 1);
-            cP.set(S.rgx * (620 - 100 * k), gs * (5120 - 1350 + 150 * k), 150 + Math.max(0, bp.z - 400) * 0.25); cL.set(bp.x * 0.35, bp.y * 0.35 + gs * 5120 * 0.65, bp.z * 0.35 + 190);
-          }
-          fxPush(cP, 70);
-          if (snap) { S.rp.copy(cP); S.rl.copy(cL); }
-          else { S.rp.lerp(cP, 1 - Math.exp(-(sh === 0 ? 4 : sh === 1 ? 2.6 : 5) * dt)); S.rl.lerp(cL, 1 - Math.exp(-(sh === 0 ? 6 : 10) * dt)); }
-          cA.copy(S.rl).sub(S.rp); if (cA.lengthSq() < 1) cA.set(0, gs, 0); cA.normalize();
-          fxApply(v, S, S.rp, cA, fxW);
+          const cmr = v.camera, Rp = fxRp, B = W.ball, F = S.rp, u = Rp.goal && Rp.goal.p.y > 0 ? 1 : -1, am = Rp.t > Rp.goalT, d = Rp.ph === 1 && !am && fxRpRate(Rp.t) < 1 ? 0.25 : 1, rs = S.rs < 0;
+          if (rs) { S.rs = 0; S.rsm = S.rft = 0; S.rpf = null; }
+          S.rsm = clamp(S.rsm + (d < 1 ? dt : -dt), 0, 1);
+          let fc = null;
+          for (const h of W.touchHist) if (h.t >= Rp.t && h.t <= Rp.slowT) { fc = h.c; break; }
+          if (fc && fc !== S.rpf) S.rft = 0;
+          S.rpf = fc; S.rft += dt * d;
+          cP.set(B.p.x + B.v.x * 0.3 * d, B.p.y + B.v.y * 0.3 * d, B.p.z + B.v.z * 0.1 * d);
+          if (fc) {
+            cL.set(fc.p.x + fc.v.x * 0.3 * d, fc.p.y + fc.v.y * 0.3 * d, fc.p.z + fc.v.z * 0.1 * d);
+            const z = cL.z + (cP.z - cL.z) * 0.35;
+            cL.lerp(cP, (1 - clamp(cL.distanceTo(cP) / 1800, 0, 1)) * 0.5); cL.z = z;
+          } else cL.copy(cP);
+          if (rs) F.copy(cL);
+          if (am) F.lerp(cT.set(0, 0, 500), Math.min(dt, 1));
+          else F.lerp(cL, Math.min((0.1 + 3.9 * Math.min(S.rft, 1)) * dt, 1));
+          const gy = u * 5120, m = clamp((gy - F.y) * u / 9000, 0, 1);
+          cP.set(4000 * m * m, gy - u * 9000, 1000);
+          const r = Math.min(1800 + 1000 * S.rsm, cP.distanceTo(F));
+          cA.copy(F).sub(cP).normalize(); cP.copy(F).addScaledVector(cA, -r);
+          const fov = Math.min(120, 2 * Math.atan(Math.tan((75 - 50 * S.rsm) * Math.PI / 360) / cmr.aspect) * 180 / Math.PI);
+          if (cmr.fov !== fov) { cmr.fov = fov; cmr.updateProjectionMatrix(); }
+          fxApply(v, S, cP, cA, fxW);
         };
 
 

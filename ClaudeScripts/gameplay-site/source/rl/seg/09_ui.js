@@ -77,7 +77,7 @@
         const uiKL = {}, uiKn = c => uiKL[c] || c.replace(/^Key|^Digit/, '');
         try { if (navigator.keyboard && navigator.keyboard.getLayoutMap) navigator.keyboard.getLayoutMap().then(m => { if (dead) return; m.forEach((x, k) => { if (/^(Key[A-Z]|Digit\d|Minus|Equal|BracketLeft|BracketRight|Backslash|IntlBackslash|Semicolon|Quote|Backquote|Comma|Period|Slash)$/.test(k) && /^\S$/.test(x)) uiKL[k] = x.toUpperCase(); }); uiCbk(); if (!uiOptEl.hidden) uiOptRender(); }).catch(() => {}); } catch (e) {}
         const uiKN = { Space: 'Space Bar', ShiftLeft: 'Left Shift', ShiftRight: 'Right Shift', ControlLeft: 'Left Ctrl', ControlRight: 'Right Ctrl', AltLeft: 'Left Alt', AltRight: 'Right Alt', MetaLeft: 'Left Win', MetaRight: 'Right Win', Tab: 'Tab', Enter: 'Enter', NumpadEnter: 'Num Enter', Escape: 'Esc', Backspace: 'Backspace', CapsLock: 'Caps Lock', ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right', Mouse0: 'Left Mouse Button', Mouse1: 'Middle Mouse Button', Mouse2: 'Right Mouse Button', Mouse3: 'Thumb Mouse Button', Mouse4: 'Thumb Mouse Button 2' };
-        const uiPN = { b0: 'A', b1: 'B', b2: 'X', b3: 'Y', b4: 'LB', b5: 'RB', b6: 'LT', b7: 'RT', b8: 'Back', b9: 'Start', b10: 'L3', b11: 'R3', b12: 'D-Pad Up', b13: 'D-Pad Down', b14: 'D-Pad Left', b15: 'D-Pad Right', b16: 'Home', 'lx-': 'Left Stick Left', 'lx+': 'Left Stick Right', 'ly-': 'Left Stick Up', 'ly+': 'Left Stick Down', 'rx-': 'Right Stick Left', 'rx+': 'Right Stick Right', 'ry-': 'Right Stick Up', 'ry+': 'Right Stick Down' };
+        const uiPN = { b0: 'A', b1: 'B', b2: 'X', b3: 'Y', b4: 'LB', b5: 'RB', b6: 'LT', b7: 'RT', b8: 'Back', b9: 'Start', b10: 'L3', b11: 'R3', b12: 'D-Pad Up', b13: 'D-Pad Down', b14: 'D-Pad Left', b15: 'D-Pad Right', b16: 'Home', b17: 'Touchpad', 'lx-': 'Left Stick Left', 'lx+': 'Left Stick Right', 'ly-': 'Left Stick Up', 'ly+': 'Left Stick Down', 'rx-': 'Right Stick Left', 'rx+': 'Right Stick Right', 'ry-': 'Right Stick Up', 'ry+': 'Right Stick Down' };
         const uiBindName = (c, x) => !x ? 'Unbound' : c === 'p' ? uiPN[x] || x : uiKN[x] || uiKL[x] || x.replace(/^Key|^Digit/, '').replace(/^Numpad/, 'Num ');
         let uiBM = null;
         const uiBindSync = () => { uiBM = { k: {}, p: {} }; for (const a of uiACT) for (const c of ['k', 'p']) { const o = saved.bind[c]; uiBM[c][a[0]] = !(a[5] || '').includes(c) && a[0] in o ? o[a[0]] : a[c === 'k' ? 2 : 3]; } };
@@ -90,8 +90,8 @@
         const uiPadRead = () => {
           const v = {}, dz = saved.dz;
           for (const gp of uiGps()) {
-            gp.buttons.forEach((b, i) => { const x = b.value || (b.pressed ? 1 : 0); if (i < 17 && x > 0.1) v['b' + i] = Math.max(v['b' + i] || 0, x); });
-            ['lx', 'ly', 'rx', 'ry'].forEach((n, i) => { const a = gp.axes[i] || 0, m = Math.abs(a); if (m > dz) { const k = n + (a < 0 ? '-' : '+'); v[k] = Math.max(v[k] || 0, Math.min(1, (m - dz) / (1 - dz))); } });
+            gp.buttons.forEach((b, i) => { const x = b.value > 0 ? b.value : b.pressed ? 1 : 0; if (i < 18 && x > 0) v['b' + i] = Math.max(v['b' + i] || 0, x); });
+            ['lx', 'ly', 'rx', 'ry'].forEach((n, i) => { const a = gp.axes[i] || 0, m = Math.abs(a), z = i > 1 ? CFG.input.lookDz : dz; if (m > z) { const k = n + (a < 0 ? '-' : '+'); v[k] = Math.max(v[k] || 0, Math.min(1, (m - z) / (1 - z))); } });
           }
           return v;
         };
@@ -792,7 +792,7 @@
           else if (t === 'ifc') { saved.ifx = { tbm: true, bci: true, arw: true, nps: 100 }; uiIfxApply(); }
           else if (t === 'sbt') saved.sbc = ['goals', 'assists', 'saves', 'shots'];
           else if (t === 'game') saved.chatf = 'all';
-          else if (t === 'ctl') { saved.bind = { k: {}, p: {} }; saved.dz = 0.3; uiCap = null; uiBindSync(); uiCbk(); }
+          else if (t === 'ctl') { saved.bind = { k: {}, p: {} }; saved.dz = CFG.input.dz; uiCap = null; uiBindSync(); uiCbk(); }
           api.save(saved); uiOptRender();
         };
         api.on(uiOptEl, 'click', e => {
@@ -1255,17 +1255,19 @@
           api.on(jz, 'pointerup', joyUp); api.on(jz, 'pointercancel', joyUp);
         }
         const dz = v => Math.abs(v) < 0.15 ? 0 : (v - Math.sign(v) * 0.15) / 0.85;
+        const uiValCtx = (a, b, off) => off ? Math.max(uiBM.k[a] !== uiBM.k[b] && keys.has(uiBM.k[a]) ? 1 : 0, uiBM.p[a] !== uiBM.p[b] ? uiPad.v[uiBM.p[a]] || 0 : 0) : uiVal(a);
         const readInput = (v, k) => {
-          const T = v.T, V = uiVal;
-          let thr = V('thr') - V('rev'), str = V('sr') - V('sl'), pit = V('pu') - V('pd'), yaw = V('yr') - V('yl');
+          const T = v.T, V = uiVal, air = !!v.car && !v.car.onGround, tr = CFG.input.trigger;
+          let thr = V('thr') - uiValCtx('rev', 'roll', air), str = V('sr') - V('sl'), pit = V('pu') - V('pd'), yaw = V('yr') - V('yl');
           if (T.id !== null) { thr = clamp(-dz(T.y) * 1.25, -1, 1); str = clamp(dz(T.x) * 1.25, -1, 1); pit = -thr; yaw = str; }
-          const slide = V('slide') > 0.5 || T.slide;
-          k.throttle = thr; k.steer = str; k.pitch = pit;
-          if (slide || V('roll') > 0.5) { k.yaw = 0; k.roll = yaw; } else { k.yaw = yaw; k.roll = 0; }
-          k.roll = clamp(k.roll + V('arr') - V('arl'), -1, 1);
+          const slide = V('slide') > tr || T.slide, rl = V('arl'), rr = V('arr');
+          k.throttle = thr; k.steer = str; k.pitch = pit; k.yaw = yaw; k.roll = 0;
+          if (rl > 0 || rr > 0) k.roll = clamp(rr - rl, -1, 1);
+          else if (uiValCtx('roll', 'rev', !air) > tr || T.slide) { k.roll = yaw; k.yaw = 0; }
           k.boost = Math.max(V('boost'), V('boost2')) > 0.5 || T.boost;
           k.jump = Math.max(V('jump'), V('jump2')) > 0.5 || T.jump || v.latch;
           k.slide = slide; v.latch = false; v.rear = V('rear') > 0.5;
+          v.lookX = clamp(V('lkr') - V('lkl'), -1, 1); v.lookY = clamp(V('lkd') - V('lku'), -1, 1);
         };
 
 

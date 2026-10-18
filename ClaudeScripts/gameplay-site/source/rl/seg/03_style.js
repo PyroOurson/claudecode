@@ -1,8 +1,8 @@
   Object.assign(BODIES, {
-    breakout: { name: 'Breakout', hitbox: 'Breakout', hb: [66.996, 41.5105, 16.4], off: [12.5, 0, 11.75], cz: 11.75, wf: [51.5, 26.67, 13.5], wb: [-35.75, 35, 15], sr: [29.7, 29.666], rz: 18.37 },
-    merc: { name: 'Merc', hitbox: 'Merc', hb: [61.61, 39.60515, 22.07955], off: [11.3757, 0, 21.505], cz: 21.505, wf: [51.25, 25.9, 15], wb: [-33.75, 29.5, 15], sr: [39.505, 39.105], rz: 18.81 },
-    venom: { name: 'Venom', hitbox: 'Hybrid', hb: [64.7595, 42.34395, 18.32955], off: [13.8757, 0, 20.755], cz: 20.755, wf: [51.25, 25.9, 12.5], wb: [-34, 29.5, 15], sr: [38.755, 37.055] },
-    paladin: { name: 'Paladin', hitbox: 'Plank', mdl: 'dominus', hb: [65.66, 43.5852, 15.9472], off: [9.00857, 0, 12.0942], cz: 12.0942, wf: [49.97, 27.8, 12.5], wb: [-35.43, 20.28, 17], sr: [31.9242, 27.9242], rz: 18.67 }
+    breakout: { name: 'Breakout', hitbox: 'Dominus', ph: 'flat', wf: [51.5, 26.67, 13.5], wb: [-35.75, 35, 15] },
+    merc: { name: 'Merc', hitbox: 'Octane', ph: 'default', wf: [51.25, 25.9, 15], wb: [-33.75, 29.5, 15] },
+    venom: { name: 'Venom', hitbox: 'Octane', ph: 'default', wf: [51.25, 25.9, 12.5], wb: [-34, 29.5, 15] },
+    paladin: { name: 'Paladin', hitbox: 'Dominus', ph: 'flat', mdl: 'dominus', wf: [49.97, 27.8, 12.5], wb: [-35.43, 20.28, 17] }
   });
   for (const k in BODIES) if (!BODY_IDS.includes(k)) BODY_IDS.push(k);
   const NO_GL = { kicker: '3D', title: '3D unavailable', text: 'Your browser could not start WebGL. Try another browser or turn on hardware acceleration.', button: null };
@@ -992,7 +992,7 @@ $ .osel::before{content:'';position:absolute;right:calc(var(--u)*.55);top:50%;z-
     category: '3D',
     tint: '#2f7bff',
     blurb: 'Rocket-powered car soccer: customize your car in the garage, level up the Rocket Pass, practise in Free Play and score in Duel, Doubles or Standard against bots or friends online.',
-    help: '<kbd>W</kbd><kbd>S</kbd> throttle · <kbd>A</kbd><kbd>D</kbd> steer · <kbd>Shift</kbd> or left click boost · <kbd>Space</kbd> or right click jump, again to flip · <kbd>X</kbd>/<kbd>Ctrl</kbd> powerslide &amp; air roll · <kbd>Q</kbd><kbd>E</kbd> air roll · <kbd>C</kbd> ball cam · <kbd>Tab</kbd> scoreboard · <kbd>1</kbd>–<kbd>4</kbd> quick chat · <kbd>Esc</kbd> pause · menus: arrows + <kbd>Enter</kbd>, <kbd>Esc</kbd> back · Free Play: <kbd>R</kbd> reset ball, <kbd>T</kbd> reset car · touch: stick + Boost/Jump/Slide',
+    help: '<kbd>W</kbd><kbd>S</kbd> throttle · <kbd>A</kbd><kbd>D</kbd> steer · left click boost · <kbd>Space</kbd> or right click jump, again to flip · <kbd>Shift</kbd> powerslide &amp; air roll · <kbd>Q</kbd><kbd>E</kbd> air roll · <kbd>C</kbd> ball cam · middle click rear view · <kbd>Tab</kbd> scoreboard · <kbd>1</kbd>–<kbd>4</kbd> quick chat · <kbd>Esc</kbd> pause · menus: arrows + <kbd>Enter</kbd>, <kbd>Esc</kbd> back · Free Play: <kbd>R</kbd> reset ball, <kbd>T</kbd> reset car · controller: R2/L2 throttle/reverse (L2 air rolls in the air), Circle boost, Cross jump, Square powerslide, R1 air roll left, Triangle ball cam, R3 rear view, right stick look · touch: stick + Boost/Jump/Slide',
     better: 'high',
     ownPause: true,
     width: 960,
