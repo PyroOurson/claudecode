@@ -108,8 +108,9 @@ async function sbRest(path, o = {}) {
 
 function sbVid() {
   try {
-    let v = localStorage.getItem(VIDK);
-    if (!/^[a-z0-9]{4,40}$/.test(v || '')) { v = (rid() + rid()).replace(/[^a-z0-9]/g, '').slice(0, 32); localStorage.setItem(VIDK, v); }
+    const st = ckStore();
+    let v = st.getItem(VIDK);
+    if (!/^[a-z0-9]{4,40}$/.test(v || '')) { v = (rid() + rid()).replace(/[^a-z0-9]/g, '').slice(0, 32); st.setItem(VIDK, v); }
     return v;
   } catch (e) { return null; }
 }
@@ -713,6 +714,7 @@ function auChoose() {
   SB.choosing = true;
   unStep = 1; $('#un1').hidden = false; $('#un2').hidden = true;
   $('#unt').textContent = 'Choose a username'; $('#uncont').textContent = 'Save';
+  $('#unmodal').classList.add('un-must');
   const sug = String(getProfile().username || '').toLowerCase().replace(/[^a-z0-9_.]/g, '').slice(0, 20);
   $('#unew').value = UN_RE.test(sug) ? sug : '';
   $('label[for="unew"]').textContent = 'Username';
@@ -774,7 +776,7 @@ async function auSignedIn(ev) {
   siteSignedIn();
   if (loud) toast(auT('Logged in as {name}').replace('{name}', SB.prof && SB.prof.username ? '@' + SB.prof.username : SB.user.email || 'you'));
   sySync();
-  if (loud && SB.prof && !SB.prof.username) setTimeout(auChoose, 400);
+  if (SB.prof && !SB.prof.username) setTimeout(auChoose, loud ? 400 : 0);
 }
 function auSignedOut() {
   SB.prof = null; SB.fail = 0;
@@ -831,6 +833,8 @@ function auPatchLegal() {
   lp('privacy', 'Because today we hold no personal data on our servers, most requests can be handled directly in your browser with the tools above.', 'If you are signed in, Download my data also includes what your account stores, and Delete my account in Settings, Account removes it from our database. For anything else, email us.');
   lp('cookies', 'They stay in your browser and are never used to track you.', 'If you sign in, your sign-in session (<code>sb-gameplay-auth</code>) is stored too. They are never used to track you.');
   lp('cookies', 'with a random session ID (<code>gameplay:analytics</code>, <code>gameplay:sid</code>). They help us understand which games people play. For now they stay on your device.', 'with a random session ID and a random device ID (<code>gameplay:analytics</code>, <code>gameplay:sid</code>, <code>gameplay:vid</code>). They help us understand which games people play and are sent to our database on Supabase in the European Union.');
+  LEGAL.privacy[1] = LEGAL.privacy[1].replace('<h2>Online play</h2>', '<h2>More analytics details</h2><p>With your consent we also record your approximate location (country, region and city) and your internet provider. Your browser looks these up from your IP address with the GeoJS service (geojs.io). We do not store your IP address.</p><p>We also record your time zone and local time, your connection type and speed, and whether the network looks like a VPN or a data center.</p><p>About your device: operating system and browser versions, phone model, processor cores, memory, graphics card, screen refresh rate, keyboard layout, controller model and whether an ad blocker is on.</p><p>About how the site is used: page speed, how far you scroll, which game cards were shown and clicked, repeated or unanswered clicks, and time spent on each page.</p><p>About each game session: frames per second, loading time, final scores, level reached, how you played (keyboard, mouse, touch or controller), controls you change and Rocket League match results. This helps us fix games and plan the site.</p><h2>Game ratings</h2><p>If you give a game a thumbs up or down, your vote is saved in our database, linked to your account if you are signed in. This browser remembers that you voted.</p><h2>Online play</h2>');
+  Object.keys(LEGAL).forEach(k => { LEGAL[k][1] = LEGAL[k][1].replace('<tr><td><code>gameplay:consent</code>', '<tr><td><code>gameplay:votes</code></td><td>The games you rated</td><td>Essential</td></tr>\n<tr><td><code>gameplay:geo</code>, <code>gameplay:env</code></td><td>Your approximate location for this visit and whether device details were already sent, only if you accept analytics. Cleared when you close the tab.</td><td>Analytics</td></tr>\n<tr><td><code>gameplay:consent</code>'); });
   lp('cookies', 'and online games use the PeerJS service.', 'online games use the PeerJS service, and accounts and analytics use Supabase.');
 }
 if (SB.on) auPatchLegal();
@@ -861,9 +865,9 @@ function ckPlace() {
 function ckChoose(k) {
   if (!$('#ckterms').checked) { auMsg('cknote', 'Tick the box first to agree to the Terms of Use and the Privacy Policy.', 'bad'); const a = $('#ckagree'); a.classList.add('ck-want'); auShake(a); $('#ckterms').focus({ preventScroll: true }); return; }
   const ck = $('#ckbar');
-  if (motionOK() && !ck.classList.contains('ck-bye')) { ck.classList.add('ck-bye'); setTimeout(() => { ck.classList.remove('ck-bye'); setConsent(k === 'all', k); }, 220); }
-  else setConsent(k === 'all', k);
-  toast(k === 'all' ? 'Thanks! Cookie choice saved' : 'Cookie choice saved');
+  if (motionOK() && !ck.classList.contains('ck-bye')) { ck.classList.add('ck-bye'); setTimeout(() => { ck.classList.remove('ck-bye'); setConsent(k !== 'essential', k); }, 220); }
+  else setConsent(k !== 'essential', k);
+  toast(k === 'all' ? 'Thanks! Cookie choice saved' : k === 'session' ? 'Saved for this visit only' : 'Cookie choice saved');
 }
 const FR = { q: '', seq: 0, t: 0, list: null, req: null, res: null, rq: '', rres: [] };
 const SK_ROWS = '<div class="frow sk-row" aria-hidden="true"><i class="sk sk-pic"></i><div class="fr-n"><i class="sk sk-l1"></i><i class="sk sk-l2"></i></div></div>'.repeat(3);

@@ -2072,17 +2072,18 @@ const SB = { on: !!(SUPABASE_URL && SUPABASE_ANON_KEY), c: null, p: null, lib: n
 const AN_KEY = 'gameplay:analytics', CK_KEY = 'gameplay:consent', AN_MAX = 2000;
 const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 let consent = null;
-try { consent = JSON.parse(localStorage.getItem(CK_KEY)); } catch (e) {}
+try { consent = JSON.parse(localStorage.getItem(CK_KEY) || sessionStorage.getItem(CK_KEY)); } catch (e) {}
 if (!consent || typeof consent !== 'object' || consent.v !== 2) consent = null;
 const anOk = () => !!(consent && consent.analytics);
+const ckStore = () => consent && consent.level === 'session' ? sessionStorage : localStorage;
 let anQ = [];
-try { anQ = JSON.parse(localStorage.getItem(AN_KEY)) || []; } catch (e) {}
+try { anQ = JSON.parse(ckStore().getItem(AN_KEY)) || []; } catch (e) {}
 if (!Array.isArray(anQ)) anQ = [];
 if (!anOk()) anQ = [];
 let anHold = [], anT = 0, anErr = 0, anBusy = false;
 const SID = (() => { try { const o = JSON.parse(sessionStorage.getItem('gameplay:sid')); if (o && o.id && Date.now() - o.t < 30 * 60e3) return o.id; } catch (e) {} return rid(); })();
 const T0 = Date.now();
-function anSave() { try { if (anOk()) localStorage.setItem(AN_KEY, JSON.stringify(anQ)); } catch (e) { anQ.splice(0, Math.ceil(anQ.length / 4)); } }
+function anSave() { try { if (anOk()) ckStore().setItem(AN_KEY, JSON.stringify(anQ)); } catch (e) { anQ.splice(0, Math.ceil(anQ.length / 4)); } }
 function anClean(p) {
   const o = {};
   Object.keys(p).slice(0, 24).forEach(k => {
@@ -2091,7 +2092,7 @@ function anClean(p) {
     if (typeof v === 'number') o[k] = isFinite(v) ? Math.round(v * 100) / 100 : null;
     else if (typeof v === 'boolean') o[k] = v;
     else if (typeof v === 'string') o[k] = v.slice(0, 160);
-    else if (Array.isArray(v)) o[k] = v.slice(0, 12).map(x => typeof x === 'object' ? String(x) : x);
+    else if (Array.isArray(v)) o[k] = v.slice(0, 40).map(x => typeof x === 'number' ? (isFinite(x) ? Math.round(x * 100) / 100 : null) : typeof x === 'boolean' ? x : String(x).slice(0, 80));
   });
   return o;
 }
@@ -2168,9 +2169,9 @@ Ameplay.analytics = {
 };
 function setConsent(an, lv) {
   consent = { v: 2, analytics: !!an, level: lv || (an ? 'all' : 'essential'), terms: true, at: Date.now() };
-  try { localStorage.setItem(CK_KEY, JSON.stringify(consent)); } catch (e) {}
-  if (an) { anQ = anQ.concat(anHold); anHold = []; track('consent', { analytics: true }); anSave(); }
-  else { anQ = []; anHold = []; try { localStorage.removeItem(AN_KEY); if (SB.on) localStorage.removeItem(VIDK); } catch (e) {} }
+  try { [localStorage, sessionStorage].forEach(st => { st.removeItem(CK_KEY); st.removeItem(AN_KEY); }); if (lv === 'session') localStorage.removeItem(VIDK); ckStore().setItem(CK_KEY, JSON.stringify(consent)); } catch (e) {}
+  if (an) { anQ = anQ.concat(anHold); anHold = []; track('consent', { analytics: true, level: consent.level }); anSave(); setTimeout(trEnv, 500); }
+  else { anQ = []; anHold = []; try { if (SB.on) localStorage.removeItem(VIDK); } catch (e) {} }
   $('#ckbar').hidden = true;
   document.documentElement.classList.remove('ck-open');
   syncSwitches();
@@ -2213,6 +2214,7 @@ function start(g) {
   setPause(false);
   const ctl = makeApi(g, root);
   cur = { g, api: ctl.api, kill: ctl.kill, counted: cur ? cur.counted : false };
+  trStart(g, ctl);
   ttSync();
   const mark = e => {
     if (!cur || cur.g !== g || cur.counted) return;
@@ -2270,7 +2272,9 @@ function setPause(on) {
 const canPause = () => !!(cur && !cur.g.ownPause && !(cur.api && cur.api.online));
 function restartCurrent() {
   if (!cur) return;
-  const g = cur.g; cur.kill();
+  const g = cur.g;
+  if (TR.g) TR.g.why = 'restart';
+  cur.kill();
   frame.classList.remove('swap'); void frame.offsetWidth; frame.classList.add('swap');
   start(g);
 }
@@ -2358,6 +2362,7 @@ function showView(v) {
   closeAll();
   document.body.classList.toggle('in-game', v === 'game');
   if (view === v) return false;
+  trView(view);
   if (view === 'home') homeY = scrollY;
   view = v;
   ['home', 'game', 'legal', 'admin'].forEach(k => { $('#v' + k[0].toUpperCase() + k.slice(1)).hidden = k !== v; });
@@ -2480,7 +2485,7 @@ const LEGAL = {
 <h2>Contact</h2><p>Questions, requests about your data, or a rights holder asking for a change: email <a href="mailto:gabriel06401@gmail.com">gabriel06401@gmail.com</a>.</p>`],
   cookies: ['Cookie Policy', `<p>This policy explains the cookies and similar browser storage (local storage and session storage) used by gameplay.</p>
 <h2>Essential</h2><p>These make the site work and are always on: your records, saves, profile, settings, your cookie choice and, on the password-protected version, the password unlock. They stay in your browser and are never used to track you.</p>
-<h2>Analytics (optional)</h2><p>If you accept, the site stores anonymous usage events, such as games opened, time played, searches and filters, with a random session ID (<code>gameplay:analytics</code>, <code>gameplay:sid</code>). They help us understand which games people play. For now they stay on your device. Rejecting analytics turns this off and deletes what was stored.</p>
+<h2>Analytics (optional)</h2><p>If you accept, the site stores anonymous usage events, such as games opened, time played, searches and filters, with a random session ID (<code>gameplay:analytics</code>, <code>gameplay:sid</code>). They help us understand which games people play. For now they stay on your device. Rejecting analytics turns this off and deletes what was stored.</p><p>Choosing Only for this session turns analytics on until you close the tab. Nothing is kept for your next visit, and we ask again then.</p>
 <h2>No advertising cookies</h2><p>gameplay does not use advertising or cross-site tracking cookies.</p>
 <h2>Third parties</h2><p>Fonts, the 3D engine and the networking library are loaded from Google Fonts, cdnjs and jsDelivr, and online games use the PeerJS service. These services receive your IP address when your browser contacts them, but gameplay does not let them set cookies through the site.</p>
 <h2>Your choice</h2><p>You can change your choice at any time: <button class="btn2" type="button" data-cookieset>Cookie settings</button></p><p>You can also delete all site data in your browser settings.</p>
@@ -2582,7 +2587,7 @@ function fillProfile() {
 }
 function say(id, m, ok) { const n = $('#' + id); n.textContent = m; n.className = 'note' + (ok ? ' ok' : ''); }
 let unStep = 1, unPending = '';
-function unClose() { $('#unmodal').hidden = true; }
+function unClose() { if (SB.user && SB.prof && !SB.prof.username) return; const m = $('#unmodal'); m.hidden = true; m.classList.remove('un-must'); }
 function renderFriends() { frOpen(); }
 const fmtDur = s => { s = Math.round(s || 0); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + 'h ' + m + 'm' : m ? m + 'm' : s + 's'; };
 function ago(t) {
@@ -2751,8 +2756,8 @@ function boot() {
   track('session', Object.assign(dv, { ref: ref === location.hostname ? '' : ref, returning: Date.now() - S.since > 864e5, gated: !!LZ.key, path: PATH_MODE, games: games.length }));
   addEventListener('error', e => { if (errN++ > 20) return; track('error', { where: 'window', msg: String(e.message || '').slice(0, 160), src: String(e.filename || '').split('/').pop().slice(0, 40), line: e.lineno || 0, game: cur ? cur.g.id : null }); });
   addEventListener('unhandledrejection', e => { if (errN++ > 20) return; const r = e.reason; track('error', { where: 'promise', msg: String(r && r.message || r).slice(0, 160), game: cur ? cur.g.id : null }); });
-  document.addEventListener('visibilitychange', () => { ttSync(); if (document.visibilityState === 'hidden') { ttCommit(true); anSave(); anFlush(); } });
-  addEventListener('pagehide', () => { ttCommit(true); track('session_end', { sec: Math.round((Date.now() - T0) / 1000) }); anSave(); anFlush(); });
+  document.addEventListener('visibilitychange', () => { ttSync(); if (document.visibilityState === 'hidden') { trHidden(); ttCommit(true); anSave(); anFlush(); } });
+  addEventListener('pagehide', () => { trEnd(); ttCommit(true); track('session_end', { sec: Math.round((Date.now() - T0) / 1000) }); anSave(); anFlush(); });
   setInterval(() => { if (cur) ttCommit(false); }, 15000);
   setInterval(anFlush, 30000);
 
@@ -2904,6 +2909,7 @@ function boot() {
   adBoot();
   soBoot();
   inBoot();
+  trBoot();
   siteBoot();
   if (S.recent.some(id => byId.get(id) && byId.get(id).is3d)) { const warmUp = () => loadThree().catch(() => {}); if (window.requestIdleCallback) requestIdleCallback(warmUp, { timeout: 4000 }); else setTimeout(warmUp, 1500); }
 }
@@ -3018,8 +3024,9 @@ async function sbRest(path, o = {}) {
 
 function sbVid() {
   try {
-    let v = localStorage.getItem(VIDK);
-    if (!/^[a-z0-9]{4,40}$/.test(v || '')) { v = (rid() + rid()).replace(/[^a-z0-9]/g, '').slice(0, 32); localStorage.setItem(VIDK, v); }
+    const st = ckStore();
+    let v = st.getItem(VIDK);
+    if (!/^[a-z0-9]{4,40}$/.test(v || '')) { v = (rid() + rid()).replace(/[^a-z0-9]/g, '').slice(0, 32); st.setItem(VIDK, v); }
     return v;
   } catch (e) { return null; }
 }
@@ -3623,6 +3630,7 @@ function auChoose() {
   SB.choosing = true;
   unStep = 1; $('#un1').hidden = false; $('#un2').hidden = true;
   $('#unt').textContent = 'Choose a username'; $('#uncont').textContent = 'Save';
+  $('#unmodal').classList.add('un-must');
   const sug = String(getProfile().username || '').toLowerCase().replace(/[^a-z0-9_.]/g, '').slice(0, 20);
   $('#unew').value = UN_RE.test(sug) ? sug : '';
   $('label[for="unew"]').textContent = 'Username';
@@ -3684,7 +3692,7 @@ async function auSignedIn(ev) {
   siteSignedIn();
   if (loud) toast(auT('Logged in as {name}').replace('{name}', SB.prof && SB.prof.username ? '@' + SB.prof.username : SB.user.email || 'you'));
   sySync();
-  if (loud && SB.prof && !SB.prof.username) setTimeout(auChoose, 400);
+  if (SB.prof && !SB.prof.username) setTimeout(auChoose, loud ? 400 : 0);
 }
 function auSignedOut() {
   SB.prof = null; SB.fail = 0;
@@ -3741,6 +3749,8 @@ function auPatchLegal() {
   lp('privacy', 'Because today we hold no personal data on our servers, most requests can be handled directly in your browser with the tools above.', 'If you are signed in, Download my data also includes what your account stores, and Delete my account in Settings, Account removes it from our database. For anything else, email us.');
   lp('cookies', 'They stay in your browser and are never used to track you.', 'If you sign in, your sign-in session (<code>sb-gameplay-auth</code>) is stored too. They are never used to track you.');
   lp('cookies', 'with a random session ID (<code>gameplay:analytics</code>, <code>gameplay:sid</code>). They help us understand which games people play. For now they stay on your device.', 'with a random session ID and a random device ID (<code>gameplay:analytics</code>, <code>gameplay:sid</code>, <code>gameplay:vid</code>). They help us understand which games people play and are sent to our database on Supabase in the European Union.');
+  LEGAL.privacy[1] = LEGAL.privacy[1].replace('<h2>Online play</h2>', '<h2>More analytics details</h2><p>With your consent we also record your approximate location (country, region and city) and your internet provider. Your browser looks these up from your IP address with the GeoJS service (geojs.io). We do not store your IP address.</p><p>We also record your time zone and local time, your connection type and speed, and whether the network looks like a VPN or a data center.</p><p>About your device: operating system and browser versions, phone model, processor cores, memory, graphics card, screen refresh rate, keyboard layout, controller model and whether an ad blocker is on.</p><p>About how the site is used: page speed, how far you scroll, which game cards were shown and clicked, repeated or unanswered clicks, and time spent on each page.</p><p>About each game session: frames per second, loading time, final scores, level reached, how you played (keyboard, mouse, touch or controller), controls you change and Rocket League match results. This helps us fix games and plan the site.</p><h2>Game ratings</h2><p>If you give a game a thumbs up or down, your vote is saved in our database, linked to your account if you are signed in. This browser remembers that you voted.</p><h2>Online play</h2>');
+  Object.keys(LEGAL).forEach(k => { LEGAL[k][1] = LEGAL[k][1].replace('<tr><td><code>gameplay:consent</code>', '<tr><td><code>gameplay:votes</code></td><td>The games you rated</td><td>Essential</td></tr>\n<tr><td><code>gameplay:geo</code>, <code>gameplay:env</code></td><td>Your approximate location for this visit and whether device details were already sent, only if you accept analytics. Cleared when you close the tab.</td><td>Analytics</td></tr>\n<tr><td><code>gameplay:consent</code>'); });
   lp('cookies', 'and online games use the PeerJS service.', 'online games use the PeerJS service, and accounts and analytics use Supabase.');
 }
 if (SB.on) auPatchLegal();
@@ -3771,9 +3781,9 @@ function ckPlace() {
 function ckChoose(k) {
   if (!$('#ckterms').checked) { auMsg('cknote', 'Tick the box first to agree to the Terms of Use and the Privacy Policy.', 'bad'); const a = $('#ckagree'); a.classList.add('ck-want'); auShake(a); $('#ckterms').focus({ preventScroll: true }); return; }
   const ck = $('#ckbar');
-  if (motionOK() && !ck.classList.contains('ck-bye')) { ck.classList.add('ck-bye'); setTimeout(() => { ck.classList.remove('ck-bye'); setConsent(k === 'all', k); }, 220); }
-  else setConsent(k === 'all', k);
-  toast(k === 'all' ? 'Thanks! Cookie choice saved' : 'Cookie choice saved');
+  if (motionOK() && !ck.classList.contains('ck-bye')) { ck.classList.add('ck-bye'); setTimeout(() => { ck.classList.remove('ck-bye'); setConsent(k !== 'essential', k); }, 220); }
+  else setConsent(k !== 'essential', k);
+  toast(k === 'all' ? 'Thanks! Cookie choice saved' : k === 'session' ? 'Saved for this visit only' : 'Cookie choice saved');
 }
 const FR = { q: '', seq: 0, t: 0, list: null, req: null, res: null, rq: '', rres: [] };
 const SK_ROWS = '<div class="frow sk-row" aria-hidden="true"><i class="sk sk-pic"></i><div class="fr-n"><i class="sk sk-l1"></i><i class="sk sk-l2"></i></div></div>'.repeat(3);
@@ -4026,6 +4036,7 @@ function adLangName(c) {
   try { const n = new Intl.DisplayNames([adLang()], { type: 'language' }).of(c); return n ? n.charAt(0).toUpperCase() + n.slice(1) : c; } catch (e) { return c; }
 }
 const adGame = id => id ? (byId.get(id) ? byId.get(id).title : id) : '—';
+const adCv = (id, c) => { const g = byId.get(id); if (!g || !thumbsOn()) return `<span class="${c} adcv0" style="--c:${esc(TINT[id] || 'var(--accent)')}">${esc(adGame(id).charAt(0))}</span>`; const u = coverUrl(g); if (u === BLANK) lzCover(id); return `<img class="${c}" src="${u}"${u === BLANK ? ` data-cv="${esc(id)}"` : ''} alt="" decoding="async" draggable="false">`; };
 const adProv = u => (u.providers && u.providers.length ? u.providers : ['email']).map(p => p === 'google' ? 'Google' : p === 'email' ? auT('Email') : p).join(' + ');
 const adPill = (t, k) => `<span class="adm-pill${k ? ' ' + k : ''}">${esc(auT(t))}</span>`;
 const adRole = u => u.role === 'owner' ? adPill('Owner', 'acc') : u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User');
@@ -4190,7 +4201,7 @@ function adDraw(an) {
   $('#adcount').textContent = auT('{n} of {t} users').replace('{n}', rows.length).replace('{t}', (AD.users || []).length);
   tb.innerHTML = rows.length ? rows.map((u, i) => `<tr tabindex="0" data-uid="${esc(u.id)}" class="${u.id === AD.sel ? 'sel' : ''}${RT.pres[u.id] ? ' on' : ''}" style="--i:${Math.min(i, 14)}">${AD_COLS.map(c => `<td>${c[2](u)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${AD_COLS.length}" class="adm-empty">${esc(auT('No users match.'))}</td></tr>`;
 }
-const AD_TABS = ['users', 'tickets', 'stats', 'log', 'site'];
+const AD_TABS = ['users', 'tickets', 'stats', 'data', 'log', 'site'];
 function adTab(t) {
   const was = AD.tab, tabs = $('#adtabs'), o = $('#ad' + was), fade = was !== t && view === 'admin' && !o.hidden && motionOK(), top = fade ? o.offsetTop : 0;
   AD.tab = t;
@@ -4207,6 +4218,7 @@ function adTab(t) {
   });
   if (t === 'tickets') tkLoad(tkBox($('#tka'), 'admin'));
   if (t === 'stats') stLoad();
+  if (t === 'data') dataOpen(was !== t);
   if (t === 'log') alLoad();
   if (t === 'site') sfaDraw();
 }
@@ -4266,7 +4278,7 @@ async function adGames(u) {
     const r = await adRpc('admin_user_games', { p_uid: u.id });
     if (AD.sel !== u.id) return;
     const L = Array.isArray(r) ? r : [], max = Math.max(1, ...L.map(g => +g.seconds_played || 0));
-    box.innerHTML = L.length ? L.map((g, i) => `<div class="apc-g" style="--i:${Math.min(i, 12)};--c:${esc(TINT[g.game_id] || 'var(--accent)')}"><span class="apc-gi">${esc(adGame(g.game_id).charAt(0))}</span><span class="apc-gn">${esc(adGame(g.game_id))}</span><b>${esc(adHrs(g.seconds_played))}</b><i><s style="width:${Math.max(2, Math.round(100 * (+g.seconds_played || 0) / max))}%"></s></i><small>${esc(auT('{n} plays').replace('{n}', +g.plays || 0))}${g.best_score != null ? ' · ' + esc(auT('best {s}').replace('{s}', g.best_score)) : ''}${g.last_played ? ' · ' + esc(adAgo(g.last_played)) : ''}</small></div>`).join('') : `<div class="adm-mut apc-none">${esc(auT('No games played yet.'))}</div>`;
+    box.innerHTML = L.length ? L.map((g, i) => `<div class="apc-g" style="--i:${Math.min(i, 12)};--c:${esc(TINT[g.game_id] || 'var(--accent)')}">${adCv(g.game_id, 'apc-gi')}<span class="apc-gn">${esc(adGame(g.game_id))}</span><b>${esc(adHrs(g.seconds_played))}</b><i><s style="width:${Math.max(2, Math.round(100 * (+g.seconds_played || 0) / max))}%"></s></i><small>${esc(auT('{n} plays').replace('{n}', +g.plays || 0))}${g.best_score != null ? ' · ' + esc(auT('best {s}').replace('{s}', g.best_score)) : ''}${g.last_played ? ' · ' + esc(adAgo(g.last_played)) : ''}</small></div>`).join('') : `<div class="adm-mut apc-none">${esc(auT('No games played yet.'))}</div>`;
   } catch (e) { box.innerHTML = `<div class="adm-mut">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; }
 }
 function adPanelClose() {
@@ -4615,7 +4627,7 @@ function stCombo(open) {
   ST.opts = O;
   if (ST.ci >= O.length) ST.ci = O.length - 1;
   const hl = t => { const i = ql ? t.toLowerCase().indexOf(ql) : -1; return i < 0 ? esc(t) : esc(t.slice(0, i)) + '<mark>' + esc(t.slice(i, i + ql.length)) + '</mark>' + esc(t.slice(i + ql.length)); };
-  ul.innerHTML = O.length ? O.map((o, i) => `<li role="option" id="stgo${i}" data-g="${esc(o.id)}" aria-selected="${o.id === ST.game}" class="${i === ST.ci ? 'act' : ''}"><i style="background:${esc(TINT[o.id] || 'var(--accent)')}"></i><span translate="no">${hl(o.t)}</span><small>${esc(auT('{n} launches').replace('{n}', stN(o.l)))}</small></li>`).join('') : `<li class="sx-cbn" role="presentation">${esc(auT('No games match.'))}</li>`;
+  ul.innerHTML = O.length ? O.map((o, i) => `<li role="option" id="stgo${i}" data-g="${esc(o.id)}" aria-selected="${o.id === ST.game}" class="${i === ST.ci ? 'act' : ''}">${adCv(o.id, 'sx-cv')}<span translate="no">${hl(o.t)}</span><small>${esc(auT('{n} launches').replace('{n}', stN(o.l)))}</small></li>`).join('') : `<li class="sx-cbn" role="presentation">${esc(auT('No games match.'))}</li>`;
   ul.hidden = false; inp.setAttribute('aria-expanded', 'true');
   if (ST.ci >= 0) { inp.setAttribute('aria-activedescendant', 'stgo' + ST.ci); const a = $('#stgo' + ST.ci); if (a) a.scrollIntoView({ block: 'nearest' }); } else inp.removeAttribute('aria-activedescendant');
 }
@@ -4646,7 +4658,7 @@ function stGameCard(an) {
     ['Errors', stN(g.errors), 'bug', `<span class="sx-hp">${stHealth(g)}</span><small>${esc(auT('{n} in the last 7 days').replace('{n}', stN(g.errors_7d)))}</small>`, +g.errors_7d ? 'sx-gbad' : '', g.errors],
     ['Last launch', g.last_launch ? adAgo(g.last_launch) : auT('Never'), 'eye', g.last_launch ? `<small>${esc(adDate(g.last_launch, 1))}</small>` : '', 'sx-gw']
   ];
-  box.innerHTML = `<div class="sx-gh2" style="--c:${esc(tint)}"><span class="sx-gt">${esc(adGame(g.game_id).charAt(0))}</span><div><b translate="no">${esc(adGame(g.game_id))}</b><span><code>${esc(g.game_id)}</code>${gm && gm.info ? `<small>${esc(gm.info.genres.join(' · '))}</small>` : ''}</span></div>${gm ? `<a class="btn2" href="${esc(href(g.game_id))}" data-stopen="${esc(g.game_id)}">${esc(auT('Open game'))}</a>` : ''}</div>
+  box.innerHTML = `<div class="sx-gh2" style="--c:${esc(tint)}"><span class="sx-gt">${adCv(g.game_id, '')}</span><div><b translate="no">${esc(adGame(g.game_id))}</b><span><code>${esc(g.game_id)}</code>${gm && gm.info ? `<small>${esc(gm.info.genres.join(' · '))}</small>` : ''}</span></div>${gm ? `<a class="btn2" href="${esc(href(g.game_id))}" data-stopen="${esc(g.game_id)}">${esc(auT('Open game'))}</a>` : ''}</div>
    <div class="sx-gc">${C.map(([k, v, ic, x, cl, n], i) => `<div class="sx-gk ${cl || ''}" style="--i:${i}"><span class="sx-gki">${AD_SI[ic]}</span><small>${esc(auT(k))}</small><b${Number.isInteger(+n) && n !== '' && n != null ? ` data-n="${+n}" data-f="l"` : ''}>${esc(v)}</b>${x || ''}</div>`).join('')}</div>
    <div class="sx-g2">
     <div class="sx-gb"><h4>${esc(auT('Last error'))}</h4>${g.last_error ? `<div class="sx-err"><code translate="no">${esc(String(g.last_error).slice(0, 400))}</code><small>${esc(g.last_error_at ? adAgo(g.last_error_at) : '')}</small></div>` : `<div class="adm-mut">${esc(auT('No errors. Everything works.'))}</div>`}</div>
@@ -4654,10 +4666,17 @@ function stGameCard(an) {
    </div>`;
   if (an) countUp(box);
 }
+function stReveal(box) {
+  const C = [...box.querySelectorAll('.sx-c, .st-grid > .st-card')];
+  if (!window.IntersectionObserver) { C.forEach(countUp); return; }
+  if (ST.io) ST.io.disconnect();
+  ST.io = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return; ST.io.unobserve(e.target); e.target.classList.remove('sx-wait'); countUp(e.target); }), { threshold: .25 });
+  C.forEach(c => { c.classList.add('sx-wait'); ST.io.observe(c); });
+}
 function stDraw() {
   const D = ST.d || {}, O = D.overview || {}, box = $('#adstats'), S = stSeries(), days = D.series ? ST.days : S.length;
   const T = [['Active 7 days', O.active_7d], ['Active 30 days', O.active_30d]];
-  const PL = (D.players || []).slice(0, 100), ER = D.errors || [], DV = D.devices || [], SQ = D.searches || [], RE = D.retention || [];
+  const ER = D.errors || [], DV = D.devices || [], SQ = D.searches || [], RE = D.retention || [];
   const peakOk = S.some(r => r.peak != null);
   if (!ST.game || !stGames().some(g => g.game_id === ST.game)) ST.game = (stGames().slice().sort((a, b) => (+b.launches || 0) - (+a.launches || 0))[0] || {}).game_id || null;
   const keep = document.activeElement && document.activeElement.id === 'stgq', an = motionOK() ? ST.anim : 0;
@@ -4680,7 +4699,6 @@ function stDraw() {
   <div class="st-card sx-gm"><div class="sx-gh"><h3>${esc(auT('Games'))}</h3>
    <div class="sx-cb"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="stgq" role="combobox" aria-expanded="false" aria-controls="stgl" aria-autocomplete="list" aria-label="${esc(auT('Choose a game'))}" placeholder="${esc(auT('Search games'))}" autocomplete="off" spellcheck="false" value="${esc(ST.game ? adGame(ST.game) : '')}"><button type="button" class="sx-cbt" data-stcb tabindex="-1" aria-label="${esc(auT('Show all games'))}">${AD_ICO.chev}</button><ul id="stgl" role="listbox" aria-label="${esc(auT('Games'))}" hidden></ul></div>
   </div><div id="stgd"></div></div>
-  <div class="st-card"><h3>${esc(auT('Time played per player'))}</h3><div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Player', 'Game', 'Time played', 'Rounds', 'Best', 'Last played'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody translate="no">${PL.length ? PL.map(p => `<tr data-stu="${esc(p.user_id)}"><td>${esc(p.display_name || p.username || '—')}${p.username ? ` <span class="adm-mut">@${esc(p.username)}</span>` : ''}</td><td>${esc(adGame(p.game_id))}</td><td>${esc(adHrs(p.seconds_played))}</td><td>${stN(p.plays)}</td><td>${p.best_score != null ? esc(String(p.best_score)) : '—'}</td><td>${esc(adAgo(p.last_played))}</td></tr>`).join('') : `<tr><td colspan="6" class="adm-empty">${esc(auT('No games played yet.'))}</td></tr>`}</tbody></table></div></div>
   <div class="st-grid">
    <div class="st-card"><h3>${esc(auT('Devices'))}</h3>${stDevices()}<div class="st-list sx-dvl">${DV.slice(0, 6).map(d => `<div class="st-kv"><span>${esc([auT(ST_DEV[d.device] || d.device || ''), d.os, d.browser].filter(Boolean).join(' · '))}</span><b>${stN(d.sessions)}</b></div>`).join('')}</div></div>
    <div class="st-card"><h3>${esc(auT('Recent errors'))}</h3><div class="st-list">${ER.length ? ER.slice(0, 30).map(e => `<div class="st-err"><b>${esc(adGame(e.game_id))}</b><span>${esc(e.message || '')}</span><small>${esc(e.place || '')} · ${esc(e.device || '')} · ${esc(adAgo(e.created_at))}</small></div>`).join('') : `<div class="adm-mut">${esc(auT('No errors. Everything works.'))}</div>`}</div></div>
@@ -4689,7 +4707,7 @@ function stDraw() {
   </div>
   <p class="adm-mut st-at">${esc(auT('Updated {t}. Refreshes every 30 seconds; the live list updates instantly.').replace('{t}', new Date(D.at || Date.now()).toLocaleTimeString()))}</p>`;
   if (an === 2) countUp(box.querySelector('.st-top'));
-  if (an) box.querySelectorAll('.sx-c').forEach(countUp);
+  if (an) stReveal(box);
   stGameCard(an); stLive();
   if (keep) $('#stgq').focus({ preventScroll: true });
   ST.anim = 0;
@@ -4698,10 +4716,10 @@ function stBoot() {
   const box = $('#adstats');
   box.addEventListener('click', e => {
     const r = e.target.closest('[data-strng]');
-    if (r) { const d = +r.dataset.strng; if (d === ST.days) return; ST.days = d; ST.anim = 1; box.querySelectorAll('[data-strng]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.strng === d))); stLoad(true); return; }
+    if (r) { const d = +r.dataset.strng; if (d === ST.days) return; ST.days = d; ST.anim = 1; adConfetti(e); box.querySelectorAll('[data-strng]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.strng === d))); stLoad(true); return; }
     if (e.target.closest('[data-stcb]')) { const inp = $('#stgq'); if ($('#stgl').hidden) { inp.dataset.typed = ''; inp.focus(); stCombo(true); } else stCombo(false); return; }
     const o = e.target.closest('#stgl [data-g]');
-    if (o) { stPick(o.dataset.g); return; }
+    if (o) { if (o.dataset.g !== ST.game) adConfetti(e); stPick(o.dataset.g); return; }
     const u = e.target.closest('[data-stu]');
     if (u) { const x = (AD.users || []).find(y => y.id === u.dataset.stu); if (x) { adTab('users'); adPanel(x); } return; }
     const g = e.target.closest('[data-stopen]');
@@ -4715,7 +4733,7 @@ function stBoot() {
     if (e.target.id !== 'stgq') return;
     const ul = $('#stgl'), n = (ST.opts || []).length;
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (ul.hidden) { stCombo(true); return; } if (!n) return; ST.ci = e.key === 'ArrowDown' ? (ST.ci + 1) % n : (ST.ci - 1 + n) % n; stCombo(true); }
-    else if (e.key === 'Enter') { e.preventDefault(); const o = (ST.opts || [])[Math.max(0, ST.ci)]; if (!ul.hidden && o) { stPick(o.id); e.target.blur(); } }
+    else if (e.key === 'Enter') { e.preventDefault(); const o = (ST.opts || [])[Math.max(0, ST.ci)]; if (!ul.hidden && o) { if (o.id !== ST.game) adConfetti(e); stPick(o.id); e.target.blur(); } }
     else if (e.key === 'Escape') { if (!ul.hidden) { e.preventDefault(); e.stopPropagation(); stCombo(false); e.target.value = ST.game ? adGame(ST.game) : ''; e.target.dataset.typed = ''; } }
     else if (e.key === 'Home' || e.key === 'End') { if (!ul.hidden && n && e.target.dataset.typed !== '1') { e.preventDefault(); ST.ci = e.key === 'Home' ? 0 : n - 1; stCombo(true); } }
   });
@@ -4726,6 +4744,365 @@ function stBoot() {
   box.addEventListener('pointerout', e => { const dn = e.target.closest('.sx-dn'); if (dn && !dn.contains(e.relatedTarget)) stSeg(dn, null); });
   setInterval(() => { if (view === 'admin' && AD.tab === 'stats' && document.visibilityState === 'visible' && !(document.activeElement && document.activeElement.id === 'stgq')) stLoad(true); }, 30000);
   setInterval(stSample, 60000);
+}
+
+const DC_S = ['Not yet', 'Partly', 'Collected'], DC_SC = ['', 'warn', 'ok'];
+const DC_C = ['No consent needed', 'Analytics consent', 'Ads consent', 'Legal check first'], DC_CC = ['ok', 'acc', 'warn', 'bad'];
+const DC = { s: -1, c: -1, q: '' };
+const DC_CAT = [
+  ['Time and sessions', 'clock', [
+    ['Visit time', 'created_at and client_at on every event', 'Busiest hours, when to ship updates, ad dayparting', 2, 0, 'Everyone'],
+    ['Time zone', 'Intl.DateTimeFormat().resolvedOptions().timeZone', 'Local hour of play, country guess without IP, VPN check against IP country', 2, 1, 'GA4, Clarity'],
+    ['Local hour and weekday', 'Client clock plus time zone', 'Heatmap of play by local hour, best time for events and push', 2, 1, 'GA4'],
+    ['Session length', 'session_end with seconds', 'Average engagement time', 2, 1, 'GA4'],
+    ['Active vs idle time', 'visibilitychange, focus, last input time', 'Real attention time instead of open-tab time', 2, 1, 'GA4 user_engagement'],
+    ['Engaged session', 'Over 10 s, or 2+ views, or a game launch', 'GA4 engagement rate, the main health number ad buyers ask for', 0, 1, 'GA4'],
+    ['Visit number', 'Counter in local storage', 'New vs 2nd vs 10th visit behaviour', 0, 1, 'GA4 ga_session_number'],
+    ['Days since first and last visit', 'First-seen date per visitor id', 'Lifetime, recency, churn risk', 2, 1, 'GA4 first_visit'],
+    ['Time to first launch', 'Page load to first game_launch', 'Onboarding friction, homepage layout tests', 0, 1, 'Product teams'],
+    ['Visits with no game launched', 'Session without game_launch', 'Bounce rate of the homepage', 2, 1, 'GA4 bounce rate'],
+    ['Several tabs open', 'BroadcastChannel ping between tabs', 'Inflated live counts, multi-tab players', 0, 1, ''],
+    ['Holiday and school calendar match', 'Join daily stats with a country calendar', 'Explain spikes, plan events', 0, 0, 'Poki, CrazyGames']
+  ]],
+  ['Device and hardware', 'eye', [
+    ['Device type', 'Phone, tablet or desktop', 'Layout priorities, ad formats', 2, 0, 'Everyone'],
+    ['Operating system', 'Parsed from the user agent', 'Bug triage, store/PWA decisions', 2, 0, 'Everyone'],
+    ['OS version', 'navigator.userAgentData.getHighEntropyValues platformVersion', 'Drop old versions safely, Windows 10 vs 11', 2, 1, 'GA4 (uapv on Tetris)'],
+    ['Browser', 'Parsed from the user agent', 'Test matrix', 2, 0, 'Everyone'],
+    ['Browser version', 'userAgentData fullVersionList', 'Know when a feature can be used', 2, 1, 'GA4 (uafvl on Tetris)'],
+    ['Device model', 'userAgentData model (Android)', 'Low-end phone list, performance presets', 2, 1, 'GA4, ad networks'],
+    ['CPU architecture and bitness', 'userAgentData architecture, bitness', 'ARM vs x86 performance', 2, 1, 'GA4 (uaa, uab on Tetris)'],
+    ['Screen, viewport, pixel ratio', 'screen and innerWidth/innerHeight, devicePixelRatio', 'Ad slot sizes, layout breakpoints', 2, 0, 'GA4 (sr on Tetris)'],
+    ['Orientation and rotations', 'screen.orientation change events', 'Which games need portrait mode', 0, 1, 'Mobile game studios'],
+    ['Touch or mouse', 'pointer: coarse media query', 'Show touch controls', 2, 0, ''],
+    ['Hover support', 'hover: hover media query', 'Card hover previews on or off', 0, 0, ''],
+    ['CPU cores', 'navigator.hardwareConcurrency', 'Auto quality setting', 2, 1, 'Unity, Poki'],
+    ['Device memory', 'navigator.deviceMemory (Chrome)', 'Skip heavy games on 2 GB phones', 2, 1, 'Google'],
+    ['GPU model', 'WebGL WEBGL_debug_renderer_info renderer string', 'Graphics presets, crash clusters per GPU', 2, 3, 'Unity, Steam survey'],
+    ['WebGL / WebGL2 / WebGPU support', 'Feature test on load', 'Which engine tech is safe to use', 2, 0, 'Unity'],
+    ['Screen refresh rate', 'Measured from requestAnimationFrame', '120 Hz users, physics step choices', 2, 1, ''],
+    ['HDR and colour depth', 'dynamic-range: high media query, screen.colorDepth', 'Art pipeline choices', 0, 1, ''],
+    ['Battery level and charging', 'navigator.getBattery (Chrome only)', 'Low-power mode, shorter sessions on battery', 0, 3, 'Ad networks (deprecated in most browsers)'],
+    ['Gamepad model', 'navigator.getGamepads() id string', 'Which controller layouts to draw (PS, Xbox, Switch)', 2, 1, 'Steam'],
+    ['Keyboard layout', 'navigator.keyboard.getLayoutMap (Chrome)', 'AZERTY / QWERTZ default bindings', 2, 1, ''],
+    ['Installed as app', 'display-mode: standalone', 'PWA adoption', 2, 0, ''],
+    ['Storage space', 'navigator.storage.estimate()', 'Whether offline packs fit', 0, 1, ''],
+    ['Sound on or muted', 'Site mute setting', 'Whether audio ads or music matter', 1, 1, 'Ad networks (muted autoplay)']
+  ]],
+  ['Performance and quality', 'timer', [
+    ['Frames per second per game', 'Average and 1% low from rAF timing', 'Find games that run badly, per device', 2, 1, 'Unity, Steam'],
+    ['Long tasks and freezes', 'PerformanceObserver longtask', 'Jank reports, menu lag', 0, 1, 'Sentry, New Relic'],
+    ['Game load time', 'Click to first playable frame', 'Players lost while loading', 2, 1, 'Poki, CrazyGames'],
+    ['Web Vitals (LCP, INP, CLS, TTFB)', 'PerformanceObserver or web-vitals', 'Google ranking, homepage speed', 2, 1, 'Cloudflare beacon on Tetris'],
+    ['Download sizes and cache hits', 'Resource Timing transferSize', 'Hosting costs, slow countries', 0, 1, 'Cloudflare'],
+    ['JavaScript errors', 'window error and unhandledrejection', 'Bug fixing', 2, 1, 'Sentry'],
+    ['Full stack traces', 'error.stack, trimmed', 'Faster bug fixing', 1, 1, 'Sentry'],
+    ['WebGL context lost', 'webglcontextlost event', 'GPU crashes per device', 0, 1, 'Unity'],
+    ['Silent crash detection', 'Heartbeat stops without session_end', 'Crashes that throw no error', 0, 1, 'Firebase Crashlytics'],
+    ['Memory use', 'performance.memory (Chrome) or measureUserAgentSpecificMemory', 'Leaks in long sessions', 0, 1, ''],
+    ['Server call time and failures', 'Time each Supabase RPC', 'Slow backend, outages', 0, 0, 'New Relic, Datadog'],
+    ['Realtime disconnects', 'Channel status changes', 'Multiplayer stability', 0, 0, ''],
+    ['Update installs', 'update_ready event', 'How fast new versions spread', 2, 0, '']
+  ]],
+  ['Network and location', 'rocket', [
+    ['Country', 'From IP at the edge (Cloudflare cf-ipcountry, or a geo lookup like geojs which Tetris calls)', 'Ad prices differ hugely by country, translation priorities', 2, 1, 'Tetris (geojs), GA4'],
+    ['Region and city', 'IP geolocation', 'Local events, server placement', 2, 1, 'GA4'],
+    ['Internet provider and ASN', 'IP to ASN lookup (geojs and ipinfo return the organisation)', 'Spot school or office networks, outage reports per ISP', 2, 1, 'Tetris (geojs), ad fraud vendors'],
+    ['Connection type and speed', 'navigator.connection effectiveType, downlink, rtt, saveData', 'Lighter assets on 3G, data saver mode', 2, 1, 'Google'],
+    ['VPN, proxy or datacenter IP', 'ASN list or IP reputation API', 'Bot and fraud filtering, ad invalid traffic', 2, 1, 'Google Ad Traffic Quality (seen on Tetris)'],
+    ['Preferred languages', 'navigator.languages (full list)', 'Which translation to add next', 2, 0, 'GA4 (ul on Tetris)'],
+    ['Time zone vs IP country', 'Compare both', 'VPN signal', 2, 1, 'Fraud vendors'],
+    ['Raw IP address', 'Request header', 'Abuse blocking only; store hashed and short-lived', 0, 3, 'Everyone (truncated in GA4)'],
+    ['Latency to the server', 'Ping the realtime server', 'Multiplayer matchmaking by region', 0, 0, 'Online games'],
+    ['Network type from IP (mobile, home, school)', 'ASN category lookup', 'School traffic peaks, mobile data users', 0, 1, 'Ad networks']
+  ]],
+  ['Where visitors come from', 'users', [
+    ['Referrer site', 'document.referrer host', 'Which sites send players', 2, 1, 'GA4'],
+    ['Full referrer page', 'document.referrer path', 'Which exact post or video sent them', 0, 1, 'GA4'],
+    ['Campaign tags', 'utm_source, utm_medium, utm_campaign, utm_term, utm_content', 'Measure every link you share', 0, 1, 'GA4'],
+    ['Ad click ids', 'gclid, fbclid, ttclid, msclkid, twclid in the URL', 'Report conversions back to ad platforms', 0, 2, 'Google Ads, Meta, TikTok'],
+    ['Landing page', 'First path of the visit', 'Which game pages bring new people', 1, 1, 'GA4'],
+    ['First and last channel per visitor', 'Store first-touch source', 'Credit the channel that found the player', 0, 1, 'GA4 attribution'],
+    ['Invite and party links', 'party_join from a shared link', 'Viral factor (invites per player)', 1, 1, 'Mobile game studios'],
+    ['Share button clicks', 'navigator.share and copy-link clicks', 'Which games get shared', 0, 1, ''],
+    ['Install prompt shown and accepted', 'beforeinstallprompt, appinstalled', 'PWA installs', 0, 1, ''],
+    ['Search engine keyword', 'Google Search Console export', 'SEO: which searches bring players', 0, 0, 'Everyone (Search Console)']
+  ]],
+  ['Navigation and clicks', 'play', [
+    ['Page and view changes', 'view event', 'Funnels between pages', 2, 1, 'GA4 page_view'],
+    ['Scroll depth', '25 / 50 / 75 / 90% of the page', 'Is anything below the fold seen', 2, 1, 'GA4 scroll (90% on Tetris)'],
+    ['Game card clicks with position', 'tile_click with rail and slot', 'Click-through rate by slot, ranking', 2, 1, 'Poki, CrazyGames'],
+    ['Game card impressions', 'IntersectionObserver on cards', 'CTR = clicks / impressions, cover A/B tests', 2, 1, 'Poki, CrazyGames, Netflix'],
+    ['Cover A/B tests', 'Two covers per game, compare CTR', 'Better covers, more plays', 0, 1, 'Netflix, Poki'],
+    ['Hover time on cards', 'pointerenter to pointerleave', 'Interest that did not turn into a click', 0, 1, ''],
+    ['Searches and no-result searches', 'search and search_go events', 'Which games to add next', 2, 1, ''],
+    ['Filters and sorting', 'filter and sort events', 'Category demand', 2, 1, ''],
+    ['Outbound link clicks', 'Clicks on links to other sites', 'Where players leave to', 0, 1, 'GA4 enhanced measurement'],
+    ['Rage clicks and dead clicks', 'Several fast clicks in one spot, clicks with no effect', 'Broken or confusing buttons', 2, 1, 'Clarity on Tetris'],
+    ['Session replays and heatmaps', 'Record pointer and DOM changes', 'Watch where people struggle', 0, 1, 'Clarity on Tetris, Hotjar'],
+    ['Exit page', 'Last view before session_end', 'Where people give up', 2, 1, 'GA4'],
+    ['Time on each page', 'View change timestamps', 'Which pages hold attention', 2, 1, 'GA4'],
+    ['Settings changed', 'setting event', 'Which defaults are wrong', 2, 1, '']
+  ]],
+  ['Gameplay', 'trophy', [
+    ['Launches, rounds and time per game', 'game_launch, game_play, game_time', 'Most popular games', 2, 1, ''],
+    ['Best scores and records', 'game_stats table', 'Leaderboards', 2, 0, ''],
+    ['Score distribution', 'Every final score, not just the best', 'Balance difficulty, spot cheaters', 2, 1, 'Tetris, King'],
+    ['Level reached and quit point', 'Level number at game over or exit', 'Funnel per level, where it gets too hard', 2, 1, 'King, Rovio'],
+    ['Death and fail positions', 'x, y of each fail', 'Map heatmaps', 0, 1, 'Unity, Valve'],
+    ['Round length', 'Start to end of each round', 'Pacing, where to show a break ad', 2, 1, 'Ad-based studios'],
+    ['Quits in the first 30 seconds', 'Game exit soon after launch', 'Games that confuse new players', 2, 1, 'Poki'],
+    ['Restarts and pauses', 'restart and pause events', 'Frustration signals', 2, 1, ''],
+    ['Difficulty or mode chosen', 'Per-game mode event', 'Which modes to keep', 0, 1, ''],
+    ['Input used in game', 'Last input: keyboard, mouse, touch or gamepad', 'Where to invest in controls', 2, 1, 'Steam Input'],
+    ['Rebinds', 'Which actions players rebind', 'Fix bad default controls', 2, 1, 'Ubisoft, EA'],
+    ['Win, loss and bot level', 'Match result and opponent', 'Matchmaking, bot balance', 0, 1, 'Psyonix'],
+    ['Rocket League match stats', 'Goals, saves, shots, touches, boost used, aerials, demos', 'Bot tuning, skill rating, highlights', 2, 1, 'Psyonix'],
+    ['First game of new players', 'First game_launch per visitor', 'Which game should be featured for newcomers', 1, 1, 'Poki'],
+    ['Fullscreen use', 'fullscreen event', 'Default to fullscreen or not', 2, 1, ''],
+    ['Party size and party length', 'party_create, party_play', 'Multiplayer demand', 1, 1, ''],
+    ['Cheat signals', 'Impossible scores, timer drift, edited saves', 'Clean leaderboards', 0, 0, 'Every competitive game']
+  ]],
+  ['Accounts and social', 'save', [
+    ['Sign ups and log ins with method', 'auth events (Google, email)', 'Which sign-in to promote', 2, 0, ''],
+    ['Sign-up started but not finished', 'Form opened vs account created', 'Fix sign-up friction', 1, 1, 'GA4 funnels'],
+    ['Profile completeness', 'Avatar, display name, bio set', 'Engagement predictor', 0, 0, 'LinkedIn, Steam'],
+    ['Friends, messages, tickets', 'Counts per user', 'Social players stay longer', 2, 0, 'Discord, Steam'],
+    ['Account age', 'created_at', 'Cohorts', 2, 0, ''],
+    ['Favourites', 'favourites table', 'Personal recommendations', 2, 0, ''],
+    ['Age range (self declared)', 'One question at sign-up', 'Children cannot get personalised ads; required for COPPA and GDPR-K', 0, 3, 'Google, Roblox'],
+    ['Gender (self declared)', 'Optional profile field', 'Ad targeting; sensitive, keep optional', 0, 3, 'Meta, Google'],
+    ['Newsletter opt-in', 'Checkbox with double opt-in', 'Bring players back by email', 0, 0, 'Everyone'],
+    ['Push notification permission', 'Notification.permission and opt-in rate', 'Re-engagement channel', 0, 0, 'Mobile games'],
+    ['Account deletion and data downloads', 'Requests table, data_download event', 'GDPR compliance proof', 2, 0, '']
+  ]],
+  ['Retention and calculated numbers', 'users', [
+    ['Daily, weekly, monthly actives', 'Distinct visitors per day, 7 and 30 days', 'Core growth numbers', 2, 1, 'Everyone'],
+    ['Stickiness (DAU / MAU)', 'Daily actives divided by monthly actives', 'How habit-forming the site is; 20% is good', 2, 1, 'Facebook, Zynga'],
+    ['Day 1, 7 and 30 retention', 'Share of new players back on that day', 'The number investors and ad partners ask for', 2, 1, 'Everyone'],
+    ['Churn risk', 'No visit for 14 days after a regular streak', 'Win-back emails', 2, 1, 'GA4 churn probability'],
+    ['Returning after a long break', 'Back after 30+ days', 'What brought them back', 0, 1, ''],
+    ['Streaks', 'Consecutive days played', 'Daily rewards', 2, 1, 'Duolingo'],
+    ['Retention by channel', 'Cohorts split by first source', 'Which sources bring loyal players', 0, 1, 'GA4'],
+    ['Full funnel', 'Visit, launch, play 1 minute, sign up, come back', 'Where most people drop', 2, 1, 'Mixpanel, Amplitude'],
+    ['Lifetime playtime per player', 'Sum of game_time', 'Find super fans', 2, 1, ''],
+    ['Power user share', 'Top 1% and 10% of playtime', 'How much depends on a few players', 1, 1, ''],
+    ['Feature adoption', 'Share of players using parties, favourites, chat', 'Which features to keep', 1, 1, 'Amplitude'],
+    ['Game ratings', 'Thumbs up or down after a round', 'Ranking, removing bad games', 2, 0, 'Poki, CrazyGames']
+  ]],
+  ['Ads and money', 'star', [
+    ['Consent string', 'IAB TCF v2.2 via __tcfapi, plus GPP for the US', 'Required before EU ad networks can personalise; Tetris uses Google Funding Choices', 0, 0, 'Tetris (Funding Choices), every ad site'],
+    ['Ad impressions and viewability', 'Ad shown and at least 50% visible for 1 s', 'Revenue reporting', 1, 2, 'Tetris (GA4 ad_impression)'],
+    ['Ad clicks and CTR', 'Clicks on ad slots', 'Layout tuning', 1, 2, 'Google Ad Manager'],
+    ['Revenue per thousand views (eCPM)', 'From the ad network report', 'Which countries and pages earn most', 1, 2, 'Google Ad Manager, Prebid'],
+    ['Header bidding prices', 'Prebid.js bid responses per bidder', 'Which ad partners pay most; Tetris runs Prebid with Taboola, Criteo, Kueez, Seedtag, Sharethrough, RichAudience', 0, 2, 'Tetris (pbjs)'],
+    ['Rewarded ads started and finished', 'Video ad events', 'Reward balance, revenue', 0, 2, 'Tetris (Google IMA SDK)'],
+    ['Ad breaks between rounds', 'Interstitial shown at round end', 'Revenue without hurting retention', 0, 2, 'Tetris (H5 Games Ads), Poki'],
+    ['Ad errors and timeouts', 'Failed or slow ad loads', 'Lost revenue; Tetris logs ads_google_h5 timeouts to GA4', 0, 2, 'Tetris'],
+    ['Ad blocker detected', 'Bait element or blocked script check', 'Share of visitors who cannot earn money', 2, 1, 'News sites'],
+    ['Interest segments', 'Ad network inferred interests', 'Higher ad prices; done by the networks, not you', 0, 2, 'Google, Taboola'],
+    ['Cross-site ids', 'ID5, IntentIQ, Criteo ids', 'Better ad prices without third-party cookies; Tetris stores id5id and _iiq_fdata', 0, 2, 'Tetris (ID5, IntentIQ, Criteo)'],
+    ['Revenue per daily user (ARPDAU)', 'Revenue divided by daily actives', 'The main money number', 0, 0, 'Every free game'],
+    ['Purchases or donations', 'If you ever sell skins or remove ads', 'Paying user rate, ARPPU', 0, 0, 'Every free game']
+  ]],
+  ['Identity and fingerprinting', 'eye', [
+    ['Random visitor id', 'Stored in local storage', 'Count unique visitors', 2, 1, 'GA4 _ga cookie'],
+    ['Session id', 'Per tab session', 'Group events', 2, 0, 'Everyone'],
+    ['Same person on several devices', 'Linked through the account', 'True user counts', 2, 0, 'Google, Meta'],
+    ['Hashed email for ad matching', 'SHA-256 email sent to ad platforms', 'Match players to ad conversions; needs explicit consent', 0, 3, 'Google Enhanced Conversions, Meta CAPI'],
+    ['Browser fingerprint', 'Canvas, audio, fonts, GPU hash', 'Track without cookies; treated as personal data under GDPR, avoid', 0, 3, 'Ad fraud vendors'],
+    ['Bot detection', 'navigator.webdriver, headless user agents, no input events', 'Clean stats and ad traffic', 0, 0, 'Google reCAPTCHA, Cloudflare']
+  ]],
+  ['Accessibility and preferences', 'cake', [
+    ['Reduced motion', 'prefers-reduced-motion and the site setting', 'How many need calmer animations', 1, 1, 'Apple, Google'],
+    ['Dark or light theme', 'Site theme and prefers-color-scheme', 'Default theme', 1, 1, ''],
+    ['High contrast and forced colours', 'prefers-contrast, forced-colors', 'Accessibility fixes', 0, 1, 'Microsoft'],
+    ['Page zoom and font size', 'visualViewport.scale, root font size', 'Text that is too small', 0, 1, ''],
+    ['Thumbnails off', 'Setting', 'Data saving users', 2, 1, ''],
+    ['Translated by the browser', 'html lang changed by Google Translate', 'Languages to support natively', 0, 1, '']
+  ]]
+];
+const dcAll = () => DC_CAT.flatMap(c => c[2]);
+function dcList() {
+  const box = $('#dcl');
+  if (!box) return;
+  const q = DC.q.trim().toLowerCase();
+  const ok = r => (DC.s < 0 || r[3] === DC.s) && (DC.c < 0 || r[4] === DC.c) && (!q || r.slice(0, 3).concat(r[5]).join(' ').toLowerCase().includes(q));
+  const cats = DC_CAT.map(([t, ic, R], ci) => [t, ic, R.filter(ok), ci]).filter(c => c[2].length);
+  $('#addata').querySelectorAll('[data-dc]').forEach(b => b.setAttribute('aria-pressed', String(DC[b.dataset.dc] === +b.dataset.v)));
+  box.innerHTML = cats.length ? cats.map(([t, ic, R, ci], i) => `<details class="st-card dc-cat" style="--i:${i}" open><summary><span class="sx-gki">${AD_SI[ic]}</span><h3>${esc(auT(t))}</h3><em>${R.length}</em><i class="dc-mt" title="${esc(auT('Share already collected'))}"><s style="width:${Math.round(100 * DC_CAT[ci][2].filter(r => r[3] === 2).length / DC_CAT[ci][2].length)}%"></s></i></summary>
+   <div class="dc-rows">${R.map((r, j) => `<div class="dc-r" style="--j:${Math.min(j, 16)}"><div class="dc-n"><b>${esc(auT(r[0]))}</b><small>${esc(auT(r[1]))}</small></div><div class="dc-u">${esc(auT(r[2]))}${r[5] ? `<small>${esc(auT('Who does it: {w}').replace('{w}', r[5]))}</small>` : ''}</div><div class="dc-p"><span class="adm-pill ${DC_SC[r[3]]}">${esc(auT(DC_S[r[3]]))}</span><span class="adm-pill ${DC_CC[r[4]]}">${esc(auT(DC_C[r[4]]))}</span></div></div>`).join('')}</div></details>`).join('') : `<div class="adm-empty">${esc(auT('Nothing matches.'))}</div>`;
+}
+function dcDraw(an) {
+  const box = $('#dcv');
+  if (!box) return;
+  if (!motionOK()) an = false;
+  const all = dcAll(), cnt = [0, 1, 2].map(s => all.filter(r => r[3] === s).length);
+  const chip = (k, v, l, n) => `<button type="button" data-dc="${k}" data-v="${v}" aria-pressed="${DC[k] === v}">${esc(auT(l))}${n != null ? `<em>${n}</em>` : ''}</button>`;
+  const T = [['Things you could track', all.length], ['Already collected', cnt[2]], ['Partly collected', cnt[1]], ['Not collected yet', cnt[0]]];
+  box.classList.toggle('sx-q', !an);
+  box.innerHTML = `
+  <div class="tiles adm-tiles st-tiles dc-tiles">${T.map(([k, n], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b data-n="${n}" data-f="l">${stN(n)}</b></div>`).join('')}</div>
+  <div class="st-card dc-intro"><h3>${AD_SI.eye}${esc(auT('What big sites collect'))}</h3><p>${esc(auT('Checked live on play.tetris.com: Google Tag Manager with Google Analytics 4 (page views, scroll depth, ad impressions, ad timeouts), Microsoft Clarity (session replays, heatmaps, rage clicks), Google Funding Choices for consent, Google Ad Manager with Prebid header bidding (Taboola, Criteo, Kueez, Seedtag, Sharethrough, RichAudience), ID5 and IntentIQ cross-site ids, a geojs IP lookup for country and provider, Cloudflare Web Analytics for page speed, and Google IMA for video ads.'))}</p><p class="adm-mut">${esc(auT('Anything marked Analytics or Ads consent may only be collected after the visitor agrees in the cookie banner (GDPR, ePrivacy, and Monaco Law 1.565). Legal check first means personal or sensitive data.'))}</p></div>
+  <div class="dc-bar"><label class="search dc-q" for="dcq"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="dcq" type="search" placeholder="${esc(auT('Search the list'))}" autocomplete="off" spellcheck="false" value="${esc(DC.q)}"></label>
+   <div class="dc-chips" role="group" aria-label="${esc(auT('Status'))}">${chip('s', -1, 'All')}${[2, 1, 0].map(s => chip('s', s, DC_S[s], cnt[s])).join('')}</div>
+   <div class="dc-chips" role="group" aria-label="${esc(auT('Consent'))}">${chip('c', -1, 'Any consent')}${DC_C.map((l, c) => chip('c', c, l)).join('')}</div></div>
+  <div class="dc-cats" id="dcl"></div>`;
+  dcList();
+  if (an) countUp(box.querySelector('.dc-tiles'));
+}
+function dcBoot() {
+  const box = $('#addata');
+  box.addEventListener('click', e => {
+    const sb = e.target.closest('[data-dsub]');
+    if (sb) { if (sb.dataset.dsub !== INS.sub) { INS.sub = sb.dataset.dsub; dataOpen(true); adConfetti(e); } return; }
+    const rg = e.target.closest('[data-insrng]');
+    if (rg) { const d = +rg.dataset.insrng; if (d !== INS.days) { INS.days = d; box.querySelectorAll('[data-insrng]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.insrng === d))); adConfetti(e); insLoad(true); } return; }
+    const u = e.target.closest('[data-stu]');
+    if (u) { const x = (AD.users || []).find(y => y.id === u.dataset.stu); if (x) { adTab('users'); adPanel(x); } return; }
+    const b = e.target.closest('[data-dc]');
+    if (!b) return;
+    const k = b.dataset.dc, v = +b.dataset.v;
+    if (DC[k] === v) return;
+    DC[k] = v; box.classList.remove('sx-q'); dcList(); adConfetti(e);
+  });
+  box.addEventListener('input', e => { if (e.target.id === 'dcq') { DC.q = e.target.value; box.classList.add('sx-q'); dcList(); } });
+}
+function adConfetti(e) {
+  if (!motionOK()) return;
+  const cv = document.createElement('canvas'), x = cv.getContext('2d'), d = devicePixelRatio || 1, W = innerWidth, H = innerHeight;
+  if (!x) return;
+  cv.className = 'adcf'; cv.width = W * d; cv.height = H * d; x.scale(d, d);
+  document.body.append(cv);
+  const el = e && e.target && e.target.closest ? e.target.closest('button, li') || e.target : null, bb = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+  const ox = e && e.clientX ? e.clientX : bb ? bb.left + bb.width / 2 : W / 2, oy = e && e.clientY ? e.clientY : bb ? bb.top + bb.height / 2 : H / 3;
+  const C = ['#6c5ce7', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#3aa0ff'];
+  const P = Array.from({ length: 70 }, () => { const a = -Math.PI / 2 + (Math.random() - .5) * 2.2, s = 5 + Math.random() * 7; return { x: ox, y: oy, vx: Math.cos(a) * s, vy: Math.sin(a) * s, w: 5 + Math.random() * 5, h: 3 + Math.random() * 4, r: Math.random() * 6, vr: (Math.random() - .5) * .4, c: C[Math.random() * C.length | 0] }; });
+  const t0 = performance.now();
+  (function f(t) {
+    const k = (t - t0) / 1300;
+    x.clearRect(0, 0, W, H);
+    if (k >= 1) { cv.remove(); return; }
+    x.globalAlpha = 1 - k * k;
+    P.forEach(p => { p.vy += .32; p.vx *= .985; p.x += p.vx; p.y += p.vy; p.r += p.vr; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.r * 2))); x.restore(); });
+    requestAnimationFrame(f);
+  })(t0);
+}
+
+const INS = { d: null, days: 30, busy: false, sub: 'ins', at: 0 };
+const insPct = (a, b) => b ? Math.round(100 * a / b) : 0;
+const insShare = o => o && o.n ? insPct(o.yes, o.n) + '%' : '—';
+const insMs = v => v == null ? '—' : v >= 1000 ? (v / 1000).toFixed(1) + ' s' : Math.round(v) + ' ms';
+const insVit = (k, v) => { const T = { lcp: [2500, 4000], inp: [200, 500], cls: [.1, .25], fcp: [1800, 3000], ttfb: [800, 1800] }[k]; if (v == null) return '<span class="adm-mut">—</span>'; const c = v <= T[0] ? 'ok' : v <= T[1] ? 'warn' : 'bad'; return `<span class="adm-pill ${c}">${esc(k === 'cls' ? String(v) : insMs(v))}</span>`; };
+const insCountry = c => { try { return new Intl.DisplayNames([adLang()], { type: 'region' }).of(c) || c; } catch (e) { return c; } };
+function insBars(title, rows, o) {
+  o = o || {};
+  const R = (rows || []).filter(r => r && r.n > 0), max = Math.max(1, ...R.map(r => +r.n || 0)), tot = R.reduce((s, r) => s + (+r.n || 0), 0);
+  return `<div class="st-card ins-c"><h3>${esc(auT(title))}</h3>${o.note ? `<p class="sx-note">${esc(auT(o.note))}</p>` : ''}${R.length ? `<div class="ins-bars">${R.map((r, i) => `<div class="ins-b" style="--i:${Math.min(i, 14)}"><span class="ins-bk" translate="no" title="${esc(String(r.k))}">${o.fmt ? o.fmt(r.k) : esc(r.k)}</span><i><s style="width:${(100 * r.n / max).toFixed(1)}%"></s></i><b>${o.val ? esc(o.val(r)) : `${stN(r.n)}<small>${insPct(r.n, tot)}%</small>`}</b></div>`).join('')}</div>` : `<div class="adm-mut">${esc(auT('No data yet.'))}</div>`}</div>`;
+}
+function insTiles(T) { return `<div class="tiles adm-tiles st-tiles ins-tiles">${T.map(([k, v, n, s], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b${Number.isInteger(n) ? ` data-n="${n}" data-f="l"` : ''}>${esc(v)}</b>${s ? `<small class="ins-ts">${esc(auT(s))}</small>` : ''}</div>`).join('')}</div>`; }
+function insHeat(H) {
+  const M = {}, max = Math.max(.01, ...(H || []).map(x => +x.v || 0));
+  (H || []).forEach(x => { M[x.d + '-' + x.h] = +x.v || 0; });
+  const day = d => { try { return new Date(2024, 0, 1 + d).toLocaleDateString(adLang(), { weekday: 'short' }); } catch (e) { return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d]; } };
+  let h = '<div class="ins-hm" role="img" aria-label="' + esc(auT('Hours played by local day and hour')) + '"><span></span>';
+  for (let c = 0; c < 24; c++) h += `<span class="ins-hh">${c % 3 ? '' : c}</span>`;
+  for (let d = 0; d < 7; d++) { h += `<span class="ins-hd">${esc(day(d))}</span>`; for (let c = 0; c < 24; c++) { const v = M[d + '-' + c] || 0; h += `<i style="--a:${(v / max).toFixed(3)};--i:${d * 24 + c}" title="${esc(day(d) + ' ' + c + ':00 · ' + stH(v))}"></i>`; } }
+  return h + '</div>';
+}
+function insDraw(an) {
+  const box = $('#insv');
+  if (!box) return;
+  if (!motionOK()) an = false;
+  const D = INS.d || {}, G = D.geo || {}, V = D.dev || {}, B = D.behaviour || {}, R = D.retention || {}, RL = D.rl || {}, A = D.ads || {}, C = D.coverage || {};
+  const coh = d => (R.cohort || []).find(x => x.d === d) || {}, F = R.funnel || {}, S = R.streaks || {}, sc = B.scroll || {}, all = RL.all || {};
+  const rng = `<div class="sx-bar"><h3>${esc(auT('Insights'))}</h3><div class="sx-rng" role="group" aria-label="${esc(auT('Time range'))}">${[7, 30, 90].map(d => `<button type="button" data-insrng="${d}" aria-pressed="${d === INS.days}">${esc(auT('{n} days').replace('{n}', d))}</button>`).join('')}</div></div>`;
+  const cov = `<p class="adm-mut ins-cov">${esc(auT('{a} of {b} sessions shared device details and {c} shared location. Only visitors who accepted cookies are counted.').replace('{a}', stN(C.dev)).replace('{b}', stN(C.sessions)).replace('{c}', stN(C.geo)))}</p>`;
+  const games = (D.games || []).slice(0, 60), votes = new Map((D.votes || []).map(v => [v.id, v]));
+  const inMain = g => { const I = [['Keyboard', g.ik], ['Mouse', g.im], ['Touch', g.it], ['Controller', g.ip]].sort((a, b) => b[1] - a[1]); const t = I.reduce((s, x) => s + (+x[1] || 0), 0); return t ? I.filter(x => x[1] > 0).slice(0, 2).map(x => auT(x[0]) + ' ' + insPct(x[1], t) + '%').join(' · ') : '—'; };
+  const gRows = games.map((g, i) => { const vt = votes.get(g.id) || g.votes || {}, s = g.scores || {}, l = g.load || {}; return `<tr style="--i:${Math.min(i, 14)}"><td><span class="ins-gn">${adCv(g.id, 'ins-cv')}<span translate="no">${esc(adGame(g.id))}</span></span></td><td>${stN(g.n)}</td><td>${g.n ? `<span class="adm-pill ${insPct(g.early, g.n) > 40 ? 'bad' : insPct(g.early, g.n) > 20 ? 'warn' : 'ok'}">${insPct(g.early, g.n)}%</span>` : '—'}</td><td>${g.sec != null ? esc(adHrs(g.sec)) : '—'}</td><td>${g.fps != null ? `<b>${g.fps}</b> <span class="adm-mut">/ ${g.fps_low != null ? g.fps_low : '—'}</span>` : '—'}</td><td>${l.n ? esc(insMs(l.p50)) + ' <span class="adm-mut">/ ' + esc(insMs(l.p90)) + '</span>' : '—'}</td><td>${s.n ? `<b>${esc(stN(s.p50))}</b> <span class="adm-mut">${esc(stN(s.p25))}–${esc(stN(s.p75))} · ${esc(auT('max {n}').replace('{n}', stN(s.max)))}</span>` : '—'}</td><td>${g.lv_n ? `${esc(String(g.lv_avg))} <span class="adm-mut">/ ${esc(String(g.lv_max))}</span>` : '—'}</td><td>${esc(inMain(g))}</td><td>${vt.up || vt.down ? `<span class="ins-vt"><b>▲ ${vt.up | 0}</b> <span>▼ ${vt.down | 0}</span></span>` : '—'}</td></tr>`; }).join('');
+  const user = (p, x) => `<button type="button" class="sx-tpr" data-stu="${esc(p.id)}"><span class="pic">${esc((p.name || p.username || '?').charAt(0).toUpperCase())}</span><span class="sx-tpn"><b translate="no">${esc(p.name || p.username || '—')}</b><small>${p.username ? '@' + esc(p.username) : ''}</small></span><em>${esc(x)}</em></button>`;
+  const slots = (B.slots || []).filter(s => s.src !== 'side').sort((a, b) => a.pos - b.pos || a.src.localeCompare(b.src)).slice(0, 16);
+  const funnel = [['Visited', F.visited], ['Launched a game', F.launched], ['Played 1 minute', F.played], ['Created an account', F.account], ['Came back another day', F.returned]];
+  const dau = +R.dau || 0, mau = +R.mau || 0;
+  box.classList.toggle('sx-q', !an);
+  box.innerHTML = rng + cov + `
+  <h2 class="ins-h">${esc(auT('Retention'))}</h2>
+  ${insTiles([['Stickiness (daily ÷ monthly)', mau ? insPct(dau, mau) + '%' : '—', null, 'Above 20% is good'], ['Back next day', coh(1).eligible ? insPct(coh(1).back, coh(1).eligible) + '%' : '—'], ['Back after 7 days', coh(7).eligible ? insPct(coh(7).back, coh(7).eligible) + '%' : '—'], ['Back after 30 days', coh(30).eligible ? insPct(coh(30).back, coh(30).eligible) + '%' : '—'], ['At risk of leaving', stN(R.churn_all), +R.churn_all || 0, 'Regulars gone 14+ days'], ['On a streak now', stN(S.active), +S.active || 0, S.avg_cur ? auT('average {n} days').replace('{n}', S.avg_cur) : '']])}
+  <div class="ins-grid">
+   <div class="st-card ins-c"><h3>${esc(auT('Funnel'))}</h3><p class="sx-note">${esc(auT('New visitors in this period'))}</p><div class="ins-fun">${funnel.map(([k, n], i) => `<div class="ins-fs" style="--i:${i};--w:${funnel[0][1] ? Math.max(2, 100 * (+n || 0) / funnel[0][1]).toFixed(1) : 0}%"><span>${esc(auT(k))}</span><b>${stN(n)}</b><small>${i ? insPct(n, funnel[0][1]) + '%' : ''}</small></div>`).join('')}</div></div>
+   ${insBars('Longest streak (days in a row)', [['1 day', S.b1], ['2–3 days', S.b3], ['4–7 days', S.b7], ['8–14 days', S.b14], ['15+ days', S.b15]].map(([k, n]) => ({ k: auT(k), n: +n || 0 })))}
+   <div class="st-card ins-c"><h3>${esc(auT('Top current streaks'))}</h3>${(R.top_streaks || []).length ? `<div class="sx-tp">${R.top_streaks.map(p => user(p, auT('{n} days').replace('{n}', p.cur))).join('')}</div>` : `<div class="adm-mut">${esc(auT('No data yet.'))}</div>`}</div>
+   <div class="st-card ins-c"><h3>${esc(auT('Players at risk of leaving'))}</h3><p class="sx-note">${esc(auT('Played 3+ days in the last 60, gone for 14+ days'))}</p>${(R.churn || []).length ? `<div class="sx-tp ins-scroll">${R.churn.map(p => user(p, auT('{d} days · {h} h · {t}').replace('{d}', p.days).replace('{h}', p.hours).replace('{t}', adAgo(p.last)))).join('')}</div>` : `<div class="adm-mut">${esc(auT('Nobody right now.'))}</div>`}</div>
+  </div>
+  <h2 class="ins-h">${esc(auT('Games'))}</h2>
+  <div class="st-card"><p class="sx-note">${esc(auT('Per game session: quits under 30 seconds, average session, frames per second (average / worst 10%), load time (median / slowest 10%), final scores (median, middle half, best), level reached at the end (average / highest), main input, thumbs.'))}</p><div class="adm-tw"><table class="adm-t st-t ins-t"><thead><tr>${['Game', 'Sessions', 'Quit < 30 s', 'Avg session', 'FPS', 'Load', 'Scores', 'Level', 'Input', 'Votes'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody class="${an ? 'an' : ''}">${gRows || `<tr><td colspan="10" class="adm-empty">${esc(auT('No data yet.'))}</td></tr>`}</tbody></table></div></div>
+  <div class="ins-grid">
+   <div class="st-card ins-c"><h3>${esc(auT('Rocket League matches'))}</h3>${all.n ? `<div class="ins-kv"><span>${esc(auT('Matches'))}</span><b>${stN(all.n)}</b><span>${esc(auT('Win rate'))}</span><b>${insPct(all.wins, all.n)}%</b><span>${esc(auT('Goals / assists / saves / shots per match'))}</span><b>${all.goals} / ${all.assists} / ${all.saves} / ${all.shots}</b><span>${esc(auT('Boost used per match'))}</span><b>${stN(all.boost)}</b><span>${esc(auT('Demos per match'))}</span><b>${all.demos}</b><span>${esc(auT('MVP'))}</span><b>${insPct(all.mvp, all.n)}%</b><span>${esc(auT('Overtime'))}</span><b>${insPct(all.ot, all.n)}%</b></div><div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Bot level', 'Matches', 'Win rate', 'Goal margin'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${(RL.by_diff || []).map(r => `<tr><td>${esc(auT(r.diff))}</td><td>${stN(r.n)}</td><td>${insPct(r.wins, r.n)}%</td><td>${r.margin > 0 ? '+' : ''}${esc(String(r.margin))}</td></tr>`).join('')}</tbody></table></div>` : `<div class="adm-mut">${esc(auT('No matches yet.'))}</div>`}</div>
+   ${insBars('Controls players rebind', (D.rebinds || []).map(r => ({ k: `${adGame(r.game)} · ${r.dev === 'pad' ? auT('Controller') : auT('Keyboard')} · ${r.act}${r.to ? ' → ' + r.to : ''}`, n: r.n })), { val: r => stN(r.n) })}
+  </div>
+  <h2 class="ins-h">${esc(auT('Clicks and behaviour'))}</h2>
+  <div class="ins-grid">
+   <div class="st-card ins-c"><h3>${esc(auT('Click rate per slot'))}</h3><p class="sx-note">${esc(auT('A card counts as seen when half of it is on screen for 1 second'))}</p>${slots.length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Where', 'Slot', 'Seen', 'Clicks', 'Click rate'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${slots.map(s => `<tr><td>${esc(auT(s.src === 'grid' ? 'Grid' : s.src === 'rail' ? 'Row' : s.src))}</td><td>#${s.pos + 1}</td><td>${stN(s.imp)}</td><td>${stN(s.clk)}</td><td><b>${s.imp ? (100 * s.clk / s.imp).toFixed(1) : 0}%</b></td></tr>`).join('')}</tbody></table></div>` : `<div class="adm-mut">${esc(auT('No data yet.'))}</div>`}</div>
+   ${insBars('Click rate per game', (B.ctr || []).slice(0, 15).map(r => ({ k: r.id, n: r.imp ? 100 * r.clk / r.imp : 0.0001, imp: r.imp, clk: r.clk })).sort((a, b) => b.n - a.n), { fmt: id => adCv(id, 'ins-cv') + esc(adGame(id)), val: r => (r.imp ? (100 * r.clk / r.imp).toFixed(1) : 0) + '% · ' + stN(r.imp) })}
+   ${insBars('How far people scroll the home page', [['Under 25%', sc.b25], ['25–50%', sc.b50], ['50–75%', sc.b75], ['75–90%', sc.b90], ['90–100%', sc.b100]].map(([k, n]) => ({ k: auT(k), n: +n || 0 })), { note: sc.n ? auT('Average {n}%').replace('{n}', sc.avg) : '' })}
+   <div class="st-card ins-c"><h3>${esc(auT('Time on each page and exits'))}</h3>${(B.pages || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Page', 'Visits', 'Avg time', 'Left the site here'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${B.pages.map(p => `<tr><td>${esc(auT({ home: 'Home', game: 'Game', legal: 'Legal pages', admin: 'Admin' }[p.v] || p.v))}</td><td>${stN(p.n)}</td><td>${esc(adHrs(p.sec))}</td><td>${stN(p.exits)} <span class="adm-mut">${insPct(p.exits, p.n)}%</span></td></tr>`).join('')}</tbody></table></div>` : `<div class="adm-mut">${esc(auT('No data yet.'))}</div>`}</div>
+   ${insBars('Rage clicks (3 fast clicks in one spot)', B.rage, { val: r => stN(r.n) })}
+   ${insBars('Dead clicks (nothing happened)', B.dead, { val: r => stN(r.n) })}
+  </div>
+  <h2 class="ins-h">${esc(auT('Speed'))}</h2>
+  <div class="st-card"><p class="sx-note">${esc(auT('Web Vitals, 75th percentile (what Google uses for ranking). Green is good.'))}</p>${(D.vitals || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Device', 'Visits', 'LCP (main content)', 'INP (reaction)', 'CLS (layout jumps)', 'FCP (first paint)', 'TTFB (server)'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${D.vitals.map(v => `<tr><td>${esc(auT(ST_DEV[v.device] || v.device))}</td><td>${stN(v.n)}</td><td>${insVit('lcp', v.lcp)}</td><td>${insVit('inp', v.inp)}</td><td>${insVit('cls', v.cls)}</td><td>${insVit('fcp', v.fcp)}</td><td>${insVit('ttfb', v.ttfb)}</td></tr>`).join('')}</tbody></table></div>` : `<div class="adm-mut">${esc(auT('No data yet.'))}</div>`}</div>
+  <h2 class="ins-h">${esc(auT('Where players are'))}</h2>
+  ${insTiles([['Behind a VPN or datacenter', insShare(G.vpn)], ['Datacenter networks', insShare(G.dc)], ['Data saver on', insShare(G.save)], ['Median download speed', G.speed && G.speed.dl != null ? G.speed.dl + ' Mb/s' : '—'], ['Median latency', G.speed && G.speed.rtt != null ? G.speed.rtt + ' ms' : '—']])}
+  <div class="st-card ins-c"><h3>${esc(auT('When people play, in their own time'))}</h3><p class="sx-note">${esc(auT('Hours played by local weekday and hour'))}</p>${(G.hours || []).length ? insHeat(G.hours) : `<div class="adm-mut">${esc(auT('No data yet.'))}</div>`}</div>
+  <div class="ins-grid">
+   ${insBars('Countries', G.countries, { fmt: c => esc(insCountry(c)) + ' <span class="adm-mut">' + esc(c) + '</span>' })}
+   ${insBars('Regions', G.regions)}
+   ${insBars('Cities', G.cities)}
+   ${insBars('Internet providers', G.isps)}
+   ${insBars('Connection speed class', G.net)}
+   ${insBars('Connection type', G.ctype)}
+   ${insBars('Time zones', G.tz)}
+  </div>
+  <h2 class="ins-h">${esc(auT('Devices'))}</h2>
+  ${insTiles([['WebGL 2 support', insShare(V.gl2)], ['WebGPU support', insShare(V.wgpu)], ['Ad blocker on', insShare(A.adblock)]])}
+  <div class="ins-grid">
+   ${insBars('Operating system versions', V.os)}
+   ${insBars('Browser versions', V.browsers)}
+   ${insBars('Phone models', V.models)}
+   ${insBars('Graphics cards', V.gpus)}
+   ${insBars('CPU cores', V.cores)}
+   ${insBars('Memory (GB)', V.mem)}
+   ${insBars('Screen refresh rate (Hz)', V.hz)}
+   ${insBars('Keyboard layouts', V.kb, { fmt: k => esc(String(k).toUpperCase()) })}
+   ${insBars('Controllers', V.pads)}
+   ${insBars('Controller models', V.pad_ids)}
+   ${insBars('CPU architecture', V.arch)}
+   ${insBars('Main browser language', V.langs)}
+  </div>
+  <h2 class="ins-h">${esc(auT('Ads'))}</h2>
+  <div class="st-card">${(A.slots || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Slot', 'Impressions', 'Clicks', 'Click rate', 'Revenue (USD)', 'Per 1,000 views'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${A.slots.map(s => `<tr><td>${esc(s.slot)}</td><td>${stN(s.imp)}</td><td>${stN(s.clk)}</td><td>${s.imp ? (100 * s.clk / s.imp).toFixed(2) : 0}%</td><td>${(+s.usd || 0).toFixed(2)}</td><td>${s.imp ? (1000 * s.usd / s.imp).toFixed(2) : '—'}</td></tr>`).join('')}</tbody></table></div>` : `<p class="adm-mut">${esc(auT('No ads on the site yet. Ad blocker use is measured already; impressions, clicks and revenue start counting as soon as an ad slot calls Ameplay.ads.watch(element, slot).'))}</p>`}</div>
+  <p class="adm-mut st-at">${esc(auT('Updated {t}.').replace('{t}', new Date(D.at || Date.now()).toLocaleTimeString()))}</p>`;
+  if (an) countUp(box);
+}
+async function insLoad(force) {
+  if (!adIsAdmin() || INS.busy) return;
+  const box = $('#insv');
+  if (!force && INS.d && Date.now() - INS.at < 60000) { insDraw(false); return; }
+  INS.busy = true;
+  if (!INS.d) box.innerHTML = '<div class="tiles adm-tiles">' + '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(4) + '</div><i class="sk sk-chart"></i><i class="sk sk-chart"></i>';
+  box.classList.add('sx-busy');
+  try { INS.d = await adRpc('admin_insights', { p_days: INS.days }); INS.at = Date.now(); insDraw(true); }
+  catch (e) { box.innerHTML = `<div class="adm-empty">${esc(/admin_insights|function|404|PGRST/i.test(e.message || '') ? auT('The insights database update is not installed yet. Run round8_insights.sql in the Supabase SQL editor.') : auT('Could not load the stats. Check your connection and try again.'))}</div>`; }
+  finally { INS.busy = false; box.classList.remove('sx-busy'); }
+}
+function dataOpen(fresh) {
+  const box = $('#addata');
+  if (!$('#insv')) box.innerHTML = `<div class="adm-tabs ins-sub" role="tablist" data-m="${INS.sub === 'ins' ? 'users' : 'tickets'}"><button type="button" role="tab" data-dsub="ins" aria-selected="${INS.sub === 'ins'}">${esc(auT('Insights'))}</button><button type="button" role="tab" data-dsub="cat" aria-selected="${INS.sub === 'cat'}">${esc(auT('What could be tracked'))}</button><i></i></div><div id="insv" class="ads"></div><div id="dcv" class="ads dc" hidden></div>`;
+  $('#insv').hidden = INS.sub !== 'ins'; $('#dcv').hidden = INS.sub !== 'cat';
+  box.querySelector('.ins-sub').dataset.m = INS.sub === 'ins' ? 'users' : 'tickets';
+  box.querySelectorAll('[data-dsub]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.dsub === INS.sub)));
+  if (INS.sub === 'ins') insLoad(false); else if (fresh || !$('#dcv').children.length) dcDraw(true);
 }
 
 function tkBox(el, mode) {
@@ -4888,7 +5265,7 @@ function adBoot() {
     if (s) { const k = s.dataset.adsort; AD.sort = AD.sort[0] === k ? [k, -AD.sort[1]] : [k, /_at$|last_seen|friends|email_confirmed|locked|role|has_password/.test(k) ? -1 : 1]; adDraw(); return; }
     const tb = t.closest('[data-adtab]');
     if (tb) { adTab(tb.dataset.adtab); return; }
-    if (t.closest('#adref')) { adLoad(); tkLoad(tkBox($('#tka'), 'admin')); if (AD.tab === 'stats') stLoad(true); if (AD.tab === 'log') alLoad(); if (AD.tab === 'site') sfLoad(true).then(sfaDraw); return; }
+    if (t.closest('#adref')) { adLoad(); tkLoad(tkBox($('#tka'), 'admin')); if (AD.tab === 'stats') stLoad(true); if (AD.tab === 'data' && INS.sub === 'ins') insLoad(true); if (AD.tab === 'log') alLoad(); if (AD.tab === 'site') sfLoad(true).then(sfaDraw); return; }
     if (t.closest('[data-almore]')) { alLoad(true); return; }
     const alu = t.closest('[data-alu]');
     if (alu) { const x = (AD.users || []).find(y => y.id === alu.dataset.alu); if (x) { adTab('users'); adPanel(x); } return; }
@@ -4911,8 +5288,9 @@ function adBoot() {
     const tr = e.target.closest && e.target.closest('#adt tbody tr[data-uid]');
     if (tr && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); tr.click(); }
   });
-  $('#adtabs').addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); const T = ['users', 'tickets', 'stats', 'log', 'site'], i = T.indexOf(AD.tab); adTab(T[(i + (e.key === 'ArrowRight' ? 1 : T.length - 1)) % T.length]); $('#adtabs [aria-selected="true"]').focus(); } });
+  $('#adtabs').addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); const T = AD_TABS, i = T.indexOf(AD.tab); adTab(T[(i + (e.key === 'ArrowRight' ? 1 : T.length - 1)) % T.length]); $('#adtabs [aria-selected="true"]').focus(); } });
   stBoot();
+  dcBoot();
   $('#adq').addEventListener('input', e => { AD.q = e.target.value; adDraw(); });
   $('#adsite').addEventListener('input', e => { if (e.target.id !== 'sfaq') return; const q = e.target.value.trim().toLowerCase(); document.querySelectorAll('#sfag [data-sfg]').forEach(c => { c.hidden = !!q && !c.textContent.toLowerCase().includes(q) && !c.dataset.sfg.includes(q); }); });
   $('#adf').addEventListener('change', e => { AD.f = e.target.value; adDraw(); });
@@ -5746,6 +6124,7 @@ function inCaptured(code, pk) {
   if (c.add) { if (code && code !== 'Escape') { (IN.used[id] = IN.used[id] || new Set()).add(code); inLearn({ code }); } }
   else if (c.to && code && code !== 'Escape') { Object.keys(p.k).forEach(k => { if (p.k[k] === c.to) delete p.k[k]; }); if (code !== c.to) { p.k[code] = c.to; p.k[c.to] = p.k[c.to] || ''; } else delete p.k[c.to]; Object.keys(p.k).forEach(k => { if (p.k[k] === '' && !Object.values(p.k).includes(k)) delete p.k[k]; }); }
   else if (c.pk && code && code !== 'Escape') p.p[c.pk] = code;
+  if (!c.add && code && code !== 'Escape') track('rebind', { game: id, dev: c.pk ? 'pad' : 'key', act: String(c.to || c.pk), to: code });
   save(); inDraw();
 }
 function inBoot() {
@@ -5769,13 +6148,245 @@ function inBoot() {
     if (b('[data-kb]')) { IN.cap = { to: b('[data-kb]').dataset.kb }; inDraw(); return; }
     if (b('[data-kbr]')) { const to = b('[data-kbr]').dataset.kbr; Object.keys(p.k).forEach(k => { if (p.k[k] === to || k === to) delete p.k[k]; }); save(); inDraw(); return; }
     if (b('[data-kbadd]')) { IN.cap = { add: true }; b('[data-kbadd]').textContent = auT('Press the game key…'); b('[data-kbadd]').classList.add('cap'); return; }
-    if (b('[data-kbclear]')) { p.k = {}; save(); inDraw(); return; }
+    if (b('[data-kbclear]')) { p.k = {}; track('rebind', { game: inGid(), dev: 'key', act: 'reset' }); save(); inDraw(); return; }
     if (b('[data-pb]')) { IN.cap = { pk: b('[data-pb]').dataset.pb }; inDraw(); return; }
     if (b('[data-pbn]')) { p.p[b('[data-pbn]').dataset.pbn] = ''; save(); inDraw(); return; }
-    if (b('[data-pbclear]')) { p.p = {}; save(); inDraw(); return; }
+    if (b('[data-pbclear]')) { p.p = {}; track('rebind', { game: inGid(), dev: 'pad', act: 'reset' }); save(); inDraw(); return; }
   });
   if (navigator.getGamepads && [...navigator.getGamepads()].some(Boolean)) inPadStart();
 }
+
+const TR = { g: null, v0: 0, sy: 0, impQ: [], io: null, clicks: [], dw: 0, vit: { cls: 0, inp: 0, lcp: null }, vsent: false, pads: new Set(), kb: '', env: 0, asked: new Set() };
+const TR_DC = /amazon|aws|google cloud|google llc|microsoft|azure|digitalocean|ovh|hetzner|linode|akamai|vultr|choopa|oracle|contabo|leaseweb|m247|datacamp|cdn77|scaleway|alibaba|tencent|hostinger|ionos|psychz|zenlayer|packethub|tzulo|quadranet|nordvpn|expressvpn|proton|mullvad|surfshark|private internet|cyberghost|ipvanish|hide\.me|windscribe|cloudflare|fastly|gcore|constant company|hostwinds|kamatera|clouvider|serverius|worldstream|hivelocity|colocrossing/i;
+const trPadKind = id => /054c|sony|playstation|dualsense|dualshock/i.test(id) ? 'PlayStation' : /045e|xbox|xinput/i.test(id) ? 'Xbox' : /057e|nintendo|switch|joy-con/i.test(id) ? 'Switch' : /8bitdo/i.test(id) ? '8BitDo' : /046d|logitech/i.test(id) ? 'Logitech' : 'Other';
+const trSel = el => { const a = el.closest('[id],[data-id],a,button,[role="button"]') || el, t = a.tagName.toLowerCase(); return (t + (a.id ? '#' + a.id : a.dataset && a.dataset.id ? '[' + a.dataset.id + ']' : typeof a.className === 'string' && a.className.trim() ? '.' + a.className.trim().split(/\s+/)[0] : '') + (a !== el ? ' ' + el.tagName.toLowerCase() : '')).slice(0, 80); };
+const trTo = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
+const trOff = tz => { try { const p = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'shortOffset' }).formatToParts(new Date()).find(x => x.type === 'timeZoneName'); return p ? p.value : ''; } catch (e) { return ''; } };
+const trKbOf = (q, y, w) => q === 'a' ? 'azerty' : y === 'z' ? 'qwertz' : q === "'" ? 'dvorak' : q === 'q' && w === 'w' && y === 'y' ? 'qwerty' : '';
+const trVotes = () => { try { return JSON.parse(localStorage.getItem('gameplay:votes')) || {}; } catch (e) { return {}; } };
+
+function trStart(g, ctl) {
+  const A = ctl.api, G = { g, t0: performance.now(), why: 'exit', rounds: 0, sc: [], last: null, lv: null, fr: 0, ft: 0, fs: [], inp: { k: 0, m: 0, t: 0, p: 0 }, on: {} };
+  if (TR.g) trEnd1(TR.g);
+  TR.g = G;
+  const sc = A.score, sb = A.submit, ov = A.overlay;
+  A.score = v => { if (typeof v === 'number' && isFinite(v)) G.last = v; return sc(v); };
+  A.submit = v => { if (typeof v === 'number' && isFinite(v) && G.sc.length < 40) G.sc.push(v); return sb(v); };
+  A.overlay = (o = {}) => { const r = ov(o); if (o && o.stats && o.stats.length) trRound(G, o); return r; };
+  A.on(window, 'keydown', e => { if (!isField(e.target)) G.on.k = 1; }, true);
+  A.on(frame, 'pointerdown', e => { G.on[e.pointerType === 'touch' || e.pointerType === 'pen' ? 't' : 'm'] = 1; }, true);
+  ctl.add(() => trEnd1(G));
+  let last = 0, s0 = 0, n = 0, k = 0;
+  const step = t => {
+    if (TR.g !== G) return;
+    requestAnimationFrame(step);
+    if (PAUSE.on || document.visibilityState !== 'visible') { last = 0; return; }
+    if (!last || t - last > 1000) { last = s0 = t; n = 0; return; }
+    G.fr++; G.ft += t - last; last = t; n++;
+    if (++k % 10 === 0 && navigator.getGamepads) { for (const p of navigator.getGamepads()) if (p && (p.buttons.some(b => b.pressed) || p.axes.some(a => Math.abs(a) > .5))) { G.on.p = 1; break; } }
+    if (t - s0 >= 1000) {
+      if (t - G.t0 > 3000 && G.fs.length < 7200) G.fs.push(n * 1000 / (t - s0));
+      for (const x in G.on) G.inp[x]++;
+      G.on = {}; n = 0; s0 = t;
+    }
+  };
+  requestAnimationFrame(step);
+}
+function trRound(G, o) {
+  G.rounds++;
+  for (const [k, v] of o.stats) {
+    if (!/^(level|wave|stage|floor|round|lap)s?\b/i.test(String(k))) continue;
+    const n = parseFloat(String(v).replace(/<[^>]*>/g, '').replace(/[^\d.-]/g, ''));
+    if (isFinite(n) && (G.lv == null || n > G.lv)) G.lv = n;
+  }
+  const id = G.g.id, card = frame.querySelector('.g-overlay:last-child .g-ov-card');
+  if (!card || TR.asked.has(id) || trVotes()[id]) return;
+  TR.asked.add(id);
+  const box = document.createElement('div');
+  box.className = 'g-vote';
+  box.innerHTML = `<span>${esc(auT('Enjoying {g}?').replace('{g}', G.g.title))}</span><button type="button" data-gv="1" aria-label="${esc(auT('I like it'))}"><svg viewBox="0 0 24 24"><path d="M7 11v9H4v-9zM7 11l4-8a2 2 0 0 1 3 2l-1 5h6a2 2 0 0 1 2 2l-2 7a2 2 0 0 1-2 1H7"/></svg></button><button type="button" data-gv="-1" aria-label="${esc(auT('Not for me'))}"><svg viewBox="0 0 24 24"><path d="M17 13V4h3v9zM17 13l-4 8a2 2 0 0 1-3-2l1-5H5a2 2 0 0 1-2-2l2-7a2 2 0 0 1 2-1h10"/></svg></button>`;
+  box.addEventListener('click', e => {
+    const b = e.target.closest('[data-gv]');
+    e.stopPropagation();
+    if (!b) return;
+    trVote(id, +b.dataset.gv);
+    box.innerHTML = `<span>${esc(auT('Thanks for the feedback!'))}</span>`;
+    frame.focus({ preventScroll: true });
+  });
+  card.append(box);
+}
+function trVote(id, v) {
+  const V = trVotes();
+  V[id] = v;
+  try { localStorage.setItem('gameplay:votes', JSON.stringify(V)); } catch (e) {}
+  if (SB.on) sbRest('rpc/vote_game', { method: 'POST', body: { p_game: id, p_vote: v }, auth: !!SB.user }).catch(() => {});
+}
+function trEnd1(G) {
+  if (TR.g !== G) return;
+  TR.g = null;
+  const fs = G.fs.slice().sort((a, b) => a - b), I = G.inp;
+  track('game_quit', { game: G.g.id, sec: Math.round((performance.now() - G.t0) / 1000), why: G.why, rounds: G.rounds, sc: G.sc, last: G.last, lv: G.lv, fps: G.ft ? G.fr * 1000 / G.ft : null, fpsmin: fs.length ? fs[0] : null, fps5: fs.length ? fs[Math.floor(fs.length * .05)] : null, ik: I.k, im: I.m, it: I.t, ip: I.p });
+}
+function trView(from) {
+  const now = performance.now();
+  if (from) track('page_time', { v: from, sec: Math.round((now - TR.v0) / 1000) });
+  if (from === 'home') trScroll();
+  TR.v0 = now;
+}
+function trScroll() {
+  if (TR.sy > 0) track('scroll', { v: 'home', pct: Math.min(100, Math.round(TR.sy / 5) * 5) });
+  TR.sy = 0;
+}
+function trImpFlush() { while (TR.impQ.length) track('impr', { l: TR.impQ.splice(0, 40) }); }
+function trImpScan() {
+  if (!window.IntersectionObserver) return;
+  if (!TR.io) TR.io = new IntersectionObserver(es => es.forEach(e => {
+    const el = e.target;
+    if (!e.isIntersecting) { clearTimeout(el._it); return; }
+    el._it = setTimeout(() => { if (!el.isConnected) return; TR.io.unobserve(el); TR.impQ.push(el.dataset.id + '|' + el.dataset.src + '|' + [...el.parentNode.children].indexOf(el)); if (TR.impQ.length >= 40) trImpFlush(); }, 1000);
+  }), { threshold: .5 });
+  document.querySelectorAll('a[data-id][data-src]:not([data-imp])').forEach(el => { el.dataset.imp = '1'; TR.io.observe(el); });
+}
+function trDead(t) {
+  if (TR.dw || !window.MutationObserver) return;
+  const href = location.href, sy = scrollY;
+  let hit = false;
+  const mo = new MutationObserver(() => { hit = true; });
+  mo.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+  TR.dw = setTimeout(() => { mo.disconnect(); TR.dw = 0; if (!hit && location.href === href && Math.abs(scrollY - sy) < 2) track('dead', { t: trSel(t), v: view }); }, 900);
+}
+function trVitalsSend() {
+  if (TR.vsent) return;
+  TR.vsent = true;
+  const n = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null, f = performance.getEntriesByName ? performance.getEntriesByName('first-contentful-paint')[0] : null;
+  track('vitals', { lcp: TR.vit.lcp, cls: Math.round(TR.vit.cls * 1000) / 1000, inp: TR.vit.inp || null, fcp: f ? f.startTime : null, ttfb: n ? n.responseStart : null, load: n && n.loadEventEnd ? n.loadEventEnd : null, v: view });
+}
+function trHz() {
+  return new Promise(r => {
+    if (document.visibilityState !== 'visible') { r(null); return; }
+    const t = [];
+    const f = x => {
+      t.push(x);
+      if (t.length < 61) { requestAnimationFrame(f); return; }
+      const d = t.slice(1).map((v, i) => v - t[i]).sort((a, b) => a - b), hz = 1000 / d[d.length >> 1];
+      r([30, 48, 50, 60, 72, 75, 90, 100, 120, 144, 165, 170, 180, 200, 240, 360].reduce((a, b) => Math.abs(b - hz) < Math.abs(a - hz) ? b : a));
+    };
+    requestAnimationFrame(f);
+  });
+}
+async function trGeo() {
+  try { const c = JSON.parse(sessionStorage.getItem('gameplay:geo')); if (c) return c; } catch (e) {}
+  try {
+    const j = await (await fetch('https://get.geojs.io/v1/ip/geo.json', { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer' })).json();
+    const org = String(j.organization_name || j.organization || '').replace(/^AS\d+\s*/, '');
+    const o = { cc: String(j.country_code || '').slice(0, 2).toUpperCase(), country: j.country || '', region: j.region || '', city: j.city || '', isp: org, asn: +j.asn || +(String(j.organization || '').match(/^AS(\d+)/) || [])[1] || null, gtz: j.timezone || '' };
+    try { sessionStorage.setItem('gameplay:geo', JSON.stringify(o)); } catch (e) {}
+    return o;
+  } catch (e) { return null; }
+}
+function trGpu() {
+  try {
+    const c = document.createElement('canvas'), gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+    if (!gl) return '';
+    const x = /Firefox\//.test(navigator.userAgent) ? null : gl.getExtension('WEBGL_debug_renderer_info');
+    const r = String(gl.getParameter(x ? x.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || '');
+    const lc = gl.getExtension('WEBGL_lose_context'); if (lc) lc.loseContext();
+    return r.replace(/^ANGLE \((.*)\)$/, '$1').replace(/,? ?(Direct3D|D3D|OpenGL|Vulkan|Metal).*$/i, '').replace(/ \(0x[0-9a-f]+\)/gi, '').replace(/^[^,]{2,24}, (?=.*\S)/, '').trim().slice(0, 100);
+  } catch (e) { return ''; }
+}
+function trOs(hi) {
+  const ua = navigator.userAgent, d = device().os, pv = hi && hi.platformVersion ? String(hi.platformVersion) : '';
+  let m;
+  if (d === 'Windows') { const v = parseInt(pv, 10); return v >= 13 ? 'Windows 11' : v > 0 ? 'Windows 10' : (m = ua.match(/Windows NT ([\d.]+)/)) ? 'Windows ' + ({ '10.0': '10 or 11', '6.3': '8.1', '6.2': '8', '6.1': '7' }[m[1]] || m[1]) : 'Windows'; }
+  if (d === 'Android') return 'Android ' + (pv ? pv.split('.')[0] : (m = ua.match(/Android (\d+)/)) ? m[1] : '');
+  if ((m = ua.match(/(?:iPhone|iPad|CPU) OS (\d+)_(\d+)/))) return 'iOS ' + m[1] + '.' + m[2];
+  if (d === 'iOS') return (m = ua.match(/Version\/(\d+\.\d+)/)) ? 'iPadOS ' + m[1] : 'iPadOS';
+  if (d === 'macOS') return 'macOS' + (pv ? ' ' + pv.split('.').slice(0, 2).join('.') : (m = ua.match(/Mac OS X (\d+)[_.](\d+)/)) ? ' ' + m[1] + '.' + m[2] : '');
+  return d;
+}
+function trBr(hi) {
+  const b = device().browser, ua = navigator.userAgent, want = { Chrome: 'Google Chrome', Edge: 'Microsoft Edge', Opera: 'Opera' }[b];
+  const fv = hi && hi.fullVersionList && want ? hi.fullVersionList.find(x => x.brand === want) : null;
+  if (fv) return b + ' ' + String(fv.version).split('.')[0];
+  const m = ua.match(b === 'Firefox' ? /Firefox\/(\d+)/ : b === 'Safari' ? /Version\/(\d+(?:\.\d+)?)/ : b === 'Samsung' ? /SamsungBrowser\/(\d+)/ : b === 'Edge' ? /Edg\/(\d+)/ : b === 'Opera' ? /OPR\/(\d+)/ : /Chrome\/(\d+)/);
+  return b + (m ? ' ' + m[1] : '');
+}
+function trAdb() {
+  return new Promise(r => {
+    const b = document.createElement('div');
+    b.className = 'adsbox ad-banner ad-unit pub_300x250 text-ad';
+    b.style.cssText = 'position:absolute;left:-999px;top:0;width:10px;height:10px';
+    b.innerHTML = '&nbsp;';
+    document.body.append(b);
+    setTimeout(() => { const s = getComputedStyle(b); r(!b.offsetHeight || s.display === 'none' || s.visibility === 'hidden'); b.remove(); }, 400);
+  });
+}
+async function trEnv() {
+  if (!anOk() || TR.env) return;
+  TR.env = 1;
+  try { if (sessionStorage.getItem('gameplay:env') === SID) return; sessionStorage.setItem('gameplay:env', SID); } catch (e) {}
+  const ud = navigator.userAgentData, c = navigator.connection || {}, now = new Date(), tz = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { return ''; } })();
+  const [hi, kbm, geo, hz, adb] = await Promise.all([
+    trTo(ud && ud.getHighEntropyValues ? ud.getHighEntropyValues(['platformVersion', 'model', 'architecture', 'bitness', 'fullVersionList']).catch(() => null) : Promise.resolve(null), 2000),
+    trTo(navigator.keyboard && navigator.keyboard.getLayoutMap ? navigator.keyboard.getLayoutMap().catch(() => null) : Promise.resolve(null), 2000),
+    trTo(trGeo(), 6000), trTo(trHz(), 4000), trTo(trAdb(), 2000)
+  ]);
+  if (kbm && !TR.kb) TR.kb = trKbOf(kbm.get('KeyQ'), kbm.get('KeyY'), kbm.get('KeyW'));
+  const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean).map(p => trPadKind(p.id)) : [];
+  track('env_dev', { osv: trOs(hi), brv: trBr(hi), model: hi && hi.model ? hi.model : null, arch: hi && hi.architecture ? hi.architecture + (hi.bitness ? '-' + hi.bitness : '') : null, cores: navigator.hardwareConcurrency || null, mem: navigator.deviceMemory || null, gpu: trGpu() || null, gl2: 'WebGL2RenderingContext' in window, wgpu: 'gpu' in navigator, hz, kb: TR.kb || null, pads, adb, langs: (navigator.languages || []).slice(0, 6) });
+  const g = geo || {}, dc = TR_DC.test(g.isp || ''), tzm = !!(g.gtz && tz && g.gtz !== tz && trOff(g.gtz) !== trOff(tz));
+  track('env_geo', { tz, off: -now.getTimezoneOffset(), lh: now.getHours(), wd: now.getDay(), net: c.effectiveType || null, ctype: c.type || null, dl: c.downlink != null ? c.downlink : null, rtt: c.rtt != null ? c.rtt : null, save: c.saveData != null ? !!c.saveData : null, cc: g.cc || null, country: g.country || null, region: g.region || null, city: g.city || null, isp: g.isp || null, asn: g.asn || null, dc, tzm, vpn: dc || tzm });
+}
+function trHidden() { trImpFlush(); trVitalsSend(); }
+function trEnd() {
+  if (TR.g) { TR.g.why = 'close'; trEnd1(TR.g); }
+  trScroll(); trImpFlush(); trVitalsSend();
+  track('page_time', { v: view, sec: Math.round((performance.now() - TR.v0) / 1000), exit: true });
+}
+function trBoot() {
+  TR.v0 = performance.now();
+  const ob = (type, fn, o) => { try { new PerformanceObserver(l => l.getEntries().forEach(fn)).observe(Object.assign({ type, buffered: true }, o)); } catch (e) {} };
+  ob('layout-shift', e => { if (!e.hadRecentInput) TR.vit.cls += e.value; });
+  ob('largest-contentful-paint', e => { TR.vit.lcp = e.startTime; });
+  ob('event', e => { if (e.interactionId) TR.vit.inp = Math.max(TR.vit.inp, e.duration); }, { durationThreshold: 40 });
+  addEventListener('scroll', () => { if (view !== 'home') return; const h = document.documentElement.scrollHeight; if (h > 0) TR.sy = Math.max(TR.sy, 100 * (scrollY + innerHeight) / h); }, { passive: true });
+  document.addEventListener('click', e => {
+    const t = e.target;
+    if (!(t instanceof Element) || t.closest('.g-root, input, textarea, select, [contenteditable]')) return;
+    const now = performance.now(), x = e.clientX, y = e.clientY;
+    TR.clicks = TR.clicks.filter(c => now - c.t < 800 && Math.hypot(c.x - x, c.y - y) < 30);
+    TR.clicks.push({ t: now, x, y });
+    if (TR.clicks.length === 3) track('rage', { t: trSel(t), v: view });
+    if (getComputedStyle(t).cursor === 'pointer' || t.closest('a, button, [role="button"], img, label')) trDead(t);
+  }, true);
+  addEventListener('keydown', e => {
+    if (TR.kb || !e.key || e.key.length !== 1 || !/^Key[QWYZA]$/.test(e.code)) return;
+    const k = e.key.toLowerCase(), c = e.code;
+    const l = (c === 'KeyQ' && k === 'a') || (c === 'KeyA' && k === 'q') || (c === 'KeyW' && k === 'z') ? 'azerty' : (c === 'KeyY' && k === 'z') || (c === 'KeyZ' && k === 'y') ? 'qwertz' : (c === 'KeyY' && k === 'y') || (c === 'KeyZ' && k === 'z') ? 'qwerty' : '';
+    if (l) { TR.kb = l; if (TR.env) track('kb', { kb: l }); }
+  }, true);
+  addEventListener('gamepadconnected', e => {
+    const id = String(e.gamepad && e.gamepad.id || '');
+    if (!id || TR.pads.has(id)) return;
+    TR.pads.add(id);
+    track('pad', { kind: trPadKind(id), id: id.replace(/\s*\(.*?\)\s*/g, ' ').trim().slice(0, 60) || trPadKind(id), map: e.gamepad.mapping || '' });
+  });
+  let mt = 0;
+  if (window.MutationObserver) new MutationObserver(() => { clearTimeout(mt); mt = setTimeout(trImpScan, 400); }).observe(document.querySelector('main') || document.body, { childList: true, subtree: true });
+  trImpScan();
+  setInterval(trImpFlush, 30000);
+  if (anOk()) setTimeout(trEnv, 1500);
+}
+Ameplay.ads = {
+  watch(el, slot, net) {
+    if (!el || !window.IntersectionObserver) return;
+    let t = 0;
+    const io = new IntersectionObserver(es => es.forEach(e => { clearTimeout(t); if (e.isIntersecting) t = setTimeout(() => { io.disconnect(); track('ad_impression', { slot: String(slot || ''), net: String(net || '') }); }, 1000); }), { threshold: .5 });
+    io.observe(el);
+    el.addEventListener('click', () => track('ad_click', { slot: String(slot || ''), net: String(net || '') }), true);
+  },
+  revenue(slot, usd, net) { track('ad_revenue', { slot: String(slot || ''), net: String(net || ''), usd: +usd || 0 }); }
+};
 
 const CHANGELOG = [
   { v: 6, date: '2026-10-17', items: [
@@ -6669,6 +7280,23 @@ const R = [
 ["Accept all", "Tout accepter", "Aceptar todo", "Alle akzeptieren", "Accetta tutto", "Aceitar tudo"],
 ["Only essentials", "Essentiels uniquement", "Solo esenciales", "Nur notwendige", "Solo essenziali", "Só essenciais"],
 ["Decline", "Refuser", "Rechazar", "Ablehnen", "Rifiuta", "Recusar"],
+["Choosing Only for this session turns analytics on until you close the tab. Nothing is kept for your next visit, and we ask again then.", "Choisir Seulement pour cette session active les statistiques jusqu’à la fermeture de l’onglet. Rien n’est conservé pour votre prochaine visite, et nous vous redemandons alors.", "Elegir Solo para esta sesión activa las estadísticas hasta que cierres la pestaña. No se guarda nada para tu próxima visita y entonces te lo volvemos a preguntar.", "Mit Nur für diese Sitzung ist die Analyse aktiv, bis du den Tab schließt. Für deinen nächsten Besuch wird nichts gespeichert, und wir fragen dann erneut.", "Scegliendo Solo per questa sessione le statistiche restano attive finché non chiudi la scheda. Non viene conservato nulla per la prossima visita e te lo chiederemo di nuovo.", "Escolher Só nesta sessão ativa as estatísticas até fechar o separador. Nada é guardado para a próxima visita, e voltamos a perguntar nessa altura."],
+["More analytics details", "Plus de détails sur les statistiques", "Más detalles sobre las estadísticas", "Weitere Details zur Analyse", "Altri dettagli sulle statistiche", "Mais detalhes sobre as estatísticas"],
+["With your consent we also record your approximate location (country, region and city) and your internet provider. Your browser looks these up from your IP address with the GeoJS service (geojs.io). We do not store your IP address.", "Avec votre accord, nous enregistrons aussi votre position approximative (pays, région et ville) et votre fournisseur d’accès. Votre navigateur les obtient à partir de votre adresse IP grâce au service GeoJS (geojs.io). Nous ne conservons pas votre adresse IP.", "Con tu consentimiento también registramos tu ubicación aproximada (país, región y ciudad) y tu proveedor de internet. Tu navegador los obtiene a partir de tu dirección IP con el servicio GeoJS (geojs.io). No guardamos tu dirección IP.", "Mit deiner Zustimmung erfassen wir auch deinen ungefähren Standort (Land, Region und Stadt) und deinen Internetanbieter. Dein Browser ermittelt diese aus deiner IP-Adresse über den Dienst GeoJS (geojs.io). Deine IP-Adresse speichern wir nicht.", "Con il tuo consenso registriamo anche la tua posizione approssimativa (paese, regione e città) e il tuo fornitore di internet. Il tuo browser li ricava dal tuo indirizzo IP tramite il servizio GeoJS (geojs.io). Non conserviamo il tuo indirizzo IP.", "Com o teu consentimento registamos também a tua localização aproximada (país, região e cidade) e o teu fornecedor de internet. O teu navegador obtém-nos a partir do teu endereço IP com o serviço GeoJS (geojs.io). Não guardamos o teu endereço IP."],
+["We also record your time zone and local time, your connection type and speed, and whether the network looks like a VPN or a data center.", "Nous enregistrons aussi votre fuseau horaire et votre heure locale, le type et la vitesse de votre connexion, et si le réseau ressemble à un VPN ou à un centre de données.", "También registramos tu zona horaria y tu hora local, el tipo y la velocidad de tu conexión, y si la red parece un VPN o un centro de datos.", "Außerdem erfassen wir deine Zeitzone und Ortszeit, Art und Geschwindigkeit deiner Verbindung und ob das Netz nach einem VPN oder Rechenzentrum aussieht.", "Registriamo anche il tuo fuso orario e l’ora locale, il tipo e la velocità della connessione e se la rete sembra una VPN o un data center.", "Registamos também o teu fuso horário e a hora local, o tipo e a velocidade da ligação e se a rede parece uma VPN ou um centro de dados."],
+["About your device: operating system and browser versions, phone model, processor cores, memory, graphics card, screen refresh rate, keyboard layout, controller model and whether an ad blocker is on.", "Sur votre appareil : versions du système et du navigateur, modèle de téléphone, cœurs du processeur, mémoire, carte graphique, fréquence de l’écran, disposition du clavier, modèle de manette et présence d’un bloqueur de publicités.", "Sobre tu dispositivo: versiones del sistema y del navegador, modelo de teléfono, núcleos del procesador, memoria, tarjeta gráfica, frecuencia de la pantalla, distribución del teclado, modelo de mando y si hay un bloqueador de anuncios.", "Zu deinem Gerät: Versionen von Betriebssystem und Browser, Handymodell, Prozessorkerne, Arbeitsspeicher, Grafikkarte, Bildwiederholrate, Tastaturlayout, Controller-Modell und ob ein Werbeblocker aktiv ist.", "Sul tuo dispositivo: versioni del sistema e del browser, modello di telefono, core del processore, memoria, scheda grafica, frequenza dello schermo, layout della tastiera, modello di controller e se è attivo un blocco pubblicità.", "Sobre o teu dispositivo: versões do sistema e do navegador, modelo de telemóvel, núcleos do processador, memória, placa gráfica, frequência do ecrã, disposição do teclado, modelo de comando e se há um bloqueador de anúncios."],
+["About how the site is used: page speed, how far you scroll, which game cards were shown and clicked, repeated or unanswered clicks, and time spent on each page.", "Sur l’utilisation du site : vitesse des pages, jusqu’où vous faites défiler, quelles cartes de jeux ont été affichées et cliquées, les clics répétés ou sans effet, et le temps passé sur chaque page.", "Sobre el uso del sitio: velocidad de las páginas, hasta dónde te desplazas, qué tarjetas de juegos se mostraron y se pulsaron, los clics repetidos o sin efecto y el tiempo en cada página.", "Zur Nutzung der Seite: Ladegeschwindigkeit, wie weit du scrollst, welche Spielkarten angezeigt und angeklickt wurden, wiederholte oder wirkungslose Klicks und die Zeit auf jeder Seite.", "Sull’uso del sito: velocità delle pagine, fin dove scorri, quali schede dei giochi sono state mostrate e cliccate, i clic ripetuti o senza effetto e il tempo passato su ogni pagina.", "Sobre a utilização do site: velocidade das páginas, até onde deslizas, que cartões de jogos foram mostrados e clicados, os cliques repetidos ou sem efeito e o tempo em cada página."],
+["About each game session: frames per second, loading time, final scores, level reached, how you played (keyboard, mouse, touch or controller), controls you change and Rocket League match results. This helps us fix games and plan the site.", "Sur chaque partie : images par seconde, temps de chargement, scores finaux, niveau atteint, façon de jouer (clavier, souris, tactile ou manette), touches modifiées et résultats des matchs de Rocket League. Cela nous aide à corriger les jeux et à faire évoluer le site.", "Sobre cada partida: fotogramas por segundo, tiempo de carga, puntuaciones finales, nivel alcanzado, cómo jugaste (teclado, ratón, táctil o mando), controles que cambias y resultados de los partidos de Rocket League. Esto nos ayuda a arreglar juegos y planificar el sitio.", "Zu jeder Spielsitzung: Bilder pro Sekunde, Ladezeit, Endpunktzahlen, erreichtes Level, womit du gespielt hast (Tastatur, Maus, Touch oder Controller), geänderte Steuerung und Ergebnisse von Rocket-League-Spielen. Das hilft uns, Spiele zu reparieren und die Seite zu planen.", "Su ogni sessione di gioco: fotogrammi al secondo, tempo di caricamento, punteggi finali, livello raggiunto, come hai giocato (tastiera, mouse, touch o controller), comandi modificati e risultati delle partite di Rocket League. Ci aiuta a sistemare i giochi e a pianificare il sito.", "Sobre cada sessão de jogo: imagens por segundo, tempo de carregamento, pontuações finais, nível alcançado, como jogaste (teclado, rato, toque ou comando), controlos que alteras e resultados das partidas de Rocket League. Isto ajuda-nos a corrigir jogos e a planear o site."],
+["Game ratings", "Avis sur les jeux", "Valoraciones de juegos", "Spielbewertungen", "Valutazioni dei giochi", "Avaliações dos jogos"],
+["If you give a game a thumbs up or down, your vote is saved in our database, linked to your account if you are signed in. This browser remembers that you voted.", "Si vous mettez un pouce levé ou baissé à un jeu, votre vote est enregistré dans notre base de données, lié à votre compte si vous êtes connecté. Ce navigateur se souvient que vous avez voté.", "Si das un pulgar arriba o abajo a un juego, tu voto se guarda en nuestra base de datos, vinculado a tu cuenta si has iniciado sesión. Este navegador recuerda que votaste.", "Wenn du einem Spiel Daumen hoch oder runter gibst, wird deine Stimme in unserer Datenbank gespeichert, mit deinem Konto verknüpft, falls du angemeldet bist. Dieser Browser merkt sich, dass du abgestimmt hast.", "Se dai un pollice in su o in giù a un gioco, il tuo voto viene salvato nel nostro database, collegato al tuo account se hai effettuato l’accesso. Questo browser ricorda che hai votato.", "Se deres um polegar para cima ou para baixo a um jogo, o teu voto é guardado na nossa base de dados, ligado à tua conta se tiveres sessão iniciada. Este navegador lembra-se de que votaste."],
+["The games you rated", "Les jeux que vous avez notés", "Los juegos que has valorado", "Die Spiele, die du bewertet hast", "I giochi che hai valutato", "Os jogos que avaliaste"],
+["Your approximate location for this visit and whether device details were already sent, only if you accept analytics. Cleared when you close the tab.", "Votre position approximative pour cette visite et si les détails de l’appareil ont déjà été envoyés, seulement si vous acceptez les statistiques. Effacé à la fermeture de l’onglet.", "Tu ubicación aproximada para esta visita y si ya se enviaron los detalles del dispositivo, solo si aceptas las estadísticas. Se borra al cerrar la pestaña.", "Dein ungefährer Standort für diesen Besuch und ob Gerätedetails schon gesendet wurden, nur wenn du der Analyse zustimmst. Wird beim Schließen des Tabs gelöscht.", "La tua posizione approssimativa per questa visita e se i dettagli del dispositivo sono già stati inviati, solo se accetti le statistiche. Cancellato alla chiusura della scheda.", "A tua localização aproximada para esta visita e se os detalhes do dispositivo já foram enviados, só se aceitares as estatísticas. Apagado ao fechar o separador."],
+["Enjoying {g}?", "Vous aimez {g} ?", "¿Te gusta {g}?", "Gefällt dir {g}?", "Ti piace {g}?", "Estás a gostar de {g}?"],
+["I like it", "J’aime", "Me gusta", "Gefällt mir", "Mi piace", "Gosto"],
+["Not for me", "Pas pour moi", "No es para mí", "Nicht mein Ding", "Non fa per me", "Não é para mim"],
+["Thanks for the feedback!", "Merci pour votre avis !", "¡Gracias por tu opinión!", "Danke für dein Feedback!", "Grazie per il feedback!", "Obrigado pela opinião!"],
+["Only for this session", "Seulement pour cette session", "Solo para esta sesión", "Nur für diese Sitzung", "Solo per questa sessione", "Só nesta sessão"],
+["Saved for this visit only", "Enregistré pour cette visite uniquement", "Guardado solo para esta visita", "Nur für diesen Besuch gespeichert", "Salvato solo per questa visita", "Guardado só para esta visita"],
 ["Read the", "Lisez la", "Lee la", "Lies die", "Leggi la", "Leia a"],
 [". You can change your choice any time in Cookie settings.", ". Vous pouvez modifier votre choix à tout moment dans Paramètres des cookies.", ". Puedes cambiar tu elección cuando quieras en Configuración de cookies.", ". Du kannst deine Wahl jederzeit in den Cookie-Einstellungen ändern.", ". Puoi cambiare la tua scelta in qualsiasi momento in Impostazioni dei cookie.", ". Você pode mudar sua escolha a qualquer momento em Configurações de cookies."],
 ["Thanks! Cookie choice saved", "Merci ! Choix des cookies enregistré", "¡Gracias! Preferencia de cookies guardada", "Danke! Cookie-Auswahl gespeichert", "Grazie! Scelta sui cookie salvata", "Obrigado! Escolha de cookies salva"],

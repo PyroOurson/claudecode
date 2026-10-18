@@ -178,7 +178,7 @@
   }
   let carSeq = 0;
   const NOCTL = { throttle: 0, steer: 0, pitch: 0, yaw: 0, roll: 0, boost: false, jump: false, slide: false };
-  const newSt = () => ({ score: 0, goals: 0, assists: 0, saves: 0, shots: 0, demos: 0 });
+  const newSt = () => ({ score: 0, goals: 0, assists: 0, saves: 0, shots: 0, demos: 0, boost: 0 });
   const newAi = () => ({ mode: 'idle', role: 0, tx: 0, ty: 0, arrive: 0, want: 2300, think: 0, seq: null, stuck: 0, unst: 0, rest: 0, park: false, kind: '', dx: 0, dy: 1, D: null, pad: null, press: true, clear: false, shadow: false, retreat: false, boostOK: false, tgt: null, until: 0, kf: false, k0: 0, hfT: 0, save: false, opT: 9 });
   function makeCar(team, name, bot, body) {
     body = BODIES[body] ? body : 'octane';
@@ -363,7 +363,7 @@
       cImp(c, s.jx, s.jy, s.jz, rx, ry, rz);
     }
     if (c.boost > 0) c.boosting = c.boosting ? (k.boost || c.boostT < CFG.boostMin) : k.boost; else c.boosting = false;
-    if (c.boosting) { c.boostT += dt; c.boost = Math.max(0, c.boost - CFG.boostUse * dt); vadd(c.F, f, c.onGround ? CFG.boostGround : CFG.boostAir); } else c.boostT = 0;
+    if (c.boosting) { c.boostT += dt; c.st.boost += Math.min(c.boost, CFG.boostUse * dt); c.boost = Math.max(0, c.boost - CFG.boostUse * dt); vadd(c.F, f, c.onGround ? CFG.boostGround : CFG.boostAir); } else c.boostT = 0;
     c.boostK = clamp(c.boostK + (c.boosting ? dt * 10 : -dt * 6.5), 0, 1);
   }
 
@@ -5481,7 +5481,7 @@ diffuseColor.rgb = dc;
           const q = uiCap; uiCap = null;
           if (!q) return;
           const a = uiACT.find(z => z[0] === q.a);
-          if (a && x !== 'Escape' && x !== 'b9') { if (x === a[q.c === 'k' ? 2 : 3]) delete saved.bind[q.c][q.a]; else saved.bind[q.c][q.a] = x; uiBindSync(); uiCbk(); api.save(saved); api.sfx('tap'); }
+          if (a && x !== 'Escape' && x !== 'b9') { if (x === a[q.c === 'k' ? 2 : 3]) delete saved.bind[q.c][q.a]; else saved.bind[q.c][q.a] = x; try { Ameplay.analytics.track('rebind', { game: 'rocket-soccer', dev: q.c === 'k' ? 'key' : 'pad', act: q.a, to: x }); } catch (e) {} uiBindSync(); uiCbk(); api.save(saved); api.sfx('tap'); }
           if (!uiOptEl.hidden) uiOptRender();
         };
         const uiVf = (k, v) => k === 'fov' ? Math.round(v) + '°' : k === 'vol' ? String(Math.round(v)) : k === 'nps' ? Math.round(v) + '%' : (+v).toFixed(2);
@@ -5681,6 +5681,7 @@ diffuseColor.rgb = dc;
           const a = uiLvl(saved.xp); saved.xp += tot; const b = uiLvl(saved.xp), w0 = saved.wins;
           saved.games++; if (won) saved.wins++;
           api.save(saved);
+          try { const bt = W.cars.filter(c => c.bot); Ameplay.analytics.track('rl_match', { game: 'rocket-soccer', mode, online: !!online, size: W.size, diff: bt.length ? (typeof diffOf === 'function' ? diffOf(W, bt[0]) : W.diff) : null, bots: bt.length, team: me.team, win: won, us: W.score[me.team], them: W.score[1 - me.team], ot: !!W.ot, len: Math.round(W.len), goals: me.st.goals, assists: me.st.assists, saves: me.st.saves, shots: me.st.shots, demos: me.st.demos, boost: Math.round(me.st.boost || 0), score: me.st.score, mvp: me === uiEnd.mvp }); } catch (e) {}
           const s = me.st, ch = s.goals >= 2 ? ['Score 2 Goals', 'goal'] : s.saves >= 1 ? ['Make a Save', 'save'] : s.goals >= 1 ? ['Score a Goal', 'shot'] : won ? ['Win a Match', 'trophy'] : null;
           const pl = [['Time Played', Math.round(Math.min(uiPT, 1500) * 2)], ['Goals', (s.goals | 0) * 50], ['Assists', (s.assists | 0) * 30], ['Saves', (s.saves | 0) * 40]];
           if (won) pl.push(['Win', 150]);

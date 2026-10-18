@@ -417,3 +417,4 @@ body.modal-open{overflow:hidden}
 @keyframes sheetIn{from{opacity:0;transform:translateY(24px)}}
 @keyframes sheetOut{to{opacity:0;transform:translateY(18px)}}
 .am-gamebox.fs .g-canvas{border-radius:0}
+.un-must [data-unclose],.un-must #uncancel{display:none}

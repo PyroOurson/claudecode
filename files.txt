@@ -276,6 +276,7 @@ ClaudeScripts/gameplay-site/source/w/new/social.css
 ClaudeScripts/gameplay-site/source/w/new/social.js
 ClaudeScripts/gameplay-site/source/w/new/tail.js
 ClaudeScripts/gameplay-site/source/w/new/toast.css
+ClaudeScripts/gameplay-site/source/w/new/track.js
 ClaudeScripts/gameplay-site/source/w/orig_order.txt
 ClaudeScripts/gameplay-site/source/w/parts/000_pre_000.html
 ClaudeScripts/gameplay-site/source/w/parts/001_portal.js
@@ -411,6 +412,7 @@ ClaudeScripts/gameplay-site/source/w/supabase/emails/subjects.txt
 ClaudeScripts/gameplay-site/source/w/supabase/round5_admin.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round6.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round7_owner.sql
+ClaudeScripts/gameplay-site/source/w/supabase/round8_insights.sql
 ClaudeScripts/gameplay-site/source/w/supabase/schema.sql
 ClaudeScripts/gameplay-site/source/w/supabase/setup.py
 ClaudeScripts/gameplay-site/supabase/GUIDE.md
@@ -552,7 +554,6 @@ gameplay/7dc91769c995403489b8.bin
 gameplay/7ec4aaeca984ce2c7cff.bin
 gameplay/807a85de2943133d0734.bin
 gameplay/8098b3f7b5bc7ee84802.bin
-gameplay/80e35c79c3563598b10e.bin
 gameplay/80f3b18dce67cb44b759.bin
 gameplay/881ee40f9b5bc40579e0.bin
 gameplay/8980232bbc6f32e3ae97.bin
@@ -583,6 +584,7 @@ gameplay/c7165d4db42414aec11a.bin
 gameplay/c7641b96421f7ee61060.bin
 gameplay/c821da670e92c6e166a3.bin
 gameplay/ca0d5906a4e7755401d6.bin
+gameplay/cabe18e8e13687782c55.bin
 gameplay/cae8da02f03c4b6f391a.bin
 gameplay/cb90d1b2c56ebdff5e0c.bin
 gameplay/cba6d03d28cb9ee74ebc.bin

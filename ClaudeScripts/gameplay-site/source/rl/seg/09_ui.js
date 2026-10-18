@@ -752,7 +752,7 @@
           const q = uiCap; uiCap = null;
           if (!q) return;
           const a = uiACT.find(z => z[0] === q.a);
-          if (a && x !== 'Escape' && x !== 'b9') { if (x === a[q.c === 'k' ? 2 : 3]) delete saved.bind[q.c][q.a]; else saved.bind[q.c][q.a] = x; uiBindSync(); uiCbk(); api.save(saved); api.sfx('tap'); }
+          if (a && x !== 'Escape' && x !== 'b9') { if (x === a[q.c === 'k' ? 2 : 3]) delete saved.bind[q.c][q.a]; else saved.bind[q.c][q.a] = x; try { Ameplay.analytics.track('rebind', { game: 'rocket-soccer', dev: q.c === 'k' ? 'key' : 'pad', act: q.a, to: x }); } catch (e) {} uiBindSync(); uiCbk(); api.save(saved); api.sfx('tap'); }
           if (!uiOptEl.hidden) uiOptRender();
         };
         const uiVf = (k, v) => k === 'fov' ? Math.round(v) + '°' : k === 'vol' ? String(Math.round(v)) : k === 'nps' ? Math.round(v) + '%' : (+v).toFixed(2);
@@ -952,6 +952,7 @@
           const a = uiLvl(saved.xp); saved.xp += tot; const b = uiLvl(saved.xp), w0 = saved.wins;
           saved.games++; if (won) saved.wins++;
           api.save(saved);
+          try { const bt = W.cars.filter(c => c.bot); Ameplay.analytics.track('rl_match', { game: 'rocket-soccer', mode, online: !!online, size: W.size, diff: bt.length ? (typeof diffOf === 'function' ? diffOf(W, bt[0]) : W.diff) : null, bots: bt.length, team: me.team, win: won, us: W.score[me.team], them: W.score[1 - me.team], ot: !!W.ot, len: Math.round(W.len), goals: me.st.goals, assists: me.st.assists, saves: me.st.saves, shots: me.st.shots, demos: me.st.demos, boost: Math.round(me.st.boost || 0), score: me.st.score, mvp: me === uiEnd.mvp }); } catch (e) {}
           const s = me.st, ch = s.goals >= 2 ? ['Score 2 Goals', 'goal'] : s.saves >= 1 ? ['Make a Save', 'save'] : s.goals >= 1 ? ['Score a Goal', 'shot'] : won ? ['Win a Match', 'trophy'] : null;
           const pl = [['Time Played', Math.round(Math.min(uiPT, 1500) * 2)], ['Goals', (s.goals | 0) * 50], ['Assists', (s.assists | 0) * 30], ['Saves', (s.saves | 0) * 40]];
           if (won) pl.push(['Win', 150]);

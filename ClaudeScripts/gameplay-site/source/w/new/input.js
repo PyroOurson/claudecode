@@ -117,6 +117,7 @@ function inCaptured(code, pk) {
   if (c.add) { if (code && code !== 'Escape') { (IN.used[id] = IN.used[id] || new Set()).add(code); inLearn({ code }); } }
   else if (c.to && code && code !== 'Escape') { Object.keys(p.k).forEach(k => { if (p.k[k] === c.to) delete p.k[k]; }); if (code !== c.to) { p.k[code] = c.to; p.k[c.to] = p.k[c.to] || ''; } else delete p.k[c.to]; Object.keys(p.k).forEach(k => { if (p.k[k] === '' && !Object.values(p.k).includes(k)) delete p.k[k]; }); }
   else if (c.pk && code && code !== 'Escape') p.p[c.pk] = code;
+  if (!c.add && code && code !== 'Escape') track('rebind', { game: id, dev: c.pk ? 'pad' : 'key', act: String(c.to || c.pk), to: code });
   save(); inDraw();
 }
 function inBoot() {
@@ -140,10 +141,10 @@ function inBoot() {
     if (b('[data-kb]')) { IN.cap = { to: b('[data-kb]').dataset.kb }; inDraw(); return; }
     if (b('[data-kbr]')) { const to = b('[data-kbr]').dataset.kbr; Object.keys(p.k).forEach(k => { if (p.k[k] === to || k === to) delete p.k[k]; }); save(); inDraw(); return; }
     if (b('[data-kbadd]')) { IN.cap = { add: true }; b('[data-kbadd]').textContent = auT('Press the game key…'); b('[data-kbadd]').classList.add('cap'); return; }
-    if (b('[data-kbclear]')) { p.k = {}; save(); inDraw(); return; }
+    if (b('[data-kbclear]')) { p.k = {}; track('rebind', { game: inGid(), dev: 'key', act: 'reset' }); save(); inDraw(); return; }
     if (b('[data-pb]')) { IN.cap = { pk: b('[data-pb]').dataset.pb }; inDraw(); return; }
     if (b('[data-pbn]')) { p.p[b('[data-pbn]').dataset.pbn] = ''; save(); inDraw(); return; }
-    if (b('[data-pbclear]')) { p.p = {}; save(); inDraw(); return; }
+    if (b('[data-pbclear]')) { p.p = {}; track('rebind', { game: inGid(), dev: 'pad', act: 'reset' }); save(); inDraw(); return; }
   });
   if (navigator.getGamepads && [...navigator.getGamepads()].some(Boolean)) inPadStart();
 }

@@ -178,7 +178,7 @@
   }
   let carSeq = 0;
   const NOCTL = { throttle: 0, steer: 0, pitch: 0, yaw: 0, roll: 0, boost: false, jump: false, slide: false };
-  const newSt = () => ({ score: 0, goals: 0, assists: 0, saves: 0, shots: 0, demos: 0 });
+  const newSt = () => ({ score: 0, goals: 0, assists: 0, saves: 0, shots: 0, demos: 0, boost: 0 });
   const newAi = () => ({ mode: 'idle', role: 0, tx: 0, ty: 0, arrive: 0, want: 2300, think: 0, seq: null, stuck: 0, unst: 0, rest: 0, park: false, kind: '', dx: 0, dy: 1, D: null, pad: null, press: true, clear: false, shadow: false, retreat: false, boostOK: false, tgt: null, until: 0, kf: false, k0: 0, hfT: 0, save: false, opT: 9 });
   function makeCar(team, name, bot, body) {
     body = BODIES[body] ? body : 'octane';
@@ -363,7 +363,7 @@
       cImp(c, s.jx, s.jy, s.jz, rx, ry, rz);
     }
     if (c.boost > 0) c.boosting = c.boosting ? (k.boost || c.boostT < CFG.boostMin) : k.boost; else c.boosting = false;
-    if (c.boosting) { c.boostT += dt; c.boost = Math.max(0, c.boost - CFG.boostUse * dt); vadd(c.F, f, c.onGround ? CFG.boostGround : CFG.boostAir); } else c.boostT = 0;
+    if (c.boosting) { c.boostT += dt; c.st.boost += Math.min(c.boost, CFG.boostUse * dt); c.boost = Math.max(0, c.boost - CFG.boostUse * dt); vadd(c.F, f, c.onGround ? CFG.boostGround : CFG.boostAir); } else c.boostT = 0;
     c.boostK = clamp(c.boostK + (c.boosting ? dt * 10 : -dt * 6.5), 0, 1);
   }
 

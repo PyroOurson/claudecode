@@ -379,17 +379,18 @@ const SB = { on: !!(SUPABASE_URL && SUPABASE_ANON_KEY), c: null, p: null, lib: n
 const AN_KEY = 'gameplay:analytics', CK_KEY = 'gameplay:consent', AN_MAX = 2000;
 const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 let consent = null;
-try { consent = JSON.parse(localStorage.getItem(CK_KEY)); } catch (e) {}
+try { consent = JSON.parse(localStorage.getItem(CK_KEY) || sessionStorage.getItem(CK_KEY)); } catch (e) {}
 if (!consent || typeof consent !== 'object' || consent.v !== 2) consent = null;
 const anOk = () => !!(consent && consent.analytics);
+const ckStore = () => consent && consent.level === 'session' ? sessionStorage : localStorage;
 let anQ = [];
-try { anQ = JSON.parse(localStorage.getItem(AN_KEY)) || []; } catch (e) {}
+try { anQ = JSON.parse(ckStore().getItem(AN_KEY)) || []; } catch (e) {}
 if (!Array.isArray(anQ)) anQ = [];
 if (!anOk()) anQ = [];
 let anHold = [], anT = 0, anErr = 0, anBusy = false;
 const SID = (() => { try { const o = JSON.parse(sessionStorage.getItem('gameplay:sid')); if (o && o.id && Date.now() - o.t < 30 * 60e3) return o.id; } catch (e) {} return rid(); })();
 const T0 = Date.now();
-function anSave() { try { if (anOk()) localStorage.setItem(AN_KEY, JSON.stringify(anQ)); } catch (e) { anQ.splice(0, Math.ceil(anQ.length / 4)); } }
+function anSave() { try { if (anOk()) ckStore().setItem(AN_KEY, JSON.stringify(anQ)); } catch (e) { anQ.splice(0, Math.ceil(anQ.length / 4)); } }
 function anClean(p) {
   const o = {};
   Object.keys(p).slice(0, 24).forEach(k => {
@@ -398,7 +399,7 @@ function anClean(p) {
     if (typeof v === 'number') o[k] = isFinite(v) ? Math.round(v * 100) / 100 : null;
     else if (typeof v === 'boolean') o[k] = v;
     else if (typeof v === 'string') o[k] = v.slice(0, 160);
-    else if (Array.isArray(v)) o[k] = v.slice(0, 12).map(x => typeof x === 'object' ? String(x) : x);
+    else if (Array.isArray(v)) o[k] = v.slice(0, 40).map(x => typeof x === 'number' ? (isFinite(x) ? Math.round(x * 100) / 100 : null) : typeof x === 'boolean' ? x : String(x).slice(0, 80));
   });
   return o;
 }
@@ -475,9 +476,9 @@ Ameplay.analytics = {
 };
 function setConsent(an, lv) {
   consent = { v: 2, analytics: !!an, level: lv || (an ? 'all' : 'essential'), terms: true, at: Date.now() };
-  try { localStorage.setItem(CK_KEY, JSON.stringify(consent)); } catch (e) {}
-  if (an) { anQ = anQ.concat(anHold); anHold = []; track('consent', { analytics: true }); anSave(); }
-  else { anQ = []; anHold = []; try { localStorage.removeItem(AN_KEY); if (SB.on) localStorage.removeItem(VIDK); } catch (e) {} }
+  try { [localStorage, sessionStorage].forEach(st => { st.removeItem(CK_KEY); st.removeItem(AN_KEY); }); if (lv === 'session') localStorage.removeItem(VIDK); ckStore().setItem(CK_KEY, JSON.stringify(consent)); } catch (e) {}
+  if (an) { anQ = anQ.concat(anHold); anHold = []; track('consent', { analytics: true, level: consent.level }); anSave(); setTimeout(trEnv, 500); }
+  else { anQ = []; anHold = []; try { if (SB.on) localStorage.removeItem(VIDK); } catch (e) {} }
   $('#ckbar').hidden = true;
   document.documentElement.classList.remove('ck-open');
   syncSwitches();
@@ -520,6 +521,7 @@ function start(g) {
   setPause(false);
   const ctl = makeApi(g, root);
   cur = { g, api: ctl.api, kill: ctl.kill, counted: cur ? cur.counted : false };
+  trStart(g, ctl);
   ttSync();
   const mark = e => {
     if (!cur || cur.g !== g || cur.counted) return;
@@ -577,7 +579,9 @@ function setPause(on) {
 const canPause = () => !!(cur && !cur.g.ownPause && !(cur.api && cur.api.online));
 function restartCurrent() {
   if (!cur) return;
-  const g = cur.g; cur.kill();
+  const g = cur.g;
+  if (TR.g) TR.g.why = 'restart';
+  cur.kill();
   frame.classList.remove('swap'); void frame.offsetWidth; frame.classList.add('swap');
   start(g);
 }
@@ -665,6 +669,7 @@ function showView(v) {
   closeAll();
   document.body.classList.toggle('in-game', v === 'game');
   if (view === v) return false;
+  trView(view);
   if (view === 'home') homeY = scrollY;
   view = v;
   ['home', 'game', 'legal', 'admin'].forEach(k => { $('#v' + k[0].toUpperCase() + k.slice(1)).hidden = k !== v; });
@@ -787,7 +792,7 @@ const LEGAL = {
 <h2>Contact</h2><p>Questions, requests about your data, or a rights holder asking for a change: email <a href="mailto:gabriel06401@gmail.com">gabriel06401@gmail.com</a>.</p>`],
   cookies: ['Cookie Policy', `<p>This policy explains the cookies and similar browser storage (local storage and session storage) used by gameplay.</p>
 <h2>Essential</h2><p>These make the site work and are always on: your records, saves, profile, settings, your cookie choice and, on the password-protected version, the password unlock. They stay in your browser and are never used to track you.</p>
-<h2>Analytics (optional)</h2><p>If you accept, the site stores anonymous usage events, such as games opened, time played, searches and filters, with a random session ID (<code>gameplay:analytics</code>, <code>gameplay:sid</code>). They help us understand which games people play. For now they stay on your device. Rejecting analytics turns this off and deletes what was stored.</p>
+<h2>Analytics (optional)</h2><p>If you accept, the site stores anonymous usage events, such as games opened, time played, searches and filters, with a random session ID (<code>gameplay:analytics</code>, <code>gameplay:sid</code>). They help us understand which games people play. For now they stay on your device. Rejecting analytics turns this off and deletes what was stored.</p><p>Choosing Only for this session turns analytics on until you close the tab. Nothing is kept for your next visit, and we ask again then.</p>
 <h2>No advertising cookies</h2><p>gameplay does not use advertising or cross-site tracking cookies.</p>
 <h2>Third parties</h2><p>Fonts, the 3D engine and the networking library are loaded from Google Fonts, cdnjs and jsDelivr, and online games use the PeerJS service. These services receive your IP address when your browser contacts them, but gameplay does not let them set cookies through the site.</p>
 <h2>Your choice</h2><p>You can change your choice at any time: <button class="btn2" type="button" data-cookieset>Cookie settings</button></p><p>You can also delete all site data in your browser settings.</p>
@@ -889,7 +894,7 @@ function fillProfile() {
 }
 function say(id, m, ok) { const n = $('#' + id); n.textContent = m; n.className = 'note' + (ok ? ' ok' : ''); }
 let unStep = 1, unPending = '';
-function unClose() { $('#unmodal').hidden = true; }
+function unClose() { if (SB.user && SB.prof && !SB.prof.username) return; const m = $('#unmodal'); m.hidden = true; m.classList.remove('un-must'); }
 function renderFriends() { frOpen(); }
 const fmtDur = s => { s = Math.round(s || 0); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + 'h ' + m + 'm' : m ? m + 'm' : s + 's'; };
 function ago(t) {
@@ -1058,8 +1063,8 @@ function boot() {
   track('session', Object.assign(dv, { ref: ref === location.hostname ? '' : ref, returning: Date.now() - S.since > 864e5, gated: !!LZ.key, path: PATH_MODE, games: games.length }));
   addEventListener('error', e => { if (errN++ > 20) return; track('error', { where: 'window', msg: String(e.message || '').slice(0, 160), src: String(e.filename || '').split('/').pop().slice(0, 40), line: e.lineno || 0, game: cur ? cur.g.id : null }); });
   addEventListener('unhandledrejection', e => { if (errN++ > 20) return; const r = e.reason; track('error', { where: 'promise', msg: String(r && r.message || r).slice(0, 160), game: cur ? cur.g.id : null }); });
-  document.addEventListener('visibilitychange', () => { ttSync(); if (document.visibilityState === 'hidden') { ttCommit(true); anSave(); anFlush(); } });
-  addEventListener('pagehide', () => { ttCommit(true); track('session_end', { sec: Math.round((Date.now() - T0) / 1000) }); anSave(); anFlush(); });
+  document.addEventListener('visibilitychange', () => { ttSync(); if (document.visibilityState === 'hidden') { trHidden(); ttCommit(true); anSave(); anFlush(); } });
+  addEventListener('pagehide', () => { trEnd(); ttCommit(true); track('session_end', { sec: Math.round((Date.now() - T0) / 1000) }); anSave(); anFlush(); });
   setInterval(() => { if (cur) ttCommit(false); }, 15000);
   setInterval(anFlush, 30000);
 
@@ -1211,6 +1216,7 @@ function boot() {
   adBoot();
   soBoot();
   inBoot();
+  trBoot();
   siteBoot();
   if (S.recent.some(id => byId.get(id) && byId.get(id).is3d)) { const warmUp = () => loadThree().catch(() => {}); if (window.requestIdleCallback) requestIdleCallback(warmUp, { timeout: 4000 }); else setTimeout(warmUp, 1500); }
 }

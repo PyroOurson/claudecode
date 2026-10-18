@@ -111,7 +111,7 @@
    <div class="adm">
     <div class="adm-h"><a class="back" href="#" data-home><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back to games</a><h2>Admin dashboard</h2><button class="btn2 adm-ref" id="adref" type="button"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>Refresh</button></div>
     <div class="tiles adm-tiles" id="adtiles"></div>
-    <div class="au-tabs adm-tabs" id="adtabs" role="tablist" aria-label="Dashboard sections" data-m="users"><button type="button" role="tab" data-adtab="users" aria-selected="true">Users</button><button type="button" role="tab" data-adtab="tickets" aria-selected="false">Tickets<em id="adtn" hidden></em></button><button type="button" role="tab" data-adtab="stats" aria-selected="false">Stats</button><button type="button" role="tab" data-adtab="log" aria-selected="false">Log</button><button type="button" role="tab" data-adtab="site" aria-selected="false">Site</button><i></i></div>
+    <div class="au-tabs adm-tabs" id="adtabs" role="tablist" aria-label="Dashboard sections" data-m="users"><button type="button" role="tab" data-adtab="users" aria-selected="true">Users</button><button type="button" role="tab" data-adtab="tickets" aria-selected="false">Tickets<em id="adtn" hidden></em></button><button type="button" role="tab" data-adtab="stats" aria-selected="false">Stats</button><button type="button" role="tab" data-adtab="data" aria-selected="false">Data</button><button type="button" role="tab" data-adtab="log" aria-selected="false">Log</button><button type="button" role="tab" data-adtab="site" aria-selected="false">Site</button><i></i></div>
     <section class="adm-sec" id="adusers">
      <div class="adm-tools">
       <label class="search" for="adq"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="adq" type="search" placeholder="Search by email, username, name or id" autocomplete="off" spellcheck="false" aria-label="Search users"></label>
@@ -144,6 +144,7 @@
     </section>
     <section class="adm-sec" id="adtickets" hidden><div id="tka"></div></section>
     <section class="adm-sec ads" id="adstats" hidden></section>
+    <section class="adm-sec" id="addata" hidden></section>
     <section class="adm-sec" id="adlog" hidden></section>
     <section class="adm-sec" id="adsite" hidden></section>
    </div>
@@ -415,7 +416,7 @@
    <div class="srw"><div><b>Essential</b><small>Your records, saves, settings and this choice. Always on.</small></div><span class="sw on dis" aria-hidden="true"></span></div>
    <div class="srw"><div><b>Analytics</b><small>Anonymous counts of which games are played and for how long.</small></div><button class="sw" type="button" role="switch" id="ckan" aria-label="Analytics"></button></div>
    <p class="mtext small"><a href="#/cookies" data-legal="cookies">Cookie Policy</a></p>
-   <div class="addrow end"><button class="btn2" type="button" data-ck="reject">Reject non-essential</button><button class="btn2 pri" type="button" data-ck="save">Save</button></div>
+   <div class="addrow end"><button class="btn2" type="button" data-ck="reject">Only essentials</button><button class="btn2 pri" type="button" data-ck="save">Save</button></div>
   </div>
  </div>
 </div>
@@ -426,7 +427,7 @@
   <p id="ckd">We keep your records, saves and settings in this browser so the site works. With your OK we also count which games are played, to make the site better. No ads, nothing is sold.</p>
   <label class="au-chk" id="ckagree"><input type="checkbox" id="ckterms"><span>I agree to the <a href="#/terms" data-aulegal="terms">Terms of Use</a> and the <a href="#/privacy" data-aulegal="privacy">Privacy Policy</a></span></label>
   <div class="note bad" id="cknote" role="alert"></div>
-  <div class="ck-btns"><button class="btn2 pri" type="button" data-ckc="all">Accept all</button><button class="btn2" type="button" data-ckc="essential">Only essentials</button><button class="btn2" type="button" data-ckc="none">Decline</button></div>
+  <div class="ck-btns"><button class="btn2 pri" type="button" data-ckc="all">Accept all</button><button class="btn2" type="button" data-ckc="session">Only for this session</button><button class="btn2" type="button" data-ckc="essential">Only essentials</button></div>
   <p class="au-small">Read the <a href="#/cookies" data-aulegal="cookies">Cookie Policy</a>. You can change your choice any time in Cookie settings.</p>
  </div>
 </div>
