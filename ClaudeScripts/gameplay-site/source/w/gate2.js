@@ -44,8 +44,8 @@ plan.files.forEach(f => {
 const pre = plan.pre || (plan.packs || []).slice(0, 6);
 const { gz, iv, ct } = seal(Buffer.from(html, 'utf8'));
 const page = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>gameplay</title>
-${fonts ? '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' : ''}<style>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>gameplay</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%236d4cf5'/%3E%3Cpath d='M12.5 10v12l10-6z' fill='%23fff' stroke='%23fff' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E">
+${fonts ? '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="preload" as="style" href="' + fonts + '">\n' : ''}<style>
 :root{color-scheme:light;--bg:#f6f4ff;--card:#fff;--ink:#17142b;--muted:#6b6785;--accent:#6d4cf5;--ink-a:#fff;--line:#e6e2f6;--bad:#d93a4a;--soft:#ece8ff}
 :root.dk{color-scheme:dark;--bg:#12101f;--card:#1b182d;--ink:#f0eeff;--muted:#a29fc0;--accent:#8e74ff;--ink-a:#12101f;--line:#2f2a50;--bad:#ff6b7a;--soft:#2b2552}
 *{box-sizing:border-box}html,body{height:100%;margin:0}

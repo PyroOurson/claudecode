@@ -303,7 +303,7 @@ function lzScan(now) {
   const wait = now === true ? null : pend;
   if (wait) need(wait).then(() => lzScan(true), () => lzScan(true));
   if (!LZ.io && window.IntersectionObserver) LZ.io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { LZ.io.unobserve(e.target); if (e.target.dataset.cv) lzCover(e.target.dataset.cv); } }), { rootMargin: '500px 0px' });
-  imgs.forEach(im => { if (im.closest('#pThumb')) lzCover(im.dataset.cv, true); else if (wait) return; else if (!LZ.io || im.closest('.rail')) lzCover(im.dataset.cv); else LZ.io.observe(im); });
+  imgs.forEach(im => { if (im.closest('#pThumb')) lzCover(im.dataset.cv, true); else if (wait) return; else if (!LZ.io || im.closest('.rail') || im.getAttribute('fetchpriority') === 'high') lzCover(im.dataset.cv); else LZ.io.observe(im); });
 }
 function lzIdle(now) {
   if (now !== true && pend) { need(pend).then(() => lzIdle(true), () => lzIdle(true)); return; }
@@ -667,7 +667,7 @@ function showView(v) {
   if (view === v) return false;
   if (view === 'home') homeY = scrollY;
   view = v;
-  ['home', 'game', 'legal', 'admin'].forEach(k => { const el = $('#v' + k[0].toUpperCase() + k.slice(1)); el.hidden = k !== v; if (k === v) { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; } });
+  ['home', 'game', 'legal', 'admin'].forEach(k => { $('#v' + k[0].toUpperCase() + k.slice(1)).hidden = k !== v; });
   if (v !== 'home' && !$('#slist').children.length) { lastList = compute().list; renderSide(lastList); markSide(); }
   track('view', { v });
   return true;
@@ -690,9 +690,9 @@ function fbtnState() {
 }
 function recentList() { return S.recent.map(id => byId.get(id)).filter(Boolean).slice(0, 5); }
 function renderSide(list) {
-  const sl = $('#slist'), sy = sl.scrollTop;
+  const sl = $('#slist'), sy = sl.firstChild ? sl.scrollTop : 0;
   sl.innerHTML = list.map(srow).join('');
-  sl.scrollTop = sy;
+  if (sy) sl.scrollTop = sy;
   $('#scount').textContent = list.length;
   const g = sel && byId.get(sel), p = $('#play');
   p.disabled = !g; p.textContent = g ? 'Play ' + g.title : 'Select a game';
@@ -815,15 +815,20 @@ function vis(el, on) {
   el._vt = setTimeout(() => { el.hidden = true; el.classList.remove('out'); }, 170);
 }
 function countUp(box) {
-  const els = [...box.querySelectorAll('[data-n]')];
+  const els = box ? [...box.querySelectorAll('[data-n]')] : [];
   if (!els.length || !motionOK()) return;
-  const f = el => el.dataset.f === 'd' ? fmtDur : x => String(Math.round(x));
-  const t0 = performance.now() + 120, D = 900;
+  const f = el => el.dataset.f === 'd' ? fmtDur : el.dataset.f === 'l' ? x => Math.round(x).toLocaleString(adLang()) : x => String(Math.round(x));
+  const t0 = performance.now() + 80, D = 700;
   els.forEach(el => { el.textContent = f(el)(0); });
   const step = t => {
-    const k = Math.max(0, Math.min(1, (t - t0) / D)), e = 1 - Math.pow(1 - k, 3);
-    els.forEach(el => { if (el.isConnected) el.textContent = f(el)(+el.dataset.n * e); });
-    if (k < 1 && els[0].isConnected) requestAnimationFrame(step);
+    let more = false;
+    els.forEach((el, i) => {
+      if (!el.isConnected) return;
+      const k = Math.max(0, Math.min(1, (t - t0 - Math.min(i, 8) * 60) / D)), s = f(el)(+el.dataset.n * (1 - Math.pow(1 - k, 3)));
+      if (el.textContent !== s) el.textContent = s;
+      if (k < 1) more = true;
+    });
+    if (more) requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
 }
@@ -848,7 +853,7 @@ function setOpen(k) {
 }
 function closeAll() { if (openK) setOpen(openK); }
 function showPane(p) {
-  document.querySelectorAll('.pane').forEach(x => { const on = x.dataset.pane === p; if (on && !x.hidden) { x.style.animation = 'none'; void x.offsetWidth; x.style.animation = ''; } x.hidden = !on; });
+  document.querySelectorAll('.pane').forEach(x => { const on = x.dataset.pane === p; if (on && !x.hidden && !x.closest('[hidden]')) { x.style.animation = 'none'; void x.offsetWidth; x.style.animation = ''; } x.hidden = !on; });
   document.querySelectorAll('#snav button').forEach(b => b.setAttribute('aria-current', String(b.dataset.p === p)));
 }
 
@@ -1023,7 +1028,7 @@ function fsSync() {
   document.querySelectorAll('[data-fs]').forEach(b => { b.setAttribute('aria-label', on ? 'Exit fullscreen' : 'Fullscreen'); b.title = on ? 'Exit fullscreen' : 'Fullscreen'; });
   clearInterval(fitTimer);
   frame.classList.add('no-anim');
-  if (on) { frame.style.transform = ''; fsScale = 1; fsT = [0, 0]; requestAnimationFrame(() => requestAnimationFrame(() => { fitStage(); frame.classList.remove('no-anim'); })); fitTimer = setInterval(fitStage, 1500); }
+  if (on) { frame.style.transform = ''; fsScale = 1; fsT = [0, 0]; requestAnimationFrame(() => requestAnimationFrame(() => { fitStage(); frame.classList.remove('no-anim'); })); fitTimer = setInterval(() => { if (!document.hidden) fitStage(); }, 1500); }
   else { $('#stage').style.height = ''; frame.style.transform = ''; fsScale = 1; fsT = [0, 0]; applyGlScale(1); requestAnimationFrame(() => { frame.classList.remove('no-anim'); startFitTimer(); queueFit(); }); }
   frame.focus({ preventScroll: true });
 }

@@ -227,7 +227,7 @@ function siteBoot() {
 async function siteSignedIn() {
   const uid = SB.user.id;
   SF.peek = false;
-  sfRt(); sfLoad(true); fvSync();
+  sfRt(); sfLoad(); fvSync();
   if (CL.done || CL.open) return;
   let sv = null;
   try { const r = await sbRest('profiles?select=seen_version&id=eq.' + uid); sv = r && r[0] ? r[0].seen_version : null; } catch (e) {}

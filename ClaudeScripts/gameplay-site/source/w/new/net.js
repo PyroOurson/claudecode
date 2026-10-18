@@ -780,7 +780,7 @@ function makeNet(g, add) {
         c.style.zoom = String(sv / k);
       };
       const tick = setInterval(() => {
-        if (done) return;
+        if (done || document.hidden) return;
         const p = el.parentNode;
         if (!p || !el.isConnected) return place(), fit();
         const vp = el.classList.contains('gl-fixed'), W = vp ? innerWidth : p.clientWidth, H = vp ? innerHeight : p.clientHeight, k = vp ? 1 : (p.getBoundingClientRect().width / (W || 1)) || 1;

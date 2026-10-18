@@ -365,9 +365,9 @@ function auView(v) {
   const from = c.querySelector('.au-v:not([hidden]):not(.au-out)'), to = c.querySelector('[data-auview="' + k + '"]');
   document.querySelectorAll('#aumodal .au-eye[aria-pressed="true"]').forEach(b => auEye(b, true));
   if (from !== to) {
-    auSettle();
+    if (c.classList.contains('au-morph') || c.querySelector('.au-out')) auSettle();
     const anim = !!from && motionOK() && openK === 'mauth' && !$('#aumodal').hidden;
-    const h0 = c.offsetHeight, top = from ? from.offsetTop : 0;
+    const h0 = anim ? c.offsetHeight : 0, top = anim ? from.offsetTop : 0;
     c.querySelectorAll('.au-v').forEach(el => { el.hidden = el !== to; });
     if (anim) {
       const h1 = c.offsetHeight, d = AU_ORD.indexOf(k) > AU_ORD.indexOf(from.dataset.auview) ? 1 : -1;

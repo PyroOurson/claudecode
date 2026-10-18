@@ -127,6 +127,7 @@ function adRoute() {
 }
 async function adEnter() {
   clearTimeout(AD.wait);
+  ST.anim = 2; AD.anim = true;
   adTab(AD.tab);
   await adLoad();
   tkLoad(tkBox($('#tka'), 'admin'));
@@ -140,20 +141,20 @@ async function adLoad() {
   try {
     const r = await adRpc('admin_list_users');
     AD.users = Array.isArray(r) ? r : [];
-    adTiles(); adDraw();
+    adTiles(AD.anim); adDraw(AD.anim); AD.anim = false;
     if (AD.sel) { const u = AD.users.find(x => x.id === AD.sel); if (u) adPanel(u, true); }
   } catch (e) {
     if (/admins only/i.test(e.message || '')) { AD.role = 'user'; adStatus({ role: 'user', locked: false }); return; }
     $('#adt tbody').innerHTML = `<tr><td colspan="${AD_COLS.length}" class="adm-empty">${esc(auT('Could not load the users. Check your connection and try again.'))}</td></tr>`;
   } finally { AD.busy = false; $('#adref').classList.remove('spin'); }
 }
-function adTiles() {
+function adTiles(an) {
   const U = AD.users || [], now = Date.now(), tk = ($('#tka')._tk || {}).list || [];
   const open = tk.filter(t => t.status === 'open').length;
   const T = [['Accounts', U.length], ['New this week', U.filter(u => now - Date.parse(u.created_at) < 6048e5).length], ['Active today', U.filter(u => now - Date.parse(u.last_seen || 0) < 864e5).length], ['Admins', U.filter(adStaff).length], ['Locked', U.filter(u => u.locked).length], ['Open tickets', open]];
-  const box = $('#adtiles');
-  box.innerHTML = T.map(([k, n], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b data-n="${n}">${n}</b></div>`).join('');
-  countUp(box);
+  const box = $('#adtiles'), old = box.querySelectorAll('b[data-n]');
+  if (!an && old.length === T.length) T.forEach(([, n], i) => { if (old[i].dataset.n !== String(n)) { old[i].dataset.n = n; old[i].textContent = stN(n); } });
+  else { box.innerHTML = T.map(([k, n], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b data-n="${n}" data-f="l">${stN(n)}</b></div>`).join(''); countUp(box); }
   const tn = $('#adtn'); tn.textContent = open || ''; tn.hidden = !open;
 }
 const adPw = u => u.has_password ? adPill('Set · hidden', 'ok') : adPill('None · Google only');
@@ -199,18 +200,28 @@ function adRows() {
     return true;
   }).sort((a, b) => { const x = adSortVal(a, k), y = adSortVal(b, k); const ex = x === '' || x === 0, ey = y === '' || y === 0; if (ex !== ey) return ex ? 1 : -1; return (x < y ? -1 : x > y ? 1 : 0) * d; });
 }
-function adDraw() {
+function adDraw(an) {
   adHead();
   const rows = adRows(), tb = $('#adt tbody');
+  tb.classList.toggle('an', !!an);
   $('#adcount').textContent = auT('{n} of {t} users').replace('{n}', rows.length).replace('{t}', (AD.users || []).length);
   tb.innerHTML = rows.length ? rows.map((u, i) => `<tr tabindex="0" data-uid="${esc(u.id)}" class="${u.id === AD.sel ? 'sel' : ''}${RT.pres[u.id] ? ' on' : ''}" style="--i:${Math.min(i, 14)}">${AD_COLS.map(c => `<td>${c[2](u)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${AD_COLS.length}" class="adm-empty">${esc(auT('No users match.'))}</td></tr>`;
 }
+const AD_TABS = ['users', 'tickets', 'stats', 'log', 'site'];
 function adTab(t) {
+  const was = AD.tab, tabs = $('#adtabs'), o = $('#ad' + was), fade = was !== t && view === 'admin' && !o.hidden && motionOK(), top = fade ? o.offsetTop : 0;
   AD.tab = t;
-  const tabs = $('#adtabs');
   tabs.dataset.m = t;
   tabs.querySelectorAll('[data-adtab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.adtab === t)));
-  $('#adusers').hidden = t !== 'users'; $('#adtickets').hidden = t !== 'tickets'; $('#adstats').hidden = t !== 'stats'; $('#adlog').hidden = t !== 'log'; $('#adsite').hidden = t !== 'site';
+  if (was !== t) tabs.parentNode.dataset.dir = AD_TABS.indexOf(t) < AD_TABS.indexOf(was) ? 'l' : 'r';
+  if (t === 'stats' && was !== t) ST.anim = 2;
+  AD_TABS.forEach(k => {
+    const s = $('#ad' + k);
+    clearTimeout(s._xt); s.classList.remove('adx'); s.style.top = '';
+    if (k === t) s.hidden = false;
+    else if (k === was && fade) { s.style.top = top + 'px'; s.classList.add('adx'); s._xt = setTimeout(() => { s.hidden = true; s.classList.remove('adx'); s.style.top = ''; }, 180); }
+    else s.hidden = true;
+  });
   if (t === 'tickets') tkLoad(tkBox($('#tka'), 'admin'));
   if (t === 'stats') stLoad();
   if (t === 'log') alLoad();
@@ -470,7 +481,7 @@ async function sfaSave(b) {
   finally { b.disabled = false; b.classList.remove('is-busy'); }
 }
 
-const ST = { d: null, at: 0, busy: false, days: 30, game: null, ci: -1, anim: true, ps: 0, ch: {} };
+const ST = { d: null, at: 0, busy: false, days: 30, game: null, ci: -1, anim: 2, ps: 0, ch: {}, lv: new Set() };
 const stN = v => (+v || 0).toLocaleString(adLang());
 const stH = v => { const n = +v || 0; return (n < 10 ? n.toFixed(1) : stN(Math.round(n))) + ' h'; };
 const stDay = (t, o) => { const d = Date.parse(String(t).slice(0, 10) + 'T12:00:00'); try { return new Date(d).toLocaleDateString(adLang(), o || { day: 'numeric', month: 'short' }); } catch (e) { return String(t).slice(0, 10); } };
@@ -481,7 +492,7 @@ async function stLoad(force) {
   if (!force && ST.d && Date.now() - ST.at < 20000) { stDraw(); return; }
   ST.busy = true;
   const box = $('#adstats');
-  box.classList.add('sx-busy');
+  if (ST.anim || !ST.d) box.classList.add('sx-busy');
   if (!ST.d) box.innerHTML = '<div class="tiles adm-tiles">' + '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(4) + '</div><i class="sk sk-chart"></i><i class="sk sk-chart"></i>';
   try {
     ST.d = await adRpc('admin_stats_v2', { p_days: ST.days }).catch(e => { if (/admins only/i.test(e.message || '')) throw e; return adRpc('admin_stats'); });
@@ -501,9 +512,11 @@ function stLive() {
   P.forEach(([, p]) => { const k = p.g || ''; by[k] = (by[k] || 0) + 1; });
   const top = Object.entries(by).filter(([k]) => k).sort((a, b) => b[1] - a[1]).slice(0, 6);
   $('#stln').textContent = P.length;
+  const seen = ST.lv;
+  ST.lv = new Set(P.map(([id]) => id));
   box.innerHTML = P.length ? P.sort((a, b) => (b[1].g ? 1 : 0) - (a[1].g ? 1 : 0)).map(([id, p]) => {
     const u = (AD.users || []).find(x => x.id === id), name = (u && (u.display_name || u.username || u.email)) || id.slice(0, 8);
-    return `<button class="st-on" type="button" data-stu="${esc(id)}"><span class="pic">${esc(name.charAt(0).toUpperCase())}<i class="fr-dot on"></i></span><span><b>${esc(name)}</b><small>${esc(u && u.username ? '@' + u.username : '')}${p.h ? ' · ' + esc(auT('hidden from friends')) : ''}</small></span><em>${esc(p.g ? adGame(p.g) : auT('Browsing'))}</em></button>`;
+    return `<button class="st-on${seen.has(id) ? '' : ' nw'}" type="button" data-stu="${esc(id)}"><span class="pic">${esc(name.charAt(0).toUpperCase())}<i class="fr-dot on"></i></span><span><b>${esc(name)}</b><small>${esc(u && u.username ? '@' + u.username : '')}${p.h ? ' · ' + esc(auT('hidden from friends')) : ''}</small></span><em>${esc(p.g ? adGame(p.g) : auT('Browsing'))}</em></button>`;
   }).join('') : `<div class="adm-mut sx-nobody">${esc(auT('Nobody is online right now.'))}</div>`;
   $('#stlg').innerHTML = top.map(([g, n]) => `<span class="adm-pill acc">${esc(adGame(g))} · ${n}</span>`).join('');
 }
@@ -529,16 +542,17 @@ function stChart(id, title, rows, keys, o) {
   const kl = o.agg === 'max' ? 'Highest' : o.agg === 'avg' ? 'Daily average' : 'Total';
   const X = i => bar ? (i + .5) * W / n : n > 1 ? i * W / (n - 1) : W / 2, Y = v => +(H - H * v / max).toFixed(1);
   let g = [0, .5, 1].map(f => `<line class="sx-gl" x1="0" x2="${W}" y1="${H * f}" y2="${H * f}"/>`).join('');
+  const sd = (Math.min(25, 420 / Math.max(1, n))).toFixed(1);
   if (bar && n) { const bw = W / n * (n > 40 ? .78 : .64); g += vals[0].map((v, i) => { const h = Math.max(v ? 2 : 0, H * (v || 0) / max); return `<rect data-i="${i}" style="--i:${i}" x="${(X(i) - bw / 2).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}"/>`; }).join(''); }
   else g += vals.map((vs, s) => { const [d, a] = stPath(vs.map((v, i) => v == null ? null : [+X(i).toFixed(1), Y(v)]), H); return (s ? '' : `<path class="sx-a" d="${a}" fill="url(#sxg-${id})"/>`) + `<path class="sx-l sx-s${s}" d="${d}"/>`; }).join('');
   const lab = v => o.dec ? fmt(v) : stN(v);
   const xl = n ? [0, Math.floor((n - 1) / 2), n - 1].filter((v, i, A) => A.indexOf(v) === i).map(i => `<span style="left:${(100 * X(i) / W).toFixed(2)}%">${esc(stDay(rows[i].day))}</span>`).join('') : '';
   return `<div class="st-card sx-c${o.wide ? ' sx-wide' : ''}" style="--i:${o.i || 0}">
-   <div class="sx-ch"><div><h3>${esc(auT(title))}</h3>${o.note ? `<p class="sx-note">${esc(auT(o.note))}</p>` : ''}</div><div class="sx-kpi"><b>${esc(o.dec ? fmt(kv) : stN(Math.round(kv * 10) / 10))}</b><small>${esc(auT(kl))}</small></div></div>
+   <div class="sx-ch"><div><h3>${esc(auT(title))}</h3>${o.note ? `<p class="sx-note">${esc(auT(o.note))}</p>` : ''}</div><div class="sx-kpi"><b${!o.dec && Number.isInteger(kv) ? ` data-n="${kv}" data-f="l"` : ''}>${esc(o.dec ? fmt(kv) : stN(Math.round(kv * 10) / 10))}</b><small>${esc(auT(kl))}</small></div></div>
    ${keys.length > 1 ? `<div class="sx-leg">${keys.map((k, s) => `<span><i class="sx-s${s}"></i>${esc(auT(k.l))}</span>`).join('')}</div>` : ''}
    <div class="sx-plot"><div class="sx-y" aria-hidden="true"><span>${esc(lab(max))}</span><span>${esc(lab(max / 2))}</span><span>0</span></div>
     <div class="sx-area" data-ch="${id}">
-     <svg class="sx-svg${bar ? ' sx-bars' : ''}${ST.anim ? ' an' : ''}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${esc(auT(title))}"><defs><linearGradient id="sxg-${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sx0);stop-opacity:.32"/><stop offset="1" style="stop-color:var(--sx0);stop-opacity:0"/></linearGradient></defs>${g}</svg>
+     <div class="sx-w${ST.anim && !bar ? ' an' : ''}"><svg class="sx-svg${bar ? ' sx-bars' : ''}${ST.anim ? ' an' : ''}" style="--sd:${sd}ms" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${esc(auT(title))}"><defs><linearGradient id="sxg-${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sx0);stop-opacity:.32"/><stop offset="1" style="stop-color:var(--sx0);stop-opacity:0"/></linearGradient></defs>${g}</svg></div>
      <div class="sx-ov" aria-hidden="true"><i class="sx-x"></i>${bar ? '' : keys.map((k, s) => `<i class="sx-dot sx-s${s}"></i>`).join('')}<div class="sx-tip"></div></div>
      <div class="sx-xl" aria-hidden="true">${xl}</div>
     </div>
@@ -570,8 +584,8 @@ function stDonut() {
   const top = L.slice(0, 5), rest = L.slice(5).reduce((s, x) => s + x[1], 0);
   if (rest > 0) top.push(['', rest]);
   let off = 0;
-  const gap = top.length > 1 ? .8 : 0;
-  const segs = top.map(([id, h], s) => { const p = 100 * h / tot, len = Math.max(.01, p - gap), c = `<circle class="sx-seg sx-k${id ? s : 'o'}" data-seg="${s}" cx="21" cy="21" r="15.915" pathLength="100" stroke-dasharray="${len.toFixed(2)} ${(100 - len).toFixed(2)}" stroke-dashoffset="${(25 - off).toFixed(2)}" style="--i:${s}"><title>${esc(id ? adGame(id) : auT('Other games'))}: ${esc(stH(h))} (${Math.round(p)}%)</title></circle>`; off += p; return c; }).join('');
+  const ms = 7, gap = top.length > 1 ? .8 : 0;
+  const segs = top.map(([id, h], s) => { const p = 100 * h / tot, len = Math.max(.01, p - gap), c = `<circle class="sx-seg sx-k${id ? s : 'o'}" data-seg="${s}" cx="21" cy="21" r="15.915" pathLength="100" stroke-dasharray="${len.toFixed(2)} ${(100 - len).toFixed(2)}" stroke-dashoffset="${(25 - off).toFixed(2)}" style="--d:${Math.round(off * ms)}ms;--t:${Math.max(90, Math.round(p * ms))}ms"><title>${esc(id ? adGame(id) : auT('Other games'))}: ${esc(stH(h))} (${Math.round(p)}%)</title></circle>`; off += p; return c; }).join('');
   ST.dn = top.map(([id, h]) => ({ n: id ? adGame(id) : auT('Other games'), h, p: Math.round(100 * h / tot) }));
   return `<div class="sx-dn"><div class="sx-ring"><svg viewBox="0 0 42 42" class="${ST.anim ? 'an' : ''}" role="img" aria-label="${esc(auT('Share of playtime'))}"><circle class="sx-track" cx="21" cy="21" r="15.915"/>${segs}</svg><div class="sx-dc" data-h="${esc(`<b>${esc(stH(tot))}</b><small>${esc(auT('Hours played'))}</small>`)}"><b>${esc(stH(tot))}</b><small>${esc(auT('Hours played'))}</small></div></div>
    <div class="sx-dl">${top.map(([id, h], s) => `<div class="sx-dr" data-seg="${s}"><i class="sx-k${id ? s : 'o'}"></i><span>${esc(id ? adGame(id) : auT('Other games'))}</span><b>${Math.round(100 * h / tot)}%</b><small>${esc(stH(h))}</small></div>`).join('')}</div></div>`;
@@ -600,10 +614,10 @@ function stHealth(g) {
   if (!+g.launches && !+g.plays) return adPill('Not played yet');
   return adPill('Working', 'ok');
 }
-function stSpark(a) {
+function stSpark(a, an) {
   if (!a || !a.length) return '';
   const max = Math.max(1, ...a), n = a.length, W = 120, H = 34, X = i => n > 1 ? i * W / (n - 1) : W / 2, P = a.map((v, i) => [+X(i).toFixed(1), +(H - 2 - (H - 4) * v / max).toFixed(1)]), [d, ar] = stPath(P, H);
-  return `<svg class="sx-spark${ST.anim ? ' an' : ''}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path class="sx-a" d="${ar}"/><path class="sx-l sx-s0" d="${d}"/></svg>`;
+  return `<div class="sx-w${an ? ' an' : ''}"><svg class="sx-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path class="sx-a" d="${ar}"/><path class="sx-l sx-s0" d="${d}"/></svg></div>`;
 }
 function stOpts(q) {
   q = (q || '').trim().toLowerCase();
@@ -627,32 +641,35 @@ function stPick(id) {
   const inp = $('#stgq');
   if (inp) { inp.value = adGame(id); inp.dataset.typed = ''; }
   stCombo(false);
-  stGameCard();
+  stGameCard(true);
 }
-function stGameCard() {
+function stGameCard(an) {
   const box = $('#stgd');
   if (!box) return;
+  if (!motionOK()) an = 0;
+  box.classList.toggle('sx-gp', an === true);
   const g = stGames().find(x => x.game_id === ST.game);
   if (!g) { box.innerHTML = ''; return; }
   const D = ST.d || {}, sp = (D.game_days || {})[g.game_id], gm = byId.get(g.game_id), tint = TINT[g.game_id] || 'var(--accent)';
   const P = (D.players || []).filter(p => p.game_id === g.game_id).sort((a, b) => (+b.seconds_played || 0) - (+a.seconds_played || 0)).slice(0, 5);
   const spSum = sp ? sp.reduce((s, v) => s + (+v || 0), 0) : null;
   const C = [
-    ['Launches', stN(g.launches), 'rocket', spSum != null ? `${stSpark(sp)}<small>${esc(auT('{n} in the last {d} days').replace('{n}', stN(spSum)).replace('{d}', ST.days))}</small>` : `<small>${esc(auT('{n} in the last 7 days').replace('{n}', stN(g.launches_7d)))}</small>`, 'sx-gw'],
-    ['Players', stN(g.players), 'users'],
-    ['Rounds played', stN(g.plays), 'play'],
+    ['Launches', stN(g.launches), 'rocket', spSum != null ? `${stSpark(sp, an)}<small>${esc(auT('{n} in the last {d} days').replace('{n}', stN(spSum)).replace('{d}', ST.days))}</small>` : `<small>${esc(auT('{n} in the last 7 days').replace('{n}', stN(g.launches_7d)))}</small>`, 'sx-gw', g.launches],
+    ['Players', stN(g.players), 'users', '', '', g.players],
+    ['Rounds played', stN(g.plays), 'play', '', '', g.plays],
     ['Hours played', stH(g.hours), 'clock', `<small>${esc(auT('{n} in the last 7 days').replace('{n}', stH(g.hours_7d)))}</small>`],
     ['Avg minutes per visit', (+g.avg_min || 0).toFixed(1), 'timer'],
-    ['Accounts with records', stN(g.accounts), 'save'],
-    ['Errors', stN(g.errors), 'bug', `<span class="sx-hp">${stHealth(g)}</span><small>${esc(auT('{n} in the last 7 days').replace('{n}', stN(g.errors_7d)))}</small>`, +g.errors_7d ? 'sx-gbad' : ''],
+    ['Accounts with records', stN(g.accounts), 'save', '', '', g.accounts],
+    ['Errors', stN(g.errors), 'bug', `<span class="sx-hp">${stHealth(g)}</span><small>${esc(auT('{n} in the last 7 days').replace('{n}', stN(g.errors_7d)))}</small>`, +g.errors_7d ? 'sx-gbad' : '', g.errors],
     ['Last launch', g.last_launch ? adAgo(g.last_launch) : auT('Never'), 'eye', g.last_launch ? `<small>${esc(adDate(g.last_launch, 1))}</small>` : '', 'sx-gw']
   ];
   box.innerHTML = `<div class="sx-gh2" style="--c:${esc(tint)}"><span class="sx-gt">${esc(adGame(g.game_id).charAt(0))}</span><div><b translate="no">${esc(adGame(g.game_id))}</b><span><code>${esc(g.game_id)}</code>${gm && gm.info ? `<small>${esc(gm.info.genres.join(' · '))}</small>` : ''}</span></div>${gm ? `<a class="btn2" href="${esc(href(g.game_id))}" data-stopen="${esc(g.game_id)}">${esc(auT('Open game'))}</a>` : ''}</div>
-   <div class="sx-gc">${C.map(([k, v, ic, x, cl], i) => `<div class="sx-gk ${cl || ''}" style="--i:${i}"><span class="sx-gki">${AD_SI[ic]}</span><small>${esc(auT(k))}</small><b>${esc(v)}</b>${x || ''}</div>`).join('')}</div>
+   <div class="sx-gc">${C.map(([k, v, ic, x, cl, n], i) => `<div class="sx-gk ${cl || ''}" style="--i:${i}"><span class="sx-gki">${AD_SI[ic]}</span><small>${esc(auT(k))}</small><b${Number.isInteger(+n) && n !== '' && n != null ? ` data-n="${+n}" data-f="l"` : ''}>${esc(v)}</b>${x || ''}</div>`).join('')}</div>
    <div class="sx-g2">
     <div class="sx-gb"><h4>${esc(auT('Last error'))}</h4>${g.last_error ? `<div class="sx-err"><code translate="no">${esc(String(g.last_error).slice(0, 400))}</code><small>${esc(g.last_error_at ? adAgo(g.last_error_at) : '')}</small></div>` : `<div class="adm-mut">${esc(auT('No errors. Everything works.'))}</div>`}</div>
     <div class="sx-gb"><h4>${esc(auT('Top players'))}</h4>${P.length ? `<div class="sx-tp">${P.map((p, i) => `<button type="button" class="sx-tpr" data-stu="${esc(p.user_id)}"><span class="sx-rk">${i + 1}</span><span class="pic">${esc((p.display_name || p.username || '?').charAt(0).toUpperCase())}</span><span class="sx-tpn"><b translate="no">${esc(p.display_name || p.username || '—')}</b><small>${p.username ? '@' + esc(p.username) + ' · ' : ''}${esc(auT('{n} plays').replace('{n}', +p.plays || 0))}${p.best_score != null ? ' · ' + esc(auT('best {s}').replace('{s}', p.best_score)) : ''}</small></span><em>${esc(adHrs(p.seconds_played))}</em></button>`).join('')}</div>` : `<div class="adm-mut">${esc(auT('No games played yet.'))}</div>`}</div>
    </div>`;
+  if (an) countUp(box);
 }
 function stDraw() {
   const D = ST.d || {}, O = D.overview || {}, box = $('#adstats'), S = stSeries(), days = D.series ? ST.days : S.length;
@@ -660,11 +677,13 @@ function stDraw() {
   const PL = (D.players || []).slice(0, 100), ER = D.errors || [], DV = D.devices || [], SQ = D.searches || [], RE = D.retention || [];
   const peakOk = S.some(r => r.peak != null);
   if (!ST.game || !stGames().some(g => g.game_id === ST.game)) ST.game = (stGames().slice().sort((a, b) => (+b.launches || 0) - (+a.launches || 0))[0] || {}).game_id || null;
-  const keep = document.activeElement && document.activeElement.id === 'stgq';
+  const keep = document.activeElement && document.activeElement.id === 'stgq', an = motionOK() ? ST.anim : 0;
+  ST.anim = an;
   ST.ch = {};
+  box.classList.toggle('sx-q', !an); box.classList.toggle('sx-r', an === 1);
   box.innerHTML = `
   <div class="st-top"><div class="st-card st-livec"><div class="st-h"><h3><i class="adm-dot"></i>${esc(auT('Live now'))}</h3><b class="st-big" id="stln">0</b></div><div class="st-lg" id="stlg"></div><div class="st-live" id="stlive"></div></div>
-  <div class="tiles adm-tiles st-tiles">${T.map(([k, n], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b data-n="${+n || 0}">${stN(n)}</b></div>`).join('')}</div></div>
+  <div class="tiles adm-tiles st-tiles">${T.map(([k, n], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b data-n="${+n || 0}" data-f="l">${stN(n)}</b></div>`).join('')}</div></div>
   <div class="sx-bar"><h3>${esc(auT('Trends'))}</h3><div class="sx-rng" role="group" aria-label="${esc(auT('Time range'))}">${[7, 30, 90].map(d => `<button type="button" data-strng="${d}" aria-pressed="${d === ST.days}">${esc(auT('{n} days').replace('{n}', d))}</button>`).join('')}</div></div>
   ${stChart('act', 'Active players per day', S, [{ k: 'active', l: 'Active players' }, { k: 'signed_in', l: 'Signed in' }], { agg: 'avg', wide: true })}
   <div class="sx-grid">
@@ -686,16 +705,17 @@ function stDraw() {
    <div class="st-card"><h3>${esc(auT('Players coming back'))}</h3><div class="st-list">${RE.length ? RE.map(r => `<div class="st-kv"><span>${esc(adDate(r.cohort_day))} · ${esc(auT('{n} new').replace('{n}', r.new_players))}</span><b>${esc(auT('next day {a}% · week {b}%').replace('{a}', r.day1_pct).replace('{b}', r.back_within_7d_pct))}</b></div>`).join('') : `<div class="adm-mut">${esc(auT('No data yet.'))}</div>`}</div></div>
   </div>
   <p class="adm-mut st-at">${esc(auT('Updated {t}. Refreshes every 30 seconds; the live list updates instantly.').replace('{t}', new Date(D.at || Date.now()).toLocaleTimeString()))}</p>`;
-  if (ST.anim) countUp(box.querySelector('.st-tiles'));
-  stGameCard(); stLive();
+  if (an === 2) countUp(box.querySelector('.st-top'));
+  if (an) box.querySelectorAll('.sx-c').forEach(countUp);
+  stGameCard(an); stLive();
   if (keep) $('#stgq').focus({ preventScroll: true });
-  ST.anim = false;
+  ST.anim = 0;
 }
 function stBoot() {
   const box = $('#adstats');
   box.addEventListener('click', e => {
     const r = e.target.closest('[data-strng]');
-    if (r) { const d = +r.dataset.strng; if (d === ST.days) return; ST.days = d; ST.anim = true; box.querySelectorAll('[data-strng]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.strng === d))); stLoad(true); return; }
+    if (r) { const d = +r.dataset.strng; if (d === ST.days) return; ST.days = d; ST.anim = 1; box.querySelectorAll('[data-strng]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.strng === d))); stLoad(true); return; }
     if (e.target.closest('[data-stcb]')) { const inp = $('#stgq'); if ($('#stgl').hidden) { inp.dataset.typed = ''; inp.focus(); stCombo(true); } else stCombo(false); return; }
     const o = e.target.closest('#stgl [data-g]');
     if (o) { stPick(o.dataset.g); return; }

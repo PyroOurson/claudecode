@@ -47,7 +47,7 @@ function fitStage() {
   fsScale = s; fsT = [tx, ty]; applyGlScale(s);
 }
 const queueFit = () => { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(fitStage); };
-function startFitTimer() { clearInterval(fitTimer); fitTimer = setInterval(() => { if (stageMode() !== 'off') fitStage(); }, 1500); }
+function startFitTimer() { clearInterval(fitTimer); fitTimer = setInterval(() => { if (stageMode() !== 'off' && !document.hidden) fitStage(); }, 1500); }
 function gpMain(frameEl) {
   let best = null;
   glSet.forEach(e => { if (e.canvas && frameEl.contains(e.canvas) && (!best || e.w0 * e.h0 > best.w0 * best.h0)) best = e; });
