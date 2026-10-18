@@ -9,6 +9,7 @@ ClaudeScripts/gameplay-site/source/design/gameplay-home.html
 ClaudeScripts/gameplay-site/source/design/lobby.webp
 ClaudeScripts/gameplay-site/source/design/party-lobby.html
 ClaudeScripts/gameplay-site/source/rl/RLBRIEF.md
+ClaudeScripts/gameplay-site/source/rl/models/ball.json
 ClaudeScripts/gameplay-site/source/rl/models/breakout.json
 ClaudeScripts/gameplay-site/source/rl/models/dominus.json
 ClaudeScripts/gameplay-site/source/rl/models/fennec.json
@@ -232,6 +233,7 @@ ClaudeScripts/gameplay-site/source/w/covers2/whack.webp
 ClaudeScripts/gameplay-site/source/w/covers2/word-guess.webp
 ClaudeScripts/gameplay-site/source/w/gate.js
 ClaudeScripts/gameplay-site/source/w/gate2.js
+ClaudeScripts/gameplay-site/source/w/gate_slot.js
 ClaudeScripts/gameplay-site/source/w/meta2.js
 ClaudeScripts/gameplay-site/source/w/meta_rows.py
 ClaudeScripts/gameplay-site/source/w/minibuild.py
@@ -389,6 +391,7 @@ ClaudeScripts/gameplay-site/source/w/supabase/emails/reset_password.html
 ClaudeScripts/gameplay-site/source/w/supabase/emails/subjects.txt
 ClaudeScripts/gameplay-site/source/w/supabase/round5_admin.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round6.sql
+ClaudeScripts/gameplay-site/source/w/supabase/round7_owner.sql
 ClaudeScripts/gameplay-site/source/w/supabase/schema.sql
 ClaudeScripts/gameplay-site/source/w/supabase/setup.py
 ClaudeScripts/gameplay-site/supabase/GUIDE.md
@@ -471,6 +474,7 @@ gameplay/02cfad207c6b6e71f8ca.bin
 gameplay/065d785a9413ef11da44.bin
 gameplay/087fef92eb09b9a09fab.bin
 gameplay/08a0e1a8a97a95377b15.bin
+gameplay/08a2d534e893b5a93586.bin
 gameplay/0a98f1b461be41c354ac.bin
 gameplay/0b0de71c08be1b72ed14.bin
 gameplay/0e1bd7f0b7b4d1760d0a.bin
@@ -547,7 +551,6 @@ gameplay/a25511a235d2aff6edd3.bin
 gameplay/a482ebabba38adfc1687.bin
 gameplay/a9cb17aa7bcc0ee9e288.bin
 gameplay/aac2eed9e81e57f4ef3e.bin
-gameplay/ab1708a3fd29db448b87.bin
 gameplay/afcf80767dfb1092571b.bin
 gameplay/afe470153958433d9047.bin
 gameplay/b2257bb15ce7d3047a5c.bin

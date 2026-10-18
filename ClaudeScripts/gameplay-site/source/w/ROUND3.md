@@ -1,6 +1,6 @@
 # Round 3: shared brief for 10 agents
 
-"gameplay" is the owner's password-protected site of browser game remakes, live at https://gameplaygames.web.app (password `pineapple`). 78 games. The owner wrote a master prompt (quoted at the bottom). Ten agents work at the same time, each owning specific files. Read this whole file, then the docs it points to, before changing anything.
+"gameplay" is the owner's password-protected site of browser game remakes, live at https://gameplaygames.web.app (password protected; the password lives in Supabase, see `../BUILD.md`). 78 games. The owner wrote a master prompt (quoted at the bottom). Ten agents work at the same time, each owning specific files. Read this whole file, then the docs it points to, before changing anything.
 
 ## Machine and paths (Windows, read carefully)
 
@@ -19,7 +19,7 @@
 
 - Portal + parts: `cd /c/tmp/gameplay-build/w && python assemble.py` regenerates `parts/001_portal.js` and `parts/000_pre_000.html` from `parts_orig/001_portal.js` + `new/*` (now including `new/auth.js`, `new/i18n.js`, `new/auth.css`). Anyone may run it; it only reads `new/*`.
 - Full site, unencrypted, into YOUR folder: `python build2.py parts C:/tmp/gameplay-build/w/agents3/<you>/site` (no `GATE_PASS` = no password page, easier to test). It must be served over http (lazy game files are fetched): `python -m http.server <yourport> -d C:/tmp/gameplay-build/w/agents3/<you>/site` (run it in the background). Ports: portal 8101, auth 8102, i18n 8103, lobby 8104, covers 8105, rl-world 8106, rl-cars 8107, minecraft 8108, subway 8109, games 8110.
-- With password (what ships): `GATE_PASS=pineapple python build2.py parts <dir>`. The auth agent must test this path (password page, then the new sign-up page).
+- With password (what ships): `GATE_PASS=<test build secret> python build2.py parts <dir>` (then seed a test slot with `gate_slot.js`, see `../BUILD.md`). The auth agent must test this path (password page, then the new sign-up page).
 - Quick single-file page with some games: `python .../w/minibuild.py C:/tmp/gameplay-build/w/agents3/<you>/mini.html <game-id> [...]`, then `node .../t/look.js <abs html> <game-id> <abs out.png> '<steps json>' [w h]` (works with `file://`).
 - Rocket League: `cd /c/tmp/gameplay-build/rl && python -I tools/join.py <you> all` joins all live segments into `rl/build/<you>_all.js` + a test page `rl/build/<you>_all.html`. `join.py <you>` (no `all`) joins your live segments with the frozen baseline `rl/base/` (copy of the segments at the start of this round). To test RL inside the full site, copy your joined JS to your OWN parts copy, never over the shared `w/parts/115_g_rocket-soccer.js` (the lead does that at integration).
 - Screenshots of the current live site are in `C:/tmp/pw/shots/` (home page, Rocket League). Bug already confirmed by the lead: Rocket League's main menu (after the intro "press any button") shows a plain white background instead of the 3D arena.

@@ -176,7 +176,9 @@
           if (!!v.rear !== !!S.rear) { S.rear = !!v.rear; S.snap = true; }
           const snap = S.snap, gl = W.state === 'goal' && fxGoal.on, tgt = gl ? fxGoal.p : B.hidden ? null : B.p;
           const want = tgt && (gl || v.camBall) && !v.rear ? 1 : 0;
-          if (snap) S.k = want; else { const st = dt * fxCam.trans * 2.2; S.k = S.k < want ? Math.min(want, S.k + st) : Math.max(want, S.k - st); }
+          if (!!v.camBall !== !!S.wb) { S.wb = !!v.camBall; S.fast = 0.3; }
+          S.fast = Math.max(0, (S.fast || 0) - dt);
+          if (snap) S.k = want; else { const st = dt * (S.fast > 0 ? 9 : fxCam.trans * 2.2); S.k = S.k < want ? Math.min(want, S.k + st) : Math.max(want, S.k - st); }
           const ks = S.k * S.k * (3 - 2 * S.k), air = !me.onGround, flip = air && me.dodgeT >= 0 && me.dodgeT < 0.9;
           if (air) cU.copy(fxW); else cU.set(me.u.x, me.u.y, me.u.z);
           cU.lerp(fxW, ks); if (cU.lengthSq() < 1e-4) cU.copy(fxW); cU.normalize();
@@ -194,9 +196,9 @@
           const thT = thC + (thB - thC) * ks;
           if (snap) { S.D.copy(cF); S.th = thT; S.piv.set(P.x, P.y, P.z); }
           else {
-            const rate = fxCam.swivel * 1.35 + (9 - fxCam.swivel * 1.35) * ks;
+            const rate = S.fast > 0 ? 22 : fxCam.swivel * 1.35 + (9 - fxCam.swivel * 1.35) * ks;
             fxRotTo(S.D, U, cF, 1 - Math.exp(-rate * dt));
-            S.th += (thT - S.th) * (1 - Math.exp(-6.5 * dt));
+            S.th += (thT - S.th) * (1 - Math.exp(-(S.fast > 0 ? 22 : 6.5) * dt));
             { const kp = 1 - Math.exp(-Math.min(400, 20 / Math.max(0.05, 1 - fxCam.stiff)) * dt), pz = S.piv.z; S.piv.lerp(cP.set(P.x, P.y, P.z), kp); if (air) S.piv.z = pz + (P.z - pz) * (1 - Math.exp(-2.2 * dt)); }
           }
           S.D.addScaledVector(U, -S.D.dot(U)).normalize();

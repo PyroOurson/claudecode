@@ -1,6 +1,8 @@
 const AD = { role: null, locked: false, reason: null, until: null, ut: 0, uti: 0, at: 0, game: null, gat: 0, users: null, q: '', f: 'all', sort: ['created_at', -1], sel: null, tab: 'users', wait: 0, busy: false };
 const adHref = () => (PATH_MODE ? '/' : '#/') + 'admin';
-const adIsAdmin = () => AD.role === 'admin' && !AD.locked;
+const adIsAdmin = () => (AD.role === 'admin' || AD.role === 'owner') && !AD.locked;
+const adIsOwner = () => AD.role === 'owner' && !AD.locked;
+const adStaff = u => u.role === 'admin' || u.role === 'owner';
 const adRpc = (f, b) => sbRest('rpc/' + f, { method: 'POST', body: b || {} });
 const adLang = () => window.gpI18n ? gpI18n.lang : 'en';
 const AD_ICO = {
@@ -43,12 +45,14 @@ function adLangName(c) {
 const adGame = id => id ? (byId.get(id) ? byId.get(id).title : id) : '—';
 const adProv = u => (u.providers && u.providers.length ? u.providers : ['email']).map(p => p === 'google' ? 'Google' : p === 'email' ? auT('Email') : p).join(' + ');
 const adPill = (t, k) => `<span class="adm-pill${k ? ' ' + k : ''}">${esc(auT(t))}</span>`;
-const adErr = e => { const m = String(e && e.message || ''); return /admins only/i.test(m) ? 'Admins only' : /at least one admin/i.test(m) ? 'There must be at least one admin' : /own account/i.test(m) ? 'You cannot lock your own account' : /at least 8/i.test(m) ? 'Use at least 8 characters.' : /at most 72/i.test(m) ? 'Use at most 72 characters.' : /not found/i.test(m) ? 'Not found. Refresh and try again.' : /too many/i.test(m) ? 'Too many messages. Wait a minute and try again.' : /account locked/i.test(m) ? 'Your account is locked.' : /end time/i.test(m) ? 'Pick an end time in the future.' : /write a subject/i.test(m) ? 'Write a subject.' : /write a message/i.test(m) ? 'Write a message.' : 'Could not update. Check your connection and try again.'; };
+const adRole = u => u.role === 'owner' ? adPill('Owner', 'acc') : u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User');
+const adErr = e => { const m = String(e && e.message || ''); return /admins only/i.test(m) ? 'Admins only' : /change an owner/i.test(m) ? 'Only an owner can change an owner.' : /at least one owner/i.test(m) ? 'There must be at least one owner' : /owners only|owner can do/i.test(m) ? 'Only an owner can do this.' : /at least one admin/i.test(m) ? 'There must be at least one admin' : /own account/i.test(m) ? 'You cannot lock your own account' : /at least 8/i.test(m) ? 'Use at least 8 characters.' : /at most 72/i.test(m) ? 'Use at most 72 characters.' : /not found/i.test(m) ? 'Not found. Refresh and try again.' : /too many/i.test(m) ? 'Too many messages. Wait a minute and try again.' : /account locked/i.test(m) ? 'Your account is locked.' : /end time/i.test(m) ? 'Pick an end time in the future.' : /write a subject/i.test(m) ? 'Write a subject.' : /write a message/i.test(m) ? 'Write a message.' : 'Could not update. Check your connection and try again.'; };
 
 function adStatus(s) {
   const was = adIsAdmin(), wl = AD.locked;
   AD.role = s ? s.role : null; AD.locked = !!(s && s.locked); AD.reason = s && s.locked_reason || null; AD.until = AD.locked && s.locked_until || null; AD.at = Date.now();
   document.querySelectorAll('[data-admin]').forEach(el => { el.hidden = !adIsAdmin(); });
+  document.querySelectorAll('[data-owner]').forEach(el => { el.hidden = !adIsOwner(); });
   clearTimeout(AD.ut);
   if (AD.locked && AD.until) { const d = Date.parse(AD.until) - Date.now(); AD.ut = setTimeout(adCheck, d > 0 ? Math.min(d + 1500, 3600000) : 30000); }
   if (AD.locked !== wl || AD.locked) adBlock(AD.locked);
@@ -73,7 +77,7 @@ function adSeen(id) {
 }
 function adSignedOut() {
   AD.role = null; AD.at = 0; AD.users = null; AD.sel = null; AD.until = null; clearTimeout(AD.ut);
-  document.querySelectorAll('[data-admin]').forEach(el => { el.hidden = true; });
+  document.querySelectorAll('[data-admin], [data-owner]').forEach(el => { el.hidden = true; });
   if (AD.locked) { AD.locked = false; adBlock(false); }
   document.querySelectorAll('.tk').forEach(b => { if (b._tk) { b._tk.list = null; b._tk.cur = null; } });
   if (view === 'admin') adBounce();
@@ -146,7 +150,7 @@ async function adLoad() {
 function adTiles() {
   const U = AD.users || [], now = Date.now(), tk = ($('#tka')._tk || {}).list || [];
   const open = tk.filter(t => t.status === 'open').length;
-  const T = [['Accounts', U.length], ['New this week', U.filter(u => now - Date.parse(u.created_at) < 6048e5).length], ['Active today', U.filter(u => now - Date.parse(u.last_seen || 0) < 864e5).length], ['Admins', U.filter(u => u.role === 'admin').length], ['Locked', U.filter(u => u.locked).length], ['Open tickets', open]];
+  const T = [['Accounts', U.length], ['New this week', U.filter(u => now - Date.parse(u.created_at) < 6048e5).length], ['Active today', U.filter(u => now - Date.parse(u.last_seen || 0) < 864e5).length], ['Admins', U.filter(adStaff).length], ['Locked', U.filter(u => u.locked).length], ['Open tickets', open]];
   const box = $('#adtiles');
   box.innerHTML = T.map(([k, n], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b data-n="${n}">${n}</b></div>`).join('');
   countUp(box);
@@ -167,7 +171,7 @@ const AD_COLS = [
   ['has_password', 'Password', adPw],
   ['fav_game', 'Favourite game', u => esc(adGame(u.fav_game))],
   ['friends', 'Friends', u => String(+u.friends || 0)],
-  ['role', 'Role', u => u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User')],
+  ['role', 'Role', adRole],
   ['email_confirmed', 'Email confirmed', u => u.email_confirmed ? adPill('Yes', 'ok') : adPill('No', 'warn')],
   ['locked', 'Locked', u => u.locked ? `<span title="${esc(u.locked_reason || '')}">${adPill('Locked', 'bad')}</span><small class="adm-left">${esc(adLeft(u))}</small>` : adPill('No')]
 ];
@@ -186,7 +190,7 @@ function adRows() {
   const q = AD.q.trim().toLowerCase().replace(/^@/, ''), f = AD.f, now = Date.now(), [k, d] = AD.sort;
   return (AD.users || []).filter(u => {
     if (q && ![u.id, u.email, u.username, u.display_name].some(x => x && String(x).toLowerCase().includes(q))) return false;
-    if (f === 'admin') return u.role === 'admin';
+    if (f === 'admin') return adStaff(u);
     if (f === 'locked') return u.locked;
     if (f === 'unconfirmed') return !u.email_confirmed;
     if (f === 'google' || f === 'email') return (u.providers || []).includes(f);
@@ -225,28 +229,31 @@ function adPanel(u, keep) {
   $('#adppic').textContent = name.charAt(0).toUpperCase();
   $('#adpn').textContent = name;
   $('#adpu').textContent = [u.username ? '@' + u.username : '', u.email || ''].filter(Boolean).join(' · ');
-  $('#adpp').innerHTML = (u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User')) + (u.locked ? adPill('Locked', 'bad') + adPill(adLeft(u), 'bad') : '') + (u.email_confirmed ? adPill('Email confirmed', 'ok') : adPill('Email not confirmed', 'warn')) + (me ? adPill('You', 'acc') : '');
+  $('#adpp').innerHTML = adRole(u) + (u.locked ? adPill('Locked', 'bad') + adPill(adLeft(u), 'bad') : '') + (u.email_confirmed ? adPill('Email confirmed', 'ok') : adPill('Email not confirmed', 'warn')) + (me ? adPill('You', 'acc') : '');
   $('#adplive').innerHTML = adLiveTxt(u);
   $('#adpq').innerHTML = [['Time played', adHrs(u.seconds_played), 'clock'], ['Plays', stN(u.plays), 'play'], ['Friends', stN(u.friends), 'users'], ['Favourite game', adGame(u.fav_game), 'star'], ['Account created', adAgo(u.created_at), 'cake'], ['Last seen', RT.pres[u.id] ? auT('Online now') : adAgo(u.last_seen), 'eye']].map(([k, v, i], n) => `<div style="--i:${n}">${AD_SI[i]}<small>${esc(auT(k))}</small><b title="${esc(v)}">${esc(v)}</b></div>`).join('');
-  const F = [['User id', `<code>${esc(u.id)}</code>`], ['Email', esc(u.email || '—')], ['Username', u.username ? '@' + esc(u.username) : '—'], ['Display name', esc(u.display_name || '—')], ['Last log in', esc(adDate(u.last_sign_in_at, 1))], ['Last used website', esc(adDate(u.last_seen, 1))], ['Log in method', esc(adProv(u))], ['Account created', esc(adDate(u.created_at, 1))], ['Password', adPw(u)], ['Favourite game', esc(adGame(u.fav_game))], ['Friends', String(+u.friends || 0)], ['Role', u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User')], ['Email confirmed', u.email_confirmed ? esc(adDate(u.email_confirmed_at, 1)) : adPill('No', 'warn')], ['Locked', u.locked ? adPill('Locked', 'bad') + ` <span class="adm-mut">${esc(u.locked_until ? auT('until {d}').replace('{d}', adDate(u.locked_until, 1)) : auT('Permanent'))}</span>` + (u.locked_reason ? `<div class="adm-why">${esc(u.locked_reason)}</div>` : '') : adPill('No')], ['Last game opened', esc(adGame(u.last_game))], ['Language', esc(adLangName(u.last_lang))]];
+  const F = [['User id', `<code>${esc(u.id)}</code>`], ['Email', esc(u.email || '—')], ['Username', u.username ? '@' + esc(u.username) : '—'], ['Display name', esc(u.display_name || '—')], ['Last log in', esc(adDate(u.last_sign_in_at, 1))], ['Last used website', esc(adDate(u.last_seen, 1))], ['Log in method', esc(adProv(u))], ['Account created', esc(adDate(u.created_at, 1))], ['Password', adPw(u)], ['Favourite game', esc(adGame(u.fav_game))], ['Friends', String(+u.friends || 0)], ['Role', adRole(u)], ['Email confirmed', u.email_confirmed ? esc(adDate(u.email_confirmed_at, 1)) : adPill('No', 'warn')], ['Locked', u.locked ? adPill('Locked', 'bad') + ` <span class="adm-mut">${esc(u.locked_until ? auT('until {d}').replace('{d}', adDate(u.locked_until, 1)) : auT('Permanent'))}</span>` + (u.locked_reason ? `<div class="adm-why">${esc(u.locked_reason)}</div>` : '') : adPill('No')], ['Last game opened', esc(adGame(u.last_game))], ['Language', esc(adLangName(u.last_lang))]];
   $('#adpdl').innerHTML = F.map(([k, v]) => `<div><dt>${esc(auT(k))}</dt><dd>${v}</dd></div>`).join('');
-  p.querySelectorAll('[data-adrole]').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.adrole === u.role)); adUnconfirm(b); });
+  const prot = u.role === 'owner' && !adIsOwner(), rl = adStaff(u) && !adIsOwner();
+  p.querySelectorAll('[data-adrole]').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.adrole === u.role)); b.disabled = rl; adUnconfirm(b); });
   const lb = $('#adlock');
   adUnconfirm(lb);
   lb.textContent = auT(u.locked ? 'Unlock account' : 'Lock account');
   lb.className = 'btn2 ' + (u.locked ? 'pri' : 'danger');
-  lb.disabled = me && !u.locked;
+  lb.disabled = (me && !u.locked) || prot;
   $('#adlr').hidden = u.locked; $('#adlrl').hidden = u.locked; $('#adld').hidden = u.locked; $('#adldl').hidden = u.locked;
   const lt = $('#adlt'); lt.hidden = !u.locked; lt.textContent = u.locked ? (u.locked_until ? auT('Locked until {d} ({r}).').replace('{d}', adDate(u.locked_until, 1)).replace('{r}', adAgo(u.locked_until)) : auT('Locked with no end date.')) : '';
   ['adpwb', 'adrst', 'adunb', 'addelb'].forEach(id => adUnconfirm($('#' + id)));
-  $('#adrst').disabled = !u.email;
+  $('#adrst').disabled = !u.email || prot;
+  $('#adpwb').disabled = prot; $('#adunb').disabled = prot;
   $('#adpwt').textContent = auT(u.has_password ? 'Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them.' : 'This account has no password: it signs in with Google.');
-  $('#addelb').disabled = !!me || u.role === 'admin';
+  $('#addelb').disabled = !!me || adStaff(u);
   if (!keep) {
     ['adprn', 'adpwn', 'adln', 'adrstn', 'adunn', 'addeln'].forEach(id => auMsg(id, ''));
     $('#adpw').value = ''; $('#adlr').value = ''; $('#addel').value = ''; $('#adun').value = u.username || '';
     if (me) { auMsg('adln', 'You cannot lock your own account'); auMsg('addeln', 'You cannot delete your own account here.'); }
-    else if (u.role === 'admin') auMsg('addeln', 'Make this admin a regular user first.');
+    else if (adStaff(u)) auMsg('addeln', 'Make this admin a regular user first.');
+    if (prot) auMsg('adprn', 'Only an owner can change an owner.'); else if (rl) auMsg('adprn', 'Only an owner can change the role of an admin.');
     $('#adpw').type = 'password';
     const eye = p.querySelector('.au-eye'); if (eye) auEye(eye, true);
     adGames(u);
@@ -294,7 +301,7 @@ async function adAct(k, b) {
     if (r === u.role) return;
     if (!adConfirm(b)) return;
     b.disabled = true; b.classList.add('is-busy'); auMsg('adprn', '');
-    try { await adRpc('admin_set_role', { p_uid: u.id, p_role: r }); u.role = r; auMsg('adprn', r === 'admin' ? 'This user is now an admin.' : 'This user is now a regular user.', 'ok'); track('admin', { act: 'role' }); rtSend(u.id, { t: 'status' }); if (SB.user && u.id === SB.user.id && r !== 'admin') { adCheck(); return; } }
+    try { await adRpc('admin_set_role', { p_uid: u.id, p_role: r }); u.role = r; auMsg('adprn', r === 'owner' ? 'This user is now an owner.' : r === 'admin' ? 'This user is now an admin.' : 'This user is now a regular user.', 'ok'); track('admin', { act: 'role' }); rtSend(u.id, { t: 'status' }); if (SB.user && u.id === SB.user.id) { adCheck(); if (r === 'user') return; } }
     catch (e) { auMsg('adprn', adErr(e), 'bad'); }
     finally { b.disabled = false; b.classList.remove('is-busy'); }
   } else if (k === 'pw') {
@@ -355,7 +362,7 @@ async function adAct(k, b) {
 
 const AL = { list: [], more: false, busy: false, seq: 0 };
 const alWho = (un, dn, id) => un ? '@' + un : dn || (id ? id.slice(0, 8) : '');
-const AL_T = { role_admin: '{a} made {t} an admin', role_user: '{a} made {t} a regular user', username: '{a} changed the username of {t} to {n}', lock_until: '{a} locked {t} until {d}', lock: '{a} locked {t} with no end date', unlock: '{a} unlocked {t}', expire: 'The lock on {t} ended', password: '{a} set a new password for {t}', reset_email: '{a} sent a password reset email to {t}', delete_user: '{a} deleted the account of {t}', ticket_delete: '{a} deleted a ticket from {t}', ticket_reply: '{a} replied to a ticket from {t}', ticket_closed: '{a} closed a ticket from {t}', ticket_open: '{a} reopened a ticket from {t}', site: '{a} changed the site switches' };
+const AL_T = { role_owner: '{a} made {t} an owner', role_admin: '{a} made {t} an admin', role_user: '{a} made {t} a regular user', username: '{a} changed the username of {t} to {n}', lock_until: '{a} locked {t} until {d}', lock: '{a} locked {t} with no end date', unlock: '{a} unlocked {t}', expire: 'The lock on {t} ended', password: '{a} set a new password for {t}', reset_email: '{a} sent a password reset email to {t}', delete_user: '{a} deleted the account of {t}', ticket_delete: '{a} deleted a ticket from {t}', ticket_reply: '{a} replied to a ticket from {t}', ticket_closed: '{a} closed a ticket from {t}', ticket_open: '{a} reopened a ticket from {t}', site: '{a} changed the site switches', site_password: '{a} changed the site password' };
 function alSite(d) {
   const a = d.after || {}, b = d.before || {}, out = [], ga = new Set(a.disabled_games || []), gb = new Set(b.disabled_games || []);
   if (!!a.maintenance !== !!b.maintenance) out.push(auT(a.maintenance ? 'Maintenance mode on' : 'Maintenance mode off'));
@@ -366,12 +373,12 @@ function alSite(d) {
   return out.length ? out.join(' · ') : auT('Messages updated');
 }
 function alRow(x, i) {
-  const d = x.detail || {}, k = x.action === 'role' ? 'role_' + (d.to === 'admin' ? 'admin' : 'user') : x.action === 'lock' && d.until ? 'lock_until' : x.action === 'ticket_status' ? (d.status === 'closed' ? 'ticket_closed' : 'ticket_open') : x.action;
+  const d = x.detail || {}, k = x.action === 'role' ? 'role_' + (d.to === 'owner' || d.to === 'admin' ? d.to : 'user') : x.action === 'lock' && d.until ? 'lock_until' : x.action === 'ticket_status' ? (d.status === 'closed' ? 'ticket_closed' : 'ticket_open') : x.action;
   const a = alWho(x.admin_username, x.admin_display, x.admin_id) || auT('An admin'), t = alWho(x.target_username, x.target_display, null) || (d.username ? '@' + d.username : d.display_name) || (x.target_user ? auT('a deleted account') : '');
   const tt = x.target_user && (AD.users || []).some(u => u.id === x.target_user) ? `<button type="button" class="al-u" data-alu="${esc(x.target_user)}">${esc(t)}</button>` : `<b>${esc(t)}</b>`;
   const txt = esc(auT(AL_T[k] || '{a} did something ({x})')).replace('{a}', `<b>${esc(a)}</b>`).replace('{t}', tt).replace('{n}', `<b>@${esc(d.to || '')}</b>`).replace('{d}', esc(adDate(d.until, 1))).replace('{x}', esc(x.action));
   const ex = x.action === 'lock' && d.reason ? auT('Reason: {r}').replace('{r}', d.reason) : /^ticket_/.test(x.action) && d.subject ? '“' + d.subject + '”' : x.action === 'site' ? alSite(d) : x.action === 'username' && d.from ? auT('Was @{u}').replace('{u}', d.from) : '';
-  const ic = { lock: AD_ICO.lock, unlock: AD_ICO.lock, expire: AD_SI.clock, delete_user: AD_ICO.trash, ticket_delete: AD_ICO.trash, site: SF_ICO.tool, ticket_reply: AD_ICO.send, ticket_status: AD_ICO.send, password: AD_SI.eye, reset_email: AD_SI.eye, role: AD_SI.star, username: AD_SI.users }[x.action] || AD_SI.clock;
+  const ic = { lock: AD_ICO.lock, unlock: AD_ICO.lock, expire: AD_SI.clock, delete_user: AD_ICO.trash, ticket_delete: AD_ICO.trash, site: SF_ICO.tool, site_password: AD_ICO.lock, ticket_reply: AD_ICO.send, ticket_status: AD_ICO.send, password: AD_SI.eye, reset_email: AD_SI.eye, role: AD_SI.star, username: AD_SI.users }[x.action] || AD_SI.clock;
   return `<div class="al-r al-${esc(x.action)}" style="--i:${Math.min(i, 14)}"><span class="al-i">${ic}</span><div class="al-t"><span>${txt}</span>${ex ? `<em>${esc(ex)}</em>` : ''}<small title="${esc(adDate(x.at, 1))}">${esc(adAgo(x.at))} · ${esc(adDate(x.at, 1))}</small></div></div>`;
 }
 async function alLoad(more) {
@@ -413,7 +420,39 @@ function sfaDraw() {
    <label class="search sfa-q"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="sfaq" type="search" placeholder="${esc(auT('Search games'))}" autocomplete="off" spellcheck="false" aria-label="${esc(auT('Search games'))}"></label>
    <div class="sfa-g" id="sfag" translate="no">${games.slice().sort((a, b) => (off.has(b.id) - off.has(a.id)) || a.title.localeCompare(b.title)).map(g => `<button type="button" class="chip" data-sfg="${esc(g.id)}" aria-pressed="${off.has(g.id)}">${esc(g.title)}</button>`).join('')}</div>
    <label class="apc-l" for="sfadm">${esc(auT('Message for turned off games (optional)'))}</label><textarea id="sfadm" maxlength="300" rows="2" placeholder="${esc(auT('This game is being fixed. Try again a bit later.'))}">${esc(d.disabled_msg || '')}</textarea></div>
-  <div class="sfa-f"><div class="note" id="sfan" role="status"></div><button class="btn2 pri" type="button" id="sfas">${esc(auT('Save and publish'))}</button></div></div>`;
+  <div class="sfa-f"><div class="note" id="sfan" role="status"></div><button class="btn2 pri" type="button" id="sfas">${esc(auT('Save and publish'))}</button></div>${adIsOwner() ? `
+  <div class="st-card sfa-c" id="sfpw"><h3>${esc(auT('Site password'))}</h3><p class="sx-note">${esc(auT('The password everyone types to open the site. Only owners can see and change this.'))}</p>
+   <div class="sfa-2"><div><label class="apc-l" for="sfp1">${esc(auT('New password'))}</label><div class="au-pw"><input id="sfp1" type="password" autocomplete="new-password" maxlength="200" spellcheck="false">${EYE}</div></div><div><label class="apc-l" for="sfp2">${esc(auT('Confirm password'))}</label><div class="au-pw"><input id="sfp2" type="password" autocomplete="new-password" maxlength="200" spellcheck="false">${EYE}</div></div></div>
+   <div class="sfa-f"><div class="note" id="sfpn" role="status"></div><button class="btn2 pri" type="button" id="sfps">${esc(auT('Save password'))}</button></div></div>` : ''}</div>`;
+}
+const gpEnc = u => btoa(String.fromCharCode.apply(null, u));
+async function gpKek(pw, s, n) {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
+  return crypto.subtle.importKey('raw', await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: s, iterations: n, hash: 'SHA-256' }, base, 256), 'AES-GCM', false, ['encrypt', 'decrypt']);
+}
+async function gpSlot(pw, k) {
+  const s = crypto.getRandomValues(new Uint8Array(16)), i = crypto.getRandomValues(new Uint8Array(12)), n = 310000;
+  const c = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: i }, await gpKek(pw, s, n), k));
+  const o = { v: 1, s: gpEnc(s), n, i: gpEnc(i), c: gpEnc(c) };
+  const back = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: lzB64(o.i) }, await gpKek(pw, lzB64(o.s), o.n), lzB64(o.c)));
+  if (back.length !== k.length || back.some((x, j) => x !== k[j])) throw new Error('Slot check failed');
+  return o;
+}
+async function sfpSave(b) {
+  const a = $('#sfp1').value, c = $('#sfp2').value;
+  if (a.length < 6) { auMsg('sfpn', 'Use at least 6 characters.', 'bad'); auShake($('#sfp1').closest('.au-pw')); return; }
+  if (a !== c) { auMsg('sfpn', 'The two passwords do not match.', 'bad'); auShake($('#sfp2').closest('.au-pw')); return; }
+  if (!LZ.key) { auMsg('sfpn', 'This copy of the site is not password protected.', 'bad'); return; }
+  if (!adConfirm(b)) return;
+  b.disabled = true; b.classList.add('is-busy'); auMsg('sfpn', '');
+  try {
+    await adRpc('owner_set_gate', { p_slot: await gpSlot(a, lzB64(LZ.key)) });
+    $('#sfp1').value = ''; $('#sfp2').value = '';
+    auMsg('sfpn', 'Site password changed. Everyone needs the new password; devices that already unlocked this version stay unlocked.', 'ok');
+    track('admin', { act: 'gate' });
+    AL.list = [];
+  } catch (e) { auMsg('sfpn', adErr(e), 'bad'); }
+  finally { b.disabled = false; b.classList.remove('is-busy'); }
 }
 async function sfaSave(b) {
   const v = id => $('#' + id).value, au = v('sfau'), until = au ? new Date(au) : null;
@@ -855,6 +894,7 @@ function adBoot() {
     const sm = t.closest('#sfam');
     if (sm) { sm.classList.toggle('on'); sm.setAttribute('aria-checked', String(sm.classList.contains('on'))); return; }
     if (t.closest('#sfas')) { sfaSave(t.closest('#sfas')); return; }
+    if (t.closest('#sfps')) { sfpSave(t.closest('#sfps')); return; }
     if (t.closest('#adpclose')) { adPanelClose(); return; }
     const eye = t.closest('.au-eye');
     if (eye) { auEye(eye); return; }

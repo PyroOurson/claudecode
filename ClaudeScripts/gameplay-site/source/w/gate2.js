@@ -1,6 +1,6 @@
 const fs = require('fs'), path = require('path'), zlib = require('zlib'), crypto = require('crypto');
 const [src, out] = process.argv.slice(2);
-const pass = process.env.GATE_PASS;
+const pass = (process.env.GATE_PASS || '').trim();
 const plan = JSON.parse(fs.readFileSync(path.join(src, 'plan.json'), 'utf8'));
 const html = fs.readFileSync(path.join(src, 'index.html'), 'utf8');
 const dirOut = path.join(out, plan.dir);
@@ -21,6 +21,9 @@ if (!pass) {
   console.log('gate2: public build', out, 'index', page.length, 'files', plan.files.length);
   process.exit(0);
 }
+const consts = fs.readFileSync(path.join(__dirname, 'new', 'consts.js'), 'utf8');
+const sbUrl = (/const SUPABASE_URL = '([^']+)'/.exec(consts) || [])[1], sbKey = (/const SUPABASE_ANON_KEY = '([^']+)'/.exec(consts) || [])[1];
+if (!sbUrl || !sbKey) { console.error('gate2: SUPABASE_URL or SUPABASE_ANON_KEY missing in new/consts.js'); process.exit(1); }
 const salt = Buffer.from('gameplay-gate-v1');
 const iter = 310000;
 const key = crypto.pbkdf2Sync(Buffer.from(pass, 'utf8'), salt, iter, 32, 'sha256');
@@ -71,7 +74,7 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
 <div class="sp" id="sp" hidden aria-label="Loading"><div><i></i><i></i><i></i><i></i><i></i></div></div><form class="c" id="f" autocomplete="off"><div class="lg"><i>&#9654;</i>gameplay</div><h1 id="h">Enter the password</h1><p id="t">This site is private.</p><input id="p" class="pw" type="text" name="gp-site-code" placeholder="Password" autofocus aria-label="Password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"><button id="b">Unlock</button><div class="m" id="m"></div></form>
 <script>
 (() => {
-  const D = { s: '${salt.toString('base64')}', i: '${iv.toString('base64')}', n: ${iter}, c: '${ct.toString('base64')}', d: ${JSON.stringify(plan.dir)}, p: ${JSON.stringify(pre)} };
+  const D = { u: ${JSON.stringify(sbUrl)}, a: ${JSON.stringify(sbKey)}, i: '${iv.toString('base64')}', c: '${ct.toString('base64')}', d: ${JSON.stringify(plan.dir)}, p: ${JSON.stringify(pre)} };
   const K = 'gameplay:gate', MAX = 5;
   const $ = id => document.getElementById(id);
   const b64 = s => { const t = atob(s), u = new Uint8Array(t.length); for (let i = 0; i < t.length; i++) u[i] = t.charCodeAt(i); return u; };
@@ -96,10 +99,21 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
     const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(D.i) }, key, b64(D.c));
     return new Response(new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
   };
-  const derive = async pw => {
-    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
-    return new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: b64(D.s), iterations: D.n, hash: 'SHA-256' }, base, 256));
+  const slot = async () => {
+    const h = { apikey: D.a, 'Content-Type': 'application/json' };
+    if (/^eyJ/.test(D.a)) h.Authorization = 'Bearer ' + D.a;
+    const r = await fetch(D.u + '/rest/v1/rpc/get_gate_slot', { method: 'POST', headers: h, body: '{}', cache: 'no-store', signal: window.AbortSignal && AbortSignal.timeout ? AbortSignal.timeout(20000) : undefined });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const o = await r.json();
+    if (!o || typeof o.s !== 'string' || typeof o.i !== 'string' || typeof o.c !== 'string' || !(o.n > 0)) throw new Error('no slot');
+    return o;
   };
+  const unwrap = async (pw, o) => {
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
+    const kek = await crypto.subtle.importKey('raw', await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: b64(o.s), iterations: o.n, hash: 'SHA-256' }, base, 256), 'AES-GCM', false, ['decrypt']);
+    return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(o.i) }, kek, b64(o.c)));
+  };
+  const soft = m => { $('b').classList.remove('bz'); $('b').disabled = false; $('m').className = 'm b'; $('m').textContent = m; };
   if (!(window.CSS && CSS.supports && CSS.supports('-webkit-text-security', 'disc'))) $('p').type = 'password';
   const ok = !!(window.crypto && crypto.subtle && window.DecompressionStream);
   if (!ok) { $('t').textContent = 'Please update your browser to open this site.'; $('p').remove(); $('b').remove(); return; }
@@ -112,10 +126,14 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
     const pw = $('p').value;
     if (!pw) return;
     $('b').disabled = true; $('b').classList.add('bz'); $('m').className = 'm'; $('m').textContent = '';
-    let raw;
-    let txt;
-    try { raw = await derive(pw); txt = await show(raw); }
-    catch (x) { txt = null; }
+    let o, raw = null, txt = null;
+    try { o = await slot(); }
+    catch (x) { soft('Could not reach the server. Check your connection and try again.'); return; }
+    try { raw = await unwrap(pw, o); } catch (x) { raw = null; }
+    if (raw) {
+      try { txt = await show(raw); } catch (x) { txt = null; }
+      if (txt == null) { soft('Could not open the site. Try again later.'); return; }
+    }
     if (txt != null) { $('p').value = ''; st.f = 0; st.k = enc(raw); wr(st); warm(); $('f').style.visibility = 'hidden'; $('sp').hidden = false; requestAnimationFrame(() => put(txt, raw)); return; }
     $('b').classList.remove('bz');
     {

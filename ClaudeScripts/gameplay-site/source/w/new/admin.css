@@ -90,7 +90,7 @@
 .apc-row .btn2{height:44px}
 .apc-l{font-size:13px;color:var(--muted)}
 .apc-l[hidden],#adlr[hidden]{display:none}
-.apc-role{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.apc-role{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
 .apc-role .btn2{height:42px}
 .apc-role .btn2[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .apc .au-pw input{padding-right:50px}
@@ -440,6 +440,14 @@ html.rm .adm *,html.rm .tk *,html.rm .adblock,html.rm .adblock *{animation:none!
 .sfa-f{display:flex;align-items:center;justify-content:flex-end;gap:14px;flex-wrap:wrap;position:sticky;bottom:12px;padding:12px 14px;border-radius:16px;background:color-mix(in srgb,var(--surface) 88%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line);box-shadow:var(--shadow-sm)}
 .sfa-f .note{flex:1;margin:0}
 .sfa-f .btn2{height:44px;padding:0 22px}
+.sfa-2>div{display:flex;flex-direction:column;gap:6px;flex:1 1 200px}
+.sfa-2>div>label{flex:none}
+#sfpw{margin-bottom:72px}
+.sfa-2 .au-pw input{flex:1;min-width:0;padding-right:50px}
+.sfa-c .au-eye{color:var(--muted)}
+.sfa-c .au-eye:hover{color:var(--fg);background:var(--surface-2)}
+.sfa-c .au-eye:focus-visible{outline:2px solid var(--accent)}
+.sfa-c .sfa-f{position:static;padding:14px 0 0;border:0;border-radius:0;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
 @media (max-width:600px){
   .adm-tabs button{font-size:12.5px}
   .sfa-f .btn2{flex:1}

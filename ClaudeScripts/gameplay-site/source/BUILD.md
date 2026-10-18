@@ -14,11 +14,30 @@ Everything needed to rebuild `index.html` and `gameplay/` at the repo root lives
 1. Rocket League (joined from `rl/seg/*` and `rl/models/*`):
    `cd /tmp/gameplay-build/rl && python3 -I tools/join.py lead all && cp build/lead_all.js ../w/parts/115_g_rocket-soccer.js`
 2. Portal (from `w/parts_orig` + `w/new/*`): `cd /tmp/gameplay-build/w && python3 assemble.py`
-3. Encrypted site: `GATE_PASS=<site password> python3 build2.py parts site`
+3. Encrypted site: `GATE_PASS="$(cat ~/.gameplay/gate_secret.txt)" python3 build2.py parts site` (see "Site password" below)
 4. Copy `site/index.html` to the repo root and replace the repo's `gameplay/` folder with `site/gameplay/`, then `git ls-files > files.txt`.
 5. Copy changed sources back into `ClaudeScripts/gameplay-site/source/` so the repo stays the source of truth.
 
-Keeping the same password and the fixed salt in `w/gate2.js` means browsers that already unlocked the site stay unlocked after updates.
+Keeping the same build secret and the fixed salt in `w/gate2.js` means browsers that already unlocked the site stay unlocked after updates.
+
+## Site password
+
+Two different secrets:
+
+- `GATE_PASS` is a long random build secret. Nobody types it. The site is encrypted with a key derived from it. It is never committed: on the lead's PC it lives in `C:\Users\gabri\.gameplay\gate_secret.txt` (`~/.gameplay/gate_secret.txt` in Git Bash). Create it once with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))" > ~/.gameplay/gate_secret.txt`. If it is lost, make a new one, rebuild and reseed (everyone has to type the password again).
+- The password people type lives in Supabase (`public.site_gate`, set up by `w/supabase/round7_owner.sql`) as a key slot: the build key wrapped with the typed password. The password page fetches the slot (`get_gate_slot`) and unwraps it, so it needs the internet to unlock (devices that already unlocked keep working offline).
+- The owner changes the password in the admin dashboard, Site tab, "Site password" card (owners only). Devices that already unlocked this version stay unlocked.
+
+Seed or reset the password from the command line (prints one SQL statement; paste it into the Supabase SQL editor):
+
+```
+cd ClaudeScripts/gameplay-site/source/w
+GATE_PASS="$(cat ~/.gameplay/gate_secret.txt)" NEW_SITE_PASS='the password people type' node gate_slot.js
+```
+
+In PowerShell: `$env:GATE_PASS = (Get-Content $HOME\.gameplay\gate_secret.txt -Raw).Trim(); $env:NEW_SITE_PASS = 'the password people type'; node gate_slot.js`.
+
+Reseed after every change of `GATE_PASS`: the old slot unwraps a key that no longer opens the site.
 
 ## Where things are
 
