@@ -268,6 +268,7 @@ ClaudeScripts/gameplay-site/source/w/new/fit.js
 ClaudeScripts/gameplay-site/source/w/new/gcss.css
 ClaudeScripts/gameplay-site/source/w/new/i18n.js
 ClaudeScripts/gameplay-site/source/w/new/input.js
+ClaudeScripts/gameplay-site/source/w/new/legal.js
 ClaudeScripts/gameplay-site/source/w/new/media.css
 ClaudeScripts/gameplay-site/source/w/new/net.js
 ClaudeScripts/gameplay-site/source/w/new/site.css

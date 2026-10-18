@@ -1691,6 +1691,521 @@ function makeApi(g, root) {
   return { api, add, kill() { alive = false; while (fns.length) { try { fns.pop()(); } catch (e) { console.error(e); } } } };
 }
 
+const LEGAL = {
+  terms: ['Terms of Service', `<p>These Terms of Service (the "Terms") constitute a legally binding agreement between you and the operator of gameplay (the "Operator", "we", "us" or "our") governing your access to and use of the gameplay website, its subdomains, mirrors and associated application programming interfaces, together with every game, feature, account facility, social function, communication channel and related service made available through it (collectively, the "Service"). Please read these Terms carefully and in their entirety before accessing or using the Service. They contain important provisions regarding intellectual property, acceptable conduct, the handling of infringement notices, disclaimers of warranties, limitations of liability, indemnification obligations, governing law and the resolution of disputes.</p>
+<p>By accessing, browsing, playing, creating an account on, or otherwise using any part of the Service, you acknowledge that you have read, understood and agree to be bound by these Terms, by our Privacy Policy and by our Cookie Policy, each of which is incorporated into these Terms by reference. If you do not agree with any provision of these Terms, you are not authorised to use the Service and must immediately cease all access to it.</p>
+
+<h2>1. Definitions and Interpretation</h2>
+<p>In these Terms, unless the context requires otherwise, the following expressions have the meanings set out below:</p>
+<ul>
+<li><b>"Account"</b> means a registered user profile created on the Service, whether by means of an email address and password or by means of a supported third-party identity provider such as Google.</li>
+<li><b>"Content"</b> means any software, code, games, levels, graphics, images, animations, audio, music, sound effects, text, typefaces, interfaces, layouts, designs, data, compilations and other materials of any kind.</li>
+<li><b>"Operator Content"</b> means all Content made available through the Service by or on behalf of the Operator, including the source code, object code, architecture and visual design of the Service and of the games it hosts, excluding User Content and Third-Party Materials.</li>
+<li><b>"User Content"</b> means any Content that you or another user submits, uploads, transmits, publishes or otherwise makes available through the Service, including usernames, display names, chat messages, direct messages, images, support requests, feedback and game ratings.</li>
+<li><b>"Third-Party Materials"</b> means Content, names, trademarks, services, software libraries, fonts, data or other materials owned or controlled by persons other than the Operator.</li>
+<li><b>"Rights Holder"</b> means any natural or legal person who owns, controls or is authorised to act on behalf of the owner of a copyright, trademark, design right, database right or other intellectual property right.</li>
+<li><b>"Applicable Law"</b> means all laws, statutes, regulations, ordinances, codes and binding decisions of any competent authority that apply to you, to the Operator or to the Service, including, where relevant, the laws of the Principality of Monaco, the law of the European Union and the national law of the place where you reside.</li>
+</ul>
+<p>Headings are included for convenience only and do not affect interpretation. Words in the singular include the plural and vice versa. The words "including", "include" and "in particular" are illustrative and do not limit the generality of the preceding words. A reference to a statute or regulation includes any amendment, consolidation, re-enactment or replacement of it from time to time.</p>
+
+<h2>2. Eligibility and Capacity</h2>
+<p>The Service is intended for a general audience. You may use the Service only if you are legally capable of entering into a binding contract under Applicable Law or, where you lack such capacity, only with the knowledge, consent and supervision of a parent or legal guardian who agrees to these Terms on your behalf and accepts responsibility for your conduct.</p>
+<p>If you are under the age of thirteen (13), or under the minimum age of digital consent applicable in your country of residence (which may be as high as sixteen (16) within the European Union), you must not create an Account, communicate with other users or provide any personal information through the Service without verifiable parental consent. Parents and guardians are responsible for supervising the online activities of minors in their care and for determining whether the Service, including its online multiplayer and messaging features, is appropriate for them.</p>
+<p>Parents and guardians are encouraged to make use of the controls offered by operating systems, browsers and network providers to restrict access to online communication features, to discuss safe online behaviour with minors, and to contact the Operator if they believe that a child has provided personal information without appropriate consent. Upon verification of such a request, the Operator will take reasonable steps to delete the relevant Account and associated personal data.</p>
+<p>You represent and warrant that you are not prohibited from receiving or using the Service under Applicable Law, that you are not located in, or ordinarily resident in, a territory subject to comprehensive economic sanctions, and that you are not designated on any governmental list of prohibited or restricted parties.</p>
+
+<h2>3. Description of the Service</h2>
+<p>gameplay is a free-to-access, browser-based entertainment platform offering a curated catalogue of casual games that run directly in a web browser without installation. Many of the games available on the Service are independently developed recreations, adaptations, parodies or homages inspired by the general gameplay concepts, genres and mechanics of well-known video games. The Service may also include original games, experimental prototypes, multiplayer modes, leaderboards, personal statistics, cloud saving, friends lists, direct messaging, presence indicators, game ratings, support ticketing and related community features.</p>
+<p>The Operator may, in its sole discretion and without prior notice, add, modify, suspend, replace or permanently discontinue any game, feature, functionality or portion of the Service, temporarily or permanently, for any reason, including technical, legal, commercial or security considerations, or in response to a request from a Rights Holder. You acknowledge that the Service is provided as a hobby project on a non-commercial basis and that no specific game, feature or level of availability is guaranteed.</p>
+<p>The Operator endeavours to make the Service usable by the widest possible audience, including people with disabilities, and offers settings such as reduced motion, theme selection, configurable controls and keyboard navigation. Because many games rely on fast reactions, precise timing or visual cues, certain games may not be fully accessible to every user. Suggestions for improving accessibility are welcome and may be submitted through the contact details below.</p>
+<p>Access to certain versions or environments of the Service may be restricted by a site-wide access password. Such a password is confidential and is provided for the sole purpose of controlled access. You must not publish, distribute, sell or otherwise disclose any access password, and you must not attempt to bypass, disable or circumvent any access control, encryption or authentication mechanism protecting the Service.</p>
+
+<h2>4. Accounts, Registration and Security</h2>
+<p>Many features of the Service are available without registration. To use certain features, including cloud synchronisation of records and saved progress, friends, direct messaging and support requests, you must create an Account. You may register using an email address and password or by authenticating through Google. Upon registration you are required to select a unique username before you can continue to use the Service. You agree to provide accurate, current and complete information during registration and to keep such information up to date.</p>
+<p>You are solely responsible for maintaining the confidentiality of your credentials and for all activities that occur under your Account, whether or not authorised by you. You must notify us without undue delay at the contact address set out below if you become aware of any unauthorised use of your Account or any other breach of security. The Operator will not be liable for any loss or damage arising from your failure to safeguard your credentials.</p>
+<p>Your username and display name must not: (a) impersonate any person, brand, organisation, public figure or member of the Operator's staff; (b) infringe the trademark, copyright or other rights of any third party; (c) contain obscene, hateful, discriminatory, harassing, sexually explicit or violent language; (d) contain personal data such as a telephone number, home address or email address; or (e) be misleading as to your identity or affiliation. The Operator reserves the right to reclaim, modify, reset or refuse any username at any time, including where a Rights Holder asserts a legitimate claim to it.</p>
+<p>Accounts are personal and non-transferable. You may not sell, rent, lend, share, trade or otherwise transfer your Account or any access to it to any other person. You may delete your Account at any time from the account settings within the Service. Deletion is permanent and results in the removal of your profile, records, saved progress, friends, messages and associated data from our active systems, subject to the retention periods described in our Privacy Policy.</p>
+
+<h2>5. Licence to Use the Service</h2>
+<p>Subject to your continuing compliance with these Terms, the Operator grants you a limited, personal, revocable, non-exclusive, non-transferable and non-sublicensable licence to access and use the Service, through a supported web browser, solely for your own private, non-commercial entertainment purposes. This licence does not include any right to: (a) resell or make commercial use of the Service or any Operator Content; (b) collect, compile or exploit any game listings, descriptions, images or data; (c) make any derivative use of the Service or its Content; (d) download, copy or store any Content other than through temporary caching performed automatically by your browser in the ordinary course of use; or (e) use any data mining, robots, crawlers, scrapers or similar data gathering and extraction tools.</p>
+<p>All rights not expressly granted to you in these Terms are reserved by the Operator and its licensors. Any unauthorised use of the Service automatically terminates the licence granted in this Section without prejudice to any other remedy available to the Operator.</p>
+
+<h2>6. Acceptable Use and Prohibited Conduct</h2>
+<p>You agree to use the Service only for lawful purposes and in accordance with these Terms. Without limiting the foregoing, you shall not, and shall not attempt to, encourage or assist any other person to:</p>
+<ul>
+<li>copy, reproduce, republish, frame, mirror, scrape, archive, decompile, disassemble, reverse engineer, deobfuscate or otherwise attempt to derive the source code, encryption keys, algorithms or underlying structure of the Service or any game, except to the limited extent that such restriction is expressly prohibited by Applicable Law;</li>
+<li>extract, redistribute, re-host or embed any game, asset or file from the Service on any other website, application, platform or medium;</li>
+<li>circumvent, disable, tamper with or otherwise interfere with any security feature, access password, encryption, rate limit, content protection or technical measure of the Service;</li>
+<li>introduce viruses, trojan horses, worms, logic bombs, ransomware or any other malicious or technologically harmful material;</li>
+<li>launch or participate in any denial-of-service attack, flood, spam campaign or other activity that imposes an unreasonable or disproportionately large load on our infrastructure or that of our service providers;</li>
+<li>use cheats, exploits, automation software, bots, macros, modified clients or any unauthorised third-party software to gain an unfair advantage, manipulate leaderboards, falsify records or alter the outcome of any game;</li>
+<li>harass, threaten, stalk, bully, intimidate, defame, dox or abuse any other user, or solicit personal information from minors;</li>
+<li>transmit any content that is unlawful, obscene, pornographic, hateful, discriminatory, extremist, violent, deceptive or that promotes illegal activity or self-harm;</li>
+<li>infringe, misappropriate or violate the intellectual property rights, privacy rights, publicity rights or other rights of any person;</li>
+<li>impersonate the Operator, any member of its staff or any other person, or misrepresent your affiliation with any person or entity;</li>
+<li>use the Service for any commercial solicitation, advertising, pyramid scheme, chain letter, phishing or fraudulent purpose;</li>
+<li>access or attempt to access any Account, system, database or network to which you have not been granted access, or probe, scan or test the vulnerability of the Service without our prior written authorisation; or</li>
+<li>use the Service in any manner that could damage, disable, overburden, impair or bring into disrepute the Service or the Operator.</li>
+</ul>
+<p>If you believe that you have discovered a security vulnerability, you are encouraged to report it responsibly and privately to the contact address below. Good-faith security research that complies with this paragraph, avoids privacy violations and service degradation, and is not publicly disclosed before we have had a reasonable opportunity to remediate it, will not be pursued by the Operator.</p>
+
+<h2>7. Online Play, Communications and Community Features</h2>
+<p>Certain games permit real-time multiplayer sessions with other users by means of party codes and peer-to-peer connections. To establish such connections, your browser communicates with signalling and relay infrastructure operated by third parties, and the other participants in a session may be able to see your chosen name, your in-game actions and messages, and technical connection information such as your IP address. You acknowledge that peer-to-peer communication inherently involves the exchange of such information between participants.</p>
+<p>The Service may also provide friends lists, presence indicators showing whether you are online and which game you are playing, direct messaging including the exchange of images and game invitations, and support ticketing. You are solely responsible for all communications you send and for any personal information you choose to disclose. Do not share passwords, financial details, home addresses or other sensitive personal information with other users. The Operator does not pre-screen communications but reserves the right, without any obligation, to monitor, review, retain, remove or disclose any communication where reasonably necessary to enforce these Terms, protect users, comply with Applicable Law or respond to lawful requests from public authorities.</p>
+<p>You may block, remove or decline to interact with other users using the tools provided. Abuse may be reported through the support function within the Service or by email. The Operator will review reports in a timely, diligent, non-arbitrary and objective manner and may take the enforcement measures described in Section 11.</p>
+
+<h2>8. User Content</h2>
+<p>You retain any ownership rights you may have in your User Content. By submitting, posting or transmitting User Content through the Service, you grant the Operator a worldwide, non-exclusive, royalty-free, fully paid-up, transferable and sublicensable licence to host, store, cache, reproduce, transmit, display, format, adapt for technical purposes and distribute such User Content, solely to the extent necessary to operate, provide, secure, maintain and improve the Service and to enforce these Terms. This licence ends when your User Content is deleted from our systems, save for copies retained in backups for a limited period or where retention is required by law.</p>
+<p>You represent and warrant that: (a) you own or have obtained all rights, licences, consents and permissions necessary to submit your User Content and to grant the licence above; (b) your User Content does not infringe, misappropriate or violate any intellectual property right, privacy right, publicity right or other right of any third party; and (c) your User Content complies with these Terms and with Applicable Law. You must not upload images or other material in which you do not hold the necessary rights, including screenshots of copyrighted works where such use is not permitted by Applicable Law.</p>
+<p>The Operator does not endorse any User Content and expressly disclaims all liability in connection with User Content. Opinions expressed by users are solely those of their authors.</p>
+
+<h2>9. Feedback and Game Ratings</h2>
+<p>If you provide any suggestions, ideas, bug reports, enhancement requests, ratings or other feedback concerning the Service ("Feedback"), you grant the Operator a perpetual, irrevocable, worldwide, royalty-free licence to use, exploit and incorporate such Feedback into the Service or any other product or service without any obligation of attribution, confidentiality or compensation. Game ratings you submit, such as a thumbs up or thumbs down, may be aggregated and used to rank, recommend, improve or remove games.</p>
+
+<h2>10. Records, Saved Progress and Virtual Items</h2>
+<p>The Service may store best scores, play counts, time played, settings, saved game progress, constructed worlds and similar data locally in your browser and, where you are signed in, synchronise such data with your Account. Data stored only in your browser may be lost if you clear your browser data, use private browsing, change device or uninstall your browser. The Operator does not guarantee the preservation, integrity or recoverability of any record or saved progress and shall have no liability for its loss or corruption.</p>
+<p>Any scores, statistics, levels, achievements, cosmetic items, experience points, passes or other in-game items or progress have no monetary value, cannot be redeemed for cash or any other consideration, cannot be transferred or traded, and do not constitute personal property. The Operator may reset, modify or remove any such items or progress, for example to correct errors, address cheating or rebalance a game.</p>
+
+<h2>11. Moderation, Suspension and Enforcement</h2>
+<p>The Operator may, at its discretion and having regard to the severity, frequency and impact of the conduct concerned, take any of the following measures where it reasonably believes that you have breached these Terms or Applicable Law, or that your conduct creates risk for other users, the Operator or third parties: issue a warning; remove or restrict the visibility of User Content; reset or change your username or display name; restrict access to specific features such as messaging or multiplayer; suspend your Account for a defined period; permanently terminate your Account; reset records; or refer the matter to the competent authorities.</p>
+<p>Where reasonably practicable and lawful, the Operator will inform you of a restriction, the reasons for it and any available means of contesting it. You may request a review of any decision affecting your Account by contacting us at the address below, providing your username and an explanation. Records of administrative actions are maintained for accountability and audit purposes.</p>
+
+<h2>12. Intellectual Property of the Operator</h2>
+<p>The Service and all Operator Content, including without limitation its software, source code, compiled code, encryption and build tooling, game engines, physics and camera implementations, user interfaces, layouts, visual design, original artwork, original audio, text, selection, coordination and arrangement, are owned by or licensed to the Operator and are protected by copyright, database rights, design rights, trade dress, trademark and other intellectual property laws and international treaties, including the Berne Convention for the Protection of Literary and Artistic Works and the Agreement on Trade-Related Aspects of Intellectual Property Rights.</p>
+<p>The name "gameplay", its logo and associated marks and trade dress are identifiers of the Operator. You may not use them in connection with any product or service that is not provided by the Operator, in any manner likely to cause confusion, or in any manner that disparages or discredits the Operator, without our prior written consent.</p>
+<p>Certain components of the Service incorporate open-source software, libraries and fonts that are licensed under their respective open-source licences. Your use of such components is governed by the terms of those licences, which prevail over these Terms to the extent of any conflict in respect of those components.</p>
+
+<h2>13. Third-Party Intellectual Property, Trademarks and Non-Affiliation</h2>
+<p>gameplay is an independent, fan-operated project. It is not affiliated with, associated with, authorised by, endorsed by, sponsored by or in any way officially connected with any of the developers, publishers, licensors or owners of the original video games, board games, card games, characters or brands that may have inspired games available on the Service, nor with any of their subsidiaries or affiliates.</p>
+<p>All product names, game titles, character names, logos, brands and trademarks referred to on the Service are the property of their respective owners and are used solely for identification, descriptive and comparative purposes, in order to indicate the genre or the game that inspired a particular recreation. Such use does not imply any endorsement, partnership or sponsorship. By way of illustration only, and without limitation: Minecraft is a trademark of Mojang Synergies AB and Microsoft Corporation; Tetris is a trademark of The Tetris Company, LLC; Rocket League is a trademark of Psyonix LLC and Epic Games, Inc.; Fall Guys is a trademark of Epic Games, Inc.; Subway Surfers is a trademark of SYBO ApS; Geometry Dash is a trademark of RobTop Games AB; Super Mario Bros. is a trademark of Nintendo Co., Ltd.; UNO is a trademark of Mattel, Inc.; Plants vs. Zombies is a trademark of Electronic Arts Inc.; Agar.io and 8 Ball Pool are trademarks of Miniclip SA; Paper.io, Hole.io and Helix Jump are trademarks of Voodoo SAS; and Crossy Road is a trademark of Hipster Whale Pty Ltd.</p>
+<p>Games on the Service are independently implemented and do not, to the Operator's knowledge, incorporate the original source code of the works that inspired them. Where any Third-Party Materials are nonetheless present, they are used in good faith in the belief that such use is authorised, licensed, de minimis or permitted under Applicable Law, including applicable exceptions and limitations for quotation, parody, caricature, pastiche, criticism, review or fair use. The Operator respects the intellectual property rights of others and expects its users to do the same. Any Rights Holder who disagrees with the presence or presentation of any material on the Service is invited to use the procedure in Section 14, and the Operator undertakes to address legitimate concerns expeditiously, including by renaming, modifying or removing the material concerned.</p>
+
+<h2>14. Copyright and Intellectual Property Complaints (Notice and Takedown)</h2>
+<p>The Operator responds to clear notices of alleged infringement that comply with Applicable Law, including the notice-and-action mechanism of the European Union Digital Services Act (Regulation (EU) 2022/2065) and, to the extent applicable, the notice requirements of the United States Digital Millennium Copyright Act (17 U.S.C. § 512). Notices must be sent by email to <a href="mailto:gabriel06401@gmail.com">gabriel06401@gmail.com</a> with the subject line "Intellectual Property Notice" and should contain:</p>
+<ul>
+<li>the physical or electronic signature of the Rights Holder or of a person authorised to act on its behalf;</li>
+<li>identification of the copyrighted work, trademark or other right claimed to have been infringed, or, if multiple works are covered by a single notice, a representative list of such works;</li>
+<li>identification of the material claimed to be infringing, together with information reasonably sufficient to permit us to locate it, preferably the exact URL or game name;</li>
+<li>a sufficiently substantiated explanation of the reasons why the material is considered to be infringing or otherwise unlawful;</li>
+<li>your full name, postal address, telephone number and email address;</li>
+<li>a statement that you have a good-faith belief that the use of the material in the manner complained of is not authorised by the Rights Holder, its agent or the law; and</li>
+<li>a statement that the information in the notice is accurate and complete and, where the DMCA applies, a statement under penalty of perjury that you are the Rights Holder or authorised to act on its behalf.</li>
+</ul>
+<p>Upon receipt of a complete and valid notice, the Operator will acknowledge receipt without undue delay, review the notice in a timely, diligent and objective manner and, where appropriate, remove, disable access to, rename or modify the material concerned. Where material provided by a user is removed, the Operator will, where possible, inform the user who provided it and the reasons for the decision.</p>
+<p><b>Counter-notification.</b> If you believe that User Content you submitted was removed or disabled as a result of a mistake or misidentification, you may submit a counter-notification containing your signature, identification of the material and its former location, a statement in good faith that it was removed by mistake or misidentification, your name, address and telephone number, and your consent to the jurisdiction of the competent courts. The Operator may restore the material where permitted by Applicable Law.</p>
+<p><b>Repeat infringers.</b> The Operator will, in appropriate circumstances and at its discretion, suspend or terminate the Accounts of users who are found to have repeatedly infringed the intellectual property rights of others. The Operator may also suspend the processing of notices submitted by persons who frequently submit manifestly unfounded notices.</p>
+<p><b>Misrepresentation.</b> Please be aware that any person who knowingly and materially misrepresents that material is infringing, or that material was removed by mistake, may be liable for damages, including costs and legal fees, under Applicable Law. If you are unsure whether material infringes your rights, we recommend that you seek legal advice before submitting a notice.</p>
+
+<h2>15. Third-Party Services and Links</h2>
+<p>The Service relies on and may link to third-party services, including hosting, database, authentication, content delivery, font delivery, geolocation and real-time communication providers, and identity providers such as Google. The Operator does not control and is not responsible for the availability, content, accuracy, privacy practices or terms of any third-party service. Your use of any third-party service is at your own risk and subject to the terms and policies of that third party. The inclusion of any link does not imply endorsement.</p>
+
+<h2>16. Advertising, Sponsorship and Commercial Changes</h2>
+<p>The Service is currently provided free of charge and without paid advertising. The Operator reserves the right to introduce advertising, sponsorships, optional purchases, donations or other monetisation in the future. Any such introduction will be accompanied by appropriate updates to these Terms, the Privacy Policy and the Cookie Policy, and any processing of personal data for advertising purposes will take place only on a lawful basis, including your prior consent where required. Where paid features are introduced, any statutory rights you have as a consumer, including any right of withdrawal, will be respected.</p>
+
+<h2>17. Availability, Maintenance and Modification</h2>
+<p>The Operator does not guarantee that the Service or any game will be available at all times, without interruption, at any particular speed or on any particular device or browser. The Service may be temporarily unavailable due to maintenance, updates, failures of third-party infrastructure, security incidents, maintenance modes or events beyond our reasonable control. The Operator may impose limits on certain features, restrict access to parts of the Service, or require minimum browser capabilities without notice or liability.</p>
+<p>From time to time the Operator may make available experimental, preview, beta or test features, games or environments ("Beta Features"). Beta Features are provided for evaluation purposes only, may be incomplete, unstable or insecure, may be changed or withdrawn at any time, and may result in the loss of data or progress. Your use of Beta Features is entirely at your own risk, and the disclaimers and limitations in Sections 18 and 19 apply to them with particular force.</p>
+<p>The Operator may use automated systems to protect the integrity of the Service, for example rate limits that restrict the number of requests, messages or votes that may be submitted within a given period, validation rules that reject malformed or abusive data, and integrity checks that flag implausible scores. Such systems do not produce legal effects concerning you and may be reviewed by a human administrator on request.</p>
+
+<h2>18. Disclaimer of Warranties</h2>
+<p>TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, THE SERVICE AND ALL CONTENT ARE PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS, WITH ALL FAULTS AND WITHOUT WARRANTY OF ANY KIND, WHETHER EXPRESS, IMPLIED, STATUTORY OR OTHERWISE. THE OPERATOR EXPRESSLY DISCLAIMS ALL WARRANTIES, INCLUDING ANY IMPLIED WARRANTIES OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, QUIET ENJOYMENT, ACCURACY AND NON-INFRINGEMENT, AND ANY WARRANTIES ARISING OUT OF COURSE OF DEALING OR USAGE OF TRADE. WITHOUT LIMITATION, THE OPERATOR DOES NOT WARRANT THAT THE SERVICE WILL MEET YOUR REQUIREMENTS, BE UNINTERRUPTED, TIMELY, SECURE OR ERROR-FREE, THAT DEFECTS WILL BE CORRECTED, THAT THE SERVICE IS FREE OF VIRUSES OR OTHER HARMFUL COMPONENTS, OR THAT ANY DATA WILL BE PRESERVED.</p>
+<p>Some games involve rapid flashing lights, patterns or motion. A small proportion of people may experience seizures or other symptoms when exposed to such stimuli. If you or anyone in your household has a history of epilepsy or photosensitivity, consult a medical professional before playing, and stop playing immediately if you experience dizziness, altered vision, involuntary movements, disorientation or discomfort. Take regular breaks and maintain a healthy posture.</p>
+
+<h2>19. Limitation of Liability</h2>
+<p>TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL THE OPERATOR, ITS CONTRIBUTORS, ADMINISTRATORS, LICENSORS OR SERVICE PROVIDERS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF PROFITS, REVENUE, GOODWILL, DATA, RECORDS, SAVED PROGRESS, OPPORTUNITY OR ANTICIPATED SAVINGS, WHETHER ARISING IN CONTRACT, TORT (INCLUDING NEGLIGENCE), BREACH OF STATUTORY DUTY OR OTHERWISE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. BECAUSE THE SERVICE IS PROVIDED FREE OF CHARGE, THE AGGREGATE LIABILITY OF THE OPERATOR ARISING OUT OF OR RELATING TO THESE TERMS OR THE SERVICE SHALL NOT EXCEED THE GREATER OF FIFTY EUROS (EUR 50) OR THE AMOUNT YOU PAID TO THE OPERATOR, IF ANY, IN THE TWELVE (12) MONTHS PRECEDING THE EVENT GIVING RISE TO THE CLAIM.</p>
+<p>Nothing in these Terms excludes or limits liability for death or personal injury caused by negligence, for fraud or fraudulent misrepresentation, for gross negligence or wilful misconduct, or for any other liability that cannot be excluded or limited under Applicable Law. If you are a consumer, you benefit from any mandatory provisions of the law of your country of residence, and nothing in these Terms affects your statutory rights as a consumer.</p>
+
+<h2>20. Indemnification</h2>
+<p>To the extent permitted by Applicable Law, you agree to defend, indemnify and hold harmless the Operator and its contributors, administrators, licensors and service providers from and against any and all claims, demands, actions, liabilities, losses, damages, judgments, settlements, penalties, costs and expenses, including reasonable legal fees, arising out of or relating to: (a) your User Content; (b) your use or misuse of the Service; (c) your breach of these Terms; (d) your violation of any Applicable Law; or (e) your infringement of any intellectual property or other right of any third party. The Operator reserves the right to assume the exclusive defence and control of any matter subject to indemnification, in which case you agree to cooperate with our defence.</p>
+
+<h2>21. Term and Termination</h2>
+<p>These Terms remain in full force and effect while you use the Service. You may terminate them at any time by ceasing to use the Service and, if you have an Account, by deleting it. The Operator may suspend or terminate your access to all or part of the Service, with or without notice, if you breach these Terms, if required by law or by a Rights Holder's legitimate claim, or if the Service is discontinued. Upon termination, the licence granted to you ends immediately. Sections 8 (to the extent of retained copies), 9, 10, 12, 13, 14, 18, 19, 20, 22, 23 and any other provisions which by their nature are intended to survive shall survive termination.</p>
+
+<h2>22. Governing Law and Dispute Resolution</h2>
+<p>These Terms and any dispute or claim, including non-contractual disputes or claims, arising out of or in connection with them or their subject matter or formation, shall be governed by and construed in accordance with the laws of the Principality of Monaco, without regard to its conflict-of-laws principles. Subject to the following paragraph, the courts of the Principality of Monaco shall have exclusive jurisdiction to settle any such dispute or claim.</p>
+<p>If you are a consumer habitually resident in the European Union, the European Economic Area, the United Kingdom, Switzerland or another jurisdiction whose mandatory law so provides, you will benefit from any mandatory protections of the law of your country of residence, and you may bring proceedings in the courts of your country of residence. Before initiating any formal proceedings, you agree to first contact the Operator and attempt in good faith to resolve the dispute informally for a period of at least thirty (30) days. Nothing in this Section prevents either party from seeking urgent interim or injunctive relief from any competent court.</p>
+
+<h2>23. Changes to These Terms</h2>
+<p>The Operator may revise these Terms from time to time to reflect changes to the Service, to our business, to Applicable Law or to industry practice. The "Last updated" date at the top of this page indicates when the Terms were last modified. Where changes are material, we will take reasonable steps to bring them to your attention, for example by displaying a notice on the Service or contacting you by email if you have an Account. Your continued use of the Service after revised Terms take effect constitutes your acceptance of them. If you do not agree to the revised Terms, you must stop using the Service and may delete your Account.</p>
+
+<h2>24. General Provisions</h2>
+<p><b>Entire agreement.</b> These Terms, together with the Privacy Policy, the Cookie Policy and any supplemental terms presented to you within the Service, constitute the entire agreement between you and the Operator concerning the Service and supersede all prior agreements and understandings.</p>
+<p><b>Severability.</b> If any provision of these Terms is held to be invalid, illegal or unenforceable by a court of competent jurisdiction, that provision shall be enforced to the maximum extent permissible, and the remaining provisions shall continue in full force and effect.</p>
+<p><b>No waiver.</b> No failure or delay by the Operator in exercising any right or remedy shall operate as a waiver of it, nor shall any single or partial exercise preclude any further exercise of that or any other right or remedy.</p>
+<p><b>Assignment.</b> You may not assign, delegate or transfer any of your rights or obligations under these Terms without our prior written consent. The Operator may assign or transfer these Terms, in whole or in part, including in connection with a transfer of the Service, provided that your rights as a consumer are not prejudiced.</p>
+<p><b>Force majeure.</b> The Operator shall not be liable for any failure or delay in performance caused by events beyond its reasonable control, including natural disasters, pandemics, war, terrorism, civil unrest, labour disputes, governmental action, failures of public or private telecommunications networks, power outages, cyber-attacks or failures of third-party service providers.</p>
+<p><b>No third-party beneficiaries.</b> Except as expressly provided, these Terms do not confer any rights or remedies on any person other than you and the Operator.</p>
+<p><b>Language.</b> These Terms are drafted in the English language. Any translation is provided for convenience only. In the event of any inconsistency between the English version and a translation, the English version shall prevail to the extent permitted by Applicable Law.</p>
+<p><b>Notices.</b> The Operator may provide notices to you through the Service, by email to the address associated with your Account, or by posting on the Service. You may provide notices to the Operator by email to the contact address below.</p>
+<p><b>Relationship.</b> Nothing in these Terms creates any partnership, joint venture, employment, agency or fiduciary relationship between you and the Operator.</p>
+<p><b>Electronic communications.</b> By using the Service, you consent to receiving communications from the Operator electronically, including by email and by notices displayed within the Service, and you agree that all agreements, notices, disclosures and other communications provided electronically satisfy any legal requirement that such communications be in writing, to the extent permitted by Applicable Law.</p>
+<p><b>Export control and sanctions.</b> You shall comply with all applicable export control, import and economic sanctions laws and regulations in connection with your use of the Service and shall not use the Service in violation of any such laws or for the benefit of any sanctioned person or territory.</p>
+<p><b>Limitation period.</b> To the extent permitted by Applicable Law, any claim arising out of or relating to these Terms or the Service must be commenced within one (1) year after the cause of action accrues; otherwise, such claim is permanently barred. This paragraph does not apply to consumers where mandatory law provides for a longer limitation period.</p>
+<p><b>Interpretation against the drafter.</b> These Terms shall be interpreted fairly in accordance with their plain meaning, and no rule of construction requiring ambiguities to be resolved against the drafting party shall apply, save where mandatory consumer protection law provides otherwise.</p>
+
+<h2>25. Contact</h2>
+<p>For any question concerning these Terms, for intellectual property notices, counter-notifications, abuse reports, security disclosures, appeals against moderation decisions or any other enquiry, please contact the Operator at <a href="mailto:gabriel06401@gmail.com">gabriel06401@gmail.com</a>. This address also serves as the single point of contact for users and for authorities for the purposes of Articles 11 and 12 of Regulation (EU) 2022/2065. Communications may be sent in English or French.</p>`],
+  privacy: ['Privacy Policy', `<p>This Privacy Policy describes how the operator of gameplay (the "Operator", "we", "us" or "our") collects, uses, discloses, retains and otherwise processes personal data in connection with the gameplay website, its games, account facilities, social features and related services (collectively, the "Service"), and explains the rights and choices available to you. We are committed to processing personal data lawfully, fairly and transparently, in accordance with the principles of purpose limitation, data minimisation, accuracy, storage limitation, integrity, confidentiality and accountability.</p>
+<p>This Policy is designed to satisfy the transparency requirements of Articles 12 to 14 of Regulation (EU) 2016/679 (the "General Data Protection Regulation" or "GDPR"), of the Monegasque Law No. 1.565 of 3 December 2024 relating to the protection of personal data, of the United Kingdom GDPR and Data Protection Act 2018, of the Swiss Federal Act on Data Protection, and, to the extent applicable, of the privacy laws of the states of the United States of America, including the California Consumer Privacy Act as amended by the California Privacy Rights Act. It should be read together with our Terms of Service and our Cookie Policy.</p>
+
+<h2>1. Summary of Key Points</h2>
+<ul>
+<li>You can play without creating an account. In that case, your records, settings and saved progress are stored in your own browser.</li>
+<li>If you create an account, we store your account details, profile, records, saved progress and social data in our database, hosted in the European Union.</li>
+<li>Usage analytics, including device characteristics, approximate location and gameplay telemetry, are collected only if you consent through the cookie banner. You may consent permanently or for the current session only, and you may withdraw consent at any time.</li>
+<li>We do not sell your personal data, we do not share it for cross-context behavioural advertising, and the Service currently displays no advertising.</li>
+<li>We do not store your IP address in our analytics, and we do not use your data for automated decision-making producing legal or similarly significant effects.</li>
+<li>You have rights of access, rectification, erasure, restriction, portability and objection, as well as the right to withdraw consent and to lodge a complaint with a supervisory authority.</li>
+</ul>
+
+<h2>2. Controller and Contact Details</h2>
+<p>The controller responsible for the processing of personal data described in this Policy is the operator of gameplay, an independent, non-commercial project established in the Principality of Monaco. You may contact the controller regarding any matter relating to this Policy or to the processing of your personal data by email at <a href="mailto:gabriel06401@gmail.com">gabriel06401@gmail.com</a>. Given the scale and nature of the processing, the Operator has not appointed a data protection officer; requests are handled directly by the controller. Where the Operator is required to designate a representative in the European Union or the United Kingdom, the identity of such representative will be published in this section.</p>
+
+<h2>3. Scope of this Policy</h2>
+<p>This Policy applies to personal data processed when you visit or use the Service through any device or browser, create or use an Account, participate in online multiplayer sessions, use social and messaging features, submit support requests, rate games, or otherwise interact with us. It does not apply to the processing of personal data by third-party services that you access through links or that operate independently of us, such as Google when you manage your Google account, which are governed by their own privacy policies.</p>
+
+<h2>4. Definitions</h2>
+<p>"Personal data" means any information relating to an identified or identifiable natural person. "Processing" means any operation performed on personal data, such as collection, recording, organisation, storage, adaptation, retrieval, consultation, use, disclosure, combination, restriction, erasure or destruction. "Processor" means a person or entity that processes personal data on behalf of the controller. "Pseudonymous identifier" means an identifier, such as a randomly generated session identifier, that does not by itself reveal your identity. Other capitalised terms have the meanings given in the Terms of Service.</p>
+
+<h2>5. Categories of Personal Data We Process</h2>
+<p><b>5.1 Data stored on your device without an account.</b> When you use the Service without an Account, the following information is stored locally in your browser and is not transmitted to our servers: best scores, play counts, time played per game and per day, recently played and favourite games, preferences such as theme, language, sound, thumbnails, reduced motion and custom controls, the username and display name you choose locally, saved game progress, constructed worlds in sandbox games, the keyboard keys used in each game for control hints, your cookie choice, your game ratings, and, on access-controlled versions of the Service, the cryptographic unlock state and the number of failed password attempts. Details of each storage item are set out in the Cookie Policy.</p>
+<p><b>5.2 Account data.</b> If you register, we process your email address; your username and display name; your authentication method; if you sign in with Google, the name, email address and profile picture link provided by Google; the date of creation and of last sign-in of your Account; your role and status (for example whether the Account is locked and the reason and duration of any restriction); and your password, which is processed exclusively by our authentication provider and stored only as a salted cryptographic hash that cannot be read by anyone, including the Operator.</p>
+<p><b>5.3 Gameplay and synchronisation data.</b> For signed-in users, we process the best score, number of plays, time played and date of last play for each game, saved game progress, favourite games and technical batch identifiers used to synchronise your browser with your Account reliably.</p>
+<p><b>5.4 Social and communication data.</b> For signed-in users who use social features, we process friend requests and friendships; presence information indicating whether you are online, which game you are playing and whether you have chosen to hide your status from friends; direct messages exchanged with other users, including text, images you upload, game invitations and read receipts; and the time at which these events occur. Direct message images are stored in private storage and are delivered to the intended recipient only through time-limited signed links.</p>
+<p><b>5.5 Online multiplayer data.</b> When you take part in a multiplayer session, the name you enter, your in-game actions and any messages exchanged within the session are transmitted directly to the other participants. Connection metadata, including IP addresses, is processed by the signalling and relay infrastructure necessary to establish peer-to-peer connections. The Operator does not store the content of multiplayer chat.</p>
+<p><b>5.6 Support and moderation data.</b> If you submit a support ticket, we process its subject, the messages exchanged, their timestamps and status. If an administrator takes an action concerning your Account, such as changing your username, adjusting your role, locking or unlocking your Account or resetting a password, a record of the action, its author, its target and relevant details is kept in an administrative audit log.</p>
+<p><b>5.7 Game ratings.</b> If you rate a game with a thumbs up or thumbs down, we store the game, the rating, the time and, if you are signed in, your Account identifier. Ratings submitted without an Account are stored without any identifier.</p>
+<p><b>5.8 Analytics data (only with your consent).</b> If, and only if, you consent to analytics, we collect usage events linked to a random session identifier and a random device identifier and, if you are signed in, to your Account. These events may include:</p>
+<ul>
+<li><b>Navigation and interaction:</b> pages and views visited and time spent on each, the page from which you left the Service, how far you scrolled the home page, which game cards were displayed on screen and which were clicked together with their position, searches and filters used, settings changed, repeated rapid clicks in one location ("rage clicks") and clicks that produced no visible effect ("dead clicks"), identified by the type of interface element concerned;</li>
+<li><b>Gameplay telemetry:</b> games opened, launched and played, playing time, loading time, final scores, level, wave or stage reached at the end of a round, number of rounds, whether a game was left within the first thirty seconds, frame rate statistics, the type of input used (keyboard, mouse, touch or controller), controls you rebind, and, for the Rocket League-inspired game, match results and statistics such as goals, assists, saves, shots, demolitions, boost consumed, match length and opponent difficulty;</li>
+<li><b>Device and software characteristics:</b> device type, operating system and version, browser and version, device model where reported by the browser, processor architecture and number of cores, approximate device memory, graphics processor model, support for graphics technologies, screen size, viewport, pixel density, refresh rate, keyboard layout, controller model, preferred languages, whether the Service runs as an installed application, and whether an advertising blocker is active;</li>
+<li><b>Network and approximate location:</b> time zone and local time, connection type, estimated bandwidth and latency, data-saver preference, country, region and city, internet service provider and autonomous system number, and an indicator of whether your network appears to belong to a data centre or virtual private network. Approximate location and provider are derived from your IP address by the GeoJS service at the request of your browser; your IP address is not stored by us in connection with analytics. A country code may additionally be derived by our hosting infrastructure from request headers;</li>
+<li><b>Performance and reliability:</b> page speed metrics known as Core Web Vitals (largest contentful paint, interaction to next paint, cumulative layout shift, first contentful paint and time to first byte), error messages and their location in our code, and the time at which updates were installed;</li>
+<li><b>Advertising measurement:</b> should advertising be introduced in the future, impressions, clicks and revenue attributable to advertising placements, which will be collected only on a lawful basis.</li>
+</ul>
+<p><b>5.9 Technical and security data.</b> Our hosting, database and content delivery providers necessarily process your IP address, browser user agent, request timestamps and similar technical information in order to deliver the Service, protect it against abuse and maintain server logs. Rate-limiting mechanisms process a one-way hash of your IP address for a short period to prevent abuse. Administrators may record periodic counts of the number of users online.</p>
+<p><b>5.10 Special categories of data.</b> We do not intentionally collect special categories of personal data, such as data revealing racial or ethnic origin, political opinions, religious beliefs, health or sexual orientation, nor data relating to criminal convictions. Please do not include such information in usernames, messages or support requests.</p>
+
+<h2>6. Sources of Personal Data</h2>
+<p>We obtain personal data directly from you when you register, configure your profile, communicate or submit requests; automatically from your device and browser when you use the Service and, where applicable, have consented to analytics; from Google when you choose to sign in with Google; from GeoJS, which returns approximate location and network information derived from your IP address to your browser; and from other users, for example when they send you a friend request or a message.</p>
+
+<h2>7. Account Lifecycle in Detail</h2>
+<p><b>Registration.</b> When you register with an email address, our authentication provider sends a confirmation message to verify that you control the address. Until the address is confirmed, certain features may be unavailable. When you register through Google, Google authenticates you and provides us with your email address, name and profile picture link in accordance with the permissions you grant on Google's consent screen; we never receive your Google password. In both cases you must select a unique username before using the Service, so that other users can identify you without seeing your email address.</p>
+<p><b>Sign-in and sessions.</b> Signing in creates a session token and a refresh token stored in your browser, which allow you to remain signed in across visits. These tokens are transmitted only to our authentication provider over encrypted connections. Signing out removes them from your browser. Administrators may revoke active sessions where necessary for security, for example after a password reset.</p>
+<p><b>Password reset and email change.</b> If you request a password reset or change your email address, a time-limited link is sent to the relevant address. We process the request metadata, such as the time and type of request, in order to complete the operation and to protect against abuse. Requests may be rate-limited.</p>
+<p><b>Account deletion.</b> When you delete your Account, your profile, records, saved progress, favourites, friendships, friend requests, direct messages and their images, support tickets and synchronisation data are erased from our active database, your analytics events are dissociated from your Account so that they can no longer be attributed to you, and your game ratings are dissociated from your Account. Administrators may also process requests for deletion submitted by email. Deletion cannot be undone.</p>
+
+<h2>8. How Analytics Work</h2>
+<p>When analytics are enabled, events are first recorded in your browser and then transmitted to our database in small batches, typically every thirty seconds and when you leave the page, using encrypted connections. Each event carries a random session identifier, which is regenerated after thirty minutes of inactivity, and a random device identifier, which allows us to recognise returning visitors without knowing who they are. Neither identifier is derived from your name, email address, hardware serial numbers or any fingerprinting technique. If you chose consent for the current session only, both identifiers and any queued events are held in session storage and disappear when the tab is closed.</p>
+<p>Events are validated on arrival: their names and fields must match expected formats and sizes, and our database applies per-session and per-network rate limits to prevent flooding. Free-text values are truncated. Events are then aggregated into statistics, such as the number of active players per day, the share of players using a given browser version, the median loading time of a game or the proportion of visitors who return after seven days, which are displayed to administrators in a dashboard. Individual-level analytics are consulted only where necessary, for example to investigate a reported bug, and lists of individual players appear in the dashboard only for signed-in users who have consented to analytics, for purposes such as identifying regular players who may have stopped visiting.</p>
+<p>We use analytics to determine which games are enjoyed and should be improved, featured or removed; to detect games that load slowly, run at low frame rates on particular devices or crash; to choose default controls and keyboard layouts; to understand at what point players abandon a game; to arrange the home page so that games are easier to find; to plan server capacity and the hours at which maintenance is least disruptive; to prioritise translations; and to filter automated or abusive traffic from our statistics.</p>
+
+<h2>9. Approximate Location Lookup</h2>
+<p>If you consent to analytics, once per browser session your browser sends a request to the GeoJS service, which observes the IP address from which the request originates and returns an estimate of your country, region, city, time zone, internet service provider and autonomous system number. Your browser removes the IP address and coordinates from the response and transmits only the remaining fields to our database. The estimate is cached in your browser's session storage for the remainder of the session and is erased when the tab is closed. Location derived from IP addresses is approximate, may be inaccurate, and is never used to determine your precise location or street address. GeoJS processes your IP address as an independent service provider in accordance with its own terms.</p>
+<p>To flag traffic that may originate from data centres or virtual private networks, your browser compares the name of your internet service provider with a list of hosting and VPN providers and compares the time zone reported by your device with the time zone associated with your IP address. The resulting indicator is used solely to improve the accuracy of our statistics and does not restrict your access to the Service.</p>
+
+<h2>10. Online Multiplayer and Peer-to-Peer Connections</h2>
+<p>Peer-to-peer technologies such as WebRTC allow browsers to exchange game data directly with low latency. To establish a connection, browsers exchange network candidates, which include IP addresses, through a signalling service and, where a direct connection is not possible, relay traffic through TURN servers. Consequently, other participants in a multiplayer session and the providers of these services may be able to observe your IP address. If you prefer not to expose your IP address to other players, you should not participate in online multiplayer sessions or should use the network protections available to you. Party codes are short-lived identifiers and should be shared only with people you wish to play with.</p>
+
+<h2>11. Purposes and Legal Bases of Processing</h2>
+<table><thead><tr><th>Purpose</th><th>Data concerned</th><th>Legal basis</th></tr></thead><tbody>
+<tr><td>Providing the Service and its games, storing local records and settings</td><td>Data stored on your device, technical data</td><td>Performance of a contract (Art. 6(1)(b) GDPR) and strictly necessary storage exempt from consent</td></tr>
+<tr><td>Creating and administering your Account, authentication and account security</td><td>Account data, technical and security data</td><td>Performance of a contract</td></tr>
+<tr><td>Synchronising records and saved progress across devices</td><td>Gameplay and synchronisation data</td><td>Performance of a contract</td></tr>
+<tr><td>Providing friends, presence, direct messaging and multiplayer features</td><td>Social, communication and multiplayer data</td><td>Performance of a contract</td></tr>
+<tr><td>Responding to support requests and exercising data subject rights</td><td>Support data, account data</td><td>Performance of a contract and compliance with a legal obligation (Art. 6(1)(c))</td></tr>
+<tr><td>Moderation, enforcement of the Terms, prevention of fraud, cheating, abuse and security incidents</td><td>Account, social, moderation, technical and security data</td><td>Legitimate interests (Art. 6(1)(f)) in maintaining a safe and fair Service</td></tr>
+<tr><td>Recording game ratings to rank and improve games</td><td>Game ratings</td><td>Legitimate interests and performance of a contract</td></tr>
+<tr><td>Analytics, performance measurement, debugging, product improvement and capacity planning</td><td>Analytics data</td><td>Consent (Art. 6(1)(a) GDPR and Art. 5(3) of Directive 2002/58/EC)</td></tr>
+<tr><td>Advertising measurement, if introduced</td><td>Advertising measurement data</td><td>Consent</td></tr>
+<tr><td>Compliance with legal obligations, responding to lawful requests and establishing, exercising or defending legal claims, including intellectual property claims</td><td>Any relevant data</td><td>Legal obligation and legitimate interests</td></tr>
+</tbody></table>
+<p>Where we rely on legitimate interests, we have carried out a balancing test and concluded that our interests are not overridden by your interests, rights and freedoms, taking into account your reasonable expectations, the limited nature of the data and the safeguards in place. You may request details of this assessment and you have the right to object as described in the section entitled "Your Rights".</p>
+
+<h2>12. Consent and How to Withdraw It</h2>
+<p>When you first visit the Service, a banner invites you to accept our Terms and Privacy Policy and to choose among three options: <b>Accept all</b>, which enables analytics until you change your choice; <b>Only for this session</b>, which enables analytics only until you close the browser tab, after which nothing is retained for your next visit and you are asked again; and <b>Only essentials</b>, which limits processing to what is strictly necessary for the Service to function. Analytics events generated before you make a choice are held temporarily in memory and are transmitted only if you subsequently consent; otherwise they are discarded.</p>
+<p>You may withdraw or modify your consent at any time through the Cookie settings available on every page of the Service. Withdrawal does not affect the lawfulness of processing carried out before withdrawal. When you select Only essentials, locally queued analytics events and the random device identifier are deleted from your browser.</p>
+
+<h2>13. Recipients and Processors</h2>
+<p>We do not sell, rent or trade personal data. We disclose personal data only to the following categories of recipients, each of which is bound by appropriate contractual, technical and organisational safeguards:</p>
+<ul>
+<li><b>Supabase, Inc.</b>, which provides our database, authentication, file storage, real-time messaging and transactional email services, with data hosted in the European Union;</li>
+<li><b>Google LLC and Google Ireland Limited</b>, which provide website hosting through Firebase Hosting, font delivery through Google Fonts and, if you choose it, sign-in with Google;</li>
+<li><b>GeoJS</b>, which, at the request of your browser and only if you consent to analytics, returns approximate location and network information derived from your IP address;</li>
+<li><b>Content delivery networks</b>, including cdnjs (operated by Cloudflare, Inc.) and jsDelivr, from which your browser downloads software libraries such as the three-dimensional rendering engine and networking library;</li>
+<li><b>PeerJS and providers of STUN and TURN servers</b>, which facilitate the establishment of peer-to-peer connections for online multiplayer games;</li>
+<li><b>Other users</b>, who can see your username, display name, presence and the content you share with them, but never your email address;</li>
+<li><b>Administrators of the Service</b>, who have access to account, moderation, support and aggregated analytics data strictly to the extent necessary to operate and protect the Service; and</li>
+<li><b>Public authorities, courts, Rights Holders and professional advisers</b>, where disclosure is required by law, necessary to establish, exercise or defend legal claims, or necessary to protect the rights, property or safety of the Operator, users or others.</li>
+</ul>
+<p>In the event of a reorganisation, transfer or discontinuation of the Service, personal data may be transferred to a successor that agrees to honour this Policy, and you will be informed in advance where required by law.</p>
+
+<h2>14. International Transfers</h2>
+<p>Our primary database is hosted in the European Union. Certain service providers, including Google, Cloudflare, GeoJS and connection infrastructure providers, may process personal data in the United States or other countries outside the European Economic Area and the Principality of Monaco. Where such transfers occur, they are based on an adequacy decision of the European Commission, including the EU-U.S. Data Privacy Framework for certified recipients, or on appropriate safeguards such as the Standard Contractual Clauses adopted by the European Commission, supplemented where necessary by additional technical measures such as encryption in transit. You may obtain further information on these safeguards by contacting us.</p>
+
+<h2>15. Retention Periods</h2>
+<table><thead><tr><th>Data</th><th>Retention</th></tr></thead><tbody>
+<tr><td>Data stored in your browser</td><td>Until you clear it, delete your Account data in Settings, or clear your browser storage; session storage is erased when you close the tab</td></tr>
+<tr><td>Account, profile, records, saved progress, favourites and friends</td><td>For as long as your Account exists; deleted upon deletion of your Account</td></tr>
+<tr><td>Direct messages and images</td><td>For as long as both participating Accounts exist; deleted upon deletion of the Account concerned</td></tr>
+<tr><td>Support tickets</td><td>For as long as your Account exists, then deleted</td></tr>
+<tr><td>Synchronisation batch identifiers</td><td>Sixty (60) days</td></tr>
+<tr><td>Analytics events</td><td>Two (2) years from collection, after which they are automatically deleted; upon Account deletion, the link between events and your Account is removed</td></tr>
+<tr><td>Online-user counts</td><td>Two (2) years</td></tr>
+<tr><td>Rate-limiting counters based on hashed IP addresses</td><td>Approximately three (3) hours</td></tr>
+<tr><td>Game ratings</td><td>Retained in aggregate; ratings linked to an Account are dissociated from it upon Account deletion</td></tr>
+<tr><td>Administrative audit log</td><td>For as long as necessary for accountability, security and the defence of legal claims</td></tr>
+<tr><td>Server logs held by hosting providers</td><td>In accordance with the retention policies of those providers, typically a few days to a few months</td></tr>
+</tbody></table>
+<p>Backups may persist for a limited period after deletion from active systems and are overwritten in the ordinary course. Where we are required to retain data for longer to comply with a legal obligation or to establish, exercise or defend legal claims, we will retain it only for that purpose and duration.</p>
+
+<h2>16. Your Rights</h2>
+<p>Subject to the conditions and exceptions provided by Applicable Law, you have the following rights in relation to your personal data:</p>
+<ul>
+<li><b>Right of access</b> to obtain confirmation as to whether we process your personal data and a copy of it, together with information about the processing;</li>
+<li><b>Right to rectification</b> of inaccurate or incomplete data;</li>
+<li><b>Right to erasure</b> ("right to be forgotten") where, among other grounds, the data is no longer necessary, you withdraw consent or you object to processing;</li>
+<li><b>Right to restriction</b> of processing while a dispute about accuracy or lawfulness is resolved;</li>
+<li><b>Right to data portability</b> to receive data you provided in a structured, commonly used and machine-readable format and to transmit it to another controller;</li>
+<li><b>Right to object</b> at any time, on grounds relating to your particular situation, to processing based on legitimate interests;</li>
+<li><b>Right to withdraw consent</b> at any time, without affecting prior lawful processing;</li>
+<li><b>Right not to be subject to a decision based solely on automated processing</b> that produces legal or similarly significant effects; we do not carry out such processing; and</li>
+<li><b>Right to define directives</b> regarding the retention, erasure and communication of your personal data after your death, where provided by Applicable Law.</li>
+</ul>
+<p>Several of these rights can be exercised directly within the Service: <b>Download my data</b> in the privacy settings provides a machine-readable export of the data held in your browser and, if you are signed in, the data associated with your Account, including your analytics events; <b>Delete my account</b> in the account settings permanently erases your Account; and Cookie settings allows you to withdraw consent. For any other request, contact us by email. We may need to verify your identity before responding. We will respond without undue delay and in any event within one (1) month of receipt, which may be extended by two (2) further months where necessary taking into account the complexity and number of requests, in which case we will inform you. Requests are free of charge unless manifestly unfounded or excessive.</p>
+
+<h2>17. Right to Lodge a Complaint</h2>
+<p>If you consider that the processing of your personal data infringes Applicable Law, you have the right to lodge a complaint with a supervisory authority, in particular in the State in which you habitually reside, work or where the alleged infringement took place. In the Principality of Monaco, the competent authority is the Autorité de protection des données personnelles (APDP). In France, it is the Commission nationale de l'informatique et des libertés (CNIL). A list of the supervisory authorities of the European Economic Area is published by the European Data Protection Board. We would, however, appreciate the opportunity to address your concerns before you approach an authority.</p>
+
+<h2>18. Information for Residents of the United States</h2>
+<p>In the preceding twelve (12) months we have collected the following categories of personal information within the meaning of the California Consumer Privacy Act: identifiers (such as email address, username and pseudonymous identifiers); internet or other electronic network activity information (such as interactions with the Service); approximate geolocation (only with consent); and inferences limited to aggregated statistics. These categories are collected from the sources and for the business purposes described above and are disclosed to the service providers listed in the section entitled "Recipients and Processors". We do not sell personal information, we do not share personal information for cross-context behavioural advertising, and we do not use or disclose sensitive personal information for purposes requiring a right to limit. California residents and residents of other states with comprehensive privacy laws have the right to know, access, correct and delete their personal information, the right to opt out of sale or sharing, and the right not to be discriminated against for exercising their rights. Requests may be submitted by email and may be made through an authorised agent with appropriate proof of authority.</p>
+
+<h2>19. Global Privacy Control and Do Not Track</h2>
+<p>Because we do not sell or share personal information for advertising and analytics are collected only with your affirmative consent, a Global Privacy Control signal or Do Not Track header does not change our current practices. If we introduce advertising in the future, we will honour Global Privacy Control signals as a valid opt-out request where required by law.</p>
+
+<h2>20. Children</h2>
+<p>The Service is designed for a general audience and is not directed primarily at children. We do not knowingly collect personal data through Accounts from children under the age of thirteen (13), or under the age of digital consent applicable in their country of residence, without verifiable parental consent. Analytics are collected only with consent given through the cookie banner, and we encourage parents and guardians to make this choice on behalf of young children. If you believe that we have collected personal data from a child without appropriate consent, please contact us and we will promptly delete it.</p>
+
+<h2>21. Security</h2>
+<p>We implement appropriate technical and organisational measures designed to protect personal data against accidental or unlawful destruction, loss, alteration, unauthorised disclosure or access, having regard to the state of the art, the costs of implementation and the nature, scope, context and purposes of the processing. These measures include encryption of data in transit using Transport Layer Security; row-level security policies ensuring that users can access only their own data; hashing of passwords by our authentication provider; time-limited signed links for private images; input validation and size limits; rate limiting; restriction of administrative functions to authorised administrators with audit logging; encryption of access-controlled versions of the Service; and minimisation of the data we collect. No method of transmission or storage is completely secure, and we cannot guarantee absolute security. In the event of a personal data breach likely to result in a risk to your rights and freedoms, we will notify the competent supervisory authority and, where required, affected individuals, in accordance with Applicable Law.</p>
+
+<h2>22. Requests from Public Authorities and Rights Holders</h2>
+<p>We may disclose personal data to public authorities, including law enforcement and judicial authorities, only where we are legally required to do so by a valid order, warrant, subpoena or equivalent legal process, or where we believe in good faith that disclosure is necessary to prevent imminent harm to a person. We review each request for legal validity and proportionality, disclose only the minimum data necessary and, where legally permitted, inform the affected user. Where a Rights Holder submits a notice of alleged infringement concerning User Content, we may share with the Rights Holder only the information necessary to process the notice, and we may share the substance of the notice with the user concerned.</p>
+
+<h2>23. Data Protection by Design and by Default</h2>
+<p>The Service has been designed to operate fully without an Account and without analytics, so that the default experience involves the least possible processing of personal data. Records and settings remain in your browser unless you sign in. Analytics are disabled until you make an affirmative choice, and the session-only option allows you to contribute statistics without being recognised on future visits. We avoid collecting free-text data where structured data suffices, we truncate text fields, we do not record screen contents or session recordings, we do not record what you type other than search queries entered in the game search box, we do not use browser fingerprinting to identify you, and we do not store IP addresses in our analytics. Administrative access is restricted to authorised individuals and every administrative action affecting an Account is recorded in an audit log.</p>
+<p>Before introducing new processing activities that may present a high risk to individuals, such as large-scale profiling or the processing of children's data for new purposes, we assess the necessity and proportionality of the processing and, where required by law, carry out a data protection impact assessment.</p>
+
+<h2>24. Personal Data Breaches</h2>
+<p>We maintain procedures to detect, investigate and respond to security incidents. Where a personal data breach occurs, we will contain it, assess the risks to the individuals concerned, document the facts, effects and remedial action taken and, where the breach is likely to result in a risk to the rights and freedoms of natural persons, notify the competent supervisory authority without undue delay and, where feasible, not later than seventy-two (72) hours after having become aware of it. Where the breach is likely to result in a high risk, we will also inform the affected individuals in clear and plain language, describing the likely consequences and the measures taken or proposed.</p>
+
+<h2>25. Aggregated and De-identified Information</h2>
+<p>We may create, use and disclose aggregated or de-identified information that cannot reasonably be used to identify you, such as the total number of players of a game, the distribution of operating systems among visitors or the average session length. Such information is not personal data, and we may use it for any lawful purpose, including publishing general statistics about the Service. We will not attempt to re-identify de-identified information.</p>
+
+<h2>26. Information Concerning Other People</h2>
+<p>If you provide information about another person, for example by mentioning them in a message or support request, you must ensure that you are entitled to do so. If you are not a user of the Service and believe that we hold personal data about you, for example because a user has sent us information about you, you may exercise your rights by contacting us as described above.</p>
+<h2>27. Your Responsibilities</h2>
+<p>You are responsible for the information you choose to share with other users through usernames, display names, messages, images and multiplayer sessions. Content you send to another user cannot be withdrawn from that user's device once received. Please exercise caution and do not share sensitive information.</p>
+
+<h2>28. Accuracy of Data</h2>
+<p>We take reasonable steps to ensure that the personal data we process is accurate and kept up to date. You can review and correct your username, display name and email address at any time in your account settings. Because analytics data is generated automatically from your device and network, certain values, such as approximate location, device model or connection speed, may be estimates and may not accurately reflect your circumstances; such values are used only in aggregate statistics.</p>
+<h2>29. Access-Controlled Versions of the Service</h2>
+<p>Certain versions of the Service are protected by a site-wide access password. When you enter the password, the verification is performed in your browser using cryptographic techniques: your browser retrieves an encrypted key from our database and attempts to decrypt it with the password you entered. The password itself is never transmitted to or stored on our servers. If decryption succeeds, the resulting key is stored in your browser so that you are not asked again; the number of failed attempts is also stored locally to limit brute-force attempts. Clearing your browser storage removes this information.</p>
+<h2>30. Third-Party Websites and Services</h2>
+<p>The Service may contain links to third-party websites or allow you to interact with third-party services, such as Google when you sign in. When you follow such links or use such services, the third party may collect information about you in accordance with its own privacy policy, over which we have no control. We encourage you to review the privacy policies of every website and service you visit.</p>
+<h2>31. Accountability and Records</h2>
+<p>We maintain internal documentation describing our processing activities, the categories of data and recipients, retention periods and security measures, and we review this Policy and our practices periodically and whenever we introduce new features. Our database schema, access policies and retention routines are maintained under version control, enabling us to demonstrate compliance with the principles set out in this Policy.</p>
+<h2>32. Language of this Policy</h2>
+<p>This Policy is drafted in English. Any translation is provided for convenience only. In the event of any inconsistency between the English version and a translation, the English version shall prevail to the extent permitted by Applicable Law.</p>
+<h2>33. Changes to this Policy</h2>
+<p>We may update this Policy from time to time to reflect changes in our processing activities, the Service or Applicable Law. The "Last updated" date at the top of this page indicates the latest revision. Where changes are material, in particular where we intend to process personal data for a new purpose requiring consent, we will inform you through the Service and, where required, request your renewed consent before the new processing begins.</p>
+
+<h2>34. Contact</h2>
+<p>For any question, request or complaint regarding this Policy or our processing of your personal data, please contact the controller at <a href="mailto:gabriel06401@gmail.com">gabriel06401@gmail.com</a>. Please indicate "Privacy" in the subject line and, where your request concerns an Account, your username, so that we may locate and verify the relevant data.</p>`],
+  cookies: ['Cookie Policy', `<p>This Cookie Policy explains how the operator of gameplay (the "Operator", "we", "us" or "our") uses cookies and similar technologies, including browser local storage, session storage, IndexedDB, in-memory identifiers and requests to third-party resources (collectively, "Storage Technologies"), when you access or use the gameplay website, its games and related services (the "Service"). It describes what these technologies are, which ones we use, the purposes for which we use them, how long they persist, the legal basis on which we rely and the choices available to you. This Policy should be read together with our Privacy Policy, which contains further information about the personal data processed through Storage Technologies, and with our Terms of Service.</p>
+
+<h2>1. Summary</h2>
+<ul>
+<li>The Service does not place any advertising cookies, cross-site tracking cookies or third-party marketing pixels.</li>
+<li>Most storage used by the Service is strictly necessary to provide the games and features you request, such as keeping your records, saved progress, settings and sign-in session, and does not require your consent.</li>
+<li>Analytics storage and the associated measurement are activated only if you select Accept all or Only for this session in our consent banner. If you select Only essentials, no analytics storage is used.</li>
+<li>You can change your choice at any time using the Cookie settings link available on every page, and you can delete all stored data through your browser settings.</li>
+</ul>
+
+<h2>2. What Are Cookies and Similar Technologies?</h2>
+<p><b>Cookies</b> are small text files placed on your device by a website you visit. They are sent back to the originating website on each subsequent request, or to another website that recognises them, and are widely used to make websites work, to work more efficiently and to provide information to the owners of the site. Cookies may be "first-party", set by the website you are visiting, or "third-party", set by a domain other than the one you are visiting. They may be "session" cookies, which expire when you close your browser, or "persistent" cookies, which remain until they expire or are deleted.</p>
+<p><b>Web Storage</b> comprises two mechanisms provided by modern browsers. <b>Local storage</b> allows a website to store key-value data in your browser that persists across sessions until it is deleted by the website, by you or by your browser. <b>Session storage</b> operates in the same manner but is limited to a single browser tab and is erased automatically when that tab is closed. Unlike cookies, web storage is not transmitted automatically to servers with each request; it is read only by code running on the website that created it.</p>
+<p><b>IndexedDB</b> is a browser database that allows websites to store larger structured data, such as saved game worlds, on your device.</p>
+<p><b>Third-party resources</b> are files, such as fonts, scripts or data, that your browser retrieves from servers operated by third parties when you load a web page. Such requests necessarily disclose technical information, such as your IP address and browser user agent, to the third party, even if no cookie is set.</p>
+<p>In this Policy, references to "cookies" include all of these Storage Technologies unless the context indicates otherwise.</p>
+
+<h2>3. Definitions</h2>
+<p>For the purposes of this Policy: "device" means any computer, telephone, tablet, console or other equipment used to access the Service; "browser" means the software used to access the Service, including any installed web application; "consent" means any freely given, specific, informed and unambiguous indication of your wishes by which you signify agreement to the use of Storage Technologies for a given purpose; "strictly necessary" refers to storage or access without which the service explicitly requested by you could not be provided; "first-party" refers to Storage Technologies created by code served from the domain of the Service; and "third-party" refers to Storage Technologies or requests associated with a domain other than that of the Service. Capitalised terms not defined in this Policy have the meanings given in the Terms of Service or the Privacy Policy.</p>
+
+<h2>4. Legal Framework</h2>
+<p>The storage of information, or the gaining of access to information already stored, on your device is governed in the European Union by Article 5(3) of Directive 2002/58/EC (the "ePrivacy Directive") as transposed into national law, in the United Kingdom by the Privacy and Electronic Communications Regulations 2003, and in the Principality of Monaco by the applicable provisions of Law No. 1.565 of 3 December 2024 relating to the protection of personal data. Under these rules, storage and access require your prior, free, specific, informed and unambiguous consent, except where they are strictly necessary for the provision of an information society service explicitly requested by you or for the sole purpose of carrying out the transmission of a communication. Where Storage Technologies involve the processing of personal data, the General Data Protection Regulation and the corresponding national laws also apply. In designing our consent mechanism, we have had regard to the guidelines and recommendations published by the European Data Protection Board and by supervisory authorities such as the French Commission nationale de l'informatique et des libertés.</p>
+
+<h2>5. Categories of Storage Technologies We Use</h2>
+<p><b>Strictly necessary.</b> These technologies are essential for the Service to function and to provide the features you explicitly request. They enable core functionality such as remembering your best scores and saved progress, keeping you signed in, applying your settings, remembering your consent choice, synchronising your records with your Account, protecting the Service against abuse and, on access-controlled versions, remembering that you have entered the correct access password. Because they are strictly necessary, they do not require your consent. You can block or delete them through your browser settings, but parts of the Service will then not work properly, and your records and saved progress may be lost.</p>
+<p><b>Functional and preference.</b> These technologies remember choices you make in order to provide enhanced and more personal features, such as your interface language, favourite games, the games you have rated, controls you have customised, notices you have dismissed and the latest changes you have seen. They are set only in response to an action or preference expressed by you and are used exclusively to provide the functionality you have requested; accordingly, we treat them as strictly necessary for the service you have requested.</p>
+<p><b>Analytics and performance.</b> These technologies allow us to count visits, measure how the Service and its games are used and how they perform on different devices and networks, and identify problems, so that we can improve the Service. They are used only with your consent. They include a random device identifier, a random session identifier, a temporary queue of analytics events awaiting transmission, a session-scoped cache of approximate location data and a session-scoped marker indicating that device characteristics have already been transmitted during the current session.</p>
+<p><b>Advertising and marketing.</b> The Service does not currently use any advertising, retargeting, social media or marketing cookies or similar technologies, and does not allow any third party to place such technologies through the Service. Should we decide to introduce advertising in the future, we will update this Policy, offer a separate and specific choice, and will not activate any advertising technology without your prior consent where consent is required.</p>
+
+<h2>6. Detailed Inventory</h2>
+<p>The following table lists every Storage Technology placed or read by the Service on your device, its purpose, its category, its type and its duration. Items are first-party unless otherwise stated. Items prefixed with "gameplay:" are created by the Service; the item prefixed with "sb-" is created by the authentication library provided by our database and authentication provider.</p>
+<table><thead><tr><th>Name</th><th>Purpose</th><th>Category</th><th>Type and duration</th></tr></thead><tbody>
+<tr><td><code>gameplay:v1</code></td><td>Stores your best scores, play counts, time played, daily play history, recently played games, the date of your first visit, mute state and preferences such as theme, reduced motion, thumbnails and custom control profiles</td><td>Strictly necessary</td><td>Local storage; persistent until deleted</td></tr>
+<tr><td><code>gameplay:save:&lt;game&gt;</code></td><td>Stores saved progress for each game that supports saving</td><td>Strictly necessary</td><td>Local storage; persistent until deleted</td></tr>
+<tr><td>IndexedDB databases created by sandbox games</td><td>Store worlds and structures you build in sandbox games</td><td>Strictly necessary</td><td>IndexedDB; persistent until deleted</td></tr>
+<tr><td><code>gameplay:profile</code></td><td>Stores the username and display name shown in the Service</td><td>Strictly necessary</td><td>Local storage; persistent until deleted</td></tr>
+<tr><td><code>gameplay:consent</code></td><td>Records your consent choice, its level and the time it was given, so that we do not ask you again on every page</td><td>Strictly necessary</td><td>Local storage, persistent until changed; or session storage until the tab is closed if you chose Only for this session</td></tr>
+<tr><td><code>sb-gameplay-auth</code></td><td>Holds your sign-in session and refresh token so that you remain signed in to your Account</td><td>Strictly necessary</td><td>Local storage; persistent until you sign out or the session expires</td></tr>
+<tr><td><code>gameplay:sync</code></td><td>Records which records and saved progress have already been synchronised with your Account, to avoid duplication</td><td>Strictly necessary</td><td>Local storage; persistent until you sign out or delete it</td></tr>
+<tr><td><code>gameplay:authback</code></td><td>Remembers the page you were on when you started signing in with Google so that you can be returned to it</td><td>Strictly necessary</td><td>Session storage; erased after sign-in or when the tab is closed</td></tr>
+<tr><td><code>gameplay:gate</code>, <code>gpgate</code></td><td>On access-controlled versions only, stores the decryption key obtained after you enter the correct access password and the number of failed attempts, to prevent brute-force attacks</td><td>Strictly necessary</td><td>Local storage; persistent until deleted</td></tr>
+<tr><td><code>gameplay:reset</code></td><td>Marks that a one-time storage migration has been completed after an update of the Service</td><td>Strictly necessary</td><td>Local storage; persistent</td></tr>
+<tr><td><code>gameplay:paths</code></td><td>Remembers the technical address format used by the current deployment</td><td>Strictly necessary</td><td>Session storage; erased when the tab is closed</td></tr>
+<tr><td><code>gameplay:site</code>, <code>gameplay:sitehide</code></td><td>Cache site-wide notices and status flags, such as maintenance information, and remember notices you have dismissed</td><td>Functional</td><td>Local storage; persistent until deleted</td></tr>
+<tr><td><code>gameplay:lang</code></td><td>Stores your chosen interface language</td><td>Functional</td><td>Local storage; persistent until changed</td></tr>
+<tr><td><code>gameplay:favs</code></td><td>Stores the games you have marked as favourites</td><td>Functional</td><td>Local storage; persistent until deleted</td></tr>
+<tr><td><code>gameplay:votes</code></td><td>Remembers the games you have rated so that you are not asked again</td><td>Functional</td><td>Local storage; persistent until deleted</td></tr>
+<tr><td><code>gameplay:keys</code></td><td>Remembers which keys you have used in each game in order to display relevant control hints; never transmitted</td><td>Functional</td><td>Local storage; persistent until deleted</td></tr>
+<tr><td><code>gameplay:seen</code></td><td>Remembers the latest change log entries you have seen</td><td>Functional</td><td>Local storage; persistent until deleted</td></tr>
+<tr><td><code>gameplay:known</code></td><td>Remembers friends already known to your browser so that you are notified of new friend activity only once</td><td>Functional</td><td>Local storage; persistent until deleted</td></tr>
+<tr><td><code>gameplay:sid</code></td><td>Random session identifier used to group analytics events belonging to the same visit; renewed after thirty minutes of inactivity</td><td>Analytics</td><td>Session storage; erased when the tab is closed</td></tr>
+<tr><td><code>gameplay:vid</code></td><td>Random device identifier used to recognise returning visitors in aggregate statistics</td><td>Analytics</td><td>Local storage, persistent until consent is withdrawn or storage cleared; session storage only if you chose Only for this session</td></tr>
+<tr><td><code>gameplay:analytics</code></td><td>Temporary queue of analytics events awaiting transmission to our database</td><td>Analytics</td><td>Local storage, or session storage if you chose Only for this session; entries are removed once transmitted</td></tr>
+<tr><td><code>gameplay:geo</code></td><td>Caches the approximate location and network information returned by the GeoJS service for the current session, without the IP address</td><td>Analytics</td><td>Session storage; erased when the tab is closed</td></tr>
+<tr><td><code>gameplay:env</code></td><td>Records that device and network characteristics have already been transmitted during the current session</td><td>Analytics</td><td>Session storage; erased when the tab is closed</td></tr>
+</tbody></table>
+<p>The Service does not set any HTTP cookies of its own. Our hosting and authentication providers may set technical cookies on their own domains strictly necessary for security and load balancing, for example during the Google sign-in flow on Google's domains, which are governed by those providers' policies.</p>
+
+<h2>7. How the Strictly Necessary Storage Works in Practice</h2>
+<p><b>Records and statistics.</b> Each time you play a game, the Service updates the play count, time played and, where applicable, best score for that game in <code>gameplay:v1</code>. Time is accumulated only while the browser tab is visible and the game is not paused, so that the figures reflect actual play. The same item stores a rolling history of daily play for up to sixty days, used to display your personal statistics, and the date of your first visit, used to determine whether you are a new or returning player for the purposes of the interface.</p>
+<p><b>Saved progress.</b> Games that support saving write their state to a dedicated item named after the game. Sandbox games that allow you to construct worlds may use IndexedDB because the volume of data exceeds what is practical for web storage. Without this storage, your progress would be lost whenever you close the game.</p>
+<p><b>Sign-in session.</b> When you sign in, the authentication library stores an access token, which expires after a short period, and a refresh token, which allows a new access token to be obtained without asking for your password again. These tokens are bound to your Account and are transmitted only to our authentication provider over encrypted connections. They are removed when you sign out.</p>
+<p><b>Synchronisation.</b> When you are signed in, the Service compares the records stored in your browser with those stored in your Account and transmits only the differences. <code>gameplay:sync</code> records the baseline already synchronised and the identifiers of pending batches, so that interrupted transmissions can be safely retried without counting the same play twice.</p>
+<p><b>Consent record.</b> <code>gameplay:consent</code> contains a version number, whether analytics are enabled, the level of your choice and a timestamp. It contains no identifier and is never transmitted to us; it exists solely so that your choice is respected.</p>
+<p><b>Access protection.</b> On access-controlled versions of the Service, the content of the Service is encrypted, and the decryption key is obtained in your browser only after the correct access password has been entered. Storing the key locally avoids requiring the password on every visit, and storing the number of failed attempts allows the Service to block repeated guessing.</p>
+
+<h2>8. Assessment of the Strictly Necessary Exemption</h2>
+<p>We have assessed each Storage Technology classified as strictly necessary or functional against the criteria developed by European supervisory authorities. In each case: the storage serves a purpose directly linked to a feature you have explicitly requested, such as playing a game, saving progress, signing in, choosing a language or marking a favourite; the storage is limited to what is required for that purpose; the data is not used for any other purpose, in particular not for analytics, profiling or advertising; the data is not shared with third parties, save for the transmission of your own records to your own Account at your request; and the storage persists no longer than necessary, being removable at any time by you. Where a single item could serve both a necessary purpose and a measurement purpose, we have separated the purposes into distinct items so that measurement occurs only with consent.</p>
+
+<h2>9. Third-Party Resources</h2>
+<p>When you load the Service, your browser may retrieve resources from the following third parties. These requests are necessary to display the Service or to provide the feature you request, and the Service does not permit these third parties to place cookies through it. Each third party nonetheless receives technical information inherent to any internet request, such as your IP address, the time of the request and your browser user agent, which it processes in accordance with its own policies.</p>
+<table><thead><tr><th>Provider</th><th>Resource or function</th><th>When</th></tr></thead><tbody>
+<tr><td>Google (Firebase Hosting)</td><td>Delivery of the website files</td><td>Every visit</td></tr>
+<tr><td>Google Fonts</td><td>Typefaces used by the interface</td><td>Every visit</td></tr>
+<tr><td>cdnjs (Cloudflare) and jsDelivr</td><td>Software libraries, such as the three-dimensional rendering engine and the peer-to-peer networking library</td><td>When a game requiring them is opened</td></tr>
+<tr><td>Supabase</td><td>Database, authentication, file storage, real-time presence and messaging, and receipt of analytics events</td><td>When accounts, social features, site notices or analytics are used</td></tr>
+<tr><td>Google (Sign-In)</td><td>Authentication with your Google account</td><td>Only if you choose to sign in with Google</td></tr>
+<tr><td>GeoJS</td><td>Approximate location and network lookup based on your IP address</td><td>Once per session, only if you consented to analytics</td></tr>
+<tr><td>PeerJS and STUN/TURN providers</td><td>Establishment of peer-to-peer connections for online multiplayer</td><td>Only when you join or host an online session</td></tr>
+</tbody></table>
+
+<h2>10. Third-Party Requests in Detail</h2>
+<p><b>Website hosting.</b> The files that make up the Service are delivered by Firebase Hosting, a service of Google. When your browser requests these files, Google's infrastructure processes your IP address, the requested address, the time of the request and your browser user agent in order to deliver the content through its global content delivery network and to protect it against attacks. Standard server logs may be retained by Google for operational and security purposes.</p>
+<p><b>Fonts.</b> The interface uses typefaces provided by Google Fonts. Your browser downloads the font files directly from Google's servers, which receive your IP address and browser information. Google states that requests to the Google Fonts service are not used to create user profiles and do not involve cookies.</p>
+<p><b>Software libraries.</b> Certain games rely on open-source libraries, such as a three-dimensional rendering engine and a peer-to-peer networking library, which are downloaded from the public content delivery networks cdnjs, operated by Cloudflare, and jsDelivr. These networks receive the technical information inherent in the request. The Service requests specific, fixed versions of each library.</p>
+<p><b>Database and real-time services.</b> When you use accounts, friends, messaging, site notices, game ratings or, with your consent, analytics, your browser communicates with Supabase over encrypted connections, including persistent real-time connections used to deliver messages and presence information instantly. Supabase processes your IP address and request metadata as our processor and hosts our database in the European Union.</p>
+<p><b>Sign in with Google.</b> If you choose to sign in with Google, you are redirected to Google's sign-in pages, where Google may use its own cookies in accordance with its policies to authenticate you and protect your account. Google then returns you to the Service with the information you agreed to share.</p>
+<p><b>Location lookup.</b> If you have consented to analytics, your browser sends a single request per session to GeoJS, which uses your IP address to estimate your approximate location and network provider and returns the result to your browser. No cookie is set, and the IP address returned in the response is discarded by your browser before any data is transmitted to us.</p>
+<p><b>Online multiplayer.</b> When you host or join an online session, your browser connects to a signalling server provided by the PeerJS service and may use STUN and TURN servers to discover network routes and relay traffic. These services and the other participants may observe your IP address, as explained in the Privacy Policy.</p>
+
+<h2>11. Your Consent Choices</h2>
+<p>When you first visit the Service, a banner informs you about our use of Storage Technologies and invites you to agree to the Terms of Service and Privacy Policy and to select one of the following options:</p>
+<ul>
+<li><b>Accept all</b>: enables analytics Storage Technologies and measurement for this and future visits until you change your choice.</li>
+<li><b>Only for this session</b>: enables analytics Storage Technologies and measurement only until you close the browser tab. All analytics storage is held in session storage and is erased when the tab is closed, and the banner is shown again on your next visit.</li>
+<li><b>Only essentials</b>: limits Storage Technologies to those that are strictly necessary or functional as described above. No analytics measurement takes place, and any analytics data previously queued in your browser is deleted.</li>
+</ul>
+<p>The options are presented with equal prominence, and the Service remains fully usable whichever option you select. Your choice is recorded in <code>gameplay:consent</code> so that it can be respected on subsequent visits and so that we can demonstrate that consent was obtained. Consent is valid for a maximum of thirteen (13) months, after which we may ask you again. Analytics events generated before you make a choice are held in memory only and are discarded unless you consent.</p>
+<p>You can change your choice at any time: <button class="btn2" type="button" data-cookieset>Cookie settings</button></p>
+<p>Withdrawing consent does not affect the lawfulness of processing based on consent before its withdrawal. Data already transmitted to our database is retained and deleted in accordance with the Privacy Policy, and you may request its erasure by exercising your rights as described there.</p>
+
+<h2>12. Lifecycle of Your Consent</h2>
+<p>The consent banner is displayed on your first visit, whenever no valid consent record is present, for example after you have cleared your browser data or used a new browser, after a choice made for a single session has expired, and when your previous choice is more than thirteen (13) months old. Until you make a choice, no analytics data leaves your device. Agreeing to the Terms of Service and Privacy Policy is required in order to close the banner, but it does not by itself constitute consent to analytics; analytics consent is expressed only by selecting Accept all or Only for this session.</p>
+<p>When you select Accept all, the consent record is written to local storage, analytics events held in memory since the start of your visit are added to the queue for transmission, and device and location characteristics are recorded once for the session. When you select Only for this session, the same occurs, but every analytics item, including the consent record itself, is written to session storage and is therefore erased when the tab closes. When you select Only essentials, the consent record is written to local storage, events held in memory are discarded, any queued analytics events in your browser are deleted, and the device identifier is removed.</p>
+<p>You may revisit your choice at any time through Cookie settings, which allows you to switch analytics on or off. Each change replaces the previous consent record and takes effect immediately.</p>
+
+<h2>13. Managing Storage Through Your Browser</h2>
+<p>In addition to our consent tool, most browsers allow you to view, manage, delete and block cookies and site data. Please note that deleting site data for the Service will remove your locally stored records, saved progress, settings and sign-in session, and that blocking strictly necessary storage will prevent parts of the Service from working. Instructions are available from the following browser providers:</p>
+<ul>
+<li><b>Google Chrome:</b> Settings, Privacy and security, Third-party cookies or Site settings, View permissions and data stored across sites.</li>
+<li><b>Mozilla Firefox:</b> Settings, Privacy and Security, Cookies and Site Data, Manage Data.</li>
+<li><b>Apple Safari:</b> Settings or Preferences, Privacy, Manage Website Data.</li>
+<li><b>Microsoft Edge:</b> Settings, Cookies and site permissions, Manage and delete cookies and site data.</li>
+<li><b>Mobile browsers:</b> consult the settings of your browser or operating system, typically under Privacy or Site settings.</li>
+</ul>
+<p>Private or incognito browsing modes generally erase all site data when the private window is closed. You may also use the Download my data and data deletion tools available in the privacy settings of the Service to export or erase data associated with your browser and Account.</p>
+
+<h2>14. Consequences of Refusing or Deleting Storage</h2>
+<table><thead><tr><th>If you block or delete</th><th>Consequence</th></tr></thead><tbody>
+<tr><td>Records and settings storage</td><td>Best scores, play counts, time played, preferences and custom controls are reset; the Service behaves as on a first visit</td></tr>
+<tr><td>Saved progress and game databases</td><td>Saved games and constructed worlds stored only in your browser are permanently lost</td></tr>
+<tr><td>Sign-in session</td><td>You are signed out and must sign in again; data synchronised to your Account is not affected</td></tr>
+<tr><td>Consent record</td><td>The consent banner is displayed again</td></tr>
+<tr><td>Access unlock</td><td>On access-controlled versions, you must enter the access password again</td></tr>
+<tr><td>Functional preferences</td><td>Your language, favourites, ratings, dismissed notices and similar preferences are forgotten</td></tr>
+<tr><td>Analytics storage</td><td>No effect on functionality; you are counted as a new visitor if you consent again</td></tr>
+</tbody></table>
+
+<h2>15. Analytics Measurement in Detail</h2>
+<p>If you consent to analytics, the Service records usage events describing your interaction with the Service and its games, as detailed in the Privacy Policy, and places them in a queue in your browser. The queue is transmitted to our database at regular intervals, typically every thirty seconds, and when you leave or hide the page, after which transmitted entries are removed from your browser. If transmission fails, for example because you are offline, entries remain in the queue and are retried later, subject to a maximum number of queued entries beyond which the oldest entries are discarded.</p>
+<p>Once per session, the Service also records characteristics of your device, browser and network, and requests an approximate location estimate from the GeoJS service, as described in the Privacy Policy. The markers <code>gameplay:env</code> and <code>gameplay:geo</code> prevent these operations from being repeated during the same session and are erased when you close the tab.</p>
+<p>The random identifiers used for analytics are generated by your browser from random numbers and the current time. They do not contain or derive from any information about you, your device or your network, and they cannot be used to identify you outside the Service. They are not shared with any third party for advertising or any other purpose. If you withdraw consent, the device identifier is deleted from your browser, and any new consent will result in a new identifier.</p>
+<p>The Service does not use third-party analytics products, tag managers, session replay tools, heatmap scripts or advertising measurement scripts. All analytics are processed by the Operator's own code and stored in the Operator's own database.</p>
+
+<h2>16. Interaction Between Storage and Accounts</h2>
+<p>Signing in does not by itself enable analytics; your consent choice applies equally whether or not you are signed in. If you are signed in and have consented to analytics, analytics events are additionally associated with your Account identifier, which allows statistics such as retention and streaks to be computed for registered players and enables the inclusion of your analytics events in the export provided by the Download my data function. If you sign out, locally stored records remain in your browser unless you delete them. If you sign in on a different device, your records and saved progress are retrieved from your Account and stored in the browser of that device.</p>
+
+<h2>17. Multiple Devices, Browsers and Profiles</h2>
+<p>Storage Technologies are specific to each browser, browser profile and device. Your consent choice, preferences and locally stored records on one browser do not apply to another browser or device, and you may be asked for your consent separately on each. Deleting site data on one device does not affect the data stored on other devices or in your Account.</p>
+
+<h2>18. Storage Limits and Automatic Removal</h2>
+<p>Browsers impose limits on the amount of data each website may store, and some browsers may automatically remove data from websites that have not been visited for an extended period or when the device runs low on storage space. In particular, certain browsers delete script-writable storage for websites with which you have not interacted for a number of days. The Service cannot prevent such removal. If you wish to preserve your records and saved progress reliably, we recommend creating an Account so that they are synchronised to our database, or regularly exporting your data.</p>
+
+<h2>19. Security of Stored Data</h2>
+<p>Data stored in your browser is accessible to code running on the Service's domain and to anyone with access to your device or browser profile. Do not use the Service on shared devices without signing out and clearing site data afterwards. The Service applies a strict separation between its own storage and that of third-party resources, does not allow third-party scripts to read its storage, and validates data read from storage before use to protect against corruption. Session tokens are transmitted only over encrypted connections.</p>
+
+<h2>20. Children</h2>
+<p>Because analytics Storage Technologies are activated only following an affirmative choice in the consent banner, parents and guardians are encouraged to make that choice on behalf of young children or to select Only essentials. Strictly necessary storage used to save the progress of a child's games involves no transmission of data to the Operator unless an Account is created.</p>
+
+<h2>21. Global Privacy Control and Do Not Track</h2>
+<p>Because the Service does not use advertising or cross-site tracking technologies and activates analytics only upon your affirmative consent, Global Privacy Control signals and Do Not Track headers do not currently change the operation of the Service. Should we introduce technologies to which such signals are relevant, we will honour them as required by Applicable Law.</p>
+
+<h2>22. Future Advertising Technologies</h2>
+<p>If advertising is introduced on the Service in the future, any advertising technologies will be subject to a separate consent request distinct from analytics, presented before any such technology is activated. Where required, we will implement an industry-standard consent management framework capable of transmitting your choices to advertising partners, publish the list of such partners and the purposes for which they process data, and allow you to accept or refuse each purpose and partner individually. Advertising technologies will not be activated for users who select Only essentials. We may measure the presence of content-blocking software as part of analytics, with your consent, solely to understand the proportion of visitors for whom advertising would not be displayed.</p>
+
+<h2>23. Language</h2>
+<p>This Policy is drafted in English. Any translation is provided for convenience only. In the event of any inconsistency between the English version and a translation, the English version shall prevail to the extent permitted by Applicable Law.</p>
+<h2>24. Installed Application Mode</h2>
+<p>If you add the Service to your home screen or install it as a web application, it continues to use the same Storage Technologies described in this Policy, within the storage space your browser allocates to the installed application. On some platforms, installed applications and the browser maintain separate storage, in which case your records, preferences and consent choice may need to be established separately in each. Uninstalling the application may delete its stored data.</p>
+<h2>25. Purposes for Which Storage Is Never Used</h2>
+<p>We do not use Storage Technologies, or any information read from your device, to: build advertising profiles or segments; infer sensitive characteristics such as health, religion, political opinions or sexual orientation; determine your creditworthiness, eligibility for services or any matter producing legal effects; sell or license data to data brokers; synchronise identifiers with advertising networks or other websites ("cookie syncing"); or identify you across devices other than through an Account you have created and signed in to yourself.</p>
+<h2>26. Retention and Proof of Consent</h2>
+<p>To demonstrate that consent was validly obtained, the consent record stored in your browser includes the time at which you made your choice and the version of the consent mechanism. Where you have consented to analytics, a consent event recording the level of consent chosen is also transmitted with your analytics data and is retained for the same period as other analytics events, namely two (2) years. If you refuse analytics, no record of your refusal is transmitted to us; your choice is stored only in your browser.</p>
+<h2>27. Your Rights</h2>
+<p>To the extent that Storage Technologies involve the processing of personal data, you benefit from the rights described in the Privacy Policy, including the rights of access, rectification, erasure, restriction, portability and objection, and the right to withdraw consent at any time. You may exercise these rights by using the tools available within the Service or by contacting us at the address below. You also have the right to lodge a complaint with a supervisory authority, such as the Autorité de protection des données personnelles in the Principality of Monaco, the Commission nationale de l'informatique et des libertés in France, or the supervisory authority of your place of habitual residence, work or alleged infringement.</p>
+<h2>28. Accessibility of this Policy</h2>
+<p>We aim to present this Policy in a clear and accessible format. It is available at any time through the legal pages of the Service, the Cookie settings and the consent banner, and it can be read with assistive technologies such as screen readers. If you require this Policy in an alternative format or have difficulty understanding any part of it, please contact us and we will endeavour to assist you.</p>
+<h2>29. Illustrative Examples</h2>
+<p><b>First visit without consent.</b> You open the Service for the first time and select Only essentials. The Service writes your consent record and, as you play, updates your records and settings in your browser. No analytics event, device characteristic or location estimate is transmitted to us. Requests to our hosting provider, font provider and, where a game requires them, content delivery networks occur as necessary to display the Service.</p>
+<p><b>Visit with consent for a single session.</b> You select Only for this session and play two games. Your browser records events such as the games launched, their loading time, your final scores and the frame rate achieved, transmits them in batches together with a session identifier and a device identifier held in session storage, and requests an approximate location estimate once. When you close the tab, the consent record, identifiers, location cache and any untransmitted events are erased. On your next visit, the banner is displayed again and you are counted as a new visitor if you consent.</p>
+<p><b>Signed-in player with full consent.</b> You select Accept all and sign in to your Account. Your records are synchronised with your Account, enabling you to continue on another device, and your analytics events are associated with your Account so that features such as streak statistics can be computed and so that your events are included when you download your data. If you later select Only essentials in Cookie settings, analytics stops immediately, the device identifier and queued events are deleted from your browser, and previously transmitted events are retained and deleted in accordance with the Privacy Policy unless you request their earlier erasure.</p>
+<h2>30. Frequently Asked Questions</h2>
+<p><b>Does the Service track me across other websites?</b> No. The Service does not use third-party cookies, advertising identifiers, social media pixels or any technology designed to follow you across websites.</p>
+<p><b>Can I use the Service without accepting analytics?</b> Yes. Every game and feature is available regardless of your analytics choice.</p>
+<p><b>Why does the Service ask me again after I chose Only for this session?</b> Because that option is designed to apply only to the visit during which you made it. Nothing is remembered once you close the tab, including your choice.</p>
+<p><b>Do you use browser fingerprinting?</b> No. Although, with your consent, we record characteristics of your device such as its operating system, graphics processor and screen refresh rate in order to improve game performance, we do not combine these characteristics into a fingerprint to identify or recognise you, and recognition of returning visitors relies exclusively on the random device identifier described above.</p>
+<p><b>How can I see what is stored?</b> Most browsers allow you to inspect site storage through their developer tools, and the Download my data function in the privacy settings of the Service provides an export of the data associated with your browser and, if you are signed in, your Account.</p>
+<h2>31. Changes to this Policy</h2>
+<p>We may update this Cookie Policy to reflect changes in the Storage Technologies we use, in the Service or in Applicable Law. The "Last updated" date at the top of this page indicates the latest revision. Where we introduce new categories of non-essential Storage Technologies, we will request your consent before using them.</p>
+
+<h2>32. Contact</h2>
+<p>If you have any question about this Cookie Policy or our use of Storage Technologies, please contact us at <a href="mailto:gabriel06401@gmail.com">gabriel06401@gmail.com</a>.</p>`]
+};
 const INFO = new Map();
 ROWS.forEach((r, i) => INFO.set(r[0], { id: r[0], name: r[1], genres: r[2].split(','), pl: r[3], mins: r[4], kw: r[5], remake: r[6].includes('r'), hot: r[6].includes('h'), fresh: r[6].includes('n'), rank: i }));
 const NEWEST_RANK = new Map(NEWEST.map((id, i) => [id, i]));
@@ -2073,7 +2588,7 @@ const AN_KEY = 'gameplay:analytics', CK_KEY = 'gameplay:consent', AN_MAX = 2000;
 const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 let consent = null;
 try { consent = JSON.parse(localStorage.getItem(CK_KEY) || sessionStorage.getItem(CK_KEY)); } catch (e) {}
-if (!consent || typeof consent !== 'object' || consent.v !== 2) consent = null;
+if (!consent || typeof consent !== 'object' || consent.v !== 2 || !(Date.now() - (+consent.at || 0) < 395 * 864e5)) consent = null;
 const anOk = () => !!(consent && consent.analytics);
 const ckStore = () => consent && consent.level === 'session' ? sessionStorage : localStorage;
 let anQ = [];
@@ -2453,49 +2968,11 @@ function toggleFilter(k, v) {
   track('filter', { k, v, on, n: lastList.length });
 }
 
-const LEGAL = {
-  terms: ['Terms of Service', `<p>These terms apply when you use gameplay, a free website of browser games. By playing on the site you agree to them. If you do not agree, please do not use the site.</p>
-<h2>1. What gameplay is</h2><p>gameplay is a fan-made, non-commercial hobby project. Most games are remakes inspired by well-known games. gameplay is not affiliated with, endorsed by or sponsored by the creators, publishers or owners of the original games. Game names are used only to say which game a remake is inspired by. All trademarks and original works belong to their owners.</p>
-<h2>2. Using the site</h2><ul><li>The site is free and for personal, non-commercial use.</li><li>Do not try to break, overload, copy at scale or misuse the site, and do not use it to cheat or harm other players.</li><li>Some versions of the site are protected by a password. Do not share it publicly.</li></ul>
-<h2>3. Online play</h2><p>Online games connect you directly to the other players in your party using a party code. Be respectful: no harassment, hate, threats, spam or sharing other people's personal information. Do not share your own personal details in names or chat. The host of a party can remove players, and you can leave a party at any time.</p>
-<h2>4. Names and messages</h2><p>Your username, display name and chat messages must not be offensive, misleading or impersonate someone else. We may block names or content that break these terms.</p>
-<h2>5. Accounts</h2><p>Today you play without an account and your data stays in your browser. We plan to add optional sign-in with Google. When we do, these terms will be updated.</p>
-<h2>6. Your data on this device</h2><p>Records, saves and settings are kept in your browser. Clearing your browser data, using private browsing or switching devices can remove them. We cannot restore data that was stored only on your device.</p>
-<h2>7. No warranty</h2><p>The site is provided "as is" and "as available". Games can change, move or be removed at any time, and the site may sometimes be unavailable or contain bugs.</p>
-<h2>8. Liability</h2><p>To the extent the law allows, the people who run gameplay are not liable for indirect or consequential losses, or for loss of data, arising from your use of the site. Nothing in these terms limits liability that cannot be limited by law.</p>
-<h2>9. Rights holders</h2><p>If you own the rights to a game, name or artwork and want something changed or removed, contact us and we will act promptly.</p>
-<h2>10. Changes</h2><p>We may update these terms. The date at the top shows the latest version. If you keep using the site after a change, the new terms apply.</p>
-<h2>11. Contact</h2><p>Questions, requests about your data, or a rights holder asking for a change: email <a href="mailto:gabriel06401@gmail.com">gabriel06401@gmail.com</a>.</p>`],
-  privacy: ['Privacy Policy', `<p>In short: you do not need an account, there are no ads, we do not sell data, and what the site remembers about you is stored in your own browser.</p>
-<h2>What is stored on your device</h2><table><thead><tr><th>Name</th><th>What it holds</th><th>Kind</th></tr></thead><tbody>
-<tr><td><code>gameplay:v1</code></td><td>Best scores, play counts, time played, recently played games and settings such as theme and sound</td><td>Essential</td></tr>
-<tr><td><code>gameplay:save:…</code></td><td>Saved progress for games that support it</td><td>Essential</td></tr>
-<tr><td><code>gameplay:profile</code></td><td>The username and display name you choose</td><td>Essential</td></tr>
-<tr><td><code>gameplay:consent</code></td><td>Your cookie choice</td><td>Essential</td></tr>
-<tr><td><code>gameplay:gate</code>, <code>gpgate</code></td><td>Password unlock and wrong attempts, only on the password-protected version</td><td>Essential</td></tr>
-<tr><td><code>gameplay:analytics</code>, <code>gameplay:sid</code></td><td>Usage events and a random session ID, only if you accept analytics</td><td>Analytics</td></tr>
-</tbody></table>
-<h2>Analytics</h2><p>Only if you accept analytics, the site records events such as which games are opened and clicked, how long they are played (only while the tab is visible and the game is not paused), searches typed in the search box, filters used, online parties started, errors, and basic device information: device type (phone, tablet or computer), operating system and browser family, screen size and language. Events are linked to a random session ID, not to your name or email.</p><p>Right now these events stay in your browser and are not sent anywhere. We plan to send them to our own database (hosted on Supabase) to learn which games people enjoy. We will update this policy before that starts. If you reject analytics, nothing is recorded.</p>
-<h2>Online play</h2><p>Online games connect players directly using WebRTC. To find each other, browsers use the PeerJS connection service and connection helper (STUN and TURN) servers. Players in your party see the name you enter and your chat messages. As with any direct connection, the other players and these services can see your IP address. We do not store chat messages.</p>
-<h2>Other services</h2><ul><li>Firebase Hosting (Google) delivers the website and may keep standard server logs, such as IP address and time of request.</li><li>Google Fonts provides the fonts. Your browser downloads them from Google, which receives your IP address.</li><li>The 3D engine and the networking library are downloaded from public content delivery networks (cdnjs and jsDelivr).</li></ul>
-<h2>Accounts, coming later</h2><p>We plan to add optional sign-in with Google, with profiles, friends and records stored in our database on Supabase. Signing in will stay optional. When it launches, this policy will explain exactly what is stored, for how long and why.</p>
-<h2>Your choices</h2><ul><li>Change your cookie choice at any time in Cookie settings.</li><li>Download your data in Settings, Privacy and data.</li><li>Delete it in Settings, Account, or by clearing this site's data in your browser.</li></ul><p>Depending on where you live, you may have rights to access, correct, delete or object to the use of your personal data. Because today we hold no personal data on our servers, most requests can be handled directly in your browser with the tools above.</p>
-<h2>Children</h2><p>The site is meant for a general audience. Children under 13, or under the age of digital consent in their country, should ask a parent or guardian before playing online with others.</p>
-<h2>Changes</h2><p>We will update this policy when the site changes, in particular before analytics are sent to a server or accounts are introduced. The date at the top shows the latest version.</p>
-<h2>Contact</h2><p>Questions, requests about your data, or a rights holder asking for a change: email <a href="mailto:gabriel06401@gmail.com">gabriel06401@gmail.com</a>.</p>`],
-  cookies: ['Cookie Policy', `<p>This policy explains the cookies and similar browser storage (local storage and session storage) used by gameplay.</p>
-<h2>Essential</h2><p>These make the site work and are always on: your records, saves, profile, settings, your cookie choice and, on the password-protected version, the password unlock. They stay in your browser and are never used to track you.</p>
-<h2>Analytics (optional)</h2><p>If you accept, the site stores anonymous usage events, such as games opened, time played, searches and filters, with a random session ID (<code>gameplay:analytics</code>, <code>gameplay:sid</code>). They help us understand which games people play. For now they stay on your device. Rejecting analytics turns this off and deletes what was stored.</p><p>Choosing Only for this session turns analytics on until you close the tab. Nothing is kept for your next visit, and we ask again then.</p>
-<h2>No advertising cookies</h2><p>gameplay does not use advertising or cross-site tracking cookies.</p>
-<h2>Third parties</h2><p>Fonts, the 3D engine and the networking library are loaded from Google Fonts, cdnjs and jsDelivr, and online games use the PeerJS service. These services receive your IP address when your browser contacts them, but gameplay does not let them set cookies through the site.</p>
-<h2>Your choice</h2><p>You can change your choice at any time: <button class="btn2" type="button" data-cookieset>Cookie settings</button></p><p>You can also delete all site data in your browser settings.</p>
-<h2>Contact</h2><p>Questions, requests about your data, or a rights holder asking for a change: email <a href="mailto:gabriel06401@gmail.com">gabriel06401@gmail.com</a>.</p>`]
-};
 function openLegal(k) {
   closeGame();
   showView('legal');
   const d = LEGAL[k];
-  $('#doc').innerHTML = `<h1>${d[0]}</h1><p class="upd">Last updated 16 October 2026</p>${d[1]}`;
+  $('#doc').innerHTML = `<h1>${d[0]}</h1><p class="upd">Last updated 18 October 2026</p>${d[1]}`;
   document.querySelectorAll('.ltabs a').forEach(a => a.setAttribute('aria-current', a.dataset.legal === k ? 'page' : 'false'));
   setHead(d[0] + ' | gameplay', d[0] + ' for gameplay.', '/' + k);
   scrollTo({ top: 0, behavior: 'instant' });
@@ -3737,23 +4214,6 @@ async function auReturn() {
   if (r.kind === 'recovery') { const em = SB.session && SB.session.user && SB.session.user.email; if (em) $('#anuser').value = em; auOpen('newpass'); }
   else { if (openK === 'mauth' && SB.view === 'wait') closeAll(); if (r.kind === 'email') toast('Your email address was updated'); }
 }
-function auPatchLegal() {
-  const lp = (k, a, b) => { if (LEGAL[k] && LEGAL[k][1].includes(a)) LEGAL[k][1] = LEGAL[k][1].replace(a, b); };
-  lp('terms', '<p>Today you play without an account and your data stays in your browser. We plan to add optional sign-in with Google. When we do, these terms will be updated.</p>', '<p>An account is optional. You can sign in with Google or with an email address and a password. Keep your password safe and do not share your account. You can delete your account at any time in Settings, Account. We may suspend accounts that break these terms.</p>');
-  lp('terms', '<p>Records, saves and settings are kept in your browser.', '<p>Records, saves and settings are kept in your browser. If you sign in, your records and saves are also copied to your account.');
-  lp('privacy', '<p>In short: you do not need an account, there are no ads, we do not sell data, and what the site remembers about you is stored in your own browser.</p>', '<p>In short: you do not need an account, there are no ads and we do not sell data. Without an account, what the site remembers about you is stored in your own browser. If you sign in, your profile, records and saves are also kept in our database so you can use them on every device.</p>');
-  lp('privacy', '<tr><td><code>gameplay:analytics</code>, <code>gameplay:sid</code></td><td>Usage events and a random session ID, only if you accept analytics</td><td>Analytics</td></tr>', '<tr><td><code>sb-gameplay-auth</code>, <code>gameplay:sync</code></td><td>Your sign-in session and what was already copied to your account, only if you sign in</td><td>Essential</td></tr>\n<tr><td><code>gameplay:analytics</code>, <code>gameplay:sid</code>, <code>gameplay:vid</code></td><td>Usage events, a random session ID and a random device ID, only if you accept analytics</td><td>Analytics</td></tr>');
-  lp('privacy', 'Events are linked to a random session ID, not to your name or email.</p><p>Right now these events stay in your browser and are not sent anywhere. We plan to send them to our own database (hosted on Supabase) to learn which games people enjoy. We will update this policy before that starts. If you reject analytics, nothing is recorded.</p>', 'Events are linked to a random session ID and a random device ID, so we can count returning players. If you are signed in, they are also linked to your account. They are not linked to your name or email.</p><p>These events are sent to our database, hosted by Supabase in the European Union, and are used only to learn which games people enjoy and to fix bugs. They are deleted after two years. If you reject analytics, nothing is recorded or sent.</p>');
-  lp('privacy', '<li>Firebase Hosting (Google)', '<li>Supabase hosts our database and the sign-in service in the European Union. It receives your IP address when your browser contacts it.</li><li>If you sign in with Google, Google tells us your email address, your name and a link to your profile picture.</li><li>Firebase Hosting (Google)');
-  LEGAL.privacy[1] = LEGAL.privacy[1].replace(/<h2>Accounts, coming later<\/h2><p>[^<]*<\/p>/, '<h2>Accounts</h2><p>Signing in is optional. If you create an account, our database on Supabase (European Union) stores your email address; your username and display name; and, if you use Google, your name and the link to your Google profile picture; your best scores, play counts, time played and saved progress; and your friends and friend requests. Other signed-in players can find you by your username and see your username and display name, never your email. Passwords are handled by Supabase Auth: they are stored only as a secure hash and nobody, including us, can read them. Emails about your account (confirmation, password reset, email change) are sent by Supabase. We keep this data until you delete your account in Settings, Account, which removes it from our database.</p>');
-  lp('privacy', 'Because today we hold no personal data on our servers, most requests can be handled directly in your browser with the tools above.', 'If you are signed in, Download my data also includes what your account stores, and Delete my account in Settings, Account removes it from our database. For anything else, email us.');
-  lp('cookies', 'They stay in your browser and are never used to track you.', 'If you sign in, your sign-in session (<code>sb-gameplay-auth</code>) is stored too. They are never used to track you.');
-  lp('cookies', 'with a random session ID (<code>gameplay:analytics</code>, <code>gameplay:sid</code>). They help us understand which games people play. For now they stay on your device.', 'with a random session ID and a random device ID (<code>gameplay:analytics</code>, <code>gameplay:sid</code>, <code>gameplay:vid</code>). They help us understand which games people play and are sent to our database on Supabase in the European Union.');
-  LEGAL.privacy[1] = LEGAL.privacy[1].replace('<h2>Online play</h2>', '<h2>More analytics details</h2><p>With your consent we also record your approximate location (country, region and city) and your internet provider. Your browser looks these up from your IP address with the GeoJS service (geojs.io). We do not store your IP address.</p><p>We also record your time zone and local time, your connection type and speed, and whether the network looks like a VPN or a data center.</p><p>About your device: operating system and browser versions, phone model, processor cores, memory, graphics card, screen refresh rate, keyboard layout, controller model and whether an ad blocker is on.</p><p>About how the site is used: page speed, how far you scroll, which game cards were shown and clicked, repeated or unanswered clicks, and time spent on each page.</p><p>About each game session: frames per second, loading time, final scores, level reached, how you played (keyboard, mouse, touch or controller), controls you change and Rocket League match results. This helps us fix games and plan the site.</p><h2>Game ratings</h2><p>If you give a game a thumbs up or down, your vote is saved in our database, linked to your account if you are signed in. This browser remembers that you voted.</p><h2>Online play</h2>');
-  Object.keys(LEGAL).forEach(k => { LEGAL[k][1] = LEGAL[k][1].replace('<tr><td><code>gameplay:consent</code>', '<tr><td><code>gameplay:votes</code></td><td>The games you rated</td><td>Essential</td></tr>\n<tr><td><code>gameplay:geo</code>, <code>gameplay:env</code></td><td>Your approximate location for this visit and whether device details were already sent, only if you accept analytics. Cleared when you close the tab.</td><td>Analytics</td></tr>\n<tr><td><code>gameplay:consent</code>'); });
-  lp('cookies', 'and online games use the PeerJS service.', 'online games use the PeerJS service, and accounts and analytics use Supabase.');
-}
-if (SB.on) auPatchLegal();
 const EYE = '<button class="au-eye" type="button" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24"><g class="o"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></g><path class="c" d="M3 3l18 18M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6A17.4 17.4 0 0 0 2 12s3.6 7 10 7a10 10 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button>';
 function auEye(b, off) {
   const i = b.parentNode.querySelector('input'), on = !off && b.getAttribute('aria-pressed') !== 'true';
@@ -4201,7 +4661,7 @@ function adDraw(an) {
   $('#adcount').textContent = auT('{n} of {t} users').replace('{n}', rows.length).replace('{t}', (AD.users || []).length);
   tb.innerHTML = rows.length ? rows.map((u, i) => `<tr tabindex="0" data-uid="${esc(u.id)}" class="${u.id === AD.sel ? 'sel' : ''}${RT.pres[u.id] ? ' on' : ''}" style="--i:${Math.min(i, 14)}">${AD_COLS.map(c => `<td>${c[2](u)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${AD_COLS.length}" class="adm-empty">${esc(auT('No users match.'))}</td></tr>`;
 }
-const AD_TABS = ['users', 'tickets', 'stats', 'data', 'log', 'site'];
+const AD_TABS = ['users', 'tickets', 'stats', 'log', 'site'];
 function adTab(t) {
   const was = AD.tab, tabs = $('#adtabs'), o = $('#ad' + was), fade = was !== t && view === 'admin' && !o.hidden && motionOK(), top = fade ? o.offsetTop : 0;
   AD.tab = t;
@@ -4217,8 +4677,7 @@ function adTab(t) {
     else s.hidden = true;
   });
   if (t === 'tickets') tkLoad(tkBox($('#tka'), 'admin'));
-  if (t === 'stats') stLoad();
-  if (t === 'data') dataOpen(was !== t);
+  if (t === 'stats') { stShell(); if (INS.sub === 'ins') insLoad(false); else stLoad(); }
   if (t === 'log') alLoad();
   if (t === 'site') sfaDraw();
 }
@@ -4482,17 +4941,25 @@ const stH = v => { const n = +v || 0; return (n < 10 ? n.toFixed(1) : stN(Math.r
 const stDay = (t, o) => { const d = Date.parse(String(t).slice(0, 10) + 'T12:00:00'); try { return new Date(d).toLocaleDateString(adLang(), o || { day: 'numeric', month: 'short' }); } catch (e) { return String(t).slice(0, 10); } };
 const stNice = (v, int) => { if (!(v > 0)) return int ? 2 : 1; if (int && v <= 5) return Math.max(2, Math.ceil(v / 2) * 2); const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; };
 const ST_DEV = { desktop: 'Desktop', phone: 'Phone', tablet: 'Tablet', unknown: 'Unknown' }, ST_DK = { desktop: 0, phone: 1, tablet: 2, unknown: 'o' };
+function stShell() {
+  const box = $('#adstats');
+  if (!$('#stov')) box.innerHTML = `<div class="adm-tabs ins-sub" role="tablist" aria-label="${esc(auT('Stats sections'))}"><button type="button" role="tab" data-stsub="ov">${esc(auT('Overview'))}</button><button type="button" role="tab" data-stsub="ins">${esc(auT('Player data'))}</button><i></i></div><div id="stov"></div><div id="insv"></div>`;
+  box.querySelector('.ins-sub').dataset.m = INS.sub === 'ins' ? 'tickets' : 'users';
+  box.querySelectorAll('[data-stsub]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.stsub === INS.sub)));
+  $('#stov').hidden = INS.sub === 'ins'; $('#insv').hidden = INS.sub !== 'ins';
+  return $('#stov');
+}
 async function stLoad(force) {
   if (!adIsAdmin() || ST.busy) return;
   if (!force && ST.d && Date.now() - ST.at < 20000) { stDraw(); return; }
   ST.busy = true;
-  const box = $('#adstats');
+  const box = $('#adstats'), el = stShell();
   if (ST.anim || !ST.d) box.classList.add('sx-busy');
-  if (!ST.d) box.innerHTML = '<div class="tiles adm-tiles">' + '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(4) + '</div><i class="sk sk-chart"></i><i class="sk sk-chart"></i>';
+  if (!ST.d) el.innerHTML = '<div class="tiles adm-tiles">' + '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(4) + '</div><i class="sk sk-chart"></i><i class="sk sk-chart"></i>';
   try {
     ST.d = await adRpc('admin_stats_v2', { p_days: ST.days }).catch(e => { if (/admins only/i.test(e.message || '')) throw e; return adRpc('admin_stats'); });
     ST.at = Date.now(); stDraw();
-  } catch (e) { if (!ST.d) box.innerHTML = `<div class="adm-empty">${esc(auT('Could not load the stats. Check your connection and try again.'))}</div>`; }
+  } catch (e) { if (!ST.d) el.innerHTML = `<div class="adm-empty">${esc(auT('Could not load the stats. Check your connection and try again.'))}</div>`; }
   finally { ST.busy = false; box.classList.remove('sx-busy'); }
 }
 function stSample() {
@@ -4674,7 +5141,7 @@ function stReveal(box) {
   C.forEach(c => { c.classList.add('sx-wait'); ST.io.observe(c); });
 }
 function stDraw() {
-  const D = ST.d || {}, O = D.overview || {}, box = $('#adstats'), S = stSeries(), days = D.series ? ST.days : S.length;
+  const D = ST.d || {}, O = D.overview || {}, box = $('#adstats'), el = stShell(), S = stSeries(), days = D.series ? ST.days : S.length;
   const T = [['Active 7 days', O.active_7d], ['Active 30 days', O.active_30d]];
   const ER = D.errors || [], DV = D.devices || [], SQ = D.searches || [], RE = D.retention || [];
   const peakOk = S.some(r => r.peak != null);
@@ -4683,7 +5150,7 @@ function stDraw() {
   ST.anim = an;
   ST.ch = {};
   box.classList.toggle('sx-q', !an); box.classList.toggle('sx-r', an === 1);
-  box.innerHTML = `
+  el.innerHTML = `
   <div class="st-top"><div class="st-card st-livec"><div class="st-h"><h3><i class="adm-dot"></i>${esc(auT('Live now'))}</h3><b class="st-big" id="stln">0</b></div><div class="st-lg" id="stlg"></div><div class="st-live" id="stlive"></div></div>
   <div class="tiles adm-tiles st-tiles">${T.map(([k, n], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b data-n="${+n || 0}" data-f="l">${stN(n)}</b></div>`).join('')}</div></div>
   <div class="sx-bar"><h3>${esc(auT('Trends'))}</h3><div class="sx-rng" role="group" aria-label="${esc(auT('Time range'))}">${[7, 30, 90].map(d => `<button type="button" data-strng="${d}" aria-pressed="${d === ST.days}">${esc(auT('{n} days').replace('{n}', d))}</button>`).join('')}</div></div>
@@ -4706,8 +5173,8 @@ function stDraw() {
    <div class="st-card"><h3>${esc(auT('Players coming back'))}</h3><div class="st-list">${RE.length ? RE.map(r => `<div class="st-kv"><span>${esc(adDate(r.cohort_day))} · ${esc(auT('{n} new').replace('{n}', r.new_players))}</span><b>${esc(auT('next day {a}% · week {b}%').replace('{a}', r.day1_pct).replace('{b}', r.back_within_7d_pct))}</b></div>`).join('') : `<div class="adm-mut">${esc(auT('No data yet.'))}</div>`}</div></div>
   </div>
   <p class="adm-mut st-at">${esc(auT('Updated {t}. Refreshes every 30 seconds; the live list updates instantly.').replace('{t}', new Date(D.at || Date.now()).toLocaleTimeString()))}</p>`;
-  if (an === 2) countUp(box.querySelector('.st-top'));
-  if (an) stReveal(box);
+  if (an === 2) countUp(el.querySelector('.st-top'));
+  if (an) stReveal(el);
   stGameCard(an); stLive();
   if (keep) $('#stgq').focus({ preventScroll: true });
   ST.anim = 0;
@@ -4715,6 +5182,10 @@ function stDraw() {
 function stBoot() {
   const box = $('#adstats');
   box.addEventListener('click', e => {
+    const sb = e.target.closest('[data-stsub]');
+    if (sb) { if (sb.dataset.stsub !== INS.sub) { INS.sub = sb.dataset.stsub; ST.anim = 2; stShell(); adConfetti(e); if (INS.sub === 'ins') insLoad(false); else stLoad(); } return; }
+    const rg = e.target.closest('[data-insrng]');
+    if (rg) { const d = +rg.dataset.insrng; if (d !== INS.days) { INS.days = d; box.querySelectorAll('[data-insrng]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.insrng === d))); adConfetti(e); insLoad(true); } return; }
     const r = e.target.closest('[data-strng]');
     if (r) { const d = +r.dataset.strng; if (d === ST.days) return; ST.days = d; ST.anim = 1; adConfetti(e); box.querySelectorAll('[data-strng]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.strng === d))); stLoad(true); return; }
     if (e.target.closest('[data-stcb]')) { const inp = $('#stgq'); if ($('#stgl').hidden) { inp.dataset.typed = ''; inp.focus(); stCombo(true); } else stCombo(false); return; }
@@ -4742,232 +5213,10 @@ function stBoot() {
   box.addEventListener('pointerout', e => { const a = e.target.closest('.sx-area'); if (a && !a.contains(e.relatedTarget)) stUnhover(a); });
   box.addEventListener('pointerover', e => { const dn = e.target.closest('.sx-dn'); if (dn) stSeg(dn, e.target.closest('[data-seg]')); });
   box.addEventListener('pointerout', e => { const dn = e.target.closest('.sx-dn'); if (dn && !dn.contains(e.relatedTarget)) stSeg(dn, null); });
-  setInterval(() => { if (view === 'admin' && AD.tab === 'stats' && document.visibilityState === 'visible' && !(document.activeElement && document.activeElement.id === 'stgq')) stLoad(true); }, 30000);
+  setInterval(() => { if (view !== 'admin' || AD.tab !== 'stats' || document.visibilityState !== 'visible') return; if (INS.sub === 'ins') { if (Date.now() - INS.at > 120000) insLoad(true); } else if (!(document.activeElement && document.activeElement.id === 'stgq')) stLoad(true); }, 30000);
   setInterval(stSample, 60000);
 }
 
-const DC_S = ['Not yet', 'Partly', 'Collected'], DC_SC = ['', 'warn', 'ok'];
-const DC_C = ['No consent needed', 'Analytics consent', 'Ads consent', 'Legal check first'], DC_CC = ['ok', 'acc', 'warn', 'bad'];
-const DC = { s: -1, c: -1, q: '' };
-const DC_CAT = [
-  ['Time and sessions', 'clock', [
-    ['Visit time', 'created_at and client_at on every event', 'Busiest hours, when to ship updates, ad dayparting', 2, 0, 'Everyone'],
-    ['Time zone', 'Intl.DateTimeFormat().resolvedOptions().timeZone', 'Local hour of play, country guess without IP, VPN check against IP country', 2, 1, 'GA4, Clarity'],
-    ['Local hour and weekday', 'Client clock plus time zone', 'Heatmap of play by local hour, best time for events and push', 2, 1, 'GA4'],
-    ['Session length', 'session_end with seconds', 'Average engagement time', 2, 1, 'GA4'],
-    ['Active vs idle time', 'visibilitychange, focus, last input time', 'Real attention time instead of open-tab time', 2, 1, 'GA4 user_engagement'],
-    ['Engaged session', 'Over 10 s, or 2+ views, or a game launch', 'GA4 engagement rate, the main health number ad buyers ask for', 0, 1, 'GA4'],
-    ['Visit number', 'Counter in local storage', 'New vs 2nd vs 10th visit behaviour', 0, 1, 'GA4 ga_session_number'],
-    ['Days since first and last visit', 'First-seen date per visitor id', 'Lifetime, recency, churn risk', 2, 1, 'GA4 first_visit'],
-    ['Time to first launch', 'Page load to first game_launch', 'Onboarding friction, homepage layout tests', 0, 1, 'Product teams'],
-    ['Visits with no game launched', 'Session without game_launch', 'Bounce rate of the homepage', 2, 1, 'GA4 bounce rate'],
-    ['Several tabs open', 'BroadcastChannel ping between tabs', 'Inflated live counts, multi-tab players', 0, 1, ''],
-    ['Holiday and school calendar match', 'Join daily stats with a country calendar', 'Explain spikes, plan events', 0, 0, 'Poki, CrazyGames']
-  ]],
-  ['Device and hardware', 'eye', [
-    ['Device type', 'Phone, tablet or desktop', 'Layout priorities, ad formats', 2, 0, 'Everyone'],
-    ['Operating system', 'Parsed from the user agent', 'Bug triage, store/PWA decisions', 2, 0, 'Everyone'],
-    ['OS version', 'navigator.userAgentData.getHighEntropyValues platformVersion', 'Drop old versions safely, Windows 10 vs 11', 2, 1, 'GA4 (uapv on Tetris)'],
-    ['Browser', 'Parsed from the user agent', 'Test matrix', 2, 0, 'Everyone'],
-    ['Browser version', 'userAgentData fullVersionList', 'Know when a feature can be used', 2, 1, 'GA4 (uafvl on Tetris)'],
-    ['Device model', 'userAgentData model (Android)', 'Low-end phone list, performance presets', 2, 1, 'GA4, ad networks'],
-    ['CPU architecture and bitness', 'userAgentData architecture, bitness', 'ARM vs x86 performance', 2, 1, 'GA4 (uaa, uab on Tetris)'],
-    ['Screen, viewport, pixel ratio', 'screen and innerWidth/innerHeight, devicePixelRatio', 'Ad slot sizes, layout breakpoints', 2, 0, 'GA4 (sr on Tetris)'],
-    ['Orientation and rotations', 'screen.orientation change events', 'Which games need portrait mode', 0, 1, 'Mobile game studios'],
-    ['Touch or mouse', 'pointer: coarse media query', 'Show touch controls', 2, 0, ''],
-    ['Hover support', 'hover: hover media query', 'Card hover previews on or off', 0, 0, ''],
-    ['CPU cores', 'navigator.hardwareConcurrency', 'Auto quality setting', 2, 1, 'Unity, Poki'],
-    ['Device memory', 'navigator.deviceMemory (Chrome)', 'Skip heavy games on 2 GB phones', 2, 1, 'Google'],
-    ['GPU model', 'WebGL WEBGL_debug_renderer_info renderer string', 'Graphics presets, crash clusters per GPU', 2, 3, 'Unity, Steam survey'],
-    ['WebGL / WebGL2 / WebGPU support', 'Feature test on load', 'Which engine tech is safe to use', 2, 0, 'Unity'],
-    ['Screen refresh rate', 'Measured from requestAnimationFrame', '120 Hz users, physics step choices', 2, 1, ''],
-    ['HDR and colour depth', 'dynamic-range: high media query, screen.colorDepth', 'Art pipeline choices', 0, 1, ''],
-    ['Battery level and charging', 'navigator.getBattery (Chrome only)', 'Low-power mode, shorter sessions on battery', 0, 3, 'Ad networks (deprecated in most browsers)'],
-    ['Gamepad model', 'navigator.getGamepads() id string', 'Which controller layouts to draw (PS, Xbox, Switch)', 2, 1, 'Steam'],
-    ['Keyboard layout', 'navigator.keyboard.getLayoutMap (Chrome)', 'AZERTY / QWERTZ default bindings', 2, 1, ''],
-    ['Installed as app', 'display-mode: standalone', 'PWA adoption', 2, 0, ''],
-    ['Storage space', 'navigator.storage.estimate()', 'Whether offline packs fit', 0, 1, ''],
-    ['Sound on or muted', 'Site mute setting', 'Whether audio ads or music matter', 1, 1, 'Ad networks (muted autoplay)']
-  ]],
-  ['Performance and quality', 'timer', [
-    ['Frames per second per game', 'Average and 1% low from rAF timing', 'Find games that run badly, per device', 2, 1, 'Unity, Steam'],
-    ['Long tasks and freezes', 'PerformanceObserver longtask', 'Jank reports, menu lag', 0, 1, 'Sentry, New Relic'],
-    ['Game load time', 'Click to first playable frame', 'Players lost while loading', 2, 1, 'Poki, CrazyGames'],
-    ['Web Vitals (LCP, INP, CLS, TTFB)', 'PerformanceObserver or web-vitals', 'Google ranking, homepage speed', 2, 1, 'Cloudflare beacon on Tetris'],
-    ['Download sizes and cache hits', 'Resource Timing transferSize', 'Hosting costs, slow countries', 0, 1, 'Cloudflare'],
-    ['JavaScript errors', 'window error and unhandledrejection', 'Bug fixing', 2, 1, 'Sentry'],
-    ['Full stack traces', 'error.stack, trimmed', 'Faster bug fixing', 1, 1, 'Sentry'],
-    ['WebGL context lost', 'webglcontextlost event', 'GPU crashes per device', 0, 1, 'Unity'],
-    ['Silent crash detection', 'Heartbeat stops without session_end', 'Crashes that throw no error', 0, 1, 'Firebase Crashlytics'],
-    ['Memory use', 'performance.memory (Chrome) or measureUserAgentSpecificMemory', 'Leaks in long sessions', 0, 1, ''],
-    ['Server call time and failures', 'Time each Supabase RPC', 'Slow backend, outages', 0, 0, 'New Relic, Datadog'],
-    ['Realtime disconnects', 'Channel status changes', 'Multiplayer stability', 0, 0, ''],
-    ['Update installs', 'update_ready event', 'How fast new versions spread', 2, 0, '']
-  ]],
-  ['Network and location', 'rocket', [
-    ['Country', 'From IP at the edge (Cloudflare cf-ipcountry, or a geo lookup like geojs which Tetris calls)', 'Ad prices differ hugely by country, translation priorities', 2, 1, 'Tetris (geojs), GA4'],
-    ['Region and city', 'IP geolocation', 'Local events, server placement', 2, 1, 'GA4'],
-    ['Internet provider and ASN', 'IP to ASN lookup (geojs and ipinfo return the organisation)', 'Spot school or office networks, outage reports per ISP', 2, 1, 'Tetris (geojs), ad fraud vendors'],
-    ['Connection type and speed', 'navigator.connection effectiveType, downlink, rtt, saveData', 'Lighter assets on 3G, data saver mode', 2, 1, 'Google'],
-    ['VPN, proxy or datacenter IP', 'ASN list or IP reputation API', 'Bot and fraud filtering, ad invalid traffic', 2, 1, 'Google Ad Traffic Quality (seen on Tetris)'],
-    ['Preferred languages', 'navigator.languages (full list)', 'Which translation to add next', 2, 0, 'GA4 (ul on Tetris)'],
-    ['Time zone vs IP country', 'Compare both', 'VPN signal', 2, 1, 'Fraud vendors'],
-    ['Raw IP address', 'Request header', 'Abuse blocking only; store hashed and short-lived', 0, 3, 'Everyone (truncated in GA4)'],
-    ['Latency to the server', 'Ping the realtime server', 'Multiplayer matchmaking by region', 0, 0, 'Online games'],
-    ['Network type from IP (mobile, home, school)', 'ASN category lookup', 'School traffic peaks, mobile data users', 0, 1, 'Ad networks']
-  ]],
-  ['Where visitors come from', 'users', [
-    ['Referrer site', 'document.referrer host', 'Which sites send players', 2, 1, 'GA4'],
-    ['Full referrer page', 'document.referrer path', 'Which exact post or video sent them', 0, 1, 'GA4'],
-    ['Campaign tags', 'utm_source, utm_medium, utm_campaign, utm_term, utm_content', 'Measure every link you share', 0, 1, 'GA4'],
-    ['Ad click ids', 'gclid, fbclid, ttclid, msclkid, twclid in the URL', 'Report conversions back to ad platforms', 0, 2, 'Google Ads, Meta, TikTok'],
-    ['Landing page', 'First path of the visit', 'Which game pages bring new people', 1, 1, 'GA4'],
-    ['First and last channel per visitor', 'Store first-touch source', 'Credit the channel that found the player', 0, 1, 'GA4 attribution'],
-    ['Invite and party links', 'party_join from a shared link', 'Viral factor (invites per player)', 1, 1, 'Mobile game studios'],
-    ['Share button clicks', 'navigator.share and copy-link clicks', 'Which games get shared', 0, 1, ''],
-    ['Install prompt shown and accepted', 'beforeinstallprompt, appinstalled', 'PWA installs', 0, 1, ''],
-    ['Search engine keyword', 'Google Search Console export', 'SEO: which searches bring players', 0, 0, 'Everyone (Search Console)']
-  ]],
-  ['Navigation and clicks', 'play', [
-    ['Page and view changes', 'view event', 'Funnels between pages', 2, 1, 'GA4 page_view'],
-    ['Scroll depth', '25 / 50 / 75 / 90% of the page', 'Is anything below the fold seen', 2, 1, 'GA4 scroll (90% on Tetris)'],
-    ['Game card clicks with position', 'tile_click with rail and slot', 'Click-through rate by slot, ranking', 2, 1, 'Poki, CrazyGames'],
-    ['Game card impressions', 'IntersectionObserver on cards', 'CTR = clicks / impressions, cover A/B tests', 2, 1, 'Poki, CrazyGames, Netflix'],
-    ['Cover A/B tests', 'Two covers per game, compare CTR', 'Better covers, more plays', 0, 1, 'Netflix, Poki'],
-    ['Hover time on cards', 'pointerenter to pointerleave', 'Interest that did not turn into a click', 0, 1, ''],
-    ['Searches and no-result searches', 'search and search_go events', 'Which games to add next', 2, 1, ''],
-    ['Filters and sorting', 'filter and sort events', 'Category demand', 2, 1, ''],
-    ['Outbound link clicks', 'Clicks on links to other sites', 'Where players leave to', 0, 1, 'GA4 enhanced measurement'],
-    ['Rage clicks and dead clicks', 'Several fast clicks in one spot, clicks with no effect', 'Broken or confusing buttons', 2, 1, 'Clarity on Tetris'],
-    ['Session replays and heatmaps', 'Record pointer and DOM changes', 'Watch where people struggle', 0, 1, 'Clarity on Tetris, Hotjar'],
-    ['Exit page', 'Last view before session_end', 'Where people give up', 2, 1, 'GA4'],
-    ['Time on each page', 'View change timestamps', 'Which pages hold attention', 2, 1, 'GA4'],
-    ['Settings changed', 'setting event', 'Which defaults are wrong', 2, 1, '']
-  ]],
-  ['Gameplay', 'trophy', [
-    ['Launches, rounds and time per game', 'game_launch, game_play, game_time', 'Most popular games', 2, 1, ''],
-    ['Best scores and records', 'game_stats table', 'Leaderboards', 2, 0, ''],
-    ['Score distribution', 'Every final score, not just the best', 'Balance difficulty, spot cheaters', 2, 1, 'Tetris, King'],
-    ['Level reached and quit point', 'Level number at game over or exit', 'Funnel per level, where it gets too hard', 2, 1, 'King, Rovio'],
-    ['Death and fail positions', 'x, y of each fail', 'Map heatmaps', 0, 1, 'Unity, Valve'],
-    ['Round length', 'Start to end of each round', 'Pacing, where to show a break ad', 2, 1, 'Ad-based studios'],
-    ['Quits in the first 30 seconds', 'Game exit soon after launch', 'Games that confuse new players', 2, 1, 'Poki'],
-    ['Restarts and pauses', 'restart and pause events', 'Frustration signals', 2, 1, ''],
-    ['Difficulty or mode chosen', 'Per-game mode event', 'Which modes to keep', 0, 1, ''],
-    ['Input used in game', 'Last input: keyboard, mouse, touch or gamepad', 'Where to invest in controls', 2, 1, 'Steam Input'],
-    ['Rebinds', 'Which actions players rebind', 'Fix bad default controls', 2, 1, 'Ubisoft, EA'],
-    ['Win, loss and bot level', 'Match result and opponent', 'Matchmaking, bot balance', 0, 1, 'Psyonix'],
-    ['Rocket League match stats', 'Goals, saves, shots, touches, boost used, aerials, demos', 'Bot tuning, skill rating, highlights', 2, 1, 'Psyonix'],
-    ['First game of new players', 'First game_launch per visitor', 'Which game should be featured for newcomers', 1, 1, 'Poki'],
-    ['Fullscreen use', 'fullscreen event', 'Default to fullscreen or not', 2, 1, ''],
-    ['Party size and party length', 'party_create, party_play', 'Multiplayer demand', 1, 1, ''],
-    ['Cheat signals', 'Impossible scores, timer drift, edited saves', 'Clean leaderboards', 0, 0, 'Every competitive game']
-  ]],
-  ['Accounts and social', 'save', [
-    ['Sign ups and log ins with method', 'auth events (Google, email)', 'Which sign-in to promote', 2, 0, ''],
-    ['Sign-up started but not finished', 'Form opened vs account created', 'Fix sign-up friction', 1, 1, 'GA4 funnels'],
-    ['Profile completeness', 'Avatar, display name, bio set', 'Engagement predictor', 0, 0, 'LinkedIn, Steam'],
-    ['Friends, messages, tickets', 'Counts per user', 'Social players stay longer', 2, 0, 'Discord, Steam'],
-    ['Account age', 'created_at', 'Cohorts', 2, 0, ''],
-    ['Favourites', 'favourites table', 'Personal recommendations', 2, 0, ''],
-    ['Age range (self declared)', 'One question at sign-up', 'Children cannot get personalised ads; required for COPPA and GDPR-K', 0, 3, 'Google, Roblox'],
-    ['Gender (self declared)', 'Optional profile field', 'Ad targeting; sensitive, keep optional', 0, 3, 'Meta, Google'],
-    ['Newsletter opt-in', 'Checkbox with double opt-in', 'Bring players back by email', 0, 0, 'Everyone'],
-    ['Push notification permission', 'Notification.permission and opt-in rate', 'Re-engagement channel', 0, 0, 'Mobile games'],
-    ['Account deletion and data downloads', 'Requests table, data_download event', 'GDPR compliance proof', 2, 0, '']
-  ]],
-  ['Retention and calculated numbers', 'users', [
-    ['Daily, weekly, monthly actives', 'Distinct visitors per day, 7 and 30 days', 'Core growth numbers', 2, 1, 'Everyone'],
-    ['Stickiness (DAU / MAU)', 'Daily actives divided by monthly actives', 'How habit-forming the site is; 20% is good', 2, 1, 'Facebook, Zynga'],
-    ['Day 1, 7 and 30 retention', 'Share of new players back on that day', 'The number investors and ad partners ask for', 2, 1, 'Everyone'],
-    ['Churn risk', 'No visit for 14 days after a regular streak', 'Win-back emails', 2, 1, 'GA4 churn probability'],
-    ['Returning after a long break', 'Back after 30+ days', 'What brought them back', 0, 1, ''],
-    ['Streaks', 'Consecutive days played', 'Daily rewards', 2, 1, 'Duolingo'],
-    ['Retention by channel', 'Cohorts split by first source', 'Which sources bring loyal players', 0, 1, 'GA4'],
-    ['Full funnel', 'Visit, launch, play 1 minute, sign up, come back', 'Where most people drop', 2, 1, 'Mixpanel, Amplitude'],
-    ['Lifetime playtime per player', 'Sum of game_time', 'Find super fans', 2, 1, ''],
-    ['Power user share', 'Top 1% and 10% of playtime', 'How much depends on a few players', 1, 1, ''],
-    ['Feature adoption', 'Share of players using parties, favourites, chat', 'Which features to keep', 1, 1, 'Amplitude'],
-    ['Game ratings', 'Thumbs up or down after a round', 'Ranking, removing bad games', 2, 0, 'Poki, CrazyGames']
-  ]],
-  ['Ads and money', 'star', [
-    ['Consent string', 'IAB TCF v2.2 via __tcfapi, plus GPP for the US', 'Required before EU ad networks can personalise; Tetris uses Google Funding Choices', 0, 0, 'Tetris (Funding Choices), every ad site'],
-    ['Ad impressions and viewability', 'Ad shown and at least 50% visible for 1 s', 'Revenue reporting', 1, 2, 'Tetris (GA4 ad_impression)'],
-    ['Ad clicks and CTR', 'Clicks on ad slots', 'Layout tuning', 1, 2, 'Google Ad Manager'],
-    ['Revenue per thousand views (eCPM)', 'From the ad network report', 'Which countries and pages earn most', 1, 2, 'Google Ad Manager, Prebid'],
-    ['Header bidding prices', 'Prebid.js bid responses per bidder', 'Which ad partners pay most; Tetris runs Prebid with Taboola, Criteo, Kueez, Seedtag, Sharethrough, RichAudience', 0, 2, 'Tetris (pbjs)'],
-    ['Rewarded ads started and finished', 'Video ad events', 'Reward balance, revenue', 0, 2, 'Tetris (Google IMA SDK)'],
-    ['Ad breaks between rounds', 'Interstitial shown at round end', 'Revenue without hurting retention', 0, 2, 'Tetris (H5 Games Ads), Poki'],
-    ['Ad errors and timeouts', 'Failed or slow ad loads', 'Lost revenue; Tetris logs ads_google_h5 timeouts to GA4', 0, 2, 'Tetris'],
-    ['Ad blocker detected', 'Bait element or blocked script check', 'Share of visitors who cannot earn money', 2, 1, 'News sites'],
-    ['Interest segments', 'Ad network inferred interests', 'Higher ad prices; done by the networks, not you', 0, 2, 'Google, Taboola'],
-    ['Cross-site ids', 'ID5, IntentIQ, Criteo ids', 'Better ad prices without third-party cookies; Tetris stores id5id and _iiq_fdata', 0, 2, 'Tetris (ID5, IntentIQ, Criteo)'],
-    ['Revenue per daily user (ARPDAU)', 'Revenue divided by daily actives', 'The main money number', 0, 0, 'Every free game'],
-    ['Purchases or donations', 'If you ever sell skins or remove ads', 'Paying user rate, ARPPU', 0, 0, 'Every free game']
-  ]],
-  ['Identity and fingerprinting', 'eye', [
-    ['Random visitor id', 'Stored in local storage', 'Count unique visitors', 2, 1, 'GA4 _ga cookie'],
-    ['Session id', 'Per tab session', 'Group events', 2, 0, 'Everyone'],
-    ['Same person on several devices', 'Linked through the account', 'True user counts', 2, 0, 'Google, Meta'],
-    ['Hashed email for ad matching', 'SHA-256 email sent to ad platforms', 'Match players to ad conversions; needs explicit consent', 0, 3, 'Google Enhanced Conversions, Meta CAPI'],
-    ['Browser fingerprint', 'Canvas, audio, fonts, GPU hash', 'Track without cookies; treated as personal data under GDPR, avoid', 0, 3, 'Ad fraud vendors'],
-    ['Bot detection', 'navigator.webdriver, headless user agents, no input events', 'Clean stats and ad traffic', 0, 0, 'Google reCAPTCHA, Cloudflare']
-  ]],
-  ['Accessibility and preferences', 'cake', [
-    ['Reduced motion', 'prefers-reduced-motion and the site setting', 'How many need calmer animations', 1, 1, 'Apple, Google'],
-    ['Dark or light theme', 'Site theme and prefers-color-scheme', 'Default theme', 1, 1, ''],
-    ['High contrast and forced colours', 'prefers-contrast, forced-colors', 'Accessibility fixes', 0, 1, 'Microsoft'],
-    ['Page zoom and font size', 'visualViewport.scale, root font size', 'Text that is too small', 0, 1, ''],
-    ['Thumbnails off', 'Setting', 'Data saving users', 2, 1, ''],
-    ['Translated by the browser', 'html lang changed by Google Translate', 'Languages to support natively', 0, 1, '']
-  ]]
-];
-const dcAll = () => DC_CAT.flatMap(c => c[2]);
-function dcList() {
-  const box = $('#dcl');
-  if (!box) return;
-  const q = DC.q.trim().toLowerCase();
-  const ok = r => (DC.s < 0 || r[3] === DC.s) && (DC.c < 0 || r[4] === DC.c) && (!q || r.slice(0, 3).concat(r[5]).join(' ').toLowerCase().includes(q));
-  const cats = DC_CAT.map(([t, ic, R], ci) => [t, ic, R.filter(ok), ci]).filter(c => c[2].length);
-  $('#addata').querySelectorAll('[data-dc]').forEach(b => b.setAttribute('aria-pressed', String(DC[b.dataset.dc] === +b.dataset.v)));
-  box.innerHTML = cats.length ? cats.map(([t, ic, R, ci], i) => `<details class="st-card dc-cat" style="--i:${i}" open><summary><span class="sx-gki">${AD_SI[ic]}</span><h3>${esc(auT(t))}</h3><em>${R.length}</em><i class="dc-mt" title="${esc(auT('Share already collected'))}"><s style="width:${Math.round(100 * DC_CAT[ci][2].filter(r => r[3] === 2).length / DC_CAT[ci][2].length)}%"></s></i></summary>
-   <div class="dc-rows">${R.map((r, j) => `<div class="dc-r" style="--j:${Math.min(j, 16)}"><div class="dc-n"><b>${esc(auT(r[0]))}</b><small>${esc(auT(r[1]))}</small></div><div class="dc-u">${esc(auT(r[2]))}${r[5] ? `<small>${esc(auT('Who does it: {w}').replace('{w}', r[5]))}</small>` : ''}</div><div class="dc-p"><span class="adm-pill ${DC_SC[r[3]]}">${esc(auT(DC_S[r[3]]))}</span><span class="adm-pill ${DC_CC[r[4]]}">${esc(auT(DC_C[r[4]]))}</span></div></div>`).join('')}</div></details>`).join('') : `<div class="adm-empty">${esc(auT('Nothing matches.'))}</div>`;
-}
-function dcDraw(an) {
-  const box = $('#dcv');
-  if (!box) return;
-  if (!motionOK()) an = false;
-  const all = dcAll(), cnt = [0, 1, 2].map(s => all.filter(r => r[3] === s).length);
-  const chip = (k, v, l, n) => `<button type="button" data-dc="${k}" data-v="${v}" aria-pressed="${DC[k] === v}">${esc(auT(l))}${n != null ? `<em>${n}</em>` : ''}</button>`;
-  const T = [['Things you could track', all.length], ['Already collected', cnt[2]], ['Partly collected', cnt[1]], ['Not collected yet', cnt[0]]];
-  box.classList.toggle('sx-q', !an);
-  box.innerHTML = `
-  <div class="tiles adm-tiles st-tiles dc-tiles">${T.map(([k, n], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b data-n="${n}" data-f="l">${stN(n)}</b></div>`).join('')}</div>
-  <div class="st-card dc-intro"><h3>${AD_SI.eye}${esc(auT('What big sites collect'))}</h3><p>${esc(auT('Checked live on play.tetris.com: Google Tag Manager with Google Analytics 4 (page views, scroll depth, ad impressions, ad timeouts), Microsoft Clarity (session replays, heatmaps, rage clicks), Google Funding Choices for consent, Google Ad Manager with Prebid header bidding (Taboola, Criteo, Kueez, Seedtag, Sharethrough, RichAudience), ID5 and IntentIQ cross-site ids, a geojs IP lookup for country and provider, Cloudflare Web Analytics for page speed, and Google IMA for video ads.'))}</p><p class="adm-mut">${esc(auT('Anything marked Analytics or Ads consent may only be collected after the visitor agrees in the cookie banner (GDPR, ePrivacy, and Monaco Law 1.565). Legal check first means personal or sensitive data.'))}</p></div>
-  <div class="dc-bar"><label class="search dc-q" for="dcq"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="dcq" type="search" placeholder="${esc(auT('Search the list'))}" autocomplete="off" spellcheck="false" value="${esc(DC.q)}"></label>
-   <div class="dc-chips" role="group" aria-label="${esc(auT('Status'))}">${chip('s', -1, 'All')}${[2, 1, 0].map(s => chip('s', s, DC_S[s], cnt[s])).join('')}</div>
-   <div class="dc-chips" role="group" aria-label="${esc(auT('Consent'))}">${chip('c', -1, 'Any consent')}${DC_C.map((l, c) => chip('c', c, l)).join('')}</div></div>
-  <div class="dc-cats" id="dcl"></div>`;
-  dcList();
-  if (an) countUp(box.querySelector('.dc-tiles'));
-}
-function dcBoot() {
-  const box = $('#addata');
-  box.addEventListener('click', e => {
-    const sb = e.target.closest('[data-dsub]');
-    if (sb) { if (sb.dataset.dsub !== INS.sub) { INS.sub = sb.dataset.dsub; dataOpen(true); adConfetti(e); } return; }
-    const rg = e.target.closest('[data-insrng]');
-    if (rg) { const d = +rg.dataset.insrng; if (d !== INS.days) { INS.days = d; box.querySelectorAll('[data-insrng]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.insrng === d))); adConfetti(e); insLoad(true); } return; }
-    const u = e.target.closest('[data-stu]');
-    if (u) { const x = (AD.users || []).find(y => y.id === u.dataset.stu); if (x) { adTab('users'); adPanel(x); } return; }
-    const b = e.target.closest('[data-dc]');
-    if (!b) return;
-    const k = b.dataset.dc, v = +b.dataset.v;
-    if (DC[k] === v) return;
-    DC[k] = v; box.classList.remove('sx-q'); dcList(); adConfetti(e);
-  });
-  box.addEventListener('input', e => { if (e.target.id === 'dcq') { DC.q = e.target.value; box.classList.add('sx-q'); dcList(); } });
-}
 function adConfetti(e) {
   if (!motionOK()) return;
   const cv = document.createElement('canvas'), x = cv.getContext('2d'), d = devicePixelRatio || 1, W = innerWidth, H = innerHeight;
@@ -4989,7 +5238,7 @@ function adConfetti(e) {
   })(t0);
 }
 
-const INS = { d: null, days: 30, busy: false, sub: 'ins', at: 0 };
+const INS = { d: null, days: 30, busy: false, sub: 'ov', at: 0 };
 const insPct = (a, b) => b ? Math.round(100 * a / b) : 0;
 const insShare = o => o && o.n ? insPct(o.yes, o.n) + '%' : '—';
 const insMs = v => v == null ? '—' : v >= 1000 ? (v / 1000).toFixed(1) + ' s' : Math.round(v) + ' ms';
@@ -5016,7 +5265,7 @@ function insDraw(an) {
   if (!motionOK()) an = false;
   const D = INS.d || {}, G = D.geo || {}, V = D.dev || {}, B = D.behaviour || {}, R = D.retention || {}, RL = D.rl || {}, A = D.ads || {}, C = D.coverage || {};
   const coh = d => (R.cohort || []).find(x => x.d === d) || {}, F = R.funnel || {}, S = R.streaks || {}, sc = B.scroll || {}, all = RL.all || {};
-  const rng = `<div class="sx-bar"><h3>${esc(auT('Insights'))}</h3><div class="sx-rng" role="group" aria-label="${esc(auT('Time range'))}">${[7, 30, 90].map(d => `<button type="button" data-insrng="${d}" aria-pressed="${d === INS.days}">${esc(auT('{n} days').replace('{n}', d))}</button>`).join('')}</div></div>`;
+  const rng = `<div class="sx-bar"><h3>${esc(auT('Player data'))}</h3><div class="sx-rng" role="group" aria-label="${esc(auT('Time range'))}">${[7, 30, 90].map(d => `<button type="button" data-insrng="${d}" aria-pressed="${d === INS.days}">${esc(auT('{n} days').replace('{n}', d))}</button>`).join('')}</div></div>`;
   const cov = `<p class="adm-mut ins-cov">${esc(auT('{a} of {b} sessions shared device details and {c} shared location. Only visitors who accepted cookies are counted.').replace('{a}', stN(C.dev)).replace('{b}', stN(C.sessions)).replace('{c}', stN(C.geo)))}</p>`;
   const games = (D.games || []).slice(0, 60), votes = new Map((D.votes || []).map(v => [v.id, v]));
   const inMain = g => { const I = [['Keyboard', g.ik], ['Mouse', g.im], ['Touch', g.it], ['Controller', g.ip]].sort((a, b) => b[1] - a[1]); const t = I.reduce((s, x) => s + (+x[1] || 0), 0); return t ? I.filter(x => x[1] > 0).slice(0, 2).map(x => auT(x[0]) + ' ' + insPct(x[1], t) + '%').join(' · ') : '—'; };
@@ -5026,6 +5275,7 @@ function insDraw(an) {
   const funnel = [['Visited', F.visited], ['Launched a game', F.launched], ['Played 1 minute', F.played], ['Created an account', F.account], ['Came back another day', F.returned]];
   const dau = +R.dau || 0, mau = +R.mau || 0;
   box.classList.toggle('sx-q', !an);
+  if (an) $('#adstats').classList.remove('sx-q', 'sx-r');
   box.innerHTML = rng + cov + `
   <h2 class="ins-h">${esc(auT('Retention'))}</h2>
   ${insTiles([['Stickiness (daily ÷ monthly)', mau ? insPct(dau, mau) + '%' : '—', null, 'Above 20% is good'], ['Back next day', coh(1).eligible ? insPct(coh(1).back, coh(1).eligible) + '%' : '—'], ['Back after 7 days', coh(7).eligible ? insPct(coh(7).back, coh(7).eligible) + '%' : '—'], ['Back after 30 days', coh(30).eligible ? insPct(coh(30).back, coh(30).eligible) + '%' : '—'], ['At risk of leaving', stN(R.churn_all), +R.churn_all || 0, 'Regulars gone 14+ days'], ['On a streak now', stN(S.active), +S.active || 0, S.avg_cur ? auT('average {n} days').replace('{n}', S.avg_cur) : '']])}
@@ -5088,21 +5338,13 @@ function insDraw(an) {
 async function insLoad(force) {
   if (!adIsAdmin() || INS.busy) return;
   const box = $('#insv');
-  if (!force && INS.d && Date.now() - INS.at < 60000) { insDraw(false); return; }
+  if (!force && INS.d && Date.now() - INS.at < 60000) { insDraw(!!ST.anim); ST.anim = 0; return; }
   INS.busy = true;
   if (!INS.d) box.innerHTML = '<div class="tiles adm-tiles">' + '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(4) + '</div><i class="sk sk-chart"></i><i class="sk sk-chart"></i>';
   box.classList.add('sx-busy');
-  try { INS.d = await adRpc('admin_insights', { p_days: INS.days }); INS.at = Date.now(); insDraw(true); }
+  try { INS.d = await adRpc('admin_insights', { p_days: INS.days }); INS.at = Date.now(); insDraw(!INS.drawn || !!ST.anim); INS.drawn = true; ST.anim = 0; }
   catch (e) { box.innerHTML = `<div class="adm-empty">${esc(/admin_insights|function|404|PGRST/i.test(e.message || '') ? auT('The insights database update is not installed yet. Run round8_insights.sql in the Supabase SQL editor.') : auT('Could not load the stats. Check your connection and try again.'))}</div>`; }
   finally { INS.busy = false; box.classList.remove('sx-busy'); }
-}
-function dataOpen(fresh) {
-  const box = $('#addata');
-  if (!$('#insv')) box.innerHTML = `<div class="adm-tabs ins-sub" role="tablist" data-m="${INS.sub === 'ins' ? 'users' : 'tickets'}"><button type="button" role="tab" data-dsub="ins" aria-selected="${INS.sub === 'ins'}">${esc(auT('Insights'))}</button><button type="button" role="tab" data-dsub="cat" aria-selected="${INS.sub === 'cat'}">${esc(auT('What could be tracked'))}</button><i></i></div><div id="insv" class="ads"></div><div id="dcv" class="ads dc" hidden></div>`;
-  $('#insv').hidden = INS.sub !== 'ins'; $('#dcv').hidden = INS.sub !== 'cat';
-  box.querySelector('.ins-sub').dataset.m = INS.sub === 'ins' ? 'users' : 'tickets';
-  box.querySelectorAll('[data-dsub]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.dsub === INS.sub)));
-  if (INS.sub === 'ins') insLoad(false); else if (fresh || !$('#dcv').children.length) dcDraw(true);
 }
 
 function tkBox(el, mode) {
@@ -5265,7 +5507,7 @@ function adBoot() {
     if (s) { const k = s.dataset.adsort; AD.sort = AD.sort[0] === k ? [k, -AD.sort[1]] : [k, /_at$|last_seen|friends|email_confirmed|locked|role|has_password/.test(k) ? -1 : 1]; adDraw(); return; }
     const tb = t.closest('[data-adtab]');
     if (tb) { adTab(tb.dataset.adtab); return; }
-    if (t.closest('#adref')) { adLoad(); tkLoad(tkBox($('#tka'), 'admin')); if (AD.tab === 'stats') stLoad(true); if (AD.tab === 'data' && INS.sub === 'ins') insLoad(true); if (AD.tab === 'log') alLoad(); if (AD.tab === 'site') sfLoad(true).then(sfaDraw); return; }
+    if (t.closest('#adref')) { adLoad(); tkLoad(tkBox($('#tka'), 'admin')); if (AD.tab === 'stats') { if (INS.sub === 'ins') insLoad(true); else stLoad(true); } if (AD.tab === 'log') alLoad(); if (AD.tab === 'site') sfLoad(true).then(sfaDraw); return; }
     if (t.closest('[data-almore]')) { alLoad(true); return; }
     const alu = t.closest('[data-alu]');
     if (alu) { const x = (AD.users || []).find(y => y.id === alu.dataset.alu); if (x) { adTab('users'); adPanel(x); } return; }
@@ -5290,7 +5532,6 @@ function adBoot() {
   });
   $('#adtabs').addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); const T = AD_TABS, i = T.indexOf(AD.tab); adTab(T[(i + (e.key === 'ArrowRight' ? 1 : T.length - 1)) % T.length]); $('#adtabs [aria-selected="true"]').focus(); } });
   stBoot();
-  dcBoot();
   $('#adq').addEventListener('input', e => { AD.q = e.target.value; adDraw(); });
   $('#adsite').addEventListener('input', e => { if (e.target.id !== 'sfaq') return; const q = e.target.value.trim().toLowerCase(); document.querySelectorAll('#sfag [data-sfg]').forEach(c => { c.hidden = !!q && !c.textContent.toLowerCase().includes(q) && !c.dataset.sfg.includes(q); }); });
   $('#adf').addEventListener('change', e => { AD.f = e.target.value; adDraw(); });
@@ -7280,17 +7521,6 @@ const R = [
 ["Accept all", "Tout accepter", "Aceptar todo", "Alle akzeptieren", "Accetta tutto", "Aceitar tudo"],
 ["Only essentials", "Essentiels uniquement", "Solo esenciales", "Nur notwendige", "Solo essenziali", "Só essenciais"],
 ["Decline", "Refuser", "Rechazar", "Ablehnen", "Rifiuta", "Recusar"],
-["Choosing Only for this session turns analytics on until you close the tab. Nothing is kept for your next visit, and we ask again then.", "Choisir Seulement pour cette session active les statistiques jusqu’à la fermeture de l’onglet. Rien n’est conservé pour votre prochaine visite, et nous vous redemandons alors.", "Elegir Solo para esta sesión activa las estadísticas hasta que cierres la pestaña. No se guarda nada para tu próxima visita y entonces te lo volvemos a preguntar.", "Mit Nur für diese Sitzung ist die Analyse aktiv, bis du den Tab schließt. Für deinen nächsten Besuch wird nichts gespeichert, und wir fragen dann erneut.", "Scegliendo Solo per questa sessione le statistiche restano attive finché non chiudi la scheda. Non viene conservato nulla per la prossima visita e te lo chiederemo di nuovo.", "Escolher Só nesta sessão ativa as estatísticas até fechar o separador. Nada é guardado para a próxima visita, e voltamos a perguntar nessa altura."],
-["More analytics details", "Plus de détails sur les statistiques", "Más detalles sobre las estadísticas", "Weitere Details zur Analyse", "Altri dettagli sulle statistiche", "Mais detalhes sobre as estatísticas"],
-["With your consent we also record your approximate location (country, region and city) and your internet provider. Your browser looks these up from your IP address with the GeoJS service (geojs.io). We do not store your IP address.", "Avec votre accord, nous enregistrons aussi votre position approximative (pays, région et ville) et votre fournisseur d’accès. Votre navigateur les obtient à partir de votre adresse IP grâce au service GeoJS (geojs.io). Nous ne conservons pas votre adresse IP.", "Con tu consentimiento también registramos tu ubicación aproximada (país, región y ciudad) y tu proveedor de internet. Tu navegador los obtiene a partir de tu dirección IP con el servicio GeoJS (geojs.io). No guardamos tu dirección IP.", "Mit deiner Zustimmung erfassen wir auch deinen ungefähren Standort (Land, Region und Stadt) und deinen Internetanbieter. Dein Browser ermittelt diese aus deiner IP-Adresse über den Dienst GeoJS (geojs.io). Deine IP-Adresse speichern wir nicht.", "Con il tuo consenso registriamo anche la tua posizione approssimativa (paese, regione e città) e il tuo fornitore di internet. Il tuo browser li ricava dal tuo indirizzo IP tramite il servizio GeoJS (geojs.io). Non conserviamo il tuo indirizzo IP.", "Com o teu consentimento registamos também a tua localização aproximada (país, região e cidade) e o teu fornecedor de internet. O teu navegador obtém-nos a partir do teu endereço IP com o serviço GeoJS (geojs.io). Não guardamos o teu endereço IP."],
-["We also record your time zone and local time, your connection type and speed, and whether the network looks like a VPN or a data center.", "Nous enregistrons aussi votre fuseau horaire et votre heure locale, le type et la vitesse de votre connexion, et si le réseau ressemble à un VPN ou à un centre de données.", "También registramos tu zona horaria y tu hora local, el tipo y la velocidad de tu conexión, y si la red parece un VPN o un centro de datos.", "Außerdem erfassen wir deine Zeitzone und Ortszeit, Art und Geschwindigkeit deiner Verbindung und ob das Netz nach einem VPN oder Rechenzentrum aussieht.", "Registriamo anche il tuo fuso orario e l’ora locale, il tipo e la velocità della connessione e se la rete sembra una VPN o un data center.", "Registamos também o teu fuso horário e a hora local, o tipo e a velocidade da ligação e se a rede parece uma VPN ou um centro de dados."],
-["About your device: operating system and browser versions, phone model, processor cores, memory, graphics card, screen refresh rate, keyboard layout, controller model and whether an ad blocker is on.", "Sur votre appareil : versions du système et du navigateur, modèle de téléphone, cœurs du processeur, mémoire, carte graphique, fréquence de l’écran, disposition du clavier, modèle de manette et présence d’un bloqueur de publicités.", "Sobre tu dispositivo: versiones del sistema y del navegador, modelo de teléfono, núcleos del procesador, memoria, tarjeta gráfica, frecuencia de la pantalla, distribución del teclado, modelo de mando y si hay un bloqueador de anuncios.", "Zu deinem Gerät: Versionen von Betriebssystem und Browser, Handymodell, Prozessorkerne, Arbeitsspeicher, Grafikkarte, Bildwiederholrate, Tastaturlayout, Controller-Modell und ob ein Werbeblocker aktiv ist.", "Sul tuo dispositivo: versioni del sistema e del browser, modello di telefono, core del processore, memoria, scheda grafica, frequenza dello schermo, layout della tastiera, modello di controller e se è attivo un blocco pubblicità.", "Sobre o teu dispositivo: versões do sistema e do navegador, modelo de telemóvel, núcleos do processador, memória, placa gráfica, frequência do ecrã, disposição do teclado, modelo de comando e se há um bloqueador de anúncios."],
-["About how the site is used: page speed, how far you scroll, which game cards were shown and clicked, repeated or unanswered clicks, and time spent on each page.", "Sur l’utilisation du site : vitesse des pages, jusqu’où vous faites défiler, quelles cartes de jeux ont été affichées et cliquées, les clics répétés ou sans effet, et le temps passé sur chaque page.", "Sobre el uso del sitio: velocidad de las páginas, hasta dónde te desplazas, qué tarjetas de juegos se mostraron y se pulsaron, los clics repetidos o sin efecto y el tiempo en cada página.", "Zur Nutzung der Seite: Ladegeschwindigkeit, wie weit du scrollst, welche Spielkarten angezeigt und angeklickt wurden, wiederholte oder wirkungslose Klicks und die Zeit auf jeder Seite.", "Sull’uso del sito: velocità delle pagine, fin dove scorri, quali schede dei giochi sono state mostrate e cliccate, i clic ripetuti o senza effetto e il tempo passato su ogni pagina.", "Sobre a utilização do site: velocidade das páginas, até onde deslizas, que cartões de jogos foram mostrados e clicados, os cliques repetidos ou sem efeito e o tempo em cada página."],
-["About each game session: frames per second, loading time, final scores, level reached, how you played (keyboard, mouse, touch or controller), controls you change and Rocket League match results. This helps us fix games and plan the site.", "Sur chaque partie : images par seconde, temps de chargement, scores finaux, niveau atteint, façon de jouer (clavier, souris, tactile ou manette), touches modifiées et résultats des matchs de Rocket League. Cela nous aide à corriger les jeux et à faire évoluer le site.", "Sobre cada partida: fotogramas por segundo, tiempo de carga, puntuaciones finales, nivel alcanzado, cómo jugaste (teclado, ratón, táctil o mando), controles que cambias y resultados de los partidos de Rocket League. Esto nos ayuda a arreglar juegos y planificar el sitio.", "Zu jeder Spielsitzung: Bilder pro Sekunde, Ladezeit, Endpunktzahlen, erreichtes Level, womit du gespielt hast (Tastatur, Maus, Touch oder Controller), geänderte Steuerung und Ergebnisse von Rocket-League-Spielen. Das hilft uns, Spiele zu reparieren und die Seite zu planen.", "Su ogni sessione di gioco: fotogrammi al secondo, tempo di caricamento, punteggi finali, livello raggiunto, come hai giocato (tastiera, mouse, touch o controller), comandi modificati e risultati delle partite di Rocket League. Ci aiuta a sistemare i giochi e a pianificare il sito.", "Sobre cada sessão de jogo: imagens por segundo, tempo de carregamento, pontuações finais, nível alcançado, como jogaste (teclado, rato, toque ou comando), controlos que alteras e resultados das partidas de Rocket League. Isto ajuda-nos a corrigir jogos e a planear o site."],
-["Game ratings", "Avis sur les jeux", "Valoraciones de juegos", "Spielbewertungen", "Valutazioni dei giochi", "Avaliações dos jogos"],
-["If you give a game a thumbs up or down, your vote is saved in our database, linked to your account if you are signed in. This browser remembers that you voted.", "Si vous mettez un pouce levé ou baissé à un jeu, votre vote est enregistré dans notre base de données, lié à votre compte si vous êtes connecté. Ce navigateur se souvient que vous avez voté.", "Si das un pulgar arriba o abajo a un juego, tu voto se guarda en nuestra base de datos, vinculado a tu cuenta si has iniciado sesión. Este navegador recuerda que votaste.", "Wenn du einem Spiel Daumen hoch oder runter gibst, wird deine Stimme in unserer Datenbank gespeichert, mit deinem Konto verknüpft, falls du angemeldet bist. Dieser Browser merkt sich, dass du abgestimmt hast.", "Se dai un pollice in su o in giù a un gioco, il tuo voto viene salvato nel nostro database, collegato al tuo account se hai effettuato l’accesso. Questo browser ricorda che hai votato.", "Se deres um polegar para cima ou para baixo a um jogo, o teu voto é guardado na nossa base de dados, ligado à tua conta se tiveres sessão iniciada. Este navegador lembra-se de que votaste."],
-["The games you rated", "Les jeux que vous avez notés", "Los juegos que has valorado", "Die Spiele, die du bewertet hast", "I giochi che hai valutato", "Os jogos que avaliaste"],
-["Your approximate location for this visit and whether device details were already sent, only if you accept analytics. Cleared when you close the tab.", "Votre position approximative pour cette visite et si les détails de l’appareil ont déjà été envoyés, seulement si vous acceptez les statistiques. Effacé à la fermeture de l’onglet.", "Tu ubicación aproximada para esta visita y si ya se enviaron los detalles del dispositivo, solo si aceptas las estadísticas. Se borra al cerrar la pestaña.", "Dein ungefährer Standort für diesen Besuch und ob Gerätedetails schon gesendet wurden, nur wenn du der Analyse zustimmst. Wird beim Schließen des Tabs gelöscht.", "La tua posizione approssimativa per questa visita e se i dettagli del dispositivo sono già stati inviati, solo se accetti le statistiche. Cancellato alla chiusura della scheda.", "A tua localização aproximada para esta visita e se os detalhes do dispositivo já foram enviados, só se aceitares as estatísticas. Apagado ao fechar o separador."],
 ["Enjoying {g}?", "Vous aimez {g} ?", "¿Te gusta {g}?", "Gefällt dir {g}?", "Ti piace {g}?", "Estás a gostar de {g}?"],
 ["I like it", "J’aime", "Me gusta", "Gefällt mir", "Mi piace", "Gosto"],
 ["Not for me", "Pas pour moi", "No es para mí", "Nicht mein Ding", "Non fa per me", "Não é para mim"],
