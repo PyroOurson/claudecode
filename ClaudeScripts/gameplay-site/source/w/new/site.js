@@ -224,7 +224,7 @@ function siteBoot() {
   setInterval(() => { if (!SF.ch && !SF.shown && document.visibilityState !== 'hidden') sfLoad(true); }, 60000);
   if (SB.on && sbHasSession()) CL.t = setTimeout(() => clAuto(), 8000);
   else CL.t = setTimeout(() => clAuto(), 1200);
-  Ameplay.debug.site = { check: () => upCheck(true), load: () => sfLoad(true), flags: () => SF.d, favs: () => FV.ids.slice() };
+  Ameplay.debug.site = { check: () => upCheck(true), load: () => sfLoad(true), flags: () => SF.d, favs: () => FV.ids.slice(), route: () => ({ api: SB.on ? SBN.best() : 'none', live: SBN.ws(), routes: SBN.all(), accounts: SB.on }) };
 }
 async function siteSignedIn() {
   const uid = SB.user.id;

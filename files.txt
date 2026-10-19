@@ -4,6 +4,7 @@ ClaudeScripts/gameplay-site/COVER_SOURCES.md
 ClaudeScripts/gameplay-site/GAMES.md
 ClaudeScripts/gameplay-site/deploy.py
 ClaudeScripts/gameplay-site/server/README.md
+ClaudeScripts/gameplay-site/server/cloudflare-worker.js
 ClaudeScripts/gameplay-site/server/setup.py
 ClaudeScripts/gameplay-site/source/.gitignore
 ClaudeScripts/gameplay-site/source/BUILD.md

@@ -14,10 +14,10 @@ const put = (rel, buf) => {
 };
 const fonts = (/href="(https:\/\/fonts\.googleapis\.com\/css2\?[^"]+)"/.exec(html) || [])[1] || '';
 const consts = fs.readFileSync(path.join(__dirname, 'new', 'consts.js'), 'utf8');
-const sbUrl = (/const SUPABASE_DIRECT = '([^']+)'/.exec(consts) || [])[1], sbRelay = (/const SUPABASE_RELAY = '([^']*)'/.exec(consts) || [])[1] || '', sbKey = (/const SUPABASE_ANON_KEY = '([^']+)'/.exec(consts) || [])[1], gId = (/const GOOGLE_CLIENT_ID = '([^']*)'/.exec(consts) || [])[1] || '';
+const sbUrl = (/const SUPABASE_DIRECT = '([^']+)'/.exec(consts) || [])[1], sbRelays = JSON.parse(((/const SUPABASE_RELAYS = (\[[^\]]*\])/.exec(consts) || [])[1] || '[]').replace(/'/g, '"')), sbKey = (/const SUPABASE_ANON_KEY = '([^']+)'/.exec(consts) || [])[1], gId = (/const GOOGLE_CLIENT_ID = '([^']*)'/.exec(consts) || [])[1] || '';
 const vendor = path.join(__dirname, 'vendor');
 if (fs.existsSync(vendor)) fs.readdirSync(vendor).sort().forEach(f => put(plan.dir + f, fs.readFileSync(path.join(vendor, f))));
-const check = fs.readFileSync(path.join(__dirname, 'check.html'), 'utf8').split('%%SB_DIRECT%%').join(sbUrl || '').split('%%SB_RELAY%%').join(sbRelay).split('%%SB_KEY%%').join(sbKey || '').split('%%GOOGLE_ID%%').join(gId);
+const check = fs.readFileSync(path.join(__dirname, 'check.html'), 'utf8').split('%%SB_DIRECT%%').join(sbUrl || '').split('"%%SB_RELAYS%%"').join(JSON.stringify(sbRelays)).split('%%SB_KEY%%').join(sbKey || '').split('%%GOOGLE_ID%%').join(gId);
 put(plan.dir + 'check.html', Buffer.from(check, 'utf8'));
 if (!pass && !gkey) {
   plan.files.forEach(f => put(plan.dir + f, fs.readFileSync(path.join(src, 'files', f))));
@@ -93,7 +93,7 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
 <div class="sp" id="sp" hidden aria-label="Loading"><div><i></i><i></i><i></i><i></i><i></i></div></div><form class="c" id="f" autocomplete="off"><div class="lg"><i>&#9654;</i>gameplay</div><h1 id="h">Enter the password</h1><p id="t">This site is private.</p><input id="p" class="pw" type="text" name="gp-site-code" placeholder="Password" autofocus aria-label="Password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"><button id="b">Unlock</button><div class="m" id="m"></div></form>
 <script>
 (() => {
-  const D = { u: ${JSON.stringify(sbUrl)}, r: ${JSON.stringify(sbRelay)}, a: ${JSON.stringify(sbKey)}, i: '${iv.toString('base64')}', c: '${ct.toString('base64')}', d: ${JSON.stringify(plan.dir)}, p: ${JSON.stringify(pre)}, l: ${JSON.stringify(slot)} };
+  const D = { u: ${JSON.stringify(sbUrl)}, r: ${JSON.stringify(sbRelays)}, a: ${JSON.stringify(sbKey)}, i: '${iv.toString('base64')}', c: '${ct.toString('base64')}', d: ${JSON.stringify(plan.dir)}, p: ${JSON.stringify(pre)}, l: ${JSON.stringify(slot)} };
   const K = 'gameplay:gate', MAX = 5;
   const $ = id => document.getElementById(id);
   const b64 = s => { const t = atob(s), u = new Uint8Array(t.length); for (let i = 0; i < t.length; i++) u[i] = t.charCodeAt(i); return u; };
@@ -128,17 +128,25 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
     if (!o || typeof o.s !== 'string' || typeof o.i !== 'string' || typeof o.c !== 'string' || !(o.n > 0)) throw new Error('no slot');
     return o;
   };
+  const ALL = [D.u].concat(D.r);
+  const SBF = 'gameplay:sbforce';
+  let only = null;
+  try { const q = new URLSearchParams(location.search).get('sb'); if (q !== null) { if (q === '' || q === 'auto') sessionStorage.removeItem(SBF); else sessionStorage.setItem(SBF, q); } only = sessionStorage.getItem(SBF); } catch (e) {}
+  const pool = only == null ? ALL : only === 'none' ? [] : /^\\d+$/.test(only) && ALL[+only] ? [ALL[+only]] : ALL;
+  if (only != null && pool.length === 1) window.__gpSbOnly = true;
   const slot = ms => new Promise((res, rej) => {
-    let rs = null, n = 0, over = false, grace = 0;
-    const all = D.r ? 2 : 1;
+    let n = 0, over = false, grace = 0, first = null, dFail = false;
     const end = (u, o) => { if (over) return; over = true; clearTimeout(grace); clearTimeout(lim); window.__gpSbUrl = u; window.__gpSbDown = false; try { sessionStorage.setItem(SBK, u); } catch (e) {} res(o); };
     const fail = () => { if (over) return; over = true; clearTimeout(grace); clearTimeout(lim); window.__gpSbDown = true; rej(new Error('unreachable')); };
-    const miss = () => { n++; if (rs) end(D.r, rs); else if (n >= all) fail(); };
-    const lim = setTimeout(() => { if (rs) end(D.r, rs); else fail(); }, ms);
-    get(D.u).then(o => end(D.u, o), miss);
-    if (D.r) get(D.r).then(o => { rs = o; if (n) end(D.r, o); else grace = setTimeout(() => end(D.r, o), 1500); }, miss);
+    const lim = setTimeout(() => { if (first) end(first[0], first[1]); else fail(); }, ms);
+    if (!pool.length) { fail(); return; }
+    const direct = pool[0] === D.u;
+    pool.forEach(u => get(u).then(o => {
+      if (u === D.u || !direct || dFail) { end(u, o); return; }
+      if (!first) { first = [u, o]; grace = setTimeout(() => end(u, o), 1500); }
+    }, () => { n++; if (u === D.u) dFail = true; if (n >= pool.length) fail(); else if (first && dFail) end(first[0], first[1]); }));
   });
-  const reach = () => { let c = null; try { c = sessionStorage.getItem(SBK); } catch (e) {} if (c && (c === D.u || c === D.r)) { window.__gpSbUrl = c; window.__gpSbDown = false; return Promise.resolve(); } return slot(4000).catch(() => {}); };
+  const reach = () => { let c = null; try { c = sessionStorage.getItem(SBK); } catch (e) {} if (c && pool.indexOf(c) >= 0) { window.__gpSbUrl = c; window.__gpSbDown = false; return Promise.resolve(); } return slot(5000).catch(() => {}); };
   const unwrap = async (pw, o) => {
     const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
     const kek = await crypto.subtle.importKey('raw', await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: b64(o.s), iterations: o.n, hash: 'SHA-256' }, base, 256), 'AES-GCM', false, ['decrypt']);

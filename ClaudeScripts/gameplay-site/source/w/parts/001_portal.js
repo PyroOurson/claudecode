@@ -37,9 +37,53 @@ const PATH_MODE = /(^|\.)(web\.app|firebaseapp\.com)$/i.test(location.hostname) 
 const PAUSE = { on: false };
 (() => { try { if (localStorage.getItem('gameplay:reset') !== '4') { const keep = k => k === 'gameplay:consent' || k === 'gameplay:lang' || k.indexOf('gameplay:gate') === 0 || k.indexOf('sb-') === 0; let o = {}; try { o = JSON.parse(localStorage.getItem('gameplay:v1') || '{}') || {}; } catch (e) {} const prefs = o.prefs; Object.keys(localStorage).forEach(k => { if (!keep(k)) localStorage.removeItem(k); }); localStorage.setItem('gameplay:v1', JSON.stringify(prefs ? { prefs } : {})); localStorage.setItem('gameplay:reset', '4'); try { indexedDB.deleteDatabase('gameplay-minecraft'); } catch (e) {} } } catch (e) {} })();
 const SUPABASE_DIRECT = 'https://uafouyvtcijptspjbsqf.supabase.co';
-const SUPABASE_RELAY = 'https://gameplaygames.vitalang.net';
+const SUPABASE_RELAYS = ['https://gameplaygames.vitalang.net', 'https://gameplay-api.vitalang.net'];
 const SUPABASE_URL = (typeof window.__gpSbUrl === 'string' && /^https:\/\//.test(window.__gpSbUrl) && window.__gpSbUrl) || SUPABASE_DIRECT;
-const SB_VIA_RELAY = SUPABASE_URL !== SUPABASE_DIRECT;
+const SBN = (() => {
+  const K = 'gameplay:sb';
+  const all = (window.__gpSbOnly ? [SUPABASE_URL] : [SUPABASE_URL, SUPABASE_DIRECT].concat(SUPABASE_RELAYS)).filter((x, i, a) => x && a.indexOf(x) === i);
+  let best = SUPABASE_URL, wsB = null;
+  const bad = {}, wsBad = {}, fresh = (m, b, ms) => (m[b] || 0) > Date.now() - ms;
+  const strip = u => { u = String(u).replace(/^ws(s?):/, 'http$1:'); for (const b of all) if (u === b || u.indexOf(b + '/') === 0 || u.indexOf(b + '?') === 0) return u.slice(b.length); return null; };
+  const order = () => [best].concat(all.filter(b => b !== best).sort((a, c) => (bad[a] || 0) - (bad[c] || 0)));
+  const good = b => { delete bad[b]; if (best === b) return; best = b; try { sessionStorage.setItem(K, b); } catch (e) {} };
+  const page = r => /text\/html/i.test(r.headers.get('content-type') || '');
+  async function viaFetch(input, init) {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : null;
+    const path = url == null ? null : strip(url);
+    if (path == null) return fetch(input, init);
+    const o = Object.assign({}, init || {}), outer = o.signal;
+    let last = null;
+    for (const b of order()) {
+      if (outer && outer.aborted) throw outer.reason || new DOMException('Aborted', 'AbortError');
+      const ctl = new AbortController(), stop = () => ctl.abort(outer.reason);
+      if (outer) outer.addEventListener('abort', stop, { once: true });
+      const tm = setTimeout(() => ctl.abort(new DOMException('Timed out', 'TimeoutError')), b === best ? 15000 : 12000);
+      try {
+        const r = await fetch(b + path, Object.assign({}, o, { signal: ctl.signal }));
+        if (page(r)) { bad[b] = Date.now(); last = new TypeError('The network answered with a web page'); continue; }
+        good(b);
+        return r;
+      } catch (e) {
+        if (outer && outer.aborted) throw e;
+        bad[b] = Date.now(); last = e;
+      } finally { clearTimeout(tm); if (outer) outer.removeEventListener('abort', stop); }
+    }
+    throw last || new TypeError('Failed to fetch');
+  }
+  const wsPick = () => (wsB && !fresh(wsBad, wsB, 60000)) ? wsB : (order().find(b => !fresh(wsBad, b, 60000)) || order()[0]);
+  const WS = window.WebSocket ? class extends WebSocket {
+    constructor(url, protocols) {
+      const path = strip(url), b = path == null ? null : wsPick();
+      if (protocols === undefined) super(b ? b.replace(/^http/, 'ws') + path : url); else super(b ? b.replace(/^http/, 'ws') + path : url, protocols);
+      if (!b) return;
+      let open = false;
+      this.addEventListener('open', () => { open = true; wsB = b; delete wsBad[b]; });
+      this.addEventListener('close', () => { if (!open) { wsBad[b] = Date.now(); if (wsB === b) wsB = null; } });
+    }
+  } : undefined;
+  return { fetch: viaFetch, WS, best: () => best, ws: () => wsB, all: () => all.slice(), url: p => best + p };
+})();
 const GOOGLE_CLIENT_ID = '114405851703-b6u2jan6mapjucijipcecr6g8nbgf73s.apps.googleusercontent.com';
 const SUPABASE_ANON_KEY = 'sb_publishable_Lry5e9J350lXelAUPHU1rg_3YYvTuAf';
 const SUPABASE_JS_FILE = 'supabase-js-2.117.2.js';
@@ -3475,7 +3519,7 @@ function sbClient() {
   if (SB.p) return SB.p;
   const p = SB.p = sbLib().then(lib => {
     if (!SB.c) {
-      SB.c = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'pkce', detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storageKey: SB_STORE } });
+      SB.c = lib.createClient(SBN.best(), SUPABASE_ANON_KEY, { global: { fetch: SBN.fetch }, realtime: SBN.WS ? { transport: SBN.WS } : {}, auth: { flowType: 'pkce', detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storageKey: SB_STORE } });
       SB.c.auth.onAuthStateChange((ev, s) => setTimeout(() => auSession(ev, s), 0));
     }
     return SB.c;
@@ -3494,7 +3538,7 @@ async function sbRest(path, o = {}) {
   else if (/^eyJ/.test(SUPABASE_ANON_KEY)) h.Authorization = 'Bearer ' + SUPABASE_ANON_KEY;
   if (o.prefer) h.Prefer = o.prefer;
   const body = o.body === undefined ? undefined : JSON.stringify(o.body);
-  const r = await fetch(SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/' + path, { method: o.method || 'GET', headers: h, body, keepalive: !!o.keep && (!body || body.length < 60000), credentials: 'omit', cache: 'no-store' });
+  const r = await SBN.fetch(SBN.url('/rest/v1/' + path), { method: o.method || 'GET', headers: h, body, keepalive: !!o.keep && (!body || body.length < 60000), credentials: 'omit', cache: 'no-store' });
   if (!r.ok) {
     let j = null;
     try { j = await r.json(); } catch (e) {}
@@ -3738,7 +3782,7 @@ function auGoogleUi() {
 }
 function auSettings() {
   if (!SB.on || SB.set) return;
-  if (!SB.gs) SB.gs = fetch(SUPABASE_URL.replace(/\/+$/, '') + '/auth/v1/settings', { headers: { apikey: SUPABASE_ANON_KEY }, credentials: 'omit', cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null).then(j => { SB.gs = null; if (j && j.external) { SB.set = j; auGoogleUi(); } });
+  if (!SB.gs) SB.gs = SBN.fetch(SBN.url('/auth/v1/settings'), { headers: { apikey: SUPABASE_ANON_KEY }, credentials: 'omit', cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null).then(j => { SB.gs = null; if (j && j.external) { SB.set = j; auGoogleUi(); } });
 }
 const AU_ORD = ['in', 'up', 'reset', 'check', 'newpass', 'wait'], AU_E = 'cubic-bezier(.22,.8,.2,1)';
 const auKey = v => v === 'main' ? (SB.mode === 'up' ? 'up' : 'in') : v;
@@ -3866,7 +3910,7 @@ async function auGoogle(b) {
   }
 }
 const GIS = { p: null, n: '', on: false };
-const gisWanted = () => !!(SB.on && SB_VIA_RELAY && GOOGLE_CLIENT_ID && !(SB.set && SB.set.external && SB.set.external.google === false));
+const gisWanted = () => !!(SB.on && SBN.best() !== SUPABASE_DIRECT && GOOGLE_CLIENT_ID && !(SB.set && SB.set.external && SB.set.external.google === false));
 function gisLib() {
   if (window.google && google.accounts && google.accounts.id) return Promise.resolve(google.accounts.id);
   if (GIS.p) return GIS.p;
@@ -6936,7 +6980,7 @@ function siteBoot() {
   setInterval(() => { if (!SF.ch && !SF.shown && document.visibilityState !== 'hidden') sfLoad(true); }, 60000);
   if (SB.on && sbHasSession()) CL.t = setTimeout(() => clAuto(), 8000);
   else CL.t = setTimeout(() => clAuto(), 1200);
-  Ameplay.debug.site = { check: () => upCheck(true), load: () => sfLoad(true), flags: () => SF.d, favs: () => FV.ids.slice() };
+  Ameplay.debug.site = { check: () => upCheck(true), load: () => sfLoad(true), flags: () => SF.d, favs: () => FV.ids.slice(), route: () => ({ api: SB.on ? SBN.best() : 'none', live: SBN.ws(), routes: SBN.all(), accounts: SB.on }) };
 }
 async function siteSignedIn() {
   const uid = SB.user.id;

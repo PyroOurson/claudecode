@@ -76,7 +76,7 @@ function sbClient() {
   if (SB.p) return SB.p;
   const p = SB.p = sbLib().then(lib => {
     if (!SB.c) {
-      SB.c = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'pkce', detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storageKey: SB_STORE } });
+      SB.c = lib.createClient(SBN.best(), SUPABASE_ANON_KEY, { global: { fetch: SBN.fetch }, realtime: SBN.WS ? { transport: SBN.WS } : {}, auth: { flowType: 'pkce', detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storageKey: SB_STORE } });
       SB.c.auth.onAuthStateChange((ev, s) => setTimeout(() => auSession(ev, s), 0));
     }
     return SB.c;
@@ -95,7 +95,7 @@ async function sbRest(path, o = {}) {
   else if (/^eyJ/.test(SUPABASE_ANON_KEY)) h.Authorization = 'Bearer ' + SUPABASE_ANON_KEY;
   if (o.prefer) h.Prefer = o.prefer;
   const body = o.body === undefined ? undefined : JSON.stringify(o.body);
-  const r = await fetch(SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/' + path, { method: o.method || 'GET', headers: h, body, keepalive: !!o.keep && (!body || body.length < 60000), credentials: 'omit', cache: 'no-store' });
+  const r = await SBN.fetch(SBN.url('/rest/v1/' + path), { method: o.method || 'GET', headers: h, body, keepalive: !!o.keep && (!body || body.length < 60000), credentials: 'omit', cache: 'no-store' });
   if (!r.ok) {
     let j = null;
     try { j = await r.json(); } catch (e) {}
@@ -339,7 +339,7 @@ function auGoogleUi() {
 }
 function auSettings() {
   if (!SB.on || SB.set) return;
-  if (!SB.gs) SB.gs = fetch(SUPABASE_URL.replace(/\/+$/, '') + '/auth/v1/settings', { headers: { apikey: SUPABASE_ANON_KEY }, credentials: 'omit', cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null).then(j => { SB.gs = null; if (j && j.external) { SB.set = j; auGoogleUi(); } });
+  if (!SB.gs) SB.gs = SBN.fetch(SBN.url('/auth/v1/settings'), { headers: { apikey: SUPABASE_ANON_KEY }, credentials: 'omit', cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null).then(j => { SB.gs = null; if (j && j.external) { SB.set = j; auGoogleUi(); } });
 }
 const AU_ORD = ['in', 'up', 'reset', 'check', 'newpass', 'wait'], AU_E = 'cubic-bezier(.22,.8,.2,1)';
 const auKey = v => v === 'main' ? (SB.mode === 'up' ? 'up' : 'in') : v;
@@ -467,7 +467,7 @@ async function auGoogle(b) {
   }
 }
 const GIS = { p: null, n: '', on: false };
-const gisWanted = () => !!(SB.on && SB_VIA_RELAY && GOOGLE_CLIENT_ID && !(SB.set && SB.set.external && SB.set.external.google === false));
+const gisWanted = () => !!(SB.on && SBN.best() !== SUPABASE_DIRECT && GOOGLE_CLIENT_ID && !(SB.set && SB.set.external && SB.set.external.google === false));
 function gisLib() {
   if (window.google && google.accounts && google.accounts.id) return Promise.resolve(google.accounts.id);
   if (GIS.p) return GIS.p;

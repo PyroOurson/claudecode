@@ -34,12 +34,12 @@ textarea{width:100%;min-height:160px;margin-top:12px;border-radius:12px;border:1
 <h1>Connection check</h1>
 <p>This page tests each service the site uses, from this computer and this network. It does not need the site password and sends nothing anywhere. When it finishes, press Copy report and send the text to the site owner.</p>
 <div class="card"><h2>Summary</h2><div class="sum" id="sum"><div><span class="chip">Running</span><span>Testing…</span></div></div>
-<div class="bar"><button id="cp" disabled>Copy report</button><button id="rr" class="s" disabled>Run again</button></div><textarea id="rep" readonly hidden></textarea></div>
+<div class="bar"><button id="cp" disabled>Copy report</button><button id="rr" class="s" disabled>Run again</button></div><p style="margin:14px 0 0;font-size:13.5px">Open the site through one route only, to test it: <span id="routes"></span></p><textarea id="rep" readonly hidden></textarea></div>
 <div id="groups"></div>
 </main>
 <script>
 (() => {
-  const C = { direct: '%%SB_DIRECT%%', relay: '%%SB_RELAY%%', key: '%%SB_KEY%%', google: '%%GOOGLE_ID%%' };
+  const C = { direct: '%%SB_DIRECT%%', relays: "%%SB_RELAYS%%", key: '%%SB_KEY%%', google: '%%GOOGLE_ID%%' };
   const $ = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const now = () => performance.now();
@@ -131,8 +131,8 @@ textarea{width:100%;min-height:160px;margin-top:12px;border-radius:12px;border:1
       { id: 'site', name: 'Site files', url: HERE + 'manifest.txt', check: (r, b) => r.ok && /\.bin /.test(b), html: false },
       { id: 'lib', name: 'Libraries served by the site', url: HERE + 'supabase-js-2.117.2.js', check: (r, b) => r.ok && b.length > 50000 }
     ] },
-    { title: 'Accounts server, direct (supabase.co)', tests: sbTests(C.direct, 'sb') },
-    { title: 'Accounts server, through the relay (' + (C.relay || 'not set') + ')', tests: sbTests(C.relay, 'relay') },
+    { title: 'Accounts server, direct (supabase.co)', tests: sbTests(C.direct, 'sb') }
+  ].concat(C.relays.map((r, i) => ({ title: 'Accounts server, relay ' + (i + 1) + ' (' + r.replace(/^https:\/\//, '') + ')', tests: sbTests(r, 'relay' + i) }))).concat([
     { title: 'Google sign-in', tests: [
       { id: 'g-net', name: 'accounts.google.com', url: 'https://accounts.google.com/generate_204', mode: 'no-cors' },
       { id: 'g-gis', name: 'Google sign-in button script', kind: 'script', url: 'https://accounts.google.com/gsi/client', ready: () => !!(window.google && google.accounts && google.accounts.id) }
@@ -150,7 +150,7 @@ textarea{width:100%;min-height:160px;margin-top:12px;border-radius:12px;border:1
       { id: 'stun', name: 'Direct connections (STUN)', kind: 'ice', url: 'stun:stun.l.google.com:19302', servers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }], want: 'srflx' },
       { id: 'turn', name: 'Relayed connections (TURN)', kind: 'ice', url: 'turn:staticauth.openrelay.metered.ca', turn: ['turn:staticauth.openrelay.metered.ca:80', 'turn:staticauth.openrelay.metered.ca:80?transport=tcp', 'turn:staticauth.openrelay.metered.ca:443', 'turns:staticauth.openrelay.metered.ca:443?transport=tcp'], want: 'relay' }
     ] }
-  ];
+  ]);
   const R = {};
   function paintRow(t) {
     const tr = $('row-' + t.id), r = R[t.id];
@@ -166,10 +166,10 @@ textarea{width:100%;min-height:160px;margin-top:12px;border-radius:12px;border:1
   const any = (...ids) => ids.some(i => R[i] && R[i].ok);
   function verdict() {
     const v = [];
-    const direct = okAll('sb-pass', 'sb-auth', 'sb-login'), relay = C.relay && okAll('relay-pass', 'relay-auth', 'relay-login');
-    v.push([direct ? 'ok' : relay ? 'warn' : 'bad', direct ? 'Accounts work directly on this network.' : relay ? 'supabase.co is blocked here, but the relay works: the site uses it automatically.' : 'The accounts server cannot be reached here' + (C.relay ? ', directly or through the relay.' : '.') + ' The site still opens with the password, without accounts.']);
+    const direct = okAll('sb-pass', 'sb-auth', 'sb-login'), relays = C.relays.map((r, i) => okAll('relay' + i + '-pass', 'relay' + i + '-auth', 'relay' + i + '-login')), relay = relays.some(Boolean);
+    v.push([direct ? 'ok' : relay ? 'warn' : 'bad', direct ? 'Accounts work directly on this network.' : relay ? 'supabase.co is blocked here, but ' + relays.filter(Boolean).length + ' of ' + relays.length + ' relays work: the site uses them automatically.' : 'The accounts server cannot be reached here, directly or through a relay.' + ' The site still opens with the password, without accounts.']);
     if (!direct && R['sb-net']) v.push(['', R['sb-net'].ok ? 'supabase.co answers at network level but its data is refused: a filter replaces or strips the answers.' : 'supabase.co is blocked at network level (name lookup or connection refused).']);
-    const live = direct ? okAll('sb-rt') : relay ? okAll('relay-rt') : false;
+    const live = okAll('sb-rt') || C.relays.some((r, i) => okAll('relay' + i + '-rt'));
     v.push([live ? 'ok' : 'bad', live ? 'Live updates (friends, chat, instant site switches) work.' : 'Live updates do not work here: friends and chat refresh slower and site switches apply within a minute.']);
     const gOk = okAll('g-net', 'g-gis');
     if (direct) v.push([gOk || any('sb-oauth') ? 'ok' : 'bad', gOk ? 'Google sign-in should work.' : 'Google sign-in is blocked here; use email or username sign-in.']);
@@ -208,6 +208,8 @@ textarea{width:100%;min-height:160px;margin-top:12px;border-radius:12px;border:1
     setTimeout(() => { $('cp').textContent = 'Copy report'; }, 2500);
   });
   $('rr').addEventListener('click', run);
+  const home = /check\.html$/.test(location.pathname) ? new URL('..', location.href).href : location.origin + '/';
+  $('routes').innerHTML = [['Automatic', 'auto'], ['Direct', '0']].concat(C.relays.map((r, i) => ['Relay ' + (i + 1), String(i + 1)])).concat([['No accounts', 'none']]).map(x => '<a href="' + esc(home + '?sb=' + x[1]) + '" style="color:var(--accent);font-weight:700">' + esc(x[0]) + '</a>').join(' · ');
   run();
 })();
 </script></body></html>

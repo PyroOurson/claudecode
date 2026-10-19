@@ -31,8 +31,17 @@ Run it again at any time; it changes nothing that is already right.
 ## Check it
 
 - From a phone on mobile data: https://gameplaygames.vitalang.net/health shows `ok`.
-- On the restricted network: open https://gameplaygames.web.app/check. Under "Accounts server, through the relay", every line should say Works.
+- On the restricted network: open https://gameplaygames.web.app/check. Under "relay 1 (gameplaygames.vitalang.net)", every line should say Works.
 - Logs: `journalctl -u caddy -f` and `/var/log/caddy/gameplay.log`.
+
+## Second relay: Cloudflare Worker (gameplay-api.vitalang.net)
+
+This one runs on Cloudflare's network, so it keeps working when the home connection or the Debian machine is off. It also uses Cloudflare addresses, which school filters almost never block. It is free (100,000 requests a day), and the site only uses it when the other routes fail.
+
+1. In the Cloudflare dashboard: **Workers & Pages** → **Create** → **Create Worker**, name it `gameplay-api`, press **Deploy**.
+2. **Edit code**: replace everything with the content of `cloudflare-worker.js` (in this folder), then press **Deploy**.
+3. **Settings** → **Domains & Routes** → **Add** → **Custom domain** → `gameplay-api.vitalang.net` → **Add domain**. Cloudflare creates the DNS record itself.
+4. Check: https://gameplay-api.vitalang.net/health shows `ok`, and on https://gameplaygames.web.app/check the "relay 2" lines say Works.
 
 ## What it relays
 
