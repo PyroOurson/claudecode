@@ -774,19 +774,23 @@ function makeNet(g, add) {
   const keep = p => {
     let n = 0, next = 0;
     p.on('open', () => { n = 0; next = 0; });
+    const wake = () => { if (p.destroyed) { document.removeEventListener('visibilitychange', wake); removeEventListener('online', wake); return; } if (p.disconnected) { n = 0; next = 0; try { p.reconnect(); } catch (e) {} } };
+    document.addEventListener('visibilitychange', wake);
+    addEventListener('online', wake);
     const t = setInterval(() => {
       if (p.destroyed) return clearInterval(t);
       if (!p.disconnected) { n = 0; return; }
       const tm = now();
       if (tm < next) return;
-      next = tm + Math.min(30000, 1500 * Math.pow(2, n++));
+      next = tm + Math.min(8000, 1000 * Math.pow(2, n++));
       try { p.reconnect(); } catch (e) {}
     }, 1000);
   };
-  const newPeer = async (id, my) => {
+  const newPeer = async (id, my, relay) => {
     let Peer;
     try { Peer = await loadPeer(); } catch (e) { try { Peer = await loadPeer(); } catch (x) { throw { type: 'load' }; } }
-    const config = { iceServers: await netIce(), sdpSemantics: 'unified-plan' };
+    const config = { iceServers: await netIce(), sdpSemantics: 'unified-plan', iceCandidatePoolSize: 4 };
+    if (relay) config.iceTransportPolicy = 'relay';
     let last = null;
     for (let i = 0; i < 3; i++) {
       if (i) {
@@ -1157,12 +1161,32 @@ function makeNet(g, add) {
     shut(true);
     const my = gen;
     code = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-    const p = await newPeer(undefined, my);
-    if (my !== gen) { p.destroy(); return false; }
-    peer = p;
-    rm.me = netUid(); rm.key = netUid() + netUid(); rm.state = 'lobby'; rm.inGame = false; rm.list = []; rm.leader = null; rm.chat = []; net.closeReason = null;
-    let r;
-    try { r = await guestConnect(code, my); } catch (e) { if (my === gen) shut(false); throw e; }
+    const TRIES = 4;
+    let r = null;
+    rm.me = netUid(); rm.key = netUid() + netUid();
+    for (let a = 0; a < TRIES && !r; a++) {
+      if (a) {
+        if (note) note(netT('Connecting again ({n}/{m})…').replace('{n}', a + 1).replace('{m}', TRIES));
+        await sleepMs(800 + 700 * a);
+        if (my !== gen) return false;
+      }
+      let p;
+      try { p = await newPeer(undefined, my, a === TRIES - 1); }
+      catch (e) { if (my !== gen || (e && e.type === 'cancel')) return false; if (a === TRIES - 1) { shut(false); throw e; } continue; }
+      if (my !== gen) { p.destroy(); return false; }
+      peer = p;
+      rm.state = 'lobby'; rm.inGame = false; rm.list = []; rm.leader = null; rm.chat = []; net.closeReason = null;
+      try { r = await guestConnect(code, my); }
+      catch (e) {
+        if (my !== gen) return false;
+        const t = e && e.type;
+        try { p.destroy(); } catch (x) {}
+        if (peer === p) peer = null;
+        if (t === 'room-full' || t === 'cancel' || a === TRIES - 1) { shut(false); throw e; }
+        netTrack('party_retry', { game: g.id, why: String(t || 'unknown').slice(0, 24), n: a + 1 });
+      }
+    }
+    if (!r) { shut(false); throw { type: 'network' }; }
     if (my !== gen) { try { r.c.close(); } catch (e) {} return false; }
     if (invite && invite.id === g.id) invite = null;
     net.code = code; net.role = 'guest'; mode = 'room';
@@ -1932,6 +1956,8 @@ const LEGAL = {
 <li><b>Device and software characteristics:</b> device type, operating system and version, browser and version, device model where reported by the browser, processor architecture and number of cores, approximate device memory, graphics processor model, support for graphics technologies, screen size, viewport, pixel density, refresh rate, keyboard layout, controller model, preferred languages, whether the Service runs as an installed application, and whether an advertising blocker is active;</li>
 <li><b>Network and approximate location:</b> time zone and local time, connection type, estimated bandwidth and latency, data-saver preference, country, region and city, internet service provider and autonomous system number, and an indicator of whether your network appears to belong to a data centre or virtual private network. Approximate location and provider are derived from your IP address by the GeoJS service at the request of your browser; your IP address is not stored by us in connection with analytics. A country code may additionally be derived by our hosting infrastructure from request headers;</li>
 <li><b>Performance and reliability:</b> page speed metrics known as Core Web Vitals (largest contentful paint, interaction to next paint, cumulative layout shift, first contentful paint and time to first byte), error messages and their location in our code, and the time at which updates were installed;</li>
+<li><b>Display, hardware and browser capabilities:</b> screen and window resolution, colour depth and range, HDR support, zoom level, orientation, pointer and touch capabilities, display preferences (dark mode, reduced motion, contrast, transparency), whether several screens are used, the number (not the names) of microphones, cameras and speakers, audio sample rate, number of speech voices, supported video formats, graphics limits and WebGPU vendor, browser storage quota and usage, JavaScript memory limit, battery level and charging state where the browser reports them, the result of a short speed test, regional formats (locale, calendar, clock and first day of the week), notification permission state, support for browser features (such as WebAssembly, Bluetooth, USB, virtual reality and sharing), privacy signals (Do Not Track, Global Privacy Control), whether the browser is automated, the browser user agent and platform, the referring website, the first page opened and how the page was opened;</li>
+<li><b>Session activity:</b> session length and time the page was actually visible, the longest idle period, the number of games opened and which ones, counts (never the content) of key presses, clicks, screen taps, scroll and mouse wheel use, the distance the mouse travelled, focus changes, full-screen use, window resizes, copy actions, connection losses and errors, the route used to reach our accounts server, whether you were signed in, the language and theme, and retries needed to join an online party;</li>
 <li><b>Advertising measurement:</b> should advertising be introduced in the future, impressions, clicks and revenue attributable to advertising placements, which will be collected only on a lawful basis.</li>
 </ul>
 <p><b>5.9 Technical and security data.</b> Our hosting, database and content delivery providers necessarily process your IP address, browser user agent, request timestamps and similar technical information in order to deliver the Service, protect it against abuse and maintain server logs. Rate-limiting mechanisms process a one-way hash of your IP address for a short period to prevent abuse. Administrators may record periodic counts of the number of users online.</p>
@@ -2113,7 +2139,7 @@ const LEGAL = {
 <tr><td><code>sb-gameplay-auth</code></td><td>Holds your sign-in session and refresh token so that you remain signed in to your Account</td><td>Strictly necessary</td><td>Local storage; persistent until you sign out or the session expires</td></tr>
 <tr><td><code>gameplay:sync</code></td><td>Records which records and saved progress have already been synchronised with your Account, to avoid duplication</td><td>Strictly necessary</td><td>Local storage; persistent until you sign out or delete it</td></tr>
 <tr><td><code>gameplay:authback</code></td><td>Remembers the page you were on when you started signing in with Google so that you can be returned to it</td><td>Strictly necessary</td><td>Session storage; erased after sign-in or when the tab is closed</td></tr>
-<tr><td><code>gameplay:gate</code>, <code>gpgate</code></td><td>On access-controlled versions only, stores the decryption key obtained after you enter the correct access password and the number of failed attempts, to prevent brute-force attacks</td><td>Strictly necessary</td><td>Local storage; persistent until deleted</td></tr>
+<tr><td><code>gameplay:gate</code>, <code>gpgate</code>, <code>gpk</code></td><td>On access-controlled versions only, stores the decryption key obtained after you enter the correct access password, so you only enter it once, and the number of failed attempts, to prevent brute-force attacks</td><td>Strictly necessary</td><td>Local storage and first-party cookies; up to 400 days, renewed at each visit</td></tr>
 <tr><td><code>gameplay:reset</code></td><td>Marks that a one-time storage migration has been completed after an update of the Service</td><td>Strictly necessary</td><td>Local storage; persistent</td></tr>
 <tr><td><code>gameplay:paths</code></td><td>Remembers the technical address format used by the current deployment</td><td>Strictly necessary</td><td>Session storage; erased when the tab is closed</td></tr>
 <tr><td><code>gameplay:site</code>, <code>gameplay:sitehide</code></td><td>Cache site-wide notices and status flags, such as maintenance information, and remember notices you have dismissed</td><td>Functional</td><td>Local storage; persistent until deleted</td></tr>
@@ -2651,7 +2677,7 @@ const T0 = Date.now();
 function anSave() { try { if (anOk()) ckStore().setItem(AN_KEY, JSON.stringify(anQ)); } catch (e) { anQ.splice(0, Math.ceil(anQ.length / 4)); } }
 function anClean(p) {
   const o = {};
-  Object.keys(p).slice(0, 24).forEach(k => {
+  Object.keys(p).slice(0, 64).forEach(k => {
     const v = p[k];
     if (v == null) return;
     if (typeof v === 'number') o[k] = isFinite(v) ? Math.round(v * 100) / 100 : null;
@@ -4865,6 +4891,7 @@ function adPanel(u, keep) {
     $('#adpw').type = 'password';
     const eye = p.querySelector('.au-eye'); if (eye) auEye(eye, true);
     adGames(u);
+    adDevices(u);
     alHist(u);
     const was = p.hidden;
     vis(p, true);
@@ -4882,6 +4909,31 @@ async function adGames(u) {
     const L = Array.isArray(r) ? r : [], max = Math.max(1, ...L.map(g => +g.seconds_played || 0));
     box.innerHTML = L.length ? L.map((g, i) => `<div class="apc-g" style="--i:${Math.min(i, 12)};--c:${esc(TINT[g.game_id] || 'var(--accent)')}">${adCv(g.game_id, 'apc-gi')}<span class="apc-gn">${esc(adGame(g.game_id))}</span><b>${esc(adHrs(g.seconds_played))}</b><i><s style="width:${Math.max(2, Math.round(100 * (+g.seconds_played || 0) / max))}%"></s></i><small>${esc(auT('{n} plays').replace('{n}', +g.plays || 0))}${g.best_score != null ? ' · ' + esc(auT('best {s}').replace('{s}', g.best_score)) : ''}${g.last_played ? ' · ' + esc(adAgo(g.last_played)) : ''}</small></div>`).join('') : `<div class="adm-mut apc-none">${esc(auT('No games played yet.'))}</div>`;
   } catch (e) { box.innerHTML = `<div class="adm-mut">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; }
+}
+async function adDevices(u) {
+  const box = $('#adpd');
+  if (!box) return;
+  box.innerHTML = '<i class="sk sk-td"></i><i class="sk sk-td"></i>';
+  let L;
+  try { L = await adRpc('admin_user_devices', { p_uid: u.id }); }
+  catch (e) { if (AD.sel === u.id) box.innerHTML = `<div class="adm-mut">${esc(/admin_user_devices|function|404|PGRST/i.test(e.message || '') ? auT('Run round9_more.sql in the Supabase SQL editor to see this part.') : auT('Could not load. Check your connection and try again.'))}</div>`; return; }
+  if (AD.sel !== u.id) return;
+  L = Array.isArray(L) ? L : [];
+  if (!L.length) { box.innerHTML = `<div class="adm-mut">${esc(auT('No device data yet. It appears once this player accepts cookies.'))}</div>`; return; }
+  const kv = (k, v) => v == null || v === '' ? '' : `<span>${esc(auT(k))}</span><b translate="no">${esc(String(v))}</b>`;
+  const yn = v => v == null ? null : v ? auT('Yes') : auT('No');
+  box.innerHTML = L.map((x, i) => {
+    const d = x.dev || {}, g = x.geo || {}, sc = x.scr || {}, c = x.caps || {}, sm = x.sum || {};
+    const when = new Date(x.last).toLocaleString(adLang()), dur = sm.dur != null ? (sm.dur >= 60 ? Math.round(sm.dur / 60) + ' min' : sm.dur + ' s') : null;
+    const head = [d.osv, d.brv, d.model].filter(Boolean).join(' · ') || x.device || '—', where = [g.city, g.region, g.country].filter(Boolean).join(', ');
+    return `<details class="apc-dv" style="--i:${Math.min(i, 12)}"${i ? '' : ' open'}><summary><b translate="no">${esc(head)}</b><small>${esc(when)}${where ? ' · ' + esc(where) : ''}${dur ? ' · ' + esc(dur) : ''}</small></summary><div class="ins-kv apc-kv">${[
+      kv('Internet provider', g.isp), kv('VPN or datacenter', yn(g.vpn)), kv('Time zone', g.tz), kv('Connection', [g.net, g.ctype, g.dl != null ? g.dl + ' Mb/s' : '', g.rtt != null ? g.rtt + ' ms' : ''].filter(Boolean).join(' · ')),
+      kv('Screen', sc.res), kv('Window', sc.vw ? sc.vw + '×' + sc.vh : null), kv('Pixel density', sc.dpr), kv('Pointer', sc.ptr), kv('Touch points', sc.tp), kv('Dark mode', yn(sc.dark)),
+      kv('Graphics card', d.gpu), kv('CPU cores', d.cores), kv('Memory (GB)', d.mem), kv('Refresh rate (Hz)', d.hz), kv('Keyboard layout', d.kb), kv('Controllers', (d.pads || []).join(', ')), kv('Ad blocker', yn(d.adb)), kv('Languages', (d.langs || []).join(', ')),
+      kv('Speed test', c.bench != null ? c.bench + ' ms' : null), kv('Battery', c.bat != null ? c.bat + '%' + (c.chg ? ' ⚡' : '') : null), kv('Storage', c.quota != null ? c.used + ' / ' + c.quota + ' MB' : null), kv('Microphones / cameras', c.mic != null ? c.mic + ' / ' + c.cam : null), kv('Region settings', c.loc), kv('Arrived from', c.ref), kv('Bot', yn(c.bot)),
+      kv('Session', dur), kv('Time looking', sm.vis != null ? Math.round(sm.vis / 60) + ' min' : null), kv('Games opened', sm.games), kv('Games', (sm.gl || []).map(adGame).join(', ')), kv('Keys / clicks / taps', sm.keys != null ? [sm.keys, sm.clicks, sm.taps].join(' / ') : null), kv('Connection used', sm.route), kv('Events', x.events)
+    ].join('')}</div>${x.ua ? `<p class="adm-mut apc-ua" translate="no">${esc(x.ua)}</p>` : ''}</details>`;
+  }).join('');
 }
 function adPanelClose() {
   const p = $('#adpanel');
@@ -5023,13 +5075,13 @@ function sfaDraw() {
    <label class="apc-l" for="sfamm">${esc(auT('Message on the maintenance page (optional)'))}</label><textarea id="sfamm" maxlength="500" rows="2" placeholder="${esc(auT('We are making the site better. Please come back in a little while.'))}">${esc(d.maintenance_msg || '')}</textarea></div>
   <div class="st-card sfa-c"><h3>${esc(auT('Announcement banner'))}</h3><p class="sx-note">${esc(auT('Shown at the top of the site for everyone. Leave it empty to hide it.'))}</p>
    <textarea id="sfab" maxlength="300" rows="2">${esc(d.banner || '')}</textarea>
-   <div class="sfa-2"><label class="apc-l">${esc(auT('Style'))}<select id="sfal"><option value="info"${d.banner_level !== 'warning' ? ' selected' : ''}>${esc(auT('Info'))}</option><option value="warning"${d.banner_level === 'warning' ? ' selected' : ''}>${esc(auT('Warning'))}</option></select></label><label class="apc-l">${esc(auT('Ends (optional)'))}<input type="datetime-local" id="sfau" value="${esc(sfaLocal(d.banner_until))}"></label></div></div>
+   <div class="sfa-2"><label class="apc-l">${esc(auT('Style'))}<select id="sfal"><option value="info"${d.banner_level !== 'warning' ? ' selected' : ''}>${esc(auT('Info'))}</option><option value="warning"${d.banner_level === 'warning' ? ' selected' : ''}>${esc(auT('Alert (middle of the screen)'))}</option></select></label><label class="apc-l">${esc(auT('Ends (optional)'))}<input type="datetime-local" id="sfau" value="${esc(sfaLocal(d.banner_until))}"></label></div></div>
   <div class="st-card sfa-c"><h3>${esc(auT('Turned off games'))}</h3><p class="sx-note">${esc(auT('These games show as temporarily unavailable and cannot be started.'))}</p>
    <label class="search sfa-q"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="sfaq" type="search" placeholder="${esc(auT('Search games'))}" autocomplete="off" spellcheck="false" aria-label="${esc(auT('Search games'))}"></label>
    <div class="sfa-g" id="sfag" translate="no">${games.slice().sort((a, b) => (off.has(b.id) - off.has(a.id)) || a.title.localeCompare(b.title)).map(g => `<button type="button" class="chip" data-sfg="${esc(g.id)}" aria-pressed="${off.has(g.id)}">${esc(g.title)}</button>`).join('')}</div>
    <label class="apc-l" for="sfadm">${esc(auT('Message for turned off games (optional)'))}</label><textarea id="sfadm" maxlength="300" rows="2" placeholder="${esc(auT('This game is being fixed. Try again a bit later.'))}">${esc(d.disabled_msg || '')}</textarea></div>
   <div class="sfa-f"><div class="note" id="sfan" role="status"></div><button class="btn2 pri" type="button" id="sfas">${esc(auT('Save and publish'))}</button></div>${adIsOwner() ? `
-  <div class="st-card sfa-c" id="sfpw"><h3>${esc(auT('Site password'))}</h3><p class="sx-note">${esc(auT('The password everyone types to open the site. Only owners can see and change this.'))}</p>
+  <div class="st-card sfa-c" id="sfpw"><h3>${esc(auT('Site password'))}</h3><p class="sx-note">${esc(auT('The password everyone types to open the site. Only owners can see and change this.'))}</p><p class="sx-note">${esc(auT('A change works at once for everyone whose network reaches the accounts server. Networks that block it keep accepting the previous password until the next deploy. Browsers that already unlocked the site stay unlocked.'))}</p>
    <div class="sfa-2"><div><label class="apc-l" for="sfp1">${esc(auT('New password'))}</label><div class="au-pw"><input id="sfp1" type="password" autocomplete="new-password" maxlength="200" spellcheck="false">${EYE}</div></div><div><label class="apc-l" for="sfp2">${esc(auT('Confirm password'))}</label><div class="au-pw"><input id="sfp2" type="password" autocomplete="new-password" maxlength="200" spellcheck="false">${EYE}</div></div></div>
    <div class="sfa-f"><div class="note" id="sfpn" role="status"></div><button class="btn2 pri" type="button" id="sfps">${esc(auT('Save password'))}</button></div></div>` : ''}</div>`;
 }
@@ -5402,6 +5454,55 @@ function insHeat(H) {
   for (let d = 0; d < 7; d++) { h += `<span class="ins-hd">${esc(day(d))}</span>`; for (let c = 0; c < 24; c++) { const v = M[d + '-' + c] || 0; h += `<i style="--a:${(v / max).toFixed(3)};--i:${d * 24 + c}" title="${esc(day(d) + ' ' + c + ':00 · ' + stH(v))}"></i>`; } }
   return h + '</div>';
 }
+function insMore() {
+  const M = INS.m || {};
+  if (M.__err) return `<h2 class="ins-h">${esc(auT('More player data'))}</h2><div class="st-card adm-mut">${esc(auT('Run round9_more.sql in the Supabase SQL editor to see this part.'))}</div>`;
+  const S = M.sessions || {}, mins = v => v == null ? '—' : v >= 60 ? Math.round(v / 60) + ' min' : Math.round(v) + ' s', num = v => v == null ? '—' : stN(+v);
+  return `<h2 class="ins-h">${esc(auT('Sessions'))}</h2>
+  ${insTiles([['Sessions measured', num(S.n)], ['Median session', mins(S.dur)], ['Longest 10% of sessions', mins(S.dur90)], ['Median time actually looking', mins(S.vis)], ['Longest idle moment (median)', mins(S.idle)], ['Games per session', num(S.games)], ['Different games per session', num(S.gset)], ['Keys pressed per session', num(S.keys)], ['Mouse clicks per session', num(S.clicks)], ['Screen taps per session', num(S.taps)], ['Mouse travel per session (px)', num(S.mdist)], ['JavaScript errors per session', S.errs == null ? '—' : S.errs], ['Sessions using full screen', S.fs == null ? '—' : S.fs + '%']])}
+  <div class="ins-grid">
+   ${insBars('Session length', S.b)}
+   ${insBars('Connection to the accounts server', M.route)}
+   ${insBars('Account state', M.acct)}
+   ${insBars('Theme', M.theme)}
+   ${insBars('Why joining a party needed a retry', M.retries)}
+   ${insBars('Arrived from', M.refs)}
+   ${insBars('First page opened', M.land)}
+   ${insBars('Page opened by', M.navt)}
+  </div>
+  <h2 class="ins-h">${esc(auT('Screens and display'))}</h2>
+  ${insTiles([['Dark mode preferred', insShare(M.dark)], ['Reduced motion', insShare(M.rmo)], ['HDR screen', insShare(M.hdr)], ['Mouse or trackpad (hover)', insShare(M.hov)], ['Several screens', insShare(M.ext)]])}
+  <div class="ins-grid">
+   ${insBars('Screen resolutions', M.screens)}
+   ${insBars('Browser window sizes', M.viewports)}
+   ${insBars('Pixel density', M.dpr)}
+   ${insBars('Browser zoom', M.zoom)}
+   ${insBars('Main pointer', M.pointer)}
+   ${insBars('Touch points', M.touch)}
+   ${insBars('Orientation', M.orient)}
+   ${insBars('Colour range', M.gamut)}
+   ${insBars('Colour depth (bits)', M.depth)}
+   ${insBars('Opened as', M.mode)}
+  </div>
+  <h2 class="ins-h">${esc(auT('Hardware and browser features'))}</h2>
+  ${insTiles([['Charging now', insShare(M.charging)], ['Automated browsers (bots)', insShare(M.bot)], ['Do Not Track on', insShare(M.dnt)], ['Global Privacy Control on', insShare(M.gpc)], ['AV1 video', insShare(M.av1)], ['HEVC video', insShare(M.hevc)], ['Virtual reality support', insShare(M.xr)]])}
+  <div class="ins-grid">
+   ${insBars('Speed test (lower is faster)', M.bench)}
+   ${insBars('Battery level', M.battery)}
+   ${insBars('Browser storage available', M.quota)}
+   ${insBars('JavaScript memory limit (MB)', M.heap)}
+   ${insBars('WebGPU graphics', M.gpuv)}
+   ${insBars('Largest texture size', M.mtex)}
+   ${insBars('Platforms', M.plat)}
+   ${insBars('Region settings', M.locale)}
+   ${insBars('Clock (h12 or h23)', M.hour)}
+   ${insBars('Notification permission', M.notif)}
+   ${insBars('Microphones', M.mic)}
+   ${insBars('Cameras', M.cam)}
+   ${insBars('Speech voices', M.voices)}
+   ${insBars('Audio sample rate', M.srate)}
+  </div>`;
+}
 function insDraw(an) {
   const box = $('#insv');
   if (!box) return;
@@ -5473,6 +5574,7 @@ function insDraw(an) {
    ${insBars('CPU architecture', V.arch)}
    ${insBars('Main browser language', V.langs)}
   </div>
+  ${insMore()}
   <h2 class="ins-h">${esc(auT('Ads'))}</h2>
   <div class="st-card">${(A.slots || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Slot', 'Impressions', 'Clicks', 'Click rate', 'Revenue (USD)', 'Per 1,000 views'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${A.slots.map(s => `<tr><td>${esc(s.slot)}</td><td>${stN(s.imp)}</td><td>${stN(s.clk)}</td><td>${s.imp ? (100 * s.clk / s.imp).toFixed(2) : 0}%</td><td>${(+s.usd || 0).toFixed(2)}</td><td>${s.imp ? (1000 * s.usd / s.imp).toFixed(2) : '—'}</td></tr>`).join('')}</tbody></table></div>` : `<p class="adm-mut">${esc(auT('No ads on the site yet. Ad blocker use is measured already; impressions, clicks and revenue start counting as soon as an ad slot calls Ameplay.ads.watch(element, slot).'))}</p>`}</div>
   <p class="adm-mut st-at">${esc(auT('Updated {t}.').replace('{t}', new Date(D.at || Date.now()).toLocaleTimeString()))}</p>`;
@@ -5485,7 +5587,7 @@ async function insLoad(force) {
   INS.busy = true;
   if (!INS.d) box.innerHTML = '<div class="tiles adm-tiles">' + '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(4) + '</div><i class="sk sk-chart"></i><i class="sk sk-chart"></i>';
   box.classList.add('sx-busy');
-  try { INS.d = await adRpc('admin_insights', { p_days: INS.days }); INS.at = Date.now(); insDraw(!INS.drawn || !!ST.anim); INS.drawn = true; ST.anim = 0; }
+  try { const [d, m] = await Promise.all([adRpc('admin_insights', { p_days: INS.days }), adRpc('admin_insights_more', { p_days: INS.days }).catch(e => ({ __err: String(e && e.message || e) }))]); INS.d = d; INS.m = m; INS.at = Date.now(); insDraw(!INS.drawn || !!ST.anim); INS.drawn = true; ST.anim = 0; }
   catch (e) { box.innerHTML = `<div class="adm-empty">${esc(/admin_insights|function|404|PGRST/i.test(e.message || '') ? auT('The insights database update is not installed yet. Run round8_insights.sql in the Supabase SQL editor.') : auT('Could not load the stats. Check your connection and try again.'))}</div>`; }
   finally { INS.busy = false; box.classList.remove('sx-busy'); }
 }
@@ -6540,6 +6642,7 @@ function inBoot() {
   if (navigator.getGamepads && [...navigator.getGamepads()].some(Boolean)) inPadStart();
 }
 
+const TRS = { t0: Date.now(), vis: 0, vt: performance.now(), foc: 0, blur: 0, keys: 0, clicks: 0, taps: 0, md: 0, mx: null, my: null, wheel: 0, scr: 0, sy: 0, games: 0, gset: new Set(), fs: 0, off: 0, errs: 0, idle: 0, la: performance.now(), copy: 0, rsz: 0, seq: 0 };
 const TR = { g: null, v0: 0, sy: 0, impQ: [], io: null, clicks: [], dw: 0, vit: { cls: 0, inp: 0, lcp: null }, vsent: false, pads: new Set(), kb: '', env: 0, asked: new Set() };
 const TR_DC = /amazon|aws|google cloud|google llc|microsoft|azure|digitalocean|ovh|hetzner|linode|akamai|vultr|choopa|oracle|contabo|leaseweb|m247|datacamp|cdn77|scaleway|alibaba|tencent|hostinger|ionos|psychz|zenlayer|packethub|tzulo|quadranet|nordvpn|expressvpn|proton|mullvad|surfshark|private internet|cyberghost|ipvanish|hide\.me|windscribe|cloudflare|fastly|gcore|constant company|hostwinds|kamatera|clouvider|serverius|worldstream|hivelocity|colocrossing/i;
 const trPadKind = id => /054c|sony|playstation|dualsense|dualshock/i.test(id) ? 'PlayStation' : /045e|xbox|xinput/i.test(id) ? 'Xbox' : /057e|nintendo|switch|joy-con/i.test(id) ? 'Switch' : /8bitdo/i.test(id) ? '8BitDo' : /046d|logitech/i.test(id) ? 'Logitech' : 'Other';
@@ -6550,6 +6653,7 @@ const trKbOf = (q, y, w) => q === 'a' ? 'azerty' : y === 'z' ? 'qwertz' : q === 
 const trVotes = () => { try { return JSON.parse(localStorage.getItem('gameplay:votes')) || {}; } catch (e) { return {}; } };
 
 function trStart(g, ctl) {
+  TRS.games++; TRS.gset.add(g.id);
   const A = ctl.api, G = { g, t0: performance.now(), why: 'exit', rounds: 0, sc: [], last: null, lv: null, fr: 0, ft: 0, fs: [], inp: { k: 0, m: 0, t: 0, p: 0 }, on: {} };
   if (TR.g) trEnd1(TR.g);
   TR.g = G;
@@ -6719,13 +6823,61 @@ async function trEnv() {
   const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean).map(p => trPadKind(p.id)) : [];
   track('env_dev', { osv: trOs(hi), brv: trBr(hi), model: hi && hi.model ? hi.model : null, arch: hi && hi.architecture ? hi.architecture + (hi.bitness ? '-' + hi.bitness : '') : null, cores: navigator.hardwareConcurrency || null, mem: navigator.deviceMemory || null, gpu: trGpu() || null, gl2: 'WebGL2RenderingContext' in window, wgpu: 'gpu' in navigator, hz, kb: TR.kb || null, pads, adb, langs: (navigator.languages || []).slice(0, 6) });
   const g = geo || {}, dc = TR_DC.test(g.isp || ''), tzm = !!(g.gtz && tz && g.gtz !== tz && trOff(g.gtz) !== trOff(tz));
+  setTimeout(() => trMore().catch(() => {}), 2500);
   track('env_geo', { tz, off: -now.getTimezoneOffset(), lh: now.getHours(), wd: now.getDay(), net: c.effectiveType || null, ctype: c.type || null, dl: c.downlink != null ? c.downlink : null, rtt: c.rtt != null ? c.rtt : null, save: c.saveData != null ? !!c.saveData : null, cc: g.cc || null, country: g.country || null, region: g.region || null, city: g.city || null, isp: g.isp || null, asn: g.asn || null, dc, tzm, vpn: dc || tzm });
 }
-function trHidden() { trImpFlush(); trVitalsSend(); }
+const trMq = q => { try { return matchMedia(q).matches; } catch (e) { return false; } };
+const trB = (v, cuts, unit) => { if (v == null || !isFinite(v)) return null; for (const c of cuts) if (v < c) return '<' + c + unit; return cuts[cuts.length - 1] + unit + '+'; };
+const trHost = u => { try { return u ? new URL(u).hostname.replace(/^www\./, '').slice(0, 60) : ''; } catch (e) { return ''; } };
+function trBench() {
+  const t = performance.now();
+  let x = 0;
+  for (let i = 0; i < 3e6; i++) x += Math.sqrt(i) * Math.sin(i);
+  return x && Math.round((performance.now() - t) * 10) / 10;
+}
+async function trMore() {
+  const sc = screen || {}, o = sc.orientation || {}, dpr = window.devicePixelRatio || 1;
+  track('env_scr', { sw: sc.width || null, sh: sc.height || null, aw: sc.availWidth || null, ah: sc.availHeight || null, cd: sc.colorDepth || null, dpr: Math.round(dpr * 100) / 100, ori: o.type || null, vw: innerWidth, vh: innerHeight, tp: navigator.maxTouchPoints || 0, ptr: trMq('(pointer: fine)') ? 'fine' : trMq('(pointer: coarse)') ? 'coarse' : 'none', hov: trMq('(hover: hover)'), dark: trMq('(prefers-color-scheme: dark)'), rmo: trMq('(prefers-reduced-motion: reduce)'), con: trMq('(prefers-contrast: more)'), fcol: trMq('(forced-colors: active)'), rtr: trMq('(prefers-reduced-transparency: reduce)'), hdr: trMq('(dynamic-range: high)'), gam: trMq('(color-gamut: rec2020)') ? 'rec2020' : trMq('(color-gamut: p3)') ? 'p3' : 'srgb', dm: ['fullscreen', 'standalone', 'minimal-ui'].find(m => trMq('(display-mode: ' + m + ')')) || 'browser', ext: sc.isExtended != null ? !!sc.isExtended : null, zoom: outerWidth && innerWidth ? Math.round(100 * outerWidth / innerWidth) / 100 : null, res: (sc.width || 0) + 'x' + (sc.height || 0) });
+  const n = navigator, A = window.AudioContext || window.webkitAudioContext;
+  let sr = null, ach = null, mtex = null, glx = null, voices = null, devs = null, bat = null, est = null, gpuv = null, pers = null;
+  try { if (A) { const ac = new A(); sr = ac.sampleRate; ach = ac.destination ? ac.destination.maxChannelCount : null; ac.close(); } } catch (e) {}
+  try { const gl = document.createElement('canvas').getContext('webgl'); if (gl) { mtex = gl.getParameter(gl.MAX_TEXTURE_SIZE); glx = (gl.getSupportedExtensions() || []).length; const lc = gl.getExtension('WEBGL_lose_context'); if (lc) lc.loseContext(); } } catch (e) {}
+  try { voices = window.speechSynthesis ? speechSynthesis.getVoices().length : null; } catch (e) {}
+  const v = document.createElement('video'), cp = t => { try { return window.MediaSource && MediaSource.isTypeSupported ? MediaSource.isTypeSupported(t) : !!v.canPlayType(t); } catch (e) { return false; } };
+  const [dl, b, q, gp, ps] = await Promise.all([
+    trTo(n.mediaDevices && n.mediaDevices.enumerateDevices ? n.mediaDevices.enumerateDevices().catch(() => null) : Promise.resolve(null), 2000),
+    trTo(n.getBattery ? n.getBattery().catch(() => null) : Promise.resolve(null), 2000),
+    trTo(n.storage && n.storage.estimate ? n.storage.estimate().catch(() => null) : Promise.resolve(null), 2000),
+    trTo(n.gpu && n.gpu.requestAdapter ? n.gpu.requestAdapter().catch(() => null) : Promise.resolve(null), 3000),
+    trTo(n.storage && n.storage.persisted ? n.storage.persisted().catch(() => null) : Promise.resolve(null), 2000)
+  ]);
+  if (dl) devs = { mic: dl.filter(d => d.kind === 'audioinput').length, cam: dl.filter(d => d.kind === 'videoinput').length, spk: dl.filter(d => d.kind === 'audiooutput').length };
+  if (b) bat = { lvl: Math.round(b.level * 100), chg: !!b.charging };
+  if (q) est = { quota: Math.round((q.quota || 0) / 1048576), used: Math.round((q.usage || 0) / 1048576) };
+  if (gp) { try { const i = gp.info || (gp.requestAdapterInfo ? await trTo(gp.requestAdapterInfo(), 1500) : null); if (i) gpuv = [i.vendor, i.architecture].filter(Boolean).join(' ').slice(0, 60) || null; } catch (e) {} }
+  if (ps != null) pers = !!ps;
+  const ro = (() => { try { return Intl.DateTimeFormat().resolvedOptions(); } catch (e) { return {}; } })();
+  let hc = null, fdw = null;
+  try { hc = new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hourCycle || null; } catch (e) {}
+  try { const L = new Intl.Locale(ro.locale || n.language); const w = L.getWeekInfo ? L.getWeekInfo() : L.weekInfo; fdw = w ? w.firstDay : null; } catch (e) {}
+  const nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null, mem = performance.memory;
+  const bench = await new Promise(r => (window.requestIdleCallback || setTimeout)(() => { try { r(trBench()); } catch (e) { r(null); } }, { timeout: 3000 }));
+  track('env_caps', { ck: n.cookieEnabled, dnt: n.doNotTrack === '1' || window.doNotTrack === '1', gpc: !!n.globalPrivacyControl, pdf: n.pdfViewerEnabled != null ? !!n.pdfViewerEnabled : null, bot: !!n.webdriver, wasm: typeof WebAssembly === 'object', sab: typeof SharedArrayBuffer === 'function', coi: !!window.crossOriginIsolated, swk: 'serviceWorker' in n, notif: window.Notification ? Notification.permission : null, vib: 'vibrate' in n, bt: 'bluetooth' in n, usb: 'usb' in n, ser: 'serial' in n, hid: 'hid' in n, xr: 'xr' in n, midi: 'requestMIDIAccess' in n, share: 'share' in n, wl: 'wakeLock' in n, voices, mic: devs ? devs.mic : null, cam: devs ? devs.cam : null, spk: devs ? devs.spk : null, sr, ach, h264: cp('video/mp4; codecs="avc1.42E01E"'), vp9: cp('video/webm; codecs="vp9"'), av1: cp('video/mp4; codecs="av01.0.05M.08"'), hevc: cp('video/mp4; codecs="hvc1.1.6.L93.B0"'), mtex, glx, gpuv, quota: est ? est.quota : null, used: est ? est.used : null, qb: est ? trB(est.quota, [200, 1000, 10000, 100000], ' MB') : null, pers, heap: mem ? Math.round(mem.jsHeapSizeLimit / 1048576) : null, bat: bat ? bat.lvl : null, batb: bat ? trB(bat.lvl, [20, 50, 80], '%') : null, chg: bat ? bat.chg : null, bench, benchb: trB(bench, [15, 30, 60, 120], ' ms'), loc: ro.locale || null, cal: ro.calendar || null, num: ro.numberingSystem || null, hc, fdw, ref: trHost(document.referrer) || null, land: (location.pathname + location.hash).slice(0, 60), navt: nav ? nav.type : null, hist: history.length, plat: n.platform || null, vend: n.vendor || null, ua: n.userAgent.slice(0, 300), route: SB.on ? (SBN.best() === SUPABASE_DIRECT ? 'direct' : 'relay') : 'none', down: !!window.__gpSbDown });
+}
+function trSess(final) {
+  if (!anOk()) return;
+  const t = performance.now();
+  if (document.visibilityState === 'visible') TRS.vis += t - TRS.vt;
+  TRS.vt = t;
+  TRS.idle = Math.max(TRS.idle, t - TRS.la);
+  track('sess_sum', { seq: ++TRS.seq, final: !!final, dur: Math.round((Date.now() - TRS.t0) / 1000), vis: Math.round(TRS.vis / 1000), foc: TRS.foc, blur: TRS.blur, keys: TRS.keys, clicks: TRS.clicks, taps: TRS.taps, mdist: Math.round(TRS.md), wheel: TRS.wheel, scr: Math.round(TRS.scr), games: TRS.games, gset: TRS.gset.size, gl: [...TRS.gset].slice(0, 30), fs: TRS.fs, off: TRS.off, errs: TRS.errs, idle: Math.round(TRS.idle / 1000), copy: TRS.copy, rsz: TRS.rsz, route: SB.on ? (SBN.best() === SUPABASE_DIRECT ? 'direct' : 'relay') : 'none', acct: SB.user ? 'user' : SB.guest ? 'guest' : 'none', lang: document.documentElement.lang || null, theme: document.documentElement.getAttribute('data-theme') || 'system' });
+}
+function trHidden() { trImpFlush(); trVitalsSend(); trSess(false); }
 function trEnd() {
   if (TR.g) { TR.g.why = 'close'; trEnd1(TR.g); }
   trScroll(); trImpFlush(); trVitalsSend();
   track('page_time', { v: view, sec: Math.round((performance.now() - TR.v0) / 1000), exit: true });
+  trSess(true);
 }
 function trBoot() {
   TR.v0 = performance.now();
@@ -6760,6 +6912,21 @@ function trBoot() {
   trImpScan();
   setInterval(trImpFlush, 30000);
   if (anOk()) setTimeout(trEnv, 1500);
+  const act = () => { const t = performance.now(); TRS.idle = Math.max(TRS.idle, t - TRS.la); TRS.la = t; };
+  addEventListener('keydown', () => { TRS.keys++; act(); }, { capture: true, passive: true });
+  addEventListener('pointerdown', e => { if (e.pointerType === 'touch') TRS.taps++; else TRS.clicks++; act(); }, { capture: true, passive: true });
+  addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') return; if (TRS.mx != null) TRS.md += Math.min(400, Math.hypot(e.clientX - TRS.mx, e.clientY - TRS.my)); TRS.mx = e.clientX; TRS.my = e.clientY; act(); }, { capture: true, passive: true });
+  addEventListener('wheel', () => { TRS.wheel++; act(); }, { capture: true, passive: true });
+  addEventListener('scroll', () => { TRS.scr += Math.abs(scrollY - TRS.sy); TRS.sy = scrollY; }, { passive: true });
+  addEventListener('focus', () => TRS.foc++);
+  addEventListener('blur', () => TRS.blur++);
+  addEventListener('offline', () => TRS.off++);
+  addEventListener('error', () => TRS.errs++);
+  addEventListener('copy', () => TRS.copy++);
+  addEventListener('resize', () => TRS.rsz++, { passive: true });
+  document.addEventListener('fullscreenchange', () => { if (document.fullscreenElement) TRS.fs++; });
+  document.addEventListener('visibilitychange', () => { const t = performance.now(); if (document.visibilityState === 'hidden') TRS.vis += t - TRS.vt; TRS.vt = t; });
+  setInterval(() => { if (document.visibilityState === 'visible') trSess(false); }, 300000);
 }
 Ameplay.ads = {
   watch(el, slot, net) {
@@ -6893,8 +7060,18 @@ function sfPaint() {
   let hid = '';
   try { hid = localStorage.getItem(SF_HIDE) || ''; } catch (e) {}
   const lv = d.banner_level === 'warning' ? 'warning' : 'info', showB = !!txt && hid !== syHash(txt), showM = !!d.maintenance && adm;
-  bar.innerHTML = (showM ? `<div class="sfb sfb-adm">${SF_ICO.tool}<span>${esc(auT('Maintenance mode is on. Players see the maintenance page.'))}</span><button class="btn2" type="button" data-adgo="site">${esc(auT('Site switches'))}</button></div>` : '') + (showB ? `<div class="sfb sfb-${lv}" role="status">${SF_ICO[lv]}<span translate="no">${esc(txt)}</span><button class="x" type="button" data-sfhide aria-label="${esc(auT('Hide announcement'))}">${SF_ICO.x}</button></div>` : '');
-  bar.hidden = !showB && !showM;
+  const top = showB && lv === 'info', mid = showB && lv === 'warning';
+  bar.innerHTML = (showM ? `<div class="sfb sfb-adm">${SF_ICO.tool}<span>${esc(auT('Maintenance mode is on. Players see the maintenance page.'))}</span><button class="btn2" type="button" data-adgo="site">${esc(auT('Site switches'))}</button></div>` : '') + (top ? `<div class="sfb sfb-info" role="status">${SF_ICO.info}<span translate="no">${esc(txt)}</span><button class="x" type="button" data-sfhide aria-label="${esc(auT('Hide announcement'))}">${SF_ICO.x}</button></div>` : '');
+  bar.hidden = !top && !showM;
+  let al = $('#sfalert');
+  if (mid) {
+    if (!al) { document.body.insertAdjacentHTML('beforeend', '<div class="sfal" id="sfalert" role="alertdialog" aria-modal="true" aria-labelledby="sfalt"><div class="sfal-c"><span class="sfal-i"></span><h2 id="sfalt"></h2><p class="sfal-t" translate="no"></p><button class="btn2 pri sfal-ok" type="button" data-sfhide></button></div></div>'); al = $('#sfalert'); }
+    al.querySelector('.sfal-i').innerHTML = SF_ICO.warning;
+    al.querySelector('h2').textContent = auT('Alert');
+    al.querySelector('.sfal-t').textContent = txt;
+    al.querySelector('.sfal-ok').textContent = auT('OK');
+    if (al.hidden !== false || !al.classList.contains('on')) { al.hidden = false; void al.offsetWidth; al.classList.add('on'); }
+  } else if (al) { al.classList.remove('on'); al.hidden = true; }
   clearTimeout(SF.bt);
   if (showB && until) SF.bt = setTimeout(sfPaint, Math.min(until - now + 500, 3600000));
   const m = !!d.maintenance && !adm && !(SB.user && !AD.at) && !SF.peek, el = $('#sfmaint');
@@ -7003,11 +7180,11 @@ function siteBoot() {
   document.addEventListener('visibilitychange', wake);
   addEventListener('focus', wake);
   setInterval(() => { if (document.visibilityState !== 'hidden') { sfLoad(true); upCheck(true); } }, 300000);
-  setInterval(() => { if (SF.shown) sfLoad(true); }, 60000);
+  setInterval(() => { if (SF.shown) sfLoad(true); }, 20000);
   setTimeout(() => upCheck(true), 4000);
   sfPaint(); sfLoad(true);
   if (SB.on) sbClient().then(() => sfRt()).catch(() => {});
-  setInterval(() => { if (!SF.ch && !SF.shown && document.visibilityState !== 'hidden') sfLoad(true); }, 60000);
+  setInterval(() => { if (!SF.shown && document.visibilityState !== 'hidden') sfLoad(true); }, 30000);
   if (SB.on && sbHasSession()) CL.t = setTimeout(() => clAuto(), 8000);
   else CL.t = setTimeout(() => clAuto(), 1200);
   Ameplay.debug.site = { check: () => upCheck(true), load: () => sfLoad(true), flags: () => SF.d, favs: () => FV.ids.slice(), route: () => ({ api: SB.on ? SBN.best() : 'none', live: SBN.ws(), routes: SBN.all(), accounts: SB.on }) };
@@ -7642,6 +7819,16 @@ const R = [
 ["Play without an account for now", "Jouer sans compte pour le moment", "Jugar sin cuenta por ahora", "Vorerst ohne Konto spielen", "Gioca senza account per ora", "Jogar sem conta por agora"],
 ["You can play without an account until the sign-in service can be reached. Then you will need to log in.", "Vous pouvez jouer sans compte jusqu’à ce que le service de connexion soit joignable. Ensuite, il faudra vous connecter.", "Puedes jugar sin cuenta hasta que se pueda acceder al servicio de inicio de sesión. Después tendrás que iniciar sesión.", "Du kannst ohne Konto spielen, bis der Anmeldedienst erreichbar ist. Danach musst du dich anmelden.", "Puoi giocare senza account finché il servizio di accesso non è raggiungibile. Poi dovrai accedere.", "Pode jogar sem conta até o serviço de início de sessão estar acessível. Depois terá de iniciar sessão."],
 ["The sign-in service works again: log in or create an account to keep playing.", "Le service de connexion fonctionne à nouveau : connectez-vous ou créez un compte pour continuer à jouer.", "El servicio de inicio de sesión vuelve a funcionar: inicia sesión o crea una cuenta para seguir jugando.", "Der Anmeldedienst funktioniert wieder: Melde dich an oder erstelle ein Konto, um weiterzuspielen.", "Il servizio di accesso funziona di nuovo: accedi o crea un account per continuare a giocare.", "O serviço de início de sessão voltou a funcionar: inicie sessão ou crie uma conta para continuar a jogar."],
+["Alert (middle of the screen)", "Alerte (au milieu de l’écran)", "Alerta (en el centro de la pantalla)", "Warnung (in der Bildschirmmitte)", "Avviso (al centro dello schermo)", "Alerta (no centro do ecrã)"],
+["Alert", "Alerte", "Alerta", "Warnung", "Avviso", "Alerta"],
+["A change works at once for everyone whose network reaches the accounts server. Networks that block it keep accepting the previous password until the next deploy. Browsers that already unlocked the site stay unlocked.", "Le changement s’applique tout de suite pour tous ceux dont le réseau atteint le serveur de comptes. Les réseaux qui le bloquent acceptent l’ancien mot de passe jusqu’au prochain déploiement. Les navigateurs qui ont déjà ouvert le site restent déverrouillés.", "El cambio se aplica al instante para todos cuya red llega al servidor de cuentas. Las redes que lo bloquean aceptan la contraseña anterior hasta el próximo despliegue. Los navegadores que ya abrieron el sitio siguen desbloqueados.", "Die Änderung gilt sofort für alle, deren Netzwerk den Kontoserver erreicht. Netzwerke, die ihn sperren, akzeptieren das alte Passwort bis zur nächsten Veröffentlichung. Browser, die die Seite schon geöffnet haben, bleiben entsperrt.", "La modifica vale subito per tutti quelli la cui rete raggiunge il server degli account. Le reti che lo bloccano accettano la vecchia password fino alla prossima pubblicazione. I browser che hanno già aperto il sito restano sbloccati.", "A alteração vale de imediato para todos cuja rede chega ao servidor de contas. As redes que o bloqueiam aceitam a palavra-passe anterior até à próxima publicação. Os navegadores que já abriram o site continuam desbloqueados."],
+["More player data", "Plus de données joueurs", "Más datos de jugadores", "Mehr Spielerdaten", "Più dati sui giocatori", "Mais dados dos jogadores"],
+["Devices and sessions", "Appareils et sessions", "Dispositivos y sesiones", "Geräte und Sitzungen", "Dispositivi e sessioni", "Dispositivos e sessões"],
+["Run round9_more.sql in the Supabase SQL editor to see this part.", "Exécutez round9_more.sql dans l’éditeur SQL de Supabase pour voir cette partie.", "Ejecuta round9_more.sql en el editor SQL de Supabase para ver esta parte.", "Führe round9_more.sql im SQL-Editor von Supabase aus, um diesen Teil zu sehen.", "Esegui round9_more.sql nell’editor SQL di Supabase per vedere questa parte.", "Execute round9_more.sql no editor SQL do Supabase para ver esta parte."],
+["No device data yet. It appears once this player accepts cookies.", "Pas encore de données d’appareil. Elles apparaissent quand ce joueur accepte les cookies.", "Aún no hay datos del dispositivo. Aparecen cuando este jugador acepta las cookies.", "Noch keine Gerätedaten. Sie erscheinen, sobald dieser Spieler Cookies akzeptiert.", "Ancora nessun dato del dispositivo. Appaiono quando questo giocatore accetta i cookie.", "Ainda não há dados do dispositivo. Aparecem quando este jogador aceita os cookies."],
+["Sessions", "Sessions", "Sesiones", "Sitzungen", "Sessioni", "Sessões"],
+["Screens and display", "Écrans et affichage", "Pantallas y visualización", "Bildschirme und Anzeige", "Schermi e visualizzazione", "Ecrãs e visualização"],
+["Hardware and browser features", "Matériel et fonctions du navigateur", "Hardware y funciones del navegador", "Hardware und Browserfunktionen", "Hardware e funzioni del browser", "Hardware e funcionalidades do navegador"],
 ["Made by Gabriel Courtin", "Créé par Gabriel Courtin", "Creado por Gabriel Courtin", "Erstellt von Gabriel Courtin", "Creato da Gabriel Courtin", "Criado por Gabriel Courtin"],
 ["run a connection check", "lancez un test de connexion", "haz una prueba de conexión", "starte einen Verbindungstest", "esegui un test di connessione", "faça um teste de ligação"],
 ["Run a connection check", "Lancer un test de connexion", "Hacer una prueba de conexión", "Verbindungstest starten", "Esegui un test di connessione", "Fazer um teste de ligação"],
@@ -8099,6 +8286,7 @@ const R = [
 ["Could not join this party", "Impossible de rejoindre ce groupe", "No se pudo entrar en este grupo", "Beitritt zur Gruppe fehlgeschlagen", "Impossibile entrare in questo gruppo", "Não foi possível entrar neste grupo"],
 ["New party", "Nouveau groupe", "Nuevo grupo", "Neue Gruppe", "Nuovo gruppo", "Novo grupo"],
 ["Create my own party", "Créer mon propre groupe", "Crear mi propio grupo", "Eigene Gruppe erstellen", "Crea il mio gruppo", "Criar meu próprio grupo"],
+["Connecting again ({n}/{m})…", "Nouvelle tentative de connexion ({n}/{m})…", "Conectando de nuevo ({n}/{m})…", "Neuer Verbindungsversuch ({n}/{m})…", "Nuovo tentativo di connessione ({n}/{m})…", "A ligar de novo ({n}/{m})…"],
 ["Server busy, trying again ({n}/3)…", "Serveur occupé, nouvel essai ({n}/3)…", "Servidor ocupado, reintentando ({n}/3)…", "Server ausgelastet, neuer Versuch ({n}/3)…", "Server occupato, nuovo tentativo ({n}/3)…", "Servidor ocupado, tentando de novo ({n}/3)…"],
 ["Connection lost. Reconnecting…", "Connexion perdue. Reconnexion…", "Se perdió la conexión. Reconectando…", "Verbindung verloren. Verbinde neu…", "Connessione persa. Riconnessione…", "Conexão perdida. Reconectando…"],
 ["Reconnecting…", "Reconnexion…", "Reconectando…", "Verbinde neu…", "Riconnessione…", "Reconectando…"],

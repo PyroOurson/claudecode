@@ -328,19 +328,23 @@ function makeNet(g, add) {
   const keep = p => {
     let n = 0, next = 0;
     p.on('open', () => { n = 0; next = 0; });
+    const wake = () => { if (p.destroyed) { document.removeEventListener('visibilitychange', wake); removeEventListener('online', wake); return; } if (p.disconnected) { n = 0; next = 0; try { p.reconnect(); } catch (e) {} } };
+    document.addEventListener('visibilitychange', wake);
+    addEventListener('online', wake);
     const t = setInterval(() => {
       if (p.destroyed) return clearInterval(t);
       if (!p.disconnected) { n = 0; return; }
       const tm = now();
       if (tm < next) return;
-      next = tm + Math.min(30000, 1500 * Math.pow(2, n++));
+      next = tm + Math.min(8000, 1000 * Math.pow(2, n++));
       try { p.reconnect(); } catch (e) {}
     }, 1000);
   };
-  const newPeer = async (id, my) => {
+  const newPeer = async (id, my, relay) => {
     let Peer;
     try { Peer = await loadPeer(); } catch (e) { try { Peer = await loadPeer(); } catch (x) { throw { type: 'load' }; } }
-    const config = { iceServers: await netIce(), sdpSemantics: 'unified-plan' };
+    const config = { iceServers: await netIce(), sdpSemantics: 'unified-plan', iceCandidatePoolSize: 4 };
+    if (relay) config.iceTransportPolicy = 'relay';
     let last = null;
     for (let i = 0; i < 3; i++) {
       if (i) {
@@ -711,12 +715,32 @@ function makeNet(g, add) {
     shut(true);
     const my = gen;
     code = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-    const p = await newPeer(undefined, my);
-    if (my !== gen) { p.destroy(); return false; }
-    peer = p;
-    rm.me = netUid(); rm.key = netUid() + netUid(); rm.state = 'lobby'; rm.inGame = false; rm.list = []; rm.leader = null; rm.chat = []; net.closeReason = null;
-    let r;
-    try { r = await guestConnect(code, my); } catch (e) { if (my === gen) shut(false); throw e; }
+    const TRIES = 4;
+    let r = null;
+    rm.me = netUid(); rm.key = netUid() + netUid();
+    for (let a = 0; a < TRIES && !r; a++) {
+      if (a) {
+        if (note) note(netT('Connecting again ({n}/{m})…').replace('{n}', a + 1).replace('{m}', TRIES));
+        await sleepMs(800 + 700 * a);
+        if (my !== gen) return false;
+      }
+      let p;
+      try { p = await newPeer(undefined, my, a === TRIES - 1); }
+      catch (e) { if (my !== gen || (e && e.type === 'cancel')) return false; if (a === TRIES - 1) { shut(false); throw e; } continue; }
+      if (my !== gen) { p.destroy(); return false; }
+      peer = p;
+      rm.state = 'lobby'; rm.inGame = false; rm.list = []; rm.leader = null; rm.chat = []; net.closeReason = null;
+      try { r = await guestConnect(code, my); }
+      catch (e) {
+        if (my !== gen) return false;
+        const t = e && e.type;
+        try { p.destroy(); } catch (x) {}
+        if (peer === p) peer = null;
+        if (t === 'room-full' || t === 'cancel' || a === TRIES - 1) { shut(false); throw e; }
+        netTrack('party_retry', { game: g.id, why: String(t || 'unknown').slice(0, 24), n: a + 1 });
+      }
+    }
+    if (!r) { shut(false); throw { type: 'network' }; }
     if (my !== gen) { try { r.c.close(); } catch (e) {} return false; }
     if (invite && invite.id === g.id) invite = null;
     net.code = code; net.role = 'guest'; mode = 'room';

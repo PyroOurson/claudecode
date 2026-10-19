@@ -393,7 +393,7 @@ const T0 = Date.now();
 function anSave() { try { if (anOk()) ckStore().setItem(AN_KEY, JSON.stringify(anQ)); } catch (e) { anQ.splice(0, Math.ceil(anQ.length / 4)); } }
 function anClean(p) {
   const o = {};
-  Object.keys(p).slice(0, 24).forEach(k => {
+  Object.keys(p).slice(0, 64).forEach(k => {
     const v = p[k];
     if (v == null) return;
     if (typeof v === 'number') o[k] = isFinite(v) ? Math.round(v * 100) / 100 : null;

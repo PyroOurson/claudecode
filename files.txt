@@ -418,6 +418,7 @@ ClaudeScripts/gameplay-site/source/w/supabase/round5_admin.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round6.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round7_owner.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round8_insights.sql
+ClaudeScripts/gameplay-site/source/w/supabase/round9_more.sql
 ClaudeScripts/gameplay-site/source/w/supabase/schema.sql
 ClaudeScripts/gameplay-site/source/w/supabase/setup.py
 ClaudeScripts/gameplay-site/source/w/vendor/peerjs-1.5.4.min.js

@@ -1342,6 +1342,14 @@ html.rm .adm-tabs i,html.rm .sx-tip{transition:none}
 .ins-hh{text-align:center}
 #insv.sx-q :is(.ins-b,.ins-b s,.ins-fs,.ins-fs::before,.ins-hm i,.st-card,.tile,tr){animation:none}
 
+.apc-devs{display:flex;flex-direction:column;gap:8px}
+.apc-dv{border:1px solid var(--line);border-radius:14px;background:var(--surface-2);overflow:hidden;animation:sfIn .3s calc(var(--i,0)*40ms) both}
+.apc-dv summary{display:flex;flex-direction:column;gap:2px;padding:10px 14px;cursor:pointer;list-style:none}
+.apc-dv summary::-webkit-details-marker{display:none}
+.apc-dv summary small{color:var(--muted);font-size:12.5px}
+.apc-kv{padding:4px 14px 12px;font-size:13px}
+.apc-ua{margin:0;padding:0 14px 12px;font-size:11.5px;word-break:break-all}
+
 .top .right:where(:not(.g-root *)){position:relative}
 .onl:where(:not(.g-root *)){display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:99px;background:var(--surface-2);color:var(--muted);font-size:12.5px;font-weight:700;white-space:nowrap;margin-right:4px}
 .onl b:where(:not(.g-root *)){color:var(--fg)}
@@ -1630,13 +1638,14 @@ html.rm .onl i::after,html.rm .adm-dot::after,html.rm .fr-dot.on::after{animatio
 .card .offb:where(:not(.g-root *)){position:absolute;left:8px;bottom:8px;max-width:calc(100% - 16px);padding:4px 9px;border-radius:99px;background:rgba(18,15,34,.78);color:#fff;font-size:12px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sfbar:where(:not(.g-root *)){display:flex;flex-direction:column;gap:6px;padding:calc(8px + env(safe-area-inset-top,0px)) 0 0}
 .sfbar[hidden]:where(:not(.g-root *)){display:none}
-.sfb:where(:not(.g-root *)){display:flex;align-items:center;gap:10px;padding:8px 8px 8px 14px;border-radius:14px;font-size:14px;font-weight:600;line-height:1.4;animation:sfIn .35s var(--ease) both}
-.sfb>svg:where(:not(.g-root *)){width:19px;height:19px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sfb:where(:not(.g-root *)){display:flex;align-items:center;gap:14px;padding:14px 12px 14px 18px;border-radius:16px;font-size:17px;font-weight:700;line-height:1.45;animation:sfIn .35s var(--ease) both}
+.sfb>svg:where(:not(.g-root *)){width:24px;height:24px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .sfb span:where(:not(.g-root *)){flex:1;min-width:0;overflow-wrap:anywhere}
-.sfb .x:where(:not(.g-root *)){width:30px;height:30px;flex:none;color:inherit}
+.sfb .x:where(:not(.g-root *)){width:36px;height:36px;flex:none;color:inherit}
 .sfb .x svg:where(:not(.g-root *)){width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
 .sfb .x:hover:where(:not(.g-root *)){background:color-mix(in srgb,currentColor 12%,transparent)}
-.sfb-info:where(:not(.g-root *)){background:var(--accent-soft);color:var(--accent)}
+.sfb-info:where(:not(.g-root *)){background:var(--accent);color:var(--accent-ink,#fff);box-shadow:0 10px 28px -14px var(--accent)}
+.sfb-info .x:hover:where(:not(.g-root *)){background:rgba(255,255,255,.18)}
 .sfb-warning:where(:not(.g-root *)){background:rgba(232,155,20,.16);color:#8a5600;border:1px solid rgba(232,155,20,.35)}
 .sfb-adm:where(:not(.g-root *)){background:var(--surface-2);color:var(--fg);border:1px dashed var(--line);font-size:13px}
 .sfb-adm .btn2:where(:not(.g-root *)){height:32px;font-size:13px}
@@ -1690,10 +1699,21 @@ html.rm .onl i::after,html.rm .adm-dot::after,html.rm .fr-dot.on::after{animatio
 .clp-card:where(:not(.g-root *)){border-radius:24px 24px 0 0;max-height:88dvh;border-bottom:0}
 .clp-f:where(:not(.g-root *)){padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
 .clp-f .btn2:where(:not(.g-root *)){flex:1}
-.sfb:where(:not(.g-root *)){font-size:13px}
+.sfb:where(:not(.g-root *)){font-size:15.5px;padding:12px 10px 12px 14px}
 }
 @media (prefers-reduced-motion:reduce){.clp:where(:not(.g-root *)),.clp-card:where(:not(.g-root *)),.clp-s:where(:not(.g-root *)),.clp-s li:where(:not(.g-root *)),.upbar:where(:not(.g-root *)),.sfb:where(:not(.g-root *)){animation:none}}
 .rm .clp:where(:not(.g-root *)),.rm .clp-card:where(:not(.g-root *)),.rm .clp-s:where(:not(.g-root *)),.rm .clp-s li:where(:not(.g-root *)),.rm .upbar:where(:not(.g-root *)),.rm .sfb:where(:not(.g-root *)){animation:none}
+.sfal:where(:not(.g-root *)){position:fixed;inset:0;z-index:84;display:grid;place-items:center;padding:20px;background:rgba(14,10,34,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);opacity:0;transition:opacity .25s}
+.sfal[hidden]:where(:not(.g-root *)){display:none}
+.sfal.on:where(:not(.g-root *)){opacity:1}
+.sfal-c:where(:not(.g-root *)){width:min(560px,100%);padding:34px 30px 28px;border-radius:26px;background:var(--surface);color:var(--fg);text-align:center;box-shadow:0 30px 80px -30px rgba(0,0,0,.55);border:2px solid rgba(232,155,20,.55);transform:scale(.94);transition:transform .3s var(--spring,ease)}
+.sfal.on .sfal-c:where(:not(.g-root *)){transform:none}
+.sfal-i:where(:not(.g-root *)){display:grid;place-items:center;width:64px;height:64px;margin:0 auto 16px;border-radius:20px;background:rgba(232,155,20,.16);color:#c27a00}
+.sfal-i svg:where(:not(.g-root *)){width:34px;height:34px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sfal-c h2:where(:not(.g-root *)){margin:0 0 10px;font-size:26px;letter-spacing:-.02em}
+.sfal-t:where(:not(.g-root *)){margin:0 0 24px;font-size:19px;line-height:1.5;font-weight:600;white-space:pre-wrap;overflow-wrap:anywhere}
+.sfal-ok:where(:not(.g-root *)){min-width:160px;height:48px;font-size:16px}
+@media (prefers-reduced-motion:reduce){.sfal:where(:not(.g-root *)),.sfal-c:where(:not(.g-root *)){transition:none}}
 </style>
 </head>
 <body>
@@ -1827,6 +1847,7 @@ html.rm .onl i::after,html.rm .adm-dot::after,html.rm .fr-dot.on::after{animatio
       <div class="apc-grid">
        <div class="apc-col">
         <div class="apc-card"><h4>Games played</h4><div class="apc-games" id="adpg" translate="no"></div></div>
+        <div class="apc-card"><h4>Devices and sessions</h4><div class="apc-devs" id="adpd"></div></div>
         <div class="apc-card"><h4>All details</h4><dl class="apc-dl" id="adpdl" translate="no"></dl></div>
         <div class="apc-card"><h4>History</h4><div class="al-list apc-hist" id="adph" translate="no"></div></div>
        </div>

@@ -107,8 +107,18 @@ function sfPaint() {
   let hid = '';
   try { hid = localStorage.getItem(SF_HIDE) || ''; } catch (e) {}
   const lv = d.banner_level === 'warning' ? 'warning' : 'info', showB = !!txt && hid !== syHash(txt), showM = !!d.maintenance && adm;
-  bar.innerHTML = (showM ? `<div class="sfb sfb-adm">${SF_ICO.tool}<span>${esc(auT('Maintenance mode is on. Players see the maintenance page.'))}</span><button class="btn2" type="button" data-adgo="site">${esc(auT('Site switches'))}</button></div>` : '') + (showB ? `<div class="sfb sfb-${lv}" role="status">${SF_ICO[lv]}<span translate="no">${esc(txt)}</span><button class="x" type="button" data-sfhide aria-label="${esc(auT('Hide announcement'))}">${SF_ICO.x}</button></div>` : '');
-  bar.hidden = !showB && !showM;
+  const top = showB && lv === 'info', mid = showB && lv === 'warning';
+  bar.innerHTML = (showM ? `<div class="sfb sfb-adm">${SF_ICO.tool}<span>${esc(auT('Maintenance mode is on. Players see the maintenance page.'))}</span><button class="btn2" type="button" data-adgo="site">${esc(auT('Site switches'))}</button></div>` : '') + (top ? `<div class="sfb sfb-info" role="status">${SF_ICO.info}<span translate="no">${esc(txt)}</span><button class="x" type="button" data-sfhide aria-label="${esc(auT('Hide announcement'))}">${SF_ICO.x}</button></div>` : '');
+  bar.hidden = !top && !showM;
+  let al = $('#sfalert');
+  if (mid) {
+    if (!al) { document.body.insertAdjacentHTML('beforeend', '<div class="sfal" id="sfalert" role="alertdialog" aria-modal="true" aria-labelledby="sfalt"><div class="sfal-c"><span class="sfal-i"></span><h2 id="sfalt"></h2><p class="sfal-t" translate="no"></p><button class="btn2 pri sfal-ok" type="button" data-sfhide></button></div></div>'); al = $('#sfalert'); }
+    al.querySelector('.sfal-i').innerHTML = SF_ICO.warning;
+    al.querySelector('h2').textContent = auT('Alert');
+    al.querySelector('.sfal-t').textContent = txt;
+    al.querySelector('.sfal-ok').textContent = auT('OK');
+    if (al.hidden !== false || !al.classList.contains('on')) { al.hidden = false; void al.offsetWidth; al.classList.add('on'); }
+  } else if (al) { al.classList.remove('on'); al.hidden = true; }
   clearTimeout(SF.bt);
   if (showB && until) SF.bt = setTimeout(sfPaint, Math.min(until - now + 500, 3600000));
   const m = !!d.maintenance && !adm && !(SB.user && !AD.at) && !SF.peek, el = $('#sfmaint');
@@ -217,11 +227,11 @@ function siteBoot() {
   document.addEventListener('visibilitychange', wake);
   addEventListener('focus', wake);
   setInterval(() => { if (document.visibilityState !== 'hidden') { sfLoad(true); upCheck(true); } }, 300000);
-  setInterval(() => { if (SF.shown) sfLoad(true); }, 60000);
+  setInterval(() => { if (SF.shown) sfLoad(true); }, 20000);
   setTimeout(() => upCheck(true), 4000);
   sfPaint(); sfLoad(true);
   if (SB.on) sbClient().then(() => sfRt()).catch(() => {});
-  setInterval(() => { if (!SF.ch && !SF.shown && document.visibilityState !== 'hidden') sfLoad(true); }, 60000);
+  setInterval(() => { if (!SF.shown && document.visibilityState !== 'hidden') sfLoad(true); }, 30000);
   if (SB.on && sbHasSession()) CL.t = setTimeout(() => clAuto(), 8000);
   else CL.t = setTimeout(() => clAuto(), 1200);
   Ameplay.debug.site = { check: () => upCheck(true), load: () => sfLoad(true), flags: () => SF.d, favs: () => FV.ids.slice(), route: () => ({ api: SB.on ? SBN.best() : 'none', live: SBN.ws(), routes: SBN.all(), accounts: SB.on }) };

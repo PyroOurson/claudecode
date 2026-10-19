@@ -98,8 +98,9 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
   const $ = id => document.getElementById(id);
   const b64 = s => { const t = atob(s), u = new Uint8Array(t.length); for (let i = 0; i < t.length; i++) u[i] = t.charCodeAt(i); return u; };
   const enc = u => btoa(String.fromCharCode.apply(null, u));
-  const rd = () => { let o = {}; try { o = JSON.parse(localStorage.getItem(K) || '{}') || {}; } catch (e) {} const ck = (document.cookie.match(/gpgate=(\\d+)/) || [])[1]; if (ck && +ck > (o.f || 0)) o.f = +ck; return o; };
-  const wr = o => { try { localStorage.setItem(K, JSON.stringify(o)); } catch (e) {} try { document.cookie = 'gpgate=' + (o.f || 0) + ';max-age=31536000;path=/;SameSite=Lax'; } catch (e) {} };
+  const CK = ';max-age=34560000;path=/;SameSite=Lax' + (location.protocol === 'https:' ? ';Secure' : '');
+  const rd = () => { let o = {}; try { o = JSON.parse(localStorage.getItem(K) || '{}') || {}; } catch (e) {} const ck = (document.cookie.match(/gpgate=(\\d+)/) || [])[1]; if (ck && +ck > (o.f || 0)) o.f = +ck; if (!o.k) { const kc = (document.cookie.match(/(?:^|; )gpk=([^;]+)/) || [])[1]; if (kc) { try { o.k = decodeURIComponent(kc); } catch (e) {} } } return o; };
+  const wr = o => { try { localStorage.setItem(K, JSON.stringify(o)); } catch (e) {} try { document.cookie = 'gpgate=' + (o.f || 0) + CK; document.cookie = o.k ? 'gpk=' + encodeURIComponent(o.k) + CK : 'gpk=;max-age=0;path=/'; } catch (e) {} };
   let st = rd();
   const lock = () => { $('h').textContent = 'Locked'; $('t').textContent = 'Too many wrong passwords on this computer.'; $('p').remove(); $('b').remove(); $('m').textContent = ''; };
   const warm = () => {
@@ -159,7 +160,7 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
   if ((st.f || 0) >= MAX) { lock(); return; }
   const left = () => { const n = MAX - (st.f || 0); return n + (n === 1 ? ' try' : ' tries') + ' left'; };
   if (st.f) $('m').textContent = left();
-  if (st.k) { $('f').style.visibility = 'hidden'; $('sp').hidden = false; const raw = b64(st.k); warm(); Promise.all([show(raw), reach()]).then(([t]) => put(t, raw), () => { delete st.k; wr(st); $('f').style.visibility = ''; $('sp').hidden = true; }); }
+  if (st.k) { $('f').style.visibility = 'hidden'; $('sp').hidden = false; const raw = b64(st.k); warm(); Promise.all([show(raw), reach()]).then(([t]) => { wr(st); put(t, raw); }, () => { delete st.k; wr(st); $('f').style.visibility = ''; $('sp').hidden = true; }); }
   $('f').addEventListener('submit', async e => {
     e.preventDefault();
     const pw = $('p').value;

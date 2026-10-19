@@ -52,6 +52,11 @@ Reseed after every change of `GATE_PASS`: the old slot unwraps a key that no lon
 - `w/vendor/` holds the libraries the site serves itself (supabase-js, three.js, PeerJS), tried before the public CDNs. `gate2.js` copies them into `gameplay/` unencrypted, together with `w/check.html`.
 - `w/check.html` becomes https://gameplaygames.web.app/check, a page anyone can open without the password: it tests every service the site uses and gives a report to copy.
 
+## Player data
+
+- `w/new/track.js` sends, after cookie consent, `env_dev`, `env_geo`, `env_scr` (screen and display), `env_caps` (hardware, browser features, speed test, storage, battery, locale, referrer) once per session, and `sess_sum` (session length, visible time, counts of keys, clicks, taps, mouse travel, games opened, errors, route) every 5 minutes, when the tab is hidden and when the page closes.
+- The dashboard reads them through `admin_insights_more` and `admin_user_devices`, created by `w/supabase/round9_more.sql` (run it once in the Supabase SQL editor; it is also at the end of `schema.sql`).
+
 ## Where things are
 
 - `w/parts/`: one file per game (or group of games), `_order.json` lists them.

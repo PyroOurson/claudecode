@@ -269,6 +269,7 @@ function adPanel(u, keep) {
     $('#adpw').type = 'password';
     const eye = p.querySelector('.au-eye'); if (eye) auEye(eye, true);
     adGames(u);
+    adDevices(u);
     alHist(u);
     const was = p.hidden;
     vis(p, true);
@@ -286,6 +287,31 @@ async function adGames(u) {
     const L = Array.isArray(r) ? r : [], max = Math.max(1, ...L.map(g => +g.seconds_played || 0));
     box.innerHTML = L.length ? L.map((g, i) => `<div class="apc-g" style="--i:${Math.min(i, 12)};--c:${esc(TINT[g.game_id] || 'var(--accent)')}">${adCv(g.game_id, 'apc-gi')}<span class="apc-gn">${esc(adGame(g.game_id))}</span><b>${esc(adHrs(g.seconds_played))}</b><i><s style="width:${Math.max(2, Math.round(100 * (+g.seconds_played || 0) / max))}%"></s></i><small>${esc(auT('{n} plays').replace('{n}', +g.plays || 0))}${g.best_score != null ? ' · ' + esc(auT('best {s}').replace('{s}', g.best_score)) : ''}${g.last_played ? ' · ' + esc(adAgo(g.last_played)) : ''}</small></div>`).join('') : `<div class="adm-mut apc-none">${esc(auT('No games played yet.'))}</div>`;
   } catch (e) { box.innerHTML = `<div class="adm-mut">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; }
+}
+async function adDevices(u) {
+  const box = $('#adpd');
+  if (!box) return;
+  box.innerHTML = '<i class="sk sk-td"></i><i class="sk sk-td"></i>';
+  let L;
+  try { L = await adRpc('admin_user_devices', { p_uid: u.id }); }
+  catch (e) { if (AD.sel === u.id) box.innerHTML = `<div class="adm-mut">${esc(/admin_user_devices|function|404|PGRST/i.test(e.message || '') ? auT('Run round9_more.sql in the Supabase SQL editor to see this part.') : auT('Could not load. Check your connection and try again.'))}</div>`; return; }
+  if (AD.sel !== u.id) return;
+  L = Array.isArray(L) ? L : [];
+  if (!L.length) { box.innerHTML = `<div class="adm-mut">${esc(auT('No device data yet. It appears once this player accepts cookies.'))}</div>`; return; }
+  const kv = (k, v) => v == null || v === '' ? '' : `<span>${esc(auT(k))}</span><b translate="no">${esc(String(v))}</b>`;
+  const yn = v => v == null ? null : v ? auT('Yes') : auT('No');
+  box.innerHTML = L.map((x, i) => {
+    const d = x.dev || {}, g = x.geo || {}, sc = x.scr || {}, c = x.caps || {}, sm = x.sum || {};
+    const when = new Date(x.last).toLocaleString(adLang()), dur = sm.dur != null ? (sm.dur >= 60 ? Math.round(sm.dur / 60) + ' min' : sm.dur + ' s') : null;
+    const head = [d.osv, d.brv, d.model].filter(Boolean).join(' · ') || x.device || '—', where = [g.city, g.region, g.country].filter(Boolean).join(', ');
+    return `<details class="apc-dv" style="--i:${Math.min(i, 12)}"${i ? '' : ' open'}><summary><b translate="no">${esc(head)}</b><small>${esc(when)}${where ? ' · ' + esc(where) : ''}${dur ? ' · ' + esc(dur) : ''}</small></summary><div class="ins-kv apc-kv">${[
+      kv('Internet provider', g.isp), kv('VPN or datacenter', yn(g.vpn)), kv('Time zone', g.tz), kv('Connection', [g.net, g.ctype, g.dl != null ? g.dl + ' Mb/s' : '', g.rtt != null ? g.rtt + ' ms' : ''].filter(Boolean).join(' · ')),
+      kv('Screen', sc.res), kv('Window', sc.vw ? sc.vw + '×' + sc.vh : null), kv('Pixel density', sc.dpr), kv('Pointer', sc.ptr), kv('Touch points', sc.tp), kv('Dark mode', yn(sc.dark)),
+      kv('Graphics card', d.gpu), kv('CPU cores', d.cores), kv('Memory (GB)', d.mem), kv('Refresh rate (Hz)', d.hz), kv('Keyboard layout', d.kb), kv('Controllers', (d.pads || []).join(', ')), kv('Ad blocker', yn(d.adb)), kv('Languages', (d.langs || []).join(', ')),
+      kv('Speed test', c.bench != null ? c.bench + ' ms' : null), kv('Battery', c.bat != null ? c.bat + '%' + (c.chg ? ' ⚡' : '') : null), kv('Storage', c.quota != null ? c.used + ' / ' + c.quota + ' MB' : null), kv('Microphones / cameras', c.mic != null ? c.mic + ' / ' + c.cam : null), kv('Region settings', c.loc), kv('Arrived from', c.ref), kv('Bot', yn(c.bot)),
+      kv('Session', dur), kv('Time looking', sm.vis != null ? Math.round(sm.vis / 60) + ' min' : null), kv('Games opened', sm.games), kv('Games', (sm.gl || []).map(adGame).join(', ')), kv('Keys / clicks / taps', sm.keys != null ? [sm.keys, sm.clicks, sm.taps].join(' / ') : null), kv('Connection used', sm.route), kv('Events', x.events)
+    ].join('')}</div>${x.ua ? `<p class="adm-mut apc-ua" translate="no">${esc(x.ua)}</p>` : ''}</details>`;
+  }).join('');
 }
 function adPanelClose() {
   const p = $('#adpanel');
@@ -427,13 +453,13 @@ function sfaDraw() {
    <label class="apc-l" for="sfamm">${esc(auT('Message on the maintenance page (optional)'))}</label><textarea id="sfamm" maxlength="500" rows="2" placeholder="${esc(auT('We are making the site better. Please come back in a little while.'))}">${esc(d.maintenance_msg || '')}</textarea></div>
   <div class="st-card sfa-c"><h3>${esc(auT('Announcement banner'))}</h3><p class="sx-note">${esc(auT('Shown at the top of the site for everyone. Leave it empty to hide it.'))}</p>
    <textarea id="sfab" maxlength="300" rows="2">${esc(d.banner || '')}</textarea>
-   <div class="sfa-2"><label class="apc-l">${esc(auT('Style'))}<select id="sfal"><option value="info"${d.banner_level !== 'warning' ? ' selected' : ''}>${esc(auT('Info'))}</option><option value="warning"${d.banner_level === 'warning' ? ' selected' : ''}>${esc(auT('Warning'))}</option></select></label><label class="apc-l">${esc(auT('Ends (optional)'))}<input type="datetime-local" id="sfau" value="${esc(sfaLocal(d.banner_until))}"></label></div></div>
+   <div class="sfa-2"><label class="apc-l">${esc(auT('Style'))}<select id="sfal"><option value="info"${d.banner_level !== 'warning' ? ' selected' : ''}>${esc(auT('Info'))}</option><option value="warning"${d.banner_level === 'warning' ? ' selected' : ''}>${esc(auT('Alert (middle of the screen)'))}</option></select></label><label class="apc-l">${esc(auT('Ends (optional)'))}<input type="datetime-local" id="sfau" value="${esc(sfaLocal(d.banner_until))}"></label></div></div>
   <div class="st-card sfa-c"><h3>${esc(auT('Turned off games'))}</h3><p class="sx-note">${esc(auT('These games show as temporarily unavailable and cannot be started.'))}</p>
    <label class="search sfa-q"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="sfaq" type="search" placeholder="${esc(auT('Search games'))}" autocomplete="off" spellcheck="false" aria-label="${esc(auT('Search games'))}"></label>
    <div class="sfa-g" id="sfag" translate="no">${games.slice().sort((a, b) => (off.has(b.id) - off.has(a.id)) || a.title.localeCompare(b.title)).map(g => `<button type="button" class="chip" data-sfg="${esc(g.id)}" aria-pressed="${off.has(g.id)}">${esc(g.title)}</button>`).join('')}</div>
    <label class="apc-l" for="sfadm">${esc(auT('Message for turned off games (optional)'))}</label><textarea id="sfadm" maxlength="300" rows="2" placeholder="${esc(auT('This game is being fixed. Try again a bit later.'))}">${esc(d.disabled_msg || '')}</textarea></div>
   <div class="sfa-f"><div class="note" id="sfan" role="status"></div><button class="btn2 pri" type="button" id="sfas">${esc(auT('Save and publish'))}</button></div>${adIsOwner() ? `
-  <div class="st-card sfa-c" id="sfpw"><h3>${esc(auT('Site password'))}</h3><p class="sx-note">${esc(auT('The password everyone types to open the site. Only owners can see and change this.'))}</p>
+  <div class="st-card sfa-c" id="sfpw"><h3>${esc(auT('Site password'))}</h3><p class="sx-note">${esc(auT('The password everyone types to open the site. Only owners can see and change this.'))}</p><p class="sx-note">${esc(auT('A change works at once for everyone whose network reaches the accounts server. Networks that block it keep accepting the previous password until the next deploy. Browsers that already unlocked the site stay unlocked.'))}</p>
    <div class="sfa-2"><div><label class="apc-l" for="sfp1">${esc(auT('New password'))}</label><div class="au-pw"><input id="sfp1" type="password" autocomplete="new-password" maxlength="200" spellcheck="false">${EYE}</div></div><div><label class="apc-l" for="sfp2">${esc(auT('Confirm password'))}</label><div class="au-pw"><input id="sfp2" type="password" autocomplete="new-password" maxlength="200" spellcheck="false">${EYE}</div></div></div>
    <div class="sfa-f"><div class="note" id="sfpn" role="status"></div><button class="btn2 pri" type="button" id="sfps">${esc(auT('Save password'))}</button></div></div>` : ''}</div>`;
 }
@@ -806,6 +832,55 @@ function insHeat(H) {
   for (let d = 0; d < 7; d++) { h += `<span class="ins-hd">${esc(day(d))}</span>`; for (let c = 0; c < 24; c++) { const v = M[d + '-' + c] || 0; h += `<i style="--a:${(v / max).toFixed(3)};--i:${d * 24 + c}" title="${esc(day(d) + ' ' + c + ':00 · ' + stH(v))}"></i>`; } }
   return h + '</div>';
 }
+function insMore() {
+  const M = INS.m || {};
+  if (M.__err) return `<h2 class="ins-h">${esc(auT('More player data'))}</h2><div class="st-card adm-mut">${esc(auT('Run round9_more.sql in the Supabase SQL editor to see this part.'))}</div>`;
+  const S = M.sessions || {}, mins = v => v == null ? '—' : v >= 60 ? Math.round(v / 60) + ' min' : Math.round(v) + ' s', num = v => v == null ? '—' : stN(+v);
+  return `<h2 class="ins-h">${esc(auT('Sessions'))}</h2>
+  ${insTiles([['Sessions measured', num(S.n)], ['Median session', mins(S.dur)], ['Longest 10% of sessions', mins(S.dur90)], ['Median time actually looking', mins(S.vis)], ['Longest idle moment (median)', mins(S.idle)], ['Games per session', num(S.games)], ['Different games per session', num(S.gset)], ['Keys pressed per session', num(S.keys)], ['Mouse clicks per session', num(S.clicks)], ['Screen taps per session', num(S.taps)], ['Mouse travel per session (px)', num(S.mdist)], ['JavaScript errors per session', S.errs == null ? '—' : S.errs], ['Sessions using full screen', S.fs == null ? '—' : S.fs + '%']])}
+  <div class="ins-grid">
+   ${insBars('Session length', S.b)}
+   ${insBars('Connection to the accounts server', M.route)}
+   ${insBars('Account state', M.acct)}
+   ${insBars('Theme', M.theme)}
+   ${insBars('Why joining a party needed a retry', M.retries)}
+   ${insBars('Arrived from', M.refs)}
+   ${insBars('First page opened', M.land)}
+   ${insBars('Page opened by', M.navt)}
+  </div>
+  <h2 class="ins-h">${esc(auT('Screens and display'))}</h2>
+  ${insTiles([['Dark mode preferred', insShare(M.dark)], ['Reduced motion', insShare(M.rmo)], ['HDR screen', insShare(M.hdr)], ['Mouse or trackpad (hover)', insShare(M.hov)], ['Several screens', insShare(M.ext)]])}
+  <div class="ins-grid">
+   ${insBars('Screen resolutions', M.screens)}
+   ${insBars('Browser window sizes', M.viewports)}
+   ${insBars('Pixel density', M.dpr)}
+   ${insBars('Browser zoom', M.zoom)}
+   ${insBars('Main pointer', M.pointer)}
+   ${insBars('Touch points', M.touch)}
+   ${insBars('Orientation', M.orient)}
+   ${insBars('Colour range', M.gamut)}
+   ${insBars('Colour depth (bits)', M.depth)}
+   ${insBars('Opened as', M.mode)}
+  </div>
+  <h2 class="ins-h">${esc(auT('Hardware and browser features'))}</h2>
+  ${insTiles([['Charging now', insShare(M.charging)], ['Automated browsers (bots)', insShare(M.bot)], ['Do Not Track on', insShare(M.dnt)], ['Global Privacy Control on', insShare(M.gpc)], ['AV1 video', insShare(M.av1)], ['HEVC video', insShare(M.hevc)], ['Virtual reality support', insShare(M.xr)]])}
+  <div class="ins-grid">
+   ${insBars('Speed test (lower is faster)', M.bench)}
+   ${insBars('Battery level', M.battery)}
+   ${insBars('Browser storage available', M.quota)}
+   ${insBars('JavaScript memory limit (MB)', M.heap)}
+   ${insBars('WebGPU graphics', M.gpuv)}
+   ${insBars('Largest texture size', M.mtex)}
+   ${insBars('Platforms', M.plat)}
+   ${insBars('Region settings', M.locale)}
+   ${insBars('Clock (h12 or h23)', M.hour)}
+   ${insBars('Notification permission', M.notif)}
+   ${insBars('Microphones', M.mic)}
+   ${insBars('Cameras', M.cam)}
+   ${insBars('Speech voices', M.voices)}
+   ${insBars('Audio sample rate', M.srate)}
+  </div>`;
+}
 function insDraw(an) {
   const box = $('#insv');
   if (!box) return;
@@ -877,6 +952,7 @@ function insDraw(an) {
    ${insBars('CPU architecture', V.arch)}
    ${insBars('Main browser language', V.langs)}
   </div>
+  ${insMore()}
   <h2 class="ins-h">${esc(auT('Ads'))}</h2>
   <div class="st-card">${(A.slots || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Slot', 'Impressions', 'Clicks', 'Click rate', 'Revenue (USD)', 'Per 1,000 views'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${A.slots.map(s => `<tr><td>${esc(s.slot)}</td><td>${stN(s.imp)}</td><td>${stN(s.clk)}</td><td>${s.imp ? (100 * s.clk / s.imp).toFixed(2) : 0}%</td><td>${(+s.usd || 0).toFixed(2)}</td><td>${s.imp ? (1000 * s.usd / s.imp).toFixed(2) : '—'}</td></tr>`).join('')}</tbody></table></div>` : `<p class="adm-mut">${esc(auT('No ads on the site yet. Ad blocker use is measured already; impressions, clicks and revenue start counting as soon as an ad slot calls Ameplay.ads.watch(element, slot).'))}</p>`}</div>
   <p class="adm-mut st-at">${esc(auT('Updated {t}.').replace('{t}', new Date(D.at || Date.now()).toLocaleTimeString()))}</p>`;
@@ -889,7 +965,7 @@ async function insLoad(force) {
   INS.busy = true;
   if (!INS.d) box.innerHTML = '<div class="tiles adm-tiles">' + '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(4) + '</div><i class="sk sk-chart"></i><i class="sk sk-chart"></i>';
   box.classList.add('sx-busy');
-  try { INS.d = await adRpc('admin_insights', { p_days: INS.days }); INS.at = Date.now(); insDraw(!INS.drawn || !!ST.anim); INS.drawn = true; ST.anim = 0; }
+  try { const [d, m] = await Promise.all([adRpc('admin_insights', { p_days: INS.days }), adRpc('admin_insights_more', { p_days: INS.days }).catch(e => ({ __err: String(e && e.message || e) }))]); INS.d = d; INS.m = m; INS.at = Date.now(); insDraw(!INS.drawn || !!ST.anim); INS.drawn = true; ST.anim = 0; }
   catch (e) { box.innerHTML = `<div class="adm-empty">${esc(/admin_insights|function|404|PGRST/i.test(e.message || '') ? auT('The insights database update is not installed yet. Run round8_insights.sql in the Supabase SQL editor.') : auT('Could not load the stats. Check your connection and try again.'))}</div>`; }
   finally { INS.busy = false; box.classList.remove('sx-busy'); }
 }

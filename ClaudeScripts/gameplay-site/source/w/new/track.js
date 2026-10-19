@@ -1,3 +1,4 @@
+const TRS = { t0: Date.now(), vis: 0, vt: performance.now(), foc: 0, blur: 0, keys: 0, clicks: 0, taps: 0, md: 0, mx: null, my: null, wheel: 0, scr: 0, sy: 0, games: 0, gset: new Set(), fs: 0, off: 0, errs: 0, idle: 0, la: performance.now(), copy: 0, rsz: 0, seq: 0 };
 const TR = { g: null, v0: 0, sy: 0, impQ: [], io: null, clicks: [], dw: 0, vit: { cls: 0, inp: 0, lcp: null }, vsent: false, pads: new Set(), kb: '', env: 0, asked: new Set() };
 const TR_DC = /amazon|aws|google cloud|google llc|microsoft|azure|digitalocean|ovh|hetzner|linode|akamai|vultr|choopa|oracle|contabo|leaseweb|m247|datacamp|cdn77|scaleway|alibaba|tencent|hostinger|ionos|psychz|zenlayer|packethub|tzulo|quadranet|nordvpn|expressvpn|proton|mullvad|surfshark|private internet|cyberghost|ipvanish|hide\.me|windscribe|cloudflare|fastly|gcore|constant company|hostwinds|kamatera|clouvider|serverius|worldstream|hivelocity|colocrossing/i;
 const trPadKind = id => /054c|sony|playstation|dualsense|dualshock/i.test(id) ? 'PlayStation' : /045e|xbox|xinput/i.test(id) ? 'Xbox' : /057e|nintendo|switch|joy-con/i.test(id) ? 'Switch' : /8bitdo/i.test(id) ? '8BitDo' : /046d|logitech/i.test(id) ? 'Logitech' : 'Other';
@@ -8,6 +9,7 @@ const trKbOf = (q, y, w) => q === 'a' ? 'azerty' : y === 'z' ? 'qwertz' : q === 
 const trVotes = () => { try { return JSON.parse(localStorage.getItem('gameplay:votes')) || {}; } catch (e) { return {}; } };
 
 function trStart(g, ctl) {
+  TRS.games++; TRS.gset.add(g.id);
   const A = ctl.api, G = { g, t0: performance.now(), why: 'exit', rounds: 0, sc: [], last: null, lv: null, fr: 0, ft: 0, fs: [], inp: { k: 0, m: 0, t: 0, p: 0 }, on: {} };
   if (TR.g) trEnd1(TR.g);
   TR.g = G;
@@ -177,13 +179,61 @@ async function trEnv() {
   const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean).map(p => trPadKind(p.id)) : [];
   track('env_dev', { osv: trOs(hi), brv: trBr(hi), model: hi && hi.model ? hi.model : null, arch: hi && hi.architecture ? hi.architecture + (hi.bitness ? '-' + hi.bitness : '') : null, cores: navigator.hardwareConcurrency || null, mem: navigator.deviceMemory || null, gpu: trGpu() || null, gl2: 'WebGL2RenderingContext' in window, wgpu: 'gpu' in navigator, hz, kb: TR.kb || null, pads, adb, langs: (navigator.languages || []).slice(0, 6) });
   const g = geo || {}, dc = TR_DC.test(g.isp || ''), tzm = !!(g.gtz && tz && g.gtz !== tz && trOff(g.gtz) !== trOff(tz));
+  setTimeout(() => trMore().catch(() => {}), 2500);
   track('env_geo', { tz, off: -now.getTimezoneOffset(), lh: now.getHours(), wd: now.getDay(), net: c.effectiveType || null, ctype: c.type || null, dl: c.downlink != null ? c.downlink : null, rtt: c.rtt != null ? c.rtt : null, save: c.saveData != null ? !!c.saveData : null, cc: g.cc || null, country: g.country || null, region: g.region || null, city: g.city || null, isp: g.isp || null, asn: g.asn || null, dc, tzm, vpn: dc || tzm });
 }
-function trHidden() { trImpFlush(); trVitalsSend(); }
+const trMq = q => { try { return matchMedia(q).matches; } catch (e) { return false; } };
+const trB = (v, cuts, unit) => { if (v == null || !isFinite(v)) return null; for (const c of cuts) if (v < c) return '<' + c + unit; return cuts[cuts.length - 1] + unit + '+'; };
+const trHost = u => { try { return u ? new URL(u).hostname.replace(/^www\./, '').slice(0, 60) : ''; } catch (e) { return ''; } };
+function trBench() {
+  const t = performance.now();
+  let x = 0;
+  for (let i = 0; i < 3e6; i++) x += Math.sqrt(i) * Math.sin(i);
+  return x && Math.round((performance.now() - t) * 10) / 10;
+}
+async function trMore() {
+  const sc = screen || {}, o = sc.orientation || {}, dpr = window.devicePixelRatio || 1;
+  track('env_scr', { sw: sc.width || null, sh: sc.height || null, aw: sc.availWidth || null, ah: sc.availHeight || null, cd: sc.colorDepth || null, dpr: Math.round(dpr * 100) / 100, ori: o.type || null, vw: innerWidth, vh: innerHeight, tp: navigator.maxTouchPoints || 0, ptr: trMq('(pointer: fine)') ? 'fine' : trMq('(pointer: coarse)') ? 'coarse' : 'none', hov: trMq('(hover: hover)'), dark: trMq('(prefers-color-scheme: dark)'), rmo: trMq('(prefers-reduced-motion: reduce)'), con: trMq('(prefers-contrast: more)'), fcol: trMq('(forced-colors: active)'), rtr: trMq('(prefers-reduced-transparency: reduce)'), hdr: trMq('(dynamic-range: high)'), gam: trMq('(color-gamut: rec2020)') ? 'rec2020' : trMq('(color-gamut: p3)') ? 'p3' : 'srgb', dm: ['fullscreen', 'standalone', 'minimal-ui'].find(m => trMq('(display-mode: ' + m + ')')) || 'browser', ext: sc.isExtended != null ? !!sc.isExtended : null, zoom: outerWidth && innerWidth ? Math.round(100 * outerWidth / innerWidth) / 100 : null, res: (sc.width || 0) + 'x' + (sc.height || 0) });
+  const n = navigator, A = window.AudioContext || window.webkitAudioContext;
+  let sr = null, ach = null, mtex = null, glx = null, voices = null, devs = null, bat = null, est = null, gpuv = null, pers = null;
+  try { if (A) { const ac = new A(); sr = ac.sampleRate; ach = ac.destination ? ac.destination.maxChannelCount : null; ac.close(); } } catch (e) {}
+  try { const gl = document.createElement('canvas').getContext('webgl'); if (gl) { mtex = gl.getParameter(gl.MAX_TEXTURE_SIZE); glx = (gl.getSupportedExtensions() || []).length; const lc = gl.getExtension('WEBGL_lose_context'); if (lc) lc.loseContext(); } } catch (e) {}
+  try { voices = window.speechSynthesis ? speechSynthesis.getVoices().length : null; } catch (e) {}
+  const v = document.createElement('video'), cp = t => { try { return window.MediaSource && MediaSource.isTypeSupported ? MediaSource.isTypeSupported(t) : !!v.canPlayType(t); } catch (e) { return false; } };
+  const [dl, b, q, gp, ps] = await Promise.all([
+    trTo(n.mediaDevices && n.mediaDevices.enumerateDevices ? n.mediaDevices.enumerateDevices().catch(() => null) : Promise.resolve(null), 2000),
+    trTo(n.getBattery ? n.getBattery().catch(() => null) : Promise.resolve(null), 2000),
+    trTo(n.storage && n.storage.estimate ? n.storage.estimate().catch(() => null) : Promise.resolve(null), 2000),
+    trTo(n.gpu && n.gpu.requestAdapter ? n.gpu.requestAdapter().catch(() => null) : Promise.resolve(null), 3000),
+    trTo(n.storage && n.storage.persisted ? n.storage.persisted().catch(() => null) : Promise.resolve(null), 2000)
+  ]);
+  if (dl) devs = { mic: dl.filter(d => d.kind === 'audioinput').length, cam: dl.filter(d => d.kind === 'videoinput').length, spk: dl.filter(d => d.kind === 'audiooutput').length };
+  if (b) bat = { lvl: Math.round(b.level * 100), chg: !!b.charging };
+  if (q) est = { quota: Math.round((q.quota || 0) / 1048576), used: Math.round((q.usage || 0) / 1048576) };
+  if (gp) { try { const i = gp.info || (gp.requestAdapterInfo ? await trTo(gp.requestAdapterInfo(), 1500) : null); if (i) gpuv = [i.vendor, i.architecture].filter(Boolean).join(' ').slice(0, 60) || null; } catch (e) {} }
+  if (ps != null) pers = !!ps;
+  const ro = (() => { try { return Intl.DateTimeFormat().resolvedOptions(); } catch (e) { return {}; } })();
+  let hc = null, fdw = null;
+  try { hc = new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hourCycle || null; } catch (e) {}
+  try { const L = new Intl.Locale(ro.locale || n.language); const w = L.getWeekInfo ? L.getWeekInfo() : L.weekInfo; fdw = w ? w.firstDay : null; } catch (e) {}
+  const nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null, mem = performance.memory;
+  const bench = await new Promise(r => (window.requestIdleCallback || setTimeout)(() => { try { r(trBench()); } catch (e) { r(null); } }, { timeout: 3000 }));
+  track('env_caps', { ck: n.cookieEnabled, dnt: n.doNotTrack === '1' || window.doNotTrack === '1', gpc: !!n.globalPrivacyControl, pdf: n.pdfViewerEnabled != null ? !!n.pdfViewerEnabled : null, bot: !!n.webdriver, wasm: typeof WebAssembly === 'object', sab: typeof SharedArrayBuffer === 'function', coi: !!window.crossOriginIsolated, swk: 'serviceWorker' in n, notif: window.Notification ? Notification.permission : null, vib: 'vibrate' in n, bt: 'bluetooth' in n, usb: 'usb' in n, ser: 'serial' in n, hid: 'hid' in n, xr: 'xr' in n, midi: 'requestMIDIAccess' in n, share: 'share' in n, wl: 'wakeLock' in n, voices, mic: devs ? devs.mic : null, cam: devs ? devs.cam : null, spk: devs ? devs.spk : null, sr, ach, h264: cp('video/mp4; codecs="avc1.42E01E"'), vp9: cp('video/webm; codecs="vp9"'), av1: cp('video/mp4; codecs="av01.0.05M.08"'), hevc: cp('video/mp4; codecs="hvc1.1.6.L93.B0"'), mtex, glx, gpuv, quota: est ? est.quota : null, used: est ? est.used : null, qb: est ? trB(est.quota, [200, 1000, 10000, 100000], ' MB') : null, pers, heap: mem ? Math.round(mem.jsHeapSizeLimit / 1048576) : null, bat: bat ? bat.lvl : null, batb: bat ? trB(bat.lvl, [20, 50, 80], '%') : null, chg: bat ? bat.chg : null, bench, benchb: trB(bench, [15, 30, 60, 120], ' ms'), loc: ro.locale || null, cal: ro.calendar || null, num: ro.numberingSystem || null, hc, fdw, ref: trHost(document.referrer) || null, land: (location.pathname + location.hash).slice(0, 60), navt: nav ? nav.type : null, hist: history.length, plat: n.platform || null, vend: n.vendor || null, ua: n.userAgent.slice(0, 300), route: SB.on ? (SBN.best() === SUPABASE_DIRECT ? 'direct' : 'relay') : 'none', down: !!window.__gpSbDown });
+}
+function trSess(final) {
+  if (!anOk()) return;
+  const t = performance.now();
+  if (document.visibilityState === 'visible') TRS.vis += t - TRS.vt;
+  TRS.vt = t;
+  TRS.idle = Math.max(TRS.idle, t - TRS.la);
+  track('sess_sum', { seq: ++TRS.seq, final: !!final, dur: Math.round((Date.now() - TRS.t0) / 1000), vis: Math.round(TRS.vis / 1000), foc: TRS.foc, blur: TRS.blur, keys: TRS.keys, clicks: TRS.clicks, taps: TRS.taps, mdist: Math.round(TRS.md), wheel: TRS.wheel, scr: Math.round(TRS.scr), games: TRS.games, gset: TRS.gset.size, gl: [...TRS.gset].slice(0, 30), fs: TRS.fs, off: TRS.off, errs: TRS.errs, idle: Math.round(TRS.idle / 1000), copy: TRS.copy, rsz: TRS.rsz, route: SB.on ? (SBN.best() === SUPABASE_DIRECT ? 'direct' : 'relay') : 'none', acct: SB.user ? 'user' : SB.guest ? 'guest' : 'none', lang: document.documentElement.lang || null, theme: document.documentElement.getAttribute('data-theme') || 'system' });
+}
+function trHidden() { trImpFlush(); trVitalsSend(); trSess(false); }
 function trEnd() {
   if (TR.g) { TR.g.why = 'close'; trEnd1(TR.g); }
   trScroll(); trImpFlush(); trVitalsSend();
   track('page_time', { v: view, sec: Math.round((performance.now() - TR.v0) / 1000), exit: true });
+  trSess(true);
 }
 function trBoot() {
   TR.v0 = performance.now();
@@ -218,6 +268,21 @@ function trBoot() {
   trImpScan();
   setInterval(trImpFlush, 30000);
   if (anOk()) setTimeout(trEnv, 1500);
+  const act = () => { const t = performance.now(); TRS.idle = Math.max(TRS.idle, t - TRS.la); TRS.la = t; };
+  addEventListener('keydown', () => { TRS.keys++; act(); }, { capture: true, passive: true });
+  addEventListener('pointerdown', e => { if (e.pointerType === 'touch') TRS.taps++; else TRS.clicks++; act(); }, { capture: true, passive: true });
+  addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') return; if (TRS.mx != null) TRS.md += Math.min(400, Math.hypot(e.clientX - TRS.mx, e.clientY - TRS.my)); TRS.mx = e.clientX; TRS.my = e.clientY; act(); }, { capture: true, passive: true });
+  addEventListener('wheel', () => { TRS.wheel++; act(); }, { capture: true, passive: true });
+  addEventListener('scroll', () => { TRS.scr += Math.abs(scrollY - TRS.sy); TRS.sy = scrollY; }, { passive: true });
+  addEventListener('focus', () => TRS.foc++);
+  addEventListener('blur', () => TRS.blur++);
+  addEventListener('offline', () => TRS.off++);
+  addEventListener('error', () => TRS.errs++);
+  addEventListener('copy', () => TRS.copy++);
+  addEventListener('resize', () => TRS.rsz++, { passive: true });
+  document.addEventListener('fullscreenchange', () => { if (document.fullscreenElement) TRS.fs++; });
+  document.addEventListener('visibilitychange', () => { const t = performance.now(); if (document.visibilityState === 'hidden') TRS.vis += t - TRS.vt; TRS.vt = t; });
+  setInterval(() => { if (document.visibilityState === 'visible') trSess(false); }, 300000);
 }
 Ameplay.ads = {
   watch(el, slot, net) {
