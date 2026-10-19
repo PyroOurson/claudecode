@@ -35,7 +35,7 @@ const PATH_MODE = /(^|\.)(web\.app|firebaseapp\.com)$/i.test(location.hostname) 
 const PAUSE = { on: false };
 (() => { try { if (localStorage.getItem('gameplay:reset') !== '4') { const keep = k => k === 'gameplay:consent' || k === 'gameplay:lang' || k.indexOf('gameplay:gate') === 0 || k.indexOf('sb-') === 0; let o = {}; try { o = JSON.parse(localStorage.getItem('gameplay:v1') || '{}') || {}; } catch (e) {} const prefs = o.prefs; Object.keys(localStorage).forEach(k => { if (!keep(k)) localStorage.removeItem(k); }); localStorage.setItem('gameplay:v1', JSON.stringify(prefs ? { prefs } : {})); localStorage.setItem('gameplay:reset', '4'); try { indexedDB.deleteDatabase('gameplay-minecraft'); } catch (e) {} } } catch (e) {} })();
 const SUPABASE_DIRECT = 'https://uafouyvtcijptspjbsqf.supabase.co';
-const SUPABASE_RELAYS = ['https://gameplaygames.vitalang.net', 'https://gameplay-api.vitalang.net'];
+const SUPABASE_RELAYS = ['https://gameplay-api.vitalang.net'];
 const SUPABASE_URL = (typeof window.__gpSbUrl === 'string' && /^https:\/\//.test(window.__gpSbUrl) && window.__gpSbUrl) || SUPABASE_DIRECT;
 const SBN = (() => {
   const K = 'gameplay:sb';
@@ -44,7 +44,7 @@ const SBN = (() => {
   const bad = {}, wsBad = {}, fresh = (m, b, ms) => (m[b] || 0) > Date.now() - ms;
   const strip = u => { u = String(u).replace(/^ws(s?):/, 'http$1:'); for (const b of all) if (u === b || u.indexOf(b + '/') === 0 || u.indexOf(b + '?') === 0) return u.slice(b.length); return null; };
   const order = () => [best].concat(all.filter(b => b !== best).sort((a, c) => (bad[a] || 0) - (bad[c] || 0)));
-  const good = b => { delete bad[b]; if (best === b) return; best = b; try { sessionStorage.setItem(K, b); } catch (e) {} };
+  const good = b => { delete bad[b]; window.__gpSbDown = false; if (best === b) return; best = b; try { sessionStorage.setItem(K, b); } catch (e) {} };
   const page = r => /text\/html/i.test(r.headers.get('content-type') || '');
   async function viaFetch(input, init) {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : null;

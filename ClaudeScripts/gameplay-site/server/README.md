@@ -1,5 +1,7 @@
 # gameplay server (gameplaygames.vitalang.net)
 
+**Not in use yet.** The site does not contact this machine. When it should, run the setup below and add `https://gameplaygames.vitalang.net` to `SUPABASE_RELAYS` in `ClaudeScripts/gameplay-site/source/w/new/consts.js`, then rebuild. The Cloudflare Worker below does not need the machine and is used already.
+
 Some school and office networks block `supabase.co`, where the accounts, friends, chat, statistics and site switches live. This server relays those requests: the site first talks to Supabase directly, and when that fails it uses `https://gameplaygames.vitalang.net` instead, with no setting for players to change. The online multiplayer server will be added behind the same address later.
 
 It runs on Debian (or Raspberry Pi OS) on arm64 or x86, without Docker. It uses Caddy from the Debian packages, which also gets and renews the HTTPS certificate on its own.
@@ -31,7 +33,7 @@ Run it again at any time; it changes nothing that is already right.
 ## Check it
 
 - From a phone on mobile data: https://gameplaygames.vitalang.net/health shows `ok`.
-- On the restricted network: open https://gameplaygames.web.app/check. Under "relay 1 (gameplaygames.vitalang.net)", every line should say Works.
+- On the restricted network: open https://gameplaygames.web.app/check. Once it is added to the site, its relay lines should all say Works.
 - Logs: `journalctl -u caddy -f` and `/var/log/caddy/gameplay.log`.
 
 ## Second relay: Cloudflare Worker (gameplay-api.vitalang.net)
@@ -41,7 +43,7 @@ This one runs on Cloudflare's network, so it keeps working when the home connect
 1. In the Cloudflare dashboard: **Workers & Pages** → **Create** → **Create Worker**, name it `gameplay-api`, press **Deploy**.
 2. **Edit code**: replace everything with the content of `cloudflare-worker.js` (in this folder), then press **Deploy**.
 3. **Settings** → **Domains & Routes** → **Add** → **Custom domain** → `gameplay-api.vitalang.net` → **Add domain**. Cloudflare creates the DNS record itself.
-4. Check: https://gameplay-api.vitalang.net/health shows `ok`, and on https://gameplaygames.web.app/check the "relay 2" lines say Works.
+4. Check: https://gameplay-api.vitalang.net/health shows `ok`, and on https://gameplaygames.web.app/check the "relay 1 (gameplay-api.vitalang.net)" lines say Works.
 
 ## What it relays
 

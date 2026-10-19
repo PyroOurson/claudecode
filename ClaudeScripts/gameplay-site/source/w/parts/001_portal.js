@@ -37,7 +37,7 @@ const PATH_MODE = /(^|\.)(web\.app|firebaseapp\.com)$/i.test(location.hostname) 
 const PAUSE = { on: false };
 (() => { try { if (localStorage.getItem('gameplay:reset') !== '4') { const keep = k => k === 'gameplay:consent' || k === 'gameplay:lang' || k.indexOf('gameplay:gate') === 0 || k.indexOf('sb-') === 0; let o = {}; try { o = JSON.parse(localStorage.getItem('gameplay:v1') || '{}') || {}; } catch (e) {} const prefs = o.prefs; Object.keys(localStorage).forEach(k => { if (!keep(k)) localStorage.removeItem(k); }); localStorage.setItem('gameplay:v1', JSON.stringify(prefs ? { prefs } : {})); localStorage.setItem('gameplay:reset', '4'); try { indexedDB.deleteDatabase('gameplay-minecraft'); } catch (e) {} } } catch (e) {} })();
 const SUPABASE_DIRECT = 'https://uafouyvtcijptspjbsqf.supabase.co';
-const SUPABASE_RELAYS = ['https://gameplaygames.vitalang.net', 'https://gameplay-api.vitalang.net'];
+const SUPABASE_RELAYS = ['https://gameplay-api.vitalang.net'];
 const SUPABASE_URL = (typeof window.__gpSbUrl === 'string' && /^https:\/\//.test(window.__gpSbUrl) && window.__gpSbUrl) || SUPABASE_DIRECT;
 const SBN = (() => {
   const K = 'gameplay:sb';
@@ -46,7 +46,7 @@ const SBN = (() => {
   const bad = {}, wsBad = {}, fresh = (m, b, ms) => (m[b] || 0) > Date.now() - ms;
   const strip = u => { u = String(u).replace(/^ws(s?):/, 'http$1:'); for (const b of all) if (u === b || u.indexOf(b + '/') === 0 || u.indexOf(b + '?') === 0) return u.slice(b.length); return null; };
   const order = () => [best].concat(all.filter(b => b !== best).sort((a, c) => (bad[a] || 0) - (bad[c] || 0)));
-  const good = b => { delete bad[b]; if (best === b) return; best = b; try { sessionStorage.setItem(K, b); } catch (e) {} };
+  const good = b => { delete bad[b]; window.__gpSbDown = false; if (best === b) return; best = b; try { sessionStorage.setItem(K, b); } catch (e) {} };
   const page = r => /text\/html/i.test(r.headers.get('content-type') || '');
   async function viaFetch(input, init) {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : null;
@@ -2633,7 +2633,7 @@ function related(g) {
   return scored.sort((a, b) => b[0] - a[0]).map(x => x[1]);
 }
 
-const SB = { on: !!(SUPABASE_URL && SUPABASE_ANON_KEY) && !window.__gpSbDown, c: null, p: null, lib: null, user: null, session: null, prof: null, syncing: false, again: false, fail: 0, t: 0, loud: false, mode: 'in', choosing: false, view: 'main' };
+const SB = { on: !!(SUPABASE_URL && SUPABASE_ANON_KEY), c: null, p: null, lib: null, user: null, session: null, prof: null, syncing: false, again: false, fail: 0, t: 0, loud: false, mode: 'in', choosing: false, view: 'main' };
 const AN_KEY = 'gameplay:analytics', CK_KEY = 'gameplay:consent', AN_MAX = 2000;
 const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 let consent = null;
@@ -3459,7 +3459,6 @@ function gpNetWrap(g, net) {
 }
 
 ['load', 'error'].forEach(t => document.addEventListener(t, e => { const m = e.target; if (m && m.tagName === 'IMG') m.classList.add('ld'); }, true));
-const AU_DOWN = 'Accounts cannot be reached on this network. You can still play, and your progress stays on this computer.';
 const SB_STORE = 'sb-gameplay-auth', SYK = 'gameplay:sync', VIDK = 'gameplay:vid', SAVE_P = 'gameplay:save:';
 const UN_RE = /^[a-z0-9_.]{3,20}$/, GID_RE = /^[a-z0-9][a-z0-9-]{0,39}$/, EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const sbBase = () => PATH_MODE ? location.origin + '/' : location.origin + location.pathname;
@@ -3832,9 +3831,22 @@ function auFocus() {
   const f = { newpass: '#anpass', reset: '#aremail', check: '#accode', main: SB.mode === 'up' ? '#auupemail' : '#auemail' }[SB.view], n = f && $(f);
   if (n && SB.on && !auCoarse() && openK === 'mauth') n.focus({ preventScroll: true });
 }
+function auDown() {
+  let n = $('#audown');
+  if (!window.__gpSbDown || SB.user) { if (n) n.hidden = true; return; }
+  if (!n) {
+    n = document.createElement('div'); n.id = 'audown'; n.className = 'au-off au-dn'; n.setAttribute('role', 'status');
+    n.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><div><b>Cannot reach the sign-in service from this network yet.</b><span>It keeps trying in the background. If it lasts, </span><a target="_blank" rel="noopener">run a connection check</a></div>';
+    n.querySelector('a').href = PATH_MODE ? '/check' : 'gameplay/check.html';
+    $('#auoff').after(n);
+  }
+  n.hidden = false;
+  clearTimeout(SB.dt);
+  SB.dt = setTimeout(() => SBN.fetch(SBN.url('/auth/v1/health'), { headers: { apikey: SUPABASE_ANON_KEY }, cache: 'no-store', credentials: 'omit' }).catch(() => {}).then(() => { auSettings(); auDown(); }), 8000);
+}
 function auShow() {
   $('#auoff').hidden = SB.on;
-  if (window.__gpSbDown && !$('#auoff a')) { $('#auoff b').textContent = AU_DOWN; const a = document.createElement('a'); a.href = PATH_MODE ? '/check' : 'gameplay/check.html'; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Run a connection check'; a.style.cssText = 'display:block;margin-top:4px;color:inherit;font-weight:600'; $('#auoff b').after(a); }
+  auDown();
   if (SB.on) { sbClient().catch(() => {}); auSettings(); if (gisWanted()) requestAnimationFrame(() => gisPaint()); }
   ['aunote', 'auupnote', 'arnote', 'annote', 'acnote'].forEach(id => auMsg(id, ''));
   document.querySelectorAll('#aumodal .au-err').forEach(e => auFieldErr(e.closest('.fld').querySelector('input'), ''));
@@ -4409,7 +4421,7 @@ function frOpen() {
   if (!ok) {
     ['g-res', 'g-req', 'g-fr'].forEach(id => { $('#' + id).hidden = true; });
     $('#frgt').textContent = st === 'off' ? 'Friends are coming soon' : 'Log in to add friends';
-    $('#frgs').textContent = st === 'off' ? (window.__gpSbDown ? AU_DOWN : 'Accounts are not switched on yet. Then you can find players by their username and add them as friends.') : 'Create a free account or log in, then find players by their username.';
+    $('#frgs').textContent = st === 'off' ? 'Accounts are not switched on yet. Then you can find players by their username and add them as friends.' : 'Create a free account or log in, then find players by their username.';
     return;
   }
   FR.q = inp.value.trim().toLowerCase().replace(/^@/, '');
@@ -4551,7 +4563,6 @@ function auBoot() {
     auSettings();
   }
   try { localStorage.removeItem('gameplay:guest'); sessionStorage.removeItem('gameplay:guest'); } catch (e) {}
-  if (window.__gpSbDown) document.querySelectorAll('.scard[data-au="off"] > p').forEach(p => { p.textContent = AU_DOWN; });
   auRender();
   auGate();
 }
@@ -7607,7 +7618,9 @@ const R = [
 ["Continue as guest", "Continuer en invité", "Continuar como invitado", "Als Gast fortfahren", "Continua come ospite", "Continuar como convidado"],
 ["Play as a guest", "Jouer en invité", "Jugar como invitado", "Als Gast spielen", "Gioca come ospite", "Jogar como convidado"],
 ["You can still play every game as a guest. Your records and saves stay in this browser.", "Vous pouvez toujours jouer à tous les jeux en invité. Vos records et sauvegardes restent dans ce navigateur.", "Puedes seguir jugando a todos los juegos como invitado. Tus récords y partidas se quedan en este navegador.", "Du kannst weiterhin alle Spiele als Gast spielen. Deine Rekorde und Spielstände bleiben in diesem Browser.", "Puoi comunque giocare a tutti i giochi come ospite. Record e salvataggi restano in questo browser.", "Você ainda pode jogar todos os jogos como convidado. Seus recordes e jogos salvos ficam neste navegador."],
-["Accounts cannot be reached on this network. You can still play, and your progress stays on this computer.", "Les comptes sont inaccessibles sur ce réseau. Vous pouvez quand même jouer, et votre progression reste sur cet ordinateur.", "No se puede acceder a las cuentas desde esta red. Puedes seguir jugando y tu progreso se queda en este ordenador.", "Konten sind in diesem Netzwerk nicht erreichbar. Du kannst trotzdem spielen, dein Fortschritt bleibt auf diesem Computer.", "Gli account non sono raggiungibili da questa rete. Puoi comunque giocare e i tuoi progressi restano su questo computer.", "As contas não estão acessíveis nesta rede. Pode continuar a jogar e o seu progresso fica neste computador."],
+["Cannot reach the sign-in service from this network yet.", "Le service de connexion est injoignable depuis ce réseau pour le moment.", "No se puede acceder al servicio de inicio de sesión desde esta red por ahora.", "Der Anmeldedienst ist von diesem Netzwerk aus noch nicht erreichbar.", "Il servizio di accesso non è ancora raggiungibile da questa rete.", "O serviço de início de sessão ainda não está acessível a partir desta rede."],
+["It keeps trying in the background. If it lasts, ", "Il réessaie en arrière-plan. Si cela dure, ", "Sigue intentándolo en segundo plano. Si continúa, ", "Es wird im Hintergrund weiter versucht. Wenn es anhält, ", "Continua a riprovare in background. Se dura, ", "Continua a tentar em segundo plano. Se persistir, "],
+["run a connection check", "lancez un test de connexion", "haz una prueba de conexión", "starte einen Verbindungstest", "esegui un test di connessione", "faça um teste de ligação"],
 ["Run a connection check", "Lancer un test de connexion", "Hacer una prueba de conexión", "Verbindungstest starten", "Esegui un test di connessione", "Fazer um teste de ligação"],
 ["Accounts are not switched on yet", "Les comptes ne sont pas encore activés", "Las cuentas aún no están activadas", "Konten sind noch nicht aktiviert", "Gli account non sono ancora attivi", "As contas ainda não estão ativadas"],
 ["Accounts are not switched on yet. Soon you can keep your profile, records and saves on every device.", "Les comptes ne sont pas encore activés. Bientôt, vous retrouverez votre profil, vos records et vos sauvegardes sur tous vos appareils.", "Las cuentas aún no están activadas. Pronto podrás conservar tu perfil, récords y partidas en todos tus dispositivos.", "Konten sind noch nicht aktiviert. Bald kannst du dein Profil, deine Rekorde und Spielstände auf allen Geräten behalten.", "Gli account non sono ancora attivi. Presto potrai ritrovare profilo, record e salvataggi su ogni dispositivo.", "As contas ainda não estão ativadas. Em breve você poderá manter seu perfil, recordes e jogos salvos em todos os dispositivos."],

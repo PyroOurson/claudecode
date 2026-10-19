@@ -16,7 +16,6 @@ function gpNetWrap(g, net) {
 }
 
 ['load', 'error'].forEach(t => document.addEventListener(t, e => { const m = e.target; if (m && m.tagName === 'IMG') m.classList.add('ld'); }, true));
-const AU_DOWN = 'Accounts cannot be reached on this network. You can still play, and your progress stays on this computer.';
 const SB_STORE = 'sb-gameplay-auth', SYK = 'gameplay:sync', VIDK = 'gameplay:vid', SAVE_P = 'gameplay:save:';
 const UN_RE = /^[a-z0-9_.]{3,20}$/, GID_RE = /^[a-z0-9][a-z0-9-]{0,39}$/, EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const sbBase = () => PATH_MODE ? location.origin + '/' : location.origin + location.pathname;
@@ -389,9 +388,22 @@ function auFocus() {
   const f = { newpass: '#anpass', reset: '#aremail', check: '#accode', main: SB.mode === 'up' ? '#auupemail' : '#auemail' }[SB.view], n = f && $(f);
   if (n && SB.on && !auCoarse() && openK === 'mauth') n.focus({ preventScroll: true });
 }
+function auDown() {
+  let n = $('#audown');
+  if (!window.__gpSbDown || SB.user) { if (n) n.hidden = true; return; }
+  if (!n) {
+    n = document.createElement('div'); n.id = 'audown'; n.className = 'au-off au-dn'; n.setAttribute('role', 'status');
+    n.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><div><b>Cannot reach the sign-in service from this network yet.</b><span>It keeps trying in the background. If it lasts, </span><a target="_blank" rel="noopener">run a connection check</a></div>';
+    n.querySelector('a').href = PATH_MODE ? '/check' : 'gameplay/check.html';
+    $('#auoff').after(n);
+  }
+  n.hidden = false;
+  clearTimeout(SB.dt);
+  SB.dt = setTimeout(() => SBN.fetch(SBN.url('/auth/v1/health'), { headers: { apikey: SUPABASE_ANON_KEY }, cache: 'no-store', credentials: 'omit' }).catch(() => {}).then(() => { auSettings(); auDown(); }), 8000);
+}
 function auShow() {
   $('#auoff').hidden = SB.on;
-  if (window.__gpSbDown && !$('#auoff a')) { $('#auoff b').textContent = AU_DOWN; const a = document.createElement('a'); a.href = PATH_MODE ? '/check' : 'gameplay/check.html'; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Run a connection check'; a.style.cssText = 'display:block;margin-top:4px;color:inherit;font-weight:600'; $('#auoff b').after(a); }
+  auDown();
   if (SB.on) { sbClient().catch(() => {}); auSettings(); if (gisWanted()) requestAnimationFrame(() => gisPaint()); }
   ['aunote', 'auupnote', 'arnote', 'annote', 'acnote'].forEach(id => auMsg(id, ''));
   document.querySelectorAll('#aumodal .au-err').forEach(e => auFieldErr(e.closest('.fld').querySelector('input'), ''));
@@ -966,7 +978,7 @@ function frOpen() {
   if (!ok) {
     ['g-res', 'g-req', 'g-fr'].forEach(id => { $('#' + id).hidden = true; });
     $('#frgt').textContent = st === 'off' ? 'Friends are coming soon' : 'Log in to add friends';
-    $('#frgs').textContent = st === 'off' ? (window.__gpSbDown ? AU_DOWN : 'Accounts are not switched on yet. Then you can find players by their username and add them as friends.') : 'Create a free account or log in, then find players by their username.';
+    $('#frgs').textContent = st === 'off' ? 'Accounts are not switched on yet. Then you can find players by their username and add them as friends.' : 'Create a free account or log in, then find players by their username.';
     return;
   }
   FR.q = inp.value.trim().toLowerCase().replace(/^@/, '');
@@ -1108,7 +1120,6 @@ function auBoot() {
     auSettings();
   }
   try { localStorage.removeItem('gameplay:guest'); sessionStorage.removeItem('gameplay:guest'); } catch (e) {}
-  if (window.__gpSbDown) document.querySelectorAll('.scard[data-au="off"] > p').forEach(p => { p.textContent = AU_DOWN; });
   auRender();
   auGate();
 }

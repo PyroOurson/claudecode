@@ -132,7 +132,7 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
   const SBF = 'gameplay:sbforce';
   let only = null;
   try { const q = new URLSearchParams(location.search).get('sb'); if (q !== null) { if (q === '' || q === 'auto') sessionStorage.removeItem(SBF); else sessionStorage.setItem(SBF, q); } only = sessionStorage.getItem(SBF); } catch (e) {}
-  const pool = only == null ? ALL : only === 'none' ? [] : /^\\d+$/.test(only) && ALL[+only] ? [ALL[+only]] : ALL;
+  const pool = only == null ? ALL : /^\\d+$/.test(only) && ALL[+only] ? [ALL[+only]] : ALL;
   if (only != null && pool.length === 1) window.__gpSbOnly = true;
   const slot = ms => new Promise((res, rej) => {
     let n = 0, over = false, grace = 0, first = null, dFail = false;

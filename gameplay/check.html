@@ -39,7 +39,7 @@ textarea{width:100%;min-height:160px;margin-top:12px;border-radius:12px;border:1
 </main>
 <script>
 (() => {
-  const C = { direct: 'https://uafouyvtcijptspjbsqf.supabase.co', relays: ["https://gameplaygames.vitalang.net","https://gameplay-api.vitalang.net"], key: 'sb_publishable_Lry5e9J350lXelAUPHU1rg_3YYvTuAf', google: '114405851703-b6u2jan6mapjucijipcecr6g8nbgf73s.apps.googleusercontent.com' };
+  const C = { direct: 'https://uafouyvtcijptspjbsqf.supabase.co', relays: ["https://gameplay-api.vitalang.net"], key: 'sb_publishable_Lry5e9J350lXelAUPHU1rg_3YYvTuAf', google: '114405851703-b6u2jan6mapjucijipcecr6g8nbgf73s.apps.googleusercontent.com' };
   const $ = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const now = () => performance.now();
@@ -209,7 +209,7 @@ textarea{width:100%;min-height:160px;margin-top:12px;border-radius:12px;border:1
   });
   $('rr').addEventListener('click', run);
   const home = /check\.html$/.test(location.pathname) ? new URL('..', location.href).href : location.origin + '/';
-  $('routes').innerHTML = [['Automatic', 'auto'], ['Direct', '0']].concat(C.relays.map((r, i) => ['Relay ' + (i + 1), String(i + 1)])).concat([['No accounts', 'none']]).map(x => '<a href="' + esc(home + '?sb=' + x[1]) + '" style="color:var(--accent);font-weight:700">' + esc(x[0]) + '</a>').join(' · ');
+  $('routes').innerHTML = [['Automatic', 'auto'], ['Direct', '0']].concat(C.relays.map((r, i) => ['Relay ' + (i + 1), String(i + 1)])).map(x => '<a href="' + esc(home + '?sb=' + x[1]) + '" style="color:var(--accent);font-weight:700">' + esc(x[0]) + '</a>').join(' · ');
   run();
 })();
 </script></body></html>

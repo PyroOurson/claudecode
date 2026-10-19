@@ -26,7 +26,7 @@ What the portal does:
 - Each game page opens in a large "theater" stage by default (the button next to fullscreen turns it off), counts a play only once you start playing, and suggests similar games by shared tags.
 - Search is letter accurate for short input: typing "d" lists only the games whose name starts with D. Longer searches also match old names, genres and synonyms.
 - The site asks for a password before anything else. The whole page is encrypted with it, so the games cannot be opened without it. Five wrong tries lock that browser, and a browser that unlocked once stays unlocked.
-- The password also works on networks that block Supabase (it is copied into the page at each build). On those networks, accounts go through the relay at https://gameplaygames.vitalang.net (`ClaudeScripts/gameplay-site/server/`). If that is down too, the site opens without accounts.
+- The password also works on networks that block Supabase (it is copied into the page at each build). On those networks, accounts go through the Cloudflare relay at https://gameplay-api.vitalang.net (see `ClaudeScripts/gameplay-site/server/`). An account is always required: without one, nobody gets past the sign-in screen.
 - https://gameplaygames.web.app/check tests every service the site uses from the current network and gives a report to copy.
 - Pressing Esc pauses any game (Resume, Restart or back to all games). Online matches are not frozen, so the other players are not affected.
 - UNO and Tank Trouble can be played online by up to 4 players and Rocket League by up to 6: one player creates a lobby, the others join with its code or invite link, and the host presses Play.
