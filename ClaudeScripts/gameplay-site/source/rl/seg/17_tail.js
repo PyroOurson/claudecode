@@ -1,4 +1,5 @@
         return () => {
+          uiRlLog(true);
           dead = true;
           try { if (AC) AC.close(); } catch (e) {   }
           AC = null;

@@ -1,4 +1,4 @@
-const TRS = { t0: Date.now(), vis: 0, vt: performance.now(), foc: 0, blur: 0, keys: 0, clicks: 0, taps: 0, md: 0, mx: null, my: null, wheel: 0, scr: 0, sy: 0, games: 0, gset: new Set(), fs: 0, off: 0, errs: 0, idle: 0, la: performance.now(), copy: 0, rsz: 0, seq: 0 };
+const TRS = { t0: Date.now(), vis: 0, vt: performance.now(), von: document.visibilityState === 'visible', foc: 0, blur: 0, keys: 0, clicks: 0, taps: 0, md: 0, mx: null, my: null, wheel: 0, scr: 0, sy: 0, games: 0, gset: new Set(), fs: 0, off: 0, errs: 0, idle: 0, la: performance.now(), copy: 0, rsz: 0, seq: 0 };
 const TR = { g: null, v0: 0, sy: 0, impQ: [], io: null, clicks: [], dw: 0, vit: { cls: 0, inp: 0, lcp: null }, vsent: false, pads: new Set(), kb: '', env: 0, asked: new Set() };
 const TR_DC = /amazon|aws|google cloud|google llc|microsoft|azure|digitalocean|ovh|hetzner|linode|akamai|vultr|choopa|oracle|contabo|leaseweb|m247|datacamp|cdn77|scaleway|alibaba|tencent|hostinger|ionos|psychz|zenlayer|packethub|tzulo|quadranet|nordvpn|expressvpn|proton|mullvad|surfshark|private internet|cyberghost|ipvanish|hide\.me|windscribe|cloudflare|fastly|gcore|constant company|hostwinds|kamatera|clouvider|serverius|worldstream|hivelocity|colocrossing/i;
 const trPadKind = id => /054c|sony|playstation|dualsense|dualshock/i.test(id) ? 'PlayStation' : /045e|xbox|xinput/i.test(id) ? 'Xbox' : /057e|nintendo|switch|joy-con/i.test(id) ? 'Switch' : /8bitdo/i.test(id) ? '8BitDo' : /046d|logitech/i.test(id) ? 'Logitech' : 'Other';
@@ -6,6 +6,8 @@ const trSel = el => { const a = el.closest('[id],[data-id],a,button,[role="butto
 const trTo = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
 const trOff = tz => { try { const p = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'shortOffset' }).formatToParts(new Date()).find(x => x.type === 'timeZoneName'); return p ? p.value : ''; } catch (e) { return ''; } };
 const trKbOf = (q, y, w) => q === 'a' ? 'azerty' : y === 'z' ? 'qwertz' : q === "'" ? 'dvorak' : q === 'q' && w === 'w' && y === 'y' ? 'qwerty' : '';
+const trVis = () => { const t = performance.now(); if (TRS.von) TRS.vis += t - TRS.vt; TRS.vt = t; TRS.von = document.visibilityState === 'visible'; };
+const trZoom = () => { if (!trMq('(pointer: fine)') || window.top !== window || !outerWidth || !innerWidth) return null; const z = outerWidth / innerWidth, s = [.25, .33, .5, .67, .75, .8, .9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5].reduce((a, b) => Math.abs(b - z) < Math.abs(a - z) ? b : a); return Math.abs(s - z) / s < .03 ? s : null; };
 const trVotes = () => { try { return JSON.parse(localStorage.getItem('gameplay:votes')) || {}; } catch (e) { return {}; } };
 
 function trStart(g, ctl) {
@@ -16,7 +18,7 @@ function trStart(g, ctl) {
   const sc = A.score, sb = A.submit, ov = A.overlay;
   A.score = v => { if (typeof v === 'number' && isFinite(v)) G.last = v; return sc(v); };
   A.submit = v => { if (typeof v === 'number' && isFinite(v) && G.sc.length < 40) G.sc.push(v); return sb(v); };
-  A.overlay = (o = {}) => { const r = ov(o); if (o && o.stats && o.stats.length) trRound(G, o); return r; };
+  A.overlay = (o = {}) => { const r = ov(o); if (o && o.stats && o.stats.length) trRound(G, o); else if (performance.now() - G.t0 > 90000) trAsk(G); return r; };
   A.on(window, 'keydown', e => { if (!isField(e.target)) G.on.k = 1; }, true);
   A.on(frame, 'pointerdown', e => { G.on[e.pointerType === 'touch' || e.pointerType === 'pen' ? 't' : 'm'] = 1; }, true);
   ctl.add(() => trEnd1(G));
@@ -39,10 +41,13 @@ function trStart(g, ctl) {
 function trRound(G, o) {
   G.rounds++;
   for (const [k, v] of o.stats) {
-    if (!/^(level|wave|stage|floor|round|lap)s?\b/i.test(String(k))) continue;
+    if (!/^(level|wave|stage|floor|round|lap|world|chapter|zone|tier|night|day)s?\b/i.test(String(k))) continue;
     const n = parseFloat(String(v).replace(/<[^>]*>/g, '').replace(/[^\d.-]/g, ''));
     if (isFinite(n) && (G.lv == null || n > G.lv)) G.lv = n;
   }
+  trAsk(G);
+}
+function trAsk(G) {
   const id = G.g.id, card = frame.querySelector('.g-overlay:last-child .g-ov-card');
   if (!card || TR.asked.has(id) || trVotes()[id]) return;
   TR.asked.add(id);
@@ -177,10 +182,10 @@ async function trEnv() {
   ]);
   if (kbm && !TR.kb) TR.kb = trKbOf(kbm.get('KeyQ'), kbm.get('KeyY'), kbm.get('KeyW'));
   const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean).map(p => trPadKind(p.id)) : [];
-  track('env_dev', { osv: trOs(hi), brv: trBr(hi), model: hi && hi.model ? hi.model : null, arch: hi && hi.architecture ? hi.architecture + (hi.bitness ? '-' + hi.bitness : '') : null, cores: navigator.hardwareConcurrency || null, mem: navigator.deviceMemory || null, gpu: trGpu() || null, gl2: 'WebGL2RenderingContext' in window, wgpu: 'gpu' in navigator, hz, kb: TR.kb || null, pads, adb, langs: (navigator.languages || []).slice(0, 6) });
+  track('env_dev', { osv: trOs(hi), brv: trBr(hi), model: hi && hi.model ? hi.model : device().type === 'desktop' ? null : /iPhone/.test(navigator.userAgent) ? 'iPhone' : /iPad|Macintosh/.test(navigator.userAgent) ? 'iPad' : 'Unknown model', arch: hi && hi.architecture ? hi.architecture + (hi.bitness ? '-' + hi.bitness : '') : null, cores: navigator.hardwareConcurrency || null, mem: navigator.deviceMemory || null, gpu: trGpu() || null, gl2: 'WebGL2RenderingContext' in window, wgpu: 'gpu' in navigator, hz, kb: TR.kb || null, pads, adb, langs: (navigator.languages || []).slice(0, 6) });
   const g = geo || {}, dc = TR_DC.test(g.isp || ''), tzm = !!(g.gtz && tz && g.gtz !== tz && trOff(g.gtz) !== trOff(tz));
   setTimeout(() => trMore().catch(() => {}), 2500);
-  track('env_geo', { tz, off: -now.getTimezoneOffset(), lh: now.getHours(), wd: now.getDay(), net: c.effectiveType || null, ctype: c.type || null, dl: c.downlink != null ? c.downlink : null, rtt: c.rtt != null ? c.rtt : null, save: c.saveData != null ? !!c.saveData : null, cc: g.cc || null, country: g.country || null, region: g.region || null, city: g.city || null, isp: g.isp || null, asn: g.asn || null, dc, tzm, vpn: dc || tzm });
+  track('env_geo', { tz, off: -now.getTimezoneOffset(), lh: now.getHours(), wd: now.getDay(), net: c.effectiveType || null, ctype: c.type || 'unknown', dl: c.downlink != null ? c.downlink : null, rtt: c.rtt != null ? c.rtt : null, save: c.saveData != null ? !!c.saveData : null, cc: g.cc || null, country: g.country || null, region: g.region || null, city: g.city || null, isp: g.isp || null, asn: g.asn || null, dc, tzm, vpn: dc || tzm });
 }
 const trMq = q => { try { return matchMedia(q).matches; } catch (e) { return false; } };
 const trB = (v, cuts, unit) => { if (v == null || !isFinite(v)) return null; for (const c of cuts) if (v < c) return '<' + c + unit; return cuts[cuts.length - 1] + unit + '+'; };
@@ -193,7 +198,7 @@ function trBench() {
 }
 async function trMore() {
   const sc = screen || {}, o = sc.orientation || {}, dpr = window.devicePixelRatio || 1;
-  track('env_scr', { sw: sc.width || null, sh: sc.height || null, aw: sc.availWidth || null, ah: sc.availHeight || null, cd: sc.colorDepth || null, dpr: Math.round(dpr * 100) / 100, ori: o.type || null, vw: innerWidth, vh: innerHeight, tp: navigator.maxTouchPoints || 0, ptr: trMq('(pointer: fine)') ? 'fine' : trMq('(pointer: coarse)') ? 'coarse' : 'none', hov: trMq('(hover: hover)'), dark: trMq('(prefers-color-scheme: dark)'), rmo: trMq('(prefers-reduced-motion: reduce)'), con: trMq('(prefers-contrast: more)'), fcol: trMq('(forced-colors: active)'), rtr: trMq('(prefers-reduced-transparency: reduce)'), hdr: trMq('(dynamic-range: high)'), gam: trMq('(color-gamut: rec2020)') ? 'rec2020' : trMq('(color-gamut: p3)') ? 'p3' : 'srgb', dm: ['fullscreen', 'standalone', 'minimal-ui'].find(m => trMq('(display-mode: ' + m + ')')) || 'browser', ext: sc.isExtended != null ? !!sc.isExtended : null, zoom: outerWidth && innerWidth ? Math.round(100 * outerWidth / innerWidth) / 100 : null, res: (sc.width || 0) + 'x' + (sc.height || 0) });
+  track('env_scr', { sw: sc.width || null, sh: sc.height || null, aw: sc.availWidth || null, ah: sc.availHeight || null, cd: sc.colorDepth || null, dpr: Math.round(dpr * 100) / 100, ori: o.type || null, vw: innerWidth, vh: innerHeight, tp: navigator.maxTouchPoints || 0, ptr: trMq('(pointer: fine)') ? 'fine' : trMq('(pointer: coarse)') ? 'coarse' : 'none', hov: trMq('(hover: hover)'), dark: trMq('(prefers-color-scheme: dark)'), rmo: trMq('(prefers-reduced-motion: reduce)'), con: trMq('(prefers-contrast: more)'), fcol: trMq('(forced-colors: active)'), rtr: trMq('(prefers-reduced-transparency: reduce)'), hdr: trMq('(dynamic-range: high)'), gam: trMq('(color-gamut: rec2020)') ? 'rec2020' : trMq('(color-gamut: p3)') ? 'p3' : 'srgb', dm: ['fullscreen', 'standalone', 'minimal-ui'].find(m => trMq('(display-mode: ' + m + ')')) || 'browser', ext: sc.isExtended != null ? !!sc.isExtended : null, zoom: trZoom(), res: (sc.width || 0) + 'x' + (sc.height || 0) });
   const n = navigator, A = window.AudioContext || window.webkitAudioContext;
   let sr = null, ach = null, mtex = null, glx = null, voices = null, devs = null, bat = null, est = null, gpuv = null, pers = null;
   try { if (A) { const ac = new A(); sr = ac.sampleRate; ach = ac.destination ? ac.destination.maxChannelCount : null; ac.close(); } } catch (e) {}
@@ -218,13 +223,12 @@ async function trMore() {
   try { const L = new Intl.Locale(ro.locale || n.language); const w = L.getWeekInfo ? L.getWeekInfo() : L.weekInfo; fdw = w ? w.firstDay : null; } catch (e) {}
   const nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null, mem = performance.memory;
   const bench = await new Promise(r => (window.requestIdleCallback || setTimeout)(() => { try { r(trBench()); } catch (e) { r(null); } }, { timeout: 3000 }));
-  track('env_caps', { ck: n.cookieEnabled, dnt: n.doNotTrack === '1' || window.doNotTrack === '1', gpc: !!n.globalPrivacyControl, pdf: n.pdfViewerEnabled != null ? !!n.pdfViewerEnabled : null, bot: !!n.webdriver, wasm: typeof WebAssembly === 'object', sab: typeof SharedArrayBuffer === 'function', coi: !!window.crossOriginIsolated, swk: 'serviceWorker' in n, notif: window.Notification ? Notification.permission : null, vib: 'vibrate' in n, bt: 'bluetooth' in n, usb: 'usb' in n, ser: 'serial' in n, hid: 'hid' in n, xr: 'xr' in n, midi: 'requestMIDIAccess' in n, share: 'share' in n, wl: 'wakeLock' in n, voices, mic: devs ? devs.mic : null, cam: devs ? devs.cam : null, spk: devs ? devs.spk : null, sr, ach, h264: cp('video/mp4; codecs="avc1.42E01E"'), vp9: cp('video/webm; codecs="vp9"'), av1: cp('video/mp4; codecs="av01.0.05M.08"'), hevc: cp('video/mp4; codecs="hvc1.1.6.L93.B0"'), mtex, glx, gpuv, quota: est ? est.quota : null, used: est ? est.used : null, qb: est ? trB(est.quota, [200, 1000, 10000, 100000], ' MB') : null, pers, heap: mem ? Math.round(mem.jsHeapSizeLimit / 1048576) : null, bat: bat ? bat.lvl : null, batb: bat ? trB(bat.lvl, [20, 50, 80], '%') : null, chg: bat ? bat.chg : null, bench, benchb: trB(bench, [15, 30, 60, 120], ' ms'), loc: ro.locale || null, cal: ro.calendar || null, num: ro.numberingSystem || null, hc, fdw, ref: trHost(document.referrer) || null, land: (location.pathname + location.hash).slice(0, 60), navt: nav ? nav.type : null, hist: history.length, plat: n.platform || null, vend: n.vendor || null, ua: n.userAgent.slice(0, 300), route: SB.on ? (SBN.best() === SUPABASE_DIRECT ? 'direct' : 'relay') : 'none', down: !!window.__gpSbDown });
+  track('env_caps', { ck: n.cookieEnabled, dnt: n.doNotTrack === '1' || window.doNotTrack === '1', gpc: !!n.globalPrivacyControl, pdf: n.pdfViewerEnabled != null ? !!n.pdfViewerEnabled : null, bot: !!n.webdriver, wasm: typeof WebAssembly === 'object', sab: typeof SharedArrayBuffer === 'function', coi: !!window.crossOriginIsolated, swk: 'serviceWorker' in n, notif: window.Notification ? Notification.permission : null, vib: 'vibrate' in n, bt: 'bluetooth' in n, usb: 'usb' in n, ser: 'serial' in n, hid: 'hid' in n, xr: 'xr' in n, midi: 'requestMIDIAccess' in n, share: 'share' in n, wl: 'wakeLock' in n, voices, mic: devs ? devs.mic : null, cam: devs ? devs.cam : null, spk: devs ? devs.spk : null, sr, ach, h264: cp('video/mp4; codecs="avc1.42E01E"'), vp9: cp('video/webm; codecs="vp9"'), av1: cp('video/mp4; codecs="av01.0.05M.08"'), hevc: cp('video/mp4; codecs="hvc1.1.6.L93.B0"'), mtex, glx, gpuv, quota: est ? est.quota : null, used: est ? est.used : null, qb: est ? trB(est.quota, [200, 1000, 10000, 100000], ' MB') : null, pers, heap: mem ? Math.round(mem.jsHeapSizeLimit / 1048576) : null, bat: bat ? bat.lvl : null, batb: bat ? trB(bat.lvl, [20, 50, 80], '%') : null, chg: bat ? bat.chg : null, bench, benchb: trB(bench, [15, 30, 60, 120], ' ms'), loc: ro.locale || null, cal: ro.calendar || null, num: ro.numberingSystem || null, hc, fdw, ref: trHost(document.referrer) || 'direct', land: (location.pathname + location.hash).slice(0, 60), navt: nav ? nav.type : null, hist: history.length, plat: n.platform || null, vend: n.vendor || null, ua: n.userAgent.slice(0, 300), route: SB.on ? (SBN.best() === SUPABASE_DIRECT ? 'direct' : 'relay') : 'none', down: !!window.__gpSbDown });
 }
 function trSess(final) {
   if (!anOk()) return;
   const t = performance.now();
-  if (document.visibilityState === 'visible') TRS.vis += t - TRS.vt;
-  TRS.vt = t;
+  trVis();
   TRS.idle = Math.max(TRS.idle, t - TRS.la);
   track('sess_sum', { seq: ++TRS.seq, final: !!final, dur: Math.round((Date.now() - TRS.t0) / 1000), vis: Math.round(TRS.vis / 1000), foc: TRS.foc, blur: TRS.blur, keys: TRS.keys, clicks: TRS.clicks, taps: TRS.taps, mdist: Math.round(TRS.md), wheel: TRS.wheel, scr: Math.round(TRS.scr), games: TRS.games, gset: TRS.gset.size, gl: [...TRS.gset].slice(0, 30), fs: TRS.fs, off: TRS.off, errs: TRS.errs, idle: Math.round(TRS.idle / 1000), copy: TRS.copy, rsz: TRS.rsz, route: SB.on ? (SBN.best() === SUPABASE_DIRECT ? 'direct' : 'relay') : 'none', acct: SB.user ? 'user' : SB.guest ? 'guest' : 'none', lang: document.documentElement.lang || null, theme: document.documentElement.getAttribute('data-theme') || 'system' });
 }
@@ -281,7 +285,7 @@ function trBoot() {
   addEventListener('copy', () => TRS.copy++);
   addEventListener('resize', () => TRS.rsz++, { passive: true });
   document.addEventListener('fullscreenchange', () => { if (document.fullscreenElement) TRS.fs++; });
-  document.addEventListener('visibilitychange', () => { const t = performance.now(); if (document.visibilityState === 'hidden') TRS.vis += t - TRS.vt; TRS.vt = t; });
+  document.addEventListener('visibilitychange', trVis);
   setInterval(() => { if (document.visibilityState === 'visible') trSess(false); }, 300000);
 }
 Ameplay.ads = {

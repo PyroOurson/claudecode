@@ -784,7 +784,7 @@ function vis(el, on) {
 function countUp(box) {
   const els = box ? [...box.querySelectorAll('[data-n]')] : [];
   if (!els.length || !motionOK()) return;
-  const f = el => el.dataset.f === 'd' ? fmtDur : el.dataset.f === 'l' ? x => Math.round(x).toLocaleString(adLang()) : x => String(Math.round(x));
+  const f = el => el.dataset.f === 'd' ? fmtDur : el.dataset.f === 'l' ? x => Math.round(x).toLocaleString(adLang()) : el.dataset.f === 'p' ? x => Math.round(x) + '%' : x => String(Math.round(x));
   const t0 = performance.now() + 80, D = 700;
   els.forEach(el => { el.textContent = f(el)(0); });
   const step = t => {

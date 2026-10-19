@@ -726,7 +726,7 @@ function makeNet(g, add) {
       }
       let p;
       try { p = await newPeer(undefined, my, a === TRIES - 1); }
-      catch (e) { if (my !== gen || (e && e.type === 'cancel')) return false; if (a === TRIES - 1) { shut(false); throw e; } continue; }
+      catch (e) { if (my !== gen || (e && e.type === 'cancel')) return false; if (a === TRIES - 1) { shut(false); throw e; } netTrack('party_retry', { game: g.id, why: ('peer-' + String(e && e.type || 'unknown')).slice(0, 24), n: a + 1 }); continue; }
       if (my !== gen) { p.destroy(); return false; }
       peer = p;
       rm.state = 'lobby'; rm.inGame = false; rm.list = []; rm.leader = null; rm.chat = []; net.closeReason = null;

@@ -5583,15 +5583,22 @@ diffuseColor.rgb = dc;
         const uiShowWorld = () => { W = makeWorld({ size: 1, human: false, bodies: [saved.car, saved.car] }); views[0].car = views[1].car = null; bindCars(); syncPads(); api.score('—'); uiPose(); uiCamSnap = true; };
         const uiHideAll = () => { wrap.classList.remove('pzo'); menu.hidden = endEl.hidden = pz.hidden = uiLd.hidden = uiLbEl.hidden = uiTtl.hidden = uiOptEl.hidden = true; uiDlgClose(); uiEnd.on = false; };
         const uiTrainLeave = () => { if (mode !== 'train' || uiPT < 5) return; const T = W.train || {}; uiPassAdd(Math.min(900, Math.floor(uiPT) + (T.goals || 0) * 15 + (T.saves || 0) * 10)); uiPT = 0; };
+        const uiRlLog = left => {
+          if (left && ui !== 'play') return;
+          const me = views[0].car;
+          if (!me || !W || W.rlLog || mode === 'train') return;
+          W.rlLog = 1;
+          try { const bt = W.cars.filter(c => c.bot); Ameplay.analytics.track(left ? 'rl_left' : 'rl_match', { game: 'rocket-soccer', mode, online: !!online, size: W.size, diff: bt.length ? (typeof diffOf === 'function' ? diffOf(W, bt[0]) : W.diff) : null, bots: bt.length, team: me.team, win: left ? null : me.team === uiEnd.win, us: W.score[me.team], them: W.score[1 - me.team], ot: !!W.ot, len: Math.round(W.len), played: Math.round(Math.max(0, W.len - W.clock)), goals: me.st.goals, assists: me.st.assists, saves: me.st.saves, shots: me.st.shots, demos: me.st.demos, boost: Math.round(me.st.boost || 0), score: me.st.score, mvp: left ? false : me === uiEnd.mvp }); } catch (e) {}
+        };
         const showMenu = scr => {
-          leaveOnline(); uiTrainLeave();
+          uiRlLog(true); leaveOnline(); uiTrainLeave();
           ui = 'menu'; mode = 'cpu'; paused = false; setLayout(); uiHideAll(); wrap.classList.remove('train');
           uiScr = scr || 'main'; uiFs = null; uiPrev = null; uiPv = null; if (uiScr === 'main') uiFm = 'play';
           hideViews(); uiShowWorld(); renderMenu(); menu.hidden = false;
           if (uiRvQ.length) uiRvShow();
         };
         const showTitle = () => {
-          leaveOnline();
+          uiRlLog(true); leaveOnline();
           ui = 'title'; mode = 'cpu'; paused = false; setLayout(); uiHideAll(); wrap.classList.remove('train');
           hideViews(); uiShowWorld(); uiTtl.hidden = false;
         };
@@ -5609,6 +5616,7 @@ diffuseColor.rgb = dc;
         const uiJoinLog = () => { uiLog.length = 0; for (const c of W.cars) uiLog.push(`<i class="p${c.team}">${esc(c.name)}</i> joined the match`); };
         const uiRoster = t => { const pool = BOTNAMES.slice(), r = []; for (let k = 0; k < 2; k++) for (let i = 0; i < saved.size; i++) r.push(k === t && i === 0 ? { team: k, slot: i, name: saved.name, bot: false, body: saved.car } : { team: k, slot: i, name: pool.splice(Math.floor(Math.random() * pool.length), 1)[0] || 'Bot', bot: true, body: BODY_IDS[Math.floor(Math.random() * BODY_IDS.length)] }); return r; };
         const startGame = m => {
+          uiRlLog(true);
           saved.name = uiProfName() || saved.name;
           mode = m === 'train' ? 'train' : 'cpu'; setLayout();
           W = mode === 'train' ? makeWorld({ mode: 'training', size: 1, bodies: [saved.car], names: [saved.name] }) : uiTeam ? makeWorld({ size: saved.size, diff: saved.diff, len: saved.len, roster: uiRoster(1) }) : makeWorld({ size: saved.size, diff: saved.diff, len: saved.len, names: [saved.name], bodies: [saved.car, saved.car] });
@@ -5681,7 +5689,7 @@ diffuseColor.rgb = dc;
           const a = uiLvl(saved.xp); saved.xp += tot; const b = uiLvl(saved.xp), w0 = saved.wins;
           saved.games++; if (won) saved.wins++;
           api.save(saved);
-          try { const bt = W.cars.filter(c => c.bot); Ameplay.analytics.track('rl_match', { game: 'rocket-soccer', mode, online: !!online, size: W.size, diff: bt.length ? (typeof diffOf === 'function' ? diffOf(W, bt[0]) : W.diff) : null, bots: bt.length, team: me.team, win: won, us: W.score[me.team], them: W.score[1 - me.team], ot: !!W.ot, len: Math.round(W.len), goals: me.st.goals, assists: me.st.assists, saves: me.st.saves, shots: me.st.shots, demos: me.st.demos, boost: Math.round(me.st.boost || 0), score: me.st.score, mvp: me === uiEnd.mvp }); } catch (e) {}
+          uiRlLog(false);
           const s = me.st, ch = s.goals >= 2 ? ['Score 2 Goals', 'goal'] : s.saves >= 1 ? ['Make a Save', 'save'] : s.goals >= 1 ? ['Score a Goal', 'shot'] : won ? ['Win a Match', 'trophy'] : null;
           const pl = [['Time Played', Math.round(Math.min(uiPT, 1500) * 2)], ['Goals', (s.goals | 0) * 50], ['Assists', (s.assists | 0) * 30], ['Saves', (s.saves | 0) * 40]];
           if (won) pl.push(['Win', 150]);
@@ -7364,6 +7372,7 @@ diffuseColor.rgb = dc;
         wrap.__rs = { cam: a => { uiDbgCam = a || null; }, slow: k => { uiDbgK = k > 0 ? k : 1; }, vcam: () => { const c = views[0].camera, d = c.getWorldDirection(new THREE.Vector3()); return [c.position.x, c.position.y, c.position.z, d.x, d.y, d.z, c.fov]; }, world: () => W, ui: () => ui, gar: () => ({ scr: uiScr, gc: uiGc, gf: uiGf, gi: uiGi, tier: uiTier(), pxp: saved.pxp, ld: saved.ld[saved.car], car: saved.car, rv: uiRvQ.length + (uiRvEl.hidden ? 0 : 1) }), thumb: (b, t, cos, v) => crThumb(b, t, Object.assign(crCosOf(null, t), cos || {}), v), icon: (k, id, t) => crIcon(k, id, t), fin: () => { if (ui === 'load') beginPlay(); if (ui === 'play') { W.state = 'end'; showEnd(false); } }, pass: (x, q) => { uiPassAdd(x); if (q) uiRvQ.length = 0; if (ui === 'menu') { renderMenu(); if (uiRvEl.hidden) uiRvShow(); } }, mode: () => mode, end: () => uiEnd, start: m => { if (ui === 'title' || ui === 'menu') startGame(m || 'cpu'); }, online: () => online && { role: online.role, id: online.id, mid: online.mid, ids: online.ids, left: online.left, votes: [...online.votes], seq: online.G ? online.G.seq : 0, ack: online.G ? online.G.ack : 0, n: online.G ? online.G.lastN : 0, corr: online.G ? online.G.corr : 0, nsnap: online.G ? online.G.nsnap : 0, L: online.L, pl: online.pl } };
         if (api.net && api.net.invite) { saved.play = 'online'; showMenu(); startOnline(); } else showTitle();
         return () => {
+          uiRlLog(true);
           dead = true;
           try { if (AC) AC.close(); } catch (e) {   }
           AC = null;
