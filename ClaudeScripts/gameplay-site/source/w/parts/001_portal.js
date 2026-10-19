@@ -4625,6 +4625,8 @@ const adHref = () => (PATH_MODE ? '/' : '#/') + 'admin';
 const adIsAdmin = () => (AD.role === 'admin' || AD.role === 'owner') && !AD.locked;
 const adIsOwner = () => AD.role === 'owner' && !AD.locked;
 const adStaff = u => u.role === 'admin' || u.role === 'owner';
+const adRank = r => r === 'owner' ? 2 : r === 'admin' ? 1 : 0;
+const adCan = u => adIsAdmin() && adRank(AD.role) > adRank(u.role);
 const adRpc = (f, b) => sbRest('rpc/' + f, { method: 'POST', body: b || {} });
 const adLang = () => window.gpI18n ? gpI18n.lang : 'en';
 const AD_ICO = {
@@ -4669,7 +4671,7 @@ const adCv = (id, c) => { const g = byId.get(id); if (!g || !thumbsOn()) return 
 const adProv = u => (u.providers && u.providers.length ? u.providers : ['email']).map(p => p === 'google' ? 'Google' : p === 'email' ? auT('Email') : p).join(' + ');
 const adPill = (t, k) => `<span class="adm-pill${k ? ' ' + k : ''}">${esc(auT(t))}</span>`;
 const adRole = u => u.role === 'owner' ? adPill('Owner', 'acc') : u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User');
-const adErr = e => { const m = String(e && e.message || ''); return /admins only/i.test(m) ? 'Admins only' : /change an owner/i.test(m) ? 'Only an owner can change an owner.' : /at least one owner/i.test(m) ? 'There must be at least one owner' : /owners only|owner can do/i.test(m) ? 'Only an owner can do this.' : /at least one admin/i.test(m) ? 'There must be at least one admin' : /own account/i.test(m) ? 'You cannot lock your own account' : /at least 8/i.test(m) ? 'Use at least 8 characters.' : /at most 72/i.test(m) ? 'Use at most 72 characters.' : /not found/i.test(m) ? 'Not found. Refresh and try again.' : /too many/i.test(m) ? 'Too many messages. Wait a minute and try again.' : /account locked/i.test(m) ? 'Your account is locked.' : /end time/i.test(m) ? 'Pick an end time in the future.' : /write a subject/i.test(m) ? 'Write a subject.' : /write a message/i.test(m) ? 'Write a message.' : 'Could not update. Check your connection and try again.'; };
+const adErr = e => { const m = String(e && e.message || ''); return /admins only/i.test(m) ? 'Admins only' : /below your rank|change an owner/i.test(m) ? 'You can only manage accounts below your rank.' : /at least one owner/i.test(m) ? 'There must be at least one owner' : /owners only|owner can do/i.test(m) ? 'Only an owner can do this.' : /at least one admin/i.test(m) ? 'There must be at least one admin' : /own account/i.test(m) ? 'You cannot lock your own account' : /at least 8/i.test(m) ? 'Use at least 8 characters.' : /at most 72/i.test(m) ? 'Use at most 72 characters.' : /not found/i.test(m) ? 'Not found. Refresh and try again.' : /too many/i.test(m) ? 'Too many messages. Wait a minute and try again.' : /account locked/i.test(m) ? 'Your account is locked.' : /end time/i.test(m) ? 'Pick an end time in the future.' : /write a subject/i.test(m) ? 'Write a subject.' : /write a message/i.test(m) ? 'Write a message.' : 'Could not update. Check your connection and try again.'; };
 
 function adStatus(s) {
   const was = adIsAdmin(), wl = AD.locked;
@@ -4868,18 +4870,20 @@ function adPanel(u, keep) {
   $('#adpq').innerHTML = [['Time played', adHrs(u.seconds_played), 'clock'], ['Plays', stN(u.plays), 'play'], ['Friends', stN(u.friends), 'users'], ['Favourite game', adGame(u.fav_game), 'star'], ['Account created', adAgo(u.created_at), 'cake'], ['Last seen', RT.pres[u.id] ? auT('Online now') : adAgo(u.last_seen), 'eye']].map(([k, v, i], n) => `<div style="--i:${n}">${AD_SI[i]}<small>${esc(auT(k))}</small><b title="${esc(v)}">${esc(v)}</b></div>`).join('');
   const F = [['User id', `<code>${esc(u.id)}</code>`], ['Email', esc(u.email || '—')], ['Username', u.username ? '@' + esc(u.username) : '—'], ['Display name', esc(u.display_name || '—')], ['Last log in', esc(adDate(u.last_sign_in_at, 1))], ['Last used website', esc(adDate(u.last_seen, 1))], ['Log in method', esc(adProv(u))], ['Account created', esc(adDate(u.created_at, 1))], ['Password', adPw(u)], ['Favourite game', esc(adGame(u.fav_game))], ['Friends', String(+u.friends || 0)], ['Role', adRole(u)], ['Email confirmed', u.email_confirmed ? esc(adDate(u.email_confirmed_at, 1)) : adPill('No', 'warn')], ['Locked', u.locked ? adPill('Locked', 'bad') + ` <span class="adm-mut">${esc(u.locked_until ? auT('until {d}').replace('{d}', adDate(u.locked_until, 1)) : auT('Permanent'))}</span>` + (u.locked_reason ? `<div class="adm-why">${esc(u.locked_reason)}</div>` : '') : adPill('No')], ['Last game opened', esc(adGame(u.last_game))], ['Language', esc(adLangName(u.last_lang))]];
   $('#adpdl').innerHTML = F.map(([k, v]) => `<div><dt>${esc(auT(k))}</dt><dd>${v}</dd></div>`).join('');
-  const prot = u.role === 'owner' && !adIsOwner(), rl = adStaff(u) && !adIsOwner();
-  p.querySelectorAll('[data-adrole]').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.adrole === u.role)); b.disabled = rl; adUnconfirm(b); });
+  const can = adCan(u), own = adIsOwner(), rc = p.querySelector('[data-adrole]').closest('.apc-card');
+  ['#adun', '#adrst', '#adlock', '#addelb'].forEach(q => { $(q).closest('.apc-card').hidden = !can; });
+  rc.hidden = !own;
+  rc.closest('.apc-col').hidden = !can && !own;
+  p.querySelectorAll('[data-adrole]').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.adrole === u.role)); b.disabled = false; adUnconfirm(b); });
   const lb = $('#adlock');
   adUnconfirm(lb);
   lb.textContent = auT(u.locked ? 'Unlock account' : 'Lock account');
   lb.className = 'btn2 ' + (u.locked ? 'pri' : 'danger');
-  lb.disabled = (me && !u.locked) || prot;
+  lb.disabled = me && !u.locked;
   $('#adlr').hidden = u.locked; $('#adlrl').hidden = u.locked; $('#adld').hidden = u.locked; $('#adldl').hidden = u.locked;
   const lt = $('#adlt'); lt.hidden = !u.locked; lt.textContent = u.locked ? (u.locked_until ? auT('Locked until {d} ({r}).').replace('{d}', adDate(u.locked_until, 1)).replace('{r}', adAgo(u.locked_until)) : auT('Locked with no end date.')) : '';
   ['adpwb', 'adrst', 'adunb', 'addelb'].forEach(id => adUnconfirm($('#' + id)));
-  $('#adrst').disabled = !u.email || prot;
-  $('#adpwb').disabled = prot; $('#adunb').disabled = prot;
+  $('#adrst').disabled = !u.email;
   $('#adpwt').textContent = auT(u.has_password ? 'Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them.' : 'This account has no password: it signs in with Google.');
   $('#addelb').disabled = !!me || adStaff(u);
   if (!keep) {
@@ -4887,7 +4891,6 @@ function adPanel(u, keep) {
     $('#adpw').value = ''; $('#adlr').value = ''; $('#addel').value = ''; $('#adun').value = u.username || '';
     if (me) { auMsg('adln', 'You cannot lock your own account'); auMsg('addeln', 'You cannot delete your own account here.'); }
     else if (adStaff(u)) auMsg('addeln', 'Make this admin a regular user first.');
-    if (prot) auMsg('adprn', 'Only an owner can change an owner.'); else if (rl) auMsg('adprn', 'Only an owner can change the role of an admin.');
     $('#adpw').type = 'password';
     const eye = p.querySelector('.au-eye'); if (eye) auEye(eye, true);
     adGames(u);
@@ -4955,7 +4958,7 @@ function adConfirm(b) {
 const adCur = () => (AD.users || []).find(x => x.id === AD.sel);
 async function adAct(k, b) {
   const u = adCur();
-  if (!u || b.disabled) return;
+  if (!u || b.disabled || !(k === 'role' ? adIsOwner() : adCan(u))) return;
   if (k === 'role') {
     const r = b.dataset.adrole;
     if (r === u.role) return;
@@ -4977,8 +4980,8 @@ async function adAct(k, b) {
   } else if (k === 'reset') {
     if (!adConfirm(b)) return;
     b.disabled = true; b.classList.add('is-busy'); auMsg('adrstn', '');
-    try { const c = await sbClient(); const { error } = await c.auth.resetPasswordForEmail(u.email, { redirectTo: sbRedirect('recovery') }); if (error) throw error; auMsg('adrstn', auT('Sent to {e}. They get a 6-digit code to choose a new password.').replace('{e}', u.email), 'ok'); track('admin', { act: 'reset' }); await adRpc('admin_log_reset', { p_uid: u.id }).catch(() => {}); alHist(u); }
-    catch (e) { auMsg('adrstn', auErrText(e), 'bad'); }
+    try { await adRpc('admin_log_reset', { p_uid: u.id }).catch(e => { if (/rank|admins only/i.test(e.message || '')) { e.ad = 1; throw e; } }); const c = await sbClient(); const { error } = await c.auth.resetPasswordForEmail(u.email, { redirectTo: sbRedirect('recovery') }); if (error) throw error; auMsg('adrstn', auT('Sent to {e}. They get a 6-digit code to choose a new password.').replace('{e}', u.email), 'ok'); track('admin', { act: 'reset' }); alHist(u); }
+    catch (e) { auMsg('adrstn', e.ad ? adErr(e) : auErrText(e), 'bad'); }
     finally { b.disabled = false; b.classList.remove('is-busy'); }
     return;
   } else if (k === 'un') {
@@ -5538,9 +5541,10 @@ function insDraw(an) {
   const games = (D.games || []).slice(0, 60), votes = new Map((D.votes || []).map(v => [v.id, v])), GD = (ST.d || {}).game_days || {}, MS = M.scores || {};
   const inBar = g => { const I = [['Keyboard', +g.ik || 0, 'sx-k0'], ['Mouse', +g.im || 0, 'sx-k1'], ['Touch', +g.it || 0, 'sx-k2'], ['Controller', +g.ip || 0, 'sx-k3']].filter(x => x[1]), t = I.reduce((s, x) => s + x[1], 0); if (!t) return `<span class="adm-mut" title="${esc(auT('No input recorded'))}">—</span>`; const top = I.slice().sort((a, b) => b[1] - a[1])[0]; return `<span class="ins-in" title="${esc(I.map(x => auT(x[0]) + ' ' + insPct(x[1], t) + '%').join(' · '))}"><span>${I.map(x => `<i class="${x[2]}" style="flex:${x[1]}"></i>`).join('')}</span><small>${esc(auT(top[0]))} ${insPct(top[1], t)}%</small></span>`; };
   const scoreCell = s => { if (!s || !s.n) return `<span class="adm-mut" title="${esc(auT('This game does not report a score'))}">—</span>`; const lo = Math.min(+(s.min != null ? s.min : s.p10 != null ? s.p10 : 0) || 0, +s.p25 || 0), mx = Math.max(+s.max || 0, lo + 1e-9), X = v => Math.max(0, Math.min(100, 100 * ((+v || 0) - lo) / (mx - lo))); return `<span class="ins-sc" title="${esc(auT('Median {m} · middle half {a}–{b} · best {x} · {n} scores').replace('{m}', insNum(s.p50)).replace('{a}', insNum(s.p25)).replace('{b}', insNum(s.p75)).replace('{x}', insNum(s.max)).replace('{n}', stN(s.n)))}"><b>${esc(insNum(s.p50))}</b><i><s style="left:${X(s.p25).toFixed(1)}%;width:${Math.max(2, X(s.p75) - X(s.p25)).toFixed(1)}%"></s><u style="left:${X(s.p50).toFixed(1)}%"></u></i><small>${esc(auT('max {n}').replace('{n}', insNum(s.max)))}</small></span>`; };
+  const insFps = g => { const a = Math.round(+g.fps), lo = g.fps_low != null ? Math.round(+g.fps_low) : null, P = v => Math.max(0, Math.min(100, v / 2.4)).toFixed(1); return `<span class="ins-fps" style="--p:${P(a)}" title="${esc(auT('Average {a} FPS, worst 10% {l} FPS, out of 240').replace('{a}', a).replace('{l}', lo == null ? '—' : lo))}"><i><s style="width:${P(a)}%"></s>${lo == null ? '' : `<u style="left:${P(lo)}%"></u>`}</i><span><b>${a}</b><small>${lo == null ? '' : ' · ' + esc(auT('low {n}').replace('{n}', lo))} / 240</small></span></span>`; };
   const mut = (t, v) => `<span class="adm-mut" title="${esc(auT(t))}">${v || '—'}</span>`;
-  const gRows = games.map((g, i) => { const vt = votes.get(g.id) || g.votes || {}, l = g.load || {}, q = insPct(g.early, g.n); return `<tr style="--i:${Math.min(i, 14)}"><td><span class="ins-gn">${adCv(g.id, 'ins-cv')}<span translate="no">${esc(adGame(g.id))}</span></span></td><td><span class="ins-gs"><b>${stN(g.n)}</b>${GD[g.id] ? stSpark(GD[g.id], an) : ''}</span></td><td>${g.n ? `<span class="adm-pill ${q > 40 ? 'bad' : q > 20 ? 'warn' : 'ok'}">${q}%</span>` : '—'}</td><td>${g.sec != null ? esc(adHrs(g.sec)) : '—'}</td><td>${g.fps != null ? `<b>${g.fps}</b> <span class="adm-mut">/ ${g.fps_low != null ? g.fps_low : '—'}</span>` : mut('Not measured: the game was closed within 3 seconds')}</td><td>${l.n ? esc(insMs(l.p50)) + ' <span class="adm-mut">/ ' + esc(insMs(l.p90)) + '</span>' : mut('Part of the page, nothing extra to download')}</td><td>${scoreCell(MS[g.id] || g.scores)}</td><td>${g.lv_n ? `${esc(String(g.lv_avg))} <span class="adm-mut">/ ${esc(String(g.lv_max))}</span>` : mut('This game does not show a level')}</td><td>${inBar(g)}</td><td>${vt.up || vt.down ? `<span class="ins-vt"><b>▲ ${vt.up | 0}</b> <span>▼ ${vt.down | 0}</span></span>` : mut('No thumbs yet. Players are asked after a round or after 90 seconds of play.')}</td></tr>`; }).join('');
-  const gTab = `<div class="st-card ins-tc"><div class="adm-tw"><table class="adm-t st-t ins-t"><thead><tr>${[['Game'], ['Sessions', 'Times the game was opened, with launches per day'], ['Quit < 30 s', 'Share of sessions closed within 30 seconds'], ['Avg session'], ['FPS', 'Frames per second: average / worst 10%'], ['Load', 'Download time: median / slowest 10%'], ['Scores', 'Final scores: median, middle half and best'], ['Level', 'Level reached at the end: average / highest'], ['Input', 'Main input used while playing'], ['Votes', 'Thumbs up and down']].map(([h, t]) => `<th${t ? ` title="${esc(auT(t))}"` : ''}><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody class="${an ? 'an' : ''}">${gRows || `<tr><td colspan="10">${insWhy()}</td></tr>`}</tbody></table></div></div>`;
+  const gRows = games.map((g, i) => { const vt = votes.get(g.id) || g.votes || {}, l = g.load || {}, q = insPct(g.early, g.n); return `<tr style="--i:${Math.min(i, 14)}"><td><span class="ins-gn">${adCv(g.id, 'ins-cv')}<span translate="no">${esc(adGame(g.id))}</span></span></td><td><span class="ins-gs"><b>${stN(g.n)}</b>${GD[g.id] ? stSpark(GD[g.id], an) : ''}</span></td><td>${g.n ? `<span class="adm-pill ${q > 40 ? 'bad' : q > 20 ? 'warn' : 'ok'}">${q}%</span>` : '—'}</td><td>${g.sec != null ? esc(adHrs(g.sec)) : '—'}</td><td>${g.fps != null ? insFps(g) : mut('Not measured: the game was closed within 3 seconds')}</td><td>${l.n ? esc(insMs(l.p50)) + ' <span class="adm-mut">/ ' + esc(insMs(l.p90)) + '</span>' : mut('Part of the page, nothing extra to download')}</td><td>${scoreCell(MS[g.id] || g.scores)}</td><td>${g.lv_n ? `${esc(String(g.lv_avg))} <span class="adm-mut">/ ${esc(String(g.lv_max))}</span>` : mut('This game does not show a level')}</td><td>${inBar(g)}</td><td>${vt.up || vt.down ? `<span class="ins-vt"><b>▲ ${vt.up | 0}</b> <span>▼ ${vt.down | 0}</span></span>` : mut('No thumbs yet. Players are asked after a round or after 90 seconds of play.')}</td></tr>`; }).join('');
+  const gTab = `<div class="st-card ins-tc"><div class="adm-tw"><table class="adm-t st-t ins-t"><thead><tr>${[['Game'], ['Sessions', 'Times the game was opened, with launches per day'], ['Quit < 30 s', 'Share of sessions closed within 30 seconds'], ['Avg session'], ['FPS', 'Frames per second out of 240: average and worst 10%'], ['Load', 'Download time: median / slowest 10%'], ['Scores', 'Final scores: median, middle half and best'], ['Level', 'Level reached at the end: average / highest'], ['Input', 'Main input used while playing'], ['Votes', 'Thumbs up and down']].map(([h, t]) => `<th${t ? ` title="${esc(auT(t))}"` : ''}><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody class="${an ? 'an' : ''}">${gRows || `<tr><td colspan="10">${insWhy()}</td></tr>`}</tbody></table></div></div>`;
   const rl = insKpis([
     { k: 'Matches finished', v: stN(all.n), n: +all.n || 0 },
     P('Win rate', all.wins, all.n),
@@ -6675,7 +6679,7 @@ function inBoot() {
 }
 
 const TRS = { t0: Date.now(), vis: 0, vt: performance.now(), von: document.visibilityState === 'visible', foc: 0, blur: 0, keys: 0, clicks: 0, taps: 0, md: 0, mx: null, my: null, wheel: 0, scr: 0, sy: 0, games: 0, gset: new Set(), fs: 0, off: 0, errs: 0, idle: 0, la: performance.now(), copy: 0, rsz: 0, seq: 0 };
-const TR = { g: null, v0: 0, sy: 0, impQ: [], io: null, clicks: [], dw: 0, vit: { cls: 0, inp: 0, lcp: null }, vsent: false, pads: new Set(), kb: '', env: 0, asked: new Set() };
+const TR = { g: null, v0: 0, sy: 0, impQ: [], io: null, clicks: [], dw: 0, vit: { cls: 0, inp: 0, lcp: null }, vsent: false, pads: new Set(), kb: '', env: 0, asked: new Set(), hz: (() => { try { return +sessionStorage.getItem('gameplay:hz') || null; } catch (e) { return null; } })() };
 const TR_DC = /amazon|aws|google cloud|google llc|microsoft|azure|digitalocean|ovh|hetzner|linode|akamai|vultr|choopa|oracle|contabo|leaseweb|m247|datacamp|cdn77|scaleway|alibaba|tencent|hostinger|ionos|psychz|zenlayer|packethub|tzulo|quadranet|nordvpn|expressvpn|proton|mullvad|surfshark|private internet|cyberghost|ipvanish|hide\.me|windscribe|cloudflare|fastly|gcore|constant company|hostwinds|kamatera|clouvider|serverius|worldstream|hivelocity|colocrossing/i;
 const trPadKind = id => /054c|sony|playstation|dualsense|dualshock/i.test(id) ? 'PlayStation' : /045e|xbox|xinput/i.test(id) ? 'Xbox' : /057e|nintendo|switch|joy-con/i.test(id) ? 'Switch' : /8bitdo/i.test(id) ? '8BitDo' : /046d|logitech/i.test(id) ? 'Logitech' : 'Other';
 const trSel = el => { const a = el.closest('[id],[data-id],a,button,[role="button"]') || el, t = a.tagName.toLowerCase(); return (t + (a.id ? '#' + a.id : a.dataset && a.dataset.id ? '[' + a.dataset.id + ']' : typeof a.className === 'string' && a.className.trim() ? '.' + a.className.trim().split(/\s+/)[0] : '') + (a !== el ? ' ' + el.tagName.toLowerCase() : '')).slice(0, 80); };
@@ -6688,7 +6692,7 @@ const trVotes = () => { try { return JSON.parse(localStorage.getItem('gameplay:v
 
 function trStart(g, ctl) {
   TRS.games++; TRS.gset.add(g.id);
-  const A = ctl.api, G = { g, t0: performance.now(), why: 'exit', rounds: 0, sc: [], last: null, lv: null, fr: 0, ft: 0, fs: [], inp: { k: 0, m: 0, t: 0, p: 0 }, on: {} };
+  const A = ctl.api, G = { g, t0: performance.now(), why: 'exit', rounds: 0, sc: [], last: null, lv: null, fr: 0, ft: 0, fs: [], fh: new Uint32Array(4000), inp: { k: 0, m: 0, t: 0, p: 0 }, on: {} };
   if (TR.g) trEnd1(TR.g);
   TR.g = G;
   const sc = A.score, sb = A.submit, ov = A.overlay;
@@ -6704,7 +6708,7 @@ function trStart(g, ctl) {
     requestAnimationFrame(step);
     if (PAUSE.on || document.visibilityState !== 'visible') { last = 0; return; }
     if (!last || t - last > 1000) { last = s0 = t; n = 0; return; }
-    G.fr++; G.ft += t - last; last = t; n++;
+    G.fr++; G.ft += t - last; G.fh[Math.min(3999, (t - last) * 4 | 0)]++; last = t; n++;
     if (++k % 10 === 0 && navigator.getGamepads) { for (const p of navigator.getGamepads()) if (p && (p.buttons.some(b => b.pressed) || p.axes.some(a => Math.abs(a) > .5))) { G.on.p = 1; break; } }
     if (t - s0 >= 1000) {
       if (t - G.t0 > 3000 && G.fs.length < 7200) G.fs.push(n * 1000 / (t - s0));
@@ -6713,6 +6717,12 @@ function trStart(g, ctl) {
     }
   };
   requestAnimationFrame(step);
+}
+function trLow(h, n) {
+  if (!n) return null;
+  let need = Math.ceil(n * .1), k = 0, ms = 0;
+  for (let i = h.length - 1; i >= 0 && k < need; i--) { const c = Math.min(h[i], need - k); k += c; ms += c * (i + .5) / 4; }
+  return ms ? k * 1000 / ms : null;
 }
 function trRound(G, o) {
   G.rounds++;
@@ -6750,7 +6760,7 @@ function trEnd1(G) {
   if (TR.g !== G) return;
   TR.g = null;
   const fs = G.fs.slice().sort((a, b) => a - b), I = G.inp;
-  track('game_quit', { game: G.g.id, sec: Math.round((performance.now() - G.t0) / 1000), why: G.why, rounds: G.rounds, sc: G.sc, last: G.last, lv: G.lv, fps: G.ft ? G.fr * 1000 / G.ft : null, fpsmin: fs.length ? fs[0] : null, fps5: fs.length ? fs[Math.floor(fs.length * .05)] : null, ik: I.k, im: I.m, it: I.t, ip: I.p });
+  track('game_quit', { game: G.g.id, sec: Math.round((performance.now() - G.t0) / 1000), why: G.why, rounds: G.rounds, sc: G.sc, last: G.last, lv: G.lv, fps: G.ft ? G.fr * 1000 / G.ft : null, fpsmin: fs.length ? fs[0] : null, fps5: fs.length ? fs[Math.floor(fs.length * .05)] : null, fps10: trLow(G.fh, G.fr), fpshi: fs.length ? fs[fs.length - 1] : null, hz: TR.hz, ik: I.k, im: I.m, it: I.t, ip: I.p });
 }
 function trView(from) {
   const now = performance.now();
@@ -6856,6 +6866,7 @@ async function trEnv() {
     trTo(navigator.keyboard && navigator.keyboard.getLayoutMap ? navigator.keyboard.getLayoutMap().catch(() => null) : Promise.resolve(null), 2000),
     trTo(trGeo(), 6000), trTo(trHz(), 4000), trTo(trAdb(), 2000)
   ]);
+  if (hz) { TR.hz = hz; try { sessionStorage.setItem('gameplay:hz', hz); } catch (e) {} }
   if (kbm && !TR.kb) TR.kb = trKbOf(kbm.get('KeyQ'), kbm.get('KeyY'), kbm.get('KeyW'));
   const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean).map(p => trPadKind(p.id)) : [];
   track('env_dev', { osv: trOs(hi), brv: trBr(hi), model: hi && hi.model ? hi.model : device().type === 'desktop' ? null : /iPhone/.test(navigator.userAgent) ? 'iPhone' : /iPad|Macintosh/.test(navigator.userAgent) ? 'iPad' : 'Unknown model', arch: hi && hi.architecture ? hi.architecture + (hi.bitness ? '-' + hi.bitness : '') : null, cores: navigator.hardwareConcurrency || null, mem: navigator.deviceMemory || null, gpu: trGpu() || null, gl2: 'WebGL2RenderingContext' in window, wgpu: 'gpu' in navigator, hz, kb: TR.kb || null, pads, adb, langs: (navigator.languages || []).slice(0, 6) });
@@ -7244,6 +7255,10 @@ document.addEventListener('DOMContentLoaded', boot);
 (() => {
 const LANGS = ['en', 'fr', 'es', 'de', 'it', 'pt'], NAMES = { en: 'English', fr: 'Français', es: 'Español', de: 'Deutsch', it: 'Italiano', pt: 'Português' }, LKEY = 'gameplay:lang';
 const R = [
+["Frames per second out of 240: average and worst 10%", "Images par seconde sur 240 : moyenne et 10 % les pires", "Fotogramas por segundo sobre 240: media y 10 % peor", "Bilder pro Sekunde von 240: Schnitt und schlechteste 10 %", "Fotogrammi al secondo su 240: media e 10% peggiore", "Imagens por segundo de 240: média e 10% piores"],
+["Average {a} FPS, worst 10% {l} FPS, out of 240", "Moyenne {a} FPS, 10 % les pires {l} FPS, sur 240", "Media {a} FPS, 10 % peor {l} FPS, sobre 240", "Schnitt {a} FPS, schlechteste 10 % {l} FPS, von 240", "Media {a} FPS, 10% peggiore {l} FPS, su 240", "Média {a} FPS, 10% piores {l} FPS, de 240"],
+["low {n}", "bas {n}", "mín. {n}", "tief {n}", "min {n}", "mín. {n}"],
+["You can only manage accounts below your rank.", "Vous ne pouvez gérer que les comptes d'un rang inférieur au vôtre.", "Solo puedes gestionar cuentas de un rango inferior al tuyo.", "Du kannst nur Konten mit einem niedrigeren Rang verwalten.", "Puoi gestire solo account di grado inferiore al tuo.", "Só pode gerir contas de nível inferior ao seu."],
 ["Updated {t}.", "Mis à jour à {t}.", "Actualizado a las {t}.", "Aktualisiert um {t}.", "Aggiornato alle {t}.", "Atualizado às {t}."],
 ["Other habits per session", "Autres habitudes par session", "Otros hábitos por sesión", "Weitere Gewohnheiten pro Sitzung", "Altre abitudini per sessione", "Outros hábitos por sessão"],
 ["Account, server and theme", "Compte, serveur et thème", "Cuenta, servidor y tema", "Konto, Server und Design", "Account, server e tema", "Conta, servidor e tema"],

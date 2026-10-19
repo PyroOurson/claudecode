@@ -811,6 +811,7 @@
         } catch (err) {}
       }
 
+      let wobA = 0, wobS = 1;
       function wobble(c, n) {
         const jo = c.jo, jv = c.jv, kick = 0.22 + c.kick * 1.4;
         c.kick *= 0.9;
@@ -849,7 +850,7 @@
         if (rs < 6) ctx.arc(x, y, r, 0, TAU);
         else {
           const n = Math.max(18, Math.min(64, Math.round(rs * 0.7))), t = trig(n), jo = c.jo, amp = 1.2 + r * 0.018;
-          wobble(c, n);
+          for (let k = 0; k < wobS; k++) wobble(c, n);
           for (let i = 0; i < n; i++) RAD[i] = r + jo[i] * amp;
           if (o.cells.length > 1) {
             for (const b of o.cells) {
@@ -917,6 +918,7 @@
       const byR = (a, b) => a.rr - b.rr;
       function render(alpha, dt) {
         const kR = Math.min(1, dt * 12);
+        wobA = Math.min(4, wobA + dt * 60); wobS = wobA | 0; wobA -= wobS;
         for (const c of cells) { c.rx = c.px + (c.x - c.px) * alpha; c.ry = c.py + (c.y - c.py) * alpha; c.rr += (c.s - c.rr) * kR; }
         for (const e of ejs) { e.rx = e.px + (e.x - e.px) * alpha; e.ry = e.py + (e.y - e.py) * alpha; e.rr += (e.s - e.rr) * kR; }
         for (const v of viruses) { v.rx = v.px + (v.x - v.px) * alpha; v.ry = v.py + (v.y - v.py) * alpha; v.rr += (v.s - v.rr) * kR; }

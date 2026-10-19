@@ -1,6 +1,10 @@
 (() => {
 const LANGS = ['en', 'fr', 'es', 'de', 'it', 'pt'], NAMES = { en: 'English', fr: 'Français', es: 'Español', de: 'Deutsch', it: 'Italiano', pt: 'Português' }, LKEY = 'gameplay:lang';
 const R = [
+["Frames per second out of 240: average and worst 10%", "Images par seconde sur 240 : moyenne et 10 % les pires", "Fotogramas por segundo sobre 240: media y 10 % peor", "Bilder pro Sekunde von 240: Schnitt und schlechteste 10 %", "Fotogrammi al secondo su 240: media e 10% peggiore", "Imagens por segundo de 240: média e 10% piores"],
+["Average {a} FPS, worst 10% {l} FPS, out of 240", "Moyenne {a} FPS, 10 % les pires {l} FPS, sur 240", "Media {a} FPS, 10 % peor {l} FPS, sobre 240", "Schnitt {a} FPS, schlechteste 10 % {l} FPS, von 240", "Media {a} FPS, 10% peggiore {l} FPS, su 240", "Média {a} FPS, 10% piores {l} FPS, de 240"],
+["low {n}", "bas {n}", "mín. {n}", "tief {n}", "min {n}", "mín. {n}"],
+["You can only manage accounts below your rank.", "Vous ne pouvez gérer que les comptes d'un rang inférieur au vôtre.", "Solo puedes gestionar cuentas de un rango inferior al tuyo.", "Du kannst nur Konten mit einem niedrigeren Rang verwalten.", "Puoi gestire solo account di grado inferiore al tuo.", "Só pode gerir contas de nível inferior ao seu."],
 ["Updated {t}.", "Mis à jour à {t}.", "Actualizado a las {t}.", "Aktualisiert um {t}.", "Aggiornato alle {t}.", "Atualizado às {t}."],
 ["Other habits per session", "Autres habitudes par session", "Otros hábitos por sesión", "Weitere Gewohnheiten pro Sitzung", "Altre abitudini per sessione", "Outros hábitos por sessão"],
 ["Account, server and theme", "Compte, serveur et thème", "Cuenta, servidor y tema", "Konto, Server und Design", "Account, server e tema", "Conta, servidor e tema"],

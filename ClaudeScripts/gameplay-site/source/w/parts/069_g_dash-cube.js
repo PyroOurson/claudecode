@@ -869,6 +869,7 @@
         if (toastT > 0) toastT -= dt;
         flash = Math.max(0, flash - dt * 2.5);
         if (newBest) newBest.t += dt;
+        for (const f of coinFx) f.t += dt;
         if (scr === 'play') {
           acc += dt; playTime += dt;
           while (acc >= 1 / 240) {
@@ -1132,7 +1133,6 @@
           }
         }
         for (const f of coinFx) {
-          f.t += 1 / 60;
           if (f.t > 1) continue;
           ctx.globalAlpha = 1 - f.t; coinIcon(ctx, sx(f.x), sy(f.y + f.t * 90), 16 + f.t * 8, true, T * 12); ctx.globalAlpha = 1;
         }

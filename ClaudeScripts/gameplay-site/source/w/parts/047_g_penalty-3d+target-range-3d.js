@@ -472,11 +472,12 @@ ${g} .hint:empty{display:none}
       }
     }
     const dive = { on: false, type: 'dive', t0: 0, dur: 0.5, x0: 0, d: 0, side: 1, th: 0, lift: 0 };
-    function keeperPose(t) {
+    function keeperPose(t, f) {
       if (!dive.on) {
         const amp = 0.25 + Math.min(0.15, round * 0.03);
         Object.assign(IP, { x: amp * Math.sin(t * 1.3), y: 0, rot: 0, hip: 0.95 + 0.02 * Math.sin(t * 7), arm: 0.8 + 0.1 * Math.sin(t * 3.4), elb: 0.55, th: -0.36, kn: 0.62, sp: 0.18 });
-        for (const k in IP) P[k] += (IP[k] - P[k]) * 0.16;
+        const q = 1 - Math.pow(0.84, f);
+        for (const k in IP) P[k] += (IP[k] - P[k]) * q;
       } else {
         const u = (shotT - dive.t0) / dive.dur, b = easeOut(clamp(u, 0, 1)), f = smooth(clamp((shotT - dive.t0 - dive.dur - 0.2) / 0.4, 0, 1));
         P.x = dive.x0 + dive.d * b;
@@ -784,20 +785,20 @@ ${g} .hint:empty{display:none}
         aimX = clamp(aimX + ((keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0)) * 3.2 * dt, -GW - 0.8, GW + 0.8);
         aimY = clamp(aimY + ((keys.has('ArrowUp') ? 1 : 0) - (keys.has('ArrowDown') ? 1 : 0)) * 2.4 * dt, 0.2, GH + 0.8);
         if (charging) { chargeT += dt; const u = chargeT / 0.95 % 2; power = u < 1 ? u : 2 - u; }
-        keeperPose(t);
+        keeperPose(t, dt * 60);
       } else if (st === 'flight') {
         const n = Math.max(4, Math.ceil(dt * 300)), h = dt / n;
         for (let i = 0; i < n && st === 'flight'; i++) {
-          shotT += h; think(); keeperPose(t); updSpheres(); physStep(h, true);
+          shotT += h; think(); keeperPose(t, h * 300); updSpheres(); physStep(h, true);
           if (st === 'flight' && !caught) keeperHit();
           if (st === 'flight' && (shotT > 3 || bp.z > 8 || (postHit && !inGoal && bv.z > 0.5) || (bp.y <= BR + 1e-3 && bv.lengthSq() < 0.3))) resolve(touched ? 'save' : 'miss');
         }
       } else if (st === 'result') {
-        resT += dt; shotT += dt; keeperPose(t);
+        resT += dt; shotT += dt; keeperPose(t, dt * 60);
         if (caught) { kp.updateMatrixWorld(true); arms[-1].glove.getWorldPosition(tv); arms[1].glove.getWorldPosition(tmp); bp.addVectors(tv, tmp).multiplyScalar(0.5); bp.z += 0.12; }
         else if (ball.visible) { const n = Math.max(4, Math.ceil(dt * 300)), h = dt / n; for (let i = 0; i < n; i++) physStep(h, false); if (bp.z < -19 || bp.z > 12) ball.visible = false; }
         if (resT > 1.9) afterShot();
-      } else keeperPose(t);
+      } else keeperPose(t, dt * 60);
 
 
       ball.position.copy(bp);

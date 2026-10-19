@@ -1,5 +1,5 @@
 const TRS = { t0: Date.now(), vis: 0, vt: performance.now(), von: document.visibilityState === 'visible', foc: 0, blur: 0, keys: 0, clicks: 0, taps: 0, md: 0, mx: null, my: null, wheel: 0, scr: 0, sy: 0, games: 0, gset: new Set(), fs: 0, off: 0, errs: 0, idle: 0, la: performance.now(), copy: 0, rsz: 0, seq: 0 };
-const TR = { g: null, v0: 0, sy: 0, impQ: [], io: null, clicks: [], dw: 0, vit: { cls: 0, inp: 0, lcp: null }, vsent: false, pads: new Set(), kb: '', env: 0, asked: new Set() };
+const TR = { g: null, v0: 0, sy: 0, impQ: [], io: null, clicks: [], dw: 0, vit: { cls: 0, inp: 0, lcp: null }, vsent: false, pads: new Set(), kb: '', env: 0, asked: new Set(), hz: (() => { try { return +sessionStorage.getItem('gameplay:hz') || null; } catch (e) { return null; } })() };
 const TR_DC = /amazon|aws|google cloud|google llc|microsoft|azure|digitalocean|ovh|hetzner|linode|akamai|vultr|choopa|oracle|contabo|leaseweb|m247|datacamp|cdn77|scaleway|alibaba|tencent|hostinger|ionos|psychz|zenlayer|packethub|tzulo|quadranet|nordvpn|expressvpn|proton|mullvad|surfshark|private internet|cyberghost|ipvanish|hide\.me|windscribe|cloudflare|fastly|gcore|constant company|hostwinds|kamatera|clouvider|serverius|worldstream|hivelocity|colocrossing/i;
 const trPadKind = id => /054c|sony|playstation|dualsense|dualshock/i.test(id) ? 'PlayStation' : /045e|xbox|xinput/i.test(id) ? 'Xbox' : /057e|nintendo|switch|joy-con/i.test(id) ? 'Switch' : /8bitdo/i.test(id) ? '8BitDo' : /046d|logitech/i.test(id) ? 'Logitech' : 'Other';
 const trSel = el => { const a = el.closest('[id],[data-id],a,button,[role="button"]') || el, t = a.tagName.toLowerCase(); return (t + (a.id ? '#' + a.id : a.dataset && a.dataset.id ? '[' + a.dataset.id + ']' : typeof a.className === 'string' && a.className.trim() ? '.' + a.className.trim().split(/\s+/)[0] : '') + (a !== el ? ' ' + el.tagName.toLowerCase() : '')).slice(0, 80); };
@@ -12,7 +12,7 @@ const trVotes = () => { try { return JSON.parse(localStorage.getItem('gameplay:v
 
 function trStart(g, ctl) {
   TRS.games++; TRS.gset.add(g.id);
-  const A = ctl.api, G = { g, t0: performance.now(), why: 'exit', rounds: 0, sc: [], last: null, lv: null, fr: 0, ft: 0, fs: [], inp: { k: 0, m: 0, t: 0, p: 0 }, on: {} };
+  const A = ctl.api, G = { g, t0: performance.now(), why: 'exit', rounds: 0, sc: [], last: null, lv: null, fr: 0, ft: 0, fs: [], fh: new Uint32Array(4000), inp: { k: 0, m: 0, t: 0, p: 0 }, on: {} };
   if (TR.g) trEnd1(TR.g);
   TR.g = G;
   const sc = A.score, sb = A.submit, ov = A.overlay;
@@ -28,7 +28,7 @@ function trStart(g, ctl) {
     requestAnimationFrame(step);
     if (PAUSE.on || document.visibilityState !== 'visible') { last = 0; return; }
     if (!last || t - last > 1000) { last = s0 = t; n = 0; return; }
-    G.fr++; G.ft += t - last; last = t; n++;
+    G.fr++; G.ft += t - last; G.fh[Math.min(3999, (t - last) * 4 | 0)]++; last = t; n++;
     if (++k % 10 === 0 && navigator.getGamepads) { for (const p of navigator.getGamepads()) if (p && (p.buttons.some(b => b.pressed) || p.axes.some(a => Math.abs(a) > .5))) { G.on.p = 1; break; } }
     if (t - s0 >= 1000) {
       if (t - G.t0 > 3000 && G.fs.length < 7200) G.fs.push(n * 1000 / (t - s0));
@@ -37,6 +37,12 @@ function trStart(g, ctl) {
     }
   };
   requestAnimationFrame(step);
+}
+function trLow(h, n) {
+  if (!n) return null;
+  let need = Math.ceil(n * .1), k = 0, ms = 0;
+  for (let i = h.length - 1; i >= 0 && k < need; i--) { const c = Math.min(h[i], need - k); k += c; ms += c * (i + .5) / 4; }
+  return ms ? k * 1000 / ms : null;
 }
 function trRound(G, o) {
   G.rounds++;
@@ -74,7 +80,7 @@ function trEnd1(G) {
   if (TR.g !== G) return;
   TR.g = null;
   const fs = G.fs.slice().sort((a, b) => a - b), I = G.inp;
-  track('game_quit', { game: G.g.id, sec: Math.round((performance.now() - G.t0) / 1000), why: G.why, rounds: G.rounds, sc: G.sc, last: G.last, lv: G.lv, fps: G.ft ? G.fr * 1000 / G.ft : null, fpsmin: fs.length ? fs[0] : null, fps5: fs.length ? fs[Math.floor(fs.length * .05)] : null, ik: I.k, im: I.m, it: I.t, ip: I.p });
+  track('game_quit', { game: G.g.id, sec: Math.round((performance.now() - G.t0) / 1000), why: G.why, rounds: G.rounds, sc: G.sc, last: G.last, lv: G.lv, fps: G.ft ? G.fr * 1000 / G.ft : null, fpsmin: fs.length ? fs[0] : null, fps5: fs.length ? fs[Math.floor(fs.length * .05)] : null, fps10: trLow(G.fh, G.fr), fpshi: fs.length ? fs[fs.length - 1] : null, hz: TR.hz, ik: I.k, im: I.m, it: I.t, ip: I.p });
 }
 function trView(from) {
   const now = performance.now();
@@ -180,6 +186,7 @@ async function trEnv() {
     trTo(navigator.keyboard && navigator.keyboard.getLayoutMap ? navigator.keyboard.getLayoutMap().catch(() => null) : Promise.resolve(null), 2000),
     trTo(trGeo(), 6000), trTo(trHz(), 4000), trTo(trAdb(), 2000)
   ]);
+  if (hz) { TR.hz = hz; try { sessionStorage.setItem('gameplay:hz', hz); } catch (e) {} }
   if (kbm && !TR.kb) TR.kb = trKbOf(kbm.get('KeyQ'), kbm.get('KeyY'), kbm.get('KeyW'));
   const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean).map(p => trPadKind(p.id)) : [];
   track('env_dev', { osv: trOs(hi), brv: trBr(hi), model: hi && hi.model ? hi.model : device().type === 'desktop' ? null : /iPhone/.test(navigator.userAgent) ? 'iPhone' : /iPad|Macintosh/.test(navigator.userAgent) ? 'iPad' : 'Unknown model', arch: hi && hi.architecture ? hi.architecture + (hi.bitness ? '-' + hi.bitness : '') : null, cores: navigator.hardwareConcurrency || null, mem: navigator.deviceMemory || null, gpu: trGpu() || null, gl2: 'WebGL2RenderingContext' in window, wgpu: 'gpu' in navigator, hz, kb: TR.kb || null, pads, adb, langs: (navigator.languages || []).slice(0, 6) });

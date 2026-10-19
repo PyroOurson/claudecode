@@ -11,6 +11,7 @@ ClaudeScripts/gameplay-site/source/BUILD.md
 ClaudeScripts/gameplay-site/source/design/gameplay-home.html
 ClaudeScripts/gameplay-site/source/design/lobby.webp
 ClaudeScripts/gameplay-site/source/design/party-lobby.html
+ClaudeScripts/gameplay-site/source/notes/fps_report.md
 ClaudeScripts/gameplay-site/source/notes/stats_audit.md
 ClaudeScripts/gameplay-site/source/rl/RLBRIEF.md
 ClaudeScripts/gameplay-site/source/rl/models/ball.json
@@ -416,6 +417,7 @@ ClaudeScripts/gameplay-site/source/w/supabase/emails/reauthentication.html
 ClaudeScripts/gameplay-site/source/w/supabase/emails/reset_password.html
 ClaudeScripts/gameplay-site/source/w/supabase/emails/subjects.txt
 ClaudeScripts/gameplay-site/source/w/supabase/round10_stats.sql
+ClaudeScripts/gameplay-site/source/w/supabase/round11_ranks.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round5_admin.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round6.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round7_owner.sql
@@ -532,6 +534,7 @@ gameplay/3411a106ae6cf1c73a2c.bin
 gameplay/34a75deb0086aeb05efd.bin
 gameplay/36bd5279df9ce4039793.bin
 gameplay/395a306a637e30bff3e8.bin
+gameplay/3c47c47eacbbe45216ba.bin
 gameplay/40c13791a5a24637d909.bin
 gameplay/40ccabfd1eed62b486dc.bin
 gameplay/415cafb73f1ce43f2f36.bin
@@ -549,7 +552,6 @@ gameplay/4d1b0f7a00809c05cb8d.bin
 gameplay/4e6b948bbfa85ba28c2c.bin
 gameplay/5330cdeb35ac198db1fd.bin
 gameplay/54bc0c679f10a01b0e54.bin
-gameplay/566d9a1e7dafa8f0d6f7.bin
 gameplay/571a6b4329511ff0dde7.bin
 gameplay/594b7b416b166be1b075.bin
 gameplay/66aa72987f50cc9a23a1.bin
@@ -570,6 +572,7 @@ gameplay/80f3b18dce67cb44b759.bin
 gameplay/881ee40f9b5bc40579e0.bin
 gameplay/8980232bbc6f32e3ae97.bin
 gameplay/8d086c026875594e87a8.bin
+gameplay/8fafe1124c59a2c04daf.bin
 gameplay/95840a42e56899cc1993.bin
 gameplay/96acfbf2e82dc0531967.bin
 gameplay/9987bbbffe1eb0db433a.bin
@@ -579,6 +582,7 @@ gameplay/9ed3ab29d75da7b2f6a3.bin
 gameplay/a1839e83704c9a85b103.bin
 gameplay/a2a94b3adebc6b568773.bin
 gameplay/a50ecd18b601e88e2766.bin
+gameplay/a7489f0cceb99e396e1c.bin
 gameplay/a8b2ca1265e1aaea0748.bin
 gameplay/ab96330293662f2cd05d.bin
 gameplay/abab39ac5d49c5c38fe2.bin
@@ -614,7 +618,6 @@ gameplay/de7c0c0840333641b2ac.bin
 gameplay/e099ea270844672a8b29.bin
 gameplay/e1fc63f56c03f0517567.bin
 gameplay/e21bc7c514534991438f.bin
-gameplay/e3001b5297cab05cdabb.bin
 gameplay/e3e8db2590ac0ec368a2.bin
 gameplay/e3f92c2d613c222b121e.bin
 gameplay/e3ff6fe093943d6c5713.bin
@@ -627,7 +630,6 @@ gameplay/f34f3f59599fba5a7e0b.bin
 gameplay/f79e4fb09f0e3723b19c.bin
 gameplay/fae2a8fb5298e38b7450.bin
 gameplay/fc42f97519148b4dae9a.bin
-gameplay/fee4130838db3287403e.bin
 gameplay/ffb2862d2f3461eef708.bin
 gameplay/manifest.txt
 gameplay/peerjs-1.5.4.min.js
