@@ -3606,7 +3606,8 @@ begin
     'gpuv', private.ins_top('env_caps', 'gpuv', v_since, 12),
     'mtex', private.ins_top('env_caps', 'mtex', v_since, 6),
     'locale', private.ins_top('env_caps', 'loc', v_since, 15),
-    'hour', private.ins_top('env_caps', 'hc', v_since, 4),
+    'hour', private.ins_top('env_caps', 'hc', v_since, 4)
+  ) || jsonb_build_object(
     'refs', coalesce((
       select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc, t.k)
       from (
