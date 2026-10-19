@@ -851,6 +851,7 @@ async function auDisplayName(v) {
   finally { b.disabled = false; b.classList.remove('is-busy'); }
 }
 async function auSignedIn(ev) {
+  try { localStorage.setItem('gameplay:acct', '1'); } catch (e) {}
   const uid = SB.user.id, loud = SB.loud;
   SB.loud = false;
   SB.prof = null;
@@ -1133,6 +1134,7 @@ function auBoot() {
     setInterval(() => { if (SB.user && cur && document.visibilityState !== 'hidden') sySync(); }, 120000);
     if (SB_RET && SB_RET.code) SB.rt = true;
     if (!sbHasSession() && !SB.rt) SB.chk = true;
+    if (!sbHasSession() && !SB_RET) { let had = false; try { had = localStorage.getItem('gameplay:acct') === '1'; } catch (e) {} if (!had) SB.mode = 'up'; }
     if (SB_RET || sbHasSession()) sbClient().then(() => auReturn()).catch(() => { auWait(false); SB.rt = false; SB.chk = true; if (openK === 'mauth') auOpen('main', 'Sign-in could not load. Check your connection and reload the page.', 'bad', 'in'); else toast('Sign-in could not load. Check your connection and reload the page.'); });
     auSettings();
   }
