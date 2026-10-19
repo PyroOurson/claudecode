@@ -552,7 +552,7 @@ function stLive() {
   box.innerHTML = P.length ? P.sort((a, b) => (b[1].g ? 1 : 0) - (a[1].g ? 1 : 0)).map(([id, p]) => {
     const u = (AD.users || []).find(x => x.id === id), name = (u && (u.display_name || u.username || u.email)) || id.slice(0, 8);
     return `<button class="st-on${seen.has(id) ? '' : ' nw'}" type="button" data-stu="${esc(id)}"><span class="pic">${esc(name.charAt(0).toUpperCase())}<i class="fr-dot on"></i></span><span><b>${esc(name)}</b><small>${esc(u && u.username ? '@' + u.username : '')}${p.h ? ' · ' + esc(auT('hidden from friends')) : ''}</small></span><em>${esc(p.g ? adGame(p.g) : auT('Browsing'))}</em></button>`;
-  }).join('') : `<div class="adm-mut sx-nobody">${esc(auT('Nobody is online right now.'))}</div>`;
+  }).join('') : '<div class="adm-mut sx-nobody">—</div>';
   $('#stlg').innerHTML = top.map(([g, n]) => `<span class="adm-pill acc">${esc(adGame(g))} · ${n}</span>`).join('');
 }
 function stSeries() {
@@ -583,7 +583,7 @@ function stChart(id, title, rows, keys, o) {
   const lab = v => o.dec ? fmt(v) : stN(v);
   const xl = n ? [0, Math.floor((n - 1) / 2), n - 1].filter((v, i, A) => A.indexOf(v) === i).map(i => `<span style="left:${(100 * X(i) / W).toFixed(2)}%">${esc(stDay(rows[i].day))}</span>`).join('') : '';
   return `<div class="st-card sx-c${o.wide ? ' sx-wide' : ''}" style="--i:${o.i || 0}">
-   <div class="sx-ch"><div><h3>${esc(auT(title))}</h3>${o.note ? `<p class="sx-note">${esc(auT(o.note))}</p>` : ''}</div><div class="sx-kpi"><b${!o.dec && Number.isInteger(kv) ? ` data-n="${kv}" data-f="l"` : ''}>${esc(o.dec ? fmt(kv) : stN(Math.round(kv * 10) / 10))}</b><small>${esc(auT(kl))}</small></div></div>
+   <div class="sx-ch"><div><h3>${esc(auT(title))}</h3></div><div class="sx-kpi"><b${!o.dec && Number.isInteger(kv) ? ` data-n="${kv}" data-f="l"` : ''}>${esc(o.dec ? fmt(kv) : stN(Math.round(kv * 10) / 10))}</b><small>${esc(auT(kl))}</small></div></div>
    ${keys.length > 1 ? `<div class="sx-leg">${keys.map((k, s) => `<span><i class="sx-s${s}"></i>${esc(auT(k.l))}</span>`).join('')}</div>` : ''}
    <div class="sx-plot"><div class="sx-y" aria-hidden="true"><span>${esc(lab(max))}</span><span>${esc(lab(max / 2))}</span><span>0</span></div>
     <div class="sx-area" data-ch="${id}">
@@ -615,7 +615,7 @@ function stDonut() {
   const D = ST.d || {}, H = D.game_hours || null;
   const src = H ? Object.entries(H).map(([id, h]) => [id, +h || 0]) : stGames().map(g => [g.game_id, +g.hours || 0]);
   const L = src.filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]), tot = L.reduce((s, x) => s + x[1], 0);
-  if (!tot) return `<div class="adm-mut sx-empty">${esc(auT('No data yet.'))}</div>`;
+  if (!tot) return '<div class="adm-mut sx-empty">—</div>';
   const top = L.slice(0, 5), rest = L.slice(5).reduce((s, x) => s + x[1], 0);
   if (rest > 0) top.push(['', rest]);
   let off = 0;
@@ -634,7 +634,7 @@ function stDevices() {
   const D = ST.d || {}, by = {};
   (D.device_split || D.devices || []).forEach(d => { const k = ST_DEV[d.device] ? d.device : 'unknown'; by[k] = (by[k] || 0) + (+d.sessions || 0); });
   const L = Object.entries(by).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]), tot = L.reduce((s, x) => s + x[1], 0);
-  if (!tot) return `<div class="adm-mut sx-empty">${esc(auT('No data yet.'))}</div>`;
+  if (!tot) return '<div class="adm-mut sx-empty">—</div>';
   const DI = { desktop: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>', phone: '<svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>', tablet: '<svg viewBox="0 0 24 24"><rect x="4" y="2.5" width="16" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>', unknown: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6M12 17h.01"/></svg>' };
   return `<div class="sx-stack" aria-hidden="true">${L.map(([k, n]) => `<i class="sx-k${ST_DK[k]}" style="flex:${n}"></i>`).join('')}</div><div class="sx-dv">${L.map(([k, n], s) => `<div class="sx-dvr" style="--i:${s}"><span class="sx-dvi sx-k${ST_DK[k]}">${DI[k]}</span><span>${esc(auT(ST_DEV[k]))}</span><b>${Math.round(100 * n / tot)}%</b><small>${esc(auT('{n} sessions').replace('{n}', stN(n)))}</small></div>`).join('')}</div>`;
 }
@@ -701,8 +701,8 @@ function stGameCard(an) {
   box.innerHTML = `<div class="sx-gh2" style="--c:${esc(tint)}"><span class="sx-gt">${adCv(g.game_id, '')}</span><div><b translate="no">${esc(adGame(g.game_id))}</b><span><code>${esc(g.game_id)}</code>${gm && gm.info ? `<small>${esc(gm.info.genres.join(' · '))}</small>` : ''}</span></div>${gm ? `<a class="btn2" href="${esc(href(g.game_id))}" data-stopen="${esc(g.game_id)}">${esc(auT('Open game'))}</a>` : ''}</div>
    <div class="sx-gc">${C.map(([k, v, ic, x, cl, n], i) => `<div class="sx-gk ${cl || ''}" style="--i:${i}"><span class="sx-gki">${AD_SI[ic]}</span><small>${esc(auT(k))}</small><b${Number.isInteger(+n) && n !== '' && n != null ? ` data-n="${+n}" data-f="l"` : ''}>${esc(v)}</b>${x || ''}</div>`).join('')}</div>
    <div class="sx-g2">
-    <div class="sx-gb"><h4>${esc(auT('Last error'))}</h4>${g.last_error ? `<div class="sx-err"><code translate="no">${esc(String(g.last_error).slice(0, 400))}</code><small>${esc(g.last_error_at ? adAgo(g.last_error_at) : '')}</small></div>` : `<div class="adm-mut">${esc(auT('No errors. Everything works.'))}</div>`}</div>
-    <div class="sx-gb"><h4>${esc(auT('Top players'))}</h4>${P.length ? `<div class="sx-tp">${P.map((p, i) => `<button type="button" class="sx-tpr" data-stu="${esc(p.user_id)}"><span class="sx-rk">${i + 1}</span><span class="pic">${esc((p.display_name || p.username || '?').charAt(0).toUpperCase())}</span><span class="sx-tpn"><b translate="no">${esc(p.display_name || p.username || '—')}</b><small>${p.username ? '@' + esc(p.username) + ' · ' : ''}${esc(auT('{n} plays').replace('{n}', +p.plays || 0))}${p.best_score != null ? ' · ' + esc(auT('best {s}').replace('{s}', p.best_score)) : ''}</small></span><em>${esc(adHrs(p.seconds_played))}</em></button>`).join('')}</div>` : `<div class="adm-mut">${esc(auT('No games played yet.'))}</div>`}</div>
+    <div class="sx-gb"><h4>${esc(auT('Last error'))}</h4>${g.last_error ? `<div class="sx-err"><code translate="no">${esc(String(g.last_error).slice(0, 400))}</code><small>${esc(g.last_error_at ? adAgo(g.last_error_at) : '')}</small></div>` : '<div class="adm-mut">—</div>'}</div>
+    <div class="sx-gb"><h4>${esc(auT('Top players'))}</h4>${P.length ? `<div class="sx-tp">${P.map((p, i) => `<button type="button" class="sx-tpr" data-stu="${esc(p.user_id)}"><span class="sx-rk">${i + 1}</span><span class="pic">${esc((p.display_name || p.username || '?').charAt(0).toUpperCase())}</span><span class="sx-tpn"><b translate="no">${esc(p.display_name || p.username || '—')}</b><small>${p.username ? '@' + esc(p.username) + ' · ' : ''}${esc(auT('{n} plays').replace('{n}', +p.plays || 0))}${p.best_score != null ? ' · ' + esc(auT('best {s}').replace('{s}', p.best_score)) : ''}</small></span><em>${esc(adHrs(p.seconds_played))}</em></button>`).join('')}</div>` : '<div class="adm-mut">—</div>'}</div>
    </div>`;
   if (an) countUp(box);
 }
@@ -715,7 +715,7 @@ function stReveal(box, k) {
   C.forEach(c => { c.classList.add('sx-wait'); io.observe(c); });
 }
 function stDraw() {
-  const D = ST.d || {}, O = D.overview || {}, box = $('#adstats'), el = stShell(), S = stSeries(), days = D.series ? ST.days : S.length;
+  const D = ST.d || {}, O = D.overview || {}, box = $('#adstats'), el = stShell(), S = stSeries();
   const T = [['Active 7 days', O.active_7d], ['Active 30 days', O.active_30d]];
   const ER = D.errors || [], DV = D.devices || [], SQ = D.searches || [], RE = D.retention || [];
   const peakOk = S.some(r => r.peak != null), NR = new Set(SQ.filter(q => +q.with_no_results).map(q => q.query)), td = new Date().toISOString().slice(0, 10);
@@ -729,26 +729,25 @@ function stDraw() {
   <div class="st-top"><div class="st-card st-livec"><div class="st-h"><h3><i class="adm-dot"></i>${esc(auT('Live now'))}</h3><b class="st-big" id="stln">0</b></div><div class="st-lg" id="stlg"></div><div class="st-live" id="stlive"></div></div>
   <div class="tiles adm-tiles st-tiles">${T.map(([k, n], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b data-n="${+n || 0}" data-f="l">${stN(n)}</b></div>`).join('')}</div></div>
   <div class="sx-bar"><h3>${esc(auT('Trends'))}</h3><div class="sx-rng" role="group" aria-label="${esc(auT('Time range'))}">${[7, 30, 90].map(d => `<button type="button" data-strng="${d}" aria-pressed="${d === ST.days}">${esc(auT('{n} days').replace('{n}', d))}</button>`).join('')}</div></div>
-  ${insTw(auT('Daily numbers for the chosen period. Hover or tap a chart for exact values.'), 'p', 'st-cap')}
   ${stChart('act', 'Active players per day', S, [{ k: 'active', l: 'Active players' }, { k: 'signed_in', l: 'Signed in' }], { agg: 'avg', wide: true })}
   <div class="sx-grid">
-   ${peakOk ? stChart('peak', 'Peak online per day', S, [{ k: 'peak', l: 'Peak online' }], { agg: 'max', i: 1, note: 'Most people online at the same time' }) : stChart('ses', 'Sessions per day', S, [{ k: 'sessions', l: 'Sessions' }], { agg: 'sum', i: 1, note: 'Peak online starts recording while an admin has this page open' })}
+   ${peakOk ? stChart('peak', 'Peak online per day', S, [{ k: 'peak', l: 'Peak online' }], { agg: 'max', i: 1 }) : stChart('ses', 'Sessions per day', S, [{ k: 'sessions', l: 'Sessions' }], { agg: 'sum', i: 1 })}
    ${peakOk ? stChart('ses', 'Sessions per day', S, [{ k: 'sessions', l: 'Sessions' }], { agg: 'sum', i: 2 }) : ''}
    ${stChart('hrs', 'Hours played per day', S, [{ k: 'hours', l: 'Hours played' }], { agg: 'sum', dec: true, fmt: stH, i: 3 })}
    ${stChart('new', 'New accounts per day', S, [{ k: 'signups', l: 'New accounts' }], { agg: 'sum', type: 'bar', i: 4 })}
    ${stChart('lch', 'Game launches per day', S, [{ k: 'launches', l: 'Game launches' }], { agg: 'sum', type: 'bar', i: 5 })}
-   <div class="st-card sx-c" style="--i:6"><div class="sx-ch"><div><h3>${esc(auT('Share of playtime'))}</h3><p class="sx-note">${esc(D.game_hours ? auT('Last {n} days').replace('{n}', days) : auT('All time'))}</p></div></div>${stDonut()}</div>
+   <div class="st-card sx-c" style="--i:6"><div class="sx-ch"><div><h3>${esc(auT('Share of playtime'))}</h3></div></div>${stDonut()}</div>
   </div>
   <div class="st-card sx-gm"><div class="sx-gh"><h3>${esc(auT('Games'))}</h3>
    <div class="sx-cb"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="stgq" role="combobox" aria-expanded="false" aria-controls="stgl" aria-autocomplete="list" aria-label="${esc(auT('Choose a game'))}" placeholder="${esc(auT('Search games'))}" autocomplete="off" spellcheck="false" value="${esc(ST.game ? adGame(ST.game) : '')}"><button type="button" class="sx-cbt" data-stcb tabindex="-1" aria-label="${esc(auT('Show all games'))}">${AD_ICO.chev}</button><ul id="stgl" role="listbox" aria-label="${esc(auT('Games'))}" hidden></ul></div>
-  </div>${insTw(auT('Pick a game to see its launches, players, play time and errors.'), 'p', 'st-cap')}<div id="stgd"></div></div>
+  </div><div id="stgd"></div></div>
   <div class="st-grid">
-   <div class="st-card"><h3>${esc(auT('Devices'))}</h3><p class="sx-note">${esc(auT('Share of sessions by device'))}</p>${stDevices()}<div class="st-list sx-dvl">${DV.slice(0, 6).map(d => `<div class="st-kv"><span>${esc([auT(ST_DEV[d.device] || d.device || ''), d.os, d.browser].filter(Boolean).join(' · '))}</span><b>${stN(d.sessions)}</b></div>`).join('')}</div></div>
-   <div class="st-card"><h3>${esc(auT('Recent errors'))}</h3><div class="st-list">${ER.length ? ER.slice(0, 30).map(e => `<div class="st-err"><b>${esc(adGame(e.game_id))}</b><span>${esc(e.message || '')}</span><small>${esc(e.place || '')} · ${esc(e.device || '')} · ${esc(adAgo(e.created_at))}</small></div>`).join('') : `<div class="adm-mut">${esc(auT('No errors. Everything works.'))}</div>`}</div></div>
-   <div class="st-card"><h3>${esc(auT('Top searches'))}</h3><p class="sx-note">${esc(auT('What people typed in the search box'))}</p>${insList(SQ.map(q => ({ k: q.query, n: +q.searches || 0 })), { k: 8, val: r => stN(r.n), fmt: k => esc(k) + (NR.has(k) ? ` <span class="adm-pill warn">${esc(auT('no result'))}</span>` : ''), why: 'Nobody has searched yet.' })}</div>
-   <div class="st-card"><h3>${esc(auT('Players coming back'))}</h3><p class="sx-note">${esc(auT('New players by first day, and how many came back'))}</p>${RE.length ? `<div class="adm-tw st-re"><table class="adm-t st-t"><thead><tr>${['First day', 'New', 'Next day', 'Within a week'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${RE.map(r => `<tr><td>${esc(stDay(r.cohort_day))}</td><td>${stN(r.new_players)}</td>${String(r.cohort_day).slice(0, 10) >= td ? `<td><span class="adm-mut" title="${esc(auT('Too early to tell'))}">—</span></td>` : reCell(r.day1_pct)}${reCell(r.back_within_7d_pct)}</tr>`).join('')}</tbody></table></div>` : insWhy('No visitors yet.')}</div>
+   <div class="st-card"><h3>${esc(auT('Devices'))}</h3>${stDevices()}<div class="st-list sx-dvl">${DV.slice(0, 6).map(d => `<div class="st-kv"><span>${esc([auT(ST_DEV[d.device] || d.device || ''), d.os, d.browser].filter(Boolean).join(' · '))}</span><b>${stN(d.sessions)}</b></div>`).join('')}</div></div>
+   <div class="st-card"><h3>${esc(auT('Recent errors'))}</h3><div class="st-list">${ER.length ? ER.slice(0, 30).map(e => `<div class="st-err"><b>${esc(adGame(e.game_id))}</b><span>${esc(e.message || '')}</span><small>${esc(e.place || '')} · ${esc(e.device || '')} · ${esc(adAgo(e.created_at))}</small></div>`).join('') : insWhy()}</div></div>
+   <div class="st-card"><h3>${esc(auT('Top searches'))}</h3>${insList(SQ.map(q => ({ k: q.query, n: +q.searches || 0 })), { val: r => stN(r.n), fmt: k => esc(k) + (NR.has(k) ? ` <span class="adm-pill warn">${esc(auT('no result'))}</span>` : '') })}</div>
+   <div class="st-card"><h3>${esc(auT('Players coming back'))}</h3>${RE.length ? `<div class="adm-tw st-re"><table class="adm-t st-t"><thead><tr>${['First day', 'New', 'Next day', 'Within a week'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${RE.map(r => `<tr><td>${esc(stDay(r.cohort_day))}</td><td>${stN(r.new_players)}</td>${String(r.cohort_day).slice(0, 10) >= td ? `<td><span class="adm-mut" title="${esc(auT('Too early to tell'))}">—</span></td>` : reCell(r.day1_pct)}${reCell(r.back_within_7d_pct)}</tr>`).join('')}</tbody></table></div>` : insWhy()}</div>
   </div>
-  <p class="adm-mut st-at">${esc(auT('Updated {t}. Refreshes every 30 seconds; the live list updates instantly.').replace('{t}', new Date(D.at || Date.now()).toLocaleTimeString()))}</p>`;
+  <p class="adm-mut st-at">${esc(auT('Updated {t}.').replace('{t}', new Date(D.at || Date.now()).toLocaleTimeString()))}</p>`;
   if (an === 2) countUp(el.querySelector('.st-top'));
   if (an) stReveal(el);
   stGameCard(an); stLive();
@@ -760,10 +759,6 @@ function stBoot() {
   box.addEventListener('click', e => {
     const sb = e.target.closest('[data-stsub]');
     if (sb) { if (sb.dataset.stsub !== INS.sub) { INS.sub = sb.dataset.stsub; ST.anim = 2; stShell(); adConfetti(e); if (INS.sub === 'ins') insLoad(false); else stLoad(); } return; }
-    const ia = e.target.closest('[data-insall]');
-    if (ia) { INS.all = !INS.all; const t = $('#insv .ins-t'); if (t) t.classList.toggle('all', INS.all); const n = document.querySelectorAll('#insv .ins-t tbody tr').length; ia.textContent = INS.all ? auT('Show fewer') : auT('Show all {n} games').replace('{n}', n); return; }
-    const ig = e.target.closest('[data-insgo]');
-    if (ig) { const sc = $('#ins-' + ig.dataset.insgo); if (sc) { sc.open = true; INS.shut.delete(ig.dataset.insgo); sc.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'start' }); } return; }
     const rg = e.target.closest('[data-insrng]');
     if (rg) { const d = +rg.dataset.insrng; if (d !== INS.days) { INS.days = d; box.querySelectorAll('[data-insrng]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.insrng === d))); adConfetti(e); insLoad(true); } return; }
     const r = e.target.closest('[data-strng]');
@@ -777,7 +772,6 @@ function stBoot() {
     if (g) { e.preventDefault(); go(href(g.dataset.stopen), false); }
   });
   box.addEventListener('mousedown', e => { if (e.target.closest('#stgl, [data-stcb]')) e.preventDefault(); });
-  box.addEventListener('toggle', e => { const d = e.target; if (d.classList && d.classList.contains('ins-sec')) { INS.shut[d.open ? 'delete' : 'add'](d.id.slice(4)); if (d.id === 'ins-ads') INS.adsOpen = d.open; } }, true);
   box.addEventListener('input', e => { if (e.target.id === 'stgq') { e.target.dataset.typed = '1'; ST.ci = e.target.value.trim() ? 0 : -1; stCombo(true); } });
   box.addEventListener('focusin', e => { if (e.target.id === 'stgq') { e.target.select(); stCombo(true); } });
   box.addEventListener('focusout', e => { if (e.target.id === 'stgq') setTimeout(() => { if (document.activeElement !== e.target) { stCombo(false); if (ST.game) e.target.value = adGame(ST.game); e.target.dataset.typed = ''; } }, 120); });
@@ -796,7 +790,6 @@ function stBoot() {
   box.addEventListener('pointerout', e => { const dn = e.target.closest('.sx-dn'); if (dn && !dn.contains(e.relatedTarget)) stSeg(dn, null); });
   setInterval(() => { if (view !== 'admin' || AD.tab !== 'stats' || document.visibilityState !== 'visible') return; if (INS.sub === 'ins') { if (Date.now() - INS.at > 120000) insLoad(true); } else if (!(document.activeElement && document.activeElement.id === 'stgq')) stLoad(true); }, 30000);
   setInterval(stSample, 60000);
-  addEventListener('scroll', () => { if (INS.raf || INS.sub !== 'ins' || view !== 'admin') return; INS.raf = requestAnimationFrame(() => { INS.raf = 0; insNav(); }); }, { passive: true });
 }
 
 function adConfetti(e) {
@@ -820,7 +813,7 @@ function adConfetti(e) {
   })(t0);
 }
 
-const INS = { d: null, days: 30, busy: false, sub: 'ov', at: 0, shut: new Set(['scr', 'hw']), all: false };
+const INS = { d: null, days: 30, busy: false, sub: 'ov', at: 0 };
 const insPct = (a, b) => b ? Math.round(100 * a / b) : 0;
 const insMs = v => v == null ? '—' : v >= 1000 ? (v / 1000).toFixed(1) + ' s' : Math.round(v) + ' ms';
 const insVit = (k, v) => { const T = { lcp: [2500, 4000], inp: [200, 500], cls: [.1, .25], fcp: [1800, 3000], ttfb: [800, 1800] }[k]; if (v == null) return '<span class="adm-mut">—</span>'; const c = v <= T[0] ? 'ok' : v <= T[1] ? 'warn' : 'bad'; return `<span class="adm-pill ${c}">${esc(k === 'cls' ? String(v) : insMs(v))}</span>`; };
@@ -828,13 +821,12 @@ const insCountry = c => { try { return new Intl.DisplayNames([adLang()], { type:
 const insFlag = c => /^[A-Z]{2}$/.test(c) && !/Windows/.test(navigator.userAgent) ? String.fromCodePoint(...[...c].map(x => 127397 + x.charCodeAt(0))) : '';
 const insNum = (v, d) => v == null || v === '' || !isFinite(+v) ? '—' : (+v).toLocaleString(adLang(), { maximumFractionDigits: d == null ? 1 : d });
 const insDur = v => v == null ? '—' : v >= 3600 ? (v / 3600).toFixed(1) + ' h' : v >= 60 ? Math.round(v / 60) + ' min' : Math.round(v) + ' s';
-const insWhy = t => `<p class="ins-why">${esc(auT(t))}</p>`;
+const insWhy = () => '<p class="ins-why">—</p>';
 const insTw = (t, tag, cls) => `<${tag} class="tw${cls ? ' ' + cls : ''}" style="--tn:${Math.max(1, Math.min(60, t.length))}">${esc(t)}</${tag}>`;
 const insRows = rows => (rows || []).filter(r => r && +r.n > 0).sort((a, b) => b.n - a.n);
-const INS_WHY = 'Nothing recorded in this period yet.';
 function insCard(title, body, o) {
   o = o || {};
-  return `<div class="st-card ins-c${o.cls ? ' ' + o.cls : ''}"${o.tip ? ` title="${esc(auT(o.tip))}"` : ''}><h3>${esc(auT(title))}</h3>${o.cap ? `<p class="sx-note">${esc(auT(o.cap))}</p>` : ''}${body}</div>`;
+  return `<div class="st-card ins-c${o.cls ? ' ' + o.cls : ''}"${o.tip ? ` title="${esc(auT(o.tip))}"` : ''}><h3>${esc(auT(title))}</h3>${o.cap ? `<p class="sx-note">${esc(o.cap)}</p>` : ''}${body}</div>`;
 }
 function insKpis(T) {
   return `<div class="ins-kpis">${T.map((t, i) => {
@@ -844,17 +836,16 @@ function insKpis(T) {
 }
 function insList(rows, o) {
   o = o || {};
-  const R = insRows(rows), max = Math.max(1, ...R.map(r => +r.n)), tot = R.reduce((s, r) => s + (+r.n || 0), 0), k = o.k || 5, nm = o.name || (x => String(x));
-  if (!R.length) return insWhy(o.why || INS_WHY);
+  const R = insRows(rows), max = Math.max(1, ...R.map(r => +r.n)), tot = R.reduce((s, r) => s + (+r.n || 0), 0), k = o.k || 10, nm = o.name || (x => String(x));
+  if (!R.length) return insWhy();
   const val = r => o.val ? o.val(r) : stN(r.n) + ' · ' + insPct(r.n, tot) + '%';
   const row = (r, i) => `<div class="ins-b" style="--i:${Math.min(i, 9)}" title="${esc(o.tip ? o.tip(r) : nm(r.k) + ': ' + val(r))}"><span class="ins-bk" translate="no">${o.fmt ? o.fmt(r.k) : esc(r.k)}</span><i><s style="width:${(100 * r.n / max).toFixed(1)}%"></s></i><b>${o.val ? esc(o.val(r)) : `${stN(r.n)}<small> · ${insPct(r.n, tot)}%</small>`}</b></div>`;
-  const a = R.slice(0, k).map(row).join(''), b = R.slice(k).map((r, i) => row(r, i)).join('');
-  return `<div class="ins-bars">${a}</div>${b ? `<details class="ins-more"><summary>${esc(auT('Show {n} more').replace('{n}', R.length - k))}</summary><div class="ins-bars">${b}</div></details>` : ''}`;
+  return `<div class="ins-bars">${R.slice(0, k).map(row).join('')}</div>`;
 }
 function insStk(label, rows, o) {
   o = o || {};
   const R = insRows(rows), tot = R.reduce((s, r) => s + (+r.n || 0), 0), nm = k => o.fmt ? o.fmt(k) : String(k);
-  if (!tot) return `<div class="ins-sk ins-sk0" title="${esc(auT(label))}"><span class="ins-skl">${esc(auT(label))}</span><span class="ins-skn">${esc(auT(o.why || 'Not reported by any browser yet'))}</span></div>`;
+  if (!tot) return `<div class="ins-sk ins-sk0" title="${esc(auT(label))}"><span class="ins-skl">${esc(auT(label))}</span><span class="ins-skn">—</span></div>`;
   const top = R.slice(0, 4), rest = R.slice(4).reduce((s, r) => s + +r.n, 0);
   const seg = top.map((r, i) => [nm(r.k), +r.n, 'sx-k' + i]).concat(rest ? [[auT('Other'), rest, 'sx-ko']] : []);
   return `<div class="ins-sk" title="${esc(auT(label) + ': ' + seg.map(([k, n]) => k + ' ' + insPct(n, tot) + '%').join(', '))}"><span class="ins-skl">${esc(auT(label))}</span><span class="ins-skb">${seg.map(([k, n, c]) => `<i class="${c}" style="flex:${n}" title="${esc(k + ': ' + stN(n) + ' · ' + insPct(n, tot) + '%')}"><em translate="no">${esc(k)}<small> · ${insPct(n, tot)}%</small></em></i>`).join('')}</span></div>`;
@@ -866,7 +857,7 @@ function insMeters(L) {
 function insDonut(rows, o) {
   o = o || {};
   const R = insRows(rows), tot = R.reduce((s, r) => s + +r.n, 0);
-  if (!tot) return insWhy(o.why || INS_WHY);
+  if (!tot) return insWhy();
   const top = R.slice(0, 4), rest = R.slice(4).reduce((s, r) => s + +r.n, 0), L = top.map((r, i) => [o.fmt ? o.fmt(r.k) : String(r.k), +r.n, 'sx-k' + i]).concat(rest ? [[auT('Other'), rest, 'sx-ko']] : []);
   let off = 0;
   const gap = L.length > 1 ? 1.2 : 0;
@@ -877,16 +868,13 @@ const insDns = L => `<div class="ins-dns">${L.map(([t, h]) => `<div><small>${esc
 function insHist(rows, o) {
   o = o || {};
   const R = rows || [], max = Math.max(1, ...R.map(r => +r.n || 0)), tot = R.reduce((s, r) => s + (+r.n || 0), 0);
-  if (!tot) return insWhy(o.why || INS_WHY);
+  if (!tot) return insWhy();
   return `<div class="ins-hg">${R.map((r, i) => `<div style="--i:${i}" title="${esc(r.k + ': ' + stN(r.n) + ' · ' + insPct(r.n, tot) + '%')}"><b>${stN(r.n)}</b><i><s style="height:${(100 * (+r.n || 0) / max).toFixed(1)}%"></s></i><small>${esc(r.k)}</small></div>`).join('')}</div>`;
 }
 function insFunnel(F) {
   const S = [['Visited', F.visited], ['Launched a game', F.launched], ['Played 1 minute', F.played], ['Created an account', F.account], ['Came back another day', F.returned]].map(([k, n]) => [k, +n || 0]), top = S[0][1];
-  if (!top) return insWhy('No new visitors in this period.');
-  return `<div class="ins-fun">${S.map(([k, n], i) => {
-    const w = Math.max(3, Math.min(100, 100 * n / top)), nx = S[i + 1] ? Math.max(3, Math.min(100, 100 * S[i + 1][1] / top)) : w * .9, d = Math.max(0, (1 - nx / w) * 50);
-    return `<div class="ins-fs" style="--i:${i}" title="${esc(auT(k) + ': ' + stN(n) + (i ? ' · ' + auT('{p}% of visitors').replace('{p}', insPct(n, top)) : ''))}"><span>${esc(auT(k))}</span><i><s style="width:${w.toFixed(1)}%;clip-path:polygon(0 0,100% 0,${(100 - d).toFixed(1)}% 100%,${d.toFixed(1)}% 100%)"></s></i><b>${stN(n)}${i ? `<small> · ${insPct(n, top)}%</small>` : ''}</b></div>`;
-  }).join('')}</div>`;
+  if (!top) return insWhy();
+  return `<div class="ins-fun">${S.map(([k, n], i) => `<div class="ins-fs" style="--i:${i}" title="${esc(auT(k) + ': ' + stN(n) + ' · ' + auT('{p}% of visitors').replace('{p}', insPct(n, top)))}"><span>${esc(auT(k))}</span><i><s style="width:${Math.min(100, 100 * n / top).toFixed(1)}%"></s></i><b>${stN(n)}</b><em>${insPct(n, top)}%</em></div>`).join('')}</div>`;
 }
 function insHeat(H) {
   const M = {}, max = Math.max(.01, ...(H || []).map(x => +x.v || 0));
@@ -902,38 +890,35 @@ function insSlots(S) {
   S.forEach(s => (by[s.src] = by[s.src] || []).push(s));
   return Object.entries(by).map(([src, L]) => `<div class="ins-sl"><span>${esc(auT(src === 'grid' ? 'Grid' : src === 'rail' ? 'Row' : src))}</span><div>${L.sort((a, b) => a.pos - b.pos).map((s, i) => { const r = s.imp ? s.clk / s.imp : 0; return `<i class="${r / max > .55 ? 'hi' : ''}" style="--a:${(r / max).toFixed(3)};--i:${i}" title="${esc(auT('Slot {n}').replace('{n}', s.pos + 1) + ': ' + (100 * r).toFixed(1) + '% · ' + auT('{a} clicks of {b} views').replace('{a}', stN(s.clk)).replace('{b}', stN(s.imp)))}"><b>${Math.round(100 * r)}</b></i>`; }).join('')}</div></div>`).join('');
 }
-const INS_SEC = [['ret', 'Retention', 'Do players come back? Counts every visitor, signed in or not.'], ['games', 'Games', 'How each game does: quick quits, play time, smoothness, loading, scores and thumbs.'], ['rl', 'Rocket League', 'Matches reported by the game itself, finished or left early.'], ['beh', 'Clicks and behaviour', 'What people click on the home page and where they get stuck.'], ['geo', 'Where players are', 'Location and network of visitors who accepted cookies.'], ['dev', 'Devices', 'Computers, phones, browsers and controllers people use.'], ['ses', 'Sessions', 'One session is one visit, from opening the site to closing it.'], ['spd', 'Speed', 'How fast pages load and react (Web Vitals, 75th percentile). Green is good.'], ['scr', 'Screens and display', 'Screen sizes and display settings.'], ['hw', 'Hardware and browser features', 'What each device and browser can do.'], ['ads', 'Ads', 'Ad views, clicks and revenue.']];
+const INS_SEC = [['ret', 'Retention'], ['games', 'Games'], ['rl', 'Rocket League'], ['beh', 'Clicks and behaviour'], ['geo', 'Where players are'], ['dev', 'Devices'], ['ses', 'Sessions'], ['spd', 'Speed'], ['scr', 'Screens and display'], ['hw', 'Hardware and browser features'], ['ads', 'Ads']];
 function insDraw(an) {
   const box = $('#insv');
   if (!box) return;
   if (!motionOK()) an = false;
-  const D = INS.d || {}, M = INS.m && !INS.m.__err ? INS.m : {}, G = D.geo || {}, V = D.dev || {}, B = D.behaviour || {}, R = D.retention || {}, RL = D.rl || {}, A = D.ads || {}, C = D.coverage || {};
+  const D = INS.d || {}, M = INS.m && !INS.m.__err ? INS.m : {}, G = D.geo || {}, V = D.dev || {}, B = D.behaviour || {}, R = D.retention || {}, RL = D.rl || {}, A = D.ads || {};
   const coh = d => (R.cohort || []).find(x => x.d === d) || {}, S = R.streaks || {}, sc = B.scroll || {}, all = RL.all || {}, LF = M.rl_left || {}, SS = M.sessions || {}, FL = M.flags || {}, EX = M.extra || {};
   const P = (k, a, b, o) => { const p = b ? insPct(a, b) : null; return Object.assign({ k, v: p == null ? '—' : p + '%', n: p, f: 'p' }, o || {}); };
   const K = (k, v, d, tip) => ({ k, v: insNum(v, d), n: v != null && Number.isInteger(+v) ? +v : null, tip });
-  const cohT = (d, k) => { const c = coh(d); return c.eligible ? P(k, c.back, c.eligible, { s: auT('of {n} players').replace('{n}', stN(c.eligible)), tip: 'New players seen again exactly that many days after their first visit' }) : { k, v: '—', s: auT('Shows once players are {d} days old').replace('{d}', d) }; };
+  const cohT = (d, k) => { const c = coh(d); return c.eligible ? P(k, c.back, c.eligible, { s: auT('of {n} players').replace('{n}', stN(c.eligible)), tip: 'New players seen again exactly that many days after their first visit' }) : { k, v: '—' }; };
   const user = (p, x) => `<button type="button" class="sx-tpr" data-stu="${esc(p.id)}"><span class="pic">${esc((p.name || p.username || '?').charAt(0).toUpperCase())}</span><span class="sx-tpn"><b translate="no">${esc(p.name || p.username || '—')}</b><small>${p.username ? '@' + esc(p.username) : ''}</small></span><em>${esc(x)}</em></button>`;
   const rng = `<div class="sx-bar"><h3>${esc(auT('Player data'))}</h3><div class="sx-rng" role="group" aria-label="${esc(auT('Time range'))}">${[7, 30, 90].map(d => `<button type="button" data-insrng="${d}" aria-pressed="${d === INS.days}">${esc(auT('{n} days').replace('{n}', d))}</button>`).join('')}</div></div>`;
-  const cov = `<p class="adm-mut ins-cov">${esc(auT('{a} of {b} sessions shared device details and {c} shared location. Only visitors who accepted cookies are counted.').replace('{a}', stN(C.dev)).replace('{b}', stN(C.sessions)).replace('{c}', stN(C.geo)))}</p>`;
   const mau = +R.mau || 0, dau = +R.dau || 0;
   const ret = insKpis([
-    { k: 'Stickiness (daily ÷ monthly)', v: mau ? insPct(dau, mau) + '%' : '—', n: mau ? insPct(dau, mau) : null, f: 'p', s: auT('Above 20% is good'), tip: 'Average players per day divided by players in the last 30 days' },
+    { k: 'Stickiness', v: mau ? insPct(dau, mau) + '%' : '—', n: mau ? insPct(dau, mau) : null, f: 'p', tip: 'Average players per day divided by players in the last 30 days' },
     cohT(1, 'Back next day'), cohT(7, 'Back after 7 days'), cohT(30, 'Back after 30 days'),
-    { k: 'At risk of leaving', v: stN(R.churn_all), n: +R.churn_all || 0, s: auT('Regulars gone 14+ days') },
-    { k: 'On a streak now', v: stN(S.active), n: +S.active || 0, s: S.avg_cur ? auT('average {n} days').replace('{n}', S.avg_cur) : auT('2+ days in a row') }
-  ]) + `<div class="ins-grid">
-   ${insCard('Funnel', insFunnel(R.funnel || {}), { cap: 'New visitors in this period, step by step' })}
-   ${insCard('Longest streak (days in a row)', insHist([['1 day', S.b1], ['2–3 days', S.b3], ['4–7 days', S.b7], ['8–14 days', S.b14], ['15+ days', S.b15]].map(([k, n]) => ({ k: auT(k), n: +n || 0 }))), { cap: 'Players by their longest run of days in a row' })}
-   ${insCard('Top current streaks', (R.top_streaks || []).length ? `<div class="sx-tp ins-scroll">${R.top_streaks.map(p => user(p, auT('{n} days').replace('{n}', p.cur))).join('')}</div>` : insWhy('Nobody is on a streak of 2 days or more right now.'))}
-   ${insCard('Players at risk of leaving', (R.churn || []).length ? `<div class="sx-tp ins-scroll">${R.churn.map(p => user(p, auT('{d} days · {h} h · {t}').replace('{d}', p.days).replace('{h}', p.hours).replace('{t}', adAgo(p.last)))).join('')}</div>` : insWhy('Nobody right now.'), { cap: 'Played 3+ days in the last 60, gone for 14+ days' })}
+    { k: 'At risk of leaving', v: stN(R.churn_all), n: +R.churn_all || 0, tip: 'Played 3+ days in the last 60, gone for 14+ days' },
+    { k: 'On a streak now', v: stN(S.active), n: +S.active || 0, s: S.avg_cur ? auT('average {n} days').replace('{n}', S.avg_cur) : '' }
+  ]) + insCard('Funnel', insFunnel(R.funnel || {})) + `<div class="ins-grid">
+   ${insCard('Longest streak', insHist([['1 day', S.b1], ['2–3 days', S.b3], ['4–7 days', S.b7], ['8–14 days', S.b14], ['15+ days', S.b15]].map(([k, n]) => ({ k: auT(k), n: +n || 0 }))))}
+   ${insCard('Top current streaks', (R.top_streaks || []).length ? `<div class="sx-tp">${R.top_streaks.slice(0, 10).map(p => user(p, auT('{n} days').replace('{n}', p.cur))).join('')}</div>` : insWhy())}
+   ${insCard('Players at risk of leaving', (R.churn || []).length ? `<div class="sx-tp">${R.churn.slice(0, 10).map(p => user(p, auT('{d} days · {h} h · {t}').replace('{d}', p.days).replace('{h}', p.hours).replace('{t}', adAgo(p.last)))).join('')}</div>` : insWhy())}
   </div>`;
   const games = (D.games || []).slice(0, 60), votes = new Map((D.votes || []).map(v => [v.id, v])), GD = (ST.d || {}).game_days || {}, MS = M.scores || {};
   const inBar = g => { const I = [['Keyboard', +g.ik || 0, 'sx-k0'], ['Mouse', +g.im || 0, 'sx-k1'], ['Touch', +g.it || 0, 'sx-k2'], ['Controller', +g.ip || 0, 'sx-k3']].filter(x => x[1]), t = I.reduce((s, x) => s + x[1], 0); if (!t) return `<span class="adm-mut" title="${esc(auT('No input recorded'))}">—</span>`; const top = I.slice().sort((a, b) => b[1] - a[1])[0]; return `<span class="ins-in" title="${esc(I.map(x => auT(x[0]) + ' ' + insPct(x[1], t) + '%').join(' · '))}"><span>${I.map(x => `<i class="${x[2]}" style="flex:${x[1]}"></i>`).join('')}</span><small>${esc(auT(top[0]))} ${insPct(top[1], t)}%</small></span>`; };
   const scoreCell = s => { if (!s || !s.n) return `<span class="adm-mut" title="${esc(auT('This game does not report a score'))}">—</span>`; const lo = Math.min(+(s.min != null ? s.min : s.p10 != null ? s.p10 : 0) || 0, +s.p25 || 0), mx = Math.max(+s.max || 0, lo + 1e-9), X = v => Math.max(0, Math.min(100, 100 * ((+v || 0) - lo) / (mx - lo))); return `<span class="ins-sc" title="${esc(auT('Median {m} · middle half {a}–{b} · best {x} · {n} scores').replace('{m}', insNum(s.p50)).replace('{a}', insNum(s.p25)).replace('{b}', insNum(s.p75)).replace('{x}', insNum(s.max)).replace('{n}', stN(s.n)))}"><b>${esc(insNum(s.p50))}</b><i><s style="left:${X(s.p25).toFixed(1)}%;width:${Math.max(2, X(s.p75) - X(s.p25)).toFixed(1)}%"></s><u style="left:${X(s.p50).toFixed(1)}%"></u></i><small>${esc(auT('max {n}').replace('{n}', insNum(s.max)))}</small></span>`; };
   const mut = (t, v) => `<span class="adm-mut" title="${esc(auT(t))}">${v || '—'}</span>`;
-  const gRows = games.map((g, i) => { const vt = votes.get(g.id) || g.votes || {}, l = g.load || {}, q = insPct(g.early, g.n); return `<tr style="--i:${Math.min(i, 14)}"${i >= 6 ? ' class="ins-x"' : ''}><td><span class="ins-gn">${adCv(g.id, 'ins-cv')}<span translate="no">${esc(adGame(g.id))}</span></span></td><td><span class="ins-gs"><b>${stN(g.n)}</b>${GD[g.id] ? stSpark(GD[g.id], an) : ''}</span></td><td>${g.n ? `<span class="adm-pill ${q > 40 ? 'bad' : q > 20 ? 'warn' : 'ok'}">${q}%</span>` : '—'}</td><td>${g.sec != null ? esc(adHrs(g.sec)) : '—'}</td><td>${g.fps != null ? `<b>${g.fps}</b> <span class="adm-mut">/ ${g.fps_low != null ? g.fps_low : '—'}</span>` : mut('Not measured: the game was closed within 3 seconds')}</td><td>${l.n ? esc(insMs(l.p50)) + ' <span class="adm-mut">/ ' + esc(insMs(l.p90)) + '</span>' : mut('Part of the page, nothing extra to download')}</td><td>${scoreCell(MS[g.id] || g.scores)}</td><td>${g.lv_n ? `${esc(String(g.lv_avg))} <span class="adm-mut">/ ${esc(String(g.lv_max))}</span>` : mut('This game does not show a level')}</td><td>${inBar(g)}</td><td>${vt.up || vt.down ? `<span class="ins-vt"><b>▲ ${vt.up | 0}</b> <span>▼ ${vt.down | 0}</span></span>` : mut('No thumbs yet. Players are asked after a round or after 90 seconds of play.')}</td></tr>`; }).join('');
-  const gTab = `<div class="st-card ins-tc"><div class="adm-tw"><table class="adm-t st-t ins-t${INS.all ? ' all' : ''}"><thead><tr>${[['Game'], ['Sessions', 'Times the game was opened, with launches per day'], ['Quit < 30 s', 'Share of sessions closed within 30 seconds'], ['Avg session'], ['FPS', 'Frames per second: average / worst 10%'], ['Load', 'Download time: median / slowest 10%'], ['Scores', 'Final scores: median, middle half and best'], ['Level', 'Level reached at the end: average / highest'], ['Input', 'Main input used while playing'], ['Votes', 'Thumbs up and down']].map(([h, t]) => `<th${t ? ` title="${esc(auT(t))}"` : ''}><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody class="${an ? 'an' : ''}">${gRows || `<tr><td colspan="10">${insWhy('No game was played in this period.')}</td></tr>`}</tbody></table></div>${games.length > 6 ? `<button type="button" class="btn2 ins-all" data-insall>${esc(INS.all ? auT('Show fewer') : auT('Show all {n} games').replace('{n}', games.length))}</button>` : ''}</div>`;
-  const noMatch = 'No match has been played to the end yet. A match ends when its clock runs out.';
+  const gRows = games.map((g, i) => { const vt = votes.get(g.id) || g.votes || {}, l = g.load || {}, q = insPct(g.early, g.n); return `<tr style="--i:${Math.min(i, 14)}"><td><span class="ins-gn">${adCv(g.id, 'ins-cv')}<span translate="no">${esc(adGame(g.id))}</span></span></td><td><span class="ins-gs"><b>${stN(g.n)}</b>${GD[g.id] ? stSpark(GD[g.id], an) : ''}</span></td><td>${g.n ? `<span class="adm-pill ${q > 40 ? 'bad' : q > 20 ? 'warn' : 'ok'}">${q}%</span>` : '—'}</td><td>${g.sec != null ? esc(adHrs(g.sec)) : '—'}</td><td>${g.fps != null ? `<b>${g.fps}</b> <span class="adm-mut">/ ${g.fps_low != null ? g.fps_low : '—'}</span>` : mut('Not measured: the game was closed within 3 seconds')}</td><td>${l.n ? esc(insMs(l.p50)) + ' <span class="adm-mut">/ ' + esc(insMs(l.p90)) + '</span>' : mut('Part of the page, nothing extra to download')}</td><td>${scoreCell(MS[g.id] || g.scores)}</td><td>${g.lv_n ? `${esc(String(g.lv_avg))} <span class="adm-mut">/ ${esc(String(g.lv_max))}</span>` : mut('This game does not show a level')}</td><td>${inBar(g)}</td><td>${vt.up || vt.down ? `<span class="ins-vt"><b>▲ ${vt.up | 0}</b> <span>▼ ${vt.down | 0}</span></span>` : mut('No thumbs yet. Players are asked after a round or after 90 seconds of play.')}</td></tr>`; }).join('');
+  const gTab = `<div class="st-card ins-tc"><div class="adm-tw"><table class="adm-t st-t ins-t"><thead><tr>${[['Game'], ['Sessions', 'Times the game was opened, with launches per day'], ['Quit < 30 s', 'Share of sessions closed within 30 seconds'], ['Avg session'], ['FPS', 'Frames per second: average / worst 10%'], ['Load', 'Download time: median / slowest 10%'], ['Scores', 'Final scores: median, middle half and best'], ['Level', 'Level reached at the end: average / highest'], ['Input', 'Main input used while playing'], ['Votes', 'Thumbs up and down']].map(([h, t]) => `<th${t ? ` title="${esc(auT(t))}"` : ''}><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody class="${an ? 'an' : ''}">${gRows || `<tr><td colspan="10">${insWhy()}</td></tr>`}</tbody></table></div></div>`;
   const rl = insKpis([
     { k: 'Matches finished', v: stN(all.n), n: +all.n || 0 },
     P('Win rate', all.wins, all.n),
@@ -941,41 +926,41 @@ function insDraw(an) {
     P('MVP', all.mvp, all.n), P('Overtime', all.ot, all.n),
     K('Boost used per match', all.n ? all.boost : null, 0)
   ]) + `<div class="ins-grid">
-   ${insCard('Per match (average)', all.n ? insList([['Goals', all.goals], ['Assists', all.assists], ['Saves', all.saves], ['Shots', all.shots], ['Demos', all.demos]].map(([k, n]) => ({ k: auT(k), n: +n || 0 })), { val: r => insNum(r.n, 2), why: 'No goals, saves or shots yet.' }) : insWhy(noMatch))}
-   ${insCard('By bot level', (RL.by_diff || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Bot level', 'Matches', 'Win rate', 'Goal margin'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${RL.by_diff.map(r => `<tr><td>${esc(auT(r.diff))}</td><td>${stN(r.n)}</td><td>${insPct(r.wins, r.n)}%</td><td>${r.margin > 0 ? '+' : ''}${esc(String(r.margin))}</td></tr>`).join('')}</tbody></table></div>` : insWhy(noMatch))}
-   ${insCard('Matches left early', LF.n ? `<div class="ins-kv"><span>${esc(auT('Played before leaving'))}</span><b>${esc(insDur(LF.played))}</b><span>${esc(auT('Goals / saves per match'))}</span><b>${esc(insNum(LF.goals, 2))} / ${esc(insNum(LF.saves, 2))}</b><span>${esc(auT('Winning when they left'))}</span><b>${insPct(LF.ahead, LF.n)}%</b><span>${esc(auT('Losing when they left'))}</span><b>${insPct(LF.behind, LF.n)}%</b></div>` : insWhy('Nobody has left a match before the end yet.'))}
-   ${insCard('Controls players rebind', insList((D.rebinds || []).map(r => ({ k: `${adGame(r.game)} · ${r.dev === 'pad' ? auT('Controller') : auT('Keyboard')} · ${r.act}${r.to ? ' → ' + r.to : ''}`, n: r.n })), { val: r => stN(r.n), why: 'Nobody has changed a control yet (Controls menu or the Rocket League Controls tab).' }))}
+   ${insCard('Per match (average)', all.n ? insList([['Goals', all.goals], ['Assists', all.assists], ['Saves', all.saves], ['Shots', all.shots], ['Demos', all.demos]].map(([k, n]) => ({ k: auT(k), n: +n || 0 })), { val: r => insNum(r.n, 2) }) : insWhy())}
+   ${insCard('By bot level', (RL.by_diff || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Bot level', 'Matches', 'Win rate', 'Goal margin'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${RL.by_diff.map(r => `<tr><td>${esc(auT(r.diff))}</td><td>${stN(r.n)}</td><td>${insPct(r.wins, r.n)}%</td><td>${r.margin > 0 ? '+' : ''}${esc(String(r.margin))}</td></tr>`).join('')}</tbody></table></div>` : insWhy())}
+   ${insCard('Matches left early', LF.n ? `<div class="ins-kv"><span>${esc(auT('Played before leaving'))}</span><b>${esc(insDur(LF.played))}</b><span>${esc(auT('Goals / saves per match'))}</span><b>${esc(insNum(LF.goals, 2))} / ${esc(insNum(LF.saves, 2))}</b><span>${esc(auT('Winning when they left'))}</span><b>${insPct(LF.ahead, LF.n)}%</b><span>${esc(auT('Losing when they left'))}</span><b>${insPct(LF.behind, LF.n)}%</b></div>` : insWhy())}
+   ${insCard('Controls players rebind', insList((D.rebinds || []).map(r => ({ k: `${adGame(r.game)} · ${r.dev === 'pad' ? auT('Controller') : auT('Keyboard')} · ${r.act}${r.to ? ' → ' + r.to : ''}`, n: r.n })), { val: r => stN(r.n) }))}
   </div>`;
   const slots = (B.slots || []).filter(s => s.src !== 'side');
   const ctr = (B.ctr || []).slice(0, 15).map(r => ({ k: r.id, n: r.imp ? 100 * r.clk / r.imp || .0001 : .0001, imp: r.imp, clk: r.clk }));
-  const beh = `${insCard('Click rate per slot', slots.length ? insSlots(slots) : insWhy('No game card has been seen on the home page yet.'), { cap: 'Clicks ÷ views for each card position (%). A card counts as seen when half of it is on screen for 1 second.' })}<div class="ins-grid">
-   ${insCard('How far people scroll the home page', insHist([['Under 25%', sc.b25], ['25–50%', sc.b50], ['50–75%', sc.b75], ['75–90%', sc.b90], ['90–100%', sc.b100]].map(([k, n]) => ({ k: auT(k), n: +n || 0 })), { why: 'Nobody has scrolled the home page yet.' }), { cap: sc.n ? auT('Average {n}%').replace('{n}', sc.avg) : '' })}
-   ${insCard('Click rate per game', insList(ctr, { fmt: id => adCv(id, 'ins-cv') + esc(adGame(id)), name: adGame, val: r => (r.imp ? (100 * r.clk / r.imp).toFixed(1) : 0) + '%', tip: r => adGame(r.k) + ': ' + (r.imp ? (100 * r.clk / r.imp).toFixed(1) : 0) + '% · ' + auT('{a} clicks of {b} views').replace('{a}', stN(r.clk)).replace('{b}', stN(r.imp)), why: 'No game card has been seen on the home page yet.' }))}
-   ${insCard('Time on each page and exits', (B.pages || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Page', 'Visits', 'Avg time', 'Left the site here'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${B.pages.map(p => `<tr><td>${esc(auT({ home: 'Home', game: 'Game', legal: 'Legal pages', admin: 'Admin' }[p.v] || p.v))}</td><td>${stN(p.n)}</td><td>${esc(adHrs(p.sec))}</td><td>${stN(p.exits)}<span class="adm-mut"> · ${insPct(p.exits, p.n)}%</span></td></tr>`).join('')}</tbody></table></div>` : insWhy(INS_WHY))}
-   ${insCard('Rage clicks (3 fast clicks in one spot)', insList(B.rage, { val: r => stN(r.n), why: 'No rage clicks: nobody clicked 3 times fast in one spot.' }))}
-   ${insCard('Dead clicks (nothing happened)', insList(B.dead, { val: r => stN(r.n), why: 'No dead clicks: every click did something.' }))}
+  const beh = `${insCard('Click rate per slot', slots.length ? insSlots(slots) : insWhy())}<div class="ins-grid">
+   ${insCard('How far people scroll the home page', insHist([['Under 25%', sc.b25], ['25–50%', sc.b50], ['50–75%', sc.b75], ['75–90%', sc.b90], ['90–100%', sc.b100]].map(([k, n]) => ({ k: auT(k), n: +n || 0 }))), { cap: sc.n ? auT('Average {n}%').replace('{n}', sc.avg) : '' })}
+   ${insCard('Click rate per game', insList(ctr, { fmt: id => adCv(id, 'ins-cv') + esc(adGame(id)), name: adGame, val: r => (r.imp ? (100 * r.clk / r.imp).toFixed(1) : 0) + '%', tip: r => adGame(r.k) + ': ' + (r.imp ? (100 * r.clk / r.imp).toFixed(1) : 0) + '% · ' + auT('{a} clicks of {b} views').replace('{a}', stN(r.clk)).replace('{b}', stN(r.imp)) }))}
+   ${insCard('Time on each page and exits', (B.pages || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Page', 'Visits', 'Avg time', 'Left the site here'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${B.pages.map(p => `<tr><td>${esc(auT({ home: 'Home', game: 'Game', legal: 'Legal pages', admin: 'Admin' }[p.v] || p.v))}</td><td>${stN(p.n)}</td><td>${esc(adHrs(p.sec))}</td><td>${stN(p.exits)}<span class="adm-mut"> · ${insPct(p.exits, p.n)}%</span></td></tr>`).join('')}</tbody></table></div>` : insWhy())}
+   ${insCard('Rage clicks', insList(B.rage, { val: r => stN(r.n) }), { tip: '3 fast clicks in one spot' })}
+   ${insCard('Dead clicks', insList(B.dead, { val: r => stN(r.n) }), { tip: 'Clicks where nothing happened' })}
   </div>`;
-  const spd = `<div class="st-card ins-tc">${(D.vitals || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Device', 'Visits', 'LCP (main content)', 'INP (reaction)', 'CLS (layout jumps)', 'FCP (first paint)', 'TTFB (server)'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${D.vitals.map(v => `<tr><td>${esc(auT(ST_DEV[v.device] || v.device))}</td><td>${stN(v.n)}</td><td>${insVit('lcp', v.lcp)}</td><td>${insVit('inp', v.inp)}</td><td>${insVit('cls', v.cls)}</td><td>${insVit('fcp', v.fcp)}</td><td>${insVit('ttfb', v.ttfb)}</td></tr>`).join('')}</tbody></table></div>` : insWhy('Measured when a page is hidden or closed. None recorded yet.')}</div>`;
+  const spd = `<div class="st-card ins-tc">${(D.vitals || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${[['Device'], ['Visits'], ['LCP', 'Main content shown'], ['INP', 'Reaction to input'], ['CLS', 'Layout jumps'], ['FCP', 'First paint'], ['TTFB', 'Server response']].map(([h, t]) => `<th${t ? ` title="${esc(auT(t))}"` : ''}><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${D.vitals.map(v => `<tr><td>${esc(auT(ST_DEV[v.device] || v.device))}</td><td>${stN(v.n)}</td><td>${insVit('lcp', v.lcp)}</td><td>${insVit('inp', v.inp)}</td><td>${insVit('cls', v.cls)}</td><td>${insVit('fcp', v.fcp)}</td><td>${insVit('ttfb', v.ttfb)}</td></tr>`).join('')}</tbody></table></div>` : insWhy()}</div>`;
   const ctype = M.ctype || G.ctype, spd2 = G.speed || {};
-  const geo = `${insCard('When people play, in their own time', (G.hours || []).length ? insHeat(G.hours) : insWhy('No game time with a local time yet.'), { cap: 'Hours played by local weekday and hour. Darker is busier.' })}<div class="ins-grid">
-   ${insCard('Countries', insList(G.countries, { fmt: c => `<span class="ins-fl" aria-hidden="true">${insFlag(c)}</span>${esc(insCountry(c))} <span class="adm-mut">${esc(c)}</span>`, name: insCountry, k: 6 }))}
+  const geo = `${insCard('When people play', (G.hours || []).length ? insHeat(G.hours) : insWhy(), { tip: 'Hours played by local weekday and hour' })}<div class="ins-grid">
+   ${insCard('Countries', insList(G.countries, { fmt: c => `<span class="ins-fl" aria-hidden="true">${insFlag(c)}</span>${esc(insCountry(c))} <span class="adm-mut">${esc(c)}</span>`, name: insCountry }))}
    ${insCard('Regions', insList(G.regions))}
    ${insCard('Cities', insList(G.cities))}
    ${insCard('Internet providers', insList(G.isps))}
-   ${insCard('Network', insDns([['Connection speed class', insDonut(G.net, { label: 'Connection speed class', why: 'Only Chrome-based browsers report this' })], ['Connection type', insDonut(ctype, { label: 'Connection type', fmt: k => k === 'unknown' ? auT('Not reported') : k, why: 'Only Chrome on Android reports the connection type.' })]]) + `<div class="ins-kv ins-kv2"><span>${esc(auT('Median download speed'))}</span><b>${spd2.dl != null ? esc(insNum(spd2.dl)) + ' Mb/s' : '—'}</b><span>${esc(auT('Median latency'))}</span><b>${spd2.rtt != null ? esc(insNum(spd2.rtt, 0)) + ' ms' : '—'}</b></div>` + insMeters([['Behind a VPN or datacenter', G.vpn], ['Datacenter networks', G.dc], ['Data saver on', G.save], ['Time zone differs from location', FL.tzm]]))}
+   ${insCard('Network', insDns([['Connection speed class', insDonut(G.net, { label: 'Connection speed class' })], ['Connection type', insDonut(ctype, { label: 'Connection type', fmt: k => k === 'unknown' ? auT('Not reported') : k })]]) + `<div class="ins-kv ins-kv2"><span>${esc(auT('Median download speed'))}</span><b>${spd2.dl != null ? esc(insNum(spd2.dl)) + ' Mb/s' : '—'}</b><span>${esc(auT('Median latency'))}</span><b>${spd2.rtt != null ? esc(insNum(spd2.rtt, 0)) + ' ms' : '—'}</b></div>` + insMeters([['Behind a VPN or datacenter', G.vpn], ['Datacenter networks', G.dc], ['Data saver on', G.save], ['Time zone differs from location', FL.tzm]]))}
    ${insCard('Time zones', insList(G.tz))}
   </div>`;
   const dev = `<div class="ins-grid">
    ${insCard('Operating system versions', insList(V.os))}
    ${insCard('Browser versions', insList(V.browsers))}
    ${insCard('Graphics cards', insList(V.gpus))}
-   ${insCard('Phone models', insList(M.models || V.models, { fmt: k => esc(k === 'Unknown model' ? auT('Unknown model') : k), why: 'No phone or tablet visits yet.' }))}
-   ${insCard('Controllers', (V.pads || []).length ? insDonut(V.pads, { label: 'Controllers' }) + `<div class="ins-sp">${insList(V.pad_ids, { k: 3 })}</div>` : insWhy('Nobody has connected a controller yet. A controller is counted when its first button is pressed.'))}
+   ${insCard('Phone models', insList(M.models || V.models, { fmt: k => esc(k === 'Unknown model' ? auT('Unknown model') : k) }))}
+   ${insCard('Controllers', (V.pads || []).length ? insDonut(V.pads, { label: 'Controllers' }) + `<div class="ins-sp">${insList(V.pad_ids, { k: 3 })}</div>` : insWhy())}
   </div>`;
   const nm = +SS.nm || 0;
   const AC = { user: 'Signed in', guest: 'Guest', none: 'Not signed in' }, RT = { direct: 'Direct', relay: 'Relay', none: 'Offline' }, TH = { system: 'System', dark: 'Dark', light: 'Light' }, NV = { navigate: 'Link or address', reload: 'Reload', back_forward: 'Back or forward', prerender: 'Prerender' };
   const tr = T => k => auT(T[k] || k);
-  const ses = (INS.m && INS.m.__err ? insWhy('Run round10_stats.sql in the Supabase SQL editor to see this part.') : '') + insKpis([
+  const ses = (INS.m && INS.m.__err ? `<p class="ins-why">${esc(auT('Run round10_stats.sql in the Supabase SQL editor to see this part.'))}</p>` : '') + insKpis([
     K('Sessions', SS.n, 0, 'Every visit in this period, counted from all events'),
     K('Measured in detail', SS.nm, 0, 'Visits that sent a session summary (needs cookies accepted). The keyboard, mouse and screen numbers come from these.'),
     { k: 'Median session', v: insDur(SS.dur) }, { k: 'Longest 10% of sessions', v: insDur(SS.dur90) },
@@ -985,33 +970,25 @@ function insDraw(an) {
     K('Keys pressed per session', SS.keys, 0), K('Mouse clicks per session', SS.clicks, 0), K('Screen taps per session', SS.taps, 0),
     K('Mouse travel per session (px)', SS.mdist, 0), K('Scroll distance per session (px)', SS.scr, 0)
   ]) + `<div class="ins-grid">
-   ${insCard('Other habits per session', `<div class="ins-kv ins-kv2">${[['Mouse wheel turns per session', insNum(SS.wheel, 0)], ['Tab switches per session', insNum(SS.blur)], ['Copies per session', insNum(SS.copy, 2)], ['Window resizes per session', insNum(SS.rsz)], ['Went offline', nm && SS.off != null ? SS.off + '%' : '—'], ['JavaScript errors per session', insNum(SS.errs, 2)], ['Sessions using full screen', nm && SS.fs != null ? SS.fs + '%' : '—']].map(([k, v]) => `<span>${esc(auT(k))}</span><b>${esc(v)}</b>`).join('')}</div>`, { cap: 'Averages over the sessions measured in detail' })}
+   ${insCard('Other habits per session', `<div class="ins-kv ins-kv2">${[['Mouse wheel turns per session', insNum(SS.wheel, 0)], ['Tab switches per session', insNum(SS.blur)], ['Copies per session', insNum(SS.copy, 2)], ['Window resizes per session', insNum(SS.rsz)], ['Went offline', nm && SS.off != null ? SS.off + '%' : '—'], ['JavaScript errors per session', insNum(SS.errs, 2)], ['Sessions using full screen', nm && SS.fs != null ? SS.fs + '%' : '—']].map(([k, v]) => `<span>${esc(auT(k))}</span><b>${esc(v)}</b>`).join('')}</div>`)}
    ${insCard('Session length', insHist((SS.b || []).map(r => ({ k: auT(r.k), n: +r.n || 0 }))))}
    ${insCard('Account, server and theme', insDns([['Account state', insDonut(M.acct, { fmt: tr(AC) })], ['Connection to the accounts server', insDonut(M.route, { fmt: tr(RT) })], ['Theme', insDonut(M.theme, { fmt: tr(TH) })]]))}
-   ${insCard('Arrived from', insList(M.refs, { fmt: k => esc(k === 'direct' ? auT('Direct (typed, bookmark or app)') : k), name: k => k === 'direct' ? auT('Direct (typed, bookmark or app)') : k }))}
+   ${insCard('Arrived from', insList(M.refs, { fmt: k => esc(k === 'direct' ? auT('Direct') : k), name: k => k === 'direct' ? auT('Direct') : k }))}
    ${insCard('First page opened', insList(M.land))}
    ${insCard('Page opened by', insDonut(M.navt, { fmt: tr(NV) }))}
    ${insCard('Site language', insDonut(M.slang, { fmt: adLangName }))}
-   ${insCard('Why joining a party needed a retry', insList(M.retries, { why: 'No party join has needed a retry: every join worked on the first try.' }))}
+   ${insCard('Why joining a party needed a retry', insList(M.retries))}
   </div>`;
   const PT = { fine: 'Mouse or trackpad', coarse: 'Touch', none: 'None' }, OM = { browser: 'Browser tab', standalone: 'Installed app', fullscreen: 'Full screen', 'minimal-ui': 'Minimal window' }, OR = { 'landscape-primary': 'Landscape', 'landscape-secondary': 'Landscape (flipped)', 'portrait-primary': 'Portrait', 'portrait-secondary': 'Portrait (flipped)' };
-  const scr = `<div class="st-card ins-c">${insMeters([['Dark mode preferred', M.dark], ['Reduced motion', M.rmo], ['HDR screen', M.hdr], ['Mouse or trackpad (hover)', M.hov], ['Several screens', M.ext], ['More contrast', FL.con], ['Forced colours', FL.fcol], ['Reduced transparency', FL.rtr]])}${insStks([insStk('Screen resolutions', M.screens), insStk('Browser window sizes', M.viewports), insStk('Pixel density', M.dpr, { fmt: k => k + '×' }), insStk('Browser zoom', M.zoom, { fmt: k => Math.round(+k * 100) + '%', why: 'Only measured on computers' }), insStk('Main pointer', M.pointer, { fmt: tr(PT) }), insStk('Touch points', M.touch), insStk('Orientation', M.orient, { fmt: tr(OR) }), insStk('Colour range', M.gamut), insStk('Colour depth (bits)', M.depth), insStk('Opened as', M.mode, { fmt: tr(OM) })])}</div>`;
+  const scr = `<div class="st-card ins-c">${insMeters([['Dark mode preferred', M.dark], ['Reduced motion', M.rmo], ['HDR screen', M.hdr], ['Mouse or trackpad (hover)', M.hov], ['Several screens', M.ext], ['More contrast', FL.con], ['Forced colours', FL.fcol], ['Reduced transparency', FL.rtr]])}${insStks([insStk('Screen resolutions', M.screens), insStk('Browser window sizes', M.viewports), insStk('Pixel density', M.dpr, { fmt: k => k + '×' }), insStk('Browser zoom', M.zoom, { fmt: k => Math.round(+k * 100) + '%' }), insStk('Main pointer', M.pointer, { fmt: tr(PT) }), insStk('Touch points', M.touch), insStk('Orientation', M.orient, { fmt: tr(OR) }), insStk('Colour range', M.gamut), insStk('Colour depth (bits)', M.depth), insStk('Opened as', M.mode, { fmt: tr(OM) })])}</div>`;
   const wd = d => { try { return new Date(2024, 0, +d || 1).toLocaleDateString(adLang(), { weekday: 'long' }); } catch (e) { return String(d); } };
-  const hw = `${insCard('Hardware', insStks([insStk('CPU cores', V.cores), insStk('Memory (GB)', V.mem, { why: 'Only Chrome-based browsers report this' }), insStk('Screen refresh rate (Hz)', V.hz), insStk('Keyboard layouts', V.kb, { fmt: k => String(k).toUpperCase(), why: 'Shows after someone types on a keyboard' }), insStk('CPU architecture', V.arch, { why: 'Only Chrome-based browsers report this' }), insStk('Main browser language', V.langs)]) + insMeters([['WebGL 2 support', V.gl2], ['WebGPU support', V.wgpu], ['Ad blocker on', A.adblock]]))}<div class="st-card ins-c">${insMeters([['Charging now', M.charging], ['Automated browsers (bots)', M.bot], ['Do Not Track on', M.dnt], ['Global Privacy Control on', M.gpc], ['AV1 video', M.av1], ['HEVC video', M.hevc], ['H.264 video', FL.h264], ['VP9 video', FL.vp9], ['Virtual reality support', M.xr], ['Cross-origin isolated', M.coi], ['WebAssembly', FL.wasm], ['Shared memory', FL.sab], ['Service workers', FL.swk], ['Vibration', FL.vib], ['Bluetooth', FL.bt], ['USB', FL.usb], ['Serial ports', FL.ser], ['HID devices', FL.hid], ['MIDI', FL.midi], ['Share menu', FL.share], ['Keep screen awake', FL.wl], ['PDF viewer', FL.pdf], ['Storage kept', FL.pers], ['Cookies on', FL.ck], ['Accounts server down', FL.down]])}${insStks([insStk('Speed test (lower is faster)', M.bench), insStk('Battery level', M.battery, { why: 'Only Chrome-based browsers report the battery' }), insStk('Browser storage available', M.quota), insStk('JavaScript memory limit (MB)', M.heap, { why: 'Only Chrome-based browsers report this' }), insStk('WebGPU graphics', M.gpuv, { why: 'Only browsers with WebGPU report this' }), insStk('Largest texture size', M.mtex), insStk('Platforms', M.plat), insStk('Region settings', M.locale), insStk('Clock (h12 or h23)', M.hour), insStk('Notification permission', M.notif), insStk('Microphones', M.mic), insStk('Cameras', M.cam), insStk('Speakers', EX.spk), insStk('Speech voices', M.voices), insStk('Audio sample rate', M.srate, { fmt: k => insNum(k, 0) + ' Hz' }), insStk('Audio channels', EX.ach), insStk('WebGL extensions', EX.glx), insStk('Calendar', EX.cal), insStk('Number system', EX.num), insStk('First day of the week', EX.fdw, { fmt: wd }), insStk('Browser maker', EX.vend), insStk('Pages in tab history', EX.hist)])}</div>`;
-  const ads = `<div class="st-card ins-tc">${(A.slots || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Slot', 'Impressions', 'Clicks', 'Click rate', 'Revenue (USD)', 'Per 1,000 views'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${A.slots.map(s => `<tr><td>${esc(s.slot)}</td><td>${stN(s.imp)}</td><td>${stN(s.clk)}</td><td>${s.imp ? (100 * s.clk / s.imp).toFixed(2) : 0}%</td><td>${(+s.usd || 0).toFixed(2)}</td><td>${s.imp ? (1000 * s.usd / s.imp).toFixed(2) : '—'}</td></tr>`).join('')}</tbody></table></div>` : insWhy('No ads on the site yet. Ad blocker use is measured already; impressions, clicks and revenue start counting as soon as an ad slot calls Ameplay.ads.watch(element, slot).')}</div>`;
-  const body = { ret, games: gTab, rl, beh, geo, dev, ses, spd, scr, hw, ads }, adsNone = !(A.slots || []).length;
+  const hw = `${insCard('Hardware', insStks([insStk('CPU cores', V.cores), insStk('Memory (GB)', V.mem), insStk('Screen refresh rate (Hz)', V.hz), insStk('Keyboard layouts', V.kb, { fmt: k => String(k).toUpperCase() }), insStk('CPU architecture', V.arch), insStk('Main browser language', V.langs)]) + insMeters([['WebGL 2 support', V.gl2], ['WebGPU support', V.wgpu], ['Ad blocker on', A.adblock]]))}<div class="st-card ins-c">${insMeters([['Charging now', M.charging], ['Automated browsers (bots)', M.bot], ['Do Not Track on', M.dnt], ['Global Privacy Control on', M.gpc], ['AV1 video', M.av1], ['HEVC video', M.hevc], ['H.264 video', FL.h264], ['VP9 video', FL.vp9], ['Virtual reality support', M.xr], ['Cross-origin isolated', M.coi], ['WebAssembly', FL.wasm], ['Shared memory', FL.sab], ['Service workers', FL.swk], ['Vibration', FL.vib], ['Bluetooth', FL.bt], ['USB', FL.usb], ['Serial ports', FL.ser], ['HID devices', FL.hid], ['MIDI', FL.midi], ['Share menu', FL.share], ['Keep screen awake', FL.wl], ['PDF viewer', FL.pdf], ['Storage kept', FL.pers], ['Cookies on', FL.ck], ['Accounts server down', FL.down]])}${insStks([insStk('Speed test (ms)', M.bench), insStk('Battery level', M.battery), insStk('Browser storage available', M.quota), insStk('JavaScript memory limit (MB)', M.heap), insStk('WebGPU graphics', M.gpuv), insStk('Largest texture size', M.mtex), insStk('Platforms', M.plat), insStk('Region settings', M.locale), insStk('Clock (h12 or h23)', M.hour), insStk('Notification permission', M.notif), insStk('Microphones', M.mic), insStk('Cameras', M.cam), insStk('Speakers', EX.spk), insStk('Speech voices', M.voices), insStk('Audio sample rate', M.srate, { fmt: k => insNum(k, 0) + ' Hz' }), insStk('Audio channels', EX.ach), insStk('WebGL extensions', EX.glx), insStk('Calendar', EX.cal), insStk('Number system', EX.num), insStk('First day of the week', EX.fdw, { fmt: wd }), insStk('Browser maker', EX.vend), insStk('Pages in tab history', EX.hist)])}</div>`;
+  const ads = `<div class="st-card ins-tc">${(A.slots || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Slot', 'Impressions', 'Clicks', 'Click rate', 'Revenue (USD)', 'Per 1,000 views'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${A.slots.map(s => `<tr><td>${esc(s.slot)}</td><td>${stN(s.imp)}</td><td>${stN(s.clk)}</td><td>${s.imp ? (100 * s.clk / s.imp).toFixed(2) : 0}%</td><td>${(+s.usd || 0).toFixed(2)}</td><td>${s.imp ? (1000 * s.usd / s.imp).toFixed(2) : '—'}</td></tr>`).join('')}</tbody></table></div>` : insWhy()}</div>`;
+  const body = { ret, games: gTab, rl, beh, geo, dev, ses, spd, scr, hw, ads };
   box.classList.toggle('sx-q', !an);
   if (an) $('#adstats').classList.remove('sx-q', 'sx-r');
-  box.innerHTML = rng + cov + `<div class="ins-wrap"><nav class="ins-nav" aria-label="${esc(auT('Sections'))}">${INS_SEC.map(([id, t]) => `<button type="button" data-insgo="${id}">${esc(auT(t))}</button>`).join('')}</nav><div class="ins-main">${INS_SEC.map(([id, t, c]) => [id, t, id === 'ads' && adsNone ? 'No ads on the site yet. Ad blocker use is measured already; impressions, clicks and revenue start counting as soon as an ad slot calls Ameplay.ads.watch(element, slot).' : c]).map(([id, t, c]) => `<details class="ins-sec" id="ins-${id}"${INS.shut.has(id) || (id === 'ads' && adsNone && !INS.adsOpen) ? '' : ' open'}><summary>${insTw(auT(t), 'h2')}${insTw(auT(c), 'p', 'ins-cap')}</summary><div class="ins-body">${body[id]}</div></details>`).join('')}</div></div><p class="adm-mut st-at">${esc(auT('Updated {t}.').replace('{t}', new Date(D.at || Date.now()).toLocaleTimeString()))}</p>`;
+  box.innerHTML = rng + `<div class="ins-main">${INS_SEC.map(([id, t]) => `<section class="ins-sec" id="ins-${id}">${insTw(auT(t), 'h2')}<div class="ins-body">${body[id]}</div></section>`).join('')}</div><p class="adm-mut st-at">${esc(auT('Updated {t}.').replace('{t}', new Date(D.at || Date.now()).toLocaleTimeString()))}</p>`;
   if (an) stReveal(box, 'iio');
-  insNav();
-}
-function insNav() {
-  const S = [...document.querySelectorAll('#insv .ins-sec')];
-  if (!S.length) return;
-  let a = S[0];
-  S.forEach(x => { if (x.getBoundingClientRect().top < innerHeight * .3) a = x; });
-  document.querySelectorAll('#insv [data-insgo]').forEach(b => b.setAttribute('aria-current', String(b.dataset.insgo === a.id.slice(4))));
 }
 async function insLoad(force) {
   if (!adIsAdmin() || INS.busy) return;

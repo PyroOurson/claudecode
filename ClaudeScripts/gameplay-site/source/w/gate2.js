@@ -88,9 +88,9 @@ button{transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s}button
 @keyframes sh{from{background-position:100% 0}to{background-position:0 0}}
 button.bz{position:relative;color:transparent}button.bz::after{content:"";position:absolute;inset:0;margin:auto;width:18px;height:18px;border-radius:50%;border:2.5px solid var(--ink-a);border-right-color:transparent;animation:spin .7s linear infinite}
 @media (prefers-reduced-motion:reduce){.sp i,button.bz::after{animation:none}}
-.pw{-webkit-text-security:disc;text-security:disc}.shake{animation:sh .35s}@keyframes sh{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.pw{-webkit-text-security:disc;text-security:disc;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.shake{animation:sh .35s}@keyframes sh{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 </style><script>try{var t=(JSON.parse(localStorage.getItem('gameplay:v1')||'{}')||{}).prefs||{};if(t.theme==='dark'||(t.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.className='dk'}catch(e){}</script></head><body>
-<div class="sp" id="sp" hidden aria-label="Loading"><div><i></i><i></i><i></i><i></i><i></i></div><p class="by">gameplay · Made by Gabriel Courtin</p></div><form class="c" id="f" autocomplete="off"><div class="lg"><i>&#9654;</i>gameplay</div><h1 id="h">Enter the password</h1><p id="t">This site is private.</p><input id="p" class="pw" type="text" name="gp-site-code" placeholder="Password" autofocus aria-label="Password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"><button id="b">Unlock</button><div class="m" id="m"></div><p class="by">Made by Gabriel Courtin</p></form>
+<div class="sp" id="sp" hidden aria-label="Loading"><div><i></i><i></i><i></i><i></i><i></i></div><p class="by">gameplay · Made by Gabriel Courtin</p></div><form class="c" id="f" autocomplete="off" onsubmit="return false"><div class="lg"><i>&#9654;</i>gameplay</div><h1 id="h">Enter the password</h1><p id="t">This site is private.</p><input id="p" class="pw" type="text" placeholder="Password" autofocus aria-label="Password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"><button id="b">Unlock</button><div class="m" id="m"></div><p class="by">Made by Gabriel Courtin</p></form>
 <script>
 (() => {
   const D = { u: ${JSON.stringify(sbUrl)}, r: ${JSON.stringify(sbRelays)}, a: ${JSON.stringify(sbKey)}, i: '${iv.toString('base64')}', c: '${ct.toString('base64')}', d: ${JSON.stringify(plan.dir)}, p: ${JSON.stringify(pre)}, l: ${JSON.stringify(slot)} };
@@ -148,13 +148,15 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
     }, () => { n++; if (u === D.u) dFail = true; if (n >= pool.length) fail(); else if (first && dFail) end(first[0], first[1]); }));
   });
   const reach = () => { let c = null; try { c = sessionStorage.getItem(SBK); } catch (e) {} if (c && pool.indexOf(c) >= 0) { window.__gpSbUrl = c; window.__gpSbDown = false; return Promise.resolve(); } return slot(5000).catch(() => {}); };
-  const unwrap = async (pw, o) => {
-    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
+  const pk = pw => { const u = new TextEncoder().encode(pw), k = crypto.subtle.importKey('raw', u, 'PBKDF2', false, ['deriveBits']); u.fill(0); return k; };
+  const unwrap = async (base, o) => {
     const kek = await crypto.subtle.importKey('raw', await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: b64(o.s), iterations: o.n, hash: 'SHA-256' }, base, 256), 'AES-GCM', false, ['decrypt']);
     return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(o.i) }, kek, b64(o.c)));
   };
   const soft = m => { $('b').classList.remove('bz'); $('b').disabled = false; $('m').className = 'm b'; $('m').textContent = m; };
   if (!(window.CSS && CSS.supports && CSS.supports('-webkit-text-security', 'disc'))) $('p').type = 'password';
+  ['copy', 'cut', 'dragstart', 'selectstart', 'contextmenu'].forEach(t => $('p').addEventListener(t, e => e.preventDefault()));
+  $('p').addEventListener('select', e => { const n = e.target.value.length; e.target.setSelectionRange(n, n); });
   const ok = !!(window.crypto && crypto.subtle && window.DecompressionStream);
   if (!ok) { $('t').textContent = 'Please update your browser to open this site.'; $('p').remove(); $('b').remove(); return; }
   if ((st.f || 0) >= MAX) { lock(); return; }
@@ -163,24 +165,28 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
   if (st.k) { $('f').style.visibility = 'hidden'; $('sp').hidden = false; const raw = b64(st.k); warm(); Promise.all([show(raw), reach()]).then(([t]) => { wr(st); put(t, raw); }, () => { delete st.k; wr(st); $('f').style.visibility = ''; $('sp').hidden = true; }); }
   $('f').addEventListener('submit', async e => {
     e.preventDefault();
-    const pw = $('p').value;
+    let pw = $('p').value;
     if (!pw) return;
+    $('p').value = '';
+    const kp = pk(pw);
+    pw = null;
+    kp.catch(() => {});
     $('b').disabled = true; $('b').classList.add('bz'); $('m').className = 'm'; $('m').textContent = '';
     let o, raw = null, txt = null;
     try { o = await slot(8000); }
     catch (x) { o = D.l; }
     if (!o) { soft('Could not reach the server. Check your connection and try again.'); $('m').insertAdjacentHTML('beforeend', ' <a href="' + (/(^|\\.)(web\\.app|firebaseapp\\.com)$/i.test(location.hostname) ? '/check' : D.d + 'check.html') + '" style="color:inherit">Run a connection check</a>'); return; }
-    try { raw = await unwrap(pw, o); } catch (x) { raw = null; }
+    try { raw = await unwrap(await kp, o); } catch (x) { raw = null; }
     if (raw) {
       try { txt = await show(raw); } catch (x) { txt = null; }
       if (txt == null) { soft('Could not open the site. Try again later.'); return; }
     }
-    if (txt != null) { $('p').value = ''; st.f = 0; st.k = enc(raw); wr(st); warm(); $('f').style.visibility = 'hidden'; $('sp').hidden = false; requestAnimationFrame(() => put(txt, raw)); return; }
+    if (txt != null) { st.f = 0; st.k = enc(raw); wr(st); warm(); $('f').style.visibility = 'hidden'; $('sp').hidden = false; requestAnimationFrame(() => put(txt, raw)); return; }
     $('b').classList.remove('bz');
     {
       st = rd(); st.f = (st.f || 0) + 1; delete st.k; wr(st);
       if (st.f >= MAX) { lock(); return; }
-      $('b').disabled = false; $('p').value = ''; $('p').focus();
+      $('b').disabled = false; $('p').focus();
       $('m').className = 'm b'; $('m').textContent = 'Wrong password · ' + left();
       $('f').classList.remove('shake'); void $('f').offsetWidth; $('f').classList.add('shake');
     }
