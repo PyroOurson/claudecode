@@ -1,0 +1,6 @@
+Confirm signup: Your gameplay confirmation code
+Reset password: Your gameplay password reset code
+Magic link: Your gameplay log in link
+Change email address: Confirm your new email for gameplay
+Invite user: You are invited to gameplay
+Reauthentication: Your gameplay confirmation code

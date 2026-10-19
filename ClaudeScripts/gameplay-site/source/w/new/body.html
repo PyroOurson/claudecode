@@ -1,0 +1,441 @@
+<body>
+<header class="top" id="top">
+ <a class="brand" href="#" data-home aria-label="gameplay home"><span class="logo"><svg viewBox="0 0 16 16"><path d="M2 1.5v13l12-6.5z"/></svg></span><span>gameplay</span></a>
+ <div class="right">
+  <button class="icon" id="abtn" type="button" aria-label="Friends" aria-haspopup="dialog" aria-expanded="false" aria-controls="fmodal"><svg viewBox="0 0 24 24"><g transform="translate(1.5 0)"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"/></g></svg></button>
+  <button class="icon" id="sbtn" type="button" aria-label="Settings" aria-haspopup="true" aria-expanded="false" aria-controls="smenu"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  <button class="avatar" id="pbtn" type="button" aria-label="Your account" aria-haspopup="true" aria-expanded="false" aria-controls="pmenu"><span class="pic" data-pic></span></button>
+
+  <div class="menu r" id="pmenu" hidden>
+   <div class="m-head"><span class="pic" data-pic></span><div><b data-pname></b><span data-psub></span></div></div>
+   <button class="item" type="button" data-go="mprofile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profile</button>
+   <button class="item" type="button" data-go="mstats"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Stats</button>
+   <button class="item" type="button" data-go="msupport" data-au="in" hidden><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/></svg>Support</button>
+   <button class="item" type="button" data-admin data-adgo="users" hidden><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>Admin dashboard</button>
+   <button class="item" type="button" data-admin data-adgo="stats" hidden><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/><circle cx="19" cy="5" r="2.5"/></svg>Admin stats</button>
+   <div class="sep"></div>
+   <button class="item" type="button" data-go="mauth" data-au="off out"><svg viewBox="0 0 24 24"><path d="M15 3h4v18h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in</button>
+   <button class="item danger" type="button" data-go="msignout" data-au="in" hidden><svg viewBox="0 0 24 24"><path d="M9 21H5V3h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>
+  </div>
+
+  <div class="menu r" id="smenu" hidden>
+   <button class="item" type="button" data-go="msettings" data-pane="account"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>All settings</button>
+   <div class="item st"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Theme<span class="seg"><button type="button" data-t="light">Light</button><button type="button" data-t="dark">Dark</button><button type="button" data-t="system">Auto</button></span></div>
+   <button class="item" type="button" data-go="msettings" data-pane="appearance"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>Language<small>English</small></button>
+   <button class="item" type="button" data-go="msettings" data-pane="controls"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>Controls and shortcuts</button>
+   <button class="item" type="button" id="snd"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg>Sound effects<span class="sw" data-sw="sound"></span></button>
+   <div class="sep"></div>
+   <button class="item" type="button" data-go="msettings" data-pane="legal"><svg viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6zM14 2v5h5M9 13h6M9 17h6"/></svg>Terms and privacy</button>
+   <button class="item" type="button" id="clopen"><svg viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></svg>What's new</button>
+   <button class="item" type="button" data-go="msettings" data-pane="legal"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/></svg>Help center</button>
+  </div>
+ </div>
+</header>
+
+<div class="shell">
+ <aside class="side" id="side" aria-label="Games list">
+  <div class="side-h"><b>Games</b><span id="scount"></span></div>
+  <div class="slist" id="slist"></div>
+  <div class="side-f"><button class="play" id="play" type="button" disabled>Select a game</button></div>
+ </aside>
+
+ <main id="main" tabindex="-1">
+  <div class="view" id="vHome">
+   <section id="continue" hidden>
+    <div class="row-head"><h2>Continue playing</h2></div>
+    <div class="rail" id="rail"></div>
+   </section>
+
+   <section id="favs" hidden>
+    <div class="row-head"><h2>Favourites</h2></div>
+    <div class="rail" id="favrail"></div>
+   </section>
+
+   <section id="all">
+    <div class="row-head">
+     <h2 id="title">All games</h2>
+     <div class="center">
+      <label class="search" for="q">
+       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+       <input id="q" type="search" placeholder="Search games" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-label="Search games">
+       <kbd>/</kbd>
+      </label>
+      <button class="fbtn" id="fbtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="fpanel"><svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span class="lbl">Filters</span><span class="n" id="fcount" hidden>0</span></button>
+      <div class="menu panel" id="fpanel" hidden role="dialog" aria-label="Filters">
+       <div id="fgroups"></div>
+       <div class="foot"><button class="link" type="button" id="clear">Clear all</button><button class="cta" type="button" id="apply">Show games</button></div>
+      </div>
+     </div>
+     <div class="tools"><span class="count" id="count" role="status" aria-live="polite"></span></div>
+    </div>
+    <div class="active" id="active" hidden></div>
+    <div class="grid" id="grid"><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div><div class="sk-card" aria-hidden="true"><i class="sk"></i><b class="sk"></b></div></div>
+    <div class="empty" id="empty" hidden><b>No games match</b>Try a different word or remove a filter.<br><button class="cta" type="button" id="reset">Clear filters</button></div>
+   </section>
+  </div>
+
+  <div class="view" id="vGame" hidden>
+   <div class="am-gamebox" id="gamebox">
+    <div class="play-bar">
+     <a class="icon am-back" href="#" data-home aria-label="Back to all games" title="All games"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></a>
+     <div class="pb-thumb" id="pThumb"></div>
+     <div class="play-title"><h1 id="pTitle"></h1><span id="pSub"></span></div>
+     <div class="play-side">
+      <div class="am-pstat"><span id="pScoreK">Score</span><b id="pScore">—</b></div>
+      <div class="am-pstat"><span id="pBestK">Best</span><b id="pBest">—</b></div>
+      <button class="icon pb-fav" type="button" id="pFav" data-fav="" aria-pressed="false" title="Add to favourites" aria-label="Add to favourites"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-9.3-9.4C1.5 7.8 3.6 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.5 3.3 4.3 6.6-1.8 4.8-9.3 9.4-9.3 9.4z"/></svg></button>
+      <button class="icon" type="button" id="pRestart" title="Restart" aria-label="Restart game"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+      <button class="icon" type="button" data-sound aria-pressed="true" title="Sound" aria-label="Toggle sound"><svg class="on" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg><svg class="off" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM22 9l-6 6M16 9l6 6"/></svg></button>
+      <button class="icon tgl" type="button" data-theater aria-pressed="true" title="Large view" aria-label="Toggle large view"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="3"/></svg></button>
+      <button class="icon" type="button" data-fs title="Fullscreen" aria-label="Toggle fullscreen"><svg class="fs-in" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="fs-out" viewBox="0 0 24 24"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>
+     </div>
+    </div>
+    <div class="play-stage" id="stage"><div class="play-frame" id="frame" tabindex="-1"></div></div>
+    <button class="fs-x" type="button" data-fs title="Exit fullscreen" aria-label="Exit fullscreen"><svg viewBox="0 0 24 24"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>
+   </div>
+   <section class="more">
+    <div class="row-head"><h2>More like this</h2></div>
+    <div class="grid" id="more"></div>
+   </section>
+  </div>
+
+  <div class="view" id="vLegal" hidden>
+   <div class="legalpage">
+    <a class="back" href="#" data-home><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back to games</a>
+    <nav class="ltabs" aria-label="Legal documents"><a href="#/terms" data-legal="terms">Terms of Service</a><a href="#/privacy" data-legal="privacy">Privacy Policy</a><a href="#/cookies" data-legal="cookies">Cookie Policy</a></nav>
+    <article class="doc" id="doc"></article>
+   </div>
+  </div>
+
+  <div class="view" id="vAdmin" hidden>
+   <div class="adm">
+    <div class="adm-h"><a class="back" href="#" data-home><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back to games</a><h2>Admin dashboard</h2><button class="btn2 adm-ref" id="adref" type="button"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>Refresh</button></div>
+    <div class="tiles adm-tiles" id="adtiles"></div>
+    <div class="au-tabs adm-tabs" id="adtabs" role="tablist" aria-label="Dashboard sections" data-m="users"><button type="button" role="tab" data-adtab="users" aria-selected="true">Users</button><button type="button" role="tab" data-adtab="tickets" aria-selected="false">Tickets<em id="adtn" hidden></em></button><button type="button" role="tab" data-adtab="stats" aria-selected="false">Stats</button><button type="button" role="tab" data-adtab="log" aria-selected="false">Log</button><button type="button" role="tab" data-adtab="site" aria-selected="false">Site</button><i></i></div>
+    <section class="adm-sec" id="adusers">
+     <div class="adm-tools">
+      <label class="search" for="adq"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="adq" type="search" placeholder="Search by email, username, name or id" autocomplete="off" spellcheck="false" aria-label="Search users"></label>
+      <select id="adf" aria-label="Filter users"><option value="all">All users</option><option value="admin">Admins</option><option value="locked">Locked</option><option value="unconfirmed">Email not confirmed</option><option value="google">Google</option><option value="email">Email and password</option><option value="online">Online now</option><option value="active">Active in the last 7 days</option></select>
+      <span class="count" id="adcount" translate="no"></span>
+     </div>
+     <div class="adm-tw"><table class="adm-t" id="adt"><thead></thead><tbody translate="no"></tbody></table></div>
+     <section class="apc" id="adpanel" hidden aria-labelledby="adpn" tabindex="-1">
+      <div class="apc-hero">
+       <span class="pic apc-pic" id="adppic" translate="no"></span>
+       <div class="apc-id"><b id="adpn" translate="no"></b><span id="adpu" translate="no"></span><div class="apc-pills" id="adpp"></div><div class="apc-live" id="adplive" translate="no"></div></div>
+       <button class="x apc-x" type="button" id="adpclose" aria-label="Close player card"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div class="apc-q" id="adpq" translate="no"></div>
+      <div class="apc-grid">
+       <div class="apc-col">
+        <div class="apc-card"><h4>Games played</h4><div class="apc-games" id="adpg" translate="no"></div></div>
+        <div class="apc-card"><h4>Devices and sessions</h4><div class="apc-devs" id="adpd"></div></div>
+        <div class="apc-card"><h4>All details</h4><dl class="apc-dl" id="adpdl" translate="no"></dl></div>
+        <div class="apc-card"><h4>History</h4><div class="al-list apc-hist" id="adph" translate="no"></div></div>
+       </div>
+       <div class="apc-col">
+        <div class="apc-card"><h4>Username</h4><div class="apc-row"><input id="adun" maxlength="20" autocomplete="off" spellcheck="false" autocapitalize="off" aria-label="Username"><button class="btn2 pri" type="button" id="adunb" data-adact="un">Save</button></div><div class="note" id="adunn" role="status"></div></div>
+        <div class="apc-card"><h4>Role</h4><div class="apc-role"><button class="btn2" type="button" data-adact="role" data-adrole="user">User</button><button class="btn2" type="button" data-adact="role" data-adrole="admin">Admin</button><button class="btn2" type="button" data-adact="role" data-adrole="owner" data-owner hidden>Owner</button></div><div class="note" id="adprn" role="status"></div></div>
+        <div class="apc-card"><h4>Password</h4><p id="adpwt">Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them.</p><button class="btn2" type="button" id="adrst" data-adact="reset">Send password reset email</button><div class="note" id="adrstn" role="status"></div><p>Or set a new password yourself:</p><div class="apc-row"><div class="au-pw"><input id="adpw" type="password" autocomplete="new-password" placeholder="New password, at least 8 characters" maxlength="72" aria-label="New password"></div><button class="btn2 pri" type="button" id="adpwb" data-adact="pw">Set new password</button></div><div class="note" id="adpwn" role="status"></div></div>
+        <div class="apc-card"><h4>Access</h4><p id="adlt" hidden></p><label class="apc-l" for="adld" id="adldl">How long</label><select id="adld"><option value="1">1 hour</option><option value="24">24 hours</option><option value="168">7 days</option><option value="720">30 days</option><option value="0" selected>Permanent</option></select><label class="apc-l" for="adlr" id="adlrl">Reason shown to the user (optional)</label><textarea id="adlr" maxlength="500" rows="2"></textarea><button class="btn2 danger" type="button" id="adlock" data-adact="lock">Lock account</button><div class="note" id="adln" role="status"></div></div>
+        <div class="apc-card apc-danger"><h4>Danger zone</h4><p>Deletes the account, profile, records, saves, friends and messages for good. This cannot be undone.</p><label class="apc-l" for="addel" id="addell">Type the username or email to confirm</label><div class="apc-row"><input id="addel" autocomplete="off" spellcheck="false" autocapitalize="off"><button class="btn2 danger" type="button" id="addelb" data-adact="del">Delete account forever</button></div><div class="note" id="addeln" role="status"></div></div>
+       </div>
+      </div>
+     </section>
+    </section>
+    <section class="adm-sec" id="adtickets" hidden><div id="tka"></div></section>
+    <section class="adm-sec ads" id="adstats" hidden></section>
+    <section class="adm-sec" id="adlog" hidden></section>
+    <section class="adm-sec" id="adsite" hidden></section>
+   </div>
+  </div>
+
+  <footer class="sitefoot">
+   <nav><a href="#/terms" data-legal="terms">Terms</a><a href="#/privacy" data-legal="privacy">Privacy</a><a href="#/cookies" data-legal="cookies">Cookies</a><button type="button" data-cookieset>Cookie settings</button></nav>
+   <p class="gp-by">Made by Gabriel Courtin</p>
+  </footer>
+ </main>
+</div>
+
+<div class="modal full" id="fmodal" hidden role="dialog" aria-modal="true" aria-label="Friends">
+ <div class="mc">
+  <div class="mh"><button class="back" type="button" data-close><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back to games</button><h3>Friends</h3><span class="mh-sp"></span></div>
+  <div class="mb fpage">
+   <label class="search" for="fname"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="fname" placeholder="Find players by username" autocomplete="off" spellcheck="false" autocapitalize="off" enterkeyhint="search" maxlength="20" aria-controls="fres"></label>
+   <div class="note" id="anote"></div>
+   <div class="fr-gate" id="frgate" hidden><b id="frgt"></b><span id="frgs"></span><button class="btn2 pri" type="button" data-go="mauth" id="frgb">Log in or sign up</button></div>
+   <div class="grp" id="g-res" hidden><h4 id="res-h">Players</h4><div class="flist" id="fres" role="list"></div></div>
+   <div class="grp" id="g-req" hidden><button class="sech" type="button" aria-expanded="true" data-sec="g-req"><svg class="chev2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg><span>Requests</span><i id="req-n">0</i></button><div class="flist" id="req-l"></div></div>
+   <div class="grp" id="g-fr"><button class="sech" type="button" aria-expanded="true" data-sec="g-fr"><svg class="chev2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg><span>Friends</span><i id="fr-n">0</i></button><div class="flist" id="fr-l"></div></div>
+  </div>
+ </div>
+</div>
+
+<div class="modal full" id="prmodal" hidden role="dialog" aria-modal="true" aria-label="Profile">
+ <div class="mc">
+  <div class="mh"><button class="back" type="button" data-close><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back to games</button><h3>Profile</h3><span class="mh-sp"></span></div>
+  <div class="mb">
+   <div class="pgrid">
+    <aside class="pcard">
+     <span class="pic" data-pic></span><b data-pname></b><span id="pcun"></span><span id="pcsince"></span>
+     <div class="tiles"><div class="tile"><small>Games</small><b id="pcg">0</b></div><div class="tile"><small>Records</small><b id="pcr">0</b></div><div class="tile"><small>Friends</small><b id="pcf">0</b></div></div>
+    </aside>
+    <div class="pmain">
+     <div class="scard"><h4>Username</h4>
+      <div class="stack"><div class="fld"><div class="unrow"><span class="at">@</span><input id="un" aria-label="Username" readonly maxlength="20"><button class="btn2" type="button" id="unedit">Change</button></div><div class="note" id="unnote"></div></div></div>
+      <h4>Display name</h4>
+      <div class="stack"><div class="fld"><div class="row"><input id="dn" aria-label="Display name" maxlength="24" autocomplete="off"><button class="mini" type="button" id="dnsave">Save</button></div><div class="note" id="dnnote"></div></div></div></div>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<div class="modal full" id="semodal" hidden role="dialog" aria-modal="true" aria-label="Settings">
+ <div class="mc">
+  <div class="mh"><button class="back" type="button" data-close><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back to games</button><h3>Settings</h3><span class="mh-sp"></span></div>
+  <div class="mb">
+   <div class="setgrid">
+    <nav class="snav" id="snav" aria-label="Settings sections">
+     <button type="button" data-p="account">Account</button><button type="button" data-p="appearance">Appearance and language</button><button type="button" data-p="sound">Sound</button><button type="button" data-p="notifications">Notifications</button><button type="button" data-p="privacy">Privacy and data</button><button type="button" data-p="controls">Controls and shortcuts</button><button type="button" data-p="legal">Help and legal</button>
+    </nav>
+    <div>
+     <section class="pane" data-pane="account"><h2>Account</h2>
+      <div class="scard"><h4>Profile</h4>
+       <div class="srw"><div><b data-pname></b><small data-pun></small></div><button class="btn2" type="button" data-go="mprofile">Edit profile</button></div></div>
+      <div class="scard" data-au="in" hidden><h4>Signed in</h4>
+       <div class="srw"><div><b id="auwho"></b><small id="auvia"></small></div><button class="btn2" type="button" data-go="msignout">Sign out</button></div>
+       <div class="srw"><div><b>Sync</b><small id="ausync">Your records and saves are kept in your account.</small></div><button class="btn2" type="button" id="aunow">Sync now</button></div>
+      </div>
+      <div class="scard" data-au="in" hidden><h4>Email and password</h4>
+       <div class="stack">
+        <div class="fld"><label for="auem2">Email address</label><div class="row"><input id="auem2" type="email" autocomplete="email" spellcheck="false" autocapitalize="off" inputmode="email"><button class="mini" type="button" id="auemsave">Change</button></div><div class="note" id="auemnote"></div></div>
+        <div class="fld"><label for="aupw2" id="aupwl">New password</label><div class="row"><input id="aupw2" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters"><button class="mini" type="button" id="aupwsave">Save</button></div><div class="note" id="aupwnote"></div></div>
+       </div></div>
+      <div class="scard" data-au="out" hidden><h4>Sign in</h4><p>Optional. Keep your profile, records and saves on every device.</p>
+       <div class="srw"><div><b>Google</b><small>Use your Google account.</small></div><button class="btn2" type="button" data-auth="google">Continue</button></div>
+       <div class="srw"><div><b>Email or username</b><small>Log in or create an account.</small></div><button class="btn2" type="button" data-go="mauth">Log in or sign up</button></div>
+       <div class="srw"><div><b>This device</b><small>Without an account your data stays in this browser.</small></div><span class="count">Current</span></div>
+      </div>
+      <div class="scard" data-au="off"><h4>Sign in</h4><p>Accounts are not switched on yet. Soon you can keep your profile, records and saves on every device.</p>
+       <div class="srw"><div><b>Account</b><small>Log in or sign up with email, or with Google.</small></div><button class="btn2" type="button" data-go="mauth">Open</button></div>
+       <div class="srw"><div><b>This device</b><small>Your data is saved in this browser.</small></div><span class="count">Current</span></div>
+      </div>
+      <div class="scard"><h4>Delete my data</h4><p>Removes your profile, records, saves and settings from this browser. Type DELETE to confirm.</p>
+       <div class="stack"><div class="unrow"><input id="delc" placeholder="DELETE" autocomplete="off"><button class="btn2 danger" type="button" id="delbtn" disabled>Delete</button></div><div class="note" id="delnote"></div></div></div>
+      <div class="scard" data-au="in" hidden><h4>Delete my account</h4><p>Deletes your account, profile, records, saves and friends from our database. What is saved in this browser stays. Type DELETE to confirm.</p>
+       <div class="stack"><div class="unrow"><input id="adelc" placeholder="DELETE" autocomplete="off" aria-label="Type DELETE to confirm"><button class="btn2 danger" type="button" id="adelbtn" disabled>Delete account</button></div><div class="note" id="adelnote"></div></div></div>
+     </section>
+
+     <section class="pane" data-pane="appearance" hidden><h2>Appearance and language</h2>
+      <div class="scard">
+       <div class="srw"><div><b>Theme</b><small>Auto follows your device.</small></div><span class="seg lg"><button type="button" data-t="light">Light</button><button type="button" data-t="dark">Dark</button><button type="button" data-t="system">Auto</button></span></div>
+       <div class="srw"><div><b>Language</b><small>Changes the text of the site right away.</small></div><select id="langsel" aria-label="Language"><option value="en" lang="en">English</option><option value="fr" lang="fr">Français</option><option value="es" lang="es">Español</option><option value="de" lang="de">Deutsch</option><option value="it" lang="it">Italiano</option><option value="pt" lang="pt">Português</option></select></div>
+       <div class="srw"><div><b>Reduce motion</b><small>Turn off hover movement and transitions.</small></div><button class="sw" type="button" role="switch" data-sw="motion" aria-label="Reduce motion"></button></div>
+       <div class="srw"><div><b>Show game thumbnails</b><small>Hide them to load the page faster.</small></div><button class="sw" type="button" role="switch" data-sw="thumbs" aria-label="Show game thumbnails"></button></div>
+      </div></section>
+
+     <section class="pane" data-pane="sound" hidden><h2>Sound</h2>
+      <div class="scard">
+       <div class="srw"><div><b>Sound effects</b><small>Clicks, wins and game sounds.</small></div><button class="sw" type="button" role="switch" data-sw="sound" aria-label="Sound effects"></button></div>
+      </div></section>
+
+     <section class="pane" data-pane="notifications" hidden><h2>Notifications</h2>
+      <div class="scard"><h4>In the app</h4><p>Shown in the corner of the screen and in the bell menu.</p>
+       <div class="srw"><div><b>Messages</b><small>When a friend sends you a message or a picture.</small></div><button class="sw" type="button" role="switch" data-sw="n_msg" aria-label="Messages"></button></div>
+       <div class="srw"><div><b>Party invites</b><small>When a friend invites you to play or asks to join you.</small></div><button class="sw" type="button" role="switch" data-sw="n_inv" aria-label="Party invites"></button></div>
+       <div class="srw"><div><b>Friend requests</b><small>When someone adds you.</small></div><button class="sw" type="button" role="switch" data-sw="n_req" aria-label="Friend requests"></button></div>
+       <div class="srw"><div><b>Friends coming online</b><small>When a friend opens the site.</small></div><button class="sw" type="button" role="switch" data-sw="n_on" aria-label="Friends online"></button></div>
+       <div class="srw"><div><b>New games</b><small>When new games are added to the site.</small></div><button class="sw" type="button" role="switch" data-sw="n_game" aria-label="New games"></button></div>
+      </div></section>
+
+     <section class="pane" data-pane="privacy" hidden><h2>Privacy and data</h2>
+      <div class="scard"><h4>Who can see and reach you</h4>
+       <div class="srw"><div><b>Online status</b><small>Your friends see a green dot when you are online.</small></div><select data-sel="p_status" aria-label="Online status"><option value="Friends">Friends</option><option value="Nobody">Nobody</option></select></div>
+       <div class="srw"><div><b>Show what I am playing</b><small>Friends see your current game.</small></div><button class="sw" type="button" role="switch" data-sw="p_game" aria-label="Show current game"></button></div>
+       <div class="srw"><div><b>Party invites from</b><small>Only friends can invite you. Choose Nobody to stop invite pop-ups.</small></div><select data-sel="p_inv" aria-label="Party invites from"><option value="Friends">Friends</option><option value="Nobody">Nobody</option></select></div>
+      </div>
+      <div class="scard"><h4>Your data</h4>
+       <div class="srw"><div><b>Download my data</b><small>A file with your profile, records and settings.</small></div><button class="btn2" type="button" id="dl">Download</button></div>
+       <div class="srw"><div><b>Analytics cookies</b><small>Help us see which games people play.</small></div><button class="sw" type="button" role="switch" data-sw="analytics" aria-label="Analytics cookies"></button></div>
+       <div class="srw"><div><b>Cookie settings</b><small>Change what this site may store.</small></div><button class="btn2" type="button" data-cookieset>Open</button></div>
+       <div class="srw"><div><b>Reset my records</b><small>Clears best scores, play counts and saved games. This cannot be undone.</small></div><button class="btn2 danger" type="button" id="rr">Reset</button></div>
+       <div class="note" id="datanote"></div></div></section>
+
+     <section class="pane" data-pane="controls" hidden><h2>Controls and shortcuts</h2>
+      <div class="scard"><h4>Site</h4>
+       <div class="srw"><div><b>Focus search</b></div><span class="keys"><kbd>/</kbd></span></div>
+       <div class="srw"><div><b>Close window or menu</b></div><span class="keys"><kbd>Esc</kbd></span></div>
+       <h4>In games</h4>
+       <div class="srw"><div><b>Move</b></div><span class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows</span></div>
+       <div class="srw"><div><b>Action</b></div><span class="keys"><kbd>Space</kbd></span></div>
+       <div class="srw"><div><b>Pause</b></div><span class="keys"><kbd>Esc</kbd></span></div>
+      </div></section>
+
+     <section class="pane" data-pane="legal" hidden><h2>Help and legal</h2>
+      <div class="scard"><h4>Documents</h4>
+       <div class="srw"><div><b>Terms of Service</b></div><a class="btn2" href="#/terms" data-legal="terms">Open</a></div>
+       <div class="srw"><div><b>Privacy Policy</b></div><a class="btn2" href="#/privacy" data-legal="privacy">Open</a></div>
+       <div class="srw"><div><b>Cookie Policy</b></div><a class="btn2" href="#/cookies" data-legal="cookies">Open</a></div>
+       <h4>Help</h4>
+       <div class="srw"><div><b>Contact support</b><small>Send us a message. Replies show up in Support.</small></div><button class="btn2" type="button" data-go="msupport">Write to us</button></div>
+       <div class="srw"><div><b>Report a bug or a player</b><small>Open a support ticket and tell us what happened.</small></div><button class="btn2" type="button" data-go="msupport">Report</button></div>
+       <div class="srw"><div><b>About</b><small id="about"></small></div></div>
+      </div></section>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<div class="modal full" id="tkmodal" hidden role="dialog" aria-modal="true" aria-label="Support">
+ <div class="mc">
+  <div class="mh"><button class="back" type="button" data-close><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back to games</button><h3>Support</h3><span class="mh-sp"></span></div>
+  <div class="mb tkpage"><p class="mtext">A question, a problem with your account or a game? Open a ticket and the admins will reply here.</p><div id="tks"></div></div>
+ </div>
+</div>
+
+<div class="adblock" id="adblock" hidden role="dialog" aria-modal="true" aria-labelledby="adbt">
+ <div class="adb-wrap">
+  <div class="adb-brand"><span class="logo"><svg viewBox="0 0 16 16"><path d="M2 1.5v13l12-6.5z"/></svg></span><span>gameplay</span></div>
+  <div class="adb-card">
+   <span class="adb-ico"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg></span>
+   <h3 id="adbt">The admin has blocked you out of this website</h3>
+   <p class="adb-sub">You cannot play or use your account for now.</p>
+   <div class="adb-why" id="adbr" hidden><b>Reason</b><span id="adbrt" translate="no"></span></div>
+   <div class="adb-why adb-til" id="adbu"><b>Lock ends</b><span id="adbut" translate="no"></span></div>
+   <div class="adb-contact">
+    <h4>Contact</h4>
+    <p>Think this is a mistake? Open a ticket to talk with the admins. Their replies show up here.</p>
+    <div id="tkb"></div>
+   </div>
+   <button class="btn2 adb-out" type="button" id="adbout"><svg viewBox="0 0 24 24"><path d="M9 21H5V3h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>
+  </div>
+ </div>
+</div>
+
+<div class="modal" id="sgmodal" hidden role="dialog" aria-modal="true" aria-label="Sign out">
+ <div class="mc sm"><div class="mh"><h3>Sign out?</h3></div><div class="mb"><p class="mtext">You can sign back in any time. Your records stay saved.</p><div class="addrow end"><button class="btn2" type="button" data-close>Cancel</button><button class="btn2 pri" type="button" id="dosignout">Sign out</button></div></div></div>
+</div>
+
+<div class="modal full au-page" id="aumodal" hidden role="dialog" aria-modal="true" aria-labelledby="aut">
+ <div class="mc">
+  <div class="au-wrap">
+   <div class="au-top"><span class="au-logo" translate="no"><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.6 4.2v7.6l6-3.8z"/></svg></i>gameplay</span></div>
+   <div class="au-mid">
+    <div class="au-card" id="aucard">
+     <div class="au-off" id="auoff" hidden><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><div><b>Accounts are not switched on yet</b></div></div>
+     <div class="au-v" data-auview="in">
+      <div class="au-hd"><h3 id="aut">Welcome back.</h3><p>Log in to keep your records and saves on every device.</p></div>
+      <form class="au-f" id="auform" novalidate>
+       <div class="fld"><label for="auemail">Email or username</label><input id="auemail" type="text" autocomplete="username" spellcheck="false" autocapitalize="off" placeholder="Enter your email or username"></div>
+       <div class="fld"><div class="au-lrow"><label for="aupass">Password</label><button class="au-link" type="button" id="auforgot">Forgot password?</button></div><div class="au-pw"><input id="aupass" type="password" autocomplete="current-password" placeholder="Enter your password"></div></div>
+       <div class="note" id="aunote" role="status"></div>
+       <button class="au-go" type="submit" id="augo"><span>Log in</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8.5 3.5 13 8l-4.5 4.5"/></svg></button>
+      </form>
+      <div class="au-or"><span>or</span></div>
+      <button class="au-g" type="button" data-auth="google"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Continue with Google</span><em hidden>Coming soon</em></button>
+      <p class="au-sw">Don't have an account? <button class="au-link" type="button" data-aumode="up">Sign up</button></p>
+     </div>
+     <div class="au-v" data-auview="up" hidden>
+      <div class="au-hd"><h3 id="aut2">Make it your game.</h3><p>Create an account to keep your records and saves on every device.</p></div>
+      <form class="au-f" id="auupform" novalidate>
+       <div class="fld"><label for="auupemail">Email</label><input id="auupemail" type="email" autocomplete="email" inputmode="email" spellcheck="false" autocapitalize="off" placeholder="you@example.com"></div>
+       <div class="fld"><label for="auupemail2">Confirm Email</label><input id="auupemail2" type="email" autocomplete="email" inputmode="email" spellcheck="false" autocapitalize="off" placeholder="Enter your email again"></div>
+       <div class="fld"><label for="auuser">Username</label><input id="auuser" autocomplete="username" maxlength="20" spellcheck="false" autocapitalize="off" placeholder="Choose your player name"></div>
+       <div class="fld"><div class="au-lrow"><label for="auuppass">Password</label><span class="au-reqs" data-for="auuppass"></span></div><div class="au-pw"><input id="auuppass" type="password" autocomplete="new-password" placeholder="Create a password"></div></div>
+       <div class="note" id="auupnote" role="status"></div>
+       <button class="au-go" type="submit" id="auupgo"><span>Create account</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8.5 3.5 13 8l-4.5 4.5"/></svg></button>
+      </form>
+      <div class="au-or"><span>or</span></div>
+      <button class="au-g" type="button" data-auth="google"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Continue with Google</span><em hidden>Coming soon</em></button>
+      <p class="au-sw">Already have an account? <button class="au-link" type="button" data-aumode="in">Log in</button></p>
+     </div>
+     <div class="au-v au-center" data-auview="check" hidden>
+      <span class="au-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></span>
+      <div class="au-hd"><h3>Check your inbox</h3><p>We sent a 6-digit code to <b id="aucmail"></b>. <span data-cv="signup">Type it below to confirm your account.</span><span data-cv="recovery" hidden>Type it below to choose a new password.</span></p></div>
+      <form class="au-f" id="acform" novalidate>
+       <div class="fld"><label for="accode">Confirmation code</label><input id="accode" class="au-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" spellcheck="false" placeholder="000000"></div>
+       <div class="note" id="acnote" role="status"></div>
+       <button class="au-go" type="submit" id="acgo"><span>Confirm</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8.5 3.5 13 8l-4.5 4.5"/></svg></button>
+      </form>
+      <p class="au-sw">No code? Check your spam folder, <button class="au-link" type="button" id="auresend"><span>Resend code</span></button> or <button class="au-link" type="button" id="auckback" data-auv="main">use a different email</button>.</p>
+     </div>
+     <div class="au-v" data-auview="reset" hidden>
+      <div class="au-hd"><h3>Reset your password</h3><p>Type the email of your account. We will send you a 6-digit code to choose a new password.</p></div>
+      <form class="au-f" id="aurform" novalidate>
+       <div class="fld"><label for="aremail">Email</label><input id="aremail" type="email" autocomplete="email" inputmode="email" spellcheck="false" autocapitalize="off" placeholder="you@example.com"></div>
+       <div class="note" id="arnote" role="status"></div>
+       <button class="au-go" type="submit" id="arsend"><span>Send code</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8.5 3.5 13 8l-4.5 4.5"/></svg></button>
+      </form>
+      <p class="au-sw"><button class="au-link" type="button" data-auv="main">Back to log in</button></p>
+     </div>
+     <div class="au-v" data-auview="newpass" hidden>
+      <div class="au-hd"><h3>Choose a new password</h3><p>Pick a password you do not use on other sites.</p></div>
+      <form class="au-f" id="anform" novalidate>
+       <input id="anuser" type="email" autocomplete="username" hidden>
+       <div class="fld"><div class="au-lrow"><label for="anpass">New password</label><span class="au-reqs" data-for="anpass"></span></div><div class="au-pw"><input id="anpass" type="password" autocomplete="new-password" placeholder="Create a password"></div></div>
+       <div class="fld"><label for="anpass2">Confirm new password</label><div class="au-pw"><input id="anpass2" type="password" autocomplete="new-password" placeholder="Enter your password again"></div></div>
+       <div class="note" id="annote" role="status"></div>
+       <button class="au-go" type="submit" id="ansave"><span>Save password</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8.5 3.5 13 8l-4.5 4.5"/></svg></button>
+      </form>
+     </div>
+     <div class="au-v" data-auview="wait" hidden aria-busy="true" aria-label="Signing you in…">
+      <i class="sk au-sk-h"></i><i class="sk au-sk-p"></i>
+      <i class="sk au-sk-l"></i><i class="sk au-sk-i"></i><i class="sk au-sk-l"></i><i class="sk au-sk-i"></i><i class="sk au-sk-b"></i>
+     </div>
+    </div>
+   </div>
+   <div class="au-foot"><span><span translate="no">© 2026 gameplay</span> · <span class="gp-by">Made by Gabriel Courtin</span></span><span>By continuing, you agree to our <a href="#/terms" data-aulegal="terms">Terms of Use</a> and <a href="#/privacy" data-aulegal="privacy">Privacy Policy</a>.</span></div>
+  </div>
+ </div>
+</div>
+
+
+<div class="modal" id="unmodal" hidden role="dialog" aria-modal="true" aria-label="Change username">
+ <div class="mc sm">
+  <div class="mh"><h3 id="unt">Change username</h3><button class="x" type="button" data-unclose aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="mb">
+   <div id="un1"><div class="fld"><label for="unew">New username</label><input id="unew" maxlength="20" autocomplete="off" spellcheck="false"></div><div class="note" id="unerr"></div></div>
+   <div id="un2" hidden><p class="mtext">Change your username from <b id="uno"></b> to <b id="unn"></b>?</p></div>
+   <div class="addrow end"><button class="btn2" type="button" id="uncancel">Cancel</button><button class="btn2 pri" type="button" id="uncont">Continue</button></div>
+  </div>
+ </div>
+</div>
+
+<div class="modal" id="stmodal" hidden role="dialog" aria-modal="true" aria-label="Stats">
+ <div class="mc wide">
+  <div class="mh"><h3>Stats</h3><button class="x" type="button" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="mb" id="stbody"></div>
+ </div>
+</div>
+
+<div class="modal" id="ckmodal" hidden role="dialog" aria-modal="true" aria-label="Cookie settings">
+ <div class="mc sm">
+  <div class="mh"><h3>Cookie settings</h3><button class="x" type="button" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="mb">
+   <div class="srw"><div><b>Essential</b><small>Your records, saves, settings and this choice. Always on.</small></div><span class="sw on dis" aria-hidden="true"></span></div>
+   <div class="srw"><div><b>Analytics</b><small>Anonymous counts of which games are played and for how long.</small></div><button class="sw" type="button" role="switch" id="ckan" aria-label="Analytics"></button></div>
+   <p class="mtext small"><a href="#/cookies" data-legal="cookies">Cookie Policy</a></p>
+   <div class="addrow end"><button class="btn2" type="button" data-ck="reject">Only essentials</button><button class="btn2 pri" type="button" data-ck="save">Save</button></div>
+  </div>
+ </div>
+</div>
+
+<div class="ckbar" id="ckbar" hidden role="region" aria-labelledby="ckt" aria-describedby="ckd">
+ <div class="ck-card">
+  <h3 id="ckt"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.5A9 9 0 1 1 11.5 3a3.5 3.5 0 0 0 4 4 3.5 3.5 0 0 0 5.5 5.5z"/><path d="M8 10h.01M12 15h.01M8 16h.01M16 15.5h.01M12 10.5h.01"/></svg><span>Cookies and terms</span></h3>
+  <p id="ckd">We keep your records, saves and settings in this browser so the site works. With your OK we also count which games are played, to make the site better. No ads, nothing is sold.</p>
+  <label class="au-chk" id="ckagree"><input type="checkbox" id="ckterms"><span>I agree to the <a href="#/terms" data-aulegal="terms">Terms of Use</a> and the <a href="#/privacy" data-aulegal="privacy">Privacy Policy</a></span></label>
+  <div class="note bad" id="cknote" role="alert"></div>
+  <div class="ck-btns"><button class="btn2 pri" type="button" data-ckc="all">Accept all</button><button class="btn2" type="button" data-ckc="session">Only for this session</button><button class="btn2" type="button" data-ckc="essential">Only essentials</button></div>
+  <p class="au-small">Read the <a href="#/cookies" data-aulegal="cookies">Cookie Policy</a>. You can change your choice any time in Cookie settings.</p>
+ </div>
+</div>
+<div class="lgsheet" id="lgsheet" hidden role="dialog" aria-modal="true" aria-labelledby="lgt">
+ <div class="lg-card"><div class="lg-h"><button class="back" type="button" id="lgback"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back</button><b id="lgt"></b><span></span></div><article class="doc" id="lgdoc"></article></div>
+</div>
+
+
+<div class="am-toast" id="toast" role="status" aria-live="polite"></div>
+{{NOSCRIPT}}
