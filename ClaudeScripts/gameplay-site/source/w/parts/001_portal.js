@@ -2583,7 +2583,7 @@ function related(g) {
   return scored.sort((a, b) => b[0] - a[0]).map(x => x[1]);
 }
 
-const SB = { on: !!(SUPABASE_URL && SUPABASE_ANON_KEY), c: null, p: null, lib: null, user: null, session: null, prof: null, syncing: false, again: false, fail: 0, t: 0, loud: false, mode: 'in', choosing: false, view: 'main' };
+const SB = { on: !!(SUPABASE_URL && SUPABASE_ANON_KEY) && !window.__gpSbDown, c: null, p: null, lib: null, user: null, session: null, prof: null, syncing: false, again: false, fail: 0, t: 0, loud: false, mode: 'in', choosing: false, view: 'main' };
 const AN_KEY = 'gameplay:analytics', CK_KEY = 'gameplay:consent', AN_MAX = 2000;
 const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 let consent = null;
@@ -3409,6 +3409,7 @@ function gpNetWrap(g, net) {
 }
 
 ['load', 'error'].forEach(t => document.addEventListener(t, e => { const m = e.target; if (m && m.tagName === 'IMG') m.classList.add('ld'); }, true));
+const AU_DOWN = 'Accounts cannot be reached on this network. You can still play, and your progress stays on this computer.';
 const SB_STORE = 'sb-gameplay-auth', SYK = 'gameplay:sync', VIDK = 'gameplay:vid', SAVE_P = 'gameplay:save:';
 const UN_RE = /^[a-z0-9_.]{3,20}$/, GID_RE = /^[a-z0-9][a-z0-9-]{0,39}$/, EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const sbBase = () => PATH_MODE ? location.origin + '/' : location.origin + location.pathname;
@@ -3781,6 +3782,7 @@ function auFocus() {
 }
 function auShow() {
   $('#auoff').hidden = SB.on;
+  if (window.__gpSbDown) $('#auoff b').textContent = AU_DOWN;
   if (SB.on) { sbClient().catch(() => {}); auSettings(); }
   ['aunote', 'auupnote', 'arnote', 'annote', 'acnote'].forEach(id => auMsg(id, ''));
   document.querySelectorAll('#aumodal .au-err').forEach(e => auFieldErr(e.closest('.fld').querySelector('input'), ''));
@@ -4297,7 +4299,7 @@ function frOpen() {
   if (!ok) {
     ['g-res', 'g-req', 'g-fr'].forEach(id => { $('#' + id).hidden = true; });
     $('#frgt').textContent = st === 'off' ? 'Friends are coming soon' : 'Log in to add friends';
-    $('#frgs').textContent = st === 'off' ? 'Accounts are not switched on yet. Then you can find players by their username and add them as friends.' : 'Create a free account or log in, then find players by their username.';
+    $('#frgs').textContent = st === 'off' ? (window.__gpSbDown ? AU_DOWN : 'Accounts are not switched on yet. Then you can find players by their username and add them as friends.') : 'Create a free account or log in, then find players by their username.';
     return;
   }
   FR.q = inp.value.trim().toLowerCase().replace(/^@/, '');
@@ -4439,6 +4441,7 @@ function auBoot() {
     auSettings();
   }
   try { localStorage.removeItem('gameplay:guest'); sessionStorage.removeItem('gameplay:guest'); } catch (e) {}
+  if (window.__gpSbDown) document.querySelectorAll('.scard[data-au="off"] > p').forEach(p => { p.textContent = AU_DOWN; });
   auRender();
   auGate();
 }
@@ -7492,6 +7495,7 @@ const R = [
 ["Continue as guest", "Continuer en invité", "Continuar como invitado", "Als Gast fortfahren", "Continua come ospite", "Continuar como convidado"],
 ["Play as a guest", "Jouer en invité", "Jugar como invitado", "Als Gast spielen", "Gioca come ospite", "Jogar como convidado"],
 ["You can still play every game as a guest. Your records and saves stay in this browser.", "Vous pouvez toujours jouer à tous les jeux en invité. Vos records et sauvegardes restent dans ce navigateur.", "Puedes seguir jugando a todos los juegos como invitado. Tus récords y partidas se quedan en este navegador.", "Du kannst weiterhin alle Spiele als Gast spielen. Deine Rekorde und Spielstände bleiben in diesem Browser.", "Puoi comunque giocare a tutti i giochi come ospite. Record e salvataggi restano in questo browser.", "Você ainda pode jogar todos os jogos como convidado. Seus recordes e jogos salvos ficam neste navegador."],
+["Accounts cannot be reached on this network. You can still play, and your progress stays on this computer.", "Les comptes sont inaccessibles sur ce réseau. Vous pouvez quand même jouer, et votre progression reste sur cet ordinateur.", "No se puede acceder a las cuentas desde esta red. Puedes seguir jugando y tu progreso se queda en este ordenador.", "Konten sind in diesem Netzwerk nicht erreichbar. Du kannst trotzdem spielen, dein Fortschritt bleibt auf diesem Computer.", "Gli account non sono raggiungibili da questa rete. Puoi comunque giocare e i tuoi progressi restano su questo computer.", "As contas não estão acessíveis nesta rede. Pode continuar a jogar e o seu progresso fica neste computador."],
 ["Accounts are not switched on yet", "Les comptes ne sont pas encore activés", "Las cuentas aún no están activadas", "Konten sind noch nicht aktiviert", "Gli account non sono ancora attivi", "As contas ainda não estão ativadas"],
 ["Accounts are not switched on yet. Soon you can keep your profile, records and saves on every device.", "Les comptes ne sont pas encore activés. Bientôt, vous retrouverez votre profil, vos records et vos sauvegardes sur tous vos appareils.", "Las cuentas aún no están activadas. Pronto podrás conservar tu perfil, récords y partidas en todos tus dispositivos.", "Konten sind noch nicht aktiviert. Bald kannst du dein Profil, deine Rekorde und Spielstände auf allen Geräten behalten.", "Gli account non sono ancora attivi. Presto potrai ritrovare profilo, record e salvataggi su ogni dispositivo.", "As contas ainda não estão ativadas. Em breve você poderá manter seu perfil, recordes e jogos salvos em todos os dispositivos."],
 ["Accounts are not switched on yet. Then you can find players by their username and add them as friends.", "Les comptes ne sont pas encore activés. Vous pourrez alors trouver des joueurs par leur nom d’utilisateur et les ajouter en amis.", "Las cuentas aún no están activadas. Entonces podrás buscar jugadores por su nombre de usuario y añadirlos como amigos.", "Konten sind noch nicht aktiviert. Dann kannst du Spieler über ihren Benutzernamen finden und als Freunde hinzufügen.", "Gli account non sono ancora attivi. Allora potrai trovare i giocatori con il loro nome utente e aggiungerli come amici.", "As contas ainda não estão ativadas. Depois você poderá encontrar jogadores pelo nome de usuário e adicioná-los como amigos."],

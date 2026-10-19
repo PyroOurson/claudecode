@@ -1,6 +1,6 @@
 const fs = require('fs'), path = require('path'), zlib = require('zlib'), crypto = require('crypto');
 const [src, out] = process.argv.slice(2);
-const pass = (process.env.GATE_PASS || '').trim();
+const pass = (process.env.GATE_PASS || '').trim(), gkey = (process.env.GATE_KEY || '').trim();
 const plan = JSON.parse(fs.readFileSync(path.join(src, 'plan.json'), 'utf8'));
 const html = fs.readFileSync(path.join(src, 'index.html'), 'utf8');
 const dirOut = path.join(out, plan.dir);
@@ -13,7 +13,7 @@ const put = (rel, buf) => {
   manifest.push(rel + ' ' + buf.length + ' ' + crypto.createHash('sha256').update(buf).digest('hex'));
 };
 const fonts = (/href="(https:\/\/fonts\.googleapis\.com\/css2\?[^"]+)"/.exec(html) || [])[1] || '';
-if (!pass) {
+if (!pass && !gkey) {
   plan.files.forEach(f => put(plan.dir + f, fs.readFileSync(path.join(src, 'files', f))));
   const page = html.replace('"%%GPKEY%%"', 'null');
   fs.writeFileSync(path.join(out, 'index.html'), page);
@@ -21,12 +21,27 @@ if (!pass) {
   console.log('gate2: public build', out, 'index', page.length, 'files', plan.files.length);
   process.exit(0);
 }
+(async () => {
 const consts = fs.readFileSync(path.join(__dirname, 'new', 'consts.js'), 'utf8');
 const sbUrl = (/const SUPABASE_URL = '([^']+)'/.exec(consts) || [])[1], sbKey = (/const SUPABASE_ANON_KEY = '([^']+)'/.exec(consts) || [])[1];
 if (!sbUrl || !sbKey) { console.error('gate2: SUPABASE_URL or SUPABASE_ANON_KEY missing in new/consts.js'); process.exit(1); }
 const salt = Buffer.from('gameplay-gate-v1');
 const iter = 310000;
-const key = crypto.pbkdf2Sync(Buffer.from(pass, 'utf8'), salt, iter, 32, 'sha256');
+const key = gkey ? Buffer.from(gkey, 'base64') : crypto.pbkdf2Sync(Buffer.from(pass, 'utf8'), salt, iter, 32, 'sha256');
+if (key.length !== 32) { console.error('gate2: GATE_KEY must be 32 bytes in base64'); process.exit(1); }
+const okSlot = o => !!(o && typeof o === 'object' && typeof o.s === 'string' && typeof o.i === 'string' && typeof o.c === 'string' && o.n > 0);
+let slot = null;
+if (process.env.GATE_SLOT) { try { slot = JSON.parse(process.env.GATE_SLOT); } catch (e) {} }
+else if (typeof fetch === 'function') {
+  try {
+    const h = { apikey: sbKey, 'Content-Type': 'application/json' };
+    if (/^eyJ/.test(sbKey)) h.Authorization = 'Bearer ' + sbKey;
+    const r = await fetch(sbUrl.replace(/\/+$/, '') + '/rest/v1/rpc/get_gate_slot', { method: 'POST', headers: h, body: '{}' });
+    if (r.ok) slot = await r.json();
+  } catch (e) {}
+}
+if (!okSlot(slot)) { console.error('gate2: could not read the site password slot from Supabase (get_gate_slot). Check the internet connection, or set GATE_SLOT to the JSON it returns.'); process.exit(1); }
+slot = { v: 1, s: slot.s, n: slot.n, i: slot.i, c: slot.c };
 const seal = buf => {
   const gz = zlib.gzipSync(buf, { level: 9 });
   const iv = crypto.createHmac('sha256', key).update(gz).digest().subarray(0, 12);
@@ -74,7 +89,7 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
 <div class="sp" id="sp" hidden aria-label="Loading"><div><i></i><i></i><i></i><i></i><i></i></div></div><form class="c" id="f" autocomplete="off"><div class="lg"><i>&#9654;</i>gameplay</div><h1 id="h">Enter the password</h1><p id="t">This site is private.</p><input id="p" class="pw" type="text" name="gp-site-code" placeholder="Password" autofocus aria-label="Password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"><button id="b">Unlock</button><div class="m" id="m"></div></form>
 <script>
 (() => {
-  const D = { u: ${JSON.stringify(sbUrl)}, a: ${JSON.stringify(sbKey)}, i: '${iv.toString('base64')}', c: '${ct.toString('base64')}', d: ${JSON.stringify(plan.dir)}, p: ${JSON.stringify(pre)} };
+  const D = { u: ${JSON.stringify(sbUrl)}, a: ${JSON.stringify(sbKey)}, i: '${iv.toString('base64')}', c: '${ct.toString('base64')}', d: ${JSON.stringify(plan.dir)}, p: ${JSON.stringify(pre)}, l: ${JSON.stringify(slot)} };
   const K = 'gameplay:gate', MAX = 5;
   const $ = id => document.getElementById(id);
   const b64 = s => { const t = atob(s), u = new Uint8Array(t.length); for (let i = 0; i < t.length; i++) u[i] = t.charCodeAt(i); return u; };
@@ -99,15 +114,17 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
     const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(D.i) }, key, b64(D.c));
     return new Response(new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
   };
-  const slot = async () => {
+  const SBK = 'gameplay:sb';
+  const slot = ms => Promise.race([(async () => {
     const h = { apikey: D.a, 'Content-Type': 'application/json' };
     if (/^eyJ/.test(D.a)) h.Authorization = 'Bearer ' + D.a;
-    const r = await fetch(D.u + '/rest/v1/rpc/get_gate_slot', { method: 'POST', headers: h, body: '{}', cache: 'no-store', signal: window.AbortSignal && AbortSignal.timeout ? AbortSignal.timeout(20000) : undefined });
+    const r = await fetch(D.u + '/rest/v1/rpc/get_gate_slot', { method: 'POST', headers: h, body: '{}', cache: 'no-store' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const o = await r.json();
     if (!o || typeof o.s !== 'string' || typeof o.i !== 'string' || typeof o.c !== 'string' || !(o.n > 0)) throw new Error('no slot');
     return o;
-  };
+  })(), new Promise((res, rej) => setTimeout(() => rej(new Error('timeout')), ms))]).then(o => { window.__gpSbDown = false; try { sessionStorage.setItem(SBK, '1'); } catch (e) {} return o; }, x => { window.__gpSbDown = true; throw x; });
+  const reach = () => { let c = null; try { c = sessionStorage.getItem(SBK); } catch (e) {} if (c === '1') { window.__gpSbDown = false; return Promise.resolve(); } return slot(4000).catch(() => {}); };
   const unwrap = async (pw, o) => {
     const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
     const kek = await crypto.subtle.importKey('raw', await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: b64(o.s), iterations: o.n, hash: 'SHA-256' }, base, 256), 'AES-GCM', false, ['decrypt']);
@@ -120,15 +137,16 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
   if ((st.f || 0) >= MAX) { lock(); return; }
   const left = () => { const n = MAX - (st.f || 0); return n + (n === 1 ? ' try' : ' tries') + ' left'; };
   if (st.f) $('m').textContent = left();
-  if (st.k) { $('f').style.visibility = 'hidden'; $('sp').hidden = false; const raw = b64(st.k); warm(); show(raw).then(t => put(t, raw), () => { delete st.k; wr(st); $('f').style.visibility = ''; $('sp').hidden = true; }); }
+  if (st.k) { $('f').style.visibility = 'hidden'; $('sp').hidden = false; const raw = b64(st.k); warm(); Promise.all([show(raw), reach()]).then(([t]) => put(t, raw), () => { delete st.k; wr(st); $('f').style.visibility = ''; $('sp').hidden = true; }); }
   $('f').addEventListener('submit', async e => {
     e.preventDefault();
     const pw = $('p').value;
     if (!pw) return;
     $('b').disabled = true; $('b').classList.add('bz'); $('m').className = 'm'; $('m').textContent = '';
     let o, raw = null, txt = null;
-    try { o = await slot(); }
-    catch (x) { soft('Could not reach the server. Check your connection and try again.'); return; }
+    try { o = await slot(8000); }
+    catch (x) { o = D.l; }
+    if (!o) { soft('Could not reach the server. Check your connection and try again.'); return; }
     try { raw = await unwrap(pw, o); } catch (x) { raw = null; }
     if (raw) {
       try { txt = await show(raw); } catch (x) { txt = null; }
@@ -150,3 +168,4 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
 fs.writeFileSync(path.join(out, 'index.html'), page);
 fs.writeFileSync(path.join(dirOut, 'manifest.txt'), manifest.join('\n') + '\n');
 console.log('gate2:', out, 'index', page.length, 'bytes (payload html', html.length, 'gz', gz.length + ')', 'files', plan.files.length, 'total', total);
+})();

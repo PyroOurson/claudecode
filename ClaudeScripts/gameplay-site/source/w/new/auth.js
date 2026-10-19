@@ -16,6 +16,7 @@ function gpNetWrap(g, net) {
 }
 
 ['load', 'error'].forEach(t => document.addEventListener(t, e => { const m = e.target; if (m && m.tagName === 'IMG') m.classList.add('ld'); }, true));
+const AU_DOWN = 'Accounts cannot be reached on this network. You can still play, and your progress stays on this computer.';
 const SB_STORE = 'sb-gameplay-auth', SYK = 'gameplay:sync', VIDK = 'gameplay:vid', SAVE_P = 'gameplay:save:';
 const UN_RE = /^[a-z0-9_.]{3,20}$/, GID_RE = /^[a-z0-9][a-z0-9-]{0,39}$/, EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const sbBase = () => PATH_MODE ? location.origin + '/' : location.origin + location.pathname;
@@ -388,6 +389,7 @@ function auFocus() {
 }
 function auShow() {
   $('#auoff').hidden = SB.on;
+  if (window.__gpSbDown) $('#auoff b').textContent = AU_DOWN;
   if (SB.on) { sbClient().catch(() => {}); auSettings(); }
   ['aunote', 'auupnote', 'arnote', 'annote', 'acnote'].forEach(id => auMsg(id, ''));
   document.querySelectorAll('#aumodal .au-err').forEach(e => auFieldErr(e.closest('.fld').querySelector('input'), ''));
@@ -904,7 +906,7 @@ function frOpen() {
   if (!ok) {
     ['g-res', 'g-req', 'g-fr'].forEach(id => { $('#' + id).hidden = true; });
     $('#frgt').textContent = st === 'off' ? 'Friends are coming soon' : 'Log in to add friends';
-    $('#frgs').textContent = st === 'off' ? 'Accounts are not switched on yet. Then you can find players by their username and add them as friends.' : 'Create a free account or log in, then find players by their username.';
+    $('#frgs').textContent = st === 'off' ? (window.__gpSbDown ? AU_DOWN : 'Accounts are not switched on yet. Then you can find players by their username and add them as friends.') : 'Create a free account or log in, then find players by their username.';
     return;
   }
   FR.q = inp.value.trim().toLowerCase().replace(/^@/, '');
@@ -1046,6 +1048,7 @@ function auBoot() {
     auSettings();
   }
   try { localStorage.removeItem('gameplay:guest'); sessionStorage.removeItem('gameplay:guest'); } catch (e) {}
+  if (window.__gpSbDown) document.querySelectorAll('.scard[data-au="off"] > p').forEach(p => { p.textContent = AU_DOWN; });
   auRender();
   auGate();
 }

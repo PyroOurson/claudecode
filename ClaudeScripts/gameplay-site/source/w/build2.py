@@ -10,7 +10,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 PARTS = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, 'parts')
 OUT = sys.argv[2] if len(sys.argv) > 2 else os.path.join(HERE, 'site')
-KEYTAG = hashlib.sha256(('gameplay-names|' + os.environ.get('GATE_PASS', '').strip()).encode('utf-8')).digest()
+KEYTAG = hashlib.sha256(('gameplay-names|' + (os.environ.get('GATE_PASS', '').strip() or ('key:' + os.environ['GATE_KEY'].strip() if os.environ.get('GATE_KEY', '').strip() else ''))).encode('utf-8')).digest()
 PLAIN = OUT.rstrip('/') + '_plain'
 DIR = 'gameplay/'
 INLINE = int(os.environ.get('INLINE_COVERS', '8'))
