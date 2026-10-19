@@ -280,6 +280,7 @@ table.rec td:last-child,table.rec th:last-child{text-align:right}
 
 .sitefoot{display:flex;justify-content:space-between;align-items:center;gap:8px 20px;flex-wrap:wrap;margin-top:48px;padding:18px 0 22px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 .sitefoot nav{display:flex;gap:16px;flex-wrap:wrap}
+.sitefoot .gp-by{margin:0;font-weight:600}
 .sitefoot a,.sitefoot button{color:var(--muted);font-weight:600;text-decoration:none;font-size:13px}
 .sitefoot a:hover,.sitefoot button:hover{color:var(--fg)}
 

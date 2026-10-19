@@ -81,7 +81,7 @@ button:disabled{opacity:.6;cursor:default}
 .c{animation:in .45s cubic-bezier(.22,.8,.2,1)}@keyframes in{from{opacity:0;transform:translateY(12px) scale(.97)}}
 button{transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s}button:active{transform:scale(.97)}
 .sp{position:fixed;inset:0;display:grid;place-items:center;padding:16px;animation:fade .3s .2s backwards}
-.sp[hidden]{display:none}@keyframes spin{to{transform:rotate(360deg)}}@keyframes fade{from{opacity:0}}
+.sp[hidden]{display:none}.sp{grid-template-rows:auto auto;align-content:center}.by{margin:18px 0 0;font-size:12.5px;font-weight:600;color:var(--muted);text-align:center}.sp .by{margin-top:16px}@keyframes spin{to{transform:rotate(360deg)}}@keyframes fade{from{opacity:0}}
 .sp>div{width:min(481px,100%);padding:40px;border-radius:26px;background:var(--card);border:1px solid var(--line);box-shadow:0 14px 36px -10px rgba(60,40,150,.12)}
 .sp i{display:block;height:52px;margin-top:16px;border-radius:11px;background:var(--soft) linear-gradient(100deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%) 0 0/300% 100% no-repeat;animation:sh 1.5s linear infinite}
 .sp i:first-child{width:62%;height:34px;margin:0}.sp i:nth-child(2){width:88%;height:15px;margin:14px 0 28px}
@@ -90,7 +90,7 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
 @media (prefers-reduced-motion:reduce){.sp i,button.bz::after{animation:none}}
 .pw{-webkit-text-security:disc;text-security:disc}.shake{animation:sh .35s}@keyframes sh{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 </style><script>try{var t=(JSON.parse(localStorage.getItem('gameplay:v1')||'{}')||{}).prefs||{};if(t.theme==='dark'||(t.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.className='dk'}catch(e){}</script></head><body>
-<div class="sp" id="sp" hidden aria-label="Loading"><div><i></i><i></i><i></i><i></i><i></i></div></div><form class="c" id="f" autocomplete="off"><div class="lg"><i>&#9654;</i>gameplay</div><h1 id="h">Enter the password</h1><p id="t">This site is private.</p><input id="p" class="pw" type="text" name="gp-site-code" placeholder="Password" autofocus aria-label="Password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"><button id="b">Unlock</button><div class="m" id="m"></div></form>
+<div class="sp" id="sp" hidden aria-label="Loading"><div><i></i><i></i><i></i><i></i><i></i></div><p class="by">gameplay · Made by Gabriel Courtin</p></div><form class="c" id="f" autocomplete="off"><div class="lg"><i>&#9654;</i>gameplay</div><h1 id="h">Enter the password</h1><p id="t">This site is private.</p><input id="p" class="pw" type="text" name="gp-site-code" placeholder="Password" autofocus aria-label="Password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"><button id="b">Unlock</button><div class="m" id="m"></div><p class="by">Made by Gabriel Courtin</p></form>
 <script>
 (() => {
   const D = { u: ${JSON.stringify(sbUrl)}, r: ${JSON.stringify(sbRelays)}, a: ${JSON.stringify(sbKey)}, i: '${iv.toString('base64')}', c: '${ct.toString('base64')}', d: ${JSON.stringify(plan.dir)}, p: ${JSON.stringify(pre)}, l: ${JSON.stringify(slot)} };

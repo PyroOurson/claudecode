@@ -304,6 +304,7 @@ table.rec td:last-child:where(:not(.g-root *)),table.rec th:last-child:where(:no
 
 .sitefoot:where(:not(.g-root *)){display:flex;justify-content:space-between;align-items:center;gap:8px 20px;flex-wrap:wrap;margin-top:48px;padding:18px 0 22px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 .sitefoot nav:where(:not(.g-root *)){display:flex;gap:16px;flex-wrap:wrap}
+.sitefoot .gp-by:where(:not(.g-root *)){margin:0;font-weight:600}
 .sitefoot a:where(:not(.g-root *)),.sitefoot button:where(:not(.g-root *)){color:var(--muted);font-weight:600;text-decoration:none;font-size:13px}
 .sitefoot a:hover:where(:not(.g-root *)),.sitefoot button:hover:where(:not(.g-root *)){color:var(--fg)}
 
@@ -711,7 +712,7 @@ tr:nth-child(2n) .sk-td{width:56%}
 .au-off span{display:block;color:var(--au-mute)}
 .au-off:not([hidden])~.au-v .au-f,.au-off:not([hidden])~.au-v .au-g{opacity:.55}
 .au-dn:not([hidden])~.au-v .au-f,.au-dn:not([hidden])~.au-v .au-g{opacity:1}
-.au-dn span{display:inline}.au-dn a{color:var(--au-acc);font-weight:600}
+.au-dn span{display:inline}.au-dn .au-gst{display:block;margin-top:10px}.au-dn .au-gst[hidden]{display:none}.au-dn a{color:var(--au-acc);font-weight:600}
 .au-foot{flex:none;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px 24px;padding:0 64px 22px;font-size:12px;line-height:18px;color:var(--au-foot)}
 .au-foot span:last-child{color:var(--au-foot)}
 .au-foot a{color:var(--au-ink);text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--au-ink) 55%,transparent);text-underline-offset:2px;font-weight:500}
@@ -1848,6 +1849,7 @@ html.rm .onl i::after,html.rm .adm-dot::after,html.rm .fr-dot.on::after{animatio
 
   <footer class="sitefoot">
    <nav><a href="#/terms" data-legal="terms">Terms</a><a href="#/privacy" data-legal="privacy">Privacy</a><a href="#/cookies" data-legal="cookies">Cookies</a><button type="button" data-cookieset>Cookie settings</button></nav>
+   <p class="gp-by">Made by Gabriel Courtin</p>
   </footer>
  </main>
 </div>
@@ -2081,7 +2083,7 @@ html.rm .onl i::after,html.rm .adm-dot::after,html.rm .fr-dot.on::after{animatio
      </div>
     </div>
    </div>
-   <div class="au-foot"><span translate="no">© 2026 gameplay</span><span>By continuing, you agree to our <a href="#/terms" data-aulegal="terms">Terms of Use</a> and <a href="#/privacy" data-aulegal="privacy">Privacy Policy</a>.</span></div>
+   <div class="au-foot"><span><span translate="no">© 2026 gameplay</span> · <span class="gp-by">Made by Gabriel Courtin</span></span><span>By continuing, you agree to our <a href="#/terms" data-aulegal="terms">Terms of Use</a> and <a href="#/privacy" data-aulegal="privacy">Privacy Policy</a>.</span></div>
   </div>
  </div>
 </div>

@@ -3733,7 +3733,7 @@ async function sySync(o = {}) {
 
 const auState = () => !SB.on ? 'off' : SB.user ? 'in' : 'out';
 const auT = s => window.gpI18n ? gpI18n.t(s) : s;
-const auLocked = () => SB.on && !SB.user;
+const auLocked = () => SB.on && !SB.user && !SB.guest;
 const auCoarse = () => !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
 function auMsg(id, m, kind) { const n = $('#' + id); if (!n) return; const set = () => { n.textContent = m || ''; n.className = 'note' + (kind ? ' ' + kind : ''); }; if (n.closest('#aucard') && (n.textContent || '') !== (m || '')) auMorph(set); else set(); }
 function auShake(el) { if (!el) return; el.classList.remove('au-shake'); void el.offsetWidth; el.classList.add('au-shake'); }
@@ -3833,16 +3833,33 @@ function auFocus() {
 }
 function auDown() {
   let n = $('#audown');
-  if (!window.__gpSbDown || SB.user) { if (n) n.hidden = true; return; }
-  if (!n) {
-    n = document.createElement('div'); n.id = 'audown'; n.className = 'au-off au-dn'; n.setAttribute('role', 'status');
-    n.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><div><b>Cannot reach the sign-in service from this network yet.</b><span>It keeps trying in the background. If it lasts, </span><a target="_blank" rel="noopener">run a connection check</a></div>';
-    n.querySelector('a').href = PATH_MODE ? '/check' : 'gameplay/check.html';
-    $('#auoff').after(n);
-  }
-  n.hidden = false;
   clearTimeout(SB.dt);
-  SB.dt = setTimeout(() => SBN.fetch(SBN.url('/auth/v1/health'), { headers: { apikey: SUPABASE_ANON_KEY }, cache: 'no-store', credentials: 'omit' }).catch(() => {}).then(() => { auSettings(); auDown(); }), 8000);
+  if (!window.__gpSbDown || SB.user) {
+    if (n) n.hidden = true;
+    SB.df = 0;
+    if (SB.guest && !SB.user) { SB.guest = false; if (cur || pend) { closeGame(); showView('home'); renderHome(); } toast('The sign-in service works again: log in or create an account to keep playing.'); auGate(); }
+    return;
+  }
+  if (!SB.guest) {
+    if (!n) {
+      n = document.createElement('div'); n.id = 'audown'; n.className = 'au-off au-dn'; n.setAttribute('role', 'status');
+      n.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><div><b>Cannot reach the sign-in service from this network yet.</b><span>It keeps trying in the background. If it lasts, </span><a target="_blank" rel="noopener">run a connection check</a><button class="btn2 au-gst" type="button" hidden>Play without an account for now</button></div>';
+      n.querySelector('a').href = PATH_MODE ? '/check' : 'gameplay/check.html';
+      n.querySelector('button').addEventListener('click', auGuest);
+      $('#auoff').after(n);
+    }
+    n.hidden = false;
+    n.querySelector('button').hidden = (SB.df || 0) < 2;
+  }
+  SB.dt = setTimeout(() => SBN.fetch(SBN.url('/auth/v1/health'), { headers: { apikey: SUPABASE_ANON_KEY }, cache: 'no-store', credentials: 'omit' }).catch(() => {}).then(() => { if (window.__gpSbDown) SB.df = (SB.df || 0) + 1; auSettings(); auDown(); }), SB.guest ? 20000 : 8000);
+}
+function auGuest() {
+  if (!window.__gpSbDown || SB.user) return;
+  SB.guest = true;
+  track('auth', { act: 'guest' });
+  closeAll();
+  toast('You can play without an account until the sign-in service can be reached. Then you will need to log in.');
+  auDown();
 }
 function auShow() {
   $('#auoff').hidden = SB.on;
@@ -7620,6 +7637,10 @@ const R = [
 ["You can still play every game as a guest. Your records and saves stay in this browser.", "Vous pouvez toujours jouer à tous les jeux en invité. Vos records et sauvegardes restent dans ce navigateur.", "Puedes seguir jugando a todos los juegos como invitado. Tus récords y partidas se quedan en este navegador.", "Du kannst weiterhin alle Spiele als Gast spielen. Deine Rekorde und Spielstände bleiben in diesem Browser.", "Puoi comunque giocare a tutti i giochi come ospite. Record e salvataggi restano in questo browser.", "Você ainda pode jogar todos os jogos como convidado. Seus recordes e jogos salvos ficam neste navegador."],
 ["Cannot reach the sign-in service from this network yet.", "Le service de connexion est injoignable depuis ce réseau pour le moment.", "No se puede acceder al servicio de inicio de sesión desde esta red por ahora.", "Der Anmeldedienst ist von diesem Netzwerk aus noch nicht erreichbar.", "Il servizio di accesso non è ancora raggiungibile da questa rete.", "O serviço de início de sessão ainda não está acessível a partir desta rede."],
 ["It keeps trying in the background. If it lasts, ", "Il réessaie en arrière-plan. Si cela dure, ", "Sigue intentándolo en segundo plano. Si continúa, ", "Es wird im Hintergrund weiter versucht. Wenn es anhält, ", "Continua a riprovare in background. Se dura, ", "Continua a tentar em segundo plano. Se persistir, "],
+["Play without an account for now", "Jouer sans compte pour le moment", "Jugar sin cuenta por ahora", "Vorerst ohne Konto spielen", "Gioca senza account per ora", "Jogar sem conta por agora"],
+["You can play without an account until the sign-in service can be reached. Then you will need to log in.", "Vous pouvez jouer sans compte jusqu’à ce que le service de connexion soit joignable. Ensuite, il faudra vous connecter.", "Puedes jugar sin cuenta hasta que se pueda acceder al servicio de inicio de sesión. Después tendrás que iniciar sesión.", "Du kannst ohne Konto spielen, bis der Anmeldedienst erreichbar ist. Danach musst du dich anmelden.", "Puoi giocare senza account finché il servizio di accesso non è raggiungibile. Poi dovrai accedere.", "Pode jogar sem conta até o serviço de início de sessão estar acessível. Depois terá de iniciar sessão."],
+["The sign-in service works again: log in or create an account to keep playing.", "Le service de connexion fonctionne à nouveau : connectez-vous ou créez un compte pour continuer à jouer.", "El servicio de inicio de sesión vuelve a funcionar: inicia sesión o crea una cuenta para seguir jugando.", "Der Anmeldedienst funktioniert wieder: Melde dich an oder erstelle ein Konto, um weiterzuspielen.", "Il servizio di accesso funziona di nuovo: accedi o crea un account per continuare a giocare.", "O serviço de início de sessão voltou a funcionar: inicie sessão ou crie uma conta para continuar a jogar."],
+["Made by Gabriel Courtin", "Créé par Gabriel Courtin", "Creado por Gabriel Courtin", "Erstellt von Gabriel Courtin", "Creato da Gabriel Courtin", "Criado por Gabriel Courtin"],
 ["run a connection check", "lancez un test de connexion", "haz una prueba de conexión", "starte einen Verbindungstest", "esegui un test di connessione", "faça um teste de ligação"],
 ["Run a connection check", "Lancer un test de connexion", "Hacer una prueba de conexión", "Verbindungstest starten", "Esegui un test di connessione", "Fazer um teste de ligação"],
 ["Accounts are not switched on yet", "Les comptes ne sont pas encore activés", "Las cuentas aún no están activadas", "Konten sind noch nicht aktiviert", "Gli account non sono ancora attivi", "As contas ainda não estão ativadas"],
