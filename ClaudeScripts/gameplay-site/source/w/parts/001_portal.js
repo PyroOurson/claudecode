@@ -36,8 +36,13 @@ const SORTS = [['rel', 'Best match'], ['rec', 'Popular'], ['az', 'A to Z'], ['ne
 const PATH_MODE = /(^|\.)(web\.app|firebaseapp\.com)$/i.test(location.hostname) || (() => { try { return sessionStorage.getItem('gameplay:paths') === '1'; } catch (e) { return false; } })();
 const PAUSE = { on: false };
 (() => { try { if (localStorage.getItem('gameplay:reset') !== '4') { const keep = k => k === 'gameplay:consent' || k === 'gameplay:lang' || k.indexOf('gameplay:gate') === 0 || k.indexOf('sb-') === 0; let o = {}; try { o = JSON.parse(localStorage.getItem('gameplay:v1') || '{}') || {}; } catch (e) {} const prefs = o.prefs; Object.keys(localStorage).forEach(k => { if (!keep(k)) localStorage.removeItem(k); }); localStorage.setItem('gameplay:v1', JSON.stringify(prefs ? { prefs } : {})); localStorage.setItem('gameplay:reset', '4'); try { indexedDB.deleteDatabase('gameplay-minecraft'); } catch (e) {} } } catch (e) {} })();
-const SUPABASE_URL = 'https://uafouyvtcijptspjbsqf.supabase.co';
+const SUPABASE_DIRECT = 'https://uafouyvtcijptspjbsqf.supabase.co';
+const SUPABASE_RELAY = 'https://gameplaygames.vitalang.net';
+const SUPABASE_URL = (typeof window.__gpSbUrl === 'string' && /^https:\/\//.test(window.__gpSbUrl) && window.__gpSbUrl) || SUPABASE_DIRECT;
+const SB_VIA_RELAY = SUPABASE_URL !== SUPABASE_DIRECT;
+const GOOGLE_CLIENT_ID = '114405851703-b6u2jan6mapjucijipcecr6g8nbgf73s.apps.googleusercontent.com';
 const SUPABASE_ANON_KEY = 'sb_publishable_Lry5e9J350lXelAUPHU1rg_3YYvTuAf';
+const SUPABASE_JS_FILE = 'supabase-js-2.117.2.js';
 const SUPABASE_JS = ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js', 'https://unpkg.com/@supabase/supabase-js@2.117.2/dist/umd/supabase.js'];
 const SUPABASE_SRI = 'sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok';
 const ROWS = [
@@ -368,6 +373,7 @@ function gpEdge(root, st) {
 }
 
 const libP = {};
+const libUrl = n => (PATH_MODE ? location.origin + '/' : new URL('.', location.href).href) + 'gameplay/' + n;
 function loadLib(name, urls) {
   if (window[name]) return Promise.resolve(window[name]);
   return libP[name] || (libP[name] = new Promise((res, rej) => {
@@ -382,10 +388,10 @@ function loadLib(name, urls) {
     tryAt(0);
   }));
 }
-const loadThree = () => loadLib('THREE', ['https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js', 'https://unpkg.com/three@0.128.0/build/three.min.js']);
+const loadThree = () => loadLib('THREE', [libUrl('three-r128.min.js'), 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js', 'https://unpkg.com/three@0.128.0/build/three.min.js']);
 let invite = null;
 const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const loadPeer = () => loadLib('Peer', ['https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js', 'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js', 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js']);
+const loadPeer = () => loadLib('Peer', [libUrl('peerjs-1.5.4.min.js'), 'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js', 'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js', 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js']);
 function netErr(e) {
   const t = e && e.type;
   if (t === 'peer-unavailable') return 'Room not found. Check the code and try again.';
@@ -3452,10 +3458,11 @@ function sbLib() {
   if (window.supabase && window.supabase.createClient) return Promise.resolve(window.supabase);
   if (SB.lib) return SB.lib;
   return SB.lib = new Promise((res, rej) => {
+    const urls = [libUrl(SUPABASE_JS_FILE)].concat(SUPABASE_JS);
     const tryAt = i => {
-      if (i >= SUPABASE_JS.length) { SB.lib = null; rej(new Error('Sign-in could not load')); return; }
+      if (i >= urls.length) { SB.lib = null; rej(new Error('Sign-in could not load')); return; }
       const s = document.createElement('script');
-      s.src = SUPABASE_JS[i]; s.async = true; s.crossOrigin = 'anonymous';
+      s.src = urls[i]; s.async = true; s.crossOrigin = 'anonymous';
       if (SUPABASE_SRI) s.integrity = SUPABASE_SRI;
       s.onload = () => { if (window.supabase && window.supabase.createClient) res(window.supabase); else { s.remove(); tryAt(i + 1); } };
       s.onerror = () => { s.remove(); tryAt(i + 1); };
@@ -3726,6 +3733,7 @@ function auRender() {
 }
 function auGoogleUi() {
   const ok = !!(SB.on && !(SB.set && SB.set.external && SB.set.external.google === false));
+  if (ok && gisWanted()) gisPaint();
   document.querySelectorAll('[data-auth="google"]').forEach(b => { if (!b.classList.contains('is-busy')) b.disabled = !ok; b.title = ok ? '' : 'Coming soon'; const em = b.querySelector('em'); if (em) em.hidden = ok; if (b.classList.contains('btn2')) b.textContent = ok ? 'Continue' : 'Coming soon'; });
 }
 function auSettings() {
@@ -3782,8 +3790,8 @@ function auFocus() {
 }
 function auShow() {
   $('#auoff').hidden = SB.on;
-  if (window.__gpSbDown) $('#auoff b').textContent = AU_DOWN;
-  if (SB.on) { sbClient().catch(() => {}); auSettings(); }
+  if (window.__gpSbDown && !$('#auoff a')) { $('#auoff b').textContent = AU_DOWN; const a = document.createElement('a'); a.href = PATH_MODE ? '/check' : 'gameplay/check.html'; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Run a connection check'; a.style.cssText = 'display:block;margin-top:4px;color:inherit;font-weight:600'; $('#auoff b').after(a); }
+  if (SB.on) { sbClient().catch(() => {}); auSettings(); if (gisWanted()) requestAnimationFrame(() => gisPaint()); }
   ['aunote', 'auupnote', 'arnote', 'annote', 'acnote'].forEach(id => auMsg(id, ''));
   document.querySelectorAll('#aumodal .au-err').forEach(e => auFieldErr(e.closest('.fld').querySelector('input'), ''));
   auView(['newpass', 'reset', 'check', 'wait'].includes(SB.view) ? SB.view : 'main');
@@ -3841,6 +3849,7 @@ function auWait(on) {
 }
 async function auGoogle(b) {
   if (!SB.on) return;
+  if (gisWanted()) { gisPaint(); return; }
   const inModal = openK === 'mauth';
   if (b) { b.classList.add('is-busy'); b.disabled = true; }
   if (inModal) auMsg(auNote(), '');
@@ -3855,6 +3864,63 @@ async function auGoogle(b) {
     if (b) { b.classList.remove('is-busy'); auGoogleUi(); }
     if (inModal) auMsg(auNote(), auErrText(e), 'bad'); else toast(auErrText(e));
   }
+}
+const GIS = { p: null, n: '', on: false };
+const gisWanted = () => !!(SB.on && SB_VIA_RELAY && GOOGLE_CLIENT_ID && !(SB.set && SB.set.external && SB.set.external.google === false));
+function gisLib() {
+  if (window.google && google.accounts && google.accounts.id) return Promise.resolve(google.accounts.id);
+  if (GIS.p) return GIS.p;
+  return GIS.p = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client'; s.async = true;
+    s.onload = () => window.google && google.accounts && google.accounts.id ? res(google.accounts.id) : rej(new Error('Google sign-in could not load'));
+    s.onerror = () => { s.remove(); GIS.p = null; rej(new Error('Google sign-in could not load')); };
+    document.head.append(s);
+  });
+}
+async function gisNonce() {
+  const raw = rid() + rid() + rid() + rid();
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw)));
+  GIS.n = raw;
+  return Array.from(h, b => b.toString(16).padStart(2, '0')).join('');
+}
+async function gisInit() {
+  const id = await gisLib();
+  id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: gisDone, nonce: await gisNonce(), ux_mode: 'popup', auto_select: false, cancel_on_tap_outside: true, itp_support: true, context: 'signin' });
+  GIS.on = true;
+  return id;
+}
+async function gisPaint() {
+  if (!gisWanted()) return;
+  let id;
+  try { id = GIS.on ? google.accounts.id : await gisInit(); } catch (e) { return; }
+  document.querySelectorAll('[data-auth="google"]').forEach(b => {
+    let w = b.nextElementSibling;
+    if (!w || !w.classList.contains('au-gis')) { w = document.createElement('div'); w.className = 'au-gis' + (b.classList.contains('btn2') ? ' au-gis-s' : ''); b.after(w); }
+    const wd = b.classList.contains('btn2') ? 200 : Math.round(Math.min(400, Math.max(200, (b.parentElement && b.parentElement.clientWidth) || b.offsetWidth || 340)));
+    if (w.dataset.w === String(wd) && w.firstChild) { b.style.display = 'none'; return; }
+    w.dataset.w = String(wd); w.textContent = '';
+    try { id.renderButton(w, { type: 'standard', theme: 'outline', size: b.classList.contains('btn2') ? 'medium' : 'large', text: 'continue_with', shape: 'rectangular', logo_alignment: 'center', width: wd }); b.style.display = 'none'; }
+    catch (e) { w.remove(); b.style.display = ''; }
+  });
+}
+async function gisDone(r) {
+  const inModal = openK === 'mauth';
+  if (inModal) auMsg(auNote(), '');
+  auWait(true);
+  try {
+    if (!r || !r.credential) throw new Error('Google sign-in was cancelled');
+    const c = await sbClient();
+    track('auth', { act: 'google', via: 'relay' });
+    SB.loud = true;
+    const { error } = await c.auth.signInWithIdToken({ provider: 'google', token: r.credential, nonce: GIS.n });
+    if (error) throw error;
+  } catch (e) {
+    SB.loud = false;
+    auWait(false);
+    if (inModal) auMsg(auNote(), auErrText(e), 'bad'); else toast(auErrText(e));
+  }
+  try { google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: gisDone, nonce: await gisNonce(), ux_mode: 'popup', auto_select: false, itp_support: true, context: 'signin' }); } catch (e) {}
 }
 const AU_REQ = [['8+ characters', v => v.length >= 8], ['1 letter', v => /\p{L}/u.test(v)], ['1 number', v => /\d/.test(v)]];
 const auPwOk = v => AU_REQ.every(r => r[1](v));
@@ -6866,6 +6932,8 @@ function siteBoot() {
   setInterval(() => { if (SF.shown) sfLoad(true); }, 60000);
   setTimeout(() => upCheck(true), 4000);
   sfPaint(); sfLoad(true);
+  if (SB.on) sbClient().then(() => sfRt()).catch(() => {});
+  setInterval(() => { if (!SF.ch && !SF.shown && document.visibilityState !== 'hidden') sfLoad(true); }, 60000);
   if (SB.on && sbHasSession()) CL.t = setTimeout(() => clAuto(), 8000);
   else CL.t = setTimeout(() => clAuto(), 1200);
   Ameplay.debug.site = { check: () => upCheck(true), load: () => sfLoad(true), flags: () => SF.d, favs: () => FV.ids.slice() };
@@ -7496,6 +7564,7 @@ const R = [
 ["Play as a guest", "Jouer en invité", "Jugar como invitado", "Als Gast spielen", "Gioca come ospite", "Jogar como convidado"],
 ["You can still play every game as a guest. Your records and saves stay in this browser.", "Vous pouvez toujours jouer à tous les jeux en invité. Vos records et sauvegardes restent dans ce navigateur.", "Puedes seguir jugando a todos los juegos como invitado. Tus récords y partidas se quedan en este navegador.", "Du kannst weiterhin alle Spiele als Gast spielen. Deine Rekorde und Spielstände bleiben in diesem Browser.", "Puoi comunque giocare a tutti i giochi come ospite. Record e salvataggi restano in questo browser.", "Você ainda pode jogar todos os jogos como convidado. Seus recordes e jogos salvos ficam neste navegador."],
 ["Accounts cannot be reached on this network. You can still play, and your progress stays on this computer.", "Les comptes sont inaccessibles sur ce réseau. Vous pouvez quand même jouer, et votre progression reste sur cet ordinateur.", "No se puede acceder a las cuentas desde esta red. Puedes seguir jugando y tu progreso se queda en este ordenador.", "Konten sind in diesem Netzwerk nicht erreichbar. Du kannst trotzdem spielen, dein Fortschritt bleibt auf diesem Computer.", "Gli account non sono raggiungibili da questa rete. Puoi comunque giocare e i tuoi progressi restano su questo computer.", "As contas não estão acessíveis nesta rede. Pode continuar a jogar e o seu progresso fica neste computador."],
+["Run a connection check", "Lancer un test de connexion", "Hacer una prueba de conexión", "Verbindungstest starten", "Esegui un test di connessione", "Fazer um teste de ligação"],
 ["Accounts are not switched on yet", "Les comptes ne sont pas encore activés", "Las cuentas aún no están activadas", "Konten sind noch nicht aktiviert", "Gli account non sono ancora attivi", "As contas ainda não estão ativadas"],
 ["Accounts are not switched on yet. Soon you can keep your profile, records and saves on every device.", "Les comptes ne sont pas encore activés. Bientôt, vous retrouverez votre profil, vos records et vos sauvegardes sur tous vos appareils.", "Las cuentas aún no están activadas. Pronto podrás conservar tu perfil, récords y partidas en todos tus dispositivos.", "Konten sind noch nicht aktiviert. Bald kannst du dein Profil, deine Rekorde und Spielstände auf allen Geräten behalten.", "Gli account non sono ancora attivi. Presto potrai ritrovare profilo, record e salvataggi su ogni dispositivo.", "As contas ainda não estão ativadas. Em breve você poderá manter seu perfil, recordes e jogos salvos em todos os dispositivos."],
 ["Accounts are not switched on yet. Then you can find players by their username and add them as friends.", "Les comptes ne sont pas encore activés. Vous pourrez alors trouver des joueurs par leur nom d’utilisateur et les ajouter en amis.", "Las cuentas aún no están activadas. Entonces podrás buscar jugadores por su nombre de usuario y añadirlos como amigos.", "Konten sind noch nicht aktiviert. Dann kannst du Spieler über ihren Benutzernamen finden und als Freunde hinzufügen.", "Gli account non sono ancora attivi. Allora potrai trovare i giocatori con il loro nome utente e aggiungerli come amici.", "As contas ainda não estão ativadas. Depois você poderá encontrar jogadores pelo nome de usuário e adicioná-los como amigos."],

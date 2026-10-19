@@ -181,6 +181,7 @@ function fitFullscreen() {
 const queueFit = () => { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(fitFullscreen); };
 
 const libP = {};
+const libUrl = n => (PATH_MODE ? location.origin + '/' : new URL('.', location.href).href) + 'gameplay/' + n;
 function loadLib(name, urls) {
   if (window[name]) return Promise.resolve(window[name]);
   return libP[name] || (libP[name] = new Promise((res, rej) => {
@@ -195,10 +196,10 @@ function loadLib(name, urls) {
     tryAt(0);
   }));
 }
-const loadThree = () => loadLib('THREE', ['https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js', 'https://unpkg.com/three@0.128.0/build/three.min.js']);
+const loadThree = () => loadLib('THREE', [libUrl('three-r128.min.js'), 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js', 'https://unpkg.com/three@0.128.0/build/three.min.js']);
 let invite = null;
 const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const loadPeer = () => loadLib('Peer', ['https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js', 'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js', 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js']);
+const loadPeer = () => loadLib('Peer', [libUrl('peerjs-1.5.4.min.js'), 'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js', 'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js', 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js']);
 function netErr(e) {
   const t = e && e.type;
   if (t === 'peer-unavailable') return 'Room not found. Check the code and try again.';

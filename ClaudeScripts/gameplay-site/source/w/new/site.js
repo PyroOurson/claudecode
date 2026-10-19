@@ -220,6 +220,8 @@ function siteBoot() {
   setInterval(() => { if (SF.shown) sfLoad(true); }, 60000);
   setTimeout(() => upCheck(true), 4000);
   sfPaint(); sfLoad(true);
+  if (SB.on) sbClient().then(() => sfRt()).catch(() => {});
+  setInterval(() => { if (!SF.ch && !SF.shown && document.visibilityState !== 'hidden') sfLoad(true); }, 60000);
   if (SB.on && sbHasSession()) CL.t = setTimeout(() => clAuto(), 8000);
   else CL.t = setTimeout(() => clAuto(), 1200);
   Ameplay.debug.site = { check: () => upCheck(true), load: () => sfLoad(true), flags: () => SF.d, favs: () => FV.ids.slice() };

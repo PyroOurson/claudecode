@@ -13,6 +13,12 @@ const put = (rel, buf) => {
   manifest.push(rel + ' ' + buf.length + ' ' + crypto.createHash('sha256').update(buf).digest('hex'));
 };
 const fonts = (/href="(https:\/\/fonts\.googleapis\.com\/css2\?[^"]+)"/.exec(html) || [])[1] || '';
+const consts = fs.readFileSync(path.join(__dirname, 'new', 'consts.js'), 'utf8');
+const sbUrl = (/const SUPABASE_DIRECT = '([^']+)'/.exec(consts) || [])[1], sbRelay = (/const SUPABASE_RELAY = '([^']*)'/.exec(consts) || [])[1] || '', sbKey = (/const SUPABASE_ANON_KEY = '([^']+)'/.exec(consts) || [])[1], gId = (/const GOOGLE_CLIENT_ID = '([^']*)'/.exec(consts) || [])[1] || '';
+const vendor = path.join(__dirname, 'vendor');
+if (fs.existsSync(vendor)) fs.readdirSync(vendor).sort().forEach(f => put(plan.dir + f, fs.readFileSync(path.join(vendor, f))));
+const check = fs.readFileSync(path.join(__dirname, 'check.html'), 'utf8').split('%%SB_DIRECT%%').join(sbUrl || '').split('%%SB_RELAY%%').join(sbRelay).split('%%SB_KEY%%').join(sbKey || '').split('%%GOOGLE_ID%%').join(gId);
+put(plan.dir + 'check.html', Buffer.from(check, 'utf8'));
 if (!pass && !gkey) {
   plan.files.forEach(f => put(plan.dir + f, fs.readFileSync(path.join(src, 'files', f))));
   const page = html.replace('"%%GPKEY%%"', 'null');
@@ -22,9 +28,7 @@ if (!pass && !gkey) {
   process.exit(0);
 }
 (async () => {
-const consts = fs.readFileSync(path.join(__dirname, 'new', 'consts.js'), 'utf8');
-const sbUrl = (/const SUPABASE_URL = '([^']+)'/.exec(consts) || [])[1], sbKey = (/const SUPABASE_ANON_KEY = '([^']+)'/.exec(consts) || [])[1];
-if (!sbUrl || !sbKey) { console.error('gate2: SUPABASE_URL or SUPABASE_ANON_KEY missing in new/consts.js'); process.exit(1); }
+if (!sbUrl || !sbKey) { console.error('gate2: SUPABASE_DIRECT or SUPABASE_ANON_KEY missing in new/consts.js'); process.exit(1); }
 const salt = Buffer.from('gameplay-gate-v1');
 const iter = 310000;
 const key = gkey ? Buffer.from(gkey, 'base64') : crypto.pbkdf2Sync(Buffer.from(pass, 'utf8'), salt, iter, 32, 'sha256');
@@ -89,7 +93,7 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
 <div class="sp" id="sp" hidden aria-label="Loading"><div><i></i><i></i><i></i><i></i><i></i></div></div><form class="c" id="f" autocomplete="off"><div class="lg"><i>&#9654;</i>gameplay</div><h1 id="h">Enter the password</h1><p id="t">This site is private.</p><input id="p" class="pw" type="text" name="gp-site-code" placeholder="Password" autofocus aria-label="Password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"><button id="b">Unlock</button><div class="m" id="m"></div></form>
 <script>
 (() => {
-  const D = { u: ${JSON.stringify(sbUrl)}, a: ${JSON.stringify(sbKey)}, i: '${iv.toString('base64')}', c: '${ct.toString('base64')}', d: ${JSON.stringify(plan.dir)}, p: ${JSON.stringify(pre)}, l: ${JSON.stringify(slot)} };
+  const D = { u: ${JSON.stringify(sbUrl)}, r: ${JSON.stringify(sbRelay)}, a: ${JSON.stringify(sbKey)}, i: '${iv.toString('base64')}', c: '${ct.toString('base64')}', d: ${JSON.stringify(plan.dir)}, p: ${JSON.stringify(pre)}, l: ${JSON.stringify(slot)} };
   const K = 'gameplay:gate', MAX = 5;
   const $ = id => document.getElementById(id);
   const b64 = s => { const t = atob(s), u = new Uint8Array(t.length); for (let i = 0; i < t.length; i++) u[i] = t.charCodeAt(i); return u; };
@@ -115,16 +119,26 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
     return new Response(new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
   };
   const SBK = 'gameplay:sb';
-  const slot = ms => Promise.race([(async () => {
+  const get = async u => {
     const h = { apikey: D.a, 'Content-Type': 'application/json' };
     if (/^eyJ/.test(D.a)) h.Authorization = 'Bearer ' + D.a;
-    const r = await fetch(D.u + '/rest/v1/rpc/get_gate_slot', { method: 'POST', headers: h, body: '{}', cache: 'no-store' });
+    const r = await fetch(u + '/rest/v1/rpc/get_gate_slot', { method: 'POST', headers: h, body: '{}', cache: 'no-store', credentials: 'omit' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const o = await r.json();
     if (!o || typeof o.s !== 'string' || typeof o.i !== 'string' || typeof o.c !== 'string' || !(o.n > 0)) throw new Error('no slot');
     return o;
-  })(), new Promise((res, rej) => setTimeout(() => rej(new Error('timeout')), ms))]).then(o => { window.__gpSbDown = false; try { sessionStorage.setItem(SBK, '1'); } catch (e) {} return o; }, x => { window.__gpSbDown = true; throw x; });
-  const reach = () => { let c = null; try { c = sessionStorage.getItem(SBK); } catch (e) {} if (c === '1') { window.__gpSbDown = false; return Promise.resolve(); } return slot(4000).catch(() => {}); };
+  };
+  const slot = ms => new Promise((res, rej) => {
+    let rs = null, n = 0, over = false, grace = 0;
+    const all = D.r ? 2 : 1;
+    const end = (u, o) => { if (over) return; over = true; clearTimeout(grace); clearTimeout(lim); window.__gpSbUrl = u; window.__gpSbDown = false; try { sessionStorage.setItem(SBK, u); } catch (e) {} res(o); };
+    const fail = () => { if (over) return; over = true; clearTimeout(grace); clearTimeout(lim); window.__gpSbDown = true; rej(new Error('unreachable')); };
+    const miss = () => { n++; if (rs) end(D.r, rs); else if (n >= all) fail(); };
+    const lim = setTimeout(() => { if (rs) end(D.r, rs); else fail(); }, ms);
+    get(D.u).then(o => end(D.u, o), miss);
+    if (D.r) get(D.r).then(o => { rs = o; if (n) end(D.r, o); else grace = setTimeout(() => end(D.r, o), 1500); }, miss);
+  });
+  const reach = () => { let c = null; try { c = sessionStorage.getItem(SBK); } catch (e) {} if (c && (c === D.u || c === D.r)) { window.__gpSbUrl = c; window.__gpSbDown = false; return Promise.resolve(); } return slot(4000).catch(() => {}); };
   const unwrap = async (pw, o) => {
     const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
     const kek = await crypto.subtle.importKey('raw', await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: b64(o.s), iterations: o.n, hash: 'SHA-256' }, base, 256), 'AES-GCM', false, ['decrypt']);
@@ -146,7 +160,7 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
     let o, raw = null, txt = null;
     try { o = await slot(8000); }
     catch (x) { o = D.l; }
-    if (!o) { soft('Could not reach the server. Check your connection and try again.'); return; }
+    if (!o) { soft('Could not reach the server. Check your connection and try again.'); $('m').insertAdjacentHTML('beforeend', ' <a href="' + (/(^|\\.)(web\\.app|firebaseapp\\.com)$/i.test(location.hostname) ? '/check' : D.d + 'check.html') + '" style="color:inherit">Run a connection check</a>'); return; }
     try { raw = await unwrap(pw, o); } catch (x) { raw = null; }
     if (raw) {
       try { txt = await show(raw); } catch (x) { txt = null; }

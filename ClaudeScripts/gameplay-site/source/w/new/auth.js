@@ -59,10 +59,11 @@ function sbLib() {
   if (window.supabase && window.supabase.createClient) return Promise.resolve(window.supabase);
   if (SB.lib) return SB.lib;
   return SB.lib = new Promise((res, rej) => {
+    const urls = [libUrl(SUPABASE_JS_FILE)].concat(SUPABASE_JS);
     const tryAt = i => {
-      if (i >= SUPABASE_JS.length) { SB.lib = null; rej(new Error('Sign-in could not load')); return; }
+      if (i >= urls.length) { SB.lib = null; rej(new Error('Sign-in could not load')); return; }
       const s = document.createElement('script');
-      s.src = SUPABASE_JS[i]; s.async = true; s.crossOrigin = 'anonymous';
+      s.src = urls[i]; s.async = true; s.crossOrigin = 'anonymous';
       if (SUPABASE_SRI) s.integrity = SUPABASE_SRI;
       s.onload = () => { if (window.supabase && window.supabase.createClient) res(window.supabase); else { s.remove(); tryAt(i + 1); } };
       s.onerror = () => { s.remove(); tryAt(i + 1); };
@@ -333,6 +334,7 @@ function auRender() {
 }
 function auGoogleUi() {
   const ok = !!(SB.on && !(SB.set && SB.set.external && SB.set.external.google === false));
+  if (ok && gisWanted()) gisPaint();
   document.querySelectorAll('[data-auth="google"]').forEach(b => { if (!b.classList.contains('is-busy')) b.disabled = !ok; b.title = ok ? '' : 'Coming soon'; const em = b.querySelector('em'); if (em) em.hidden = ok; if (b.classList.contains('btn2')) b.textContent = ok ? 'Continue' : 'Coming soon'; });
 }
 function auSettings() {
@@ -389,8 +391,8 @@ function auFocus() {
 }
 function auShow() {
   $('#auoff').hidden = SB.on;
-  if (window.__gpSbDown) $('#auoff b').textContent = AU_DOWN;
-  if (SB.on) { sbClient().catch(() => {}); auSettings(); }
+  if (window.__gpSbDown && !$('#auoff a')) { $('#auoff b').textContent = AU_DOWN; const a = document.createElement('a'); a.href = PATH_MODE ? '/check' : 'gameplay/check.html'; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Run a connection check'; a.style.cssText = 'display:block;margin-top:4px;color:inherit;font-weight:600'; $('#auoff b').after(a); }
+  if (SB.on) { sbClient().catch(() => {}); auSettings(); if (gisWanted()) requestAnimationFrame(() => gisPaint()); }
   ['aunote', 'auupnote', 'arnote', 'annote', 'acnote'].forEach(id => auMsg(id, ''));
   document.querySelectorAll('#aumodal .au-err').forEach(e => auFieldErr(e.closest('.fld').querySelector('input'), ''));
   auView(['newpass', 'reset', 'check', 'wait'].includes(SB.view) ? SB.view : 'main');
@@ -448,6 +450,7 @@ function auWait(on) {
 }
 async function auGoogle(b) {
   if (!SB.on) return;
+  if (gisWanted()) { gisPaint(); return; }
   const inModal = openK === 'mauth';
   if (b) { b.classList.add('is-busy'); b.disabled = true; }
   if (inModal) auMsg(auNote(), '');
@@ -462,6 +465,63 @@ async function auGoogle(b) {
     if (b) { b.classList.remove('is-busy'); auGoogleUi(); }
     if (inModal) auMsg(auNote(), auErrText(e), 'bad'); else toast(auErrText(e));
   }
+}
+const GIS = { p: null, n: '', on: false };
+const gisWanted = () => !!(SB.on && SB_VIA_RELAY && GOOGLE_CLIENT_ID && !(SB.set && SB.set.external && SB.set.external.google === false));
+function gisLib() {
+  if (window.google && google.accounts && google.accounts.id) return Promise.resolve(google.accounts.id);
+  if (GIS.p) return GIS.p;
+  return GIS.p = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client'; s.async = true;
+    s.onload = () => window.google && google.accounts && google.accounts.id ? res(google.accounts.id) : rej(new Error('Google sign-in could not load'));
+    s.onerror = () => { s.remove(); GIS.p = null; rej(new Error('Google sign-in could not load')); };
+    document.head.append(s);
+  });
+}
+async function gisNonce() {
+  const raw = rid() + rid() + rid() + rid();
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw)));
+  GIS.n = raw;
+  return Array.from(h, b => b.toString(16).padStart(2, '0')).join('');
+}
+async function gisInit() {
+  const id = await gisLib();
+  id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: gisDone, nonce: await gisNonce(), ux_mode: 'popup', auto_select: false, cancel_on_tap_outside: true, itp_support: true, context: 'signin' });
+  GIS.on = true;
+  return id;
+}
+async function gisPaint() {
+  if (!gisWanted()) return;
+  let id;
+  try { id = GIS.on ? google.accounts.id : await gisInit(); } catch (e) { return; }
+  document.querySelectorAll('[data-auth="google"]').forEach(b => {
+    let w = b.nextElementSibling;
+    if (!w || !w.classList.contains('au-gis')) { w = document.createElement('div'); w.className = 'au-gis' + (b.classList.contains('btn2') ? ' au-gis-s' : ''); b.after(w); }
+    const wd = b.classList.contains('btn2') ? 200 : Math.round(Math.min(400, Math.max(200, (b.parentElement && b.parentElement.clientWidth) || b.offsetWidth || 340)));
+    if (w.dataset.w === String(wd) && w.firstChild) { b.style.display = 'none'; return; }
+    w.dataset.w = String(wd); w.textContent = '';
+    try { id.renderButton(w, { type: 'standard', theme: 'outline', size: b.classList.contains('btn2') ? 'medium' : 'large', text: 'continue_with', shape: 'rectangular', logo_alignment: 'center', width: wd }); b.style.display = 'none'; }
+    catch (e) { w.remove(); b.style.display = ''; }
+  });
+}
+async function gisDone(r) {
+  const inModal = openK === 'mauth';
+  if (inModal) auMsg(auNote(), '');
+  auWait(true);
+  try {
+    if (!r || !r.credential) throw new Error('Google sign-in was cancelled');
+    const c = await sbClient();
+    track('auth', { act: 'google', via: 'relay' });
+    SB.loud = true;
+    const { error } = await c.auth.signInWithIdToken({ provider: 'google', token: r.credential, nonce: GIS.n });
+    if (error) throw error;
+  } catch (e) {
+    SB.loud = false;
+    auWait(false);
+    if (inModal) auMsg(auNote(), auErrText(e), 'bad'); else toast(auErrText(e));
+  }
+  try { google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: gisDone, nonce: await gisNonce(), ux_mode: 'popup', auto_select: false, itp_support: true, context: 'signin' }); } catch (e) {}
 }
 const AU_REQ = [['8+ characters', v => v.length >= 8], ['1 letter', v => /\p{L}/u.test(v)], ['1 number', v => /\d/.test(v)]];
 const auPwOk = v => AU_REQ.every(r => r[1](v));

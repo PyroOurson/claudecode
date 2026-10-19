@@ -42,6 +42,13 @@ In PowerShell: `$env:GATE_PASS = (Get-Content $HOME\.gameplay\gate_secret.txt -R
 
 Reseed after every change of `GATE_PASS`: the old slot unwraps a key that no longer opens the site.
 
+## Restricted networks
+
+- The page asks Supabase (`SUPABASE_DIRECT` in `w/new/consts.js`) and the relay (`SUPABASE_RELAY`, `https://gameplaygames.vitalang.net`, set up with `ClaudeScripts/gameplay-site/server/`) at the same time. It uses Supabase when Supabase answers, otherwise the relay, otherwise it opens without accounts. The choice is kept for the browser session (`sessionStorage['gameplay:sb']`).
+- Through the relay, Google sign-in uses Google's own button and `signInWithIdToken` (the usual Google sign-in sends the browser to `supabase.co`, which these networks block). It needs `GOOGLE_CLIENT_ID` in `w/new/consts.js`. That client must list `https://gameplaygames.web.app` and `https://gameplaygames.firebaseapp.com` under Authorized JavaScript origins in Google Cloud Console.
+- `w/vendor/` holds the libraries the site serves itself (supabase-js, three.js, PeerJS), tried before the public CDNs. `gate2.js` copies them into `gameplay/` unencrypted, together with `w/check.html`.
+- `w/check.html` becomes https://gameplaygames.web.app/check, a page anyone can open without the password: it tests every service the site uses and gives a report to copy.
+
 ## Where things are
 
 - `w/parts/`: one file per game (or group of games), `_order.json` lists them.

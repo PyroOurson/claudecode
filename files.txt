@@ -3,6 +3,8 @@ CLAUDE.md
 ClaudeScripts/gameplay-site/COVER_SOURCES.md
 ClaudeScripts/gameplay-site/GAMES.md
 ClaudeScripts/gameplay-site/deploy.py
+ClaudeScripts/gameplay-site/server/README.md
+ClaudeScripts/gameplay-site/server/setup.py
 ClaudeScripts/gameplay-site/source/.gitignore
 ClaudeScripts/gameplay-site/source/BUILD.md
 ClaudeScripts/gameplay-site/source/design/gameplay-home.html
@@ -169,6 +171,7 @@ ClaudeScripts/gameplay-site/source/w/agents_perf/serve.js
 ClaudeScripts/gameplay-site/source/w/assemble.py
 ClaudeScripts/gameplay-site/source/w/build.py
 ClaudeScripts/gameplay-site/source/w/build2.py
+ClaudeScripts/gameplay-site/source/w/check.html
 ClaudeScripts/gameplay-site/source/w/covers2/2048.webp
 ClaudeScripts/gameplay-site/source/w/covers2/README.md
 ClaudeScripts/gameplay-site/source/w/covers2/SOURCES.md
@@ -416,6 +419,9 @@ ClaudeScripts/gameplay-site/source/w/supabase/round7_owner.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round8_insights.sql
 ClaudeScripts/gameplay-site/source/w/supabase/schema.sql
 ClaudeScripts/gameplay-site/source/w/supabase/setup.py
+ClaudeScripts/gameplay-site/source/w/vendor/peerjs-1.5.4.min.js
+ClaudeScripts/gameplay-site/source/w/vendor/supabase-js-2.117.2.js
+ClaudeScripts/gameplay-site/source/w/vendor/three-r128.min.js
 ClaudeScripts/gameplay-site/supabase/GUIDE.md
 ClaudeScripts/gameplay-site/supabase/schema.sql
 ClaudeScripts/gameplay-site/supabase/setup.py
@@ -599,6 +605,7 @@ gameplay/c827f34d58bfef9f025f.bin
 gameplay/cbd872ee3b7a8bca6f07.bin
 gameplay/cd7381d79935df1bc310.bin
 gameplay/cd8f715fd371f36a2084.bin
+gameplay/check.html
 gameplay/d25d2c1d9d4e02631dc2.bin
 gameplay/d286a9996c2315ed880e.bin
 gameplay/d5496d3cf06ae60e5774.bin
@@ -619,4 +626,7 @@ gameplay/f93a32506f23ca5a6f77.bin
 gameplay/fa9623d765e264f79cf9.bin
 gameplay/fef020389384ebd10814.bin
 gameplay/manifest.txt
+gameplay/peerjs-1.5.4.min.js
+gameplay/supabase-js-2.117.2.js
+gameplay/three-r128.min.js
 index.html
