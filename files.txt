@@ -421,6 +421,7 @@ ClaudeScripts/gameplay-site/source/w/supabase/emails/subjects.txt
 ClaudeScripts/gameplay-site/source/w/supabase/round10_stats.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round11_ranks.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round12_test_accounts.sql
+ClaudeScripts/gameplay-site/source/w/supabase/round13_users.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round5_admin.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round6.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round7_owner.sql

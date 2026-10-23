@@ -95,6 +95,7 @@ function runSearch(qt, pool, allowPrefix) {
 }
 function search(q, pool) {
   const full = norm(q);
+  if (!full) return { list: [], partial: false, scores: new Map() };
   const pre = g => norm(g.info.name).startsWith(full);
   const alpha = l => l.slice().sort((x, y) => x.title.localeCompare(y.title, 'en', { sensitivity: 'base' }));
   if (full.length < 3) {
@@ -182,6 +183,7 @@ function parseLocation() {
     const h = location.hash.replace(/^#\/?/, '');
     const i = h.indexOf('?');
     path = (i < 0 ? h : h.slice(0, i)).replace(/\/+$/, '');
+    if (!/\/[A-Za-z0-9]{4}$/.test(path)) path = path.toLowerCase();
     query = i < 0 ? '' : h.slice(i);
   }
   if (LEGAL_KEYS.includes(path)) return { legal: path };
@@ -482,6 +484,7 @@ function setConsent(an, lv) {
   $('#ckbar').hidden = true;
   document.documentElement.classList.remove('ck-open');
   syncSwitches();
+  sfLock();
 }
 const TT = { g: null, since: 0, acc: 0 };
 const ttRunning = () => !!(cur && !PAUSE.on && document.visibilityState !== 'hidden');
@@ -622,6 +625,7 @@ function waitStart(g) {
   });
 }
 function openGame(g) {
+  if (gpBlocked()) return;
   if (cur && cur.g === g) return;
   if (pend && pend.id === g.id) return;
   if (cur) { cur.kill(); cur = null; ttSync(); }
@@ -718,6 +722,7 @@ function renderResults() {
   if (state.sort && state.sort !== defSort()) { const s = SORTS.find(x => x[0] === state.sort); chips.push(`<button class="chip" type="button" data-x="s:" aria-label="Reset sort">${esc(s ? s[1] : state.sort)} &times;</button>`); }
   $('#active').innerHTML = chips.join(''); $('#active').hidden = !chips.length;
   $('#apply').textContent = 'Show ' + n + (n === 1 ? ' game' : ' games');
+  $('#apply').disabled = !n;
   renderPanel(); fbtnState();
   renderSide(list);
   markSide();
@@ -764,7 +769,7 @@ function openLegal(k) {
   closeGame();
   showView('legal');
   const d = LEGAL[k];
-  $('#doc').innerHTML = `<h1>${d[0]}</h1><p class="upd">Last updated 18 October 2026</p>${d[1]}`;
+  $('#doc').innerHTML = `<h1>${d[0]}</h1><p class="upd">${esc(auT('Last updated {d}').replace('{d}', new Date(2026, 9, 18).toLocaleDateString(window.gpI18n ? gpI18n.lang : 'en', { day: 'numeric', month: 'long', year: 'numeric' })))}</p>${d[1]}`;
   document.querySelectorAll('.ltabs a').forEach(a => a.setAttribute('aria-current', a.dataset.legal === k ? 'page' : 'false'));
   setHead(d[0] + ' | gameplay', d[0] + ' for gameplay.', '/' + k);
   scrollTo({ top: 0, behavior: 'instant' });
@@ -953,6 +958,7 @@ function route() {
   const loc = parseLocation();
   if (loc.legal) return openLegal(loc.legal);
   if (auLocked() && (loc.game || loc.admin)) { SB.blk = 1; closeGame(); showView('home'); renderHome(); auGate(); return; }
+  if (gpBlocked() && (loc.game || (loc.admin && !adIsAdmin()))) { closeGame(); showView('home'); renderHome(); return; }
   if (loc.admin) return adRoute();
   if (loc.game) {
     const g = loc.game;
@@ -1066,7 +1072,7 @@ function boot() {
     if (lg && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); if (openK) closeAll(); if (!$('#unmodal').hidden) unClose(); go(legalHref(lg.dataset.legal), false); return; }
     if (t.closest('[data-cookieset]')) { e.stopPropagation(); if (openK !== 'cookies') setOpen('cookies'); return; }
     const ck = t.closest('[data-ck]');
-    if (ck) { const k = ck.dataset.ck; setConsent(k === 'accept' ? true : k === 'reject' ? false : $('#ckan').classList.contains('on')); if (openK === 'cookies') closeAll(); toast('Cookie choice saved'); return; }
+    if (ck) { if (!consent) { closeAll(); sfLock(); return; } const k = ck.dataset.ck; setConsent(k === 'accept' ? true : k === 'reject' ? false : $('#ckan').classList.contains('on')); if (openK === 'cookies') closeAll(); toast('Cookie choice saved'); return; }
     const gob = t.closest('[data-go]');
     if (gob) { e.stopPropagation(); const k = gob.dataset.go; if (openK !== k) setOpen(k); if (gob.dataset.pane) showPane(gob.dataset.pane); return; }
     if (t.closest('[data-close]')) { closeAll(); return; }

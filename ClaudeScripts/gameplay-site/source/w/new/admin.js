@@ -4,7 +4,7 @@ const adIsAdmin = () => (AD.role === 'admin' || AD.role === 'owner') && !AD.lock
 const adIsOwner = () => AD.role === 'owner' && !AD.locked;
 const adStaff = u => u.role === 'admin' || u.role === 'owner';
 const adRank = r => r === 'owner' ? 2 : r === 'admin' ? 1 : 0;
-const adCan = u => adIsAdmin() && adRank(AD.role) > adRank(u.role);
+const adCan = u => adIsAdmin() && (adIsOwner() || adRank(AD.role) > adRank(u.role));
 const adRpc = (f, b) => sbRest('rpc/' + f, { method: 'POST', body: b || {} });
 const adLang = () => window.gpI18n ? gpI18n.lang : 'en';
 const AD_ICO = {
@@ -71,7 +71,10 @@ async function adCheck(game) {
     if (AD.del && Array.isArray(r) && !r.length) { AD.del = false; toast(auT('This account was deleted')); auSignOut(); return; }
     AD.del = false;
     adStatus(Array.isArray(r) ? r[0] : null);
-  } catch (e) { if (view === 'admin' && !AD.at) adBounce(); }
+  } catch (e) {
+    if (/session ended/i.test(e.message || '') && SB.user && SB.user.id === uid) { toast(auT('You were signed out')); auSignOut(); return; }
+    if (view === 'admin' && !AD.at) adBounce();
+  }
 }
 function adSeen(id) {
   if (!SB.user || (AD.game === id && Date.now() - AD.gat < 60000)) return;
@@ -181,7 +184,7 @@ const AD_COLS = [
   ['locked', 'Locked', u => u.locked ? `<span title="${esc(u.locked_reason || '')}">${adPill('Locked', 'bad')}</span><small class="adm-left">${esc(adLeft(u))}</small>` : adPill('No')]
 ];
 function adHead() {
-  $('#adt thead').innerHTML = '<tr>' + AD_COLS.map(([k, l]) => k ? `<th><button type="button" data-adsort="${k}" aria-sort="${AD.sort[0] === k ? (AD.sort[1] > 0 ? 'ascending' : 'descending') : 'none'}">${esc(auT(l))}<i></i></button></th>` : `<th><span>${esc(auT(l))}</span></th>`).join('') + '</tr>';
+  $('#adt thead').innerHTML = '<tr>' + AD_COLS.map(([k, l]) => k ? `<th>${k === 'id' ? '<div class="adm-thw">' : ''}<button type="button" data-adsort="${k}" aria-sort="${AD.sort[0] === k ? (AD.sort[1] > 0 ? 'ascending' : 'descending') : 'none'}">${esc(auT(l))}<i></i></button>${k === 'id' ? `<button type="button" class="adm-plus" data-adnew aria-label="${esc(auT('Create a user'))}" title="${esc(auT('Create a user'))}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>` : ''}</th>` : `<th><span>${esc(auT(l))}</span></th>`).join('') + '</tr>';
 }
 function adSortVal(u, k) {
   const v = k === 'providers' ? adProv(u) : u[k];
@@ -202,7 +205,7 @@ function adRows() {
     if (f === 'active') return now - Date.parse(u.last_seen || 0) < 6048e5;
     if (f === 'online') return !!RT.pres[u.id];
     return true;
-  }).sort((a, b) => { const x = adSortVal(a, k), y = adSortVal(b, k); const ex = x === '' || x === 0, ey = y === '' || y === 0; if (ex !== ey) return ex ? 1 : -1; return (x < y ? -1 : x > y ? 1 : 0) * d; });
+  }).sort((a, b) => { const x = adSortVal(a, k), y = adSortVal(b, k), dt = /_at$|last_seen/.test(k); const ex = x === '' || (dt && x === 0), ey = y === '' || (dt && y === 0); if (ex !== ey) return ex ? 1 : -1; return (x < y ? -1 : x > y ? 1 : 0) * d; });
 }
 function adDraw(an) {
   adHead();
@@ -250,7 +253,7 @@ function adPanel(u, keep) {
   const F = [['User id', `<code>${esc(u.id)}</code>`], ['Email', esc(u.email || '—')], ['Username', u.username ? '@' + esc(u.username) : '—'], ['Display name', esc(u.display_name || '—')], ['Last log in', esc(adDate(u.last_sign_in_at, 1))], ['Last used website', esc(adDate(u.last_seen, 1))], ['Log in method', esc(adProv(u))], ['Account created', esc(adDate(u.created_at, 1))], ['Password', adPw(u)], ['Favourite game', esc(adGame(u.fav_game))], ['Friends', String(+u.friends || 0)], ['Role', adRole(u)], ['Email confirmed', u.email_confirmed ? esc(adDate(u.email_confirmed_at, 1)) : adPill('No', 'warn')], ['Locked', u.locked ? adPill('Locked', 'bad') + ` <span class="adm-mut">${esc(u.locked_until ? auT('until {d}').replace('{d}', adDate(u.locked_until, 1)) : auT('Permanent'))}</span>` + (u.locked_reason ? `<div class="adm-why">${esc(u.locked_reason)}</div>` : '') : adPill('No')], ['Last game opened', esc(adGame(u.last_game))], ['Language', esc(adLangName(u.last_lang))]];
   $('#adpdl').innerHTML = F.map(([k, v]) => `<div><dt>${esc(auT(k))}</dt><dd>${v}</dd></div>`).join('');
   const can = adCan(u), own = adIsOwner(), rc = p.querySelector('[data-adrole]').closest('.apc-card');
-  ['#adun', '#adrst', '#adlock', '#addelb'].forEach(q => { $(q).closest('.apc-card').hidden = !can; });
+  ['#adun', '#adrst', '#adso', '#adlock', '#addelb'].forEach(q => { $(q).closest('.apc-card').hidden = !can; });
   rc.hidden = !own;
   rc.closest('.apc-col').hidden = !can && !own;
   p.querySelectorAll('[data-adrole]').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.adrole === u.role)); b.disabled = false; adUnconfirm(b); });
@@ -261,13 +264,14 @@ function adPanel(u, keep) {
   lb.disabled = me && !u.locked;
   $('#adlr').hidden = u.locked; $('#adlrl').hidden = u.locked; $('#adld').hidden = u.locked; $('#adldl').hidden = u.locked;
   const lt = $('#adlt'); lt.hidden = !u.locked; lt.textContent = u.locked ? (u.locked_until ? auT('Locked until {d} ({r}).').replace('{d}', adDate(u.locked_until, 1)).replace('{r}', adAgo(u.locked_until)) : auT('Locked with no end date.')) : '';
-  ['adpwb', 'adrst', 'adunb', 'addelb'].forEach(id => adUnconfirm($('#' + id)));
+  ['adpwb', 'adrst', 'adunb', 'addelb', 'adso', 'ademb'].forEach(id => adUnconfirm($('#' + id)));
+  taSaved(u);
   $('#adrst').disabled = !u.email;
   $('#adpwt').textContent = auT(u.has_password ? 'Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them.' : 'This account has no password: it signs in with Google.');
   $('#addelb').disabled = !!me || adStaff(u);
   if (!keep) {
-    ['adprn', 'adpwn', 'adln', 'adrstn', 'adunn', 'addeln'].forEach(id => auMsg(id, ''));
-    $('#adpw').value = ''; $('#adlr').value = ''; $('#addel').value = ''; $('#adun').value = u.username || '';
+    ['adprn', 'adpwn', 'adln', 'adrstn', 'adunn', 'addnn', 'ademn', 'adson', 'addeln'].forEach(id => auMsg(id, ''));
+    $('#adpw').value = ''; $('#adlr').value = ''; $('#addel').value = ''; $('#adun').value = u.username || ''; $('#addn').value = u.display_name || ''; $('#adem').value = u.email || '';
     if (me) { auMsg('adln', 'You cannot lock your own account'); auMsg('addeln', 'You cannot delete your own account here.'); }
     else if (adStaff(u)) auMsg('addeln', 'Make this admin a regular user first.');
     $('#adpw').type = 'password';
@@ -292,9 +296,10 @@ async function adGames(u) {
     box.innerHTML = L.length ? L.map((g, i) => `<div class="apc-g" style="--i:${Math.min(i, 12)};--c:${esc(TINT[g.game_id] || 'var(--accent)')}">${adCv(g.game_id, 'apc-gi')}<span class="apc-gn">${esc(adGame(g.game_id))}</span><b>${esc(adHrs(g.seconds_played))}</b><i><s style="width:${Math.max(2, Math.round(100 * (+g.seconds_played || 0) / max))}%"></s></i><small>${esc(auT('{n} plays').replace('{n}', +g.plays || 0))}${g.best_score != null ? ' · ' + esc(auT('best {s}').replace('{s}', g.best_score)) : ''}${g.last_played ? ' · ' + esc(adAgo(g.last_played)) : ''}</small></div>`).join('') : `<div class="adm-mut apc-none">${esc(auT('No games played yet.'))}</div>`;
   } catch (e) { box.innerHTML = `<div class="adm-mut">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; }
 }
-async function adDevices(u) {
+async function adDevices(u, all) {
   const box = $('#adpd');
   if (!box) return;
+  box._all = !!all;
   box.innerHTML = '<i class="sk sk-td"></i><i class="sk sk-td"></i>';
   let L;
   try { L = await adRpc('admin_user_devices', { p_uid: u.id }); }
@@ -304,7 +309,8 @@ async function adDevices(u) {
   if (!L.length) { box.innerHTML = `<div class="adm-mut">${esc(auT('No device data yet. It appears once this player accepts cookies.'))}</div>`; return; }
   const kv = (k, v) => v == null || v === '' ? '' : `<span>${esc(auT(k))}</span><b translate="no">${esc(String(v))}</b>`;
   const yn = v => v == null ? null : v ? auT('Yes') : auT('No');
-  box.innerHTML = L.map((x, i) => {
+  const more = L.length > 3 && !box._all;
+  box.innerHTML = L.slice(0, more ? 3 : L.length).map((x, i) => {
     const d = x.dev || {}, g = x.geo || {}, sc = x.scr || {}, c = x.caps || {}, sm = x.sum || {};
     const when = new Date(x.last).toLocaleString(adLang()), dur = sm.dur != null ? (sm.dur >= 60 ? Math.round(sm.dur / 60) + ' min' : sm.dur + ' s') : null;
     const head = [d.osv, d.brv, d.model].filter(Boolean).join(' · ') || x.device || '—', where = [g.city, g.region, g.country].filter(Boolean).join(', ');
@@ -315,7 +321,7 @@ async function adDevices(u) {
       kv('Speed test', c.bench != null ? c.bench + ' ms' : null), kv('Battery', c.bat != null ? c.bat + '%' + (c.chg ? ' ⚡' : '') : null), kv('Storage', c.quota != null ? c.used + ' / ' + c.quota + ' MB' : null), kv('Microphones / cameras', c.mic != null ? c.mic + ' / ' + c.cam : null), kv('Region settings', c.loc), kv('Arrived from', c.ref), kv('Bot', yn(c.bot)),
       kv('Session', dur), kv('Time looking', sm.vis != null ? Math.round(sm.vis / 60) + ' min' : null), kv('Games opened', sm.games), kv('Games', (sm.gl || []).map(adGame).join(', ')), kv('Keys / clicks / taps', sm.keys != null ? [sm.keys, sm.clicks, sm.taps].join(' / ') : null), kv('Connection used', sm.route), kv('Events', x.events)
     ].join('')}</div>${x.ua ? `<p class="adm-mut apc-ua" translate="no">${esc(x.ua)}</p>` : ''}</details>`;
-  }).join('');
+  }).join('') + (more ? `<button class="btn2 apc-more" type="button" data-addev>${esc(auT('Show all {n}').replace('{n}', L.length))}</button>` : '');
 }
 function adPanelClose() {
   const p = $('#adpanel');
@@ -371,6 +377,29 @@ async function adAct(k, b) {
     try { u.username = await adRpc('admin_set_username', { p_uid: u.id, p_name: v }); auMsg('adunn', 'Username saved.', 'ok'); track('admin', { act: 'username' }); rtSend(u.id, { t: 'profile' }); }
     catch (e) { auMsg('adunn', /taken/i.test(e.message || '') ? 'That username is taken.' : /not allowed/i.test(e.message || '') ? 'That username is not allowed.' : adErr(e), 'bad'); }
     finally { b.disabled = false; b.classList.remove('is-busy'); }
+  } else if (k === 'dn') {
+    const v = $('#addn').value.replace(/\s+/g, ' ').trim();
+    if (v === (u.display_name || '')) return;
+    b.disabled = true; b.classList.add('is-busy'); auMsg('addnn', '');
+    try { u.display_name = await adRpc('admin_set_display_name', { p_uid: u.id, p_name: v }); $('#addn').value = u.display_name || ''; auMsg('addnn', 'Display name saved.', 'ok'); track('admin', { act: 'display_name' }); rtSend(u.id, { t: 'profile' }); }
+    catch (e) { auMsg('addnn', adErr(e), 'bad'); }
+    finally { b.disabled = false; b.classList.remove('is-busy'); }
+  } else if (k === 'em') {
+    const v = $('#adem').value.trim().toLowerCase();
+    if (v === String(u.email || '').toLowerCase()) return;
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { auMsg('ademn', 'That email does not look valid.', 'bad'); auShake($('#adem')); return; }
+    if (!adConfirm(b)) return;
+    b.disabled = true; b.classList.add('is-busy'); auMsg('ademn', '');
+    try { u.email = await adRpc('admin_set_email', { p_uid: u.id, p_email: v }); u.email_confirmed = true; auMsg('ademn', 'Email saved. They log in with the new one.', 'ok'); track('admin', { act: 'email' }); }
+    catch (e) { auMsg('ademn', /already has an account/i.test(e.message || '') ? 'That email already has an account.' : adErr(e), 'bad'); }
+    finally { b.disabled = false; b.classList.remove('is-busy'); }
+  } else if (k === 'so') {
+    if (!adConfirm(b)) return;
+    b.disabled = true; b.classList.add('is-busy'); auMsg('adson', '');
+    try { const n = await adRpc('admin_sign_out', { p_uid: u.id }); rtSend(u.id, { t: 'status' }); auMsg('adson', n ? auT('Signed out on {n} device(s). Open pages log out within a few minutes.').replace('{n}', n) : 'They were not logged in anywhere.', 'ok'); track('admin', { act: 'sign_out' }); }
+    catch (e) { auMsg('adson', adErr(e), 'bad'); }
+    finally { b.disabled = false; b.classList.remove('is-busy'); }
+    if (SB.user && u.id === SB.user.id) { auSignOut(); return; }
   } else if (k === 'del') {
     const t = $('#addel').value.trim().toLowerCase().replace(/^@/, '');
     if (!t || (t !== String(u.username || '').toLowerCase() && t !== String(u.email || '').toLowerCase())) { auMsg('addeln', 'Type the username or email exactly to confirm.', 'bad'); auShake($('#addel')); return; }
@@ -1154,39 +1183,54 @@ addEventListener('keydown', e => {
   e.stopImmediatePropagation();
 }, true);
 const TA = { list: null, busy: false };
-const taPw = () => { const c = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789', a = new Uint32Array(10); crypto.getRandomValues(a); return Array.from(a, x => c[x % c.length]).join(''); };
 async function taLoad() {
   if (!adIsAdmin()) return;
-  try { const r = await adRpc('admin_test_accounts'); TA.list = Array.isArray(r) ? r : []; }
-  catch (e) { TA.list = /admin_test_accounts|function|schema/i.test(e.message || '') ? 'missing' : TA.list; }
-  taDraw();
+  try { const r = await adRpc('admin_test_accounts'); TA.list = Array.isArray(r) ? r : []; } catch (e) {}
+  const u = adCur(); if (u) taSaved(u);
 }
-function taDraw() {
-  const box = $('#tal'), L = TA.list;
-  if (!box) return;
-  $('#tan').textContent = Array.isArray(L) && L.length ? String(L.length) : '';
-  if (L === 'missing') { box.innerHTML = `<p class="adm-mut">${esc(auT('Run round12_test_accounts.sql in the Supabase SQL editor to turn on test accounts.'))}</p>`; return; }
-  if (!Array.isArray(L)) { box.innerHTML = ''; return; }
-  box.innerHTML = L.length ? L.map(t => `<div class="ta-r" data-uid="${esc(t.user_id)}"><div class="ta-c"><b>@${esc(t.username || '?')}</b><code>${esc(t.email)}</code><code class="ta-pw">${esc(t.password)}</code></div><small>${esc(auT('Created {t}').replace('{t}', adAgo(t.created_at)))}${t.created_by ? ' · @' + esc(t.created_by) : ''} · ${esc(t.last_sign_in_at ? auT('last log in {t}').replace('{t}', adAgo(t.last_sign_in_at)) : auT('never logged in'))}${t.locked ? ' · ' + esc(auT('Locked')) : ''}${t.note ? ' · ' + esc(t.note) : ''}</small><div class="ta-b"><button class="btn2" type="button" data-tacopy="${esc(t.user_id)}">${esc(auT('Copy'))}</button><button class="btn2" type="button" data-taopen="${esc(t.user_id)}">${esc(auT('Open'))}</button></div></div>`).join('') : `<p class="adm-mut">${esc(auT('No test accounts yet.'))}</p>`;
+const taOf = id => (Array.isArray(TA.list) ? TA.list : []).find(t => t.user_id === id);
+function taSaved(u) {
+  const t = taOf(u.id), el = $('#adpws');
+  if (!el) return;
+  el.hidden = !t;
+  el.innerHTML = t ? `<span>${esc(auT('Password set when an admin created this account'))}</span><code translate="no">${esc(t.password)}</code><button class="btn2" type="button" data-tacopy="${esc(u.id)}">${esc(auT('Copy log in details'))}</button>${t.note ? `<small translate="no">${esc(t.note)}</small>` : ''}` : '';
 }
-const taText = t => auT('Site: {s}\nEmail or username: {u}\nPassword: {p}').replace('{s}', location.origin).replace('{u}', t.username ? t.username : t.email).replace('{p}', t.password);
+const taText = t => auT('Site: {s}\nEmail or username: {u}\nPassword: {p}').replace('{s}', location.origin).replace('{u}', t.username || t.email).replace('{p}', t.password);
 async function taCopy(t, b) {
   try { await navigator.clipboard.writeText(taText(t)); const l = b.textContent; b.textContent = auT('Copied'); setTimeout(() => { if (b.isConnected) b.textContent = l; }, 1500); }
-  catch (e) { auMsg('tam', taText(t), 'ok'); }
+  catch (e) { toast(taText(t)); }
 }
-async function taCreate(b) {
+function anOpen() {
+  const d = $('#adnew');
+  ['anem', 'anun', 'andn', 'anpw', 'annt'].forEach(id => { $('#' + id).value = ''; });
+  $('#anrl').value = 'user'; $('#anpw').type = 'password';
+  d.querySelectorAll('[data-owner]').forEach(o => { o.hidden = !adIsOwner(); });
+  $('#adnewb').hidden = false; $('#adnewok').hidden = true; $('#adnews').hidden = false; $('#adnewc').textContent = auT('Cancel');
+  auMsg('annote', '');
+  if (d.showModal) d.showModal(); else d.setAttribute('open', '');
+  setTimeout(() => $('#anem').focus(), 30);
+}
+function anClose() { const d = $('#adnew'); if (d.close) d.close(); else d.removeAttribute('open'); }
+async function anCreate() {
   if (TA.busy) return;
-  const un = $('#tau').value.trim().toLowerCase(), pw = $('#tap').value, em = $('#tae').value.trim(), nt = $('#tat').value.trim();
-  if (un && !/^[a-z0-9_.]{3,20}$/.test(un)) { auMsg('tam', 'Username: 3 to 20 letters, numbers, dots or underscores', 'bad'); return; }
-  if (pw.length < 8) { auMsg('tam', 'Password must be at least 8 characters', 'bad'); return; }
-  TA.busy = true; b.disabled = true; b.classList.add('is-busy');
+  const em = $('#anem').value.trim().toLowerCase(), un = $('#anun').value.trim().toLowerCase().replace(/^@/, ''), dn = $('#andn').value.replace(/\s+/g, ' ').trim(), pw = $('#anpw').value, rl = $('#anrl').value, nt = $('#annt').value.trim();
+  if (em && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { auMsg('annote', 'That email does not look valid.', 'bad'); auShake($('#anem')); return; }
+  if (un && (!UN_RE.test(un) || /^\.|\.$|\.\./.test(un))) { auMsg('annote', 'Use 3 to 20 lowercase letters, numbers, dots or underscores.', 'bad'); auShake($('#anun')); return; }
+  if (pw.length < 8) { auMsg('annote', 'Choose a password of at least 8 characters.', 'bad'); auShake($('#anpw').closest('.au-pw')); return; }
+  if (utf8Len(pw) > 72) { auMsg('annote', 'Use at most 72 characters.', 'bad'); return; }
+  const b = $('#adnews');
+  TA.busy = true; b.disabled = true; b.classList.add('is-busy'); auMsg('annote', '');
   try {
-    const r = await adRpc('admin_create_test_account', { p_username: un || null, p_password: pw, p_email: em || null, p_note: nt || null });
-    $('#tau').value = ''; $('#tae').value = ''; $('#tat').value = ''; $('#tap').value = taPw();
-    auMsg('tam', auT('Created @{u}. Copy the details below and give them to the tester.').replace('{u}', r.username), 'ok');
-    track('admin', { act: 'test_account' });
+    const r = await adRpc('admin_create_user', { p_email: em || null, p_username: un || null, p_display: dn || null, p_password: pw, p_role: rl, p_note: nt || null });
+    track('admin', { act: 'create_user' });
+    const t = { user_id: r.id, email: r.email, username: r.username, password: r.password };
+    $('#adnewb').hidden = true; b.hidden = true; $('#adnewc').textContent = auT('Done');
+    const ok = $('#adnewok');
+    ok.hidden = false;
+    ok.innerHTML = `<p class="adm-ok">${esc(auT('Account created. Give these details to the person.'))}</p><dl class="apc-dl"><div><dt>${esc(auT('Email'))}</dt><dd translate="no">${esc(r.email)}</dd></div><div><dt>${esc(auT('Username'))}</dt><dd translate="no">@${esc(r.username)}</dd></div><div><dt>${esc(auT('Display name'))}</dt><dd translate="no">${esc(r.display_name || '—')}</dd></div><div><dt>${esc(auT('Password'))}</dt><dd translate="no"><code>${esc(r.password)}</code></dd></div><div><dt>${esc(auT('Role'))}</dt><dd>${adRole({ role: r.role })}</dd></div></dl><div class="apc-row"><button class="btn2 pri" type="button" data-ancopy>${esc(auT('Copy log in details'))}</button><button class="btn2" type="button" data-anopen="${esc(r.id)}">${esc(auT('Open player card'))}</button></div>`;
+    ok._t = t;
     await Promise.all([taLoad(), adLoad()]);
-  } catch (e) { auMsg('tam', /admin_create_test_account|schema cache/i.test(e.message || '') ? 'Run round12_test_accounts.sql in the Supabase SQL editor first.' : e.message || 'Could not create the account.', 'bad'); }
+  } catch (e) { auMsg('annote', /taken/i.test(e.message || '') ? 'That username is taken.' : /already has an account/i.test(e.message || '') ? 'That email already has an account.' : /admin_create_user|schema cache/i.test(e.message || '') ? 'Run round13_users.sql in the Supabase SQL editor first.' : adErr(e), 'bad'); }
   finally { TA.busy = false; b.disabled = false; b.classList.remove('is-busy'); }
 }
 function adBoot() {
@@ -1214,12 +1258,14 @@ function adBoot() {
     if (t.closest('#sfas')) { sfaSave(t.closest('#sfas')); return; }
     if (t.closest('#sfps')) { sfpSave(t.closest('#sfps')); return; }
     if (t.closest('#adpclose')) { adPanelClose(); return; }
-    if (t.closest('#tab')) { taCreate(t.closest('#tab')); return; }
-    if (t.closest('#tag')) { $('#tap').value = taPw(); $('#tap').type = 'text'; return; }
+    if (t.closest('[data-adnew]')) { anOpen(); return; }
+    if (t.closest('[data-adnewx]')) { anClose(); return; }
+    if (t.closest('[data-ancopy]')) { const ok = $('#adnewok'); if (ok._t) taCopy(ok._t, t.closest('[data-ancopy]')); return; }
+    const ao = t.closest('[data-anopen]');
+    if (ao) { const x = (AD.users || []).find(y => y.id === ao.dataset.anopen); anClose(); if (x) adPanel(x); return; }
+    if (t.closest('[data-addev]')) { const u = adCur(); if (u) adDevices(u, true); return; }
     const tc = t.closest('[data-tacopy]');
-    if (tc) { const x = (TA.list || []).find(y => y.user_id === tc.dataset.tacopy); if (x) taCopy(x, tc); return; }
-    const to = t.closest('[data-taopen]');
-    if (to) { const x = (AD.users || []).find(y => y.id === to.dataset.taopen); if (x) adPanel(x); return; }
+    if (tc) { const x = taOf(tc.dataset.tacopy); if (x) taCopy(x, tc); return; }
     const eye = t.closest('.au-eye');
     if (eye) { auEye(eye); return; }
     const a = t.closest('[data-adact]');
@@ -1237,8 +1283,11 @@ function adBoot() {
   $('#adq').addEventListener('input', e => { AD.q = e.target.value; adDraw(); });
   $('#adsite').addEventListener('input', e => { if (e.target.id !== 'sfaq') return; const q = e.target.value.trim().toLowerCase(); document.querySelectorAll('#sfag [data-sfg]').forEach(c => { c.hidden = !!q && !c.textContent.toLowerCase().includes(q) && !c.dataset.sfg.includes(q); }); });
   $('#adf').addEventListener('change', e => { AD.f = e.target.value; adDraw(); });
-  $('#tap').value = taPw();
-  $('#tau').addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; });
+  $('#anpw').parentNode.insertAdjacentHTML('beforeend', EYE);
+  $('#anun').addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; });
+  $('#adnewf').addEventListener('submit', e => { e.preventDefault(); if (!$('#adnewb').hidden) anCreate(); else anClose(); });
+  $('#adnew').addEventListener('click', e => { if (e.target === e.currentTarget) anClose(); });
+  [['#addn', 'dn', '#addnb'], ['#adem', 'em', '#ademb']].forEach(([q, k, bq]) => $(q).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); adAct(k, $(bq)); } }));
   $('#adpw').parentNode.insertAdjacentHTML('beforeend', EYE);
   $('#adpw').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); adAct('pw', $('#adpwb')); } });
   $('#adun').addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; });

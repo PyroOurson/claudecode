@@ -2379,6 +2379,7 @@ function runSearch(qt, pool, allowPrefix) {
 }
 function search(q, pool) {
   const full = norm(q);
+  if (!full) return { list: [], partial: false, scores: new Map() };
   const pre = g => norm(g.info.name).startsWith(full);
   const alpha = l => l.slice().sort((x, y) => x.title.localeCompare(y.title, 'en', { sensitivity: 'base' }));
   if (full.length < 3) {
@@ -2466,6 +2467,7 @@ function parseLocation() {
     const h = location.hash.replace(/^#\/?/, '');
     const i = h.indexOf('?');
     path = (i < 0 ? h : h.slice(0, i)).replace(/\/+$/, '');
+    if (!/\/[A-Za-z0-9]{4}$/.test(path)) path = path.toLowerCase();
     query = i < 0 ? '' : h.slice(i);
   }
   if (LEGAL_KEYS.includes(path)) return { legal: path };
@@ -2766,6 +2768,7 @@ function setConsent(an, lv) {
   $('#ckbar').hidden = true;
   document.documentElement.classList.remove('ck-open');
   syncSwitches();
+  sfLock();
 }
 const TT = { g: null, since: 0, acc: 0 };
 const ttRunning = () => !!(cur && !PAUSE.on && document.visibilityState !== 'hidden');
@@ -2906,6 +2909,7 @@ function waitStart(g) {
   });
 }
 function openGame(g) {
+  if (gpBlocked()) return;
   if (cur && cur.g === g) return;
   if (pend && pend.id === g.id) return;
   if (cur) { cur.kill(); cur = null; ttSync(); }
@@ -3002,6 +3006,7 @@ function renderResults() {
   if (state.sort && state.sort !== defSort()) { const s = SORTS.find(x => x[0] === state.sort); chips.push(`<button class="chip" type="button" data-x="s:" aria-label="Reset sort">${esc(s ? s[1] : state.sort)} &times;</button>`); }
   $('#active').innerHTML = chips.join(''); $('#active').hidden = !chips.length;
   $('#apply').textContent = 'Show ' + n + (n === 1 ? ' game' : ' games');
+  $('#apply').disabled = !n;
   renderPanel(); fbtnState();
   renderSide(list);
   markSide();
@@ -3048,7 +3053,7 @@ function openLegal(k) {
   closeGame();
   showView('legal');
   const d = LEGAL[k];
-  $('#doc').innerHTML = `<h1>${d[0]}</h1><p class="upd">Last updated 18 October 2026</p>${d[1]}`;
+  $('#doc').innerHTML = `<h1>${d[0]}</h1><p class="upd">${esc(auT('Last updated {d}').replace('{d}', new Date(2026, 9, 18).toLocaleDateString(window.gpI18n ? gpI18n.lang : 'en', { day: 'numeric', month: 'long', year: 'numeric' })))}</p>${d[1]}`;
   document.querySelectorAll('.ltabs a').forEach(a => a.setAttribute('aria-current', a.dataset.legal === k ? 'page' : 'false'));
   setHead(d[0] + ' | gameplay', d[0] + ' for gameplay.', '/' + k);
   scrollTo({ top: 0, behavior: 'instant' });
@@ -3237,6 +3242,7 @@ function route() {
   const loc = parseLocation();
   if (loc.legal) return openLegal(loc.legal);
   if (auLocked() && (loc.game || loc.admin)) { SB.blk = 1; closeGame(); showView('home'); renderHome(); auGate(); return; }
+  if (gpBlocked() && (loc.game || (loc.admin && !adIsAdmin()))) { closeGame(); showView('home'); renderHome(); return; }
   if (loc.admin) return adRoute();
   if (loc.game) {
     const g = loc.game;
@@ -3350,7 +3356,7 @@ function boot() {
     if (lg && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); if (openK) closeAll(); if (!$('#unmodal').hidden) unClose(); go(legalHref(lg.dataset.legal), false); return; }
     if (t.closest('[data-cookieset]')) { e.stopPropagation(); if (openK !== 'cookies') setOpen('cookies'); return; }
     const ck = t.closest('[data-ck]');
-    if (ck) { const k = ck.dataset.ck; setConsent(k === 'accept' ? true : k === 'reject' ? false : $('#ckan').classList.contains('on')); if (openK === 'cookies') closeAll(); toast('Cookie choice saved'); return; }
+    if (ck) { if (!consent) { closeAll(); sfLock(); return; } const k = ck.dataset.ck; setConsent(k === 'accept' ? true : k === 'reject' ? false : $('#ckan').classList.contains('on')); if (openK === 'cookies') closeAll(); toast('Cookie choice saved'); return; }
     const gob = t.closest('[data-go]');
     if (gob) { e.stopPropagation(); const k = gob.dataset.go; if (openK !== k) setOpen(k); if (gob.dataset.pane) showPane(gob.dataset.pane); return; }
     if (t.closest('[data-close]')) { closeAll(); return; }
@@ -4626,7 +4632,7 @@ const adIsAdmin = () => (AD.role === 'admin' || AD.role === 'owner') && !AD.lock
 const adIsOwner = () => AD.role === 'owner' && !AD.locked;
 const adStaff = u => u.role === 'admin' || u.role === 'owner';
 const adRank = r => r === 'owner' ? 2 : r === 'admin' ? 1 : 0;
-const adCan = u => adIsAdmin() && adRank(AD.role) > adRank(u.role);
+const adCan = u => adIsAdmin() && (adIsOwner() || adRank(AD.role) > adRank(u.role));
 const adRpc = (f, b) => sbRest('rpc/' + f, { method: 'POST', body: b || {} });
 const adLang = () => window.gpI18n ? gpI18n.lang : 'en';
 const AD_ICO = {
@@ -4693,7 +4699,10 @@ async function adCheck(game) {
     if (AD.del && Array.isArray(r) && !r.length) { AD.del = false; toast(auT('This account was deleted')); auSignOut(); return; }
     AD.del = false;
     adStatus(Array.isArray(r) ? r[0] : null);
-  } catch (e) { if (view === 'admin' && !AD.at) adBounce(); }
+  } catch (e) {
+    if (/session ended/i.test(e.message || '') && SB.user && SB.user.id === uid) { toast(auT('You were signed out')); auSignOut(); return; }
+    if (view === 'admin' && !AD.at) adBounce();
+  }
 }
 function adSeen(id) {
   if (!SB.user || (AD.game === id && Date.now() - AD.gat < 60000)) return;
@@ -4803,7 +4812,7 @@ const AD_COLS = [
   ['locked', 'Locked', u => u.locked ? `<span title="${esc(u.locked_reason || '')}">${adPill('Locked', 'bad')}</span><small class="adm-left">${esc(adLeft(u))}</small>` : adPill('No')]
 ];
 function adHead() {
-  $('#adt thead').innerHTML = '<tr>' + AD_COLS.map(([k, l]) => k ? `<th><button type="button" data-adsort="${k}" aria-sort="${AD.sort[0] === k ? (AD.sort[1] > 0 ? 'ascending' : 'descending') : 'none'}">${esc(auT(l))}<i></i></button></th>` : `<th><span>${esc(auT(l))}</span></th>`).join('') + '</tr>';
+  $('#adt thead').innerHTML = '<tr>' + AD_COLS.map(([k, l]) => k ? `<th>${k === 'id' ? '<div class="adm-thw">' : ''}<button type="button" data-adsort="${k}" aria-sort="${AD.sort[0] === k ? (AD.sort[1] > 0 ? 'ascending' : 'descending') : 'none'}">${esc(auT(l))}<i></i></button>${k === 'id' ? `<button type="button" class="adm-plus" data-adnew aria-label="${esc(auT('Create a user'))}" title="${esc(auT('Create a user'))}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>` : ''}</th>` : `<th><span>${esc(auT(l))}</span></th>`).join('') + '</tr>';
 }
 function adSortVal(u, k) {
   const v = k === 'providers' ? adProv(u) : u[k];
@@ -4824,7 +4833,7 @@ function adRows() {
     if (f === 'active') return now - Date.parse(u.last_seen || 0) < 6048e5;
     if (f === 'online') return !!RT.pres[u.id];
     return true;
-  }).sort((a, b) => { const x = adSortVal(a, k), y = adSortVal(b, k); const ex = x === '' || x === 0, ey = y === '' || y === 0; if (ex !== ey) return ex ? 1 : -1; return (x < y ? -1 : x > y ? 1 : 0) * d; });
+  }).sort((a, b) => { const x = adSortVal(a, k), y = adSortVal(b, k), dt = /_at$|last_seen/.test(k); const ex = x === '' || (dt && x === 0), ey = y === '' || (dt && y === 0); if (ex !== ey) return ex ? 1 : -1; return (x < y ? -1 : x > y ? 1 : 0) * d; });
 }
 function adDraw(an) {
   adHead();
@@ -4872,7 +4881,7 @@ function adPanel(u, keep) {
   const F = [['User id', `<code>${esc(u.id)}</code>`], ['Email', esc(u.email || '—')], ['Username', u.username ? '@' + esc(u.username) : '—'], ['Display name', esc(u.display_name || '—')], ['Last log in', esc(adDate(u.last_sign_in_at, 1))], ['Last used website', esc(adDate(u.last_seen, 1))], ['Log in method', esc(adProv(u))], ['Account created', esc(adDate(u.created_at, 1))], ['Password', adPw(u)], ['Favourite game', esc(adGame(u.fav_game))], ['Friends', String(+u.friends || 0)], ['Role', adRole(u)], ['Email confirmed', u.email_confirmed ? esc(adDate(u.email_confirmed_at, 1)) : adPill('No', 'warn')], ['Locked', u.locked ? adPill('Locked', 'bad') + ` <span class="adm-mut">${esc(u.locked_until ? auT('until {d}').replace('{d}', adDate(u.locked_until, 1)) : auT('Permanent'))}</span>` + (u.locked_reason ? `<div class="adm-why">${esc(u.locked_reason)}</div>` : '') : adPill('No')], ['Last game opened', esc(adGame(u.last_game))], ['Language', esc(adLangName(u.last_lang))]];
   $('#adpdl').innerHTML = F.map(([k, v]) => `<div><dt>${esc(auT(k))}</dt><dd>${v}</dd></div>`).join('');
   const can = adCan(u), own = adIsOwner(), rc = p.querySelector('[data-adrole]').closest('.apc-card');
-  ['#adun', '#adrst', '#adlock', '#addelb'].forEach(q => { $(q).closest('.apc-card').hidden = !can; });
+  ['#adun', '#adrst', '#adso', '#adlock', '#addelb'].forEach(q => { $(q).closest('.apc-card').hidden = !can; });
   rc.hidden = !own;
   rc.closest('.apc-col').hidden = !can && !own;
   p.querySelectorAll('[data-adrole]').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.adrole === u.role)); b.disabled = false; adUnconfirm(b); });
@@ -4883,13 +4892,14 @@ function adPanel(u, keep) {
   lb.disabled = me && !u.locked;
   $('#adlr').hidden = u.locked; $('#adlrl').hidden = u.locked; $('#adld').hidden = u.locked; $('#adldl').hidden = u.locked;
   const lt = $('#adlt'); lt.hidden = !u.locked; lt.textContent = u.locked ? (u.locked_until ? auT('Locked until {d} ({r}).').replace('{d}', adDate(u.locked_until, 1)).replace('{r}', adAgo(u.locked_until)) : auT('Locked with no end date.')) : '';
-  ['adpwb', 'adrst', 'adunb', 'addelb'].forEach(id => adUnconfirm($('#' + id)));
+  ['adpwb', 'adrst', 'adunb', 'addelb', 'adso', 'ademb'].forEach(id => adUnconfirm($('#' + id)));
+  taSaved(u);
   $('#adrst').disabled = !u.email;
   $('#adpwt').textContent = auT(u.has_password ? 'Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them.' : 'This account has no password: it signs in with Google.');
   $('#addelb').disabled = !!me || adStaff(u);
   if (!keep) {
-    ['adprn', 'adpwn', 'adln', 'adrstn', 'adunn', 'addeln'].forEach(id => auMsg(id, ''));
-    $('#adpw').value = ''; $('#adlr').value = ''; $('#addel').value = ''; $('#adun').value = u.username || '';
+    ['adprn', 'adpwn', 'adln', 'adrstn', 'adunn', 'addnn', 'ademn', 'adson', 'addeln'].forEach(id => auMsg(id, ''));
+    $('#adpw').value = ''; $('#adlr').value = ''; $('#addel').value = ''; $('#adun').value = u.username || ''; $('#addn').value = u.display_name || ''; $('#adem').value = u.email || '';
     if (me) { auMsg('adln', 'You cannot lock your own account'); auMsg('addeln', 'You cannot delete your own account here.'); }
     else if (adStaff(u)) auMsg('addeln', 'Make this admin a regular user first.');
     $('#adpw').type = 'password';
@@ -4914,9 +4924,10 @@ async function adGames(u) {
     box.innerHTML = L.length ? L.map((g, i) => `<div class="apc-g" style="--i:${Math.min(i, 12)};--c:${esc(TINT[g.game_id] || 'var(--accent)')}">${adCv(g.game_id, 'apc-gi')}<span class="apc-gn">${esc(adGame(g.game_id))}</span><b>${esc(adHrs(g.seconds_played))}</b><i><s style="width:${Math.max(2, Math.round(100 * (+g.seconds_played || 0) / max))}%"></s></i><small>${esc(auT('{n} plays').replace('{n}', +g.plays || 0))}${g.best_score != null ? ' · ' + esc(auT('best {s}').replace('{s}', g.best_score)) : ''}${g.last_played ? ' · ' + esc(adAgo(g.last_played)) : ''}</small></div>`).join('') : `<div class="adm-mut apc-none">${esc(auT('No games played yet.'))}</div>`;
   } catch (e) { box.innerHTML = `<div class="adm-mut">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; }
 }
-async function adDevices(u) {
+async function adDevices(u, all) {
   const box = $('#adpd');
   if (!box) return;
+  box._all = !!all;
   box.innerHTML = '<i class="sk sk-td"></i><i class="sk sk-td"></i>';
   let L;
   try { L = await adRpc('admin_user_devices', { p_uid: u.id }); }
@@ -4926,7 +4937,8 @@ async function adDevices(u) {
   if (!L.length) { box.innerHTML = `<div class="adm-mut">${esc(auT('No device data yet. It appears once this player accepts cookies.'))}</div>`; return; }
   const kv = (k, v) => v == null || v === '' ? '' : `<span>${esc(auT(k))}</span><b translate="no">${esc(String(v))}</b>`;
   const yn = v => v == null ? null : v ? auT('Yes') : auT('No');
-  box.innerHTML = L.map((x, i) => {
+  const more = L.length > 3 && !box._all;
+  box.innerHTML = L.slice(0, more ? 3 : L.length).map((x, i) => {
     const d = x.dev || {}, g = x.geo || {}, sc = x.scr || {}, c = x.caps || {}, sm = x.sum || {};
     const when = new Date(x.last).toLocaleString(adLang()), dur = sm.dur != null ? (sm.dur >= 60 ? Math.round(sm.dur / 60) + ' min' : sm.dur + ' s') : null;
     const head = [d.osv, d.brv, d.model].filter(Boolean).join(' · ') || x.device || '—', where = [g.city, g.region, g.country].filter(Boolean).join(', ');
@@ -4937,7 +4949,7 @@ async function adDevices(u) {
       kv('Speed test', c.bench != null ? c.bench + ' ms' : null), kv('Battery', c.bat != null ? c.bat + '%' + (c.chg ? ' ⚡' : '') : null), kv('Storage', c.quota != null ? c.used + ' / ' + c.quota + ' MB' : null), kv('Microphones / cameras', c.mic != null ? c.mic + ' / ' + c.cam : null), kv('Region settings', c.loc), kv('Arrived from', c.ref), kv('Bot', yn(c.bot)),
       kv('Session', dur), kv('Time looking', sm.vis != null ? Math.round(sm.vis / 60) + ' min' : null), kv('Games opened', sm.games), kv('Games', (sm.gl || []).map(adGame).join(', ')), kv('Keys / clicks / taps', sm.keys != null ? [sm.keys, sm.clicks, sm.taps].join(' / ') : null), kv('Connection used', sm.route), kv('Events', x.events)
     ].join('')}</div>${x.ua ? `<p class="adm-mut apc-ua" translate="no">${esc(x.ua)}</p>` : ''}</details>`;
-  }).join('');
+  }).join('') + (more ? `<button class="btn2 apc-more" type="button" data-addev>${esc(auT('Show all {n}').replace('{n}', L.length))}</button>` : '');
 }
 function adPanelClose() {
   const p = $('#adpanel');
@@ -4993,6 +5005,29 @@ async function adAct(k, b) {
     try { u.username = await adRpc('admin_set_username', { p_uid: u.id, p_name: v }); auMsg('adunn', 'Username saved.', 'ok'); track('admin', { act: 'username' }); rtSend(u.id, { t: 'profile' }); }
     catch (e) { auMsg('adunn', /taken/i.test(e.message || '') ? 'That username is taken.' : /not allowed/i.test(e.message || '') ? 'That username is not allowed.' : adErr(e), 'bad'); }
     finally { b.disabled = false; b.classList.remove('is-busy'); }
+  } else if (k === 'dn') {
+    const v = $('#addn').value.replace(/\s+/g, ' ').trim();
+    if (v === (u.display_name || '')) return;
+    b.disabled = true; b.classList.add('is-busy'); auMsg('addnn', '');
+    try { u.display_name = await adRpc('admin_set_display_name', { p_uid: u.id, p_name: v }); $('#addn').value = u.display_name || ''; auMsg('addnn', 'Display name saved.', 'ok'); track('admin', { act: 'display_name' }); rtSend(u.id, { t: 'profile' }); }
+    catch (e) { auMsg('addnn', adErr(e), 'bad'); }
+    finally { b.disabled = false; b.classList.remove('is-busy'); }
+  } else if (k === 'em') {
+    const v = $('#adem').value.trim().toLowerCase();
+    if (v === String(u.email || '').toLowerCase()) return;
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { auMsg('ademn', 'That email does not look valid.', 'bad'); auShake($('#adem')); return; }
+    if (!adConfirm(b)) return;
+    b.disabled = true; b.classList.add('is-busy'); auMsg('ademn', '');
+    try { u.email = await adRpc('admin_set_email', { p_uid: u.id, p_email: v }); u.email_confirmed = true; auMsg('ademn', 'Email saved. They log in with the new one.', 'ok'); track('admin', { act: 'email' }); }
+    catch (e) { auMsg('ademn', /already has an account/i.test(e.message || '') ? 'That email already has an account.' : adErr(e), 'bad'); }
+    finally { b.disabled = false; b.classList.remove('is-busy'); }
+  } else if (k === 'so') {
+    if (!adConfirm(b)) return;
+    b.disabled = true; b.classList.add('is-busy'); auMsg('adson', '');
+    try { const n = await adRpc('admin_sign_out', { p_uid: u.id }); rtSend(u.id, { t: 'status' }); auMsg('adson', n ? auT('Signed out on {n} device(s). Open pages log out within a few minutes.').replace('{n}', n) : 'They were not logged in anywhere.', 'ok'); track('admin', { act: 'sign_out' }); }
+    catch (e) { auMsg('adson', adErr(e), 'bad'); }
+    finally { b.disabled = false; b.classList.remove('is-busy'); }
+    if (SB.user && u.id === SB.user.id) { auSignOut(); return; }
   } else if (k === 'del') {
     const t = $('#addel').value.trim().toLowerCase().replace(/^@/, '');
     if (!t || (t !== String(u.username || '').toLowerCase() && t !== String(u.email || '').toLowerCase())) { auMsg('addeln', 'Type the username or email exactly to confirm.', 'bad'); auShake($('#addel')); return; }
@@ -5776,39 +5811,54 @@ addEventListener('keydown', e => {
   e.stopImmediatePropagation();
 }, true);
 const TA = { list: null, busy: false };
-const taPw = () => { const c = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789', a = new Uint32Array(10); crypto.getRandomValues(a); return Array.from(a, x => c[x % c.length]).join(''); };
 async function taLoad() {
   if (!adIsAdmin()) return;
-  try { const r = await adRpc('admin_test_accounts'); TA.list = Array.isArray(r) ? r : []; }
-  catch (e) { TA.list = /admin_test_accounts|function|schema/i.test(e.message || '') ? 'missing' : TA.list; }
-  taDraw();
+  try { const r = await adRpc('admin_test_accounts'); TA.list = Array.isArray(r) ? r : []; } catch (e) {}
+  const u = adCur(); if (u) taSaved(u);
 }
-function taDraw() {
-  const box = $('#tal'), L = TA.list;
-  if (!box) return;
-  $('#tan').textContent = Array.isArray(L) && L.length ? String(L.length) : '';
-  if (L === 'missing') { box.innerHTML = `<p class="adm-mut">${esc(auT('Run round12_test_accounts.sql in the Supabase SQL editor to turn on test accounts.'))}</p>`; return; }
-  if (!Array.isArray(L)) { box.innerHTML = ''; return; }
-  box.innerHTML = L.length ? L.map(t => `<div class="ta-r" data-uid="${esc(t.user_id)}"><div class="ta-c"><b>@${esc(t.username || '?')}</b><code>${esc(t.email)}</code><code class="ta-pw">${esc(t.password)}</code></div><small>${esc(auT('Created {t}').replace('{t}', adAgo(t.created_at)))}${t.created_by ? ' · @' + esc(t.created_by) : ''} · ${esc(t.last_sign_in_at ? auT('last log in {t}').replace('{t}', adAgo(t.last_sign_in_at)) : auT('never logged in'))}${t.locked ? ' · ' + esc(auT('Locked')) : ''}${t.note ? ' · ' + esc(t.note) : ''}</small><div class="ta-b"><button class="btn2" type="button" data-tacopy="${esc(t.user_id)}">${esc(auT('Copy'))}</button><button class="btn2" type="button" data-taopen="${esc(t.user_id)}">${esc(auT('Open'))}</button></div></div>`).join('') : `<p class="adm-mut">${esc(auT('No test accounts yet.'))}</p>`;
+const taOf = id => (Array.isArray(TA.list) ? TA.list : []).find(t => t.user_id === id);
+function taSaved(u) {
+  const t = taOf(u.id), el = $('#adpws');
+  if (!el) return;
+  el.hidden = !t;
+  el.innerHTML = t ? `<span>${esc(auT('Password set when an admin created this account'))}</span><code translate="no">${esc(t.password)}</code><button class="btn2" type="button" data-tacopy="${esc(u.id)}">${esc(auT('Copy log in details'))}</button>${t.note ? `<small translate="no">${esc(t.note)}</small>` : ''}` : '';
 }
-const taText = t => auT('Site: {s}\nEmail or username: {u}\nPassword: {p}').replace('{s}', location.origin).replace('{u}', t.username ? t.username : t.email).replace('{p}', t.password);
+const taText = t => auT('Site: {s}\nEmail or username: {u}\nPassword: {p}').replace('{s}', location.origin).replace('{u}', t.username || t.email).replace('{p}', t.password);
 async function taCopy(t, b) {
   try { await navigator.clipboard.writeText(taText(t)); const l = b.textContent; b.textContent = auT('Copied'); setTimeout(() => { if (b.isConnected) b.textContent = l; }, 1500); }
-  catch (e) { auMsg('tam', taText(t), 'ok'); }
+  catch (e) { toast(taText(t)); }
 }
-async function taCreate(b) {
+function anOpen() {
+  const d = $('#adnew');
+  ['anem', 'anun', 'andn', 'anpw', 'annt'].forEach(id => { $('#' + id).value = ''; });
+  $('#anrl').value = 'user'; $('#anpw').type = 'password';
+  d.querySelectorAll('[data-owner]').forEach(o => { o.hidden = !adIsOwner(); });
+  $('#adnewb').hidden = false; $('#adnewok').hidden = true; $('#adnews').hidden = false; $('#adnewc').textContent = auT('Cancel');
+  auMsg('annote', '');
+  if (d.showModal) d.showModal(); else d.setAttribute('open', '');
+  setTimeout(() => $('#anem').focus(), 30);
+}
+function anClose() { const d = $('#adnew'); if (d.close) d.close(); else d.removeAttribute('open'); }
+async function anCreate() {
   if (TA.busy) return;
-  const un = $('#tau').value.trim().toLowerCase(), pw = $('#tap').value, em = $('#tae').value.trim(), nt = $('#tat').value.trim();
-  if (un && !/^[a-z0-9_.]{3,20}$/.test(un)) { auMsg('tam', 'Username: 3 to 20 letters, numbers, dots or underscores', 'bad'); return; }
-  if (pw.length < 8) { auMsg('tam', 'Password must be at least 8 characters', 'bad'); return; }
-  TA.busy = true; b.disabled = true; b.classList.add('is-busy');
+  const em = $('#anem').value.trim().toLowerCase(), un = $('#anun').value.trim().toLowerCase().replace(/^@/, ''), dn = $('#andn').value.replace(/\s+/g, ' ').trim(), pw = $('#anpw').value, rl = $('#anrl').value, nt = $('#annt').value.trim();
+  if (em && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { auMsg('annote', 'That email does not look valid.', 'bad'); auShake($('#anem')); return; }
+  if (un && (!UN_RE.test(un) || /^\.|\.$|\.\./.test(un))) { auMsg('annote', 'Use 3 to 20 lowercase letters, numbers, dots or underscores.', 'bad'); auShake($('#anun')); return; }
+  if (pw.length < 8) { auMsg('annote', 'Choose a password of at least 8 characters.', 'bad'); auShake($('#anpw').closest('.au-pw')); return; }
+  if (utf8Len(pw) > 72) { auMsg('annote', 'Use at most 72 characters.', 'bad'); return; }
+  const b = $('#adnews');
+  TA.busy = true; b.disabled = true; b.classList.add('is-busy'); auMsg('annote', '');
   try {
-    const r = await adRpc('admin_create_test_account', { p_username: un || null, p_password: pw, p_email: em || null, p_note: nt || null });
-    $('#tau').value = ''; $('#tae').value = ''; $('#tat').value = ''; $('#tap').value = taPw();
-    auMsg('tam', auT('Created @{u}. Copy the details below and give them to the tester.').replace('{u}', r.username), 'ok');
-    track('admin', { act: 'test_account' });
+    const r = await adRpc('admin_create_user', { p_email: em || null, p_username: un || null, p_display: dn || null, p_password: pw, p_role: rl, p_note: nt || null });
+    track('admin', { act: 'create_user' });
+    const t = { user_id: r.id, email: r.email, username: r.username, password: r.password };
+    $('#adnewb').hidden = true; b.hidden = true; $('#adnewc').textContent = auT('Done');
+    const ok = $('#adnewok');
+    ok.hidden = false;
+    ok.innerHTML = `<p class="adm-ok">${esc(auT('Account created. Give these details to the person.'))}</p><dl class="apc-dl"><div><dt>${esc(auT('Email'))}</dt><dd translate="no">${esc(r.email)}</dd></div><div><dt>${esc(auT('Username'))}</dt><dd translate="no">@${esc(r.username)}</dd></div><div><dt>${esc(auT('Display name'))}</dt><dd translate="no">${esc(r.display_name || '—')}</dd></div><div><dt>${esc(auT('Password'))}</dt><dd translate="no"><code>${esc(r.password)}</code></dd></div><div><dt>${esc(auT('Role'))}</dt><dd>${adRole({ role: r.role })}</dd></div></dl><div class="apc-row"><button class="btn2 pri" type="button" data-ancopy>${esc(auT('Copy log in details'))}</button><button class="btn2" type="button" data-anopen="${esc(r.id)}">${esc(auT('Open player card'))}</button></div>`;
+    ok._t = t;
     await Promise.all([taLoad(), adLoad()]);
-  } catch (e) { auMsg('tam', /admin_create_test_account|schema cache/i.test(e.message || '') ? 'Run round12_test_accounts.sql in the Supabase SQL editor first.' : e.message || 'Could not create the account.', 'bad'); }
+  } catch (e) { auMsg('annote', /taken/i.test(e.message || '') ? 'That username is taken.' : /already has an account/i.test(e.message || '') ? 'That email already has an account.' : /admin_create_user|schema cache/i.test(e.message || '') ? 'Run round13_users.sql in the Supabase SQL editor first.' : adErr(e), 'bad'); }
   finally { TA.busy = false; b.disabled = false; b.classList.remove('is-busy'); }
 }
 function adBoot() {
@@ -5836,12 +5886,14 @@ function adBoot() {
     if (t.closest('#sfas')) { sfaSave(t.closest('#sfas')); return; }
     if (t.closest('#sfps')) { sfpSave(t.closest('#sfps')); return; }
     if (t.closest('#adpclose')) { adPanelClose(); return; }
-    if (t.closest('#tab')) { taCreate(t.closest('#tab')); return; }
-    if (t.closest('#tag')) { $('#tap').value = taPw(); $('#tap').type = 'text'; return; }
+    if (t.closest('[data-adnew]')) { anOpen(); return; }
+    if (t.closest('[data-adnewx]')) { anClose(); return; }
+    if (t.closest('[data-ancopy]')) { const ok = $('#adnewok'); if (ok._t) taCopy(ok._t, t.closest('[data-ancopy]')); return; }
+    const ao = t.closest('[data-anopen]');
+    if (ao) { const x = (AD.users || []).find(y => y.id === ao.dataset.anopen); anClose(); if (x) adPanel(x); return; }
+    if (t.closest('[data-addev]')) { const u = adCur(); if (u) adDevices(u, true); return; }
     const tc = t.closest('[data-tacopy]');
-    if (tc) { const x = (TA.list || []).find(y => y.user_id === tc.dataset.tacopy); if (x) taCopy(x, tc); return; }
-    const to = t.closest('[data-taopen]');
-    if (to) { const x = (AD.users || []).find(y => y.id === to.dataset.taopen); if (x) adPanel(x); return; }
+    if (tc) { const x = taOf(tc.dataset.tacopy); if (x) taCopy(x, tc); return; }
     const eye = t.closest('.au-eye');
     if (eye) { auEye(eye); return; }
     const a = t.closest('[data-adact]');
@@ -5859,8 +5911,11 @@ function adBoot() {
   $('#adq').addEventListener('input', e => { AD.q = e.target.value; adDraw(); });
   $('#adsite').addEventListener('input', e => { if (e.target.id !== 'sfaq') return; const q = e.target.value.trim().toLowerCase(); document.querySelectorAll('#sfag [data-sfg]').forEach(c => { c.hidden = !!q && !c.textContent.toLowerCase().includes(q) && !c.dataset.sfg.includes(q); }); });
   $('#adf').addEventListener('change', e => { AD.f = e.target.value; adDraw(); });
-  $('#tap').value = taPw();
-  $('#tau').addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; });
+  $('#anpw').parentNode.insertAdjacentHTML('beforeend', EYE);
+  $('#anun').addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; });
+  $('#adnewf').addEventListener('submit', e => { e.preventDefault(); if (!$('#adnewb').hidden) anCreate(); else anClose(); });
+  $('#adnew').addEventListener('click', e => { if (e.target === e.currentTarget) anClose(); });
+  [['#addn', 'dn', '#addnb'], ['#adem', 'em', '#ademb']].forEach(([q, k, bq]) => $(q).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); adAct(k, $(bq)); } }));
   $('#adpw').parentNode.insertAdjacentHTML('beforeend', EYE);
   $('#adpw').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); adAct('pw', $('#adpwb')); } });
   $('#adun').addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; });
@@ -7140,7 +7195,33 @@ function sfNudge() {
   sfRt();
   try { if (SF.ch) SF.ch.send({ type: 'broadcast', event: 'n', payload: { t: Date.now() } }).catch(() => {}); } catch (e) {}
 }
-function sfLock() { const on = SF.shown || !!AD.locked; ['top', 'side', 'main'].forEach(id => { const n = document.getElementById(id); if (n) n.inert = on; }); }
+const BLK = { el: {}, mo: null, t: 0, q: false };
+const gpBlocked = () => !!(SF.shown || AD.locked || !consent);
+function sfLock() {
+  const on = gpBlocked();
+  document.documentElement.classList.toggle('gp-block', on);
+  document.documentElement.classList.toggle('ck-block', !consent);
+  ['top', 'side', 'main'].forEach(id => { const n = document.getElementById(id); if (n && n.inert !== on) n.inert = on; });
+  const keep = new Set(['sfmaint', 'adblock', 'ckbar', 'lgsheet', 'toast', 'sfbar', 'sfalert', 'upbar', 'clp']);
+  for (const c of document.body.children) {
+    if (/^(SCRIPT|STYLE|LINK|NOSCRIPT)$/.test(c.tagName) || keep.has(c.id) || c.contains(document.getElementById('main'))) continue;
+    if (on && !c.inert) { c.inert = true; c.dataset.gpi = '1'; } else if (!on && c.dataset.gpi) { c.inert = false; delete c.dataset.gpi; }
+  }
+  [['sfmaint', SF.shown], ['adblock', !!AD.locked], ['ckbar', !consent]].forEach(([id, want]) => {
+    const el = BLK.el[id] || (BLK.el[id] = document.getElementById(id));
+    if (!want || !el) return;
+    if (!el.isConnected) document.body.append(el);
+    if (el.hidden) el.hidden = false;
+    if (el.inert) el.inert = false;
+    if (el.getAttribute('style')) el.removeAttribute('style');
+  });
+  if (on && (cur || pend)) go(homeHref(), true);
+  if (on && !BLK.mo && window.MutationObserver) {
+    BLK.mo = new MutationObserver(() => { if (BLK.q) return; BLK.q = true; queueMicrotask(() => { BLK.q = false; sfLock(); }); });
+    BLK.mo.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['inert', 'hidden', 'style', 'class'] });
+    BLK.t = setInterval(sfLock, 1000);
+  } else if (!on && BLK.mo) { BLK.mo.disconnect(); BLK.mo = null; clearInterval(BLK.t); }
+}
 function sfOffFrame(g) {
   SF.og = g;
   frame.textContent = '';
@@ -7174,7 +7255,8 @@ function sfPaint() {
   } else if (al) { al.classList.remove('on'); al.hidden = true; }
   clearTimeout(SF.bt);
   if (showB && until) SF.bt = setTimeout(sfPaint, Math.min(until - now + 500, 3600000));
-  const m = !!d.maintenance && !adm && !(SB.user && !AD.at) && !SF.peek, el = $('#sfmaint');
+  const m = !!d.maintenance && !adm && !(SB.user && !AD.at && Date.now() - T0 < 10000) && !SF.peek, el = $('#sfmaint');
+  if (d.maintenance && SB.user && !AD.at && !SF.mt) SF.mt = setTimeout(sfPaint, Math.max(0, 10500 - (Date.now() - T0)));
   if (m !== SF.shown) {
     SF.shown = m;
     if (m) {
@@ -7282,7 +7364,7 @@ function siteBoot() {
   setInterval(() => { if (document.visibilityState !== 'hidden') { sfLoad(true); upCheck(true); } }, 300000);
   setInterval(() => { if (SF.shown) sfLoad(true); }, 20000);
   setTimeout(() => upCheck(true), 4000);
-  sfPaint(); sfLoad(true);
+  sfPaint(); sfLock(); sfLoad(true);
   if (SB.on) sbClient().then(() => sfRt()).catch(() => {});
   setInterval(() => { if (!SF.shown && document.visibilityState !== 'hidden') sfLoad(true); }, 30000);
   if (SB.on && sbHasSession()) CL.t = setTimeout(() => clAuto(), 8000);
@@ -7308,6 +7390,29 @@ document.addEventListener('DOMContentLoaded', boot);
 (() => {
 const LANGS = ['en', 'fr', 'es', 'de', 'it', 'pt'], NAMES = { en: 'English', fr: 'Français', es: 'Español', de: 'Deutsch', it: 'Italiano', pt: 'Português' }, LKEY = 'gameplay:lang';
 const R = [
+["Create a user", "Créer un utilisateur", "Crear un usuario", "Benutzer erstellen", "Crea un utente", "Criar um utilizador"],
+["The account is ready at once: no email check. Leave email or username empty to make one up.", "Le compte est prêt tout de suite, sans vérification d’e-mail. Laisse l’e-mail ou le nom d’utilisateur vide pour en inventer un.", "La cuenta está lista al instante, sin comprobar el correo. Deja el correo o el nombre de usuario vacío para inventar uno.", "Das Konto ist sofort bereit, ohne E-Mail-Prüfung. Lass E-Mail oder Benutzernamen leer, um einen zu erfinden.", "L’account è subito pronto, senza verifica dell’email. Lascia vuoti email o nome utente per inventarne uno.", "A conta fica pronta logo, sem verificar o e-mail. Deixa o e-mail ou o nome de utilizador vazio para inventar um."],
+["Note (only admins see it)", "Note (seuls les admins la voient)", "Nota (solo la ven los admins)", "Notiz (nur Admins sehen sie)", "Nota (solo gli admin la vedono)", "Nota (só os admins a veem)"],
+["Account created. Give these details to the person.", "Compte créé. Donne ces informations à la personne.", "Cuenta creada. Dale estos datos a la persona.", "Konto erstellt. Gib diese Daten an die Person weiter.", "Account creato. Dai questi dati alla persona.", "Conta criada. Dá estes dados à pessoa."],
+["Copy log in details", "Copier les identifiants", "Copiar los datos de acceso", "Anmeldedaten kopieren", "Copia i dati di accesso", "Copiar os dados de acesso"],
+["Open player card", "Ouvrir la fiche du joueur", "Abrir la ficha del jugador", "Spielerkarte öffnen", "Apri la scheda del giocatore", "Abrir a ficha do jogador"],
+["Create user", "Créer", "Crear", "Erstellen", "Crea", "Criar"],
+["Names and email", "Noms et e-mail", "Nombres y correo", "Namen und E-Mail", "Nomi ed email", "Nomes e e-mail"],
+["Password set when an admin created this account", "Mot de passe choisi quand un admin a créé ce compte", "Contraseña puesta cuando un admin creó esta cuenta", "Passwort, das ein Admin beim Erstellen festgelegt hat", "Password impostata quando un admin ha creato questo account", "Palavra-passe definida quando um admin criou esta conta"],
+["Signs this account out on every device where it is logged in. They have to log in again.", "Déconnecte ce compte sur tous les appareils où il est connecté. Il faudra se reconnecter.", "Cierra la sesión de esta cuenta en todos los dispositivos. Tendrá que volver a entrar.", "Meldet dieses Konto auf allen Geräten ab. Es muss sich neu anmelden.", "Disconnette questo account da tutti i dispositivi. Dovrà accedere di nuovo.", "Termina a sessão desta conta em todos os dispositivos. Terá de entrar de novo."],
+["Sign out everywhere", "Déconnecter partout", "Cerrar sesión en todas partes", "Überall abmelden", "Disconnetti ovunque", "Terminar sessão em todo o lado"],
+["Signed out on {n} device(s). Open pages log out within a few minutes.", "Déconnecté sur {n} appareil(s). Les pages ouvertes se déconnectent d’ici quelques minutes.", "Sesión cerrada en {n} dispositivo(s). Las páginas abiertas se cierran en unos minutos.", "Auf {n} Gerät(en) abgemeldet. Offene Seiten melden sich in ein paar Minuten ab.", "Disconnesso su {n} dispositivo/i. Le pagine aperte si disconnettono entro pochi minuti.", "Sessão terminada em {n} dispositivo(s). As páginas abertas saem dentro de minutos."],
+["They were not logged in anywhere.", "Ce compte n’était connecté nulle part.", "No tenía la sesión abierta en ningún sitio.", "Das Konto war nirgends angemeldet.", "Non era connesso da nessuna parte.", "Não tinha sessão aberta em lado nenhum."],
+["3 to 20 letters, numbers, dots or underscores", "3 à 20 lettres, chiffres, points ou tirets bas", "De 3 a 20 letras, números, puntos o guiones bajos", "3 bis 20 Buchstaben, Zahlen, Punkte oder Unterstriche", "Da 3 a 20 lettere, numeri, punti o trattini bassi", "3 a 20 letras, números, pontos ou sublinhados"],
+["No friends yet. Type a username above to find someone.", "Pas encore d’amis. Tape un nom d’utilisateur ci-dessus pour trouver quelqu’un.", "Aún no tienes amigos. Escribe un nombre de usuario arriba para encontrar a alguien.", "Noch keine Freunde. Gib oben einen Benutzernamen ein, um jemanden zu finden.", "Ancora nessun amico. Scrivi un nome utente qui sopra per trovare qualcuno.", "Ainda sem amigos. Escreve um nome de utilizador acima para encontrar alguém."],
+["Add friend", "Ajouter", "Añadir", "Hinzufügen", "Aggiungi", "Adicionar"],
+["Email saved. They log in with the new one.", "E-mail enregistré. La connexion se fait avec le nouveau.", "Correo guardado. Ahora entra con el nuevo.", "E-Mail gespeichert. Die Anmeldung läuft jetzt mit der neuen.", "Email salvata. Ora accede con quella nuova.", "E-mail guardado. Agora entra com o novo."],
+["That email does not look valid.", "Cet e-mail ne semble pas valide.", "Ese correo no parece válido.", "Diese E-Mail sieht nicht gültig aus.", "Questa email non sembra valida.", "Esse e-mail não parece válido."],
+["That email already has an account.", "Cet e-mail a déjà un compte.", "Ese correo ya tiene una cuenta.", "Für diese E-Mail gibt es schon ein Konto.", "Questa email ha già un account.", "Esse e-mail já tem uma conta."],
+["Choose a password of at least 8 characters.", "Choisis un mot de passe d’au moins 8 caractères.", "Elige una contraseña de al menos 8 caracteres.", "Wähle ein Passwort mit mindestens 8 Zeichen.", "Scegli una password di almeno 8 caratteri.", "Escolhe uma palavra-passe com pelo menos 8 caracteres."],
+["Show all {n}", "Tout afficher ({n})", "Ver todo ({n})", "Alle {n} zeigen", "Mostra tutti ({n})", "Ver tudo ({n})"],
+["You were signed out", "Tu as été déconnecté", "Se cerró tu sesión", "Du wurdest abgemeldet", "Sei stato disconnesso", "A tua sessão foi terminada"],
+["Last updated {d}", "Dernière mise à jour : {d}", "Última actualización: {d}", "Zuletzt aktualisiert: {d}", "Ultimo aggiornamento: {d}", "Última atualização: {d}"],
 ["Frames per second out of 240: average and worst 10%", "Images par seconde sur 240 : moyenne et 10 % les pires", "Fotogramas por segundo sobre 240: media y 10 % peor", "Bilder pro Sekunde von 240: Schnitt und schlechteste 10 %", "Fotogrammi al secondo su 240: media e 10% peggiore", "Imagens por segundo de 240: média e 10% piores"],
 ["Average {a} FPS, worst 10% {l} FPS, out of 240", "Moyenne {a} FPS, 10 % les pires {l} FPS, sur 240", "Media {a} FPS, 10 % peor {l} FPS, sobre 240", "Schnitt {a} FPS, schlechteste 10 % {l} FPS, von 240", "Media {a} FPS, 10% peggiore {l} FPS, su 240", "Média {a} FPS, 10% piores {l} FPS, de 240"],
 ["low {n}", "bas {n}", "mín. {n}", "tief {n}", "min {n}", "mín. {n}"],

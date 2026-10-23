@@ -87,7 +87,33 @@ function sfNudge() {
   sfRt();
   try { if (SF.ch) SF.ch.send({ type: 'broadcast', event: 'n', payload: { t: Date.now() } }).catch(() => {}); } catch (e) {}
 }
-function sfLock() { const on = SF.shown || !!AD.locked; ['top', 'side', 'main'].forEach(id => { const n = document.getElementById(id); if (n) n.inert = on; }); }
+const BLK = { el: {}, mo: null, t: 0, q: false };
+const gpBlocked = () => !!(SF.shown || AD.locked || !consent);
+function sfLock() {
+  const on = gpBlocked();
+  document.documentElement.classList.toggle('gp-block', on);
+  document.documentElement.classList.toggle('ck-block', !consent);
+  ['top', 'side', 'main'].forEach(id => { const n = document.getElementById(id); if (n && n.inert !== on) n.inert = on; });
+  const keep = new Set(['sfmaint', 'adblock', 'ckbar', 'lgsheet', 'toast', 'sfbar', 'sfalert', 'upbar', 'clp']);
+  for (const c of document.body.children) {
+    if (/^(SCRIPT|STYLE|LINK|NOSCRIPT)$/.test(c.tagName) || keep.has(c.id) || c.contains(document.getElementById('main'))) continue;
+    if (on && !c.inert) { c.inert = true; c.dataset.gpi = '1'; } else if (!on && c.dataset.gpi) { c.inert = false; delete c.dataset.gpi; }
+  }
+  [['sfmaint', SF.shown], ['adblock', !!AD.locked], ['ckbar', !consent]].forEach(([id, want]) => {
+    const el = BLK.el[id] || (BLK.el[id] = document.getElementById(id));
+    if (!want || !el) return;
+    if (!el.isConnected) document.body.append(el);
+    if (el.hidden) el.hidden = false;
+    if (el.inert) el.inert = false;
+    if (el.getAttribute('style')) el.removeAttribute('style');
+  });
+  if (on && (cur || pend)) go(homeHref(), true);
+  if (on && !BLK.mo && window.MutationObserver) {
+    BLK.mo = new MutationObserver(() => { if (BLK.q) return; BLK.q = true; queueMicrotask(() => { BLK.q = false; sfLock(); }); });
+    BLK.mo.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['inert', 'hidden', 'style', 'class'] });
+    BLK.t = setInterval(sfLock, 1000);
+  } else if (!on && BLK.mo) { BLK.mo.disconnect(); BLK.mo = null; clearInterval(BLK.t); }
+}
 function sfOffFrame(g) {
   SF.og = g;
   frame.textContent = '';
@@ -121,7 +147,8 @@ function sfPaint() {
   } else if (al) { al.classList.remove('on'); al.hidden = true; }
   clearTimeout(SF.bt);
   if (showB && until) SF.bt = setTimeout(sfPaint, Math.min(until - now + 500, 3600000));
-  const m = !!d.maintenance && !adm && !(SB.user && !AD.at) && !SF.peek, el = $('#sfmaint');
+  const m = !!d.maintenance && !adm && !(SB.user && !AD.at && Date.now() - T0 < 10000) && !SF.peek, el = $('#sfmaint');
+  if (d.maintenance && SB.user && !AD.at && !SF.mt) SF.mt = setTimeout(sfPaint, Math.max(0, 10500 - (Date.now() - T0)));
   if (m !== SF.shown) {
     SF.shown = m;
     if (m) {
@@ -229,7 +256,7 @@ function siteBoot() {
   setInterval(() => { if (document.visibilityState !== 'hidden') { sfLoad(true); upCheck(true); } }, 300000);
   setInterval(() => { if (SF.shown) sfLoad(true); }, 20000);
   setTimeout(() => upCheck(true), 4000);
-  sfPaint(); sfLoad(true);
+  sfPaint(); sfLock(); sfLoad(true);
   if (SB.on) sbClient().then(() => sfRt()).catch(() => {});
   setInterval(() => { if (!SF.shown && document.visibilityState !== 'hidden') sfLoad(true); }, 30000);
   if (SB.on && sbHasSession()) CL.t = setTimeout(() => clAuto(), 8000);
