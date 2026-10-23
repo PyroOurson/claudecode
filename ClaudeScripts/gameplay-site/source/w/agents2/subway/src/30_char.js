@@ -42,6 +42,7 @@
     }
 
     function hero(P) {
+      const J = P.id === 'jake';
       const root = new THREE.Group();
       const body = grp(0, 0, 0, root);
       const spin = grp(0, 0.55, 0, body);
@@ -64,24 +65,43 @@
       const neck = grp(0, 0.56, 0, torso);
       mesh(cyl(0.08, 0.09, 0.08, 10), M(P.skin), 0, 0.06, 0, neck);
       const head = grp(0, 0.04, 0, neck);
-      head.scale.setScalar(1.22);
+      head.scale.setScalar(J ? 1.5 : 1.22);
       mesh(rbox(0.44, 0.46, 0.42, 0.82), M(P.skin), 0, 0.22, 0, head);
       mesh(ball(0.12, 12), M(P.skin), 0, 0.12, -0.08, head, 1.4, 0.8, 1.1);
       for (const sx of [-1, 1]) {
         mesh(ball(0.065, 10), M(P.skin), sx * 0.215, 0.2, 0.02, head, 0.55, 1, 0.9);
-        mesh(ball(0.06, 12), M('#ffffff'), sx * 0.085, 0.25, -0.185, head, 1, 1.3, 0.55);
-        mesh(ball(0.032, 10), M('#3a2a1a'), sx * 0.085, 0.245, -0.212, head, 1, 1.2, 0.5);
+        const ek = J ? 1.05 : 1;
+        mesh(ball(0.06, 12), M('#ffffff'), sx * 0.085, 0.25, -0.185, head, ek, 1.3 * ek, 0.55);
+        mesh(ball(0.032, 10), M(J ? '#4a2a14' : '#3a2a1a'), sx * 0.085, 0.245, -0.212, head, ek, 1.2 * ek, 0.5);
         mesh(ball(0.012, 6), M('#ffffff'), sx * 0.075, 0.26, -0.225, head);
-        const br = mesh(rbox(0.1, 0.028, 0.035, 0.8), M(P.hair), sx * 0.09, 0.335, -0.195, head); br.rotation.z = -sx * 0.18;
+        const br = mesh(rbox(0.1, J ? 0.036 : 0.028, 0.035, 0.8), M(P.hair), sx * 0.09, J ? 0.345 : 0.335, -0.195, head); br.rotation.z = -sx * (J ? 0.28 : 0.18);
       }
       mesh(ball(0.05, 10), M(shade(P.skin, -0.06)), 0, 0.18, -0.215, head, 1, 0.9, 1);
-      const mo = mesh(G('mouth', () => new THREE.TorusGeometry(0.05, 0.014, 6, 12, Math.PI)), M('#7a2a2a'), 0, 0.12, -0.2, head); mo.rotation.z = Math.PI;
+      if (J) {
+        mesh(rbox(0.17, 0.075, 0.05, 0.8), M('#6a1f1f'), 0, 0.115, -0.208, head);
+        mesh(rbox(0.15, 0.03, 0.04, 0.8), M('#ffffff'), 0, 0.136, -0.222, head);
+        for (const sx of [-1, 1]) { const dm = mesh(ball(0.022, 8), M(shade(P.skin, -0.12)), sx * 0.1, 0.125, -0.2, head); dm.scale.set(1, 1, 0.6); }
+      } else { const mo = mesh(G('mouth', () => new THREE.TorusGeometry(0.05, 0.014, 6, 12, Math.PI)), M('#7a2a2a'), 0, 0.12, -0.2, head); mo.rotation.z = Math.PI; }
       mesh(rbox(0.46, 0.26, 0.4, 0.8), M(P.hair), 0, 0.31, 0.045, head);
       for (const sx of [-1, 1]) mesh(rbox(0.06, 0.14, 0.12, 0.8), M(P.hair), sx * 0.2, 0.27, -0.06, head);
       if (P.extra === 'pony') { mesh(rbox(0.17, 0.36, 0.17, 0.8), M(P.hair), 0, 0.18, 0.27, head); }
-      if (P.hood) {
+      if (P.hood && J) {
+        mesh(rbox(0.56, 0.22, 0.24, 0.75), M(P.hood), 0, 0.5, 0.2, torso);
+        mesh(rbox(0.46, 0.3, 0.16, 0.75), M(P.hood), 0, 0.36, 0.24, torso);
+        mesh(rbox(0.5, 0.14, 0.12, 0.8), M(shade(P.hood, -0.22)), 0, 0.57, 0.2, torso);
+        for (const sx of [-1, 1]) { mesh(cyl(0.014, 0.014, 0.2, 5), M('#ffffff'), sx * 0.07, 0.52, -0.2, torso); mesh(ball(0.025, 6), M('#ffffff'), sx * 0.07, 0.31, -0.2, torso); }
+      } else if (P.hood) {
         mesh(rbox(0.46, 0.2, 0.2, 0.8), M(P.hood), 0, 0.0, 0.17, head);
         mesh(rbox(0.36, 0.2, 0.2, 0.8), M(P.hood), 0, 0.5, 0.2, torso);
+      }
+      if (J) {
+        const pk = grp(0, 0.3, 0.3, torso);
+        mesh(rbox(0.42, 0.46, 0.2, 0.7), M('#3a4150'), 0, 0, 0, pk);
+        mesh(rbox(0.43, 0.16, 0.22, 0.75), M('#ffcf1f'), 0, 0.17, 0.005, pk);
+        mesh(rbox(0.3, 0.14, 0.08, 0.75), M('#2a2f3a'), 0, -0.08, 0.13, pk);
+        for (const sx of [-1, 1]) mesh(rbox(0.05, 0.4, 0.04, 0.8), M('#2a2f3a'), sx * 0.2, 0.0, -0.11, pk);
+        for (const sx of [-1, 1]) mesh(rbox(0.05, 0.4, 0.04, 0.8), M('#2a2f3a'), sx * 0.15, -0.05, -0.115, pk);
+        torso.userData.pack = pk;
       }
       if (P.scarf) { mesh(rbox(0.34, 0.12, 0.14, 0.8), M(P.scarf), 0, 0.555, -0.13, torso); const sc = mesh(rbox(0.16, 0.16, 0.05, 0.6), M(P.scarf), 0, 0.47, -0.2, torso); sc.rotation.z = Math.PI / 4; }
       if (P.extra === 'phones') { const t = new THREE.Mesh(G('torus', () => new THREE.TorusGeometry(0.17, 0.035, 6, 16)), M('#2f2f3a')); t.rotation.x = Math.PI / 2; t.position.set(0, 0.0, 0); neck.add(t); for (const s of [-1, 1]) mesh(rbox(0.08, 0.12, 0.12), M('#ff4fa3'), s * 0.17, 0.0, -0.02, neck); }
@@ -94,6 +114,13 @@
         brim.rotation.x = -0.14;
         mesh(cyl(0.25, 0.25, 0.04, 20), M(shade(P.hatA, -0.2)), 0, 0.355, 0.015, head);
         mesh(ball(0.03, 8), M(P.hatA), 0, 0.555, 0.015, head);
+        if (J) {
+          mesh(rbox(0.26, 0.05, 0.03, 0.8), M(shade(P.hatA, -0.25)), 0, 0.36, 0.255, head);
+          mesh(rbox(0.07, 0.07, 0.02, 0.8), M('#ffffff'), 0, 0.36, 0.272, head);
+          for (const sx of [-1, 1]) { const sm = mesh(rbox(0.02, 0.2, 0.46, 0.8), M(shade(P.hatA, -0.12)), sx * 0.04, 0.44, 0.0, head); sm.rotation.z = sx * 0.12; }
+          mesh(rbox(0.16, 0.1, 0.02, 0.8), M('#e8323a'), -0.04, 0.42, -0.232, head).rotation.x = -0.35;
+          mesh(ball(0.02, 6), M('#2f6fd9'), 0.06, 0.41, -0.236, head);
+        }
       } else if (P.hat === 'beanie') {
         const dome = G('dome2', () => new THREE.SphereGeometry(0.24, 16, 8, 0, TAU, 0, Math.PI / 2));
         mesh(dome, M(P.hatA), 0, 0.31, 0.02, head, 1, 1.05, 1);
@@ -122,10 +149,11 @@
         for (let k = 0; k < 3; k++) mesh(rbox(0.12, 0.018, 0.025, 0.8), M('#ffffff'), 0, 0.04 - k * 0.012, -0.08 - k * 0.05, g);
         return g;
       };
-      const legR = limb(pelvis, 0.13, -0.02, 0.38, 0.35, 0.13, 0.12, P.pants, P.pants, null, null, null, 1.18);
-      const legL = limb(pelvis, -0.13, -0.02, 0.38, 0.35, 0.13, 0.12, P.pants, P.pants, null, null, null, 1.18);
-      for (const lg of [legR, legL]) mesh(cyl(0.15, 0.15, 0.06, 12), M(shade(P.pants, 0.15)), 0, 0.05, 0, lg.end);
-      legR.end.add(shoe(P.shoeA, P.shoeB)); legL.end.add(shoe(P.shoeA, P.shoeB));
+      const lr1 = J ? 0.15 : 0.13, lr2 = J ? 0.145 : 0.12, lf = J ? 1.32 : 1.18;
+      const legR = limb(pelvis, 0.13, -0.02, 0.38, 0.35, lr1, lr2, P.pants, P.pants, null, null, null, lf);
+      const legL = limb(pelvis, -0.13, -0.02, 0.38, 0.35, lr1, lr2, P.pants, P.pants, null, null, null, lf);
+      for (const lg of [legR, legL]) mesh(cyl(J ? 0.19 : 0.15, J ? 0.19 : 0.15, 0.06, 12), M(shade(P.pants, 0.15)), 0, 0.05, 0, lg.end);
+      for (const lg of [legR, legL]) { const sh = shoe(P.shoeA, P.shoeB); if (J) { sh.scale.setScalar(1.3); mesh(rbox(0.1, 0.1, 0.05, 0.8), M('#d8322c'), 0, -0.03, 0.17, sh); mesh(rbox(0.14, 0.05, 0.06, 0.8), M('#5cc43a'), 0, 0.06, 0.15, sh); } lg.end.add(sh); }
       const board = grp(0, 0.06, 0, root);
       mesh(rbox(0.66, 0.08, 1.6, 0.35), M('#ff4fa3'), 0, 0, 0, board);
       mesh(rbox(0.56, 0.03, 1.42, 0.35), M('#ffd23f'), 0, 0.045, 0, board);
@@ -260,7 +288,7 @@
         tor = lerp(tor, -0.75, k); hx = lerp(hx, 0.5, k);
         spinX = -TAU * ease(clamp(st.rollP, 0, 1)); spinY = lerp(0.55, 0.42, k); pelY = lerp(pelY, 0.12, k); bob = 0;
       }
-      if (st.stumble > 0) { const q = st.stumble; tor += 0.5 * q; aL += 1.6 * q * Math.sin(t * 30); aR += 1.6 * q * Math.cos(t * 30); hy += 0.4 * q * Math.sin(t * 25); }
+      if (st.stumble > 0) { const q = st.stumble, e = Math.sin(clamp(q, 0, 1) * Math.PI), fl = Math.sin(t * 26); tor -= 0.75 * e; hx -= 0.35 * e; pelY -= 0.1 * e; lL = lerp(lL, 0.9, e); kL = lerp(kL, -0.9, e); lR = lerp(lR, -0.6, e); aL = lerp(aL, 2.3, e) + 0.55 * q * fl; aR = lerp(aR, 2.0, e) - 0.55 * q * fl; eL = lerp(eL, 0.5, e); eR = lerp(eR, 0.5, e); azL = lerp(azL, 0.9, e); azR = lerp(azR, -0.9, e); hy += 0.4 * q * Math.sin(t * 25); tw += 0.35 * e * fl; }
       R.legL.top.rotation.x = lL; R.legR.top.rotation.x = lR; R.legL.mid.rotation.x = kL; R.legR.mid.rotation.x = kR;
       R.legL.end.rotation.x = -0.25 * Math.max(0, -kL - 0.6); R.legR.end.rotation.x = -0.25 * Math.max(0, -kR - 0.6);
       R.legL.top.rotation.z = st.mode === 'board' ? -0.22 : -0.04; R.legR.top.rotation.z = st.mode === 'board' ? 0.22 : 0.04;

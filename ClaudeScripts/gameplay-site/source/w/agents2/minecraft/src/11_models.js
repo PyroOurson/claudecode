@@ -144,7 +144,7 @@
       const SK = [92, 142, 66], SKD = [66, 106, 48], HAIR = [52, 76, 40], SH = [30, 150, 150], SHD = [22, 120, 124], PA = [58, 60, 160], PAD = [44, 46, 126], SHOE = [62, 62, 70], h = hash3(px, py, f.length * 11 + part.length);
       if (part === 'head') { if (f === 'top') return mk(HAIR, .9 + h * .3); if (f === 'bottom') return SKD; if (f === 'back') return py < 4 ? mk(HAIR, .95 + h * .15) : mk(SK, .9 + h * .1); if (f === 'front') { if (py === 0 || (py === 1 && h < .45)) return mk(HAIR, .9 + h * .2); if (py === 4 && (px === 1 || px === 6)) return [20, 26, 20, 2]; if (py === 4 && (px === 2 || px === 5)) return [12, 16, 12, 2]; if (py === 5 && (px === 3 || px === 4)) return mk(SKD, .9); if (py === 6 && px >= 2 && px <= 5) return [28, 40, 28, 2]; return mk(SK, .93 + h * .1); } if (py < 2) return mk(HAIR, .95 + h * .15); return mk(SK, .92 + h * .1); }
       if (part === 'body') { if (f === 'top') return SH; if (f === 'bottom') return mk(PA, .9); if (py >= fh - 2) return mk(PA, 1); return mk(hash3(px >> 1, py >> 1, 7) < .13 ? SHD : SH, .94 + h * .1); }
-      if (part.includes('arm')) { if (f === 'top') return SH; if (f === 'bottom') return mk(SKD, .9); if (py <= 3) return mk(h < .12 ? SHD : SH, .94 + h * .1); return mk(h < .08 ? SKD : SK, .92 + h * .12); }
+      if (part.includes('arm')) { if (f === 'top') return SH; if (f === 'bottom') return [SK[0] * 1.2, SK[1] * 1.2, SK[2] * 1.2, 2]; if (py <= 3) return mk(h < .12 ? SHD : SH, .94 + h * .1); return mk(h < .08 ? SKD : SK, .92 + h * .12); }
       if (f === 'top') return PA; if (f === 'bottom') return mk(SHOE, .85); if (py >= fh - 3) return mk(SHOE, 1.1 - (py - fh + 3) * .12); return mk(h < .07 ? PAD : PA, .92 + h * .12);
     };
     PAINTERS.skeleton = (part, f, px, py, fw, fh, B) => {

@@ -227,7 +227,15 @@
         state = 'paused';
         show('idle', label(), 'Paused', 'Tap or press Space to carry on.');
       });
+      let tick = performance.now();
       api.loop(() => {
+        const now = performance.now(), gap = now - tick;
+        tick = now;
+        if (gap > 400 && (state === 'wait' || state === 'go' || state === 'red')) {
+          state = 'paused'; lock = now + 300;
+          show('idle', label(), 'Paused', 'Tap or press Space to carry on.');
+          return;
+        }
         if (state === 'wait') { if (performance.now() >= goTime) present(); }
         else if (state === 'red' && performance.now() >= redEnd) { reds++; api.sfx('good'); trial('Nice hold! Now wait for green…'); }
       });

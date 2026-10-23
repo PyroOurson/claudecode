@@ -464,7 +464,7 @@ ${p} .seg button[aria-checked="true"]{background:#fff;color:var(--accent);box-sh
           t0 = performance.now();
           timer = api.interval(() => { timeEl.textContent = clock((performance.now() - t0) / 1000); }, 250);
         }
-        moves += k; movesEl.textContent = moves; api.score(moves); api.sfx('tick');
+        moves += k; movesEl.textContent = moves; api.score(String(moves)); api.sfx('tick');
         place();
         if (isSolved(b)) finish();
       }

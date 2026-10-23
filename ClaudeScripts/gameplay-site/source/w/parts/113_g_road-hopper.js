@@ -185,6 +185,31 @@
     }]
   ];
 
+  const critter = o => (B, S) => {
+    const c = o.c, d = o.d, l = o.l, hd = o.hd || c, nose = o.nose || '#3a2c2c';
+    S(.1, .14, .1, .13, 0, .24, d); S(.1, .14, .1, .13, 0, -.12, d);
+    if (o.wool) { B(.6, .46, .64, 0, .1, .04, c); B(.62, .06, .66, 0, .1, .04, shade(c, .82)); B(.5, .03, .5, 0, .56, .04, '#ffffff'); }
+    else { B(.5, .4, .56, 0, .12, .04, c); B(.52, .06, .58, 0, .12, .04, shade(c, .8)); B(.34, .02, .4, 0, .52, .04, shade(c, 1.1)); }
+    if (o.spots) { B(.22, .03, .24, .1, .53, .1, d); B(.18, .03, .2, -.12, .53, -.08, d); B(.04, .2, .24, .27, .3, .02, d); }
+    B(.46, .4, .4, 0, .46, -.22, hd); B(.4, .02, .34, 0, .86, -.22, shade(hd, 1.1));
+    B(.26, .16, .06, 0, .46, -.44, l); B(.12, .06, .05, 0, .56, -.47, nose);
+    if (o.patch) S(.12, .14, .03, .12, .6, -.425, d);
+    S(.05, .08, .03, .11, .64, -.43, o.patch ? W : DK); S(.02, .03, .03, .115, .68, -.445, o.patch ? DK : W);
+    if (o.ear === 'long') { S(.08, .36, .07, .1, .84, -.18, hd); S(.04, .26, .02, .1, .86, -.22, '#ffb3c6'); }
+    else if (o.ear === 'horn') { S(.06, .16, .06, .15, .86, -.26, '#f4ead0'); S(.14, .07, .08, .27, .72, -.2, hd); }
+    else if (o.ear === 'big') { S(.2, .2, .08, .26, .78, -.2, hd); S(.11, .11, .02, .26, .8, -.245, '#e9ecf2'); }
+    else { S(.12, .12, .08, .18, .84, -.2, o.d); S(.07, .07, .02, .18, .86, -.245, l); }
+    if (o.tail) B(.16, .16, .16, 0, .34, .36, l); else B(.1, .1, .08, 0, .38, .34, c);
+  };
+  CHARS.push(
+    ['PANDA', critter({ c: '#f4f6fa', d: '#23242e', l: '#ffffff', patch: 1 })],
+    ['BUNNY', critter({ c: '#cfc7bf', d: '#b2a89e', l: '#fffaf4', ear: 'long', tail: 1, nose: '#ff8fa3' })],
+    ['BEARY', critter({ c: '#8a5a3a', d: '#6a4229', l: '#d9b48c', nose: '#2b2d42' })],
+    ['COWBELL', critter({ c: '#f7f7f9', d: '#2b2d42', l: '#ffb3c6', ear: 'horn', spots: 1, nose: '#e68aa0' })],
+    ['LAMBCHOP', critter({ c: '#f6f1e4', d: '#3a3340', l: '#5a5066', wool: 1, hd: '#3a3340', nose: '#1d1b26' })],
+    ['KOALA', critter({ c: '#9fa5b3', d: '#7d8392', l: '#e9ecf2', ear: 'big', nose: '#2b2d42' })]
+  );
+
   const wheels = (B, xs, aw, ah) => {
     for (const x of xs) {
       B(.4, ah || .16, aw || .875, x, .2, 0, '#1d1f2a');
@@ -856,7 +881,7 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
         if (state !== 'dying') return;
         state = 'over';
         let nb = false;
-        if (!submitted) { submitted = true; if (score > 0) nb = api.submit(score); }
+        if (!submitted) { submitted = true; if (score > 0) nb = api.submit(score) && score > top; }
         if (score > top) top = score;
         persist(); hudTop();
         el.nb.hidden = !nb;

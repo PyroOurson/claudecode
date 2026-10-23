@@ -1,5 +1,5 @@
-        let AC = null, master = null, fxRv = null, noiseB = null, bstG = null, bstF = null, fxBst2 = null, fxBst3 = null, windG = null, crowdG = null, crowdF = null, fxCr2 = null;
-        const fxEngV = [], FX_CROWD = 0.032;
+        let AC = null, master = null, fxRv = null, noiseB = null, bstG = null, bstF = null, fxBst2 = null, fxBst3 = null, windG = null, crowdG = null, crowdF = null, fxCr2 = null, fxTyG = null, fxSqG = null, fxSqF = null;
+        const fxEngV = [], fxEngO = [], FX_CROWD = 0.032;
         function audio() {
           if (AC || dead) return;
           try {
@@ -22,9 +22,16 @@
               o1.start(); o2.start(); o3.start();
               fxEngV.push({ o1, o2, o3, f, g, g3, boost: false, sup: false });
             }
+            for (let i = 0; i < 4; i++) {
+              const o1 = AC.createOscillator(), o2 = AC.createOscillator(), f = AC.createBiquadFilter(), g = AC.createGain(), pn = AC.createStereoPanner ? AC.createStereoPanner() : null;
+              o1.type = 'sawtooth'; o2.type = 'square'; f.type = 'lowpass'; f.Q.value = 2; f.frequency.value = 260; g.gain.value = 0;
+              o1.connect(f); const g2 = AC.createGain(); g2.gain.value = 0.3; o2.connect(g2).connect(f); f.connect(g); if (pn) g.connect(pn).connect(master); else g.connect(master);
+              o1.start(); o2.start();
+              fxEngO.push({ o1, o2, f, g, pn });
+            }
             [bstG, bstF] = loop('bandpass', 700, 0.75, 0); [fxBst2] = loop('lowpass', 260, 0.9, 0); [fxBst3] = loop('highpass', 4200, 0.5, 0); [windG] = loop('highpass', 2300, 0.6, 0);
-            [crowdG, crowdF] = loop('bandpass', 500, 0.5, FX_CROWD); [fxCr2] = loop('bandpass', 1300, 0.8, 0);
-          } catch (e) { try { if (AC) AC.close(); } catch (er) { } AC = null; fxEngV.length = 0; }
+            [crowdG, crowdF] = loop('bandpass', 500, 0.5, FX_CROWD); [fxCr2] = loop('bandpass', 1300, 0.8, 0); [fxTyG] = loop('lowpass', 420, 0.8, 0); [fxSqG, fxSqF] = loop('bandpass', 1900, 9, 0);
+          } catch (e) { try { if (AC) AC.close(); } catch (er) { } AC = null; fxEngV.length = 0; fxEngO.length = 0; }
         }
         const fxRoute = (g, rv, pan) => {
           if (pan && AC.createStereoPanner) { const p = AC.createStereoPanner(); p.pan.value = clamp(pan, -1, 1); g.connect(p).connect(master); } else g.connect(master);
@@ -212,7 +219,7 @@
             case 'tball': { const B = W.ball.p; fxFlash(B.x, B.y, B.z, 0xdff0ff, 120, 520, 0.35, 0.8); for (let i = 0; i < 30; i++) { const d = fxDir(0, 0, 0, false); fire.emit(B.x + d.x * 100, B.y + d.y * 100, B.z + d.z * 100, -d.x * 220, -d.y * 220, -d.z * 220, 0.45, 0.7, 0.9, 1, 40, 6, 0, 1); } break; }
             case 'treset': { const c = e.car; if (c) fxFlash(c.p.x, c.p.y, c.p.z + 30, TEAMC[c.team], 120, 520, 0.45, 0.8); break; }
             case 'save': if (!rp && e.car) { feedMsg(`${nm(e.car)} saved it`); popMsg(e.car, 'SAVE +50'); } fxOoh(); break;
-            case 'shot': if (!rp) popMsg(e.car, 'SHOT ON GOAL +20'); break;
+            case 'shot': if (!rp) popMsg(e.car, 'SHOT ON GOAL +20'); crowdSwell(0.09, 1.5, 0.35); break;
             case 'epicsave': fxOoh(); crowdSwell(0.24, 2.6, 0.6); break;
             case 'flipreset': if (isLocal(e.car)) { const c = e.car, x = c.p.x - c.u.x * 22, y = c.p.y - c.u.y * 22, z = c.p.z - c.u.z * 22; tone(1318.5, 0.12, 'sine', 0.04, 1975.5); tone(1975.5, 0.16, 'triangle', 0.025, 0, 0.06); fxFlash(x, y, z, 0xe8ff60, 40, 260, 0.2, 0.7); for (let i = 0; i < 46; i++) { const d = fxDir(-c.u.x * 0.6, -c.u.y * 0.6, -c.u.z * 0.6, false), sp = 500 + Math.random() * 900; fxSpark.emit(x, y, z, d.x * sp + c.v.x, d.y * sp + c.v.y, d.z * sp + c.v.z, 0.18 + Math.random() * 0.22, 0.8, 1, 0.15, 2 + Math.random() * 2.5, 0.06, 0, 4); } } break;
             case 'demo': {
@@ -245,7 +252,17 @@
               if (isLocal(c)) { const hi = e.type === 'djump' ? 1.3 : 1; noise(0.13, 900 * hi, 0.1, 'bandpass', 1.2, 380 * hi); tone(175 * hi, 0.12, 'sine', 0.08, 88 * hi); }
               break;
             }
-            case 'dodge': if (isLocal(e.car)) { noise(0.32, 1900, 0.12, 'bandpass', 0.9, 420); tone(260, 0.18, 'sine', 0.03, 120); } break;
+            case 'dodge': {
+              const c = e.car; if (!c) break;
+              const a = isLocal(c) ? 1 : att(c.p) * 0.45, pn = fxPan(c.p), hl = Math.hypot(c.f.x, c.f.y) || 1, dx = c.fdx || 0, dy = c.fdy || 0, mv = dx || dy, wx = mv ? (c.f.x * dx + c.f.y * dy) / hl : 0, wy = mv ? (c.f.y * dx - c.f.x * dy) / hl : 0;
+              noise(0.32, 1900, 0.12 * a, 'bandpass', 0.9, 420, 0, 0.2, pn); tone(260, 0.18, 'sine', 0.03 * a, 120, 0, 0.2, pn);
+              fxFlash(c.p.x, c.p.y, c.p.z, 0xdff0ff, 60, 320, 0.16, 0.45); fxShock(c.p.x, c.p.y, c.p.z, 0xcfe6ff, 40, 280, 0.22, 0.22, false);
+              for (let i = 0; i < 14; i++) {
+                const r = Math.random() * TAU, sp = 500 + Math.random() * 500, vx = mv ? -wx * sp + Math.cos(r) * 160 : Math.cos(r) * sp, vy = mv ? -wy * sp + Math.sin(r) * 160 : Math.sin(r) * sp;
+                fxSpark.emit(c.p.x + R() * 30, c.p.y + R() * 30, c.p.z + R() * 14, vx, vy, R() * 120, 0.14 + Math.random() * 0.14, 0.8, 0.9, 1, 3, 0.08, 0, 3);
+              }
+              break;
+            }
             case 'land': {
               const c = e.car; if (!c) break;
               fxDust(c.p.x - c.u.x * 16, c.p.y - c.u.y * 16, c.p.z - c.u.z * 16, 8, 1, c.u.x, c.u.y, c.u.z);

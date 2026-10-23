@@ -904,8 +904,8 @@ ${p} .hist em{font-style:normal;color:var(--soft);min-width:26px}
 ${p} .hist span{flex:1;min-width:0;white-space:nowrap}
 ${p} .hist .cur{color:var(--accent)}
 ${p} .hist .none{color:var(--soft);font-family:var(--sans)}
-${p} .btns{display:flex;gap:6px}
-${p} .btns .g-btn{flex:1;min-width:0;padding:0 8px}
+${p} .btns{display:flex;flex-wrap:wrap;gap:6px}
+${p} .btns .g-btn{flex:1 1 40%;min-width:0;padding:0 8px}
 ${p} [hidden]{display:none!important}
 ${p} .seg button.tb{display:none}
 ${p}.touch .seg button.tb{display:block}
@@ -954,7 +954,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     const side = el('div', 'side', segs.map(s => `<div class="seg" data-k="${s.key}"${s.only ? ` data-only="${s.only}"` : ''} role="radiogroup">${s.opts.map(v => `<button role="radio" data-v="${v}"${v === 'Table' ? ' class="tb"' : ''}>${(s.txt && s.txt[v]) || v}</button>`).join('')}</div>`).join('')
       + '<div class="cn" hidden><i></i><span></span></div>'
       + `<div class="pcs">${['ai', 'you'].map(w => `<div class="pc ${w}"><i class="chip"></i><div><b></b><small></small></div><span class="dots"><i></i><i></i><i></i></span></div>`).join('')}</div>`
-      + '<div class="st" role="status"></div><div class="hist"></div><div class="btns"><button class="g-btn ghost sm"></button><button class="g-btn sm"></button></div>');
+      + '<div class="st" role="status"></div><div class="hist"></div><div class="btns"><button class="g-btn ghost sm"></button><button class="g-btn sm"></button><button class="g-btn ghost sm" hidden></button><button class="g-btn ghost sm" hidden></button></div>');
     main.append(side);
     if (o.elo) {
       const ew = el('div', 'elo', `<div class="elo-h"><span>AI strength</span><b></b></div><input type="range" min="400" max="2400" step="50" aria-label="AI strength in Elo"><div class="elo-s"><i>400</i><i>Beginner</i><i>Club</i><i>Master</i><i>2400</i></div>`);
@@ -967,7 +967,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       rg.addEventListener('change', () => { api.save({ ...opt }); api.sfx('tick'); });
       rg.addEventListener('keydown', e => e.stopPropagation());
     }
-    const q = s => side.querySelector(s), pc = { ai: q('.pc.ai'), you: q('.pc.you') }, stEl = q('.st'), histEl = q('.hist'), cn = q('.cn'), [b1, b2] = q('.btns').children;
+    const q = s => side.querySelector(s), pc = { ai: q('.pc.ai'), you: q('.pc.you') }, stEl = q('.st'), histEl = q('.hist'), cn = q('.cn'), [b1, b2, b3, b4] = q('.btns').children;
     const N = { role: null, live: false, round: 0, mine: false, theirs: false, myRe: false, theirRe: false, sure: false, hooked: false };
     let streak = 0, over = false, gen = 0, dirtyF = true, cursor = null, ovUp = false, drag = null, me = 1, toMove = 1, canUndo = false, cur = '';
     const online = () => opt.mode === 'Online';
@@ -998,7 +998,9 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       else if (over) { a = ['Leave', 'leave']; b = [N.myRe ? 'Waiting…' : 'Rematch', 're', N.myRe]; }
       else if (N.theirs) { a = ['Decline', 'dec']; b = ['Accept draw', 'acc']; }
       else { a = N.role === 'host' && !o.ply() ? ['Swap sides', 'swap'] : [N.mine ? 'Draw offered' : 'Offer draw', 'offer', N.mine]; b = [N.sure ? 'Tap to confirm' : 'Resign', 'resign']; }
-      [[b1, a], [b2, b]].forEach(([bt, [t, act, dis]]) => { bt.textContent = t; bt.dataset.b = act; bt.disabled = !!dis; });
+      const cp = !online() && !!o.offer, st = !o.started() || over;
+      [[b1, a], [b2, b], ...(cp ? [[b3, [N.sure ? 'Sure?' : 'Resign', 'resign0', st]], [b4, ['Offer draw', 'draw0', st]]] : [])].forEach(([bt, [t, act, dis]]) => { bt.textContent = t; bt.dataset.b = act; bt.disabled = !!dis; });
+      b3.hidden = b4.hidden = !cp;
     }
     function turnTo(s, note) {
       toMove = s;
@@ -1112,6 +1114,16 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     function act(a) {
       if (a === 'undo') undo();
       else if (a === 'new') newGame();
+      else if (a === 'resign0') {
+        if (over) return;
+        if (!N.sure) { N.sure = true; btns(); const g = gen; api.timeout(() => { if (g === gen && N.sure) { N.sure = false; btns(); } }, 2500); return; }
+        end(-me, 'You resigned', o.stats());
+      }
+      else if (a === 'draw0') {
+        if (over) return;
+        const why = o.offer();
+        if (why) { api.toast(why); api.sfx('bad'); } else end(0, 'Draw agreed', o.stats());
+      }
       else if (a === 'room') goOnline('CPU');
       else if (a === 'leave') setMode('CPU');
       else if (a === 're') rematch();
@@ -1421,7 +1433,13 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       sides: { 1: ['White', CHIP_W], '-1': ['Black', CHIP_B] }, cpuSide: () => k.opt.side === 'Black' ? -1 : 1,
       flip: f => { if (flip !== f) { flip = f; k.dirty(); } },
       newGame, undo, draw, down, drop, remote, load, ai: aiTurn, ply: () => hist.length, list: () => hist.map(h => h.m),
-      busy: () => anims.length > 0, started: () => hist.some(h => h.by === k.me)
+      busy: () => anims.length > 0, started: () => hist.some(h => h.by === k.me),
+      stats: () => [['Moves', Math.ceil(hist.length / 2)]],
+      offer: () => {
+        if (hist.length < 20) return 'AI: too early for a draw';
+        const sum = s => hist.filter(h => h.by === s && h.cap).reduce((t, h) => t + MAT[Math.abs(h.cap)], 0);
+        return sum(-k.me) > sum(k.me) ? 'AI declines the draw' : '';
+      }
     });
     const ctx = k.ctx, hide = new Uint8Array(128);
     useSet(k.opt.board === 'Green');
@@ -1616,14 +1634,14 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     return { destroy() { aiTok++; if (worker) { try { worker.terminate(); } catch (e) {} } if (wurl) URL.revokeObjectURL(wurl); if (ac) { try { ac.close(); } catch (e) {} } } };
   }
 
-  const CK_AI = { Easy: { depth: 2, minDepth: 2, time: 300, noise: 70, blunder: .1 }, Normal: { depth: 5, minDepth: 4, time: 700, noise: 10 }, Hard: { depth: 30, minDepth: 6, time: 1000, cap: 1450 } };
+  const CK_AI = { Easy: { depth: 2, minDepth: 2, time: 300, noise: 70, blunder: .1 }, Normal: { depth: 5, minDepth: 4, time: 300, cap: 300, noise: 10 }, Hard: { depth: 30, minDepth: 6, time: 300, cap: 320 } };
   function mountCheckers(root, api) {
     const E = checkersEngine(), d = dprOf();
     const spr = { 1: checkerSprite(true, false, SQ * d * 1.2), 2: checkerSprite(true, true, SQ * d * 1.2), '-1': checkerSprite(false, false, SQ * d * 1.2), '-2': checkerSprite(false, true, SQ * d * 1.2) };
     const tex = frameTex(23, woodSquares(['#ecd7a8', ['#d2b47c', '#f8e9c8', '#c19f63']], ['#2e6a47', ['#1f5136', '#3d8059', '#173f29']]));
     let hist = [], sel = -1, cands = [], anims = [], last = null, thinking = false, forced = [], all = [], flip = false;
     const k = kit(root, api, {
-      title: 'Checkers', sides: { 1: ['Red', 'radial-gradient(circle at 35% 30%,#ff9a86,#de3b33 55%,#7c1a14)'], '-1': ['White', 'radial-gradient(circle at 35% 30%,#fff,#f2e8d0 55%,#a89470)'] },
+      title: 'Checkers', segs: [{ key: 'side', opts: ['Red', 'White'], only: 'CPU', txt: { Red: 'Play Red', White: 'Play White' } }], cpuSide: () => k.opt.side === 'White' ? -1 : 1, sides: { 1: ['Red', 'radial-gradient(circle at 35% 30%,#ff9a86,#de3b33 55%,#7c1a14)'], '-1': ['White', 'radial-gradient(circle at 35% 30%,#fff,#f2e8d0 55%,#a89470)'] },
       flip: f => { if (flip !== f) { flip = f; k.dirty(); } },
       newGame, undo, draw, down, drop, remote, load, ai: aiTurn, ply: () => hist.length, list: () => hist.map(h => h.enc),
       busy: () => anims.length > 0 || forced.length > 0, started: () => hist.some(h => h.by === k.me)
@@ -1636,7 +1654,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     function newGame() {
       E.reset();
       hist = []; sel = -1; cands = []; anims = []; last = null; thinking = false;
-      k.turnTo(E.side, k.mode === 'CPU' ? 'red goes first' : '');
+      k.turnTo(E.side, k.mode === 'CPU' ? 'you play ' + (k.me === 1 ? 'Red' : 'White') : '');
       refresh();
     }
     function refresh() {
@@ -1767,7 +1785,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     k.start();
   }
 
-  const RV_AI = { Easy: { depth: 1, minDepth: 1, time: 200, noise: 80, blunder: .1 }, Normal: { depth: 3, minDepth: 3, time: 600, noise: 8 }, Hard: { depth: 30, minDepth: 4, time: 950, cap: 1450 } };
+  const RV_AI = { Easy: { depth: 1, minDepth: 1, time: 200, noise: 80, blunder: .1 }, Normal: { depth: 3, minDepth: 3, time: 300, cap: 300, noise: 8 }, Hard: { depth: 30, minDepth: 4, time: 300, cap: 320 } };
   function mountReversi(root, api) {
     const E = reversiEngine(), d = dprOf();
     const spr = { 1: discSprite(true, SQ * d * 1.2), '-1': discSprite(false, SQ * d * 1.2) };
@@ -1775,7 +1793,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     const flipAt = new Float64Array(64), dropAt = new Float64Array(64).fill(-1e9);
     let hist = [], last = -1, thinking = false, legal = [], animEnd = 0;
     const k = kit(root, api, {
-      title: 'Reversi', sides: { 1: ['Black', 'radial-gradient(circle at 35% 30%,#6a6a75,#25252b 55%,#050507)'], '-1': ['White', 'radial-gradient(circle at 35% 30%,#fff,#f1f1f5 55%,#9d9da8)'] },
+      title: 'Reversi', segs: [{ key: 'side', opts: ['Black', 'White'], only: 'CPU', txt: { Black: 'Play Black', White: 'Play White' } }], cpuSide: () => k.opt.side === 'White' ? -1 : 1, sides: { 1: ['Black', 'radial-gradient(circle at 35% 30%,#6a6a75,#25252b 55%,#050507)'], '-1': ['White', 'radial-gradient(circle at 35% 30%,#fff,#f1f1f5 55%,#9d9da8)'] },
       newGame, undo, draw, down, drop: () => {}, remote, load, ai: aiTurn, ply: () => hist.length, list: () => hist.map(h => h.enc),
       busy: () => now() < animEnd, started: () => hist.some(h => h.by === k.me && !h.pass)
     });
@@ -1786,7 +1804,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     function newGame() {
       E.reset();
       hist = []; last = -1; thinking = false; animEnd = 0; flipAt.fill(-1e9); dropAt.fill(-1e9);
-      k.turnTo(E.side, k.mode === 'CPU' ? 'black goes first' : '');
+      k.turnTo(E.side, k.mode === 'CPU' ? 'you play ' + (k.me === 1 ? 'Black' : 'White') : '');
       refresh();
     }
     function refresh() {

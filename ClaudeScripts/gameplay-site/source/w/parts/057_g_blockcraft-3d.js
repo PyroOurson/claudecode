@@ -1775,11 +1775,12 @@
     }
     function spawn() {
       const o = {};
-      for (let r = 0; r < 1200; r += 8) for (let a = 0; a < 16; a++) {
+      if (flat) return [.5, 4, .5];
+      for (const tmax of [.1, .4]) for (let r = 0; r < 1200; r += 8) for (let a = 0; a < 16; a++) {
         const x = Math.round(Math.cos(a * .3927 + r) * r), z = Math.round(Math.sin(a * .3927 + r) * r);
         column(x, z, o);
         const bb = BIO[o.b];
-        if (o.h >= SEA + 1 && o.h < SEA + 40 && !bb.water && bb.top !== 'stone' && bb.top !== 'snow_block' && bb.top !== 'packed_ice' && bb.td < .4) return [x + .5, o.h + 1, z + .5];
+        if (o.h >= SEA + 1 && o.h < SEA + 40 && !bb.water && bb.top !== 'stone' && bb.top !== 'snow_block' && bb.top !== 'packed_ice' && bb.td < tmax) return [x + .5, o.h + 1, z + .5];
       }
       column(0, 0, o);
       return [.5, Math.max(o.h, SEA) + 2, .5];
@@ -3808,7 +3809,7 @@
       const SK = [92, 142, 66], SKD = [66, 106, 48], HAIR = [52, 76, 40], SH = [30, 150, 150], SHD = [22, 120, 124], PA = [58, 60, 160], PAD = [44, 46, 126], SHOE = [62, 62, 70], h = hash3(px, py, f.length * 11 + part.length);
       if (part === 'head') { if (f === 'top') return mk(HAIR, .9 + h * .3); if (f === 'bottom') return SKD; if (f === 'back') return py < 4 ? mk(HAIR, .95 + h * .15) : mk(SK, .9 + h * .1); if (f === 'front') { if (py === 0 || (py === 1 && h < .45)) return mk(HAIR, .9 + h * .2); if (py === 4 && (px === 1 || px === 6)) return [20, 26, 20, 2]; if (py === 4 && (px === 2 || px === 5)) return [12, 16, 12, 2]; if (py === 5 && (px === 3 || px === 4)) return mk(SKD, .9); if (py === 6 && px >= 2 && px <= 5) return [28, 40, 28, 2]; return mk(SK, .93 + h * .1); } if (py < 2) return mk(HAIR, .95 + h * .15); return mk(SK, .92 + h * .1); }
       if (part === 'body') { if (f === 'top') return SH; if (f === 'bottom') return mk(PA, .9); if (py >= fh - 2) return mk(PA, 1); return mk(hash3(px >> 1, py >> 1, 7) < .13 ? SHD : SH, .94 + h * .1); }
-      if (part.includes('arm')) { if (f === 'top') return SH; if (f === 'bottom') return mk(SKD, .9); if (py <= 3) return mk(h < .12 ? SHD : SH, .94 + h * .1); return mk(h < .08 ? SKD : SK, .92 + h * .12); }
+      if (part.includes('arm')) { if (f === 'top') return SH; if (f === 'bottom') return [SK[0] * 1.2, SK[1] * 1.2, SK[2] * 1.2, 2]; if (py <= 3) return mk(h < .12 ? SHD : SH, .94 + h * .1); return mk(h < .08 ? SKD : SK, .92 + h * .12); }
       if (f === 'top') return PA; if (f === 'bottom') return mk(SHOE, .85); if (py >= fh - 3) return mk(SHOE, 1.1 - (py - fh + 3) * .12); return mk(h < .07 ? PAD : PA, .92 + h * .12);
     };
     PAINTERS.skeleton = (part, f, px, py, fw, fh, B) => {
@@ -5040,7 +5041,7 @@
         if (P.y < y + 1 || !boxFree(P, 0, 0, 0)) P.y = y + 1;
         P.py = P.y;
       }
-      if (P.sleeping) { P.vx = P.vz = 0; P.vy = 0; P.sleeping++; return; }
+      if (P.sleeping) { P.vx = P.vz = 0; P.vy = 0; if (++P.sleeping >= 100 && NET.role !== 'guest' && ![...RP.values()].some(e => !e.pdead && e.mode !== 'spectator')) { W.time = Math.ceil(W.time / 24000) * 24000; W.raining = W.thunder = false; wake(); } return; }
       let fwd = 0, str = 0;
       const K = c => keys.has(c), active = !gui && !P.dead && !chatOpen;
       if (active) {
@@ -5802,7 +5803,10 @@
     fg.fillStyle = '#fff';
     for (let i = 0; i < 95; i++) { let w = 0; for (let r = 0; r < 8; r++) { const v = parseInt(FONT[i * 8 + r], 32); for (let c = 0; c < 5; c++) if (v & (16 >> c)) { fg.fillRect((i & 15) * 8 + c, (i >> 4) * 9 + r, 1, 1); w = Math.max(w, c + 1); } } fontW.push(i ? w : 3); }
     let GW = 480, GH = 300, GK = 2, cssW = 0, cssH = 0;
+    let fsOn = false;
     function resize() {
+      const fs = !!wrap.closest('.fs');
+      if (fs || fs !== fsOn) { fsOn = fs; wrap.style.aspectRatio = fs ? (innerWidth / innerHeight).toFixed(4) : ''; wrap.style.height = fs ? 'auto' : ''; wrap.style.borderRadius = fs ? '0' : ''; }
       const w = wrap.clientWidth || 960, h = wrap.clientHeight || 600, r = wrap.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 3);
       const pw = Math.max(64, Math.round((r.width || w) * dpr)), ph = Math.max(64, Math.round((r.height || h) * dpr));
       if (w !== cssW || h !== cssH) { cssW = w; cssH = h; renderer.setSize(w, h, false); cam.aspect = hCam.aspect = w / h; fovDirty = true; hCam.fov = w < h ? 90 : 70; cam.updateProjectionMatrix(); hCam.updateProjectionMatrix(); }
@@ -6037,7 +6041,7 @@
       if (P.eyeL) { g.fillStyle = 'rgba(220,80,10,.75)'; g.fillRect(0, 0, GW, GH); }
       if (P.fire > 0 && md !== 'creative' && md !== 'spectator') { const t = now / 80; for (let i = 0; i < 6; i++) { g.fillStyle = `rgba(255,${120 + (i * 20)},20,${.25})`; const fx = (i * 73 % GW), fh = 30 + Math.sin(t + i) * 10; g.fillRect(i < 3 ? 0 : GW - 60, GH - fh - i * 6, 60, fh); } }
       if (P.hurtT > 10) { g.fillStyle = `rgba(255,0,0,${(P.hurtT - 10) / 40})`; g.fillRect(0, 0, GW, GH); }
-      if (P.sleeping) { g.fillStyle = `rgba(10,10,20,${Math.min(.9, P.sleeping / 100)})`; g.fillRect(0, 0, GW, GH); textC('Sleeping...', GW / 2, GH / 2 - 20, '#ffffff'); button(GW / 2 - 50, GH - 40, 100, 20, 'Leave Bed', wake); }
+      if (P.sleeping) { g.fillStyle = `rgba(10,10,20,${Math.min(.9, P.sleeping / 100)})`; g.fillRect(0, 0, GW, GH); textC('Sleeping...', GW / 2, GH / 2 - 20, '#ffffff'); button(GW / 2 - 100, GH - 40, 200, 20, 'Leave Bed', wake); return; }
       if (md === 'spectator') { textC('Spectator Mode', GW / 2, GH - 20, '#aaaaaa'); return; }
       if (!touch && !gui) {
         const cx = GW >> 1, cy = GH >> 1; g.globalCompositeOperation = 'difference'; g.fillStyle = '#fff'; g.fillRect(cx - 4, cy, 9, 1); g.fillRect(cx, cy - 4, 1, 4); g.fillRect(cx, cy + 1, 1, 4); g.globalCompositeOperation = 'source-over';
@@ -7151,6 +7155,7 @@
         say('Gave ' + n + ' [' + it.name + '] to ' + (tgt === '@a' ? 'all players' : self ? P.name : tgt)); return;
       }
       if (cmd === 'tp' || cmd === 'teleport') {
+        if (a.length > 2 && (a[1] === '@s' || a[1] === '@p' || a[1] === P.name)) a.splice(1, 1);
         if (a.length >= 4) { const x = coord(a[1], P.x), y = coord(a[2], P.y - CFG.YOFF) + CFG.YOFF, z = coord(a[3], P.z); if (![x, y, z].every(isFinite)) { err('Invalid position'); return; } P.x = x; P.y = y; P.z = z; P.vx = P.vy = P.vz = 0; P.fall = 0; P.px = x; P.py = y; P.pz = z; if (a[4] !== undefined && isFinite(+a[4])) P.yaw = Math.PI - (+a[4]) * Math.PI / 180; if (a[5] !== undefined && isFinite(+a[5])) P.pitch = clamp(-(+a[5]) * Math.PI / 180, -1.5707, 1.5707); say('Teleported ' + P.name + ' to ' + x.toFixed(1) + ', ' + (y - CFG.YOFF).toFixed(1) + ', ' + z.toFixed(1)); return; }
         const o = ENTS.find(e => e.kind === 'player' && e.name === a[1]);
         if (o) { P.x = o.x; P.y = o.y; P.z = o.z; say('Teleported ' + P.name + ' to ' + o.name); return; }
@@ -7956,8 +7961,9 @@
       } else {
         holder.visible = true;
         handArm.userData.mat.color.setScalar(br);
-        holder.position.set(.72 + sx * .8, -.72 + sy * .5 - eq, -.5 + sz);
-        holder.rotation.set(2.1 - Math.sin(sq * Math.PI) * .5, .5 + Math.sin(sq * Math.PI) * .4, .1, 'YXZ');
+        holder.scale.setScalar(1.25);
+        holder.position.set(.6 + sx * .8, -.6 + sy * .5 - eq, -.62 + sz);
+        holder.rotation.set(2.0 - Math.sin(sq * Math.PI) * .5, .4 + Math.sin(sq * Math.PI) * .4, .12, 'YXZ');
       }
     }
     function updRain(now, ex, ey, ez) {

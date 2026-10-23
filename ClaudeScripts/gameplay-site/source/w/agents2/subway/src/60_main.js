@@ -56,6 +56,13 @@
       wrap.style.width = v.canvas.style.width;
       wrap.style.aspectRatio = v.canvas.style.aspectRatio;
       v.canvas.style.width = '100%';
+      const setSize0 = renderer.setSize.bind(renderer);
+      renderer.setSize = (w, h, u) => {
+        const r = setSize0(w, h, u);
+        wrap.style.width = `min(100%, ${w}px, calc((100dvh - var(--goff, 250px)) * ${(w / h).toFixed(4)}))`;
+        wrap.style.aspectRatio = `${w} / ${h}`;
+        return r;
+      };
       root.append(wrap);
       wrap.append(v.canvas);
       wrap.insertAdjacentHTML('beforeend', HTML);
@@ -86,7 +93,8 @@
       const au = mkAudio(api);
 
       const scene = new THREE.Scene();
-      const cam = new THREE.PerspectiveCamera(portrait ? 70 : 60, VW / VH, 0.1, 520);
+      const baseFov = portrait ? 70 : 60, baseAsp = VW / VH;
+      const cam = new THREE.PerspectiveCamera(baseFov, baseAsp, 0.1, 520);
       const hemi = new THREE.HemisphereLight(0xffffff, 0x888888, 1);
       const sun = new THREE.DirectionalLight(0xffffff, 0.8);
       sun.position.set(-0.45, 1, 0.5);
@@ -181,7 +189,7 @@
       function dropMesh(o) { if (o.mesh) { scene.remove(o.mesh); o.mesh = null; } }
       function clearObsMeshes() { if (W) { for (const o of W.obs) dropMesh(o); for (const it of W.items) dropMesh(it); } }
 
-      const coinGeo = keep(new THREE.CylinderGeometry(0.42, 0.42, 0.11, 22)); coinGeo.rotateX(Math.PI / 2);
+      const coinGeo = keep(new THREE.CylinderGeometry(0.5, 0.5, 0.12, 24)); coinGeo.rotateX(Math.PI / 2);
       const coinFace = keep(T.coin());
       const coinMats = [keep(new THREE.MeshLambertMaterial({ color: new THREE.Color('#ffb31a').convertSRGBToLinear(), emissive: new THREE.Color('#5a3200') })), keep(new THREE.MeshLambertMaterial({ map: coinFace, emissive: new THREE.Color('#3a2400') })), keep(new THREE.MeshLambertMaterial({ map: coinFace, emissive: new THREE.Color('#3a2400') }))];
       const MAXC = 480;
@@ -192,6 +200,20 @@
       for (let i = 0; i < 14; i++) { const sp = new THREE.Sprite(GM.y); sp.visible = false; sp.userData.t = 0; scene.add(sp); sparks.push(sp); }
       let sparkI = 0;
       function spark(x, y, z, k, s) { const sp = sparks[sparkI++ % sparks.length]; sp.material = GM[k || 'y']; sp.position.set(x, y, z); sp.visible = true; sp.userData.t = 0; sp.userData.s = s || 1.4; }
+
+      const deb = [], debGeo = keep(new THREE.BoxGeometry(0.3, 0.08, 0.45)), debMats = ['#ff4fa3', '#ffd23f', '#3ad1ff'].map(c => keep(new THREE.MeshLambertMaterial({ color: new THREE.Color(c).convertSRGBToLinear(), emissive: new THREE.Color(c).multiplyScalar(0.25) })));
+      for (let i = 0; i < 12; i++) { const m = new THREE.Mesh(debGeo, debMats[i % 3]); m.visible = false; scene.add(m); deb.push({ m, v: new THREE.Vector3(), w: new THREE.Vector3(), t: 0 }); }
+      const ring = new THREE.Mesh(keep(new THREE.RingGeometry(0.85, 1, 40)), keep(new THREE.MeshBasicMaterial({ color: 0x9afcff, transparent: true, depthWrite: false, side: THREE.DoubleSide })));
+      ring.rotation.x = -Math.PI / 2; ring.visible = false; scene.add(ring);
+      let ringT = 9;
+      function boardBreak(x, y, z) {
+        for (const d of deb) { d.m.position.set(x + rnd(-0.3, 0.3), y + 0.3, z + rnd(-0.3, 0.3)); d.v.set(rnd(-4.5, 4.5), rnd(3, 7.5), rnd(-6, 2)); d.w.set(rnd(-10, 10), rnd(-10, 10), rnd(-10, 10)); d.t = 0; d.m.scale.setScalar(rnd(0.7, 1.5)); d.m.visible = true; }
+        ringT = 0; ring.position.set(x, y + 0.1, z);
+      }
+      function updBreak(dt) {
+        for (const d of deb) if (d.m.visible) { d.t += dt; d.v.y -= 22 * dt; d.m.position.addScaledVector(d.v, dt); d.m.rotation.x += d.w.x * dt; d.m.rotation.y += d.w.y * dt; d.m.rotation.z += d.w.z * dt; if (d.t > 1.0 || d.m.position.y < -0.2) d.m.visible = false; }
+        if (ringT < 0.55) { ringT += dt; const k = ringT / 0.55; ring.visible = true; ring.scale.setScalar(1 + k * 11); ring.material.opacity = 1 - k; } else ring.visible = false;
+      }
 
       const IM = {};
       const itemModel = k => {
@@ -218,8 +240,8 @@
         if (hero) scene.remove(hero.root);
         const P = CHARS.find(c => c.id === save.char) || CHARS[0];
         hero = CH.hero(P);
-        if (P.vest) { const pm = new THREE.Mesh(patchGeo, patchMat); pm.position.set(0, 0.33, 0.212); hero.torso.add(pm); }
-        scene.add(hero.root);
+        if (P.vest) { const pm = new THREE.Mesh(patchGeo, patchMat); pm.position.set(0, P.id === 'jake' ? 0.3 : 0.33, P.id === 'jake' ? 0.405 : 0.212); P.id === 'jake' ? pm.scale.setScalar(1.2) : 0; hero.torso.add(pm); }
+        hero.root.scale.setScalar(1.15); scene.add(hero.root);
       }
       const guard = CH.guard(), dog = CH.dog();
       scene.add(guard.root, dog.root);
@@ -263,10 +285,10 @@
         au.unlock(); au.play('ui');
         show(E.home, 0); show(E.panel, 0);
         E.hud.classList.remove('off');
-        state = 'intro'; introT = 0; R.chase = CFG.START_CHASE; gd = 4.2; gx = 0;
+        state = 'intro'; introT = 0; R.chase = CFG.START_CHASE; gd = 4.2; gx = 0; au.play('whistle');
         hudScore = hudCoins = hudMult = -1; runKeys = 0; runBonus = 0; saveCost = 1;
         hudBoards(); updPU(true);
-        hintI = save.runs < 3 ? 0 : 99;
+        hintI = save.runs < 3 ? 0 : 99; E.hint.classList.remove('on');
         au.music(true);
         if (window.Ameplay && Ameplay.analytics) try { Ameplay.analytics.track('subway_start', { city: CITIES[save.city].id }); } catch (e) {}
       }
@@ -373,9 +395,10 @@
           else if (e === 'crash') { au.play('crash'); shake = 0.5; }
           else if (e === 'caught') { au.play('bump'); au.play('caught'); }
           else if (e === 'bump') { au.play('bump'); shake = 0.25; }
-          else if (e === 'board_break') { au.play('board_break'); shake = 0.3; spark(R.x, R.y + 0.3, -R.s, 'p', 4); hudBoards(); }
-          else if (e === 'board_end') au.play('board_end');
+          else if (e === 'board_break') { au.play('board_break'); shake = 0.45; boardBreak(R.x, R.y, -R.s); spark(R.x, R.y + 0.3, -R.s, 'p', 4); hudBoards(); }
+          else if (e === 'board_end') { au.play('board_end'); au.play('power_down'); }
           else if (e === 'jet_end') au.play('jet_end');
+          else if (e === 'jump') au.play(R.sneak > 0 ? 'spring' : 'jump');
           else au.play(e);
         }
         R.ev.length = 0;
@@ -538,9 +561,12 @@
       api.on(document, 'visibilitychange', () => { if (document.hidden) pause(); });
 
       const HINTS = COARSE ? [['Swipe left or right', 'to switch lanes'], ['Swipe up to jump', 'swipe down to roll'], ['Double tap', 'to use a hoverboard']] : [['← → to switch lanes', 'or A / D'], ['↑ jump  ·  ↓ roll', 'roll in the air to drop fast'], ['Space: hoverboard', 'it saves you from one crash']];
+      const hintDone = [() => R.lane !== 1, () => R.st.jump + R.st.roll > 0, () => R.st.board > 0];
       function hintTick() {
+        if (R.dead) { E.hint.classList.remove('on'); return; }
         if (hintI >= HINTS.length) return;
         const at = 1.0 + hintI * 3.4, t = R.t;
+        if (hintDone[hintI]()) { E.hint.classList.remove('on'); hintI++; return; }
         if (t > at && t < at + 3.0) { if (!E.hint.classList.contains('on')) { E.hint.innerHTML = HINTS[hintI][0] + '<small>' + HINTS[hintI][1] + '</small>'; E.hint.classList.add('on'); } }
         else if (t >= at + 3.0) { E.hint.classList.remove('on'); hintI++; }
       }
@@ -572,6 +598,7 @@
           if (n >= MAXC) break;
         }
         coinIM.count = n; coinIM.instanceMatrix.needsUpdate = true;
+        updBreak(dt);
         for (const sp of sparks) if (sp.visible) { sp.userData.t += dt; const f = sp.userData.t / 0.3; if (f >= 1) sp.visible = false; else { const k = sp.userData.s * (0.4 + f); sp.scale.set(k, k, 1); sp.material.opacity = 1 - f; } }
       }
 
@@ -588,13 +615,15 @@
         const st = { mode, speed: R.speed, air: airW, vy: R.vy, roll: R.rollT > 0 ? 1 : 0, rollP: R.rollT > 0 ? 1 - R.rollT / R.rollD : 0, stumble: R.stumbleT / 0.45, leanZ: mode === 'run' || mode === 'board' ? leanZ : 0, spray: false, can: false, deadT: R.deadT };
         if (state === 'home') { sprayT += dt; st.spray = (sprayT % 7) > 3.5; st.can = true; }
         CH.animHero(H, st, dt, t);
+        if (mode === 'run' && R.grounded) { const sp = Math.floor(H.ph / Math.PI); if (sp !== H.lastStep) { H.lastStep = sp; au.play(R.y > 3 ? 'step_roof' : 'step'); } }
         H.root.position.set(R.x, R.y, -R.s);
         let yaw = 0;
         if (state === 'home') yaw = st.spray ? 0.95 : 0.12 + 0.08 * Math.sin(t * 0.8);
         else if (state === 'intro') yaw = lerp(0.6, 0, ease(clamp(introT / 0.5, 0, 1)));
         else if (mode === 'run') yaw = clamp(-xv * 0.012, -0.35, 0.35);
         H.root.rotation.y = damp(H.root.rotation.y, yaw, 12, dt);
-        if (mode === 'dead') { const k = clamp(R.deadT * 5, 0, 1); H.root.position.z += 0.6 * k; H.body.rotation.x = lerp(0, 1.25, ease(k)); H.root.position.y = R.y + 0.1 * Math.sin(k * Math.PI); }
+        if (mode === 'dead') { const k = clamp(R.deadT * 4, 0, 1), bn = Math.abs(Math.sin(R.deadT * 8)) * 0.5 * Math.exp(-R.deadT * 3.4); H.root.position.z += 0.75 * ease(k); H.body.rotation.x = lerp(0, 1.45, ease(k)); H.body.rotation.y = 0.8 * ease(k); H.root.position.y = R.y + bn + 0.2 * Math.sin(k * Math.PI); }
+        else if (mode === 'board' && CFG.BOARD_T - R.board < 0.7) { const q = clamp((CFG.BOARD_T - R.board) / 0.7, 0, 1); H.body.rotation.y += TAU * ease(q); H.root.position.y += 0.5 * Math.sin(q * Math.PI); H.body.rotation.x = 0; }
         else H.body.rotation.x = 0;
         H.root.visible = noBlink || !(R.ghost > 0 && R.jet <= 0 && !R.dead && Math.floor(t * 12) % 3 === 0);
         const sup = R.jet > 0 ? supportAt(W, laneOf(R.x), R.s) : supportAt(W, laneOf(R.x), R.s);
@@ -609,7 +638,7 @@
         if (state === 'home') { target = 40; }
         else if (R.dead === 'caught' || R.dead === 'crash') target = R.dead === 'caught' ? 1.25 : 1.9;
         else if (R.jet > 0) target = 40;
-        else if (R.chase > 0) target = 2.9;
+        else if (R.chase > 0) target = 2.5;
         const k = target < gd ? (R.dead ? 4 : 2.6) : 0.7;
         gd = damp(gd, target, k, dt);
         if (gd > 20) vis = false;
@@ -638,11 +667,11 @@
         const tun = inTunnel(W, R.s + 2);
         const sp0 = supportAt(W, laneOf(R.x), R.s), yT = R.jet > 0 || R.grounded ? R.y : lerp(sp0, R.y, 0.6);
         camY = damp(camY, yT, R.jet > 0 ? 3 : 6, dt);
-        const base = portrait ? 6.1 : 5.3, back = portrait ? 8.4 : 7.0;
+        const base = portrait ? 6.7 : 5.8, back = portrait ? 7.2 : 6.2;
         let cy = base + camY * 0.9;
         if (tun) cy = Math.min(cy, 8.6);
         out.set(R.x * 0.62, cy, -R.s + back);
-        look.set(R.x * 0.85, 0.7 + camY * 0.88, -R.s - (portrait ? 8 : 9));
+        look.set(R.x * 0.85, 0.9 + camY * 0.88, -R.s - (portrait ? 6.5 : 7));
       }
       function camHome(out, look) {
         out.set(portrait ? 0.55 : 1.05, portrait ? 1.7 : 1.55, -R.s - (portrait ? 4.6 : 3.7));
@@ -680,8 +709,9 @@
       try { if (document.fonts && !document.fonts.check('40px "Lilita One"')) document.fonts.load('40px "Lilita One"').then(() => { if (api.alive && state === 'home' && document.fonts.check('40px "Lilita One"')) { buildCity(save.city); resetWorld(); } }).catch(() => {}); } catch (e) {}
       camHome(camP, camL);
 
+      let tsc = 1, tvirt = 0;
       api.loop((dt, t) => {
-        t /= 1000;
+        dt *= tsc; tvirt += dt; t = tvirt;
         capPR(); perf(dt);
         if (state === 'run' || state === 'intro') {
           acc += dt;
@@ -724,6 +754,8 @@
           if (state === 'run' || state === 'save' || state === 'over') { camP.x = damp(camP.x, tmpP.x, 9, dt); camP.y = damp(camP.y, tmpP.y, 7, dt); camP.z = tmpP.z; camL.x = damp(camL.x, tmpL.x, 9, dt); camL.y = damp(camL.y, tmpL.y, 7, dt); camL.z = tmpL.z; }
           else { camP.copy(tmpP); camL.copy(tmpL); }
         }
+        const ca = renderer.domElement.width / Math.max(1, renderer.domElement.height);
+        cam.aspect = ca; cam.fov = ca < baseAsp ? 2 * Math.atan(Math.tan(baseFov * Math.PI / 360) * baseAsp / ca) * 180 / Math.PI : baseFov; cam.updateProjectionMatrix();
         cam.position.copy(camP);
         if (shake > 0) { shake = Math.max(0, shake - dt); cam.position.x += (Math.random() - 0.5) * shake * 0.6; cam.position.y += (Math.random() - 0.5) * shake * 0.6; }
         cam.lookAt(camL);
@@ -734,7 +766,7 @@
         renderer.render(scene, cam);
       });
 
-      wrap._ss = { get W() { return W; }, get R() { return R; }, get state() { return state; }, save, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, pr: renderer.getPixelRatio(), geos: renderer.info.memory.geometries, tex: renderer.info.memory.textures }), act: a => input(a), set noBlink(v) { noBlink = v; }, clearChunks: () => clearChunks(), give(k) { if (state === 'run') onItem({ k, x: R.x, y: R.y, s: R.s }); }, city: d => city(d) };
+      wrap._ss = { get W() { return W; }, get R() { return R; }, get state() { return state; }, save, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, pr: renderer.getPixelRatio(), geos: renderer.info.memory.geometries, tex: renderer.info.memory.textures }), act: a => input(a), set noBlink(v) { noBlink = v; }, set ts(v) { tsc = v; }, clearChunks: () => clearChunks(), give(k) { if (state === 'run') onItem({ k, x: R.x, y: R.y, s: R.s }); }, city: d => city(d) };
       return {
         destroy() {
           au.close();

@@ -31,11 +31,11 @@ ${SC} .ss-pause{position:absolute;left:2.4%;top:3.2%;width:3.1em;height:3.1em;bo
 ${SC} .ss-pause svg{width:62%}
 ${SC} .ss-tr{position:absolute;right:2%;top:2.6%;display:flex;flex-direction:column;align-items:flex-end;gap:.28em}
 ${SC} .ss-score{display:flex;align-items:stretch;gap:.22em;font-size:2.05em;${OUT}}
-${SC} .ss-mult{color:#ffd23f;background:rgba(22,34,52,.52);border-radius:.28em;padding:.16em .32em .08em;transition:transform .2s;font-variant-numeric:tabular-nums}
-${SC} .ss-sv{font-weight:400;background:rgba(22,34,52,.52);border-radius:.28em;padding:.16em .32em .08em;letter-spacing:.04em;font-variant-numeric:tabular-nums;min-width:4.1em;text-align:center}
+${SC} .ss-mult{color:#fad502;background:rgba(30,45,66,.78);border-radius:.28em;padding:.16em .32em .08em;transition:transform .2s;font-variant-numeric:tabular-nums}
+${SC} .ss-sv{font-weight:400;background:rgba(30,45,66,.78);border-radius:.28em;padding:.16em .32em .08em;letter-spacing:.04em;font-variant-numeric:tabular-nums;min-width:4.1em;text-align:center}
 ${SC} .ss-mult.x2{color:#ff9a3a}
 ${SC} .ss-mult.pop{transform:scale(1.35)}
-${SC} .ss-pill{display:flex;align-items:center;gap:.3em;font-size:1.55em;background:rgba(22,34,52,.52);border-radius:.28em;padding:.16em .32em .08em;${OUT}}
+${SC} .ss-pill{display:flex;align-items:center;gap:.3em;font-size:1.55em;background:rgba(30,45,66,.78);border-radius:.28em;padding:.16em .32em .08em;${OUT}}
 ${SC} .ss-pill b{font-weight:400;font-variant-numeric:tabular-nums}
 ${SC} .ss-pill .ss-ic{width:1.15em;height:1.15em;filter:drop-shadow(0 2px 0 rgba(0,0,0,.35))}
 ${SC} .ss-keyp{transition:opacity .3s}
@@ -167,7 +167,9 @@ ${SC} .ss-char b{color:#1f56a8;text-shadow:0 .06em 0 #fff}
 ${SC} .ss-btn{background:linear-gradient(#6f86a6,#3d5070);border-color:#fff}
 ${SC} .ss-btn.g{background:linear-gradient(#7be04a,#2e9a1a)}
 ${SC} .ss-dim{background:rgba(8,18,44,.45)}
-@container (max-width: 640px){${SC} .ss-hud,${SC} .ss-scr{font-size:clamp(10px,3.1cqw,18px)}${SC} .ss-logo{font-size:3em}${SC} .ss-mid{flex-direction:column;gap:1em;align-items:center}${SC} .ss-logo{transform:rotate(-4deg);transform-origin:center;text-align:center}}
+@container (max-width: 640px){${SC} .ss-hud,${SC} .ss-scr{font-size:clamp(10px,3.1cqw,18px)}}
+@container (max-width: 640px) and (max-aspect-ratio: 1/1){${SC} .ss-logo{font-size:3em}${SC} .ss-mid{flex-direction:column;gap:1em;align-items:center}${SC} .ss-logo{transform:rotate(-4deg);transform-origin:center;text-align:center}}
+@container (max-width: 640px) and (min-aspect-ratio: 1/1){${SC} .ss-logo{font-size:2.6em}}
 `;
   const ic = k => `<span class="ss-ic">${ICO[k]}</span>`;
   const logoW = (w, o) => [...w].map((c, i) => `<i style="--r:${[-7, 5, -3, 6, -5, 4, -6][(i + o) % 7]}deg;--y:${[0.03, -0.05, 0.02, -0.03, 0.05, -0.02, 0][(i + o) % 7]}em">${c}</i>`).join('');

@@ -48,16 +48,18 @@
     const cv = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
 
     function atlas(city) {
-      const S = 2048, c = cv(S, S), g = c.getContext('2d');
-      g.fillStyle = '#fff'; g.fillRect(0, 0, S, S);
+      const S = 2048, SH = 3072, c = cv(S, SH), g = c.getContext('2d');
+      g.fillStyle = '#fff'; g.fillRect(0, 0, S, SH);
       let sx = 0, sy = 0, sh = 0;
       const R = {};
       const alloc = (w, h) => { if (sx + w > S) { sx = 0; sy += sh + 2; sh = 0; } const r = [sx, sy, w, h]; sx += w + 2; sh = Math.max(sh, h); return r; };
       R.liv = []; R.front = []; R.frontLit = []; R.ends = [];
-      city.trains.forEach((lv, i) => {
-        const r = alloc(1020, 200); R.liv.push(r); paintLivery(g, r, lv, i);
+      const TR = trainsOf(city);
+      TR.forEach((lv, i) => {
+        const r = alloc(1020, 200); R.liv.push(r); if (lv[3]) paintFreight(g, r, lv, i); else paintLivery(g, r, lv, i);
       });
-      city.trains.forEach((lv, i) => {
+      TR.forEach((lv, i) => {
+        if (lv[3]) { const r3 = alloc(168, 200); paintFreightEnd(g, r3, lv); R.front.push(r3); R.frontLit.push(r3); R.ends.push(r3); return; }
         const r = alloc(168, 200); R.front.push(r); paintFront(g, r, lv, false, i);
         const r2 = alloc(168, 200); R.frontLit.push(r2); paintFront(g, r2, lv, true, i);
         const r3 = alloc(168, 200); R.ends.push(r3); paintEnd(g, r3, lv);
@@ -82,7 +84,7 @@
       R.sign = alloc(256, 96); paintSign(g, R.sign, city);
       R.neon = alloc(128, 256); paintNeon(g, R.neon, city);
       const tex = canvasTex(c);
-      const uv = (r, u0 = 0, v0 = 0, u1 = 1, v1 = 1) => [(r[0] + 1 + u0 * (r[2] - 2)) / S, 1 - (r[1] + 1 + v1 * (r[3] - 2)) / S, (r[0] + 1 + u1 * (r[2] - 2)) / S, 1 - (r[1] + 1 + v0 * (r[3] - 2)) / S];
+      const uv = (r, u0 = 0, v0 = 0, u1 = 1, v1 = 1) => [(r[0] + 1 + u0 * (r[2] - 2)) / S, 1 - (r[1] + 1 + v1 * (r[3] - 2)) / SH, (r[0] + 1 + u1 * (r[2] - 2)) / S, 1 - (r[1] + 1 + v0 * (r[3] - 2)) / SH];
       return { tex, R, uv, canvas: c };
     }
 
@@ -121,6 +123,66 @@
       g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(x, y, w, 6); g.fillRect(x, y + h - 8, w, 8);
       g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(x, y + 6, w, 3);
       noise(g, x, y, w, h, 600, 0.05);
+    }
+
+    function paintFreight(g, r, lv, i) {
+      const [x, y, w, h] = r, base = lv[0], dark = lv[1], kind = lv[3];
+      if (kind === 'tank' || kind === 'flat') { g.fillStyle = base; g.fillRect(x, y, w, h); return; }
+      g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+      const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, shade(base, 0.16)); gr.addColorStop(1, shade(base, -0.28));
+      g.fillStyle = gr; g.fillRect(x, y, w, h);
+      if (kind === 'box') {
+        for (let k = 0; k < w; k += 15) { g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(x + k, y + 8, 3, h - 16); g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(x + k + 3, y + 8, 2, h - 16); }
+        g.fillStyle = shade(base, -0.3); g.fillRect(x, y, w, 12); g.fillRect(x, y + h - 14, w, 14);
+        for (const dx of [0.3, 0.7]) {
+          const px = x + w * dx - 70;
+          g.fillStyle = shade(base, -0.42); g.fillRect(px - 8, y + 16, 156, h - 32);
+          g.fillStyle = shade(base, 0.05); g.fillRect(px, y + 22, 140, h - 44);
+          for (let k = 0; k < 140; k += 12) { g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(px + k, y + 22, 2, h - 44); }
+          g.fillStyle = '#2a2a2e'; g.fillRect(px + 66, y + 22, 8, h - 44); g.fillStyle = '#d9dde6'; g.fillRect(px + 100, y + h * 0.5 - 6, 22, 7);
+        }
+        g.fillStyle = 'rgba(255,255,255,.85)'; g.font = `900 20px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.fillText('SS RAIL ' + (4000 + i * 311), x + w * 0.5, y + h * 0.5 + 62); g.fillRect(x + w * 0.1, y + h * 0.5 + 36, 70, 5);
+        g.fillStyle = '#f2f2f2'; g.fillRect(x + w * 0.88, y + 24, 8, h - 48);
+      } else if (kind === 'cont') {
+        const names = ['SEALINE', 'ORCA', 'TRANSCO', 'BLUEWAVE'];
+        const cols = [base, shade(base, 0.12)];
+        for (let c = 0; c < 2; c++) {
+          const cx = x + c * (w / 2) + 6, cw = w / 2 - 12;
+          g.fillStyle = shade(cols[c], c ? -0.12 : 0); g.fillRect(cx, y + 6, cw, h - 18);
+          for (let k = 0; k < cw; k += 11) { g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(cx + k, y + 14, 3, h - 34); g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(cx + k + 3, y + 14, 2, h - 34); }
+          g.fillStyle = shade(cols[c], -0.45); g.fillRect(cx, y + 6, cw, 10); g.fillRect(cx, y + h - 22, cw, 10); g.fillRect(cx, y + 6, 8, h - 18); g.fillRect(cx + cw - 8, y + 6, 8, h - 18);
+          g.fillStyle = 'rgba(255,255,255,.9)'; g.font = `900 44px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+          g.fillText(names[(i + c) % 4], cx + cw / 2, y + h * 0.42);
+          g.font = `900 14px ${FONT}`; g.fillText(String(2210000 + i * 977 + c * 131), cx + cw / 2, y + h * 0.7);
+          g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(cx + cw - 56, y + 24, 3, h - 56); g.fillRect(cx + cw - 42, y + 24, 3, h - 56);
+        }
+        g.fillStyle = '#26262c'; g.fillRect(x + w / 2 - 6, y, 12, h);
+      } else {
+        g.fillStyle = shade(base, -0.2); g.fillRect(x, y, w, 20);
+        for (let k = 0; k < w; k += 85) { g.fillStyle = shade(base, -0.38); g.fillRect(x + k, y + 20, 8, h - 34); g.fillStyle = 'rgba(255,255,255,.15)'; g.fillRect(x + k + 8, y + 20, 3, h - 34); }
+        for (let ry = 0; ry < 3; ry++) { g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x, y + 56 + ry * 40, w, 3); }
+        for (let k = 0; k < w; k += 21) { g.fillStyle = shade(base, 0.25); g.beginPath(); g.arc(x + k + 10, y + 12, 3.2, 0, TAU); g.fill(); }
+        g.fillStyle = 'rgba(255,255,255,.85)'; g.font = `900 22px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('GONDOLA  ' + (7100 + i * 53), x + w * 0.5, y + h * 0.5 + 6);
+      }
+      for (let k = 0; k < 4; k++) graffitiLight(g, x + rnd(60, w - 60), y + h * rnd(0.55, 0.8), rnd(32, 46), i + k);
+      noise(g, x, y, w, h, 700, 0.07, ['#7a3a1a', '#3a2a1a', '#ffffff']);
+      const dg = g.createLinearGradient(0, y + h * 0.75, 0, y + h); dg.addColorStop(0, 'rgba(40,30,20,0)'); dg.addColorStop(1, 'rgba(40,30,20,.5)');
+      g.fillStyle = dg; g.fillRect(x, y, w, h);
+      g.restore();
+    }
+    function graffitiLight(g, cx, cy, size, i) {
+      if (Math.random() < 0.55) return;
+      graffiti(g, pick(GWORDS), cx, cy, size, pick(GCOLS), rnd(-0.12, 0.1));
+    }
+    function paintFreightEnd(g, r, lv) {
+      const [x, y, w, h] = r;
+      g.fillStyle = shade(lv[0], -0.05); g.fillRect(x, y, w, h);
+      for (let k = 0; k < w; k += 14) { g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(x + k, y, 3, h); }
+      g.fillStyle = shade(lv[0], -0.4); g.fillRect(x, y, w, 12); g.fillRect(x, y + h - 14, w, 14);
+      g.fillStyle = '#d9dde6'; g.fillRect(x + 18, y + 26, 6, h - 52); g.fillRect(x + w - 24, y + 26, 6, h - 52);
+      for (let k = 0; k < 6; k++) g.fillRect(x + 18, y + 36 + k * 24, w - 36, 4);
+      noise(g, x, y, w, h, 200, 0.06);
     }
     function paintFront(g, r, lv, lit, i) {
       const [x, y, w, h] = r, base = lv[0], band = lv[1], cx = x + w / 2;

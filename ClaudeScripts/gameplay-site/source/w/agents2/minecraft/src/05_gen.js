@@ -561,11 +561,12 @@
     }
     function spawn() {
       const o = {};
-      for (let r = 0; r < 1200; r += 8) for (let a = 0; a < 16; a++) {
+      if (flat) return [.5, 4, .5];
+      for (const tmax of [.1, .4]) for (let r = 0; r < 1200; r += 8) for (let a = 0; a < 16; a++) {
         const x = Math.round(Math.cos(a * .3927 + r) * r), z = Math.round(Math.sin(a * .3927 + r) * r);
         column(x, z, o);
         const bb = BIO[o.b];
-        if (o.h >= SEA + 1 && o.h < SEA + 40 && !bb.water && bb.top !== 'stone' && bb.top !== 'snow_block' && bb.top !== 'packed_ice' && bb.td < .4) return [x + .5, o.h + 1, z + .5];
+        if (o.h >= SEA + 1 && o.h < SEA + 40 && !bb.water && bb.top !== 'stone' && bb.top !== 'snow_block' && bb.top !== 'packed_ice' && bb.td < tmax) return [x + .5, o.h + 1, z + .5];
       }
       column(0, 0, o);
       return [.5, Math.max(o.h, SEA) + 2, .5];

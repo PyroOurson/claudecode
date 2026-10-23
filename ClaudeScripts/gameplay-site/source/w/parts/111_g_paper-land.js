@@ -852,6 +852,7 @@
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         const ns = portrait ? 11.5 : 13;
         for (const p of drawList) {
+          if (state === 'title') break;
           if (p === human) { const sx = (p.x - cam.x) * s + W / 2, sy = (p.y - cam.y) * s + H / 2 - (CFG.unit * 0.5 + CFG.blockDepth) * s - (p === king ? 26 : 11); text('You', sx, sy, ns + 3, '#ffffff', 'center', 900, '#2b2f7a', 5); continue; }
           const sx = (p.x - cam.x) * s + W / 2, sy = (p.y - cam.y) * s + H / 2 - (CFG.unit * 0.5 + CFG.blockDepth) * s - (p === king ? 26 : 9);
           text(p.name, sx, sy, ns, p.col.dark, 'center', 900, 'rgba(255,255,255,.85)', 3.5);
@@ -871,7 +872,36 @@
         rank.sort((a, b) => b.count - a.count || (a === human) - (b === human));
       }
 
+      const MMN = 64, mm = document.createElement('canvas'), mmx = mm.getContext('2d');
+      mm.width = mm.height = MMN;
+      let mmT = -1;
+      function drawMini() {
+        const sz = portrait ? 66 : 84, x = 10, y = H - sz - 10;
+        if (clock - mmT > 0.35) {
+          mmT = clock;
+          const cols = [], q = G / MMN;
+          for (const p of players) cols[p.id] = p.col.base;
+          mmx.clearRect(0, 0, MMN, MMN);
+          for (let j = 0; j < MMN; j++) for (let i = 0; i < MMN; i++) {
+            const o = owner[((j + 0.5) * q | 0) * G + ((i + 0.5) * q | 0)];
+            if (o === OUT) continue;
+            mmx.fillStyle = cols[o] || '#eef0f6'; mmx.fillRect(i, j, 1, 1);
+          }
+        }
+        ctx.fillStyle = 'rgba(255,255,255,.82)'; rr(x - 4, y - 4, sz + 8, sz + 8, 12); ctx.fill();
+        ctx.save(); ctx.beginPath(); ctx.arc(x + sz / 2, y + sz / 2, sz / 2, 0, TAU); ctx.clip();
+        ctx.drawImage(mm, x, y, sz, sz);
+        for (const p of players) if (p.alive) {
+          const px = x + p.x / G * sz, py = y + p.y / G * sz;
+          ctx.fillStyle = p === human ? '#2b2840' : p.col.dark; ctx.beginPath(); ctx.arc(px, py, p === human ? 3.2 : 1.8, 0, TAU); ctx.fill();
+          if (p === human) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.stroke(); }
+        }
+        ctx.restore();
+        ctx.strokeStyle = 'rgba(43,40,64,.35)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x + sz / 2, y + sz / 2, sz / 2, 0, TAU); ctx.stroke();
+      }
+
       function drawHud() {
+        if (human && state === 'play') drawMini();
         const ph = portrait, U = ph ? 0.88 : 1;
         const lw = ph ? 150 : 200, rh = ph ? 21 : 25, x = W - lw - 10;
         let y = 10;

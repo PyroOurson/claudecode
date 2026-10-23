@@ -118,7 +118,7 @@
     format: mmss,
     width: 960,
     blurb: 'Classic Klondike. Build four suits from Ace to King.',
-    help: 'Drag cards · double-click to send home · touch: tap a card to auto-move it, tap the deck to draw · <kbd>Space</kbd> draws · <kbd>Z</kbd> undo',
+    help: 'Drag cards · double-click to send home · touch: tap a card to auto-move it, tap the deck to draw · <kbd>Space</kbd> draws · <kbd>H</kbd> hint · <kbd>Z</kbd> undo',
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="16" width="26" height="38" rx="4" transform="rotate(-12 21 35)" opacity=".3" fill="currentColor"/><rect x="28" y="10" width="28" height="40" rx="4"/><path d="M42 36c-5-3.5-8-6-8-9a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 3-3 5.5-8 9z" fill="currentColor"/></svg>',
     css: `
 .gm-solitaire{gap:12px}
@@ -146,12 +146,13 @@
       let pref = saved.draw === 3 ? 3 : 1, drawN = pref;
 
       root.innerHTML = `<div class="sol-bar">
+        <div class="g-stat"><span class="k">Score</span><span class="v" data-s>0</span></div>
         <div class="g-stat"><span class="k">Time</span><span class="v" data-t>0:00</span></div>
         <div class="g-stat"><span class="k">Moves</span><span class="v" data-m>0</span></div>
         <div class="sol-seg"><button type="button" data-d="1">Draw 1</button><button type="button" data-d="3">Draw 3</button></div>
-        <div class="sol-btns"><button type="button" class="g-btn sm ghost" data-u>Undo</button><button type="button" class="g-btn sm" data-n>New deal</button></div>
+        <div class="sol-btns"><button type="button" class="g-btn sm ghost" data-h>Hint</button><button type="button" class="g-btn sm ghost" data-u>Undo</button><button type="button" class="g-btn sm" data-n>New deal</button></div>
       </div>`;
-      const tEl = root.querySelector('[data-t]'), mEl = root.querySelector('[data-m]'), newBtn = root.querySelector('[data-n]');
+      const tEl = root.querySelector('[data-t]'), mEl = root.querySelector('[data-m]'), sEl = root.querySelector('[data-s]'), newBtn = root.querySelector('[data-n]');
       const segBtns = [...root.querySelectorAll('[data-d]')];
       const { canvas: cv, ctx } = api.canvas(W, H);
 
@@ -262,7 +263,7 @@
 
       const cards = [];
       for (let s = 0; s < 4; s++) for (let r = 1; r <= 13; r++) cards.push({ id: cards.length, s, r, up: false, f: 0, x: 0, y: 0, tx: 0, ty: 0, delay: 0, p: 0, i: 0, drag: false });
-      let piles = [], hist = [], moves = 0, secs = 0, shown = -1, running = false, won = false, auto = false, autoT = 0;
+      let piles = [], hist = [], moves = 0, score = 0, recycles = 0, hintG = null, secs = 0, shown = -1, running = false, won = false, auto = false, autoT = 0;
       let drag = null, lastTap = { c: null, t: 0 }, cascade = null, newTok = 0, confirmNew = false;
 
       function layout() {
@@ -287,14 +288,15 @@
           }
         }
       }
-      function hud() { mEl.textContent = moves; }
+      function hud() { mEl.textContent = moves; sEl.textContent = score; }
+      const pts = n => { score = Math.max(0, score + n); hud(); };
       function setDraw(n) {
         pref = n; segBtns.forEach(b => b.classList.toggle('on', +b.dataset.d === n));
         api.save({ draw: n });
       }
       function deal() {
         piles = Array.from({ length: 13 }, () => []); drawN = pref;
-        hist = []; moves = 0; secs = 0; shown = -1; running = false; won = false; auto = false; cascade = null; drag = null;
+        hist = []; moves = 0; score = 0; recycles = 0; hintG = null; secs = 0; shown = -1; running = false; won = false; auto = false; cascade = null; drag = null;
         confirmNew = false; newBtn.textContent = 'New deal'; newBtn.classList.remove('warn');
         const deck = shuffle(cards.slice());
         for (const c of deck) { c.up = false; c.f = 0; c.drag = false; c.delay = 0; c.x = slotX(STOCK); c.y = TOP; }
@@ -306,7 +308,7 @@
         layout(); hud(); tEl.textContent = '0:00'; api.score(0);
         api.sfx('pop');
       }
-      const snapshot = () => hist.push({ p: piles.map(a => a.slice()), up: cards.map(c => c.up) });
+      const snapshot = () => { hintG = null; hist.push({ p: piles.map(a => a.slice()), up: cards.map(c => c.up), score, recycles }); };
       function begin() { if (!running && !won) running = true; }
       function after() {
         moves++; hud(); layout();
@@ -320,7 +322,7 @@
       }
       function canMove(c, n, p) {
         const pile = piles[p], top = pile[pile.length - 1];
-        if (p >= FND && p < TAB) return n === 1 && (top ? top.s === c.s && c.r === top.r + 1 : c.r === 1);
+        if (p >= FND && p < TAB) return n === 1 && (top ? top.s === c.s && c.r === top.r + 1 : c.r === 1 && c.s === p - FND);
         if (p >= TAB) return top ? top.up && RED[top.s] !== RED[c.s] && c.r === top.r - 1 : c.r === 13;
         return false;
       }
@@ -329,7 +331,10 @@
         const moved = piles[from].splice(i);
         piles[to].push(...moved);
         const src = piles[from], last = src[src.length - 1];
-        if (from >= TAB && last && !last.up) { last.up = true; api.timeout(() => api.sfx('tick'), 120); }
+        if (from >= TAB && last && !last.up) { last.up = true; pts(5); api.timeout(() => api.sfx('tick'), 120); }
+        if (to < TAB) pts(from < FND || from >= TAB ? 10 : 0);
+        else if (from === WASTE) pts(5);
+        else if (from < TAB) pts(-15);
         api.sfx(to < TAB ? 'good' : 'tap');
         after();
       }
@@ -344,6 +349,7 @@
           api.sfx('tick');
         } else {
           while (w.length) { const c = w.pop(); c.up = false; s.push(c); }
+          recycles++; if (drawN === 1) pts(-100); else if (recycles >= 3) pts(-20);
           api.sfx('pop');
         }
         after();
@@ -352,7 +358,32 @@
         if (!hist.length || won || auto || drag) return;
         const h = hist.pop();
         piles = h.p; cards.forEach((c, i) => { c.up = h.up[i]; });
+        score = h.score; recycles = h.recycles; hintG = null;
         moves++; hud(); layout(); api.sfx('tap');
+      }
+      function hint() {
+        if (won || auto || drag || cascade) return;
+        const tops = [], ok = c => c.up && c.delay <= 0;
+        if (piles[WASTE].length) tops.push(piles[WASTE][piles[WASTE].length - 1]);
+        for (let t = TAB; t < 13; t++) if (piles[t].length) tops.push(piles[t][piles[t].length - 1]);
+        const dst = p => piles[p].length ? piles[p][piles[p].length - 1] : { tx: slotX(p), ty: slotY(p) };
+        let found = null;
+        const set = (c, p) => { if (!found) found = { c, d: dst(p) }; };
+        for (const c of tops) if (ok(c)) for (let f = FND; f < TAB; f++) if (canMove(c, 1, f)) set(c, f);
+        const grp = [];
+        for (let t = TAB; t < 13; t++) piles[t].forEach((c, i) => { if (ok(c)) grp.push(c); });
+        for (const pass of [0, 1]) for (const c of grp) {
+          const pile = piles[c.p], n = pile.length - c.i, reveal = c.i > 0 && !pile[c.i - 1].up;
+          if (pass === 0 ? !reveal : c.i !== 0) continue;
+          for (let t = TAB; t < 13; t++) if (t !== c.p && piles[t].length && canMove(c, n, t)) set(c, t);
+          if (pass === 0) for (let t = TAB; t < 13; t++) if (t !== c.p && !piles[t].length && canMove(c, n, t)) set(c, t);
+        }
+        const w = piles[WASTE][piles[WASTE].length - 1];
+        if (w && ok(w)) for (let t = TAB; t < 13; t++) if (canMove(w, 1, t)) set(w, t);
+        if (found) { hintG = { s: found.c, d: found.d, t: 2.4 }; api.sfx('tick'); return; }
+        const reach = [...piles[STOCK], ...piles[WASTE]].some(c => { for (let q = FND; q < 13; q++) if (canMove(c, 1, q) && (q < TAB || piles[q].length || c.r === 13)) return true; return false; });
+        if (reach) { hintG = { s: { tx: slotX(STOCK), ty: TOP }, d: null, t: 2.4 }; api.toast(piles[STOCK].length ? 'Draw from the deck' : 'Turn the deck over'); return; }
+        api.toast('No moves left · undo or deal again');
       }
       function autoSend(c) {
         const pile = piles[c.p], top = c.i === pile.length - 1;
@@ -378,13 +409,14 @@
         for (let f = FND; f < TAB; f++) {
           if (!canMove(best, 1, f)) continue;
           piles[best.p].splice(best.i, 1); best.up = true; best.delay = 0; piles[f].push(best);
-          api.sfx('tick'); after(); return;
+          pts(10); api.sfx('tick'); after(); return;
         }
         auto = false;
       }
       function win() {
         won = true; running = false; auto = false;
         const t = Math.max(1, Math.round(secs));
+        if (t >= 30) pts(Math.round(7e5 / t));
         tEl.textContent = mmss(t); api.score(t);
         const isBest = api.submit(t);
         api.sfx('win');
@@ -394,7 +426,7 @@
           api.overlay({
             kicker: isBest ? 'New best!' : 'Solved',
             title: 'You win!',
-            stats: [['Time', mmss(t)], ['Moves', moves], ['Best', api.best != null ? mmss(api.best) : '—']],
+            stats: [['Score', score], ['Time', mmss(t)], ['Moves', moves], ['Best', api.best != null ? mmss(api.best) : '—']],
             button: 'Play again', onAction: deal
           });
         };
@@ -508,6 +540,7 @@
         if (!moves || won) deal(); else { api.toast(`Draw ${n} starts with the next deal`); }
       }));
       root.querySelector('[data-u]').addEventListener('click', undo);
+      root.querySelector('[data-h]').addEventListener('click', hint);
       newBtn.addEventListener('click', () => {
         if (moves && !won && !confirmNew) {
           confirmNew = true; newBtn.textContent = 'Sure?'; newBtn.classList.add('warn');
@@ -522,6 +555,7 @@
         if (e.ctrlKey && e.code === 'KeyZ') { e.preventDefault(); undo(); return; }
         if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
         if (e.code === 'Space' || e.code === 'KeyD') drawStock();
+        else if (e.code === 'KeyH') hint();
         else if (e.code === 'KeyZ' || e.code === 'KeyU' || e.code === 'Backspace') { e.preventDefault(); undo(); }
       });
 
@@ -550,14 +584,21 @@
         for (let p = 0; p < 13; p++) for (const c of piles[p]) if (!c.drag && !moving(c)) drawCard(c, false);
         for (let p = 0; p < 13; p++) for (const c of piles[p]) if (!c.drag && moving(c)) drawCard(c, true);
         if (drag && drag.moved) for (const c of drag.group) drawCard(c, true);
+        if (hintG) {
+          ctx.save(); ctx.lineWidth = 4; ctx.strokeStyle = '#ffd23f'; ctx.shadowColor = '#ffd23f'; ctx.shadowBlur = 14;
+          ctx.globalAlpha = .55 + .45 * Math.sin(hintG.t * 9);
+          for (const c of [hintG.s, hintG.d]) if (c) { ctx.beginPath(); ctx.roundRect(c.tx, c.ty, CW, CH, R); ctx.stroke(); }
+          ctx.restore();
+        }
       }
 
       api.loop(dt => {
         if (running) {
           secs += dt;
           const s = Math.floor(secs);
-          if (s !== shown) { shown = s; tEl.textContent = mmss(s); api.score(s); }
+          if (s !== shown) { shown = s; tEl.textContent = mmss(s); api.score(s); if (s && s % 10 === 0) pts(-2); }
         }
+        if (hintG && (hintG.t -= dt) <= 0) hintG = null;
         const k = 1 - Math.exp(-dt * 16);
         if (!cascade) for (const c of cards) {
           if (c.drag) continue;

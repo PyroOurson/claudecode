@@ -505,7 +505,7 @@ diffuseColor.rgb = dc;
           const sh = new THREE.Mesh(crSh.g, crSh.m); sh.visible = false; sh.renderOrder = 1; g.add(sh);
           const tag = new THREE.Sprite(crTagMat('', team)); tag.center.set(0.5, 0); tag.renderOrder = 9; tag.frustumCulled = false; tag.visible = false; scene.add(tag);
           tag.onBeforeRender = (r, s, cam) => { const d = cam.position.distanceTo(tag.position), hh = d < 160 ? 0.001 : Math.min(300, Math.max(24, d * 0.05)), ns = crNps(); tag.scale.set(hh * 4 * ns, hh * ns, 1); tag.updateMatrix(); tag.matrixWorld.copy(tag.matrix); };
-          carVis.push({ team, slot, g, bg, tag, sh, body: null, wheels: [], fl: [], tr: [0, 0, 0], tz: 60, tz0: 60, rf: 12.5, rb: 15, trails: [crTrail(), crTrail()], car: null, bs: crCat.boost[0], ts: crCat.trail[0], s: { reset: true, vx: 0, vy: 0, vz: 0, px: 0, py: 0, pz: 0, vu: 0, gr: true, z: 0, zv: 0, pi: 0, pv: 0, ro: 0, rv: 0, ws: 0, af: 0, ab: 0, sa: 0, wd: 0, bt: 0, ea: 0, es: 0, pt: 0 } });
+          carVis.push({ team, slot, g, bg, tag, sh, body: null, wheels: [], fl: [], tr: [0, 0, 0], tz: 60, tz0: 60, rf: 12.5, rb: 15, trails: [crTrail(), crTrail()], car: null, bs: crCat.boost[0], ts: crCat.trail[0], s: { reset: true, vx: 0, vy: 0, vz: 0, px: 0, py: 0, pz: 0, vu: 0, gr: true, z: 0, zv: 0, pi: 0, pv: 0, ro: 0, rv: 0, ws: 0, af: 0, ab: 0, sa: 0, wd: 0, sw: [0, 0, 0, 0], bt: 0, ea: 0, es: 0, pt: 0 } });
         }
         const visOf = c => carVis[c.team * 3 + c.slot];
         const bindCars = () => {

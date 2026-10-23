@@ -461,7 +461,9 @@
       const n = S.n, [w1x, w1] = S.portrait ? CFG.mazeWp : CFG.mazeW, [h1x, h1] = S.portrait ? CFG.mazeHp : CFG.mazeH, w0 = Math.min(w1, w1x + Math.max(0, n - 3)), h0 = Math.min(h1, h1x + Math.max(0, n - 3));
       let m, d0, reach, start;
       do {
-        m = genMaze(w0 + R(w1 - w0 + 1), h0 + R(h1 - h0 + 1), R);
+        let mw = w0 + R(w1 - w0 + 1), mh = h0 + R(h1 - h0 + 1);
+        if (S.portrait ? mw > mh : mh > mw) { const t = mw; mw = mh; mh = t; }
+        m = genMaze(mw, mh, R);
         start = R(m.N); d0 = bfs(m, start); reach = [];
         for (let c = 0; c < m.N; c++) if (d0[c] >= 0) reach.push(c);
       } while (reach.length < 2 * n);

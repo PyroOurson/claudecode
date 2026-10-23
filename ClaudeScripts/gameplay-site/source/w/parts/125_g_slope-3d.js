@@ -649,7 +649,7 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
 
   const CSS = `.gm-slope-3d [hidden]{display:none!important}
 .gm-slope-3d .stage{position:relative;max-width:100%;border-radius:var(--r);overflow:hidden;container-type:inline-size;touch-action:none;background:#000;box-shadow:0 22px 44px -30px rgba(31,29,43,.7);--neon:#2bff5a}
-.gm-slope-3d .stage .g-canvas{border-radius:0;background:#000}
+.gm-slope-3d .stage .g-canvas{border-radius:0;background:#000;display:block;width:100%!important;height:100%!important;aspect-ratio:auto!important}
 .gm-slope-3d .hud{position:absolute;left:0;right:0;top:3.4%;pointer-events:none;color:var(--neon);font-family:'Lucida Console','Courier New',monospace;line-height:1;display:flex;flex-direction:column;align-items:center;gap:.35em;font-size:clamp(11px,1.9cqw,18px)}
 .gm-slope-3d .zt{position:absolute;left:0;right:0;top:20%;text-align:center;pointer-events:none;color:#fff;font:900 clamp(22px,6cqw,58px)/1 var(--sans);font-style:italic;letter-spacing:.14em;text-transform:uppercase;text-shadow:0 0 .25em var(--neon),0 0 .6em var(--neon);opacity:0}
 .gm-slope-3d .zt.on{animation:slz 2.2s ease-out forwards}
@@ -658,6 +658,7 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
 .gm-slope-3d .sp{display:none;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--neon);opacity:.9;font-variant-numeric:tabular-nums}
 .gm-slope-3d .pz{position:absolute;right:2.6%;top:3%;width:44px;height:44px;border-radius:50%;border:2px solid var(--neon);background:rgba(0,0,0,.45);cursor:pointer;display:grid;place-items:center;padding:0}
 .gm-slope-3d .pz::before{content:"";width:12px;height:14px;border-left:4px solid var(--neon);border-right:4px solid var(--neon);box-sizing:border-box}
+.fs .gm-slope-3d .pz{right:auto;left:2.6%}
 .gm-slope-3d .tz{position:absolute;bottom:4%;width:56px;height:56px;border-radius:50%;border:2px solid var(--neon);opacity:.28;pointer-events:none;display:grid;place-items:center}
 .gm-slope-3d .tz::before{content:"";width:16px;height:16px;border-left:4px solid var(--neon);border-bottom:4px solid var(--neon);box-sizing:border-box}
 .gm-slope-3d .tz.l{left:5%}.gm-slope-3d .tz.l::before{transform:translateX(3px) rotate(45deg)}
@@ -711,9 +712,12 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
 
       const wrap = document.createElement('div');
       wrap.className = 'stage';
-      wrap.style.width = v.canvas.style.width;
-      wrap.style.aspectRatio = v.canvas.style.aspectRatio;
-      v.canvas.style.width = '100%';
+      const cvs = v.canvas.style;
+      for (const k of ['width', 'aspectRatio']) {
+        let val = cvs[k];
+        wrap.style[k] = val;
+        Object.defineProperty(cvs, k, { get: () => val, set: x => { val = x; wrap.style[k] = x; } });
+      }
       root.append(wrap);
       wrap.append(v.canvas);
       wrap.insertAdjacentHTML('beforeend', `
@@ -1089,7 +1093,7 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
         else if (state === 'play') { if (e.code === 'KeyP') pause(); }
         else if (state === 'pause') resume();
       });
-      api.on(window, 'blur', pause);
+      api.on(window, 'blur', () => { if (!api.paused) pause(); });
       api.on(document, 'visibilitychange', () => { if (document.hidden) pause(); });
 
       applyTheme();

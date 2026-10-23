@@ -21,7 +21,7 @@
     squashAim: 45, squashJump: 55, squashR: 50, jalaFuse: 100, spikeRate: 100, spikeDmg: 20, smash: 70, smashEnd: 115, impFly: 70,
     waves: [5, 8, 10, 10, 8, 12, 16, 16, 20, 20, 20, 20, 20, 24, 30]
   };
-  const ORDER = ['peashooter', 'sunflower', 'cherrybomb', 'wallnut', 'potatomine', 'snowpea', 'chomper', 'repeater', 'squash', 'spikeweed', 'jalapeno', 'torchwood', 'threepeater', 'tallnut'];
+  const ORDER = ['peashooter', 'sunflower', 'cherrybomb', 'wallnut', 'potatomine', 'snowpea', 'chomper', 'repeater', 'squash', 'spikeweed', 'jalapeno', 'torchwood', 'threepeater', 'tallnut', 'puffshroom'];
   const PL = {
     peashooter: { name: 'Peashooter', cost: 100, refresh: 750, hp: 300, rate: 150, desc: 'Shoots peas at zombies in its lane. Each pea does 20 damage.' },
     sunflower: { name: 'Sunflower', cost: 50, refresh: 750, hp: 300, rate: 2500, desc: 'Makes 25 extra sun about every 24 seconds. Plant plenty of them early!' },
@@ -37,6 +37,7 @@
     torchwood: { name: 'Torchwood', cost: 175, refresh: 750, hp: 300, desc: 'Peas that pass through it turn into fireballs that do double damage.' },
     threepeater: { name: 'Threepeater', cost: 325, refresh: 750, hp: 300, rate: 150, desc: 'Shoots peas in three lanes at once.' },
     tallnut: { name: 'Tall-nut', cost: 125, refresh: 3000, hp: 8000, desc: 'A towering wall twice as tough as a Wall-nut. Pole vaulters cannot jump over it.' },
+    puffshroom: { name: 'Puff-shroom', cost: 0, refresh: 750, hp: 300, rate: 150, desc: 'Free to plant. Spits short-range spores at zombies in its lane, up to three tiles ahead.' },
     bowlnut: { name: 'Wall-nut', cost: 0, refresh: 0, hp: 4000 },
     boomnut: { name: 'Explode-o-nut', cost: 0, refresh: 0, hp: 4000 }
   };
@@ -65,11 +66,11 @@
     { rows: ALL, z: ['zombie', 'cone', 'bucket', 'news', 'screen'], seeds: ORDER.slice(0, 8), award: 'squash', intro: 'screen', slots: 7 },
     { rows: ALL, z: DAY, seeds: ORDER.slice(0, 9), award: 'spikeweed', slots: 7 },
     { rows: ALL, z: DAY, belt: 1, seeds: [], award: 'jalapeno' },
-    { rows: ALL, z: [...DAY, 'football'], seeds: ORDER.slice(0, 11), award: 'torchwood', intro: 'football', slots: 7, dusk: 1 },
-    { rows: ALL, z: [...DAY, 'football'], seeds: ORDER.slice(0, 12), award: 'threepeater', slots: 8, dusk: 1 },
-    { rows: ALL, z: [...DAY, 'football'], seeds: ORDER.slice(0, 13), award: 'tallnut', slots: 8, dusk: 1 },
-    { rows: ALL, z: [...DAY, 'football', 'garg'], seeds: ORDER.slice(0, 14), award: 'note', intro: 'garg', slots: 8, dusk: 1 },
-    { rows: ALL, z: [...DAY, 'football', 'garg'], seeds: ORDER.slice(0, 14), award: 'trophy', slots: 8, dusk: 1 }
+    { rows: ALL, z: [...DAY, 'football'], seeds: [...ORDER.slice(0, 11), 'puffshroom'], award: 'torchwood', intro: 'football', slots: 7, dusk: 1 },
+    { rows: ALL, z: [...DAY, 'football'], seeds: [...ORDER.slice(0, 12), 'puffshroom'], award: 'threepeater', slots: 8, dusk: 1 },
+    { rows: ALL, z: [...DAY, 'football'], seeds: [...ORDER.slice(0, 13), 'puffshroom'], award: 'tallnut', slots: 8, dusk: 1 },
+    { rows: ALL, z: [...DAY, 'football', 'garg'], seeds: [...ORDER.slice(0, 14), 'puffshroom'], award: 'note', intro: 'garg', slots: 8, dusk: 1 },
+    { rows: ALL, z: [...DAY, 'football', 'garg'], seeds: [...ORDER.slice(0, 14), 'puffshroom'], award: 'trophy', slots: 8, dusk: 1 }
   ];
   const NLV = LV.length;
   const lvName = i => i < 10 ? '1-' + (i + 1) : '2-' + (i - 9);
@@ -176,7 +177,7 @@
     }
     function nextWaveComing() {
       if (G.wave + 1 === n) { G.msg = { k: 'final', t: 0 }; G.finalSnd = 60; }
-      if (G.wave === 0) sfx('awooga');
+      if (G.wave === 0) { sfx('awooga'); if (li === 0) G.msg = { k: 'first', t: 0 }; }
       else if (isFlag(G.wave)) sfx('siren');
     }
     function spawnWave() {
@@ -297,9 +298,9 @@
     G.collect = s => { if (s.st === 'col' || G.state !== 'play') return false; s.st = 'col'; sfx('sun'); return true; };
     G.collectAward = () => { if (!G.award || G.award.st === 'col') return false; G.award.st = 'col'; G.award.t = 0; G.state = 'won'; sfx('award'); return true; };
 
-    function hasTarget(p, row) {
+    function hasTarget(p, row, rng) {
       const r = row == null ? p.row : row;
-      for (const z of G.zombies) if (z.row === r && !dead(z) && z.x + 21 > p.px + 60 && z.x - 21 < 800) return true;
+      for (const z of G.zombies) if (z.row === r && !dead(z) && z.x + 21 > p.px + 60 && z.x - 21 < (rng ? p.px + rng : 800)) return true;
       return false;
     }
     function fire(p) {
@@ -307,6 +308,12 @@
       p.sh = 18;
       G.peas.push({ x: p.px + 76, y: p.by - 52, row: p.row, snow: p.type === 'snowpea', fire: false, gone: false });
       sfx(p.type === 'snowpea' ? 'shootsnow' : 'shoot');
+    }
+    function firePuff(p) {
+      if (!hasTarget(p, null, 320)) return;
+      p.sh = 18;
+      G.peas.push({ x: p.px + 62, y: p.by - 22, row: p.row, snow: false, fire: false, spore: true, xr: p.px + 62 + 250, gone: false });
+      sfx('shoot');
     }
     function fire3(p) {
       const rs = [p.row - 1, p.row, p.row + 1].filter(r => rows.includes(r));
@@ -355,6 +362,10 @@
           if (p.sh > 0) p.sh--;
           if (--p.lc <= 0) { p.lc = PL[p.type].rate - rnd(15); fire(p); }
           else if (p.lc === 25 && p.type === 'repeater') fire(p);
+          break;
+        case 'puffshroom':
+          if (p.sh > 0) p.sh--;
+          if (--p.lc <= 0) { p.lc = PL[p.type].rate - rnd(15); firePuff(p); }
           break;
         case 'threepeater':
           if (p.sh > 0) p.sh--;
@@ -600,9 +611,9 @@
       hurt(z, q.fire ? CFG.peaDmg * 2 : CFG.peaDmg, 'pea');
       if (q.fire && !dead(z)) z.chill = 0;
       if (q.snow && !shield && !dead(z)) { if (z.chill === 0) sfx('freeze'); z.chill = CFG.chill; }
-      const col = q.fire ? '#ffb02e' : q.snow ? '#bff0ff' : '#8ed14a';
+      const col = q.fire ? '#ffb02e' : q.snow ? '#bff0ff' : q.spore ? '#c98ae8' : '#8ed14a';
       for (let i = 0; i < 5; i++) part({ k: 'dot', x: q.x + 4, y: q.y, vx: rf(-1.6, 0.4), vy: rf(-1.6, 1.2), g: 0.05, life: 16 + rnd(8), r: rf(2, 3.6), c: col });
-      part({ k: 'splat', x: q.x + 6, y: q.y, life: 12, c: q.fire ? '#ff7a1a' : q.snow ? '#9be3f5' : '#7bd13a' });
+      part({ k: 'splat', x: q.x + 6, y: q.y, life: 12, c: q.fire ? '#ff7a1a' : q.snow ? '#9be3f5' : q.spore ? '#a45ccf' : '#7bd13a' });
     }
     function updNut(u) {
       u.x += CFG.bowlSpeed;
@@ -695,9 +706,9 @@
       for (const q of G.peas) {
         q.x += CFG.peaSpeed;
         if (q.ty != null) { q.y += (q.ty - q.y) * 0.14; if (Math.abs(q.ty - q.y) < 0.5) { q.y = q.ty; q.ty = null; } }
-        if (q.x > 830) { q.gone = true; continue; }
+        if (q.x > 830 || q.xr && q.x > q.xr) { q.gone = true; continue; }
         const tc = Math.floor((q.x - CFG.lawnX) / CFG.cellW), tp = tc >= 0 && tc < 9 ? G.grid[q.row][tc] : null;
-        if (tp && tp.type === 'torchwood' && !tp.gone && q.tw !== tp.id && Math.abs(q.x - (tp.px + 40)) < 12) { q.tw = tp.id; if (q.snow) q.snow = false; else q.fire = true; }
+        if (tp && tp.type === 'torchwood' && !q.spore && !tp.gone && q.tw !== tp.id && Math.abs(q.x - (tp.px + 40)) < 12) { q.tw = tp.id; if (q.snow) q.snow = false; else q.fire = true; }
         let hit = null;
         for (const z of G.zombies) if (z.row === q.row && !dead(z) && z.st !== 'fly' && z.x - 21 < q.x + 8 && z.x + 21 > q.x - 8 && z.x - 21 < 800 && (!hit || z.x < hit.x)) hit = z;
         if (hit) { q.gone = true; peaHit(hit, q); }
@@ -731,9 +742,27 @@
     snowpea: { head: '#8fd9f2', headL: '#e9fbff', headD: '#3a8fbe', stem: '#5aa9c9', leaf: '#7cc8e4', hole: '#1b4560' }
   };
 
-  function makeArt(c) {
+  function makeArt(c, off) {
     const cache = {};
     const cg = (k, f) => cache[k] || (cache[k] = f());
+    const SPR = new Map(), sub = { cv: null, ctx: null, art: null };
+    let SC = 1, spx = 0;
+    const setScale = v => { v = Math.round(clamp(v || 1, 1, 2) * 4) / 4; if (v !== SC) { SC = v; SPR.clear(); spx = 0; sub.cv = null; } };
+    const sprite = (key, b, fn) => {
+      let s = SPR.get(key);
+      if (!s) {
+        if (spx > 3.5e7) { SPR.clear(); spx = 0; }
+        if (!sub.cv) { sub.cv = document.createElement('canvas'); sub.cv.width = Math.ceil(260 * SC); sub.cv.height = Math.ceil(230 * SC); sub.ctx = sub.cv.getContext('2d'); sub.art = makeArt(sub.ctx, true); }
+        const o = sub.ctx, w = Math.ceil(b[2] * SC), h = Math.ceil(b[3] * SC);
+        o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, w, h);
+        o.setTransform(SC, 0, 0, SC, -b[0] * SC, -b[1] * SC);
+        fn(sub.art);
+        s = document.createElement('canvas'); s.width = w; s.height = h;
+        s.getContext('2d').drawImage(sub.cv, 0, 0, w, h, 0, 0, w, h);
+        SPR.set(key, s); spx += w * h;
+      }
+      c.drawImage(s, b[0], b[1], s.width / SC, s.height / SC);
+    };
     const E = (x, y, rx, ry, r) => { c.beginPath(); c.ellipse(x, y, Math.abs(rx), Math.abs(ry), r || 0, 0, TAU); };
     const F = (f, lw) => { c.fillStyle = f; c.fill(); if (lw !== 0) { c.lineWidth = lw || 2.2; c.strokeStyle = OL; c.stroke(); } };
     const lg = (x0, y0, x1, y1, s) => { const g = c.createLinearGradient(x0, y0, x1, y1); s.forEach((v, i) => g.addColorStop(i / (s.length - 1), v)); return g; };
@@ -744,6 +773,11 @@
       c.lineCap = 'round'; c.lineJoin = 'round';
       c.strokeStyle = OL; c.lineWidth = w + 4.2; c.stroke();
       c.strokeStyle = col; c.lineWidth = w; c.stroke();
+      if (w >= 6) {
+        const ex = (x3 != null ? x3 : x2) - x1, ey = (y3 != null ? y3 : y2) - y1, ln = Math.hypot(ex, ey) || 1;
+        let nx = -ey / ln, ny = ex / ln; if (nx + ny < 0) { nx = -nx; ny = -ny; }
+        c.save(); c.translate(nx * w * 0.24, ny * w * 0.24); c.strokeStyle = 'rgba(0,0,0,.12)'; c.lineWidth = w * 0.5; c.stroke(); c.translate(-nx * w * 0.52, -ny * w * 0.52); c.strokeStyle = 'rgba(255,255,255,.12)'; c.lineWidth = w * 0.26; c.stroke(); c.restore();
+      }
     };
     const T = (s, x, y, size, fill, stroke, align, lw) => {
       c.font = '900 ' + size + 'px Nunito, system-ui, sans-serif';
@@ -793,8 +827,8 @@
       stem(38, sw * 20, '#4f9e2c');
       c.save(); c.translate(sw * 20, -50); c.rotate(sw);
       if (glow > 0) { E(0, 0, 44, 44); c.fillStyle = cg('sglow', () => rg(0, 0, 8, 44, ['rgba(255,246,160,.9)', 'rgba(255,230,90,0)'])); c.globalAlpha = glow; c.fill(); c.globalAlpha = 1; }
-      for (let i = 0; i < 14; i++) { c.save(); c.rotate((i + 0.5) / 14 * TAU + t * 0.002); E(0, -22, 6.6, 11.8); F('#e8960f', 1.5); c.restore(); }
-      for (let i = 0; i < 14; i++) { c.save(); c.rotate(i / 14 * TAU + t * 0.002); E(0, -21, 6.2, 11.5); F(cg('petal', () => lg(0, -33, 0, -9, ['#fff27a', '#ffc61f', '#f6a410'])), 1.6); c.beginPath(); c.moveTo(0, -12); c.lineTo(0, -28); c.strokeStyle = 'rgba(190,110,0,.35)'; c.lineWidth = 1; c.stroke(); c.restore(); }
+      for (let i = 0; i < 14; i++) { c.save(); c.rotate((i + 0.5) / 14 * TAU); E(0, -22, 6.6, 11.8); F('#e8960f', 1.5); c.restore(); }
+      for (let i = 0; i < 14; i++) { c.save(); c.rotate(i / 14 * TAU); E(0, -21, 6.2, 11.5); F(cg('petal', () => lg(0, -33, 0, -9, ['#fff27a', '#ffc61f', '#f6a410'])), 1.6); c.beginPath(); c.moveTo(0, -12); c.lineTo(0, -28); c.strokeStyle = 'rgba(190,110,0,.35)'; c.lineWidth = 1; c.stroke(); c.restore(); }
       E(0, 0, 15, 15); F(cg('sface', () => rg(-4, -5, 2, 17, ['#f1b04a', '#d98a2b', '#a9611b'])), 2);
       for (let i = 0; i < 24; i++) { const r = 9.6 + 4 * Math.sqrt(i / 24), a = i * 2.4; E(Math.cos(a) * r, Math.sin(a) * r, 1.2, 0.9, a); c.fillStyle = i % 3 ? 'rgba(80,40,10,.4)' : 'rgba(255,220,150,.35)'; c.fill(); }
       E(-5, -3, 2.6, 4); F('#1a1008', 0); E(5, -3, 2.6, 4); F('#1a1008', 0);
@@ -829,7 +863,6 @@
       c.strokeStyle = boom ? 'rgba(90,10,0,.2)' : 'rgba(90,50,10,.22)'; c.lineWidth = 1.6;
       for (const gx of [-16, -6, 6, 16]) { c.beginPath(); c.moveTo(gx * 0.7, -68); c.quadraticCurveTo(gx * 1.3, -36, gx * 0.8, -4); c.stroke(); }
       E(-14, -52, 5.5, 13, -0.25); c.fillStyle = 'rgba(255,255,255,.24)'; c.fill();
-      E(-8, -35, 4, 2.6); c.fillStyle = 'rgba(255,110,80,.3)'; c.fill(); E(22, -33, 3.6, 2.4); c.fill();
       c.strokeStyle = boom ? 'rgba(90,10,0,.35)' : 'rgba(90,50,10,.35)'; c.lineWidth = 2;
       c.beginPath(); c.arc(-10, -50, 12, 3.7, 5.1); c.stroke();
       c.beginPath(); c.arc(-14, -20, 10, 2.2, 3.4); c.stroke();
@@ -838,8 +871,7 @@
       E(1, -46, 6.8, 8.6); F('#fff', 1.6); E(15, -46, 5.8, 8); F('#fff', 1.6);
       E(3.5, -45, 2.4, 3); F('#111', 0); E(17, -45, 2.2, 2.8); F('#111', 0);
       if (worried || boom) { limb(-5, -57 + (boom ? 3 : 0), 6, -55 - (boom ? 0 : 3), null, null, 1.6, OL); limb(11, -55 - (boom ? 0 : 3), 20, -57 + (boom ? 3 : 0), null, null, 1.6, OL); }
-      c.beginPath(); if (st >= 2) c.arc(9, -26, 5, 1.15 * Math.PI, 1.85 * Math.PI); else c.arc(9, -31, 5, 0.2 * Math.PI, 0.8 * Math.PI);
-      c.strokeStyle = OL; c.lineWidth = 2; c.stroke();
+      if (st >= 2 || boom) { c.beginPath(); c.arc(9, -26, 5, 1.15 * Math.PI, 1.85 * Math.PI); c.strokeStyle = OL; c.lineWidth = 2; c.stroke(); }
       if (st >= 1) {
         c.beginPath(); c.moveTo(16, -71); c.lineTo(10, -62); c.lineTo(15, -56); c.lineTo(9, -50); c.moveTo(-20, -60); c.lineTo(-13, -54); c.lineTo(-16, -46);
         c.strokeStyle = '#4a2a0c'; c.lineWidth = 2; c.stroke();
@@ -998,11 +1030,45 @@
       if (st >= 1) { c.beginPath(); c.moveTo(14, -104); c.lineTo(8, -92); c.lineTo(14, -86); c.moveTo(-22, -40); c.lineTo(-14, -34); c.lineTo(-18, -24); c.strokeStyle = '#4a2a0c'; c.lineWidth = 2; c.stroke(); }
       if (st >= 2) { c.beginPath(); c.moveTo(-4, -110); c.lineTo(8, -96); c.lineTo(22, -98); c.quadraticCurveTo(14, -110, -4, -110); F('#6a3d12', 1.6); c.beginPath(); c.moveTo(20, -50); c.lineTo(12, -40); c.lineTo(20, -30); c.strokeStyle = '#4a2a0c'; c.lineWidth = 2; c.stroke(); }
     }
+    const PQ = {
+      peashooter: [140, 12, 5, [-44, -88, 110, 96]], snowpea: [140, 12, 5, [-44, -88, 110, 96]], repeater: [140, 12, 5, [-44, -88, 110, 96]],
+      threepeater: [140, 12, 5, [-52, -112, 128, 122]], sunflower: [126, 12, 5, [-50, -98, 100, 102]],
+      wallnut: [157, 4, 0, [-32, -78, 64, 84]], tallnut: [157, 4, 0, [-40, -116, 80, 124]]
+    };
+    function puffshroom(t, sh) {
+      const bob = Math.sin(t * 0.07) * 0.8, k = 1 - sh * 0.1;
+      leaf(-3, -1, 14, 4.6, Math.PI + 0.25, '#5db534'); leaf(3, -1, 14, 4.6, -0.25, '#5db534');
+      c.beginPath(); c.moveTo(-8, -1); c.quadraticCurveTo(-11, -14, -7, -23); c.lineTo(7, -23); c.quadraticCurveTo(11, -14, 8, -1); c.quadraticCurveTo(0, 4, -8, -1); c.closePath();
+      F(cg('pfs', () => lg(-10, 0, 10, 0, ['#fbf3d6', '#e8d9a8', '#b9a56e'])), 2.2);
+      E(-1, -23 + bob, 14, 5); F('#e7d49c', 1.6);
+      E(-3, -17, 3.4, 4.3); F('#fff', 1.2); E(5, -17, 3.1, 4); F('#fff', 1.2);
+      E(-2.4 + sh, -16.5, 1.5, 2); F('#111', 0); E(5.6 + sh, -16.5, 1.4, 1.9); F('#111', 0);
+      c.beginPath(); c.arc(1, -9, 2.6 + sh * 2, 0.15 * Math.PI, 0.85 * Math.PI); c.strokeStyle = OL; c.lineWidth = 1.5; c.stroke();
+      c.save(); c.translate(0, -26 + bob); c.scale(1 / k, k);
+      c.beginPath(); c.moveTo(-19, 2); c.bezierCurveTo(-24, -22, 22, -24, 19, 2); c.quadraticCurveTo(0, 8, -19, 2); c.closePath();
+      F(cg('pfc', () => rg(-6, -12, 2, 26, ['#d6a0ee', '#9a4fc6', '#5a2380'])), 2.2);
+      for (const [x, y, r] of [[-8, -8, 2.6], [5, -12, 2.2], [10, -4, 2], [-1, -4, 1.8]]) { E(x, y, r, r * 0.8); c.fillStyle = 'rgba(240,210,255,.8)'; c.fill(); }
+      E(-8, -14, 5, 2.2, -0.5); c.fillStyle = 'rgba(255,255,255,.35)'; c.fill();
+      c.restore();
+    }
     function plant(type, t, p) {
       p = p || {};
+      const q = PQ[type];
+      if (q && !off) {
+        const st = p.hp != null ? (p.hp < p.hpMax / 3 ? 2 : p.hp < p.hpMax * 2 / 3 ? 1 : 0) : 0;
+        const qt = Math.floor(((t % q[0]) + q[0]) % q[0] / q[0] * q[1]);
+        const ex = type === 'sunflower' ? (p.lc != null && p.lc < 100 ? Math.round((1 - p.lc / 100) * q[2]) : 0) : q[2] ? Math.round((p.sh || 0) / 18 * q[2]) : st;
+        const qp = type === 'sunflower' ? { lc: ex ? 100 - ex / q[2] * 100 : 100 } : q[2] ? { sh: ex / q[2] * 18 } : { hp: [1, 0.5, 0.2][st], hpMax: 1 };
+        sprite(type + qt + '_' + ex, q[3], a => a.plantRaw(type, qt * q[0] / q[1], qp));
+        return;
+      }
+      plantRaw(type, t, p);
+    }
+    function plantRaw(type, t, p) {
       switch (type) {
         case 'threepeater': threepeater(t, (p.sh || 0) / 18); break;
         case 'squash': squash(t, p.st || 'idle', p.dir || 1); break;
+        case 'puffshroom': puffshroom(t, (p.sh || 0) / 18); break;
         case 'jalapeno': jalapeno(t, p.cd != null ? 1 - p.cd / CFG.jalaFuse : 0); break;
         case 'spikeweed': spikeweed(t, p.sh || 0); break;
         case 'torchwood': torchwood(t); break;
@@ -1089,7 +1155,8 @@
       } else {
         c.beginPath(); c.moveTo(-13, -42); c.lineTo(-15, -90); c.quadraticCurveTo(0, -98, 14, -88); c.lineTo(13, -42);
         c.lineTo(8, -38); c.lineTo(4, -43); c.lineTo(-2, -38); c.lineTo(-7, -43); c.closePath();
-        F(tp === 'news' ? P.vest : P.jacket, 2.2);
+        const jc = tp === 'news' ? P.vest : P.jacket;
+        F(cg('jk' + jc, () => lg(-15, 0, 14, 0, [mix(jc, '#ffffff', 0.16), jc, mix(jc, '#000000', 0.3)])), 2.2);
         c.save(); c.clip(); c.fillStyle = 'rgba(0,0,0,.14)'; c.fillRect(5, -100, 20, 70); c.fillStyle = 'rgba(255,255,255,.07)'; c.fillRect(-20, -100, 10, 70); c.fillStyle = 'rgba(0,0,0,.12)'; c.fillRect(-20, -48, 40, 10); c.restore();
         c.beginPath(); c.moveTo(-11, -90); c.lineTo(1, -91); c.lineTo(-6, -64); c.closePath(); F(P.shirt, 1.5);
         if (tp === 'news') { c.beginPath(); c.moveTo(-10, -89); c.lineTo(-5, -86); c.lineTo(-1, -89); c.lineTo(-1, -84); c.lineTo(-5, -86); c.lineTo(-10, -84); c.closePath(); F(P.tie, 1.2); }
@@ -1147,7 +1214,7 @@
     function head(z, P, jaw) {
       const tp = z.type;
       E(13, -18, 4, 6); F(P.skinD, 1.6);
-      E(-3, -20, 19, 21); F(P.skin, 2.2);
+      E(-3, -20, 19, 21); F(cg('hd' + P.skin, () => rg(-10, -30, 3, 30, [mix(P.skin, '#ffffff', 0.28), P.skin, P.skinD])), 2.2);
       c.beginPath(); c.moveTo(-20, -12); c.quadraticCurveTo(-16, 2 + jaw * 3, -2, 2 + jaw * 2); c.quadraticCurveTo(8, 0, 12, -8); c.strokeStyle = 'rgba(60,70,40,.35)'; c.lineWidth = 2; c.stroke();
       E(-15, -6 + jaw * 2, 5.6, 2 + jaw * 4); F(P.mouth, 1.4);
       c.fillStyle = P.teeth; c.fillRect(-18.5, -8 + jaw * 0.5, 2.6, 3); c.fillRect(-14, -8 + jaw * 0.5, 2.6, 2.6);
@@ -1213,6 +1280,24 @@
         c.restore();
       }
     }
+    const ZB = {
+      zombie: [-65, -148, 96, 157], cone: [-65, -179, 96, 188], bucket: [-65, -178, 96, 187], news: [-74, -142, 105, 151],
+      screen: [-77, -148, 108, 157], football: [-72, -155, 110, 164], pole: [-110, -141, 152, 150], flag: [-65, -194, 121, 202]
+    };
+    function zsprite(z, P, idle, tm) {
+      const b = ZB[z.type];
+      if (off || !b || z.flash > 12) return zombie(z, P, idle, tm);
+      const eat = z.st === 'eat', N = 24, ang = TAU / N;
+      const q = eat ? Math.floor(((z.eatT * 0.16) % TAU + TAU) % TAU / ang) : Math.floor(((z.ph % TAU) + TAU) % TAU / ang);
+      const hs = z.helmType && z.helm > 0 ? 1 + (z.helm / z.helmMax > 2 / 3 ? 0 : z.helm / z.helmMax > 1 / 3 ? 1 : 2) : 0;
+      const ds = z.door > 0 ? 1 + (z.door / z.doorMax > 2 / 3 ? 0 : z.door / z.doorMax > 1 / 3 ? 1 : 2) : 0;
+      const key = z.type + z.st + q + (idle ? 'i' : '') + (z.pole ? 'p' : '') + (z.mad ? 'm' : '') + (z.head ? 'h' : '') + (z.arm ? 'a' : '') + (z.chill > 0 ? 'c' : '') + hs + ds + (z.paper > 0 ? (z.paper < 75 ? 2 : 1) : 0);
+      sprite(key, b, a => {
+        const o = Object.assign({}, z, { id: 0 });
+        if (eat) { o.eatT = (q + 0.5) * ang / 0.16; o.ph = 0; a.zombie(o, P, false, 0); }
+        else { o.ph = (q + 0.5) * ang; a.zombie(o, P, idle, o.ph / 2); }
+      });
+    }
     function zombieAt(z, x, y, tm, idle) {
       let P = z.st === 'burn' ? ZBURN : ZPAL[(z.chill > 0 ? 2 : 0) + (z.flash > 12 ? 1 : 0)];
       c.save(); c.translate(x, y);
@@ -1230,7 +1315,7 @@
       if (z.st === 'fly') c.rotate(-Math.sin(clamp(z.t / CFG.impFly, 0, 1) * Math.PI) * 0.9);
       if (z.st === 'vault') c.rotate(-Math.sin(clamp((z.t / CFG.vault - 0.3) / 0.55, 0, 1) * Math.PI) * 0.5);
       c.globalAlpha = clamp(a, 0, 1);
-      zombie(z, P, idle, tm);
+      zsprite(z, P, idle, tm);
       c.globalAlpha = 1;
       c.restore();
     }
@@ -1271,7 +1356,15 @@
       c.globalAlpha = 1;
       c.restore();
     }
-    function pea(x, y, snow, fire, t) {
+    function pea(x, y, snow, fire, t, spore) {
+      if (spore) {
+        c.save(); c.translate(x, y);
+        E(-9, 0, 8, 3); c.fillStyle = 'rgba(190,130,230,.3)'; c.fill();
+        E(0, 0, 6.5, 6.5); F(cg('spore', () => rg(-2, -2, 1, 7, ['#f0d2ff', '#b06ad8', '#6a2f93'])), 1.6);
+        E(-2, -2.4, 2, 1.4, -0.6); c.fillStyle = 'rgba(255,255,255,.75)'; c.fill();
+        c.restore();
+        return;
+      }
       if (fire) {
         c.save(); c.translate(x, y);
         for (let i = 0; i < 4; i++) { const k = i / 4, w = Math.sin((t || 0) * 0.4 + i) * 2; E(-10 - k * 18, w * k, 10 - k * 6, 7 - k * 4); c.fillStyle = i % 2 ? 'rgba(255,120,30,.55)' : 'rgba(255,200,60,.55)'; c.fill(); }
@@ -1290,8 +1383,9 @@
       const s = Math.min(w / 50, h / 70);
       c.save(); c.translate(x + (w - 50 * s) / 2, y + (h - 70 * s) / 2); c.scale(s, s);
       RR(0, 0, 50, 70, 5); F(type === 'boomnut' ? '#d98a6e' : '#d6b46e', 2);
-      RR(3.5, 3.5, 43, 47, 3); F(cg('pk', () => lg(0, 4, 0, 50, ['#f6fbe2', '#bde088'])), 1.2);
-      c.save(); RR(3.5, 3.5, 43, 47, 3); c.clip(); c.translate(25, type === 'potatomine' ? 40 : type === 'spikeweed' ? 36 : 47); const ps = { chomper: 0.42, wallnut: 0.5, bowlnut: 0.5, boomnut: 0.5, tallnut: 0.36, threepeater: 0.44, squash: 0.5, jalapeno: 0.5, spikeweed: 0.62, torchwood: 0.52 }[type] || 0.54; c.scale(ps, ps);
+      const ih = o.cost != null ? 47 : 63;
+      RR(3.5, 3.5, 43, ih, 3); F(cg('pk' + ih, () => lg(0, 4, 0, 3.5 + ih, ['#f6fbe2', '#bde088'])), 1.2);
+      c.save(); RR(3.5, 3.5, 43, ih, 3); c.clip(); c.translate(25, (type === 'potatomine' ? 40 : type === 'spikeweed' ? 36 : 47) + ih - 47); const ps = { chomper: 0.42, wallnut: 0.5, bowlnut: 0.5, boomnut: 0.5, tallnut: 0.36, threepeater: 0.44, squash: 0.5, jalapeno: 0.5, spikeweed: 0.62, torchwood: 0.52, puffshroom: 1 }[type] || 0.54; c.scale(ps, ps);
       plant(type, 0, { st: type === 'potatomine' ? 'armed' : type === 'chomper' ? 'ready' : '' });
       c.restore();
       if (o.cost != null) {
@@ -1372,7 +1466,7 @@
         }
       }
     }
-    return { E, F, lg, rg, RR, T, limb, leaf, cg, plant, zombieAt, zombie, mower, sun, pea, packet, shovel, award, part, wallnut, sunflower, trophy };
+    return { E, F, lg, rg, RR, T, limb, leaf, cg, plant, plantRaw, setScale, zombieAt, zombie, mower, sun, pea, packet, shovel, award, part, wallnut, sunflower, trophy };
     function A_T(s, x, y, size, fill) { c.font = '900 ' + size + 'px Nunito, system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = fill; c.fillText(s, x, y); }
   }
 
@@ -1628,7 +1722,7 @@
     title: 'Garden Defense',
     category: 'Action',
     tint: '#5fb336',
-    blurb: 'Defend your house from the zombie horde across 15 levels with 14 plants and 10 kinds of zombies.',
+    blurb: 'Defend your house from the zombie horde across 15 levels with 15 plants and 10 kinds of zombies.',
     help: '<kbd>Click</kbd> a seed packet, then a lawn tile · click sun to collect · <kbd>1</kbd>–<kbd>8</kbd> seeds · <kbd>S</kbd> shovel · <kbd>F</kbd> game speed · <kbd>P</kbd> pause · tap on touch',
     format: v => v <= 10 ? 'Level 1-' + v : 'Level 2-' + (v - 10),
     width: 940,
@@ -1637,7 +1731,7 @@
     mount(root, api) {
       const coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
       const PORT = coarse && window.innerHeight > window.innerWidth;
-      const W = PORT ? 800 : 920, H = PORT ? 760 : 600, BGW = 1620, CX = W / 2, CAM0 = PORT ? 0 : -120, PANX = 1400 - W, UX = (W - 800) / 2;
+      const W = PORT ? 800 : 920, H = PORT ? 760 : 600, BGW = 1620, CX = W / 2, CAM0 = PORT ? -30 : -120, PANX = 1400 - W, UX = (W - 800) / 2;
       const cv = api.canvas(W, H);
       const c = cv.ctx, canvas = cv.canvas;
       canvas.style.touchAction = 'none';
@@ -1646,7 +1740,7 @@
       const snd = makeAudio(api);
       const play = n => snd.play(n);
       const loaded = api.load();
-      const sv = { lv: 1, pick: null, speed: 1.5 };
+      const sv = { lv: 1, pick: null, speed: 1 };
       if (loaded && typeof loaded === 'object') { if (loaded.lv >= 1 && loaded.lv <= NLV + 1) sv.lv = loaded.lv | 0; if (Array.isArray(loaded.pick)) sv.pick = loaded.pick.filter(t => ORDER.includes(t)); if ([1, 1.5, 2].includes(loaded.speed)) sv.speed = loaded.speed; }
       let nSlots = 6;
       const LAY = PORT ? {
@@ -1689,7 +1783,7 @@
       function startLevel(i) {
         li = clamp(i, 0, NLV - 1); nSlots = slotsFor(li);
         G = makeGame(li, { sfx: play });
-        G.sunDest = LAY.sunDest;
+        G.sunDest = { x: LAY.sunDest.x + CAM0, y: LAY.sunDest.y };
         for (const m of G.mowers) m.x = -160;
         held = null; drag = null; paused = false; acc = 0; lostT = 0; awardT = 0; wonInfo = null; submitted = false; screamed = false;
         camX = CAM0; ph = 'pan'; phT = 0; rollK = L().roll ? 0 : 1;
@@ -1767,11 +1861,11 @@
         if (scr === 'intro') { if (ph === 'pan' || ph === 'hold') { ph = 'back'; phT = 0; } else if (ph === 'ready') { phT = Math.max(phT, 1.2); } return true; }
         if (scr !== 'play' || paused) return false;
         const aw = G.award;
-        if (aw && aw.st !== 'col' && Math.hypot(x - aw.x, y - aw.y) < (touchMode ? 70 : 50)) { G.collectAward(); awardT = 0; held = null; return true; }
+        if (aw && aw.st !== 'col' && Math.hypot(x + camX - aw.x, y - aw.y) < (touchMode ? 70 : 50)) { G.collectAward(); awardT = 0; held = null; return true; }
         const rad = touchMode ? 58 : 44;
         for (let i = G.suns.length - 1; i >= 0; i--) {
           const s = G.suns[i];
-          if (s.st !== 'col' && Math.hypot(x - s.x, y - s.y) < rad * s.sc) { G.collect(s); return true; }
+          if (s.st !== 'col' && Math.hypot(x + camX - s.x, y - s.y) < rad * s.sc) { G.collect(s); return true; }
         }
         const cell = cellAt(x, y);
         if (held) {
@@ -1959,7 +2053,7 @@
             c.save(); c.translate(x, y); if (k > 0.8) c.scale(1.15, 0.85); A.plant('squash', p.t, { st: 'aim', dir: p.dir }); c.restore();
           }
           if (scr === 'intro') for (const z of preview) if (Math.round((z.by - 168) / 100) === r) { z.ph = tm * 2 + z.id; A.zombieAt(z, z.x, z.by, tm, true); }
-          for (const q of G.peas) if (q.row === r) A.pea(q.x, q.y, q.snow, q.fire, G.t);
+          for (const q of G.peas) if (q.row === r) A.pea(q.x, q.y, q.snow, q.fire, G.t, q.spore);
         }
         for (const q of G.parts) A.part(q);
         if (held && held.src !== 'shovel' && scr === 'play' && !paused) {
@@ -2064,11 +2158,17 @@
         if (!G.msg) return;
         const m = G.msg, t = m.t;
         if (m.k === 'huge' && t < 420) {
-          const s = 1 + Math.sin(t * 0.08) * 0.03;
-          c.save(); c.translate(CX, 300); c.scale(s, s);
+          const s = 1 + Math.sin(t * 0.08) * 0.03, a = clamp(Math.min(t / 30, (420 - t) / 40), 0, 1);
+          c.save(); c.globalAlpha = a; c.translate(CX, 300); c.scale(s, s);
           A.T('A huge wave of zombies', 0, -20, 38, '#ff3a2a', OL, 'center', 8);
           A.T('is approaching!', 0, 24, 38, '#ff3a2a', OL, 'center', 8);
-          c.restore();
+          c.restore(); c.globalAlpha = 1;
+        }
+        if (m.k === 'first' && t < 260) {
+          const a = clamp(Math.min(t / 25, (260 - t) / 40), 0, 1);
+          c.save(); c.globalAlpha = a; c.translate(CX, 250 + (1 - ease(t / 25)) * 12);
+          A.T('The zombies are coming!', 0, 0, 40, '#ff3a2a', OL, 'center', 8);
+          c.restore(); c.globalAlpha = 1;
         }
         if (m.k === 'final' && t < 300) {
           const k = clamp(t / 22, 0, 1), s = 3 - 2 * ease(k), a = t > 240 ? 1 - (t - 240) / 60 : k;
@@ -2251,6 +2351,7 @@
 
       function render() {
         btns = [];
+        A.setScale(c.getTransform().a);
         c.clearRect(0, 0, W, H);
         if (scr === 'title') { drawTitle(); return; }
         if (scr === 'won') { drawWon(); return; }

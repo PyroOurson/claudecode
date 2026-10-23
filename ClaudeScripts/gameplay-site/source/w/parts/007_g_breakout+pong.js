@@ -129,7 +129,7 @@
       const PAD_COL = ['#b8fff4', '#2ec4b6', '#13867c', 'rgba(53,208,192,.18)', '#35d0c0'];
       const newPad = (i, x) => ({ i, x, tg: x, v: 0, w: PW0, wideT: 0, laserT: 0, fireCd: 0, squash: 0, held: false });
       let state = 'ready', grid = [], live = 0, balls = [], drops = [], bolts = [];
-      let lives = 3, level = 1, score = 0, base = 370, cap = 610, speed = 370, pads = [newPad(0, W / 2)];
+      let idleT = 0, lives = 3, level = 1, score = 0, base = 370, cap = 610, speed = 370, pads = [newPad(0, W / 2)];
       let slowT = 0, banner = 0, clock = 0, wait = 0;
       const lmax = () => 5;
 
@@ -207,7 +207,7 @@
         api.score(0);
       }
       function launch() {
-        state = 'play';
+        state = 'play'; idleT = 0;
         const a = (Math.random() < 0.5 ? -1 : 1) * rand(0.12, 0.38) + clamp(pads[0].v / 3000, -0.25, 0.25), b = balls[0];
         b.vx = Math.sin(a) * speed; b.vy = -Math.cos(a) * speed;
         api.sfx('tap');
@@ -238,6 +238,7 @@
       function damage(b, own) {
         b.flash = 1;
         if (b.steel) { api.sfx('tick'); return; }
+        idleT = 0;
         if (--b.hp > 0) { b.crack = crack(b); api.sfx('tick'); return; }
         grid[b.r * COLS + b.c] = null; live--;
         score += 10 * b.max; api.score(score);
@@ -288,6 +289,10 @@
       }
       function physics(dt) {
         const sf = slowT > 0 ? 0.62 : 1;
+        if ((idleT += dt) > 10) {
+          idleT = 7;
+          for (const b of balls) { const a = rand(-.14, .14), c = Math.cos(a), s = Math.sin(a), vx = b.vx * c - b.vy * s; b.vy = b.vx * s + b.vy * c; b.vx = vx; }
+        }
         for (let j = balls.length - 1; j >= 0; j--) {
           const b = balls[j], n = Math.max(1, Math.ceil(speed * sf * dt / 4)), h = dt * sf / n;
           for (let i = 0; i < n; i++) {
@@ -349,7 +354,9 @@
           slowT -= dt;
           physics(dt);
           for (let i = bolts.length - 1; i >= 0; i--) {
-            const z = bolts[i], br = (z.y -= 950 * dt) < CEIL ? null : brickAt(z.x, z.y, 3);
+            const z = bolts[i];
+            if (!z) break;
+            const br = (z.y -= 950 * dt) < CEIL ? null : brickAt(z.x, z.y, 3);
             if (z.y < CEIL || br) { bolts.splice(i, 1); if (br) { damage(br, z.own); burst(fx, z.x, z.y, ['#ff6b6b', '#ffd166'], 5, 120); } }
           }
           for (let i = drops.length - 1; i >= 0; i--) {
@@ -853,8 +860,8 @@
         for (const p of [L, Rp]) {
           const [x, y] = anchor(p, s);
           ctx.save(); ctx.translate(x, y);
-          if (sel.mode === '1p' && p === Rp) for (let i = 0; i < 3; i++) heart((i - 1) * 24 * s, -2 * s, 9 * s, i < lives);
-          else txt(ctx, String(sel.mode === '1p' ? score : pts[p === L ? 0 : 1]), 0, 0, 64 * s, 'rgba(255,255,255,.2)');
+          if (sel.mode !== '1p') txt(ctx, String(pts[p === L ? 0 : 1]), 0, 0, 64 * s, 'rgba(255,255,255,.2)');
+          else if (p === L) { txt(ctx, String(score), 0, 0, 64 * s, 'rgba(255,255,255,.2)'); for (let i = 0; i < 3; i++) heart((i - 1) * 24 * s, 76 * s, 9 * s, i < lives); }
           txt(ctx, who(p), 0, 46 * s, 12 * s, p === L ? 'rgba(255,93,143,.75)' : 'rgba(76,201,240,.75)');
           ctx.restore();
         }

@@ -54,7 +54,7 @@
               }
             }
             if (tr && v.key !== 'tr') { v.key = 'tr'; v.bd.classList.remove('b'); v.bd.classList.add('n'); }
-            if (bo !== v.bkey) { v.bkey = bo; uiDig(v.bdNum, bo); uiBT(v, bo); v.bd.classList.toggle('full', bo >= 100); }
+            if (bo !== v.bkey) { if (bo - (v.bkey || 0) >= 8 && v.bkey !== undefined) { v.bd.classList.remove('pk'); void v.bd.offsetWidth; v.bd.classList.add('pk'); } v.bkey = bo; uiDig(v.bdNum, bo); uiBT(v, bo); v.bd.classList.toggle('full', bo >= 100); }
             if (me && !!me.boosting !== v.bbo) { v.bbo = !!me.boosting; v.bd.classList.toggle('on', v.bbo); }
             if (me) {
               const dm = me.demoT > 0 && me.demoT < 100 ? Math.ceil(me.demoT) : 0, sk = dm ? 'd' + dm : '';

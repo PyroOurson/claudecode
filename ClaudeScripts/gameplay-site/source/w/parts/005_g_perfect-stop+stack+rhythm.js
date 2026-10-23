@@ -283,7 +283,10 @@
         if (flash > 0) { ctx.globalAlpha = flash * .35; ctx.fillStyle = flashC; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
       }
 
+      let lastNow = 0;
       api.loop((dt, now) => {
+        if (lastNow && now - lastNow > 400) { holdUntil += now - lastNow; endAt += now - lastNow; }
+        lastNow = now;
         if (tw) {
           tw.t += dt;
           if (tw.t > 0) {
@@ -941,7 +944,12 @@
         ctx.textBaseline = 'alphabetic';
       }
 
-      api.loop(dt => { update(dt); draw(); });
+      let lastNow = 0;
+      api.loop((dt, now) => {
+        if (st === 'play' && lastNow && now - lastNow > 400) t0 += now - lastNow + 1000;
+        lastNow = now;
+        update(dt); draw();
+      });
       api.on(window, 'keydown', e => {
         if (st === 'menu' && /^Digit[1-3]$/.test(e.code)) { const i = +e.code[5] - 1; setSong(i); mark('s', i); api.sfx('tap'); return; }
         const l = KEYS[e.code];

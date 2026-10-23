@@ -35,7 +35,7 @@
 
   const uiCss = id => `
 .gm-${id} .wrap{position:relative;max-width:100%;container-type:inline-size;border-radius:var(--r);overflow:hidden;background:#bcd6ee;box-shadow:0 18px 40px -24px rgba(20,24,60,.55)}
-.gm-${id} .wrap canvas{width:100%!important;border-radius:0}
+.gm-${id} .wrap canvas{width:100%!important;height:100%!important;aspect-ratio:auto!important;display:block;border-radius:0}
 .gm-${id} .hud{position:absolute;inset:0;pointer-events:none;font-family:var(--sans);color:#fff}
 .gm-${id} .chip{position:relative;display:flex;flex-direction:column;gap:1px;padding:max(4px,1cqw) max(7px,1.6cqw);border-radius:max(8px,1.5cqw);background:rgba(16,18,40,.42);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:0 8px 20px -10px rgba(0,0,0,.55)}
 .gm-${id} .chip .k{font-size:max(7px,1.1cqw);font-weight:900;letter-spacing:.12em;text-transform:uppercase;opacity:.72}
@@ -53,6 +53,11 @@
 .gm-${id} .pad svg{width:42%;height:42%;pointer-events:none}
 @media (hover:none),(pointer:coarse){.gm-${id} .ctl{display:flex}}
 .gm-${id}.touch .ctl{display:flex}
+.fs .gm-${id} .ctl{position:absolute;left:0;right:0;bottom:max(12px,env(safe-area-inset-bottom));width:auto;max-width:none;padding:0 14px;box-sizing:border-box;pointer-events:none;z-index:3}
+.fs .gm-${id} .pad button{pointer-events:auto;background:rgba(255,255,255,.5);opacity:.85}
+.fs .gm-${id} .hud>div[style*="right"],.fs .gm-${id} .speedo{margin-right:max(0px,calc(48px - 1.6cqw))}
+.fs .gm-${id} .ctl{padding-right:84px}
+.fs .gm-${id} .cam{bottom:96px}
 `;
 
   const ARROW = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
@@ -60,8 +65,12 @@
   function ui(root, canvas) {
     const wrap = document.createElement('div');
     wrap.className = 'wrap';
-    wrap.style.width = canvas.style.width;
-    wrap.style.aspectRatio = canvas.style.aspectRatio;
+    const cvs = canvas.style;
+    for (const k of ['width', 'aspectRatio']) {
+      let val = cvs[k];
+      wrap.style[k] = val;
+      Object.defineProperty(cvs, k, { get: () => val, set: x => { val = x; wrap.style[k] = x; } });
+    }
     root.append(wrap);
     root.addEventListener('pointerdown', e => { if (e.pointerType === 'touch') root.classList.add('touch'); });
     wrap.append(canvas);
@@ -984,10 +993,28 @@
     };
 
     const CK = carKit(THREE, K), M = CK.M;
-    const player = CK.build('sports', '#e8293b');
-    player.g.rotation.order = 'YXZ';
-    for (const w of player.wheels) w.rotation.order = 'YXZ';
-    scene.add(player.g);
+    const CARS = [
+      { type: 'sports', name: 'Muscle', km: 0, vm: 1, acc: 1, lat: 1, dmg: 1, note: 'Balanced' },
+      { type: 'hatch', name: 'Hot hatch', km: 2, vm: .93, acc: 1.18, lat: 1.18, dmg: 1.1, note: 'Quick and agile' },
+      { type: 'suv', name: 'Off-roader', km: 5, vm: .9, acc: .95, lat: 1, dmg: .55, note: 'Tough, takes less damage' },
+      { type: 'sedan', name: 'Grand tourer', km: 10, vm: 1.07, acc: .9, lat: .9, dmg: .9, note: 'Highest top speed' }
+    ];
+    const PAINTS = ['#e8293b', '#2d8cff', '#f4b400', '#2a9d8f', '#b5179e', '#f2f2f0'];
+    const garage = Object.assign({ car: 0, col: 0, km: 0 }, api.load() || {});
+    if (!CARS[garage.car] || garage.km < CARS[garage.car].km) garage.car = 0;
+    let CAR = CARS[garage.car], player = null;
+    const cockPaint = K.std(PAINTS[garage.col], { roughness: .28, metalness: .35 });
+    const setCar = () => {
+      CAR = CARS[garage.car];
+      if (player) scene.remove(player.g);
+      player = CK.build(CAR.type, PAINTS[garage.col]);
+      player.g.rotation.order = 'YXZ';
+      for (const w of player.wheels) w.rotation.order = 'YXZ';
+      player.g.visible = !cockpit;
+      scene.add(player.g);
+      cockPaint.color.copy(player.g.children[0].material.color);
+    };
+    const saveGarage = () => api.save(Object.assign(api.load() || {}, garage));
     const pool = [];
     const addPool = (type, n, pal) => {
       for (let i = 0; i < n; i++) {
@@ -1013,7 +1040,7 @@
     const plastic = K.std('#131418', { roughness: .9 }), plastic2 = K.std('#2a2c33', { roughness: .6 }), leather = K.std('#26211f', { roughness: .85 }), alu = K.std('#9aa1aa', { roughness: .3, metalness: .8 }), glove = K.std('#15161a', { roughness: .8 });
     const cMesh = (geo, mat, x, y, z, rx, ry, rz, parent) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx || 0, ry || 0, rz || 0); (parent || cock).add(m); return m; };
     const BXG = (w, h, d) => new THREE.BoxGeometry(w, h, d);
-    const hood = cMesh(BXG(2.0, .12, 2.2), player.g.children[0].material, .36, -.5, -2.0, .07);
+    const hood = cMesh(BXG(2.0, .12, 2.2), cockPaint, .36, -.5, -2.0, .07);
     cMesh(BXG(2.4, .32, .8), plastic, .4, -.37, -1.1, -.06);
     cMesh(BXG(2.4, .3, .1), plastic2, .4, -.43, -.72, -.25);
     cMesh(BXG(.62, .03, .26), plastic, 0, -.03, -.84, -.1); cMesh(BXG(.62, .24, .04), plastic, 0, -.13, -.98); cMesh(BXG(.64, .1, .3), plastic, 0, -.29, -.9);
@@ -1076,7 +1103,7 @@
     cMesh(BXG(.02, .1, .02), plastic, .24, .3, -.57);
     for (const [x, y, z, ry] of [[-.86, -.1, -1.0, .45], [1.75, -.1, -1.15, -.45]]) {
       const mm = new THREE.Group(); mm.position.set(x, y, z); mm.rotation.y = ry; cock.add(mm);
-      cMesh(BXG(.2, .13, .06), player.g.children[0].material, 0, 0, -.035, 0, 0, 0, mm);
+      cMesh(BXG(.2, .13, .06), cockPaint, 0, 0, -.035, 0, 0, 0, mm);
       cMesh(new THREE.PlaneGeometry(.18, .11), mirMat, 0, 0, .0, 0, 0, 0, mm);
     }
     cock.visible = false;
@@ -1118,7 +1145,7 @@
     right.className = 'rt';
     const hKm = U.chip(right, 'Distance'), hMode = U.chip(right, 'Mode'), hWrong = U.chip(right, 'Opposing lane');
     hWrong.textContent = 'x2';
-    hWrong.parentNode.classList.add('opp'); hMode.parentNode.style.display = 'none';
+    hWrong.parentNode.classList.add('opp'); hMode.previousSibling.textContent = 'Time';
     const speedo = document.createElement('div');
     speedo.className = 'speedo';
     speedo.innerHTML = '<b>0</b><span>km/h</span>';
@@ -1128,8 +1155,9 @@
     U.pad('r', [['B', ARROW('M5 9l7 7 7-7'), 'Brake'], ['G', ARROW('M5 15l7-7 7 7'), 'Gas']], held);
     const has = (a, b, c) => keys.has(a) || keys.has(b) || held.has(c);
 
-    const fresh = () => ({ dmg: 0, gear: 2, rpm: 3000, kmhF: 86, shift: 0, scrape: 0, x: laneX(2), vx: 0, V: 24, dist: 0, bonus: 0, near: 0, top: 0, yaw: 0, roll: 0, pitch: 0, pitchT: 0, steer: 0, spin: 0, crashT: 0, acc: 0, gap: 40, tick: 0, shown: -1, shake: 0, spark: 0, kmh: -1 });
-    let S = fresh(), mode = 'ready', twoWay = false, clock = 0, T = 0, ts = 1, braking = false;
+    const fresh = () => ({ dmg: 0, gear: 2, rpm: 3000, kmhF: 86, shift: 0, scrape: 0, x: laneX(2), vx: 0, V: 24, dist: 0, bonus: 0, near: 0, top: 0, yaw: 0, roll: 0, pitch: 0, pitchT: 0, steer: 0, spin: 0, crashT: 0, acc: 0, gap: 40, tick: 0, shown: -1, shake: 0, spark: 0, kmh: -1, tl: 60, cpAt: 1000, cps: 0 });
+    setCar();
+    let S = fresh(), mode = 'ready', twoWay = false, trial = false, clock = 0, T = 0, ts = 1, braking = false;
     const total = () => Math.floor(S.dist + S.bonus);
 
     function hudAll() {
@@ -1137,7 +1165,8 @@
       if (d !== S.hd) { S.hd = d; hDist.textContent = d.toLocaleString(); hNear.textContent = S.near; hKm.textContent = ((mode === 'ready' ? 0 : S.dist) / 1000).toFixed(2) + ' km'; }
       const dm = Math.round(S.dmg * 100);
       if (dm !== S.hdm) { S.hdm = dm; hDmg.textContent = dm + '%'; hDmg.style.color = dm > 60 ? '#ff5a4a' : dm > 25 ? '#ffb020' : ''; }
-      hMode.textContent = twoWay ? 'Two-way' : 'One-way';
+      hMode.parentNode.style.display = trial && mode !== 'ready' ? '' : 'none';
+      if (trial) { const tl = Math.max(0, S.tl); hMode.textContent = tl.toFixed(1) + ' s'; hMode.style.color = tl < 10 ? '#ff5a4a' : ''; }
       hWrong.parentNode.style.display = twoWay && S.x < 0 && mode === 'run' ? '' : 'none';
       const kmh = Math.round(S.V * 3.6);
       if (kmh !== S.kmh) {
@@ -1278,18 +1307,20 @@
       mode = 'over';
       const t = total(), nb = api.submit(t);
       api.score(t);
+      garage.km = Math.round((garage.km + S.dist / 1000) * 100) / 100; saveGarage();
       const unit = (n, u) => `${n}<small style="font-size:12px;font-weight:700;color:var(--muted)"> ${u}</small>`;
       api.overlay({
-        kicker: nb ? 'New best!' : 'Crashed',
-        title: 'Game over',
-        text: (S.dmg >= 1 ? 'Too much barrier scraping wrecked the car. ' : '') + (S.near ? `${S.near} near miss${S.near > 1 ? 'es' : ''} added ${S.bonus.toLocaleString()} m of bonus.` : 'Skim past cars for near-miss bonuses.'),
+        kicker: nb ? 'New best!' : trial && S.tl <= 0 ? 'Time trial' : 'Crashed',
+        title: trial && S.tl <= 0 ? 'Time up' : 'Game over',
+        text: (trial ? `${S.cps} checkpoint${S.cps === 1 ? '' : 's'} reached. ` : '') + (S.dmg >= 1 ? 'Too much barrier scraping wrecked the car. ' : '') + (S.near ? `${S.near} near miss${S.near > 1 ? 'es' : ''} added ${S.bonus.toLocaleString()} m of bonus.` : 'Skim past cars for near-miss bonuses.'),
         stats: [['Score', unit(t.toLocaleString(), 'm')], ['Top speed', unit(Math.round(S.top * 3.6), 'km/h')], ['Near misses', S.near], ['Best', api.best != null ? unit(api.best.toLocaleString(), 'm') : '—']],
-        button: 'Play again', onAction: () => start(twoWay),
+        button: 'Play again', onAction: () => start(twoWay, trial),
         secondary: 'Change mode', onSecondary: menu
       });
     }
 
-    function start(two) {
+    function start(two, tr) {
+      trial = !!tr;
       if (two !== twoWay) { twoWay = two; W.road.redraw(two); }
       for (const V of pool) { V.on = false; V.g.visible = false; }
       S = fresh(); mode = 'run'; ts = 1; T = 0; envT = 99;
@@ -1303,11 +1334,34 @@
       mode = 'ready';
       api.overlay({
         kicker: '3D', title: 'Traffic Racer',
-        text: 'Hold the gas and weave through traffic up to 330 km/h. Skim past cars for near-miss bonuses, doubled above 100 km/h. Scraping the barriers damages the car. Two-way adds oncoming lanes on the left that score double. Press C (or the Camera button) for the cockpit view.',
-        button: 'One-way', onAction: () => start(false),
+        text: 'Hold the gas and weave through traffic up to 330 km/h. Skim past cars for near-miss bonuses, doubled above 100 km/h. Scraping the barriers damages the car. Two-way adds oncoming lanes on the left that score double. Time trial gives you 60 seconds and adds time at every checkpoint. Press C (or the Camera button) for the cockpit view.' +
+          '<span class="hw-sub"><button type="button" class="g-btn ghost" data-hw="tt">Time trial</button><button type="button" class="g-btn ghost" data-hw="gar">Garage</button></span>',
+        button: 'Endless', onAction: () => start(false),
         secondary: 'Two-way', onSecondary: () => start(true)
       });
     }
+
+    function garageMenu() {
+      const rows = CARS.map((c, i) => {
+        const open = garage.km >= c.km, on = garage.car === i;
+        return `<span class="hw-row"><span class="hw-n"><b>${c.name}</b><small>${open ? c.note : 'Unlocks after ' + c.km + ' km driven'}</small></span><button type="button" class="g-btn${on ? '' : ' ghost'}" data-car="${i}" ${open ? '' : 'disabled'}>${on ? 'Selected' : open ? 'Select' : 'Locked'}</button></span>`;
+      }).join('');
+      const dots = PAINTS.map((c, i) => `<button type="button" class="hw-dot${garage.col === i ? ' on' : ''}" data-paint="${i}" style="background:${c}" aria-label="Paint ${i + 1}"></button>`).join('');
+      api.overlay({
+        kicker: 'Garage', title: 'Choose your car',
+        text: `<span class="hw-hg"><span class="hw-km">${garage.km.toFixed(1)} km driven</span>${rows}<span class="hw-paint">${dots}</span></span>`,
+        button: 'Back', onAction: menu
+      });
+    }
+    api.on(window, 'click', e => {
+      const t = e.target.closest && e.target.closest('[data-hw],[data-car],[data-paint]');
+      if (!t || mode !== 'ready') return;
+      if (t.dataset.hw === 'tt') { api.hideOverlay(); api.sfx('tap'); const f = root.closest('[tabindex]'); if (f) f.focus({ preventScroll: true }); start(false, true); return; }
+      if (t.dataset.hw === 'gar') { api.sfx('tap'); garageMenu(); return; }
+      if (t.dataset.car != null) { if (t.disabled) return; garage.car = +t.dataset.car; }
+      else garage.col = +t.dataset.paint;
+      saveGarage(); api.sfx('tap'); setCar(); garageMenu();
+    });
 
     function drive(dt) {
       const g = has('ArrowUp', 'KeyW', 'G'), b = has('ArrowDown', 'KeyS', 'B');
@@ -1318,15 +1372,15 @@
       S.gear = gi;
       S.shift = Math.max(0, S.shift - dt);
       if (b) S.V -= 21 * dt;
-      else if (g) S.V += 9.2 * Math.max(0, 1 - Math.pow(S.V / VMAX, 2.4)) * (S.shift > 0 ? .3 : 1) * dt;
+      else if (g) S.V += 9.2 * CAR.acc * Math.max(0, 1 - Math.pow(S.V / (VMAX * CAR.vm), 2.4)) * (S.shift > 0 ? .3 : 1) * dt;
       else S.V -= (.5 + S.V * .011) * dt;
-      S.V = clamp(S.V, 8.4, VMAX);
+      S.V = clamp(S.V, 8.4, VMAX * CAR.vm);
       const lo = GEARS[S.gear - 1], hi = GEARS[S.gear];
       S.rpm = damp(S.rpm, clamp(S.gear === 1 ? 900 + S.V / hi * 6400 : 2600 + (S.V - lo) / (hi - lo) * 4900, 800, 7900) + (g ? 250 : 0), 10, dt);
       S.kmhF = S.V * 3.6;
       S.top = Math.max(S.top, S.V);
       braking = b;
-      const lat = 4.6 + S.V * .075;
+      const lat = (4.6 + S.V * .075) * CAR.lat;
       S.vx = damp(S.vx, st * lat, 7, dt);
       S.x += S.vx * dt;
       S.steer = damp(S.steer, st * .32, 12, dt);
@@ -1334,7 +1388,7 @@
       if (Math.abs(S.x) > LIM) {
         const sg = Math.sign(S.x), hit = Math.max(0, S.vx * sg);
         S.x = sg * LIM;
-        S.dmg = Math.min(1, S.dmg + hit * .03 + dt * (.2 + S.V / VMAX * .55));
+        S.dmg = Math.min(1, S.dmg + (hit * .03 + dt * (.2 + S.V / VMAX * .55)) * CAR.dmg);
         S.vx = -sg * (1.2 + hit * .35);
         S.V -= S.V * 1.3 * dt + hit * .5;
         S.shake = Math.max(S.shake, .18 + hit * .05);
@@ -1345,6 +1399,11 @@
       S.pitchT = b ? -.022 : g ? .012 : 0;
       const k = 1 - Math.exp(-S.dist / 5000);
       S.dist += S.V * dt * (twoWay && S.x < 0 ? 2 : 1);
+      if (trial) {
+        S.tl -= dt;
+        if (S.dist >= S.cpAt) { const add = Math.max(14, 24 - S.cps * 2); S.cps++; S.cpAt += 1000; S.tl += add; U.pop('Checkpoint +' + add + ' s'); api.sfx('good'); }
+        if (S.tl <= 0) { S.tl = 0; mode = 'crash'; S.crashT = 0; api.sfx('hit'); api.score(total()); return; }
+      }
       S.acc += Math.max(S.V, 16) * dt;
       if (S.acc >= S.gap && spawn(k, true)) { S.acc = 0; S.gap = lerp(50, 19, k) * rnd(.7, 1.3) * (twoWay ? .85 : 1) * (1 + S.V / VMAX * .25); }
       if ((S.tick -= dt) <= 0) { S.tick = .2; const t = total(); if (t !== S.shown) api.score(S.shown = t); }
@@ -1502,7 +1561,20 @@
 .gm-highway-3d .speedo{top:max(10px,1.6cqw);bottom:auto;right:max(10px,1.6cqw);left:auto;transform:none;width:auto;aspect-ratio:auto;border-radius:0;background:none!important;box-shadow:none;display:grid;grid-template-columns:auto auto;align-items:baseline;justify-items:end;column-gap:.3em;text-shadow:0 2px 0 rgba(0,0,0,.85),0 0 5px rgba(0,0,0,.7)}
 .gm-highway-3d .speedo::before{content:'SPEED';grid-column:1/3;color:#ffd21a;font-size:max(9px,1.45cqw);font-weight:900;letter-spacing:.05em}
 .gm-highway-3d .speedo b{font-size:max(18px,3.6cqw)}
-.gm-highway-3d .speedo span{opacity:1;font-size:max(9px,1.4cqw);letter-spacing:.04em}`,
+.gm-highway-3d .speedo span{opacity:1;font-size:max(9px,1.4cqw);letter-spacing:.04em}
+.g-overlay .hw-sub{display:flex;gap:8px;justify-content:center;margin-top:10px}
+.g-overlay .hw-sub .g-btn{height:34px;padding:0 14px;font-size:13px}
+.g-overlay .hw-hg{display:block;text-align:left}
+.g-overlay .hw-km{display:block;text-align:center;font-weight:900;font-size:15px;color:var(--muted);margin-bottom:6px}
+.g-overlay .hw-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line,rgba(0,0,0,.08))}
+.g-overlay .hw-n{flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
+.g-overlay .hw-n b{font-weight:900;color:var(--ink)}
+.g-overlay .hw-n small{font-size:12px;color:var(--muted)}
+.g-overlay .hw-row .g-btn{height:32px;padding:0 12px;font-size:13px}
+.g-overlay .hw-row .g-btn:disabled{opacity:.4;cursor:default}
+.g-overlay .hw-paint{display:flex;gap:10px;justify-content:center;padding-top:10px;border-top:1px solid var(--line,rgba(0,0,0,.08))}
+.g-overlay .hw-dot{width:26px;height:26px;border-radius:50%;border:2px solid rgba(0,0,0,.12);padding:0;cursor:pointer}
+.g-overlay .hw-dot.on{outline:3px solid var(--accent,#6c5ce7);outline-offset:2px}`,
     mount(root, api) {
       let cleanup = null;
       api.gl(...glSize(root, 720, 720)).then(v => { if (v && api.alive) { cleanup = highway(api, root, v, kit(v.THREE)); fitPR(api, v); } });

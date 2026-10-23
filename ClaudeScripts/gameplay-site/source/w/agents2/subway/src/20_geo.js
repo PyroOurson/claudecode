@@ -87,7 +87,58 @@
     const fin = b => { const g = b.build(); out.bin.push(g); return g; };
     const C = CFG, TW = C.THW * 2, BODY0 = 0.45, RB = 0.5, BODYH = C.ROOF - RB - BODY0;
 
+    function freightCar(liv, lv) {
+      const b = GB(), L = C.CAR, zc = -L / 2, side = uv(R.liv[liv]), end = uv(R.ends[liv]), k = lv[3];
+      b.box(TW, BODYH, L - 0.1, 0, BODY0 + BODYH / 2, zc, '#ffffff', { px: side, nx: side, pz: end, nz: end, py: [null, shade(lv[0], -0.2)] });
+      const top = shade(lv[0], k === 'gon' ? -0.35 : 0.08);
+      b.box(TW + 0.06, 0.5, L - 0.1, 0, C.ROOF - 0.25, zc, k === 'gon' ? shade(lv[0], -0.15) : top);
+      if (k === 'box') for (let i = 0; i < 7; i++) b.box(TW - 0.12, 0.07, 0.14, 0, C.ROOF + 0.035, zc - L * 0.45 + i * L * 0.15, shade(lv[0], -0.3));
+      else if (k === 'cont') { for (let i = 0; i < 12; i++) b.box(TW - 0.2, 0.05, 0.12, 0, C.ROOF + 0.025, zc - L * 0.46 + i * L * 0.084, shade(lv[0], -0.22)); b.box(TW - 0.1, 0.06, 0.2, 0, C.ROOF + 0.03, zc, '#26262c'); }
+      else { b.box(TW - 0.34, 0.1, L - 0.7, 0, C.ROOF + 0.05, zc, '#2a2522'); for (let i = 0; i < 14; i++) b.ball(0.2 + (i % 3) * 0.06, ((i * 37) % 7 - 3) * 0.17, C.ROOF + 0.1, zc - L * 0.42 + i * L * 0.06, '#1d1a18', 1, 0.7, 1.2, 0); }
+      b.box(TW - 0.5, 0.32, L - 1.6, 0, 0.3, zc, '#2c2d35');
+      for (const zz of [-1.6, -L + 1.6]) {
+        b.box(1.9, 0.34, 2.4, 0, 0.3, zz, '#3a3b44');
+        for (const dz of [-0.75, 0.75]) for (const sx of [-1, 1]) b.cyl(0.3, 0.3, 0.12, 10, sx * 0.86, 0.32, zz + dz, '#1f2026', [0, 0, Math.PI / 2]);
+      }
+      for (const sx of [-1, 1]) b.box(0.08, 0.1, L - 0.4, sx * (TW / 2 + 0.02), BODY0 + 0.05, zc, '#3a3b44');
+      b.box(0.5, 0.14, 0.5, 0, 0.5, -0.1, '#55575f'); b.box(0.5, 0.14, 0.5, 0, 0.5, -L + 0.1, '#55575f');
+      return fin(b);
+    }
+    function deckCar(liv, lv) {
+      const b = GB(), L = C.CAR, zc = -L / 2, k = lv[3];
+      b.box(TW - 0.3, 0.34, L - 0.1, 0, 0.62, zc, '#2c2d35');
+      for (const zz of [-1.6, -L + 1.6]) {
+        b.box(1.9, 0.34, 2.4, 0, 0.3, zz, '#3a3b44');
+        for (const dz of [-0.75, 0.75]) for (const sx of [-1, 1]) b.cyl(0.3, 0.3, 0.12, 10, sx * 0.86, 0.32, zz + dz, '#1f2026', [0, 0, Math.PI / 2]);
+      }
+      if (k === 'flat') {
+        b.box(TW, 0.18, L - 0.1, 0, 0.86, zc, '#6a5a44');
+        for (const zz of [zc + L * 0.25, zc - L * 0.25]) {
+          const ch = C.ROOF - 0.95;
+          b.box(TW - 0.24, ch, L * 0.42, 0, 0.95 + ch / 2, zz, '#b9853f');
+          for (let i = 0; i < 5; i++) b.box(TW - 0.18, 0.12, L * 0.43, 0, 1.3 + i * 0.5, zz, '#8a6128');
+          for (const dz of [-0.14, 0.14]) b.box(TW - 0.16, ch + 0.02, 0.12, 0, 0.95 + ch / 2, zz + L * dz, '#2a2a30');
+          b.box(TW - 0.3, 0.04, L * 0.42, 0, C.ROOF + 0.02, zz, '#a07430');
+        }
+        for (const sx of [-1, 1]) for (let i = 0; i < 4; i++) b.box(0.08, 1.2, 0.1, sx * (TW / 2 - 0.02), 1.5, zc - L * 0.45 + i * L * 0.3, '#3a3b44');
+      } else {
+        const r = TW / 2, cy = C.ROOF - r;
+        b.box(TW * 0.86, cy - 0.45 + 0.6, L - 1.2, 0, (cy + 0.15 + 0.45) / 2, zc, '#2c2d35');
+        const g = new THREE.CylinderGeometry(r, r, L - 0.7, 20, 1, false); g.rotateX(Math.PI / 2); g.translate(0, cy, zc); b.add(g, lv[0]);
+        for (const dz of [-0.34, 0, 0.34]) { const g2 = new THREE.CylinderGeometry(r + 0.025, r + 0.025, 0.4, 20, 1, false); g2.rotateX(Math.PI / 2); g2.translate(0, cy, zc + dz * L); b.add(g2, lv[1], null, { flat: true }); }
+        { const g3 = new THREE.CylinderGeometry(r + 0.02, r + 0.02, 1.3, 20, 1, false); g3.rotateX(Math.PI / 2); g3.translate(0, cy, zc); b.add(g3, '#f2f2f2', null, { flat: true }); }
+        b.box(0.5, 0.05, L - 1.4, 0, C.ROOF + 0.02, zc, '#7a808a');
+        b.cyl(0.3, 0.3, 0.24, 10, 0, C.ROOF + 0.1, zc + L * 0.2, '#c9ccd2');
+        b.cyl(0.3, 0.3, 0.24, 10, 0, C.ROOF + 0.1, zc - L * 0.2, '#c9ccd2');
+        for (const zz of [-0.15, -L + 0.15]) for (const sx of [-0.7, 0.7]) b.box(0.06, 2.0, 0.06, sx, cy, zz, '#3a3b44');
+      }
+      b.box(0.5, 0.14, 0.5, 0, 0.5, -0.1, '#55575f'); b.box(0.5, 0.14, 0.5, 0, 0.5, -L + 0.1, '#55575f');
+      return fin(b);
+    }
     function car(liv, kind) {
+      const tl = trainsOf(city)[liv];
+      if (tl[3] === 'tank' || tl[3] === 'flat') return deckCar(liv, tl);
+      if (tl[3]) return freightCar(liv, tl);
       const b = GB(), L = C.CAR, zc = -L / 2;
       const side = uv(R.liv[liv]);
       const faceN = kind === 'front' ? uv(R.front[liv]) : kind === 'lit' ? uv(R.frontLit[liv]) : uv(R.ends[liv]);
@@ -109,7 +160,7 @@
       return fin(b);
     }
     out.car = { front: [], lit: [], mid: [] };
-    for (let i = 0; i < city.trains.length; i++) { out.car.front.push(car(i, 'front')); out.car.lit.push(car(i, 'lit')); out.car.mid.push(car(i, 'mid')); }
+    for (let i = 0; i < trainsOf(city).length; i++) { out.car.front.push(car(i, 'front')); out.car.lit.push(car(i, 'lit')); out.car.mid.push(car(i, 'mid')); }
 
     {
       const b = GB(), L = C.RAMP, w = 2.2, top = C.ROOF + 0.02, r = uv(R.ramp), sd = uv(R.rampSide);
@@ -275,6 +326,14 @@
       b.box(60, 0.1, C.CHUNK, sg * (x1 + 30), -0.02, -C.CHUNK / 2, shade(city.walk, -0.08));
     }
 
+    function clutter(b, x, z, far) {
+      const k = rint(0, far ? 1 : 4);
+      if (k === 0) { b.box(1.7, 1.1, 0.95, x, 0.65, z, pick(['#2f6f4a', '#3a5f8a', '#6a4a2a'])); b.box(1.8, 0.12, 1.05, x, 1.24, z, '#1f2f28'); b.box(0.3, 0.3, 0.04, x, 0.75, z + 0.5, '#ffffff'); }
+      else if (k === 1) { for (let i = 0; i < 3; i++) b.box(0.8, 0.8, 0.8, x - Math.sign(x) * (i === 1 ? 0.85 : 0), 0.4 + (i === 2 ? 0.8 : 0), z + (i === 1 ? 0.08 : 0), shade('#a9773f', i * 0.06 - 0.08)); }
+      else if (k === 2) { for (let i = 0; i < 2; i++) { const zz = z + i * 0.9; b.box(0.5, 0.06, 0.5, x, 0.03, zz, '#26262c'); b.cyl(0.04, 0.2, 0.72, 8, x, 0.42, zz, '#ff7a1a'); b.cyl(0.115, 0.145, 0.1, 8, x, 0.46, zz, '#ffffff'); } }
+      else if (k === 3) { b.cyl(0.38, 0.38, 0.95, 10, x, 0.48, z, pick(['#2f6fd9', '#d8322c', '#3a3f4a'])); b.cyl(0.39, 0.39, 0.08, 10, x, 0.7, z, '#1f2a4a'); b.cyl(0.39, 0.39, 0.08, 10, x, 0.28, z, '#1f2a4a'); }
+      else { b.cyl(0.17, 0.2, 0.62, 8, x, 0.31, z, '#e8323a'); b.ball(0.19, x, 0.68, z, '#e8323a'); b.box(0.5, 0.12, 0.12, x, 0.45, z, '#e8323a'); b.box(0.22, 0.08, 0.22, x, 0.82, z, '#b81f22'); }
+    }
     function sideChunk(sg, kind) {
       const b = GB(), f = GB();
       const fence = (x, h, z0, z1) => {
@@ -339,6 +398,8 @@
         for (let z = -2; z > -C.CHUNK; z -= rnd(5, 9)) { if (chance(0.7)) tree(b, sg * rnd(7, 9), z, rnd(0.85, 1.25)); else prop(b, sg, sg * rnd(7, 8.5), z); }
         buildingRow(b, sg, 11);
       }
+      if (kind !== 2 && kind !== 4) for (let i = 0; i < 3; i++) clutter(b, sg * rnd(4.65, 5.05), -rnd(3, 37), false);
+      if (kind === 5 || kind === 3 || kind === 1) for (let i = 0; i < 2; i++) clutter(b, sg * rnd(6.8, 8), -rnd(3, 37), true);
       const geo = fin(b);
       const fg = f.size ? fin(f) : null;
       return { geo, fence: fg };

@@ -170,7 +170,7 @@ const ROWS = [
   ["true-false", "True or False", "Brain", "s", 3, "true false quiz facts trivia questions", ""]
 ];
 const NEWEST = ["slope-3d", "tunnel-run", "rocket-soccer", "hole-city", "bean-royale", "block-roll", "flap-bird", "slither", "cell-feast", "paper-land", "brick-bros", "garden-defense", "last-card", "maze-tanks", "hoop-flop", "sea-battle", "moto-stunts", "cookie-baker", "blockcraft-3d", "asteroids-3d", "cube-3d", "tanks-3d", "maze-3d", "target-range-3d", "penalty-3d", "hoops-3d", "sky-pilot", "highway-3d", "marble-3d", "helix-3d", "road-hopper", "sky-runner", "true-false", "hangman", "solitaire", "reversi", "checkers", "chess", "sudoku", "pipe-connect", "box-pusher", "gem-swap", "bubble-pop", "tetra", "chimp-test", "fruit-slice", "cps-test", "piano-tiles", "pool", "archery", "air-hockey", "pinball", "maze-muncher", "invaders", "knife-throw", "dash-cube", "dino-run", "typing", "word-guess", "math-sprint", "trivia", "number-memory", "sequence", "pairs", "connect-four", "tictactoe", "slide", "minesweeper", "2048", "pong", "breakout", "snake", "rhythm", "stack", "perfect-stop", "whack", "aim", "reaction"];
-const STAT = {"block-roll": "Stages", "tunnel-run": "Distance", "reaction": "Last", "minesweeper": "Time", "sudoku": "Time", "solitaire": "Time", "marble-3d": "Time", "maze-3d": "Time", "slide": "Moves", "cube-3d": "Moves", "pairs": "Moves", "chess": "Wins", "checkers": "Wins", "reversi": "Wins", "connect-four": "Wins", "tictactoe": "Wins", "pool": "Wins", "word-guess": "Streak", "hangman": "Streak", "true-false": "Streak", "moto-stunts": "Stars", "garden-defense": "Stage", "paper-land": "Territory", "slither": "Length", "cell-feast": "Mass", "highway-3d": "Distance", "dash-cube": "Progress", "sea-battle": "Shots", "chimp-test": "Level", "piano-tiles": "Tiles"};
+const STAT = {"block-roll": "Stages", "tunnel-run": "Distance", "reaction": "Last", "minesweeper": "Time", "sudoku": "Time", "solitaire": "Time", "marble-3d": "Time", "maze-3d": "Time", "slide": "Moves", "cube-3d": "Moves", "pairs": "Moves", "chess": "Wins", "checkers": "Wins", "reversi": "Wins", "connect-four": "Wins", "tictactoe": "Wins", "pool": "Wins", "word-guess": "Streak", "hangman": "Streak", "true-false": "Score", "moto-stunts": "Stars", "garden-defense": "Stage", "paper-land": "Territory", "slither": "Length", "cell-feast": "Mass", "highway-3d": "Distance", "dash-cube": "Progress", "sea-battle": "Shots", "chimp-test": "Level", "piano-tiles": "Tiles"};
 const DELETED = new Set(["demon-halls", "night-survivors", "fire-water", "bomb-blast", "marble-chain", "clicker", "glide", "jetpack", "sky-jump", "lights-out", "deep-miner", "fling-birds", "candy-rope", "racer", "shooter", "hill-climb", "golf", "asteroids", "bowling-3d", "kart-circuit", "tower-defense", "stick-bridge"]);
 const TINT = { reaction: '#ff6b6b', snake: '#4cc38a', '2048': '#f5a623', racer: '#5b8def', 'perfect-stop': '#a06cd5', pairs: '#ff8fab', trivia: '#ffd166', aim: '#ef476f', golf: '#7bd389', minesweeper: '#8d99ae', shooter: '#3d348b', stack: '#ff9f68', sequence: '#06d6a0', 'math-sprint': '#118ab2', whack: '#9bc53d', breakout: '#e76f51', tictactoe: '#48cae4', typing: '#6d597a', glide: '#90e0ef', rhythm: '#7209b7', 'word-guess': '#6aaa64', slide: '#f28482', pong: '#2b2d42', 'connect-four': '#4361ee', 'number-memory': '#f72585', clicker: '#e9c46a', 'lights-out': '#22223b',
   'sky-runner': '#ff7a59', 'road-hopper': '#7ed957', 'helix-3d': '#ff4d8d', 'highway-3d': '#3a86ff', 'sky-pilot': '#4cc9f0', 'marble-3d': '#9b5de5', 'hoops-3d': '#f77f00', 'bowling-3d': '#8338ec', 'penalty-3d': '#2a9d8f', 'maze-3d': '#577590', 'target-range-3d': '#d62828', 'tanks-3d': '#6a994e', 'cube-3d': '#ffbe0b', 'asteroids-3d': '#14213d', 'blockcraft-3d': '#52b788',
@@ -268,7 +268,7 @@ function sfx(name) {
 const $ = s => document.querySelector(s);
 const frame = $('#frame'), toastEl = $('#toast'), gamebox = $('#gamebox');
 const BASE_TITLE = document.title, BASE_DESC = document.querySelector('meta[name="description"]').getAttribute('content');
-const fmt = (g, v) => v == null ? '—' : g.format ? g.format(v) : String(v);
+const fmt = (g, v) => v == null ? '—' : g.format ? g.format(v) : typeof v === 'number' && Math.abs(v) >= 1e5 ? new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(v) : String(v);
 const isField = el => el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
 let cur = null, ov = null, toastTimer = 0;
 
@@ -4768,6 +4768,7 @@ async function adLoad() {
     AD.users = Array.isArray(r) ? r : [];
     adTiles(AD.anim); adDraw(AD.anim); AD.anim = false;
     if (AD.sel) { const u = AD.users.find(x => x.id === AD.sel); if (u) adPanel(u, true); }
+    taLoad();
   } catch (e) {
     if (/admins only/i.test(e.message || '')) { AD.role = 'user'; adStatus({ role: 'user', locked: false }); return; }
     $('#adt tbody').innerHTML = `<tr><td colspan="${AD_COLS.length}" class="adm-empty">${esc(auT('Could not load the users. Check your connection and try again.'))}</td></tr>`;
@@ -5025,7 +5026,7 @@ async function adAct(k, b) {
 
 const AL = { list: [], more: false, busy: false, seq: 0 };
 const alWho = (un, dn, id) => un ? '@' + un : dn || (id ? id.slice(0, 8) : '');
-const AL_T = { role_owner: '{a} made {t} an owner', role_admin: '{a} made {t} an admin', role_user: '{a} made {t} a regular user', username: '{a} changed the username of {t} to {n}', lock_until: '{a} locked {t} until {d}', lock: '{a} locked {t} with no end date', unlock: '{a} unlocked {t}', expire: 'The lock on {t} ended', password: '{a} set a new password for {t}', reset_email: '{a} sent a password reset email to {t}', delete_user: '{a} deleted the account of {t}', ticket_delete: '{a} deleted a ticket from {t}', ticket_reply: '{a} replied to a ticket from {t}', ticket_closed: '{a} closed a ticket from {t}', ticket_open: '{a} reopened a ticket from {t}', site: '{a} changed the site switches', site_password: '{a} changed the site password' };
+const AL_T = { role_owner: '{a} made {t} an owner', role_admin: '{a} made {t} an admin', role_user: '{a} made {t} a regular user', username: '{a} changed the username of {t} to {n}', lock_until: '{a} locked {t} until {d}', lock: '{a} locked {t} with no end date', unlock: '{a} unlocked {t}', expire: 'The lock on {t} ended', password: '{a} set a new password for {t}', reset_email: '{a} sent a password reset email to {t}', delete_user: '{a} deleted the account of {t}', ticket_delete: '{a} deleted a ticket from {t}', ticket_reply: '{a} replied to a ticket from {t}', ticket_closed: '{a} closed a ticket from {t}', ticket_open: '{a} reopened a ticket from {t}', site: '{a} changed the site switches', site_password: '{a} changed the site password', test_account: '{a} created the test account {t}' };
 function alSite(d) {
   const a = d.after || {}, b = d.before || {}, out = [], ga = new Set(a.disabled_games || []), gb = new Set(b.disabled_games || []);
   if (!!a.maintenance !== !!b.maintenance) out.push(auT(a.maintenance ? 'Maintenance mode on' : 'Maintenance mode off'));
@@ -5041,7 +5042,7 @@ function alRow(x, i) {
   const tt = x.target_user && (AD.users || []).some(u => u.id === x.target_user) ? `<button type="button" class="al-u" data-alu="${esc(x.target_user)}">${esc(t)}</button>` : `<b>${esc(t)}</b>`;
   const txt = esc(auT(AL_T[k] || '{a} did something ({x})')).replace('{a}', `<b>${esc(a)}</b>`).replace('{t}', tt).replace('{n}', `<b>@${esc(d.to || '')}</b>`).replace('{d}', esc(adDate(d.until, 1))).replace('{x}', esc(x.action));
   const ex = x.action === 'lock' && d.reason ? auT('Reason: {r}').replace('{r}', d.reason) : /^ticket_/.test(x.action) && d.subject ? '“' + d.subject + '”' : x.action === 'site' ? alSite(d) : x.action === 'username' && d.from ? auT('Was @{u}').replace('{u}', d.from) : '';
-  const ic = { lock: AD_ICO.lock, unlock: AD_ICO.lock, expire: AD_SI.clock, delete_user: AD_ICO.trash, ticket_delete: AD_ICO.trash, site: SF_ICO.tool, site_password: AD_ICO.lock, ticket_reply: AD_ICO.send, ticket_status: AD_ICO.send, password: AD_SI.eye, reset_email: AD_SI.eye, role: AD_SI.star, username: AD_SI.users }[x.action] || AD_SI.clock;
+  const ic = { lock: AD_ICO.lock, unlock: AD_ICO.lock, expire: AD_SI.clock, delete_user: AD_ICO.trash, ticket_delete: AD_ICO.trash, site: SF_ICO.tool, site_password: AD_ICO.lock, ticket_reply: AD_ICO.send, ticket_status: AD_ICO.send, password: AD_SI.eye, reset_email: AD_SI.eye, role: AD_SI.star, username: AD_SI.users, test_account: AD_SI.users }[x.action] || AD_SI.clock;
   return `<div class="al-r al-${esc(x.action)}" style="--i:${Math.min(i, 14)}"><span class="al-i">${ic}</span><div class="al-t"><span>${txt}</span>${ex ? `<em>${esc(ex)}</em>` : ''}<small title="${esc(adDate(x.at, 1))}">${esc(adAgo(x.at))} · ${esc(adDate(x.at, 1))}</small></div></div>`;
 }
 async function alLoad(more) {
@@ -5774,6 +5775,42 @@ addEventListener('keydown', e => {
   if (s && !s.hidden) return;
   e.stopImmediatePropagation();
 }, true);
+const TA = { list: null, busy: false };
+const taPw = () => { const c = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789', a = new Uint32Array(10); crypto.getRandomValues(a); return Array.from(a, x => c[x % c.length]).join(''); };
+async function taLoad() {
+  if (!adIsAdmin()) return;
+  try { const r = await adRpc('admin_test_accounts'); TA.list = Array.isArray(r) ? r : []; }
+  catch (e) { TA.list = /admin_test_accounts|function|schema/i.test(e.message || '') ? 'missing' : TA.list; }
+  taDraw();
+}
+function taDraw() {
+  const box = $('#tal'), L = TA.list;
+  if (!box) return;
+  $('#tan').textContent = Array.isArray(L) && L.length ? String(L.length) : '';
+  if (L === 'missing') { box.innerHTML = `<p class="adm-mut">${esc(auT('Run round12_test_accounts.sql in the Supabase SQL editor to turn on test accounts.'))}</p>`; return; }
+  if (!Array.isArray(L)) { box.innerHTML = ''; return; }
+  box.innerHTML = L.length ? L.map(t => `<div class="ta-r" data-uid="${esc(t.user_id)}"><div class="ta-c"><b>@${esc(t.username || '?')}</b><code>${esc(t.email)}</code><code class="ta-pw">${esc(t.password)}</code></div><small>${esc(auT('Created {t}').replace('{t}', adAgo(t.created_at)))}${t.created_by ? ' · @' + esc(t.created_by) : ''} · ${esc(t.last_sign_in_at ? auT('last log in {t}').replace('{t}', adAgo(t.last_sign_in_at)) : auT('never logged in'))}${t.locked ? ' · ' + esc(auT('Locked')) : ''}${t.note ? ' · ' + esc(t.note) : ''}</small><div class="ta-b"><button class="btn2" type="button" data-tacopy="${esc(t.user_id)}">${esc(auT('Copy'))}</button><button class="btn2" type="button" data-taopen="${esc(t.user_id)}">${esc(auT('Open'))}</button></div></div>`).join('') : `<p class="adm-mut">${esc(auT('No test accounts yet.'))}</p>`;
+}
+const taText = t => auT('Site: {s}\nEmail or username: {u}\nPassword: {p}').replace('{s}', location.origin).replace('{u}', t.username ? t.username : t.email).replace('{p}', t.password);
+async function taCopy(t, b) {
+  try { await navigator.clipboard.writeText(taText(t)); const l = b.textContent; b.textContent = auT('Copied'); setTimeout(() => { if (b.isConnected) b.textContent = l; }, 1500); }
+  catch (e) { auMsg('tam', taText(t), 'ok'); }
+}
+async function taCreate(b) {
+  if (TA.busy) return;
+  const un = $('#tau').value.trim().toLowerCase(), pw = $('#tap').value, em = $('#tae').value.trim(), nt = $('#tat').value.trim();
+  if (un && !/^[a-z0-9_.]{3,20}$/.test(un)) { auMsg('tam', 'Username: 3 to 20 letters, numbers, dots or underscores', 'bad'); return; }
+  if (pw.length < 8) { auMsg('tam', 'Password must be at least 8 characters', 'bad'); return; }
+  TA.busy = true; b.disabled = true; b.classList.add('is-busy');
+  try {
+    const r = await adRpc('admin_create_test_account', { p_username: un || null, p_password: pw, p_email: em || null, p_note: nt || null });
+    $('#tau').value = ''; $('#tae').value = ''; $('#tat').value = ''; $('#tap').value = taPw();
+    auMsg('tam', auT('Created @{u}. Copy the details below and give them to the tester.').replace('{u}', r.username), 'ok');
+    track('admin', { act: 'test_account' });
+    await Promise.all([taLoad(), adLoad()]);
+  } catch (e) { auMsg('tam', /admin_create_test_account|schema cache/i.test(e.message || '') ? 'Run round12_test_accounts.sql in the Supabase SQL editor first.' : e.message || 'Could not create the account.', 'bad'); }
+  finally { TA.busy = false; b.disabled = false; b.classList.remove('is-busy'); }
+}
 function adBoot() {
   $('#adbout').addEventListener('click', () => { auSignOut(); });
   document.addEventListener('click', e => {
@@ -5799,6 +5836,12 @@ function adBoot() {
     if (t.closest('#sfas')) { sfaSave(t.closest('#sfas')); return; }
     if (t.closest('#sfps')) { sfpSave(t.closest('#sfps')); return; }
     if (t.closest('#adpclose')) { adPanelClose(); return; }
+    if (t.closest('#tab')) { taCreate(t.closest('#tab')); return; }
+    if (t.closest('#tag')) { $('#tap').value = taPw(); $('#tap').type = 'text'; return; }
+    const tc = t.closest('[data-tacopy]');
+    if (tc) { const x = (TA.list || []).find(y => y.user_id === tc.dataset.tacopy); if (x) taCopy(x, tc); return; }
+    const to = t.closest('[data-taopen]');
+    if (to) { const x = (AD.users || []).find(y => y.id === to.dataset.taopen); if (x) adPanel(x); return; }
     const eye = t.closest('.au-eye');
     if (eye) { auEye(eye); return; }
     const a = t.closest('[data-adact]');
@@ -5816,6 +5859,8 @@ function adBoot() {
   $('#adq').addEventListener('input', e => { AD.q = e.target.value; adDraw(); });
   $('#adsite').addEventListener('input', e => { if (e.target.id !== 'sfaq') return; const q = e.target.value.trim().toLowerCase(); document.querySelectorAll('#sfag [data-sfg]').forEach(c => { c.hidden = !!q && !c.textContent.toLowerCase().includes(q) && !c.dataset.sfg.includes(q); }); });
   $('#adf').addEventListener('change', e => { AD.f = e.target.value; adDraw(); });
+  $('#tap').value = taPw();
+  $('#tau').addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; });
   $('#adpw').parentNode.insertAdjacentHTML('beforeend', EYE);
   $('#adpw').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); adAct('pw', $('#adpwb')); } });
   $('#adun').addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; });
@@ -6987,6 +7032,14 @@ Ameplay.ads = {
 };
 
 const CHANGELOG = [
+  { v: 7, date: '2026-10-23', items: [
+    'Geometry Dash: new look closer to the real game, robot and spider forms, Back On Track, Polargeist, Dry Out and Geometrical Dominator, music for every level, volume sliders, achievements and a level creator.',
+    'Subway Surfers: new Jake, freight trains and tankers, stumble and crash animations, more sounds, and fullscreen now fills the screen.',
+    'Rocket League: smoother at high frame rates, wheel suspension, skid marks, sharper goal explosions, dodge effects and engine sounds for other cars.',
+    'Super Mario Bros.: worlds 1 and 2 rebuilt from the real maps, with the underwater level and the Bowser bridge.',
+    'Fall Guys: 40 beans, spectating, Hit Parade, Fruit Chute, Tip Toe, Jump Club and the Egg Scramble team round.',
+    'Cookie Clicker, Plants vs. Zombies and Basket Random got big updates too, and many other games got fixes for pausing, fullscreen and phones.'
+  ] },
   { v: 6, date: '2026-10-17', items: [
     'Tap the heart on any game to add it to your favourites. They show up in their own row on the home page and in the Favourites filter, and follow your account to every device.',
     'A chat button now sits at the bottom right of every page, so you can talk with friends while you play.',

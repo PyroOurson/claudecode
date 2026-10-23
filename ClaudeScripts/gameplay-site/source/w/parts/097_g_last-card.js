@@ -23,7 +23,7 @@
   const NAMEV = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Skip', 'Reverse', 'Draw Two', 'Wild', 'Wild Draw Four'];
   const cardName = id => CV(id) >= 13 ? NAMEV[CV(id)] : CN[CC(id)] + ' ' + NAMEV[CV(id)];
 
-  const RULE_DEF = { chal: false, nobluff: true, stack2: true, stack4: true, mix: false, s70: false, until: true, force: false, jump: false, multi: false, strict: true, pen: 2, timer: 0, hand: 7 };
+  const RULE_DEF = { chal: false, nobluff: true, stack2: false, stack4: false, mix: false, s70: false, until: false, force: false, jump: false, multi: false, strict: true, pen: 2, timer: 0, hand: 7 };
   const stacking = r => r.stack2 || r.stack4 || r.mix;
   function canPlay(st, hand, id) {
     const v = CV(id), r = st.rules;
@@ -671,7 +671,7 @@
 `,
     mount(root, api) {
       const opt = Object.assign({ mode: 'cpu', cpus: 2, diff: 'Normal', target: CFG.TARGET, felt: 'blue', obots: 0 }, RULE_DEF, api.load() || {});
-      if (opt.v !== 2) Object.assign(opt, RULE_DEF, { felt: 'blue', v: 2 });
+      if (opt.v !== 3) Object.assign(opt, RULE_DEF, { felt: 'blue', v: 3 });
       if (opt.mode !== 'cpu' && opt.mode !== 'online') opt.mode = 'cpu';
       if (!AIP[opt.diff]) opt.diff = 'Normal';
       const saveOpt = () => api.save(opt);

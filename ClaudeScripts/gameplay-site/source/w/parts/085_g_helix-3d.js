@@ -113,8 +113,9 @@
 .gm-${ID} .stage:active{cursor:grabbing}
 .gm-${ID} .stage::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 38%,rgba(255,255,255,.28),rgba(255,255,255,0) 55%),radial-gradient(130% 100% at 50% 50%,rgba(0,0,0,0) 62%,rgba(31,29,43,.2))}
 .gm-${ID} .hud,.gm-${ID} .panel{z-index:1}
-.gm-${ID} .stage canvas{border-radius:0;background:transparent;display:block}
+.gm-${ID} .stage canvas{width:100%!important;height:100%!important;aspect-ratio:auto!important;display:block;border-radius:0;background:transparent}
 .gm-${ID} .hud{position:absolute;left:0;right:0;top:0;display:flex;flex-direction:column;align-items:center;gap:1.6cqw;padding:3.6cqw 4cqw 0;pointer-events:none;font-family:var(--sans)}
+.fs .gm-${ID} .lv{width:min(66%,340px)}
 .gm-${ID} .lv{display:flex;align-items:center;gap:1.6cqw;width:min(82%,340px)}
 .gm-${ID} .lv b{flex:none;display:grid;place-items:center;width:clamp(26px,8cqw,40px);aspect-ratio:1;border-radius:50%;background:#fff;color:var(--ink);font:900 clamp(12px,3.6cqw,18px)/1 var(--sans);box-shadow:0 3px 10px -3px rgba(31,29,43,.35)}
 .gm-${ID} .lv b.a{background:var(--ball);color:#fff}
@@ -174,8 +175,12 @@
 
       const st = document.createElement('div');
       st.className = 'stage';
-      st.style.width = canvas.style.width; st.style.aspectRatio = canvas.style.aspectRatio;
-      canvas.style.width = '100%';
+      const cvs = canvas.style;
+      for (const k of ['width', 'aspectRatio']) {
+        let val = cvs[k];
+        st.style[k] = val;
+        Object.defineProperty(cvs, k, { get: () => val, set: x => { val = x; st.style[k] = x; } });
+      }
       root.append(st); st.append(canvas);
       st.insertAdjacentHTML('beforeend', `
 <div class="hud" hidden><div class="lv"><b class="a">1</b><span class="bar"><i></i></span><b class="b">2</b></div><div class="sc">0</div></div>

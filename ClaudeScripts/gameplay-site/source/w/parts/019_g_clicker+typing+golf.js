@@ -353,7 +353,8 @@
         lastIn = performance.now();
       });
       input.addEventListener('keydown', e => {
-        if (e.key === 'Tab') { e.preventDefault(); reset(); focusIn(); }
+        if (e.key === 'Escape') { e.preventDefault(); input.blur(); document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); }
+        else if (e.key === 'Tab') { e.preventDefault(); reset(); focusIn(); }
         else if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) e.preventDefault();
       });
       const toEnd = () => { const n = input.value.length; try { input.setSelectionRange(n, n); } catch (_) { } };
@@ -370,8 +371,11 @@
       api.on(window, 'resize', () => caretTo());
       if (document.fonts) document.fonts.ready.then(() => { if (api.alive) caretTo(); });
 
+      let lastTick = 0;
       api.loop(() => {
-        const now = performance.now();
+        const now = performance.now(), gap = lastTick ? now - lastTick : 0;
+        lastTick = now;
+        if (running && gap > 400) t0 += gap;
         caret.classList.toggle('idle', !running || now - lastIn > 650);
         if (!running) return;
         const el = (now - t0) / 1000;

@@ -37,6 +37,10 @@
       if (onChange) onChange(k);
     });
   };
+  const onPause = (api, pause, resume) => {
+    let was = false;
+    api.interval(() => { if (api.paused === was) return; was = api.paused; (was ? pause : resume)(); }, 80);
+  };
   const clock = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 
   const SHAPES = [
@@ -119,7 +123,7 @@
       const cfg = { size: PSIZE[saved.size] ? saved.size : '4x4', theme: THEMES[saved.theme] ? saved.theme : 'shapes', best: saved.best && typeof saved.best === 'object' ? saved.best : {} };
       root.innerHTML = '<div class="g-hud"><div class="g-stat"><span class="k">Moves</span><span class="v">0</span></div><div class="g-stat"><span class="k">Time</span><span class="v">0:00</span></div><div class="g-stat"><span class="k">Pairs</span><span class="v">0/8</span></div></div><div class="board"></div><span class="chip"></span>';
       const [mEl, tEl, pEl] = root.querySelectorAll('.v'), board = root.querySelector('.board'), chip = root.querySelector('.chip'), T = timers(api);
-      let cards = [], first = null, pending = null, moves = 0, found = 0, total = 8, cols = 4, locked = true, running = false, t0 = 0, secs = 0;
+      let cards = [], first = null, pending = null, moves = 0, found = 0, total = 8, cols = 4, locked = true, running = false, t0 = 0, secs = 0, peeking = false, pAt = 0;
       const hud = () => { mEl.textContent = moves; pEl.textContent = found + '/' + total; };
       const wave = i => (Math.floor(i / cols) + i % cols) * 60;
       const flip = (c, up) => { c.up = up; c.el.classList.toggle('up', up); c.el.setAttribute('aria-label', up ? c.name : 'Hidden card'); };
@@ -131,7 +135,7 @@
         if (pending) clearTimeout(pending.id);
         const [c, r] = PSIZE[cfg.size], [set, b1, b2, b3] = THEMES[cfg.theme];
         cols = c; total = c * r / 2;
-        first = pending = null; moves = found = secs = 0; running = false; locked = true;
+        first = pending = null; moves = found = secs = 0; running = false; locked = true; peeking = !!peek;
         tEl.textContent = '0:00'; hud(); api.score('—');
         board.style.cssText = `--cols:${c};--rows:${r};--mw:${c === 6 ? 560 : c === 5 ? 540 : 470}px;--b1:${b1};--b2:${b2};--b3:${b3}`;
         const best = cfg.best[cfg.size];
@@ -153,7 +157,7 @@
         const last = wave(cards.length - 1), hide = 600 + last + 450 + 1200 + Math.max(0, total - 8) * 70;
         T.later(() => cards.forEach(c => T.later(() => flip(c, true), wave(c.i))), 600);
         T.later(() => cards.forEach(c => T.later(() => flip(c, false), wave(c.i))), hide);
-        T.later(() => { locked = false; board.classList.remove('lock'); }, hide + last);
+        T.later(() => { locked = false; peeking = false; board.classList.remove('lock'); }, hide + last);
       }
 
       function resolve() {
@@ -204,6 +208,7 @@
         }
       });
 
+      onPause(api, () => { pAt = performance.now(); }, () => { if (running) t0 += performance.now() - pAt; if (peeking) deal(true); });
       deal(false);
       api.overlay({ kicker: 'Memory', title: 'Pairs', text: 'Every card is revealed for a moment. Then flip two at a time and find all the pairs in as few moves as you can.' + opts(), button: 'Play', onAction: () => deal(true) });
     }
@@ -307,8 +312,12 @@
       const want = () => cfg.mode === 'reverse' ? seq[seq.length - 1 - idx] : seq[idx];
 
       function round() {
-        seq.push(Math.random() * tiles.length | 0); idx = 0; phase = 'watch';
+        seq.push(Math.random() * tiles.length | 0);
         lvl.textContent = 'Level ' + seq.length; lvl.classList.remove('pop'); void lvl.offsetWidth; lvl.classList.add('pop');
+        show();
+      }
+      function show() {
+        idx = 0; phase = 'watch';
         say('Watch…'); board.classList.add('busy');
         const gap = Math.max(250, 640 - level * 30), on = Math.round(gap * .62), lead = 650;
         seq.forEach((p, i) => T.later(() => light(p, on), lead + i * gap));
@@ -352,6 +361,13 @@
         round();
       }
 
+      onPause(api, () => {
+        if (phase === 'watch') { T.clear(); tiles.forEach(t => { clearTimeout(t.off); t.el.classList.remove('lit'); }); phase = 'held'; }
+        else if (phase === 'wait') { T.clear(); phase = 'heldwait'; }
+      }, () => {
+        if (phase === 'held') show();
+        else if (phase === 'heldwait') { phase = 'wait'; T.later(round, 500); }
+      });
       bindPick(api, root, 'sequence', cfg, () => { build(); tiles.forEach(t => t.el.classList.remove('hint', 'wrong')); });
       api.on(window, 'keydown', e => {
         const m = /^(?:Digit|Numpad)([1-9])$/.exec(e.code), d = m ? m[1] : /^[1-9]$/.test(e.key) && e.key;
@@ -449,10 +465,12 @@
         chip.textContent = (letters ? 'Letters' : 'Digits') + (b ? ' · best ' + b : '');
       }
 
-      function round() {
+      function round(keep) {
         phase = 'show'; nEl.textContent = n;
-        target = letters ? '' : String(1 + Math.random() * 9 | 0);
-        while (target.length < n) target += letters ? ALPHA[Math.random() * ALPHA.length | 0] : Math.random() * 10 | 0;
+        if (keep !== true) {
+          target = letters ? '' : String(1 + Math.random() * 9 | 0);
+          while (target.length < n) target += letters ? ALPHA[Math.random() * ALPHA.length | 0] : Math.random() * 10 | 0;
+        }
         num.innerHTML = [...target].map((c, i) => `<span style="color:${NCOL[(i * 3 + n) % 8]};animation-delay:${i * 35}ms">${c}</span>`).join('');
         num.style.fontSize = `min(104px, ${(150 / n).toFixed(2)}cqw)`;
         input.value = ''; view('show');
@@ -489,7 +507,7 @@
         verdict.className = 'verdict ' + (ok ? 'ok' : 'no');
         verdict.innerHTML = ok ? CHECK + 'Correct' : CROSS + 'Not quite';
         view('res');
-        if (ok) { score = n++; sEl.textContent = score; api.score(letters ? score + ' letters' : score); api.sfx('good'); T.later(round, 1300); }
+        if (ok) { score = n++; sEl.textContent = score; api.score(letters ? score + ' letters' : score); api.sfx('good'); T.later(round, 1300); phase = 'resok'; }
         else { api.sfx('lose'); T.later(over, 2200); }
       }
 
@@ -518,6 +536,13 @@
         b.classList.add('dn'); api.timeout(() => b.classList.remove('dn'), 90);
         const k = b.dataset.k;
         if (k === 'ok') check(); else if (k === 'del') del(); else type(k);
+      });
+      onPause(api, () => {
+        if (phase === 'show') { T.clear(); if (stopBar) stopBar(); phase = 'held'; }
+        else if (phase === 'resok') { T.clear(); phase = 'heldok'; }
+      }, () => {
+        if (phase === 'held') round(true);
+        else if (phase === 'heldok') { phase = 'resok'; T.later(round, 600); }
       });
       bindPick(api, root, 'number-memory', cfg, () => setMode());
       api.on(window, 'keydown', e => {

@@ -16,6 +16,7 @@
     FRUIT_OF: [0, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7],
     MODES: [[7, 20, 7, 20, 5, 20, 5], [7, 20, 7, 20, 5, 1033, 1 / 60], [5, 20, 5, 20, 5, 1037, 1 / 60]],
     GLOBAL_REL: [0, 7, 17, 32],
+    INTER: { 2: 1, 5: 2, 9: 3, 13: 3, 17: 3 }, INTER_RUN: 190, INTER_LEN: 420,
     SCATTER: [[25, -3], [2, -3], [27, 32], [0, 32]],
     NO_UP: [[12, 11], [15, 11], [12, 23], [15, 23]],
     HOUSE: { door: 112, out: 92, mid: 116, homes: [112, 112, 96, 128] },
@@ -609,13 +610,17 @@
           }
         } else if (state === 'clear') {
           if (--stT <= -(CFG.CLEAR_FLASH * CFG.CLEAR_HALF)) {
-            level++; loadLevel(); resetActors(); elroyOff = false; state = 'ready'; stT = CFG.READY;
+            if (CFG.INTER[level]) { state = 'inter'; stT = 0; sfx('intro'); }
+            else nextLevel();
           }
+        } else if (state === 'inter') {
+          if (++stT >= CFG.INTER_LEN) nextLevel();
         } else if (state === 'over') {
           if (--stT <= 0) { state = 'title'; stT = 0; }
         }
         updateBg();
       }
+      function nextLevel() { level++; loadLevel(); resetActors(); elroyOff = false; state = 'ready'; stT = CFG.READY; }
       function gameOver() {
         state = 'over'; stT = CFG.OVER; bgMode = 'off';
         if (!submitted) { submitted = true; api.submit(score); }
@@ -671,6 +676,23 @@
         const seq = [0, 1, 2, 1], fr = pac.moving ? seq[(pac.anim >> 1) & 3] : 1;
         g.drawImage(SPR.pac[pac.dir][state === 'intro' || state === 'ready' ? 0 : fr], pac.x - 8, pac.y - 8 + TOP);
       }
+      function drawInter() {
+        const act = CFG.INTER[level], t = stT, run = CFG.INTER_RUN, Y = 132, fr = (t >> 3) & 1, pf = [0, 1, 2, 1][(t >> 2) & 3], u = t - run;
+        const blinky = (x, d, h) => g.drawImage(SPR.ghost[0][fr][d], 0, 0, 16, h || 16, x, Y, 16, h || 16);
+        if (u < 0) {
+          const px = 232 - t * 1.3, bx = px + 36;
+          g.drawImage(SPR.pac[1][pf], px, Y);
+          if (act === 2) { g.fillStyle = '#9a9aff'; g.fillRect(100, Y + 2, 2, 12); blinky(Math.max(bx, 100), 1); } else blinky(bx, 1);
+        } else if (act === 1) {
+          const x = -64 + u * 1.3;
+          g.drawImage(SPR.pac[3][pf], 0, 0, 16, 16, x, Y - 8, 32, 32);
+          g.drawImage(SPR.fright[(u >> 3) & 1][fr], x + 56, Y);
+        } else {
+          const x = 100 + u * .8;
+          if (act === 2) { g.fillStyle = '#ff0000'; g.fillRect(100, Y + 12, 4, 4); } else { g.fillStyle = '#dedeff'; g.fillRect(x - 28, Y + 8, 28, 6); }
+          blinky(x, 3, 12);
+        }
+      }
       function drawTitle() {
         textC('CHARACTER / NICKNAME', 5, '#dedeff');
         const t = stT;
@@ -697,6 +719,7 @@
         g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
         drawHeader();
         if (state === 'title') { drawTitle(); return; }
+        if (state === 'inter') { drawInter(); return; }
         const clearing = state === 'clear' && stT <= 0;
         drawMaze(clearing && (((-stT) / CFG.CLEAR_HALF) | 0) % 2 === 1);
         if (!clearing) drawDots();
@@ -762,6 +785,7 @@
       function startOrAdvance() {
         if (state === 'title') newGame();
         else if (state === 'over' && stT < CFG.OVER - 40) { state = 'title'; stT = 250; }
+        else if (state === 'inter') nextLevel();
       }
       api.on(window, 'keydown', e => {
         const t = e.target;
@@ -793,7 +817,7 @@
         const s = sw; sw = null;
         if (s.moved) return;
         if (state === 'title' && s.p.y > 25 * 8 && s.p.y < 31 * 8 && (s.p.x < 72 || s.p.x > 152)) { input(s.p.x < 72 ? 1 : 3); return; }
-        if (state === 'title' || state === 'over') startOrAdvance();
+        if (state === 'title' || state === 'over' || state === 'inter') startOrAdvance();
       };
       api.on(canvas, 'pointerup', swEnd);
       api.on(canvas, 'pointercancel', () => { sw = null; });

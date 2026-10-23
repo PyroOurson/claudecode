@@ -280,7 +280,75 @@
       '        33',
       '      ooo oo',
       '      of Goo',
-      '      oooooo'], s: { P: 'split 0,5 17,5', A: 'soft 1t 2+', B: 'soft 1-', H: 'heavy 3+' } }
+      '      oooooo'], s: { P: 'split 0,5 17,5', A: 'soft 1t 2+', B: 'soft 1-', H: 'heavy 3+' } },
+    { name: 'Footbridge', code: '923478', m: [
+      '     oCo    ooo          ooo',
+      'ooS  ooo2222oDo   oooo   oEG',
+      'ooo11ooB    ooo333oooo   ooo',
+      'Afo  ooo          o oo444ooo',
+      '     ooo          oooo   ooo',
+      '                  oooo'], s: { A: 'heavy 1+', B: 'soft 2+', C: 'soft 3t', D: 'heavy 4+', E: 'soft 1-' } },
+    { name: 'Relay', code: '829858', m: [
+      'Boo',
+      'ooo11ooo',
+      'oSo  ooo                 oGoo',
+      'ooo  oCo          oDooo  oooo',
+      'Aoo  ooo          ooooo44oooo',
+      '     ooo222ooEoo  ooooo',
+      '           oo oo  ooooo',
+      '           oF Ho33ooooo'], s: { A: 'heavy 1+', B: 'heavy 2+', C: 'heavy 3+', D: 'soft 4+', E: 'soft 2-', F: 'soft 3-', H: 'soft 4-' } },
+    { name: 'Detour', code: '774146', m: [
+      'oooo1111oooB',
+      'Dooo    ooCo   oo',
+      'oooo    o oo222ooo  ooo444oooof',
+      'oSoF           ooo33ooo   ooooo',
+      'AEoo           ooo  ooo   Goooo'], s: { A: 'soft 1t', B: 'soft 2+', C: 'heavy 3+', D: 'heavy 4+', E: 'soft 4-', F: 'soft 4-' } },
+    { name: 'Tollgate', code: '487096', m: [
+      '                    ooo',
+      '               oCo  ooo',
+      'oooo   ofoo2222ooo  oGo',
+      ' ooo   oooB    Doo  ooo',
+      'ofoo   oooo    off33ooo',
+      'ooSA111oooo    ooo',
+      '       oooo'], s: { A: 'soft 1+', B: 'heavy 2+', C: 'heavy 3+', D: 'soft 3-' } },
+    { name: 'Switchyard', code: '458310', m: [
+      'Soooo1111ooo          oo',
+      'oofo     ooo22oo     ooo',
+      'oooBC    ooo  oDo3333ooo44ooo',
+      'ooooA    ooE  ooo    ooo  Foo',
+      '                          ooG'], s: { A: 'soft 1t', B: 'soft 2+', C: 'heavy 3+', D: 'heavy 4t', E: 'soft 1-', F: 'soft 3-' }, on: '1' },
+    { name: 'Causeway', code: '543151', m: [
+      'ooS',
+      'ooo    ooDoo',
+      'oAo    Boooo   fCo',
+      'o E1111ooooo222ooo',
+      '               oof333ooo    oo',
+      '                     ooo4444ooo',
+      '                     ooo    ooo',
+      '                            ooG',
+      '                            ooo'], s: { A: 'soft 1+', B: 'heavy 2+', C: 'heavy 3t', D: 'heavy 4+', E: 'soft 4-' } },
+    { name: 'Ferry', code: '538450', m: [
+      'foo1111ooEBo',
+      'Doo    ofoCo   oooo',
+      'AoS    ooooo222oooo',
+      'ooo            oooo',
+      '               oooo   Goo',
+      '               oooo333ooo',
+      '                      ooo'], s: { A: 'soft 1+', B: 'heavy 2+', C: 'heavy 3+', D: 'soft 3-', E: 'soft 2-' } },
+    { name: 'Gauntlet', code: '584866', m: [
+      '           ooo  oooo',
+      '      ooo22ooo33oooo',
+      'ooS111oDo  ooo  oooo444Goooo',
+      'Bo    ofo  oEC  oooo   oooo',
+      'Aoo        ooo  oooo   ooooo'], s: { A: 'soft 1+', B: 'soft 2+', C: 'heavy 3t', D: 'heavy 4+', E: 'soft 1-' } },
+    { name: 'Summit', code: '210581', m: [
+      '                  oooo',
+      '                  oooo    ooooG',
+      '                  oooo    ooooo',
+      'DoA        ooo3333oooo4444ooooo',
+      'Boo11ooo   fCo    oooE    ooooo',
+      'ooS  ooo   ffF',
+      '      oo222ooo'], s: { A: 'soft 1+', B: 'soft 2t', C: 'heavy 3+', D: 'soft 4+', E: 'soft 3-', F: 'soft 4-' }, on: '2' }
   ];
 
   function parseLevel(def) {

@@ -26,7 +26,7 @@
     W.free[lane] = Math.max(W.free[lane], o.s1 + 2);
     return o;
   }
-  const addTrain = (W, lane, s0, cars, liv) => addObs(W, 'train', lane, s0, trainLen(cars), { cars, liv: liv == null ? rint(0, 4) : liv });
+  const addTrain = (W, lane, s0, cars, liv) => addObs(W, 'train', lane, s0, trainLen(cars), { cars, liv: liv == null ? rint(0, NLIV - 1) : liv });
   const addRamp = (W, lane, s0) => addObs(W, 'ramp', lane, s0, CFG.RAMP);
   const addBar = (W, k, lane, s) => addObs(W, k, lane, s - CFG.BAR_D, CFG.BAR_D * 2);
   const addCoin = (W, lane, s, y) => W.coins.push({ lane, x: LX(lane), s, y, got: false, pull: false, px: 0, py: 0, ps: 0 });
@@ -159,7 +159,7 @@
       for (const l of cand) { const e = [0, 1, 2].filter(x => Math.abs(x - l) === 1 && W.free[x] < meet - 26); if (e.length) { ml = l; esc = pick(e); break; } }
       if (ml < 0) { W.genS = s + 12; W.lastKind = 'x'; return; }
       const cars = rint(1, 3);
-      const o = addTrain(W, ml, sm, cars, rint(0, 4));
+      const o = addTrain(W, ml, sm, cars, rint(0, NLIV - 1));
       o.v = vt; o.moving = true;
       const third = 3 - ml - esc;
       let maxEnd = o.s1;

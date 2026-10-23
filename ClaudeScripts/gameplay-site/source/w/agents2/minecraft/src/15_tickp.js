@@ -167,7 +167,7 @@
         if (P.y < y + 1 || !boxFree(P, 0, 0, 0)) P.y = y + 1;
         P.py = P.y;
       }
-      if (P.sleeping) { P.vx = P.vz = 0; P.vy = 0; P.sleeping++; return; }
+      if (P.sleeping) { P.vx = P.vz = 0; P.vy = 0; if (++P.sleeping >= 100 && NET.role !== 'guest' && ![...RP.values()].some(e => !e.pdead && e.mode !== 'spectator')) { W.time = Math.ceil(W.time / 24000) * 24000; W.raining = W.thunder = false; wake(); } return; }
       let fwd = 0, str = 0;
       const K = c => keys.has(c), active = !gui && !P.dead && !chatOpen;
       if (active) {

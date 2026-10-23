@@ -1815,7 +1815,7 @@
       const gr = api.canvas(720, 130);
       gr.canvas.classList.add('cp-graph');
       const g = gr.ctx, GW = gr.w, GH = gr.h;
-      let state = 'idle', t0 = 0, clicks = 0, times = [], samples = [], lastSample = -1, lastSub = '', final = 0, peak = 0;
+      let state = 'idle', t0 = 0, clicks = 0, times = [], samples = [], lastSample = -1, lastSub = '', final = 0, peak = 0, lastLoop = performance.now();
 
       const save = () => api.save({ mode, bests });
       const setHud = (vals) => vals.forEach((v, i) => { if (hv[i].textContent !== v) hv[i].textContent = v; });
@@ -1890,7 +1890,6 @@
         if (state === 'ready') {
           state = 'run'; t0 = t;
           pad.classList.add('run'); paintModes();
-          api.timeout(finish, Math.max(0, mode * 1000 - (performance.now() - t)));
         } else if (state !== 'run') return;
         if (t - t0 > mode * 1000) return;
         clicks++; times.push(t - t0);
@@ -1949,8 +1948,12 @@
       modeEls.forEach(el => el.addEventListener('click', () => { if (state === 'run' || state === 'done') return; mode = +el.dataset.m; save(); arm(); }));
 
       api.loop(() => {
+        const now = performance.now(), gap = now - lastLoop;
+        lastLoop = now;
         if (state !== 'run') return;
-        const el = Math.min(mode * 1000, performance.now() - t0);
+        if (gap > 250) t0 += gap;
+        if (now - t0 >= mode * 1000) { finish(); return; }
+        const el = Math.min(mode * 1000, now - t0);
         if (el - lastSample >= 50) {
           lastSample = el;
           const c = winCps(el);

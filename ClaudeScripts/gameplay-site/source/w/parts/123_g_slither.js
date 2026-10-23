@@ -141,18 +141,21 @@
     mount(root, api) {
       const coarse = matchMedia('(pointer: coarse)').matches;
       const tall = coarse && innerHeight > innerWidth;
-      const W = tall ? 400 : 880, H = tall ? 640 : 560, F = tall ? 0.95 : 1, BASE = Math.sqrt(W * H) / CFG.view * (tall ? 1.2 : 1);
+      const W0 = tall ? 400 : 880, H0 = tall ? 640 : 560, F0 = tall ? 0.95 : 1, BASE = Math.sqrt(W0 * H0) / CFG.view * (tall ? 1.2 : 1);
+      let W = W0, H = H0, F = F0;
       const wrap = document.createElement('div');
       wrap.className = 'sl-wrap';
       wrap.style.width = `min(100%, ${W}px, calc((100dvh - var(--goff, 250px)) * ${(W / H).toFixed(4)}))`;
       root.append(wrap);
-      const { canvas, ctx, toLocal } = api.canvas(W, H, wrap);
+      const { canvas, ctx } = api.canvas(W, H, wrap);
+      const toLocal = e => { const r = canvas.getBoundingClientRect(), p = e.touches ? (e.touches[0] || e.changedTouches[0]) : e; return { x: (p.clientX - r.left) * W / r.width, y: (p.clientY - r.top) * H / r.height }; };
       canvas.style.width = '100%';
-      const DPR = canvas.width / W;
+      const DPR0 = canvas.width / W0;
+      let DPR = DPR0, fitN = 0, fsOn = false;
       wrap.insertAdjacentHTML('beforeend', MENU);
       const menu = wrap.querySelector('.sl-menu'), nickEl = wrap.querySelector('.sl-nick'), lastEl = wrap.querySelector('.sl-last'), prevC = wrap.querySelector('.sl-prev');
       wrap.querySelector('.sl-hint').textContent = coarse ? 'Drag anywhere to steer · hold a second finger or the boost button to speed up' : 'Move the mouse to steer · hold the mouse button or Space to speed up';
-      prevC.width = Math.round(180 * DPR); prevC.height = Math.round(56 * DPR);
+      prevC.width = Math.round(180 * DPR0); prevC.height = Math.round(56 * DPR0);
       const pctx = prevC.getContext('2d');
       const SP = sprites(), SPRB = SP.b, SPRF = SP.f, SPRG = SP.g, SHADOW = SP.s, HX = hexTile();
       const saved = api.load() || {};
@@ -187,6 +190,20 @@
       let mouseBoost = false, keyBoost = false, turnL = false, turnR = false, kbMode = false, touchMode = coarse, lastTapEnd = -1e9;
       const touches = new Map();
       const BB = { x: Math.round(54 * F), y: H - Math.round(104 * F), r: Math.round(32 * F) };
+      function fit() {
+        const fs = !!wrap.closest('.fs');
+        let w = W0, h = H0;
+        if (fs) { const A = innerWidth / innerHeight; if (A > W0 / H0) w = Math.round(H0 * A); else h = Math.round(W0 / A); }
+        const d = fs ? Math.min(3, Math.max(1, canvas.getBoundingClientRect().width * (devicePixelRatio || 1) / w)) : DPR0;
+        if (w === W && h === H && Math.abs(d - DPR) < 0.1 && fs === fsOn) return;
+        const px = ptr.x / W, py = ptr.y / H;
+        fsOn = fs; W = w; H = h; DPR = d; F = F0 * Math.max(W / W0, H / H0);
+        canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
+        canvas.style.aspectRatio = `${W} / ${H}`;
+        wrap.style.width = `min(100%, ${W0}px, calc((100dvh - var(--goff, 250px)) * ${(W / H).toFixed(4)}))`;
+        ptr.x = px * W; ptr.y = py * H;
+        BB.x = Math.round(54 * F); BB.y = H - Math.round(104 * F); BB.r = Math.round(32 * F);
+      }
 
       function addFood(x, y, v, ci, kind, born) {
         if (!freeTop) return;
@@ -714,6 +731,7 @@
         return true;
       }
       function render() {
+        if (!(++fitN % 20) || wrap.closest('.fs') !== null !== fsOn) fit();
         const sc = zoom * BASE, ox = W / 2 - camX * sc, oy = H / 2 - camY * sc;
         const vw = W / sc, vh = H / sc, vx0 = camX - vw / 2, vy0 = camY - vh / 2, vx1 = vx0 + vw, vy1 = vy0 + vh;
         ctx.setTransform(DPR * sc, 0, 0, DPR * sc, DPR * ox, DPR * oy);
@@ -835,7 +853,7 @@
       }
       function drawPreview() {
         const c = pctx, h = 56, sk = SKINS[skinIdx], N = 15, r = 11, gap = 8.4;
-        c.setTransform(DPR, 0, 0, DPR, 0, 0);
+        c.setTransform(DPR0, 0, 0, DPR0, 0, 0);
         c.clearRect(0, 0, 180, h);
         const yAt = i => h / 2 + Math.sin(gt * 3.2 - i * 0.55) * 7;
         for (let i = N - 1; i >= 0; i--) {

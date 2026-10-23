@@ -51,7 +51,7 @@
 
   const STAGE_CSS = id => `
 .gm-${id} .stage{position:relative;max-width:100%;border-radius:var(--r);overflow:hidden;container-type:inline-size;touch-action:none;box-shadow:0 22px 44px -28px rgba(31,29,43,.55)}
-.gm-${id} .stage canvas{border-radius:0}
+.gm-${id} .stage canvas{width:100%!important;height:100%!important;aspect-ratio:auto!important;display:block;border-radius:0}
 .gm-${id} .pop{position:absolute;font:900 clamp(15px,5cqw,26px)/1 var(--sans);color:#fff;white-space:nowrap;pointer-events:none;text-shadow:0 2px 0 rgba(31,29,43,.28),0 4px 14px rgba(31,29,43,.25)}`;
 
   const mount3d = (size, game) => (root, api) => {
@@ -67,8 +67,12 @@
   function stage(root, canvas, html) {
     const el = document.createElement('div');
     el.className = 'stage';
-    el.style.width = canvas.style.width;
-    canvas.style.width = '100%';
+    const cvs = canvas.style;
+    for (const k of ['width', 'aspectRatio']) {
+      let val = cvs[k];
+      el.style[k] = val;
+      Object.defineProperty(cvs, k, { get: () => val, set: x => { val = x; el.style[k] = x; } });
+    }
     root.append(el);
     el.append(canvas);
     el.insertAdjacentHTML('beforeend', html);
@@ -1240,6 +1244,7 @@
       renderer.render(scene, cam);
     });
 
+    root.__mb = { b, MP, get state() { return state; }, get course() { return course; }, get cp() { return cpIdx; }, get yaw() { return camYaw; }, get lvl() { return lvl; }, get time() { return lvTime; }, get ct() { return ct; }, go(i) { loadLevel(i); play(); } };
     loadLevel(0);
     api.overlay({
       kicker: '3D',
@@ -1250,7 +1255,7 @@
       onAction: newRun
     });
 
-    return () => { for (const o of bin.concat(lvBin)) o.dispose(); };
+    return () => { delete root.__mb; for (const o of bin.concat(lvBin)) o.dispose(); };
   }
 
   Ameplay.register({
@@ -1265,6 +1270,7 @@
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="22" cy="40" r="11"/><path d="M13.5 35q8.5 6 17 0"/><path d="M4 55h56"/><path d="M48 55V10l11 5.5L48 21"/></svg>',
     css: STAGE_CSS('marble-3d') + `
 .gm-marble-3d .hud{position:absolute;left:0;right:0;top:0;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:clamp(8px,2cqw,16px);pointer-events:none}
+.fs .gm-marble-3d .hud{padding-right:56px}
 .gm-marble-3d .pill{padding:clamp(5px,1.2cqw,8px) clamp(9px,2cqw,14px);border-radius:999px;background:rgba(255,255,255,.88);font:800 clamp(10px,2.2cqw,13px)/1 var(--sans);color:var(--muted);white-space:nowrap;box-shadow:0 6px 16px -8px rgba(31,29,43,.4)}
 .gm-marble-3d .pill b{color:var(--ink);font-weight:900;font-variant-numeric:tabular-nums}
 .gm-marble-3d .clock{min-width:3.2em;padding:.18em .5em;border-radius:999px;background:rgba(31,29,43,.62);font:900 clamp(20px,4.6cqw,36px)/1 var(--sans);color:#fff;text-align:center;font-variant-numeric:tabular-nums;box-shadow:0 8px 20px -10px rgba(31,29,43,.6)}

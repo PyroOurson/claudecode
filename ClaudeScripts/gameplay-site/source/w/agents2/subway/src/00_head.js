@@ -15,7 +15,7 @@
 
   const CFG = {
     LANE: 2.5, PHW: 0.36, PHD: 0.32, H_STAND: 1.7, H_ROLL: 0.85,
-    V0: 15.5, VMAX: 31, VTAU: 125,
+    V0: 16.5, VMAX: 33, VTAU: 105,
     JUMP_H: 1.55, JUMP_T: 0.64, SNEAK_H: 4.6, SNEAK_T: 1.0, ROLL_T: 0.62, FALL_V: 34,
     LANE_T: 0.13, COYOTE: 0.09, BUFFER: 0.16, STEP: 1 / 120,
     ROOF: 3.55, THW: 1.17, CAR: 12, CGAP: 0.7, RAMP: 8.5,
@@ -27,6 +27,10 @@
   const LX = l => (l - 1) * CFG.LANE;
   const speedAt = t => CFG.V0 + (CFG.VMAX - CFG.V0) * (1 - Math.exp(-t / CFG.VTAU));
   const tscale = v => Math.pow(CFG.V0 / Math.max(CFG.V0, v), 0.42);
+
+  const FREIGHT = [['#2f7d4a', '#1f5a35', 'x', 'box'], ['#d9692a', '#9a3f14', 'x', 'cont'], ['#8c5a34', '#5e3a20', 'x', 'gon'], ['#2c6cb8', '#1a4a88', 'x', 'cont'], ['#dfe3ea', '#c42a2a', 'x', 'tank'], ['#8a6a3a', '#5a4020', 'x', 'flat']];
+  const trainsOf = c => c.trains.concat(FREIGHT);
+  const NLIV = 11;
 
   const CITIES = [
     { id: 'subway', name: 'Subway City', sub: 'The classic yard',

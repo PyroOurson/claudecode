@@ -1,15 +1,21 @@
         const fxVisuals = (dt, t) => {
-          fxDebUpdate(dt); fire.update(dt); smoke.update(dt); fxSpark.update(dt); fxShkUpdate(dt); fxFlUpdate(dt);
+          fxDebUpdate(dt); fxSk.update(dt); fire.update(dt); smoke.update(dt); fxSpark.update(dt); fxShkUpdate(dt); fxFlUpdate(dt);
           if (fxLt.t >= 0) { fxLt.t += dt; const k = fxLt.t / fxLt.d; if (k >= 1) { fxLt.t = -1; fxLight.intensity = 0; } else fxLight.intensity = fxLt.i * (1 - k) * (1 - k); }
           for (let i = fxQk.length - 1; i >= 0; i--) { fxQk[i].t += dt; if (fxQk[i].t >= fxQk[i].d) fxQk.splice(i, 1); }
           fxBoostFx(dt); fxWheelFx(dt);
         };
         const fxWheelFx = dt => {
           if (ui !== 'play' || W.state === 'menu' || dt <= 0 || fxQ.lv >= 3) return;
-          for (const c of W.cars) {
-            if (c.demoT > 0 || !c.onGround || !c.cfg) continue;
+          for (let ci = 0; ci < W.cars.length; ci++) {
+            const c = W.cars[ci];
+            if (c.demoT > 0 || !c.onGround || !c.cfg || (fxRp.on && fxRp.show)) { fxSk.end(ci * 2); fxSk.end(ci * 2 + 1); continue; }
             const sp = vlen(c.v), slip = Math.abs(c.v.x * c.l.x + c.v.y * c.l.y + c.v.z * c.l.z), sl = c.slide || 0;
             const k = Math.max(sl > 0.2 ? clamp((slip - 150) / 600, 0, 1) * sl : 0, clamp((slip - 500) / 700, 0, 1), sp > 1250 ? 0.12 * clamp((sp - 1250) / 900, 0, 1) : 0);
+            const mk = c.nw >= 3 && c.n.z > 0.97 && c.p.z < 40 ? Math.max(sl > 0.3 && sp > 350 ? 0.55 + 0.4 * sl : 0, clamp((slip - 800) / 800, 0, 1) * 0.7) : 0;
+            for (let i = 2; i < 4; i++) {
+              const kq = ci * 2 + i - 2;
+              if (mk > 0) { const q = c.cfg.wh[i]; fxSk.add(kq, c.p.x + c.f.x * q.x + c.l.x * q.y, c.p.y + c.f.y * q.x + c.l.y * q.y, 1.4, mk * 0.6); } else fxSk.end(kq);
+            }
             if (k <= 0) continue;
             for (let i = 2; i < 4; i++) {
               if (Math.random() > k * 34 * dt) continue;
@@ -43,6 +49,7 @@
             const x = o[k];
             if (typeof x === 'number') s.push([k, '', 0]);
             else if (typeof x === 'boolean') s.push([k, '', 1]);
+            else if (k === 'wz' && Array.isArray(x)) for (let j = 0; j < x.length; j++) s.push([k, String(j), 0]);
             else if (x && typeof x === 'object' && !Array.isArray(x) && !ArrayBuffer.isView(x)) {
               if (typeof x.x === 'number' && typeof x.y === 'number' && typeof x.z === 'number') s.push([k, '', 2]);
               else if (k === 'ctl') for (const j in x) { if (typeof x[j] === 'number') s.push([k, j, 0]); else if (typeof x[j] === 'boolean') s.push([k, j, 1]); }
@@ -173,7 +180,7 @@
             x.n.innerHTML = (g.assist ? `<i class="p${g.assist.team}">${esc(g.assist.name)}</i>, ` : '') + esc(who);
             x.d.classList.toggle('t1', g.team === 1); x.d.style.setProperty('--tc', tc[0]); x.d.style.setProperty('--td', tc[1]);
           }
-          fxWipe(); noise(0.5, 300, 0.07, 'bandpass', 0.8, 2600, 0, 0.2);
+          fxWipe(); noise(0.5, 300, 0.07, 'bandpass', 0.8, 2600, 0, 0.2); tone(150, 0.5, 'sine', 0.06, 640, 0, 0.2);
         };
         const fxRpWant = () => !!fxRp.goal && fxRp.done !== fxRp.goalT && W.state === 'goal' && W.stateT >= CFG.rules.goalT - 1e-6;
         const fxRpCheck = () => {
@@ -189,7 +196,7 @@
           if (Rp.ph === 1) {
             const a = Rp.t; Rp.t = Math.min(Rp.t1, Rp.t + dt * fxRpRate(Rp.t));
             fxRpApply(Rp.t); fxRpEvents(a, Rp.t);
-            if (Rp.t >= Rp.t1 || Rp.skip) { Rp.ph = 2; Rp.pt = 0; fxWipe(); noise(0.45, 2400, 0.06, 'bandpass', 0.8, 300, 0, 0.2); }
+            if (Rp.t >= Rp.t1 || Rp.skip) { Rp.ph = 2; Rp.pt = 0; fxWipe(); noise(0.45, 2400, 0.06, 'bandpass', 0.8, 300, 0, 0.2); tone(640, 0.45, 'sine', 0.05, 140, 0, 0.2); }
             return;
           }
           if (Rp.show) {

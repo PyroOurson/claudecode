@@ -226,14 +226,14 @@
       }
       function setupStage() {
         boss = stage % 5 === 0; R = boss ? 104 : 94; logSpr = makeLog(R, boss);
-        need = boss ? Math.min(11, 8 + Math.floor(stage / 10)) : Math.min(10, 5 + Math.floor(stage * .4));
+        need = boss ? Math.min(14, 8 + Math.floor(stage / 8)) : Math.min(12, 5 + Math.floor(stage * .4));
         left = need; knives = []; apples = []; fly.on = false; queued = false;
-        const pre = boss ? Math.min(4, 2 + Math.floor(stage / 15)) : stage < 3 ? 0 : Math.floor(rnd(0, Math.min(3.99, 1 + stage / 4)));
+        const pre = boss ? Math.min(6, 2 + Math.floor(stage / 12)) : stage < 3 ? 0 : Math.floor(rnd(0, Math.min(5.99, 1 + stage / 4)));
         for (let i = 0; i < pre; i++) { const a = freeAngle(.55); if (a != null) knives.push(a); }
         const na = Math.random() < .7 ? (Math.random() < .3 ? 2 : 1) : 0;
         for (let i = 0; i < na; i++) { const a = freeAngle(.45); if (a != null) apples.push({ a, hit: false }); }
         pat = boss ? BOSS : PAT[stage <= PAT.length ? stage - 1 : Math.random() * PAT.length | 0];
-        spd = (Math.random() < .5 ? -1 : 1) * (1.55 + .085 * Math.min(stage, 25));
+        spd = (Math.random() < .5 ? -1 : 1) * (1.55 + .085 * Math.min(stage, 40));
         tS = 0; intro = 0; banner = 1.5; readyT = 0;
       }
       function start() {
@@ -369,7 +369,7 @@
         if (banner > 0 && state === 'play') {
           const k = Math.max(.01, eBack(Math.min(1, (1.5 - banner) / .25)));
           ctx.globalAlpha = Math.min(1, banner / .4);
-          ctx.save(); ctx.translate(CX, CY + R + 76); ctx.scale(k, k);
+          ctx.save(); ctx.translate(CX, CY + R + 130); ctx.scale(k, k);
           txt(ctx, boss ? 'BOSS FIGHT!' : 'STAGE ' + stage, 0, 0, boss ? 34 : 28, 'center', boss ? '#ff9a9a' : '#ffffff');
           ctx.restore(); ctx.globalAlpha = 1;
         }

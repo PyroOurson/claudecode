@@ -121,8 +121,8 @@
             fxM4.compose(fxVb.set(p[i3], p[i3 + 1], p[i3 + 2]), fxDb.q[i], fxVa.set(sc, sc * 0.7, sc * 0.45)); fxDeb.setMatrixAt(i, fxM4);
             if (fxDb.hot[i] > 0) {
               fxDb.hot[i] -= dt;
-              if (Math.random() < 0.16) smoke.emit(p[i3], p[i3 + 1], p[i3 + 2], R() * 20, R() * 20, 30, 0.7 + Math.random() * 0.4, 0.13, 0.12, 0.12, 30, 120, -40, 1.5);
-              if (Math.random() < 0.3) fire.emit(p[i3], p[i3 + 1], p[i3 + 2], R() * 40, R() * 40, R() * 40, 0.22, 1, 0.5, 0.15, 34, 6, 0, 2);
+              if (Math.random() < 0.16 * dt * 60) smoke.emit(p[i3], p[i3 + 1], p[i3 + 2], R() * 20, R() * 20, 30, 0.7 + Math.random() * 0.4, 0.13, 0.12, 0.12, 30, 120, -40, 1.5);
+              if (Math.random() < 0.3 * dt * 60) fire.emit(p[i3], p[i3 + 1], p[i3 + 2], R() * 40, R() * 40, R() * 40, 0.22, 1, 0.5, 0.15, 34, 6, 0, 2);
             }
           }
           fxDeb.instanceMatrix.needsUpdate = true;
@@ -171,7 +171,7 @@
         let shake = 0;
         const R = () => Math.random() * 2 - 1;
         const fxDir = (bx, by, bz, up) => { let x = R(), y = R(), z = R(); const l = Math.hypot(x, y, z) || 1; x = x / l + bx; y = y / l + by; z = (up ? Math.abs(z / l) : z / l) + bz; const m = Math.hypot(x, y, z) || 1; fxVa.set(x / m, y / m, z / m); return fxVa; };
-        const fxClear = () => { fire.clear(); smoke.clear(); fxSpark.clear(); for (const s of fxShk) { s.t = -1; s.o.visible = false; } for (const f of fxFl) { f.t = -1; f.s.visible = false; } fxDb.l.fill(0); fxDb.live = true; fxLt.t = -1; fxLight.intensity = 0; fxQk.length = 0; };
+        const fxClear = () => { fire.clear(); smoke.clear(); fxSpark.clear(); fxSk.clear(); for (const s of fxShk) { s.t = -1; s.o.visible = false; } for (const f of fxFl) { f.t = -1; f.s.visible = false; } fxDb.l.fill(0); fxDb.live = true; fxLt.t = -1; fxLight.intensity = 0; fxQk.length = 0; };
         const burst = (p, color, big) => {
           fxTc.set(color);
           const n = big ? 220 : 80;
@@ -192,9 +192,9 @@
           fxLightAt(x, y + sy * 450, Math.max(z, 250), 0xff7a20, 1.4, 0.9);
           fxShock(x, y, z, 0xff9a40, 90, 900, 0.32, 0.28, false);
           for (let i = 0; i < 42; i++) { const d = fxDir(0, sy * 0.2, 0.15, false), sp = 1900 + Math.random() * 1900, wt = Math.random() < 0.25; fxSpark.emit(x + d.x * 60, y + d.y * 60, z + d.z * 60, d.x * sp, d.y * sp, d.z * sp, 0.24 + Math.random() * 0.22, 0.9, wt ? 0.55 : 0.32, wt ? 0.2 : 0.05, 28 + Math.random() * 36, 0.2, 0, 4.5); }
-          for (let i = 0; i < 10; i++) {
-            const a = (i / 10 + Math.random() * 0.06) * TAU, h = 0.35 + Math.random() * 0.9, vx = Math.cos(a) * 900 * h, vy = (Math.sin(a) * 0.55 + sy * 0.7) * 900 * h, vz = 1700 + Math.random() * 500, G = 1300;
-            fxSpark.emit(x, y, z, vx, vy, vz, 1 + Math.random() * 0.4, 1, 0.55, 0.16, 18 + Math.random() * 10, 0.16, G, 0);
+          for (let i = 0; i < 16; i++) {
+            const a = (i / 16 + Math.random() * 0.06) * TAU, h = 0.35 + Math.random() * 0.9, vx = Math.cos(a) * 900 * h, vy = (Math.sin(a) * 0.55 + sy * 0.7) * 900 * h, vz = 1700 + Math.random() * 500, G = 1300;
+            fxSpark.emit(x, y, z, vx, vy, vz, 1.1 + Math.random() * 0.5, 1, 0.58, 0.18, 9 + Math.random() * 6, 0.36, G, 0);
             for (let k = 1; k <= 6; k++) { const t = k * 0.11; fxLater(t * 1000, () => smoke.emit(x + vx * t, y + vy * t, z + vz * t - G * t * t / 2, vx * 0.05, vy * 0.05, 40, 1 + Math.random() * 0.7, 0.55, 0.32, 0.19, 40 + k * 8, 150 + k * 20, -30, 1.2)); }
           }
           for (let i = 0; i < 64; i++) { const d = fxDir(0, sy * 0.3, 0.25, false), sp = 300 + Math.random() * 2000, k = Math.random(), q = i < 10 ? 0.1 : 0.15; fire.emit(x, y, z, d.x * sp, d.y * sp, d.z * sp, 0.18 + Math.random() * 0.32, q, (0.28 + k * 0.4) * q, 0.04 * q, i < 10 ? 130 + Math.random() * 60 : 70 + Math.random() * 50, 30, 200, 2.6); }
@@ -307,3 +307,44 @@
           }
         };
 
+
+        const fxSkN = 900, fxSkLife = 7;
+        const fxSk = (() => {
+          const geo = own(new THREE.BufferGeometry());
+          const P = new Float32Array(fxSkN * 12), A = new Float32Array(fxSkN * 4), E = new Float32Array(fxSkN * 4), I = new Uint16Array(fxSkN * 6), A0 = new Float32Array(fxSkN * 4), T = new Float32Array(fxSkN).fill(-1e9);
+          for (let i = 0; i < fxSkN; i++) { E.set([-1, 1, -1, 1], i * 4); const b = i * 4, o = i * 6; I[o] = b; I[o + 1] = b + 1; I[o + 2] = b + 2; I[o + 3] = b + 1; I[o + 4] = b + 3; I[o + 5] = b + 2; }
+          geo.setAttribute('position', new THREE.BufferAttribute(P, 3).setUsage(THREE.DynamicDrawUsage)); geo.setAttribute('alpha', new THREE.BufferAttribute(A, 1).setUsage(THREE.DynamicDrawUsage)); geo.setAttribute('edge', new THREE.BufferAttribute(E, 1)); geo.setIndex(new THREE.BufferAttribute(I, 1));
+          const mat = own(new THREE.ShaderMaterial({ vertexShader: 'attribute float alpha; attribute float edge; varying float vA; varying float vE;\nvoid main() { vA = alpha; vE = edge; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }', fragmentShader: 'varying float vA; varying float vE;\nvoid main() { float a = vA * smoothstep(1.0, 0.45, abs(vE)); if (a < 0.004) discard; gl_FragColor = vec4(0.012, 0.011, 0.01, a); }', transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -8 }));
+          const obj = new THREE.Mesh(geo, mat); obj.frustumCulled = false; obj.renderOrder = 2; obj.visible = false; scene.add(obj);
+          let head = 0, live = false, now = 0;
+          const L = new Float32Array(64 * 5);
+          return {
+            clear() { T.fill(-1e9); A.fill(0); live = true; for (let i = 0; i < L.length; i += 5) L[i] = 0; },
+            add(k, x, y, z, a) {
+              const o = k * 5;
+              if (L[o] && Math.hypot(x - L[o + 1], y - L[o + 2]) < 120) {
+                const dx = x - L[o + 1], dy = y - L[o + 2], d = Math.hypot(dx, dy);
+                if (d < 14) return;
+                const px = -dy / d * 4.2, py = dx / d * 4.2, i = head, j = i * 12, a0 = L[o + 4]; head = (head + 1) % fxSkN;
+                const qx = L[o + 1], qy = L[o + 2], qz = L[o + 3];
+                P[j] = qx + px; P[j + 1] = qy + py; P[j + 2] = qz; P[j + 3] = qx - px; P[j + 4] = qy - py; P[j + 5] = qz;
+                P[j + 6] = x + px; P[j + 7] = y + py; P[j + 8] = z; P[j + 9] = x - px; P[j + 10] = y - py; P[j + 11] = z;
+                A0[i * 4] = A0[i * 4 + 1] = a0; A0[i * 4 + 2] = A0[i * 4 + 3] = a; T[i] = now; live = true; obj.visible = true;
+              }
+              L[o] = 1; L[o + 1] = x; L[o + 2] = y; L[o + 3] = z; L[o + 4] = a;
+            },
+            end(k) { L[k * 5] = 0; },
+            update(dt) {
+              now += dt;
+              if (!live) return;
+              let any = false;
+              for (let i = 0; i < fxSkN; i++) {
+                const age = now - T[i];
+                if (age > fxSkLife) { if (A[i * 4] || A[i * 4 + 2]) A[i * 4] = A[i * 4 + 1] = A[i * 4 + 2] = A[i * 4 + 3] = 0; continue; }
+                const f = Math.min(1, (fxSkLife - age) / 2.6); any = true;
+                A[i * 4] = A0[i * 4] * f; A[i * 4 + 1] = A0[i * 4 + 1] * f; A[i * 4 + 2] = A0[i * 4 + 2] * f; A[i * 4 + 3] = A0[i * 4 + 3] * f;
+              }
+              geo.attributes.alpha.needsUpdate = true; geo.attributes.position.needsUpdate = true; live = any; obj.visible = any;
+            }
+          };
+        })();

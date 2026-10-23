@@ -335,8 +335,9 @@
       } else {
         holder.visible = true;
         handArm.userData.mat.color.setScalar(br);
-        holder.position.set(.72 + sx * .8, -.72 + sy * .5 - eq, -.5 + sz);
-        holder.rotation.set(2.1 - Math.sin(sq * Math.PI) * .5, .5 + Math.sin(sq * Math.PI) * .4, .1, 'YXZ');
+        holder.scale.setScalar(1.25);
+        holder.position.set(.6 + sx * .8, -.6 + sy * .5 - eq, -.62 + sz);
+        holder.rotation.set(2.0 - Math.sin(sq * Math.PI) * .5, .4 + Math.sin(sq * Math.PI) * .4, .12, 'YXZ');
       }
     }
     function updRain(now, ex, ey, ez) {

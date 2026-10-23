@@ -58,6 +58,7 @@
   .play-bar{flex-wrap:nowrap;gap:6px;padding:6px 10px}
   .play-side{width:auto}
   .play-side .am-pstat{flex:none;min-width:58px;height:36px;padding:0 8px}
+  .play-side .am-pstat b{max-width:34vw;overflow:hidden;text-overflow:ellipsis}
   .play-title h1{font-size:16px}
   .play-title span,.pb-thumb{display:none}
   .am-gamebox.theater .play-stage{min-height:0}

@@ -5,7 +5,7 @@ Target: about 1000 games, added in waves of at most 100. Every game is a remake 
 | Wave | Games | Status |
 |---|---|---|
 | 0 | 78 | Live (22 removed after player testing) |
-| 1 | 100 | Planned (below), not started |
+| 1 | 122 | Planned (below), not started; brings the total to 200 |
 | 2 to 9 | about 800 | Idea pool at the bottom |
 
 ## Quality bar (every game must pass before a wave ships)
@@ -33,129 +33,155 @@ The 22 removed games above are still listed here for history. Online today: Rock
 - Sign in with Google creating a profile with username and display name.
 - Connect everything to Supabase: accounts (email, username, display name), stats, analytics events (the site already records them locally through `Ameplay.analytics`).
 
-## Wave 1 plan (100 games, 76 online)
+## Wave 1 plan (122 games, to reach 200)
 
-Players column: max players online (bots fill empty seats where the game has opponents). 3D marks 3D games.
+Order is build order: simple 2D card and board games first, then party games, then the harder 2D and 3D games. Players: max online (bots fill empty seats where the game has opponents). "Ref" means a research folder exists in `references/`.
 
-### Party and social (online)
+### Part A: cards (2D)
 | # | Game | Players | Notes |
 |---|---|---|---|
-| 1 | Gartic Phone | 3-10 | Write, draw, guess chain; album replay at the end |
-| 2 | Skribbl.io | 2-10 | Draw and guess with hints, word choice, rounds |
-| 3 | Werewolf | 5-12 | Night/day phases, Seer, Doctor, Hunter, Witch, voting, chat |
-| 4 | Among Us | 4-10 | Top-down ship, tasks, vents, sabotage, meetings, voting |
-| 5 | Codenames | 4-10 | Two teams, spymaster clues, word grid |
-| 6 | Spyfall | 3-8 | Location cards, questions, accuse the spy |
-| 7 | Coup | 2-6 | Bluffing roles, challenges, coins |
-| 8 | Exploding Kittens | 2-5 | Card effects, defuse, nope |
-| 9 | Quiplash | 3-8 | Prompts, funny answers, head-to-head votes |
-| 10 | Kahoot | 2-20 | Timed quiz rounds, podium, built-in question packs |
-| 11 | Wavelength | 2-8 | Dial guessing between two extremes |
-| 12 | Word Bomb (BombParty) | 2-8 | Type a word with the letters before the bomb explodes |
-| 13 | Bingo | 2-12 | Called numbers, multiple cards |
-| 14 | Trivia Crack | 2 | Category wheel, crowns, head to head |
-| 15 | Mafia (Town of Salem) | 7-15 | Classes, night actions, trial votes |
+| 1 | Texas Hold'em Poker | 2-8 | Chips, blinds, side pots, showdown, all-in |
+| 2 | Blackjack | 1-6 | Shared dealer table, split, double, insurance |
+| 3 | Durak | 2-6 | Podkidnoy and Perevodnoy, trump, attack/defend |
+| 4 | Belote (Coinche) | 4 | Teams, bidding, belote-rebelote, French deck |
+| 5 | French Tarot | 3-5 | Bids, excuse, oudlers, chien |
+| 6 | President | 3-8 | Ranks swap between rounds |
+| 7 | Crazy Eights | 2-6 | Suit change on 8 |
+| 8 | Go Fish | 2-6 | Ask, books |
+| 9 | War | 2 | Fast flips, war piles |
+| 10 | Hearts | 4 | Passing, shooting the moon |
+| 11 | Spades | 4 | Teams, bids, bags |
+| 12 | Euchre | 4 | Bowers, going alone |
+| 13 | Gin Rummy | 2 | Melds, knock, gin |
+| 14 | Rummikub | 2-4 | Tiles, table rearranging |
+| 15 | Phase 10 | 2-6 | Phases, skips, wilds |
+| 16 | Skip-Bo | 2-6 | Stock piles, building piles |
+| 17 | Cheat (BS) | 3-8 | Bluff and call |
+| 18 | Old Maid | 2-6 | Pairs, the last card |
+| 19 | Speed (Spit) | 2 | Real-time, no turns |
+| 20 | Exploding Kittens | 2-5 | Defuse, nope, attack, see the future |
+| 21 | Coup | 2-6 | Bluffing roles, challenges, coins |
+| 22 | Cribbage | 2 | Board pegging, crib |
+| 23 | Spider Solitaire | solo | 1, 2 and 4 suits |
+| 24 | FreeCell | solo | Numbered deals |
+| 25 | Pyramid Solitaire | solo | Pairs to 13 |
+| 26 | Mahjong Solitaire | solo | Turtle and other layouts |
 
-### Board and card (online)
+### Part B: board (2D)
 | # | Game | Players | Notes |
 |---|---|---|---|
-| 16 | Monopoly | 2-6 | Full board, trading, auctions, houses, jail |
-| 17 | Ludo | 2-4 | Classic rules, captures, safe squares |
-| 18 | Catan | 3-4 | Resources, trading, robber, longest road |
-| 19 | Scrabble | 2-4 | Dictionary check, premium squares |
-| 20 | Poker (Texas Hold'em) | 2-8 | Chips, blinds, side pots, showdown |
-| 21 | Blackjack | 1-6 | Shared dealer table |
-| 22 | Yahtzee | 2-6 | Score sheet, three rolls |
-| 23 | Sorry! | 2-4 | Card driven pawn race |
-| 24 | Risk | 2-6 | World map, armies, cards |
-| 25 | Mancala | 2 | Kalah rules |
-| 26 | Go | 2 | 9x9, 13x13, 19x19, scoring |
-| 27 | Backgammon | 2 | Doubling cube |
-| 28 | Chinese Checkers | 2-6 | Star board |
-| 29 | Dominoes | 2-4 | Draw and block modes |
-| 30 | Spades | 4 | Teams, bids, bags |
-| 31 | Hearts | 4 | Passing, shooting the moon |
-| 32 | Phase 10 | 2-6 | Phases, skips, wilds |
-| 33 | Rummy | 2-4 | Melds, runs, knocking |
-| 34 | Stratego | 2 | Hidden ranks, setup phase |
-| 35 | Clue | 3-6 | Mansion, suggestions, accusation |
-| 36 | Guess Who | 2 | Yes/no questions, character board |
-| 37 | Boggle | 2-8 | Timed word finding on a shared grid |
-| 38 | Dots and Boxes | 2-4 | Grid sizes |
-| 39 | Mahjong | 4 | Riichi-style hands |
-| 40 | Snakes and Ladders | 2-6 | Animated board |
+| 27 | Ludo | 2-4 | Captures, safe squares |
+| 28 | Snakes and Ladders | 2-6 | Animated board |
+| 29 | Monopoly | 2-6 | Trading, auctions, houses, jail |
+| 30 | Backgammon | 2 | Doubling cube |
+| 31 | Mancala | 2 | Kalah rules |
+| 32 | Go | 2 | 9x9, 13x13, 19x19, scoring |
+| 33 | Gomoku | 2 | Five in a row |
+| 34 | Dots and Boxes | 2-4 | Grid sizes |
+| 35 | Chinese Checkers | 2-6 | Star board |
+| 36 | Dominoes | 2-4 | Draw and block |
+| 37 | Yahtzee | 2-6 | Score sheet, three rolls |
+| 38 | Scrabble | 2-4 | Dictionary check, premium squares |
+| 39 | Boggle | 2-8 | Timed shared grid |
+| 40 | Mastermind | 1-2 | Code breaking |
+| 41 | Stratego | 2 | Hidden ranks, setup phase |
+| 42 | Guess Who | 2 | Yes/no questions |
+| 43 | Clue | 3-6 | Suggestions, accusation |
+| 44 | Sorry! | 2-4 | Card-driven pawn race |
+| 45 | Nine Men's Morris | 2 | Mills, flying |
+| 46 | Blokus | 2-4 | Corner-touch placement |
+| 47 | Quoridor | 2-4 | Walls, shortest path |
+| 48 | Catan | 3-4 | Resources, trading, robber, longest road |
+| 49 | Risk | 2-6 | World map, armies, cards |
+| 50 | Mahjong (Riichi) | 4 | Hands, riichi, scoring |
 
-### Action, shooters and fighting (online)
-| # | Game | Players | Notes |
-|---|---|---|---|
-| 41 | CS:GO | 2-10, 3D | Dust 2 style map, buy menu, bomb plant/defuse, bots |
-| 42 | Krunker | 2-8, 3D | Fast low-poly FPS, classes, slide hopping |
-| 43 | Shell Shockers | 2-8, 3D | Egg FPS, weapon classes |
-| 44 | 1v1.LOL (build fights) | 2-4, 3D | Build walls/ramps, edit, box fights |
-| 45 | Surviv.io | 2-20 | Top-down battle royale, loot, shrinking zone |
-| 46 | Brawl Stars | 2-6 | 3v3 gem grab, brawlers, supers |
-| 47 | Smash Karts | 2-8, 3D | Kart arena with weapons |
-| 48 | Super Smash Bros. | 2-4 | Platform fighter, damage percent, stocks |
-| 49 | Stick Fight | 2-4 | Physics stickman brawls, weapon drops |
-| 50 | Worms | 2-4 | Turn-based artillery, destructible terrain |
-| 51 | Bonk.io | 2-8 | Physics ball arena |
-| 52 | Diep.io | 2-10 | Tank upgrades, classes |
-| 53 | Rocket Bot Royale | 2-10 | Tank battle royale on rising water |
-| 54 | Bedwars | 2-8, 3D | Minecraft-style bed defense, shop, bridges |
-| 55 | Tower of Hell | 2-8, 3D | Obby race to the top |
-| 56 | Starve.io | 2-10 | Survival, crafting, day/night |
-| 57 | Paintball (Splatoon style) | 2-8, 3D | Ink turf war |
-| 58 | Getaway Shootout | 2-4 | Chaotic race and shoot |
-
-### Sports and racing (online)
-| # | Game | Players | Notes |
-|---|---|---|---|
-| 59 | PolyTrack | 1-8, 3D | Low-poly time trial, track editor, ghosts, shareable codes |
-| 60 | Open-world car game (Madalin Stunt Cars) | 1-8, 3D | Free roam city, stunt park, garage, police chase |
-| 61 | Drift Hunters | 1-8, 3D | Drift scoring, tuning, tracks |
-| 62 | Golf With Your Friends | 2-8, 3D | Online mini golf courses, power-ups |
-| 63 | Basketball Stars | 2 | 1v1 street basketball |
-| 64 | Head Soccer | 2 | Big-head football, power shots |
-| 65 | Slime Volleyball | 2-4 | Classic slime volley |
-| 66 | Table Tennis | 2, 3D | Spin and smashes |
-| 67 | Mario Party | 2-4 | Board plus minigames |
-| 68 | Overcooked | 2-4 | Co-op kitchen orders |
-| 69 | Typeracer | 2-8 | Live typing race |
-| 70 | Bowling | 2-6, 3D | Ten-pin with spin |
-| 71 | Darts | 2-4 | 501 and Around the Clock |
-| 72 | Tennis Clash | 2, 3D | Arcade tennis |
-| 73 | Volleyball Beach | 2-4, 3D | 2v2 beach volley |
-| 74 | Hockey (Air to Ice) | 2-6, 3D | Arcade ice hockey |
-| 75 | Boxing | 2 | Punch timing and blocks |
-| 76 | Sumo.io | 2-8 | Push-off arena |
-
-### Popular solo games
+### Part C: puzzle and word (2D, solo)
 | # | Game | Notes |
 |---|---|---|
-| 77 | Stickman Hook | Swing physics levels |
-| 78 | Retro Bowl | Retro American football management and play |
-| 79 | Drift Boss | One-button drifting |
-| 80 | Tiny Fishing | Idle fishing upgrades |
-| 81 | Happy Wheels | Ragdoll obstacle courses |
-| 82 | Escape Road | Police chase survival |
-| 83 | BitLife | Life simulator choices |
-| 84 | Little Alchemy 2 | Combine elements |
-| 85 | Vex 5 | Platformer parkour |
-| 86 | Temple Run | 3D endless runner |
-| 87 | Papa's Pizzeria | Restaurant order management |
-| 88 | Bloons TD | Balloon tower defense |
-| 89 | Duck Life | Train and race a duck |
-| 90 | Color Switch | Colour gate timing |
-| 91 | Snow Rider 3D | Sled downhill dodge |
-| 92 | Eggy Car | Balance an egg while driving |
-| 93 | Basketball Legends | Arcade 1v1 hoops with powers (also online 2) |
-| 94 | Ragdoll Archers | Physics archery duel (also online 2) |
-| 95 | Getting Over It | Hammer climbing |
-| 96 | Only Up | 3D climbing |
-| 97 | The Impossible Quiz | Trick questions |
-| 98 | Tomb of the Mask | Maze dash |
-| 99 | Terraria | 2D sandbox mining and building (also online co-op) |
-| 100 | Idle Breakout | Idle brick breaker |
+| 51 | Word Search | Themes, timed |
+| 52 | Mini Crossword | Daily grid |
+| 53 | Nonogram (Picross) | Sizes 5 to 20 |
+| 54 | Flow Free | Connect colours |
+| 55 | Water Sort | Pour to sort colours |
+| 56 | Unblock Me (Rush Hour) | Slide blocks out |
+| 57 | Spelling Bee | Seven letters, pangram |
+| 58 | Connections | Four groups of four |
+
+### Part D: party and social (2D, online)
+| # | Game | Players | Notes |
+|---|---|---|---|
+| 59 | Gartic Phone | 3-10 | Write, draw, guess chain; album replay. Ref |
+| 60 | Skribbl.io | 2-10 | Draw and guess, hints, word choice |
+| 61 | Werewolf (Wolvesville) | 5-16 | Night/day, Seer, Doctor, Witch, Hunter, votes, chat. Ref |
+| 62 | Codenames | 4-10 | Teams, spymaster clues |
+| 63 | Spyfall | 3-8 | Location cards, find the spy |
+| 64 | Undercover | 3-12 | Secret words, find the impostors |
+| 65 | Word Bomb (BombParty) | 2-8 | Word with the letters before it explodes |
+| 66 | Kahoot-style quiz | 2-30 | Timed rounds, podium, question packs |
+| 67 | Quiplash | 3-8 | Funny answers, head-to-head votes |
+| 68 | Wavelength | 2-8 | Dial between two extremes |
+| 69 | Petit Bac (Scattergories) | 2-10 | Letter, categories, votes |
+| 70 | Bingo | 2-12 | Called numbers, several cards |
+| 71 | Typeracer | 2-8 | Live typing race |
+| 72 | Trivia Crack | 2 | Category wheel, crowns |
+
+### Part E: harder 2D
+| # | Game | Players | Notes |
+|---|---|---|---|
+| 73 | Terraria | 1-4 | Mining, building, crafting, bosses, co-op. Ref |
+| 74 | Among Us | 4-10 | Tasks, vents, sabotage, meetings |
+| 75 | Worms | 2-4 | Turn-based artillery, destructible terrain |
+| 76 | Stick Fight | 2-4 | Physics stickman brawls |
+| 77 | Smash Bros. style fighter | 2-4 | Damage percent, stocks |
+| 78 | Brawl Stars | 2-6 | 3v3 gem grab, brawlers, supers |
+| 79 | Surviv.io | 2-20 | Battle royale, loot, zone |
+| 80 | Diep.io | 2-10 | Tank classes, upgrades |
+| 81 | Bonk.io | 2-8 | Physics ball arena |
+| 82 | Starve.io | 2-10 | Survival, crafting, day/night |
+| 83 | Head Soccer | 2 | Big heads, power shots |
+| 84 | Slime Volleyball | 2-4 | Classic slime volley |
+| 85 | Basketball Legends | 2 | Arcade 1v1 with powers |
+| 86 | Ragdoll Archers | 2 | Physics archery duel |
+| 87 | Stickman Hook | solo | Swing physics levels |
+| 88 | Vex 5 | solo | Parkour platformer |
+| 89 | Happy Wheels | solo | Ragdoll obstacle courses |
+| 90 | Getting Over It | solo | Hammer climbing |
+| 91 | Tomb of the Mask | solo | Maze dash |
+| 92 | Bloons TD | solo | Balloon tower defense |
+| 93 | Papa's Pizzeria | solo | Orders, topping, baking |
+| 94 | Retro Bowl | solo | Football management and play |
+| 95 | Drift Boss | solo | One-button drifting |
+| 96 | Tiny Fishing | solo | Idle fishing upgrades |
+| 97 | Duck Life | solo | Train and race |
+| 98 | Color Switch | solo | Colour gates |
+| 99 | Eggy Car | solo | Keep the egg on |
+| 100 | Friday Night Funkin' | solo | Rhythm battles |
+| 101 | osu! | solo | Circles, sliders, spinners |
+| 102 | Clash Royale style | 2 | Cards, elixir, towers |
+| 103 | Balatro style | solo | Poker-hand roguelike, jokers |
+| 104 | Little Alchemy 2 | solo | Combine elements |
+| 105 | BitLife | solo | Life simulator choices |
+
+### Part F: harder 3D
+| # | Game | Players | Notes |
+|---|---|---|---|
+| 106 | Counter-Strike 2 | 2-10 | Dust II style map, buy menu, bomb, bots. Ref |
+| 107 | PolyTrack | 1-8 | Time trial, track editor, ghosts, codes. Ref |
+| 108 | Krunker | 2-8 | Fast FPS, classes, slide hops |
+| 109 | Shell Shockers | 2-8 | Egg FPS |
+| 110 | 1v1.LOL | 2-4 | Build fights |
+| 111 | Smash Karts | 2-8 | Kart arena with weapons |
+| 112 | Bedwars | 2-8 | Bed defense, shop, bridges |
+| 113 | Tower of Hell | 2-8 | Obby race to the top |
+| 114 | Murder Mystery 2 | 4-12 | Murderer, sheriff, innocents |
+| 115 | Temple Run | solo | 3D endless runner |
+| 116 | Snow Rider 3D | solo | Sled downhill |
+| 117 | Drift Hunters | 1-8 | Drift scoring, tuning |
+| 118 | Madalin Stunt Cars | 1-8 | Free roam, stunt park |
+| 119 | Golf With Your Friends | 2-8 | Online mini golf |
+| 120 | Bowling | 2-6 | Ten-pin with spin |
+| 121 | Table Tennis | 2 | Spin and smashes |
+| 122 | Only Up | 1-8 | 3D climbing |
 
 ## Idea pool for later waves
 

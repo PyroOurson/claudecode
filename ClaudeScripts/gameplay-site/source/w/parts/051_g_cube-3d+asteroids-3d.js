@@ -8,6 +8,13 @@
   const damp = (k, dt) => 1 - Math.exp(-k * dt);
   const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 
+  const COARSE = matchMedia('(pointer: coarse)').matches;
+  const glSize = (root, pw, ph) => root.clientWidth && root.clientWidth < 560 ? [pw, ph] : [960, 600];
+  function fitPR(api, v) {
+    if (!COARSE) return;
+    const fit = () => { const cw = v.canvas.clientWidth; if (cw && !document.fullscreenElement) v.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1) * cw / v.w); };
+    fit(); api.on(window, 'resize', fit);
+  }
   function stageFor(root, canvas, w, h, extra) {
     const st = el('div', 'stage');
     st.style.width = `min(100%, ${w}px, calc((100dvh - ${250 + extra}px) * ${(w / h).toFixed(4)}))`;
@@ -157,8 +164,9 @@
       return { destroy() { for (const o of bin) { try { o.dispose(); } catch (e) {} } bin.length = 0; } };
 
       async function boot() {
-        const v = await api.gl(960, 600, { alpha: true });
+        const v = await api.gl(...glSize(root, 640, 800), { alpha: true });
         if (!v) return;
+        fitPR(api, v);
         const { THREE, renderer, canvas, w, h, toLocal } = v;
         const col = hex => new THREE.Color(hex).convertSRGBToLinear();
         renderer.toneMappingExposure = 0.95;
@@ -224,7 +232,7 @@
 
         const saved = api.load() || {};
         let n = saved.n === 2 ? 2 : 3, cube = null, pieces = [], meshes = [];
-        let state = 'free', moves = 0, hist = [], queue = [], anim = null, t0 = 0, lastShown = '';
+        let state = 'free', moves = 0, hist = [], queue = [], anim = null, t0 = 0, lastTick = performance.now(), lastShown = '';
         let yaw = 0.62, pitch = 0.48, vyaw = 0, vpitch = 0, camDist = 10.4, camD = 10.4, spin = -1, drag = null;
         const Z = new THREE.Vector3(0, 0, 1), tv = new THREE.Vector3(), lp = new THREE.Vector3(), pa = new THREE.Vector3(), pb = new THREE.Vector3();
         const AX = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)];
@@ -255,7 +263,7 @@
           });
           floor.position.y = -(n * 0.5 + 0.8);
           stand.position.y = floor.position.y - 0.012;
-          camDist = n === 3 ? 10.4 : 7.8;
+          camDist = (n === 3 ? 10.4 : 7.8) * (w < h ? 1.5 : 1);
         }
         function setMoves(v) { moves = v; mvEl.textContent = v; api.score(v); }
         function setTag() {
@@ -462,6 +470,9 @@
             if (k >= 1) { spin = -1; cubeRoot.rotation.y = 0; cubeRoot.position.y = 0; }
           }
           stepConfetti(dt);
+          const nw = performance.now();
+          if (nw - lastTick > 250) t0 += nw - lastTick;
+          lastTick = nw;
           if (state === 'solving') { const s = fmtT((performance.now() - t0) / 1000); if (s !== lastShown) tmEl.textContent = lastShown = s; }
           renderer.render(scene, camera);
         });
@@ -549,8 +560,9 @@
       return { destroy() { for (const o of bin) { try { o.dispose(); } catch (e) {} } bin.length = 0; } };
 
       async function boot() {
-        const v = await api.gl(960, 600, { alpha: true });
+        const v = await api.gl(...glSize(root, 640, 800), { alpha: true });
         if (!v) return;
+        fitPR(api, v);
         const { THREE, renderer, canvas, w, h, toLocal } = v;
         const col = hex => new THREE.Color(hex).convertSRGBToLinear();
         renderer.setClearColor(0x000000, 0);
@@ -565,7 +577,7 @@
 
         const scene = new THREE.Scene();
         scene.fog = new THREE.FogExp2(0x2c1a55, 0.0068);
-        const camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 800);
+        const F0 = w < h ? 74 : 60, camera = new THREE.PerspectiveCamera(F0, w / h, 0.1, 800);
         scene.add(new THREE.HemisphereLight(col('#b9a8ff'), col('#2a1a40'), 0.95));
         const sun = new THREE.DirectionalLight(col('#fff0dc'), 2.3);
         sun.position.set(-6, 9, 4); scene.add(sun);
@@ -1189,7 +1201,7 @@
             ret.scale.setScalar(ret.scale.x + ((lock ? 1.9 : 2.4) - ret.scale.x) * damp(14, rdt));
           }
 
-          camera.fov += ((boosting ? 72 : 60) - camera.fov) * damp(4, rdt);
+          camera.fov += ((boosting ? F0 + 12 : F0) - camera.fov) * damp(4, rdt);
           camera.updateProjectionMatrix();
           shake = Math.max(0, shake - rdt * 2.2);
           const sk = shake * shake * 0.7;

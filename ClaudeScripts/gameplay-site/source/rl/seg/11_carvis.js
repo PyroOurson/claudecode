@@ -27,7 +27,7 @@
             const tp = Math.hypot(c.p.x - S.px, c.p.y - S.py, c.p.z - S.pz) > Math.hypot(vx, vy, vz) * d * 1.5 + 120;
             if (S.reset || tp || d <= 0) {
               S.vx = vx; S.vy = vy; S.vz = vz; S.gr = c.onGround; S.vu = vx * ux + vy * uy + vz * uz;
-              if (S.reset || tp) { S.z = S.zv = S.pi = S.pv = S.ro = S.rv = S.ap = S.apv = S.ar = S.arv = 0; for (const tr of cv.trails) tr.n = 0; }
+              if (S.reset || tp) { S.z = S.zv = S.pi = S.pv = S.ro = S.rv = S.ap = S.apv = S.ar = S.arv = 0; S.sw.fill(0); for (const tr of cv.trails) tr.n = 0; }
               S.reset = false;
             }
             const id = d > 0 ? 1 / d : 0, ax = (vx - S.vx) * id, ay = (vy - S.vy) * id, az = (vz - S.vz) * id;
@@ -55,7 +55,13 @@
             const as = Math.abs(c.fs || 0), sm = crSteerMax(as, CFG.steer), sl = c.slide || 0;
             S.sa += (-(c.ctl ? c.ctl.steer || 0 : 0) * (sm + (CFG.slideSteer ? crSteerMax(as, CFG.slideSteer) - sm : 0) * sl) - S.sa) * Math.min(1, d * 14);
             S.wd += ((gnd ? 0 : 3.2) - S.wd) * Math.min(1, d * (gnd ? 25 : 6));
-            for (const wh of cv.wheels) { wh.spin.rotation.y = wh.front ? S.af : S.ab; if (wh.front) wh.piv.rotation.z = S.sa; wh.piv.position.z = wh.z - S.wd; }
+            const sus = c.cfg && c.wz && c.wz.length === 4;
+            for (let i = 0; i < cv.wheels.length; i++) {
+              const wh = cv.wheels[i];
+              wh.spin.rotation.y = wh.front ? S.af : S.ab; if (wh.front) wh.piv.rotation.z = S.sa;
+              if (sus && i < 4) { const wd = c.cfg.wh[i], tg = Math.max(-6, Math.min(6, (wd.rest - wd.z + c.wz[i]) * 0.5)); S.sw[i] += (tg - S.sw[i]) * Math.min(1, d * (tg > S.sw[i] ? 34 : 13)); wh.piv.position.z = wh.z + S.sw[i]; }
+              else wh.piv.position.z = wh.z - S.wd;
+            }
             S.bt += ((c.boosting ? 1 : 0) - S.bt) * Math.min(1, d * (c.boosting ? 18 : 10));
             for (const f of cv.fl) {
               f.g.visible = true; f.o.visible = f.c.visible = S.bt > 0.04;

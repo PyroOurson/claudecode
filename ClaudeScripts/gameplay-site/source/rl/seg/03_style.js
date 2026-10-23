@@ -45,6 +45,8 @@ $ .sb .clk.ot{color:#ffd65a}
 $ .touch .sb{pointer-events:auto;cursor:pointer}
 $ .bd{position:absolute;right:calc(var(--u)*1.6);bottom:calc(var(--u)*1.4);width:calc(var(--u)*13.6);height:calc(var(--u)*13.6);--bdF0:rgba(214,92,18,.92);--bdF1:rgba(110,38,6,.84);--bdF2:rgba(22,8,2,.88);--bdD:rgba(255,190,120,.4);--bdN:#ffb15a;--bdG:rgba(255,120,10,.9)}
 $ .bd.b{--bdF0:rgba(18,42,150,.88);--bdF1:rgba(6,16,66,.88);--bdF2:rgba(2,4,14,.92);--bdD:rgba(140,190,255,.42);--bdN:#5d8dff;--bdG:rgba(50,130,255,.95)}
+$ .bd.pk{animation:gmrs-pk .38s ease-out}
+@keyframes gmrs-pk{0%{transform:scale(1)}28%{transform:scale(1.09);filter:brightness(1.35)}100%{transform:scale(1)}}
 $ .bd .dec{stroke:var(--bdD)}
 $ .bd svg{display:block;width:100%;height:100%;overflow:visible}
 $ .bd .tk path{opacity:.04;transition:opacity .08s}

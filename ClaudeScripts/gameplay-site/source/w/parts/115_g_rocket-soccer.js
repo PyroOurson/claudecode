@@ -1888,6 +1888,8 @@ $ .sb .clk.ot{color:#ffd65a}
 $ .touch .sb{pointer-events:auto;cursor:pointer}
 $ .bd{position:absolute;right:calc(var(--u)*1.6);bottom:calc(var(--u)*1.4);width:calc(var(--u)*13.6);height:calc(var(--u)*13.6);--bdF0:rgba(214,92,18,.92);--bdF1:rgba(110,38,6,.84);--bdF2:rgba(22,8,2,.88);--bdD:rgba(255,190,120,.4);--bdN:#ffb15a;--bdG:rgba(255,120,10,.9)}
 $ .bd.b{--bdF0:rgba(18,42,150,.88);--bdF1:rgba(6,16,66,.88);--bdF2:rgba(2,4,14,.92);--bdD:rgba(140,190,255,.42);--bdN:#5d8dff;--bdG:rgba(50,130,255,.95)}
+$ .bd.pk{animation:gmrs-pk .38s ease-out}
+@keyframes gmrs-pk{0%{transform:scale(1)}28%{transform:scale(1.09);filter:brightness(1.35)}100%{transform:scale(1)}}
 $ .bd .dec{stroke:var(--bdD)}
 $ .bd svg{display:block;width:100%;height:100%;overflow:visible}
 $ .bd .tk path{opacity:.04;transition:opacity .08s}
@@ -4340,7 +4342,7 @@ diffuseColor.rgb = dc;
           const sh = new THREE.Mesh(crSh.g, crSh.m); sh.visible = false; sh.renderOrder = 1; g.add(sh);
           const tag = new THREE.Sprite(crTagMat('', team)); tag.center.set(0.5, 0); tag.renderOrder = 9; tag.frustumCulled = false; tag.visible = false; scene.add(tag);
           tag.onBeforeRender = (r, s, cam) => { const d = cam.position.distanceTo(tag.position), hh = d < 160 ? 0.001 : Math.min(300, Math.max(24, d * 0.05)), ns = crNps(); tag.scale.set(hh * 4 * ns, hh * ns, 1); tag.updateMatrix(); tag.matrixWorld.copy(tag.matrix); };
-          carVis.push({ team, slot, g, bg, tag, sh, body: null, wheels: [], fl: [], tr: [0, 0, 0], tz: 60, tz0: 60, rf: 12.5, rb: 15, trails: [crTrail(), crTrail()], car: null, bs: crCat.boost[0], ts: crCat.trail[0], s: { reset: true, vx: 0, vy: 0, vz: 0, px: 0, py: 0, pz: 0, vu: 0, gr: true, z: 0, zv: 0, pi: 0, pv: 0, ro: 0, rv: 0, ws: 0, af: 0, ab: 0, sa: 0, wd: 0, bt: 0, ea: 0, es: 0, pt: 0 } });
+          carVis.push({ team, slot, g, bg, tag, sh, body: null, wheels: [], fl: [], tr: [0, 0, 0], tz: 60, tz0: 60, rf: 12.5, rb: 15, trails: [crTrail(), crTrail()], car: null, bs: crCat.boost[0], ts: crCat.trail[0], s: { reset: true, vx: 0, vy: 0, vz: 0, px: 0, py: 0, pz: 0, vu: 0, gr: true, z: 0, zv: 0, pi: 0, pv: 0, ro: 0, rv: 0, ws: 0, af: 0, ab: 0, sa: 0, wd: 0, sw: [0, 0, 0, 0], bt: 0, ea: 0, es: 0, pt: 0 } });
         }
         const visOf = c => carVis[c.team * 3 + c.slot];
         const bindCars = () => {
@@ -4541,8 +4543,8 @@ diffuseColor.rgb = dc;
             fxM4.compose(fxVb.set(p[i3], p[i3 + 1], p[i3 + 2]), fxDb.q[i], fxVa.set(sc, sc * 0.7, sc * 0.45)); fxDeb.setMatrixAt(i, fxM4);
             if (fxDb.hot[i] > 0) {
               fxDb.hot[i] -= dt;
-              if (Math.random() < 0.16) smoke.emit(p[i3], p[i3 + 1], p[i3 + 2], R() * 20, R() * 20, 30, 0.7 + Math.random() * 0.4, 0.13, 0.12, 0.12, 30, 120, -40, 1.5);
-              if (Math.random() < 0.3) fire.emit(p[i3], p[i3 + 1], p[i3 + 2], R() * 40, R() * 40, R() * 40, 0.22, 1, 0.5, 0.15, 34, 6, 0, 2);
+              if (Math.random() < 0.16 * dt * 60) smoke.emit(p[i3], p[i3 + 1], p[i3 + 2], R() * 20, R() * 20, 30, 0.7 + Math.random() * 0.4, 0.13, 0.12, 0.12, 30, 120, -40, 1.5);
+              if (Math.random() < 0.3 * dt * 60) fire.emit(p[i3], p[i3 + 1], p[i3 + 2], R() * 40, R() * 40, R() * 40, 0.22, 1, 0.5, 0.15, 34, 6, 0, 2);
             }
           }
           fxDeb.instanceMatrix.needsUpdate = true;
@@ -4591,7 +4593,7 @@ diffuseColor.rgb = dc;
         let shake = 0;
         const R = () => Math.random() * 2 - 1;
         const fxDir = (bx, by, bz, up) => { let x = R(), y = R(), z = R(); const l = Math.hypot(x, y, z) || 1; x = x / l + bx; y = y / l + by; z = (up ? Math.abs(z / l) : z / l) + bz; const m = Math.hypot(x, y, z) || 1; fxVa.set(x / m, y / m, z / m); return fxVa; };
-        const fxClear = () => { fire.clear(); smoke.clear(); fxSpark.clear(); for (const s of fxShk) { s.t = -1; s.o.visible = false; } for (const f of fxFl) { f.t = -1; f.s.visible = false; } fxDb.l.fill(0); fxDb.live = true; fxLt.t = -1; fxLight.intensity = 0; fxQk.length = 0; };
+        const fxClear = () => { fire.clear(); smoke.clear(); fxSpark.clear(); fxSk.clear(); for (const s of fxShk) { s.t = -1; s.o.visible = false; } for (const f of fxFl) { f.t = -1; f.s.visible = false; } fxDb.l.fill(0); fxDb.live = true; fxLt.t = -1; fxLight.intensity = 0; fxQk.length = 0; };
         const burst = (p, color, big) => {
           fxTc.set(color);
           const n = big ? 220 : 80;
@@ -4612,9 +4614,9 @@ diffuseColor.rgb = dc;
           fxLightAt(x, y + sy * 450, Math.max(z, 250), 0xff7a20, 1.4, 0.9);
           fxShock(x, y, z, 0xff9a40, 90, 900, 0.32, 0.28, false);
           for (let i = 0; i < 42; i++) { const d = fxDir(0, sy * 0.2, 0.15, false), sp = 1900 + Math.random() * 1900, wt = Math.random() < 0.25; fxSpark.emit(x + d.x * 60, y + d.y * 60, z + d.z * 60, d.x * sp, d.y * sp, d.z * sp, 0.24 + Math.random() * 0.22, 0.9, wt ? 0.55 : 0.32, wt ? 0.2 : 0.05, 28 + Math.random() * 36, 0.2, 0, 4.5); }
-          for (let i = 0; i < 10; i++) {
-            const a = (i / 10 + Math.random() * 0.06) * TAU, h = 0.35 + Math.random() * 0.9, vx = Math.cos(a) * 900 * h, vy = (Math.sin(a) * 0.55 + sy * 0.7) * 900 * h, vz = 1700 + Math.random() * 500, G = 1300;
-            fxSpark.emit(x, y, z, vx, vy, vz, 1 + Math.random() * 0.4, 1, 0.55, 0.16, 18 + Math.random() * 10, 0.16, G, 0);
+          for (let i = 0; i < 16; i++) {
+            const a = (i / 16 + Math.random() * 0.06) * TAU, h = 0.35 + Math.random() * 0.9, vx = Math.cos(a) * 900 * h, vy = (Math.sin(a) * 0.55 + sy * 0.7) * 900 * h, vz = 1700 + Math.random() * 500, G = 1300;
+            fxSpark.emit(x, y, z, vx, vy, vz, 1.1 + Math.random() * 0.5, 1, 0.58, 0.18, 9 + Math.random() * 6, 0.36, G, 0);
             for (let k = 1; k <= 6; k++) { const t = k * 0.11; fxLater(t * 1000, () => smoke.emit(x + vx * t, y + vy * t, z + vz * t - G * t * t / 2, vx * 0.05, vy * 0.05, 40, 1 + Math.random() * 0.7, 0.55, 0.32, 0.19, 40 + k * 8, 150 + k * 20, -30, 1.2)); }
           }
           for (let i = 0; i < 64; i++) { const d = fxDir(0, sy * 0.3, 0.25, false), sp = 300 + Math.random() * 2000, k = Math.random(), q = i < 10 ? 0.1 : 0.15; fire.emit(x, y, z, d.x * sp, d.y * sp, d.z * sp, 0.18 + Math.random() * 0.32, q, (0.28 + k * 0.4) * q, 0.04 * q, i < 10 ? 130 + Math.random() * 60 : 70 + Math.random() * 50, 30, 200, 2.6); }
@@ -4727,6 +4729,47 @@ diffuseColor.rgb = dc;
           }
         };
 
+
+        const fxSkN = 900, fxSkLife = 7;
+        const fxSk = (() => {
+          const geo = own(new THREE.BufferGeometry());
+          const P = new Float32Array(fxSkN * 12), A = new Float32Array(fxSkN * 4), E = new Float32Array(fxSkN * 4), I = new Uint16Array(fxSkN * 6), A0 = new Float32Array(fxSkN * 4), T = new Float32Array(fxSkN).fill(-1e9);
+          for (let i = 0; i < fxSkN; i++) { E.set([-1, 1, -1, 1], i * 4); const b = i * 4, o = i * 6; I[o] = b; I[o + 1] = b + 1; I[o + 2] = b + 2; I[o + 3] = b + 1; I[o + 4] = b + 3; I[o + 5] = b + 2; }
+          geo.setAttribute('position', new THREE.BufferAttribute(P, 3).setUsage(THREE.DynamicDrawUsage)); geo.setAttribute('alpha', new THREE.BufferAttribute(A, 1).setUsage(THREE.DynamicDrawUsage)); geo.setAttribute('edge', new THREE.BufferAttribute(E, 1)); geo.setIndex(new THREE.BufferAttribute(I, 1));
+          const mat = own(new THREE.ShaderMaterial({ vertexShader: 'attribute float alpha; attribute float edge; varying float vA; varying float vE;\nvoid main() { vA = alpha; vE = edge; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }', fragmentShader: 'varying float vA; varying float vE;\nvoid main() { float a = vA * smoothstep(1.0, 0.45, abs(vE)); if (a < 0.004) discard; gl_FragColor = vec4(0.012, 0.011, 0.01, a); }', transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -8 }));
+          const obj = new THREE.Mesh(geo, mat); obj.frustumCulled = false; obj.renderOrder = 2; obj.visible = false; scene.add(obj);
+          let head = 0, live = false, now = 0;
+          const L = new Float32Array(64 * 5);
+          return {
+            clear() { T.fill(-1e9); A.fill(0); live = true; for (let i = 0; i < L.length; i += 5) L[i] = 0; },
+            add(k, x, y, z, a) {
+              const o = k * 5;
+              if (L[o] && Math.hypot(x - L[o + 1], y - L[o + 2]) < 120) {
+                const dx = x - L[o + 1], dy = y - L[o + 2], d = Math.hypot(dx, dy);
+                if (d < 14) return;
+                const px = -dy / d * 4.2, py = dx / d * 4.2, i = head, j = i * 12, a0 = L[o + 4]; head = (head + 1) % fxSkN;
+                const qx = L[o + 1], qy = L[o + 2], qz = L[o + 3];
+                P[j] = qx + px; P[j + 1] = qy + py; P[j + 2] = qz; P[j + 3] = qx - px; P[j + 4] = qy - py; P[j + 5] = qz;
+                P[j + 6] = x + px; P[j + 7] = y + py; P[j + 8] = z; P[j + 9] = x - px; P[j + 10] = y - py; P[j + 11] = z;
+                A0[i * 4] = A0[i * 4 + 1] = a0; A0[i * 4 + 2] = A0[i * 4 + 3] = a; T[i] = now; live = true; obj.visible = true;
+              }
+              L[o] = 1; L[o + 1] = x; L[o + 2] = y; L[o + 3] = z; L[o + 4] = a;
+            },
+            end(k) { L[k * 5] = 0; },
+            update(dt) {
+              now += dt;
+              if (!live) return;
+              let any = false;
+              for (let i = 0; i < fxSkN; i++) {
+                const age = now - T[i];
+                if (age > fxSkLife) { if (A[i * 4] || A[i * 4 + 2]) A[i * 4] = A[i * 4 + 1] = A[i * 4 + 2] = A[i * 4 + 3] = 0; continue; }
+                const f = Math.min(1, (fxSkLife - age) / 2.6); any = true;
+                A[i * 4] = A0[i * 4] * f; A[i * 4 + 1] = A0[i * 4 + 1] * f; A[i * 4 + 2] = A0[i * 4 + 2] * f; A[i * 4 + 3] = A0[i * 4 + 3] * f;
+              }
+              geo.attributes.alpha.needsUpdate = true; geo.attributes.position.needsUpdate = true; live = any; obj.visible = any;
+            }
+          };
+        })();
         const hud = el('div', 'hud', wrap);
         if (!document.querySelector('link[data-gmrs-f]')) { try { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Saira+Semi+Condensed:wght@300;400;500;600;800&display=swap'; l.setAttribute('data-gmrs-f', '1'); document.head.append(l); } catch (e) {   } }
         const uiCSR = { fov: [60, 110, 1], dist: [100, 400, 5], height: [40, 200, 5], angle: [-15, 0, 1], stiff: [0, 1, 0.05], swivel: [1, 10, 0.1], trans: [1, 2, 0.1] };
@@ -6514,8 +6557,8 @@ diffuseColor.rgb = dc;
           }
           return { step, reset, S: () => S };
         };
-        let AC = null, master = null, fxRv = null, noiseB = null, bstG = null, bstF = null, fxBst2 = null, fxBst3 = null, windG = null, crowdG = null, crowdF = null, fxCr2 = null;
-        const fxEngV = [], FX_CROWD = 0.032;
+        let AC = null, master = null, fxRv = null, noiseB = null, bstG = null, bstF = null, fxBst2 = null, fxBst3 = null, windG = null, crowdG = null, crowdF = null, fxCr2 = null, fxTyG = null, fxSqG = null, fxSqF = null;
+        const fxEngV = [], fxEngO = [], FX_CROWD = 0.032;
         function audio() {
           if (AC || dead) return;
           try {
@@ -6538,9 +6581,16 @@ diffuseColor.rgb = dc;
               o1.start(); o2.start(); o3.start();
               fxEngV.push({ o1, o2, o3, f, g, g3, boost: false, sup: false });
             }
+            for (let i = 0; i < 4; i++) {
+              const o1 = AC.createOscillator(), o2 = AC.createOscillator(), f = AC.createBiquadFilter(), g = AC.createGain(), pn = AC.createStereoPanner ? AC.createStereoPanner() : null;
+              o1.type = 'sawtooth'; o2.type = 'square'; f.type = 'lowpass'; f.Q.value = 2; f.frequency.value = 260; g.gain.value = 0;
+              o1.connect(f); const g2 = AC.createGain(); g2.gain.value = 0.3; o2.connect(g2).connect(f); f.connect(g); if (pn) g.connect(pn).connect(master); else g.connect(master);
+              o1.start(); o2.start();
+              fxEngO.push({ o1, o2, f, g, pn });
+            }
             [bstG, bstF] = loop('bandpass', 700, 0.75, 0); [fxBst2] = loop('lowpass', 260, 0.9, 0); [fxBst3] = loop('highpass', 4200, 0.5, 0); [windG] = loop('highpass', 2300, 0.6, 0);
-            [crowdG, crowdF] = loop('bandpass', 500, 0.5, FX_CROWD); [fxCr2] = loop('bandpass', 1300, 0.8, 0);
-          } catch (e) { try { if (AC) AC.close(); } catch (er) { } AC = null; fxEngV.length = 0; }
+            [crowdG, crowdF] = loop('bandpass', 500, 0.5, FX_CROWD); [fxCr2] = loop('bandpass', 1300, 0.8, 0); [fxTyG] = loop('lowpass', 420, 0.8, 0); [fxSqG, fxSqF] = loop('bandpass', 1900, 9, 0);
+          } catch (e) { try { if (AC) AC.close(); } catch (er) { } AC = null; fxEngV.length = 0; fxEngO.length = 0; }
         }
         const fxRoute = (g, rv, pan) => {
           if (pan && AC.createStereoPanner) { const p = AC.createStereoPanner(); p.pan.value = clamp(pan, -1, 1); g.connect(p).connect(master); } else g.connect(master);
@@ -6728,7 +6778,7 @@ diffuseColor.rgb = dc;
             case 'tball': { const B = W.ball.p; fxFlash(B.x, B.y, B.z, 0xdff0ff, 120, 520, 0.35, 0.8); for (let i = 0; i < 30; i++) { const d = fxDir(0, 0, 0, false); fire.emit(B.x + d.x * 100, B.y + d.y * 100, B.z + d.z * 100, -d.x * 220, -d.y * 220, -d.z * 220, 0.45, 0.7, 0.9, 1, 40, 6, 0, 1); } break; }
             case 'treset': { const c = e.car; if (c) fxFlash(c.p.x, c.p.y, c.p.z + 30, TEAMC[c.team], 120, 520, 0.45, 0.8); break; }
             case 'save': if (!rp && e.car) { feedMsg(`${nm(e.car)} saved it`); popMsg(e.car, 'SAVE +50'); } fxOoh(); break;
-            case 'shot': if (!rp) popMsg(e.car, 'SHOT ON GOAL +20'); break;
+            case 'shot': if (!rp) popMsg(e.car, 'SHOT ON GOAL +20'); crowdSwell(0.09, 1.5, 0.35); break;
             case 'epicsave': fxOoh(); crowdSwell(0.24, 2.6, 0.6); break;
             case 'flipreset': if (isLocal(e.car)) { const c = e.car, x = c.p.x - c.u.x * 22, y = c.p.y - c.u.y * 22, z = c.p.z - c.u.z * 22; tone(1318.5, 0.12, 'sine', 0.04, 1975.5); tone(1975.5, 0.16, 'triangle', 0.025, 0, 0.06); fxFlash(x, y, z, 0xe8ff60, 40, 260, 0.2, 0.7); for (let i = 0; i < 46; i++) { const d = fxDir(-c.u.x * 0.6, -c.u.y * 0.6, -c.u.z * 0.6, false), sp = 500 + Math.random() * 900; fxSpark.emit(x, y, z, d.x * sp + c.v.x, d.y * sp + c.v.y, d.z * sp + c.v.z, 0.18 + Math.random() * 0.22, 0.8, 1, 0.15, 2 + Math.random() * 2.5, 0.06, 0, 4); } } break;
             case 'demo': {
@@ -6761,7 +6811,17 @@ diffuseColor.rgb = dc;
               if (isLocal(c)) { const hi = e.type === 'djump' ? 1.3 : 1; noise(0.13, 900 * hi, 0.1, 'bandpass', 1.2, 380 * hi); tone(175 * hi, 0.12, 'sine', 0.08, 88 * hi); }
               break;
             }
-            case 'dodge': if (isLocal(e.car)) { noise(0.32, 1900, 0.12, 'bandpass', 0.9, 420); tone(260, 0.18, 'sine', 0.03, 120); } break;
+            case 'dodge': {
+              const c = e.car; if (!c) break;
+              const a = isLocal(c) ? 1 : att(c.p) * 0.45, pn = fxPan(c.p), hl = Math.hypot(c.f.x, c.f.y) || 1, dx = c.fdx || 0, dy = c.fdy || 0, mv = dx || dy, wx = mv ? (c.f.x * dx + c.f.y * dy) / hl : 0, wy = mv ? (c.f.y * dx - c.f.x * dy) / hl : 0;
+              noise(0.32, 1900, 0.12 * a, 'bandpass', 0.9, 420, 0, 0.2, pn); tone(260, 0.18, 'sine', 0.03 * a, 120, 0, 0.2, pn);
+              fxFlash(c.p.x, c.p.y, c.p.z, 0xdff0ff, 60, 320, 0.16, 0.45); fxShock(c.p.x, c.p.y, c.p.z, 0xcfe6ff, 40, 280, 0.22, 0.22, false);
+              for (let i = 0; i < 14; i++) {
+                const r = Math.random() * TAU, sp = 500 + Math.random() * 500, vx = mv ? -wx * sp + Math.cos(r) * 160 : Math.cos(r) * sp, vy = mv ? -wy * sp + Math.sin(r) * 160 : Math.sin(r) * sp;
+                fxSpark.emit(c.p.x + R() * 30, c.p.y + R() * 30, c.p.z + R() * 14, vx, vy, R() * 120, 0.14 + Math.random() * 0.14, 0.8, 0.9, 1, 3, 0.08, 0, 3);
+              }
+              break;
+            }
             case 'land': {
               const c = e.car; if (!c) break;
               fxDust(c.p.x - c.u.x * 16, c.p.y - c.u.y * 16, c.p.z - c.u.z * 16, 8, 1, c.u.x, c.u.y, c.u.z);
@@ -6837,7 +6897,7 @@ diffuseColor.rgb = dc;
             const tp = Math.hypot(c.p.x - S.px, c.p.y - S.py, c.p.z - S.pz) > Math.hypot(vx, vy, vz) * d * 1.5 + 120;
             if (S.reset || tp || d <= 0) {
               S.vx = vx; S.vy = vy; S.vz = vz; S.gr = c.onGround; S.vu = vx * ux + vy * uy + vz * uz;
-              if (S.reset || tp) { S.z = S.zv = S.pi = S.pv = S.ro = S.rv = S.ap = S.apv = S.ar = S.arv = 0; for (const tr of cv.trails) tr.n = 0; }
+              if (S.reset || tp) { S.z = S.zv = S.pi = S.pv = S.ro = S.rv = S.ap = S.apv = S.ar = S.arv = 0; S.sw.fill(0); for (const tr of cv.trails) tr.n = 0; }
               S.reset = false;
             }
             const id = d > 0 ? 1 / d : 0, ax = (vx - S.vx) * id, ay = (vy - S.vy) * id, az = (vz - S.vz) * id;
@@ -6865,7 +6925,13 @@ diffuseColor.rgb = dc;
             const as = Math.abs(c.fs || 0), sm = crSteerMax(as, CFG.steer), sl = c.slide || 0;
             S.sa += (-(c.ctl ? c.ctl.steer || 0 : 0) * (sm + (CFG.slideSteer ? crSteerMax(as, CFG.slideSteer) - sm : 0) * sl) - S.sa) * Math.min(1, d * 14);
             S.wd += ((gnd ? 0 : 3.2) - S.wd) * Math.min(1, d * (gnd ? 25 : 6));
-            for (const wh of cv.wheels) { wh.spin.rotation.y = wh.front ? S.af : S.ab; if (wh.front) wh.piv.rotation.z = S.sa; wh.piv.position.z = wh.z - S.wd; }
+            const sus = c.cfg && c.wz && c.wz.length === 4;
+            for (let i = 0; i < cv.wheels.length; i++) {
+              const wh = cv.wheels[i];
+              wh.spin.rotation.y = wh.front ? S.af : S.ab; if (wh.front) wh.piv.rotation.z = S.sa;
+              if (sus && i < 4) { const wd = c.cfg.wh[i], tg = Math.max(-6, Math.min(6, (wd.rest - wd.z + c.wz[i]) * 0.5)); S.sw[i] += (tg - S.sw[i]) * Math.min(1, d * (tg > S.sw[i] ? 34 : 13)); wh.piv.position.z = wh.z + S.sw[i]; }
+              else wh.piv.position.z = wh.z - S.wd;
+            }
             S.bt += ((c.boosting ? 1 : 0) - S.bt) * Math.min(1, d * (c.boosting ? 18 : 10));
             for (const f of cv.fl) {
               f.g.visible = true; f.o.visible = f.c.visible = S.bt > 0.04;
@@ -6944,17 +7010,23 @@ diffuseColor.rgb = dc;
         };
 
         const fxVisuals = (dt, t) => {
-          fxDebUpdate(dt); fire.update(dt); smoke.update(dt); fxSpark.update(dt); fxShkUpdate(dt); fxFlUpdate(dt);
+          fxDebUpdate(dt); fxSk.update(dt); fire.update(dt); smoke.update(dt); fxSpark.update(dt); fxShkUpdate(dt); fxFlUpdate(dt);
           if (fxLt.t >= 0) { fxLt.t += dt; const k = fxLt.t / fxLt.d; if (k >= 1) { fxLt.t = -1; fxLight.intensity = 0; } else fxLight.intensity = fxLt.i * (1 - k) * (1 - k); }
           for (let i = fxQk.length - 1; i >= 0; i--) { fxQk[i].t += dt; if (fxQk[i].t >= fxQk[i].d) fxQk.splice(i, 1); }
           fxBoostFx(dt); fxWheelFx(dt);
         };
         const fxWheelFx = dt => {
           if (ui !== 'play' || W.state === 'menu' || dt <= 0 || fxQ.lv >= 3) return;
-          for (const c of W.cars) {
-            if (c.demoT > 0 || !c.onGround || !c.cfg) continue;
+          for (let ci = 0; ci < W.cars.length; ci++) {
+            const c = W.cars[ci];
+            if (c.demoT > 0 || !c.onGround || !c.cfg || (fxRp.on && fxRp.show)) { fxSk.end(ci * 2); fxSk.end(ci * 2 + 1); continue; }
             const sp = vlen(c.v), slip = Math.abs(c.v.x * c.l.x + c.v.y * c.l.y + c.v.z * c.l.z), sl = c.slide || 0;
             const k = Math.max(sl > 0.2 ? clamp((slip - 150) / 600, 0, 1) * sl : 0, clamp((slip - 500) / 700, 0, 1), sp > 1250 ? 0.12 * clamp((sp - 1250) / 900, 0, 1) : 0);
+            const mk = c.nw >= 3 && c.n.z > 0.97 && c.p.z < 40 ? Math.max(sl > 0.3 && sp > 350 ? 0.55 + 0.4 * sl : 0, clamp((slip - 800) / 800, 0, 1) * 0.7) : 0;
+            for (let i = 2; i < 4; i++) {
+              const kq = ci * 2 + i - 2;
+              if (mk > 0) { const q = c.cfg.wh[i]; fxSk.add(kq, c.p.x + c.f.x * q.x + c.l.x * q.y, c.p.y + c.f.y * q.x + c.l.y * q.y, 1.4, mk * 0.6); } else fxSk.end(kq);
+            }
             if (k <= 0) continue;
             for (let i = 2; i < 4; i++) {
               if (Math.random() > k * 34 * dt) continue;
@@ -6988,6 +7060,7 @@ diffuseColor.rgb = dc;
             const x = o[k];
             if (typeof x === 'number') s.push([k, '', 0]);
             else if (typeof x === 'boolean') s.push([k, '', 1]);
+            else if (k === 'wz' && Array.isArray(x)) for (let j = 0; j < x.length; j++) s.push([k, String(j), 0]);
             else if (x && typeof x === 'object' && !Array.isArray(x) && !ArrayBuffer.isView(x)) {
               if (typeof x.x === 'number' && typeof x.y === 'number' && typeof x.z === 'number') s.push([k, '', 2]);
               else if (k === 'ctl') for (const j in x) { if (typeof x[j] === 'number') s.push([k, j, 0]); else if (typeof x[j] === 'boolean') s.push([k, j, 1]); }
@@ -7118,7 +7191,7 @@ diffuseColor.rgb = dc;
             x.n.innerHTML = (g.assist ? `<i class="p${g.assist.team}">${esc(g.assist.name)}</i>, ` : '') + esc(who);
             x.d.classList.toggle('t1', g.team === 1); x.d.style.setProperty('--tc', tc[0]); x.d.style.setProperty('--td', tc[1]);
           }
-          fxWipe(); noise(0.5, 300, 0.07, 'bandpass', 0.8, 2600, 0, 0.2);
+          fxWipe(); noise(0.5, 300, 0.07, 'bandpass', 0.8, 2600, 0, 0.2); tone(150, 0.5, 'sine', 0.06, 640, 0, 0.2);
         };
         const fxRpWant = () => !!fxRp.goal && fxRp.done !== fxRp.goalT && W.state === 'goal' && W.stateT >= CFG.rules.goalT - 1e-6;
         const fxRpCheck = () => {
@@ -7134,7 +7207,7 @@ diffuseColor.rgb = dc;
           if (Rp.ph === 1) {
             const a = Rp.t; Rp.t = Math.min(Rp.t1, Rp.t + dt * fxRpRate(Rp.t));
             fxRpApply(Rp.t); fxRpEvents(a, Rp.t);
-            if (Rp.t >= Rp.t1 || Rp.skip) { Rp.ph = 2; Rp.pt = 0; fxWipe(); noise(0.45, 2400, 0.06, 'bandpass', 0.8, 300, 0, 0.2); }
+            if (Rp.t >= Rp.t1 || Rp.skip) { Rp.ph = 2; Rp.pt = 0; fxWipe(); noise(0.45, 2400, 0.06, 'bandpass', 0.8, 300, 0, 0.2); tone(640, 0.45, 'sine', 0.05, 140, 0, 0.2); }
             return;
           }
           if (Rp.show) {
@@ -7235,7 +7308,7 @@ diffuseColor.rgb = dc;
               }
             }
             if (tr && v.key !== 'tr') { v.key = 'tr'; v.bd.classList.remove('b'); v.bd.classList.add('n'); }
-            if (bo !== v.bkey) { v.bkey = bo; uiDig(v.bdNum, bo); uiBT(v, bo); v.bd.classList.toggle('full', bo >= 100); }
+            if (bo !== v.bkey) { if (bo - (v.bkey || 0) >= 8 && v.bkey !== undefined) { v.bd.classList.remove('pk'); void v.bd.offsetWidth; v.bd.classList.add('pk'); } v.bkey = bo; uiDig(v.bdNum, bo); uiBT(v, bo); v.bd.classList.toggle('full', bo >= 100); }
             if (me && !!me.boosting !== v.bbo) { v.bbo = !!me.boosting; v.bd.classList.toggle('on', v.bbo); }
             if (me) {
               const dm = me.demoT > 0 && me.demoT < 100 ? Math.ceil(me.demoT) : 0, sk = dm ? 'd' + dm : '';
@@ -7255,7 +7328,7 @@ diffuseColor.rgb = dc;
           if (!AC || !fxEngV.length) return;
           const t = AC.currentTime, on = (ui === 'play' || ui === 'end') && !paused && !api.muted, vs = views;
           master.gain.setTargetAtTime(api.muted || saved.mute ? 0 : (paused ? 0.3 : 0.85) * saved.vol / 85, t, 0.05);
-          let bst = 0, sup = 0, wsp = 0;
+          let bst = 0, sup = 0, wsp = 0, tyr = 0, sqq = 0, sqf = 0;
           for (let i = 0; i < 1; i++) {
             const E = fxEngV[i], v = vs[i], c = v && v.car;
             const live = !!(on && c && c.demoT <= 0 && W.state !== 'menu' && W.state !== 'end' && (!fxRp.on || fxRp.show));
@@ -7270,11 +7343,24 @@ diffuseColor.rgb = dc;
             if (!b && E.boost) noise(0.35, 900, 0.05, 'bandpass', 0.7, 240, 0, 0.2);
             if (live && c.ctl.boost && c.boost <= 0 && t > fxSputT) { fxSputT = t + 0.16 + Math.random() * 0.1; noise(0.06, 1400, 0.05, 'bandpass', 1.4, 500); tone(95, 0.07, 'square', 0.02, 60); }
             if (ss && !E.sup) { noise(0.65, 500, 0.1, 'bandpass', 0.7, 3200, 0, 0.25); tone(320, 0.5, 'sine', 0.02, 960, 0, 0.2); }
+            if (live && c.onGround) { tyr = clamp(sp / 2300, 0, 1); const lat = Math.abs(c.v.x * c.l.x + c.v.y * c.l.y + c.v.z * c.l.z); sqq = Math.max(c.slide > 0.3 && sp > 400 ? 0.5 + 0.5 * c.slide : 0, clamp((lat - 600) / 700, 0, 1)); sqf = sp; }
             E.boost = b; E.sup = ss;
             if (b) bst = live ? 0.55 + 0.45 * c.boostK : 1; if (ss) sup = 1; wsp = Math.max(wsp, sp);
           }
+          const oth = [];
+          if (on && W.state !== 'menu' && !fxRp.on) for (const c of W.cars) if (c !== (vs[0] && vs[0].car) && c.demoT <= 0) oth.push([Math.hypot(c.p.x - vs[0].camera.position.x, c.p.y - vs[0].camera.position.y, c.p.z - vs[0].camera.position.z), c]);
+          oth.sort((a, b) => a[0] - b[0]);
+          for (let i = 0; i < fxEngO.length; i++) {
+            const E = fxEngO[i], q = oth[i], c = q && q[1], sp = c ? vlen(c.v) : 0, th = c ? Math.abs(c.ctl.throttle || 0) : 0, gr = c && !c.onGround ? 0.82 : 1;
+            E.o1.frequency.setTargetAtTime((44 + sp * 0.043 + th * 7 + (c && c.boosting ? 9 : 0)) * gr * (1 + i * 0.015), t, 0.08);
+            E.o2.frequency.setTargetAtTime((22 + sp * 0.0215 + th * 3.5) * gr * (1 + i * 0.015), t, 0.08);
+            E.f.frequency.setTargetAtTime(200 + sp * 0.3 + th * 160, t, 0.1);
+            E.g.gain.setTargetAtTime(c ? (0.012 + sp / 2300 * 0.016 + th * 0.006) * clamp(1.15 - q[0] / 5200, 0, 1) : 0, t, 0.1);
+            if (E.pn && c) E.pn.pan.setTargetAtTime(fxPan(c.p), t, 0.08);
+          }
           bstG.gain.setTargetAtTime(bst * 0.13, t, 0.035); fxBst2.gain.setTargetAtTime(bst * 0.17, t, 0.05); fxBst3.gain.setTargetAtTime(bst * 0.05, t, 0.04);
           bstF.frequency.setTargetAtTime(560 + wsp * 0.28, t, 0.1);
+          fxTyG.gain.setTargetAtTime(tyr * 0.006, t, 0.08); fxSqG.gain.setTargetAtTime(sqq * 0.0045, t, 0.05); fxSqF.frequency.setTargetAtTime(1500 + sqf * 0.25, t, 0.1);
           windG.gain.setTargetAtTime(sup ? 0.05 : clamp((wsp - 1500) / 800, 0, 1) * 0.016, t, 0.12);
           crowdF.frequency.setTargetAtTime(470 + Math.sin(t * 0.37) * 55 + Math.sin(t * 1.13) * 25, t, 0.3);
           if (on && W.state === 'play' && !fxRp.on) {
@@ -7333,10 +7419,49 @@ diffuseColor.rgb = dc;
         };
         const STEP = 1 / CFG.hz;
         let acc = 0;
+        const fxPace = { s: 1 / 60, b: 0, o: 0 };
+        const fxPaceDt = dt => {
+          const P = fxPace;
+          if (!(dt > 0)) return dt;
+          if (Math.abs(dt - P.s) > P.s * 0.35) { if (++P.o > 6) { P.s = dt; P.o = 0; P.b = 0; } P.b = 0; return dt; }
+          P.o = 0; P.s += (dt - P.s) * 0.1;
+          const o = P.s + clamp(P.b * 0.2, -0.002, 0.002);
+          P.b = clamp(P.b + dt - o, -0.03, 0.03);
+          return o;
+        };
+        const fxIp = { W: null, n: 0, pv: [], cu: [], bp: new Float64Array(3), bc: new Float64Array(3), on: false };
+        const fxIpSnap = () => {
+          if (fxIp.W !== W || fxIp.n !== W.cars.length) { fxIp.W = W; fxIp.n = W.cars.length; fxIp.pv.length = fxIp.cu.length = 0; for (let i = 0; i < fxIp.n; i++) { fxIp.pv.push(new Float64Array(12)); fxIp.cu.push(new Float64Array(12)); } fxIp.on = false; }
+          for (let i = 0; i < fxIp.n; i++) { const c = W.cars[i], q = fxIp.pv[i]; q[0] = c.p.x; q[1] = c.p.y; q[2] = c.p.z; q[3] = c.f.x; q[4] = c.f.y; q[5] = c.f.z; q[6] = c.u.x; q[7] = c.u.y; q[8] = c.u.z; q[9] = c.l.x; q[10] = c.l.y; q[11] = c.l.z; }
+          const B = W.ball; fxIp.bp[0] = B.p.x; fxIp.bp[1] = B.p.y; fxIp.bp[2] = B.p.z; fxIp.ok = true;
+        };
+        const fxIpApply = a => {
+          if (!fxIp.ok || fxIp.W !== W || fxIp.n !== W.cars.length || fxIp.on || fxRp.on || online || ui !== 'play' || !(a > 0.001)) return;
+          a = Math.min(a, 1); fxIp.on = true;
+          for (let i = 0; i < fxIp.n; i++) {
+            const c = W.cars[i], q = fxIp.pv[i], o = fxIp.cu[i];
+            o[0] = c.p.x; o[1] = c.p.y; o[2] = c.p.z; o[3] = c.f.x; o[4] = c.f.y; o[5] = c.f.z; o[6] = c.u.x; o[7] = c.u.y; o[8] = c.u.z; o[9] = c.l.x; o[10] = c.l.y; o[11] = c.l.z;
+            if (c.demoT > 0 || Math.hypot(o[0] - q[0], o[1] - q[1], o[2] - q[2]) > 240) continue;
+            const k = 1 - a;
+            c.p.x = q[0] * k + o[0] * a; c.p.y = q[1] * k + o[1] * a; c.p.z = q[2] * k + o[2] * a;
+            c.f.x = q[3] * k + o[3] * a; c.f.y = q[4] * k + o[4] * a; c.f.z = q[5] * k + o[5] * a;
+            c.u.x = q[6] * k + o[6] * a; c.u.y = q[7] * k + o[7] * a; c.u.z = q[8] * k + o[8] * a;
+            fxOrtho(c);
+          }
+          const B = W.ball, b = fxIp.bp, k = 1 - a; fxIp.bc[0] = B.p.x; fxIp.bc[1] = B.p.y; fxIp.bc[2] = B.p.z;
+          fxIp.bj = Math.hypot(B.p.x - b[0], B.p.y - b[1], B.p.z - b[2]) < 240;
+          if (fxIp.bj) { B.p.x = b[0] * k + B.p.x * a; B.p.y = b[1] * k + B.p.y * a; B.p.z = b[2] * k + B.p.z * a; }
+        };
+        const fxIpRestore = () => {
+          if (!fxIp.on) return;
+          fxIp.on = false;
+          for (let i = 0; i < fxIp.n; i++) { const c = W.cars[i], o = fxIp.cu[i]; c.p.x = o[0]; c.p.y = o[1]; c.p.z = o[2]; c.f.x = o[3]; c.f.y = o[4]; c.f.z = o[5]; c.u.x = o[6]; c.u.y = o[7]; c.u.z = o[8]; c.l.x = o[9]; c.l.y = o[10]; c.l.z = o[11]; }
+          const B = W.ball, b = fxIp.bc; B.p.x = b[0]; B.p.y = b[1]; B.p.z = b[2];
+        };
         api.loop((dt, t) => {
           if (dead) return;
           fxQTick(dt);
-          dt *= uiDbgK;
+          dt = fxPaceDt(dt) * uiDbgK;
           if (fxRp.on && (fxRp.W !== W || ui !== 'play')) fxRpAbort();
           if (!paused) {
             fxNow += dt;
@@ -7350,22 +7475,24 @@ diffuseColor.rgb = dc;
                 while (acc >= STEP && n < 8 && !fxRpWant()) {
                   if (ui === 'play') { const v = views[0]; if (v.car) { if (online && !(pz.hidden && uiOptEl.hidden)) uiNeutral(v.car.ctl); else readInput(v, v.car.ctl); } }
                   if (host) online.H.pre();
-                  worldStep(W, STEP); acc -= STEP; n++;
+                  fxIpSnap(); worldStep(W, STEP); acc -= STEP; n++;
                 }
                 if (n >= 8) acc = 0;
                 if (host) hostSend();
               }
               handleEvents();
             }
-            visuals(dt, t / 1000);
+            fxIpApply(acc / STEP); visuals(dt, t / 1000); fxIpRestore();
             if (fxRp.on) fxRpPost(); else { fxRecord(); fxRpCheck(); }
           }
+          fxIpApply(acc / STEP);
           cameraUpdate(views[0], paused ? 0 : dt);
           if (uiDbgCam) { const c = views[0].camera; c.position.set(uiDbgCam[0], uiDbgCam[1], uiDbgCam[2]); c.up.set(0, 0, 1); c.lookAt(uiDbgCam[3], uiDbgCam[4], uiDbgCam[5]); }
           if (shake > 0) shake = Math.max(0, shake - dt * 1.6);
           hudUpdate(dt);
           soundUpdate();
           renderViews();
+          fxIpRestore();
         });
 
         let uiDbgCam = null, uiDbgK = 1;

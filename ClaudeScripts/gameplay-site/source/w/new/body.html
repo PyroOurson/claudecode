@@ -118,6 +118,10 @@
       <select id="adf" aria-label="Filter users"><option value="all">All users</option><option value="admin">Admins</option><option value="locked">Locked</option><option value="unconfirmed">Email not confirmed</option><option value="google">Google</option><option value="email">Email and password</option><option value="online">Online now</option><option value="active">Active in the last 7 days</option></select>
       <span class="count" id="adcount" translate="no"></span>
      </div>
+     <details class="apc-card ta" id="ta"><summary><h4>Test accounts</h4><em id="tan" translate="no"></em><span>Make a ready-to-use account to give to someone. No email check; the details are saved here.</span></summary>
+      <div class="ta-f"><label class="apc-l" for="tau">Username (empty = random)</label><input id="tau" maxlength="20" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="test12345"><label class="apc-l" for="tap">Password</label><div class="apc-row"><input id="tap" type="text" maxlength="72" autocomplete="off" spellcheck="false" autocapitalize="off"><button class="btn2" type="button" id="tag">New random</button></div><label class="apc-l" for="tae">Email (empty = made-up address)</label><input id="tae" type="email" maxlength="254" autocomplete="off" spellcheck="false" placeholder="name@test.example.com"><label class="apc-l" for="tat">Note (optional, only admins see it)</label><input id="tat" maxlength="200" autocomplete="off"><button class="btn2 pri" type="button" id="tab">Create test account</button><div class="note" id="tam" role="status"></div></div>
+      <div class="ta-l" id="tal" translate="no"></div>
+     </details>
      <div class="adm-tw"><table class="adm-t" id="adt"><thead></thead><tbody translate="no"></tbody></table></div>
      <section class="apc" id="adpanel" hidden aria-labelledby="adpn" tabindex="-1">
       <div class="apc-hero">

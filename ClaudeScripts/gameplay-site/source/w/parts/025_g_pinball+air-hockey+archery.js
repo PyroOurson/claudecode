@@ -302,14 +302,14 @@
 
       const b = { x: PLX, y: PL0 - R, vx: 0, vy: 0, layer: 0, live: false, idle: 0 };
       let state = 'idle', score = 0, ballNo = 1, mult = 1, ramps = 0, saveT = 0, saveUsed = false, launched = false;
-      let gen = 0, acc = 0, pull = 0, pulling = false, plSnap = 0, msg = null, shake = 0, time = 0;
+      let gen = 0, acc = 0, pull = 0, pulling = false, plSnap = 0, msg = null, shake = 0, time = 0, tilt = false, nudges = [];
       const plY = () => PL0 + pull * 40;
       const say = (a, sub, life = 1.6, c, c2) => { msg = { a, b: sub, t: 0, life, c, c2 }; };
       const add = pts => { score += pts * mult; api.score(score); };
       const bumpMult = () => { if (mult < 6) { mult++; say(mult + 'X', 'Multiplier', 1.6, '#7dff6a', '#1fbf6a'); } };
 
       const resetBall = () => { b.x = PLX; b.y = PL0 - R; b.vx = b.vy = 0; b.layer = 0; b.live = true; b.idle = 0; launched = false; };
-      const newBall = () => { resetBall(); mult = 1; saveUsed = false; saveT = 0; targets.forEach(t => { t.up = true; }); };
+      const newBall = () => { resetBall(); tilt = false; nudges = []; mult = 1; saveUsed = false; saveT = 0; targets.forEach(t => { t.up = true; }); };
 
       const kick = s => {
         const sl = s.sl;
@@ -399,12 +399,12 @@
         api.sfx('bad');
         const g0 = gen;
         if (ballNo >= 3) { say('GAME OVER', null, 2); api.timeout(() => { if (g0 === gen) over(); }, 1100); }
-        else { say('BALL ' + (ballNo + 1), null, 1.4); api.timeout(() => { if (g0 === gen) { ballNo++; newBall(); } }, 1300); }
+        else { say('BALL ' + (ballNo + 1), 'N nudges the table', 1.4); api.timeout(() => { if (g0 === gen) { ballNo++; newBall(); } }, 1300); }
       };
       const near = (o, r) => { const dx = b.x - o.x, dy = b.y - o.y; return dx * dx + dy * dy < r * r; };
       const step = h => {
         for (const f of flips) {
-          const on = f.keys.size > 0 || f.ptr > 0, tg = on ? f.up : f.rest, d = tg - f.a, sp = (on ? 32 : 22) * h;
+          const on = !tilt && (f.keys.size > 0 || f.ptr > 0), tg = on ? f.up : f.rest, d = tg - f.a, sp = (on ? 32 : 22) * h;
           if (Math.abs(d) <= sp) { f.w = d / h; f.a = tg; } else { const sg = d > 0 ? 1 : -1; f.w = sg * sp / h; f.a += sg * sp; }
         }
         if (!b.live) return;
@@ -457,6 +457,12 @@
         const l = lanes.map(q => q.lit);
         lanes.forEach((q, k) => { q.lit = i ? l[(k + 2) % 3] : l[(k + 1) % 3]; });
       };
+      const nudge = () => {
+        if (state !== 'play' || !b.live || !launched || b.layer || tilt) return;
+        nudges = nudges.filter(t => time - t < 3); nudges.push(time);
+        if (nudges.length > 3) { tilt = true; saveT = 0; say('TILT', 'Flippers off', 1.8, '#ff8a7a', '#d6281c'); api.sfx('bad'); return; }
+        b.vx += (Math.random() - .5) * 520; b.vy -= 240; shake = .25; api.sfx('tick');
+      };
       const release = () => {
         if (!pulling) return;
         pulling = false;
@@ -468,6 +474,7 @@
         const i = KL.includes(e.code) ? 0 : KR.includes(e.code) ? 1 : -1;
         if (i >= 0) { const f = flips[i], was = f.keys.size > 0 || f.ptr > 0; f.keys.add(e.code); flipOn(i, was); }
         else if (KP.includes(e.code) && inLane()) pulling = true;
+        else if (e.code === 'KeyN' || e.code === 'ArrowUp') { e.preventDefault(); nudge(); }
       });
       api.on(window, 'keyup', e => {
         flips.forEach(f => f.keys.delete(e.code));
@@ -1220,7 +1227,7 @@
 @media (max-width:640px){.gm-archery .g-hud{gap:4px 16px}.gm-archery .g-stat{min-width:0}}`,
     mount(root, api) {
       const W = 900, H = 500, GY = 432, SX = 132, SY = 336, G = 520, TR = 56, AL = 64, SHOTS = 10;
-      root.innerHTML = `<div class="g-hud">${['Arrow', 'Score', 'Last', 'Best'].map(k => `<div class="g-stat"><span class="k">${k}</span><span class="v">–</span></div>`).join('')}</div>`;
+      root.innerHTML = `<div class="g-hud">${['Arrow', 'Score', 'Last', 'Wind', 'Best'].map(k => `<div class="g-stat"><span class="k">${k}</span><span class="v">–</span></div>`).join('')}</div>`;
       const hv = [...root.querySelectorAll('.g-stat .v')];
       const { canvas, ctx, toLocal } = api.canvas(W, H);
       const dpr = canvas.width / W, fx = sparks(), keys = api.keys;
@@ -1235,7 +1242,7 @@
       const cam = { x: W / 2, y: H / 2, z: 1 };
 
       const hud = () => {
-        const v = [Math.min(n + 1, SHOTS) + ' / ' + SHOTS, total, last == null ? '–' : last ? last : 'Miss', api.best != null ? api.best : '–'];
+        const v = [Math.min(n + 1, SHOTS) + ' / ' + SHOTS, total, last == null ? '–' : last ? last : 'Miss', (wind < 0 ? '← ' : '→ ') + (Math.abs(wind) / 25).toFixed(1), api.best != null ? api.best : '–'];
         hv.forEach((el, i) => { if (el.textContent !== String(v[i])) el.textContent = v[i]; });
       };
       const setup = first => {

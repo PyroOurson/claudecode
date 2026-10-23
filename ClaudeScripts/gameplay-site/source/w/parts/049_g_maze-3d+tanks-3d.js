@@ -10,6 +10,13 @@
   const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0, q = a[i]; a[i] = a[j]; a[j] = q; } return a; };
   const el = (tag, cls, parent, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; if (parent) parent.append(e); return e; };
   const hexRGB = hx => [((hx >> 16) & 255) / 255, ((hx >> 8) & 255) / 255, (hx & 255) / 255];
+  const COARSE = matchMedia('(pointer: coarse)').matches;
+  const glSize = (root, pw, ph) => root.clientWidth && root.clientWidth < 560 ? [pw, ph] : [960, 600];
+  function fitPR(api, v) {
+    if (!COARSE) return;
+    const fit = () => { const cw = v.canvas.clientWidth; if (cw && !document.fullscreenElement) v.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1) * cw / v.w); };
+    fit(); api.on(window, 'resize', fit);
+  }
   const NO_GL = { kicker: '3D', title: '3D unavailable', text: 'Your browser could not start WebGL. Try another browser or turn on hardware acceleration.', button: null };
 
   function grain(g, w, h, a, n) {
@@ -596,7 +603,7 @@ void main() { vec4 t = texture2D(map, gl_PointCoord); float a = t.a * vA; if (a 
 @media (max-width:640px){
 .gm-maze-3d .hud{left:8px;top:8px;gap:5px}
 .gm-maze-3d .pill{height:26px;padding:0 9px;font-size:12px;gap:4px}
-.gm-maze-3d .pill span{display:none}
+.gm-maze-3d .pill span{font-size:8px;letter-spacing:.08em}
 .gm-maze-3d .key{width:14px;height:14px}
 .gm-maze-3d .map{width:92px;height:92px;right:8px;top:8px;border-radius:12px}
 .gm-maze-3d .mapbtn{right:8px;bottom:8px;height:28px;padding:0 10px;font-size:12px}
@@ -609,7 +616,7 @@ void main() { vec4 t = texture2D(map, gl_PointCoord); float a = t.a * vA; if (a 
       const keys = api.keys;
       const wrap = el('div', 'wrap', root);
       let cleanup = null;
-      api.gl(960, 600).then(v => { if (v && api.alive) cleanup = run(v); }, () => { if (api.alive) api.overlay(NO_GL); });
+      api.gl(...glSize(root, 640, 800)).then(v => { if (v && api.alive) { cleanup = run(v); fitPR(api, v); } }, () => { if (api.alive) api.overlay(NO_GL); });
       return { destroy() { if (cleanup) cleanup(); } };
 
       function run({ THREE, renderer, canvas, w, h }) {
@@ -619,7 +626,7 @@ void main() { vec4 t = texture2D(map, gl_PointCoord); float a = t.a * vA; if (a 
         const scene = new THREE.Scene(), FOG = 0x1d1836;
         scene.background = new THREE.Color(FOG);
         scene.fog = new THREE.Fog(FOG, 3, 23);
-        const cam = new THREE.PerspectiveCamera(72, w / h, .05, 220);
+        const cam = new THREE.PerspectiveCamera(w < h ? 84 : 72, w / h, .05, 220);
         cam.rotation.order = 'YXZ';
         scene.add(new THREE.HemisphereLight(0x8f86e6, 0x3a2a1c, .42));
         const moonL = new THREE.DirectionalLight(0xb4c2ff, .36); moonL.position.set(-5, 12, 4); scene.add(moonL);
@@ -1089,7 +1096,7 @@ void main() { vec4 t = texture2D(map, gl_PointCoord); float a = t.a * vA; if (a 
 @media (max-width:640px){
 .gm-tanks-3d .hud{left:8px;top:8px;gap:5px}
 .gm-tanks-3d .pill{height:26px;padding:0 9px;font-size:12px;gap:5px}
-.gm-tanks-3d .pill span{display:none}
+.gm-tanks-3d .pill span{font-size:8px;letter-spacing:.08em}
 .gm-tanks-3d .hp{width:60px;height:9px}
 .gm-tanks-3d .pups{right:8px;top:8px}
 .gm-tanks-3d .chip{height:24px;padding:0 8px;font-size:11px}
@@ -1103,7 +1110,7 @@ void main() { vec4 t = texture2D(map, gl_PointCoord); float a = t.a * vA; if (a 
       const keys = api.keys;
       const wrap = el('div', 'wrap', root);
       let cleanup = null;
-      api.gl(960, 600).then(v => { if (v && api.alive) cleanup = run(v); }, () => { if (api.alive) api.overlay(NO_GL); });
+      api.gl(...glSize(root, 640, 800)).then(v => { if (v && api.alive) { cleanup = run(v); fitPR(api, v); } }, () => { if (api.alive) api.overlay(NO_GL); });
       return { destroy() { if (cleanup) cleanup(); } };
 
       function run({ THREE, renderer, canvas, w, h, toLocal }) {
@@ -1113,7 +1120,7 @@ void main() { vec4 t = texture2D(map, gl_PointCoord); float a = t.a * vA; if (a 
         const scene = new THREE.Scene(), SKY = 0xbfe3ff;
         scene.background = new THREE.Color(SKY);
         scene.fog = new THREE.Fog(SKY, 55, 120);
-        const cam = new THREE.PerspectiveCamera(46, w / h, .5, 240);
+        const cam = new THREE.PerspectiveCamera(46, w / h, .5, 240), PK = w < h ? 1.5 : 1;
         scene.add(new THREE.HemisphereLight(0xe2f1ff, 0x7a6440, .62));
         const sun = new THREE.DirectionalLight(0xfff0d6, 1.15);
         sun.position.set(-14, 30, 12); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
@@ -1793,11 +1800,11 @@ void main() { vec4 t = texture2D(map, gl_PointCoord); float a = t.a * vA; if (a 
             crossM.color.setHex(rapidT > 0 ? 0xffd166 : 0xffffff);
           }
 
-          const tx = clamp(P.x + (aimPt.x - P.x) * .15, -6, 6), tz = clamp(P.z + (aimPt.z - P.z) * .15, -1, 4.5);
+          const tx = clamp(P.x + (aimPt.x - P.x) * .15, -6 * PK, 6 * PK), tz = clamp(P.z + (aimPt.z - P.z) * .15, -1, 4.5);
           camT.x = damp(camT.x, tx, 4, dt); camT.z = damp(camT.z, tz, 4, dt);
           shake = damp(shake, 0, 5, dt);
           const sx = (Math.random() - .5) * shake * .9, sz = (Math.random() - .5) * shake * .9;
-          cam.position.set(camT.x + sx, 23, camT.z + 14.5 + sz); cam.lookAt(camT.x + sx * .5, 0, camT.z + sz * .5);
+          cam.position.set(camT.x + sx, 23 * PK, camT.z + 14.5 * PK + sz); cam.lookAt(camT.x + sx * .5, 0, camT.z + sz * .5);
           flashI = damp(flashI, 0, 7, dt); flash.intensity = flashI;
           const sc = h * renderer.getPixelRatio() / (2 * Math.tan(cam.fov * Math.PI / 360));
           fire.mat.uniforms.scale.value = smoke.mat.uniforms.scale.value = sc;

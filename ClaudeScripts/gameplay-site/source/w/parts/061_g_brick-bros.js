@@ -25,10 +25,10 @@
     bossHp: 5, scrollX: 112
   };
 
-  const T = { E: 0, GND: 1, BRK: 2, QC: 3, QP: 4, USED: 5, HARD: 6, PTL: 7, PTR: 8, PBL: 9, PBR: 10, HC: 11, H1: 12, BMC: 13, BS: 14, BP: 15, COIN: 16, LAVA: 17, TREE: 18, TREEL: 19, TREER: 20, TRUNK: 21, BRIDGE: 22, AXE: 23, CANT: 24, CANB: 25, B1: 26, SPT: 27, SPB: 28, SBT: 29, SBB: 30, LAVT: 31, CHAIN: 32 };
-  const SOLID = new Uint8Array(40);
-  [T.GND, T.BRK, T.QC, T.QP, T.USED, T.HARD, T.PTL, T.PTR, T.PBL, T.PBR, T.BMC, T.BS, T.BP, T.TREE, T.TREEL, T.TREER, T.BRIDGE, T.CANT, T.CANB, T.B1, T.SPT, T.SPB, T.SBT, T.SBB].forEach(t => SOLID[t] = 1);
-  const CH = { B: T.BRK, '?': T.QC, M: T.QP, U: T.USED, X: T.HARD, h: T.HC, u: T.H1, C: T.BMC, S: T.BS, P: T.BP, L: T.B1, o: T.COIN, '#': T.GND, '~': T.LAVA, '=': T.BRIDGE, A: T.AXE, K: T.CANT, k: T.CANB, T: T.TREE, '<': T.TREEL, '>': T.TREER, '|': T.TRUNK, '.': T.E };
+  const T = { E: 0, GND: 1, BRK: 2, QC: 3, QP: 4, USED: 5, HARD: 6, PTL: 7, PTR: 8, PBL: 9, PBR: 10, HC: 11, H1: 12, BMC: 13, BS: 14, BP: 15, COIN: 16, LAVA: 17, TREE: 18, TREEL: 19, TREER: 20, TRUNK: 21, BRIDGE: 22, AXE: 23, CANT: 24, CANB: 25, B1: 26, SPT: 27, SPB: 28, SBT: 29, SBB: 30, LAVT: 31, CHAIN: 32, RB: 33, CLD: 34, BV: 35, MSL: 36, MSM: 37, MSR: 38, MSS: 39, MSA: 40, MSB: 41 };
+  const SOLID = new Uint8Array(48);
+  [T.GND, T.BRK, T.QC, T.QP, T.USED, T.HARD, T.PTL, T.PTR, T.PBL, T.PBR, T.BMC, T.BS, T.BP, T.TREE, T.TREEL, T.TREER, T.BRIDGE, T.CANT, T.CANB, T.B1, T.SPT, T.SPB, T.SBT, T.SBB, T.RB, T.CLD, T.BV, T.MSL, T.MSM, T.MSR].forEach(t => SOLID[t] = 1);
+  const CH = { B: T.BRK, '?': T.QC, M: T.QP, U: T.USED, X: T.HARD, h: T.HC, u: T.H1, C: T.BMC, S: T.BS, P: T.BP, L: T.B1, o: T.COIN, '#': T.GND, '~': T.LAVA, '=': T.BRIDGE, A: T.AXE, K: T.CANT, k: T.CANB, T: T.TREE, '<': T.TREEL, '>': T.TREER, '|': T.TRUNK, '.': T.E, V: T.BV, c: T.CLD };
 
   const NES = { sky: '#5C94FC', blk: '#000000', wht: '#FCFCFC', brn: '#C84C0C', lt: '#FCBCB0', org: '#FC9838', gold: '#F8B800', grn: '#00A800', lgrn: '#80D010', dgrn: '#005800', red: '#D82800', ored: '#F83800', lava: '#FCA044', gry: '#7C7C7C', lgry: '#BCBCBC', teal: '#008888', lteal: '#9CFCF0', navy: '#0000BC', skin: '#FCBCB0', tan: '#FCE4A0', pur: '#940084', blu: '#3CBCFC' };
   const KIND = {
@@ -36,8 +36,12 @@
     tree: { sky: NES.sky, a: NES.lt, b: NES.brn, k: NES.blk, walker: [NES.brn, NES.blk, NES.lt] },
     under: { sky: NES.blk, a: NES.lteal, b: NES.teal, k: NES.blk, walker: ['#0070EC', NES.blk, NES.lteal] },
     bonus: { sky: NES.blk, a: NES.lteal, b: NES.teal, k: NES.blk, walker: ['#0070EC', NES.blk, NES.lteal] },
-    castle: { sky: NES.blk, a: NES.lgry, b: NES.gry, k: NES.blk, walker: [NES.gry, NES.blk, NES.lgry] }
+    castle: { sky: NES.blk, a: NES.lgry, b: NES.gry, k: NES.blk, walker: [NES.gry, NES.blk, NES.lgry] },
+    water: { sky: '#2038EC', a: NES.lgrn, b: NES.grn, k: NES.dgrn, walker: [NES.brn, NES.blk, NES.lt] },
+    night: { sky: NES.blk, a: NES.lt, b: NES.brn, k: NES.blk, walker: [NES.brn, NES.blk, NES.lt] },
+    sky: { sky: NES.sky, a: NES.lt, b: NES.brn, k: NES.blk, walker: [NES.brn, NES.blk, NES.lt] }
   };
+  const OVK = { over: 1, tree: 1, night: 1, sky: 1 };
   const HERO_PAL = { a: '#D82800', d: '#887000', c: '#FC9838' };
   const FIRE_PAL = { a: '#FCE4A0', d: '#D82800', c: '#FC9838' };
   const STAR_PALS = [HERO_PAL, FIRE_PAL, { a: '#00A800', d: '#000000', c: '#FC9838' }, { a: '#000000', d: '#C84C0C', c: '#FCBCB0' }];
@@ -105,6 +109,16 @@
   const BOWSER1 = ['....dbd....dbd..................', '....dbbd..dbbd....d.............', '...dbbbdddbbbd...dbd..d.........', '...dbeeeeeeebdd..dbd.dbd...d....', '..daeeaaaaaeeeaddbbd.dbbd.dbd...', '.daaeebbbbaeeeaadbbbddbbddbbd...', '.daaaabbbbaaaaaabbbbabbbbdbbd...', 'daaaaaddbbaaaaaaaaaaaaaaaabbbd..', 'daaaaaddbbaaaaaaaaaaaaaaaaabd...', 'cccccaddbbaaaaaaaaaaaaaaaaaabdd.', 'cdcccccaaaaaaaaaaaaaaaaaaaaaabbd', 'ccccccccaaaaaaaaaaaaaaaaaaaaabbb', 'bddbddbdcaaaaaaaaaaaaaaaaaaaabdd', 'ddddddddcaaaaaaaaaaaaaaaaaaaaad.', 'dbddbdddaaaaaaacccaaaaaaaaaaabdd', 'dccccccaaaaaafffffaaaaaaaaaaabbb', '.ddccddccccccccccccaaaaaaaaaabbd', '...dddcccccccccccccaaaaaaaaaabd.', '...dcccccfffffffffcaaaaaaaaaabdd', '..dbccccccccccccccccaaaaaaaabbbb', '..dccccccccccccccccaaaaaaaabbbbd', '..dbcccccfffffffffcaaaaaaabbddd.', '...dcccccccccccccccaaaaabbdd....', '...dbdcdccccccccccbbbbbbbaaadd..', '....d.ddffffffffffdddcccccccaad.', '.......dccccccccdd..dcccccccaaad', '.......dcccccccd....dcccccccddd.', '.......dcccccccd....dcccccccd...', '.......dcccccccd....dcccccccd...', '.......dcccccccd....dcccccccd...', '.......dbbdbbdbbd...dbbdbbdbbd..', '.......dbbdbbdbbd...dbbdbbdbbd..'];
   const TOAD = ['...ddaaaaaadd...', '..daaaaaaaaaad..', '.daaaabbbbaaaad.', 'daaaabbbbbbaaaad', 'bbaaabbbbbbaaabb', 'bbbaaabbbbaaabbb', 'bbbaaaaaaaaaabbb', 'bbaaaaaaaaaaaabb', 'aaaaaaaaaaaaaaaa', 'aaaaaaccccaaaaaa', 'dddaccccccccaddd', '..dccccccccccd..', '..dcccdccdcccd..', '..dcccdccdcccd..', '..dccccccccccd..', '...dccccccccd...', '..deeeaaaaeeed..', '.dcceeaaaaeeccd.', '.dcceeaaaaeeccd.', '.dcceeaaaaeeccd.', '..deeeaaaaeeed..', '..deeeeeeeeeed..', '...dfffddfffd...', '...dfffddfffd...'];
   const PEACH = ['.....d..d.d.....', '....deddeded....', '....deeeeeed....', '....deeeeeed....', '...daaaaaaaad...', '...daaaaaaaad...', '...dccccccccd...', '..daccdccdccad..', '..daccccccccad..', '.daaaccffccaaad.', '.daaaccccccaaad.', '.daaaaaaaaaaaad.', '.daaaaffffaaaad.', '.daabbffffbbaad.', '.daccbffffbccad.', '.daccbffffbccad.', '.daccbbbbbbccad.', '..dbbbbbbbbbbd..', '..dbbbbbbbbbbd..', '..dbffffffffbd..', '..dbbbbbbbbbbd..', '.dbbbbbbbbbbbbd.', '.dbbbbbbbbbbbbd.', '.dbbbbbbbbbbbbd.'];
+  const SQUID0 = ['......aaaa......', '....aaaaaaaa....', '...aaaaaaaaaa...', '..aaaaaaaaaaaa..', '..aaaaaaaaaaaa..', '.aaaaaaaaaaaaaa.', '.aaabbaaaabbaaa.', '.aaabbaaaabbaaa.', '.aaaaaaaaaaaaaa.', '.aaaaaaaaaaaaaa.', '..aaaaaaaaaaaa..', '..aaaaaaaaaaaa..', '...aaaaaaaaaa...', '...aaaaaaaaaa...', '....aaaaaaaa....', '...aa.aaaa.aa...', '...aa.aaaa.aa...', '..aa..aaaa..aa..', '..aa..aaaa..aa..', '..aa.a.aa.a.aa..', '..a..a.aa.a..a..', '..aa.a.aa.a.aa..', '.....a....a.....', '................'];
+  const SQUID1 = ['................', '................', '......aaaa......', '....aaaaaaaa....', '...aaaaaaaaaa...', '..aaaaaaaaaaaa..', '..aaabbaabbaaa..', '..aaabbaabbaaa..', '..aaaaaaaaaaaa..', '..aaaaaaaaaaaa..', '...aaaaaaaaaa...', '...aaaaaaaaaa...', '....aaaaaaaa....', '....aaaaaaaa....', '....a.aaaa.a....', '....a.aaaa.a....', '....aaaaaaaa....', '.....aaaaaa.....', '.....a.aa.a.....', '.....a.aa.a.....', '.....a.aa.a.....', '................', '................', '................'];
+  const FISH0 = ['................', '................', '......bbbb......', '....bbaaaaaab...', '...baaaaaaaaaab.', '..baaaaaaaaaaaab', '.baaccaaaaaaaaab', '.baacdaaaaaaaab.', '.baaaaaaaaaaaab.', '..baaaaaaaaaaab.', '...bbaaaaaabbbb.', '.....bbbbbb..bb.', '................', '................', '................', '................'];
+  const FISH1 = ['................', '................', '......bbbb......', '....bbaaaaaab...', '...baaaaaaaaaab.', '..baaaaaaaaaaaab', '.baaccaaaaaaaaab', '.baacdaaaaaaaab.', '.baaaaaaaaaaaab.', '..baaaaaaaaaaab.', '...bbaaaaaabbb..', '.....bbbbbb.bbb.', '................', '................', '................', '................'];
+  const BUZ0 = ['................', '.....aaaaaa.....', '...aaaaaaaaaa...', '..aabbbaaaaaaa..', '.aabbbbaaaaaaaa.', '.aabbbaaaaaaaaa.', '.aaabaaaaaaaaaa.', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', '.cccccccccccccc.', '.cccccccccccccc.', '..cccccccccccc..', '..dd.cccccc.dd..', '.ddd........ddd.', '.dddd......dddd.'];
+  const BUZ1 = ['................', '.....aaaaaa.....', '...aaaaaaaaaa...', '..aabbbaaaaaaa..', '.aabbbbaaaaaaaa.', '.aabbbaaaaaaaaa.', '.aaabaaaaaaaaaa.', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', '.cccccccccccccc.', '.cccccccccccccc.', '..cccccccccccc..', '...dd.cccc.dd...', '..ddd......ddd..', '..dd........dd..'];
+  const SPN0 = ['.....b....b.....', '....bab..bab....', '...bbaabbaabb...', '..aaaaaaaaaaaa..', '.aaaabaaaabaaaa.', '.aaabbaaabbaaaa.', 'aaaabbaaaabbaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', '.aaaaaaaaaaaaaa.', '..cccccccccccc..', '.cccccccccccccc.', '.cc.dd....dd.cc.', '..dddd....dddd..', '..ddd......ddd..'];
+  const LAKI = ['.....aaaaaa.....', '...aaaaaaaaaa...', '..aaaaaaaaaaaa..', '..aaaccccccaaa..', '..aaccddccddcc..', '..aaccddccddca..', '..aaaccccccaaa..', '...aaacffcaaa...', '....aaaaaaaa....', '..bbbbbbbbbbbb..', '.bbbbbbbbbbbbbb.', 'bbbbbbbbbbbbbbbb', 'bbbdbbbbbbbbdbbb', 'bbbdbbbbbbbbdbbb', 'bbbbbbbbbbbbbbbb', 'bbbbbbbbbbbbbbbb', '.bbbbbbbbbbbbbb.', '..eebbbbbbbbee..', '...eeeeeeeeee...', '................'];
+  const HBRO0 = ['......aaaa......', '.....aaaaaa.....', '....aaaaaaaa....', '...aaabaabaaa...', '...aabaaaaabaa..', '..ccccccccccc...', '..ccdccccdcccc..', '.cccdccccdccccc.', '.ccccccffcccccc.', '..cccccccccccc..', '...cccccccccc...', '..eecccccceeccc.', '.eeeecccceeeeccc', 'eeeeeeccceeeeecc', 'eeeeeeeeeeeeee..', 'eeebeeeeeeebee..', 'eeeeeeeeeeeeee..', '.eeeeeeeeeeee...', '..cccccccccc....', '..cccc..cccc....', '..cccc..cccc....', '..ccc....ccc....', '.dddd....dddd...', '.dddd....dddd...'];
+  const HBRO1 = HBRO0.slice(0, 18).concat(['..cccc..cccc....', '...ccc..ccc.....', '...ccc..ccc.....', '..dddd..dddd....', '..dddd..dddd....', '................'].slice(0, 6));
   const E16 = '................';
 
   function buildGrids() {
@@ -134,13 +148,16 @@
     S.npc = art(TOAD); S.princess = art(PEACH);
     const flag = grid(16, 16); gPoly(flag, [[16, 0], [16, 16], [0, 1]], 'a'); gRect(flag, 9, 4, 14, 9, 'b'); gRect(flag, 9, 6, 14, 7, 'a'); gRect(flag, 11, 4, 12, 6, 'a'); gRect(flag, 12, 7, 13, 9, 'a');
     S.flag = flag;
-    S.bean = art(['..dd..', '.daad.', 'daaaad', 'daaaad', '.daad.', '..dd..']);
+    S.bean = art(['..aaaa..', '.aaccaa.', 'aaccccaa', 'acaaaaca', 'aaaaaaaa', '..dddd..', '.dbddbd.', '..dddd..']);
+    S.buz0 = art(BUZ0); S.buz1 = art(BUZ1); S.spn0 = art(SPN0); S.spn1 = art(flipH(SPN0)); S.laki = art(LAKI); S.hbro0 = art(HBRO0); S.hbro1 = art(HBRO1);
+    const egg = grid(16, 16); gEll(egg, 8, 9, 5.6, 5.6, 'a'); for (const [x, y] of [[8, 2], [8, 3], [3, 4], [12, 4], [2, 9], [13, 9], [4, 14], [11, 14], [8, 15]]) gs(egg, x, y, 'b'); gRect(egg, 6, 7, 8, 9, 'c'); S.egg = egg;
+    S.squid0 = art(SQUID0); S.squid1 = art(SQUID1); S.fish0 = art(FISH0); S.fish1 = art(FISH1);
     return S;
   }
   const GRIDS = buildGrids();
 
   function area(kind, w, extra) {
-    const a = Object.assign({ kind, w, map: new Uint8Array(w * 15), spawns: [], pipes: [], flag: 0, castle: 0, axe: null, bridge: null, npc: 0, labels: [], camMax: 0 }, extra || {});
+    const a = Object.assign({ kind, w, map: new Uint8Array(w * 15), spawns: [], pipes: [], flag: 0, castle: 0, axe: null, bridge: null, npc: 0, labels: [], coral: [], gen: null, water: kind === 'water', camMax: 0 }, extra || {});
     const set = (x, y, t) => { if (x >= 0 && x < w && y >= 0 && y < 15) a.map[y * w + x] = t; };
     const B = {
       a,
@@ -171,10 +188,21 @@
       pod(x, d = 0) { return B.e('pod', x, 14, { d }); },
       flag(x) { a.flag = x; set(x, 12, T.HARD); a.castle = x + 4; return B; },
       label(x, y, s) { a.labels.push({ x, y, s }); return B; },
-      boss(x0, x1, axe, by, o) {
+      coral(x, t, n) { a.coral.push({ x, t, n }); return B; },
+      gen(x0, x1) { a.gen = [x0, x1]; return B; },
+      mush(x, y, n) {
+        set(x, y, T.MSL); set(x + n - 1, y, T.MSR);
+        for (let i = 1; i < n - 1; i++) set(x + i, y, T.MSM);
+        for (let yy = y + 1; yy < 15; yy++) { if (n & 1) set(x + (n >> 1), yy, T.MSS); else { set(x + n / 2 - 1, yy, T.MSA); set(x + n / 2, yy, T.MSB); } }
+        return B;
+      },
+      bal(xa, ya, xb, yb, yp, w = 3) { return B.e('bal', xa, ya - 1, { xb, yb, yp, w }); },
+      lak(x0, x1) { a.lak = [x0, x1]; return B; },
+      loop(x0, x1, y0, y1, tx, ty) { (a.loops = a.loops || []).push({ x0, x1, y0, y1, tx, ty }); return B; },
+      boss(x0, x1, axe, by, o, ay = by - 1) {
         for (let x = x0; x <= x1; x++) set(x, by, T.BRIDGE);
         set(x1, by - 1, T.CHAIN);
-        a.bridge = { x0, x1, y: by }; a.axe = { x: x1 + 1, y: by - 1 }; set(x1 + 1, by - 1, T.AXE);
+        a.bridge = { x0, x1, y: by }; a.axe = { x: x1 + 1, y: ay }; set(x1 + 1, ay, T.AXE);
         a.camMax = (x1 + 4) * 16 - 256;
         return B.e('boss', x1 - 4, by - 1, Object.assign({ x0: (x0 + 3) * 16, x1: (x1 - 2) * 16, fire: 150 }, o || {}));
       }
@@ -190,9 +218,34 @@
     B.side(12, 12, back);
     return B.a;
   }
+  function heaven(back) {
+    const B = area('sky', 36, { back });
+    B.fill(0, 13, 33, 14, T.CLD).fill(12, 10, 19, 10, T.CLD).fill(21, 7, 28, 7, T.CLD);
+    B.row(3, 12, 'oooooooo').row(12, 9, 'oooooooo').row(21, 6, 'oooooooo').row(24, 12, 'oooooooo');
+    return B.a;
+  }
   function exitArea(time) {
     const B = area('over', 40);
     B.gnd(0, 39).pipe(2, 11).stair(8, 8, 1).fill(16, 5, 16, 12, T.HARD).flag(26);
+    return B.a;
+  }
+
+  function exit12() {
+    const B = area('over', 36);
+    B.gnd(0, 35).pipe(2, 11).stair(4, 8, 1).fill(12, 5, 12, 12, T.HARD).flag(21);
+    return B.a;
+  }
+  function bonus12(back) {
+    const B = area('bonus', 17);
+    B.gnd(0, 16).fill(0, 2, 0, 12, T.BRK).fill(3, 2, 14, 5, T.BRK).fill(13, 6, 14, 10, T.BRK).row(3, 9, 'BBBBBBBBB').row(4, 8, 'oooooooo').row(3, 12, 'ooooooooo').row(12, 9, 'o');
+    B.side(13, 12, back, 2);
+    return B.a;
+  }
+
+  function bonus21(back) {
+    const B = area('bonus', 17);
+    B.gnd(0, 16).fill(0, 2, 0, 12, T.BRK).fill(4, 2, 10, 2, T.BRK).fill(4, 10, 10, 12, T.BRK).row(5, 5, 'ooooo').row(4, 7, 'ooooooo').row(4, 9, 'ooooooo');
+    B.side(13, 12, back, 2);
     return B.a;
   }
 
@@ -214,126 +267,256 @@
       B.stair(181, 8, 1).fill(189, 5, 189, 12, T.HARD).flag(198);
       return [B.a, bonusRoom({ a: 0, x: 163, y: 11, out: 'up' })];
     } },
-    { name: '1-2', time: 400, mid: 92, build() {
-      const B = area('under', 190);
-      B.gnd(0, 79).gnd(82, 87).gnd(90, 119).gnd(128, 189).fill(0, 2, 0, 12, T.BRK).fill(6, 2, 140, 2, T.BRK).fill(147, 2, 189, 2, T.BRK);
-      B.row(10, 9, 'M????').e('walker', 15).e('walker', 16.5);
-      B.fill(22, 11, 23, 12, T.HARD).fill(26, 9, 27, 12, T.HARD).fill(30, 7, 31, 12, T.HARD).row(30, 6, 'oo').e('walker', 28).e('walker', 34);
-      B.row(36, 9, 'BBCBBBB').row(36, 5, 'BBBBBBB').e('snail', 40, 8);
-      B.row(46, 8, 'BBBBBPBB').row(47, 6, 'oooooo').e('walker', 49, 7).e('walker', 51, 7).e('snail', 56);
-      B.pipe(62, 10, { plant: 1 }).e('walker', 66).pipe(68, 9, { plant: 1 }).e('walker', 71.5).pipe(74, 10, { plant: 1 });
-      B.e('snail', 84, 12, { red: 1 });
-      B.row(92, 9, 'BBBB').row(92, 5, 'BLBB').e('walker', 96).e('walker', 97.5).e('walker', 99);
-      B.fill(102, 7, 102, 10, T.BRK).fill(103, 10, 108, 10, T.BRK).fill(109, 7, 109, 10, T.BRK).row(103, 9, 'oooooo').row(105, 6, 'C');
-      B.e('snail', 112, 12, { red: 1 }).e('walker', 115).e('walker', 116.5);
-      B.lift(120.5, 6, 'down', { spd: 1 }).lift(124.5, 12, 'up', { spd: 1 });
-      B.pipe(132, 10, { plant: 1 }).row(136, 9, 'BBBB').row(141, 5, 'BBBBBB').row(141, 4, 'oooooo');
-      B.e('walker', 148).e('walker', 149.5).e('snail', 153);
-      B.side(156, 12, { a: 1, x: 2, y: 11, out: 'up' }, 3);
-      B.gnd(160, 189).fill(160, 3, 161, 12, T.BRK).fill(164, 2, 168, 2, T.E);
-      B.pipe(171, 10, { to: { level: 4 } }).pipe(176, 10, { to: { level: 5 } }).pipe(181, 10, { to: { level: 6 } });
-      B.label(171, 8, '2-1').label(176, 8, '2-2').label(181, 8, '2-3').label(164.5, 5, 'SECRET WARP ZONE!');
-      return [B.a, exitArea()];
+    { name: '1-2', time: 400, mid: 98, build() {
+      const B = area('under', 192), H = T.HARD, K = T.BRK;
+      B.gnd(0, 79).gnd(83, 119).gnd(122, 123).gnd(126, 137).gnd(145, 152).gnd(160, 191);
+      B.fill(0, 2, 0, 12, K).fill(6, 2, 137, 2, K).fill(161, 2, 167, 2, K).fill(170, 2, 186, 2, K).fill(190, 2, 191, 12, K);
+      B.fill(170, 3, 176, 9, K).fill(160, 10, 176, 12, K);
+      B.row(10, 9, 'M????').e('walker', 16, 12).e('walker', 17, 11);
+      B.fill(17, 12, 17, 12, H).fill(19, 11, 19, 12, H).fill(21, 10, 21, 12, H).fill(23, 9, 23, 12, H).fill(25, 9, 25, 12, H).fill(27, 10, 27, 12, H).fill(31, 10, 31, 12, H).fill(33, 11, 33, 12, H);
+      B.row(29, 8, 'C').e('walker', 29);
+      B.row(39, 7, 'B').row(41, 7, 'BBBB').row(46, 7, 'S').row(39, 8, 'BoB').row(44, 8, 'BoB').row(39, 9, 'BBB').row(44, 9, 'BBB').row(41, 5, 'oooo');
+      B.e('snail', 44).e('snail', 45.5);
+      B.fill(52, 5, 53, 9, K).fill(54, 3, 55, 4, K).fill(54, 9, 55, 11, K).e('snail', 59);
+      B.fill(58, 3, 63, 4, K).fill(62, 5, 63, 9, K).row(58, 9, 'BBBBBB').row(58, 8, 'oooo').e('walker', 62).e('walker', 64);
+      B.fill(66, 3, 69, 4, K).fill(67, 5, 67, 9, K).row(68, 9, 'BB').row(68, 8, 'oP').fill(72, 5, 73, 9, K).row(73, 8, 'C').e('walker', 73, 4);
+      B.fill(76, 3, 79, 4, K).row(76, 9, 'BBBB').e('walker', 76, 8).e('walker', 77.5, 8);
+      B.row(84, 5, 'oooooo').fill(84, 7, 89, 8, K);
+      B.e('walker', 99).e('walker', 100.5).e('walker', 102);
+      B.pipe(103, 10, { plant: 1, to: { a: 2, x: 1.5, y: 3, out: 'drop' } }).pipe(109, 9, { plant: 1 }).pipe(115, 11, { plant: 1 }).e('walker', 113);
+      B.fill(122, 10, 123, 12, K);
+      B.stair(133, 4, 1).fill(137, 9, 137, 12, H).e('walker', 135, 8).e('walker', 136.5, 8);
+      B.lift(139.75, 7, 'down', { spd: 1 }).lift(139.75, 13, 'down', { spd: 1 });
+      B.row(145, 8, 'BBBBBP').e('snail', 146);
+      B.lift(154.75, 1, 'up', { spd: 1 }).lift(154.75, 9, 'up', { spd: 1 });
+      B.side(166, 9, { a: 1, x: 2, y: 11, out: 'up' }, 2);
+      B.pipe(178, 10, { to: { level: 12 } }).pipe(182, 10, { to: { level: 8 } }).pipe(186, 10, { to: { level: 4 } });
+      B.label(178, 6, 'WELCOME TO WARP ZONE!').label(178.5, 8, '4').label(182.5, 8, '3').label(186.5, 8, '2');
+      return [B.a, exit12(), bonus12({ a: 0, x: 115, y: 11, out: 'up' })];
     } },
-    { name: '1-3', time: 300, mid: 83, build() {
-      const B = area('tree', 172);
-      B.gnd(0, 15);
-      B.tree(18, 11, 4).tree(23, 8, 6).row(24, 6, 'oooo').e('walker', 27, 7);
-      B.tree(31, 5, 4).row(31, 3, 'oooo').tree(37, 10, 5).e('snail', 40, 9, { red: 1 });
-      B.tree(44, 7, 4).lift(48.5, 8, 'h', { rng: 64, spd: 0.025 });
-      B.tree(57, 10, 7).e('walker', 60, 9).e('walker', 62, 9).row(58, 6, 'ooooo');
-      B.tree(66, 7, 3).tree(71, 11, 5).row(72, 8, 'ooo');
-      B.lift(76.5, 7, 'v', { rng: 64, spd: 0.02 });
-      B.tree(81, 6, 5).row(82, 4, 'ooo').e('snail', 84, 5, { red: 1 });
-      B.tree(88, 9, 4).e('snail', 93, 6, { wing: 'fly', red: 1 }).tree(96, 6, 4);
-      B.lift(100.5, 7, 'h', { rng: 72, spd: 0.022 });
-      B.tree(111, 9, 5).e('walker', 113, 8).tree(118, 5, 3).row(118, 3, 'ooo');
-      B.tree(122, 8, 4).e('snail', 124, 7, { wing: 'hop' });
-      B.lift(127.5, 9, 'v', { rng: 48, spd: 0.025 });
-      B.tree(132, 7, 6).row(133, 5, 'oooo').tree(140, 10, 4);
-      B.gnd(146, 171).stair(148, 6, 1).fill(154, 7, 154, 12, T.HARD).flag(162);
+    { name: '1-3', time: 300, mid: 51, build() {
+      const B = area('tree', 148);
+      B.tree(2, 12, 4).tree(10, 5, 5).tree(8, 9, 8).tree(16, 12, 3).tree(19, 8, 5).tree(24, 4, 7).tree(34, 13, 4).tree(44, 5, 4).tree(43, 13, 5).tree(49, 13, 5);
+      B.tree(54, 9, 3).tree(60, 6, 6).tree(82, 11, 4).tree(88, 7, 8).tree(97, 13, 3).tree(100, 9, 4).tree(106, 9, 4);
+      B.row(11, 4, 'ooo').row(17, 11, 'o').row(21, 2, 'oo').row(34, 6, 'oo').row(44, 4, 'oooo').row(69, 5, 'oo').row(77, 4, 'oo').row(81, 4, 'oo').row(97, 12, 'ooo').row(104, 5, 'oo').row(43, 10, 'u');
+      B.e('snail', 14, 4, { red: 1 }).e('walker', 28, 3).e('walker', 30, 3).e('snail', 60, 4, { wing: 'fly', red: 1 }).e('walker', 64, 4);
+      B.e('snail', 94, 6, { red: 1 }).e('snail', 98, 5, { wing: 'fly', red: 1 }).e('snail', 117, 12, { red: 1 });
+      B.lift(39, 6, 'v', { rng: 112, spd: 0.03 }).lift(70, 8, 'h', { rng: 80, spd: 0.03 }).lift(78, 9, 'h', { rng: 80, spd: 0.03 }).lift(115, 6, 'h', { rng: 40, spd: 0.03 });
+      B.gnd(113, 147).fill(122, 9, 123, 12, T.HARD).fill(124, 7, 125, 12, T.HARD).fill(126, 5, 127, 12, T.HARD).flag(136);
       return [B.a];
     } },
     { name: '1-4', time: 300, castle: 1, build() {
-      const B = area('castle', 170);
-      B.fill(0, 2, 169, 3, T.GND).fill(0, 8, 13, 14, T.GND).fill(14, 11, 24, 14, T.GND);
-      B.lava(25, 27).pod(26).fill(28, 11, 40, 14, T.GND).fbar(33, 7, 6, 0.04).row(37, 7, 'M');
-      B.lava(41, 44).pod(42, 40).pod(44, 90).fill(45, 9, 52, 14, T.GND).fbar(49, 5, 6, -0.045);
-      B.fill(53, 4, 70, 5, T.GND).fill(53, 11, 70, 14, T.GND).fbar(58, 10, 5, 0.05).fbar(65, 6, 5, -0.05, 3);
-      B.lava(71, 74).pod(72).pod(74, 60).fill(75, 10, 90, 14, T.GND).fbar(80, 9, 6, 0.045).fbar(86, 6, 6, -0.045, 1.5).row(83, 6, '?');
-      B.lava(91, 97).fill(94, 9, 94, 14, T.GND).pod(92).pod(96, 70);
-      B.fill(98, 10, 112, 14, T.GND).fbar(104, 9, 6, 0.06).fill(107, 4, 112, 6, T.GND);
-      B.lava(113, 115).pod(114).fill(116, 9, 126, 14, T.GND);
-      B.lava(127, 139).boss(127, 139, 1, 9).fill(140, 9, 169, 14, T.GND);
+      const B = area('castle', 170), G = T.GND, D = Math.PI / 2;
+      B.fill(0, 2, 169, 2, G).fill(0, 9, 5, 14, G).stair(6, 4, -1).fill(6, 13, 9, 14, G);
+      B.lava(10, 13).pod(11).pod(13, 55);
+      B.fill(14, 12, 27, 14, G).row(18, 8, 'M').fbar(22, 8, 6, 0.045, D);
+      B.lava(28, 30).pod(29);
+      B.fill(31, 12, 52, 14, G).fill(31, 3, 52, 7, G).fbar(36, 7, 8, 0.05, 0).fbar(41, 7, 8, -0.05, 2).fbar(46, 7, 8, 0.05, 4);
+      B.lava(53, 55).pod(54);
+      B.fill(56, 12, 80, 14, G).fill(56, 3, 80, 5, G).fbar(62, 6, 8, 0.05, 0).fbar(68, 11, 6, -0.05, 0).fbar(74, 6, 8, 0.05, 2);
+      B.lava(81, 84).pod(82).pod(84, 50);
+      B.fill(85, 10, 96, 14, G).fbar(90, 7, 6, -0.05, D);
+      B.lava(97, 99).pod(98);
+      B.fill(100, 12, 113, 14, G).row(104, 8, 'hhh').row(107, 10, 'ooo');
+      B.fill(114, 9, 125, 14, G);
+      B.lava(126, 138).boss(126, 138, 1, 9).lift(131, 5.5, 'h', { w: 2, rng: 48, spd: 0.025 });
+      B.fill(139, 9, 169, 14, G);
       B.a.npc = 152;
       return [B.a];
     } },
-    { name: '2-1', time: 400, mid: 100, build() {
-      const B = area('over', 226);
-      B.gnd(0, 47).gnd(50, 92).gnd(96, 140).gnd(143, 170).gnd(174, 225);
-      B.row(14, 9, 'B?B').row(15, 5, 'M').e('walker', 20).e('walker', 21.5).e('walker', 23);
-      B.spring(30, 12).row(26, 3, 'oooooooo').e('snail', 34, 12, { wing: 'hop' }).pipe(38, 10, { plant: 1 });
-      B.row(53, 9, 'BB?BB').row(54, 5, 'BBB').e('walker', 55, 4);
-      B.cannon(62, 11, 2).e('walker', 66).e('walker', 67.5).e('walker', 69);
-      B.pipe(72, 9, { plant: 1 }).pipe(78, 10, { to: { a: 1, x: 1.5, y: 3, out: 'drop' } });
-      B.row(84, 9, 'C').e('snail', 86, 12, { red: 1 }).row(88, 5, 'BSBB');
-      B.stair(97, 3, 1).e('snail', 103, 12, { wing: 'hop' }).e('snail', 107, 12, { wing: 'hop' });
-      B.row(106, 9, '?B?B?').row(108, 5, 'u').e('walker', 112).e('walker', 113.5).e('walker', 115);
-      B.cannon(118, 10, 3).pipe(124, 9).e('snail', 128).e('snail', 130, 12, { red: 1 });
-      B.row(132, 9, 'BBBBBBB').row(132, 5, 'BB?BBBB').e('walker', 134, 8).e('walker', 136, 4);
-      B.cannon(146, 11, 2).cannon(152, 10, 3).row(156, 8, 'BBBB').e('snail', 158, 7, { red: 1 });
-      B.spring(162, 12).row(160, 4, 'oooooo').pipe(166, 11);
-      B.stair(176, 4, 1).e('walker', 181).e('walker', 182.5).stair(185, 3, -1);
-      B.stair(190, 8, 1).fill(198, 5, 198, 12, T.HARD).flag(206);
-      return [B.a, bonusRoom({ a: 0, x: 166, y: 11, out: 'up' }, '  oooo  ')];
+    { name: '2-1', time: 400, mid: 83, build() {
+      const B = area('over', 197), H = T.HARD;
+      B.gnd(0, 75).gnd(80, 89).gnd(93, 122).gnd(126, 135).gnd(138, 196);
+      B.row(0, 9, 'PB').stair(4, 5, 1).e('walker', 8, 6).row(12, 5, 'uBBB').row(12, 9, 'h').e('snail', 16).e('snail', 17);
+      B.fill(18, 9, 18, 12, H).fill(19, 11, 19, 12, H).e('walker', 26).e('walker', 27.5).pipe(30, 9, { plant: 1 });
+      B.row(37, 5, '?????').row(37, 9, 'M????').e('snail', 39, 8).e('walker', 43).e('walker', 44.5).e('snail', 50);
+      B.row(53, 5, 'SBBB').row(52, 9, 'B').e('walker', 52).e('walker', 53.5).e('walker', 55).pipe(58, 9, { plant: 1 });
+      B.row(63, 9, '????').row(65, 5, 'BBVBB').row(69, 9, '???').e('walker', 71).e('walker', 72.5).e('walker', 74).row(76, 5, 'BBBB');
+      B.pipe(87, 9, { plant: 1, to: { a: 1, x: 2, y: 3, out: 'drop' } }).e('walker', 87, 8);
+      B.pipe(99, 11, { plant: 1 }).e('walker', 100, 10).e('walker', 104);
+      B.pipe(106, 9, { plant: 1 }).pipe(110, 10, { plant: 1 }).pipe(114, 8, { plant: 1 }).row(109, 5, 'PBBB');
+      B.e('snail', 121).e('snail', 135, 12, { wing: 'hop' }).fill(138, 10, 138, 12, H);
+      B.e('walker', 146).e('walker', 147.5).row(145, 9, 'C').row(148, 5, 'BBBBB').row(154, 9, '?').row(156, 5, 'P').e('snail', 153, 12, { wing: 'hop' }).e('snail', 155, 12, { wing: 'hop' });
+      B.pipe(160, 10, { plant: 1 }).row(169, 9, 'BB').row(170, 5, 'h').e('snail', 169).spring(172, 12).fill(174, 3, 175, 12, H).flag(184);
+      B.a.vineTo = { a: 2, x: 2, y: 12 };
+      return [B.a, bonus21({ a: 0, x: 99, y: 11, out: 'up' }), heaven({ a: 0, x: 70, y: 11 })];
     } },
-    { name: '2-2', time: 400, mid: 100, build() {
-      const B = area('under', 180);
-      B.gnd(0, 30).gnd(33, 60).gnd(64, 95).gnd(100, 140).gnd(149, 179).fill(0, 2, 0, 12, T.BRK).fill(6, 2, 179, 2, T.BRK);
-      B.row(8, 9, '?M?').e('walker', 14).e('walker', 15.5).e('snail', 18, 12, { red: 1 });
-      B.pipe(22, 10, { plant: 1 }).pipe(27, 9, { plant: 1 });
-      B.cannon(36, 11, 2).row(40, 9, 'BBBBBB').row(40, 5, 'BBCBBB').e('snail', 42, 8, { red: 1 }).e('walker', 44, 4);
-      B.e('walker', 48).e('walker', 49.5).e('walker', 51).pipe(54, 10, { plant: 1 }).pipe(58, 9, { plant: 1 });
-      B.fill(66, 11, 67, 12, T.BRK).fill(70, 9, 71, 12, T.BRK).fill(74, 7, 75, 12, T.BRK).row(74, 6, 'oo').e('snail', 72, 12, { wing: 'hop' });
-      B.row(80, 5, 'BBBBBBBB').row(80, 9, 'B P  B').cannon(86, 10, 3).e('walker', 89).e('walker', 90.5).pipe(92, 9, { plant: 1 });
-      B.row(103, 9, 'BBBB').row(103, 5, 'BLBB').e('snail', 106, 12, { red: 1 }).e('walker', 110).e('walker', 111.5).e('walker', 113);
-      B.fill(116, 7, 116, 10, T.BRK).fill(117, 10, 122, 10, T.BRK).fill(123, 7, 123, 10, T.BRK).row(117, 9, 'oooooo');
-      B.pipe(127, 10, { plant: 1 }).pipe(133, 9, { plant: 1 }).e('snail', 137, 12, { wing: 'hop' });
-      B.lift(141.5, 9, 'v', { rng: 64, spd: 0.025 }).lift(145, 9, 'v', { rng: 64, spd: 0.025, ph: 3.1 });
-      B.cannon(152, 11, 2).e('walker', 156).e('walker', 157.5).row(160, 9, 'BB?BB');
-      B.side(172, 12, { a: 1, x: 2, y: 11, out: 'up' }, 3);
-      return [B.a, exitArea()];
+    { name: '2-2', time: 400, mid: 86, build() {
+      const B = area('water', 192), G = T.GND;
+      B.gnd(0, 65).gnd(71, 130).gnd(140, 156).gnd(164, 191);
+      B.fill(18, 9, 20, 9, G).fill(42, 9, 43, 9, G).fill(102, 9, 103, 9, G).fill(172, 9, 176, 9, G).fill(180, 9, 183, 9, G);
+      B.fill(82, 5, 84, 5, G).fill(172, 5, 176, 5, G).fill(180, 5, 183, 5, G).fill(115, 8, 116, 8, G);
+      B.fill(64, 10, 64, 12, G).fill(65, 8, 65, 12, G).fill(71, 8, 71, 12, G).fill(72, 10, 72, 12, G).fill(78, 10, 79, 12, G).fill(78, 2, 79, 4, G);
+      B.fill(129, 9, 129, 12, G).fill(130, 11, 130, 12, G).fill(131, 2, 131, 4, G).fill(131, 4, 139, 4, G).fill(140, 11, 140, 12, G).fill(141, 9, 141, 12, G);
+      B.fill(156, 5, 156, 12, G).fill(156, 5, 158, 5, G).fill(162, 5, 164, 5, G).fill(164, 5, 164, 12, G);
+      B.fill(185, 12, 185, 12, G).fill(186, 11, 186, 12, G).fill(187, 10, 187, 12, G).fill(188, 9, 189, 12, G).fill(188, 2, 191, 5, G).fill(190, 2, 191, 12, G);
+      B.row(14, 12, 'oo').row(27, 5, 'ooo').row(36, 12, 'ooo').row(67, 10, 'ooo').row(101, 11, 'ooo').row(113, 6, 'ooo');
+      B.row(133, 11, 'o').row(134, 12, 'ooo').row(137, 11, 'o').row(159, 9, 'ooo').row(159, 12, 'ooo');
+      B.e('squid', 22, 12).e('squid', 46, 10).e('squid', 55, 11).e('squid', 83, 9).e('squid', 94, 4).e('squid', 105, 12);
+      B.coral(11, 10, 3).coral(33, 8, 5).coral(42, 7, 2).coral(50, 9, 4).coral(83, 3, 2).coral(89, 10, 3).coral(102, 5, 4).coral(120, 9, 4).coral(147, 11, 2).coral(149, 10, 3).coral(173, 3, 2);
+      B.gen(72, 160).side(188, 8, { a: 1, x: 2, y: 11, out: 'up' }, 2);
+      return [B.a, exit12()];
     } },
-    { name: '2-3', time: 300, mid: 90, build() {
-      const B = area('tree', 196);
-      B.gnd(0, 14);
-      B.tree(17, 10, 3).tree(22, 7, 3).e('snail', 25, 5, { wing: 'fly', red: 1 }).lift(26.5, 8, 'h', { rng: 64, spd: 0.025 });
-      B.tree(37, 9, 4).cannon(39, 8, 1).tree(44, 6, 3).tree(49, 10, 5).e('walker', 51, 9).e('walker', 52.5, 9);
-      B.lift(55.5, 7, 'fall').lift(60.5, 9, 'fall');
-      B.tree(66, 8, 4).e('snail', 68, 7, { wing: 'hop' }).tree(71, 8, 3).spring(72, 7).tree(75, 2, 7).row(76, 1, 'ooooo');
-      B.tree(78, 10, 4).lift(83.5, 8, 'v', { rng: 72, spd: 0.022 });
-      B.tree(89, 6, 4).e('snail', 90, 5, { red: 1 }).lift(94.5, 6, 'h', { rng: 80, spd: 0.02 });
-      B.tree(107, 9, 5).e('walker', 109, 8).e('walker', 110.5, 8).e('snail', 114, 5, { wing: 'fly', red: 1 });
-      B.tree(117, 7, 3).tree(122, 10, 4).cannon(124, 9, 1);
-      B.lift(127.5, 9, 'fall').lift(132.5, 8, 'fall');
-      B.tree(138, 6, 5).e('snail', 140, 5, { wing: 'hop' }).tree(145, 10, 3).lift(149.5, 8, 'h', { rng: 64, spd: 0.025 });
-      B.tree(161, 8, 4).gnd(167, 195).stair(170, 8, 1).fill(178, 5, 178, 12, T.HARD).flag(186);
+    { name: '2-3', time: 300, mid: 96, build() {
+      const B = area('tree', 222), br = (x0, x1, y = 10) => B.fill(x0, y, x1, y, T.RB), pl = (x, y = 10) => B.fill(x, y, x, 14, T.HARD);
+      br(0, 46);
+      br(53, 62); br(69, 78); br(84, 88, 9); br(106, 108); br(112, 126); br(131, 138, 12); br(144, 151); br(155, 156); br(159, 160); br(163, 164); br(168, 176);
+      for (const x of [15, 31, 47, 52, 63, 68, 79, 111, 127, 143, 152, 167]) pl(x);
+      pl(83, 9); pl(89, 9); pl(130, 12); pl(139, 12);
+      B.tree(96, 13, 8).tree(176, 13, 13).fill(177, 10, 178, 12, T.HARD).fill(179, 11, 179, 12, T.HARD).fill(180, 12, 180, 12, T.HARD);
+      B.gnd(191, 221).stair(192, 8, 1).fill(200, 5, 200, 12, T.HARD).flag(209);
+      B.row(20, 5, 'oooo').row(39, 5, 'o').row(40, 6, 'o').row(41, 5, 'o').row(42, 6, 'o').row(43, 5, 'o').row(56, 5, 'o').row(57, 4, 'oo').row(59, 5, 'o');
+      B.row(81, 5, 'ooo').row(86, 5, 'M').row(92, 5, 'ooo').row(117, 5, 'oooooo').row(133, 8, 'oooo').row(157, 6, 'oooooo');
+      B.a.jgen = [14, 188];
       return [B.a];
     } },
-    { name: '2-4', time: 300, castle: 2, build() {
-      const B = area('castle', 186);
-      B.fill(0, 2, 185, 3, T.GND).fill(0, 8, 12, 14, T.GND).fill(13, 11, 22, 14, T.GND).row(17, 7, 'M');
-      B.lava(23, 28).pod(24).pod(27, 50).lift(24, 10, 'h', { rng: 40, spd: 0.03 });
-      B.fill(29, 11, 42, 14, T.GND).fbar(34, 10, 6, 0.07).fbar(39, 6, 6, -0.06, 2);
-      B.lava(43, 52).pod(45).pod(50, 45).fill(47, 9, 48, 14, T.GND).fbar(47, 8, 5, 0.06);
-      B.fill(53, 4, 72, 6, T.GND).fill(53, 11, 72, 14, T.GND).fbar(57, 10, 4, 0.08).fbar(62, 7, 4, -0.08, 2).fbar(67, 10, 4, 0.08, 4);
-      B.lava(73, 84).pod(75).pod(79, 30).pod(83, 70).lift(75, 9, 'h', { rng: 96, spd: 0.02 });
-      B.fill(85, 10, 104, 14, T.GND).fbar(92, 6, 12, 0.035).row(98, 6, '?');
-      B.lava(105, 110).pod(107).fill(111, 10, 122, 14, T.GND).fbar(114, 9, 6, -0.07).fbar(119, 9, 6, 0.07, 3.1);
-      B.lava(123, 128).fill(125, 9, 126, 14, T.GND).pod(124).pod(128, 40);
-      B.fill(129, 9, 140, 14, T.GND).fill(133, 4, 140, 6, T.GND);
-      B.lava(141, 153).boss(141, 153, 1, 9, { fire: 100, jump: 3.6 }).fill(154, 9, 185, 14, T.GND);
-      B.a.npc = 166;
+    { name: '2-4', time: 300, castle: 1, build() {
+      const B = area('castle', 145), G = T.GND, D = Math.PI / 2;
+      B.lava(0, 15).pod(0).pod(14, 50).lava(93, 94).lava(97, 98).lava(112, 124);
+      B.fill(2, 9, 3, 9, G).fill(6, 7, 8, 7, G).fill(11, 9, 12, 9, G).row(7, 7, 'U').row(7, 3, 'M');
+      B.gnd(16, 67).gnd(76, 92).gnd(95, 96).gnd(99, 111).gnd(125, 143);
+      B.fill(16, 10, 17, 12, G).fill(64, 10, 67, 12, G).fill(76, 10, 82, 12, G).fill(92, 10, 92, 12, G).fill(95, 10, 96, 12, G).fill(99, 10, 103, 12, G).fill(106, 10, 107, 12, G).fill(110, 10, 111, 12, G).fill(125, 9, 127, 12, G);
+      B.fill(18, 2, 66, 5, G).fill(21, 9, 57, 9, G).fill(77, 2, 82, 4, G).fill(99, 2, 111, 4, G).fill(112, 2, 143, 2, G).fill(126, 3, 127, 5, G);
+      B.row(27, 13, 'U').row(39, 13, 'U').row(51, 13, 'U');
+      B.fbar(33, 9, 6, -0.06, D).fbar(39, 5, 6, -0.06, D).fbar(45, 9, 6, -0.06, D).fbar(57, 9, 6, -0.06, D).fbar(66, 6, 6, -0.06, D).fbar(76, 10, 6, -0.06, D);
+      B.lift(69.75, 10, 'up', { spd: 1, w: 1.5 }).lift(69.75, 2.6, 'up', { spd: 1, w: 1.5 }).lift(72.75, 10, 'down', { spd: 1, w: 1.5 }).lift(72.75, 2.6, 'down', { spd: 1, w: 1.5 });
+      B.row(86, 8, 'ooo').row(86, 12, 'ooo').row(87, 11, 'U').row(112, 5, 'BBBBBB');
+      B.boss(112, 124, 1, 10, { fire: 100, jump: 3.6 }, 8).lift(122, 6, 'h', { w: 2, rng: 48, spd: 0.025 });
+      B.a.npc = 137;
+      return [B.a];
+    } },
+    { name: '3-1', time: 300, mid: 83, build() {
+      const B = area('night', 194), H = T.HARD;
+      B.gnd(0, 28).gnd(32, 60).gnd(69, 69).gnd(72, 111).gnd(116, 125).gnd(128, 160).gnd(164, 193);
+      B.row(0, 9, '?').row(3, 8, '?').row(6, 8, 'M').row(10, 9, 'BBB').e('snail', 9, 12, { wing: 'hop' }).e('snail', 12, 9, { wing: 'fly' });
+      B.pipe(16, 10, { plant: 1 }).pipe(22, 9, { plant: 1, to: { a: 1, x: 2, y: 3, out: 'drop' } }).e('walker', 21).e('walker', 37).e('walker', 38.5);
+      B.e('walker', 40).pipe(41, 10, { plant: 1 }).row(45, 9, 'B').e('snail', 49).pipe(51, 11, { plant: 1 }).stair(57, 4, 1);
+      B.fill(61, 9, 68, 9, T.BRIDGE).fill(69, 9, 69, 12, H).e('walker', 66, 8).e('walker', 67, 8).e('walker', 68, 8).row(66, 5, 'u');
+      B.fill(72, 9, 72, 12, H).fill(73, 11, 73, 12, H).row(74, 5, 'SBB').e('walker', 78).e('walker', 79.5);
+      B.e('snail', 85).pipe(87, 9, { plant: 1 }).row(95, 9, 'BBBBBBBBBBB').row(95, 5, 'BB?BBBMBBB').e('snail', 97, 8).e('snail', 100).spring(110, 12);
+      B.row(113, 5, 'BBV').row(113, 8, 'BBB');
+      B.stair(120, 6, 1).e('walker', 123, 8).e('walker', 124, 7);
+      B.e('snail', 133).row(134, 5, 'B?B').row(134, 9, 'B?B').e('snail', 136, 4).row(139, 5, 'B?B').row(139, 9, 'BMB');
+      B.e('walker', 138).e('walker', 140).e('walker', 141.5).e('hbro', 146, 12);
+      B.e('snail', 149, 12, { wing: 'hop' }).row(150, 9, 'BCBBB').e('snail', 152, 11, { wing: 'hop' }).e('snail', 154, 7, { wing: 'fly' }).e('snail', 155, 12, { wing: 'hop' });
+      B.fill(158, 10, 158, 12, H).fill(159, 7, 159, 12, H);
+      B.stair(167, 8, 1).fill(175, 5, 175, 12, H).e('snail', 172, 6).e('snail', 175, 4).flag(184);
+      B.a.vineTo = { a: 2, x: 2, y: 12 };
+      return [B.a, bonus21({ a: 0, x: 51, y: 11, out: 'up' }), heaven({ a: 0, x: 145, y: 2 })];
+    } },
+    { name: '3-2', time: 300, mid: 83, build() {
+      const B = area('night', 203), H = T.HARD;
+      B.gnd(0, 63).gnd(66, 106).gnd(109, 111).gnd(114, 202);
+      B.e('snail', 1, 12, { wing: 'hop' }).e('walker', 8).e('walker', 9.5).e('walker', 11).e('snail', 17).e('snail', 19).e('snail', 21).e('snail', 27).e('snail', 29);
+      B.fill(33, 12, 33, 12, H).row(39, 9, 'ooo').row(44, 6, 'M').fill(44, 10, 44, 12, H);
+      B.e('snail', 50).e('walker', 55).e('walker', 56.5).e('walker', 58).fill(59, 11, 59, 12, H).row(61, 5, 'S').row(61, 9, 'C').e('snail', 62).fill(63, 11, 63, 12, H);
+      B.e('snail', 76, 12, { wing: 'hop' }).e('snail', 95).e('walker', 103).e('walker', 104.6).e('walker', 106);
+      B.fill(110, 11, 110, 12, H).row(110, 6, 'B').e('snail', 118);
+      B.e('snail', 124).e('snail', 126).e('snail', 127).e('snail', 134).e('snail', 136).e('snail', 146).e('snail', 147.5).e('snail', 149);
+      B.pipe(153, 10, { plant: 1 }).row(152, 6, 'oooo').e('snail', 159);
+      B.e('walker', 163).e('walker', 165).e('walker', 166.5).e('walker', 172).e('walker', 173.8).e('walker', 175);
+      B.stair(176, 8, 1).fill(184, 5, 184, 12, H).flag(193);
+      return [B.a];
+    } },
+    { name: '3-3', time: 300, mid: 50, build() {
+      const B = area('night', 148);
+      B.mush(2, 10, 5).mush(7, 7, 5).mush(14, 13, 3).mush(20, 12, 7).mush(27, 9, 4).mush(31, 7, 6).mush(30, 11, 10).mush(39, 3, 4);
+      B.mush(49, 7, 3).mush(53, 7, 3).mush(57, 7, 3).mush(61, 4, 3).mush(49, 13, 16).mush(68, 11, 4);
+      B.mush(81, 9, 3).mush(88, 5, 4).mush(92, 7, 3).mush(91, 11, 5).mush(100, 13, 3).mush(103, 10, 11);
+      B.gnd(128, 147).flag(135);
+      B.row(15, 12, 'oo').row(21, 6, 'o').row(26, 6, 'ooo').row(36, 9, 'ooo').row(33, 3, 'M').row(40, 2, 'oo');
+      B.row(50, 6, 'o').row(54, 6, 'o').row(58, 6, 'o').row(62, 3, 'o').row(65, 5, 'o').row(72, 5, 'o').row(74, 5, 'o');
+      B.row(89, 4, 'oo').row(93, 6, 'o').row(92, 10, 'o');
+      B.e('walker', 10, 6).e('snail', 36, 6, { red: 1 }).e('snail', 38, 10, { red: 1 }).e('snail', 57, 12, { red: 1 }).e('snail', 98, 5, { wing: 'fly', red: 1 });
+      B.e('snail', 108, 9, { red: 1 }).e('snail', 110, 9, { red: 1 });
+      B.lift(14, 4, 'h', { rng: 48, spd: 0.025 }).lift(17, 8, 'h', { rng: 48, spd: 0.025 }).lift(44, 6, 'h', { rng: 48, spd: 0.025 });
+      B.lift(78, 9, 'h', { rng: 40, spd: 0.025 }).lift(80, 5, 'h', { rng: 40, spd: 0.025 }).lift(87, 11, 'h', { rng: 40, spd: 0.025 }).lift(116, 6, 'h', { rng: 48, spd: 0.025 });
+      B.bal(65, 6, 72, 8, 2).bal(120, 5, 124, 8, 2);
+      return [B.a];
+    } },
+    { name: '3-4', time: 300, castle: 1, build() {
+      const B = area('castle', 144), G = T.GND, D = Math.PI / 2;
+      B.fill(0, 2, 143, 2, G).fill(19, 3, 29, 4, G).fill(37, 3, 39, 4, G).fill(47, 3, 49, 4, G).fill(63, 3, 65, 4, G).fill(74, 3, 79, 4, G).fill(95, 3, 111, 4, G).fill(116, 3, 117, 5, G);
+      B.lava(0, 1).pod(0).lava(5, 6).lava(10, 11).pod(10).lava(15, 16);
+      B.fill(2, 10, 4, 14, G).fill(7, 10, 9, 14, G).fill(12, 10, 14, 14, G).fill(17, 10, 18, 14, G).gnd(19, 29);
+      B.fbar(3, 11, 6, 0.05, D).fbar(8, 11, 6, -0.05, D).fbar(13, 11, 6, 0.05, D);
+      B.row(26, 9, '?M?').lava(30, 31).gnd(32, 71);
+      B.fill(37, 12, 39, 14, G).fbar(38, 5, 6, 0.05, D).fbar(38, 11, 6, -0.05, D);
+      B.fill(47, 12, 49, 14, G).fbar(48, 5, 6, -0.05, D).fbar(48, 11, 6, 0.05, D);
+      B.fill(63, 12, 65, 14, G).fbar(64, 5, 6, 0.05, D).fbar(64, 11, 6, -0.05, D).row(65, 6, 'ooo');
+      B.lava(72, 73).pod(72).fill(74, 10, 79, 14, G).lava(80, 82).pod(81).fill(83, 10, 85, 14, G).lava(86, 88).pod(87).fill(89, 10, 91, 14, G).lava(92, 94).pod(93);
+      B.fill(95, 10, 99, 14, G).gnd(100, 101).fill(102, 10, 111, 14, G);
+      B.lava(112, 124).boss(112, 124, 1, 10).lift(122, 6, 'h', { w: 2, rng: 48, spd: 0.025 });
+      B.fill(125, 10, 127, 14, G).fill(126, 3, 127, 5, G).gnd(128, 143);
+      B.a.npc = 137;
+      return [B.a];
+    } },
+    { name: '4-1', time: 400, mid: 83, build() {
+      const B = area('over', 224), H = T.HARD;
+      B.gnd(0, 15).gnd(18, 61).gnd(66, 132).gnd(135, 157).gnd(161, 163).gnd(166, 173).gnd(176, 223);
+      B.pipe(5, 10, { plant: 1 }).row(9, 5, '?').row(9, 9, 'M').row(25, 9, 'o').row(26, 8, 'oo').row(28, 9, 'o');
+      B.row(48, 5, '? ?').row(48, 9, '? ?').row(74, 9, '????').row(76, 5, 'u');
+      B.fill(87, 10, 87, 12, H).row(89, 6, 'oooo').pipe(100, 9, { plant: 1 }).row(103, 6, 'oooo');
+      B.pipe(116, 9, { plant: 1, to: { a: 1, x: 2, y: 3, out: 'drop' } }).row(119, 6, 'oooo');
+      B.row(130, 9, '??MBB???').row(132, 5, '????').pipe(147, 11, { plant: 1 });
+      B.fill(173, 10, 173, 12, H).stair(192, 8, 1).fill(200, 5, 200, 12, H).row(204, 9, 'C').flag(209).lak(0, 200);
+      return [B.a, bonus21({ a: 0, x: 147, y: 11, out: 'up' })];
+    } },
+    { name: '4-2', time: 400, mid: 99, build() {
+      const B = area('under', 196), K = T.BRK, H = T.HARD;
+      B.gnd(0, 10).gnd(13, 14).gnd(17, 17).gnd(21, 56).gnd(63, 104).gnd(107, 108).gnd(111, 112).gnd(119, 122).gnd(129, 143).gnd(146, 154).gnd(160, 182).gnd(185, 195);
+      B.fill(0, 2, 0, 12, K).fill(6, 2, 19, 2, K).fill(20, 2, 47, 5, K).fill(48, 2, 56, 2, K).fill(67, 2, 111, 2, K).fill(119, 2, 122, 2, K).fill(128, 2, 154, 2, K).fill(160, 2, 175, 5, K).fill(176, 2, 188, 2, K).fill(160, 6, 160, 7, K);
+      B.fill(22, 9, 26, 10, K).row(27, 9, 'BM').row(27, 12, 'ooo').fill(30, 9, 47, 10, K);
+      B.e('walker', 34).e('walker', 37).e('walker', 41);
+      B.row(50, 5, '??').row(50, 9, '??').row(54, 9, '?M?');
+      B.lift(59, 5, 'down', { spd: 1 }).lift(59, 12, 'down', { spd: 1 });
+      B.row(64, 5, 'VBB').row(64, 7, 'h').row(63, 8, 'h').row(65, 8, 'h').row(66, 9, 'h');
+      B.pipe(72, 10, { plant: 1 }).pipe(78, 6, { plant: 1 }).e('snail', 77, 12, { bz: 1 }).row(76, 9, 'BC');
+      B.row(80, 9, 'BS').row(87, 8, 'B').pipe(84, 10, { plant: 1, to: { a: 2, x: 2, y: 3, out: 'drop' } }).pipe(89, 10, { plant: 1 });
+      B.e('snail', 83, 12, { bz: 1 }).e('snail', 88, 12, { bz: 1 }).e('snail', 100).e('snail', 101.5);
+      B.fill(103, 11, 103, 12, H).fill(104, 10, 104, 12, H).pipe(107, 9, { plant: 1 }).fill(111, 10, 112, 12, H);
+      B.lift(114.75, 5, 'down', { spd: 1 }).lift(114.75, 12, 'down', { spd: 1 });
+      B.row(119, 5, 'BMB').row(119, 9, 'BBBB');
+      B.lift(123.75, 2, 'up', { spd: 1 }).lift(123.75, 9, 'up', { spd: 1 });
+      B.pipe(131, 11, { plant: 1 }).pipe(138, 10, { plant: 1 }).pipe(142, 9, { plant: 1 }).e('snail', 137);
+      B.stair(152, 3, 1).e('snail', 154, 9, { bz: 1 });
+      B.lift(155.75, 5, 'down', { spd: 1 }).lift(155.75, 12, 'down', { spd: 1 });
+      B.row(161, 9, 'MBBBBBBBBBB').row(162, 8, 'oooooooooo').e('snail', 168).e('snail', 169.5);
+      B.stair(173, 4, 1).e('snail', 179, 12, { bz: 1 }).pipe(180, 6, { plant: 1 });
+      B.fill(185, 10, 190, 12, K).fill(191, 2, 195, 12, K).side(187, 9, { a: 1, x: 2, y: 11, out: 'up' }, 2);
+      B.a.vineTo = { a: 3, x: 2, y: 12 };
+      return [B.a, exit12(), bonus21({ a: 0, x: 131, y: 11, out: 'up' }), heaven({ a: 0, x: 68, y: 11 })];
+    } },
+    { name: '4-3', time: 300, mid: 51, build() {
+      const B = area('over', 143);
+      B.mush(0, 13, 5).mush(3, 5, 5).mush(7, 9, 7).mush(16, 4, 3).mush(23, 5, 5).mush(20, 12, 7).mush(28, 9, 3).mush(35, 8, 3);
+      B.mush(51, 7, 3).mush(54, 3, 3).mush(56, 9, 3).mush(58, 5, 5).mush(68, 9, 3).mush(83, 11, 3).mush(89, 10, 3);
+      B.mush(97, 9, 5).mush(101, 6, 3).mush(105, 13, 7).mush(114, 10, 5).mush(49, 13, 6);
+      B.gnd(125, 142).flag(131);
+      B.row(4, 4, 'ooo').row(8, 8, 'oooo').row(22, 11, 'o').row(24, 11, 'o').row(27, 2, 'M').row(32, 7, 'o').row(41, 3, 'o');
+      B.row(51, 6, 'ooo').row(54, 2, 'ooo').row(57, 8, 'o').row(80, 7, 'o').row(88, 4, 'o').row(97, 8, 'ooooo');
+      B.e('snail', 12, 8, { red: 1 }).e('snail', 13, 8, { red: 1 }).e('snail', 20, 3, { wing: 'fly', red: 1 }).e('snail', 23, 11, { red: 1 });
+      B.e('snail', 52, 12, { red: 1 }).e('snail', 62, 4, { red: 1 });
+      B.bal(32, 5, 39, 8, 2).bal(64, 5, 72, 9, 2).bal(75, 5, 80, 9, 2).bal(86, 5, 92, 9, 2);
+      B.lift(42, 6, 'v', { rng: 64, spd: 0.03 }).lift(46, 4, 'v', { rng: 64, spd: 0.03 }).lift(120, 5, 'v', { rng: 64, spd: 0.03 });
+      return [B.a];
+    } },
+    { name: '4-4', time: 300, castle: 2, build() {
+      const B = area('castle', 176), G = T.GND, D = Math.PI / 2;
+      B.fill(0, 2, 130, 2, G).fill(136, 2, 175, 2, G).fill(158, 3, 159, 5, G).fill(129, 3, 130, 4, G);
+      B.gnd(0, 71).fill(74, 10, 74, 14, G).gnd(79, 143).lava(72, 73).lava(75, 78);
+      B.fill(2, 6, 7, 9, G).fill(19, 6, 21, 9, G).fill(22, 6, 27, 6, G).fill(28, 6, 58, 9, G);
+      for (const c of [9, 11, 13, 15, 17]) B.fill(c, 6, c, 9, G);
+      B.pipe(24, 10, { plant: 1 }).fbar(37, 6, 6, 0.05, D).fbar(44, 9, 6, -0.05, D);
+      B.fill(61, 3, 63, 5, G).fill(61, 10, 63, 12, G);
+      B.fill(70, 10, 71, 10, G).fill(74, 10, 78, 10, G).fill(77, 7, 77, 7, G).fill(78, 8, 78, 9, G).fill(79, 6, 79, 7, G);
+      B.fill(80, 6, 81, 6, G).fill(84, 6, 87, 6, G).fill(89, 6, 91, 6, G).fill(89, 7, 89, 9, G).fill(94, 6, 128, 6, G).fill(80, 10, 127, 10, G).fill(128, 5, 128, 9, G);
+      B.fbar(99, 6, 6, 0.05, D).fbar(106, 10, 6, -0.05, D);
+      B.fill(136, 10, 139, 12, G).fill(142, 10, 143, 12, G);
+      B.lava(144, 156).boss(144, 156, 1, 10).fbar(146, 11, 6, 0.06, D).pod(149);
+      B.fill(157, 10, 159, 14, G).gnd(160, 175);
+      B.loop(55, 58, 10, 13, 2, 5).loop(126, 128, 3, 10, 64, 8);
+      B.a.npc = 170;
       return [B.a];
     } }
   ];
@@ -354,13 +537,14 @@
       score: carry.score || 0, coins: carry.coins || 0, lives: carry.lives == null ? 3 : carry.lives,
       state: 'play', st: 0, tp: 0, result: null, warp: 0, ev: [], prev: 0, rng: (seed >>> 0) || 1, mid: false, pit: false,
       flagY: 48, cflag: 0, fw: 0, fwn: 0, pipe: null, msg: 0, bx: 0,
-      p: { x: 40, y: 208, vx: 0, vy: 0, face: 1, big: !!carry.big, fire: !!carry.fire, ground: true, jh: false, g1: CFG.jumpHeld[0], g2: CFG.jumpFall[0], airMax: CFG.maxWalk, jumpSpd: 0, run: 0, crouch: false, skid: false, star: 0, inv: 0, chain: 0, schain: 0, anim: 0, at: 0, lift: null, spring: null, throwT: 0, hide: false, behind: false }
+      p: { vine: null, vcd: 0, x: 40, y: 208, vx: 0, vy: 0, face: 1, big: !!carry.big, fire: !!carry.fire, ground: true, jh: false, g1: CFG.jumpHeld[0], g2: CFG.jumpFall[0], airMax: CFG.maxWalk, jumpSpd: 0, run: 0, crouch: false, skid: false, star: 0, inv: 0, chain: 0, schain: 0, anim: 0, at: 0, lift: null, spring: null, throwT: 0, hide: false, behind: false }
     };
     W.A = W.areas[0];
     const p = W.p, c = fromMid && L.mid ? L.mid : 3;
-    let r = 14;
-    while (r > 2 && solidAt(W.A, c, r)) r--;
-    p.y = (r + 1) * 16;
+    if (W.A.water) { p.y = 80; p.ground = false; }
+    let r = 4;
+    while (r < 14 && !solidAt(W.A, c, r)) r++;
+    if (!W.A.water) p.y = r * 16;
     if (fromMid && L.mid) {
       p.x = c * 16; W.mid = true;
       W.cam = Math.max(0, p.x - 40);
@@ -389,7 +573,7 @@
     if (W.state === 'die') return;
     const p = W.p;
     W.state = 'die'; W.st = 0; W.pit = !!pit;
-    p.big = false; p.fire = false; p.star = 0; p.crouch = false; p.vx = 0; p.vy = 0; p.lift = null; p.spring = null;
+    p.big = false; p.fire = false; p.star = 0; p.crouch = false; p.vx = 0; p.vy = 0; p.lift = null; p.spring = null; p.vine = null;
     ev(W, 'die');
   }
   function hurt(W) {
@@ -488,6 +672,21 @@
     updFx(W);
     camera(W);
     spawn(W);
+    const j = W.A.jgen;
+    if (j && p.x > j[0] * 16 && p.x < j[1] * 16 && (W.jt = (W.jt || 0) + 1) % 48 === 0 && W.ents.filter(e => e.t === 'fish').length < 3) {
+      const e = mkEnt({ t: 'fish', x: W.cam + 24 + rnd(W) * 220, y: 262, o: { red: true } });
+      e.jf = true; e.vx = -0.3 - rnd(W) * 0.5; e.vy = -(5.2 + rnd(W) * 1.2); W.ents.push(e);
+    }
+    const lk = W.A.lak;
+    if (lk && p.x > lk[0] * 16 && p.x < lk[1] * 16) {
+      if (W.ents.some(e => e.t === 'lak' && !e.gone && e.st !== 2)) W.lt = 0;
+      else if ((W.lt = (W.lt || 0) + 1) > 150) { W.lt = 0; W.ents.push(mkEnt({ t: 'lak', x: W.cam + 272, y: 52, o: {} })); }
+    }
+    const g = W.A.gen;
+    if (g && p.x > g[0] * 16 && p.x < g[1] * 16 && (W.gt = (W.gt || 0) + 1) % 80 === 0 && W.ents.filter(e => e.t === 'fish').length < 4) {
+      const y = Math.round(56 + rnd(W) * 130);
+      W.ents.push(mkEnt({ t: 'fish', x: W.cam + 262, y, o: { red: rnd(W) < 0.5 } }));
+    }
   }
 
   function player(W, inp, pr) {
@@ -496,6 +695,7 @@
     if (p.throwT > 0) p.throwT--;
     if (inp & 32) p.run = CFG.runTimer; else if (p.run > 0) p.run--;
     if (p.spring) { springRide(W, inp, pr); return; }
+    if (p.vine) { climb(W, inp, pr); return; }
     if (p.lift) {
       const l = p.lift;
       if (l.gone || p.x + 13 <= l.x || p.x + 3 >= l.x + l.w) p.lift = null;
@@ -507,7 +707,11 @@
       for (const e of W.ents) if (e.t === 'fb') n++;
       if (n < CFG.fbMax) { W.ents.push({ t: 'fb', x: p.x + (p.face > 0 ? 14 : 2), y: p.y - (p.big ? 20 : 8), vx: p.face * CFG.fbSpeed, vy: CFG.fbDown, st: 0, tm: 0, gone: false }); p.throwT = 8; ev(W, 'fire'); }
     }
-    if (p.ground && (pr & 16)) {
+    if (p.sw > 0) p.sw--;
+    if (A.water && (pr & 16) && p.y - ph(p) > 40) {
+      p.vy = -1.35; p.ground = false; p.lift = null; p.sw = 14; p.jh = false;
+      ev(W, 'kick');
+    } else if (!A.water && p.ground && (pr & 16)) {
       const s = Math.abs(p.vx), r = rowOf(s);
       p.vy = -CFG.jumpV[r]; p.g1 = CFG.jumpHeld[r]; p.g2 = CFG.jumpFall[r];
       p.jh = true; p.ground = false; p.lift = null; p.jumpSpd = s; p.airMax = s > CFG.maxWalk ? CFG.maxRun : CFG.maxWalk;
@@ -516,7 +720,11 @@
     const dir = (right ? 1 : 0) - (left ? 1 : 0);
     let s = Math.abs(p.vx);
     const sg = Math.sign(p.vx);
-    if (p.ground) {
+    if (A.water) {
+      const tv = dir * (p.ground ? 0.95 : 1.25), dv = tv - p.vx;
+      p.vx += Math.sign(dv) * Math.min(Math.abs(dv), dir ? 0.06 : 0.035);
+      if (dir) p.face = dir;
+    } else if (p.ground) {
       const max = p.run > 0 ? CFG.maxRun : CFG.maxWalk;
       p.skid = false;
       if (dir && !p.crouch) {
@@ -537,7 +745,7 @@
       else { s -= s >= CFG.maxWalk ? CFG.runAcc : p.jumpSpd >= CFG.airDecThr ? CFG.relDec : CFG.walkAcc; p.vx = sg * s; }
     }
     if (p.ground && down) for (const q of A.pipes) if (q.k === 'down' && Math.abs(p.y - q.y * 16) < 0.01 && p.x + 8 >= q.x * 16 + 4 && p.x + 8 <= q.x * 16 + 28) { startPipe(W, q); return; }
-    if (p.ground && right) for (const q of A.pipes) if (q.k === 'side' && Math.abs(p.y - (q.y + 1) * 16) < 0.01 && p.x + 13 >= q.x * 16 - 0.5 && p.x < q.x * 16) { startPipe(W, q); return; }
+    if (right) for (const q of A.pipes) if (q.k === 'side' && (A.water ? p.y > q.y * 16 + 4 && p.y <= (q.y + 1) * 16 + 14 : p.ground && Math.abs(p.y - (q.y + 1) * 16) < 0.01) && p.x + 13 >= q.x * 16 - 0.5 && p.x < q.x * 16) { startPipe(W, q); return; }
     p.x += p.vx;
     if (p.x < W.cam - 3) { p.x = W.cam - 3; if (p.vx < 0) p.vx = 0; }
     collideX(W);
@@ -545,12 +753,16 @@
     p.y += p.vy;
     p.ground = false;
     if (p.vy < 0) { headCheck(W); p.lift = null; } else { floorCheck(W, py); if (!p.ground) liftCheck(W, py); }
+    if (A.water && p.y - ph(p) < 34) { p.y = 34 + ph(p); if (p.vy < 0) p.vy = 0; }
     if (p.ground) { p.vy = 0; p.chain = 0; p.jh = false; }
     else {
       if (wasG && p.vy >= 0) { const r = rowOf(Math.abs(p.vx)); p.g1 = CFG.jumpHeld[r]; p.g2 = CFG.jumpFall[r]; p.jh = false; p.jumpSpd = Math.abs(p.vx); p.airMax = p.jumpSpd > CFG.maxWalk ? CFG.maxRun : CFG.maxWalk; }
       if (!aH) p.jh = false;
-      p.vy += (p.vy < 0 && p.jh) ? p.g1 : p.g2;
-      if (p.vy >= CFG.maxFall) p.vy = CFG.fallReset;
+      if (A.water) p.vy = Math.min(p.vy + 0.045, 0.95);
+      else {
+        p.vy += (p.vy < 0 && p.jh) ? p.g1 : p.g2;
+        if (p.vy >= CFG.maxFall) p.vy = CFG.fallReset;
+      }
     }
     if (p.spring) return;
     const h = ph(p), bt = p.y - h + 2;
@@ -561,8 +773,15 @@
         else if (t === T.AXE) { startAxe(W); return; }
         else if ((t === T.LAVA || t === T.LAVT) && p.y >= r * 16 + 6) { killPlayer(W, true); return; }
       }
-    if (p.y > 256) { killPlayer(W, true); return; }
-    if (A.flag && p.x + 13 >= A.flag * 16 + 6 && p.x + 3 <= A.flag * 16 + 10) { startFlag(W); return; }
+    vineGrab(W, inp);
+    if (p.vine) return;
+    if (A.loops) for (const q of A.loops) if (p.x >= q.x0 * 16 && p.x < q.x1 * 16 && p.y >= q.y0 * 16 && p.y <= q.y1 * 16) {
+      p.x = q.tx * 16 + (p.x - q.x0 * 16); if (q.ty != null) { p.y = q.ty * 16; p.vy = 0; } W.cam = Math.max(0, p.x - 80); W.ents = [];
+      for (const sp of A.spawns) sp.done = false;
+      spawn(W); ev(W, 'bump'); break;
+    }
+    if (p.y > 256) { if (A.back) { travel(W, A.back); return; } killPlayer(W, true); return; }
+    if (A.flag && p.x + 13 >= A.flag * 16 - 0.5 && p.x + 3 <= A.flag * 16 + 10) { startFlag(W); return; }
     if (L.mid && W.ai === 0 && p.x >= L.mid * 16) W.mid = true;
     if (p.ground) {
       const sp = Math.abs(p.vx);
@@ -571,6 +790,33 @@
     }
   }
 
+  function vineGrab(W, inp) {
+    const p = W.p;
+    if (p.vcd > 0) { p.vcd--; return; }
+    if (p.ground && !(inp & 12)) return;
+    for (const e of W.ents) if (e.t === 'vine' && !e.gone && Math.abs(p.x + 8 - (e.x + 8)) < 6 && p.y > e.top + 8 && p.y - ph(p) < e.base) {
+      p.vine = e; p.x = e.x; p.vx = 0; p.vy = 0; p.ground = false; p.lift = null; p.crouch = false; p.skid = false;
+      return;
+    }
+  }
+  function climb(W, inp, pr) {
+    const p = W.p, e = p.vine, A = W.A;
+    if (e.gone) { p.vine = null; return; }
+    p.x = e.x; p.vx = 0; p.vy = 0; p.ground = false;
+    if (inp & 1) p.face = -1; else if (inp & 2) p.face = 1;
+    if ((pr & 16) && !(inp & 8)) {
+      p.vine = null; p.vcd = 16; p.vy = -CFG.jumpV[0]; p.vx = (inp & 2 ? 1 : inp & 1 ? -1 : 0) * 1.2; p.jh = true;
+      p.g1 = CFG.jumpHeld[0]; p.g2 = CFG.jumpFall[0]; p.airMax = CFG.maxWalk; p.jumpSpd = 0;
+      ev(W, 'jump');
+      return;
+    }
+    if (inp & 8) { p.y -= 0.8; p.cl = (p.cl || 0) + 1; } else if (inp & 4) { p.y += 0.8; p.cl = (p.cl || 0) + 1; }
+    if (p.y - ph(p) <= 8) {
+      if (A.vineTo) { travel(W, A.vineTo); return; }
+      p.y = 8 + ph(p);
+    }
+    if (p.y >= e.base) { p.y = e.base; p.vine = null; p.vcd = 10; p.ground = true; }
+  }
   function collideX(W) {
     const p = W.p, A = W.A, h = ph(p);
     const r0 = Math.floor((p.y - h + 2) / 16), r1 = Math.floor((p.y - 1) / 16);
@@ -632,6 +878,7 @@
   }
   function travel(W, to) {
     const p = W.p;
+    p.vine = null; p.vcd = 0;
     if (to.level != null) { W.state = 'done'; W.result = 'warp'; W.warp = to.level; return; }
     enterArea(W, to.a);
     const A = W.A;
@@ -696,13 +943,13 @@
     if (W.cam < 0) W.cam = 0;
   }
   function spawn(W) {
-    for (const s of W.A.spawns) if (!s.done && s.x < W.cam + 256 + 24) { s.done = true; if (s.x + 64 >= W.cam) W.ents.push(mkEnt(s)); }
+    for (const s of W.A.spawns) if (!s.done && s.x < W.cam + 256 + 24) { s.done = true; if (s.x + 64 >= W.cam) { const e = mkEnt(s); W.ents.push(e); if (e.pend) { W.ents.push(e.pend); e.pend = null; } } }
   }
   function mkEnt(s) {
     const o = s.o, e = { t: s.t, x: s.x, y: s.y, vx: 0, vy: 0, gone: false, st: 0, tm: 0, h: 16, ground: false };
     switch (s.t) {
-      case 'walker': e.vx = -CFG.eSpeed; break;
-      case 'snail': e.vx = -CFG.eSpeed; e.red = !!o.red; e.wing = o.wing || ''; e.y0 = s.y; e.ph = 0; break;
+      case 'walker': e.vx = -CFG.eSpeed; e.sp = !!o.sp; break;
+      case 'snail': e.vx = -CFG.eSpeed; e.red = !!o.red; e.bz = !!o.bz; e.wing = o.wing || ''; e.y0 = s.y; e.ph = 0; break;
       case 'plant': e.y0 = s.y; e.off = 0; e.tm = 40; break;
       case 'cannon': e.tm = 40; break;
       case 'firebar': e.cx = s.x + 8; e.cy = s.y - 8; e.n = o.n; e.spd = o.spd; e.ang = o.a0 || 0; break;
@@ -710,6 +957,16 @@
       case 'boss': e.hp = CFG.bossHp; e.x0 = o.x0; e.x1 = o.x1; e.fire = o.fire; e.jv = o.jump || 3; e.ft = 60; e.jt = 120; e.mt = 60; e.dir = -1; e.face = -1; e.h = 32; break;
       case 'lift': e.w = o.w * 16; e.kind = o.kind; e.x0 = s.x; e.y0 = s.y; e.rng = o.rng; e.spd = o.spd; e.ph = o.ph || 0; e.dx = 0; e.dy = 0; break;
       case 'spring': e.comp = 0; break;
+      case 'hbro': e.h = 24; e.hx = s.x; e.dir = -1; e.mt = 30; e.jt = 50; e.ft = 70; e.face = -1; break;
+      case 'lak': e.h = 20; e.ft = 100; break;
+      case 'bal': {
+        const b = { t: 'lift', x: o.xb * 16, y: o.yb * 16, vx: 0, vy: 0, gone: false, st: 0, tm: 0, h: 16, ground: false, kind: 'bal', w: o.w * 16, m: 0, x0: o.xb * 16, y0: o.yb * 16, dx: 0, dy: 0, yp: o.yp * 16, fl: 0, d: 0, rng: 0, spd: 0, ph: 0 };
+        e.t = 'lift'; e.kind = 'bal'; e.w = o.w * 16; e.m = 1; e.x0 = s.x; e.y0 = s.y; e.dx = 0; e.dy = 0; e.yp = o.yp * 16; e.fl = 0; e.d = 0; e.rng = 0; e.spd = 0; e.ph = 0;
+        e.pr = b; b.pr = e; e.pend = b;
+        break;
+      }
+      case 'squid': e.h = 24; e.ph = 0; e.dir = -1; break;
+      case 'fish': e.h = 16; e.y0 = s.y; e.ph = 0; e.red = !!o.red; e.vx = e.red ? -0.95 : -0.55; break;
     }
     return e;
   }
@@ -747,6 +1004,12 @@
     chainPts(W, CFG.stompPts, p.schain++, e.x, e.y - 16);
     ev(W, 'kick');
   }
+  function stompKill(W, e, pts) {
+    const p = W.p;
+    p.vy = -CFG.stompV; p.jh = !!(W.prev & 16); p.ground = false; p.lift = null;
+    flip(e, p.x < e.x ? 1 : -1);
+    addScore(W, pts, e.x, e.y - e.h); ev(W, 'stomp');
+  }
   function bounce(W, e) {
     const p = W.p;
     p.vy = -CFG.stompV; p.jh = !!(W.prev & 16); p.ground = false; p.lift = null;
@@ -756,12 +1019,33 @@
   }
 
   const UPD = {
+    squid(W, e) {
+      if (e.st === 2) return flipFall(e);
+      const p = W.p;
+      e.tm++;
+      if (e.st === 0) {
+        e.y = Math.min(e.y + 0.45, 208);
+        if (e.tm > 14 && (e.y > p.y + 22 || e.tm > 70)) { e.st = 1; e.tm = 0; e.dir = p.x + 8 < e.x + 8 ? -1 : 1; }
+      } else {
+        e.y = Math.max(e.y - (1.7 - e.tm * 0.06), 60); e.x += e.dir * 0.9;
+        if (e.tm >= 18) { e.st = 0; e.tm = 0; }
+      }
+      if (touch(W, e)) hurt(W);
+      offscreen(W, e);
+    },
+    fish(W, e) {
+      if (e.st === 2) return flipFall(e);
+      e.tm++;
+      if (e.jf) { e.vy += 0.13; e.x += e.vx; e.y += e.vy; } else { e.x += e.vx; e.y = e.y0 + Math.sin(e.tm * 0.07 + e.ph) * (e.red ? 12 : 5); }
+      if (touch(W, e)) hurt(W);
+      offscreen(W, e);
+    },
     walker(W, e) {
       if (e.st === 1) { if (++e.tm > 30) e.gone = true; return; }
       if (e.st === 2) return flipFall(e);
       moveE(W, e, false); e.tm++;
       const r = touch(W, e);
-      if (r === 1) { e.st = 1; e.tm = 0; bounce(W, e); } else if (r === 2) hurt(W);
+      if (r === 1 && !e.sp) { e.st = 1; e.tm = 0; bounce(W, e); } else if (r) hurt(W);
       offscreen(W, e);
     },
     snail(W, e) {
@@ -791,7 +1075,7 @@
         if (e.kt > 0) e.kt--;
         for (const o of W.ents) {
           if (o === e || o.gone || Math.abs(o.x - e.x) > 14 || Math.abs(o.y - e.y) > 14) continue;
-          if ((o.t === 'walker' && o.st === 0) || (o.t === 'snail' && o.st !== 2) || o.t === 'bullet' && o.st === 0) {
+          if ((o.t === 'walker' && o.st === 0) || (o.t === 'hbro' && o.st === 0) || (o.t === 'snail' && o.st !== 2) || o.t === 'bullet' && o.st === 0) {
             flip(o, Math.sign(e.vx)); chainPts(W, CFG.shellPts, e.chain++, o.x, o.y - 16); ev(W, 'kick');
           }
         }
@@ -800,6 +1084,64 @@
         else if (r === 2 && e.kt === 0) hurt(W);
       }
       offscreen(W, e);
+    },
+    hbro(W, e) {
+      if (e.st === 2) return flipFall(e);
+      const p = W.p;
+      e.face = p.x + 8 < e.x + 8 ? -1 : 1; e.tm++;
+      if (e.x > W.cam + 280) return;
+      if (--e.mt <= 0) { e.mt = 30 + Math.floor(rnd(W) * 40); e.dir = [-1, 0, 1][Math.floor(rnd(W) * 3)]; }
+      if (e.x < e.hx - 36) e.dir = 1; else if (e.x > e.hx + 36) e.dir = -1;
+      e.vx = e.dir * 0.4;
+      moveE(W, e, false);
+      if (e.ground && --e.jt <= 0) { e.vy = -(rnd(W) < 0.5 ? 3.6 : 5.2); e.jt = 60 + Math.floor(rnd(W) * 100); }
+      if (--e.ft <= 0) {
+        e.ft = 60 + Math.floor(rnd(W) * 60);
+        if (e.x > W.cam - 8 && e.x < W.cam + 248) W.ents.push({ t: 'hammer', x: e.x + 4 + e.face * 5, y: e.y - 28, vx: e.face * (0.5 + rnd(W) * 0.8), vy: -4.2, gone: false, tm: 0 });
+      }
+      const r = touch(W, e);
+      if (r === 1) stompKill(W, e, 1000); else if (r === 2) hurt(W);
+      if (e.x < W.cam - 64 || e.y > 270) e.gone = true;
+    },
+    hammer(W, e) {
+      e.x += e.vx; e.y += e.vy; e.vy += 0.17; e.tm++;
+      if (e.y > 260 || e.x < W.cam - 32 || e.x > W.cam + 290) e.gone = true;
+      if (overlapP(W, e.x + 2, e.y - 14, e.x + 14, e.y - 2)) hurt(W);
+    },
+    lak(W, e) {
+      if (e.st === 2) return flipFall(e);
+      const p = W.p, lk = W.A.lak;
+      e.tm++;
+      if (lk && p.x > lk[1] * 16 + 64) e.out = 1;
+      if (e.out) { e.x += 2; if (e.x > W.cam + 300) e.gone = true; }
+      else {
+        const tx = p.x + Math.sin(e.tm * 0.02) * 90 + p.vx * 16 + 8;
+        e.x += Math.max(-1.9, Math.min(1.9, (tx - e.x) * 0.06));
+        e.x = Math.max(W.cam + 6, Math.min(W.cam + 234, e.x));
+      }
+      e.y = 50 + Math.sin(e.tm * 0.05) * 5;
+      if (!e.out && --e.ft <= 0) {
+        e.ft = 120 + Math.floor(rnd(W) * 80);
+        if (W.ents.filter(o => o.t === 'egg' || o.sp).length < 3) W.ents.push({ t: 'egg', x: e.x, y: e.y - 8, vx: (p.x < e.x ? -1 : 1) * (0.3 + rnd(W) * 0.8), vy: -3.6, gone: false, tm: 0 });
+      }
+      const r = touch(W, e);
+      if (r === 1) stompKill(W, e, 800); else if (r === 2) hurt(W);
+    },
+    egg(W, e) {
+      e.tm++;
+      const py = e.y;
+      e.x += e.vx; e.vy = Math.min(e.vy + 0.18, 4); e.y += e.vy;
+      const r = Math.floor(e.y / 16);
+      if (e.vy > 0 && py <= r * 16 + 0.01 && solidAt(W.A, Math.floor((e.x + 8) / 16), r)) {
+        e.t = 'walker'; e.sp = true; e.y = r * 16; e.vx = (W.p.x < e.x ? -1 : 1) * 0.55; e.vy = 0; e.st = 0; e.h = 16; e.ground = true;
+        return;
+      }
+      if (e.y > 270 || e.x < W.cam - 32) { e.gone = true; return; }
+      if (overlapP(W, e.x + 3, e.y - 13, e.x + 13, e.y - 1)) hurt(W);
+    },
+    vine(W, e) {
+      if (e.top > 0) e.top = Math.max(0, e.top - 0.75);
+      if (e.x < W.cam - 64) e.gone = true;
     },
     plant(W, e) {
       const p = W.p;
@@ -894,25 +1236,40 @@
       for (const o of W.ents) {
         if (o.gone || o === e) continue;
         let hit = false;
-        if ((o.t === 'walker' && o.st === 0) || (o.t === 'snail' && o.st !== 2)) hit = Math.abs(o.x + 8 - e.x) < 11 && e.y > o.y - 18 && e.y < o.y + 3;
+        if ((o.t === 'walker' && o.st === 0) || (o.t === 'snail' && o.st !== 2) || ((o.t === 'squid' || o.t === 'fish' || o.t === 'hbro' || o.t === 'lak') && o.st === 0)) hit = Math.abs(o.x + 8 - e.x) < 11 && e.y > o.y - (o.h || 16) - 2 && e.y < o.y + 3;
         else if (o.t === 'plant') hit = o.off > 3 && Math.abs(o.x + 16 - e.x) < 10 && e.y > o.y0 - o.off - 3 && e.y < o.y0;
         else if (o.t === 'boss' && o.st === 0) hit = e.x > o.x && e.x < o.x + 32 && e.y > o.y - 32 && e.y < o.y;
         if (!hit) continue;
         e.st = 1;
         if (o.t === 'plant') { o.gone = true; addScore(W, 200, o.x + 8, o.y0 - 24); }
         else if (o.t === 'boss') { if (--o.hp <= 0) { flip(o, Math.sign(e.vx)); o.vy = -2; addScore(W, CFG.bossPts, o.x + 8, o.y - 32); ev(W, 'bossfall'); } else ev(W, 'bump'); }
-        else { flip(o, Math.sign(e.vx)); addScore(W, o.t === 'walker' ? 100 : 200, o.x, o.y - 16); }
+        else if (o.bz) { ev(W, 'bump'); break; }
+        else { flip(o, Math.sign(e.vx)); addScore(W, o.t === 'walker' ? 100 : o.t === 'hbro' ? 1000 : o.t === 'lak' ? 800 : 200, o.x, o.y - 16); }
         ev(W, 'kick');
         break;
       }
       if (e.x < W.cam - 8 || e.x > W.cam + 264 || e.y > 250) e.gone = true;
     },
     lift(W, e) {
+      if (e.kind === 'bal') {
+        const mv = (l, ny) => { l.dx = 0; l.dy = ny - l.y; l.y = ny; };
+        if (e.m) {
+          const o = e.pr;
+          if (!e.fl) {
+            e.d += (W.p.lift === e ? 1 : W.p.lift === o ? -1 : 0) * 0.5;
+            if (o.y0 - e.d <= e.yp + 6) e.fl = 1; else if (e.y0 + e.d <= e.yp + 6) e.fl = 2;
+          }
+          if (!e.fl) { mv(e, e.y0 + e.d); mv(o, o.y0 - e.d); }
+          else { const f = e.fl === 1 ? e : o, k = f === e ? o : e; f.vy = Math.min(f.vy + 0.1, 3); mv(f, f.y + f.vy); mv(k, k.y); }
+        }
+        if (e.y > 320 || e.x0 + e.w + 128 < W.cam) e.gone = true;
+        return;
+      }
       let nx = e.x, ny = e.y;
       if (e.kind === 'v') { e.ph += e.spd; ny = e.y0 + e.rng * (1 - Math.cos(e.ph)) / 2; }
       else if (e.kind === 'h') { e.ph += e.spd; nx = e.x0 + e.rng * (1 - Math.cos(e.ph)) / 2; }
-      else if (e.kind === 'up') { ny -= e.spd; if (ny < 24) ny = 248; }
-      else if (e.kind === 'down') { ny += e.spd; if (ny > 248) ny = 24; }
+      else if (e.kind === 'up') { ny -= e.spd; if (ny < 12) ny = 248; }
+      else if (e.kind === 'down') { ny += e.spd; if (ny > 248) ny = 12; }
       else if (e.kind === 'fall') { if (W.p.lift === e) e.st = 1; if (e.st) { e.vy = Math.min(e.vy + 0.05, 2.5); ny += e.vy; } }
       e.dx = nx - e.x; e.dy = ny - e.y; e.x = nx; e.y = ny;
       if (Math.abs(e.dy) > 20 && W.p.lift === e) W.p.lift = null;
@@ -947,7 +1304,7 @@
     const top = cy * 16;
     for (const e of W.ents) {
       if (e.gone || Math.abs(e.y - top) > 2 || e.x + 14 < cx * 16 || e.x + 2 > cx * 16 + 16) continue;
-      if ((e.t === 'walker' && e.st === 0) || (e.t === 'snail' && e.st !== 2)) { flip(e, e.x + 8 < cx * 16 + 8 ? -1 : 1); addScore(W, 100, e.x, e.y - 16); ev(W, 'kick'); }
+      if ((e.t === 'walker' && e.st === 0) || (e.t === 'hbro' && e.st === 0) || (e.t === 'snail' && e.st !== 2)) { flip(e, e.x + 8 < cx * 16 + 8 ? -1 : 1); addScore(W, 100, e.x, e.y - 16); ev(W, 'kick'); }
       else if (e.t === 'item' && !e.em) { e.vy = -3.5; e.ground = false; if (e.k === 'grow' || e.k === 'oneup') e.vx = (e.x + 8 < cx * 16 + 8 ? -1 : 1) * CFG.itemSpeed; }
     }
     if (tileAt(W.A, cx, cy - 1) === T.COIN) { setTile(W.A, cx, cy - 1, T.E); coinPop(W, cx, cy - 1); }
@@ -968,6 +1325,7 @@
       case T.QC: case T.HC: used(); coinPop(W, cx, cy); break;
       case T.QP: case T.BP: used(); spawnItem(W, cx, cy, p.big ? 'fire' : 'grow'); break;
       case T.BS: used(); spawnItem(W, cx, cy, 'star'); break;
+      case T.BV: used(); { let gy = cy + 1; while (gy < 14 && !solidAt(A, cx, gy)) gy++; W.ents.push({ t: 'vine', x: cx * 16, y: cy * 16, base: gy * 16, top: cy * 16, gone: false, st: 0, tm: 0 }); ev(W, 'sprout'); } break;
       case T.B1: case T.H1: used(); spawnItem(W, cx, cy, 'oneup'); break;
       case T.BMC: {
         const k = cx + ',' + cy;
@@ -1079,7 +1437,7 @@
           R(K.k, 3, 3, 2, 2); R(K.a, 3, 3, 1, 1); R(K.k, 12, 11, 2, 1); R(K.k, 8, 13, 1, 1); R(K.a, 13, 3, 1, 1);
           break;
         }
-        case T.BRK: case T.BMC: case T.BS: case T.BP: case T.B1: {
+        case T.BRK: case T.BMC: case T.BS: case T.BP: case T.B1: case T.BV: {
           const hi = mix(K.b, K.a, .8), lo = mix(K.b, K.k, .4);
           R(K.k, 0, 0, 16, 16);
           for (let r = 0; r < 4; r++) {
@@ -1144,6 +1502,27 @@
           if (lip) { R(NES.blk, 0, 0, 1, 16); R(NES.blk, 15, 0, 1, 16); }
           break;
         }
+        case T.CLD:
+          R(NES.wht, 0, 0, 16, 16); R('#BCE8FC', 0, 9, 16, 7); R(NES.blu, 0, 12, 16, 4); R(NES.wht, 1, 12, 5, 1); R(NES.wht, 9, 13, 5, 1); R(NES.blu, 3, 8, 4, 1); R(NES.blu, 10, 7, 4, 1); R(NES.lgry, 0, 0, 16, 1);
+          break;
+        case T.MSL: case T.MSM: case T.MSR: {
+          const l = t === T.MSL, r = t === T.MSR;
+          R(NES.blk, l ? 1 : 0, 0, 16 - (l ? 1 : 0) - (r ? 1 : 0), 15);
+          R(NES.org, l ? 1 : 0, 1, 16 - (l ? 2 : 0) - (r ? 2 : 0) + (l ? 0 : 0), 12);
+          R('#FCCC70', l ? 2 : 0, 1, 16 - (l ? 2 : 0) - (r ? 2 : 0), 1);
+          if (l) { R(NES.blk, 0, 2, 1, 11); R(NES.org, 1, 2, 1, 11); }
+          if (r) { R(NES.blk, 15, 2, 1, 11); R(NES.org, 14, 2, 1, 11); }
+          x.fillStyle = '#B83018';
+          for (const [a, b, rr] of (l ? [[8, 7, 3]] : r ? [[7, 6, 3]] : [[4, 6, 2.6], [11, 9, 3]])) { x.beginPath(); x.arc(a, b, rr, 0, 7); x.fill(); }
+          x.clearRect(0, 13, 16, 3); R(NES.blk, l ? 2 : 0, 13, 16 - (l ? 2 : 0) - (r ? 2 : 0), 1);
+          break;
+        }
+        case T.MSS: case T.MSA: case T.MSB: {
+          const a = t === T.MSS ? 3 : t === T.MSA ? 4 : 0, w = t === T.MSS ? 10 : 12;
+          R('#FCBCB0', a, 0, w, 16); if (t !== T.MSB) R('#C07868', a, 0, 1, 16); if (t !== T.MSA) R('#C07868', a + w - 1, 0, 1, 16);
+          R('#FCE0D8', a + 2, 0, 2, 16);
+          break;
+        }
         case T.COIN: { const cc = coinPal(fr, kind); x.drawImage(spr('coin0', cc), -1, -1); break; }
         case T.LAVT: case T.LAVA:
           R(NES.ored, 0, 0, 16, 16); R('#D82800', 0, 8, 16, 8); R('#B01800', 0, 13, 16, 3);
@@ -1164,6 +1543,15 @@
           for (let i = 0; i < 16; i += 4) R(NES.blk, i, 2, 1, 4);
           R(NES.lgry, 0, 9, 16, 1); R(NES.lgry, 2, 7, 1, 2); R(NES.lgry, 13, 7, 1, 2);
           break;
+        case T.RB:
+          if (fr) {
+            R(NES.grn, 0, 0, 1, 8); R(NES.grn, 15, 0, 1, 8); R(NES.lgrn, 7, 0, 2, 8);
+            for (let i = 0; i < 16; i += 8) { R(NES.blk, i + 1, 1, 1, 1); R(NES.blk, i + 2, 2, 1, 2); R(NES.blk, i + 3, 4, 3, 1); R(NES.blk, i + 6, 2, 1, 2); R(NES.blk, i + 7, 1, 1, 1); }
+          } else {
+            R(NES.blk, 0, 0, 16, 1); R(NES.blk, 0, 7, 16, 1);
+            for (let i = 0; i < 16; i += 8) { R('#FFCCC5', i, 1, 8, 6); R(NES.brn, i + 2, 2, 5, 4); R(NES.blk, i + 7, 1, 1, 6); }
+          }
+          break;
         case T.CHAIN:
           for (let i = 0; i < 7; i++) { R(NES.lgry, 1 + i * 2, 13 - i * 2, 2, 2); R(NES.gry, 2 + i * 2, 14 - i * 2, 1, 1); }
           break;
@@ -1183,7 +1571,7 @@
       tcache.set(key, c);
       return c;
     }
-    const coinPal = (fr, kind) => ({ a: [NES.org, NES.org, NES.brn, '#883400'][fr & 3], b: kind === 'over' || kind === 'tree' ? NES.brn : '#883400', c: NES.wht });
+    const coinPal = (fr, kind) => ({ a: [NES.org, NES.org, NES.brn, '#883400'][fr & 3], b: OVK[kind] ? NES.brn : '#883400', c: NES.wht });
     const shapes = new Map();
     function shape(key, w, h, fn) { let c = shapes.get(key); if (!c) { c = cv(w, h); fn(c.getContext('2d')); shapes.set(key, c); } return c; }
     const lump = (x, pts, fill, line) => {
@@ -1222,8 +1610,8 @@
     function decorFor(A) {
       if (A._decor) return A._decor;
       const out = [];
-      if (A.kind === 'over' || A.kind === 'tree') for (let b = 0; b < A.w; b += 48) {
-        const g = c => A.kind === 'over' && tileAt(A, c, 13) === T.GND && tileAt(A, c + 2, 13) === T.GND;
+      if (OVK[A.kind]) for (let b = 0; b < A.w; b += 48) {
+        const g = c => (A.kind === 'over' || A.kind === 'night') && tileAt(A, c, 13) === T.GND && tileAt(A, c + 2, 13) === T.GND;
         if (g(b)) out.push(['hill1', b * 16, 208 - 36]);
         if (g(b + 16)) out.push(['hill0', (b + 16) * 16, 208 - 20]);
         for (const [c, r, n] of [[8, 3, 0], [19, 2, 0], [27, 3, 2], [36, 2, 1]]) out.push(['cloud' + n, (b + c) * 16, r * 16]);
@@ -1275,8 +1663,9 @@
         const pre = big ? 'b_' : 's_';
         if (big && p.crouch) f = 'b_crouch';
         else if (W.state === 'flag' || W.state === 'flag2') f = pre + (p.anim ? 'w2' : 'jump');
+        else if (p.vine) f = pre + (((p.cl || 0) >> 3) & 1 ? 'w1' : 'w3');
         else if (W.state === 'pipeIn' && W.pipe && W.pipe.k === 'down' || W.state === 'pipeOut') f = pre + 'stand';
-        else if (!p.ground && W.state === 'play') f = pre + 'jump';
+        else if (!p.ground && W.state === 'play') f = pre + (W.A.water && !(p.sw > 0) ? 'w1' : 'jump');
         else if (p.skid) f = pre + 'skid';
         else if (p.throwT > 0 && big) f = 'b_w1';
         else f = pre + (p.anim ? 'w' + p.anim : 'stand');
@@ -1284,9 +1673,20 @@
       const h = big || f === 'b_crouch' ? 32 : 16;
       draw(f, heroPal(W, fr), p.x - cam, p.y - h, p.face < 0, false);
     }
+    const BUZZ = { a: '#2038EC', b: '#9CB4FC', c: NES.lt, d: NES.org }, SPINY = { a: NES.red, b: NES.wht, c: NES.lt, d: NES.org };
+    const LAKP = { a: '#00A800', b: NES.wht, c: '#FCE4A0', d: NES.blk, e: NES.blu, f: NES.red }, HBP = { a: '#00A800', b: '#B8F818', c: NES.org, d: NES.blk, e: '#007800', f: NES.red }, EGGP = { a: NES.red, b: NES.wht, c: NES.org };
+    const hammerAt = (cx, cy, ang) => {
+      ctx.save(); ctx.translate(Math.round(cx), Math.round(cy)); ctx.rotate(ang);
+      ctx.fillStyle = NES.blk; ctx.fillRect(-2, -4, 5, 14); ctx.fillStyle = '#C84C0C'; ctx.fillRect(-1, -3, 3, 12);
+      ctx.fillStyle = NES.blk; ctx.fillRect(-7, -9, 15, 9); ctx.fillStyle = NES.lgry; ctx.fillRect(-6, -8, 13, 7); ctx.fillStyle = NES.wht; ctx.fillRect(-6, -8, 13, 1); ctx.fillStyle = NES.gry; ctx.fillRect(-6, -3, 13, 2);
+      ctx.restore();
+    };
     const SNAIL_G = { a: '#00A800', b: NES.wht, c: NES.org }, SNAIL_R = { a: NES.red, b: NES.wht, c: NES.org };
     const PLANT = { a: '#00A800', b: NES.wht, c: NES.red, d: NES.dgrn };
     const BULLET = { a: NES.blk, b: NES.wht, c: NES.gry };
+    const SQUID = { a: NES.wht, b: NES.blk };
+    const FISHG = { a: '#00A800', b: NES.dgrn, c: NES.wht, d: NES.blk };
+    const FISHR = { a: NES.red, b: '#881400', c: NES.wht, d: NES.blk };
     const BOSS = { a: '#00A800', b: NES.wht, c: NES.org, d: NES.blk, e: NES.red, f: NES.brn };
     const FIRE = { a: NES.ored, b: NES.lava, c: NES.wht };
     const CYC = [NES.red, NES.org, NES.wht, NES.lgrn];
@@ -1302,20 +1702,44 @@
       switch (e.t) {
         case 'walker': {
           const pal = { a: K.walker[0], b: K.walker[1], c: K.walker[2] };
-          if (W.A.kind !== 'over' && W.A.kind !== 'tree') pal.b = '#202020';
+          if (!OVK[W.A.kind]) pal.b = '#202020';
+          if (e.sp) { draw(((e.tm >> 3) & 1) ? 'spn1' : 'spn0', SPINY, x, e.y - 16, false, e.st === 2); break; }
           if (e.st === 1) draw('walkerF', pal, x, e.y - 16);
           else draw(((e.tm >> 3) & 1) ? 'walker1' : 'walker0', pal, x, e.y - 16, false, e.st === 2);
           break;
         }
         case 'snail': {
-          const pal = e.red ? SNAIL_R : SNAIL_G, fx = e.vx > 0;
+          const pal = e.bz ? BUZZ : e.red ? SNAIL_R : SNAIL_G, fx = e.vx > 0;
           if (e.st === 0) {
-            draw(((e.tm >> 3) & 1) ? 'snail1' : 'snail0', pal, x, e.y - 24, fx);
+            if (e.bz) draw(((e.tm >> 3) & 1) ? 'buz1' : 'buz0', pal, x, e.y - 16); else draw(((e.tm >> 3) & 1) ? 'snail1' : 'snail0', pal, x, e.y - 24, fx);
             if (e.wing) draw(((fr >> 3) & 1) ? 'wing1' : 'wing0', pal, x + (fx ? -5 : 5), e.y - 20, fx);
           } else if (e.st === 4) draw('shell', pal, x, e.y - 16, (fr >> 1) & 1);
           else draw(e.st === 3 && e.tm > CFG.shellWake - 70 && (fr & 4) ? 'shellPeek' : 'shell', pal, x, e.y - 16, false, e.st === 2);
           break;
         }
+        case 'hbro':
+          draw(((e.tm >> 4) & 1) ? 'hbro1' : 'hbro0', HBP, x, e.y - 24, e.face > 0, e.st === 2);
+          if (e.st === 0 && e.ft < 28) hammerAt(x + 8 + e.face * 2, e.y - 36, 0);
+          break;
+        case 'hammer': hammerAt(x + 8, e.y - 8, e.tm * 0.4); break;
+        case 'lak':
+          draw('laki', LAKP, x, e.y - 20, false, e.st === 2);
+          if (e.st === 0 && e.ft < 22) draw('egg', EGGP, x, e.y - 32);
+          break;
+        case 'egg': draw('egg', EGGP, x, e.y - 16); break;
+        case 'vine': {
+          const x0 = Math.round(x), yb = Math.round(e.base), yt = Math.round(e.top);
+          ctx.fillStyle = NES.blk; ctx.fillRect(x0 + 5, yt, 6, yb - yt);
+          ctx.fillStyle = NES.grn; ctx.fillRect(x0 + 6, yt, 4, yb - yt);
+          ctx.fillStyle = NES.lgrn; ctx.fillRect(x0 + 6, yt, 1, yb - yt);
+          for (let y = yb - 10, i = 0; y > yt + 2; y -= 14, i++) {
+            const lx = i & 1 ? x0 + 9 : x0 + 1;
+            ctx.fillStyle = NES.blk; ctx.fillRect(lx - 1, y - 1, 8, 6); ctx.fillStyle = NES.lgrn; ctx.fillRect(lx, y, 6, 4); ctx.fillStyle = NES.grn; ctx.fillRect(lx, y + 3, 6, 1);
+          }
+          break;
+        }
+        case 'squid': draw(e.st === 1 ? 'squid1' : 'squid0', SQUID, x, e.y - 24, false, e.st === 2); break;
+        case 'fish': draw(((fr >> 3) & 1) ? 'fish1' : 'fish0', e.red ? FISHR : FISHG, x, e.y - 16, e.vx > 0, e.st === 2); break;
         case 'bullet': draw('bullet', BULLET, x, e.y - 16, e.vx > 0, e.st === 2); break;
         case 'boss': draw(e.ft > e.fire * 2 - 30 || e.ft < 20 ? 'boss1' : 'boss0', BOSS, x, e.y - 32, e.face > 0, e.st === 2); break;
         case 'flame': draw(((fr >> 2) & 1) ? 'flame1' : 'flame0', FIRE, x, e.y - 4, e.vx > 0); break;
@@ -1357,6 +1781,19 @@
       const A = W.A, cam = Math.floor(W.cam), K = KIND[A.kind], tf = (fr >> 3) % 6;
       const qf = [0, 0, 0, 1, 2, 1][tf];
       ctx.fillStyle = K.sky; ctx.fillRect(0, 0, 256, 240);
+      if (A.water) {
+        ctx.fillStyle = NES.sky; ctx.fillRect(0, 0, 256, 33);
+        ctx.fillStyle = NES.wht;
+        for (let i = 0; i < 256; i += 4) { const k = ((i + cam + (fr >> 3) * 4) >> 2) & 1; ctx.fillRect(i, 33 + k, 4, 1); ctx.fillRect(i, 34 + k, 2, 1); }
+        ctx.fillStyle = '#F878F8';
+        for (const cr of A.coral) {
+          const cx = cr.x * 16 - cam;
+          if (cx < -24 || cx > 256) continue;
+          const by = (cr.t + cr.n) * 16;
+          ctx.fillRect(cx + 7, cr.t * 16, 1, cr.n * 16);
+          for (let yy = cr.t * 16 + 4; yy < by - 2; yy += 6) { const sd = ((yy >> 1) & 1) ? 1 : -1; for (let k = 1; k <= 4; k++) ctx.fillRect(cx + 7 + sd * k, yy - k, 1, 1); for (let k = 1; k <= 3; k++) ctx.fillRect(cx + 7 - sd * k, yy + 2 - k, 1, 1); }
+        }
+      }
       for (const [n, dx, dy] of decorFor(A)) {
         if (dx - cam > 256 || dx - cam < -96) continue;
         const c = n.startsWith('hill') ? hill(+n[4]) : n.startsWith('cloud') ? puff(+n[5] + 1, true) : puff(+n[4], false);
@@ -1378,6 +1815,14 @@
         else if (e.t === 'item' && e.em) itemDraw(e, fr, cam);
         else if (e.t === 'pod' && e.st) draw('pod', FIRE, e.x - cam, e.y - 16, false, e.vy > 0);
       }
+      for (const e of W.ents) if (e.t === 'lift' && e.kind === 'bal' && e.m && e.pr) {
+        const o = e.pr, x1 = Math.round(e.x + e.w / 2 - cam), x2 = Math.round(o.x + e.w / 2 - cam), yp = Math.round(e.yp);
+        ctx.fillStyle = NES.lt; ctx.fillRect(x1, yp - 1, x2 - x1, 2);
+        if (!e.fl) { ctx.fillRect(x1 - 1, yp, 2, Math.round(e.y - yp)); ctx.fillRect(x2 - 1, yp, 2, Math.round(o.y - yp)); }
+        ctx.fillStyle = NES.blk; for (const px of [x1, x2]) { ctx.beginPath(); ctx.arc(px, yp, 4, 0, 7); ctx.fill(); }
+        ctx.fillStyle = NES.brn; for (const px of [x1, x2]) { ctx.beginPath(); ctx.arc(px, yp, 3, 0, 7); ctx.fill(); }
+        ctx.fillStyle = NES.lt; for (const px of [x1, x2]) ctx.fillRect(px - 1, yp - 1, 2, 2);
+      }
       if (W.p.behind && !opts.noHero) hero(W, fr, cam);
       const c0 = Math.floor(cam / 16), off = cam - c0 * 16;
       for (let r = 0; r < 15; r++) for (let c = 0; c <= 16; c++) {
@@ -1385,6 +1830,7 @@
         if (!t || t === T.HC || t === T.H1 || (c0 + c) >= A.w) continue;
         let dy = 0;
         for (const b of W.bumps) if (b.cx === c0 + c && b.cy === r) dy = -[0, 2, 4, 5, 6, 6, 5, 4, 2, 1][b.t] || 0;
+        if (t === T.RB) ctx.drawImage(tile(t, A.kind, 1), c * 16 - off, r * 16 - 8);
         ctx.drawImage(tile(t, A.kind, t === T.QC || t === T.QP || t === T.COIN ? qf : t === T.AXE ? tf : t === T.LAVT || t === T.LAVA ? (fr >> 3) & 7 : 0), c * 16 - off, r * 16 + dy);
       }
       for (const e of W.ents) if (e.t !== 'plant' && e.t !== 'pod' && e.t !== 'fb' && !(e.t === 'item' && e.em)) ent(W, e, fr, cam);
@@ -1407,7 +1853,7 @@
         const fin = LEVELS[W.li].castle === 2;
         if (A.npc) { let r = 4; while (r < 14 && !solidAt(A, A.npc, r)) r++; fin ? draw('princess', { a: NES.org, b: NES.wht, c: NES.lt, d: NES.blk, e: NES.gold, f: NES.red }, A.npc * 16 - cam, r * 16 - 24) : draw('npc', { a: NES.wht, b: NES.red, c: NES.lt, d: NES.blk, e: '#0058F8', f: NES.brn }, A.npc * 16 - cam, r * 16 - 24); }
         text('THANK YOU MARIO!', 64, 56);
-        if (W.msg > 60) { if (fin) { text('YOUR QUEST IS OVER.', 52, 80); text('WE PRESENT YOU A NEW', 48, 104); text('QUEST.', 104, 120); } else { text('BUT OUR PRINCESS IS IN', 40, 80); text('ANOTHER CASTLE!', 68, 96); } }
+        if (W.msg > 60) { if (fin) { text('YOUR QUEST IS OVER.', 52, 80); text('THANK YOU FOR PLAYING!', 36, 104); } else { text('BUT OUR PRINCESS IS IN', 40, 80); text('ANOTHER CASTLE!', 68, 96); } }
       }
     }
     function hud(st) {
@@ -1446,6 +1892,10 @@
         ['p25', 0.32, 'd5.1 c#5.1 d5.1 c#5.1 d5.1 a#4.1 d5.1 a4.1 d5.1 g#4.1 d5.1 a4.1 d5.1 a#4.1 d5.1 c#5.1 c5.1 b4.1 c5.1 b4.1 c5.1 g#4.1 c5.1 g4.1 c5.1 f#4.1 c5.1 g4.1 c5.1 g#4.1 c5.1 b4.1 g5.1 f#5.1 g5.1 f#5.1 g5.1 d#5.1 g5.1 d5.1 g5.1 c#5.1 g5.1 d5.1 g5.1 d#5.1 g5.1 f#5.1 d5.1 c#5.1 d5.1 c#5.1 d5.1 a#4.1 d5.1 a4.1 d5.1 g#4.1 d5.1 a4.1 d5.1 a#4.1 d5.1 c#5.1'],
         ['p12', 0.16, 'd4.16 c4.16 g4.16 d4.16'],
         ['tri', 0.55, 'd2.2 -.2 a1.2 -.2 d2.2 -.2 a#1.2 -.2 c2.2 -.2 g1.2 -.2 c2.2 -.2 g#1.2 -.2 g2.2 -.2 d2.2 -.2 g2.2 -.2 d#2.2 -.2 d2.2 -.2 a1.2 -.2 d2.2 -.2 c#2.2 -.2']
+      ] },
+      water: { sd: 0.16, loop: 1, ch: [
+        ['p25', 0.4, 'e5.4 g5.2 b5.6 a5.4 f#5.2 d5.6 g5.4 b5.2 d6.6 c6.4 a5.2 e5.6 e5.4 g5.2 b5.4 a5.2 g5.4 f#5.2 e5.6 -.6 d5.4 f#5.2 a5.6 g5.4 e5.2 b4.6 c5.4 e5.2 a5.4 g5.2 f#5.4 d5.2 e5.12'],
+        ['tri', 0.5, 'e2.2 b2.2 g3.2 e2.2 b2.2 g3.2 d2.2 a2.2 f#3.2 d2.2 a2.2 f#3.2 g2.2 d3.2 b3.2 g2.2 d3.2 b3.2 c3.2 g3.2 e4.2 a2.2 e3.2 c4.2 e2.2 b2.2 g3.2 e2.2 b2.2 g3.2 b2.2 f#3.2 d4.2 d2.2 a2.2 f#3.2 a2.2 e3.2 c4.2 g2.2 d3.2 b3.2 e2.2 b2.2 g3.2 e2.2 -.4']
       ] },
       star: { sd: 0.075, loop: 1, ch: [
         ['p25', 0.45, 'c5.1 e5.1 g5.1 c6.1 g5.1 e5.1 c5.1 e5.1 d5.1 f5.1 a5.1 d6.1 a5.1 f5.1 d5.1 f5.1 b4.1 d5.1 g5.1 b5.1 g5.1 d5.1 b4.1 d5.1 c5.1 e5.1 g5.1 c6.1 e6.2 -.2'],
@@ -1563,7 +2013,7 @@
 
   const ID = 'brick-bros';
   GAME.makeRenderer = makeRenderer;
-  const MUS = { over: 'over', tree: 'over', under: 'under', bonus: 'under', castle: 'castle' };
+  const MUS = { over: 'over', tree: 'over', night: 'over', sky: 'over', under: 'under', bonus: 'under', castle: 'castle', water: 'water' };
   const PLAYING = { play: 1, grow: 1, shrink: 1, power: 1, pipeIn: 1, pipeOut: 1 };
 
   Ameplay.register({
@@ -1571,7 +2021,7 @@
     title: 'Brick Bros',
     category: 'Arcade',
     tint: '#5C94FC',
-    blurb: 'Run, jump and stomp through 8 classic side-scrolling stages.',
+    blurb: 'Run, jump and stomp through 16 classic side-scrolling stages.',
     help: '<kbd>←</kbd> <kbd>→</kbd> move · <kbd>Z</kbd>/<kbd>Shift</kbd> run &amp; fire · <kbd>X</kbd>/<kbd>Space</kbd>/<kbd>↑</kbd> jump · <kbd>↓</kbd> pipes · <kbd>Enter</kbd> start/pause · on-screen pad on touch',
     width: 800,
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="10" width="44" height="44" rx="4"/><path d="M25 27a7 7 0 1 1 10 6c-2 1-3 2-3 5"/><circle cx="32" cy="45" r="1.5"/><circle cx="16" cy="16" r="1"/><circle cx="48" cy="16" r="1"/><circle cx="16" cy="48" r="1"/><circle cx="48" cy="48" r="1"/></svg>',
@@ -1620,7 +2070,7 @@
       const STEP = 1 / 60;
 
       const has = (...c) => c.some(k => keys.has(k));
-      const bits = () => (has('ArrowLeft', 'KeyA') ? 1 : 0) | (has('ArrowRight', 'KeyD') ? 2 : 0) | (has('ArrowDown', 'KeyS') ? 4 : 0) | (has('KeyX', 'Space', 'ArrowUp', 'KeyW', 'KeyK') ? 16 : 0) | (has('KeyZ', 'ShiftLeft', 'ShiftRight', 'KeyJ') ? 32 : 0) | (has('Enter', 'KeyP') ? 64 : 0) | touchBits;
+      const bits = () => (has('ArrowLeft', 'KeyA') ? 1 : 0) | (has('ArrowRight', 'KeyD') ? 2 : 0) | (has('ArrowDown', 'KeyS') ? 4 : 0) | (has('ArrowUp', 'KeyW') ? 8 : 0) | (has('KeyX', 'Space', 'ArrowUp', 'KeyW', 'KeyK') ? 16 : 0) | (has('KeyZ', 'ShiftLeft', 'ShiftRight', 'KeyJ') ? 32 : 0) | (has('Enter', 'KeyP') ? 64 : 0) | touchBits;
 
       const save = () => api.save(sv);
       const unlock = li => { if (li > sv.unlock && li < LEVELS.length) { sv.unlock = li; save(); } };
@@ -1709,7 +2159,7 @@
           R.text('BROS.', 70, 91, '#5C1800', 3); R.text('BROS.', 69, 89, NES.blk, 3); R.text('BROS.', 68, 88, NES.lt, 3);
           R.text('@2026 GAMEPLAY', 104, 124, NES.lt);
           R.text('1 PLAYER GAME', 88, 142);
-          R.draw('bean', { a: NES.red, d: NES.blk }, 74, 143);
+          R.draw('bean', { a: NES.red, b: NES.blk, c: NES.wht, d: NES.lt }, 72, 141);
           R.text((sv.unlock ? '< ' : '  ') + 'WORLD ' + LEVELS[sel].name + (sv.unlock ? ' >' : ''), 72, 158);
           R.text('TOP- ' + String(sv.top).padStart(6, '0'), 96, 178);
           if ((frame >> 5) & 1) R.text('PUSH START', 88, 200);
@@ -1726,13 +2176,14 @@
         } else if (mode === 'timeup') { black(); R.hud(hudFor(0)); R.text('TIME UP', 100, 116); }
         else if (mode === 'over') { black(); R.hud(hudFor(null)); R.text('GAME OVER', 92, 116); if (newBest && timer > 40) R.text('NEW BEST!', 92, 136, NES.gold); }
         else if (mode === 'win') {
-          black(); R.hud(hudFor(null, '2-4'));
-          R.text('CONGRATULATIONS!', 64, 72, NES.gold);
-          R.text('ALL 8 STAGES CLEARED', 48, 96);
-          R.text('SCORE ' + String(run.score).padStart(6, '0'), 76, 120);
-          if (newBest) R.text('NEW BEST!', 92, 140, NES.gold);
-          R.draw('s_jump', HERO_PAL, 120, 152 - Math.abs(Math.sin(frame / 12)) * 12);
-          if (timer > 90 && (frame >> 5) & 1) R.text('PUSH START', 88, 196);
+          black(); R.hud(hudFor(null, LEVELS[LEVELS.length - 1].name));
+          R.text('CONGRATULATIONS!', 64, 56, NES.gold);
+          R.text('ALL ' + LEVELS.length + ' STAGES CLEARED', 52, 80);
+          R.text('THANK YOU FOR PLAYING!', 36, 104, NES.gold);
+          R.text('SCORE ' + String(run.score).padStart(6, '0'), 76, 128);
+          if (newBest) R.text('NEW BEST!', 92, 146, NES.gold);
+          R.draw('s_jump', HERO_PAL, 120, 180 - Math.abs(Math.sin(frame / 12)) * 12);
+          if (timer > 90 && (frame >> 5) & 1) R.text('PUSH START', 88, 204);
         }
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(off, 0, 0, 768, 720);

@@ -18,7 +18,7 @@
     const g = '.gm-' + id;
     return `
 ${g}{gap:0}
-${g} .w3{position:relative;width:min(100%,960px,calc((100dvh - 250px) * 1.6));aspect-ratio:960/600;border-radius:var(--r);overflow:hidden;background:#bcd6ee;box-shadow:0 22px 44px -28px rgba(31,29,43,.6);touch-action:none}
+${g} .w3{position:relative;width:min(100%,960px,calc((100dvh - 250px) * var(--ar,1.6)));aspect-ratio:var(--ar,1.6);border-radius:var(--r);overflow:hidden;background:#bcd6ee;box-shadow:0 22px 44px -28px rgba(31,29,43,.6);touch-action:none}
 ${g} .w3>canvas{position:absolute;inset:0;width:100%;height:100%;border-radius:0;background:none}
 ${g} .hud{position:absolute;inset:0;pointer-events:none;color:#fff;font-family:var(--sans);font-weight:900}
 ${g} .pill{position:absolute;display:flex;align-items:center;gap:10px;padding:7px 15px;border-radius:999px;background:rgba(16,18,36,.46);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font-size:15px;line-height:1.1;white-space:nowrap;box-shadow:0 8px 20px -12px rgba(0,0,0,.6)}
@@ -36,7 +36,7 @@ ${g} .hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);max
 ${g} .hint:empty{display:none}
 @keyframes ${id}-ban{0%{opacity:0;transform:translate(-50%,-50%) scale(.45)}14%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}24%{transform:translate(-50%,-50%) scale(1)}78%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-64%) scale(.98)}}
 @keyframes ${id}-pop{0%{opacity:0;transform:translate(-50%,-40%) scale(.6)}14%{opacity:1;transform:translate(-50%,-70%) scale(1.12)}100%{opacity:0;transform:translate(-50%,-210%) scale(1)}}
-@media (max-width:560px){${g} .pill{padding:5px 10px;gap:6px;font-size:12px}${g} .pill b{font-size:15px}${g} .pill small{font-size:8.5px}${g} .tl{left:8px;top:8px}${g} .tr{right:8px;top:8px}${g} .tc{top:8px}${g} .hint{font-size:10.5px;bottom:8px;padding:5px 10px}}
+@media (max-width:560px){${g} .pill{padding:5px 10px;gap:6px;font-size:12px}${g} .pill b{font-size:15px}${g} .pill small{font-size:8.5px}${g} .tl{left:8px;top:8px}${g} .tr{right:8px;top:8px}${g} .tc{top:8px}${g} .hint{font-size:10.5px;bottom:8px;padding:5px 10px;white-space:normal;text-align:center;border-radius:14px;width:max-content}}
 `;
   };
 
@@ -167,9 +167,10 @@ ${g} .hint:empty{display:none}
     };
   }
 
-  function makeUi(api, root, canvas) {
+  function makeUi(api, root, canvas, ar) {
     const wrap = document.createElement('div');
     wrap.className = 'w3';
+    wrap.style.setProperty('--ar', ar);
     canvas.removeAttribute('style');
     root.append(wrap);
     wrap.append(canvas);
@@ -193,9 +194,16 @@ ${g} .hint:empty{display:none}
     };
   }
 
-  function boot(api, run) {
+  const COARSE = matchMedia('(pointer: coarse)').matches;
+  function fitPR(api, v) {
+    if (!COARSE) return;
+    const fit = () => { const cw = v.canvas.clientWidth; if (cw && !document.fullscreenElement) v.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1) * cw / v.w); };
+    fit(); api.on(window, 'resize', fit);
+  }
+  function boot(api, run, root) {
     let dead = false, cleanup = null;
-    api.gl(960, 600).then(gl => { if (gl && !dead && api.alive) cleanup = run(gl); }).catch(e => {
+    const tall = root.clientWidth && root.clientWidth < 560;
+    api.gl(tall ? 640 : 960, tall ? 800 : 600).then(gl => { if (gl && !dead && api.alive) { cleanup = run(gl); fitPR(api, gl); } }).catch(e => {
       if (dead || !api.alive) return;
       console.error('[gameplay 3D]', e);
       api.overlay({ kicker: '3D', title: '3D unavailable', text: 'This game needs WebGL. Try enabling hardware acceleration or another browser.', button: null });
@@ -207,14 +215,14 @@ ${g} .hint:empty{display:none}
 
   function penalty(root, api, gl) {
     const { THREE, renderer, canvas } = gl, V3 = THREE.Vector3;
-    const K = kit(THREE), ui = makeUi(api, root, canvas), keys = api.keys;
+    const K = kit(THREE), ui = makeUi(api, root, canvas, gl.w / gl.h), keys = api.keys;
     const coarse = matchMedia('(pointer: coarse)').matches;
     const GW = 3.66, GH = 2.44, GZ = -11, BR = 0.11, PR = 0.06, G = 9.81, KD = 0.011, KM = 0.0062, ND = 2, NT = 0.8, WMAX = 110, KZ = GZ + 0.4, L = 2.2;
     renderer.toneMappingExposure = 0.9;
     const scene = new THREE.Scene();
     scene.fog = new THREE.Fog(0xcfe0ee, 70, 220);
     skyDome(THREE, K, scene, '#3e8ad8', '#cfe5f8', '#dce8f0', 12);
-    const cam = new THREE.PerspectiveCamera(38, 1.6, 0.1, 600);
+    const W = gl.w, H = gl.h, cam = new THREE.PerspectiveCamera(W < H ? 60 : 38, W / H, 0.1, 600);
     const CAM0 = new V3(0, 1.5, 4.4), LOOK0 = new V3(0, 1.05, GZ), camPos = CAM0.clone(), camLook = LOOK0.clone(), camT = new V3(), lookT = new V3();
     cam.position.copy(CAM0); cam.lookAt(LOOK0);
     let shake = 0;
@@ -535,7 +543,7 @@ ${g} .hint:empty{display:none}
     const skillFor = r => { const l = r - 1; return { react: Math.max(0.14, 0.3 - l * 0.03), dur: Math.max(0.34, 0.5 - l * 0.03), reach: Math.min(1.6, 0.95 + l * 0.12), lift: Math.min(1.1, 0.7 + l * 0.08), noise: Math.max(0.2, 0.55 - l * 0.07), read: Math.min(0.75, l * 0.14), guess: Math.min(0.32, l * 0.07), catchV: 15 + l * 1.5 }; };
     skill = skillFor(1);
 
-    const sw = ui.el('sw', '<svg viewBox="0 0 960 600" preserveAspectRatio="none"><polyline points=""/></svg>'), poly = sw.querySelector('polyline');
+    const sw = ui.el('sw', `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline points=""/></svg>`), poly = sw.querySelector('polyline');
     const hR = ui.el('pill tl'), hD = ui.el('pill tc dots', '<i></i>'.repeat(5)), hS = ui.el('pill tr'), hint = ui.el('hint'), pw = ui.el('pw', '<i></i><s></s>');
     hud();
     function hud() { hR.innerHTML = `<small>Round</small><b>${round}</b>`; hS.innerHTML = `<small>Score</small><b>${score}</b>`; }
@@ -714,9 +722,9 @@ ${g} .hint:empty{display:none}
     }
 
 
-    const screenY = y => { tmp.set(0, y, GZ).project(cam); return (1 - tmp.y) * 300; };
+    const screenY = y => { tmp.set(0, y, GZ).project(cam); return (1 - tmp.y) * H / 2; };
     function unproject(px, py, out) {
-      ndc.set(px / 480 - 1, 1 - py / 300); ray.setFromCamera(ndc, cam);
+      ndc.set(px / (W / 2) - 1, 1 - py / (H / 2)); ray.setFromCamera(ndc, cam);
       const o = ray.ray.origin, dd = ray.ray.direction, k = (GZ - o.z) / Math.min(-1e-3, dd.z);
       return out.set(o.x + dd.x * k, o.y + dd.y * k, GZ);
     }
@@ -726,7 +734,7 @@ ${g} .hint:empty{display:none}
       let j = p.length - 1;
       while (j > 0 && e.t - p[j - 1].t < 120) j--;
       if (j === p.length - 1 && j > 0) j--;
-      const q = p[j], fl = Math.hypot(e.x - q.x, e.y - q.y) / 600, ft = Math.max(16, e.t - q.t) / 1000;
+      const q = p[j], fl = Math.hypot(e.x - q.x, e.y - q.y) / H, ft = Math.max(16, e.t - q.t) / 1000;
       const pw0 = clamp((fl / ft - 0.8) / 3.2, 0, 1);
       let dev = 0;
       for (const r of p) { const c = (dx * (r.y - s.y) - dy * (r.x - s.x)) / len; if (Math.abs(c) > Math.abs(dev)) dev = c; }
@@ -878,20 +886,20 @@ ${g} .hint:empty{display:none}
 .gm-penalty-3d .sw polyline{fill:none;stroke:#fff;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;opacity:.9;vector-effect:non-scaling-stroke}
 .gm-penalty-3d .sw.fade polyline{opacity:0;transition:opacity .45s}
 `,
-    mount(root, api) { return boot(api, gl => penalty(root, api, gl)); }
+    mount(root, api) { return boot(api, gl => penalty(root, api, gl), root); }
   });
 
 
 
   function range(root, api, gl) {
     const { THREE, renderer, canvas } = gl, V3 = THREE.Vector3;
-    const K = kit(THREE), ui = makeUi(api, root, canvas), keys = api.keys;
+    const K = kit(THREE), ui = makeUi(api, root, canvas, gl.w / gl.h), keys = api.keys;
     const fine = matchMedia('(pointer: fine)').matches, lockable = 'requestPointerLock' in canvas;
     renderer.toneMappingExposure = 1.05;
     const scene = new THREE.Scene();
     scene.fog = new THREE.Fog(0xdde7ee, 80, 300);
     skyDome(THREE, K, scene, '#4a93df', '#d7eaf8', '#e9ddc8', 16);
-    const cam = new THREE.PerspectiveCamera(55, 1.6, 0.03, 600);
+    const cam = new THREE.PerspectiveCamera(gl.w < gl.h ? 72 : 55, gl.w / gl.h, 0.03, 600);
     cam.rotation.order = 'YXZ'; cam.position.set(0, 1.6, 0); scene.add(cam);
     scene.add(new THREE.HemisphereLight(0xdcecff, 0xc9a873, 0.85));
     const sun = new THREE.DirectionalLight(0xfff0d6, 1.65);
@@ -1362,7 +1370,7 @@ ${g} .hint:empty{display:none}
       if (locked) { if (e.button === 0) fire(0, 0, 0, 50, 50); return; }
       if (e.pointerType === 'mouse' && fine && !lockFailed) { requestLock(); return; }
       const l = gl.toLocal(e), w = canvas.getBoundingClientRect().width || 960;
-      fire(l.nx, l.ny, e.pointerType === 'touch' ? 34 / w : 0, l.x / 9.6, l.y / 6);
+      fire(l.nx, l.ny, e.pointerType === 'touch' ? 34 / w : 0, l.x / gl.w * 100, l.y / gl.h * 100);
       drag = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: 0, refunded: false };
       try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
     });
@@ -1499,7 +1507,7 @@ ${g} .hint:empty{display:none}
 @keyframes target-range-3d-beat{50%{transform:scale(1.15)}}
 @media (max-width:560px){.gm-target-range-3d .hint{left:8px;transform:none;max-width:calc(100% - 110px)}.gm-target-range-3d .ammo{right:8px;bottom:8px;padding:7px 9px 10px;gap:3px}.gm-target-range-3d .ammo i{width:5px;height:15px}.gm-target-range-3d .stk{top:44px}}
 `,
-    mount(root, api) { return boot(api, gl => range(root, api, gl)); }
+    mount(root, api) { return boot(api, gl => range(root, api, gl), root); }
   });
 })();
 

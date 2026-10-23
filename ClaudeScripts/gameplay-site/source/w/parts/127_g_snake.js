@@ -202,7 +202,7 @@
       let state = 'title', stateT = 0, clock = 0, submitted = false, won = false, deathWhy = '';
       let skin = CFG.SKINS[0];
       let coarse = matchMedia('(pointer: coarse)').matches;
-      let look = 0, mouth = 0, blink = 3, tongue = 0, tongueT = 2, chomp = 0, hover = null;
+      let look = 0, mouth = 0, blink = 3, tongue = 0, tongueT = 2, chomp = 0, hover = null; let lumps = [], curP = 1;
       const parts = [];
 
       const wrapMode = () => cfg.mode === 'borderless' || cfg.mode === 'peaceful';
@@ -268,7 +268,7 @@
         dir = DIRS.right; queue = []; grow = 0; lastTail = null; apples = []; walls = new Uint8Array(cols * rows);
         score = 0; acc = 0; reverseNext = false; portalFrom = null; eatFx = null; tickN = 0; pairId = 0;
         interval = CFG.TICK * CFG.SPEEDS[cfg.speed];
-        submitted = false; won = false; mouth = 0; chomp = 0; look = 0; parts.length = 0;
+        submitted = false; won = false; mouth = 0; chomp = 0; look = 0; parts.length = 0; lumps.length = 0;
         const ax = cols - 1 - (cols >> 2);
         if (cfg.mode === 'portal') {
           apples.push({ x: ax, y: my, kind: 'apple', pair: 0, t: clock });
@@ -321,6 +321,7 @@
       }
       function tick() {
         tickN++;
+        for (let i = lumps.length - 1; i >= 0; i--) if (++lumps[i] >= body.length) lumps.splice(i, 1);
         portalFrom = null;
         if (eatFx && eatFx.tick < tickN) { burst(eatFx.x, eatFx.y, eatFx.kind === 'poison' ? ['#B57AE8', '#8E44C9'] : ['#E7471D', '#FF8A65', '#FFD54F']); eatFx = null; }
         if (reverseNext) { reverseNext = false; reverse(); }
@@ -344,6 +345,7 @@
       }
       function eat(ap, x, y) {
         grow++; score++; api.score(score); chomp = 1;
+        if (ap.kind !== 'poison') lumps.push(0);
         eatFx = { x, y, kind: ap.kind, tick: tickN, ring: ap.pair >= 0 ? CFG.PAIR[ap.pair % CFG.PAIR.length] : null };
         if (cfg.mode === 'portal') { for (let i = apples.length - 1; i >= 0; i--) if (apples[i].pair === ap.pair) apples.splice(i, 1); sfx('portal'); }
         else apples.splice(apples.indexOf(ap), 1);
@@ -557,6 +559,15 @@
           if (k === 0 || RUN[k] !== RUN[k - 1]) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         }
         ctx.stroke();
+        if (!cheese) {
+          ctx.fillStyle = fill;
+          for (const L of lumps) {
+            const f = Math.max(0, L - 1 + curP), a = Math.floor(f), b = Math.min(n - 1, a + 1);
+            if (a >= n || RUN[a] !== RUN[b]) continue;
+            const q = f - a;
+            ctx.beginPath(); ctx.arc(px(PX[a] + (PX[b] - PX[a]) * q + offx), py(PY[a] + (PY[b] - PY[a]) * q + offy), wBody * 0.62, 0, TAU); ctx.fill();
+          }
+        }
         if (cheese) {
           ctx.lineWidth = wBody; ctx.beginPath();
           for (let k = 1; k < body.length && k < n; k++) {
@@ -602,7 +613,7 @@
       }
       function drawSnake(flash, prog, bumpT) {
         const p = prog === undefined ? (state === 'play' ? Math.min(1, acc / interval) : 1) : prog;
-        buildPath(p);
+        buildPath(p); curP = p;
         const bt = bumpT === undefined ? (state === 'dying' && !won ? stateT : null) : bumpT;
         if (bt !== null) {
           const b = Math.sin(Math.min(1, bt / 0.22) * Math.PI) * 0.22;

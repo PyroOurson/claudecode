@@ -320,7 +320,7 @@
       const opt = {
         mode: ['cpu', 'online'].includes(sv.mode) ? sv.mode : 'cpu',
         diff: ['easy', 'normal', 'hard', 'expert'].includes(sv.diff) ? sv.diff : 'hard',
-        salvo: !!sv.salvo, noTouch: !!sv.noTouch, chain: sv.chain !== false
+        salvo: !!sv.salvo, noTouch: !!sv.noTouch, chain: sv.chain === true
       };
       const saveOpt = () => api.save({ ...opt });
       const S = {

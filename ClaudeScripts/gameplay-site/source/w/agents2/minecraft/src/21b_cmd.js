@@ -74,6 +74,7 @@
         say('Gave ' + n + ' [' + it.name + '] to ' + (tgt === '@a' ? 'all players' : self ? P.name : tgt)); return;
       }
       if (cmd === 'tp' || cmd === 'teleport') {
+        if (a.length > 2 && (a[1] === '@s' || a[1] === '@p' || a[1] === P.name)) a.splice(1, 1);
         if (a.length >= 4) { const x = coord(a[1], P.x), y = coord(a[2], P.y - CFG.YOFF) + CFG.YOFF, z = coord(a[3], P.z); if (![x, y, z].every(isFinite)) { err('Invalid position'); return; } P.x = x; P.y = y; P.z = z; P.vx = P.vy = P.vz = 0; P.fall = 0; P.px = x; P.py = y; P.pz = z; if (a[4] !== undefined && isFinite(+a[4])) P.yaw = Math.PI - (+a[4]) * Math.PI / 180; if (a[5] !== undefined && isFinite(+a[5])) P.pitch = clamp(-(+a[5]) * Math.PI / 180, -1.5707, 1.5707); say('Teleported ' + P.name + ' to ' + x.toFixed(1) + ', ' + (y - CFG.YOFF).toFixed(1) + ', ' + z.toFixed(1)); return; }
         const o = ENTS.find(e => e.kind === 'player' && e.name === a[1]);
         if (o) { P.x = o.x; P.y = o.y; P.z = o.z; say('Teleported ' + P.name + ' to ' + o.name); return; }

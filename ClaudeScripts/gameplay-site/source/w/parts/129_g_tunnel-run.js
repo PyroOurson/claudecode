@@ -9,22 +9,26 @@
   const ID = 'tunnel-run';
 
   const CSS = `.gm-${ID} .stage{position:relative;max-width:100%;margin:0 auto;border-radius:var(--r,14px);overflow:hidden;background:#000;touch-action:none;user-select:none;-webkit-user-select:none;container-type:inline-size}
-.gm-${ID} .stage canvas{display:block;border-radius:0}
+.gm-${ID} .stage canvas{width:100%!important;height:100%!important;aspect-ratio:auto!important;display:block;border-radius:0}
 .gm-${ID} .hud{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:flex-start;padding:2.4cqw 3cqw;pointer-events:none;font:700 clamp(12px,2.6cqw,20px)/1 var(--sans,system-ui);color:#fff;font-variant-numeric:tabular-nums}
+.fs .gm-${ID} .hud{padding-right:max(3cqw,56px)}
 .gm-${ID} .pill{min-width:7.5em;padding:.5em .9em;background:rgba(150,150,160,.28);border:1px solid rgba(255,255,255,.22);border-radius:.3em;text-align:center;letter-spacing:.02em;backdrop-filter:blur(2px)}
 .gm-${ID} .pz{pointer-events:auto;width:2.4em;height:2.4em;border-radius:.4em;border:2px solid rgba(255,255,255,.75);background:rgba(120,120,130,.35);display:grid;place-items:center;cursor:pointer;padding:0}
 .gm-${ID} .pz i{display:block;width:.9em;height:1em;border-left:.3em solid #fff;border-right:.3em solid #fff;box-sizing:border-box}
-.gm-${ID} .panel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2cqw;text-align:center;color:#fff;font-family:var(--sans,system-ui);background:radial-gradient(circle at 50% 45%,rgba(0,0,0,.15),rgba(0,0,0,.7));padding:5cqw}
+.gm-${ID} .panel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2cqw;text-align:center;color:#fff;font-family:var(--sans,system-ui);background:radial-gradient(circle at 50% 45%,rgba(0,0,0,.3),rgba(0,0,0,.78));padding:5cqw}
 .gm-${ID} .logo{font:900 clamp(38px,11cqw,96px)/.9 var(--sans,system-ui);letter-spacing:.04em;font-style:italic;text-shadow:0 0 .25em var(--neon,#ff2a2a),0 .06em 0 rgba(0,0,0,.6)}
 .gm-${ID} .logo span{display:block;color:var(--neon,#ff2a2a);text-shadow:0 0 .3em var(--neon,#ff2a2a)}
 .gm-${ID} .sub{font:800 clamp(12px,2.6cqw,20px)/1.3 var(--sans,system-ui);opacity:.9;letter-spacing:.06em}
 .gm-${ID} .big{font:900 clamp(30px,8cqw,64px)/1 var(--sans,system-ui);letter-spacing:.04em}
 .gm-${ID} .stat{font:800 clamp(14px,3cqw,24px)/1.4 var(--sans,system-ui);font-variant-numeric:tabular-nums}
-.gm-${ID} .stat b{color:var(--neon,#ff2a2a)}
+.gm-${ID} .stat b{color:#fff;text-shadow:0 0 .5em var(--neon,#ff2a2a)}
 .gm-${ID} .go{pointer-events:auto;margin-top:1.5cqw;min-width:8em;height:2.6em;padding:0 1.6em;border:2px solid #fff;border-radius:.4em;background:rgba(255,255,255,.12);color:#fff;font:900 clamp(14px,3cqw,22px)/1 var(--sans,system-ui);letter-spacing:.08em;cursor:pointer}
 .gm-${ID} .go:hover{background:rgba(255,255,255,.25)}
 .gm-${ID} .blink{animation:trb 1s ease-in-out infinite}
 @keyframes trb{50%{opacity:.35}}
+.gm-${ID} .lvb{position:absolute;left:0;right:0;top:24%;text-align:center;font:900 clamp(26px,7cqw,60px)/1 var(--sans,system-ui);letter-spacing:.14em;font-style:italic;color:#fff;text-shadow:0 0 .35em var(--neon,#ff2a2a),0 .05em 0 rgba(0,0,0,.6);opacity:0;pointer-events:none}
+.gm-${ID} .lvb.on{animation:trl 1.8s ease-out}
+@keyframes trl{0%{opacity:0;transform:scale(1.5)}15%{opacity:1;transform:scale(1)}70%{opacity:1}100%{opacity:0}}
 .gm-${ID} .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
 .gm-${ID} .touch{position:absolute;bottom:3cqw;left:0;right:0;display:flex;justify-content:space-between;padding:0 4cqw;pointer-events:none}
 .gm-${ID} .touch i{width:16cqw;height:16cqw;max-width:96px;max-height:96px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);display:grid;place-items:center;font:900 7cqw/1 var(--sans,system-ui);color:rgba(255,255,255,.7);font-style:normal}
@@ -129,12 +133,16 @@
       const keys = api.keys, audio = makeAudio(api);
       const wrap = document.createElement('div');
       wrap.className = 'stage';
-      wrap.style.width = v.canvas.style.width; wrap.style.aspectRatio = v.canvas.style.aspectRatio;
-      v.canvas.style.width = '100%';
+      const cvs = v.canvas.style;
+      for (const k of ['width', 'aspectRatio']) {
+        let val = cvs[k];
+        wrap.style[k] = val;
+        Object.defineProperty(cvs, k, { get: () => val, set: x => { val = x; wrap.style[k] = x; } });
+      }
       root.append(wrap); wrap.append(v.canvas);
-      wrap.insertAdjacentHTML('beforeend', `<div class="hud"><div class="pill sp">0.0m/s</div><button class="pz" aria-label="Pause"><i></i></button><div class="pill ds">0.0m</div></div><div class="flash"></div><div class="touch"${COARSE ? '' : ' hidden'}><i class="tl">‹</i><i class="tr">›</i></div><div class="panel pm"><div class="logo">TUNNEL<span>RUSH</span></div><div class="sub bm"></div><button class="go gs">PLAY</button><div class="sub blink">${COARSE ? 'Hold left / right to spin' : '← → or A D to spin · Space to start'}</div></div><div class="panel po" hidden><div class="big">GAME OVER</div><div class="stat">Distance <b class="od">0</b> m</div><div class="stat">Best <b class="ob">0</b> m</div><button class="go gr">RETRY</button><div class="sub">${COARSE ? 'Tap to retry' : 'Space to retry'}</div></div>`);
+      wrap.insertAdjacentHTML('beforeend', `<div class="hud"><div class="pill sp">0.0m/s</div><button class="pz" aria-label="Pause"><i></i></button><div class="pill ds">0.0m</div></div><div class="flash"></div><div class="lvb"></div><div class="touch"${COARSE ? '' : ' hidden'}><i class="tl">‹</i><i class="tr">›</i></div><div class="panel pm"><div class="logo">TUNNEL<span>RUSH</span></div><div class="sub bm"></div><button class="go gs">PLAY</button><div class="sub blink">${COARSE ? 'Hold left / right to spin' : '← → or A D to spin · Space to start'}</div></div><div class="panel po" hidden><div class="big">GAME OVER</div><div class="stat">Level <b class="ol">1</b> · Distance <b class="od">0</b> m</div><div class="stat">Best <b class="ob">0</b> m</div><button class="go gr">RETRY</button><div class="sub">${COARSE ? 'Tap to retry' : 'Space to retry'}</div></div>`);
       const q = s => wrap.querySelector(s);
-      const elSp = q('.sp'), elDs = q('.ds'), elFlash = q('.flash'), pm = q('.pm'), po = q('.po'), tl = q('.tl'), tr = q('.tr');
+      const elHud = q('.hud'), elSp = q('.sp'), elDs = q('.ds'), elFlash = q('.flash'), elLvb = q('.lvb'), pm = q('.pm'), po = q('.po'), tl = q('.tl'), tr = q('.tr');
       const SV = Object.assign({ best: 0 }, api.load() || {});
       const setNeon = c => wrap.style.setProperty('--neon', c);
       q('.bm').textContent = SV.best ? 'Best ' + SV.best + ' m' : '';
@@ -265,8 +273,9 @@
         col.set(COLS[0]); colTo.set(COLS[0]); setNeon(COLS[0]);
         nextAt = -55; while (nextAt > -SPAWN) spawn(nextAt);
       }
+      const banner = n => { elLvb.textContent = 'LEVEL ' + n; elLvb.classList.remove('on'); void elLvb.offsetWidth; elLvb.classList.add('on'); };
       function start() {
-        audio.init(); reset(); state = 'play'; pm.hidden = true; po.hidden = true; audio.start(); audio.sfx('start'); api.score(0);
+        audio.init(); reset(); banner(1); state = 'play'; pm.hidden = true; po.hidden = true; elHud.hidden = false; audio.start(); audio.sfx('start'); api.score(0);
       }
       function die() {
         state = 'dead'; deadT = 0; shake = 0.35;
@@ -275,8 +284,8 @@
         const m = Math.floor(dist);
         api.score(m); if (m > 0) api.submit(m);
         if (m > SV.best) { SV.best = m; api.save(SV); }
-        q('.od').textContent = m; q('.ob').textContent = SV.best;
-        api.timeout(() => { if (state === 'dead') { state = 'over'; po.hidden = false; } }, 650);
+        q('.od').textContent = m; q('.ol').textContent = stage + 1; q('.ob').textContent = SV.best;
+        api.timeout(() => { if (state === 'dead') { state = 'over'; po.hidden = false; elHud.hidden = true; } }, 650);
       }
       const act = () => { if (state === 'menu') start(); else if (state === 'over') start(); };
       q('.gs').addEventListener('click', e => { e.stopPropagation(); start(); });
@@ -304,7 +313,7 @@
       api.on(wrap, 'pointerup', pUp); api.on(wrap, 'pointercancel', pUp);
       api.on(window, 'blur', () => { ptrs.clear(); setPtr(); });
 
-      reset();
+      reset(); elHud.hidden = true;
       api.score(0);
       api.loop(dt => {
         T += dt;
@@ -325,7 +334,7 @@
           while (nextAt > -SPAWN) spawn(nextAt);
           for (let i = obs.length - 1; i >= 0; i--) if (obs[i].z > 8) { const o = obs[i]; world.remove(o.g); for (const gg of o.geos) gg.dispose(); obs.splice(i, 1); }
           const st = Math.floor(dist / 400);
-          if (st !== stage) { stage = st; colTo.set(COLS[st % COLS.length]); setNeon(COLS[st % COLS.length]); audio.sfx('stage'); }
+          if (st !== stage) { stage = st; colTo.set(COLS[st % COLS.length]); setNeon(COLS[st % COLS.length]); audio.sfx('stage'); banner(st + 1); }
           const m = Math.floor(dist); api.score(m);
           audio.tick();
         } else if (state === 'menu') {

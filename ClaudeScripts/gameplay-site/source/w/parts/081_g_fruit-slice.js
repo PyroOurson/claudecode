@@ -1474,7 +1474,7 @@
         }
       });
       api.on(document, 'visibilitychange', () => { if (document.hidden) setPause(true); });
-      api.on(window, 'blur', () => setPause(true));
+      api.on(window, 'blur', () => { if (!api.paused) setPause(true); });
 
       root.__fs = { get state() { return state; }, get score() { return score; }, get lives() { return lives; }, get mode() { return mode; }, get timeLeft() { return timeLeft; }, set timeLeft(v) { timeLeft = v; }, get objs() { return objs; }, get rings() { return rings; }, get pom() { return pom; }, get paused() { return paused; }, get halves() { return halves; }, eff, launch, W, H, startRun, SPR, INN, BAN, BOMB, POM };
 

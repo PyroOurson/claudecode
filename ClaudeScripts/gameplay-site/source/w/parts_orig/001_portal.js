@@ -99,7 +99,7 @@ function sfx(name) {
 const $ = s => document.querySelector(s);
 const frame = $('#frame'), toastEl = $('#toast'), gamebox = $('#gamebox');
 const BASE_TITLE = document.title;
-const fmt = (g, v) => v == null ? '—' : g.format ? g.format(v) : String(v);
+const fmt = (g, v) => v == null ? '—' : g.format ? g.format(v) : typeof v === 'number' && Math.abs(v) >= 1e5 ? new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(v) : String(v);
 const isField = el => el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
 const filter = { cat: 'All', q: '' };
 let cur = null, ov = null, toastTimer = 0;
