@@ -11,6 +11,7 @@ holding the run name) is pointed at it.
 from __future__ import annotations
 
 import argparse
+import zipfile
 import functools
 import json
 import time
@@ -25,6 +26,7 @@ from gymnasium import spaces
 
 HERE = Path(__file__).resolve().parent
 MODEL_PATH = HERE / "acra.xml"
+MESHES_PATH = HERE / "meshes.zip"
 RUNS_DIR = HERE / "runs"
 LATEST_FILE = RUNS_DIR / "latest"
 
@@ -48,6 +50,13 @@ class RewardWeights:
     clearance: float = 0.3
     slip: float = 1.0
     body_rock: float = 0.02
+
+
+def load_model() -> mujoco.MjModel:
+    """Compile acra.xml with its STL meshes read straight out of meshes.zip."""
+    with zipfile.ZipFile(MESHES_PATH) as z:
+        assets = {name: z.read(name) for name in z.namelist()}
+    return mujoco.MjModel.from_xml_string(MODEL_PATH.read_text(), assets)
 
 
 def heading_free_quat(q: np.ndarray) -> np.ndarray:
@@ -97,7 +106,7 @@ class AcraEnv(gym.Env):
         min_upright: float = 0.2,
         weights: Optional[RewardWeights] = None,
     ) -> None:
-        self.model = mujoco.MjModel.from_xml_path(str(MODEL_PATH))
+        self.model = load_model()
         self.data = mujoco.MjData(self.model)
         self.fixed_command = command
         self.frame_skip = frame_skip

@@ -1,5 +1,5 @@
 <mujoco model="acra">
-  <compiler angle="radian" meshdir="meshes" autolimits="true"/>
+  <compiler angle="radian" autolimits="true"/>
   <option timestep="0.002" integrator="implicitfast"/>
 
   <default>

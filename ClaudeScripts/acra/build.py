@@ -1,13 +1,14 @@
 """Build the ACRA lizard quadruped in FreeCAD and export it for MuJoCo.
 
 Run inside FreeCAD (Python console or macro) for coloured FCStd/STEP output, or
-headless with `freecadcmd freecad_build.py` for geometry and meshes only.
+headless with `freecadcmd build.py` for geometry and meshes only.
 
 Every part is modelled in its own MuJoCo body frame (millimetres, x forward,
 y left, z up) and exported as one STL per body and finish (shell, dark, black,
-rubber, blue), so acra.xml can colour them separately. The assembly in
-acra.FCStd / acra.step is posed at the neutral standing pose; the STEP file is
-shipped zipped as acra_step.zip (it is ~50 MB raw).
+rubber, blue), so acra.xml can colour them separately. All STLs are packed into
+meshes.zip, which train.py reads directly. The assembly in
+acra.FCStd is posed at the neutral standing pose (File > Export in FreeCAD
+gives a STEP file when one is needed).
 
 Design: a two-segment lofted body joined by a rubber bellows over the spine
 yaw joint, sprawled legs (each leg plane is mounted with a fixed 45 degree
@@ -21,17 +22,17 @@ from __future__ import annotations
 
 import math
 import os
+import tempfile
 import zipfile
 from typing import Dict, List, Optional, Sequence, Tuple
 
 import FreeCAD as App
-import Import
 import MeshPart
 import Part
 
 V = App.Vector
 HERE = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.getcwd()
-MESH_DIR = os.path.join(HERE, "meshes")
+MESHES_ZIP = os.path.join(HERE, "meshes.zip")
 FONTS = (
     r"C:\Windows\Fonts\arial.ttf",
     "/System/Library/Fonts/Supplemental/Arial.ttf",
@@ -400,45 +401,40 @@ def assembly() -> List[Tuple[str, str, Parts, App.Placement]]:
     return items
 
 
-def export_mesh(shape: Part.Shape, path: str, fine: bool) -> int:
-    """Tessellate a shape and write it as STL; large smooth shells get the finer tolerance. Returns the facet count."""
+def export_mesh(shape: Part.Shape, name: str, fine: bool, archive: zipfile.ZipFile) -> int:
+    """Tessellate a shape into `name` inside the mesh archive; large smooth shells get the finer tolerance. Returns the facet count."""
     lin, ang = (0.08, 0.15) if fine else (0.2, 0.35)
     mesh = MeshPart.meshFromShape(Shape=shape, LinearDeflection=lin, AngularDeflection=ang, Relative=False)
+    path = os.path.join(tempfile.mkdtemp(), name)
     mesh.write(path)
+    archive.write(path, name)
+    os.remove(path)
     return mesh.CountFacets
 
 
 def main() -> None:
-    """Build the document, export per-finish meshes, STEP and FCStd, and print a size report."""
-    os.makedirs(MESH_DIR, exist_ok=True)
-    for f in os.listdir(MESH_DIR):
-        if f.endswith(".stl"):
-            os.remove(os.path.join(MESH_DIR, f))
+    """Build the document, pack per-finish meshes into meshes.zip, save the FCStd and print a size report."""
     if "ACRA" in App.listDocuments():
         App.closeDocument("ACRA")
     doc = App.newDocument("ACRA")
     written: Dict[str, int] = {}
     objs = []
-    for obj_name, mesh_name, parts, placement in assembly():
-        for finish, shape in parts.items():
-            key = "%s_%s" % (mesh_name, finish)
-            if key not in written:
-                fine = finish == "shell" and not mesh_name.startswith("foot")
-                written[key] = export_mesh(shape, os.path.join(MESH_DIR, key + ".stl"), fine)
-            obj = doc.addObject("Part::Feature", "%s_%s" % (obj_name, finish))
-            placed = shape.copy()
-            placed.Placement = placement.multiply(shape.Placement)
-            obj.Shape = placed
-            if App.GuiUp:
-                obj.ViewObject.ShapeColor = COLOURS[finish]
-                obj.ViewObject.DisplayMode = "Shaded"
-            objs.append(obj)
+    with zipfile.ZipFile(MESHES_ZIP, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+        for obj_name, mesh_name, parts, placement in assembly():
+            for finish, shape in parts.items():
+                key = "%s_%s" % (mesh_name, finish)
+                if key not in written:
+                    fine = finish == "shell" and not mesh_name.startswith("foot")
+                    written[key] = export_mesh(shape, key + ".stl", fine, archive)
+                obj = doc.addObject("Part::Feature", "%s_%s" % (obj_name, finish))
+                placed = shape.copy()
+                placed.Placement = placement.multiply(shape.Placement)
+                obj.Shape = placed
+                if App.GuiUp:
+                    obj.ViewObject.ShapeColor = COLOURS[finish]
+                    obj.ViewObject.DisplayMode = "Shaded"
+                objs.append(obj)
     doc.recompute()
-    step = os.path.join(HERE, "acra.step")
-    Import.export(objs, step)
-    with zipfile.ZipFile(os.path.join(HERE, "acra_step.zip"), "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
-        z.write(step, "acra.step")
-    os.remove(step)
     doc.saveAs(os.path.join(HERE, "acra.FCStd"))
     bb = objs[0].Shape.BoundBox
     for o in objs[1:]:
@@ -446,6 +442,5 @@ def main() -> None:
     print("meshes:", ", ".join("%s (%d)" % kv for kv in written.items()))
     print("bbox mm: x %.1f..%.1f  y %.1f..%.1f  z %.1f..%.1f" % (bb.XMin, bb.XMax, bb.YMin, bb.YMax, bb.ZMin, bb.ZMax))
     print("standing torso-centre height mm: %.1f" % -bb.ZMin)
-
 
 main()

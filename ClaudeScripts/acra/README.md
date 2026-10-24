@@ -4,22 +4,23 @@ Gecko-style quadruped from the reference renders, built as a manufacturable robo
 
 ![ACRA](images/hero.png)
 
-More pictures in [`images/`](images/): four views (`views.png`), top view, head, gecko foot, body details, the FreeCAD model (`freecad.png`) and the trained walk (`walk.gif`).
+More pictures in [`images/`](images/): `views.png` (front, top and both sides, like the reference), `details.png` (head, gecko foot, body, the FreeCAD model) and `walk.gif` (the trained walk).
 
 | File | What it is |
-|---|---|
-| `freecad_build.py` | Builds the model in FreeCAD, writes `acra.FCStd`, `acra_step.zip` and `meshes/*.stl` |
-| `acra.FCStd`, `acra_step.zip` | Coloured FreeCAD document and STEP assembly (zipped) in the neutral standing pose |
-| `images/` | Renders of the model, the FreeCAD model and the trained walk |
-| `runs/` | The trained policy (`runs/latest` names it) |
-| `meshes/*.stl` | One mesh per rigid body and finish, in that body's MuJoCo frame (mm) |
+| --- | --- |
+| `train.py` | Training: the Gymnasium environment and PPO |
+| `watch.py` | Watch the robot walk in the MuJoCo viewer, steer it with the arrow keys |
+| `build.py` | Rebuilds the model in FreeCAD and writes `acra.FCStd` and `meshes.zip` |
 | `acra.xml` | MuJoCo model |
-| `train.py` | `AcraEnv` (Gymnasium) and PPO training |
-| `visualiser.py` | Real-time viewer for a trained or random policy |
+| `meshes.zip` | The 3D meshes (STL, one per body and colour), read straight from the zip |
+| `acra.FCStd` | Coloured FreeCAD model in the standing pose (File > Export gives STEP if needed) |
+| `runs/` | The trained policy (`runs/acra/`); `runs/latest` names the one `watch.py` loads |
+| `images/` | Pictures and the walking GIF |
+| `requirements.txt` | Python packages to install |
 
 ## Run
 
-**Quick start (just watch it walk):** download the repository as a ZIP from https://github.com/PyroOurson/claudecode/archive/refs/heads/mainbranch-claude-code.zip, unzip it, open a terminal in `ClaudeScripts/acra/` and run the first two commands below (create the environment, install the packages), then `.venv/bin/python visualiser.py`. The trained policy is included in `runs/`, so no training is needed. Use the arrow keys to steer it.
+**Quick start (just watch it walk):** download the repository as a ZIP from https://github.com/PyroOurson/claudecode/archive/refs/heads/mainbranch-claude-code.zip, unzip it, open a terminal in `ClaudeScripts/acra/` and run the first two commands below (create the environment, install the packages), then `.venv/bin/python watch.py`. The trained policy is included in `runs/`, so no training is needed. Use the arrow keys to steer it.
 
 Needs Python 3.10+ (current MuJoCo wheels no longer support 3.9).
 
@@ -36,22 +37,22 @@ python -m venv .venv
 .venv/bin/python train.py --resume --steps 4000000
 ```
 ```bash
-.venv/bin/python visualiser.py
+.venv/bin/python watch.py
 ```
 ```bash
-.venv/bin/python visualiser.py --run 20261024-144731
+.venv/bin/python watch.py --run acra
 ```
 ```bash
-.venv/bin/python visualiser.py --random
+.venv/bin/python watch.py --random
 ```
 
-On macOS the passive viewer must be started with `mjpython` instead of `python` (`.venv/bin/mjpython visualiser.py`). On Windows use `.venv\Scripts\python.exe`.
+On macOS the passive viewer must be started with `mjpython` instead of `python` (`.venv/bin/mjpython watch.py`). On Windows use `.venv\Scripts\python.exe`.
 
-Rebuild the geometry: run `freecad_build.py` from FreeCAD's Python console (coloured FCStd/STEP), or `freecadcmd freecad_build.py` (geometry and meshes only). Do not rebuild while a training run is starting: it rewrites the meshes the environments load.
+Rebuild the geometry: run `build.py` from FreeCAD's Python console (coloured model), or `freecadcmd build.py` (geometry and meshes only). Do not rebuild while a training run is starting: it rewrites `meshes.zip`, which the environments load.
 
 Viewer keys: Up/Down forward speed ±0.1 m/s, Left/Right yaw rate ±0.2 rad/s, Space pause, R reset, + / - double / halve playback speed.
 
-Each training run writes `runs/<timestamp>/` with `checkpoints/`, `logs/progress.csv`, `policy.zip`, `vecnormalize.pkl`, `config.json` and `summary.json`. `runs/latest` is a one-line text file holding the newest run name (a text file instead of a symlink so it works on Windows without admin rights).
+Each new training run writes `runs/<timestamp>/` with `checkpoints/`, `logs/progress.csv`, `policy.zip`, `vecnormalize.pkl`, `config.json` and `summary.json`, and points `runs/latest` at it. The shipped policy keeps only `policy.zip` and `vecnormalize.pkl`. `runs/latest` is a one-line text file holding the newest run name (a text file instead of a symlink so it works on Windows without admin rights).
 
 ## Articulation
 
@@ -127,7 +128,7 @@ How it walks like a lizard with so few joints:
 - Terminates when the body centre drops below 0.06 m or its up axis tilts past ~78° (upright < 0.2); truncates after 1000 steps (20 s).
 - PPO: 2×256 ELU MLP, 24 envs × 1024 steps per update, batch 4096, 5 epochs, learning rate 3e-4 decaying linearly to 3e-5, target KL 0.03, observation and reward normalisation (`VecNormalize`).
 
-## Results (run 20261024-144731: 40M steps, 24 envs, seed 0, 59 min on CPU, ~11.3k steps/s)
+## Results (run `runs/acra`: 40M steps, 24 envs, seed 0, 59 min on CPU, ~11.3k steps/s)
 
 Mean episode return went 814 → 2939; every episode at the end ran the full 20 s without falling. Deterministic policy, 8 s per command after a 2 s warm-up:
 
