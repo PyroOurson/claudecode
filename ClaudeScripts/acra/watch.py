@@ -66,7 +66,8 @@ def load_policy(run: str, env: AcraEnv) -> Callable[[np.ndarray], np.ndarray]:
     from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 
     path = resolve_run(run)
-    model = PPO.load(str(path / "policy.zip"), device="cpu")
+    frozen = {"learning_rate": 0.0, "lr_schedule": lambda _: 0.0, "clip_range": lambda _: 0.0}
+    model = PPO.load(str(path / "policy.zip"), device="cpu", custom_objects=frozen)
     norm = VecNormalize.load(str(path / "vecnormalize.pkl"), DummyVecEnv([AcraEnv]))
     norm.training = False
     print(f"loaded policy from {path}")

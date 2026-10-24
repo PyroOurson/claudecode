@@ -327,7 +327,8 @@ def main() -> None:
     if args.resume:
         src = resolve_run(args.resume)
         env = VecNormalize.load(str(src / "vecnormalize.pkl"), venv)
-        model = PPO.load(str(src / "policy.zip"), env=env, device="cpu")
+        schedules = {"learning_rate": linear_lr, "lr_schedule": linear_lr, "clip_range": 0.2}
+        model = PPO.load(str(src / "policy.zip"), env=env, device="cpu", custom_objects=schedules)
         print(f"resumed from {src.name} at {model.num_timesteps} steps")
     else:
         env = VecNormalize(venv, norm_obs=True, norm_reward=True, clip_obs=10.0, gamma=0.99)
