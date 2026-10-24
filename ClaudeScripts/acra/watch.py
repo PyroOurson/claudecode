@@ -4,6 +4,11 @@
     python watch.py --run acra
     python watch.py --random         (untrained random actions, for comparison)
 
+On Linux the viewer uses GLFW's X11 build (XWayland on Wayland desktops),
+which avoids crashes seen with GLFW's Wayland build; set
+PYGLFW_LIBRARY_VARIANT=wayland to override. If anything still crashes, the
+Python line is printed.
+
 Keys: Up/Down change forward speed, Left/Right turn, Space pauses, R resets,
 + and - double or halve playback speed. Walking speed and the episode's
 cumulative reward are printed in the terminal.
@@ -11,10 +16,16 @@ cumulative reward are printed in the terminal.
 from __future__ import annotations
 
 import argparse
+import faulthandler
+import os
 import sys
 import time
 from dataclasses import dataclass
 from typing import Callable
+
+faulthandler.enable()
+if sys.platform.startswith("linux"):
+    os.environ.setdefault("PYGLFW_LIBRARY_VARIANT", "x11")
 
 import mujoco
 import mujoco.viewer
