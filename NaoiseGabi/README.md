@@ -1,6 +1,6 @@
 # NaoiseGabi
 
-Everything here is Python 3.9+, except `maps-server/`. Go into a folder and run a script with `python`. Add `--help` to any script to see all its options.
+Everything here is Python 3.9+. Go into a folder and run a script with `python`. Add `--help` to any script to see all its options.
 
 ## Setup (once)
 
@@ -28,6 +28,8 @@ python -m pip install --user -r requirements.txt
 | --- | --- | --- |
 | `voronoi_stippling.py` | `python voronoi_stippling.py` | Opens a file picker, then redraws the picture as dots using weighted Voronoi stippling, animated live, and saves the result next to the picture as `name_stippled.png`. You can also give a path directly, or use `--demo`. Options: `--density`, `--contrast`, `--min-size`, `--max-size`, `--color`, `--background`, `--save`, `--no-window`. |
 
-## `maps-server/`
+## `typing-bot/`
 
-buphagus (maps-server), a public-transport routing engine written in Rust and run with Nix and Docker; it is not a Python script. Everything about it, from setup to the HTTP API and the plugin protocol, is in [`maps-server/README.md`](maps-server/README.md). What changed is in [`maps-server/CHANGELOG.md`](maps-server/CHANGELOG.md).
+| Script | Run | What it does |
+| --- | --- | --- |
+| `typer.py` | `python typer.py` | Types typing.com tests automatically in Google Chrome at 120 wpm by default: waits for the test text, types it and stops when the test ends. Notes in `HANDOFF.md`. |

@@ -4,7 +4,7 @@
 
 | Folder | Made by | Contents |
 | --- | --- | --- |
-| [`NaoiseGabi/`](NaoiseGabi/) | Naoise and Gabi | Our projects: Python games, solvers and art, and `maps-server`, Naoise's public-transport routing engine in Rust. See its README. |
+| [`NaoiseGabi/`](NaoiseGabi/) | Naoise and Gabi | Our projects: Python games, solvers, art and the typing bot. See its README. |
 | [`ClaudeScripts/`](ClaudeScripts/) | Claude | Everything Claude makes from scratch, one folder per project (list below). |
 | `index.html`, [`gameplay/`](gameplay/) | Claude | The gameplay website. GitHub Pages serves it from the root of the repository, so these two stay here. Its source is in `ClaudeScripts/gameplay-site/`. |
 
@@ -14,15 +14,12 @@
 | --- | --- |
 | [`acra/`](ClaudeScripts/acra/) | ACRA, a lizard-style quadruped robot: FreeCAD model, MuJoCo simulation, a walking policy trained with reinforcement learning and a real-time viewer. Its README has the download and run steps. |
 | [`gameplay-site/`](ClaudeScripts/gameplay-site/) | Source, sign-in server, Supabase setup, deploy script and game roadmap (`GAMES.md`) of the gameplay website. |
-| [`hello-page/`](ClaudeScripts/hello-page/) | The first browser games page (`index.html`) and its 12 small games, listed at the end of this file. |
-| [`maps-demo/`](ClaudeScripts/maps-demo/) | A web page to try `NaoiseGabi/maps-server` in the browser on a map of Monaco: https://pyroourson.github.io/claudecode/ClaudeScripts/maps-demo/ |
-| [`maps-server-review/`](ClaudeScripts/maps-server-review/) | A review of `maps-server` with tests that prove each bug and a handoff prompt. |
-| [`typing-bot/`](ClaudeScripts/typing-bot/) | A Python script that types typing.com tests automatically (`typer.py`, notes in `HANDOFF.md`). |
 | [`update.py`](ClaudeScripts/update.py) | Downloads the latest version of the whole repository (see below). |
 
 ## What changed on 24 October 2026
 
-- **One branch, everything re-uploaded today.** All the old branches (`claude/peaceful-thompson-u1uxhi`, `claude/upbeat-bell-n1e54q`, `gh-pages` and four older ones) were combined into `mainbranch-claude-code` and the whole repository was uploaded again as one commit, so every file carries today's date. `maps-demo`, `maps-server-review`, `typing-bot` and the hello-page `index.html` only existed on side branches; they are now back in `ClaudeScripts/`.
+- **One branch, everything re-uploaded today.** All the old branches were combined into `mainbranch-claude-code` and the whole repository was uploaded again, so every file carries today's date.
+- **Cleaned up.** The maps project (`maps-server`, `maps-demo`, `maps-server-review`), the old hello-page games, `.gitignore` and `.nojekyll` were removed. The typing bot moved to `NaoiseGabi/typing-bot/`.
 - **`update.py`, `deploy.py` and the instructions below now point at `mainbranch-claude-code`.** Run `python ClaudeScripts/update.py` once on each computer to switch over.
 - **New project: [`ClaudeScripts/acra/`](ClaudeScripts/acra/).** A lizard robot designed in FreeCAD from reference renders (10 motors, sprawled legs, a sideways-bending spine, five-toed gecko feet), simulated in MuJoCo and trained with PPO to walk, run and turn on command. It includes the trained policy, so it can be watched without training.
 
@@ -74,21 +71,4 @@ curl -fsSL https://raw.githubusercontent.com/PyroOurson/claudecode/mainbranch-cl
 ```
 
 It downloads `index.html` from the branch named at the end, writes the Firebase config (every game gets its own address such as `/block-roll`), a sitemap and `robots.txt`, creates the `gameplaygames` site if needed and deploys it to https://gameplaygames.web.app.
-
-The older hello-page games are still in `ClaudeScripts/hello-page/`:
-
-| Game | File | What it is |
-| --- | --- | --- |
-| Draw a Perfect Circle | `games/circle.html` | Draw freehand around a dot and get a roundness score. |
-| The Password Gauntlet | `games/password.html` | Type a password that obeys more and more ridiculous rules. |
-| Spend a Hundred Billion | `games/spend.html` | Buy and sell things until the money runs out. |
-| Higher or Lower | `games/higher-lower.html` | Guess which country has the bigger population. |
-| Element Crafter | `games/crafter.html` | Combine Water, Fire, Earth and Wind into new elements. |
-| Cosmic Clicker | `games/clicker.html` | Idle game: click a planet and buy stardust generators. |
-| Reaction Time | `games/reaction.html` | Click the moment the screen turns green. |
-| 2048 | `games/2048.html` | Slide and merge tiles to reach 2048. |
-| Minesweeper | `games/minesweeper.html` | The classic, in three sizes, with flag mode for phones. |
-| Typing Speed | `games/typing.html` | Words-per-minute test. |
-| Color Match | `games/color.html` | Memorise a colour, then recreate it with sliders. |
-| Snake | `games/snake.html` | Snake for the browser, with swipe and D-pad controls on phones. |
 
