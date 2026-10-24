@@ -22,6 +22,8 @@ Shared brief for agents that test or improve one game group of the gameplay site
 - No new external network dependencies. Assets are drawn in code or generated; do not copy the reference images or audio into the game (they are copyrighted, for study only).
 - Keep 60 fps on an ordinary laptop, no console errors, keyboard and touch both work, Esc pauses.
 
+- Never kill processes by image name (`taskkill /IM node.exe`, `/IM chrome.exe`, `pkill node`): other agents run tests on the same machine. Close your own browsers with `browser.close()` or kill only the PIDs you started.
+
 ## Build a test page and play it
 
 ```

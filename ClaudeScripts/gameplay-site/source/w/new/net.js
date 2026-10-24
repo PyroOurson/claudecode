@@ -37,7 +37,7 @@ const NET_CSS = `.g-lobby{position:absolute;inset:0;z-index:200;display:flex;ove
 .g-lobby .gl-pill svg{width:14px;height:14px;stroke-width:2.4}
 .g-lobby .gl-pill.gl-live{color:var(--gl-live);background:var(--gl-live-soft);gap:7px;padding:4px 12px}
 .g-lobby .gl-pill.gl-live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--gl-live)}
-.g-lobby .gl-players{list-style:none;margin:0;padding:0;flex:1 1 auto;min-height:calc(var(--rows,4) * 71px);overflow-y:auto;overscroll-behavior:contain}
+.g-lobby .gl-players{list-style:none;margin:0;padding:0;flex:1 1 auto;min-height:calc(var(--rows,4) * 71px);max-height:calc(8 * 71px);overflow-y:auto;overscroll-behavior:contain}
 .g-lobby.gl-fixh .gl-players{min-height:0}
 .g-lobby .gl-pl{display:flex;align-items:center;gap:14px;height:71px;padding:14px 0;border-bottom:1px solid var(--gl-line)}
 .g-lobby .gl-new{animation:glin .3s ease both}
@@ -117,7 +117,7 @@ const NET_CSS = `.g-lobby{position:absolute;inset:0;z-index:200;display:flex;ove
 .g-lobby.gl-cmp .gl-codebox b{font-size:24px}
 .g-lobby.gl-cmp .gl-body{padding:22px 32px 22px}
 .g-lobby.gl-cmp .gl-sec-h{margin-bottom:10px}
-.g-lobby.gl-cmp .gl-players{min-height:calc(var(--rows,4) * 58px)}
+.g-lobby.gl-cmp .gl-players{min-height:calc(var(--rows,4) * 58px);max-height:calc(8 * 58px)}
 .g-lobby.gl-cmp.gl-fixh .gl-players{min-height:0}
 .g-lobby.gl-cmp .gl-pl{height:58px;padding:8px 0}
 .g-lobby.gl-cmp .gl-av{width:38px;height:38px}
@@ -143,7 +143,7 @@ const NET_CSS = `.g-lobby{position:absolute;inset:0;z-index:200;display:flex;ove
 .g-lobby.gl-stack .gl-body>.gl-rule{display:none}
 .g-lobby.gl-stack .gl-plsec{order:1;padding:20px 16px 18px}
 .g-lobby.gl-stack .gl-sec-h{margin-bottom:8px}
-.g-lobby.gl-stack .gl-players{min-height:0;overflow:visible;flex:none}
+.g-lobby.gl-stack .gl-players{min-height:0;max-height:312px;overflow-y:auto;flex:none}
 .g-lobby.gl-stack .gl-pl{height:60px;padding:9px 0;gap:12px}
 .g-lobby.gl-stack .gl-av{width:38px;height:38px}
 .g-lobby.gl-stack .gl-foot{order:2;display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:18px 16px}
@@ -184,6 +184,15 @@ const netLoadName = () => { const p = netProfile(); return netName(p.username) |
 const netSaveName = n => { n = netName(n); if (n) netLs('gameplay:netname', n); };
 const netGuest = () => { let n = netName(netLs('gameplay:netguest')); if (!n) { n = 'Player ' + (1000 + Math.floor(Math.random() * 9000)); netLs('gameplay:netguest', n); } return n; };
 const netT = s => { try { return window.gpI18n && typeof gpI18n.t === 'function' ? gpI18n.t(s) || s : s; } catch (e) { return s; } };
+const NET_TAB = netUid();
+const NET_SES = 'gameplay:netses';
+const netSes = v => {
+  try {
+    if (v === undefined) { const o = JSON.parse(sessionStorage.getItem(NET_SES) || 'null'); return o && typeof o === 'object' && typeof o.code === 'string' && Date.now() - o.t < 180000 ? o : null; }
+    if (v === null) sessionStorage.removeItem(NET_SES); else sessionStorage.setItem(NET_SES, JSON.stringify(v));
+  } catch (e) {}
+  return null;
+};
 const netInit = n => {
   const w = String(n || '').trim().split(/\s+/).filter(Boolean).map(x => Array.from(x));
   if (!w.length) return '?';
@@ -191,10 +200,11 @@ const netInit = n => {
 };
 const netHm = t => { const d = new Date(t), p = x => (x < 10 ? '0' : '') + x; return p(d.getHours()) + ':' + p(d.getMinutes()); };
 const netTrack = (ev, p) => { try { if (typeof Ameplay !== 'undefined' && Ameplay.analytics && typeof Ameplay.analytics.track === 'function') Ameplay.analytics.track(ev, p); } catch (e) {} };
+const NET_MAX = 16;
 const netSizes = o => {
-  const mn = Math.max(2, Math.min(8, Math.round(+o.min) || 2));
-  let s = (Array.isArray(o.sizes) ? o.sizes : []).map(n => Math.round(+n)).filter(n => n >= 2 && n <= 8);
-  if (!s.length) { const mx = Math.max(mn, Math.min(8, Math.round(+o.max) || 4)); for (let i = mn; i <= mx; i++) s.push(i); }
+  const mn = Math.max(2, Math.min(NET_MAX, Math.round(+o.min) || 2));
+  let s = (Array.isArray(o.sizes) ? o.sizes : []).map(n => Math.round(+n)).filter(n => n >= 2 && n <= NET_MAX);
+  if (!s.length) { const mx = Math.max(mn, Math.min(NET_MAX, Math.round(+o.max) || 4)); for (let i = mn; i <= mx; i++) s.push(i); }
   if (+o.max >= 2) { const f = s.filter(n => n <= +o.max); if (f.length) s = f; }
   s = [...new Set(s)].sort((a, b) => a - b);
   const f = s.filter(n => n >= mn);
@@ -234,8 +244,10 @@ const netTe = new TextEncoder();
 function makeNet(g, add) {
   const ls = {};
   const emit = (t, ...a) => (ls[t] || []).slice().forEach(f => { try { f(...a); } catch (e) { console.error(e); } });
-  let peer = null, conn = null, hb = 0, lastRx = 0, gen = 0, mode = null, note = null, ckId = 0;
-  const now = () => performance.now();
+  let peer = null, conn = null, hb = 0, lastRx = 0, gen = 0, mode = null, note = null, ckId = 0, pairHid = false, resumed = false, nudge = null;
+  const now = () => Date.now();
+  const lim = hid => (document.hidden || hid ? 180000 : 7000);
+  const nap = ms => new Promise(r => { const t = setTimeout(() => { nudge = null; r(); }, ms); nudge = () => { clearTimeout(t); nudge = null; r(); }; });
   const pid = code => 'gameplay-' + g.id + '-' + code;
   const sleepMs = ms => new Promise(r => setTimeout(r, ms));
   const wait = (p, ms, type) => new Promise((res, rej) => {
@@ -305,6 +317,7 @@ function makeNet(g, add) {
       lastRx = now();
       if (d && d.__hb) { pong(c, d, fast); return; }
       if (d && d.__hr) { net.rtt = Math.round(now() - d.__hr); return; }
+      if (d && d.__vis !== undefined) { pairHid = !!d.__vis; return; }
       if (d && d.__hey) { if (net.role === 'host') tx(c, { __hi: 1 }); return; }
       if (d && (d.__hi || d.__full)) return;
       emit('data', d);
@@ -321,7 +334,7 @@ function makeNet(g, add) {
       if (t - last > 2500) lastRx = Math.max(lastRx, t - 1000);
       last = t;
       ping(c, t);
-      if (t - lastRx > 6000) drop();
+      if (t - lastRx > (document.hidden || pairHid ? 120000 : 6000)) drop();
     }, 1000);
     emit('open', net.role);
   };
@@ -374,7 +387,8 @@ function makeNet(g, add) {
     };
     const onErr = e => fin(e && e.type === 'peer-unavailable' ? e : e && e.type ? e : { type: 'network' });
     const tick = () => { if (!ext && ice() === 'checking') { ext = true; t = setTimeout(tick, 10000); return; } fin({ type: why() }); };
-    t = setTimeout(tick, 12000);
+    const early = () => { if (ice() === 'new' && !(c && c.open)) fin({ type: 'peer-unavailable' }); else t = setTimeout(tick, 8500); };
+    t = setTimeout(early, 3000);
     p.on('error', onErr);
     try { c = p.connect(pid(code), { reliable: true, serialization: 'json' }); } catch (e) { return fin({ type: 'network' }); }
     if (!c) return fin({ type: 'network' });
@@ -396,7 +410,7 @@ function makeNet(g, add) {
     try { return await dial1(p, code, my, hello, done); }
     catch (e) { if (e && e.type === 'timeout' && hello && my === gen && p && !p.destroyed) return dial1(p, code, my, hello, done); throw e; }
   };
-  const rm = { me: null, key: null, name: '', hostId: null, list: [], guests: new Map(), seq: 0, min: 2, max: 4, sizes: [2, 3, 4], state: 'lobby', conn: null, lastRx: 0, hb: 0, ui: null, busy: false, reconn: false, pendingGo: null, inGame: false, leader: null, chat: [], rate: new Map(), compat: false, compatO: null, tick: 0, lastTick: 0, bots: false, botsOk: false, renamed: false };
+  const rm = { me: null, key: null, name: '', hostId: null, list: [], guests: new Map(), seq: 0, min: 2, max: 4, sizes: [2, 3, 4], state: 'lobby', conn: null, lastRx: 0, hb: 0, ui: null, busy: false, reconn: false, pendingGo: null, inGame: false, leader: null, chat: [], rate: new Map(), go: null, hubHid: false, rt0: 0, compat: false, compatO: null, tick: 0, lastTick: 0, bots: false, botsOk: false, renamed: false };
   const leaderId = () => {
     if (net.role === 'host') return rm.leader && (rm.leader === rm.me || rm.guests.has(rm.leader)) ? rm.leader : rm.me;
     return rm.leader || rm.hostId;
@@ -413,8 +427,8 @@ function makeNet(g, add) {
     for (let i = 2; i < 99; i++) { const t = nm.slice(0, 13) + ' ' + i; if (!taken.has(t.toLowerCase())) return t; }
     return nm;
   };
-  const cleanList = l => Array.isArray(l) ? l.slice(0, 8).filter(p => p && typeof p.id === 'string').map(p => ({ id: p.id.slice(0, 16), name: netName(p.name) || 'Player', host: !!p.host, leader: !!p.leader, ping: Math.max(0, Math.min(9999, +p.ping || 0)), away: !!p.away, inGame: !!p.inGame })) : [];
-  const cleanSizes = l => Array.isArray(l) ? l.map(n => Math.round(+n)).filter(n => n >= 2 && n <= 8).slice(0, 7) : [];
+  const cleanList = l => Array.isArray(l) ? l.slice(0, NET_MAX).filter(p => p && typeof p.id === 'string').map(p => ({ id: p.id.slice(0, 16), name: netName(p.name) || 'Player', host: !!p.host, leader: !!p.leader, ping: Math.max(0, Math.min(9999, +p.ping || 0)), away: !!p.away, inGame: !!p.inGame })) : [];
+  const cleanSizes = l => Array.isArray(l) ? l.map(n => Math.round(+n)).filter(n => n >= 2 && n <= NET_MAX).slice(0, NET_MAX - 1) : [];
   const cleanMsg = m => m && typeof m === 'object' ? { i: typeof m.i === 'string' ? m.i.slice(0, 16) : '', n: netName(m.n), x: netMsg(m.x), k: m.s && typeof m.k === 'string' ? netMsg(m.k).slice(0, 60) : '', a: netName(m.a), t: +m.t || Date.now(), s: m.s ? 1 : 0 } : null;
   const cleanChat = l => Array.isArray(l) ? l.slice(-100).map(cleanMsg).filter(m => m && m.x) : [];
   const txAll = m => {
@@ -422,10 +436,29 @@ function makeNet(g, add) {
     const s = JSON.stringify(m), b = s.length < 16000 ? netTe.encode(s) : null;
     rm.guests.forEach(gs => tx(gs.conn, m, s, b));
   };
+  const sesSave = () => {
+    if (mode !== 'room' || !net.code || !rm.me) return;
+    const o = { g: g.id, role: net.role, code: net.code, me: rm.me, key: rm.key, name: rm.name, t: Date.now() };
+    if (net.role === 'host') o.h = { max: rm.max, bots: rm.bots, leader: rm.leader, guests: [...rm.guests.values()].map(x => ({ id: x.id, key: x.key, name: x.name, seq: x.seq })) };
+    netSes(o);
+  };
+  const hidTx = () => {
+    const m = { __vis: document.hidden ? 1 : 0 };
+    if (mode === 'room') { if (net.role === 'host') rm.guests.forEach(gs => tx(gs.conn, m)); else tx(rm.conn, m); }
+    else tx(conn, m);
+  };
+  const revive = () => {
+    const t = now();
+    lastRx = t; rm.lastRx = t; rm.lastTick = t; rm.rt0 = t;
+    rm.guests.forEach(gs => { if (gs.conn) gs.lastRx = t; });
+    if (nudge) nudge();
+  };
+  const onVis = () => { hidTx(); if (!document.hidden) revive(); };
   const pushList = () => {
     rm.list = hostPlayers();
     const m = { __pl: rm.list, busy: rm.state === 'game', min: rm.min, max: rm.max, sizes: rm.sizes, leader: leaderId(), bots: rm.bots, canBots: rm.botsOk };
     txAll(m);
+    sesSave();
     if (rm.ui) rm.ui.update();
   };
   const chatAdd = m => {
@@ -444,7 +477,7 @@ function makeNet(g, add) {
     r.push(t);
     chatAdd({ i: id, n: nm, x, t, s: 0 });
   };
-  const welOf = gs => ({ __wel: { id: gs.id, host: rm.me, code: net.code, busy: rm.state === 'game', inGame: gs.inGame, min: rm.min, max: rm.max, sizes: rm.sizes, leader: leaderId(), bots: rm.bots, canBots: rm.botsOk, chat: rm.chat } });
+  const welOf = gs => ({ __wel: { id: gs.id, host: rm.me, code: net.code, busy: rm.state === 'game', inGame: gs.inGame, hid: document.hidden, go: gs.inGame && rm.state === 'game' ? rm.go : null, min: rm.min, max: rm.max, sizes: rm.sizes, leader: leaderId(), bots: rm.bots, canBots: rm.botsOk, chat: rm.chat } });
   const removeGuest = (id, why) => {
     const gs = rm.guests.get(id);
     if (!gs) return;
@@ -489,23 +522,25 @@ function makeNet(g, add) {
     if (mode !== 'room' || leaderId() !== rm.me) return;
     if (net.role === 'host') ctl(a, id, n); else tx(rm.conn, { __ctl: { a, id, n } });
   };
-  const goAway = gs => {
+  const goAway = (gs, back) => {
     if (gs.away) return;
     const c = gs.conn; gs.conn = null; gs.away = true;
     try { if (c) c.close(); } catch (e) {}
     clearTimeout(gs.gt);
-    gs.gt = setTimeout(() => removeGuest(gs.id, 'lost'), 12000);
+    gs.gt = setTimeout(() => removeGuest(gs.id, 'lost'), back ? 20000 : gs.hid ? 60000 : 12000);
     pushList();
   };
   const hostIn = (gid, c, d, fast) => {
     const gs = rm.guests.get(gid);
     if (!gs || gs.conn !== c) return;
     gs.lastRx = now();
+    if (!d.__hello) gs.ok = true;
     if (d.__hb) { pong(c, d, fast); return; }
     if (d.__hr) { gs.rtt = Math.round(now() - d.__hr); return; }
     if (d.__hello) { if (!fast) tx(c, welOf(gs)); return; }
+    if (d.__vis !== undefined) { gs.hid = !!d.__vis; return; }
     if (fast) { if (gs.inGame && rm.state === 'game') emit('data', d, gid); return; }
-    if (d.__bye) { removeGuest(gid, 'left'); return; }
+    if (d.__bye) { if (d.back) goAway(gs, true); else removeGuest(gid, 'left'); return; }
     if (d.__name) { const n2 = uniqueName(d.__name, gid); if (n2 !== gs.name) { gs.name = n2; pushList(); } return; }
     if (d.__chat) { chatFrom(gid, gs.name, d.__chat); return; }
     if (d.__ctl) { const k = d.__ctl; if (k && typeof k === 'object' && leaderId() === gid) ctl(String(k.a || ''), k.id, k.n); return; }
@@ -525,9 +560,10 @@ function makeNet(g, add) {
         clearTimeout(kill);
         const id = h.id.slice(0, 16), old = rm.guests.get(id);
         if (old) {
-          if (old.key !== h.key) { tx(c, { __full: 1, why: 'id' }); setTimeout(() => { try { c.close(); } catch (e) {} }, 400); return; }
+          const dup = !!(old.conn && old.conn !== c && old.conn.open && !old.away && h.tab && old.tab && h.tab !== old.tab && now() - old.lastRx < 2500);
+          if (old.key !== h.key || dup) { tx(c, { __full: 1, why: dup ? 'dup' : 'id' }); setTimeout(() => { try { c.close(); } catch (e) {} }, 400); return; }
           const prev = old.conn; gid = id;
-          old.conn = c; old.lastRx = now(); old.away = false; clearTimeout(old.gt);
+          old.conn = c; old.lastRx = now(); old.away = false; old.tab = String(h.tab || ''); clearTimeout(old.gt);
           if (prev && prev !== c) { try { prev.close(); } catch (e) {} }
           tx(c, welOf(old));
           if (old.inGame && rm.state === 'game') emit('rejoin', pubOf(old));
@@ -536,7 +572,7 @@ function makeNet(g, add) {
         }
         if (rm.guests.size + 1 >= rm.max) { tx(c, { __full: 1 }); setTimeout(() => { try { c.close(); } catch (e) {} }, 400); return; }
         gid = id;
-        const gs = { id, key: h.key, name: uniqueName(h.name), conn: c, lastRx: now(), rtt: 0, inGame: false, away: false, gt: 0, seq: ++rm.seq };
+        const gs = { id, key: h.key, name: uniqueName(h.name), conn: c, lastRx: now(), rtt: 0, inGame: false, away: false, gt: 0, seq: ++rm.seq, ok: false, hid: false, tab: String(h.tab || '') };
         rm.guests.set(id, gs);
         tx(c, welOf(gs));
         emit('join', pubOf(gs));
@@ -547,7 +583,7 @@ function makeNet(g, add) {
       }
       hostIn(gid, c, d, false);
     });
-    const gone = () => { const gs = gid && rm.guests.get(gid); if (gs && gs.conn === c) goAway(gs); };
+    const gone = () => { const gs = gid && rm.guests.get(gid); if (gs && gs.conn === c) { if (gs.ok) goAway(gs); else removeGuest(gid, 'left'); } };
     c.on('close', gone);
     c.on('error', gone);
   };
@@ -558,7 +594,7 @@ function makeNet(g, add) {
     rm.guests.forEach(gs => {
       if (!gs.conn) return;
       if (stall) gs.lastRx = Math.max(gs.lastRx, t - 1000);
-      if (!gs.conn.open || t - gs.lastRx > 7000) return goAway(gs);
+      if (!gs.conn.open || t - gs.lastRx > lim(gs.hid)) return goAway(gs);
       ping(gs.conn, t);
       if (gs.inGame || rm.state !== 'game') mx = Math.max(mx, gs.rtt || 0);
     });
@@ -573,11 +609,19 @@ function makeNet(g, add) {
     if (rm.ui) rm.ui.ended(reason);
     if (wasGame || !rm.ui) emit('close', reason);
   };
+  const guestGo = d => {
+    rm.state = 'game'; rm.inGame = true; rm.busy = true;
+    const players = cleanList(d.__go).map(p => ({ id: p.id, name: p.name, host: p.host, leader: p.leader }));
+    const r = { role: 'guest', id: rm.me, players, size: Math.round(+d.size) || players.length, leader: typeof d.leader === 'string' ? d.leader.slice(0, 16) : rm.hostId, bots: !!d.bots };
+    if (rm.ui) rm.ui.finish(r);
+    else rm.pendingGo = r;
+  };
   const guestData = (c, d, fast) => {
     if (c !== rm.conn || !d || typeof d !== 'object') return;
     rm.lastRx = now();
     if (d.__hb) { pong(c, d, fast); return; }
     if (d.__hr) { net.rtt = Math.round(now() - d.__hr); return; }
+    if (d.__vis !== undefined) { rm.hubHid = !!d.__vis; return; }
     if (fast) { if (rm.state === 'game' && rm.inGame) emit('data', d, rm.hostId); return; }
     if (d.__pl) {
       rm.list = cleanList(d.__pl); rm.busy = !!d.busy;
@@ -595,14 +639,7 @@ function makeNet(g, add) {
       if (m && m.x) { rm.chat.push(m); if (rm.chat.length > 100) rm.chat.splice(0, rm.chat.length - 100); if (rm.ui) rm.ui.chat(); }
       return;
     }
-    if (d.__go) {
-      rm.state = 'game'; rm.inGame = true; rm.busy = true;
-      const players = cleanList(d.__go).map(p => ({ id: p.id, name: p.name, host: p.host, leader: p.leader }));
-      const r = { role: 'guest', id: rm.me, players, size: Math.round(+d.size) || players.length, leader: typeof d.leader === 'string' ? d.leader.slice(0, 16) : rm.hostId, bots: !!d.bots };
-      if (rm.ui) rm.ui.finish(r);
-      else rm.pendingGo = r;
-      return;
-    }
+    if (d.__go) { guestGo(d); return; }
     if (d.__lob) {
       rm.state = 'lobby'; rm.inGame = false; rm.busy = false; rm.pendingGo = null;
       emit('lobby');
@@ -616,15 +653,15 @@ function makeNet(g, add) {
   };
   const guestConnect = async (code, my) => {
     let w = null;
-    const c = await dial(peer, code, my, { __hello: { id: rm.me, key: rm.key, name: rm.name } }, d => {
-      if (d && d.__full) return { type: d.why === 'id' ? 'network' : 'room-full' };
+    const c = await dial(peer, code, my, { __hello: { id: rm.me, key: rm.key, name: rm.name, tab: NET_TAB } }, d => {
+      if (d && d.__full) return { type: d.why ? 'dup' : 'room-full' };
       if (d && d.__wel) { w = d.__wel; return true; }
       return false;
     });
     return { c, w };
   };
   const guestAttach = (c, w) => {
-    rm.conn = c; rm.lastRx = now(); rm.reconn = false;
+    rm.conn = c; rm.lastRx = now(); rm.reconn = false; rm.hubHid = !!w.hid;
     rm.hostId = typeof w.host === 'string' ? w.host.slice(0, 16) : 'host';
     rm.busy = !!w.busy;
     if (+w.min) rm.min = +w.min;
@@ -639,16 +676,20 @@ function makeNet(g, add) {
     c.on('close', gone);
     c.on('error', gone);
     clearInterval(rm.hb);
-    let last = now();
+    let last = now(), sv = 0;
     rm.hb = setInterval(() => {
       if (rm.conn !== c) return;
       const t = now();
       if (t - last > 2500) rm.lastRx = Math.max(rm.lastRx, t - 1000);
       last = t;
-      if (!c.open || t - rm.lastRx > 7000) return guestLost();
+      if (!c.open || t - rm.lastRx > lim(rm.hubHid)) return guestLost();
       ping(c, t);
+      if (++sv % 5 === 0) sesSave();
     }, 1000);
+    sesSave();
+    if (document.hidden) hidTx();
     if (rm.ui) rm.ui.chat();
+    if (w.inGame && w.go && typeof w.go === 'object' && !(rm.state === 'game' && rm.inGame)) guestGo(w.go);
   };
   const guestLost = async () => {
     const c = rm.conn;
@@ -656,32 +697,43 @@ function makeNet(g, add) {
     rm.conn = null; rm.reconn = true; clearInterval(rm.hb);
     try { c.close(); } catch (e) {}
     if (rm.ui) rm.ui.update();
-    const my = gen, code = net.code, t0 = now();
-    while (my === gen && now() - t0 < 16000) {
-      await new Promise(r => setTimeout(r, 1500));
+    const my = gen, code = net.code;
+    let why = 'lost';
+    rm.rt0 = now();
+    while (my === gen && (now() - rm.rt0 < 45000 || (document.hidden && now() - rm.rt0 < 600000))) {
+      await nap(1200);
       if (my !== gen) return;
       try {
         if (!peer || peer.destroyed) { const p = await newPeer(undefined, my); if (my !== gen) { p.destroy(); return; } peer = p; }
-        else if (peer.disconnected) { try { peer.reconnect(); } catch (e) {} await new Promise(r => setTimeout(r, 1500)); }
+        else if (peer.disconnected) { try { peer.reconnect(); } catch (e) {} await nap(1500); }
         const { c: c2, w } = await guestConnect(code, my);
         if (my !== gen) { try { c2.close(); } catch (e) {} return; }
-        if (rm.state === 'game' && rm.inGame && !w.inGame) { guestAttach(c2, w); guestEnd('lost'); return; }
         guestAttach(c2, w);
+        if (rm.state === 'game' && rm.inGame && !w.inGame) {
+          if ((ls.lobby || []).length) { rm.state = 'lobby'; rm.inGame = false; rm.busy = false; rm.pendingGo = null; emit('lobby'); }
+          else { guestEnd('lost'); return; }
+        }
         if (rm.ui) rm.ui.update();
         return;
-      } catch (e) {}
+      } catch (e) {
+        const t = e && e.type;
+        why = t === 'peer-unavailable' ? 'host-left' : 'lost';
+        if (t === 'room-full' || t === 'dup') { why = 'lost'; break; }
+      }
     }
-    if (my === gen) guestEnd('lost');
+    if (my === gen) guestEnd(why);
   };
-  const shut = polite => {
+  const shut = (polite, keep) => {
+    keep = keep || (mode === 'room' && !!invite && invite.id === g.id && !!invite.code && invite.code === net.code);
+    if (keep) sesSave(); else if (mode === 'room') netSes(null);
     gen++; clearInterval(hb); clearInterval(rm.hb);
     const c = conn, p = peer, gc = rm.conn, gs = [...rm.guests.values()], wasHost = mode === 'room' && net.role === 'host';
     conn = null; peer = null; rm.conn = null; rm.reconn = false;
     gs.forEach(x => clearTimeout(x.gt)); rm.guests.clear();
     let delay = 0;
     if (polite && mode === 'room') {
-      if (wasHost) gs.forEach(x => { if (tx(x.conn, { __end: 1 })) delay = 350; });
-      else if (tx(gc, { __bye: 1 })) delay = 350;
+      if (wasHost) { if (!keep) gs.forEach(x => { if (tx(x.conn, { __end: 1 })) delay = 350; }); }
+      else if (tx(gc, keep ? { __bye: 1, back: 1 } : { __bye: 1 })) delay = 350;
     }
     const bye = () => {
       try { if (c) c.close(); } catch (e) {}
@@ -691,56 +743,81 @@ function makeNet(g, add) {
     };
     if (delay) setTimeout(bye, delay); else bye();
     net.role = null; net.code = null; mode = null; net.rtt = 0;
-    rm.list = []; rm.state = 'lobby'; rm.inGame = false; rm.busy = false; rm.pendingGo = null; rm.leader = null; rm.chat = []; rm.rate.clear();
+    rm.list = []; rm.state = 'lobby'; rm.inGame = false; rm.busy = false; rm.pendingGo = null; rm.leader = null; rm.chat = []; rm.rate.clear(); rm.go = null; rm.hubHid = false;
   };
-  const roomHost = async () => {
+  const restoreGuests = h => {
+    (Array.isArray(h.guests) ? h.guests : []).slice(0, NET_MAX - 1).forEach(x => {
+      if (!x || typeof x.id !== 'string' || typeof x.key !== 'string') return;
+      const id = x.id.slice(0, 16), seq = +x.seq || ++rm.seq;
+      rm.seq = Math.max(rm.seq, seq);
+      rm.guests.set(id, { id, key: x.key, name: netName(x.name) || 'Player', conn: null, lastRx: now(), rtt: 0, inGame: false, away: true, gt: setTimeout(() => removeGuest(id, 'lost'), 25000), seq, ok: true, hid: false, tab: '' });
+    });
+    if (typeof h.leader === 'string' && rm.guests.has(h.leader)) rm.leader = h.leader;
+  };
+  const roomHost = async res => {
     shut(true);
-    const my = gen;
-    for (let i = 0; i < 5; i++) {
-      const code = Array.from({ length: 4 }, () => CODE_ABC[Math.floor(Math.random() * CODE_ABC.length)]).join('');
-      let p;
-      try { p = await newPeer(pid(code), my); } catch (e) { if (e && e.type === 'unavailable-id') continue; throw e; }
-      if (my !== gen) { p.destroy(); return null; }
-      peer = p; net.code = code; net.role = 'host'; mode = 'room';
-      rm.me = netUid(); rm.state = 'lobby'; rm.guests.clear(); rm.tick = 0; rm.lastTick = 0; rm.hostId = rm.me; rm.leader = rm.me; rm.chat = []; net.closeReason = null;
-      p.on('connection', c => hostConn(c, my));
-      clearInterval(rm.hb);
-      rm.hb = setInterval(() => { if (my === gen) hostTick(); }, 1000);
-      pushList();
-      return code;
+    const my = gen, want = res && res.code, t0 = now();
+    let p = null, code = null, left = 5;
+    while (!p) {
+      const old = !!want && now() - t0 < 20000;
+      code = old ? want : Array.from({ length: 4 }, () => CODE_ABC[Math.floor(Math.random() * CODE_ABC.length)]).join('');
+      try { p = await newPeer(pid(code), my); }
+      catch (e) {
+        if (!e || e.type !== 'unavailable-id') throw e;
+        if (old) await nap(1200); else if (--left <= 0) throw { type: 'network' };
+        if (my !== gen) return null;
+      }
     }
-    throw { type: 'network' };
+    if (my !== gen) { p.destroy(); return null; }
+    const same = !!want && code === want;
+    peer = p; net.code = code; net.role = 'host'; mode = 'room';
+    rm.me = same ? res.me : netUid(); rm.state = 'lobby'; rm.guests.clear(); rm.tick = 0; rm.lastTick = 0; rm.hostId = rm.me; rm.leader = rm.me; rm.chat = []; rm.go = null; net.closeReason = null;
+    if (same && res.h) restoreGuests(res.h);
+    p.on('connection', c => hostConn(c, my));
+    clearInterval(rm.hb);
+    rm.hb = setInterval(() => { if (my === gen) hostTick(); }, 1000);
+    pushList();
+    return code;
   };
   const roomJoin = async code => {
+    code = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const ses = netSes();
+    let res = ses && ses.g === g.id && ses.code === code && ses.role === 'guest' ? ses : null;
     shut(true);
     const my = gen;
-    code = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-    const TRIES = 4;
-    let r = null;
-    rm.me = netUid(); rm.key = netUid() + netUid();
-    for (let a = 0; a < TRIES && !r; a++) {
+    rm.me = res ? res.me : netUid(); rm.key = res ? res.key : netUid() + netUid();
+    rm.state = 'lobby'; rm.inGame = false; rm.list = []; rm.leader = null; rm.chat = []; rm.go = null; net.closeReason = null;
+    const save = () => netSes({ g: g.id, role: 'guest', code, me: rm.me, key: rm.key, name: rm.name, t: Date.now() });
+    save();
+    const t0 = now(), END = 50000;
+    let p = null, a = 0, fails = 0, ice = 0, r = null;
+    const drop = () => { if (p) { try { p.destroy(); } catch (x) {} if (peer === p) peer = null; p = null; } };
+    const fatal = e => { netSes(null); shut(false); throw e; };
+    while (!r) {
       if (a) {
-        if (note) note(netT('Connecting again ({n}/{m})…').replace('{n}', a + 1).replace('{m}', TRIES));
-        await sleepMs(800 + 700 * a);
+        if (note) note(netT('Party {code} is not open yet, trying again…').replace('{code}', code));
+        await nap(Math.min(2000, 300 + 250 * a));
         if (my !== gen) return false;
       }
-      let p;
-      try { p = await newPeer(undefined, my, a === TRIES - 1); }
-      catch (e) { if (my !== gen || (e && e.type === 'cancel')) return false; if (a === TRIES - 1) { shut(false); throw e; } netTrack('party_retry', { game: g.id, why: ('peer-' + String(e && e.type || 'unknown')).slice(0, 24), n: a + 1 }); continue; }
-      if (my !== gen) { p.destroy(); return false; }
-      peer = p;
-      rm.state = 'lobby'; rm.inGame = false; rm.list = []; rm.leader = null; rm.chat = []; net.closeReason = null;
-      try { r = await guestConnect(code, my); }
-      catch (e) {
-        if (my !== gen) return false;
+      a++;
+      try {
+        if (p && p.disconnected) { try { p.reconnect(); } catch (x) {} await nap(1500); if (p.disconnected) drop(); }
+        if (!p) {
+          const q = await newPeer(undefined, my, ice > 2);
+          if (my !== gen) { q.destroy(); return false; }
+          p = peer = q;
+        }
+        r = await guestConnect(code, my);
+      } catch (e) {
+        if (my !== gen || (e && e.type === 'cancel')) { drop(); return false; }
         const t = e && e.type;
-        try { p.destroy(); } catch (x) {}
-        if (peer === p) peer = null;
-        if (t === 'room-full' || t === 'cancel' || a === TRIES - 1) { shut(false); throw e; }
-        netTrack('party_retry', { game: g.id, why: String(t || 'unknown').slice(0, 24), n: a + 1 });
+        if (t === 'room-full') fatal(e);
+        if (t === 'dup') { rm.me = netUid(); rm.key = netUid() + netUid(); res = null; save(); continue; }
+        if (now() - t0 > END) fatal(e);
+        netTrack('party_retry', { game: g.id, why: String(t || 'unknown').slice(0, 24), n: a });
+        if (t !== 'peer-unavailable') { if (t === 'ice') ice++; drop(); if (++fails >= 6) fatal(e); }
       }
     }
-    if (!r) { shut(false); throw { type: 'network' }; }
     if (my !== gen) { try { r.c.close(); } catch (e) {} return false; }
     if (invite && invite.id === g.id) invite = null;
     net.code = code; net.role = 'guest'; mode = 'room';
@@ -892,7 +969,7 @@ function makeNet(g, add) {
         if (jn) pl = `<li class="gl-pl gl-seat"><span class="gl-av" aria-hidden="true">${phase === 'error' ? NET_I.x : NET_I.plus}</span><div class="gl-who"><b><i>${netEsc(phase === 'error' ? T('Party {code}').replace('{code}', again.code) : T('Joining party…'))}</i></b><span>${netEsc(T(phase === 'error' ? 'Could not join this party' : 'Connecting to the party…'))}</span></div></li>`;
         else for (let i = L.length; i < size; i++) pl += seat();
         if (put('pl', '.gl-players', pl)) L.forEach(p => seen.add(p.id));
-        const nr = Math.max(size, L.length, 1);
+        const nr = Math.min(8, Math.max(size, L.length, 1));
         if (nr !== rows) { rows = nr; el.style.setProperty('--rows', String(nr)); fit(); }
         const jt = netEsc(T('{n} / {m} joined').replace('{n}', L.length).replace('{m}', size));
         const opts = amLead && !rm.busy && !rm.reconn && !jn ? (on ? rm.sizes : cfg.sizes).filter(s => s >= L.length) : [];
@@ -936,17 +1013,19 @@ function makeNet(g, add) {
       rm.ui = ui;
       const canRetry = e => { const t = e && e.type; return t === 'ice' || t === 'timeout' || t === 'peer-unavailable' || NET_SOFT.indexOf(t) >= 0; };
       const fail = (m, fn) => { phase = 'error'; err = m; again = fn; if (screen !== 'lobby') show('lobby'); else { cache = {}; ui.update(); } };
-      const hosting = async () => {
+      const hosting = async res => {
         const my = ++op;
-        phase = 'creating'; err = ''; again = null; note0 = '';
+        if (res && res.h && cfg.sizes.indexOf(Math.round(+res.h.max)) >= 0) pick = Math.round(+res.h.max);
+        phase = 'creating'; err = ''; again = null; note0 = res ? T('Restoring party {code}…').replace('{code}', res.code) : '';
         note = t => { if (!done && my === op) { note0 = t; ui.update(); } };
         show('lobby');
         try {
           rm.min = cfg.min; rm.max = pick; rm.sizes = cfg.sizes;
-          const code = await roomHost();
+          const code = await roomHost(res);
           if (done || my !== op || !code) return;
           note = null; note0 = '';
-          rm.min = cfg.min; rm.max = pick; rm.sizes = cfg.sizes; phase = 'ready'; cache = {};
+          rm.min = cfg.min; rm.max = Math.max(pick, rm.guests.size + 1); rm.sizes = cfg.sizes; phase = 'ready'; cache = {};
+          if (res && res.h && res.code === code) rm.bots = !!(res.h.bots && rm.botsOk);
           pushList();
           netTrack('party_create', { game: g.id, size: pick });
         } catch (e) { if (!done && my === op && !(e && e.type === 'cancel')) { note = null; fail(netWhy(e), hosting); } }
@@ -955,6 +1034,10 @@ function makeNet(g, add) {
         code = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
         if (!/^[A-Z0-9]{4}$/.test(code)) { const f = el.querySelector('.gl-join'), i = f && f.querySelector('input'); if (f) { f.classList.add('gl-bad'); try { i.focus({ preventScroll: true }); } catch (e) {} } return; }
         if (ready() && code === net.code) { const i = el.querySelector('.gl-code-in'); if (i) i.value = ''; return; }
+        if (phase === 'joining' && again && again.code === code) return;
+        const ses = netSes();
+        if (ses && ses.g === g.id && ses.code === code && ses.role === 'host' && mode !== 'room') { if (invite && invite.id === g.id) invite = null; return hosting(ses); }
+        const resume = !!(ses && ses.g === g.id && ses.code === code && ses.role === 'guest');
         const my = ++op, fn = () => joining(code);
         fn.code = code;
         phase = 'joining'; err = ''; again = fn; note0 = '';
@@ -972,6 +1055,7 @@ function makeNet(g, add) {
           const t = e && e.type;
           if (done || my !== op || t === 'cancel') return;
           note = null;
+          if (resume && t === 'peer-unavailable') return ui.ended('host-left');
           fail(t === 'room-full' ? T('Party {code} is full.').replace('{code}', code) : netWhy(e, code), canRetry(e) ? fn : Object.assign(() => joining(code), { code }));
         }
       };
@@ -985,7 +1069,8 @@ function makeNet(g, add) {
         rm.guests.forEach(gs => { gs.inGame = ids.has(gs.id); });
         const lead = leaderId(), bots = !!(rm.botsOk && rm.bots);
         const out = players.map(p => ({ id: p.id, name: p.name, host: p.host, leader: p.id === lead }));
-        rm.guests.forEach(gs => { if (gs.inGame) tx(gs.conn, { __go: out, size: rm.max, leader: lead, bots }); });
+        rm.go = { __go: out, size: rm.max, leader: lead, bots };
+        rm.guests.forEach(gs => { if (gs.inGame) tx(gs.conn, rm.go); });
         pushList();
         netTrack('party_play', { game: g.id, players: out.length, size: rm.max, bots });
         finish({ role: 'host', id: rm.me, players: out, size: rm.max, leader: lead, bots });
@@ -1070,7 +1155,7 @@ function makeNet(g, add) {
         show('lobby');
       } else if (mode === 'room' && net.role === 'guest' && (rm.conn || rm.reconn)) { phase = 'ready'; show('lobby'); }
       else if (net.invite && !invite.host) joining(net.invite);
-      else { if (invite && invite.host && invite.id === g.id) invite = null; hosting(); }
+      else { const ho = !!(invite && invite.host && invite.id === g.id); if (ho) invite = null; const ses = ho ? netSes() : null; hosting(ses && ses.g === g.id && ses.role === 'host' ? ses : undefined); }
       loadPeer().catch(() => {}); netIce();
     });
   };
@@ -1089,7 +1174,14 @@ function makeNet(g, add) {
       }
       return !!(conn && conn.open);
     },
-    get invite() { return invite && invite.id === g.id ? invite.host ? 'NEW' : invite.code : null; },
+    get invite() {
+      if (!resumed) {
+        resumed = true;
+        const o = !invite && mode === null ? netSes() : null;
+        if (o && o.g === g.id) invite = { id: g.id, code: o.role === 'guest' ? o.code : null, host: o.role === 'host' };
+      }
+      return invite && invite.id === g.id ? invite.host ? 'NEW' : invite.code : null;
+    },
     on(t, fn) { (ls[t] = ls[t] || []).push(fn); const off = () => { ls[t] = (ls[t] || []).filter(f => f !== fn); }; add(off); return off; },
     send(msg, fast) {
       let s;
@@ -1159,9 +1251,13 @@ function makeNet(g, add) {
     if (navigator.share) navigator.share({ title: g.title + ' on gameplay', text: `Join my ${g.title} party on gameplay! Party code ${net.code}`, url }).catch(e => { if (!e || e.name !== 'AbortError') copy(); });
     else copy();
   };
-  const onHide = () => { if (mode) shut(true); };
+  const onHide = () => { if (mode) shut(true, true); };
+  const onShow = e => { if (e.persisted && netSes()) location.reload(); };
   window.addEventListener('pagehide', onHide);
-  add(() => window.removeEventListener('pagehide', onHide));
+  window.addEventListener('pageshow', onShow);
+  window.addEventListener('online', revive);
+  document.addEventListener('visibilitychange', onVis);
+  add(() => { window.removeEventListener('pagehide', onHide); window.removeEventListener('pageshow', onShow); window.removeEventListener('online', revive); document.removeEventListener('visibilitychange', onVis); });
   add(() => shut(true));
   return net;
 }

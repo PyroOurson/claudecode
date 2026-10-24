@@ -24,14 +24,15 @@ async function open(html, id, o = {}) {
   const b = await chromium.launch({ channel: 'chrome', headless: o.headless !== false, args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
   const vp = o.viewport || { width: 1280, height: 800 };
   const ctx = await b.newContext({ viewport: vp, deviceScaleFactor: o.dpr || 1, isMobile: !!o.mobile, hasTouch: !!o.mobile });
-  await ctx.addInitScript(([s, muted]) => {
+  await ctx.addInitScript(([s, muted, name]) => {
     try {
+      if (name) localStorage.setItem('gameplay:profile', JSON.stringify({ username: name, displayName: name }));
       localStorage.setItem('sb-gameplay-auth', JSON.stringify(s));
       localStorage.setItem('gameplay:consent', JSON.stringify({ v: 2, analytics: false, level: 'essential', terms: true, at: Date.now() }));
       if (muted) { const v = JSON.parse(localStorage.getItem('gameplay:v1') || '{}'); v.muted = true; localStorage.setItem('gameplay:v1', JSON.stringify(v)); }
     } catch (e) {}
-  }, [session(), o.muted !== false]);
-  await ctx.route(/fonts\.(googleapis|gstatic)\.com|peerjs\.com|geojs\.io/, r => r.abort());
+  }, [session(), o.muted !== false, o.name || null]);
+  await ctx.route(o.peer ? /fonts\.(googleapis|gstatic)\.com|geojs\.io/ : /fonts\.(googleapis|gstatic)\.com|peerjs\.com|geojs\.io/, r => r.abort());
   await ctx.routeWebSocket(/realtime\/v1\/websocket/, w => w.onMessage(m => {
     let x; try { x = JSON.parse(m); } catch (e) { return; }
     const arr = Array.isArray(x), msg = arr ? { join_ref: x[0], ref: x[1], topic: x[2] } : x;
