@@ -2,6 +2,7 @@ CLAUDE.md
 ClaudeScripts/acra/README.md
 ClaudeScripts/acra/acra.FCStd
 ClaudeScripts/acra/acra.xml
+ClaudeScripts/acra/acra.zip
 ClaudeScripts/acra/build.py
 ClaudeScripts/acra/images/details.png
 ClaudeScripts/acra/images/hero.png

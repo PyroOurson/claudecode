@@ -17,10 +17,15 @@ More pictures in [`images/`](images/): `views.png` (front, top and both sides, l
 | `runs/` | The trained policy (`runs/acra/`); `runs/latest` names the one `watch.py` loads |
 | `images/` | Pictures and the walking GIF |
 | `requirements.txt` | Python packages to install |
+| `acra.zip` | This whole folder in one download (see Quick start) |
 
 ## Run
 
-**Quick start (just watch it walk):** download the repository as a ZIP from https://github.com/PyroOurson/claudecode/archive/refs/heads/mainbranch-claude-code.zip, unzip it, open a terminal in `ClaudeScripts/acra/` and run the first two commands below (create the environment, install the packages), then `.venv/bin/python watch.py`. The trained policy is included in `runs/`, so no training is needed. Use the arrow keys to steer it.
+**Quick start (just watch it walk):**
+
+1. Download **https://github.com/PyroOurson/claudecode/raw/mainbranch-claude-code/ClaudeScripts/acra/acra.zip** and unzip it.
+2. Install Python 3.10 or newer (https://www.python.org/downloads/), open a terminal in the unzipped `acra` folder and run `python -m pip install -r requirements.txt` (on a Mac: `python3 -m pip install -r requirements.txt`).
+3. Run `python watch.py` (on a Mac: `mjpython watch.py`). The trained policy is included, so no training is needed. Arrow keys steer it, Space pauses, R resets.
 
 Needs Python 3.10+ (current MuJoCo wheels no longer support 3.9).
 

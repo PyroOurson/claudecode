@@ -21,7 +21,7 @@
 - **One branch, everything re-uploaded today.** All the old branches were combined into `mainbranch-claude-code` and the whole repository was uploaded again, so every file carries today's date.
 - **Cleaned up.** The maps project (`maps-server`, `maps-demo`, `maps-server-review`), the old hello-page games, `.gitignore` and `.nojekyll` were removed. The typing bot moved to `NaoiseGabi/typing-bot/`.
 - **`update.py`, `deploy.py` and the instructions below now point at `mainbranch-claude-code`.** Run `python ClaudeScripts/update.py` once on each computer to switch over.
-- **New project: [`ClaudeScripts/acra/`](ClaudeScripts/acra/).** A lizard robot designed in FreeCAD from reference renders (10 motors, sprawled legs, a sideways-bending spine, five-toed gecko feet), simulated in MuJoCo and trained with PPO to walk, run and turn on command. It includes the trained policy, so it can be watched without training.
+- **New project: [`ClaudeScripts/acra/`](ClaudeScripts/acra/).** A lizard robot designed in FreeCAD from reference renders (10 motors, sprawled legs, a sideways-bending spine, five-toed gecko feet), simulated in MuJoCo and trained with PPO to walk, run and turn on command. It includes the trained policy, so it can be watched without training. One-click download of the whole project: https://github.com/PyroOurson/claudecode/raw/mainbranch-claude-code/ClaudeScripts/acra/acra.zip
 
 ## Get the latest version
 
