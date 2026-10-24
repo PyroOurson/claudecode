@@ -1,0 +1,200 @@
+<mujoco model="acra">
+  <compiler angle="radian" meshdir="meshes" autolimits="true"/>
+  <option timestep="0.002" integrator="implicitfast"/>
+
+  <default>
+    <joint damping="0.3" armature="0.01" frictionloss="0.05"/>
+    <geom contype="1" conaffinity="0" condim="3" friction="1.0 0.02 0.002" group="3" rgba="0.5 0.5 0.5 0.3"/>
+    <position kp="30" kv="0.8" forcerange="-12 12" inheritrange="1"/>
+    <default class="visual">
+      <geom type="mesh" contype="0" conaffinity="0" group="2" density="0" mass="0" material="shell" rgba="0.5 0.5 0.5 1"/>
+    </default>
+    <default class="pitch">
+      <joint axis="0 1 0"/>
+    </default>
+    <default class="foot">
+      <geom type="sphere" size="0.02" friction="1.0 0.02 0.002" mass="0.05"/>
+    </default>
+  </default>
+
+  <asset>
+    <mesh name="torso_shell" file="torso_shell.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="torso_dark" file="torso_dark.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="torso_blue" file="torso_blue.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="rear_shell" file="rear_shell.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="rear_dark" file="rear_dark.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="rear_rubber" file="rear_rubber.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="head_shell" file="head_shell.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="head_dark" file="head_dark.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="head_black" file="head_black.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="head_blue" file="head_blue.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="tail_shell" file="tail_shell.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="tail_dark" file="tail_dark.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="thigh_shell" file="thigh_shell.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="thigh_dark" file="thigh_dark.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="shin_shell" file="shin_shell.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="shin_dark" file="shin_dark.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="foot_FL_shell" file="foot_FL_shell.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="foot_FL_dark" file="foot_FL_dark.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="foot_FL_rubber" file="foot_FL_rubber.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="foot_FR_shell" file="foot_FR_shell.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="foot_FR_dark" file="foot_FR_dark.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="foot_FR_rubber" file="foot_FR_rubber.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="foot_RL_shell" file="foot_RL_shell.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="foot_RL_dark" file="foot_RL_dark.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="foot_RL_rubber" file="foot_RL_rubber.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="foot_RR_shell" file="foot_RR_shell.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="foot_RR_dark" file="foot_RR_dark.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="foot_RR_rubber" file="foot_RR_rubber.stl" scale="0.001 0.001 0.001"/>
+    <material name="shell" rgba="0.50 0.52 0.54 1" specular="0.6" shininess="0.6" reflectance="0.05"/>
+    <material name="dark" rgba="0.22 0.23 0.25 1" specular="0.4" shininess="0.4"/>
+    <material name="black" rgba="0.03 0.03 0.04 1" specular="0.9" shininess="0.9" reflectance="0.3"/>
+    <material name="rubber" rgba="0.09 0.09 0.10 1" specular="0.1" shininess="0.1"/>
+    <material name="blue" rgba="0.15 0.5 1 1" emission="1"/>
+    <texture name="grid" type="2d" builtin="checker" width="512" height="512" rgb1="0.86 0.87 0.88" rgb2="0.80 0.81 0.83"/>
+    <material name="grid" texture="grid" texrepeat="8 8" texuniform="true" reflectance="0.05"/>
+    <texture name="sky" type="skybox" builtin="gradient" rgb1="0.96 0.96 0.97" rgb2="0.82 0.84 0.87" width="512" height="512"/>
+  </asset>
+
+  <visual>
+    <global offwidth="1600" offheight="1000"/>
+    <quality shadowsize="4096"/>
+    <map shadowclip="0.6" shadowscale="0.5"/>
+    <headlight ambient="0.35 0.35 0.35" diffuse="0.5 0.5 0.5"/>
+  </visual>
+
+  <worldbody>
+    <light pos="0.5 -0.5 3" dir="-0.15 0.15 -1" diffuse="0.6 0.6 0.6" castshadow="true"/>
+    <geom name="floor" type="plane" size="0 0 0.05" material="grid" conaffinity="1" group="0"/>
+
+    <body name="torso" pos="0 0 0.107">
+      <freejoint name="root"/>
+      <site name="imu" size="0.01"/>
+      <geom class="visual" mesh="torso_shell"/>
+      <geom class="visual" mesh="torso_dark" material="dark"/>
+      <geom class="visual" mesh="torso_blue" material="blue"/>
+      <geom name="torso_box" type="box" pos="0.065 0 0" size="0.12 0.052 0.042" mass="2.1"/>
+
+      <body name="head" pos="0.285 0 0.072">
+        <geom class="visual" mesh="head_shell"/>
+        <geom class="visual" mesh="head_dark" material="dark"/>
+        <geom class="visual" mesh="head_black" material="black"/>
+        <geom class="visual" mesh="head_blue" material="blue"/>
+        <geom name="head_shell" type="ellipsoid" pos="0 0 0.002" size="0.066 0.04 0.032" mass="0.3"/>
+        <geom name="neck" type="capsule" fromto="-0.115 0 -0.062 -0.05 0 -0.006" size="0.027" mass="0.15"/>
+        <camera name="head_cam" pos="0.072 0 0.004" xyaxes="0 -1 0 0 0 1" fovy="75"/>
+        <site name="camera" pos="0.072 0 0.004" size="0.006" rgba="0.03 0.03 0.04 1"/>
+        <site name="led_left" pos="0.0695 0.017 -0.009" size="0.004" rgba="0.15 0.5 1 1"/>
+        <site name="led_right" pos="0.0695 -0.017 -0.009" size="0.004" rgba="0.15 0.5 1 1"/>
+      </body>
+
+      <body name="FL_thigh" pos="0.13 0.08 -0.014" euler="0.785398 0 0">
+        <joint name="FL_hip" class="pitch" range="-0.2 2.1"/>
+        <geom class="visual" mesh="thigh_shell"/>
+        <geom class="visual" mesh="thigh_dark" material="dark"/>
+        <geom type="capsule" fromto="0 0 0 0 0 -0.095" size="0.016" mass="0.3"/>
+        <body name="FL_shin" pos="0 0 -0.095">
+          <joint name="FL_knee" class="pitch" range="-2.7 -0.6"/>
+          <geom class="visual" mesh="shin_shell"/>
+          <geom class="visual" mesh="shin_dark" material="dark"/>
+          <geom class="visual" mesh="foot_FL_shell"/>
+          <geom class="visual" mesh="foot_FL_dark" material="dark"/>
+          <geom class="visual" mesh="foot_FL_rubber" material="rubber"/>
+          <geom type="capsule" fromto="0 0 0 0 0 -0.085" size="0.01" mass="0.07"/>
+          <geom name="FL_foot" class="foot" pos="0 0 -0.105"/>
+        </body>
+      </body>
+
+      <body name="FR_thigh" pos="0.13 -0.08 -0.014" euler="-0.785398 0 0">
+        <joint name="FR_hip" class="pitch" range="-0.2 2.1"/>
+        <geom class="visual" mesh="thigh_shell"/>
+        <geom class="visual" mesh="thigh_dark" material="dark"/>
+        <geom type="capsule" fromto="0 0 0 0 0 -0.095" size="0.016" mass="0.3"/>
+        <body name="FR_shin" pos="0 0 -0.095">
+          <joint name="FR_knee" class="pitch" range="-2.7 -0.6"/>
+          <geom class="visual" mesh="shin_shell"/>
+          <geom class="visual" mesh="shin_dark" material="dark"/>
+          <geom class="visual" mesh="foot_FR_shell"/>
+          <geom class="visual" mesh="foot_FR_dark" material="dark"/>
+          <geom class="visual" mesh="foot_FR_rubber" material="rubber"/>
+          <geom type="capsule" fromto="0 0 0 0 0 -0.085" size="0.01" mass="0.07"/>
+          <geom name="FR_foot" class="foot" pos="0 0 -0.105"/>
+        </body>
+      </body>
+
+      <body name="rear" pos="-0.07 0 0">
+        <joint name="spine_yaw" axis="0 0 1" range="-0.45 0.45" damping="0.5"/>
+        <geom class="visual" mesh="rear_shell"/>
+        <geom class="visual" mesh="rear_dark" material="dark"/>
+        <geom class="visual" mesh="rear_rubber" material="rubber"/>
+        <geom name="rear_box" type="box" pos="-0.065 0 0" size="0.05 0.05 0.04" mass="0.9"/>
+
+        <body name="RL_thigh" pos="-0.06 0.08 -0.014" euler="0.785398 0 0">
+          <joint name="RL_hip" class="pitch" range="-2.1 0.2"/>
+          <geom class="visual" mesh="thigh_shell"/>
+          <geom class="visual" mesh="thigh_dark" material="dark"/>
+          <geom type="capsule" fromto="0 0 0 0 0 -0.095" size="0.016" mass="0.3"/>
+          <body name="RL_shin" pos="0 0 -0.095">
+            <joint name="RL_knee" class="pitch" range="0.6 2.7"/>
+            <geom class="visual" mesh="shin_shell"/>
+            <geom class="visual" mesh="shin_dark" material="dark"/>
+            <geom class="visual" mesh="foot_RL_shell"/>
+            <geom class="visual" mesh="foot_RL_dark" material="dark"/>
+            <geom class="visual" mesh="foot_RL_rubber" material="rubber"/>
+            <geom type="capsule" fromto="0 0 0 0 0 -0.085" size="0.01" mass="0.07"/>
+            <geom name="RL_foot" class="foot" pos="0 0 -0.105"/>
+          </body>
+        </body>
+
+        <body name="RR_thigh" pos="-0.06 -0.08 -0.014" euler="-0.785398 0 0">
+          <joint name="RR_hip" class="pitch" range="-2.1 0.2"/>
+          <geom class="visual" mesh="thigh_shell"/>
+          <geom class="visual" mesh="thigh_dark" material="dark"/>
+          <geom type="capsule" fromto="0 0 0 0 0 -0.095" size="0.016" mass="0.3"/>
+          <body name="RR_shin" pos="0 0 -0.095">
+            <joint name="RR_knee" class="pitch" range="0.6 2.7"/>
+            <geom class="visual" mesh="shin_shell"/>
+            <geom class="visual" mesh="shin_dark" material="dark"/>
+            <geom class="visual" mesh="foot_RR_shell"/>
+            <geom class="visual" mesh="foot_RR_dark" material="dark"/>
+            <geom class="visual" mesh="foot_RR_rubber" material="rubber"/>
+            <geom type="capsule" fromto="0 0 0 0 0 -0.085" size="0.01" mass="0.07"/>
+            <geom name="RR_foot" class="foot" pos="0 0 -0.105"/>
+          </body>
+        </body>
+
+        <body name="tail" pos="-0.11 0 -0.006">
+          <joint name="tail_yaw" axis="0 0 1" range="-0.7 0.7" damping="0.2"/>
+          <geom class="visual" mesh="tail_shell"/>
+          <geom class="visual" mesh="tail_dark" material="dark"/>
+          <geom name="tail_cone" type="capsule" fromto="0 0 0 -0.385 0 -0.055" size="0.016" mass="0.35"/>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <position name="FL_hip" joint="FL_hip"/>
+    <position name="FL_knee" joint="FL_knee"/>
+    <position name="FR_hip" joint="FR_hip"/>
+    <position name="FR_knee" joint="FR_knee"/>
+    <position name="spine_yaw" joint="spine_yaw" kp="25" kv="0.6" forcerange="-10 10"/>
+    <position name="RL_hip" joint="RL_hip"/>
+    <position name="RL_knee" joint="RL_knee"/>
+    <position name="RR_hip" joint="RR_hip"/>
+    <position name="RR_knee" joint="RR_knee"/>
+    <position name="tail_yaw" joint="tail_yaw" kp="8" kv="0.2" forcerange="-4 4"/>
+  </actuator>
+
+  <sensor>
+    <framequat name="torso_quat" objtype="site" objname="imu"/>
+    <gyro name="torso_gyro" site="imu"/>
+    <velocimeter name="torso_vel" site="imu"/>
+  </sensor>
+
+  <keyframe>
+    <key name="stand"
+         qpos="0 0 0.107 1 0 0 0  0.95 -1.9  0.95 -1.9  0  -0.95 1.9  -0.95 1.9  0"
+         ctrl="0.95 -1.9  0.95 -1.9  0  -0.95 1.9  -0.95 1.9  0"/>
+  </keyframe>
+</mujoco>
