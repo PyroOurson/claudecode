@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>maps-server demo</title>
+  <meta name="description" content="Try the maps-server routing engine in your browser, on a map of Monaco with its bus lines.">
+  <link rel="stylesheet" href="../hello-page/common.css">
+  <link rel="stylesheet" href="leaflet/leaflet.css">
+  <link rel="stylesheet" href="demo.css">
+</head>
+<body>
+  <nav class="topbar"><a class="logo" href="../../index.html">hello</a></nav>
+
+  <main class="demo">
+    <h1 class="game-title">maps-server demo</h1>
+    <p class="lede">Click a start and a destination in Monaco. The route is worked out in your browser by maps-server's own routing code, with walking and Monaco's bus lines.</p>
+
+    <div class="layout">
+      <div class="map-wrap">
+        <div id="map" role="application" aria-label="Map of Monaco. Click to place the start, then the destination."></div>
+        <p class="map-hint" id="hint">Loading the map...</p>
+      </div>
+
+      <section class="side" aria-label="Route">
+        <p class="status" id="status" role="status">Loading the routing engine and the map of Monaco...</p>
+
+        <div class="examples">
+          <span class="label">Try</span>
+          <button class="chip" type="button" data-from="43.7287,7.4155" data-to="43.7441,7.4361">Fontvieille to Larvotto</button>
+          <button class="chip" type="button" data-from="43.7313,7.4204" data-to="43.7395,7.4276">Palace to Casino</button>
+          <button class="chip" type="button" data-from="43.7313,7.4114" data-to="43.7376,7.4210">Jardin Exotique to the port</button>
+        </div>
+
+        <form class="options" id="options">
+          <label class="field">
+            <span>Leave at</span>
+            <input type="datetime-local" id="time" step="60" required>
+          </label>
+          <label class="field">
+            <span>Walking speed</span>
+            <select id="speed">
+              <option value="0.000833">Slow, 3 km/h</option>
+              <option value="0.00138" selected>Normal, 5 km/h</option>
+              <option value="0.00181">Fast, 6.5 km/h</option>
+            </select>
+          </label>
+          <label class="check"><input type="checkbox" id="buses" checked> Use buses</label>
+          <label class="check"><input type="checkbox" id="steps"> Avoid steps</label>
+          <label class="check"><input type="checkbox" id="fast"> Fast search (can miss a quicker bus)</label>
+          <details class="more">
+            <summary>More options</summary>
+            <label class="field">
+              <span>Minimum change time, seconds</span>
+              <input type="number" id="transfer" min="0" max="86400" step="10" value="60">
+            </label>
+            <label class="field">
+              <span>Penalty per change, seconds</span>
+              <input type="number" id="penalty" min="0" max="86400" step="30" value="0">
+            </label>
+            <label class="field">
+              <span>Longest single walk, metres (empty for no limit)</span>
+              <input type="number" id="maxwalk" min="1" step="50" placeholder="no limit">
+            </label>
+          </details>
+          <div class="row buttons">
+            <button class="btn secondary" type="button" id="swap" disabled>Swap</button>
+            <button class="btn secondary" type="button" id="clear" disabled>Clear</button>
+          </div>
+        </form>
+
+        <div class="result" id="result" aria-live="polite"></div>
+
+        <details class="raw" id="raw">
+          <summary>Request and answer (JSON)</summary>
+          <p class="note">The same body maps-server takes on <code>POST /</code>, and the answer it would give.</p>
+          <pre id="request"></pre>
+          <pre id="response"></pre>
+        </details>
+      </section>
+    </div>
+
+    <section class="about">
+      <h2>What this is</h2>
+      <p>maps-server is a public-transport routing engine. This page runs its route search and its map loader, compiled to WebAssembly, on the OpenStreetMap data of Monaco. Nothing is sent to a server: the map tiles are the only thing downloaded while you use it.</p>
+      <p><strong>The bus times are not real.</strong> The lines and their stops come from OpenStreetMap, but the timetable is made up for this demo: a bus every <span id="headway">10</span> minutes from <span id="first">06:00</span> to <span id="last">22:00</span>, Monaco time, at about <span id="kmh">18</span> km/h. The real server gets its times from transit plugins, such as the SNCF one, which cannot run in a browser.</p>
+      <p>Times are shown in your own time zone. The real server also needs Docker, Overpass and its plugins; see its README.</p>
+      <p class="credits">Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, ODbL. Routing code: <a id="source" href="https://github.com/PyroOurson/claudecode/tree/claude/peaceful-thompson-u1uxhi/NaoiseGabi/maps-server">maps-server</a> by Naoise McG, AGPL-3.0; <a href="https://github.com/PyroOurson/claudecode/tree/claude/peaceful-thompson-u1uxhi/ClaudeScripts/maps-demo">source of this page</a>. Map display: <a href="https://leafletjs.com">Leaflet</a>, BSD-2-Clause.</p>
+    </section>
+  </main>
+
+  <script src="leaflet/leaflet.js"></script>
+  <script src="demo.js"></script>
+</body>
+</html>

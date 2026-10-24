@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Typing Speed</title>
+  <link rel="stylesheet" href="../common.css">
+  <style>
+    :root {
+      --caret: #1f63d6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --caret: #6e9cf0;
+      }
+    }
+    .modes {
+      display: inline-flex;
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+    .mode {
+      appearance: none;
+      border: 1px solid var(--border);
+      min-width: 56px;
+      min-height: 40px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .mode:hover { background: var(--surface); }
+    .mode:focus-visible {
+      outline: 2px solid var(--caret);
+      outline-offset: 2px;
+    }
+    .mode.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-text);
+    }
+    .box {
+      position: relative;
+      text-align: left;
+      border-radius: var(--radius);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 18px 18px;
+      cursor: text;
+    }
+    .viewport {
+      position: relative;
+      height: calc(var(--lh) * 3);
+      overflow: hidden;
+      --lh: 2.6rem;
+    }
+    .words {
+      position: relative;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: clamp(1.15rem, 4.6vw, 1.5rem);
+      line-height: var(--lh);
+      color: var(--muted);
+      transition: transform 0.18s ease;
+      word-break: keep-all;
+    }
+    .word {
+      display: inline-block;
+      margin-right: 0.6em;
+      white-space: nowrap;
+    }
+    .word.error {
+      text-decoration: underline wavy var(--bad);
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 6px;
+    }
+    .ok { color: var(--text); }
+    .no { color: var(--bad); }
+    .extra { color: var(--bad); opacity: 0.7; }
+    .caret {
+      position: absolute;
+      width: 3px;
+      height: 1.7rem;
+      border-radius: 1px;
+      background: var(--caret);
+      left: 0;
+      top: 0;
+      transition: left 0.08s ease, top 0.08s ease;
+      animation: blink 1s steps(1) infinite;
+      pointer-events: none;
+    }
+    .caret.typing { animation: none; }
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+    .box.blurred .words { opacity: 0.2; }
+    .box.blurred .caret { display: none; }
+    .focus-note {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: var(--text);
+      pointer-events: none;
+      opacity: 0;
+    }
+    .focus-note span {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 14px;
+    }
+    .box.blurred .focus-note { opacity: 1; }
+    .trap {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      border: 0;
+      padding: 0;
+      font-size: 16px;
+      background: transparent;
+      color: transparent;
+      caret-color: transparent;
+    }
+    .controls {
+      margin-top: 18px;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 14px;
+    }
+    kbd {
+      font-family: inherit;
+      font-size: 0.8rem;
+      background: var(--surface-2);
+      border-radius: 6px;
+      padding: 1px 7px;
+      border: 1px solid var(--border);
+    }
+    .big-wpm {
+      font-size: clamp(3.4rem, 15vw, 5rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .big-wpm small {
+      font-size: 0.3em;
+      color: var(--muted);
+      letter-spacing: 0;
+      font-weight: 600;
+    }
+    .verdict {
+      color: var(--muted);
+      font-weight: 600;
+      margin: 8px 0 18px;
+    }
+    .verdict.good { color: var(--good); }
+    .stat-value.timer { color: var(--caret); }
+    @media (max-width: 520px) {
+      #liveStats {
+        flex-wrap: nowrap;
+        gap: 8px;
+      }
+      #liveStats .stat {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 4px 2px;
+      }
+      #liveStats .stat-label {
+        font-size: 0.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topbar"><a class="logo" href="../../../index.html">hello</a></nav>
+  <main class="game">
+    <h1 class="game-title">Typing Speed</h1>
+    <p class="lede">Type the words as fast as you can. The clock starts on your first key.</p>
+    <div class="modes" role="group" aria-label="Test length">
+      <button class="mode" data-sec="15">15s</button>
+      <button class="mode" data-sec="30">30s</button>
+      <button class="mode" data-sec="60">60s</button>
+    </div>
+    <div class="stats" id="liveStats">
+      <div class="stat"><div class="stat-value timer" id="time">30</div><div class="stat-label">Seconds</div></div>
+      <div class="stat"><div class="stat-value" id="wpm">0</div><div class="stat-label">WPM</div></div>
+      <div class="stat"><div class="stat-value" id="acc">–</div><div class="stat-label">Accuracy</div></div>
+      <div class="stat"><div class="stat-value" id="best">–</div><div class="stat-label">Best WPM</div></div>
+    </div>
+
+    <section id="testView">
+      <div class="box" id="box">
+        <input class="trap" id="trap" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="text" aria-label="Type here" enterkeyhint="next">
+        <div class="viewport">
+          <div class="words" id="words"></div>
+          <div class="caret" id="caret"></div>
+        </div>
+        <div class="focus-note" id="focusNote"><span>Click or tap here to type</span></div>
+      </div>
+      <div class="controls row"><button class="btn secondary" id="restartBtn">Restart</button></div>
+      <p class="hint"><kbd>Space</kbd> next word · <kbd>Tab</kbd> then <kbd>Enter</kbd> to restart</p>
+    </section>
+
+    <section id="resultView" class="hidden">
+      <div class="panel result">
+        <div class="big-wpm" id="resWpm">0 <small>wpm</small></div>
+        <p class="verdict" id="resVerdict"></p>
+        <div class="stats">
+          <div class="stat"><div class="stat-value" id="resAcc">–</div><div class="stat-label">Accuracy</div></div>
+          <div class="stat"><div class="stat-value" id="resChars">–</div><div class="stat-label">Correct / wrong</div></div>
+          <div class="stat"><div class="stat-value" id="resBest">–</div><div class="stat-label">Best <span id="resSec">30</span>s</div></div>
+        </div>
+        <div class="row"><button class="btn" id="againBtn">Try again</button></div>
+      </div>
+      <p class="hint"><kbd>Tab</kbd> then <kbd>Enter</kbd> works too</p>
+    </section>
+  </main>
+  <script>
+    const WORDS = Array.from(new Set("the be to of and a in that have it for not on with he as you do at this but his by from they we say her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back after use two how our work first well way even new want because any these give day most us great between need large often hand high place hold turn without world still every sound small write home read last never under might while house again point city play spell three keep start light thought head under story saw left few along close something seem next hard open example begin life always those both paper together got group run important until children side feet car mile night walk white sea began grow took river four carry state once book hear stop second later miss idea enough eat face watch far real almost let above girl sometimes mountain cut young talk soon list song being leave family body music color stand sun question fish area mark dog horse bird problem complete room knew since ever piece told usually friend easy heard order red door sure become top ship across today during short better best however low hours black happen whole measure remember early waves reached".split(" ")));
+    const KEY = "hello-typing-best-";
+    const $ = (id) => document.getElementById(id);
+    const box = $("box");
+    const trap = $("trap");
+    const wordsEl = $("words");
+    const caret = $("caret");
+    const modeBtns = Array.from(document.querySelectorAll(".mode"));
+
+    let duration = 30;
+    let words = [];
+    let typed = [];
+    let idx = 0;
+    let state = "ready";
+    let startAt = 0;
+    let tick = null;
+    let typingTimer = null;
+    let keyOk = 0;
+    let keyAll = 0;
+    let shift = 0;
+
+    function loadBest(sec) {
+      try { return Number(localStorage.getItem(KEY + sec)) || 0; } catch (e) { return 0; }
+    }
+    function saveBest(sec, v) {
+      try { localStorage.setItem(KEY + sec, String(v)); } catch (e) {}
+    }
+    function loadDuration() {
+      try { return Number(localStorage.getItem("hello-typing-duration")) || 30; } catch (e) { return 30; }
+    }
+    function saveDuration(v) {
+      try { localStorage.setItem("hello-typing-duration", String(v)); } catch (e) {}
+    }
+
+    function randomWord(prev) {
+      let w;
+      do { w = WORDS[Math.floor(Math.random() * WORDS.length)]; } while (w === prev);
+      return w;
+    }
+
+    function addWords(n) {
+      for (let i = 0; i < n; i++) {
+        const w = randomWord(words[words.length - 1]);
+        words.push(w);
+        typed.push("");
+        const el = document.createElement("span");
+        el.className = "word";
+        wordsEl.appendChild(el);
+        renderWord(words.length - 1);
+      }
+    }
+
+    function renderWord(i) {
+      const el = wordsEl.children[i];
+      const w = words[i];
+      const t = typed[i];
+      el.textContent = "";
+      for (let j = 0; j < Math.max(w.length, t.length); j++) {
+        const s = document.createElement("span");
+        if (j < w.length) {
+          s.textContent = w[j];
+          if (j < t.length) s.className = t[j] === w[j] ? "ok" : "no";
+        } else {
+          s.textContent = t[j];
+          s.className = "extra";
+        }
+        el.appendChild(s);
+      }
+      el.classList.toggle("error", i < idx && t !== w);
+    }
+
+    function placeCaret() {
+      const el = wordsEl.children[idx];
+      if (!el) return;
+      const t = typed[idx];
+      const letters = el.children;
+      let left;
+      if (t.length < letters.length) {
+        left = letters[t.length].offsetLeft;
+      } else {
+        const last = letters[letters.length - 1];
+        left = last.offsetLeft + last.offsetWidth;
+      }
+      const top = el.offsetTop;
+      const lineH = parseFloat(getComputedStyle(wordsEl).lineHeight) || el.offsetHeight;
+      const line = Math.round(top / lineH);
+      const want = Math.max(0, line - 1);
+      if (want !== shift) {
+        shift = want;
+        wordsEl.style.transform = "translateY(" + -shift * lineH + "px)";
+      }
+      caret.style.left = left + "px";
+      caret.style.top = (line - shift) * lineH + (lineH - caret.offsetHeight) / 2 + "px";
+    }
+
+    function bumpCaret() {
+      caret.classList.add("typing");
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => caret.classList.remove("typing"), 500);
+    }
+
+    function correctChars() {
+      let n = 0;
+      for (let i = 0; i < idx; i++) if (typed[i] === words[i]) n += words[i].length + 1;
+      const t = typed[idx];
+      const w = words[idx];
+      if (t && w.startsWith(t)) n += t.length;
+      return n;
+    }
+
+    function elapsed() {
+      return state === "ready" ? 0 : Math.min(duration, (performance.now() - startAt) / 1000);
+    }
+
+    function wpmNow() {
+      const s = elapsed();
+      if (s < 1) return 0;
+      return Math.round((correctChars() / 5) / (s / 60));
+    }
+
+    function accNow() {
+      return keyAll ? Math.round((keyOk / keyAll) * 100) : 0;
+    }
+
+    function updateLive() {
+      const left = Math.max(0, duration - elapsed());
+      $("time").textContent = Math.ceil(left - 1e-6);
+      $("wpm").textContent = wpmNow();
+      $("acc").textContent = keyAll ? accNow() + "%" : "–";
+      if (state === "running" && left <= 0) finish();
+    }
+
+    function updateBest() {
+      const b = loadBest(duration);
+      $("best").textContent = b ? b : "–";
+    }
+
+    function reset() {
+      clearInterval(tick);
+      state = "ready";
+      words = [];
+      typed = [];
+      idx = 0;
+      keyOk = 0;
+      keyAll = 0;
+      shift = 0;
+      wordsEl.innerHTML = "";
+      wordsEl.style.transform = "translateY(0)";
+      trap.value = "";
+      addWords(duration * 3);
+      $("time").textContent = duration;
+      $("wpm").textContent = "0";
+      $("acc").textContent = "–";
+      updateBest();
+      modeBtns.forEach((b) => b.classList.toggle("active", Number(b.dataset.sec) === duration));
+      $("testView").classList.remove("hidden");
+      $("resultView").classList.add("hidden");
+      requestAnimationFrame(placeCaret);
+      focusTrap();
+    }
+
+    function focusTrap() {
+      trap.focus({ preventScroll: true });
+      syncFocus();
+    }
+
+    function syncFocus() {
+      box.classList.toggle("blurred", document.activeElement !== trap && state !== "done");
+    }
+
+    function start() {
+      state = "running";
+      startAt = performance.now();
+      tick = setInterval(updateLive, 200);
+    }
+
+    function judge(prev, next) {
+      let k = 0;
+      while (k < prev.length && k < next.length && prev[k] === next[k]) k++;
+      const w = words[idx];
+      for (let j = k; j < next.length; j++) {
+        keyAll++;
+        if (w[j] === next[j]) keyOk++;
+      }
+    }
+
+    function commitWord(text) {
+      const prev = typed[idx];
+      judge(prev, text);
+      typed[idx] = text;
+      keyAll++;
+      if (text === words[idx]) keyOk++;
+      idx++;
+      renderWord(idx - 1);
+      if (words.length - idx < 40) addWords(60);
+    }
+
+    function onInput() {
+      if (state === "done") {
+        trap.value = "";
+        return;
+      }
+      let value = trap.value.replace(/[\r\n]/g, " ");
+      if (state === "ready") {
+        if (!value.trim()) {
+          trap.value = "";
+          return;
+        }
+        start();
+      }
+      if (/^\s/.test(value) && !typed[idx]) value = value.replace(/^\s+/, "");
+      const parts = value.split(/\s+/);
+      if (parts.length > 1) {
+        for (let p = 0; p < parts.length - 1; p++) {
+          if (parts[p] === "") continue;
+          commitWord(parts[p].slice(0, words[idx].length + 12));
+        }
+        value = parts[parts.length - 1];
+      }
+      value = value.slice(0, words[idx].length + 12);
+      judge(typed[idx], value);
+      typed[idx] = value;
+      trap.value = value;
+      renderWord(idx);
+      placeCaret();
+      bumpCaret();
+      updateLive();
+    }
+
+    function finish() {
+      if (state !== "running") return;
+      state = "done";
+      clearInterval(tick);
+      const wpm = Math.round((correctChars() / 5) / (duration / 60));
+      const acc = accNow();
+      let wrong = 0;
+      for (let i = 0; i <= idx && i < words.length; i++) {
+        const w = words[i];
+        const t = typed[i];
+        for (let j = 0; j < t.length; j++) if (t[j] !== w[j]) wrong++;
+      }
+      const prevBest = loadBest(duration);
+      const isBest = wpm > prevBest;
+      if (isBest) saveBest(duration, wpm);
+      trap.blur();
+      $("resWpm").innerHTML = wpm + " <small>wpm</small>";
+      $("resAcc").textContent = acc + "%";
+      $("resChars").textContent = correctChars() + " / " + wrong;
+      $("resBest").textContent = Math.max(wpm, prevBest);
+      $("resSec").textContent = duration;
+      let line;
+      if (isBest && prevBest) line = "New best, up " + (wpm - prevBest) + " wpm";
+      else if (isBest) line = "New best";
+      else if (wpm >= 80) line = "Very fast";
+      else if (wpm >= 60) line = "Fast";
+      else if (wpm >= 40) line = "Above average";
+      else line = prevBest ? "Best: " + prevBest + " wpm" : "No correct words";
+      $("resVerdict").textContent = line;
+      $("resVerdict").className = "verdict" + (isBest || wpm >= 60 ? " good" : "");
+      updateBest();
+      $("time").textContent = "0";
+      $("wpm").textContent = wpm;
+      $("acc").textContent = acc + "%";
+      $("testView").classList.add("hidden");
+      $("resultView").classList.remove("hidden");
+      $("againBtn").focus({ preventScroll: true });
+    }
+
+    trap.addEventListener("input", onInput);
+    trap.addEventListener("focus", syncFocus);
+    trap.addEventListener("blur", () => setTimeout(syncFocus, 0));
+    trap.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") e.preventDefault();
+    });
+    box.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      focusTrap();
+    });
+    box.addEventListener("click", focusTrap);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Tab" && (document.activeElement === trap || document.activeElement === document.body || state === "done")) {
+        e.preventDefault();
+        (state === "done" ? $("againBtn") : $("restartBtn")).focus();
+        syncFocus();
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        reset();
+        return;
+      }
+      const onButton = document.activeElement && document.activeElement.tagName === "BUTTON";
+      if (state !== "done" && document.activeElement !== trap && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && !(onButton && e.key === " ")) {
+        focusTrap();
+      }
+    });
+    $("restartBtn").addEventListener("click", reset);
+    $("againBtn").addEventListener("click", reset);
+    modeBtns.forEach((b) => b.addEventListener("click", () => {
+      duration = Number(b.dataset.sec);
+      saveDuration(duration);
+      reset();
+    }));
+    window.addEventListener("resize", () => requestAnimationFrame(placeCaret));
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => placeCaret());
+
+    duration = [15, 30, 60].includes(loadDuration()) ? loadDuration() : 30;
+    reset();
+  </script>
+</body>
+</html>

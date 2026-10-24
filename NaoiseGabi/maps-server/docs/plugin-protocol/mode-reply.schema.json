@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gitlab.com/buphagidae/maps-server/-/raw/main/docs/plugin-protocol/mode-reply.schema.json",
+  "title": "Reply to mode",
+  "description": "The mode of transport the plugin serves. It names the plugin's segments and is what exclude_modes matches.",
+  "type": "object",
+  "required": [
+    "response"
+  ],
+  "properties": {
+    "response": {
+      "type": "string",
+      "minLength": 1,
+      "examples": [
+        "train",
+        "bus"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

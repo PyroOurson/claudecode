@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="maps-server-review">
+  <node id="1" version="1" lat="0.0" lon="0.0"/>
+  <node id="2" version="1" lat="0.0" lon="0.027"/>
+  <node id="3" version="1" lat="0.0" lon="-0.0027"/>
+  <node id="700" version="1" lat="1.0" lon="0.0"/>
+  <node id="701" version="1" lat="1.0" lon="0.0001"/>
+  <way id="10" version="1">
+    <nd ref="3"/>
+    <nd ref="1"/>
+    <nd ref="2"/>
+    <tag k="highway" v="footway"/>
+  </way>
+  <way id="11" version="1">
+    <nd ref="700"/>
+    <nd ref="701"/>
+    <tag k="highway" v="footway"/>
+  </way>
+</osm>

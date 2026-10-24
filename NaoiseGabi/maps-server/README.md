@@ -1,0 +1,296 @@
+# buphagus (maps-server)
+
+## What it is
+
+A routing engine designed with public transport in mind. It finds the earliest arrival between OpenStreetMap nodes by combining walking, on a graph built from `.osm.pbf` extracts, with vehicles. Each public transport provider has a plugin that talks to that provider's API; the engine asks the plugins for departures while it searches.
+
+A route request lists two or more OSM node IDs (a footway node, a station node, or any node on a walkable way) and a departure time. The answer is a list of segments: walks, and one segment per vehicle leg, with times.
+
+## Requirements
+
+* Nix with flakes enabled (`nix.settings.experimental-features = ["nix-command" "flakes"]`).
+* Docker, with your user in the `docker` group (`users.users.<user>.extraGroups = ["docker"]`) and the daemon running. The server runs a local [Overpass API](https://wiki.openstreetmap.org/wiki/Overpass_API) in a container called `overpass_api`; plugins use it to match their stops to OSM nodes.
+* One of the systems the flake builds for: `x86_64-linux`, `aarch64-linux` or `aarch64-darwin`. The pinned Overpass image has no 32-bit ARM build.
+* Memory for the walking graph. The first request with `waypoints` also builds a spatial index, about 20 more bytes per walkable node. The graph itself keeps about 36 bytes per walkable node: 1.3 MB for Andorra (37,522 walkable nodes), 0.5 MB for north Bayreuth (13,341). As a rough guide, plan for about the size of your `.osm.pbf` files in RAM for the graph, up to three times that while it loads, and a few MB per CPU core while it decodes large files. Overpass, in Docker, needs its own memory and disk on top of that.
+* SSH access only for private plugins: every input below is public and fetched over HTTPS. If you add a private plugin through a `git+ssh://` URL, configure an SSH key for that host.
+
+## First run
+
+The first start imports your map files into Overpass. Nothing else can answer until that finishes, and it is by far the slowest step: seconds for a city extract, typically an hour or more for a large region, and several hours for a whole country, depending on your disk. The server prints its progress every minute and gives up after `MAPS_OVERPASS_READY_TIMEOUT_S` (6 hours by default), or as soon as the container stops, showing its last log lines.
+
+The import lives in the Docker volume `overpass_db` and is reused on later starts. It is redone only when the list of map files, their size or their modification time changes. If an import is interrupted, the next start throws the half-imported database away and starts again.
+
+While Overpass and the plugins start, the server already listens and answers `503`.
+
+## Setup
+
+### Flake configuration (`flake.nix`)
+
+Save the following configuration as `flake.nix` in your project folder:
+
+```
+{
+    inputs = {
+        nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+        flake-utils.url = "github:numtide/flake-utils";
+
+        maps-server.url = "gitlab:buphagidae/maps-server";
+
+        sncf-plugin.url = "git+https://gitlab.com/buphagidae/plugins/sncf-plugin.git";
+        dublin-bus-bus-eireann-go-ahead-plugin.url = "git+https://gitlab.com/buphagidae/plugins/tfi-plugins/dublin-bus-bus-eireann-go-ahead-plugin.git";
+        cam-plugin.url = "git+https://gitlab.com/buphagidae/plugins/camonaco-plugin.git";
+        tri-rail-plugin.url = "git+https://gitlab.com/vitras21-group/trirail-plugin.git";
+    };
+
+    outputs = { self, nixpkgs, maps-server, sncf-plugin, dublin-bus-bus-eireann-go-ahead-plugin, cam-plugin, tri-rail-plugin, flake-utils }:
+        flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ] (system:
+            let
+                pkgs = nixpkgs.legacyPackages.${system};
+            in {
+                packages.default = maps-server.packages.${system}.default;
+
+                apps = {
+                    default = {
+                        type = "app";
+                        program = "${pkgs.writeShellScriptBin "maps-server-configured" ''
+                            export OSM_PBF_FILES="provence-alpes-cote-d-azur-260718.osm.pbf,florida-260819.osm.pbf"
+                            exec ${maps-server.apps.${system}.default.program} "$@"
+                        ''}/bin/maps-server-configured";
+                    };
+
+                    plugins = {
+                        sncf-plugin = sncf-plugin.apps.${system}.default;
+                        cam-plugin-bus = cam-plugin.apps.${system}.default;
+                    };
+                };
+            }
+        );
+}
+```
+
+Git inputs need the `git+https://` form: plain `https://…git` is fetched as an archive and Nix rejects it with "Unrecognized archive format".
+
+### Steps
+
+1. Create an `assets` folder next to `flake.nix` and download the `.osm.pbf` files into it, for example from [Geofabrik](https://download.geofabrik.de/). The names must match `OSM_PBF_FILES`; the server lists any missing file and stops before touching Docker.
+2. Add the API keys your plugins need. Each plugin's README says which environment variables it reads.
+3. Run the server from that folder:
+```
+nix run
+```
+The wrapper loads the pinned Overpass image (`wiktorn/overpass-api:v0.7.62.9`) into Docker the first time, then starts the server. `Ctrl-C` or `SIGTERM` stops the plugins and the Overpass container.
+
+`examples/requests.sh` sends a set of requests with their expected status codes: `examples/requests.sh http://127.0.0.1:6767`.
+
+## Configuration
+
+Every setting can come from an environment variable or from a `maps-server.toml` file in the folder you start the server from (or the file named by `MAPS_CONFIG`). The environment wins over the file, and the file wins over the defaults. In the file, write the names in lower case without the `MAPS_` prefix:
+
+```toml
+osm_pbf_files = ["provence-alpes-cote-d-azur-260718.osm.pbf", "florida-260819.osm.pbf"]
+bind = "127.0.0.1:6767"
+cache_ttl_s = 60
+max_speed_kmh = 350
+```
+
+Unknown names in the file stop startup, so typos do not go unnoticed. At startup the server prints every setting with its value and where it came from (`environment`, the file, or `default`); settings whose name contains `KEY`, `TOKEN`, `SECRET` or `PASSWORD` are shown as `(hidden)`.
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `OSM_PBF_FILES` | `provence-alpes-cote-d-azur-260718.osm.pbf` | Comma-separated map files in `./assets`. `OSM_PBF_FILE_NAME` is read if this is unset. |
+| `MAPS_BIND` | `0.0.0.0:6767` | Address and port the HTTP server listens on. |
+| `MAPS_MAX_BODY_BYTES` | `65536` | Largest request body; larger ones get `413`. |
+| `MAPS_MAX_REQUIRED_NODES` | `25` | Most entries allowed in `required_nodes`. |
+| `MAPS_MIN_TRANSFER_S` | `60` | Default for `min_transfer_s`: seconds between arriving at a station and leaving it on another vehicle. |
+| `MAPS_MAX_SPEED_KMH` | `300` | Speed used by the exact search's estimate. Keep it above the fastest vehicle's average speed between stations; `0` turns the estimate off (plain Dijkstra). |
+| `MAPS_MAX_EXPANDED` | `5000000` | Most search states expanded per request. |
+| `MAPS_MAX_PLUGIN_CALLS` | `1000` | Most plugin calls per request. |
+| `MAPS_HORIZON_H` | `24` | States arriving more than this many hours after the start of their leg are not expanded. Fractions are allowed. |
+| `MAPS_CACHE_TTL_S` | `120` | How long a plugin's answer for a station and a 5-minute window is reused. `0` turns the cache off. |
+| `MAPS_PLUGIN_TIMEOUT_S` | `30` | How long to wait for a plugin's answer to `explore`. |
+| `MAPS_PLUGIN_STARTUP_TIMEOUT_S` | `900` | How long to wait for `mode`, `attribution` and `available`, at startup and after a restart. |
+| `MAPS_OVERPASS_IMAGE` | `wiktorn/overpass-api:v0.7.62.9` | Docker image for Overpass. The Nix wrapper loads the pinned default into Docker; set this to use another image, which Docker must already have. |
+| `MAPS_OVERPASS_READY_TIMEOUT_S` | `21600` | How long to wait for the Overpass import before giving up. |
+| `MAPS_SOURCE_URL` | `https://gitlab.com/buphagidae/maps-server` | Sent in the `Source-Code` header. Change it if you run modified code: the AGPL asks you to offer your version's source to its users. |
+
+Overpass is published on `127.0.0.1:12345` only.
+
+Logs go to standard output, one line per event, with the request ID on every line about a request. Set `RUST_LOG` to change the detail, for example `RUST_LOG=warn` for problems only or `RUST_LOG=debug` for more.
+
+## HTTP API
+
+### `POST /`
+
+The body is a JSON object. Unknown fields are ignored.
+
+| Field | Type | Unit and default | Meaning |
+| --- | --- | --- | --- |
+| `required_nodes` | array of integers | 2 to `MAPS_MAX_REQUIRED_NODES` entries | OSM node IDs to visit in order: walkable nodes, station nodes or station entrances. Send this or `waypoints`. |
+| `waypoints` | array of `[latitude, longitude]` | degrees, 2 to `MAPS_MAX_REQUIRED_NODES` entries | Places to visit in order, instead of `required_nodes`. Each one snaps to the nearest walkable node. |
+| `max_snap_m` | number | metres, default `500` | A waypoint further than this from any walkable node gets `400`. |
+| `format` | string | `json` (default) or `geojson` | `geojson` returns a GeoJSON FeatureCollection instead. |
+| `time` | string | UTC, default now | Departure time, as `YYYYmmddTHHMMSS`, `YYYY-mm-ddTHH:MM:SS`, or RFC 3339 with an offset (`2026-08-08T15:10:00+02:00`). |
+| `walking_speed` | number | km/s, `0.0003` to `0.01`, default `0.00138` (about 5 km/h) | Walking speed. |
+| `fast` | boolean | default `false` | `true` uses the walking-speed estimate: about half the work, but it can miss a faster vehicle (see below). |
+| `heuristic` | boolean or integer | legacy | `1`/`true` means exact, `0`/`false` means fast. `fast` wins when both are sent. |
+| `min_transfer_s` | integer | seconds, default `MAPS_MIN_TRANSFER_S` (60) | Time allowed between arriving at a station and leaving it on another vehicle. |
+| `max_walk_m` | number | metres, default no limit | Longest single walk: from the start to the first vehicle, between two vehicles, or from the last vehicle to the end. |
+| `transfer_penalty_s` | number | seconds, default `0` | Added to the journey time of each change between vehicles when comparing routes, so a slightly slower route with fewer changes can win. Reported times are real times. |
+| `exclude_modes` | array of strings | default `[]` | Plugin modes never to use, such as `["bus"]`. Those plugins are not even asked. |
+| `avoid_steps` | boolean | default `false` | Never walk on `highway=steps`. |
+
+With every option at its default the search behaves exactly as without them. The search keeps one best arrival per node, so with `max_walk_m` it can, rarely, miss a slower route that walks less before a later change.
+
+**Search modes.** The default, exact search always returns the earliest arrival. `"fast": true` estimates the remaining time at walking speed, which explores far fewer nodes but treats vehicles as no faster than walking, so it can return a 36-minute walk when a 20-minute train exists. On Andorra, a 9 h 26 min walk expands 29,319 states in exact mode and 15,763 in fast mode, with the same answer.
+
+A successful answer is `200`:
+
+```json
+{
+  "route": [
+    {"mode": "walking", "line": null, "nodes": [1, 3, 100],
+     "departure_time": "2026-08-08T12:00:00Z", "arrival_time": "2026-08-08T12:03:37.555Z"},
+    {"mode": "train", "line": {"id": "TER", "preferred_colour": "#0055A5"}, "nodes": [100, 200],
+     "departure_time": "2026-08-08T12:14:37Z", "arrival_time": "2026-08-08T12:19:37Z"}
+  ],
+  "arrival_time": "2026-08-08T12:19:37Z",
+  "attribution": [
+    {"plugin": "OpenStreetMap", "data_owner": "[OpenStreetMap contributors](https://www.openstreetmap.org/copyright)", "data_license": "[ODbL](https://opendatacommons.org/licenses/odbl/1-0/)", "plugin_owner": "[maps-server](https://gitlab.com/buphagidae/maps-server)", "plugin_license": "[AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html)"},
+    {"plugin": "sncf-plugin", "data_owner": "[SNCF](sncf.fr)", "data_license": "[ODbL](https://opendatacommons.org/licenses/odbl/1.0/)", "plugin_owner": "Naoise McG", "plugin_license": "[BSD 3-clause](https://gitlab.com/buphagidae/plugins/sncf-plugin/-/raw/main/LICENSE)"}
+  ]
+}
+```
+
+* `mode` is `walking` or the plugin's mode.
+* `line` is `{"id", "preferred_colour"}` (either may be `null`) or `null`.
+* `nodes` lists the nodes from the first to the last.
+* Times are RFC 3339 in UTC, to the millisecond.
+* Consecutive walking edges form one segment, and each vehicle leg is its own segment, so a change between vehicles is always visible.
+* `coordinates` lists `[latitude, longitude]` for each node of the segment that has a position. A station without a position of its own is placed at its first entrance.
+* `snapped` is present when the request used `waypoints`: `[{"input": [lat, lon], "node": <id>, "distance_m": <metres>}]`, one per waypoint.
+* `attribution` credits the data behind this route: OpenStreetMap, plus each plugin whose vehicles the route uses, sorted by `plugin`. Show it next to the route.
+
+With `"format": "geojson"` the answer is a `FeatureCollection` (`Content-Type: application/geo+json`) with one `Feature` per segment: a `LineString` geometry in GeoJSON's `[longitude, latitude]` order (a `Point` or `null` when fewer than two positions are known), and the segment's `mode`, `line`, `nodes`, `departure_time` and `arrival_time` as properties. `arrival_time`, `attribution` and `snapped` sit next to `features`.
+
+### `GET /health`
+
+Reports whether the server can answer routes. `200` when the graph is loaded, Overpass answers and every plugin is running; `503` otherwise.
+
+```json
+{
+  "status": "ok",
+  "ready": true,
+  "uptime_s": 5321,
+  "graph": {"nodes": 37524, "edges": 75706},
+  "overpass": "up",
+  "plugins": [{"name": "sncf-plugin", "mode": "train", "alive": true, "calls": 412, "errors": 3, "avg_ms": 84.2}]
+}
+```
+
+* `status` is `ok` or `degraded`; `ready` is `false` while Overpass and the plugins start.
+* `graph.edges` counts each direction of a footway.
+* For each plugin: `alive` is `false` while it restarts or after it died, `calls` and `errors` count its requests since the server started, and `avg_ms` is their average duration.
+
+### `GET /metrics`
+
+Counters and gauges in the Prometheus text format, for a Prometheus server or any compatible scraper:
+
+* `maps_http_requests_total{path, status}` and the `maps_http_request_duration_seconds` histogram;
+* `maps_searches_total`, `maps_search_expanded_states_total` and `maps_search_plugin_calls_total`;
+* `maps_plugin_calls_total{plugin}`, `maps_plugin_errors_total{plugin}`, `maps_plugin_call_duration_seconds_sum{plugin}` and `_count{plugin}` (average latency is sum divided by count), and `maps_plugin_alive{plugin}`;
+* `maps_cache_hits_total`, `maps_cache_misses_total` and `maps_cache_hit_ratio`;
+* `maps_uptime_seconds`, `maps_ready`, `maps_graph_nodes` and `maps_graph_edges`.
+
+### Errors
+
+Every error has a JSON body `{"error": "<message>"}`, sometimes with more fields.
+
+| Status | When |
+| --- | --- |
+| `400` | Invalid JSON, a body that is not an object, `required_nodes` or `waypoints` missing, both sent, malformed, or with too few or too many entries, a waypoint further than `max_snap_m` from any walkable node, a `time` that does not parse, a `walking_speed` out of range, or a bad `fast`, `heuristic`, `max_snap_m`, `format`, `min_transfer_s`, `max_walk_m`, `transfer_penalty_s`, `exclude_modes` or `avoid_steps`. The message names the problem. |
+| `404` | `{"error": "no route", "failed_leg": [from, to]}`: no route for that pair of consecutive nodes, or one of them is unknown. `{"error": "no route within limits", "limit": "max_expanded" \| "max_plugin_calls" \| "horizon_h"}`: a search limit stopped the search. Unknown paths get `404` too. |
+| `405` | A method other than `POST` or `OPTIONS` on `/`, or other than `GET` on `/health` or `/metrics`. |
+| `413` | A body larger than `MAPS_MAX_BODY_BYTES`. |
+| `500` | An internal error. The connection is never dropped without an answer. |
+| `503` | The server is still starting: Overpass or the plugins are not ready yet. |
+
+### Headers
+
+Every response carries:
+
+* `Access-Control-Allow-Origin: *` and `Access-Control-Expose-Headers: Attribution, Source-Code`, so pages on any origin can call the server and read both headers.
+* `Source-Code: "<MAPS_SOURCE_URL>"`.
+
+A route also carries `Attribution: "<text>"`, URL-encoded: the same credits as the `attribution` field, as sentences.
+
+Every response also carries `X-Request-Id`: the request's own `X-Request-Id` if it sent a short one made of letters, digits, `-` and `_`, otherwise a new one. The same ID tags the server's log lines for that request.
+
+`OPTIONS /` answers `204` with `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Methods: POST, OPTIONS`, `Access-Control-Allow-Headers: Content-Type` and `Access-Control-Max-Age: 86400`.
+
+## Plugin protocol
+
+Plugins are long-running processes started with `nix run .#plugins.<name>`, one per attribute in your flake's `apps.<system>.plugins`. They talk over stdin and stdout with newline-delimited JSON: one request per line, one reply per line, and stdout flushed after each reply. Anything a plugin writes to stderr is logged with its name. An example plugin is https://gitlab.com/buphagidae/plugins/sncf-plugin. For Overpass queries, use the local instance at `http://localhost:12345/api/interpreter`.
+
+### Call order
+
+1. `mode`, then `attribution`. These must answer without any slow initialisation.
+2. `available`. Do the slow initialisation (downloading timetables, matching stops) here; it gets `MAPS_PLUGIN_STARTUP_TIMEOUT_S`.
+3. Any number of `explore` calls. Each gets `MAPS_PLUGIN_TIMEOUT_S`.
+
+A plugin is only asked about stations it listed in `available`. If it misses a deadline, exits, or prints something that is not JSON, it is killed and restarted, and `mode`, `attribution` and `available` are sent again. Calls to several plugins happen in parallel; each plugin receives one request at a time.
+
+### Requests
+
+Every request is `{"action": "<name>", "data": <value>}`.
+
+* `{"action": "mode", "data": []}`
+* `{"action": "attribution", "data": []}`
+* `{"action": "available", "data": []}`
+* `{"action": "explore", "data": {"station": 123456, "datetime": "20260808T120000"}}`
+  * `station` (integer): OSM ID of the station, one of the keys from `available`.
+  * `datetime` (string, `YYYYmmddTHHMMSS`, UTC): start of the window. The server rounds it down to a 5-minute mark so answers can be cached, and drops departures before the time it needs.
+  * `duration` (integer, seconds, optional): the length of the window. The server does not send it today, so pick a sensible default for your network (the SNCF plugin uses 7200).
+
+### Replies
+
+Success is `{"response": <value>}`:
+
+* `mode`: a string, for example `{"response": "train"}`.
+* `attribution`: `{"response": {"data_owner": "[SNCF](https://sncf.fr/)", "data_license": "[ODbL](https://opendatacommons.org/licenses/odbl/1.0/)", "plugin_owner": "Naoise McG", "plugin_license": "[BSD 3-clause](https://gitlab.com/buphagidae/plugins/sncf-plugin/-/raw/main/LICENSE)"}}`.
+* `available`: station IDs mapped to the walkable node IDs of their entrances, `{"response": {"123456": [789123, 456789]}}`. Keys are strings because JSON keys always are; send the entrances as integers (numeric strings are accepted). A station whose own node lies on a footway can have an empty list.
+* `explore`: every journey that leaves the station in the window, `{"response": [{"to": 654321, "cost": 1800, "time": "20260808T121500", "line": {"id": "4", "preferred_colour": "#FF0000", "ways": [123456]}}]}`.
+  * `to` (integer): the station the journey reaches. Numeric strings are accepted.
+  * `cost` (integer, seconds, 0 or more): travel time.
+  * `time` (string, `YYYYmmddTHHMMSS`, UTC): departure time.
+  * `line` (object, optional): `id` (string or number) and `preferred_colour` (hex colour such as `#FF0000`) are shown in routes; `ways` (OSM way IDs) is not used yet.
+
+  List one entry for **every later stop** of each vehicle: a train leaving at 12:15 and calling at three more stations gives three entries with the same `time` and different `to` and `cost`. The server needs this to let travellers get off anywhere. Journeys with a negative or non-integer `cost`, an unreadable `time` or a `to` that is not an ID are skipped and logged. Plugins are the slowest part of a search, so use as few API requests as possible.
+
+On failure, reply `{"error": "<message>"}` and keep running. An error reply does not restart the plugin.
+
+### Checking a plugin
+
+`maps-server check-plugin <flake attribute>` starts a plugin with `nix run`, sends `mode`, `attribution` and `available`, then `explore` for the first three stations at the current time, and prints a report. It checks the types, the time format, that `cost` is 0 or more, that every `to` is a station from `available`, that each `preferred_colour` is a hex colour, and how long each answer takes. It exits with status 1 when it finds a problem. Use `maps-server check-plugin -- <command> [args...]` for a plugin that is not packaged with Nix.
+
+For example, on the test suite's fake plugin given a broken timetable:
+
+```
+$ maps-server check-plugin -- python3 tests/fake_plugin.py '{"available": {"300": [3], "400": ["2"]}, "explore": {"300": [{"to": 999, "offset": 120, "cost": -1}]}}'
+ok       mode: train
+ok       attribution: all four fields present
+warning  available: station 400 entrance "2" is a string; send integers
+ok       available: 2 station(s)
+PROBLEM  explore 300: journey 0: to 999 is not a station listed by available
+PROBLEM  explore 300: journey 0: cost -1 is negative
+ok       explore 300: 1 journey(s) in 7 ms
+ok       explore 400: 0 journey(s) in 0 ms
+2 problem(s), 1 warning(s).
+```
+
+JSON Schemas for every request and reply are in `docs/plugin-protocol/`.
+
+## Attribution and licence
+
+maps-server is free software under the GNU Affero General Public License v3.0 (`LICENSE`). If you run a modified version for other people, the AGPL requires you to offer them its source; point `MAPS_SOURCE_URL` at it.
+
+Map data © OpenStreetMap contributors, under the [ODbL](https://opendatacommons.org/licenses/odbl/1-0/). The walking graph and every node ID come from OpenStreetMap, and the `Attribution` header of every route says so. Timetable and realtime data come from each plugin's data owner under the licence that plugin reports, and are credited in the same header.

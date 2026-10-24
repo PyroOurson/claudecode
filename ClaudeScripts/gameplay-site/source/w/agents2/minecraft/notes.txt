@@ -1,0 +1,7 @@
+Blockcraft (blockcraft-3d) source notes, round 3
+- Build: python mk.py  -> writes ../../parts/057_g_blockcraft-3d.js (concatenates src/*.js in name order). node --check the part after.
+- Tests (Playwright, real Chrome): ../../agents3/minecraft/tools/*.js (drive.js helper: open, btn(label), cmd('/...'), newWorld, shot). wrap.__mc() returns screen state, buttons, player, chat, signs.
+- Pointer lock: grab() (21_input) is called from Create/Play world clicks and openWorldObj, lock is kept through the loading screen (wantLock window 4 s). No "Click to play" bar; an unlocked game grabs the mouse on the first click. Esc / lock loss opens the Game Menu.
+- New file 20b_adv.js: advancements (inventory checks every 20 ticks, toasts, Advancements screen), statistics (P.st, saved in playerData), sign text meshes in the world (updSigns every 20 frames).
+- GUI scale is always an integer (also on touch) so the bitmap font stays crisp.
+- Menus over the panorama use a CSS blur on the GL canvas (blurOn in 24_main); pause/options/stats/adv in game blur the world too.

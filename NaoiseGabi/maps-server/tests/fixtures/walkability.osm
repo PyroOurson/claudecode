@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="maps-server-tests">
+  <node id="1" version="1" lat="10.0000" lon="0.0010"/>
+  <node id="2" version="1" lat="10.0000" lon="0.0020"/>
+  <node id="3" version="1" lat="10.0010" lon="0.0010"/>
+  <node id="4" version="1" lat="10.0010" lon="0.0020"/>
+  <node id="5" version="1" lat="10.0020" lon="0.0010"/>
+  <node id="6" version="1" lat="10.0020" lon="0.0020"/>
+  <node id="7" version="1" lat="10.0030" lon="0.0010"/>
+  <node id="8" version="1" lat="10.0030" lon="0.0020"/>
+  <node id="9" version="1" lat="10.0040" lon="0.0010"/>
+  <node id="10" version="1" lat="10.0040" lon="0.0020"/>
+  <node id="11" version="1" lat="10.0050" lon="0.0010"/>
+  <node id="12" version="1" lat="10.0050" lon="0.0020"/>
+  <node id="13" version="1" lat="10.0060" lon="0.0010"/>
+  <node id="14" version="1" lat="10.0060" lon="0.0020"/>
+  <node id="15" version="1" lat="10.0070" lon="0.0010"/>
+  <node id="16" version="1" lat="10.0070" lon="0.0020"/>
+  <node id="17" version="1" lat="10.0080" lon="0.0010"/>
+  <node id="18" version="1" lat="10.0080" lon="0.0020"/>
+  <node id="19" version="1" lat="10.0090" lon="0.0010"/>
+  <node id="20" version="1" lat="10.0090" lon="0.0020"/>
+  <node id="21" version="1" lat="10.0100" lon="0.0010"/>
+  <node id="22" version="1" lat="10.0100" lon="0.0020"/>
+  <node id="23" version="1" lat="10.0110" lon="0.0010"/>
+  <node id="24" version="1" lat="10.0110" lon="0.0020"/>
+  <node id="25" version="1" lat="10.0120" lon="0.0010"/>
+  <node id="26" version="1" lat="10.0120" lon="0.0020"/>
+  <node id="27" version="1" lat="10.0130" lon="0.0010"/>
+  <node id="28" version="1" lat="10.0130" lon="0.0020"/>
+  <node id="29" version="1" lat="10.0140" lon="0.0010"/>
+  <node id="30" version="1" lat="10.0140" lon="0.0020"/>
+  <way id="1" version="1">
+    <nd ref="1"/>
+    <nd ref="2"/>
+    <tag k="highway" v="busway"/>
+    <tag k="name" v="busway"/>
+  </way>
+  <way id="2" version="1">
+    <nd ref="3"/>
+    <nd ref="4"/>
+    <tag k="highway" v="bus_guideway"/>
+    <tag k="name" v="bus_guideway"/>
+  </way>
+  <way id="3" version="1">
+    <nd ref="5"/>
+    <nd ref="6"/>
+    <tag k="highway" v="razed"/>
+    <tag k="name" v="razed"/>
+  </way>
+  <way id="4" version="1">
+    <nd ref="7"/>
+    <nd ref="8"/>
+    <tag k="highway" v="disused"/>
+    <tag k="name" v="disused"/>
+  </way>
+  <way id="5" version="1">
+    <nd ref="9"/>
+    <nd ref="10"/>
+    <tag k="highway" v="no"/>
+    <tag k="name" v="no"/>
+  </way>
+  <way id="6" version="1">
+    <nd ref="11"/>
+    <nd ref="12"/>
+    <tag k="highway" v="busway"/>
+    <tag k="foot" v="yes"/>
+    <tag k="name" v="busway_foot_yes"/>
+  </way>
+  <way id="7" version="1">
+    <nd ref="13"/>
+    <nd ref="14"/>
+    <tag k="indoor" v="corridor"/>
+    <tag k="name" v="corridor"/>
+  </way>
+  <way id="8" version="1">
+    <nd ref="15"/>
+    <nd ref="16"/>
+    <tag k="indoor" v="corridor"/>
+    <tag k="access" v="private"/>
+    <tag k="name" v="corridor_private"/>
+  </way>
+  <way id="9" version="1">
+    <nd ref="17"/>
+    <nd ref="18"/>
+    <tag k="highway" v="trunk"/>
+    <tag k="sidewalk" v="both"/>
+    <tag k="name" v="trunk_sidewalk_both"/>
+  </way>
+  <way id="10" version="1">
+    <nd ref="19"/>
+    <nd ref="20"/>
+    <tag k="highway" v="trunk"/>
+    <tag k="sidewalk:left" v="yes"/>
+    <tag k="name" v="trunk_sidewalk_left_yes"/>
+  </way>
+  <way id="11" version="1">
+    <nd ref="21"/>
+    <nd ref="22"/>
+    <tag k="highway" v="trunk_link"/>
+    <tag k="sidewalk" v="right"/>
+    <tag k="name" v="trunk_link_sidewalk_right"/>
+  </way>
+  <way id="12" version="1">
+    <nd ref="23"/>
+    <nd ref="24"/>
+    <tag k="highway" v="trunk"/>
+    <tag k="name" v="trunk"/>
+  </way>
+  <way id="13" version="1">
+    <nd ref="25"/>
+    <nd ref="26"/>
+    <tag k="highway" v="trunk"/>
+    <tag k="sidewalk" v="separate"/>
+    <tag k="name" v="trunk_sidewalk_separate"/>
+  </way>
+  <way id="14" version="1">
+    <nd ref="27"/>
+    <nd ref="28"/>
+    <tag k="highway" v="motorway"/>
+    <tag k="sidewalk" v="both"/>
+    <tag k="name" v="motorway_sidewalk_both"/>
+  </way>
+  <way id="15" version="1">
+    <nd ref="29"/>
+    <nd ref="30"/>
+    <tag k="highway" v="footway"/>
+    <tag k="name" v="footway"/>
+  </way>
+</osm>

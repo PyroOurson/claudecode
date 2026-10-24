@@ -1,0 +1,51 @@
+stages:
+  - check
+  - build
+
+variables:
+  CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
+  CARGO_TERM_COLOR: "always"
+
+.rust:
+  stage: check
+  image: rust:1.97
+  cache:
+    key: cargo-$CI_JOB_NAME
+    paths:
+      - .cargo/registry
+      - target
+
+fmt:
+  extends: .rust
+  script:
+    - rustup component add rustfmt
+    - cargo fmt --check
+
+clippy:
+  extends: .rust
+  script:
+    - rustup component add clippy
+    - cargo clippy --all-targets -- -D warnings
+
+test:
+  extends: .rust
+  script:
+    - python3 --version
+    - cargo test
+
+msrv:
+  extends: .rust
+  image: rust:1.88
+  script:
+    - cargo check --all-targets
+
+nix:
+  stage: build
+  image: nixos/nix:2.34.6
+  when: manual
+  allow_failure: true
+  variables:
+    NIX_CONFIG: "experimental-features = nix-command flakes"
+  script:
+    - nix build --print-build-logs
+    - nix flake check --all-systems

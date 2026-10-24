@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gitlab.com/buphagidae/maps-server/-/raw/main/docs/plugin-protocol/attribution-reply.schema.json",
+  "title": "Reply to attribution",
+  "description": "Credits shown with every route that uses this plugin.",
+  "type": "object",
+  "required": [
+    "response"
+  ],
+  "properties": {
+    "response": {
+      "type": "object",
+      "required": [
+        "data_owner",
+        "data_license",
+        "plugin_owner",
+        "plugin_license"
+      ],
+      "properties": {
+        "data_owner": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Who provides the data, Markdown links allowed."
+        },
+        "data_license": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The data's licence, Markdown links allowed."
+        },
+        "plugin_owner": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Who wrote the plugin."
+        },
+        "plugin_license": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The plugin's licence, Markdown links allowed."
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Higher or Lower: Countries</title>
+  <link rel="stylesheet" href="../common.css">
+  <style>
+    .game { max-width: 900px; }
+    .stage {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius);
+    }
+    .track {
+      display: flex;
+      gap: 12px;
+      will-change: transform;
+    }
+    .track.moving { transition: transform 0.5s ease-in-out; }
+    .card {
+      flex: 0 0 calc((100% - 12px) / 2);
+      min-height: 340px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 28px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: var(--text);
+    }
+    .flag {
+      font-size: clamp(3.5rem, 12vw, 5rem);
+      line-height: 1.1;
+    }
+    .cname {
+      font-size: clamp(1.4rem, 4.5vw, 2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+    .label { font-size: 0.95rem; color: var(--muted); }
+    .value {
+      font-size: clamp(1.5rem, 5vw, 2.3rem);
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+    .choices {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: min(200px, 100%);
+      margin: 6px 0;
+    }
+    .choices .btn {
+      min-height: 44px;
+    }
+    .vs {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 44px;
+      height: 44px;
+      margin: -22px 0 0 -22px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: var(--bg);
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+      z-index: 2;
+    }
+    .vs.right { background: var(--good); border-color: var(--good); color: #fff; font-size: 1.2rem; }
+    .vs.wrong { background: var(--bad); border-color: var(--bad); color: #fff; font-size: 1.2rem; }
+    .over { margin-top: 16px; }
+    .over h2 { margin: 0 0 4px; font-size: 1.4rem; font-weight: 800; }
+    .over p { margin: 0 0 14px; color: var(--muted); }
+    @media (max-width: 600px) {
+      .track { flex-direction: column; }
+      .card {
+        flex: 0 0 auto;
+        height: 248px;
+        min-height: 0;
+        padding: 14px 16px;
+        gap: 2px;
+      }
+      .stage { height: calc(248px * 2 + 12px); }
+      .flag { font-size: 3rem; }
+      .choices { flex-direction: row; width: 100%; max-width: 300px; }
+      .choices .btn { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topbar"><a class="logo" href="../../../index.html">hello</a></nav>
+  <main class="game">
+    <h1 class="game-title">Higher or Lower</h1>
+    <p class="lede">Guess whether the second country has a higher or lower population than the first.</p>
+    <div class="stats">
+      <div class="stat"><div class="stat-value" id="score">0</div><div class="stat-label">Score</div></div>
+      <div class="stat"><div class="stat-value" id="best">0</div><div class="stat-label">Best</div></div>
+    </div>
+    <div class="stage" id="stage">
+      <div class="track" id="track"></div>
+      <div class="vs" id="vs">VS</div>
+    </div>
+    <div class="over panel hidden" id="over">
+      <h2 id="overTitle">Game over</h2>
+      <p id="overText"></p>
+      <button class="btn" id="again">Play again</button>
+    </div>
+  </main>
+  <script>
+    const COUNTRIES = [
+      ["🇮🇳", "India", 1441700000],
+      ["🇨🇳", "China", 1410700000],
+      ["🇺🇸", "United States", 341100000],
+      ["🇮🇩", "Indonesia", 281600000],
+      ["🇵🇰", "Pakistan", 245200000],
+      ["🇳🇬", "Nigeria", 229200000],
+      ["🇧🇷", "Brazil", 211900000],
+      ["🇧🇩", "Bangladesh", 173600000],
+      ["🇷🇺", "Russia", 144000000],
+      ["🇪🇹", "Ethiopia", 129700000],
+      ["🇲🇽", "Mexico", 129400000],
+      ["🇯🇵", "Japan", 123800000],
+      ["🇪🇬", "Egypt", 116500000],
+      ["🇵🇭", "Philippines", 115800000],
+      ["🇨🇩", "DR Congo", 109300000],
+      ["🇻🇳", "Vietnam", 100300000],
+      ["🇮🇷", "Iran", 89800000],
+      ["🇹🇷", "Turkey", 85500000],
+      ["🇩🇪", "Germany", 84500000],
+      ["🇹🇭", "Thailand", 71700000],
+      ["🇬🇧", "United Kingdom", 69100000],
+      ["🇹🇿", "Tanzania", 68600000],
+      ["🇫🇷", "France", 66500000],
+      ["🇿🇦", "South Africa", 63200000],
+      ["🇮🇹", "Italy", 59300000],
+      ["🇰🇪", "Kenya", 56400000],
+      ["🇲🇲", "Myanmar", 54500000],
+      ["🇨🇴", "Colombia", 52900000],
+      ["🇰🇷", "South Korea", 51700000],
+      ["🇸🇩", "Sudan", 50400000],
+      ["🇺🇬", "Uganda", 50000000],
+      ["🇪🇸", "Spain", 47900000],
+      ["🇩🇿", "Algeria", 46800000],
+      ["🇮🇶", "Iraq", 46000000],
+      ["🇦🇷", "Argentina", 45700000],
+      ["🇦🇫", "Afghanistan", 42600000],
+      ["🇨🇦", "Canada", 39700000],
+      ["🇵🇱", "Poland", 38500000],
+      ["🇲🇦", "Morocco", 38100000],
+      ["🇺🇦", "Ukraine", 37900000],
+      ["🇲🇾", "Malaysia", 35600000],
+      ["🇬🇭", "Ghana", 34400000],
+      ["🇵🇪", "Peru", 34200000],
+      ["🇸🇦", "Saudi Arabia", 33900000],
+      ["🇳🇵", "Nepal", 29700000],
+      ["🇻🇪", "Venezuela", 28400000],
+      ["🇦🇺", "Australia", 26700000],
+      ["🇰🇵", "North Korea", 26500000],
+      ["🇹🇼", "Taiwan", 23400000],
+      ["🇱🇰", "Sri Lanka", 23100000],
+      ["🇰🇿", "Kazakhstan", 20600000],
+      ["🇨🇱", "Chile", 19800000],
+      ["🇷🇴", "Romania", 19000000],
+      ["🇳🇱", "Netherlands", 18200000],
+      ["🇪🇨", "Ecuador", 18100000],
+      ["🇰🇭", "Cambodia", 17600000],
+      ["🇧🇪", "Belgium", 11800000],
+      ["🇨🇺", "Cuba", 11000000],
+      ["🇸🇪", "Sweden", 10600000],
+      ["🇵🇹", "Portugal", 10400000],
+      ["🇬🇷", "Greece", 10000000],
+      ["🇮🇱", "Israel", 9400000],
+      ["🇦🇹", "Austria", 9100000],
+      ["🇨🇭", "Switzerland", 8900000],
+      ["🇸🇬", "Singapore", 6000000],
+      ["🇩🇰", "Denmark", 6000000],
+      ["🇫🇮", "Finland", 5600000],
+      ["🇳🇴", "Norway", 5600000],
+      ["🇮🇪", "Ireland", 5300000],
+      ["🇳🇿", "New Zealand", 5200000],
+      ["🇲🇳", "Mongolia", 3500000],
+      ["🇯🇲", "Jamaica", 2800000],
+      ["🇫🇯", "Fiji", 900000],
+      ["🇮🇸", "Iceland", 400000]
+    ].map(([flag, name, pop]) => ({ flag, name, pop }));
+
+    const KEY = "hello-higher-lower-best";
+    const track = document.getElementById("track");
+    const vs = document.getElementById("vs");
+    const scoreEl = document.getElementById("score");
+    const bestEl = document.getElementById("best");
+    const over = document.getElementById("over");
+    const overTitle = document.getElementById("overTitle");
+    const overText = document.getElementById("overText");
+    const fmt = (n) => Math.round(n).toLocaleString("en-US");
+
+    function loadBest() {
+      try { return Number(localStorage.getItem(KEY)) || 0; } catch (e) { return 0; }
+    }
+    function saveBest(v) {
+      try { localStorage.setItem(KEY, String(v)); } catch (e) {}
+    }
+
+    let best = loadBest();
+    bestEl.textContent = best;
+    let score = 0;
+    let left, right, next;
+    let recent = [];
+    let busy = false;
+    let bestAtStart = best;
+
+    function pick(other) {
+      for (let tries = 0; tries < 500; tries++) {
+        const c = COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)];
+        if (c === other || recent.includes(c)) continue;
+        if (other && Math.abs(c.pop - other.pop) / Math.max(c.pop, other.pop) < 0.02) continue;
+        return c;
+      }
+      return COUNTRIES.find((c) => c !== other && Math.abs(c.pop - other.pop) / Math.max(c.pop, other.pop) >= 0.02);
+    }
+
+    function remember(c) {
+      recent.push(c);
+      if (recent.length > 12) recent.shift();
+    }
+
+    function makeCard(c, mode) {
+      const el = document.createElement("div");
+      el.className = "card";
+      const flag = document.createElement("div");
+      flag.className = "flag";
+      flag.textContent = c.flag;
+      const name = document.createElement("div");
+      name.className = "cname";
+      name.textContent = c.name;
+      el.append(flag, name);
+      if (mode === "known") {
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = "has a population of";
+        const v = document.createElement("div");
+        v.className = "value";
+        v.textContent = fmt(c.pop);
+        el.append(label, v);
+      } else {
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = "has a population";
+        const choices = document.createElement("div");
+        choices.className = "choices";
+        const hi = document.createElement("button");
+        hi.className = "btn";
+        hi.textContent = "Higher";
+        hi.addEventListener("click", () => guess(true));
+        const lo = document.createElement("button");
+        lo.className = "btn";
+        lo.textContent = "Lower";
+        lo.addEventListener("click", () => guess(false));
+        choices.append(hi, lo);
+        const tail = document.createElement("div");
+        tail.className = "label";
+        tail.textContent = "than " + left.name;
+        const v = document.createElement("div");
+        v.className = "value hidden";
+        el.append(label, choices, v, tail);
+      }
+      return el;
+    }
+
+    function countUp(el, to, ms) {
+      return new Promise((resolve) => {
+        const t0 = performance.now();
+        el.classList.remove("hidden");
+        const step = (t) => {
+          const p = Math.min(1, (t - t0) / ms);
+          const e = 1 - Math.pow(1 - p, 3);
+          el.textContent = fmt(to * e);
+          if (p < 1) requestAnimationFrame(step);
+          else resolve();
+        };
+        requestAnimationFrame(step);
+      });
+    }
+
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    function render() {
+      track.classList.remove("moving");
+      track.style.transform = "none";
+      track.innerHTML = "";
+      track.append(makeCard(left, "known"), makeCard(right, "guess"));
+      vs.className = "vs";
+      vs.textContent = "VS";
+    }
+
+    async function guess(higher) {
+      if (busy) return;
+      busy = true;
+      const card = track.children[1];
+      card.querySelector(".choices").classList.add("hidden");
+      card.querySelectorAll(".label")[0].textContent = "has a population of";
+      card.querySelectorAll(".label")[1].classList.add("hidden");
+      await countUp(card.querySelector(".value"), right.pop, 900);
+      const correct = higher ? right.pop > left.pop : right.pop < left.pop;
+      vs.textContent = correct ? "✓" : "✗";
+      vs.classList.add(correct ? "right" : "wrong");
+      if (!correct) {
+        await wait(500);
+        gameOver();
+        return;
+      }
+      score++;
+      scoreEl.textContent = score;
+      if (score > best) {
+        best = score;
+        bestEl.textContent = best;
+        saveBest(best);
+      }
+      await wait(700);
+      next = pick(right);
+      remember(next);
+      left = right;
+      const third = makeCard(next, "guess");
+      track.appendChild(third);
+      const a = track.children[0];
+      const b = track.children[1];
+      const dx = b.offsetLeft - a.offsetLeft;
+      const dy = b.offsetTop - a.offsetTop;
+      vs.className = "vs";
+      vs.textContent = "VS";
+      void track.offsetWidth;
+      track.classList.add("moving");
+      track.style.transform = "translate(" + (-dx) + "px, " + (-dy) + "px)";
+      await wait(520);
+      track.classList.remove("moving");
+      a.remove();
+      track.style.transform = "none";
+      right = next;
+      third.querySelectorAll(".label")[1].textContent = "than " + left.name;
+      busy = false;
+    }
+
+    function gameOver() {
+      overTitle.textContent = score > bestAtStart ? "New best" : "Game over";
+      overText.textContent = right.name + " has " + fmt(right.pop) + " people, " + (right.pop > left.pop ? "more" : "fewer") + " than " + left.name + ". You scored " + score + ". Best: " + best + ".";
+      over.classList.remove("hidden");
+      over.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      document.getElementById("again").focus({ preventScroll: true });
+    }
+
+    function start() {
+      score = 0;
+      bestAtStart = best;
+      scoreEl.textContent = "0";
+      recent = [];
+      over.classList.add("hidden");
+      left = pick(null);
+      remember(left);
+      right = pick(left);
+      remember(right);
+      render();
+      busy = false;
+    }
+
+    document.getElementById("again").addEventListener("click", start);
+    document.addEventListener("keydown", (e) => {
+      if (busy || !over.classList.contains("hidden")) return;
+      if (e.key === "ArrowUp" || e.key === "h" || e.key === "H") { e.preventDefault(); guess(true); }
+      if (e.key === "ArrowDown" || e.key === "l" || e.key === "L") { e.preventDefault(); guess(false); }
+    });
+    start();
+  </script>
+</body>
+</html>

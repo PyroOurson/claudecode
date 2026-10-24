@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gitlab.com/buphagidae/maps-server/-/raw/main/docs/plugin-protocol/available-reply.schema.json",
+  "title": "Reply to available",
+  "description": "Sent once at startup and again after a restart. Do slow initialisation here.",
+  "type": "object",
+  "required": [
+    "response"
+  ],
+  "properties": {
+    "response": {
+      "type": "object",
+      "description": "Station IDs (as JSON object keys) mapped to the walkable node IDs of their entrances.",
+      "propertyNames": {
+        "pattern": "^-?[0-9]+$"
+      },
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "description": "OpenStreetMap node ID."
+            },
+            {
+              "type": "string",
+              "pattern": "^-?[0-9]+$",
+              "description": "Accepted, but send integers."
+            }
+          ]
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
