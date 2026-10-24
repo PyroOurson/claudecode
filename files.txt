@@ -1,8 +1,9 @@
 CLAUDE.md
 ClaudeScripts/acra/README.md
+ClaudeScripts/acra/acra-linux.zip
+ClaudeScripts/acra/acra-windows.zip
 ClaudeScripts/acra/acra.FCStd
 ClaudeScripts/acra/acra.xml
-ClaudeScripts/acra/acra.zip
 ClaudeScripts/acra/build.py
 ClaudeScripts/acra/images/details.png
 ClaudeScripts/acra/images/hero.png
@@ -13,6 +14,8 @@ ClaudeScripts/acra/requirements.txt
 ClaudeScripts/acra/runs/acra/policy.zip
 ClaudeScripts/acra/runs/acra/vecnormalize.pkl
 ClaudeScripts/acra/runs/latest
+ClaudeScripts/acra/start.bat
+ClaudeScripts/acra/start.sh
 ClaudeScripts/acra/train.py
 ClaudeScripts/acra/watch.py
 ClaudeScripts/gameplay-site/COVER_SOURCES.md

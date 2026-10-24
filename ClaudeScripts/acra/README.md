@@ -17,15 +17,17 @@ More pictures in [`images/`](images/): `views.png` (front, top and both sides, l
 | `runs/` | The trained policy (`runs/acra/`); `runs/latest` names the one `watch.py` loads |
 | `images/` | Pictures and the walking GIF |
 | `requirements.txt` | Python packages to install |
-| `acra.zip` | This whole folder in one download (see Quick start) |
+| `start.bat`, `start.sh` | One-click launchers for Windows and Linux: install the packages on first run, then open the viewer |
+| `acra-windows.zip`, `acra-linux.zip` | This whole folder in one download, with the launcher for that system (see Quick start) |
 
 ## Run
 
-**Quick start (just watch it walk):**
+**Quick start (just watch it walk).** Pick the download for your computer, unzip it, and launch. The trained policy is included, so no training is needed. The first launch installs MuJoCo, PyTorch and Stable-Baselines3 (a few minutes); later launches start in seconds. You need Python 3.10 or newer (https://www.python.org/downloads/; on Windows tick "Add python.exe to PATH").
 
-1. Download **https://github.com/PyroOurson/claudecode/raw/mainbranch-claude-code/ClaudeScripts/acra/acra.zip** and unzip it.
-2. Install Python 3.10 or newer (https://www.python.org/downloads/), open a terminal in the unzipped `acra` folder and run `python -m pip install -r requirements.txt` (on a Mac: `python3 -m pip install -r requirements.txt`).
-3. Run `python watch.py` (on a Mac: `mjpython watch.py`). The trained policy is included, so no training is needed. Arrow keys steer it, Space pauses, R resets.
+- **Windows:** download **https://github.com/PyroOurson/claudecode/raw/mainbranch-claude-code/ClaudeScripts/acra/acra-windows.zip**, unzip it, open the `acra` folder and double-click `start.bat`.
+- **Linux:** download **https://github.com/PyroOurson/claudecode/raw/mainbranch-claude-code/ClaudeScripts/acra/acra-linux.zip**, then in a terminal: `unzip acra-linux.zip && cd acra && ./start.sh`. It uses your Python if MuJoCo, PyTorch and Stable-Baselines3 are already installed, otherwise it installs them into `acra/.venv`. On Ubuntu/Debian, `python3-venv` must be installed first (`sudo apt install python3-venv`).
+
+In the viewer: arrow keys steer the robot, Space pauses, R resets, + and - change the playback speed. `start.bat --random` / `./start.sh --random` shows an untrained robot for comparison.
 
 Needs Python 3.10+ (current MuJoCo wheels no longer support 3.9).
 
