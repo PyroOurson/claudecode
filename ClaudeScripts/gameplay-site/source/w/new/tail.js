@@ -96,39 +96,16 @@ function runSearch(qt, pool, allowPrefix) {
 function search(q, pool) {
   const full = norm(q);
   if (!full) return { list: [], partial: false, scores: new Map() };
-  const pre = g => norm(g.info.name).startsWith(full);
+  const parts = full.split(' ').filter(Boolean);
   const alpha = l => l.slice().sort((x, y) => x.title.localeCompare(y.title, 'en', { sensitivity: 'base' }));
-  const names = g => norm(g.info.name) + ' ' + norm(g.oldTitle);
-  const wordAt = g => (' ' + names(g)).includes(' ' + full), inside = g => names(g).includes(full);
-  if (full.length < 3) {
-    const a = alpha(pool.filter(pre)), b = alpha(pool.filter(g => !pre(g) && wordAt(g))), c = full.length > 1 ? alpha(pool.filter(g => !pre(g) && !wordAt(g) && inside(g))) : [];
-    const list = a.concat(b, c), scores = new Map();
-    list.forEach((g, i) => scores.set(g, 1000 - i * .01));
-    return { list, partial: false, scores };
-  }
-  const qt = toks(q).filter(t => !STOP.has(t));
-  if (!qt.length) { const list = alpha(pool.filter(inside)), scores = new Map(); list.forEach((g, i) => scores.set(g, 1000 - i * .01)); return { list, partial: false, scores }; }
-  let r = runSearch(qt, pool, qt.every(t => t.length >= 4 || false) || qt.length > 1 && qt[qt.length - 1].length >= 4);
-  let list = [...r.scores.keys()].filter(g => r.misses.get(g) === 0);
-  if (!list.length) { r = runSearch(qt, pool, true); list = [...r.scores.keys()].filter(g => r.misses.get(g) === 0); }
-  let partial = false;
-  if (!list.length && qt.length > 1) { list = [...r.scores.keys()]; partial = list.length > 0; }
-  const scores = r.scores;
-  list.forEach(g => {
-    const nm = norm(g.info.name), old = norm(g.oldTitle);
-    if (nm === full || old === full) scores.set(g, scores.get(g) + 40);
-    else if (nm.startsWith(full) || old.startsWith(full)) scores.set(g, scores.get(g) + 12);
-  });
-  const head = alpha(list.filter(pre));
-  head.forEach((g, i) => scores.set(g, 1000 - i * .01));
-  let rest = list.filter(g => !pre(g));
-  if (rest.length > 6) {
-    const top = Math.max(...rest.map(g => scores.get(g)));
-    rest = rest.filter(g => scores.get(g) >= top * .2);
-  }
-  list = head.concat(rest);
-  if (!list.length) { list = alpha(pool.filter(inside)); list.forEach((g, i) => scores.set(g, 1000 - i * .01)); }
-  return { list, partial, scores };
+  const nm = g => norm(g.title) + ' | ' + norm(g.info.name);
+  const pre = g => norm(g.title).startsWith(full) || norm(g.info.name).startsWith(full);
+  const wordAt = g => (' ' + nm(g)).includes(' ' + full);
+  const hit = pool.filter(g => parts.every(t => nm(g).includes(t)));
+  const list = alpha(hit.filter(pre)).concat(alpha(hit.filter(g => !pre(g) && wordAt(g))), alpha(hit.filter(g => !pre(g) && !wordAt(g))));
+  const scores = new Map();
+  list.forEach((g, i) => scores.set(g, 1000 - i * .01));
+  return { list, partial: false, scores };
 }
 
 const state = { q: '', f: new Set(), g: new Set(), p: new Set(), t: new Set(), v: new Set(), c: new Set(), sort: '' };
@@ -428,8 +405,7 @@ const thumbsOn = () => S.prefs.thumbs !== false;
 const tint = g => g.cc || TINT[g.id] || 'var(--ph1)';
 const img = (g, pri) => { if (!thumbsOn()) return ''; const u = coverUrl(g); return `<img src="${u}"${u === BLANK ? ` data-cv="${g.id}"` : ''} alt="" width="16" height="10"${pri ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async" draggable="false">`; };
 let sel = null;
-const cardMeta = g => { const b = S.best[g.id], t = S.last[g.id], p = []; if (b != null) p.push('Best ' + fmt(g, b)); if (t) p.push(ago(t)); return p.length ? `<div class="meta">${esc(p.join(' · '))}</div>` : ''; };
-const card = (g, src, i) => `<a class="card${sel === g.id && src === 'grid' ? ' sel' : ''}${sfOff(g.id) ? ' off' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="${src}" style="--c:${tint(g)};--i:${i || 0}"><div class="art">${img(g, i != null && i < 10)}${sfOff(g.id) ? '<span class="offb">Temporarily unavailable</span>' : ''}</div>${fvBtn(g.id)}<div class="name">${esc(g.title)}</div>${src === 'rail' ? cardMeta(g) : ''}</a>`;
+const card = (g, src, i) => `<a class="card${sel === g.id && src === 'grid' ? ' sel' : ''}${sfOff(g.id) ? ' off' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="${src}" style="--c:${tint(g)};--i:${i || 0}"><div class="art">${img(g, i != null && i < 10)}${sfOff(g.id) ? '<span class="offb">Temporarily unavailable</span>' : ''}</div>${fvBtn(g.id)}<div class="name">${esc(g.title)}</div></a>`;
 const srow = g => `<a class="srow${sel === g.id ? ' sel' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="side" ><span class="n">${esc(g.title)}</span></a>`;
 const filterHref = q => (PATH_MODE ? '/' : '#/') + '?' + q;
 const SHELVES = [
