@@ -34,7 +34,7 @@ function fvToggle(id) {
       if (FV.uid !== uid) return;
       FV.ids = on ? FV.ids.filter(x => x !== id) : [id, ...FV.ids.filter(x => x !== id)];
       fvStore(); fvPaint();
-      toast(auT('Could not save your favourite. Check your connection and try again.'));
+      toast(auT('Could not save your favourite.'));
     }
   });
 }
@@ -137,7 +137,7 @@ function sfPaint() {
   try { hid = localStorage.getItem(SF_HIDE) || ''; } catch (e) {}
   const lv = d.banner_level === 'warning' ? 'warning' : 'info', showB = !!txt && hid !== syHash(txt), showM = !!d.maintenance && adm;
   const top = showB && lv === 'info', mid = showB && lv === 'warning';
-  bar.innerHTML = (showM ? `<div class="sfb sfb-adm">${SF_ICO.tool}<span>${esc(auT('Maintenance mode is on. Players see the maintenance page.'))}</span><button class="btn2" type="button" data-adgo="site">${esc(auT('Site switches'))}</button></div>` : '') + (top ? `<div class="sfb sfb-info" role="status">${SF_ICO.info}<span translate="no">${esc(txt)}</span><button class="x" type="button" data-sfhide aria-label="${esc(auT('Hide announcement'))}">${SF_ICO.x}</button></div>` : '');
+  bar.innerHTML = (showM ? `<div class="sfb sfb-adm">${SF_ICO.tool}<span>${esc(auT('Maintenance mode is on.'))}</span><button class="btn2" type="button" data-adgo="site">${esc(auT('Site switches'))}</button></div>` : '') + (top ? `<div class="sfb sfb-info" role="status">${SF_ICO.info}<span translate="no">${esc(txt)}</span><button class="x" type="button" data-sfhide aria-label="${esc(auT('Hide announcement'))}">${SF_ICO.x}</button></div>` : '');
   bar.hidden = !top && !showM;
   let al = $('#sfalert');
   if (mid) {

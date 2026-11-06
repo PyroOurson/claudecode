@@ -69,6 +69,21 @@ const NET_CSS = `.g-lobby{position:absolute;inset:0;z-index:200;display:flex;ove
 .g-lobby .gl-bots:empty{display:none}
 .g-lobby .gl-pubsw{padding-top:10px}
 .g-lobby .gl-publ:empty{display:none}
+.g-lobby .gl-pkb{display:flex;flex-direction:column;gap:28px}
+.g-lobby .gl-pkr{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.g-lobby .gl-pkc{display:flex;flex-direction:column;align-items:center;gap:8px;padding:30px 20px;border-radius:24px;background:var(--gl-band);border:2px solid var(--gl-line);transition:transform .15s,border-color .15s,background .15s}
+.g-lobby .gl-pkc:hover{transform:translateY(-3px);border-color:var(--gl-accent);background:var(--gl-accent-soft)}
+.g-lobby .gl-pkc b{font-size:24px;font-weight:800;color:var(--gl-fg)}
+.g-lobby .gl-pkc small{font-size:15px;color:var(--gl-muted)}
+.g-lobby .gl-pki{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;background:var(--gl-accent);color:var(--gl-accent-ink)}
+.g-lobby .gl-pki svg{width:30px;height:30px;stroke-width:2}
+.g-lobby .gl-pkl h2{margin:0 0 12px;font-size:20px;font-weight:700;color:var(--gl-fg)}
+.g-lobby.gl-stack .gl-body.gl-pkb{display:flex;padding:16px;order:1}
+.g-lobby.gl-stack .gl-pkr{grid-template-columns:1fr}
+.g-lobby.gl-stack .gl-pkc{padding:18px;flex-direction:row;justify-content:flex-start;gap:14px;text-align:left}
+.g-lobby.gl-stack .gl-pki{width:48px;height:48px;border-radius:14px}
+.g-lobby.gl-stack .gl-pkc small{display:none}
+.g-lobby.gl-stack .gl-pkc b{font-size:22px}
 .g-lobby .gl-publ{flex:none;padding-top:14px}
 .g-lobby .gl-publh{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--gl-muted)}
 .g-lobby .gl-publw{display:flex;flex-wrap:wrap;gap:8px}
@@ -197,6 +212,7 @@ const NET_I = {
   back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
   down: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
   plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
   globe: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
   pen: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></svg>',
   bot: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4M9 13v1M15 13v1M9.5 17h5"/><circle cx="12" cy="3.5" r=".5"/></svg>'
@@ -261,10 +277,10 @@ const NET_SOFT = ['network', 'server-error', 'socket-error', 'socket-closed', 'l
 const netWhy = (e, code) => {
   const t = e && e.type;
   if (t === 'peer-unavailable') return code ? netT('Party {code} not found. Check the code and try again.').replace('{code}', code) : netT('Party not found. Check the code and try again.');
-  if (t === 'ice') return netT('Could not connect to the other player. A school, office or mobile network may be blocking game connections. Try again, or switch networks (for example Wi-Fi instead of mobile data).');
+  if (t === 'ice') return netT('Could not connect to the other player. Try another network.');
   if (t === 'timeout') return netT('The other player did not answer. Try again.');
-  if (t === 'load') return netT('Could not load the online player. Check your internet connection and try again.');
-  if (NET_SOFT.indexOf(t) >= 0) return netT('Can’t reach the online server right now (it may be busy or blocked on this network). Try again in a moment.');
+  if (t === 'load') return netT('Could not load online play. Try again.');
+  if (NET_SOFT.indexOf(t) >= 0) return netT('Can’t reach the online server. Try again.');
   return netT(netErr(e));
 };
 const netTe = new TextEncoder();
@@ -993,8 +1009,11 @@ function makeNet(g, add) {
       const show = s => {
         screen = s; note = null; cache = {}; editing = false;
         if (s === 'lobby') {
-          el.innerHTML = `<div class="gl-card gl-lob" tabindex="-1">${head('Leave', true)}<div class="gl-body"><section class="gl-sec gl-plsec" aria-label="${T('Players')}"><div class="gl-sec-h"><h2>${T('Players')}</h2><span class="gl-cnt"></span></div><ul class="gl-players"></ul><div class="gl-bots"></div><div class="gl-bots gl-pubsw"></div><div class="gl-publ"></div></section><div class="gl-rule"></div><section class="gl-sec gl-chat" aria-label="${T('Live chat')}"><div class="gl-sec-h"><h2>${T('Live chat')}</h2><span class="gl-pill gl-live">${T('Live')}</span></div><div class="gl-msgs" role="log" aria-live="polite"></div><form class="gl-send" autocomplete="off"><input class="gl-chat-in" maxlength="200" placeholder="${T('Type a message...')}" autocomplete="off" enterkeyhint="send" aria-label="${T('Message')}"><button class="gl-go" type="submit" aria-label="${T('Send')}">${NET_I.send}</button></form></section></div><footer class="gl-foot">${joinForm()}<div class="gl-act"></div><p class="gl-hint" role="status"></p></footer></div>`;
+          el.innerHTML = `<div class="gl-card gl-lob" tabindex="-1">${head('Leave', true)}<div class="gl-body"><section class="gl-sec gl-plsec" aria-label="${T('Players')}"><div class="gl-sec-h"><h2>${T('Players')}</h2><span class="gl-cnt"></span></div><ul class="gl-players"></ul><div class="gl-bots"></div><div class="gl-bots gl-pubsw"></div></section><div class="gl-rule"></div><section class="gl-sec gl-chat" aria-label="${T('Live chat')}"><div class="gl-sec-h"><h2>${T('Live chat')}</h2><span class="gl-pill gl-live">${T('Live')}</span></div><div class="gl-msgs" role="log" aria-live="polite"></div><form class="gl-send" autocomplete="off"><input class="gl-chat-in" maxlength="200" placeholder="${T('Type a message...')}" autocomplete="off" enterkeyhint="send" aria-label="${T('Message')}"><button class="gl-go" type="submit" aria-label="${T('Send')}">${NET_I.send}</button></form></section></div><footer class="gl-foot">${joinForm()}<div class="gl-act"></div><p class="gl-hint" role="status"></p></footer></div>`;
           ui.update(); ui.chat(true);
+        } else if (s === 'pick') {
+          el.innerHTML = `<div class="gl-card gl-pk" tabindex="-1">${head('Leave')}<div class="gl-body gl-pkb"><div class="gl-pkr"><button class="gl-pkc" type="button" data-n="mkpriv"><span class="gl-pki">${NET_I.lock}</span><b>${T('Private party')}</b><small>${T('Invite only')}</small></button><button class="gl-pkc" type="button" data-n="mkpub"><span class="gl-pki">${NET_I.globe}</span><b>${T('Public party')}</b><small>${T('Anyone can join')}</small></button></div><div class="gl-pkl"></div></div><footer class="gl-foot">${joinForm()}<div class="gl-act"></div><p class="gl-hint" role="status"></p></footer></div>`;
+          ui.pick();
         } else if (s === 'ended') {
           el.innerHTML = `<div class="gl-card" tabindex="-1">${head('Close')}<div class="gl-body"><div class="gl-center"><p class="gl-msg">${netEsc(ui.endMsg[0])}</p><p class="gl-txt">${netEsc(ui.endMsg[1])}</p></div></div><footer class="gl-foot">${joinForm()}<div class="gl-act"><button class="gl-play" type="button" data-n="new">${NET_I.plus}${T('New party')}</button></div><p class="gl-hint"></p></footer></div>`;
         }
@@ -1003,6 +1022,11 @@ function makeNet(g, add) {
         if (!el.contains(document.activeElement)) { try { c.focus({ preventScroll: true }); } catch (e) {} }
       };
       ui.finish = finish;
+      ui.pick = () => {
+        if (done || screen !== 'pick') return;
+        const L = typeof window.gpPubList === 'function' ? window.gpPubList(g.id) : [];
+        put('pkl', '.gl-pkl', `<h2>${T('Public parties')}</h2>` + (L.length ? `<div class="gl-publw">${L.slice(0, 8).map(p => `<button type="button" class="gl-pubj" data-n="pubjoin" data-c="${netEsc(p.c)}"><span class="gl-pubn"><b>${netEsc(p.h || p.c)}</b><small>${netEsc(T('{n} / {m} joined').replace('{n}', p.n).replace('{m}', p.m))}${p.b ? ' · ' + T('In game') : ''}</small></span><i>${T('Join')}</i></button>`).join('')}</div>` : `<p class="gl-empty">${T('None right now')}</p>`));
+      };
       ui.update = () => {
         if (done || screen !== 'lobby') return;
         const jn = phase === 'joining' || (phase === 'error' && !!(again && again.code));
@@ -1023,8 +1047,6 @@ function makeNet(g, add) {
         put('bots', '.gl-bots', botsOk ? `<span class="gl-av" aria-hidden="true">${NET_I.bot}</span><div class="gl-who"><b><i>${T('Fill empty seats with bots')}</i></b><span>${T(!amLead ? (rm.bots ? 'On · set by the host' : 'Off · set by the host') : rm.bots ? 'Bots play the empty seats' : 'Only real players play')}</span></div><button class="gl-sw" type="button" role="switch" data-n="bots" aria-checked="${rm.bots}" aria-label="${T('Fill empty seats with bots')}"${amLead && !rm.busy && !rm.reconn ? '' : ' disabled'}></button>` : '');
         const canPub = !rm.compat && !jn;
         put('pubsw', '.gl-pubsw', canPub ? `<span class="gl-av" aria-hidden="true">${NET_I.globe}</span><div class="gl-who"><b><i>${T('Public party')}</i></b><span>${T(!amLead ? (rm.pub ? 'On · set by the host' : 'Off · set by the host') : rm.pub ? 'Anyone can join' : 'Invite only')}</span></div><button class="gl-sw" type="button" role="switch" data-n="pub" aria-checked="${rm.pub}" aria-label="${T('Public party')}"${amLead && !rm.reconn ? '' : ' disabled'}></button>` : '');
-        const pubs = typeof window.gpPubList === 'function' && !jn && (!on || (net.role === 'host' && L.length <= 1)) ? window.gpPubList(g.id).filter(p => p.c !== net.code) : [];
-        put('publ', '.gl-publ', pubs.length ? `<p class="gl-publh">${T('Public parties')}</p><div class="gl-publw">${pubs.slice(0, 6).map(p => `<button type="button" class="gl-pubj" data-n="pubjoin" data-c="${netEsc(p.c)}"><span class="gl-pubn"><b>${netEsc(p.h || p.c)}</b><small>${netEsc(T('{n} / {m} joined').replace('{n}', p.n).replace('{m}', p.m))}${p.b ? ' · ' + T('In game') : ''}</small></span><i>${T('Join')}</i></button>`).join('')}</div>` : '');
         const need = rm.bots ? 1 : on ? rm.min : cfg.min;
         let f, hint = '', bad = false;
         if (phase === 'creating') { f = `<div class="gl-wait" role="status">${T('Creating party…')}</div>`; hint = note0 || ''; }
@@ -1108,7 +1130,7 @@ function makeNet(g, add) {
           fail(t === 'room-full' ? T('Party {code} is full.').replace('{code}', code) : netWhy(e, code), canRetry(e) ? fn : Object.assign(() => joining(code), { code }));
         }
       };
-      const fresh = () => { rm.botsOk = !!o.bots && !rm.compat; rm.bots = false; rows = 0; hosting(); };
+      const fresh = () => { rm.botsOk = !!o.bots && !rm.compat; rm.bots = false; rows = 0; if (rm.compat) hosting(); else show('pick'); };
       const play = () => {
         if (done || screen !== 'lobby' || net.role !== 'host' || mode !== 'room' || rm.state === 'game') return;
         const players = hostPlayers().filter(p => !p.away);
@@ -1172,6 +1194,7 @@ function makeNet(g, add) {
         else if (n === 'bots') { if (ready()) leadAct('bots', null, !rm.bots); else { rm.bots = !rm.bots; ui.update(); } }
         else if (n === 'pub') { const v = !rm.pub; netLs('gameplay:pubparty', v ? '1' : null); if (ready()) leadAct('pub', null, v); else { rm.pub = v; ui.update(); } }
         else if (n === 'pubjoin') { const c = b.dataset.c; if (c) joining(c); }
+        else if (n === 'mkpriv' || n === 'mkpub') { rm.pub = n === 'mkpub'; netLs('gameplay:pubparty', rm.pub ? '1' : null); hosting(); }
         else if (n === 'invf') invOpen();
         else if (n === 'invx') invClose();
         else if (n === 'invcopy') shareLink();
@@ -1202,7 +1225,7 @@ function makeNet(g, add) {
         try { await P.invite(b.dataset.id); b.textContent = T('Invited'); b.classList.add('gl-done'); if (n) n.textContent = ''; }
         catch (e) { b.disabled = false; b.textContent = T('Invite'); if (n) n.textContent = P.err(e); }
       };
-      const onPub = () => { if (!done) ui.update(); };
+      const onPub = () => { if (!done) { ui.update(); ui.pick(); } };
       document.addEventListener('gp:pub', onPub);
       el.addEventListener('submit', e => {
         e.preventDefault();
@@ -1235,7 +1258,7 @@ function makeNet(g, add) {
         show('lobby');
       } else if (mode === 'room' && net.role === 'guest' && (rm.conn || rm.reconn)) { phase = 'ready'; show('lobby'); }
       else if (net.invite && !invite.host) joining(net.invite);
-      else { const ho = !!(invite && invite.host && invite.id === g.id); if (ho) invite = null; const ses = ho ? netSes() : null; hosting(ses && ses.g === g.id && ses.role === 'host' ? ses : undefined); }
+      else { const ho = !!(invite && invite.host && invite.id === g.id); if (ho) invite = null; const ses = ho ? netSes() : null; if (ho || rm.compat) { if (ho) rm.pub = false; hosting(ses && ses.g === g.id && ses.role === 'host' ? ses : undefined); } else show('pick'); }
       loadPeer().catch(() => {}); netIce();
     });
   };

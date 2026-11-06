@@ -990,7 +990,7 @@ async function ppLoad(force) {
     FR.ppAt = Date.now(); FR.ppTr = FR.pp.length >= 500;
   } catch (e) {
     if (sbMissing(e)) FR.ppMiss = true;
-    else if (!FR.pp) FR.ppErr = sbLimit(e) ? sbLimitText(e, 'too many searches') : auT('Could not load the player list. Check your connection and try again.');
+    else if (!FR.pp) FR.ppErr = sbLimit(e) ? sbLimitText(e, 'too many searches') : auT('Could not load the player list.');
   } finally { FR.ppBusy = false; }
   if (openK === 'friends') { frPh(); frDraw(); if (FR.ppMiss && FR.q.length >= 2) frSearch(); }
 }
@@ -1034,7 +1034,7 @@ function frDraw() {
   $('#g-fr').hidden = searching;
   $('#fr-n').textContent = fl.length;
   const fo = f => (soOn(f.friend_id) ? 2 : 0) + (DM.inbox.some(c => c.other_id === f.friend_id && c.unread) ? 1 : 0);
-  frFill($('#fr-l'), fl.slice().sort((a, b) => fo(b) - fo(a)).map(f => ['f' + f.friend_id + (FR.open === f.friend_id ? 'o' : ''), soFriendRow(f)]), FR.list ? `<div class="nofr">${esc(auT(pm || FR.ppBusy ? 'No friends yet. Add someone from the list below.' : 'No friends yet. Type a username above to find someone.'))}</div>` : SK_ROWS);
+  frFill($('#fr-l'), fl.slice().sort((a, b) => fo(b) - fo(a)).map(f => ['f' + f.friend_id + (FR.open === f.friend_id ? 'o' : ''), soFriendRow(f)]), FR.list ? `<div class="nofr">${esc(auT(pm || FR.ppBusy ? 'No friends yet.' : 'No friends yet.'))}</div>` : SK_ROWS);
   const pcf = $('#pcf'); if (pcf && FR.list) pcf.textContent = fl.length;
   let gb = $('#g-bl');
   if (!gb && $('#g-fr')) {
@@ -1059,7 +1059,7 @@ function frDraw() {
     if (pm) {
       const L = FR.pp.filter(p => !blHas(p.id)).sort(ppSort), cut = FR.ppAll ? L : L.slice(0, 60);
       $('#all-n').textContent = L.length + (FR.ppTr ? '+' : '');
-      frFill($('#all-l'), cut.map(p => ['a' + p.id + ppState(p)[0], ppRow(p, '')]).concat(L.length > cut.length ? [['more', `<button class="btn2 pp-more" type="button" data-fr="ppall">${esc(auT('Show all {n} players').replace('{n}', L.length))}</button>`]] : []), `<div class="nofr">${esc(auT('Nobody else has joined yet. Share gameplay with your friends!'))}</div>`);
+      frFill($('#all-l'), cut.map(p => ['a' + p.id + ppState(p)[0], ppRow(p, '')]).concat(L.length > cut.length ? [['more', `<button class="btn2 pp-more" type="button" data-fr="ppall">${esc(auT('Show all {n} players').replace('{n}', L.length))}</button>`]] : []), `<div class="nofr">${esc(auT('Nobody else yet.'))}</div>`);
     } else if (FR.ppErr) { $('#all-n').textContent = '–'; $('#all-l').innerHTML = `<div class="nofr">${esc(FR.ppErr)} <button class="au-link" type="button" data-fr="ppretry">${esc(auT('Reload'))}</button></div>`; }
     else if (!$('#all-l .sk-row')) $('#all-l').innerHTML = SK_ROWS;
   }
@@ -1151,7 +1151,7 @@ async function frAct(k, b) {
     } else if (k === 'block') {
       FR.bc = null; FR.open = null;
       await soBlock(id);
-      toast(auT('{u} is blocked. They can no longer message, invite or add you.').replace('{u}', name || auT('This player')));
+      toast(auT('{u} is blocked.').replace('{u}', name || auT('This player')));
       track('friend', { act: 'block' });
     } else if (k === 'unblock') {
       await soUnblock(id);

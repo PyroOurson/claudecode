@@ -530,7 +530,7 @@ function soList() {
   };
   const sec = (t, a) => a.length ? `<div class="so-sh">${esc(t)} — ${a.length}</div>` + a.map(row).join('') : '';
   let h = req ? `<button class="so-req" type="button" data-ch="find">${SO_ICO.add}<span>${esc(auT(req === 1 ? '1 friend request' : '{n} friend requests').replace('{n}', req))}</span></button>` : '';
-  if (!all.length) h += `<div class="so-empty">${SO_ICO.user}<b>${esc(auT('No friends yet'))}</b><span>${esc(auT('Add friends to chat and play together.'))}</span><button class="btn2 pri" type="button" data-ch="find">${esc(auT('Find friends'))}</button></div>`;
+  if (!all.length) h += `<div class="so-empty">${SO_ICO.user}<b>${esc(auT('No friends yet'))}</b><button class="btn2 pri" type="button" data-ch="find">${esc(auT('Find friends'))}</button></div>`;
   else if (!L.length) h += `<div class="so-empty"><span>${esc(auT('No friend matches “{q}”.').replace('{q}', q))}</span></div>`;
   else h += sec(auT('Online'), A) + sec(auT('Offline'), B);
   const f = document.activeElement && document.activeElement.closest && document.activeElement.closest('.so-fr'), fid = f && f.dataset.id;
@@ -598,7 +598,7 @@ function soHost(game, id) {
   if (SO.pend && SO.pend.game === game) SO.pend.ids.add(id); else SO.pend = { game, ids: new Set([id]) };
   SO.pend.t = Date.now();
   const here = cur && cur.g.id === game;
-  toast(auT('Starting a {g} party. Your invite goes out as soon as it is ready.').replace('{g}', soGameName(game)));
+  toast(auT('Starting a {g} party…').replace('{g}', soGameName(game)));
   if (!(here && cur.api && cur.api.online)) {
     invite = { id: game, code: null, host: true };
     soPick(false);
@@ -627,7 +627,7 @@ async function soPendTick() {
   if (away || Date.now() - P.t > 120000) {
     SO.pend = null; clearInterval(SO.pt);
     if (invite && invite.host) invite = null;
-    if (!away) toast(auT('The party did not start, so the invite was not sent. Try again.'));
+    if (!away) toast(auT('Invite not sent. Try again.'));
   }
 }
 async function soJoin(id) {
@@ -636,7 +636,7 @@ async function soJoin(id) {
   try { await soDm(id, 'join', { game: on.g }); }
   catch (e) { soSaid(id, soErr(e), 'bad'); return; }
   SO.want = { id, t: Date.now() };
-  soSaid(id, on.p ? auT('Asked {u} to let you in. You join as soon as they accept.').replace('{u}', soName(id)) : auT('Request sent. {u} gets a notification and can start a party for you.').replace('{u}', soName(id)), 'ok');
+  soSaid(id, on.p ? auT('Asked {u} to let you in.').replace('{u}', soName(id)) : auT('Request sent to {u}.').replace('{u}', soName(id)), 'ok');
 }
 function soPick(on) {
   const el = $('#chat');
@@ -798,7 +798,7 @@ async function dmAct(k, b) {
     if (!(SO.bc === uid && Date.now() - SO.bat < 4000)) { SO.bc = uid; SO.bat = Date.now(); dmHead(); setTimeout(() => { if (SO.bc === uid) { SO.bc = null; if (DM.open === uid) dmHead(); } }, 4100); return; }
     SO.bc = null; b.disabled = true;
     const nm = soName(uid);
-    try { await soBlock(uid); SO.more = false; toast(auT('{u} is blocked. They can no longer message, invite or add you.').replace('{u}', nm)); track('friend', { act: 'block' }); }
+    try { await soBlock(uid); SO.more = false; toast(auT('{u} is blocked.').replace('{u}', nm)); track('friend', { act: 'block' }); }
     catch (e) { b.disabled = false; soSaid(uid, sbLimit(e) ? sbLimitText(e, 'too many changes') : 'Could not update. Check your connection and try again.', 'bad'); }
     return;
   }

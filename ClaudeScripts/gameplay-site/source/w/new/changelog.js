@@ -1,6 +1,6 @@
 const CHANGELOG = [
   { v: 9, date: '2026-11-06', items: [
-    'Public parties: turn on Public party in any online game and anyone can join. Covers and the home page show open public parties.',
+    'Public parties: pick Private or Public when you start a party, and join open public parties from the same screen.',
     'Press + on an empty seat in a party to invite your friends.',
     'Locked accounts can now open a support ticket.',
     'Admins can now read chat messages to keep players safe. See the Privacy page.',

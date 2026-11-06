@@ -132,7 +132,7 @@
       <form method="dialog" class="adm-dlgf" id="adnewf" novalidate>
        <div class="adm-dlgh"><h3 id="adnewt">Create a user</h3><button class="x" type="button" data-adnewx aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
        <div class="adm-dlgb" id="adnewb">
-        <p class="adm-mut">The account is ready at once: no email check. Leave email or username empty to make one up.</p>
+        <p class="adm-mut">Leave email or username empty to make one up.</p>
         <label class="apc-l" for="anem">Email</label><input id="anem" type="email" maxlength="254" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="name@example.com">
         <label class="apc-l" for="anun">Username</label><input id="anun" maxlength="20" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="3 to 20 letters, numbers, dots or underscores">
         <label class="apc-l" for="andn">Display name</label><input id="andn" maxlength="32" autocomplete="off" spellcheck="false">
@@ -233,25 +233,25 @@
        <div class="srw"><div><b data-pname></b><small data-pun></small></div><button class="btn2" type="button" data-go="mprofile">Edit profile</button></div></div>
       <div class="scard" data-au="in" hidden><h4>Signed in</h4>
        <div class="srw"><div><b id="auwho"></b><small id="auvia"></small></div><button class="btn2" type="button" data-go="msignout">Sign out</button></div>
-       <div class="srw"><div><b>Sync</b><small id="ausync">Your records and saves are kept in your account.</small></div><button class="btn2" type="button" id="aunow">Sync now</button></div>
+       <div class="srw"><div><b>Sync</b></div><button class="btn2" type="button" id="aunow">Sync now</button></div>
       </div>
       <div class="scard" data-au="in" hidden><h4>Email and password</h4>
        <div class="stack">
         <div class="fld"><label for="auem2">Email address</label><div class="row"><input id="auem2" type="email" autocomplete="email" spellcheck="false" autocapitalize="off" inputmode="email"><button class="mini" type="button" id="auemsave">Change</button></div><div class="note" id="auemnote"></div></div>
         <div class="fld"><label for="aupw2" id="aupwl">New password</label><div class="row"><input id="aupw2" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters"><button class="mini" type="button" id="aupwsave">Save</button></div><div class="note" id="aupwnote"></div></div>
        </div></div>
-      <div class="scard" data-au="out" hidden><h4>Sign in</h4><p>Optional. Keep your profile, records and saves on every device.</p>
-       <div class="srw"><div><b>Google</b><small>Use your Google account.</small></div><button class="btn2" type="button" data-auth="google">Continue</button></div>
-       <div class="srw"><div><b>Email or username</b><small>Log in or create an account.</small></div><button class="btn2" type="button" data-go="mauth">Log in or sign up</button></div>
-       <div class="srw"><div><b>This device</b><small>Without an account your data stays in this browser.</small></div><span class="count">Current</span></div>
+      <div class="scard" data-au="out" hidden><h4>Sign in</h4><p>Keep your saves on every device.</p>
+       <div class="srw"><div><b>Google</b></div><button class="btn2" type="button" data-auth="google">Continue</button></div>
+       <div class="srw"><div><b>Email or username</b></div><button class="btn2" type="button" data-go="mauth">Log in or sign up</button></div>
+       <div class="srw"><div><b>This device</b></div><span class="count">Current</span></div>
       </div>
       <div class="scard" data-au="off"><h4>Sign in</h4><p>Accounts are not switched on yet. Soon you can keep your profile, records and saves on every device.</p>
-       <div class="srw"><div><b>Account</b><small>Log in or sign up with email, or with Google.</small></div><button class="btn2" type="button" data-go="mauth">Open</button></div>
-       <div class="srw"><div><b>This device</b><small>Your data is saved in this browser.</small></div><span class="count">Current</span></div>
+       <div class="srw"><div><b>Account</b></div><button class="btn2" type="button" data-go="mauth">Open</button></div>
+       <div class="srw"><div><b>This device</b></div><span class="count">Current</span></div>
       </div>
-      <div class="scard"><h4>Delete my data</h4><p>Removes your profile, records, saves and settings from this browser. Type DELETE to confirm.</p>
+      <div class="scard"><h4>Delete my data</h4><p>Clears this browser. Type DELETE to confirm.</p>
        <div class="stack"><div class="unrow"><input id="delc" placeholder="DELETE" autocomplete="off"><button class="btn2 danger" type="button" id="delbtn" disabled>Delete</button></div><div class="note" id="delnote"></div></div></div>
-      <div class="scard" data-au="in" hidden><h4>Delete my account</h4><p>Deletes your account, profile, records, saves and friends from our database. What is saved in this browser stays. Type DELETE to confirm.</p>
+      <div class="scard" data-au="in" hidden><h4>Delete my account</h4><p>Deletes your account and its data. Type DELETE to confirm.</p>
        <div class="stack"><div class="unrow"><input id="adelc" placeholder="DELETE" autocomplete="off" aria-label="Type DELETE to confirm"><button class="btn2 danger" type="button" id="adelbtn" disabled>Delete account</button></div><div class="note" id="adelnote"></div></div></div>
      </section>
 
@@ -269,25 +269,25 @@
       </div></section>
 
      <section class="pane" data-pane="notifications" hidden><h2>Notifications</h2>
-      <div class="scard"><h4>In the app</h4><p>Shown in the corner of the screen and in the bell menu.</p>
-       <div class="srw"><div><b>Messages</b><small>When a friend sends you a message or a picture.</small></div><button class="sw" type="button" role="switch" data-sw="n_msg" aria-label="Messages"></button></div>
-       <div class="srw"><div><b>Party invites</b><small>When a friend invites you to play or asks to join you.</small></div><button class="sw" type="button" role="switch" data-sw="n_inv" aria-label="Party invites"></button></div>
-       <div class="srw"><div><b>Friend requests</b><small>When someone adds you.</small></div><button class="sw" type="button" role="switch" data-sw="n_req" aria-label="Friend requests"></button></div>
-       <div class="srw"><div><b>Friends coming online</b><small>When a friend opens the site.</small></div><button class="sw" type="button" role="switch" data-sw="n_on" aria-label="Friends online"></button></div>
-       <div class="srw"><div><b>New games</b><small>When new games are added to the site.</small></div><button class="sw" type="button" role="switch" data-sw="n_game" aria-label="New games"></button></div>
+      <div class="scard"><h4>In the app</h4>
+       <div class="srw"><div><b>Messages</b></div><button class="sw" type="button" role="switch" data-sw="n_msg" aria-label="Messages"></button></div>
+       <div class="srw"><div><b>Party invites</b></div><button class="sw" type="button" role="switch" data-sw="n_inv" aria-label="Party invites"></button></div>
+       <div class="srw"><div><b>Friend requests</b></div><button class="sw" type="button" role="switch" data-sw="n_req" aria-label="Friend requests"></button></div>
+       <div class="srw"><div><b>Friends coming online</b></div><button class="sw" type="button" role="switch" data-sw="n_on" aria-label="Friends online"></button></div>
+       <div class="srw"><div><b>New games</b></div><button class="sw" type="button" role="switch" data-sw="n_game" aria-label="New games"></button></div>
       </div></section>
 
      <section class="pane" data-pane="privacy" hidden><h2>Privacy and data</h2>
       <div class="scard"><h4>Who can see and reach you</h4>
-       <div class="srw"><div><b>Online status</b><small>Your friends see a green dot when you are online.</small></div><select data-sel="p_status" aria-label="Online status"><option value="Friends">Friends</option><option value="Nobody">Nobody</option></select></div>
-       <div class="srw"><div><b>Show what I am playing</b><small>Friends see your current game.</small></div><button class="sw" type="button" role="switch" data-sw="p_game" aria-label="Show current game"></button></div>
-       <div class="srw"><div><b>Party invites from</b><small>Only friends can invite you. Choose Nobody to stop invite pop-ups.</small></div><select data-sel="p_inv" aria-label="Party invites from"><option value="Friends">Friends</option><option value="Nobody">Nobody</option></select></div>
+       <div class="srw"><div><b>Online status</b></div><select data-sel="p_status" aria-label="Online status"><option value="Friends">Friends</option><option value="Nobody">Nobody</option></select></div>
+       <div class="srw"><div><b>Show what I am playing</b></div><button class="sw" type="button" role="switch" data-sw="p_game" aria-label="Show current game"></button></div>
+       <div class="srw"><div><b>Party invites from</b><small>Only friends can invite you.</small></div><select data-sel="p_inv" aria-label="Party invites from"><option value="Friends">Friends</option><option value="Nobody">Nobody</option></select></div>
       </div>
       <div class="scard"><h4>Your data</h4>
-       <div class="srw"><div><b>Download my data</b><small>A file with your profile, records and settings.</small></div><button class="btn2" type="button" id="dl">Download</button></div>
-       <div class="srw"><div><b>Analytics cookies</b><small>Help us see which games people play.</small></div><button class="sw" type="button" role="switch" data-sw="analytics" aria-label="Analytics cookies"></button></div>
-       <div class="srw"><div><b>Cookie settings</b><small>Change what this site may store.</small></div><button class="btn2" type="button" data-cookieset>Open</button></div>
-       <div class="srw"><div><b>Reset my records</b><small>Clears best scores, play counts and saved games. This cannot be undone.</small></div><button class="btn2 danger" type="button" id="rr">Reset</button></div>
+       <div class="srw"><div><b>Download my data</b></div><button class="btn2" type="button" id="dl">Download</button></div>
+       <div class="srw"><div><b>Analytics cookies</b></div><button class="sw" type="button" role="switch" data-sw="analytics" aria-label="Analytics cookies"></button></div>
+       <div class="srw"><div><b>Cookie settings</b></div><button class="btn2" type="button" data-cookieset>Open</button></div>
+       <div class="srw"><div><b>Reset my records</b><small>Cannot be undone.</small></div><button class="btn2 danger" type="button" id="rr">Reset</button></div>
        <div class="note" id="datanote"></div></div></section>
 
      <section class="pane" data-pane="controls" hidden><h2>Controls and shortcuts</h2>
@@ -344,7 +344,7 @@
 </div>
 
 <div class="modal" id="sgmodal" hidden role="dialog" aria-modal="true" aria-label="Sign out">
- <div class="mc sm"><div class="mh"><h3>Sign out?</h3></div><div class="mb"><p class="mtext">You can sign back in any time. Your records stay saved.</p><div class="addrow end"><button class="btn2" type="button" data-close>Cancel</button><button class="btn2 pri" type="button" id="dosignout">Sign out</button></div></div></div>
+ <div class="mc sm"><div class="mh"><h3>Sign out?</h3></div><div class="mb"><p class="mtext">Your records stay saved.</p><div class="addrow end"><button class="btn2" type="button" data-close>Cancel</button><button class="btn2 pri" type="button" id="dosignout">Sign out</button></div></div></div>
 </div>
 
 <div class="modal full au-page" id="aumodal" hidden role="dialog" aria-modal="true" aria-labelledby="aut">
@@ -355,7 +355,7 @@
     <div class="au-card" id="aucard">
      <div class="au-off" id="auoff" hidden><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><div><b>Accounts are not switched on yet</b></div></div>
      <div class="au-v" data-auview="in">
-      <div class="au-hd"><h3 id="aut">Welcome back.</h3><p>Log in to keep your records and saves on every device.</p></div>
+      <div class="au-hd"><h3 id="aut">Welcome back.</h3><p>Keep your saves on every device.</p></div>
       <form class="au-f" id="auform" novalidate>
        <div class="fld"><label for="auemail">Email or username</label><input id="auemail" type="text" autocomplete="username" spellcheck="false" autocapitalize="off" placeholder="Enter your email or username"></div>
        <div class="fld"><div class="au-lrow"><label for="aupass">Password</label><button class="au-link" type="button" id="auforgot">Forgot password?</button></div><div class="au-pw"><input id="aupass" type="password" autocomplete="current-password" placeholder="Enter your password"></div></div>
@@ -367,7 +367,7 @@
       <p class="au-sw">Don't have an account? <button class="au-link" type="button" data-aumode="up">Sign up</button></p>
      </div>
      <div class="au-v" data-auview="up" hidden>
-      <div class="au-hd"><h3 id="aut2">Make it your game.</h3><p>Create an account to keep your records and saves on every device.</p></div>
+      <div class="au-hd"><h3 id="aut2">Make it your game.</h3><p>Keep your saves on every device.</p></div>
       <form class="au-f" id="auupform" novalidate>
        <div class="fld"><label for="auupemail">Email</label><input id="auupemail" type="email" autocomplete="email" inputmode="email" spellcheck="false" autocapitalize="off" placeholder="you@example.com"></div>
        <div class="fld"><label for="auupemail2">Confirm email</label><input id="auupemail2" type="email" autocomplete="email" inputmode="email" spellcheck="false" autocapitalize="off" placeholder="Enter your email again"></div>
@@ -391,7 +391,7 @@
       <p class="au-sw">No code? Check your spam folder, <button class="au-link" type="button" id="auresend"><span>Resend code</span></button> or <button class="au-link" type="button" id="auckback" data-auv="main">use a different email</button>.</p>
      </div>
      <div class="au-v" data-auview="reset" hidden>
-      <div class="au-hd"><h3>Reset your password</h3><p>Type the email of your account. We will send you a 6-digit code to choose a new password.</p></div>
+      <div class="au-hd"><h3>Reset your password</h3><p>We will email you a 6-digit code.</p></div>
       <form class="au-f" id="aurform" novalidate>
        <div class="fld"><label for="aremail">Email</label><input id="aremail" type="email" autocomplete="email" inputmode="email" spellcheck="false" autocapitalize="off" placeholder="you@example.com"></div>
        <div class="note" id="arnote" role="status"></div>
@@ -400,7 +400,7 @@
       <p class="au-sw"><button class="au-link" type="button" data-auv="main">Back to log in</button></p>
      </div>
      <div class="au-v" data-auview="newpass" hidden>
-      <div class="au-hd"><h3>Choose a new password</h3><p>Pick a password you do not use on other sites.</p></div>
+      <div class="au-hd"><h3>Choose a new password</h3></div>
       <form class="au-f" id="anform" novalidate>
        <input id="anuser" type="email" autocomplete="username" hidden>
        <div class="fld"><div class="au-lrow"><label for="anpass">New password</label><span class="au-reqs" data-for="anpass"></span></div><div class="au-pw"><input id="anpass" type="password" autocomplete="new-password" placeholder="Create a password"></div></div>
@@ -450,8 +450,8 @@
  <div class="mc sm">
   <div class="mh"><h3>Cookie settings</h3><button class="x" type="button" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="mb">
-   <div class="srw"><div><b>Essential</b><small>Your records, saves, settings and this choice. Always on.</small></div><span class="sw on dis" aria-hidden="true"></span></div>
-   <div class="srw"><div><b>Analytics</b><small>Anonymous counts of which games are played and for how long.</small></div><button class="sw" type="button" role="switch" id="ckan" aria-label="Analytics"></button></div>
+   <div class="srw"><div><b>Essential</b><small>Always on.</small></div><span class="sw on dis" aria-hidden="true"></span></div>
+   <div class="srw"><div><b>Analytics</b><small>Anonymous play counts.</small></div><button class="sw" type="button" role="switch" id="ckan" aria-label="Analytics"></button></div>
    <p class="mtext small"><a href="#/cookies" data-legal="cookies">Cookie Policy</a></p>
    <div class="addrow end"><button class="btn2" type="button" data-ck="reject">Only essentials</button><button class="btn2 pri" type="button" data-ck="save">Save</button></div>
   </div>
