@@ -222,9 +222,21 @@ function adTiles(an) {
 const adPw = u => u.has_password ? adPill('Set · hidden', 'ok') : adPill('None · Google only');
 const adHrs = sec => { const m = Math.round((+sec || 0) / 60); return m < 60 ? m + ' min' : (m / 60).toFixed(m < 600 ? 1 : 0) + ' h'; };
 const AD_CP = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+function adCopyFallback(t) {
+  const ta = document.createElement('textarea');
+  ta.value = t; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) {}
+  ta.remove();
+  return ok;
+}
 async function adCopyId(id, b) {
-  try { await navigator.clipboard.writeText(id); b.classList.add('ok'); b.title = auT('Copied'); setTimeout(() => { if (b.isConnected) { b.classList.remove('ok'); b.title = auT('Copy user id'); } }, 1400); }
-  catch (e) { toast(id); }
+  let ok = false;
+  try { await navigator.clipboard.writeText(id); ok = true; } catch (e) { ok = adCopyFallback(id); }
+  if (!ok) { toast(id); return; }
+  b.classList.add('ok'); b.title = auT('Copied'); toast(auT('Copied'));
+  setTimeout(() => { if (b.isConnected) { b.classList.remove('ok'); b.title = auT('Copy user id'); } }, 1400);
 }
 const adDot = () => `<span class="adm-dot" title="${esc(auT('Online now'))}"></span>`;
 const AD_COLS = [
@@ -513,7 +525,7 @@ async function adAct(k, b) {
 
 const AL = { list: [], more: false, busy: false, seq: 0, top: 0 };
 const alWho = (un, dn, id) => un ? '@' + un : dn || id || '';
-const AL_T = { role_owner: '{a} made {t} an owner', role_admin: '{a} made {t} an admin', role_user: '{a} made {t} a regular user', username: '{a} changed the username of {t} to {n}', lock_until: '{a} locked {t} until {d}', lock: '{a} locked {t} with no end date', unlock: '{a} unlocked {t}', expire: 'The lock on {t} ended', password: '{a} set a new password for {t}', reset_email: '{a} sent a password reset email to {t}', delete_user: '{a} deleted the account of {t}', ticket_delete: '{a} deleted a ticket from {t}', ticket_reply: '{a} replied to a ticket from {t}', ticket_closed: '{a} closed a ticket from {t}', ticket_open: '{a} reopened a ticket from {t}', site: '{a} changed the site switches', site_password: '{a} changed the site password', test_account: '{a} created the test account {t}', rate_reset: '{a} reset the rate limits of {t}', gate_open: '{a} turned the site password off: anyone who opens the site gets in', gate_closed: '{a} turned the site password back on' };
+const AL_T = { display_name: '{a} changed the display name of {t}', email: '{a} changed the email of {t}', sign_out: '{a} signed {t} out on every device', role_owner: '{a} made {t} an owner', role_admin: '{a} made {t} an admin', role_user: '{a} made {t} a regular user', username: '{a} changed the username of {t} to {n}', lock_until: '{a} locked {t} until {d}', lock: '{a} locked {t} with no end date', unlock: '{a} unlocked {t}', expire: 'The lock on {t} ended', password: '{a} set a new password for {t}', reset_email: '{a} sent a password reset email to {t}', delete_user: '{a} deleted the account of {t}', ticket_delete: '{a} deleted a ticket from {t}', ticket_reply: '{a} replied to a ticket from {t}', ticket_closed: '{a} closed a ticket from {t}', ticket_open: '{a} reopened a ticket from {t}', site: '{a} changed the site switches', site_password: '{a} changed the site password', test_account: '{a} created the test account {t}', rate_reset: '{a} reset the rate limits of {t}', gate_open: '{a} turned the site password off: anyone who opens the site gets in', gate_closed: '{a} turned the site password back on' };
 function alSite(d) {
   const a = d.after || {}, b = d.before || {}, out = [], ga = new Set(a.disabled_games || []), gb = new Set(b.disabled_games || []);
   if (!!a.maintenance !== !!b.maintenance) out.push(auT(a.maintenance ? 'Maintenance mode on' : 'Maintenance mode off'));
@@ -528,7 +540,7 @@ function alRow(x, i) {
   const a = alWho(x.admin_username, x.admin_display, x.admin_id) || auT('An admin'), t = alWho(x.target_username, x.target_display, null) || (d.username ? '@' + d.username : d.display_name) || (x.target_user ? auT('a deleted account') : '');
   const tt = x.target_user && (AD.users || []).some(u => u.id === x.target_user) ? `<button type="button" class="al-u" data-alu="${esc(x.target_user)}">${esc(t)}</button>` : `<b>${esc(t)}</b>`;
   const txt = esc(auT(AL_T[k] || '{a} did something ({x})')).replace('{a}', `<b>${esc(a)}</b>`).replace('{t}', tt).replace('{n}', `<b>@${esc(d.to || '')}</b>`).replace('{d}', esc(adDate(d.until, 1))).replace('{x}', esc(x.action));
-  const ex = x.action === 'lock' && d.reason ? auT('Reason: {r}').replace('{r}', d.reason) : /^ticket_/.test(x.action) && d.subject ? '“' + d.subject + '”' : x.action === 'site' ? alSite(d) : x.action === 'username' && d.from ? auT('Was @{u}').replace('{u}', d.from) : '';
+  const ex = x.action === 'lock' && d.reason ? auT('Reason: {r}').replace('{r}', d.reason) : /^ticket_/.test(x.action) && d.subject ? '“' + d.subject + '”' : x.action === 'site' ? alSite(d) : x.action === 'username' && d.from ? auT('Was @{u}').replace('{u}', d.from) : (x.action === 'display_name' || x.action === 'email') && d.from ? auT('Was {u}').replace('{u}', d.from) : '';
   const ic = { lock: AD_ICO.lock, unlock: AD_ICO.lock, expire: AD_SI.clock, delete_user: AD_ICO.trash, ticket_delete: AD_ICO.trash, site: SF_ICO.tool, site_password: AD_ICO.lock, gate_open: AD_ICO.lock, gate_closed: AD_ICO.lock, rate_reset: AD_SI.timer, ticket_reply: AD_ICO.send, ticket_status: AD_ICO.send, password: AD_SI.eye, reset_email: AD_SI.eye, role: AD_SI.star, username: AD_SI.users, test_account: AD_SI.users }[x.action] || AD_SI.clock;
   return `<div class="al-r al-${esc(x.action)}${AL.top && +x.id > AL.top ? ' nw' : ''}" data-k="al:${+x.id}" style="--i:${Math.min(i, 14)}"><span class="al-i">${ic}</span><div class="al-t"><span>${txt}</span>${ex ? `<em>${esc(ex)}</em>` : ''}<small title="${esc(adDate(x.at, 1))}">${esc(adAgo(x.at))} · ${esc(adDate(x.at, 1))}</small></div></div>`;
 }
@@ -670,7 +682,7 @@ async function sfgLoad() {
   sfgPaint();
 }
 async function sfgSet(open) {
-  if (SG.busy || (open && !LZ.key)) return;
+  if (!adIsOwner() || SG.busy || (open && !LZ.key)) return;
   SG.busy = true; SG.cf = false; SG.msg = null; SG.seq++; sfgPaint();
   try {
     const d = await adRpc('owner_set_gate_open', { p_open: open, p_key: open ? LZ.key : null });
@@ -682,6 +694,7 @@ async function sfgSet(open) {
   finally { SG.busy = false; sfgPaint(); }
 }
 async function sfpSave(b) {
+  if (!adIsOwner()) return;
   const a = $('#sfp1').value, c = $('#sfp2').value;
   if (a.length < 6) { auMsg('sfpn', 'Use at least 6 characters.', 'bad'); auShake($('#sfp1').closest('.au-pw')); return; }
   if (a !== c) { auMsg('sfpn', 'The two passwords do not match.', 'bad'); auShake($('#sfp2').closest('.au-pw')); return; }

@@ -1,6 +1,6 @@
 .adm{position:relative;max-width:1400px;margin:0 auto;padding:8px 0 28px;display:flex;flex-direction:column;gap:16px}
 .adm-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.adm-h h2{margin:0;flex:1;font-size:30px;font-weight:800;letter-spacing:-.02em;animation:tw .6s steps(22,end) .08s backwards}
+.adm-h h2{margin:0;flex:1;font-size:26px;font-weight:800;letter-spacing:-.02em;animation:tw .6s steps(22,end) .08s backwards}
 .adm-ref{gap:8px}
 .adm-ref svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .adm-ref.spin svg{animation:auSpin .8s linear infinite}
@@ -8,11 +8,11 @@
 .adm-tiles .tile{background:var(--surface);border:1px solid var(--line);animation:adTile .5s var(--ease) backwards;animation-delay:calc(var(--i,0) * 60ms)}
 .adm-tiles .tile b{font-variant-numeric:tabular-nums}
 @keyframes adTile{from{opacity:0;transform:translateY(10px) scale(.96)}}
-.adm-tabs{position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:min(640px,100%);padding:0;border-radius:14px;background:var(--surface-2);margin:8px 0 6px}
-.adm-tabs button{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px;border-radius:10px;font-weight:700;color:var(--muted);transition:color .2s}
+.adm-tabs{position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:min(640px,100%);padding:4px;border-radius:14px;background:var(--surface-2);margin:4px 0 2px}
+.adm-tabs button{position:relative;z-index:1;height:38px;font:inherit;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px;border-radius:10px;font-weight:700;color:var(--muted);transition:color .2s}
 .adm-tabs button[aria-selected="true"]{color:var(--fg)}
 .adm-tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-.adm-tabs i{position:absolute;left:0;bottom:-1px;height:2px;width:calc(100% / 5);border-radius:10px;background:var(--surface);transition:transform .32s var(--ease);box-shadow:var(--shadow-sm)}
+.adm-tabs i{position:absolute;top:4px;left:4px;bottom:4px;width:calc((100% - 8px) / 5);border-radius:10px;background:var(--surface);box-shadow:var(--shadow-sm);transition:transform .32s var(--ease)}
 .adm-tabs[data-m="tickets"] i{transform:translateX(100%)}
 .adm-tabs[data-m="stats"] i{transform:translateX(200%)}
 .adm-tabs[data-m="log"] i{transform:translateX(300%)}
@@ -35,9 +35,9 @@
 .apc textarea,.tk textarea{padding:10px 14px;resize:vertical;min-height:44px;line-height:1.45;width:100%}
 .apc input,.adm-dlg input,.adm-dlg select,.tk input{height:44px;width:100%}
 .adm select:focus,.apc textarea:focus,.apc input:focus,.adm-dlg input:focus,.adm-dlg select:focus,.tk input:focus,.tk textarea:focus{outline:2px solid var(--accent);border-color:transparent}
-.adm-tw{overflow-anchor:none;border:1px solid var(--line);border-radius:18px;background:var(--surface);box-shadow:var(--shadow-sm)}
+.adm-tw{overflow:auto;max-height:calc(100vh - 230px);max-height:calc(100dvh - 230px);overflow-anchor:none;border:1px solid var(--line);border-radius:18px;background:var(--surface);box-shadow:var(--shadow-sm);overscroll-behavior:contain}
 .adm-t{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:14px}
-.adm-t th{position:sticky;top:0;z-index:2;background:var(--surface-2);text-align:left;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap;border-bottom:1px solid var(--line)}
+.adm-t th{position:sticky;top:0;z-index:2;background:var(--surface-2);text-align:left;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap;border-bottom:1px solid var(--line)}
 .adm-t th>span,.adm-t th>button{display:flex;align-items:center;gap:6px;padding:11px 14px;font:inherit;font-weight:700;letter-spacing:inherit;text-transform:inherit;color:inherit;width:100%}
 .adm-t th>button:hover{color:var(--fg)}
 .adm-t th i{width:0;height:0;border:4px solid transparent;opacity:0;transition:opacity .15s,transform .2s var(--ease)}
@@ -59,7 +59,7 @@
 .adm code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border-radius:6px;padding:2px 6px}
 .adm-mut{color:var(--muted)}
 .adm-empty{padding:28px 16px;text-align:center;color:var(--muted);white-space:normal}
-.adm-pill{display:inline-flex;align-items:center;font-size:12px;font-weight:700;border-radius:99px;padding:2px 7px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.adm-pill{display:inline-flex;align-items:center;font-size:12px;font-weight:700;border-radius:99px;padding:3px 9px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
 .adm-pill.ok{background:rgba(34,176,125,.14);color:#168a60}
 .adm-pill.warn{background:rgba(232,155,20,.16);color:#a46600}
 .adm-pill.bad{background:rgba(217,58,74,.13);color:var(--danger)}
@@ -336,7 +336,7 @@ html.ad-locked body{overflow:hidden}
 .adb-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.01em;animation:adbIn .5s var(--ease) both}
 .adb-card{width:min(580px,100%);display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:34px 32px 26px;border-radius:28px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow),0 0 0 6px color-mix(in srgb,var(--surface) 40%,transparent);animation:adbIn .55s .05s var(--ease) both}
 .adb-ico{width:76px;height:76px;border-radius:24px;display:grid;place-items:center;background:color-mix(in srgb,var(--danger) 13%,transparent);color:var(--danger);margin-bottom:8px;box-shadow:0 0 0 8px color-mix(in srgb,var(--danger) 6%,transparent)}
-.adb-ico svg{animation:adbWig .9s .5s var(--ease) both;stroke:currentColor;fill:none}
+.adb-ico svg{width:36px;height:36px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;animation:adbWig .9s .5s var(--ease) both;transform-origin:50% 30%}
 .adb-card h3{margin:0;font-size:26px;line-height:1.2;font-weight:800;letter-spacing:-.02em;text-wrap:balance}
 .adb-sub{margin:0;color:var(--muted);font-size:15px;line-height:1.45}
 .adb-why{width:100%;box-sizing:border-box;text-align:left;margin-top:10px;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--danger) 7%,var(--surface-2));border:1px solid color-mix(in srgb,var(--danger) 24%,transparent);font-size:14.5px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -708,3 +708,4 @@ body:has(.menu:not([hidden])) .so-dl{display:none}
 .adm-tabs button{flex:1 0 auto;padding:0 12px;overflow:visible}
 .adm-tabs button[aria-selected="true"]{box-shadow:inset 0 -2px 0 var(--accent)}
 .adm-tabs i{display:none}}
+@media (max-width:760px){.adm-t th:first-child,.adm-t td:first-child{position:static}.adm-uid{font-size:11px}}

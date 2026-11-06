@@ -1,89 +1,108 @@
 # gamecreation.md: the gameplay studio standard
 
-Every game on gameplay, whether it already exists or is about to be created, is held to this standard. Read all of it before you touch a game. It applies to remakes of famous games, to classics (cards, board games, puzzles) and to original games alike. "Good enough for a browser game" is not the bar. The bar is: a player who opens it should believe a small professional studio made it.
+Read all of this before you touch a game. It applies to every game on gameplay. Most games on the site are recreations of famous games, and for those the bar is fidelity: **the game must be the real game, rebuilt for the browser**, not a game "inspired by" it. For classic games (cards, board games, puzzles) the bar is the official rules plus studio-quality presentation. For original games the bar is a polished, complete game.
 
-## 1. What a finished game has
+## 1. The fidelity bar for recreations
 
-A game is finished only when every item below is true.
+A player who knows the real game must:
+- recognise it within 5 seconds from the title screen and the first frame of play;
+- find every control on the key or gesture the real game uses;
+- see the HUD elements where the real game puts them, with the same information;
+- find the same modes, in the same menu structure, with the same names;
+- feel the same pacing: speeds, jump heights, timers, cooldowns, costs, damage and scores come from research, not from guesses;
+- meet the same characters, items, enemies, maps, levels and terms, with their real names;
+- get at least the content of the real game's first hour of play: its first levels, worlds, maps or tracks in order, its starting characters or units and the items they meet, and the full set when the real game's set is small (a few maps, one deck, one board).
 
-**First minute**
-- A title screen in the game's own art style (not a plain form): logo/title treatment, a clear primary button (Play), secondary buttons (Modes, How to play, Settings) and the player's best score.
-- How to play is shown the first time, in 3 to 5 short illustrated steps, and can be reopened. Controls are shown for the device in use (keyboard or touch).
-- The first 30 seconds teach by doing: the first level/round is easy and introduces one mechanic at a time.
+If any of these is not true, the game is not finished. The question to ask is: would a fan of the real game believe they are playing it?
 
-**Core loop**
-- Controls respond within one frame. Input buffering and coyote time for jumps. No input is ever swallowed.
-- Every action has feedback: a sound, an animation, and often a particle or screen effect (hit flash, squash and stretch, small camera kick that respects "reduce motion").
-- Difficulty ramps. Endless games speed up or add hazards on a curve; level games have a designed progression where each level adds one idea.
-- Failure is fair and readable: the player always understands why they lost.
+## 2. Research protocol (mandatory, before any code)
 
-**Depth and variety**
-- At least three ways to play where it fits the genre: modes (Classic, Timed, Endless, Daily), difficulties, board sizes, rule variants, track/map choice.
-- Computer opponents at several levels with genuinely different behaviour, not just slower reactions:
-  - Easy: makes understandable mistakes, never punishes hard.
-  - Normal: plays the basic strategy correctly.
-  - Hard: plans ahead (lookahead, card counting, positioning, combos).
-  - Expert where the genre allows (chess-like games, cards, racing): close to the best strategy you can implement in the time.
-- Content that lasts: enough levels, maps, tracks, words, questions, cards or enemy types that a player does not see repeats in a 15-minute session.
-- Progression that rewards coming back: best scores per mode, stars or medals, unlocks (skins, colours, tracks) earned by playing, simple stats (games played, win rate, best streak).
+1. **Use WebSearch and WebFetch.** Memory is not a source. Every fact in the dossier has a URL.
+2. **At least 6 sources**, of different kinds:
+   - the official site, store page or official rules;
+   - the main wiki (Fandom or the community wiki);
+   - a mechanics or numbers reference (wiki data pages, community spreadsheets, speedrun or competitive guides);
+   - a guide or walkthrough that describes the first minutes of play and the menus;
+   - for card and board games, the official rulebook or pagat.com;
+   - one more source to cross-check anything that two sources disagree on.
+3. **Write the dossier** `docs/research/<id>.md` (in C:\Users\gabri\Desktop\Documents\gameplaygames\docs\research\) with these sections:
+   - Sources (URL and what each was used for).
+   - Core rules and win/lose conditions.
+   - Controls (keyboard, mouse, touch, controller as the real game does them).
+   - Numbers: every speed, size, timer, cooldown, cost, damage, score value and probability you found, each with its source. Write "unknown" rather than inventing one.
+   - Modes and menus: the real menu tree and mode list.
+   - Content lists: maps or levels (with layouts and landmarks described), characters, items, enemies, power-ups, cards, with their real names and stats.
+   - Visual reference: camera angle and distance, proportions of the main character or object, colour palette (hex values from reference images), HUD layout (what is in each corner), signature effects.
+   - Audio reference: which events have sounds, the character of each sound, the music style.
+   - Multiplayer: player counts, lobby flow, what is shared.
+4. **Fidelity checklist** at the end of the dossier: 40 or more numbered items, each tagged **Must** (a fan would notice it is wrong or missing) or **Should**, each with a status after you play the current build: *matches*, *differs* (say how) or *missing*.
 
-**End of a run**
-- A real result screen: outcome, score, best, a few stats from the run (accuracy, time, combo), what was unlocked, and a one-key/one-tap restart (Space/Enter or a big button). Never a bare alert or a frozen frame.
+## 3. Order of work
 
-**Pause and settings**
-- Esc (and a visible button on touch) pauses offline games and shows Resume, Restart, Settings, How to play, Quit. Online games open the same menu without freezing other players.
-- Settings that matter for the game: sound and music volume, difficulty, controls, colour-blind friendly palette where colour carries meaning.
+1. Research and dossier (about 25% of your time).
+2. Play the current build with real input and fill in the checklist status.
+3. Fix in this order: things that are **wrong** (wrong rules, wrong numbers, wrong controls, wrong names) before things that are **missing**, and within each, what a player notices first: the first frame, the controls, the core loop, the HUD, the menus, then content and depth.
+4. Re-test after every change.
 
-## 2. Visual quality
+## 4. Undo earlier departures
 
-- **Art direction first.** Pick a coherent style for the game (flat vector, soft 3D, pixel art, paper, neon) and apply it to everything: background, characters, UI, fonts, particles. No mix of placeholder rectangles and detailed art.
-- **2D art** is drawn in code (Canvas or SVG) with care: shapes with highlights and shadows, outlines where the style uses them, gradients used with restraint, consistent light direction, hand-tuned colours (not raw #ff0000 primaries). Characters have personality: eyes, poses, idle animation.
-- **Cards and boards** look like real, well-made physical objects: card faces with proper pip layouts, court cards with drawn figures, a card back pattern, soft drop shadows, a felt or wood table with texture (noise, grain or weave drawn procedurally), dealing, flipping and sliding animations, chips and pieces with bevels.
-- **3D (three.js via api.gl)**: real models built from several primitives or custom geometry with bevels, not single boxes; materials with roughness and colour variation; procedural textures (canvas textures for asphalt, grass, wood, metal, fabric); proper lighting (hemisphere + directional with shadows where affordable), fog for depth, a sky; animated characters (walk/run/jump cycles), wheels that turn, suspension that moves; particles for dust, sparks, smoke and boost. Maps are designed spaces with landmarks, not empty planes.
-- **Animation**: everything that moves eases (no linear pops). UI elements enter and leave with short transitions. Score counters roll. Respect prefers-reduced-motion.
-- **Typography and UI inside games**: one display face for titles, one readable face for numbers and text, large clear HUD numbers, buttons that look pressable with hover/press states. Text never overlaps or overflows at 390 px wide.
-- **Resolution**: crisp on high-DPI screens (devicePixelRatio-aware canvas), correct in the normal frame, theater mode and fullscreen, and at phone size 390x844 in portrait.
+Earlier passes sometimes changed recreations away from the real game to be "original": renamed buildings, units, items or currencies, renamed the HUD labels or title, replaced real levels with invented ones, invented modes that the real game does not have. **Undo these.** Real names, real levels, real modes. Invented extras may stay only if the real ones are all present and the extra does not push them aside in the menus.
 
-## 3. Sound
+## 5. What is allowed and what is not
 
-- Generated with WebAudio (no files): distinct sounds for primary actions, success, failure, UI clicks, and a short win/lose sting. Optional light music loop where the genre has music.
-- Mixed sensibly: nothing harsh, nothing louder than the UI expects; respects the site mute switch.
+Allowed and expected, made by hand in code:
+- the real rules, mechanics, numbers, controls and menu structure;
+- the real names of the game, modes, characters, items, units, maps and levels;
+- maps and levels rebuilt from research (layouts, landmarks, proportions);
+- characters, vehicles and objects modelled in code (three.js geometry, canvas or SVG drawing) to match the real silhouettes, proportions and colours;
+- HUD and UI laid out like the real game, drawn in code, using system fonts or the fonts the site already loads, picked to look close to the real ones.
 
-## 4. Multiplayer
+Not allowed:
+- files copied from the game or its site: sprites, textures, models, sounds, music, fonts, logo images;
+- tracing official artwork pixel by pixel;
+- downloading anything at runtime from another site (fonts, images, scripts, data).
 
-- Games people play together have online play through api.net.room (see SRC\w\agents_net\API.md): lobby with party code, host can fill seats with bots, host-authoritative rules, hidden information never sent to players who should not see it, rejoin/refresh recovery, rematch and back to lobby. No same-screen two-player modes.
-- Solo against bots stays available for every multiplayer game.
+## 6. Quality bar for every game
 
-## 5. Performance and stability
+**First minute**: a title screen in the game's own style with a clear Play button, modes, how to play and settings; how to play shown the first time, with controls for the device in use; an easy first round.
 
-- 60 fps on an ordinary laptop, no frame spikes during play. Pool objects, avoid per-frame allocations, cap particles, dispose three.js geometry/materials/textures on unmount.
-- Zero console errors and warnings. No softlocks: every state has a way forward.
-- Works with keyboard, mouse and touch. Touch controls are designed (virtual stick/buttons or gestures), not an afterthought.
+**Core loop**: controls respond within one frame (input buffering, coyote time where the real game has it); feedback for every action (sound, animation, particles, screen effects that respect reduced motion); a difficulty curve; fair and readable failure.
 
-## 6. Remakes of famous games: what "accurate" means here
+**Depth**: all the real game's modes; computer opponents at several levels with genuinely different behaviour (easy makes understandable mistakes, normal plays the basic strategy, hard plans ahead, expert where the genre allows); enough content that a 15-minute session has no repeats.
 
-Many games on the site are named after famous games so friends can find them. For those:
-- **Match the gameplay**: rules, scoring, controls, game modes, pacing, physics feel, the structure of the menus. Get rules exactly right (official rules for classic card and board games).
-- **Do not copy protected content**: no ripped or traced models, sprites, textures, logos, characters, maps or level layouts, music or sound effects from the commercial game. Build original models, maps and art that capture the genre and the mood at the same quality level. An original arena, an original track, an original character design with the same role is the goal.
-- Classic public games (chess, poker, solitaire, mahjong, go, backgammon...) have no such limit beyond not copying another product's art.
+**End of a run**: a real result screen like the real game's, with one-key restart.
 
-## 7. Covers
+**Pause and settings**: Esc pauses offline games; sound volume and the settings the real game offers.
 
-Every game has a 960x600 WebP cover in SRC\w\covers2\<id>.webp in the site's one cover layout: blurred, darkened background art, a centred 420 px rounded square icon (radius 96) with a soft shadow, and the game name in white Montserrat 800 underneath.
+**Visuals**: one coherent art direction matching the real game; 3D with modelled objects (not single boxes), procedural textures, proper light, fog and sky; 2D drawn with care, devicePixelRatio-aware; eased animation; text never overflows at 390 px wide.
 
-- The cover is drawn art made for it, like the existing drawn covers: an icon that reads at thumbnail size (one bold subject, strong silhouette, two or three main colours, light from the top left, a glossy highlight), and a background that shows the game's world. Not a raw screenshot, not official artwork.
-- How: add one file SRC\w\agents2\covers\flat\art\g_<id>.js defining G['<id>'] = { icon() { ... 400x400 SVG content ... }, bg() { ... 960x600 SVG content ... } } with the helpers in flat\kit.js (r, c, e, p, d, sk, ln, t, lg/rg gradients, rep, pix, shade; look at a_core.js to e_batch.js for examples). Render with:
-  `set COVER_PNG=C:\tmp\<you>\png` then `node SRC\w\agents2\covers\flat\render.js <id>=<Game Name>` and encode with `set COVER_OUT=C:\tmp\<you>\webp` then `python SRC\w\agents2\covers\flat\enc.py <id>`; copy the WebP to SRC\w\covers2\<id>.webp (under 80 KB). Look at it next to three existing covers before you keep it.
+**Sound**: WebAudio-generated sounds for every primary event, mixed sensibly, respecting the site mute switch.
 
-## 8. Process for every game
+**Multiplayer**: games people play together have online play through api.net.room (see SRC\w\agents_net\API.md), host-authoritative, hidden information kept hidden, rematch; bots fill seats; solo vs bots always available.
 
-1. Read this file, the game's report in docs\playtest2\<id>.md and its soak folder C:\tmp\soak\out\<id>\.
-2. Play it for real (Playwright with real inputs, keyboard and touch) and write down what a demanding player would notice first.
-3. Plan the biggest quality jump you can deliver in your time: usually art and animation pass + feedback + difficulty/bot levels + one more mode or content set.
-4. Build it, re-test after every step (node syntax check, real run, screenshots you actually look at, zero console errors, 390x844 check).
-5. Make the cover.
-6. Update docs\playtest2\<id>.md with a "Studio pass" section: what changed, before/after screenshots paths, what is still missing.
+**Performance**: 60 fps on an ordinary laptop; no per-frame allocations in hot paths; dispose three.js resources on unmount; zero console errors and warnings; keyboard, mouse and touch all work.
 
-## 9. Self-review before handing in
+## 7. Classic and original games
 
-Answer honestly, 1 to 10: Would a player believe a studio made this? Is the first minute clear? Does every action feel good? Is there a reason to play a second and third time? Does it look right on a phone? Anything below 7 means keep working or say exactly why not in the report.
+The research protocol applies to classic games too: the official rulebook or pagat.com, and the best-known digital versions as the reference for presentation and bots. Use the official rules, including the common variants as options. Present them like a well-made physical game: real card faces and backs, felt or wood tables, pieces with bevels, dealing and moving animations. Bots: rule-correct at every level, with strategy that improves with the level.
+
+Original games (not named after a real game): research the two or three best-known games of the same genre and use them as the bar for feel, content and presentation, without copying them.
+
+## 8. Covers
+
+Recreations keep the real game's cover that the site uses. Do not replace it. Classic and original games use a drawn cover in the site's style (SRC\w\agents2\covers\flat\, see kit.js and existing art files), 960x600 WebP under 80 KB in SRC\w\covers2\.
+
+## 9. Verification and definition of done
+
+1. Go through the checklist item by item in the running game. Mark each one again.
+2. Score each area 0 to 10: rules, controls and physics, content, visuals, audio, menus and modes, multiplayer (or n/a).
+3. Done means: every Must item *matches*, every area scores 8 or more, zero console errors, works at 390x844 with touch, 60 fps. If something cannot be done in your time, the report says exactly what and why.
+4. Report: add a "Fidelity pass" section to docs\playtest2\<id>.md with the scores, what changed, the checklist items still open, and screenshot paths.
+
+## 10. Working in the codebase
+
+- Source: C:\Users\gabri\source\repos\claudecode\ClaudeScripts\gameplay-site\source (SRC). Each game lives in SRC\w\parts\NNN_g_<ids>.js; several games can share one file, and you only edit the part of the file that belongs to your game.
+- Generated games: Rocket League is built from SRC\rl\seg\*.js (`python -I tools/join.py lead all` in SRC\rl, then copy build\lead_all.js to w\parts\115_g_rocket-soccer.js); Minecraft from SRC\w\agents2\minecraft (mk.py); Subway Surfers from SRC\w\agents2\subway (build.py). Edit the sources and regenerate; never edit only the generated part.
+- Rules: no comments in code; keep each file's line endings as they are in git (CRLF files stay CRLF); plain JavaScript in the existing style; the game API is described in SRC\w\agents_net\API.md and in the existing games.
+- Touch only your game: its part (or generator sources), its research dossier and its report. Never edit the portal (SRC\w\new\*), other games, covers of recreations, the build scripts or the SQL. Do not add site features.
+- Test: `python SRC\t\pbuild.py C:\tmp\<you>\pb <id>` builds a test page; SRC\t\play.js has a Playwright harness (`open(html, id, opts)`) with Supabase faked; Playwright is at C:/tmp/pw/node_modules/playwright (use channel 'chrome'). Check `node --check` on the part (for Rocket League, on the joined file), play with real keyboard, mouse and touch input, look at the screenshots yourself, and check 390x844.

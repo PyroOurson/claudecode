@@ -243,4 +243,5 @@ html.rm .sk,html.rm .card .art::after,html.rm .g-loading.pg-sk,html.rm .au-wait 
 html.rm .au-card,html.rm #ckbar{animation:none}
 @media (prefers-reduced-motion:reduce){.sk,.card .art::after,.g-loading.pg-sk,.au-wait .pic,#aumodal.au-busy .au-f input{animation:none}
 .au-card,#ckbar,.au-ico,.au-err,#aumodal .note{animation:none}}
-
+.au-reqs.idle .au-req:not(.ok){border-color:var(--au-line);background:var(--au-card);color:var(--au-mute)}
+.au-reqs.idle .au-req:not(.ok) svg path{stroke:var(--au-card)}

@@ -564,6 +564,7 @@ const auPwOk = v => AU_REQ.every(r => r[1](v));
 function auReqs(inp) {
   const box = inp && document.querySelector('.au-reqs[data-for="' + inp.id + '"]');
   if (!box) return;
+  box.classList.toggle('idle', !inp.value && !box.classList.contains('tried'));
   [...box.children].forEach((el, i) => { const ok = AU_REQ[i][1](inp.value), was = el.classList.contains('ok'); el.classList.toggle('ok', ok); el.classList.toggle('pop', ok && !was); });
 }
 function auUserCheck() {
@@ -615,7 +616,7 @@ async function auSignup() {
   if (!EMAIL_RE.test(id)) return auBad('auupemail', 'Enter a valid email address.');
   if (id.toLowerCase() !== id2.toLowerCase()) return auBad('auupemail2', 'The two email addresses do not match.');
   if (!UN_RE.test(un) || /^\.|\.$|\.\./.test(un)) return auBad('auuser', 'Choose a username: 3 to 20 lowercase letters, numbers, dots or underscores.');
-  if (!auPwOk(pw)) return auBad('auuppass', 'Use at least 8 characters with 1 letter and 1 number.');
+  if (!auPwOk(pw)) { const rb = document.querySelector('.au-reqs[data-for="auuppass"]'); if (rb) { rb.classList.add('tried'); rb.classList.remove('idle'); } return auBad('auuppass', 'Use at least 8 characters with 1 letter and 1 number.'); }
   auBusy(true);
   try {
     const c = await sbClient();
@@ -714,7 +715,7 @@ async function auNewPass() {
   if (!SB.on) return;
   const pw = $('#anpass').value;
   auMsg('annote', '');
-  if (!auPwOk(pw)) return auBad('anpass', 'Use at least 8 characters with 1 letter and 1 number.');
+  if (!auPwOk(pw)) { const rb = document.querySelector('.au-reqs[data-for="anpass"]'); if (rb) { rb.classList.add('tried'); rb.classList.remove('idle'); } return auBad('anpass', 'Use at least 8 characters with 1 letter and 1 number.'); }
   if (pw !== $('#anpass2').value) return auBad('anpass2', 'The two passwords are not the same.');
   auBusy(true);
   try {
