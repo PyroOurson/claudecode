@@ -736,7 +736,7 @@ async function auChangeEmail() {
   try {
     const { error } = await SB.c.auth.updateUser({ email }, { emailRedirectTo: sbRedirect('email') });
     if (error) throw error;
-    auMsg('auemnote', 'Check your inbox: open the link we sent to confirm the change. You may get a link at your old address too.', 'ok');
+    auMsg('auemnote', 'Check your inbox to confirm the change.', 'ok');
   } catch (e) { auMsg('auemnote', auErrText(e), 'bad'); }
   finally { b.disabled = false; b.classList.remove('is-busy'); }
 }
@@ -1271,5 +1271,6 @@ Ameplay.account = {
 };
 
 Ameplay.debug = { open: id => go(href(id), false), close: () => go(PATH_MODE ? '/' : '#/', false), games, fire: () => ov && ov.fire(), state, compute, q: t => { const o = state.q; state.q = t; const r = compute().list.map(g => g.id); state.q = o; return r; }, info: INFO, fit: () => fitStage(), pause: () => PAUSE.on };
+Ameplay.debug.t = { PUB, FR, cardPills, pubStrip, host: id => { invite = { id, code: null, host: true }; restartCurrent(); } };
 document.addEventListener('DOMContentLoaded', boot);
 })();

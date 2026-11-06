@@ -57,6 +57,7 @@
 
    <div class="shelves" id="shelves"></div>
 
+   <section class="pubs" id="pubs" hidden aria-labelledby="pubsh"><h2 id="pubsh">Public parties</h2><div class="pubs-l" id="pubsl"></div></section>
    <section id="all">
     <div class="row-head">
      <h2 id="title">All games</h2>
@@ -138,7 +139,7 @@
         <label class="apc-l" for="anpw">Password</label><div class="au-pw"><input id="anpw" type="password" maxlength="72" autocomplete="new-password" placeholder="At least 8 characters"></div>
         <label class="apc-l" for="anrl">Role</label><select id="anrl"><option value="user">User</option><option value="admin" data-owner hidden>Admin</option><option value="owner" data-owner hidden>Owner</option></select>
         <label class="apc-l" for="annt">Note (only admins see it)</label><input id="annt" maxlength="200" autocomplete="off">
-        <div class="note" id="annote" role="status"></div>
+        <div class="note" id="adnnote" role="status"></div>
        </div>
        <div class="adm-dlgb" id="adnewok" hidden></div>
        <div class="adm-dlgf2"><button class="btn2" type="button" data-adnewx id="adnewc">Cancel</button><button class="btn2 pri" type="submit" id="adnews">Create user</button></div>
@@ -154,6 +155,7 @@
       <div class="apc-grid">
        <div class="apc-col">
         <div class="apc-card"><h4>Games played</h4><div class="apc-games" id="adpg" translate="no"></div></div>
+        <div class="apc-card apc-chat"><h4>Messages</h4><div class="apc-seg" id="adcs" role="tablist"><button type="button" role="tab" data-adck="dm" aria-selected="true">Direct</button><button type="button" role="tab" data-adck="party" aria-selected="false">Party chat</button><button type="button" role="tab" data-adck="game" aria-selected="false">In-game</button></div><input class="apc-chatq" id="adcq" type="search" placeholder="Search these messages" aria-label="Search these messages" autocomplete="off"><div class="apc-chatl" id="adcl" translate="no"></div><div class="apc-chatb"><button class="btn2" type="button" id="adcm" hidden>Load older</button><button class="btn2" type="button" id="adcc">Copy all</button></div></div>
         <div class="apc-card"><h4>Devices and sessions</h4><div class="apc-devs" id="adpd"></div></div>
         <div class="apc-card"><h4>All details</h4><dl class="apc-dl" id="adpdl" translate="no"></dl></div>
         <div class="apc-card"><h4>History</h4><div class="al-list apc-hist" id="adph" translate="no"></div></div>
@@ -161,10 +163,10 @@
        <div class="apc-col">
         <div class="apc-card"><h4>Names and email</h4><label class="apc-l" for="adun">Username</label><div class="apc-row"><input id="adun" maxlength="20" autocomplete="off" spellcheck="false" autocapitalize="off" aria-label="Username"><button class="btn2 pri" type="button" id="adunb" data-adact="un">Save</button></div><div class="note" id="adunn" role="status"></div><label class="apc-l" for="addn">Display name</label><div class="apc-row"><input id="addn" maxlength="32" autocomplete="off" spellcheck="false" aria-label="Display name"><button class="btn2 pri" type="button" id="addnb" data-adact="dn">Save</button></div><div class="note" id="addnn" role="status"></div><label class="apc-l" for="adem">Email</label><div class="apc-row"><input id="adem" type="email" maxlength="254" autocomplete="off" spellcheck="false" autocapitalize="off" aria-label="Email"><button class="btn2 pri" type="button" id="ademb" data-adact="em">Save</button></div><div class="note" id="ademn" role="status"></div></div>
         <div class="apc-card"><h4>Role</h4><div class="apc-role"><button class="btn2" type="button" data-adact="role" data-adrole="user">User</button><button class="btn2" type="button" data-adact="role" data-adrole="admin">Admin</button><button class="btn2" type="button" data-adact="role" data-adrole="owner" data-owner hidden>Owner</button></div><div class="note" id="adprn" role="status"></div></div>
-        <div class="apc-card"><h4>Password</h4><div class="apc-saved" id="adpws" hidden></div><p id="adpwt">Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them.</p><button class="btn2" type="button" id="adrst" data-adact="reset">Send password reset email</button><div class="note" id="adrstn" role="status"></div><p>Or set a new password yourself:</p><div class="apc-row"><div class="au-pw"><input id="adpw" type="password" autocomplete="new-password" placeholder="New password, at least 8 characters" maxlength="72" aria-label="New password"></div><button class="btn2 pri" type="button" id="adpwb" data-adact="pw">Set new password</button></div><div class="note" id="adpwn" role="status"></div></div>
-        <div class="apc-card"><h4>Sessions</h4><p>Signs this account out on every device where it is logged in. They have to log in again.</p><button class="btn2" type="button" id="adso" data-adact="so">Sign out everywhere</button><div class="note" id="adson" role="status"></div></div>
+        <div class="apc-card"><h4>Password</h4><div class="apc-saved" id="adpws" hidden></div><p id="adpwt">Hidden.</p><button class="btn2" type="button" id="adrst" data-adact="reset">Send password reset email</button><div class="note" id="adrstn" role="status"></div><p>Or set a new password yourself:</p><div class="apc-row"><div class="au-pw"><input id="adpw" type="password" autocomplete="new-password" placeholder="New password, at least 8 characters" maxlength="72" aria-label="New password"></div><button class="btn2 pri" type="button" id="adpwb" data-adact="pw">Set new password</button></div><div class="note" id="adpwn" role="status"></div></div>
+        <div class="apc-card"><h4>Sessions</h4><button class="btn2" type="button" id="adso" data-adact="so">Sign out everywhere</button><div class="note" id="adson" role="status"></div></div>
         <div class="apc-card"><h4>Access</h4><p id="adlt" hidden></p><label class="apc-l" for="adld" id="adldl">How long</label><select id="adld"><option value="1">1 hour</option><option value="24">24 hours</option><option value="168">7 days</option><option value="720">30 days</option><option value="0" selected>Permanent</option></select><label class="apc-l" for="adlr" id="adlrl">Reason shown to the user (optional)</label><textarea id="adlr" maxlength="500" rows="2"></textarea><button class="btn2 danger" type="button" id="adlock" data-adact="lock">Lock account</button><div class="note" id="adln" role="status"></div></div>
-        <div class="apc-card apc-danger"><h4>Danger zone</h4><p>Deletes the account, profile, records, saves, friends and messages for good. This cannot be undone.</p><label class="apc-l" for="addel" id="addell">Type the username or email to confirm</label><div class="apc-row"><input id="addel" autocomplete="off" spellcheck="false" autocapitalize="off"><button class="btn2 danger" type="button" id="addelb" data-adact="del">Delete account forever</button></div><div class="note" id="addeln" role="status"></div></div>
+        <div class="apc-card apc-danger"><h4>Danger zone</h4><p>Deletes the account and all its data for good.</p><label class="apc-l" for="addel" id="addell">Type the username or email to confirm</label><div class="apc-row"><input id="addel" autocomplete="off" spellcheck="false" autocapitalize="off"><button class="btn2 danger" type="button" id="addelb" data-adact="del">Delete account forever</button></div><div class="note" id="addeln" role="status"></div></div>
        </div>
       </div>
      </section>
@@ -255,15 +257,15 @@
 
      <section class="pane" data-pane="appearance" hidden><h2>Appearance and language</h2>
       <div class="scard">
-       <div class="srw"><div><b>Theme</b><small>Auto follows your device.</small></div><span class="seg lg"><button type="button" data-t="light">Light</button><button type="button" data-t="dark">Dark</button><button type="button" data-t="system">Auto</button></span></div>
-       <div class="srw"><div><b>Language</b><small>Changes the text of the site right away.</small></div><select id="langsel" aria-label="Language"><option value="en" lang="en">English</option><option value="fr" lang="fr">Français</option><option value="es" lang="es">Español</option><option value="de" lang="de">Deutsch</option><option value="it" lang="it">Italiano</option><option value="pt" lang="pt">Português</option></select></div>
-       <div class="srw"><div><b>Reduce motion</b><small>Turn off hover movement and transitions.</small></div><button class="sw" type="button" role="switch" data-sw="motion" aria-label="Reduce motion"></button></div>
-       <div class="srw"><div><b>Show game thumbnails</b><small>Hide them to load the page faster.</small></div><button class="sw" type="button" role="switch" data-sw="thumbs" aria-label="Show game thumbnails"></button></div>
+       <div class="srw"><div><b>Theme</b></div><span class="seg lg"><button type="button" data-t="light">Light</button><button type="button" data-t="dark">Dark</button><button type="button" data-t="system">Auto</button></span></div>
+       <div class="srw"><div><b>Language</b></div><select id="langsel" aria-label="Language"><option value="en" lang="en">English</option><option value="fr" lang="fr">Français</option><option value="es" lang="es">Español</option><option value="de" lang="de">Deutsch</option><option value="it" lang="it">Italiano</option><option value="pt" lang="pt">Português</option></select></div>
+       <div class="srw"><div><b>Reduce motion</b></div><button class="sw" type="button" role="switch" data-sw="motion" aria-label="Reduce motion"></button></div>
+       <div class="srw"><div><b>Show game thumbnails</b></div><button class="sw" type="button" role="switch" data-sw="thumbs" aria-label="Show game thumbnails"></button></div>
       </div></section>
 
      <section class="pane" data-pane="sound" hidden><h2>Sound</h2>
       <div class="scard">
-       <div class="srw"><div><b>Sound effects</b><small>Clicks, wins and game sounds.</small></div><button class="sw" type="button" role="switch" data-sw="sound" aria-label="Sound effects"></button></div>
+       <div class="srw"><div><b>Sound effects</b></div><button class="sw" type="button" role="switch" data-sw="sound" aria-label="Sound effects"></button></div>
       </div></section>
 
      <section class="pane" data-pane="notifications" hidden><h2>Notifications</h2>
@@ -305,8 +307,8 @@
        <div class="srw"><div><b>Privacy Policy</b></div><a class="btn2" href="#/privacy" data-legal="privacy">Open</a></div>
        <div class="srw"><div><b>Cookie Policy</b></div><a class="btn2" href="#/cookies" data-legal="cookies">Open</a></div>
        <h4>Help</h4>
-       <div class="srw"><div><b>Contact support</b><small>Send us a message. Replies show up in Support.</small></div><button class="btn2" type="button" data-go="msupport">Write to us</button></div>
-       <div class="srw"><div><b>Report a bug or a player</b><small>Open a support ticket and tell us what happened.</small></div><button class="btn2" type="button" data-go="msupport">Report</button></div>
+       <div class="srw"><div><b>Contact support</b></div><button class="btn2" type="button" data-go="msupport">Write to us</button></div>
+       <div class="srw"><div><b>Report a bug or a player</b></div><button class="btn2" type="button" data-go="msupport">Report</button></div>
        <div class="srw"><div><b>About</b><small id="about"></small></div></div>
       </div></section>
     </div>
@@ -318,7 +320,7 @@
 <div class="modal full" id="tkmodal" hidden role="dialog" aria-modal="true" aria-label="Support">
  <div class="mc">
   <div class="mh"><button class="back" type="button" data-close><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back to games</button><h3>Support</h3><span class="mh-sp"></span></div>
-  <div class="mb tkpage"><p class="mtext">A question, a problem with your account or a game? Open a ticket and the admins will reply here.</p><div id="tks"></div></div>
+  <div class="mb tkpage"><div id="tks"></div></div>
  </div>
 </div>
 
@@ -333,7 +335,7 @@
    <div class="adb-why adb-til" id="adbu"><b>Lock ends</b><span id="adbut" translate="no"></span></div>
    <div class="adb-contact">
     <h4>Contact</h4>
-    <p>Think this is a mistake? Open a ticket to talk with the admins. Their replies show up here.</p>
+    <p>Think this is a mistake? Open a ticket.</p>
     <div id="tkb"></div>
    </div>
    <button class="btn2 adb-out" type="button" id="adbout"><svg viewBox="0 0 24 24"><path d="M9 21H5V3h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>

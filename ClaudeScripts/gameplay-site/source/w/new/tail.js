@@ -893,7 +893,7 @@ function openLegal(k) {
   closeGame();
   showView('legal');
   const d = LEGAL[k];
-  $('#doc').innerHTML = `<h1>${d[0]}</h1><p class="upd">${esc(auT('Last updated {d}').replace('{d}', new Date(2026, 9, 18).toLocaleDateString(window.gpI18n ? gpI18n.lang : 'en', { day: 'numeric', month: 'long', year: 'numeric' })))}</p>${d[1]}`;
+  $('#doc').innerHTML = `<h1>${d[0]}</h1><p class="upd">${esc(auT('Last updated {d}').replace('{d}', new Date(2026, 10, 6).toLocaleDateString(window.gpI18n ? gpI18n.lang : 'en', { day: 'numeric', month: 'long', year: 'numeric' })))}</p>${d[1]}`;
   document.querySelectorAll('.ltabs a').forEach(a => a.setAttribute('aria-current', a.dataset.legal === k ? 'page' : 'false'));
   setHead(d[0] + ' | gameplay', d[0] + ' for gameplay.', '/' + k);
   scrollTo({ top: 0, behavior: 'instant' });
@@ -1101,7 +1101,7 @@ function deleteData() {
   setTimeout(() => location.reload(), 600);
 }
 
-let fromPop = false, progNav = false, navFromHome = false;
+let fromPop = false, progNav = false, navFromHome = false, rndLast = null;
 function route() {
   const pop = fromPop; fromPop = false;
   const loc = parseLocation();
@@ -1267,7 +1267,7 @@ function boot() {
   $('#clear').addEventListener('click', e => { e.stopPropagation(); changeState(() => { FKEYS.forEach(k => state[k].clear()); state.sort = ''; }); track('filter_clear', {}); });
   $('#apply').addEventListener('click', e => { e.stopPropagation(); closeAll(); });
   $('#reset').addEventListener('click', () => { changeState(() => { resetState(); $('#q').value = ''; }); });
-  $('#rnd').addEventListener('click', () => { const L = (lastList.length ? lastList : games).filter(g => !sfOff(g.id)); if (!L.length) return; const g = L[Math.floor(Math.random() * L.length)]; clickSrc = 'random'; go(href(g.id), false); });
+  $('#rnd').addEventListener('click', () => { const A = (lastList.length ? lastList : games).filter(g => !sfOff(g.id)), recentIds = new Set((S.recent || []).slice(0, 3)), L = A.length > 4 ? A.filter(g => !recentIds.has(g.id) && g.id !== rndLast) : A; if (!L.length) return; const g = L[Math.floor(Math.random() * L.length)]; rndLast = g.id; clickSrc = 'random'; go(href(g.id), false); });
   $('#snav').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showPane(b.dataset.p); });
   showPane('account');
   document.querySelectorAll('.sech').forEach(b => b.addEventListener('click', () => { const g = $('#' + b.dataset.sec), c = g.classList.toggle('collapsed'); b.setAttribute('aria-expanded', String(!c)); }));

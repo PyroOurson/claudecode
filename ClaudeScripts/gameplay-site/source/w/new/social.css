@@ -326,3 +326,23 @@ html.rm .onl i::after,html.rm .adm-dot::after,html.rm .fr-dot.on::after{animatio
 .am-gamebox .nt[data-i="2"]{transform:translateY(-14px) scale(.9)}
 .am-gamebox .ntst.nt-open{display:flex;flex-direction:column-reverse;align-items:flex-end}
 .am-gamebox .ntst.nt-open>.nt{transform:none}}
+.pubpill{position:absolute;left:8px;top:8px;display:inline-flex;align-items:center;gap:6px;max-width:calc(100% - 16px);padding:3px 3px 3px 9px;border-radius:99px;background:var(--accent);color:#fff;font-size:11.5px;font-weight:700;z-index:3;cursor:pointer;box-shadow:0 4px 14px rgba(70,40,160,.35);white-space:nowrap;overflow:hidden;animation:pubIn .35s var(--ease,ease) both;transition:transform .15s}
+.pubpill:hover,.pubpill:focus-visible{transform:translateY(-1px) scale(1.03)}
+.pubpill i{width:7px;height:7px;border-radius:50%;background:#fff;flex:none;animation:pubDot 1.6s ease-in-out infinite}
+@keyframes pubDot{50%{opacity:.35}}
+.pubpill b{background:#fff;color:var(--accent);border-radius:99px;padding:2px 8px;font-size:11px;flex:none}
+@keyframes pubIn{from{opacity:0;transform:translateY(4px)}}
+@media (prefers-reduced-motion:reduce){.pubpill,.pubpill i{animation:none}}
+.art:has(.pubpill) .livepill{top:38px}
+.pubs{margin:0}
+.pubs h2{margin:0 0 10px;font-size:18px;font-weight:800;letter-spacing:-.01em}
+.pubs-l{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.pubc{display:flex;align-items:center;gap:10px;flex:none;padding:8px 8px 8px 8px;border-radius:16px;background:var(--surface);border:1px solid var(--line);text-decoration:none;color:inherit;transition:transform .15s,border-color .15s}
+.pubc:hover{transform:translateY(-2px);border-color:var(--accent)}
+.pubc-i{width:48px;height:30px;border-radius:8px;overflow:hidden;flex:none;display:grid;place-items:center;color:#fff;font-weight:800}
+.pubc-i img{width:100%;height:100%;object-fit:cover}
+.pubc-t{display:flex;flex-direction:column;min-width:0;max-width:160px}
+.pubc-t b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pubc-t small{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pubc i{font-style:normal;font-weight:700;font-size:13px;color:#fff;background:var(--accent);border-radius:10px;padding:6px 11px}
+.srow.haspub::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:auto;flex:none;box-shadow:0 0 0 3px var(--accent-soft)}

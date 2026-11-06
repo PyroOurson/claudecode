@@ -141,7 +141,8 @@ function adBlock(on) {
     if (view !== 'home' || cur || pend) go(homeHref(), true);
     $('#adbrt').textContent = AD.reason || '';
     $('#adbr').hidden = !AD.reason;
-    if (el.hidden) { el.hidden = false; const b = tkBox($('#tkb'), 'user'); tkLoad(b); }
+    el.hidden = false;
+    const b = tkBox($('#tkb'), 'user'); if (!b._tk.list) tkLoad(b);
   } else el.hidden = true;
 }
 
@@ -213,12 +214,25 @@ function adLive(force) {
 function adTiles(an) {
   const U = AD.users || [], now = Date.now(), tk = ($('#tka')._tk || {}).list || [];
   const open = tk.filter(t => t.status === 'open').length;
-  const T = [['Accounts', U.length], ['New this week', U.filter(u => now - Date.parse(u.created_at) < 6048e5).length], ['Active today', U.filter(u => RT.pres[u.id] || now - Date.parse(u.last_seen || 0) < 864e5).length], ['Admins', U.filter(adStaff).length], ['Locked', U.filter(u => u.locked).length], ['Open tickets', open]];
+  const T = [['Accounts', U.length, 'all', 'users'], ['New this week', U.filter(u => now - Date.parse(u.created_at) < 6048e5).length, 'new', 'cake'], ['Active today', U.filter(u => RT.pres[u.id] || now - Date.parse(u.last_seen || 0) < 864e5).length, 'today', 'eye'], ['Admins', U.filter(adStaff).length, 'admin', 'star'], ['Locked', U.filter(u => u.locked).length, 'locked', 'lock'], ['Open tickets', open, 'tickets', 'chat']];
   const box = $('#adtiles'), old = box.querySelectorAll('b[data-n]');
   if (!an && old.length === T.length) T.forEach(([, n], i) => { if (old[i].dataset.n !== String(n)) { old[i].dataset.n = n; old[i].textContent = stN(n); } });
-  else { box.innerHTML = T.map(([k, n], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b data-n="${n}" data-f="l">${stN(n)}</b></div>`).join(''); countUp(box); }
+  else { box.innerHTML = T.map(([k, n, f, ic], i) => `<button type="button" class="tile" data-adtile="${f}" style="--i:${i}" title="${esc(auT(f === 'tickets' ? 'Open the tickets' : 'Show these players'))}"><span class="tile-ic" aria-hidden="true">${AD_TI[ic]}</span><small>${esc(auT(k))}</small><b data-n="${n}" data-f="l">${stN(n)}</b></button>`).join(''); countUp(box); }
+  box.querySelectorAll('.tile').forEach((t, i) => t.classList.toggle('hot', (T[i][2] === 'locked' || T[i][2] === 'tickets') && T[i][1] > 0));
   const tn = $('#adtn'); tn.textContent = open || ''; tn.hidden = !open;
 }
+const AD_TI = { users: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg>', cake: '<svg viewBox="0 0 24 24"><path d="M12 3v4M4 21h16v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2zM4 16c2 1.3 4 1.3 5.3 0 1.4-1.3 3.4-1.3 5.4 0 1.3 1.3 3.3 1.3 5.3 0"/></svg>', eye: '<svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>', star: '<svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/></svg>', lock: '<svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>', chat: '<svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg>' };
+function adTileGo(f) {
+  if (f === 'tickets') { adTab('tickets'); return; }
+  const sel = $('#adf'), map = { all: 'all', new: 'all', today: 'active', admin: 'admin', locked: 'locked' }, v = map[f] || 'all';
+  AD.f = v; if (sel) sel.value = v;
+  if (f === 'new') AD.sort = ['created_at', -1];
+  if (f === 'today') AD.sort = ['last_seen', -1];
+  if (AD.tab !== 'users') adTab('users');
+  adDraw(true);
+  const tw = $('#adusers .adm-tw'); if (tw) { tw.scrollTop = 0; tw.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'nearest' }); }
+}
+document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-adtile]'); if (t && t.closest('#adtiles')) adTileGo(t.dataset.adtile); });
 const adPw = u => u.has_password ? adPill('Set · hidden', 'ok') : adPill('None · Google only');
 const adHrs = sec => { const m = Math.round((+sec || 0) / 60); return m < 60 ? m + ' min' : (m / 60).toFixed(m < 600 ? 1 : 0) + ' h'; };
 const AD_CP = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
@@ -240,10 +254,8 @@ async function adCopyId(id, b) {
 }
 const adDot = () => `<span class="adm-dot" title="${esc(auT('Online now'))}"></span>`;
 const AD_COLS = [
-  ['id', 'User id', u => `${adDot(u)}<code class="adm-uid">${esc(u.id)}</code><button type="button" class="adm-cp" data-adcopy="${esc(u.id)}" aria-label="${esc(auT('Copy user id'))}" title="${esc(auT('Copy user id'))}">${AD_CP}</button>`],
+  ['id', 'Player', u => { const n = u.display_name || u.username || u.email || '?'; return `<span class="adm-who"><span class="adm-av" aria-hidden="true">${esc(n.charAt(0).toUpperCase())}${adDot(u)}</span><span class="adm-wn"><b>${esc(n)}</b><small>${u.username ? '@' + esc(u.username) : esc(auT('No username'))}</small></span></span>`; }],
   ['email', 'Email', u => esc(u.email || '—')],
-  ['username', 'Username', u => u.username ? '@' + esc(u.username) : '<span class="adm-mut">—</span>'],
-  ['display_name', 'Display name', u => esc(u.display_name || '—')],
   ['last_sign_in_at', 'Last log in', u => `<span title="${esc(adDate(u.last_sign_in_at, 1))}">${esc(adAgo(u.last_sign_in_at))}</span>`],
   ['last_seen', 'Last used website', u => `<span class="ls-on">${adPill('Online now', 'ok')}</span><span class="ls-off" title="${esc(adDate(u.last_seen, 1))}">${esc(adAgo(u.last_seen))}</span>`],
   ['providers', 'Log in method', u => esc(adProv(u))],
@@ -259,7 +271,7 @@ function adHead() {
   adMorph($('#adt thead'), '<tr>' + AD_COLS.map(([k, l]) => k ? `<th>${k === 'id' ? '<div class="adm-thw">' : ''}<button type="button" data-adsort="${k}" aria-sort="${AD.sort[0] === k ? (AD.sort[1] > 0 ? 'ascending' : 'descending') : 'none'}">${esc(auT(l))}<i></i></button>${k === 'id' ? `<button type="button" class="adm-plus" data-adnew aria-label="${esc(auT('Create a user'))}" title="${esc(auT('Create a user'))}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>` : ''}</th>` : `<th><span>${esc(auT(l))}</span></th>`).join('') + '</tr>');
 }
 function adSortVal(u, k) {
-  const v = k === 'providers' ? adProv(u) : u[k];
+  const v = k === 'providers' ? adProv(u) : k === 'id' ? u.display_name || u.username || u.email : u[k];
   if (k === 'last_seen' && RT.pres[u.id]) return Date.now() + 1;
   if (/_at$|last_seen/.test(k)) return Date.parse(v) || 0;
   if (typeof v === 'boolean') return v ? 1 : 0;
@@ -357,7 +369,7 @@ function adPanel(u, keep) {
   ['adpwb', 'adrst', 'adunb', 'addelb', 'adso', 'ademb'].forEach(id => adUnconfirm($('#' + id)));
   taSaved(u);
   $('#adrst').disabled = !u.email;
-  $('#adpwt').textContent = auT(u.has_password ? 'Hidden (hashed). Passwords are stored as one-way hashes, so nobody can see them.' : 'This account has no password: it signs in with Google.');
+  $('#adpwt').textContent = auT(u.has_password ? 'Hidden.' : 'No password (Google sign-in).');
   $('#addelb').disabled = !!me || adStaff(u);
   if (!keep) {
     ['adprn', 'adpwn', 'adln', 'adrstn', 'adunn', 'addnn', 'ademn', 'adson', 'addeln'].forEach(id => auMsg(id, ''));
@@ -369,6 +381,7 @@ function adPanel(u, keep) {
     adGames(u);
     adDevices(u);
     alHist(u);
+    achLoad(u);
     const was = p.hidden;
     vis(p, true);
     p.classList.remove('swap'); void p.offsetWidth; if (!was) p.classList.add('swap');
@@ -513,7 +526,7 @@ async function adAct(k, b) {
     try {
       if (on) await adRpc('admin_lock_until', { p_uid: u.id, p_reason: $('#adlr').value, p_until: until }); else await adRpc('admin_lock', { p_uid: u.id, p_locked: false, p_reason: null });
       u.locked = on; u.locked_until = until; u.locked_reason = on ? (String($('#adlr').value).replace(/\s+/g, ' ').trim().slice(0, 500) || null) : null;
-      auMsg('adln', on ? (until ? auT('Account locked until {d}. They only see the blocked page until then.').replace('{d}', adDate(until, 1)) : 'Account locked. They now only see the blocked page.') : 'Account unlocked.', 'ok'); track('admin', { act: on ? 'lock' : 'unlock', hrs }); rtSend(u.id, { t: 'status' });
+      auMsg('adln', on ? (until ? auT('Account locked until {d}.').replace('{d}', adDate(until, 1)) : 'Account locked.') : 'Account unlocked.', 'ok'); track('admin', { act: on ? 'lock' : 'unlock', hrs }); rtSend(u.id, { t: 'status' });
     }
     catch (e) { auMsg('adln', adErr(e), 'bad'); }
     finally { b.disabled = false; b.classList.remove('is-busy'); }
@@ -525,7 +538,7 @@ async function adAct(k, b) {
 
 const AL = { list: [], more: false, busy: false, seq: 0, top: 0 };
 const alWho = (un, dn, id) => un ? '@' + un : dn || id || '';
-const AL_T = { display_name: '{a} changed the display name of {t}', email: '{a} changed the email of {t}', sign_out: '{a} signed {t} out on every device', role_owner: '{a} made {t} an owner', role_admin: '{a} made {t} an admin', role_user: '{a} made {t} a regular user', username: '{a} changed the username of {t} to {n}', lock_until: '{a} locked {t} until {d}', lock: '{a} locked {t} with no end date', unlock: '{a} unlocked {t}', expire: 'The lock on {t} ended', password: '{a} set a new password for {t}', reset_email: '{a} sent a password reset email to {t}', delete_user: '{a} deleted the account of {t}', ticket_delete: '{a} deleted a ticket from {t}', ticket_reply: '{a} replied to a ticket from {t}', ticket_closed: '{a} closed a ticket from {t}', ticket_open: '{a} reopened a ticket from {t}', site: '{a} changed the site switches', site_password: '{a} changed the site password', test_account: '{a} created the test account {t}', rate_reset: '{a} reset the rate limits of {t}', gate_open: '{a} turned the site password off: anyone who opens the site gets in', gate_closed: '{a} turned the site password back on' };
+const AL_T = { view_chat: '{a} read the messages of {t}', search_chat: '{a} searched all messages', display_name: '{a} changed the display name of {t}', email: '{a} changed the email of {t}', sign_out: '{a} signed {t} out on every device', role_owner: '{a} made {t} an owner', role_admin: '{a} made {t} an admin', role_user: '{a} made {t} a regular user', username: '{a} changed the username of {t} to {n}', lock_until: '{a} locked {t} until {d}', lock: '{a} locked {t} with no end date', unlock: '{a} unlocked {t}', expire: 'The lock on {t} ended', password: '{a} set a new password for {t}', reset_email: '{a} sent a password reset email to {t}', delete_user: '{a} deleted the account of {t}', ticket_delete: '{a} deleted a ticket from {t}', ticket_reply: '{a} replied to a ticket from {t}', ticket_closed: '{a} closed a ticket from {t}', ticket_open: '{a} reopened a ticket from {t}', site: '{a} changed the site switches', site_password: '{a} changed the site password', test_account: '{a} created the test account {t}', rate_reset: '{a} reset the rate limits of {t}', gate_open: '{a} turned the site password off: anyone who opens the site gets in', gate_closed: '{a} turned the site password back on' };
 function alSite(d) {
   const a = d.after || {}, b = d.before || {}, out = [], ga = new Set(a.disabled_games || []), gb = new Set(b.disabled_games || []);
   if (!!a.maintenance !== !!b.maintenance) out.push(auT(a.maintenance ? 'Maintenance mode on' : 'Maintenance mode off'));
@@ -556,9 +569,9 @@ async function alLoad(more, quiet) {
     else if (quiet && AL.list.length && L.length === 50) { const lo = +L[L.length - 1].id; AL.list = L.concat(AL.list.filter(x => +x.id < lo)); }
     else { AL.list = L; AL.more = L.length === 50; }
     AL.top = quiet ? was : 0;
-    const card = `<div class="st-card al-card" id="alc"><div class="sx-ch"><div><h3>${esc(auT('Admin log'))}</h3><p class="sx-note">${esc(auT('Every change made by an admin, newest first.'))}</p></div></div><div class="al-list" translate="no">${AL.list.length ? AL.list.map(alRow).join('') : `<div class="adm-empty">${esc(auT('Nothing here yet.'))}</div>`}</div>${AL.more ? `<button class="btn2 al-more" type="button" data-almore>${esc(auT('Show more'))}</button>` : ''}</div>`;
+    const card = `<div class="st-card al-card" id="alc"><div class="sx-ch"><div><h3>${esc(auT('Admin log'))}</h3></div></div><div class="al-list" translate="no">${AL.list.length ? AL.list.map(alRow).join('') : `<div class="adm-empty">${esc(auT('Nothing here yet.'))}</div>`}</div>${AL.more ? `<button class="btn2 al-more" type="button" data-almore>${esc(auT('Show more'))}</button>` : ''}</div>`;
     AL.top = 0;
-    if ($('#alc') && $('#adab')) adMorph($('#alc'), card.slice(card.indexOf('>') + 1, -6)); else box.innerHTML = card + `<div id="adab">${AB.html}</div>`;
+    if ($('#alc') && $('#adab')) adMorph($('#alc'), card.slice(card.indexOf('>') + 1, -6)); else box.innerHTML = msHtml() + card + `<div id="adab">${AB.html}</div>`;
     abLoad(quiet);
     if (quiet) adStamp(true);
   } catch (e) { if (!AL.list.length) box.innerHTML = `<div class="adm-empty">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; else if (quiet) adStamp(false); }
@@ -578,7 +591,7 @@ function abHtml(A, R) {
     return `<tr data-k="ab:${+r.id}"><td title="${esc(adDate(r.created_at, 1))}">${esc(adAgo(r.created_at))}</td><td>${abWho(r.target, r.target_username, r.target_display)}${r.target_locked ? ' ' + adPill('Locked', 'bad') : ''}${+r.target_reports > 1 ? ' ' + adPill(auT('{n} reports').replace('{n}', +r.target_reports), 'warn') : ''}</td><td>${esc(auT(AB_R[r.reason] || r.reason))}</td><td class="ab-d">${r.details ? `<span>${esc(r.details)}</span>` : ''}${msgs}</td><td>${abWho(r.reporter, r.reporter_username, null)}</td><td><div class="ab-acts">${r.ticket_id ? `<button class="btn2" type="button" data-abt="${+r.ticket_id}">${esc(auT('Open ticket'))}</button>` : ''}<button class="btn2" type="button" data-abr="${+r.id}">${esc(auT('Close'))}</button></div></td></tr>`;
   }).join('')}</tbody></table></div>` : `<div class="adm-empty">${esc(auT('No open reports.'))}</div>`;
   const lim = A.length ? `<div class="adm-tw ab-tw"><table class="adm-t st-t ab-t"><thead><tr>${['Player', 'Limit', 'Requests', 'Times at the limit', 'Last', ''].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${A.map(a => `<tr><td>${a.uid ? abWho(a.uid, a.username, a.display_name) : `<span class="adm-mut">${esc(auT('Signed out visitor'))} · <code>${esc(a.ip || '')}</code></span>`}</td><td>${esc(auT(AB_T[a.action] || a.action))}</td><td>${stN(a.hits)}</td><td>${+a.at_limit ? adPill(stN(a.at_limit), 'warn') : '0'}</td><td title="${esc(adDate(a.last_at, 1))}">${esc(adAgo(a.last_at))}</td><td>${a.uid ? `<button class="btn2" type="button" data-abreset="${esc(a.uid)}">${esc(auT('Reset limits'))}</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : `<div class="adm-empty">${esc(auT('Nobody came close to a limit.'))}</div>`;
-  return `<div class="st-card al-card"><div class="sx-ch"><div><h3>${esc(auT('Player reports'))}${R.length ? ` <span class="adm-pill warn">${stN(R.length)}</span>` : ''}</h3><p class="sx-note">${esc(auT('Open reports sent by players. Each one also opened a ticket.'))}</p></div></div>${rep}</div><div class="st-card al-card"><div class="sx-ch"><div><h3>${esc(auT('Rate limits'))}</h3><p class="sx-note">${esc(auT('Who sent the most requests in the last {h} hours and how often they reached a limit.').replace('{h}', AB.h))}</p></div><button class="btn2" type="button" data-abh>${esc(auT(AB.h === 24 ? 'Last 7 days' : 'Last 24 hours'))}</button></div>${lim}</div>`;
+  return `<div class="st-card al-card"><div class="sx-ch"><div><h3>${esc(auT('Player reports'))}${R.length ? ` <span class="adm-pill warn">${stN(R.length)}</span>` : ''}</h3></div></div>${rep}</div><div class="st-card al-card"><div class="sx-ch"><div><h3>${esc(auT('Rate limits'))}</h3></div><button class="btn2" type="button" data-abh>${esc(auT(AB.h === 24 ? 'Last 7 days' : 'Last 24 hours'))}</button></div>${lim}</div>`;
 }
 async function abLoad(quiet) {
   const box = $('#adab');
@@ -628,19 +641,19 @@ const sfaLocal = iso => { const t = Date.parse(iso || ''); if (!t) return ''; co
 function sfaDraw() {
   const d = SF.d || {}, box = $('#adsite'), off = new Set(d.disabled_games || []);
   box.innerHTML = `<div class="sfa">
-  <div class="st-card sfa-c"><div class="sfa-row"><div><h3>${esc(auT('Maintenance mode'))}</h3><p class="sx-note">${esc(auT('Players see a maintenance page. Admins can still use the site.'))}</p></div><button class="sw${d.maintenance ? ' on' : ''}" type="button" role="switch" id="sfam" aria-checked="${!!d.maintenance}" aria-label="${esc(auT('Maintenance mode'))}"></button></div>
+  <div class="st-card sfa-c"><div class="sfa-row"><div><h3>${esc(auT('Maintenance mode'))}</h3></div><button class="sw${d.maintenance ? ' on' : ''}" type="button" role="switch" id="sfam" aria-checked="${!!d.maintenance}" aria-label="${esc(auT('Maintenance mode'))}"></button></div>
    <label class="apc-l" for="sfamm">${esc(auT('Message on the maintenance page (optional)'))}</label><textarea id="sfamm" maxlength="500" rows="2" placeholder="${esc(auT('We are making the site better. Please come back in a little while.'))}">${esc(d.maintenance_msg || '')}</textarea></div>
-  <div class="st-card sfa-c"><h3>${esc(auT('Announcement banner'))}</h3><p class="sx-note">${esc(auT('Shown at the top of the site for everyone. Leave it empty to hide it.'))}</p>
+  <div class="st-card sfa-c"><h3>${esc(auT('Announcement banner'))}</h3>
    <textarea id="sfab" maxlength="300" rows="2">${esc(d.banner || '')}</textarea>
    <div class="sfa-2"><label class="apc-l">${esc(auT('Style'))}<select id="sfal"><option value="info"${d.banner_level !== 'warning' ? ' selected' : ''}>${esc(auT('Info'))}</option><option value="warning"${d.banner_level === 'warning' ? ' selected' : ''}>${esc(auT('Alert (middle of the screen)'))}</option></select></label><label class="apc-l">${esc(auT('Ends (optional)'))}<input type="datetime-local" id="sfau" value="${esc(sfaLocal(d.banner_until))}"></label></div></div>
-  <div class="st-card sfa-c"><h3>${esc(auT('Turned off games'))}</h3><p class="sx-note">${esc(auT('These games show as temporarily unavailable and cannot be started.'))}</p>
+  <div class="st-card sfa-c"><h3>${esc(auT('Turned off games'))}</h3>
    <label class="search sfa-q"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="sfaq" type="search" placeholder="${esc(auT('Search games'))}" autocomplete="off" spellcheck="false" aria-label="${esc(auT('Search games'))}"></label>
    <div class="sfa-g" id="sfag" translate="no">${games.slice().sort((a, b) => (off.has(b.id) - off.has(a.id)) || a.title.localeCompare(b.title)).map(g => `<button type="button" class="chip" data-sfg="${esc(g.id)}" aria-pressed="${off.has(g.id)}">${esc(g.title)}</button>`).join('')}</div>
    <label class="apc-l" for="sfadm">${esc(auT('Message for turned off games (optional)'))}</label><textarea id="sfadm" maxlength="300" rows="2" placeholder="${esc(auT('This game is being fixed. Try again a bit later.'))}">${esc(d.disabled_msg || '')}</textarea></div>
   <div class="sfa-f"><div class="note" id="sfan" role="status"></div><button class="btn2 pri" type="button" id="sfas">${esc(auT('Save and publish'))}</button></div>${adIsOwner() ? `
-  <div class="st-card sfa-c" id="sfpw"><h3>${esc(auT('Site password'))}</h3><p class="sx-note">${esc(auT('The password everyone types to open the site. Only owners can see and change this.'))}</p>
+  <div class="st-card sfa-c" id="sfpw"><h3>${esc(auT('Site password'))}</h3>
    <div class="sfg" id="sfg">${sfgHtml()}</div>
-   <h4 class="sfg-h">${esc(auT('Change the password'))}</h4><p class="sx-note">${esc(auT('A change works at once for everyone whose network reaches the accounts server. Networks that block it keep accepting the previous password until the next deploy. Browsers that already unlocked the site stay unlocked.'))}</p>
+   <h4 class="sfg-h">${esc(auT('Change the password'))}</h4>
    <div class="sfa-2"><div><label class="apc-l" for="sfp1">${esc(auT('New password'))}</label><div class="au-pw"><input id="sfp1" type="password" autocomplete="new-password" maxlength="200" spellcheck="false">${EYE}</div></div><div><label class="apc-l" for="sfp2">${esc(auT('Confirm password'))}</label><div class="au-pw"><input id="sfp2" type="password" autocomplete="new-password" maxlength="200" spellcheck="false">${EYE}</div></div></div>
    <div class="sfa-f"><div class="note" id="sfpn" role="status"></div><button class="btn2 pri" type="button" id="sfps">${esc(auT('Save password'))}</button></div></div>` : ''}</div>`;
 }
@@ -667,10 +680,10 @@ function sfgHtml() {
   const st = SG.err ? SG.err : !LZ.key ? auT('This copy of the site is not password protected, so there is nothing to switch.') : !d ? auT('Checking…') : !ready ? auT('Set a site password below first.') : on ? auT('Everyone types the password to open the site.') : auT('Since {t}: anyone who opens the site gets straight in, without the password.').replace('{t}', adDate(d.at, 1)) + (d.by_name ? ' ' + auT('Turned off by {u}.').replace('{u}', d.by_name) : '');
   const msg = SG.msg && Date.now() - SG.msg[2] < 20000 ? `<div class="note ${SG.msg[1]}" role="status">${esc(auT(SG.msg[0]))}</div>` : '';
   return `<div class="sfa-row"><div><b class="sfg-st ${!d ? '' : on ? 'on' : 'off'}">${esc(auT(!d ? 'Site password' : on ? 'Site password: On' : 'Site password: Off'))}</b><p class="sx-note">${esc(st)}</p></div><button class="sw${on ? ' on' : ''}${dis ? ' dis' : ''}${SG.busy ? ' is-busy' : ''}" type="button" role="switch" id="sfgo" aria-checked="${on}" aria-label="${esc(auT('Site password'))}"${dis ? ' disabled' : ''}></button></div>`
-    + (stale ? `<div class="sfg-cf warn"><span>${esc(auT('The key saved on the server belongs to an older version of the site, so visitors see the password page again. Save the current key to let them in.'))}</span><button class="btn2 pri" type="button" data-sfgo="fix">${esc(auT('Save the current key'))}</button></div>` : '')
-    + (SG.cf ? `<div class="sfg-cf"><span>${esc(auT('Anyone who has the address gets in without the password, on every device, as soon as they open the site.'))}</span><div class="sfg-b"><button class="btn2" type="button" data-sfgo="cancel">${esc(auT('Cancel'))}</button><button class="btn2 danger" type="button" data-sfgo="off">${esc(auT('Turn the password off'))}</button></div></div>` : '')
+    + (stale ? `<div class="sfg-cf warn"><span>${esc(auT('The saved key is out of date. Save the current key to let visitors in.'))}</span><button class="btn2 pri" type="button" data-sfgo="fix">${esc(auT('Save the current key'))}</button></div>` : '')
+    + (SG.cf ? `<div class="sfg-cf"><span>${esc(auT('Anyone with the address gets in without the password.'))}</span><div class="sfg-b"><button class="btn2" type="button" data-sfgo="cancel">${esc(auT('Cancel'))}</button><button class="btn2 danger" type="button" data-sfgo="off">${esc(auT('Turn the password off'))}</button></div></div>` : '')
     + msg
-    + `<p class="sx-note sfg-n">${esc(auT('Works at once on every network that reaches the accounts server; networks that block it still show the password page. Devices that open the site while the password is off stay unlocked after you turn it back on, the same as after a password change. Turning it back on deletes the key saved on the server.'))}</p>`;
+    + ``;
 }
 function sfgPaint() { const el = $('#sfg'); if (el) adMorph(el, sfgHtml()); }
 async function sfgLoad() {
@@ -704,7 +717,7 @@ async function sfpSave(b) {
   try {
     await adRpc('owner_set_gate', { p_slot: await gpSlot(a, lzB64(LZ.key)) });
     $('#sfp1').value = ''; $('#sfp2').value = '';
-    auMsg('sfpn', 'Site password changed. Everyone needs the new password; devices that already unlocked this version stay unlocked.', 'ok');
+    auMsg('sfpn', 'Site password changed.', 'ok');
     track('admin', { act: 'gate' });
     AL.list = [];
   } catch (e) { auMsg('sfpn', adErr(e), 'bad'); }
@@ -968,7 +981,7 @@ function stDraw() {
   </div>
   <div class="st-card sx-gm"><div class="sx-gh"><h3>${esc(auT('Games'))}</h3>
    <div class="sx-cb"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="stgq" role="combobox" aria-expanded="false" aria-controls="stgl" aria-autocomplete="list" aria-label="${esc(auT('Choose a game'))}" placeholder="${esc(auT('Search games'))}" autocomplete="off" spellcheck="false" value="${esc(ST.game ? adGame(ST.game) : '')}"><button type="button" class="sx-cbt" data-stcb tabindex="-1" aria-label="${esc(auT('Show all games'))}">${AD_ICO.chev}</button><ul id="stgl" role="listbox" aria-label="${esc(auT('Games'))}" hidden></ul></div>
-  </div>${D.measure === 2 ? `<p class="sx-note sx-gnote">${esc(auT('Last {d} days. Play time only counts while the game is open, the tab is visible and the player pressed a key, moved the mouse or touched the screen in the last minute. Avg minutes per visit = play time ÷ launches.').replace('{d}', ST.days))}</p>` : ''}<div id="stgd">${stGameHtml(an)}</div></div>
+  </div>${D.measure === 2 ? `<p class="sx-note sx-gnote">${esc(auT('Last {d} days. Only active play time counts.').replace('{d}', ST.days))}</p>` : ''}<div id="stgd">${stGameHtml(an)}</div></div>
   <div class="st-grid">
    <div class="st-card"><h3>${esc(auT('Devices'))}</h3>${stDevices()}<div class="st-list sx-dvl">${DV.slice(0, 6).map(d => `<div class="st-kv"><span>${esc([auT(ST_DEV[d.device] || d.device || ''), d.os, d.browser].filter(Boolean).join(' · '))}</span><b>${stN(d.sessions)}</b></div>`).join('')}</div></div>
    <div class="st-card"><h3>${esc(auT('Recent errors'))}</h3><div class="st-list">${ER.length ? ER.slice(0, 30).map(e => `<div class="st-err"><b>${esc(adGame(e.game_id))}</b><span>${esc(e.message || '')}</span><small>${esc(e.place || '')} · ${esc(e.device || '')} · ${esc(adAgo(e.created_at))}</small></div>`).join('') : insWhy()}</div></div>
@@ -1383,6 +1396,7 @@ addEventListener('keydown', e => {
   if (!AD.locked) return;
   const s = document.getElementById('lgsheet');
   if (s && !s.hidden) return;
+  if (e.target && e.target.closest && e.target.closest('#adblock')) return;
   e.stopImmediatePropagation();
 }, true);
 const TA = { list: null, busy: false };
@@ -1409,7 +1423,7 @@ function anOpen() {
   $('#anrl').value = 'user'; $('#anpw').type = 'password';
   d.querySelectorAll('[data-owner]').forEach(o => { o.hidden = !adIsOwner(); });
   $('#adnewb').hidden = false; $('#adnewok').hidden = true; $('#adnews').hidden = false; $('#adnewc').textContent = auT('Cancel');
-  auMsg('annote', '');
+  auMsg('adnnote', '');
   if (d.showModal) d.showModal(); else d.setAttribute('open', '');
   setTimeout(() => $('#anem').focus(), 30);
 }
@@ -1417,12 +1431,12 @@ function anClose() { const d = $('#adnew'); if (d.close) d.close(); else d.remov
 async function anCreate() {
   if (TA.busy) return;
   const em = $('#anem').value.trim().toLowerCase(), un = $('#anun').value.trim().toLowerCase().replace(/^@/, ''), dn = $('#andn').value.replace(/\s+/g, ' ').trim(), pw = $('#anpw').value, rl = $('#anrl').value, nt = $('#annt').value.trim();
-  if (em && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { auMsg('annote', 'That email does not look valid.', 'bad'); auShake($('#anem')); return; }
-  if (un && (!UN_RE.test(un) || /^\.|\.$|\.\./.test(un))) { auMsg('annote', 'Use 3 to 20 lowercase letters, numbers, dots or underscores.', 'bad'); auShake($('#anun')); return; }
-  if (pw.length < 8) { auMsg('annote', 'Choose a password of at least 8 characters.', 'bad'); auShake($('#anpw').closest('.au-pw')); return; }
-  if (utf8Len(pw) > 72) { auMsg('annote', 'Use at most 72 characters.', 'bad'); return; }
+  if (em && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { auMsg('adnnote', 'That email does not look valid.', 'bad'); auShake($('#anem')); return; }
+  if (un && (!UN_RE.test(un) || /^\.|\.$|\.\./.test(un))) { auMsg('adnnote', 'Use 3 to 20 lowercase letters, numbers, dots or underscores.', 'bad'); auShake($('#anun')); return; }
+  if (pw.length < 8) { auMsg('adnnote', 'Choose a password of at least 8 characters.', 'bad'); auShake($('#anpw').closest('.au-pw')); return; }
+  if (utf8Len(pw) > 72) { auMsg('adnnote', 'Use at most 72 characters.', 'bad'); return; }
   const b = $('#adnews');
-  TA.busy = true; b.disabled = true; b.classList.add('is-busy'); auMsg('annote', '');
+  TA.busy = true; b.disabled = true; b.classList.add('is-busy'); auMsg('adnnote', '');
   try {
     const r = await adRpc('admin_create_user', { p_email: em || null, p_username: un || null, p_display: dn || null, p_password: pw, p_role: rl, p_note: nt || null });
     track('admin', { act: 'create_user' });
@@ -1433,7 +1447,7 @@ async function anCreate() {
     ok.innerHTML = `<p class="adm-ok">${esc(auT('Account created. Give these details to the person.'))}</p><dl class="apc-dl"><div><dt>${esc(auT('Email'))}</dt><dd translate="no">${esc(r.email)}</dd></div><div><dt>${esc(auT('Username'))}</dt><dd translate="no">@${esc(r.username)}</dd></div><div><dt>${esc(auT('Display name'))}</dt><dd translate="no">${esc(r.display_name || '—')}</dd></div><div><dt>${esc(auT('Password'))}</dt><dd translate="no"><code>${esc(r.password)}</code></dd></div><div><dt>${esc(auT('Role'))}</dt><dd>${adRole({ role: r.role })}</dd></div></dl><div class="apc-row"><button class="btn2 pri" type="button" data-ancopy>${esc(auT('Copy log in details'))}</button><button class="btn2" type="button" data-anopen="${esc(r.id)}">${esc(auT('Open player card'))}</button></div>`;
     ok._t = t;
     await Promise.all([taLoad(), adLoad()]);
-  } catch (e) { auMsg('annote', /taken/i.test(e.message || '') ? 'That username is taken.' : /already has an account/i.test(e.message || '') ? 'That email already has an account.' : /admin_create_user|schema cache/i.test(e.message || '') ? 'Run round13_users.sql in the Supabase SQL editor first.' : adErr(e), 'bad'); }
+  } catch (e) { auMsg('adnnote', /taken/i.test(e.message || '') ? 'That username is taken.' : /already has an account/i.test(e.message || '') ? 'That email already has an account.' : /admin_create_user|schema cache/i.test(e.message || '') ? 'Run round13_users.sql in the Supabase SQL editor first.' : adErr(e), 'bad'); }
   finally { TA.busy = false; b.disabled = false; b.classList.remove('is-busy'); }
 }
 function adBoot() {
@@ -1509,7 +1523,94 @@ function adBoot() {
   document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible' && Date.now() - AD.at > 60000) adCheck(); if (document.visibilityState === 'visible' && Date.now() - AD.lt > 10000) adLive(true); });
   setInterval(() => {
     if (view !== 'admin' || !AD.users) return;
-    const nw = Object.keys(RT.pres).some(id => !AD.users.some(u => u.id === id));
-    adLive(nw && Date.now() - AD.lt > 8000);
+    const miss = AD.miss || (AD.miss = new Set()), nw = Object.keys(RT.pres).filter(id => !miss.has(id) && !AD.users.some(u => u.id === id));
+    if (nw.length && Date.now() - AD.lt > 8000) { nw.forEach(id => miss.add(id)); adLive(true); }
   }, 4000);
+}
+
+const ACH = { uid: null, kind: 'dm', rows: [], more: false, busy: 0, room: null };
+const ACH_N = 60;
+function achSeg() { document.querySelectorAll('#adcs [data-adck]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.adck === ACH.kind))); }
+async function achLoad(u, older) {
+  const box = $('#adcl');
+  if (!box || !u || !adIsAdmin()) return;
+  if (ACH.uid !== u.id) { ACH.uid = u.id; ACH.rows = []; ACH.more = false; ACH.room = null; }
+  if (!older) { ACH.rows = []; ACH.room = null; box.innerHTML = '<i class="sk sk-msg" aria-hidden="true"></i>'.repeat(3); $('#adcm').hidden = true; }
+  achSeg();
+  const kind = ACH.kind, uid = u.id, before = older && ACH.rows.length ? ACH.rows[ACH.rows.length - 1].id : null, my = ++ACH.busy;
+  try {
+    const r = await adRpc('admin_user_chat', { p_uid: uid, p_kind: kind, p_before: before, p_limit: ACH_N });
+    if (my !== ACH.busy || ACH.uid !== uid || ACH.kind !== kind) return;
+    const L = Array.isArray(r) ? r : [];
+    ACH.rows = older ? ACH.rows.concat(L) : L; ACH.more = L.length === ACH_N;
+    achDraw();
+  } catch (e) {
+    if (my !== ACH.busy) return;
+    box.innerHTML = `<div class="adm-empty">${esc(/admin_user_chat|schema cache|could not find/i.test(e.message || '') ? auT('Message history is not set up on the server yet.') : auT('Could not load the messages. Check your connection and try again.'))}</div>`;
+  }
+}
+function achWhat(m) {
+  if (m.kind === 'image') return `<i>${esc(auT('Sent a picture'))}</i>`;
+  if (m.kind === 'invite') return `<i>${esc(auT('Party invite · {g}').replace('{g}', adGame(m.game)))}${m.room ? ' · ' + esc(m.room) : ''}</i>`;
+  if (m.kind === 'join') return `<i>${esc(auT('Asked to join · {g}').replace('{g}', adGame(m.game)))}</i>`;
+  return esc(m.body || '');
+}
+function achDraw() {
+  const box = $('#adcl'), q = String(($('#adcq') || {}).value || '').trim().toLowerCase();
+  if (!box) return;
+  const L = q ? ACH.rows.filter(m => [m.body, m.other_username, m.other_display, m.game, m.room].some(x => x && String(x).toLowerCase().includes(q))) : ACH.rows;
+  const empty = { dm: 'No direct messages.', party: 'No party chat messages.', game: 'No in-game chat messages.' }[ACH.kind];
+  box.innerHTML = L.length ? L.map(m => {
+    let who;
+    if (ACH.kind === 'dm') { const o = m.other_username ? '@' + m.other_username : m.other_display || auT('Deleted account'); who = esc(auT(m.outgoing ? 'To {u}' : 'From {u}').replace('{u}', o)); }
+    else who = esc(adGame(m.game) || auT('Unknown game')) + (m.room ? ` · <button type="button" class="ach-room" data-adroom="${esc(m.room)}" data-at="${esc(m.created_at)}" title="${esc(auT('Show the whole chat of this party'))}">${esc(auT('Party {code}').replace('{code}', m.room))}</button>` : '');
+    return `<div class="ach-m${m.outgoing && ACH.kind === 'dm' ? ' out' : ''}"><div class="ach-h"><b>${who}</b><time title="${esc(adDate(m.created_at, 1))}">${esc(adAgo(m.created_at))}</time></div><p>${achWhat(m)}</p></div>`;
+  }).join('') : `<div class="adm-empty">${esc(auT(q ? 'No messages match.' : empty))}</div>`;
+  $('#adcm').hidden = !ACH.more || !!q;
+}
+async function achRoom(room, at) {
+  const box = $('#adcl');
+  ACH.room = room; box.innerHTML = '<i class="sk sk-msg" aria-hidden="true"></i>'.repeat(3); $('#adcm').hidden = true;
+  try {
+    const r = await adRpc('admin_room_chat', { p_room: room, p_at: at });
+    if (ACH.room !== room) return;
+    const L = Array.isArray(r) ? r : [];
+    box.innerHTML = `<div class="ach-rh"><button type="button" class="btn2" data-adcback>${esc(auT('Back'))}</button><b>${esc(auT('Party {code}').replace('{code}', room))}</b><small>${esc(auT('3 hours before and after'))}</small></div>` + (L.length ? L.map(m => `<div class="ach-m${m.user_id === ACH.uid ? ' out' : ''}"><div class="ach-h"><b>${esc(m.username ? '@' + m.username : m.display_name || auT('Player'))} · ${esc(adGame(m.game))}</b><time title="${esc(adDate(m.created_at, 1))}">${esc(adClock(Date.parse(m.created_at)))}</time></div><p>${esc(m.body)}</p></div>`).join('') : `<div class="adm-empty">${esc(auT('No messages.'))}</div>`);
+  } catch (e) { box.innerHTML = `<div class="adm-empty">${esc(auT('Could not load the messages. Check your connection and try again.'))}</div>`; }
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-adck], #adcm, #adcc, [data-adroom], [data-adcback]');
+  if (!t || !t.closest('#adpanel')) return;
+  const u = adCur();
+  if (!u) return;
+  if (t.dataset.adck) { if (ACH.kind !== t.dataset.adck || ACH.room) { ACH.kind = t.dataset.adck; achLoad(u); } }
+  else if (t.id === 'adcm') achLoad(u, true);
+  else if (t.id === 'adcc') achCopy(u);
+  else if (t.dataset.adroom) achRoom(t.dataset.adroom, t.dataset.at);
+  else if (t.hasAttribute('data-adcback')) { ACH.room = null; achDraw(); }
+});
+document.addEventListener('input', e => { if (e.target && e.target.id === 'adcq' && !ACH.room) achDraw(); });
+
+const MS = { busy: 0 };
+const msHtml = () => `<div class="st-card ms-card" id="adms"><div class="sx-ch"><div><h3>${esc(auT('Search all messages'))}</h3></div></div><form class="ms-f" id="admsf" novalidate><input type="search" id="admsq" placeholder="${esc(auT('Word or phrase, at least 2 letters'))}" aria-label="${esc(auT('Search all messages'))}" autocomplete="off" maxlength="80"><button class="btn2 pri" type="submit">${esc(auT('Search'))}</button></form><div class="apc-chatl ms-l" id="admsl" translate="no"></div></div>`;
+async function msSearch() {
+  const q = $('#admsq').value.trim(), box = $('#admsl');
+  if (q.length < 2) { box.innerHTML = `<div class="adm-empty">${esc(auT('Type at least 2 letters.'))}</div>`; return; }
+  const my = ++MS.busy;
+  box.innerHTML = '<i class="sk sk-msg" aria-hidden="true"></i>'.repeat(3);
+  try {
+    const r = await adRpc('admin_chat_search', { p_q: q, p_limit: 150 });
+    if (my !== MS.busy) return;
+    const L = Array.isArray(r) ? r : [], K = { dm: 'Direct message', party: 'Party chat', game: 'In-game chat' };
+    box.innerHTML = L.length ? `<p class="ms-n">${esc(auT(L.length === 1 ? '1 message' : '{n} messages').replace('{n}', L.length))}</p>` + L.map(m => `<div class="ach-m"><div class="ach-h"><b>${abWho(m.user_id, m.username, m.display_name)} · ${esc(auT(K[m.kind] || m.kind))}${m.kind === 'dm' && m.other_username ? ' · ' + esc(auT('to {u}').replace('{u}', '@' + m.other_username)) : ''}${m.game ? ' · ' + esc(adGame(m.game)) : ''}${m.room ? ' · ' + esc(m.room) : ''}</b><time title="${esc(adDate(m.created_at, 1))}">${esc(adAgo(m.created_at))}</time></div><p>${esc(m.body || '')}</p></div>`).join('') : `<div class="adm-empty">${esc(auT('No messages match.'))}</div>`;
+  } catch (e) { if (my === MS.busy) box.innerHTML = `<div class="adm-empty">${esc(/admin_chat_search|schema cache|could not find/i.test(e.message || '') ? auT('Message history is not set up on the server yet.') : adErr(e))}</div>`; }
+}
+document.addEventListener('submit', e => { if (e.target && e.target.id === 'admsf') { e.preventDefault(); msSearch(); } });
+async function achCopy(u) {
+  if (!ACH.rows.length) { toast(auT('Nothing to copy')); return; }
+  const K = { dm: 'Direct messages', party: 'Party chat', game: 'In-game chat' }[ACH.kind];
+  const txt = [(u.username ? '@' + u.username : u.email || u.id) + ' · ' + auT(K)].concat(ACH.rows.slice().reverse().map(m => `[${adDate(m.created_at, 1)}] ${ACH.kind === 'dm' ? (m.outgoing ? '→ @' : '← @') + (m.other_username || '?') : adGame(m.game) + (m.room ? ' ' + m.room : '')}: ${m.body || m.kind}`)).join(String.fromCharCode(10));
+  let ok = false;
+  try { await navigator.clipboard.writeText(txt); ok = true; } catch (e) { ok = adCopyFallback(txt); }
+  toast(auT(ok ? 'Copied' : 'Could not copy'));
 }

@@ -476,3 +476,4 @@ body.modal-open{overflow:hidden}
 .kb-tips{margin:0;padding-left:18px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:4px}
 .item small kbd{font-size:11px}
 @media (hover:none){.sh-nav{display:none}}
+@media (pointer:coarse){.sitefoot a,.sitefoot button{display:inline-flex;align-items:center;min-height:36px}.seg button{min-height:36px}.ginfo .badge{min-height:32px;display:inline-flex;align-items:center}}

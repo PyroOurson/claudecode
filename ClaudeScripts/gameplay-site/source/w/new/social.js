@@ -187,15 +187,7 @@ function soStatus(id) {
 function soLive() {
   const n = Object.keys(RT.pres).filter(k => !RT.pres[k].h).length, pill = $('#onl');
   if (pill) { pill.hidden = !SB.user || !n; pill.querySelector('b').textContent = n; pill.title = auT(n === 1 ? '1 player online' : '{n} players online').replace('{n}', n); }
-  const by = {};
-  Object.values(RT.pres).forEach(p => { if (p.g && !p.h) by[p.g] = (by[p.g] || 0) + 1; });
-  document.querySelectorAll('#grid [data-id]').forEach(el => {
-    const c = by[el.dataset.id] || 0;
-    let b = el.querySelector('.livepill');
-    if (!c) { if (b) b.remove(); return; }
-    if (!b) { b = document.createElement('span'); b.className = 'livepill'; b.setAttribute('translate', 'no'); (el.querySelector('.art') || el).append(b); }
-    b.textContent = auT('{n} playing').replace('{n}', c);
-  });
+  cardPills();
   if (openK === 'friends' && FR.list) frDraw();
   if (DM.open) dmHead();
   soList(); soDockSync();
@@ -914,3 +906,124 @@ function soBoot() {
   ntLoad();
   setTimeout(soNewGames, 3000);
 }
+const CHL = { last: '', at: 0 };
+function gpChatLog(kind, game, room, body) {
+  body = String(body == null ? '' : body).replace(/\s+/g, ' ').trim().slice(0, 500);
+  if (!body || !SB.user || AD.locked) return;
+  const k = kind + '|' + body, t = Date.now();
+  if (CHL.last === k && t - CHL.at < 2500) return;
+  CHL.last = k; CHL.at = t;
+  adRpc('log_chat', { p_kind: kind, p_game: game || null, p_room: room || null, p_body: body }).catch(() => {});
+}
+const clText = el => !!el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && /^(text|search|)$/i.test(el.getAttribute('type') || ''))) && !el.closest('.g-lobby');
+function clGame(v) {
+  if (!cur) return;
+  let room = null;
+  try { const n = cur.api && cur.api.online && cur.api.net; room = n && n.code ? String(n.code) : null; } catch (e) {}
+  gpChatLog('game', cur.g.id, room, v);
+}
+(() => {
+  const gb = document.getElementById('gamebox');
+  if (!gb) return;
+  gb.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing && clText(e.target)) clGame(e.target.value); }, true);
+  gb.addEventListener('submit', e => { const f = e.target; if (f && f.querySelectorAll) f.querySelectorAll('input, textarea').forEach(i => { if (clText(i)) clGame(i.value); }); }, true);
+  gb.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('button');
+    if (!b || b.closest('.g-lobby') || (b.form && b.type === 'submit')) return;
+    let p = b.parentElement;
+    for (let i = 0; i < 2 && p && p !== gb; i++, p = p.parentElement) {
+      const t = [...p.querySelectorAll('input, textarea')].filter(x => clText(x) && x.value.trim());
+      if (t.length === 1) { clGame(t[0].value); return; }
+      if (t.length > 1) return;
+    }
+  }, true);
+})();
+window.gpChatLog = gpChatLog;
+window.gpParty = {
+  signed: () => !!SB.user,
+  friends: () => (FR.list || []).filter(f => !blHas(f.friend_id)).map(f => ({ id: f.friend_id, name: f.display_name || f.username || '?', status: soStatus(f.friend_id), on: !!soOn(f.friend_id) })).sort((a, b) => b.on - a.on || a.name.localeCompare(b.name)),
+  invite: id => { const p = soParty(); if (!p) return Promise.reject(new Error('No party')); return soDm(id, 'invite', p, true); },
+  err: e => soErr(e),
+  signIn: () => { closeAll(); auOpen('main', '', '', 'in'); }
+};
+const PUB = { ch: null, me: 'p' + Math.random().toString(36).slice(2, 12), list: {}, mine: null, tt: 0, st: false, mo: null, q: 0 };
+function pubStart() {
+  if (PUB.st) return;
+  PUB.st = true;
+  sbClient().then(c => {
+    if (PUB.ch) return;
+    PUB.ch = c.channel('parties', { config: { presence: { key: PUB.me } } }).on('presence', { event: 'sync' }, pubSync).subscribe(s => { if (s === 'SUBSCRIBED') pubTrack(); });
+  }).catch(() => { PUB.st = false; });
+}
+function pubSync() {
+  const s = PUB.ch ? PUB.ch.presenceState() : {}, L = {};
+  for (const k in s) {
+    if (k === PUB.me) continue;
+    const a = s[k], p = a && a[a.length - 1];
+    if (!p || typeof p.g !== 'string' || typeof p.c !== 'string' || !byId.has(p.g) || !/^[A-Z0-9]{4,8}$/.test(p.c) || sfOff(p.g)) continue;
+    const n = Math.max(1, Math.min(16, +p.n || 1)), m = Math.max(2, Math.min(16, +p.m || 2));
+    if (n >= m) continue;
+    (L[p.g] = L[p.g] || []).push({ c: p.c, n, m, h: String(p.h || '').replace(/[<>&"'`]/g, '').slice(0, 16), b: !!p.b, t: +p.t || 0 });
+  }
+  for (const k in L) L[k].sort((x, y) => x.b - y.b || y.n - x.n || x.t - y.t);
+  PUB.list = L;
+  cardPills();
+  pubStrip();
+  document.dispatchEvent(new CustomEvent('gp:pub'));
+}
+function pubTrack() {
+  if (!PUB.ch) return;
+  if (PUB.mine) PUB.ch.track(PUB.mine).catch(() => {}); else PUB.ch.untrack().catch(() => {});
+}
+window.gpPubSet = (gid, o) => {
+  if (!o && (!PUB.mine || PUB.mine.g !== gid)) return;
+  PUB.mine = o || null;
+  if (o) pubStart();
+  clearTimeout(PUB.tt); PUB.tt = setTimeout(pubTrack, 250);
+};
+window.gpPubList = gid => (PUB.list[gid] || []).slice();
+function cardPills() {
+  const by = {};
+  Object.values(RT.pres).forEach(p => { if (p.g && !p.h) by[p.g] = (by[p.g] || 0) + 1; });
+  document.querySelectorAll('.card[data-id]').forEach(el => {
+    const id = el.dataset.id, art = el.querySelector('.art') || el, c = by[id] || 0, P = PUB.list[id];
+    let b = el.querySelector('.livepill');
+    if (!c) { if (b) b.remove(); }
+    else {
+      if (!b) { b = document.createElement('span'); b.className = 'livepill'; b.setAttribute('translate', 'no'); art.append(b); }
+      const t = auT('{n} playing').replace('{n}', c); if (b.textContent !== t) b.textContent = t;
+    }
+    let q = el.querySelector('.pubpill');
+    if (!P || !P.length) { if (q) q.remove(); return; }
+    if (!q) { q = document.createElement('span'); q.className = 'pubpill'; q.setAttribute('role', 'button'); q.tabIndex = 0; art.append(q); }
+    const p = P[0], t = P.length > 1 ? auT('{n} public parties').replace('{n}', P.length) : auT('Public party · {n}/{m}').replace('{n}', p.n).replace('{m}', p.m), h = `<i></i>${esc(t)}<b>${esc(auT('Join'))}</b>`;
+    if (q.dataset.h !== h) { q.dataset.h = h; q.innerHTML = h; q.title = auT('Join {u}’s public party').replace('{u}', p.h || p.c); q.dataset.c = p.c; }
+  });
+}
+function pubStrip() {
+  const sec = $('#pubs'), box = $('#pubsl');
+  if (!sec) return;
+  const all = [];
+  for (const id in PUB.list) if (byId.has(id)) PUB.list[id].forEach(p => all.push([id, p]));
+  all.sort((a, b) => a[1].b - b[1].b || b[1].n - a[1].n);
+  sec.hidden = !all.length;
+  const h = all.slice(0, 8).map(([id, p]) => { const g = byId.get(id); return `<a class="pubc" href="${href(id, p.c)}" data-pid="${esc(id)}"><span class="pubc-i" style="background:${esc(tint(g))}">${img(g) || esc(g.title.charAt(0))}</span><span class="pubc-t"><b>${esc(g.title)}</b><small>${esc(p.h || p.c)} · ${p.n}/${p.m}${p.b ? ' · ' + esc(auT('In game')) : ''}</small></span><i>${esc(auT('Join'))}</i></a>`; }).join('');
+  if (box.dataset.h !== h) { box.dataset.h = h; box.innerHTML = h; }
+  document.querySelectorAll('#slist .srow').forEach(r => r.classList.toggle('haspub', !!(PUB.list[r.dataset.id] || []).length));
+}
+function pubJoin(q) {
+  const el = q.closest('[data-id]'), id = el && el.dataset.id, c = q.dataset.c;
+  if (!id || !c) return;
+  go(href(id, c), false);
+}
+document.addEventListener('click', e => { const q = e.target.closest && e.target.closest('.pubpill'); if (!q) return; e.preventDefault(); e.stopPropagation(); pubJoin(q); }, true);
+document.addEventListener('keydown', e => { const q = e.target.closest && e.target.closest('.pubpill'); if (!q || (e.key !== 'Enter' && e.key !== ' ')) return; e.preventDefault(); e.stopPropagation(); pubJoin(q); }, true);
+(() => {
+  if (window.MutationObserver) {
+    PUB.mo = new MutationObserver(() => { if (PUB.q) return; PUB.q = requestAnimationFrame(() => { PUB.q = 0; cardPills(); }); });
+    ['grid', 'rail', 'favrail', 'gotd', 'shelves', 'more'].forEach(id => { const n = document.getElementById(id); if (n) PUB.mo.observe(n, { childList: true }); });
+    const sl = document.getElementById('slist'); if (sl) new MutationObserver(() => document.querySelectorAll('#slist .srow').forEach(r => r.classList.toggle('haspub', !!(PUB.list[r.dataset.id] || []).length))).observe(sl, { childList: true });
+  }
+  const st = () => setTimeout(pubStart, 2500);
+  if (document.readyState === 'complete') st(); else addEventListener('load', st, { once: true });
+})();
