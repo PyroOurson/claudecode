@@ -1508,6 +1508,7 @@ const R = [
 ["{n} public parties", "{n} groupes publics", "{n} grupos públicos", "{n} öffentliche Gruppen", "{n} gruppi pubblici", "{n} grupos públicos"],
 ["Public party · {n}/{m}", "Groupe public · {n}/{m}", "Grupo público · {n}/{m}", "Öffentliche Gruppe · {n}/{m}", "Gruppo pubblico · {n}/{m}", "Grupo público · {n}/{m}"],
 ["Join {u}’s public party", "Rejoindre le groupe public de {u}", "Unirse al grupo público de {u}", "Der öffentlichen Gruppe von {u} beitreten", "Unisciti al gruppo pubblico di {u}", "Entrar no grupo público de {u}"],
+["No device data yet.", "Aucune donnée d’appareil.", "Aún no hay datos del dispositivo.", "Noch keine Gerätedaten.", "Ancora nessun dato del dispositivo.", "Ainda sem dados do dispositivo."],
 ["Copied", "Copié", "Copiado", "Kopiert", "Copiato", "Copiado"],
 ["Copy user id", "Copier l’identifiant", "Copiar el id de usuario", "Benutzer-ID kopieren", "Copia l’id utente", "Copiar o id do utilizador"],
 ["A deleted account", "Un compte supprimé", "Una cuenta eliminada", "Ein gelöschtes Konto", "Un account eliminato", "Uma conta eliminada"],

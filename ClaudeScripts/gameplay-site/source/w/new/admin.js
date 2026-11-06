@@ -411,7 +411,7 @@ async function adDevices(u, all) {
   catch (e) { if (AD.sel === u.id) box.innerHTML = `<div class="adm-mut">${esc(/admin_user_devices|function|404|PGRST/i.test(e.message || '') ? auT('Run round9_more.sql in the Supabase SQL editor to see this part.') : auT('Could not load. Check your connection and try again.'))}</div>`; return; }
   if (AD.sel !== u.id) return;
   L = Array.isArray(L) ? L : [];
-  if (!L.length) { box.innerHTML = `<div class="adm-mut">${esc(auT('No device data yet. It appears once this player accepts cookies.'))}</div>`; return; }
+  if (!L.length) { box.innerHTML = `<div class="adm-mut">${esc(auT('No device data yet.'))}</div>`; return; }
   const kv = (k, v) => v == null || v === '' ? '' : `<span>${esc(auT(k))}</span><b translate="no">${esc(String(v))}</b>`;
   const yn = v => v == null ? null : v ? auT('Yes') : auT('No');
   const more = L.length > 3 && !box._all;

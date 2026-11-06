@@ -745,7 +745,7 @@ body:has(.menu:not([hidden])) .so-dl{display:none}
 .adm-tiles .tile.hot{border-color:color-mix(in srgb,var(--danger) 35%,var(--line));background:color-mix(in srgb,var(--danger) 5%,var(--surface))}
 .adm-tiles .tile.hot .tile-ic{background:color-mix(in srgb,var(--danger) 13%,transparent);color:var(--danger)}
 .adm-tiles .tile.hot b{color:var(--danger)}
-@media (max-width:760px){.tile-ic{width:24px;height:24px;right:8px;top:8px;border-radius:8px}.tile-ic svg{width:13px;height:13px}}
+@media (max-width:760px){.tile-ic{display:none}}
 .ms-f{display:flex;gap:8px;margin:4px 0 10px}
 .ms-f input{flex:1;min-width:0;height:40px}
 .ms-l:empty{display:none}
