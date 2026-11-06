@@ -1,12 +1,12 @@
 const CHANGELOG = [
   { v: 8, date: '2026-11-06', items: [
-    'A new look for the whole site: warm paper, black ink and one orange colour, with a dark mode to match.',
-    'The home page has a row for each kind of game: popular now, online with friends, action, cards, board games, puzzles, arcade, racing, 3D and sports.',
-    'All games is mixed so card and board games no longer sit in one long block, with the games everyone plays first.',
-    'Every game page shows how to play, the controls, and your own best score, plays and time.',
-    'A game of the day on the home page, the same one for everybody.',
-    'Press ? for help and keyboard shortcuts. The game bar has a pause button, also on phones.',
-    'Search also finds games from part of a name.'
+    'Add friends now lists everyone on gameplay, with a search box.',
+    'Notifications are smaller, close on their own, and repeats are grouped with a counter instead of piling up.',
+    'You can block or report a player from the chat. Party invites can be sent once every 3 seconds.',
+    'All games is mixed so card and board games no longer sit in one long block, with the games everyone plays first. Surprise me opens a random game.',
+    'Every game page shows how to play, the controls, and your own best score, plays and time. Press ? for help and keyboard shortcuts, and the game bar has a pause button, also on phones.',
+    "New games: Surviv.io and Diep.io. Big updates for Super Mario Bros. (endless Brick Run and a daily run), Plants vs. Zombies (Survival and three difficulties), 8 Ball Pool (9-ball), Tetris (Sprint and Ultra), Minesweeper (Expert and Master), Rubik's Cube (2x2 to 5x5) and many more.",
+    'Game pictures now load on school and office networks that blocked them before.'
   ] },
   { v: 7, date: '2026-10-23', items: [
     'Geometry Dash: new look closer to the real game, robot and spider forms, Back On Track, Polargeist, Dry Out and Geometrical Dominator, music for every level, volume sliders, achievements and a level creator.',
