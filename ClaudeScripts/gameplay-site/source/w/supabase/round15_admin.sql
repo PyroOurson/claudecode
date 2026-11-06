@@ -420,3 +420,20 @@ grant execute on function public.get_gate_slot() to anon, authenticated;
 grant execute on function public.owner_gate_state() to authenticated;
 grant execute on function public.owner_set_gate_open(boolean, text) to authenticated;
 notify pgrst, 'reload schema';
+
+create or replace function private.gate_slot_guard()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.slot is distinct from old.slot then
+    new.open_key := null;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists site_gate_slot_guard on public.site_gate;
+create trigger site_gate_slot_guard before update on public.site_gate
+  for each row execute function private.gate_slot_guard();

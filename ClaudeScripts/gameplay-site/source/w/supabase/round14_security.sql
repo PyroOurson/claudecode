@@ -192,6 +192,7 @@ begin
   end if;
   if tg_op = 'UPDATE' and v_uid is not null and v_uid = new.id
     and (new.username is distinct from old.username or new.display_name is distinct from old.display_name)
+    and not (new.username is null and new.display_name is null)
     and not private.is_staff(v_uid) then
     if new.username is distinct from old.username then
       perform private.rate_check('username_change', 5, interval '1 day');

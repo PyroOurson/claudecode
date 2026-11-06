@@ -283,7 +283,7 @@ function ntToast(n) {
   else { el = document.createElement('div'); el.className = 'nt'; el.dataset.key = n.key; }
   el.dataset.k = n.k; el.dataset.nid = n.id; el._n = n;
   el.innerHTML = `<span class="nt-i">${ntIcon(n.k)}</span><div class="nt-t"><b translate="no"><span>${esc(n.t)}</span>${ntCount(n.c)}</b>${n.b ? `<span translate="no">${esc(n.b)}</span>` : ''}</div>${lab ? `<button class="btn2 pri" type="button" data-nt="go">${esc(auT(lab))}</button>` : ''}<button class="x" type="button" data-nt="x" aria-label="${esc(auT('Close'))}">${SO_ICO.x}</button>`;
-  el.exp = now + ntLife(n.k) + (NT.hold ? now - NT.hold : 0);
+  el.exp = NT.hold ? NT.hold + ntLife(n.k) : now + ntLife(n.k);
   box.prepend(el);
   if (again) el.classList.add('nt-again');
   if (now - NT.snd > 1500) { NT.snd = now; sfx('pop'); }

@@ -14,7 +14,7 @@
 .nlist{overflow-y:auto;display:flex;flex-direction:column;gap:2px;overscroll-behavior:contain}
 .nrow{display:flex;gap:11px;align-items:flex-start;text-align:left;padding:10px;border-radius:12px;color:var(--fg);width:100%;font:inherit;transition:background .15s}
 .nrow:hover{background:var(--surface-2)}
-.nrow.new{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent)}
+.nrow.new{background:var(--accent-soft)}
 .nt-i{width:34px;height:34px;flex:none;border-radius:11px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
 .nt-i svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .nt-t{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
@@ -31,9 +31,9 @@
 .nt .x:hover{background:var(--surface-2);color:var(--fg)}
 @keyframes ntIn{from{opacity:0;transform:translateX(40px) scale(.96)}}
 @keyframes ntOut{to{opacity:0;transform:translateX(40px) scale(.96)}}
-.so-dl{position:fixed;z-index:79;right:max(18px,env(safe-area-inset-right,0px));bottom:max(18px,env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:9px;height:50px;padding:0 16px 0 15px;border-radius:99px;background:var(--accent);color:var(--accent-ink);font-family:inherit;font-weight:700;font-size:15px;box-shadow:0 10px 26px rgba(90,50,200,.32),0 2px 6px rgba(20,10,60,.12);cursor:pointer;transition:transform .18s var(--spring),opacity .2s;animation:chatIn .45s var(--spring) both}
+.so-dl{position:fixed;z-index:79;right:max(18px,env(safe-area-inset-right,0px));bottom:max(18px,env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:9px;height:50px;padding:0 16px 0 15px;border-radius:99px;background:var(--accent);color:var(--accent-ink);font-family:inherit;font-weight:800;font-size:15px;box-shadow:0 10px 26px rgba(90,50,200,.32),0 2px 6px rgba(20,10,60,.12);cursor:pointer;transition:transform .18s var(--spring),opacity .2s;animation:chatIn .45s var(--spring) both}
 .so-dl[hidden]{display:none}
-.so-dl:hover{background:var(--accent-2);transform:translateY(-2px)}
+.so-dl:hover{transform:translateY(-2px)}
 .so-dl:active{transform:scale(.95)}
 .so-dl:focus-visible{outline:3px solid var(--fg);outline-offset:3px}
 .so-dl>svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
