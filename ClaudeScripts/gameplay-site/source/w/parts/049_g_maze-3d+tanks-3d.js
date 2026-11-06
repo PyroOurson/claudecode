@@ -1517,7 +1517,7 @@ void main() { vec4 t = texture2D(map, gl_PointCoord); float a = t.a * vA; if (a 
               }
               if (s.team === 'p') {
                 for (const e of enemies) if (e.drop < .5 && (e.x - s.x) ** 2 + (e.z - s.z) ** 2 < e.r * e.r) { hurtEnemy(e, s.dmg); hit = true; break; }
-              } else if (P.alive && (P.x - s.x) ** 2 + (P.z - s.z) ** 2 < P.r * P.r) { hurtPlayer(s.dmg); hit = true; }
+              } else if (P.alive && (P.x - s.x) ** 2 + (P.z - s.z) ** 2 < P.r * P.r) { hurtPlayer(s.dmg * Math.min(1, .55 + .15 * wave)); hit = true; }
             }
             if (hit || s.life <= 0) { killShell(s, true); continue; }
             if (s.team === 'p') {
@@ -1776,7 +1776,7 @@ void main() { vec4 t = texture2D(map, gl_PointCoord); float a = t.a * vA; if (a 
           }
           allTanks().forEach(t => syncTank(t, dt));
           if (state === 'play') {
-            if (queue.length) { spawnT -= dt; if (spawnT <= 0) { spawnEnemy(queue.pop()); spawnT = .75; hud(); } }
+            if (queue.length) { spawnT -= dt; if (spawnT <= 0) { spawnEnemy(queue.pop()); spawnT = wave === 1 ? 4.5 : .75; hud(); } }
             else if (!enemies.length && P.alive) {
               if (!clearing) { clearing = 2.8; const b = 100 * wave; addScore(b); P.hp = Math.min(100, P.hp + 15); showBanner(`Wave ${wave} cleared`, `+${b} bonus · +15 HP`); api.sfx('win'); hud(); }
               else if ((clearing -= dt) <= 0) { clearing = 0; nextWave(); }

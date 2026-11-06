@@ -364,7 +364,7 @@ function makeHost(env, init) {
   const finish = (w, why) => {
     if (H.phase === 'over') return;
     H.phase = 'over'; H.overT = 0; H.sab = null;
-    H.overInfo = { w, why, roles: P.map(p => p.role), alive: P.map(p => p.alive ? 1 : 0) };
+    H.overInfo = { w, why, roles: P.map(p => p.role), alive: P.map(p => p.alive ? 1 : 0), st: P.map(p => { let d = 0, t = 0; (p.tasks || []).forEach(k => k.steps.forEach(x => { t++; if (x.done) d++; })); return [p.kc || 0, p.role === 1 ? 0 : d, p.role === 1 ? 0 : t]; }) };
     all(Object.assign({ t: 'over' }, H.overInfo));
   };
   const checkWin = () => {
@@ -421,7 +421,7 @@ function makeHost(env, init) {
     b.alive = false; b.scan = 0;
     H.bodies.push({ i: vi, x: b.x, y: b.y });
     const kx = a.x, ky = a.y;
-    a.x = b.x; a.y = b.y; a.fix = 1; a.kcd = S.kcd; a.lastKill = H.t;
+    a.x = b.x; a.y = b.y; a.fix = 1; a.kcd = S.kcd; a.lastKill = H.t; a.kc = (a.kc || 0) + 1;
     out(vi, { t: 'ev', k: 'killed', by: ki, x: b.x, y: b.y });
     out(ki, { t: 'ev', k: 'kill', v: vi, x: b.x, y: b.y });
     P.forEach(q => {
@@ -2827,6 +2827,7 @@ function mountGame(root, api) {
       const imp = Math.min(L.S.imp, maxImp(L.roster.length));
       let rows = '';
       if (G.role === 'solo') rows += `<div class="au-row"><span>Players</span><div><button data-p="-1" ${lead ? '' : 'disabled'}>-</button><b>${L.size}</b><button data-p="1" ${lead ? '' : 'disabled'}>+</button></div></div>`;
+      if (G.role === 'solo') rows += `<div class="au-row"><span>Your role</span><div><button data-r="-1">-</button><b>${['Random', 'Crewmate', 'Impostor'][saved.role | 0]}</b><button data-r="1">+</button></div></div>`;
       else rows += `<div class="au-row"><span>Players</span><div><b>${L.roster.length}</b></div></div>`;
       SPEC.forEach(([k, label, opts, fmt]) => {
         const v = L.S[k];
@@ -2845,6 +2846,7 @@ function mountGame(root, api) {
     if (b.dataset.t != null) { L.tab = +b.dataset.t; renderLobby(); return; }
     if (b.dataset.c != null) { setMyColor(+b.dataset.c); return; }
     if (b.dataset.p) { L.size = clamp(L.size + +b.dataset.p, 4, 15); saved.np = L.size; save(); fillBots(); lobbyChanged(); return; }
+    if (b.dataset.r) { saved.role = clamp((saved.role | 0) + +b.dataset.r, 0, 2); save(); renderLobby(); return; }
     if (b.dataset.k) {
       const spec = SPEC.find(s => s[0] === b.dataset.k), opts = spec[2], i = opts.indexOf(L.S[spec[0]]), j = clamp(i + +b.dataset.d, 0, opts.length - 1);
       if (G.role === 'guest') api.net.send({ t: 'set', k: spec[0], v: opts[j] }); else { L.S[spec[0]] = opts[j]; saved.set = Object.assign({}, L.S); save(); lobbyChanged(); }
@@ -2999,7 +3001,7 @@ function mountGame(root, api) {
     if (!lg) return;
     const p = V.players[c.i];
     const d = h('div', 'cm' + (c.dead ? ' dead' : ''));
-    d.innerHTML = `<b style="color:${COLORS[p.color][1]}">${esc(p.name)}</b> ${esc(c.text)}`;
+    d.innerHTML = `<b style="color:${COLORS[p.color][1]};filter:brightness(${[1, 6, 8, 9, 12].includes(p.color) ? 2.2 : 1.05})">${esc(p.name)}</b> ${esc(c.text)}`;
     lg.append(d); lg.scrollTop = lg.scrollHeight;
   }
   function renderMeet() {
@@ -3107,7 +3109,12 @@ function mountGame(root, api) {
     if (G.role === 'solo' && win) { try { api.submit(saved.wins); } catch (e) {} }
     snd(win ? 'win' : (o.why === 'sabotage' ? 'boom' : 'lose'));
     const el = h('div', 'au-over ' + (win ? 'win' : 'lose'));
-    const rows = V.players.map(p => `<div class="r ${o.roles[p.i] ? 'imp' : ''} ${o.alive[p.i] ? '' : 'dead'}">${crewSvg(COLORS[p.color], 1)}<b>${esc(p.name)}</b><em>${o.roles[p.i] ? 'Impostor' : 'Crewmate'}</em></div>`).join('');
+    const ST = o.st || [];
+    const sc = i => { const q = ST[i] || [0, 0, 0]; return o.roles[i] ? q[0] * 10 + (o.alive[i] ? 3 : 0) : q[1] * 2 + (o.alive[i] ? 3 : 0) + (q[2] && q[1] === q[2] ? 4 : 0); };
+    const side = V.players.filter(p => (o.w === 'imp') === !!o.roles[p.i]);
+    const mvp = side.length ? side.reduce((a, p) => sc(p.i) > sc(a.i) ? p : a, side[0]) : null;
+    const line = i => { const q = ST[i]; if (!q) return ''; return o.roles[i] ? `${q[0]} kill${q[0] === 1 ? '' : 's'}` : `${q[1]}/${q[2]} tasks`; };
+    const rows = V.players.map(p => `<div class="r ${o.roles[p.i] ? 'imp' : ''} ${o.alive[p.i] ? '' : 'dead'}${mvp && mvp.i === p.i ? ' mvp' : ''}">${crewSvg(COLORS[p.color], 1)}<b>${esc(p.name)}</b><em>${o.roles[p.i] ? 'Impostor' : 'Crewmate'}${ST[p.i] ? ' · ' + line(p.i) : ''}${o.alive[p.i] ? '' : ' · out'}</em>${mvp && mvp.i === p.i ? '<i class="mv">MVP</i>' : ''}</div>`).join('');
     const lead = G.role === 'solo' || G.role === 'host' ? leaderIdx() === 0 : L.me === L.lead;
     el.innerHTML = `<div class="ot">${win ? 'VICTORY' : 'DEFEAT'}</div><div class="os">${REASON[o.why] || ''}</div><div class="au-orl">${rows}</div><div class="au-ob">${lead ? '<button class="au-bt" data-a="again">Play again</button>' : '<span class="wl">Waiting for the leader…</span>'}${G.role === 'host' ? '<button class="au-bt blue" data-a="party">Party lobby</button>' : ''}<button class="au-bt ghost" data-a="leave">Leave</button></div>`;
     showLayer('over', el);
@@ -3157,7 +3164,12 @@ function mountGame(root, api) {
       L.roster.forEach((r, i) => { if (i && r.id && !live.has(r.id)) { r.id = null; r.bot = 1; } });
     }
     G.ids = L.roster.map(r => r.id || null); G.meIdx = 0; G.inbox.length = 0;
-    G.H = makeHost(hostEnv, { players: L.roster.map(r => ({ id: r.id, name: r.name, color: r.color, bot: !!r.bot })), settings: L.S });
+    let forceImp = null;
+    if (G.role === 'solo' && saved.role) {
+      const n = L.roster.length, ni = Math.min(L.S.imp, maxImp(n)), others = shuffle(Array.from({ length: n - 1 }, (_, i) => i + 1));
+      forceImp = saved.role === 2 ? [0].concat(others.slice(0, ni - 1)) : others.slice(0, ni);
+    }
+    G.H = makeHost(hostEnv, { players: L.roster.map(r => ({ id: r.id, name: r.name, color: r.color, bot: !!r.bot })), settings: L.S, forceImp });
     flushInbox();
   }
 
@@ -3572,6 +3584,9 @@ $ .au-over .os{font-size:1.3em;opacity:.9}
 $ .au-orl{display:grid;grid-template-columns:repeat(auto-fit,minmax(11em,1fr));gap:.4em;width:min(52em,96%);max-height:46%;overflow:auto}
 $ .au-orl .r{display:flex;align-items:center;gap:.5em;padding:.3em .6em;border-radius:.7em;background:rgba(255,255,255,.07)}
 $ .au-orl .r svg{width:1.9em;height:auto}
+$ .au-orl .r{position:relative}
+$ .au-orl .r.mvp{background:rgba(250,204,21,.16);box-shadow:inset 0 0 0 2px rgba(250,204,21,.7)}
+$ .au-orl .r .mv{position:absolute;right:.5em;top:50%;transform:translateY(-50%);padding:.1em .45em;border-radius:.4em;background:#facc15;color:#1a1a1a;font-style:normal;font-weight:900;font-size:.72em;letter-spacing:.06em}
 $ .au-orl .r b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 $ .au-orl .r em{font-style:normal;font-size:.8em;opacity:.8}
 $ .au-orl .r.imp{background:rgba(255,75,58,.22)}

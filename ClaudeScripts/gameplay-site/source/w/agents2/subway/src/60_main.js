@@ -85,7 +85,8 @@
       const save = {
         v: 2, coins: loaded.coins | 0, keys: loaded.keys == null ? 2 : loaded.keys | 0, boards: loaded.boards == null ? 3 : loaded.boards | 0,
         upg: Object.assign({ jet: 0, sneak: 0, mag: 0, x2: 0 }, loaded.upg || {}), ms: loaded.ms && loaded.ms.lvl ? loaded.ms : { lvl: 1, base: [0, 0, 0], done: [false, false, false] },
-        chars: Array.isArray(loaded.chars) ? loaded.chars : ['jake'], char: loaded.char || 'jake', city: loaded.city | 0, runs: loaded.runs | 0, best: loaded.best | 0
+        chars: Array.isArray(loaded.chars) ? loaded.chars : ['jake'], char: loaded.char || 'jake', city: loaded.city | 0, runs: loaded.runs | 0, best: loaded.best | 0,
+        mode: MODES.find(m => m.id === loaded.mode) ? loaded.mode : 'classic', mbest: Object.assign({ rush: 0, chill: 0 }, loaded.mbest || {}), how: loaded.how ? 1 : 0, tot: Object.assign({ m: 0, coins: 0, jumps: 0 }, loaded.tot || {})
       };
       if (!CHARS.find(c => c.id === save.char)) save.char = 'jake';
       save.city = clamp(save.city, 0, CITIES.length - 1);
@@ -161,7 +162,7 @@
           const L = WG.side.L[kl], Rr = WG.side.R[kr];
           add(L.geo, atlasMat, z); if (L.fence) add(L.fence, fenceMat, z);
           add(Rr.geo, atlasMat, z); if (Rr.fence) add(Rr.fence, fenceMat, z);
-          if (((i % 3) + 3) % 3 === 1) { add(WG.gantry, atlasMat, z - 20); add(WG.gantryLamp, lampMat, z - 20); }
+          if (((i % 3) + 3) % 3 === 1) { add(WG.gantry, atlasMat, z - 20); add(WG.gantryLamp, lampMat, z - 20); arr[arr.length - 1].userData.g = arr[arr.length - 2].userData.g = 1; }
           add(WG.wires, atlasMat, z);
         }
         return arr;
@@ -248,13 +249,14 @@
       const gBlob = mkBlob(1.3), dBlob = mkBlob(0.9);
 
       let W = null, R = null, state = 'home', acc = 0, introT = 0, saveT = 0, overShown = false, hudScore = -1, hudCoins = -1, hudMult = -1, cullT = 0, tunK = 0, shake = 0;
-      let gd = 30, gx = 0, gy = 0, dgx = 0, homeT = 0, sprayT = 0, leanZ = 0, prevX = 0, airW = 0, bannerT = 0, bigT = 0, toastT = 0, hintI = 0, msnap = null, saveCost = 1, runKeys = 0, runBonus = 0;
+      let gd = 30, gx = 0, gy = 0, dgx = 0, homeT = 0, sprayT = 0, leanZ = 0, prevX = 0, airW = 0, bannerT = 0, bigT = 0, toastT = 0, hintI = 0, msnap = null, saveCost = 1, runKeys = 0, runBonus = 0, runT = 0, rollT = 9, rollSc = 0;
       const camP = new THREE.Vector3(), camL = new THREE.Vector3(), tmpP = new THREE.Vector3(), tmpL = new THREE.Vector3();
       let camY = 0, noBlink = false;
 
       function resetWorld() {
         clearObsMeshes();
         W = newWorld(); R = newRun();
+        const md = modeOf(); R.vk = md.vk; R.vs = md.vs; R.t0 = md.t0; R.mb = md.mb; R.speed = speedAt(R.t0) * md.vs;
         addTrain(W, 0, -16, 3, 0);
         W.genS = 36;
         clearChunks();
@@ -263,11 +265,16 @@
         msnap = Object.assign({}, R.st);
       }
 
+      const modeOf = () => MODES.find(m => m.id === save.mode) || MODES[0];
+      const bestOf = id => id === 'classic' ? save.best : save.mbest[id] | 0;
       function hudBoards() { E.hbn.textContent = save.boards; E.hb.classList.toggle('none', save.boards <= 0); }
       function refreshHome() {
         E.hbest.textContent = fmt(save.best); E.hcoins.textContent = fmt(save.coins); E.hkeys.textContent = save.keys; E.hboards.textContent = save.boards;
         E.hmult.textContent = 'x' + save.ms.lvl;
         const c = CITIES[save.city]; E.tname.textContent = c.name; E.tsub.textContent = c.sub;
+        E.hbest.textContent = fmt(bestOf(save.mode));
+        q('.ss-modes').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.m === save.mode); b.querySelector('small').textContent = fmt(bestOf(b.dataset.m)); });
+        q('.ss-msub').textContent = modeOf().sub;
       }
       function show(el, on) { el.classList.toggle('on', !!on); }
       function toHome() {
@@ -282,15 +289,16 @@
       }
       function startRun() {
         if (state !== 'home') return;
+        if (!save.how) { save.how = 1; persist(); openPanel('how'); return; }
         au.unlock(); au.play('ui');
         show(E.home, 0); show(E.panel, 0);
         E.hud.classList.remove('off');
         state = 'intro'; introT = 0; R.chase = CFG.START_CHASE; gd = 4.2; gx = 0; au.play('whistle');
-        hudScore = hudCoins = hudMult = -1; runKeys = 0; runBonus = 0; saveCost = 1;
+        hudScore = hudCoins = hudMult = -1; runKeys = 0; runBonus = 0; saveCost = 1; runT = 0;
         hudBoards(); updPU(true);
         hintI = save.runs < 3 ? 0 : 99; E.hint.classList.remove('on');
         au.music(true);
-        if (window.Ameplay && Ameplay.analytics) try { Ameplay.analytics.track('subway_start', { city: CITIES[save.city].id }); } catch (e) {}
+        if (window.Ameplay && Ameplay.analytics) try { Ameplay.analytics.track('subway_start', { city: CITIES[save.city].id, mode: save.mode }); } catch (e) {}
       }
       function playAgain() { show(E.over, 0); toHome(); startRun(); }
 
@@ -426,16 +434,20 @@
         const sc = Math.floor(R.score);
         bankMissions();
         save.coins += R.coins; save.runs++;
-        const isBest = sc > save.best; if (isBest) save.best = sc;
+        const md = modeOf(), isBest = sc > bestOf(md.id);
+        if (isBest) { if (md.id === 'classic') save.best = sc; else save.mbest[md.id] = sc; }
+        save.tot.m += Math.round(R.s); save.tot.coins += R.coins; save.tot.jumps += R.st.jump;
         persist();
-        api.score(sc); api.submit(sc);
-        q('.o-title').textContent = R.dead === 'caught' ? 'Caught!' : 'Crashed!';
+        api.score(sc); if (md.id === 'classic') api.submit(sc);
+        q('.o-title').textContent = (R.dead === 'caught' ? 'Caught!' : R.dead === 'quit' ? 'Run over' : 'Crashed!') + (md.id === 'classic' ? '' : ' \u00b7 ' + md.name);
+        const mm = Math.floor(runT / 60), ss = Math.floor(runT % 60);
+        q('.o-st').innerHTML = [['DISTANCE', fmt(R.s) + ' m'], ['TIME', mm + ':' + String(ss).padStart(2, '0')], ['JUMPS / ROLLS', R.st.jump + ' / ' + R.st.roll], ['POWER-UPS', R.st.pu]].map(a => `<div><small>${a[0]}</small><b>${a[1]}</b></div>`).join('');
         q('.o-new').innerHTML = isBest && sc > 0 ? '<span class="ss-new">NEW HIGH SCORE!</span>' : '';
-        q('.o-score').textContent = fmt(sc); q('.o-best').textContent = fmt(save.best); q('.o-coins').textContent = fmt(R.coins + runBonus);
+        q('.o-score').textContent = '0'; rollT = 0; rollSc = sc; q('.o-best').textContent = fmt(bestOf(md.id)); q('.o-coins').textContent = fmt(R.coins + runBonus);
         q('.o-ms').innerHTML = missionRows();
         show(E.over, 1);
         E.hud.classList.add('off');
-        if (window.Ameplay && Ameplay.analytics) try { Ameplay.analytics.track('subway_over', { score: sc, coins: R.coins, city: CITIES[save.city].id, t: Math.round(R.t) }); } catch (e) {}
+        if (window.Ameplay && Ameplay.analytics) try { Ameplay.analytics.track('subway_over', { score: sc, coins: R.coins, city: CITIES[save.city].id, mode: md.id, t: Math.round(runT) }); } catch (e) {}
       }
       function pause() {
         if (state !== 'run' && state !== 'intro') return;
@@ -455,7 +467,7 @@
         const k = panelKind;
         if (k === 'missions') {
           E.ptitle.textContent = 'Missions';
-          E.pbody.innerHTML = `<div class="ss-multi">Score multiplier <b>x${save.ms.lvl}</b></div><div class="ss-list">${missionRows()}</div><p class="ss-small">Complete all three missions to raise your multiplier by +1 (up to x30) and win coins.</p>`;
+          E.pbody.innerHTML = `<div class="ss-multi">Score multiplier <b>x${save.ms.lvl}</b></div><div class="ss-list">${missionRows()}</div><p class="ss-small">Complete all three missions to raise your multiplier by +1 (up to x30) and win coins.</p><p class="ss-small">${fmt(save.runs)} runs · ${fmt(save.tot.m)} m run · ${fmt(save.tot.coins)} coins collected · ${fmt(save.tot.jumps)} jumps</p>`;
         } else if (k === 'shop') {
           E.ptitle.textContent = 'Shop';
           let body = `<div class="ss-tabs"><button data-tab="up" class="${shopTab === 'up' ? 'on' : ''}">Upgrades</button><button data-tab="it" class="${shopTab === 'it' ? 'on' : ''}">Items</button></div><div class="ss-multi">${ic('coin')}<b>${fmt(save.coins)}</b></div><div class="ss-list">`;
@@ -474,6 +486,10 @@
           E.ptitle.textContent = 'Surfers';
           E.pbody.innerHTML = `<div class="ss-multi">${ic('coin')}<b>${fmt(save.coins)}</b></div><div class="ss-chars">${CHARS.map(c => { const own = save.chars.includes(c.id), sel = save.char === c.id; return `<div class="ss-char${sel ? ' sel' : ''}" data-c="${c.id}"><span class="av"></span><b>${c.name}</b>${sel ? '<button class="ss-btn dis">Selected</button>' : own ? `<button class="ss-btn" data-sel="${c.id}">Select</button>` : `<button class="ss-btn g${save.coins < c.price ? ' dis' : ''}" data-unl="${c.id}">${ic('coin')}${fmt(c.price)}</button>`}</div>`; }).join('')}</div>`;
           E.pbody.querySelectorAll('.ss-char').forEach(el => el.querySelector('.av').replaceWith(avatar(CHARS.find(c => c.id === el.dataset.c))));
+        } else if (k === 'how') {
+          E.ptitle.textContent = 'How to play';
+          const S = COARSE ? [['Switch lanes', 'Swipe left or right'], ['Jump and roll', 'Swipe up to jump over, down to roll under'], ['Power-ups', 'Grab coins, Magnet, Jetpack, 2X and Super Sneakers'], ['Hoverboard', 'Double tap: it saves you from one crash']] : [['Switch lanes', '\u2190 \u2192 or A / D'], ['Jump and roll', '\u2191 / W to jump, \u2193 / S to roll'], ['Power-ups', 'Grab coins, Magnet, Jetpack, 2X and Super Sneakers'], ['Hoverboard', 'Space: it saves you from one crash']];
+          E.pbody.innerHTML = `<div class="ss-how">${S.map((s, i) => `<div class="ss-step"><i>${i + 1}</i>${howSvg[i]}<b>${s[0]}</b><small>${s[1]}</small></div>`).join('')}</div><p class="ss-small">Trains hurt. Ramps take you onto the roofs. Stumble twice and the guard catches you; keys buy a second chance. ${COARSE ? 'The pause button' : 'P or Esc'} pauses.</p><button class="ss-btn g ss-howgo" data-go="1">${ic('play')}${state === 'pause' ? 'Resume' : 'Let\u2019s go!'}</button>`;
         }
       }
       function buy(what) {
@@ -492,13 +508,18 @@
       }
       api.on(E.panel, 'click', e => {
         const t = e.target.closest('button');
-        if (e.target === E.panel || (t && t.classList.contains('x'))) { show(E.panel, 0); au.play('ui'); return; }
+        if (e.target === E.panel || (t && t.classList.contains('x'))) { closePanel(); au.play('ui'); return; }
         if (!t) return;
+        if (t.dataset.go) { show(E.panel, 0); if (state === 'pause') resume(); else startRun(); return; }
         if (t.dataset.tab) { shopTab = t.dataset.tab; au.play('ui'); renderPanel(); }
         else if (t.dataset.buy) buy(t.dataset.buy);
         else if (t.dataset.sel) { save.char = t.dataset.sel; persist(); buildHero(); au.play('ui'); renderPanel(); }
         else if (t.dataset.unl) { const c = CHARS.find(x => x.id === t.dataset.unl); if (c && save.coins >= c.price) { save.coins -= c.price; save.chars.push(c.id); save.char = c.id; persist(); buildHero(); au.play('buy'); renderPanel(); refreshHome(); } }
       });
+      function closePanel() { show(E.panel, 0); if (state === 'pause') show(E.pausep, 1); }
+      const setMode = id => { if (!MODES.find(m => m.id === id) || save.mode === id) return; save.mode = id; persist(); au.unlock(); au.play('ui'); resetWorld(); refreshHome(); };
+      api.on(q('.ss-modes'), 'click', e => { const b = e.target.closest('[data-m]'); if (b) setMode(b.dataset.m); });
+      api.on(q('.pz-how'), 'click', () => { show(E.pausep, 0); openPanel('how'); });
       api.on(q('.ss-menu'), 'click', e => { const b = e.target.closest('[data-o]'); if (b) openPanel(b.dataset.o); });
       const city = d => { save.city = (save.city + d + CITIES.length) % CITIES.length; persist(); au.unlock(); au.play('ui'); buildCity(save.city); resetWorld(); refreshHome(); };
       api.on(q('.t-prev'), 'click', () => city(-1));
@@ -525,11 +546,12 @@
           else if (k === 'Space') { e.preventDefault(); if (!e.repeat) useBoard(); }
           else if (k === 'KeyP') pause();
         } else if (state === 'home') {
-          if (E.panel.classList.contains('on')) { if (k === 'Escape') show(E.panel, 0); return; }
+          if (E.panel.classList.contains('on')) { if (k === 'Escape') show(E.panel, 0); else if (panelKind === 'how' && (k === 'Space' || k === 'Enter')) { e.preventDefault(); show(E.panel, 0); startRun(); } return; }
+          if (k === 'KeyM') { const i = MODES.findIndex(m => m.id === save.mode); setMode(MODES[(i + 1) % MODES.length].id); return; }
           if (k === 'Space' || k === 'Enter' || k === 'ArrowUp' || k === 'KeyW') { e.preventDefault(); startRun(); }
           else if (k === 'ArrowLeft') city(-1); else if (k === 'ArrowRight') city(1);
         } else if (state === 'over') { if (k === 'Space' || k === 'Enter') { e.preventDefault(); playAgain(); } }
-        else if (state === 'pause') { if (k === 'KeyP' || k === 'Space' || k === 'Enter') { e.preventDefault(); resume(); } }
+        else if (state === 'pause') { if (E.panel.classList.contains('on')) { if (k === 'Escape') closePanel(); else if (k === 'KeyP' || k === 'Space' || k === 'Enter') { e.preventDefault(); show(E.panel, 0); resume(); } return; } if (k === 'KeyP' || k === 'Space' || k === 'Enter') { e.preventDefault(); resume(); } }
         else if (state === 'save') { if (k === 'Space' || k === 'Enter') { e.preventDefault(); useSave(); } }
       });
       let pd = null, lastTap = 0, lastTapX = 0, lastTapY = 0;
@@ -664,10 +686,10 @@
       }
 
       function camRun(out, look, dt) {
-        const tun = inTunnel(W, R.s + 2);
+        const back = portrait ? 7.2 : 6.2, tun = inTunnel(W, R.s + 2) || inTunnel(W, R.s - back - 1);
         const sp0 = supportAt(W, laneOf(R.x), R.s), yT = R.jet > 0 || R.grounded ? R.y : lerp(sp0, R.y, 0.6);
         camY = damp(camY, yT, R.jet > 0 ? 3 : 6, dt);
-        const base = portrait ? 6.7 : 5.8, back = portrait ? 7.2 : 6.2;
+        const base = portrait ? 6.7 : 5.8;
         let cy = base + camY * 0.9;
         if (tun) cy = Math.min(cy, 8.6);
         out.set(R.x * 0.62, cy, -R.s + back);
@@ -717,6 +739,7 @@
           acc += dt;
           let n = 0;
           const ctx = { mult: save.ms.lvl };
+          if (!R.dead) runT += dt;
           if (R.dead) { step(W, R, dt, ctx); acc = 0; }
           else while (acc >= CFG.STEP && n++ < 10) { step(W, R, CFG.STEP, ctx); acc -= CFG.STEP; if (R.dead) break; }
           if (n >= 10) acc = 0;
@@ -737,7 +760,7 @@
           const f = clamp(saveT / 4.5, 0, 1);
           E.sarc.style.strokeDashoffset = (276.5 * f).toFixed(1);
           if (f >= 1) gameOver();
-        } else if (state === 'over') step(W, R, dt, { mult: 1 });
+        } else if (state === 'over') { step(W, R, dt, { mult: 1 }); if (rollT < 0.9) { rollT += dt; q('.o-score').textContent = fmt(rollSc * ease(clamp(rollT / 0.9, 0, 1))); } }
         else if (state === 'home') homeT += dt;
         syncWorld(dt, t);
         syncHero(dt, t);
@@ -759,6 +782,7 @@
         cam.position.copy(camP);
         if (shake > 0) { shake = Math.max(0, shake - dt); cam.position.x += (Math.random() - 0.5) * shake * 0.6; cam.position.y += (Math.random() - 0.5) * shake * 0.6; }
         cam.lookAt(camL);
+        for (const arr of chunks.values()) for (const m of arr) if (m.userData.g) { const dz = cam.position.z - m.position.z; m.visible = !(dz > -0.6 && dz < 2 && cam.position.y > 5.2 && cam.position.y < 7.8); }
         skyPlane.position.set(cam.position.x * 0.9, 52, cam.position.z - 340);
         sunSprite.position.set(cam.position.x - 120, 150, cam.position.z - 330);
         sun.position.set(cam.position.x - 20, 40, cam.position.z + 25); sun.target.position.set(cam.position.x, 0, cam.position.z - 10);

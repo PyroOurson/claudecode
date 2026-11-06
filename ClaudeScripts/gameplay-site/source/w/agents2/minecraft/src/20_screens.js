@@ -45,7 +45,7 @@
       button(GW / 2 - 100, by + step, 200, 20, 'Multiplayer', () => { scr = 'mp'; FIELDV.uname = FIELDV.uname || (validName(loadProfile().username) ? loadProfile().username : ''); });
       button(GW / 2 - 100, by + step * 2 + 12, 98, 20, 'Options...', () => { optBack = 'title'; scr = 'options'; });
       button(GW / 2 + 2, by + step * 2 + 12, 98, 20, 'Quit Game', () => { location.hash = '#/'; });
-      text('Minecraft 26.3', 2, GH - 10, '#ffffff');
+      text('Blockcraft 26.3', 2, GH - 10, '#ffffff');
     }
     function goWorlds() { scr = 'worlds'; selWorld = -1; wScroll = 0; worldsLoaded = false; listWorlds().then(l => { worldsMeta = l; worldsLoaded = true; if (l.length) selWorld = 0; }); }
     function drawWorlds() {
@@ -207,12 +207,14 @@
     }
     function drawPause() {
       g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(0, 0, GW, GH);
-      const step = touch ? 28 : 24, host = NET.role === 'host', guest = NET.role === 'guest', n = NET.role ? 5 : 4, y = Math.max(22, Math.min(GH / 4 + 8 | 0, GH - n * step - 4));
+      const step = touch ? 28 : 24, host = NET.role === 'host', guest = NET.role === 'guest', n = NET.role ? 6 : 5, y = Math.max(22, Math.min(GH / 4 + 8 | 0, GH - n * step - 4));
       textC('Game Menu', GW / 2, Math.max(8, Math.min(40, y - 26)), '#ffffff');
       let r = y;
       button(GW / 2 - 102, r, 204, 20, 'Back to Game', () => closeGui()); r += step;
       button(GW / 2 - 102, r, 98, 20, 'Advancements', () => { gui = 'adv'; });
       button(GW / 2 + 4, r, 98, 20, 'Statistics', () => { gui = 'stats'; statScroll = 0; }); r += step;
+      button(GW / 2 - 102, r, 98, 20, 'How to Play', () => { openHelp('pause'); });
+      button(GW / 2 + 4, r, 98, 20, 'Goals: ' + (SV.goalsOff ? 'OFF' : 'ON'), () => { SV.goalsOff = !SV.goalsOff; api.save(SV); }); r += step;
       if (NET.role) { button(GW / 2 - 102, r, 204, 20, 'Player List (' + playersList().length + ')', () => { gui = 'plist'; }); r += step; }
       button(GW / 2 - 102, r, 98, 20, 'Options...', () => { gui = 'options'; });
       button(GW / 2 + 4, r, 98, 20, host ? ['Invite Players', 'Invite'] : 'Open to LAN', () => { openToLan(); }, !guest); r += step;
@@ -232,9 +234,12 @@
       textC(W.hardcore ? 'Game Over!' : 'You Died!', GW / 2, ty, '#ffffff', true, 2);
       if (P.deathMsg) textC(P.deathMsg, GW / 2, ty + 25, '#ffffff');
       text('Score: ', GW / 2 - tw('Score: ' + sc) / 2, ty + 40, '#ffffff'); text(sc, GW / 2 - tw('Score: ' + sc) / 2 + tw('Score: '), ty + 40, '#ffff55');
-      const en = deadT > 20, y = Math.max(ty + 56, Math.min(GH / 4 + 72 | 0, GH - 50));
+      const life = 'Survived ' + fmtTime(P.lifeAtDeath || 0) + (goalsOn() ? '   Goals ' + Math.min(P.goal || 0, GOALS.length) + '/' + GOALS.length : '') + '   Mined ' + ((P.st && P.st.mined) || 0);
+      textC(life, GW / 2, ty + 52, '#d8b0b0');
+      const en = deadT > 20, y = Math.max(ty + 68, Math.min(GH / 4 + 72 | 0, GH - 50));
       if (W.hardcore) button(GW / 2 - 100, y, 200, 20, 'Spectate World', () => { respawn(); }, en);
       else button(GW / 2 - 100, y, 200, 20, 'Respawn', () => { respawn(); }, en);
+      if (en && !W.hardcore && !touch) textC('Space to respawn', GW / 2, y + 50, '#b08080', false);
       button(GW / 2 - 100, y + 24, 200, 20, NET.role === 'guest' ? 'Disconnect' : 'Title Screen', () => { quitToTitle(); }, en);
     }
     function drawScreen(now) {
@@ -258,6 +263,7 @@
       else if (gui === 'plist') drawPList();
       else if (gui === 'stats') drawStats();
       else if (gui === 'adv') drawAdv();
+      else if (gui === 'help') drawHelp();
       else if (gui === 'dead') drawDead();
       else if (gui === 'sign') drawSign();
       else if (INVG.has(gui)) drawInv(now);

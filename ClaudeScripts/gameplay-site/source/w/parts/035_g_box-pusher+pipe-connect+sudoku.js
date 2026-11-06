@@ -733,7 +733,7 @@
     better: 'high',
     width: 640,
     blurb: 'Spin the pipes until water flows from the tank to every drain.',
-    help: 'Click or tap a tile to rotate · right-click, or flip the Turn button, to turn the other way · <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> + <kbd>Space</kbd> / <kbd>Q</kbd>',
+    help: 'Click or tap a tile to rotate · right-click, or flip the Turn button, to turn the other way · <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> + <kbd>Space</kbd> / <kbd>Q</kbd> · <kbd>H</kbd> or the Hint button fixes one pipe',
     icon: ICON('<path d="M6 22h16a10 10 0 0 1 10 10v26"/><path d="M6 34h10"/><path d="M44 6v14a8 8 0 0 0 8 8h6"/><path d="M48 38c-4 6-6 9-6 12a6 6 0 0 0 12 0c0-3-2-6-6-12z"/>'),
     css: `
 .gm-pipe-connect{gap:14px}
@@ -750,7 +750,7 @@
       const saved = api.load() || {};
       let level = Number.isInteger(saved.level) && saved.level >= 1 ? saved.level : 1;
       let solvedCount = Number.isInteger(saved.solved) && saved.solved >= 0 ? saved.solved : 0;
-      const bar = el('div', 'bar', `<div class="g-hud">${stat('Level', level, 'lv')}${stat('Time', '0:00', 'tm')}${stat('Moves', 0, 'mv')}</div><div class="g-row" style="gap:8px"><button type="button" class="g-btn ghost sm dir" data-a="dir" aria-label="Turn direction" title="Tap direction (right-click turns back)"></button><button type="button" class="g-btn ghost sm" data-a="new">${I_DICE}New</button></div>`);
+      const bar = el('div', 'bar', `<div class="g-hud">${stat('Level', level, 'lv')}${stat('Time', '0:00', 'tm')}${stat('Moves', 0, 'mv')}</div><div class="g-row" style="gap:8px"><button type="button" class="g-btn ghost sm dir" data-a="dir" aria-label="Turn direction" title="Tap direction (right-click turns back)"></button><button type="button" class="g-btn ghost sm" data-a="hint">${I_BULB}Hint</button><button type="button" class="g-btn ghost sm" data-a="new">${I_DICE}New</button></div>`);
       root.append(bar);
       const { canvas, ctx, w: W, h: H, toLocal } = api.canvas(480, 480);
       const lvV = bar.querySelector('.lv .v'), tmV = bar.querySelector('.tm .v'), mvV = bar.querySelector('.mv .v');
@@ -790,11 +790,21 @@
         flowF = -.35; maxD = 0;
         for (let i = 0; i < n * n; i++) maxD = Math.max(maxD, flow.dist[i]);
       }
+      function hint() {
+        if (won) return;
+        const wrong = [];
+        for (let i = 0; i < n * n; i++) if (cur[i] !== base[i]) wrong.push(i);
+        if (!wrong.length) return;
+        const i = wrong[(Math.random() * wrong.length) | 0];
+        for (let k = 0; k < 4 && !won && cur[i] !== base[i]; k++) rotate(i, 1);
+        kb = true; cx = i % n; cy = (i / n) | 0;
+        fx.burst(PAD + (cx + .5) * T, PAD + (cy + .5) * T, 10, ['#ffe066', '#94cdf2']);
+      }
       const dirBtn = bar.querySelector('[data-a="dir"]');
       let back = false;
       const paintDir = () => { dirBtn.innerHTML = back ? `${I_CCW}Turn left` : `${I_CW}Turn right`; dirBtn.classList.toggle('on', back); };
       paintDir();
-      press(api, bar, '[data-a]', b => { if (b === dirBtn) { back = !back; paintDir(); api.sfx('tick'); } else if (!won) newLevel(); });
+      press(api, bar, '[data-a]', b => { if (b === dirBtn) { back = !back; paintDir(); api.sfx('tick'); } else if (b.dataset.a === 'hint') hint(); else if (!won) newLevel(); });
 
       api.on(canvas, 'contextmenu', e => e.preventDefault());
       const cellAt = e => { const p = toLocal(e), x = Math.floor((p.x - PAD) / T), y = Math.floor((p.y - PAD) / T); return x < 0 || y < 0 || x >= n || y >= n ? -1 : y * n + x; };
@@ -813,6 +823,7 @@
         if (d !== undefined) { e.preventDefault(); kb = true; cx = Math.max(0, Math.min(n - 1, cx + DX[d])); cy = Math.max(0, Math.min(n - 1, cy + DY[d])); api.sfx('tick'); return; }
         if (e.code === 'Space' || e.code === 'KeyE' || e.code === 'Enter') { e.preventDefault(); kb = true; rotate(cy * n + cx, 1); }
         else if (e.code === 'KeyQ') { e.preventDefault(); kb = true; rotate(cy * n + cx, -1); }
+        else if (e.code === 'KeyH') { e.preventDefault(); hint(); }
       });
 
       const arms = (m, len) => { ctx.beginPath(); for (let d = 0; d < 4; d++) if (m & (1 << d)) { ctx.moveTo(0, 0); ctx.lineTo(DX[d] * len, DY[d] * len); } };

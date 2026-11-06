@@ -85,9 +85,9 @@
 
   const CHARS = [
     { id: 'jake', name: 'Jake', price: 0, skin: '#e9b48a', hair: '#5a3420', hat: 'cap', hatA: '#d8322c', hatB: '#ffd23f', top: '#efebe2', vest: '#7fb2e5', under: '#9ea4ab', pants: '#79a6dc', shoeA: '#f2f2f2', shoeB: '#5cc43a', extra: '', hood: '#a7abb2', scarf: '#d8322c' },
-    { id: 'tricky', name: 'Tricky', price: 6000, skin: '#f4c7a0', hair: '#e2541f', hat: 'beanie', hatA: '#d8322c', hatB: '#ffffff', top: '#2f6fd9', vest: '', under: '#ffffff', pants: '#3a3f5a', shoeA: '#ffffff', shoeB: '#d8322c', extra: 'pony' },
-    { id: 'fresh', name: 'Fresh', price: 12000, skin: '#8a5a3c', hair: '#1f1814', hat: 'beanie', hatA: '#3a3f4a', hatB: '#ffd23f', top: '#ff9a2a', vest: '', under: '#ffffff', pants: '#2f3f5f', shoeA: '#f4f4f4', shoeB: '#2f2f3a', extra: 'phones' },
-    { id: 'yutani', name: 'Yutani', price: 20000, skin: '#f0c49c', hair: '#2a1d16', hat: 'alien', hatA: '#6fd25a', hatB: '#ffffff', top: '#a95ad9', vest: '', under: '#ffd23f', pants: '#2a2f45', shoeA: '#ffd23f', shoeB: '#a95ad9', extra: '' }
+    { id: 'tricky', name: 'Tricky', price: 2500, skin: '#f4c7a0', hair: '#e2541f', hat: 'beanie', hatA: '#d8322c', hatB: '#ffffff', top: '#2f6fd9', vest: '', under: '#ffffff', pants: '#3a3f5a', shoeA: '#ffffff', shoeB: '#d8322c', extra: 'pony' },
+    { id: 'fresh', name: 'Fresh', price: 6000, skin: '#8a5a3c', hair: '#1f1814', hat: 'beanie', hatA: '#3a3f4a', hatB: '#ffd23f', top: '#ff9a2a', vest: '', under: '#ffffff', pants: '#2f3f5f', shoeA: '#f4f4f4', shoeB: '#2f2f3a', extra: 'phones' },
+    { id: 'yutani', name: 'Yutani', price: 12000, skin: '#f0c49c', hair: '#2a1d16', hat: 'alien', hatA: '#6fd25a', hatB: '#ffffff', top: '#a95ad9', vest: '', under: '#ffd23f', pants: '#2a2f45', shoeA: '#ffd23f', shoeB: '#a95ad9', extra: '' }
   ];
 
   const PU = {
@@ -96,6 +96,11 @@
     mag: { name: 'Coin Magnet', col: '#e8343a' },
     x2: { name: '2X Multiplier', col: '#ffc21a' }
   };
+  const MODES = [
+    { id: 'classic', name: 'Classic', sub: 'Speed builds up the longer you run', vk: 1, vs: 1, t0: 0, mb: 0 },
+    { id: 'rush', name: 'Rush', sub: 'Starts fast, ramps quicker, +1 score multiplier', vk: 1.6, vs: 1, t0: 75, mb: 1 },
+    { id: 'chill', name: 'Chill', sub: 'Slower trains and a gentle ramp to learn', vk: 0.4, vs: 0.82, t0: 0, mb: 0 }
+  ];
   const UPG_COST = [300, 800, 1600, 3200, 6400];
   const puDur = lvl => 10 + lvl * 4;
 
@@ -1409,7 +1414,7 @@
   function newRun() {
     return {
       s: 0, x: 0, lane: 1, xFrom: 0, lt: 1, ldir: 0, y: 0, vy: 0, g: 1, grounded: true, coyote: 0, jumpBuf: 0,
-      rollT: 0, rollD: 1, h: CFG.H_STAND, t: 0, speed: CFG.V0, score: 0, coins: 0, keys: 0, mult: 1,
+      rollT: 0, rollD: 1, h: CFG.H_STAND, t: 0, vk: 1, vs: 1, t0: 0, mb: 0, speed: CFG.V0, score: 0, coins: 0, keys: 0, mult: 1,
       x2: 0, jet: 0, jetD: 1, sneak: 0, sneakD: 1, mag: 0, magD: 1, x2D: 1, board: 0, ghost: 0, stumbleT: 0, chase: CFG.START_CHASE,
       dead: '', deadT: 0, revives: 0, warm: true, landT: 0, jumpT: 0, ev: [], hitObs: null,
       st: { jump: 0, roll: 0, pu: 0, jet: 0, magCoins: 0, board: 0, bump: 0, dodge: 0, roof: 0, sneakJump: 0, mbox: 0, stumble: 0, coinsRun: 0 }
@@ -1662,7 +1667,7 @@
   function step(W, R, dt, ctx) {
     if (R.dead) { R.deadT += dt; R.speed = damp(R.speed, 0, 9, dt); return; }
     R.t += dt;
-    R.speed = speedAt(R.t);
+    R.speed = speedAt(R.t * R.vk + R.t0) * R.vs;
     const ps = R.s;
     R.s += R.speed * dt;
     if (R.lt < 1) { R.lt = Math.min(1, R.lt + dt / CFG.LANE_T); }
@@ -1709,7 +1714,7 @@
         if (o.act) { o.s0 -= o.v * dt; o.s1 = o.s0 + o.len; }
       } else o.ps0 = o.s0;
     }
-    R.mult = ctx.mult * (R.x2 > 0 ? 2 : 1);
+    R.mult = (ctx.mult + R.mb) * (R.x2 > 0 ? 2 : 1);
     R.score += R.speed * dt * CFG.SCORE_K * R.mult;
     if (R.jet > 0) return;
     for (const o of W.obs) {
@@ -1783,7 +1788,7 @@
 
   function revive(W, R) {
     R.dead = ''; R.deadT = 0; R.ghost = CFG.REVIVE_GHOST; R.chase = 0; R.stumbleT = 0; R.revives++;
-    R.t = Math.max(0, R.t * 0.9); R.speed = speedAt(R.t);
+    R.t = Math.max(0, R.t * 0.9); R.speed = speedAt(R.t * R.vk + R.t0) * R.vs;
     R.vy = 0; R.lt = 1; R.x = LX(R.lane); R.xFrom = R.x;
     for (const o of W.obs) {
       if (o.s1 > R.s - 3 && o.s0 < R.s + 45) o.done = true;
@@ -1939,6 +1944,35 @@ ${SC} .ss-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
 ${SC} .ss-ring .k{position:absolute;inset:0;display:grid;place-items:center}
 ${SC} .ss-ring .k .ss-ic{width:3.6em;height:3.6em}
 ${SC} .ss-small{font-family:"Nunito",system-ui,sans-serif;font-weight:800;font-size:.9em;opacity:.9;letter-spacing:0;margin:.4em 0 0}
+${SC} .ss-modes{display:flex;gap:.25em;background:rgba(18,34,74,.6);border:.13em solid rgba(255,255,255,.9);border-radius:1.4em;padding:.22em;box-shadow:0 .2em 0 rgba(18,34,74,.5)}
+${SC} .ss-modes button{padding:.38em .85em .3em;border-radius:1.1em;font-size:1.1em;${OUT};transition:background .15s,transform .08s}
+${SC} .ss-modes button:active{transform:scale(.95)}
+${SC} .ss-modes button.on{background:linear-gradient(#ffe25a,#ffaa1a);color:#7a3a00;text-shadow:0 .06em 0 rgba(255,255,255,.6)}
+${SC} .ss-modes button small{display:block;font-size:.6em;margin-top:.2em;opacity:.92;font-variant-numeric:tabular-nums}
+${SC} .ss-msub{font-size:.95em;${OUT};opacity:.95;margin-top:-.45em}
+${SC} .ss-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.35em;margin:0 0 .6em}
+${SC} .ss-stats div{background:rgba(75,99,133,.14);border:.12em solid rgba(51,70,95,.35);border-radius:.5em;padding:.4em .2em .32em;color:#1d3f73}
+${SC} .ss-stats small{display:block;font-family:"Nunito",system-ui,sans-serif;font-weight:800;font-size:.68em;letter-spacing:0;opacity:.8;margin-bottom:.2em}
+${SC} .ss-stats b{font-weight:400;font-size:1.2em;font-variant-numeric:tabular-nums}
+${SC} .ss-how{display:grid;grid-template-columns:repeat(4,1fr);gap:.45em;text-align:center}
+@container (max-width: 640px){${SC} .ss-how{grid-template-columns:repeat(2,1fr)}}
+${SC} .ss-panel .ss-card:has(.ss-how){width:min(96%,44em)}
+${SC} .ss-over .ss-card{padding-bottom:.9em}
+${SC} .ss-over .ss-res{margin:.1em 0 .45em}
+${SC} .ss-over .ss-res div{padding:.42em .3em}
+${SC} .ss-over .ss-stats{margin-bottom:.45em}
+${SC} .ss-over .ss-stats div{padding:.26em .2em .2em}
+${SC} .ss-over .ss-new{margin-bottom:.15em}
+${SC} .ss-over .ss-res b{font-size:1.45em}
+${SC} .ss-over .ss-res .big b{font-size:1.75em}
+${SC} .ss-over .ss-prog{height:.45em;margin-top:.25em}
+${SC} .ss-over .ss-row{padding:.25em .55em}
+${SC} .ss-step{position:relative;background:linear-gradient(#7189a8,#4b6385);border:.12em solid #33465f;border-radius:.6em;padding:.45em .45em .55em;display:flex;flex-direction:column;align-items:center;gap:.3em;box-shadow:inset 0 .12em 0 rgba(255,255,255,.25)}
+${SC} .ss-step svg{width:100%;height:auto;border-radius:.4em;display:block}
+${SC} .ss-step b{color:#ffd23f;${OUT};font-weight:400;font-size:1.05em}
+${SC} .ss-step small{font-family:"Nunito",system-ui,sans-serif;font-weight:800;font-size:.78em;letter-spacing:0;line-height:1.2}
+${SC} .ss-step i{position:absolute;left:.35em;top:.3em;width:1.5em;height:1.5em;border-radius:50%;display:grid;place-items:center;font-style:normal;background:#ffd23f;color:#7a3a00;border:.1em solid #fff;font-size:.85em;z-index:1}
+${SC} .ss-howgo{margin-top:.7em}
 ${SC} .ss-toast{position:absolute;left:50%;bottom:22%;transform:translateX(-50%);background:rgba(18,34,74,.75);border:.13em solid #fff;border-radius:1em;padding:.5em .9em .4em;font-size:1.1em;opacity:0;transition:opacity .25s;white-space:nowrap;${OUT}}
 ${SC} .ss-toast.on{opacity:1}
 ${SC} .ss-card{background:repeating-linear-gradient(0deg,rgba(70,100,140,.09) 0 1px,transparent 1px 1.3em),repeating-linear-gradient(90deg,rgba(70,100,140,.09) 0 1px,transparent 1px 1.3em),linear-gradient(#fbfcfd,#e9eef3);border:0;border-radius:.55em;box-shadow:0 .32em 0 #8d99a8,0 1em 2.6em rgba(0,0,0,.4);padding:2.3em 1.1em 1.2em}
@@ -1967,6 +2001,25 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
 @container (max-width: 640px) and (min-aspect-ratio: 1/1){${SC} .ss-logo{font-size:2.6em}}
 `;
   const ic = k => `<span class="ss-ic">${ICO[k]}</span>`;
+
+  const howSvg = (() => {
+    const tx = (y, s) => (s < 0 ? 42 - (y - 24) * 38 / 44 : 78 + (y - 24) * 38 / 44).toFixed(1);
+    const lx = (l, y, o) => { const a = 48 + l * 12 + o, b = 16.7 + l * 43.3 + o * 3; return (a + (b - a) * (y - 24) / 44).toFixed(1); };
+    let bg = '<rect width="120" height="68" fill="#8fd0ff"/><path d="M0 18h120v8H0z" fill="#cfe9fb"/><path d="M6 18h12v-8h8v8h10v-12h10v12h28v-9h9v9h12v-6h9v6" fill="#c4553f" opacity=".55"/><path d="M0 24h120v44H0z" fill="#c9c2b6"/><path d="M42 24h36l38 44H4z" fill="#a99b88"/>';
+    for (const y of [27, 31, 36, 42, 49, 58]) bg += `<path d="M${tx(y, -1)} ${y}H${tx(y, 1)}" stroke="#6b4a32" stroke-width="${(0.6 + (y - 24) * 0.05).toFixed(2)}"/>`;
+    for (let l = 0; l < 3; l++) for (const o of [-3, 3]) bg += `<path d="M${lx(l, 24, o)} 24L${lx(l, 68, o)} 68" stroke="#e3e7ec" stroke-width="1.1"/>`;
+    const man = (x, y, s, op) => `<g transform="translate(${x} ${y}) scale(${s})" opacity="${op}"><ellipse cx="0" cy="1" rx="5.5" ry="1.7" fill="rgba(0,0,0,.28)"/><rect x="-2.8" y="-9" width="2.4" height="9" rx="1.1" fill="#79a6dc"/><rect x=".4" y="-9" width="2.4" height="9" rx="1.1" fill="#79a6dc"/><rect x="-3.2" y="-1" width="3" height="1.8" rx=".8" fill="#f2f2f2"/><rect x=".2" y="-1" width="3" height="1.8" rx=".8" fill="#f2f2f2"/><rect x="-4" y="-17.5" width="8" height="9.5" rx="2.6" fill="#efebe2"/><rect x="-4" y="-17.5" width="8" height="4" rx="2" fill="#7fb2e5"/><circle cx="0" cy="-21" r="3.8" fill="#e9b48a"/><circle cx="1.4" cy="-21.2" r=".6" fill="#2a1d16"/><path d="M-4 -22a4 4 0 0 1 8 0z" fill="#d8322c"/><rect x="1.2" y="-22.8" width="4.6" height="1.4" rx=".7" fill="#d8322c"/></g>`;
+    const arr = (x, y, r) => `<g transform="translate(${x} ${y}) rotate(${r})"><path d="M-6 -4.5h5v-4.5l8 9-8 9v-4.5h-5z" fill="#ffd23f" stroke="#12224a" stroke-width="1.6" stroke-linejoin="round"/></g>`;
+    const icon = (k, x, y, w) => ICO[k].replace('<svg viewBox="0 0 24 24">', `<svg x="${x}" y="${y}" width="${w}" height="${w}" viewBox="0 0 24 24">`);
+    const coin = (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#ffc91f" stroke="#b87400" stroke-width="${(r * 0.22).toFixed(2)}"/><circle cx="${x - r * 0.3}" cy="${y - r * 0.3}" r="${(r * 0.32).toFixed(2)}" fill="#fff6c0"/>`;
+    const wrapS = c => `<svg viewBox="0 0 120 68">${bg}${c}</svg>`;
+    return [
+      wrapS(man(25, 62, 0.9, 0.35) + man(95, 62, 0.9, 0.35) + man(60, 62, 1, 1) + arr(39, 46, 180) + arr(81, 46, 0)),
+      wrapS('<g><rect x="49" y="50" width="22" height="5" rx="1" fill="#fff" stroke="#12224a" stroke-width="1"/><path d="M52 50h4l-2 5h-4zM60 50h4l-2 5h-4zM68 50h3v2l-1.5 3h-3z" fill="#e2412c"/><rect x="50" y="55" width="2" height="7" fill="#5a6270"/><rect x="68" y="55" width="2" height="7" fill="#5a6270"/></g><path d="M44 64Q52 26 60 40" fill="none" stroke="#fff" stroke-width="1.4" stroke-dasharray="2.5 2.5" opacity=".9"/>' + man(60, 44, 0.95, 1) + arr(22, 40, -90) + arr(98, 40, 90)),
+      wrapS(coin(60, 29, 1.6) + coin(60, 34, 2.2) + coin(60, 41, 2.9) + coin(60, 50, 3.7) + man(60, 66, 0.9, 1) + icon('mag', 6, 4, 22) + icon('jet', 92, 4, 22) + icon('x2', 6, 36, 18) + icon('sneak', 96, 36, 18)),
+      wrapS('<g><path d="M26 30h20l-3 26H18z" fill="#ef6a2c" stroke="#7a2a0a" stroke-width="1"/><path d="M27.5 33h17l-1 8h-17.5z" fill="#a9d4ef" stroke="#3a4a5a" stroke-width=".8"/><path d="M19.5 49h24.5" stroke="#b8d636" stroke-width="3"/><circle cx="23" cy="53" r="1.4" fill="#fff6c0"/><circle cx="40" cy="53" r="1.4" fill="#fff6c0"/></g><ellipse cx="60" cy="63" rx="11" ry="3" fill="#ff4fa3" stroke="#8a1f5a" stroke-width="1"/><ellipse cx="60" cy="62.6" rx="7" ry="1.3" fill="#ffd23f"/><ellipse cx="60" cy="66" rx="9" ry="1.4" fill="#3ad1ff" opacity=".7"/>' + man(60, 61, 0.95, 1) + icon('board', 92, 4, 24) + icon('key', 94, 30, 20))
+    ];
+  })();
   const logoW = (w, o) => [...w].map((c, i) => `<i style="--r:${[-7, 5, -3, 6, -5, 4, -6][(i + o) % 7]}deg;--y:${[0.03, -0.05, 0.02, -0.03, 0.05, -0.02, 0][(i + o) % 7]}em">${c}</i>`).join('');
   const HTML = `
 <div class="ss-hud off">
@@ -1991,13 +2044,15 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
   </div>
   <div class="ss-bot">
     <div class="ss-tap">TAP TO PLAY</div>
-    <div class="ss-menu"><button class="ss-btn y" data-o="missions">${ic('star')}Missions<span class="bdg h-mult">x1</span></button><button class="ss-btn g" data-o="shop">${ic('coin')}Shop</button><button class="ss-btn" data-o="chars">Surfers</button></div>
+    <div class="ss-modes"><button data-m="classic">Classic<small>0</small></button><button data-m="rush">Rush<small>0</small></button><button data-m="chill">Chill<small>0</small></button></div>
+    <div class="ss-msub"></div>
+    <div class="ss-menu"><button class="ss-btn y" data-o="missions">${ic('star')}Missions<span class="bdg h-mult">x1</span></button><button class="ss-btn g" data-o="shop">${ic('coin')}Shop</button><button class="ss-btn" data-o="chars">Surfers</button><button class="ss-btn" data-o="how">How to play</button></div>
   </div>
 </div>
 <div class="ss-scr ss-dim ss-panel"><div class="ss-card"><button class="x" aria-label="Close">&#10005;</button><h3 class="p-title"></h3><div class="p-body"></div></div></div>
 <div class="ss-scr ss-dim ss-save"><div class="ss-card"><h3>Save me!</h3><div class="ss-ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="9"/><circle class="s-arc" cx="50" cy="50" r="44" fill="none" stroke="#ffd23f" stroke-width="9" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0"/></svg><div class="k">${ic('key')}</div></div><button class="ss-btn g s-go">Use <b class="s-cost">1</b> ${ic('key')}</button><p class="ss-small s-have"></p><div class="ss-btns"><button class="ss-btn r s-skip">No thanks</button></div></div></div>
-<div class="ss-scr ss-dim ss-over"><div class="ss-card"><h3 class="o-title">Game over</h3><div class="o-new"></div><div class="ss-res"><div class="big"><small>SCORE</small><b class="o-score">0</b></div><div><small>HIGH SCORE</small><b class="o-best">0</b></div><div><small>COINS</small><b class="o-coins">0</b></div></div><div class="ss-list o-ms"></div><div class="ss-btns"><button class="ss-btn g o-play">${ic('play')}Play</button><button class="ss-btn o-home">${ic('home')}Home</button><button class="ss-btn y o-shop">${ic('coin')}Shop</button></div></div></div>
-<div class="ss-scr ss-dim ss-pausep"><div class="ss-card"><h3>Paused</h3><div class="ss-list pz-ms"></div><div class="ss-btns"><button class="ss-btn g pz-go">${ic('play')}Resume</button><button class="ss-btn pz-home">${ic('home')}Home</button></div></div></div>
+<div class="ss-scr ss-dim ss-over"><div class="ss-card"><h3 class="o-title">Game over</h3><div class="o-new"></div><div class="ss-res"><div class="big"><small>SCORE</small><b class="o-score">0</b></div><div><small>HIGH SCORE</small><b class="o-best">0</b></div><div><small>COINS</small><b class="o-coins">0</b></div></div><div class="ss-stats o-st"></div><div class="ss-list o-ms"></div><div class="ss-btns"><button class="ss-btn g o-play">${ic('play')}Play</button><button class="ss-btn o-home">${ic('home')}Home</button><button class="ss-btn y o-shop">${ic('coin')}Shop</button></div></div></div>
+<div class="ss-scr ss-dim ss-pausep"><div class="ss-card"><h3>Paused</h3><div class="ss-list pz-ms"></div><div class="ss-btns"><button class="ss-btn g pz-go">${ic('play')}Resume</button><button class="ss-btn pz-how">How to play</button><button class="ss-btn pz-home">${ic('home')}Home</button></div></div></div>
 `;
 
   function mkAudio(api) {
@@ -2180,7 +2235,8 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       const save = {
         v: 2, coins: loaded.coins | 0, keys: loaded.keys == null ? 2 : loaded.keys | 0, boards: loaded.boards == null ? 3 : loaded.boards | 0,
         upg: Object.assign({ jet: 0, sneak: 0, mag: 0, x2: 0 }, loaded.upg || {}), ms: loaded.ms && loaded.ms.lvl ? loaded.ms : { lvl: 1, base: [0, 0, 0], done: [false, false, false] },
-        chars: Array.isArray(loaded.chars) ? loaded.chars : ['jake'], char: loaded.char || 'jake', city: loaded.city | 0, runs: loaded.runs | 0, best: loaded.best | 0
+        chars: Array.isArray(loaded.chars) ? loaded.chars : ['jake'], char: loaded.char || 'jake', city: loaded.city | 0, runs: loaded.runs | 0, best: loaded.best | 0,
+        mode: MODES.find(m => m.id === loaded.mode) ? loaded.mode : 'classic', mbest: Object.assign({ rush: 0, chill: 0 }, loaded.mbest || {}), how: loaded.how ? 1 : 0, tot: Object.assign({ m: 0, coins: 0, jumps: 0 }, loaded.tot || {})
       };
       if (!CHARS.find(c => c.id === save.char)) save.char = 'jake';
       save.city = clamp(save.city, 0, CITIES.length - 1);
@@ -2256,7 +2312,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
           const L = WG.side.L[kl], Rr = WG.side.R[kr];
           add(L.geo, atlasMat, z); if (L.fence) add(L.fence, fenceMat, z);
           add(Rr.geo, atlasMat, z); if (Rr.fence) add(Rr.fence, fenceMat, z);
-          if (((i % 3) + 3) % 3 === 1) { add(WG.gantry, atlasMat, z - 20); add(WG.gantryLamp, lampMat, z - 20); }
+          if (((i % 3) + 3) % 3 === 1) { add(WG.gantry, atlasMat, z - 20); add(WG.gantryLamp, lampMat, z - 20); arr[arr.length - 1].userData.g = arr[arr.length - 2].userData.g = 1; }
           add(WG.wires, atlasMat, z);
         }
         return arr;
@@ -2343,13 +2399,14 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       const gBlob = mkBlob(1.3), dBlob = mkBlob(0.9);
 
       let W = null, R = null, state = 'home', acc = 0, introT = 0, saveT = 0, overShown = false, hudScore = -1, hudCoins = -1, hudMult = -1, cullT = 0, tunK = 0, shake = 0;
-      let gd = 30, gx = 0, gy = 0, dgx = 0, homeT = 0, sprayT = 0, leanZ = 0, prevX = 0, airW = 0, bannerT = 0, bigT = 0, toastT = 0, hintI = 0, msnap = null, saveCost = 1, runKeys = 0, runBonus = 0;
+      let gd = 30, gx = 0, gy = 0, dgx = 0, homeT = 0, sprayT = 0, leanZ = 0, prevX = 0, airW = 0, bannerT = 0, bigT = 0, toastT = 0, hintI = 0, msnap = null, saveCost = 1, runKeys = 0, runBonus = 0, runT = 0, rollT = 9, rollSc = 0;
       const camP = new THREE.Vector3(), camL = new THREE.Vector3(), tmpP = new THREE.Vector3(), tmpL = new THREE.Vector3();
       let camY = 0, noBlink = false;
 
       function resetWorld() {
         clearObsMeshes();
         W = newWorld(); R = newRun();
+        const md = modeOf(); R.vk = md.vk; R.vs = md.vs; R.t0 = md.t0; R.mb = md.mb; R.speed = speedAt(R.t0) * md.vs;
         addTrain(W, 0, -16, 3, 0);
         W.genS = 36;
         clearChunks();
@@ -2358,11 +2415,16 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         msnap = Object.assign({}, R.st);
       }
 
+      const modeOf = () => MODES.find(m => m.id === save.mode) || MODES[0];
+      const bestOf = id => id === 'classic' ? save.best : save.mbest[id] | 0;
       function hudBoards() { E.hbn.textContent = save.boards; E.hb.classList.toggle('none', save.boards <= 0); }
       function refreshHome() {
         E.hbest.textContent = fmt(save.best); E.hcoins.textContent = fmt(save.coins); E.hkeys.textContent = save.keys; E.hboards.textContent = save.boards;
         E.hmult.textContent = 'x' + save.ms.lvl;
         const c = CITIES[save.city]; E.tname.textContent = c.name; E.tsub.textContent = c.sub;
+        E.hbest.textContent = fmt(bestOf(save.mode));
+        q('.ss-modes').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.m === save.mode); b.querySelector('small').textContent = fmt(bestOf(b.dataset.m)); });
+        q('.ss-msub').textContent = modeOf().sub;
       }
       function show(el, on) { el.classList.toggle('on', !!on); }
       function toHome() {
@@ -2377,15 +2439,16 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       }
       function startRun() {
         if (state !== 'home') return;
+        if (!save.how) { save.how = 1; persist(); openPanel('how'); return; }
         au.unlock(); au.play('ui');
         show(E.home, 0); show(E.panel, 0);
         E.hud.classList.remove('off');
         state = 'intro'; introT = 0; R.chase = CFG.START_CHASE; gd = 4.2; gx = 0; au.play('whistle');
-        hudScore = hudCoins = hudMult = -1; runKeys = 0; runBonus = 0; saveCost = 1;
+        hudScore = hudCoins = hudMult = -1; runKeys = 0; runBonus = 0; saveCost = 1; runT = 0;
         hudBoards(); updPU(true);
         hintI = save.runs < 3 ? 0 : 99; E.hint.classList.remove('on');
         au.music(true);
-        if (window.Ameplay && Ameplay.analytics) try { Ameplay.analytics.track('subway_start', { city: CITIES[save.city].id }); } catch (e) {}
+        if (window.Ameplay && Ameplay.analytics) try { Ameplay.analytics.track('subway_start', { city: CITIES[save.city].id, mode: save.mode }); } catch (e) {}
       }
       function playAgain() { show(E.over, 0); toHome(); startRun(); }
 
@@ -2521,16 +2584,20 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         const sc = Math.floor(R.score);
         bankMissions();
         save.coins += R.coins; save.runs++;
-        const isBest = sc > save.best; if (isBest) save.best = sc;
+        const md = modeOf(), isBest = sc > bestOf(md.id);
+        if (isBest) { if (md.id === 'classic') save.best = sc; else save.mbest[md.id] = sc; }
+        save.tot.m += Math.round(R.s); save.tot.coins += R.coins; save.tot.jumps += R.st.jump;
         persist();
-        api.score(sc); api.submit(sc);
-        q('.o-title').textContent = R.dead === 'caught' ? 'Caught!' : 'Crashed!';
+        api.score(sc); if (md.id === 'classic') api.submit(sc);
+        q('.o-title').textContent = (R.dead === 'caught' ? 'Caught!' : R.dead === 'quit' ? 'Run over' : 'Crashed!') + (md.id === 'classic' ? '' : ' \u00b7 ' + md.name);
+        const mm = Math.floor(runT / 60), ss = Math.floor(runT % 60);
+        q('.o-st').innerHTML = [['DISTANCE', fmt(R.s) + ' m'], ['TIME', mm + ':' + String(ss).padStart(2, '0')], ['JUMPS / ROLLS', R.st.jump + ' / ' + R.st.roll], ['POWER-UPS', R.st.pu]].map(a => `<div><small>${a[0]}</small><b>${a[1]}</b></div>`).join('');
         q('.o-new').innerHTML = isBest && sc > 0 ? '<span class="ss-new">NEW HIGH SCORE!</span>' : '';
-        q('.o-score').textContent = fmt(sc); q('.o-best').textContent = fmt(save.best); q('.o-coins').textContent = fmt(R.coins + runBonus);
+        q('.o-score').textContent = '0'; rollT = 0; rollSc = sc; q('.o-best').textContent = fmt(bestOf(md.id)); q('.o-coins').textContent = fmt(R.coins + runBonus);
         q('.o-ms').innerHTML = missionRows();
         show(E.over, 1);
         E.hud.classList.add('off');
-        if (window.Ameplay && Ameplay.analytics) try { Ameplay.analytics.track('subway_over', { score: sc, coins: R.coins, city: CITIES[save.city].id, t: Math.round(R.t) }); } catch (e) {}
+        if (window.Ameplay && Ameplay.analytics) try { Ameplay.analytics.track('subway_over', { score: sc, coins: R.coins, city: CITIES[save.city].id, mode: md.id, t: Math.round(runT) }); } catch (e) {}
       }
       function pause() {
         if (state !== 'run' && state !== 'intro') return;
@@ -2550,7 +2617,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         const k = panelKind;
         if (k === 'missions') {
           E.ptitle.textContent = 'Missions';
-          E.pbody.innerHTML = `<div class="ss-multi">Score multiplier <b>x${save.ms.lvl}</b></div><div class="ss-list">${missionRows()}</div><p class="ss-small">Complete all three missions to raise your multiplier by +1 (up to x30) and win coins.</p>`;
+          E.pbody.innerHTML = `<div class="ss-multi">Score multiplier <b>x${save.ms.lvl}</b></div><div class="ss-list">${missionRows()}</div><p class="ss-small">Complete all three missions to raise your multiplier by +1 (up to x30) and win coins.</p><p class="ss-small">${fmt(save.runs)} runs · ${fmt(save.tot.m)} m run · ${fmt(save.tot.coins)} coins collected · ${fmt(save.tot.jumps)} jumps</p>`;
         } else if (k === 'shop') {
           E.ptitle.textContent = 'Shop';
           let body = `<div class="ss-tabs"><button data-tab="up" class="${shopTab === 'up' ? 'on' : ''}">Upgrades</button><button data-tab="it" class="${shopTab === 'it' ? 'on' : ''}">Items</button></div><div class="ss-multi">${ic('coin')}<b>${fmt(save.coins)}</b></div><div class="ss-list">`;
@@ -2569,6 +2636,10 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
           E.ptitle.textContent = 'Surfers';
           E.pbody.innerHTML = `<div class="ss-multi">${ic('coin')}<b>${fmt(save.coins)}</b></div><div class="ss-chars">${CHARS.map(c => { const own = save.chars.includes(c.id), sel = save.char === c.id; return `<div class="ss-char${sel ? ' sel' : ''}" data-c="${c.id}"><span class="av"></span><b>${c.name}</b>${sel ? '<button class="ss-btn dis">Selected</button>' : own ? `<button class="ss-btn" data-sel="${c.id}">Select</button>` : `<button class="ss-btn g${save.coins < c.price ? ' dis' : ''}" data-unl="${c.id}">${ic('coin')}${fmt(c.price)}</button>`}</div>`; }).join('')}</div>`;
           E.pbody.querySelectorAll('.ss-char').forEach(el => el.querySelector('.av').replaceWith(avatar(CHARS.find(c => c.id === el.dataset.c))));
+        } else if (k === 'how') {
+          E.ptitle.textContent = 'How to play';
+          const S = COARSE ? [['Switch lanes', 'Swipe left or right'], ['Jump and roll', 'Swipe up to jump over, down to roll under'], ['Power-ups', 'Grab coins, Magnet, Jetpack, 2X and Super Sneakers'], ['Hoverboard', 'Double tap: it saves you from one crash']] : [['Switch lanes', '\u2190 \u2192 or A / D'], ['Jump and roll', '\u2191 / W to jump, \u2193 / S to roll'], ['Power-ups', 'Grab coins, Magnet, Jetpack, 2X and Super Sneakers'], ['Hoverboard', 'Space: it saves you from one crash']];
+          E.pbody.innerHTML = `<div class="ss-how">${S.map((s, i) => `<div class="ss-step"><i>${i + 1}</i>${howSvg[i]}<b>${s[0]}</b><small>${s[1]}</small></div>`).join('')}</div><p class="ss-small">Trains hurt. Ramps take you onto the roofs. Stumble twice and the guard catches you; keys buy a second chance. ${COARSE ? 'The pause button' : 'P or Esc'} pauses.</p><button class="ss-btn g ss-howgo" data-go="1">${ic('play')}${state === 'pause' ? 'Resume' : 'Let\u2019s go!'}</button>`;
         }
       }
       function buy(what) {
@@ -2587,13 +2658,18 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       }
       api.on(E.panel, 'click', e => {
         const t = e.target.closest('button');
-        if (e.target === E.panel || (t && t.classList.contains('x'))) { show(E.panel, 0); au.play('ui'); return; }
+        if (e.target === E.panel || (t && t.classList.contains('x'))) { closePanel(); au.play('ui'); return; }
         if (!t) return;
+        if (t.dataset.go) { show(E.panel, 0); if (state === 'pause') resume(); else startRun(); return; }
         if (t.dataset.tab) { shopTab = t.dataset.tab; au.play('ui'); renderPanel(); }
         else if (t.dataset.buy) buy(t.dataset.buy);
         else if (t.dataset.sel) { save.char = t.dataset.sel; persist(); buildHero(); au.play('ui'); renderPanel(); }
         else if (t.dataset.unl) { const c = CHARS.find(x => x.id === t.dataset.unl); if (c && save.coins >= c.price) { save.coins -= c.price; save.chars.push(c.id); save.char = c.id; persist(); buildHero(); au.play('buy'); renderPanel(); refreshHome(); } }
       });
+      function closePanel() { show(E.panel, 0); if (state === 'pause') show(E.pausep, 1); }
+      const setMode = id => { if (!MODES.find(m => m.id === id) || save.mode === id) return; save.mode = id; persist(); au.unlock(); au.play('ui'); resetWorld(); refreshHome(); };
+      api.on(q('.ss-modes'), 'click', e => { const b = e.target.closest('[data-m]'); if (b) setMode(b.dataset.m); });
+      api.on(q('.pz-how'), 'click', () => { show(E.pausep, 0); openPanel('how'); });
       api.on(q('.ss-menu'), 'click', e => { const b = e.target.closest('[data-o]'); if (b) openPanel(b.dataset.o); });
       const city = d => { save.city = (save.city + d + CITIES.length) % CITIES.length; persist(); au.unlock(); au.play('ui'); buildCity(save.city); resetWorld(); refreshHome(); };
       api.on(q('.t-prev'), 'click', () => city(-1));
@@ -2620,11 +2696,12 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
           else if (k === 'Space') { e.preventDefault(); if (!e.repeat) useBoard(); }
           else if (k === 'KeyP') pause();
         } else if (state === 'home') {
-          if (E.panel.classList.contains('on')) { if (k === 'Escape') show(E.panel, 0); return; }
+          if (E.panel.classList.contains('on')) { if (k === 'Escape') show(E.panel, 0); else if (panelKind === 'how' && (k === 'Space' || k === 'Enter')) { e.preventDefault(); show(E.panel, 0); startRun(); } return; }
+          if (k === 'KeyM') { const i = MODES.findIndex(m => m.id === save.mode); setMode(MODES[(i + 1) % MODES.length].id); return; }
           if (k === 'Space' || k === 'Enter' || k === 'ArrowUp' || k === 'KeyW') { e.preventDefault(); startRun(); }
           else if (k === 'ArrowLeft') city(-1); else if (k === 'ArrowRight') city(1);
         } else if (state === 'over') { if (k === 'Space' || k === 'Enter') { e.preventDefault(); playAgain(); } }
-        else if (state === 'pause') { if (k === 'KeyP' || k === 'Space' || k === 'Enter') { e.preventDefault(); resume(); } }
+        else if (state === 'pause') { if (E.panel.classList.contains('on')) { if (k === 'Escape') closePanel(); else if (k === 'KeyP' || k === 'Space' || k === 'Enter') { e.preventDefault(); show(E.panel, 0); resume(); } return; } if (k === 'KeyP' || k === 'Space' || k === 'Enter') { e.preventDefault(); resume(); } }
         else if (state === 'save') { if (k === 'Space' || k === 'Enter') { e.preventDefault(); useSave(); } }
       });
       let pd = null, lastTap = 0, lastTapX = 0, lastTapY = 0;
@@ -2759,10 +2836,10 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       }
 
       function camRun(out, look, dt) {
-        const tun = inTunnel(W, R.s + 2);
+        const back = portrait ? 7.2 : 6.2, tun = inTunnel(W, R.s + 2) || inTunnel(W, R.s - back - 1);
         const sp0 = supportAt(W, laneOf(R.x), R.s), yT = R.jet > 0 || R.grounded ? R.y : lerp(sp0, R.y, 0.6);
         camY = damp(camY, yT, R.jet > 0 ? 3 : 6, dt);
-        const base = portrait ? 6.7 : 5.8, back = portrait ? 7.2 : 6.2;
+        const base = portrait ? 6.7 : 5.8;
         let cy = base + camY * 0.9;
         if (tun) cy = Math.min(cy, 8.6);
         out.set(R.x * 0.62, cy, -R.s + back);
@@ -2812,6 +2889,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
           acc += dt;
           let n = 0;
           const ctx = { mult: save.ms.lvl };
+          if (!R.dead) runT += dt;
           if (R.dead) { step(W, R, dt, ctx); acc = 0; }
           else while (acc >= CFG.STEP && n++ < 10) { step(W, R, CFG.STEP, ctx); acc -= CFG.STEP; if (R.dead) break; }
           if (n >= 10) acc = 0;
@@ -2832,7 +2910,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
           const f = clamp(saveT / 4.5, 0, 1);
           E.sarc.style.strokeDashoffset = (276.5 * f).toFixed(1);
           if (f >= 1) gameOver();
-        } else if (state === 'over') step(W, R, dt, { mult: 1 });
+        } else if (state === 'over') { step(W, R, dt, { mult: 1 }); if (rollT < 0.9) { rollT += dt; q('.o-score').textContent = fmt(rollSc * ease(clamp(rollT / 0.9, 0, 1))); } }
         else if (state === 'home') homeT += dt;
         syncWorld(dt, t);
         syncHero(dt, t);
@@ -2854,6 +2932,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         cam.position.copy(camP);
         if (shake > 0) { shake = Math.max(0, shake - dt); cam.position.x += (Math.random() - 0.5) * shake * 0.6; cam.position.y += (Math.random() - 0.5) * shake * 0.6; }
         cam.lookAt(camL);
+        for (const arr of chunks.values()) for (const m of arr) if (m.userData.g) { const dz = cam.position.z - m.position.z; m.visible = !(dz > -0.6 && dz < 2 && cam.position.y > 5.2 && cam.position.y < 7.8); }
         skyPlane.position.set(cam.position.x * 0.9, 52, cam.position.z - 340);
         sunSprite.position.set(cam.position.x - 120, 150, cam.position.z - 330);
         sun.position.set(cam.position.x - 20, 40, cam.position.z + 25); sun.target.position.set(cam.position.x, 0, cam.position.z - 10);

@@ -12,9 +12,10 @@ function fvPaint() {
   if (view === 'home') { fvRail(); if (state.f.size) renderResults(); }
 }
 function fvRail() {
-  const L = FV.ids.map(id => byId.get(id)).filter(Boolean).slice(0, 10), sec = $('#favs');
-  sec.hidden = !L.length || !!(activeCount() || state.q.trim());
+  const L = FV.ids.map(id => byId.get(id)).filter(Boolean).slice(0, 40), sec = $('#favs');
+  sec.hidden = !L.length || !!(activeCount() || qText());
   $('#favrail').innerHTML = L.map((g, i) => card(g, 'fav', i)).join('');
+  $('#favn').textContent = L.length;
   lzScan();
 }
 function fvToggle(id) {
@@ -91,6 +92,8 @@ const BLK = { el: {}, mo: null, t: 0, q: false };
 const gpBlocked = () => !!(SF.shown || AD.locked || !consent);
 function sfLock() {
   const on = gpBlocked();
+  const ck = $('#ckbar');
+  if (!consent && ck && ck.classList.contains('ck-inline')) { ck.classList.remove('ck-inline'); document.body.insertBefore(ck, $('#lgsheet')); }
   document.documentElement.classList.toggle('gp-block', on);
   document.documentElement.classList.toggle('ck-block', !consent);
   ['top', 'side', 'main'].forEach(id => { const n = document.getElementById(id); if (n && n.inert !== on) n.inert = on; });
@@ -138,13 +141,13 @@ function sfPaint() {
   bar.hidden = !top && !showM;
   let al = $('#sfalert');
   if (mid) {
-    if (!al) { document.body.insertAdjacentHTML('beforeend', '<div class="sfal" id="sfalert" role="alertdialog" aria-modal="true" aria-labelledby="sfalt"><div class="sfal-c"><span class="sfal-i"></span><h2 id="sfalt"></h2><p class="sfal-t" translate="no"></p><button class="btn2 pri sfal-ok" type="button" data-sfhide></button></div></div>'); al = $('#sfalert'); }
+    if (!al) { document.body.insertAdjacentHTML('beforeend', '<div class="sfal" id="sfalert" role="alertdialog" aria-modal="true" aria-labelledby="sfalt" aria-describedby="sfald"><div class="sfal-c"><span class="sfal-i"></span><h2 id="sfalt"></h2><p class="sfal-t" id="sfald" translate="no"></p><button class="btn2 pri sfal-ok" type="button" data-sfhide></button></div></div>'); al = $('#sfalert'); al.addEventListener('keydown', e => { if (e.key === 'Tab') { e.preventDefault(); al.querySelector('.sfal-ok').focus(); } }); }
     al.querySelector('.sfal-i').innerHTML = SF_ICO.warning;
     al.querySelector('h2').textContent = auT('Alert');
     al.querySelector('.sfal-t').textContent = txt;
     al.querySelector('.sfal-ok').textContent = auT('OK');
-    if (al.hidden !== false || !al.classList.contains('on')) { al.hidden = false; void al.offsetWidth; al.classList.add('on'); }
-  } else if (al) { al.classList.remove('on'); al.hidden = true; }
+    if (al.hidden !== false || !al.classList.contains('on')) { SF.af = document.activeElement; al.hidden = false; void al.offsetWidth; al.classList.add('on'); const ok = al.querySelector('.sfal-ok'); requestAnimationFrame(() => ok.focus({ preventScroll: true })); }
+  } else if (al && !al.hidden) { al.classList.remove('on'); al.hidden = true; const f = SF.af; SF.af = null; if (f && f.isConnected && f !== document.body) f.focus({ preventScroll: true }); }
   clearTimeout(SF.bt);
   if (showB && until) SF.bt = setTimeout(sfPaint, Math.min(until - now + 500, 3600000));
   const m = !!d.maintenance && !adm && !(SB.user && !AD.at && Date.now() - T0 < 10000) && !SF.peek, el = $('#sfmaint');

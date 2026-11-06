@@ -4498,7 +4498,7 @@
     dot(W.spawnX * 16, W.spawnY * 16, '#ffe060', 3.5 * S, null);
     for (const n of G.npcs) dot(n.x + 10, n.y + 20, '#ffe060', 3 * S, n.name);
     for (const q of G.players.values()) if (!q.dead) dot(pcx(q), pcy(q), q === G.me ? '#ffffff' : '#6af0ff', 4 * S * (1 + 0.15 * Math.sin(G.tick * 0.2)), q.name);
-    txt(h, W.name + '  -  press M or Esc to close', w / 2, 26 * S, '#fff', 14 * S, 'center');
+    txt(h, W.name + '  -  click, M or Esc to close', w / 2, 26 * S, '#fff', 14 * S, 'center');
   }
   function bossBar(h) {
     const S = UI.S, groups = {};
@@ -4938,6 +4938,7 @@
   function handleBtn(b, right, shift) {
     const p = G.me;
     if (b.k === 'minimap') { UI.map = true; sfxAt('click'); return true; }
+    if (UI.map && b.k === 'panel') { UI.map = false; sfxAt('click'); return true; }
     if (b.k === 'slot' && !UI.open && b.a === 'inv') { p.sel = b.b; sfxAt('click'); return true; }
     return uiClick(b, right, shift);
   }

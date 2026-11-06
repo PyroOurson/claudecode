@@ -92,7 +92,8 @@
       const axis = Math.random() * 3 | 0;
       if (axis === last) continue;
       last = axis;
-      out.push({ axis, layer: Math.random() < 0.5 ? -m : m, dir: Math.random() < 0.5 ? -1 : 1 });
+      const L = []; for (let l = -m; l <= m; l += 2) L.push(l);
+      out.push({ axis, layer: m > 2 ? L[Math.random() * L.length | 0] : Math.random() < 0.5 ? -m : m, dir: Math.random() < 0.5 ? -1 : 1 });
     }
     return out;
   }
@@ -175,7 +176,7 @@
         const [mvEl, tmEl] = hud.querySelectorAll('b');
         const tag = el('div', 'tag');
         stage.append(hud, tag);
-        const ctl = el('div', 'g-row', '<div class="seg"><button data-n="2">2x2</button><button data-n="3">3x3</button></div><button class="g-btn sm">Scramble</button><button class="g-btn sm ghost">Undo</button>');
+        const ctl = el('div', 'g-row', '<div class="seg"><button data-n="2">2x2</button><button data-n="3">3x3</button><button data-n="4">4x4</button><button data-n="5">5x5</button></div><button class="g-btn sm">Scramble</button><button class="g-btn sm ghost">Undo</button>');
         root.append(ctl);
         const segBtns = ctl.querySelectorAll('.seg button'), [scrBtn, undoBtn] = ctl.querySelectorAll('.g-btn');
 
@@ -231,7 +232,7 @@
         let confT = -1;
 
         const saved = api.load() || {};
-        let n = saved.n === 2 ? 2 : 3, cube = null, pieces = [], meshes = [];
+        let n = [2, 3, 4, 5].includes(saved.n) ? saved.n : 3, cube = null, pieces = [], meshes = [];
         let state = 'free', moves = 0, hist = [], queue = [], anim = null, t0 = 0, lastTick = performance.now(), lastShown = '';
         let yaw = 0.62, pitch = 0.48, vyaw = 0, vpitch = 0, camDist = 10.4, camD = 10.4, spin = -1, drag = null;
         const Z = new THREE.Vector3(0, 0, 1), tv = new THREE.Vector3(), lp = new THREE.Vector3(), pa = new THREE.Vector3(), pb = new THREE.Vector3();
@@ -263,14 +264,14 @@
           });
           floor.position.y = -(n * 0.5 + 0.8);
           stand.position.y = floor.position.y - 0.012;
-          camDist = (n === 3 ? 10.4 : 7.8) * (w < h ? 1.5 : 1);
+          camDist = ({ 2: 7.8, 3: 10.4, 4: 13.2, 5: 16 })[n] * (w < h ? 1.5 : 1);
         }
         function setMoves(v) { moves = v; mvEl.textContent = v; api.score(v); }
         function setTag() {
           tag.textContent = `${n}x${n} · ${{ free: 'Free play', scrambling: 'Scrambling…', ready: 'Timer starts on first turn', solving: 'Solving', won: 'Solved!' }[state]}`;
         }
         function resetRun(st) { state = st; hist = []; setMoves(0); tmEl.textContent = '0:00.0'; lastShown = ''; setTag(); }
-        function scrambleMoves() { for (const s of cubeScramble(cube.m, n === 3 ? 20 : 12)) queue.push({ ...s, kind: 'scramble' }); }
+        function scrambleMoves() { for (const s of cubeScramble(cube.m, ({ 2: 12, 3: 20, 4: 40, 5: 60 })[n])) queue.push({ ...s, kind: 'scramble' }); }
         function scramble() {
           build(); resetRun('scrambling'); scrambleMoves(); api.sfx('pop');
         }
@@ -296,14 +297,15 @@
           if (n === 3) { isNew = api.submit(moves); best = api.best; }
           else {
             const s = api.load() || {};
-            isNew = !s.best2 || moves < s.best2;
-            if (isNew) api.save({ ...s, best2: moves });
-            best = isNew ? moves : s.best2;
+            const k = 'best' + n;
+            isNew = !s[k] || moves < s[k];
+            if (isNew) api.save({ ...s, [k]: moves });
+            best = isNew ? moves : s[k];
           }
           spin = 0; confetti(); api.sfx('win');
           const ov = {
             kicker: isNew ? 'New best!' : 'Solved!', title: 'Cube solved',
-            text: n === 3 ? 'Every face is one colour again. Can you do it in fewer moves?' : '2x2 records are kept apart from the 3x3 leaderboard.',
+            text: n === 3 ? 'Every face is one colour again. Can you do it in fewer moves?' : `${n}x${n} records are kept apart from the 3x3 leaderboard.`,
             stats: [['Moves', moves], ['Time', fmtT(secs)], [`${n}x${n} best`, best == null ? '—' : best]],
             button: 'Scramble again', onAction: scramble, secondary: 'Free play', onSecondary: () => resetRun('free')
           };
@@ -421,7 +423,7 @@
           if (e.code === 'Backspace') { e.preventDefault(); undo(); return; }
           const f = FACES[e.code];
           if (f) {
-            if (!e.repeat && !(f[1] === 0 && n === 2)) userMove(f[0], f[1] * cube.m, e.shiftKey ? -f[2] : f[2]);
+            if (!e.repeat && !(f[1] === 0 && n % 2 === 0)) userMove(f[0], f[1] * cube.m, e.shiftKey ? -f[2] : f[2]);
             return;
           }
           if (e.code === 'ArrowLeft') vyaw += 2.6;

@@ -5,7 +5,7 @@ const D = __dirname;
 const OUT = process.env.COVER_PNG || 'C:/tmp/gameplay-build/w/agents3/covers/png';
 const games = JSON.parse(fs.readFileSync(D + '/games.json', 'utf8'));
 const want = process.argv.slice(2);
-const list = want.length ? games.filter(x => want.includes(x[0])) : games;
+const list = want.length ? want.map(w => { const [id, nm] = w.split('='); const g = games.find(x => x[0] === id); return g ? [g[0], nm || g[1]] : [id, nm || id]; }) : games;
 const arts = fs.readdirSync(D + '/art').filter(f => f.endsWith('.js')).sort().map(f => '<script>' + fs.readFileSync(D + '/art/' + f, 'utf8') + '</script>').join('\n');
 const html = `<!doctype html><html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Press+Start+2P&family=Luckiest+Guy&family=Lilita+One&display=block" rel="stylesheet">

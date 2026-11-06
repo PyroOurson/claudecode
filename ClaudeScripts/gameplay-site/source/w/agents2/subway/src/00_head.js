@@ -85,9 +85,9 @@
 
   const CHARS = [
     { id: 'jake', name: 'Jake', price: 0, skin: '#e9b48a', hair: '#5a3420', hat: 'cap', hatA: '#d8322c', hatB: '#ffd23f', top: '#efebe2', vest: '#7fb2e5', under: '#9ea4ab', pants: '#79a6dc', shoeA: '#f2f2f2', shoeB: '#5cc43a', extra: '', hood: '#a7abb2', scarf: '#d8322c' },
-    { id: 'tricky', name: 'Tricky', price: 6000, skin: '#f4c7a0', hair: '#e2541f', hat: 'beanie', hatA: '#d8322c', hatB: '#ffffff', top: '#2f6fd9', vest: '', under: '#ffffff', pants: '#3a3f5a', shoeA: '#ffffff', shoeB: '#d8322c', extra: 'pony' },
-    { id: 'fresh', name: 'Fresh', price: 12000, skin: '#8a5a3c', hair: '#1f1814', hat: 'beanie', hatA: '#3a3f4a', hatB: '#ffd23f', top: '#ff9a2a', vest: '', under: '#ffffff', pants: '#2f3f5f', shoeA: '#f4f4f4', shoeB: '#2f2f3a', extra: 'phones' },
-    { id: 'yutani', name: 'Yutani', price: 20000, skin: '#f0c49c', hair: '#2a1d16', hat: 'alien', hatA: '#6fd25a', hatB: '#ffffff', top: '#a95ad9', vest: '', under: '#ffd23f', pants: '#2a2f45', shoeA: '#ffd23f', shoeB: '#a95ad9', extra: '' }
+    { id: 'tricky', name: 'Tricky', price: 2500, skin: '#f4c7a0', hair: '#e2541f', hat: 'beanie', hatA: '#d8322c', hatB: '#ffffff', top: '#2f6fd9', vest: '', under: '#ffffff', pants: '#3a3f5a', shoeA: '#ffffff', shoeB: '#d8322c', extra: 'pony' },
+    { id: 'fresh', name: 'Fresh', price: 6000, skin: '#8a5a3c', hair: '#1f1814', hat: 'beanie', hatA: '#3a3f4a', hatB: '#ffd23f', top: '#ff9a2a', vest: '', under: '#ffffff', pants: '#2f3f5f', shoeA: '#f4f4f4', shoeB: '#2f2f3a', extra: 'phones' },
+    { id: 'yutani', name: 'Yutani', price: 12000, skin: '#f0c49c', hair: '#2a1d16', hat: 'alien', hatA: '#6fd25a', hatB: '#ffffff', top: '#a95ad9', vest: '', under: '#ffd23f', pants: '#2a2f45', shoeA: '#ffd23f', shoeB: '#a95ad9', extra: '' }
   ];
 
   const PU = {
@@ -96,6 +96,11 @@
     mag: { name: 'Coin Magnet', col: '#e8343a' },
     x2: { name: '2X Multiplier', col: '#ffc21a' }
   };
+  const MODES = [
+    { id: 'classic', name: 'Classic', sub: 'Speed builds up the longer you run', vk: 1, vs: 1, t0: 0, mb: 0 },
+    { id: 'rush', name: 'Rush', sub: 'Starts fast, ramps quicker, +1 score multiplier', vk: 1.6, vs: 1, t0: 75, mb: 1 },
+    { id: 'chill', name: 'Chill', sub: 'Slower trains and a gentle ramp to learn', vk: 0.4, vs: 0.82, t0: 0, mb: 0 }
+  ];
   const UPG_COST = [300, 800, 1600, 3200, 6400];
   const puDur = lvl => 10 + lvl * 4;
 

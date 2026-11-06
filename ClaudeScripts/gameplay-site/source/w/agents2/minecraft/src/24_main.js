@@ -5,7 +5,7 @@
     P.name = myName();
     function remeshAll() { if (!W) return; FANCY = SET.fancy; W.cols.forEach(c => { if (c.meshed) for (let s = 0; s < NSEC; s++) if (c.s[s] || c.m[s]) { c.md[s] = 1; W.dirty.add(c); } }); }
     function resetPlayer() {
-      Object.assign(P, { st: {}, adv: {}, x: .5, y: 100, z: .5, px: .5, py: 100, pz: .5, vx: 0, vy: 0, vz: 0, hp: 20, food: 20, sat: 5, exh: 0, air: 300, fall: 0, fly: false, xp: 0, lvl: 0, score: 0, dead: false, sleeping: 0, effects: {}, fire: 0, absorb: 0, spawn: null, hurtT: 0, place: true, yaw: 0, pitch: 0 });
+      Object.assign(P, { st: {}, adv: {}, goal: 0, x: .5, y: 100, z: .5, px: .5, py: 100, pz: .5, vx: 0, vy: 0, vz: 0, hp: 20, food: 20, sat: 5, exh: 0, air: 300, fall: 0, fly: false, xp: 0, lvl: 0, score: 0, dead: false, sleeping: 0, effects: {}, fire: 0, absorb: 0, spawn: null, hurtT: 0, place: true, yaw: 0, pitch: 0 });
       inv = new Array(36).fill(null); armor = [null, null, null, null]; offhand = null; craft2.fill(null); craft3.fill(null); cursor = null; sel = 0; ender = new Array(27).fill(null);
       gui = null; mine = null; eating = null; drawing = null; attackHeld = useHeld = false; chatOpen = false;
     }
@@ -199,6 +199,7 @@
       tickPlayer();
       if (!P.dead && !W.pano && scr === 'game') { stat('play'); stat('sinceDeath'); const dh = Math.hypot(P.x - P.px, P.z - P.pz) * 100; if (dh > 0 && dh < 300) stat(P.fly ? 'flyCm' : P.eyeW ? 'swimCm' : P.sprint ? 'sprintCm' : 'walkCm', dh); if (P.y < P.py && !P.fly) stat('fallCm', (P.py - P.y) * 100); }
       advTick();
+      goalTick();
       tickInteract();
       if (host) { tickEnts(); tickSched(); randomTicks(); tickFurnaces(); if (tickN % 2 === 0) checkPlates(); spawnTick(); if (W.pendSpawn) flushPendSpawn(); if (W.pendEnts && nearMeshed(1) >= 1) spawnSaved(); }
       tickMirrors();
@@ -394,7 +395,7 @@
           }
         }
         if (scr === 'game') {
-          const paused = !NET.role && (gui === 'pause' || gui === 'options' || gui === 'controls' || gui === 'stats' || gui === 'adv');
+          const paused = !NET.role && (gui === 'pause' || gui === 'options' || gui === 'controls' || gui === 'stats' || gui === 'adv' || gui === 'help');
           if (!paused) { acc += Math.min(dt, .25); let n = 0; while (acc >= .05 && n < 5) { const t0 = performance.now(); tick(); fT += (performance.now() - t0 - fT) * .1; acc -= .05; n++; } if (n >= 5) acc = 0; }
           alpha = paused ? 1 : clamp(acc / .05, 0, 1);
           lightF = alpha;
@@ -408,11 +409,11 @@
       g.setTransform(GK, 0, 0, GK, 0, 0);
       btns = []; fields = []; sliders = [];
       if (!W || !(scr === 'game' || W.pano)) { renderer.setClearColor(0, 1); renderer.clear(); }
-      const wb = scr === 'game' ? gui === 'pause' || gui === 'options' || gui === 'controls' || gui === 'plist' || gui === 'stats' || gui === 'adv' : scr !== 'title' && !!W && !!W.pano && panoReady;
+      const wb = scr === 'game' ? gui === 'pause' || gui === 'options' || gui === 'controls' || gui === 'plist' || gui === 'stats' || gui === 'adv' || gui === 'help' : scr !== 'title' && !!W && !!W.pano && panoReady;
       if (wb !== blurOn) { blurOn = wb; canvas.style.filter = wb ? 'blur(' + Math.max(3, Math.round(GK * 2.5 / (window.devicePixelRatio || 1))) + 'px)' : ''; }
       if (scr === 'game' && W) {
         if (!hideHud || gui || chatOpen) {
-          if (!hideHud && !blurOn) { drawHUD(now); drawChat(now); } else if (chatOpen) drawChat(now);
+          if (!hideHud && !blurOn) { drawHUD(now); if (!gui) drawGoals(now); drawChat(now); } else if (chatOpen) drawChat(now);
           if (touch && !gui && !hideHud && !P.dead) drawTouch();
           try { drawGameGui(now); drawToasts(now); } catch (e) { if (!frameLoop.gerr) { frameLoop.gerr = 1; if (window.console) console.error(e); } gui = null; }
         }

@@ -25,9 +25,17 @@
   const MODES = {
     classic: { name: 'Classic', desc: '2 minutes. Swallow the city and be the biggest hole. Bigger holes eat smaller ones!' },
     battle: { name: 'Battle', desc: '20 holes, no respawns. Eat the others and be the last hole standing!' },
+    rush: { name: 'Rush', desc: '40 s on the clock. Size-ups add 4 s, eating a hole adds 8 s. Get eaten and it is over!' },
     solo: { name: 'Solo', desc: 'Just you and the city. Eat 100% of it as fast as you can in 2 minutes!' }
   };
-  const MODE_KEYS = ['classic', 'battle', 'solo'];
+  const MODE_KEYS = ['classic', 'battle', 'rush', 'solo'];
+  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DIFFS = [
+    { name: 'Easy', s0: 0.05, s1: 0.3, spd: 0.8, flee: 0.2, hunt: 0.5, wander: 0.3, lead: 0, foe: 0.55, think: 1.3, turn: 0.65, noise: 1.3, smart: 0 },
+    { name: 'Normal', s0: 0.35, s1: 0.6, spd: 0.9, flee: 0.45, hunt: 1, wander: 0.05, lead: 0.35, foe: 1, think: 1, turn: 1, noise: 0.6, smart: 0 },
+    { name: 'Hard', s0: 0.8, s1: 0.2, spd: 0.92, flee: 0.95, hunt: 1.2, wander: 0, lead: 0.35, foe: 1.7, think: 0.65, turn: 1.35, noise: 0.25, smart: 1 }
+  ];
+  const LBL = { man: ['Person', 'People'], man2: ['Person', 'People'], cone: ['Cone', 'Cones'], hydrant: ['Hydrant', 'Hydrants'], bin: ['Bin', 'Bins'], mailbox: ['Mailbox', 'Mailboxes'], bush: ['Bush', 'Bushes'], bench: ['Bench', 'Benches'], fence: ['Fence', 'Fences'], hedge: ['Hedge', 'Hedges'], lamp: ['Lamp', 'Lamps'], tlight: ['Traffic light', 'Traffic lights'], tree: ['Tree', 'Trees'], pine: ['Tree', 'Trees'], booth: ['Phone booth', 'Booths'], kiosk: ['Kiosk', 'Kiosks'], fountain: ['Fountain', 'Fountains'], statue: ['Statue', 'Statues'], car: ['Car', 'Cars'], taxi: ['Taxi', 'Taxis'], van: ['Van', 'Vans'], truck: ['Truck', 'Trucks'], bus: ['Bus', 'Buses'], house: ['House', 'Houses'], house2: ['House', 'Houses'], shop: ['Shop', 'Shops'], apt: ['Apartment block', 'Apartments'], store: ['Supermarket', 'Supermarkets'], office: ['Office', 'Offices'], tower: ['Tower', 'Towers'], sky: ['Skyscraper', 'Skyscrapers'] };
 
   const BCOL = ['#ff8a80', '#ffd166', '#80d8ff', '#b39ddb', '#a5d6a7', '#ffab91', '#f48fb1', '#fff1d6', '#90caf9', '#ffcc80', '#c5e1a5', '#e1bee7', '#ffe082', '#80cbc4'];
   const CCOL = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24aa', '#fb8c00', '#f5f5f5', '#3949ab', '#00acc1', '#ec407a', '#6d4c41'];
@@ -496,7 +504,7 @@ ${g} .board b{width:1.2em;text-align:right;color:#8a8a9a}
 ${g} .board span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:6.5em}
 ${g} .board em{font-style:normal;color:#55556a;font-variant-numeric:tabular-nums}
 ${g} .board .h{font-size:.8em;letter-spacing:.08em;text-transform:uppercase;color:#8a8a9a;padding:0 .2em .2em}
-${g} .msg{position:absolute;left:0;right:0;top:40%;text-align:center;font-weight:900;font-size:1.7em;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25),0 0 14px rgba(0,0,0,.35);opacity:0;transition:opacity .25s}
+${g} .msg{position:absolute;left:0;right:0;top:63%;text-align:center;font-weight:900;font-size:1.7em;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25),0 0 14px rgba(0,0,0,.35);opacity:0;transition:opacity .25s}
 ${g} .msg.on{opacity:1}
 ${g} .msg small{display:block;font-size:.6em;margin-top:.3em}
 ${g} .joy{position:absolute;left:0;top:0;width:96px;height:96px;margin:-48px 0 0 -48px;border-radius:50%;background:rgba(255,255,255,.22);border:2px solid rgba(255,255,255,.55);pointer-events:none;display:none}
@@ -534,6 +542,36 @@ ${g} .card .st b{display:block;font-size:1.3em;color:#1f1d2b}
 ${g} .btns{display:flex;gap:.6em;justify-content:center;flex-wrap:wrap;align-items:center}
 ${g} .end button{font-size:1.3em;padding:.6em 1.6em}
 ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3de;text-shadow:none;font-size:1.1em}
+${g} .diff{display:flex;gap:.3em;padding:.28em;border-radius:999px;background:rgba(20,26,50,.55)}
+${g} .diff.off{visibility:hidden}
+${g} .diff button{font:900 .9em/1 var(--sans);padding:.55em 1em;min-height:36px;border:0;border-radius:999px;background:transparent;color:rgba(255,255,255,.82);cursor:pointer}
+${g} .diff button.on{background:#fff;color:#1f1d2b;box-shadow:0 .2em .5em -.2em rgba(0,0,0,.5)}
+${g} .diff button.on[data-d="0"]{color:#2fae4e}
+${g} .diff button.on[data-d="2"]{color:#ef3b4f}
+${g} .mrow{display:flex;gap:.7em;align-items:center;justify-content:center;flex-wrap:wrap}
+${g} .howb{font:900 1em/1 var(--sans);padding:.7em 1.2em;min-height:44px;border:0;border-radius:999px;background:rgba(255,255,255,.94);color:#2a3a6a;cursor:pointer;box-shadow:0 .25em 0 rgba(20,30,60,.4)}
+${g} .howb:active{transform:translateY(.12em);box-shadow:0 .1em 0 rgba(20,30,60,.4)}
+${g} .logo .sub{font-size:.62em;margin-left:.22em;color:#ffd23f;text-shadow:0 .09em 0 #8a5a00,0 .18em .3em rgba(0,0,0,.35);transform:rotate(-4deg) translateY(.06em)}
+${g} .pop{position:absolute;left:0;top:0;font-weight:900;font-size:clamp(13px,2.9cqw,24px);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.32),0 0 6px rgba(0,0,0,.3);white-space:nowrap;pointer-events:none;opacity:0;will-change:transform,opacity}
+${g} .pop.go{animation:gm-hc-pop 1s ease-out forwards}
+${g} .pop.big{font-size:clamp(15px,3.4cqw,30px);color:#ffd23f;text-shadow:0 2px 0 #8a5a00,0 0 8px rgba(0,0,0,.35)}
+@keyframes gm-hc-pop{0%{opacity:0;transform:var(--p) translate(-50%,0) scale(.5)}14%{opacity:1;transform:var(--p) translate(-50%,-60%) scale(1.18)}30%{transform:var(--p) translate(-50%,-90%) scale(1)}100%{opacity:0;transform:var(--p) translate(-50%,-300%) scale(.95)}}
+${g} .combo{padding:.3em .8em;border-radius:999px;background:linear-gradient(#ffb547,#ff7a1a);color:#fff;font-weight:900;font-size:1.05em;line-height:1;box-shadow:0 .25em 0 #c2540a,0 .4em .8em -.3em rgba(0,0,0,.4);text-shadow:0 1px 0 rgba(0,0,0,.25);font-variant-numeric:tabular-nums;transition:transform .12s}
+${g} .combo.off{display:none}
+${g} .combo.bump{transform:scale(1.18)}
+${g} .how{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(18,22,40,.62);font-size:clamp(11px,1.85cqw,17px)}
+${g} .how.off{display:none}
+${g} .how .card{width:min(92%,34em)}
+${g} .how h2{font-size:2em;color:#1f1d2b}
+${g} .steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55em;margin:.6em 0 .8em;text-align:left}
+${g} .steps div{background:#f3f4f7;border-radius:.8em;padding:.5em .6em .6em;font-weight:800;font-size:.9em;line-height:1.28;color:#3a3a4e}
+${g} .steps b{color:#3d8bff}
+${g} .steps svg{display:block;width:100%;height:4.4em;margin-bottom:.35em;border-radius:.5em;background:#86cf5e}
+${g} .how .ok{font:900 1.35em/1 var(--sans);padding:.6em 2em;min-height:48px;border:0;border-radius:999px;background:linear-gradient(#4fd16b,#2fae4e);color:#fff;cursor:pointer;box-shadow:0 .25em 0 #1f8a3a;text-shadow:0 1px 0 rgba(0,0,0,.2)}
+${g} .card .spark{display:block;width:100%;height:2.6em;margin:0 0 .5em;border-radius:.5em;background:#f3f6fb}
+${g} .card .ate{display:flex;flex-wrap:wrap;gap:.3em;justify-content:center;margin:0 0 .55em}
+${g} .card .ate span{padding:.22em .6em;border-radius:999px;background:#e8f1ff;font-weight:800;font-size:.82em;color:#2a4a8a}
+${g} .card .tip{margin:.5em 0 0;font-weight:800;font-size:.78em;color:#9a9aaa}
 `;
 
   const CROWN = '<svg viewBox="0 0 24 16"><path d="M2 14L1 3l6 5 5-7 5 7 6-5-1 11z" fill="#ffc83d" stroke="#c98a00" stroke-width="1.3" stroke-linejoin="round"/></svg>';
@@ -569,14 +607,26 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
       v.canvas.style.width = '100%';
       root.append(stage);
       stage.append(v.canvas);
+      const HO = (x, y, r, c) => `<ellipse cx="${x}" cy="${y}" rx="${r * 1.25}" ry="${r * 0.78}" fill="${c}"/><ellipse cx="${x}" cy="${y}" rx="${r * 1.1}" ry="${r * 0.66}" fill="#0b0c12"/>`;
+      const ROAD = '<rect x="-120" y="20" width="360" height="22" fill="#6b717d"/><path d="M-70 31h12M-46 31h12M-22 31h12M2 31h12M26 31h12M82 31h12M106 31h12M130 31h12M154 31h12M178 31h12" stroke="#f4f4f4" stroke-width="2"/>';
+      const STEPS = [
+        `<svg viewBox="0 0 120 60">${ROAD}${HO(40, 32, 13, '#3d8bff')}<path d="M60 27L82 19" stroke="#fff" stroke-width="3" stroke-dasharray="4 3" stroke-linecap="round"/>${COARSE ? '<circle cx="92" cy="16" r="10" fill="#fff" opacity=".35"/><circle cx="92" cy="16" r="5.5" fill="#fff" stroke="#1f1d2b" stroke-width="1.5"/>' : '<path d="M88 8v19l5-4 3.4 7.4 3.2-1.5-3.3-7.2 6.4-.4z" fill="#fff" stroke="#1f1d2b" stroke-width="1.5" stroke-linejoin="round"/>'}</svg>${COARSE ? '<b>Drag</b> anywhere: the hole follows your finger.' : '<b>Move the mouse</b> or use WASD / arrows to steer the hole.'}`,
+        `<svg viewBox="0 0 120 60">${ROAD}${HO(56, 36, 17, '#3d8bff')}<g transform="translate(57 31) rotate(-32)"><rect x="-13" y="-6" width="26" height="11" rx="2.5" fill="#e53935"/><rect x="-6" y="-11" width="12" height="6" rx="1.5" fill="#a6dcff"/><rect x="-13" y="1" width="26" height="4" fill="#000" opacity=".35"/></g><text x="96" y="20" font-size="13" font-weight="900" text-anchor="middle" fill="#ffd23f" stroke="#8a5a00" stroke-width="2.6" paint-order="stroke">+10</text></svg><b>Swallow</b> anything smaller than you. Fill the ring to grow.`,
+        `<svg viewBox="0 0 120 60">${HO(40, 32, 20, '#3d8bff')}${HO(94, 30, 9, '#ff4d6d')}<path d="M80 30.5H68M73 25l-6 5.5 6 5.5" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Bigger holes eat smaller ones.</b> Hunt small rivals, run from big ones.`,
+        `<svg viewBox="0 0 120 60">${ROAD}${HO(52, 38, 14, '#3d8bff')}<path d="M39 21l-2-11 7.5 5 7.5-8.5 7.5 8.5 7.5-5-2 11z" fill="#ffc83d" stroke="#c98a00" stroke-width="1.6" stroke-linejoin="round"/><circle cx="98" cy="22" r="10" fill="#fff" stroke="#1f1d2b" stroke-width="2"/><path d="M98 22v-6.5M98 22l5 3" stroke="#1f1d2b" stroke-width="2" stroke-linecap="round"/></svg><b>Classic</b>: biggest after 2 min. <b>Battle</b>: last hole alive. <b>Rush</b>: grow to earn time. <b>Solo</b>: eat the city.`
+      ];
       stage.insertAdjacentHTML('beforeend', `<div class="lbs"></div>
-<div class="hud off"><div class="top"><div class="pill tm"><i class="clock"></i><b>2:00</b></div><div class="pct"><div><u></u></div><b>0%</b></div></div><div class="board"></div><div class="msg"></div></div>
+<div class="hud off"><div class="top"><div class="pill tm"><i class="clock"></i><b>2:00</b></div><div class="pct"><div><u></u></div><b>0%</b></div><div class="combo off"></div></div><div class="board"></div><div class="msg"></div></div>
 <div class="joy"><i></i></div>
-<div class="menu"><div class="logo"><span>H</span><i></i><span>le.io</span></div><div class="tabs">${MODE_KEYS.map(m => `<button data-m="${m}">${MODES[m].name}</button>`).join('')}</div><p class="desc"></p><button class="play">Play</button><p class="best"></p><p class="hint">${COARSE ? 'Drag anywhere to move' : 'Move the mouse or use WASD / arrows'}</p></div>
-<div class="end off"><div class="card"><p class="k"></p><h2></h2><p class="s"></p><div class="list"></div><div class="st"></div><div class="btns"><button class="again">Play again</button><button class="alt tomenu">Menu</button></div></div></div>`);
+<div class="menu"><div class="logo"><span>H</span><i></i><span>le</span><span class="sub">City</span></div><div class="tabs">${MODE_KEYS.map(m => `<button data-m="${m}">${MODES[m].name}</button>`).join('')}</div><div class="diff">${DIFFS.map((d, i) => `<button data-d="${i}">${d.name}</button>`).join('')}</div><p class="desc"></p><div class="mrow"><button class="play">Play</button><button class="howb">How to play</button></div><p class="best"></p><p class="hint">${COARSE ? 'Drag anywhere to move' : 'Mouse or WASD to move · ←/→ mode · ↑/↓ difficulty'}</p></div>
+<div class="end off"><div class="card"><p class="k"></p><h2></h2><p class="s"></p><div class="list"></div><svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none"></svg><div class="ate"></div><div class="st"></div><div class="btns"><button class="again">Play again</button><button class="alt tomenu">Menu</button></div><p class="tip">${COARSE ? '' : 'Space or Enter to play again'}</p></div></div>
+<div class="how off"><div class="card"><p class="k">Hole City</p><h2>How to play</h2><div class="steps">${STEPS.map(s => `<div>${s}</div>`).join('')}</div><div class="btns"><button class="ok">Got it!</button></div></div></div>`);
       const $ = s => stage.querySelector(s);
       const elLbs = $('.lbs'), elHud = $('.hud'), elTm = $('.tm'), elTmI = $('.tm i'), elTmB = $('.tm b'), elPct = $('.pct'), elPctU = $('.pct u'), elPctB = $('.pct b');
-      const elBoard = $('.board'), elMsg = $('.msg'), elJoy = $('.joy'), elJoyK = $('.joy i'), elMenu = $('.menu'), elEnd = $('.end');
+      const elBoard = $('.board'), elMsg = $('.msg'), elJoy = $('.joy'), elJoyK = $('.joy i'), elMenu = $('.menu'), elEnd = $('.end'), elHow = $('.how'), elCombo = $('.combo'), elDiff = $('.diff');
+      const POPS = [];
+      for (let k = 0; k < 10; k++) { const el = document.createElement('div'); el.className = 'pop'; elLbs.append(el); POPS.push(el); }
+      let popK = 0, popAcc = 0, popLast = 0;
 
       const scene = new THREE.Scene();
       scene.background = new THREE.Color('#8fd3f5');
@@ -993,6 +1043,55 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
         elLbs.append(el);
         HOLES.push({ k, g, ring, rm, el, sp: el.lastChild, on: false, bot: true, name: '', color: '#fff', x: 0, z: 0, vx: 0, vz: 0, ang: 0, R: 1, mass: 0, level: 0, alive: false, prot: 0, dieT: 0, by: null, resp: 0, think: 0, tx: 0, tz: 0, skill: 0.5, spdK: 0.95, aggr: 0.5, eaten: 0, kills: 0, pulse: 0, flash: 0, Rd: 1, peak: 0, ix: 0, iz: 0, mag: 0, rank: 0 });
       }
+      const PN = 180, pGeo = new THREE.BoxGeometry(0.34, 0.34, 0.34), pMat = new THREE.MeshBasicMaterial();
+      const pMesh = new THREE.InstancedMesh(pGeo, pMat, PN);
+      pMesh.frustumCulled = false; pMesh.renderOrder = 4; pMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      const PS = [];
+      tcol.set('#ffffff');
+      for (let i = 0; i < PN; i++) { pMesh.setMatrixAt(i, _zero); pMesh.setColorAt(i, tcol); PS.push({ t: 0, t0: 1, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, s: 1, r: 0 }); }
+      scene.add(pMesh);
+      disposables.push(pGeo, pMat);
+      let pHead = 0, pAny = false;
+      const _e = new THREE.Euler(), _ps = new THREE.Vector3();
+      function burst(x, z, n, cols, pow, y0) {
+        for (let k = 0; k < n; k++) {
+          const q = PS[pHead];
+          tcol.set(cols[k % cols.length]).convertSRGBToLinear(); pMesh.setColorAt(pHead, tcol);
+          pHead = (pHead + 1) % PN;
+          const a = Math.random() * TAU, sp = (2.5 + Math.random() * 5) * pow;
+          q.t = q.t0 = 0.7 + Math.random() * 0.6; q.x = x + Math.cos(a) * 0.3 * pow; q.z = z + Math.sin(a) * 0.3 * pow; q.y = y0 || 0.4;
+          q.vx = Math.cos(a) * sp; q.vz = Math.sin(a) * sp; q.vy = (5 + Math.random() * 7) * Math.sqrt(pow); q.s = (0.6 + Math.random() * 0.9) * Math.min(2.4, 0.6 + pow * 0.5); q.r = Math.random() * 6;
+        }
+        pMesh.instanceColor.needsUpdate = true; pAny = true;
+      }
+      function particles(dt) {
+        if (!pAny) return;
+        let any = false;
+        for (let i = 0; i < PN; i++) {
+          const q = PS[i];
+          if (q.t <= 0) continue;
+          q.t -= dt;
+          if (q.t <= 0) { pMesh.setMatrixAt(i, _zero); continue; }
+          any = true;
+          q.vy -= 24 * dt; q.x += q.vx * dt; q.z += q.vz * dt; q.y += q.vy * dt;
+          if (q.y < 0.15) { q.y = 0.15; q.vy = Math.abs(q.vy) * 0.35; q.vx *= 0.7; q.vz *= 0.7; }
+          q.r += dt * 9;
+          _e.set(q.r, q.r * 0.7, q.r * 0.3); _q.setFromEuler(_e); _p.set(q.x, q.y, q.z);
+          const sc = q.s * Math.min(1, q.t / q.t0 * 2.5); _ps.set(sc, sc, sc);
+          _m.compose(_p, _q, _ps); pMesh.setMatrixAt(i, _m);
+        }
+        pMesh.instanceMatrix.needsUpdate = true;
+        pAny = any;
+      }
+      function popAt(H, text, big) {
+        if (!H) return;
+        _v.set(H.x, 0, H.z - H.R * 0.2).project(cam);
+        if (_v.z > 1 || Math.abs(_v.x) > 1.1 || Math.abs(_v.y) > 1.1) return;
+        const el = POPS[popK]; popK = (popK + 1) % POPS.length;
+        el.textContent = text; el.classList.toggle('big', !!big);
+        el.style.setProperty('--p', `translate(${((_v.x + 1) / 2 * stage.offsetWidth).toFixed(1)}px,${((1 - _v.y) / 2 * stage.offsetHeight).toFixed(1)}px)`);
+        el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
+      }
       let holes = [];
       const speedOf = R => CFG.speedBase + CFG.speedPerR * R;
       const canEat = (a, b) => RL[a.level] > RL[b.level] * CFG.eatRatio;
@@ -1001,7 +1100,8 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
         H.on = true; H.bot = bot; H.name = name; H.color = color; H.x = x; H.z = z; H.vx = H.vz = 0; H.ang = Math.random() * TAU;
         H.mass = 0; H.level = 0; H.R = RL[0]; H.alive = true; H.prot = mode === 'battle' ? 0 : 1.2; H.dieT = 0; H.by = null; H.resp = 0; H.think = Math.random() * 0.5;
         H.tx = x; H.tz = z; H.eaten = 0; H.kills = 0; H.pulse = 0; H.flash = 0; H.peak = 0; H.mag = 0; H.dead = false;
-        H.skill = 0.35 + Math.random() * 0.6; H.spdK = 0.9 + H.skill * 0.08; H.aggr = Math.random();
+        const D = DIFFS[botDiff];
+        H.skill = D.s0 + Math.random() * D.s1; H.spdK = D.spd + H.skill * 0.08; H.aggr = Math.random(); H.pl = 0;
         H.rm.uniforms.uC.value.set(color); H.rm.uniforms.uP.value = 0;
         H.g.visible = true; H.el.style.color = color; H.sp.textContent = name; H.el.classList.remove('hide');
       }
@@ -1022,15 +1122,21 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
         H.mass += v; H.peak = Math.max(H.peak, H.mass);
         let up = false;
         while (H.mass >= TL[H.level + 1]) { H.level++; up = true; }
-        if (up) { H.flash = 1; if (H === player && phase === 'play') sfx('level'); }
+        H.pl = Math.max(H.pl || 0, H.level);
+        if (up) {
+          H.flash = 1;
+          if (H === player && phase === 'play') { sfx('level'); if (mode === 'rush') roundT += 4; popAt(H, 'Size ' + (H.level + 1) + '!' + (mode === 'rush' ? ' +4s' : ''), true); burst(H.x, H.z, 22 + Math.min(20, H.level * 2), [H.color, '#ffffff', '#ffd23f'], 0.8 + H.R * 0.25); kick = 1; }
+        }
       }
 
       let mode = 'classic', phase = 'menu', sel = 0, player = null, roundT = 0, elapsed = 0, attractT = 0, endT = 0, endInfo = null;
       let eatenPts = 0, eatenObjs = 0, scoreShown = -1, boardT = 0, msgT = 0, auto = false, timeScale = 1;
+      let diff = 1, botDiff = 1, combo = 0, comboT = 0, bestCombo = 0, ateBy = {}, biggest = null, growth = [], growT = 0, kick = 0, howOpen = false, howNext = null;
       const active = [];
       const save = api.load() || {};
       save.best = save.best || {};
-      if (typeof save.mode === 'number') sel = clamp(save.mode, 0, 2);
+      if (MODE_KEYS.includes(save.mk)) sel = MODE_KEYS.indexOf(save.mk);
+      if (typeof save.diff === 'number') diff = clamp(save.diff, 0, 2);
 
       let ac = null, master = null, lastPop = 0;
       function audio() {
@@ -1053,11 +1159,13 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
         const now = performance.now();
         if (n === 'pop') {
           if (now - lastPop < 45) return; lastPop = now;
-          if (pts >= 200) { tone(140, 40, 0.6, 'sine', 0.35); tone(320, 90, 0.35, 'triangle', 0.12); }
-          else if (pts >= 30) { tone(220, 70, 0.32, 'sine', 0.3); tone(500, 200, 0.12, 'triangle', 0.08); }
-          else if (pts >= 8) tone(380 + Math.random() * 80, 120, 0.16, 'sine', 0.22);
-          else tone(700 + Math.random() * 500, 260, 0.08, 'sine', 0.13);
-        } else if (n === 'level') { [523, 659, 784, 1047].forEach((f, i) => tone(f, f * 1.01, 0.14, 'triangle', 0.13, i * 0.06)); }
+          const cm = 1 + Math.min(combo, 24) * 0.025;
+          if (pts >= 200) { tone(140, 40, 0.6, 'sine', 0.35); tone(320, 90, 0.35, 'triangle', 0.12); tone(70, 30, 0.5, 'sine', 0.25, 0.05); }
+          else if (pts >= 30) { tone(220, 70, 0.32, 'sine', 0.3); tone(500 * cm, 200, 0.12, 'triangle', 0.08); }
+          else if (pts >= 8) tone((380 + Math.random() * 80) * cm, 120, 0.16, 'sine', 0.22);
+          else tone((700 + Math.random() * 300) * cm, 260, 0.08, 'sine', 0.13);
+        }
+        else if (n === 'combo') { [660, 880, 1100].forEach((f, i) => tone(f * pts, f * pts * 1.02, 0.1, 'triangle', 0.09, i * 0.05)); } else if (n === 'level') { [523, 659, 784, 1047].forEach((f, i) => tone(f, f * 1.01, 0.14, 'triangle', 0.13, i * 0.06)); }
         else if (n === 'gulp') { tone(160, 520, 0.22, 'square', 0.08); [784, 988, 1175].forEach((f, i) => tone(f, f, 0.16, 'triangle', 0.12, 0.15 + i * 0.07)); }
         else if (n === 'eaten') { tone(420, 60, 0.7, 'sawtooth', 0.1); tone(300, 50, 0.7, 'sine', 0.2); }
         else if (n === 'tick') tone(1200, 1200, 0.05, 'square', 0.05);
@@ -1091,7 +1199,18 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
         o.st = 3; o.h = null; writeObj(o);
         if (!H || !H.alive || phase === 'end') return;
         addMass(H, o.t.pts); H.eaten++; H.pulse = Math.min(1, H.pulse + 0.25 + o.t.pts / 200);
-        if (H === player) { eatenPts += o.t.pts; eatenObjs++; if (phase === 'play') sfx('pop', o.t.pts); }
+        if (H === player) {
+          eatenPts += o.t.pts; eatenObjs++;
+          if (phase === 'play') {
+            combo++; comboT = 0.75; if (combo > bestCombo) bestCombo = combo;
+            const lb = (LBL[o.t.name] || [o.t.name, o.t.name])[1], a = ateBy[lb] || (ateBy[lb] = { n: 0, p: 0 }); a.n++; a.p += o.t.pts;
+            if (!biggest || o.t.pts > biggest.pts) biggest = o.t;
+            sfx('pop', o.t.pts);
+            if (combo % 10 === 0) { sfx('combo', 1 + Math.min(combo, 60) / 60); elCombo.classList.add('bump'); }
+            popAcc += o.t.pts;
+            if (o.t.pts >= 30) burst(H.x, H.z, Math.min(14, 5 + (o.t.pts / 40) | 0), ['#cfd3db', '#ffffff', '#a9b0bd'], 0.7 + Math.min(1.6, o.t.h * 0.06), 0.3);
+          }
+        }
       }
       function activeStep(dt) {
         let n = 0;
@@ -1147,32 +1266,35 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
       }
 
       function decide(H) {
-        const Rt = RL[H.level];
-        let threat = null, td = 1e9;
+        const D = DIFFS[botDiff], Rt = RL[H.level];
+        let threat = null, td = 1e9, fx = 0, fz = 0;
         for (const o of holes) {
           if (o === H || !o.on || !o.alive || !canEat(o, H)) continue;
           const d = Math.hypot(o.x - H.x, o.z - H.z) - RL[o.level];
-          if (d < 5 + Rt * 2 + 9 * H.skill && d < td) { td = d; threat = o; }
+          if (d < 5 + Rt * 2 + 9 * H.skill) { const wt = 1 / Math.max(1, d) / (Math.hypot(o.x - H.x, o.z - H.z) || 1); fx += (H.x - o.x) * wt; fz += (H.z - o.z) * wt; if (d < td) { td = d; threat = o; } }
         }
-        if (threat && Math.random() < 0.45 + 0.55 * H.skill) {
-          let ax = H.x - threat.x, az = H.z - threat.z;
-          const l = Math.hypot(ax, az) || 1, j = (Math.random() - 0.5) * 1.2;
+        if (threat && (!D.smart || td < 4 + Rt * 1.3 + 5 * H.skill) && Math.random() < D.flee + (1 - D.flee) * H.skill * 0.55) {
+          let ax = D.smart ? fx : H.x - threat.x, az = D.smart ? fz : H.z - threat.z;
+          let l = Math.hypot(ax, az) || 1;
           ax /= l; az /= l;
+          if (D.smart) { const ex = H.x / LIMIT, ez = H.z / LIMIT; if (Math.abs(ex) > 0.55) ax -= ex * 1.5; if (Math.abs(ez) > 0.55) az -= ez * 1.5; l = Math.hypot(ax, az) || 1; ax /= l; az /= l; }
+          const j = (Math.random() - 0.5) * (D.smart ? 0.35 : 1.2);
           const c = Math.cos(j), s = Math.sin(j);
           let tx = H.x + (ax * c - az * s) * 40, tz = H.z + (ax * s + az * c) * 40;
           if (Math.abs(tx) > LIMIT - 10) tx = H.x - (tx - H.x) * 0.3 + (Math.random() - 0.5) * 60;
           if (Math.abs(tz) > LIMIT - 10) tz = H.z - (tz - H.z) * 0.3 + (Math.random() - 0.5) * 60;
           H.tx = tx; H.tz = tz; return;
         }
+        if (D.wander && Math.random() < D.wander) { H.tx = clamp(H.x + (Math.random() - 0.5) * 60, -HALF, HALF); H.tz = clamp(H.z + (Math.random() - 0.5) * 60, -HALF, HALF); return; }
         const late = mode === 'battle' ? Math.min(1, elapsed / 150) : 0;
-        let prey = null, pd = 1e9;
+        let prey = null, pd = 1e9, praw = 0;
         for (const o of holes) {
           if (o === H || !o.on || !o.alive || o.prot > 0 || !canEat(H, o)) continue;
-          const d = Math.hypot(o.x - H.x, o.z - H.z), lim = 14 + Rt * 3 + 26 * H.aggr + 120 * late;
-          if (d < lim && d < pd) { pd = d; prey = o; }
+          const d = Math.hypot(o.x - H.x, o.z - H.z), dd = o === player ? d / D.foe : d, lim = (14 + Rt * 3 + 26 * H.aggr + 120 * late) * D.hunt;
+          if (dd < lim && dd < pd) { pd = dd; prey = o; praw = d; }
         }
-        if (prey) { H.tx = prey.x + prey.vx * 0.35; H.tz = prey.z + prey.vz * 0.35; return; }
-        const R = Rt * 0.97, rc = Math.min(5, 2 + Math.floor(Rt / 2.5)), ci = cellOf(H.x), cj = cellOf(H.z);
+        if (prey) { const lt = D.smart ? Math.min(1.4, praw / speedOf(H.R)) : D.lead; H.tx = prey.x + prey.vx * lt; H.tz = prey.z + prey.vz * lt; return; }
+        const R = Rt * 0.97, rc = Math.min(5 + D.smart, 2 + D.smart + Math.floor(Rt / 2.5)), ci = cellOf(H.x), cj = cellOf(H.z);
         let best = 0, bx = 0, bz = 0;
         for (let dj = -rc; dj <= rc; dj++) for (let di = -rc; di <= rc; di++) {
           const i = ci + di, j = cj + dj;
@@ -1182,7 +1304,8 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
           for (let k = 0; k < c.length; k++) { const o = c[k]; if (o.st < 2 && o.t.fr < R) sum += o.t.pts; }
           if (!sum) continue;
           const cx = (i + 0.5) * CELL - EXT, cz = (j + 0.5) * CELL - EXT;
-          const sc = sum / (Math.hypot(cx - H.x, cz - H.z) + 10 + Rt * 2) * (0.7 + Math.random() * 0.6);
+          let sc = sum / (Math.hypot(cx - H.x, cz - H.z) + 10 + Rt * 2) * (1 - D.noise / 2 + Math.random() * D.noise);
+          if (D.smart && threat) sc *= clamp(Math.hypot(cx - threat.x, cz - threat.z) / (RL[threat.level] * 3 + 12), 0.1, 1);
           if (sc > best) { best = sc; bx = cx; bz = cz; }
         }
         if (best > 0) { H.tx = bx + (Math.random() - 0.5) * 6; H.tz = bz + (Math.random() - 0.5) * 6; }
@@ -1191,10 +1314,10 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
       function steerBot(H, dt) {
         H.think -= dt;
         const dx = H.tx - H.x, dz = H.tz - H.z, d = Math.hypot(dx, dz);
-        if (H.think <= 0 || d < Math.max(1.5, H.R * 0.5)) { decide(H); H.think = 0.85 - 0.5 * H.skill + Math.random() * 0.25; }
+        if (H.think <= 0 || d < Math.max(1.5, H.R * 0.5)) { decide(H); H.think = (0.85 - 0.5 * H.skill + Math.random() * 0.25) * DIFFS[botDiff].think; }
         const want = Math.atan2(H.tz - H.z, H.tx - H.x);
         let da = want - H.ang; da = Math.atan2(Math.sin(da), Math.cos(da));
-        const tr = (3 + 4 * H.skill) * dt;
+        const tr = (3 + 4 * H.skill) * DIFFS[botDiff].turn * dt;
         H.ang += clamp(da, -tr, tr);
         H.ix = Math.cos(H.ang); H.iz = Math.sin(H.ang); H.mag = 1;
       }
@@ -1226,8 +1349,8 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
       const local = e => { const r = stage.getBoundingClientRect(), k = stage.offsetWidth / (r.width || 1); return [(e.clientX - r.left) * k, (e.clientY - r.top) * k, r]; };
       api.on(stage, 'pointerdown', e => {
         audio();
-        if (e.target.closest('button')) return;
-        if (phase === 'menu') { startMode(MODE_KEYS[sel]); }
+        if (e.target.closest('button') || howOpen) return;
+        if (phase === 'menu') { tryStart(MODE_KEYS[sel]); return; }
         else if (phase === 'end') return;
         const [x, y, r] = local(e);
         if (e.pointerType === 'mouse') { ptr.on = true; ptr.nx = (e.clientX - r.left) / r.width * 2 - 1; ptr.ny = -((e.clientY - r.top) / r.height * 2 - 1); return; }
@@ -1255,16 +1378,31 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
       api.on(stage, 'pointerleave', e => { if (e.pointerType === 'mouse') ptr.on = false; });
       api.on(stage, 'contextmenu', e => e.preventDefault());
       api.on(window, 'keydown', e => {
+        if (howOpen) { if (e.code === 'Enter' || e.code === 'Space' || e.code === 'Escape') { e.preventDefault(); closeHow(); } return; }
         if (phase === 'menu') {
-          if (e.code === 'ArrowLeft' || e.code === 'KeyA') { sel = (sel + 2) % 3; renderMenu(); sfx('tap'); return; }
-          if (e.code === 'ArrowRight' || e.code === 'KeyD') { sel = (sel + 1) % 3; renderMenu(); sfx('tap'); return; }
-          if (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3') { sel = +e.code.slice(5) - 1; renderMenu(); }
-          if (e.code === 'Tab' || e.code === 'ArrowUp' || e.code === 'ArrowDown' || e.code === 'KeyW' || e.code === 'KeyS' || e.metaKey || e.ctrlKey || e.altKey) return;
-          audio(); startMode(MODE_KEYS[sel]);
+          if (e.code === 'ArrowLeft' || e.code === 'KeyA') { sel = (sel + MODE_KEYS.length - 1) % MODE_KEYS.length; renderMenu(); sfx('tap'); return; }
+          if (e.code === 'ArrowRight' || e.code === 'KeyD') { sel = (sel + 1) % MODE_KEYS.length; renderMenu(); sfx('tap'); return; }
+          if (e.code === 'ArrowUp' || e.code === 'ArrowDown') { e.preventDefault(); if (MODE_KEYS[sel] !== 'solo') { diff = clamp(diff + (e.code === 'ArrowUp' ? 1 : -1), 0, 2); save.diff = diff; api.save(save); renderMenu(); sfx('tap'); } return; }
+          if (e.code === 'KeyH') { openHow(null); return; }
+          if (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3' || e.code === 'Digit4') { sel = +e.code.slice(5) - 1; renderMenu(); }
+          if (e.code === 'Tab' || e.code === 'KeyW' || e.code === 'KeyS' || e.code === 'Escape' || e.metaKey || e.ctrlKey || e.altKey) return;
+          audio(); tryStart(MODE_KEYS[sel]);
         } else if (phase === 'end' && performance.now() - endT > 900 && (e.code === 'Enter' || e.code === 'Space')) { e.preventDefault(); startMode(mode); }
       });
       elMenu.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; sel = MODE_KEYS.indexOf(b.dataset.m); renderMenu(); sfx('tap'); });
-      elMenu.querySelector('.play').addEventListener('click', () => { audio(); startMode(MODE_KEYS[sel]); });
+      elMenu.querySelector('.play').addEventListener('click', () => { audio(); tryStart(MODE_KEYS[sel]); });
+      elDiff.addEventListener('click', e => { const b = e.target.closest('[data-d]'); if (!b) return; diff = +b.dataset.d; save.diff = diff; api.save(save); renderMenu(); sfx('tap'); });
+      elMenu.querySelector('.howb').addEventListener('click', () => { audio(); sfx('tap'); openHow(null); });
+      elHow.querySelector('.ok').addEventListener('click', () => closeHow());
+      function openHow(next) { howOpen = true; howNext = next; elHow.classList.remove('off'); }
+      function closeHow() {
+        if (!howOpen) return;
+        howOpen = false; elHow.classList.add('off'); sfx('tap');
+        if (!save.how) { save.how = 1; api.save(save); }
+        const n = howNext; howNext = null;
+        if (n && phase === 'menu') startMode(n);
+      }
+      function tryStart(m) { if (!save.how) { openHow(m); return; } startMode(m); }
       elEnd.querySelector('.again').addEventListener('click', () => { if (phase === 'end') startMode(mode); });
       elEnd.querySelector('.tomenu').addEventListener('click', () => { if (phase === 'end') toMenu(); });
 
@@ -1272,9 +1410,11 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
       function renderMenu() {
         elMenu.querySelectorAll('[data-m]').forEach((b, i) => b.classList.toggle('on', i === sel));
         const m = MODE_KEYS[sel];
-        elMenu.querySelector('.desc').textContent = MODES[m].desc;
+        elDiff.querySelectorAll('[data-d]').forEach((b, i) => b.classList.toggle('on', i === diff));
+        elDiff.classList.toggle('off', m === 'solo');
+        elMenu.querySelector('.desc').textContent = MODES[m].desc + (m === 'solo' ? '' : ' ' + ['Easy rivals wander and rarely chase you.', 'Rivals hunt smaller holes and flee bigger ones.', 'Rivals plan escapes, cut you off and chase the leader.'][diff]);
         const b = save.best[m];
-        elMenu.querySelector('.best').textContent = b ? 'Best: ' + b.toLocaleString('en-US') + (m === 'battle' && save.wins ? ' · Wins: ' + save.wins : '') : '';
+        elMenu.querySelector('.best').textContent = (b ? 'Best: ' + b.toLocaleString('en-US') : 'No best score yet') + (m === 'battle' && save.wins ? ' · Wins: ' + save.wins : '') + (save.played ? ' · Played: ' + save.played : '');
       }
       function shuffledNames() { const a = NAMES.slice(); for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; }
       function spawnSet(nBots, withPlayer) {
@@ -1294,22 +1434,25 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
         if (player) player.prot = mode === 'battle' ? 1.5 : CFG.shield;
       }
       function startMode(m) {
-        mode = m; sel = MODE_KEYS.indexOf(m); save.mode = sel; api.save(save);
+        mode = m; sel = MODE_KEYS.indexOf(m); save.mk = m; api.save(save);
+        botDiff = diff;
+        combo = 0; comboT = 0; bestCombo = 0; ateBy = {}; biggest = null; growth = [0]; growT = 2; kick = 0; popAcc = 0;
+        elCombo.classList.add('off');
         resetCity();
         spawnSet(m === 'solo' ? 0 : m === 'battle' ? CFG.battleHoles - 1 : CFG.classicHoles - 1, true);
-        phase = 'play'; roundT = CFG.roundTime; elapsed = 0; eatenPts = 0; eatenObjs = 0; scoreShown = -1; endInfo = null; lastTick = -1;
+        phase = 'play'; roundT = m === 'rush' ? 40 : CFG.roundTime; elapsed = 0; eatenPts = 0; eatenObjs = 0; scoreShown = -1; endInfo = null; lastTick = -1;
         elMenu.classList.add('off'); elEnd.classList.add('off'); elHud.classList.remove('off');
         elTmI.className = m === 'battle' ? 'holei' : 'clock'; elTm.classList.remove('hot');
         elPct.style.display = m === 'solo' ? 'flex' : 'none';
         elBoard.style.display = m === 'solo' ? 'none' : 'block';
-        elMsg.classList.remove('on');
+        msg('Go!', 0.9);
         camD = CFG.camBase + CFG.camPerR * RL[0];
         camX = player.x; camZ = player.z;
         api.score(0);
         boardT = 0;
       }
       function toMenu() {
-        phase = 'menu'; mode = MODE_KEYS[sel];
+        phase = 'menu'; mode = MODE_KEYS[sel]; botDiff = 1;
         resetCity();
         spawnSet(CFG.classicHoles, false);
         attractT = 0;
@@ -1329,6 +1472,8 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
         const nb = api.submit(score);
         if (!save.best[mode] || score > save.best[mode]) save.best[mode] = score;
         if (mode === 'battle' && rank === 1) save.wins = (save.wins || 0) + 1;
+        save.played = (save.played || 0) + 1;
+        growth.push(player.alive ? player.mass : 0);
         api.save(save);
         api.score(score);
         endInfo = { kind, rank, score, nb, list };
@@ -1354,15 +1499,21 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
           c.querySelector('.list').innerHTML = '';
         } else {
           c.querySelector('h2').textContent = '#' + rank;
-          c.querySelector('.s').textContent = 'You are #' + rank + (rank === 1 ? '!' : '');
-          const rows = list.slice(0, 5);
+          c.querySelector('.s').textContent = MODES[mode].name + ' · ' + DIFFS[botDiff].name + (rank === 1 ? ' · You win!' : '');
+          const rows = list.slice(0, 3);
           if (!rows.includes(player)) rows.push(player);
           c.querySelector('.list').innerHTML = rows.map(o => `<div class="r${o === player ? ' me' : ''}"><b>${list.indexOf(o) + 1}</b><span style="color:${o.color}">${o.name}</span><em>${Math.round(o.mass).toLocaleString('en-US')}</em></div>`).join('');
         }
-        const st = [['Score', score.toLocaleString('en-US')], ['Eaten', eatenObjs.toLocaleString('en-US')]];
-        if (mode !== 'solo') st.push(['Holes eaten', player.kills]); else st.push(['Size', player.level + 1]);
+        const gm = Math.max(1, ...growth), gn = Math.max(1, growth.length - 1);
+        const gp = growth.map((v, i) => (i / gn * 100).toFixed(1) + ',' + (28 - v / gm * 25).toFixed(1)).join(' ');
+        c.querySelector('.spark').innerHTML = `<polygon points="0,30 ${gp} 100,30" fill="rgba(61,139,255,.18)"/><polyline points="${gp}" fill="none" stroke="#3d8bff" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`;
+        const top = Object.keys(ateBy).sort((a, b) => ateBy[b].p - ateBy[a].p).slice(0, 4);
+        c.querySelector('.ate').innerHTML = top.map(k => `<span>${ateBy[k].n}× ${k}</span>`).join('');
+        const st = [['Score', score.toLocaleString('en-US')], ['Eaten', eatenObjs.toLocaleString('en-US')], ['Peak size', (player.pl || 0) + 1], ['Best combo', bestCombo]];
+        if (mode !== 'solo') st.push(['Holes eaten', player.kills]);
+        if (biggest) st.push(['Biggest bite', LBL[biggest.name] ? LBL[biggest.name][0] : biggest.name]);
         c.querySelector('.st').innerHTML = st.map(([a, b]) => `<div>${a}<b>${b}</b></div>`).join('');
-        elEnd.classList.remove('off'); elHud.classList.add('off');
+        elEnd.classList.remove('off'); elHud.classList.add('off'); elCombo.classList.add('off');
         for (const H of holes) H.el.classList.add('hide');
       }
       function msg(html, t) { elMsg.innerHTML = html; elMsg.classList.add('on'); msgT = t; }
@@ -1370,13 +1521,15 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
       function eatHole(big, small) {
         small.alive = false; small.dieT = 0; small.by = big; small.Rd = small.R; small.deathAt = elapsed;
         big.kills++;
-        addMass(big, Math.round(small.mass * CFG.holeGain) + 15 * (small.level + 1));
-        if (mode !== 'battle' || phase === 'menu') small.mass = 0;
+        const gain = Math.round(small.mass * CFG.holeGain) + 15 * (small.level + 1);
+        addMass(big, gain);
+        if (phase === 'menu' || (mode !== 'battle' && !(mode === 'rush' && small === player))) small.mass = 0;
         big.pulse = 1;
-        if (big === player && phase === 'play') { sfx('gulp'); msg('You ate ' + small.name + '!', 1.6); }
+        if (phase === 'play') burst(small.x, small.z, 30, [small.color, '#ffffff', small.color], 0.9 + small.R * 0.3);
+        if (big === player && phase === 'play') { sfx('gulp'); msg('You ate ' + small.name + '!', 1.6); if (mode === 'rush') roundT += 8; popAt(big, '+' + gain + (mode === 'rush' ? ' · +8s' : ''), true); kick = 1; }
         if (small === player && phase === 'play') {
           sfx('eaten');
-          if (mode === 'battle') { msg('Eaten by ' + big.name + '!', 3); endRound('eaten'); }
+          if (mode === 'battle' || mode === 'rush') { msg('Eaten by ' + big.name + '!', 3); endRound('eaten'); }
           else msg('Eaten by ' + big.name + '!<small>Respawning…</small>', CFG.respawn);
         }
         if (mode === 'battle' && phase === 'play' && player.alive && holes.every(o => o === player || !o.alive)) endRound('win');
@@ -1437,6 +1590,9 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
         if (phase === 'play' || phase === 'menu') holeEats();
         if (phase === 'play') {
           elapsed += dt;
+          if (comboT > 0) { comboT -= dt; if (comboT <= 0) combo = 0; }
+          growT -= dt;
+          if (growT <= 0) { growT = 2; if (growth.length < 400) growth.push(player.alive ? player.mass : 0); }
           if (mode !== 'battle') {
             roundT -= dt;
             if (roundT <= 0) { roundT = 0; endRound('time'); }
@@ -1464,7 +1620,9 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
         const wantD = (CFG.camBase + CFG.camPerR * R) * (w > h ? 0.92 : 1.18);
         camD += (wantD - camD) * (1 - Math.exp(-2.5 * dt));
         const t = CFG.camTilt;
-        cam.position.set(camX, camD * Math.sin(t), camZ + camD * Math.cos(t));
+        kick = Math.max(0, kick - dt * 3.2);
+        const kd = camD * (1 - (RM ? 0 : kick * kick * 0.045));
+        cam.position.set(camX, kd * Math.sin(t), camZ + kd * Math.cos(t));
         cam.lookAt(camX, 0, camZ);
         const nr = Math.max(0.5, camD * 0.05);
         if (Math.abs(nr - cam.near) > 0.05) { cam.near = nr; cam.updateProjectionMatrix(); }
@@ -1522,6 +1680,10 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
           elPctB.textContent = (p < 10 ? p.toFixed(1) : Math.floor(p)) + '%';
         }
         if (msgT > 0) { msgT -= dt; if (msgT <= 0) elMsg.classList.remove('on'); }
+        const now = performance.now();
+        if (popAcc > 0 && now - popLast > 220 && player.alive) { popAt(player, '+' + popAcc, popAcc >= 150); popAcc = 0; popLast = now; }
+        if (combo >= 5) { const ct = 'Combo ×' + combo; if (elCombo.textContent !== ct) elCombo.textContent = ct; if (elCombo.classList.contains('off')) elCombo.classList.remove('off'); if (elCombo.classList.contains('bump') && comboT < 0.6) elCombo.classList.remove('bump'); }
+        else if (!elCombo.classList.contains('off')) elCombo.classList.add('off');
         boardT -= dt;
         if (boardT <= 0 && mode !== 'solo') {
           boardT = 0.25;
@@ -1543,6 +1705,7 @@ ${g} .end button.alt{background:#eef0f5;color:#3a3a4e;box-shadow:0 .25em 0 #cfd3
         for (const o of active) writeObj(o);
         for (const k in TYPES) { const T = TYPES[k]; if (T.dirty && T.mesh) { T.mesh.instanceMatrix.needsUpdate = true; T.dirty = false; } }
         updateCamera(dt);
+        particles(Math.min(dt, 0.05) * timeScale);
         updateHoles();
         updateHud(dt);
         renderer.render(scene, cam);

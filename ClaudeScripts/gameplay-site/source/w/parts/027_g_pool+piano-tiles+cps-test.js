@@ -63,6 +63,20 @@
   const moving = B => B.some(b => b.on && (b.vx || b.vy || b.fx || b.fy));
   const left = (B, g) => B.reduce((c, b) => c + (b.on && grp(b.n) === g ? 1 : 0), 0);
   const mkBall = n => ({ n, x: 0, y: 0, vx: 0, vy: 0, on: true, fx: 0, fy: 0, sF: 0, sS: 0, rx: 0, ry: 0, fall: 0 });
+  const lowOn = B => { for (let n = 1; n < B.length; n++) if (B[n].on) return n; return 0; };
+  function rack9() {
+    const B = [];
+    for (let n = 0; n < 16; n++) { const b = mkBall(n); if (n > 9) { b.on = false; b.x = MX; b.y = MY; } B.push(b); }
+    const rest = [2, 3, 4, 5, 6, 7, 8].sort(() => Math.random() - 0.5), d = 2 * BR + 0.15;
+    [1, 2, 3, 2, 1].forEach((cnt, k) => {
+      for (let j = 0; j < cnt; j++) {
+        const b = B[k === 0 ? 1 : k === 2 && j === 1 ? 9 : rest.pop()];
+        b.x = FOOTX + k * d * Math.sqrt(3) / 2; b.y = MY + (j - (cnt - 1) / 2) * d;
+      }
+    });
+    B[0].x = HEADX - 40; B[0].y = MY;
+    return B;
+  }
 
   function rack() {
     const B = [];
@@ -181,6 +195,18 @@
     r.cont = !foul && (st.brk ? obj.length > 0 : obj.some(n => grp(n) === mine));
     return r;
   }
+  function judge9(st, ev) {
+    const pot = ev.pocketed;
+    let foul = '';
+    if (pot.includes(0)) foul = 'Scratch';
+    else if (ev.first == null) foul = 'No ball hit';
+    else if (ev.first !== st.low) foul = 'Wrong ball first';
+    else if (!pot.length && !ev.rail) foul = 'No rail after contact';
+    const r = { foul, cont: !foul && pot.some(n => n), win: false, lose: false, assign: 0, respot8: false, respot9: false, why: '' };
+    if (pot.includes(9)) { if (foul) r.respot9 = true; else r.win = true; }
+    return r;
+  }
+  const rule = (st, B, ev) => (st.nine ? judge9(st, ev) : judge(st, B, ev));
 
   const nearPocket = b => { let bi = 0, bd = 1e9; for (let i = 0; i < 6; i++) { const q = (POCK[i][0] - b.x) ** 2 + (POCK[i][1] - b.y) ** 2; if (q < bd) { bd = q; bi = i; } } return bi; };
   function strike(c, s) { c.vx = Math.cos(s.a) * s.p * VMAX; c.vy = Math.sin(s.a) * s.p * VMAX; c.sF = s.sF || 0; c.sS = s.sS || 0; c.fx = c.fy = 0; }
@@ -191,7 +217,8 @@
     for (let i = 0; i < 1800 && moving(S); i++) pStep(S, ev);
     return { S, ev };
   }
-  function targets(B, g, onE) {
+  function targets(B, g, onE, nine) {
+    if (nine) { const l = lowOn(B); return l ? [B[l]] : []; }
     const o = [];
     for (let n = 1; n < 16; n++) { const b = B[n]; if (b.on && (onE ? n === 8 : g ? grp(n) === g : n !== 8)) o.push(b); }
     return o;
@@ -205,9 +232,9 @@
     }
     return true;
   }
-  function potLines(B, cx, cy, g, onE, aims) {
+  function potLines(B, cx, cy, g, onE, aims, nine) {
     const res = [];
-    for (const t of targets(B, g, onE)) for (let p = 0; p < 6; p++) for (let k = 0; k < aims; k++) {
+    for (const t of targets(B, g, onE, nine)) for (let p = 0; p < 6; p++) for (let k = 0; k < aims; k++) {
       const [px, py] = PAIM[p][k];
       let ux = px - t.x, uy = py - t.y;
       const dp = Math.hypot(ux, uy); ux /= dp; uy /= dp;
@@ -221,7 +248,7 @@
     }
     return res.sort((a, b) => b.h - a.h);
   }
-  const easyShots = (B, g, onE) => potLines(B, B[0].x, B[0].y, g, onE, 1).filter(l => l.clear && l.cos > 0.5).length;
+  const easyShots = (B, g, onE, nine) => potLines(B, B[0].x, B[0].y, g, onE, 1, nine).filter(l => l.clear && l.cos > 0.5).length;
   const AIL = [
     { k: 3, aims: 1, powers: [0.55], spins: [0], noise: 0.03, pn: 0.12 },
     { k: 6, aims: 2, powers: [0.42, 0.68], spins: [0], noise: 0.011, pn: 0.05 },
@@ -229,21 +256,44 @@
   ];
   function aiShots(B, st, lv) {
     const c = B[0], g = st.groups[st.turn], out = [];
-    for (const l of potLines(B, c.x, c.y, g, st.onEight, lv.aims).slice(0, lv.k))
+    for (const l of potLines(B, c.x, c.y, g, st.onEight, lv.aims, st.nine).slice(0, lv.k))
       for (const p of lv.powers) for (const s of lv.spins)
         out.push({ a: l.a, p: clamp(p * (0.55 + (l.dc + l.dp * 1.5) / 900), 0.12, 1), sF: s, sS: 0 });
-    for (const t of targets(B, g, st.onEight)) out.push({ a: Math.atan2(t.y - c.y, t.x - c.x), p: 0.5, sF: 0, sS: 0 });
+    for (const t of targets(B, g, st.onEight, st.nine)) out.push({ a: Math.atan2(t.y - c.y, t.x - c.x), p: 0.5, sF: 0, sS: 0 });
     return out;
   }
   function aiValue(B, st, shot) {
-    const { S, ev } = simulate(B, shot), r = judge(st, S, ev);
+    const { S, ev } = simulate(B, shot), r = rule(st, S, ev);
     if (r.lose) return -1e5;
     if (r.win) return 1e5;
     if (r.foul) return -2000;
-    const g = r.assign || st.groups[st.turn];
-    if (r.cont) return 1000 + 40 * ev.pocketed.length + 60 * Math.min(4, easyShots(S, g, !!g && left(S, g) === 0));
-    const og = r.assign ? 3 - r.assign : st.groups[1 - st.turn];
-    return -50 * Math.min(4, easyShots(S, og, !!og && left(S, og) === 0));
+    const ez = gg => (st.nine ? easyShots(S, 0, false, true) : easyShots(S, gg, !!gg && left(S, gg) === 0));
+    if (r.cont) return 1000 + 40 * ev.pocketed.length + 60 * Math.min(4, ez(r.assign || st.groups[st.turn]));
+    return -50 * Math.min(4, ez(r.assign ? 3 - r.assign : st.groups[1 - st.turn]));
+  }
+  function safeShots(B, st) {
+    const c = B[0], out = [];
+    const ts = targets(B, st.groups[st.turn], st.onEight, st.nine).sort((a, b) => Math.hypot(a.x - c.x, a.y - c.y) - Math.hypot(b.x - c.x, b.y - c.y)).slice(0, 6);
+    for (const t of ts) {
+      const dx = t.x - c.x, dy = t.y - c.y, d = Math.hypot(dx, dy), a0 = Math.atan2(dy, dx), w = Math.asin(Math.min(1, 2 * BR / Math.max(d, 2 * BR)));
+      for (const k of [-0.85, -0.45, 0, 0.45, 0.85]) for (const p of [0.15, 0.24, 0.36]) out.push({ a: a0 + k * w, p, sF: 0, sS: 0, safe: 1 });
+    }
+    return out;
+  }
+  function safeValue(B, st, shot) {
+    const { S, ev } = simulate(B, shot), r = rule(st, S, ev);
+    if (r.lose) return -1e5;
+    if (r.win) return 1e5;
+    if (r.foul) return -2000;
+    if (r.cont) return 400;
+    const og = st.nine ? 0 : r.assign ? 3 - r.assign : st.groups[1 - st.turn], oe = !st.nine && !!og && left(S, og) === 0;
+    const ls = potLines(S, S[0].x, S[0].y, og, oe, 1, st.nine), easy = ls.filter(l => l.clear && l.cos > 0.5).length, any = ls.filter(l => l.clear).length;
+    return -120 * Math.min(4, easy) - 20 * Math.min(8, any) + (any ? 0 : 150);
+  }
+  function potOdds(B, st, shot) {
+    let ok = 0;
+    for (let i = 0; i < 4; i++) { const { S, ev } = simulate(B, { a: shot.a + gauss() * 0.009, p: shot.p * (1 + gauss() * 0.04), sF: shot.sF, sS: shot.sS }), r = rule(st, S, ev); if (r.win || r.cont) ok++; }
+    return ok / 4;
   }
   function validSpot(B, x, y, kitchen, skip) {
     if (x < X0 + BR + 1 || x > (kitchen ? HEADX : X1 - BR - 1) || y < Y0 + BR + 1 || y > Y1 - BR - 1) return false;
@@ -263,7 +313,7 @@
   function aiPlace(B, st, diff, kitchen) {
     const g = st.groups[st.turn], onE = !!g && left(B, g) === 0;
     let best = null, bh = -1e9;
-    if (diff > 0) for (const t of targets(B, g, onE)) for (let p = 0; p < 6; p++) {
+    if (diff > 0) for (const t of targets(B, g, onE, st.nine)) for (let p = 0; p < 6; p++) {
       const [px, py] = PAIM[p][0];
       let ux = px - t.x, uy = py - t.y;
       const dp = Math.hypot(ux, uy); ux /= dp; uy /= dp;
@@ -473,7 +523,17 @@
 .gm-pool .pl-balls em{font-style:normal;font-size:11.5px;font-weight:800;color:#8fa6c8;line-height:17px}
 .gm-pool .pl-msg{max-width:260px;padding:9px 16px;border-radius:999px;background:#050b16;border:1px solid #22344f;color:#fff;font-weight:900;font-size:13.5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gm-pool .pl-mid{width:100%;max-width:960px;display:flex;align-items:stretch;justify-content:center;gap:10px}
-.gm-pool .pl-tab{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center}
+.gm-pool .pl-tab{position:relative;flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center}
+.gm-pool .pl-coach{position:absolute;z-index:3;left:50%;top:8px;transform:translateX(-50%);width:min(94%,440px);display:flex;align-items:center;gap:11px;padding:9px 10px 9px 9px;border-radius:16px;background:rgba(6,13,26,.93);border:1px solid #2f4a74;box-shadow:0 14px 30px -12px rgba(0,0,0,.75);color:#fff;text-align:left;animation:plIn .35s cubic-bezier(.2,.9,.3,1.25)}
+.gm-pool .pl-coach>svg{width:40px;height:40px;flex:none}
+.gm-pool .pl-coach>div{flex:1;min-width:0}
+.gm-pool .pl-coach b{display:block;font-size:13.5px;font-weight:900}
+.gm-pool .pl-coach b em{font-style:normal;margin-left:7px;font-size:10px;letter-spacing:.08em;color:#8fa6c8}
+.gm-pool .pl-coach p{margin:2px 0 0;font-size:12.5px;line-height:1.3;color:#d6e4ff}
+.gm-pool .pl-coach button{flex:none;height:34px;padding:0 13px;border-radius:999px;border:0;background:#3fd16b;color:#06210f;font:900 12.5px var(--sans);cursor:pointer;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+.gm-pool .pl-coach button:active{transform:translateY(1px);box-shadow:none}
+@keyframes plIn{from{opacity:0;transform:translate(-50%,-10px)}}
+@media (prefers-reduced-motion:reduce){.gm-pool .pl-coach{animation:none}}
 .gm-pool .pl-canvas{cursor:crosshair;touch-action:none;background:#12213a;border-radius:0}
 .gm-pool .pl-pow{position:relative;width:52px;flex:none;border-radius:18px;background:linear-gradient(90deg,#2a2838,#403d56 50%,#2a2838);box-shadow:inset 0 3px 8px rgba(0,0,0,.45);overflow:hidden;cursor:ns-resize;touch-action:none}
 .gm-pool .pl-pow b{position:absolute;inset:0;transform-origin:center top;transform:scaleY(var(--p,0));background:linear-gradient(180deg,#22b07d,#ffc86e 55%,#ef4f4f);opacity:.92}
@@ -502,6 +562,9 @@
 .gm-pool .pl-pl.r{padding:4px 4px 4px 8px}
 .gm-pool .pl-tip{display:none}
 .gm-pool .pl-roll span{font-size:10.5px}
+.gm-pool .pl-coach{top:4px;gap:8px;padding:7px 8px}
+.gm-pool .pl-coach>svg{width:32px;height:32px}
+.gm-pool .pl-coach p{font-size:11.5px}
 }
 .gm-pool~.g-overlay .pl-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
 .gm-pool~.g-overlay .pl-mode{min-height:48px;padding:6px 10px;border-radius:16px;border:2px solid var(--line-2);background:#fff;font:900 14.5px var(--sans);color:var(--ink);cursor:pointer}
@@ -509,29 +572,68 @@
 .gm-pool~.g-overlay .pl-opts{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px}
 .gm-pool~.g-overlay .pl-diff{height:44px;padding:0 15px;border-radius:999px;border:2px solid var(--line-2);background:#fff;font:800 13.5px var(--sans);color:var(--ink);cursor:pointer}
 .gm-pool~.g-overlay .pl-diff.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
-.gm-pool~.g-overlay .pl-mdesc{display:block;min-height:2.9em}`,
+.gm-pool~.g-overlay .pl-mdesc{display:block;min-height:2.9em}
+.gm-pool~.g-overlay .pl-how{display:grid;gap:9px;margin-top:6px;text-align:left}
+.gm-pool~.g-overlay .pl-how>span{display:flex;gap:11px;align-items:center;font-size:13px;line-height:1.3}
+.gm-pool~.g-overlay .pl-how svg{width:40px;height:40px;flex:none}
+.gm-pool~.g-overlay .pl-how b{display:block;font-size:14px;color:var(--ink)}`,
     mount(root, api) {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const net = api.net, invited = !!net.invite;
       const MODES = [['ai', 'vs CPU'], ['net', 'Online'], ['practice', 'Practice']];
       const data = api.load() || {};
-      let diff = [0, 1, 2].includes(data.diff) ? data.diff : 1, streak = data.streak | 0, inGame = false;
+      let diff = [0, 1, 2].includes(data.diff) ? data.diff : 1, streak = data.streak | 0, inGame = false, pick9 = !!data.r9, nine = false, tut = data.tut | 0;
       let pick = invited ? 'net' : MODES.some(m => m[0] === data.mode) ? data.mode : 'ai', timerOn = data.tm !== false;
       if (data.inGame) streak = 0;
-      const persist = () => api.save({ diff, streak, inGame, mode: pick, tm: timerOn });
+      const persist = () => api.save({ diff, streak, inGame, mode: pick, tm: timerOn, r9: pick9, tut });
       persist();
 
       const VERT = matchMedia('(max-width: 700px) and (orientation: portrait)').matches, CW = VERT ? PH : PW, CH = VERT ? PW : PH;
 
       const plBar = r => `<div class="pl-pl${r ? ' r' : ''}"><span class="pl-ring"><span class="pl-av"></span></span><div><div class="pl-nm"></div><div class="pl-balls"></div></div></div>`;
-      root.innerHTML = `<div class="pl-top">${plBar(0)}<div class="pl-msg">8-Ball</div>${plBar(1)}</div><div class="pl-mid"><div class="pl-pow" title="Power: pull down, release to shoot"><b></b><i></i><span>Pull<br>&#9660;</span></div><div class="pl-tab"></div></div><div class="pl-ctl"><div class="pl-spin" title="Cue ball spin: drag the red dot"><i></i></div><div class="pl-tip">Spin</div><div class="pl-roll" title="Fine-tune the aim: drag left or right"><span>&#8249; Fine tune &#8250;</span></div><button type="button" class="pl-fine" data-f="-1" title="Fine aim: rotate left (hold)">&#8634;</button><button type="button" class="pl-fine" data-f="1" title="Fine aim: rotate right (hold)">&#8635;</button></div>`;
+      root.innerHTML = `<div class="pl-top">${plBar(0)}<div class="pl-msg">8-Ball</div>${plBar(1)}</div><div class="pl-mid"><div class="pl-pow" title="Power: pull down, release to shoot"><b></b><i></i><span>Pull<br>&#9660;</span></div><div class="pl-tab"><div class="pl-coach" hidden></div></div></div><div class="pl-ctl"><div class="pl-spin" title="Cue ball spin: drag the red dot"><i></i></div><div class="pl-tip">Spin</div><div class="pl-roll" title="Fine-tune the aim: drag left or right"><span>&#8249; Fine tune &#8250;</span></div><button type="button" class="pl-fine" data-f="-1" title="Fine aim: rotate left (hold)">&#8634;</button><button type="button" class="pl-fine" data-f="1" title="Fine aim: rotate right (hold)">&#8635;</button></div>`;
       const { canvas: cv, ctx, toLocal } = api.canvas(CW, CH, root.querySelector('.pl-tab'));
       cv.classList.add('pl-canvas');
       cv.style.width = `min(100%, ${CW}px, calc((100dvh - var(--goff, 250px) - ${VERT ? 175 : 150}px) * ${(CW / CH).toFixed(4)}))`;
       const toW = e => { const p = toLocal(e); return VERT ? { x: p.y, y: PH - p.x } : p; };
       const pEls = [...root.querySelectorAll('.pl-pl')], msgEl = root.querySelector('.pl-msg'), ctl = root.querySelector('.pl-ctl');
       const spinEl = ctl.querySelector('.pl-spin'), dotEl = spinEl.firstChild, powEl = root.querySelector('.pl-pow'), rollEl = ctl.querySelector('.pl-roll');
-      const au = makeAudio();
+      const au = makeAudio(), calm = matchMedia('(prefers-reduced-motion: reduce)').matches, touch = matchMedia('(pointer: coarse)').matches, coachEl = root.querySelector('.pl-coach');
+      const IC = [
+        '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#2b87c2"/><circle cx="11" cy="28" r="5.5" fill="#f6f4ec"/><path d="M15.5 24 26 14" stroke="#fff" stroke-width="2" stroke-dasharray="3 3"/><circle cx="29" cy="11" r="5.5" fill="#f5c518"/><circle cx="27.5" cy="9.5" r="1.6" fill="#fff" opacity=".7"/></svg>',
+        '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#2b87c2"/><rect x="16.5" y="5" width="7" height="21" rx="3.5" fill="#f2e1b8"/><rect x="16.5" y="5" width="7" height="5" rx="2.5" fill="#3f74c9"/><path d="M12.5 27.5l7.5 7 7.5-7" fill="none" stroke="#3fd16b" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#2b87c2"/><circle cx="20" cy="20" r="13" fill="#f6f4ec"/><circle cx="16" cy="15" r="3" fill="#fff"/><path d="M20 11.5v9" stroke="#8fa6c8" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 3"/><circle cx="20" cy="26.5" r="3.6" fill="#e53935"/></svg>',
+        '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#2b87c2"/><circle cx="27" cy="12" r="6.5" fill="#05070c"/><circle cx="27" cy="12" r="9.5" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="3 3"/><circle cx="13.5" cy="26.5" r="7" fill="#18181c"/><circle cx="13.5" cy="26.5" r="3.3" fill="#fff"/><circle cx="11" cy="23.5" r="1.6" fill="#fff" opacity=".5"/></svg>'
+      ];
+      const CO = [
+        ['Aim', touch ? 'Drag on the table to aim. The white line shows where the cue ball and the object ball will go.' : 'Move the mouse over the table to aim (or use the arrow keys). The white line shows where the balls will go.'],
+        ['Power', touch ? 'Pull the cue on the left down and let go to shoot. The further you pull, the harder the shot.' : 'Pull the cue on the left down and let go, or press Space twice. The further you pull, the harder the shot.'],
+        ['Spin', 'Drag the red dot on the cue ball. Low spin screws the cue ball back, high spin makes it follow through.'],
+        ['Call the 8', 'When only the 8 is left, tap the pocket you will sink it in, then shoot. The wrong pocket loses the game.']
+      ];
+      let coachS = -1, coachA = 0;
+      const coachDone = bit => { if (tut & bit) return; tut |= bit; persist(); };
+      const coachStep = () => {
+        if (tut >= 15 || state !== 'aim') return -1;
+        if (!(tut & 1)) return 0;
+        if (!(tut & 2)) return 1;
+        if (needCall() && call < 0 && !(tut & 8)) return 3;
+        if (!(tut & 4) && !brk && !inHand) return 2;
+        return -1;
+      };
+      function coach() {
+        const k = coachStep();
+        if (k === 0 && coachS === 0 && Math.abs(aimA - coachA) > 0.3) { coachDone(1); return coach(); }
+        if (k === coachS) return;
+        coachS = k; coachA = aimA;
+        coachEl.hidden = k < 0;
+        if (k >= 0) coachEl.innerHTML = `${IC[k]}<div><b>${CO[k][0]}<em>TIP ${k + 1}/4</em></b><p>${CO[k][1]}</p></div><button type="button">Got it</button>`;
+      }
+      coachEl.addEventListener('click', e => { if (!e.target.closest('button')) return; coachDone([1, 2, 4, 8][coachS] || 0); api.sfx('tap'); coach(); });
+      const mkPs = () => [0, 1].map(() => ({ pots: 0, ok: 0, fouls: 0, run: 0, best: 0, balls: [] }));
+      let ps = mkPs(), gameT = 0;
+      const rings = [];
+      const fmtT = v => `${Math.floor(v / 60)}:${String(Math.floor(v % 60)).padStart(2, '0')}`;
 
       const tableCv = buildTable(dpr), cueCv = buildCue(dpr, false), cueSh = buildCue(dpr, true);
       const shCv = document.createElement('canvas'), SS = Math.ceil(BR * 3 * dpr);
@@ -658,10 +760,13 @@
       const you = s => nameOf(s) === 'You';
       const myTurn = () => state === 'aim';
       const onEightFor = s => !!groups[s] && left(balls, groups[s]) === 0;
-      const needCall = () => mode !== 'practice' && !brk && onEightFor(turn);
+      const needCall = () => mode !== 'practice' && !nine && !brk && onEightFor(turn);
+      const mkSt = () => ({ turn, groups: groups.slice(), brk, onEight: onEightFor(turn), call: needCall() ? call : -1, nine, low: lowOn(balls) });
       const aimShown = () => state === 'aim' || state === 'ai' || state === 'wait';
       const legal = n => {
-        if (mode === 'practice' || brk) return true;
+        if (mode === 'practice') return true;
+        if (nine) return n === lowOn(balls);
+        if (brk) return true;
         const g = groups[turn];
         if (!g) return n !== 8;
         return left(balls, g) === 0 ? n === 8 : grp(n) === g;
@@ -675,13 +780,14 @@
           if (mode === 'practice') {
             av.textContent = i ? 'SOLO' : 'YOU';
             nm.innerHTML = i ? 'Practice<small>solo</small>' : 'You<small>all balls</small>';
-            bl.innerHTML = i ? `<em>${shots[0]} shots · ${pots} potted</em>` : balls.slice(1).map(b => `<i class="${b.n > 8 ? 's' : ''}${b.on ? '' : ' off'}" style="--c:${bhex(b.n)}"></i>`).join('');
+            bl.innerHTML = i ? `<em>${shots[0]} shots · ${pots} potted</em>` : balls.slice(1, nine ? 10 : 16).map(b => `<i class="${b.n > 8 ? 's' : ''}${b.on ? '' : ' off'}" style="--c:${bhex(b.n)}"></i>`).join('');
             return;
           }
           av.textContent = mode === 'ai' ? (p ? 'CPU' : 'YOU') : mode === 'net' && p === me ? 'YOU' : 'P' + (p + 1);
           const who = mode === 'ai' ? (p ? 'CPU' : 'You') : p === me ? 'You' : 'Friend';
-          const sub = (mode === 'ai' && p ? DIFFS[diff] + ' · ' : '') + GNAME[g] + (mode === 'net' && p !== me && online && net.rtt ? ' · ' + net.rtt + ' ms' : '');
+          const sub = (mode === 'ai' && p ? DIFFS[diff] + ' · ' : '') + (nine ? '9-Ball' : GNAME[g]) + (mode === 'net' && p !== me && online && net.rtt ? ' · ' + net.rtt + ' ms' : '');
           nm.innerHTML = who + `<small>${sub}</small>`;
+          if (nine) { const mb = ps[p].balls; bl.innerHTML = mb.length ? mb.map(n => `<i class="${n > 8 ? 's' : ''}" style="--c:${bhex(n)}"></i>`).join('') : '<em>No balls yet</em>'; return; }
           if (!g) { bl.innerHTML = '<i class="e"></i>'.repeat(7); return; }
           const ns = g === 1 ? [1, 2, 3, 4, 5, 6, 7] : [9, 10, 11, 12, 13, 14, 15], cleared = left(balls, g) === 0;
           bl.innerHTML = ns.map(n => `<i class="${n > 8 ? 's' : ''}${balls[n].on ? '' : ' off'}" style="--c:${bhex(n)}"></i>`).join('') + `<i class="${cleared ? '' : 'off'}" style="--c:${BHEX[8]}"></i>`;
@@ -702,7 +808,7 @@
 
       function onHit(type, s) {
         if (state === 'roll' && online && hq.length < 24) hq.push(type, Math.round(s));
-        if (type === 0 && s > 900) shake = Math.max(shake, Math.min(1, s / 2600));
+        if (!calm && type === 0 && s > 900) shake = Math.max(shake, Math.min(1, s / 2600));
         const ac = au.get();
         if (!ac) return;
         const now = performance.now();
@@ -735,7 +841,8 @@
 
       function newRack(m, setup) {
         mode = m; groups = [0, 0]; shots = [0, 0]; pots = 0; brk = true; kitchen = true; inHand = true; sn = 0;
-        balls = rack(); balls.forEach(initBall);
+        nine = setup ? !!setup.r9 : pick9; ps = mkPs(); gameT = 0; rings.length = 0;
+        balls = nine ? rack9() : rack(); balls.forEach(initBall);
         if (setup) setPos(setup.b);
         turn = setup ? (setup.turn === 1 ? 1 : 0) : m === 'ai' ? rackNo % 2 : m === 'practice' ? 0 : nextBrk;
         if (m === 'net') nextBrk = 1 - turn;
@@ -767,15 +874,16 @@
         sayAim();
       }
       function sayAim() {
-        const t = inHand ? (kitchen ? 'Place the cue ball, then break' : 'Ball in hand: drag the cue ball') : brk ? 'Your break' : needCall() ? (call < 0 ? 'Tap a pocket to call the 8' : 'Pocket called: sink the 8') : mode === 'practice' ? `Practice · shot ${shots[0] + 1}` : 'Your shot';
+        const t = inHand ? (kitchen ? 'Place the cue ball, then break' : 'Ball in hand: drag the cue ball') : brk ? 'Your break' : nine && mode !== 'practice' ? `Your shot · hit the ${lowOn(balls)} first` : needCall() ? (call < 0 ? 'Tap a pocket to call the 8' : 'Pocket called: sink the 8') : mode === 'practice' ? `Practice · shot ${shots[0] + 1}` : 'Your shot';
         say(t);
       }
       function shoot(a, p, sF, sS) {
         if (state !== 'aim' && state !== 'ai') return;
         if (needCall() && call < 0) { drag = null; barId = null; barP = 0; kbOn = false; say('Tap a pocket to call the 8 first'); api.sfx('bad'); return; }
         const c = balls[0];
+        if (state === 'aim') coachDone(2);
         aimA = a;
-        stState = { turn, groups: groups.slice(), brk, onEight: onEightFor(turn), call: needCall() ? call : -1 };
+        stState = mkSt();
         sn++;
         if (online) net.send({ t: 'shot', n: sn, a, p, x: c.x, y: c.y, k: stState.call });
         strike(c, { a, p, sF, sS });
@@ -809,16 +917,22 @@
       }
 
       function outcome() {
-        const r = judge(stState, balls, ev);
+        const r = rule(stState, balls, ev);
         if (r.respot8) { const b = balls[8], p = freeSpot(balls, FOOTX, MY, false, 8); Object.assign(b, { on: true, fall: 0, x: p.x, y: p.y }); }
-        return { s: stState.turn, foul: r.foul, cont: r.cont, assign: r.assign, respot8: r.respot8, win: r.win, lose: r.lose, why: r.why, pot: ev.pocketed.slice() };
+        if (r.respot9) { const b = balls[9], p = freeSpot(balls, FOOTX, MY, false, 9); Object.assign(b, { on: true, fall: 0, x: p.x, y: p.y }); }
+        return { s: stState.turn, foul: r.foul, cont: r.cont, assign: r.assign, respot8: r.respot8, respot9: !!r.respot9, win: r.win, lose: r.lose, why: r.why, pot: ev.pocketed.slice() };
       }
       function settle(o) {
         apply(o);
         if (online === 'host') net.send({ t: 'st', n: sn, o, b: packX(), turn, groups, ih: inHand });
       }
       function apply(o, ov) {
-        const s = o.s === 1 ? 1 : 0, prev = turn;
+        const s = o.s === 1 ? 1 : 0, prev = turn, P = ps[s];
+        const gs = o.assign || groups[s], pn = !o.foul && Array.isArray(o.pot) ? o.pot.filter(n => n > 0 && n < 16 && !(n === 8 && o.respot8) && !(n === 9 && o.respot9) && (nine || n === 8 || !gs || grp(n) === gs)) : [];
+        P.pots += pn.length; P.balls.push(...pn);
+        if (o.foul) P.fouls++;
+        if (o.cont || o.win) { P.ok++; P.run += pn.length; if (P.run > P.best) P.best = P.run; }
+        if (o.foul || !o.cont) P.run = 0;
         if (o.win || o.lose) return gameEnd(o);
         if (o.assign === 1 || o.assign === 2) { groups[s] = o.assign; groups[1 - s] = 3 - o.assign; }
         brk = false; kitchen = false;
@@ -829,6 +943,7 @@
           api.sfx('bad');
         } else if (o.assign) banner(`${nameOf(s)} ${you(s) ? 'are' : 'is'} ${GNAME[groups[s]].toLowerCase()}`, `${nameOf(1 - s)} ${you(1 - s) ? 'take' : 'takes'} ${GNAME[groups[1 - s]].toLowerCase()}`);
         else if (o.respot8) banner('8 ball respotted', 'Potted on the break');
+        else if (pn.length >= 2) banner(pn.length === 2 ? 'Double!' : pn.length === 3 ? 'Triple!' : pn.length + ' balls!', `${nameOf(s)} ${you(s) ? 'sink' : 'sinks'} ${pn.length} in one shot`, C.good);
         else if (turn !== prev && mode === 'net') banner(turn === me ? 'Your turn' : "Your friend's turn", '');
         if (!o.foul && o.cont && Array.isArray(o.pot) && o.pot.length && you(s)) api.sfx('good');
         startTurn();
@@ -842,7 +957,7 @@
       function gameEnd(o) {
         state = 'over'; inGame = false; drag = null; barId = null; rem = null;
         const s = o.s === 1 ? 1 : 0, w = o.win ? s : 1 - s;
-        const why = nameOf(s) + (o.win ? ' sank the 8 ball.' : o.why === 'pocket' ? ' sank the 8 in an uncalled pocket.' : o.why === 'foul' ? ' fouled on the 8 ball.' : ' sank the 8 ball too early.');
+        const why = nameOf(s) + (o.win ? (nine ? ' sank the 9 ball.' : ' sank the 8 ball.') : o.why === 'pocket' ? ' sank the 8 in an uncalled pocket.' : o.why === 'foul' ? ' fouled on the 8 ball.' : ' sank the 8 ball too early.');
         updHud();
         if (mode === 'ai') {
           const won = w === 0;
@@ -856,8 +971,8 @@
           api.timeout(() => api.overlay({
             kicker: nb ? 'New best!' : won ? 'Winner' : 'Game over',
             title: won ? 'You win!' : 'CPU wins',
-            text: why + (won ? ' Your win streak keeps growing.' : ' Your win streak resets.'),
-            stats: [['Streak', streak], ['Your shots', shots[0]], ['Best', api.best ?? 0]],
+            text: why + (won ? ' Your win streak keeps growing.' : ' Your win streak resets.') + ` CPU potted ${ps[1].pots} in ${shots[1]} shots.`,
+            stats: [['Potted', ps[0].pots], ['Accuracy', shots[0] ? Math.round(ps[0].ok / shots[0] * 100) + '%' : '—'], ['Best run', ps[0].best], ['Fouls', ps[0].fouls], ['Time', fmtT(gameT)], ['Streak', streak]],
             button: won ? 'Next rack' : 'Play again', onAction: () => newRack('ai'),
             secondary: 'Menu', onSecondary: menu
           }), 1300);
@@ -868,8 +983,8 @@
         api.timeout(() => { if (state === 'over' && online) netOver(t, why); }, 1300);
       }
       const netOver = (t, why) => api.overlay({
-        kicker: 'Online', title: t, text: why,
-        stats: [['Your shots', shots[me]], ['Friend’s shots', shots[1 - me]]],
+        kicker: 'Online', title: t, text: why + ` Your friend potted ${ps[1 - me].pots} in ${shots[1 - me]} shots.`,
+        stats: [['Potted', ps[me].pots], ['Accuracy', shots[me] ? Math.round(ps[me].ok / shots[me] * 100) + '%' : '—'], ['Best run', ps[me].best], ['Fouls', ps[me].fouls], ['Time', fmtT(gameT)]],
         button: 'Rematch', onAction: rematch, secondary: 'Leave', onSecondary: menu
       });
       function practiceDone() {
@@ -877,27 +992,38 @@
         api.sfx('win');
         say('Table cleared');
         api.timeout(() => api.overlay({
-          kicker: 'Practice', title: 'Table cleared', text: `All fifteen balls down in ${shots[0]} shots.`,
-          stats: [['Shots', shots[0]], ['Potted', pots]],
+          kicker: 'Practice', title: 'Table cleared', text: `All ${nine ? 'nine' : 'fifteen'} balls down in ${shots[0]} shots.`,
+          stats: [['Shots', shots[0]], ['Potted', pots], ['Time', fmtT(gameT)]],
           button: 'Rack again', onAction: () => newRack('practice'), secondary: 'Menu', onSecondary: menu
         }), 900);
       }
 
 
       const DESC = {
-        ai: () => `Pot your solids or stripes, then call a pocket and sink the 8. Win streak: <b>${streak}</b>`,
-        net: () => 'Play a friend on another device: create a room and send the invite link, or join with their code.',
-        practice: () => 'Clear all fifteen balls on your own. No rules, no timer.'
+        ai: () => (pick9 ? 'Hit the lowest ball first every shot and sink the 9 to win.' : 'Pot your solids or stripes, then call a pocket and sink the 8.') + ` Win streak: <b>${streak}</b>`,
+        net: () => `Play a friend on another device: create a room and send the invite link, or join with their code. The host's rules are used.`,
+        practice: () => `Clear all ${pick9 ? 'nine' : 'fifteen'} balls on your own. No rules, no timer.`
       };
-      const optHtml = () => `<span class="pl-opts pl-diffs"${pick === 'ai' ? '' : ' hidden'}>${DIFFS.map((d, i) => `<button type="button" class="pl-diff${i === diff ? ' on' : ''}" data-d="${i}">${d}</button>`).join('')}</span><span class="pl-opts"${pick === 'practice' ? ' hidden' : ''}><button type="button" class="pl-diff pl-tm${timerOn ? ' on' : ''}">Shot timer: ${timerOn ? TLIM + ' s' : 'off'}</button></span>`;
+      const optHtml = () => `<span class="pl-opts"><button type="button" class="pl-diff${pick9 ? '' : ' on'}" data-r="8">8-Ball</button><button type="button" class="pl-diff${pick9 ? ' on' : ''}" data-r="9">9-Ball</button></span><span class="pl-opts pl-diffs"${pick === 'ai' ? '' : ' hidden'}>${DIFFS.map((d, i) => `<button type="button" class="pl-diff${i === diff ? ' on' : ''}" data-d="${i}">${d}</button>`).join('')}</span><span class="pl-opts"${pick === 'practice' ? ' hidden' : ''}><button type="button" class="pl-diff pl-tm${timerOn ? ' on' : ''}">Shot timer: ${timerOn ? TLIM + ' s' : 'off'}</button></span>`;
       function menu() {
         if (online || net.role) { online = null; net.close(); }
         state = 'menu'; inGame = false; mode = pick === 'net' ? 'ai' : pick; me = 0; persist();
-        updHud(); ring(); say('8-Ball');
+        rerack();
         api.overlay({
           kicker: 'Sports', title: '8 Ball Pool',
           text: `<span class="pl-mdesc">${DESC[pick]()}</span><span class="pl-modes">${MODES.map(([k, t]) => `<button type="button" class="pl-mode${k === pick ? ' on' : ''}" data-m="${k}">${t}</button>`).join('')}</span><span class="pl-optbox">${optHtml()}</span>`,
-          button: 'Play', onAction: () => start(pick)
+          button: 'Play', onAction: () => start(pick), secondary: 'How to play', onSecondary: howTo
+        });
+      }
+      function rerack() {
+        nine = pick9; ps = mkPs(); groups = [0, 0]; balls = nine ? rack9() : rack(); balls.forEach(initBall);
+        updHud(); ring(); say(nine ? '9-Ball' : '8-Ball');
+      }
+      function howTo() {
+        api.overlay({
+          kicker: '8 Ball Pool', title: 'How to play',
+          text: `<span class="pl-how">${CO.map(([t, x], i) => `<span>${IC[i]}<span><b>${t}</b>${x}</span></span>`).join('')}</span>`,
+          button: 'Back', onAction: menu, secondary: 'Replay tips', onSecondary: () => { tut = 0; persist(); api.toast('Tips will show in your next game'); menu(); }
         });
       }
       const start = m => { if (m === 'net') return goOnline(); newRack(m); };
@@ -908,6 +1034,7 @@
         if (!ov) return;
         if (t.dataset.m) pick = t.dataset.m;
         else if (t.dataset.d) diff = +t.dataset.d;
+        else if (t.dataset.r) { pick9 = t.dataset.r === '9'; if (nine !== pick9) rerack(); }
         else timerOn = !timerOn;
         persist();
         ov.querySelectorAll('.pl-mode').forEach(x => x.classList.toggle('on', x.dataset.m === pick));
@@ -928,7 +1055,7 @@
         if (online !== 'host') return;
         meRe = peerRe = false; api.hideOverlay();
         newRack('net');
-        net.send({ t: 'setup', b: packX(), turn, tm: timerOn });
+        net.send({ t: 'setup', b: packX(), turn, tm: timerOn, r9: nine });
       };
       function finishWatch() {
         const m = fin;
@@ -989,7 +1116,7 @@
           const a = num(m.a, -10, 10, aimA), p = num(m.p, 0, 1, 0.5);
           if (inHand) setCue(m.x, m.y);
           call = Number.isInteger(m.k) && m.k >= 0 && m.k < 6 ? m.k : -1;
-          stState = { turn, groups: groups.slice(), brk, onEight: onEightFor(turn), call: needCall() ? call : -1 };
+          stState = mkSt();
           aimA = a; rem = null; fb = []; fpi = 0; fin = null; inHand = false;
           strikeFx = { a, x: balls[0].x, y: balls[0].y, pull: BR + 3 + p * 70, t: 0 };
           shots[turn]++;
@@ -1045,9 +1172,9 @@
           ai.best = { a: Math.atan2(ap.y - c.y, ap.x - c.x) + gauss() * 0.006, p: diff ? 1 : 0.85, sF: 0, sS: 0 };
           return;
         }
-        if (inHand) { const p = aiPlace(balls, { turn, groups }, diff, kitchen); c.x = p.x; c.y = p.y; }
+        if (inHand) { const p = aiPlace(balls, { turn, groups, nine }, diff, kitchen); c.x = p.x; c.y = p.y; }
         const g = groups[turn];
-        ai.st = { turn, groups: groups.slice(), brk: false, onEight: !!g && left(balls, g) === 0 };
+        ai.st = { turn, groups: groups.slice(), brk: false, onEight: !nine && !!g && left(balls, g) === 0, nine, low: lowOn(balls) };
         ai.q = aiShots(balls, ai.st, lv);
       }
       function aiUpdate(dt) {
@@ -1055,11 +1182,19 @@
         if (ai.phase === 'think') {
           const t0 = performance.now();
           while (ai.i < ai.q.length && performance.now() - t0 < 7) {
-            const s = ai.q[ai.i++], v = aiValue(balls, ai.st, s) + Math.random() * (diff ? 1 : 500);
-            if (v > ai.bs) { ai.bs = v; ai.best = s; }
+            const s = ai.q[ai.i++], v = (ai.safe ? safeValue : aiValue)(balls, ai.st, s) + Math.random() * (diff ? 1 : 500);
+            if (v > ai.bs) { ai.bs = v; ai.best = s; ai.look = s.a; }
           }
+          if (ai.look != null && !brk) { let d = ai.look - aimA; d = Math.atan2(Math.sin(d), Math.cos(d)); aimA += d * Math.min(1, dt * 3.5); }
           if (ai.i >= ai.q.length && ai.t > 0.7) {
+            if (diff === 2 && !brk && !ai.safe && ai.st && ai.best && (ai.bs < 900 || potOdds(balls, ai.st, ai.best) <= 0.25)) {
+              ai.safe = true; ai.pot = ai.best; ai.potV = ai.bs; ai.q = safeShots(balls, ai.st); ai.i = 0; ai.bs = -Infinity; ai.best = null;
+              say('CPU is weighing a safety…');
+              return;
+            }
+            if (ai.safe && ai.pot && (!ai.best || ai.bs < -300) && ai.potV > -2000) ai.best = ai.pot;
             const lv = AIL[diff], s = ai.best || { a: aimA, p: 0.5, sF: 0, sS: 0 };
+            if (s.safe) say('CPU plays safe');
             if (needCall()) { const e = simulate(balls, s).ev; call = e.pk8 >= 0 ? e.pk8 : nearPocket(balls[8]); }
             ai.shot = { a: s.a + (brk ? 0 : gauss() * lv.noise), p: clamp(s.p * (1 + gauss() * lv.pn), 0.1, 1), sF: s.sF, sS: s.sS };
             ai.phase = 'aim'; ai.t = 0; ai.from = aimA;
@@ -1098,7 +1233,7 @@
         if (!myTurn() || drag || barId != null) return;
         e.preventDefault();
         const p = toW(e);
-        if (needCall()) { const k = pickPocket(p); if (k >= 0) { call = k; api.sfx('tap'); sayAim(); return; } }
+        if (needCall()) { const k = pickPocket(p); if (k >= 0) { call = k; coachDone(8); api.sfx('tap'); sayAim(); return; } }
         const near = nearCue(p);
         try { cv.setPointerCapture(e.pointerId); } catch (_) {}
         kbOn = false;
@@ -1155,7 +1290,7 @@
       powEl.addEventListener('pointercancel', barUp);
 
       let spinId = null;
-      const spinAt = e => { const r = spinEl.getBoundingClientRect(); let x = ((e.clientX - r.left) / r.width) * 2 - 1, y = ((e.clientY - r.top) / r.height) * 2 - 1; if (Math.hypot(x, y) < 0.12) x = y = 0; setSpin(x, y); };
+      const spinAt = e => { const r = spinEl.getBoundingClientRect(); let x = ((e.clientX - r.left) / r.width) * 2 - 1, y = ((e.clientY - r.top) / r.height) * 2 - 1; if (Math.hypot(x, y) < 0.12) x = y = 0; setSpin(x, y); if (x || y) coachDone(4); };
       spinEl.addEventListener('pointerdown', e => { e.preventDefault(); spinId = e.pointerId; try { spinEl.setPointerCapture(e.pointerId); } catch (_) {} spinAt(e); });
       spinEl.addEventListener('pointermove', e => { if (e.pointerId === spinId) spinAt(e); });
       spinEl.addEventListener('pointerup', () => { spinId = null; });
@@ -1193,7 +1328,7 @@
           if (e.repeat) return;
           if (kbOn) shoot(aimA, kbP, -spin.y, spin.x); else kbOn = true;
         } else if (/^Arrow/.test(e.code)) kbOn = true;
-        else if (/^Digit[1-6]$/.test(e.code) && needCall()) { call = +e.code[5] - 1; sayAim(); }
+        else if (/^Digit[1-6]$/.test(e.code) && needCall()) { call = +e.code[5] - 1; coachDone(8); sayAim(); }
       });
       const keyboard = dt => {
         const L = keys.has('ArrowLeft'), R = keys.has('ArrowRight'), U = keys.has('ArrowUp'), D = keys.has('ArrowDown');
@@ -1352,6 +1487,17 @@
           ctx.drawImage(b.cv, x - r, y - r, 2 * r, 2 * r);
           if (!b.on) { ctx.fillStyle = `rgba(0,0,0,${(b.fall * 0.8).toFixed(3)})`; ctx.beginPath(); ctx.arc(x, y, BR * s, 0, TAU); ctx.fill(); }
         }
+        for (let i = rings.length - 1; i >= 0; i--) {
+          const r = rings[i];
+          r.t += dt;
+          if (r.t > 0.6) { rings.splice(i, 1); continue; }
+          const k = r.t / 0.6, e = 1 - (1 - k) * (1 - k), rad = 17 + 24 * e;
+          ctx.globalAlpha = (1 - k) * 0.55; ctx.strokeStyle = '#fff'; ctx.lineWidth = 7 * (1 - k) + 1;
+          ctx.beginPath(); ctx.arc(r.x, r.y, rad, 0, TAU); ctx.stroke();
+          ctx.globalAlpha = 1 - k; ctx.strokeStyle = r.c; ctx.lineWidth = 3.5 * (1 - k) + 1;
+          ctx.beginPath(); ctx.arc(r.x, r.y, rad, 0, TAU); ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
         const c = balls[0];
         if (aimShown() && needCall()) drawCall();
         if (showAim && c.on) {
@@ -1382,7 +1528,12 @@
           if (online && (sendT += dt) >= 1 / 30) { sendT = 0; sendFrame(); }
         }
         let falling = false;
-        for (const b of balls) if (b.fall > 0 && b.fall < 1) { b.fall = Math.min(1, b.fall + dt * 4.5); falling = true; }
+        for (const b of balls) if (b.fall > 0 && b.fall < 1) {
+          if (b.fall === 0.001 && b.pk != null && rings.length < 8) rings.push({ x: POCK[b.pk][0], y: POCK[b.pk][1], c: bhex(b.n), t: 0 });
+          b.fall = Math.min(1, b.fall + dt * 4.5); falling = true;
+        }
+        if (state !== 'menu' && state !== 'over' && state !== 'left') gameT += dt;
+        coach();
         if (state === 'roll') { if (!falling && !moving(balls)) resolve(); }
         else if (state === 'ai') aiUpdate(dt);
         else if (state === 'watch') watch(falling);
@@ -1399,7 +1550,7 @@
         draw(dt);
       });
 
-      cv._pool = () => ({ state, mode, turn, me, groups, inHand, call, sn, shots, aimA, brk, balls: packX(), vert: VERT });
+      cv._pool = () => ({ state, mode, turn, me, groups, inHand, call, sn, shots, aimA, brk, balls: packX(), vert: VERT, nine, tut, coach: coachS, ps, ai: ai && { safe: !!ai.safe, phase: ai.phase } });
       balls = rack(); balls.forEach(initBall);
       if (invited) { mode = 'net'; updHud(); goOnline(); } else menu();
       return { destroy() { au.close(); } };

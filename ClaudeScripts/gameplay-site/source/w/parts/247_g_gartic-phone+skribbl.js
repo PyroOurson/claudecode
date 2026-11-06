@@ -1707,13 +1707,13 @@ ${padCss('.gm-skribbl')}`;
     }
 
     async function startOnline() {
-      M.online = true;
+      M.online = true; M.scene = 'msg';
       scr('<div class="sb-msg"><h2>Opening the party...</h2></div>');
       const tok = M.tok;
       const r = await P.open();
       if (!api.alive || tok !== M.tok) return;
       if (!r) { title(); return; }
-      H.phase = 'lobby'; H.av[P.me] = M.av; M.me = P.me;
+      H.phase = 'lobby'; H.av[P.me] = M.av; M.me = P.me; M.scene = 'msg';
       scr('<div class="sb-msg"><h2>Joining the game...</h2></div>');
       P.up({ t: 'hello', av: M.av });
       if (P.hub) pushLob();
@@ -1722,7 +1722,7 @@ ${padCss('.gm-skribbl')}`;
     function lobby() {
       const L = M.lob;
       if (!L) return;
-      if (M.scene !== 'lobby') {
+      if (M.scene !== 'lobby' || !q(root, '.sb-lob')) {
         M.scene = 'lobby';
         const opts = (a, f) => a.map(v => `<option value="${v}">${f ? f(v) : v}</option>`).join('');
         scr(`<div class="sb-top"><button class="sb-btn sm gray" data-a="back">&#8249; ${P.hub ? 'Party' : 'Leave'}</button>${SK_LOGO(38)}<span style="width:90px"></span></div>
@@ -1743,7 +1743,7 @@ ${padCss('.gm-skribbl')}`;
     }
     function paintLobby() {
       const L = M.lob;
-      if (!L || M.scene !== 'lobby') return;
+      if (!L || M.scene !== 'lobby' || !q(root, '.sb-lob')) return;
       const lead = L.lead === P.me, o = L.opt;
       const empties = Math.min(Math.max(0, L.size - L.pl.length), 3);
       q(root, '.lc').textContent = L.pl.length + ' / ' + L.size;

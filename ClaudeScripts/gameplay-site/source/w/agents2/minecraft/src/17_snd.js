@@ -83,6 +83,7 @@
         case 'burp': tnS('sawtooth', 120, 70, .25, .14, 0, 500); break;
         case 'splash': nzS(.45, .2, 'lowpass', 1800, .5, 0, 400); break;
         case 'tbreak': tnS('square', 900, 300, .08, .1); nzS(.1, .1, 'highpass', 2500, .5); break;
+        case 'goal': [659, 988, 1319].forEach((f, i) => tnS('sine', f, f * 1.01, .18, .07, i * .07)); tnS('triangle', 330, 330, .3, .04, .14); break;
         case 'levelup': [523, 659, 784, 1047].forEach((f, i) => tnS('sine', f, f, .22, .08, i * .08)); break;
         case 'hit_weak': nzS(.05, .1 * v, 'lowpass', 1000, 1); break;
         case 'hit_strong': nzS(.06, .16 * v, 'lowpass', 900, 1); tnS('triangle', 200, 90, .07, .1 * v); break;

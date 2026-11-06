@@ -1664,7 +1664,7 @@
       const hsl = (ui.querySelector('.ek-hand') || {}).scrollLeft || 0;
       ui.innerHTML = `<div class="ek-bar${turnMine ? ' me' : ''}${v.phase === 'nope' ? ' nope' : ''}">${esc(status())}</div>
 <div class="ek-opps n${order.length}">${opps}</div>
-<div class="ek-mid"><div class="ek-cen">${dk}<div class="ek-ctr">${pend}</div>${ds}</div><div class="ek-acts">${acts}</div><div class="ek-info"><span class="kit">${ekKitSvg}Kittens left in the pile: <b>${v.kit}</b></span>${known}</div></div>
+<div class="ek-mid"><div class="ek-cen">${dk}<div class="ek-ctr">${pend}</div>${ds}</div><div class="ek-acts">${acts}</div><div class="ek-info"><span class="kit">${ekKitSvg}Kittens left in the pile: <b>${v.kit}</b>${v.deckN ? ` &middot; <b>${Math.round(100 * v.kit / v.deckN)}%</b> per draw` : ''}</span>${known}</div></div>
 <div class="ek-me${turnMine ? ' turn' : ''}"><div class="ek-hint">${hint()}</div><div class="ek-hand">${hand}</div></div>${ovl}`;
       const hd = ui.querySelector('.ek-hand'); if (hd && hsl) hd.scrollLeft = hsl;
       h.rd();

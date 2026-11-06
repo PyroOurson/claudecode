@@ -397,7 +397,7 @@
           }
           msg = { text: pstreak > 1 ? 'PERFECT ×' + pstreak : 'PERFECT', life: 1 };
           fx.burst(sx, sy, 16 + Math.min(20, pstreak * 3), ['#fff', '#ffd166', nb.c.t], 260, .8, 7, 500);
-          api.sfx('good');
+          if (!chime(pstreak)) api.sfx('good');
         } else {
           pstreak = 0;
           fx.burst(sx, sy, 6, ['#fff', nb.c.t], 140, .5, 5, 500);
@@ -527,6 +527,22 @@
         ctx.globalAlpha = 1;
       }
 
+      let cac = null;
+      function chime(k) {
+        if (api.muted) return false;
+        try {
+          if (!cac) cac = new (window.AudioContext || window.webkitAudioContext)();
+          if (cac.state === 'suspended') { const p = cac.resume(); if (p && p.catch) p.catch(() => {}); }
+          const STEPS = [0, 2, 4, 7, 9], i = Math.min(k - 1, 9), f = 523.25 * Math.pow(2, (Math.floor(i / 5) * 12 + STEPS[i % 5]) / 12), t = cac.currentTime;
+          [[f, .16, 'triangle'], [f * 2, .05, 'sine']].forEach(([fr, v, ty]) => {
+            const o = cac.createOscillator(), g = cac.createGain();
+            o.type = ty; o.frequency.setValueAtTime(fr, t);
+            g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + .008); g.gain.exponentialRampToValueAtTime(.0001, t + .5);
+            o.connect(g).connect(cac.destination); o.start(t); o.stop(t + .52);
+          });
+          return true;
+        } catch (e) { return false; }
+      }
       api.loop((dt, now) => { step(dt); draw(now); });
       api.on(window, 'keydown', e => {
         if (st === 'menu' && /^Digit[1-2]$/.test(e.code)) { const i = +e.code[5] - 1; setMode(i); mark('m', i); api.sfx('tap'); return; }
@@ -535,6 +551,7 @@
       });
       api.on(root, 'pointerdown', e => { if (e.button === 0) drop(e); });
       menu();
+      return { destroy() { if (cac) try { const p = cac.close(); if (p && p.catch) p.catch(() => {}); } catch (e) {} } };
     }
   });
 
@@ -616,6 +633,7 @@
     format: v => Number(v).toLocaleString('en-US'),
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="48" height="48" rx="10"/><path d="M20 8v48M32 8v48M44 8v48" opacity=".3"/><path d="M8 45h48"/><rect x="22" y="14" width="8" height="6" rx="3" fill="currentColor" stroke="none"/><rect x="46" y="23" width="8" height="6" rx="3" fill="currentColor" stroke="none"/><rect x="10" y="31" width="8" height="6" rx="3" fill="currentColor" stroke="none"/><rect x="34" y="42" width="8" height="6" rx="3" fill="currentColor" stroke="none"/></svg>',
     css: `
+.am-gamebox.fs .gm-rhythm .pu-hud .k{color:rgba(255,255,255,.72)}.am-gamebox.fs .gm-rhythm .pu-hud .v{color:#fff}.am-gamebox.fs .gm-rhythm .pu-hud .v.hot{color:#ffd166}.am-gamebox.fs .gm-rhythm .pu-prog{background:rgba(255,255,255,.18)}
 .gm-rhythm{gap:0}
 .gm-rhythm .pu-col{width:min(100%,600px,max(260px,calc((100dvh - 344px) * .9375)));display:flex;flex-direction:column;gap:12px}
 .gm-rhythm .pu-hud{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}

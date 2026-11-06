@@ -76,7 +76,7 @@
       P.dead = true; P.hp = 0; deadT = 0; P.sprint = false; attackHeld = useHeld = false; eating = null; mine = null; drawing = null;
       const msg = (P.name || 'Player') + ' ' + (DEATHMSG[kind] || 'died');
       chatSys(msg); netSend({ t: 'chat', s: 1, m: msg });
-      P.deathMsg = msg; P.scoreAtDeath = P.score; stat('deaths'); P.st.sinceDeath = 0;
+      P.deathMsg = msg; P.scoreAtDeath = P.score; P.lifeAtDeath = P.st.sinceDeath || 0; stat('deaths'); P.st.sinceDeath = 0;
       if (W.rules.keepInventory !== true && mode() !== 'creative') {
         for (const arr of [inv, armor, craft2, craft3]) for (let i = 0; i < arr.length; i++) if (arr[i]) { const s = arr[i]; arr[i] = null; spawnItem(s, P.x, P.y + 1, P.z, (RNG() - .5) * .5, .2 + RNG() * .2, (RNG() - .5) * .5, 40); }
         if (offhand) { spawnItem(offhand, P.x, P.y + 1, P.z); offhand = null; }

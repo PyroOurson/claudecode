@@ -124,6 +124,21 @@ ${p} .seg button[aria-checked="true"]{background:#fff;color:var(--accent);box-sh
 @media (max-width:520px){.gm-2048 .box{min-width:58px;padding:5px 9px 4px}.gm-2048 .box .v{font-size:19px}.gm-2048 .seg button{padding:8px 10px}.gm-2048 .row p{font-size:13px}.gm-2048 .btns button{padding:0 11px;font-size:14px}}
 `,
     mount(root, api) {
+      let mac = null;
+      const mergeTone = v => {
+        if (api.muted) return;
+        try {
+          mac = mac || new (window.AudioContext || window.webkitAudioContext)();
+          if (mac.state === 'suspended') mac.resume();
+          const lv = Math.log2(v), now = mac.currentTime, f = 220 * Math.pow(2, (lv - 1) / 4), vol = Math.min(.12, .035 + lv * .006);
+          for (const [m, d] of [[1, 0], [1.5, .04]]) {
+            const o = mac.createOscillator(), g = mac.createGain();
+            o.type = lv >= 9 ? 'triangle' : 'sine'; o.frequency.setValueAtTime(f * m, now + d);
+            g.gain.setValueAtTime(.0001, now + d); g.gain.exponentialRampToValueAtTime(vol / m, now + d + .012); g.gain.exponentialRampToValueAtTime(.0001, now + d + .18 + lv * .012);
+            o.connect(g).connect(mac.destination); o.start(now + d); o.stop(now + d + .45);
+          }
+        } catch (e) {}
+      };
       const saved = api.load() || {};
       const st = {
         size: SIZES.includes(+saved.size) ? +saved.size : 4,
@@ -220,7 +235,7 @@ ${p} .seg button[aria-checked="true"]{background:#fff;color:var(--accent);box-sh
         }
         vals = r.vals;
         for (const i of r.merged) tiles[i] = make(vals[i], i, 'pop');
-        if (r.gained) { score += r.gained; plus(r.gained); api.sfx('pop'); }
+        if (r.gained) { score += r.gained; plus(r.gained); mergeTone(Math.max(...r.merged.map(i => vals[i]))); }
         animEnd = performance.now() + 300;
         spawn();
         if (score > (+st.best[n] || 0)) st.best[n] = score;
@@ -371,6 +386,7 @@ ${p} .seg button[aria-checked="true"]{background:#fff;color:var(--accent);box-sh
     help: 'Tap a tile in line with the gap · <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> slide a tile into the gap · numbers or picture mode',
     icon: ICON('<rect x="7" y="7" width="14" height="14" rx="3.5"/><rect x="25" y="7" width="14" height="14" rx="3.5"/><rect x="43" y="7" width="14" height="14" rx="3.5"/><rect x="7" y="25" width="14" height="14" rx="3.5"/><rect x="25" y="25" width="14" height="14" rx="3.5"/><rect x="43" y="25" width="14" height="14" rx="3.5"/><rect x="7" y="43" width="14" height="14" rx="3.5"/><rect x="25" y="43" width="14" height="14" rx="3.5" fill="currentColor" opacity=".3"/><path d="M45 50h8M50 47l3 3-3 3"/>'),
     css: segCss('.gm-slide') + `
+.am-gamebox.fs .gm-slide.g-root{background:var(--sunk)}
 .gm-slide{gap:14px}
 .gm-slide .opts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .gm-slide .g-hud{gap:6px 30px}

@@ -1362,7 +1362,7 @@ ${v.lead && v.setupErr ? `<p class="cn-hint warn">${esc(v.setupErr)}</p>` : ''}`
 .gm-codenames .cn-clue.empty{font:800 15px var(--sans);color:var(--mut);animation:none}
 .gm-codenames .cn-turn{font:800 13px var(--sans);color:var(--mut)}
 @keyframes cn-in{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
-.gm-codenames .cn-board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(4px,.9vw,9px)}
+.gm-codenames .cn-board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(4px,.9vw,9px);width:100%;max-width:max(440px,calc((100dvh - 360px) * 1.5));margin:0 auto}
 .gm-codenames .cn-board.shake{animation:cn-shake .6s}
 @keyframes cn-shake{10%,90%{transform:translateX(-3px)}20%,80%{transform:translateX(5px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
 .gm-codenames .cn-c{position:relative;perspective:900px;aspect-ratio:1.52;cursor:pointer}

@@ -60,7 +60,7 @@ textarea{width:100%;min-height:160px;margin-top:12px;border-radius:12px;border:1
       const ct = r.headers.get('content-type') || '';
       let body = '';
       try { body = await limit(r.text(), 8000); } catch (e) {}
-      const info = 'HTTP ' + r.status + (ct ? ' · ' + ct.split(';')[0] : '') + (body && !t.quiet ? ' · ' + body.replace(/\s+/g, ' ').slice(0, 140) : '');
+      const info = 'HTTP ' + r.status + (ct ? ' · ' + ct.split(';')[0] : '') + (body && !t.quiet ? ' · ' + body.replace(/\s+/g, ' ').slice(0, 140) : '') + (t.note && r.ok ? ' · ' + t.note(body) : '');
       const good = t.check ? t.check(r, body, ct) : r.ok;
       const html = /text\/html/i.test(ct) && !t.html;
       return { ok: good && !html, ms, info: (html ? 'answered with a web page instead of data (often a network block page) · ' : '') + info };
@@ -117,9 +117,10 @@ textarea{width:100%;min-height:160px;margin-top:12px;border-radius:12px;border:1
   }
   const slotOk = (r, b) => { if (!r.ok) return false; try { const o = JSON.parse(b); return !!(o && o.s && o.c); } catch (e) { return false; } };
   const jsonOk = (r, b) => { if (!r.ok) return false; try { JSON.parse(b); return true; } catch (e) { return false; } };
+  const gateNote = b => { try { const o = JSON.parse(b); return o && typeof o.o === 'string' ? 'site password is switched off: everyone gets in' : 'site password is on'; } catch (e) { return ''; } };
   const sbTests = (base, tag) => !base ? [] : [
     { id: tag + '-net', name: 'Network reaches the server', url: base + '/auth/v1/health', mode: 'no-cors' },
-    { id: tag + '-pass', name: 'Site password (get_gate_slot)', url: base + '/rest/v1/rpc/get_gate_slot', method: 'POST', headers: hdr(), body: '{}', check: slotOk },
+    { id: tag + '-pass', name: 'Site password (get_gate_slot)', url: base + '/rest/v1/rpc/get_gate_slot', method: 'POST', headers: hdr(), body: '{}', check: slotOk, quiet: true, note: gateNote },
     { id: tag + '-flags', name: 'Site switches (maintenance, announcements)', url: base + '/rest/v1/rpc/get_site_flags', method: 'POST', headers: hdr(), body: '{}', check: jsonOk },
     { id: tag + '-auth', name: 'Accounts service (sign-in, sign-up)', url: base + '/auth/v1/settings', headers: { apikey: C.key }, check: jsonOk },
     { id: tag + '-login', name: 'Sign-in request answers', url: base + '/auth/v1/token?grant_type=password', method: 'POST', headers: hdr(), body: JSON.stringify({ email: 'connection-check@example.invalid', password: 'not-a-real-password-1' }), check: (r, b) => r.status === 400 && /invalid|credentials|email/i.test(b) },

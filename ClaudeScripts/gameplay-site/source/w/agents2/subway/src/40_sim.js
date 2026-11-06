@@ -13,7 +13,7 @@
   function newRun() {
     return {
       s: 0, x: 0, lane: 1, xFrom: 0, lt: 1, ldir: 0, y: 0, vy: 0, g: 1, grounded: true, coyote: 0, jumpBuf: 0,
-      rollT: 0, rollD: 1, h: CFG.H_STAND, t: 0, speed: CFG.V0, score: 0, coins: 0, keys: 0, mult: 1,
+      rollT: 0, rollD: 1, h: CFG.H_STAND, t: 0, vk: 1, vs: 1, t0: 0, mb: 0, speed: CFG.V0, score: 0, coins: 0, keys: 0, mult: 1,
       x2: 0, jet: 0, jetD: 1, sneak: 0, sneakD: 1, mag: 0, magD: 1, x2D: 1, board: 0, ghost: 0, stumbleT: 0, chase: CFG.START_CHASE,
       dead: '', deadT: 0, revives: 0, warm: true, landT: 0, jumpT: 0, ev: [], hitObs: null,
       st: { jump: 0, roll: 0, pu: 0, jet: 0, magCoins: 0, board: 0, bump: 0, dodge: 0, roof: 0, sneakJump: 0, mbox: 0, stumble: 0, coinsRun: 0 }
@@ -266,7 +266,7 @@
   function step(W, R, dt, ctx) {
     if (R.dead) { R.deadT += dt; R.speed = damp(R.speed, 0, 9, dt); return; }
     R.t += dt;
-    R.speed = speedAt(R.t);
+    R.speed = speedAt(R.t * R.vk + R.t0) * R.vs;
     const ps = R.s;
     R.s += R.speed * dt;
     if (R.lt < 1) { R.lt = Math.min(1, R.lt + dt / CFG.LANE_T); }
@@ -313,7 +313,7 @@
         if (o.act) { o.s0 -= o.v * dt; o.s1 = o.s0 + o.len; }
       } else o.ps0 = o.s0;
     }
-    R.mult = ctx.mult * (R.x2 > 0 ? 2 : 1);
+    R.mult = (ctx.mult + R.mb) * (R.x2 > 0 ? 2 : 1);
     R.score += R.speed * dt * CFG.SCORE_K * R.mult;
     if (R.jet > 0) return;
     for (const o of W.obs) {
@@ -387,7 +387,7 @@
 
   function revive(W, R) {
     R.dead = ''; R.deadT = 0; R.ghost = CFG.REVIVE_GHOST; R.chase = 0; R.stumbleT = 0; R.revives++;
-    R.t = Math.max(0, R.t * 0.9); R.speed = speedAt(R.t);
+    R.t = Math.max(0, R.t * 0.9); R.speed = speedAt(R.t * R.vk + R.t0) * R.vs;
     R.vy = 0; R.lt = 1; R.x = LX(R.lane); R.xFrom = R.x;
     for (const o of W.obs) {
       if (o.s1 > R.s - 3 && o.s0 < R.s + 45) o.done = true;

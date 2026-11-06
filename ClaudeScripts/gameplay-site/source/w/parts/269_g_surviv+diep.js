@@ -796,7 +796,7 @@
       }
       if (p.burst > 0 && S.t >= p.bT) {
         const gg = gcur(p), s = p.sl[p.cur];
-        if (gg && s && s.mag > 0 && !p.rld) { s.mag--; fireBullets(p, gg); p.burst--; p.bT = S.t + gg.burst[1]; } else p.burst = 0;
+        if (gg && gg.burst && s && s.mag > 0 && !p.rld) { s.mag--; fireBullets(p, gg); p.burst--; p.bT = S.t + gg.burst[1]; } else p.burst = 0;
       }
       if (I.f) {
         if (p.cur < 2) {
@@ -2026,14 +2026,14 @@
 
     function resultsTable(upTo = 8) {
       const arr = S.P.slice().sort((a, b) => (a.place || 99) - (b.place || 99)).slice(0, upTo);
-      return arr.map(p => [p.place || 1, p.name, p.kills, Math.round(p.dmg), p.id]);
+      return arr.map(p => [p.place || 1, p.name, p.kills, Math.round(p.dmg), p.id, p.alive && !p.place ? 1 : 0]);
     }
     function overPanel(win, rows, mine) {
       const rank = mine && mine.place || (win ? 1 : 0);
-      const title = win ? 'Winner Winner Chicken Dinner!' : 'You died';
-      const sub = win ? 'You are the last one standing.' : `You placed <b>#${rank}</b> of ${GS ? GS.n : S.n}.`;
-      const list = `<div class="io-list">${rows.map(r => `<div class="${r[4] === meId() ? 'me' : ''}"><span>#${r[0]} ${esc(r[1])}</span><span>${r[2]} kills · ${r[3]} dmg</span></div>`).join('')}</div>`;
-      return `<div class="io-kick">${win ? 'Victory' : 'Eliminated'}</div><div class="io-title">${title}</div><div class="io-sub">${sub}</div>${ioStats([['Kills', mine ? mine.kills : 0], ['Damage', mine ? mine.dmg : 0], ['Place', '#' + rank]])}${rows && rows.length ? list : ''}`;
+      const title = win ? 'Last one standing!' : 'You died';
+      const sub = win ? 'Every other player is out.' : `You placed <b>#${rank}</b> of ${GS ? GS.n : S.n}.`;
+      const list = `<div class="io-list">${rows.map(r => `<div class="${r[4] === meId() ? 'me' : ''}"><span>${r[5] && !win ? 'Alive' : '#' + r[0]} ${esc(r[1])}</span><span>${r[2]} kills · ${Math.round(r[3])} dmg</span></div>`).join('')}</div>`;
+      return `<div class="io-kick">${win ? 'Victory' : 'Eliminated'}</div><div class="io-title">${title}</div><div class="io-sub">${sub}</div>${ioStats([['Kills', mine ? mine.kills : 0], ['Damage', mine ? Math.round(mine.dmg) : 0], ['Place', '#' + rank]])}${rows && rows.length ? list : ''}`;
     }
     function endButtons(spectatable) {
       const b = [];
@@ -2066,7 +2066,7 @@
       const win = winId === meId();
       const p = role === 'guest' ? GS.mine || GS.meb : S.P[me];
       st = 'over';
-      const head = win ? overPanel(true, rows, p) : `<div class="io-kick">Game over</div><div class="io-title">${esc(nameOf(winId))} wins</div><div class="io-sub">Final standings</div>${ioStats([['Your kills', p ? p.kills : 0], ['Your place', '#' + ((p && p.place) || '-')]])}<div class="io-list">${rows.map(r => `<div class="${r[4] === meId() ? 'me' : ''}"><span>#${r[0]} ${esc(r[1])}</span><span>${r[2]} kills · ${r[3]} dmg</span></div>`).join('')}</div>`;
+      const head = win ? overPanel(true, rows, p) : `<div class="io-kick">Game over</div><div class="io-title">${esc(nameOf(winId))} wins</div><div class="io-sub">Final standings</div>${ioStats([['Your kills', p ? p.kills : 0], ['Your place', '#' + ((p && p.place) || '-')]])}<div class="io-list">${rows.map(r => `<div class="${r[4] === meId() ? 'me' : ''}"><span>#${r[0]} ${esc(r[1])}</span><span>${r[2]} kills · ${Math.round(r[3])} dmg</span></div>`).join('')}</div>`;
       sh.show(head + endButtons(false), endHandler, 'io-ui io-panel');
       snd(win ? 'win' : 'lose', null, null, 1);
       if (role === 'solo' && !submitted && p) { submitted = true; api.submit(p.kills); }
@@ -2880,7 +2880,7 @@
     }
     function hurtTank(p, dmg, killer, name) {
       if (!p.alive || p.shield > 0 || dmg <= 0) return;
-      p.hp -= dmg; p.regenT = 0; p.fl = .12;
+      p.hp -= dmg; p.regenT = 0; p.fl = .12; if (killer && killer !== p) { p.hitBy = killer.id; p.hitT = S.t; }
       if (p.hp <= 0) die(p, killer, name);
     }
     function killShape(s, killer) {
@@ -3315,6 +3315,7 @@
     let foe = null, fd = 1e9;
     for (const q of S.P) {
       if (!q.alive || q.team === p.team || q.shield > 0) continue;
+      if (q.lv < 8 && S.t - (q.born || 0) < (sk >= 2 ? 8 : 16) && !(p.hitBy === q.id && p.hitT >= q.born)) continue;
       const d = Math.hypot(q.x - p.x, q.y - p.y);
       if (d < sight && d < fd) { fd = d; foe = q; }
     }

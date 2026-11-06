@@ -4,12 +4,16 @@
   const ID = 'road-hopper';
   const TAU = Math.PI * 2;
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
-  const rnd = (a, b) => a + Math.random() * (b - a);
-  const rint = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
-  const pick = a => a[(Math.random() * a.length) | 0];
+  let RAND = Math.random;
+  const rnd = (a, b) => a + RAND() * (b - a);
+  const rint = (a, b) => Math.floor(a + RAND() * (b - a + 1));
+  const pick = a => a[(RAND() * a.length) | 0];
+  const seeded = n => () => { n = (n + 0x6D2B79F5) | 0; let t = Math.imul(n ^ (n >>> 15), 1 | n); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const hashStr = str => { let x = 2166136261; for (let i = 0; i < str.length; i++) x = Math.imul(x ^ str.charCodeAt(i), 16777619); return x >>> 0; };
   const damp = (a, b, k, dt) => b + (a - b) * Math.exp(-k * dt);
   const angTo = (a, b, k) => a + ((((b - a + Math.PI) % TAU) + TAU) % TAU - Math.PI) * k;
   const COARSE = matchMedia('(pointer: coarse)').matches;
+  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const CFG = {
     cols: 4, half: 15, loop: 36, step: 1 / 120,
@@ -18,7 +22,37 @@
     rampRows: 220,
     car: [1.7, 3.4, 3.4], truck: [1.3, 2.2, 1.8], log: [0.9, 1.8, 1.1], fastLane: 1.7,
     trainSpeed: 36, trainWarn: 1.5, trainGap: [2.5, 7.5],
-    coinChance: 0.15, prizeCost: 100, giftEvery: 300, gift: [20, 45]
+    coinChance: 0.15, prizeCost: 100, giftEvery: 300, gift: [20, 45], biomeRows: 100
+  };
+  const BIOMES = [
+    { name: 'MEADOW', g: ['#a2e05f', '#99da58'], side: '#8a6a46', leaf: ['#a5cf3a', '#9cc834', '#acd443'], tuft: ['#6fb83e', '#86cf4b', '#5fa636'], fl: ['#ffffff', '#ffe066', '#ff8fb1', '#b9a3ff'], peb: ['#b8ec7a', '#86c94b', '#cfd6e4'], tree: 'cube', bg: '#2d5e33' },
+    { name: 'AUTUMN WOODS', g: ['#c9d65a', '#bfcf52'], side: '#8a5a36', leaf: ['#f29d38', '#e8742a', '#f7c142', '#d9532b'], tuft: ['#a8a83c', '#c2b448', '#9a8a30'], fl: ['#ff8a1f', '#ffd23f', '#d9532b'], peb: ['#e0c870', '#c98a3a', '#cfd6e4'], tree: 'cube', bg: '#5e4a24' },
+    { name: 'SNOWFIELDS', g: ['#eef4fb', '#e3ecf6'], side: '#9aa8bc', leaf: ['#3f8f5a', '#4d9e66', '#37804f'], tuft: ['#c9d8ea', '#dbe6f3', '#b8cadf'], fl: null, peb: ['#ffffff', '#cfdced', '#b0c2d8'], tree: 'pine', bg: '#7d8fa8' },
+    { name: 'DUSTY DESERT', g: ['#f2d48a', '#ebcb80'], side: '#c08a4e', leaf: ['#5fae4f', '#53a046', '#6dbb58'], tuft: ['#c9a85a', '#b8954a', '#d8b86a'], fl: ['#ff5e8a', '#ffd23f'], peb: ['#e4c27a', '#c9a060', '#f6e2b0'], tree: 'cactus', bg: '#a8743c' }
+  ];
+  let BOFF = 0;
+  const biomeOf = r => BIOMES[Math.floor((Math.max(0, r) + BOFF) / CFG.biomeRows) % BIOMES.length];
+  let BIO = BIOMES[0];
+  const hc = (x, y) => `<g transform="translate(${x} ${y})"><rect x="0" y="7" width="17" height="15" fill="#fff" stroke="#1d1b26" stroke-width="2"/><rect x="5" y="1" width="6" height="6" fill="#ff3b4e"/><rect x="17" y="12" width="5" height="4" fill="#ff9f1c"/><rect x="11" y="10" width="3" height="4" fill="#1d1b26"/><rect x="5" y="22" width="2" height="4" fill="#ff9f1c"/><rect x="11" y="22" width="2" height="4" fill="#ff9f1c"/></g>`;
+  const HELP_ART = [
+    `<svg viewBox="0 0 64 64"><rect width="64" height="64" rx="10" fill="#a2e05f"/><rect y="40" width="64" height="24" fill="#99da58"/><path d="M30 38c0-14 4-22 4-22" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="4 4"/><path d="M28 18l6-9 6 9z" fill="#fff"/>${hc(22, 34)}</svg>`,
+    `<svg viewBox="0 0 64 64"><rect width="64" height="64" rx="10" fill="#555a67"/><path d="M0 32h64" stroke="#eef1f5" stroke-width="2" stroke-dasharray="8 6"/><rect x="40" y="10" width="22" height="13" rx="2" fill="#ff4d4d"/><rect x="44" y="6" width="12" height="6" fill="#34466a"/><rect x="42" y="22" width="5" height="4" fill="#1d1b26"/><rect x="55" y="22" width="5" height="4" fill="#1d1b26"/>${hc(20, 34)}<path d="M14 50H4m4-4-4 4 4 4M46 50h10m-4-4 4 4-4 4" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    `<svg viewBox="0 0 64 64"><rect width="64" height="64" rx="10" fill="#55c9f5"/><path d="M6 14h12M40 54h14M44 12h10" stroke="#a8ecff" stroke-width="3" stroke-linecap="round"/><rect x="6" y="34" width="52" height="8" fill="#b9824f"/><rect x="6" y="42" width="52" height="7" fill="#9a6538"/><rect x="56" y="34" width="3" height="15" fill="#e9c08c"/>${hc(22, 10)}</svg>`,
+    `<svg viewBox="0 0 64 64"><rect width="64" height="64" rx="10" fill="#a39383"/><path d="M0 44h64M0 54h64" stroke="#f1f4f8" stroke-width="3"/><rect x="8" y="12" width="4" height="30" fill="#e8413c"/><rect x="2" y="8" width="16" height="9" rx="2" fill="#2b2d42"/><circle cx="6" cy="12.5" r="3" fill="#ff2a2a"/><circle cx="14" cy="12.5" r="3" fill="#5b2630"/><path d="M30 20l10-8 6 6 6-6 10 8-10-2-6 6-6-6z" fill="#7a4a2a"/><rect x="43" y="16" width="6" height="6" fill="#fff"/><path d="M49 19l4 1-4 2z" fill="#ffc93c"/></svg>`
+  ];
+  const MODES = {
+    classic: { name: 'CLASSIC', off: 0, creep: 1, idle: 4.6, note: 'Endless run. Ranked on the leaderboard.' },
+    rush: { name: 'RUSH', off: 110, creep: 1.75, idle: 3.2, note: 'Busy roads from the first hop. The camera pushes harder.' },
+    daily: { name: 'DAILY', off: 40, creep: 1.15, idle: 4.6, note: 'The same course for everyone today.' }
+  };
+  const MODE_IDS = ['classic', 'rush', 'daily'];
+  const CAUSE = {
+    car: ['SQUASHED!', 'Cars never stop: wait for a gap, then hop.'],
+    side: ['SQUASHED!', 'You hopped into a car. Look both ways first.'],
+    train: ['TRAIN!', 'Flashing red lights and a bell mean a train is coming.'],
+    water: ['SPLASH!', 'Only logs and lily pads float.'],
+    drift: ['SWEPT AWAY!', 'Hop off the log before it carries you off screen.'],
+    eagle: ['TOO SLOW!', 'Keep moving forward or the eagle grabs you.']
   };
 
   const FONT = {
@@ -35,7 +69,7 @@
     3: '11110,00001,00110,00001,11110', 4: '10010,10010,11111,00010,00010', 5: '11111,10000,11110,00001,11110',
     6: '01110,10000,11110,10001,01110', 7: '11111,00001,00010,00100,00100', 8: '01110,10001,01110,10001,01110',
     9: '01110,10001,01111,00001,01110', ' ': '00,00,00,00,00', '!': '1,1,1,0,1', '?': '1110,0001,0110,0000,0100',
-    ':': '0,1,0,1,0', '.': '0,0,0,0,1', '-': '000,000,111,000,000', "'": '1,1,0,0,0', '/': '00001,00010,00100,01000,10000'
+    ':': '0,1,0,1,0', '.': '0,0,0,0,1', '-': '000,000,111,000,000', "'": '1,1,0,0,0', '/': '00001,00010,00100,01000,10000', '+': '000,010,111,010,000'
   };
   function pix(cv, text, o = {}) {
     text = String(text).toUpperCase();
@@ -365,10 +399,10 @@ ${G} .rh-coin{display:block;flex:none;width:clamp(20px,4.6cqw,38px);aspect-ratio
 ${G} .rh-coin.pop{animation:rh-pop .3s ease-out}
 @keyframes rh-pop{40%{transform:scale(1.4) rotate(12deg)}}
 ${G} .rh-scr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,2cqw,18px);pointer-events:none;padding:clamp(64px,14cqw,120px) 12px clamp(86px,20cqw,150px)}
-${G} .rh-title{justify-content:space-between;padding-top:clamp(80px,15cqw,124px)}
+${G} .rh-title{justify-content:space-between;padding-top:clamp(62px,10.5cqw,96px)}
 ${G} .rh-logo{display:flex;flex-direction:column;align-items:center;gap:clamp(2px,.6cqw,6px);animation:rh-drop .8s cubic-bezier(.3,1.5,.5,1) both}
-${G} .rh-logo canvas{height:clamp(46px,11cqw,96px);transform:rotate(-4deg)}
-${G} .rh-logo .l2{height:clamp(40px,9.5cqw,84px);margin-left:8%}
+${G} .rh-logo canvas{height:clamp(42px,8.6cqw,76px);transform:rotate(-4deg)}
+${G} .rh-logo .l2{height:clamp(36px,7.4cqw,66px);margin-left:8%}
 @keyframes rh-drop{from{transform:translateY(-70%) scale(.5);opacity:0}}
 ${G} .rh-blink{height:clamp(18px,4.2cqw,34px);animation:rh-blink 1.1s infinite}
 @keyframes rh-blink{0%,78%{opacity:1}79%,100%{opacity:.15}}
@@ -395,7 +429,37 @@ ${G} .rh-btn.off{filter:grayscale(.8) brightness(.85)}
 ${G} .rh-btn.hot{animation:rh-hot .9s ease-in-out infinite}
 @keyframes rh-hot{0%,100%{transform:rotate(0)}20%{transform:rotate(-8deg) scale(1.08)}40%{transform:rotate(8deg) scale(1.08)}60%{transform:rotate(0)}}
 ${G} .rh-btn .rh-coin{width:1.1em}
-${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6cqw,24px)}`;
+${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6cqw,24px)}
+${G} .rh-tl{display:flex;flex-direction:column;align-items:center;gap:clamp(6px,1.4cqw,12px)}
+${G} .rh-modes{display:flex;gap:clamp(3px,.8cqw,6px);pointer-events:auto;background:rgba(29,27,38,.42);padding:clamp(4px,.8cqw,6px);border-radius:99px;box-shadow:0 .22em 0 rgba(29,27,38,.5)}
+${G} .rh-chip{border:0;border-radius:99px;padding:.6em 1.05em;font:900 clamp(11px,2cqw,16px)/1 var(--sans);letter-spacing:.06em;color:#fff;background:transparent;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:background .15s,color .15s,transform .15s}
+${G} .rh-chip:hover{background:rgba(255,255,255,.16)}
+${G} .rh-chip.on{background:#fff;color:#1d1b26;box-shadow:0 .16em 0 #1d1b26;transform:translateY(-1px)}
+${G} .rh-mnote{max-width:min(92%,420px);font:800 clamp(11px,1.9cqw,15px)/1.25 var(--sans);color:#fff;text-shadow:0 2px 0 #1d1b26;text-align:center}
+${G} .rh-card{width:min(94%,470px);background:#fff;border-radius:clamp(12px,2.4cqw,18px);box-shadow:0 .38em 0 #1d1b26,inset 0 -.3em 0 #e3e6ee;padding:clamp(10px,2.2cqw,18px) clamp(10px,2.4cqw,20px) clamp(14px,2.8cqw,22px);display:flex;flex-direction:column;align-items:center;gap:clamp(5px,1.1cqw,9px);color:#1d1b26;animation:rh-card .45s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes rh-card{from{transform:translateY(40%) scale(.8);opacity:0}}
+${G} .rh-cause{height:clamp(24px,5.2cqw,42px)}
+${G} .rh-why{font:800 clamp(12px,2.1cqw,16px)/1.25 var(--sans);text-align:center;color:#4a4e5a}
+${G} .rh-mtag{font:900 clamp(9px,1.6cqw,12px)/1 var(--sans);letter-spacing:.14em;color:#fff;background:#3d8bff;border-radius:99px;padding:.4em .9em}
+${G} .rh-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(4px,1cqw,8px);width:100%}
+${G} .rh-stats div{display:flex;flex-direction:column;align-items:center;gap:.2em;background:#f1f3f8;border-radius:clamp(8px,1.6cqw,12px);padding:.5em .2em .45em}
+${G} .rh-stats div:first-child{background:#fff1b8}
+${G} .rh-stats b{font:900 clamp(17px,3.6cqw,30px)/1 var(--sans);color:#1d1b26;font-variant-numeric:tabular-nums}
+${G} .rh-stats span{font:900 clamp(8px,1.5cqw,12px)/1.1 var(--sans);letter-spacing:.1em;color:#8a8fa0}
+${G} .rh-help{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;padding:12px;background:rgba(14,18,32,.55);pointer-events:auto}
+${G} .rh-hcard{width:min(100%,660px);max-height:100%;overflow:auto;background:#fff;border-radius:clamp(14px,2.6cqw,20px);box-shadow:0 .4em 0 #1d1b26;padding:clamp(12px,2.6cqw,22px);display:flex;flex-direction:column;align-items:center;gap:clamp(8px,1.8cqw,14px);animation:rh-card .4s cubic-bezier(.3,1.4,.5,1) both}
+${G} .rh-hcard .ttl{height:clamp(20px,4.4cqw,34px)}
+${G} .rh-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(6px,1.4cqw,12px);width:100%}
+@container (max-width:560px){${G} .rh-steps{grid-template-columns:repeat(2,1fr)}}
+${G} .rh-step{display:flex;flex-direction:column;align-items:center;gap:.4em;background:#f1f3f8;border-radius:12px;padding:.7em .45em .8em;text-align:center;font:700 clamp(11px,1.85cqw,14px)/1.3 var(--sans);color:#3a3e50}
+${G} .rh-step svg{width:clamp(50px,10cqw,74px);height:clamp(50px,10cqw,74px);border-radius:10px;box-shadow:0 3px 0 #1d1b26}
+${G} .rh-step b{display:block;font-weight:900;letter-spacing:.06em;color:#1d1b26}
+${G} .rh-hb{font-size:clamp(22px,4.8cqw,34px)}
+${G} .rh-cc{position:absolute;height:clamp(14px,2.9cqw,24px);pointer-events:none;transform:translate(-50%,-100%);animation:rh-cc 1s ease-out both}
+@keyframes rh-cc{0%{opacity:0;transform:translate(-50%,-60%) scale(.6)}15%{opacity:1;transform:translate(-50%,-100%) scale(1.12)}100%{opacity:0;transform:translate(-50%,-230%)}}
+${G} .rh-zone{position:absolute;left:50%;top:clamp(70px,15cqw,124px);height:clamp(22px,4.6cqw,38px);pointer-events:none;transform:translateX(-50%);animation:rh-zone 2.6s ease both}
+@keyframes rh-zone{0%{opacity:0;transform:translate(-50%,-30px) scale(.7)}12%,82%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-10px)}}
+@media (prefers-reduced-motion:reduce){${G} *{animation:none!important;transition:none!important}}`;
 
 
   Ameplay.register({
@@ -428,11 +492,13 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
       const ui = document.createElement('div');
       ui.innerHTML = `
 <div class="rh-hud"><div class="rh-l"><canvas class="rh-px rh-score"></canvas><canvas class="rh-px rh-top"></canvas></div><div class="rh-r"><canvas class="rh-px rh-coins"></canvas><i class="rh-coin rh-ci"></i></div></div>
-<div class="rh-scr rh-title"><div class="rh-logo"><canvas class="rh-px l1"></canvas><canvas class="rh-px l2"></canvas></div><canvas class="rh-px rh-blink rh-tap"></canvas></div>
-<div class="rh-scr rh-over" hidden><canvas class="rh-px rh-nb"></canvas><canvas class="rh-px rh-blink rh-again"></canvas></div>
+<div class="rh-scr rh-title"><div class="rh-tl"><div class="rh-logo"><canvas class="rh-px l1"></canvas><canvas class="rh-px l2"></canvas></div><div class="rh-modes">${MODE_IDS.map((m, i) => `<button class="rh-chip" data-a="m:${m}" aria-label="${MODES[m].name} mode (${i + 1})">${MODES[m].name}</button>`).join('')}</div><div class="rh-mnote"></div></div><canvas class="rh-px rh-blink rh-tap"></canvas></div>
+<div class="rh-scr rh-over" hidden><canvas class="rh-px rh-nb"></canvas><div class="rh-card"><canvas class="rh-px rh-cause"></canvas><div class="rh-why"></div><div class="rh-stats"><div><b class="s-sc">0</b><span>SCORE</span></div><div><b class="s-be">0</b><span>BEST</span></div><div><b class="s-co">0</b><span>COINS</span></div><div><b class="s-ti">0</b><span>TIME</span></div></div><div class="rh-mtag"></div></div><canvas class="rh-px rh-blink rh-again"></canvas></div>
+<canvas class="rh-px rh-zone" hidden></canvas><canvas class="rh-px rh-cc" hidden></canvas>
+<div class="rh-help" hidden><div class="rh-hcard"><canvas class="rh-px ttl"></canvas><div class="rh-steps">${[['HOP', COARSE ? 'Tap anywhere to hop forward.' : 'Press Up, W or Space to hop forward.'], ['DODGE', COARSE ? 'Swipe left, right or down to step aside. Trees block you.' : 'Left, Right and Down step aside. Trees block you.'], ['FLOAT', 'Water is deadly. Ride the logs and lily pads.'], ['HURRY', 'Red lights mean a train. Stand still too long and the eagle swoops.']].map((q, i) => `<div class="rh-step">${HELP_ART[i]}<div><b>${q[0]}</b>${q[1]}</div></div>`).join('')}</div><button class="rh-btn go wide" data-a="helpok">GOT IT</button></div></div>
 <div class="rh-scr rh-menu rh-chars" hidden><canvas class="rh-px ttl"></canvas><div class="rh-gap"></div><canvas class="rh-px nm"></canvas><div class="rh-note"></div><div class="rh-row"><button class="rh-btn" data-a="prev" aria-label="Previous">${ICON.prev}</button><button class="rh-btn go wide rh-pick" data-a="pick">SELECT</button><button class="rh-btn" data-a="next" aria-label="Next">${ICON.next}</button></div></div>
 <div class="rh-scr rh-menu rh-prize" hidden><canvas class="rh-px ttl"></canvas><div class="rh-gap"></div><canvas class="rh-px nm"></canvas><div class="rh-note"></div><div class="rh-row"><button class="rh-btn gold wide rh-spin" data-a="spin"><i class="rh-coin"></i>${CFG.prizeCost}</button><button class="rh-btn go wide rh-use" data-a="use">PLAY</button></div></div>
-<div class="rh-bar"><button class="rh-btn" data-a="chars" aria-label="Characters">${ICON.chars}</button><button class="rh-btn go big rh-play" data-a="play" aria-label="Play">${ICON.play}</button><button class="rh-btn pink rh-pz" data-a="prize" aria-label="Prize machine">${ICON.prize}</button><button class="rh-btn gold rh-gift" data-a="gift" aria-label="Free gift">${ICON.gift}</button></div>
+<div class="rh-bar"><button class="rh-btn" data-a="chars" aria-label="Characters">${ICON.chars}</button><button class="rh-btn go big rh-play" data-a="play" aria-label="Play">${ICON.play}</button><button class="rh-btn pink rh-pz" data-a="prize" aria-label="Prize machine">${ICON.prize}</button><button class="rh-btn gold rh-gift" data-a="gift" aria-label="Free gift">${ICON.gift}</button><button class="rh-btn rh-hb" data-a="help" aria-label="How to play">?</button></div>
 <button class="rh-btn rh-back" data-a="back" aria-label="Back" hidden>${ICON.back}</button>`;
       while (ui.firstChild) wrap.append(ui.firstChild);
       const $ = s => wrap.querySelector(s);
@@ -441,12 +507,16 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
         title: $('.rh-title'), logo: $('.rh-logo'), over: $('.rh-over'), nb: $('.rh-nb'), chars: $('.rh-chars'), prize: $('.rh-prize'),
         bar: $('.rh-bar'), play: $('.rh-play'), pz: $('.rh-pz'), gift: $('.rh-gift'), back: $('.rh-back'),
         cName: $('.rh-chars .nm'), cNote: $('.rh-chars .rh-note'), pick: $('.rh-pick'),
-        pName: $('.rh-prize .nm'), pNote: $('.rh-prize .rh-note'), spin: $('.rh-spin'), use: $('.rh-use')
+        pName: $('.rh-prize .nm'), pNote: $('.rh-prize .rh-note'), spin: $('.rh-spin'), use: $('.rh-use'),
+        chips: [...wrap.querySelectorAll('.rh-chip')], mnote: $('.rh-mnote'), cause: $('.rh-cause'), why: $('.rh-why'), mtag: $('.rh-mtag'),
+        sSc: $('.s-sc'), sBe: $('.s-be'), sCo: $('.s-co'), sTi: $('.s-ti'), zone: $('.rh-zone'), help: $('.rh-help'), cc: $('.rh-cc')
       };
+      pix($('.rh-help .ttl'), 'HOW TO PLAY', { fill: '#ffd23f' });
+      pix(el.cc, 'CLOSE CALL! +1', { fill: '#ffd23f', dp: 2 });
       pix($('.l1'), 'CROSSY', { fill: '#ffffff', side: '#2f80ed', dp: 7 });
       pix($('.l2'), 'ROAD', { fill: '#ffd23f', side: '#e8590c', dp: 7 });
       pix($('.rh-tap'), COARSE ? 'TAP TO PLAY' : 'PRESS UP TO PLAY', {});
-      pix($('.rh-again'), 'TAP TO PLAY AGAIN', {});
+      pix($('.rh-again'), COARSE ? 'TAP TO PLAY AGAIN' : 'SPACE TO PLAY AGAIN', {});
       pix(el.nb, 'NEW TOP SCORE!', { fill: '#ffd23f' });
       pix($('.rh-chars .ttl'), 'CHARACTERS', {});
       pix($('.rh-prize .ttl'), 'PRIZE MACHINE', {});
@@ -457,8 +527,14 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
       if (!owned.includes(0)) owned.unshift(0);
       let sel = owned.includes(saved.sel) ? saved.sel : 0;
       let top = Math.max(saved.top | 0, api.best | 0);
+      const today = new Date().toISOString().slice(0, 10);
+      const bests = Object.assign({ classic: 0, rush: 0, daily: 0, day: today }, saved.bests && typeof saved.bests === 'object' ? saved.bests : {});
+      if (bests.day !== today) { bests.daily = 0; bests.day = today; }
+      bests.classic = Math.max(bests.classic | 0, top);
+      const stats = Object.assign({ g: 0, h: 0, c: 0 }, saved.stats && typeof saved.stats === 'object' ? saved.stats : {});
+      let mode = MODE_IDS.includes(saved.mode) ? saved.mode : 'classic', seen = !!saved.seen, help = false;
       let giftAt = +saved.gift || 0;
-      const persist = () => api.save({ coins, owned, sel, top, gift: giftAt });
+      const persist = () => api.save({ coins, owned, sel, top, gift: giftAt, bests, stats, mode, seen });
 
       const lin = hex => new THREE.Color(hex).convertSRGBToLinear();
       const scene = new THREE.Scene();
@@ -640,6 +716,7 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
         bell: () => { tone('sine', 1760, 0, 0.3, 0.07); tone('triangle', 2637, 0, 0.16, 0.025); },
         train: () => { hiss(1.2, 0.22, 700, 160, 0.7, 'lowpass'); for (const f of [233, 294, 349]) tone('sawtooth', f, f * 0.98, 0.75, 0.018); },
         splash: () => { hiss(0.5, 0.45, 2400, 300, 0.8); tone('sine', 300, 900, 0.12, 0.05, 0.06); tone('sine', 420, 1200, 0.1, 0.04, 0.17); },
+        close: () => { hiss(0.28, 0.2, 500, 2600, 1.4); tone('triangle', 660, 1320, 0.12, 0.06, 0.05); tone('square', 1568, 0, 0.12, 0.035, 0.14); },
         squash: () => { tone('sine', 190, 45, 0.22, 0.32); hiss(0.08, 0.3, 3000, 800, 1, 'highpass'); },
         eagle: () => { tone('sawtooth', 2100, 1300, 0.55, 0.03); tone('sawtooth', 2180, 1240, 0.55, 0.026, 0.03); tone('sawtooth', 1900, 1200, 0.4, 0.02, 0.35); },
         grab: () => { hiss(0.16, 0.3, 1500, 500, 1); tone('square', 300, 120, 0.2, 0.06); },
@@ -655,25 +732,37 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
       const rows = new Map();
       const GEN = { chunk: 'grass', left: 0, path: 0, rdir: 1 };
       let genR = 0;
-      const diff = r => clamp(r / CFG.rampRows, 0, 1);
+      const diff = r => clamp((r + MODES[mode].off) / CFG.rampRows, 0, 1);
       function nextType(r) {
         if (r <= 3) return 'grass';
         if (GEN.left <= 0) {
           const d = diff(r);
-          if (GEN.chunk !== 'grass' && Math.random() < 0.72 - d * 0.32) { GEN.chunk = 'grass'; GEN.left = rint(1, d > 0.5 ? 2 : 3); }
+          if (GEN.chunk !== 'grass' && RAND() < 0.72 - d * 0.32) { GEN.chunk = 'grass'; GEN.left = rint(1, d > 0.5 ? 2 : 3); }
           else {
             GEN.chunk = pick(['road', 'road', 'road', 'river', 'river', 'rail'].filter(t => t !== GEN.chunk));
             GEN.left = GEN.chunk === 'rail' ? rint(1, d > 0.25 ? 2 : 1) : rint(1, Math.min(4, 2 + Math.round(d * 3)));
-            GEN.rdir = Math.random() < 0.5 ? 1 : -1;
+            GEN.rdir = RAND() < 0.5 ? 1 : -1;
           }
         }
         GEN.left--;
         return GEN.chunk;
       }
       function deco(p, x, kind) {
-        kind = kind || (Math.random() < 0.66 ? 'tree' : Math.random() < 0.6 ? 'rock' : 'stump');
-        if (kind === 'tree') {
-          const hh = pick([1, 1, 2, 2, 3]), c = pick(['#a5cf3a', '#9cc834', '#acd443']), H = .5 + .35 * hh;
+        kind = kind || (RAND() < 0.66 ? 'tree' : RAND() < 0.6 ? 'rock' : 'stump');
+        if (kind === 'tree' && BIO.tree === 'pine') {
+          const c = pick(BIO.leaf), tall = RAND() < 0.5, snow = '#f4f8ff';
+          p.push(box(.26, .3, .26, x, 0, 0, '#6b4630'), box(.3, .04, .3, x, 0, 0, '#523422'));
+          const tiers = tall ? [[.92, .3], [.74, .62], [.54, .94], [.32, 1.24]] : [[.9, .3], [.66, .6], [.4, .88]];
+          for (const [wd, yy] of tiers) p.push(box(wd, .3, wd, x, yy, 0, c), box(wd + .02, .05, wd + .02, x, yy, 0, shade(c, .75)), box(wd * .86, .05, wd * .86, x, yy + .3, 0, snow), box(wd * .4, .03, .05, x - wd * .25, yy + .22, wd / 2 + .01, snow));
+          p.push(box(.14, .1, .14, x, tiers[tiers.length - 1][1] + .35, 0, snow));
+        } else if (kind === 'tree' && BIO.tree === 'cactus') {
+          const c = pick(BIO.leaf), H = rnd(.8, 1.3), dk = shade(c, .78);
+          p.push(box(.5, .06, .5, x, 0, 0, '#e4c27a'), box(.32, H, .32, x, 0, 0, c), box(.06, H - .1, .325, x - .08, .05, 0, dk), box(.06, H - .1, .325, x + .08, .05, 0, dk), box(.24, .05, .24, x, H, 0, shade(c, 1.1)));
+          p.push(box(.22, .12, .14, x - .25, .42, 0, c), box(.14, .34, .14, x - .32, .48, 0, c), box(.15, .04, .15, x - .32, .82, 0, shade(c, 1.1)));
+          if (RAND() < 0.6) p.push(box(.2, .12, .14, x + .24, .58, 0, c), box(.14, .26, .14, x + .3, .64, 0, c), box(.15, .04, .15, x + .3, .9, 0, shade(c, 1.1)));
+          if (RAND() < 0.5) p.push(box(.12, .08, .12, x, H + .04, 0, '#ff5e8a'), box(.05, .04, .05, x, H + .12, 0, '#ffd23f'));
+        } else if (kind === 'tree') {
+          const hh = pick([1, 1, 2, 2, 3]), c = pick(BIO.leaf), H = .5 + .35 * hh;
           p.push(box(.32, .36, .32, x, 0, 0, '#6b4630'), box(.36, .05, .36, x, 0, 0, '#523422'));
           p.push(box(.8, H, .8, x, .36, 0, c), box(.82, .06, .82, x, .36, 0, shade(c, .78)));
           for (let i = 1; i < hh; i++) p.push(box(.81, .025, .81, x, .36 + i * H / hh, 0, shade(c, .92)));
@@ -698,20 +787,23 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
         for (const [c, it] of items) { it.x = ((c + ph) % L) - L / 2; row.movers.push(it); }
       }
       const isWet = t => t === 'river' || t === 'pads';
-      function buildRow(r) {
+      let genRng = null;
+      function buildRow(r) { const keep = RAND; if (genRng) RAND = genRng; buildRow0(r); RAND = keep; }
+      function buildRow0(r) {
         const prev = rows.get(r - 1), d = diff(r);
+        BIO = biomeOf(r);
         let type = nextType(r);
-        if (type === 'river' && prev && prev.type === 'river' && Math.random() < 0.3) type = 'pads';
+        if (type === 'river' && prev && prev.type === 'river' && RAND() < 0.3) type = 'pads';
         const row = { r, type, top: TOP[type], movers: [], blocked: new Set(), pads: new Set(), coin: null, dir: 1, speed: 0, rail: null, mesh: null };
         const p = [], WD = CFG.half * 2 + 1, ground = (c, top, side) => { p.push(box(WD, .86, 1, 0, top - 1, 0, side || c), box(WD, .14, 1, 0, top - .14, 0, c)); };
         if (prev && isWet(type) && !isWet(prev.type)) p.push(box(CFG.half * 2 + 1, .02, .1, 0, -.3, .44, FOAM));
         if (prev && !isWet(type) && isWet(prev.type)) p.push(box(CFG.half * 2 + 1, .02, .1, 0, -.3, .56, FOAM));
         if (type === 'grass') {
-          const gc = r & 1 ? '#a2e05f' : '#99da58';
-          ground(gc, 0, '#8a6a46');
+          const gc = r & 1 ? BIO.g[0] : BIO.g[1];
+          ground(gc, 0, BIO.side);
           if (r <= -4) for (let x = -CFG.cols; x <= CFG.cols; x++) row.blocked.add(x);
           else if (r < 0) for (let i = rint(2, 4); i > 0; i--) row.blocked.add(rint(-CFG.cols, CFG.cols));
-          else if (r <= 3) { for (const x of [-4, -3, 3, 4]) if (Math.random() < 0.3) row.blocked.add(x); }
+          else if (r <= 3) { for (const x of [-4, -3, 3, 4]) if (RAND() < 0.3) row.blocked.add(x); }
           else {
             const prevPath = GEN.path, fromGrass = prev && prev.type === 'grass';
             if (fromGrass) GEN.path = clamp(GEN.path + rint(-1, 1), -3, 3);
@@ -722,22 +814,22 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
             }
           }
           for (const x of row.blocked) deco(p, x);
-          for (let x = CFG.cols + 1; x <= CFG.half; x++) for (const sx of [-x, x]) if (Math.random() < (x <= CFG.cols + 2 ? 0.8 : 0.42)) deco(p, sx, Math.random() < 0.9 ? 'tree' : 'rock');
-          for (let i = 0; i < 4; i++) { const x = rnd(-CFG.half, CFG.half), z = rnd(-.4, .4); if (!row.blocked.has(Math.round(x))) p.push(box(.05, .12, .05, x, 0, z, '#6fb83e'), box(.05, .09, .05, x + .06, 0, z + .02, '#86cf4b'), box(.05, .08, .05, x - .05, 0, z + .03, '#5fa636')); }
-          for (let i = 0; i < 3; i++) { const x = rnd(-CFG.half, CFG.half), z = rnd(-.4, .4); if (!row.blocked.has(Math.round(x))) p.push(box(.03, .1, .03, x, 0, z, '#4f9a35'), box(.1, .05, .1, x, .1, z, pick(['#ffffff', '#ffe066', '#ff8fb1', '#b9a3ff'])), box(.04, .03, .04, x, .15, z, '#ffd23f')); }
-          for (let i = 0; i < 3; i++) { const x = rnd(-CFG.half, CFG.half), z = rnd(-.4, .4); if (!row.blocked.has(Math.round(x))) p.push(box(.08, .04, .07, x, 0, z, pick(['#b8ec7a', '#86c94b', '#cfd6e4']))); }
+          for (let x = CFG.cols + 1; x <= CFG.half; x++) for (const sx of [-x, x]) if (RAND() < (x <= CFG.cols + 2 ? 0.8 : 0.42)) deco(p, sx, RAND() < 0.9 ? 'tree' : 'rock');
+          for (let i = 0; i < 4; i++) { const x = rnd(-CFG.half, CFG.half), z = rnd(-.4, .4); if (!row.blocked.has(Math.round(x))) p.push(box(.05, .12, .05, x, 0, z, BIO.tuft[0]), box(.05, .09, .05, x + .06, 0, z + .02, BIO.tuft[1]), box(.05, .08, .05, x - .05, 0, z + .03, BIO.tuft[2])); }
+          if (BIO.fl) for (let i = 0; i < 3; i++) { const x = rnd(-CFG.half, CFG.half), z = rnd(-.4, .4); if (!row.blocked.has(Math.round(x))) p.push(box(.03, .1, .03, x, 0, z, BIO.tuft[2]), box(.1, .05, .1, x, .1, z, pick(BIO.fl)), box(.04, .03, .04, x, .15, z, '#ffd23f')); }
+          for (let i = 0; i < 3; i++) { const x = rnd(-CFG.half, CFG.half), z = rnd(-.4, .4); if (!row.blocked.has(Math.round(x))) p.push(box(.08, .04, .07, x, 0, z, pick(BIO.peb))); }
         } else if (type === 'road') {
           ground('#555a67', TOP.road, '#3c404c');
           for (let i = 0; i < 12; i++) p.push(box(rnd(.2, .9), .01, rnd(.08, .26), rnd(-CFG.half, CFG.half), TOP.road, rnd(-.38, .38), pick(['#5d6270', '#4d525f', '#626776'])));
           if (!prev || prev.type !== 'road') p.push(box(WD, .012, .07, 0, TOP.road, .45, '#d0d4dc'));
-          if (Math.random() < 0.18) { const mx = rint(-CFG.cols, CFG.cols); p.push(box(.4, .014, .4, mx, TOP.road, 0, '#444855'), box(.3, .016, .3, mx, TOP.road, 0, '#4d5260')); }
+          if (RAND() < 0.18) { const mx = rint(-CFG.cols, CFG.cols); p.push(box(.4, .014, .4, mx, TOP.road, 0, '#444855'), box(.3, .016, .3, mx, TOP.road, 0, '#4d5260')); }
           if (prev && prev.type === 'road') for (let x = -CFG.half; x <= CFG.half; x += 1.5) p.push(box(.72, .012, .08, x, TOP.road, .5, '#eef1f5'));
-          row.dir = Math.random() < 0.5 ? 1 : -1;
-          const trucks = Math.random() < 0.28, fast = !trucks && Math.random() < 0.12 + d * 0.2, sp = trucks ? CFG.truck : CFG.car;
+          row.dir = RAND() < 0.5 ? 1 : -1;
+          const trucks = RAND() < 0.28, fast = !trucks && RAND() < 0.12 + d * 0.2, sp = trucks ? CFG.truck : CFG.car;
           row.speed = (rnd(sp[0], sp[1]) + d * sp[2]) * (fast ? CFG.fastLane : 1);
           const gmin = fast ? 4.5 : 2.6;
           fill(row, gmin, gmin + 6.5 - d * 3, () => {
-            const k = trucks ? (Math.random() < 0.75 ? 'truck' : 'van') : (Math.random() < 0.8 ? 'car' : 'van'), V = VEH[k], ci = rint(0, V.cols.length - 1);
+            const k = trucks ? (RAND() < 0.75 ? 'truck' : 'van') : (RAND() < 0.8 ? 'car' : 'van'), V = VEH[k], ci = rint(0, V.cols.length - 1);
             const m = take(k + ci, () => build(B => V.make(B, V.cols[ci], ci)));
             m.rotation.y = row.dir > 0 ? 0 : Math.PI;
             return { len: V.len, mesh: m };
@@ -756,14 +848,14 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
           for (const x of row.pads) {
             p.push(box(.88, .012, .88, x, -.3, 0, '#3aa8d4'), box(.8, .05, .5, x, -.32, 0, '#3cae4c'), box(.5, .05, .8, x, -.32, 0, '#3cae4c'), box(.56, .05, .56, x, -.32, 0, '#3cae4c', 0, Math.PI / 4));
             p.push(box(.6, .056, .34, x + .05, -.32, .06, '#5ccd62'), box(.34, .056, .6, x + .05, -.32, .06, '#5ccd62'), box(.04, .058, .7, x, -.32, 0, '#2d8e3c'), box(.7, .058, .04, x, -.32, 0, '#2d8e3c'), box(.1, .07, .2, x, -.322, .32, WATER));
-            if (Math.random() < 0.3) p.push(box(.14, .1, .14, x - .18, -.27, -.16, '#ff8fb1'), box(.09, .06, .09, x - .27, -.27, -.16, '#ffb3c8'), box(.09, .06, .09, x - .09, -.27, -.16, '#ffb3c8'), box(.09, .06, .09, x - .18, -.27, -.25, '#ffb3c8'), box(.06, .06, .06, x - .18, -.2, -.16, '#ffd23f'));
+            if (RAND() < 0.3) p.push(box(.14, .1, .14, x - .18, -.27, -.16, '#ff8fb1'), box(.09, .06, .09, x - .27, -.27, -.16, '#ffb3c8'), box(.09, .06, .09, x - .09, -.27, -.16, '#ffb3c8'), box(.09, .06, .09, x - .18, -.27, -.25, '#ffb3c8'), box(.06, .06, .06, x - .18, -.2, -.16, '#ffd23f'));
           }
         } else {
           ground('#a39383', 0, '#7f7164');
           for (let i = 0; i < 16; i++) p.push(box(rnd(.1, .3), .03, rnd(.06, .14), rnd(-CFG.half, CFG.half), 0, rnd(-.45, .45), pick(['#b8a999', '#8d7f70', '#c9bcab'])));
           for (let x = -CFG.half; x <= CFG.half; x += 0.7) p.push(box(.24, .05, .84, x, 0, 0, pick(['#7a5236', '#6e4a30', '#835a3c'])), box(.05, .02, .84, x - .04, .05, 0, '#8f6444'));
           for (const z of [-.26, .26]) p.push(box(WD, .07, .08, 0, .03, z, '#a7aebb'), box(WD, .02, .05, 0, .1, z, '#f1f4f8'), box(WD, .02, .02, 0, .0, z + (z < 0 ? -.07 : .07), '#6b6055'));
-          row.dir = Math.random() < 0.5 ? 1 : -1;
+          row.dir = RAND() < 0.5 ? 1 : -1;
           const px = CFG.cols + 0.95, pz = -r + 0.36;
           const post = new THREE.Mesh(sigGeo, plain); post.position.set(px, 0, pz); post.castShadow = true;
           const l1 = new THREE.Mesh(lampGeo, lampOff), l2 = new THREE.Mesh(lampGeo, lampOff);
@@ -771,7 +863,7 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
           scene.add(post, l1, l2);
           row.rail = { timer: rnd(1.5, 6), train: null, bell: 0, warn: false, own: [post, l1, l2], lamps: [l1, l2] };
         }
-        if (r > 3 && (type === 'grass' || type === 'road' || type === 'rail') && Math.random() < CFG.coinChance) {
+        if (r > 3 && (type === 'grass' || type === 'road' || type === 'rail') && RAND() < CFG.coinChance) {
           const free = [];
           for (let x = -CFG.cols; x <= CFG.cols; x++) if (!row.blocked.has(x)) free.push(x);
           if (free.length) { const x = pick(free), m = take('coin', () => coinGeo, coinMat); m.position.set(x, row.top + .42, -r); row.coin = { x, mesh: m }; }
@@ -795,11 +887,14 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
       const P = { x: 0, r: 0, rf: 0, y: 0, face: 0, faceT: 0, hop: null, log: null, logV: 0, off: 0, queued: null, sq: 0, bump: 0, snap: 0, crouch: false, vx: 0, vy: 0, vz: 0 };
       const E = { t: 0, x: 0, z: 0, grabbed: false };
       let state = 'title', mini = false, score = 0, maxR = 0, idle = 0, started = false, submitted = false;
-      let camRow = 0, camTarget = 0, camX = 0, shake = 0, deathKind = '', deathT = 0, overAt = 0, hornCD = 2, clock = 0, acc = 0;
+      let titleOff = 0, camRow = 0, camTarget = 0, camX = 0, shake = 0, deathKind = '', deathT = 0, overAt = 0, hornCD = 2, clock = 0, acc = 0;
       let cIdx = sel, PZ = null, show = null;
 
       const hudScore = () => { pix(el.score, score, { dp: 4 }); api.score(score); };
-      const hudTop = () => pix(el.top, 'TOP ' + top, { dp: 2 });
+      const hudTop = () => pix(el.top, 'TOP ' + (bests[mode] | 0), { dp: 2 });
+      let runCoins = 0, hops = 0, runT = 0, roll = 1, closeCalls = 0;
+      const fmtT = t => { t = Math.floor(t); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+      function showZone(name) { pix(el.zone, name, { fill: '#ffd23f' }); el.zone.hidden = true; void el.zone.offsetWidth; el.zone.hidden = false; api.timeout(() => { el.zone.hidden = true; }, 2700); }
       const hudCoins = () => pix(el.coins, coins, { dp: 3, fill: '#ffd23f' });
       const bumpCoin = () => { el.ci.classList.remove('pop'); void el.ci.offsetWidth; el.ci.classList.add('pop'); };
 
@@ -807,9 +902,12 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
         for (const row of [...rows.values()]) dropRow(row);
         Object.assign(GEN, { chunk: 'grass', left: 0, path: 0, rdir: 1 });
         genR = -12;
+        genRng = mode === 'daily' ? seeded(hashStr('road-hopper-' + today)) : null;
+        BOFF = mode === 'daily' ? (hashStr(today) % BIOMES.length) * CFG.biomeRows : 0;
         while (genR <= 24) buildRow(genR++);
         Object.assign(P, { x: 0, r: 0, rf: 0, y: 0, face: 0, faceT: 0, hop: null, log: null, logV: 0, off: 0, queued: null, sq: 0, bump: 0, snap: 0, crouch: false });
-        score = 0; maxR = 0; idle = 0; started = false; submitted = false;
+        score = 0; maxR = 0; idle = 0; started = false; submitted = false; runCoins = 0; hops = 0; runT = 0; closeCalls = 0; P.from = null; el.cc.hidden = true;
+        scene.background.set(biomeOf(0).bg); el.zone.hidden = true;
         camRow = 0; camTarget = 0; camX = 0; shake = 0; deathKind = '';
         chick.geometry = charGeo(sel); chick.visible = true; chick.position.set(0, 0, 0); chick.rotation.set(0, 0, 0); chick.scale.set(1, 1, 1);
         eagle.visible = false; partsClear();
@@ -830,16 +928,19 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
         if (!row) return;
         const wet = isWet(row.type), tx = wet ? P.x + dx : Math.round(P.x + dx);
         if (Math.abs(tx) > CFG.cols + (wet ? 0.45 : 0.01) || row.blocked.has(tx)) { P.bump = 0.14; SFX.bump(); return; }
+        const fromRow = rows.get(P.r);
+        P.from = fromRow && fromRow.type === 'road' ? { row: fromRow, x: Math.round(P.x), t: clock } : null;
         P.hop = { t: 0, fx: P.x, fr: P.rf, fy: P.y, tx, tr, ty: row.top, drift: P.log && wet ? P.logV : 0 };
         P.log = null; P.r = tr; P.sq = 0; P.bump = 0;
         SFX.hop();
-        if (tr > maxR) { maxR = tr; score = tr; idle = 0; hudScore(); }
+        hops++;
+        if (tr > maxR) { maxR = tr; score = tr; idle = 0; hudScore(); if (tr % CFG.biomeRows === 0) { showZone(biomeOf(tr).name); SFX.reveal(); } }
       }
       function collect(row) {
         const c = row.coin;
         burst(10, c.x, row.top + .45, -row.r, 2.2, 3.5, .5, .1, ['#ffe066', '#fff6c4', '#ffb31f'], 9);
         give(c.mesh); row.coin = null;
-        coins++; persist(); hudCoins(); bumpCoin(); SFX.coin();
+        coins++; runCoins++; persist(); hudCoins(); bumpCoin(); SFX.coin();
       }
       function land() {
         const hp = P.hop;
@@ -880,11 +981,19 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
       function gameOver() {
         if (state !== 'dying') return;
         state = 'over';
-        let nb = false;
-        if (!submitted) { submitted = true; if (score > 0) nb = api.submit(score) && score > top; }
-        if (score > top) top = score;
+        if (!submitted) { submitted = true; if (score > 0 && mode === 'classic') api.submit(score); }
+        const nb = score > 0 && score > (bests[mode] | 0);
+        if (nb) bests[mode] = score;
+        if (mode === 'classic' && score > top) top = score;
+        stats.g++; stats.h += hops; stats.c += runCoins;
         persist(); hudTop();
+        el.zone.hidden = true;
         el.nb.hidden = !nb;
+        const C = CAUSE[deathKind] || CAUSE.car;
+        pix(el.cause, C[0], { fill: deathKind === 'water' || deathKind === 'drift' ? '#7fd8f7' : deathKind === 'eagle' ? '#ffd23f' : '#ff6b6b' });
+        el.why.textContent = C[1];
+        el.mtag.textContent = MODES[mode].name + (mode === 'daily' ? ' ' + today.slice(5).replace('-', '/') : '') + ' · RUN ' + stats.g + (closeCalls ? ' · ' + closeCalls + ' CLOSE CALL' + (closeCalls > 1 ? 'S' : '') : '');
+        el.sBe.textContent = bests[mode] | 0; el.sCo.textContent = '+' + runCoins; el.sTi.textContent = fmtT(runT); el.sSc.textContent = '0'; roll = 0;
         overAt = performance.now();
         syncUI();
       }
@@ -896,8 +1005,17 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
       function newRun() { resetWorld(); state = 'title'; mini = true; syncUI(); }
       const giftReady = () => Date.now() - giftAt >= CFG.giftEvery * 1000;
 
+      function setMode(m) {
+        if (state !== 'title' || !MODES[m]) return;
+        if (m !== mode) { mode = m; persist(); resetWorld(); }
+        SFX.ui(); syncUI();
+      }
+      function openHelp() { help = true; el.help.hidden = false; P.crouch = false; SFX.ui(); }
+      function closeHelp() { help = false; el.help.hidden = true; if (!seen) { seen = true; persist(); } SFX.ui(); }
       function syncUI() {
         const menu = state === 'chars' || state === 'prize';
+        el.chips.forEach((b, i) => b.classList.toggle('on', MODE_IDS[i] === mode));
+        el.mnote.textContent = MODES[mode].note + ' Best ' + (bests[mode] | 0) + '.';
         el.title.hidden = state !== 'title';
         el.logo.hidden = mini;
         el.over.hidden = state !== 'over';
@@ -992,6 +1110,9 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
       function act(a) {
         unlock();
         if (a === 'play') { if (state === 'over') { SFX.ui(); newRun(); } }
+        else if (a.startsWith('m:')) setMode(a.slice(2));
+        else if (a === 'help') { if (state === 'over') newRun(); if (state === 'title') openHelp(); }
+        else if (a === 'helpok') closeHelp();
         else if (a === 'chars' || a === 'prize') openMenu(a);
         else if (a === 'back') closeMenu();
         else if (a === 'prev') browse(-1);
@@ -1009,6 +1130,7 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
       }
 
       function tapAction(d, swipe) {
+        if (help) return;
         if (state === 'run') hop(d);
         else if (state === 'title') { startRun(); hop(d); }
         else if (state === 'over') { if (performance.now() - overAt > 450) newRun(); }
@@ -1018,8 +1140,12 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
       api.on(window, 'keydown', e => {
         if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
         const d = KEYS[e.code], c = e.code;
-        if (!d && c !== 'Enter' && c !== 'Backspace') return;
+        const dg = { Digit1: 0, Digit2: 1, Digit3: 2 }[c];
+        if (!d && c !== 'Enter' && c !== 'Backspace' && dg == null && c !== 'KeyH') return;
         unlock();
+        if (help) { if (d || c === 'Enter' || c === 'Backspace' || c === 'KeyH') closeHelp(); return; }
+        if (state === 'title' && dg != null) { setMode(MODE_IDS[dg]); return; }
+        if (c === 'KeyH') { if (state === 'title' || state === 'over') act('help'); return; }
         if (state === 'chars') { if (d === 'left' || d === 'right') browse(d === 'left' ? -1 : 1); else if (c === 'Enter') act('pick'); else if (c === 'Backspace') act('back'); return; }
         if (state === 'prize') { if (c === 'Enter' || c === 'Space') act(PZ && PZ.done ? 'use' : 'spin'); else if (c === 'Backspace') act('back'); return; }
         if (state === 'over') { if ((d || c === 'Enter') && performance.now() - overAt > 450) newRun(); return; }
@@ -1030,6 +1156,7 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
       api.on(wrap, 'pointerdown', e => {
         if (e.target.closest && e.target.closest('button')) return;
         unlock();
+        if (help) { closeHelp(); return; }
         if (e.pointerType === 'mouse') { if (e.button === 0) tapAction('up'); return; }
         tps.set(e.pointerId, { x: e.clientX, y: e.clientY, f: false });
         if (state === 'run' || state === 'title') P.crouch = true;
@@ -1096,6 +1223,19 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
         if (row.type === 'road') { for (const m of row.movers) if (Math.abs(P.x - m.x) < m.len / 2 + 0.22) return die(P.hop ? 'side' : 'car', row); }
         else if (row.type === 'rail' && row.rail.train) { const t = row.rail.train; if (Math.abs(P.x - t.x) < t.len / 2 + 0.3) die('train', row); }
       }
+      function nearMiss() {
+        const f = P.from;
+        if (!f) return;
+        if (clock - f.t > 0.45) { P.from = null; return; }
+        for (const m of f.row.movers) if (Math.abs(f.x - m.x) < m.len / 2 + 0.3) {
+          P.from = null; closeCalls++; coins++; runCoins++; persist(); hudCoins(); bumpCoin(); SFX.close();
+          tmpV.set(P.x, P.y + 1.3, -P.rf).project(cam);
+          el.cc.hidden = true; void el.cc.offsetWidth; el.cc.hidden = false;
+          const hw = el.cc.offsetWidth / Math.max(1, wrap.clientWidth) * 50 + 1.5;
+          el.cc.style.left = clamp((tmpV.x + 1) * 50, hw, 100 - hw).toFixed(1) + '%'; el.cc.style.top = clamp((1 - tmpV.y) * 50, 12, 90).toFixed(1) + '%';
+          return;
+        }
+      }
       function honk(hh) {
         hornCD -= hh;
         if (hornCD > 0 || P.hop) return;
@@ -1126,8 +1266,9 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
         if (state !== 'run') return;
         collide();
         if (state !== 'run') return;
+        nearMiss();
         honk(hh);
-        if (started) { idle += hh; if (idle > CFG.eagleIdle && !P.hop) die('eagle'); }
+        if (started) { runT += hh; idle += hh; if (idle > MODES[mode].idle && !P.hop) die('eagle'); }
       }
 
       function drawPlayer(dt) {
@@ -1208,12 +1349,15 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
         if (n >= 8) acc = 0;
         if (state === 'run' || state === 'title') drawPlayer(dt);
         else if (state === 'dying') drawDying(dt);
-        if (state === 'run' && started) camTarget += CFG.camCreep * (1 + diff(maxR)) * dt;
+        if (state === 'run' && started) camTarget += CFG.camCreep * MODES[mode].creep * (1 + diff(maxR)) * dt;
+        if (state === 'over' && roll < 1) { roll = Math.min(1, roll + dt / 0.7); el.sSc.textContent = Math.round(score * (1 - Math.pow(1 - roll, 3))); }
+        tc.set(biomeOf(Math.round(camRow) + 8).bg); scene.background.lerp(tc, 1 - Math.exp(-2 * dt));
         camTarget = Math.max(camTarget, P.rf);
         camRow = damp(camRow, camTarget, 5, dt);
         camX = damp(camX, clamp(P.x * 0.5, -2, 2), 3, dt);
-        shake = damp(shake, 0, 7, dt);
-        const tx = camX, tz = -(camRow + CFG.camAhead + (portrait ? 0.7 : 0));
+        shake = RM ? 0 : damp(shake, 0, 7, dt);
+        titleOff = damp(titleOff, state === 'title' && !mini ? 0.8 : 0, 4, dt);
+        const tx = camX, tz = -(camRow + CFG.camAhead + titleOff + (portrait ? 0.7 : 0));
         cam.position.set(tx + OFF.x + (Math.random() - 0.5) * shake, OFF.y + (Math.random() - 0.5) * shake, tz + OFF.z);
         cam.lookAt(tx, 0, tz);
         cam.updateMatrixWorld();
@@ -1231,6 +1375,7 @@ ${G} .rh-back{position:absolute;left:clamp(10px,2.6cqw,24px);top:clamp(10px,2.6c
 
       resetWorld();
       syncUI();
+      if (!seen) openHelp();
       return {
         destroy() {
           const bin = new Set();

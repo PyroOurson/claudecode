@@ -1,4 +1,5 @@
-const AD = { role: null, locked: false, reason: null, until: null, ut: 0, uti: 0, at: 0, game: null, gat: 0, users: null, q: '', f: 'all', sort: ['created_at', -1], sel: null, tab: 'users', wait: 0, busy: false };
+const AD = { role: null, locked: false, reason: null, until: null, ut: 0, uti: 0, at: 0, game: null, gat: 0, users: null, q: '', f: 'all', sort: ['created_at', -1], sel: null, tab: 'users', wait: 0, busy: false, lt: 0, ok: 0, bad: false, fresh: new Set() };
+const SG = { d: null, kh: null, err: null, busy: false, cf: false, msg: null, seq: 0 };
 const adHref = () => (PATH_MODE ? '/' : '#/') + 'admin';
 const adIsAdmin = () => (AD.role === 'admin' || AD.role === 'owner') && !AD.locked;
 const adIsOwner = () => AD.role === 'owner' && !AD.locked;
@@ -49,7 +50,45 @@ const adCv = (id, c) => { const g = byId.get(id); if (!g || !thumbsOn()) return 
 const adProv = u => (u.providers && u.providers.length ? u.providers : ['email']).map(p => p === 'google' ? 'Google' : p === 'email' ? auT('Email') : p).join(' + ');
 const adPill = (t, k) => `<span class="adm-pill${k ? ' ' + k : ''}">${esc(auT(t))}</span>`;
 const adRole = u => u.role === 'owner' ? adPill('Owner', 'acc') : u.role === 'admin' ? adPill('Admin', 'acc') : adPill('User');
-const adErr = e => { const m = String(e && e.message || ''); return /admins only/i.test(m) ? 'Admins only' : /below your rank|change an owner/i.test(m) ? 'You can only manage accounts below your rank.' : /at least one owner/i.test(m) ? 'There must be at least one owner' : /owners only|owner can do/i.test(m) ? 'Only an owner can do this.' : /at least one admin/i.test(m) ? 'There must be at least one admin' : /own account/i.test(m) ? 'You cannot lock your own account' : /at least 8/i.test(m) ? 'Use at least 8 characters.' : /at most 72/i.test(m) ? 'Use at most 72 characters.' : /not found/i.test(m) ? 'Not found. Refresh and try again.' : /too many/i.test(m) ? 'Too many messages. Wait a minute and try again.' : /account locked/i.test(m) ? 'Your account is locked.' : /end time/i.test(m) ? 'Pick an end time in the future.' : /write a subject/i.test(m) ? 'Write a subject.' : /write a message/i.test(m) ? 'Write a message.' : 'Could not update. Check your connection and try again.'; };
+const adErr = e => { const m = String(e && e.message || ''); return /admins only/i.test(m) ? 'Admins only' : /below your rank|change an owner/i.test(m) ? 'You can only manage accounts below your rank.' : /at least one owner/i.test(m) ? 'There must be at least one owner' : /owners only|owner can do/i.test(m) ? 'Only an owner can do this.' : /at least one admin/i.test(m) ? 'There must be at least one admin' : /own account/i.test(m) ? 'You cannot lock your own account' : /at least 8/i.test(m) ? 'Use at least 8 characters.' : /at most 72/i.test(m) ? 'Use at most 72 characters.' : /no site password/i.test(m) ? 'Set a site password below first.' : /bad site key/i.test(m) ? 'This copy of the site has no valid key. Reload the page and try again.' : /not found/i.test(m) ? 'Not found. Refresh and try again.' : /rate_limited/i.test(m) || (e && e.status === 429) ? 'Slow down a little and try again in a minute.' : /too many/i.test(m) ? 'Too many messages. Wait a minute and try again.' : /account locked/i.test(m) ? 'Your account is locked.' : /end time/i.test(m) ? 'Pick an end time in the future.' : /write a subject/i.test(m) ? 'Write a subject.' : /write a message/i.test(m) ? 'Write a message.' : 'Could not update. Check your connection and try again.'; };
+const adKey = n => n.nodeType === 1 ? n.getAttribute('data-k') || n.getAttribute('data-uid') || n.id || null : null;
+function adAttrs(a, b) {
+  const keep = a.tagName === 'DETAILS' ? 'open' : /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) ? 'value' : '';
+  for (const x of [...a.attributes]) if (x.name !== keep && !b.hasAttribute(x.name)) a.removeAttribute(x.name);
+  for (const x of [...b.attributes]) if (x.name !== keep && a.getAttribute(x.name) !== x.value) a.setAttribute(x.name, x.value);
+}
+function adKids(a, b) {
+  const map = new Map();
+  for (const n of a.childNodes) { const k = adKey(n); if (k) map.set(k, n); }
+  let cur = a.firstChild;
+  for (const n of [...b.childNodes]) {
+    const k = adKey(n);
+    let o = k ? map.get(k) : cur && !adKey(cur) ? cur : null;
+    if (o && (o.nodeType !== n.nodeType || o.nodeName !== n.nodeName)) o = null;
+    if (!o) { a.insertBefore(n, cur); continue; }
+    if (k) map.delete(k);
+    if (o === cur) cur = cur.nextSibling; else a.insertBefore(o, cur);
+    if (o.nodeType === 1) { adAttrs(o, n); adKids(o, n); }
+    else if (o.nodeValue !== n.nodeValue) o.nodeValue = n.nodeValue;
+  }
+  while (cur) { const x = cur.nextSibling; cur.remove(); cur = x; }
+}
+function adMorph(el, html) {
+  if (!el) return;
+  const t = document.createElement('template');
+  t.innerHTML = html;
+  adKids(el, t.content);
+}
+const adClock = t => { try { return new Date(t).toLocaleTimeString(adLang(), { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); } catch (e) { return new Date(t).toTimeString().slice(0, 8); } };
+function adStamp(ok) {
+  let el = $('#adupd');
+  if (!el) { const r = $('#adref'); if (!r) return; r.insertAdjacentHTML('beforebegin', '<span class="adm-upd" id="adupd" role="status" translate="no"><i></i><span></span></span>'); el = $('#adupd'); }
+  if (ok) { AD.ok = Date.now(); el.classList.remove('tick'); void el.offsetWidth; el.classList.add('tick'); }
+  AD.bad = !ok;
+  el.classList.toggle('bad', !ok);
+  el.title = auT(ok ? 'The dashboard refreshes by itself every few seconds while this tab is open.' : 'Could not reach the server. Trying again.');
+  el.lastChild.textContent = AD.ok ? auT(ok ? 'Updated {t}' : 'Offline · updated {t}').replace('{t}', adClock(AD.ok)) : auT('Offline');
+}
 
 function adStatus(s) {
   const was = adIsAdmin(), wl = AD.locked;
@@ -82,7 +121,8 @@ function adSeen(id) {
   adCheck(id);
 }
 function adSignedOut() {
-  AD.role = null; AD.at = 0; AD.users = null; AD.sel = null; AD.until = null; clearTimeout(AD.ut);
+  AD.role = null; AD.at = 0; AD.users = null; AD.sel = null; AD.until = null; AD.ok = 0; clearTimeout(AD.ut);
+  SG.d = null; SG.err = null; SG.msg = null; SG.cf = false;
   document.querySelectorAll('[data-admin], [data-owner]').forEach(el => { el.hidden = true; });
   if (AD.locked) { AD.locked = false; adBlock(false); }
   document.querySelectorAll('.tk').forEach(b => { if (b._tk) { b._tk.list = null; b._tk.cur = null; } });
@@ -133,32 +173,47 @@ function adRoute() {
 }
 async function adEnter() {
   clearTimeout(AD.wait);
-  ST.anim = 2; AD.anim = true;
+  ST.anim = 2; AD.anim = true; AD.lt = Date.now();
   adTab(AD.tab);
   await adLoad();
   tkLoad(tkBox($('#tka'), 'admin'));
   setTimeout(stSample, 15000);
 }
-async function adLoad() {
+async function adLoad(quiet) {
   if (!adIsAdmin() || AD.busy) return;
   AD.busy = true;
-  $('#adref').classList.add('spin');
+  if (!quiet) $('#adref').classList.add('spin');
   if (!AD.users) { $('#adt tbody').innerHTML = ('<tr aria-hidden="true">' + '<td><i class="sk sk-td"></i></td>'.repeat(AD_COLS.length) + '</tr>').repeat(7); $('#adtiles').innerHTML = '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(6); }
   try {
     const r = await adRpc('admin_list_users');
+    const prev = AD.users ? new Set(AD.users.map(u => u.id)) : null;
     AD.users = Array.isArray(r) ? r : [];
+    AD.fresh = prev ? new Set(AD.users.filter(u => !prev.has(u.id)).map(u => u.id)) : new Set();
     adTiles(AD.anim); adDraw(AD.anim); AD.anim = false;
-    if (AD.sel) { const u = AD.users.find(x => x.id === AD.sel); if (u) adPanel(u, true); }
-    taLoad();
+    if (AD.sel) { const u = adCur(); if (!u) adPanelClose(); else if (quiet) adPanelLive(u); else adPanel(u, true); }
+    if (!quiet) taLoad();
+    adStamp(true);
   } catch (e) {
     if (/admins only/i.test(e.message || '')) { AD.role = 'user'; adStatus({ role: 'user', locked: false }); return; }
-    $('#adt tbody').innerHTML = `<tr><td colspan="${AD_COLS.length}" class="adm-empty">${esc(auT('Could not load the users. Check your connection and try again.'))}</td></tr>`;
+    if (AD.users && AD.users.length) adStamp(false);
+    else $('#adt tbody').innerHTML = `<tr><td colspan="${AD_COLS.length}" class="adm-empty">${esc(auT('Could not load the users. Check your connection and try again.'))}</td></tr>`;
   } finally { AD.busy = false; $('#adref').classList.remove('spin'); }
+}
+function adLive(force) {
+  if (view !== 'admin' || !adIsAdmin() || AD.locked || document.visibilityState === 'hidden') return;
+  const now = Date.now();
+  if (!force && now - AD.lt < 20000) return;
+  AD.lt = now;
+  adLoad(true);
+  tkLoad(tkBox($('#tka'), 'admin'));
+  if (AD.tab === 'log') alLoad(false, true);
+  if (AD.tab === 'site') sfgLoad();
+  if (AD.tab === 'stats' && !(document.activeElement && document.activeElement.id === 'stgq')) { if (INS.sub === 'ins') { if (now - INS.at > 120000) insLoad(true); } else if (now - ST.at > 18000) stLoad(true); }
 }
 function adTiles(an) {
   const U = AD.users || [], now = Date.now(), tk = ($('#tka')._tk || {}).list || [];
   const open = tk.filter(t => t.status === 'open').length;
-  const T = [['Accounts', U.length], ['New this week', U.filter(u => now - Date.parse(u.created_at) < 6048e5).length], ['Active today', U.filter(u => now - Date.parse(u.last_seen || 0) < 864e5).length], ['Admins', U.filter(adStaff).length], ['Locked', U.filter(u => u.locked).length], ['Open tickets', open]];
+  const T = [['Accounts', U.length], ['New this week', U.filter(u => now - Date.parse(u.created_at) < 6048e5).length], ['Active today', U.filter(u => RT.pres[u.id] || now - Date.parse(u.last_seen || 0) < 864e5).length], ['Admins', U.filter(adStaff).length], ['Locked', U.filter(u => u.locked).length], ['Open tickets', open]];
   const box = $('#adtiles'), old = box.querySelectorAll('b[data-n]');
   if (!an && old.length === T.length) T.forEach(([, n], i) => { if (old[i].dataset.n !== String(n)) { old[i].dataset.n = n; old[i].textContent = stN(n); } });
   else { box.innerHTML = T.map(([k, n], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b data-n="${n}" data-f="l">${stN(n)}</b></div>`).join(''); countUp(box); }
@@ -166,9 +221,14 @@ function adTiles(an) {
 }
 const adPw = u => u.has_password ? adPill('Set · hidden', 'ok') : adPill('None · Google only');
 const adHrs = sec => { const m = Math.round((+sec || 0) / 60); return m < 60 ? m + ' min' : (m / 60).toFixed(m < 600 ? 1 : 0) + ' h'; };
+const AD_CP = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+async function adCopyId(id, b) {
+  try { await navigator.clipboard.writeText(id); b.classList.add('ok'); b.title = auT('Copied'); setTimeout(() => { if (b.isConnected) { b.classList.remove('ok'); b.title = auT('Copy user id'); } }, 1400); }
+  catch (e) { toast(id); }
+}
 const adDot = () => `<span class="adm-dot" title="${esc(auT('Online now'))}"></span>`;
 const AD_COLS = [
-  ['id', 'User id', u => `${adDot(u)}<code title="${esc(u.id)}">${esc(u.id.slice(0, 8))}</code>`],
+  ['id', 'User id', u => `${adDot(u)}<code class="adm-uid">${esc(u.id)}</code><button type="button" class="adm-cp" data-adcopy="${esc(u.id)}" aria-label="${esc(auT('Copy user id'))}" title="${esc(auT('Copy user id'))}">${AD_CP}</button>`],
   ['email', 'Email', u => esc(u.email || '—')],
   ['username', 'Username', u => u.username ? '@' + esc(u.username) : '<span class="adm-mut">—</span>'],
   ['display_name', 'Display name', u => esc(u.display_name || '—')],
@@ -184,7 +244,7 @@ const AD_COLS = [
   ['locked', 'Locked', u => u.locked ? `<span title="${esc(u.locked_reason || '')}">${adPill('Locked', 'bad')}</span><small class="adm-left">${esc(adLeft(u))}</small>` : adPill('No')]
 ];
 function adHead() {
-  $('#adt thead').innerHTML = '<tr>' + AD_COLS.map(([k, l]) => k ? `<th>${k === 'id' ? '<div class="adm-thw">' : ''}<button type="button" data-adsort="${k}" aria-sort="${AD.sort[0] === k ? (AD.sort[1] > 0 ? 'ascending' : 'descending') : 'none'}">${esc(auT(l))}<i></i></button>${k === 'id' ? `<button type="button" class="adm-plus" data-adnew aria-label="${esc(auT('Create a user'))}" title="${esc(auT('Create a user'))}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>` : ''}</th>` : `<th><span>${esc(auT(l))}</span></th>`).join('') + '</tr>';
+  adMorph($('#adt thead'), '<tr>' + AD_COLS.map(([k, l]) => k ? `<th>${k === 'id' ? '<div class="adm-thw">' : ''}<button type="button" data-adsort="${k}" aria-sort="${AD.sort[0] === k ? (AD.sort[1] > 0 ? 'ascending' : 'descending') : 'none'}">${esc(auT(l))}<i></i></button>${k === 'id' ? `<button type="button" class="adm-plus" data-adnew aria-label="${esc(auT('Create a user'))}" title="${esc(auT('Create a user'))}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>` : ''}</th>` : `<th><span>${esc(auT(l))}</span></th>`).join('') + '</tr>');
 }
 function adSortVal(u, k) {
   const v = k === 'providers' ? adProv(u) : u[k];
@@ -212,7 +272,12 @@ function adDraw(an) {
   const rows = adRows(), tb = $('#adt tbody');
   tb.classList.toggle('an', !!an);
   $('#adcount').textContent = auT('{n} of {t} users').replace('{n}', rows.length).replace('{t}', (AD.users || []).length);
-  tb.innerHTML = rows.length ? rows.map((u, i) => `<tr tabindex="0" data-uid="${esc(u.id)}" class="${u.id === AD.sel ? 'sel' : ''}${RT.pres[u.id] ? ' on' : ''}" style="--i:${Math.min(i, 14)}">${AD_COLS.map(c => `<td>${c[2](u)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${AD_COLS.length}" class="adm-empty">${esc(auT('No users match.'))}</td></tr>`;
+  const h = rows.length ? rows.map((u, i) => `<tr tabindex="0" data-uid="${esc(u.id)}" class="${[u.id === AD.sel ? 'sel' : '', RT.pres[u.id] ? 'on' : '', AD.fresh.has(u.id) ? 'nw' : ''].filter(Boolean).join(' ')}" style="--i:${Math.min(i, 14)}">${AD_COLS.map(c => `<td>${c[2](u)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${AD_COLS.length}" class="adm-empty">${esc(auT('No users match.'))}</td></tr>`;
+  if (an || !tb.querySelector('tr[data-uid]') || !rows.length) { tb.innerHTML = h; return; }
+  const tw = tb.closest('.adm-tw'), top = tw ? tw.getBoundingClientRect().top + (tb.previousElementSibling ? tb.previousElementSibling.offsetHeight : 0) : 0;
+  const ref = tw && tw.scrollTop > 0 ? [...tb.rows].find(r => r.getBoundingClientRect().bottom > top + 1) : null, y0 = ref ? ref.getBoundingClientRect().top : 0;
+  adMorph(tb, h);
+  if (ref && ref.isConnected) tw.scrollTop += ref.getBoundingClientRect().top - y0;
 }
 const AD_TABS = ['users', 'tickets', 'stats', 'log', 'site'];
 function adTab(t) {
@@ -220,6 +285,7 @@ function adTab(t) {
   AD.tab = t;
   tabs.dataset.m = t;
   tabs.querySelectorAll('[data-adtab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.adtab === t)));
+  if (tabs.scrollWidth > tabs.clientWidth + 2) { const b = tabs.querySelector(`[data-adtab="${t}"]`); if (b) tabs.scrollTo({ left: Math.max(0, b.offsetLeft - (tabs.clientWidth - b.offsetWidth) / 2), behavior: motionOK() ? 'smooth' : 'auto' }); }
   if (was !== t) tabs.parentNode.dataset.dir = AD_TABS.indexOf(t) < AD_TABS.indexOf(was) ? 'l' : 'r';
   if (t === 'stats' && was !== t) ST.anim = 2;
   AD_TABS.forEach(k => {
@@ -232,26 +298,38 @@ function adTab(t) {
   if (t === 'tickets') tkLoad(tkBox($('#tka'), 'admin'));
   if (t === 'stats') { stShell(); if (INS.sub === 'ins') insLoad(false); else stLoad(); }
   if (t === 'log') alLoad();
-  if (t === 'site') sfaDraw();
+  if (t === 'site') { sfaDraw(); sfgLoad(); }
 }
 function adLiveTxt(u) {
   const pr = RT.pres[u.id];
   if (!pr) return `<span class="adm-mut">${esc(auT('Offline'))} · ${esc(auT('last seen {t}').replace('{t}', adAgo(u.last_seen)))}</span>`;
   return `<span class="adm-dot"></span><b>${esc(auT('Online now'))}</b> · ${esc(pr.g ? auT('playing {g}').replace('{g}', adGame(pr.g)) : auT('browsing'))}`;
 }
-function adPanel(u, keep) {
-  AD.sel = u.id;
-  const p = $('#adpanel'), me = SB.user && SB.user.id === u.id, name = u.display_name || u.username || u.email || '?';
+const adPk = u => [u.locked, u.locked_until, u.role, u.email, u.has_password, u.username].join('|');
+function adPanelView(u) {
+  const name = u.display_name || u.username || u.email || '?', me = SB.user && SB.user.id === u.id;
   document.querySelectorAll('#adt tr.sel').forEach(r => r.classList.remove('sel'));
   const tr = document.querySelector(`#adt tr[data-uid="${CSS.escape(u.id)}"]`); if (tr) tr.classList.add('sel');
   $('#adppic').textContent = name.charAt(0).toUpperCase();
   $('#adpn').textContent = name;
   $('#adpu').textContent = [u.username ? '@' + u.username : '', u.email || ''].filter(Boolean).join(' · ');
-  $('#adpp').innerHTML = adRole(u) + (u.locked ? adPill('Locked', 'bad') + adPill(adLeft(u), 'bad') : '') + (u.email_confirmed ? adPill('Email confirmed', 'ok') : adPill('Email not confirmed', 'warn')) + (me ? adPill('You', 'acc') : '');
-  $('#adplive').innerHTML = adLiveTxt(u);
-  $('#adpq').innerHTML = [['Time played', adHrs(u.seconds_played), 'clock'], ['Plays', stN(u.plays), 'play'], ['Friends', stN(u.friends), 'users'], ['Favourite game', adGame(u.fav_game), 'star'], ['Account created', adAgo(u.created_at), 'cake'], ['Last seen', RT.pres[u.id] ? auT('Online now') : adAgo(u.last_seen), 'eye']].map(([k, v, i], n) => `<div style="--i:${n}">${AD_SI[i]}<small>${esc(auT(k))}</small><b title="${esc(v)}">${esc(v)}</b></div>`).join('');
-  const F = [['User id', `<code>${esc(u.id)}</code>`], ['Email', esc(u.email || '—')], ['Username', u.username ? '@' + esc(u.username) : '—'], ['Display name', esc(u.display_name || '—')], ['Last log in', esc(adDate(u.last_sign_in_at, 1))], ['Last used website', esc(adDate(u.last_seen, 1))], ['Log in method', esc(adProv(u))], ['Account created', esc(adDate(u.created_at, 1))], ['Password', adPw(u)], ['Favourite game', esc(adGame(u.fav_game))], ['Friends', String(+u.friends || 0)], ['Role', adRole(u)], ['Email confirmed', u.email_confirmed ? esc(adDate(u.email_confirmed_at, 1)) : adPill('No', 'warn')], ['Locked', u.locked ? adPill('Locked', 'bad') + ` <span class="adm-mut">${esc(u.locked_until ? auT('until {d}').replace('{d}', adDate(u.locked_until, 1)) : auT('Permanent'))}</span>` + (u.locked_reason ? `<div class="adm-why">${esc(u.locked_reason)}</div>` : '') : adPill('No')], ['Last game opened', esc(adGame(u.last_game))], ['Language', esc(adLangName(u.last_lang))]];
-  $('#adpdl').innerHTML = F.map(([k, v]) => `<div><dt>${esc(auT(k))}</dt><dd>${v}</dd></div>`).join('');
+  adMorph($('#adpp'), adRole(u) + (u.locked ? adPill('Locked', 'bad') + adPill(adLeft(u), 'bad') : '') + (u.email_confirmed ? adPill('Email confirmed', 'ok') : adPill('Email not confirmed', 'warn')) + (me ? adPill('You', 'acc') : ''));
+  adMorph($('#adplive'), adLiveTxt(u));
+  adMorph($('#adpq'), [['Time played', adHrs(u.seconds_played), 'clock'], ['Plays', stN(u.plays), 'play'], ['Friends', stN(u.friends), 'users'], ['Favourite game', adGame(u.fav_game), 'star'], ['Account created', adAgo(u.created_at), 'cake'], ['Last seen', RT.pres[u.id] ? auT('Online now') : adAgo(u.last_seen), 'eye']].map(([k, v, i], n) => `<div style="--i:${n}">${AD_SI[i]}<small>${esc(auT(k))}</small><b title="${esc(v)}">${esc(v)}</b></div>`).join(''));
+  const F = [['User id', `<code class="adm-uid">${esc(u.id)}</code><button type="button" class="adm-cp" data-adcopy="${esc(u.id)}" aria-label="${esc(auT('Copy user id'))}" title="${esc(auT('Copy user id'))}">${AD_CP}</button>`], ['Email', esc(u.email || '—')], ['Username', u.username ? '@' + esc(u.username) : '—'], ['Display name', esc(u.display_name || '—')], ['Last log in', esc(adDate(u.last_sign_in_at, 1))], ['Last used website', esc(adDate(u.last_seen, 1))], ['Log in method', esc(adProv(u))], ['Account created', esc(adDate(u.created_at, 1))], ['Password', adPw(u)], ['Favourite game', esc(adGame(u.fav_game))], ['Friends', String(+u.friends || 0)], ['Role', adRole(u)], ['Email confirmed', u.email_confirmed ? esc(adDate(u.email_confirmed_at, 1)) : adPill('No', 'warn')], ['Locked', u.locked ? adPill('Locked', 'bad') + ` <span class="adm-mut">${esc(u.locked_until ? auT('until {d}').replace('{d}', adDate(u.locked_until, 1)) : auT('Permanent'))}</span>` + (u.locked_reason ? `<div class="adm-why">${esc(u.locked_reason)}</div>` : '') : adPill('No')], ['Last game opened', esc(adGame(u.last_game))], ['Language', esc(adLangName(u.last_lang))]];
+  adMorph($('#adpdl'), F.map(([k, v]) => `<div><dt>${esc(auT(k))}</dt><dd>${v}</dd></div>`).join(''));
+}
+function adPanelLive(u) {
+  if (adPk(u) !== AD.pk) { adPanel(u, true); return; }
+  adPanelView(u);
+  adGames(u, true);
+  alHist(u);
+}
+function adPanel(u, keep) {
+  AD.sel = u.id;
+  AD.pk = adPk(u);
+  const p = $('#adpanel'), me = SB.user && SB.user.id === u.id;
+  adPanelView(u);
   const can = adCan(u), own = adIsOwner(), rc = p.querySelector('[data-adrole]').closest('.apc-card');
   ['#adun', '#adrst', '#adso', '#adlock', '#addelb'].forEach(q => { $(q).closest('.apc-card').hidden = !can; });
   rc.hidden = !own;
@@ -286,15 +364,17 @@ function adPanel(u, keep) {
     if (was && !auCoarse()) p.focus({ preventScroll: true });
   }
 }
-async function adGames(u) {
+async function adGames(u, quiet) {
   const box = $('#adpg');
-  box.innerHTML = '<i class="sk sk-td"></i><i class="sk sk-td"></i><i class="sk sk-td"></i>';
+  if (!quiet || box.dataset.u !== u.id) box.innerHTML = '<i class="sk sk-td"></i><i class="sk sk-td"></i><i class="sk sk-td"></i>';
+  box.dataset.u = u.id;
   try {
     const r = await adRpc('admin_user_games', { p_uid: u.id });
     if (AD.sel !== u.id) return;
     const L = Array.isArray(r) ? r : [], max = Math.max(1, ...L.map(g => +g.seconds_played || 0));
-    box.innerHTML = L.length ? L.map((g, i) => `<div class="apc-g" style="--i:${Math.min(i, 12)};--c:${esc(TINT[g.game_id] || 'var(--accent)')}">${adCv(g.game_id, 'apc-gi')}<span class="apc-gn">${esc(adGame(g.game_id))}</span><b>${esc(adHrs(g.seconds_played))}</b><i><s style="width:${Math.max(2, Math.round(100 * (+g.seconds_played || 0) / max))}%"></s></i><small>${esc(auT('{n} plays').replace('{n}', +g.plays || 0))}${g.best_score != null ? ' · ' + esc(auT('best {s}').replace('{s}', g.best_score)) : ''}${g.last_played ? ' · ' + esc(adAgo(g.last_played)) : ''}</small></div>`).join('') : `<div class="adm-mut apc-none">${esc(auT('No games played yet.'))}</div>`;
-  } catch (e) { box.innerHTML = `<div class="adm-mut">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; }
+    const h = L.length ? L.map((g, i) => `<div class="apc-g" data-k="g:${esc(g.game_id)}" style="--i:${Math.min(i, 12)};--c:${esc(TINT[g.game_id] || 'var(--accent)')}">${adCv(g.game_id, 'apc-gi')}<span class="apc-gn">${esc(adGame(g.game_id))}</span><b>${esc(adHrs(g.seconds_played))}</b><i><s style="width:${Math.max(2, Math.round(100 * (+g.seconds_played || 0) / max))}%"></s></i><small>${esc(auT('{n} plays').replace('{n}', +g.plays || 0))}${g.best_score != null ? ' · ' + esc(auT('best {s}').replace('{s}', g.best_score)) : ''}${g.last_played ? ' · ' + esc(adAgo(g.last_played)) : ''}</small></div>`).join('') : `<div class="adm-mut apc-none">${esc(auT('No games played yet.'))}</div>`;
+    if (quiet && box.querySelector('.apc-g')) adMorph(box, h); else box.innerHTML = h;
+  } catch (e) { if (!quiet || !box.querySelector('.apc-g')) box.innerHTML = `<div class="adm-mut">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; }
 }
 async function adDevices(u, all) {
   const box = $('#adpd');
@@ -431,9 +511,9 @@ async function adAct(k, b) {
   adLoad();
 }
 
-const AL = { list: [], more: false, busy: false, seq: 0 };
-const alWho = (un, dn, id) => un ? '@' + un : dn || (id ? id.slice(0, 8) : '');
-const AL_T = { role_owner: '{a} made {t} an owner', role_admin: '{a} made {t} an admin', role_user: '{a} made {t} a regular user', username: '{a} changed the username of {t} to {n}', lock_until: '{a} locked {t} until {d}', lock: '{a} locked {t} with no end date', unlock: '{a} unlocked {t}', expire: 'The lock on {t} ended', password: '{a} set a new password for {t}', reset_email: '{a} sent a password reset email to {t}', delete_user: '{a} deleted the account of {t}', ticket_delete: '{a} deleted a ticket from {t}', ticket_reply: '{a} replied to a ticket from {t}', ticket_closed: '{a} closed a ticket from {t}', ticket_open: '{a} reopened a ticket from {t}', site: '{a} changed the site switches', site_password: '{a} changed the site password', test_account: '{a} created the test account {t}' };
+const AL = { list: [], more: false, busy: false, seq: 0, top: 0 };
+const alWho = (un, dn, id) => un ? '@' + un : dn || id || '';
+const AL_T = { role_owner: '{a} made {t} an owner', role_admin: '{a} made {t} an admin', role_user: '{a} made {t} a regular user', username: '{a} changed the username of {t} to {n}', lock_until: '{a} locked {t} until {d}', lock: '{a} locked {t} with no end date', unlock: '{a} unlocked {t}', expire: 'The lock on {t} ended', password: '{a} set a new password for {t}', reset_email: '{a} sent a password reset email to {t}', delete_user: '{a} deleted the account of {t}', ticket_delete: '{a} deleted a ticket from {t}', ticket_reply: '{a} replied to a ticket from {t}', ticket_closed: '{a} closed a ticket from {t}', ticket_open: '{a} reopened a ticket from {t}', site: '{a} changed the site switches', site_password: '{a} changed the site password', test_account: '{a} created the test account {t}', rate_reset: '{a} reset the rate limits of {t}', gate_open: '{a} turned the site password off: anyone who opens the site gets in', gate_closed: '{a} turned the site password back on' };
 function alSite(d) {
   const a = d.after || {}, b = d.before || {}, out = [], ga = new Set(a.disabled_games || []), gb = new Set(b.disabled_games || []);
   if (!!a.maintenance !== !!b.maintenance) out.push(auT(a.maintenance ? 'Maintenance mode on' : 'Maintenance mode off'));
@@ -449,21 +529,74 @@ function alRow(x, i) {
   const tt = x.target_user && (AD.users || []).some(u => u.id === x.target_user) ? `<button type="button" class="al-u" data-alu="${esc(x.target_user)}">${esc(t)}</button>` : `<b>${esc(t)}</b>`;
   const txt = esc(auT(AL_T[k] || '{a} did something ({x})')).replace('{a}', `<b>${esc(a)}</b>`).replace('{t}', tt).replace('{n}', `<b>@${esc(d.to || '')}</b>`).replace('{d}', esc(adDate(d.until, 1))).replace('{x}', esc(x.action));
   const ex = x.action === 'lock' && d.reason ? auT('Reason: {r}').replace('{r}', d.reason) : /^ticket_/.test(x.action) && d.subject ? '“' + d.subject + '”' : x.action === 'site' ? alSite(d) : x.action === 'username' && d.from ? auT('Was @{u}').replace('{u}', d.from) : '';
-  const ic = { lock: AD_ICO.lock, unlock: AD_ICO.lock, expire: AD_SI.clock, delete_user: AD_ICO.trash, ticket_delete: AD_ICO.trash, site: SF_ICO.tool, site_password: AD_ICO.lock, ticket_reply: AD_ICO.send, ticket_status: AD_ICO.send, password: AD_SI.eye, reset_email: AD_SI.eye, role: AD_SI.star, username: AD_SI.users, test_account: AD_SI.users }[x.action] || AD_SI.clock;
-  return `<div class="al-r al-${esc(x.action)}" style="--i:${Math.min(i, 14)}"><span class="al-i">${ic}</span><div class="al-t"><span>${txt}</span>${ex ? `<em>${esc(ex)}</em>` : ''}<small title="${esc(adDate(x.at, 1))}">${esc(adAgo(x.at))} · ${esc(adDate(x.at, 1))}</small></div></div>`;
+  const ic = { lock: AD_ICO.lock, unlock: AD_ICO.lock, expire: AD_SI.clock, delete_user: AD_ICO.trash, ticket_delete: AD_ICO.trash, site: SF_ICO.tool, site_password: AD_ICO.lock, gate_open: AD_ICO.lock, gate_closed: AD_ICO.lock, rate_reset: AD_SI.timer, ticket_reply: AD_ICO.send, ticket_status: AD_ICO.send, password: AD_SI.eye, reset_email: AD_SI.eye, role: AD_SI.star, username: AD_SI.users, test_account: AD_SI.users }[x.action] || AD_SI.clock;
+  return `<div class="al-r al-${esc(x.action)}${AL.top && +x.id > AL.top ? ' nw' : ''}" data-k="al:${+x.id}" style="--i:${Math.min(i, 14)}"><span class="al-i">${ic}</span><div class="al-t"><span>${txt}</span>${ex ? `<em>${esc(ex)}</em>` : ''}<small title="${esc(adDate(x.at, 1))}">${esc(adAgo(x.at))} · ${esc(adDate(x.at, 1))}</small></div></div>`;
 }
-async function alLoad(more) {
+async function alLoad(more, quiet) {
   if (!adIsAdmin() || AL.busy) return;
   AL.busy = true;
   const box = $('#adlog');
-  if (!more && !AL.list.length) box.innerHTML = '<div class="st-card">' + '<i class="sk sk-td"></i>'.repeat(6) + '</div>';
+  if (!more && !AL.list.length && !quiet) box.innerHTML = '<div class="st-card">' + '<i class="sk sk-td"></i>'.repeat(6) + '</div>';
   try {
     const r = await adRpc('admin_log_list', { p_limit: 50, p_before: more && AL.list.length ? AL.list[AL.list.length - 1].id : null, p_target: null });
-    const L = Array.isArray(r) ? r : [];
-    AL.list = more ? AL.list.concat(L) : L; AL.more = L.length === 50;
-    box.innerHTML = `<div class="st-card al-card"><div class="sx-ch"><div><h3>${esc(auT('Admin log'))}</h3><p class="sx-note">${esc(auT('Every change made by an admin, newest first.'))}</p></div></div><div class="al-list" translate="no">${AL.list.length ? AL.list.map(alRow).join('') : `<div class="adm-empty">${esc(auT('Nothing here yet.'))}</div>`}</div>${AL.more ? `<button class="btn2 al-more" type="button" data-almore>${esc(auT('Show more'))}</button>` : ''}</div>`;
-  } catch (e) { if (!AL.list.length) box.innerHTML = `<div class="adm-empty">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; }
+    const L = Array.isArray(r) ? r : [], was = AL.list.length ? +AL.list[0].id : 0;
+    if (more) { AL.list = AL.list.concat(L); AL.more = L.length === 50; }
+    else if (quiet && AL.list.length && L.length === 50) { const lo = +L[L.length - 1].id; AL.list = L.concat(AL.list.filter(x => +x.id < lo)); }
+    else { AL.list = L; AL.more = L.length === 50; }
+    AL.top = quiet ? was : 0;
+    const card = `<div class="st-card al-card" id="alc"><div class="sx-ch"><div><h3>${esc(auT('Admin log'))}</h3><p class="sx-note">${esc(auT('Every change made by an admin, newest first.'))}</p></div></div><div class="al-list" translate="no">${AL.list.length ? AL.list.map(alRow).join('') : `<div class="adm-empty">${esc(auT('Nothing here yet.'))}</div>`}</div>${AL.more ? `<button class="btn2 al-more" type="button" data-almore>${esc(auT('Show more'))}</button>` : ''}</div>`;
+    AL.top = 0;
+    if ($('#alc') && $('#adab')) adMorph($('#alc'), card.slice(card.indexOf('>') + 1, -6)); else box.innerHTML = card + `<div id="adab">${AB.html}</div>`;
+    abLoad(quiet);
+    if (quiet) adStamp(true);
+  } catch (e) { if (!AL.list.length) box.innerHTML = `<div class="adm-empty">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; else if (quiet) adStamp(false); }
   finally { AL.busy = false; }
+}
+const AB = { html: '', busy: false, h: 24 };
+const AB_T = { party: 'Party invites (1 per 3 s)', party_h: 'Party invites per hour', people: 'Player list loads per minute', people_h: 'Player list loads per hour', invite: 'Party invites per minute', invite_h: 'Party invites per hour', invite_pair: 'Invite cooldown per friend', dm_text: 'Messages per minute', dm_text_h: 'Messages per hour', dm_image: 'Pictures per minute', dm_image_d: 'Pictures per day', dm_upload: 'Picture uploads per minute', dm_upload_d: 'Picture uploads per day', friend_request: 'Friend requests per hour', friend_request_d: 'Friend requests per day', friend_pair: 'Friend requests to one player', friend_respond: 'Friend request answers', search: 'Player searches per minute', search_h: 'Player searches per hour', username_check: 'Username checks per minute', username_check_h: 'Username checks per hour', username_change: 'Username changes per day', display_change: 'Display name changes per day', ticket_create: 'Tickets per 10 minutes', ticket_create_d: 'Tickets per day', ticket_send: 'Ticket messages per minute', ticket_send_d: 'Ticket messages per day', sync: 'Stat syncs', save_write: 'Save uploads', export: 'Data exports', delete_account: 'Account deletions', block: 'Blocks', unblock: 'Unblocks', report: 'Reports per hour', report_d: 'Reports per day', party: 'Party invites and join requests (one every 3 s)', party_h: 'Party invites and join requests per hour', people: 'Player list loads per minute', people_h: 'Player list loads per hour' };
+const AB_R = { spam: 'Spam', harassment: 'Harassment', cheating: 'Cheating', inappropriate: 'Inappropriate', other: 'Something else' };
+function abWho(id, un, dn, fb) {
+  const t = un ? '@' + un : dn || fb || auT('A deleted account');
+  return id && (AD.users || []).some(u => u.id === id) ? `<button type="button" class="al-u" data-alu="${esc(id)}">${esc(t)}</button>` : `<b>${esc(t)}</b>`;
+}
+function abHtml(A, R) {
+  const rep = R.length ? `<div class="adm-tw ab-tw"><table class="adm-t st-t ab-t"><thead><tr>${['When', 'Reported player', 'Reason', 'Details', 'By', ''].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${R.map(r => {
+    const M = r.context && Array.isArray(r.context.messages) ? r.context.messages : [];
+    const msgs = M.length ? `<details class="ab-msgs"><summary>${esc(auT('{n} recent messages').replace('{n}', M.length))}</summary>${M.map(m => `<div class="adm-mut"><b>${esc(m.from_reported ? auT('Reported') : auT('Reporter'))}</b> · ${esc(m.kind === 'text' ? String(m.body || '') : m.kind === 'image' ? auT('Picture') : auT('Party invite') + ' · ' + adGame(m.meta && m.meta.game))}</div>`).join('')}</details>` : '';
+    return `<tr data-k="ab:${+r.id}"><td title="${esc(adDate(r.created_at, 1))}">${esc(adAgo(r.created_at))}</td><td>${abWho(r.target, r.target_username, r.target_display)}${r.target_locked ? ' ' + adPill('Locked', 'bad') : ''}${+r.target_reports > 1 ? ' ' + adPill(auT('{n} reports').replace('{n}', +r.target_reports), 'warn') : ''}</td><td>${esc(auT(AB_R[r.reason] || r.reason))}</td><td class="ab-d">${r.details ? `<span>${esc(r.details)}</span>` : ''}${msgs}</td><td>${abWho(r.reporter, r.reporter_username, null)}</td><td><div class="ab-acts">${r.ticket_id ? `<button class="btn2" type="button" data-abt="${+r.ticket_id}">${esc(auT('Open ticket'))}</button>` : ''}<button class="btn2" type="button" data-abr="${+r.id}">${esc(auT('Close'))}</button></div></td></tr>`;
+  }).join('')}</tbody></table></div>` : `<div class="adm-empty">${esc(auT('No open reports.'))}</div>`;
+  const lim = A.length ? `<div class="adm-tw ab-tw"><table class="adm-t st-t ab-t"><thead><tr>${['Player', 'Limit', 'Requests', 'Times at the limit', 'Last', ''].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${A.map(a => `<tr><td>${a.uid ? abWho(a.uid, a.username, a.display_name) : `<span class="adm-mut">${esc(auT('Signed out visitor'))} · <code>${esc(a.ip || '')}</code></span>`}</td><td>${esc(auT(AB_T[a.action] || a.action))}</td><td>${stN(a.hits)}</td><td>${+a.at_limit ? adPill(stN(a.at_limit), 'warn') : '0'}</td><td title="${esc(adDate(a.last_at, 1))}">${esc(adAgo(a.last_at))}</td><td>${a.uid ? `<button class="btn2" type="button" data-abreset="${esc(a.uid)}">${esc(auT('Reset limits'))}</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : `<div class="adm-empty">${esc(auT('Nobody came close to a limit.'))}</div>`;
+  return `<div class="st-card al-card"><div class="sx-ch"><div><h3>${esc(auT('Player reports'))}${R.length ? ` <span class="adm-pill warn">${stN(R.length)}</span>` : ''}</h3><p class="sx-note">${esc(auT('Open reports sent by players. Each one also opened a ticket.'))}</p></div></div>${rep}</div><div class="st-card al-card"><div class="sx-ch"><div><h3>${esc(auT('Rate limits'))}</h3><p class="sx-note">${esc(auT('Who sent the most requests in the last {h} hours and how often they reached a limit.').replace('{h}', AB.h))}</p></div><button class="btn2" type="button" data-abh>${esc(auT(AB.h === 24 ? 'Last 7 days' : 'Last 24 hours'))}</button></div>${lim}</div>`;
+}
+async function abLoad(quiet) {
+  const box = $('#adab');
+  if (!box || !adIsAdmin()) return;
+  if (AB.busy) { AB.again = true; return; }
+  AB.busy = true;
+  if (!AB.html && !box.children.length) box.innerHTML = '<div class="st-card">' + '<i class="sk sk-td"></i>'.repeat(4) + '</div>';
+  let A = null, R = null, miss = false;
+  try { [A, R] = await Promise.all([adRpc('admin_abuse', { p_hours: AB.h }), adRpc('admin_reports', { p_status: 'open', p_limit: 100 })]); }
+  catch (e) { if (sbMissing(e)) miss = true; else { AB.busy = false; AB.again = false; if (!AB.html && $('#adab')) $('#adab').innerHTML = `<div class="adm-empty">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; return; } }
+  AB.busy = false;
+  const h = miss ? `<div class="st-card al-card"><h3>${esc(auT('Player reports and rate limits'))}</h3><p class="sx-note">${esc(auT('Run round14_security.sql in the Supabase SQL editor to see player reports and rate-limit hits here.'))}</p></div>` : abHtml(Array.isArray(A) ? A : [], Array.isArray(R) ? R : []);
+  const el = $('#adab');
+  if (!el) { AB.html = h; return; }
+  if (AB.html && el.querySelector('.al-card') && quiet) { if (h !== AB.html) adMorph(el, h); } else el.innerHTML = h;
+  AB.html = h;
+  if (AB.again) { AB.again = false; abLoad(true); }
+}
+async function abAct(t) {
+  const r = t.closest('[data-abr]'), x = t.closest('[data-abreset]'), tk = t.closest('[data-abt]');
+  if (t.closest('[data-abh]')) { AB.h = AB.h === 24 ? 168 : 24; abLoad(); return true; }
+  if (tk) { const el = tkBox($('#tka'), 'admin'), id = +tk.dataset.abt; adTab('tickets'); if (el._tk.list && el._tk.list.some(z => z.id === id)) tkOpen(el, id); else tkLoad(el).then(() => { if ((el._tk.list || []).some(z => z.id === id)) tkOpen(el, id); }); return true; }
+  if (!r && !x) return false;
+  const b = r || x;
+  b.disabled = true;
+  try {
+    if (r) { await adRpc('admin_report_set', { p_id: +r.dataset.abr, p_status: 'closed' }); toast(auT('Report closed')); abLoad(true); }
+    else { await adRpc('admin_rate_reset', { p_uid: x.dataset.abreset }); toast(auT('Limits reset')); alLoad(false, true); }
+  } catch (e) { b.disabled = false; toast(auT(adErr(e))); }
+  return true;
 }
 async function alHist(u) {
   const box = $('#adph'), n = ++AL.seq;
@@ -474,8 +607,9 @@ async function alHist(u) {
     const r = await adRpc('admin_log_list', { p_limit: 20, p_before: null, p_target: u.id });
     if (n !== AL.seq || AD.sel !== u.id) return;
     const L = Array.isArray(r) ? r : [];
-    box.innerHTML = L.length ? L.map(alRow).join('') : `<div class="adm-mut apc-none">${esc(auT('No admin changes for this player yet.'))}</div>`;
-  } catch (e) { if (n === AL.seq) box.innerHTML = `<div class="adm-mut">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; }
+    const h = L.length ? L.map(alRow).join('') : `<div class="adm-mut apc-none">${esc(auT('No admin changes for this player yet.'))}</div>`;
+    if (box.querySelector('.al-r') && L.length) adMorph(box, h); else box.innerHTML = h;
+  } catch (e) { if (n === AL.seq && !box.querySelector('.al-r')) box.innerHTML = `<div class="adm-mut">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; }
 }
 
 const sfaLocal = iso => { const t = Date.parse(iso || ''); if (!t) return ''; const d = new Date(t); return new Date(t - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
@@ -492,7 +626,9 @@ function sfaDraw() {
    <div class="sfa-g" id="sfag" translate="no">${games.slice().sort((a, b) => (off.has(b.id) - off.has(a.id)) || a.title.localeCompare(b.title)).map(g => `<button type="button" class="chip" data-sfg="${esc(g.id)}" aria-pressed="${off.has(g.id)}">${esc(g.title)}</button>`).join('')}</div>
    <label class="apc-l" for="sfadm">${esc(auT('Message for turned off games (optional)'))}</label><textarea id="sfadm" maxlength="300" rows="2" placeholder="${esc(auT('This game is being fixed. Try again a bit later.'))}">${esc(d.disabled_msg || '')}</textarea></div>
   <div class="sfa-f"><div class="note" id="sfan" role="status"></div><button class="btn2 pri" type="button" id="sfas">${esc(auT('Save and publish'))}</button></div>${adIsOwner() ? `
-  <div class="st-card sfa-c" id="sfpw"><h3>${esc(auT('Site password'))}</h3><p class="sx-note">${esc(auT('The password everyone types to open the site. Only owners can see and change this.'))}</p><p class="sx-note">${esc(auT('A change works at once for everyone whose network reaches the accounts server. Networks that block it keep accepting the previous password until the next deploy. Browsers that already unlocked the site stay unlocked.'))}</p>
+  <div class="st-card sfa-c" id="sfpw"><h3>${esc(auT('Site password'))}</h3><p class="sx-note">${esc(auT('The password everyone types to open the site. Only owners can see and change this.'))}</p>
+   <div class="sfg" id="sfg">${sfgHtml()}</div>
+   <h4 class="sfg-h">${esc(auT('Change the password'))}</h4><p class="sx-note">${esc(auT('A change works at once for everyone whose network reaches the accounts server. Networks that block it keep accepting the previous password until the next deploy. Browsers that already unlocked the site stay unlocked.'))}</p>
    <div class="sfa-2"><div><label class="apc-l" for="sfp1">${esc(auT('New password'))}</label><div class="au-pw"><input id="sfp1" type="password" autocomplete="new-password" maxlength="200" spellcheck="false">${EYE}</div></div><div><label class="apc-l" for="sfp2">${esc(auT('Confirm password'))}</label><div class="au-pw"><input id="sfp2" type="password" autocomplete="new-password" maxlength="200" spellcheck="false">${EYE}</div></div></div>
    <div class="sfa-f"><div class="note" id="sfpn" role="status"></div><button class="btn2 pri" type="button" id="sfps">${esc(auT('Save password'))}</button></div></div>` : ''}</div>`;
 }
@@ -508,6 +644,42 @@ async function gpSlot(pw, k) {
   const back = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: lzB64(o.i) }, await gpKek(pw, lzB64(o.s), o.n), lzB64(o.c)));
   if (back.length !== k.length || back.some((x, j) => x !== k[j])) throw new Error('Slot check failed');
   return o;
+}
+async function sfgHash() {
+  if (!LZ.key) return null;
+  try { const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(LZ.key))); return [...h.slice(0, 8)].map(x => x.toString(16).padStart(2, '0')).join(''); } catch (e) { return null; }
+}
+function sfgHtml() {
+  const d = SG.d, ready = !!(d && d.ready), on = !(d && d.open), stale = !!(d && d.open && SG.kh && d.kh && d.kh !== SG.kh);
+  const dis = !LZ.key || SG.busy || !ready || !!SG.err;
+  const st = SG.err ? SG.err : !LZ.key ? auT('This copy of the site is not password protected, so there is nothing to switch.') : !d ? auT('Checking…') : !ready ? auT('Set a site password below first.') : on ? auT('Everyone types the password to open the site.') : auT('Since {t}: anyone who opens the site gets straight in, without the password.').replace('{t}', adDate(d.at, 1)) + (d.by_name ? ' ' + auT('Turned off by {u}.').replace('{u}', d.by_name) : '');
+  const msg = SG.msg && Date.now() - SG.msg[2] < 20000 ? `<div class="note ${SG.msg[1]}" role="status">${esc(auT(SG.msg[0]))}</div>` : '';
+  return `<div class="sfa-row"><div><b class="sfg-st ${!d ? '' : on ? 'on' : 'off'}">${esc(auT(!d ? 'Site password' : on ? 'Site password: On' : 'Site password: Off'))}</b><p class="sx-note">${esc(st)}</p></div><button class="sw${on ? ' on' : ''}${dis ? ' dis' : ''}${SG.busy ? ' is-busy' : ''}" type="button" role="switch" id="sfgo" aria-checked="${on}" aria-label="${esc(auT('Site password'))}"${dis ? ' disabled' : ''}></button></div>`
+    + (stale ? `<div class="sfg-cf warn"><span>${esc(auT('The key saved on the server belongs to an older version of the site, so visitors see the password page again. Save the current key to let them in.'))}</span><button class="btn2 pri" type="button" data-sfgo="fix">${esc(auT('Save the current key'))}</button></div>` : '')
+    + (SG.cf ? `<div class="sfg-cf"><span>${esc(auT('Anyone who has the address gets in without the password, on every device, as soon as they open the site.'))}</span><div class="sfg-b"><button class="btn2" type="button" data-sfgo="cancel">${esc(auT('Cancel'))}</button><button class="btn2 danger" type="button" data-sfgo="off">${esc(auT('Turn the password off'))}</button></div></div>` : '')
+    + msg
+    + `<p class="sx-note sfg-n">${esc(auT('Works at once on every network that reaches the accounts server; networks that block it still show the password page. Devices that open the site while the password is off stay unlocked after you turn it back on, the same as after a password change. Turning it back on deletes the key saved on the server.'))}</p>`;
+}
+function sfgPaint() { const el = $('#sfg'); if (el) adMorph(el, sfgHtml()); }
+async function sfgLoad() {
+  if (!adIsOwner() || !$('#sfg') || SG.busy) return;
+  const n = ++SG.seq;
+  if (SG.kh == null) SG.kh = await sfgHash();
+  try { const d = await adRpc('owner_gate_state'); if (n !== SG.seq || SG.busy) return; SG.d = d && typeof d === 'object' ? d : null; SG.err = null; }
+  catch (e) { if (n !== SG.seq || SG.busy) return; const miss = sbMissing(e) || /owner_gate_state|schema cache/i.test(e.message || ''); if (miss) SG.d = null; SG.err = miss ? auT('Run round15_admin.sql in the Supabase SQL editor to use this switch.') : SG.d ? null : auT('Could not load. Check your connection and try again.'); }
+  sfgPaint();
+}
+async function sfgSet(open) {
+  if (SG.busy || (open && !LZ.key)) return;
+  SG.busy = true; SG.cf = false; SG.msg = null; SG.seq++; sfgPaint();
+  try {
+    const d = await adRpc('owner_set_gate_open', { p_open: open, p_key: open ? LZ.key : null });
+    SG.d = d && typeof d === 'object' ? d : SG.d;
+    SG.msg = [open ? 'The site password is off. Anyone who opens the site now gets straight in.' : 'The site password is back on. New visitors have to type it again.', 'ok', Date.now()];
+    track('admin', { act: open ? 'gate_open' : 'gate_closed' });
+    AL.list = [];
+  } catch (e) { SG.msg = [sbMissing(e) ? 'Run round15_admin.sql in the Supabase SQL editor to use this switch.' : adErr(e), 'bad', Date.now()]; }
+  finally { SG.busy = false; sfgPaint(); }
 }
 async function sfpSave(b) {
   const a = $('#sfp1').value, c = $('#sfp2').value;
@@ -564,8 +736,8 @@ async function stLoad(force) {
   if (!ST.d) el.innerHTML = '<div class="tiles adm-tiles">' + '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(4) + '</div><i class="sk sk-chart"></i><i class="sk sk-chart"></i>';
   try {
     ST.d = await adRpc('admin_stats_v2', { p_days: ST.days }).catch(e => { if (/admins only/i.test(e.message || '')) throw e; return adRpc('admin_stats'); });
-    ST.at = Date.now(); stDraw();
-  } catch (e) { if (!ST.d) el.innerHTML = `<div class="adm-empty">${esc(auT('Could not load the stats. Check your connection and try again.'))}</div>`; }
+    ST.at = Date.now(); stDraw(); adStamp(true);
+  } catch (e) { if (!ST.d) el.innerHTML = `<div class="adm-empty">${esc(auT('Could not load the stats. Check your connection and try again.'))}</div>`; else adStamp(false); }
   finally { ST.busy = false; box.classList.remove('sx-busy'); }
 }
 function stSample() {
@@ -573,20 +745,25 @@ function stSample() {
   ST.ps = Date.now();
   adRpc('admin_presence_sample', { p_online: Object.keys(RT.pres).length }).catch(() => {});
 }
-function stLive() {
-  const box = $('#stlive');
-  if (!box) return;
+function stLiveParts() {
   const P = Object.entries(RT.pres), by = {};
   P.forEach(([, p]) => { const k = p.g || ''; by[k] = (by[k] || 0) + 1; });
   const top = Object.entries(by).filter(([k]) => k).sort((a, b) => b[1] - a[1]).slice(0, 6);
-  $('#stln').textContent = P.length;
   const seen = ST.lv;
   ST.lv = new Set(P.map(([id]) => id));
-  box.innerHTML = P.length ? P.sort((a, b) => (b[1].g ? 1 : 0) - (a[1].g ? 1 : 0)).map(([id, p]) => {
+  const list = P.length ? P.sort((a, b) => (b[1].g ? 1 : 0) - (a[1].g ? 1 : 0)).map(([id, p]) => {
     const u = (AD.users || []).find(x => x.id === id), name = (u && (u.display_name || u.username || u.email)) || id.slice(0, 8);
-    return `<button class="st-on${seen.has(id) ? '' : ' nw'}" type="button" data-stu="${esc(id)}"><span class="pic">${esc(name.charAt(0).toUpperCase())}<i class="fr-dot on"></i></span><span><b>${esc(name)}</b><small>${esc(u && u.username ? '@' + u.username : '')}${p.h ? ' · ' + esc(auT('hidden from friends')) : ''}</small></span><em>${esc(p.g ? adGame(p.g) : auT('Browsing'))}</em></button>`;
+    return `<button class="st-on${seen.has(id) ? '' : ' nw'}" type="button" data-stu="${esc(id)}" data-k="on:${esc(id)}"><span class="pic">${esc(name.charAt(0).toUpperCase())}<i class="fr-dot on"></i></span><span><b>${esc(name)}</b><small>${esc(u && u.username ? '@' + u.username : '')}${p.h ? ' · ' + esc(auT('hidden from friends')) : ''}</small></span><em>${esc(p.g ? adGame(p.g) : auT('Browsing'))}</em></button>`;
   }).join('') : '<div class="adm-mut sx-nobody">—</div>';
-  $('#stlg').innerHTML = top.map(([g, n]) => `<span class="adm-pill acc">${esc(adGame(g))} · ${n}</span>`).join('');
+  return { n: P.length, lg: top.map(([g, n]) => `<span class="adm-pill acc" data-k="lg:${esc(g)}">${esc(adGame(g))} · ${n}</span>`).join(''), list };
+}
+function stLive() {
+  const box = $('#stlive');
+  if (!box) return;
+  const L = stLiveParts();
+  $('#stln').textContent = L.n;
+  adMorph($('#stlg'), L.lg);
+  adMorph(box, L.list);
 }
 function stSeries() {
   const D = ST.d || {};
@@ -711,33 +888,36 @@ function stPick(id) {
   stCombo(false);
   stGameCard(true);
 }
-function stGameCard(an) {
-  const box = $('#stgd');
-  if (!box) return;
-  if (!motionOK()) an = 0;
-  box.classList.toggle('sx-gp', an === true);
+function stGameHtml(an) {
   const g = stGames().find(x => x.game_id === ST.game);
-  if (!g) { box.innerHTML = ''; return; }
-  const D = ST.d || {}, sp = (D.game_days || {})[g.game_id], gm = byId.get(g.game_id), tint = TINT[g.game_id] || 'var(--accent)';
+  if (!g) return '';
+  const D = ST.d || {}, v2 = D.measure === 2, sp = (D.game_days || {})[g.game_id], gm = byId.get(g.game_id), tint = TINT[g.game_id] || 'var(--accent)';
   const P = (D.players || []).filter(p => p.game_id === g.game_id).sort((a, b) => (+b.seconds_played || 0) - (+a.seconds_played || 0)).slice(0, 5);
-  const spSum = sp ? sp.reduce((s, v) => s + (+v || 0), 0) : null;
+  const spSum = sp ? sp.reduce((s, v) => s + (+v || 0), 0) : null, sm = t => `<small>${esc(t)}</small>`;
   const C = [
-    ['Launches', stN(g.launches), 'rocket', spSum != null ? `${stSpark(sp, an)}<small>${esc(auT('{n} in the last {d} days').replace('{n}', stN(spSum)).replace('{d}', ST.days))}</small>` : `<small>${esc(auT('{n} in the last 7 days').replace('{n}', stN(g.launches_7d)))}</small>`, 'sx-gw', g.launches],
+    ['Launches', stN(g.launches), 'rocket', v2 ? `${sp ? stSpark(sp, an) : ''}${sm(auT('{n} all time').replace('{n}', stN(g.launches_all)))}` : spSum != null ? `${stSpark(sp, an)}${sm(auT('{n} in the last {d} days').replace('{n}', stN(spSum)).replace('{d}', ST.days))}` : sm(auT('{n} in the last 7 days').replace('{n}', stN(g.launches_7d))), 'sx-gw', g.launches],
     ['Players', stN(g.players), 'users', '', '', g.players],
     ['Rounds played', stN(g.plays), 'play', '', '', g.plays],
-    ['Hours played', stH(g.hours), 'clock', `<small>${esc(auT('{n} in the last 7 days').replace('{n}', stH(g.hours_7d)))}</small>`],
-    ['Avg minutes per visit', (+g.avg_min || 0).toFixed(1), 'timer'],
-    ['Accounts with records', stN(g.accounts), 'save', '', '', g.accounts],
-    ['Errors', stN(g.errors), 'bug', `<span class="sx-hp">${stHealth(g)}</span><small>${esc(auT('{n} in the last 7 days').replace('{n}', stN(g.errors_7d)))}</small>`, +g.errors_7d ? 'sx-gbad' : '', g.errors],
-    ['Last launch', g.last_launch ? adAgo(g.last_launch) : auT('Never'), 'eye', g.last_launch ? `<small>${esc(adDate(g.last_launch, 1))}</small>` : '', 'sx-gw']
+    ['Hours played', stH(g.hours), 'clock', sm(auT('{n} in the last 7 days').replace('{n}', stH(g.hours_7d)))],
+    ['Avg minutes per visit', (+g.avg_min || 0).toFixed(1), 'timer', v2 ? sm(auT('{n} visits').replace('{n}', stN(g.visits))) : ''],
+    ['Accounts with records', stN(g.accounts), 'save', v2 && +g.acct_hours ? sm(auT('{h} on their accounts').replace('{h}', stH(g.acct_hours))) : '', '', g.accounts],
+    ['Errors', stN(g.errors), 'bug', `<span class="sx-hp">${stHealth(g)}</span>${sm(auT('{n} in the last 7 days').replace('{n}', stN(g.errors_7d)))}`, +g.errors_7d ? 'sx-gbad' : '', g.errors],
+    ['Last launch', g.last_launch ? adAgo(g.last_launch) : auT('Never'), 'eye', g.last_launch ? sm(adDate(g.last_launch, 1)) : '', 'sx-gw']
   ];
-  box.innerHTML = `<div class="sx-gh2" style="--c:${esc(tint)}"><span class="sx-gt">${adCv(g.game_id, '')}</span><div><b translate="no">${esc(adGame(g.game_id))}</b><span><code>${esc(g.game_id)}</code>${gm && gm.info ? `<small>${esc(gm.info.genres.join(' · '))}</small>` : ''}</span></div>${gm ? `<a class="btn2" href="${esc(href(g.game_id))}" data-stopen="${esc(g.game_id)}">${esc(auT('Open game'))}</a>` : ''}</div>
+  return `<div class="sx-gh2" style="--c:${esc(tint)}"><span class="sx-gt">${adCv(g.game_id, '')}</span><div><b translate="no">${esc(adGame(g.game_id))}</b><span><code>${esc(g.game_id)}</code>${gm && gm.info ? `<small>${esc(gm.info.genres.join(' · '))}</small>` : ''}</span></div>${gm ? `<a class="btn2" href="${esc(href(g.game_id))}" data-stopen="${esc(g.game_id)}">${esc(auT('Open game'))}</a>` : ''}</div>
    <div class="sx-gc">${C.map(([k, v, ic, x, cl, n], i) => `<div class="sx-gk ${cl || ''}" style="--i:${i}"><span class="sx-gki">${AD_SI[ic]}</span><small>${esc(auT(k))}</small><b${Number.isInteger(+n) && n !== '' && n != null ? ` data-n="${+n}" data-f="l"` : ''}>${esc(v)}</b>${x || ''}</div>`).join('')}</div>
    <div class="sx-g2">
     <div class="sx-gb"><h4>${esc(auT('Last error'))}</h4>${g.last_error ? `<div class="sx-err"><code translate="no">${esc(String(g.last_error).slice(0, 400))}</code><small>${esc(g.last_error_at ? adAgo(g.last_error_at) : '')}</small></div>` : '<div class="adm-mut">—</div>'}</div>
     <div class="sx-gb"><h4>${esc(auT('Top players'))}</h4>${P.length ? `<div class="sx-tp">${P.map((p, i) => `<button type="button" class="sx-tpr" data-stu="${esc(p.user_id)}"><span class="sx-rk">${i + 1}</span><span class="pic">${esc((p.display_name || p.username || '?').charAt(0).toUpperCase())}</span><span class="sx-tpn"><b translate="no">${esc(p.display_name || p.username || '—')}</b><small>${p.username ? '@' + esc(p.username) + ' · ' : ''}${esc(auT('{n} plays').replace('{n}', +p.plays || 0))}${p.best_score != null ? ' · ' + esc(auT('best {s}').replace('{s}', p.best_score)) : ''}</small></span><em>${esc(adHrs(p.seconds_played))}</em></button>`).join('')}</div>` : '<div class="adm-mut">—</div>'}</div>
    </div>`;
-  if (an) countUp(box);
+}
+function stGameCard(an) {
+  const box = $('#stgd');
+  if (!box) return;
+  if (!motionOK()) an = 0;
+  box.classList.toggle('sx-gp', an === true);
+  const h = stGameHtml(an);
+  if (an || !box.firstElementChild) { box.innerHTML = h; if (an) countUp(box); } else adMorph(box, h);
 }
 function stReveal(box, k) {
   k = k || 'io';
@@ -749,18 +929,20 @@ function stReveal(box, k) {
 }
 function stDraw() {
   const D = ST.d || {}, O = D.overview || {}, box = $('#adstats'), el = stShell(), S = stSeries();
-  const T = [['Active 7 days', O.active_7d], ['Active 30 days', O.active_30d]];
+  const PL = D.play || null, avg = PL && +PL.visits ? (+PL.hours || 0) * 60 / +PL.visits : null;
+  const T = [['Active 7 days', stN(O.active_7d), +O.active_7d || 0], ['Active 30 days', stN(O.active_30d), +O.active_30d || 0]].concat(PL ? [['Hours played', stH(PL.hours), null, auT('last {d} days').replace('{d}', ST.days)], ['Avg minutes per visit', avg == null ? '—' : avg.toFixed(1), null, auT('{n} visits').replace('{n}', stN(PL.visits))]] : []);
   const ER = D.errors || [], DV = D.devices || [], SQ = D.searches || [], RE = D.retention || [];
   const peakOk = S.some(r => r.peak != null), NR = new Set(SQ.filter(q => +q.with_no_results).map(q => q.query)), td = new Date().toISOString().slice(0, 10);
   const reCell = v => v == null ? '<td>—</td>' : `<td><span class="st-hc" style="--a:${Math.min(1, (+v || 0) / 100).toFixed(2)}">${Math.round(+v || 0)}%</span></td>`;
   if (!ST.game || !stGames().some(g => g.game_id === ST.game)) ST.game = (stGames().slice().sort((a, b) => (+b.launches || 0) - (+a.launches || 0))[0] || {}).game_id || null;
-  const keep = document.activeElement && document.activeElement.id === 'stgq', an = motionOK() ? ST.anim : 0;
+  const keep = document.activeElement && document.activeElement.id === 'stgq', an = motionOK() ? ST.anim : 0, live = !an && !!el.querySelector('.st-top');
   ST.anim = an;
   ST.ch = {};
   box.classList.toggle('sx-q', !an); box.classList.toggle('sx-r', an === 1);
-  el.innerHTML = `
-  <div class="st-top"><div class="st-card st-livec"><div class="st-h"><h3><i class="adm-dot"></i>${esc(auT('Live now'))}</h3><b class="st-big" id="stln">0</b></div><div class="st-lg" id="stlg"></div><div class="st-live" id="stlive"></div></div>
-  <div class="tiles adm-tiles st-tiles">${T.map(([k, n], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b data-n="${+n || 0}" data-f="l">${stN(n)}</b></div>`).join('')}</div></div>
+  const LV = stLiveParts();
+  const html = `
+  <div class="st-top"><div class="st-card st-livec"><div class="st-h"><h3><i class="adm-dot"></i>${esc(auT('Live now'))}</h3><b class="st-big" id="stln">${LV.n}</b></div><div class="st-lg" id="stlg">${LV.lg}</div><div class="st-live" id="stlive">${LV.list}</div></div>
+  <div class="tiles adm-tiles st-tiles">${T.map(([k, v, n, sub], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b${n != null ? ` data-n="${n}" data-f="l"` : ''}>${esc(v)}</b>${sub ? `<em class="st-ts">${esc(sub)}</em>` : ''}</div>`).join('')}</div></div>
   <div class="sx-bar"><h3>${esc(auT('Trends'))}</h3><div class="sx-rng" role="group" aria-label="${esc(auT('Time range'))}">${[7, 30, 90].map(d => `<button type="button" data-strng="${d}" aria-pressed="${d === ST.days}">${esc(auT('{n} days').replace('{n}', d))}</button>`).join('')}</div></div>
   ${stChart('act', 'Active players per day', S, [{ k: 'active', l: 'Active players' }, { k: 'signed_in', l: 'Signed in' }], { agg: 'avg', wide: true })}
   <div class="sx-grid">
@@ -773,17 +955,20 @@ function stDraw() {
   </div>
   <div class="st-card sx-gm"><div class="sx-gh"><h3>${esc(auT('Games'))}</h3>
    <div class="sx-cb"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="stgq" role="combobox" aria-expanded="false" aria-controls="stgl" aria-autocomplete="list" aria-label="${esc(auT('Choose a game'))}" placeholder="${esc(auT('Search games'))}" autocomplete="off" spellcheck="false" value="${esc(ST.game ? adGame(ST.game) : '')}"><button type="button" class="sx-cbt" data-stcb tabindex="-1" aria-label="${esc(auT('Show all games'))}">${AD_ICO.chev}</button><ul id="stgl" role="listbox" aria-label="${esc(auT('Games'))}" hidden></ul></div>
-  </div><div id="stgd"></div></div>
+  </div>${D.measure === 2 ? `<p class="sx-note sx-gnote">${esc(auT('Last {d} days. Play time only counts while the game is open, the tab is visible and the player pressed a key, moved the mouse or touched the screen in the last minute. Avg minutes per visit = play time ÷ launches.').replace('{d}', ST.days))}</p>` : ''}<div id="stgd">${stGameHtml(an)}</div></div>
   <div class="st-grid">
    <div class="st-card"><h3>${esc(auT('Devices'))}</h3>${stDevices()}<div class="st-list sx-dvl">${DV.slice(0, 6).map(d => `<div class="st-kv"><span>${esc([auT(ST_DEV[d.device] || d.device || ''), d.os, d.browser].filter(Boolean).join(' · '))}</span><b>${stN(d.sessions)}</b></div>`).join('')}</div></div>
    <div class="st-card"><h3>${esc(auT('Recent errors'))}</h3><div class="st-list">${ER.length ? ER.slice(0, 30).map(e => `<div class="st-err"><b>${esc(adGame(e.game_id))}</b><span>${esc(e.message || '')}</span><small>${esc(e.place || '')} · ${esc(e.device || '')} · ${esc(adAgo(e.created_at))}</small></div>`).join('') : insWhy()}</div></div>
    <div class="st-card"><h3>${esc(auT('Top searches'))}</h3>${insList(SQ.map(q => ({ k: q.query, n: +q.searches || 0 })), { val: r => stN(r.n), fmt: k => esc(k) + (NR.has(k) ? ` <span class="adm-pill warn">${esc(auT('no result'))}</span>` : '') })}</div>
    <div class="st-card"><h3>${esc(auT('Players coming back'))}</h3>${RE.length ? `<div class="adm-tw st-re"><table class="adm-t st-t"><thead><tr>${['First day', 'New', 'Next day', 'Within a week'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${RE.map(r => `<tr><td>${esc(stDay(r.cohort_day))}</td><td>${stN(r.new_players)}</td>${String(r.cohort_day).slice(0, 10) >= td ? `<td><span class="adm-mut" title="${esc(auT('Too early to tell'))}">—</span></td>` : reCell(r.day1_pct)}${reCell(r.back_within_7d_pct)}</tr>`).join('')}</tbody></table></div>` : insWhy()}</div>
   </div>
-  <p class="adm-mut st-at">${esc(auT('Updated {t}.').replace('{t}', new Date(D.at || Date.now()).toLocaleTimeString()))}</p>`;
-  if (an === 2) countUp(el.querySelector('.st-top'));
-  if (an) stReveal(el);
-  stGameCard(an); stLive();
+  <p class="adm-mut st-at">${esc(auT('Updated {t}.').replace('{t}', adClock(D.at || Date.now())))}</p>`;
+  if (live) adMorph(el, html);
+  else {
+    el.innerHTML = html;
+    if (an === 2) countUp(el.querySelector('.st-top'));
+    if (an) { stReveal(el); countUp($('#stgd')); }
+  }
   if (keep) $('#stgq').focus({ preventScroll: true });
   ST.anim = 0;
 }
@@ -821,7 +1006,6 @@ function stBoot() {
   box.addEventListener('pointerout', e => { const a = e.target.closest('.sx-area'); if (a && !a.contains(e.relatedTarget)) stUnhover(a); });
   box.addEventListener('pointerover', e => { const dn = e.target.closest('.sx-dn'); if (dn) stSeg(dn, e.target.closest('[data-seg]')); });
   box.addEventListener('pointerout', e => { const dn = e.target.closest('.sx-dn'); if (dn && !dn.contains(e.relatedTarget)) stSeg(dn, null); });
-  setInterval(() => { if (view !== 'admin' || AD.tab !== 'stats' || document.visibilityState !== 'visible') return; if (INS.sub === 'ins') { if (Date.now() - INS.at > 120000) insLoad(true); } else if (!(document.activeElement && document.activeElement.id === 'stgq')) stLoad(true); }, 30000);
   setInterval(stSample, 60000);
 }
 
@@ -928,7 +1112,9 @@ function insDraw(an) {
   const box = $('#insv');
   if (!box) return;
   if (!motionOK()) an = false;
-  const D = INS.d || {}, M = INS.m && !INS.m.__err ? INS.m : {}, G = D.geo || {}, V = D.dev || {}, B = D.behaviour || {}, R = D.retention || {}, RL = D.rl || {}, A = D.ads || {};
+  const D = INS.d || {}, M = INS.m && !INS.m.__err ? INS.m : {}, PI = INS.p && !INS.p.__err ? INS.p : null, V = D.dev || {}, B = D.behaviour || {}, RL = D.rl || {}, A = D.ads || {};
+  const G = Object.assign({}, D.geo || {}, PI ? { hours: PI.hours || [] } : {}), R0 = D.retention || {}, UH = PI ? PI.user_hours || {} : {}, PG = new Map((PI ? PI.games || [] : []).map(x => [x.id, x]));
+  const R = Object.assign({}, R0, PI ? { funnel: Object.assign({}, R0.funnel || {}, { played: PI.played }), churn: (R0.churn || []).map(p => UH[p.id] != null ? Object.assign({}, p, { hours: UH[p.id] }) : p) } : {});
   const coh = d => (R.cohort || []).find(x => x.d === d) || {}, S = R.streaks || {}, sc = B.scroll || {}, all = RL.all || {}, LF = M.rl_left || {}, SS = M.sessions || {}, FL = M.flags || {}, EX = M.extra || {};
   const P = (k, a, b, o) => { const p = b ? insPct(a, b) : null; return Object.assign({ k, v: p == null ? '—' : p + '%', n: p, f: 'p' }, o || {}); };
   const K = (k, v, d, tip) => ({ k, v: insNum(v, d), n: v != null && Number.isInteger(+v) ? +v : null, tip });
@@ -951,8 +1137,8 @@ function insDraw(an) {
   const scoreCell = s => { if (!s || !s.n) return `<span class="adm-mut" title="${esc(auT('This game does not report a score'))}">—</span>`; const lo = Math.min(+(s.min != null ? s.min : s.p10 != null ? s.p10 : 0) || 0, +s.p25 || 0), mx = Math.max(+s.max || 0, lo + 1e-9), X = v => Math.max(0, Math.min(100, 100 * ((+v || 0) - lo) / (mx - lo))); return `<span class="ins-sc" title="${esc(auT('Median {m} · middle half {a}–{b} · best {x} · {n} scores').replace('{m}', insNum(s.p50)).replace('{a}', insNum(s.p25)).replace('{b}', insNum(s.p75)).replace('{x}', insNum(s.max)).replace('{n}', stN(s.n)))}"><b>${esc(insNum(s.p50))}</b><i><s style="left:${X(s.p25).toFixed(1)}%;width:${Math.max(2, X(s.p75) - X(s.p25)).toFixed(1)}%"></s><u style="left:${X(s.p50).toFixed(1)}%"></u></i><small>${esc(auT('max {n}').replace('{n}', insNum(s.max)))}</small></span>`; };
   const insFps = g => { const a = Math.round(+g.fps), lo = g.fps_low != null ? Math.round(+g.fps_low) : null, P = v => Math.max(0, Math.min(100, v / 2.4)).toFixed(1); return `<span class="ins-fps" style="--p:${P(a)}" title="${esc(auT('Average {a} FPS, worst 10% {l} FPS, out of 240').replace('{a}', a).replace('{l}', lo == null ? '—' : lo))}"><i><s style="width:${P(a)}%"></s>${lo == null ? '' : `<u style="left:${P(lo)}%"></u>`}</i><span><b>${a}</b><small>${lo == null ? '' : ' · ' + esc(auT('low {n}').replace('{n}', lo))} / 240</small></span></span>`; };
   const mut = (t, v) => `<span class="adm-mut" title="${esc(auT(t))}">${v || '—'}</span>`;
-  const gRows = games.map((g, i) => { const vt = votes.get(g.id) || g.votes || {}, l = g.load || {}, q = insPct(g.early, g.n); return `<tr style="--i:${Math.min(i, 14)}"><td><span class="ins-gn">${adCv(g.id, 'ins-cv')}<span translate="no">${esc(adGame(g.id))}</span></span></td><td><span class="ins-gs"><b>${stN(g.n)}</b>${GD[g.id] ? stSpark(GD[g.id], an) : ''}</span></td><td>${g.n ? `<span class="adm-pill ${q > 40 ? 'bad' : q > 20 ? 'warn' : 'ok'}">${q}%</span>` : '—'}</td><td>${g.sec != null ? esc(adHrs(g.sec)) : '—'}</td><td>${g.fps != null ? insFps(g) : mut('Not measured: the game was closed within 3 seconds')}</td><td>${l.n ? esc(insMs(l.p50)) + ' <span class="adm-mut">/ ' + esc(insMs(l.p90)) + '</span>' : mut('Part of the page, nothing extra to download')}</td><td>${scoreCell(MS[g.id] || g.scores)}</td><td>${g.lv_n ? `${esc(String(g.lv_avg))} <span class="adm-mut">/ ${esc(String(g.lv_max))}</span>` : mut('This game does not show a level')}</td><td>${inBar(g)}</td><td>${vt.up || vt.down ? `<span class="ins-vt"><b>▲ ${vt.up | 0}</b> <span>▼ ${vt.down | 0}</span></span>` : mut('No thumbs yet. Players are asked after a round or after 90 seconds of play.')}</td></tr>`; }).join('');
-  const gTab = `<div class="st-card ins-tc"><div class="adm-tw"><table class="adm-t st-t ins-t"><thead><tr>${[['Game'], ['Sessions', 'Times the game was opened, with launches per day'], ['Quit < 30 s', 'Share of sessions closed within 30 seconds'], ['Avg session'], ['FPS', 'Frames per second out of 240: average and worst 10%'], ['Load', 'Download time: median / slowest 10%'], ['Scores', 'Final scores: median, middle half and best'], ['Level', 'Level reached at the end: average / highest'], ['Input', 'Main input used while playing'], ['Votes', 'Thumbs up and down']].map(([h, t]) => `<th${t ? ` title="${esc(auT(t))}"` : ''}><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody class="${an ? 'an' : ''}">${gRows || `<tr><td colspan="10">${insWhy()}</td></tr>`}</tbody></table></div></div>`;
+  const gRows = games.map((g, i) => { const vt = votes.get(g.id) || g.votes || {}, l = g.load || {}, q = insPct(g.early, g.n); return `<tr style="--i:${Math.min(i, 14)}"><td><span class="ins-gn">${adCv(g.id, 'ins-cv')}<span translate="no">${esc(adGame(g.id))}</span></span></td><td><span class="ins-gs"><b>${stN(g.n)}</b>${GD[g.id] ? stSpark(GD[g.id], an) : ''}</span></td><td>${g.n ? `<span class="adm-pill ${q > 40 ? 'bad' : q > 20 ? 'warn' : 'ok'}">${q}%</span>` : '—'}</td><td>${(PI ? (PG.has(g.id) ? PG.get(g.id).sec : null) : g.sec) != null ? esc(adHrs(PI ? PG.get(g.id).sec : g.sec)) : '—'}</td><td>${g.fps != null ? insFps(g) : mut('Not measured: the game was closed within 3 seconds')}</td><td>${l.n ? esc(insMs(l.p50)) + ' <span class="adm-mut">/ ' + esc(insMs(l.p90)) + '</span>' : mut('Part of the page, nothing extra to download')}</td><td>${scoreCell(MS[g.id] || g.scores)}</td><td>${g.lv_n ? `${esc(String(g.lv_avg))} <span class="adm-mut">/ ${esc(String(g.lv_max))}</span>` : mut('This game does not show a level')}</td><td>${inBar(g)}</td><td>${vt.up || vt.down ? `<span class="ins-vt"><b>▲ ${vt.up | 0}</b> <span>▼ ${vt.down | 0}</span></span>` : mut('No thumbs yet. Players are asked after a round or after 90 seconds of play.')}</td></tr>`; }).join('');
+  const gTab = `<div class="st-card ins-tc"><div class="adm-tw"><table class="adm-t st-t ins-t"><thead><tr>${[['Game'], ['Sessions', 'Times the game was opened, with launches per day'], ['Quit < 30 s', 'Share of sessions closed within 30 seconds'], ['Avg session', PI ? 'Play time per visit: game open, tab visible and input in the last minute' : ''], ['FPS', 'Frames per second out of 240: average and worst 10%'], ['Load', 'Download time: median / slowest 10%'], ['Scores', 'Final scores: median, middle half and best'], ['Level', 'Level reached at the end: average / highest'], ['Input', 'Main input used while playing'], ['Votes', 'Thumbs up and down']].map(([h, t]) => `<th${t ? ` title="${esc(auT(t))}"` : ''}><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody class="${an ? 'an' : ''}">${gRows || `<tr><td colspan="10">${insWhy()}</td></tr>`}</tbody></table></div></div>`;
   const rl = insKpis([
     { k: 'Matches finished', v: stN(all.n), n: +all.n || 0 },
     P('Win rate', all.wins, all.n),
@@ -1021,7 +1207,8 @@ function insDraw(an) {
   const body = { ret, games: gTab, rl, beh, geo, dev, ses, spd, scr, hw, ads };
   box.classList.toggle('sx-q', !an);
   if (an) $('#adstats').classList.remove('sx-q', 'sx-r');
-  box.innerHTML = rng + `<div class="ins-main">${INS_SEC.map(([id, t]) => `<section class="ins-sec" id="ins-${id}">${insTw(auT(t), 'h2')}<div class="ins-body">${body[id]}</div></section>`).join('')}</div><p class="adm-mut st-at">${esc(auT('Updated {t}.').replace('{t}', new Date(D.at || Date.now()).toLocaleTimeString()))}</p>`;
+  const html = rng + `<div class="ins-main">${INS_SEC.map(([id, t]) => `<section class="ins-sec" id="ins-${id}">${insTw(auT(t), 'h2')}<div class="ins-body">${body[id]}</div></section>`).join('')}</div><p class="adm-mut st-at">${esc(auT('Updated {t}.').replace('{t}', adClock(D.at || Date.now())))}</p>`;
+  if (an || !box.querySelector('.ins-main')) box.innerHTML = html; else adMorph(box, html);
   if (an) stReveal(box, 'iio');
 }
 async function insLoad(force) {
@@ -1031,8 +1218,8 @@ async function insLoad(force) {
   INS.busy = true;
   if (!INS.d) box.innerHTML = '<div class="tiles adm-tiles">' + '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(4) + '</div><i class="sk sk-chart"></i><i class="sk sk-chart"></i>';
   box.classList.add('sx-busy');
-  try { const [d, m] = await Promise.all([adRpc('admin_insights', { p_days: INS.days }), adRpc('admin_insights_more', { p_days: INS.days }).catch(e => ({ __err: String(e && e.message || e) }))]); INS.d = d; INS.m = m; INS.at = Date.now(); insDraw(!INS.drawn || !!ST.anim); INS.drawn = true; ST.anim = 0; }
-  catch (e) { box.innerHTML = `<div class="adm-empty">${esc(/admin_insights|function|404|PGRST/i.test(e.message || '') ? auT('The insights database update is not installed yet. Run round8_insights.sql in the Supabase SQL editor.') : auT('Could not load the stats. Check your connection and try again.'))}</div>`; }
+  try { const [d, m, pi] = await Promise.all([adRpc('admin_insights', { p_days: INS.days }), adRpc('admin_insights_more', { p_days: INS.days }).catch(e => ({ __err: String(e && e.message || e) })), adRpc('admin_play_insights', { p_days: INS.days }).catch(e => ({ __err: String(e && e.message || e) }))]); INS.d = d; INS.m = m; INS.p = pi; INS.at = Date.now(); insDraw(!INS.drawn || !!ST.anim); INS.drawn = true; ST.anim = 0; adStamp(true); }
+  catch (e) { if (INS.d && force) { adStamp(false); return; } box.innerHTML = `<div class="adm-empty">${esc(/admin_insights|function|404|PGRST/i.test(e.message || '') ? auT('The insights database update is not installed yet. Run round8_insights.sql in the Supabase SQL editor.') : auT('Could not load the stats. Check your connection and try again.'))}</div>`; }
   finally { INS.busy = false; box.classList.remove('sx-busy'); }
 }
 
@@ -1056,6 +1243,7 @@ async function tkLoad(el) {
     const r = await adRpc(T.mode === 'admin' ? 'admin_tickets' : 'my_tickets');
     T.list = Array.isArray(r) ? r : [];
     tkList(el);
+    if (T.cur) tkHead(el, true);
     if (T.mode === 'admin' && view === 'admin') adTiles();
   } catch (e) { if (!T.list) el.querySelector('.tk-list').innerHTML = `<div class="adm-empty">${esc(auT('Could not load the tickets. Check your connection and try again.'))}</div>`; }
 }
@@ -1063,11 +1251,12 @@ function tkList(el) {
   const T = el._tk, L = T.list || [], adm = T.mode === 'admin';
   const nf = el.querySelector('.tk-new'), ob = el.querySelector('.tk-open');
   if (nf) { const show = T.compose || !L.length; nf.hidden = !show; ob.hidden = show; nf.querySelector('.tk-cancel').hidden = !L.length; }
-  el.querySelector('.tk-list').innerHTML = L.length ? L.map((t, i) => {
+  const lb = el.querySelector('.tk-list'), h = L.length ? L.map((t, i) => {
     const who = adm ? (t.username ? '@' + t.username : t.email || '') : '';
     const flag = t.status === 'open' ? (adm ? (!t.last_admin ? adPill('Needs a reply', 'warn') : '') : (t.last_admin ? adPill('New reply', 'acc') : '')) : '';
-    return `<button type="button" class="tk-item${t.id === T.cur ? ' on' : ''}" data-tk="open" data-id="${+t.id}" role="listitem" style="--i:${Math.min(i, 12)}"><span class="tk-it"><b translate="no">${esc(t.subject)}</b>${t.status === 'open' ? adPill('Open', 'ok') : adPill('Closed')}</span><span class="tk-is">${who ? `<span translate="no">${esc(who)}</span>` : ''}${adm && t.locked ? adPill('Locked', 'bad') : ''}${flag}<span>${esc(adAgo(t.updated_at))}</span><span>${esc(auT(t.messages === 1 ? '1 message' : '{n} messages').replace('{n}', +t.messages))}</span></span></button>`;
+    return `<button type="button" class="tk-item${t.id === T.cur ? ' on' : ''}" data-tk="open" data-id="${+t.id}" data-k="tk:${+t.id}" role="listitem" style="--i:${Math.min(i, 12)}"><span class="tk-it"><b translate="no">${esc(t.subject)}</b>${t.status === 'open' ? adPill('Open', 'ok') : adPill('Closed')}</span><span class="tk-is">${who ? `<span translate="no">${esc(who)}</span>` : ''}${adm && t.locked ? adPill('Locked', 'bad') : ''}${flag}<span>${esc(adAgo(t.updated_at))}</span><span>${esc(auT(t.messages === 1 ? '1 message' : '{n} messages').replace('{n}', +t.messages))}</span></span></button>`;
   }).join('') : adm ? `<div class="adm-empty">${esc(auT('No tickets yet.'))}</div>` : '';
+  if (L.length && lb.querySelector('.tk-item')) adMorph(lb, h); else lb.innerHTML = h;
 }
 function tkShow(el, main) {
   el.classList.toggle('tk-in', main);
@@ -1086,9 +1275,10 @@ async function tkOpen(el, id) {
   await tkThread(el);
   if (!auCoarse()) el.querySelector('.tk-comp textarea').focus({ preventScroll: true });
 }
-function tkHead(el) {
+function tkHead(el, live) {
   const T = el._tk, t = (T.list || []).find(x => x.id === T.cur);
   if (!t) return;
+  if (live) { const b = el.querySelector('.tk-tog'), want = auT(t.status === 'open' ? 'Close ticket' : 'Reopen'); if (b.textContent !== want && !b.disabled) b.textContent = want; adMorph(el.querySelector('.tk-meta'), (T.mode === 'admin' ? `<span translate="no">${esc(t.username ? '@' + t.username : t.email || '')}</span>` : '') + (t.status === 'open' ? adPill('Open', 'ok') : adPill('Closed')) + `<span>${esc(auT('Opened {d}').replace('{d}', adDate(t.created_at)))}</span>`); return; }
   el.querySelector('.tk-meta').innerHTML = (T.mode === 'admin' ? `<span translate="no">${esc(t.username ? '@' + t.username : t.email || '')}</span>` : '') + (t.status === 'open' ? adPill('Open', 'ok') : adPill('Closed')) + `<span>${esc(auT('Opened {d}').replace('{d}', adDate(t.created_at)))}</span>`;
   const b = el.querySelector('.tk-tog');
   b.textContent = auT(t.status === 'open' ? 'Close ticket' : 'Reopen');
@@ -1247,8 +1437,9 @@ function adBoot() {
     if (s) { const k = s.dataset.adsort; AD.sort = AD.sort[0] === k ? [k, -AD.sort[1]] : [k, /_at$|last_seen|friends|email_confirmed|locked|role|has_password/.test(k) ? -1 : 1]; adDraw(); return; }
     const tb = t.closest('[data-adtab]');
     if (tb) { adTab(tb.dataset.adtab); return; }
-    if (t.closest('#adref')) { adLoad(); tkLoad(tkBox($('#tka'), 'admin')); if (AD.tab === 'stats') { if (INS.sub === 'ins') insLoad(true); else stLoad(true); } if (AD.tab === 'log') alLoad(); if (AD.tab === 'site') sfLoad(true).then(sfaDraw); return; }
+    if (t.closest('#adref')) { AD.lt = Date.now(); adLoad(); tkLoad(tkBox($('#tka'), 'admin')); if (AD.tab === 'stats') { if (INS.sub === 'ins') insLoad(true); else stLoad(true); } if (AD.tab === 'log') alLoad(false, true); if (AD.tab === 'site') sfLoad(true).then(() => { sfaDraw(); sfgLoad(); }); return; }
     if (t.closest('[data-almore]')) { alLoad(true); return; }
+    if (t.closest('[data-abr], [data-abreset], [data-abh], [data-abt]')) { abAct(t); return; }
     const alu = t.closest('[data-alu]');
     if (alu) { const x = (AD.users || []).find(y => y.id === alu.dataset.alu); if (x) { adTab('users'); adPanel(x); } return; }
     const sg = t.closest('[data-sfg]');
@@ -1257,6 +1448,9 @@ function adBoot() {
     if (sm) { sm.classList.toggle('on'); sm.setAttribute('aria-checked', String(sm.classList.contains('on'))); return; }
     if (t.closest('#sfas')) { sfaSave(t.closest('#sfas')); return; }
     if (t.closest('#sfps')) { sfpSave(t.closest('#sfps')); return; }
+    if (t.closest('#sfgo')) { const on = !(SG.d && SG.d.open); if (on) { SG.cf = !SG.cf; SG.msg = null; sfgPaint(); } else sfgSet(false); return; }
+    const gq = t.closest('[data-sfgo]');
+    if (gq) { const k = gq.dataset.sfgo; if (k === 'cancel') { SG.cf = false; sfgPaint(); } else sfgSet(true); return; }
     if (t.closest('#adpclose')) { adPanelClose(); return; }
     if (t.closest('[data-adnew]')) { anOpen(); return; }
     if (t.closest('[data-adnewx]')) { anClose(); return; }
@@ -1270,6 +1464,8 @@ function adBoot() {
     if (eye) { auEye(eye); return; }
     const a = t.closest('[data-adact]');
     if (a) { adAct(a.dataset.adact, a); return; }
+    const cp = t.closest('[data-adcopy]');
+    if (cp) { e.stopPropagation(); adCopyId(cp.dataset.adcopy, cp); return; }
     const tr = t.closest('#adt tbody tr[data-uid]');
     if (tr) { const u = (AD.users || []).find(x => x.id === tr.dataset.uid); if (u) adPanel(u); }
   });
@@ -1297,5 +1493,10 @@ function adBoot() {
     document.querySelectorAll('.tk').forEach(el => { if (!el._tk || el.closest('[hidden]')) return; if (el._tk.cur) tkThread(el); if (++el._tk.n % 5 === 0) tkLoad(el); });
   }, 6000);
   setInterval(() => { if (SB.user && document.visibilityState !== 'hidden') adCheck(); }, 180000);
-  document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible' && Date.now() - AD.at > 60000) adCheck(); });
+  document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible' && Date.now() - AD.at > 60000) adCheck(); if (document.visibilityState === 'visible' && Date.now() - AD.lt > 10000) adLive(true); });
+  setInterval(() => {
+    if (view !== 'admin' || !AD.users) return;
+    const nw = Object.keys(RT.pres).some(id => !AD.users.some(u => u.id === id));
+    adLive(nw && Date.now() - AD.lt > 8000);
+  }, 4000);
 }

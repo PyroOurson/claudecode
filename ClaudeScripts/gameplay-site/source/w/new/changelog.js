@@ -1,4 +1,13 @@
 const CHANGELOG = [
+  { v: 8, date: '2026-11-06', items: [
+    'A new look for the whole site: warm paper, black ink and one orange colour, with a dark mode to match.',
+    'The home page has a row for each kind of game: popular now, online with friends, action, cards, board games, puzzles, arcade, racing, 3D and sports.',
+    'All games is mixed so card and board games no longer sit in one long block, with the games everyone plays first.',
+    'Every game page shows how to play, the controls, and your own best score, plays and time.',
+    'A game of the day on the home page, the same one for everybody.',
+    'Press ? for help and keyboard shortcuts. The game bar has a pause button, also on phones.',
+    'Search also finds games from part of a name.'
+  ] },
   { v: 7, date: '2026-10-23', items: [
     'Geometry Dash: new look closer to the real game, robot and spider forms, Back On Track, Polargeist, Dry Out and Geometrical Dominator, music for every level, volume sliders, achievements and a level creator.',
     'Subway Surfers: new Jake, freight trains and tankers, stumble and crash animations, more sounds, and fullscreen now fills the screen.',

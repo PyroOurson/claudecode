@@ -42,9 +42,9 @@
     sky: { sky: NES.sky, a: NES.lt, b: NES.brn, k: NES.blk, walker: [NES.brn, NES.blk, NES.lt] }
   };
   const OVK = { over: 1, tree: 1, night: 1, sky: 1 };
-  const HERO_PAL = { a: '#D82800', d: '#887000', c: '#FC9838' };
-  const FIRE_PAL = { a: '#FCE4A0', d: '#D82800', c: '#FC9838' };
-  const STAR_PALS = [HERO_PAL, FIRE_PAL, { a: '#00A800', d: '#000000', c: '#FC9838' }, { a: '#000000', d: '#C84C0C', c: '#FCBCB0' }];
+  const HERO_PAL = { a: '#1F8FE0', d: '#7A3B12', c: '#FCB888', e: '#F8B800' };
+  const FIRE_PAL = { a: '#FCFCFC', d: '#1F8FE0', c: '#FCB888', e: '#FC7460' };
+  const STAR_PALS = [HERO_PAL, FIRE_PAL, { a: '#00A800', d: '#000000', c: '#FC9838', e: '#80D010' }, { a: '#000000', d: '#C84C0C', c: '#FCBCB0', e: '#FCFCFC' }];
 
   const FONT = {
     '0': '384CC6C6C66438', '1': '1838181818187E', '2': '7CC60E3C78E0FE', '3': '7E0C183C06C67C', '4': '1C3C6CCCFE0C0C',
@@ -91,8 +91,6 @@
     skid: ['....aaaaaa......', '..aaaaaaaaaa....', '.aaaaaaaaaaaa...', '...dddcccdcc....', '..dccdcccdcccc..', '..dccddcccdcccc.', '..ddccccdddddd..', '..dccccccdddd...', '....ccccccccc...', '.....ccccccc....', '..dddddaaddd....', 'dddddddaadddd...', 'ccdddddaadddd...', 'cccddaaaaaaddd..', 'cccaaaaaaaaadd..', '...aacaacaacac..', '...aaaaaaaaaccc.', '...aaaaaaaaaacc.', '...aaaaaaaaaaa..', '...aaaaaaaaaa...', '..aaaaaaaaaa....', '.aaaaa..aaaa....', '.aaaa....aaaa...', '.aaaa....aaaa...', '.aaa......aaaa..', '.aaa.......aaa..', '.dddd.......ddd.', '.ddddd......dddd', '..dddd......dddd', '.............dd.', '................', '................'],
     crouch: ['.....aaaaaa.....', '....aaaaaaaaaa..', '...aaaaaaaaaaaa.', '...dddcccdcc....', '..dccdcccdcccc..', '..dccddcccdcccc.', '..ddccccdddddd..', '...dcccccdddd...', '..dddcccccccdd..', '.ddddddaaddddd..', 'ccdddddaaaaddcc.', 'cccddaacaacaaccc', '.ccaaaaaaaaaacc.', '..aaaaaaaaaaaa..', '.aaaaaaaaaaaaaa.', 'aaaaa......aaaaa', 'dddd........dddd', 'ddddd......ddddd']
   };
-  const GOOMBA = ['......aaaa......', '.....aaaaaa.....', '....aaaaaaaa....', '...aaaaaaaaaa...', '..abbaaaaaabba..', '.aaacbbaabbcaaa.', '.aaacbcaacbcaaa.', 'aaaacbcaacbcaaaa', 'aaaacccaacccaaaa', 'aaaaaaaaaaaaaaaa', '.aaaaccccccaaaa.', '....cccccccc....', '...bbcccccccc...', '..bbbbbccccbb...', '..bbbbbbccbbbb..', '...bbbbb.bbbbb..'];
-  const GFLAT = ['................', '................', '................', '................', '................', '................', '................', '................', '.....aaaaaa.....', '...aaaaaaaaaa...', '.aabbbaaaabbbaa.', 'aaaaacbaabcaaaaa', 'aaaaaaaaaaaaaaaa', '....cccccccc....', '..bbbbbccbbbbb..', '.bbbbbb..bbbbbb.'];
   const KOOPA0 = ['....ccc.........', '...ccccc........', '..cbbbcc........', '..cbabcc........', '.ccbabccc.......', '.ccbbbccc.......', 'ccccccccc.......', 'cccccccc........', '.acccccc........', '..aacccc........', '....cccc........', '.....ccc.aaaaa..', '.....cc.abbbbaa.', '....ccbabaaabbaa', '....ccbaabaaabaa', '...cccbaaababbaa', '...ccbbaaabbbbaa', '....cbbbaaabaaba', '.....cbbbbbaaaba', '......cbbbbbbbaa', '.......ccbbbbba.', '......ccccc.ccc.', '.....cccccc.cccc', '.....ccccc..cccc'];
   const KOOPA1 = ['....ccc.........', '...ccccc........', '..cbbbcc........', '..cbabcc........', '.ccbabccc.......', '.ccbbbccc.......', 'ccccccccc.......', 'cccccccc........', '.acccccc........', '..aacccc........', '....cccc........', '.....ccc.aaaaa..', '.....cc.abbbbaa.', '....ccbabaaabbaa', '....ccbaabaaabaa', '...cccbaaababbaa', '...ccbbaaabbbbaa', '....cbbbaaabaaba', '.....cbbbbbaaaba', '......cbbbbbbbaa', '.......cbbbbbba.', '........cccc.cc.', '.......ccccc.ccc', '.......cccc.cccc'];
   const SHELL = ['................', '................', '.....aaaaaa.....', '...aabbbbbbaa...', '..abaaaabaaaaba.', '.abaaaabbaaaaaba', '.baaaaabbaaaaaab', 'abaaaabaabaaaaba', 'abaaabaaaabaaaba', 'abbbbaaaaaabbbba', 'abaaabaaaabaaaba', '.baaaabbbbaaaab.', '.bbbbbbbbbbbbbb.', '..cbbbbbbbbbbc..', '...cccccccccc...', '................'];
@@ -124,9 +122,27 @@
   function buildGrids() {
     const S = {};
     const flipH = rows => rows.map(r => r.split('').reverse().join(''));
-    for (const k in SMALL) S['s_' + k] = art(SMALL[k]);
-    for (const k in BIG) S['b_' + k] = art(BIG[k]);
-    S.walker0 = art(GOOMBA); S.walker1 = art(flipH(GOOMBA)); S.walkerF = art(GFLAT);
+    const hat = rows => { const k = rows.findIndex(r => r.indexOf('d') >= 0); return rows.map((r, i) => i < k ? r.replace(/a/g, 'e') : r); };
+    for (const k in SMALL) S['s_' + k] = art(hat(SMALL[k]));
+    for (const k in BIG) S['b_' + k] = art(hat(BIG[k]));
+    const mite = (ft, flat) => {
+      const g = grid(16, 16), ry = flat ? 3.4 : 6.2;
+      gEll(g, 8, flat ? 12 : 7.6, 7.2, ry, 'a');
+      if (!flat) { gs(g, 7, 0, 'a'); gs(g, 8, 0, 'a'); gs(g, 8, 1, 'a'); gs(g, 9, 0, 'b'); }
+      gEll(g, 8, flat ? 13.4 : 10.4, 5.2, flat ? 1.6 : 3.2, 'c');
+      if (flat) { gRect(g, 4, 10, 7, 12, 'c'); gRect(g, 9, 10, 12, 12, 'c'); gs(g, 5, 11, 'b'); gs(g, 10, 11, 'b'); }
+      else {
+        gRect(g, 4, 5, 7, 9, 'c'); gRect(g, 9, 5, 12, 9, 'c');
+        gRect(g, 6, 6, 7, 8, 'b'); gRect(g, 9, 6, 10, 8, 'b');
+        gs(g, 3, 4, 'b'); gs(g, 4, 4, 'b'); gs(g, 5, 5, 'b'); gs(g, 12, 4, 'b'); gs(g, 11, 4, 'b'); gs(g, 10, 5, 'b');
+        gRect(g, 6, 11, 10, 12, 'b'); gs(g, 6, 10, 'b'); gs(g, 9, 10, 'b');
+      }
+      const fy = flat ? 14 : 13;
+      if (ft) { gRect(g, 1, fy + 1, 6, 16, 'b'); gRect(g, 10, fy, 15, fy + 2, 'b'); }
+      else { gRect(g, 1, fy, 6, fy + 2, 'b'); gRect(g, 10, fy + 1, 15, 16, 'b'); }
+      return g;
+    };
+    S.walker0 = mite(0); S.walker1 = mite(1); S.walkerF = mite(0, 1);
     S.snail0 = art(KOOPA0); S.snail1 = art(KOOPA1);
     S.shell = art(SHELL); S.shellPeek = art(SHELLPK);
     S.wing0 = art(WING0); S.wing1 = art(WING1);
@@ -521,6 +537,89 @@
     } }
   ];
 
+  const RUNLV = new Map();
+  const LV = li => li >= 100 ? RUNLV.get(li) : LEVELS[li];
+  function genLevel(n, seed) {
+    let s = ((seed >>> 0) ^ Math.imul(n + 7, 2654435761)) >>> 0 || 1;
+    const R = () => (s = (Math.imul(s, 1103515245) + 12345) >>> 0) / 4294967296;
+    const ri = (a, b) => a + Math.floor(R() * (b - a + 1));
+    const pick = a => a[Math.floor(R() * a.length)];
+    const d = Math.min(1, n / 10);
+    const kind = n === 0 ? 'over' : pick(n > 1 ? ['over', 'under', 'tree', 'night', 'over', 'under'] : ['over', 'tree', 'night', 'over']);
+    const len = 140 + Math.min(80, n * 8);
+    const w = len + 46;
+    const lv = { name: 'R-' + (n + 1), time: 300, mid: 0, run: n, build() {
+      s = ((seed >>> 0) ^ Math.imul(n + 7, 2654435761)) >>> 0 || 1;
+      const B = area(kind, w);
+      let x = 16, mid = 0, power = 0, last = '';
+      B.gnd(0, 15);
+      if (kind === 'under') B.fill(0, 2, 0, 12, T.BRK);
+      const foe = (fx, fy = 12, air) => {
+        const r = R();
+        if (r < 0.5 - d * 0.3) B.e('walker', fx, fy);
+        else if (r < 0.72) B.e('snail', fx, fy, { red: R() < 0.3 + d * 0.5 ? 1 : 0 });
+        else if (r < 0.84 || air) B.e('snail', fx, fy, { wing: 'hop' });
+        else if (d > 0.5 && R() < 0.5) B.e('snail', fx, fy, { bz: 1 });
+        else B.e('walker', fx, fy);
+      };
+      while (x < len) {
+        if (!mid && x > len * 0.45) { mid = x + 2; lv.mid = mid; B.gnd(x, x + 6).row(x + 2, 9, R() < 0.5 ? '?' : 'B'); x += 7; last = 'mid'; continue; }
+        const t = x < 30 ? 0.3 : n === 0 && x < 56 ? 0.95 : R();
+        if (t < 0.2 && last !== 'gap' && last !== 'plat') {
+          const g = ri(2, 2 + Math.round(d * 2)), l = ri(4, 7);
+          x += g; B.gnd(x, x + l - 1);
+          if (R() < d * 0.5) foe(x + l - 2);
+          x += l; last = 'gap';
+        } else if (t < 0.42) {
+          const l = ri(9, 13), bx = x + ri(2, 3);
+          B.gnd(x, x + l - 1);
+          const pat = !power || R() < 0.15 ? pick(['BMB', 'B?BMB', 'M']) : pick(['B?B', '?B?B?', 'BBB?B', '??', 'BCB', 'B?BSB'.slice(0, R() < 0.12 ? 5 : 3)]);
+          if (pat.indexOf('M') >= 0) power++;
+          B.row(bx, 9, pat);
+          if (R() < 0.5) B.row(bx + 1, 5, pick(['???', 'BBBB', 'B?B', 'oooo']));
+          if (R() < 0.5) foe(x + l - 3);
+          if (R() < d * 0.7) foe(x + l - 1.5);
+          if (d > 0.45 && R() < 0.25 && l > 10) B.fbar(bx + pat.length + 2, 9, 4 + Math.round(d * 2), R() < 0.5 ? 0.05 : -0.05);
+          x += l; last = 'blk';
+        } else if (t < 0.57) {
+          const l = ri(11, 14);
+          B.gnd(x, x + l - 1).pipe(x + 2, ri(9, 11), { plant: R() < 0.15 + d * 0.7 ? 1 : 0 });
+          if (R() < 0.65) B.pipe(x + ri(8, 10), ri(8, 11), { plant: R() < d * 0.8 ? 1 : 0 });
+          foe(x + 6);
+          if (R() < d) foe(x + 7.5);
+          x += l; last = 'pipe';
+        } else if (t < 0.7) {
+          const h = ri(3, 4 + Math.round(d)), g = R() < (n ? 0.35 + d * 0.45 : 0.2) ? ri(1, n ? 2 + Math.round(d) : 1) : 0;
+          B.gnd(x, x + h + 1).stair(x + 2, h, 1);
+          x += h + 2 + g;
+          B.gnd(x, x + h + 2).stair(x, h, -1);
+          if (R() < 0.4) B.row(x - g - h + 1, 12 - h - 3, 'o'.repeat(Math.max(2, h + g)));
+          x += h + 3; last = 'stair';
+        } else if (t < 0.82 && last !== 'gap' && last !== 'plat') {
+          const g = ri(5, 7 + Math.round(d * 2)), py = ri(9, 10);
+          x += 1;
+          if (kind === 'tree' || (kind !== 'under' && R() < 0.4)) { const tw = Math.max(3, g - 2); B.tree(x + 1, py, tw); B.row(x + 2, py - 2, 'o'.repeat(tw - 2)); if (R() < d * 0.8) foe(x + 1 + tw / 2, py - 1, 1); }
+          else { B.row(x + 1, py, 'B'.repeat(g - 2)); B.row(x + 2, py - 3, 'o'.repeat(Math.max(1, g - 4))); if (R() < d * 0.7) B.e('walker', x + g / 2, py - 1); }
+          x += g; B.gnd(x, x + 4); x += 5; last = 'plat';
+        } else {
+          const l = ri(10, 14);
+          B.gnd(x, x + l - 1).row(x + 2, ri(8, 9), 'o'.repeat(ri(3, 6)));
+          const k = 1 + Math.round(d * 2 * R()) + (R() < 0.5 ? 1 : 0);
+          for (let i = 0; i < k; i++) foe(x + 5 + i * 1.6);
+          if (d > 0.6 && R() < 0.25) B.e('hbro', x + l - 3);
+          x += l; last = 'grp';
+        }
+      }
+      if (kind === 'under') B.fill(1, 2, x - 1, 2, T.BRK);
+      const sh = ri(4, 8), cx = x + 2 + sh;
+      B.gnd(x, w - 1).stair(x + 2, sh, 1).fill(cx, 13 - sh, cx, 12, T.HARD).flag(cx + 9);
+      if (!mid) lv.mid = 0;
+      return [B.a];
+    } };
+    RUNLV.set(100 + n, lv);
+    return lv;
+  }
+
   const tileAt = (A, cx, cy) => cx < 0 || cx >= A.w ? T.HARD : cy < 0 || cy > 14 ? T.E : A.map[cy * A.w + cx];
   const solidAt = (A, cx, cy) => SOLID[tileAt(A, cx, cy)] === 1;
   const setTile = (A, cx, cy, t) => { if (cx >= 0 && cx < A.w && cy >= 0 && cy < 15) A.map[cy * A.w + cx] = t; };
@@ -530,7 +629,7 @@
   const rowOf = s => s < CFG.jumpSpd[0] ? 0 : s < CFG.jumpSpd[1] ? 1 : 2;
 
   function newWorld(li, carry, fromMid, seed) {
-    const L = LEVELS[li];
+    const L = LV(li);
     const W = {
       li, areas: L.build(), ai: 0, A: null, ents: [], fx: [], bumps: [], multi: {},
       cam: 0, frame: 0, time: L.time, tf: 0, hurry: false, timeUp: false,
@@ -690,7 +789,7 @@
   }
 
   function player(W, inp, pr) {
-    const p = W.p, A = W.A, L = LEVELS[W.li];
+    const p = W.p, A = W.A, L = LV(W.li);
     const left = inp & 1, right = inp & 2, down = inp & 4, aH = inp & 16;
     if (p.throwT > 0) p.throwT--;
     if (inp & 32) p.run = CFG.runTimer; else if (p.run > 0) p.run--;
@@ -729,7 +828,7 @@
       p.skid = false;
       if (dir && !p.crouch) {
         if (sg && sg !== dir) {
-          p.skid = true; s -= CFG.skidDec;
+          p.skid = true; s -= CFG.skidDec; if ((W.frame & 3) === 0) dust(W, p.x + 8 - p.face * 4, p.y, 1);
           if (s < CFG.skidTurn) { s = 0; p.face = dir; p.skid = false; }
           p.vx = sg * s;
         } else {
@@ -754,7 +853,7 @@
     p.ground = false;
     if (p.vy < 0) { headCheck(W); p.lift = null; } else { floorCheck(W, py); if (!p.ground) liftCheck(W, py); }
     if (A.water && p.y - ph(p) < 34) { p.y = 34 + ph(p); if (p.vy < 0) p.vy = 0; }
-    if (p.ground) { p.vy = 0; p.chain = 0; p.jh = false; }
+    if (p.ground) { if (!wasG && p.vy > 2.4 && !A.water) dust(W, p.x + 8, p.y, 3); p.vy = 0; p.chain = 0; p.jh = false; }
     else {
       if (wasG && p.vy >= 0) { const r = rowOf(Math.abs(p.vx)); p.g1 = CFG.jumpHeld[r]; p.g2 = CFG.jumpFall[r]; p.jh = false; p.jumpSpd = Math.abs(p.vx); p.airMax = p.jumpSpd > CFG.maxWalk ? CFG.maxRun : CFG.maxWalk; }
       if (!aH) p.jh = false;
@@ -932,7 +1031,7 @@
       } else if (W.st > 24) { W.tp = 2; W.st = 0; }
     } else {
       if (!W.A.npc) W.cflag = Math.min(16, W.cflag + 0.5);
-      if (W.st > 80) { W.state = 'done'; W.result = LEVELS[W.li].castle === 2 ? 'win' : 'clear'; }
+      if (W.st > 80) { W.state = 'done'; W.result = LV(W.li).castle === 2 ? 'win' : 'clear'; }
     }
     updFx(W);
   }
@@ -1009,6 +1108,7 @@
     p.vy = -CFG.stompV; p.jh = !!(W.prev & 16); p.ground = false; p.lift = null;
     flip(e, p.x < e.x ? 1 : -1);
     addScore(W, pts, e.x, e.y - e.h); ev(W, 'stomp');
+    if (W.fx.length < 60) W.fx.push({ t: 'pop', x: e.x + 8, y: e.y - 6, life: 0 });
   }
   function bounce(W, e) {
     const p = W.p;
@@ -1337,6 +1437,7 @@
       default: ev(W, 'bump');
     }
   }
+  function dust(W, x, y, n) { for (let i = 0; i < n && W.fx.length < 60; i++) W.fx.push({ t: 'dust', x: x + (i - (n - 1) / 2) * 5, y: y - 2, vx: (i - (n - 1) / 2) * 0.35, life: 0 }); }
   function updFx(W) {
     let dead = false;
     for (const f of W.fx) {
@@ -1344,12 +1445,13 @@
       if (f.t === 'txt') { if (f.life < 30) f.y -= 1; if (f.life > 54) f.dead = dead = true; }
       else if (f.t === 'coin') { f.y += f.vy; f.vy += 0.35; if (f.life > 28) { f.dead = dead = true; W.fx.push({ t: 'txt', s: String(CFG.coinPts), x: f.x, y: f.y, life: 0 }); } }
       else if (f.t === 'deb') { f.x += f.vx; f.y += f.vy; f.vy += 0.3; if (f.y > 260) f.dead = dead = true; }
+      else if (f.t === 'dust') { f.x += f.vx; f.y -= 0.25; if (f.life > 16) f.dead = dead = true; }
       else if (f.life > (f.t === 'boom' ? 30 : 12)) f.dead = dead = true;
     }
     if (dead) W.fx = W.fx.filter(f => !f.dead);
   }
 
-  const GAME = { CFG, T, LEVELS, newWorld, step, tileAt };
+  const GAME = { CFG, T, LEVELS, LV, genLevel, newWorld, step, tileAt };
 
   function makeRenderer(ctx) {
     const cv = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
@@ -1839,6 +1941,8 @@
       for (const f of W.fx) {
         const x = f.x - cam;
         if (f.t === 'txt') text(f.s, x, f.y, NES.wht);
+        else if (f.t === 'dust') { const k = f.life < 6 ? 3 : f.life < 12 ? 2 : 1; ctx.globalAlpha = 1 - f.life / 18; ctx.fillStyle = OVK[W.A.kind] ? '#FCF0D8' : '#BCBCBC'; ctx.fillRect(Math.round(x - k / 2), Math.round(f.y - k), k + 1, k); ctx.globalAlpha = 1; }
+        else if (f.t === 'pop') { const rr = 3 + f.life * 1.2; ctx.fillStyle = f.life < 6 ? NES.wht : NES.gold; for (let i = 0; i < 6; i++) { const a = i * 1.047 + 0.3; ctx.fillRect(Math.round(x + Math.cos(a) * rr - 1), Math.round(f.y + Math.sin(a) * rr - 1), 2, 2); } }
         else if (f.t === 'coin') draw('coin' + ((f.life >> 1) & 3), coinPal(0, 'over'), x, f.y);
         else if (f.t === 'deb') { ctx.fillStyle = K.k; ctx.fillRect(Math.round(x), Math.round(f.y), 8, 8); ctx.fillStyle = K.b; ctx.fillRect(Math.round(x) + 1, Math.round(f.y) + 1, 6, 6); ctx.fillStyle = K.a; ctx.fillRect(Math.round(x) + 1, Math.round(f.y) + 1, 6, 1); ctx.fillRect(Math.round(x) + 1, Math.round(f.y) + 1, 1, 6); ctx.fillStyle = mix(K.b, K.k, .5); ctx.fillRect(Math.round(x) + 1, Math.round(f.y) + 6, 6, 1); }
         else if (f.t === 'boom') {
@@ -1850,15 +1954,15 @@
       }
       for (const l of A.labels) { const lx = l.x * 16 - cam; if (lx > -200 && lx < 256) text(l.s, lx, l.y * 16); }
       if (W.msg) {
-        const fin = LEVELS[W.li].castle === 2;
+        const fin = LV(W.li).castle === 2;
         if (A.npc) { let r = 4; while (r < 14 && !solidAt(A, A.npc, r)) r++; fin ? draw('princess', { a: NES.org, b: NES.wht, c: NES.lt, d: NES.blk, e: NES.gold, f: NES.red }, A.npc * 16 - cam, r * 16 - 24) : draw('npc', { a: NES.wht, b: NES.red, c: NES.lt, d: NES.blk, e: '#0058F8', f: NES.brn }, A.npc * 16 - cam, r * 16 - 24); }
-        text('THANK YOU MARIO!', 64, 56);
+        text('THANK YOU BRICK!', 64, 56);
         if (W.msg > 60) { if (fin) { text('YOUR QUEST IS OVER.', 52, 80); text('THANK YOU FOR PLAYING!', 36, 104); } else { text('BUT OUR PRINCESS IS IN', 40, 80); text('ANOTHER CASTLE!', 68, 96); } }
       }
     }
     function hud(st) {
       const T2 = (q, x, y) => text(q, x, y, NES.wht, 1, true);
-      T2('MARIO', 24, 16); T2(String(st.score).padStart(6, '0'), 24, 24);
+      T2('BRICK', 24, 16); T2(String(st.score).padStart(6, '0'), 24, 24);
       const cf = st.coinFr || 0;
       ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(90, 25, 5, 7);
       ctx.fillStyle = [NES.org, NES.org, NES.brn, '#883400'][cf & 3]; ctx.fillRect(89, 24, 5, 7); ctx.fillStyle = NES.blk; ctx.fillRect(91, 25, 1, 5);
@@ -2021,7 +2125,7 @@
     title: 'Brick Bros',
     category: 'Arcade',
     tint: '#5C94FC',
-    blurb: 'Run, jump and stomp through 16 classic side-scrolling stages.',
+    blurb: 'Run, jump and stomp through 16 stages, an endless Brick Run and a daily run.',
     help: '<kbd>←</kbd> <kbd>→</kbd> move · <kbd>Z</kbd>/<kbd>Shift</kbd> run &amp; fire · <kbd>X</kbd>/<kbd>Space</kbd>/<kbd>↑</kbd> jump · <kbd>↓</kbd> pipes · <kbd>Enter</kbd> start/pause · on-screen pad on touch',
     width: 800,
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="10" width="44" height="44" rx="4"/><path d="M25 27a7 7 0 1 1 10 6c-2 1-3 2-3 5"/><circle cx="32" cy="45" r="1.5"/><circle cx="16" cy="16" r="1"/><circle cx="48" cy="16" r="1"/><circle cx="16" cy="48" r="1"/><circle cx="48" cy="48" r="1"/></svg>',
@@ -2064,19 +2168,32 @@
       const bB = btn('b'), bA = btn('a'), bSel = btn('sel'), bStart = btn('start');
       if (matchMedia('(pointer: coarse)').matches) root.classList.add('touch');
 
-      const sv = Object.assign({ unlock: 0, top: 0 }, api.load() || {});
-      let mode = 'title', timer = 0, frame = 0, sel = 0, paused = false, W = null, run = null, submitted = false, lastScore = -1, prevInp = 0, newBest = false, acc = 0, touchBits = 0;
-      const titleW = GAME.newWorld(0, {}, false, 1);
+      const sv = Object.assign({ unlock: 0, top: 0, runBest: 0, runStage: 0, day: '', dayBest: 0, seen: 0, played: 0 }, api.load() || {});
+      let gm = 0, page = 0, mode = 'title', timer = 0, frame = 0, sel = 0, paused = false, W = null, run = null, submitted = false, lastScore = -1, prevInp = 0, newBest = false, acc = 0, touchBits = 0;
+      GAME.genLevel(0, 20260);
+      const titleW = GAME.newWorld(100, {}, false, 1);
       const STEP = 1 / 60;
 
       const has = (...c) => c.some(k => keys.has(k));
-      const bits = () => (has('ArrowLeft', 'KeyA') ? 1 : 0) | (has('ArrowRight', 'KeyD') ? 2 : 0) | (has('ArrowDown', 'KeyS') ? 4 : 0) | (has('ArrowUp', 'KeyW') ? 8 : 0) | (has('KeyX', 'Space', 'ArrowUp', 'KeyW', 'KeyK') ? 16 : 0) | (has('KeyZ', 'ShiftLeft', 'ShiftRight', 'KeyJ') ? 32 : 0) | (has('Enter', 'KeyP') ? 64 : 0) | touchBits;
+      const bits = () => (has('ArrowLeft', 'KeyA') ? 1 : 0) | (has('ArrowRight', 'KeyD') ? 2 : 0) | (has('ArrowDown', 'KeyS') ? 4 : 0) | (has('ArrowUp', 'KeyW') ? 8 : 0) | (has('KeyX', 'Space', 'ArrowUp', 'KeyW', 'KeyK') ? 16 : 0) | (has('KeyZ', 'ShiftLeft', 'ShiftRight', 'KeyJ') ? 32 : 0) | (has('Enter', 'KeyP') ? 64 : 0) | (has('KeyH') ? 256 : 0) | (has('KeyQ') ? 128 : 0) | touchBits;
 
       const save = () => api.save(sv);
       const unlock = li => { if (li > sv.unlock && li < LEVELS.length) { sv.unlock = li; save(); } };
+      const MODES = ['STAGES', 'BRICK RUN', 'DAILY RUN'];
+      const today = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+      const hash = q => { let h = 2166136261; for (let i = 0; i < q.length; i++) h = Math.imul(h ^ q.charCodeAt(i), 16777619); return h >>> 0; };
+      const isTouch = () => root.classList.contains('touch');
+      const pad6 = v => String(v).padStart(6, '0');
+      let hBack = 'title';
+      function openHelp(back) { hBack = back; mode = 'howto'; timer = 0; }
       function startRun() {
-        run = { li: sel, score: 0, coins: 0, lives: 3, big: false, fire: false, mid: false };
-        submitted = false; newBest = false; mode = 'intro'; timer = 0; api.score(0); lastScore = 0;
+        const seed = gm === 2 ? hash('brick' + today()) : (Math.random() * 1e9) >>> 0;
+        if (gm) GAME.genLevel(0, seed);
+        run = { gm, seed, n: 0, li: gm ? 100 : sel, score: 0, coins: 0, lives: 3, big: false, fire: false, mid: false, stomps: 0, got: 0, deaths: 0, frames: 0, cleared: 0, best: false };
+        submitted = false; newBest = false; timer = 0; api.score(0); lastScore = 0;
+        sv.played = (sv.played || 0) + 1;
+        if (!sv.seen) { sv.seen = 1; openHelp('intro'); } else mode = 'intro';
+        save();
         audio.unlock(); audio.stop();
       }
       function beginLevel() {
@@ -2085,7 +2202,11 @@
       }
       function finish(won) {
         if (!submitted) { submitted = true; newBest = api.submit(run.score); }
-        if (run.score > sv.top) { sv.top = run.score; save(); }
+        if (run.score > sv.top) sv.top = run.score;
+        if (run.gm === 0 && run.score >= sv.top && run.score > 0) run.best = true;
+        if (run.gm === 1) { if (run.score > sv.runBest) { sv.runBest = run.score; run.best = true; } sv.runStage = Math.max(sv.runStage || 0, run.n + 1); }
+        if (run.gm === 2) { if (sv.day !== today()) { sv.day = today(); sv.dayBest = 0; } if (run.score > sv.dayBest) { sv.dayBest = run.score; run.best = true; } }
+        save();
         mode = won ? 'win' : 'over'; timer = 0;
         if (won) { sv.unlock = LEVELS.length - 1; save(); } else audio.jingle('gameover');
       }
@@ -2094,17 +2215,22 @@
         const r = W.result;
         run.score = W.score; run.coins = W.coins; run.lives = W.lives;
         if (r === 'clear' || r === 'warp') {
-          run.big = W.p.big; run.fire = W.p.fire; run.mid = false;
-          run.li = r === 'warp' ? W.warp : run.li + 1;
-          unlock(run.li); mode = 'intro'; timer = 0;
+          run.big = W.p.big; run.fire = W.p.fire; run.mid = false; run.cleared++;
+          if (run.gm) {
+            run.n++; GAME.genLevel(run.n, run.seed); run.li = 100 + run.n;
+            if (run.n % 4 === 0) { run.lives++; audio.sfx('1up'); }
+          } else { run.li = r === 'warp' ? W.warp : run.li + 1; unlock(run.li); }
+          mode = 'intro'; timer = 0;
         } else if (r === 'win') finish(true);
         else {
-          run.lives--; run.big = false; run.fire = false; run.mid = W.mid;
+          run.lives--; run.deaths++; run.big = false; run.fire = false; run.mid = W.mid;
           if (W.timeUp) { mode = 'timeup'; timer = 0; } else afterDeath();
         }
       }
       function toTitle() { mode = 'title'; timer = 0; W = null; sel = Math.min(sel, sv.unlock); audio.stop(); }
       function onEv(n) {
+        if (run && (n === 'stomp' || n === 'kick')) run.stomps++;
+        if (run && n === 'coin') run.got++;
         if (n === 'die') audio.jingle('die');
         else if (n === 'flag') { audio.stop(); audio.sfx('flag'); }
         else if (n === 'clear') audio.jingle('clear');
@@ -2119,62 +2245,130 @@
         prevInp = inp;
         switch (mode) {
           case 'title':
-            if (pr & 3 || pr & 128) { const n = sv.unlock + 1; sel = (sel + (pr & 1 ? n - 1 : 1)) % n; audio.sfx('select'); }
+            if (pr & 256) { openHelp('title'); audio.sfx('select'); }
+            else if (pr & 132) { gm = (gm + 1) % 3; audio.sfx('select'); }
+            else if (pr & 3) { if (gm === 0 && sv.unlock) { const n = sv.unlock + 1; sel = (sel + (pr & 1 ? n - 1 : 1)) % n; } audio.sfx('select'); }
             else if (pr & 80) startRun();
             break;
+          case 'howto': if (++timer > 15 && (pr & 338)) { mode = hBack; timer = 0; audio.sfx('select'); } break;
           case 'intro': if (++timer > 165) beginLevel(); break;
           case 'play':
             if (pr & 64) { paused = !paused; audio.stop(); audio.sfx('pause'); }
             if (paused) break;
+            run.frames++;
             GAME.step(W, inp & 63);
             for (const n of W.ev) onEv(n);
             if (W.score !== lastScore) api.score(lastScore = W.score);
             if (W.state === 'done') onResult();
             break;
           case 'timeup': if (++timer > 150) afterDeath(); break;
-          case 'over': if (++timer > 280 || (timer > 60 && (pr & 80))) toTitle(); break;
+          case 'over': if (++timer > 45) { if (pr & 80) startRun(); else if (pr & 132) toTitle(); } break;
           case 'win': if (++timer > 90 && (pr & 80)) toTitle(); break;
         }
         if (mode === 'play' && !paused && W) audio.music(PLAYING[W.state] ? (W.p.star > 50 ? 'star' : MUS[W.A.kind]) : null);
         else if (mode !== 'over') audio.music(null);
       }
       const coinFr = () => [0, 0, 0, 1, 2, 1][(frame >> 3) % 6];
-      function hudFor(time, world) { return { score: run ? (W ? W.score : run.score) : 0, coins: run ? (W ? W.coins : run.coins) : 0, world: world || LEVELS[run ? run.li : sel].name, time, coinFr: coinFr() }; }
+      function hudFor(time, world) { return { score: run ? (W ? W.score : run.score) : 0, coins: run ? (W ? W.coins : run.coins) : 0, world: world || GAME.LV(run ? run.li : sel).name, time, coinFr: coinFr() }; }
       function black() { const c = R.ctx; c.fillStyle = '#000'; c.fillRect(0, 0, 256, 240); }
+      const mid = (q, y, col, sc = 1) => R.text(q, 128 - q.length * 4 * sc, y, col, sc);
+      function outline(q, x, y, col, sc) {
+        for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [2, 2], [1, 2], [2, 1], [-1, 1], [1, -1]]) R.text(q, x + dx, y + dy, '#2A0E04', sc);
+        R.text(q, x, y, col, sc);
+      }
+      function logo(y0) {
+        const c = R.ctx, x0 = 36, w = 184, h = 62;
+        c.fillStyle = 'rgba(0,0,0,.45)'; c.fillRect(x0 + 3, y0 + 4, w, h);
+        c.fillStyle = '#2A0E04'; c.fillRect(x0 - 2, y0 - 2, w + 4, h + 4);
+        c.fillStyle = '#B4480F'; c.fillRect(x0, y0, w, h);
+        for (let r = 0; r < h; r += 8) {
+          c.fillStyle = '#D9682A'; c.fillRect(x0, y0 + r, w, 1);
+          c.fillStyle = '#6E2606'; c.fillRect(x0, y0 + r + 7, w, 1);
+          for (let k = (r >> 3) & 1 ? 8 : 0; k < w; k += 16) { c.fillStyle = '#6E2606'; c.fillRect(x0 + k, y0 + r, 1, 7); c.fillStyle = '#D9682A'; c.fillRect(x0 + k + 1, y0 + r + 1, 1, 6); }
+        }
+        c.fillStyle = 'rgba(255,240,200,.18)'; c.fillRect(x0, y0, w, 3);
+        outline('BRICK', 68, y0 + 6, '#FCF0D8', 3);
+        outline('BROS.', 68, y0 + 35, NES.gold, 3);
+        c.fillStyle = NES.gold; for (const [x, y] of [[x0 + 4, y0 + 4], [x0 + w - 6, y0 + 4], [x0 + 4, y0 + h - 6], [x0 + w - 6, y0 + h - 6]]) c.fillRect(x, y, 2, 2);
+      }
       function render() {
         const c = R.ctx;
         if (mode === 'title') {
           R.world(titleW, frame);
-          c.fillStyle = 'rgba(0,0,0,.35)'; c.fillRect(41, 35, 178, 90);
-          c.fillStyle = NES.blk; c.fillRect(39, 31, 178, 90);
-          c.fillStyle = NES.lt; c.fillRect(40, 32, 176, 88);
-          c.fillStyle = '#C07868'; c.fillRect(40, 118, 176, 2); c.fillRect(214, 32, 2, 88);
-          c.fillStyle = NES.brn; c.fillRect(42, 34, 172, 84);
-          c.fillStyle = '#E8661C'; c.fillRect(42, 34, 172, 38);
-          c.fillStyle = '#E87C3C'; c.fillRect(42, 34, 172, 1); c.fillRect(42, 34, 1, 84);
-          c.fillStyle = '#8C3004'; c.fillRect(42, 116, 172, 2); c.fillRect(212, 34, 2, 84);
-          c.fillStyle = NES.blk; for (const [x, y] of [[45, 37], [209, 37], [45, 113], [209, 113]]) { c.fillRect(x, y, 2, 2); c.fillStyle = NES.lt; c.fillRect(x, y, 1, 1); c.fillStyle = NES.blk; }
-          R.text('SUPER', 54, 40, NES.blk, 2); R.text('SUPER', 53, 39, NES.lt, 2);
-          R.text('MARIO', 70, 61, '#5C1800', 3); R.text('MARIO', 69, 59, NES.blk, 3); R.text('MARIO', 68, 58, NES.lt, 3);
-          R.text('BROS.', 70, 91, '#5C1800', 3); R.text('BROS.', 69, 89, NES.blk, 3); R.text('BROS.', 68, 88, NES.lt, 3);
-          R.text('@2026 GAMEPLAY', 104, 124, NES.lt);
-          R.text('1 PLAYER GAME', 88, 142);
-          R.draw('bean', { a: NES.red, b: NES.blk, c: NES.wht, d: NES.lt }, 72, 141);
-          R.text((sv.unlock ? '< ' : '  ') + 'WORLD ' + LEVELS[sel].name + (sv.unlock ? ' >' : ''), 72, 158);
-          R.text('TOP- ' + String(sv.top).padStart(6, '0'), 96, 178);
-          if ((frame >> 5) & 1) R.text('PUSH START', 88, 200);
-          R.hud({ score: run ? run.score : 0, coins: 0, world: LEVELS[sel].name, time: null, coinFr: coinFr() });
+          logo(38);
+          const my = 110;
+          c.fillStyle = 'rgba(10,6,30,.72)'; c.fillRect(44, my - 6, 168, 46);
+          c.fillStyle = 'rgba(255,255,255,.25)'; c.fillRect(44, my - 6, 168, 1);
+          MODES.forEach((m, i) => R.text(m, 68, my + i * 13, i === gm ? NES.wht : '#8C8CA8'));
+          R.draw('bean', { a: NES.red, b: NES.blk, c: NES.wht, d: NES.lt }, 54 + ((frame >> 4) & 1), my - 1 + gm * 13);
+          if (gm === 0) R.text((sv.unlock ? '<' : ' ') + LEVELS[sel].name + (sv.unlock ? '>' : ' '), 160, my, NES.gold);
+          if (gm === 1) R.text('ENDLESS', 152, my + 13, NES.gold);
+          if (gm === 2) R.text('1 SEED', 160, my + 26, NES.gold);
+          const bl = gm === 0 ? 'TOP ' + pad6(sv.top) : gm === 1 ? 'BEST ' + pad6(sv.runBest) + ' R-' + Math.max(1, sv.runStage || 0) : 'TODAY ' + pad6(sv.day === today() ? sv.dayBest : 0);
+          mid(bl, 154, NES.gold);
+          if ((frame >> 5) & 1) mid(isTouch() ? 'TAP TO START' : 'PRESS ENTER', 166, NES.wht);
+          c.fillStyle = 'rgba(10,6,30,.72)'; c.fillRect(40, 180, 176, 40);
+          const L3 = isTouch() ? ['PAD MOVE     A JUMP', 'B RUN/FIRE  DOWN PIPE', 'SELECT MODE  TAP: HELP'] : ['ARROWS MOVE  X JUMP', 'Z RUN/FIRE  DOWN PIPE', 'DOWN MODE   H HELP'];
+          L3.forEach((q, i) => mid(q, 184 + i * 11, i === 2 ? '#9CFCF0' : NES.wht));
+          R.draw('b_stand', HERO_PAL, 14, 176);
+          R.draw(((frame >> 4) & 1) ? 'walker1' : 'walker0', { a: NES.brn, b: NES.blk, c: NES.lt }, 226, 192);
+          R.hud({ score: 0, coins: 0, world: gm ? (gm === 1 ? 'RUN' : 'DAY') : LEVELS[sel].name, time: null, coinFr: coinFr() });
+        } else if (mode === 'howto') {
+          c.fillStyle = '#16123A'; c.fillRect(0, 0, 256, 240);
+          c.fillStyle = '#221C52'; for (let y = 0; y < 240; y += 16) c.fillRect(0, y, 256, 8);
+          mid('HOW TO PLAY', 10, NES.gold, 2);
+          const tch = isTouch();
+          const rows = [
+            ['RUN', tch ? 'PAD LEFT / RIGHT' : 'ARROW KEYS OR A / D', tch ? 'HOLD B TO SPRINT' : 'HOLD Z OR SHIFT: SPRINT'],
+            ['JUMP', tch ? 'TAP A' : 'X, SPACE OR UP', 'HOLD LONGER, JUMP HIGHER'],
+            ['STOMP FOES', 'LAND ON THEIR HEADS', 'TOUCHING THE SIDE HURTS'],
+            ['BUMP BLOCKS', '? BLOCKS HIDE COINS', 'AND GROW / FIRE POWERS'],
+            ['REACH THE FLAG', 'BEFORE THE TIMER ENDS', 'HALFWAY IS A CHECKPOINT']
+          ];
+          rows.forEach((r, i) => {
+            const y = 34 + i * 38;
+            c.fillStyle = 'rgba(0,0,0,.35)'; c.fillRect(12, y - 2, 232, 34);
+            c.fillStyle = '#5C94FC'; c.fillRect(14, y, 30, 30);
+            c.fillStyle = '#80D010'; c.fillRect(14, y + 26, 30, 4);
+            const a = frame >> 3;
+            if (i === 0) R.draw('s_w' + (a % 3 + 1), HERO_PAL, 21, y + 10);
+            if (i === 1) R.draw('s_jump', HERO_PAL, 21, y + 4 + Math.round(Math.abs(Math.sin(frame / 14)) * -2) + 4);
+            if (i === 2) { R.draw('walkerF', { a: NES.brn, b: NES.blk, c: NES.lt }, 21, y + 10); R.draw('s_jump', HERO_PAL, 25, y - 2 + ((frame >> 4) & 1) * 2); }
+            if (i === 3) { c.drawImage(R.tile(T.QC, 'over', (a >> 1) % 3), 21, y + 10); R.draw('berry', { a: NES.red, b: NES.blk, c: NES.wht, d: NES.lt }, 21, y - 4 + ((frame >> 5) & 1) * 2); }
+            if (i === 4) { c.fillStyle = '#9CFC9C'; c.fillRect(36, y + 2, 2, 24); R.draw('flag', { a: NES.wht, b: NES.grn }, 21, y + 4); }
+            R.text(r[0], 52, y + 1, NES.gold); R.text(r[1], 52, y + 11, NES.wht); R.text(r[2], 52, y + 21, '#BCBCD8');
+          });
+          if (timer > 15 && (frame >> 5) & 1) mid(tch ? 'TAP TO CONTINUE' : 'PRESS ENTER', 228, NES.wht);
         } else if (mode === 'intro') {
           black(); R.hud(hudFor(null));
-          R.text('WORLD ' + LEVELS[run.li].name, 88, 80);
+          if (run.gm) mid(MODES[run.gm], 58, NES.gold);
+          mid('WORLD ' + GAME.LV(run.li).name, 80, NES.wht);
           R.draw('s_stand', HERO_PAL, 96, 102);
           R.text('*  ' + run.lives, 120, 108);
+          if (run.gm && run.n && run.n % 4 === 0 && timer < 120) mid('BONUS LIFE!', 140, NES.lgrn);
+          else if (run.mid) mid('CHECKPOINT', 140, '#9CFCF0');
         } else if (mode === 'play') {
           R.world(W, frame);
           R.hud(hudFor(W.state === 'done' ? null : W.time));
-          if (paused) R.text('PAUSE', 108, 112);
+          if (paused) { c.fillStyle = 'rgba(0,0,0,.5)'; c.fillRect(0, 100, 256, 40); mid('PAUSE', 112, NES.wht, 2); }
         } else if (mode === 'timeup') { black(); R.hud(hudFor(0)); R.text('TIME UP', 100, 116); }
-        else if (mode === 'over') { black(); R.hud(hudFor(null)); R.text('GAME OVER', 92, 116); if (newBest && timer > 40) R.text('NEW BEST!', 92, 136, NES.gold); }
+        else if (mode === 'over') {
+          if (W) R.world(W, frame); else black();
+          c.fillStyle = 'rgba(0,0,0,.62)'; c.fillRect(0, 0, 256, 240);
+          R.hud(hudFor(null));
+          c.fillStyle = '#2A0E04'; c.fillRect(30, 44, 196, 168);
+          c.fillStyle = '#4A1C0A'; c.fillRect(32, 46, 192, 164);
+          c.fillStyle = '#B4480F'; c.fillRect(32, 46, 192, 26);
+          c.fillStyle = '#D9682A'; c.fillRect(32, 46, 192, 1);
+          outline('GAME OVER', 56, 52, '#FCF0D8', 2);
+          mid(MODES[run.gm], 78, NES.gold);
+          const sec = Math.floor(run.frames / 60);
+          const best = run.gm === 0 ? sv.top : run.gm === 1 ? sv.runBest : sv.dayBest;
+          const st = [['SCORE', pad6(run.score)], ['BEST', pad6(best)], ['REACHED', 'WORLD ' + GAME.LV(run.li).name], ['CLEARED', String(run.cleared)], ['COINS', String(run.got)], ['FOES', String(run.stomps)], ['TIME', Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0')]];
+          st.forEach(([k, v], i) => { const y = 92 + i * 11; R.text(k, 44, y, '#BCBCD8'); R.text(v, 212 - v.length * 8, y, NES.wht); });
+          if (run.best && (frame >> 4) & 1) mid('NEW BEST!', 172, NES.gold);
+          if (timer > 45) { mid(isTouch() ? 'TAP OR A: RETRY' : 'ENTER: RETRY', 186, NES.wht); mid(isTouch() ? 'SELECT: MENU' : 'DOWN: MENU', 197, '#9CFCF0'); }
+        }
         else if (mode === 'win') {
           black(); R.hud(hudFor(null, LEVELS[LEVELS.length - 1].name));
           R.text('CONGRATULATIONS!', 64, 56, NES.gold);
@@ -2228,8 +2422,14 @@
       api.on(view.canvas, 'pointerdown', e => {
         if (e.pointerType === 'touch') root.classList.add('touch');
         audio.unlock();
-        if (mode === 'title') startRun();
-        else if (mode === 'over' && timer > 60) toTitle();
+        const q = view.canvas.getBoundingClientRect(), fy = (e.clientY - q.top) / q.height * 240;
+        if (mode === 'title') {
+          if (fy >= 104 && fy < 146) { gm = Math.max(0, Math.min(2, Math.floor((fy - 104) / 13))); startRun(); }
+          else if (fy >= 176) openHelp('title');
+          else startRun();
+        }
+        else if (mode === 'howto' && timer > 15) { mode = hBack; timer = 0; }
+        else if (mode === 'over' && timer > 45) startRun();
         else if (mode === 'win' && timer > 90) toTitle();
       });
       api.loop(dt => {

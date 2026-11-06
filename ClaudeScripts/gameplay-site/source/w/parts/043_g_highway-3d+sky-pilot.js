@@ -1395,7 +1395,7 @@
         if ((S.spark -= dt) <= 0) { S.spark = .04; tmp.set(S.x + sg * .95, .4, .6); burst.fire(tmp, 4, 5, ['#ffd166', '#ff9f1c', '#fff3b0'], .6); }
         if ((S.scrape -= dt) <= 0) { S.scrape = .9; U.pop('Scraping! ' + Math.round(S.dmg * 100) + '% damage', 'bad'); api.sfx('hit'); }
         if (S.dmg >= 1) { crash(null); return; }
-      }
+      } else if (S.dmg > 0) S.dmg = Math.max(0, S.dmg - dt * .012);
       S.pitchT = b ? -.022 : g ? .012 : 0;
       const k = 1 - Math.exp(-S.dist / 5000);
       S.dist += S.V * dt * (twoWay && S.x < 0 ? 2 : 1);
@@ -2229,7 +2229,7 @@
       const f = S.fuel / 100;
       fuelBar.style.transform = `scaleX(${f.toFixed(3)})`;
       const low = f < .25;
-      if (low !== S.low) { S.low = low; fuelBar.parentNode.classList.toggle('low', low); }
+      if (low !== S.low) { S.low = low; fuelBar.parentNode.classList.toggle('low', low); if (low && S.fuel > 0 && mode === 'run') { U.pop('Low fuel! Fly through rings', 'bad'); api.sfx('bad'); } }
       const s = `${Math.round(pos.y)}|${score()}|${S.rings}|${S.mult}|${S.coins}|${S.arm}`;
       if (s !== S.shown) {
         S.shown = s;

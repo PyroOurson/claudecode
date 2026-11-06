@@ -100,6 +100,7 @@
     width: 640,
     icon: ICON + '<rect x="8" y="13" width="22" height="31" rx="4" transform="rotate(-7 19 28.5)"/><rect x="34" y="20" width="22" height="31" rx="4" transform="rotate(7 45 35.5)"/><circle cx="19" cy="28.5" r="5"/><circle cx="45" cy="35.5" r="5"/></svg>',
     css: pickCss('pairs') + `
+.am-gamebox.fs .gm-pairs.g-root{background:var(--sunk)}
 .gm-pairs{gap:14px}
 .gm-pairs .board{touch-action:none;display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:clamp(6px,1.6vw,12px);width:min(var(--mw),100%,calc((100dvh - 360px) * var(--cols) / var(--rows) * .8))}
 .gm-pairs .pcard{position:relative;display:block;width:100%;aspect-ratio:4/5;padding:0;border:0;border-radius:14%/11%;background:none;cursor:pointer;perspective:700px;transition:transform .3s var(--ease);animation:gm-pairs-in .5s var(--ease) var(--d,0ms) backwards}
@@ -230,6 +231,7 @@
     width: 560,
     icon: ICON + [...Array(9)].map((_, i) => `<rect x="${9 + i % 3 * 17}" y="${9 + (i / 3 | 0) * 17}" width="12" height="12" rx="3"${i === 1 || i === 6 ? ' fill="currentColor"' : i === 5 ? ' fill="currentColor" opacity=".3"' : ''}/>`).join('') + '</svg>',
     css: pickCss('sequence') + `
+.am-gamebox.fs .gm-sequence.g-root{background:var(--sunk)}
 .gm-sequence{gap:14px}
 .gm-sequence .status{display:flex;flex-direction:column;align-items:center;gap:8px}
 .gm-sequence .lvl{font:900 clamp(34px,5vw,44px)/1 var(--sans);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
@@ -399,6 +401,7 @@
     width: 640,
     icon: ICON + '<rect x="7" y="13" width="50" height="28" rx="7"/><circle cx="21" cy="27" r="2.6" fill="currentColor"/><circle cx="32" cy="27" r="2.6" fill="currentColor"/><circle cx="43" cy="27" r="2.6" fill="currentColor"/><path d="M7 51h50" opacity=".3"/><path d="M7 51h30"/></svg>',
     css: pickCss('number-memory') + `
+.am-gamebox.fs .gm-number-memory.g-root{background:var(--sunk)}
 .gm-number-memory{gap:14px}
 .gm-number-memory .stage{display:grid;width:100%;container-type:inline-size}
 .gm-number-memory .view{grid-area:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;min-width:0;opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .25s var(--ease),transform .4s var(--ease),visibility 0s linear .4s}

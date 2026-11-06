@@ -98,13 +98,16 @@ function search(q, pool) {
   if (!full) return { list: [], partial: false, scores: new Map() };
   const pre = g => norm(g.info.name).startsWith(full);
   const alpha = l => l.slice().sort((x, y) => x.title.localeCompare(y.title, 'en', { sensitivity: 'base' }));
+  const names = g => norm(g.info.name) + ' ' + norm(g.oldTitle);
+  const wordAt = g => (' ' + names(g)).includes(' ' + full), inside = g => names(g).includes(full);
   if (full.length < 3) {
-    const list = alpha(pool.filter(pre)), scores = new Map();
+    const a = alpha(pool.filter(pre)), b = alpha(pool.filter(g => !pre(g) && wordAt(g))), c = full.length > 1 ? alpha(pool.filter(g => !pre(g) && !wordAt(g) && inside(g))) : [];
+    const list = a.concat(b, c), scores = new Map();
     list.forEach((g, i) => scores.set(g, 1000 - i * .01));
     return { list, partial: false, scores };
   }
   const qt = toks(q).filter(t => !STOP.has(t));
-  if (!qt.length) return { list: pool, partial: false, scores: null };
+  if (!qt.length) { const list = alpha(pool.filter(inside)), scores = new Map(); list.forEach((g, i) => scores.set(g, 1000 - i * .01)); return { list, partial: false, scores }; }
   let r = runSearch(qt, pool, qt.every(t => t.length >= 4 || false) || qt.length > 1 && qt[qt.length - 1].length >= 4);
   let list = [...r.scores.keys()].filter(g => r.misses.get(g) === 0);
   if (!list.length) { r = runSearch(qt, pool, true); list = [...r.scores.keys()].filter(g => r.misses.get(g) === 0); }
@@ -124,6 +127,7 @@ function search(q, pool) {
     rest = rest.filter(g => scores.get(g) >= top * .2);
   }
   list = head.concat(rest);
+  if (!list.length) { list = alpha(pool.filter(inside)); list.forEach((g, i) => scores.set(g, 1000 - i * .01)); }
   return { list, partial, scores };
 }
 
@@ -131,7 +135,8 @@ const state = { q: '', f: new Set(), g: new Set(), p: new Set(), t: new Set(), v
 const FKEYS = ['f', 'g', 'p', 't', 'v', 'c'];
 function resetState() { state.q = ''; FKEYS.forEach(k => state[k].clear()); state.sort = ''; }
 const activeCount = () => FKEYS.reduce((n, k) => n + state[k].size, 0);
-const defSort = () => state.q.trim() ? 'rel' : 'rec';
+const qText = () => norm(state.q) ? state.q.trim() : '';
+const defSort = () => qText() ? 'rel' : 'rec';
 const nFilters = () => activeCount() + (state.sort && state.sort !== defSort() ? 1 : 0);
 function passes(g) {
   const m = g.info;
@@ -143,15 +148,45 @@ function passes(g) {
   if (state.c.size && !state.c.has(g.kb ? 'kb' : 'tp') && !(state.c.has('kb') && g.kb)) return false;
   return true;
 }
+const POP_NOW = ['rocket-soccer', 'among-us', 'maze-tanks', 'block-roll', 'minesweeper', 'durak', 'last-card', 'bean-royale', 'paper-land', 'slither', 'hole-city', 'slope-3d', 'blockcraft-3d', 'risk'];
+const CARD_RE = /\bcards?\b|solitaire|poker|deck|tarot|rummy|blackjack|belote|euchre|cribbage/;
+function fam(g) {
+  if (g.fam) return g.fam;
+  const m = g.info, k = m.genres;
+  let f = k[0];
+  if (!m.pl.includes('s') && m.pl.includes('o')) f = 'Party';
+  else if (k.includes('Board') && CARD_RE.test(m.kw + ' ' + norm(m.name)) && !/mahjong|domino|rummikub|bingo|yahtzee/.test(g.id)) f = 'Cards';
+  else if (k[0] === 'Board') f = 'Board';
+  return g.fam = f;
+}
+let MIX = null;
+function mixRank(g) {
+  if (!MIX) {
+    MIX = new Map();
+    const head = POP_NOW.map(id => byId.get(id)).filter(Boolean), fams = new Map(), keyed = [];
+    games.filter(x => !head.includes(x)).sort((a, b) => a.info.rank - b.info.rank).forEach(x => { const f = fam(x); if (!fams.has(f)) fams.set(f, []); fams.get(f).push(x); });
+    fams.forEach(L => L.forEach((x, i) => keyed.push([(i + .5) / L.length, x.info.rank, x])));
+    keyed.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const q = head.concat(keyed.map(x => x[2])), out = [];
+    while (q.length) {
+      const a = out.length ? fam(out[out.length - 1]) : '', b = out.length > 1 ? fam(out[out.length - 2]) : '';
+      let i = q.findIndex(x => fam(x) !== a && fam(x) !== b);
+      if (i < 0) i = q.findIndex(x => fam(x) !== a);
+      out.push(q.splice(Math.max(0, i), 1)[0]);
+    }
+    out.forEach((x, i) => MIX.set(x.id, i));
+  }
+  return MIX.has(g.id) ? MIX.get(g.id) : 900 + g.info.rank;
+}
 function compute() {
-  const q = state.q.trim();
+  const q = qText();
   let list = games.filter(passes), partial = false, scores = null;
   if (q) ({ list, partial, scores } = search(q, list));
   const sort = state.sort || defSort();
   const byRank = (a, b) => a.info.rank - b.info.rank;
   const cmp = {
     rel: (a, b) => ((scores && scores.get(b)) || 0) - ((scores && scores.get(a)) || 0) || byRank(a, b),
-    rec: byRank,
+    rec: (a, b) => mixRank(a) - mixRank(b),
     az: (a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }),
     new: (a, b) => (NEWEST_RANK.get(a.id) ?? 999) - (NEWEST_RANK.get(b.id) ?? 999) || byRank(a, b),
     played: (a, b) => (S.plays[b.id] || 0) - (S.plays[a.id] || 0) || byRank(a, b),
@@ -166,7 +201,7 @@ const href = (id, code) => PATH_MODE ? '/' + id + (code ? '/' + code : '') : '#/
 const legalHref = k => (PATH_MODE ? '/' : '#/') + k;
 function stateQuery() {
   const p = new URLSearchParams();
-  if (state.q.trim()) p.set('q', state.q.trim());
+  if (qText()) p.set('q', qText());
   FKEYS.forEach(k => { if (state[k].size) p.set(k, [...state[k]].join(',')); });
   if (state.sort) p.set('s', state.sort);
   const s = p.toString();
@@ -179,6 +214,8 @@ function parseLocation() {
     path = location.pathname.replace(/^\/+|\/+$/g, '');
     query = location.search;
     if (!path && /^#\/[\w-]/.test(location.hash)) { path = location.hash.slice(2); const i = path.indexOf('?'); if (i >= 0) { query = path.slice(i); path = path.slice(0, i); } }
+    try { path = decodeURIComponent(path); } catch (e) {}
+    path = path.replace(/^([^/]+)/, x => x.toLowerCase());
   } else {
     const h = location.hash.replace(/^#\/?/, '');
     const i = h.indexOf('?');
@@ -213,13 +250,32 @@ function go(url, replace) {
   if (location.hash === url) route(); else { progNav = true; location.hash = url; }
 }
 
-const LZ = { key: null, kp: null, dir: '', root: '', raw: {}, code: {}, packs: [], packOf: {}, pk: {}, done: new Set(), io: null };
+const LZ = { key: null, kp: null, dir: '', root: '', raw: {}, code: {}, packs: [], packOf: {}, pk: {}, done: new Set(), io: null, alt: 0, fail: new Set() };
 const BLANK = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 10"/>');
 const lzB64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 const lzUrl = (f, ext) => LZ.root + LZ.dir + f + ext;
-function lzFetch(f) {
+function lzGet(f, small) {
+  const order = LZ.alt ? ['.json', '.bin'] : ['.bin', '.json'];
+  const lim = small ? [12000, 15000, 25000, 40000] : [45000, 60000, 90000, 120000];
+  const one = (ext, ms) => {
+    const c = window.AbortController ? new AbortController() : null;
+    const tm = c ? setTimeout(() => c.abort(), ms) : 0;
+    return fetch(lzUrl(f, ext), c ? { signal: c.signal } : undefined).then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return ext === '.json' ? r.json().then(t => { if (typeof t !== 'string') throw new Error('bad mirror'); return lzB64(t).buffer; }) : r.arrayBuffer();
+    }).finally(() => clearTimeout(tm));
+  };
+  let n = 0;
+  const step = () => one(order[n % 2], lim[n]).then(buf => { LZ.alt = order[n % 2] === '.json' ? 1 : 0; return buf; }, e => {
+    n++;
+    if (n >= lim.length) throw e;
+    return new Promise(r => setTimeout(r, n < 2 ? 0 : 1200 * n)).then(step);
+  });
+  return step();
+}
+function lzFetch(f, small) {
   if (LZ.raw[f]) return LZ.raw[f];
-  const get = () => fetch(lzUrl(f, '.bin')).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); });
+  const get = () => lzGet(f, small);
   const pre = window.__gpPre && window.__gpPre[f];
   if (pre) delete window.__gpPre[f];
   return LZ.raw[f] = (pre ? pre.catch(get) : get()).catch(e => { delete LZ.raw[f]; throw e; });
@@ -289,16 +345,30 @@ function cvPump() {
     const id = CV.q.shift(), g = byId.get(id);
     if (!g || !g.cv) continue;
     CV.n++;
-    CV.p[id] = lzFetch(g.cv).then(lzOpenBuf).then(buf => {
+    CV.p[id] = lzFetch(g.cv, true).then(lzOpenBuf).then(buf => {
       delete LZ.raw[g.cv];
       const u = URL.createObjectURL(new Blob([buf], { type: g.cvt || 'image/webp' }));
       CV.url[id] = u; coverCache.delete(id); setImgs(id, u);
     }, e => {
-      CV.bad[id] = 1; coverCache.delete(id); setImgs(id, coverUrl(g));
+      CV.bad[id] = 1; coverCache.delete(id); lzFailed(id);
     }).finally(() => { delete CV.p[id]; CV.n--; cvPump(); });
   }
 }
-const lzCover = (id, hi) => { const g = byId.get(id); if (g && g.cv) { cvWant(id, hi); return; } const i = LZ.packOf[id]; if (i != null && !LZ.done.has(id)) lzPack(i).catch(() => {}); };
+function lzFailed(id) {
+  const g = byId.get(id);
+  if (!g) return;
+  LZ.fail.add(id);
+  document.querySelectorAll('img[data-cv="' + id + '"]').forEach(im => { im.removeAttribute('data-cv'); im.dataset.cvf = id; im.src = coverUrl(g); });
+}
+function lzRetry() {
+  if (!LZ.fail.size) return;
+  const ids = [...LZ.fail];
+  LZ.fail.clear();
+  ids.forEach(id => { delete CV.bad[id]; LZ.done.delete(id); coverCache.delete(id); document.querySelectorAll('img[data-cvf="' + id + '"]').forEach(im => { im.removeAttribute('data-cvf'); im.dataset.cv = id; }); lzCover(id, false); });
+}
+window.addEventListener('online', () => setTimeout(lzRetry, 800));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && LZ.fail.size && navigator.onLine !== false) setTimeout(lzRetry, 400); });
+const lzCover = (id, hi) => { const g = byId.get(id); if (g && g.cv) { cvWant(id, hi); return; } const i = LZ.packOf[id]; if (i != null && !LZ.done.has(id)) lzPack(i).catch(() => { LZ.packs[i].ids.forEach(x => { if (!Ameplay.covers[x] && !Ameplay.shots[x]) { LZ.done.add(x); coverCache.delete(x); lzFailed(x); } }); }); };
 function lzScan(now) {
   const imgs = document.querySelectorAll('img[data-cv]');
   if (!imgs.length) return;
@@ -355,11 +425,71 @@ function coverUrl(g) {
   return url;
 }
 const thumbsOn = () => S.prefs.thumbs !== false;
-const tint = g => g.cc || TINT[g.id] || '#6c5ce7';
+const tint = g => g.cc || TINT[g.id] || 'var(--ph1)';
 const img = (g, pri) => { if (!thumbsOn()) return ''; const u = coverUrl(g); return `<img src="${u}"${u === BLANK ? ` data-cv="${g.id}"` : ''} alt="" width="16" height="10"${pri ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async" draggable="false">`; };
 let sel = null;
-const card = (g, src, i) => `<a class="card${sel === g.id && src === 'grid' ? ' sel' : ''}${sfOff(g.id) ? ' off' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="${src}" style="--c:${tint(g)};--i:${i || 0}"><div class="art">${img(g, i != null && i < 10)}${sfOff(g.id) ? '<span class="offb">Temporarily unavailable</span>' : ''}</div>${fvBtn(g.id)}<div class="name">${esc(g.title)}</div></a>`;
+const cardMeta = g => { const b = S.best[g.id], t = S.last[g.id], p = []; if (b != null) p.push('Best ' + fmt(g, b)); if (t) p.push(ago(t)); return p.length ? `<div class="meta">${esc(p.join(' · '))}</div>` : ''; };
+const card = (g, src, i) => `<a class="card${sel === g.id && src === 'grid' ? ' sel' : ''}${sfOff(g.id) ? ' off' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="${src}" style="--c:${tint(g)};--i:${i || 0}"><div class="art">${img(g, i != null && i < 10)}${sfOff(g.id) ? '<span class="offb">Temporarily unavailable</span>' : ''}</div>${fvBtn(g.id)}<div class="name">${esc(g.title)}</div>${src === 'rail' ? cardMeta(g) : ''}</a>`;
 const srow = g => `<a class="srow${sel === g.id ? ' sel' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="side" ><span class="n">${esc(g.title)}</span></a>`;
+const filterHref = q => (PATH_MODE ? '/' : '#/') + '?' + q;
+const SHELVES = [
+  ['pop', 'Popular now', null, ''],
+  ['online', 'Play online with friends', g => onlineMax(g.info.pl) > 0, 'p=o'],
+  ['action', 'Action', g => g.info.genres.includes('Action'), 'g=Action'],
+  ['cards', 'Card games', g => fam(g) === 'Cards', 'g=Board'],
+  ['board', 'Board games', g => fam(g) === 'Board', 'g=Board'],
+  ['puzzle', 'Puzzle', g => g.info.genres.includes('Puzzle'), 'g=Puzzle'],
+  ['arcade', 'Arcade', g => g.info.genres.includes('Arcade'), 'g=Arcade'],
+  ['racing', 'Racing', g => g.info.genres.includes('Racing'), 'g=Racing'],
+  ['3d', '3D games', g => g.is3d, 'v=3d'],
+  ['sports', 'Sports', g => g.info.genres.includes('Sports'), 'g=Sports']
+];
+const SH = { done: false };
+const ARR = d => `<svg viewBox="0 0 24 24"><path d="${d ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6'}"/></svg>`;
+function shelfList(k, seen) {
+  const sh = SHELVES.find(x => x[0] === k), w = g => mixRank(g) + (seen && seen.get(g.id) || 0) * 40;
+  if (!sh[2]) return POP_NOW.map(id => byId.get(id)).filter(Boolean).concat(games.slice().sort((a, b) => mixRank(a) - mixRank(b))).filter((g, i, a) => a.indexOf(g) === i).slice(0, 18);
+  return games.filter(sh[2]).sort((a, b) => w(a) - w(b));
+}
+const HOME_X = false;
+function renderShelves() {
+  SH.done = true;
+  const seen = new Map(), saw = (g, n) => seen.set(g.id, (seen.get(g.id) || 0) + n);
+  recentList().forEach(g => saw(g, 1));
+  FV.ids.forEach(id => { const g = byId.get(id); if (g) saw(g, 1); });
+  const rows = SHELVES.map(([k, name, , q]) => {
+    const all = shelfList(k, seen), L = all.slice(0, 18);
+    L.slice(0, 6).forEach(g => saw(g, 1));
+    if (L.length < 4) return '';
+    const more = q ? `<a class="sh-all" href="${filterHref(q)}"${q.startsWith('g=') ? ` data-genre="${q.slice(2)}"` : ''} data-shall="${k}">See all <span>${all.length}</span></a>` : '';
+    return `<section class="shelf" id="sh-${k}" data-shelf="${k}"><div class="row-head"><h2>${esc(name)}</h2>${more}<span class="sh-nav"><button class="icon" type="button" data-shnav="-1" aria-label="Scroll left">${ARR(0)}</button><button class="icon" type="button" data-shnav="1" aria-label="Scroll right">${ARR(1)}</button></span></div><div class="shelf-row">${L.map(g => card(g, 'shelf')).join('')}</div></section>`;
+  }).join('');
+  $('#shelves').innerHTML = rows;
+  $('#jump').innerHTML = SHELVES.filter(([k]) => $('#sh-' + k)).map(([k, name]) => `<button class="chip" type="button" data-jump="sh-${k}">${esc(name)}</button>`).join('') + '<button class="chip" type="button" data-jump="all">All games</button>';
+}
+function gotdPick() {
+  const pool = games.filter(g => (g.info.remake || g.info.hot) && !sfOff(g.id)).sort((a, b) => a.info.rank - b.info.rank);
+  if (!pool.length) return null;
+  const d = new Date(), n = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5);
+  return pool[(n * 7919) % pool.length];
+}
+function renderGotd() {
+  const g = gotdPick(), el = $('#gotd');
+  if (!g) { el.innerHTML = ''; return; }
+  const b = S.best[g.id], day = new Date().toLocaleDateString(window.gpI18n ? gpI18n.lang : 'en', { day: 'numeric', month: 'long' });
+  el.innerHTML = `<a class="gd-card" href="${href(g.id)}" data-id="${g.id}" data-src="gotd" style="--c:${tint(g)}"><div class="gd-art card"><div class="art">${img(g, true)}</div></div><div class="gd-txt"><span class="gd-k"><span>Game of the day</span> · <span translate="no">${esc(day)}</span></span><h2 translate="no">${esc(g.title)}</h2><p translate="no">${esc(g.blurb || '')}</p><div class="gd-row"><span class="cta gd-go">Play now</span>${b != null ? `<span class="gd-best">Your best: <b translate="no">${esc(fmt(g, b))}</b></span>` : `<span class="gd-best">${esc(gname(g.info.genres[0]))} · ${esc(playersText(g.info.pl))}</span>`}</div></div></a>`;
+}
+const genreBadge = k => `<a class="badge" href="${filterHref('g=' + k)}" data-genre="${k}">${esc(gname(k))}</a>`;
+function infoMe(g) {
+  const L = [['Best', S.best[g.id] != null ? fmt(g, S.best[g.id]) : '—'], ['Played', String(S.plays[g.id] || 0)], ['Time played', S.time[g.id] >= 1 ? fmtDur(S.time[g.id]) : '—'], ['Last played', ago(S.last[g.id])]];
+  return L.map(([k, v]) => `<div class="tile"><small>${k}</small><b>${esc(v)}</b></div>`).join('');
+}
+function renderInfo(g) {
+  const m = g.info, help = String(g.help || '').split(/\s+·\s+/).filter(x => x.trim());
+  const tags = m.genres.map(genreBadge).join('') + (g.is3d ? `<a class="badge" href="${filterHref('v=3d')}">3D</a>` : '');
+  $('#ginfo').innerHTML = `<div class="gi-main"><h2>How to play</h2>${g.blurb ? `<p class="gi-blurb" translate="no">${esc(g.blurb)}</p>` : ''}${help.length ? `<ul class="gi-help" translate="no">${help.map(h => `<li>${h}</li>`).join('')}</ul>` : ''}</div><aside class="gi-side"><dl class="gi-facts"><div><dt>Genre</dt><dd class="badges">${tags}</dd></div><div><dt>Players</dt><dd>${esc(playersText(m.pl))}</dd></div><div><dt>Length</dt><dd>About ${m.mins} min</dd></div></dl><h4>Your stats</h4><div class="tiles gi-me" id="gime">${infoMe(g)}</div></aside>`;
+}
+function infoSync() { const g = view === 'game' && ((cur && cur.g) || pend); const el = $('#gime'); if (g && el) { const h = infoMe(g); if (el.innerHTML !== h) el.innerHTML = h; } }
 function related(g) {
   const mine = new Set(g.info.genres);
   const scored = games.filter(x => x !== g).map(x => {
@@ -487,7 +617,7 @@ function setConsent(an, lv) {
   sfLock();
 }
 const TT = { g: null, since: 0, acc: 0 };
-const ttRunning = () => !!(cur && !PAUSE.on && document.visibilityState !== 'hidden');
+const ttRunning = () => !!(cur && !PAUSE.on && document.visibilityState !== 'hidden' && !(typeof trIdle === 'function' && trIdle()));
 const dayKey = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 function ttAccrue() {
   const now = performance.now();
@@ -497,7 +627,8 @@ function ttAccrue() {
 function ttCommit(final) {
   ttAccrue();
   const id = TT.g, sec = TT.acc;
-  if (!id || sec < .5) return;
+  if (!id) return;
+  if (sec < .5) { if (final && TT.sec >= 1) { track('game_time', { game: id, sec: Math.round(TT.sec) }); TT.sec = 0; } return; }
   TT.acc = 0;
   S.time[id] = (S.time[id] || 0) + sec;
   const k = dayKey(), d = S.daily[k] || (S.daily[k] = { s: 0, p: 0 });
@@ -555,6 +686,7 @@ function markPlayed(g) {
   const k = dayKey(), d = S.daily[k] || (S.daily[k] = { s: 0, p: 0 });
   d.p++;
   save();
+  infoSync();
   track('game_play', { game: g.id, n: S.plays[g.id] });
 }
 let pauseEl = null;
@@ -563,21 +695,30 @@ function setPause(on) {
   PAUSE.on = on;
   ttSync();
   if (pauseEl) { const p = pauseEl; pauseEl = null; p.classList.remove('show'); p.style.pointerEvents = 'none'; setTimeout(() => p.remove(), 300); }
-  if (!on) { frame.focus({ preventScroll: true }); return; }
+  if (!on) { pauseBtn(); frame.focus({ preventScroll: true }); return; }
   dispatchEvent(new Event('blur'));
   const el = document.createElement('div');
   el.className = 'g-overlay g-pause';
-  el.innerHTML = '<div class="g-ov-card"><h3 class="g-ov-title">Paused</h3><div class="g-ov-btns"><button class="g-btn" data-p="r">Resume</button><button class="g-btn ghost" data-p="s">Restart</button><button class="g-btn ghost" data-p="x">All games</button></div></div>';
+  el.innerHTML = '<div class="g-ov-card"><h3 class="g-ov-title">Paused</h3><div class="g-ov-btns"><button class="g-btn" data-p="r">Resume</button><button class="g-btn ghost" data-p="s">Restart</button><button class="g-btn ghost" data-p="h">How to play</button><button class="g-btn ghost" data-p="x">All games</button></div></div>';
   el.addEventListener('click', e => {
     const b = e.target.closest('[data-p]');
     if (!b) return;
     sfx('tap');
     if (b.dataset.p === 'r') setPause(false);
     else if (b.dataset.p === 's') { setPause(false); restartCurrent(); }
+    else if (b.dataset.p === 'h') { e.stopPropagation(); setOpen('mkeys'); }
     else { setPause(false); const a = document.querySelector('.am-back'); if (a) a.click(); }
   });
   frame.append(el); void el.offsetWidth; el.classList.add('show');
   pauseEl = el;
+  pauseBtn();
+}
+function pauseBtn() {
+  const b = $('#pPause');
+  if (!b) return;
+  const on = PAUSE.on && !!pauseEl;
+  b.setAttribute('aria-label', on ? 'Resume game' : 'Pause game'); b.title = on ? 'Resume' : 'Pause';
+  b.innerHTML = on ? '<svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg>';
 }
 const canPause = () => !!(cur && !cur.g.ownPause && !(cur.api && cur.api.online));
 function restartCurrent() {
@@ -634,7 +775,7 @@ function openGame(g) {
   adSeen(g.id);
   rtTrack();
   clickSrc = null;
-  setHead(g.title + ' — play free online | gameplay', g.title + ' on gameplay: ' + (g.blurb || '') + ' Free to play in your browser, no download.', '/' + g.id);
+  setHead('Play ' + g.title + ' free online | gameplay', g.title + ' on gameplay: ' + (g.blurb || '') + ' Free to play in your browser, no download.', '/' + g.id);
   $('#pTitle').textContent = g.title;
   $('#pSub').textContent = gname(g.info.genres[0]) + ' · ' + playersText(g.info.pl);
   $('#pScoreK').textContent = g.info.stat || 'Score';
@@ -642,6 +783,7 @@ function openGame(g) {
   fvBar(g);
   gamebox.style.setProperty('--fw', (g.width || 880) + 'px');
   $('#more').innerHTML = related(g).slice(0, 10).map(x => card(x, 'more')).join('');
+  renderInfo(g);
   showView('game');
   if (!$('#slist').children.length) renderResults();
   scrollTo({ top: 0, behavior: 'instant' });
@@ -710,13 +852,16 @@ let lastList = [];
 function renderResults() {
   const { list, partial, q, sort } = compute();
   lastList = list;
-  const n = list.length, filt = activeCount() > 0;
-  $('#title').textContent = filt || q ? 'Results' : 'All games';
+  const n = list.length, filt = activeCount() > 0, browse = !(filt || q);
+  $('#title').textContent = browse ? 'All games' : 'Results';
   $('#count').textContent = n + (n === 1 ? ' game' : ' games') + (partial ? ', partial matches' : '');
   $('#grid').innerHTML = list.map((g, i) => card(g, 'grid', i)).join('');
   $('#grid').hidden = !n; $('#empty').hidden = n > 0;
-  $('#continue').hidden = !!(filt || q) || !recentList().length;
-  $('#favs').hidden = !!(filt || q) || !FV.ids.some(id => byId.has(id));
+  $('#continue').hidden = !browse || !recentList().length;
+  $('#favs').hidden = !browse || !FV.ids.some(id => byId.has(id));
+  if (HOME_X && browse && !SH.done) renderShelves();
+  $('#shelves').hidden = !HOME_X || !browse; $('#jump').hidden = !HOME_X || !browse || !$('#jump').children.length;
+  $('#gotd').hidden = !HOME_X || !browse || !$('#gotd').children.length;
   const chips = [];
   FKEYS.forEach(k => state[k].forEach(v => chips.push(`<button class="chip" type="button" data-x="${k}:${v}" aria-label="Remove ${esc(filterLabel(k, v))}">${esc(filterLabel(k, v))} &times;</button>`)));
   if (state.sort && state.sort !== defSort()) { const s = SORTS.find(x => x[0] === state.sort); chips.push(`<button class="chip" type="button" data-x="s:" aria-label="Reset sort">${esc(s ? s[1] : state.sort)} &times;</button>`); }
@@ -731,6 +876,8 @@ function renderResults() {
 function renderHome() {
   const rec = recentList();
   $('#rail').innerHTML = rec.map((g, i) => card(g, 'rail', i)).join('');
+  if (HOME_X) renderGotd();
+  SH.done = false;
   renderResults();
   fvRail();
 }
@@ -760,6 +907,7 @@ function changeState(mut, o = {}) {
   if (o.scroll) toAll(true);
 }
 function toggleFilter(k, v) {
+  if (!state[k] || typeof state[k].has !== 'function') return;
   let on = false;
   changeState(() => { if (state[k].has(v)) state[k].delete(v); else { state[k].add(v); on = true; } });
   track('filter', { k, v, on, n: lastList.length });
@@ -775,8 +923,28 @@ function openLegal(k) {
   scrollTo({ top: 0, behavior: 'instant' });
 }
 
-const MENUS = { filters: ['#fpanel', '#fbtn'], friends: ['#fmodal', '#abtn'], profile: ['#pmenu', '#pbtn'], settings: ['#smenu', '#sbtn'], mprofile: ['#prmodal'], mstats: ['#stmodal'], msettings: ['#semodal'], msignout: ['#sgmodal'], cookies: ['#ckmodal'], mauth: ['#aumodal'], msupport: ['#tkmodal'] };
+const MENUS = { filters: ['#fpanel', '#fbtn'], friends: ['#fmodal', '#abtn'], profile: ['#pmenu', '#pbtn'], settings: ['#smenu', '#sbtn'], mprofile: ['#prmodal'], mstats: ['#stmodal'], msettings: ['#semodal'], msignout: ['#sgmodal'], cookies: ['#ckmodal'], mauth: ['#aumodal'], msupport: ['#tkmodal'], mkeys: ['#kbmodal'] };
 let openK = null;
+const FOC = { el: null };
+const focusables = box => [...box.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter(x => x.getClientRects().length && !x.closest('[hidden]') && !x.closest('[inert]'));
+function focusTrap(e) {
+  const box = openK && /modal/.test(MENUS[openK][0]) ? $(MENUS[openK][0]) : null;
+  if (!box || box.hidden) return;
+  const L = focusables(box);
+  if (!L.length) return;
+  const a = document.activeElement, i = L.indexOf(a);
+  if (e.shiftKey && (i <= 0 || !box.contains(a))) { e.preventDefault(); L[L.length - 1].focus(); }
+  else if (!e.shiftKey && (i === L.length - 1 || !box.contains(a))) { e.preventDefault(); L[0].focus(); }
+}
+const KB_ROWS = [['On the home page', [['/', 'Search games'], ['Enter', 'Open the first result'], ['Esc', 'Clear the search'], ['?', 'Help and shortcuts']]], ['While playing', [['Esc', 'Pause the game or open its menu'], ['Enter Space', 'Resume']]], ['Anywhere', [['Esc', 'Close a window or menu'], ['Tab', 'Move between buttons']]]];
+function renderKeys() {
+  const g = (cur && cur.g) || pend;
+  const help = g ? String(g.help || '').split(/\s+·\s+/).filter(x => x.trim()) : [];
+  $('#kbbody').innerHTML = (g ? `<div class="grp kb-game"><h4><span>How to play</span> · <span translate="no">${esc(g.title)}</span></h4><ul class="gi-help" translate="no">${help.map(h => `<li>${h}</li>`).join('')}</ul></div>` : '')
+    + (auCoarse() ? [] : KB_ROWS).map(([h, L]) => `<div class="grp"><h4>${h}</h4>${L.map(([k, t]) => `<div class="srw"><div><b>${t}</b></div><span class="keys">${k.split(' ').map(x => `<kbd>${x}</kbd>`).join('')}</span></div>`).join('')}</div>`).join('')
+    + `<div class="grp"><h4>Tips</h4><ul class="kb-tips"><li>Tap the heart on a game to keep it in Favourites.</li><li>Surprise me opens a random game from the list you are looking at.</li><li>Sign in to keep your records and saves on every device.</li></ul></div>`
+    + `<div class="addrow end"><button class="btn2" type="button" data-go="msettings" data-pane="controls">All settings</button>${SB.user ? '<button class="btn2 pri" type="button" data-go="msupport">Contact support</button>' : ''}</div>`;
+}
 const motionOK = () => !S.prefs.motion && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 function vis(el, on) {
   clearTimeout(el._vt);
@@ -806,7 +974,10 @@ function countUp(box) {
 }
 function setOpen(k) {
   if (auLocked() && (openK === 'mauth' || k !== 'mauth')) { if (openK !== 'mauth') auGate(); return; }
+  const prevK = openK;
   openK = openK === k ? null : k;
+  if (openK && !prevK) FOC.el = document.activeElement;
+  if (!openK && prevK) { const el = FOC.el, box = $(MENUS[prevK][0]), a = document.activeElement; FOC.el = null; if (el && el.isConnected && el !== document.body && (!a || a === document.body || (box && box.contains(a)))) el.focus({ preventScroll: true }); }
   Object.keys(MENUS).forEach(m => { const on = m === openK; const el = $(MENUS[m][0]); if (el) vis(el, on); if (MENUS[m][1]) $(MENUS[m][1]).setAttribute('aria-expanded', String(on)); });
   const modal = !!openK && /modal/.test(MENUS[openK][0]);
   document.body.classList.toggle('modal-open', modal);
@@ -820,6 +991,8 @@ function setOpen(k) {
   if (openK === 'filters') renderPanel();
   if (openK === 'mauth') auShow();
   if (openK === 'msupport') adSupport();
+  if (openK === 'mkeys') renderKeys();
+  if (openK && modal && !/^(mauth|friends|msupport)$/.test(openK)) requestAnimationFrame(() => { const box = openK && MENUS[openK] ? $(MENUS[openK][0]) : null; if (!box || box.hidden || box.contains(document.activeElement)) return; const f = box.querySelector('.mh .x, .mh .back') || focusables(box)[0]; if (f) f.focus({ preventScroll: true }); });
   fbtnState();
   ckPlace();
 }
@@ -896,7 +1069,7 @@ function applyTheme() {
   if (t === 'system') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', t);
   document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === t)));
   const dark = t === 'dark' || (t === 'system' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
-  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', dark ? '#12101f' : '#f6f4ff');
+  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', dark ? '#131210' : '#f4f2ee');
 }
 function swVal(k) {
   if (k === 'sound') return !S.muted;
@@ -1016,6 +1189,7 @@ function syncTheater() {
 function boot() {
   const rank = g => g.info.rank;
   games.sort((a, b) => rank(a) - rank(b));
+  MIX = null;
   const css = games.map(g => g.css || '').join('\n');
   if (css.trim()) { const st = document.createElement('style'); st.textContent = css; document.head.append(st); }
   buildIndex();
@@ -1033,12 +1207,12 @@ function boot() {
   addEventListener('unhandledrejection', e => { if (errN++ > 20) return; const r = e.reason; track('error', { where: 'promise', msg: String(r && r.message || r).slice(0, 160), game: cur ? cur.g.id : null }); });
   document.addEventListener('visibilitychange', () => { ttSync(); if (document.visibilityState === 'hidden') { trHidden(); ttCommit(true); anSave(); anFlush(); } });
   addEventListener('pagehide', () => { trEnd(); ttCommit(true); track('session_end', { sec: Math.round((Date.now() - T0) / 1000) }); anSave(); anFlush(); });
-  setInterval(() => { if (cur) ttCommit(false); }, 15000);
+  setInterval(() => { if (cur) { ttCommit(false); infoSync(); } }, 15000);
   setInterval(anFlush, 30000);
 
   const q = $('#q');
   q.addEventListener('input', () => {
-    changeState(() => { state.q = q.value; state.sort = state.sort === 'rel' && !q.value.trim() ? '' : state.sort; });
+    changeState(() => { state.q = q.value; state.sort = state.sort === 'rel' && !norm(q.value) ? '' : state.sort; });
     const top = $('#all').getBoundingClientRect().top + scrollY - 70;
     if (scrollY > top) scrollTo({ top: Math.max(0, top), behavior: 'instant' });
     clearTimeout(searchT);
@@ -1048,7 +1222,7 @@ function boot() {
   q.addEventListener('focus', () => { if (openK === 'filters' || openK === 'profile' || openK === 'settings') closeAll(); });
   ['keydown', 'keyup'].forEach(t => q.addEventListener(t, e => e.stopPropagation()));
   q.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { const first = $('#grid .card'); if (first && state.q.trim()) { clickSrc = 'search'; track('search_go', { q: norm(state.q).slice(0, 60), game: first.dataset.id }); go(first.getAttribute('href'), false); q.blur(); } }
+    if (e.key === 'Enter') { const first = $('#grid .card'); if (first && qText()) { clickSrc = 'search'; track('search_go', { q: norm(state.q).slice(0, 60), game: first.dataset.id }); go(first.getAttribute('href'), false); q.blur(); } }
     if (e.key === 'Escape') { q.value = ''; changeState(() => { state.q = ''; }); q.blur(); }
   });
   document.querySelectorAll('.modal, .menu, .ckbar').forEach(el => ['keydown', 'keyup'].forEach(t => el.addEventListener(t, e => { if (e.key !== 'Escape') e.stopPropagation(); })));
@@ -1083,6 +1257,10 @@ function boot() {
     if (t.closest('#snd')) { setSwitch('sound'); return; }
     const sg = t.closest('.seg button');
     if (sg) { e.stopPropagation(); S.prefs.theme = sg.dataset.t; save(); applyTheme(); track('setting', { k: 'theme', v: sg.dataset.t }); return; }
+    const jb = t.closest('[data-jump]');
+    if (jb) { const el = document.getElementById(jb.dataset.jump); if (el) el.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'instant', block: 'start' }); track('ui', { jump: jb.dataset.jump }); return; }
+    const sn = t.closest('[data-shnav]');
+    if (sn) { const row = sn.closest('.shelf').querySelector('.shelf-row'); row.scrollBy({ left: +sn.dataset.shnav * row.clientWidth * .9, behavior: motionOK() ? 'smooth' : 'instant' }); return; }
     const soon = t.closest('[data-soon]');
     if (soon) { toast(soon.dataset.soon + ' is coming soon'); track('soon', { what: soon.dataset.soon }); return; }
     const a = t.closest('a[href]');
@@ -1113,6 +1291,7 @@ function boot() {
   $('#clear').addEventListener('click', e => { e.stopPropagation(); changeState(() => { FKEYS.forEach(k => state[k].clear()); state.sort = ''; }); track('filter_clear', {}); });
   $('#apply').addEventListener('click', e => { e.stopPropagation(); closeAll(); });
   $('#reset').addEventListener('click', () => { changeState(() => { resetState(); $('#q').value = ''; }); });
+  $('#rnd').addEventListener('click', () => { const L = (lastList.length ? lastList : games).filter(g => !sfOff(g.id)); if (!L.length) return; const g = L[Math.floor(Math.random() * L.length)]; clickSrc = 'random'; go(href(g.id), false); });
   $('#snav').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showPane(b.dataset.p); });
   showPane('account');
   document.querySelectorAll('.sech').forEach(b => b.addEventListener('click', () => { const g = $('#' + b.dataset.sec), c = g.classList.toggle('collapsed'); b.setAttribute('aria-expanded', String(!c)); }));
@@ -1137,7 +1316,7 @@ function boot() {
   $('#dosignout').addEventListener('click', () => { closeAll(); if (SB.user) { auSignOut(); return; } toast('Accounts are coming soon.'); track('soon', { what: 'sign_out' }); });
   $('#delc').addEventListener('input', e => { $('#delbtn').disabled = e.target.value !== 'DELETE'; });
   $('#delbtn').addEventListener('click', () => { say('delnote', 'Your data was deleted. Reloading…', 1); deleteData(); });
-  $('#dl').addEventListener('click', async () => { let extra = null; if (SB.user) { say('datanote', 'Preparing your file…'); try { extra = await sbRest('rpc/export_my_data', { method: 'POST', body: {} }); } catch (e) { extra = { error: 'Could not download your account data. Try again later.' }; } } downloadData(extra); say('datanote', 'Your data file was downloaded.', 1); track('data_download', {}); });
+  $('#dl').addEventListener('click', async () => { let extra = null, lim = ''; if (SB.user) { say('datanote', 'Preparing your file…'); try { extra = await sbRest('rpc/export_my_data', { method: 'POST', body: {} }); } catch (e) { if (sbLimit(e)) lim = sbLimitText(e, 'too many exports'); extra = { error: 'Could not download your account data. Try again later.' }; } } downloadData(extra); if (lim) say('datanote', lim); else say('datanote', 'Your data file was downloaded.', 1); track('data_download', { limited: !!lim }); });
   $('#rr').addEventListener('click', () => { const b = $('#rr'); if (b.dataset.c) { b.textContent = 'Reset'; delete b.dataset.c; b.classList.remove('dangerfill'); if (SB.user) { say('datanote', 'Resetting…'); auResetCloud().then(() => { resetRecords(); say('datanote', 'Your records were reset on this device and in your account.', 1); }, () => say('datanote', 'Could not reset your account records. Check your connection and try again.')); } else { resetRecords(); say('datanote', 'Your records were reset.', 1); } track('records_reset', {}); } else { b.dataset.c = '1'; b.textContent = 'Click again to confirm'; b.classList.add('dangerfill'); } });
   document.querySelectorAll('[data-sound]').forEach(b => b.addEventListener('click', () => { setMuted(!S.muted); b.blur(); if (!S.muted) sfx('tap'); }));
   const th = $('[data-theater]');
@@ -1151,14 +1330,16 @@ function boot() {
   if (window.ResizeObserver) new ResizeObserver(() => { if (stageMode() !== 'off') queueFit(); }).observe(frame);
   startFitTimer();
   $('#pRestart').addEventListener('click', e => { e.currentTarget.blur(); restartCurrent(); track('restart', { game: cur ? cur.g.id : null }); });
+  $('#pPause').addEventListener('click', e => { e.currentTarget.blur(); if (!cur) return; if (canPause()) { const on = !PAUSE.on; setPause(on); if (on) track('pause', { game: cur.g.id, src: 'bar' }); return; } inSend('keydown', 'Escape'); setTimeout(() => inSend('keyup', 'Escape'), 60); track('pause', { game: cur.g.id, src: 'bar', own: true }); });
   addEventListener('storage', e => { if (e.key === PKEY) renderProfileBits(); });
   addEventListener('keyup', e => { if (PAUSE.on && !isField(e.target) && !openK) e.stopImmediatePropagation(); }, true);
   const unmodal = $('#unmodal');
   addEventListener('keydown', e => {
     if (!unmodal.hidden) { if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); unClose(); } return; }
-    if (openK) { if (e.key === 'Escape' && !e.repeat) { e.preventDefault(); e.stopImmediatePropagation(); closeAll(); } return; }
+    if (openK) { if (e.key === 'Escape' && !e.repeat) { e.preventDefault(); e.stopImmediatePropagation(); closeAll(); } else if (e.key === 'Tab') focusTrap(e); return; }
     if (e.key === 'Escape' && gamebox.classList.contains('pfs')) { e.preventDefault(); e.stopImmediatePropagation(); fsExit(); return; }
     if (e.key === '/' && !isField(e.target) && !cur && !pend && view === 'home') { e.preventDefault(); q.focus(); return; }
+    if (e.key === '?' && !isField(e.target) && !cur && !pend && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); setOpen('mkeys'); return; }
     if (!cur && !pend) return;
     if (PAUSE.on) {
       if (isField(e.target)) return;

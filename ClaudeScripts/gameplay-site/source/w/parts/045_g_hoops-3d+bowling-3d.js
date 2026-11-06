@@ -258,6 +258,8 @@
 .gm-${id} .t4-pill b{display:block;font-size:clamp(16px,3.4cqw,34px);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .gm-${id} .t4-meter{position:absolute;right:2.2cqw;top:26%;height:46%;width:clamp(9px,1.5cqw,15px);border-radius:99px;background:linear-gradient(0deg,#22b07d,#9be15d 40%,#f7c548 65%,#ff7a45 85%,#ef4f4f);box-shadow:0 0 0 2px rgba(18,16,36,.55),0 6px 16px rgba(0,0,0,.35);opacity:0;transition:opacity .2s}
 .gm-${id} .t4-meter.on{opacity:1}
+.gm-${id} .t4-meter u{position:absolute;left:-4px;right:-4px;height:7.1%;border:2px solid #fff;border-radius:4px;box-shadow:0 0 8px rgba(255,255,255,.7);opacity:0;transition:opacity .4s;pointer-events:none}
+.gm-${id} .t4-meter u.on{opacity:.95}
 .gm-${id} .t4-meter i{position:absolute;left:0;right:0;top:0;height:100%;border-radius:99px 99px 0 0;background:rgba(22,20,42,.86)}
 .gm-${id} .t4-meter b{position:absolute;left:-5px;right:-5px;height:3px;margin-bottom:-1.5px;border-radius:2px;background:#fff;opacity:0;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
 .gm-${id} .t4-hint{position:absolute;left:50%;bottom:2.2cqw;transform:translateX(-50%);max-width:92%;text-align:center;font-size:clamp(10px,1.45cqw,15px);font-weight:800;padding:.6cqw 1.8cqw;border-radius:99px;background:rgba(18,16,36,.5);transition:opacity .35s}
@@ -545,11 +547,11 @@
     hud.innerHTML = `<div class="t4-pill" style="left:2cqw"><span>Time</span><b class="hs-time">60</b></div>
 <div class="t4-pill" style="right:2cqw"><span>Score</span><b class="hs-score">0</b></div>
 <div class="hs-mid"><b class="hs-spot">Free throw</b><div class="hs-dots"><i></i><i></i><i></i></div><div class="hs-fire">On fire</div></div>
-<div class="t4-meter"><i></i><b></b></div>
+<div class="t4-meter"><i></i><b></b><u></u></div>
 <div class="t4-hint off">Flick up from the ball to shoot &middot; or hold <b>Space</b>, <b>&larr; &rarr;</b> to aim</div>`;
     const $ = s => hud.querySelector(s);
     const hTime = $('.hs-time'), hScore = $('.hs-score'), hSpot = $('.hs-spot'), hDots = [...hud.querySelectorAll('.hs-dots i')], hFire = $('.hs-fire');
-    const meter = $('.t4-meter'), meterCover = meter.querySelector('i'), meterMark = meter.querySelector('b'), hint = $('.t4-hint');
+    const meter = $('.t4-meter'), meterCover = meter.querySelector('i'), meterMark = meter.querySelector('b'), meterIdeal = meter.querySelector('u'), hint = $('.t4-hint');
 
     let st = 'intro', time = 60, score = 0, makes = 0, shots = 0, swishes = 0, streak = 0, bestStreak = 0, spot = 0, atSpot = 0;
     let held = null, cool = 0, moveT = 0, endT = 0, charging = false, chargeT = 0, drag = null, kyaw = 0, guideT = 0;
@@ -574,6 +576,8 @@
     const meterShow = p => {
       meter.classList.toggle('on', p != null);
       if (p != null) meterCover.style.height = (100 - clamp(p / 1.2, 0, 1) * 100).toFixed(1) + '%';
+      meterIdeal.classList.toggle('on', p != null && shots < 3);
+      if (p != null) meterIdeal.style.bottom = (clamp((pIdeal(HSPOTS[spot][2]) - 0.035) / 1.2, 0, 0.93) * 100).toFixed(1) + '%';
       if (lastP != null) { meterMark.style.opacity = 1; meterMark.style.bottom = (clamp(lastP / 1.2, 0, 1) * 100).toFixed(1) + '%'; meterMark.style.background = lastMade ? '#22b07d' : '#fff'; }
     };
     const spawn = () => {

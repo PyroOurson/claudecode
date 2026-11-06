@@ -836,6 +836,8 @@
     kickoffPlace(W);
     W.state = 'countdown'; W.stateT = 0; W.kickoff = true; W.clockOn = false; W.cd = CFG.rules.countdown; W.touchHist = []; W.lastTouch = null; W.pend = null;
     W.threat[0] = W.threat[1] = Infinity; W.first[0] = W.first[1] = null;
+    W.kv = [0, 1].map(() => { const r = Math.random(); return r < 0.62 ? 0 : r < 0.88 ? 1 : 2; });
+    W.kd = [0, 1].map(() => 0.12 + Math.random() * 0.55);
     W.events.push({ type: 'countdown', n: CFG.rules.countdown });
   }
   function worldStep(W, dt) {
@@ -1286,7 +1288,12 @@
     A.shadow = true;
   }
   function kickPlan(W, c, A, D, sg) {
-    if (W.kicker[c.team] === c) { A.mode = 'kick'; return; }
+    if (W.kicker[c.team] === c) {
+      const v = W.kv ? W.kv[c.team] : 0, slow = (D.react || 0) * 1.6;
+      if (v === 1 && W.state === 'play' && W.stateT < W.kd[c.team] + slow) { setPos(A, c.p.x, c.p.y, 0, true); return; }
+      if (v === 2 && (D.react || 0) < 0.2 && W.state === 'play' && W.stateT < 1.6) { setPos(A, c.p.x * 0.4, -sg * (CFG.Y * 0.55), 1400, true); return; }
+      A.mode = 'kick'; return;
+    }
     let rank = 0;
     for (const m of W.cars) if (m.team === c.team && m !== W.kicker[c.team] && m !== c && Math.hypot(m.p.x, m.p.y) < Math.hypot(c.p.x, c.p.y) - 1) rank++;
     if (rank === 0) { setPos(A, c.p.x * 0.25, -sg * 1700, 1600, true); return; }

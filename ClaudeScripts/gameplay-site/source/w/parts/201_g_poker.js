@@ -1958,6 +1958,7 @@
 .gm-poker .pk-seg button{flex:1;min-height:38px;border-radius:11px;border:2px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font:900 13px var(--sans);padding:0 3px}
 .gm-poker .pk-seg button.on{background:#ffd34a;border-color:#fff;color:#1b1b1f}
 .gm-poker .pk-pane.scroll .pk-box{margin:auto}
+.gm-poker .pk-pane.scroll .pk-box.wide>.pk-big{position:sticky;bottom:0;z-index:1;box-shadow:inset 0 -5px 0 rgba(0,0,0,.22),0 -10px 18px rgba(18,23,42,.85)}
 .gm-poker .pk-tw{overflow-x:auto;margin:8px 0}
 .gm-poker .pk-tbl{width:100%;border-collapse:collapse;font:800 13px var(--sans)}
 .gm-poker .pk-tbl th{font:900 11px var(--sans);letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.5);text-align:left;padding:4px}

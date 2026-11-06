@@ -3,9 +3,12 @@
   'use strict';
   const TAU = Math.PI * 2, PI = Math.PI;
   const FONT = 'Nunito, "Arial Rounded MT Bold", system-ui, sans-serif';
+  const calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 
   const CFG = {
     unit: 4,
+    grace: 8,
     speed: 4.6,
     turn: 9.5,
     trailR: 1.5,
@@ -22,10 +25,17 @@
     modes: {
       classic: { name: 'Classic', R: 50, bots: 12, speed: 1 },
       small: { name: 'Small', R: 30, bots: 10, speed: 1 },
-      fast: { name: 'Fast', R: 50, bots: 12, speed: 1.5 }
+      fast: { name: 'Fast', R: 50, bots: 12, speed: 1.5 },
+      timed: { name: '3 Min', R: 46, bots: 12, speed: 1, time: 180 }
+    },
+    levels: {
+      easy: { name: 'Easy', aggro: [0, 0.3], caution: [1.3, 1.8], greed: [0.55, 1], grace: 14, hunt: 0, think: [0.18, 0.28], slip: 0.3, cut: false },
+      normal: { name: 'Normal', aggro: [0.1, 0.9], caution: [0.7, 1.4], greed: [0.7, 1.5], grace: 8, hunt: 1, think: [0.08, 0.16], slip: 0, cut: false },
+      hard: { name: 'Hard', aggro: [0.7, 1.2], caution: [1.1, 1.6], greed: [1, 1.9], grace: 5, hunt: 1.6, think: [0.05, 0.09], slip: 0, cut: true }
     }
   };
-  const MODE_KEYS = ['classic', 'small', 'fast'];
+  const MODE_KEYS = ['classic', 'small', 'fast', 'timed'], LEVEL_KEYS = ['easy', 'normal', 'hard'];
+  const FREE = 6, UNLOCK = [0.5, 1, 1.5, 2, 3, 4, 5, 7, 10, 15];
   const OUT = 255;
 
   const BASES = ['#ff5e5b', '#4d8dff', '#ffc93c', '#4cd47a', '#b066ff', '#ff9a3c', '#2ec4b6', '#ff6fb5', '#7a6cff', '#a5dd3b', '#3cc8f0', '#f0507a', '#ff7f66', '#5fe0b5', '#7cb7ff', '#d184ff'];
@@ -68,7 +78,13 @@
       const saved = api.load() || {};
       let skin = Number.isInteger(saved.skin) && saved.skin >= 0 && saved.skin < SKINS.length ? saved.skin : 0;
       let mode = CFG.modes[saved.mode] ? saved.mode : 'classic';
-      const store = () => api.save({ skin, mode });
+      let level = CFG.levels[saved.level] ? saved.level : 'normal', lv = CFG.levels[level];
+      const stats = { games: saved.games | 0, kills: saved.kills | 0, top: +saved.top || 0, wins: saved.wins | 0, seen: !!saved.seen };
+      const store = () => api.save({ skin, mode, level, games: stats.games, kills: stats.kills, top: stats.top, wins: stats.wins, seen: stats.seen });
+      const topPct = () => Math.max(stats.top, +api.best || 0);
+      const grand = saved.games === undefined && Number.isInteger(saved.skin) ? saved.skin : -1;
+      const locked = k => k >= FREE && k !== grand && topPct() < UNLOCK[k - FREE];
+      let unlockedNow = [], timeUp = false, danger = 0, dangerBy = null, beepT = 0, tickS = -1, helpPage = 0, helpFrom = 'title';
 
       let G = 0, C = 0, RM = 0, RC = 0, owner, tOwn, tSeq, mark, stack, stolen, gen = 1, total = 1, speed = 18;
       let players = [], human = null, ghosts = [], parts = [], floats = [], feed = [], banner = null, nameBag = [];
@@ -108,6 +124,11 @@
         die() { noise(0.35, 0.45, 1200); tone(420, 70, 0.5, 'sawtooth', 0.09); },
         pop() { tone(300, 160, 0.12, 'triangle', 0.08); },
         tap() { tone(700, 900, 0.05, 'sine', 0.07); },
+        warn() { tone(980, 760, 0.09, 'square', 0.045); tone(980, 760, 0.09, 'square', 0.04, 0.12); },
+        tick(last) { tone(last ? 1320 : 1040, last ? 1320 : 1040, 0.06, 'triangle', 0.09); },
+        leave() { tone(240, 420, 0.1, 'sine', 0.05); },
+        unlock() { [784, 988, 1175, 1568].forEach((f, i) => tone(f, f, 0.18, 'triangle', 0.1, i * 0.08)); },
+        lock() { tone(220, 180, 0.14, 'square', 0.05); },
         win() { [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, f * 1.01, 0.32, 'triangle', 0.13, i * 0.11)); }
       };
 
@@ -132,11 +153,12 @@
         if (players.some(p => p.name === n) && nameBag.length) n = nameBag.pop();
         return n;
       };
-      const newAI = () => ({ mode: 'home', tt: rand(0, 0.15), want: 0, theta: 0, side: 1, d1: 0, d2: 0, travel: 0, homeT: 0, greed: rand(0.7, 1.5), aggro: rand(0.1, 0.9), caution: rand(0.7, 1.4), maxTrail: 0, target: null, chaseT: 0, hx: 0, hy: 0, hd: 0 });
+      const newAI = () => ({ mode: 'home', tt: rand(0, 0.15), want: 0, theta: 0, side: 1, d1: 0, d2: 0, travel: 0, homeT: 0, greed: rand(lv.greed[0], lv.greed[1]), aggro: rand(lv.aggro[0], lv.aggro[1]), caution: rand(lv.caution[0], lv.caution[1]), sloppy: Math.random() < lv.slip, maxTrail: 0, target: null, chaseT: 0, hx: 0, hy: 0, hd: 0 });
       const makePlayer = (id, name, col, bot) => ({ id, name, col, bot, alive: false, x: 0, y: 0, a: 0, want: 0, odo: 0, trail: [], tcells: [], tbb: [0, 0, 0, 0], bb: [0, 0, 0, 0], count: 0, path: null, dirty: false, kills: 0, cx: 0, cy: 0, wall: false, respawnT: 0, born: -9, trailStart: 0, ai: bot ? newAI() : null });
 
       function newWorld(m, withHuman) {
         const M = CFG.modes[m], U = CFG.unit;
+        lv = CFG.levels[level]; danger = 0; dangerBy = null; timeUp = false; tickS = -1;
         RM = M.R * U; RC = RM - 1; G = Math.ceil(RM * 2) + 10; C = G / 2;
         const N = G * G;
         owner = new Uint8Array(N); tOwn = new Uint8Array(N); tSeq = new Float32Array(N); mark = new Int32Array(N); stack = new Int32Array(N); gen = 1;
@@ -318,6 +340,9 @@
           const pct = gained / total * 100;
           floats.push({ x: p.x, y: p.y, text: '+' + (pct < 0.01 ? '0.01' : pct.toFixed(2)) + '%', col: '#ffffff', oc: p.col.dark, t: 0, life: 1.3, size: 24 });
           sfx.capture(Math.floor(pct * 2));
+          const np = Math.min(22, 6 + Math.floor(gained / 30));
+          for (let k = 0; k < np; k++) { const a = rand(0, TAU), v = rand(5, 16); parts.push({ x: p.x, y: p.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 5, t: 0, life: rand(0.4, 0.8), s: rand(0.6, 1.3), r: rand(0, TAU), vr: rand(-9, 9), col: k % 3 ? p.col.light : k % 2 ? '#ffffff' : p.col.base }); }
+          if (pct >= 1) shake = Math.max(shake, 0.35);
           if (p.count >= total) win();
         }
       }
@@ -394,6 +419,7 @@
           tr.push(ox, oy); p.trailStart = p.odo;
           p.tbb[0] = p.tbb[2] = nx | 0; p.tbb[1] = p.tbb[3] = ny | 0;
           if (p.bot && p.ai.mode === 'home') { p.ai.mode = 'out'; p.ai.travel = 0; }
+          if (p === human && state === 'play') sfx.leave();
         }
         stamp(p, nx, ny);
         const n = tr.length, lx = tr[n - 2], ly = tr[n - 1];
@@ -469,8 +495,10 @@
       function nearestTrail(b, radius, only) {
         let bd = radius * radius, res = null;
         for (const e of players) {
-          if (e === b || !e.alive || !e.trail.length || (only && e !== only)) continue;
-          const t = e.trail, f = e === human ? 0.7 : 1;
+          if (e === b || !e.alive || !e.trail.length || (only && e !== only) || (!only && e === human && clock - e.born < lv.grace
+)) continue;
+          if (!only && e === human && !lv.hunt) continue;
+          const t = e.trail, f = e === human ? 1.12 - 0.42 * lv.hunt : 1;
           for (let k = 0; k < t.length; k += 4) {
             const dx = t[k] - b.x, dy = t[k + 1] - b.y, d = (dx * dx + dy * dy) * f;
             if (d < bd) { bd = d; res = { p: e, x: t[k], y: t[k + 1] }; }
@@ -494,8 +522,10 @@
         if (!out) { ai.homeT += dt; if (ai.mode === 'home' && ai.homeT > 6) plan(b); }
         if (!out && ai.mode !== 'chase' && clock - b.born > 1.5) {
           for (const e of players) {
-            if (e === b || !e.alive || !e.trail.length) continue;
+            if (e === b || !e.alive || !e.trail.length || (e === human && clock - e.born < lv.grace
+)) continue;
             const inMine = owner[(e.y | 0) * G + (e.x | 0)] === b.id, dd = Math.hypot(e.x - b.x, e.y - b.y);
+            if (e === human && !lv.hunt && !inMine) continue;
             if ((inMine && dd < 30 * U) || (dd < (8 + 10 * ai.aggro) * U && e.odo - e.trailStart > 5 * U)) {
               if (Math.random() < (inMine ? 0.6 : 0.2) + ai.aggro * 0.3) { ai.mode = 'chase'; ai.target = e; ai.chaseT = 0; }
               break;
@@ -512,6 +542,9 @@
           if (!t || ai.chaseT > 5 || len > 16 * U || (out && dangerDist(b) < 2.5 * U)) {
             ai.target = null;
             if (out) ai.mode = 'back'; else plan(b);
+          } else if (lv.cut && !out && owner[(ai.target.y | 0) * G + (ai.target.x | 0)] === b.id) {
+            const tg = ai.target, ld = Math.min(1.2, Math.hypot(tg.x - b.x, tg.y - b.y) / speed);
+            want = Math.atan2(tg.y + Math.sin(tg.a) * speed * ld - b.y, tg.x + Math.cos(tg.a) * speed * ld - b.x);
           } else want = Math.atan2(t.y - b.y, t.x - b.x);
         }
         if (out && ai.mode !== 'chase') {
@@ -528,7 +561,7 @@
           want = Math.abs(angDiff(t1, want)) < Math.abs(angDiff(t2, want)) ? t1 : t2;
           if (!out && ai.mode === 'home') ai.theta = want;
         }
-        if (out && !trailFree(b, want)) {
+        if (out && !ai.sloppy && !trailFree(b, want)) {
           for (let d = 0.5; d < 3; d += 0.5) {
             if (trailFree(b, want + d)) { want += d; break; }
             if (trailFree(b, want - d)) { want -= d; break; }
@@ -538,9 +571,12 @@
       }
 
       function startGame() {
+        if (locked(skin)) { sfx.lock(); return; }
+        if (!stats.seen) { stats.seen = true; store(); helpFrom = 'play'; state = 'help'; stateT = 0; return; }
         newWorld(mode, true);
         state = 'play'; stateT = 0; elapsed = 0; submitted = false; newBest = false; lastRank = 0; acc = 0;
-        maxPct = human.count / total * 100;
+        maxPct = human.count / total * 100; unlockedNow = [];
+
         api.score(+maxPct.toFixed(2));
         cam.snap = true; touch.id = null;
         sfx.tap();
@@ -552,15 +588,21 @@
       function finishRun() {
         if (submitted) return;
         submitted = true;
-        newBest = api.submit(+Math.max(0.01, maxPct).toFixed(2));
+        const was = SKINS.map((_, k) => locked(k)), prev = topPct(), v = +Math.max(0.01, maxPct).toFixed(2);
+        newBest = api.submit(v) && v > prev;
+        stats.games++; stats.kills += human ? human.kills : 0; stats.top = Math.max(stats.top, +maxPct.toFixed(2));
+        unlockedNow = [];
+        was.forEach((w, k) => { if (w && !locked(k)) unlockedNow.push(k); });
+        if (unlockedNow.length) sfx.unlock();
+        store();
       }
       function win() {
         if (state !== 'play') return;
         maxPct = 100; api.score(100);
-        state = 'win'; stateT = 0;
+        state = 'win'; stateT = 0; stats.wins++;
         finishRun();
         sfx.win();
-        for (let k = 0; k < 90; k++) parts.push({ conf: true, x: rand(0, W), y: rand(-H * 0.6, 0), vx: rand(-40, 40), vy: rand(80, 200), t: 0, life: rand(2.5, 4), s: rand(5, 9), r: rand(0, TAU), vr: rand(-6, 6), col: BASES[k % BASES.length] });
+        confetti();
       }
 
       function step(dt) {
@@ -574,7 +616,7 @@
             continue;
           }
           if (p.bot) {
-            if ((p.ai.tt -= dt) <= 0) { const iv = rand(0.08, 0.16); think(p, iv); p.ai.tt = iv; }
+            if ((p.ai.tt -= dt) <= 0) { const iv = rand(lv.think[0], lv.think[1]); think(p, iv); p.ai.tt = iv; }
             p.want = p.ai.want;
           } else steerHuman(p);
           move(p, dt);
@@ -584,7 +626,38 @@
           elapsed += dt;
           const pct = human.count / total * 100;
           if (pct > maxPct + 0.004) { maxPct = Math.min(100, pct); api.score(+maxPct.toFixed(2)); }
+          const T = CFG.modes[mode].time;
+          if (T) {
+            const left = T - elapsed, s = Math.ceil(left);
+            if (left <= 10 && s !== tickS && s > 0) { tickS = s; sfx.tick(s <= 3); }
+            if (left <= 0) { endTimed(); return; }
+          }
+          watchDanger(dt);
         }
+      }
+      function watchDanger(dt) {
+        const t = human.trail, R = 9 * CFG.unit;
+        let dm = R * R, db = null;
+        if (t.length) for (const e of players) {
+          if (e === human || !e.alive) continue;
+          let dx = e.x - human.x, dy = e.y - human.y, q = dx * dx + dy * dy;
+          if (q < dm) { dm = q; db = e; }
+          for (let k = 0; k < t.length; k += 4) { dx = e.x - t[k]; dy = e.y - t[k + 1]; q = dx * dx + dy * dy; if (q < dm) { dm = q; db = e; } }
+        }
+        danger = db ? 1 - Math.sqrt(dm) / R : 0; dangerBy = db;
+        if (danger > 0.2) { if ((beepT -= dt) <= 0) { sfx.warn(); beepT = 1 - danger * 0.55; } } else beepT = 0;
+      }
+      function endTimed() {
+        if (state !== 'play') return;
+        timeUp = true; elapsed = CFG.modes[mode].time; danger = 0; dangerBy = null;
+        computeRank(); lastRank = rank.indexOf(human) + 1;
+        deathMsg = lastRank === 1 ? 'Time up! You own the most land' : 'Time up! You finished #' + lastRank;
+        state = 'over'; stateT = 0;
+        if (lastRank === 1) { stats.wins++; sfx.win(); confetti(); } else sfx.capture(5);
+        finishRun();
+      }
+      function confetti() {
+        for (let k = 0; k < 90; k++) parts.push({ conf: true, x: rand(0, W), y: rand(-H * 0.6, 0), vx: rand(-40, 40), vy: rand(80, 200), t: 0, life: rand(2.5, 4), s: rand(5, 9), r: rand(0, TAU), vr: rand(-6, 6), col: BASES[k % BASES.length] });
       }
 
       const STEER = { ArrowLeft: 1, ArrowRight: 1, ArrowUp: 1, ArrowDown: 1, KeyA: 1, KeyD: 1, KeyW: 1, KeyS: 1 };
@@ -610,7 +683,7 @@
         audio();
         const pt = toLocal(e);
         if (e.pointerType === 'mouse') { mouse.x = pt.x; mouse.y = pt.y; }
-        if (state === 'title' || state === 'over' || state === 'win') {
+        if (state === 'title' || state === 'over' || state === 'win' || state === 'help') {
           e.preventDefault();
           const b = hit(pt);
           if (b) { b.act(); if (state !== 'play') sfx.tap(); }
@@ -643,7 +716,15 @@
       api.on(window, 'keydown', e => {
         audio();
         const k = e.code;
-        if (state === 'title') { if (!e.repeat && k !== 'Tab' && !e.ctrlKey && !e.metaKey && !e.altKey) startGame(); return; }
+        if (state === 'help') { if ((k === 'Enter' || k === 'Space') && stateT > 0.3) closeHelp(); return; }
+        if (state === 'title') {
+          if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+          if (k === 'ArrowLeft' || k === 'KeyA') { skin = (skin + SKINS.length - 1) % SKINS.length; store(); sfx.tap(); }
+          else if (k === 'ArrowRight' || k === 'KeyD') { skin = (skin + 1) % SKINS.length; store(); sfx.tap(); }
+          else if (k === 'KeyH' || k === 'Slash') openHelp();
+          else if (k === 'Enter' || k === 'Space' || k === 'ArrowUp' || k === 'KeyW' || k === 'ArrowDown' || k === 'KeyS') startGame();
+          return;
+        }
         if (state === 'over' || state === 'win') { if ((k === 'Enter' || k === 'Space') && stateT > 0.5) startGame(); return; }
         if (state === 'play' && STEER[k] && human) {
           inputMode = 'keys'; mouse.kx = mouse.x; mouse.ky = mouse.y;
@@ -651,6 +732,8 @@
         }
       });
 
+      const openHelp = () => { helpFrom = 'title'; state = 'help'; stateT = 0; };
+      const closeHelp = () => { if (helpFrom === 'play') startGame(); else { state = 'title'; stateT = 0; } };
       const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); };
       const text = (s, x, y, size, col, align = 'center', weight = 900, outline = null, ow = 0) => {
         ctx.font = `${weight} ${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = 'middle';
@@ -789,7 +872,7 @@
       }
       const easeOut = t => { t = Math.min(1, t); return 1 - (1 - t) * (1 - t) * (1 - t); };
       function drawWorld(dpr) {
-        const s = cam.s, sh = shake > 0 ? shake * 3 : 0;
+        const s = cam.s, sh = shake > 0 && !calm ? shake * 3 : 0;
         const ox = W / 2 - cam.x * s + (sh ? rand(-sh, sh) : 0), oy = H / 2 - cam.y * s + (sh ? rand(-sh, sh) : 0);
         ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
         const vx0 = cam.x - W / 2 / s - 6, vx1 = cam.x + W / 2 / s + 6, vy0 = cam.y - H / 2 / s - 6, vy1 = cam.y + H / 2 / s + 6;
@@ -834,6 +917,10 @@
           ctx.beginPath(); ctx.moveTo(t[0], t[1]);
           for (let k = 2; k < t.length; k += 2) ctx.lineTo(t[k], t[k + 1]);
           ctx.lineTo(p.x, p.y);
+          if (p === human && danger > 0.2) {
+            ctx.strokeStyle = `rgba(255,59,92,${((0.4 + 0.5 * Math.abs(Math.sin(clock * 11))) * Math.min(1, danger * 1.6)).toFixed(3)})`;
+            ctx.lineWidth = CFG.trailR * 2 + 1.5; ctx.stroke(); ctx.lineWidth = CFG.trailR * 2;
+          }
           ctx.strokeStyle = p.col.trail; ctx.stroke();
         }
         for (const q of parts) {
@@ -848,7 +935,13 @@
         for (const p of players) if (p.alive && p.x > vx0 && p.x < vx1 && p.y > vy0 && p.y < vy1) drawList.push(p);
         drawList.sort((a, b) => a.y - b.y);
         const king = rank.length && rank[0].count > 0 ? rank[0] : null;
-        for (const p of drawList) drawBlock(p.x, p.y, p.a, p.col, Math.min(1, Math.max(0.05, easeBack(Math.min(1, (clock - p.born) / 0.35)))), p === king);
+        for (const p of drawList) {
+          const gr = p === human && state === 'play' && clock - p.born < lv.grace
+;
+          if (gr) ctx.globalAlpha = 0.55 + 0.45 * Math.abs(Math.cos((clock - p.born) * 5));
+          drawBlock(p.x, p.y, p.a, p.col, Math.min(1, Math.max(0.05, easeBack(Math.min(1, (clock - p.born) / 0.35)))), p === king);
+          if (gr) ctx.globalAlpha = 1;
+        }
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         const ns = portrait ? 11.5 : 13;
         for (const p of drawList) {
@@ -939,6 +1032,27 @@
           text('TIME', 18 + (ph ? 58 : 70), sy, 10, '#8a8ea8', 'left', 900);
           text(fmtTime(elapsed), 18 + (ph ? 86 : 100), sy, 13, '#2b2840', 'left');
         }
+        const T = CFG.modes[mode].time;
+        if (T && human && (state === 'play' || state === 'dying' || timeUp)) {
+
+          const left = Math.max(0, T - elapsed), urgent = left <= 10 && state === 'play';
+          const tw = ph ? 72 : 100, th = ph ? 30 : 38, tx = W / 2 - tw / 2, ty = 10, pop = urgent ? 1 + 0.18 * Math.max(0, (left % 1) - 0.75) * 4 : 1;
+          ctx.fillStyle = 'rgba(30,30,70,.18)'; rr(tx, ty + 3, tw, th, th / 2); ctx.fill();
+          ctx.fillStyle = urgent ? '#ff3b5c' : '#2b2840'; rr(tx, ty, tw, th, th / 2); ctx.fill();
+          text(fmtTime(Math.ceil(left)), W / 2, ty + th / 2 + 1, (ph ? 18 : 23) * pop, '#ffffff');
+        }
+        if (dangerBy && danger > 0.2 && state === 'play') {
+          const e = dangerBy, sx = (e.x - cam.x) * cam.s + W / 2, sy = (e.y - cam.y) * cam.s + H / 2, m = 30;
+          const on = sx > m && sx < W - m && sy > m + 30 && sy < H - m;
+          const px = clamp(sx, m, W - m), py = clamp(on ? sy - 44 : sy, m, H - m), pu = 1 + 0.12 * Math.sin(clock * 14);
+          ctx.save(); ctx.translate(px, py); ctx.scale(pu, pu);
+          if (!on) { ctx.save(); ctx.rotate(Math.atan2(sy - H / 2, sx - W / 2)); ctx.fillStyle = '#ff3b5c'; ctx.beginPath(); ctx.moveTo(24, 0); ctx.lineTo(12, -8); ctx.lineTo(12, 8); ctx.closePath(); ctx.fill(); ctx.restore(); }
+          ctx.fillStyle = 'rgba(30,30,70,.2)'; ctx.beginPath(); ctx.arc(0, 2, 13, 0, TAU); ctx.fill();
+          ctx.fillStyle = '#ff3b5c'; ctx.beginPath(); ctx.arc(0, 0, 13, 0, TAU); ctx.fill();
+          ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5; ctx.stroke();
+          text('!', 0, 1, 17, '#ffffff');
+          ctx.restore();
+        }
         let fy = human && state !== 'title' ? (ph ? 80 : 90) : 14;
         ctx.font = `800 ${ph ? 11 : 12.5}px ${FONT}`;
         for (const f of feed) {
@@ -978,16 +1092,18 @@
         text(label, x + w / 2, y + h / 2 + 1, size || h * 0.42, '#ffffff', 'center', 900, 'rgba(0,0,0,.15)', 3);
         btns.push({ x, y: y - 2, w, h: h + dep + 4, act });
       }
-      function pill(x, y, w, h, label, on, act) {
-        ctx.fillStyle = on ? '#2b2840' : 'rgba(255,255,255,.9)'; rr(x, y, w, h, h / 2); ctx.fill();
+      function pill(x, y, w, h, label, on, act, oc) {
+        if (on) { ctx.fillStyle = 'rgba(30,30,70,.16)'; rr(x, y + 3, w, h, h / 2); ctx.fill(); }
+        ctx.fillStyle = on ? oc || '#2b2840' : 'rgba(255,255,255,.9)'; rr(x, y, w, h, h / 2); ctx.fill();
         if (!on) { ctx.strokeStyle = '#d6d9e6'; ctx.lineWidth = 2; rr(x + 1, y + 1, w - 2, h - 2, h / 2); ctx.stroke(); }
         text(label, x + w / 2, y + h / 2 + 1, h * 0.4, on ? '#ffffff' : '#4a4766');
         btns.push({ x, y, w, h, act });
       }
       function logo(cx, cy, size) {
-        const words = [['PAPER', '#ff5e5b'], ['.IO', '#4d8dff']];
+        const words = [['PAPER', '#ff5e5b'], ['LAND', '#4d8dff']];
         ctx.font = `900 ${size}px ${FONT}`;
-        const gap = size * 0.02, w1 = ctx.measureText(words[0][0]).width, w2 = ctx.measureText(words[1][0]).width;
+        const gap = size * 0.24,
+ w1 = ctx.measureText(words[0][0]).width, w2 = ctx.measureText(words[1][0]).width;
         let x = cx - (w1 + gap + w2) / 2;
         for (const [w, c] of words) {
           ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
@@ -1000,59 +1116,156 @@
         }
       }
 
+      function drawLock(x, y, s) {
+        ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+        ctx.strokeStyle = '#2b2840'; ctx.lineWidth = 3.4; ctx.beginPath(); ctx.arc(0, -4, 6.5, PI, 0); ctx.stroke();
+        ctx.fillStyle = 'rgba(30,30,70,.25)'; rr(-10, -3, 20, 17, 4); ctx.fill();
+        ctx.fillStyle = '#2b2840'; rr(-10, -5, 20, 17, 4); ctx.fill();
+        ctx.fillStyle = '#ffcf33'; ctx.beginPath(); ctx.arc(0, 2, 2.6, 0, TAU); ctx.fill(); ctx.fillRect(-1.1, 2, 2.2, 5);
+        ctx.restore();
+      }
       function drawTitle() {
         const ph = portrait;
         const g = ctx.createLinearGradient(0, 0, 0, H);
         g.addColorStop(0, 'rgba(246,247,251,.9)'); g.addColorStop(0.5, 'rgba(246,247,251,.72)'); g.addColorStop(1, 'rgba(246,247,251,.92)');
         ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-        logo(W / 2, H * (ph ? 0.15 : 0.17), ph ? 50 : 70);
-        const by = H * (ph ? 0.385 : 0.43), sk = SKINS[skin], bs = ph ? 15 : 17;
-        ctx.save(); ctx.translate(W / 2, by); ctx.scale(bs, bs);
-        drawBlock(0, 0, -PI / 2 + Math.sin(clock * 1.6) * 0.25, sk, 1, false);
+        const lb = state === 'title' ? easeBack(Math.min(1, stateT / 0.5)) : 1;
+        ctx.save(); ctx.translate(W / 2, H * (ph ? 0.12 : 0.14)); ctx.rotate(-0.03 + Math.sin(clock * 1.3) * 0.01); ctx.scale(lb, lb);
+        logo(0, 0, ph ? 46 : 66);
         ctx.restore();
-        const ax = ph ? 92 : 112, ar = 24;
+        text('Leave your land, loop back, own the map', W / 2, H * (ph ? 0.205 : 0.235), ph ? 13 : 15, '#6a6f8e', 'center', 800);
+        const by = H * (ph ? 0.34 : 0.385), sk = SKINS[skin], bs = ph ? 14 : 16, lk = locked(skin);
+        ctx.save(); ctx.translate(W / 2, by + Math.sin(clock * 2.2) * 2); ctx.scale(bs, bs);
+        if (lk) ctx.globalAlpha = 0.35;
+        drawBlock(0, 0, -PI / 2 + Math.sin(clock * 1.6) * 0.25, sk, 1, false);
+        ctx.restore(); ctx.globalAlpha = 1;
+        if (lk) drawLock(W / 2, by + 2, 1.3);
+        const ax = ph ? 88 : 108, ar = 22;
         for (const s of [-1, 1]) {
           const cx = W / 2 + s * ax;
           ctx.fillStyle = 'rgba(30,30,70,.15)'; ctx.beginPath(); ctx.arc(cx, by + 4, ar, 0, TAU); ctx.fill();
           ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cx, by, ar, 0, TAU); ctx.fill();
           ctx.strokeStyle = '#2b2840'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-          ctx.beginPath(); ctx.moveTo(cx - s * 4, by - 9); ctx.lineTo(cx + s * 5, by); ctx.lineTo(cx - s * 4, by + 9); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx - s * 4, by - 8); ctx.lineTo(cx + s * 4, by); ctx.lineTo(cx - s * 4, by + 8); ctx.stroke();
           btns.push({ x: cx - ar - 6, y: by - ar - 6, w: ar * 2 + 12, h: ar * 2 + 12, act: () => { skin = (skin + s + SKINS.length) % SKINS.length; store(); } });
         }
-        text('SKIN ' + (skin + 1) + '/' + SKINS.length, W / 2, by + (ph ? 52 : 58), 11, '#8a8ea8');
-        const mw = ph ? 108 : 118, mh = 42, mg = 10, mx = W / 2 - (mw * 3 + mg * 2) / 2, my = H * (ph ? 0.55 : 0.6);
+        const owned = SKINS.reduce((n, _, k) => n + (locked(k) ? 0 : 1), 0);
+        if (lk) text('Reach ' + UNLOCK[skin - FREE] + '% in one game to unlock', W / 2, by + (ph ? 48 : 54), 12, '#e8344a');
+        else text('SKIN ' + (skin + 1) + '/' + SKINS.length + '  ·  ' + owned + ' UNLOCKED', W / 2, by + (ph ? 48 : 54), 11, '#8a8ea8');
+        const mw = ph ? 84 : 104, mh = 38, mg = 8, mx = W / 2 - (mw * 4 + mg * 3) / 2, my = H * (ph ? 0.5 : 0.535);
         MODE_KEYS.forEach((k, i) => pill(mx + i * (mw + mg), my, mw, mh, CFG.modes[k].name, mode === k, () => { if (mode !== k) { mode = k; store(); toTitle(); } }));
-        const pw = ph ? 210 : 240, phh = ph ? 62 : 66;
-        button(W / 2 - pw / 2, H * (ph ? 0.68 : 0.73), pw, phh, 'PLAY', '#3ccf6e', startGame, ph ? 28 : 30);
-        const best = api.best;
-        text(best != null ? 'BEST ' + fmtPct(best) : 'Claim as much of the map as you can', W / 2, H * (ph ? 0.84 : 0.885), ph ? 14 : 15, '#4a4766', 'center', 900);
-        text(ph ? 'Drag anywhere to steer · tap to play' : 'Steer with the mouse or arrow keys · any key to play', W / 2, H * (ph ? 0.885 : 0.93), 12.5, '#8a8ea8', 'center', 800);
+        const LC = { easy: '#2fae5f', normal: '#3f77e0', hard: '#e8344a' };
+        const lw = ph ? 96 : 104, lh = 32, lx = W / 2 - (lw * 3 + mg * 2) / 2, ly = my + mh + 10;
+        LEVEL_KEYS.forEach((k, i) => pill(lx + i * (lw + mg), ly, lw, lh, CFG.levels[k].name, level === k, () => { level = k; lv = CFG.levels[k]; store(); }, LC[k]));
+        const pw = ph ? 210 : 240, phh = ph ? 60 : 64;
+        button(W / 2 - pw / 2, H * (ph ? 0.69 : 0.725), pw, phh, lk ? 'LOCKED' : 'PLAY', lk ? '#9a9db4' : '#3ccf6e', startGame, ph ? 27 : 30);
+        const best = topPct();
+        text(best > 0 ? 'BEST ' + fmtPct(best) + '   ·   ' + stats.games + ' GAMES   ·   ' + stats.kills + ' KILLS' : 'Claim as much of the map as you can', W / 2, H * (ph ? 0.855 : 0.89), ph ? 12.5 : 14, '#4a4766', 'center', 900);
+        text(ph ? 'Drag anywhere to steer · tap to play' : 'Mouse or arrow keys to steer · Enter to play · ←/→ skins', W / 2, H * (ph ? 0.9 : 0.935), 12, '#8a8ea8', 'center', 800);
+        const hx = W - 30, hy = 30;
+        ctx.fillStyle = 'rgba(30,30,70,.15)'; ctx.beginPath(); ctx.arc(hx, hy + 3, 18, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(hx, hy, 18, 0, TAU); ctx.fill();
+        text('?', hx, hy + 1, 22, '#2b2840');
+        btns.push({ x: hx - 22, y: hy - 22, w: 44, h: 44, act: openHelp });
+      }
+
+      function helpArt(i, x, y, w, h) {
+        const me = SKINS[locked(skin) ? 0 : skin], foe = SKINS[(locked(skin) ? 0 : skin) === 1 ? 2 : 1], s = Math.min(w / 38, h / 27), B = 1.45;
+        ctx.save(); ctx.translate(x + w / 2, y + h / 2); ctx.scale(s, s);
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        const land = (fn, col) => { ctx.save(); ctx.translate(0, 1.1); ctx.fillStyle = col.side; fn(); ctx.fill(); ctx.restore(); ctx.fillStyle = col.base; fn(); ctx.fill(); };
+        const sq = (x0, y0, w0, h0) => () => rr(x0, y0, w0, h0, 2.5);
+        const trail = (pts, col) => { ctx.strokeStyle = col.trail; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(pts[0], pts[1]); for (let k = 2; k < pts.length; k += 2) ctx.lineTo(pts[k], pts[k + 1]); ctx.stroke(); };
+        const t = clock % 2.4 / 2.4;
+        if (i === 0) {
+          land(sq(-16, -6, 12, 12), me);
+          const L = 3 + 9 * easeOut(t * 1.4);
+          trail([-5, 0, -5 + L * 0.7, -L * 0.45], me);
+          drawBlock(-5 + L * 0.7, -L * 0.45, -0.57, me, B, false);
+        } else if (i === 1) {
+          land(sq(-16, -6, 12, 12), me);
+          trail([-5, -3, 3, -10, 11, -6, 11, 5, 3, 8, -1, 5], me);
+          ctx.strokeStyle = '#2b2840'; ctx.lineWidth = 0.6; ctx.setLineDash([1.2, 1.2]); ctx.beginPath(); ctx.moveTo(-1, 5); ctx.lineTo(-4.5, 3); ctx.stroke(); ctx.setLineDash([]);
+          drawBlock(-1, 5, PI - 0.5, me, B, false);
+        } else if (i === 2) {
+          const big = () => { ctx.beginPath(); ctx.moveTo(-16, -6); ctx.lineTo(-4, -6); ctx.lineTo(3, -11); ctx.lineTo(12, -6); ctx.lineTo(12, 6); ctx.lineTo(3, 9); ctx.lineTo(-4, 6); ctx.lineTo(-16, 6); ctx.closePath(); };
+          ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = me.side; ctx.translate(0, 1.1); big(); ctx.stroke(); ctx.fillStyle = me.side; ctx.fill(); ctx.restore();
+          ctx.lineWidth = 3; ctx.strokeStyle = me.base; big(); ctx.stroke(); ctx.fillStyle = me.base; ctx.fill();
+          ctx.save(); big(); ctx.clip(); ctx.globalAlpha = 0.6 * (1 - t); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(-3, 4, 4 + t * 24, 0, TAU); ctx.fill(); ctx.restore(); ctx.globalAlpha = 1;
+          drawBlock(-6, 1, 0, me, B, false);
+          ctx.fillStyle = '#ffffff';
+          for (const [sx, sy, r0] of [[7, -2, 1.6], [2, -6, 1.1], [9, 3, 0.9]]) { const q = r0 * (0.7 + 0.3 * Math.sin(clock * 6 + sx)); ctx.beginPath(); ctx.moveTo(sx, sy - q * 2); ctx.lineTo(sx + q * 0.6, sy - q * 0.6); ctx.lineTo(sx + q * 2, sy); ctx.lineTo(sx + q * 0.6, sy + q * 0.6); ctx.lineTo(sx, sy + q * 2); ctx.lineTo(sx - q * 0.6, sy + q * 0.6); ctx.lineTo(sx - q * 2, sy); ctx.lineTo(sx - q * 0.6, sy - q * 0.6); ctx.closePath(); ctx.fill(); }
+        } else {
+          land(sq(-17, -5, 9, 10), foe);
+          trail([-8, 0, 0, 0, 8, -1], foe);
+          drawBlock(10.5, -1.5, -0.1, foe, B, false);
+          land(sq(-4, 8, 10, 7), me);
+          trail([1, 8, 1, 0, 1, -6], me);
+          drawBlock(1, -8, -PI / 2, me, B, false);
+          const k = 0.8 + 0.25 * Math.sin(clock * 8);
+          ctx.fillStyle = '#ff3b5c'; ctx.beginPath();
+          for (let n = 0; n < 16; n++) { const a = n / 16 * TAU, r0 = (n & 1 ? 1.4 : 3.2) * k; ctx.lineTo(1 + Math.cos(a) * r0, Math.sin(a) * r0); }
+          ctx.closePath(); ctx.fill();
+        }
+        ctx.restore();
+      }
+      function drawHelp() {
+        btns.length = 0;
+        const ph = portrait, k = Math.min(1, stateT / 0.3), sc = easeBack(k);
+        ctx.fillStyle = 'rgba(36,34,70,' + (0.45 * k).toFixed(3) + ')'; ctx.fillRect(0, 0, W, H);
+        const cw = ph ? 376 : 620, ch = ph ? 548 : 486, cx = W / 2 - cw / 2, cy = H / 2 - ch / 2;
+        ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(sc, sc); ctx.translate(-W / 2, -H / 2);
+        ctx.fillStyle = 'rgba(30,30,70,.25)'; rr(cx, cy + 8, cw, ch, 24); ctx.fill();
+        ctx.fillStyle = '#ffffff'; rr(cx, cy, cw, ch, 24); ctx.fill();
+        ctx.fillStyle = '#4d8dff'; rr(cx, cy, cw, 58, [24, 24, 0, 0]); ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,.08)'; ctx.fillRect(cx, cy + 54, cw, 4);
+        text('HOW TO PLAY', W / 2, cy + 30, ph ? 25 : 28, '#ffffff', 'center', 900, 'rgba(0,0,0,.18)', 5);
+        const steps = [['Leave your land', 'A trail follows you'], ['Loop back home', 'Close the shape'], ['Claim the inside', 'All of it is yours'], ['Cut rival trails', 'Guard your own trail']];
+        const gp = 12, pw = (cw - 32 - gp) / 2, pph = ph ? 180 : 146, px0 = cx + 16, py0 = cy + 72;
+        steps.forEach(([a, b], i) => {
+          const x = px0 + (i % 2) * (pw + gp), y = py0 + Math.floor(i / 2) * (pph + gp);
+          ctx.fillStyle = '#f2f3f8'; rr(x, y, pw, pph, 16); ctx.fill();
+          ctx.save(); rr(x, y, pw, pph - 52, [16, 16, 0, 0]); ctx.clip(); ctx.fillStyle = '#f8f9fc'; ctx.fillRect(x, y, pw, pph - 52); ctx.restore();
+          helpArt(i, x + 4, y + 4, pw - 8, pph - 58);
+          ctx.fillStyle = '#2b2840'; ctx.beginPath(); ctx.arc(x + 18, y + 18, 12, 0, TAU); ctx.fill();
+          text(String(i + 1), x + 18, y + 19, 14, '#ffffff');
+          text(a, x + pw / 2, y + pph - 34, ph ? 14.5 : 16, '#2b2840');
+          text(b, x + pw / 2, y + pph - 15, ph ? 11.5 : 12.5, '#8a8ea8', 'center', 800);
+        });
+        const touchy = ph || inputMode === 'touch';
+        text(touchy ? 'Drag anywhere to steer · walls and your own trail kill' : 'Steer with the mouse or ←↑→↓ / WASD · Esc pauses', W / 2, cy + ch - 92, ph ? 11 : 13, '#4a4766', 'center', 800);
+        text('Red trail = a rival is close. Get home!', W / 2, cy + ch - 72, ph ? 11.5 : 13, '#e8344a', 'center', 900);
+        const bw = ph ? 200 : 220;
+        if (k >= 1) button(W / 2 - bw / 2, cy + ch - 58, bw, 46, helpFrom === 'play' ? 'PLAY' : 'GOT IT', '#3ccf6e', closeHelp, 20);
+        else { ctx.fillStyle = '#3ccf6e'; rr(W / 2 - bw / 2, cy + ch - 58, bw, 46, 23); ctx.fill(); }
+        ctx.restore();
       }
 
       function drawCard() {
-        const ph = portrait, won = state === 'win';
+        const ph = portrait, won = state === 'win', gold = won || timeUp && lastRank === 1;
         const k = Math.min(1, stateT / 0.45), sc = easeBack(k);
-        ctx.fillStyle = `rgba(36,34,70,${0.35 * k})`; ctx.fillRect(0, 0, W, H);
-        const cw = ph ? 340 : 380, ch = ph ? 372 : 384, cx = W / 2 - cw / 2, cy = H / 2 - ch / 2 - (ph ? 6 : 0);
+        ctx.fillStyle = 'rgba(36,34,70,' + (0.35 * k).toFixed(3) + ')'; ctx.fillRect(0, 0, W, H);
+        const cw = ph ? 340 : 380, ch = ph ? 410 : 418, cx = W / 2 - cw / 2, cy = H / 2 - ch / 2 - (ph ? 14 : 10);
         ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(sc, sc); ctx.translate(-W / 2, -H / 2);
         ctx.fillStyle = 'rgba(30,30,70,.25)'; rr(cx, cy + 8, cw, ch, 24); ctx.fill();
         ctx.fillStyle = '#ffffff'; rr(cx, cy, cw, ch, 24); ctx.fill();
         const col = human ? human.col : SKINS[skin];
-        ctx.fillStyle = won ? '#ffcf33' : col.base; rr(cx, cy, cw, 64, [24, 24, 0, 0]); ctx.fill();
+        ctx.fillStyle = gold ? '#ffcf33' : col.base; rr(cx, cy, cw, 64, [24, 24, 0, 0]); ctx.fill();
         ctx.fillStyle = 'rgba(0,0,0,.08)'; ctx.fillRect(cx, cy + 60, cw, 4);
-        text(won ? 'YOU WIN!' : 'GAME OVER', W / 2, cy + 33, 30, '#ffffff', 'center', 900, 'rgba(0,0,0,.18)', 5);
+        text(won ? 'YOU WIN!' : timeUp ? (lastRank === 1 ? 'FIRST PLACE!' : 'TIME UP!') : 'GAME OVER', W / 2, cy + 33, 30, '#ffffff', 'center', 900, 'rgba(0,0,0,.18)', 5);
         let y = cy + 88;
-        text(won ? 'You painted the whole map!' : deathMsg, W / 2, y, 15, '#4a4766', 'center', 800);
+        text(won ? 'You painted the whole map!' : fit(deathMsg, cw - 30, 15), W / 2, y, 15, '#4a4766', 'center', 800);
         y += 26;
         if (newBest) {
           ctx.fillStyle = '#ff5e5b'; rr(W / 2 - 52, y - 11, 104, 22, 11); ctx.fill();
           text('NEW BEST!', W / 2, y + 0.5, 12, '#ffffff');
-        } else text('BEST ' + fmtPct(Math.max(maxPct, api.best || 0)), W / 2, y, 12, '#8a8ea8');
+        } else text('BEST ' + fmtPct(Math.max(maxPct, topPct())), W / 2, y, 12, '#8a8ea8');
         y += 46;
-        text(fmtPct(maxPct), W / 2, y + 2, 52, col.side);
-        text(fmtPct(maxPct), W / 2, y - 1, 52, col.base);
+        const roll = fmtPct(maxPct * easeOut(Math.min(1, stateT / 0.9)));
+        text(roll, W / 2, y + 2, 52, col.side);
+        text(roll, W / 2, y - 1, 52, col.base);
         y += 34;
-        text('TERRITORY', W / 2, y, 11, '#8a8ea8');
+        text('TERRITORY  ·  ' + CFG.modes[mode].name.toUpperCase() + '  ·  ' + lv.name.toUpperCase(), W / 2, y, 11, '#8a8ea8');
         y += 22;
         const sw = (cw - 48) / 3;
         [['KILLS', String(human ? human.kills : 0)], ['RANK', lastRank ? '#' + lastRank : '-'], ['TIME', fmtTime(elapsed)]].forEach(([l, v], i) => {
@@ -1061,11 +1274,20 @@
           text(l, sx + sw / 2, y + 15, 10, '#8a8ea8');
           text(v, sx + sw / 2, y + 35, 19, '#2b2840');
         });
+        y += 74;
+        if (unlockedNow.length) {
+          const nk = unlockedNow[unlockedNow.length - 1], pu = 1 + 0.06 * Math.sin(clock * 6);
+          ctx.fillStyle = '#fff4cc'; rr(cx + 16, y - 16, cw - 32, 32, 16); ctx.fill();
+          ctx.save(); ctx.translate(cx + 40, y); ctx.scale(4.2 * pu, 4.2 * pu); drawBlock(0, 0, -PI / 2, SKINS[nk], 1, false); ctx.restore();
+          text(unlockedNow.length > 1 ? unlockedNow.length + ' NEW SKINS UNLOCKED!' : 'NEW SKIN UNLOCKED!', W / 2 + 14, y + 1, 14, '#b77900');
+        } else text(stats.games + (stats.games === 1 ? ' game' : ' games') + '  ·  ' + stats.kills + (stats.kills === 1 ? ' kill' : ' kills') + '  ·  ' + stats.wins + (stats.wins === 1 ? ' win' : ' wins') + '  ·  best ' + fmtPct(topPct()), W / 2, y, 12.5, '#8a8ea8', 'center', 800);
+
         const bw = cw - 150, bh = 52, by = cy + ch - 74, nb = btns.length;
         button(cx + 18, by, bw, bh, 'PLAY AGAIN', '#3ccf6e', startGame, 21);
         button(cx + 30 + bw, by, cw - bw - 48, bh, 'MENU', '#8a8ea8', toTitle, 18);
         if (k < 1) btns.length = nb;
         ctx.restore();
+        if (k >= 1 && !ph) text('Space / Enter to play again', W / 2, cy + ch + 26, 13, 'rgba(255,255,255,.9)', 'center', 800, 'rgba(30,30,70,.35)', 4);
       }
 
       newWorld(mode, false);
@@ -1116,6 +1338,7 @@
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         drawWorld(dpr);
         if (state === 'title') drawTitle();
+        else if (state === 'help') { drawTitle(); drawHelp(); }
         else {
           drawHud();
           if (state === 'over' || state === 'win') drawCard();

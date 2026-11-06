@@ -178,9 +178,10 @@
         if (c === 'Enter' && scr === 'worlds' && selWorld >= 0) playSel();
         return;
       }
-      if (gui === 'dead') return;
+      if (gui === 'dead') { if ((c === 'Space' || c === 'Enter') && deadT > 20 && !W.hardcore) { respawn(); lockMouse(true); } return; }
+      if (c === 'Escape' && gui === 'help') { if (helpBack) gui = helpBack; else closeGui(); return; }
       if (c === 'Escape') { if (gui === 'options' || gui === 'controls' || gui === 'plist' || gui === 'stats' || gui === 'adv') { persistSet(); gui = 'pause'; } else if (gui) closeGui(); else { gui = 'pause'; releaseMouse(); saveSoon(); } return; }
-      if (gui === 'pause' || gui === 'options' || gui === 'controls' || gui === 'plist' || gui === 'stats' || gui === 'adv' || gui === 'sign') return;
+      if (gui === 'pause' || gui === 'options' || gui === 'controls' || gui === 'plist' || gui === 'stats' || gui === 'adv' || gui === 'help' || gui === 'sign') return;
       if (c === KB.inv && !e.repeat) { if (gui) closeGui(); else if (!chatOpen && !P.dead) openGui('inv'); return; }
       if (gui) { invKey(c); return; }
       if (chatOpen) return;

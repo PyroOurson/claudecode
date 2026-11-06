@@ -25,330 +25,333 @@
   const DIRS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
   const LEVELS = [
-    { name: 'First Roll', code: '780464', m: [
-      'ooo',
-      'oSoooo',
-      'ooooooooo',
-      ' ooooooooo',
-      '     ooGoo',
-      '      ooo'] },
-    { name: 'Narrow Path', code: '372178', m: [
+    { name: 'First Steps', code: '388247', par: 9, m: [
       'oooo',
-      'oSoo',
-      'oooo',
-      '  o',
-      '  o',
-      '  o',
-      '  ooooooo',
-      '        o',
-      '     ooooo',
-      '     oooGo',
-      '     ooooo'] },
-    { name: 'Soft Touch', code: '234876', m: [
-      'oooooo',
-      'oSoooo',
-      'oooooo    oooo',
-      'oooAoo1111ooGo',
-      '          oooo'], s: { A: 'soft 1+' } },
-    { name: 'Flip Flop', code: '100841', m: [
-      'ooooo',
-      'oSooo',
-      'ooAoo11oooo',
-      'ooooo  oGoo',
-      '       oooo'], s: { A: 'soft 1t' } },
-    { name: 'Thin Ice', code: '241445', m: [
-      'oooo',
-      'oSoofffffffoo',
-      'oooofffffffoo',
-      'oooo   ffffooo',
-      '          ooGo',
-      '          oooo'] },
-    { name: 'Heavy Duty', code: '427482', m: [
-      'ooo',
-      'oSoooooooo',
-      'ooo     ooo',
-      '        oHo',
-      '        ooo',
-      '         1',
-      '         1',
-      '       ooooo',
-      '       ooGoo',
-      '       ooooo'], s: { H: 'heavy 1+' } },
-    { name: 'Two Keys', code: '390893', m: [
-      '     ooo',
-      '     oHo',
-      '     ooo',
-      '      o',
-      'oooo  o',
-      'oSoooooooo22oooo',
-      'oooo     o  ooGo',
-      '         o  oooo',
-      '        ooo',
-      '        oAo',
-      '        ooo'], s: { H: 'heavy 1+', A: 'soft 2+' } },
-    { name: 'Divide', code: '939823', m: [
-      'oooo     ooo',
-      'oSooooooooo',
-      'oooo   oooo',
-      '       oooAoo',
-      '',
-      'ooo        ooo',
-      'oooo      oooo',
-      ' ooooooooooooo',
-      '    oooGo',
-      '    ooooo'], s: { A: 'split 1,5 12,5' } },
-    { name: 'Orange Maze', code: '502525', m: [
-      'ooo',
-      'oSoffffff',
-      'ooooffoofoo',
-      '  ooffoffooo',
-      '  foffffoooo',
-      '    offofo oo',
-      '      fffooGo',
-      '         ooo'] },
-    { name: 'Twin Cubes', code: '294003', m: [
-      'ooo   ooo',
-      'oSoooooAo',
-      'ooo   ooo',
-      '',
-      'ooo          ooo',
-      'oBo11oooooo22oCo',
-      'ooo  oooooo  ooo',
-      '       oo',
-      '      oooo',
-      '      ooGo',
-      '      oooo'], s: { A: 'split 1,4 14,4', B: 'soft 2+', C: 'soft 1+' } },
-    { name: 'Brittle Bridge', code: '331156', m: [
-      'oooo',
-      'oSooffffffffoooo',
-      'ooooffffffffooAo',
-      'oooo        oooo',
-      '             11',
-      '             11',
-      '             ff',
-      '             ff',
-      '             ff',
-      '          ooooooo',
-      '          oooooGo',
-      '          ooooooo'], s: { A: 'soft 1+' } },
-    { name: 'Gatekeeper', code: '947340', m: [
-      'oooo        ooooo',
-      'oSoooooA11ooooHoo',
-      'oooo   o    ooooo',
-      '       o      2',
-      '    ooooo     2',
-      '    ooBoo   ooooo',
-      '    ooooo   oooGo',
-      '            ooooo'], s: { A: 'soft 1t 2t', H: 'heavy 1-', B: 'soft 1t 2+' }, on: '2' },
-    { name: 'Crossroads', code: '690050', m: [
-      '    oooo',
-      '    oAoo',
-      '    oooo',
-      '     1',
-      'ooo  1',
-      'oSoooooooo22oooo',
-      'ooo oooooo  ooGo',
-      '    oooooo  oooo',
-      '       3',
-      '       3',
-      '     oooo',
-      '     ooBo',
-      '     oooo'], s: { A: 'soft 1t 2- 3+', B: 'heavy 1+ 2+ 3t' }, on: '1' },
-    { name: 'Long Haul', code: '151355', m: [
-      'oooo',
-      'oSoooooooooo',
-      'oooo      oo',
-      '          oo',
-      '   ooooooooo',
-      '   o',
-      '   o',
-      '   oooooooooooo',
-      '             oo',
-      '          ooooo',
-      '          ooGoo',
-      '          ooooo'] },
-    { name: 'Knot', code: '495662', m: [
-      'oooooooo',
-      'oSooo oo',
-      'o o   oo',
-      ' ooooooo',
-      'ooo o oo',
-      'oooo oGo',
-      'o ooooo'] },
-    { name: 'Heavy Split', code: '233594', m: [
-      'ooo       oooo',
-      'oSooooooooooPo',
-      'ooo       oooo',
-      '',
-      'oooo11oooooo22oooo',
-      'oAoo  oooHoo  ooBo',
-      'oooo  oooooo  oooo',
-      '        33',
-      '        33',
-      '      oooooo',
-      '      oooGoo',
-      '      oooooo'], s: { P: 'split 1,4 16,4', A: 'soft 2+', B: 'soft 1+', H: 'heavy 3+' } },
-    { name: 'Lockstep', code: '329702', m: [
-      'oooo',
-      'oSoooooP',
-      'oooo',
-      '',
-      'ooA1oB2oC3ooooooo',
-      '            ooGoo',
-      'ooD4oE5oF6ooooooo'], s: { P: 'split 0,4 0,6', A: 'soft 4- 6+', B: 'soft 5+ 6-', C: 'soft 4+ 5t', D: 'soft 1+ 3+', E: 'soft 2+', F: 'soft 1+ 2t 3t' }, on: '1256' },
-    { name: 'Far Apart', code: '978282', m: [
-      'ooo     oooo     ooo',
-      'oAo     oSoP     oBo',
-      'ooo     oooo     ooo',
-      ' 1                2',
-      ' 1                2',
-      'ooooCo33oooo44oDoooo',
-      'oooo    oHoo    oooo',
-      'oooo    oooo    oooo',
-      '          5',
-      '          5',
-      '        oooooo',
-      '        oooGoo',
-      '        oooooo'], s: { P: 'split 0,0 19,0', A: 'soft 1- 2t 3t 4t', B: 'soft 1- 2+ 3+ 4+', C: 'soft 1t 2t', D: 'soft 1t 4-', H: 'heavy 5+' }, on: '14' },
-    { name: 'Shards', code: '284014', m: [
-      'oooooo  oo',
-      'oSoo ooooo',
-      ' o ooo ooo',
-      'foooo oo o',
-      'oo foooo o',
-      'oooo oofGo',
-      'fooooo ooo'] },
-    { name: 'Mirror', code: '542272', m: [
-      'ooo oo     oooooo',
-      'oSo oo     oooooo',
-      'oo ooo11111o ooo',
-      'oo Aoo      oBo o',
-      'o o oo22222o oooo',
-      'oooooo     ooooGo',
-      'ooooo      oooo o'], s: { A: 'heavy 1+ 2t', B: 'soft 1- 2+' }, on: '1' },
-    { name: 'Clockwork', code: '154574', m: [
-      '      oooo',
-      '      oAoo',
-      '      oooo',
-      '       1',
-      '       1',
+      'oSoooooo',
       'oooo  oooo',
-      'oSoo44oooo  oooo',
-      'ooDo  oooo22oooo55ooo',
-      '      oooo  oBoo  oGo',
-      '        3         ooo',
-      '        3         ooo',
-      '      oooo',
-      '      ooCo',
-      '      oooo'], s: { A: 'soft 3t 5t', B: 'heavy 1t 3t 4t', C: 'soft 1t 2t 4t 5t', D: 'heavy 3t 4t 5t' }, on: '135' },
-    { name: 'Labyrinth', code: '170135', m: [
-      ' ooooo ooo',
-      'oSo oo ooo',
-      'oo ooooooo',
-      'oo oH oo o',
-      'o oo oooo',
-      'ooooooo oo',
-      'ooooo  ooo11oooo',
-      'oo oooooo 11ooGo',
-      '            oooo'], s: { H: 'heavy 1+' } },
-    { name: 'Switchback', code: '724649', m: [
-      'oooo    oooo',
-      'oSoo1111ooAo',
-      'oooo    oooo',
-      '  2      3',
-      '  2      3',
-      'oooo    oooo',
-      'oBoo4444oCoo',
-      'oooo    oooo',
-      '          5',
-      '          5',
-      '        ooooo',
-      '        ooooo',
-      '        ooGoo'], s: { A: 'soft 1t 2+ 3t', B: 'heavy 1t 2+ 3- 4- 5t', C: 'soft 1t 2t 3t 4+' }, on: '25' },
-    { name: 'Last Drop', code: '757640', m: [
+      '      oGoo',
+      '      oooo'] },
+    { name: 'Lean and Lie', code: '868885', par: 11, m: [
+      '      oG',
+      '      ooo',
+      'oo    ooo',
+      'oooo oooo',
+      'oooSooo',
+      'ooooooo'] },
+    { name: 'Stand Tall', code: '561788', par: 14, m: [
+      ' oooooo',
+      ' oooooooo',
+      'oo oooooo',
+      'oG oo oo',
+      'o ooooo',
+      'oooooS'] },
+    { name: 'Cracked Glass', code: '684340', par: 14, m: [
+      '       Soo',
+      'G   oooooo',
+      'foooooooo',
+      'offo oooo',
+      'ofooo o',
+      ' fffooo'] },
+    { name: 'Long Way Round', code: '314500', par: 18, m: [
+      '   oo G',
+      '   oooo',
+      'ooooooo',
+      'ooSo oo',
+      '     oo'] },
+    { name: 'Glass Garden', code: '714813', par: 18, m: [
+      '  oooooff',
+      ' ooo ffff',
+      ' oooofoff',
+      '  ooo   So',
+      'oooooooGoo',
       'oooo',
-      'oSooffffffoooo',
-      'ooooffffffooPo',
-      'oooo      oooo',
-      '',
-      'ooo   oo ooo   ooo',
-      'oAo11ooo o oo22oBo',
-      'ooo   ooHo o   ooo',
-      '      oooooo',
-      '      oo ooo',
-      '        33',
-      '        33',
-      '      ooo oo',
-      '      of Goo',
-      '      oooooo'], s: { P: 'split 0,5 17,5', A: 'soft 1t 2+', B: 'soft 1-', H: 'heavy 3+' } },
-    { name: 'Footbridge', code: '923478', m: [
-      '     oCo    ooo          ooo',
-      'ooS  ooo2222oDo   oooo   oEG',
-      'ooo11ooB    ooo333oooo   ooo',
-      'Afo  ooo          o oo444ooo',
-      '     ooo          oooo   ooo',
-      '                  oooo'], s: { A: 'heavy 1+', B: 'soft 2+', C: 'soft 3t', D: 'heavy 4+', E: 'soft 1-' } },
-    { name: 'Relay', code: '829858', m: [
-      'Boo',
-      'ooo11ooo',
-      'oSo  ooo                 oGoo',
-      'ooo  oCo          oDooo  oooo',
-      'Aoo  ooo          ooooo44oooo',
-      '     ooo222ooEoo  ooooo',
-      '           oo oo  ooooo',
-      '           oF Ho33ooooo'], s: { A: 'heavy 1+', B: 'heavy 2+', C: 'heavy 3+', D: 'soft 4+', E: 'soft 2-', F: 'soft 3-', H: 'soft 4-' } },
-    { name: 'Detour', code: '774146', m: [
-      'oooo1111oooB',
-      'Dooo    ooCo   oo',
-      'oooo    o oo222ooo  ooo444oooof',
-      'oSoF           ooo33ooo   ooooo',
-      'AEoo           ooo  ooo   Goooo'], s: { A: 'soft 1t', B: 'soft 2+', C: 'heavy 3+', D: 'heavy 4+', E: 'soft 4-', F: 'soft 4-' } },
-    { name: 'Tollgate', code: '487096', m: [
-      '                    ooo',
-      '               oCo  ooo',
-      'oooo   ofoo2222ooo  oGo',
-      ' ooo   oooB    Doo  ooo',
-      'ofoo   oooo    off33ooo',
-      'ooSA111oooo    ooo',
-      '       oooo'], s: { A: 'soft 1+', B: 'heavy 2+', C: 'heavy 3+', D: 'soft 3-' } },
-    { name: 'Switchyard', code: '458310', m: [
-      'Soooo1111ooo          oo',
-      'oofo     ooo22oo     ooo',
-      'oooBC    ooo  oDo3333ooo44ooo',
-      'ooooA    ooE  ooo    ooo  Foo',
-      '                          ooG'], s: { A: 'soft 1t', B: 'soft 2+', C: 'heavy 3+', D: 'heavy 4t', E: 'soft 1-', F: 'soft 3-' }, on: '1' },
-    { name: 'Causeway', code: '543151', m: [
-      'ooS',
-      'ooo    ooDoo',
-      'oAo    Boooo   fCo',
-      'o E1111ooooo222ooo',
-      '               oof333ooo    oo',
-      '                     ooo4444ooo',
-      '                     ooo    ooo',
-      '                            ooG',
-      '                            ooo'], s: { A: 'soft 1+', B: 'heavy 2+', C: 'heavy 3t', D: 'heavy 4+', E: 'soft 4-' } },
-    { name: 'Ferry', code: '538450', m: [
-      'foo1111ooEBo',
-      'Doo    ofoCo   oooo',
-      'AoS    ooooo222oooo',
-      'ooo            oooo',
-      '               oooo   Goo',
-      '               oooo333ooo',
-      '                      ooo'], s: { A: 'soft 1+', B: 'heavy 2+', C: 'heavy 3+', D: 'soft 3-', E: 'soft 2-' } },
-    { name: 'Gauntlet', code: '584866', m: [
-      '           ooo  oooo',
-      '      ooo22ooo33oooo',
-      'ooS111oDo  ooo  oooo444Goooo',
-      'Bo    ofo  oEC  oooo   oooo',
-      'Aoo        ooo  oooo   ooooo'], s: { A: 'soft 1+', B: 'soft 2+', C: 'heavy 3t', D: 'heavy 4+', E: 'soft 1-' } },
-    { name: 'Summit', code: '210581', m: [
-      '                  oooo',
-      '                  oooo    ooooG',
-      '                  oooo    ooooo',
-      'DoA        ooo3333oooo4444ooooo',
-      'Boo11ooo   fCo    oooE    ooooo',
-      'ooS  ooo   ffF',
-      '      oo222ooo'], s: { A: 'soft 1+', B: 'soft 2t', C: 'heavy 3+', D: 'soft 4+', E: 'soft 3-', F: 'soft 4-' }, on: '2' }
+      'oooo'] },
+    { name: 'Open Sesame', code: '371864', par: 16, m: [
+      'ooo oooooo',
+      'A o ooSo o',
+      'ooooooo oo',
+      'ooooo11ooo',
+      'ooooo oooo',
+      'ooooo oo G'], s: { A: 'soft 1+' } },
+    { name: 'Heavy Step', code: '932692', par: 19, m: [
+      '         oG',
+      '   oo11oooo',
+      'oooo   oooo',
+      'ooooo  oooo',
+      'oHooo  oooo',
+      '  Soo'], s: { H: 'heavy 1+' } },
+    { name: 'The Gap', code: '159224', par: 21, m: [
+      ' oS',
+      ' ooo',
+      ' ooo',
+      ' oo',
+      'oooo ooo',
+      'oooooooo',
+      '   oGoo'] },
+    { name: 'Flip Switch', code: '985203', par: 20, m: [
+      '  oo  ooooo',
+      'oooff11ooooo',
+      'ffofooo   Go',
+      'ooo ooo    o',
+      'oAo  Soooooo',
+      'oooooooooooo',
+      'oo oo    ooo'], s: { A: 'soft 1t' } },
+    { name: 'Two Doors', code: '719522', par: 26, m: [
+      '     oBo',
+      ' oo11ooo',
+      'Soo  ooo  ooo',
+      'ooo  ooo  ooo',
+      'oAo   oo22ooG',
+      '      oo  ooo'], s: { A: 'soft 1+', B: 'heavy 2+' } },
+    { name: 'Splinter', code: '316466', par: 16, m: [
+      '   ooooo   o',
+      '  oooooooooo',
+      '     ooX  SG',
+      '      oo  o',
+      '  oo   o  oo',
+      'oooooooooooo',
+      'oo'], s: { X: 'split 8,5 10,1' } },
+    { name: 'Brittle Maze', code: '460328', par: 24, m: [
+      '     oo',
+      '  ooooo  oo',
+      '  ooooS  oo',
+      'Gooo ooofoo',
+      ' oo    ofofo',
+      '  oooo  fooo',
+      '   oooooofo',
+      '   oofffoo'] },
+    { name: 'Reunion', code: '947182', par: 20, m: [
+      '    ffo',
+      '   fooooX',
+      ' ooooffoo',
+      'ooooff',
+      'ooo o',
+      '  ooooG',
+      '  oooSo'], s: { X: 'split 2,2 5,3' } },
+    { name: 'Pressure Plate', code: '703877', par: 26, m: [
+      'ooo   oGfo',
+      'oof   ofoo',
+      'oo    oooo',
+      'oooo11oo',
+      ' H',
+      'oo',
+      'oS'], s: { H: 'heavy 1t' } },
+    { name: 'Island Hop', code: '162478', par: 32, m: [
+      'oSo',
+      'ooo   oooo  ooo',
+      'oooo11oooo22ooo',
+      'oooo  oooo   oo',
+      'oooo  oooo   oo',
+      'oooA  ooo    ooo',
+      '      ooB    oGo'], s: { A: 'soft 1+', B: 'soft 2+' } },
+    { name: 'Switchback', code: '781299', par: 27, m: [
+      'Soo',
+      'ooo  oo',
+      'o oo oo',
+      'ooGo o',
+      'oo  oo ooo',
+      'oooooooooo',
+      'ooo oooo'] },
+    { name: 'Far Apart', code: '904523', par: 24, m: [
+      '         ooooo',
+      ' So        oooo',
+      ' oo       ooooo',
+      'Aoo oo    oo  o',
+      'oooo11X       oo',
+      '   oo         oo',
+      '   oo         oG'], s: { A: 'soft 1+', X: 'split 12,2 13,0' } },
+    { name: 'Closing Time', code: '120256', par: 26, m: [
+      '   S',
+      '   o',
+      ' ooo ooo ooG',
+      'Hoooo11ooooo',
+      '   o   fffo',
+      '       fo'], s: { H: 'heavy 1t' } },
+    { name: 'Spiral Stair', code: '356076', par: 31, m: [
+      'Soo',
+      'ooooooooooo',
+      ' oo o  oooo',
+      'ooo o',
+      'ooofoooooo',
+      ' ooooooooo',
+      '        oG'] },
+    { name: 'Keyhole', code: '176298', par: 29, m: [
+      '         oo',
+      '       oooo',
+      '  ooooooooo',
+      'ooo  o oG o',
+      'ooo  oooffo',
+      'oooooo   ff',
+      'o Hoo11ooo',
+      'ooo S'], s: { H: 'heavy 1+' } },
+    { name: 'Ferry', code: '846133', par: 34, m: [
+      'oof   oooH',
+      'Soo   oooo',
+      'oooo  oooo22ooo',
+      ' oAo11fooo    oo',
+      ' ooo        oooo',
+      ' ooo        oooo',
+      '             Goo'], s: { A: 'soft 1t', H: 'heavy 2+' } },
+    { name: 'Twin Paths', code: '666026', par: 28, m: [
+      '   oo  offG',
+      '  ooo  ffffffo',
+      '  oo   ofo  fo',
+      'oSoooX ooooooo',
+      'oooo   o',
+      'ooo  oooo   oo',
+      ' ooo  oo o  oo',
+      ' ooooooooooooo'], s: { X: 'split 2,7 4,3' } },
+    { name: 'Long Haul', code: '315456', par: 32, m: [
+      '    oooooS',
+      '   oooooo',
+      '  ooo  oo',
+      'G oo',
+      'oooooooo',
+      'oooooooooo',
+      ' oo o o  oo',
+      '    ooo  oo'] },
+    { name: 'Fault Line', code: '580566', par: 32, m: [
+      'oooofo',
+      'ooo fff',
+      ' oo ffff',
+      'ooo ofoo',
+      'Goooo ooo',
+      ' oooo  oo',
+      '       ooS'] },
+    { name: 'Relay', code: '386614', par: 32, m: [
+      '      oo   oo',
+      'ooooooof oooooo',
+      'ooB11off o ooooo',
+      'Ao  oooooo  oooo',
+      'fo   ffo    o G',
+      'oo  oooff22oo',
+      'So  of'], s: { A: 'soft 1+', B: 'heavy 2t' } },
+    { name: 'Echo', code: '432266', par: 30, m: [
+      '     oooo',
+      'oo   oooo',
+      'ooo  o    oG',
+      'ooSA o    oo',
+      '  oooooo  ooo',
+      ' oo oo o  o o',
+      ' oooXooo11ooo',
+      '  oooooo oo'], s: { X: 'split 6,7 7,5', A: 'soft 1t' } },
+    { name: 'Tight Rope', code: '899563', par: 35, m: [
+      'Soo   ooo',
+      'ooo  oooo',
+      ' ooo o oo',
+      'ooooofffo',
+      'oG  ooooo',
+      '      ooo'] },
+    { name: 'Toll Bridge', code: '459234', par: 34, m: [
+      '              G',
+      ' oo           o',
+      'oooA11Bo      o',
+      'ooo o oooooo oo',
+      'ooooo    oooooo',
+      ' o        22ooo',
+      ' S           oo'], s: { A: 'heavy 1t', B: 'soft 2+' } },
+    { name: 'Three Isles', code: '550151', par: 34, m: [
+      '      oo',
+      'oBo   oo',
+      'Aooo11ooo',
+      ' ooo   oo',
+      ' ooo    o',
+      '  o     oo22fff',
+      '  o         oGff',
+      '  S         ooof'], s: { A: 'heavy 1+', B: 'soft 2t' } },
+    { name: 'Undertow', code: '396791', par: 38, m: [
+      '  oo       ooo',
+      '  oS       ooo',
+      '  oo      ooooo',
+      'ooooo  offooo o',
+      'ooooo oooofoo o',
+      'oo  ooooo   ooo',
+      '    oo      ooo',
+      '    oooooG',
+      '    ooo oo'] },
+    { name: 'Scatter', code: '478677', par: 34, m: [
+      'fo    fo',
+      'ff    fooo',
+      'Xff   oooo',
+      'SfooBofoo',
+      ' fooffff',
+      ' fooo off22ooo',
+      'ooff    oo  ooo',
+      'oo oo       G'], s: { X: 'split 1,3 5,4', B: 'heavy 2+' } },
+    { name: 'Lockstep', code: '624644', par: 38, m: [
+      'ooo',
+      'ooooH11oooo',
+      ' ooo o  oooG',
+      'So ooooooo',
+      'oooooooo',
+      'oooo  oo'], s: { H: 'heavy 1t' } },
+    { name: 'Labyrinth', code: '496201', par: 42, m: [
+      '         fo',
+      '        ofo',
+      '        ffoo',
+      '        fooo',
+      '         ffo',
+      'ooGo     f fo',
+      'ooooooooooSoo',
+      'oo ooo'] },
+    { name: 'Grand Tour', code: '865792', par: 40, m: [
+      '   oo',
+      ' AooS',
+      ' oo11ooo',
+      ' ooo fffooo',
+      'oo o ooff o oooo',
+      'oooo   ff22ooooo',
+      'ooHo      ooo oG',
+      'oooo',
+      ' oo'], s: { A: 'soft 1t', H: 'heavy 2t' } },
+    { name: 'Overpass', code: '770105', par: 40, m: [
+      '  o     ffo',
+      'ooo  ooofoff',
+      'oooXooofoSo  ooG',
+      'o  o  o    fffff',
+      'o oHoooooo ffo',
+      'o oo oo oo11 o',
+      'o   oo   o oo',
+      'o   ooo  o oo',
+      'oo  o oooo'], s: { X: 'split 8,8 5,4', H: 'heavy 1+' } },
+    { name: 'Last Light', code: '866185', par: 46, m: [
+      '     oo      oo',
+      'oo   ooo     oo',
+      'oo   ooo    oo',
+      ' ooo ooo    oooo',
+      'Gooooo    Sooo o',
+      ' ooo ooo oo oooo',
+      ' oo ooooooooo oo',
+      '   ooo ooo ooooo',
+      '   oo    ooo ooo'] },
+    { name: 'Summit Run', code: '187642', par: 46, m: [
+      '  S  oA',
+      '  o11ooo',
+      'ooooBooo',
+      'oooo  oo',
+      'oo     o     off',
+      'oo     o     fff',
+      'oo     oG22oooo'], s: { A: 'soft 1t', B: 'heavy 2t' } },
+    { name: 'Keystone', code: '714262', par: 46, m: [
+      '            oooG',
+      '  ooooo    ooooo',
+      'ooooo ooo 11 oo',
+      'ooX offoooo',
+      'oooofofoo oo',
+      'ooo  ooo   o',
+      ' ooo fofoooSoo',
+      ' ooAooo',
+      '   oooooffo'], s: { X: 'split 10,4 8,8', A: 'heavy 1t' } },
+    { name: 'Apex', code: '107511', par: 50, m: [
+      '    oooo',
+      '   fo11oo',
+      '  oof  oo',
+      'ooooS   o',
+      'oooo    ooooo',
+      'o  o     oooo',
+      'ooff      ooooG',
+      'ffof',
+      ' Hff'], s: { H: 'heavy 1t' } }
   ];
 
   function parseLevel(def) {
@@ -494,12 +497,18 @@
   }
 
   const THEMES = [
-    { floor: ['#a3a6aa', 'rgba(70,70,76,.6)', 'rgba(255,255,255,.55)'], rock: 0x6a2a20 }
+    { name: 'Ember', css: '#ff8a4a', sky: ['#5e0800', '#b81c04', '#d83410', '#8e1000'], dk: '20,0,0', gl: '255,96,40', floor: ['#a3a6aa', 'rgba(70,70,76,.6)', 'rgba(255,255,255,.55)'], rock: 0x6a2a20, hemi: 0x4a1a10, goal: 0xffa040 },
+    { name: 'Dusk', css: '#e49aff', sky: ['#14062e', '#3e1670', '#8a3a9e', '#24093f'], dk: '8,0,20', gl: '255,130,210', floor: ['#b2aec2', 'rgba(64,56,90,.6)', 'rgba(255,255,255,.55)'], rock: 0x3a2050, hemi: 0x2a1640, goal: 0xff8ae0 },
+    { name: 'Glacier', css: '#8fe2ff', sky: ['#031a30', '#0b4672', '#2b88b2', '#052a46'], dk: '0,8,22', gl: '170,235,255', floor: ['#c2cad3', 'rgba(56,76,98,.6)', 'rgba(255,255,255,.6)'], rock: 0x1e3a50, hemi: 0x123048, goal: 0x7ae6ff },
+    { name: 'Jade', css: '#c8f57a', sky: ['#021e16', '#0a4c32', '#2a8a52', '#033424'], dk: '0,14,6', gl: '220,255,150', floor: ['#b9bcae', 'rgba(58,68,48,.6)', 'rgba(255,255,255,.55)'], rock: 0x203820, hemi: 0x1a3020, goal: 0xd4ff6a }
   ];
+  const WORLD = 10;
+  const TIPS = { 0: ['Arrow keys roll the block. Stand it upright on the glowing hole.', 'Swipe or use the pad to roll. Stand the block upright on the glowing hole.'], 1: ['Wrong turn? Z takes the move back, even while falling.', 'Wrong turn? Undo takes the move back, even while falling.'], 3: ['New: orange tiles crack under an upright block. Lie flat on them.'], 6: ['New: a round switch opens the bridge. Any touch presses it.'], 7: ['New: X switches only click under an upright block.'], 9: ['This switch toggles: press it twice and the bridge closes again.'], 11: ['New: the split switch makes two cubes. Space swaps between them.', 'New: the split switch makes two cubes. SWAP picks the other one.'], 13: ['Bring the cubes side by side to join them back into a block.'] };
 
-  function drawSky(g, w, h) {
+  function drawSky(g, w, h, th) {
+    th = th || THEMES[0];
     const bg = g.createLinearGradient(0, 0, w * .25, h);
-    bg.addColorStop(0, '#5e0800'); bg.addColorStop(.3, '#b81c04'); bg.addColorStop(.62, '#d83410'); bg.addColorStop(1, '#8e1000');
+    bg.addColorStop(0, th.sky[0]); bg.addColorStop(.3, th.sky[1]); bg.addColorStop(.62, th.sky[2]); bg.addColorStop(1, th.sky[3]);
     g.fillStyle = bg; g.fillRect(0, 0, w, h);
     const r = rng(9157);
     const puff = (x, y, rx, ry, a, col) => {
@@ -508,12 +517,13 @@
       n.addColorStop(0, col); n.addColorStop(1, col.replace(/[\d.]+\)$/, '0)'));
       g.fillStyle = n; g.fillRect(-rx, -rx, rx * 2, rx * 2); g.restore();
     };
-    for (let i = 0; i < 26; i++) puff(r() * w, r() * h, (.12 + r() * .3) * w, (.03 + r() * .07) * w, (r() - .5) * .7, `rgba(20,0,0,${.18 + r() * .28})`);
-    for (let i = 0; i < 12; i++) puff(r() * w, h * (.3 + r() * .5), (.1 + r() * .25) * w, (.03 + r() * .05) * w, (r() - .5) * .5, `rgba(255,96,40,${.1 + r() * .16})`);
-    puff(w * .08, h * .92, w * .5, h * .22, -.2, 'rgba(10,0,0,.55)');
-    puff(w * .95, h * .05, w * .45, h * .2, .1, 'rgba(10,0,0,.45)');
+    for (let i = 0; i < 26; i++) puff(r() * w, r() * h, (.12 + r() * .3) * w, (.03 + r() * .07) * w, (r() - .5) * .7, `rgba(${th.dk},${.18 + r() * .28})`);
+    for (let i = 0; i < 12; i++) puff(r() * w, h * (.3 + r() * .5), (.1 + r() * .25) * w, (.03 + r() * .05) * w, (r() - .5) * .5, `rgba(${th.gl},${.1 + r() * .16})`);
+    for (let i = 0; i < 60; i++) { const x = r() * w, y = r() * h * .7, s = r() < .15 ? 2.2 : 1.2; g.fillStyle = `rgba(255,255,255,${.15 + r() * .45})`; g.beginPath(); g.arc(x, y, s, 0, 6.283); g.fill(); }
+    puff(w * .08, h * .92, w * .5, h * .22, -.2, `rgba(${th.dk},.55)`);
+    puff(w * .95, h * .05, w * .45, h * .2, .1, `rgba(${th.dk},.45)`);
     const v = g.createRadialGradient(w * .5, h * .5, Math.min(w, h) * .3, w * .5, h * .5, Math.max(w, h) * .78);
-    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(15,0,0,.6)');
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, `rgba(${th.dk},.6)`);
     g.fillStyle = v; g.fillRect(0, 0, w, h);
   }
 
@@ -604,7 +614,8 @@
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(CFG.fov, W / H, 0.1, 400);
     scene.background = track(canvasTex(THREE, 1024, (g, w, h) => drawSky(g, w, h, THEMES[0]), Math.round(1024 * H / W)));
-    scene.add(new THREE.HemisphereLight(0xfff4ee, 0x4a1a10, 0.85));
+    const hemi = new THREE.HemisphereLight(0xfff4ee, 0x4a1a10, 0.85);
+    scene.add(hemi);
     const sun = new THREE.DirectionalLight(0xfff0dc, 1.3);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
@@ -660,9 +671,47 @@
         scene.add(m); rocks.push(m);
       }
     }
+    const matGoal = track(new THREE.MeshStandardMaterial({ color: 0x1a1a1a, emissive: 0xffa040, emissiveIntensity: 1.2, metalness: .3, roughness: .4 }));
+    const texBeam = track(canvasTex(THREE, 8, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.7, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,1)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }, 64));
+    const matBeam = track(new THREE.MeshBasicMaterial({ color: 0xffa040, map: texBeam, transparent: true, opacity: .3, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.FrontSide }));
+    const rimGeo = track(new THREE.BoxGeometry(1.02, .05, .07));
+    const beamGeo = track(new THREE.CylinderGeometry(.36, .44, 2.6, 28, 1, true));
+    beamGeo.translate(0, 1.3, 0);
+    const goalG = new THREE.Group();
+    for (let k = 0; k < 4; k++) { const m = new THREE.Mesh(rimGeo, matGoal); const a = k * Math.PI / 2; m.rotation.y = a; m.position.set(Math.sin(a) * .5, -.02, Math.cos(a) * .5); goalG.add(m); }
+    const beam = new THREE.Mesh(beamGeo, matBeam);
+    goalG.add(beam);
+    scene.add(goalG);
+    const matDust = track(new THREE.MeshBasicMaterial({ color: 0xe8e2da, transparent: true, opacity: .8, depthWrite: false }));
+    const matSpark = track(new THREE.MeshBasicMaterial({ color: 0xffa040 }));
+    const matShard = track(new THREE.MeshBasicMaterial({ color: 0xf08a3c }));
+    const partGeo = track(new THREE.BoxGeometry(.09, .09, .09));
+    const parts = [];
+    for (let i = 0; i < 64; i++) { const m = new THREE.Mesh(partGeo, matDust); m.visible = false; m.userData = { v: V3(0, 0, 0), life: 0, max: 1, g: 0 }; scene.add(m); parts.push(m); }
+    let partI = 0;
+    function burst(x, y, z, n, mat, sp, up, g, life) {
+      for (let i = 0; i < n; i++) {
+        const m = parts[partI = (partI + 1) % parts.length], u = m.userData, a = Math.random() * 6.283, s = sp * (.4 + Math.random() * .6);
+        m.material = mat; m.visible = true; m.position.set(x + Math.cos(a) * .3, y, z + Math.sin(a) * .3);
+        u.v.set(Math.cos(a) * s, up * (.5 + Math.random() * .7), Math.sin(a) * s); u.life = u.max = life * (.6 + Math.random() * .5); u.g = g;
+        m.rotation.set(Math.random() * 3, Math.random() * 3, 0);
+      }
+    }
+    function updParts(dt) {
+      for (const m of parts) {
+        if (!m.visible) continue;
+        const u = m.userData;
+        u.life -= dt;
+        if (u.life <= 0) { m.visible = false; continue; }
+        u.v.y -= u.g * dt;
+        m.position.addScaledVector(u.v, dt);
+        m.scale.setScalar(Math.max(.05, u.life / u.max) * (m.material === matDust ? 1.6 : 1));
+        m.rotation.x += dt * 4;
+      }
+    }
     let themeIdx = -1;
     function applyTheme(i) {
-      const k = Math.floor(i / 4) % THEMES.length;
+      const k = Math.floor(i / WORLD) % THEMES.length;
       if (k === themeIdx) return;
       themeIdx = k;
       const th = THEMES[k];
@@ -673,6 +722,9 @@
       drawTile(fc.getContext('2d'), fc.width, th.floor[0], th.floor[1], th.floor[2], 77);
       texFloor.needsUpdate = true;
       rockMat.color.setHex(th.rock);
+      hemi.groundColor.setHex(th.hemi);
+      matGoal.emissive.setHex(th.goal); matBeam.color.setHex(th.goal);
+      for (const m of [matSpark]) m.color.setHex(th.goal);
     }
     function placeRocks() {
       const rx = L.w / 2 + 3.5, rz = L.h / 2 + 3.5;
@@ -693,8 +745,17 @@
     const camTarget = V3(0, 0, 0), camDir = V3(0, 1, 0);
     const axS = [0, 0], azS = [0, 0];
 
-    const save = Object.assign({ unlocked: 0, cleared: 0, best: {} }, api.load() || {});
+    const old = api.load() || {};
+    const save = old.ver === 2 ? Object.assign({ unlocked: 0, cleared: 0, best: {}, stars: {} }, old) : { ver: 2, unlocked: Math.min(LEVELS.length - 1, old.unlocked | 0), cleared: Math.min(LEVELS.length, old.cleared | 0), best: {}, stars: {}, seenHelp: !!old.unlocked };
     if (!save.best || typeof save.best !== 'object') save.best = {};
+    if (!save.stars || typeof save.stars !== 'object') save.stars = {};
+    const totalStars = () => Object.values(save.stars).reduce((a, b) => a + (b | 0), 0);
+    const starsFor = (n, par, h) => Math.min(h ? 2 : 3, n <= par ? 3 : n <= Math.ceil(par * 1.4) + 2 ? 2 : 1);
+    const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.4l2.95 6.2 6.75.8-5 4.7 1.33 6.75L12 17.5l-6.03 3.35L7.3 14.1l-5-4.7 6.75-.8z"/></svg>';
+    const stars3 = (n, cls) => `<span class="${cls}">${[0, 1, 2].map(k => `<i class="${k < n ? 'on' : ''}" style="--d:${(.25 + k * .22).toFixed(2)}s">${STAR}</i>`).join('')}</span>`;
+    const hist = [];
+    const cloneSt = q => ({ ...q, c: q.c ? [q.c[0].slice(), q.c[1].slice()] : null });
+    let undos = 0;
     const persist = () => api.save(save);
     api.score(save.cleared || 0);
 
@@ -743,6 +804,8 @@
       win() { tone(420, 90, .75, 'sine', .14); [523, 659, 784, 1046].forEach((f, i) => tone(f, f, .3, 'triangle', .09, .55 + i * .1)); },
       tiles() { noise(.7, .07, 'bandpass', 400, 2400); },
       ui() { tone(660, 660, .05, 'sine', .06); },
+      undo() { tone(700, 420, .09, 'sine', .08); noise(.08, .05, 'bandpass', 2400, 900); },
+      star(i) { const f = 880 * Math.pow(1.26, i); tone(f, f, .22, 'triangle', .09); tone(f * 2, f * 2, .18, 'sine', .04, .02); },
       bad() { tone(220, 140, .2, 'triangle', .1); }
     };
 
@@ -813,7 +876,8 @@
       applyTheme(Math.max(0, LEVELS.indexOf(def)));
       placeRocks();
       fitCamera();
-      hud.code.textContent = def.code.slice(0, 3) + ' ' + def.code.slice(3);
+      goalG.position.set(L.goal[0] - ox, 0, L.goal[1] - oz); goalG.visible = true;
+      hud.code.textContent = def.par;
     }
 
     const FOLD = [[-Math.PI, 'z'], [Math.PI, 'z'], [Math.PI, 'x'], [-Math.PI, 'x']];
@@ -919,21 +983,30 @@
       elBanner.classList.remove('show'); void elBanner.offsetWidth; elBanner.classList.add('show');
       bannerT = dur;
     }
-    let bannerT = 0;
+    let bannerT = 0, tipT = 0;
+    const elTip = $('.br-tip');
+    function showTip(i) {
+      const t = TIPS[i];
+      if (!t || (save.stars[i + 1] | 0) > 0) { elTip.classList.remove('show'); tipT = 0; return; }
+      elTip.textContent = touch && t[1] ? t[1] : t[0];
+      elTip.classList.add('show'); tipT = 9;
+    }
 
     function startStage(i) {
       lvl = Math.max(0, Math.min(LEVELS.length - 1, i));
       buildLevel(LEVELS[lvl]);
       st = initState(L);
-      moves = 0; secs = 0; falls = 0; hints = 0; buffered.length = 0; anim = null; fall = null;
+      moves = 0; secs = 0; falls = 0; hints = 0; undos = 0; hist.length = 0; buffered.length = 0; anim = null; fall = null;
+      goalG.visible = false;
       for (const t of tiles) { t.holder.position.copy(t.base); t.holder.position.y += 14 + (t.y + t.x * .3) * .05; }
       blockMesh.visible = false; cubes[0].visible = cubes[1].visible = false; markActive();
       phase = 'intro'; phaseT = 0; timerOn = false;
       elHud.hidden = false; elPad.hidden = !touch;
       updHud(true);
-      banner(`<b>STAGE ${pad2(lvl + 1)}</b><span>${LEVELS[lvl].name}</span><i>PASSCODE&nbsp; ${LEVELS[lvl].code}</i>`, CFG.bannerTime);
+      banner(`<b>STAGE ${pad2(lvl + 1)}</b><span>${LEVELS[lvl].name}</span><i>${THEMES[Math.floor(lvl / WORLD) % THEMES.length].name.toUpperCase()} &middot; PAR ${LEVELS[lvl].par} &middot; CODE ${LEVELS[lvl].code}</i>`, CFG.bannerTime);
       if (lvl > save.unlocked) save.unlocked = lvl;
       save.last = lvl; persist();
+      showTip(lvl);
       SND.tiles();
     }
 
@@ -942,7 +1015,8 @@
       showState();
       blockMesh.quaternion.copy(Q0[0]);
       blockMesh.position.y = 9;
-      phase = 'drop'; phaseT = 0;
+      phase = 'drop'; phaseT = 0; hist.length = 0;
+      goalG.visible = true;
       markActive();
     }
 
@@ -956,6 +1030,27 @@
       applyFold(0);
       fall = null; anim = null; buffered.length = 0;
       dropBlock();
+    }
+
+    function restoreState(q) {
+      for (let b = 0; b < L.nb; b++) setBridge(b, q.m >> b & 1, true);
+      for (const m of bridgeMats) m.emissiveIntensity = 0;
+      for (const t of tiles) {
+        t.spin = null; t.fallV = 0;
+        if (t.t !== BRIDGE) { t.holder.position.copy(t.base); t.holder.rotation.set(0, 0, 0); t.holder.visible = true; }
+      }
+      applyFold(0);
+      fall = null; anim = null; splitFx = null; buffered.length = 0;
+      st = cloneSt(q);
+      showState();
+      if (st.k === 0) blockMesh.quaternion.copy(Q0[st.o]); else cubes.forEach(m => m.quaternion.copy(Q0[0]));
+      phase = 'play';
+    }
+    function undo() {
+      if (screen || !hist.length || !(phase === 'play' || phase === 'roll' || phase === 'fall' || phase === 'busy')) return;
+      const h = hist.pop();
+      restoreState(h.s); moves = h.moves; undos++; updHud(); SND.undo();
+      const m = st.k === 0 ? blockMesh : cubes[st.a]; m.scale.setScalar(1.06);
     }
 
     function heldDir() {
@@ -988,6 +1083,7 @@
     }
 
     function doMove(d) {
+      hist.push({ s: cloneSt(st), moves }); if (hist.length > 300) hist.shift();
       const res = step(L, st, d);
       moves++; totalMoves++; updHud();
       timerOn = true;
@@ -1012,6 +1108,7 @@
       const prevK = st.k;
       st = res.s;
       SND.land();
+      if (res.r !== 'fall') { if (st.k === 0) for (const [cx, cy] of blockCells(st)) burst(cx - ox, .02, cy - oz, st.o === 0 ? 7 : 3, matDust, 1.1, .5, 1.2, .45); else { const c = st.c[st.a]; burst(c[0] - ox, .02, c[1] - oz, 4, matDust, 1, .5, 1.2, .4); } }
       let bridgeOff = false, splitEv = false, mergeEv = false, brokeTile = null;
       for (const e of res.ev) {
         if (e.t === 'press') { const t = tileAt[e.i]; if (t) t.press = 1; SND.click(); }
@@ -1078,7 +1175,7 @@
           f.spinAxis.set(Math.random() - .5, 0, Math.random() - .5).normalize(); f.spin = 1.2;
         }
       }
-      if (brokeTile) { SND.crack(); brokeTile.spin = V3(Math.random() - .5, 0, Math.random() - .5).normalize(); brokeTile.fallV = 0; }
+      if (brokeTile) { burst(brokeTile.x - ox, 0, brokeTile.y - oz, 14, matShard, 2.2, 3, 14, .9); SND.crack(); brokeTile.spin = V3(Math.random() - .5, 0, Math.random() - .5).normalize(); brokeTile.fallV = 0; }
       fall = f;
       api.timeout(() => { if (phase === 'fall') SND.fall(); }, delay * 1000 + 120);
     }
@@ -1117,15 +1214,27 @@
     }
 
     function stageCleared() {
-      const n = lvl + 1;
-      if (save.best[n] == null || moves < save.best[n]) save.best[n] = moves;
+      const n = lvl + 1, par = LEVELS[lvl].par, stars = starsFor(moves, par, hints);
+      const prevBest = save.best[n], prevStars = save.stars[n] | 0;
+      if (prevBest == null || moves < prevBest) save.best[n] = moves;
+      if (stars > prevStars) save.stars[n] = stars;
       save.cleared = Math.max(save.cleared || 0, n);
       save.unlocked = Math.max(save.unlocked, Math.min(LEVELS.length - 1, n));
       persist();
       api.score(save.cleared);
       totalSecs += secs;
-      const nb = api.submit(n);
-      banner(`<b>${nb ? 'NEW BEST' : 'STAGE CLEAR'}</b><span>${moves} moves &middot; ${fmtTime(secs | 0)}${falls ? ' &middot; ' + falls + (falls === 1 ? ' fall' : ' falls') : ''}</span>`, CFG.outroTime + .4);
+      api.submit(n);
+      goalG.visible = false;
+      const isBest = prevBest != null && moves < prevBest;
+      const last = lvl + 1 >= LEVELS.length;
+      setScreen('clear', `<p class="br-kick">STAGE ${pad2(n)} &middot; ${LEVELS[lvl].name}</p>
+        <h3 class="br-h">${isBest ? 'New best!' : stars === 3 ? 'Perfect!' : 'Stage clear'}</h3>
+        ${stars3(stars, 'br-stars')}
+        <div class="br-stats2"><div><i>MOVES</i><b>${moves}</b></div><div><i>PAR</i><b>${par}</b></div><div><i>TIME</i><b>${fmtTime(secs | 0)}</b></div><div><i>FALLS</i><b>${falls}</b></div></div>
+        <p class="br-sub">${stars < 3 ? (hints ? 'Hint used, 2 stars max. ' : '') + 'Finish in ' + par + ' moves for 3 stars' : 'Par reached'} &middot; best ${save.best[n]} &middot; ${totalStars()}/${LEVELS.length * 3} stars</p>
+        <div class="br-row"><button class="br-b" data-act="retry">Retry</button><button class="br-b pri" data-act="${last ? 'end' : 'next'}">${last ? 'Finish' : 'Next stage'}</button></div>
+        <button class="br-b ghost" data-act="stages">All stages</button>`);
+      for (let k = 0; k < stars; k++) api.timeout(() => { if (screen === 'clear') SND.star(k); }, 280 + k * 220);
     }
 
     function updIntro(dt) {
@@ -1146,16 +1255,14 @@
         t.holder.position.y = t.base.y - .5 * CFG.fallG * .6 * k * k;
         t.holder.rotation.x = (t.base.x % 2 ? 1 : -1) * k * .8;
       }
-      if (phaseT >= CFG.outroTime) {
-        if (lvl + 1 < LEVELS.length) startStage(lvl + 1);
-        else showEnd();
-      }
+      if (phaseT >= CFG.outroTime) phase = 'done';
     }
 
     function frame(dt, now) {
       if (screen === 'pause') { renderer.render(scene, camera); return; }
       if (timerOn && (phase === 'play' || phase === 'roll' || phase === 'busy' || phase === 'fall' || phase === 'drop')) { secs += dt; updHud(); }
       if (bannerT > 0) { bannerT -= dt; if (bannerT <= 0) elBanner.classList.remove('show'); }
+      if (tipT > 0 && phase !== 'intro') { tipT -= dt; if (tipT <= 0 || phase === 'outro') { tipT = 0; elTip.classList.remove('show'); } }
       if (phase === 'title') {
         placeCamera(CFG.yaw + Math.sin(now / 4000) * .35);
       } else if (phase === 'intro') updIntro(dt);
@@ -1187,10 +1294,12 @@
         phaseT += dt;
         const k = Math.min(1, phaseT / CFG.sinkTime);
         blockMesh.position.y = 1 - 3.4 * k * k;
-        if (k >= 1) { blockMesh.visible = false; phase = 'outro'; phaseT = 0; stageCleared(); }
+        if (k >= 1) { blockMesh.visible = false; phase = 'outro'; phaseT = 0; burst(goalG.position.x, .1, goalG.position.z, 26, matSpark, 1.6, 6, 9, 1.1); stageCleared(); }
       } else if (phase === 'outro') updOutro(dt);
       for (const m of rocks) { const u = m.userData; m.rotation.x += dt * u.sp * (1 + u.ax); m.rotation.z += dt * u.sp * (1 + u.az); m.position.y = u.y + Math.sin(now / 1800 + u.ph) * .25; }
       applyFold(dt);
+      updParts(dt);
+      if (goalG.visible) { const p = .5 + .5 * Math.sin(now / 320); matBeam.opacity = .22 + .2 * p; matGoal.emissiveIntensity = .7 + .7 * p; }
       for (const t of tiles) if (t.press > 0) { t.press = Math.max(0, t.press - dt * 5); for (const c of t.mesh.children) c.position.y = .03 - .035 * Math.sin(t.press * Math.PI); }
       for (const m of bodies) if (m.scale.x > 1.001 && !(phase === 'busy')) m.scale.setScalar(Math.max(1, m.scale.x - dt * .8));
       renderer.render(scene, camera);
@@ -1201,6 +1310,8 @@
       elScreen.className = 'br-screen' + (name ? ' on ' + name : '');
       elScreen.innerHTML = html || '';
       elScreen.hidden = !name;
+      elHud.classList.toggle('dim', !!name && name !== 'pause');
+      wrap.classList.toggle('scr', !!name);
     }
 
     function showTitle() {
@@ -1210,14 +1321,13 @@
       buildLevel(LEVELS[Math.min(save.unlocked, LEVELS.length - 1)]);
       st = initState(L); showState(); blockMesh.quaternion.copy(Q0[0]);
       const cont = save.unlocked > 0;
-      setScreen('title', `<div class="br-logo"><img alt="Bloxorz" src="${ledLogo('BLOXORZ')}"></div>
+      setScreen('title', `<div class="br-logo"><img alt="Block Roll" src="${ledLogo('BLOCK ROLL')}"></div>
         <div class="br-menu-list">
-          <button class="br-b pri" data-act="${cont ? 'cont' : 'new'}">${cont ? 'Continue &middot; Stage ' + (save.unlocked + 1) : 'New game'}</button>
-          ${cont ? '<button class="br-b" data-act="new">New game</button>' : ''}
-          <button class="br-b" data-act="code">Load stage</button>
-          <button class="br-b" data-act="help">How to play</button>
+          <button class="br-b pri" data-act="${cont ? 'cont' : 'new'}">${cont ? 'Continue &middot; Stage ' + (save.unlocked + 1) : 'Play'}</button>
+          <button class="br-b" data-act="stages">Stages</button>
+          <div class="br-row"><button class="br-b" data-act="help">How to play</button><button class="br-b" data-act="code">Passcode</button></div>
         </div>
-        <p class="br-foot">${save.cleared ? save.cleared + ' of ' + LEVELS.length + ' stages cleared' : LEVELS.length + ' stages &middot; drop the block in the hole'}</p>`);
+        <p class="br-foot">${save.cleared ? STAR + ' ' + totalStars() + '/' + LEVELS.length * 3 + ' &middot; ' + save.cleared + ' of ' + LEVELS.length + ' stages cleared' : LEVELS.length + ' stages in 4 worlds &middot; drop the block in the hole'}</p>`);
     }
 
     let codeBuf = '', codeMsg = '';
@@ -1240,7 +1350,23 @@
       showCode();
     }
 
-    function showHelp() {
+    function showStages() {
+      const open = i => i <= save.unlocked + 2;
+      let h = '';
+      for (let w = 0; w * WORLD < LEVELS.length; w++) {
+        const th = THEMES[w % THEMES.length];
+        let ws = 0, cells = '';
+        for (let i = w * WORLD; i < Math.min(LEVELS.length, (w + 1) * WORLD); i++) {
+          const ok = open(i), sN = save.stars[i + 1] | 0, done = save.best[i + 1] != null;
+          ws += sN;
+          cells += `<button class="br-st${ok ? '' : ' lock'}${done ? ' done' : ''}${i === save.unlocked ? ' cur' : ''}" ${ok ? `data-stage="${i}"` : 'disabled'} aria-label="Stage ${i + 1}"><b>${i + 1}</b>${stars3(sN, 'br-mini')}</button>`;
+        }
+        h += `<div class="br-world" style="--c:${th.css}"><div class="br-wn"><b>${th.name}</b><span>${STAR}${ws}/${WORLD * 3}</span></div><div class="br-grid">${cells}</div></div>`;
+      }
+      setScreen('stages', `<h3 class="br-h">Stages</h3><p class="br-sub">${STAR.replace('<svg', '<svg class="br-si"')} ${totalStars()}/${LEVELS.length * 3} &middot; reach par for 3 stars &middot; the next three stages are always open</p><div class="br-worlds">${h}</div><button class="br-b ghost" data-act="title">Back</button>`);
+    }
+
+    function showHelp(first) {
       setScreen('help', `<h3 class="br-h">How to play</h3>
         <div class="br-help">
           <div><span class="ic blk"></span><p>Roll the block with the <b>arrow keys</b> (swipe or D-pad on touch). Stand it upright over the <b>square hole</b> to drop in.</p></div>
@@ -1249,8 +1375,10 @@
           <div><span class="ic soft"></span><p><b>Round switches</b> work on any touch. They open, close or toggle bridges.</p></div>
           <div><span class="ic heavy"></span><p><b>X switches</b> are heavy: only an upright block presses them.</p></div>
           <div><span class="ic split"></span><p><b>Split switches</b> break the block into two cubes. <b>Space</b> (or SWAP) picks the cube; put them side by side to join up.</p></div>
+          <div><span class="ic undo"></span><p><b>Z</b> or <b>Undo</b> takes a move back, even mid-fall. <b>R</b> restarts, <b>H</b> gives a hint.</p></div>
+          <div><span class="ic star"></span><p>Finish in the <b>par</b> number of moves for <b>3 stars</b>. Hints cap a stage at 2 stars.</p></div>
         </div>
-        <button class="br-b pri" data-act="title">Got it</button>`);
+        <button class="br-b pri" data-act="${first ? 'new' : 'title'}">${first ? 'Play' : 'Got it'}</button>`);
     }
 
     function showPause() {
@@ -1260,6 +1388,7 @@
         <div class="br-menu-list">
           <button class="br-b pri" data-act="resume">Resume</button>
           <button class="br-b" data-act="restart">Restart stage</button>
+          <button class="br-b" data-act="stages">All stages</button>
           <button class="br-b" data-act="title">Main menu</button>
         </div>`);
     }
@@ -1268,15 +1397,19 @@
       phase = 'end'; timerOn = false; clearLevel(); blockMesh.visible = cubes[0].visible = cubes[1].visible = false;
       elHud.hidden = true; elPad.hidden = true;
       setScreen('end', `<div class="br-logo sm"><img alt="Well done" src="${ledLogo('WELL DONE')}"></div>
-        <p class="br-sub">The final stage is cleared &mdash; all ${LEVELS.length} holes conquered.</p>
-        <div class="br-stats2"><div><i>Moves</i><b>${totalMoves}</b></div><div><i>Time</i><b>${fmtTime(totalSecs | 0)}</b></div></div>
-        <div class="br-menu-list"><button class="br-b pri" data-act="title">Main menu</button></div>`);
+        <p class="br-sub">The final stage is cleared &mdash; all ${LEVELS.length} holes conquered. Go back for the stars you missed.</p>
+        <div class="br-stats2"><div><i>STARS</i><b>${totalStars()}/${LEVELS.length * 3}</b></div><div><i>MOVES</i><b>${totalMoves}</b></div><div><i>TIME</i><b>${fmtTime(totalSecs | 0)}</b></div></div>
+        <div class="br-menu-list"><button class="br-b pri" data-act="stages">All stages</button><button class="br-b" data-act="title">Main menu</button></div>`);
     }
 
     function doAct(a) {
       SND.ui();
       if (a === 'cont') { setScreen(null); startStage(save.unlocked); }
-      else if (a === 'new') { setScreen(null); startStage(0); }
+      else if (a === 'new') { if (!save.seenHelp) { save.seenHelp = true; persist(); showHelp(true); return; } setScreen(null); startStage(0); }
+      else if (a === 'stages') showStages();
+      else if (a === 'retry') { setScreen(null); startStage(lvl); }
+      else if (a === 'next') { setScreen(null); startStage(lvl + 1); }
+      else if (a === 'end') showEnd();
       else if (a === 'code') { codeBuf = ''; codeMsg = ''; showCode(); }
       else if (a === 'help') showHelp();
       else if (a === 'title') showTitle();
@@ -1288,6 +1421,8 @@
     api.on(wrap, 'click', e => {
       const b = e.target.closest('[data-act]');
       if (b) { e.preventDefault(); doAct(b.dataset.act); return; }
+      const sb = e.target.closest('[data-stage]');
+      if (sb && screen === 'stages') { e.preventDefault(); SND.ui(); setScreen(null); startStage(+sb.dataset.stage); return; }
       const k = e.target.closest('[data-key]');
       if (k && screen === 'code') codeKey(k.dataset.key);
       else if (screen === 'title' && e.target === elScreen) doAct(save.unlocked > 0 ? 'cont' : 'new');
@@ -1305,6 +1440,7 @@
       }
       if (screen) {
         if (e.repeat) return;
+        if (screen === 'clear' && c === 'KeyR') { doAct('retry'); return; }
         if (screen === 'title' && /^Digit\d$|^Numpad\d$/.test(c)) { codeBuf = ''; codeMsg = ''; codeKey(c.slice(-1)); return; }
         if (c === 'Enter' || c === 'Space' || (screen === 'title' && KEYDIR[c] != null)) { const b = elScreen.querySelector('.pri'); if (b) doAct(b.dataset.act); }
         else if (screen === 'pause' && c === 'KeyP') doAct('resume');
@@ -1318,6 +1454,7 @@
       else if (c === 'KeyR' && !e.repeat) { if (phase === 'play' || phase === 'roll' || phase === 'busy') { falls++; resetStage(); } }
       else if (c === 'KeyP' && !e.repeat) showPause();
       else if (c === 'KeyH' && !e.repeat) hint();
+      else if (c === 'KeyZ' || c === 'KeyU' || c === 'Backspace') { e.preventDefault(); undo(); }
     });
     api.on(window, 'keyup', e => { const i = heldKeys.indexOf(e.code); if (i >= 0) heldKeys.splice(i, 1); });
     api.on(window, 'blur', () => { heldKeys.length = 0; holdTouch = -1; });
@@ -1353,7 +1490,8 @@
       api.on(b, 'pointerup', up); api.on(b, 'pointercancel', up); api.on(b, 'lostpointercapture', up);
     });
     api.on(elSwap, 'pointerdown', e => { e.preventDefault(); audio(); act('swap'); });
-    api.on($('.br-menu:not(.br-hintb)'), 'pointerdown', e => { e.preventDefault(); showPause(); });
+    api.on($('.br-menu:not(.br-hintb):not(.br-undob)'), 'pointerdown', e => { e.preventDefault(); showPause(); });
+    api.on($('.br-undob'), 'pointerdown', e => { e.preventDefault(); audio(); undo(); });
     api.on($('.br-hintb'), 'pointerdown', e => { e.preventDefault(); audio(); hint(); });
     function hint() {
       if (screen || phase !== 'play' || !st) return;
@@ -1382,8 +1520,8 @@
     title: 'Block Roll',
     category: '3D',
     tint: '#b4532a',
-    blurb: 'Roll the rusty block across floating tiles and drop it in the hole.',
-    help: '<kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> roll · <kbd>Space</kbd> swap cube · <kbd>R</kbd> restart stage · <kbd>H</kbd> hint · <kbd>P</kbd> pause · touch: swipe or D-pad',
+    blurb: 'Roll the rusty block across 40 floating stages in four worlds and drop it in the hole. Reach par for three stars.',
+    help: '<kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> roll · <kbd>Space</kbd> swap cube · <kbd>Z</kbd> undo · <kbd>R</kbd> restart stage · <kbd>H</kbd> hint · <kbd>P</kbd> pause · touch: swipe or D-pad',
     better: 'high',
     format: v => v + '/' + LEVELS.length,
     width: 960,
@@ -1471,6 +1609,54 @@ ${G} .br-stats2{display:flex;gap:2cqw}
 ${G} .br-stats2 div{display:flex;flex-direction:column;gap:.4cqw;padding:1.4cqw 3cqw;border-radius:2cqw;background:rgba(255,255,255,.08)}
 ${G} .br-stats2 i{font-style:normal;font-size:clamp(10px,1.3cqw,13px);font-weight:900;letter-spacing:.14em;color:#ffc0a0}
 ${G} .br-stats2 b{font-size:clamp(20px,3.4cqw,34px);font-weight:900}
+${G} .br-kick{margin:0;font-size:clamp(11px,1.6cqw,16px);font-weight:900;letter-spacing:.2em;color:#ffcf8a;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+${G} .br-stars{display:flex;gap:1.6cqw;align-items:flex-end}
+${G} .br-stars i{display:block;width:max(46px,8cqw);height:max(46px,8cqw);color:rgba(0,0,0,.4)}
+${G} .br-stars i:nth-child(2){width:max(58px,10.4cqw);height:max(58px,10.4cqw)}
+${G} .br-stars svg{display:block;width:100%;height:100%;fill:currentColor;stroke:rgba(255,236,200,.35);stroke-width:.8;filter:drop-shadow(0 .35cqw 0 rgba(0,0,0,.35))}
+${G} .br-stars i.on{color:#ffc93a;animation:brStar .55s var(--d) both cubic-bezier(.3,1.7,.5,1)}
+@keyframes brStar{0%{transform:scale(0) rotate(-50deg);opacity:0}100%{transform:none;opacity:1}}
+${G} .br-row{display:flex;gap:1.3cqw;width:100%}
+${G} .br-screen>.br-row{width:min(92%,max(300px,46cqw))}
+${G} .br-row .br-b{flex:1;padding:0 .6em}
+${G} .br-screen.clear{background:radial-gradient(ellipse at 50% 50%,rgba(16,4,8,.62),rgba(10,2,6,.9))}
+${G} .br-screen.stages{justify-content:safe center;overflow:auto;gap:1.6cqw}
+${G} .br-si{display:inline-block;width:1.1em;height:1.1em;fill:#ffc93a;vertical-align:-.15em}
+${G} .br-hud.dim{opacity:0}
+${G} .br-tip{position:absolute;left:50%;bottom:7cqw;transform:translate(-50%,1cqw);max-width:min(80%,640px);padding:1cqw 2.4cqw;border-radius:1.6cqw;background:rgba(14,4,6,.78);border:1px solid rgba(255,205,180,.3);font-size:clamp(12px,1.7cqw,17px);font-weight:800;line-height:1.3;text-align:center;color:#ffe8de;pointer-events:none;opacity:0;transition:opacity .35s,transform .35s}
+${G} .br-tip.show{opacity:1;transform:translate(-50%,0)}
+${G} .br-wrap.scr .br-tip{visibility:hidden}
+${G} .br-wrap.touch .br-tip{left:3cqw;bottom:3cqw;max-width:calc(94% - max(150px,25cqw));transform:translateY(1cqw);text-align:left}
+${G} .br-wrap.touch .br-tip.show{transform:none}
+${G} .br-wrap.scr .br-pad,${G} .br-wrap.scr .br-swap,${G} .br-wrap.scr .br-hint{visibility:hidden}
+${G} .br-screen.help>.br-b{padding:0 3.2em}
+${G} .br-worlds{display:flex;flex-direction:column;gap:1.2cqw;width:min(96%,860px)}
+${G} .br-world{display:flex;align-items:center;gap:1.6cqw}
+${G} .br-wn{flex:none;width:max(76px,11cqw);display:flex;flex-direction:column;align-items:flex-start;gap:.3cqw;text-align:left}
+${G} .br-wn b{font-size:clamp(13px,2cqw,20px);font-weight:900;color:var(--c);text-shadow:0 1px 3px rgba(0,0,0,.6)}
+${G} .br-wn span{display:flex;align-items:center;gap:.4cqw;font-size:clamp(10px,1.4cqw,14px);font-weight:800;color:#ffe8de}
+${G} .br-wn svg{width:1.2em;height:1.2em;fill:#ffc93a}
+${G} .br-grid{flex:1;display:grid;grid-template-columns:repeat(10,1fr);gap:.8cqw}
+${G} .br-st{position:relative;aspect-ratio:1;min-height:40px;border-radius:1.2cqw;border:2px solid color-mix(in srgb,var(--c) 40%,transparent);background:rgba(14,4,6,.72);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3cqw;cursor:pointer;padding:0;font-family:var(--sans);transition:transform .15s,border-color .15s}
+${G} .br-st b{font-size:clamp(13px,2cqw,20px);font-weight:900;line-height:1}
+${G} .br-st:hover:not(.lock){transform:translateY(-2px);border-color:var(--c)}
+${G} .br-st.done{background:linear-gradient(color-mix(in srgb,var(--c) 30%,transparent),rgba(255,255,255,.03)),rgba(14,4,6,.72)}
+${G} .br-st.cur{box-shadow:0 0 0 2px var(--c),0 0 1.6cqw var(--c)}
+${G} .br-st.lock{opacity:.32;cursor:default}
+${G} .br-mini{display:flex;gap:1px}
+${G} .br-mini i{display:block;width:max(9px,1.3cqw);height:max(9px,1.3cqw);color:rgba(255,255,255,.2)}
+${G} .br-mini i.on{color:#ffc93a}
+${G} .br-mini svg{display:block;width:100%;height:100%;fill:currentColor}
+${G} .br-foot svg{display:inline-block;width:1.1em;height:1.1em;fill:#ffc93a;vertical-align:-.15em}
+${G} .ic.undo{background:linear-gradient(#5c6a86,#3a4560);box-shadow:inset 0 0 0 3px rgba(20,30,50,.4),0 .4cqw 0 #232a3c}
+${G} .ic.undo::after{content:"";position:absolute;inset:26%;border:3px solid #e8ecf4;border-left-color:transparent;border-radius:50%}
+${G} .ic.star{background:none;box-shadow:none}
+${G} .ic.star::after{content:"";position:absolute;inset:0;background:#ffc93a;clip-path:polygon(50% 4%,62% 37%,97% 38%,69% 59%,79% 93%,50% 73%,21% 93%,31% 59%,3% 38%,38% 37%)}
+${G} .br-wrap.port .br-world{flex-direction:column;align-items:stretch;gap:.6cqw}
+${G} .br-wrap.port .br-wn{flex-direction:row;width:auto;justify-content:space-between;align-items:center}
+${G} .br-wrap.port .br-grid{grid-template-columns:repeat(5,1fr)}
+${G} .br-wrap.port .br-st{aspect-ratio:auto;height:max(44px,10cqw)}
+${G} .br-wrap.port .br-stats2{flex-wrap:wrap;justify-content:center}
 ${G} .br-wrap.port .br-help{grid-template-columns:1fr}
 ${G} .br-wrap.port .br-stats{gap:4cqw}
 ${G} .br-wrap.port .br-hud{grid-template-columns:1fr 1fr;row-gap:1cqw;padding:2.4cqw 3cqw}
@@ -1487,10 +1673,11 @@ ${G} .br-wrap.port .br-hr div:last-child{display:none}
       wrap.className = 'br-wrap' + (port ? ' port' : '') + (touch ? ' touch' : '');
       wrap.style.width = `min(100%, ${W}px, calc((100dvh - var(--goff, 250px)) * ${(W / H).toFixed(4)}))`;
       wrap.style.aspectRatio = `${W} / ${H}`;
-      wrap.innerHTML = `<div class="br-hud" hidden><div class="br-hl"><button class="br-menu" aria-label="Menu">Menu</button><button class="br-menu br-hintb" aria-label="Hint">Hint</button></div><div class="br-hc">STAGE:&nbsp; <b data-h="stage">01</b></div><div class="br-hr"><div><i>Passcode:</i><b data-h="code">------</b></div><div><i>Moves:</i><b data-h="moves">0</b></div><div><i>Time:</i><b data-h="time">0:00</b></div></div></div>
+      wrap.innerHTML = `<div class="br-hud" hidden><div class="br-hl"><button class="br-menu" aria-label="Menu">Menu</button><button class="br-menu br-undob" aria-label="Undo">Undo</button><button class="br-menu br-hintb" aria-label="Hint">Hint</button></div><div class="br-hc">STAGE:&nbsp; <b data-h="stage">01</b></div><div class="br-hr"><div><i>Par:</i><b data-h="code">--</b></div><div><i>Moves:</i><b data-h="moves">0</b></div><div><i>Time:</i><b data-h="time">0:00</b></div></div></div>
         <div class="br-banner"></div>
         <div class="br-load"><i></i><span>LOADING</span></div>
         <div class="br-hint" hidden>Space &middot; switch cube</div>
+        <div class="br-tip"></div>
         <button class="br-swap" hidden>SWAP</button>
         <div class="br-pad" hidden>${[2, 0, 1, 3].map(d => `<button data-d="${d}" aria-label="${['Left', 'Right', 'Up', 'Down'][d]}">${ARROW}</button>`).join('')}</div>
         <div class="br-screen" hidden></div>`;

@@ -16,7 +16,13 @@
     CAM_H: 4.8, CAM_B: 8, CAM_LOOK: 10, FOV: 62,
     BPM: 124
   };
-  const THEMES = ['#2bff5a', '#2fe3ff', '#ff45e9', '#ffb22e', '#f2f2f2'];
+  const THEMES = ['#2bff5a', '#2fe3ff', '#ff45e9', '#ffb22e', '#f2f2f2', '#b46cff', '#3d8bff', '#fff04a'];
+  const UNLOCK = [0, 0, 0, 0, 0, 100, 250, 500];
+  const MODES = [
+    { n: 'Classic', d: 'Endless run. Your best goes on the leaderboard.', b: 0 },
+    { n: 'Daily', d: 'One track for everyone today. Beat your friends on it.', b: 0 },
+    { n: 'Hardcore', d: 'Starts fast with hazards from the first metre.', b: 900 }
+  ];
   const D2R = Math.PI / 180, TAU = Math.PI * 2;
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -44,7 +50,7 @@
   };
 
   function makeSim() {
-    const S = { t: 0, live: [], moving: [], buckets: new Map(), spine: [], tunnels: [], secs: [], onAdd: null, onRemove: null };
+    const S = { t: 0, boost: 0, live: [], moving: [], buckets: new Map(), spine: [], tunnels: [], secs: [], onAdd: null, onRemove: null };
     const b = S.ball = { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, gt: 0, n: [0, 1, 0], imp: 0 };
     const cur = { x: 0, y: 0, z: 0, lo: null };
     const CN = [0, 0, 0, 0, 0], NB = [];
@@ -432,10 +438,10 @@
     ];
 
     function section() {
-      const dist = -cur.z, d = Math.min(1, dist / CFG.DIFF), k = Math.min(2.5, Math.max(0, dist - CFG.DIFF) / CFG.DIFF);
+      const dist = S.boost - cur.z, d = Math.min(1, dist / CFG.DIFF), k = Math.min(2.5, Math.max(0, dist - CFG.DIFF) / CFG.DIFF);
       const g = { d, k, v: speedAt(dist) + 1, W: lerp(CFG.W0, CFG.W1, d) * (1 - 0.11 * k) * r(0.92, 1.1) };
       let tot = 0;
-      const ws = SECT.map(([n, f]) => { const w = n === last ? 0 : f(d, k) * (hist.includes(n) ? 0.3 : 1); tot += w; return w; });
+      const ease = Math.min(1, dist / 150), ws = SECT.map(([n, f]) => { const w = n === last ? 0 : f(d, k) * (hist.includes(n) ? 0.3 : 1) * (n === 'blocks' || n === 'stagger' ? ease : 1); tot += w; return w; });
       let x = rand() * tot, i = 0;
       while (i < ws.length - 1 && (x -= ws[i]) > 0) i++;
       last = SECT[i][0];
@@ -445,7 +451,8 @@
       if (rand() < Math.max(0.12, 0.45 - 0.15 * d - 0.12 * k)) row({ len: r(6, 12) * (1 - 0.2 * Math.min(1, k)), slope: r(9, 14), parts: flat(g.W) });
     }
 
-    S.reset = seed => {
+    S.reset = (seed, boost) => {
+      S.boost = boost || 0;
       if (S.onRemove) for (const p of S.live) S.onRemove(p);
       S.live.length = 0; S.moving.length = 0; S.buckets.clear(); S.spine.length = 0; S.tunnels.length = 0; S.secs.length = 0;
       S.t = 0; last = ''; hist.length = 0;
@@ -487,7 +494,7 @@
 
     S.step = (dt, inp) => {
       S.t += dt;
-      const vt = speedAt(sp0 - b.z);
+      const vt = speedAt(sp0 - b.z + S.boost);
       let ax = 0, ay = -CFG.G, az = 0;
       if (b.gt > 0) {
         const nx = b.n[0], ny = b.n[1], nz = b.n[2];
@@ -680,7 +687,36 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
 .gm-slope-3d .stats span{display:block;font-size:.75em;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.6)}
 .gm-slope-3d .stats b{display:block;font-size:2.4em;font-weight:900;font-variant-numeric:tabular-nums;color:var(--neon);text-shadow:0 0 .3em var(--neon)}
 .gm-slope-3d .nb{color:#000;background:var(--neon);padding:.3em .8em;border-radius:.3em;font-weight:900;letter-spacing:.16em;text-transform:uppercase;font-size:.8em}
-@media (max-width:560px){.gm-slope-3d .panel{gap:.8em}.gm-slope-3d .sw i{width:34px;height:34px}}`;
+.gm-slope-3d .cd{position:absolute;left:0;right:0;top:27%;text-align:center;pointer-events:none;color:#fff;font:900 clamp(60px,17cqw,160px)/1 var(--sans);font-style:italic;letter-spacing:.04em;text-shadow:0 0 .12em var(--neon),0 0 .45em var(--neon),0 .05em 0 rgba(0,0,0,.6)}
+.gm-slope-3d .cd.on{animation:slc .42s cubic-bezier(.2,.9,.3,1.3)}
+.gm-slope-3d .cd.out{animation:slo .6s ease-out forwards}
+@keyframes slc{0%{opacity:0;transform:scale(1.9)}100%{opacity:1;transform:scale(1)}}
+@keyframes slo{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.6)}}
+.gm-slope-3d .ms{font:900 1.05em/1 var(--sans);letter-spacing:.22em;text-transform:uppercase;color:#fff;text-shadow:0 0 .4em var(--neon),0 0 .9em var(--neon);opacity:0}
+.gm-slope-3d .ms.on{animation:slm 1.4s ease-out}
+@keyframes slm{0%{opacity:0;transform:translateY(.7em) scale(.8)}14%{opacity:1;transform:none}75%{opacity:1}100%{opacity:0;transform:translateY(-.5em)}}
+.gm-slope-3d .sc.pop{animation:slp .5s ease-out}
+@keyframes slp{0%{transform:scale(1.45);color:#fff;text-shadow:0 0 .4em var(--neon)}100%{transform:none}}
+.gm-slope-3d .tag{font-size:.78em;font-weight:900;letter-spacing:.42em;text-transform:uppercase;color:var(--neon);margin-top:-.4em;text-shadow:0 0 .5em var(--neon)}
+.gm-slope-3d .md{min-width:0;height:2.2em;font-size:.8em;padding:0 1em;opacity:.75}
+.gm-slope-3d .md.on{background:var(--neon);color:#000;opacity:1}
+.gm-slope-3d .md:hover{opacity:1}
+.gm-slope-3d .mdesc{min-height:1.2em;max-width:26em}
+.gm-slope-3d .sw{flex-wrap:wrap;justify-content:center}
+.gm-slope-3d .sw i.lk{opacity:.42;cursor:not-allowed;background-image:repeating-linear-gradient(45deg,rgba(0,0,0,.62) 0 3px,transparent 3px 6px)!important}
+.gm-slope-3d .over,.gm-slope-3d .help{background:radial-gradient(ellipse at center,rgba(0,0,0,.6),rgba(0,0,0,.86))}
+.gm-slope-3d .why{color:#ff6d64;font-weight:900;letter-spacing:.2em;text-transform:uppercase;font-size:.85em;margin-top:-.4em}
+.gm-slope-3d .st2{display:grid;grid-template-columns:repeat(4,auto);gap:.3em 1.6em;padding:.6em 1.2em;border-top:1px solid rgba(255,255,255,.12);border-bottom:1px solid rgba(255,255,255,.12)}
+.gm-slope-3d .st2 span{display:block;font-size:.66em;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.gm-slope-3d .st2 b{display:block;font-size:1.25em;font-weight:900;font-variant-numeric:tabular-nums;color:#fff}
+.gm-slope-3d .unl{display:flex;align-items:center;gap:.5em;font-weight:900;letter-spacing:.14em;text-transform:uppercase;font-size:.8em;color:#fff}
+.gm-slope-3d .unl i{display:block;width:1.4em;height:1.4em;border-radius:50%;box-shadow:0 0 .8em currentColor}
+.gm-slope-3d .steps{display:flex;gap:.8em;flex-wrap:wrap;justify-content:center}
+.gm-slope-3d .steps>div{width:9.6em;padding:.8em .6em;border:1px solid rgba(255,255,255,.14);border-radius:.6em;background:rgba(0,0,0,.55);box-shadow:inset 0 0 1.4em -.8em var(--neon)}
+.gm-slope-3d .steps svg{width:5.6em;height:3.9em;display:block;margin:0 auto .5em;color:var(--neon)}
+.gm-slope-3d .steps b{display:block;font-weight:900;letter-spacing:.1em;text-transform:uppercase;font-size:.86em;margin-bottom:.3em;color:var(--neon)}
+.gm-slope-3d .steps p{margin:0;font-size:.76em;color:rgba(255,255,255,.75);line-height:1.3}
+@media (max-width:560px){.gm-slope-3d .panel{gap:.8em}.gm-slope-3d .sw i{width:34px;height:34px}.gm-slope-3d .st2{grid-template-columns:repeat(2,auto)}.gm-slope-3d .steps{gap:.5em}.gm-slope-3d .steps>div{width:7.3em;padding:.6em .35em}.gm-slope-3d .steps svg{width:4.6em;height:3.2em}.gm-slope-3d .sw{gap:.4em}.gm-slope-3d .sw i{width:27px;height:27px}}`;
 
   Ameplay.register({
     id: ID,
@@ -707,8 +743,16 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
       renderer.setClearColor(0x000000, 1);
 
       const saved = api.load() || {};
-      const setg = { col: clamp(saved.col | 0, 0, THEMES.length - 1), music: saved.music !== false };
-      const persist = () => api.save({ col: setg.col, music: setg.music });
+      const setg = { col: clamp(saved.col | 0, 0, THEMES.length - 1), music: saved.music !== false, sky: saved.sky !== false };
+      const st = { hb: saved.hb | 0, dd: saved.dd || '', db: saved.db | 0, top: saved.top | 0, runs: saved.runs | 0, tot: +saved.tot || 0, seen: !!saved.seen };
+      let mode = clamp(saved.mode | 0, 0, MODES.length - 1);
+      const persist = () => api.save({ col: setg.col, music: setg.music, sky: setg.sky, mode, hb: st.hb, dd: st.dd, db: st.db, top: st.top, runs: st.runs, tot: Math.round(st.tot), seen: st.seen });
+      const topScore = () => Math.max(api.best || 0, st.top);
+      const unlocked = i => topScore() >= UNLOCK[i];
+      if (!unlocked(setg.col)) setg.col = 0;
+      const today = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+      const daySeed = t => { let x = 2166136261; for (let i = 0; i < t.length; i++) x = Math.imul(x ^ t.charCodeAt(i), 16777619); return x >>> 0; };
+      const modeBest = m => (m === 0 ? api.best || 0 : m === 1 ? (st.dd === today() ? st.db : 0) : st.hb);
 
       const wrap = document.createElement('div');
       wrap.className = 'stage';
@@ -725,29 +769,50 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
 <div class="zt" hidden></div>
 <button class="pz" aria-label="Pause" hidden></button>
 <div class="tz l" hidden></div><div class="tz r" hidden></div>
+<div class="cd" hidden></div>
 <div class="panel menu">
   <div class="logo">SLOPE</div>
+  <div class="tag">Endless neon run</div>
+  <div class="row2">${MODES.map((m, i) => `<button class="btn md" data-m="${i}">${m.n}</button>`).join('')}</div>
+  <div class="muted mdesc"></div>
   <button class="btn go">Play</button>
   <div class="best"></div>
-  <div class="row2"><div class="sw">${THEMES.map((c, i) => `<i data-c="${i}" style="background:${c};color:${c}"></i>`).join('')}</div><button class="btn sm mus"></button></div>
-  <div class="muted">Steer with &larr; &rarr; or A D &middot; hold the left / right side on touch</div>
-  <div class="muted">Press any key to roll</div>
+  <div class="row2"><div class="sw">${THEMES.map((c, i) => `<i data-c="${i}" style="background:${c};color:${c}"></i>`).join('')}</div></div>
+  <div class="row2"><button class="btn sm mus"></button><button class="btn sm skb"></button><button class="btn sm hw">How to play</button></div>
+  <div class="muted ulh"></div>
+  <div class="muted kh"></div>
+</div>
+<div class="panel help" hidden>
+  <div class="t1">How to play</div>
+  <div class="steps">
+    <div><svg viewBox="0 0 80 56" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="26" width="22" height="22" rx="4"/><path d="M19 37h-9m4-4-4 4 4 4"/><rect x="55" y="26" width="22" height="22" rx="4"/><path d="M61 37h9m-4-4 4 4-4 4"/><circle cx="40" cy="22" r="9"/><path d="M36 15l8 14M31 22h18" opacity=".5"/><path d="M27 10h-7M60 10h-7" opacity=".6"/></svg><b>Steer</b><p class="hk"></p></div>
+    <div><svg viewBox="0 0 80 56" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 54 27 12h26l22 42Z" stroke="currentColor"/><path d="M17 38h46M23 26h34" stroke="currentColor" opacity=".45"/><path d="M33 21h14v12H33z" fill="#3a0306" stroke="#ff4038"/><path d="M33 21l3-4h14l-3 4M47 33l3-4V17" stroke="#ff4038"/><circle cx="40" cy="46" r="5.5" stroke="currentColor"/><path d="M28 40l-4-4M52 40l4-4" stroke="#ff4038"/></svg><b>Dodge red</b><p>Red blocks, walls and spinners shatter your ball.</p></div>
+    <div><svg viewBox="0 0 80 56" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 28h42l8 6H12Z"/><path d="M12 34v6h42v-6M46 28v6"/><circle cx="64" cy="20" r="6"/><path d="M66 31l3 14m-5-3 5 3 3-5" stroke-dasharray="3 4"/></svg><b>Stay on</b><p>Roll off the edge and you fall. Ramps and gaps need a straight line.</p></div>
+  </div>
+  <div class="muted">You keep speeding up. Every 1200 m a new level changes the colours. Every 100 points is a milestone.</div>
+  <button class="btn hok">Got it</button>
 </div>
 <div class="panel over" hidden>
   <div class="t1">Game Over</div>
+  <div class="why"></div>
   <div class="nb" hidden>New best</div>
   <div class="stats"><div><span>Score</span><b class="os">0</b></div><div><span>Best</span><b class="ob">0</b></div></div>
+  <div class="st2"><div><span>Distance</span><b class="od">0</b></div><div><span>Top speed</span><b class="ov">0</b></div><div><span>Time</span><b class="ot">0</b></div><div><span>Level</span><b class="ol">1</b></div></div>
+  <div class="unl" hidden><i></i><span>New ball colour unlocked</span></div>
   <div class="row2"><button class="btn rs">Restart</button><button class="btn sm mn">Menu</button></div>
   <div class="muted">Press any key or tap to restart</div>
 </div>
 <div class="panel pause" hidden>
   <div class="t1">Paused</div>
   <button class="btn rsm">Resume</button>
+  <div class="row2"><button class="btn sm prs">Restart</button><button class="btn sm phw">How to play</button><button class="btn sm pmn">Menu</button></div>
   <div class="muted">Press any key or tap to continue</div>
 </div>`);
       const $ = s => wrap.querySelector(s);
       const elZt = $('.zt'), elHud = $('.hud'), elSc = $('.sc'), elSp = $('.sp'), elPz = $('.pz'), elTL = $('.tz.l'), elTR = $('.tz.r');
-      const pMenu = $('.menu'), pOver = $('.over'), pPause = $('.pause'), elBest = $('.best'), elMus = $('.mus');
+      const pMenu = $('.menu'), pOver = $('.over'), pPause = $('.pause'), pHelp = $('.help'), elBest = $('.best'), elMus = $('.mus'), elCd = $('.cd');
+      const elMs = document.createElement('div');
+      elMs.className = 'ms'; elHud.append(elMs);
       let touchUI = matchMedia('(pointer: coarse)').matches;
 
       const scene = new THREE.Scene();
@@ -829,6 +894,19 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
       shards.frustumCulled = false; shards.visible = false; scene.add(shards);
       const shP = new Float32Array(NSH * 3), shV = new Float32Array(NSH * 3), shR = new Float32Array(NSH * 3), shS = new Float32Array(NSH);
       const dummy = new THREE.Object3D();
+      const rm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const NST = 56, stP = new Float32Array(NST * 6), stZ = new Float32Array(NST);
+      const stGeo = new THREE.BufferGeometry();
+      stGeo.setAttribute('position', new THREE.BufferAttribute(stP, 3));
+      const stMat = new THREE.LineBasicMaterial({ color: neon, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+      const streaks = new THREE.LineSegments(stGeo, stMat);
+      streaks.frustumCulled = false; streaks.visible = false; streaks.renderOrder = 6; scene.add(streaks);
+      let stInit = false;
+      const stSpawn = (i, bx, bz, far) => {
+        const z = bz - (far ? 8 + Math.random() * 70 : 60 + Math.random() * 25), sd = Math.random() < 0.5 ? -1 : 1;
+        const x = bx + sd * (2.6 + Math.random() * 7), y = sim.floorAt(z) + 0.4 + Math.random() * 6;
+        stZ[i] = z; stP[i * 6] = stP[i * 6 + 3] = x; stP[i * 6 + 1] = stP[i * 6 + 4] = y; stP[i * 6 + 2] = z;
+      };
 
       const unitBox = new THREE.BoxGeometry(1, 1, 1);
       const poolT = [], poolX = [];
@@ -865,10 +943,10 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
       };
       const B = sim.ball;
 
-      const ZCOL = THEMES.concat(['#b46cff', '#fff04a', '#3d8bff', '#7dffd0']), zTarget = new THREE.Color(), FILLB = new THREE.Color(0.01, 0.014, 0.018);
+      const ZCOL = THEMES.concat(['#7dffd0']), zTarget = new THREE.Color(), FILLB = new THREE.Color(0.01, 0.014, 0.018);
       let zone = 0, zoneT = 0;
       function tint() {
-        glowMat.color.copy(neon); flashMat.color.copy(neon); shardMat.color.copy(neon); poolMat.color.copy(neon);
+        glowMat.color.copy(neon); flashMat.color.copy(neon); shardMat.color.copy(neon); poolMat.color.copy(neon); stMat.color.copy(neon);
         fill.copy(neon).multiplyScalar(0.025).add(FILLB);
         wrap.style.setProperty('--neon', '#' + neon.getHexString());
       }
@@ -879,6 +957,7 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
         else {
           zoneT = 2.2;
           elZt.textContent = 'Level ' + (z + 1);
+          sfxLevel();
           elZt.hidden = false; elZt.classList.remove('on'); void elZt.offsetWidth; elZt.classList.add('on');
         }
       }
@@ -886,8 +965,12 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
         neon.set(THEMES[setg.col]);
         tint();
         if (zone) setZone(zone, true);
-        wrap.querySelectorAll('.sw i').forEach((el, i) => el.classList.toggle('on', i === setg.col));
+        wrap.querySelectorAll('.sw i').forEach((el, i) => { el.classList.toggle('on', i === setg.col); el.classList.toggle('lk', !unlocked(i)); el.title = unlocked(i) ? '' : 'Score ' + UNLOCK[i] + ' to unlock'; });
+        const nx = UNLOCK.find(u => u > topScore());
+        $('.ulh').textContent = nx ? 'Next ball colour at ' + nx + ' points' : 'All ball colours unlocked';
         elMus.textContent = 'Music ' + (setg.music ? 'On' : 'Off');
+        $('.skb').textContent = setg.sky ? 'Neon city' : 'Classic void';
+        sky.visible = grid.visible = stars.visible = setg.sky;
       }
 
       let ac = null, master = null, sfxG = null, musG = null, musLP = null, arpLP = null, noiseBuf = null, rollN = null;
@@ -966,6 +1049,11 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
         tone('square', 190, 32, 0.38, 0.16, sfxG, t);
         for (let i = 0; i < 7; i++) { const f = 2200 + Math.random() * 3200; tone('sine', f, f * 0.92, 0.09 + Math.random() * 0.12, 0.05, sfxG, t + 0.02 + i * 0.035); }
       }
+      function sfxLevel() { if (!ac) return; const t = ac.currentTime; [0, 4, 7, 12].forEach((n, i) => tone('triangle', NOTE(69 + n), NOTE(69 + n), 0.22, 0.09, sfxG, t + i * 0.07)); }
+      function sfxMile() { if (!ac) return; const t = ac.currentTime; tone('sine', 1046, 1046, 0.12, 0.1, sfxG, t); tone('sine', 1568, 1568, 0.22, 0.08, sfxG, t + 0.08); }
+      function sfxBest() { if (!ac) return; const t = ac.currentTime + 0.12; [0, 4, 7, 12, 16].forEach((n, i) => tone('triangle', NOTE(72 + n), NOTE(72 + n), 0.3, 0.08, sfxG, t + i * 0.08)); }
+      function sfxBeep(go) { if (go) tone('square', 1046, 1046, 0.3, 0.06); else tone('sine', 523, 523, 0.14, 0.16); }
+      function sfxUi() { tone('sine', 900, 1250, 0.05, 0.06); }
       function sfxFall() { tone('sine', 640, 55, 1.25, 0.16); tone('triangle', 320, 30, 1.25, 0.08); }
       function sfxLand(imp) {
         if (!ac || ac.currentTime - landAt < 0.12) return;
@@ -975,6 +1063,7 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
       }
 
       let state = 'menu', acc = 0, deadT = 0, deathKind = 0, score = 0, overAt = 0, fresh = false, shake = 0, lastSp = -1, pruneTick = 0;
+      let cntT = 0, cntN = 0, cntStep = 0.42, cdLeft = 0, runT = 0, runD = 0, topV = 0, lastMs = 0, rollT = 1, helpRun = false;
       let px = 0, py = 0, pz = 0, camX = 0, camY = 0, lookX = 0, lookY = 0, camRoll = 0, lowT = 0, fov = cam.fov, menuT = 0;
       const ptrs = new Map();
       const fallCam = new THREE.Vector3(), lookV = new THREE.Vector3(), qTmp = new THREE.Quaternion(), axTmp = new THREE.Vector3();
@@ -985,43 +1074,72 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
       }
       function newCourse() {
         towZ = 1e9;
-        sim.reset((Math.random() * 4294967296) >>> 0);
+        sim.reset(mode === 1 ? daySeed(today()) : (Math.random() * 4294967296) >>> 0, MODES[mode].b);
         snapCam();
         if (zone) { zone = 0; neon.set(THEMES[setg.col]); tint(); }
         elZt.hidden = true;
         ball.visible = true; glow.visible = true; shards.visible = false; flash.visible = false;
         ball.quaternion.identity();
       }
-      function show(p) { for (const el of [pMenu, pOver, pPause]) el.hidden = el !== p; }
+      function show(p) { for (const el of [pMenu, pOver, pPause, pHelp]) el.hidden = el !== p; }
+      function menuInfo() {
+        wrap.querySelectorAll('.md').forEach((el, i) => el.classList.toggle('on', i === mode));
+        $('.mdesc').textContent = MODES[mode].d;
+        const bst = modeBest(mode);
+        elBest.textContent = (bst ? MODES[mode].n + ' best ' + bst : 'No ' + MODES[mode].n.toLowerCase() + ' best yet') + (st.runs ? ' · ' + st.runs + ' runs' : '');
+        $('.kh').textContent = touchUI ? 'Tap Play to roll' : '↑ ↓ change mode · H how to play · any other key to roll';
+      }
+      function setMode(m) { if (m === mode) return; mode = m; persist(); newCourse(); fresh = true; menuInfo(); sfxUi(); }
       function toMenu() {
         state = 'menu'; musOn = false;
         newCourse(); fresh = true;
-        const bst = api.best;
-        elBest.textContent = bst ? 'Best ' + bst : '';
+        elCd.hidden = true; cdLeft = 0;
+        menuInfo();
+        applyTheme();
         show(pMenu);
         elHud.hidden = true; elPz.hidden = true; elTL.hidden = elTR.hidden = true;
         api.score(0);
       }
       function startRun() {
         ensureAudio();
+        if (!st.seen) { showHelp(true); return; }
         if (!fresh) newCourse();
         fresh = false;
-        state = 'play'; acc = 0; score = 0; lastSp = -1; ptrs.clear();
+        acc = 0; score = 0; lastSp = -1; ptrs.clear(); runT = 0; runD = 0; topV = 0; lastMs = 0;
         api.score(0); elSc.textContent = '0';
         show(null);
         elHud.hidden = false; elPz.hidden = false;
         elTL.hidden = elTR.hidden = !touchUI;
+        countdown(0.42);
         if (setg.music) startMusic();
       }
+      function cdShow(t, out) {
+        elCd.textContent = t; elCd.hidden = false;
+        elCd.classList.remove('on', 'out'); void elCd.offsetWidth; elCd.classList.add(out ? 'out' : 'on');
+      }
+      function countdown(stp) { state = 'count'; cntT = 0; cntN = 3; cntStep = stp; cdLeft = 0; cdShow(3); sfxBeep(false); }
+      function showHelp(run) {
+        helpRun = run; state = 'help';
+        $('.hk').textContent = touchUI ? 'Hold the left or right half of the screen.' : 'Arrow keys or A and D. P pauses.';
+        show(pHelp);
+      }
+      function closeHelp() {
+        if (state !== 'help') return;
+        st.seen = true; persist();
+        if (helpRun === 'pause') { state = 'pause'; show(pPause); }
+        else if (helpRun) { state = 'menu'; startRun(); }
+        else { state = 'menu'; show(pMenu); }
+      }
       function pause() {
-        if (state !== 'play') return;
-        state = 'pause'; ptrs.clear(); musOn = false;
+        if (state !== 'play' && state !== 'count') return;
+        state = 'pause'; ptrs.clear(); musOn = false; elCd.hidden = true; cdLeft = 0;
         show(pPause);
       }
       function resume() {
         if (state !== 'pause') return;
-        state = 'play'; acc = 0;
+        acc = 0;
         show(null);
+        countdown(0.34);
         if (setg.music) startMusic();
       }
       function shatter() {
@@ -1037,19 +1155,40 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
         flash.visible = true; flash.position.set(B.x, B.y, B.z); flashMat.opacity = 1;
       }
       function die(kind) {
-        state = 'dead'; deadT = 0; deathKind = kind; ptrs.clear(); musOn = false;
+        state = 'dead'; deadT = 0; deathKind = kind; ptrs.clear(); musOn = false; runD = sim.dist(); elCd.hidden = true;
         elTL.classList.remove('on'); elTR.classList.remove('on');
-        if (kind === 1) { shatter(); sfxCrunch(); ball.visible = false; glow.visible = false; shake = 0.55; }
+        if (kind === 1) { shatter(); sfxCrunch(); ball.visible = false; glow.visible = false; shake = rm ? 0 : 0.55; }
         else { sfxFall(); fallCam.copy(cam.position); }
       }
       function showOver() {
-        state = 'over'; overAt = performance.now();
-        const nb = score > 0 && api.submit(score);
-        const bst = Math.max(api.best || 0, score);
-        $('.os').textContent = score; $('.ob').textContent = bst;
+        state = 'over'; overAt = performance.now(); rollT = 0;
+        const prevTop = topScore();
+        let nb = false, bst = score;
+        if (mode === 0) { nb = score > 0 && !!api.submit(score); bst = Math.max(api.best || 0, score); }
+        else if (mode === 1) { const td = today(); if (st.dd !== td) { st.dd = td; st.db = 0; } nb = score > st.db; st.db = Math.max(st.db, score); bst = st.db; }
+        else { nb = score > st.hb; st.hb = Math.max(st.hb, score); bst = st.hb; }
+        st.top = Math.max(st.top, score); st.runs++; st.tot += runD;
+        persist();
+        let ul = -1;
+        for (let i = 0; i < UNLOCK.length; i++) if (UNLOCK[i] > prevTop && UNLOCK[i] <= topScore()) ul = i;
+        const elU = $('.unl');
+        elU.hidden = ul < 0;
+        if (ul >= 0) {
+          const ic = elU.querySelector('i'), nu = UNLOCK.filter(u => u > prevTop && u <= topScore()).length;
+          ic.style.background = THEMES[ul]; ic.style.color = THEMES[ul];
+          elU.querySelector('span').textContent = nu > 1 ? nu + ' new ball colours unlocked' : 'New ball colour unlocked';
+        }
+        $('.why').textContent = deathKind === 1 ? 'Hit a red block' : 'Fell off the track';
+        $('.os').textContent = '0'; $('.ob').textContent = bst;
+        $('.od').textContent = Math.round(runD) + ' m';
+        $('.ov').textContent = topV + ' km/h';
+        $('.ot').textContent = Math.floor(runT / 60) + ':' + String(Math.floor(runT % 60)).padStart(2, '0');
+        $('.ol').textContent = zone + 1;
         $('.nb').hidden = !nb;
-        elPz.hidden = true; elTL.hidden = elTR.hidden = true;
+        $('.nb').textContent = 'New ' + MODES[mode].n.toLowerCase() + ' best';
+        elPz.hidden = true; elHud.hidden = true; elTL.hidden = elTR.hidden = true;
         show(pOver);
+        if (nb || ul >= 0) sfxBest();
       }
 
       const dbg = root.__slope = { sim, auto: null, get state() { return state; } };
@@ -1066,8 +1205,9 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
         if (isCtl(e)) return;
         e.preventDefault();
         if (e.pointerType === 'touch' && !touchUI) { touchUI = true; if (state === 'play') elTL.hidden = elTR.hidden = false; }
-        if (state === 'play') { ptrs.set(e.pointerId, sideOf(e)); try { wrap.setPointerCapture(e.pointerId); } catch (er) {} }
+        if (state === 'play' || state === 'count') { ptrs.set(e.pointerId, sideOf(e)); try { wrap.setPointerCapture(e.pointerId); } catch (er) {} }
         else if (state === 'menu') startRun();
+        else if (state === 'help') closeHelp();
         else if (state === 'over' && performance.now() - overAt > 450) startRun();
         else if (state === 'pause') resume();
       });
@@ -1082,15 +1222,28 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
       btn('.rsm', resume);
       btn('.pz', pause);
       btn('.mus', () => { setg.music = !setg.music; persist(); applyTheme(); });
-      wrap.querySelectorAll('.sw i').forEach(el => api.on(el, 'pointerdown', e => { e.preventDefault(); e.stopPropagation(); setg.col = +el.dataset.c; persist(); applyTheme(); }));
+      btn('.hw', () => { if (state === 'menu') showHelp(false); });
+      btn('.skb', () => { setg.sky = !setg.sky; persist(); applyTheme(); sfxUi(); });
+      btn('.hok', closeHelp);
+      btn('.prs', () => { if (state === 'pause') startRun(); });
+      btn('.phw', () => { if (state === 'pause') showHelp('pause'); });
+      btn('.pmn', () => { if (state === 'pause') toMenu(); });
+      wrap.querySelectorAll('.md').forEach(el => api.on(el, 'pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (state === 'menu') setMode(+el.dataset.m); }));
+      wrap.querySelectorAll('.sw i').forEach(el => api.on(el, 'pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (!unlocked(+el.dataset.c)) return; setg.col = +el.dataset.c; persist(); applyTheme(); sfxUi(); }));
       api.on(window, 'keydown', e => {
         if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
         if (e.code === 'Tab' || e.code === 'Escape' || /^(Shift|Control|Alt|Meta)/.test(e.key || '')) return;
         const tg = e.target;
         if (tg && /^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName)) return;
-        if (state === 'menu') startRun();
+        if (state === 'menu') {
+          if (e.code === 'ArrowUp' || e.code === 'ArrowDown') setMode((mode + (e.code === 'ArrowUp' ? MODES.length - 1 : 1)) % MODES.length);
+          else if (/^Digit[1-3]$/.test(e.code)) setMode(+e.code.slice(5) - 1);
+          else if (e.code === 'KeyH') showHelp(false);
+          else startRun();
+        }
+        else if (state === 'help') closeHelp();
         else if (state === 'over') { if (performance.now() - overAt > 450) startRun(); }
-        else if (state === 'play') { if (e.code === 'KeyP') pause(); }
+        else if (state === 'play' || state === 'count') { if (e.code === 'KeyP') pause(); }
         else if (state === 'pause') resume();
       });
       api.on(window, 'blur', () => { if (!api.paused) pause(); });
@@ -1118,9 +1271,19 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
           const zn = Math.floor(sim.dist() / CFG.ZONE);
           if (zn > zone) setZone(zn, false);
           const s = Math.max(0, Math.floor(sim.dist() / CFG.SCORE_DIV));
-          if (s !== score) { score = s; elSc.textContent = s; api.score(s); }
+          if (s !== score) {
+            score = s; elSc.textContent = s; api.score(s);
+            const m = Math.floor(s / 100);
+            if (m > lastMs) {
+              lastMs = m; elMs.textContent = m * 100 + ' points';
+              for (const el of [elMs, elSc]) { el.classList.remove('on', 'pop'); void el.offsetWidth; }
+              elMs.classList.add('on'); elSc.classList.add('pop'); sfxMile();
+            }
+          }
           const spd = Math.round(sim.speed() * 3.6);
+          if (spd > topV) topV = spd;
           if (spd !== lastSp) { lastSp = spd; elSp.textContent = 'Speed ' + spd; }
+          runT += dt;
         } else if (state === 'dead') {
           deadT += dt;
           elZt.hidden = true;
@@ -1130,9 +1293,18 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
           }
           px = B.x; py = B.y; pz = B.z;
           if (deadT > (deathKind === 1 ? 1.15 : 1.35)) showOver();
+        } else if (state === 'count') {
+          cntT += dt;
+          if (cntT >= cntStep) {
+            cntT -= cntStep; cntN--;
+            if (cntN > 0) { cdShow(cntN); sfxBeep(false); }
+            else { cdShow('GO', true); sfxBeep(true); cdLeft = 0.6; state = 'play'; acc = 0; }
+          }
         } else if (state === 'menu') {
           menuT += dt;
         }
+        if (cdLeft > 0 && (cdLeft -= dt) <= 0) elCd.hidden = true;
+        if (state === 'over' && rollT < 1) { rollT = Math.min(1, rollT + dt / 0.7); $('.os').textContent = Math.round(score * (1 - Math.pow(1 - rollT, 3))); }
         if (zoneT > 0) { zoneT -= dt; neon.lerp(zTarget, 1 - Math.exp(-3 * dt)); if (zoneT <= 0) neon.copy(zTarget); tint(); }
         const a = state === 'play' ? acc / HSTEP : 1;
         const bx = px + (B.x - px) * a, by = py + (B.y - py) * a, bz = pz + (B.z - pz) * a;
@@ -1222,6 +1394,18 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
 
         for (const p of sim.moving) if (p.mesh) { sim.pose(p, sim.t); setMat(p.mesh, p); }
 
+        const stO = state === 'play' && !rm ? clamp((spd - 16) / 28, 0, 0.5) : 0;
+        stMat.opacity += (stO - stMat.opacity) * (1 - Math.exp(-4 * dt));
+        streaks.visible = stMat.opacity > 0.01;
+        if (streaks.visible) {
+          if (!stInit) { for (let i = 0; i < NST; i++) stSpawn(i, bx, bz, true); stInit = true; }
+          const L = 0.6 + spd * 0.07;
+          for (let i = 0; i < NST; i++) {
+            if (stZ[i] > cam.position.z + 1 || stZ[i] < bz - 120) stSpawn(i, bx, bz, false);
+            stP[i * 6 + 5] = stZ[i] + L;
+          }
+          stGeo.attributes.position.needsUpdate = true;
+        } else stInit = false;
         uTime.value = performance.now() * 0.001;
         sky.position.copy(cam.position); stars.position.copy(cam.position);
         grid.position.set(cam.position.x, cam.position.y - 170, cam.position.z - 300);
@@ -1235,8 +1419,8 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
           musOn = false;
           if (rollN) { try { rollN.n.stop(); rollN.o.stop(); } catch (e) {} }
           if (ac) { try { ac.close(); } catch (e) {} ac = null; }
-          for (const g of [unitBox, ballGeo, shardGeo, starGeo, sky.geometry, grid.geometry, trGeo, pool.geometry]) g.dispose();
-          for (const m of [tileMat, redMat, skyMat, gridMat, starMat, ballMat, glowMat, flashMat, shardMat, trMat, poolMat]) m.dispose();
+          for (const g of [unitBox, ballGeo, shardGeo, starGeo, sky.geometry, grid.geometry, trGeo, pool.geometry, stGeo]) g.dispose();
+          for (const m of [tileMat, redMat, skyMat, gridMat, starMat, ballMat, glowMat, flashMat, shardMat, trMat, poolMat, stMat, towMat]) m.dispose();
           glowTex.dispose();
           shards.dispose && shards.dispose();
         }
@@ -1245,7 +1429,7 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
   });
 
   Ameplay.covers[ID] = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="slp-bg" cx="50%" cy="34%" r="75%"><stop offset="0" stop-color="#0e3a1f"/><stop offset=".5" stop-color="#05170c"/><stop offset="1" stop-color="#010503"/></radialGradient><radialGradient id="slp-ball" cx="36%" cy="30%" r="72%"><stop offset="0" stop-color="#f2fff5"/><stop offset=".3" stop-color="#6dff93"/><stop offset="1" stop-color="#109a3a"/></radialGradient><radialGradient id="slp-glow"><stop offset="0" stop-color="#3dff6e" stop-opacity=".7"/><stop offset="1" stop-color="#3dff6e" stop-opacity="0"/></radialGradient><linearGradient id="slp-hz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3dff6e" stop-opacity="0"/><stop offset=".5" stop-color="#3dff6e" stop-opacity=".22"/><stop offset="1" stop-color="#3dff6e" stop-opacity="0"/></linearGradient><clipPath id="slp-ballc"><circle cx="200" cy="246" r="31"/></clipPath></defs>
-<rect width="400" height="300" fill="url(#slp-bg)"/><rect y="70" width="400" height="60" fill="url(#slp-hz)"/>
+<rect width="400" height="300" fill="url(#slp-bg)"/><rect y="70" width="400" height="60" fill="url(#slp-hz)"/><defs><linearGradient id="slp-sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4ffd0"/><stop offset=".55" stop-color="#9dff6a"/><stop offset="1" stop-color="#18c95a"/></linearGradient></defs><circle cx="204" cy="112" r="44" fill="url(#slp-sun)" opacity=".9"/><g fill="#0a2a16"><rect x="164.2" y="92" width="79.6" height="2.5"/><rect x="161.5" y="99" width="85" height="3.5"/><rect x="160.1" y="106" width="87.8" height="5"/></g><g fill="#020a06" stroke="#3dff6e" stroke-width="2" opacity=".75"><rect x="24" y="34" width="44" height="120"/><rect x="78" y="62" width="30" height="90"/><rect x="300" y="44" width="34" height="110"/><rect x="342" y="20" width="48" height="140"/></g><g stroke="#3dff6e" stroke-width="1" opacity=".3"><path d="M24 50H68M24 66H68M24 82H68M24 98H68M24 114H68M78 78H108M78 94H108M78 110H108M300 60H334M300 76H334M300 92H334M300 108H334M342 36H390M342 52H390M342 68H390M342 84H390M342 100H390M342 116H390M39 34V154M53 34V154M93 62V152M317 44V154M358 20V160M374 20V160"/></g>
 <g fill="#cfe9d8" opacity=".55"><circle cx="40" cy="30" r="1.6"/><circle cx="96" cy="58" r="1.3"/><circle cx="150" cy="22" r="1.5"/><circle cx="262" cy="40" r="1.4"/><circle cx="318" cy="18" r="1.7"/><circle cx="366" cy="62" r="1.3"/><circle cx="214" cy="12" r="1.2"/></g>
 <g stroke="#3dff6e" stroke-width="3" opacity=".22" fill="none"><path d="M0 128H400M0 150H400M0 186H400M0 250H400M120 100L-60 300M170 100L60 300M240 100L360 300M290 100L470 300"/></g>
 <path d="M173 140H235L216 111H193Z" fill="#071a0e"/><path d="M173 140H235V145H173Z" fill="#03100a" stroke="#3dff6e" stroke-width="2.5"/><path d="M173 140H235L216 111H193Z" fill="none" stroke="#3dff6e" stroke-width="3.5" stroke-linejoin="round"/>

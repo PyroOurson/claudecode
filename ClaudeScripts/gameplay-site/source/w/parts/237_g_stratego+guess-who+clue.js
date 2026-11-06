@@ -95,6 +95,7 @@
 .gm-@ .bx-net{position:absolute;right:8px;top:8px;z-index:5;display:flex;align-items:center;gap:6px;padding:3px 9px;border-radius:12px;background:rgba(10,14,30,.55);color:#fff;font:800 11px var(--sans)}
 .gm-@ .bx-net i{width:8px;height:8px;border-radius:50%;background:#5be27a}
 .gm-@ .bx-net.bad i{background:#ff5b4b}
+@media (max-width:520px){.gm-@ .bx-pane{padding:6px}.gm-@ .bx-box{padding:12px 12px 10px;border-radius:16px}.gm-@ .bx-box h3{font-size:20px;margin:0 0 4px}.gm-@ .bx-box p{font-size:13px;line-height:1.35;margin:4px 0}.gm-@ .bx-btn{min-height:42px;margin:6px 0;font-size:15px}.gm-@ .bx-btn.sm{min-height:36px}.gm-@ .bx-seg{margin:4px 0}.gm-@ .bx-seg button{min-height:36px;font-size:13px}.gm-@ .bx-lbl{margin-top:6px}}
 `;
 
   const ST_NAMES = ['Flag', 'Spy', 'Scout', 'Miner', 'Sergeant', 'Lieutenant', 'Captain', 'Major', 'Colonel', 'General', 'Marshal', 'Bomb'];
@@ -638,7 +639,7 @@
     return cv;
   }
 
-  const ST_CSS = BASE_CSS.replace(/@/g, 'stratego') + `
+  const ST_CSS = BASE_CSS.replace(/gm-@/g, 'gm-stratego') + `
 .gm-stratego{--bx:#c8352b;--accent:#c8352b}
 .gm-stratego .st-wrap{width:100%;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:flex-start}
 .gm-stratego .st-bd{position:relative;flex:1 1 380px;max-width:660px;min-width:0;border-radius:18px;overflow:hidden;box-shadow:0 12px 30px rgba(40,22,6,.35);background:#5e3f21}
@@ -1744,7 +1745,7 @@ ${online ? `<button class="bx-btn" data-a="${M.left ? 'cpu' : 'rematch'}">${M.le
     return { q: opts[0].q };
   }
 
-  const GW_CSS = BASE_CSS.replace(/@/g, 'guess-who') + `
+  const GW_CSS = BASE_CSS.replace(/gm-@/g, 'gm-guess-who') + `
 .gm-guess-who{--bx:#1c58b8;--accent:#1c58b8}
 .gm-guess-who .gw-wrap{width:100%;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:flex-start}
 .gm-guess-who .gw-case{position:relative;flex:1 1 400px;max-width:640px;min-width:0;border-radius:18px;padding:12px 12px 14px;background:linear-gradient(160deg,#2f6fd0,#173f86);box-shadow:0 12px 30px rgba(15,35,90,.4),inset 0 2px 0 rgba(255,255,255,.3);border:3px solid #0f2c63}
@@ -2878,7 +2879,7 @@ ${online && why === 'left' ? `<button class="bx-btn" data-a="cpu">Play vs comput
     c.restore();
   }
 
-  const CL_CSS = BASE_CSS.replace(/@/g, 'clue') + `
+  const CL_CSS = BASE_CSS.replace(/gm-@/g, 'gm-clue') + `
 .gm-clue{--bx:#8a2535;--accent:#8a2535}
 .gm-clue .cl-wrap{width:100%;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:flex-start}
 .gm-clue .cl-bd{position:relative;flex:1 1 440px;max-width:680px;min-width:0;display:flex;justify-content:center;align-items:flex-start}
@@ -2942,6 +2943,7 @@ ${online && why === 'left' ? `<button class="bx-btn" data-a="cpu">Play vs comput
 .gm-clue .cl-seg button{flex:1 0 auto;min-height:40px;border-radius:12px;border:2px solid #d5d8e8;background:#fff;color:#2a2f45;font:800 13.5px var(--sans);padding:0 10px;display:flex;align-items:center;justify-content:center;gap:6px}
 .gm-clue .cl-seg button.on{background:#8a2535;border-color:#8a2535;color:#fff}
 .gm-clue .cl-seg button i{width:14px;height:14px;border-radius:50%;border:2px solid rgba(0,0,0,.3)}
+@media (max-width:520px){.gm-clue .cl-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:4px 0}.gm-clue .cl-seg button{min-height:34px;padding:0 4px;font-size:12.5px;gap:4px}.gm-clue .cl-seg button i{width:10px;height:10px}.gm-clue .bx-box>p:not(.bx-kick){font-size:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}}
 @media(max-width:700px){.gm-clue .cl-side{flex:1 1 100%}.gm-clue .cl-nb,.gm-clue .cl-log{max-height:260px}}
 `;
 

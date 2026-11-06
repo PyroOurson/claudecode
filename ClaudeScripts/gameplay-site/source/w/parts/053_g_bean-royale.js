@@ -26,7 +26,14 @@
 
   const PAL = ['#ff6fae', '#4fc3ff', '#8be04e', '#ffd23f', '#ff9442', '#a678ff', '#3fe0c5', '#ff5a6e', '#f2efff', '#5b7cff'];
   const PATS = ['Solid', 'Stripes', 'Dots', 'Split', 'Stars'];
-  const HATS = ['None', 'Beanie', 'Cat', 'Bunny', 'Party', 'Viking', 'Propeller', 'Chef', 'Antenna', 'Bow', 'Phones'];
+  const HATS = ['None', 'Beanie', 'Cat', 'Bunny', 'Party', 'Viking', 'Propeller', 'Chef', 'Antenna', 'Bow', 'Phones', 'Halo', 'Crown'];
+  const FREE_HATS = 11;
+  const HAT_REQ = [null, null, null, null, null, null, null, null, null, null, null, { k: 'shows', n: 5, t: 'Play 5 shows' }, { k: 'crowns', n: 1, t: 'Win a crown' }];
+  const DIFFS = ['Easy', 'Normal', 'Hard'];
+  const DIFF_TXT = ['Bots wobble and hesitate', 'Bots race properly', 'Bots dive, grab and push'];
+  const MODES = ['Show', 'Quick', 'Rush'];
+  const MODE_TXT = ['4 rounds to the crown', 'Practice one round', 'Straight to the final'];
+  const RKEYS = ['whirl', 'doors', 'tiptoe', 'hit', 'fruit', 'slime', 'hex', 'jump', 'egg', 'crown'];
   const NA = ['Jelly', 'Wobble', 'Bouncy', 'Squishy', 'Giggle', 'Noodle', 'Puddle', 'Bubble', 'Sprinkle', 'Tumble', 'Fizzy', 'Doodle', 'Marsh', 'Pickle', 'Waffle', 'Gummy'];
   const NB = ['bean', 'bop', 'toes', 'loo', 'kins', 'pants', 'muffin', 'berry', 'nugget', 'zilla', 'face', 'drop', 'bun', 'wig'];
   const botName = used => { for (let i = 0; i < 40; i++) { const n = pick(NA) + pick(NB); if (!used.has(n)) { used.add(n); return n; } } return 'Bean' + used.size; };
@@ -71,13 +78,14 @@ ${G} .fbtn{display:inline-flex;align-items:center;justify-content:center;min-hei
 ${G} .fbtn:active{transform:translateY(.15em);box-shadow:0 .1em 0 #c27400}
 ${G} .fbtn.alt{background:linear-gradient(#ffffff,#dfe6ff);color:#2a1660;box-shadow:0 .28em 0 #8a8fc7,0 .6em 1em rgba(30,10,70,.3)}
 ${G} .lob{background:radial-gradient(120% 90% at 50% 40%,rgba(255,255,255,0) 40%,rgba(80,30,160,.35))}
-${G} .ttl{position:absolute;left:0;right:0;top:4%;text-align:center;font-weight:900;font-size:4.6em;line-height:.9;letter-spacing:-.03em;color:#ffe14d;transform:rotate(-3deg);${OL('#2a1660')}}
+${G} .ttl{position:absolute;left:3.5%;top:5%;text-align:left;font-weight:900;font-size:4em;line-height:.9;letter-spacing:-.03em;color:#ffe14d;transform:rotate(-4deg);transform-origin:0 0;${OL('#2a1660')}}
 ${G} .ttl small{display:block;font-size:.3em;letter-spacing:.2em;color:#fff;margin-top:.35em}
 ${G} .stats{position:absolute;right:2.5%;top:3%;display:flex;flex-direction:column;align-items:flex-end;gap:.3em;font-weight:900}
 ${G} .stats div{padding:.3em .8em;border-radius:99px;background:rgba(42,22,96,.55);font-size:.9em}
 ${G} .cust{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.6em;width:min(94%,40em)}
 ${G} .row{display:flex;gap:.45em;flex-wrap:wrap;justify-content:center}
-${G} .row.hr{flex-wrap:nowrap;overflow-x:auto;max-width:100%;justify-content:flex-start;padding:.2em .3em .45em;scrollbar-width:thin}
+${G} .row.hr{max-width:100%;padding:.2em .3em .2em;gap:.35em}
+@container (max-width:480px){${G} .ttl{font-size:2.6em;top:2.5%;left:4%}${G} .stats{font-size:.85em}${G} .cust .sw{width:2em;height:2em;min-width:27px;min-height:27px;border-width:.16em}${G} .cust .row{gap:.28em}${G} .cust{gap:.45em;bottom:3%}}
 ${G} .row.hr .pt{flex:none;font-size:.85em;min-height:32px;padding:.35em .75em}
 ${G} .big.hold::before{content:"";position:absolute;left:-5%;right:-5%;top:50%;height:1.3em;transform:translateY(-50%) rotate(-3deg);z-index:-1;background:linear-gradient(100deg,#ff4fa3,#ff9a3d 55%,#ffd23f);box-shadow:0 .1em .4em rgba(40,10,90,.35);animation:br-band 2.6s var(--spring) both}
 ${G} .big.hold.e::before{background:linear-gradient(100deg,#120a2a,#2e1a58 60%,#120a2a)}
@@ -130,6 +138,49 @@ ${G} .tb.dv{right:calc(4% + 86px);bottom:4%;width:60px;height:60px;background:ra
 ${G} .tb.gb{right:calc(4% + 4px);bottom:calc(5% + 90px);width:56px;height:56px;background:radial-gradient(circle at 40% 35%,#9fe8ff,#3fa8ff);box-shadow:0 5px 0 #1a5fa8}
 ${G} .tb.on{transform:translateY(3px) scale(.95)}
 ${G} .tb svg{width:46%;height:46%}
+${G} .tabs{display:flex;gap:.35em;padding:.3em;border-radius:99px;background:rgba(24,12,56,.6)}
+${G} .tab{min-height:34px;padding:.35em 1.1em;border:0;border-radius:99px;background:transparent;color:#d8ccff;font:900 .9em var(--sans);letter-spacing:.08em;cursor:pointer}
+${G} .tab.on{background:#fff;color:#2a1660;box-shadow:0 .15em 0 rgba(42,22,96,.45)}
+${G} .opt{display:flex;align-items:center;gap:.5em;flex-wrap:wrap;justify-content:center}
+${G} .opt>span{font-weight:900;font-size:.75em;letter-spacing:.16em;color:#ffe14d;min-width:4.4em;text-align:right;${OL('#2a1660')}}
+${G} .mo{min-height:34px;padding:.4em .9em;border-radius:.8em;border:0;background:rgba(255,255,255,.9);color:#2a1660;font:900 .9em var(--sans);cursor:pointer;box-shadow:0 .2em 0 rgba(42,22,96,.45);transition:transform .15s var(--spring)}
+${G} .mo:hover{transform:translateY(-.08em)}
+${G} .mo.on{background:linear-gradient(#ff7fbf,#ee3c92);color:#fff;box-shadow:0 .2em 0 #a01d63}
+${G} .mo small{display:block;font-size:.68em;font-weight:800;opacity:.75;letter-spacing:.02em}
+${G} .rp{display:flex;align-items:center;gap:.4em}
+${G} .rp b{min-width:8.5em;text-align:center;padding:.45em .8em;border-radius:.8em;background:rgba(24,12,56,.75);font-weight:900;font-size:.95em}
+${G} .rp b small{display:block;font-size:.7em;color:#ff86c8;letter-spacing:.12em}
+${G} .rp .mo{padding:.4em .75em;font-size:1em}
+${G} .pt.lk{background:rgba(42,22,96,.55);color:#cfc6ff;cursor:not-allowed}
+${G} .pt.lk::before{content:"\\1F512";margin-right:.3em;font-size:.85em}
+${G} .pbr{display:flex;gap:.6em;align-items:center}
+${G} .fbtn.sm{font-size:1em;padding:.55em 1.1em}
+${G} .hp{width:min(94%,40em)}
+${G} .hg{display:grid;grid-template-columns:repeat(4,1fr);gap:.6em;margin:.4em 0 1em}
+${G} .hc{display:flex;flex-direction:column;align-items:center;gap:.35em;padding:.6em .4em .7em;border-radius:1em;background:rgba(24,12,56,.38);animation:br-fi .5s ease both}
+${G} .hc:nth-child(2){animation-delay:.08s}${G} .hc:nth-child(3){animation-delay:.16s}${G} .hc:nth-child(4){animation-delay:.24s}
+${G} .hc svg{width:4.6em;height:4.6em}
+${G} .hc b{font-weight:900;font-size:1.05em;letter-spacing:.06em;color:#ffe14d;${OL('#2a1660')}}
+${G} .hc p{margin:0;font-weight:800;font-size:.82em;line-height:1.3}
+${G} .hc kbd{display:inline-block;padding:.05em .4em;border-radius:.35em;background:#fff;color:#2a1660;font:900 .9em var(--sans);box-shadow:0 .12em 0 #8a8fc7}
+@container (max-width:560px){${G} .hg{grid-template-columns:repeat(2,1fr)}}
+${G} .sg{display:grid;grid-template-columns:repeat(6,1fr);gap:.35em;margin:.2em 0 .5em}
+${G} .pan.sum{width:min(94%,38em);padding:1em 1.2em 1.1em}
+${G} .pan.sum h3{font-size:2.5em;margin:0 0 .2em}
+${G} .pan.sum p{margin:.15em 0 .45em}
+${G} .pan.sum .rl{margin:.3em 0 .5em;gap:.25em}
+${G} .pan.sum .rl div{padding:.28em .7em}
+${G} .pan.sum .pts{font-size:1.9em}
+@container (max-width:560px){${G} .sg{grid-template-columns:repeat(3,1fr)}}
+${G} .sg div{padding:.4em .3em;border-radius:.7em;background:rgba(24,12,56,.35);font-weight:800;font-size:.78em;letter-spacing:.08em}
+${G} .sg b{display:block;font-weight:900;font-size:1.6em;letter-spacing:0;font-variant-numeric:tabular-nums}
+${G} .unl{margin:.2em auto .8em;padding:.45em .9em;border-radius:99px;display:inline-block;background:#ffe14d;color:#5a2d00;font-weight:900;font-size:.95em;animation:br-pop2 2.6s var(--spring) both;animation-iteration-count:1;animation-fill-mode:forwards;animation-name:br-unl}
+@keyframes br-unl{0%{opacity:0;transform:scale(.4)}60%{opacity:1;transform:scale(1.08)}100%{opacity:1;transform:scale(1)}}
+${G} .kh{margin:.7em 0 0;font-weight:800;font-size:.8em;opacity:.8}
+${G} .pan .btns .fbtn{margin:.15em 0}
+${G} .rkc{position:absolute;right:2.2%;top:calc(2.4% + 4.6em);padding:.3em .9em;border-radius:99px;font-weight:900;font-size:1em;letter-spacing:.06em;background:#22c07d;box-shadow:0 .18em 0 #137a4a;transition:background .3s,box-shadow .3s}
+${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
+@container (max-width:560px){${G} .rkc{top:calc(2.4% + 3.9em);font-size:.9em}}
 `;
 
   function makeAudio(api) {
@@ -200,7 +251,7 @@ ${G} .tb svg{width:46%;height:46%}
     api.interval(sched, 80);
     return {
       play(n) { if (api.muted) return; const c = ensure(); if (!c) return; if (c.state !== 'running') c.resume().catch(() => {}); try { S[n](); } catch (e) {} },
-      music(on) { musicOn = on; if (on && !api.muted) { const c = ensure(); if (c && c.state !== 'running') c.resume().catch(() => {}); } },
+      music(on) { musicOn = on && this.mOn !== false; if (on && !api.muted) { const c = ensure(); if (c && c.state !== 'running') c.resume().catch(() => {}); } },
       close() { musicOn = false; if (ctx) { try { ctx.close(); } catch (e) {} ctx = null; } }
     };
   }
@@ -233,7 +284,11 @@ ${G} .tb svg{width:46%;height:46%}
     const audio = makeAudio(api);
     const keys = api.keys;
     let saved = api.load() || {};
-    const prefs = { ci: saved.ci ?? 0, pi: saved.pi ?? 1, hi: saved.hi ?? 0, crowns: saved.crowns || 0, shows: saved.shows || 0, best: saved.best || 0 };
+    const prefs = { ci: saved.ci ?? 0, pi: saved.pi ?? 1, hi: saved.hi ?? 0, crowns: saved.crowns || 0, shows: saved.shows || 0, best: saved.best || 0, diff: saved.diff ?? 1, mode: saved.mode ?? 0, rk: saved.rk ?? 0, help: !!saved.help, fame: saved.fame || 0, quals: saved.quals || 0, music: saved.music !== false };
+    audio.mOn = prefs.music;
+    const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const hatOpen = i => !HAT_REQ[i] || prefs[HAT_REQ[i].k] >= HAT_REQ[i].n;
+    if (!hatOpen(prefs.hi)) prefs.hi = 0;
     const persist = () => api.save(prefs);
 
     const scene = new THREE.Scene();
@@ -433,7 +488,7 @@ ${G} .tb svg{width:46%;height:46%}
     );
     const eyesGeo = bakeG(eyeItems, own, 0).translate(0, -EY, -EZ);
     const BG = {
-      body: bodyGeo, eyes: eyesGeo, limb: own(new THREE.SphereGeometry(1, 14, 12)),
+      body: bodyGeo, eyes: eyesGeo, limb: own(new THREE.SphereGeometry(1, 14, 12)), smile: own(new THREE.TorusGeometry(0.085, 0.02, 6, 16, Math.PI)), oh: own(new THREE.TorusGeometry(0.05, 0.022, 6, 16)),
       glove: bakeG([
         pr(UG.sph, '#ffffff', 0, -0.43, 0, 0.105, 0.1, 0.105),
         pr(UG.cyl, '#ffffff', 0, -0.35, 0, 0.083, 0.045, 0.083, 0, 0, 0, 0.88),
@@ -459,6 +514,10 @@ ${G} .tb svg{width:46%;height:46%}
       HG.push(H([pr(UG.cyl, '#2a1660', 0, 0.95, 0, 0.018, 0.4, 0.018), pr(UG.sph, '#ff3d6b', 0, 1.17, 0, 0.075, 0.075, 0.075)]));
       HG.push(H([pr(UG.cone, '#ff3d6b', -0.15, 0.82, 0.08, 0.11, 0.2, 0.07, 0, 0, Math.PI / 2), pr(UG.cone, '#ff3d6b', 0.15, 0.82, 0.08, 0.11, 0.2, 0.07, 0, 0, -Math.PI / 2), pr(UG.sph, '#ff6f93', 0, 0.82, 0.08, 0.06, 0.06, 0.06)]));
       HG.push(H([pr(UG.tor, '#2a1660', 0, 0.36, 0, 0.5, 0.5, 0.9), pr(UG.cyl, '#3fe0c5', -0.5, 0.2, 0, 0.13, 0.09, 0.13, 0, 0, Math.PI / 2), pr(UG.cyl, '#3fe0c5', 0.5, 0.2, 0, 0.13, 0.09, 0.13, 0, 0, Math.PI / 2)]));
+      HG.push(H([pr(UG.tor, '#ffe680', 0, 1.02, 0, 0.36, 0.36, 0.7, Math.PI / 2, 0, 0), pr(UG.tor, '#fff6c8', 0, 1.04, 0, 0.3, 0.3, 0.4, Math.PI / 2, 0, 0)], 0.1));
+      const cw = [pr(UG.cyl, '#ffc83d', 0, 0.83, 0, 0.3, 0.16, 0.3), pr(UG.cyl, '#f2a100', 0, 0.76, 0, 0.31, 0.04, 0.31)];
+      for (let k = 0; k < 5; k++) { const a = (k / 5) * TAU; cw.push(pr(UG.cone, '#ffc83d', Math.sin(a) * 0.24, 1.0, Math.cos(a) * 0.24, 0.085, 0.22, 0.085), pr(UG.sph, k & 1 ? '#3da6ff' : '#ff3d6b', Math.sin(a) * 0.3, 0.83, Math.cos(a) * 0.3, 0.045, 0.045, 0.03, 0, a, 0), pr(UG.sph, '#fff1a8', Math.sin(a) * 0.24, 1.12, Math.cos(a) * 0.24, 0.035, 0.035, 0.035)); }
+      HG.push(H(cw, 0.25));
     }
     const propGeo = bakeG([pr(UG.box, '#3d9bff', 0, 0, 0, 0.56, 0.018, 0.09), pr(UG.box, '#ff4fa3', 0, 0, 0, 0.09, 0.018, 0.56)], own, 0.2);
     function setHat(b, hi) {
@@ -512,6 +571,8 @@ ${G} .tb svg{width:46%;height:46%}
       const bm = own(new THREE.MeshStandardMaterial({ roughness: 0.34 })), lm = own(new THREE.MeshStandardMaterial({ roughness: 0.4 }));
       const body = new THREE.Mesh(BG.body, bm); body.position.y = -0.78; body.castShadow = true; tilt.add(body);
       const eyes = new THREE.Mesh(BG.eyes, MAT.eyes); eyes.position.set(0, EY, EZ); tilt.add(eyes);
+      const mouth = new THREE.Mesh(BG.smile, MAT.pupil); mouth.position.set(0, 0.2, 0.474); mouth.rotation.set(-0.2, 0, Math.PI); tilt.add(mouth);
+      const oh = new THREE.Mesh(BG.oh, MAT.pupil); oh.position.set(0, 0.17, 0.476); oh.rotation.x = -0.2; oh.visible = false; tilt.add(oh);
       const arms = [], legs = [];
       for (const s of [-1, 1]) {
         const a = new THREE.Group(); a.position.set(s * 0.47, 0.12, 0); tilt.add(a);
@@ -522,10 +583,10 @@ ${G} .tb svg{width:46%;height:46%}
         const sh = new THREE.Mesh(BG.shoe, MAT.vc); l.add(sh);
       }
       const tag = new THREE.Sprite(own(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, fog: false })));
-      tag.scale.set(1.6, 0.4, 1); tag.position.set(0, 2.45, 0); tag.visible = false; mesh.add(tag);
+      tag.scale.set(1.36, 0.34, 1); tag.position.set(0, 2.35, 0); tag.visible = false; mesh.add(tag);
       scene.add(mesh);
       return {
-        tag, tagTex: null, crown: null, mesh, tilt, body, eyes, arms, legs, bm, lm, tex: null, name, me, hat: null, prop: null, hi: 0, pp: new THREE.Vector3(),
+        tag, tagTex: null, crown: null, mesh, tilt, body, eyes, mouth, oh, arms, legs, bm, lm, tex: null, name, me, hat: null, prop: null, hi: 0, pp: new THREE.Vector3(),
         p: new THREE.Vector3(), v: new THREE.Vector3(), yaw: 0, state: 'run', t: 0, ground: false, gc: null, gn: new THREE.Vector3(0, 1, 0),
         coyote: 0, jumpBuf: 0, diveReq: false, grabT: -1, held: null, heldBy: null, holdT: 0, ix: 0, iz: 0, out: false, fin: false, gone: false, place: 0, cp: 0, respawnT: 0, airT: 0, slide: 0,
         phase: Math.random() * 6, sq: 0, sqV: 0, leanX: 0, leanZ: 0, pvx: 0, pvz: 0, spinAx: new THREE.Vector3(1, 0, 0), spinW: 0, q: new THREE.Quaternion(), blink: Math.random() * 4,
@@ -700,7 +761,7 @@ ${G} .tb svg{width:46%;height:46%}
       const fx = Math.sin(b.yaw), fz = Math.cos(b.yaw), hs = Math.hypot(b.v.x, b.v.z), s = Math.max(CFG.diveSpeed * b.speedMul, hs);
       b.v.x = fx * s; b.v.z = fz * s; b.v.y = b.ground ? CFG.diveUp : Math.max(b.v.y, 0) + CFG.diveAirUp;
       b.state = 'dive'; b.slide = 0; b.ground = false; b.gc = null; b.coyote = 0;
-      if (b.me) audio.play('dive');
+      if (b.me) { audio.play('dive'); if (show) show.st.dives++; if (b.ground || b.coyote > -0.05) poof(b.p.x, b.p.y, b.p.z, '#ffffff', 5); }
     }
     let focus = null, ALPHA = 1, spec = false, specB = null, specN = '', camIdle = 0;
     function release(b) { if (b.held) b.held.heldBy = null; b.held = null; b.grabT = -0.5; }
@@ -713,7 +774,7 @@ ${G} .tb svg{width:46%;height:46%}
         for (const o of R.field) {
           if (o === b || o.gone || o.fin || o.respawnT > 0 || o.state === 'rag' || o.heldBy || o.held || Math.abs(o.p.y - b.p.y) > 1) continue;
           const dx = o.p.x - b.p.x, dz = o.p.z - b.p.z, d = Math.hypot(dx, dz);
-          if (d < 1.8 && d > 0.01 && (dx * fx + dz * fz) / d > 0.3) { b.held = o; o.heldBy = b; b.holdT = 2.6; b.grabT = 0; if (o.egg && !b.egg) { b.egg = o.egg; b.egg.by = b; o.egg = null; o.eggCd = 1; } if (b.me || o.me) audio.play('grab'); break; }
+          if (d < 1.8 && d > 0.01 && (dx * fx + dz * fz) / d > 0.3) { b.held = o; o.heldBy = b; b.holdT = 2.6; b.grabT = 0; if (o.egg && !b.egg) { b.egg = o.egg; b.egg.by = b; o.egg = null; o.eggCd = 1; } if (b.me || o.me) audio.play('grab'); if (b.me && show) show.st.grabs++; break; }
         }
       }
       const o = b.held;
@@ -730,6 +791,7 @@ ${G} .tb svg{width:46%;height:46%}
       b.v.set(vx, vy, vz); b.state = 'rag'; b.t = CFG.ragdollMin + Math.min(0.6, pw * 0.03); b.ground = false; b.gc = null;
       b.spinAx.set(rnd(-1, 1), rnd(-0.3, 0.3), rnd(-1, 1)).normalize(); b.spinW = rnd(8, 14);
       stars(b.p.x, b.p.y + 1.5, b.p.z);
+      if (b.me) { if (show) show.st.bonks++; if (!RM) camS.shake = Math.max(camS.shake, 0.22); }
       if (b.me || (focus && focus.p.distanceToSquared(b.p) < 150 && Math.random() < 0.6)) audio.play('bonk');
     }
     function stepBean(b, dt) {
@@ -748,7 +810,7 @@ ${G} .tb svg{width:46%;height:46%}
         if (dl > mx) { dx *= mx / dl; dz *= mx / dl; }
         v.x += dx; v.z += dz;
         if (im > 0.05) b.yaw = turnTo(b.yaw, Math.atan2(b.ix, b.iz), CFG.turnRate * dt);
-        if (b.jumpBuf > 0 && b.coyote > 0) { v.y = Math.max(v.y, 0) + CFG.jumpV; b.coyote = 0; b.jumpBuf = 0; b.ground = false; b.gc = null; b.sqV += 5; if (b.me) audio.play('jump'); }
+        if (b.jumpBuf > 0 && b.coyote > 0) { v.y = Math.max(v.y, 0) + CFG.jumpV; b.coyote = 0; b.jumpBuf = 0; b.ground = false; b.gc = null; b.sqV += 5; if (b.me) { audio.play('jump'); if (show) show.st.jumps++; } }
         if (b.diveReq) dive(b);
       } else if (st === 'dive') {
         if (b.ground) { b.slide += dt; const f = Math.exp(-4.5 * dt); v.x *= f; v.z *= f; if (b.slide > CFG.diveSlide) { b.state = 'getup'; b.t = CFG.getUp; } }
@@ -780,7 +842,7 @@ ${G} .tb svg{width:46%;height:46%}
         }
       }
       if (b.ground) {
-        if (!wasG && b.airT > 0.3) { b.sqV -= Math.min(7, b.airT * 7); if (b.me) audio.play('land'); }
+        if (!wasG && b.airT > 0.3) { b.sqV -= Math.min(7, b.airT * 7); if (b.me) { audio.play('land'); poof(p.x, p.y, p.z, '#ffffff', b.airT > 0.8 ? 9 : 4); } }
         b.coyote = CFG.coyote; b.airT = 0;
       } else { b.coyote -= dt; b.airT += dt; }
       b.jumpBuf -= dt;
@@ -805,7 +867,7 @@ ${G} .tb svg{width:46%;height:46%}
       const m = b.mesh;
       if (b.gone || b.respawnT > 0) { m.visible = false; return; }
       m.visible = true; m.position.lerpVectors(b.pp, b.p, ALPHA); m.rotation.y = b.yaw;
-      if (!b.me && b.tagTex) { const dd = cam.position.distanceTo(m.position), op = clamp((26 - dd) / 10, 0, 1) * clamp((dd - 2.5) / 2, 0, 1); b.tag.visible = op > 0.02 && phase !== 'lobby'; b.tag.material.opacity = op; } else b.tag.visible = false;
+      if (!b.me && b.tagTex) { const dd = cam.position.distanceTo(m.position), op = clamp((15 - dd) / 5, 0, 1) * clamp((dd - 2.5) / 2, 0, 1); b.tag.visible = op > 0.02 && phase !== 'lobby' && b.tagOk; b.tag.material.opacity = op; } else b.tag.visible = false;
       if (b.prop) b.prop.rotation.y += dt * (6 + Math.hypot(b.v.x, b.v.z) * 2.2 + (b.ground ? 0 : 10));
       b.sqV += (-b.sq * 170 - b.sqV * 11) * dt; b.sq += b.sqV * dt;
       const sq = clamp(b.sq, -0.32, 0.32), idt = 1 / Math.max(dt, 1e-3);
@@ -821,13 +883,14 @@ ${G} .tb svg{width:46%;height:46%}
       }
       t.quaternion.copy(b.q);
       if (b.ground && b.state === 'run' && hs > 0.6) {
-        b.phase += dt * (5 + hs * 1.7); const k = Math.min(1, hs / 5), sw = Math.sin(b.phase) * k; const sn = Math.floor(b.phase / Math.PI); if (b.me && sn !== b.sn) { b.sn = sn; audio.play('step'); }
+        b.phase += dt * (5 + hs * 1.7); const k = Math.min(1, hs / 5), sw = Math.sin(b.phase) * k; const sn = Math.floor(b.phase / Math.PI); if (b.me && sn !== b.sn) { b.sn = sn; audio.play('step'); if (hs > 6) puffs.spawn(b.p.x + rnd(-0.2, 0.2), b.p.y + 0.15, b.p.z + rnd(-0.2, 0.2), -b.v.x * 0.08, 0.7, -b.v.z * 0.08, '#ffffff', 0.32); }
         L[0].rotation.x = sw * 0.9; L[1].rotation.x = -sw * 0.9; A[0].rotation.x = -sw * 0.9; A[1].rotation.x = sw * 0.9; A[0].rotation.z = -0.35; A[1].rotation.z = 0.35;
         py += Math.abs(Math.cos(b.phase)) * 0.07 * k;
       } else if (b.state === 'run' && !b.ground) {
         const f = Math.sin(time * 22) * 0.35; L[0].rotation.x = -0.6; L[1].rotation.x = 0.3; A[0].rotation.x = f; A[1].rotation.x = -f; A[0].rotation.z = -2.5; A[1].rotation.z = 2.5;
       } else if (b.state === 'dive') { A[0].rotation.set(-3, 0, -0.2); A[1].rotation.set(-3, 0, 0.2); L[0].rotation.x = 0.35; L[1].rotation.x = 0.25; }
       else if (b.state === 'rag') { const f = Math.sin(time * 14 + b.phase); A[0].rotation.set(f, 0, -1.4 - f * 0.6); A[1].rotation.set(-f, 0, 1.4 + f * 0.6); L[0].rotation.x = f * 0.8; L[1].rotation.x = -f * 0.8; }
+      else if (b.fin || (b.me && b.crown)) { const f = Math.sin(time * 9 + b.phase); A[0].rotation.set(0.2, 0, -2.5 - f * 0.35); A[1].rotation.set(0.2, 0, 2.5 + f * 0.35); L[0].rotation.x = L[1].rotation.x = 0; }
       else { const f = Math.sin(time * 2.4 + b.phase) * 0.06; A[0].rotation.set(0, 0, -0.22 - f); A[1].rotation.set(0, 0, 0.22 + f); L[0].rotation.x = L[1].rotation.x = 0; }
       if (b.state === 'run' && (b.grabT > 0 || b.held)) { A[0].rotation.set(-1.45, 0, 0.12); A[1].rotation.set(-1.45, 0, -0.12); }
       t.position.y = py;
@@ -835,6 +898,7 @@ ${G} .tb svg{width:46%;height:46%}
       b.blink -= dt; const e = b.blink < 0.12 ? 0.12 : 1; if (b.blink < 0) b.blink = rnd(2, 5);
       const wide = b.state === 'rag' ? 1.22 : 1;
       b.eyes.scale.set(wide, e * wide, wide);
+      const shock = b.state === 'rag' || b.state === 'dive' || (b.v.y < -12 && !b.ground); if (shock === b.mouth.visible) { b.mouth.visible = !shock; b.oh.visible = shock; }
     }
 
     function boxGeo(wd, ht, d) {
@@ -1141,7 +1205,7 @@ ${G} .tb svg{width:46%;height:46%}
       seesaw(0, 0, 134, 7, 14, P.yel); seesaw(0, 0, 151, 7, 14, P.mint);
       plat(0, 0, 168, 18, 16, P.blue); finish(165, 0, 18);
       return {
-        name: 'The Whirlygig', kind: 'race', desc: 'Spin, sweep and swing your way to the finish line!', start: { z: 10, y: 0, w: 18 }, finishZ: 165, topY: 0, killY: -26,
+        name: 'Spin Cycle', kind: 'race', desc: 'Spin, sweep and swing your way to the finish line!', start: { z: 10, y: 0, w: 18 }, finishZ: 165, topY: 0, killY: -26,
         cps: [{ x: 0, y: 0, z: 2, w: 7, d: 8 }, { x: 0, y: 0, z: 41.5, w: 6, d: 2 }, { x: 0, y: 0, z: 80.5, w: 4, d: 3 }, { x: 0, y: 0, z: 121, w: 3, d: 3 }],
         path: [[0, 14, 6], [0, 30, 6], [0, 43.2, 3, 'j'], [-3, 51, 2], [0, 56.5, 1.5, 'j'], [3.5, 62, 2], [0.8, 67.5, 1.5, 'j'], [-2, 73, 2], [-0.5, 79, 2, 'j'], [0, 86, 4], [0, 99, 3], [0, 112, 2.5], [0, 125.6, 2, 'j'], [0, 134, 0.8], [0, 141.6, 0.8, 'j'], [0, 151, 0.8], [0, 158.6, 1, 'j'], [0, 165, 5, 'd'], [0, 172, 5]],
         time: CFG.raceTime
@@ -1158,7 +1222,7 @@ ${G} .tb svg{width:46%;height:46%}
       seesaw(0, 4, 138, 7, 14, P.mint);
       plat(0, 4, 155, 18, 16, P.blue); finish(152, 4, 18);
       return {
-        name: 'Door Dash', kind: 'race', desc: 'Some doors are real, some are fake. Smash through to the finish!', start: { z: 10, y: 0, w: 20 }, finishZ: 152, topY: 4, killY: -26,
+        name: 'Knock Knock', kind: 'race', desc: 'Some doors are real, some are fake. Smash through to the finish!', start: { z: 10, y: 0, w: 20 }, finishZ: 152, topY: 4, killY: -26,
         cps: [{ x: 0, y: 0, z: 2, w: 8, d: 8 }, { x: 0, y: 0, z: 39.5, w: 9, d: 4 }, { x: 0, y: 0, z: 81.5, w: 9, d: 6 }, { x: 0, y: 4, z: 111, w: 4, d: 3 }],
         path: [[0, 14, 8], [0, 24, 0, 'D'], [0, 31, 8], [0, 38, 0, 'D'], [0, 45, 8], [0, 52, 0, 'D'], [0, 59, 7], [0, 66, 0, 'D'], [-4, 73, 2], [0, 80, 0, 'D'], [0, 88, 6], [0, 97, 4], [0, 111, 3], [0, 121, 4], [0, 130.2, 2, 'j'], [0, 138, 0.8], [0, 145.3, 1, 'j'], [0, 152, 5, 'd'], [0, 158, 5]],
         time: CFG.raceTime
@@ -1185,7 +1249,7 @@ ${G} .tb svg{width:46%;height:46%}
       ramp(0, 156, 166, 16, 19, 10, P.pink); rails(156, 166, 16, 19, 10);
       plat(0, 19, 173, 16, 14, P.blue); finish(171, 19, 16);
       return {
-        name: 'Slime Climb', kind: 'race', desc: 'The slime is rising! Climb to the top before it swallows you!', start: { z: 8, y: 0, w: 14 }, finishZ: 171, topY: 19, killY: -26,
+        name: 'Goo Tower', kind: 'race', desc: 'The slime is rising! Climb to the top before it swallows you!', start: { z: 8, y: 0, w: 14 }, finishZ: 171, topY: 19, killY: -26,
         slime: { y0: -4, rate: CFG.slimeRate, delay: CFG.slimeDelay }, cps: null,
         path: [[0, 12, 4], [0, 30, 3], [3.6, 37, 1.2], [0, 46, 1.5], [0, 62, 1.5], [3.2, 69, 1], [0, 78, 2], [0, 96, 2], [0, 100.2, 0.4, 'j'], [0, 104.5, 0.4, 'j'], [0, 109.3, 0.4, 'j'], [0, 114.1, 0.4, 'j'], [0, 118.9, 0.4, 'j'], [0, 121, 3], [0, 124, 3], [0, 142, 3], [-3.6, 148, 1.2], [0, 156, 2], [0, 166, 2], [0, 171, 4, 'd'], [0, 176, 4]],
         time: CFG.raceTime
@@ -1193,7 +1257,7 @@ ${G} .tb svg{width:46%;height:46%}
     }
     function cHex() {
       hexLayer(0, 7, '#ff8fc8'); hexLayer(-8, 6, '#7fd4ff'); hexLayer(-16, 6, '#ffe066');
-      return { name: 'Hex-A-Gone', kind: 'survival', desc: 'Tiles crumble the moment you touch them. Be one of the last beans standing!', killY: -24, topY: 0, time: CFG.hexTime };
+      return { name: 'Honey Drop', kind: 'survival', desc: 'Tiles crumble the moment you touch them. Be one of the last beans standing!', killY: -24, topY: 0, time: CFG.hexTime };
     }
     function cCrown() {
       const P = PC;
@@ -1210,7 +1274,7 @@ ${G} .tb svg{width:46%;height:46%}
       for (const s of [-1, 1]) { const fl = mesh(gg(new THREE.CylinderGeometry(0.15, 0.15, 5, 6)), MAT.metal, null, s * 5.5, 20.3, 132.5); const fg = mesh(gg(new THREE.BoxGeometry(0.1, 1.2, 1.8)), MAT.foam, null, s * 5.5, 22.2, 133.4, false); fl.castShadow = fg.castShadow = false; }
       const crown = makeCrown(0, 20.75, 130);
       return {
-        name: 'Fall Mountain', kind: 'final', desc: 'Climb to the top of the peak and grab the crown to win the show!', start: { z: 8, y: 0, w: 16 }, topY: 18, killY: -26, crown,
+        name: 'Crown Peak', kind: 'final', desc: 'Climb to the top of the peak and grab the crown to win the show!', start: { z: 8, y: 0, w: 16 }, topY: 18, killY: -26, crown,
         cps: [{ x: 0, y: 0, z: 2, w: 7, d: 6 }, { x: 0, y: 7, z: 41, w: 6, d: 3 }, { x: 0, y: 13, z: 77, w: 5, d: 3 }],
         path: [[0, 12, 6], [0, 40, 5], [3.8, 46, 1.4], [0, 56, 4], [0, 76, 3], [0, 84, 4], [0, 93.7, 1, 'j'], [0, 99.5, 1.2], [-2, 104.3, 0.8, 'j'], [-4, 109, 1], [-1, 113.3, 0.8, 'j'], [2, 117.5, 1], [1, 121.3, 0.8, 'j'], [0, 127.5, 1.5], [0, 130, 0.2, 'c']],
         time: CFG.finalTime
@@ -1243,7 +1307,7 @@ ${G} .tb svg{width:46%;height:46%}
       const f2 = field(56.3, 7);
       plat(0, 0, 92.3, 20, 21.7, P.blue); finish(94, 0, 20);
       return {
-        name: 'Tip Toe', kind: 'race', desc: 'Only some tiles are real. Find the hidden path across the gap before the floor drops!', start: { z: 10, y: 0, w: 20 }, finishZ: 94, topY: 0, killY: -26, tip: T,
+        name: 'Ghost Tiles', kind: 'race', desc: 'Only some tiles are real. Find the hidden path across the gap before the floor drops!', start: { z: 10, y: 0, w: 20 }, finishZ: 94, topY: 0, killY: -26, tip: T,
         cps: [{ x: 0, y: 0, z: 2, w: 7, d: 8 }, { x: 0, y: 0, z: 47.5, w: 7, d: 3 }],
         path: [[0, 14, 6], [0, 21, 5], [0, f1.z1 + 3, 5], [0, 51, 5], [0, f2.z1 + 3, 5], [0, 94, 5, 'd'], [0, 101, 5]],
         time: 120
@@ -1259,7 +1323,7 @@ ${G} .tb svg{width:46%;height:46%}
       sweeper(0, 0, 0, 33, { f: ang }, 0);
       const s2 = sweeper(0, 0, 0, 33, { f: ang }, Math.PI / 2, true); s2.piv.visible = false; s2.c.on = false;
       R.anims.push(() => { if (R.playT > 30) { s2.piv.visible = true; s2.c.on = true; return false; } return true; });
-      return { name: 'Jump Club', kind: 'survival', ring: Rr, desc: 'A giant beam sweeps the arena and keeps getting faster. Jump it, or fall!', killY: -24, topY: 0, time: CFG.hexTime };
+      return { name: 'Beam Hop', kind: 'survival', ring: Rr, desc: 'A giant beam sweeps the arena and keeps getting faster. Jump it, or fall!', killY: -24, topY: 0, time: CFG.hexTime };
     }
 
     function slider(x, y, z, wd, span, sp, ph) {
@@ -1279,7 +1343,7 @@ ${G} .tb svg{width:46%;height:46%}
       fan(-4.5, 0, 101, 1, 6, 5, 3.4, 0); fan(4.5, 0, 109, -1, 6, 5, 3.4, 1.7);
       plat(0, 0, 132, 20, 24, P.blue); finish(138, 0, 20);
       return {
-        name: 'Hit Parade', kind: 'race', desc: 'Jump the sliding walls, dodge the spinners and hammers, and race to the finish!', start: { z: 10, y: 0, w: 20 }, finishZ: 138, topY: 0, killY: -26,
+        name: 'Bonk Alley', kind: 'race', desc: 'Jump the sliding walls, dodge the spinners and hammers, and race to the finish!', start: { z: 10, y: 0, w: 20 }, finishZ: 138, topY: 0, killY: -26,
         cps: [{ x: 0, y: 0, z: 2, w: 7, d: 8 }, { x: 0, y: 0, z: 60, w: 8, d: 3 }, { x: 0, y: 0, z: 96, w: 2, d: 3 }],
         path: [[0, 14, 7], [0, 22, 6], [0, 58, 7], [0, 70, 7], [0, 94, 7], [0, 100, 1.2], [0, 118, 1.2], [0, 126, 5], [0, 138, 5, 'd'], [0, 145, 5]],
         time: 120
@@ -1298,7 +1362,7 @@ ${G} .tb svg{width:46%;height:46%}
       boulders(4, 4, 154, 20, 120, 12, 105, 1.3, FR);
       plat(0, 20, 162, 16, 16, P.blue); finish(160, 20, 16);
       return {
-        name: 'Fruit Chute', kind: 'race', desc: 'Dodge the flying fruit and race up the conveyor belts to the finish line!', start: { z: 10, y: 0, w: 20 }, finishZ: 160, topY: 20, killY: -26,
+        name: 'Fruit Frenzy', kind: 'race', desc: 'Dodge the flying fruit and race up the conveyor belts to the finish line!', start: { z: 10, y: 0, w: 20 }, finishZ: 160, topY: 20, killY: -26,
         cps: [{ x: 0, y: 0, z: 2, w: 7, d: 8 }, { x: 0, y: 6, z: 57, w: 5, d: 6 }, { x: 0, y: 12, z: 107, w: 5, d: 6 }],
         path: [[0, 14, 6], [0, 24, 4], [0, 54, 4], [0, 63, 5], [0, 72, 4], [0, 104, 4], [0, 112, 5], [0, 120, 4], [0, 154, 3.5], [0, 160, 5, 'd'], [0, 168, 5]],
         time: 130
@@ -1320,7 +1384,7 @@ ${G} .tb svg{width:46%;height:46%}
       }
       R.team = { score: [0, 0, 0], nests, eggs: [], em, geo: gg(new THREE.SphereGeometry(0.38, 14, 10)), spawnT: 0 };
       for (let k = 0; k < 14; k++) spawnEgg(8 + k * 0.4);
-      return { name: 'Egg Scramble', kind: 'team', desc: 'Grab eggs from the middle and carry them to your team nest. The two best teams qualify!', topY: 0, killY: -24, time: 90, cps: [{ x: 0, y: 0, z: 0, w: 4, d: 1 }] };
+      return { name: 'Egg Heist', kind: 'team', desc: 'Grab eggs from the middle and carry them to your team nest. The two best teams qualify!', topY: 0, killY: -24, time: 90, cps: [{ x: 0, y: 0, z: 0, w: 4, d: 1 }] };
     }
     function spawnEgg(y) {
       const T = R.team, a = rnd(0, TAU), r = rnd(0, 9), x = Math.cos(a) * r, z = Math.sin(a) * r, m = mesh(T.geo, T.em, null, x, y, z, false);
@@ -1392,7 +1456,7 @@ ${G} .tb svg{width:46%;height:46%}
     const hud = el('div', 'hud', wrap);
     const tlEl = el('div', 'tl', hud, '<b></b><span class="chip"></span>'), tlName = tlEl.firstChild, tlChip = tlEl.lastChild;
     const trEl = el('div', 'tr', hud, '<div class="qual"><b>0 / 0</b><span>QUALIFIED</span></div>'), qualEl = trEl.firstChild, qn = qualEl.firstChild, ql = qualEl.lastChild;
-    const tmEl = el('div', 'tmc', hud, '0:00');
+    const tmEl = el('div', 'tmc', hud, '0:00'), rkEl = el('div', 'rkc', hud); rkEl.hidden = true; let rkT = 0, rkS = '';
     const pzBtn = el('button', 'pz', trEl, '<i></i>'); pzBtn.setAttribute('aria-label', 'Pause');
     const fxo = el('div', 'fxo', hud), big = el('div', 'big', hud), spBar = el('div', 'spec', hud, '<button class="sb" data-s="-1" aria-label="Previous">&lsaquo;</button><span>SPECTATING <b></b></span><button class="sb" data-s="1" aria-label="Next">&rsaquo;</button><button class="sb lv" data-s="0">LEAVE</button>'), spLbl = spBar.querySelector('b'), hint = el('div', 'hint', hud), feed = el('div', 'feed', hud);
     const tc = el('div', 'tc', wrap), joy = el('div', 'joy idle', tc, '<i></i>'), knob = joy.firstChild;
@@ -1440,7 +1504,7 @@ ${G} .tb svg{width:46%;height:46%}
       if (e.target.closest('button') || e.target.closest('.pan') || e.target.closest('.cust')) return;
       if (e.pointerType === 'touch') touchOn = true;
       if (phase === 'intro') { skipIntro(); return; }
-      if (phase === 'lobby') { startShow(); return; }
+      if (phase === 'lobby') { if (!helpFrom) tryStart(); return; }
       if (!inPlay() || paused) return;
       const { r, s } = scaleOf(), fx = (e.clientX - r.left) / r.width;
       if (e.pointerType !== 'mouse' && fx < 0.5 && joyId === null) {
@@ -1481,9 +1545,10 @@ ${G} .tb svg{width:46%;height:46%}
       audio.music(musicWanted);
       const c = e.code;
       if (c === 'Tab' || e.metaKey || e.altKey) return;
+      if (helpFrom) { if (c === 'Enter' || c === 'Space' || c === 'Escape') { e.preventDefault(); closeHelp(); } return; }
       if (paused) { if (c === 'Enter' || c === 'Space' || c === 'KeyP' || c === 'Escape') { e.preventDefault(); setPause(false); } return; }
-      if (phase === 'lobby') { if (!/^(Shift|Control|Alt|Meta)/.test(c)) { e.preventDefault(); startShow(); } return; }
-      if (phase === 'summary') { if (c === 'Enter' || c === 'Space') { e.preventDefault(); startShow(); } return; }
+      if (phase === 'lobby') { if (c === 'Enter' || c === 'Space') { e.preventDefault(); tryStart(); } else if (c === 'KeyH') openHelp('lobby'); return; }
+      if (phase === 'summary') { if (c === 'Enter' || c === 'Space') { e.preventDefault(); tryStart(); } else if (c === 'Escape') toLobby(); return; }
       if (phase === 'intro') { if (c === 'Enter' || c === 'Space') { e.preventDefault(); skipIntro(); } return; }
       if (c === 'KeyP' || c === 'Escape') { setPause(true); return; }
       if (e.repeat) return;
@@ -1511,7 +1576,7 @@ ${G} .tb svg{width:46%;height:46%}
       paused = on; unlock();
       if (on) {
         scr.style.pointerEvents = 'auto';
-        scr.innerHTML = `<div class="pan"><h3>PAUSED</h3><p>${R && R.def ? R.def.name : ''}</p><div class="btns"><button class="fbtn" data-a="res">Resume</button><button class="fbtn alt" data-a="quit">Leave show</button></div></div>`;
+        scr.innerHTML = `<div class="pan"><h3>PAUSED</h3><p>${R && R.def ? R.def.name : ''} · ${MODES[show.mode]} · ${DIFFS[show.diff]} bots</p><div class="btns"><button class="fbtn" data-a="res">Resume</button><button class="fbtn alt" data-a="restart">Restart</button><button class="fbtn alt" data-a="help">How to play</button><button class="fbtn alt" data-a="music">Music: ${prefs.music ? 'On' : 'Off'}</button><button class="fbtn alt" data-a="quit">Leave show</button></div><p class="kh">${touchOn ? 'Tap Resume to keep playing' : 'P to resume'}</p></div>`;
       } else { scr.innerHTML = ''; }
     }
     api.on(scr, 'pointerdown', e => {
@@ -1520,11 +1585,20 @@ ${G} .tb svg{width:46%;height:46%}
       const a = b.dataset.a; audio.play('tap');
       if (a === 'res') setPause(false);
       else if (a === 'quit') { setPause(false); leaveShow(); }
-      else if (a === 'play') startShow();
+      else if (a === 'play') tryStart();
+      else if (a === 'next') { prefs.rk = (prefs.rk + 1) % RKEYS.length; persist(); startShow(); }
       else if (a === 'lobby') toLobby();
-      else if (a.startsWith('c')) { prefs.ci = +a.slice(1); skinBean(player, prefs.ci, prefs.pi); persist(); markCust(); }
-      else if (a.startsWith('p')) { prefs.pi = +a.slice(1); skinBean(player, prefs.ci, prefs.pi); persist(); markCust(); }
-      else if (a.startsWith('h')) { prefs.hi = +a.slice(1); setHat(player, prefs.hi); player.sqV += 4; persist(); markCust(); }
+      else if (a === 'restart') { paused = false; scr.innerHTML = ''; startShow(true); }
+      else if (a === 'help') openHelp(phase === 'lobby' ? 'lobby' : 'pause');
+      else if (a === 'hclose') closeHelp();
+      else if (a === 'music') { prefs.music = !prefs.music; audio.mOn = prefs.music; persist(); audio.music(musicWanted); setPause(true); }
+      else if (a === 'tplay' || a === 'tlook') { lobTab = a.slice(1); markCust(); }
+      else if (a.startsWith('m')) { prefs.mode = +a.slice(1); persist(); markCust(); }
+      else if (a.startsWith('d')) { prefs.diff = +a.slice(1); persist(); markCust(); }
+      else if (a.startsWith('r')) { prefs.rk = (prefs.rk + RKEYS.length + +a.slice(1)) % RKEYS.length; persist(); markCust(); }
+      else if (a.startsWith('c')) { prefs.ci = +a.slice(1); skinBean(player, prefs.ci, prefs.pi); player.sqV += 3; persist(); markCust(); }
+      else if (a.startsWith('p')) { prefs.pi = +a.slice(1); skinBean(player, prefs.ci, prefs.pi); player.sqV += 3; persist(); markCust(); }
+      else if (a.startsWith('h')) { const k = +a.slice(1); if (!hatOpen(k)) { b.animate([{ transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'none' }], { duration: 220 }); return; } prefs.hi = k; setHat(player, prefs.hi); player.sqV += 4; persist(); markCust(); }
     });
 
     const LOB = new THREE.Vector3(0, 110, -40);
@@ -1541,10 +1615,46 @@ ${G} .tb svg{width:46%;height:46%}
       const beam = new THREE.Mesh(own(new THREE.ConeGeometry(2.3, 6.5, 32, 1, true)), own(new THREE.MeshBasicMaterial({ color: 0xfff4c8, transparent: true, opacity: 0.05, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false })));
       beam.position.y = 3.1; lobby.add(beam);
     }
+    let lobTab = 'play', helpFrom = null;
+    const RKIND = { whirl: 'RACE', doors: 'RACE', tiptoe: 'RACE', hit: 'RACE', fruit: 'RACE', slime: 'RACE', hex: 'SURVIVAL', jump: 'SURVIVAL', egg: 'TEAM', crown: 'FINAL' };
     function markCust() {
       scr.querySelectorAll('.sw').forEach((s, i) => s.classList.toggle('on', i === prefs.ci));
-      scr.querySelectorAll('.pt').forEach((s, i) => s.classList.toggle('on', i === prefs.pi));
+      scr.querySelectorAll('.pa').forEach((s, i) => s.classList.toggle('on', i === prefs.pi));
       scr.querySelectorAll('.ht').forEach((s, i) => s.classList.toggle('on', i === prefs.hi));
+      scr.querySelectorAll('.md').forEach((s, i) => s.classList.toggle('on', i === prefs.mode));
+      scr.querySelectorAll('.df').forEach((s, i) => s.classList.toggle('on', i === prefs.diff));
+      scr.querySelectorAll('.tab').forEach(s => s.classList.toggle('on', s.dataset.a === 't' + lobTab));
+      scr.querySelectorAll('[data-p]').forEach(s => { s.hidden = s.dataset.p !== lobTab; });
+      const rk = scr.querySelector('.rko'); if (rk) { rk.hidden = prefs.mode !== 1; const k = RKEYS[prefs.rk % RKEYS.length]; rk.querySelector('b').innerHTML = `<small>${RKIND[k]}</small>${NAMES[k]}`; }
+    }
+    const hb = (x, y, a, c, k, ex = '') => bean(x, y, a, c, c, ex, k);
+    const HSVG = {
+      run: `<svg viewBox="0 0 100 100">${hb(54, 52, 12, '#ff6fae', 0.75)}<path d="M14 40h18M8 54h20M16 68h14" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".85"/><ellipse cx="54" cy="88" rx="20" ry="4" fill="#1d1640" opacity=".25"/></svg>`,
+      jump: `<svg viewBox="0 0 100 100"><path d="M18 86q32-80 64 0" stroke="#ffe14d" stroke-width="4" fill="none" stroke-dasharray="6 7" stroke-linecap="round"/>${hb(50, 38, 0, '#4fc3ff', 0.62, '<ellipse cx="-27" cy="-14" rx="6" ry="13" fill="#4fc3ff" transform="rotate(30 -27 -14)"/><ellipse cx="27" cy="-14" rx="6" ry="13" fill="#4fc3ff" transform="rotate(-30 27 -14)"/>')}<ellipse cx="50" cy="90" rx="14" ry="3.5" fill="#1d1640" opacity=".25"/></svg>`,
+      dive: `<svg viewBox="0 0 100 100">${hb(58, 58, 78, '#ffd23f', 0.62)}<path d="M10 46h22M6 60h22M14 74h16" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".85"/><ellipse cx="58" cy="86" rx="26" ry="4" fill="#1d1640" opacity=".25"/></svg>`,
+      grab: `<svg viewBox="0 0 100 100">${hb(34, 54, 8, '#8be04e', 0.6, '<ellipse cx="26" cy="-6" rx="17" ry="6" fill="#8be04e"/>')}${hb(72, 52, 14, '#a678ff', 0.6)}<circle cx="56" cy="46" r="5" fill="#fff"/><ellipse cx="52" cy="88" rx="34" ry="4" fill="#1d1640" opacity=".25"/></svg>`
+    };
+    function helpHtml() {
+      const T = touchOn;
+      const cards = [
+        ['run', 'RUN', T ? 'Left thumb moves you. Drag the right side to look.' : '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to run. Drag the mouse to look.'],
+        ['jump', 'JUMP', T ? 'Tap <kbd>JUMP</kbd> to hop gaps and beams.' : '<kbd>Space</kbd> hops gaps, beams and sweepers.'],
+        ['dive', 'DIVE', T ? 'Tap <kbd>DIVE</kbd> for a burst of speed.' : '<kbd>Shift</kbd> dives forward for a burst of speed.'],
+        ['grab', 'GRAB', T ? 'Tap <kbd>GRAB</kbd> to hold a rival. Jump to escape.' : '<kbd>E</kbd> grabs a rival. Jump to break free.']
+      ];
+      return `<div class="pan hp"><h3>HOW TO PLAY</h3><p>Survive 4 rounds of chaos: finish in the qualifying spots, outlast the others, then grab the crown in the final.</p><div class="hg">${cards.map(c => `<div class="hc">${HSVG[c[0]]}<b>${c[1]}</b><p>${c[2]}</p></div>`).join('')}</div><div class="btns"><button class="fbtn" data-a="hclose">${helpFrom === 'first' ? 'Let\'s go!' : 'Got it'}</button></div><p class="kh">${T ? '' : 'Enter or Space to continue'}</p></div>`;
+    }
+    function openHelp(from) {
+      helpFrom = from;
+      if (from === 'pause') { scr.innerHTML = helpHtml(); return; }
+      const ov = el('div', 'hov', scr, helpHtml()); ov.style.cssText = 'position:absolute;inset:0;background:rgba(20,8,50,.5)';
+    }
+    function closeHelp() {
+      const from = helpFrom; helpFrom = null;
+      if (!prefs.help) { prefs.help = true; persist(); }
+      if (from === 'pause') { setPause(true); return; }
+      const ov = scr.querySelector('.hov'); if (ov) ov.remove();
+      if (from === 'first') startShow();
     }
     function toLobby() {
       endRound(); specOff(); unteam(); phase = 'lobby'; phaseT = 0; paused = false; unlock();
@@ -1554,16 +1664,20 @@ ${G} .tb svg{width:46%;height:46%}
       player.gone = false; player.p.copy(LOB); player.v.set(0, 0, 0); player.state = 'run'; player.ground = true; player.yaw = 0.4; player.q.identity();
       slime.material = meadowMat(); slime.position.y = 55;
       scr.style.pointerEvents = 'auto';
-      scr.innerHTML = `<div class="lob" style="position:absolute;inset:0;pointer-events:none"></div><div class="ttl">FALL<br>GUYS<small>JELLYBEAN PARTY SHOW</small></div>
-<div class="stats"><div>CROWNS ${prefs.crowns}</div><div>SHOWS ${prefs.shows}</div>${prefs.best ? `<div>BEST ${prefs.best}</div>` : ''}</div>
-<div class="cust"><div class="row">${PAL.map((c, i) => `<button class="sw" data-a="c${i}" style="background:${c}" aria-label="Colour ${i + 1}"></button>`).join('')}</div>
-<div class="row">${PATS.map((p, i) => `<button class="pt" data-a="p${i}">${p}</button>`).join('')}</div>
-<div class="row hr">${HATS.map((p, i) => `<button class="pt ht" data-a="h${i}">${p}</button>`).join('')}</div>
-<button class="fbtn" data-a="play">PLAY</button></div>`;
+      scr.innerHTML = `<div class="lob" style="position:absolute;inset:0;pointer-events:none"></div><div class="ttl">BEAN<br>ROYALE<small>JELLYBEAN PARTY SHOW</small></div>
+<div class="stats"><div>CROWNS ${prefs.crowns}</div><div>SHOWS ${prefs.shows}</div>${prefs.best ? `<div>BEST ${prefs.best}</div>` : ''}${prefs.fame ? `<div>FAME ${prefs.fame}</div>` : ''}</div>
+<div class="cust"><div class="tabs"><button class="tab" data-a="tplay">PLAY</button><button class="tab" data-a="tlook">LOOK</button></div>
+<div data-p="play" style="display:flex;flex-direction:column;gap:.5em;align-items:center"><div class="opt"><span>MODE</span>${MODES.map((m, i) => `<button class="mo md" data-a="m${i}">${m}<small>${MODE_TXT[i]}</small></button>`).join('')}</div>
+<div class="opt rko"><span>ROUND</span><div class="rp"><button class="mo" data-a="r-1" aria-label="Previous round">&lsaquo;</button><b></b><button class="mo" data-a="r1" aria-label="Next round">&rsaquo;</button></div></div>
+<div class="opt"><span>BOTS</span>${DIFFS.map((m, i) => `<button class="mo df" data-a="d${i}">${m}<small>${DIFF_TXT[i]}</small></button>`).join('')}</div></div>
+<div data-p="look" style="display:flex;flex-direction:column;gap:.5em;align-items:center"><div class="row">${PAL.map((c, i) => `<button class="sw" data-a="c${i}" style="background:${c}" aria-label="Colour ${i + 1}"></button>`).join('')}</div>
+<div class="row">${PATS.map((p, i) => `<button class="pt pa" data-a="p${i}">${p}</button>`).join('')}</div>
+<div class="row hr">${HATS.map((p, i) => hatOpen(i) ? `<button class="pt ht" data-a="h${i}">${p}</button>` : `<button class="pt ht lk" data-a="h${i}" title="${HAT_REQ[i].t}">${p} · ${Math.min(prefs[HAT_REQ[i].k], HAT_REQ[i].n)}/${HAT_REQ[i].n}</button>`).join('')}</div></div>
+<div class="pbr"><button class="fbtn alt sm" data-a="help">How to play</button><button class="fbtn" data-a="play">PLAY</button></div></div>`;
       markCust();
     }
 
-    const NAMES = { whirl: 'The Whirlygig', doors: 'Door Dash', slime: 'Slime Climb', hex: 'Hex-A-Gone', crown: 'Fall Mountain', tiptoe: 'Tip Toe', jump: 'Jump Club', hit: 'Hit Parade', fruit: 'Fruit Chute', egg: 'Egg Scramble' };
+    const NAMES = { whirl: 'Spin Cycle', doors: 'Knock Knock', slime: 'Goo Tower', hex: 'Honey Drop', crown: 'Crown Peak', tiptoe: 'Ghost Tiles', jump: 'Beam Hop', hit: 'Bonk Alley', fruit: 'Fruit Frenzy', egg: 'Egg Heist' };
     const used = new Set();
     player = makeBean('You', true); skinBean(player, prefs.ci, prefs.pi); setHat(player, prefs.hi); beans.push(player);
     for (let i = 1; i < (COARSE ? 28 : CFG.players); i++) beans.push(makeBean('', false));
@@ -1571,23 +1685,38 @@ ${G} .tb svg{width:46%;height:46%}
       used.clear();
       for (const b of beans) {
         if (b.me) continue;
-        b.name = botName(used); setTag(b); b.skill = rnd(0.45, 1);
+        b.name = botName(used); setTag(b); b.skill = prefs.diff === 0 ? rnd(0.15, 0.6) : prefs.diff === 2 ? rnd(0.8, 1.1) : rnd(0.45, 1);
         const ci = (Math.random() * PAL.length) | 0; let ai = (Math.random() * PAL.length) | 0; if (ai === ci) ai = (ai + 3) % PAL.length;
         skinBean(b, ci, (Math.random() * PATS.length) | 0, Math.random() < 0.5 ? null : ai);
-        setHat(b, Math.random() < 0.65 ? 1 + ((Math.random() * (HATS.length - 1)) | 0) : 0);
+        setHat(b, Math.random() < 0.65 ? 1 + ((Math.random() * (FREE_HATS - 1)) | 0) : 0);
       }
     }
     function resetBean(b, x, y, z, yaw) {
       b.p.set(x, y, z); b.pp.copy(b.p); b.v.set(0, 0, 0); b.state = 'run'; b.t = 0; b.ground = false; b.gc = null; b.fin = false; b.gone = false; b.held = null; b.heldBy = null; b.grabT = -1; b.egg = null; b.eggCd = 0; b.place = 0; b.cp = 0; b.respawnT = 0; b.airT = 0;
       b.yaw = yaw; b.q.identity(); b.jumpBuf = 0; b.diveReq = false; b.ix = b.iz = 0; b.wp = 0; b.lane = rnd(-1, 1); b.lastZ = z; b.stuckT = 0; b.door = null; b.tgt = null; b.hideT = 0; b.pvx = b.pvz = 0; b.think = 0; b.react = 0;
-      b.speedMul = b.me ? 1 : clamp(rnd(0.8, 0.93) + b.skill * 0.04, 0.8, 0.96) * (R.def.kind === 'final' ? 0.86 : 1);
+      const DF = show ? show.diff : 1;
+      b.speedMul = b.me ? 1 : (DF === 0 ? clamp(rnd(0.72, 0.85) + b.skill * 0.04, 0.72, 0.88) : DF === 2 ? clamp(rnd(0.88, 0.96) + b.skill * 0.03, 0.88, 1) : clamp(rnd(0.8, 0.93) + b.skill * 0.04, 0.8, 0.96)) * (R.def.kind === 'final' ? (DF === 2 ? 0.92 : 0.86) : 1);
+      b.hes = 0; b.grabCd = rnd(1, 3);
     }
-    function startShow() {
+    function tryStart() {
       if (phase !== 'lobby' && phase !== 'summary') return;
-      audio.play('tap'); unteam(); rollBots();
-      const r1 = pick(['whirl', 'doors', 'tiptoe', 'hit', 'fruit']), r2 = pick(['whirl', 'doors', 'tiptoe', 'slime', 'hit', 'fruit', 'egg'].filter(k => k !== r1)), r3 = pick(['hex', 'jump', 'egg'].filter(k => k !== r2));
-      show = { rounds: [r1, r2, r3, 'crown'], idx: 0, points: 10, log: [], submitted: false, best: false, winner: null };
-      for (const b of beans) b.out = false;
+      if (!prefs.help) { openHelp('first'); return; }
+      startShow();
+    }
+    function startShow(force) {
+      if (!force && phase !== 'lobby' && phase !== 'summary') return;
+      audio.play('tap'); unteam(); rollBots(); paused = false;
+      const md = prefs.mode;
+      let rounds;
+      if (md === 1) rounds = [RKEYS[prefs.rk % RKEYS.length]];
+      else if (md === 2) rounds = ['crown'];
+      else {
+        const r1 = prefs.shows === 0 ? 'doors' : pick(['whirl', 'doors', 'tiptoe', 'hit', 'fruit']), r2 = pick(['whirl', 'doors', 'tiptoe', 'slime', 'hit', 'fruit', 'egg'].filter(k => k !== r1)), r3 = pick(['hex', 'jump', 'egg'].filter(k => k !== r2));
+        rounds = [r1, r2, r3, 'crown'];
+      }
+      const lk0 = HATS.map((_, k) => hatOpen(k));
+      show = { rounds, mode: md, diff: prefs.diff, idx: 0, points: 10, log: [], submitted: false, best: false, winner: null, lk0, st: { jumps: 0, dives: 0, grabs: 0, bonks: 0, falls: 0, time: 0, best: 0 } };
+      beans.forEach((b, j) => { b.out = rounds[0] === 'crown' && j >= 16; });
       prefs.shows++; persist(); api.score(show.points);
       lobby.visible = false; farG.visible = true; startRound(0);
     }
@@ -1624,12 +1753,12 @@ ${G} .tb svg{width:46%;height:46%}
       slime.material = wet ? MAT.slime : meadowMat(); slime.position.y = def.slime ? def.slime.y0 : def.killY - 1; farG.position.y = wet ? 0 : def.killY + 7;
       phase = 'intro'; phaseT = 0; paused = false; unlock();
       hud.hidden = true; tc.hidden = true; musicWanted = true; audio.music(true);
-      tlName.textContent = def.kind === 'race' ? 'RACE TO THE FINISH!' : def.kind === 'final' ? 'GRAB THE CROWN!' : def.kind === 'team' ? 'COLLECT THE EGGS!' : def.ring ? 'JUMP THE BEAM!' : 'LAST BEANS STANDING!'; tlChip.textContent = 'ROUND ' + (i + 1) + (i === 3 ? ' · FINAL' : '') + ' · ' + def.name.toUpperCase();
-      lastQ = ''; updQual(); tmEl.textContent = fmtT(def.time); big.className = 'big';
+      tlName.textContent = def.kind === 'race' ? 'RACE TO THE FINISH!' : def.kind === 'final' ? 'GRAB THE CROWN!' : def.kind === 'team' ? 'COLLECT THE EGGS!' : def.ring ? 'JUMP THE BEAM!' : 'LAST BEANS STANDING!'; tlChip.textContent = rlab(i) + ' · ' + def.name.toUpperCase();
+      lastQ = ''; rkS = ''; rkEl.hidden = true; updQual(); tmEl.textContent = fmtT(def.time); big.className = 'big';
       const kind = def.kind === 'race' ? 'RACE' : def.kind === 'survival' ? 'SURVIVAL' : def.kind === 'team' ? 'TEAM' : 'FINAL';
       scr.style.pointerEvents = 'none';
       const goal = def.kind === 'final' ? 'FIRST TO THE CROWN WINS' : def.kind === 'team' ? 'TOP 2 TEAMS QUALIFY' : def.kind === 'survival' ? R.quota + ' SURVIVE' : R.quota + ' OF ' + n + ' QUALIFY';
-      scr.innerHTML = `<div class="ic${def.kind === 'final' ? ' fin' : ''}"><div class="itl"><div class="ibn"><small>ROUND ${i + 1}${i === 3 ? ' · FINAL ROUND' : ''}</small><span class="nm">${def.name}</span></div><span class="ityp">${kind}</span></div><div class="ihow"><h4>HOW TO PLAY</h4><p>${def.desc}${def.kind === 'team' ? ' You are on the <b style="color:' + TC[player.team] + '">' + TNM[player.team] + '</b> team.' : ''}</p></div><div class="ibar"><span>${n} BEANS</span><span>${goal}</span><span>Click or press Enter to skip</span></div></div>`;
+      scr.innerHTML = `<div class="ic${def.kind === 'final' ? ' fin' : ''}"><div class="itl"><div class="ibn"><small>${rlab(i, true)}</small><span class="nm">${def.name}</span></div><span class="ityp">${kind}</span></div><div class="ihow"><h4>HOW TO PLAY</h4><p>${def.desc}${def.kind === 'team' ? ' You are on the <b style="color:' + TC[player.team] + '">' + TNM[player.team] + '</b> team.' : ''}</p></div><div class="ibar"><span>${n} BEANS</span><span>${goal}</span><span>Click or press Enter to skip</span></div></div>`;
       focus = player;
       const nmEl = scr.querySelector('.nm');
       if (nmEl) {
@@ -1639,6 +1768,7 @@ ${G} .tb svg{width:46%;height:46%}
         spin();
       }
     }
+    function rlab(i, long) { return show.mode === 1 ? 'QUICK PLAY' : show.mode === 2 ? 'CROWN RUSH' : 'ROUND ' + (i + 1) + (i === 3 ? (long ? ' · FINAL ROUND' : ' · FINAL') : ''); }
     function skipIntro() { if (phase === 'intro' && phaseT > 0.4) phaseT = 99; }
     function toCount() {
       phase = 'count'; phaseT = 0; R.cd = -1; scr.innerHTML = ''; hud.hidden = false;
@@ -1662,7 +1792,7 @@ ${G} .tb svg{width:46%;height:46%}
     }
     function splash(b) { poof(b.p.x, slime.position.y + 0.3, b.p.z, '#ff7be0', 12); if (b.me || (focus && focus.p.distanceToSquared(b.p) < 300)) audio.play('splash'); }
     function respawn(b) {
-      const cps = R.def.cps, c = cps[Math.min(b.cp, cps.length - 1)], P = R.def.path;
+      const cps = R.def.cps, c = cps[Math.min(b.cp, cps.length - 1)], P = R.def.path || [];
       b.p.set(c.x + rnd(-c.w, c.w), c.y + 0.1, c.z + rnd(0, c.d)); b.pp.copy(b.p); b.v.set(0, 0, 0); b.state = 'run'; b.ground = false; b.gc = null; b.q.identity(); b.yaw = 0; b.respawnT = 0;
       b.wp = 0; while (b.wp < P.length - 1 && P[b.wp][1] < b.p.z - 0.6) b.wp++;
       b.lastZ = b.p.z; b.stuckT = 0; b.door = null; b.tgt = null; release(b); b.heldBy = null; dropEgg(b);
@@ -1673,7 +1803,7 @@ ${G} .tb svg{width:46%;height:46%}
       R.meDone = 2; R.meT = 0; fx('q');
       const i = show.idx, pts = R.def.kind === 'race' ? 100 * (i + 1) + Math.max(0, R.quota - place) * 10 : 300;
       show.points += pts; api.score(show.points);
-      show.log[i] = { st: 'ok', place };
+      show.log[i] = { st: 'ok', place }; prefs.quals++; if (place) show.st.best = show.st.best ? Math.min(show.st.best, place) : place;
       banner('QUALIFIED!', 'q', true); audio.play('qual'); audio.play('cheer');
     }
     function qualify(b) {
@@ -1717,17 +1847,21 @@ ${G} .tb svg{width:46%;height:46%}
     }
     function showSummary() {
       phase = 'summary'; phaseT = 0; specOff(); unteam(); unlock(); hud.hidden = true; tc.hidden = true; musicWanted = false; audio.music(false);
-      if (!show.submitted) { show.submitted = true; show.best = api.submit(show.points); prefs.best = Math.max(prefs.best, show.points); persist(); }
-      const won = show.log.some(l => l && l.st === 'win'), lost = show.log.some(l => l && l.st === 'lost');
-      const title = won ? 'CROWNED!' : lost ? 'SO CLOSE!' : 'ELIMINATED';
-      const sub = won ? 'You won the show and grabbed the crown!' : show.winner ? show.winner + ' grabbed the crown.' : lost ? 'Nobody reached the crown in time.' : 'Knocked out in round ' + (show.idx + 1) + '.';
+      if (!show.submitted) { show.submitted = true; prefs.fame += show.points; if (show.mode === 0) { show.best = api.submit(show.points); prefs.best = Math.max(prefs.best, show.points); } persist(); }
+      const won = show.log.some(l => l && l.st === 'win'), lost = show.log.some(l => l && l.st === 'lost'), cleared = show.log.length === show.rounds.length && show.log.every(l => l && l.st === 'ok');
+      const title = won ? 'CROWNED!' : lost ? 'SO CLOSE!' : cleared ? 'QUALIFIED!' : 'ELIMINATED';
+      const sub = won ? 'You won the show and grabbed the crown!' : show.winner ? show.winner + ' grabbed the crown.' : lost ? 'Nobody reached the crown in time.' : cleared ? 'You made it through ' + NAMES[show.rounds[0]] + '.' : show.mode === 0 ? 'Knocked out in round ' + (show.idx + 1) + '.' : 'Knocked out in ' + NAMES[show.rounds[show.idx]] + '.';
+      const S = show.st, unl = HATS.filter((_, k) => !show.lk0[k] && hatOpen(k));
+      const stats = [['TIME', fmtT(S.time)], ['BEST PLACE', S.best ? '#' + S.best : '-'], ['JUMPS', S.jumps], ['DIVES', S.dives], ['GRABS', S.grabs], ['BONKS', S.bonks + S.falls]].map(q => `<div><b>${q[1]}</b>${q[0]}</div>`).join('');
       const rows = show.rounds.map((k, i) => {
         const l = show.log[i], nm = i <= show.idx ? NAMES[k] : '???';
         const st = !l ? '<b class="na">-</b>' : l.st === 'ok' ? `<b class="ok">QUALIFIED${l.place ? ' #' + l.place : ''}</b>` : l.st === 'win' ? '<b class="ok">WINNER</b>' : '<b class="no">ELIMINATED</b>';
         return `<div><span>${i + 1}. ${nm}</span>${st}</div>`;
       }).join('');
       scr.style.pointerEvents = 'auto';
-      scr.innerHTML = `<div class="pan"><h3>${title}</h3><p>${sub}</p><div class="rl">${rows}</div><div class="pts">${show.points} pts</div><p>${show.best ? 'New best show!' : 'Best: ' + prefs.best + ' pts'} · Crowns: ${prefs.crowns}</p><div class="btns"><button class="fbtn" data-a="play">Play again</button><button class="fbtn alt" data-a="lobby">Customize</button></div></div>`;
+      scr.innerHTML = `<div class="pan sum"><h3>${title}</h3><p>${sub}</p><div class="rl">${rows}</div><div class="sg">${stats}</div><div class="pts">${show.points} pts</div><p>${show.mode !== 0 ? MODES[show.mode] + ' mode · ' + DIFFS[show.diff] + ' bots · not ranked' : show.best ? 'New best show!' : 'Best: ' + prefs.best + ' pts'} · Crowns: ${prefs.crowns} · Fame: ${prefs.fame}</p>${unl.length ? `<div class="unl">Unlocked hat: ${unl.join(', ')}!</div>` : ''}<div class="btns"><button class="fbtn" data-a="play">Play again</button>${show.mode === 1 ? '<button class="fbtn alt" data-a="next">Next round</button>' : ''}<button class="fbtn alt" data-a="lobby">Lobby</button></div><p class="kh">${touchOn ? '' : 'Space or Enter to play again'}</p></div>`;
+      const pe = scr.querySelector('.pts'); if (pe && !RM) { const t0 = performance.now(), tot = show.points; const roll = () => { if (!pe.isConnected) return; const k = Math.min(1, (performance.now() - t0) / 900); pe.textContent = Math.round(tot * (1 - Math.pow(1 - k, 3))) + ' pts'; if (k < 1) requestAnimationFrame(roll); }; roll(); }
+      if (unl.length) audio.play('check');
     }
 
     function threat(b) {
@@ -1790,6 +1924,8 @@ ${G} .tb svg{width:46%;height:46%}
     }
     function botAI(b, dt) {
       if (b.fin || phase !== 'play') { b.ix = b.iz = 0; if (b.fin && b.ground && b.state === 'run' && Math.random() < 0.02) b.jumpBuf = CFG.jumpBuf; return; }
+      const DF = show.diff;
+      if (DF === 0 && R.def.kind !== 'team') { if (b.hes > 0) { b.hes -= dt; b.ix = b.iz = 0; return; } if (b.ground && b.state === 'run' && Math.random() < dt * 0.2) b.hes = rnd(0.25, 0.75); }
       if (R.def.kind === 'team') return eggAI(b, dt);
       if (R.def.ring) return jumpAI(b, dt);
       if (R.def.kind === 'survival') return hexAI(b, dt);
@@ -1814,9 +1950,16 @@ ${G} .tb svg{width:46%;height:46%}
         if (fl === 'j' && b.p.z > w[1] - 1.5 && (Math.hypot(b.v.x, b.v.z) > 3.5 * b.speedMul || b.p.z > w[1] - 0.4)) b.jumpBuf = CFG.jumpBuf;
         else if (fl === 'c' && Math.hypot(b.p.x - w[0], b.p.z - w[1]) < 1.8 && Math.random() < 0.02 + b.skill * 0.03) b.jumpBuf = CFG.jumpBuf;
         b.react -= dt;
-        if (b.react <= 0) { b.react = 0.07; if (threat(b) && Math.random() < 0.3 + b.skill * 0.6) b.jumpBuf = CFG.jumpBuf; }
+        if (b.react <= 0) {
+          b.react = 0.07; if (threat(b) && Math.random() < 0.3 + b.skill * 0.6) b.jumpBuf = CFG.jumpBuf;
+          if (DF === 2) {
+            b.grabCd -= 0.07;
+            if (b.grabCd <= 0) for (const o of R.field) { if (o === b || o.gone || o.fin || o.state !== 'run' || o.heldBy) continue; const ox = o.p.x - b.p.x, oz = o.p.z - b.p.z; if (oz > 0.2 && oz < 1.7 && Math.abs(ox) < 1 && Math.abs(o.p.y - b.p.y) < 0.8) { doGrabB(b); b.grabCd = rnd(2.5, 5); break; } }
+            if (R.def.finishZ && b.p.z > R.def.finishZ - 3.6 && b.p.z < R.def.finishZ - 0.9) b.diveReq = true;
+          }
+        }
         if (Math.random() < 0.001) b.jumpBuf = CFG.jumpBuf;
-        if (Math.random() < 0.0012) doGrabB(b);
+        if (DF > 0 && Math.random() < 0.0012) doGrabB(b);
         if (fl === 'd' && b.p.z > w[1] - 3.2) b.diveReq = true;
       }
       b.stuckT += dt;
@@ -1844,9 +1987,9 @@ ${G} .tb svg{width:46%;height:46%}
       const def = R.def;
       if (phase === 'intro') { if (phaseT >= 4.4) toCount(); return; }
       if (phase === 'count') { const k = Math.floor(phaseT); if (k !== R.cd) { R.cd = k; if (k < 3) { banner(String(3 - k)); audio.play('beep'); } else { banner('GO!', 'q'); audio.play('go'); goLive(); } } return; }
-      if (phase === 'end') { if (phaseT > 3.6) { if (R.next === 'summary') showSummary(); else startRound(show.idx + 1); } return; }
+      if (phase === 'end') { if (phaseT > 3.6) { if (R.next === 'summary' || show.idx + 1 >= show.rounds.length) showSummary(); else startRound(show.idx + 1); } return; }
       if (phase !== 'play') return;
-      R.time -= dt; R.playT += dt;
+      R.time -= dt; R.playT += dt; if (!player.out && !R.meDone) show.st.time += dt;
       const tm = fmtT(R.time); if (tm !== lastTm) { lastTm = tm; tmEl.textContent = tm; }
       if (def.slime) slime.position.y = def.slime.y0 + Math.max(0, R.playT - def.slime.delay) * def.slime.rate;
       const killY = def.slime ? slime.position.y - 0.25 : def.killY;
@@ -1856,7 +1999,7 @@ ${G} .tb svg{width:46%;height:46%}
         if (b.respawnT > 0) { b.respawnT -= dt; if (b.respawnT <= 0) respawn(b); continue; }
         if (def.cps && b.ground) while (b.cp + 1 < def.cps.length && b.p.z >= def.cps[b.cp + 1].z && b.p.y > def.cps[b.cp + 1].y - 1) { b.cp++; if (b.me) { audio.play('check'); say('Checkpoint!', true); } }
         if (b.p.y < killY) {
-          splash(b);
+          splash(b); if (b.me) show.st.falls++;
           if (def.cps) { b.respawnT = CFG.respawnDelay; if (b.me) camS.shake = 0.3; }
           else { eliminate(b); if (!b.me && def.kind === 'race') say(b.name + ' got slimed'); }
           if (phase !== 'play') return;
@@ -1868,13 +2011,14 @@ ${G} .tb svg{width:46%;height:46%}
       if (def.kind === 'race') {
         if (R.qual >= R.quota || !R.field.some(b => !b.fin && !b.out) || R.time <= 0) { closeRace(); return; }
         if (R.meDone === 2 && (R.meT += dt) > 3) { resolveRace(); return; }
+        if ((rkT -= dt) <= 0) { rkT = 0.2; const on = !player.fin && !player.out && player.respawnT <= 0; let k = 1 + R.qual; if (on) for (const b of R.field) if (!b.me && !b.fin && !b.out && b.p.z > player.p.z) k++; const sTxt = on ? 'YOU #' + k : ''; if (sTxt !== rkS) { rkS = sTxt; rkEl.hidden = !on; rkEl.textContent = sTxt; rkEl.classList.toggle('no', k > R.quota); } }
       } else if (def.kind === 'survival') {
         const alive = R.field.filter(b => !b.out);
         if (alive.length <= R.quota || R.time <= 0) { for (const b of alive) b.fin = true; if (!player.out) meQualified(0); else banner('ROUND OVER!', '', true); endPhase(player.out ? 'summary' : 'round'); return; }
       } else if (def.kind === 'team') { teamStep(dt); if (R.time <= 0) { endTeam(); return; } } else if (R.time <= 0) { show.log[show.idx] = { st: 'lost' }; banner('ROUND OVER!', 'e', true); audio.play('elim'); endPhase('summary'); return; }
       updQual();
     }
-    const LOBC = new THREE.Vector3();
+    const LOBC = new THREE.Vector3(), TAGS = []; let lobY = 0.3;
     api.loop((dt, time) => {
       const tsec = time / 1000;
       if (!paused) {
@@ -1885,6 +2029,8 @@ ${G} .tb svg{width:46%;height:46%}
         if (show && show.log[show.idx] && show.log[show.idx].st === 'win' && Math.random() < dt * 4) burst(camS.tx + rnd(-6, 6), camS.ty + rnd(3, 7), camS.tz + rnd(-6, 6), 25, 5);
         confetti.update(dt, 4, 1.4); puffs.update(dt, -1, 3); sparks.update(dt, 6, 2);
         if (phase === 'lobby') { player.yaw = 0.35 * Math.sin(tsec * 0.8); player.ground = true; if (Math.random() < dt * 0.5) player.sqV += 4; }
+        TAGS.length = 0; for (const b of beans) { b.tagOk = false; if (!b.me && !b.gone && b.respawnT <= 0) { b.cd = cam.position.distanceToSquared(b.p); TAGS.push(b); } }
+        TAGS.sort((a, b) => a.cd - b.cd); for (let i = 0; i < TAGS.length && i < 7; i++) TAGS[i].tagOk = true;
         for (const b of beans) animBean(b, dt, tsec);
         for (const bl of balloons) bl.g.position.y = bl.by + Math.sin(tsec * 0.5 + bl.ph) * 1.5;
         beltT.offset.y -= dt * 0.65; slimeT.offset.x += dt * 0.012; slimeT.offset.y += dt * 0.006;
@@ -1894,7 +2040,7 @@ ${G} .tb svg{width:46%;height:46%}
       if (touchOn !== wrap.classList.contains('touch')) wrap.classList.toggle('touch', touchOn);
       if (phase === 'lobby') {
         const d = h > w ? 6.2 : 3.9;
-        cam.position.set(LOB.x + Math.sin(tsec * 0.25) * 0.8, LOB.y + 1.15, LOB.z + d); LOBC.set(LOB.x, LOB.y + (h > w ? 0.9 : 0.22), LOB.z); cam.lookAt(LOBC);
+        cam.position.set(LOB.x + Math.sin(tsec * 0.25) * 0.8, LOB.y + 1.15, LOB.z + d); lobY = damp(lobY, h > w ? (lobTab === 'look' ? -0.15 : 0.45) : 0.22, 5, dt); LOBC.set(LOB.x, LOB.y + lobY, LOB.z); cam.lookAt(LOBC);
         sun.target.position.copy(LOB);
       } else {
         if (phase === 'intro') camIntro(Math.min(1, phaseT / 4.4));

@@ -1400,7 +1400,7 @@ function drawHud(ctx, v, UI, cam) {
   } else if (ph === 'rend' || ph === 'mend') {
     let txt = '', col = '#fff';
     if (fb) { if (v.win >= 0) { txt = 'GOAL!'; col = TCOL[v.win]; } }
-    else if (v.win >= 0 && v.pl[v.win]) { txt = v.pl[v.win].name + ' wins the round'; col = v.pl[v.win].col; }
+    else if (v.win >= 0 && v.pl[v.win]) { txt = v.pl[v.win].name === 'You' ? 'You win the round' : v.pl[v.win].name + ' wins the round'; col = v.pl[v.win].col; }
     else txt = 'Draw';
     ctx.font = '900 44px system-ui, sans-serif';
     outText(ctx, txt, W / 2, H / 2 - 10, mixc(col, '#ffffff', .25), 'rgba(10,14,30,.92)', 9);
@@ -2930,7 +2930,7 @@ Sim.prototype.stepAnimal = function (a, dt) {
   a.flash = Math.max(0, a.flash - dt); a.cd -= dt; a.fear -= dt; a.fb -= dt; a.sideT -= dt; a.wt -= dt;
   let tp = null, td = 1e9;
   for (const p of this.players.values()) {
-    if (!p.alive) continue;
+    if (!p.alive || (a.k !== 'rabbit' && a.k !== 'dragon' && this.time - p.born < 10 && a.fear <= 0)) continue;
     const q = Math.hypot(p.x - a.x, p.y - a.y);
     if (q < td) { td = q; tp = p; }
   }
@@ -2938,7 +2938,7 @@ Sim.prototype.stepAnimal = function (a, dt) {
   if (a.k === 'rabbit') {
     if (tp && (td < 210 || a.fear > 0) && td < 700) { mode = 1; ax = a.x - tp.x; ay = a.y - tp.y; spd = d.sp; }
   } else {
-    const aggro = d.aggro * (a.k === 'wolf' ? .7 + .6 * dark : 1) * (tp && tp.sleeping ? .55 : 1);
+    const aggro = d.aggro * (a.k === 'wolf' ? .5 + .8 * dark : 1) * (tp && tp.sleeping ? .55 : 1);
     if (tp && (td < aggro || (a.fear > 0 && td < aggro * 2))) {
       mode = 2; ax = tp.x - a.x; ay = tp.y - a.y; spd = d.sp * (td < aggro * .35 ? 1 : .86);
       if (td < d.r + 24 + 6 && a.cd <= 0) {

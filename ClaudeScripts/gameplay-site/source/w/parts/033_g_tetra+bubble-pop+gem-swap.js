@@ -230,6 +230,9 @@
 
       let board = tNewBoard(), cur = null, hold = null, holdUsed = false, queue = [], st = { level: 1, b2b: false, combo: -1 };
       let score = 0, lines = 0, startLevel = 1, state = 'ready', acc = 0, lockT = 0, resets = 0, lowest = 0, lastRot = -1;
+      let mode = 'marathon', runT = 0, pieces = 0, tetrises = 0, maxCombo = 0, tspins = 0;
+      const tsave = Object.assign({ sprint: 0, ultra: 0 }, (api.load() || {}).modes || {});
+      const fmtT = s => Math.floor(s / 60) + ':' + (s % 60).toFixed(2).padStart(5, '0');
       let clearRows = [], clearT = 0, drop = null, dropT = 0, overT = 0, softAcc = 0, dasDir = 0, dasT = 0;
       const held = { L: false, R: false, D: false }, flash = [], trails = [];
 
@@ -278,6 +281,7 @@
       }
       function lock() {
         const ts = tSpin(board, cur, lastRot), cells = TP[cur.type][cur.rot];
+        pieces++;
         let out = true;
         for (const [cx, cy] of cells) {
           const x = cur.x + cx, y = cur.y + cy;
@@ -297,8 +301,12 @@
         if (pc) fx.text(cx, WY + 300, 'PERFECT CLEAR', '#7dffb0', 26, 1.6);
         if (n) fx.text(cx, WY + 160, '+' + fmtN(r.pts), '#fff', 18, .9);
         cur = null; holdUsed = false;
+        if (n === 4) tetrises++;
+        if (ts === 2 && n) tspins++;
+        if (st.combo > maxCombo) maxCombo = st.combo;
         if (n) {
           lines += n;
+          if (mode === 'sprint' && lines >= 40) { endMode(); return; }
           const nl = Math.max(startLevel, 1 + Math.floor(lines / 10));
           if (nl > lv) { st.level = nl; fx.text(cx, WY + 340, 'LEVEL ' + nl, '#7ff0ff', 28, 1.4); }
           state = 'clear'; clearT = 0; clearRows = rows;
@@ -322,13 +330,27 @@
         }
         dropT = DROP_T; state = 'play'; spawn();
       }
+      function endMode() {
+        if (state === 'over') return;
+        state = 'over'; overT = 0; cur = null; api.sfx('win'); fx.kick(4);
+        const S = api.load() || {};
+        const pps = pieces / Math.max(1, runT);
+        let nb = false, head, main;
+        if (mode === 'sprint') { nb = !tsave.sprint || runT < tsave.sprint; if (nb) tsave.sprint = runT; head = '40 lines'; main = ['Time', fmtT(runT)]; }
+        else { nb = score > (tsave.ultra || 0); if (nb) tsave.ultra = score; head = 'Time up'; main = ['Score', fmtN(score)]; }
+        api.save(Object.assign(S, { modes: tsave }));
+        const best = mode === 'sprint' ? fmtT(tsave.sprint) : fmtN(tsave.ultra);
+        api.timeout(() => api.overlay({ kicker: nb ? 'New best!' : mode === 'sprint' ? 'Sprint' : 'Ultra', title: head, text: `${pieces} pieces · ${pps.toFixed(2)} per second · ${tetrises} Tetris${tetrises === 1 ? '' : 'es'} · ${tspins} T-spins · best combo ${Math.max(0, maxCombo)}`, stats: [main, ['Lines', lines], ['PPS', pps.toFixed(2)], ['Best', best]], button: 'Play again', onAction: () => start(1, mode), secondary: 'Other modes', onSecondary: modes }), 700);
+      }
       function gameOver() {
         if (state === 'over') return;
+        if (mode !== 'marathon') { endMode(); return; }
         state = 'over'; overT = 0; cur = null; api.sfx('lose'); fx.kick(8);
         const nb = api.submit(score);
-        api.timeout(() => api.overlay({ kicker: nb ? 'New best!' : 'Game over', title: 'Topped out', stats: [['Score', fmtN(score)], ['Lines', lines], ['Level', st.level], ['Best', fmtN(api.best)]], button: 'Play again', onAction: () => start(startLevel) }), 1000);
+        api.timeout(() => api.overlay({ kicker: nb ? 'New best!' : 'Game over', title: 'Topped out', text: `${pieces} pieces · ${(pieces / Math.max(1, runT)).toFixed(2)} per second · ${tetrises} Tetris${tetrises === 1 ? '' : 'es'} · ${tspins} T-spins · best combo ${Math.max(0, maxCombo)}`, stats: [['Score', fmtN(score)], ['Lines', lines], ['Level', st.level], ['Best', fmtN(api.best)]], button: 'Play again', onAction: () => start(startLevel), secondary: 'Other modes', onSecondary: modes }), 1000);
       }
-      function start(L) {
+      function start(L, m) {
+        mode = m || 'marathon'; runT = 0; pieces = 0; tetrises = 0; maxCombo = 0; tspins = 0;
         startLevel = L; board = tNewBoard(); queue = []; hold = null; holdUsed = false; score = 0; lines = 0;
         st = { level: L, b2b: false, combo: -1 }; fx.clear(); trails.length = 0; flash.length = 0; clearRows = []; drop = null; dropT = 0; softAcc = 0;
         api.score(0); state = 'play'; spawn();
@@ -420,6 +442,8 @@
         if (dropT > 0) dropT = Math.max(0, dropT - dt);
         for (let i = flash.length - 1; i >= 0; i--) if ((flash[i].t += dt) > .18) flash.splice(i, 1);
         for (let i = trails.length - 1; i >= 0; i--) if ((trails[i].t += dt) > .28) trails.splice(i, 1);
+        const rn = performance.now(), rd = Math.min(1, (rn - (update.ln || rn)) / 1000); update.ln = rn;
+        if (state === 'play' || state === 'clear') { runT += rd; if (mode === 'ultra' && runT >= 120) { endMode(); return; } }
         if (state === 'clear' && (clearT += dt) >= CLEAR_T) finishClear();
         if (state === 'over') overT += dt;
         if (dasDir && (state === 'play' || state === 'clear')) {
@@ -461,6 +485,12 @@
         ctx.font = font(24, 900); ctx.fillText(st.level, 68, 254); ctx.fillText(lines, 68, 320);
         if (st.b2b) pill('B2B', 68, 372, '#ffd23f', '#3a2470');
         if (st.combo > 0) pill('COMBO ' + st.combo, 68, 404, '#ff7ac8', '#fff');
+        if (mode !== 'marathon' && state !== 'ready') {
+          ctx.font = font(12, 900); ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillText(mode === 'sprint' ? 'SPRINT' : 'ULTRA', 68, 448);
+          ctx.font = font(20, 900); ctx.fillStyle = '#fff'; ctx.fillText(mode === 'sprint' ? fmtT(runT) : fmtT(Math.max(0, 120 - runT)), 68, 474);
+          if (mode === 'sprint') { ctx.font = font(13, 800); ctx.fillStyle = '#7ff0ff'; ctx.fillText(Math.max(0, 40 - lines) + ' to go', 68, 496); }
+          ctx.fillStyle = '#fff';
+        }
         if (hold) mini(hold, 68, 76, 22, holdUsed ? .35 : 1);
         if (queue.length >= 5) { mini(queue[0], 492, 74, 22); for (let i = 1; i < 5; i++) mini(queue[i], 492, 96 + i * 54, 16, .9); }
 
@@ -507,9 +537,17 @@
       function intro() {
         api.overlay({
           kicker: 'Puzzle', title: 'Tetris',
-          text: 'Move and rotate the falling blocks to fill rows. Full rows vanish; four at once is a Tetris. It speeds up every 10 lines.',
-          button: 'Play', onAction: () => start(1),
-          secondary: 'Start at level 5', onSecondary: () => start(5)
+          text: 'Move and rotate the falling blocks to fill rows. Full rows vanish; four at once is a Tetris. Marathon speeds up every 10 lines.',
+          button: 'Marathon', onAction: () => start(1),
+          secondary: 'Sprint and Ultra', onSecondary: modes
+        });
+      }
+      function modes() {
+        api.overlay({
+          kicker: 'Modes', title: 'Race the clock',
+          text: `Sprint: clear 40 lines as fast as you can${tsave.sprint ? ' (best ' + fmtT(tsave.sprint) + ')' : ''}. Ultra: score as much as you can in 2 minutes${tsave.ultra ? ' (best ' + fmtN(tsave.ultra) + ')' : ''}.`,
+          button: 'Sprint 40 lines', onAction: () => start(1, 'sprint'),
+          secondary: 'Ultra 2 minutes', onSecondary: () => start(1, 'ultra')
         });
       }
       api.loop(dt => { update(dt); draw(dt); });

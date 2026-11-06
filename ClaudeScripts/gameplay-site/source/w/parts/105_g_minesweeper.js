@@ -4,7 +4,7 @@
 
   const CFG = {
     LW: 600, HDR: 72,
-    DIFF: { easy: [10, 8, 10], medium: [18, 14, 40], hard: [24, 20, 99] },
+    DIFF: { easy: [10, 8, 10], medium: [18, 14, 40], hard: [24, 20, 99], expert: [30, 16, 99], master: [32, 24, 200] },
     LONG_PRESS: 0.38, MOVE_CANCEL: 10,
     POP_FIRST: 0.5, POP_START: 0.26, POP_DECAY: 0.9, POP_MIN: 0.035, POP_CAP: 4.2, PANEL_DELAY: 0.9, WIN_DELAY: 1.3,
     MAX_TIME: 999, PARTICLE_CELLS: 140,
@@ -133,9 +133,12 @@
         diff: CFG.DIFF[saved.diff] ? saved.diff : 'easy',
         best: saved.best && typeof saved.best === 'object' ? saved.best : {},
         snd: saved.snd !== false,
-        classic: !!saved.classic
+        classic: !!saved.classic,
+        ng: !!saved.ng,
+        stats: saved.stats && typeof saved.stats === 'object' ? saved.stats : {}
       };
-      const store = () => api.save({ diff: st.diff, best: st.best, snd: st.snd, classic: st.classic });
+      const store = () => api.save({ diff: st.diff, best: st.best, snd: st.snd, classic: st.classic, ng: st.ng, stats: st.stats });
+      const tally = won => { const r = st.stats[st.diff] || (st.stats[st.diff] = { p: 0, w: 0, c: 0, b: 0 }); r.p++; if (won) { r.w++; r.c++; r.b = Math.max(r.b, r.c); } else r.c = 0; store(); };
       const portrait = (root.clientWidth || 600) < 560;
       let touchUI = matchMedia('(pointer: coarse)').matches;
 
@@ -210,11 +213,47 @@
           if (nx >= 0 && ny >= 0 && nx < cols && ny < rows) fn(ny * cols + nx);
         }
       }
-      function plant(safe) {
+      function deal(safe) {
         const sx = safe % cols, sy = (safe / cols) | 0, pool = [];
+        mine.fill(0);
         for (let i = 0; i < N; i++) if (Math.abs((i % cols) - sx) > 1 || Math.abs(((i / cols) | 0) - sy) > 1) pool.push(i);
         for (let k = 0; k < M; k++) { const j = k + ((Math.random() * (pool.length - k)) | 0); [pool[k], pool[j]] = [pool[j], pool[k]]; mine[pool[k]] = 1; }
         for (let i = 0; i < N; i++) { let n = 0; around(i, j => { n += mine[j]; }); adj[i] = n; }
+      }
+      function solvable(safe) {
+        const O = new Uint8Array(N), F = new Uint8Array(N);
+        let cnt = 0, bad = false;
+        const openC = i => { const q = [i]; while (q.length) { const j = q.pop(); if (O[j]) continue; if (mine[j]) { bad = true; return; } O[j] = 1; cnt++; if (!adj[j]) around(j, n => { if (!O[n]) q.push(n); }); } };
+        openC(safe);
+        let prog = true;
+        while (prog && !bad && cnt < N - M) {
+          prog = false;
+          const cons = [];
+          for (let i = 0; i < N; i++) if (O[i] && adj[i]) { const u = []; let f = 0; around(i, n => { if (F[n]) f++; else if (!O[n]) u.push(n); }); if (u.length) cons.push({ u, k: adj[i] - f }); }
+          for (const c of cons) {
+            if (c.k === 0) { for (const n of c.u) if (!O[n] && !F[n]) { openC(n); prog = true; } }
+            else if (c.k === c.u.length) { for (const n of c.u) if (!F[n] && !O[n]) { F[n] = 1; prog = true; } }
+          }
+          if (!prog) {
+            for (const a of cons) {
+              for (const b of cons) {
+                if (a === b || a.u.length >= b.u.length || !a.u.every(x => b.u.includes(x))) continue;
+                const d = b.u.filter(x => !a.u.includes(x)), dk = b.k - a.k;
+                if (dk === 0) { for (const n of d) if (!O[n] && !F[n]) { openC(n); prog = true; } }
+                else if (dk === d.length) { for (const n of d) if (!F[n] && !O[n]) { F[n] = 1; prog = true; } }
+              }
+              if (prog) break;
+            }
+          }
+        }
+        return !bad && cnt >= N - M;
+      }
+      function plant(safe) {
+        deal(safe);
+        if (st.ng) {
+          const until = performance.now() + (N > 400 ? 450 : 250);
+          while (!solvable(safe) && performance.now() < until) deal(safe);
+        }
         status = 'play'; t0 = performance.now(); time = 0;
       }
       function reveal(i) {
@@ -273,7 +312,7 @@
       }
       function stopTimer() { time = Math.min(CFG.MAX_TIME, Math.floor((performance.now() - t0) / 1000)); }
       function lose(i) {
-        stopTimer(); status = 'lost'; overAt = clock; boom = i;
+        stopTimer(); status = 'lost'; overAt = clock; boom = i; tally(false);
         mineCol[i] = CFG.MINES[(Math.random() * 8) | 0]; popAt[i] = clock; open[i] = 0;
         sfx('boom');
         const rest = [];
@@ -290,7 +329,7 @@
         if (!st.classic) burst(i);
       }
       function win() {
-        stopTimer(); status = 'won'; overAt = clock;
+        stopTimer(); status = 'won'; overAt = clock; tally(true);
         let k = 0;
         for (let j = 0; j < N; j++) if (mine[j] && !flag[j]) { flag[j] = 1; flagT[j] = clock + (k++) * 0.03; }
         flagsLeft = 0;
@@ -322,7 +361,7 @@
         sound: { x: LW - 60, y: 0, w: 58, h: HDR },
         face: { x: LW / 2 - 6 - 28, y: 0, w: 56, h: HDR }
       };
-      const menuItems = () => ['easy', 'medium', 'hard'].map((d, k) => ({ d, x: 14, y: HDR - 8 + k * 56, w: 180, h: 56 }));
+      const menuItems = () => ['easy', 'medium', 'hard', 'expert', 'master', 'ng'].map((d, k) => ({ d, x: 14, y: HDR - 8 + k * 56, w: 236, h: 56 }));
       const hit = (b, p) => p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
       const panelBtn = () => ({ x: LW / 2 - 130, y: HDR + (H - HDR) / 2 + 70, w: 260, h: 64 });
       const cellAt = p => {
@@ -334,7 +373,7 @@
 
       function header(p) {
         if (menuOpen) {
-          for (const it of menuItems()) if (hit(it, p)) { menuOpen = false; setDiff(it.d); return true; }
+          for (const it of menuItems()) if (hit(it, p)) { menuOpen = false; if (it.d === 'ng') { st.ng = !st.ng; store(); reset(); sfx('click'); } else setDiff(it.d); return true; }
           menuOpen = false; return true;
         }
         if (p.y >= HDR) return false;
@@ -577,6 +616,15 @@
         ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.roundRect(x + 2, y + 4, w, h, classic ? 0 : 8); ctx.fill();
         if (classic) bevel(ctx, x, y, w, h, 3, true); else rr(ctx, x, y, w, h, 8, '#fff');
         for (const it of items) {
+          if (it.d === 'ng') {
+            const f = classic ? 'Tahoma, Verdana, Arial, sans-serif' : FONT;
+            ctx.fillStyle = classic ? '#808080' : '#e3e3e3'; ctx.fillRect(it.x + 10, it.y, it.w - 20, 1);
+            rr(ctx, it.x + 16, it.y + 17, 24, 24, 5, st.ng ? (classic ? '#000' : COL.hdr) : '#ccc');
+            if (st.ng) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(it.x + 22, it.y + 29); ctx.lineTo(it.x + 27, it.y + 34); ctx.lineTo(it.x + 35, it.y + 23); ctx.stroke(); }
+            text(ctx, 'No guessing', it.x + 50, it.y + 22, 17, '#222', 'left', f, 800);
+            text(ctx, 'Every board solvable by logic', it.x + 50, it.y + 41, 12, '#666', 'left', f, 700);
+            continue;
+          }
           const on = it.d === st.diff;
           if (on && !classic) rr(ctx, it.x + 4, it.y + 4, it.w - 8, it.h - 8, 6, '#E8F0E0');
           if (on) { ctx.strokeStyle = classic ? '#000' : COL.hdr; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(it.x + 18, it.y + 28); ctx.lineTo(it.x + 25, it.y + 35); ctx.lineTo(it.x + 38, it.y + 20); ctx.stroke(); }
@@ -600,6 +648,8 @@
         trophy(ctx, LW / 2 + 70, y + 92, 42);
         const b = st.best[st.diff];
         text(ctx, b ? String(b).padStart(3, '0') : '–––', LW / 2 + 70, y + 150, 28, ink, 'center', font);
+        const r = st.stats[st.diff];
+        if (r && r.p) text(ctx, `Won ${r.w} of ${r.p} (${Math.round(r.w * 100 / r.p)}%) · Streak ${r.c} · Best streak ${r.b}`, LW / 2, y + 178, 13, ink, 'center', font, 700);
         const pb = panelBtn(); pb.y = y + h + 16;
         if (classic) { bevel(ctx, pb.x, pb.y, pb.w, pb.h, 4, true); }
         else { rr(ctx, pb.x, pb.y + 4, pb.w, pb.h, 10, '#0B3D91'); rr(ctx, pb.x, pb.y, pb.w, pb.h, 10, COL.btn); }

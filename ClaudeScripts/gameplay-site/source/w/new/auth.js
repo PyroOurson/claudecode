@@ -99,7 +99,7 @@ async function sbRest(path, o = {}) {
     let j = null;
     try { j = await r.json(); } catch (e) {}
     const err = new Error((j && (j.message || j.msg || j.error)) || 'HTTP ' + r.status);
-    err.status = r.status; err.code = j && j.code;
+    err.status = r.status; err.code = j && j.code; err.hint = j && j.hint; err.details = j && j.details;
     throw err;
   }
   if (r.status === 204) return null;
@@ -107,6 +107,13 @@ async function sbRest(path, o = {}) {
   return t ? JSON.parse(t) : null;
 }
 
+const sbLimit = e => !!e && (e.status === 429 || e.code === 'PT429' || /rate_limited/.test(e.message || ''));
+const sbWait = e => { const m = /retry_after=(\d+)/.exec(e && e.hint || ''); return m ? Math.max(1, Math.min(86400, +m[1])) : 0; };
+const sbMissing = e => !!e && (e.code === 'PGRST202' || e.code === '42883' || e.status === 404 || /could not find the function/i.test(e.message || ''));
+function sbLimitText(e, what) {
+  const s = sbWait(e) || 30, t = s >= 3600 ? auT('{n} h').replace('{n}', Math.ceil(s / 3600)) : s >= 60 ? auT('{n} min').replace('{n}', Math.ceil(s / 60)) : auT('{n} s').replace('{n}', s);
+  return auT('Slow down a little: {what}. Try again in {t}.').replace('{what}', auT(what)).replace('{t}', t);
+}
 function sbVid() {
   try {
     const st = ckStore();
@@ -837,7 +844,7 @@ async function auUsername() {
     say('unnote', old ? 'Username changed.' : 'Username saved.', 1);
     if (!old) toast('Welcome, @' + raw);
   } catch (e) {
-    back(e.code === '23505' ? 'That username is taken. Try another one.' : e.code === '23514' ? 'That username is not allowed.' : 'Could not save. Check your connection and try again.');
+    back(sbLimit(e) ? sbLimitText(e, 'too many username changes today') : e.code === '23505' ? 'That username is taken. Try another one.' : e.code === '23514' ? 'That username is not allowed.' : 'Could not save. Check your connection and try again.');
   } finally { b.disabled = false; b.classList.remove('is-busy'); }
 }
 async function auDisplayName(v) {
@@ -856,6 +863,7 @@ async function auSignedIn(ev) {
   SB.loud = false;
   SB.prof = null;
   FR.list = FR.req = null;
+  FR.pp = FR.ppRes = null; FR.ppAt = 0; FR.ppErr = ''; FR.ppAll = false;
   auRender();
   if (openK === 'mauth' && SB.view !== 'newpass' && !SB.rec) closeAll();
   if (SB.blk && openK !== 'mauth') { SB.blk = 0; route(); }
@@ -944,12 +952,56 @@ function ckChoose(k) {
   else setConsent(k !== 'essential', k);
   toast(k === 'all' ? 'Thanks! Cookie choice saved' : k === 'session' ? 'Saved for this visit only' : 'Cookie choice saved');
 }
-const FR = { q: '', seq: 0, t: 0, list: null, req: null, res: null, rq: '', rres: [] };
+const FR = { q: '', seq: 0, t: 0, list: null, req: null, res: null, rq: '', rres: [], cd: {}, adds: [], rep: null, bc: null, bat: 0, pp: null, ppMiss: false, ppBusy: false, ppErr: '', ppAt: 0, ppTr: false, ppRes: null, ppRq: '', ppAll: false };
 const SK_ROWS = '<div class="frow sk-row" aria-hidden="true"><i class="sk sk-pic"></i><div class="fr-n"><i class="sk sk-l1"></i><i class="sk sk-l2"></i></div></div>'.repeat(3);
 function frRow(p, acts, hl) {
   const un = p.username || '', dn = p.display_name || un, n = Math.min(hl || 0, un.length);
   const u = n ? `<mark>${esc(un.slice(0, n))}</mark>${esc(un.slice(n))}` : esc(un);
   return `<div class="frow" role="listitem"><span class="pic">${esc((dn || '?').charAt(0).toUpperCase())}</span><div class="fr-n"><b>${esc(dn)}</b><span>@${u}</span></div><div class="fr-a">${acts}</div></div>`;
+}
+const ppOn = () => !FR.ppMiss && !!FR.pp;
+const ppHl = (s, q) => { const i = q ? s.toLowerCase().indexOf(q) : -1; return i < 0 ? esc(s) : esc(s.slice(0, i)) + '<mark>' + esc(s.slice(i, i + q.length)) + '</mark>' + esc(s.slice(i + q.length)); };
+const PP_RANK = { incoming: 0, none: 1, outgoing: 2, friend: 3 };
+function ppState(p) {
+  if (FR.list && FR.req) {
+    if (FR.list.some(f => f.friend_id === p.id)) return ['friend', null];
+    const r = FR.req.find(x => x.other_id === p.id);
+    return r ? [r.direction === 'incoming' ? 'incoming' : 'outgoing', r.id] : ['none', null];
+  }
+  return [PP_RANK[p.state] == null ? 'none' : p.state, p.request_id];
+}
+function ppRow(p, q) {
+  const [st, rid] = ppState(p), un = p.username || '', dn = p.display_name || un || '?';
+  const act = st === 'friend' ? `<span class="fr-tag">${esc(auT('Friends'))}</span>` : st === 'incoming' && rid ? `<button class="btn2 pri" type="button" data-fr="accept" data-id="${+rid}">${esc(auT('Accept'))}</button>` : st === 'outgoing' ? `<span class="fr-tag">${esc(auT('Requested'))}</span>` : `<button class="btn2 pri" type="button" data-fr="add" data-un="${esc(un)}">${esc(auT('Add'))}</button>`;
+  const nw = Date.now() - (Date.parse(p.created_at) || 0) < 7 * 864e5 ? `<em class="pp-new">${esc(auT('New'))}</em>` : '';
+  return `<div class="frow pp-row" role="listitem"><span class="pic">${esc(dn.charAt(0).toUpperCase())}${st === 'friend' ? `<i class="fr-dot${soDot(soOn(p.id))}"></i>` : ''}</span><div class="fr-n"><b translate="no"><span>${ppHl(dn, q)}</span>${nw}</b><span translate="no">@${ppHl(un, q)}</span></div><div class="fr-a">${act}</div></div>`;
+}
+const ppSort = (a, b) => PP_RANK[ppState(a)[0]] - PP_RANK[ppState(b)[0]] || (a.display_name || a.username || '').localeCompare(b.display_name || b.username || '');
+const ppMatch = (p, q) => (p.username || '').toLowerCase().includes(q) || (p.display_name || '').toLowerCase().includes(q);
+async function ppLoad(force) {
+  if (!SB.user || FR.ppMiss || FR.ppBusy) return;
+  if (!force && FR.pp && Date.now() - FR.ppAt < 60000) return;
+  FR.ppBusy = true; FR.ppErr = '';
+  try {
+    const r = await sbRest('rpc/list_people', { method: 'POST', body: {} });
+    if (!SB.user) return;
+    FR.pp = (Array.isArray(r) ? r : []).filter(p => p && typeof p.id === 'string' && p.username);
+    FR.ppAt = Date.now(); FR.ppTr = FR.pp.length >= 500;
+  } catch (e) {
+    if (sbMissing(e)) FR.ppMiss = true;
+    else if (!FR.pp) FR.ppErr = sbLimit(e) ? sbLimitText(e, 'too many searches') : auT('Could not load the player list. Check your connection and try again.');
+  } finally { FR.ppBusy = false; }
+  if (openK === 'friends') { frPh(); frDraw(); if (FR.ppMiss && FR.q.length >= 2) frSearch(); }
+}
+async function ppQuery() {
+  const q = FR.q, my = ++FR.seq;
+  if (!SB.user || q.length < 2) return;
+  try {
+    const r = await sbRest('rpc/list_people', { method: 'POST', body: { p_q: q, p_limit: 100 } });
+    if (my !== FR.seq) return;
+    FR.ppRes = (Array.isArray(r) ? r : []).filter(p => p && typeof p.id === 'string' && p.username); FR.ppRq = q;
+    frDraw();
+  } catch (e) { if (my === FR.seq) auMsg('anote', sbLimit(e) ? sbLimitText(e, 'too many searches') : 'Could not search. Check your connection and try again.', 'bad'); }
 }
 function frFill(box, rows, empty) {
   const old = new Set([...box.children].map(n => n.dataset.k));
@@ -960,16 +1012,20 @@ function frFill(box, rows, empty) {
   box.replaceChildren(...nodes);
 }
 function frDraw() {
-  const q = FR.q, fl = FR.list || [], rq = FR.req || [];
+  const q = FR.q, fl = FR.list || [], rq = FR.req || [], pm = ppOn();
   const isF = new Set(fl.map(x => x.username)), inc = new Map(), out = new Map();
   rq.forEach(r => (r.direction === 'incoming' ? inc : out).set(r.username, r));
-  const searching = q.length >= 2;
+  const searching = pm ? q.length >= 1 : q.length >= 2;
   $('#g-res').hidden = !searching;
-  if (searching) {
-    const res = FR.res;
+  if (searching && pm) {
+    const L = (FR.ppTr && q.length >= 2 && FR.ppRq === q && FR.ppRes ? FR.ppRes : FR.pp.filter(p => ppMatch(p, q))).filter(p => !blHas(p.id)).sort(ppSort);
+    $('#res-h').textContent = L.length === 1 ? auT('1 player') : L.length ? auT('{n} players').replace('{n}', L.length) : auT('Players');
+    frFill($('#fres'), L.slice(0, 100).map(p => ['p' + p.id + ppState(p)[0], ppRow(p, q)]), `<div class="nofr">${esc(auT('No player matches “{q}”.').replace('{q}', q))}</div>`);
+  } else if (searching) {
+    const blU = new Set((BL.list || []).map(x => x.username).filter(Boolean)), res = FR.res;
     $('#res-h').textContent = res == null ? auT('Searching…') : res.length >= 20 ? auT('{n}+ players').replace('{n}', 20) : res.length === 1 ? auT('1 player') : res.length ? auT('{n} players').replace('{n}', res.length) : auT('Players');
     if (!res) $('#fres').innerHTML = SK_ROWS;
-    else frFill($('#fres'), res.map(p => [p.username, frRow(p, isF.has(p.username) ? '<span class="fr-tag">Friend</span>' : inc.has(p.username) ? `<button class="btn2 pri" type="button" data-fr="accept" data-id="${+inc.get(p.username).id}">Accept</button>` : out.has(p.username) ? '<span class="fr-tag">Requested</span>' : `<button class="btn2 pri" type="button" data-fr="add" data-un="${esc(p.username)}">Add friend</button>`, q.length)]), `<div class="nofr">${esc(auT('No player has a username starting with “{q}”.').replace('{q}', q))}</div>`);
+    else frFill($('#fres'), res.map(p => [p.username, frRow(p, isF.has(p.username) ? '<span class="fr-tag">Friend</span>' : blU.has(p.username) ? `<span class="fr-tag">${esc(auT('Blocked'))}</span>` : inc.has(p.username) ? `<button class="btn2 pri" type="button" data-fr="accept" data-id="${+inc.get(p.username).id}">Accept</button>` : out.has(p.username) ? '<span class="fr-tag">Requested</span>' : `<button class="btn2 pri" type="button" data-fr="add" data-un="${esc(p.username)}">Add friend</button>`, q.length)]), `<div class="nofr">${esc(auT('No player has a username starting with “{q}”.').replace('{q}', q))}</div>`);
   }
   $('#g-req').hidden = searching || !rq.length;
   $('#req-n').textContent = rq.length;
@@ -977,8 +1033,36 @@ function frDraw() {
   $('#g-fr').hidden = searching;
   $('#fr-n').textContent = fl.length;
   const fo = f => (soOn(f.friend_id) ? 2 : 0) + (DM.inbox.some(c => c.other_id === f.friend_id && c.unread) ? 1 : 0);
-  frFill($('#fr-l'), fl.slice().sort((a, b) => fo(b) - fo(a)).map(f => ['f' + f.friend_id + (FR.open === f.friend_id ? 'o' : ''), soFriendRow(f)]), FR.list ? '<div class="nofr">No friends yet. Type a username above to find someone.</div>' : SK_ROWS);
+  frFill($('#fr-l'), fl.slice().sort((a, b) => fo(b) - fo(a)).map(f => ['f' + f.friend_id + (FR.open === f.friend_id ? 'o' : ''), soFriendRow(f)]), FR.list ? `<div class="nofr">${esc(auT(pm || FR.ppBusy ? 'No friends yet. Add someone from the list below.' : 'No friends yet. Type a username above to find someone.'))}</div>` : SK_ROWS);
   const pcf = $('#pcf'); if (pcf && FR.list) pcf.textContent = fl.length;
+  let gb = $('#g-bl');
+  if (!gb && $('#g-fr')) {
+    $('#g-fr').insertAdjacentHTML('afterend', `<div class="grp" id="g-bl" hidden><button class="sech" type="button" aria-expanded="true"><svg class="chev2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg><span>${esc(auT('Blocked'))}</span><i id="bl-n">0</i></button><div class="flist" id="bl-l"></div></div>`);
+    gb = $('#g-bl');
+    gb.querySelector('.sech').addEventListener('click', e => { e.stopPropagation(); const c = gb.classList.toggle('collapsed'); e.currentTarget.setAttribute('aria-expanded', String(!c)); });
+  }
+  if (gb) {
+    const bl = BL.list || [...BL.ids].map(id => ({ blocked: id }));
+    gb.hidden = searching || !bl.length;
+    $('#bl-n').textContent = bl.length;
+    frFill($('#bl-l'), bl.map(x => ['b' + x.blocked, frRow({ username: x.username || '', display_name: x.display_name || x.username || auT('Blocked player') }, `<button class="btn2" type="button" data-fr="unblock" data-id="${esc(x.blocked)}">${esc(auT('Unblock'))}</button>`)]), '');
+  }
+  let ga = $('#g-all');
+  if (!ga && $('#g-fr')) {
+    $('#g-fr').insertAdjacentHTML('afterend', `<div class="grp" id="g-all" hidden><button class="sech" type="button" aria-expanded="true"><svg class="chev2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg><span>${esc(auT('Everyone on gameplay'))}</span><i id="all-n">0</i></button><div class="flist" id="all-l" role="list"></div></div>`);
+    ga = $('#g-all');
+    ga.querySelector('.sech').addEventListener('click', e => { e.stopPropagation(); const c = ga.classList.toggle('collapsed'); e.currentTarget.setAttribute('aria-expanded', String(!c)); });
+  }
+  if (ga) {
+    ga.hidden = searching || FR.ppMiss || !SB.user;
+    if (pm) {
+      const L = FR.pp.filter(p => !blHas(p.id)).sort(ppSort), cut = FR.ppAll ? L : L.slice(0, 60);
+      $('#all-n').textContent = L.length + (FR.ppTr ? '+' : '');
+      frFill($('#all-l'), cut.map(p => ['a' + p.id + ppState(p)[0], ppRow(p, '')]).concat(L.length > cut.length ? [['more', `<button class="btn2 pp-more" type="button" data-fr="ppall">${esc(auT('Show all {n} players').replace('{n}', L.length))}</button>`]] : []), `<div class="nofr">${esc(auT('Nobody else has joined yet. Share gameplay with your friends!'))}</div>`);
+    } else if (FR.ppErr) { $('#all-n').textContent = '–'; $('#all-l').innerHTML = `<div class="nofr">${esc(FR.ppErr)} <button class="au-link" type="button" data-fr="ppretry">${esc(auT('Reload'))}</button></div>`; }
+    else if (!$('#all-l .sk-row')) $('#all-l').innerHTML = SK_ROWS;
+  }
+  soCdApply();
 }
 async function frLoad() {
   if (!SB.user) return;
@@ -989,33 +1073,40 @@ async function frLoad() {
     frDraw();
   } catch (e) { auMsg('anote', 'Could not load your friends. Check your connection and try again.', 'bad'); }
 }
+function frPh() {
+  const inp = $('#fname'), ph = auT(FR.ppMiss ? 'Find players by username' : 'Search players by name or @username');
+  if (inp && inp.placeholder !== ph) { inp.placeholder = ph; inp.setAttribute('aria-label', ph); }
+}
 function frOpen() {
   const st = auState(), ok = st === 'in', inp = $('#fname');
   $('#frgate').hidden = ok;
   inp.disabled = !ok;
   if (!ok) {
-    ['g-res', 'g-req', 'g-fr'].forEach(id => { $('#' + id).hidden = true; });
+    ['g-res', 'g-req', 'g-fr', 'g-all', 'g-bl'].forEach(id => { const g = $('#' + id); if (g) g.hidden = true; });
     $('#frgt').textContent = st === 'off' ? 'Friends are coming soon' : 'Log in to add friends';
     $('#frgs').textContent = st === 'off' ? 'Accounts are not switched on yet. Then you can find players by their username and add them as friends.' : 'Create a free account or log in, then find players by their username.';
     return;
   }
+  frPh();
   FR.q = inp.value.trim().toLowerCase().replace(/^@/, '');
-  frDraw(); frLoad();
-  if (FR.q.length >= 2) frSearch();
+  frDraw(); frLoad(); ppLoad();
+  if (FR.q.length >= 2 && !ppOn()) frSearch();
   if (!auCoarse()) setTimeout(() => { if (openK === 'friends') inp.focus({ preventScroll: true }); }, 60);
 }
 function frInput() {
   const q = $('#fname').value.trim().toLowerCase().replace(/^@/, '');
   FR.q = q; auMsg('anote', '');
   clearTimeout(FR.t);
-  if (q.length < 2) { FR.seq++; FR.res = null; frDraw(); if (q.length === 1) auMsg('anote', 'Type at least 2 letters.'); return; }
+  if (ppOn()) { FR.seq++; frDraw(); if (FR.ppTr && q.length >= 2) FR.t = setTimeout(ppQuery, 280); return; }
+  if (q.length < 2) { FR.seq++; FR.res = null; frDraw(); if (q.length === 1 && FR.ppMiss) auMsg('anote', 'Type at least 2 letters.'); return; }
   if (!/^[a-z0-9_.]+$/.test(q)) { FR.seq++; FR.res = []; frDraw(); return; }
   if (FR.rq && q.startsWith(FR.rq) && FR.rres.length < 20) { FR.seq++; FR.res = FR.rres.filter(p => p.username.startsWith(q)); frDraw(); return; }
   if (FR.res) FR.res = FR.res.filter(p => p.username.startsWith(q));
   frDraw();
-  FR.t = setTimeout(frSearch, 150);
+  FR.t = setTimeout(frSearch, 280);
 }
 async function frSearch() {
+  if (ppOn()) { if (FR.ppTr && FR.q.length >= 2) ppQuery(); else frDraw(); return; }
   const q = FR.q, my = ++FR.seq;
   if (!SB.user || q.length < 2) return;
   try {
@@ -1023,17 +1114,29 @@ async function frSearch() {
     if (my !== FR.seq) return;
     FR.rq = q; FR.rres = Array.isArray(r) ? r : []; FR.res = FR.rres;
     frDraw();
-  } catch (e) { if (my === FR.seq) auMsg('anote', /too many/i.test(e.message || '') ? 'Too many searches. Wait a moment and try again.' : 'Could not search. Check your connection and try again.', 'bad'); }
+  } catch (e) { if (my === FR.seq) { FR.res = FR.res || []; frDraw(); auMsg('anote', sbLimit(e) ? sbLimitText(e, 'too many searches') : /too many/i.test(e.message || '') ? 'Too many searches. Wait a moment and try again.' : 'Could not search. Check your connection and try again.', 'bad'); } }
 }
 async function frAct(k, b) {
   if (!SB.user) return;
+  if (k === 'ppall') { FR.ppAll = true; frDraw(); return; }
+  if (k === 'ppretry') { FR.ppErr = ''; frDraw(); ppLoad(true); return; }
+  if (k === 'report') { FR.rep = FR.rep === b.dataset.id ? null : b.dataset.id; frDraw(); return; }
+  if (k === 'repx') { FR.rep = null; frDraw(); return; }
+  if (k === 'block' && !(FR.bc === b.dataset.id && Date.now() - FR.bat < 4000)) { FR.bc = b.dataset.id; FR.bat = Date.now(); b.textContent = auT('Click again to block'); b.classList.add('dangerfill'); setTimeout(() => { if (FR.bc === b.dataset.id && b.isConnected) { FR.bc = null; b.textContent = auT('Block'); b.classList.remove('dangerfill'); } }, 4000); return; }
+  if (k === 'add') {
+    const un = b.dataset.un, now = Date.now(), last = FR.cd[un] || 0;
+    FR.adds = FR.adds.filter(t => now - t < 60000);
+    if (now - last < 30000) { auMsg('anote', auT('You just sent a request to @{u}.').replace('{u}', un)); return; }
+    if (FR.adds.length >= 6) { auMsg('anote', auT('Slow down a little: {what}. Try again in {t}.').replace('{what}', auT('too many friend requests')).replace('{t}', auT('{n} s').replace('{n}', Math.ceil((60000 - (now - FR.adds[0])) / 1000))), 'bad'); return; }
+    FR.cd[un] = now; FR.adds.push(now);
+  }
   if (k === 'remove' && !b.dataset.c) { b.dataset.c = '1'; b.textContent = 'Click again to remove'; b.classList.add('dangerfill'); setTimeout(() => { if (b.isConnected) { delete b.dataset.c; b.textContent = 'Remove'; b.classList.remove('dangerfill'); } }, 4000); return; }
   b.disabled = true; b.classList.add('is-busy');
-  const id = b.dataset.id, name = (b.closest('.frow').querySelector('.fr-n span') || {}).textContent || '';
+  const id = b.dataset.id, name = (b.closest('.frow').querySelector('.fr-n > span') || {}).textContent || '';
   try {
     if (k === 'add') {
       const r = await sbRest('rpc/send_friend_request', { method: 'POST', body: { p_username: b.dataset.un } });
-      toast(r === 'accepted' ? auT('You are now friends with {u}').replace('{u}', name) : r === 'sent' ? auT('Friend request sent to {u}').replace('{u}', name) : r === 'already_friends' ? 'You are already friends' : 'That player was not found');
+      toast(r === 'accepted' ? auT('You are now friends with {u}').replace('{u}', name) : r === 'sent' ? auT('Friend request sent to {u}').replace('{u}', name) : r === 'already_friends' ? 'You are already friends' : r === 'cooldown' ? 'This player declined your request recently. You can ask again in a few days.' : r === 'too_many_pending' ? 'You have too many requests waiting. Cancel some first.' : 'That player was not found');
       track('friend', { act: 'request', r: String(r || '') });
       FR.nudge = b.dataset.un;
     } else if (k === 'accept' || k === 'decline') {
@@ -1044,6 +1147,21 @@ async function frAct(k, b) {
     } else if (k === 'cancel') {
       await sbRest('friend_requests?id=eq.' + (+id), { method: 'DELETE' });
       track('friend', { act: 'cancel' });
+    } else if (k === 'block') {
+      FR.bc = null; FR.open = null;
+      await soBlock(id);
+      toast(auT('{u} is blocked. They can no longer message, invite or add you.').replace('{u}', name || auT('This player')));
+      track('friend', { act: 'block' });
+    } else if (k === 'unblock') {
+      await soUnblock(id);
+      ppLoad(true);
+      toast(auT('Player unblocked'));
+      track('friend', { act: 'unblock' });
+    } else if (k === 'rep') {
+      await soReport(id, b.dataset.r);
+      FR.rep = null;
+      toast(auT('Thanks. An admin will look at your report.'));
+      track('friend', { act: 'report', r: b.dataset.r });
     } else if (k === 'remove') {
       await sbRest('rpc/remove_friend', { method: 'POST', body: { p_friend: id } });
       toast(auT('{u} was removed from your friends').replace('{u}', name));
@@ -1053,7 +1171,7 @@ async function frAct(k, b) {
     if (FR.nudge) { const un = FR.nudge, o = (FR.req || []).find(x => x.username === un) || (FR.list || []).find(x => x.username === un); FR.nudge = null; if (o) rtSend(o.other_id || o.friend_id, { t: 'fr' }); }
     if (FR.nudgeId) { rtSend(FR.nudgeId, { t: 'fr' }); FR.nudgeId = null; }
     ntBadge();
-  } catch (e) { b.disabled = false; b.classList.remove('is-busy'); auMsg('anote', 'Could not update. Check your connection and try again.', 'bad'); }
+  } catch (e) { b.disabled = false; b.classList.remove('is-busy'); if (k === 'add' && !sbLimit(e)) delete FR.cd[b.dataset.un]; auMsg('anote', sbLimit(e) ? sbLimitText(e, k === 'add' ? 'too many friend requests' : k === 'rep' ? 'too many reports' : 'too many changes') : 'Could not update. Check your connection and try again.', 'bad'); }
 }
 addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;

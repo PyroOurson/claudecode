@@ -294,8 +294,8 @@
   const AIP = {
     Easy: { err: .4, cc: false, multi: 0, cheap: 3, thr: .3, tk: 9, tx: 0, txd: 6, mc: false, think: [900, 1700] },
     Normal: { err: .06, cc: false, multi: .5, cheap: 4, thr: .6, tk: 30, tx: 0, txd: 6, mc: false, think: [750, 1400] },
-    Hard: { err: 0, cc: true, multi: .85, cheap: 5, thr: .85, tk: 30, tx: 0, txd: 6, mc: false, think: [600, 1150] },
-    Expert: { err: 0, cc: true, multi: .85, cheap: 5, thr: .85, tk: 30, tx: 0, txd: 6, mc: true, think: [550, 1000] }
+    Hard: { err: 0, cc: true, multi: .85, cheap: 5, thr: .85, tk: 30, tx: 0, txd: 6, mc: true, chunk: 4, think: [600, 1150] },
+    Expert: { err: 0, cc: true, multi: .85, cheap: 5, thr: .85, tk: 30, tx: 0, txd: 6, mc: true, chunk: 8, think: [700, 1250] }
   };
 
   function aiDefend(V, mem, P, R) {
@@ -702,6 +702,25 @@
 
   const ICON_MENU = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>';
   const CPU_NAMES = ['Ivan', 'Katya', 'Boris', 'Natasha', 'Dmitri', 'Olga', 'Sasha', 'Misha', 'Vera'];
+  const DIFF_TXT = { Easy: 'Easy bots play loose: they take often and throw in carelessly.', Normal: 'Normal bots play solid basic strategy and save their trumps.', Hard: 'Hard bots count cards and simulate the rest of the game before every move.', Expert: 'Expert bots search more than twice as deep as Hard. Good luck.' };
+  const SC = (s, v) => s * 16 + v;
+  const HOWTO = [
+    { h: 'Attack', ill: [{ id: -1, x: 28, y: 18 }, { id: SC(2, 13), x: 52, y: 18, r: 90 }, { c: 'Trump ♥', k: 'yellow', x: 20, y: 96 }, { c: '→', k: 'ar', x: 128, y: 44 }, { id: SC(0, 7), x: 176, y: 14, r: -4 }, { c: '⚔ Attack', k: 'red', x: 168, y: 96 }], t: 'Everyone gets 6 cards. The card under the deck sets the <b>trump</b> suit. The attacker leads any card.' },
+    { h: 'Defend', ill: [{ id: SC(0, 7), x: 30, y: 10 }, { id: SC(0, 10), x: 54, y: 24, r: 8 }, { c: 'Higher, same suit', k: 'green', x: 6, y: 96 }, { id: SC(0, 7), x: 168, y: 10 }, { id: SC(2, 6), x: 192, y: 24, r: 8 }, { c: 'Any trump', k: 'yellow', x: 176, y: 96 }], t: 'Beat the card with a <b>higher card of the same suit</b>, or with <b>any trump</b>. A trump is only beaten by a higher trump.' },
+    { h: 'Throw in', ill: [{ id: SC(0, 7), x: 20, y: 10 }, { id: SC(0, 10), x: 44, y: 24, r: 8 }, { c: '+', k: 'ar', x: 120, y: 40 }, { id: SC(3, 7), x: 150, y: 14, r: -6 }, { id: SC(1, 10), x: 206, y: 14, r: 6 }, { c: 'Same ranks only', k: 'blue', x: 140, y: 96 }], t: 'The others may add cards whose <b>rank is already on the table</b>: at most 6, and never more than the defender holds. Beat them all!' },
+    { h: 'Take or Bito', ill: [{ id: SC(1, 9), x: 14, y: 8, r: -8 }, { id: -1, x: 38, y: 16, r: 4 }, { id: -1, x: 62, y: 24, r: 14 }, { c: 'Take', k: 'red', x: 30, y: 98 }, { id: -1, x: 182, y: 14, r: -12 }, { id: -1, x: 188, y: 18, r: 6 }, { id: -1, x: 194, y: 12, r: 20 }, { c: 'Bito', k: 'green', x: 196, y: 98 }], t: 'Can’t beat it? <b>Take</b> the whole table and lose your turn. All beaten? <b>Bito</b>: the cards are discarded and the defender attacks next.' },
+    { h: 'Transfer and the Durak', ill: [{ id: SC(1, 8), x: 34, y: 12, r: -6 }, { id: SC(2, 8), x: 86, y: 12, r: 6 }, { c: 'Transfer →', k: 'blue', x: 34, y: 98 }, { id: SC(3, 14), x: 190, y: 8, r: -8 }, { c: 'Last one = Durak', k: 'red', x: 154, y: 98 }], t: 'In <b>Transfer</b> games, before beating anything you can add a card of the same rank to pass the whole attack on. Empty your hand to win: the last player holding cards is the <b>durak</b>.' }
+  ];
+  const SAY = {
+    take: ['Fine, I’ll take them.', 'Ugh…', 'Next time!', 'Saving those for later.', 'Hmm, okay.'],
+    big: ['That’s a lot of cards!', 'Oof…', 'You’ll pay for that!', 'My poor hand…'],
+    tr: ['Your turn!', 'Not mine!', 'Pass it on!', 'Catch!'],
+    out: ['I’m out!', 'Spasibo!', 'Done here!', 'See you!'],
+    fool: ['Durak!', 'Ha! Durak!', 'Better luck next time!', 'Shuffle up, durak!'],
+    sad: ['Not again…', 'Rematch!', 'Hmph.', 'I let you win.'],
+    trump: ['Trumped!', 'Nice try.', 'Too easy.', 'Nope!'],
+    held: ['All beaten!', 'Is that all?', 'Easy.']
+  };
   const FELTS = { green: ['#2f9c5a', '#1b6a3a', '#0a3a1f'], blue: ['#3487cf', '#1b5597', '#0a2650'], red: ['#b83a3a', '#7e2020', '#3c0c0c'], wood: ['#8a5a34', '#5e3a1e', '#2c1a0c'] };
   const RULES = `<h3>How to play</h3><div class="dk-rules">
 <p><b>Goal:</b> get rid of all your cards. The last player holding cards is the <b>durak</b> (the fool). Everyone gets 6 cards; the bottom card of the deck sets the <b>trump</b> suit.</p>
@@ -790,15 +809,35 @@
 .gm-durak .dk-rules{text-align:left}
 .gm-durak .dk-rules p{font:700 13px/1.45 var(--sans)!important}
 .gm-durak .dk-rules kbd{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)}
+.gm-durak .dk-hint{font:700 12px/1.35 var(--sans)!important;color:rgba(255,255,255,.66)!important;margin:-2px 0 4px!important;text-align:left}
+.gm-durak .dk-ill{position:relative;height:124px;width:270px;max-width:100%;margin:6px auto 4px}
+.gm-durak .dk-ill img{position:absolute;width:56px;height:80px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45))}
+.gm-durak .dk-chip{position:absolute;padding:3px 9px;border-radius:11px;font:900 12px var(--sans);color:#fff;border:2px solid #fff;white-space:nowrap;box-shadow:0 3px 0 rgba(0,0,0,.3)}
+.gm-durak .dk-chip.ar{border:0;box-shadow:none;font-size:30px;padding:0;color:#f3c64a;background:none}
+.gm-durak .dk-dots{display:flex;justify-content:center;gap:7px;margin:8px 0 2px}
+.gm-durak .dk-dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.28)}
+.gm-durak .dk-dots i.on{background:#f3c64a;transform:scale(1.2)}
+.gm-durak .dk-ctl{font:700 12px/1.4 var(--sans)!important;color:rgba(255,255,255,.75)!important;background:rgba(0,0,0,.22);border-radius:12px;padding:6px 9px}
+.gm-durak .dk-ctl kbd{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)}
+.gm-durak .dk-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
+.gm-durak .dk-stats div{background:rgba(0,0,0,.25);border-radius:12px;padding:6px 2px;font:900 20px var(--sans)}
+.gm-durak .dk-stats small{display:block;font:800 10px var(--sans);letter-spacing:.6px;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.gm-durak .dk-tally{display:inline-flex;gap:3px;margin-left:6px;vertical-align:0}
+.gm-durak .dk-tally b{width:9px;height:9px;border-radius:50%;border:1.5px solid rgba(255,255,255,.7)}
+.gm-durak .dk-tally b.on{background:#ff5b4b;border-color:#fff}
+.gm-durak .dk-keyh{font:800 11px var(--sans)!important;color:rgba(255,255,255,.5)!important;margin:0!important}
 .gm-durak .dk-stamp{display:inline-block;margin:4px 0 8px;padding:4px 16px;border:4px solid #ff5b4b;border-radius:10px;color:#ff5b4b;font:900 30px var(--sans);letter-spacing:3px;transform:rotate(-7deg);text-transform:uppercase}
 `,
     mount(root, api) {
-      const opt = Object.assign({ mode: 'cpu', bots: 3, diff: 'Normal', deck: 36, variant: 'throw', teams: false, neigh: false, first5: true, timer: 0, felt: 'green', back: 'blue', stats: { w: 0, g: 0, f: 0 } }, api.load() || {});
+      const opt = Object.assign({ mode: 'cpu', bots: 3, diff: 'Normal', deck: 36, variant: 'throw', teams: false, neigh: false, first5: true, timer: 0, felt: 'green', back: 'blue', match: 0, seen: false, stats: { w: 0, g: 0, f: 0 } }, api.load() || {});
       if (opt.mode !== 'cpu' && opt.mode !== 'online') opt.mode = 'cpu';
       if (!AIP[opt.diff]) opt.diff = 'Normal';
       if (!LOW[opt.deck]) opt.deck = 36;
       if (!FELTS[opt.felt]) opt.felt = 'green';
       if (!opt.stats || typeof opt.stats !== 'object') opt.stats = { w: 0, g: 0, f: 0 };
+      ['w', 'g', 'f', 'st', 'bs', 'mg', 'mw'].forEach(k => { opt.stats[k] = Math.max(0, +opt.stats[k] || 0); });
+      if (!opt.stats.vs || typeof opt.stats.vs !== 'object') opt.stats.vs = {};
+      if (![0, 3, 5].includes(opt.match)) opt.match = 0;
       opt.bots = Math.max(1, Math.min(maxPl(opt.deck) - 1, +opt.bots || 3));
       const saveOpt = () => api.save(opt);
       const now = () => performance.now();
@@ -904,6 +943,18 @@
         x.strokeStyle = 'rgba(255,255,255,.06)'; x.lineWidth = 2;
         x.beginPath(); x.ellipse(W / 2, H * .5, W * .46, H * .42, 0, 0, TAU); x.stroke();
         x.beginPath(); x.ellipse(W / 2, H * .5, W * .44, H * .4, 0, 0, TAU); x.stroke();
+        const ex = W / 2, ey = PORT ? H * .5 : H * .49, er = PORT ? 46 : 64;
+        x.save(); x.globalAlpha = .07;
+        [[0, -1, 2], [1, 0, 0], [0, 1, 3], [-1, 0, 1]].forEach(([dx, dy, s]) => pip(x, s, ex + dx * er, ey + dy * er * .82, er * .34, 0, '#fff'));
+        x.lineWidth = 3; x.strokeStyle = '#fff'; x.beginPath(); x.arc(ex, ey, er * 1.55, 0, TAU); x.stroke();
+        x.lineWidth = 1.5; x.beginPath(); x.arc(ex, ey, er * 1.68, 0, TAU); x.stroke();
+        x.restore();
+        const vg = x.createRadialGradient(W / 2, H * .48, Math.min(W, H) * .35, W / 2, H * .5, Math.max(W, H) * .72);
+        vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.42)');
+        x.fillStyle = vg; x.fillRect(0, 0, W, H);
+        const lg = x.createLinearGradient(0, 0, 0, H * .3);
+        lg.addColorStop(0, 'rgba(255,255,255,.07)'); lg.addColorStop(1, 'rgba(255,255,255,0)');
+        x.fillStyle = lg; x.fillRect(0, 0, W, H * .3);
         feltC = c;
       }
       function layout() {
@@ -1005,6 +1056,17 @@
 
       const pop = (txt, x, y, col, big) => fx.push({ k: 'pop', txt, x, y, col: col || '#fff', t0: now(), dur: 1100, big });
       const bubble = (p, txt) => fx.push({ k: 'bub', p, txt, t0: now(), dur: 1500 });
+      const sayT = {};
+      function say(p, kind, pr) {
+        if (p < 0 || p === viewer || !isCpu(p) || (pr != null && Math.random() > pr)) return;
+        const t = now();
+        if (sayT[p] && t - sayT[p] < 2600) return;
+        const ls = SAY[kind]; if (!ls) return;
+        sayT[p] = t;
+        for (let i = fx.length - 1; i >= 0; i--) if (fx[i].k === 'say' && fx[i].p === p) fx.splice(i, 1);
+        fx.push({ k: 'say', p, txt: ls[Math.floor(Math.random() * ls.length)], t0: t + 120, dur: 2300 });
+      }
+      const RS = () => M.run || (M.run = { beat: 0, held: 0, takes: 0, took: 0, tr: 0, thrown: 0, trumps: 0, t0: now(), t1: 0 });
       function burst(x, y, cols, k = 36, sp = 260) {
         for (let i = 0; i < k; i++) { const a = Math.random() * TAU, v = sp * (.35 + Math.random() * .65); fx.push({ k: 'pt', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, col: cols[i % cols.length], t0: now(), dur: 700 + Math.random() * 500, sz: 3 + Math.random() * 4 }); }
       }
@@ -1040,7 +1102,7 @@
           case 'deal': {
             D.n = f.counts.length; D.teams = M.teams; layout();
             D.hand = []; D.counts = Array(D.n).fill(0); D.slots = []; D.deckN = M.deckSize; D.disc = 0; D.trump = f.trump; D.tcard = -1; D.trumpOn = false; D.outs = []; D.over = false; D.att = -1; D.def = -1; D.phase = 'idle';
-            sel = null; focus = -1;
+            sel = null; focus = -1; M.run = null; RS();
             const order = [];
             for (let k = 0; k < HAND; k++) for (let i = 0; i < D.n; i++) order.push(i);
             let mi = 0; const stag = 62 * sp;
@@ -1076,7 +1138,8 @@
             const from = mine ? takeFromHand(f.id) : fanPos(p);
             if (!mine) D.counts[p] = Math.max(0, D.counts[p] - 1); else D.counts[p] = Math.max(0, D.counts[p] - 1);
             focus = -1;
-            if (f.k === 'tr') { D.att = p; D.def = f.to; sfx('tr'); pop('Transfer!', anchor(p, -6).x, anchor(p, -6).y, '#7fc4ff', true); }
+            if (mine) { const r = RS(); if (f.k === 'tr') r.tr++; else r.thrown++; if (CS(f.id) === D.trump) r.trumps++; }
+            if (f.k === 'tr') { D.att = p; D.def = f.to; sfx('tr'); pop('Transfer!', anchor(p, -6).x, anchor(p, -6).y, '#7fc4ff', true); say(p, 'tr', .6); }
             launch({ id: f.id, from, to: () => posA(sl), dur: 320 * sp, flip: !mine, arc: mine ? 36 : 24, onEnd: () => { sl.a = { id: f.id }; sfx('card'); } });
             return (f.k === 'tr' ? 560 : 360) * sp;
           }
@@ -1085,7 +1148,10 @@
             const from = mine ? takeFromHand(f.id) : fanPos(p);
             D.counts[p] = Math.max(0, D.counts[p] - 1);
             sel = null; focus = -1;
-            launch({ id: f.id, from, to: () => posD(sl), dur: 320 * sp, flip: !mine, arc: mine ? 36 : 24, onEnd: () => { sl.d = { id: f.id }; sfx('slap'); } });
+            const trp = CS(f.id) === D.trump;
+            if (mine) { const r = RS(); r.beat++; if (trp) r.trumps++; }
+            else if (trp && sl.a && CS(sl.a.id) !== D.trump) say(p, 'trump', .22);
+            launch({ id: f.id, from, to: () => posD(sl), dur: 320 * sp, flip: !mine, arc: mine ? 36 : 24, onEnd: () => { sl.d = { id: f.id }; sfx('slap'); const q = posD(sl); burst(q.x, q.y, trp ? ['#fff36b', '#ffd23a', '#fff'] : ['#ffffff', '#cfeedd'], trp ? 14 : 6, trp ? 170 : 90); } });
             return 380 * sp;
           }
           case 'take': {
@@ -1098,6 +1164,7 @@
           }
           case 'bito': {
             sfx('bito');
+            if (f.def === viewer) RS().held++; else if (D.slots.length >= 3) say(f.def, 'held', .45);
             const cards = [];
             D.slots.forEach((s, i) => { if (s.a) cards.push({ id: s.a.id, from: slotA(i) }); if (s.d) cards.push({ id: s.d.id, from: slotD(i) }); });
             D.slots.length = 0;
@@ -1110,6 +1177,7 @@
             D.slots.forEach((s, i) => { if (s.a) cards.push({ id: s.a.id, from: slotA(i) }); if (s.d) cards.push({ id: s.d.id, from: slotD(i) }); });
             D.slots.length = 0;
             sfx('draw');
+            if (mine) { const r = RS(); r.takes++; r.took += cards.length; } else say(p, cards.length >= 6 ? 'big' : 'take', cards.length >= 6 ? .8 : .4);
             cards.forEach((c, i) => {
               let e = null;
               launch({ id: c.id, from: c.from, to: mine ? () => e ? { x: e.tx, y: e.ty, r: e.tr, s: 1 } : fanPos(p) : () => fanPos(p), delay: i * 70, dur: 440 * sp, back: mine ? 0 : .6, arc: 22,
@@ -1134,6 +1202,7 @@
             sfx('out');
             const an = anchor(f.p, -6);
             pop(f.p === viewer ? 'You are out!' : nm(f.p) + ' is out!', an.x, an.y, '#f3c64a', true);
+            burst(an.x, an.y, ['#f3c64a', '#fff', '#7fe08e'], 22, 200); say(f.p, 'out', .7);
             D.outs = D.outs.concat([f.p]);
             return 650 * sp;
           }
@@ -1141,6 +1210,8 @@
             D.over = true; D.att = -1; D.def = -1;
             M.result = f;
             const w = isWin(f);
+            RS().t1 = now();
+            if (!f.teams && f.durak >= 0) { if (f.durak === viewer) { const cs = []; for (let q = 0; q < D.n; q++) if (isCpu(q)) cs.push(q); if (cs.length) say(cs[Math.floor(Math.random() * cs.length)], 'fool'); } else say(f.durak, 'sad'); }
             sfx(w ? 'win' : 'lose');
             if (w) confetti();
             return 900;
@@ -1218,7 +1289,7 @@
           if (P.mc && !follow) {
             const V0 = e.view(p);
             S = mcSearch(V0, M.mem, P, Math.random);
-            const t0 = now(), chunk = () => { if (tok !== M.tok || !M.eng || M.eng.s.tid !== tid || now() - t0 > delay - 40) return; S.step(6); api.timeout(chunk, 16); };
+            const t0 = now(), chunk = () => { if (tok !== M.tok || !M.eng || M.eng.s.tid !== tid || now() - t0 > delay - 40) return; S.step(P.chunk || 6); api.timeout(chunk, 16); };
             api.timeout(chunk, 24);
           }
           api.timeout(() => {
@@ -1361,15 +1432,16 @@
         showPane('title', `<div class="dk-title"><div class="dk-logo">DURAK<small>THE FOOL’S GAME</small></div><p class="dk-tag">Beat every attack. Don’t be the last one holding cards.</p>
 <button class="dk-big red${l('cpu')}" data-a="m:cpu">vs Bots<small>Play 1-5 computer opponents</small></button>
 <button class="dk-big green${l('online')}" data-a="m:online">Online party<small>2-6 players, bots can fill empty seats</small></button>
-<div class="dk-row"><button class="dk-sm" data-a="rules">How to play</button></div>${opt.stats.g ? `<p class="dk-tag">Games ${opt.stats.g} · Won ${opt.stats.w} · Fool ${opt.stats.f}</p>` : ''}</div>`, a => {
+<div class="dk-row"><button class="dk-sm" data-a="rules">How to play</button><button class="dk-sm" data-a="full">Full rules</button></div>${opt.stats.g ? `<p class="dk-tag">Games ${opt.stats.g} · Won ${opt.stats.w} (${Math.round(opt.stats.w * 100 / opt.stats.g)}%) · Best streak ${opt.stats.bs} · Fool ${opt.stats.f}${opt.stats.mg ? ` · Matches ${opt.stats.mw}/${opt.stats.mg}` : ''}</p>` : ''}</div>`, a => {
           if (a.startsWith('m:')) { opt.mode = a.slice(2); saveOpt(); setup(); }
-          else if (a === 'rules') rules(showTitle);
+          else if (a === 'rules') howto(0, showTitle);
+          else if (a === 'full') rules(showTitle);
         }, 'clear');
       }
       function setup() {
         const m = opt.mode, mp = maxPl(opt.deck);
         const body = m === 'cpu'
-          ? `<h3>vs Bots</h3><div class="dk-opt"><span>Opponents</span>${seg('bots', [1, 2, 3, 4, 5], null, v => v > mp - 1)}</div><div class="dk-opt"><span>Bot skill</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Expert'])}</div>`
+          ? `<h3>vs Bots</h3><div class="dk-opt"><span>Opponents</span>${seg('bots', [1, 2, 3, 4, 5], null, v => v > mp - 1)}</div><div class="dk-opt"><span>Bot skill</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Expert'])}</div><p class="dk-hint">${DIFF_TXT[opt.diff]}</p><div class="dk-opt"><span>Match<small>Lose by being the durak N times</small></span>${seg('match', [0, 3, 5], ['One game', 'To 3', 'To 5'])}</div>`
           : `<h3>Online party</h3><div class="dk-opt"><span>Bot skill</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Expert'])}</div><p>Party of 2-${mp} players. Pick the party size and turn on bots for empty seats in the party screen. The host’s rules are used.</p>`;
         showPane('setup', `<div class="dk-box">${body}
 <div class="dk-opt"><span>Variant</span>${seg('variant', ['throw', 'transfer'], ['Throw-in', 'Transfer'])}</div>
@@ -1378,7 +1450,7 @@
 <button class="dk-big ${m === 'cpu' ? 'red' : 'green'}" data-a="go">${m === 'online' ? 'Create or join a party' : 'Deal!'}</button>
 <div class="dk-row"><button class="dk-sm" data-a="more">More options</button><button class="dk-sm" data-a="back">Back</button></div></div>`, (a, b) => {
           if (a === 'seg') segClick(b, setup);
-          else if (a === 'go') { if (m === 'online') startOnline(); else newMatch(); }
+          else if (a === 'go') { if (m === 'online') startOnline(); else if (!opt.seen) howto(0, newMatch, true); else newMatch(); }
           else if (a === 'more') more(setup);
           else if (a === 'back') showTitle();
         });
@@ -1400,6 +1472,30 @@
         });
         pane.scrollTop = top;
       }
+      const cimgC = new Map();
+      function cimg(id) {
+        const key = id + opt.back;
+        let u = cimgC.get(key); if (u) return u;
+        const c = document.createElement('canvas'), w = 56, h = 80, k = 2;
+        c.width = w * k; c.height = h * k;
+        const x = c.getContext('2d'); x.scale(k, k); x.translate(w / 2, h / 2);
+        if (id < 0) cardBack(x, w - 2, h - 2, opt.back); else cardFace(x, id, w - 2, h - 2);
+        u = c.toDataURL(); cimgC.set(key, u); return u;
+      }
+      const touchy = () => { try { return matchMedia('(pointer: coarse)').matches; } catch (e) { return false; } };
+      function howto(i, done, first) {
+        const st = HOWTO[i], lastPg = i === HOWTO.length - 1;
+        const ill = st.ill.map(o => o.c != null ? `<span class="dk-chip ${o.k}" style="left:${o.x}px;top:${o.y}px">${o.c}</span>` : `<img alt="" src="${cimg(o.id)}" style="left:${o.x}px;top:${o.y}px;transform:rotate(${o.r || 0}deg)">`).join('');
+        const ctl = touchy() ? 'Tap a card to play it, or drag it onto the card it beats. Use the <b>Take</b>, <b>Bito</b> and <b>Transfer</b> buttons.' : 'Click or drag a card onto the card it beats. <kbd>&larr;</kbd><kbd>&rarr;</kbd> pick, <kbd>Enter</kbd> play, <kbd>T</kbd> take, <kbd>B</kbd> bito/pass, <kbd>X</kbd> transfer.';
+        showPane('howto', `<div class="dk-box"><p class="dk-kick">How to play · ${i + 1}/${HOWTO.length}</p><h3>${st.h}</h3><div class="dk-ill">${ill}</div><p>${st.t}</p>${lastPg ? `<p class="dk-ctl">${ctl}</p>` : ''}<div class="dk-dots">${HOWTO.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('')}</div>
+<button class="dk-big ${lastPg ? 'red' : 'green'}" data-a="next">${lastPg ? (first ? 'Deal!' : 'Got it') : 'Next'}</button>
+<div class="dk-row">${i ? '<button class="dk-sm" data-a="prev">Back</button>' : ''}${lastPg ? '<button class="dk-sm" data-a="full">Full rules</button>' : `<button class="dk-sm" data-a="skip">${first ? 'Skip, deal now' : 'Close'}</button>`}</div></div>`, a => {
+          if (a === 'next') { if (lastPg) { opt.seen = true; saveOpt(); done(); } else howto(i + 1, done, first); }
+          else if (a === 'prev') howto(i - 1, done, first);
+          else if (a === 'skip') { opt.seen = true; saveOpt(); done(); }
+          else if (a === 'full') rules(() => howto(i, done, first));
+        });
+      }
       function rules(back) { showPane('rules', `<div class="dk-box">${RULES}<button class="dk-big yellow" data-a="back">Got it</button></div>`, () => back()); }
       function menu() {
         if (scene !== 'game') return;
@@ -1410,7 +1506,7 @@
 <button class="dk-big yellow" data-a="rules">How to play</button>
 <button class="dk-big red" data-a="quit">${online ? 'Leave game' : 'Quit to title'}</button></div>`, a => {
           if (a === 'resume') { hidePane(); paused = false; idleDone = false; refreshUI(); }
-          else if (a === 'rules') rules(menu);
+          else if (a === 'rules') howto(0, menu);
           else if (a === 'quit') { if (online) leaveOnline(); else showTitle(); }
         });
       }
@@ -1421,30 +1517,45 @@
         const r = M.result || { durak: V.durak, loser: V.loser, teams: V.rules.teams, outs: V.outs, left: [] };
         const online = M.mode === 'online', teams = !!r.teams;
         const win = isWin(r);
+        const draw = (teams ? r.loser < 0 : r.durak < 0);
         if (!M.submitted) {
           M.submitted = true;
-          opt.stats.g++; if (win && !(r.durak < 0 && r.loser < 0)) opt.stats.w++; if (!teams && r.durak === viewer) opt.stats.f++;
-          saveOpt(); api.score(opt.stats.w);
-          if (win && opt.stats.w > 0) api.submit(opt.stats.w);
+          const S = opt.stats, vk = M.perevod ? 'transfer' : 'throw';
+          S.g++; if (win && !(r.durak < 0 && r.loser < 0)) S.w++; if (!teams && r.durak === viewer) S.f++;
+          if (!draw) { S.st = win ? S.st + 1 : 0; S.bs = Math.max(S.bs, S.st); }
+          const vv = S.vs[vk] || (S.vs[vk] = { g: 0, w: 0 }); vv.g++; if (win && !draw) vv.w++;
+          if (M.match && M.tally) {
+            const who = teams ? r.loser : r.durak;
+            if (who >= 0 && who < M.tally.length) M.tally[who]++;
+            if (Math.max(...M.tally) >= M.match) { M.matchOver = true; S.mg++; if (M.tally[teams ? viewer % 2 : viewer] < M.match) S.mw++; }
+          }
+          saveOpt(); api.score(S.w);
+          if (win && S.w > 0) api.submit(S.w);
         }
-        const draw = (teams ? r.loser < 0 : r.durak < 0);
+        const tal = q => M.match && M.tally ? `<span class="dk-tally">${[...Array(M.match).keys()].map(k => `<b class="${k < (M.tally[teams ? q % 2 : q] || 0) ? 'on' : ''}"></b>`).join('')}</span>` : '';
         const order = r.outs.slice();
         for (const p of (r.left || [])) if (!order.includes(p)) order.push(p);
         const rows = order.map((p, i) => {
           const fool = !teams && p === r.durak, lose = teams && r.loser === p % 2 && !draw;
           const place = fool ? 'Durak' : lose ? 'Lost' : (i + 1) + (i === 0 ? 'st' : i === 1 ? 'nd' : i === 2 ? 'rd' : 'th');
-          return `<tr class="${i === 0 && !draw && !fool && !lose ? 'win' : ''}${fool || lose ? ' fool' : ''}"><td><i style="background:${AV[(M.av[p] || 0) % AV.length].bg}"></i>${nm(p)}${teams ? ` · Team ${p % 2 ? 'B' : 'A'}` : ''}</td><td>${place}</td></tr>`;
+          return `<tr class="${i === 0 && !draw && !fool && !lose ? 'win' : ''}${fool || lose ? ' fool' : ''}"><td><i style="background:${AV[(M.av[p] || 0) % AV.length].bg}"></i>${nm(p)}${teams ? ` · Team ${p % 2 ? 'B' : 'A'}` : ''}${tal(p)}</td><td>${place}</td></tr>`;
         }).join('');
-        const title = draw ? 'It’s a draw!' : teams ? (win ? 'Your team wins!' : 'Your team lost') : (r.durak === viewer ? 'You are the Durak!' : (nm(r.durak) + ' is the Durak!'));
+        const mOver = !!(M.match && M.matchOver), mLose = mOver && M.tally[teams ? viewer % 2 : viewer] >= M.match;
+        const title = mOver ? (mLose ? (teams ? 'Your team lost the match' : 'You lost the match') : (teams ? 'Your team wins the match!' : 'You win the match!')) : draw ? 'It’s a draw!' : teams ? (win ? 'Your team wins!' : 'Your team lost') : (r.durak === viewer ? 'You are the Durak!' : (nm(r.durak) + ' is the Durak!'));
         const stamp = !teams && r.durak === viewer ? '<div class="dk-stamp">Durak</div>' : '';
-        const kick = draw ? 'Draw' : win ? 'You win' : 'Game over';
+        const kick = mOver ? 'Match over' : M.match ? `Game ${M.tally.reduce((a, b) => a + b, 0)} · match to ${M.match}` : draw ? 'Draw' : win ? 'You win' : 'Game over';
+        const R0 = M.run || RS(), secs = Math.max(0, Math.round(((R0.t1 || now()) - R0.t0) / 1000));
+        const tiles = [[R0.beat, 'Beaten'], [R0.held, 'Held'], [R0.takes ? R0.takes + '<small>' + R0.took + ' cards</small>' : 0, 'Taken'], [M.perevod ? R0.tr : Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0'), M.perevod ? 'Transfers' : 'Time']];
+        const sts = `<div class="dk-stats">${tiles.map(([v, k]) => `<div>${v}<small>${k}</small></div>`).join('')}</div>`;
+        const vs = opt.stats.vs[M.perevod ? 'transfer' : 'throw'] || { g: 0, w: 0 };
+        if (mOver && !mLose) confetti();
         const btns = online
           ? M.role === 'host'
             ? `<button class="dk-big green" data-a="again">Rematch</button><div class="dk-row"><button class="dk-sm" data-a="lobby">Back to lobby</button><button class="dk-sm" data-a="leave">Leave</button></div>`
             : `<p>Waiting for the host to start a rematch…</p><div class="dk-row"><button class="dk-sm" data-a="leave">Leave</button></div>`
-          : `<button class="dk-big red" data-a="again">Play again</button><div class="dk-row"><button class="dk-sm" data-a="title">Menu</button></div>`;
-        showPane('end', `<div class="dk-box"><p class="dk-kick">${kick}</p>${stamp}<h3>${title}</h3><table class="dk-tbl">${rows}</table><p>Won ${opt.stats.w} of ${opt.stats.g} · Fool ${opt.stats.f}</p>${btns}</div>`, a => {
-          if (a === 'again') { if (online && M.role !== 'host') return; startGame(M.nextFirst); }
+          : `<button class="dk-big red" data-a="again">${M.match ? (mOver ? 'New match' : 'Next game') : 'Play again'}</button><p class="dk-keyh">${touchy() ? '' : 'Enter or Space'}</p><div class="dk-row"><button class="dk-sm" data-a="title">Menu</button></div>`;
+        showPane('end', `<div class="dk-box"><p class="dk-kick">${kick}</p>${stamp}<h3>${title}</h3><table class="dk-tbl">${rows}</table>${sts}<p>${M.perevod ? 'Transfer' : 'Throw-in'}: won ${vs.w} of ${vs.g} · Streak ${opt.stats.st} (best ${opt.stats.bs}) · Fool ${opt.stats.f}</p>${btns}</div>`, a => {
+          if (a === 'again') { if (online && M.role !== 'host') return; if (mOver) newMatch(); else startGame(M.nextFirst); }
           else if (a === 'title') showTitle();
           else if (a === 'lobby') startOnline();
           else if (a === 'leave') leaveOnline();
@@ -1480,6 +1591,7 @@
         M.teams = !!opt.teams && n >= 4 && n % 2 === 0;
         M.deck = opt.deck; M.perevod = opt.variant === 'transfer'; M.deckSize = opt.deck === 24 ? 24 : opt.deck === 52 ? 52 : 36;
         M.eng = Game({ n, deck: opt.deck, perevod: M.perevod, teams: M.teams, neigh: opt.neigh, first5: opt.first5 });
+        M.match = online ? 0 : opt.match; M.tally = Array(M.teams ? 2 : n).fill(0); M.matchOver = false;
         D.n = n; viewer = 0;
         if (online) sendSetups();
         startGame(-1);
@@ -1575,7 +1687,7 @@
           if (d.t === 'act' && d.a && typeof d.a === 'object') { if (M.eng.act(q, d.a)) { M.timerTid = -1; flush(); } else api.net.sendTo(from, { t: 'ev', es: [], v: M.eng.view(q) }); }
         } else {
           if (d.t === 'setup') {
-            M.tok++; M.mode = 'online'; M.role = 'guest'; viewer = d.seat; M.submitted = false; M.result = null;
+            M.tok++; M.mode = 'online'; M.role = 'guest'; viewer = d.seat; M.submitted = false; M.result = null; M.match = 0; M.tally = null;
             M.cpu = d.cpu; M.human = d.human; M.names = d.names; M.av = d.av; D.n = d.n; M.lastV = null; M.awaiting = false; M.teams = !!d.teams; M.deck = d.deck; M.deckSize = d.deckSize; M.perevod = !!d.perevod; opt.timer = +d.timer || 0;
             scene = 'game'; paused = false; Q.length = 0; fly.length = 0; fx.length = 0; busy = 0; sel = null;
             D.hand = []; D.counts = Array(d.n).fill(0); D.slots = []; D.deckN = d.deckSize; D.disc = 0; D.teams = M.teams; D.outs = []; D.over = false;
@@ -1653,8 +1765,13 @@
       api.on(bMenu, 'click', () => { sfx('tap'); menu(); });
       api.on(window, 'keydown', e => {
         if (e.target && e.target.closest && e.target.closest('input,textarea,select')) return;
-        if (scene !== 'game' || !pane.hidden) return;
         const k = (e.key || '').toLowerCase();
+        if (!pane.hidden && paneFn && (k === 'enter' || k === ' ') && !(e.target && e.target.closest && e.target.closest('button'))) {
+          const pk = pane.dataset.k, b = pane.querySelector(pk === 'end' ? '[data-a=again]' : pk === 'howto' ? '[data-a=next]' : null);
+          if (b) { e.preventDefault(); sfx('tap'); paneFn(b.dataset.a, b); }
+          return;
+        }
+        if (scene !== 'game' || !pane.hidden) return;
         if (k === 'arrowleft' || k === 'arrowright') {
           e.preventDefault();
           if (!D.hand.length) return;
@@ -1774,6 +1891,7 @@
         }
         const ny = s.y + av + (PORT ? 10 : 13);
         if (r || !PORT) label(nm(p), s.x, ny, PORT ? 11 : 14, out ? 'rgba(255,255,255,.65)' : '#fff', 'center', 'rgba(0,0,0,.45)');
+        if (r) pips(p, s.x, PORT ? s.y + av + 52 : ny + 14);
         if (r && isCpu(p) && on && scene === 'game') {
           for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(s.x - 8 + i * 8, s.y - av - 10, 2.6 + Math.max(0, Math.sin(t * .01 - i)) * 1.4, 0, TAU); ctx.fillStyle = '#fff'; ctx.fill(); }
         }
@@ -1803,6 +1921,14 @@
         }
         if (drag && drag.lift) card(drag.id, drag.x, drag.y - (PORT ? 18 : 10), 0, 1.1);
       }
+      function pips(p, x, y) {
+        if (!M.match || !M.tally) return;
+        const k = M.tally[D.teams ? p % 2 : p] || 0, n = M.match, gp = PORT ? 9 : 11, r = PORT ? 3.2 : 4;
+        for (let i = 0; i < n; i++) {
+          ctx.beginPath(); ctx.arc(x + (i - (n - 1) / 2) * gp, y, r, 0, TAU);
+          ctx.fillStyle = i < k ? '#ff5b4b' : 'rgba(0,0,0,.45)'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = i < k ? '#fff' : 'rgba(255,255,255,.6)'; ctx.stroke();
+        }
+      }
       function drawMe(t, mineAct) {
         const s = L.seat[0], out = D.outs.includes(viewer), av = PORT ? 17 : L.av;
         ctx.save(); if (out) ctx.globalAlpha = .6;
@@ -1815,6 +1941,7 @@
           else if (viewer === D.def) badge(s.x - av * .8, s.y - av * .72, 'def', PORT ? 9 : 13);
         }
         if (!PORT) label(nm(viewer), s.x, s.y + av + 13, 14, '#fff', 'center', 'rgba(0,0,0,.45)');
+        pips(viewer, s.x, PORT ? s.y - av - 9 : s.y + av + 27);
         if (out) label('Out', s.x, s.y + av + (PORT ? 10 : 29), 12, '#7fe08e');
       }
       function drawStatus(t, V, act, mineAct) {
@@ -1879,6 +2006,25 @@
             const w = ctx.measureText(f.txt).width + 24, h = PORT ? 30 : 36;
             rrect(-w / 2, -h / 2, w, h, h / 2, '#fcc916', '#121214', 3);
             label(f.txt, 0, 1, PORT ? 15 : 18, '#c71b10');
+            ctx.restore();
+          } else if (f.k === 'say') {
+            const s = seatXY(f.p), av = L.av, fs = PORT ? 11 : 13;
+            ctx.font = `800 ${fs}px ${FONT}`;
+            const w = ctx.measureText(f.txt).width + 18, h = fs + 13;
+            let side = 1, bx = s.x + av + 10;
+            if (bx + w > W - 6) { side = -1; bx = s.x - av - 10 - w; }
+            if (bx < 6) { side = 0; bx = Math.max(6, Math.min(W - 6 - w, s.x - w / 2)); }
+            const by = side ? s.y - av * .55 - h / 2 : s.y + av + (PORT ? 18 : 24);
+            const sc = a < .1 ? .6 + a / .1 * .4 : 1;
+            ctx.save(); ctx.globalAlpha = a > .85 ? (1 - a) / .15 : 1;
+            ctx.translate(bx + w / 2, by + h / 2); ctx.scale(sc, sc); ctx.translate(-w / 2, -h / 2);
+            ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
+            ctx.beginPath(); ctx.roundRect(0, 0, w, h, h / 2);
+            if (side === 1) { ctx.moveTo(8, h - 4); ctx.lineTo(-6, h + 4); ctx.lineTo(16, h - 1); }
+            else if (side === -1) { ctx.moveTo(w - 8, h - 4); ctx.lineTo(w + 6, h + 4); ctx.lineTo(w - 16, h - 1); }
+            else { ctx.moveTo(w / 2 - 6, 1); ctx.lineTo(w / 2, -7); ctx.lineTo(w / 2 + 6, 1); }
+            ctx.fillStyle = '#fffdf4'; ctx.fill(); ctx.shadowColor = 'transparent';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#23262e'; ctx.fillText(f.txt, w / 2, h / 2 + 1);
             ctx.restore();
           }
         }

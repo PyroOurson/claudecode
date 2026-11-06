@@ -1044,7 +1044,7 @@
     api.on(window, 'keydown', e => {
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
       const k = e.code;
-      if (k in KEYD) { if (mode === 'play') { dash(KEYD[k]); e.preventDefault(); } return; }
+      if (k in KEYD) { if (mode === 'play') { dash(KEYD[k]); e.preventDefault(); } else if (mode === 'menu' && !e.repeat) { begin(Math.min(TM_LV, done() + 1), false); e.preventDefault(); } return; }
       if (k === 'Space' || k === 'Enter') {
         if (e.repeat) return;
         if (mode === 'menu') { begin(Math.min(TM_LV, done() + 1), false); e.preventDefault(); }
@@ -1558,7 +1558,7 @@
 
     function drawOver() {
       const e = ease(clamp(run.overT * 3, 0, 1));
-      x.fillStyle = `rgba(20,20,20,${.78 * e})`; x.fillRect(0, 0, W, H);
+      x.fillStyle = `rgba(20,20,20,${.9 * e})`; x.fillRect(0, 0, W, H);
       x.textAlign = 'center'; x.textBaseline = 'middle';
       x.globalAlpha = e;
       const cy = 190;
@@ -2817,10 +2817,10 @@
       if (KS.has(e.code)) {
         e.preventDefault();
         if (e.repeat) return;
-        if (mode === 'over') { mode = 'play'; reset(); return; }
+        if (mode === 'over') { if (st.overT > .45) { mode = 'play'; reset(); } return; }
         if (mode === 'revive' && e.code === 'Space') { revive(); return; }
         keyHold.add(e.code); press();
-      } else if (e.code === 'Enter' && mode === 'over') { mode = 'play'; reset(); }
+      } else if (e.code === 'Enter' && mode === 'over' && st.overT > .45) { mode = 'play'; reset(); }
       else if (e.code === 'KeyR' && mode === 'play') { reset(); }
     });
     api.on(window, 'keyup', e => { keyHold.delete(e.code); sync(); });

@@ -19,6 +19,7 @@
     format: v => v + ' numbers',
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="22" height="22" rx="5"/><rect x="35" y="7" width="22" height="22" rx="5" fill="currentColor" opacity=".3"/><rect x="7" y="35" width="22" height="22" rx="5" fill="currentColor" opacity=".3"/><rect x="35" y="35" width="22" height="22" rx="5"/><path d="M15 14l4-2.5V24"/><path d="M41.5 42.5a4.5 4.5 0 0 1 9 .5c0 3-9 6.5-9 9.5h9.5"/></svg>',
     css: `
+.am-gamebox.fs .gm-chimp-test.g-root{background:var(--sunk)}
 .gm-chimp-test .ct-pips{display:flex;gap:6px;align-items:center;height:28px}
 .gm-chimp-test .ct-pip{position:relative;width:20px;height:20px;border-radius:50%;background:var(--sunk);box-shadow:inset 0 0 0 2px var(--line-2);transition:background .25s,box-shadow .25s}
 .gm-chimp-test .ct-pip.on{background:var(--bad);box-shadow:0 4px 10px -3px rgba(239,79,79,.8);animation:gmChimpPop .5s var(--spring)}

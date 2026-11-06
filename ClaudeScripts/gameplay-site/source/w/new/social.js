@@ -20,7 +20,98 @@ const soOn = id => { const p = RT.pres[id]; return p && !p.h ? p : null; };
 const soParty = () => { try { if (cur && cur.api && cur.api.online) { const n = cur.api.net; if (n && n.code) return { game: cur.g.id, code: String(n.code).toUpperCase() }; } } catch (e) {} return null; };
 const soGameName = id => id ? (byId.get(id) ? byId.get(id).title : id) : '';
 const soCan = id => { const g = id && byId.get(id); return !!(g && g.info && onlineMax(g.info.pl) > 0); };
-const SO = { pend: null, want: null, act: Date.now(), away: false, party: false, ty: {}, tyAt: 0, tyT: 0, v: 'list', last: null, q: '', pt: 0, key: '', gk: '' };
+const SO = { pend: null, want: null, act: Date.now(), away: false, party: false, ty: {}, tyAt: 0, tyT: 0, v: 'list', last: null, q: '', pt: 0, key: '', gk: '', more: false, rep: null, bc: null, bat: 0, pAt: 0, pq: Promise.resolve(), cdT: 0 };
+const SO_CD = {}, RT_Q = {}, SO_PCD = 3000;
+const soCool = (k, ms) => { const t = SO_CD[k] || 0, now = Date.now(); if (now - t < ms) return Math.ceil((ms - (now - t)) / 1000); SO_CD[k] = now; return 0; };
+const soPWait = () => Math.max(0, SO.pAt + SO_PCD - Date.now());
+const soSleep = ms => new Promise(r => setTimeout(r, ms));
+const soSecs = s => s >= 60 ? auT('{n} min').replace('{n}', Math.ceil(s / 60)) : auT('{n} s').replace('{n}', s);
+function soCdApply() {
+  const w = soPWait(), s = Math.ceil(w / 1000), lab = s >= 60 ? Math.ceil(s / 60) + 'm' : s + 's';
+  document.querySelectorAll('[data-ch="invite"],[data-ch="join"],[data-fr="invite"],[data-fr="join"]').forEach(b => {
+    if (b.getAttribute('aria-disabled') === 'true') return;
+    if (w) { if (b.dataset.cd !== lab) b.dataset.cd = lab; b.classList.add('so-cd'); b.disabled = true; }
+    else if (b.classList.contains('so-cd')) { b.classList.remove('so-cd'); delete b.dataset.cd; b.disabled = false; }
+  });
+  clearTimeout(SO.cdT);
+  if (w) SO.cdT = setTimeout(soCdApply, Math.max(20, s >= 60 ? w - Math.max((Math.ceil(s / 60) - 1) * 60000, 59000) : w - (s - 1) * 1000));
+}
+const BL = { ids: new Set(), list: null, key: '' };
+const blHas = id => !!id && BL.ids.has(id);
+const SO_REP = [['spam', 'Spam'], ['harassment', 'Harassment'], ['cheating', 'Cheating'], ['inappropriate', 'Inappropriate'], ['other', 'Something else']];
+function blLoad() {
+  BL.key = SB.user ? 'gameplay:blocks:' + SB.user.id : ''; BL.ids = new Set(); BL.list = null;
+  try { (JSON.parse(BL.key && localStorage.getItem(BL.key) || '[]') || []).forEach(x => { if (typeof x === 'string') BL.ids.add(x); }); } catch (e) {}
+}
+function blSave() { if (BL.key) try { localStorage.setItem(BL.key, JSON.stringify([...BL.ids].slice(0, 500))); } catch (e) {} }
+async function blSync() {
+  if (!SB.user || BL.miss) return;
+  try { const r = await adRpc('my_blocks'); BL.list = Array.isArray(r) ? r : []; BL.ids = new Set(BL.list.map(x => x.blocked)); blSave(); }
+  catch (e) { if (sbMissing(e)) { BL.list = null; BL.miss = true; } }
+  if (openK === 'friends' && FR.list) frDraw();
+}
+async function soBlock(id) {
+  try { await adRpc('block_user', { p_uid: id }); }
+  catch (e) { if (!sbMissing(e)) throw e; await adRpc('remove_friend', { p_friend: id }); }
+  BL.ids.add(id); blSave();
+  if (DM.open === id) dmBack();
+  if (SO.last === id) SO.last = null;
+  delete SO.ty[id];
+  NT.list = NT.list.filter(n => n.from !== id); ntSave(); ntBadge();
+  await frLoad(); await blSync(); soList();
+}
+async function soUnblock(id) {
+  try { await adRpc('unblock_user', { p_uid: id }); }
+  catch (e) { if (!sbMissing(e)) throw e; }
+  BL.ids.delete(id); if (BL.list) BL.list = BL.list.filter(x => x.blocked !== id); blSave();
+  await blSync();
+}
+async function soReport(id, reason) {
+  const r = SO_REP.some(x => x[0] === reason) ? reason : 'other';
+  try { await adRpc('report_user', { p_uid: id, p_reason: r, p_details: null, p_block: false }); }
+  catch (e) {
+    if (!sbMissing(e)) throw e;
+    const f = soFriend(id), un = f && f.username ? '@' + f.username : id;
+    await adRpc('ticket_create', { p_subject: ('Report: ' + un + ' (' + r + ')').slice(0, 120), p_body: 'Player: ' + un + '\nUser id: ' + id + '\nReason: ' + r });
+  }
+}
+function soRepHtml(id, at) {
+  return `<small class="so-why">${esc(auT('Why are you reporting this player?'))}</small>` + SO_REP.map(([k, t]) => `<button class="btn2" type="button" ${at}="rep" data-r="${k}" data-id="${esc(id)}">${esc(auT(t))}</button>`).join('') + `<button class="btn2" type="button" ${at}="repx" data-id="${esc(id)}">${esc(auT('Cancel'))}</button>`;
+}
+function soErr(e, fb) {
+  const m = String(e && e.message || '');
+  if (e && e.local) return e.local > 3 ? auT('Slow down a little: {what}. Try again in {t}.').replace('{what}', auT('too many invites')).replace('{t}', soSecs(e.local)) : auT('You can send one party invite every 3 seconds. Try again in {t}.').replace('{t}', soSecs(e.local));
+  if (sbLimit(e) && e.details === 'party') return auT('You can send one party invite every 3 seconds. Try again in {t}.').replace('{t}', soSecs(sbWait(e) || 3));
+  if (sbLimit(e)) return sbLimitText(e, /dm_text|dm_image/.test(e.details || '') ? 'too many messages' : 'too many invites');
+  if (/not friends/i.test(m)) return auT('You are no longer friends.');
+  if (/locked/i.test(m)) return auT('Your account is locked.');
+  if (/too many/i.test(m)) return auT('Too many messages. Wait a minute and try again.');
+  return auT(fb || 'Could not send. Check your connection and try again.');
+}
+async function soPSend(id, kind, meta) {
+  SO.pAt = Date.now(); soCdApply();
+  try { return await dmSend(id, kind, null, meta); }
+  catch (e) { SO.pAt = sbLimit(e) ? Date.now() + (sbWait(e) || 3) * 1000 - SO_PCD : 0; soCdApply(); throw e; }
+}
+function soDm(id, kind, meta, queue) {
+  if (!queue) { const w = soPWait(); if (w) { const e = new Error('cooldown'); e.local = Math.ceil(w / 1000); return Promise.reject(e); } return soPSend(id, kind, meta); }
+  const run = async () => {
+    for (let i = 0; ; i++) {
+      let w;
+      while ((w = soPWait()) > 0) await soSleep(w + 40);
+      try { return await soPSend(id, kind, meta); }
+      catch (e) { if (!sbLimit(e) || i >= 2 || sbWait(e) > 10) throw e; }
+    }
+  };
+  const p = SO.pq.then(run, run);
+  SO.pq = p.catch(() => {});
+  return p;
+}
+function rtLater(k, fn, ms) {
+  const q = RT_Q[k] || (RT_Q[k] = { at: 0, t: 0 });
+  if (q.t) return;
+  q.t = setTimeout(() => { q.t = 0; q.at = Date.now(); fn(); }, Math.max(0, q.at + ms - Date.now()));
+}
 const soIdle = () => Date.now() - SO.act > 300000 || document.visibilityState === 'hidden' && Date.now() - SO.act > 60000;
 const soDot = on => on ? on.a ? ' away' : ' on' : '';
 
@@ -52,9 +143,11 @@ function rtSync() {
   const s = RT.on ? RT.on.presenceState() : {}, prev = RT.pres, P = {};
   for (const k in s) { const a = s[k]; if (a && a.length) P[k] = a[a.length - 1]; }
   RT.pres = P;
-  if (RT.seen && S.prefs.n_on) (FR.list || []).forEach(f => { const id = f.friend_id; if (P[id] && !P[id].h && !(prev[id] && !prev[id].h)) ntPush({ k: 'online', from: id, t: auT('{u} is online').replace('{u}', soName(id)), b: P[id].g ? auT('Playing {g}').replace('{g}', soGameName(P[id].g)) : '', a: { type: 'chat', uid: id } }); });
+  const now = Date.now();
+  if (RT.seen && S.prefs.n_on) (FR.list || []).forEach(f => { const id = f.friend_id; if (!blHas(id) && P[id] && !P[id].h && !(prev[id] && !prev[id].h) && now - (NT.on[id] || 0) > 600000) { NT.on[id] = now; ntPush({ k: 'online', from: id, t: auT('{u} is online').replace('{u}', soName(id)), b: P[id].g ? auT('Playing {g}').replace('{g}', soGameName(P[id].g)) : '', a: { type: 'chat', uid: id } }); } });
+  if (!RT.seen) (FR.list || []).forEach(f => { if (P[f.friend_id]) NT.on[f.friend_id] = now; });
   RT.seen = true;
-  soLive();
+  rtLater('live', soLive, 400);
 }
 function rtSend(uid, p) {
   if (!SB.c || !uid) return Promise.resolve();
@@ -68,15 +161,16 @@ function rtSend(uid, p) {
 }
 function rtNudge(p) {
   const t = p && p.t;
-  if (t === 'status') adCheck();
-  else if (t === 'deleted') { AD.del = true; adCheck(); }
-  else if (t === 'profile') auLoadProfile().then(() => { auRender(); renderProfileBits(); }).catch(() => {});
-  else if (t === 'dm') dmPoll();
-  else if (t === 'fr') frNudge();
+  if (t === 'status') rtLater('st', () => adCheck(), 4000);
+  else if (t === 'deleted') { AD.del = true; rtLater('st', () => adCheck(), 4000); }
+  else if (t === 'profile') rtLater('pf', () => auLoadProfile().then(() => { auRender(); renderProfileBits(); }).catch(() => {}), 5000);
+  else if (t === 'dm') rtLater('dm', dmPoll, 1500);
+  else if (t === 'fr') rtLater('fr', frNudge, 3000);
   else if (t === 'ty' || t === 'rd') {
     const f = typeof p.f === 'string' ? p.f : '';
-    if (!soFriend(f)) return;
-    if (t === 'rd') { if (DM.open === f) dmSeenSync(); return; }
+    if (!soFriend(f) || blHas(f)) return;
+    if (t === 'ty' && SO.ty[f] > Date.now() + 4000) return;
+    if (t === 'rd') { if (DM.open === f) rtLater('rd', dmSeenSync, 2000); return; }
     SO.ty[f] = Date.now() + 6000;
     soTyDraw(); soList();
   }
@@ -112,10 +206,14 @@ function soLive() {
   }
 }
 
-const NT = { list: [], key: '' };
+const NT = { list: [], key: '', on: {}, snd: 0, hold: 0, t: 0, sw: null, hov: false };
+const ntKey = n => (n.k === 'image' ? 'dm' : n.k) + '|' + (n.from || '') + '|' + (n.a && n.a.game || '');
+const ntLife = k => k === 'invite' || k === 'join' ? 9000 : k === 'online' ? 4000 : 5500;
+const NT_MAX = 3;
 function ntLoad() {
   NT.key = SB.user ? 'gameplay:notifs:' + SB.user.id : 'gameplay:notifs';
   try { NT.list = JSON.parse(localStorage.getItem(NT.key) || '[]') || []; } catch (e) { NT.list = []; }
+  if (!Array.isArray(NT.list)) NT.list = [];
   ntBadge();
 }
 function ntSave() { try { localStorage.setItem(NT.key, JSON.stringify(NT.list.slice(0, 60))); } catch (e) {} }
@@ -129,35 +227,132 @@ function ntBadge() {
   soDockSync();
 }
 function ntPush(n) {
-  n.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  n.at = Date.now(); n.r = false;
+  if (blHas(n.from)) return;
+  const now = Date.now(), key = ntKey(n), i = NT.list.findIndex(x => !x.r && (x.key || ntKey(x)) === key && now - x.at < 600000);
+  n.c = 1;
+  if (i >= 0) { n.c = Math.min(99, (+NT.list[i].c || 1) + 1); NT.list.splice(i, 1); }
+  n.id = now.toString(36) + Math.random().toString(36).slice(2, 6);
+  n.at = now; n.r = false; n.key = key;
   NT.list.unshift(n);
   NT.list = NT.list.slice(0, 60);
   ntSave(); ntBadge();
-  if (openK === 'notifs') ntDraw();
+  if (openK === 'notifs') { ntDraw(); return; }
   ntToast(n);
 }
 function ntIcon(k) { return k === 'dm' ? SO_ICO.chat : k === 'image' ? SO_ICO.img : k === 'invite' || k === 'join' ? SO_ICO.pad : k === 'game' ? SO_ICO.star : SO_ICO.user; }
 function ntActLabel(n) { const a = n.a || {}; return a.type === 'join' ? 'Join' : a.type === 'invite' ? 'Invite' : a.type === 'chat' ? (n.k === 'online' ? 'Say hi' : 'Reply') : a.type === 'game' ? 'Play' : a.type === 'friends' ? 'Open' : ''; }
-function ntToast(n) {
+const ntCount = c => +c > 1 ? `<em class="nt-c" aria-label="${esc(auT('{n} times').replace('{n}', +c))}">×${+c}</em>` : '';
+function ntBox() {
   let box = $('#ntst');
-  if (!box) { box = document.createElement('div'); box.id = 'ntst'; box.className = 'ntst'; box.setAttribute('aria-live', 'polite'); document.body.append(box); }
-  if (AD.locked) return;
-  const host = soHostEl();
-  if (box.parentNode !== host) host.append(box);
-  sfx('pop');
-  const el = document.createElement('div'), lab = ntActLabel(n);
-  el.className = 'nt';
-  el.dataset.k = n.k;
-  el.innerHTML = `<span class="nt-i">${ntIcon(n.k)}</span><div class="nt-t"><b translate="no">${esc(n.t)}</b>${n.b ? `<span translate="no">${esc(n.b)}</span>` : ''}</div>${lab ? `<button class="btn2 pri" type="button" data-nt="go">${esc(auT(lab))}</button>` : ''}<button class="x" type="button" data-nt="x" aria-label="${esc(auT('Close'))}">${SO_ICO.x}</button>`;
-  const kill = () => { if (!el.isConnected) return; el.classList.add('out'); setTimeout(() => el.remove(), motionOK() ? 220 : 0); };
-  let t = setTimeout(kill, n.k === 'invite' || n.k === 'join' ? 25000 : 7000);
-  el.addEventListener('mouseenter', () => clearTimeout(t));
-  el.addEventListener('mouseleave', () => { t = setTimeout(kill, 4000); });
-  el.addEventListener('click', e => { e.stopPropagation(); const b = e.target.closest('[data-nt]'); if (b && b.dataset.nt === 'x') { kill(); return; } ntRead(n.id); ntAct(n); kill(); });
-  box.append(el);
-  while (box.children.length > 4) box.firstElementChild.remove();
+  if (box) return box;
+  box = document.createElement('div'); box.id = 'ntst'; box.className = 'ntst'; box.setAttribute('aria-live', 'polite');
+  document.body.append(box);
+  const open = on => { box.classList.toggle('nt-open', on); ntHold(on); };
+  box.addEventListener('mouseenter', () => { NT.hov = true; open(true); });
+  box.addEventListener('mouseleave', () => { NT.hov = false; if (!box.contains(document.activeElement)) open(false); });
+  box.addEventListener('focusin', () => open(true));
+  box.addEventListener('focusout', e => { if (!box.contains(e.relatedTarget) && !NT.hov) open(false); });
+  document.addEventListener('pointerdown', e => { if (box.classList.contains('nt-open') && !NT.hov && !box.contains(e.target)) open(false); }, true);
+  box.addEventListener('click', e => {
+    e.stopPropagation();
+    if (e.target.closest('.nt-more')) { ntClear(); open(false); if (openK !== 'notifs') setOpen('notifs'); ntDraw(); return; }
+    const el = e.target.closest('.nt');
+    if (!el || el.dataset.sw) return;
+    if (!box.classList.contains('nt-open') && el.dataset.i !== '0') { open(true); return; }
+    const b = e.target.closest('[data-nt]');
+    if (b && b.dataset.nt === 'x') { ntKill(el); return; }
+    const n = NT.list.find(x => x.id === el.dataset.nid) || el._n;
+    ntKill(el);
+    if (n) { ntRead(n.id); ntAct(n); }
+  });
+  box.addEventListener('pointerdown', e => { const el = e.target.closest('.nt'); if (!el || e.pointerType === 'mouse' || e.target.closest('button')) return; NT.sw = { el, x: e.clientX, id: e.pointerId, dx: 0 }; });
+  box.addEventListener('pointermove', e => { const s = NT.sw; if (!s || e.pointerId !== s.id) return; s.dx = e.clientX - s.x; if (Math.abs(s.dx) > 6) { s.el.style.transform = `translateX(${s.dx}px)`; s.el.style.opacity = String(Math.max(.2, 1 - Math.abs(s.dx) / 220)); } });
+  const up = e => { const s = NT.sw; if (!s || e.pointerId !== s.id) return; NT.sw = null; if (Math.abs(s.dx) > 70) { s.el.dataset.sw = '1'; ntKill(s.el); } else { s.el.style.transform = ''; s.el.style.opacity = ''; } };
+  box.addEventListener('pointerup', up);
+  box.addEventListener('pointercancel', up);
+  addEventListener('resize', () => ntLay());
+  return box;
 }
+function ntToast(n) {
+  if (AD.locked) return;
+  const box = ntBox(), host = soHostEl(), now = Date.now(), lab = ntActLabel(n);
+  if (box.parentNode !== host) host.append(box);
+  let el = [...box.querySelectorAll('.nt')].find(x => x.dataset.key === n.key);
+  const again = !!el;
+  if (el) { clearTimeout(el._rm); el.classList.remove('out', 'nt-again'); el.style.transform = ''; el.style.opacity = ''; delete el.dataset.sw; }
+  else { el = document.createElement('div'); el.className = 'nt'; el.dataset.key = n.key; }
+  el.dataset.k = n.k; el.dataset.nid = n.id; el._n = n;
+  el.innerHTML = `<span class="nt-i">${ntIcon(n.k)}</span><div class="nt-t"><b translate="no"><span>${esc(n.t)}</span>${ntCount(n.c)}</b>${n.b ? `<span translate="no">${esc(n.b)}</span>` : ''}</div>${lab ? `<button class="btn2 pri" type="button" data-nt="go">${esc(auT(lab))}</button>` : ''}<button class="x" type="button" data-nt="x" aria-label="${esc(auT('Close'))}">${SO_ICO.x}</button>`;
+  el.exp = now + ntLife(n.k) + (NT.hold ? now - NT.hold : 0);
+  box.prepend(el);
+  if (again) el.classList.add('nt-again');
+  if (now - NT.snd > 1500) { NT.snd = now; sfx('pop'); }
+  ntLay();
+}
+function ntPos(box) {
+  let top = '', right = '', width = '';
+  if (box.parentNode === document.body) {
+    const ch = $('#chat');
+    if (matchMedia('(max-width:760px)').matches) {
+      if (ch && !ch.hidden) { const m = ch.querySelector(SO.v === 'conv' ? '.ch-m' : '.so-fl'), r = m && m.getBoundingClientRect(); if (r && r.height) top = Math.round(r.top + 8) + 'px'; }
+    } else {
+      const hd = $('#top'), R = hd && hd.querySelector('.right'), B = hd && hd.querySelector('.brand');
+      if (R && B) {
+        const h = hd.getBoundingClientRect(), r = R.getBoundingClientRect(), b = B.getBoundingClientRect(), w = Math.min(360, r.left - b.right - 36);
+        if (h.bottom <= 40) top = '12px';
+        else if (w >= 280) { top = Math.round(h.top + Math.max(4, (h.height - 48) / 2)) + 'px'; right = Math.round(innerWidth - r.left + 12) + 'px'; width = Math.round(w) + 'px'; }
+      }
+    }
+  }
+  if (box.style.top !== top) box.style.top = top;
+  if (box.style.right !== right) box.style.right = right;
+  if (box.style.width !== width) box.style.width = width;
+}
+function ntLay() {
+  const box = $('#ntst');
+  if (!box) return;
+  const L = [...box.querySelectorAll('.nt:not(.out)')], max = NT_MAX, h = L.length - max;
+  L.forEach((el, i) => { el.hidden = i >= max; el.dataset.i = Math.min(i, max); });
+  let more = box.querySelector('.nt-more');
+  if (h > 0) {
+    if (!more) { more = document.createElement('button'); more.type = 'button'; more.className = 'nt-more'; }
+    more.textContent = auT(h === 1 ? '+1 more notification' : '+{n} more notifications').replace('{n}', h);
+    box.append(more);
+  } else if (more) more.remove();
+  if (!L.length && box.classList.contains('nt-open') && !NT.hov) { box.classList.remove('nt-open'); ntHold(false); }
+  ntPos(box);
+  ntSched();
+}
+function ntSched() {
+  const box = $('#ntst');
+  clearTimeout(NT.t);
+  if (!box || NT.hold) return;
+  const L = [...box.querySelectorAll('.nt:not(.out)')];
+  if (!L.length) return;
+  NT.t = setTimeout(ntExpire, Math.max(60, Math.min(...L.map(el => el.exp)) - Date.now()));
+}
+function ntExpire() {
+  const box = $('#ntst'), now = Date.now();
+  if (!box || NT.hold) return;
+  box.querySelectorAll('.nt:not(.out)').forEach(el => { if (el.exp <= now + 40) ntKill(el, true); });
+  ntLay();
+}
+function ntKill(el, quiet) {
+  if (!el || !el.isConnected || el.classList.contains('out')) return;
+  el.classList.add('out');
+  el._rm = setTimeout(() => { el.remove(); ntLay(); }, motionOK() && !el.hidden ? 200 : 0);
+  if (!quiet) ntLay();
+}
+function ntHold(on) {
+  const box = $('#ntst');
+  if (on) { if (!NT.hold) { NT.hold = Date.now(); clearTimeout(NT.t); } return; }
+  if (!NT.hold) return;
+  const d = Date.now() - NT.hold, min = Date.now() + 2000;
+  NT.hold = 0;
+  if (box) box.querySelectorAll('.nt').forEach(el => { el.exp = Math.max(el.exp + d, min); });
+  ntSched();
+}
+function ntClear() { const box = $('#ntst'); if (box) { box.querySelectorAll('.nt').forEach(el => { clearTimeout(el._rm); el.remove(); }); ntLay(); } }
 function ntRead(id) { const n = NT.list.find(x => x.id === id); if (n && !n.r) { n.r = true; ntSave(); ntBadge(); } }
 async function ntAct(n) {
   const a = n.a || {};
@@ -170,7 +365,7 @@ async function ntAct(n) {
 function ntDraw() {
   const box = $('#nlist');
   if (!box) return;
-  box.innerHTML = NT.list.length ? NT.list.map(n => `<button class="nrow${n.r ? '' : ' new'}" type="button" data-nid="${esc(n.id)}"><span class="nt-i">${ntIcon(n.k)}</span><span class="nt-t"><b translate="no">${esc(n.t)}</b>${n.b ? `<span translate="no">${esc(n.b)}</span>` : ''}<small>${esc(adAgo(new Date(n.at).toISOString()))}</small></span></button>`).join('') : `<div class="nofr">${esc(auT('No notifications yet.'))}</div>`;
+  box.innerHTML = NT.list.length ? NT.list.map(n => `<button class="nrow${n.r ? '' : ' new'}" type="button" data-nid="${esc(n.id)}"><span class="nt-i">${ntIcon(n.k)}</span><span class="nt-t"><b translate="no"><span>${esc(n.t)}</span>${ntCount(n.c)}</b>${n.b ? `<span translate="no">${esc(n.b)}</span>` : ''}<small>${esc(adAgo(new Date(n.at).toISOString()))}</small></span></button>`).join('') : `<div class="nofr">${esc(auT('No notifications yet.'))}</div>`;
 }
 
 const DM = { inbox: [], last: {}, open: null, msgs: [], urls: new Map(), unread: 0, first: true, t: 0, busy: false, prev: null };
@@ -179,7 +374,7 @@ async function dmPoll() {
   let r;
   try { r = await adRpc('dm_inbox'); } catch (e) { return; }
   if (!SB.user) return;
-  const L = Array.isArray(r) ? r : [];
+  const L = (Array.isArray(r) ? r : []).filter(c => !blHas(c.other_id));
   L.forEach(c => {
     const was = DM.last[c.other_id] || 0, fresh = !DM.first && !c.last_mine && c.last_id > was;
     DM.last[c.other_id] = c.last_id;
@@ -206,8 +401,8 @@ function soAuto(c) {
   }
   if (c.last_kind === 'join') {
     const p = soParty();
-    if (!p || S.prefs.p_inv === 'Nobody') return false;
-    dmSend(id, 'invite', null, p).then(() => ntPush({ k: 'join', from: id, t: auT('{u} is joining your party').replace('{u}', soName(id)), b: soGameName(p.game) + ' · ' + auT('Code {c}').replace('{c}', p.code), a: { type: 'chat', uid: id } })).catch(() => dmNotify(c));
+    if (!p || S.prefs.p_inv === 'Nobody' || soCool('auto:' + id, 15000)) return false;
+    soDm(id, 'invite', p, true).then(() => ntPush({ k: 'join', from: id, t: auT('{u} is joining your party').replace('{u}', soName(id)), b: soGameName(p.game) + ' · ' + auT('Code {c}').replace('{c}', p.code), a: { type: 'chat', uid: id } })).catch(() => dmNotify(c));
     return true;
   }
   return false;
@@ -220,7 +415,7 @@ function dmNotify(c) {
 }
 async function dmSend(uid, kind, body, meta) {
   const id = await adRpc('dm_send', { p_to: uid, p_kind: kind, p_body: body || null, p_meta: meta || {} });
-  rtSend(uid, { t: 'dm' });
+  rtLater('s:' + uid, () => rtSend(uid, { t: 'dm' }), 1200);
   track('dm', { act: kind });
   if (DM.open === uid) dmThread();
   else dmPoll();
@@ -246,12 +441,14 @@ function soView(v) {
   const el = soChatEl();
   el.classList.toggle('so-v-list', v === 'list'); el.classList.toggle('so-v-conv', v === 'conv');
   el.setAttribute('aria-label', v === 'list' ? auT('Chats') : auT('Chat with {u}').replace('{u}', soName(DM.open)));
+  if (!el.hidden) ntLay();
 }
 function soShow(on) {
   const el = soChatEl(), b = $('#sodl');
   if (on) { soPlace(); vis(el, true); document.body.classList.add('chat-open'); }
   else { vis(el, false); document.body.classList.remove('chat-open'); }
   if (b) b.setAttribute('aria-expanded', String(on));
+  ntLay(); setTimeout(ntLay, 260);
 }
 function soDock() {
   const el = soChatEl();
@@ -354,7 +551,7 @@ async function dmOpen(uid) {
   if (!soFriend(uid)) { toast(auT('You can only chat with friends')); return; }
   const el = soChatEl();
   if (openK) closeAll();
-  if (DM.open !== uid) { DM.open = uid; DM.msgs = []; DM.prev = null; el.querySelector('.ch-m').innerHTML = '<i class="sk sk-msg"></i>'.repeat(3); el.querySelector('textarea').value = ''; soPick(false); }
+  if (DM.open !== uid) { DM.open = uid; DM.msgs = []; DM.prev = null; SO.more = false; SO.rep = SO.bc = null; el.querySelector('.ch-m').innerHTML = '<i class="sk sk-msg"></i>'.repeat(3); el.querySelector('textarea').value = ''; soPick(false); }
   SO.last = uid;
   soView('conv'); dmHead(); auMsg2(''); soTyDraw();
   soShow(true); soSave();
@@ -391,14 +588,14 @@ async function soDo(k, id, b) {
   if (b && b.getAttribute('aria-disabled') === 'true') { soSaid(id, b.title); return; }
   if (k === 'chat') { closeAll(); dmOpen(id); }
   else if (k === 'pick') { closeAll(); await dmOpen(id); soPick(true); }
-  else if (k === 'invite') { if (b) b.disabled = true; await soInvite(id, null); if (b) b.disabled = false; }
-  else if (k === 'join') { if (b) b.disabled = true; await soJoin(id); if (b) b.disabled = false; }
+  else if (k === 'invite') { if (b) b.disabled = true; await soInvite(id, null); if (b) b.disabled = false; soCdApply(); }
+  else if (k === 'join') { if (b) b.disabled = true; await soJoin(id); if (b) b.disabled = false; soCdApply(); }
 }
 async function soInvite(id, game) {
   const p = soParty();
   if (p && (!game || game === p.game)) {
-    try { await dmSend(id, 'invite', null, p); soSaid(id, auT('Invite sent to {u}. They join with code {c}.').replace('{u}', soName(id)).replace('{c}', p.code), 'ok'); }
-    catch (e) { soSaid(id, auT('Could not send. Check your connection and try again.'), 'bad'); }
+    try { await soDm(id, 'invite', p); soSaid(id, auT('Invite sent to {u}. They join with code {c}.').replace('{u}', soName(id)).replace('{c}', p.code), 'ok'); }
+    catch (e) { soSaid(id, soErr(e), 'bad'); }
     return;
   }
   game = game || (cur && soCan(cur.g.id) ? cur.g.id : null);
@@ -427,8 +624,10 @@ async function soPendTick() {
     SO.pend = null; clearInterval(SO.pt);
     rtTrack(true);
     for (const id of P.ids) {
-      try { await dmSend(id, 'invite', null, p); toast(auT('Invite sent to {u}. They join with code {c}.').replace('{u}', soName(id)).replace('{c}', p.code)); }
-      catch (e) { toast(auT('Could not send the invite to {u}. Try again.').replace('{u}', soName(id))); }
+      const w = soPWait();
+      if (w) toast(auT('Sending the invite to {u} in {t}…').replace('{u}', soName(id)).replace('{t}', soSecs(Math.ceil(w / 1000))));
+      try { await soDm(id, 'invite', p, true); toast(auT('Invite sent to {u}. They join with code {c}.').replace('{u}', soName(id)).replace('{c}', p.code)); }
+      catch (e) { toast(e && (e.local || sbLimit(e)) ? soErr(e) : auT('Could not send the invite to {u}. Try again.').replace('{u}', soName(id))); }
     }
     return;
   }
@@ -442,8 +641,8 @@ async function soPendTick() {
 async function soJoin(id) {
   const on = soOn(id);
   if (!on || !on.g) return;
-  try { await dmSend(id, 'join', null, { game: on.g }); }
-  catch (e) { soSaid(id, auT('Could not send. Check your connection and try again.'), 'bad'); return; }
+  try { await soDm(id, 'join', { game: on.g }); }
+  catch (e) { soSaid(id, soErr(e), 'bad'); return; }
   SO.want = { id, t: Date.now() };
   soSaid(id, on.p ? auT('Asked {u} to let you in. You join as soon as they accept.').replace('{u}', soName(id)) : auT('Request sent. {u} gets a notification and can start a party for you.').replace('{u}', soName(id)), 'ok');
 }
@@ -465,10 +664,12 @@ function dmHead() {
   el.querySelector('.so-cv .pic').innerHTML = `${esc(name.charAt(0).toUpperCase())}<i class="fr-dot${soDot(on)}"></i>`;
   el.querySelector('.so-cv .ch-n b').textContent = name;
   el.querySelector('.so-cv .ch-s').innerHTML = `<span class="so-st${on ? on.a ? ' aw' : ' on' : ''}">${esc(soStatus(uid))}</span><span class="so-un">@${esc(f.username || '')}</span>`;
-  el.querySelector('.ch-acts').innerHTML = soActsHtml(uid, 'data-ch');
+  const bc = SO.bc === uid && Date.now() - SO.bat < 4000;
+  el.querySelector('.ch-acts').innerHTML = SO.rep === uid ? soRepHtml(uid, 'data-ch') : soActsHtml(uid, 'data-ch') + `<button class="btn2 so-more" type="button" data-ch="more" aria-expanded="${SO.more}" aria-label="${esc(auT('More actions'))}" title="${esc(auT('More actions'))}"><span>•••</span></button>` + (SO.more ? `<button class="btn2${bc ? ' dangerfill' : ''}" type="button" data-ch="block">${esc(auT(bc ? 'Click again to block' : 'Block'))}</button><button class="btn2" type="button" data-ch="report">${esc(auT('Report'))}</button>` : '');
   el.querySelector('textarea').placeholder = auT('Message {u}').replace('{u}', '@' + (f.username || name));
   const o = DM.inbox.reduce((n, c) => n + (c.other_id === uid ? 0 : +c.unread || 0), 0), bk = el.querySelector('.so-bk em');
   bk.textContent = o > 9 ? '9+' : o; bk.hidden = !o;
+  soCdApply();
 }
 function soTyDraw() {
   const t = $('#chat .so-ty');
@@ -517,14 +718,14 @@ async function dmThread() {
       return s + dmRow(m, !first, grp);
     }).join(''));
     box.querySelectorAll('img[data-path]:not([src])').forEach(dmImg);
-    soSeen();
+    soSeen(); soCdApply();
     const nw = first && box.querySelector('#soNew');
     if (nw) box.scrollTop = Math.max(0, nw.offsetTop - 12);
     else if (near || add.some(m => m.mine)) box.scrollTop = box.scrollHeight;
     if (!first && add.some(m => !m.mine)) { delete SO.ty[uid]; soTyDraw(); sfx('pop'); }
     if (add.some(m => !m.mine && !m.read_at)) {
       await adRpc('dm_read', { p_with: uid }).catch(() => {});
-      rtSend(uid, { t: 'rd', f: SB.user.id });
+      rtLater('r:' + uid, () => { if (SB.user) rtSend(uid, { t: 'rd', f: SB.user.id }); }, 2000);
       const c = DM.inbox.find(x => x.other_id === uid); if (c) c.unread = 0;
       DM.unread = DM.inbox.reduce((n, c) => n + (c.other_id === DM.open ? 0 : +c.unread || 0), 0); ntBadge();
     }
@@ -556,12 +757,14 @@ async function dmSendText() {
   if (!v || !uid) return;
   ta.value = ''; ta.style.height = 'auto'; auMsg2(''); SO.tyAt = 0;
   try { await dmSend(uid, 'text', v); }
-  catch (e) { ta.value = v; auMsg2(/too many/i.test(e.message || '') ? 'Too many messages. Wait a minute and try again.' : /not friends/i.test(e.message || '') ? 'You are no longer friends.' : /locked/i.test(e.message || '') ? 'Your account is locked.' : 'Could not send. Check your connection and try again.', 'bad'); }
+  catch (e) { ta.value = v; auMsg2(soErr(e), 'bad'); }
 }
 async function dmImage(file) {
   const uid = DM.open;
   if (!uid || !SB.user) return;
   if (file.size > 25e6) { auMsg2('That picture is too big. Pick one under 25 MB.', 'bad'); return; }
+  const w = soCool('img', 4000);
+  if (w) { auMsg2(auT('You just sent one. Wait {s} s before sending another.').replace('{s}', w), 'bad'); return; }
   auMsg2('Sending the picture…');
   try {
     let blob = file, ext = 'gif', w = 0, h = 0;
@@ -582,7 +785,7 @@ async function dmImage(file) {
     if (error) throw error;
     await dmSend(uid, 'image', null, { path, w, h });
     auMsg2('');
-  } catch (e) { auMsg2('Could not send the picture. Try another one.', 'bad'); }
+  } catch (e) { auMsg2(sbLimit(e) ? soErr(e) : 'Could not send the picture. Try another one.', 'bad'); }
 }
 async function dmAct(k, b) {
   const uid = DM.open;
@@ -595,7 +798,19 @@ async function dmAct(k, b) {
   if (k === 'go') { dmClose(); closeAll(); go(href(b.dataset.g, b.dataset.c), false); toast(auT('Joining the party…')); return; }
   if (!uid) return;
   if (k === 'pk') { soHost(b.dataset.g, uid); return; }
-  if (k === 'invite' && b.dataset.g && !b.dataset.id) { b.disabled = true; await soInvite(uid, soCan(b.dataset.g) ? b.dataset.g : null); b.disabled = false; return; }
+  if (k === 'more') { SO.more = !SO.more; SO.bc = null; dmHead(); return; }
+  if (k === 'report') { SO.rep = uid; dmHead(); return; }
+  if (k === 'repx') { SO.rep = null; dmHead(); return; }
+  if (k === 'rep') { b.disabled = true; try { await soReport(uid, b.dataset.r); SO.rep = null; SO.more = false; dmHead(); soSaid(uid, 'Thanks. An admin will look at your report.', 'ok'); track('friend', { act: 'report', r: b.dataset.r }); } catch (e) { b.disabled = false; soSaid(uid, sbLimit(e) ? sbLimitText(e, 'too many reports') : 'Could not send. Check your connection and try again.', 'bad'); } return; }
+  if (k === 'block') {
+    if (!(SO.bc === uid && Date.now() - SO.bat < 4000)) { SO.bc = uid; SO.bat = Date.now(); dmHead(); setTimeout(() => { if (SO.bc === uid) { SO.bc = null; if (DM.open === uid) dmHead(); } }, 4100); return; }
+    SO.bc = null; b.disabled = true;
+    const nm = soName(uid);
+    try { await soBlock(uid); SO.more = false; toast(auT('{u} is blocked. They can no longer message, invite or add you.').replace('{u}', nm)); track('friend', { act: 'block' }); }
+    catch (e) { b.disabled = false; soSaid(uid, sbLimit(e) ? sbLimitText(e, 'too many changes') : 'Could not update. Check your connection and try again.', 'bad'); }
+    return;
+  }
+  if (k === 'invite' && b.dataset.g && !b.dataset.id) { b.disabled = true; await soInvite(uid, soCan(b.dataset.g) ? b.dataset.g : null); b.disabled = false; soCdApply(); return; }
   if (k === 'invite' || k === 'pick' || k === 'join') { await soDo(k, uid, b); if (DM.open === uid) dmHead(); }
 }
 function soLight(src) {
@@ -608,7 +823,7 @@ function soLight(src) {
 function soFriendRow(f) {
   const id = f.friend_id, on = soOn(id), open = FR.open === id, c = DM.inbox.find(x => x.other_id === id), un = c ? +c.unread || 0 : 0;
   const name = f.display_name || f.username || '?';
-  const x = open ? `<div class="fr-x"><button class="btn2" type="button" data-fr="chat" data-id="${esc(id)}">${SO_ICO.chat}<span>${esc(auT('Chat'))}</span></button>${soActsHtml(id, 'data-fr')}<button class="btn2" type="button" data-fr="remove" data-id="${esc(id)}">${esc(auT('Remove'))}</button></div>` : '';
+  const x = open ? `<div class="fr-x">${FR.rep === id ? soRepHtml(id, 'data-fr') : `<button class="btn2" type="button" data-fr="chat" data-id="${esc(id)}">${SO_ICO.chat}<span>${esc(auT('Chat'))}</span></button>${soActsHtml(id, 'data-fr')}<button class="btn2" type="button" data-fr="remove" data-id="${esc(id)}">${esc(auT('Remove'))}</button><button class="btn2" type="button" data-fr="block" data-id="${esc(id)}">${esc(auT('Block'))}</button><button class="btn2" type="button" data-fr="report" data-id="${esc(id)}">${esc(auT('Report'))}</button>`}</div>` : '';
   return `<div class="frow fr-f${open ? ' open' : ''}" role="listitem" tabindex="0" data-frc="${esc(id)}"><span class="pic">${esc(name.charAt(0).toUpperCase())}<i class="fr-dot${soDot(on)}"></i></span><div class="fr-n"><b>${esc(name)}</b><span>@${esc(f.username || '')}</span><em class="fr-st${on ? on.a ? ' aw' : ' on' : ''}">${esc(soStatus(id))}</em></div><div class="fr-a">${un ? `<span class="fr-un">${un > 9 ? '9+' : un}</span>` : ''}<button class="btn2 icon2" type="button" data-fr="chat" data-id="${esc(id)}" aria-label="${esc(auT('Chat'))}">${SO_ICO.chat}</button></div>${x}</div>`;
 }
 async function soFrAct(k, b) {
@@ -642,6 +857,7 @@ function soNewGames() {
 function soStart() {
   ntLoad();
   if (!SB.user) return;
+  blLoad(); blSync();
   rtStart();
   DM.first = true; DM.last = {};
   SO.key = 'gameplay:dock:' + SB.user.id;
@@ -658,7 +874,9 @@ function soStart() {
 function soStop() {
   rtStop(); dmClose();
   DM.inbox = []; DM.unread = 0; DM.msgs = []; DM.last = {}; DM.urls.clear();
-  SO.pend = SO.want = null; SO.last = null; SO.v = 'list'; SO.key = ''; SO.ty = {}; clearInterval(SO.pt);
+  SO.pend = SO.want = null; SO.last = null; SO.v = 'list'; SO.key = ''; SO.ty = {}; SO.rep = SO.bc = null; SO.more = false; clearInterval(SO.pt);
+  BL.ids = new Set(); BL.list = null; BL.key = '';
+  NT.on = {}; ntClear();
   ntLoad();
   soDockSync();
 }

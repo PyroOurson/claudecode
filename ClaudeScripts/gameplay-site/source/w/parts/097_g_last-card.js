@@ -520,14 +520,17 @@
     if (id < 0) {
       const rg = x.createRadialGradient(0, 0, 0, 0, 0, h * .6); rg.addColorStop(0, 'rgba(255,255,255,.1)'); rg.addColorStop(1, 'rgba(0,0,0,0)');
       x.fillStyle = rg; cpath(x, iw, ih, r * .7); x.fill();
-      x.save(); x.rotate(.52);
-      x.beginPath(); x.ellipse(0, 0, rx, ry, 0, 0, TAU); x.fillStyle = HEX[0]; x.fill();
-      x.lineWidth = w * .03; x.strokeStyle = '#fff'; x.stroke();
-      x.beginPath(); x.ellipse(0, 0, rx * .8, ry * .86, 0, 0, TAU); x.lineWidth = w * .012; x.strokeStyle = 'rgba(0,0,0,.35)'; x.stroke();
-      x.restore();
-      x.save(); x.rotate(-.12);
-      star(x, w * .27, w * .085, 4); x.lineJoin = 'round'; x.lineWidth = w * .05; x.strokeStyle = '#121214'; x.stroke(); x.fillStyle = HEX[1]; x.fill();
-      for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + Math.PI / 4; x.beginPath(); x.arc(Math.cos(a) * w * .16, Math.sin(a) * w * .16, w * .045, 0, TAU); x.fillStyle = HEX[[3, 2, 1, 0][i]]; x.fill(); x.lineWidth = w * .02; x.stroke(); }
+      x.save(); cpath(x, iw, ih, r * .7); x.clip();
+      x.globalAlpha = .13; x.strokeStyle = '#fff'; x.lineWidth = Math.max(.6, w * .014);
+      for (let k = -8; k <= 8; k++) { x.beginPath(); x.moveTo(k * w * .17 - h, -h); x.lineTo(k * w * .17 + h, h); x.stroke(); x.beginPath(); x.moveTo(k * w * .17 + h, -h); x.lineTo(k * w * .17 - h, h); x.stroke(); }
+      x.globalAlpha = 1; x.restore();
+      x.save(); x.rotate(Math.PI / 4);
+      const s2 = w * .27, q = s2 * .8;
+      cpath(x, s2 * 2, s2 * 2, s2 * .42); x.fillStyle = '#fff'; x.fill();
+      for (let i = 0; i < 4; i++) { x.beginPath(); x.moveTo(0, 0); x.arc(0, 0, q, i * Math.PI / 2, (i + 1) * Math.PI / 2); x.closePath(); x.fillStyle = HEX[i]; x.fill(); }
+      x.lineWidth = w * .022; x.strokeStyle = '#fff';
+      x.beginPath(); x.moveTo(-q, 0); x.lineTo(q, 0); x.moveTo(0, -q); x.lineTo(0, q); x.stroke();
+      x.beginPath(); x.arc(0, 0, q * .36, 0, TAU); x.fillStyle = '#17171b'; x.fill(); x.stroke();
       x.restore();
       return;
     }
@@ -649,9 +652,12 @@
 .gm-last-card .lc-seg button{flex:1;min-height:44px;border-radius:12px;border:2px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font:900 14px var(--sans);padding:0 4px}
 .gm-last-card .lc-seg button.on{background:#fcc916;border-color:#fff;color:#1b1b1f}
 .gm-last-card .lc-title{width:100%;max-width:380px;text-align:center;margin-top:auto}
-.gm-last-card .lc-logo{position:relative;display:inline-block;padding:14px 34px 16px;font:900 60px/0.92 var(--sans);font-style:italic;letter-spacing:-1px;color:#ffe11b;-webkit-text-stroke:3px #121214;paint-order:stroke fill;text-shadow:2px 2px 0 #121214,4px 4px 0 #121214,6px 6px 0 #121214,7px 8px 0 #3a3a3e;transform:rotate(-14deg);margin:4px 0 14px;isolation:isolate}
-.gm-last-card .lc-logo::before{content:'';position:absolute;inset:0;z-index:-1;border-radius:50%;background:radial-gradient(ellipse at 45% 35%,#ff3b30,#e2131a 55%,#b40d12);border:4px solid #121214;box-shadow:0 0 0 3px #ffe11b,0 10px 24px rgba(0,0,0,.45)}
-.gm-last-card .lc-logo b{color:#ffe11b;font-weight:900}
+.gm-last-card .lc-logo{display:inline-flex;align-items:flex-end;gap:8px;margin:6px 0 16px}
+.gm-last-card .lc-logo i{display:grid;place-items:center;width:62px;height:86px;border-radius:12px;border:4px solid #fff;font:900 46px/1 var(--sans);font-style:normal;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.28);box-shadow:0 10px 20px -6px rgba(0,0,0,.5),inset 0 -6px 0 rgba(0,0,0,.14)}
+.gm-last-card .lc-logo i:nth-child(1){background:#e8282b;transform:rotate(-9deg) translateY(4px)}
+.gm-last-card .lc-logo i:nth-child(2){background:#fcc916;color:#17171b;text-shadow:0 3px 0 rgba(255,255,255,.35)}
+.gm-last-card .lc-logo i:nth-child(3){background:#1d6fc8;transform:rotate(9deg) translateY(4px)}
+@media (max-width:560px){.gm-last-card .lc-logo i{width:48px;height:66px;font-size:34px;border-width:3px}}
 .gm-last-card .lc-tag{font:800 13px var(--sans);color:rgba(255,255,255,.85);margin:6px 0 8px;text-shadow:0 1px 2px rgba(0,0,0,.5)}
 .gm-last-card .lc-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 6px}
 .gm-last-card .lc-cols button{height:74px;border-radius:18px;border:4px solid #fff;font:900 17px var(--sans);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.3);box-shadow:inset 0 -6px 0 rgba(0,0,0,.2),0 6px 14px rgba(0,0,0,.3)}
@@ -1233,7 +1239,7 @@ ${[1, 2, 3, 4, 5, 6, 7].map(i => `<button class="lc-catch" data-u="c${i}" hidden
         hud();
         api.score('—');
         const l = m => opt.mode === m ? ' last' : '';
-        showPane('title', `<div class="lc-title"><div class="lc-logo">UN<b>O</b></div><p class="lc-tag">Match the colour or number. Call it at one card.</p>
+        showPane('title', `<div class="lc-title"><div class="lc-logo" aria-label="UNO"><i>U</i><i>N</i><i>O</i></div><p class="lc-tag">Match the colour or number. Call it at one card.</p>
 <button class="lc-big red${l('cpu')}" data-a="m:cpu">vs CPU<small>Play 1-7 computer opponents</small></button>
 <button class="lc-big green${l('online')}" data-a="m:online">Online party<small>2-8 players, each on their own device</small></button>
 <div class="lc-row"><button class="lc-sm" data-a="house">House rules</button><button class="lc-sm" data-a="rules">How to play</button></div></div>`, a => {
@@ -1697,7 +1703,8 @@ ${ones.map(q => `<div class="lc-row"><button class="lc-sm" data-a="pc${q}">Catch
         const bluffable = V && V.rules && V.rules.chal && V.hand.some(id => CC(id) === V.col);
         D.hand.forEach((e, i) => {
           const s = sl[i]; e.tx = s.x; e.ty = s.y; e.tr = s.r;
-          const lift = (set.has(e.id) ? (PORT ? 12 : 16) : 0) + (D.focus === e.id ? (PORT ? 8 : 12) : 0);
+          const nud = set.has(e.id) && D.nudge ? Math.max(0, Math.sin(t * .008 + i * .7)) * (PORT ? 8 : 12) : 0;
+          const lift = (set.has(e.id) ? (PORT ? 12 : 16) : 0) + (D.focus === e.id ? (PORT ? 8 : 12) : 0) + nud;
           e.x = lerp(e.x, s.x, k); e.y = lerp(e.y, s.y, k); e.r = lerp(e.r, s.r, k); e.lift = lerp(e.lift || 0, lift, k);
         });
         for (const e of D.hand) {
@@ -1815,6 +1822,8 @@ ${ones.map(q => `<div class="lc-row"><button class="lc-sm" data-a="pc${q}">Catch
         ctx.drawImage(feltC, 0, 0, W, H);
         if (scene === 'title') { drawTitle(t); drawFx(t, dt); return; }
         const V = view(), myTurn = !!V && V.turn === viewer && isIdle() && M.gating == null, pl = myTurn ? playable(V) : [];
+        if (myTurn && canAct()) { if (!D.turnAt) D.turnAt = t; if (!D.nudge && t - D.turnAt > 6000) { D.nudge = true; sfx('turn'); } }
+        else { D.turnAt = 0; D.nudge = false; }
         drawRing(t, dt);
         drawPiles(t, V, myTurn && canAct(), pl);
         for (let p = 0; p < D.n; p++) drawSeat(p, t);

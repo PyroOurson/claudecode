@@ -224,7 +224,7 @@
       function spawnPlayer(p, m) {
         const [x, y] = spawnPos();
         mkCell(p, x, y, m);
-        p.alive = true; p.tx = x; p.ty = y; p.wt = 0;
+        p.alive = true; p.tx = x; p.ty = y; p.wt = 0; p.born = T;
       }
       function spawnVirus() {
         for (let t = 0; t < 6; t++) {
@@ -528,7 +528,7 @@
             const reach = c.s + R + (splitter ? CFG.splitReach : 150) + (passive ? 220 : 0);
             if (d < reach) { const w = (reach - d) / reach * 3 + 0.4; fxv -= dx / d * w; fyv -= dy / d * w; danger += w; }
             if (d - c.s < near) near = d - c.s;
-          } else if (R > c.s * CFG.eatRatio) {
+          } else if (R > c.s * CFG.eatRatio && !(c.o === me && T - (me.born || 0) < TPS * 6)) {
             const edge = Math.max(1, d - R + 60);
             if (passive && edge > 450) continue;
             const sc = c.m / edge;
@@ -963,7 +963,10 @@
         for (const v of viruses) if (v.rx + v.rr > x0 && v.rx - v.rr < x1 && v.ry + v.rr > y0 && v.ry - v.rr < y1) vis.push(v);
         vis.sort(byR);
         for (const e of vis) {
-          if (e.k === 0) drawCell(e, sc);
+          if (e.k === 0) {
+            drawCell(e, sc);
+            if (e.o === me && state === 'play' && T - (me.born || 0) < TPS * 6) { ctx.save(); ctx.globalAlpha = 0.3 + 0.5 * Math.abs(Math.cos((T - me.born) / TPS * 5)); ctx.strokeStyle = me.bcol; ctx.lineWidth = 3 / sc; ctx.setLineDash([8 / sc, 6 / sc]); ctx.beginPath(); ctx.arc(e.rx, e.ry, e.rr + 7 / sc, 0, TAU); ctx.stroke(); ctx.restore(); }
+          }
           else if (e.k === 2) drawVirus(e);
           else drawBlob(e.rx, e.ry, e.rr, e.col, e.bcol);
         }

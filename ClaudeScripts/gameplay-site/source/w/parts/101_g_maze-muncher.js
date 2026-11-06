@@ -778,6 +778,7 @@
       function input(d) {
         if (state === 'title') {
           if (d === 1 || d === 3) { startLevel = Math.max(1, Math.min(21, startLevel + (d === 1 ? -1 : 1))); stT = Math.max(stT, 250); }
+          else newGame();
           return;
         }
         pac.want = d;
@@ -792,7 +793,7 @@
         if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
         audio();
         const d = KEYDIR[e.code];
-        if (d !== undefined) { e.preventDefault(); input(d); return; }
+        if (d !== undefined) { e.preventDefault(); if (!(e.repeat && state === 'title')) input(d); return; }
         if (e.code === 'KeyP' && !e.repeat && state !== 'title' && state !== 'over') { paused = !paused; return; }
         if ((e.code === 'Enter' || e.code === 'Space' || e.code === 'NumpadEnter') && !e.repeat) { e.preventDefault(); startOrAdvance(); }
       });

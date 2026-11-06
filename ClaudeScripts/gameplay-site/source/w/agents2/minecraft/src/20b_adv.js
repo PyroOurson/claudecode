@@ -1,5 +1,5 @@
     const ADV = [
-      ['root', 'Minecraft', 'The heart and story of the game', 'grass_block', 0, 1, null, () => has('crafting_table')],
+      ['root', 'Blockcraft', 'The heart and story of the game', 'grass_block', 0, 1, null, () => has('crafting_table')],
       ['stone', 'Stone Age', 'Mine Stone with your new Pickaxe', 'wooden_pickaxe', 1, 1, 'root', () => has('cobblestone') || has('cobbled_deepslate')],
       ['upgrade', 'Getting an Upgrade', 'Construct a better Pickaxe', 'stone_pickaxe', 2, 1, 'stone', () => has('stone_pickaxe')],
       ['iron', 'Acquire Hardware', 'Smelt an Iron Ingot', 'iron_ingot', 3, 1, 'upgrade', () => has('iron_ingot')],
@@ -32,7 +32,7 @@
         g.fillStyle = '#555555'; g.fillRect(x + 1, y + 1, 158, 30);
         g.fillStyle = '#212121'; g.fillRect(x + 3, y + 3, 154, 26);
         drawItem({ id: IN[o.a[3]].idx, n: 1 }, x + 8, y + 8, true);
-        text('Advancement Made!', x + 30, y + 7, '#ffff00', false);
+        text(o.h || 'Advancement Made!', x + 30, y + 7, o.h ? '#7dff6e' : '#ffff00', false);
         text(o.a[1], x + 30, y + 18, '#ffffff', false);
         y += 32;
       }
@@ -73,7 +73,7 @@
       panel(wx, wy, ww, wh);
       g.fillStyle = '#c6c6c6'; g.fillRect(tx + 3, wy, 23, 4);
       drawItem({ id: IN.grass_block.idx, n: 1 }, tx + 6, ty + 7, true);
-      text('Minecraft', wx + 8, wy + 6, '#404040', false);
+      text('Blockcraft', wx + 8, wy + 6, '#404040', false);
       const ix = wx + 9, iy = wy + 18, iw = ww - 18, ih = wh - 27;
       if (!ADVBG) { const st = get('stone'), c = cv(16, 16), q = c.getContext('2d'), im = q.createImageData(16, 16); for (let i = 0; i < 1024; i += 4) { im.data[i] = st[i] * .55; im.data[i + 1] = st[i + 1] * .55; im.data[i + 2] = st[i + 2] * .55; im.data[i + 3] = 255; } q.putImageData(im, 0, 0); ADVBG = g.createPattern(c, 'repeat'); }
       g.save(); g.beginPath(); g.rect(ix, iy, iw, ih); g.clip();

@@ -1798,7 +1798,7 @@ ${row('Highlight', 'Playable tiles', seg('assist', [[true, 'On'], [false, 'Off']
     category: 'Board',
     tint: '#c8342a',
     blurb: 'The classic dice game: shake the cup, hold your keepers, fill the official score sheet. Joker rules, smart bots, 1 to 6 players, and online play.',
-    help: 'Tap the cup or <kbd>Space</kbd> to roll · tap dice (or <kbd>1</kbd>-<kbd>5</kbd>) to hold · tap a box twice or <kbd>Enter</kbd> to score · <kbd>H</kbd> hint',
+    help: 'Tap the cup or <kbd>Space</kbd> to roll · tap dice (or <kbd>1</kbd>-<kbd>5</kbd>) to hold · tap a box twice, or <kbd>&uarr;</kbd><kbd>&darr;</kbd> + <kbd>Enter</kbd> to score · <kbd>H</kbd> hint',
     better: 'high',
     format: v => v + ' pts',
     width: 960,
@@ -2283,7 +2283,9 @@ ${row('Highlight', 'Playable tiles', seg('assist', [[true, 'On'], [false, 'Off']
         const k = e.key;
         if (k === ' ' || k === 'Enter') {
           e.preventDefault();
-          if (U.sel >= 0 && canAct()) doScore(); else doRoll();
+          if (U.sel >= 0 && canAct()) doScore();
+          else if (canAct() && !canRoll()) { const os = myOpts(); if (os.length) { U.sel = os.reduce((a, o) => o.pts > a.pts ? o : a, os[0]).c; au.pop(); U.key = ''; } }
+          else doRoll();
         } else if (k >= '1' && k <= '5') doHold(+k - 1);
         else if (k === 'ArrowUp' || k === 'ArrowDown') {
           e.preventDefault();

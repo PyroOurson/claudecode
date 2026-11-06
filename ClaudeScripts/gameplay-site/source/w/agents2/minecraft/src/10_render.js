@@ -22,7 +22,7 @@
     if (touch) renderer.setPixelRatio(Math.min(renderer.getPixelRatio(), 1.5));
     let SV = api.load(); if (!SV || typeof SV !== 'object') SV = {};
     const s0 = SV.set || {};
-    const SET = { rd: clamp(s0.rd | 0 || (touch ? CFG.RD_TOUCH : CFG.RD), 2, 12), fancy: s0.fancy != null ? !!s0.fancy : !touch, fov: clamp(+s0.fov || CFG.FOV, 30, 110), sens: clamp(+s0.sens || 1, .1, 3), music: s0.music !== false, sound: s0.sound !== false, gam: s0.gam != null ? clamp(+s0.gam, 0, 1) : .5, clouds: s0.clouds !== false, bob: s0.bob !== false, gui: s0.gui | 0, smooth: s0.smooth !== false, particles: s0.particles != null ? s0.particles | 0 : 2 };
+    const SET = { rd: clamp(s0.rd | 0 || (touch ? CFG.RD_TOUCH : CFG.RD), 2, 12), fancy: s0.fancy != null ? !!s0.fancy : !touch, fov: clamp(+s0.fov || CFG.FOV, 30, 110), sens: clamp(+s0.sens || 1, .1, 3), music: s0.music !== false, sound: s0.sound !== false, gam: s0.gam != null ? clamp(+s0.gam, 0, 1) : .5, clouds: s0.clouds != null ? s0.clouds !== false : !touch, bob: s0.bob !== false, gui: s0.gui | 0, smooth: s0.smooth !== false, particles: s0.particles != null ? s0.particles | 0 : 2 };
     const persistSet = () => { SV.set = SET; api.save(SV); };
     const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(CFG.FOV, 1.6, .05, 1200);
     cam.rotation.order = 'YXZ';

@@ -291,6 +291,7 @@ ${p} .cn.on i{background:var(--good);box-shadow:0 0 0 3px rgba(34,176,125,.2)}
     engine: { ttAi, ttWin, t4Ai, ttDead },
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M24 8v48M40 8v48M8 24h48M8 40h48" opacity=".3"/><path d="M12 12l8 8M20 12l-8 8M44 44l8 8M52 44l-8 8"/><circle cx="32" cy="32" r="4.5"/><circle cx="48" cy="16" r="4.5"/></svg>',
     css: duelCss('.gm-tictactoe') + `
+.am-gamebox.fs .gm-tictactoe.g-root{background:var(--sunk)}
 .gm-tictactoe .gl{width:12px;height:12px}
 .gm-tictactoe .board{position:relative;width:min(370px,100%,max(240px,100dvh - 440px));aspect-ratio:1;touch-action:none;border-radius:28px;background:radial-gradient(120% 90% at 30% 0%,#86e3ff,#2fb6e8 58%,#1b8fcb);box-shadow:inset 0 3px 0 rgba(255,255,255,.4),inset 0 -6px 0 rgba(0,40,80,.18),0 18px 34px -16px rgba(20,110,170,.75)}
 .gm-tictactoe .board::before{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 80% 85%,rgba(255,255,255,.18),transparent 40%);pointer-events:none}
@@ -507,6 +508,7 @@ ${p} .cn.on i{background:var(--good);box-shadow:0 0 0 3px rgba(34,176,125,.2)}
     engine: { c4Best, c4Line },
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="19" width="48" height="36" rx="6"/><circle cx="38" cy="9.5" r="3.5" fill="currentColor"/><circle cx="14" cy="25" r="3.5"/><circle cx="26" cy="25" r="3.5"/><circle cx="38" cy="25" r="3.5"/><circle cx="50" cy="25" r="3.5"/><circle cx="14" cy="37" r="3.5"/><circle cx="26" cy="37" r="3.5" fill="currentColor"/><circle cx="38" cy="37" r="3.5" fill="currentColor" opacity=".3"/><circle cx="50" cy="37" r="3.5"/><circle cx="14" cy="49" r="3.5" fill="currentColor"/><circle cx="26" cy="49" r="3.5" fill="currentColor" opacity=".3"/><circle cx="38" cy="49" r="3.5" fill="currentColor"/><circle cx="50" cy="49" r="3.5" fill="currentColor" opacity=".3"/></svg>',
     css: duelCss('.gm-connect-four') + `
+.am-gamebox.fs .gm-connect-four.g-root{background:var(--sunk)}
 .gm-connect-four .dot{display:inline-block;width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff9a9a,#e5262e 60%,#a50f16)}
 .gm-connect-four .dot.y{background:radial-gradient(circle at 35% 30%,#fff3a0,#ffc61a 60%,#c98a00)}
 .gm-connect-four .c4wrap{position:relative;width:min(560px,100%,max(260px,(100dvh - 450px) * 1.05));touch-action:none;padding-bottom:3.5%}

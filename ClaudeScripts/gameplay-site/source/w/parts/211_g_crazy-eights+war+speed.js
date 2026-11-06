@@ -2052,6 +2052,7 @@ ${M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a="again">
     css: css('speed', SP_CSS),
     mount(root, api) {
       const K = Core(root, api, { id: 'speed', W: 960, H: 600, PW: 360, PH: 640, defaults: { diff: 'Quick', hints: true, back: 'red', wins: 0 }, bg: spBg, back: WAR_BACKS.red });
+      const FINE = !!(window.matchMedia && matchMedia('(pointer: fine)').matches);
       const opt = K.opt, ctx = K.ctx;
       if (!SP_AI[opt.diff]) opt.diff = 'Quick';
       K.setBack(...(WAR_BACKS[opt.back] || WAR_BACKS.red));
@@ -2341,6 +2342,11 @@ ${M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a="again">
           if (D.hand[i] == null || D.hold[i] || (D.drag && D.drag.slot === i)) continue;
           const pe = D.pend[i], id = D.hand[i], lift = i === D.hover && !D.drag ? -12 : 0;
           K.card(id, pe ? pe.x : D.px[i], (pe ? pe.y : D.py[i]) + lift, 0, 1, { alpha: pe ? .65 : 1, glow: pl && opt.hints && !pe && legal(id) ? '#8be8ff' : null, dim: pl && opt.hints && !pe && !legal(id) ? .28 : 0 });
+        }
+        if (pl && !P && FINE) {
+          let c = 0;
+          for (let i = 0; i < 5; i++) { if (!present(i) || D.hold[i]) continue; c++; if (D.hand[i] == null || D.px[i] == null || D.pend[i]) continue; K.text(String(c), D.px[i], D.py[i] + K.ch / 2 + 13, 12, 'rgba(255,255,255,.5)', { stroke: 'rgba(0,0,0,.55)', weight: 800 }); }
+          if (!D.kb) [0, 1].forEach(i => { const p = pilePos(i); K.text(i ? 'X' : 'Z', p.x, p.y + K.ch / 2 + 15, 12, 'rgba(255,255,255,.45)', { stroke: 'rgba(0,0,0,.55)', weight: 800 }); });
         }
         if (D.drag) K.card(D.drag.id, D.drag.x, D.drag.y, 0, 1.08, { glow: '#fff' });
 

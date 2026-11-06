@@ -1,5 +1,6 @@
 const TRS = { t0: Date.now(), vis: 0, vt: performance.now(), von: document.visibilityState === 'visible', foc: 0, blur: 0, keys: 0, clicks: 0, taps: 0, md: 0, mx: null, my: null, wheel: 0, scr: 0, sy: 0, games: 0, gset: new Set(), fs: 0, off: 0, errs: 0, idle: 0, la: performance.now(), copy: 0, rsz: 0, seq: 0 };
-const TR = { g: null, v0: 0, sy: 0, impQ: [], io: null, clicks: [], dw: 0, vit: { cls: 0, inp: 0, lcp: null }, vsent: false, pads: new Set(), kb: '', env: 0, asked: new Set(), hz: (() => { try { return +sessionStorage.getItem('gameplay:hz') || null; } catch (e) { return null; } })() };
+const TR_IDLE = 60000;
+const TR = { li: performance.now(), idle: false, vis: null, g: null, v0: 0, sy: 0, impQ: [], io: null, clicks: [], dw: 0, vit: { cls: 0, inp: 0, lcp: null }, vsent: false, pads: new Set(), kb: '', env: 0, asked: new Set(), hz: (() => { try { return +sessionStorage.getItem('gameplay:hz') || null; } catch (e) { return null; } })() };
 const TR_DC = /amazon|aws|google cloud|google llc|microsoft|azure|digitalocean|ovh|hetzner|linode|akamai|vultr|choopa|oracle|contabo|leaseweb|m247|datacamp|cdn77|scaleway|alibaba|tencent|hostinger|ionos|psychz|zenlayer|packethub|tzulo|quadranet|nordvpn|expressvpn|proton|mullvad|surfshark|private internet|cyberghost|ipvanish|hide\.me|windscribe|cloudflare|fastly|gcore|constant company|hostwinds|kamatera|clouvider|serverius|worldstream|hivelocity|colocrossing/i;
 const trPadKind = id => /054c|sony|playstation|dualsense|dualshock/i.test(id) ? 'PlayStation' : /045e|xbox|xinput/i.test(id) ? 'Xbox' : /057e|nintendo|switch|joy-con/i.test(id) ? 'Switch' : /8bitdo/i.test(id) ? '8BitDo' : /046d|logitech/i.test(id) ? 'Logitech' : 'Other';
 const trSel = el => { const a = el.closest('[id],[data-id],a,button,[role="button"]') || el, t = a.tagName.toLowerCase(); return (t + (a.id ? '#' + a.id : a.dataset && a.dataset.id ? '[' + a.dataset.id + ']' : typeof a.className === 'string' && a.className.trim() ? '.' + a.className.trim().split(/\s+/)[0] : '') + (a !== el ? ' ' + el.tagName.toLowerCase() : '')).slice(0, 80); };
@@ -10,11 +11,44 @@ const trVis = () => { const t = performance.now(); if (TRS.von) TRS.vis += t - T
 const trZoom = () => { if (!trMq('(pointer: fine)') || window.top !== window || !outerWidth || !innerWidth) return null; const z = outerWidth / innerWidth, s = [.25, .33, .5, .67, .75, .8, .9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5].reduce((a, b) => Math.abs(b - z) < Math.abs(a - z) ? b : a); return Math.abs(s - z) / s < .03 ? s : null; };
 const trVotes = () => { try { return JSON.parse(localStorage.getItem('gameplay:votes')) || {}; } catch (e) { return {}; } };
 
+function trIdle() { return !!TR.g && performance.now() - TR.li > TR_IDLE; }
+function trTick(G, t) {
+  const V = G && G.vis;
+  if (!V) return;
+  if (V.on) { const e = Math.min(t, TR.li + TR_IDLE); if (e > V.t) V.ms += e - V.t; }
+  V.t = t;
+  V.on = TR.g === G && document.visibilityState === 'visible' && !PAUSE.on;
+}
+function trWake() { if (typeof ttSync === 'function') { try { ttSync(); } catch (e) {} } }
+function trInput() {
+  const t = performance.now();
+  if (t - TR.li > TR_IDLE && TR.g) { trTick(TR.g, t); TR.li = t; if (TR.idle) { TR.idle = false; trWake(); } }
+  else TR.li = t;
+}
+function trEmit(V) {
+  if (!V) return;
+  const s = Math.floor(V.ms / 1000);
+  V.st = performance.now();
+  if (s < 1 || s <= V.sent) return;
+  V.sent = s;
+  track('game_active', { game: V.game, v: V.id, sec: s });
+}
+function trBeat() {
+  const G = TR.g;
+  if (!G) return;
+  const t = performance.now(), id = t - TR.li > TR_IDLE;
+  trTick(G, t);
+  if (id !== TR.idle) { TR.idle = id; trWake(); }
+  if (t - G.vis.st >= 60000) trEmit(G.vis);
+}
 function trStart(g, ctl) {
   TRS.games++; TRS.gset.add(g.id);
-  const A = ctl.api, G = { g, t0: performance.now(), why: 'exit', rounds: 0, sc: [], last: null, lv: null, fr: 0, ft: 0, fs: [], fh: new Uint32Array(4000), inp: { k: 0, m: 0, t: 0, p: 0 }, on: {} };
+  const t0 = performance.now(), A = ctl.api, G = { g, t0, why: 'exit', rounds: 0, sc: [], last: null, lv: null, fr: 0, ft: 0, fs: [], fh: new Uint32Array(4000), inp: { k: 0, m: 0, t: 0, p: 0 }, on: {} };
   if (TR.g) trEnd1(TR.g);
-  TR.g = G;
+  if (!TR.vis || TR.vis.game !== g.id || TR.vis.done) TR.vis = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8), game: g.id, ms: 0, t: t0, on: false, sent: 0, st: t0, done: false };
+  G.vis = TR.vis; G.a0 = TR.vis.ms;
+  TR.g = G; TR.li = t0; TR.idle = false;
+  trTick(G, t0);
   const sc = A.score, sb = A.submit, ov = A.overlay;
   A.score = v => { if (typeof v === 'number' && isFinite(v)) G.last = v; return sc(v); };
   A.submit = v => { if (typeof v === 'number' && isFinite(v) && G.sc.length < 40) G.sc.push(v); return sb(v); };
@@ -29,7 +63,7 @@ function trStart(g, ctl) {
     if (PAUSE.on || document.visibilityState !== 'visible') { last = 0; return; }
     if (!last || t - last > 1000) { last = s0 = t; n = 0; return; }
     G.fr++; G.ft += t - last; G.fh[Math.min(3999, (t - last) * 4 | 0)]++; last = t; n++;
-    if (++k % 10 === 0 && navigator.getGamepads) { for (const p of navigator.getGamepads()) if (p && (p.buttons.some(b => b.pressed) || p.axes.some(a => Math.abs(a) > .5))) { G.on.p = 1; break; } }
+    if (++k % 10 === 0 && navigator.getGamepads) { for (const p of navigator.getGamepads()) if (p && (p.buttons.some(b => b.pressed) || p.axes.some(a => Math.abs(a) > .5))) { G.on.p = 1; trInput(); break; } }
     if (t - s0 >= 1000) {
       if (t - G.t0 > 3000 && G.fs.length < 7200) G.fs.push(n * 1000 / (t - s0));
       for (const x in G.on) G.inp[x]++;
@@ -70,17 +104,25 @@ function trAsk(G) {
   });
   card.append(box);
 }
+const TR_VT = {};
 function trVote(id, v) {
-  const V = trVotes();
+  const V = trVotes(), k = id + ':' + v, now = Date.now();
   V[id] = v;
   try { localStorage.setItem('gameplay:votes', JSON.stringify(V)); } catch (e) {}
+  if (now - (TR_VT[k] || 0) < 15000) return;
+  TR_VT[k] = now;
   if (SB.on) sbRest('rpc/vote_game', { method: 'POST', body: { p_game: id, p_vote: v }, auth: !!SB.user }).catch(() => {});
 }
 function trEnd1(G) {
   if (TR.g !== G) return;
+  const now = performance.now();
+  trTick(G, now);
   TR.g = null;
+  G.vis.on = false;
+  if (G.why !== 'restart') { G.vis.done = true; trEmit(G.vis); }
+  if (TR.idle) { TR.idle = false; trWake(); }
   const fs = G.fs.slice().sort((a, b) => a - b), I = G.inp;
-  track('game_quit', { game: G.g.id, sec: Math.round((performance.now() - G.t0) / 1000), why: G.why, rounds: G.rounds, sc: G.sc, last: G.last, lv: G.lv, fps: G.ft ? G.fr * 1000 / G.ft : null, fpsmin: fs.length ? fs[0] : null, fps5: fs.length ? fs[Math.floor(fs.length * .05)] : null, fps10: trLow(G.fh, G.fr), fpshi: fs.length ? fs[fs.length - 1] : null, hz: TR.hz, ik: I.k, im: I.m, it: I.t, ip: I.p });
+  track('game_quit', { game: G.g.id, sec: Math.round((now - G.t0) / 1000), act: Math.round((G.vis.ms - G.a0) / 1000), why: G.why, rounds: G.rounds, sc: G.sc, last: G.last, lv: G.lv, fps: G.ft ? G.fr * 1000 / G.ft : null, fpsmin: fs.length ? fs[0] : null, fps5: fs.length ? fs[Math.floor(fs.length * .05)] : null, fps10: trLow(G.fh, G.fr), fpshi: fs.length ? fs[fs.length - 1] : null, hz: TR.hz, ik: I.k, im: I.m, it: I.t, ip: I.p });
 }
 function trView(from) {
   const now = performance.now();
@@ -239,7 +281,7 @@ function trSess(final) {
   TRS.idle = Math.max(TRS.idle, t - TRS.la);
   track('sess_sum', { seq: ++TRS.seq, final: !!final, dur: Math.round((Date.now() - TRS.t0) / 1000), vis: Math.round(TRS.vis / 1000), foc: TRS.foc, blur: TRS.blur, keys: TRS.keys, clicks: TRS.clicks, taps: TRS.taps, mdist: Math.round(TRS.md), wheel: TRS.wheel, scr: Math.round(TRS.scr), games: TRS.games, gset: TRS.gset.size, gl: [...TRS.gset].slice(0, 30), fs: TRS.fs, off: TRS.off, errs: TRS.errs, idle: Math.round(TRS.idle / 1000), copy: TRS.copy, rsz: TRS.rsz, route: SB.on ? (SBN.best() === SUPABASE_DIRECT ? 'direct' : 'relay') : 'none', acct: SB.user ? 'user' : SB.guest ? 'guest' : 'none', lang: document.documentElement.lang || null, theme: document.documentElement.getAttribute('data-theme') || 'system' });
 }
-function trHidden() { trImpFlush(); trVitalsSend(); trSess(false); }
+function trHidden() { if (TR.g) { trTick(TR.g, performance.now()); trEmit(TR.g.vis); } trImpFlush(); trVitalsSend(); trSess(false); }
 function trEnd() {
   if (TR.g) { TR.g.why = 'close'; trEnd1(TR.g); }
   trScroll(); trImpFlush(); trVitalsSend();
@@ -279,10 +321,10 @@ function trBoot() {
   trImpScan();
   setInterval(trImpFlush, 30000);
   if (anOk()) setTimeout(trEnv, 1500);
-  const act = () => { const t = performance.now(); TRS.idle = Math.max(TRS.idle, t - TRS.la); TRS.la = t; };
+  const act = () => { const t = performance.now(); TRS.idle = Math.max(TRS.idle, t - TRS.la); TRS.la = t; trInput(); };
   addEventListener('keydown', () => { TRS.keys++; act(); }, { capture: true, passive: true });
   addEventListener('pointerdown', e => { if (e.pointerType === 'touch') TRS.taps++; else TRS.clicks++; act(); }, { capture: true, passive: true });
-  addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') return; if (TRS.mx != null) TRS.md += Math.min(400, Math.hypot(e.clientX - TRS.mx, e.clientY - TRS.my)); TRS.mx = e.clientX; TRS.my = e.clientY; act(); }, { capture: true, passive: true });
+  addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') { trInput(); return; } if (TRS.mx != null) TRS.md += Math.min(400, Math.hypot(e.clientX - TRS.mx, e.clientY - TRS.my)); TRS.mx = e.clientX; TRS.my = e.clientY; act(); }, { capture: true, passive: true });
   addEventListener('wheel', () => { TRS.wheel++; act(); }, { capture: true, passive: true });
   addEventListener('scroll', () => { TRS.scr += Math.abs(scrollY - TRS.sy); TRS.sy = scrollY; }, { passive: true });
   addEventListener('focus', () => TRS.foc++);
@@ -292,7 +334,9 @@ function trBoot() {
   addEventListener('copy', () => TRS.copy++);
   addEventListener('resize', () => TRS.rsz++, { passive: true });
   document.addEventListener('fullscreenchange', () => { if (document.fullscreenElement) TRS.fs++; });
-  document.addEventListener('visibilitychange', trVis);
+  addEventListener('touchmove', trInput, { capture: true, passive: true });
+  document.addEventListener('visibilitychange', () => { trVis(); if (TR.g) trTick(TR.g, performance.now()); });
+  setInterval(trBeat, 1000);
   setInterval(() => { if (document.visibilityState === 'visible') trSess(false); }, 300000);
 }
 Ameplay.ads = {

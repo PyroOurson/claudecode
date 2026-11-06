@@ -144,6 +144,35 @@ ${SC} .ss-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
 ${SC} .ss-ring .k{position:absolute;inset:0;display:grid;place-items:center}
 ${SC} .ss-ring .k .ss-ic{width:3.6em;height:3.6em}
 ${SC} .ss-small{font-family:"Nunito",system-ui,sans-serif;font-weight:800;font-size:.9em;opacity:.9;letter-spacing:0;margin:.4em 0 0}
+${SC} .ss-modes{display:flex;gap:.25em;background:rgba(18,34,74,.6);border:.13em solid rgba(255,255,255,.9);border-radius:1.4em;padding:.22em;box-shadow:0 .2em 0 rgba(18,34,74,.5)}
+${SC} .ss-modes button{padding:.38em .85em .3em;border-radius:1.1em;font-size:1.1em;${OUT};transition:background .15s,transform .08s}
+${SC} .ss-modes button:active{transform:scale(.95)}
+${SC} .ss-modes button.on{background:linear-gradient(#ffe25a,#ffaa1a);color:#7a3a00;text-shadow:0 .06em 0 rgba(255,255,255,.6)}
+${SC} .ss-modes button small{display:block;font-size:.6em;margin-top:.2em;opacity:.92;font-variant-numeric:tabular-nums}
+${SC} .ss-msub{font-size:.95em;${OUT};opacity:.95;margin-top:-.45em}
+${SC} .ss-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.35em;margin:0 0 .6em}
+${SC} .ss-stats div{background:rgba(75,99,133,.14);border:.12em solid rgba(51,70,95,.35);border-radius:.5em;padding:.4em .2em .32em;color:#1d3f73}
+${SC} .ss-stats small{display:block;font-family:"Nunito",system-ui,sans-serif;font-weight:800;font-size:.68em;letter-spacing:0;opacity:.8;margin-bottom:.2em}
+${SC} .ss-stats b{font-weight:400;font-size:1.2em;font-variant-numeric:tabular-nums}
+${SC} .ss-how{display:grid;grid-template-columns:repeat(4,1fr);gap:.45em;text-align:center}
+@container (max-width: 640px){${SC} .ss-how{grid-template-columns:repeat(2,1fr)}}
+${SC} .ss-panel .ss-card:has(.ss-how){width:min(96%,44em)}
+${SC} .ss-over .ss-card{padding-bottom:.9em}
+${SC} .ss-over .ss-res{margin:.1em 0 .45em}
+${SC} .ss-over .ss-res div{padding:.42em .3em}
+${SC} .ss-over .ss-stats{margin-bottom:.45em}
+${SC} .ss-over .ss-stats div{padding:.26em .2em .2em}
+${SC} .ss-over .ss-new{margin-bottom:.15em}
+${SC} .ss-over .ss-res b{font-size:1.45em}
+${SC} .ss-over .ss-res .big b{font-size:1.75em}
+${SC} .ss-over .ss-prog{height:.45em;margin-top:.25em}
+${SC} .ss-over .ss-row{padding:.25em .55em}
+${SC} .ss-step{position:relative;background:linear-gradient(#7189a8,#4b6385);border:.12em solid #33465f;border-radius:.6em;padding:.45em .45em .55em;display:flex;flex-direction:column;align-items:center;gap:.3em;box-shadow:inset 0 .12em 0 rgba(255,255,255,.25)}
+${SC} .ss-step svg{width:100%;height:auto;border-radius:.4em;display:block}
+${SC} .ss-step b{color:#ffd23f;${OUT};font-weight:400;font-size:1.05em}
+${SC} .ss-step small{font-family:"Nunito",system-ui,sans-serif;font-weight:800;font-size:.78em;letter-spacing:0;line-height:1.2}
+${SC} .ss-step i{position:absolute;left:.35em;top:.3em;width:1.5em;height:1.5em;border-radius:50%;display:grid;place-items:center;font-style:normal;background:#ffd23f;color:#7a3a00;border:.1em solid #fff;font-size:.85em;z-index:1}
+${SC} .ss-howgo{margin-top:.7em}
 ${SC} .ss-toast{position:absolute;left:50%;bottom:22%;transform:translateX(-50%);background:rgba(18,34,74,.75);border:.13em solid #fff;border-radius:1em;padding:.5em .9em .4em;font-size:1.1em;opacity:0;transition:opacity .25s;white-space:nowrap;${OUT}}
 ${SC} .ss-toast.on{opacity:1}
 ${SC} .ss-card{background:repeating-linear-gradient(0deg,rgba(70,100,140,.09) 0 1px,transparent 1px 1.3em),repeating-linear-gradient(90deg,rgba(70,100,140,.09) 0 1px,transparent 1px 1.3em),linear-gradient(#fbfcfd,#e9eef3);border:0;border-radius:.55em;box-shadow:0 .32em 0 #8d99a8,0 1em 2.6em rgba(0,0,0,.4);padding:2.3em 1.1em 1.2em}
@@ -172,6 +201,25 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
 @container (max-width: 640px) and (min-aspect-ratio: 1/1){${SC} .ss-logo{font-size:2.6em}}
 `;
   const ic = k => `<span class="ss-ic">${ICO[k]}</span>`;
+
+  const howSvg = (() => {
+    const tx = (y, s) => (s < 0 ? 42 - (y - 24) * 38 / 44 : 78 + (y - 24) * 38 / 44).toFixed(1);
+    const lx = (l, y, o) => { const a = 48 + l * 12 + o, b = 16.7 + l * 43.3 + o * 3; return (a + (b - a) * (y - 24) / 44).toFixed(1); };
+    let bg = '<rect width="120" height="68" fill="#8fd0ff"/><path d="M0 18h120v8H0z" fill="#cfe9fb"/><path d="M6 18h12v-8h8v8h10v-12h10v12h28v-9h9v9h12v-6h9v6" fill="#c4553f" opacity=".55"/><path d="M0 24h120v44H0z" fill="#c9c2b6"/><path d="M42 24h36l38 44H4z" fill="#a99b88"/>';
+    for (const y of [27, 31, 36, 42, 49, 58]) bg += `<path d="M${tx(y, -1)} ${y}H${tx(y, 1)}" stroke="#6b4a32" stroke-width="${(0.6 + (y - 24) * 0.05).toFixed(2)}"/>`;
+    for (let l = 0; l < 3; l++) for (const o of [-3, 3]) bg += `<path d="M${lx(l, 24, o)} 24L${lx(l, 68, o)} 68" stroke="#e3e7ec" stroke-width="1.1"/>`;
+    const man = (x, y, s, op) => `<g transform="translate(${x} ${y}) scale(${s})" opacity="${op}"><ellipse cx="0" cy="1" rx="5.5" ry="1.7" fill="rgba(0,0,0,.28)"/><rect x="-2.8" y="-9" width="2.4" height="9" rx="1.1" fill="#79a6dc"/><rect x=".4" y="-9" width="2.4" height="9" rx="1.1" fill="#79a6dc"/><rect x="-3.2" y="-1" width="3" height="1.8" rx=".8" fill="#f2f2f2"/><rect x=".2" y="-1" width="3" height="1.8" rx=".8" fill="#f2f2f2"/><rect x="-4" y="-17.5" width="8" height="9.5" rx="2.6" fill="#efebe2"/><rect x="-4" y="-17.5" width="8" height="4" rx="2" fill="#7fb2e5"/><circle cx="0" cy="-21" r="3.8" fill="#e9b48a"/><circle cx="1.4" cy="-21.2" r=".6" fill="#2a1d16"/><path d="M-4 -22a4 4 0 0 1 8 0z" fill="#d8322c"/><rect x="1.2" y="-22.8" width="4.6" height="1.4" rx=".7" fill="#d8322c"/></g>`;
+    const arr = (x, y, r) => `<g transform="translate(${x} ${y}) rotate(${r})"><path d="M-6 -4.5h5v-4.5l8 9-8 9v-4.5h-5z" fill="#ffd23f" stroke="#12224a" stroke-width="1.6" stroke-linejoin="round"/></g>`;
+    const icon = (k, x, y, w) => ICO[k].replace('<svg viewBox="0 0 24 24">', `<svg x="${x}" y="${y}" width="${w}" height="${w}" viewBox="0 0 24 24">`);
+    const coin = (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#ffc91f" stroke="#b87400" stroke-width="${(r * 0.22).toFixed(2)}"/><circle cx="${x - r * 0.3}" cy="${y - r * 0.3}" r="${(r * 0.32).toFixed(2)}" fill="#fff6c0"/>`;
+    const wrapS = c => `<svg viewBox="0 0 120 68">${bg}${c}</svg>`;
+    return [
+      wrapS(man(25, 62, 0.9, 0.35) + man(95, 62, 0.9, 0.35) + man(60, 62, 1, 1) + arr(39, 46, 180) + arr(81, 46, 0)),
+      wrapS('<g><rect x="49" y="50" width="22" height="5" rx="1" fill="#fff" stroke="#12224a" stroke-width="1"/><path d="M52 50h4l-2 5h-4zM60 50h4l-2 5h-4zM68 50h3v2l-1.5 3h-3z" fill="#e2412c"/><rect x="50" y="55" width="2" height="7" fill="#5a6270"/><rect x="68" y="55" width="2" height="7" fill="#5a6270"/></g><path d="M44 64Q52 26 60 40" fill="none" stroke="#fff" stroke-width="1.4" stroke-dasharray="2.5 2.5" opacity=".9"/>' + man(60, 44, 0.95, 1) + arr(22, 40, -90) + arr(98, 40, 90)),
+      wrapS(coin(60, 29, 1.6) + coin(60, 34, 2.2) + coin(60, 41, 2.9) + coin(60, 50, 3.7) + man(60, 66, 0.9, 1) + icon('mag', 6, 4, 22) + icon('jet', 92, 4, 22) + icon('x2', 6, 36, 18) + icon('sneak', 96, 36, 18)),
+      wrapS('<g><path d="M26 30h20l-3 26H18z" fill="#ef6a2c" stroke="#7a2a0a" stroke-width="1"/><path d="M27.5 33h17l-1 8h-17.5z" fill="#a9d4ef" stroke="#3a4a5a" stroke-width=".8"/><path d="M19.5 49h24.5" stroke="#b8d636" stroke-width="3"/><circle cx="23" cy="53" r="1.4" fill="#fff6c0"/><circle cx="40" cy="53" r="1.4" fill="#fff6c0"/></g><ellipse cx="60" cy="63" rx="11" ry="3" fill="#ff4fa3" stroke="#8a1f5a" stroke-width="1"/><ellipse cx="60" cy="62.6" rx="7" ry="1.3" fill="#ffd23f"/><ellipse cx="60" cy="66" rx="9" ry="1.4" fill="#3ad1ff" opacity=".7"/>' + man(60, 61, 0.95, 1) + icon('board', 92, 4, 24) + icon('key', 94, 30, 20))
+    ];
+  })();
   const logoW = (w, o) => [...w].map((c, i) => `<i style="--r:${[-7, 5, -3, 6, -5, 4, -6][(i + o) % 7]}deg;--y:${[0.03, -0.05, 0.02, -0.03, 0.05, -0.02, 0][(i + o) % 7]}em">${c}</i>`).join('');
   const HTML = `
 <div class="ss-hud off">
@@ -196,11 +244,13 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
   </div>
   <div class="ss-bot">
     <div class="ss-tap">TAP TO PLAY</div>
-    <div class="ss-menu"><button class="ss-btn y" data-o="missions">${ic('star')}Missions<span class="bdg h-mult">x1</span></button><button class="ss-btn g" data-o="shop">${ic('coin')}Shop</button><button class="ss-btn" data-o="chars">Surfers</button></div>
+    <div class="ss-modes"><button data-m="classic">Classic<small>0</small></button><button data-m="rush">Rush<small>0</small></button><button data-m="chill">Chill<small>0</small></button></div>
+    <div class="ss-msub"></div>
+    <div class="ss-menu"><button class="ss-btn y" data-o="missions">${ic('star')}Missions<span class="bdg h-mult">x1</span></button><button class="ss-btn g" data-o="shop">${ic('coin')}Shop</button><button class="ss-btn" data-o="chars">Surfers</button><button class="ss-btn" data-o="how">How to play</button></div>
   </div>
 </div>
 <div class="ss-scr ss-dim ss-panel"><div class="ss-card"><button class="x" aria-label="Close">&#10005;</button><h3 class="p-title"></h3><div class="p-body"></div></div></div>
 <div class="ss-scr ss-dim ss-save"><div class="ss-card"><h3>Save me!</h3><div class="ss-ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="9"/><circle class="s-arc" cx="50" cy="50" r="44" fill="none" stroke="#ffd23f" stroke-width="9" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0"/></svg><div class="k">${ic('key')}</div></div><button class="ss-btn g s-go">Use <b class="s-cost">1</b> ${ic('key')}</button><p class="ss-small s-have"></p><div class="ss-btns"><button class="ss-btn r s-skip">No thanks</button></div></div></div>
-<div class="ss-scr ss-dim ss-over"><div class="ss-card"><h3 class="o-title">Game over</h3><div class="o-new"></div><div class="ss-res"><div class="big"><small>SCORE</small><b class="o-score">0</b></div><div><small>HIGH SCORE</small><b class="o-best">0</b></div><div><small>COINS</small><b class="o-coins">0</b></div></div><div class="ss-list o-ms"></div><div class="ss-btns"><button class="ss-btn g o-play">${ic('play')}Play</button><button class="ss-btn o-home">${ic('home')}Home</button><button class="ss-btn y o-shop">${ic('coin')}Shop</button></div></div></div>
-<div class="ss-scr ss-dim ss-pausep"><div class="ss-card"><h3>Paused</h3><div class="ss-list pz-ms"></div><div class="ss-btns"><button class="ss-btn g pz-go">${ic('play')}Resume</button><button class="ss-btn pz-home">${ic('home')}Home</button></div></div></div>
+<div class="ss-scr ss-dim ss-over"><div class="ss-card"><h3 class="o-title">Game over</h3><div class="o-new"></div><div class="ss-res"><div class="big"><small>SCORE</small><b class="o-score">0</b></div><div><small>HIGH SCORE</small><b class="o-best">0</b></div><div><small>COINS</small><b class="o-coins">0</b></div></div><div class="ss-stats o-st"></div><div class="ss-list o-ms"></div><div class="ss-btns"><button class="ss-btn g o-play">${ic('play')}Play</button><button class="ss-btn o-home">${ic('home')}Home</button><button class="ss-btn y o-shop">${ic('coin')}Shop</button></div></div></div>
+<div class="ss-scr ss-dim ss-pausep"><div class="ss-card"><h3>Paused</h3><div class="ss-list pz-ms"></div><div class="ss-btns"><button class="ss-btn g pz-go">${ic('play')}Resume</button><button class="ss-btn pz-how">How to play</button><button class="ss-btn pz-home">${ic('home')}Home</button></div></div></div>
 `;

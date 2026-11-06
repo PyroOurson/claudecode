@@ -45,6 +45,7 @@ else if (typeof fetch === 'function') {
   } catch (e) {}
 }
 if (!okSlot(slot)) { console.error('gate2: could not read the site password slot from Supabase (get_gate_slot). Check the internet connection, or set GATE_SLOT to the JSON it returns.'); process.exit(1); }
+if (typeof slot.o === 'string') console.log('gate2: the site password is switched off in Supabase right now; the copy in the page keeps only the password slot, never the key');
 slot = { v: 1, s: slot.s, n: slot.n, i: slot.i, c: slot.c };
 const seal = buf => {
   const gz = zlib.gzipSync(buf, { level: 9 });
@@ -59,6 +60,7 @@ plan.files.forEach(f => {
   const buf = Buffer.concat([iv, ct]);
   total += buf.length;
   put(plan.dir + base + '.bin', buf);
+  put(plan.dir + base + '.json', Buffer.from(JSON.stringify(buf.toString('base64')), 'ascii'));
 });
 const pre = plan.pre || (plan.packs || []).slice(0, 6);
 const { gz, iv, ct } = seal(Buffer.from(html, 'utf8'));
@@ -159,10 +161,26 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
   $('p').addEventListener('select', e => { const n = e.target.value.length; e.target.setSelectionRange(n, n); });
   const ok = !!(window.crypto && crypto.subtle && window.DecompressionStream);
   if (!ok) { $('t').textContent = 'Please update your browser to open this site.'; $('p').remove(); $('b').remove(); return; }
-  if ((st.f || 0) >= MAX) { lock(); return; }
   const left = () => { const n = MAX - (st.f || 0); return n + (n === 1 ? ' try' : ' tries') + ' left'; };
-  if (st.f) $('m').textContent = left();
-  if (st.k) { $('f').style.visibility = 'hidden'; $('sp').hidden = false; const raw = b64(st.k); warm(); Promise.all([show(raw), reach()]).then(([t]) => { wr(st); put(t, raw); }, () => { delete st.k; wr(st); $('f').style.visibility = ''; $('sp').hidden = true; }); }
+  if (st.f && st.f < MAX) $('m').textContent = left();
+  const view = on => { const f = $('f'); f.style.visibility = on ? '' : 'hidden'; $('sp').hidden = on; if (on) { f.style.animation = 'none'; void f.offsetWidth; f.style.animation = ''; } };
+  let asked = false;
+  const ask = () => { if (asked) return; asked = true; view(true); if ((st.f || 0) >= MAX) lock(); else $('p').focus(); };
+  const opened = async o => {
+    if (!o || typeof o.o !== 'string' || o.o.length !== 44) return false;
+    let raw, txt;
+    try { raw = b64(o.o); if (raw.length !== 32) return false; txt = await show(raw); } catch (x) { return false; }
+    st = rd(); st.f = 0; st.k = o.o; wr(st); warm(); view(false);
+    requestAnimationFrame(() => put(txt, raw));
+    return true;
+  };
+  const free = () => {
+    view(false);
+    const t = setTimeout(ask, 1500);
+    slot(8000).then(opened, () => false).then(x => { clearTimeout(t); if (!x) ask(); });
+  };
+  if (st.k) { view(false); const raw = b64(st.k); warm(); Promise.all([show(raw), reach()]).then(([t]) => { wr(st); put(t, raw); }, () => { delete st.k; wr(st); free(); }); }
+  else free();
   $('f').addEventListener('submit', async e => {
     e.preventDefault();
     let pw = $('p').value;
@@ -175,6 +193,7 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
     let o, raw = null, txt = null;
     try { o = await slot(8000); }
     catch (x) { o = D.l; }
+    if (o && o.o && await opened(o)) return;
     if (!o) { soft('Could not reach the server. Check your connection and try again.'); $('m').insertAdjacentHTML('beforeend', ' <a href="' + (/(^|\\.)(web\\.app|firebaseapp\\.com)$/i.test(location.hostname) ? '/check' : D.d + 'check.html') + '" style="color:inherit">Run a connection check</a>'); return; }
     try { raw = await unwrap(await kp, o); } catch (x) { raw = null; }
     if (raw) {

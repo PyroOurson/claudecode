@@ -79,6 +79,7 @@
     width: 760,
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M32 16a20 20 0 0 1 20 20H32z" fill="currentColor" opacity=".3" stroke="none"/><circle cx="32" cy="36" r="20"/><path d="M27 8h10M32 8v8M47 20l3.5-3.5M32 36V25"/><circle cx="32" cy="36" r="2.5" fill="currentColor"/></svg>',
     css: segCss('reaction') + `
+.am-gamebox.fs .gm-reaction.g-root{background:var(--sunk)}
 .gm-reaction{gap:14px}
 .gm-reaction .rx-pad{position:relative;width:100%;height:clamp(250px,50vh,400px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;border-radius:var(--r-lg);color:#fff;cursor:pointer;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;background:#7a6af0 linear-gradient(160deg,#9586f8,#5a4ad8);box-shadow:inset 0 -6px 0 rgba(0,0,0,.12)}
 .gm-reaction .rx-pad::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 88% 8%,rgba(255,255,255,.2) 0 13%,transparent 13.3%),radial-gradient(circle at 6% 104%,rgba(255,255,255,.14) 0 24%,transparent 24.3%),radial-gradient(circle at 50% 50%,rgba(255,255,255,.07) 0 40%,transparent 40.3%)}

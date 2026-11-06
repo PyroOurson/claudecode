@@ -2557,12 +2557,12 @@ function qpEngine(seats, opt, loaded) {
     }
     if (a.k === 'skip' && boss) {
       if (ph === 'intro') startRound();
-      else if (ph === 'write') nextDuel();
-      else if (ph === 'duel') closeVote();
+      else if (ph === 'write') { st.P.forEach((p, s) => { if (p.bot) pend(s).forEach(i => { const dd = st.duels[i], j = dd.a.indexOf(s); if (dd.t[j] === null) dd.t[j] = qpBotAns(); }); }); nextDuel(); }
+      else if (ph === 'duel') { const d = cur(); st.P.forEach((p, s) => { if (p.bot && !d.a.includes(s) && !d.v[0].includes(s) && !d.v[1].includes(s)) d.v[duelPick(d)].push(s); }); closeVote(); }
       else if (ph === 'res') afterRes();
       else if (ph === 'rb') afterRb();
-      else if (ph === 'lw') lashVote();
-      else if (ph === 'lv') lashRes();
+      else if (ph === 'lw') { st.P.forEach((p, s) => { if (p.bot && st.ls.t[s] === null) st.ls.t[s] = qpBotAns(); }); lashVote(); }
+      else if (ph === 'lv') { st.P.forEach((p, s) => { if (p.bot && !st.ls.sb[s]) { st.ls.pk[s] = lashPick(s); st.ls.sb[s] = 1; } }); lashRes(); }
       else if (ph === 'lr') finish();
       else return false;
       return true;

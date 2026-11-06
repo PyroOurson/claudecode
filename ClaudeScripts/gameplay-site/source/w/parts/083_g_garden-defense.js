@@ -72,8 +72,14 @@
     { rows: ALL, z: [...DAY, 'football', 'garg'], seeds: [...ORDER.slice(0, 14), 'puffshroom'], award: 'note', intro: 'garg', slots: 8, dusk: 1 },
     { rows: ALL, z: [...DAY, 'football', 'garg'], seeds: [...ORDER.slice(0, 14), 'puffshroom'], award: 'trophy', slots: 8, dusk: 1 }
   ];
-  const NLV = LV.length;
-  const lvName = i => i < 10 ? '1-' + (i + 1) : '2-' + (i - 9);
+  const NLV = LV.length, SURV = NLV;
+  LV.push({ rows: ALL, z: [...DAY, 'football', 'garg'], seeds: ORDER.slice(), slots: 8, surv: 1, award: null });
+  const DIFF = [
+    { name: 'Casual', hm: 0.75, sun: 100, pts: 0, hunt: 0, col: '#6fc23e', desc: 'Softer zombies, more sun' },
+    { name: 'Normal', hm: 1, sun: 0, pts: 0, hunt: 0, col: '#ffd23f', desc: 'The classic challenge' },
+    { name: 'Hard', hm: 1.3, sun: 0, pts: 1, hunt: 0.5, col: '#ff6b4a', desc: 'Tough waves hunt weak lanes' }
+  ];
+  const lvName = i => i === SURV ? 'Survival' : i < 10 ? '1-' + (i + 1) : '2-' + (i - 9);
   const BELT10 = [['peashooter', 18], ['cherrybomb', 16], ['wallnut', 14], ['repeater', 18], ['snowpea', 10], ['chomper', 5], ['potatomine', 10], ['squash', 9]];
   const AWARD = {
     shovel: { name: 'Shovel', head: 'You got the Shovel!', desc: 'Dig up any plant to make room for a better one. Find it next to your seed packets.' },
@@ -98,7 +104,9 @@
     const rr = (a, b) => a + rnd(b - a + 1);
     const rf = (a, b) => a + R() * (b - a);
     const sfx = opt.sfx || (() => {});
-    const n = CFG.waves[li], perFlag = n < 10 ? n : 10;
+    const D = DIFF[opt.diff == null ? 1 : opt.diff] || DIFF[1];
+    let n = L.surv ? 10 : CFG.waves[li];
+    const perFlag = n < 10 ? n : 10;
     const isFlag = w => li > 0 && w % perFlag === perFlag - 1;
     const rowTop = r => CFG.lawnY + r * CFG.cellH;
     const foot = r => rowTop(r) + CFG.foot;
@@ -106,7 +114,7 @@
     const mkCards = list => list.map(type => { const d = PL[type], cd = CFG.initRefresh[d.refresh] || 0; return { type, cd, max: cd || d.refresh, fl: 0 }; });
     const G = {
       li, L, rows, n, isFlag, rowTop, foot, t: 0, uid: 0,
-      sun: li === 0 ? CFG.sunFirst : li >= 10 ? 75 : CFG.sunStart,
+      sun: (li === 0 ? CFG.sunFirst : L.surv ? 150 : li >= 10 ? 75 : CFG.sunStart) + (L.bowl || L.belt ? 0 : D.sun),
       grid: ALL.map(() => new Array(9).fill(null)),
       plants: [], zombies: [], peas: [], suns: [], nuts: [], parts: [],
       mowers: rows.map(r => ({ row: r, x: CFG.mowerX, st: 'ready', t: 0 })),
@@ -115,7 +123,7 @@
       sunCd: rr(CFG.skyFirst[0], CFG.skyFirst[1]), sunsFallen: 0, sunGot: 0, finalSnd: 0,
       msg: null, award: null, state: 'play', loser: null, lostDone: false,
       lastDeath: { x: 600, y: 300 }, shake: 0, kills: 0, heat: [0, 0, 0, 0, 0],
-      tut: L.tut ? 1 : 0, sunDest: { x: 46, y: 32 }
+      tut: L.tut ? 1 : 0, sunDest: { x: 46, y: 32 }, planted: 0, sunTotal: 0, diff: D
     };
     G.zcStart = G.zc;
     G.setSeeds = list => { G.cards = mkCards(list); };
@@ -133,19 +141,28 @@
       for (const t of c) { k -= ZD[t].weight; if (k < 0) return t; }
       return c[c.length - 1];
     }
-    for (let w = 0; w < n; w++) {
-      const list = []; let pts = Math.floor(w / 3) + 1;
+    function genWave(w) {
+      const list = []; let pts = (L.surv ? Math.floor((w + 9) / 2.5) + Math.floor(w * w / 150) : Math.floor(w / 3)) + 1 + D.pts;
       const put = t => { list.push(t); pts -= ZD[t].value; };
-      const fin = w === n - 1;
+      const fin = !L.surv && w === n - 1;
       if (isFlag(w)) { const plain = Math.min(pts, 8); pts = Math.floor(pts * 2.5); for (let i = 0; i < plain; i++) put('zombie'); put('flag'); }
       if (L.bowl) pts *= 4;
       if (L.intro && (w === n >> 1 || fin)) put(L.intro);
       if (fin) for (const t of L.z) if (ZD[t].weight && !list.includes(t)) put(t);
-      while (pts > 0 && list.length < 50) put(pickType(pts, w));
+      while (pts > 0 && list.length < 50) put(pickType(pts, L.surv ? w + 3 : w));
       G.waves.push(list);
+    }
+    for (let w = 0; w < n; w++) genWave(w);
+    const growWaves = () => { if (!L.surv || G.wave < n - 1) return; const k = n; n += perFlag; G.n = n; for (let w = k; w < n; w++) genWave(w); };
+    const LANEV = { sunflower: 0, peashooter: 1, snowpea: 1.3, repeater: 2, threepeater: 1.5, puffshroom: 0.6, torchwood: 0.8, wallnut: 0.8, tallnut: 1, chomper: 1, squash: 0.7, potatomine: 0.6, spikeweed: 0.6 };
+    function weakRow() {
+      let best = rows[0], bv = 1e9;
+      for (const r of rows) { let v = R() * 0.3; for (const p of G.grid[r]) if (p && !p.gone) v += LANEV[p.type] || 0; if (v < bv) { bv = v; best = r; } }
+      return best;
     }
 
     function pickRow() {
+      if (D.hunt && G.wave > 0 && R() < D.hunt) { const r = weakRow(); for (const q of rows) G.heat[q] *= 0.62; G.heat[r] += 1; return r; }
       let tot = 0; const w = [];
       for (const r of rows) { const v = 1 / (1 + 1.6 * G.heat[r]); w.push(v); tot += v; }
       let k = R() * tot, i = 0;
@@ -160,8 +177,8 @@
       const z = {
         id: ++G.uid, type, row, wave, by: foot(row),
         x: x != null ? x : type === 'pole' ? 927 + rnd(10) : 837 + rnd(40) + (isFlag(wave) ? 40 : 0),
-        hp: d.body, hpMax: d.body, helm: d.helm || 0, helmMax: d.helm || 0, helmType: d.helmType || null,
-        paper: d.paper || 0, door: d.door || 0, doorMax: d.door || 1, pole: type === 'pole', mad: false, thrown: false, big: type === 'garg',
+        hp: Math.round(d.body * D.hm), hpMax: Math.round(d.body * D.hm), helm: Math.round((d.helm || 0) * D.hm), helmMax: Math.round((d.helm || 0) * D.hm), helmType: d.helmType || null,
+        paper: Math.round((d.paper || 0) * D.hm), door: Math.round((d.door || 0) * D.hm), doorMax: Math.round((d.door || 1) * D.hm), pole: type === 'pole', mad: false, thrown: false, big: type === 'garg',
         sp: type === 'pole' ? spd(d.spt, 0.985, 1.015) : d.vary ? spd(d.spt, 0.836, 1.164) : spd(d.spt, 1, 1),
         st: 'walk', t: 0, ph: R() * TAU, age: 0, arm: true, head: true, chill: 0, flash: 0, eatT: 0, target: null,
         alt: 0, groan: 300 + rnd(1200), x0: 0, x1: 0, poleX: 0, dir: 1
@@ -176,13 +193,14 @@
       return h;
     }
     function nextWaveComing() {
-      if (G.wave + 1 === n) { G.msg = { k: 'final', t: 0 }; G.finalSnd = 60; }
+      if (G.wave + 1 === n && !L.surv) { G.msg = { k: 'final', t: 0 }; G.finalSnd = 60; }
       if (G.wave === 0) { sfx('awooga'); if (li === 0) G.msg = { k: 'first', t: 0 }; }
       else if (isFlag(G.wave)) sfx('siren');
     }
     function spawnWave() {
       for (const t of G.waves[G.wave]) addZombie(t, pickRow(), G.wave);
       G.wave++;
+      growWaves();
     }
     function updWaves() {
       if (G.tut === 1 || G.award) return;
@@ -208,8 +226,9 @@
       }
     }
     G.progress = () => {
-      if (G.wave >= n) return 1;
       const f = G.zcStart > 0 ? clamp(1 - Math.max(0, G.zc) / G.zcStart, 0, 1) : 0;
+      if (L.surv) return clamp(((G.wave % perFlag) + (G.hugeCd > 0 ? 1 : f) * 0.98) / perFlag, 0, 1);
+      if (G.wave >= n) return 1;
       return clamp((G.wave + (G.hugeCd > 0 ? 1 : f) * 0.98) / n, 0, 1);
     };
 
@@ -264,7 +283,7 @@
       if (type === 'chomper') p.st = 'ready';
       if (type === 'squash') p.st = 'idle';
       if (type === 'jalapeno') { p.cd = CFG.jalaFuse; sfx('fuse'); }
-      G.grid[row][col] = p; G.plants.push(p);
+      G.grid[row][col] = p; G.plants.push(p); G.planted++;
       dirt(px + 40, p.by, 7);
       sfx('plant');
       if (G.tut === 1) G.tut = 2;
@@ -663,7 +682,7 @@
         else if (s.st === 'col') {
           const dx = G.sunDest.x - s.x, dy = G.sunDest.y - s.y;
           s.x += dx / 21; s.y += dy / 21;
-          if (dx * dx + dy * dy < 64) { s.gone = true; G.sun = Math.min(CFG.sunCap, G.sun + s.v); G.sunGot++; }
+          if (dx * dx + dy * dy < 64) { s.gone = true; G.sun = Math.min(CFG.sunCap, G.sun + s.v); G.sunGot++; G.sunTotal += s.v; }
         }
         if (s.sc < 1) s.sc = Math.min(1, s.sc + 0.025);
       }
@@ -1722,8 +1741,8 @@
     title: 'Garden Defense',
     category: 'Action',
     tint: '#5fb336',
-    blurb: 'Defend your house from the zombie horde across 15 levels with 15 plants and 10 kinds of zombies.',
-    help: '<kbd>Click</kbd> a seed packet, then a lawn tile · click sun to collect · <kbd>1</kbd>–<kbd>8</kbd> seeds · <kbd>S</kbd> shovel · <kbd>F</kbd> game speed · <kbd>P</kbd> pause · tap on touch',
+    blurb: 'Defend your house from the zombie horde across 15 levels, an endless Survival mode and three difficulties, with 15 plants and 10 kinds of zombies.',
+    help: '<kbd>Click</kbd> a seed packet, then a lawn tile · click sun to collect · <kbd>1</kbd>–<kbd>8</kbd> seeds · <kbd>S</kbd> shovel · <kbd>F</kbd> game speed · <kbd>P</kbd> pause · <kbd>H</kbd> how to play · tap on touch',
     format: v => v <= 10 ? 'Level 1-' + v : 'Level 2-' + (v - 10),
     width: 940,
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="22" r="11"/><path d="M33 17h13v9H33"/><path d="M46 15v13"/><circle cx="27" cy="19" r="1.6" fill="currentColor"/><path d="M24 33v23"/><path d="M24 50c-5-6-13-5-15-1 5 4 11 4 15 1zM24 50c5-6 13-5 15-1-5 4-11 4-15 1z"/></svg>',
@@ -1740,8 +1759,12 @@
       const snd = makeAudio(api);
       const play = n => snd.play(n);
       const loaded = api.load();
-      const sv = { lv: 1, pick: null, speed: 1 };
-      if (loaded && typeof loaded === 'object') { if (loaded.lv >= 1 && loaded.lv <= NLV + 1) sv.lv = loaded.lv | 0; if (Array.isArray(loaded.pick)) sv.pick = loaded.pick.filter(t => ORDER.includes(t)); if ([1, 1.5, 2].includes(loaded.speed)) sv.speed = loaded.speed; }
+      const sv = { lv: 1, pick: null, speed: 1, diff: 1, surv: 0, help: 0, kills: 0, games: 0 };
+      if (loaded && typeof loaded === 'object') {
+        if (loaded.lv >= 1 && loaded.lv <= NLV + 1) sv.lv = loaded.lv | 0; if (Array.isArray(loaded.pick)) sv.pick = loaded.pick.filter(t => ORDER.includes(t)); if ([1, 1.5, 2].includes(loaded.speed)) sv.speed = loaded.speed;
+        if ([0, 1, 2].includes(loaded.diff)) sv.diff = loaded.diff;
+        for (const k of ['surv', 'help', 'kills', 'games']) if (loaded[k] > 0) sv[k] = loaded[k] | 0;
+      }
       let nSlots = 6;
       const LAY = PORT ? {
         bank: { x: 0, y: 600, w: 800, h: 160 },
@@ -1758,7 +1781,7 @@
       };
       let scr = 'title', G = null, li = 0, camX = CAM0, ph = '', phT = 0, held = null, drag = null, paused = false;
       let acc = 0, time = 0, lostT = 0, awardT = 0, wonInfo = null, preview = [], choose = null, rollK = 1, touchMode = coarse;
-      let btns = [], submitted = false, lastScore = null, screamed = false;
+      let btns = [], submitted = false, lastScore = null, screamed = false, helpOn = !sv.help, helpT = 0, runEnd = null;
       const mouse = { x: -999, y: -999 };
       const bgs = {};
       const bgFor = (L, sod) => {
@@ -1781,8 +1804,9 @@
       const needChoose = i => seedsFor(i).length > slotsFor(i);
 
       function startLevel(i) {
-        li = clamp(i, 0, NLV - 1); nSlots = slotsFor(li);
-        G = makeGame(li, { sfx: play });
+        li = i === SURV ? SURV : clamp(i, 0, NLV - 1); nSlots = slotsFor(li);
+        G = makeGame(li, { sfx: play, diff: sv.diff });
+        helpOn = false; runEnd = null;
         G.sunDest = { x: LAY.sunDest.x + CAM0, y: LAY.sunDest.y };
         for (const m of G.mowers) m.x = -160;
         held = null; drag = null; paused = false; acc = 0; lostT = 0; awardT = 0; wonInfo = null; submitted = false; screamed = false;
@@ -1804,22 +1828,30 @@
           preview.push({ type: t, x: 930 + R() * 360, by: 150 + R() * 430, ph: R() * TAU, st: 'walk', id: k, head: true, arm: true, helm: ZD[t].helm || 0, helmMax: ZD[t].helm || 1, helmType: ZD[t].helmType || null, paper: ZD[t].paper || 0, door: ZD[t].door || 0, doorMax: ZD[t].door || 1, big: t === 'garg', thrown: false, pole: t === 'pole', mad: false, chill: 0, flash: 0, alt: 0, eatT: 0, t: 0 });
         }
         preview.sort((a, b) => a.by - b.by);
-        score(li + 1);
+        if (li !== SURV) score(li + 1);
         scr = 'intro';
       }
       function endIntro() { ph = 'ready'; phT = 0; play('ready'); }
       function toPlay() { scr = 'play'; ph = ''; }
-      function toTitle() { scr = 'title'; G = null; held = null; paused = false; camX = CAM0; }
+      function toTitle() { scr = 'title'; G = null; held = null; paused = false; camX = CAM0; helpOn = false; }
+      function endRun() {
+        const waves = Math.max(0, G.wave - 1);
+        runEnd = { secs: Math.round(G.t / CFG.hz), kills: G.kills, sun: G.sunTotal, planted: G.planted, waves, best: false };
+        sv.kills += G.kills; sv.games++;
+        if (li === SURV && waves > sv.surv) { sv.surv = waves; runEnd.best = true; }
+        api.save(sv);
+      }
       function toLost() {
         scr = 'lost'; lostT = 0; held = null;
-        if (!submitted) { submitted = true; api.submit(li); }
+        endRun();
+        if (!submitted && li !== SURV) { submitted = true; api.submit(li); }
       }
       function toWon() {
         scr = 'won';
         const a = L().award;
         wonInfo = { type: a, t: 0 };
         sv.lv = Math.max(sv.lv, li + 2);
-        api.save(sv);
+        endRun();
         if (!submitted) { submitted = true; api.submit(li + 1); }
         play('win');
       }
@@ -1908,15 +1940,17 @@
       api.on(window, 'keydown', e => {
         snd.unlock();
         const k = e.code;
-        if (scr === 'title') { if (k === 'Enter' || k === 'Space') startLevel(Math.min(sv.lv, NLV) - 1); return; }
+        if (helpOn) { if (k === 'Enter' || k === 'Space' || k === 'Escape' || k === 'KeyH') closeHelp(); return; }
+        if (scr === 'title') { if (k === 'Enter' || k === 'Space') startLevel(Math.min(sv.lv, NLV) - 1); else if (k === 'KeyH') openHelp(); else if (k === 'KeyV') startLevel(SURV); else if (k === 'KeyD') cycleDiff(); return; }
         if (scr === 'intro') {
           if (k === 'Enter' || k === 'Space') { if (ph === 'choose') { if (choose && choose.sel.length === nSlots) letsGo(); } else if (ph === 'pan' || ph === 'hold') { ph = 'back'; phT = 0; } }
           return;
         }
-        if (scr === 'lost') { if (lostT > 3 && (k === 'Enter' || k === 'Space')) startLevel(li); return; }
+        if (scr === 'lost') { if (G.lostAt != null && lostT - G.lostAt > 1.4 && (k === 'Enter' || k === 'Space' || k === 'KeyR')) startLevel(li); return; }
         if (scr === 'won') { if (wonInfo && wonInfo.t > 1 && (k === 'Enter' || k === 'Space')) { if (li < NLV - 1) startLevel(li + 1); else toTitle(); } return; }
         if (scr !== 'play') return;
         if (k === 'KeyP' || k === 'Space') { pause(!paused); return; }
+        if (k === 'KeyH') { if (!paused) pause(true); openHelp(); return; }
         if (paused) { if (k === 'Enter') pause(false); return; }
         if (k.startsWith('Digit')) { const d = +k.slice(5); if (d >= 1 && d <= 8) selectCard(d - 1); return; }
         if (k === 'KeyF') { cycleSpeed(); return; }
@@ -1931,6 +1965,9 @@
         ph = 'back'; phT = 0; play('go');
       }
 
+      function openHelp() { helpOn = true; helpT = 0; play('tap'); }
+      function closeHelp() { helpOn = false; if (!sv.help) { sv.help = 1; api.save(sv); } play('tap'); }
+      function cycleDiff() { sv.diff = (sv.diff + 1) % 3; api.save(sv); play('tap'); }
       function cycleSpeed() { sv.speed = sv.speed === 1 ? 1.5 : sv.speed === 1.5 ? 2 : 1; api.save(sv); play('tap'); }
       function update(dt) {
         time += dt;
@@ -1962,6 +1999,7 @@
           while (acc >= 1 && k < 6) { G.tick(); acc -= 1; k++; }
           if (G.lostDone && !screamed) { screamed = true; G.lostAt = lostT; play('brains'); }
         } else if (scr === 'won' && wonInfo) wonInfo.t += dt;
+        if (helpOn) helpT += dt;
         const hot = G && scr === 'play' && (G.hugeCd > 0 || (G.msg && G.msg.k === 'final' && G.msg.t < 400));
         snd.music((scr === 'play' && !paused) || scr === 'intro', hot);
       }
@@ -2139,14 +2177,15 @@
         if (scr === 'play' && !paused) btn(sp.x, sp.y, sp.w, sp.h, spl, cycleSpeed, { size: PORT ? 17 : 15, col: sv.speed > 1 ? 'red' : 'stone' });
       }
       function drawProgress() {
-        const n = G.n, bw = 150, bh = 16, bx = W - 172, by = 572;
-        A.T('Level ' + lvName(li), bx - 10, by + bh / 2 + 1, 19, '#ffd84a', OL, 'right');
+        const sur = !!L().surv, n = sur ? 10 : G.n, bw = 150, bh = 16, bx = W - 172, by = 572;
+        A.T(sur ? 'Survival · Wave ' + Math.max(1, G.wave) + ' · Flags ' + Math.floor(G.wave / 10) : 'Level ' + lvName(li), bx - 10, by + bh / 2 + 1, 19, '#ffd84a', OL, 'right');
+        if (sv.diff !== 1) A.T(DIFF[sv.diff].name, bx + bw / 2, by - 14, 15, DIFF[sv.diff].col, OL, 'center', 4);
         A.RR(bx - 3, by - 3, bw + 6, bh + 6, 10); A.F('#56637a', 2); A.RR(bx, by, bw, bh, 7); A.F('#1f2633', 1);
         const f = G.progress();
         if (f > 0) { A.RR(bx + bw - bw * f, by + 2, bw * f, bh - 4, 6); c.fillStyle = A.cg('prog', () => A.lg(0, by, 0, by + bh, ['#a5f05c', '#4ca52a'])); c.fill(); }
         for (let w = 0; w < n; w++) {
           if (!G.isFlag(w)) continue;
-          const fx = bx + bw - (w + 1) / n * bw + 3, up = G.wave > w ? 8 : 0;
+          const fx = bx + bw - (w + 1) / n * bw + 3, up = !sur && G.wave > w ? 8 : 0;
           A.limb(fx, by + bh, fx, by - 12 - up, null, null, 1.6, '#e8e0d0');
           c.beginPath(); c.moveTo(fx, by - 12 - up); c.lineTo(fx + 11, by - 8 - up); c.lineTo(fx, by - 4 - up); c.closePath(); A.F('#c52b2b', 1.4);
         }
@@ -2187,12 +2226,56 @@
         if (!msg) return;
         A.RR(90 + UX, 516, 620, 52, 14); c.fillStyle = 'rgba(10,8,4,.62)'; c.fill();
         A.T(msg, CX, 543, 22, '#fff2a8', OL, 'center', 5);
+        if (paused) return;
+        if (G.tut === 1 && !held) { const r = LAY.card(0); if (PORT) arrow(r.x + r.w / 2, r.y - 6, 1); else arrow(r.x + r.w / 2, r.y + r.h + 8, -1); }
+        else if (G.tut === 1) { const x = CFG.lawnX + 2 * CFG.cellW + 40 - camX, y = CFG.lawnY + 2 * CFG.cellH + 20; A.RR(x - 38, y - 18, 76, 92, 10); c.fillStyle = 'rgba(255,246,150,' + (0.22 + Math.sin(time * 6) * 0.1).toFixed(3) + ')'; c.fill(); arrow(x, y - 6, 1); }
+        else if (G.sunGot === 0) { const sn = G.suns.find(q => q.st === 'fall' || q.st === 'land'); if (sn) arrow(sn.x - camX, sn.y - 42, 1); }
+      }
+      function arrow(x, y, dir) {
+        const b = Math.abs(Math.sin(time * 5)) * 12;
+        c.save(); c.translate(x, y - dir * b); c.scale(1, dir);
+        c.beginPath(); c.moveTo(0, 0); c.lineTo(-24, -26); c.lineTo(-10, -26); c.lineTo(-10, -58); c.lineTo(10, -58); c.lineTo(10, -26); c.lineTo(24, -26); c.closePath();
+        c.shadowColor = 'rgba(0,0,0,.35)'; c.shadowBlur = 8; c.shadowOffsetY = 3;
+        c.fillStyle = A.cg('arrw', () => A.lg(0, -58, 0, 0, ['#fff38a', '#ffb21f'])); c.fill(); c.shadowColor = 'transparent';
+        c.lineWidth = 3.5; c.strokeStyle = OL; c.lineJoin = 'round'; c.stroke();
+        c.beginPath(); c.moveTo(-5, -52); c.lineTo(-5, -30); c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 3; c.stroke();
+        c.restore();
       }
       function drawHeldCursor() {
         if (!held || touchMode || scr !== 'play' || paused || mouse.x < -900) return;
         c.save(); c.translate(mouse.x, mouse.y);
         if (held.src === 'shovel') A.shovel(8, -6, 1.1, 0);
         else { c.translate(0, 34); c.globalAlpha = 0.85; A.plant(held.type, time * 60, {}); c.globalAlpha = 1; }
+        c.restore();
+      }
+      const ZDESC = {
+        cone: 'A traffic cone lets him take about three times as many hits.',
+        pole: 'Sprints in and vaults over the first plant in his way.',
+        bucket: 'His metal bucket makes him very hard to stop. Hit him early.',
+        news: 'Destroy his newspaper and he gets angry and runs much faster.',
+        screen: 'His screen door soaks up peas fired at him from the front.',
+        football: 'Fast and heavily armoured. Slow him down and hit hard.',
+        garg: 'Smashes plants in one blow and throws an Imp when hurt.'
+      };
+      function drawNewZombie() {
+        const t = L().intro;
+        if (scr !== 'intro' || !t || !(ph === 'hold' || ph === 'choose' || ph === 'pan' && phT > 0.8) || PORT && ph === 'choose') return;
+        const z = preview.find(q => q.type === t);
+        if (!z) return;
+        const w = PORT ? 420 : 260, h = PORT ? 330 : 300, x = PORT ? CX - w / 2 : choose ? W - w - 16 : 40, y = PORT ? 120 : 92;
+        const k = ease((ph === 'pan' ? phT - 0.8 : 0.4 + phT) / 0.4);
+        c.save(); c.globalAlpha = k; c.translate(0, (1 - k) * -20);
+        panel(x, y, w, h);
+        A.T('New zombie!', x + w / 2, y + 34, PORT ? 32 : 26, '#ff6b4a', OL, 'center', 6);
+        A.RR(x + 18, y + 56, w - 36, PORT ? 150 : 130, 12); A.F(A.cg('nzb' + h, () => A.lg(0, 0, 0, 150, ['#c9e8ff', '#8fd06a'])), 2);
+        c.save(); A.RR(x + 18, y + 56, w - 36, PORT ? 150 : 130, 12); c.clip();
+        const s = (z.big ? 0.42 : 0.66) * (PORT ? 1.15 : 1);
+        c.translate(x + w / 2, y + (PORT ? 196 : 178)); c.scale(s, s);
+        z.ph = time * 2.4;
+        A.zombieAt(z, 0, 0, time * 60, false);
+        c.restore();
+        A.T(ZD[t].name, x + w / 2, y + (PORT ? 232 : 210), PORT ? 26 : 20, '#fff', OL, 'center', 5);
+        wrap(ZDESC[t] || '', x + w / 2, y + (PORT ? 266 : 240), w - 40, PORT ? 25 : 19, PORT ? 21 : 14, '#f4e3c0');
         c.restore();
       }
       function drawReady() {
@@ -2227,20 +2310,97 @@
       function drawPause() {
         if (scr !== 'play' || !paused) return;
         c.fillStyle = 'rgba(10,8,20,.45)'; c.fillRect(0, 0, W, H);
-        const w = PORT ? 560 : 380, h = PORT ? 560 : 420, x = CX - w / 2, y = (PORT ? 380 : 300) - h / 2;
+        const w = PORT ? 560 : 380, h = PORT ? 670 : 500, x = CX - w / 2, y = (PORT ? 380 : 300) - h / 2;
         panel(x, y, w, h);
         A.T('Paused', CX, y + (PORT ? 60 : 48), PORT ? 48 : 36, '#ffe9a8', OL);
         const bw = PORT ? 420 : 280, bh = PORT ? 86 : 58, gap = PORT ? 108 : 76, by = y + (PORT ? 110 : 86);
         btn(CX - bw / 2, by, bw, bh, 'Back to game', () => pause(false), { size: PORT ? 34 : 24 });
         btn(CX - bw / 2, by + gap, bw, bh, 'Game speed: ' + sv.speed + 'x', cycleSpeed, { size: PORT ? 30 : 22, col: 'red' });
         btn(CX - bw / 2, by + gap * 2, bw, bh, 'Restart level', () => startLevel(li), { size: PORT ? 34 : 24, col: 'stone' });
-        btn(CX - bw / 2, by + gap * 3, bw, bh, 'Main menu', toTitle, { size: PORT ? 34 : 24, col: 'stone' });
+        btn(CX - bw / 2, by + gap * 3, bw, bh, 'How to play', openHelp, { size: PORT ? 34 : 24, col: 'stone' });
+        btn(CX - bw / 2, by + gap * 4, bw, bh, 'Main menu', toTitle, { size: PORT ? 34 : 24, col: 'stone' });
+      }
+      function wrap(str, x, y, maxW, lh, size, col) {
+        c.font = '800 ' + size + 'px Nunito, system-ui, sans-serif'; c.fillStyle = col; c.textAlign = 'center'; c.textBaseline = 'middle';
+        const lines = []; let ln = '';
+        for (const w of str.split(' ')) { const t2 = ln ? ln + ' ' + w : w; if (c.measureText(t2).width > maxW && ln) { lines.push(ln); ln = w; } else ln = t2; }
+        if (ln) lines.push(ln);
+        lines.forEach((l, i) => c.fillText(l, x, y + i * lh));
+      }
+      const fmtT = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+      function statStrip(x, y, w, h, items) {
+        A.RR(x, y, w, h, 16); c.fillStyle = 'rgba(20,14,6,.62)'; c.fill(); c.strokeStyle = 'rgba(255,230,170,.35)'; c.lineWidth = 2; c.stroke();
+        const cw = w / items.length;
+        items.forEach(([v, l], i) => {
+          const cx = x + cw * i + cw / 2;
+          A.T(String(v), cx, y + h * 0.4, PORT ? 34 : 26, '#ffe28a', OL, 'center', 5);
+          c.font = '800 ' + (PORT ? 18 : 13) + 'px Nunito, system-ui, sans-serif'; c.fillStyle = '#f4e3c0'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(l, cx, y + h * 0.78);
+        });
+      }
+      const runItems = () => [[fmtT(runEnd.secs), 'time'], [runEnd.kills, 'zombies'], [runEnd.sun, 'sun'], [runEnd.planted, 'plants']];
+      const helpZ = { type: 'zombie', st: 'walk', ph: 0, id: 5, head: true, arm: true, helm: 0, helmMax: 1, helmType: null, paper: 0, pole: false, mad: false, chill: 0, flash: 0, alt: 0, eatT: 0, t: 0 };
+      function drawHelp() {
+        if (!helpOn) return;
+        btns = [];
+        const k = ease(helpT / 0.3);
+        c.fillStyle = 'rgba(10,8,20,' + (0.55 * k).toFixed(3) + ')'; c.fillRect(0, 0, W, H);
+        const pw = PORT ? 760 : 860, phh = PORT ? 744 : 520, px = CX - pw / 2, py = (H - phh) / 2 + (1 - k) * 30;
+        c.save(); c.globalAlpha = k;
+        panel(px, py, pw, phh);
+        A.T('How to play', CX, py + (PORT ? 46 : 42), PORT ? 42 : 34, '#ffe9a8', OL, 'center', 7);
+        const v = touchMode ? 'Tap' : 'Click';
+        const steps = [
+          ['Pick a plant', touchMode ? 'Tap a seed packet. Plants cost sun.' : 'Click a seed packet or press 1-8. Plants cost sun.'],
+          ['Plant it', v + ' a lawn tile. Shooters fire along their row.'],
+          ['Collect sun', v + ' falling sun. Sunflowers make more of it.'],
+          ['Hold the line', 'Zombies must not reach the house. Each mower saves a lane once.']
+        ];
+        const cols = PORT ? 2 : 4, cw = PORT ? 350 : 196, ch = PORT ? 246 : 330, gap = PORT ? 16 : 10;
+        const gx = CX - (cols * cw + (cols - 1) * gap) / 2, gy = py + (PORT ? 80 : 76);
+        steps.forEach(([hd, tx], i) => {
+          const x = gx + (i % cols) * (cw + gap), y = gy + Math.floor(i / cols) * (ch + gap), ix = x + cw / 2, ih = PORT ? 120 : 190, iy = y + 8 + ih - (PORT ? 36 : 44);
+          A.RR(x, y, cw, ch, 16); A.F(A.cg('hcard' + ch, () => A.lg(0, 0, 0, ch, ['#f9eccb', '#e6cd98'])), 2.4);
+          c.save(); A.RR(x + 8, y + 8, cw - 16, ih, 12); c.clip();
+          c.fillStyle = A.cg('hsky' + ih, () => A.lg(0, 0, 0, ih, ['#9fd8ff', '#e6f6ff'])); c.save(); c.translate(0, y + 8); c.fillRect(x, 0, cw, ih); c.restore();
+          c.fillStyle = '#69b93c'; c.fillRect(x, iy + 8, cw, 60); c.fillStyle = '#5aa832';
+          for (let q = 0; q < 6; q++) if (q % 2) c.fillRect(x + q * cw / 6, iy + 8, cw / 6, 60);
+          c.translate(ix, iy + 22);
+          if (PORT) { c.translate(0, 6); c.scale(0.78, 0.78); }
+          const tt = time * 60;
+          if (i === 0) {
+            A.packet('peashooter', -30, -118, 60, 84, { cost: 100, sel: Math.sin(time * 4) > 0 });
+            c.save(); c.translate(30, -16 + Math.sin(time * 4) * 6); c.rotate(-0.6); c.beginPath(); c.moveTo(0, 0); c.lineTo(-14, -18); c.lineTo(-5, -18); c.lineTo(-5, -38); c.lineTo(5, -38); c.lineTo(5, -18); c.lineTo(14, -18); c.closePath(); A.F('#ffd23f', 2.4); c.restore();
+          } else if (i === 1) {
+            const pk = (time * 0.6) % 1, sc = pk < 0.15 ? 0.3 + 0.7 * ease(pk / 0.15) : 1;
+            c.save(); c.translate(-44, 0); c.scale(sc, sc); A.plant('peashooter', tt, {}); c.restore();
+            for (let q = 0; q < 2; q++) { const px = -6 + ((time * 110 + q * 55) % 110); A.pea(px, -46, false, false, tt); }
+          } else if (i === 2) {
+            const fy = -120 + ((time * 40) % 60);
+            A.sun(10, fy, 0.8, time * 0.6, 1);
+            A.T('+25', 58, fy - 24, 20, '#fff3a0', OL, 'center', 5);
+            c.save(); c.translate(-52, 0); c.scale(0.8, 0.8); A.plant('sunflower', tt, { lc: 999 }); c.restore();
+          } else {
+            helpZ.ph = time * 2.4;
+            c.save(); c.translate(44, 0); c.scale(0.8, 0.8); A.zombie(helpZ, ZPAL[0], false, time); c.restore();
+            A.mower(-cw / 2 + 20, 0, false, tt);
+          }
+          c.restore();
+          c.beginPath(); c.arc(x + 26, y + 26, 17, 0, TAU); A.F('#ff8a3a', 2.4); A.T(String(i + 1), x + 26, y + 27, 20, '#fff', OL, 'center', 4);
+          const ty = y + ih + (PORT ? 30 : 34);
+          A.T(hd, ix, ty, PORT ? 28 : 22, '#fff', OL, 'center', 5);
+          wrap(tx, ix, ty + 30, cw - 26, PORT ? 25 : 20, PORT ? 22 : 15, '#4a3418');
+        });
+        const keys = touchMode ? 'Drag or tap to plant · II button pauses' : 'S shovel · F speed · P or Space pause · H help';
+        A.T(keys, CX, py + phh - (PORT ? 124 : 88), PORT ? 22 : 16, '#f4e3c0', OL, 'center', 4);
+        c.restore();
+        const bw = PORT ? 320 : 220, bh = PORT ? 76 : 52;
+        btn(CX - bw / 2, py + phh - (PORT ? 98 : 68), bw, bh, 'Got it!', closeHelp, { size: PORT ? 34 : 26 });
       }
       function drawLost() {
         if (scr !== 'lost' || G.lostAt == null) return;
         const t = lostT - G.lostAt;
         c.fillStyle = 'rgba(0,0,0,' + clamp(t / 1.2, 0, 0.55).toFixed(3) + ')'; c.fillRect(0, 0, W, H);
-        const k = ease(t / 0.8), s = 0.3 + 0.7 * k, cy = PORT ? 300 : 250;
+        const k = ease(t / 0.8), s = 0.3 + 0.7 * k, cy = PORT ? 270 : 214;
         c.save(); c.translate(CX, cy); c.scale(s, s); c.rotate(Math.sin(t * 3) * 0.02);
         const lines = ['THE ZOMBIES', 'MUNCHED YOUR', 'BRAINS!'];
         lines.forEach((ln, i) => {
@@ -2250,6 +2410,15 @@
           for (let d = 0; d < 6; d++) { const dx = -170 + d * 68 + (i * 23 % 40), dl = 6 + ((d * 7 + i * 5) % 9) * 2 * clamp(t - 0.6, 0, 1.4); A.E(dx, y + 34 + dl / 2, 4.5, 4 + dl / 2); c.fill(); }
         });
         c.restore();
+        if (t > 1.2 && runEnd) {
+          const a = clamp((t - 1.2) / 0.4, 0, 1), sw = PORT ? 640 : 560, sh = PORT ? 80 : 66, sy = PORT ? 426 : 384;
+          c.save(); c.globalAlpha = a;
+          if (li === SURV) {
+            A.T('You survived ' + runEnd.waves + ' wave' + (runEnd.waves === 1 ? '' : 's') + (runEnd.best ? ' · New best!' : ' · Best ' + sv.surv), CX, sy - 20, PORT ? 30 : 24, runEnd.best ? '#ffe28a' : '#fff', OL, 'center', 6);
+          }
+          statStrip(CX - sw / 2, sy, sw, sh, runItems());
+          c.restore();
+        }
         if (t > 1.6) {
           const bw = PORT ? 300 : 230, bh = PORT ? 84 : 58, y = PORT ? 520 : 470;
           btn(CX - bw - 12, y, bw, bh, 'Try again', () => startLevel(li), { size: PORT ? 34 : 24 });
@@ -2267,6 +2436,7 @@
         A.RR(px, py, pw, phh, 26); A.F(A.cg('parch', () => A.lg(0, py, 0, py + phh, ['#f9eccb', '#e9d1a0'])), 3);
         A.RR(px + 12, py + 12, pw - 24, phh - 24, 18); c.strokeStyle = 'rgba(120,80,30,.35)'; c.lineWidth = 3; c.stroke();
         A.T(info.head, CX, py + (PORT ? 62 : 52), PORT ? 44 : 36, '#ffd23f', OL, 'center', 8);
+        if (runEnd) { c.font = '800 ' + (PORT ? 21 : 16) + 'px Nunito, system-ui, sans-serif'; c.fillStyle = '#7a5a2c'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('Level ' + lvName(li) + ' cleared in ' + fmtT(runEnd.secs) + ' · ' + runEnd.kills + ' zombies · ' + runEnd.sun + ' sun · ' + runEnd.planted + ' plants', CX, py + (PORT ? 106 : 90)); }
         const fx = CX, fy = py + (PORT ? 250 : 210), fr = PORT ? 120 : 96;
         A.RR(fx - fr, fy - fr * 0.9, fr * 2, fr * 1.8, 18); A.F(A.cg('frame', () => A.lg(0, fy - fr, 0, fy + fr, ['#bfe6ff', '#8fd06a'])), 3);
         c.save(); c.beginPath(); c.roundRect(fx - fr, fy - fr * 0.9, fr * 2, fr * 1.8, 18); c.clip();
@@ -2287,6 +2457,7 @@
         lines.forEach((l, i) => c.fillText(l, CX, fy + fr * 0.9 + (PORT ? 96 : 76) + i * (PORT ? 34 : 25)));
         c.restore();
         if (wonInfo.t > 0.8) {
+          if (wonInfo.t < 3.5) for (let q = 0; q < 26; q++) { const r = (q * 97 % 89) / 89, cx = px + r * pw, cy = py + ((wonInfo.t * 160 + q * 47) % (phh + 40)) - 20; c.save(); c.translate(cx, cy); c.rotate(wonInfo.t * 3 + q); c.globalAlpha = clamp(3.5 - wonInfo.t, 0, 1); c.fillStyle = ['#ffd23f', '#8fe04a', '#ff8a6a', '#7cc6ff'][q % 4]; c.fillRect(-5, -3, 10, 6); c.restore(); }
           const bw = PORT ? 300 : 220, bh = PORT ? 84 : 56, y = py + phh - (PORT ? 112 : 84);
           if (li < NLV - 1) {
             btn(CX - bw - 10, y, bw, bh, 'Next level!', () => startLevel(li + 1), { size: PORT ? 34 : 24 });
@@ -2339,6 +2510,18 @@
         titleZ.ph = time * 2.4; titleZ2.ph = time * 2 + 1;
         c.save(); c.translate(690 + 2 * UX, PORT ? 530 : 470); c.scale(1.5, 1.5); A.zombie(titleZ2, ZPAL[0], false, time); c.restore();
         c.save(); c.translate(610 + 2 * UX, PORT ? 500 : 440); c.scale(1.35, 1.35); A.zombie(titleZ, ZPAL[0], false, time); c.restore();
+        {
+          const bx = PORT ? 22 : 118, bw = PORT ? 226 : 196, bh = PORT ? 58 : 46, g = PORT ? 70 : 54, by = PORT ? 236 : 178, fs = PORT ? 25 : 20;
+          btn(bx, by, bw, bh, 'Survival', () => startLevel(SURV), { size: fs, col: 'red' });
+          btn(bx, by + g, bw, bh, 'How to play', openHelp, { size: fs, col: 'stone' });
+          const D = DIFF[sv.diff];
+          btn(bx, by + g * 2, bw, bh, D.name, cycleDiff, { size: fs, col: sv.diff === 0 ? '' : sv.diff === 2 ? 'red' : 'stone' });
+          const dy = by + g * 2 + bh + 18;
+          if (!PORT) { A.RR(bx, dy - 11, bw, 22, 11); c.fillStyle = 'rgba(20,14,6,.55)'; c.fill(); c.font = '800 13px Nunito, system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#f4e3c0'; c.fillText(D.desc, bx + bw / 2, dy + 1); }
+          const sy = PORT ? 470 : 398;
+          A.T('Survival best: ' + sv.surv + ' waves', CX, sy, PORT ? 22 : 17, '#ffe28a', OL, 'center', 4);
+          A.T('Zombies defeated: ' + sv.kills, CX, sy + (PORT ? 26 : 22), PORT ? 22 : 17, '#fff', OL, 'center', 4);
+        }
         const tw = PORT ? 140 : 62, th = PORT ? 64 : 42, gp = PORT ? 10 : 8, cols = PORT ? 5 : 10, gx = CX - (cols * (tw + gp) - gp) / 2, ly = PORT ? 530 : 496;
         for (let i = 0; i < NLV; i++) {
           const x = gx + (i % cols) * (tw + gp), y = ly + Math.floor(i / cols) * (th + 10);
@@ -2353,7 +2536,7 @@
         btns = [];
         A.setScale(c.getTransform().a);
         c.clearRect(0, 0, W, H);
-        if (scr === 'title') { drawTitle(); return; }
+        if (scr === 'title') { drawTitle(); drawHelp(); return; }
         if (scr === 'won') { drawWon(); return; }
         drawScene();
         if (scr !== 'lost') {
@@ -2363,9 +2546,11 @@
           drawAdvice();
           drawReady();
           drawChooser();
+          drawNewZombie();
           drawHeldCursor();
           drawPause();
         } else { if (PORT) { c.fillStyle = '#3a2410'; c.fillRect(0, 600, 800, 160); } drawLost(); }
+        drawHelp();
       }
 
       root._gd = { info: () => ({ scr, ph, li, paused, held: held && held.src, port: PORT }), G: () => G, start: i => startLevel(i), ff: k => { for (let i = 0; i < k && G && G.state === 'play' && scr === 'play'; i++) G.tick(); } };

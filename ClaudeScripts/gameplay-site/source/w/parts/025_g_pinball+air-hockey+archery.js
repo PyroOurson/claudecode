@@ -714,7 +714,7 @@
       const puck = { x: MID - 150, y: CY, vx: 0, vy: 0 };
       const me = { x: L + 90, y: CY, vx: 0, vy: 0, tx: L + 90, ty: CY };
       const ai = { x: RR - 90, y: CY, vx: 0, vy: 0, tx: RR - 90, ty: CY, ux: -1, uy: 0, sx: 0, sy: 0, svx: 0, svy: 0, seen: 0, age: 0, err: 0, aimOff: 0, bank: 0, strike: 0, stuck: 0, side: 0 };
-      let state = 'ready', sMe = 0, sAi = 0, glow = 0, glowSide = 0, msg = null, gen = 0, hitCd = 0, wallCd = 0, shake = 0, cd = 0, cdN = 0, clock = 0, overAt = 0;
+      let idleT = 0, state = 'ready', sMe = 0, sAi = 0, glow = 0, glowSide = 0, msg = null, gen = 0, hitCd = 0, wallCd = 0, shake = 0, cd = 0, cdN = 0, clock = 0, overAt = 0;
       let online = null, wired = false, lobbying = false, acc = 0, simT = 0, stepN = 0, epoch = 0, off = 0, meRe = false, peerRe = false, sentX = -1, sentY = -1;
       const trail = new Float32Array(16); let trailI = 0;
       const buf = [], evq = [], cdM = { a: '', t: 0, life: 1.3, c: '#ffffff', c2: '#b9a8ff' };
@@ -866,6 +866,12 @@
         if (state !== 'play') return;
         puck.x += puck.vx * h; puck.y += puck.vy * h;
         const f = Math.exp(-.28 * h); puck.vx *= f; puck.vy *= f;
+        if (mode === 'cpu' && !online) {
+          const was = idleT;
+          idleT = puck.x < MID - PR && Math.hypot(puck.vx, puck.vy) < 30 ? idleT + h : 0;
+          if (was < 5 && idleT >= 5 && !msg) msg = { a: 'HIT IT!', b: '7-second rule', t: 0, life: 1.6, c: '#ffffff', c2: '#8ec5ff' };
+          if (idleT > 7) { idleT = 0; puck.vx += 170; puck.vy += (CY - puck.y) * .5; api.sfx('tick'); }
+        }
         for (const gx of [L, RR]) {
           const ex = puck.x - gx, ey = puck.y - CY;
           if (ex * ex + ey * ey < (CRL + 6) * (CRL + 6) && Math.hypot(puck.vx, puck.vy) < 220) { puck.vx += (gx === L ? 1 : -1) * 420 * h; puck.vy += Math.sign(ey) * 80 * h; }
@@ -1299,7 +1305,7 @@
       };
       const miss = inGround => {
         if (inGround) { ground.push({ x: fl.x, y: GY + 3, ang: Math.atan2(fl.vy, fl.vx) }); fx.burst(fl.x, GY, 10, '#a77b4f', 160, .5, 400, 2); }
-        score(0, clamp(fl.x, 60, W - 60), inGround ? GY - 40 : 80);
+        score(0, clamp(fl.x, 60, W - 60), inGround ? GY - 40 : fl.x > W - 170 ? 190 : 80);
         state = 'wait'; wait = 1.1;
       };
       const next = () => {
@@ -1555,6 +1561,24 @@
           if (v != null) {
             ctx.fillStyle = v === 0 ? '#ffffff' : v <= 2 || v >= 9 ? '#2b2a33' : '#ffffff'; ctx.font = font(900, v === 10 ? 10 : 11);
             ctx.fillText(v ? v : 'M', x, y + .5);
+          }
+        }
+        if (state !== 'idle' && state !== 'over') {
+          const cx = W - 62, cy = 98, r = 38;
+          ctx.fillStyle = 'rgba(16,30,60,.45)'; ctx.beginPath(); ctx.roundRect(cx - r - 10, cy - r - 10, r * 2 + 20, r * 2 + 20, 16); ctx.fill();
+          for (let i = 0; i < 10; i++) {
+            ctx.fillStyle = RING[i]; ctx.beginPath(); ctx.arc(cx, cy, r * (10 - i) / 10, 0, TAU); ctx.fill();
+            ctx.strokeStyle = i === 2 || i === 3 ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.25)'; ctx.lineWidth = .8; ctx.stroke();
+          }
+          const as = tg.arrows;
+          for (let i = 0; i < as.length; i++) {
+            const ar = as[i];
+            if (ar.hidden) continue;
+            const py = cy + clamp(ar.dy / TR, -1, 1) * r, room = Math.sqrt(Math.max(0, r * r - (py - cy) * (py - cy))), px = cx + (((i * 7) % 5) - 2) / 2 * Math.min(r * .45, room * .7);
+            const fresh = i === as.length - 1 && time - ar.t0 < 1.6;
+            if (fresh) { const k = (time - ar.t0) / 1.6; ctx.strokeStyle = `rgba(255,255,255,${(1 - k).toFixed(3)})`; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(px, py, 4 + k * 14, 0, TAU); ctx.stroke(); }
+            ctx.fillStyle = '#1d1c24'; ctx.beginPath(); ctx.arc(px, py, fresh ? 4.2 : 3.2, 0, TAU); ctx.fill();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.4; ctx.stroke();
           }
         }
         if (state === 'aim' && (aim.drag || aim.kb)) {

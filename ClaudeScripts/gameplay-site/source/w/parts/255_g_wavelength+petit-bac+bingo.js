@@ -67,7 +67,7 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
     const el = h('div', 'xp'); el.hidden = true; root.append(el);
     let fn = null, key = '';
     el.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b && fn) fn(b.dataset.a, b); });
-    return { el, get key() { return key; }, show(k, html, f) { key = k; fn = f; el.innerHTML = `<div class="xb">${html}</div>`; el.hidden = false; el.scrollTop = 0; }, hide() { el.hidden = true; key = ''; fn = null; } };
+    return { el, get key() { return key; }, show(k, html, f) { key = k; fn = f; el.innerHTML = `<div class="xb">${html}</div>`; el.hidden = false; el.scrollTop = 0; root.style.minHeight = Math.ceil(el.firstElementChild.offsetHeight + 32) + 'px'; }, hide() { el.hidden = true; key = ''; fn = null; root.style.minHeight = ''; } };
   }
 
   const PHV = { uh: [640, 1190, 2390], eh: [530, 1840, 2480], ih: [390, 1990, 2550], ee: [270, 2290, 3010], oo: [300, 870, 2240], aw: [570, 840, 2410], ah: [730, 1090, 2440], er: [490, 1350, 1690], l: [360, 1300, 2800], n: [260, 1700, 2600] };

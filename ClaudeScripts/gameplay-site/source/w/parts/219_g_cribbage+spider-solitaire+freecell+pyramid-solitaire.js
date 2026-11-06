@@ -319,7 +319,7 @@
     T.snapshot = x => { T.hintG = null; T.sel = null; T.hist.push({ p: T.piles.map(a => a.slice()), up: T.cards.map(c => c.up), x }); };
     T.undo = () => {
       const h = T.hist.pop();
-      T.piles = h.p; T.cards.forEach((c, i) => { c.up = h.up[i]; c.delay = 0; });
+      h.p.forEach((a, i) => { const t = T.piles[i]; t.length = 0; t.push(...a); }); T.cards.forEach((c, i) => { c.up = h.up[i]; c.delay = 0; });
       T.hintG = null; T.sel = null;
       return h.x;
     };

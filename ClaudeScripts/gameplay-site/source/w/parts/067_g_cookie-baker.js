@@ -19,62 +19,74 @@
   };
 
   const B = [
-    ['Cursor', 'cursors', 15, 0.1, 'Autoclicks the big cookie once every 10 seconds.'],
-    ['Grandma', 'grandmas', 100, 1, 'A kindly grandma who bakes more cookies.'],
-    ['Farm', 'farms', 1100, 8, 'Grows cookie plants from cookie seeds.'],
-    ['Mine', 'mines', 12000, 47, 'Digs up cookie dough and chocolate chips.'],
-    ['Factory', 'factories', 130000, 260, 'Churns out cookies by the truckload.'],
-    ['Bank', 'banks', 1.4e6, 1400, 'Generates cookies from compound interest.'],
-    ['Temple', 'temples', 2e7, 7800, 'Full of precious, ancient chocolate.'],
-    ['Wizard tower', 'wizard towers', 3.3e8, 44000, 'Summons cookies with arcane incantations.'],
-    ['Shipment', 'shipments', 5.1e9, 260000, 'Imports fresh cookies from the cookie planet.'],
-    ['Alchemy lab', 'alchemy labs', 7.5e10, 1.6e6, 'Transmutes gold into cookies!'],
-    ['Portal', 'portals', 1e12, 1e7, 'Opens a door to a dimension made of dough.'],
-    ['Time machine', 'time machines', 1.4e13, 6.5e7, 'Fetches cookies from the past, before anyone could eat them.'],
-    ['Antimatter condenser', 'antimatter condensers', 1.7e14, 4.3e8, 'Condenses the antimatter of the universe into cookies.'],
-    ['Prism', 'prisms', 2.1e15, 2.9e9, 'Converts light itself into cookies.'],
-    ['Chancemaker', 'chancemakers', 2.6e16, 2.1e10, 'Bakes cookies out of thin air through sheer luck.'],
-    ['Fractal engine', 'fractal engines', 3.1e17, 1.5e11, 'Turns cookies into even more cookies.'],
-    ['Javascript console', 'javascript consoles', 7.1e19, 1.1e12, 'Bakes cookies out of keystrokes, semicolons and the occasional error.'],
-    ['Idleverse', 'idleverses', 1.2e22, 8.3e12, 'Spins up spare universes that bake while nobody is watching.'],
-    ['Cortex baker', 'cortex bakers', 1.9e24, 6.4e13, 'A giant brain that thinks cookies into existence.'],
-    ['You', 'you', 5.4e26, 5.1e14, 'Creates cookies the way only you can. Slightly more of you, slightly more cookies.']
+    ['Helping hand', 'helping hands', 15, 0.1, 'A spare oven mitt that taps the big cookie once every 10 seconds.'],
+    ['Auntie', 'aunties', 100, 1, 'Bakes from a family recipe she refuses to write down.'],
+    ['Wheat field', 'wheat fields', 1100, 8, 'Golden wheat, milled straight into cookie flour.'],
+    ['Cocoa quarry', 'cocoa quarries', 12000, 47, 'Chips raw chocolate out of the hillside by the cartload.'],
+    ['Oven works', 'oven works', 130000, 260, 'A hall of roaring ovens and a conveyor belt that never sleeps.'],
+    ['Crumb exchange', 'crumb exchanges', 1.4e6, 1400, 'Trades cookie futures and keeps the profits warm.'],
+    ['Sugar shrine', 'sugar shrines', 2e7, 7800, 'Pilgrims leave butter at the altar. The shrine returns cookies.'],
+    ['Mage kitchen', 'mage kitchens', 3.3e8, 44000, 'Pastry mages stir dough out of thin air and old spellbooks.'],
+    ['Sky freighter', 'sky freighters', 5.1e9, 260000, 'Airships haul cookie dough down from the floating isles.'],
+    ['Flavour lab', 'flavour labs', 7.5e10, 1.6e6, 'Distils brand-new flavours from spare sugar and moonlight.'],
+    ['Dough rift', 'dough rifts', 1e12, 1e7, 'A shimmering tear that leaks warm dough from somewhere else.'],
+    ['Clockwork oven', 'clockwork ovens', 1.4e13, 6.5e7, 'Winds the clock back so every batch comes out fresh twice.'],
+    ['Crumb collider', 'crumb colliders', 1.7e14, 4.3e8, 'Smashes crumbs together until whole cookies come out.'],
+    ['Sun lens', 'sun lenses', 2.1e15, 2.9e9, 'Focuses the sunrise into perfectly golden bakes.'],
+    ['Lucky wheel', 'lucky wheels', 2.6e16, 2.1e10, 'Spin it and cookies fall out. It always lands on cookies.'],
+    ['Echo mixer', 'echo mixers', 3.1e17, 1.5e11, 'Every batch it mixes hides a smaller batch inside.'],
+    ['Recipe server', 'recipe servers', 7.1e19, 1.1e12, 'Compiles recipes into cookies at a billion lines a second.'],
+    ['Snow globe world', 'snow globe worlds', 1.2e22, 8.3e12, 'Tiny worlds under glass, each one baking quietly.'],
+    ['Dream oven', 'dream ovens', 1.9e24, 6.4e13, 'Turns sweet dreams into real cookies by morning.'],
+    ['Star baker', 'star bakers', 5.4e26, 5.1e14, 'Another copy of the finest baker alive: you, again.']
   ];
   const NB = B.length;
   const cap = t => t[0].toUpperCase() + t.slice(1);
 
   const TIERS = [
     null,
-    [['Sturdier rolling pins', 'Forged from a retired anvil. Grandma insists it is for the dough.'], ['Orthopedic slippers', 'Maximum shuffle, minimum ouch.'], ['Industrial dentures', 'Now chewing through stale biscuits at 400 bites a minute.'], ['Prune smoothies', 'Keeps everything moving. Everything.'], ['Bifocal lasers', 'She can spot a burnt edge from across the county.']],
-    [['Cheap hoes', 'Rake in the profits.'], ['Chocolate fertilizer', 'It smells sweet, which is somehow worse.'], ['Cookie orchards', 'Rows and rows of crunchy, low-hanging fruit.'], ['Pre-sweetened wheat', 'Sugared at the cellular level.'], ['Gingerbread scarecrows', 'The crows are not scared, but they are very well fed.']],
-    [['Sugar gas', 'A pink gas found deep underground. Smells like candy floss and danger.'], ['Megadrill', 'Drills twice as deep, complains twice as loud.'], ['Ultradrill', 'We stopped calling it a drill. The drill union objected.'], ['Fudge-proof helmets', 'Safety first, chocolate a close second.'], ['Core forge', 'It turns out the centre of the planet is mostly nougat.']],
-    [['Sturdier conveyor belts', 'You are going places.'], ['Robot assistants', 'Beep boop. Please stop asking them to dance.'], ['Overtime whistles', 'Toot toot, nobody goes home.'], ['Radium ovens', 'Gives your cookies a healthy glow.'], ['Recombobulators', 'Puts things back together the way they never were.']],
-    [['Taller tellers', 'Can finally reach the top shelf of the vault.'], ['Snap-proof credit cards', 'For truly tough financial decisions.'], ['Acid-proof vaults', 'Because the last ones dissolved. Do not ask.'], ['Chocolate coins', 'Legal tender, delicious tender.'], ['Exponential interest', 'The maths is sound. The economists are not.']],
-    [['Golden idols', 'Lures greedier adventurers into fetching your cookies.'], ['Offerings of milk', 'The gods prefer it at room temperature.'], ['Delicious blessing', 'Praise the crumb.'], ['Sun festival', 'Cookies baked on the hottest stone at noon.'], ['Enlarged pantheon', 'More gods, more appetites.']],
-    [['Pointier hats', 'Tests show a 42% increase in pointiness-related magic.'], ['Beardlier beards', 'Every single strand is a spell component.'], ['Ancient grimoires', 'Contains a spell for a perfectly crisp edge.'], ['Kitchen curses', 'The oven now preheats itself out of spite.'], ['School of sorcery', 'All exams are graded on crunchiness.']],
-    [['Vanilla nebulae', 'Gives your rockets a lovely smell.'], ['Wormholes', 'A shortcut through space. Mind the crumbs.'], ['Frequent flyer miles', 'Redeemable for more cookies, naturally.'], ['Warp drive', 'Warp factor oatmeal.'], ['Chocolate monoliths', 'Mysterious slabs that hum lullabies to the cargo.']],
-    [['Antimony', 'Lots of things are made of antimony. Whatever that is.'], ['Essence of dough', 'Distilled from a thousand kneadings.'], ['True chocolate', 'The pure source of all chocolate, before it got watered down.'], ['Ambrosia', 'Tastes like every dessert at once. Unsettling.'], ['Aqua biscuitae', 'Holy cookie water. Do not dunk.']],
-    [['Ancient tablet', 'A slab covered in recipes for things that do not exist yet.'], ['Oat-whispering workers', 'They will not stop talking about the oats.'], ['Soul bond', 'Signed in milk, binding for eternity.'], ['Sanity dance', 'Keeps the portal stable with a little two-step.'], ['Brane transplant', 'The cookies over there are just slightly more cookie.']],
-    [['Chrono-whisks', 'Whisks yesterday into tomorrow.'], ['Paradox resolver', 'No more stealing cookies from your own grandfather.'], ['Quantum conundrum', 'Everywhere and nowhere at once. Mostly in the jar.'], ['Causality enforcer', 'What happened, happened. Especially the snacking.'], ['Yestermorrow comparators', 'Compares tomorrow to yesterday. Both taste great.']],
-    [['Sugar bosons', 'Gives mass to cookies. Specifically, to your waistline.'], ['String theory', 'The cookies are vibrating in eleven dimensions.'], ['Large macaron collider', 'Smashing pastries at near light speed, for science.'], ['Big bang bake', 'In the beginning, there was the oven.'], ['Reverse cyclotrons', 'Unspins your particles, respins your cookies.']],
-    [['Gem polish', 'Squeaky-clean photons only.'], ['Ninth colour', 'Somewhere past violet. It smells like vanilla.'], ['Chocolate light', 'Bask in its warm, crumbly glow.'], ['Grainbow', 'A rainbow made entirely of oats.'], ['Pure cosmic light', 'Shipped straight from the edge of the observable pantry.']],
-    [['Your lucky cookie', 'Do not eat it. Seriously.'], ['Edge-landing coin', 'Lands on its edge every single time.'], ['Winning lottery ticket', 'What lottery? Who cares, it won.'], ['Four-leaf clover field', 'Mowed only on Friday the thirteenth.'], ['Horseshoe bakeware', 'Everything comes out lucky, and slightly horseshoe-shaped.']],
-    [['Metabakeries', 'Bakeries that bake bakeries.'], ['Mandelbrown sugar', 'Sweet at every single scale.'], ['Fractoids', 'Tiny cookies made of tinier cookies.'], ['Nested universe theory', 'It is cookies all the way down.'], ['Sponge cake geometry', 'Infinite surface area, no volume, perfectly moist.']],
-    [['The JavaScript console for dummies', 'Step one: open it. Step two: bake.'], ['64bit arrays', 'Twice the bits, twice the crumbs.'], ['Stack overflow', 'The cookies keep coming and nobody knows why.'], ['Enterprise compiler', 'Takes nine meetings to bake one cookie.'], ['Syntactic sugar', 'Literally.']],
-    [['Manifold bakeries', 'Every bakery sits on a slightly different bake.'], ['Infinite dough', 'Never runs out, never rises.'], ['Pocket universes', 'Small enough to fit in a cookie jar.'], ['Reality sandwiches', 'Two universes with a cookie in the middle.'], ['Idle gods', 'They only wake up for snacks.']],
-    [['Principled neural shortcuts', 'The brain skips the boring parts of baking.'], ['Obey', 'The cookies do as they are told.'], ['A sound mind', 'Rests well, bakes better.'], ['Cookie dreams', 'Fall asleep, wake up to a pantry full.'], ['Neural nets of dough', 'Learns what a cookie is. Mostly right.']],
-    [['Cloning vats', 'One more of you, one more oven.'], ['Mirror dimension', 'Where you are the cookie.'], ['Work-life balance', 'Spend it all on baking.'], ['Soul bargain', 'Read the fine print. Then bake.'], ['Better you', 'The same, but fresher out of the oven.']]
+    [['Heirloom rolling pins', 'Older than the house and twice as heavy.'], ['Comfy slippers', 'Shuffling speed: legendary.'], ['Glasses on a chain', 'Never lost, never misreads a recipe.'], ['Secret spice tin', 'Nobody knows what is inside. Not even her.'], ['Kitchen radio', 'Bakes faster when the old songs come on.']],
+    [['Sharper scythes', 'Cuts the wheat and the waiting time.'], ['Honey bees', 'They pollinate. They also have opinions.'], ['Rain barrels', 'Every drop goes into the dough.'], ['Windmill sails', 'Grinds flour while the breeze does the work.'], ['Cocoa saplings', 'Planted between the rows, just in case.']],
+    [['Lantern helmets', 'Bright ideas, deep down.'], ['Mine carts', 'Rolls downhill, comes back full of chocolate.'], ['Steam picks', 'Chipping chips at full steam.'], ['Fudge seams', 'A soft vein that tastes like victory.'], ['Caramel geodes', 'Crack one open for a sticky surprise.']],
+    [['Faster conveyors', 'The cookies arrive before they leave.'], ['Brass thermostats', 'Exactly the right kind of hot.'], ['Night ovens', 'Bakes while the town sleeps.'], ['Automatic icers', 'Swirl, swirl, swirl, perfect.'], ['Steam whistles', 'Every whistle means another batch.']],
+    [['Brass tills', 'Ka-ching, but sweeter.'], ['Crumb bonds', 'A safe investment, if you do not eat it.'], ['Sprinkle vault', 'Guarded by a very serious hamster.'], ['Cookie coins', 'Legal tender, tender inside.'], ['Compound sprinkles', 'Interest, but with toppings.']],
+    [['Vanilla candles', 'Smells like patience.'], ['Butter offerings', 'Left at dawn, gone by noon.'], ['Chanting bakers', 'Om nom nom.'], ['Glazed bells', 'Ring them for a warmer batch.'], ['Pilgrim trails', 'Paved with sprinkles, lined with ovens.']],
+    [['Enchanted spoons', 'They stir themselves. Mostly clockwise.'], ['Floating flour', 'Sifts in mid-air and never spills.'], ['Spellbook of sweets', 'Chapter one: levitating sugar.'], ['Owl familiars', 'They fetch eggs at night.'], ['Crystal mixing bowls', 'See the future of every dough.']],
+    [['Bigger balloons', 'More lift, more dough.'], ['Tailwind charts', 'Always downhill, even in the sky.'], ['Cloud harbours', 'Docking is easy when the dock is fluffy.'], ['Propeller cookies', 'The cargo helps with the flying.'], ['Star maps', 'Shortcuts through the constellations.']],
+    [['Glass flasks', 'Bubbling with something that smells of toffee.'], ['Flavour wheel', 'Spin it for a brand-new taste.'], ['Vanilla essence', 'One drop flavours the whole bakery.'], ['Fizzing sugar', 'Pops in your mouth, then in your profits.'], ['Golden extract', 'Tastes like a sunny afternoon.']],
+    [['Steadier frames', 'Keeps the rift from wobbling.'], ['Rift goggles', 'Look through and wave at the other bakers.'], ['Dough tethers', 'Pulls the good stuff through first.'], ['Echo bakeries', 'The bakery over there is also yours.'], ['Rift sweetener', 'Makes travel between worlds less sour.']],
+    [['Wind-up keys', 'Turn twice for a batch from yesterday.'], ['Brass gears', 'Tick, tock, bake.'], ['Flour hourglass', 'Pours forever, never empties.'], ['Second hands', 'Every second, a second batch.'], ['Rewind lever', 'Undo the eating, keep the cookies.']],
+    [['Magnetic trays', 'Lines the crumbs up nicely.'], ['Ring tunnels', 'Round and round the crumbs go.'], ['Crumb detectors', 'Beeps when a crumb is about to become a cookie.'], ['Sugar particles', 'Smaller than sprinkles, sweeter than sugar.'], ['Big crunch', 'In the end, everything becomes a cookie.']],
+    [['Polished glass', 'Not a single smudge.'], ['Morning angle', 'Catches the very first light.'], ['Rainbow filters', 'Each colour bakes a different flavour.'], ['Mirror fields', 'A thousand mirrors, one perfect bake.'], ['Solar crust', 'Golden outside, glowing inside.']],
+    [['Greased axle', 'Spins longer, pays sweeter.'], ['Clover pegs', 'Every slot is the lucky one.'], ['Horseshoe rim', 'Upside up, so the luck stays in.'], ['Rabbit pointer', 'Points at cookies, always.'], ['Jackpot bell', 'Rings so often nobody hears it any more.']],
+    [['Nested bowls', 'Bowls inside bowls inside bowls.'], ['Spiral dough hooks', 'Twists forever, gently.'], ['Echo chambers', 'Mix once, hear it bake twice.'], ['Tiny-batch theory', 'Every cookie is a batch in miniature.'], ['Mixing loops', 'Starts where it ends, ends with cookies.']],
+    [['More memory', 'Remembers every recipe ever baked.'], ['Faster fans', 'Cools the servers, warms the ovens.'], ['Cookie cache', 'Serves warm cookies straight from memory.'], ['Recipe compiler', 'Turns a list of ingredients into a cookie.'], ['Clean code', 'Not a single crumb in the keyboard.']],
+    [['Thicker glass', 'Keeps the little bakers safe and warm.'], ['Gentle shaking', 'Every shake starts a new batch.'], ['Tiny chimneys', 'Puffs of sweet smoke, very small.'], ['Sugar snow', 'It falls, they bake it.'], ['Globe shelves', 'Room for a whole collection.']],
+    [['Softer pillows', 'Better sleep, bigger batches.'], ['Lullaby timers', 'Rings softly when the dream is done.'], ['Counting cookies', 'Much better than counting sheep.'], ['Daydream shifts', 'Bakes in the afternoon too.'], ['Lucid baking', 'Knows it is dreaming, bakes anyway.']],
+    [['Lucky apron', 'Never washed. Never failed.'], ['Signature whisk', 'Engraved with your initials.'], ['Morning routine', 'Up at five, baking by five past.'], ['Fan mail', 'Every letter makes you bake faster.'], ['Golden spatula', 'The highest honour in baking.']]
   ];
-  const TIERX = ['Aging agents|Xtreme walkers|The Unbridling|Reverse dementia|Timeproof hair dyes', 'Rain dances|Crop rotation 3000|Seed vaults|Mutant wheat|Cookie genome project', 'Dynamite sticks|Core samples|Laser picks|Deepest veins|Cookie magma', 'Night shifts|Quality control bots|Assembly singularity|Self-oiling gears|Perpetual motion belts', 'Gold-plated vaults|Interest on interest|Offshore ovens|Cookie derivatives|Compound crumbs', 'Choir of crumbs|Pilgrimage routes|Sacred sprinkles|Oven oracles|Divine leavening', 'Mana ovens|Runic whisks|Arcane pastry|Spellbound sugar|Grand baking archmagi', 'Faster-than-light freight|Cookie tankers|Interstellar express|Hyperlane depots|Galactic loading docks', 'Philosopher\'s flour|Distilled butter|Elixir of dough|Transmuted sprinkles|Flask of eternal bake', 'Wider doorways|Stable rifts|Cookie customs|Dimensional bakeries|Rift sweeteners', 'Pocket watches|Rewound recipes|Temporal ovens|Cookie loops|Eternal Tuesdays', 'Magnetic bottles|Positron cream|Annihilation frosting|Zero-point jam|Vacuum sprinkles', 'Rainbow glazes|Polarized sugar|Lens polishing|Spectral sprinkles|Photon icing', 'Lucky socks|Rabbit\'s feet|Perfect shuffle|Fortune ovens|Probability sprinkles', 'Self-replicating dough|Zoom-in zoom-out|Infinite icing|Recursive ovens|Mandelcrumb sets', 'Semicolon sprinkles|Async oven|Promise cookies|Callback hell bakery|Garbage-collected crumbs', 'Spare timelines|Sleepy galaxies|Pocket multiverse|Idle gods\' blessing|Cosmic naps', 'Neural icing|Synapse whisks|Dream recipes|Lucid baking|Galaxy brain batter', 'Mirror practice|Inner baker|Perfect posture|Cookie meditation|Peak you'];
+  const TIERX = ['Knitted oven mitts|Bottomless teapot|Sunday baking club|Recipe card box|Bake-off trophy', 'Sugar crop circles|Harvest moon|Seed library|Giant pumpkin patch|Breadbasket of the world', 'Pneumatic chisels|Cocoa bedrock|Truffle caverns|Ganache wells|Heart of the hill', 'Twin-deck ovens|Robotic scoopers|Assembly ballet|Self-greasing trays|Perpetual preheat', 'Golden ledgers|Bake-to-bank tunnels|Fudge futures|Dough-backed currency|The cookie standard', 'Sacred sieves|Sugar mosaics|Dawn processions|Shrine of the first crumb|Eternal flame oven', 'Rune-carved whisks|Stirring circles|Mana glaze|Wand piping bags|Archmage of crumbs', 'Night convoys|Nougat cargo nets|Sky lighthouses|Jet-stream lanes|Flagship of the fleet', 'Taste-test panels|Rainbow distillers|Bottled aromas|Flask of forever|Grand flavour theory', 'Wider doorways|Rift customs desk|Pocket pantries|Borrowed ovens|Sugar storms', 'Pendulum mixers|Calendar of crumbs|Leap-year batches|Infinite Tuesdays|Timeless timer', 'Cold-fusion ovens|Quark sprinkles|Collision icing|Zero-point jam|Universe in a teaspoon', 'Prism sprinkles|Sunset glaze|Dawn chorus mirrors|Spectrum ovens|Captured noon', 'Weighted dice|Shooting star tickets|Wishbone spokes|Fortune ovens|Always-heads coin', 'Zoom whisks|Repeating patterns|Endless icing|Batch within a batch|Forever swirl', 'Bake scripts|Async ovens|Cookie protocol|Debugged dough|Cloud kitchens', 'Glitter storms|Miniature seasons|Pocket winters|Globe within a globe|Shelf of worlds', 'Night-light glaze|Dream journals|Cloud mattresses|Shared dreams|Sweetest dream', 'Mirror practice|Inner baker|Perfect posture|Cookie meditation|Peak you'];
   const TIERF = ['Twice the output, as usual.', 'A bigger bonus for a bigger bakery.', 'Experts agree this is probably fine.', 'The accountants are afraid to look.', 'Production is now officially suspicious.'];
   TIERX.forEach((l, k) => l.split('|').forEach((n, j) => TIERS[k + 1].push([n, TIERF[j]])));
   const GTYPES = [
-    ['Farmer grandmas', 'She talks to the plants. They listen.'], ['Miner grandmas', 'Hard hats, soft cookies.'], ['Worker grandmas', 'Unionised and unstoppable.'],
-    ['Banker grandmas', 'Lends cookies at 300% interest, with a pinch on the cheek.'], ['Priestess grandmas', 'Blessed are the bakers.'], ['Witch grandmas', 'Her broom doubles as a whisk.'],
-    ['Cosmic grandmas', 'In space, nobody can hear you knit.'], ['Gilded grandmas', 'Solid gold, still complaining about the weather.'], ['Otherworldly grandmas', 'Knits with yarn from the fourth dimension.'],
-    ['Time-travelling grandmas', 'Came back from the future to tell you to wear a sweater.'], ['Quantum grandmas', 'Both baking and napping until observed.'], ['Prismatic grandmas', 'Glows softly while humming old songs.'],
-    ['Lucky grandmas', 'Has never once lost at bingo.'], ['Fractal grandmas', 'Each one contains a smaller, crankier grandma.'],
-    ['Binary grandmas', 'Knits in ones and zeroes. Mostly ones.'], ['Alternate grandmas', 'From a universe where cookies came first.'], ['Brainy grandmas', 'Remembers every recipe. And every grudge.'], ['Grandmas of you', 'Reminds you to call. Reminds you often.']
+    ['Farmhand aunties', 'She talks to the wheat. The wheat talks back.'],
+    ['Quarry aunties', 'Hard hats, soft centres.'],
+    ['Foreman aunties', 'Runs the oven works with a whistle and a wink.'],
+    ['Banker aunties', 'Lends cookies at very reasonable rates, plus a pinch on the cheek.'],
+    ['Shrine aunties', 'Keeps the candles lit and the butter fresh.'],
+    ['Mage aunties', 'Her knitting needles double as wands.'],
+    ['Pilot aunties', 'Flies the freighter with one hand, knits with the other.'],
+    ['Chemist aunties', 'Measures everything twice and tastes it three times.'],
+    ['Rift aunties', 'Knits with yarn from the other side.'],
+    ['Clockmaker aunties', 'Always on time, sometimes early, once tomorrow.'],
+    ['Physicist aunties', 'Explains particle theory with biscuits.'],
+    ['Sunny aunties', 'Glows softly while humming old songs.'],
+    ['Lucky aunties', 'Has never once lost at the church raffle.'],
+    ['Echo aunties', 'Each one contains a smaller, crankier auntie.'],
+    ['Coder aunties', 'Writes recipes in perfect, tidy code.'],
+    ['Globe aunties', 'Lives in a snow globe and loves the weather.'],
+    ['Dreamy aunties', 'Bakes in her sleep. Bakes better in her sleep.'],
+    ['Aunties of you', 'Reminds you to call. Reminds you often.']
   ];
   const DOUGH = ['#f6d18f', '#dd9e52', '#b06a2c', '#6a3713'];
   const COOKIES = [
@@ -105,59 +117,59 @@
     ['Palmiers', 5e17, 2, ['#f6d08a', '#e0a85a', '#b8772f', '#6e4418'], '#fff0c0', 'Heart-shaped puff pastry. Sparks joy, flakes everywhere.'],
     ['Palets', 1e18, 2, ['#e6b774', '#c78a46', '#945a24', '#5a3210'], '#6a3a1a', 'Plain, round and surprisingly French.'],
     ['Sables', 5e18, 2, ['#f8e2a8', '#ecc772', '#c99a45', '#8a6224'], '#f6dc92', 'Sandy, buttery and gone in one bite.'],
-    ['Caramoas', 1e19, 3, ['#d29a52', '#b06f2a', '#7a4818', '#40220a'], '#f6f0e4', 'Caramel, coconut and chocolate stripes. Do not share.'],
-    ['Sagalongs', 5e19, 3, ['#f2c88a', '#d8a05a', '#a86e30', '#6a3e14'], '#fbf2dc', 'Peanut butter on shortbread. Join the trail.'],
-    ['Shortfoils', 1e20, 3, ['#f0c488', '#d49a54', '#a46a2a', '#62380e'], '#4a2a14', 'Mint-chocolate crisp with a hint of wrapper.'],
-    ['Win mints', 5e20, 3, ['#d8f0d8', '#a8d8b0', '#74aa84', '#3a6a4a'], '#ffffff', 'Minty fresh and slightly smug.'],
+    ['Coco stripes', 1e19, 3, ['#d29a52', '#b06f2a', '#7a4818', '#40220a'], '#f6f0e4', 'Caramel, coconut and chocolate stripes. Do not share.'],
+    ['Trail treats', 5e19, 3, ['#f2c88a', '#d8a05a', '#a86e30', '#6a3e14'], '#fbf2dc', 'Peanut butter on shortbread, packed for the hike.'],
+    ['Mint crisps', 1e20, 3, ['#f0c488', '#d49a54', '#a46a2a', '#62380e'], '#4a2a14', 'Mint-chocolate crisp with a hint of wrapper.'],
+    ['Frost mints', 5e20, 3, ['#d8f0d8', '#a8d8b0', '#74aa84', '#3a6a4a'], '#ffffff', 'Minty fresh and slightly smug.'],
     ['Gingerbread trees', 1e21, 3, ['#c4793e', '#a05a28', '#74401a', '#44240a'], '#2f8a3c', 'A whole forest, baked on one sheet.']
   ];
   const MICE = [
-    ['Plastic mouse', 5e4, 1e3, '#ecedf2', 'Squeaks a little when clicked.'],
-    ['Iron mouse', 5e6, 1e5, '#8d939b', 'Heavy enough to anchor a small boat.'],
-    ['Titanium mouse', 5e8, 1e7, '#bcd0e2', 'Light, strong and smells of spaceships.'],
-    ['Adamantium mouse', 5e10, 1e9, '#4f5a68', 'Unscratchable, unstoppable, unplugged.'],
-    ['Unobtainium mouse', 5e12, 1e11, '#a87be0', 'You obtained it anyway.'],
-    ['Mythril mouse', 5e14, 1e13, '#6fd6e6', 'Forged in the fires of a very serious desk setup.'],
-    ['Wishmetal mouse', 5e16, 1e15, '#f6b6d8', 'Cast from the leftovers of shooting stars.'],
-    ['Fantasteel mouse', 5e18, 1e17, '#a0e2d0', 'Strong enough that even the legends stopped arguing.'],
-    ['Nevercrack mouse', 5e20, 1e19, '#ffd9a0', 'Guaranteed never to crack, bend or sing.'],
-    ['Armythril mouse', 5e22, 1e21, '#9aa6d8', 'Click with the weight of an entire regiment.'],
-    ['Technobsidian mouse', 5e24, 1e23, '#6a5a8a', 'Wires, glass and a faint sense of dread.'],
-    ['Plasmarble mouse', 5e26, 1e25, '#f2c4f2', 'Cold to the touch and hot to the click.']
+    ['Copper thimble', 5e4, 1e3, '#ecedf2', 'Tap, tap, ting.'],
+    ['Silver thimble', 5e6, 1e5, '#8d939b', 'Polished every morning by an auntie.'],
+    ['Gold thimble', 5e8, 1e7, '#bcd0e2', 'Heavy, shiny and very tappy.'],
+    ['Crystal thimble', 5e10, 1e9, '#4f5a68', 'Rings like a bell with every tap.'],
+    ['Starlight thimble', 5e12, 1e11, '#a87be0', 'Glows faintly in the dark pantry.'],
+    ['Comet thimble', 5e14, 1e13, '#6fd6e6', 'Leaves a sparkly trail behind every tap.'],
+    ['Wishing thimble', 5e16, 1e15, '#f6b6d8', 'Made from the leftovers of shooting stars.'],
+    ['Legend thimble', 5e18, 1e17, '#a0e2d0', 'Bakers whisper about it in hushed tones.'],
+    ['Unbreakable thimble', 5e20, 1e19, '#ffd9a0', 'Guaranteed never to crack, bend or sing.'],
+    ['Royal thimble', 5e22, 1e21, '#9aa6d8', 'Taps with the weight of a whole kingdom.'],
+    ['Void thimble', 5e24, 1e23, '#6a5a8a', 'Cold, dark and oddly satisfying.'],
+    ['Aurora thimble', 5e26, 1e25, '#f2c4f2', 'Every tap paints the sky.']
   ];
   const KITTENS = [
-    ['Kitten helpers', 9e6, 0.5, 0.1, 'They will help, in exchange for a saucer of milk.'],
-    ['Kitten workers', 9e9, 1, 0.125, 'Clocks in, then immediately naps on the keyboard.'],
-    ['Kitten engineers', 9e13, 2, 0.15, 'Built a laser pointer into every machine.'],
-    ['Kitten overseers', 9e16, 3, 0.175, 'Watching you. Judging you. Improving output.'],
-    ['Kitten managers', 9e20, 4, 0.2, 'Has a corner office with a permanent sunbeam.'],
-    ['Kitten accountants', 9e23, 5, 0.2, 'Counts every whisker. Bills you for it.'],
-    ['Kitten specialists', 9e26, 6, 0.2, 'Certified in cuddling and quantum napping.'],
-    ['Kitten experts', 9e29, 7, 0.2, 'Knows exactly which sunbeam is the best.'],
-    ['Kitten consultants', 9e32, 8, 0.2, 'Charges by the purr.'],
-    ['Kitten assistants to the regional manager', 9e35, 9, 0.175, 'Mostly sits on the paperwork.']
+    ['Shop cat', 9e6, 0.5, 0.1, 'Sits in the window and attracts customers.'],
+    ['Flour cat', 9e9, 1, 0.125, 'Leaves white paw prints and good vibes.'],
+    ['Tasting cat', 9e13, 2, 0.15, 'Approves every batch with one slow blink.'],
+    ['Night-shift cat', 9e16, 3, 0.175, 'Guards the ovens from mice and boredom.'],
+    ['Head cat', 9e20, 4, 0.2, 'Has a corner office with a permanent sunbeam.'],
+    ['Ledger cat', 9e23, 5, 0.2, 'Counts every crumb. Bills you for it.'],
+    ['Cat of the house', 9e26, 6, 0.2, 'Certified in cuddling and quantum napping.'],
+    ['Grand cat', 9e29, 7, 0.2, 'Knows exactly which sunbeam is the best one.'],
+    ['Cat council', 9e32, 8, 0.2, 'Meets daily. Decides nothing. Purrs loudly.'],
+    ['Cat supreme', 9e35, 9, 0.175, 'Mostly sits on the paperwork, supremely.']
   ];
   const GOLDUPS = [
-    ['Lucky day', 777777777, 7, 'f', 'Golden cookies appear <b>twice as often</b> and stay <b>twice as long</b>.', 'Today the toast lands butter side up.'],
-    ['Serendipity', 77777777777, 27, 'f', 'Golden cookies appear <b>twice as often</b> and stay <b>twice as long</b>.', 'Happy accidents, served warm.'],
-    ['Get lucky', 77777777777777, 77, 'd', 'Golden cookie effects last <b>twice as long</b>.', 'Luck is just a well-timed snack.']
+    ['Shiny day', 777777777, 7, 'f', 'Gilded cookies appear <b>twice as often</b> and stay <b>twice as long</b>.', 'Everything glitters a little more today.'],
+    ['Gilded hour', 77777777777, 27, 'f', 'Gilded cookies appear <b>twice as often</b> and stay <b>twice as long</b>.', 'Sixty minutes of pure shine.'],
+    ['Glitter season', 77777777777777, 77, 'd', 'Gilded cookie effects last <b>twice as long</b>.', 'Luck is just a well-timed snack.']
   ];
   const HEAV0 = [
-    ['tg', 'Pearly oven doors', 1, 'While you are away, your bakery keeps producing at <b>50%</b> of its CpS instead of 10%.', 'The oven never truly closes.'],
-    ['hc', 'Heavenly cookies', 3, 'Cookie production multiplier <b>+10%</b>, permanently.', 'Baked on a cloud at very high altitude.'],
-    ['sk', 'Starter kit', 50, 'You start every run with <b>10 free cursors</b>.', 'A fresh pair of hands. Ten, actually.'],
-    ['hl', 'Heavenly luck', 77, 'Golden cookies appear <b>5%</b> more often.', 'A blessing on every crumb.'],
-    ['cc', 'Celestial coupon', 99, 'All buildings are <b>1%</b> cheaper.', 'Valid in this world and the next.'],
-    ['lf', 'Lasting fortune', 777, 'Golden cookie effects last <b>10%</b> longer.', 'Good things come to those who bake.'],
-    ['sc', 'Starter kitchen', 5000, 'You start every run with <b>5 free grandmas</b>.', 'They brought their own aprons.'],
-    ['ka', 'Kitten angels', 9, 'Kitten upgrades are <b>10%</b> more effective.', 'They have halos. And claws.'],
-    ['cd', 'Classic dairy selection', 100, 'Unlocks the <b>milk selector</b> in the options menu, with 25 flavours.', 'Every flavour, one jug.'],
-    ['fd', 'Fanciful dairy selection', 2500, 'Unlocks <b>9 more milk flavours</b> in the milk selector.', 'The kind of milk that sparkles.'],
-    ['sg', 'Sacrilegious corruption', 15000, 'Wrinklers give back <b>5%</b> more cookies when popped.', 'It bites back, in your favour.'],
-    ['dd', 'Decisive fate', 7777, 'Golden cookies stay <b>5%</b> longer.', 'Choose the cookie that chooses you.'],
-    ['dc', 'Divine discount', 99999, 'All buildings are <b>1%</b> cheaper.', 'A coupon signed by an angel.'],
-    ['dp', 'Divine bakeries', 399999, 'All upgrades are <b>5%</b> cheaper.', 'The prices went to heaven too.'],
-    ['sb', 'Sugar baking', 400, 'Each unspent sugar lump (up to 100) gives <b>+1% CpS</b>.', 'Hoard them, they are doing something.']
+    ['tg', 'Night oven', 1, 'While you are away, your bakery keeps producing at <b>50%</b> of its CpS instead of 10%.', 'The oven never truly closes.'],
+    ['hc', 'Cloud cookies', 3, 'Cookie production multiplier <b>+10%</b>, permanently.', 'Baked on a cloud at very high altitude.'],
+    ['sk', 'Spare mitts', 50, 'You start every run with <b>10 free helping hands</b>.', 'A fresh pair of hands. Ten, actually.'],
+    ['hl', 'Lucky star', 77, 'Gilded cookies appear <b>5%</b> more often.', 'A blessing on every crumb.'],
+    ['cc', 'Cloud coupon', 99, 'All buildings are <b>1%</b> cheaper.', 'Valid in this world and the next.'],
+    ['lf', 'Long glow', 777, 'Gilded cookie effects last <b>10%</b> longer.', 'Good things come to those who bake.'],
+    ['sc', 'Family reunion', 5000, 'You start every run with <b>5 free aunties</b>.', 'They brought their own aprons.'],
+    ['ka', 'Cat halos', 9, 'Bakery cat upgrades are <b>10%</b> more effective.', 'They have halos. And claws.'],
+    ['cd', 'Milk bar', 100, 'Unlocks the <b>milk selector</b> in the options menu, with 25 flavours.', 'Every flavour, one jug.'],
+    ['fd', 'Fancy milk bar', 2500, 'Unlocks <b>9 more milk flavours</b> in the milk selector.', 'The kind of milk that sparkles.'],
+    ['sg', 'Grub treaty', 15000, 'Dough grubs give back <b>5%</b> more cookies when popped.', 'It bites back, in your favour.'],
+    ['dd', 'Patient gold', 7777, 'Gilded cookies stay <b>5%</b> longer.', 'Choose the cookie that chooses you.'],
+    ['dc', 'Halo discount', 99999, 'All buildings are <b>1%</b> cheaper.', 'A coupon signed by an angel.'],
+    ['dp', 'Halo bakeries', 399999, 'All upgrades are <b>5%</b> cheaper.', 'The prices went to heaven too.'],
+    ['sb', 'Honey hoard', 400, 'Each unspent honey drop (up to 100) gives <b>+1% CpS</b>.', 'Hoard them, they are doing something.']
   ];
   const HPOS = { tg: [50, 90, null], hc: [50, 76, 'tg'], ka: [28, 76, 'hc'], cd: [18, 62, 'ka'], fd: [8, 47, 'cd'], sk: [72, 76, 'hc'], sc: [84, 62, 'sk'], sg: [92, 47, 'sc'], hl: [60, 62, 'hc'], lf: [68, 47, 'hl'], dd: [76, 32, 'lf'], cc: [40, 62, 'hc'], dc: [40, 47, 'cc'], dp: [40, 32, 'dc'], sb: [52, 47, 'hc'] };
   const HEAV = HEAV0.map(h => h.concat([HPOS[h[0]]]));
@@ -165,25 +177,25 @@
 
   const UP = [];
   const addU = o => UP.push(o);
-  const CUR_TXT = [['Reinforced index finger', 'Poke. Poke. Poke.'], ['Carpal tunnel prevention cream', 'Smells faintly of menthol and regret.'], ['Ambidextrous', 'Look, no ha... wait, both hands!']];
-  CFG.CURSOR_UPS.forEach(([price, need], k) => addU({ id: 'c' + k, name: CUR_TXT[k][0], flav: CUR_TXT[k][1], price, kind: 'cur', icon: ['cur', k], desc: 'The mouse and cursors are <b>twice</b> as efficient.', unlock: s => s.b[0] >= need }));
-  const FING_TXT = [['Thousand fingers', 'Clickety-clack.'], ['Million fingers', 'Clickety-clickety-clack.'], ['Billion fingers', 'The sound alone is a public nuisance.'], ['Trillion fingers', 'Fingers now have fingers.'], ['Quadrillion fingers', 'There is no hand big enough. Yet.'], ['Quintillion fingers', 'Hand-made has never meant so much.'], ['Sextillion fingers', 'One for every crumb in the universe.'], ['Septillion fingers', 'The mouse is starting to feel left out.'], ['Octillion fingers', 'Your keyboard filed a complaint.'], ['Nonillion fingers', 'Technically, all fingers everywhere.']];
-  CFG.FINGERS.forEach(([price, need, pow], k) => addU({ id: 'f' + k, name: FING_TXT[k][0], flav: FING_TXT[k][1], price, pow, kind: 'fing', icon: ['fing', k], desc: pow ? `Multiplies the gain from Thousand fingers by <b>${pow}</b>.` : 'The mouse and cursors gain <b>+0.1</b> cookies for each non-cursor object owned.', unlock: s => s.b[0] >= need }));
+  const CUR_TXT = [['Sturdy oven mitt', 'Tap. Tap. Tap.'], ['Padded fingertips', 'Soft on the cookie, hard on the clicking.'], ['Two-handed tapping', 'Twice the hands, twice the taps.']];
+  CFG.CURSOR_UPS.forEach(([price, need], k) => addU({ id: 'c' + k, name: CUR_TXT[k][0], flav: CUR_TXT[k][1], price, kind: 'cur', icon: ['cur', k], desc: 'Clicking and helping hands are <b>twice</b> as efficient.', unlock: s => s.b[0] >= need }));
+  const FING_TXT = [['Hundred hands', 'Tappity-tap.'], ['Busy hands', 'Tappity-tappity-tap.'], ['Crowd of hands', 'The sound alone is a public nuisance.'], ['Sea of hands', 'Waves of tapping, as far as the eye can see.'], ['Army of hands', 'Marching in perfect rhythm.'], ['Choir of hands', 'They clap in four-part harmony.'], ['Galaxy of hands', 'One for every crumb in the universe.'], ['Every hand ever', 'Even the ones that were busy.'], ['Hands of the cosmos', 'Your keyboard filed a complaint.'], ['Infinite applause', 'Technically, all hands everywhere.']];
+  CFG.FINGERS.forEach(([price, need, pow], k) => addU({ id: 'f' + k, name: FING_TXT[k][0], flav: FING_TXT[k][1], price, pow, kind: 'fing', icon: ['fing', k], desc: pow ? `Multiplies the gain from Hundred hands by <b>${pow}</b>.` : 'Clicking and helping hands gain <b>+0.1</b> cookies for each other building owned.', unlock: s => s.b[0] >= need }));
   for (let b = 1; b < NB; b++) for (let t = 0; t < 10; t++) addU({ id: `t${b}_${t}`, name: TIERS[b][t][0], flav: TIERS[b][t][1], price: B[b][2] * CFG.TIER_PRICE[t], kind: 'tier', b, icon: ['tier', b, t], desc: `${cap(B[b][1])} are <b>twice</b> as efficient.`, unlock: s => s.b[b] >= CFG.TIER_UNLOCK[t] });
-  for (let b = 2; b < NB; b++) addU({ id: 'g' + b, name: GTYPES[b - 2][0], flav: GTYPES[b - 2][1], price: B[b][2] * CFG.GRANDMA_TYPE_PRICE, kind: 'gt', b, icon: ['gt', b], desc: `Grandmas are <b>twice</b> as efficient. ${cap(B[b][1])} gain <b>+1% CpS</b> per ${b === 2 ? 'grandma' : (b - 1) + ' grandmas'}.`, unlock: s => s.b[b] >= CFG.GRANDMA_TYPE_NEED && s.b[1] >= 1 });
+  for (let b = 2; b < NB; b++) addU({ id: 'g' + b, name: GTYPES[b - 2][0], flav: GTYPES[b - 2][1], price: B[b][2] * CFG.GRANDMA_TYPE_PRICE, kind: 'gt', b, icon: ['gt', b], desc: `Aunties are <b>twice</b> as efficient. ${cap(B[b][1])} gain <b>+1% CpS</b> per ${b === 2 ? 'auntie' : (b - 1) + ' aunties'}.`, unlock: s => s.b[b] >= CFG.GRANDMA_TYPE_NEED && s.b[1] >= 1 });
   COOKIES.forEach(([name, price, pow, , , flav], k) => addU({ id: 'k' + k, name, flav, price, pow, kind: 'ck', tag: 'Cookie', icon: ['ck', k], desc: `Cookie production multiplier <b>+${pow}%</b>.`, unlock: s => s.earned >= price / CFG.COOKIE_UNLOCK_DIV }));
   MICE.forEach(([name, price, need, , flav], k) => addU({ id: 'm' + k, name, flav, price, kind: 'mouse', icon: ['mouse', k], desc: 'Clicking gains <b>+1% of your CpS</b>.', unlock: s => s.handmade >= need }));
   KITTENS.forEach(([name, price, milk, pow, flav], k) => addU({ id: 'n' + k, name, flav, price, pow, kind: 'kit', icon: ['kit', k], desc: 'You gain <b>more CpS</b> the more milk you have.', unlock: (s, A) => A.size * CFG.MILK_PER_ACH >= milk }));
   GOLDUPS.forEach(([name, price, need, pow, desc, flav], k) => addU({ id: 'l' + k, name, flav, price, pow, kind: 'gold', icon: ['gold', k], desc, unlock: s => s.gc >= need }));
   let PLEDGES = 0;
   const GPU = [
-    ['r0', 'Bingo center/Research facility', 1e12, 'Grandmas are <b>4 times</b> as efficient.', 'Where grandmas go to learn how to be unstoppable.', 0],
-    ['r1', 'One mind', 5e12, 'Each grandma gains <b>+0.02 base CpS</b> per grandma. <b>Warning :</b> the grandmas are waking up. Wrinklers will start to appear.', 'We are all one. We are grandma.', 0.02],
-    ['r2', 'Communal brainsweep', 2.5e13, 'Each grandma gains <b>+0.03 base CpS</b> per grandma. Wrinklers appear faster.', 'Burns the hair right off your head.', 0.03],
-    ['r3', 'Elder Pact', 1.25e14, 'Each grandma gains <b>+0.05 base CpS</b> per grandma. Wrinklers swarm in.', 'Signed in cookie dough.', 0.05]
+    ['r0', 'Auntie book club', 1e12, 'Aunties are <b>4 times</b> as efficient.', 'Where aunties trade recipes and gossip until dawn.', 0],
+    ['r1', 'Shared recipe', 5e12, 'Each auntie gains <b>+0.02 base CpS</b> per auntie. <b>Warning :</b> the aunties are getting restless. Dough grubs will start to appear.', 'One recipe, a thousand ovens.', 0.02],
+    ['r2', 'Whispering cookbook', 2.5e13, 'Each auntie gains <b>+0.03 base CpS</b> per auntie. Dough grubs appear faster.', 'It reads itself aloud at midnight.', 0.03],
+    ['r3', 'Midnight bake-off', 1.25e14, 'Each auntie gains <b>+0.05 base CpS</b> per auntie. Dough grubs swarm in.', 'Nobody sleeps until the last tray is out.', 0.05]
   ];
   GPU.forEach(([id, name, price, desc, flav, add], k) => addU({ id, name, flav, price, kind: 'gp', add, stage: k, icon: ['tier', 1, 5 + k], desc, unlock: (s, A, U) => k ? U.has('r' + (k - 1)) : [...U].filter(x => UPMAP[x] && UPMAP[x].kind === 'gt').length >= 7 }));
-  addU({ id: 'ep', name: 'Elder Pledge', flav: 'Gives the grandmas something soft to nap on.', get price() { return Math.pow(8, Math.min(PLEDGES + 2, 14)); }, kind: 'pledge', icon: ['gt', 1], desc: 'Puts the grandmas to sleep for <b>30 minutes</b> and pops every wrinkler.', unlock: (s, A, U) => U.has('r1') });
+  addU({ id: 'ep', name: 'Cocoa truce', flav: 'A warm mug for every auntie. Peace returns.', get price() { return Math.pow(8, Math.min(PLEDGES + 2, 14)); }, kind: 'pledge', icon: ['gt', 1], desc: 'Calms the aunties for <b>30 minutes</b> and shoos away every dough grub.', unlock: (s, A, U) => U.has('r1') });
   const UPMAP = Object.fromEntries(UP.map(u => [u.id, u]));
 
   const LONG = ['', ' million', ' billion', ' trillion', ' quadrillion', ' quintillion', ' sextillion', ' septillion', ' octillion', ' nonillion', ' decillion', ' undecillion', ' duodecillion', ' tredecillion', ' quattuordecillion', ' quindecillion'];
@@ -210,32 +222,32 @@
 
   const ACH = [];
   const aa = (name, desc, icon, test) => ACH.push({ id: 'a' + ACH.length, name, desc, icon, test });
-  [[1, 'Wake and bake'], [1e3, 'Making some dough'], [1e5, 'So baked right now'], [1e6, 'Fledgling bakery'], [1e8, 'World-famous bakery'], [1e9, 'Cosmic bakery'], [1e11, 'Universal bakery'], [1e12, 'Timeless bakery'], [1e14, 'Immortal bakery'], [1e15, 'Don\'t stop me now'], [1e17, 'You can stop now'], [1e18, 'Cookies all the way down'], [1e20, 'Overdose'], [1e21, 'How?']]
+  [[1, 'First batch'], [1e3, 'Kneading progress'], [1e5, 'Oven mitts on'], [1e6, 'Corner bakery'], [1e8, 'Famous on the block'], [1e9, 'Talk of the town'], [1e11, 'National treasure'], [1e12, 'Continental crumbs'], [1e14, 'Planetary pantry'], [1e15, 'Orbiting ovens'], [1e17, 'Starry sprinkles'], [1e18, 'Galactic glaze'], [1e20, 'Cosmic crumble'], [1e21, 'Beyond the oven']]
     .forEach(([v, n], k) => aa(n, `Bake <b>${beautify(v)}</b> cookie${v === 1 ? '' : 's'} in total.`, ['ckA', k], s => s.allTime >= v));
-  [[1, 'Casual baking'], [10, 'Hardcore baking'], [100, 'Steady tasty stream'], [1e3, 'Cookie monster'], [1e4, 'Mass producer'], [1e5, 'Cookie vortex'], [1e6, 'Cookie pulsar'], [1e7, 'Cookie quasar'], [1e8, 'Oh hey, you\'re still here'], [1e9, 'Let\'s never bake again'], [1e10, 'A world filled with cookies'], [1e11, 'Ludicrous bake speed']]
+  [[1, 'Warm oven'], [10, 'Busy kitchen'], [100, 'Steady supply'], [1e3, 'Batch machine'], [1e4, 'Assembly line'], [1e5, 'Crumb cyclone'], [1e6, 'Biscuit beacon'], [1e7, 'Sugar star'], [1e8, 'Still baking?'], [1e9, 'Retirement fund'], [1e10, 'Cookie weather'], [1e11, 'Light-speed bakery']]
     .forEach(([v, n], k) => aa(n, `Bake <b>${beautify(v)}</b> cookie${v === 1 ? '' : 's'} per second.`, ['cps', k], (s, C) => C.cps >= v));
   aa('First poke', 'Click the big cookie once.', ['hand', 0], s => s.clicksAll >= 1);
-  [[1e3, 'Clicktastic'], [1e5, 'Clickathlon'], [1e7, 'Clickolympics'], [1e9, 'Clickorama'], [1e11, 'Clickasmic'], [1e13, 'Clickageddon']]
+  [[1e3, 'Tap dancer'], [1e5, 'Tap marathon'], [1e7, 'Tap champion'], [1e9, 'Tap legend'], [1e11, 'Tap titan'], [1e13, 'Tap storm']]
     .forEach(([v, n], k) => aa(n, `Make <b>${beautify(v)}</b> cookies from clicking.`, ['hand', k + 1], s => s.handAll >= v));
-  const BACH = [['Click', 'Mouse wheel', 'Of Mice and Men'], ['Grandma\'s cookies', 'Sloppy kisses', 'Retirement home'], ['My first farm', 'Reap what you sow', 'Farm ill'], ['You know the drill', 'Excavation', 'Hollow the planet'], ['Production chain', 'Industrial revolution', 'Global warming'], ['Pretty penny', 'Fit the bill', 'A loan in the dark'], ['Your time to shine', 'Shady sect', 'New-age cult'], ['Bewitched', 'The sorcerer\'s apprentice', 'Charms and enchantments'], ['Rocket man', 'Greener on the other side', 'Out of this world'], ['Transmutation', 'Transmogrification', 'Gold member'], ['A whole new world', 'Now you\'re thinking', 'Dimensional shift'], ['Time warp', 'Alternate timeline', 'Rewriting history'], ['Antibatter', 'Quirky quarks', 'It does matter!'], ['Lone photon', 'Dazzling glimmer', 'Blinding flash'], ['Lucked out', 'What are the odds', 'Grandma needs a new pair of shoes'], ['Self-contained', 'Threw you for a loop', 'The sum of its parts']];
+  const BACH = [['Lend a hand', 'Many hands', 'Hands down'], ['Family recipe', 'Family gathering', 'Auntie army'], ['First furrow', 'Amber waves', 'Breadbasket'], ['Cocoa strike', 'Deep chocolate', 'Hollow hill'], ['Preheated', 'Production line', 'Smokestack skyline'], ['Small change', 'Market maker', 'Crumb tycoon'], ['Little altar', 'Pilgrimage', 'Sugar faith'], ['Abracadabake', 'Apprentice no more', 'Grand conjuror'], ['Lift off', 'Cloud convoy', 'Sky armada'], ['First flavour', 'Taste chemist', 'Flavour master'], ['Peek through', 'The other side', 'Rift walker'], ['Tick', 'Tock', 'Timeless batch'], ['First collision', 'Crumb physics', 'Big crunch theory'], ['Sunbeam', 'Golden hour', 'Solar bakery'], ['First spin', 'Lucky streak', 'House always wins'], ['Echo', 'Echo echo', 'Echo echo echo']];
   BACH.forEach((names, i) => [1, 50, 100].forEach((n, k) => aa(names[k], `Have <b>${n}</b> ${n === 1 ? B[i][0].toLowerCase() : B[i][1]}.`, ['bld', i, k], s => s.b[i] >= n)));
   aa('Balanced diet', 'Have at least <b>1</b> of every building.', ['bld', 1, 0], s => s.b.every(v => v >= 1));
   aa('Well-rounded', 'Have at least <b>25</b> of every building.', ['bld', 4, 1], s => s.b.every(v => v >= 25));
   aa('Collector\'s edition', 'Have at least <b>50</b> of every building.', ['bld', 15, 2], s => s.b.every(v => v >= 50));
   [[100, 'Real estate'], [500, 'Urban sprawl'], [1000, 'Megalopolis']].forEach(([n, name], k) => aa(name, `Own <b>${n}</b> buildings.`, ['bld', 5, k], s => s.b.reduce((a, v) => a + v, 0) >= n));
-  [[1, 'Fortune smiles'], [7, 'Gilded touch'], [27, 'Midas of crumbs'], [77, 'Golden age']].forEach(([n, name], k) => aa(name, `Click <b>${n}</b> golden cookie${n === 1 ? '' : 's'}.`, ['gold', k % 3], s => s.gc >= n));
+  [[1, 'Fortune smiles'], [7, 'Gilded touch'], [27, 'Midas of crumbs'], [77, 'Golden age']].forEach(([n, name], k) => aa(name, `Click <b>${n}</b> gilded cookie${n === 1 ? '' : 's'}.`, ['gold', k % 3], s => s.gc >= n));
   [[20, 'Shopping spree'], [50, 'Enhancer'], [100, 'Augmented']].forEach(([n, name], k) => aa(name, `Purchase <b>${n}</b> upgrades.`, ['cur', k], (s, C, A, U) => U.size >= n));
-  aa('Change of heart', 'Sell a grandma. How could you?', ['bld', 1, 0], s => s.sold > 0);
+  aa('Change of heart', 'Sell an auntie. How could you?', ['bld', 1, 0], s => s.sold > 0);
   aa('Breaking news', 'Click on the news ticker <b>50</b> times.', ['news', 0], s => s.news >= 50);
   aa('Name dropper', 'Give your bakery a new name.', ['news', 1], s => s.named > 0);
   aa('Hands off', 'Bake <b>1 million</b> cookies in one run while clicking the big cookie no more than <b>15</b> times.', ['hand', 6], s => s.earned >= 1e6 && s.clicks <= 15);
-  aa('Frenzied fingers', 'Trigger a click frenzy.', ['gold', 2], s => s.cfCount > 0);
+  aa('Golden touch', 'Trigger a golden touch.', ['gold', 2], s => s.cfCount > 0);
   aa('Milk mustache', 'Unlock <b>25</b> achievements and fill a whole glass of milk.', ['milk', 0], (s, C, A) => A.size >= 25);
-  aa('Got milk?', 'Unlock <b>50</b> achievements.', ['milk', 1], (s, C, A) => A.size >= 50);
-  aa('Born again', 'Ascend for the first time.', ['heav', 0], s => s.ascends >= 1);
-  aa('Serial reincarnator', 'Ascend <b>5</b> times.', ['heav', 1], s => s.ascends >= 5);
+  aa('Glass half full', 'Unlock <b>50</b> achievements.', ['milk', 1], (s, C, A) => A.size >= 50);
+  aa('Born again', 'Rebake for the first time.', ['heav', 0], s => s.ascends >= 1);
+  aa('Serial rebaker', 'Rebake <b>5</b> times.', ['heav', 1], s => s.ascends >= 5);
   aa('Hoarder', 'Have <b>1 billion</b> cookies in the bank at once.', ['ckA', 5], s => s.cookies >= 1e9);
-  [['Hello world', 'Alt-tab', 'Stack overflow'], ['Multiverse mess', 'Universe of cookies', 'Forever idle'], ['Brainwave', 'Mind over matter', 'Brain trust'], ['Mirror, mirror', 'Clone army', 'Identity crisis']]
+  [['First boot', 'Server farm', 'Cloud bakery'], ['Shake it', 'Glass menagerie', 'Collector of worlds'], ['Sweet dreams', 'Night shift', 'Dreamland'], ['Signature bake', 'Baking dynasty', 'Everyone is you']]
     .forEach((names, j) => [1, 50, 100].forEach((n, k) => aa(names[k], `Have <b>${n}</b> ${n === 1 ? B[16 + j][0].toLowerCase() : B[16 + j][1]}.`, ['bld', 16 + j, k], s => s.b[16 + j] >= n)));
   const ADJ6 = ['Sizable', 'Bustling', 'Teeming', 'Legendary', 'Mythic', 'Eternal'];
   [150, 200, 250, 300, 350, 400].forEach((n, k) => B.forEach((b, i) => aa(`${ADJ6[k]} ${b[1]}`, `Have <b>${n}</b> ${b[1]}.`, ['bld', i, 2], s => s.b[i] >= n)));
@@ -243,24 +255,55 @@
   [[1e12, 'Cookie nebula'], [1e13, 'Cookie quasar II'], [1e14, 'Cookie singularity'], [1e15, 'Sugar supernova'], [1e16, 'Dough deluge']].forEach(([v, n], k) => aa(n, `Bake <b>${beautify(v)}</b> cookies per second.`, ['cps', 12 + k], (s, C) => C.cps >= v));
   [[1e15, 'Clickpocalypse'], [1e17, 'Clickuniverse']].forEach(([v, n], k) => aa(n, `Make <b>${beautify(v)}</b> cookies from clicking.`, ['hand', 7 + k], s => s.handAll >= v));
   [[100, 'Click, then click again'], [500, 'A thousand pokes'], [2000, 'Clicking is my cardio'], [10000, 'Carpal tunnel club']].forEach(([n, name], k) => aa(name, `Click the big cookie <b>${comma(n)}</b> times.`, ['hand', k], s => s.clicksAll >= n));
-  [[150, 'Golden rush'], [365, 'Year of gold'], [777, 'Lucky sevens'], [1000, 'Gold digger']].forEach(([n, name], k) => aa(name, `Click <b>${n}</b> golden cookies.`, ['gold', k % 3], s => s.gc >= n));
+  [[150, 'Golden rush'], [365, 'Year of gold'], [777, 'Lucky sevens'], [1000, 'Gold digger']].forEach(([n, name], k) => aa(name, `Click <b>${n}</b> gilded cookies.`, ['gold', k % 3], s => s.gc >= n));
   [[150, 'Upgrade addict'], [250, 'Upgrade maniac'], [350, 'Upgrade completionist']].forEach(([n, name], k) => aa(name, `Purchase <b>${n}</b> upgrades.`, ['cur', 3 + k], (s, C, A, U) => U.size >= n));
   [[2000, 'Housing bubble'], [3000, 'Sprawling empire'], [5000, 'Everything is a bakery']].forEach(([n, name], k) => aa(name, `Own <b>${n}</b> buildings.`, ['bld', 6, k], s => s.b.reduce((a, v) => a + v, 0) >= n));
-  aa('Bingo!', 'Buy the Bingo center/Research facility.', ['tier', 1, 5], (s, C, A, U) => U.has('r0'));
-  aa('One with everything', 'Buy One mind.', ['tier', 1, 6], (s, C, A, U) => U.has('r1'));
-  aa('Elder', 'Own <b>7</b> different grandma upgrades.', ['gt', 1], (s, C, A, U) => [...U].filter(x => UPMAP[x] && UPMAP[x].kind === 'gt').length >= 7);
-  aa('Elder Pact', 'Sign the Elder Pact.', ['tier', 1, 8], (s, C, A, U) => U.has('r3'));
-  aa('Elder calm', 'Pledge to the grandmas.', ['gt', 1], s => s.pledges >= 1);
-  aa('Elder calm II', 'Pledge to the grandmas <b>5</b> times.', ['gt', 1], s => s.pledges >= 5);
-  [[1, 'Itchscratcher'], [50, 'Wrinklesquisher'], [200, 'Moistburster']].forEach(([n, name], k) => aa(name, `Pop <b>${n}</b> wrinkler${n === 1 ? '' : 's'}.`, ['wrk'], s => s.pops >= n));
-  [[1, 'Sweet'], [10, 'Sugar rush'], [100, 'Sugar sugar'], [1000, 'Lump hoarder']].forEach(([n, name], k) => aa(name, `Harvest <b>${comma(n)}</b> sugar lump${n === 1 ? '' : 's'} in total.`, ['lump', k % 3 ? (k % 3 === 2 ? 4 : 1) : 0], s => s.lumpTot >= n));
+  aa('Book club', 'Buy the Auntie book club.', ['tier', 1, 5], (s, C, A, U) => U.has('r0'));
+  aa('Shared at last', 'Buy the Shared recipe.', ['tier', 1, 6], (s, C, A, U) => U.has('r1'));
+  aa('Family tree', 'Own <b>7</b> different auntie upgrades.', ['gt', 1], (s, C, A, U) => [...U].filter(x => UPMAP[x] && UPMAP[x].kind === 'gt').length >= 7);
+  aa('Midnight oath', 'Start the Midnight bake-off.', ['tier', 1, 8], (s, C, A, U) => U.has('r3'));
+  aa('Truce', 'Offer the aunties a cocoa truce.', ['gt', 1], s => s.pledges >= 1);
+  aa('Lasting truce', 'Offer the aunties a cocoa truce <b>5</b> times.', ['gt', 1], s => s.pledges >= 5);
+  [[1, 'Grub flicker'], [50, 'Grub chaser'], [200, 'Grub hunter']].forEach(([n, name], k) => aa(name, `Pop <b>${n}</b> dough grub${n === 1 ? '' : 's'}.`, ['wrk'], s => s.pops >= n));
+  [[1, 'Sweet'], [10, 'Honey jar'], [100, 'Honey hoarder'], [1000, 'Honey baron']].forEach(([n, name], k) => aa(name, `Harvest <b>${comma(n)}</b> honey drop${n === 1 ? '' : 's'} in total.`, ['lump', k % 3 ? (k % 3 === 2 ? 4 : 1) : 0], s => s.lumpTot >= n));
   [[1, 'Level up'], [10, 'Ten levels deep'], [25, 'Master of one']].forEach(([n, name], k) => aa(name, `Get a building to level <b>${n}</b>.`, ['lump', 0], s => Math.max(0, ...s.lvl) >= n));
   aa('Level headed', 'Reach a total of <b>100</b> building levels.', ['lump', 1], s => s.lvl.reduce((a, v) => a + v, 0) >= 100);
-  [[2, 'Second wind'], [10, 'Ascension junkie'], [25, 'Eternal return']].forEach(([n, name], k) => aa(name, `Ascend <b>${n}</b> times.`, ['heav', k + 2], s => s.ascends >= n));
+  [[2, 'Second wind'], [10, 'Ascension junkie'], [25, 'Eternal return']].forEach(([n, name], k) => aa(name, `Rebake <b>${n}</b> times.`, ['heav', k + 2], s => s.ascends >= n));
   [[10, 'Heavenly start'], [100, 'Halo hoarder'], [1000, 'Prestigious']].forEach(([n, name], k) => aa(name, `Reach prestige level <b>${comma(n)}</b>.`, ['heav', k], s => s.prestige >= n));
   [[75, 'Whole lotta milk'], [100, 'Dairy farmer'], [150, 'Cow baron'], [200, 'Milk empire'], [250, 'Lactose legend'], [300, 'The great milkening']].forEach(([n, name]) => aa(name, `Unlock <b>${n}</b> achievements.`, ['milk', 1], (s, C, A) => A.size >= n));
   [[3600e3, 'Just one more minute'], [86400e3, 'A day in the bakery'], [7 * 86400e3, 'Week of dough']].forEach(([v, name]) => aa(name, `Play for <b>${v >= 86400e3 ? v / 86400e3 + ' day' + (v > 86400e3 ? 's' : '') : '1 hour'}</b>.`, ['news', 0], s => Date.now() - s.gameStart >= v));
   const ACHMAP = Object.fromEntries(ACH.map(a => [a.id, a]));
+  const bsum = s => s.b.reduce((a, v) => a + v, 0);
+  const QST = [
+    ['Click the big cookie <b>15</b> times', s => [s.clicks, 15], 15, 0],
+    ['Hire your first helping hand', s => [s.b[0], 1], 20, 0],
+    ['Own <b>5</b> helping hands', s => [s.b[0], 5], 50, 0],
+    ['Hire an auntie', s => [s.b[1], 1], 100, 0],
+    ['Buy your first upgrade', (s, C, A, U) => [U.size, 1], 150, 0],
+    ['Reach <b>10</b> cookies per second', (s, C) => [C.cps, 10], 300, 30],
+    ['Own <b>10</b> aunties', s => [s.b[1], 10], 500, 60],
+    ['Plant a wheat field', s => [s.b[2], 1], 800, 60],
+    ['Catch a gilded cookie', s => [s.gc, 1], 1000, 90],
+    ['Bake <b>10,000</b> cookies', s => [s.earned, 1e4], 1500, 90],
+    ['Open a cocoa quarry', s => [s.b[3], 1], 2000, 90],
+    ['Reach <b>100</b> cookies per second', (s, C) => [C.cps, 100], 0, 120],
+    ['Own <b>25</b> helping hands', s => [s.b[0], 25], 0, 120],
+    ['Unlock <b>10</b> achievements', (s, C, A) => [A.size, 10], 0, 120],
+    ['Build the oven works', s => [s.b[4], 1], 0, 150],
+    ['Own <b>50</b> buildings', s => [bsum(s), 50], 0, 150],
+    ['Reach <b>1,000</b> cookies per second', (s, C) => [C.cps, 1e3], 0, 180],
+    ['Bake <b>1 million</b> cookies', s => [s.earned, 1e6], 0, 180],
+    ['Open a crumb exchange', s => [s.b[5], 1], 0, 180],
+    ['Buy <b>20</b> upgrades', (s, C, A, U) => [U.size, 20], 0, 240],
+    ['Own <b>100</b> buildings', s => [bsum(s), 100], 0, 240],
+    ['Reach <b>10,000</b> cookies per second', (s, C) => [C.cps, 1e4], 0, 300],
+    ['Build a sugar shrine', s => [s.b[6], 1], 0, 300],
+    ['Catch <b>7</b> gilded cookies', s => [s.gc, 7], 0, 300],
+    ['Bake <b>100 million</b> cookies', s => [s.earned, 1e8], 0, 300],
+    ['Open a mage kitchen', s => [s.b[7], 1], 0, 360],
+    ['Reach <b>100,000</b> cookies per second', (s, C) => [C.cps, 1e5], 0, 480],
+    ['Bake <b>1 billion</b> cookies', s => [s.earned, 1e9], 0, 600]
+  ];
 
   const has = i => s => s.b[i] > 0;
   const NEWS = [
@@ -291,60 +334,60 @@
     ['Local cat knocks cookie off table, shows absolutely no remorse.', () => true],
     ['Chef unveils "deconstructed cookie". It is flour on a plate.', () => true],
     ['Dentists report record profits, send you a fruit basket.', s => s.allTime >= 1e5],
-    ['Grandmas spotted knitting cookie-shaped mittens. "For the cookies," one explains.', has(1)],
-    ['Local grandma wins marathon, credits "the dough".', has(1)],
-    ['Grandmas form choir. Their only song is about cookies.', has(1)],
-    ['Grandma reportedly says: "I have seen things, dear. Doughy things."', s => s.b[1] >= 25],
-    ['Cookie farms accused of growing more cookies than strictly necessary.', has(2)],
-    ['Scarecrow union demands cookie rations.', has(2)],
+    ['Aunties spotted knitting cookie-shaped mittens. "For the cookies," one explains.', has(1)],
+    ['Local auntie wins marathon, credits "the dough".', has(1)],
+    ['Aunties form choir. Their only song is about cookies.', has(1)],
+    ['Auntie reportedly says: "I have seen things, dear. Doughy things."', s => s.b[1] >= 25],
+    ['Wheat fields accused of growing more flour than strictly necessary.', has(2)],
+    ['Bee union demands honey rations.', has(2)],
     ['Farmers report this year\'s harvest is "crunchier than ever".', has(2)],
-    ['Miners strike a chocolate vein the size of a small country.', has(3)],
+    ['Quarry crews strike a chocolate vein the size of a small country.', has(3)],
     ['Geologists alarmed: planet\'s crust increasingly biscuit-like.', has(3)],
-    ['Factory smoke now smells of vanilla; citizens inhale deeply.', has(4)],
+    ['Oven works smoke now smells of vanilla; citizens inhale deeply.', has(4)],
     ['Conveyor belt breaks speed record, cookies achieve brief flight.', has(4)],
-    ['Banks now accept cookies as collateral. Cookies refuse to accept banks.', has(5)],
+    ['Crumb exchange now accepts cookies as collateral. Cookies refuse to accept collateral.', has(5)],
     ['Stock market crashes, rebounds after a short snack break.', has(5)],
-    ['Temple priests chant the name of your bakery at sunrise.', has(6)],
-    ['Archaeologists unearth a golden cookie idol. It is still warm.', has(6)],
-    ['Wizard accidentally turns himself into a cookie, describes it as "crumbly".', has(7)],
+    ['Shrine keepers chant the name of your bakery at sunrise.', has(6)],
+    ['Archaeologists unearth a sugar idol. It is still warm.', has(6)],
+    ['Pastry mage accidentally turns himself into a cookie, describes it as "crumbly".', has(7)],
     ['Magic school adds "Introductory Baking Hexes" to the curriculum.', has(7)],
-    ['Cookie planet discovered; locals described as "extremely chewy".', has(8)],
-    ['Astronauts report that space smells faintly of brown sugar.', has(8)],
-    ['Gold reserves plummet as alchemists keep turning it into cookies.', has(9)],
-    ['Alchemist claims to have found the elixir of life. It is a cookie.', has(9)],
-    ['Portal mishap: dimension made entirely of crumbs discovered.', has(10)],
-    ['Strange creatures emerge from portal, politely ask for milk.', has(10)],
+    ['Floating isle discovered; locals described as "extremely chewy".', has(8)],
+    ['Freighter pilots report that clouds smell faintly of brown sugar.', has(8)],
+    ['Flavour chemists invent a taste nobody can describe. Everyone wants seconds.', has(9)],
+    ['Lab claims to have bottled the smell of Sunday morning. It is a cookie.', has(9)],
+    ['Rift mishap: a world made entirely of crumbs discovered.', has(10)],
+    ['Strange bakers step out of a dough rift, politely ask for milk.', has(10)],
     ['Historians baffled as cookies appear in very old paintings.', has(11)],
-    ['Time traveller arrives, eats all the cookies, leaves yesterday.', has(11)],
-    ['Antimatter cookies taste exactly like regular cookies, but backwards.', has(12)],
-    ['Rainbows now come with a light cookie aftertaste.', has(13)],
-    ['Man finds four-leaf clover, lucky penny and winning ticket in one cookie jar.', has(14)],
+    ['Clockwork oven runs backwards, serves breakfast before dinner.', has(11)],
+    ['Collided cookies taste exactly like regular cookies, but louder.', has(12)],
+    ['Sunbeams now come with a light cookie aftertaste.', has(13)],
+    ['Lucky wheel lands on cookies for the ten-thousandth time in a row. Mathematicians resign.', has(14)],
     ['Cookie found to contain a smaller cookie, which contains a smaller cookie...', has(15)],
-    ['Programmer blames missing semicolon for a cookie shortage that does not exist.', has(16)],
+    ['Recipe server blames a missing semicolon for a cookie shortage that does not exist.', has(16)],
     ['Developers insist the cookie bug is a feature. Cookies agree.', has(16)],
-    ['Spare universe spotted behind the pantry; residents describe it as "cozy".', has(17)],
-    ['Idle gods seen napping on a pile of cookies, do not disturb.', has(17)],
-    ['Giant brain wins baking contest, thanks judges for "thinking so highly".', has(18)],
-    ['Neuroscientists puzzled: the cortex smells faintly of vanilla.', has(18)],
-    ['Local man finds out he is the secret ingredient. He is thrilled and slightly sticky.', has(19)],
+    ['Snow globe residents describe their world as "cozy, a bit shaken".', has(17)],
+    ['Tiny snowmen in the globes have started baking too.', has(17)],
+    ['Dream oven wins baking contest without waking up.', has(18)],
+    ['Sleep scientists puzzled: everyone dreams of vanilla now.', has(18)],
+    ['Local baker finds out she is the secret ingredient. Thrilled, slightly sticky.', has(19)],
     ['Mirror shop reports an unusual run on cookie-shaped reflections.', has(19)],
-    ['Golden cookie sighting causes stampede in shopping district.', s => s.gc >= 1],
-    ['Experts warn: clicking that fast may cause "cookie elbow".', s => s.clicksAll >= 500],
-    ['Mysterious bakery ascends to the heavens; returns with very good ideas.', s => s.ascends >= 1],
-    ['Grandmas wake up with a start; "something is wrong with the dough", they whisper.', (s, C) => C.gp > 0],
-    ['Wrinkly things seen clinging to the great cookie. Locals avoid eye contact.', (s, C) => C.gp > 0],
-    ['Scientists confirm the wrinklers are, in fact, extremely hungry.', s => s.wr.length > 0],
-    ['Elder pledge signed; grandmas now nap at an alarming rate.', s => s.pledge > 0],
-    ['Grandmas demand better knitting needles. Needles demand better grandmas.', has(1)],
-    ['Neighbourhood grandma is now a feared underground chess champion.', s => s.b[1] >= 100],
-    ['Sugar lump found in a pocket. It is, regrettably, a rock.', s => s.lumpStart > 0],
-    ['Farmers report sugar lumps growing in the cookie fields, delighted.', s => s.lumpStart > 0],
-    ['Lumpy sugar crystals become the hottest collectible of the season.', s => s.lumpTot >= 5],
+    ['Gilded cookie sighting causes stampede in shopping district.', s => s.gc >= 1],
+    ['Experts warn: tapping that fast may cause "cookie elbow".', s => s.clicksAll >= 500],
+    ['Mysterious bakery closes for one night, reopens with very good ideas.', s => s.ascends >= 1],
+    ['Aunties stay up late; "the dough is whispering", they say.', (s, C) => C.gp > 0],
+    ['Squishy things seen clinging to the great cookie. Locals avoid eye contact.', (s, C) => C.gp > 0],
+    ['Scientists confirm the dough grubs are, in fact, extremely hungry.', s => s.wr.length > 0],
+    ['Cocoa truce agreed; aunties now nap at an alarming rate.', s => s.pledge > 0],
+    ['Aunties demand better knitting needles. Needles demand better aunties.', has(1)],
+    ['Neighbourhood auntie is now a feared underground chess champion.', s => s.b[1] >= 100],
+    ['Honey drop found in a pocket. It is, regrettably, a pebble.', s => s.lumpStart > 0],
+    ['Bees report honey drops forming on the wheat, delighted.', s => s.lumpStart > 0],
+    ['Honey drops become the hottest collectible of the season.', s => s.lumpTot >= 5],
     ['Industry insiders claim buildings "work harder when they are level headed".', s => s.lvl.some(v => v > 0)],
-    ['Heavenly chips declared the new reserve currency of the clouds.', s => s.chips > 0],
+    ['Halo sprinkles declared the new reserve currency of the clouds.', s => s.chips > 0],
     ['Angels seen browsing the upgrade tree for "something cheap and glowy".', s => s.chips > 0 || s.ascends > 0],
     ['Milk now comes in more flavours than anyone asked for.', (s, C) => C.milk >= 5],
-    ['Kittens unionize; demand cream and a corner office.', (s, C) => C.milk >= 2],
+    ['Bakery cats unionise; demand cream and a corner office.', (s, C) => C.milk >= 2],
     ['Zebra spotted in the dairy aisle, unrelated to the milk.', (s, C) => C.milk >= 25],
     ['Stunned scientists discover the cookie is also a pretty good sundial.', s => s.allTime >= 1e8],
     ['Cookie-powered cities report 40% fewer traffic jams and 90% more crumbs.', s => s.allTime >= 1e10],
@@ -355,8 +398,8 @@
     ['Entire alphabet reorganised to start with the letter C.', s => s.allTime >= 1e27],
     ['Economists formally replace the number line with a cookie line.', s => s.allTime >= 1e30],
     ['Cookie-based physics breakthroughs rewrite every textbook, again.', s => s.allTime >= 1e33],
-    ['Old man says he once saw a golden cookie. Nobody believes him. Then he clicks it.', s => s.gc >= 10],
-    ['Tourists line up for a photo with the legendary golden cookie, which blinks.', s => s.gc >= 77],
+    ['Old man says he once saw a gilded cookie. Nobody believes him. Then he clicks it.', s => s.gc >= 10],
+    ['Tourists line up for a photo with the legendary gilded cookie, which blinks.', s => s.gc >= 77],
     ['Man trapped in elevator with cookie jar reports "best day of my life".', () => true],
     ['Cookie jar lids declared illegal in three small countries.', () => true],
     ['Baker spotted whispering to the dough, dough appears to whisper back.', () => true],
@@ -1140,6 +1183,18 @@
 .gm-cookie-baker.cb-nar .cb-tabs{background:var(--cb-ph) 0 0/256px 100% repeat-x,#3a2614;border-top:2px solid #000}
 .gm-cookie-baker .cb-tabs button{font:400 13px var(--cbT);text-shadow:0 1px 0 #000}
 .gm-cookie-baker.cb-nar .cb-mini.on{background:linear-gradient(#1a120a,#000);border-bottom:2px solid #000;box-shadow:0 2px 0 #6a4a2a}
+.gm-cookie-baker .cb-quest{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:min(250px,calc(100% - 20px));display:grid;gap:3px;padding:7px 11px 8px;border:1px solid rgba(255,220,150,.45);border-radius:10px;background:linear-gradient(rgba(40,24,10,.88),rgba(18,10,4,.92));box-shadow:0 4px 14px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,235,190,.18);color:#fff;text-align:left;z-index:3;pointer-events:none;font:400 12px var(--cbB)}
+.gm-cookie-baker .cb-quest[hidden]{display:none}
+.gm-cookie-baker .cb-qh{font:400 11px var(--cbT);letter-spacing:.06em;text-transform:uppercase;color:#ffd88a}
+.gm-cookie-baker .cb-qt{font:700 13.5px/1.25 var(--cbB);text-shadow:0 1px 0 #000}
+.gm-cookie-baker .cb-qt b{color:#ffe7a8}
+.gm-cookie-baker .cb-qb{display:block;height:7px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+.gm-cookie-baker .cb-qb i{display:block;height:100%;width:0;border-radius:4px;background:linear-gradient(#ffe39a,#e09a32);transition:width .3s ease-out}
+.gm-cookie-baker .cb-qr{font-size:11px;line-height:1.3;color:#d9ccb4}
+.gm-cookie-baker .cb-quest.done{animation:gmCbQuest .7s ease-out}
+@keyframes gmCbQuest{0%{box-shadow:0 0 0 0 rgba(255,216,138,.9)}30%{transform:translateX(-50%) scale(1.06)}100%{box-shadow:0 0 0 18px rgba(255,216,138,0);transform:translateX(-50%) scale(1)}}
+.gm-cookie-baker.cb-nar.cb-qon .cb-notes{bottom:160px}
+@media (prefers-reduced-motion:reduce){.gm-cookie-baker .cb-quest.done{animation:none}.gm-cookie-baker .cb-qb i{transition:none}}
 `;
 
   Ameplay.register({
@@ -1147,8 +1202,8 @@
     title: 'Cookie Baker',
     category: 'Idle',
     tint: '#d9923b',
-    blurb: 'Click the big cookie, hire grandmas and bake your way to infinity.',
-    help: 'Click or tap the big cookie · buy buildings and upgrades in the store · <kbd>Ctrl</kbd>/<kbd>Shift</kbd> + click buys 10/100 · catch golden cookies · progress saves on its own',
+    blurb: 'Click the big cookie, hire aunties and bake your way to infinity.',
+    help: 'Click or tap the big cookie · buy buildings and upgrades in the store · <kbd>Ctrl</kbd>/<kbd>Shift</kbd> + click buys 10/100 · catch gilded cookies · follow the goals for small rewards · progress saves on its own',
     better: 'high',
     format: v => beautify(v),
     width: 1120,
@@ -1162,7 +1217,7 @@
       } catch (e) {}
       for (const [k, f] of [['--cb-wood', woodURL], ['--cb-paper', paperURL], ['--cb-dwood', darkWoodURL], ['--cb-blue', blueURL], ['--cb-pv', panelV], ['--cb-ph', panelH], ['--cb-crate', crateURL], ['--cb-grays', goldRaysURL]]) R.style.setProperty(k, `url(${f()})`);
       const num = (v, d) => (typeof v === 'number' && isFinite(v) && v >= 0 ? v : d);
-      const fresh = () => ({ lumps: 0, lumpTot: 0, lumpStart: 0, lumpTy: 0, lvl: B.map(() => 0), wr: [], pops: 0, pledge: 0, pledges: 0, v: 1, cookies: 0, earned: 0, allTime: 0, forfeit: 0, handmade: 0, handAll: 0, clicks: 0, clicksAll: 0, gc: 0, gcRun: 0, b: B.map(() => 0), free: B.map(() => 0), made: B.map(() => 0), up: [], unl: [], ach: [], heav: [], prestige: 0, chips: 0, ascends: 0, rev: 0, runStart: Date.now(), gameStart: Date.now(), news: 0, sold: 0, named: 0, name: randName(), t: Date.now(), subBand: 0, leftBand: 0, lastSub: 0, gcT: 0, frenzy: 0, frenzyMax: 0, cfrenzy: 0, cfMax: 0, cfCount: 0, heaven: 0, prefs: { p: 1, n: 1, sh: 0, vol: 50, m: 1, c: 1, ml: -1 } });
+      const fresh = () => ({ qi: 0, lumps: 0, lumpTot: 0, lumpStart: 0, lumpTy: 0, lvl: B.map(() => 0), wr: [], pops: 0, pledge: 0, pledges: 0, v: 1, cookies: 0, earned: 0, allTime: 0, forfeit: 0, handmade: 0, handAll: 0, clicks: 0, clicksAll: 0, gc: 0, gcRun: 0, b: B.map(() => 0), free: B.map(() => 0), made: B.map(() => 0), up: [], unl: [], ach: [], heav: [], prestige: 0, chips: 0, ascends: 0, rev: 0, runStart: Date.now(), gameStart: Date.now(), news: 0, sold: 0, named: 0, name: randName(), t: Date.now(), subBand: 0, leftBand: 0, lastSub: 0, gcT: 0, frenzy: 0, frenzyMax: 0, cfrenzy: 0, cfMax: 0, cfCount: 0, heaven: 0, prefs: { p: 1, n: 1, sh: 0, vol: 50, m: 1, c: 1, ml: -1 } });
       function loadState(o) {
         const f = fresh();
         if (!o || o.v !== 1) return f;
@@ -1170,6 +1225,7 @@
         f.lvl = B.map((_, i) => Math.floor(num(Array.isArray(o.lvl) ? o.lvl[i] : 0, 0)));
         f.wr = (Array.isArray(o.wr) ? o.wr : []).slice(0, 10).map((w, i) => ({ slot: i, c: num(w && w.c, 0), h: 0 }));
         f.allTime = Math.max(f.allTime, f.earned);
+        f.qi = Number.isInteger(o.qi) ? Math.max(0, Math.min(QST.length, o.qi)) : -1;
         f.rev = Number.isInteger(o.rev) ? Math.max(0, Math.min(NB - 1, o.rev)) : 0;
         for (const k of ['b', 'free', 'made']) f[k] = B.map((_, i) => num(Array.isArray(o[k]) ? o[k][i] : 0, 0));
         f.b = f.b.map(Math.floor); f.free = f.free.map((v, i) => Math.min(Math.floor(v), f.b[i]));
@@ -1189,12 +1245,13 @@
   <div class="cb-tick cb-tickL"><span></span></div>
   <div class="cb-head"><button class="cb-name" type="button"></button><div class="cb-count"><div class="cb-n"></div><div class="cb-cps"></div></div></div>
   <div class="cb-buffs"></div>
+  <div class="cb-quest" hidden><span class="cb-qh"></span><span class="cb-qt"></span><span class="cb-qb"><i></i></span><span class="cb-qr"></span></div>
 </div>
 <div class="cb-sep a"></div>
 <div class="cb-pane cb-M">
   <div class="cb-menu"><div class="cb-mc"><button class="cb-mb" data-m="opt" type="button">Options</button><button class="cb-mb" data-m="stats" type="button">Stats</button></div><div class="cb-tick cb-tickM"><span></span></div><div class="cb-mc"><button class="cb-mb" data-m="info" type="button">Info</button><button class="cb-mb" data-m="leg" type="button">Legacy</button></div></div>
   <div class="cb-hp"></div>
-  <div class="cb-mid"><div class="cb-rows"><div class="cb-empty">Your buildings will show up here.<br>Buy a grandma to get started!</div></div><button class="cb-lump" type="button" data-tip="l:0" aria-label="Sugar lump" hidden><img alt="" draggable="false"></button><div class="cb-panel" hidden><button class="cb-x" type="button" aria-label="Close">&times;</button><div class="cb-pin"></div></div></div>
+  <div class="cb-mid"><div class="cb-rows"><div class="cb-empty">Your buildings will show up here.<br>Hire an auntie to get started!</div></div><button class="cb-lump" type="button" data-tip="l:0" aria-label="Honey drop" hidden><img alt="" draggable="false"></button><div class="cb-panel" hidden><button class="cb-x" type="button" aria-label="Close">&times;</button><div class="cb-pin"></div></div></div>
 </div>
 <div class="cb-sep b"></div>
 <div class="cb-pane cb-R">
@@ -1217,6 +1274,7 @@
       const rowsEl = $('.cb-rows'), emptyEl = $('.cb-empty'), panelEl = $('.cb-panel'), pinEl = $('.cb-pin');
       const upsEl = $('.cb-ups'), bulkEl = $('.cb-bulk'), prodsEl = $('.cb-prods');
       const miniEl = $('.cb-mini'), tabsEl = $('.cb-tabs'), gcl = $('.cb-gcl'), notesEl = $('.cb-notes'), tipEl = $('.cb-tip'), heavenEl = $('.cb-heaven'), lumpEl = $('.cb-lump');
+      const questEl = $('.cb-quest'), qhEl = $('.cb-qh'), qtEl = $('.cb-qt'), qbEl = $('.cb-qb i'), qrEl = $('.cb-qr');
       const setCls = (el, c, on) => { if (el.classList.contains(c) !== !!on) el.classList.toggle(c, !!on); };
       const setText = (el, t) => { t = String(t); if (el.textContent !== t) el.textContent = t; };
 
@@ -1243,7 +1301,8 @@
         up: () => { [784, 988, 1175].forEach((f, i) => tone(f, f, 0.14, 'triangle', 0.1, i * 0.05)); },
         gcSpawn: () => { [1568, 2093, 2637, 2093].forEach((f, i) => tone(f, f, 0.3, 'sine', 0.045, i * 0.08)); },
         gcClick: () => { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, f, 0.24, 'triangle', 0.1, i * 0.05)); },
-        ach: () => { [1047, 1319, 1568, 2093].forEach((f, i) => tone(f, f, 0.6, 'sine', 0.06, i * 0.04)); }
+        ach: () => { [1047, 1319, 1568, 2093].forEach((f, i) => tone(f, f, 0.6, 'sine', 0.06, i * 0.04)); },
+        quest: () => { [659, 784, 988, 1319].forEach((f, i) => tone(f, f, 0.22, 'triangle', 0.09, i * 0.07)); tone(1976, 1976, 0.5, 'sine', 0.05, 0.3); }
       };
       const sfx = k => { if (!api.muted) SFX[k](); };
       api.on(R, 'pointerdown', () => actx(), true);
@@ -1307,6 +1366,37 @@
         let got = 0;
         for (const a of ACH) if (!ach.has(a.id) && a.test(s, C, ach, up)) { ach.add(a.id); got++; if (got <= 3) note('Achievement unlocked', a.name, iconURL(a.icon), 5); }
         if (got) { recalc(); sfx('ach'); }
+      }
+      const qReward = q => Math.max(q[2], Math.round(C.cps * q[3]));
+      const qDone = q => { const [c, g] = q[1](s, C, ach, up); return c >= g; };
+      let qSig = '';
+      function renderQuest() {
+        setCls(R, 'cb-qon', s.qi >= 0 && s.qi < QST.length && !s.heaven && (!nar || tab === 'L'));
+        if (s.qi < 0 || s.qi >= QST.length || s.heaven) { questEl.hidden = true; return; }
+        const q = QST[s.qi], [c, g] = q[1](s, C, ach, up), bonus = (s.qi + 1) % 5 === 0;
+        questEl.hidden = false;
+        const sig = s.qi + ':' + F(qReward(q)) + ':' + F(Math.min(c, g), 1);
+        if (sig !== qSig) {
+          qSig = sig;
+          setText(qhEl, `Goal ${s.qi + 1} of ${QST.length}`);
+          if (qtEl.innerHTML !== q[0]) qtEl.innerHTML = q[0];
+          setText(qrEl, `${F(Math.min(c, g), 1)} / ${F(g)} \u00b7 reward +${F(qReward(q))}${bonus ? ' + a gilded cookie' : ''}`);
+        }
+        qbEl.style.width = (Math.max(0, Math.min(1, c / g)) * 100).toFixed(1) + '%';
+      }
+      function checkQuest() {
+        if (s.qi < 0) { s.qi = 0; while (s.qi < QST.length && qDone(QST[s.qi])) s.qi++; }
+        if (s.qi < QST.length && !s.heaven && qDone(QST[s.qi])) {
+          const q = QST[s.qi], v = qReward(q), bonus = (s.qi + 1) % 5 === 0;
+          earn(v); s.qi++;
+          note('Goal complete!', `${q[0]} &middot; <b>+${F(v)}</b> cookies${bonus ? ' and a gilded cookie' : ''}`, iconURL(['ckA', Math.min(13, s.qi >> 1)]), 6);
+          sfx('quest');
+          questEl.classList.remove('done'); void questEl.offsetWidth; questEl.classList.add('done');
+          if (bonus && !gc) spawnGC();
+          const b = questEl.getBoundingClientRect(), rb = R.getBoundingClientRect();
+          if (b.width && (!nar || tab === 'L')) pop(b.left - rb.left + b.width / 2, b.top - rb.top, `+${F(v)}<small>Goal reward</small>`);
+        }
+        renderQuest();
       }
       function checkUnlocks() {
         for (const u of UP) if (!unl.has(u.id) && u.unlock(s, ach, up)) unl.add(u.id);
@@ -1423,7 +1513,7 @@
         const W = R.clientWidth, H = R.clientHeight, top = nar ? 90 : 60, bot = nar ? 130 : 60;
         const x = 50 + Math.random() * Math.max(10, W - 100), y = top + Math.random() * Math.max(10, H - top - bot);
         const el = document.createElement('div');
-        el.className = 'cb-gc'; el.setAttribute('role', 'button'); el.setAttribute('aria-label', 'Golden cookie');
+        el.className = 'cb-gc'; el.setAttribute('role', 'button'); el.setAttribute('aria-label', 'Gilded cookie');
         el.innerHTML = `<i></i><img alt="" draggable="false" src="${goldURL()}">`;
         el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.opacity = '0';
         el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); collectGC(); });
@@ -1456,11 +1546,13 @@
         s.gc++; s.gcRun++;
         const list = ['frenzy', 'lucky'];
         if (Math.random() < CFG.CF_CHANCE) list.push('click');
+        if (s.b.some(v => v > 0) && Math.random() < 0.35) list.push('gift');
         const ef = list[Math.floor(Math.random() * list.length)];
         let msg;
-        if (ef === 'frenzy') { const d = Math.ceil(CFG.FRENZY_TIME * C.gcD); s.frenzy = s.frenzyMax = d; msg = `Frenzy<small>Cookie production x${CFG.FRENZY_MULT} for ${d} seconds!</small>`; }
-        else if (ef === 'click') { const d = Math.ceil(CFG.CF_TIME * C.gcD); s.cfrenzy = s.cfMax = d; s.cfCount++; msg = `Click frenzy<small>Clicking power x${CFG.CF_MULT} for ${d} seconds!</small>`; }
-        else { const v = Math.min(s.cookies * CFG.LUCKY_BANK, C.cps * CFG.LUCKY_SECS) + CFG.LUCKY_FLAT; earn(v); msg = `Lucky!<small>+${F(v)} cookies!</small>`; burst(); }
+        if (ef === 'frenzy') { const d = Math.ceil(CFG.FRENZY_TIME * C.gcD); s.frenzy = s.frenzyMax = d; msg = `Sugar rush<small>Cookie production x${CFG.FRENZY_MULT} for ${d} seconds!</small>`; }
+        else if (ef === 'click') { const d = Math.ceil(CFG.CF_TIME * C.gcD); s.cfrenzy = s.cfMax = d; s.cfCount++; msg = `Golden touch<small>Clicking power x${CFG.CF_MULT} for ${d} seconds!</small>`; }
+        else if (ef === 'gift') { const own = s.b.map((v, i) => v > 0 ? i : -1).filter(i => i >= 0), i = own[Math.max(0, own.length - 1 - Math.floor(Math.random() * Math.min(3, own.length)))]; s.b[i]++; s.free[i]++; recalc(); refreshStore(); msg = `Free ${B[i][0].toLowerCase()}!<small>A gift from the bakery spirits.</small>`; burst(); }
+        else { const v = Math.min(s.cookies * CFG.LUCKY_BANK, C.cps * CFG.LUCKY_SECS) + CFG.LUCKY_FLAT; earn(v); msg = `Windfall!<small>+${F(v)} cookies!</small>`; burst(); }
         buffs(); syncBuffs(); pop(x, y, msg); sfx('gcClick'); checkAch(); checkUnlocks();
       }
       let buffEls = [];
@@ -1510,9 +1602,9 @@ ${n ? `<ul><li>each ${nm} produces <b>${F(each, 1)}</b> cookie${each === 1 ? '' 
           return `<div class="tt-h"><img alt="" src="${iconURL(u.icon)}"><div class="tt-t"><b>${u.name}</b><small>[${u.tag || 'Upgrade'}]${own ? ' · purchased' : ''}</small></div>${own ? '' : priceHTML(upPrice(u), s.cookies >= upPrice(u))}</div><div class="tt-d">${u.desc}</div><div class="tt-q">&ldquo;${u.flav}&rdquo;</div>${touch && !own ? `<button class="cb-btn cb-buy" type="button" data-buy="${v}" ${s.cookies >= upPrice(u) ? '' : 'disabled'}>Buy</button>` : ''}`;
         }
         if (k === 'l') {
-          const age = Date.now() - s.lumpStart, mat = age >= LUMP.mature, ty = mat ? s.lumpTy : 0, nm = { 0: 'Sugar lump', 1: 'Bifurcated sugar lump', 2: 'Golden sugar lump', 4: 'Caramelized sugar lump' }[ty];
+          const age = Date.now() - s.lumpStart, mat = age >= LUMP.mature, ty = mat ? s.lumpTy : 0, nm = { 0: 'Honey drop', 1: 'Twin honey drop', 2: 'Golden honey drop', 4: 'Toffee honey drop' }[ty];
           const st = !mat ? `Still growing. It will be mature in ${mmss(LUMP.mature - age)}.` : age < LUMP.ripe ? `Mature, ripe in ${mmss(LUMP.ripe - age)}. Harvesting it now has a 50% chance to fail.` : 'Ripe! Click it to harvest.';
-          return `<div class="tt-h"><img alt="" src="${lumpURL(ty)}"><div class="tt-t"><b>${nm}</b><small>${comma(s.lumps)} sugar lump${s.lumps === 1 ? '' : 's'} owned</small></div></div><div class="tt-d">${st}</div><div class="tt-q">&ldquo;Spend lumps on the Lvl buttons in the building rows: each level adds 1% CpS to that building.&rdquo;</div>`;
+          return `<div class="tt-h"><img alt="" src="${lumpURL(ty)}"><div class="tt-t"><b>${nm}</b><small>${comma(s.lumps)} honey drop${s.lumps === 1 ? '' : 's'} owned</small></div></div><div class="tt-d">${st}</div><div class="tt-q">&ldquo;Spend honey drops on the Lvl buttons in the building rows: each level adds 1% CpS to that building.&rdquo;</div>`;
         }
         if (k === 'a') {
           const a = ACHMAP[v], got = ach.has(v);
@@ -1634,11 +1726,11 @@ ${n ? `<ul><li>each ${nm} produces <b>${F(each, 1)}</b> cookie${each === 1 ? '' 
         gen: () => {
           const totalB = s.b.reduce((a, v) => a + v, 0), milkR = milkRank();
           return `<h4>General</h4>
-${sl('Cookies in bank', F(s.cookies))}${sl('Cookies baked (this ascension)', F(s.earned))}${sl('Cookies baked (all time)', F(s.allTime))}${s.forfeit ? sl('Cookies forfeited by ascending', F(s.forfeit)) : ''}
+${sl('Cookies in bank', F(s.cookies))}${sl('Cookies baked (this bake)', F(s.earned))}${sl('Cookies baked (all time)', F(s.allTime))}${s.forfeit ? sl('Cookies left behind by rebaking', F(s.forfeit)) : ''}
 ${sl('Run started', ago(Date.now() - s.runStart) + ' ago')}${sl('Buildings owned', comma(totalB))}
 ${sl('Cookies per second', F(C.cps, 1) + ` <small>(multiplier : ${F(Math.round(C.glob * 100))}%)</small>`)}${sl('Raw cookies per second', F(C.raw, 1))}${sl('Cookies per click', F(C.click, 1))}
-${sl('Cookie clicks', comma(s.clicksAll))}${sl('Hand-made cookies', F(s.handAll))}${sl('Golden cookie clicks', comma(s.gc))}${s.lumpStart ? sl('Sugar lumps', `${comma(s.lumps)} <small>(${comma(s.lumpTot)} harvested)</small>`) : ''}${C.gp || s.pops ? sl('Wrinklers', `${s.wr.length}/10 <small>(${F(s.wr.reduce((a, w) => a + w.c, 0))} cookies stored)</small>`) + sl('Wrinklers popped', comma(s.pops)) : ''}${s.pledges ? sl('Elder pledges', comma(s.pledges)) + (s.pledge > 0 ? sl('Pledge ends in', mmss(s.pledge * 1000)) : '') : ''}
-<h4>Special</h4>${sl('Prestige level', comma(s.prestige) + ` <small>(+${s.prestige}% CpS)</small>`)}${sl('Heavenly chips', comma(s.chips))}${sl('Ascensions', s.ascends)}${sl('Milk', Math.round(C.milk * 100) + '% (' + MILK_N[milkR] + ')')}`;
+${sl('Cookie clicks', comma(s.clicksAll))}${sl('Hand-made cookies', F(s.handAll))}${sl('Gilded cookie clicks', comma(s.gc))}${sl('Goals completed', comma(Math.max(0, s.qi)) + ' / ' + QST.length)}${s.lumpStart ? sl('Honey drops', `${comma(s.lumps)} <small>(${comma(s.lumpTot)} harvested)</small>`) : ''}${C.gp || s.pops ? sl('Dough grubs', `${s.wr.length}/10 <small>(${F(s.wr.reduce((a, w) => a + w.c, 0))} cookies stored)</small>`) + sl('Dough grubs popped', comma(s.pops)) : ''}${s.pledges ? sl('Cocoa truces', comma(s.pledges)) + (s.pledge > 0 ? sl('Pledge ends in', mmss(s.pledge * 1000)) : '') : ''}
+<h4>Special</h4>${sl('Prestige level', comma(s.prestige) + ` <small>(+${s.prestige}% CpS)</small>`)}${sl('Halo sprinkles', comma(s.chips))}${sl('Rebakes', s.ascends)}${sl('Milk', Math.round(C.milk * 100) + '% (' + MILK_N[milkR] + ')')}`;
         },
         stats: () => {
           const owned = UP.filter(u => up.has(u.id));
@@ -1660,17 +1752,17 @@ ${sl('Cookie clicks', comma(s.clicksAll))}${sl('Hand-made cookies', F(s.handAll)
 <div class="cb-orow"><button class="cb-btn" type="button" data-o="n">Numbers ${s.prefs.n ? 'ON' : 'OFF'}</button><span>Numbers that pop up when you click the cookie.</span></div>
 <div class="cb-orow"><button class="cb-btn" type="button" data-o="sh">Short numbers ${s.prefs.sh ? 'ON' : 'OFF'}</button><span>Shorten big numbers (1.5M instead of 1.5 million).</span></div>
 <div class="cb-orow"><button class="cb-btn" type="button" data-o="m">Milk ${s.prefs.m ? 'ON' : 'OFF'}</button><span>The milk at the bottom of the big cookie pane.</span></div>
-<div class="cb-orow"><button class="cb-btn" type="button" data-o="c">Cursors ${s.prefs.c ? 'ON' : 'OFF'}</button><span>The cursors circling the big cookie.</span></div>
+<div class="cb-orow"><button class="cb-btn" type="button" data-o="c">Hands ${s.prefs.c ? 'ON' : 'OFF'}</button><span>The helping hands circling the big cookie.</span></div>
 ${heav.has('cd') ? `<div class="cb-orow"><button class="cb-btn" type="button" data-o="ml">Milk : ${s.prefs.ml < 0 || (s.prefs.ml >= 25 && !heav.has('fd')) ? 'auto' : MILK_N[s.prefs.ml].replace(' milk', '')}</button><span>Pick any milk flavour you like. Purely cosmetic.</span></div>` : ''}`,
-        info: () => `<h3>Info</h3><h4>About</h4><p>This Cookie Clicker is a fan-made remake of the classic idle cookie-clicking game. Every cookie is drawn by hand-written code, and every joke is fresh out of the oven.</p>
-<h4>How to play</h4><p>Click the big cookie to bake cookies. Spend them in the store on buildings that bake for you, and on upgrades that make everything better.</p><p>Golden cookies pop up every few minutes. Click them fast for a Frenzy, a Lucky windfall or a Click frenzy.</p><p>Achievements fill your glass of milk, which kittens love. Once you have baked a trillion cookies, visit Legacy to ascend and earn heavenly chips.</p><p>Your bakery keeps baking at a reduced rate while you are away.</p>
-<h4>Version history</h4><p><b>1.0</b> &mdash; The bakery opens: ${NB} buildings, ${UP.length} upgrades, ${ACH.length} achievements, golden cookies and ascension.</p><p><b>1.1</b> &mdash; Ten upgrade tiers per building, the full cursor, mouse, kitten and cookie upgrades, a heavenly upgrade tree, wrinklers and the grandmapocalypse, sugar lumps with building levels, 34 milk flavours, milk and cursor toggles, and ${ACH.length} achievements.</p>`,
+        info: () => `<h3>Info</h3><h4>About</h4><p>This Cookie Clicker is an original idle bakery in the cookie-clicking genre: its own aunties, wheat fields, sky freighters and dough rifts. Every cookie is drawn by hand-written code, and every joke is fresh out of the oven.</p>
+<h4>How to play</h4><p>Click the big cookie to bake cookies. Spend them in the store on buildings that bake for you, and on upgrades that make everything better.</p><p>Gilded cookies pop up every few minutes. Click them fast for a Sugar rush, a Windfall, a Golden touch or a free building.</p><p>Achievements fill your glass of milk, which the bakery cats love. Goals in the bakery pane guide your first hour and pay small rewards. Once you have baked a trillion cookies, visit Legacy to rebake and earn halo sprinkles.</p><p>Your bakery keeps baking at a reduced rate while you are away.</p>
+<h4>Version history</h4><p><b>1.0</b> &mdash; The bakery opens: ${NB} buildings, ${UP.length} upgrades, ${ACH.length} achievements, gilded cookies and rebaking.</p><p><b>1.2</b> &mdash; An original bakery: new buildings, upgrades and achievements, plus first-hour goals with rewards.</p><p><b>1.1</b> &mdash; Ten upgrade tiers per building, the full hand, thimble, cat and cookie upgrades, a halo upgrade tree, dough grubs and the midnight bake-off, honey drops with building levels, 34 milk flavours, milk and hand toggles, and ${ACH.length} achievements.</p>`,
         leg: () => {
           const p = prestigeFor(s.allTime), gain = p - s.prestige, next = Math.pow(p + 1, 3) * CFG.PRESTIGE_DIV - s.allTime;
-          return `<h3>Legacy</h3>${sl('Prestige level', comma(s.prestige) + ` <small>(+${s.prestige}% CpS)</small>`)}${sl('Heavenly chips', comma(s.chips))}${sl('Cookies baked (all time)', F(s.allTime))}
-<p>Ascending now would grant you <b>${comma(gain)}</b> prestige level${gain === 1 ? '' : 's'} and as many heavenly chips.</p><p>Next prestige level in <b>${F(next)}</b> more cookies.</p>
-<div class="cb-orow"><button class="cb-btn big" type="button" data-o="asc" ${gain < 1 ? 'disabled' : ''}>${ascArm ? 'Click again to ascend' : 'Ascend'}</button></div>
-<p>Ascending resets your cookies, buildings and upgrades. You keep your achievements, prestige levels (+1% CpS each) and heavenly chips, which you spend on heavenly upgrades before you reincarnate.</p>`;
+          return `<h3>Legacy</h3>${sl('Prestige level', comma(s.prestige) + ` <small>(+${s.prestige}% CpS)</small>`)}${sl('Halo sprinkles', comma(s.chips))}${sl('Cookies baked (all time)', F(s.allTime))}
+<p>Rebaking now would grant you <b>${comma(gain)}</b> prestige level${gain === 1 ? '' : 's'} and as many halo sprinkles.</p><p>Next prestige level in <b>${F(next)}</b> more cookies.</p>
+<div class="cb-orow"><button class="cb-btn big" type="button" data-o="asc" ${gain < 1 ? 'disabled' : ''}>${ascArm ? 'Click again to rebake' : 'Rebake'}</button></div>
+<p>Rebaking resets your cookies, buildings and upgrades. You keep your achievements, prestige levels (+1% CpS each) and halo sprinkles, which you spend on halo upgrades before you start the next bake.</p>`;
         }
       };
       let expTxt = '';
@@ -1725,10 +1817,10 @@ ${heav.has('cd') ? `<div class="cb-orow"><button class="cb-btn" type="button" da
       let hSel = null;
       function renderHeaven() {
         const own = id => heav.has(id), avail = h => !h[5][2] || own(h[5][2]), d = hSel && HMAP[hSel];
-        heavenEl.innerHTML = `<h3>Ascension</h3><p>Prestige level <b>${comma(s.prestige)}</b> &middot; +${s.prestige}% CpS forever</p><p>Heavenly chips : <b>${comma(s.chips)}</b></p>
+        heavenEl.innerHTML = `<h3>Between bakes</h3><p>Prestige level <b>${comma(s.prestige)}</b> &middot; +${s.prestige}% CpS forever</p><p>Halo sprinkles : <b>${comma(s.chips)}</b></p>
 <div class="cb-tree"><svg viewBox="0 0 100 100" preserveAspectRatio="none">${HEAV.filter(h => h[5][2]).map(h => { const p = HMAP[h[5][2]][5]; return `<line x1="${p[0]}" y1="${p[1]}" x2="${h[5][0]}" y2="${h[5][1]}" class="${own(h[0]) ? 'on' : ''}"/>`; }).join('')}</svg>${HEAV.map(h => `<button type="button" class="cb-hn${own(h[0]) ? ' own' : !avail(h) ? ' lock' : s.chips >= h[2] ? ' ok' : ''}${hSel === h[0] ? ' sel' : ''}" data-h="${h[0]}" style="left:${h[5][0]}%;top:${h[5][1]}%" aria-label="${h[1]}"><img alt="" style="filter:hue-rotate(${(h[0].charCodeAt(0) * 37 + h[0].charCodeAt(1) * 11) % 360}deg)" src="${iconURL(['heav', h[0]])}"></button>`).join('')}</div>
-<div class="cb-hd">${d ? `<b>${d[1]}</b><p>${d[3]}</p><p class="q">&ldquo;${d[4]}&rdquo;</p>${own(d[0]) ? '<em>Owned</em>' : !avail(d) ? '<em>Locked : buy ' + HMAP[d[5][2]][1] + ' first</em>' : `<button type="button" class="cb-btn" data-hb="${d[0]}" ${s.chips >= d[2] ? '' : 'disabled'}>Buy for ${comma(d[2])} heavenly chip${d[2] === 1 ? '' : 's'}</button>`}` : '<p>Tap an upgrade to read about it.</p>'}</div>
-<button class="cb-btn big cb-rein" type="button" data-o="rein">Reincarnate</button>`;
+<div class="cb-hd">${d ? `<b>${d[1]}</b><p>${d[3]}</p><p class="q">&ldquo;${d[4]}&rdquo;</p>${own(d[0]) ? '<em>Owned</em>' : !avail(d) ? '<em>Locked : buy ' + HMAP[d[5][2]][1] + ' first</em>' : `<button type="button" class="cb-btn" data-hb="${d[0]}" ${s.chips >= d[2] ? '' : 'disabled'}>Buy for ${comma(d[2])} halo sprinkle${d[2] === 1 ? '' : 's'}</button>`}` : '<p>Tap an upgrade to read about it.</p>'}</div>
+<button class="cb-btn big cb-rein" type="button" data-o="rein">Start the next bake</button>`;
       }
       api.on(heavenEl, 'click', e => {
         const h = e.target.closest('[data-h]'), hb = e.target.closest('[data-hb]');
@@ -1740,7 +1832,7 @@ ${heav.has('cd') ? `<div class="cb-orow"><button class="cb-btn" type="button" da
           if (heav.has('sc')) { s.b[1] = s.free[1] = 5; }
           s.runStart = Date.now(); s.gcT = 0;
           recalc(); checkUnlocks(); refreshAll(); persist(); api.sfx('pop');
-          note('Reincarnated', 'A fresh start, with heavenly help.', iconURL(['heav', 'x']), 5);
+          note('Fresh bake', 'A fresh start, with a little halo help.', iconURL(['heav', 'x']), 5);
         }
       });
       api.on(panelEl, 'input', e => {
@@ -1926,13 +2018,13 @@ ${heav.has('cd') ? `<div class="cb-orow"><button class="cb-btn" type="button" da
       }
       function startLump(first) {
         s.lumpStart = Date.now(); const r = Math.random(); s.lumpTy = r < 0.0015 ? 2 : r < 0.0511 ? 1 : r < 0.0608 ? 4 : 0;
-        if (first) note('Sugar lumps', 'Because you baked a billion cookies, sugar lumps now grow next to the menu. Harvest them when ripe and spend them on building levels!', lumpURL(2), 10);
+        if (first) note('Honey drops', 'Because you baked a billion cookies, honey drops now grow next to the menu. Harvest them when ripe and spend them on building levels!', lumpURL(2), 10);
         lumpSig = ''; syncLump();
       }
       function harvestLump(auto) {
         if (!s.lumpStart) return;
         const age = Date.now() - s.lumpStart;
-        if (!auto && age < LUMP.mature) { note('Sugar lump', `Still growing. It will be mature in ${mmss(LUMP.mature - age)}.`, lumpURL(0), 3); return; }
+        if (!auto && age < LUMP.mature) { note('Honey drop', `Still growing. It will be mature in ${mmss(LUMP.mature - age)}.`, lumpURL(0), 3); return; }
         const fail = !auto && age < LUMP.ripe && Math.random() < 0.5, ty = s.lumpTy;
         let got = fail ? 0 : ty === 1 ? 1 + (Math.random() < 0.5 ? 1 : 0) : ty === 2 ? 2 + Math.floor(Math.random() * 6) : ty === 4 ? 1 + Math.floor(Math.random() * 3) : 1;
         if (auto) got += Math.max(0, Math.floor(age / LUMP.fall) - 1);
@@ -1940,7 +2032,7 @@ ${heav.has('cd') ? `<div class="cb-orow"><button class="cb-btn" type="button" da
         let extra = '';
         if (!fail && ty === 2) { const v = Math.min(s.cookies, C.cps * 86400); earn(v); extra = ` Your bank doubled: +${F(v)} cookies!`; }
         s.lumpStart = Date.now() - (auto ? age % LUMP.fall : 0); const r = Math.random(); s.lumpTy = r < 0.0015 ? 2 : r < 0.0511 ? 1 : r < 0.0608 ? 4 : 0; lumpSig = '';
-        note(fail ? 'Harvest failed' : 'Sugar lump harvested', fail ? 'It was not quite ripe and crumbled away.' : `+${got} sugar lump${got === 1 ? '' : 's'}.${extra}`, lumpURL(fail ? 0 : ty), 5);
+        note(fail ? 'Harvest failed' : 'Honey drop harvested', fail ? 'It was not quite ripe and crumbled away.' : `+${got} honey drop${got === 1 ? '' : 's'}.${extra}`, lumpURL(fail ? 0 : ty), 5);
         api.sfx(fail ? 'tick' : 'good'); recalc(); syncLump(); renderPanel(); refreshStore(); checkAch();
       }
       function tickLump() {
@@ -1951,7 +2043,7 @@ ${heav.has('cd') ? `<div class="cb-orow"><button class="cb-btn" type="button" da
       api.on(lumpEl, 'click', () => harvestLump(false));
       function levelUp(i) {
         const need = s.lvl[i] + 1;
-        if (s.lumps < need) { note('Not enough sugar lumps', `${B[i][0]} level ${need} costs ${need} sugar lump${need === 1 ? '' : 's'}.`, lumpURL(0), 4); return; }
+        if (s.lumps < need) { note('Not enough honey drops', `${B[i][0]} level ${need} costs ${need} honey drop${need === 1 ? '' : 's'}.`, lumpURL(0), 4); return; }
         s.lumps -= need; s.lvl[i]++; recalc(); refreshAll(); api.sfx('good');
         note(`${B[i][0]} level ${s.lvl[i]}`, `This building now bakes <b>+${s.lvl[i]}%</b> more.`, bldURL(i), 4); checkAch();
       }
@@ -1970,7 +2062,7 @@ ${heav.has('cd') ? `<div class="cb-orow"><button class="cb-btn" type="button" da
         const free = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].filter(k => !s.wr.some(w => w.slot === k));
         if (!free.length) return;
         s.wr.push({ slot: free[Math.floor(Math.random() * free.length)], c: 0, h: 0 }); buffs();
-        if (!s.pops && s.wr.length === 1) note('The grandmas are awake', 'A wrinkler appeared on the big cookie. It sucks your cookies, but pays them back with interest when popped. Click it 3 times.', iconURL(['wrk']), 9);
+        if (!s.pops && s.wr.length === 1) note('The aunties are awake', 'A dough grub appeared on the big cookie. It sucks your cookies, but pays them back with interest when popped. Click it 3 times.', iconURL(['wrk']), 9);
       }
 
       function step(dt) {
@@ -2022,7 +2114,7 @@ ${heav.has('cd') ? `<div class="cb-orow"><button class="cb-btn" type="button" da
           api.timeout(() => note('Welcome back!', `You baked <b>${F(v)}</b> cookies while away (${ago(away * 1000)}).`, scURL(), 9), 600);
         }
       }
-      checkUnlocks(); checkAch(); layout(); refreshAll(); nextNews(); syncTabs(); tickLump();
+      checkUnlocks(); checkAch(); checkQuest(); layout(); refreshAll(); nextNews(); syncTabs(); tickLump();
       if (s.heaven) openHeaven();
       api.score(Math.floor(s.allTime));
 
@@ -2050,8 +2142,8 @@ ${heav.has('cd') ? `<div class="cb-orow"><button class="cb-btn" type="button" da
             for (const r of rows) if (r && !r.c.hidden && r.bg) { const y = r.c.offsetTop - top; if (y < hh && y + CFG.ROW_H > 0) drawRow(r, t); }
           }
         }
-        if (acc5 >= 0.2) { acc5 = 0; refreshStore(); refreshUps(); tickBuffs(); }
-        if (acc2 >= 0.5) { acc2 = 0; checkUnlocks(); checkAch(); refreshTip(); }
+        if (acc5 >= 0.2) { acc5 = 0; refreshStore(); refreshUps(); tickBuffs(); renderQuest(); }
+        if (acc2 >= 0.5) { acc2 = 0; checkUnlocks(); checkAch(); checkQuest(); refreshTip(); }
         if (acc1 >= 1) {
           acc1 = 0; tickLump();
           const sc = Math.floor(s.allTime); if (sc !== lastScore) { lastScore = sc; api.score(sc); }

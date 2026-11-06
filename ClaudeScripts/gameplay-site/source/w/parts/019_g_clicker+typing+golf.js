@@ -137,7 +137,7 @@
     for (let s = 0; s < n; s++) w.push((h[s] - (s >= 3 ? h[s - 3] : 0)) / Math.min(s + 1, 3) * 12);
     const max = Math.max(20, ...w) * 1.1;
     const pts = w.map((v, i) => (n > 1 ? i / (n - 1) * W : 0).toFixed(1) + ',' + (H - v / max * H).toFixed(1));
-    return `<svg viewBox="0 -4 ${W} ${H + 8}" width="${W}" style="display:block;max-width:100%;height:auto;margin:0 auto 8px;overflow:visible" aria-hidden="true"><path d="M0,${H}L${pts.join('L')}L${W},${H}Z" fill="rgba(108,92,231,.14)"/><polyline points="${pts.join(' ')}" fill="none" stroke="${C.accent}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+    return `<svg class="ty-sp" viewBox="0 -4 ${W} ${H + 8}" style="display:block;margin:0 auto 8px;overflow:visible" aria-hidden="true"><path d="M0,${H}L${pts.join('L')}L${W},${H}Z" fill="rgba(108,92,231,.14)"/><polyline points="${pts.join(' ')}" fill="none" stroke="${C.accent}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
   };
 
   const heat = st => {
@@ -150,7 +150,7 @@
     }));
     const sp = st[' '], Y = 4 * (K + G);
     h += `<rect x="${3 * (K + G) + 16}" y="${Y}" width="${5 * (K + G) - G}" height="${K - 4}" rx="6" fill="${!sp ? '#eeecf3' : `hsl(${Math.round(145 - Math.min(1, sp[1] / sp[0] / .25) * 145)} 68% 47%)`}"/>`;
-    return `<svg viewBox="0 0 ${W} ${Y + K}" width="${W}" style="display:block;max-width:100%;height:auto;margin:2px auto 8px;font-family:Nunito,system-ui,sans-serif" aria-label="Per-key accuracy">${h}</svg>`;
+    return `<svg class="ty-hm" viewBox="0 0 ${W} ${Y + K}" style="display:block;margin:2px auto 8px;font-family:Nunito,system-ui,sans-serif" aria-label="Per-key accuracy">${h}</svg>`;
   };
   const TY_MODES = [['text', 'Paragraphs'], ['quotes', 'Book quotes'], ['words', 'Common words']];
 
@@ -197,6 +197,10 @@
 .gm-typing .ty-foot{display:flex;justify-content:center;align-items:center;gap:14px;color:rgba(255,255,255,.85);font-size:13px;font-weight:700}
 .gm-typing .ty-foot .g-btn{background:#fff;color:var(--accent);border-color:#fff}
 .gm-typing~.g-overlay .ty-sub{display:block;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.gm-typing~.g-overlay{overflow-y:auto;place-items:safe center}
+.gm-typing~.g-overlay .ty-sp{width:min(300px,100%);height:auto;max-height:48px}
+.gm-typing~.g-overlay .ty-hm{width:min(323px,100%);height:auto;max-height:132px}
+@media (max-height:900px){.gm-typing~.g-overlay{padding-block:10px}.gm-typing~.g-overlay .ty-sp{max-height:4vh;margin-bottom:4px!important}.gm-typing~.g-overlay .ty-hm{max-height:10vh;margin-bottom:4px!important}.gm-typing~.g-overlay .g-ov-title{margin-bottom:4px}.gm-typing~.g-overlay .g-ov-text{margin-bottom:10px}.gm-typing~.g-overlay .g-ov-stats{margin-bottom:12px}}
 @media (max-width:640px){.gm-typing{--fs:19px;--lh:34px;min-height:600px}.gm-typing .ty-box{padding:16px}.gm-typing .ty-stats{gap:6px}.gm-typing .g-stat{min-width:0;padding:6px 9px}.gm-typing~.g-overlay{padding:12px}.gm-typing~.g-overlay .g-ov-title{font-size:32px;margin-bottom:8px}.gm-typing~.g-overlay .g-ov-text,.gm-typing~.g-overlay .g-ov-stats{margin-bottom:12px}}
 @media (pointer:coarse){.gm-typing .ty-foot span{display:none}.gm-typing .ty-foot .g-btn{height:40px}}
 @media (pointer:coarse) and (max-width:640px){.gm-typing.run .seg-bar{display:none}}`,

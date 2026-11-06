@@ -1851,7 +1851,7 @@
       } else if (G.ph === 'end') {
         const a = clamp(G.endT / .3, 0, 1);
         g.save(); g.globalAlpha = a;
-        const txt = G.winner >= 0 ? `${G.players[G.winner].name.toUpperCase()} WINS THE ROUND` : 'DRAW';
+        const wn = G.winner >= 0 ? G.players[G.winner].name : '', txt = G.winner >= 0 ? (wn === 'You' ? 'YOU WIN THE ROUND' : `${wn.toUpperCase()} WINS THE ROUND`) : 'DRAW';
         sfText(g, txt, 480, 96, 40, G.winner >= 0 ? SF_COL[G.winner].c : '#fff', 'center', 'rgba(0,0,0,.65)');
         g.restore();
       } else if (G.ph === 'score') {
@@ -2006,7 +2006,8 @@
       G.role = null;
       const nb = clamp(saved.bots, 1, 3);
       G.players = [{ slot: 0, name: 'You', kind: 'me' }];
-      for (let i = 0; i < nb; i++) G.players.push({ slot: i + 1, name: SF_BOTNAMES[(i + ri(0, 2) * 2) % SF_BOTNAMES.length], kind: 'bot', lvl: saved.lvl });
+      const bn = SF_BOTNAMES.slice().sort(() => Math.random() - .5);
+      for (let i = 0; i < nb; i++) G.players.push({ slot: i + 1, name: bn[i], kind: 'bot', lvl: saved.lvl });
       G.scores = G.players.map(() => 0); G.wins = saved.wins; G.rn = 0; G.me = 0; G.lastMi = -1;
       beginMatchUi();
       startRound();
@@ -2061,7 +2062,8 @@
         G.wins = sv.wins; G.scores = sv.sc.slice(); G.rn = sv.rn - 1; G.lastMi = sv.lastMi;
       } else {
         hp.forEach((q, i) => players.push({ slot: i, name: q.name, kind: i === 0 ? 'me' : 'net', id: q.id }));
-        for (let i = hp.length; i < total; i++) players.push({ slot: i, name: SF_BOTNAMES[(i + ri(0, 2) * 2) % SF_BOTNAMES.length], kind: 'bot', lvl: saved.lvl });
+        const bn = SF_BOTNAMES.slice().sort(() => Math.random() - .5);
+        for (let i = hp.length; i < total; i++) players.push({ slot: i, name: bn[i], kind: 'bot', lvl: saved.lvl });
         G.wins = saved.wins; G.scores = players.map(() => 0); G.rn = 0; G.lastMi = -1;
       }
       G.players = players; G.me = 0; G.pids = players.map(p => p.id || null); G.rin = {};

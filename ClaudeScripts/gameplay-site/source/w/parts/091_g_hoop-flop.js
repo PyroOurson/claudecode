@@ -47,10 +47,12 @@
     ],
     hoops: [{ name: 'SHORT HOOP', h: 160 }, { name: '', h: 200 }, { name: 'HIGH HOOP', h: 245 }, { name: 'LARGE HOOP', h: 200, w: 92 }, { name: 'SMALL HOOP', h: 200, w: 46 }],
     ai: [
-      { name: 'EASY', react: .3, gap: .45, reachX: 52, aLo: 15, aHi: 80, apexV: 500, flail: .45, mult: 1, block: .25, hop: 1.1 },
-      { name: 'NORMAL', react: .16, gap: .25, reachX: 70, aLo: 38, aHi: 72, apexV: 300, flail: .12, mult: 2, block: .6, hop: .7 },
-      { name: 'HARD', react: .07, gap: .12, reachX: 86, aLo: 48, aHi: 72, apexV: 170, flail: 0, mult: 3, block: .9, hop: .45 }
-    ]
+      { name: 'EASY', react: .3, gap: .45, reachX: 52, aLo: 15, aHi: 80, apexV: 500, flail: .45, mult: 1, block: .25, hop: 1.1, back: 0, aim: 0 },
+      { name: 'NORMAL', react: .16, gap: .25, reachX: 70, aLo: 38, aHi: 72, apexV: 300, flail: .12, mult: 2, block: .6, hop: .7, back: 1, aim: 0 },
+      { name: 'HARD', react: .07, gap: .12, reachX: 86, aLo: 48, aHi: 72, apexV: 170, flail: 0, mult: 3, block: .9, hop: .45, back: 2, aim: 1 }
+    ],
+    cup: [{ name: 'ROOKIES', lvl: 0 }, { name: 'BALLERS', lvl: 1 }, { name: 'LEGENDS', lvl: 2 }],
+    WINS: [3, 5, 7]
   };
 
   const TAU = Math.PI * 2, OUT = '#1d1b26', FONT = 'Nunito, system-ui, sans-serif';
@@ -60,7 +62,7 @@
   const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) * 2;
   const angN = a => { while (a > Math.PI) a -= TAU; while (a < -Math.PI) a += TAU; return a; };
   const wpick = w => { let s = 0; for (const x of w) s += x; let r = Math.random() * s; for (let i = 0; i < w.length; i++) if ((r -= w[i]) < 0) return i; return 0; };
-  const FXN = ['bounce', 'rim', 'board', 'swish', 'jump', 'bonk', 'thud', 'whoosh', 'grab', 'whistle', 'cheer', 'win', 'steal', 'goal', 'dust'];
+  const FXN = ['bounce', 'rim', 'board', 'swish', 'jump', 'bonk', 'thud', 'whoosh', 'grab', 'whistle', 'cheer', 'win', 'steal', 'goal', 'dust', 'mp', 'ooh'];
   const PH = ['live', 'goal', 'wipe', 'end'];
   const KIND = ['DUNK!', 'SWISH!', 'BANK SHOT!', 'FROM DOWNTOWN!', 'NICE SHOT!', 'OWN GOAL!'];
   const KITS = [['#d8262e', '#8e1219', '#ff9a9a'], ['#f7c531', '#6b2c91', '#ffe48a'], ['#2f6fd8', '#173a80', '#9cc0ff'], ['#2e9a4a', '#185a2a', '#9be6ad'], ['#2b2b30', '#c4262e', '#8a8a92'], ['#f07a1e', '#8e420e', '#ffc28e'], ['#5b5f6a', '#24262c', '#b3b7c2'], ['#18a7b5', '#0b5a62', '#9ae8ef']];
@@ -70,7 +72,7 @@
 
   Ameplay.register({
     id: ID, title: 'Hoop Flop', category: 'Sports', tint: '#ff7a1a',
-    blurb: 'Floppy 2v2 ragdoll hoops: you control both players on your side. First to 5 wins.',
+    blurb: 'Floppy 2v2 ragdoll hoops: you control both players on your side. Quick match, a 3-round Cup or online.',
     help: '<kbd>W</kbd> / <kbd>Space</kbd> / <kbd>↑</kbd> hold to jump &amp; raise arms, release with the ball to shoot · hold <kbd>S</kbd> / <kbd>↓</kbd> to go back · touch: JUMP and BACK buttons · online 2-player',
     width: 960,
     format: v => v + ' pts',
@@ -89,9 +91,14 @@
       const bg = bgc.getContext('2d');
       const net = api.net, invited = !!net.invite;
       const saved = api.load() || {};
-      let mode = invited ? 'net' : saved.mode === 'net' ? 'net' : 'cpu';
+      let mode = invited ? 'net' : saved.mode === 'net' || saved.mode === 'cup' ? saved.mode : 'cpu';
       let diff = clamp(saved.diff == null ? 1 : +saved.diff || 0, 0, 2) | 0;
-      const persist = () => api.save({ mode, diff });
+      let winTo = CFG.WINS.indexOf(+saved.win) >= 0 ? +saved.win : CFG.WIN, seen = !!saved.seen, coach = !saved.coach, cupStage = 0, cupWon = false, MS = null, helpNext = null, helpFrom = 'title', helpT = 0;
+      const ST = Object.assign({ played: 0, wins: 0, streak: 0, top: 0, cups: 0, dunks: 0 }, saved.st || {});
+      const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const persist = () => api.save({ mode, diff, win: winTo, seen: seen ? 1 : 0, coach: coach ? 0 : 1, st: ST });
+      const goalTo = () => mode === 'cpu' && !online ? winTo : CFG.WIN;
+      const curLvl = () => mode === 'cup' ? CFG.cup[cupStage].lvl : diff;
 
       let screen = 'title', phase = 'live', rt = 0, pt = 0, slow = 0, acc = 0, clock = 0, roundK = 0, winner = -1, endT = 0, overT = 0, newBest = false, overPts = 0, lastScorer = 0, cheerT = 0;
       let GRAV = CFG.G, score = [0, 0], cfg = null, court = CFG.courts[0], BT = CFG.balls[0], BD = CFG.bodies[0], hoops = [], players = [], ball = null, looks = [];
@@ -160,7 +167,10 @@
         win() { SND.buzzer(); [523, 659, 784, 1047].forEach((f, i) => { tone('square', f, f, .2, .06, i * .12); tone('triangle', f / 2, f / 2, .26, .1, i * .12); }); tone('triangle', 1047, 1047, .6, .08, .5); },
         click() { tone('sine', 660, 900, .05, .12); },
         dunk() { tone('sine', 110, 38, .4, .55); noise('lowpass', 900, 90, 1, .3, .4); tone('triangle', 1250, 1190, .6, .07, .03); tone('square', 620, 600, .5, .03, .03); },
-        buzzer() { tone('sawtooth', 150, 148, .7, .09); tone('square', 152, 150, .7, .05); }
+        buzzer() { tone('sawtooth', 150, 148, .7, .09); tone('square', 152, 150, .7, .05); },
+        mp() { tone('sawtooth', 392, 392, .16, .045); tone('sawtooth', 523, 523, .34, .05, .18); noise('bandpass', 1100, 1500, .7, 1.2, .14, .1, .2); },
+        ooh() { noise('bandpass', 520, 380, 1.4, .9, .16, 0, .15); tone('sine', 300, 230, .7, .03, .05); },
+        lose() { [392, 330, 262].forEach((f, i) => tone('triangle', f, f * .97, .3, .09, i * .2)); }
       };
       const MUS = { n: 0, at: 0 };
       const LEAD = [12, -1, 16, 19, -1, 16, -1, 12, 14, -1, 17, 21, -1, 17, -1, 14, 12, -1, 16, 19, -1, 24, -1, 19, 17, -1, 14, -1, 16, -1, 12, -1];
@@ -180,7 +190,8 @@
       }
       const SGAP = { dunk: 400, bounce: 50, rim: 60, board: 60, bonk: 70, thud: 70, jump: 40, grab: 60, steal: 100, whoosh: 60 };
       const sgate = {};
-      const quiet = () => api.muted || screen === 'title' || screen === 'lobby';
+      const quiet = () => api.muted || screen === 'title' || screen === 'lobby' || screen === 'help';
+      const uiClick = () => { if (!api.muted) try { SND.click(); } catch (e) {} };
       const snd = (n, a) => {
         if (quiet()) return;
         const now = performance.now();
@@ -195,14 +206,14 @@
       const FX = {
         bounce: v => snd('bounce', v / 100), rim: v => snd('rim', v / 100), board: v => snd('board', v / 100), swish: () => snd('swish'),
         jump: t => snd('jump', t), bonk: v => snd('bonk', v / 100), thud: v => snd('thud', v / 100), whoosh: () => snd('whoosh'),
-        grab: () => snd('grab'), steal: () => snd('steal'), whistle: () => snd('whistle'), cheer: () => snd('cheer'),
+        grab: () => snd('grab'), steal: () => snd('steal'), whistle: () => snd('whistle'), cheer: () => snd('cheer'), mp: () => snd('mp'), ooh: () => snd('ooh'),
         win: t => { snd('win'); cheerT = 3; for (let i = 0; i < 3; i++) confetti(W * (i + 1) / 4, 40, 30, [TEAMS[t].c, TEAMS[t].l, '#ffd23f', '#ffffff'], 520); },
         dust: (x, big) => { const c = court.k === 'beach' ? '#f3d18a' : court.k === 'ice' ? '#ffffff' : court.k === 'roof' ? '#b9b6c9' : '#f6d3a3'; for (let i = 0; i < (big ? 10 : 5); i++) spawn(x + rnd(-12, 12), FLOOR - 2, rnd(-90, 90), rnd(-60, -10), rnd(.3, .55), c, rnd(5, 10), 1); },
         goal: (team, kind, pts, side) => {
           const Hh = hoops[side]; if (!Hh) return;
           const cx = (Hh.xb + Hh.xf) / 2;
-          shake = .35; bump[team] = 1; cheerT = 2.4; lastScorer = team;
-          if (kind === 0) { zoomT = 1.6; zoomC = { x: cx, y: Hh.y + 6 }; }
+          shake = RM ? 0 : .35; bump[team] = 1; cheerT = 2.4; lastScorer = team;
+          if (kind === 0 && !RM) { zoomT = 1.6; zoomC = { x: cx, y: Hh.y + 6 }; }
           confetti(cx, Hh.y + 20, 46, [TEAMS[team].c, TEAMS[team].l, '#ffd23f', '#ffffff'], 560);
           popups.push({ text: kind === 5 ? 'OWN GOAL!' : 'BASKET!', sub: (kind < 4 ? KIND[kind] + '  ' : '') + '+' + pts, x: W / 2, y: 150, t: 0, team });
           snd('swish'); snd('cheer'); if (kind === 0) snd('dunk');
@@ -240,14 +251,14 @@
           phi: CFG.ARM_DOWN, phiV: 0, armV: 0, ground: 0, jt: 9, jdx: 0, jdy: -1, jcd: 0, cool: 0, happy: 0, sad: 0
         };
       };
-      const makeBall = () => ({ x: W / 2 + rnd(-16, 16), y: 70, px: W / 2, py: 70, vx: rnd(-40, 40), vy: 0, ang: 0, av: rnd(-3, 3), r: BT.r, holder: null, hold: 0, thrown: null, rim: 0, board: 0, still: 0 });
+      const makeBall = () => ({ x: W / 2 + rnd(-16, 16), y: 70, px: W / 2, py: 70, vx: rnd(-40, 40), vy: 0, ang: 0, av: rnd(-3, 3), r: BT.r, holder: null, hold: 0, thrown: null, rim: 0, board: 0, still: 0, ooh: 0 });
       function buildRound(c, lk) {
         cfg = c; GRAV = CFG.G * (c.lg ? .58 : 1);
         { const ki = (c.court * 7 + c.ball * 3 + c.body * 5 + c.hoop + (lk && lk[0] ? lk[0][3] : 0)) % KITS.length, kj = (ki + 1 + ((lk && lk[1] ? lk[1][3] : 0) % (KITS.length - 1))) % KITS.length; [ki, kj].forEach((q, t) => { const K = KITS[q]; TEAMS[t].c = K[0]; TEAMS[t].d = K[1]; TEAMS[t].l = K[2]; }); } court = CFG.courts[c.court] || CFG.courts[0]; BT = CFG.balls[c.ball] || CFG.balls[0];
         BD = Object.assign({}, CFG.bodies[0], CFG.bodies[c.body] || {}, c.b2 ? CFG.bodies[c.b2] || {} : {}); BD.s *= CFG.PS;
         const hh = (CFG.hoops[c.hoop] || CFG.hoops[1]).h;
         hoops = [0, 1].map(side => {
-          const s = side ? -1 : 1, bx = side ? W - CFG.BOARD_X : CFG.BOARD_X, y = FLOOR - hh, xb = bx + s * 4, rw = (CFG.hoops[c.hoop] || CFG.hoops[1]).w || CFG.RIMW, xf = bx + s * (4 + rw);
+          const s = side ? -1 : 1, bx = side ? W - CFG.BOARD_X : CFG.BOARD_X, y = FLOOR - hh, xb = bx + s * 4, rw = Math.max((CFG.hoops[c.hoop] || CFG.hoops[1]).w || CFG.RIMW, Math.round(BT.r * 2 + 24)), xf = bx + s * (4 + rw);
           return { side, s, bx, y, rw, xb, xf, lo: Math.min(xb, xf), hi: Math.max(xb, xf), net: 0, netV: 0, netX: 0 };
         });
         players = [];
@@ -366,6 +377,8 @@
         }
         b.vx = sg * v * Math.cos(th); b.vy = -v * Math.sin(th);
         b.av = -sg * (14 + rnd(-3, 3)); b.thrown = { x: b.x, team: p.team }; b.rim = b.board = 0;
+        if (MS && p.team === 0 && screen === 'game' && a >= -10) MS.shots++;
+        if (coach && p.team === 0 && screen === 'game' && !online) { coach = false; persist(); popups.push({ text: 'NICE SHOT!', sub: 'FIRST TO ' + goalTo() + ' WINS', x: W / 2, y: 150, t: 0, team: 0 }); }
         fx('whoosh');
       }
       function tryGrab(p) {
@@ -373,7 +386,7 @@
         if (p.cool > 0 || dx * dx + dy * dy > R * R) return false;
         if (!b.holder) { b.holder = p; b.hold = 0; b.thrown = null; fx('grab'); return true; }
         if (b.holder.team !== p.team && b.hold > CFG.STEAL_MIN && (Math.abs(p.phiV) > 3 || p.ground > CFG.COYOTE)) {
-          b.holder.cool = CFG.STEAL_CD; b.holder = p; b.hold = 0; fx('steal'); return true;
+          b.holder.cool = CFG.STEAL_CD; b.holder = p; b.hold = 0; if (MS && p.team === 0 && screen === 'game') MS.steals++; fx('steal'); return true;
         }
         return false;
       }
@@ -451,6 +464,7 @@
         else if (b.thrown && !b.rim) kind = 1;
         if (b.holder) { b.holder.cool = .6; b.holder = null; b.vy = Math.max(b.vy, 260); b.vx *= .3; }
         score[team] += pts;
+        if (MS && screen === 'game' && team === 0 && kind !== 5) { MS.baskets++; if (kind !== 0 && b.thrown && b.thrown.team === 0) MS.made++; if (kind === 0) MS.dunks++; else if (kind === 1) MS.swish++; else if (kind === 3) MS.deep++; }
         phase = 'goal'; pt = 0; slow = kind === 0 ? CFG.SLOWMO * 1.8 : CFG.SLOWMO;
         fx('goal', team, kind, pts, Hh.side);
       }
@@ -469,6 +483,7 @@
           if (b.y > FLOOR - b.r) {
             b.y = FLOOR - b.r;
             const mu = court.fric * 1.3 + .03;
+            if (b.ooh && phase === 'live') { b.ooh = 0; if (b.thrown) fx('ooh'); }
             if (b.vy > 0) { const v = b.vy; b.vy = -v * BT.e * court.bounce; if (b.vy > -45) b.vy = 0; spinFric(0, -1, v - b.vy, mu); if (v > 90) fx('bounce', Math.round(clamp(v / 900, 0, 1) * 100)); }
             else spinFric(0, -1, GRAV * BT.gs * DT * 2, mu);
             const rr = 1 - court.roll * DT; b.vx *= rr; b.av *= rr;
@@ -481,7 +496,7 @@
             if (v >= 0) { b.board = 1; if (v > 60) fx('board', Math.round(clamp(v / 800, 0, 1) * 100)); }
             v = ballSeg(Hh.xf, Hh.y, Hh.xf, Hh.y, 4.5, .5, .45);
             if (v < 0) { const vb = ballSeg(Hh.xb + Hh.s * 5, Hh.y, Hh.xb + Hh.s * 5, Hh.y, 4, .45, .4); if (vb > 40) fx('rim', Math.round(clamp(vb / 900, 0, 1) * 100)); }
-            if (v >= 0) { b.rim = 1; if (v > 40) fx('rim', Math.round(clamp(v / 700, 0, 1) * 100)); }
+            if (v >= 0) { if (!b.rim && b.thrown && v > 120 && phase === 'live') b.ooh = 1; b.rim = 1; if (v > 40) fx('rim', Math.round(clamp(v / 700, 0, 1) * 100)); }
             if (b.x > Hh.lo && b.x < Hh.hi && b.y > Hh.y && b.y < Hh.y + CFG.NET_H) { b.vx *= 1 - 5 * DT; b.vy *= 1 - 1.5 * DT; }
           }
           let grabbed = false;
@@ -527,17 +542,18 @@
         const P = CFG.ai[ai.lvl], t = ai.team, b = ball;
         if (btn[t]) ai.held += dt; else ai.up += dt;
         if (phase !== 'live') { if (btn[t] && !(b.holder && b.holder.team === t)) aiSet(ai, false); if (phase !== 'goal') return; }
+        if (coach && screen === 'game' && score[0] + score[1] === 0 && rt < 2.5) return;
         const lag = Math.min(100, Math.round(P.react * CFG.HZ)), k = ((histI - 1 - lag) & 127) * 4;
         const bx = hist[k], by = hist[k + 1], bvx = hist[k + 2], bvy = hist[k + 3];
         const hd = b.holder;
         let wantBack = false;
-        if (!(hd && hd.team === t) && phase === 'live') {
-          const tx0 = hd ? hd.hip.x : bx, dB = (-players.find(p => p.team === t).dir);
-          wantBack = players.every(p => p.team !== t || (tx0 - p.foot.x) * dB > (hd ? 30 : 80));
+        if (!(hd && hd.team === t) && phase === 'live' && P.back) {
+          const tx0 = hd ? hd.hip.x : bx, dB = (-players.find(p => p.team === t).dir), gp = hd ? (P.back > 1 ? -50 : 30) : (P.back > 1 ? 60 : 80);
+          wantBack = players.every(p => p.team !== t || (tx0 - p.foot.x) * dB > gp);
         }
         if (back[t] !== wantBack) back[t] = wantBack;
         if (hd && hd.team === t) {
-          if (!btn[t]) { if (ai.up > ai.wait && hd.ground < CFG.COYOTE) { ai.relA = rnd(P.aLo, P.aHi); ai.wait = rnd(.05, P.gap + .2); aiSet(ai, true); } }
+          if (!btn[t]) { if (ai.up > ai.wait && hd.ground < CFG.COYOTE) { const Ht = hoops[t === 0 ? 1 : 0], X = Math.abs((Ht.xb + Ht.xf) / 2 - hd.hip.x); ai.relA = P.aim ? (X > 480 ? rnd(46, 56) : X > 220 ? rnd(54, 64) : rnd(62, 72)) : rnd(P.aLo, P.aHi); ai.wait = rnd(.05, P.gap + .2); aiSet(ai, true); } }
           else {
             const a = armA(hd), vy = (hd.hip.y - hd.hip.py) / DT, apex = hd.ground >= CFG.COYOTE && Math.abs(vy) < P.apexV;
             if ((a >= Math.min(ai.relA, 72) && (apex || ai.held > .55)) || ai.held > 1.1) aiSet(ai, false);
@@ -582,8 +598,9 @@
         score = [0, 0]; bump[0] = bump[1] = 0; winner = -1; newBest = false; roundK++; looks = mkLooks(); popups.length = 0; parts.length = 0;
         resetInputs();
         buildRound(classic(), looks);
-        ais = mode === 'cpu' ? [null, makeAI(1, diff)] : [null, null];
-        screen = 'game'; overT = 0;
+        ais = mode !== 'net' ? [null, makeAI(1, curLvl())] : [null, null];
+        screen = 'game'; overT = 0; cupWon = false;
+        MS = { shots: 0, made: 0, baskets: 0, dunks: 0, swish: 0, deep: 0, steals: 0, time: 0 };
         fx('whistle'); setScoreText();
       }
       function toTitle() {
@@ -591,28 +608,44 @@
         mirror = false; resetInputs(); screen = 'title'; newAttract();
       }
       function start(m) {
-        mode = m; persist(); SND.click && snd('click');
+        mode = m; persist(); uiClick();
         if (m === 'net') return goOnline();
+        if (!seen) return openHelp(() => start(m));
+        if (m === 'cup') cupStage = 0;
+        newMatch();
+      }
+      function openHelp(next) { helpFrom = screen === 'pause' ? 'pause' : 'title'; helpNext = next || null; screen = 'help'; helpT = 0; resetInputs(); }
+      function closeHelp() { seen = true; persist(); const n = helpNext; helpNext = null; screen = helpFrom; if (n) n(); }
+      function overPrimary() {
+        if (online) return rematch();
+        if (mode === 'cup' && winner === 0) cupStage = cupStage >= CFG.cup.length - 1 ? 0 : cupStage + 1;
         newMatch();
       }
       function matchOver() {
         phase = 'end'; endT = 0; winner = score[0] > score[1] ? 0 : 1;
         resetInputs(); ais = [null, null];
         screen = 'over'; overT = 0;
-        if (mode === 'cpu') { overPts = (score[0] * 100 + (winner === 0 ? 500 : 0)) * CFG.ai[diff].mult; newBest = api.submit(overPts); }
+        if (mode !== 'net' && !online) {
+          overPts = (score[0] * 100 + (winner === 0 ? 500 : 0)) * CFG.ai[curLvl()].mult; newBest = api.submit(overPts);
+          ST.played++; if (MS) ST.dunks += MS.dunks;
+          if (winner === 0) { ST.wins++; ST.streak++; ST.top = Math.max(ST.top, ST.streak); } else ST.streak = 0;
+          cupWon = mode === 'cup' && winner === 0 && cupStage === CFG.cup.length - 1; if (cupWon) ST.cups++;
+          persist();
+        }
         fx('win', winner);
+        if (mode !== 'net' && !online && winner !== 0) api.timeout(() => snd('lose'), 700);
       }
       function phaseUpdate(dt) {
-        if (phase === 'live') rt += dt;
+        if (phase === 'live') { rt += dt; if (MS && screen === 'game') MS.time += dt; }
         else if (phase === 'goal') {
           pt += dt;
           if (pt > CFG.GOAL_T) {
-            if (Math.max(score[0], score[1]) >= CFG.WIN) { if (screen === 'game') return matchOver(); score = [0, 0]; }
+            if (Math.max(score[0], score[1]) >= goalTo()) { if (screen === 'game') return matchOver(); score = [0, 0]; }
             phase = 'wipe'; pt = 0;
           }
         } else if (phase === 'wipe') {
           pt += dt;
-          if (pt >= CFG.WIPE_T) { for (const t of [0, 1]) if (btn[t]) btn[t] = false; buildRound(randomCfg(cfg), looks); roundK++; fx('whistle'); }
+          if (pt >= CFG.WIPE_T) { for (const t of [0, 1]) if (btn[t]) btn[t] = false; buildRound(randomCfg(cfg), looks); roundK++; fx('whistle'); if (screen === 'game' && Math.max(score[0], score[1]) === goalTo() - 1) fx('mp'); }
         } else if (phase === 'end') {
           endT += dt;
           const want = (endT % .9) < .3;
@@ -658,7 +691,7 @@
       };
       const pauseRect = () => ({ x: 14, y: PORT ? 14 : 12, w: 52, h: 52 });
       const inR = (q, r) => q.x >= r.x && q.x <= r.x + r.w && q.y >= r.y && q.y <= r.y + r.h;
-      function pause() { if (screen !== 'game' || online) return; resetInputs(); screen = 'pause'; snd('click'); }
+      function pause() { if (screen !== 'game' || online) return; resetInputs(); screen = 'pause'; uiClick(); }
       api.on(window, 'keydown', e => {
         if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
         const t = screen === 'game' ? keyTeam(e.code) : -1;
@@ -685,24 +718,29 @@
           ptrs.set(e.pointerId, t); setSrc(t, 'p' + e.pointerId, true);
           return;
         }
-        for (let i = btns.length - 1; i >= 0; i--) if (inR(q, btns[i])) { snd('click'); btns[i].act(); return; }
+        for (let i = btns.length - 1; i >= 0; i--) if (inR(q, btns[i])) { uiClick(); btns[i].act(); return; }
         if (screen === 'over' && overT > .8 && !online && q.y > OY && q.y < OY + 80) return;
       });
       const pup = e => { const t = ptrs.get(e.pointerId); if (t == null) return; ptrs.delete(e.pointerId); if (t < 0) setBack(-1 - t, 'p' + e.pointerId, false); else setSrc(t, 'p' + e.pointerId, false); };
       api.on(window, 'pointerup', pup); api.on(window, 'pointercancel', pup);
       api.on(window, 'blur', () => { if (screen === 'game') for (const t of [0, 1]) { for (const s of [...srcs[t]]) setSrc(t, s, false); for (const s of [...bsrcs[t]]) setBack(t, s, false); } });
-      const MODES = ['cpu', 'net'];
+      const MODES = ['cpu', 'cup', 'net'];
       function menuKey(e) {
         const c = e.code, go = c === 'Enter' || c === 'Space' || c === 'KeyW' || c === 'ArrowUp';
         if (screen === 'title') {
           if (go) { e.preventDefault(); start(mode); }
-          else if (c === 'Digit1' || c === 'Digit2') start(MODES[+c.slice(5) - 1]);
-          else if (c === 'ArrowLeft' || c === 'ArrowRight') { e.preventDefault(); mode = MODES[(MODES.indexOf(mode) + 1) % 2]; persist(); snd('click'); }
-          else if (c === 'ArrowDown') { e.preventDefault(); diff = (diff + 1) % 3; persist(); snd('click'); }
+          else if (c === 'Digit1' || c === 'Digit2' || c === 'Digit3') start(MODES[+c.slice(5) - 1]);
+          else if (c === 'ArrowLeft' || c === 'ArrowRight') { e.preventDefault(); mode = MODES[(MODES.indexOf(mode) + (c === 'ArrowLeft' ? 2 : 1)) % 3]; persist(); uiClick(); }
+          else if (c === 'ArrowDown') { e.preventDefault(); diff = (diff + 1) % 3; persist(); uiClick(); }
+          else if (c === 'KeyH') openHelp(null);
+        } else if (screen === 'help') {
+          if ((go || c === 'KeyH') && helpT > .3) { e.preventDefault(); uiClick(); closeHelp(); }
         } else if (screen === 'pause') {
           if (go || c === 'KeyP') { e.preventDefault(); screen = 'game'; }
+          else if (c === 'KeyR') { uiClick(); newMatch(); }
+          else if (c === 'KeyH') openHelp(null);
         } else if (screen === 'over') {
-          if (go && overT > .8) { e.preventDefault(); if (online) rematch(); else newMatch(); }
+          if (go && overT > .8) { e.preventDefault(); overPrimary(); }
         } else if (screen === 'left') {
           if (go) { e.preventDefault(); toTitle(); }
         }
@@ -1107,7 +1145,7 @@
             rrect(-62, -27, 124, 60, 16, T.d, OUT, 3); rrect(-62, -32, 124, 60, 16, T.c, OUT, 3); rrect(-54, -27, 108, 14, 7, 'rgba(255,255,255,.25)');
             chunky(String(score[t]), 0, -1, 46, '#ffffff', 8);
             ctx.restore();
-            for (let i = 0; i < CFG.WIN; i++) circ(x - 40 + i * 20, y + 92, 6, i < score[t] ? T.c : 'rgba(255,255,255,.7)', OUT, 2.5);
+            const nW = goalTo(); for (let i = 0; i < nW; i++) circ(x - (nW - 1) * 10 + i * 20, y + 92, 6, i < score[t] ? T.c : 'rgba(255,255,255,.7)', OUT, 2.5);
           }
           if (cfg && cfg.x2) { rrect(cx - 26, y + 22, 52, 34, 12, '#ffd23f', OUT, 3); chunky('x2', cx, y + 40, 22, '#ffffff', 5); }
           else { ctx.save(); ctx.translate(cx, y + 39); circ(0, 0, 13, '#ff8a2a', OUT, 3); line(-13, 0, 13, 0, 2, '#4a200c'); line(0, -13, 0, 13, 2, '#4a200c'); ctx.restore(); }
@@ -1125,6 +1163,15 @@
             }
           }
         }
+      }
+      function drawBanner() {
+        if (!(phase === 'live' && rt < 3.6 && cfg && screen === 'game')) return;
+        const a = clamp(Math.min((rt - .1) * 4, (3.6 - rt) * 3), 0, 1), mp = Math.max(score[0], score[1]) === goalTo() - 1, cupI = mode === 'cup' && !online && score[0] + score[1] === 0;
+        if (a <= 0 || !(mp || cupI)) return;
+        const real = !PORT && !touchSeen, ty = (real ? 26 : (PORT ? 22 : 10) + 132) + 44, sc = 1 + (mp ? Math.max(0, .3 - rt) : 0);
+        ctx.save(); ctx.globalAlpha = a; ctx.translate(CW / 2, ty); ctx.scale(sc, sc);
+        chunky(mp ? 'MATCH POINT!' : 'CUP ROUND ' + (cupStage + 1) + ' / ' + CFG.cup.length + '  ·  VS ' + CFG.cup[cupStage].name, 0, 0, mp ? 40 : 30, mp ? '#ffd23f' : '#ffffff', 8);
+        ctx.restore();
       }
       function drawPads() {
         const pr = padRects();
@@ -1178,53 +1225,185 @@
           ctx.fillStyle = gr; ctx.fillText(word, cx, y);
         });
       }
+      const pill = (t, x, y, fs, bgc) => { ctx.font = `900 ${fs}px ${FONT}`; const w = ctx.measureText(t).width + fs * 2; rrect(x - w / 2, y - fs * .9, w, fs * 1.8, fs * .9, bgc || 'rgba(29,27,38,.72)'); ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y + 1); return w; };
+      const chip = (x, y, w, h, txt, on, act, fs) => { btns.push({ x, y, w, h, act }); rrect(x, y + 4, w, h, h / 2, on ? '#c49a10' : 'rgba(90,90,110,.9)', OUT, 3.5); rrect(x, y, w, h, h / 2, on ? '#ffd23f' : 'rgba(255,255,255,.92)', OUT, 3.5); ctx.font = `900 ${fs}px ${FONT}`; ctx.fillStyle = OUT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, x + w / 2, y + h / 2 + 1); };
+      const label = (t, x, y, fs, col, al) => { ctx.font = `900 ${fs}px ${FONT}`; ctx.textAlign = al || 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, fs * .22); ctx.strokeStyle = OUT; ctx.strokeText(t, x, y); ctx.fillStyle = col || '#ffffff'; ctx.fillText(t, x, y); };
+      const fitText = (t, max, fs) => { ctx.font = `900 ${fs}px ${FONT}`; const w = ctx.measureText(t).width; return w > max ? Math.floor(fs * max / w) : fs; };
+      const bestTxt = () => String(api.best == null ? 0 : api.best);
       function drawTitle() {
-        dim(.28);
-        pix(() => logo(CW / 2, PORT ? 215 : 112, PORT ? 112 : 108));
-        const B = PORT ? [[CW / 2, 420, 600, 104], [CW / 2, 544, 600, 104]] : [[320, 270, 280, 90], [640, 270, 280, 90]];
-        const defs = [['VS CPU', '#ff8a1f', '#c45a00'], ['ONLINE', '#2fbf71', '#1d8a4f']];
-        defs.forEach(([l, c, d], i) => button(B[i][0] - B[i][2] / 2, B[i][1] - B[i][3] / 2, B[i][2], B[i][3], l, c, d, () => start(MODES[i]), mode === MODES[i]));
-        const dy = PORT ? 660 : 380, cw = PORT ? 190 : 132, chh = PORT ? 62 : 46;
-        chunky('CPU', CW / 2 - cw * 2.05, dy, PORT ? 34 : 24, '#ffffff', 6);
-        CFG.ai.forEach((a, i) => {
-          const x = CW / 2 + (i - 1) * (cw + 12) - cw / 2, y = dy - chh / 2, on = i === diff;
-          btns.push({ x, y, w: cw, h: chh, act: () => { diff = i; persist(); } });
-          rrect(x, y, cw, chh, chh / 2, on ? '#ffd23f' : 'rgba(255,255,255,.88)', OUT, 3.5);
-          ctx.font = `900 ${PORT ? 28 : 20}px ${FONT}`; ctx.fillStyle = OUT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(a.name, x + cw / 2, y + chh / 2 + 1);
+        dim(.32);
+        pix(() => logo(CW / 2, PORT ? 196 : 100, PORT ? 112 : 92));
+        const defs = [['VS CPU', '#ff8a1f', '#c45a00', 'QUICK MATCH'], ['CUP', '#9b5cf0', '#6a35b8', '3 ROUNDS · TROPHY'], ['ONLINE', '#2fbf71', '#1d8a4f', 'PLAY A FRIEND']];
+        const B = PORT ? defs.map((q, i) => [CW / 2, 354 + i * 102, 580, 82]) : defs.map((q, i) => [196 + i * 284, 238, 256, 80]);
+        defs.forEach(([l, c, d, sub], i) => {
+          button(B[i][0] - B[i][2] / 2, B[i][1] - B[i][3] / 2, B[i][2], B[i][3], l, c, d, () => start(MODES[i]), mode === MODES[i]);
+          if (!PORT) label(sub, B[i][0], B[i][1] + B[i][3] / 2 + 30, 16, 'rgba(255,255,255,.95)');
         });
-        const hy = PORT ? 740 : 452, fs = PORT ? 22 : 18;
-        const hint = (t, y) => { ctx.font = `900 ${fs}px ${FONT}`; const w = ctx.measureText(t).width + 36; rrect(CW / 2 - w / 2, y - fs * .9, w, fs * 1.8, fs * .9, 'rgba(29,27,38,.72)'); ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(t, CW / 2, y); };
-        hint(PORT ? 'JUMP: HOLD TO JUMP + RAISE ARMS  ·  BACK: GO BACKWARDS' : 'W / SPACE / ↑ = JUMP + ARMS UP   ·   HOLD S / ↓ = GO BACK', hy);
-        hint('YOU CONTROL BOTH PLAYERS  ·  RELEASE WITH BALL = SHOOT', hy + (PORT ? 56 : 44));
+        const cd = mode === 'cup';
+        if (PORT) {
+          label('CPU', 120, 672, 30);
+          CFG.ai.forEach((a, i) => chip(200 + i * 230, 642, 210, 60, a.name, !cd && i === diff, () => { diff = i; persist(); }, 28));
+          label('FIRST TO', 170, 752, 30);
+          CFG.WINS.forEach((n, i) => chip(330 + i * 150, 722, 130, 60, String(n), !cd && n === winTo, () => { winTo = n; persist(); }, 30));
+          button(60, 802, 330, 66, 'HOW TO PLAY', '#3b7cf4', '#2453c2', () => openHelp(null));
+          rrect(420, 802, 480, 74, 22, 'rgba(29,27,38,.78)');
+          label('BEST ' + bestTxt() + '  ·  CUPS ' + ST.cups, 660, 824, 24, '#ffd23f');
+          label('WINS ' + ST.wins + '/' + ST.played + '  ·  STREAK ' + ST.top, 660, 856, 22);
+        } else {
+          label('CPU', 74, 352, 22);
+          CFG.ai.forEach((a, i) => chip(112 + i * 118, 330, 108, 44, a.name, !cd && i === diff, () => { diff = i; persist(); }, 18));
+          label('FIRST TO', 556, 352, 22);
+          CFG.WINS.forEach((n, i) => chip(624 + i * 82, 330, 70, 44, String(n), !cd && n === winTo, () => { winTo = n; persist(); }, 22));
+          button(40, 414, 236, 58, 'HOW TO PLAY', '#3b7cf4', '#2453c2', () => openHelp(null));
+          const st = cd ? 'CUP: BEAT ROOKIES, BALLERS AND LEGENDS (FIRST TO 5)  ·  CUPS WON ' + ST.cups : 'BEST ' + bestTxt() + '  ·  WINS ' + ST.wins + '/' + ST.played + '  ·  BEST STREAK ' + ST.top + '  ·  CUPS ' + ST.cups, fs = fitText(st, 590, 18);
+          rrect(300, 414, 620, 58, 18, 'rgba(29,27,38,.78)'); ctx.font = `900 ${fs}px ${FONT}`; ctx.fillStyle = '#ffd23f'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(st, 610, 444);
+          const hint = touchSeen ? 'HOLD JUMP = HOP + ARMS UP  ·  RELEASE WITH BALL = SHOOT  ·  HOLD BACK = RETREAT' : 'W / SPACE / ↑ = HOP + ARMS UP  ·  RELEASE WITH BALL = SHOOT  ·  S / ↓ = BACK  ·  H = HELP';
+          pill(hint, CW / 2, 508, fitText(hint, 860, 15));
+        }
+      }
+      function miniFig(x, y, s, arm, lean, col) {
+        const ux = Math.sin(lean), uy = -Math.cos(lean), hx = x + ux * 34 * s, hy = y + uy * 34 * s, nx = hx + ux * 30 * s, ny = hy + uy * 30 * s, sk = '#e8b48a';
+        box(x - 6 * s, y + 3 * s, x + 14 * s, y + 3 * s, 9 * s, OUT, 0);
+        box(x, y, hx, hy, 11 * s, sk, 3);
+        box(lerp(x, hx, .5), lerp(y, hy, .5), hx, hy, 15 * s, col, 0);
+        box(hx, hy, nx, ny, 22 * s, col, 3);
+        const q = 13 * s, cx = nx + ux * 17 * s, cy = ny + uy * 17 * s;
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(lean);
+        ctx.fillStyle = OUT; ctx.fillRect(-q - 3, -q - 3, 2 * q + 6, 2 * q + 6); ctx.fillStyle = sk; ctx.fillRect(-q, -q, 2 * q, 2 * q);
+        ctx.fillStyle = '#2a1b14'; ctx.fillRect(-q, -q, 2 * q, q * .55); ctx.fillRect(-q, -q, q * .6, q); ctx.fillStyle = OUT; ctx.fillRect(q * .35, -q * .15, 3 * s, q * .45); ctx.fillRect(q * .3, q * .5, q * .45, 3);
+        ctx.restore();
+        const ax = nx + Math.sin(arm) * 36 * s, ay = ny - Math.cos(arm) * 36 * s;
+        box(nx, ny, ax, ay, 8 * s, sk, 3); box(nx, ny, lerp(nx, ax, .2), lerp(ny, ay, .2), 12 * s, col, 0);
+        return [ax, ay];
+      }
+      function miniBall(x, y, r) { circ(x, y, r, '#f07a22', OUT, 3); line(x - r, y, x + r, y, 2, '#4a200c'); line(x, y - r, x, y + r, 2, '#4a200c'); circ(x - r * .35, y - r * .35, r * .25, 'rgba(255,255,255,.45)'); }
+      function miniHoop(x, y, s) {
+        box(x + 30 * s, y - 40 * s, x + 30 * s, y + 70 * s, 6 * s, '#e9ebf0', 3); box(x + 24 * s, y - 34 * s, x + 24 * s, y + 8 * s, 6 * s, '#ffffff', 3);
+        for (let i = 0; i < 4; i++) box(x - 20 * s + i * 13 * s, y + 3, x - 14 * s + i * 9 * s, y + 24 * s, 3, '#ffffff', 0);
+        box(x - 24 * s, y, x + 22 * s, y, 6 * s, '#e8322a', 2);
+      }
+      function drawHelp() {
+        dim(.68);
+        const tch = touchSeen || PORT, K = tch ? ['JUMP', 'JUMP', 'LET GO', 'BACK'] : ['W', 'W', 'LET GO', 'S'];
+        const steps = [
+          ['HOLD TO HOP', tch ? 'Hold JUMP: both your' : 'Hold W, Space or ↑: both', tch ? 'players hop, arms go up' : 'your players hop, arms up'],
+          ['GRAB THE BALL', 'Touch the ball with a', 'hand to catch it'],
+          ['RELEASE = SHOOT', 'Let go with the ball.', 'Arm angle aims the shot'],
+          ['BACK OFF', tch ? 'Hold BACK to hop' : 'Hold S or ↓ to hop', 'back and defend']
+        ];
+        const L = PORT ? steps.map((q, i) => [40 + (i % 2) * 450, 170 + (i >> 1) * 300, 430, 280]) : steps.map((q, i) => [31 + i * 228, 92, 214, 262]);
+        const s = PORT ? 1.5 : 1.05, wob = Math.sin(clock * 3);
+        chunky('HOW TO PLAY', CW / 2, PORT ? 104 : 50, PORT ? 64 : 50, '#ffd23f', 10);
+        L.forEach(([x, y, w, h], i) => {
+          const e = clamp((helpT - i * .08) * 5, 0, 1), oy = (1 - e) * 30;
+          ctx.globalAlpha = e;
+          rrect(x, y + 6 + oy, w, h, 20, '#2b2a3d', OUT, 4); rrect(x, y + oy, w, h, 20, '#f7efe2', OUT, 4);
+          rrect(x + 10, y + 10 + oy, w - 20, h * .5, 14, ['#bfe3ff', '#ffe2b8', '#d8f5c8', '#f2d6ff'][i]);
+          ctx.globalAlpha = 1;
+        });
+        pix(() => L.forEach(([x, y, w, h], i) => {
+          const e = clamp((helpT - i * .08) * 5, 0, 1); if (e < 1) return;
+          const cx = x + w / 2, fy = y + h * .5 - 4;
+          box(x + 14, fy + 3, x + w - 14, fy + 3, 6, '#c8a27a', 0);
+          if (i === 0) { const j = Math.abs(wob) * 18 * s; miniFig(cx - 40 * s, fy - j, s, .3 + Math.abs(wob) * .2, .1, '#f04848'); miniFig(cx + 20 * s, fy - j * .8, s, .4 + Math.abs(wob) * .2, .1, '#f04848'); for (let k = 0; k < 3; k++) box(cx - 50 * s + k * 12 * s, fy + 2, cx - 54 * s + k * 12 * s, fy - 8 * s, 3, '#ffffff', 0); }
+          else if (i === 1) { const [ax, ay] = miniFig(cx - 24 * s, fy, s, 1.2 + wob * .25, .25, '#f04848'); miniBall(ax + 10 * s, ay - 6 * s, 10 * s); }
+          else if (i === 2) { const hx = x + w - 40 * s, hy = y + 64 * s, x0 = cx - 30 * s, y0 = fy - 70 * s; miniFig(cx - 52 * s, fy, s, .75, .15, '#f04848'); miniHoop(hx, hy, s * .8); const u = (clock * .7) % 1, P2 = t => [lerp(x0, hx - 2 * s, t), lerp(y0, hy - 6 * s, t) - Math.sin(t * Math.PI) * 30 * s]; for (let k = 1; k < 8; k++) { const q = P2(k / 8); circ(q[0], q[1], 2.6 * s, 'rgba(29,27,38,.5)'); } const q = P2(u); miniBall(q[0], q[1], 8 * s); }
+          else { const dx = (wob + 1) * 10 * s, ay = fy - 26 * s; miniFig(cx + 30 * s - dx, fy, s, 2.4, -.35, '#3b7cf4'); box(cx - 50 * s, ay, cx - 14 * s, ay, 7 * s, '#ffffff', 3); ctx.fillStyle = OUT; ctx.beginPath(); ctx.moveTo(cx - 70 * s, ay); ctx.lineTo(cx - 48 * s, ay - 14 * s); ctx.lineTo(cx - 48 * s, ay + 14 * s); ctx.closePath(); ctx.fill(); }
+        }));
+        L.forEach(([x, y, w, h], i) => {
+          const e = clamp((helpT - i * .08) * 5, 0, 1); if (e < 1) return;
+          circ(x + 26, y + 26, PORT ? 20 : 15, '#ff8a1f', OUT, 3); label(String(i + 1), x + 26, y + 27, PORT ? 24 : 18);
+          ctx.font = `900 ${PORT ? 22 : 15}px ${FONT}`; const kw = ctx.measureText(K[i]).width + 22, kh = PORT ? 38 : 28;
+          rrect(x + w - kw - 12, y + 14 + 4, kw, kh, 8, '#9a9aa8', OUT, 3); rrect(x + w - kw - 12, y + 14, kw, kh, 8, '#ffffff', OUT, 3); ctx.fillStyle = OUT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(K[i], x + w - kw / 2 - 12, y + 14 + kh / 2 + 1);
+          ctx.font = `900 ${PORT ? 32 : 21}px ${FONT}`; ctx.fillStyle = OUT; ctx.fillText(steps[i][0], x + w / 2, y + h * .62);
+          ctx.font = `800 ${PORT ? 23 : 15}px ${FONT}`; ctx.fillStyle = '#4a4658'; ctx.fillText(steps[i][1], x + w / 2, y + h * .62 + (PORT ? 38 : 28)); ctx.fillText(steps[i][2], x + w / 2, y + h * .62 + (PORT ? 66 : 48));
+        });
+        const ft = 'FIRST TO ' + goalTo() + ' WINS  ·  EVERY POINT SHUFFLES THE COURT, THE BALL AND THE PLAYERS';
+        label(ft, CW / 2, PORT ? 778 : 386, fitText(ft, CW - 60, PORT ? 22 : 17), '#ffffff');
+        const bw = PORT ? 360 : 300, bh = PORT ? 72 : 70;
+        button(CW / 2 - bw / 2, PORT ? 804 : 418, bw, bh, helpNext ? 'PLAY!' : 'GOT IT', '#2fbf71', '#1d8a4f', () => { if (helpT > .3) closeHelp(); });
       }
       function drawPause() {
-        dim(.5); chunky('PAUSED', CW / 2, CH / 2 - 110, 80, '#ffffff', 14);
-        button(CW / 2 - 150, CH / 2 - 30, 300, 84, 'RESUME', '#2fbf71', '#1d8a4f', () => { screen = 'game'; });
-        button(CW / 2 - 150, CH / 2 + 80, 300, 84, 'MENU', '#ff8a1f', '#c45a00', toTitle);
+        dim(.55); chunky('PAUSED', CW / 2, PORT ? CH / 2 - 210 : 96, PORT ? 90 : 72, '#ffffff', 14);
+        const bw = PORT ? 460 : 320, bh = PORT ? 90 : 70, gap = PORT ? 112 : 90, x = CW / 2 - bw / 2, y0 = PORT ? CH / 2 - 140 : 150;
+        button(x, y0, bw, bh, 'RESUME', '#2fbf71', '#1d8a4f', () => { screen = 'game'; });
+        button(x, y0 + gap, bw, bh, 'RESTART', '#3b7cf4', '#2453c2', newMatch);
+        button(x, y0 + gap * 2, bw, bh, 'HOW TO PLAY', '#9b5cf0', '#6a35b8', () => openHelp(null));
+        button(x, y0 + gap * 3, bw, bh, 'MENU', '#ff8a1f', '#c45a00', toTitle);
+      }
+      function trophy(x, y, s, lit) {
+        const g1 = lit ? '#ffd23f' : '#8d8a9c', g2 = lit ? '#e09a12' : '#5f5c70';
+        ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+        rrect(-26, 44, 52, 16, 4, g2, OUT, 3); rrect(-8, 22, 16, 24, 3, g1, OUT, 3);
+        ctx.lineWidth = 7; ctx.strokeStyle = OUT; ctx.beginPath(); ctx.arc(-30, -14, 14, Math.PI * .5, Math.PI * 1.5); ctx.stroke(); ctx.beginPath(); ctx.arc(30, -14, 14, -Math.PI * .5, Math.PI * .5); ctx.stroke();
+        ctx.lineWidth = 3.5; ctx.strokeStyle = g1; ctx.beginPath(); ctx.arc(-30, -14, 14, Math.PI * .5, Math.PI * 1.5); ctx.stroke(); ctx.beginPath(); ctx.arc(30, -14, 14, -Math.PI * .5, Math.PI * .5); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-32, -34); ctx.lineTo(32, -34); ctx.quadraticCurveTo(30, 18, 0, 24); ctx.quadraticCurveTo(-30, 18, -32, -34); ctx.closePath(); ctx.fillStyle = g1; ctx.fill(); ctx.strokeStyle = OUT; ctx.lineWidth = 3.5; ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.fillRect(-22, -28, 8, 30);
+        if (lit) { ctx.fillStyle = '#ffffff'; for (let i = 0; i < 4; i++) { const a = clock * 2 + i * 1.57, r = 52 + Math.sin(clock * 5 + i) * 6; ctx.fillRect(Math.cos(a) * r - 2, Math.sin(a) * r - 12, 4, 4); } }
+        ctx.restore();
       }
       function drawOver() {
-        dim(clamp(overT * 1.2, 0, .38));
+        dim(clamp(overT * 1.2, 0, online ? .38 : .55));
         if (overT < .5) return;
-        const me = online ? myTeam() : 0, cy = CH / 2;
-        const title = winner === 0 ? 'P1 WINS' : mode === 'cpu' && !online ? 'CPU WINS' : 'P2 WINS';
+        if (!online) return drawResult();
+        const me = myTeam(), cy = CH / 2;
+        const title = winner === 0 ? 'P1 WINS' : 'P2 WINS';
         const s = Math.min(1, (overT - .5) * 5);
         ctx.save(); ctx.translate(26, OY + 70); ctx.scale(s, s); ctx.rotate(-.03);
         const gr = ctx.createLinearGradient(0, -38, 0, 38); gr.addColorStop(0, '#ffd23f'); gr.addColorStop(.45, '#ff6a1a'); gr.addColorStop(1, '#d8182a');
         chunky(title, 0, 0, 84, gr, 14, 'left');
-        if (online) chunky(winner === me ? 'YOU WIN!' : 'YOUR FRIEND WON', 6, 62, 30, '#ffffff', 8, 'left');
+        chunky(winner === me ? 'YOU WIN!' : 'YOUR FRIEND WON', 6, 62, 30, '#ffffff', 8, 'left');
         ctx.restore();
         const tl = mirror ? 1 : 0;
         chunky(score[tl] + '  -  ' + score[1 - tl], CW / 2, cy - 60, 64, '#ffffff', 12);
-        if (mode === 'cpu') chunky((newBest ? 'NEW BEST!  ' : '') + overPts + ' PTS  ·  ' + CFG.ai[diff].name, CW / 2, cy + 2, 30, newBest ? '#ffd23f' : '#ffffff', 7);
-        if (online) {
-          if (meRe) chunky('WAITING FOR YOUR FRIEND…', CW / 2, cy + 2, 28, '#ffffff', 6);
-          else if (peerRe) chunky('YOUR FRIEND WANTS A REMATCH', CW / 2, cy + 2, 28, '#ffd23f', 6);
-          if (!meRe) button(CW / 2 - 310, cy + 50, 300, 86, 'REMATCH', '#2fbf71', '#1d8a4f', rematch);
-          button(meRe ? CW / 2 - 150 : CW / 2 + 10, cy + 50, 300, 86, 'LEAVE', '#ff8a1f', '#c45a00', toTitle);
-        } else {
-          button(CW / 2 - 310, cy + 50, 300, 86, 'PLAY AGAIN', '#2fbf71', '#1d8a4f', newMatch);
-          button(CW / 2 + 10, cy + 50, 300, 86, 'MENU', '#ff8a1f', '#c45a00', toTitle);
+        if (meRe) chunky('WAITING FOR YOUR FRIEND…', CW / 2, cy + 2, 28, '#ffffff', 6);
+        else if (peerRe) chunky('YOUR FRIEND WANTS A REMATCH', CW / 2, cy + 2, 28, '#ffd23f', 6);
+        if (!meRe) button(CW / 2 - 310, cy + 50, 300, 86, 'REMATCH', '#2fbf71', '#1d8a4f', rematch);
+        button(meRe ? CW / 2 - 150 : CW / 2 + 10, cy + 50, 300, 86, 'LEAVE', '#ff8a1f', '#c45a00', toTitle);
+      }
+      function drawResult() {
+        const won = winner === 0, s = Math.min(1, (overT - .5) * 5), e = s * s * (3 - 2 * s), m = MS || { shots: 0, made: 0, baskets: 0, dunks: 0, swish: 0, deep: 0, steals: 0, time: 0 };
+        const title = cupWon ? 'CHAMPIONS!' : won ? 'YOU WIN!' : 'CPU WINS';
+        const ty = PORT ? OY + 40 : 52;
+        ctx.save(); ctx.translate(CW / 2, ty); ctx.scale(Math.max(.01, e), Math.max(.01, e)); ctx.rotate(-.025);
+        const gr = ctx.createLinearGradient(0, -38, 0, 38); if (won) { gr.addColorStop(0, '#ffd23f'); gr.addColorStop(.45, '#ff6a1a'); gr.addColorStop(1, '#d8182a'); } else { gr.addColorStop(0, '#d9e2f2'); gr.addColorStop(1, '#7d8aa8'); }
+        chunky(title, 0, 0, PORT ? 92 : 72, gr, 14);
+        ctx.restore();
+        const sy = ty + (PORT ? 92 : 66);
+        rrect(CW / 2 - 70, sy - 30, 60, 60, 14, TEAMS[0].c, OUT, 3); rrect(CW / 2 + 10, sy - 30, 60, 60, 14, TEAMS[1].c, OUT, 3);
+        chunky(String(score[0]), CW / 2 - 40, sy, 40, '#ffffff', 8); chunky(String(score[1]), CW / 2 + 40, sy, 40, '#ffffff', 8);
+        label('YOU', CW / 2 - 84, sy, PORT ? 28 : 20, '#ffffff', 'right'); label(mode === 'cup' ? CFG.cup[cupStage].name : 'CPU', CW / 2 + 84, sy, PORT ? 28 : 20, '#ffffff', 'left');
+        const acc = m.shots ? Math.max(0, Math.min(100, Math.round(m.made / m.shots * 100))) : 0, tm = Math.round(m.time), tms = (tm / 60 | 0) + ':' + String(tm % 60).padStart(2, '0');
+        const tiles = [['BASKETS', String(m.baskets)], ['ACCURACY', m.shots ? acc + '%' : '-'], ['DUNKS', String(m.dunks)], ['TIME', tms]];
+        const pw = PORT ? 880 : 680, ph = PORT ? 250 : 132, px = CW / 2 - pw / 2, py = sy + (PORT ? 56 : 42);
+        rrect(px, py, pw, ph, 22, 'rgba(29,27,38,.82)', 'rgba(255,255,255,.2)', 2);
+        tiles.forEach(([k, v], i) => {
+          const tw = PORT ? 420 : 155, th = PORT ? 100 : 82, tx = PORT ? px + 16 + (i % 2) * 432 : px + 14 + i * 166, tyy = PORT ? py + 16 + (i >> 1) * 112 : py + 12;
+          const a = clamp((overT - .7 - i * .1) * 5, 0, 1);
+          ctx.globalAlpha = a; rrect(tx, tyy, tw, th, 14, 'rgba(255,255,255,.08)');
+          label(v, tx + tw / 2, tyy + th * .42, PORT ? 46 : 36, i === 1 && acc >= 50 ? '#7dffa0' : '#ffffff'); ctx.font = `900 ${PORT ? 20 : 14}px ${FONT}`; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(k, tx + tw / 2, tyy + th * .82); ctx.globalAlpha = 1;
+        });
+        if (!PORT) { const ex = 'SHOTS ' + m.shots + '  ·  SWISHES ' + m.swish + '  ·  FROM DOWNTOWN ' + m.deep + '  ·  STEALS ' + m.steals; ctx.font = `900 14px ${FONT}`; ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ex, CW / 2, py + ph - 18); }
+        let ly = py + ph + (PORT ? 40 : 26);
+        label((newBest ? 'NEW BEST!  ' : '') + overPts + ' PTS  ·  ' + CFG.ai[curLvl()].name + (won ? '  ·  STREAK ' + ST.streak : ''), CW / 2, ly, PORT ? 30 : 22, newBest ? '#ffd23f' : '#ffffff');
+        if (mode === 'cup') {
+          ly += PORT ? 70 : 44;
+          const n = CFG.cup.length, gap = PORT ? 200 : 150, x0 = CW / 2 - gap * n / 2;
+          for (let i = 0; i < n; i++) {
+            const x = x0 + i * gap, done = i < cupStage || (i === cupStage && won), cur = i === cupStage;
+            if (i) line(x - gap + 26, ly, x - 26, ly, 6, done ? '#ffd23f' : 'rgba(255,255,255,.3)');
+            circ(x, ly, PORT ? 24 : 18, done ? '#ffd23f' : cur ? '#f04848' : 'rgba(255,255,255,.25)', OUT, 3);
+            label(done ? '✓' : String(i + 1), x, ly + 1, PORT ? 24 : 18, done ? OUT : '#ffffff');
+            ctx.font = `900 ${PORT ? 18 : 12}px ${FONT}`; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(CFG.cup[i].name, x, ly + (PORT ? 42 : 32));
+          }
+          line(x0 + (n - 1) * gap + 26, ly, x0 + n * gap - 40, ly, 6, cupWon ? '#ffd23f' : 'rgba(255,255,255,.3)');
+          trophy(x0 + n * gap, ly - 4, PORT ? .62 : .46, cupWon);
         }
+        const bw = PORT ? 400 : 280, bh = PORT ? 88 : 72, by = PORT ? CH - 150 : CH - 92;
+        const prim = mode === 'cup' ? (won ? (cupStage >= CFG.cup.length - 1 ? 'NEW CUP' : 'NEXT ROUND') : 'RETRY') : 'PLAY AGAIN';
+        button(CW / 2 - bw - 12, by, bw, bh, prim, '#2fbf71', '#1d8a4f', () => { if (overT > .8) overPrimary(); });
+        button(CW / 2 + 12, by, bw, bh, 'MENU', '#ff8a1f', '#c45a00', toTitle);
+        if (!touchSeen && !PORT) { ctx.font = `900 13px ${FONT}`; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('SPACE / ENTER = ' + prim, CW / 2, CH - 8); }
       }
       function drawMsg(title, sub, act) {
         dim(.55); chunky(title, CW / 2, CH / 2 - 70, 64, '#ffffff', 12);
@@ -1238,17 +1417,20 @@
         pix(drawWorld);
         drawWipe();
         if (screen === 'title' || screen === 'lobby') { drawTitle(); if (screen === 'lobby') dim(.2); return; }
+        if (screen === 'help') { if (helpFrom === 'pause') pix(drawScore); drawHelp(); return; }
         pix(() => { drawPopups(dt); drawScore(); });
+        drawBanner();
         drawPads();
         if (screen === 'game' && !online) {
           const r = pauseRect(); rrect(r.x, r.y, r.w, r.h, 16, 'rgba(255,255,255,.92)', OUT, 3);
           ctx.fillStyle = OUT; ctx.fillRect(r.x + 16, r.y + 14, 7, 24); ctx.fillRect(r.x + 29, r.y + 14, 7, 24);
         }
         if (online) { ctx.font = `900 18px ${FONT}`; ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillStyle = net.rtt > 200 ? '#ff6b6b' : '#ffffff'; ctx.strokeStyle = OUT; ctx.lineWidth = 4; const t = (net.rtt || 0) + ' ms'; ctx.strokeText(t, CW - 16, PORT ? 20 : 14); ctx.fillText(t, CW - 16, PORT ? 20 : 14); }
-        if (screen === 'game' && roundK > 0 && phase === 'live' && rt > 2.4 && rt < 7 && score[0] + score[1] === 0 && !PORT) {
-          const t = 'HOLD W TO JUMP + RAISE ARMS   ·   HOLD S TO GO BACK   ·   RELEASE WITH THE BALL TO SHOOT';
-          ctx.globalAlpha = clamp((7 - rt), 0, 1); ctx.font = `900 18px ${FONT}`; const w = ctx.measureText(t).width + 30;
-          rrect(CW / 2 - w / 2, OY + 506, w, 28, 14, 'rgba(29,27,38,.7)'); ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(t, CW / 2, OY + 520); ctx.globalAlpha = 1;
+        if (screen === 'game' && coach && !online && phase === 'live' && ball) {
+          const mine = ball.holder && ball.holder.team === 0, tch = touchSeen || PORT;
+          const t = mine ? 'LET GO TO SHOOT!  ARM ANGLE = SHOT ANGLE' : tch ? 'HOLD JUMP TO HOP TO THE BALL  ·  TOUCH IT TO GRAB' : 'HOLD W / SPACE TO HOP TO THE BALL  ·  TOUCH IT TO GRAB';
+          const fs = fitText(t, CW - 80, PORT ? 30 : 22), pul = 1 + Math.sin(clock * 6) * .03;
+          ctx.save(); ctx.translate(CW / 2, OY + (PORT ? 470 : 500)); ctx.scale(pul, pul); pill(t, 0, 0, fs, mine ? 'rgba(47,191,113,.92)' : 'rgba(29,27,38,.82)'); ctx.restore();
         }
         if (screen === 'pause') drawPause();
         else if (screen === 'over') drawOver();
@@ -1265,8 +1447,9 @@
         for (const t of [0, 1]) if (bump[t] > 0) bump[t] = Math.max(0, bump[t] - dt * 3);
         for (const p of players) { if (p.happy > 0) p.happy -= dt; if (p.sad > 0) p.sad -= dt; }
         if (screen === 'over') overT += dt;
+        if (screen === 'help') helpT += dt;
         if (online === 'guest') guestFrame();
-        else if (screen !== 'pause' && screen !== 'left' && !(screen === 'netwait' && online === 'host')) simFrame(dt);
+        else if (screen !== 'pause' && screen !== 'left' && !(screen === 'netwait' && online === 'host') && !(screen === 'help' && helpFrom === 'pause')) simFrame(dt);
         updateNets(dt);
         for (let i = parts.length - 1; i >= 0; i--) {
           const q = parts[i]; q.life -= dt;

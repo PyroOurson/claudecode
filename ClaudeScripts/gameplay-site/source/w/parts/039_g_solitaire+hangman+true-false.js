@@ -1274,8 +1274,12 @@
         const cls = frac > .5 ? '' : frac > .25 ? 'mid' : 'low';
         if (cls !== barCls) { bar.className = cls; barCls = cls; }
       }
+      let missed = [], seenNow = new Set();
       function start() {
-        deck = shuffle(TF.slice()); qi = -1;
+        const sv = api.load() || {}, seen = new Set(Array.isArray(sv.seen) ? sv.seen : []);
+        if (seen.size >= TF.length - 12) seen.clear();
+        deck = shuffle(TF.filter((f, i) => !seen.has(i))).concat(shuffle(TF.filter((f, i) => seen.has(i)))); qi = -1;
+        missed = []; seenNow = seen;
         lives = 3; score = 0; streak = 0; bestStreak = 0; correct = 0; mult = 0;
         hud(); next();
       }
@@ -1284,6 +1288,7 @@
         qi++;
         if (qi >= deck.length) { deck = shuffle(TF.slice()); qi = 0; }
         const f = deck[qi];
+        seenNow.add(TF.indexOf(f));
         card.classList.remove('ok', 'no');
         card.querySelectorAll('.tf-stamp,.tf-float').forEach(el => el.remove());
         eEl.hidden = true;
@@ -1317,6 +1322,7 @@
           api.timeout(() => { if (tok === seq) next(); }, 520);
         } else {
           lives--; streak = 0;
+          missed.push(f);
           card.classList.add('no');
           eEl.innerHTML = `<b>${f.a ? 'True.' : 'False.'}</b> ${f.e}`;
           eEl.hidden = false;
@@ -1329,11 +1335,12 @@
       }
       function over() {
         phase = 'over'; setBar(0);
+        try { api.save(Object.assign(api.load() || {}, { seen: [...seenNow] })); } catch (e) {}
         const isBest = score > 0 && api.submit(score);
         api.overlay({
           kicker: isBest ? 'New best!' : 'Game over',
           title: score + ' points',
-          text: correct ? `You got ${correct} right with a best streak of ${bestStreak}.` : 'Out of lives. Read fast, answer faster!',
+          text: (correct ? `You got ${correct} right with a best streak of ${bestStreak}.` : 'Out of lives. Read fast, answer faster!') + (missed.length ? ' Missed: ' + missed.slice(-3).map(m => `“${m.q.length > 70 ? m.q.slice(0, 68) + '…' : m.q}” is ${m.a ? 'true' : 'false'}.`).join(' ') : ''),
           stats: [['Score', score], ['Correct', correct], ['Streak', bestStreak], ['Best', api.best ?? '—']],
           button: 'Play again', onAction: start
         });
