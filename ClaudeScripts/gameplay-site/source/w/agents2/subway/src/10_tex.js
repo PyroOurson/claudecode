@@ -393,10 +393,18 @@
       g.fillStyle = '#8f949c'; g.fillRect(0, 0, 128, 6); g.fillRect(0, 122, 128, 6);
       const t = canvasTex(c, true); return t;
     }
-    function sky(city) {
-      const c = cv(4, 256), g = c.getContext('2d');
-      const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, city.sky[0]); gr.addColorStop(0.55, city.sky[1]); gr.addColorStop(1, city.sky[2]);
-      g.fillStyle = gr; g.fillRect(0, 0, 4, 256);
+    function sky() {
+      const c = cv(4, 256), g = c.getContext('2d'), tex = canvasTex(c);
+      tex.anisotropy = 1; tex.generateMipmaps = false; tex.minFilter = THREE.LinearFilter;
+      return { tex, set(a, b, d) { const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, a); gr.addColorStop(0.55, b); gr.addColorStop(1, d); g.fillStyle = gr; g.fillRect(0, 0, 4, 256); tex.needsUpdate = true; } };
+    }
+    function stars() {
+      const W = 1024, H = 256, c = cv(W, H), g = c.getContext('2d');
+      for (let i = 0; i < 300; i++) {
+        const x = rnd(0, W), y = H * Math.pow(Math.random(), 1.6), r = Math.random() < 0.12 ? rnd(1.6, 2.6) : rnd(0.6, 1.4);
+        g.fillStyle = `rgba(${rint(215, 255)},${rint(225, 255)},255,${rnd(0.45, 1).toFixed(2)})`;
+        g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+      }
       return canvasTex(c);
     }
     function skyline(city) {
@@ -464,5 +472,5 @@
       const t = new THREE.CanvasTexture(c); t.minFilter = t.magFilter = THREE.NearestFilter; t.generateMipmaps = false;
       return t;
     }
-    return { atlas, track, fence, sky, skyline, coin, blob, glow, label, toon, patch };
+    return { atlas, track, fence, sky, stars, skyline, coin, blob, glow, label, toon, patch };
   }

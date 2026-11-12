@@ -9,7 +9,7 @@
     const geos = new Map();
     const G = (k, f) => { if (!geos.has(k)) { const g = f(); geos.set(k, g); bin.add(g); } return geos.get(k); };
     const rbox = (w, h, d, n) => G(`rb${w},${h},${d},${n}`, () => {
-      const g = new THREE.SphereGeometry(1, 16, 12), p = g.attributes.position;
+      const big = Math.max(w, h, d), g = big <= 0.1 ? new THREE.SphereGeometry(1, 8, 6) : big <= 0.3 ? new THREE.SphereGeometry(1, 12, 8) : new THREE.SphereGeometry(1, 16, 12), p = g.attributes.position;
       const e = n == null ? 0.45 : n;
       for (let i = 0; i < p.count; i++) {
         const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
@@ -27,6 +27,54 @@
       return m;
     };
     const grp = (x, y, z, parent) => { const g = new THREE.Group(); g.position.set(x || 0, y || 0, z || 0); if (parent) parent.add(g); return g; };
+    const toonV = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: toonMap });
+    bin.add(toonV);
+    const bm = new THREE.Matrix4(), bi = new THREE.Matrix4(), bn = new THREE.Matrix3(), bv = new THREE.Vector3();
+    function bake(root, keep) {
+      const kept = new Set(keep), groups = new Map(), made = [];
+      kept.add(root);
+      root.updateMatrixWorld(true);
+      root.traverse(o => {
+        const m = o.material;
+        if (!o.isMesh || o.name || !m.isMeshToonMaterial || m.map || m.transparent || m.emissive.getHex()) return;
+        let a = o.parent;
+        while (a && !kept.has(a)) a = a.parent;
+        if (!a) return;
+        if (!groups.has(a)) groups.set(a, []);
+        groups.get(a).push(o);
+      });
+      groups.forEach((list, anc) => {
+        let nv = 0, ni = 0;
+        for (const o of list) { nv += o.geometry.attributes.position.count; ni += o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count; }
+        const P = new Float32Array(nv * 3), N = new Float32Array(nv * 3), C = new Float32Array(nv * 3), I = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
+        let v0 = 0, i0 = 0;
+        bi.copy(anc.matrixWorld).invert();
+        for (const o of list) {
+          const g = o.geometry, pa = g.attributes.position, na = g.attributes.normal, ix = g.index, c = o.material.color, n = pa.count;
+          bm.multiplyMatrices(bi, o.matrixWorld); bn.getNormalMatrix(bm);
+          for (let i = 0; i < n; i++) {
+            const k = (v0 + i) * 3;
+            bv.fromBufferAttribute(pa, i).applyMatrix4(bm); P[k] = bv.x; P[k + 1] = bv.y; P[k + 2] = bv.z;
+            bv.fromBufferAttribute(na, i).applyMatrix3(bn).normalize(); N[k] = bv.x; N[k + 1] = bv.y; N[k + 2] = bv.z;
+            C[k] = c.r; C[k + 1] = c.g; C[k + 2] = c.b;
+          }
+          if (ix) for (let i = 0; i < ix.count; i++) I[i0 + i] = v0 + ix.getX(i);
+          else for (let i = 0; i < n; i++) I[i0 + i] = v0 + i;
+          v0 += n; i0 += ix ? ix.count : n;
+          o.parent.remove(o);
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(P, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(N, 3)); geo.setAttribute('color', new THREE.BufferAttribute(C, 3));
+        geo.setIndex(new THREE.BufferAttribute(I, 1));
+        geo.computeBoundingSphere();
+        anc.add(new THREE.Mesh(geo, toonV));
+        made.push(geo);
+      });
+      const empty = [];
+      root.traverse(o => { if (o.isGroup && !o.children.length && !kept.has(o)) empty.push(o); });
+      for (const o of empty) o.parent.remove(o);
+      return made;
+    }
 
     function limb(parent, x, y, len1, len2, r1, r2, c1, c2, endGeo, endMat, endPos, flare) {
       const f = flare || 0.9;
@@ -41,8 +89,9 @@
       return { top, mid, end };
     }
 
-    function hero(P) {
+    function hero(P, B) {
       const J = P.id === 'jake';
+      B = B || ['#ff4fa3', '#ffd23f', '#3ad1ff', '#7afcff', '#3ad1ff'];
       const root = new THREE.Group();
       const body = grp(0, 0, 0, root);
       const spin = grp(0, 0.55, 0, body);
@@ -155,10 +204,10 @@
       for (const lg of [legR, legL]) mesh(cyl(J ? 0.19 : 0.15, J ? 0.19 : 0.15, 0.06, 12), M(shade(P.pants, 0.15)), 0, 0.05, 0, lg.end);
       for (const lg of [legR, legL]) { const sh = shoe(P.shoeA, P.shoeB); if (J) { sh.scale.setScalar(1.3); mesh(rbox(0.1, 0.1, 0.05, 0.8), M('#d8322c'), 0, -0.03, 0.17, sh); mesh(rbox(0.14, 0.05, 0.06, 0.8), M('#5cc43a'), 0, 0.06, 0.15, sh); } lg.end.add(sh); }
       const board = grp(0, 0.06, 0, root);
-      mesh(rbox(0.66, 0.08, 1.6, 0.35), M('#ff4fa3'), 0, 0, 0, board);
-      mesh(rbox(0.56, 0.03, 1.42, 0.35), M('#ffd23f'), 0, 0.045, 0, board);
-      mesh(rbox(0.3, 0.032, 0.5, 0.35), M('#3ad1ff'), 0, 0.05, -0.2, board);
-      mesh(rbox(0.5, 0.05, 1.3, 0.4), M('#7afcff', { emissive: new THREE.Color('#3ad1ff') }), 0, -0.06, 0, board);
+      mesh(rbox(0.66, 0.08, 1.6, 0.35), M(B[0]), 0, 0, 0, board);
+      mesh(rbox(0.56, 0.03, 1.42, 0.35), M(B[1]), 0, 0.045, 0, board);
+      mesh(rbox(0.3, 0.032, 0.5, 0.35), M(B[2]), 0, 0.05, -0.2, board);
+      mesh(rbox(0.5, 0.05, 1.3, 0.4), M(B[3], { emissive: new THREE.Color(B[4]) }), 0, -0.06, 0, board);
       board.visible = false;
       const jet = grp(0, 0.26, 0.2, torso);
       for (const s of [-1, 1]) {
@@ -170,7 +219,8 @@
       }
       mesh(rbox(0.12, 0.3, 0.1), M('#c9ccd2'), 0, 0.12, 0, jet);
       jet.visible = false;
-      const R = { root, body, spin, pelvis, torso, neck, head, armL, armR, legL, legR, board, jet, can, ph: 0, lean: 0 };
+      const R = { root, body, spin, pelvis, torso, neck, head, armL, armR, legL, legR, board, jet, can, ph: 0, lean: 0, flames: jet.children.filter(c => c.name === 'fl') };
+      R.geos = bake(root, [body, spin, pelvis, torso, head, armL.top, armL.mid, armL.end, armR.top, armR.mid, armR.end, legL.top, legL.mid, legL.end, legR.top, legR.mid, legR.end, board, jet, can]);
       return R;
     }
 
@@ -210,6 +260,7 @@
       const legR = limb(pelvis, 0.18, -0.04, 0.32, 0.3, 0.15, 0.13, ol2, ol2, null, null, null, 1.05);
       const legL = limb(pelvis, -0.18, -0.04, 0.32, 0.3, 0.15, 0.13, ol2, ol2, null, null, null, 1.05);
       legR.end.add(boot()); legL.end.add(boot());
+      bake(root, [body, pelvis, torso, head, armL.top, armL.mid, armL.end, armR.top, armR.mid, armR.end, legL.top, legL.mid, legL.end, legR.top, legR.mid, legR.end]);
       return { root, body, pelvis, torso, head, neck, armL, armR, legL, legR, ph: 0 };
     }
 
@@ -239,14 +290,8 @@
         mesh(ball(0.07, 10), M(cream), 0, -0.43, -0.03, l, 1, 0.7, 1.3);
         legs.push(l);
       }
+      bake(root, [body, head, tail].concat(legs));
       return { root, body, head, tail, legs, ph: 0 };
-    }
-
-    function hoverboardModel() {
-      const g = new THREE.Group();
-      mesh(rbox(0.66, 0.08, 1.6, 0.35), M('#ff4fa3'), 0, 0, 0, g);
-      mesh(rbox(0.56, 0.03, 1.42, 0.35), M('#ffd23f'), 0, 0.045, 0, g);
-      return g;
     }
 
     function animHero(R, st, dt, t) {
@@ -303,7 +348,7 @@
       R.body.position.y = st.mode === 'board' ? 0.16 + 0.04 * Math.sin(t * 6) : 0;
       R.body.rotation.y = st.mode === 'board' ? 0.55 : 0;
       R.jet.visible = st.mode === 'jet';
-      if (R.jet.visible) for (const ch of R.jet.children) if (ch.name === 'fl') ch.scale.set(0.8, 0.5 + 0.35 * Math.random(), 0.8);
+      if (R.jet.visible) for (let i = 0; i < R.flames.length; i++) R.flames[i].scale.set(0.8, 0.5 + 0.35 * Math.random(), 0.8);
       R.can.visible = !!st.can;
     }
     function animGuard(Gd, sp, dt, t, mode) {
@@ -336,5 +381,5 @@
         D.body.position.y = 0.52 + 0.12 * Math.abs(Math.sin(t * 9)); D.tail.rotation.x = -2.3; D.tail.rotation.z = 0.6 * Math.sin(t * 14); D.head.rotation.x = -0.3;
       }
     }
-    return { hero, guard, dog, hoverboardModel, animHero, animGuard, animDog, M, G, rbox, mesh, grp, ball, cyl };
+    return { hero, guard, dog, bake, animHero, animGuard, animDog, M, G, rbox, mesh, grp, ball, cyl };
   }
