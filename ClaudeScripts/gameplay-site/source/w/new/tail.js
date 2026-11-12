@@ -619,9 +619,9 @@ Ameplay.analytics = {
 };
 function setConsent(an, lv) {
   consent = { v: 2, analytics: !!an, level: lv || (an ? 'all' : 'essential'), terms: true, at: Date.now() };
-  try { [localStorage, sessionStorage].forEach(st => { st.removeItem(CK_KEY); st.removeItem(AN_KEY); }); if (lv === 'session') localStorage.removeItem(VIDK); ckStore().setItem(CK_KEY, JSON.stringify(consent)); } catch (e) {}
+  try { [localStorage, sessionStorage].forEach(st => { st.removeItem(CK_KEY); st.removeItem(AN_KEY); }); if (lv === 'session') { localStorage.removeItem(VIDK); localStorage.removeItem('gameplay:gpu'); } ckStore().setItem(CK_KEY, JSON.stringify(consent)); } catch (e) {}
   if (an) { anQ = anQ.concat(anHold); anHold = []; track('consent', { analytics: true, level: consent.level }); anSave(); setTimeout(trEnv, 500); }
-  else { anQ = []; anHold = []; try { if (SB.on) localStorage.removeItem(VIDK); ['gameplay:sid', 'gameplay:env', 'gameplay:geo', 'gameplay:hz'].forEach(k => sessionStorage.removeItem(k)); } catch (e) {} }
+  else { anQ = []; anHold = []; try { if (SB.on) localStorage.removeItem(VIDK); localStorage.removeItem('gameplay:gpu'); ['gameplay:sid', 'gameplay:env', 'gameplay:geo', 'gameplay:hz'].forEach(k => sessionStorage.removeItem(k)); } catch (e) {} }
   $('#ckbar').hidden = true;
   document.documentElement.classList.remove('ck-open');
   syncSwitches();

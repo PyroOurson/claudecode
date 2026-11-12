@@ -272,7 +272,7 @@ function trGl() {
     if (o === undefined) return { r: '', mtex: null, glx: null };
     if (!o) o = trGlMain(ff);
     const v = { r: trGlName(o.r), mtex: o.mtex == null ? null : +o.mtex || null, glx: o.glx == null ? null : +o.glx || 0 };
-    try { localStorage.setItem('gameplay:gpu', JSON.stringify(v)); } catch (e) {}
+    try { if (consent && consent.level !== 'session') localStorage.setItem('gameplay:gpu', JSON.stringify(v)); } catch (e) {}
     return v;
   })();
 }
