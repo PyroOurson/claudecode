@@ -82,3 +82,34 @@ Real covers use the game's official artwork: the icon/art in the centred rounded
 | `chimp-test` | Chimp Test | drawn | own SVG drawing | | | own SVG drawing |
 | `hangman` | Hangman | drawn | own SVG drawing | | | own SVG drawing |
 | `true-false` | True or False | drawn | own SVG drawing | | | own SVG drawing |
+| `rummikub` | Rummikub | drawn | own SVG drawing | | | own SVG drawing |
+| `phase-10` | Phase 10 | drawn | own SVG drawing | | | own SVG drawing |
+| `sorry` | Sorry! | drawn | own SVG drawing | | | own SVG drawing |
+| `monopoly` | Monopoly | drawn | own SVG drawing | | | own SVG drawing |
+| `blokus` | Blokus | drawn | own SVG drawing | | | own SVG drawing |
+| `quoridor` | Quoridor | drawn | own SVG drawing | | | own SVG drawing |
+| `yahtzee` | Yahtzee | drawn | own SVG drawing | | | own SVG drawing |
+| `mastermind` | Mastermind | drawn | own SVG drawing | | | own SVG drawing |
+| `scrabble` | Scrabble | drawn | own SVG drawing | | | own SVG drawing |
+| `boggle` | Boggle | drawn | own SVG drawing | | | own SVG drawing |
+| `stratego` | Stratego | drawn | own SVG drawing | | | own SVG drawing |
+| `guess-who` | Guess Who | drawn | own SVG drawing | | | own SVG drawing |
+| `clue` | Clue | drawn | own SVG drawing | | | own SVG drawing |
+| `catan` | Catan | drawn | own SVG drawing | | | own SVG drawing |
+| `risk` | Risk | drawn | own SVG drawing | | | own SVG drawing |
+| `gartic-phone` | Gartic Phone | drawn | own SVG drawing | | | own SVG drawing |
+| `skribbl` | Skribbl.io | drawn | own SVG drawing | | | own SVG drawing |
+| `word-bomb` | Word Bomb | drawn | own SVG drawing | | | own SVG drawing |
+| `kahoot` | Kahoot | drawn | own SVG drawing | | | own SVG drawing |
+| `quiplash` | Quiplash | drawn | own SVG drawing | | | own SVG drawing |
+| `typeracer` | Typeracer | drawn | own SVG drawing | | | own SVG drawing |
+| `trivia-crack` | Trivia Crack | drawn | own SVG drawing | | | own SVG drawing |
+| `terraria` | Terraria | drawn | own SVG drawing | | | own SVG drawing |
+| `among-us` | Among Us | drawn | own SVG drawing | | | own SVG drawing |
+| `worms` | Worms | drawn | own SVG drawing | | | own SVG drawing |
+| `stick-fight` | Stick Fight | drawn | own SVG drawing | | | own SVG drawing |
+| `smash-fighter` | Super Smash Bros. | drawn | own SVG drawing | | | own SVG drawing |
+| `surviv` | Surviv.io | drawn | own SVG drawing | | | own SVG drawing |
+| `diep` | Diep.io | drawn | own SVG drawing | | | own SVG drawing |
+| `bonk` | Bonk.io | drawn | own SVG drawing | | | own SVG drawing |
+| `starve` | Starve.io | drawn | own SVG drawing | | | own SVG drawing |

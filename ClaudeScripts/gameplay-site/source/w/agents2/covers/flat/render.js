@@ -1,4 +1,4 @@
-const { chromium } = require('C:/tmp/pw/node_modules/playwright');
+const { chromium } = (() => { for (const m of ['playwright', 'C:/tmp/pw/node_modules/playwright', '/opt/node22/lib/node_modules/playwright']) { try { return require(m); } catch (e) {} } throw new Error('playwright not found'); })();
 const fs = require('fs');
 const path = require('path');
 const D = __dirname;
@@ -8,7 +8,7 @@ const want = process.argv.slice(2);
 const list = want.length ? want.map(w => { const [id, nm] = w.split('='); const g = games.find(x => x[0] === id); return g ? [g[0], nm || g[1]] : [id, nm || id]; }) : games;
 const arts = fs.readdirSync(D + '/art').filter(f => f.endsWith('.js')).sort().map(f => '<script>' + fs.readFileSync(D + '/art/' + f, 'utf8') + '</script>').join('\n');
 const html = `<!doctype html><html><head><meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Press+Start+2P&family=Luckiest+Guy&family=Lilita+One&display=block" rel="stylesheet">
+${process.env.COVER_FONTS ? '<style>' + fs.readFileSync(process.env.COVER_FONTS, 'utf8') + '</style>' : '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Press+Start+2P&family=Luckiest+Guy&family=Lilita+One&display=block" rel="stylesheet">'}
 <style>
 html,body{margin:0;background:#000}
 #c{position:relative;width:960px;height:600px;overflow:hidden;background:#111}
@@ -22,12 +22,12 @@ html,body{margin:0;background:#000}
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   fs.writeFileSync(OUT + '/_page.html', html);
-  const b = await chromium.launch({ channel: 'chrome' });
+  const b = await chromium.launch({ channel: 'chrome' }).catch(() => chromium.launch());
   const pg = await b.newPage({ viewport: { width: 960, height: 600 } });
   const errs = [];
   pg.on('pageerror', e => errs.push(e.message));
-  await pg.goto('file:///' + OUT.replace(/\\/g, '/') + '/_page.html');
-  await pg.evaluate(() => document.fonts.ready);
+  await pg.goto(require('url').pathToFileURL(path.resolve(OUT, '_page.html')).href);
+  await pg.evaluate(() => Promise.all(['600 20px Montserrat', '800 20px Montserrat', '900 20px Montserrat', '20px "Press Start 2P"', '20px "Luckiest Guy"', '20px "Lilita One"'].map(f => document.fonts.load(f))).then(() => document.fonts.ready));
   for (const [id, name] of list) {
     const ok = await pg.evaluate(([id, name]) => { if (!G[id]) return 'missing'; try { show(id, name); return 'ok'; } catch (e) { return 'err ' + e.message; } }, [id, name]);
     if (ok !== 'ok') { console.log(id, ok); continue; }

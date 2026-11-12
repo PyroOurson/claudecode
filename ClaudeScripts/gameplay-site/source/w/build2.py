@@ -129,6 +129,9 @@ def main():
     for i in cv:
         meta['covers'].pop(i, None)
         meta['shots'].pop(i, None)
+    bare = [g['id'] for g in meta['games'] if g['id'] not in cv]
+    if bare:
+        print('build2: no cover image in covers2 for %s (the site draws a plain tile instead)' % ', '.join(bare))
     part_file, part_size = {}, {}
     for idx, (k, n) in enumerate(names):
         if k == 'script' and n.startswith('g_'):
