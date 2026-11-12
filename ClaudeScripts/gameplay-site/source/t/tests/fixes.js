@@ -12,7 +12,7 @@ const results = [];
 let PL = [];
 const player = async (b, who, o) => { const v = await lib.player(b, who, o); PL.push(v); return v; };
 const until = async (fn, ms, step = 500) => { const t0 = Date.now(); for (;;) { const r = await fn(); if (r) return r; if (Date.now() - t0 > ms) return null; await sleep(step); } };
-const reload = async (v, u) => { if (u) await v.page.goto(new URL(u, SITE).href, { timeout: 180000, waitUntil: 'domcontentloaded' }); else await v.page.reload({ timeout: 180000, waitUntil: 'domcontentloaded' }); await v.ready(); };
+const reload = async (v, u) => { if (u) { await v.page.goto('about:blank'); await v.page.goto(SITE + '#/' + u, { timeout: 180000, waitUntil: 'domcontentloaded' }); } else await v.page.reload({ timeout: 180000, waitUntil: 'domcontentloaded' }); await v.ready(); };
 const acct = async who => { const s = await api.login(USERS[who][0], USERS[who][1]); return { uid: s.user.id, token: s.access_token }; };
 const cloud = async (a, gid) => { const r = await api.rest('game_saves?select=data,updated_at&user_id=eq.' + a.uid + '&game_id=eq.' + gid, { method: 'GET', token: a.token }); return r && r[0] ? r[0].data : null; };
 const cloudSet = (a, gid, data) => api.call('/rest/v1/game_saves?on_conflict=user_id,game_id', { method: 'POST', token: a.token, body: [{ user_id: a.uid, game_id: gid, data }] }).catch(async e => { if (e.status === 409 || e.status === 400) return api.rest('game_saves?user_id=eq.' + a.uid + '&game_id=eq.' + gid, { method: 'PATCH', token: a.token, body: { data } }); throw e; });
@@ -134,7 +134,7 @@ async function scenario(name, fn) {
     const row = () => sql("select coalesce(game,'-'), extract(epoch from now() - at)::int from private.presence_now where user_id = '" + a.uid + "'");
     const t1 = await player(b, 'ann');
     const p2 = await t1.ctx.newPage();
-    await p2.goto(new URL(GID, SITE).href, { timeout: 180000, waitUntil: 'domcontentloaded' });
+    await p2.goto(SITE + '#/' + GID, { timeout: 180000, waitUntil: 'domcontentloaded' });
     await p2.waitForSelector('#frame .g-root', { timeout: 120000 });
     must(await until(async () => row().startsWith(GID + '|'), 60000, 2000), 'the playing tab never set the status: ' + row());
     const seen = [];
@@ -156,7 +156,7 @@ async function scenario(name, fn) {
     await v.page.evaluate(() => Ameplay.debug.open('dino-run'));
     await v.page.waitForSelector('#frame .g-root', { timeout: 120000 });
     await v.page.waitForTimeout(1500);
-    await Promise.all([v.page.waitForNavigation({ timeout: 120000, waitUntil: 'domcontentloaded' }).catch(() => {}), v.page.evaluate(() => document.querySelector('#delbtn').click())]);
+    await Promise.all([v.page.waitForNavigation({ timeout: 120000, waitUntil: 'domcontentloaded' }).catch(() => {}), v.page.evaluate(() => { const c = document.querySelector('#delc'); if (c) { c.value = 'DELETE'; c.dispatchEvent(new Event('input', { bubbles: true })); } const b = document.querySelector('#delbtn'); if (b.disabled) throw new Error('delete button still disabled'); b.click(); })]);
     await v.page.waitForTimeout(2500);
     const left = await v.page.evaluate(() => { const o = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^gameplay:(sync|analytics|save:)|^sb-gameplay/.test(k)) o[k] = localStorage.getItem(k).slice(0, 120); } return o; });
     const bad = Object.keys(left).filter(k => !(k === 'gameplay:sync' && /"p":\{\}/.test(left[k]) && /"uid":null/.test(left[k])));

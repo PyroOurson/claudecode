@@ -256,6 +256,7 @@ const netSaveName = n => { n = netName(n); if (n) netLs('gameplay:netname', n); 
 const netGuest = () => { let n = netName(netLs('gameplay:netguest')); if (!n) { n = 'Player ' + (1000 + Math.floor(Math.random() * 9000)); netLs('gameplay:netguest', n); } return n; };
 const netT = s => { try { return window.gpI18n && typeof gpI18n.t === 'function' ? gpI18n.t(s) || s : s; } catch (e) { return s; } };
 const NET_TAB = netUid();
+const NET_RELOAD = (() => { try { const n = performance.getEntriesByType('navigation')[0]; return !!n && n.type === 'reload'; } catch (e) { return false; } })();
 const NET_SES = 'gameplay:netses';
 const netSes = v => {
   try {
@@ -911,7 +912,7 @@ function makeNet(g, add) {
         const id = h.id.slice(0, 16), old = rm.guests.get(id);
         if (id === rm.me || !/^[a-z0-9]{6,16}$/.test(id) || h.key.length < 8 || h.key.length > 64) { tx(c, { __full: 1, why: 'id' }); setTimeout(() => { try { c.close(); } catch (e) {} }, 400); return; }
         if (old) {
-          const dup = !!(old.conn && old.conn !== c && old.conn.open && !old.away && h.tab && old.tab && h.tab !== old.tab && now() - old.lastRx < 2500);
+          const dup = !!(old.conn && old.conn !== c && old.conn.open && !old.away && !h.re && h.tab && old.tab && h.tab !== old.tab && now() - old.lastRx < 2500);
           if (old.key !== h.key || dup) { tx(c, { __full: 1, why: dup ? 'dup' : 'id' }); setTimeout(() => { try { c.close(); } catch (e) {} }, 400); return; }
           const prev = old.conn; gid = id;
           old.conn = c; old.lastRx = now(); old.away = false; old.tab = String(h.tab || ''); clearTimeout(old.gt);
@@ -1007,7 +1008,7 @@ function makeNet(g, add) {
     let w = null, slowT = 0;
     try { slowT = +sessionStorage.getItem('gameplay:netrelay') || 0; } catch (e) {}
     if (netRtOk() && Date.now() - slowT < 900000) { opt.noP2p = true; opt.rtFirst = true; opt.noPeer = true; }
-    const hello = { __hello: { id: rm.me, key: rm.key, name: rm.name, tab: NET_TAB } };
+    const hello = { __hello: { id: rm.me, key: rm.key, name: rm.name, tab: NET_TAB, re: NET_RELOAD ? 1 : 0 } };
     const done = d => { if (d && d.__full) return { type: d.why ? 'dup' : 'room-full' }; if (d && d.__wel) { w = d.__wel; return true; } return false; };
     const alive = () => my === gen, t0 = now(), rtOk = netRtOk();
     let won = null, over = false, pe = null, re = null, pc0 = null;
