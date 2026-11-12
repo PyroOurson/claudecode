@@ -55,7 +55,7 @@
   const FREE_HATS = 11;
   const HAT_REQ = [null, null, null, null, null, null, null, null, null, null, null, { k: 'shows', n: 5, t: 'Play 5 shows' }, { k: 'crowns', n: 1, t: 'Win a crown' }];
   const DIFFS = ['Easy', 'Normal', 'Hard', 'Hardest'];
-  const DIFF_TXT = ['Bots wobble and hesitate', 'Bots race properly', 'Bots dive, grab and push', 'Bots run at your pace and never slip'];
+  const DIFF_TXT = ['Bots wobble and hesitate', 'Bots race properly', 'Bots dive, grab and push', 'Bots match your pace, dodge and time jumps'];
   const MODES = ['Show', 'Quick', 'Rush'];
   const MODE_TXT = ['4 rounds to the crown', 'Practice one round', 'Straight to the final'];
   const RKEYS = ['whirl', 'doors', 'tiptoe', 'hit', 'fruit', 'slime', 'hex', 'jump', 'egg', 'crown'];
@@ -309,7 +309,7 @@ ${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
     const audio = makeAudio(api);
     const keys = api.keys;
     let saved = api.load() || {};
-    const prefs = { ci: saved.ci ?? 0, pi: saved.pi ?? 1, hi: saved.hi ?? 0, crowns: saved.crowns || 0, shows: saved.shows || 0, best: saved.best || 0, diff: saved.diff ?? 1, mode: saved.mode ?? 0, rk: saved.rk ?? 0, help: !!saved.help, fame: saved.fame || 0, quals: saved.quals || 0, music: saved.music !== false };
+    const prefs = { ci: saved.ci ?? 0, pi: saved.pi ?? 1, hi: saved.hi ?? 0, crowns: saved.crowns || 0, shows: saved.shows || 0, best: saved.best || 0, diff: saved.diff >= 0 && saved.diff < DIFFS.length ? saved.diff | 0 : 1, mode: saved.mode ?? 0, rk: saved.rk ?? 0, help: !!saved.help, fame: saved.fame || 0, quals: saved.quals || 0, music: saved.music !== false };
     audio.mOn = prefs.music;
     const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const hatOpen = i => !HAT_REQ[i] || prefs[HAT_REQ[i].k] >= HAT_REQ[i].n;
