@@ -782,7 +782,7 @@ function makeNet(g, add) {
   };
   const onVis = () => { hidTx(); if (!document.hidden) revive(); };
   const pubPush = () => {
-    try { if (typeof window.gpPubSet === 'function') window.gpPubSet(g.id, mode === 'room' && net.role === 'host' && rm.pub && !rm.compat && net.code ? { g: g.id, c: String(net.code), n: hostPlayers().filter(p => !p.away).length, m: rm.max, h: rm.name, b: rm.state === 'game' ? 1 : 0, t: Date.now() } : null); } catch (e) {}
+    try { if (typeof window.gpPubSet === 'function') window.gpPubSet(g.id, mode === 'room' && net.role === 'host' && rm.pub && !rm.compat && net.code ? { g: g.id, c: String(net.code), n: hostPlayers().filter(p => !p.away).length, m: rm.max, h: rm.name, b: rm.state === 'game' ? 1 : 0, t: rm.pubT || (rm.pubT = Date.now()) } : null); } catch (e) {}
   };
   const pushList = () => {
     rm.list = hostPlayers();
@@ -1173,7 +1173,7 @@ function makeNet(g, add) {
     }
     const same = !!want && code === want;
     peer = p; rm.door = door; net.code = code; net.role = 'host'; mode = 'room';
-    rm.me = same ? me : netUid(); rm.state = 'lobby'; rm.guests.clear(); rm.tick = 0; rm.lastTick = 0; rm.hostId = rm.me; rm.leader = rm.me; rm.chat = []; rm.go = null; net.closeReason = null;
+    rm.me = same ? me : netUid(); rm.pubT = 0; rm.state = 'lobby'; rm.guests.clear(); rm.tick = 0; rm.lastTick = 0; rm.hostId = rm.me; rm.leader = rm.me; rm.chat = []; rm.go = null; net.closeReason = null;
     if (same && res.h) restoreGuests(res.h);
     if (p) p.on('connection', c => hostConn(c, my));
     ready = true;

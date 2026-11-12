@@ -17,13 +17,17 @@ def rep(s, old, new, count=1):
 
 def i18n_js():
     s = open('new/i18n.js', encoding='utf-8').read()
-    extra = json.load(open('new/i18n_add.json', encoding='utf-8')) if os.path.exists('new/i18n_add.json') else []
+    extra = []
+    for fn in sorted(f for f in os.listdir('new') if re.fullmatch(r'i18n_[a-z0-9]+\.json', f)):
+        extra += json.load(open(os.path.join('new', fn), encoding='utf-8'))
     head = 'const R = [\n'
     assert s.count(head) == 1
     seen = set()
     rows = []
     for r in extra:
-        assert len(r) == 6 and r[0] not in seen, r[0]
+        assert len(r) == 6, r[0]
+        if r[0] in seen:
+            continue
         seen.add(r[0])
         if ('\n' + json.dumps(r[0], ensure_ascii=False) + ',') in s.replace('\n[', '\n'):
             continue

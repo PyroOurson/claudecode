@@ -1,4 +1,4 @@
-const RT = { me: null, ch: null, on: null, pres: {}, seen: false, tt: 0 };
+const RT = { me: null, ch: null, on: null, pres: {}, seen: false, tt: 0, pr: {}, rj: 0, rn: 0 };
 const PB = { t: 0, db: {}, n: 0, at: 0, miss: false, busy: false };
 const SO_ICO = {
   bell: '<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></svg>',
@@ -136,29 +136,53 @@ function pbStop(bye) {
   clearInterval(PB.t); PB.t = 0; PB.db = {}; PB.n = 0; PB.at = 0;
   if (bye && !PB.miss && sbTok()) sbRest('rpc/presence_bye', { method: 'POST', body: {}, keep: true }).catch(() => {});
 }
+const PR_GAP = 8000;
+function prSend(o, ch, payload, fresh) {
+  if (fresh) { o.last = null; }
+  o.want = payload || null; o.ch = ch;
+  if (o.t) return;
+  const run = () => {
+    o.t = 0;
+    const c = o.ch, w = o.want, j = w ? JSON.stringify(w) : '';
+    if (!c || c.state !== 'joined' || j === o.last || (!w && o.last == null)) return;
+    o.last = j; o.at = Date.now();
+    try { const r = w ? c.track(w) : c.untrack(); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  };
+  o.t = setTimeout(run, Math.max(fresh ? 0 : 250, (o.at || 0) + PR_GAP - Date.now()));
+}
+function prDrop(o) { clearTimeout(o.t); o.t = 0; o.last = null; o.want = null; o.ch = null; }
 function rtStart() {
   if (!SB.c || !SB.user || RT.me === SB.user.id) return;
   rtStop();
   const me = RT.me = SB.user.id;
   try {
     RT.ch = SB.c.channel('u:' + me).on('broadcast', { event: 'n' }, m => rtNudge(m && m.payload || {})).subscribe();
-    RT.on = SB.c.channel('online', { config: { presence: { key: me } } }).on('presence', { event: 'sync' }, rtSync).subscribe(s => { if (s === 'SUBSCRIBED') rtTrack(true); });
+    rtOnline(me);
   } catch (e) {}
 }
+function rtOnline(me) {
+  if (!SB.c || RT.me !== me) return;
+  clearTimeout(RT.rj);
+  try { if (RT.on) SB.c.removeChannel(RT.on); } catch (e) {}
+  prDrop(RT.pr);
+  const ch = RT.on = SB.c.channel('online', { config: { presence: { key: me } } });
+  ch.on('presence', { event: 'sync' }, rtSync).subscribe(s => {
+    if (RT.on !== ch) return;
+    if (s === 'SUBSCRIBED') { RT.rn = 0; RT.pr.last = null; rtTrack(true); }
+    else if (s === 'CLOSED') { DIAG.ev('net', { a: 'presence-closed', ch: 'online' }); RT.rj = setTimeout(() => rtOnline(me), Math.min(60000, 9000 * Math.pow(2, RT.rn = (RT.rn || 0) + 1))); }
+  });
+}
 function rtStop() {
+  clearTimeout(RT.rj); prDrop(RT.pr);
   try { if (RT.ch) SB.c.removeChannel(RT.ch); if (RT.on) SB.c.removeChannel(RT.on); } catch (e) {}
   RT.ch = RT.on = RT.me = null; RT.seen = false; RT.pres = {};
   soLive();
 }
 function rtTrack(now) {
-  clearTimeout(RT.tt);
-  if (!RT.on) return;
-  RT.tt = setTimeout(() => {
-    if (!RT.on || !SB.user) return;
-    const P = S.prefs, hide = P.p_status === 'Nobody', g = P.p_game === false || !cur ? null : cur.g.id, pa = soParty();
-    SO.away = soIdle(); SO.party = !!(g && pa && pa.game === g);
-    RT.on.track(hide ? { h: 1 } : { g, t: Date.now(), a: SO.away ? 1 : 0, p: SO.party ? 1 : 0 }).catch(() => {});
-  }, now ? 0 : 400);
+  if (!RT.on || !SB.user) return;
+  const P = S.prefs, hide = P.p_status === 'Nobody', g = P.p_game === false || !cur ? null : cur.g.id, pa = soParty();
+  SO.away = soIdle(); SO.party = !!(g && pa && pa.game === g);
+  prSend(RT.pr, RT.on, hide ? { h: 1 } : { g, a: SO.away ? 1 : 0, p: SO.party ? 1 : 0 }, now === true && RT.pr.last == null);
 }
 function rtSync() {
   const s = RT.on ? RT.on.presenceState() : {}, prev = RT.pres, P = {};
@@ -973,13 +997,23 @@ window.gpParty = {
   err: e => soErr(e),
   signIn: () => { closeAll(); auOpen('main', '', '', 'in'); }
 };
-const PUB = { ch: null, me: 'p' + Math.random().toString(36).slice(2, 12), list: {}, mine: null, tt: 0, st: false, mo: null, q: 0 };
+const PUB = { ch: null, me: 'p' + Math.random().toString(36).slice(2, 12), list: {}, mine: null, tt: 0, st: false, mo: null, q: 0, pr: {}, rj: 0, rn: 0 };
 function pubStart() {
   if (PUB.st) return;
   PUB.st = true;
   sbClient().then(c => {
     if (PUB.ch) return;
-    PUB.ch = c.channel('parties', { config: { presence: { key: PUB.me } } }).on('presence', { event: 'sync' }, pubSync).subscribe(s => { if (s === 'SUBSCRIBED') pubTrack(); });
+    prDrop(PUB.pr);
+    const ch = PUB.ch = c.channel('parties', { config: { presence: { key: PUB.me } } });
+    ch.on('presence', { event: 'sync' }, pubSync).subscribe(s => {
+      if (PUB.ch !== ch) return;
+      if (s === 'SUBSCRIBED') { PUB.rn = 0; PUB.pr.last = null; pubTrack(true); }
+      else if (s === 'CLOSED') {
+        DIAG.ev('net', { a: 'presence-closed', ch: 'parties' });
+        clearTimeout(PUB.rj);
+        PUB.rj = setTimeout(() => { try { c.removeChannel(ch); } catch (e) {} if (PUB.ch === ch) { PUB.ch = null; PUB.st = false; pubStart(); } }, Math.min(60000, 9000 * Math.pow(2, PUB.rn = (PUB.rn || 0) + 1)));
+      }
+    });
   }).catch(() => { PUB.st = false; });
 }
 function pubSync() {
@@ -998,15 +1032,15 @@ function pubSync() {
   pubStrip();
   document.dispatchEvent(new CustomEvent('gp:pub'));
 }
-function pubTrack() {
+function pubTrack(fresh) {
   if (!PUB.ch) return;
-  if (PUB.mine) PUB.ch.track(PUB.mine).catch(() => {}); else PUB.ch.untrack().catch(() => {});
+  prSend(PUB.pr, PUB.ch, PUB.mine, fresh === true);
 }
 window.gpPubSet = (gid, o) => {
   if (!o && (!PUB.mine || PUB.mine.g !== gid)) return;
   PUB.mine = o || null;
   if (o) pubStart();
-  clearTimeout(PUB.tt); PUB.tt = setTimeout(pubTrack, 250);
+  pubTrack();
 };
 window.gpPubList = gid => (PUB.list[gid] || []).slice();
 function cardPills() {
