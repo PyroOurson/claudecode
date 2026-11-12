@@ -61,16 +61,19 @@ Last updated: see the git log of this file.
 
 ## Section 7: games
 
-| Item | Status |
-|---|---|
-| Faithful recreations of specific commercial games, real icons and models, new named clones | Declined: I do not build or extend copies of specific commercial games (names, characters, art, levels, look) |
-| Flagship: endless runner (listed as Subway Surfers) | Done within that limit: 10 bugs fixed, draw calls cut by about 60 percent, original patterns and features; verified by simulation and scripted input, not seen at 60 fps |
-| Flagship: voxel sandbox (listed as Minecraft) | In progress |
-| Flagship: arena brawler (listed as Brawl Stars) | In progress |
-| Car soccer: `Hardest` bots | In progress |
-| Card games group A | In progress |
-| Remaining game groups (about 60 part files) | Not started |
-| Catalogue of 200 | Not done: 168 live. See the final report for the choice the owner has to make |
+Machine limits apply to everything below: this sandbox renders WebGL in software at a few frames per second and was overloaded, so the agents proved logic with headless simulation and scripted input. Nobody saw these games at 60 fps or heard them. That is stated per game.
+
+| Item | Status | What was done and how it was checked |
+|---|---|---|
+| Faithful recreations of specific commercial games, real icons and models, new named clones | Declined | I do not build or extend copies of specific commercial games (names, characters, art, levels, look) |
+| Flagship: endless runner (listed as Subway Surfers) | Done within that limit | 10 bugs fixed (train corner clip, double wall bump, coins tied to frame rate, lost progress on close, pause handling, and more); draw calls cut by about 60 percent; input buffering and touch swipes; original patterns, day cycle, daily goals. Checked by a 111-case simulation suite, 50 desktop and 18 phone-size browser checks, a passability solver over about 876 km of generated track, and a 15-minute soak |
+| Flagship: arena brawler (listed as Brawl Stars) | Done within that limit, stopped early | New `Hardest` bots: 85 percent wins against the old top level in the three team modes over 60 to 100 matches each, weaker proof in the free-for-all mode. Knockback, wall-clipping and hidden-tab freeze bugs fixed; guest-side prediction; original mode, characters and maps. Online play was tested with a simulated transport only, not the real connection |
+| Flagship: voxel sandbox (listed as Minecraft) | Partly, stopped early | Hidden terrain is no longer meshed or drawn, lighting moved off the main thread, 8 bugs fixed, `Hardest` level added (only the archer is shown to be stronger). Phone size, online play, long soak and the final performance table were not reached |
+| Card games A (poker, blackjack, durak, belote, tarot, president, cheat, old maid, go fish, crazy eights, war, speed, hearts, spades, euchre) | Done, with limits | `Hardest` in all 14 games that have opponents, never reading hidden cards. Clearly stronger by match series in poker, blackjack, president, cheat, crazy eights, speed, spades, euchre, classic belote; not shown stronger at the sample sizes run in hearts, durak, coinche, tarot and 4-player go fish. Hidden-information leaks fixed in spades (blind nil), tarot (called king) and euchre. Five games were not opened in a browser |
+| Car soccer `Hardest` bots | In progress | |
+| Card and board games B, strategy board games, word and party games | In progress | |
+| Small classics, puzzle and arcade, 3D arcade, 2D action, harder 2D groups | Not started | |
+| Catalogue of 200 | Not done: 168 live | See the final report for the choice the owner has to make |
 
 ## Bugs found so far (beyond the list in the brief)
 
