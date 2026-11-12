@@ -220,10 +220,13 @@
         ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r);
         ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.fill();
       }
+      let bgG = null, bgM = null;
       function draw(now) {
-        const bg = ctx.createRadialGradient(W * .55, H * .35, 10, W * .55, H * .4, W * .75);
-        bg.addColorStop(0, M.bg[0]); bg.addColorStop(1, M.bg[1]);
-        ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+        if (bgM !== M) {
+          bgM = M; bgG = ctx.createRadialGradient(W * .55, H * .35, 10, W * .55, H * .4, W * .75);
+          bgG.addColorStop(0, M.bg[0]); bgG.addColorStop(1, M.bg[1]);
+        }
+        ctx.fillStyle = bgG; ctx.fillRect(0, 0, W, H);
         const t = now / 1000, dead = deadT > 0;
         ctx.save();
         if (shake > 0) ctx.translate(Math.sin(now * .09) * 10 * shake, Math.cos(now * .11) * 4 * shake);
@@ -441,9 +444,8 @@
           p.vy -= 1500 * dt; p.y0 += p.vy * dt; p.age += dt;
           if (p.ax === 'x') p.x += p.side * 40 * dt; else p.z += p.side * 40 * dt;
         }
-        pieces = pieces.filter(p => p.age < 1.6);
-        for (const r of rings) r.l -= dt / .55;
-        rings = rings.filter(r => r.l > 0);
+        for (let i = pieces.length; i--;) if (pieces[i].age >= 1.6) pieces.splice(i, 1);
+        for (let i = rings.length; i--;) if ((rings[i].l -= dt / .55) <= 0) rings.splice(i, 1);
         if (msg && (msg.life -= dt / 1.1) <= 0) msg = null;
         const n = top().level;
         let tS = 1, tY = n * BH;
@@ -474,11 +476,14 @@
         ctx.moveTo((x - z) * K, (x + z) * .5 - y); ctx.lineTo((x + w - z) * K, (x + w + z) * .5 - y);
         ctx.lineTo((x + w - z - d) * K, (x + w + z + d) * .5 - y); ctx.lineTo((x - z - d) * K, (x + z + d) * .5 - y); ctx.closePath();
       }
+      let skyG = null, skyH = -1;
       function draw(now) {
-        const h = ((bgH % 360) + 360) % 360;
-        const bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, `hsl(${(h + 40) % 360},75%,86%)`); bg.addColorStop(1, `hsl(${(h + 80) % 360},62%,64%)`);
-        ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+        const h = Math.round((((bgH % 360) + 360) % 360) * 2) / 2;
+        if (h !== skyH) {
+          skyH = h; skyG = ctx.createLinearGradient(0, 0, 0, H);
+          skyG.addColorStop(0, `hsl(${(h + 40) % 360},75%,86%)`); skyG.addColorStop(1, `hsl(${(h + 80) % 360},62%,64%)`);
+        }
+        ctx.fillStyle = skyG; ctx.fillRect(0, 0, W, H);
         ctx.fillStyle = 'rgba(255,255,255,.18)';
         for (const b of bubbles) { ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill(); }
         ctx.save();

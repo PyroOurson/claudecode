@@ -449,9 +449,12 @@
       });
 
       reset();
-      let lastPop = 0;
+      let lastPop = 0, lastNow = 0;
       api.loop(dt => {
         clock += dt;
+        const now = performance.now();
+        if (lastNow && now - lastNow > 400 && status === 'play' && t0 <= lastNow) t0 += now - lastNow;
+        lastNow = now;
         if (status === 'play') {
           const s = Math.min(CFG.MAX_TIME, Math.floor((performance.now() - t0) / 1000));
           if (s !== time) { time = s; api.score(time); }
