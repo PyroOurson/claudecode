@@ -1390,7 +1390,7 @@ function run(root, wrap, api, V) {
         const bd = board(sel), b = P.best[sel.id], m = P.med[sel.id] || 0;
         side = `<div class="panel"><h2>${esc(sel.label === 'Custom' ? sel.name : sel.label + ' &middot; ' + sel.name)}</h2>${sel.med ? `<div class="kv"><span>Gold</span><b>${fmtT(sel.med[2])}</b><span>Silver</span><b>${fmtT(sel.med[1])}</b><span>Bronze</span><b>${fmtT(sel.med[0])}</b></div>` : ''}<div class="kv" style="margin-top:.5em"><span>Your best</span><b>${b ? fmtT(b) : 'No record'} ${sel.med ? medHtml(m) : ''}</b><span>Pieces</span><b>${sel.tr.pieces.length}</b></div>
 <h3>Leaderboard</h3><table class="lb">${bd.length ? bd.map((e, i) => `<tr class="${e.me ? 'me' : ''}"><td>${i + 1}</td><td>${esc(e.n)}${e.bot ? ' <small style="opacity:.55">AI</small>' : ''}</td><td class="t">${fmtT(e.t)}</td></tr>`).join('') : '<tr><td>No times yet. Be the first.</td></tr>'}</table>
-${S.mode === 'net' ? '' : `<h3>Options</h3><div class="row"><button class="pt-b sm ${S.opt.ghost ? 'on' : ''}" data-a="tg" data-k="ghost">Ghost ${S.opt.ghost ? 'on' : 'off'}</button><button class="pt-b sm" data-a="riv">Rivals: ${S.opt.rivals}</button></div>`}
+${S.mode === 'net' ? '' : `<h3>Options</h3><div class="row"><button class="pt-b sm ${S.opt.ghost ? 'on' : ''}" data-a="tg" data-k="ghost">Ghost ${S.opt.ghost ? 'on' : 'off'}</button><button class="pt-b sm" data-a="riv">Rivals: ${S.opt.rivals === 9 ? 'Hardest' : S.opt.rivals}</button></div>`}
 <div class="row" style="margin-top:.8em"><button class="pt-b go" data-a="${S.mode === 'net' ? 'nstart' : 'race'}">${S.mode === 'net' ? 'Start race' : 'Race'}</button>${sel.custom ? `<button class="pt-b sm" data-a="exp" data-id="${sel.id}">Export</button><button class="pt-b sm" data-a="del" data-id="${sel.id}">Delete</button><button class="pt-b sm" data-a="ed" data-id="${sel.id}">Edit</button>` : ''}</div></div>`;
       }
       const net_ = S.mode === 'net';
@@ -1454,7 +1454,7 @@ ${S.mode === 'net' ? '' : `<h3>Options</h3><div class="row"><button class="pt-b 
       case 'tab': S.tab = +b.dataset.i; show('select'); break;
       case 'pick': S.sel = id; show('select'); break;
       case 'tg': S.opt.ghost = S.opt.ghost ? 0 : 1; show('select'); break;
-      case 'riv': S.opt.rivals = { 0: 1, 1: 3, 3: 5, 5: 0 }[S.opt.rivals]; show('select'); break;
+      case 'riv': S.opt.rivals = { 0: 1, 1: 3, 3: 5, 5: 9, 9: 0 }[S.opt.rivals]; show('select'); break;
       case 'race': startRace(trackById(S.sel), { kind: 'solo', ghost: S.opt.ghost, rivals: S.opt.rivals }); break;
       case 'c1': prefs.c1 = +b.dataset.i; save(); show('garage'); break;
       case 'c2': prefs.c2 = +b.dataset.i; save(); show('garage'); break;
@@ -1540,7 +1540,8 @@ ${S.mode === 'net' ? '' : `<h3>Options</h3><div class="row"><button class="pt-b 
     if (r.kind === 'solo') {
       const g = o.ghost ? loadGhost(track.id) : null;
       if (g) { r.ghost = g; r.gm = view.mkCar(c1, c2, true, 'Ghost', '#ffd23a'); r.gm.g.visible = !!prefs.ghost; }
-      if (o.rivals && T.route && T.route.ok) {
+      if (o.rivals === 9 && T.route && T.route.ok) tuneStart(r, addRival(r, 'Hardest', '#ff3b3b', 1));
+      else if (o.rivals && T.route && T.route.ok) {
         for (let i = 0; i < o.rivals; i++) addRival(r, RIVALS[i][0], RIVALS[i][1], SKILL[i]);
       }
     }
@@ -1561,6 +1562,34 @@ ${S.mode === 'net' ? '' : `<h3>Options</h3><div class="row"><button class="pt-b 
     const v = { name, col, car, bot: Bot(r.T, car, skill), m: view.mkCar(col, '#f4f4f8', true, name, col), fin: null, sp: [0, 0, 0, 0], ex: [0, 0, 0, 0], id: name };
     r.riv.push(v);
     return v;
+  }
+  const hardSkill = new Map();
+  let tune = null;
+  function tuneStart(r, v) {
+    const key = r.track.id + (r.track.code || '');
+    tune = null;
+    if (hardSkill.has(key)) v.bot = Bot(r.T, v.car, hardSkill.get(key));
+    else tune = { r, v, key, cands: [1, 1.12, 1.06, 1.16, 1.1], i: 0, car: null, bot: null, n: 0, best: 1, bestT: 1e9 };
+  }
+  function tuneStep(ms) {
+    const q = tune;
+    if (!q) return;
+    if (R !== q.r) { tune = null; return; }
+    const end = performance.now() + ms, T = q.r.T, last = T.route.pts.length - 3;
+    while (performance.now() < end) {
+      if (!q.car) {
+        if (q.i >= q.cands.length) { tune = null; hardSkill.set(q.key, q.best); if (q.r.st === 'count') q.v.bot = Bot(T, q.v.car, q.best); return; }
+        q.car = Car(T); q.car.reset(T.start.p, T.start.q); q.bot = Bot(T, q.car, q.cands[q.i]); q.n = 0;
+      }
+      for (let k = 0; k < 120 && q.car; k++) {
+        q.car.step(q.bot.input(DT), DT); q.car.events.length = 0; q.n++;
+        const done = q.bot.idx >= last;
+        if (done || q.bot.stuck || q.n * DT >= q.bestT) {
+          if (done && q.n * DT < q.bestT) { q.bestT = q.n * DT; q.best = q.cands[q.i]; }
+          q.car = null; q.i++;
+        }
+      }
+    }
   }
   function botRespawn(T, car, b) {
     const pts = T.route.pts, pt = pts[Math.max(0, Math.min(pts.length - 1, b.idx))], f = pt.f, u = pt.u;
@@ -1715,9 +1744,11 @@ ${S.mode === 'net' ? '' : `<h3>Options</h3><div class="row"><button class="pt-b 
         if (n >= 1 && n <= 3) { setMsg(String(n)); audio.play('beep'); }
         else if (n <= 0) { setMsg('GO!'); audio.play('go'); setTimeout(() => { if (R === r && r.st !== 'count' && !r.hint) setMsg(''); }, 900); }
       }
+      if (tune && tune.r === r) { tuneStep(6); if (n <= 0 && tune && tune.best !== 1) tune.v.bot = Bot(r.T, tune.v.car, tune.best); }
       if (n <= 0) { r.st = 'run'; r.acc = 0; if (r.net && r.net.go) r.net.go(); }
       return;
     }
+    if (tune) tuneStep(1.5);
     r.acc = Math.min(r.acc + dt, DT * 8);
     const run = r.st === 'run';
     let inp = r.kind === 'demo' ? null : run ? readInput() : IDLE;
