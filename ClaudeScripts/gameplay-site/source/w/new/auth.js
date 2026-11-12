@@ -873,6 +873,7 @@ async function auSignedIn(ev) {
   if (!SB.user || SB.user.id !== uid) return;
   auRender();
   adCheck();
+  diagCheck();
   soStart();
   siteSignedIn();
   if (loud) toast(auT('Logged in as {name}').replace('{name}', SB.prof && SB.prof.username ? '@' + SB.prof.username : SB.user.email || 'you'));

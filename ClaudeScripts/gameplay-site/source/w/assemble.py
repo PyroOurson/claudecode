@@ -19,7 +19,7 @@ old = open('parts_orig/001_portal.js', encoding='utf-8', newline='').read()
 if os.path.exists('new/net.js'):
     _a = old.index('function makeNet(g, add) {'); _b = old.index('function makeApi(g, root) {')
     old = old[:_a] + open('new/net.js', encoding='utf-8', newline='').read() + old[_b:]
-consts = open('new/consts.js', encoding='utf-8').read()
+consts = open('new/diag.js', encoding='utf-8').read() + open('new/consts.js', encoding='utf-8').read()
 rows_js = '[\n' + ',\n'.join('  ' + json.dumps(list(r), ensure_ascii=False) for r in ROWS) + '\n]'
 consts += 'const ROWS = ' + rows_js + ';\nconst NEWEST = ' + json.dumps(newest) + ';\nconst STAT = ' + json.dumps({k: v for k, v in STAT.items() if k in ids}) + ';\nconst DELETED = new Set(' + json.dumps(DELETED) + ');\n'
 
@@ -30,6 +30,7 @@ c = old.index("const CAT_TINT = { '3D'")
 d = old.index('\n', c)
 old = old[:c] + old[d + 1:]
 old = rep(old, "  covers: {},\n", "  covers: {},\n  shots: {},\n")
+old = rep(old, "function toast(msg) {\n", "function toast(msg) {\n  DIAG.ev('toast', String(msg).slice(0, 240));\n")
 reg_a = old.index("  register(g) {")
 reg_b = old.index("\n  }\n};", reg_a)
 new_reg = """  register(g) {
@@ -56,7 +57,7 @@ old = rep(old, "    get alive() { return alive; },", "    get alive() { return a
 old = rep(old, "S.best[g.id] = v; save(); setBest(g, true); toast('New best · ' + fmt(g, v));", "S.best[g.id] = v; save(); setBest(g, true); toast('New best · ' + fmt(g, v)); track('record', { game: g.id });")
 old = rep(old, "    get net() { return net || (net = makeNet(g, add)); },", "    get net() { return net || (net = gpNetWrap(g, makeNet(g, add))); },")
 ca = old.index("const coverCache = new Map();")
-old = old[:ca] + open('new/legal.js', encoding='utf-8').read() + open('new/tail.js', encoding='utf-8').read() + open('new/auth.js', encoding='utf-8').read().replace(chr(10) + 'Ameplay.debug = ', chr(10) + open('new/admin.js', encoding='utf-8').read() + chr(10) + open('new/social.js', encoding='utf-8').read() + chr(10) + open('new/input.js', encoding='utf-8').read() + chr(10) + open('new/track.js', encoding='utf-8').read() + chr(10) + open('new/changelog.js', encoding='utf-8').read() + chr(10) + open('new/site.js', encoding='utf-8').read() + chr(10) + 'Ameplay.debug = ', 1) + chr(10) + open('new/i18n.js', encoding='utf-8').read()
+old = old[:ca] + open('new/legal.js', encoding='utf-8').read() + open('new/tail.js', encoding='utf-8').read() + open('new/auth.js', encoding='utf-8').read().replace(chr(10) + 'Ameplay.debug = ', chr(10) + open('new/admin.js', encoding='utf-8').read() + chr(10) + open('new/social.js', encoding='utf-8').read() + chr(10) + open('new/input.js', encoding='utf-8').read() + chr(10) + open('new/track.js', encoding='utf-8').read() + chr(10) + open('new/changelog.js', encoding='utf-8').read() + chr(10) + open('new/site.js', encoding='utf-8').read() + chr(10) + open('new/diagui.js', encoding='utf-8').read() + chr(10) + 'Ameplay.debug = ', 1) + chr(10) + open('new/i18n.js', encoding='utf-8').read()
 open('parts/001_portal.js', 'w', encoding='utf-8', newline='').write(old)
 
 SC = ':where(:not(.g-root *))'
@@ -102,7 +103,7 @@ am = scope(open('new/am.css', encoding='utf-8').read())
 gcss = open('new/gcss.css', encoding='utf-8').read()
 toast = open('new/toast.css', encoding='utf-8').read()
 media = scope(open('new/media.css', encoding='utf-8').read())
-media += chr(10) + open('new/auth.css', encoding='utf-8').read() + chr(10) + open('new/admin.css', encoding='utf-8').read() + chr(10) + scope(open('new/social.css', encoding='utf-8').read()) + chr(10) + scope(open('new/site.css', encoding='utf-8').read())
+media += chr(10) + open('new/auth.css', encoding='utf-8').read() + chr(10) + open('new/admin.css', encoding='utf-8').read() + chr(10) + scope(open('new/social.css', encoding='utf-8').read()) + chr(10) + scope(open('new/site.css', encoding='utf-8').read()) + chr(10) + open('new/diag.css', encoding='utf-8').read()
 _ord = json.load(open('parts/_order.json'))
 _have = os.listdir('parts')
 _built = set(i for k, n in _ord if k == 'script' and n.startswith('g_') and any(re.fullmatch(r'\d{3}_' + re.escape(n) + r'\.js', f) for f in _have) for i in n[2:].split('+'))

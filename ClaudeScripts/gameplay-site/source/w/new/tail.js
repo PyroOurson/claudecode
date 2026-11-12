@@ -513,6 +513,7 @@ function anClean(p) {
 }
 function track(e, p) {
   if (typeof e !== 'string' || !e) return;
+  DIAG.ev('track', { e, p });
   const ev = { e: e.slice(0, 40), t: Date.now(), s: SID };
   if (SB.user) { ev.u = SB.user.id; if (e === 'game_play' || e === 'game_time' || e === 'record') syNudge(); }
   if (p && typeof p === 'object') ev.p = anClean(p);
@@ -631,6 +632,7 @@ function start(g) {
   setPause(false);
   const ctl = makeApi(g, root);
   cur = { g, api: ctl.api, kill: ctl.kill, counted: cur ? cur.counted : false };
+  DIAG.game(g.id);
   trStart(g, ctl);
   ttSync();
   const mark = e => {
@@ -777,6 +779,7 @@ function closeGame() {
   if (!was) return;
   setPause(false);
   if (cur) { cur.kill(); cur = null; }
+  DIAG.game(null);
   ttSync();
   if (gamebox.classList.contains('fs')) fsExit();
   frame.textContent = '';

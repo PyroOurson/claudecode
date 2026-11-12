@@ -49,6 +49,8 @@ async function open(html, id, o = {}) {
     if (p === '/auth/v1/token') return j(200, session());
     if (p === '/rest/v1/rpc/touch_presence' || p === '/rest/v1/rpc/my_status') return j(200, [{ role: 'user', locked: false, locked_reason: null }]);
     if (p.startsWith('/rest/v1/profiles')) return j(200, [{ id: UID, username: 'tester', display_name: 'Tester', avatar_url: null, created_at: new Date().toISOString() }]);
+    if (p === '/rest/v1/rpc/diag_enabled') return j(200, o.diag !== false);
+    if (p === '/rest/v1/rpc/diag_push') return j(200, 0);
     if (p.startsWith('/rest/v1/rpc/')) return j(200, null);
     return j(200, []);
   });
@@ -65,7 +67,18 @@ async function open(html, id, o = {}) {
   let n = 0;
   const shot = async (dir, name, full) => { fs.mkdirSync(dir, { recursive: true }); const f = path.join(dir, (name || String(++n).padStart(3, '0')) + '.png'); if (full) await page.screenshot({ path: f }); else { const r = await frame(); await page.screenshot({ path: f, clip: { x: Math.max(0, r.x), y: Math.max(0, r.y), width: Math.max(1, r.w), height: Math.max(1, r.h) } }); } return f; };
   const close = async () => { await b.close(); srv.close(); };
-  return { page, ctx, browser: b, errs, frame, start, shot, close, base };
+  const diag = kinds => page.evaluate(k => { const d = window.Ameplay && Ameplay.diag ? Ameplay.diag.dump().events : []; return k ? d.filter(e => k.includes(e.k)) : d; }, kinds || null);
+  const fps = async () => { const f = (await diag(['fps'])).map(e => e.d); return f.length ? { samples: f.length, avg: Math.round(f.reduce((a, x) => a + x.fps, 0) / f.length * 10) / 10, min: Math.min(...f.map(x => x.fps)), worstFrameMs: Math.max(...f.map(x => x.worst)), slowFrames: f.reduce((a, x) => a + x.slow, 0) } : null; };
+  const cost = async (ms = 5000) => {
+    await page.evaluate(() => {
+      if (window.__gpCost) { window.__gpCost.f = []; return; }
+      const C = window.__gpCost = { f: [], cur: 0, on: false }, R = window.requestAnimationFrame.bind(window);
+      window.requestAnimationFrame = cb => R(t => { const a = performance.now(); try { cb(t); } finally { C.cur += performance.now() - a; if (!C.on) { C.on = true; Promise.resolve().then(() => { C.on = false; C.f.push(C.cur); C.cur = 0; }); } } });
+    });
+    await page.waitForTimeout(ms);
+    return page.evaluate(() => { const f = window.__gpCost.f.slice().sort((a, b) => a - b), n = f.length; if (!n) return null; const r = x => Math.round(x * 100) / 100; return { frames: n, avgMs: r(f.reduce((a, x) => a + x, 0) / n), p50Ms: r(f[Math.floor(n * .5)]), p95Ms: r(f[Math.floor(n * .95)]), maxMs: r(f[n - 1]) }; });
+  };
+  return { page, ctx, browser: b, errs, frame, start, shot, close, base, diag, fps, cost };
 }
 module.exports = { open };
 
