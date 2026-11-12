@@ -351,7 +351,7 @@ ${g} .tg input:focus-visible+i{outline:2.5px solid var(--ac);outline-offset:2px}
     ['Bell', ['..y..', '.yyy.', '.yyy.', 'yyyyy', '..y..'], { y: '#f2b632' }],
     ['Cherries', ['..gg.', '.g..g', 'r.r.r', 'rrrrr', 'rrrrr'], { r: '#d62839', g: '#3fb95f' }],
     ['Ghost', ['.www.', 'wwwww', 'w.w.w', 'wwwww', 'w.w.w'], { w: '#9aa5e8' }],
-    ['Arrow', ['..a..', '.aaa.', 'aaaaa', '..a..', '..a..'], { a: '#22b07d' }],
+    ['Arrow', ['..a..', '...a.', 'aaaaa', '...a.', '..a..'], { a: '#22b07d' }],
     ['Umbrella', ['.ppp.', 'ppppp', 'p.u.p', '..u..', '.uu..'], { p: '#8e5cf0', u: '#444b66' }],
     ['Moon', ['.yyy.', 'yy...', 'yy...', 'yy...', '.yyy.'], { y: '#f4d35e' }],
     ['Note', ['..nn.', '..n.n', '..n..', 'nnn..', 'nnn..'], { n: '#4a4e8f' }],
@@ -359,7 +359,7 @@ ${g} .tg input:focus-visible+i{outline:2.5px solid var(--ac);outline-offset:2px}
     ['Lollipop', ['.ppp.', 'ppwpp', 'pwpwp', '.ppp.', '..s..'], { p: '#ff6fa5', w: '#ffffff', s: '#b8c1cc' }],
     ['Bug', ['k...k', '.rrr.', 'rkrkr', '.rrr.', 'k...k'], { r: '#e5383b', k: '#2b2d42' }],
     ['Duck', ['.yy..', 'yyy..', '.yyoo', '.yyy.', '.yy..'], { y: '#ffd23f', o: '#f08a24' }],
-    ['Rocket', ['..w..', '.wbw.', '.www.', 'rwwwr', '..f..'], { w: '#d3dcee', b: '#4cc9f0', r: '#e5383b', f: '#ff9f1c' }]
+    ['Rocket', ['..w..', '.wbw.', '.www.', '.www.', 'r.f.r'], { w: '#d3dcee', b: '#4cc9f0', r: '#e5383b', f: '#ff9f1c' }]
   ];
   const pick = (r, a) => a[Math.floor(r() * a.length)];
   const inPoly = (pts, x, y) => {
@@ -1830,12 +1830,14 @@ ${g} .tg input:focus-visible+i{outline:2.5px solid var(--ac);outline-offset:2px}
     return null;
   }
   const wCache = new Map();
+  const W_PRE = '1.8 1.7 1.7 1.10 1.8 1.8 1.7 1.7 1.10 1.9 1.12 1.11 1.13 1.13 1.9 1.13 1.12 1.11 1.9 1.13 1.10 1.12 1.8 1.12 1.10 1.16 1.15 1.16 1.17 1.13 1.13 1.16 1.15 1.17 1.15 1.17 1.19 1.18 1.18 1.17 1.18 1.19 1.19 1.16 1.16 1.22 1.23 1.20 1.23 1.20 1.18 1.20 1.24 1.23 1.23 1.24 1.26 1.25 1.22 1.27 1.24 1.25 1.25 1.24 1.23 1.32 1.28 1.31 1.29 1.27 1.28 1.29 1.32 1.30 1.28 1.34 1.31 1.31 1.32 1.31 1.29 1.34 1.30 1.37 1.29 1.40 1.39 1.41 1.36 1.38 1.38 1.41 1.39 1.37 1.34 1.36 1.41 1.33 1.34 1.46 1.42 1.45 1.40 1.45 1.45 1.51 1.49 1.53 1.48 1.51 1.50 1.49 1.45 1.48 1.43 1.48 1.50 1.48 1.51 1.49 1.45 1.43 1.41 1.39 1.42 1.47 1.44 1.49 1.40 1.42 1.42 1.41 1.41 1.43 1.41 1.46 1.48 1.48 1.45 1.47'.split(' ');
   function wLevel(pi, li) {
     const key = pi * 100 + li;
     if (wCache.has(key)) return wCache.get(key);
     const P = W_PACKS[pi], t = P.n > 1 ? li / (P.n - 1) : 0;
     const K = Math.round(P.k[0] + (P.k[1] - P.k[0]) * t), cap = P.cap;
-    for (let seed = 1; ; seed++) {
+    const pre = (W_PRE[pi * 20 + li] || '').split('.').map(Number);
+    for (let seed = pre[0] || 1; ; seed++) {
       const r = rng(pi * 7919 + li * 104729 + seed * 31);
       const layers = [];
       for (let c = 0; c < K; c++) for (let q = 0; q < cap; q++) layers.push(c);
@@ -1843,6 +1845,11 @@ ${g} .tg input:focus-visible+i{outline:2.5px solid var(--ac);outline-offset:2px}
       const ts = [];
       for (let i = 0; i < K; i++) ts.push(layers.slice(i * cap, i * cap + cap));
       if (ts.some(a => a.every(v => v === a[0]))) continue;
+      if (seed === pre[0] && pre[1]) {
+        const res = { cap, K, tubes: ts, e: P.e, par: pre[1], seed };
+        wCache.set(key, res);
+        return res;
+      }
       const str = ts.map(a => a.map(v => String.fromCharCode(97 + v)).join('')).concat(Array(P.e).fill(''));
       const sol = wSolve(str, cap);
       if (!sol) continue;

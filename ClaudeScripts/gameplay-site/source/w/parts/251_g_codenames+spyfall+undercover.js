@@ -5,6 +5,16 @@
   const shuf = a => { for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
   const pick = a => a[rnd(a.length)];
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const RUDE = /(^|[^a-z])(f+u+c*k+|sh+i+t+|b+i+t+c+h+|c+u+n+t+|n+i+gg+(?:e+r+|a+)|f+a+g+(?:g*o+t+)?|r+e+t+a+r+d+(?:e+d+|s+)|wh+o+r+e+|s+l+u+t+|d+i+c+k+h+e+a+d+|p+u+s+s+y+|c+o+c+k+s+u+c+k+|a+s+s+h+o+l+e+|b+a+s+t+a+r+d+|w+a+n+k+|t+w+a+t+|p+o+r+n+o*|r+a+p+e+|k+y+s+|p+e+d+o+|put(?:e|ain)|salop(?:e|ard)|conn(?:ard|asse)|encul[eé]|merde|niqu(?:e|er))(?:s|e[dr]|ing|y)?(?![a-z])/g;
+  const LEET = { 0: 'o', 1: 'i', 3: 'e', 4: 'a', 5: 's', 7: 't', '@': 'a', $: 's' };
+  const tame = s => {
+    s = String(s == null ? '' : s);
+    const n = s.replace(/[A-Z013457@$]/g, c => LEET[c] || c.toLowerCase());
+    let o = '', at = 0, m;
+    RUDE.lastIndex = 0;
+    while ((m = RUDE.exec(n))) { const i = m.index + m[1].length, j = m.index + m[0].length; o += s.slice(at, i) + s[i] + '*'.repeat(j - i - 1); at = j; }
+    return o + s.slice(at);
+  };
   const fmtT = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
   const BOT_NAMES = ['Ada', 'Bruno', 'Cleo', 'Dario', 'Esme', 'Finn', 'Gus', 'Hana', 'Ivo', 'Juno', 'Kiko', 'Lola', 'Milo', 'Nia', 'Otto', 'Pia', 'Quin', 'Rosa', 'Sven', 'Tala'];
   const HUES = [4, 28, 48, 96, 150, 176, 200, 222, 262, 292, 322, 344];
@@ -148,6 +158,13 @@
       const e = M.eng;
       if (!e) return;
       saveHost();
+      const done = e.s.phase === 'over' || e.s.phase === 'series';
+      if (!done) M.told = 0;
+      else if (!M.told && M.mode === 'host') {
+        M.told = 1;
+        const nw = (api.net.players || []).filter(p => !p.host && p.inGame === false).length;
+        if (nw) ctl.toast(nw + (nw > 1 ? ' players are' : ' player is') + ' waiting. Go back to the lobby to let them in.');
+      }
       e.seats.forEach((s, i) => {
         if (s.bot) return;
         if (i === M.seat) show(e.view(i));
@@ -229,6 +246,12 @@
         menuEl.hidden = true; gameEl.hidden = false;
         gameEl.innerHTML = `<div class="${P}-wait"><div class="spin"></div><p>Connected. Waiting for the host to deal...</p><button class="${P}-btn alt sm" data-a="leave">Leave</button></div>`;
         ui = null;
+        const ask = n => api.timeout(() => {
+          if (tok !== M.tok || M.mode !== 'guest' || M.view) return;
+          api.net.send({ t: 'sync' });
+          if (n < 20) ask(n + 1);
+        }, n ? 3000 : 1200);
+        ask(0);
       }
     }
     function leave() {
@@ -236,15 +259,18 @@
       try { api.net.close(); } catch (e) {}
       toMenu();
     }
+    const flood = {};
+    const rateOk = id => { const now = performance.now(), b = flood[id] || (flood[id] = { t: now, n: 0 }); if (now - b.t > 1000) { b.t = now; b.n = 0; } return ++b.n <= 15; };
     function hook() {
       if (M.hooked) return;
       M.hooked = true;
       api.net.on('data', (d, from) => {
         if (!d || !api.alive) return;
         if (M.mode === 'host' && M.eng) {
-          if (d.t !== 'a' || !d.a || typeof d.a !== 'object') return;
           const i = M.eng.seats.findIndex(s => s.id === from && !s.bot);
-          if (i < 0) return;
+          if (i < 0 || !rateOk(from)) return;
+          if (d.t === 'sync') { api.net.sendTo(from, { t: 'v', v: M.eng.view(i) }); return; }
+          if (d.t !== 'a' || !d.a || typeof d.a !== 'object') return;
           const priv = from === api.net.leader || i === 0;
           if (M.eng.act(i, d.a, priv)) push();
           else api.net.sendTo(from, { t: 'v', v: M.eng.view(i) });
@@ -267,7 +293,8 @@
       api.net.on('lobby', () => { if (M.mode === 'guest') online(); });
       api.net.on('close', reason => {
         if (M.mode !== 'guest') return;
-        M.tok++; M.mode = 'closed'; M.eng = null;
+        M.tok++; M.mode = 'closed'; M.eng = null; M.view = null; M.dl = 0;
+        ctl.closePane(); toastEl.classList.remove('show');
         api.sfx('lose');
         const h = reason === 'kicked' ? 'You were removed' : reason === 'host-left' ? 'The host left' : 'Connection lost';
         const t = reason === 'kicked' ? 'The host removed you from the party.' : reason === 'host-left' ? 'The host ended the party.' : 'The connection to the party was lost.';
@@ -677,6 +704,7 @@ bomb: explode fuse atom blast bang tick dynamite
   const cnClueOk = (w, board) => {
     w = w.toLowerCase();
     if (!/^[a-z][a-z-]{1,19}$/.test(w)) return 'The clue must be one word (letters only).';
+    if (tame(w) !== w) return 'Pick another clue.';
     for (const b of board) {
       if (!b.open) continue;
       const x = b.w;
@@ -948,6 +976,7 @@ bomb: explode fuse atom blast bang tick dynamite
         return false;
       }
       if (s.phase !== 'play') return false;
+      if (a.k === 'skip' && priv && !opt.local) { s.log.push({ k: 'end', tm: s.turn }); nextTurn(); return true; }
       const mine = s.tm[i] === s.turn;
       if (a.k === 'clue' && mine && s.spy[i] && !s.clue) {
         const w = String(a.w || '').trim().toLowerCase();
@@ -1215,6 +1244,7 @@ ${v.lead && v.setupErr ? `<p class="cn-hint warn">${esc(v.setupErr)}</p>` : ''}`
         if (!v.clue && m.spy) html = clueForm;
         else if (v.clue && !m.spy) html = guessBar();
       }
+      if (!html && !v.duet && v.lead && ctl.online) html = `<div class="cn-form"><span class="cn-sel">Someone away? The party leader can pass the turn.</span><button class="cn-btn alt" data-a="skip">Skip turn</button></div>`;
       actEl.innerHTML = html;
     }
 
@@ -1316,7 +1346,7 @@ ${v.lead && v.setupErr ? `<p class="cn-hint warn">${esc(v.setupErr)}</p>` : ''}`
           draft.clue = '';
         }
         else if (a === 'team') ctl.send({ k: 'team', tm: b.dataset.t });
-        else if (a === 'spy' || a === 'shuf' || a === 'start' || a === 'end') ctl.send({ k: a });
+        else if (a === 'spy' || a === 'shuf' || a === 'start' || a === 'end' || a === 'skip') ctl.send({ k: a });
         else if (a === 'again') ctl.send({ k: 'again' });
         else if (a === 'lobby') ctl.lobby();
       }
@@ -1472,9 +1502,12 @@ ${v.lead && v.setupErr ? `<p class="cn-hint warn">${esc(v.setupErr)}</p>` : ''}`
 Airplane|air|Pilot,Co-pilot,Flight attendant,Air marshal,Economy passenger,First class passenger,Mechanic,Nervous flyer|seat,wing,landing,turbulence,cabin,altitude,takeoff,pilot,boarding
 Airport|air|Check-in agent,Security officer,Customs officer,Baggage handler,Air traffic controller,Pilot,Duty-free clerk,Stranded traveler|gate,terminal,luggage,passport,runway,flight,security,delay,boarding
 Amusement Park|fun|Ride operator,Mascot,Ticket seller,Thrill seeker,Parent,Face painter,Food vendor,Lost kid|ride,roller,coaster,ticket,queue,cotton,candy,ferris,wheel,mascot
+Animal Shelter|nature|Vet,Volunteer,Dog walker,Adopting family,Receptionist,Groomer,Trainer,Night keeper|dog,cat,adopt,kennel,leash,bark,volunteer,vet,rescue
+Aquarium|sea|Diver,Ticket clerk,Marine biologist,School teacher,Shark feeder,Gift shop clerk,Tank cleaner,Curious kid|fish,tank,shark,glass,tunnel,water,jellyfish,feeding,tickets
 Bakery|food|Head baker,Cashier,Apprentice,Delivery driver,Pastry chef,Regular customer,Food critic,Early shopper|bread,flour,oven,dough,croissant,cake,pastry,sugar,fresh
 Bank|money|Teller,Manager,Security guard,Customer,Robber,Loan officer,Armored car driver,Auditor|vault,money,teller,loan,account,cash,safe,deposit,counter
 Beach|nature|Lifeguard,Surfer,Sunbather,Ice cream seller,Photographer,Child with bucket,Beach volleyball player,Tourist|sand,wave,sun,towel,sea,surf,shell,sunscreen,umbrella
+Bowling Alley|fun|Shoe clerk,League champion,Birthday kid,Snack bar cook,Lane mechanic,First-timer,Scorekeeper,Arcade attendant|pins,lane,strike,shoes,ball,gutter,spare,score,arcade
 Casino|fun|Dealer,Gambler,Bouncer,Pit boss,Waitress,High roller,Card counter,Security officer|chips,dice,poker,slot,roulette,bet,jackpot,cards,table
 Cathedral|build|Priest,Organist,Choir singer,Tourist,Pilgrim,Bell ringer,Candle seller,Groom|organ,bell,pray,altar,candle,mass,window,choir,stone,wedding
 Circus Tent|fun|Ringmaster,Clown,Acrobat,Lion tamer,Juggler,Strongman,Popcorn seller,Magician|clown,trapeze,tent,lion,juggle,tightrope,popcorn,ring,act,acrobat
@@ -1482,7 +1515,9 @@ Construction Site|land|Foreman,Crane operator,Bricklayer,Electrician,Architect,S
 Cruise Ship|sea|Captain,Bartender,Cabin steward,Passenger,Entertainer,Chef,Lifeguard,Photographer|deck,cabin,buffet,pool,port,ocean,sail,anchor,voyage
 Day Spa|nature|Masseuse,Receptionist,Manicurist,Client,Yoga teacher,Facial specialist,Sauna attendant,Owner|massage,towel,robe,sauna,relax,oil,facial,steam,candle,pool
 Embassy|build|Ambassador,Diplomat,Security guard,Visa officer,Tourist,Translator,Secretary,Refugee|visa,passport,flag,ambassador,diplomat,treaty,country,passport,immunity
+Escape Room|fun|Game master,Puzzle solver,Team leader,Nervous player,Clue reader,Timekeeper,Birthday guest,Actor in costume|clue,lock,puzzle,key,timer,code,door,hint,team
 Farm|nature|Farmer,Shepherd,Veterinarian,Tractor driver,Milkmaid,Visiting child,Beekeeper,Fruit picker|barn,tractor,cow,hay,field,chicken,milk,corn,pig,harvest
+Farmers Market|food|Cheese maker,Fruit seller,Beekeeper,Street musician,Baker,Flower seller,Bargain hunter,Market inspector|stall,fresh,vegetables,honey,basket,price,organic,crowd,sample
 Fire Station|mil|Fire chief,Firefighter,Dispatcher,Paramedic,Rookie,Dalmatian owner,Cook,Mechanic|siren,hose,ladder,truck,alarm,helmet,pole,flame,rescue,hydrant
 Hospital|med|Surgeon,Nurse,Patient,Anesthetist,Visitor,Receptionist,Paramedic,Pharmacist|surgery,ward,bed,doctor,nurse,emergency,bandage,ambulance,scalpel,medicine
 Hotel|build|Receptionist,Bellhop,Maid,Manager,Guest,Concierge,Chef,Night guard|room,lobby,key,reception,suite,luggage,bed,elevator,checkout,minibar
@@ -1491,17 +1526,20 @@ Lighthouse|sea|Keeper,Painter,Tourist,Coast guard,Ship captain,Radio operator,Fi
 Military Base|mil|Colonel,Private,Sergeant,Medic,Pilot,Cook,Spy,Radio operator|soldier,tank,uniform,barracks,rank,salute,gate,drill,march,gun
 Movie Studio|fun|Director,Actor,Stuntman,Camera operator,Costume designer,Makeup artist,Producer,Extra|camera,scene,script,action,costume,set,film,lights,cut,actor
 Museum|school|Curator,Guard,Tour guide,Tourist,Art student,Restorer,Thief,Child on a school trip|painting,statue,exhibit,ancient,guide,gallery,dinosaur,ticket,glass,history
+Observatory|space|Astronomer,Tour guide,Night guard,Student,Telescope technician,Visiting family,Radio operator,Science journalist|telescope,stars,dome,night,planet,lens,sky,moon,mountain
 Ocean Liner|sea|Captain,Radio officer,Stoker,Waiter,First class passenger,Third class passenger,Musician,Stowaway|hull,funnel,lifeboat,iceberg,deck,ocean,steam,voyage,cargo,anchor
 Passenger Train|land|Conductor,Driver,Ticket inspector,Commuter,Tourist,Dining car cook,Pickpocket,Student|rail,station,ticket,platform,carriage,tunnel,whistle,track,commuter,wagon
 Pirate Ship|sea|Captain,Cook,Cabin boy,Navigator,Gunner,Prisoner,Parrot keeper,Lookout|treasure,plank,cannon,flag,rum,sword,map,sail,island,parrot
-Police Station|mil|Detective,Chief,Desk officer,Suspect,Lawyer,Witness,Cadet,Forensic analyst|badge,cell,arrest,crime,handcuffs,report,interrogation,siren,evidence,detective
 Polar Station|nature|Climatologist,Doctor,Radio operator,Cook,Mechanic,Geologist,Visiting journalist,Dog handler|ice,snow,cold,research,penguin,sled,glacier,blizzard,heater,expedition
+Police Station|mil|Detective,Chief,Desk officer,Suspect,Lawyer,Witness,Cadet,Forensic analyst|badge,cell,arrest,crime,handcuffs,report,interrogation,siren,evidence,detective
 Restaurant|food|Chef,Waiter,Host,Dishwasher,Food critic,Customer,Sommelier,Manager|menu,table,order,tip,kitchen,bill,dinner,plate,reservation,dessert
 School|school|Teacher,Principal,Student,Janitor,Cafeteria cook,Gym coach,Substitute,Parent|class,homework,bell,desk,blackboard,exam,recess,lesson,grade,playground
+Science Fair|school|Judge,Nervous student,Proud parent,Science teacher,Volcano builder,Robot team captain,Reporter,Janitor|project,poster,volcano,experiment,ribbon,prize,table,robot,judge
 Service Station|land|Attendant,Mechanic,Trucker,Cashier,Family on a trip,Tourist,Biker,Police officer|fuel,pump,tire,oil,petrol,truck,snacks,highway,wash,garage
 Ski Resort|nature|Instructor,Snowboarder,Lift operator,Ski patrol,Beginner,Cafe owner,Photographer,Tourist|snow,lift,slope,ski,helmet,boots,chalet,mountain,avalanche,cold
 Space Station|space|Commander,Engineer,Scientist,Astronaut,Doctor,Cosmonaut,Tourist,Mission controller|orbit,gravity,rocket,module,earth,float,airlock,dock,spacesuit,experiment
 Submarine|sea|Captain,Sonar operator,Cook,Engineer,Torpedo officer,Navigator,Medic,Radio operator|dive,periscope,depth,torpedo,sonar,hatch,ocean,pressure,crew,silent
+Summer Camp|nature|Counselor,Camper,Cook,Lifeguard,Camp director,Nurse,Bus driver,Homesick kid|tent,campfire,cabin,lake,canoe,marshmallow,hike,songs,bunk
 Supermarket|shop|Cashier,Stocker,Manager,Butcher,Customer,Security guard,Bagger,Delivery driver|aisle,cart,shelf,checkout,fruit,discount,freezer,receipt,basket,groceries
 Theater|fun|Actor,Director,Prompter,Stagehand,Costume designer,Critic,Usher,Spectator|stage,curtain,audience,rehearsal,seat,script,applause,play,drama,lights
 University|school|Professor,Student,Dean,Librarian,Researcher,Janitor,Teaching assistant,Visiting speaker|lecture,campus,degree,exam,thesis,dorm,professor,research,diploma,classroom
@@ -1647,7 +1685,7 @@ Zoo|nature|Keeper,Veterinarian,Tourist,Tour guide,Child,Photographer,Souvenir se
           const to = a.to;
           if (!Number.isInteger(to) || to < 0 || to >= n || to === i) return fail(i, 'Pick another player to question.');
           if (to === T.prev && n > 2) return fail(i, 'No return questions: pick someone else.');
-          const q = String(a.q || '').trim().slice(0, 160) || '(asked aloud)';
+          const q = tame(String(a.q || '').trim().slice(0, 160)) || '(asked aloud)';
           T.to = to; T.q = q; T.stage = 'answer'; s.tdl = now() + 75000;
           addText(i, q, false);
           s.log.push({ k: 'q', by: i, to, q });
@@ -1655,7 +1693,7 @@ Zoo|nature|Keeper,Veterinarian,Tourist,Tour guide,Child,Photographer,Souvenir se
           return true;
         }
         if (a.k === 'answer' && T.stage === 'answer' && T.to === i) {
-          const t = String(a.a || '').trim().slice(0, 160) || '(answered aloud)';
+          const t = tame(String(a.a || '').trim().slice(0, 160)) || '(answered aloud)';
           addText(i, t, true);
           s.log.push({ k: 'a', by: i, text: t });
           advanceTurn(i, T.by);
@@ -2207,6 +2245,14 @@ tree|bush|plant,green,garden,leaves|trunk,tall,wood,shade|small,hedge,berries,tr
 printer|scanner|office,paper,machine,computer|ink,print,cartridge,toner|copy,glass,document,digital
 lemon|lime|fruit,sour,citrus,juice|yellow,tea,sharp,pie|green,cocktail,mojito,mexican
 banana|plantain|fruit,tropical,yellow,peel|monkey,smoothie,sweet,split|fry,savory,cooked,starch
+bicycle|scooter|wheels,ride,street,helmet|pedal,chain,gears,saddle|kick,fold,deck,stand
+soup|stew|hot,bowl,spoon,winter|broth,sip,noodle,starter|thick,slow,chunks,pot
+pancake|waffle|breakfast,syrup,batter,sweet|flip,round,flat,pan|grid,iron,squares,crisp
+tornado|hurricane|storm,wind,danger,spin|funnel,twister,narrow,plains|ocean,eye,huge,season
+library|bookshop|books,shelves,quiet,read|borrow,card,return,free|buy,price,new,counter
+pillow|cushion|soft,rest,stuffing,cover|bed,sleep,head,night|sofa,sit,decor,square
+ladder|stairs|climb,steps,up,height|rungs,lean,carry,paint|rail,indoor,floor,landing
+whistle|bell|sound,signal,loud,metal|referee,blow,lips,train|ring,tower,door,chime
 `;
   const UC_PAIRS = UC_RAW.trim().split('\n').map(l => {
     const p = l.split('|');
@@ -2407,6 +2453,7 @@ banana|plantain|fruit,tropical,yellow,peel|monkey,smoothie,sweet,split|fry,savor
         const t = String(a.t || '').trim().replace(/\s+/g, ' ').slice(0, 28);
         if (!t) return fail(i, 'Type a hint first.');
         if (words(t).length > 3) return fail(i, 'Use one word, or at most three.');
+        if (tame(t) !== t) return fail(i, 'Pick another hint.');
         const w = s.words[i];
         const lw = t.toLowerCase();
         if (w && (lw.includes(w.toLowerCase()) || (lw.length >= 4 && w.toLowerCase().includes(lw)))) return fail(i, 'You cannot say your own word.');

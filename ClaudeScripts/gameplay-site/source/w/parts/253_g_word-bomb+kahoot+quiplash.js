@@ -307,7 +307,11 @@ function party(root, api, D) {
       K.pids.forEach((id, q) => { if (id && q !== K.seat && K.human[q]) api.net.sendTo(id, { t: 'v', s: q, v: e.view(q) }); });
       saveHost();
     }
-    if (e.over && !K.overDone) { K.overDone = true; if (D.onOver) D.onOver(K, K.view); try { sessionStorage.removeItem(SK); } catch (x) {} }
+    if (e.over && !K.overDone) {
+      K.overDone = true; if (D.onOver) D.onOver(K, K.view); try { sessionStorage.removeItem(SK); } catch (x) {}
+      const nw = K.mode === 'online' && K.role === 'host' ? (api.net.players || []).filter(p => !p.host && p.inGame === false).length : 0;
+      if (nw) api.toast(nw + (nw > 1 ? ' players are' : ' player is') + ' waiting. Go back to the lobby to let them in.');
+    }
   }
   K.refresh = refresh;
 
@@ -333,10 +337,11 @@ function party(root, api, D) {
   K.cmd = k => kitCmd(k);
 
   function tick() {
-    const now = performance.now(), dt = Math.min(now - lastT, 1000); lastT = now;
+    const now = performance.now(), host = K.mode === 'online' && K.role === 'host';
+    let dt = Math.min(now - lastT, host ? 120000 : 1000); lastT = now;
     if (destroyed || !K.eng || K.role === 'guest') return;
-    if (api.paused) return;
-    K.eng.step(dt);
+    if (api.paused && !host) return;
+    while (dt > 0 && K.eng) { const d = Math.min(dt, 500); K.eng.step(d); dt -= d; }
     refresh();
   }
 
@@ -384,7 +389,15 @@ function party(root, api, D) {
     if (!r) { K.mode = 'menu'; K.role = 'local'; return showMenu(); }
     K.role = r.role; K.players = r.players; K.size = +r.size || r.players.length; K.botsOn = !!r.bots;
     if (r.role === 'host') hostStart();
-    else showPane('wait', `<div class="pg-box"><p class="pg-kick">Online</p><h3>Connected</h3><p>Waiting for the host to start the game…</p><div class="pg-row">${btn('leave', 'gray sm', 'Leave')}</div></div>`, a => { if (a === 'leave') leaveToMenu(); }, true);
+    else {
+      if (!K.built) showPane('wait', `<div class="pg-box"><p class="pg-kick">Online</p><h3>Connected</h3><p>Waiting for the host to start the game…</p><div class="pg-row">${btn('leave', 'gray sm', 'Leave')}</div></div>`, a => { if (a === 'leave') leaveToMenu(); }, true);
+      const ask = n => api.timeout(() => {
+        if (tok !== K.tok || K.role !== 'guest' || K.built) return;
+        api.net.send({ t: 'sync' });
+        if (n < 20) ask(n + 1);
+      }, n ? 3000 : 1200);
+      ask(0);
+    }
   }
   K.startOnline = startOnline;
 
@@ -458,12 +471,16 @@ function party(root, api, D) {
   }
   K.showHow = showHow;
 
+  const flood = {};
+  const rateOk = id => { const now = performance.now(), b = flood[id] || (flood[id] = { t: now, n: 0 }); if (now - b.t > 1000) { b.t = now; b.n = 0; } return ++b.n <= 15; };
   function onData(d, from) {
     if (!d || !api.alive) return;
     if (K.role === 'host') {
-      if (d.t !== 'a' || !K.eng) return;
+      if (!K.eng) return;
       const q = K.pids.indexOf(from);
-      if (q < 0 || !K.human[q]) return;
+      if (q < 0 || !K.human[q] || !rateOk(from)) return;
+      if (d.t === 'sync') { api.net.sendTo(from, { t: 'start', s: q }); api.net.sendTo(from, { t: 'v', s: q, v: K.eng.view(q) }); return; }
+      if (d.t !== 'a') return;
       const a = d.a || {};
       if (a.k === '_again' || a.k === '_lobby') {
         const boss = api.net.leader === from;
@@ -475,7 +492,7 @@ function party(root, api, D) {
       try { ok = K.eng.act(q, a, api.net.leader === from); } catch (e) { console.error(e); }
       if (!ok) api.net.sendTo(from, { t: 'v', s: q, v: K.eng.view(q) });
       refresh();
-    } else if (K.role === 'guest') {
+    } else if (K.role === 'guest' || (K.role === null && K.mode === 'online')) {
       if (d.t === 'start') {
         K.seat = d.s | 0; K.mode = 'online'; K.overDone = false;
         hidePane(); K.view = null; K.built = false; G.innerHTML = '';
@@ -1503,7 +1520,7 @@ function wbEngine(seats, opt, loaded, D) {
     st = {
       g: 'wb', T: 0, o, ph: 'intro', dl: 2600, bomb: 0, tot: 1, turn: 0, syl: '', tk: 0, typed: '', U: [], ev: { n: 0 }, ex: 0, win: -1, SL: [],
       lw: null, tc: 0,
-      P: seats.map((s, i) => ({ n: s.name, bot: !!s.bot, lv: s.bot ? (o.lv === 'mix' ? ri(3) : { easy: 0, normal: 1, hard: 2 }[o.lv] || 1) : 1, L: o.lives, a: 0, w: 0, c: i, long: '', ch: 0, x: 0 }))
+      P: seats.map((s, i) => ({ n: s.name, bot: !!s.bot, lv: s.bot ? (o.lv === 'mix' ? ri(3) : { easy: 0, normal: 1, hard: 2, hardest: 3 }[o.lv] || 1) : 1, L: o.lives, a: 0, w: 0, c: i, long: '', ch: 0, x: 0 }))
     };
   }
   const O = st.o, MAXL = Math.max(3, O.lives + 1), AM = alphaMask(O.alpha);
@@ -1548,7 +1565,7 @@ function wbEngine(seats, opt, loaded, D) {
     if (st.ph !== 'play' || seat !== st.turn || !w) return false;
     const syl = st.syl;
     if (w.indexOf(syl) < 0) { ev('bad', seat, w, 'Must contain ' + syl.toUpperCase()); bump(); return true; }
-    if (!dict.has(w)) { ev('bad', seat, w, 'Not in the dictionary'); bump(); return true; }
+    if (!dict.has(w) || tame(w) !== w) { ev('bad', seat, tame(w), 'Not in the dictionary'); bump(); return true; }
     if (used.has(w)) { ev('bad', seat, w, 'Already used'); bump(); return true; }
     pass(seat, w);
     return true;
@@ -1572,17 +1589,24 @@ function wbEngine(seats, opt, loaded, D) {
 
   function botPlan() {
     const p = st.P[st.turn], lv = p.lv, syl = st.syl;
-    const failP = [.28, .12, .03][lv];
+    const failP = [.28, .12, .03, 0][lv];
     const need = AM & ~p.a;
-    const test = w => w.indexOf(syl) >= 0 && !used.has(w);
+    const test = w => w.indexOf(syl) >= 0 && !used.has(w) && tame(w) === w;
     const lim = lv === 0 ? 3500 : lv === 1 ? 9000 : dict.common.length;
     let c = [];
     for (let i = 0; i < lim && i < dict.common.length; i++) { const w = dict.common[i]; if (test(w)) c.push(w); }
-    if (!c.length && lv === 2) for (const w of dict.words) if (test(w)) { c.push(w); if (c.length > 60) break; }
+    if (!c.length && lv >= 2) for (const w of dict.words) if (test(w)) { c.push(w); if (c.length > (lv === 3 ? 400 : 60)) break; }
     if (!c.length && lv === 1 && Math.random() < .5) for (let i = 0; i < dict.common.length; i++) { const w = dict.common[i]; if (test(w)) c.push(w); }
     let word = '';
     if (c.length) {
-      if (lv === 2) {
+      if (lv === 3) {
+        let best = -1e9;
+        for (const w of c) {
+          let sc = Math.random() * .4 - Math.max(0, w.length - 4) * .55;
+          for (const ch of new Set(w)) if (need & (1 << (ch.charCodeAt(0) - 97))) sc += 1;
+          if (sc > best) { best = sc; word = w; }
+        }
+      } else if (lv === 2) {
         let best = -1;
         for (let t = 0; t < 14; t++) {
           const w = pick(c);
@@ -1598,7 +1622,7 @@ function wbEngine(seats, opt, loaded, D) {
         word = c[Math.min(c.length - 1, ri(Math.min(c.length, 6)))];
       }
     }
-    const thinkB = [[1700, 3900], [1000, 2700], [600, 1700]][lv], per = [150, 105, 75][lv];
+    const thinkB = [[1700, 3900], [1000, 2700], [600, 1700], [450, 1050]][lv], per = [150, 105, 75, 68][lv];
     return { tk: st.tk, word, fail: !word || Math.random() < failP, t0: st.T, think: rr(thinkB[0], thinkB[1]), per, k: 0 };
   }
 
@@ -1624,7 +1648,7 @@ function wbEngine(seats, opt, loaded, D) {
   E.act = (seat, a) => {
     if (!a || st.ph === 'over') return false;
     if (a.k === 'type') {
-      if (st.ph === 'play' && seat === st.turn && !st.P[seat].bot) { const t = clean(a.s); if (t !== st.typed) { st.typed = t; bump(); } }
+      if (st.ph === 'play' && seat === st.turn && !st.P[seat].bot) { const t = tame(clean(a.s)); if (t !== st.typed) { st.typed = t; bump(); } }
       return true;
     }
     if (a.k === 'word') return submit(seat, a.s);
@@ -1737,7 +1761,7 @@ const WB_D = {
     const o = K.opt, s = K.stat();
     K.pane('menu', `<div class="pg-box"><p class="pg-kick">Party game · 1 to 16 players</p><h3>Word Bomb</h3><p>Type a word with the syllable before the bomb goes off. Last player alive wins.</p>
 ${K.optRow('Bots', 'n', [[1, '1'], [2, '2'], [3, '3'], [5, '5'], [7, '7']], o.n)}
-${K.optRow('Bot skill', 'lv', [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard'], ['mix', 'Mixed']], o.lv)}
+${K.optRow('Bot skill', 'lv', [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard'], ['hardest', 'Hardest'], ['mix', 'Mixed']], o.lv)}
 ${K.optRow('Lives', 'lives', [[1, '1'], [2, '2'], [3, '3'], [4, '4']], o.lives)}
 ${K.optRow('Fuse', 'fuse', [['slow', 'Slow'], ['normal', 'Normal'], ['fast', 'Fast']], o.fuse)}
 ${K.optRow('Syllables', 'diff', [[0, 'Easy'], [1, 'Normal'], [2, 'Hard'], [3, 'Expert']], o.diff)}
@@ -1754,7 +1778,7 @@ ${K.btn('solo', 'green', 'Play vs bots', 'You and ' + o.n + ' bot' + (o.n > 1 ? 
     const fz = q('.wb-fz'); w.fzLen = fz.getTotalLength();
     w.inp.addEventListener('input', () => {
       const v = w.inp.value.toLowerCase().replace(/[^a-z]/g, ''); if (v !== w.inp.value) w.inp.value = v;
-      const t = performance.now(); if (t - w.typeAt > 90) { w.typeAt = t; K.act({ k: 'type', s: v }); } else { clearTimeout(w.tt); w.tt = setTimeout(() => K.act({ k: 'type', s: w.inp.value }), 90); }
+      const t = performance.now(); clearTimeout(w.tt); if (t - w.typeAt > 130) { w.typeAt = t; K.act({ k: 'type', s: v }); } else w.tt = setTimeout(() => { w.typeAt = performance.now(); K.act({ k: 'type', s: w.inp.value }); }, 130 - (t - w.typeAt));
     });
     w.inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); WB_D.submit(K); } pgEsc(e); e.stopPropagation(); });
     w.inp.addEventListener('keyup', e => e.stopPropagation());
@@ -1961,9 +1985,9 @@ function khParse(txt) {
     if (ans.length < 2 || ans.length > 4) return errs.push(`Question ${bi + 1}: needs 2 to 4 answers`);
     const cs = ans.map((a, i) => a[0] === '*' ? i : -1).filter(i => i >= 0);
     if (cs.length !== 1) return errs.push(`Question ${bi + 1}: mark exactly one correct answer with *`);
-    const a = ans.map(s => s.replace(/^\*\s*/, '').slice(0, 80));
+    const a = ans.map(s => tame(s.replace(/^\*\s*/, '').slice(0, 80)));
     if (a.some(s => !s)) return errs.push(`Question ${bi + 1}: empty answer`);
-    out.push({ q: q.slice(0, 160), a, c: cs[0], tf: false, ord: 1 });
+    out.push({ q: tame(q.slice(0, 160)), a, c: cs[0], tf: false, ord: 1 });
   });
   if (out.length > 60) { out.length = 60; errs.push('Only the first 60 questions are used'); }
   return { qs: out, errs };
@@ -1997,7 +2021,7 @@ function khEngine(seats, opt, loaded) {
     const Q = khQuestions(o);
     st = {
       g: 'kh', T: 0, o: { n: o.n, t: o.t, lv: o.lv, cats: o.cats, custom: !!(o.cq && o.cq.length) }, Q, qi: -1, ph: 'intro', dl: 3400, t0: 0, tot: 3400, cnt: [0, 0, 0, 0],
-      P: seats.map((s, i) => ({ n: s.name, bot: !!s.bot, lv: s.bot ? (o.lv === 'mix' ? ri(3) : { easy: 0, normal: 1, hard: 2 }[o.lv] || 1) : 1, c: i, pts: 0, str: 0, bst: 0, gain: 0, ok: null, ans: -1, ms: 0, cor: 0, pr: 0, bn: 0 }))
+      P: seats.map((s, i) => ({ n: s.name, bot: !!s.bot, lv: s.bot ? (o.lv === 'mix' ? ri(3) : { easy: 0, normal: 1, hard: 2, hardest: 3 }[o.lv] || 1) : 1, c: i, pts: 0, str: 0, bst: 0, gain: 0, ok: null, ans: -1, ms: 0, cor: 0, pr: 0, bn: 0 }))
     };
   }
   let ver = 1, plans = null;
@@ -2018,9 +2042,10 @@ function khEngine(seats, opt, loaded) {
     st.ph = 'ask'; st.t0 = st.T; st.tot = T_(); st.dl = st.T + st.tot;
     plans = st.P.map((p, i) => {
       if (!p.bot) return null;
-      const acc = [.42, .66, .88][p.lv], right = Math.random() < acc, c = q().c, n = q().a.length;
+      const acc = [.42, .66, .88, .97][p.lv], right = Math.random() < acc, c = q().c, n = q().a.length;
       let ans = c;
       if (!right) { do { ans = ri(n); } while (ans === c); }
+      if (p.lv === 3) return { at: st.t0 + Math.min(st.tot * .8, rr(850, 1900) + 22 * q().a.join('').length), ans };
       const f = [[.38, .95], [.18, .7], [.08, .42]][p.lv];
       return { at: st.t0 + rr(f[0], f[1]) * st.tot, ans };
     });
@@ -2053,7 +2078,7 @@ function khEngine(seats, opt, loaded) {
       if (!plans) {
         plans = st.P.map((p, i) => {
           if (!p.bot || p.ans >= 0) return null;
-          const c = q().c, acc = [.42, .66, .88][p.lv], right = Math.random() < acc;
+          const c = q().c, acc = [.42, .66, .88, .97][p.lv], right = Math.random() < acc;
           let ans = c; if (!right) { do { ans = ri(q().a.length); } while (ans === c); }
           return { at: st.T + rr(.1, .85) * (st.dl - st.T), ans };
         });
@@ -2220,7 +2245,7 @@ ${o.useCustom && cq.qs.length ? '' : `<div class="kh-cats">${cats}</div><p style
 ${K.optRow('Number', 'n', o.useCustom && cq.qs.length ? [[5, '5'], [10, '10'], [20, '20'], [60, 'All']] : [[5, '5'], [10, '10'], [15, '15'], [20, '20']], o.n)}
 ${K.optRow('Seconds per question', 't', [[10, '10'], [20, '20'], [30, '30'], [45, '45']], o.t)}
 ${K.optRow('Bots (solo)', 'bots', [[2, '2'], [4, '4'], [6, '6'], [9, '9']], o.bots)}
-${K.optRow('Bot skill', 'lv', [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard'], ['mix', 'Mixed']], o.lv)}
+${K.optRow('Bot skill', 'lv', [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard'], ['hardest', 'Hardest'], ['mix', 'Mixed']], o.lv)}
 ${K.btn('solo', 'green', 'Play vs bots')}${K.btn('online', 'blue', 'Host a game', 'Online 2 to 16 players, bots can fill empty seats')}<div class="pg-row">${K.btn('custom', 'purple sm', 'Write a custom quiz')}${K.btn('how', 'gray sm', 'How to play')}</div>${s.best ? `<p>Best score: ${khFmt(s.best)} · Games won: ${s.wins || 0}</p>` : ''}</div>`, a => {
       if (a === 'solo') K.startSolo(); else if (a === 'online') K.startOnline();
       else if (a === 'how') K.showHow(() => KH_D.menu(K));
@@ -2387,7 +2412,17 @@ const qpBotAns = () => {
   if (r < .88) return `${qpCap(n)}s, but ${a}`;
   return `My ${a} ${n}`;
 };
-const qpClean = s => String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 90);
+const RUDE = /(^|[^a-z])(f+u+c*k+|sh+i+t+|b+i+t+c+h+|c+u+n+t+|n+i+gg+(?:e+r+|a+)|f+a+g+(?:g*o+t+)?|r+e+t+a+r+d+(?:e+d+|s+)|wh+o+r+e+|s+l+u+t+|d+i+c+k+h+e+a+d+|p+u+s+s+y+|c+o+c+k+s+u+c+k+|a+s+s+h+o+l+e+|b+a+s+t+a+r+d+|w+a+n+k+|t+w+a+t+|p+o+r+n+o*|r+a+p+e+|k+y+s+|p+e+d+o+|put(?:e|ain)|salop(?:e|ard)|conn(?:ard|asse)|encul[eé]|merde|niqu(?:e|er))(?:s|e[dr]|ing|y)?(?![a-z])/g;
+const LEET = { 0: 'o', 1: 'i', 3: 'e', 4: 'a', 5: 's', 7: 't', '@': 'a', $: 's' };
+const tame = s => {
+  s = String(s == null ? '' : s);
+  const n = s.replace(/[A-Z013457@$]/g, c => LEET[c] || c.toLowerCase());
+  let o = '', at = 0, m;
+  RUDE.lastIndex = 0;
+  while ((m = RUDE.exec(n))) { const i = m.index + m[1].length, j = m.index + m[0].length; o += s.slice(at, i) + s[i] + '*'.repeat(j - i - 1); at = j; }
+  return o + s.slice(at);
+};
+const qpClean = s => tame(String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 90));
 const qpFmt = n => n.toLocaleString('en');
 
 function qpEngine(seats, opt, loaded) {
