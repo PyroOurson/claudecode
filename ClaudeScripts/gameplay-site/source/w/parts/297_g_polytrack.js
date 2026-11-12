@@ -7,8 +7,8 @@ const sstep = t => t * t * (3 - 2 * t);
 const COARSE = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 const ID = 'polytrack', G = '.gm-' + ID;
 function fitPR(api, v, hook) {
-  const r = v.renderer, c = v.canvas, Q = [1, 0.8, 0.64, 0.5];
-  let lvl = 0, cw = 0, avg = 0.016, t = -2, wait = 8, chk = 0, lf = -1, sf = 0, up = 0, was = 1;
+  const r = v.renderer, c = v.canvas, Q = [1, 0.75, 0.55];
+  let lvl = 0, cw = 0, avg = 0.016, t = -2, wait = 8, chk = 0, lf = -1, sf = 0, up = 0;
   const apply = () => {
     const d = Math.min(2, window.devicePixelRatio || 1), B = Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * d * d * 1.05);
     const pr = Math.max(0.5, Math.min(4, d * cw / v.w, Math.sqrt(B / (v.w * v.h)))) * Q[lvl];
@@ -17,6 +17,7 @@ function fitPR(api, v, hook) {
   };
   const size = () => { const w = c.getBoundingClientRect().width; if (w && Math.abs(w - cw) > Math.max(2, cw * 0.02)) { cw = w; apply(); } };
   const set = n => { lvl = n; t = 0; apply(); if (hook) hook(lvl); };
+  r.forceContextLoss = () => {};
   size(); api.on(window, 'resize', size);
   api.loop(dt => {
     const f = r.info.render.frame;
@@ -26,7 +27,7 @@ function fitPR(api, v, hook) {
     avg += (dt - avg) * Math.min(1, dt * 1.5); t += dt;
     if (performance.now() - chk > 500) { chk = performance.now(); size(); }
     if (t < 1.5) return;
-    if (avg > 0.021 && lvl < Q.length - 1 && (lvl < 2 || avg < was * 0.94)) { if (up && t < 6) wait = Math.min(64, wait * 2); up = 0; was = avg; set(lvl + 1); }
+    if (avg > 0.021 && lvl < Q.length - 1) { if (up && t < 6) wait = Math.min(64, wait * 2); up = 0; set(lvl + 1); }
     else if (avg < 0.0175 && lvl && t > wait) { up = 1; set(lvl - 1); }
   });
 }
