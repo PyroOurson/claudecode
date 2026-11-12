@@ -517,9 +517,16 @@ function scBestKeep(rack) {
   return { v: best, out };
 }
 
-const SC_LEVELS = ['Easy', 'Medium', 'Hard', 'Expert'];
+const SC_LEVELS = ['Easy', 'Medium', 'Hard', 'Hardest'];
 
 function scAi(s, p, level, R) {
+  const g = scAiGen(s, p, level, R);
+  let r;
+  do { r = g.next(); } while (!r.done);
+  return r.value;
+}
+
+function* scAiGen(s, p, level, R) {
   R = R || Math.random;
   const E = loadDict(), rack = s.racks[p];
   const t0 = performance.now();
@@ -561,7 +568,7 @@ function scAi(s, p, level, R) {
   let bestEq = -1e9;
   for (const m of cands) {
     let opb = 0;
-    if (opp.length && performance.now() - t0 < 2500) {
+    if (opp.length && performance.now() - t0 < 1500) {
       const bd2 = s.bd.slice(), bl2 = s.bl.slice();
       for (const t of m.tiles) { bd2[t.r * 15 + t.c] = t.l; bl2[t.r * 15 + t.c] = t.b; }
       for (let k = 0; k < samples; k++) {
@@ -572,6 +579,7 @@ function scAi(s, p, level, R) {
         let mx = 0;
         for (const x of rep) if (x.score > mx) mx = x.score;
         opb += mx;
+        yield;
       }
       opb /= samples;
     }
@@ -965,9 +973,22 @@ function scMount(root, api) {
       M.think = p; drawStatus();
       later(650 + Math.random() * 700, () => {
         if (e.s.turn !== p || e.s.over || e.s.fin || (e.s.moves + '/' + e.s.log.length) !== mv) return;
-        const a = scAi(e.s, p, M.lv[p]);
-        M.think = -1;
-        exec(p, a.type === 'play' ? { k: 'play', tiles: a.tiles } : a.type === 'exch' ? { k: 'exch', letters: a.letters } : { k: 'pass' });
+        const job = scAiGen(e.s, p, M.lv[p]), tk = M.tok;
+        const fresh = () => tk === M.tok && e.s.turn === p && !e.s.over && !e.s.fin && (e.s.moves + '/' + e.s.log.length) === mv;
+        const step = () => {
+          if (!fresh()) return;
+          const t1 = performance.now();
+          let r;
+          do { r = job.next(); } while (!r.done && performance.now() - t1 < 14);
+          if (!r.done) return api.timeout(step, 0);
+          const a = r.value;
+          later(0, () => {
+            if (!fresh()) return;
+            M.think = -1;
+            exec(p, a.type === 'play' ? { k: 'play', tiles: a.tiles } : a.type === 'exch' ? { k: 'exch', letters: a.letters } : { k: 'pass' });
+          });
+        };
+        step();
       });
     }
   }
@@ -2531,7 +2552,7 @@ function bgCover() {
 }
 
 Ameplay.register({
-  id: 'scrabble',
+  id: 'scrabble', engine: { scGame, scAi },
   title: 'Scrabble',
   category: 'Board',
   tint: '#1b5c4b',

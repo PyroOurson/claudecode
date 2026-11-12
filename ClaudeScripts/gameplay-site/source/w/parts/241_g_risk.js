@@ -933,7 +933,7 @@
   const isLight = c => { const [r, g, b] = hexRgb(c); return r * .299 + g * .587 + b * .114 > 150; };
   const MAPB = { x: -10, y: -6, w: 1040, h: 640 };
   const MODES = { dom: 'World Domination', cap: 'Capitals' };
-  const DIFFS = ['Easy', 'Normal', 'Hard'];
+  const DIFFS = ['Easy', 'Normal', 'Hardest'];
   const PHASE_LBL = { claim: 'claims territories', cappick: 'chooses a capital', setup: 'places armies', reinforce: 'reinforces', attack: 'attacks', occupy: 'attacks', fortify: 'fortifies' };
 
   Ameplay.register({

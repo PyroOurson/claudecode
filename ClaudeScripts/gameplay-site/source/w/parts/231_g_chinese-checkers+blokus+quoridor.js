@@ -11,7 +11,7 @@
   const coarse = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
   const ease = t => 1 - Math.pow(1 - clamp(t, 0, 1), 3);
   const BOTS = ['Ada', 'Bruno', 'Chen', 'Dara', 'Eli', 'Faye', 'Gus', 'Hana', 'Ivo', 'Juno', 'Kai', 'Lena', 'Milo', 'Nora', 'Otis', 'Pia', 'Quin', 'Rhea', 'Sol', 'Tess'];
-  const LEVELS = [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']];
+  const LEVELS = [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard'], ['hardest', 'Hardest']];
   const paused = () => { try { return !!Ameplay.debug.pause(); } catch (e) { return false; } };
 
   function sounds(api) {
@@ -510,7 +510,9 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
         sc.sort((a, b) => b[0] - a[0]);
         return dec(sc[0][1]);
       }
-      const top = ranked(st, s, moves, level === 'hard' ? 9 : 7);
+      const hardest = level === 'hardest';
+      if (hardest) level = 'hard';
+      const top = ranked(st, s, moves, hardest ? 12 : level === 'hard' ? 9 : 7);
       yield;
       let bestM = top[0][1], bestV = -Infinity;
       const scored = [];
@@ -518,6 +520,21 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
         const f = m >> 7, t = m & 127, k = mk(st, s, f, t);
         let v;
         if (finished(st, s)) v = 1e5;
+        else if (two && hardest) {
+          const rp = gen(st, o);
+          if (!rp.length) v = -nm(st, o, s, 4, -Infinity, Infinity, [8, 7, 6, 5]);
+          else {
+            v = Infinity;
+            for (const [, r] of ranked(st, o, rp, 9)) {
+              const rf = r >> 7, rt = r & 127, rk = mk(st, o, rf, rt);
+              const x = finished(st, o) ? -1e4 - 4 : nm(st, s, o, 3, bestV - 3, v, [7, 6, 5]);
+              un(st, o, rk, rf, rt);
+              if (x < v) v = x;
+              if (v <= bestV - 3) break;
+              yield;
+            }
+          }
+        }
         else if (two) v = -nm(st, o, s, level === 'hard' ? 4 : 2, -Infinity, Infinity, level === 'hard' ? [8, 7, 6, 5] : [6, 5]);
         else {
           const stack = [];
@@ -777,6 +794,7 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
       const phase = Math.max(0, 1 - cx.placed / 70);
       return HW.size * sz + HW.corner * nw - HW.lost * lost + HW.cover * cover - HW.centre * 10 * dist * phase * (sz > 1 ? 1 : 0);
     }
+    const BK_NEXT = .45, BK_MOB = .8;
     function* think(st, level) {
       const ci = st.turn, moves = gen(st, ci);
       if (!moves.length) return null;
@@ -786,6 +804,8 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
         for (let i = 1; i < w.length; i++) if (w[i] > w[bi]) bi = i;
         return moves[bi];
       }
+      const hardest = level === 'hardest';
+      if (hardest) level = 'hard';
       const cx = ctxOf(st, ci);
       const sc = [];
       for (let i = 0; i < moves.length; i++) {
@@ -794,7 +814,7 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
       }
       sc.sort((a, b) => b[0] - a[0]);
       if (level !== 'hard' || sc.length < 2) return sc[0][1];
-      const K = Math.min(5, sc.length);
+      const K = Math.min(hardest ? 8 : 5, sc.length);
       let best = sc[0][1], bv = -Infinity;
       for (let k = 0; k < K; k++) {
         const m = sc[k][1], t = clone(st);
@@ -805,12 +825,20 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
           const om = gen(t, o);
           if (!om.length) continue;
           const ocx = ctxOf(t, o);
-          let mxv = -Infinity;
-          for (const mm of om) { const v = feat(t, o, mm, ocx); if (v > mxv) mxv = v; }
+          let mxv = -Infinity, mxm = null;
+          for (const mm of om) { const v = feat(t, o, mm, ocx); if (v > mxv) { mxv = v; mxm = mm; } }
           worst += mxv;
+          if (hardest && mxm) place(t, o, mxm);
           yield;
         }
-        const v = sc[k][0] - .3 * worst / Math.max(1, cx.foes.length);
+        let v = sc[k][0] - .3 * worst / Math.max(1, cx.foes.length);
+        if (hardest) {
+          const nx = gen(t, ci), ncx = nx.length ? ctxOf(t, ci) : null;
+          let mine = -HW.size * 2;
+          for (const mm of nx) { const f = feat(t, ci, mm, ncx); if (f > mine) mine = f; }
+          v += BK_NEXT * mine + BK_MOB * Math.log(1 + nx.length);
+          yield;
+        }
         if (v > bv) { bv = v; best = m; }
       }
       return best;
@@ -977,6 +1005,7 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
       }
       return cand;
     }
+    let WV = .12;
     function evalFor(st, s) {
       const ds = dist(st, s);
       let mn = 99, sum = 0;
@@ -989,7 +1018,7 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
       let wl = st.walls[s];
       let ow = 0;
       for (let o = 0; o < st.n; o++) if (o !== s) ow += st.walls[o];
-      return (st.n === 2 ? oth : .6 * mn + .4 * oth) * 1.0 - ds * 1.15 + .12 * (wl - ow / (st.n - 1));
+      return (st.n === 2 ? oth : .6 * mn + .4 * oth) * 1.0 - ds * 1.15 + WV * (wl - ow / (st.n - 1));
     }
     function options(st, s, wallCap) {
       const out = [];
@@ -1005,6 +1034,7 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
       }
       return out;
     }
+    const QD_WALL = .4, QD_MS = 1300;
     function tryApply(st, s, m) {
       const sv = { pos: st.pos[s], walls: st.walls[s], turn: st.turn, over: st.over, winner: st.winner };
       if (m.w) { (m.w === 'h' ? st.hw : st.vw)[m.r * 8 + m.c] = 1; st.walls[s]--; }
@@ -1022,7 +1052,8 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
       return v;
     }
     function* think(st, level) {
-      const s = st.turn, n = st.n;
+      const s = st.turn, n = st.n, t0 = performance.now();
+      WV = level === 'hardest' && n === 2 ? QD_WALL : .12;
       const opts = options(st, s);
       if (!opts.length) return null;
       const mv = opts.filter(o => !o.w);
@@ -1042,6 +1073,9 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
         if ((i & 15) === 15) yield;
       }
       sc.sort((a, b) => b[0] - a[0]);
+      if (sc[0][0] >= 1e3) return sc[0][1];
+      const hardest = level === 'hardest';
+      if (hardest) level = 'hard';
       if (level === 'normal' || sc.length === 1) {
         const top = sc[0];
         if (level === 'normal' && n === 2 && Math.random() < .12) {
@@ -1050,12 +1084,45 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
         }
         return top[1];
       }
-      const K = Math.min(n === 2 ? 10 : 6, sc.length);
+      const K = Math.min(n === 2 ? (hardest ? 12 : 10) : 6, sc.length);
       let best = sc[0][1], bv = -Infinity;
       for (let k = 0; k < K; k++) {
         const m = sc[k][1], sv = tryApply(st, s, m);
         let v;
         if (st.over) v = 1e3;
+        else if (n === 2 && hardest) {
+          const o = 1 - s;
+          st.turn = o;
+          const rs = options(st, o).map(x => [valueAfter(st, o, x), x]).sort((a, b) => b[0] - a[0]).slice(0, 9);
+          if (!rs.length) v = evalFor(st, s);
+          else {
+            v = Infinity;
+            for (const [, r] of rs) {
+              const sv2 = tryApply(st, o, r);
+              let x;
+              if (st.over) x = -1e3 - 4;
+              else {
+                st.turn = s;
+                const deep = performance.now() - t0 < QD_MS * .6, mine = options(st, s).map(q => [valueAfter(st, s, q), q]).sort((a, b) => b[0] - a[0]).slice(0, 8);
+                x = mine.length ? -Infinity : evalFor(st, s);
+                for (const [, mm] of mine) {
+                  const sv3 = tryApply(st, s, mm);
+                  let y;
+                  if (st.over) y = 1e3 + 3;
+                  else { st.turn = o; y = -nmq(st, o, deep ? 3 : 1, -v, -Math.max(x, bv - 1)); }
+                  untry(st, s, mm, sv3);
+                  if (y > x) x = y;
+                  if (x >= v) break;
+                  if (deep) yield;
+                }
+              }
+              untry(st, o, r, sv2);
+              if (x < v) v = x;
+              if (v <= bv - 1) break;
+              yield;
+            }
+          }
+        }
         else if (n === 2) {
           st.turn = 1 - s;
           v = -nmq(st, 1 - s, level === 'hard' ? 3 : 1, -Infinity, Infinity);
@@ -1079,6 +1146,7 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
         v += Math.random() * .02;
         if (v > bv) { bv = v; best = m; }
         yield;
+        if (hardest && performance.now() - t0 > QD_MS) break;
       }
       return best;
     }
