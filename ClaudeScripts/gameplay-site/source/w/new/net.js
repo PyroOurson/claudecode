@@ -1194,7 +1194,7 @@ function makeNet(g, add) {
     rm.state = 'lobby'; rm.inGame = false; rm.list = []; rm.leader = null; rm.chat = []; rm.go = null; net.closeReason = null;
     const t0 = now(), END = res ? 22000 : 16000, MISS = res ? 6 : 3;
     let a = 0, miss = 0, ice = 0, r = null;
-    const fatal = e => { netSes(null); shut(false); netDiag('join-fail', { type: e && e.type, n: a, ms: now() - t0 }); throw e; };
+    const fatal = e => { netSes(null); shut(false); netDiag('join-fail', { type: e && e.type, n: a, ms: now() - t0 }); netTrack('party_fail', { game: g.id, why: String(e && e.type || 'unknown').slice(0, 24), n: a, ms: now() - t0, resume: !!res }); throw e; };
     netDiag('join-start', { resume: !!res });
     while (!r) {
       if (a) {
@@ -1463,8 +1463,8 @@ function makeNet(g, add) {
           rm.min = cfg.min; rm.max = Math.max(pick, rm.guests.size + 1); rm.sizes = cfg.sizes; phase = 'ready'; cache = {};
           if (res && res.h && res.code === code) { rm.bots = !!(res.h.bots && rm.botsOk); rm.pub = !!res.h.pub && !rm.compat; }
           pushList();
-          netTrack('party_create', { game: g.id, size: pick });
-        } catch (e) { if (!done && my === op && !(e && e.type === 'cancel')) { note = null; fail(netWhy(e), hosting); } }
+          netTrack('party_create', { game: g.id, size: pick, pub: rm.pub ? 1 : 0, peer: peer ? 1 : 0, rt: rm.door ? 1 : 0 });
+        } catch (e) { if (!done && my === op && !(e && e.type === 'cancel')) { note = null; netTrack('party_fail', { game: g.id, why: 'host:' + String(e && e.type || 'unknown').slice(0, 18) }); fail(netWhy(e), hosting); } }
       };
       const joining = async (code, who) => {
         code = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -1476,6 +1476,7 @@ function makeNet(g, add) {
         const resume = !!(ses && ses.g === g.id && ses.code === code && ses.role === 'guest');
         const my = ++op, fn = () => joining(code, who);
         fn.code = code;
+        const jt0 = Date.now();
         phase = 'joining'; err = ''; again = fn; note0 = '';
         jst = { phase: 'joining', code, msg: '', who: netName(who) || '' };
         note = t => { if (!done && my === op) { note0 = t; cache = {}; ui.join(); } };
@@ -1485,7 +1486,7 @@ function makeNet(g, add) {
           const ok = await roomJoin(code);
           if (done || my !== op || !ok) return;
           note = null; note0 = ''; phase = 'ready'; cache = {}; jst = { phase: 'idle', code: '', msg: '', who: '' };
-          netTrack('party_join', { game: g.id, via: rm.via });
+          netTrack('party_join', { game: g.id, via: rm.via, ms: Date.now() - jt0 });
           show('lobby'); fit();
         } catch (e) {
           const t = e && e.type;
