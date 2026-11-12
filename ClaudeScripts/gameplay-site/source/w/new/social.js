@@ -83,7 +83,7 @@ function soErr(e, fb) {
   const m = String(e && e.message || '');
   if (e && e.local) return e.local > 3 ? auT('Slow down a little: {what}. Try again in {t}.').replace('{what}', auT('too many invites')).replace('{t}', soSecs(e.local)) : auT('You are sending party invites too fast. Try again in {t}.').replace('{t}', soSecs(e.local));
   if (sbLimit(e) && e.details === 'party') return auT('You are sending party invites too fast. Try again in {t}.').replace('{t}', soSecs(sbWait(e) || 1));
-  if (sbLimit(e)) return sbLimitText(e, /dm_text|dm_image/.test(e.details || '') ? 'too many messages' : 'too many invites');
+  if (sbLimit(e)) return sbLimitText(e, /dm_text|dm_image|dm_file/.test(e.details || '') ? 'too many messages' : 'too many invites');
   if (/not friends/i.test(m)) return auT('You are no longer friends.');
   if (/locked/i.test(m)) return auT('Your account is locked.');
   if (/too many/i.test(m)) return auT('Too many messages. Wait a minute and try again.');
@@ -246,7 +246,7 @@ function soLive() {
 }
 
 const NT = { list: [], key: '', on: {}, snd: 0, hold: 0, t: 0, sw: null, hov: false };
-const ntKey = n => (n.k === 'image' ? 'dm' : n.k) + '|' + (n.from || '') + '|' + (n.a && n.a.game || '');
+const ntKey = n => (n.k === 'image' || n.k === 'file' ? 'dm' : n.k) + '|' + (n.from || '') + '|' + (n.a && n.a.game || '');
 const ntLife = k => k === 'invite' || k === 'join' ? 9000 : k === 'online' ? 4000 : 5500;
 const NT_MAX = 3;
 function ntLoad() {
@@ -278,7 +278,7 @@ function ntPush(n) {
   if (openK === 'notifs') { ntDraw(); return; }
   ntToast(n);
 }
-function ntIcon(k) { return k === 'dm' ? SO_ICO.chat : k === 'image' ? SO_ICO.img : k === 'invite' || k === 'join' ? SO_ICO.pad : k === 'game' ? SO_ICO.star : SO_ICO.user; }
+function ntIcon(k) { return k === 'dm' ? SO_ICO.chat : k === 'image' ? SO_ICO.img : k === 'file' ? FX_ICO.clip : k === 'invite' || k === 'join' ? SO_ICO.pad : k === 'game' ? SO_ICO.star : SO_ICO.user; }
 function ntActLabel(n) { const a = n.a || {}; return a.type === 'join' ? 'Join' : a.type === 'invite' ? 'Invite' : a.type === 'chat' ? (n.k === 'online' ? 'Say hi' : 'Reply') : a.type === 'game' ? 'Play' : a.type === 'friends' ? 'Open' : ''; }
 const ntCount = c => +c > 1 ? `<em class="nt-c" aria-label="${esc(auT('{n} times').replace('{n}', +c))}">×${+c}</em>` : '';
 function ntBox() {
@@ -450,7 +450,7 @@ function dmNotify(c) {
   const name = soName(c.other_id), m = c.last_meta || {}, P = S.prefs;
   if (c.last_kind === 'invite') { if (P.n_inv === false || P.p_inv === 'Nobody') return; ntPush({ k: 'invite', from: c.other_id, t: auT('{u} invited you to play').replace('{u}', name), b: soGameName(m.game), a: { type: 'join', game: m.game, code: m.code, uid: c.other_id } }); }
   else if (c.last_kind === 'join') { if (P.n_inv === false || P.p_inv === 'Nobody') return; ntPush({ k: 'join', from: c.other_id, t: auT('{u} wants to join your party').replace('{u}', name), b: soGameName(m.game), a: { type: 'invite', game: m.game, uid: c.other_id } }); }
-  else { if (P.n_msg === false) return; ntPush({ k: c.last_kind === 'image' ? 'image' : 'dm', from: c.other_id, t: name, b: c.last_kind === 'image' ? auT('Sent a picture') : String(c.last_body || '').slice(0, 140), a: { type: 'chat', uid: c.other_id } }); }
+  else { if (P.n_msg === false) return; ntPush({ k: c.last_kind === 'image' ? 'image' : c.last_kind === 'file' ? 'file' : 'dm', from: c.other_id, t: name, b: c.last_kind === 'image' ? auT('Sent a picture') : c.last_kind === 'file' ? auT('Sent a file') : String(c.last_body || '').slice(0, 140), a: { type: 'chat', uid: c.other_id } }); }
 }
 async function dmSend(uid, kind, body, meta) {
   const id = await adRpc('dm_send', { p_to: uid, p_kind: kind, p_body: body || null, p_meta: meta || {} });
@@ -512,15 +512,15 @@ function soChatEl() {
   el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', auT('Chats'));
   const xb = `<button class="x" type="button" data-ch="close" aria-label="${esc(auT('Minimize chat'))}" title="${esc(auT('Minimize chat'))}">${SO_ICO.min}</button>`;
   el.innerHTML = `<div class="so-lv"><div class="ch-h so-lh"><span class="so-li">${SO_ICO.chat}</span><div class="ch-n"><b>${esc(auT('Chats'))}</b><span class="ch-s so-lc"></span></div><button class="x" type="button" data-ch="find" aria-label="${esc(auT('Add friends'))}" title="${esc(auT('Add friends'))}">${SO_ICO.add}</button>${xb}</div><label class="so-sr">${SO_ICO.find}<input type="search" placeholder="${esc(auT('Search friends'))}" aria-label="${esc(auT('Search friends'))}" autocomplete="off" spellcheck="false" maxlength="40"></label><div class="so-fl"></div></div>` +
-    `<div class="so-cv"><div class="ch-h"><button class="x so-bk" type="button" data-ch="back" aria-label="${esc(auT('Back to chats'))}" title="${esc(auT('Back to chats'))}">${SO_ICO.back}<em hidden></em></button><span class="pic"></span><div class="ch-n"><b translate="no"></b><span class="ch-s"></span></div>${xb}</div><div class="ch-acts"></div><div class="ch-m" translate="no" aria-live="polite"></div><div class="so-ty" aria-live="polite" hidden></div><div class="note ch-note" role="status"></div><form class="ch-f" novalidate><button class="ch-ib" type="button" data-ch="img" aria-label="${esc(auT('Send a picture'))}" title="${esc(auT('Send a picture'))}">${SO_ICO.img}</button><input type="file" accept="image/*" hidden><textarea rows="1" maxlength="2000" aria-label="${esc(auT('Message'))}"></textarea><button class="ch-sb" type="submit" aria-label="${esc(auT('Send'))}">${SO_ICO.send}</button></form>` +
-    `<div class="so-pk" hidden><div class="ch-h"><button class="x" type="button" data-ch="pkx" aria-label="${esc(auT('Back'))}">${SO_ICO.back}</button><div class="ch-n"><b class="so-pt"></b><span class="ch-s">${esc(auT('A party starts and your invite goes out with the code.'))}</span></div></div><div class="so-pl"></div></div></div>`;
+    `<div class="so-cv"><div class="ch-h"><button class="x so-bk" type="button" data-ch="back" aria-label="${esc(auT('Back to chats'))}" title="${esc(auT('Back to chats'))}">${SO_ICO.back}<em hidden></em></button><span class="pic"></span><div class="ch-n"><b translate="no"></b><span class="ch-s"></span></div>${xb}</div><div class="ch-acts"></div><div class="ch-m" translate="no" aria-live="polite"></div><div class="so-ty" aria-live="polite" hidden></div><div class="note ch-note" role="status"></div><form class="ch-f" novalidate><button class="ch-ib" type="button" data-ch="img" aria-label="${esc(auT('Send a picture'))}" title="${esc(auT('Send a picture'))}">${SO_ICO.img}</button><button class="ch-ib" type="button" data-ch="file" aria-expanded="false" aria-controls="chfh" aria-label="${esc(auT('Send a file'))}" title="${esc(auT('Send a file'))}">${FX_ICO.clip}</button><input type="file" accept="image/*" hidden><input type="file" class="ch-fi" accept="${FX_ACCEPT}" hidden><div class="ch-fh" id="chfh" hidden><b>${esc(auT('Send a file'))}</b><p>${esc(auT(FX_LIMITS))}</p><p>${esc(auT('Only you and your friend can open it. Pictures are made smaller before they are sent.'))}</p><button class="btn2 pri" type="button" data-ch="pickf">${FX_ICO.clip}<span>${esc(auT('Choose a file'))}</span></button></div><textarea rows="1" maxlength="2000" aria-label="${esc(auT('Message'))}"></textarea><button class="ch-sb" type="submit" aria-label="${esc(auT('Send'))}">${SO_ICO.send}</button></form>` +
+    `<div class="so-pk" hidden><div class="ch-h"><button class="x" type="button" data-ch="pkx" aria-label="${esc(auT('Back'))}">${SO_ICO.back}</button><div class="ch-n"><b class="so-pt"></b><span class="ch-s">${esc(auT('A party starts and your invite goes out with the code.'))}</span></div></div><div class="so-pl"></div></div></div><div class="so-dropn" aria-hidden="true"><span>${esc(auT('Drop a picture or a file to send it'))}<small>${esc(auT(FX_LIMITS))}</small></span></div>`;
   document.body.append(el);
-  const ta = el.querySelector('textarea'), fi = el.querySelector('input[type=file]'), sr = el.querySelector('.so-sr input');
-  el.addEventListener('click', e => { const b = e.target.closest('[data-ch]'); if (b) { e.stopPropagation(); dmAct(b.dataset.ch, b); } const im = e.target.closest('.ch-pic img'); if (im && im.src) soLight(im.src); });
+  const ta = el.querySelector('textarea'), fi = el.querySelector('input[type=file]'), ff = el.querySelector('.ch-fi'), sr = el.querySelector('.so-sr input');
+  el.addEventListener('click', e => { const b = e.target.closest('[data-ch]'); if (!(b && b.dataset.ch === 'file') && !e.target.closest('.ch-fh')) dmFileTip(false); if (b) { e.stopPropagation(); dmAct(b.dataset.ch, b); } const im = e.target.closest('.ch-pic img'); if (im && im.src) soLight(im.src); });
   el.addEventListener('submit', e => { e.preventDefault(); dmSendText(); });
   el.addEventListener('keydown', e => {
     e.stopPropagation();
-    if (e.key === 'Escape') { e.preventDefault(); if (!el.querySelector('.so-pk').hidden) soPick(false); else { dmClose(); const b = $('#sodl'); if (b && !b.hidden) b.focus({ preventScroll: true }); } return; }
+    if (e.key === 'Escape') { e.preventDefault(); if (!el.querySelector('.ch-fh').hidden) { dmFileTip(false); el.querySelector('[data-ch="file"]').focus({ preventScroll: true }); } else if (!el.querySelector('.so-pk').hidden) soPick(false); else { dmClose(); const b = $('#sodl'); if (b && !b.hidden) b.focus({ preventScroll: true }); } return; }
     if (e.key === 'Enter' && !e.shiftKey && e.target === ta) { e.preventDefault(); dmSendText(); }
     if (e.key === 'ArrowDown' && e.target === sr) { e.preventDefault(); const f = el.querySelector('.so-fl [data-ch="so"]'); if (f) f.focus(); }
   });
@@ -529,17 +529,18 @@ function soChatEl() {
     ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px';
     if (ta.value.trim() && DM.open && SB.user && Date.now() - SO.tyAt > 3000) { SO.tyAt = Date.now(); rtSend(DM.open, { t: 'ty', f: SB.user.id }); }
   });
-  ta.addEventListener('paste', e => { const f = [...(e.clipboardData && e.clipboardData.files || [])].find(x => /^image\//.test(x.type)); if (f) { e.preventDefault(); dmImage(f); } });
+  ta.addEventListener('paste', e => { const L = [...(e.clipboardData && e.clipboardData.files || [])]; if (L.length) { e.preventDefault(); dmAttach(L); } });
   sr.addEventListener('input', () => { SO.q = sr.value.trim().toLowerCase().replace(/^@/, ''); soList(); });
   fi.addEventListener('change', () => { const f = fi.files && fi.files[0]; fi.value = ''; if (f) dmImage(f); });
-  el.addEventListener('dragover', e => { if (DM.open) { e.preventDefault(); el.classList.add('so-drop'); } });
+  ff.addEventListener('change', () => { const L = [...(ff.files || [])]; ff.value = ''; dmAttach(L); });
+  el.addEventListener('dragover', e => { if (DM.open && e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files')) { e.preventDefault(); el.classList.add('so-drop'); } });
   el.addEventListener('dragleave', e => { if (!el.contains(e.relatedTarget)) el.classList.remove('so-drop'); });
-  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('so-drop'); const f = [...(e.dataTransfer && e.dataTransfer.files || [])].find(x => /^image\//.test(x.type)); if (f && DM.open) dmImage(f); });
+  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('so-drop'); if (DM.open) dmAttach([...(e.dataTransfer && e.dataTransfer.files || [])]); });
   return el;
 }
 function soPreview(c) {
   const m = c.last_meta || {}, k = c.last_kind;
-  const s = k === 'image' ? auT('Picture') : k === 'invite' ? auT('Party invite · {g}').replace('{g}', soGameName(m.game)) : k === 'join' ? auT('Asked to join · {g}').replace('{g}', soGameName(m.game)) : String(c.last_body || '').split('\n')[0];
+  const s = k === 'image' ? auT('Picture') : k === 'file' ? auT('File · {n}').replace('{n}', m.name || c.last_body || '') : k === 'invite' ? auT('Party invite · {g}').replace('{g}', soGameName(m.game)) : k === 'join' ? auT('Asked to join · {g}').replace('{g}', soGameName(m.game)) : String(c.last_body || '').split('\n')[0];
   return c.last_mine ? auT('You: {m}').replace('{m}', s) : s;
 }
 function soWhen(t) {
@@ -774,7 +775,8 @@ async function dmThread() {
 function dmRow(m, anim, grp) {
   const d = new Date(m.created_at), hm = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const cls = 'ch-r' + (m.mine ? ' me' : '') + (anim ? ' new' : '') + (grp ? ' so-g' : ''), t = grp ? '' : `<small>${esc(hm)}</small>`, g = m.meta || {}, name = soName(DM.open), tt = ` title="${esc(d.toLocaleString())}"`;
-  if (m.kind === 'image') return `<div class="${cls}"${tt}><div class="ch-pic"><img data-path="${esc(g.path || '')}" alt="${esc(auT('Picture'))}" width="${+g.w || 320}" height="${+g.h || 240}" loading="lazy"></div>${t}</div>`;
+  if (m.kind === 'image') return `<div class="${cls}"${tt}><div class="ch-pic" data-fxb="dm"><img data-path="${esc(g.path || '')}" alt="${esc(auT('Picture'))}" width="${+g.w || 320}" height="${+g.h || 240}" loading="lazy">${m.mine && g.path ? fxDelBtn(g.path) : ''}</div>${t}</div>`;
+  if (m.kind === 'file') return `<div class="${cls}"${tt}><div class="ch-file fx-v" data-fxb="dm">${fxCard({ path: g.path || '', name: g.name || m.body || '', size: g.size }, m.mine && !!g.path)}</div>${t}</div>`;
   if (m.kind === 'invite') return `<div class="${cls}"${tt}><div class="ch-card">${SO_ICO.pad}<div><b>${esc(m.mine ? auT('You invited {u} to your party').replace('{u}', name) : auT('{u} invited you to their party').replace('{u}', name))}</b><span>${esc(soGameName(g.game))} · ${esc(auT('Code {c}').replace('{c}', g.code || ''))}</span></div>${m.mine ? '' : `<button class="btn2 pri" type="button" data-ch="go" data-g="${esc(g.game || '')}" data-c="${esc(g.code || '')}">${esc(auT('Join'))}</button>`}</div>${t}</div>`;
   if (m.kind === 'join') return `<div class="${cls}"${tt}><div class="ch-card">${SO_ICO.pad}<div><b>${esc(m.mine ? auT('You asked to join {u}').replace('{u}', name) : auT('{u} wants to join your party').replace('{u}', name))}</b><span>${esc(soGameName(g.game))}</span></div>${m.mine ? '' : `<button class="btn2 pri" type="button" data-ch="invite" data-g="${esc(g.game || '')}">${esc(auT('Invite'))}</button>`}</div>${t}</div>`;
   return `<div class="${cls}"${tt}><div class="ch-b">${esc(m.body || '')}</div>${t}</div>`;
@@ -809,7 +811,7 @@ async function dmImage(file) {
     let blob = file, ext = 'gif', w = 0, h = 0;
     const bm = await createImageBitmap(file);
     w = bm.width; h = bm.height;
-    if (file.type !== 'image/gif' || file.size > 3e6) {
+    if (file.type !== 'image/gif' || file.size > FX.IMG) {
       const k = Math.min(1, 1600 / Math.max(w, h)), cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(h * k));
       const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
       cv.getContext('2d').drawImage(bm, 0, 0, cw, ch);
@@ -826,6 +828,39 @@ async function dmImage(file) {
     auMsg2('');
   } catch (e) { auMsg2(sbLimit(e) ? soErr(e) : 'Could not send the picture. Try another one.', 'bad'); }
 }
+function dmFileTip(on) {
+  const el = $('#chat'), tip = el && el.querySelector('.ch-fh'), b = el && el.querySelector('[data-ch="file"]');
+  if (!tip || tip.hidden === !on) return;
+  tip.hidden = !on; b.setAttribute('aria-expanded', String(on));
+  if (on) tip.querySelector('button').focus({ preventScroll: true });
+}
+function dmAttach(L) {
+  const f = L && L[0];
+  if (!f || !DM.open) return;
+  dmFileTip(false);
+  if (/^image\//.test(f.type) && !/svg/.test(f.type)) dmImage(f); else dmFile(f);
+  if (L.length > 1) toast(auT('Files are sent one at a time. Only the first one was sent.'));
+}
+async function dmFile(file) {
+  const uid = DM.open;
+  if (!uid || !SB.user) return;
+  if (DM.up) { auMsg2('Wait until the file you are sending is done.', 'bad'); return; }
+  const r = await fxPrep(file);
+  if (r.err) { auMsg2(r.err, 'bad'); return; }
+  const it = r.it;
+  if (it.img) { dmImage(file); return; }
+  const w = soCool('file', 4000);
+  if (w) { auMsg2(auT('You just sent one. Wait {s} s before sending another.').replace('{s}', w), 'bad'); return; }
+  const say = p => { if (DM.open === uid) auMsg2(auT('Sending “{n}”… {p}%').replace('{n}', it.name).replace('{p}', Math.round(p * 100))); };
+  DM.up = true; say(0);
+  try {
+    const path = SB.user.id + '/' + uid + '/' + fxId() + '.' + it.ext;
+    await fxPut('dm', path, it.blob, it.mime, say);
+    await dmSend(uid, 'file', null, { path, name: it.name });
+    if (DM.open === uid) auMsg2('');
+  } catch (e) { soSaid(uid, sbLimit(e) || /not friends|locked/i.test(e && e.message || '') ? soErr(e) : e && e.status !== undefined && !e.code ? await fxWhy(e) : 'Could not send the file. Try again.', 'bad'); }
+  finally { DM.up = false; }
+}
 async function dmAct(k, b) {
   const uid = DM.open;
   if (k === 'close') { dmClose(); const l = $('#sodl'); if (l && !l.hidden) l.focus({ preventScroll: true }); return; }
@@ -833,6 +868,8 @@ async function dmAct(k, b) {
   if (k === 'so') { dmOpen(b.dataset.id); return; }
   if (k === 'find') { dmClose(); setOpen('friends'); return; }
   if (k === 'img') { $('#chat input[type=file]').click(); return; }
+  if (k === 'file') { dmFileTip($('#chat .ch-fh').hidden); return; }
+  if (k === 'pickf') { dmFileTip(false); $('#chat .ch-fi').click(); return; }
   if (k === 'pkx') { soPick(false); return; }
   if (k === 'go') { dmClose(); closeAll(); go(href(b.dataset.g, b.dataset.c), false); toast(auT('Joining the party…')); return; }
   if (!uid) return;
@@ -854,7 +891,7 @@ async function dmAct(k, b) {
 }
 function soLight(src) {
   let lb = $('#soLight');
-  if (!lb) { lb = document.createElement('div'); lb.id = 'soLight'; lb.className = 'solight'; lb.innerHTML = '<img alt="">'; lb.addEventListener('click', () => vis(lb, false)); document.body.append(lb); }
+  if (!lb) { lb = document.createElement('div'); lb.id = 'soLight'; lb.className = 'solight'; lb.innerHTML = '<img alt="">'; lb.addEventListener('click', e => { e.stopPropagation(); vis(lb, false); }); document.body.append(lb); }
   soPlace();
   lb.querySelector('img').src = src; vis(lb, true);
 }

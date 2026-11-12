@@ -303,7 +303,7 @@ function adDraw(an) {
   adMorph(tb, h);
   if (ref && ref.isConnected) tw.scrollTop += ref.getBoundingClientRect().top - y0;
 }
-const AD_TABS = ['users', 'tickets', 'stats', 'log', 'site'];
+const AD_TABS = ['users', 'tickets', 'stats', 'log', 'site', 'ideas'];
 function adTab(t) {
   const was = AD.tab, tabs = $('#adtabs'), o = $('#ad' + was), fade = was !== t && view === 'admin' && !o.hidden && motionOK(), top = fade ? o.offsetTop : 0;
   AD.tab = t;
@@ -323,6 +323,7 @@ function adTab(t) {
   if (t === 'stats') { stShell(); if (INS.sub === 'ins') insLoad(false); else stLoad(); }
   if (t === 'log') alLoad();
   if (t === 'site') { sfaDraw(); sfgLoad(); }
+  if (t === 'ideas') idaTab();
 }
 function adLiveTxt(u) {
   const pr = RT.pres[u.id];
@@ -587,7 +588,7 @@ function abWho(id, un, dn, fb) {
 function abHtml(A, R) {
   const rep = R.length ? `<div class="adm-tw ab-tw"><table class="adm-t st-t ab-t"><thead><tr>${['When', 'Reported player', 'Reason', 'Details', 'By', ''].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${R.map(r => {
     const M = r.context && Array.isArray(r.context.messages) ? r.context.messages : [];
-    const msgs = M.length ? `<details class="ab-msgs"><summary>${esc(auT('{n} recent messages').replace('{n}', M.length))}</summary>${M.map(m => `<div class="adm-mut"><b>${esc(m.from_reported ? auT('Reported') : auT('Reporter'))}</b> · ${esc(m.kind === 'text' ? String(m.body || '') : m.kind === 'image' ? auT('Picture') : auT('Party invite') + ' · ' + adGame(m.meta && m.meta.game))}</div>`).join('')}</details>` : '';
+    const msgs = M.length ? `<details class="ab-msgs"><summary>${esc(auT('{n} recent messages').replace('{n}', M.length))}</summary>${M.map(m => `<div class="adm-mut"><b>${esc(m.from_reported ? auT('Reported') : auT('Reporter'))}</b> · ${esc(m.kind === 'text' ? String(m.body || '') : m.kind === 'image' ? auT('Picture') : m.kind === 'file' ? auT('File · {n}').replace('{n}', m.meta && m.meta.name || '') : auT('Party invite') + ' · ' + adGame(m.meta && m.meta.game))}</div>`).join('')}</details>` : '';
     return `<tr data-k="ab:${+r.id}"><td title="${esc(adDate(r.created_at, 1))}">${esc(adAgo(r.created_at))}</td><td>${abWho(r.target, r.target_username, r.target_display)}${r.target_locked ? ' ' + adPill('Locked', 'bad') : ''}${+r.target_reports > 1 ? ' ' + adPill(auT('{n} reports').replace('{n}', +r.target_reports), 'warn') : ''}</td><td>${esc(auT(AB_R[r.reason] || r.reason))}</td><td class="ab-d">${r.details ? `<span>${esc(r.details)}</span>` : ''}${msgs}</td><td>${abWho(r.reporter, r.reporter_username, null)}</td><td><div class="ab-acts">${r.ticket_id ? `<button class="btn2" type="button" data-abt="${+r.ticket_id}">${esc(auT('Open ticket'))}</button>` : ''}<button class="btn2" type="button" data-abr="${+r.id}">${esc(auT('Close'))}</button></div></td></tr>`;
   }).join('')}</tbody></table></div>` : `<div class="adm-empty">${esc(auT('No open reports.'))}</div>`;
   const lim = A.length ? `<div class="adm-tw ab-tw"><table class="adm-t st-t ab-t"><thead><tr>${['Player', 'Limit', 'Requests', 'Times at the limit', 'Last', ''].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${A.map(a => `<tr><td>${a.uid ? abWho(a.uid, a.username, a.display_name) : `<span class="adm-mut">${esc(auT('Signed out visitor'))} · <code>${esc(a.ip || '')}</code></span>`}</td><td>${esc(auT(AB_T[a.action] || a.action))}</td><td>${stN(a.hits)}</td><td>${+a.at_limit ? adPill(stN(a.at_limit), 'warn') : '0'}</td><td title="${esc(adDate(a.last_at, 1))}">${esc(adAgo(a.last_at))}</td><td>${a.uid ? `<button class="btn2" type="button" data-abreset="${esc(a.uid)}">${esc(auT('Reset limits'))}</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : `<div class="adm-empty">${esc(auT('Nobody came close to a limit.'))}</div>`;
@@ -1254,7 +1255,12 @@ function tkBox(el, mode) {
   el._tk = { mode, list: null, cur: null, n: 0, sig: '', compose: false };
   el.classList.add('tk');
   el.dataset.mode = mode;
-  el.innerHTML = `<div class="tk-side">${mode === 'user' ? `<form class="tk-new" novalidate hidden><div class="fld"><label>${esc(auT('Subject'))}</label><input class="tk-subj-in" maxlength="120" autocomplete="off"></div><div class="fld"><label>${esc(auT('Message'))}</label><textarea class="tk-body-in" maxlength="2000" rows="4"></textarea></div><div class="tk-row"><button class="btn2 tk-cancel" type="button" data-tk="cancel">${esc(auT('Cancel'))}</button><button class="btn2 pri" type="submit">${esc(auT('Send ticket'))}</button></div></form><button class="btn2 pri tk-open" type="button" data-tk="new">${esc(auT('New ticket'))}</button>` : ''}<div class="tk-list" role="list"></div></div><div class="tk-main" hidden><div class="tk-h"><button class="back" type="button" data-tk="back">${AD_ICO.back}${esc(auT('All tickets'))}</button><div class="tk-ht"><b class="tk-subj" translate="no"></b><span class="tk-meta"></span></div><button class="btn2 tk-tog" type="button" data-tk="toggle"></button>${mode === 'admin' ? `<button class="btn2 danger tk-del" type="button" data-tk="del">${esc(auT('Delete ticket'))}</button>` : ''}</div><div class="tk-msgs" translate="no" aria-live="polite"></div><form class="tk-comp" novalidate><textarea maxlength="2000" rows="2" placeholder="${esc(auT('Write a message'))}"></textarea><button class="btn2 pri" type="submit" aria-label="${esc(auT('Send'))}">${AD_ICO.send}<span>${esc(auT('Send'))}</span></button></form></div><div class="note tk-note" role="status"></div>`;
+  el.innerHTML = `<div class="tk-side">${mode === 'user' ? `<form class="tk-new" novalidate hidden><div class="fld"><label>${esc(auT('Subject'))}</label><input class="tk-subj-in" maxlength="120" autocomplete="off"></div><div class="fld"><label>${esc(auT('Message'))}</label><textarea class="tk-body-in" maxlength="2000" rows="4"></textarea></div><div class="tk-fx tk-fxn"></div><div class="tk-row"><button class="btn2 tk-cancel" type="button" data-tk="cancel">${esc(auT('Cancel'))}</button><button class="btn2 pri" type="submit">${esc(auT('Send ticket'))}</button></div></form><button class="btn2 pri tk-open" type="button" data-tk="new">${esc(auT('New ticket'))}</button>` : ''}<div class="tk-list" role="list"></div></div><div class="tk-main" hidden><div class="tk-h"><button class="back" type="button" data-tk="back">${AD_ICO.back}${esc(auT('All tickets'))}</button><div class="tk-ht"><b class="tk-subj" translate="no"></b><span class="tk-meta"></span></div><button class="btn2 tk-tog" type="button" data-tk="toggle"></button>${mode === 'admin' ? `<button class="btn2 danger tk-del" type="button" data-tk="del">${esc(auT('Delete ticket'))}</button>` : ''}</div><div class="tk-msgs" translate="no" aria-live="polite"></div><form class="tk-comp" novalidate><textarea maxlength="2000" rows="2" placeholder="${esc(auT('Write a message'))}"></textarea><button class="btn2 pri" type="submit" aria-label="${esc(auT('Send'))}">${AD_ICO.send}<span>${esc(auT('Send'))}</span></button><div class="tk-fx tk-fxc"></div></form></div><div class="note tk-note" role="status"></div>`;
+  if (el.id !== 'tkb') {
+    const nf = el.querySelector('.tk-new'), cf = el.querySelector('.tk-comp');
+    if (nf) el._tk.fxn = fxBox(nf.querySelector('.tk-fxn'), { drop: nf, paste: [nf] });
+    el._tk.fx = fxBox(cf.querySelector('.tk-fxc'), { drop: el.querySelector('.tk-main'), paste: [cf] });
+  }
   el.addEventListener('click', e => { const b = e.target.closest('[data-tk]'); if (b) { e.stopPropagation(); tkAct(el, b.dataset.tk, b); } });
   el.addEventListener('submit', e => { e.preventDefault(); if (e.target.classList.contains('tk-new')) tkCreate(el); else tkSend(el); });
   el.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && e.target.tagName === 'TEXTAREA') { e.preventDefault(); e.target.form.requestSubmit(); } });
@@ -1291,6 +1297,7 @@ function tkShow(el, main) {
 }
 async function tkOpen(el, id) {
   const T = el._tk;
+  if (T.fx && T.cur !== id) T.fx.clear();
   T.cur = id; T.sig = '';
   const t = (T.list || []).find(x => x.id === id);
   el.querySelector('.tk-subj').textContent = t ? t.subject : '';
@@ -1322,37 +1329,52 @@ async function tkThread(el) {
     T.sig = sig;
     box.innerHTML = ms.map((m, i) => {
       const who = m.mine ? auT('You') : m.is_admin ? (T.mode === 'admin' && m.author ? auT('Admin') + ' · @' + m.author : auT('Admin')) : T.mode === 'admin' ? (m.author ? '@' + m.author : auT('User')) : auT('You');
-      return `<div class="tk-m${m.mine ? ' me' : ''}${m.is_admin ? ' tk-adm' : ''}${i >= old ? ' new' : ''}"><div class="tk-b">${esc(m.body)}</div><span class="tk-w">${esc(who)} · ${esc(adAgo(m.created_at))}</span></div>`;
+      return `<div class="tk-m${m.mine ? ' me' : ''}${m.is_admin ? ' tk-adm' : ''}${i >= old ? ' new' : ''}"><div class="tk-b">${esc(m.body)}</div>${fxAtts(m.attachments, 'tickets', { staff: T.mode === 'admin', del: m.mine })}<span class="tk-w">${esc(who)} · ${esc(adAgo(m.created_at))}</span></div>`;
     }).join('');
+    fxFill(box);
     if (near) box.scrollTop = box.scrollHeight;
   } catch (e) { tkNote(el, 'Could not load the messages. Check your connection and try again.', 'bad'); }
 }
 async function tkSend(el) {
-  const T = el._tk, ta = el.querySelector('.tk-comp textarea'), b = el.querySelector('.tk-comp button'), v = ta.value.trim();
-  if (!v || !T.cur) { auShake(ta); return; }
-  b.disabled = true; b.classList.add('is-busy'); tkNote(el, '');
+  const T = el._tk, ta = el.querySelector('.tk-comp textarea'), b = el.querySelector('.tk-comp [type=submit]'), v = ta.value.trim(), id = T.cur, n = T.fx ? T.fx.items.length : 0;
+  if (!id || b.disabled) return;
+  if (!v) { auShake(ta); if (n) tkNote(el, 'Write a short message to go with your files.', 'bad'); ta.focus({ preventScroll: true }); return; }
+  b.disabled = true; b.classList.add('is-busy'); tkNote(el, n ? 'Uploading your files…' : '');
   try {
-    await adRpc('ticket_send', { p_ticket: T.cur, p_body: v });
+    const files = n ? await T.fx.upload('tickets', SB.user.id) : [];
+    if (n) tkNote(el, '');
+    await tkRpc('ticket_send', { p_ticket: id, p_body: v }, files);
+    if (T.fx) T.fx.clear();
     ta.value = '';
     track('ticket', { act: 'send', admin: T.mode === 'admin' });
     await tkThread(el);
     await tkLoad(el); tkHead(el);
-  } catch (e) { tkNote(el, adErr(e), 'bad'); }
+  } catch (e) { tkNote(el, tkErr(e), 'bad'); }
   finally { b.disabled = false; b.classList.remove('is-busy'); }
+}
+const tkErr = e => e && e.fx ? e.message : /attachment/i.test(e && e.message || '') ? 'One of your files could not be attached. Remove it and try again.' : adErr(e);
+async function tkRpc(fn, args, files) {
+  try { return await adRpc(fn, Object.assign({}, args, { p_files: files })); }
+  catch (e) { if (!sbMissing(e)) throw e; if (files.length) throw Object.assign(new Error(auT('Files cannot be attached yet. Send your message without them.')), { fx: true }); return adRpc(fn, args); }
 }
 async function tkCreate(el) {
   const f = el.querySelector('.tk-new'), s = f.querySelector('.tk-subj-in'), m = f.querySelector('.tk-body-in'), b = f.querySelector('[type=submit]');
   if (!s.value.trim()) { tkNote(el, 'Write a subject.', 'bad'); auShake(s.closest('.fld')); return; }
   if (!m.value.trim()) { tkNote(el, 'Write a message.', 'bad'); auShake(m.closest('.fld')); return; }
-  b.disabled = true; tkNote(el, 'Sending…');
+  if (b.disabled) return;
+  const fx = el._tk.fxn, n = fx ? fx.items.length : 0;
+  b.disabled = true; tkNote(el, n ? 'Uploading your files…' : 'Sending…');
   try {
-    const id = await adRpc('ticket_create', { p_subject: s.value, p_body: m.value });
+    const files = n ? await fx.upload('tickets', SB.user.id) : [];
+    if (n) tkNote(el, 'Sending…');
+    const id = await tkRpc('ticket_create', { p_subject: s.value, p_body: m.value }, files);
+    if (fx) fx.clear();
     s.value = ''; m.value = ''; el._tk.compose = false;
     track('ticket', { act: 'create' });
     tkNote(el, '');
     await tkLoad(el);
     tkOpen(el, +id);
-  } catch (e) { tkNote(el, adErr(e) === 'Too many messages. Wait a minute and try again.' ? 'Too many tickets. Wait a while and try again.' : adErr(e), 'bad'); }
+  } catch (e) { tkNote(el, tkErr(e) === 'Too many messages. Wait a minute and try again.' ? 'Too many tickets. Wait a while and try again.' : tkErr(e), 'bad'); }
   finally { b.disabled = false; }
 }
 async function tkAct(el, k, b) {
@@ -1551,6 +1573,7 @@ async function achLoad(u, older) {
 }
 function achWhat(m) {
   if (m.kind === 'image') return `<i>${esc(auT('Sent a picture'))}</i>`;
+  if (m.kind === 'file') return `<span class="ach-file">${FX_ICO.file}<i>${esc(auT('Sent a file'))}</i></span>${m.body ? ' · ' + esc(m.body) : ''}`;
   if (m.kind === 'invite') return `<i>${esc(auT('Party invite · {g}').replace('{g}', adGame(m.game)))}${m.room ? ' · ' + esc(m.room) : ''}</i>`;
   if (m.kind === 'join') return `<i>${esc(auT('Asked to join · {g}').replace('{g}', adGame(m.game)))}</i>`;
   return esc(m.body || '');
