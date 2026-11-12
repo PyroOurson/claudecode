@@ -169,6 +169,6 @@ About data:
 ## Could not test
 
 - Real TURN relays, real NATs, VPNs and school firewalls: this sandbox has no direct UDP or TCP sockets to the internet. The fallback order was tested by blocking the signalling server and WebRTC in the browser.
-- The Cloudflare relay `gameplay-api.vitalang.net`: connections from this sandbox are reset before TLS completes, so I could not tell whether it is healthy.
+- The Cloudflare relay `gameplay-api.vitalang.net`: it answers, but only accepts pages served from the site's own addresses, so neither the relay route nor the new TURN endpoint could be exercised from here.
 - Safari, Firefox, real phones, real 60 fps rendering (the sandbox renders WebGL in software).
 - Google sign-in end to end (no Google account, and it is disabled on staging).

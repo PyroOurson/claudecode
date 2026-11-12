@@ -32,7 +32,9 @@ Check: in the SQL editor run `select private.username_ok('abc'), private.usernam
 
 Follow "TURN relay for online parties" in `server/README.md`: create a TURN key, add the two secrets to the `gameplay-api` worker, paste the new `cloudflare-worker.js`, deploy.
 
-Check: https://gameplay-api.vitalang.net/health shows `ok`. After the new site is deployed, https://gameplaygames.web.app/check (opened while signed in) shows "Relayed connections (site TURN 1): Works". While testing from my side the worker's address did not answer at all, so check `/health` first: if it fails, the relay for school networks is down today, independent of this work.
+Check: https://gameplay-api.vitalang.net/health shows `ok`. After the new site is deployed, https://gameplaygames.web.app/check (opened while signed in) shows "Relayed connections (site TURN 1): Works". From my test machine the worker answers but, as designed, refuses pages that are not served from the site's own addresses, so I could not exercise it; check `/health` yourself before and after pasting the new code.
+
+What I could check without touching anything: the final build, served from my machine and opened as a brand-new anonymous visitor, reads the real backend the same way the live page does, shows the sign-up page with the Google button and the cookie notice in about two seconds, lists 168 games and loads the Terms on demand. Nothing was written.
 
 ## 3. Preview before production
 
