@@ -1086,7 +1086,7 @@ function makeNet(g, add) {
       await nap(1200);
       if (my !== gen) return;
       try {
-        const { c: c2, w } = await guestConnect(code, my, { relayOnly: ice > 1, noP2p: ice > 2 });
+        const { c: c2, w } = await guestConnect(code, my, { relayOnly: ice > 1, noP2p: ice > 0, rtFirst: ice > 0 });
         if (my !== gen) { try { c2.close(); } catch (e) {} return; }
         guestAttach(c2, w);
         if (rm.state === 'game' && rm.inGame && !w.inGame) {
@@ -1213,7 +1213,7 @@ function makeNet(g, add) {
         if (my !== gen) return false;
       }
       a++;
-      try { r = await guestConnect(code, my, { relayOnly: ice > 1, noP2p: ice > 1, rtFirst: ice > 0 }); }
+      try { r = await guestConnect(code, my, { relayOnly: ice > 1, noP2p: ice > 0, rtFirst: ice > 0 }); }
       catch (e) {
         if (my !== gen || (e && e.type === 'cancel')) return false;
         const t = e && e.type;
