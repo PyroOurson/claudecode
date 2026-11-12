@@ -56,6 +56,18 @@
       return tick < s.end;
     }
     if (s.type === 'rev') { r.throttle = s.th; r.steer = s.s; return tick < s.t0 + 80; }
+    if (s.type === 'aerial') {
+      const q = tick - s.t0, Tc = Math.max((s.T - tick) / CFG.hz, 0.03);
+      let dx = s.tx - c.p.x - c.v.x * Tc, dy = s.ty - c.p.y - c.v.y * Tc, dz = s.tz - c.p.z - c.v.z * Tc + 0.5 * CFG.g * Tc * Tc;
+      const L = Math.hypot(dx, dy, dz) || 1, need = 2 * L / (Tc * Tc), fin = Tc < 0.28 || need < 110;
+      if (fin) { dx = s.bx - c.p.x; dy = s.by - c.p.y; dz = s.bz - c.p.z; }
+      const l2 = Math.hypot(dx, dy, dz) || 1;
+      aimAir(c, HXQ, dx / l2, dy / l2, dz / l2, 0, 0, 1);
+      r.throttle = 1; r.jump = q < 24 || (s.dj && q >= 28 && q < 32);
+      if (q >= 5 && !(s.dj && q >= 25 && q <= 32)) { r.pitch = HXQ.pitch; r.steer = HXQ.yaw; r.roll = HXQ.roll; }
+      r.boost = !fin && need > 160 && (dx * c.f.x + dy * c.f.y + dz * c.f.z) / l2 > 0.92;
+      return tick < s.T + 8 && !(c.onGround && q > 45);
+    }
     if (s.type === 'half') {
       const q = tick - s.t0;
       r.throttle = q < 76 ? -1 : 1;
@@ -224,6 +236,37 @@
     return out;
   }
 
+  const HXF = { ok: false, t: 0, i: 0, tx: 0, ty: 0, tz: 0, bx: 0, by: 0, bz: 0, dj: false }, HXH3 = Object.assign({}, HXH);
+  function hxFindAir(W, H, c, mode, out) {
+    const P = H.P, sg = c.team ? -1 : 1, j0 = W.tick - H.t0, dt = H.dt, hl = Math.hypot(c.f.x, c.f.y) || 1, hx = c.f.x / hl, hy = c.f.y / hl;
+    out.ok = false;
+    for (let i = 56; i < 340 && j0 + i < HXN; i += 4) {
+      const o = (j0 + i) * 9, bx = P[o], by = P[o + 1], bz = P[o + 2], t = i * dt, T = t - 0.2;
+      if (Math.abs(by) > HXGL) break;
+      if (bz < 300 || bz > 1850) continue;
+      hxAim(mode, sg, bx, by, P[o + 3], P[o + 4], c.p.x, c.p.y, 0.75, HXH3);
+      const tx = bx - HXH3.nx * (BR + 45), ty = by - HXH3.ny * (BR + 45), tz = bz - 28;
+      if (Math.abs(tx) > CFG.X - 160 || Math.abs(ty) > CFG.Y - 160) continue;
+      for (let dj = 0; dj < 2; dj++) {
+        if (dj && bz < 520) break;
+        const dx = tx - c.p.x - c.v.x * t, dy = ty - c.p.y - c.v.y * t, dz = tz - c.p.z - (dj ? 100 : 72) - (dj ? 693 : 434) * T + 0.5 * CFG.g * T * T;
+        const L = Math.hypot(dx, dy, dz), need = 2 * L / (T * T), hd = Math.hypot(dx, dy);
+        if (need > 880 || (hd > 120 && (dx * hx + dy * hy) / hd < 0.72)) continue;
+        if (c.boost < T * CFG.boostUse * clamp(need / CFG.boostAir + 0.15, 0.3, 1) + 6) continue;
+        out.ok = true; out.t = t; out.i = i; out.tx = tx; out.ty = ty; out.tz = tz; out.bx = bx; out.by = by; out.bz = bz; out.dj = !!dj;
+        return out;
+      }
+    }
+    return out;
+  }
+  function hxAirGo(W, H, c, X, a, mode) {
+    if (H.busy > 2) return false;
+    const s = { type: 'aerial', t0: W.tick, T: W.tick + a.i, tx: a.tx, ty: a.ty, tz: a.tz, bx: a.bx, by: a.by, bz: a.bz, dj: a.dj, gen: H.gen, mode };
+    const o = hxRoll(W, H, c, X.S, s, a.i + 10, W.tick);
+    if (!o.hit || hxScore(c.team, mode) < (mode === 'shot' ? 5500 : 2500)) return false;
+    X.seq = s;
+    return true;
+  }
   const hxNew = id => ({ S: hxShape(), think: id % 6, plan: null, seq: null, rest: 0, stuck: 0, hfT: -999, ban: 0, first: false, tMe: 9, tOpp: 9 });
   const HXIDLE = { type: 'idle' };
   const hxScript = () => ({ type: 'strike', tj: 0, hold: 4, td: -1, dp: -1, dx: 0, t2: -1, qx: 0, qy: 0, mx: 0, my: 0, lat: 0, thr: 1, bo: false, ax: 0, ap: 0, end: 0, score: -1e9, gen: -1, mode: 'shot', kc: 0, rc: 0 });
@@ -241,6 +284,7 @@
     const o = hxRoll(W, H, src, S, s, span, tick0);
     if (o.kc < 0) return -99;
     const kc = o.kc - tick0, bz = H.P[hxAt(H, o.kc) + 2], kind = hxKind(bz), up = Math.round(hxUpT(bz) * 120);
+    if (bz > 510) return -99;
     s.kc = o.kc;
     if (kind === 0) { s.td = o.kc - 1; s.hold = clamp(kc - 6, 4, 20); s.tj = Math.max(tick0, s.td - s.hold - 4); }
     else if (kind === 1) { s.tj = Math.max(tick0, o.kc - up); s.td = Math.max(o.kc - 3, s.tj + 8); s.hold = clamp(s.td - s.tj - 4, 4, 24); }
@@ -316,7 +360,7 @@
     const al = ex * pl.nx + ey * pl.ny, off = al - clamp(0.8 / curve(HXCURV, Math.max(0, vdot(c.v, c.f))), 250, 1100);
     hxDrive(c, r, qx - pl.nx * off, qy - pl.ny * off, pl.slack < 0.12 || tl < 0.03 ? 2500 : clamp(d / tl, 300, 2300) + 30, true, true);
     const n = hxAt(H, W.tick), bx = P[n] - c.p.x, by = P[n + 1] - c.p.y, bd = Math.hypot(bx, by) || 1, cl = ((c.v.x - P[n + 3]) * bx + (c.v.y - P[n + 4]) * by) / bd;
-    if (cl > 100 && (bd - dC) / cl * 120 <= pl.up + 50 && c.onGround && c.u.z > 0.9 && c.nwW >= 3 && (ex * c.f.x + ey * c.f.y) / d > 0.8) hxCommit(W, H, c, X, pl);
+    if (cl > 100 && i <= pl.up + 70 && (bd - dC) / cl * 120 <= pl.up + 50 && c.onGround && c.u.z > 0.9 && c.nwW >= 3 && (ex * c.f.x + ey * c.f.y) / d > 0.8) hxCommit(W, H, c, X, pl);
     return true;
   }
   function hxEtas(W, H) {
@@ -394,6 +438,10 @@
     else if (h.dy * sg < 0.15 || W.tick < X.ban) why = 'wrong';
     else { go = tMe < tOpp + (last ? 0.1 : 0.7) + (was ? 0.2 : 0) || (danger && goalSide && tMe < tOpp + 0.6); why = go ? 'first' : 'late'; }
     X.first = go || why === 'late' || why === 'wrong' || why === 'none' || why === 'save';
+    if (!W.kickoff && why !== 'mate' && c.onGround && c.u.z > 0.9 && c.nwW >= 3 && c.boost > 20 && (!go || h.t > 1) && W.tick > X.ban) {
+      const a = hxFindAir(W, H, c, mode, HXF);
+      if (a.ok && a.t < tMe - 0.35 && (a.t < tOpp + (last ? 0.05 : 0.5) || a.t < threat) && hxAirGo(W, H, c, X, a, mode)) return;
+    }
     if (go) {
       const T = W.tick + h.i;
       if (keep && Math.abs(old.T - T) <= 4) {
