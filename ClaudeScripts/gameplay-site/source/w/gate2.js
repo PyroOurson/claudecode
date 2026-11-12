@@ -14,7 +14,7 @@ const put = (rel, buf) => {
 };
 const fonts = (/href="(https:\/\/fonts\.googleapis\.com\/css2\?[^"]+)"/.exec(html) || [])[1] || '';
 const consts = fs.readFileSync(path.join(__dirname, 'new', 'consts.js'), 'utf8');
-const sbUrl = (/const SUPABASE_DIRECT = '([^']+)'/.exec(consts) || [])[1], sbRelays = JSON.parse(((/const SUPABASE_RELAYS = (\[[^\]]*\])/.exec(consts) || [])[1] || '[]').replace(/'/g, '"')), sbKey = (/const SUPABASE_ANON_KEY = '([^']+)'/.exec(consts) || [])[1], gId = (/const GOOGLE_CLIENT_ID = '([^']*)'/.exec(consts) || [])[1] || '';
+const sbUrl = (process.env.GP_SB_URL || '').trim() || (/const SUPABASE_DIRECT = '([^']+)'/.exec(consts) || [])[1], sbRelays = process.env.GP_SB_RELAYS != null ? JSON.parse(process.env.GP_SB_RELAYS || '[]') : JSON.parse(((/const SUPABASE_RELAYS = (\[[^\]]*\])/.exec(consts) || [])[1] || '[]').replace(/'/g, '"')), sbKey = (process.env.GP_SB_KEY || '').trim() || (/const SUPABASE_ANON_KEY = '([^']+)'/.exec(consts) || [])[1], gId = (/const GOOGLE_CLIENT_ID = '([^']*)'/.exec(consts) || [])[1] || '';
 const vendor = path.join(__dirname, 'vendor');
 if (fs.existsSync(vendor)) fs.readdirSync(vendor).sort().forEach(f => put(plan.dir + f, fs.readFileSync(path.join(vendor, f))));
 const check = fs.readFileSync(path.join(__dirname, 'check.html'), 'utf8').split('%%SB_DIRECT%%').join(sbUrl || '').split('"%%SB_RELAYS%%"').join(JSON.stringify(sbRelays)).split('%%SB_KEY%%').join(sbKey || '').split('%%GOOGLE_ID%%').join(gId);

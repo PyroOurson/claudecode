@@ -1,5 +1,5 @@
 import json, os, re, sys
-P = os.environ.get('GP_PARTS', '/tmp/gameplay-build/w/parts')
+P = os.environ.get('GP_PARTS', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'parts'))
 out, want = sys.argv[1], sys.argv[2:]
 names = json.load(open(os.path.join(P, '_order.json')))
 have = os.listdir(P)

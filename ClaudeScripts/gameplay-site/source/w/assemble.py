@@ -1,6 +1,9 @@
 import json, re, subprocess, sys, os
+HERE = os.path.dirname(os.path.abspath(__file__))
+os.chdir(HERE)
+sys.path.insert(0, HERE)
 from meta_rows import ROWS, DELETED
-orig = open('/tmp/gameplay-build/w/orig_order.txt').read().split()
+orig = open(os.path.join(HERE, 'orig_order.txt')).read().split()
 new25 = ['slope-3d','tunnel-run','rocket-soccer','hole-city','demon-halls','bean-royale','block-roll','flap-bird','slither','cell-feast','paper-land','fling-birds','candy-rope','brick-bros','garden-defense','night-survivors','bomb-blast','last-card','fire-water','maze-tanks','hoop-flop','sea-battle','marble-chain','moto-stunts','cookie-baker']
 ids = [r[0] for r in ROWS]
 assert not set(ids) & set(DELETED), set(ids) & set(DELETED)

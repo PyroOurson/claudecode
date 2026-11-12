@@ -1,4 +1,6 @@
-const { chromium } = require('C:/tmp/pw/node_modules/playwright');
+const { chromium } = (() => { for (const m of ['playwright', 'C:/tmp/pw/node_modules/playwright', '/opt/node22/lib/node_modules/playwright']) { try { return require(m); } catch (e) {} } throw new Error('playwright not found'); })();
+const WIN = process.platform === 'win32';
+const LAUNCH = WIN ? { channel: 'chrome', args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] } : { args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] };
 const http = require('http'), fs = require('fs'), path = require('path');
 const VENDOR = path.join(__dirname, '..', 'w', 'vendor');
 const MT = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png', '.json': 'application/json', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav' };
@@ -21,7 +23,7 @@ async function open(html, id, o = {}) {
   }).listen(0, '127.0.0.1');
   await new Promise(r => srv.once('listening', r));
   const base = 'http://127.0.0.1:' + srv.address().port + '/' + main;
-  const b = await chromium.launch({ channel: 'chrome', headless: o.headless !== false, args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
+  const b = await chromium.launch(Object.assign({ headless: o.headless !== false }, LAUNCH));
   const vp = o.viewport || { width: 1280, height: 800 };
   const ctx = await b.newContext({ viewport: vp, deviceScaleFactor: o.dpr || 1, isMobile: !!o.mobile, hasTouch: !!o.mobile });
   await ctx.addInitScript(([s, muted, name]) => {
