@@ -499,7 +499,8 @@
   const PG_AI = {
     easy: { name: 'Easy', miss: s => Math.max(0.22, 0.5 - s * 0.02), err: s => Math.max(14, 36 - s), wait: s => Math.max(0.16, 0.32 - s * 0.01), v: s => Math.min(560, 280 + s * 14), ball: s => Math.min(620, 340 + s * 12) },
     normal: { name: 'Normal', miss: s => Math.max(0.08, 0.36 - s * 0.022), err: s => Math.max(6, 28 - s * 1.5), wait: s => Math.max(0.07, 0.24 - s * 0.012), v: s => Math.min(820, 340 + s * 22), ball: s => Math.min(760, 400 + s * 16) },
-    hard: { name: 'Hard', miss: s => Math.max(0.03, 0.2 - s * 0.015), err: s => Math.max(3, 14 - s), wait: s => Math.max(0.05, 0.12 - s * 0.008), v: s => Math.min(980, 520 + s * 24), ball: s => Math.min(880, 470 + s * 18) }
+    hard: { name: 'Hard', miss: s => Math.max(0.03, 0.2 - s * 0.015), err: s => Math.max(3, 14 - s), wait: s => Math.max(0.05, 0.12 - s * 0.008), v: s => Math.min(980, 520 + s * 24), ball: s => Math.min(880, 470 + s * 18) },
+    hardest: { name: 'Hardest', pro: true, wait: () => 0.1, v: () => 760, ball: s => Math.min(880, 470 + s * 18) }
   };
   const PG_MODES = [['1p', 'vs CPU'], ['net', 'Online']];
   Ameplay.register({
@@ -527,7 +528,7 @@
       const fit = () => { if (V) canvas.style.width = `min(100%, ${CW}px, calc((100dvh - var(--goff, 250px) - ${bar.offsetHeight + 12}px) * ${(CW / CH).toFixed(4)}))`; };
       const syncBar = () => { diffSeg.hidden = sel.mode !== '1p'; fit(); };
       const keys = api.keys, sh = shaker(), fx = [], pops = [], one = [null], trail = new Float32Array(TN * 2), hist = [], buf = [], evq = [], P = { x: 0, y: 0 };
-      const L = { y: H / 2, t: H / 2, sq: 0, v: 0, col: '#ff5d8f', dark: '#c9306a' }, Rp = { y: H / 2, t: H / 2, sq: 0, v: 0, goal: H / 2, wait: 0, col: '#4cc9f0', dark: '#1f8fbf' };
+      const L = { y: H / 2, t: H / 2, sq: 0, v: 0, col: '#ff5d8f', dark: '#c9306a' }, Rp = { y: H / 2, t: H / 2, sq: 0, v: 0, goal: H / 2, wait: 0, re: 0, k: 9, col: '#4cc9f0', dark: '#1f8fbf' };
       const ball = { x: W / 2, y: H / 2, vx: 0, vy: 0, vis: 1, last: L, ox: 0, oy: 0 };
       let state = 'ready', A = PG_AI[sel.diff], score = 0, lives = 3, pts = [0, 0], rally = 0, longest = 0, sp = 0, serveT = 0, serveDir = -1, ti = 0, tn = 0, clock = 0, cd = 0, cdN = 0, overAt = 0;
       let flip = 0, online = null, wired = false, lobbying = false, acc = 0, simT = 0, stepN = 0, epoch = 0, pend = null, off = 0, meRe = false, peerRe = false, mg = 0, sentY = -1;
@@ -588,7 +589,21 @@
         ball.x = W / 2; ball.y = H / 2; ball.vis = 0;
         Rp.goal = H / 2; Rp.wait = 0;
       }
+      const bounce = y => { const lo = R + 12, span = H - 2 * lo; let k = (y - lo) % (2 * span); if (k < 0) k += 2 * span; return lo + (k > span ? 2 * span - k : k); };
+      function aim() {
+        const x1 = W - M - PW - R, t = (x1 - ball.x) / ball.vx, yi = bounce(ball.y + ball.vy * t);
+        const b = base(), s2 = Math.min(1000, b * 1.5, Math.max(sp, b) * 1.03), run = x1 - M - PW - R, room = (t - Math.max(0, Rp.wait) - 0.05) * 760;
+        let goal = clamp(yi, HALF, H - HALF), top = -1e9, pick = 9;
+        for (let k = -4; k <= 4; k++) {
+          const o = k * 0.2, gy = yi - o * (HALF + R);
+          if (gy < HALF || gy > H - HALF || Math.abs(gy - Rp.y) > room) continue;
+          const a = o * 0.95, need = (Math.abs(bounce(yi + Math.tan(a) * run) - L.y) - HALF) * Math.cos(a) * s2 / run - Math.abs(o) * 0.01 + (k === Rp.k ? 60 : 0);
+          if (need > top) { top = need; goal = gy; pick = k; }
+        }
+        Rp.goal = goal; Rp.k = pick; Rp.re = 0.1;
+      }
       function plan() {
+        if (A.pro) { Rp.wait = A.wait(score); Rp.k = 9; return aim(); }
         const span = H - 2 * R, t = (W - M - PW - R - ball.x) / ball.vx;
         let y = (ball.y - R + ball.vy * t) % (2 * span);
         if (y < 0) y += 2 * span;
@@ -794,7 +809,7 @@
         toReady(); goOnline();
       });
 
-      const follow = (p, dt) => { p.t = clamp(p.t, HALF, H - HALF); p.v = dt ? (p.t - p.y) / dt : 0; p.y = p.t; };
+      const follow = (p, dt) => { p.t = clamp(p.t, HALF, H - HALF); if (dt) p.v += ((p.t - p.y) / dt - p.v) * (1 - Math.exp(-dt / 0.03)); p.y = p.t; };
       function controls(dt) {
         const k1 = along((keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0), (keys.has('KeyS') ? 1 : 0) - (keys.has('KeyW') ? 1 : 0));
         const k2 = along((keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0), (keys.has('ArrowDown') ? 1 : 0) - (keys.has('ArrowUp') ? 1 : 0));
@@ -804,7 +819,12 @@
         if (online === 'guest' && Math.abs(Rp.y - sentY) > 0.4) sendPad();
         if (sel.mode !== '1p') return;
         if (Rp.wait > 0) Rp.wait -= dt;
-        else {
+        else if (A.pro) {
+          if (state === 'play' && ball.vx > 0 && ball.x < W - M - PW - R && (Rp.re -= dt) <= 0) aim();
+          const y0 = Rp.y, m = A.v(score) * dt;
+          Rp.y = clamp(Rp.y + clamp(Rp.goal - Rp.y, -m, m), HALF, H - HALF);
+          Rp.v = dt ? (Rp.y - y0) / dt : 0;
+        } else {
           const maxV = A.v(score) * (ball.vx > 0 && state === 'play' ? 1 : 0.45), y0 = Rp.y;
           Rp.y = clamp(Rp.y + clamp((Rp.goal - Rp.y) * 9, -maxV, maxV) * dt, HALF, H - HALF);
           Rp.v = dt ? (Rp.y - y0) / dt : 0;
@@ -887,7 +907,7 @@
         if (state === 'ready') {
           const t1 = sel.mode === 'net' ? `Online · first to ${WIN}` : `vs CPU · ${A.name}`;
           const t2 = sel.mode === 'net' ? (coarse ? 'Tap to play a friend' : 'Click or press Space to play a friend') : coarse ? 'Tap to serve' : 'Click or press Space to serve';
-          pill(CW / 2, V ? CH * 0.72 : H * 0.7, 0, t1, t2, s);
+          pill(CW / 2, V ? CH * 0.86 : H * 0.7, 0, t1, t2, s);
         } else if (state === 'count' && cd > 0) {
           const f = cd - Math.floor(cd), z = 1 + 0.4 * Math.max(0, f - 0.75) * 4;
           ctx.save(); ctx.translate(CW / 2, CH / 2); ctx.scale(z, z);
@@ -907,7 +927,7 @@
       if (invited) goOnline();
       else api.overlay({
         kicker: 'Arcade', title: 'Pong',
-        text: `Get the ball past your rival to score. Where it meets your paddle (and how you swing) sets the angle. vs CPU: three lives on Easy, Normal or Hard. Online: a friend on another device. First to ${WIN}.`,
+        text: `Get the ball past your rival to score. Where it meets your paddle (and how you swing) sets the angle. vs CPU: three lives on Easy, Normal, Hard or Hardest. Online: a friend on another device. First to ${WIN}.`,
         button: 'Play', onAction: begin, secondary: 'Change mode', onSecondary: toReady
       });
     }

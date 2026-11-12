@@ -215,7 +215,8 @@
       let state = 'ready', stage = 1, boss = false, R = 94, logSpr = null, need = 0, left = 0, knives = [], apples = [], pat = PAT[0], spd = 1.6;
       let tS = 0, rot = 0, intro = 0, banner = 0, readyT = 1, queued = false, debris = [], score = 0, landed = 0, appleCnt = 0;
       let shake = 0, kick = 0, flash = 0, red = 0, failT = 0, clearT = 0, dc = 0;
-      const fly = { on: false, y: 0 };
+      const fly = { on: false, y: 0, at: 0 };
+      let spin = 0;
 
       function freeAngle(sep) {
         for (let t = 0; t < 40; t++) {
@@ -250,7 +251,7 @@
       function throwKnife() {
         if (state !== 'play' || left <= 0) return;
         if (fly.on) { queued = true; return; }
-        left--; fly.on = true; fly.y = READY; readyT = 0;
+        left--; fly.on = true; fly.y = READY; fly.at = performance.now(); readyT = 0;
         api.sfx('tick');
       }
       function failHit() {
@@ -286,8 +287,8 @@
         P.burst(CX, CY, 36, 440, .8, 3.5, CHIPS, 900, .6);
         POP.add(CX, CY, boss ? 'BOSS DOWN!' : 'STAGE CLEAR', '#ffe066', 30, -20);
       }
-      function contact() {
-        const a = norm(Math.PI / 2 - rot);
+      function contact(late) {
+        const a = norm(Math.PI / 2 - rot + spin * late);
         fly.on = false;
         for (let i = 0; i < knives.length; i++) if (Math.abs(adiff(a, knives[i])) < SEP) { failHit(); return; }
         knives.push(a); landed++; score++;
@@ -304,10 +305,14 @@
         shake = Math.max(0, shake - dt * 45); kick = Math.max(0, kick - dt * 7); flash = Math.max(0, flash - dt * 5); red = Math.max(0, red - dt * 2.2);
         banner = Math.max(0, banner - dt); intro = Math.min(1, intro + dt / .38); readyT = Math.min(1, readyT + dt / .12);
         for (const m of motes) { m.y -= m.v * dt; if (m.y < -10) { m.y = H + 10; m.x = rnd(0, W); } }
-        if (state !== 'clear') { tS += dt; rot += pat(tS, spd) * dt; }
+        if (state !== 'clear') { tS += dt; spin = pat(tS, spd); rot += spin * dt; }
         for (const d of debris) { d.vy += 1900 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.r += d.vr * dt; }
         if (debris.length && ++dc % 30 === 0) debris = debris.filter(d => d.y < H + 220);
-        if (fly.on) { fly.y -= SPEED * dt; if (fly.y <= CY + R) contact(); }
+        if (fly.on) {
+          const d0 = fly.at ? clamp((performance.now() - fly.at) / 1000, 0, dt) : dt;
+          fly.at = 0; fly.y -= SPEED * d0;
+          if (fly.y <= CY + R) contact(Math.min(dt, (CY + R - fly.y) / SPEED));
+        }
         if (state === 'fail' && (failT += dt) > 1) gameOver();
         if (state === 'clear' && (clearT += dt) > 1.15) { stage++; setupStage(); state = 'play'; }
       }

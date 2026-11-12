@@ -286,7 +286,7 @@ ${p} .seg button[aria-checked="true"]{background:#fff;color:var(--accent);box-sh
       swipe(board, move);
 
       setSize(n, performance.now() - left2048 < 80);
-      return { destroy() { left2048 = performance.now(); } };
+      return { destroy() { left2048 = performance.now(); if (mac) { try { const p = mac.close(); if (p && p.catch) p.catch(() => {}); } catch (e) {} mac = null; } } };
     }
   });
 
@@ -414,7 +414,12 @@ ${p} .seg button[aria-checked="true"]{background:#fff;color:var(--accent);box-sh
       const board = el('div', 'board');
       root.append(opts, bar, board);
       const [movesEl, timeEl, bestEl] = bar.querySelectorAll('.v');
-      let n, els, b, moves = 0, t0 = 0, timer = 0, locked = true, gen = 0;
+      let n, els, b, moves = 0, t0 = 0, timer = 0, locked = true, gen = 0, pAt = 0;
+      api.interval(() => {
+        const now = performance.now();
+        if (api.paused) { if (!pAt) pAt = now; return; }
+        if (pAt) { if (t0) t0 += now - pAt; pAt = 0; }
+      }, 80);
 
       function place() {
         const g = b.indexOf(0);
@@ -478,7 +483,7 @@ ${p} .seg button[aria-checked="true"]{background:#fff;color:var(--accent);box-sh
         if (!k) return;
         if (!t0) {
           t0 = performance.now();
-          timer = api.interval(() => { timeEl.textContent = clock((performance.now() - t0) / 1000); }, 250);
+          timer = api.interval(() => { if (!pAt && !api.paused) timeEl.textContent = clock((performance.now() - t0) / 1000); }, 250);
         }
         moves += k; movesEl.textContent = moves; api.score(String(moves)); api.sfx('tick');
         place();
