@@ -70,12 +70,16 @@ img{max-width:100%}
 .side-h{display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px 8px}
 .side-h b{font-size:15px;font-weight:800;letter-spacing:-.01em}
 .side-h span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
-.slist{position:relative;flex:1;overflow-y:auto;padding:2px 8px 8px;display:flex;flex-direction:column;gap:2px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.slist{flex:1;overflow-y:auto;padding:2px 8px 8px;display:flex;flex-direction:column;gap:2px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
 .srow{display:flex;align-items:center;gap:10px;padding:8px 10px;font-size:14px;border-radius:10px;text-align:left;width:100%;flex:none;color:inherit;text-decoration:none;transition:background-color .18s,color .18s,padding-left .25s var(--ease)}
 .srow:hover{background:var(--surface-2);padding-left:14px}
 .srow span.n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .srow.sel{background:var(--accent-soft);color:var(--accent)}
 .srow.sel span.n{font-weight:800}
+.side-f{padding:10px;border-top:1px solid var(--line)}
+.play{width:100%;height:40px;font-size:14px;border-radius:12px;background:var(--accent);color:var(--accent-ink);font-weight:800;transition:opacity .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 10px}
+.play:disabled{background:var(--surface-2);color:var(--muted);cursor:default;font-weight:600}
+body.in-game .side-f{display:none}
 main{min-width:0;padding-bottom:24px;outline:0}
 .view{animation:viewIn .35s var(--ease) backwards}
 @keyframes viewIn{from{opacity:0;transform:translateY(6px)}}
@@ -125,6 +129,7 @@ section+section{margin-top:34px}
 .card .art img[data-cv]{opacity:0}
 html:not(.nothumb) .card .art:has(>img[data-cv]:not(.rq))::after{animation:none;background:none}
 .card .name{margin-top:10px;font-size:15.5px;font-weight:700;transition:color .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card.sel .art{outline:3px solid var(--accent);outline-offset:2px}
 .card:hover .name{color:var(--accent)}
 .nothumb .card .art img,.nothumb .pb-thumb img{display:none}
 .empty{text-align:center;padding:64px 16px;color:var(--muted)}
@@ -394,9 +399,9 @@ body.modal-open{overflow:hidden}
 .gp-wait i,.gp-spin{width:40px;height:40px;border-radius:50%;border:4px solid var(--accent-soft);border-top-color:var(--accent);animation:spin .8s linear infinite}
 @keyframes gpShow{from{opacity:0}}
 .g-loading{animation:gpShow .3s backwards}
-.icon,.btn2,.cta,.mini,.chip,.fbtn,.back,.seg button,.snav button,.ltabs a,.badge,.x,.link,.sech,.sitefoot a,.sitefoot button{transition:transform .3s var(--spring),background-color .18s,border-color .18s,color .18s,box-shadow .25s,opacity .18s}
+.icon,.btn2,.cta,.mini,.chip,.fbtn,.play,.back,.seg button,.snav button,.ltabs a,.badge,.x,.link,.sech,.sitefoot a,.sitefoot button{transition:transform .3s var(--spring),background-color .18s,border-color .18s,color .18s,box-shadow .25s,opacity .18s}
 .icon:active,.x:active{transform:scale(.88);transition-duration:.1s}
-.btn2:active,.cta:active,.mini:active,.chip:active,.fbtn:active,.back:active,.seg button:active,.ltabs a:active,.badge:active{transform:scale(.95);transition-duration:.1s}
+.btn2:active,.cta:active,.mini:active,.chip:active,.fbtn:active,.play:not(:disabled):active,.back:active,.seg button:active,.ltabs a:active,.badge:active{transform:scale(.95);transition-duration:.1s}
 .item{transition:background-color .15s,transform .2s var(--spring)}
 .item:active{transform:scale(.98)}
 .snav button:active{transform:scale(.97)}

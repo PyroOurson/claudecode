@@ -405,8 +405,9 @@ const thumbsOn = () => S.prefs.thumbs !== false;
 const tint = g => g.cc || TINT[g.id] || 'var(--ph1)';
 const CVL = new Set();
 const img = (g, pri) => { if (!thumbsOn()) return ''; const u = coverUrl(g), seen = u !== BLANK && CVL.has(u); return `<img src="${u}"${u === BLANK ? ` data-cv="${g.id}"` : seen ? ' class="ld"' : ''} alt="" width="16" height="10"${seen ? ' decoding="sync"' : (pri ? ' fetchpriority="high"' : ' loading="lazy"') + ' decoding="async"'} draggable="false">`; };
-const card = (g, src, i) => `<a class="card${sfOff(g.id) ? ' off' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="${src}" style="--c:${tint(g)};--i:${i || 0}"><div class="art">${img(g, i != null && i < 10)}${sfOff(g.id) ? '<span class="offb">Temporarily unavailable</span>' : ''}</div>${fvBtn(g.id)}<div class="name">${esc(g.title)}</div></a>`;
-const srow = g => `<a class="srow" href="${href(g.id)}" data-id="${g.id}" data-src="side"><span class="n">${esc(g.title)}</span></a>`;
+let sel = null;
+const card = (g, src, i) => `<a class="card${sel === g.id && src === 'grid' ? ' sel' : ''}${sfOff(g.id) ? ' off' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="${src}" style="--c:${tint(g)};--i:${i || 0}"><div class="art">${img(g, i != null && i < 10)}${sfOff(g.id) ? '<span class="offb">Temporarily unavailable</span>' : ''}</div>${fvBtn(g.id)}<div class="name">${esc(g.title)}</div></a>`;
+const srow = g => `<a class="srow${sel === g.id ? ' sel' : ''}" href="${href(g.id)}" data-id="${g.id}" data-src="side" ><span class="n">${esc(g.title)}</span></a>`;
 function paintCards(box, list, src) {
   const pool = box._pool || (box._pool = new Map()), tmp = document.createElement('div'), th = thumbsOn();
   const fits = (el, g) => {
@@ -417,7 +418,7 @@ function paintCards(box, list, src) {
   };
   const out = list.map((g, i) => {
     let el = pool.get(g.id);
-    if (el && fits(el, g)) el.style.setProperty('--i', i);
+    if (el && fits(el, g)) { el.style.setProperty('--i', i); el.classList.toggle('sel', src === 'grid' && sel === g.id); }
     else { tmp.innerHTML = card(g, src, i); el = tmp.firstChild; pool.set(g.id, el); }
     return el;
   });
@@ -844,6 +845,8 @@ function renderSide(list) {
   sl.innerHTML = list.map(srow).join('');
   if (sy) sl.scrollTop = sy;
   $('#scount').textContent = list.length;
+  const g = sel && byId.get(sel), p = $('#play');
+  p.disabled = !g; p.textContent = g ? 'Play ' + g.title : 'Select a game';
 }
 let lastList = [];
 function renderResults() {
@@ -884,14 +887,16 @@ function renderChrome() {
   $('#about').textContent = 'gameplay, ' + games.length + ' games';
 }
 function markSide() {
-  const on = view === 'game' ? (cur ? cur.g.id : pend ? pend.id : null) : null, sl = $('#slist');
-  sl.querySelectorAll('.srow').forEach(a => {
-    const is = a.dataset.id === on;
-    a.classList.toggle('sel', is);
-    if (!is) { a.removeAttribute('aria-current'); return; }
-    a.setAttribute('aria-current', 'page');
-    if (a.offsetTop < sl.scrollTop || a.offsetTop + a.offsetHeight > sl.scrollTop + sl.clientHeight) sl.scrollTop = a.offsetTop - (sl.clientHeight - a.offsetHeight) / 2;
-  });
+  const on = view === 'game' ? (cur ? cur.g.id : pend ? pend.id : null) : sel;
+  document.querySelectorAll('#slist .srow').forEach(a => a.classList.toggle('sel', a.dataset.id === on));
+  document.querySelectorAll('#grid .card').forEach(a => a.classList.toggle('sel', view === 'home' && a.dataset.id === sel));
+}
+function select(id, scroll) {
+  sel = id;
+  const g = byId.get(id), p = $('#play');
+  p.disabled = !g; p.textContent = g ? 'Play ' + g.title : 'Select a game';
+  markSide();
+  if (scroll === 'grid') { const el = document.querySelector('#grid [data-id="' + id + '"]'); if (el) el.scrollIntoView({ block: 'center', behavior: S.prefs.motion ? 'instant' : 'smooth' }); }
 }
 function toAll(smooth) { requestAnimationFrame(() => $('#all').scrollIntoView({ behavior: smooth ? 'smooth' : 'instant' })); }
 function changeState(mut, o = {}) {
@@ -1408,15 +1413,16 @@ function boot() {
     if (tile && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
       const src = tile.dataset.src || 'link', id = tile.dataset.id;
       const pos = [...tile.parentNode.children].indexOf(tile);
+      if (src === 'side' && view === 'home') { e.preventDefault(); track('tile_click', { game: id, src, pos, select: true }); select(id, 'grid'); return; }
       track('tile_click', { game: id, src, pos });
       clickSrc = src;
     }
     if (a && PATH_MODE && !e.defaultPrevented && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && a.target !== '_blank' && !a.hasAttribute('download')) {
       const u = a.getAttribute('href');
-      if (u === '#' || a.hasAttribute('data-home')) { e.preventDefault(); resetState(); $('#q').value = ''; go('/', false); return; }
+      if (u === '#' || a.hasAttribute('data-home')) { e.preventDefault(); resetState(); $('#q').value = ''; sel = null; go('/', false); return; }
       if (u.startsWith('/')) { e.preventDefault(); const gm = a.dataset.genre; if (gm) { resetState(); state.g.add(gm); go(homeHref(), false); toAll(false); } else go(u, false); return; }
     }
-    if (a && !PATH_MODE && a.hasAttribute('data-home')) { e.preventDefault(); resetState(); $('#q').value = ''; go('#/', false); return; }
+    if (a && !PATH_MODE && a.hasAttribute('data-home')) { e.preventDefault(); resetState(); $('#q').value = ''; sel = null; go('#/', false); return; }
     const fb = t.closest('[data-f]');
     if (fb) { e.stopPropagation(); toggleFilter(fb.dataset.f, fb.dataset.v); return; }
     const sb = t.closest('[data-sort]');
@@ -1425,6 +1431,8 @@ function boot() {
     if (x) { const [k, v] = x.dataset.x.split(':'); if (k === 's') changeState(() => { state.sort = ''; }); else toggleFilter(k, v); return; }
     if (a && !PATH_MODE && !e.defaultPrevented && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && a.target !== '_blank') { const u = a.getAttribute('href'); if (u && u[0] === '#' && u !== location.hash) progNav = true; }
   });
+  $('#slist').addEventListener('dblclick', e => { const r = e.target.closest('.srow'); if (r && view === 'home') { clickSrc = 'side'; go(href(r.dataset.id), false); } });
+  $('#play').addEventListener('click', () => { if (sel && byId.get(sel)) { clickSrc = 'side_play'; go(href(sel), false); } });
   $('#clear').addEventListener('click', e => { e.stopPropagation(); changeState(() => { FKEYS.forEach(k => state[k].clear()); state.sort = ''; }); track('filter_clear', {}); });
   $('#apply').addEventListener('click', e => { e.stopPropagation(); closeAll(); });
   $('#reset').addEventListener('click', () => { changeState(() => { resetState(); $('#q').value = ''; }); });
