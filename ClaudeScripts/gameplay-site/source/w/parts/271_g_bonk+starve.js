@@ -1,7 +1,5 @@
 (() => {
   'use strict';
-{
-const BK_ID = 'bonk';
 function bgHost(api, root, want, fn) {
   let w = null, iv = 0, last = 0, dead = false;
   const stop = () => { if (w) { try { w.terminate(); } catch (e) {} w = null; } if (iv) { clearInterval(iv); iv = 0; } };
@@ -22,6 +20,8 @@ function bgHost(api, root, want, fn) {
   api.on(document, 'visibilitychange', () => { if (dead) return; if (document.hidden && want()) start(); else stop(); });
   return () => { dead = true; stop(); };
 }
+{
+const BK_ID = 'bonk';
 const PH = (() => {
   const SLOP = .3, BETA = .2, BMAX = 100, BTHR = 90, ITER = 10;
   let UID = 1;
