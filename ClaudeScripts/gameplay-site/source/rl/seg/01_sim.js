@@ -95,8 +95,10 @@
     while (k < FN - 1 && q > p * FT[k]) k++;
     return r * FK - p * FC[k] - q * FS[k];
   }
+  const SFZ = RCN >= Math.max(RR, CFG.rampBack, CFG.ceilR) ? Math.min(RCN, HT / 2) : -Infinity;
   function sdf(x, y, z) {
     const ax = x < 0 ? -x : x, ay = y < 0 ? -y : y;
+    if (z <= SFZ && ax <= CXN && ay <= CYN && ax + ay <= CCN) return z;
     const h = RCN - octR(ax, ay), sb = ay - AY - Math.max(ax - AX, (ax + ay - AC) * Math.SQRT1_2);
     const wb = sb * RBL + 0.5, rf = wb <= 0 ? RR : wb >= 1 ? RBK : RR + (RBK - RR) * wb;
     const df = fil(h, z, rf), dc = fil(h, HT - z, CFG.ceilR);

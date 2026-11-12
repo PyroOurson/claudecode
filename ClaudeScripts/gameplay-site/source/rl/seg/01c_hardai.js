@@ -41,7 +41,7 @@
       HXO.n++;
     }
     vcopy(HXO.bp, B.p); vcopy(HXO.bv, B.v); vcopy(HXO.bw, B.w); vcopy(HXO.cp, sc.p); vcopy(HXO.cv, sc.v);
-    H.busy++;
+    H.busy += HXO.n;
     return HXO;
   }
   function hxSeq(tick, c, s, r) {
@@ -260,7 +260,7 @@
     return out;
   }
   function hxAirGo(W, H, c, X, a, mode) {
-    if (H.busy > 2) return false;
+    if (H.busy > 60) return false;
     const s = { type: 'aerial', t0: W.tick, T: W.tick + a.i, tx: a.tx, ty: a.ty, tz: a.tz, bx: a.bx, by: a.by, bz: a.bz, dj: a.dj, gen: H.gen, mode };
     const o = hxRoll(W, H, c, X.S, s, a.i + 10, W.tick);
     if (!o.hit || hxScore(c.team, mode) < (mode === 'shot' ? 5500 : 2500)) return false;
@@ -294,7 +294,7 @@
     return kc - up;
   }
   function hxCommit(W, H, c, X, pl) {
-    if (H.busy > 6) return false;
+    if (H.busy > 100) return false;
     const s = HXC, dC = BR + c.cfg.front - 6, o = hxAt(H, pl.T), lead = hxBase(W, H, c, X.S, s, pl.mode, W.tick, pl.up + 62, H.P[o] - pl.nx * dC + pl.ny * pl.lat, H.P[o + 1] - pl.ny * dC - pl.nx * pl.lat);
     if (lead < -90 || lead > 44) return false;
     hxTry(W, H, c, X.S, s, W.tick);
@@ -328,7 +328,7 @@
   function hxRefine(W, H, c, X, s) {
     const k = W.tick, t = HXC;
     if (s.gen !== H.gen) { s.gen = H.gen; hxTry(W, H, c, X.S, s, k); }
-    for (let n = k < s.tj - 20 ? 2 : 0; n < 3 && H.busy < 10; n++) {
+    for (let n = k < s.tj - 20 ? 2 : 0; n < 3 && H.busy < 200; n++) {
       const m = s.rc++ % 10, sg = m & 1 ? 1 : -1;
       Object.assign(t, s);
       if (m < 2) { if (k >= s.tj - 2) continue; t.lat = s.lat + sg * (10 + Math.min(40, s.tj - k)); }
@@ -449,7 +449,7 @@
         if (old.nx * h.nx + old.ny * h.ny < 0.9986) { old.nx = h.nx; old.ny = h.ny; old.tx = h.tx; old.ty = h.ty; old.probes = Math.min(old.probes, 1); }
       } else X.plan = { type: 'strike', mode, why, T, up: Math.round(h.up * 120), gen: H.gen, nx: h.nx, ny: h.ny, tx: h.tx, ty: h.ty, gx: h.gx, lat: keep ? old.lat : 0, probes: keep ? Math.min(old.probes, 1) : 0, e0: keep ? old.e0 : 0, l0: keep ? old.l0 : 0, q: 0, slack: h.t - h.eta };
       const pl = X.plan;
-      if (pl.probes < 3 && mode !== 'kick' && pl.T - W.tick < 170 && H.busy < 5) hxProbe(W, H, c, pl);
+      if (pl.probes < 3 && mode !== 'kick' && pl.T - W.tick < 170 && H.busy < 100) hxProbe(W, H, c, pl);
       return;
     }
     const safe = tOpp > 1.6 && threat > 6 && !danger;
