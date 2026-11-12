@@ -1034,7 +1034,7 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
       }
       return out;
     }
-    const QD_WALL = .4, QD_MS = 1300;
+    const QD_WALL = 1.5, QD_MS = 1300, QD_BACK = [];
     function tryApply(st, s, m) {
       const sv = { pos: st.pos[s], walls: st.walls[s], turn: st.turn, over: st.over, winner: st.winner };
       if (m.w) { (m.w === 'h' ? st.hw : st.vw)[m.r * 8 + m.c] = 1; st.walls[s]--; }
@@ -1084,7 +1084,7 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
         }
         return top[1];
       }
-      const K = Math.min(n === 2 ? (hardest ? 12 : 10) : 6, sc.length);
+      const K = Math.min(n === 2 ? (hardest ? 12 : 10) : 6, sc.length), bk = hardest && QD_BACK[s], back = bk && bk.n === st.count - n ? bk.p : null;
       let best = sc[0][1], bv = -Infinity;
       for (let k = 0; k < K; k++) {
         const m = sc[k][1], sv = tryApply(st, s, m);
@@ -1144,10 +1144,12 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
         }
         untry(st, s, m, sv);
         v += Math.random() * .02;
+        if (back && !m.w && m.r === back[0] && m.c === back[1]) v -= .8;
         if (v > bv) { bv = v; best = m; }
         yield;
         if (hardest && performance.now() - t0 > QD_MS) break;
       }
+      if (hardest) QD_BACK[s] = best.w ? null : { n: st.count, p: st.pos[s].slice() };
       return best;
     }
     function nmq(st, s, d, al, be) {

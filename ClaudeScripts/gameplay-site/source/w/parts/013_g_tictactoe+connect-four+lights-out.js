@@ -698,7 +698,7 @@ ${p} .cn.on i{background:var(--good);box-shadow:0 0 0 3px rgba(34,176,125,.2)}
       const getWorker = () => {
         if (worker !== null) return worker;
         try {
-          wurl = URL.createObjectURL(new Blob(['const E=(' + c4Core.toString() + ')();onmessage=e=>{const d=e.data;postMessage({id:d.id,c:E.best(d.b,d.me,d.ms).c});};'], { type: 'text/javascript' }));
+          wurl = URL.createObjectURL(new Blob(['const E=(' + c4Core.toString() + ')();let P=null,N=0;const pond=()=>{if(!P||N++>60)return;E.best(P.b,P.me,60);setTimeout(pond,0);};onmessage=e=>{const d=e.data;if(d.ponder){P=d;N=0;setTimeout(pond,0);return;}P=null;postMessage({id:d.id,c:E.best(d.b,d.me,d.ms).c});};'], { type: 'text/javascript' }));
           worker = new Worker(wurl);
           worker.onmessage = e => { const f = pend.get(e.data.id); pend.delete(e.data.id); if (f) f(e.data.c); };
           worker.onerror = () => { const w = worker; worker = false; try { w.terminate(); } catch (er) {} const list = [...pend.values()]; pend.clear(); list.forEach(f => f(-1)); };
@@ -748,7 +748,10 @@ ${p} .cn.on i{background:var(--good);box-shadow:0 0 0 3px rgba(34,176,125,.2)}
             if (d.cfg.diff === 'Hardest') solve(c => { if (g === rg) put(c); });
             else put(c4Best(b, C4DEPTH[d.cfg.diff]));
           }, 30);
-        } else d.turn(sideOf(p));
+        } else {
+          d.turn(sideOf(p));
+          if (d.ai && d.cfg.diff === 'Hardest' && worker && n) worker.postMessage({ ponder: 1, b: Array.from(b), me: p });
+        }
       }
       function drop(c, p, rem) {
         if (turn !== p || ht[c] === 6) return;

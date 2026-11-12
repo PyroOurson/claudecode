@@ -565,27 +565,27 @@ function* scAiGen(s, p, level, R) {
   if (!cands.includes(topScore)) cands.push(topScore);
   const opp = scUnseen(s, p);
   const samples = opp.length <= 7 ? 1 : moves.length > 600 ? 4 : 6;
-  let bestEq = -1e9;
-  for (const m of cands) {
-    let opb = 0;
-    if (opp.length && performance.now() - t0 < 1500) {
-      const bd2 = s.bd.slice(), bl2 = s.bl.slice();
-      for (const t of m.tiles) { bd2[t.r * 15 + t.c] = t.l; bl2[t.r * 15 + t.c] = t.b; }
-      for (let k = 0; k < samples; k++) {
-        const pool = opp.slice(), rk = [];
-        for (let j = 0; j < 7 && pool.length; j++) rk.push(pool.splice(Math.floor(R() * pool.length), 1)[0]);
-        if (opp.length <= 7 && s.bag.length === 0) { rk.length = 0; rk.push(...opp); }
-        const rep = scGen(E, bd2, bl2, rk);
-        let mx = 0;
-        for (const x of rep) if (x.score > mx) mx = x.score;
-        opb += mx;
-        yield;
-      }
-      opb /= samples;
-    }
-    const eq = m.eq - opb * .75;
-    if (eq > bestEq) { bestEq = eq; best = m; }
+  const racks = [], tot = cands.map(() => 0);
+  for (let k = 0; k < samples; k++) {
+    const pool = opp.slice(), rk = [];
+    for (let j = 0; j < 7 && pool.length; j++) rk.push(pool.splice(Math.floor(R() * pool.length), 1)[0]);
+    racks.push(opp.length <= 7 && s.bag.length === 0 ? opp.slice() : rk);
   }
+  let done = 0;
+  if (opp.length) for (let k = 0; k < samples && (!k || performance.now() - t0 < 1200); k++) {
+    for (let i = 0; i < cands.length; i++) {
+      const bd2 = s.bd.slice(), bl2 = s.bl.slice();
+      for (const t of cands[i].tiles) { bd2[t.r * 15 + t.c] = t.l; bl2[t.r * 15 + t.c] = t.b; }
+      const rep = scGen(E, bd2, bl2, racks[k]);
+      let mx = 0;
+      for (const x of rep) if (x.score > mx) mx = x.score;
+      tot[i] += mx;
+      yield;
+    }
+    done++;
+  }
+  let bestEq = -1e9;
+  cands.forEach((m, i) => { const eq = m.eq - (done ? tot[i] / done : 0) * .4; if (eq > bestEq) { bestEq = eq; best = m; } });
   return toAct(best);
 }
 
