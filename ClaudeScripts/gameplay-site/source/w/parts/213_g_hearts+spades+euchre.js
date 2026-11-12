@@ -20,6 +20,7 @@
   const TAU = Math.PI * 2;
   const QS = mkc(2, 12), JD = mkc(1, 11), C2 = mkc(0, 2);
   const nextSeat = p => (p + 1) % 4;
+  const TOP = l => l === 'Hard' || l === 'Hardest';
   const FULL = range(52);
 
   function dealUnseen(U, caps, ok, fixed) {
@@ -61,6 +62,22 @@
       for (let i = 0; i < cands.length; i++) {
         const T = G.clone(W);
         G.play(T, me, cands[i]);
+        if (o.dd) { tot[i] += o.dd(T, me); continue; }
+        if (o.look) {
+          while (T.trick.length && !G.over(T)) {
+            const p = T.turn, Lp = G.legal(T, p);
+            let bc = Lp[0], bv = -1e9;
+            if (Lp.length > 1) for (const c of Lp) {
+              const X = G.clone(T);
+              G.play(X, p, c);
+              let g = 0;
+              while (!G.over(X) && g++ < 80) { const q = X.turn; G.play(X, q, G.policy(X, q)); }
+              const v = G.util(X, p);
+              if (v > bv) { bv = v; bc = c; }
+            }
+            G.play(T, p, bc);
+          }
+        }
         let g = 0;
         while (!G.over(T) && g++ < 80) { const p = T.turn; G.play(T, p, G.policy(T, p)); }
         tot[i] += G.util(T, me);
@@ -210,7 +227,7 @@
   }
   const HG = { legal: hLegal, play: hPlay, over: hOver, policy: hPolicy, sample: hSample, clone: hClone, util: hUtil };
 
-  const H_LVL = { Easy: { n: 0, ms: 0 }, Normal: { n: 26, ms: 70 }, Hard: { n: 90, ms: 170 } };
+  const H_LVL = { Easy: { n: 0, ms: 0 }, Normal: { n: 26, ms: 70 }, Hard: { n: 90, ms: 170 }, Hardest: { n: 240, ms: 150 } };
   function hBotPlay(S, p, lvl) {
     const L = hLegal(S, p);
     if (L.length === 1) return L[0];
@@ -219,7 +236,7 @@
       if (Math.random() < 0.12) return L[(Math.random() * L.length) | 0];
       return hPolicy(S, p);
     }
-    const r = pimc(HG, S, p, { n: cfg.n, ms: cfg.ms, eps: 0.01 });
+    const r = pimc(HG, S, p, { n: cfg.n, ms: cfg.ms, eps: 0.01, look: cfg.look });
     if (r.close.length > 1) {
       const pc = r.close.filter(c => cs(c) !== 3 && c !== QS);
       return (pc.length ? lowest(pc) : lowest(r.close));
@@ -227,7 +244,7 @@
     return r.best;
   }
 
-  function hPassCards(h, dir, lvl, S) {
+  function hPassCards(h, dir, lvl, S, k) {
     const bySuit = [[], [], [], []];
     for (const c of h) bySuit[cs(c)].push(c);
     if (lvl === 'Easy') return h.slice().sort((a, b) => cr(b) - cr(a)).slice(0, 3);
@@ -236,7 +253,7 @@
     const hearts = bySuit[3];
     const topH = hearts.filter(c => cr(c) >= 12).length;
     const aces = h.filter(c => cr(c) >= 13 && cs(c) !== 3).length;
-    if (hearts.length >= 6 && topH >= 3 && aces >= 3 && hasQS === false && lvl === 'Hard') {
+    if (hearts.length >= 6 && topH >= 3 && aces >= 3 && hasQS === false && TOP(lvl)) {
       return h.slice().sort((a, b) => (cs(a) === 3 ? 1 : 0) - (cs(b) === 3 ? 1 : 0) || cr(a) - cr(b)).slice(0, 3);
     }
     const sc = c => {
@@ -258,7 +275,33 @@
       }
       return v;
     };
-    return h.slice().sort((a, b) => sc(b) - sc(a)).slice(0, 3);
+    return h.slice().sort((a, b) => sc(b) - sc(a)).slice(0, k || 3);
+  }
+  function hSimPass(S, p) {
+    const h = S.hands[p], dir = S.dir, top = hPassCards(h, dir, 'Normal', S, 5), tri = [hPassCards(h, dir, 'Hard', S)];
+    for (let a = 0; a < 5; a++) for (let b = a + 1; b < 5; b++) for (let c = b + 1; c < 5; c++) tri.push([top[a], top[b], top[c]]);
+    const off = dir === 0 ? 1 : dir === 1 ? 3 : 2, rest = FULL.filter(c => !h.includes(c)), tot = new Float64Array(tri.length), t0 = now();
+    let n = 0;
+    for (; n < 30; n++) {
+      if (n >= 8 && now() - t0 > 45) break;
+      const d = shuf(rest.slice()), hands = [h, h, h, h], give = [null, null, null, null];
+      let u = 0;
+      for (let q = 0; q < 4; q++) if (q !== p) { hands[q] = d.slice(u, u + 13); u += 13; give[q] = hPassCards(hands[q], dir, 'Normal', S); }
+      for (let i = 0; i < tri.length; i++) {
+        const W = hNew();
+        W.o = S.o;
+        give[p] = tri[i];
+        for (let q = 0; q < 4; q++) W.hands[q] = hands[q].filter(c => !give[q].includes(c));
+        for (let q = 0; q < 4; q++) W.hands[(q + off) % 4].push(...give[q]);
+        W.lead = W.turn = W.hands.findIndex(x => x.includes(C2));
+        let g = 0;
+        while (!hOver(W) && g++ < 60) hPlay(W, W.turn, hPolicy(W, W.turn));
+        tot[i] += hUtil(W, p);
+      }
+    }
+    let bi = 0;
+    for (let i = 1; i < tri.length; i++) if (tot[i] > tot[bi] + (bi ? 0 : n * .2)) bi = i;
+    return tri[bi];
   }
 
   function HeartsEngine(opt) {
@@ -349,7 +392,7 @@
         return null;
       },
       bot(p, lvl) {
-        if (S.phase === 'pass') return { t: 'pass', cards: hPassCards(S.hands[p], S.dir, lvl, S) };
+        if (S.phase === 'pass') return { t: 'pass', cards: lvl === 'Hardest' ? hSimPass(S, p) : hPassCards(S.hands[p], S.dir, lvl, S) };
         return { t: 'play', c: hBotPlay(S, p, lvl) };
       },
       view(p) {
@@ -501,8 +544,81 @@
     return W;
   }
   const SG = { legal: sLegal, play: sPlay, over: sOver, policy: sPolicy, sample: sSample, clone: sClone, util: sUtil };
+  function sFit(S, me, out) {
+    let err = 0;
+    const mine = new Uint8Array(52);
+    for (let q = 0; q < 4; q++) {
+      if (q === me || S.bid[q] == null) continue;
+      const h = out[q];
+      if (S.bid[q] === 0 && S.tw[q] === 0) {
+        for (const c of h) { const r = cr(c); if (cs(c) === 2) err += r >= 13 ? 3 : r >= 11 ? 1.2 : r >= 9 ? .3 : 0; else if (r === 14) err += .6; }
+        continue;
+      }
+      const n = [0, 0, 0, 0];
+      let e = 0;
+      for (const c of h) { n[cs(c)]++; mine[c] = 1; }
+      for (const c of h) {
+        const s = cs(c);
+        let ab = 0;
+        for (let x = cr(c) + 1; x <= 14; x++) { const o = mkc(s, x); if (!S.played[o] && !mine[o]) ab++; }
+        if (s === 2) e += ab === 0 ? 1 : ab === 1 && n[2] >= 2 ? .7 : ab === 2 && n[2] >= 3 ? .4 : 0;
+        else e += ab === 0 ? .8 : ab === 1 && n[s] >= 2 ? .45 : 0;
+      }
+      if (n[2] > 3) e += (n[2] - 3) * .7;
+      for (const c of h) mine[c] = 0;
+      const need = S.bid[q] - S.tw[q];
+      err += Math.abs(e - Math.max(0, need)) * (need > 0 ? 1 : .5);
+    }
+    return err;
+  }
+  function sSampleInf(S, me) {
+    const U = [];
+    for (let c = 0; c < 52; c++) if (!S.played[c] && !S.hands[me].includes(c) && !S.trick.some(t => t.c === c)) U.push(c);
+    const caps = [0, 1, 2, 3].map(q => (q === me ? 0 : S.hands[q].length)), ok = (q, c) => !S.vd[q * 4 + cs(c)];
+    let best = null, be = 1e9;
+    for (let k = 0; k < 5; k++) {
+      const out = dealUnseen(U, caps, ok, null), e = sFit(S, me, out);
+      if (e < be) { be = e; best = out; }
+    }
+    const W = sClone(S);
+    for (let q = 0; q < 4; q++) if (q !== me) W.hands[q] = best[q];
+    return W;
+  }
+  const SGI = Object.assign({}, SG, { sample: sSampleInf });
+  function sDD(S, me) {
+    const hands = S.hands.map(h => h.slice().sort((a, b) => a - b)), tw = S.tw.slice(), tc = S.trick.map(x => x.c), tp = S.trick.map(x => x.p), t = me & 1;
+    const X = { tw, bid: S.bid, blind: S.blind, bags: S.bags, o: S.o };
+    let nodes = 0;
+    const rec = (p, left, a, b, br) => {
+      if (!left || ++nodes > 30000) return sTeamScore(X, t).delta - sTeamScore(X, 1 - t).delta * 0.9;
+      const h = hands[p], mx = (p & 1) === t, ls = tc.length ? cs(tc[0]) : -1;
+      let any = false, side = false, best = mx ? -1e9 : 1e9, lc = -9;
+      if (ls >= 0) { for (const c of h) if (cs(c) === ls) { any = true; break; } } else if (!br) for (const c of h) if (cs(c) !== 2) { side = true; break; }
+      for (let i = 0; i < h.length; i++) {
+        const c = h[i];
+        if ((any && cs(c) !== ls) || (side && cs(c) === 2) || c === lc + 1 && cs(c) === cs(lc)) { if (c === lc + 1) lc = c; continue; }
+        lc = c;
+        h.splice(i, 1); tc.push(c); tp.push(p);
+        let v;
+        if (tc.length === 4) {
+          let w = 0;
+          for (let k = 1; k < 4; k++) if (sBeats(tc[k], tc[w], cs(tc[0]))) w = k;
+          const wp = tp[w], sc = tc.splice(0), sp = tp.splice(0);
+          tw[wp]++;
+          v = rec(wp, left - 1, a, b, br || sc.some(x => cs(x) === 2));
+          tw[wp]--;
+          for (let k = 0; k < 4; k++) { tc.push(sc[k]); tp.push(sp[k]); }
+        } else v = rec((p + 1) % 4, left, a, b, br);
+        tc.pop(); tp.pop(); h.splice(i, 0, c);
+        if (mx) { if (v > best) best = v; if (best > a) a = best; } else { if (v < best) best = v; if (best < b) b = best; }
+        if (a >= b) break;
+      }
+      return best;
+    };
+    return rec(S.turn, 13 - S.tn, -1e9, 1e9, S.broken);
+  }
   const BID_OFF = 0.1;
-  const S_LVL = { Easy: { n: 0, ms: 0 }, Normal: { n: 20, ms: 70 }, Hard: { n: 70, ms: 170 } };
+  const S_LVL = { Easy: { n: 0, ms: 0 }, Normal: { n: 20, ms: 70 }, Hard: { n: 70, ms: 170 }, Hardest: { n: 200, ms: 150, inf: 1 } };
 
   function sBotPlay(S, p, lvl) {
     const L = sLegal(S, p);
@@ -512,8 +628,8 @@
       if (Math.random() < 0.1) return L[(Math.random() * L.length) | 0];
       return sPolicy(S, p);
     }
-    const r = pimc(SG, S, p, { n: cfg.n, ms: cfg.ms, eps: 0.4 });
-    if (r.close.length > 1 && lvl === 'Hard') {
+    const r = pimc(cfg.inf ? SGI : SG, S, p, { n: cfg.n, ms: cfg.ms, eps: 0.4, look: cfg.look, dd: cfg.inf && S.tn >= 10 ? sDD : null });
+    if (r.close.length > 1 && TOP(lvl)) {
       const q = (p + 2) % 4;
       if (S.trick.length === 0) {
         const sig = r.close.filter(c => cs(c) !== 2 && S.sig && S.sig[q] && S.sig[q][cs(c)] > 0);
@@ -528,7 +644,7 @@
   function sTricksSim(hand, mode, dealer, n, ms) {
     const rest = FULL.filter(c => !hand.includes(c));
     let tot = 0, cnt = 0, zero = 0;
-    const t0 = now();
+    const t0 = now(), hist = new Array(14).fill(0);
     for (let i = 0; i < n; i++) {
       if (i >= 8 && now() - t0 > ms) break;
       const d = shuf(rest.slice());
@@ -544,9 +660,10 @@
       let g = 0;
       while (!sOver(S) && g++ < 80) sPlay(S, S.turn, sPolicy(S, S.turn));
       tot += S.tw[0]; if (S.tw[0] === 0) zero++;
+      hist[S.tw[0]]++;
       cnt++;
     }
-    return { mean: tot / cnt, zero: zero / cnt };
+    return { mean: tot / cnt, zero: zero / cnt, hist, cnt };
   }
 
   function sBotBid(S, p, lvl) {
@@ -559,11 +676,19 @@
       for (const c of hand) { const r = cr(c); if (cs(c) === 2) est += r >= 13 ? 1 : r >= 11 ? 0.6 : 0.3; else if (r === 14) est += 0.9; else if (r === 13) est += 0.4; }
       return { n: Math.max(1, Math.round(est)) };
     }
-    const sims = lvl === 'Hard' ? 70 : 28;
-    const ms = lvl === 'Hard' ? 160 : 70;
+    const sims = lvl === 'Hardest' ? 240 : lvl === 'Hard' ? 70 : 28;
+    const ms = TOP(lvl) ? 160 : 70;
     const rot = hand.slice();
     const sim = sTricksSim(rot, 'win', dealer + (4 - p), sims, ms);
     let n = Math.round(sim.mean + BID_OFF);
+    if (lvl === 'Hardest') {
+      let bv = -1e9;
+      for (let b = Math.max(1, Math.floor(sim.mean) - 1); b <= Math.min(13, Math.ceil(sim.mean) + 1); b++) {
+        let v = 0;
+        for (let t = 0; t <= 13; t++) if (sim.hist[t]) v += sim.hist[t] * (t >= b ? 10 * b - 4 * (t - b) : t === b - 1 ? -2 * b : -10 * b);
+        if (v > bv) { bv = v; n = b; }
+      }
+    }
     n = Math.max(1, Math.min(13, n));
     const spLen = hand.filter(c => cs(c) === 2).length;
     const hi = hand.filter(c => cs(c) === 2 && cr(c) >= 11).length;
@@ -696,10 +821,11 @@
         return { t: 'play', c: sBotPlay(S, p, lvl) };
       },
       view(p) {
-        return { g: 'spades', phase: S.phase, n: S.hno, dealer: S.dealer, hand: S.hands[p].slice(), counts: S.hands.map(h => h.length), trick: S.trick.map(t => ({ p: t.p, c: t.c })), turn: S.phase === 'bid' || S.phase === 'play' ? S.turn : -1, broken: S.broken, score: S.score.slice(), bags: S.bags.slice(), bid: S.bid.slice(), blind: S.blind.slice(), tw: S.tw.slice(), okb: S.okb.slice(), look: S.look.slice(), hist: S.hist.map(h => ({ r: h.r, score: h.score, bags: h.bags, dealer: h.dealer })), tn: S.tn, o };
+        return { g: 'spades', phase: S.phase, n: S.hno, dealer: S.dealer, hand: S.look[p] || S.phase !== 'bid' ? S.hands[p].slice() : S.hands[p].map(() => -1), counts: S.hands.map(h => h.length), trick: S.trick.map(t => ({ p: t.p, c: t.c })), turn: S.phase === 'bid' || S.phase === 'play' ? S.turn : -1, broken: S.broken, score: S.score.slice(), bags: S.bags.slice(), bid: S.bid.slice(), blind: S.blind.slice(), tw: S.tw.slice(), okb: S.okb.slice(), look: S.look.slice(), hist: S.hist.map(h => ({ r: h.r, score: h.score, bags: h.bags, dealer: h.dealer })), tn: S.tn, o };
       },
       filt(e, p) {
-        if (e.k === 'deal') return { k: 'deal', n: e.n, dealer: e.dealer, hand: e.hands[p].slice(), okb: e.okb, look: e.look, counts: [13, 13, 13, 13] };
+        if (e.k === 'deal') return { k: 'deal', n: e.n, dealer: e.dealer, hand: e.look[p] ? e.hands[p].slice() : e.hands[p].map(() => -1), okb: e.okb, look: e.look, counts: [13, 13, 13, 13] };
+        if (e.k === 'look' && e.p === p) return { k: 'look', p, hand: S.hands[p].slice() };
         return e;
       }
     };
@@ -736,7 +862,7 @@
     return { hands: [[], [], [], []], trick: [], lead: 0, turn: 0, tn: 0, played: new Uint8Array(52), vd: new Uint8Array(16), tw: [0, 0, 0, 0], trump: -1, maker: -1, alone: false, out: -1, dealer: 0, o: EUCHRE_DEF, known: [] };
   }
   function eClone(S) {
-    return { hands: S.hands.map(h => h.slice()), trick: S.trick.slice(), lead: S.lead, turn: S.turn, tn: S.tn, played: S.played.slice(), vd: S.vd.slice(), tw: S.tw.slice(), trump: S.trump, maker: S.maker, alone: S.alone, out: S.out, dealer: S.dealer, o: S.o, known: S.known };
+    return { hands: S.hands.map(h => h.slice()), trick: S.trick.slice(), lead: S.lead, turn: S.turn, tn: S.tn, played: S.played.slice(), vd: S.vd.slice(), tw: S.tw.slice(), trump: S.trump, maker: S.maker, alone: S.alone, out: S.out, dealer: S.dealer, o: S.o, known: S.known, dead: S.dead, dis: S.dis };
   }
   const eNext = (S, p) => { let q = nextSeat(p); if (q === S.out) q = nextSeat(q); return q; };
   const eNeed = S => (S.out >= 0 ? 3 : 4);
@@ -819,20 +945,56 @@
   function eSample(S, me) {
     const U = [];
     const inH = S.hands[me];
-    for (const c of EDECK) if (!S.played[c] && !inH.includes(c) && !S.trick.some(t => t.c === c)) U.push(c);
+    for (const c of EDECK) if (!S.played[c] && !inH.includes(c) && !S.trick.some(t => t.c === c) && !(S.dead && S.dead.includes(c)) && !(me === S.dealer && c === S.dis)) U.push(c);
     const caps = [0, 1, 2, 3].map(q => (q === me ? 0 : S.hands[q].length));
     let hid = U.length;
     for (let q = 0; q < 4; q++) hid -= caps[q];
     caps.push(Math.max(0, hid));
     const fixed = [];
-    for (const [q, c] of S.known) if (q !== me && !S.played[c] && !S.trick.some(t => t.c === c) && U.includes(c)) fixed.push([q, c]);
+    for (const [q, c] of S.known) if (q !== me && !S.played[c] && !S.trick.some(t => t.c === c) && U.includes(c) && !S.vd[q * 4 + esuit(c, S.trump)]) fixed.push([q, c]);
     const out = dealUnseen(U, caps, (q, c) => q === 4 || !S.vd[q * 4 + esuit(c, S.trump)], fixed);
     const W = eClone(S);
     for (let q = 0; q < 4; q++) if (q !== me) W.hands[q] = out[q];
     return W;
   }
   const EG = { legal: eLegal, play: ePlay, over: eOver, policy: ePolicy, sample: eSample, clone: eClone, util: eUtil };
-  const E_LVL = { Easy: { n: 0, ms: 0 }, Normal: { n: 22, ms: 60 }, Hard: { n: 60, ms: 150 } };
+  function eDD(S, me) {
+    const t = S.trump, need = eNeed(S), hands = S.hands.map(h => h.slice()), tw = S.tw.slice(), mt = S.maker & 1, sg = mt === (me & 1) ? 1 : -1, out = S.out, march = S.alone ? 4 : 2;
+    const tc = S.trick.map(x => x.c), tp = S.trick.map(x => x.p);
+    let nodes = 0;
+    const rec = (p, tn, a, b) => {
+      const mk = tw[mt] + tw[mt + 2], df = tn - mk;
+      if (++nodes > 40000) return mk > df ? sg : -sg;
+      if (df >= 3) return -2 * sg;
+      if (mk >= 3 && df >= 1) return sg;
+      if (tn >= 5) return march * sg;
+      const h = hands[p], mx = (p & 1) === (me & 1), ls = tc.length ? esuit(tc[0], t) : -1;
+      let any = false, best = mx ? -9 : 9;
+      if (ls >= 0) for (const c of h) if (esuit(c, t) === ls) { any = true; break; }
+      for (let i = 0; i < h.length; i++) {
+        const c = h[i];
+        if (any && esuit(c, t) !== ls) continue;
+        h.splice(i, 1); tc.push(c); tp.push(p);
+        let v;
+        if (tc.length === need) {
+          const l0 = esuit(tc[0], t);
+          let w = 0, wv = estr(tc[0], l0, t);
+          for (let k = 1; k < need; k++) { const x = estr(tc[k], l0, t); if (x > wv) { wv = x; w = k; } }
+          const wp = tp[w], sc = tc.splice(0), sp = tp.splice(0);
+          tw[wp]++;
+          v = rec(wp, tn + 1, a, b);
+          tw[wp]--;
+          for (let k = 0; k < need; k++) { tc.push(sc[k]); tp.push(sp[k]); }
+        } else { let q = (p + 1) % 4; if (q === out) q = (q + 1) % 4; v = rec(q, tn, a, b); }
+        tc.pop(); tp.pop(); h.splice(i, 0, c);
+        if (mx) { if (v > best) best = v; if (best > a) a = best; } else { if (v < best) best = v; if (best < b) b = best; }
+        if (a >= b) break;
+      }
+      return best;
+    };
+    return rec(S.turn, S.tn, -9, 9);
+  }
+  const E_LVL = { Easy: { n: 0, ms: 0 }, Normal: { n: 22, ms: 60 }, Hard: { n: 60, ms: 150 }, Hardest: { n: 140, ms: 200, dd: 1 } };
 
   function eBotPlay(S, p, lvl) {
     const L = eLegal(S, p);
@@ -842,7 +1004,7 @@
       if (Math.random() < 0.1) return L[(Math.random() * L.length) | 0];
       return ePolicy(S, p);
     }
-    const r = pimc(EG, S, p, { n: cfg.n, ms: cfg.ms, eps: 0.02 });
+    const r = pimc(EG, S, p, { n: cfg.n, ms: cfg.ms, eps: 0.02, dd: cfg.dd ? eDD : null });
     if (r.close.length > 1) {
       const pol = ePolicy(S, p);
       if (r.close.includes(pol)) return pol;
@@ -901,12 +1063,53 @@
     return tot / cnt;
   }
 
+  function eHandVal(h, s) {
+    let v = 0;
+    for (const c of h) { if (esuit(c, s) === s) v += cr(c) === 11 ? 2.2 : cr(c) >= 13 ? 1.4 : 1; else if (cr(c) === 14) v += 0.8; }
+    return v;
+  }
+  function eSimPass(S, me, n, ms) {
+    const dealer = S.dealer, up = S.up, upS = cs(up), hand = S.hands[me], U = [], r1 = S.phase === 'bid1';
+    for (const c of EDECK) if (!hand.includes(c) && c !== up) U.push(c);
+    let tot = 0, cnt = 0;
+    const t0 = now();
+    for (let i = 0; i < n; i++) {
+      if (i >= 6 && now() - t0 > ms) break;
+      const pool = shuf(U.slice()), W = eNew();
+      W.o = S.o; W.dealer = dealer;
+      let k = 0;
+      for (let q = 0; q < 4; q++) { if (q === me) W.hands[q] = hand.slice(); else { W.hands[q] = pool.slice(k, k + 5); k += 5; } }
+      let maker = -1, trump = -1, picked = false;
+      if (r1) for (let q = nextSeat(me); q !== nextSeat(dealer) && maker < 0; q = nextSeat(q)) {
+        if (eHandVal(W.hands[q], upS) + (q === dealer || q === mate(dealer) ? 0.8 : -0.6) >= 4.8) { maker = q; trump = upS; picked = true; }
+      }
+      if (maker < 0) {
+        let q = r1 ? nextSeat(dealer) : nextSeat(me);
+        for (let g = 0; g < 4 && maker < 0; g++, q = nextSeat(q)) {
+          if (!r1 && q === nextSeat(dealer)) break;
+          let bs = -1, bv = -1;
+          for (let s = 0; s < 4; s++) { if (s === upS) continue; const v = eHandVal(W.hands[q], s); if (v > bv) { bv = v; bs = s; } }
+          if (bv >= 4.4 || (S.o.stick && q === dealer)) { maker = q; trump = bs; }
+          if (q === dealer) break;
+        }
+      }
+      cnt++;
+      if (maker < 0) continue;
+      W.trump = trump; W.maker = maker;
+      if (picked) { const d = W.hands[dealer]; d.push(up); d.splice(d.indexOf(eDiscardPick(d, trump)), 1); }
+      W.lead = W.turn = nextSeat(dealer);
+      let g = 0;
+      while (!eOver(W) && g++ < 40) ePlay(W, W.turn, ePolicy(W, W.turn));
+      tot += eUtil(W, me);
+    }
+    return tot / Math.max(1, cnt);
+  }
   function eBotBid(S, p, lvl) {
     const up = S.up, dealer = S.dealer;
     const h = S.hands[p];
     const me = p & 1;
     const lead = S.o.alone;
-    const cfg = lvl === 'Hard' ? { n: 60, ms: 140 } : { n: 24, ms: 60 };
+    const cfg = lvl === 'Hardest' ? { n: 200, ms: 110 } : lvl === 'Hard' ? { n: 60, ms: 140 } : { n: 24, ms: 60 };
     const press = (S.score[1 - me] >= S.o.target - 1 ? -0.25 : 0) + (S.score[me] >= S.o.target - 1 ? 0.08 : 0);
     if (S.phase === 'bid1') {
       const s = cs(up);
@@ -918,8 +1121,9 @@
       }
       const ev = eSimCall(S, p, s, false, up, cfg.n, cfg.ms);
       let evA = -9;
-      if (lead && lvl === 'Hard') evA = eSimCall(S, p, s, true, up, cfg.n, cfg.ms);
+      if (lead && TOP(lvl)) evA = eSimCall(S, p, s, true, up, cfg.n, cfg.ms);
       const th = 0.22 - press;
+      if (lvl === 'Hardest') return Math.max(ev, evA) > eSimPass(S, p, cfg.n, cfg.ms) + 0.04 ? { t: 'order', alone: evA > ev + 0.2 } : { t: 'pass' };
       if (Math.max(ev, evA) > th + (S.score[me] >= S.o.target - 2 ? 0.05 : 0)) return { t: 'order', alone: evA > ev + 0.25 && evA > 0.45 };
       return { t: 'pass' };
     }
@@ -941,10 +1145,11 @@
       if (s === bad) continue;
       const ev = eSimCall(S, p, s, false, up, cfg.n, cfg.ms);
       let evA = -9;
-      if (lead && lvl === 'Hard' && ev > 0.3) evA = eSimCall(S, p, s, true, up, cfg.n, cfg.ms);
+      if (lead && TOP(lvl) && ev > 0.3) evA = eSimCall(S, p, s, true, up, cfg.n, cfg.ms);
       const m = Math.max(ev, evA);
       if (m > bv) { bv = m; best = s; ba = evA > ev + 0.25 && evA > 0.45; }
     }
+    if (lvl === 'Hardest' && !stuck) return bv > eSimPass(S, p, cfg.n, cfg.ms) + 0.04 ? { t: 'call', s: best, alone: ba } : { t: 'pass' };
     if (bv > 0.1 - press || stuck) return { t: 'call', s: best, alone: ba };
     return { t: 'pass' };
   }
@@ -952,7 +1157,7 @@
   function EuchreEngine(opt) {
     const o = Object.assign({}, EUCHRE_DEF, opt);
     const S = eNew();
-    S.o = o; S.phase = 'new'; S.hno = 0; S.score = [0, 0]; S.hist = []; S.dealer = 0; S.up = -1; S.upS = -1; S.kitty = []; S.passes = 0; S.dis = -1; S.sig = null;
+    S.o = o; S.phase = 'new'; S.hno = 0; S.score = [0, 0]; S.hist = []; S.dealer = 0; S.up = -1; S.upS = -1; S.kitty = []; S.passes = 0; S.dis = -1; S.dead = []; S.sig = null;
     let evs = [];
     const E = (k, d) => { evs.push(Object.assign({ k }, d)); };
     const take = () => { const r = evs; evs = []; return r; };
@@ -960,7 +1165,7 @@
       const d = shuf(EDECK.slice());
       const ns = eNew();
       for (let p = 0; p < 4; p++) ns.hands[p] = d.slice(p * 5, p * 5 + 5);
-      Object.assign(S, { hands: ns.hands, trick: [], tn: 0, played: ns.played, vd: ns.vd, tw: [0, 0, 0, 0], trump: -1, maker: -1, alone: false, out: -1, known: [] });
+      Object.assign(S, { hands: ns.hands, trick: [], tn: 0, played: ns.played, vd: ns.vd, tw: [0, 0, 0, 0], trump: -1, maker: -1, alone: false, out: -1, known: [], dead: [], dis: -1 });
       S.kitty = d.slice(20);
       S.up = S.kitty[0]; S.upS = cs(S.up);
       for (const h of S.hands) h.sort(esort(-1));
@@ -984,13 +1189,13 @@
       E('trump', { p, s, alone: S.alone, round });
       if (round === 1) {
         const d = S.dealer;
-        if (S.alone && d === mate(p)) { E('noPick', {}); startPlay(); return; }
+        if (S.alone && d === mate(p)) { S.dead = [S.up]; E('noPick', {}); startPlay(); return; }
         S.hands[d].push(S.up);
         S.known = [[d, S.up]];
         S.phase = 'discard'; S.turn = d;
         E('pickup', { p: d, c: S.up });
         E('turn', { tk: 'discard', p: d });
-      } else startPlay();
+      } else { S.dead = [S.up]; startPlay(); }
     }
     function scoreHand() {
       const r = eResult(S);
@@ -1054,7 +1259,7 @@
           if (a.t !== 'discard' || p !== S.dealer || !S.hands[p].includes(a.c)) return null;
           const h = S.hands[p];
           h.splice(h.indexOf(a.c), 1);
-          if (a.c === S.up) S.known = [];
+          S.dis = a.c;
           E('discard', { p, c: a.c });
           startPlay();
           return take();
@@ -1465,7 +1670,7 @@
 .GM .cg-opt{display:flex;align-items:center;gap:10px;margin:5px 0;text-align:left}
 .GM .cg-opt>span{flex:0 0 38%;font:800 13px/1.2 var(--sans);color:rgba(255,255,255,.88)}
 .GM .cg-opt>span small{display:block;font:700 11px/1.25 var(--sans);color:rgba(255,255,255,.55);margin-top:2px}
-.GM .cg-seg{flex:1;display:flex;gap:5px}
+.GM .cg-seg{flex:1;display:flex;gap:5px;flex-wrap:wrap}
 .GM .cg-seg button{flex:1;min-height:36px;border-radius:11px;border:2px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font:900 13px var(--sans);padding:0 4px;cursor:pointer}
 .GM .cg-seg button.sw{min-height:44px;background-size:cover;background-position:center;border-width:3px}
 .GM .cg-seg button.bk,.GM .cg-seg button.bk.on{background-size:auto 90%;background-repeat:no-repeat;background-position:center;background-color:#1d2a4a}
@@ -1647,7 +1852,7 @@
     const saved = api.load() || {};
     const opt = Object.assign({ diff: 'Normal', felt: 0, back: 'blue', speed: 1, hints: true, wins: 0, games: 0 }, saved);
     opt.rules = Object.assign({}, C.defs, saved.rules || {});
-    if (!['Easy', 'Normal', 'Hard'].includes(opt.diff)) opt.diff = 'Normal';
+    if (!['Easy', 'Normal', 'Hard', 'Hardest'].includes(opt.diff)) opt.diff = 'Normal';
     if (!(opt.felt >= 0 && opt.felt < 3)) opt.felt = 0;
     if (opt.back !== 'red') opt.back = 'blue';
     if (opt.speed !== 0.55) opt.speed = 1;
@@ -2040,6 +2245,7 @@
     function evLook(e) {
       if (e.p !== viewer) { hold(dur(60)); return; }
       D.look = true;
+      if (e.hand) D.hands[viewer].forEach((c, i) => setFace(c, e.hand[i]));
       D.hands[viewer].forEach((c, i) => flip(c, true, i * dur(28)));
       sfx('flip'); hold(dur(520));
     }
@@ -2506,7 +2712,7 @@
       const inGame = scene === 'game', lockRules = inGame && (M.role === 'guest' || false);
       const R = opt.rules;
       let h = `<div class="cg-box wide col"><div class="cg-bh"><p class="cg-kick">${C.title}</p><h3>Options</h3></div><div class="cg-scr">`;
-      h += `<p class="cg-sec">Computer players</p>` + segHtml('Difficulty', 'How well the computer plays', 'o', 'diff', ['Easy', 'Normal', 'Hard'], ['Easy', 'Normal', 'Hard'], opt.diff, inGame && isOnline());
+      h += `<p class="cg-sec">Computer players</p>` + segHtml('Difficulty', 'How well the computer plays', 'o', 'diff', ['Easy', 'Normal', 'Hard', 'Hardest'], ['Easy', 'Normal', 'Hard', 'Hardest'], opt.diff, inGame && isOnline());
       h += `<p class="cg-sec">Table</p>`;
       h += `<div class="cg-opt"><span>Table colour</span><div class="cg-seg">${C.felts.map((f, i) => `<button class="sw${i === opt.felt ? ' on' : ''}" style="background:linear-gradient(${f[0]},${f[2]})" data-a="felt" data-i="${i}" aria-label="Colour ${i + 1}"></button>`).join('')}</div></div>`;
       h += `<div class="cg-opt"><span>Card back</span><div class="cg-seg">${['blue', 'red'].map(b => `<button class="sw bk${b === opt.back ? ' on' : ''}" style="background-image:url(${backUrl(b)})" data-a="back" data-b="${b}" aria-label="${b} back"></button>`).join('')}</div></div>`;
@@ -2519,7 +2725,7 @@
       showPane('opts', h, from === 'title' ? 'solid' : '', (a, v, el) => {
         if (a === 'opt') {
           const i = +el.dataset.i, k = el.dataset.k;
-          if (el.dataset.g === 'o') { const o = { diff: ['Easy', 'Normal', 'Hard'], speed: [1, 0.55], hints: [true, false] }[k]; opt[k] = o[i]; }
+          if (el.dataset.g === 'o') { const o = { diff: ['Easy', 'Normal', 'Hard', 'Hardest'], speed: [1, 0.55], hints: [true, false] }[k]; opt[k] = o[i]; }
           else { const o = C.opts.find(x => x.k === k); opt.rules[k] = o.vals[i]; }
           save(); optsPane(from); if (scEl()) scEl().scrollTop = sc;
           if (k === 'hints') hud();
@@ -2927,7 +3133,7 @@ ${host ? `<button class="cg-big blue" data-a="restart">${online ? 'Restart for e
     if (window.ResizeObserver) { ro = new ResizeObserver(() => rescale()); ro.observe(wrap); }
     SND.setMuted(() => api.muted);
     applyFelt(); fit(true);
-    root._cg = { M, D, Q, opt, view, get T() { return T; }, get viewer() { return viewer; }, get scene() { return scene; }, ents: () => ents, hand: () => myHand().map(e => e.c), pane: () => paneKind(), idle: () => canAct(), geo: () => GE, dbg: () => ({ paused, busy: Math.round(busy - T), q: Q.map(e => e.k), idleDone, ver: M.ver, botVer: M.botVer, sched: sched.length }) };
+    root._cg = { M, D, Q, opt, view, send, get T() { return T; }, get viewer() { return viewer; }, get scene() { return scene; }, ents: () => ents, hand: () => myHand().map(e => e.c), pane: () => paneKind(), idle: () => canAct(), geo: () => GE, dbg: () => ({ paused, busy: Math.round(busy - T), q: Q.map(e => e.k), idleDone, ver: M.ver, botVer: M.botVer, sched: sched.length }) };
     api.score(opt.wins);
     if (api.net.invite) startOnline(); else titlePane();
     return { destroy() { M.tok++; if (ro) ro.disconnect(); SND.close(); } };
@@ -2948,6 +3154,7 @@ ${host ? `<button class="cg-big blue" data-a="restart">${online ? 'Restart for e
       id, title: c.title, category: 'Board', tint: TINT[id], blurb: BLURB[id], help: c.help,
       width: 960, format: fmtWins, better: 'high', icon: iconSuit(c.mark),
       css: cssFor(id),
+      _t: { Engine: c.Engine },
       mount: (root, api) => mountCards(id, root, api)
     });
   });

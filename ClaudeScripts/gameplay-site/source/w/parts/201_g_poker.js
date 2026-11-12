@@ -127,6 +127,7 @@
       cur: 0, minR: 0, turn: -1, street: 0, phase: 'wait', hand: 0, level: o.level || 0, hpl: o.hpl || 0, fixed: o.blinds || null,
       sbA: 0, bbA: 0, pot: 0, lastAgg: -1, raises: 0, buyin: o.buyin || 0, buyins: F(1), start: o.stacks.slice(), places: [], stats: F(0).map(() => ({ won: 0, hands: 0, best: 0, bestName: '', big: 0 })), winner: -1
     };
+    const trk = o.track ? Tracker(n) : null;
     let ev = [];
     const E = e => { ev.push(e); };
     const take = () => { const e = ev; ev = []; return e; };
@@ -140,6 +141,7 @@
     const nActable = () => { let c = 0; for (let i = 0; i < n; i++) if (live(i) && !s.allin[i]) c++; return c; };
     const potTotal = () => s.pot + s.bet.reduce((a, b) => a + b, 0);
     const unit = () => unitOf(s.bbA);
+    const pub = () => ({ n, button: s.button, sb: s.sb, bb: s.bb, bbA: s.bbA, bet: s.bet, stack: s.stack, cur: s.cur, acted: s.acted, fold: s.fold, allin: s.allin, in: s.in, raises: s.raises, pot: potTotal(), board: s.board, street: s.street });
 
     function legal(p) {
       const call = Math.min(s.cur - s.bet[p], s.stack[p]), maxTo = s.bet[p] + s.stack[p];
@@ -184,6 +186,7 @@
       };
       post(s.sb, s.sbA, 'sb'); post(s.bb, s.bbA, 'bb');
       s.cur = s.bbA; s.minR = s.bbA; s.phase = 'bet';
+      if (trk) trk.hand(pub());
       advance(s.bb);
       return true;
     }
@@ -220,6 +223,7 @@
       const c = [];
       for (let i = 0, k = s.street === 1 ? 3 : 1; i < k; i++) c.push(s.deck.pop());
       s.board.push(...c);
+      if (trk) trk.street(pub());
       E({ k: 'board', st: s.street, cards: c, pot: s.pot });
     }
     function nextStreet() {
@@ -233,6 +237,7 @@
       list.forEach(p => {
         if (s.shown[p]) return;
         s.shown[p] = true;
+        if (trk) trk.show(p, s.hole[p][0], s.hole[p][1]);
         out.push({ p, cards: s.hole[p].slice() });
       });
       if (out.length) E({ k: 'reveal', list: out });
@@ -340,6 +345,7 @@
         else if (to < lg.min && to < lg.max) to = lg.min;
       }
       if (kind !== 'fold' && kind !== 'check' && kind !== 'call' && kind !== 'raise') return false;
+      if (trk) trk.act(pub(), p, kind, lg.raise);
       const info = { k: 'act', p, a: kind };
       if (kind === 'fold') s.fold[p] = true;
       else if (kind === 'call') {
@@ -385,7 +391,7 @@
       for (let q = s.button, c = 0; c < n; c++) { q = (q + 1) % n; if (s.in[q]) posn.push(q); }
       const idx = posn.indexOf(p), tot = posn.length;
       const late = tot <= 3 ? idx >= tot - 1 || p === s.button : idx >= tot - 2;
-      return { lg, hole: s.hole[p], board: s.board, street: s.street, nOpp: nLive() - 1, nPlay: nLive(), raises: s.raises, pot: potTotal(), stack: s.stack[p], bet: s.bet[p], late, early: !late && idx < Math.max(1, tot / 3), blind: p === s.sb || p === s.bb, bb: s.bbA, sb: s.sbA, unit: unit(), cur: s.cur, hu: s.al === 2 };
+      return { lg, hole: s.hole[p], board: s.board, street: s.street, nOpp: nLive() - 1, nPlay: nLive(), raises: s.raises, pot: potTotal(), stack: s.stack[p], bet: s.bet[p], late, early: !late && idx < Math.max(1, tot / 3), blind: p === s.sb || p === s.bb, bb: s.bbA, sb: s.sbA, unit: unit(), cur: s.cur, hu: s.al === 2, seat: p, trk, g: trk ? pub() : null };
     }
     return { s, startHand, act, rebuy, leave, view, legal, info, take, filt, potTotal, live, alive };
   }
@@ -480,12 +486,315 @@
     return { k: 'fold' };
   }
 
+  const B64 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_';
+  const PFT = 'cloqrtuvwy6deffhhjjj7degghiijk7deggijjkl6ddfghhijl5bcefhhiil5bdffhhikn5cefghijkp5cefgiikmr7defghjlot9dfghiknrvbeghikmruyefgjmqtwzCaghijjkmlmcmoqruwxyB8ffghijklm8ffhiikklm7edghijjjm6cefghijkn5bdeghhiko5befgiijlp5cefhijknr7dfghijmou9dggiikorwbfghiknrvzffgkmquxzDaghijklmmnbhijklmmnocmpqswyyADaghiikmlmo9ffhijllmo8degijkklo7deghijjlp5befgijjlq5deghijlnt8efghjkmpvadghijlorxcfhijknrvAgfgkmqvyADahhjjllmmobhjklmmnnpdijlmoooprcmosuyABCGaggiklmmmp8fghjkllnq8eghikklnr6dfhijklms5deghijlot7efhijkmqv9dghiklosxbfhijlotwAfghkorwyBEafgijkllmoahijkllmnqbhjjlmnnoqdjjlmnppptcnpsxzCDEIafgilmmmor8fgijlmmos8eghjllmot6efhjkkmpv8efhijknrwaeghjkmpuybfhijmptxBeffjosvzBE8efhjkkllo9ghijkllnqahijkmnnorciikmnoopsdjklnoppqudnquyBDEGK9fijlmmnpt8ehikmmnpu7egiklmorw8eghjklosx9eggjkmquzbfhijmpuyBeffkouxADE8egijkklmq9egijkllnr9gijklmnosbgiklnnoptcijlmoopquciknnppqswcnsxAEFHJN8fijlnnorw8ghjlmnpsy9fiiklnqtzaeiijlnrwBbfhijmqvzCfeglqvyBDG8egijklmnr9fhijllmot9fhijklmotagijkmnnqubhjkmnopqvchkmnpopsxcilmoqqrtycowzDFHJMQ8gjkmnoquzagijlnosvAbejjlmptyCcgjjkotxBEeegnsxACFG8fgijklnpu8fhijllnpu9fhjklmnqv8fhjklmoqvahikmmnpsxbhjlnopptybjkmoppruAbjmnoqrtwBetADGIKMOSahjmnoqtwCbhjkmorwADciklnpvzDFegkrwADFGIagijjklorvagijklmprwagijklnprwbhiklmopsxbhijlmnqsybhjkmnoquzciklmopswBdimnopruxDdlmopqtwADoyEHJLMORUehklnqsxAEeikmoswBEGhipvzDFGIJcgijllnquycgijkmnquydhjjkmoruzdhjklnprvAdhjklnqswBdhillnpsxBdhklmoquyDeimloqswBEekmopquyCEhknopsvzCGyEKKMOPRTVhiloruyDEHjovADGHIIJdhjklnpuwAeijklnpuxBehkklnquyCeiklmnruzCejklmpsvzDeiklmprxAEeiklmptyCEfjmmorvzDGflmnqsyBEHilnoruzDFIkkprtwAEHIKNOPRRTVWYoxBFGIJKKJhhimoswzBDiijnpsxzCEiijnqtxACFjjjnquxADGiijmqvyBDFhiinrwzCEHhhjosyBEFHhhjquzCFGIiknuyDFHIKklsyCFGIJJnqxDEHIJKKrAEGHKLLLLWZZ-------';
+  const PFO = 'ccbbaa9988cb77cabcc9ac66c89c558cbac744c6b9c57cab33b8c4c36cc2a9229bc1b7c05ca88b4c983cb69a11b5a72c1c977b0cb400878ab3a689b2b096b17686a56ba4a35b7a658575a2954ba1796a3b54a0789464847493672b68431b5a690b539291738390634a825957813a802a3258567152621a42724945390a4647483141706151292160193450353040280936383720102318242708252617071315141606120305040201';
+  const PFP = [.025, .05, .08, .12, .17, .25, .35, .5, .7, 1];
+  const PFE = new Float32Array(1690), PFQ = new Float32Array(169), PFN = new Uint8Array(169);
+  const CA = new Uint8Array(1326), CB = new Uint8Array(1326), CH = new Uint8Array(1326);
+  const hcls = (a, b) => { const x = a % 13, y = b % 13, hi = x > y ? x : y, lo = x > y ? y : x; return ((a / 13) | 0) === ((b / 13) | 0) ? hi * 13 + lo : lo * 13 + hi; };
+  const cix = (a, b) => a < b ? a * (101 - a) / 2 + b - 1 : b * (101 - b) / 2 + a - 1;
+  (() => {
+    for (let i = 0; i < 1690; i++) PFE[i] = .08 + B64.indexOf(PFT[i]) * .0125;
+    let acc = 0, k = 0;
+    for (let i = 0; i < 169; i++) { const a = B64.indexOf(PFO[i * 2]), b = B64.indexOf(PFO[i * 2 + 1]), c = a === b ? 6 : a > b ? 4 : 12; PFN[a * 13 + b] = c; PFQ[a * 13 + b] = (acc + c / 2) / 1326; acc += c; }
+    for (let a = 0; a < 52; a++) for (let b = a + 1; b < 52; b++) { CA[k] = a; CB[k] = b; CH[k] = hcls(a, b); k++; }
+  })();
+  const c01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const pfEq = (h, p) => {
+    let k = 0;
+    while (k < 8 && PFP[k + 1] < p) k++;
+    const f = c01((p - PFP[k]) / (PFP[k + 1] - PFP[k]));
+    return PFE[h * 10 + k] * (1 - f) + PFE[h * 10 + k + 1] * f;
+  };
+  const sstep = (q, x) => c01((x - q) / Math.max(.012, x * .14) + .5);
+  const pfReal = (h, ip) => { const a = (h / 13) | 0, b = h % 13, hi = a > b ? a : b, lo = a > b ? b : a; return (ip ? .96 : .78) + (a > b ? .07 : 0) + (a === b ? .05 : 0) + (a !== b && hi - lo <= 2 && lo >= 3 ? .04 : 0) - (a < b && hi - lo >= 4 && hi < 12 ? .07 : 0); };
+  const BKS = [.22, .17, .61];
+  const RFI = [.16, .46, .46, .29, .21, .17, .14, .12, .11, .1];
+  const PUSH = [.5, .6, .38, .28, .21, .17, .14, .12, .11, .1];
+  function pfX(g, p, t, canR) {
+    const n = g.n, call = Math.min(g.cur - g.bet[p], g.stack[p]), agg = t.agg;
+    let beh = 0, nin = 1, opMax = 0, closing = true;
+    for (let k = 1; k < n; k++) {
+      const q = (p + k) % n;
+      if (!g.in[q]) continue;
+      nin++;
+      if (g.fold[q]) continue;
+      if (g.stack[q] + g.bet[q] > opMax) opMax = g.stack[q] + g.bet[q];
+      if (!g.allin[q] && !g.acted[q]) { beh++; closing = false; }
+    }
+    const pos = q => (q - g.button - 1 + n) % n, hu = nin === 2;
+    return {
+      beh, hu, closing, canR, limp: t.limp, raises: g.raises, po: agg >= 0 ? t.rp[agg] : 1, need: call / (g.pot + call), ip: agg >= 0 && pos(p) > pos(agg),
+      bbOpt: !g.raises && p === g.bb && call === 0, sbSeat: p === g.sb && !hu, eff: Math.min(g.stack[p] + g.bet[p], opMax) / g.bbA,
+      shove: g.raises > 0 && (call >= g.stack[p] * .4 || (agg >= 0 && g.allin[agg])), loose: t.lz(p)
+    };
+  }
+  function pfModel(h, X, out) {
+    const q = PFQ[h], lz = X.loose;
+    let r = 0, c = 0;
+    if (!X.raises) {
+      if (X.eff <= 10.5 && !X.limp && !X.bbOpt) r = sstep(q, Math.min(1, PUSH[Math.min(9, X.beh)] * Math.max(.75, Math.min(1.7, 1 + (10 - X.eff) * .08)) * lz));
+      else {
+        const x = Math.min(.95, (X.hu ? (X.bbOpt ? .3 : .8) : RFI[Math.min(9, X.beh)] * (X.limp ? .62 : 1)) * lz);
+        r = sstep(q, x);
+        c = X.bbOpt ? 1 - r : X.limp || X.sbSeat ? sstep(q, Math.min(1, x + (X.sbSeat ? .24 : .15) * lz)) * (1 - r) : 0;
+      }
+    } else {
+      const e = pfEq(h, X.po), a = (h / 13) | 0, b = h % 13, lo = 1 + (lz - 1) * .25;
+      const m = e * pfReal(h, X.ip) * lo - X.need - (X.closing ? 0 : .04), k = c01(m / .02 + .5);
+      if (X.shove || X.raises >= 3 || X.eff <= 13) {
+        if (X.canR && !X.shove) { r = c01((e * lo - (X.raises >= 3 ? .53 : .56)) / .02 + .5); c = X.eff <= 13 ? 0 : k * (1 - r); }
+        else c = c01((e * lo - X.need - .015) / .02 + .5);
+      } else {
+        const v = X.raises === 1 ? sstep(q, X.po * .2 * lz) : c01((e - .585) / .02 + .5);
+        const bl = m < 0 && m > -.06 ? (a > b ? (X.raises === 1 ? .5 : a === 12 ? .2 : 0) : a !== b && b >= 11 && X.raises === 1 ? .15 : 0) : 0;
+        r = Math.max(v, bl);
+        c = k * (1 - r);
+      }
+    }
+    out[0] = r; out[1] = c;
+  }
+  function Tracker(n) {
+    const w = [], st = [], sc = new Int32Array(1326), dr = new Float32Array(1326), ord = new Uint16Array(1326), tmp = new Float32Array(1326), cl = new Float32Array(169), o2 = [0, 0];
+    for (let i = 0; i < n; i++) { w.push(new Float32Array(1326)); st.push({ hn: 0, vp: 0, ab: 0, an: 0, ff: 0, fn: 0, v: false, bk: [0, 0, 0] }); }
+    const t = { n, w, st, sc, dr, ord, rp: Array(n).fill(1), agg: -1, pagg: -1, limp: 0, bd: [], alive: 0, log: [] };
+    let ok = false;
+    t.lz = p => { const S = st[p]; return S.hn < 12 ? 1 : Math.max(.6, Math.min(2.6, (S.vp + 6 * t.vx) / (S.hn + 6) / t.vx)); };
+    t.ag = p => { const S = st[p]; return S.an < 8 ? 1 : Math.max(.5, Math.min(2.2, (S.ab + 1.5) / (S.an + 5) / .3)); };
+    t.fr = p => { const S = st[p]; return Math.max(.3, Math.min(1.9, (S.ff + 8 * .42) / (S.fn + 8) / .42)); };
+    t.bm = p => { const b = st[p].bk, k = b[0] + b[1] + b[2] + 6; return BKS.map((s, i) => Math.max(.25, Math.min(3, (b[i] + 6 * s) / k / s))); };
+    t.show = (p, a, b) => { const ix = cix(a, b); for (const L of t.log) if (L.p === p) st[p].bk[L.e[ix] >= L.v ? 2 : L.e[ix] < .3 ? 0 : 1]++; };
+    t.hand = g => {
+      let k = 0;
+      for (let i = 0; i < n; i++) {
+        const S = st[i];
+        if (S.v) S.vp++;
+        S.v = false;
+        if (g.in[i]) { S.hn++; k++; w[i].fill(1); }
+        t.rp[i] = 1;
+      }
+      t.vx = k === 2 ? .68 : k <= 4 ? .36 : .26;
+      t.agg = -1; t.pagg = -1; t.limp = 0; t.bd = []; t.log = []; ok = false;
+    };
+    t.street = g => { t.bd = g.board.slice(); ok = false; t.pagg = t.agg >= 0 && !g.fold[t.agg] ? t.agg : -1; t.agg = -1; };
+    t.prep = () => {
+      if (ok) return;
+      ok = true;
+      const bd = t.bd, nb = bd.length, used = new Uint8Array(52), bs = [0, 0, 0, 0], cs = bd.slice();
+      let bm = 0, top = 0, m = 0;
+      for (const c of bd) { used[c] = 1; bs[(c / 13) | 0]++; const r = c % 13 + 2; bm |= 1 << r; if (r > top) top = r; }
+      cs.push(0, 0);
+      const k = nb === 3 ? .038 : nb === 4 ? .021 : 0;
+      for (let i = 0; i < 1326; i++) {
+        const a = CA[i], b = CB[i];
+        if (used[a] || used[b]) { sc[i] = -1; dr[i] = 0; continue; }
+        cs[nb] = a; cs[nb + 1] = b;
+        const v = sc[i] = score(cs);
+        let o = 0;
+        if (k && v >> 20 < 4) {
+          const sa = (a / 13) | 0, sb = (b / 13) | 0, ra = a % 13 + 2, rb = b % 13 + 2, all = bm | 1 << ra | 1 << rb;
+          if (bs[sa] + (sb === sa ? 2 : 1) === 4) o += sa === sb || ra >= 11 ? 9 : 6;
+          else if (sb !== sa && bs[sb] === 3) o += rb >= 11 ? 9 : 6;
+          for (let x = 2; x <= 14; x++) if (!(all >> x & 1) && straightHi(all | 1 << x) && !straightHi(bm | 1 << x)) o += 4;
+          if (v >> 20 === 0 && ra > top && rb > top) o += 3;
+        }
+        dr[i] = Math.min(.5, o * k);
+        ord[m++] = i;
+      }
+      t.alive = m;
+      ord.subarray(0, m).sort((x, y) => sc[x] - sc[y]);
+    };
+    t.hsOf = (p, out) => {
+      const wp = w[p], m = t.alive;
+      let tot = 0, acc = 0, j = 0;
+      for (let i = 0; i < m; i++) tot += wp[ord[i]];
+      if (!(tot > 0)) tot = 1e-9;
+      while (j < m) {
+        const v = sc[ord[j]];
+        let e = j, g = 0;
+        while (e < m && sc[ord[e]] === v) g += wp[ord[e++]];
+        const h = (acc + g / 2) / tot;
+        for (; j < e; j++) out[ord[j]] = h;
+        acc += g;
+      }
+      return tot;
+    };
+    t.act = (g, p, kind, canR) => {
+      const S = st[p], wp = w[p];
+      if (!g.street) {
+        if (kind === 'call' || kind === 'raise') S.v = true;
+        if (kind === 'fold') return;
+        const X = pfX(g, p, t, canR);
+        let sum = 0;
+        for (let h = 0; h < 169; h++) { pfModel(h, X, o2); const v = kind === 'raise' ? o2[0] : o2[1]; cl[h] = v; sum += v * PFN[h]; }
+        for (let i = 0; i < 1326; i++) wp[i] *= Math.max(.05, cl[CH[i]]);
+        if (kind === 'raise') { t.rp[p] = Math.max(.015, Math.min(1, sum / 1326 * 1.15)); t.agg = p; } else if (kind === 'call' && !g.raises) t.limp++;
+        return;
+      }
+      const call = g.cur - g.bet[p], facing = call > 0;
+      S.an++;
+      if (kind === 'raise') S.ab++;
+      if (facing) { S.fn++; if (kind === 'fold') S.ff++; }
+      if (kind === 'fold') return;
+      t.prep();
+      t.hsOf(p, tmp);
+      const m = t.alive, ag = t.ag(p), F = call / g.pot, need = call / (g.pot + call), V = .36 - g.street * .04, pa = t.pagg, pos = q => (q - g.button - 1 + n) % n;
+      const dk = pa >= 0 && pa !== p && !g.fold[pa] && !g.allin[pa] && pos(pa) > pos(p) ? .25 : 1;
+      const bm = t.bm(p), ga = Math.pow(ag, .7), ea = kind === 'raise' ? new Float32Array(1326) : null;
+      let mx = 0;
+      for (let j = 0; j < m; j++) {
+        const i = ord[j], h = tmp[i], d = dr[i], e = h + (1 - h) * d;
+        let pr;
+        if (!facing) { const pb = Math.min(.95, (e >= 1 - V ? .85 * bm[2] : d >= .16 ? .55 * bm[1] : e < .3 ? .32 * bm[0] : .2 * bm[1]) * ga) * dk; pr = kind === 'raise' ? pb : 1 - pb; }
+        else if (kind === 'raise') pr = Math.min(.95, (e >= .9 ? .6 * bm[2] : e >= .8 ? .18 * bm[2] : d >= .28 ? .22 * bm[1] : e < .2 ? .05 * bm[0] : .02 * bm[1]) * ga);
+        else pr = e >= .92 ? .45 : e >= F * .85 || d >= need ? .85 : .07;
+        const x = wp[i] * pr;
+        wp[i] = x;
+        if (x > mx) mx = x;
+        if (ea) ea[i] = e;
+      }
+      if (ea) t.log.push({ p, e: ea, v: facing ? .8 : 1 - V });
+      if (mx > 0 && mx < .5) { const k = 1 / mx; for (let j = 0; j < m; j++) wp[ord[j]] *= k; }
+      if (kind === 'raise') t.agg = p;
+    };
+    return t;
+  }
+  function hardPre(I, R) {
+    const lg = I.lg, X = pfX(I.g, I.seat, I.trk, lg.raise), o = [0, 0], u = R();
+    X.loose = 1;
+    pfModel(hcls(I.hole[0], I.hole[1]), X, o);
+    if (u < o[0] && lg.raise) {
+      let to = lg.max;
+      if (!X.raises) { if (!(X.eff <= 10.5 && !X.limp && !X.bbOpt)) to = I.bb * (X.hu ? 2.2 : X.sbSeat ? 3 : 2.3) + (X.limp + (X.bbOpt ? 1 : 0)) * I.bb; }
+      else if (!(X.shove || X.raises >= 3 || X.eff <= 13)) to = lg.cur * (X.raises === 1 ? (X.ip ? 3 : 3.8) : 2.3);
+      to = Math.round(to / I.unit) * I.unit;
+      if (to >= (I.stack + I.bet) * .4) to = lg.max;
+      return { k: 'raise', to: Math.max(Math.min(lg.min, lg.max), Math.min(lg.max, to)) };
+    }
+    if (lg.check) return { k: 'check' };
+    return u < o[0] + o[1] ? { k: 'call' } : { k: 'fold' };
+  }
+  function hardPost(I, R) {
+    const g = I.g, t = I.trk, me = I.seat, lg = I.lg, n = g.n, call = lg.call, pot = I.pot, hole = I.hole, bd = I.board, stn = I.street, nb = bd.length;
+    t.prep();
+    const sc = t.sc, dr = t.dr, ord = t.ord, m = t.alive, mi = cix(hole[0], hole[1]), opp = [], H = [], CU = [], TO = [];
+    const used = new Uint8Array(52);
+    used[hole[0]] = 1; used[hole[1]] = 1;
+    for (const c of bd) used[c] = 1;
+    let ip = true, fr = 0;
+    const pos = q => (q - g.button - 1 + n) % n;
+    for (let q = 0; q < n; q++) {
+      if (q === me || !g.in[q] || g.fold[q]) continue;
+      const h = new Float32Array(1326), cu = new Float32Array(1326), wq = t.w[q];
+      t.hsOf(q, h);
+      let acc = 0;
+      for (let i = 0; i < 1326; i++) { if (sc[i] >= 0 && !used[CA[i]] && !used[CB[i]]) acc += wq[i]; cu[i] = acc; }
+      if (!(acc > 0)) { acc = 0; for (let i = 0; i < 1326; i++) { if (sc[i] >= 0 && !used[CA[i]] && !used[CB[i]]) acc += 1; cu[i] = acc; } }
+      opp.push(q); H.push(h); CU.push(cu); TO.push(acc);
+      if (!g.allin[q] && pos(q) > pos(me)) ip = false;
+      fr += t.fr(q);
+    }
+    const no = opp.length, N = no > 2 ? 260 : 360, wv = new Float32Array(N), ev = new Float32Array(N), pick = new Int32Array(no), need5 = 5 - nb, cs = [0, 0, 0, 0, 0, 0, 0], deck = [];
+    fr /= no;
+    for (let c = 0; c < 52; c++) if (!used[c]) deck.push(c);
+    for (let i = 0; i < nb; i++) cs[i] = bd[i];
+    let ns = 0, eq = 0;
+    for (let s = 0; s < N; s++) {
+      let np = 0, mxE = 0;
+      for (let o = 0; o < no; o++) {
+        const cu = CU[o];
+        let ix = -1;
+        for (let tr = 0; tr < 6 && ix < 0; tr++) {
+          const u = R() * TO[o];
+          let lo = 0, hi = 1325;
+          while (lo < hi) { const md = (lo + hi) >> 1; if (cu[md] > u) hi = md; else lo = md + 1; }
+          if (!used[CA[lo]] && !used[CB[lo]]) ix = lo;
+        }
+        if (ix < 0) break;
+        pick[np++] = ix; used[CA[ix]] = 1; used[CB[ix]] = 1;
+        const h = H[o][ix], e = h + (1 - h) * dr[ix];
+        if (e > mxE) mxE = e;
+      }
+      if (np === no) {
+        for (let i = 0; i < need5; i++) {
+          let c = deck[(R() * deck.length) | 0];
+          while (used[c]) c = deck[(R() * deck.length) | 0];
+          used[c] = 1; cs[nb + i] = c;
+        }
+        cs[5] = hole[0]; cs[6] = hole[1];
+        const a = score(cs);
+        let bo = -1, ties = 0;
+        for (let o = 0; o < no; o++) { cs[5] = CA[pick[o]]; cs[6] = CB[pick[o]]; const v = score(cs); if (v > bo) { bo = v; ties = 1; } else if (v === bo) ties++; }
+        const r = a > bo ? 1 : a === bo ? 1 / (ties + 1) : 0;
+        wv[ns] = r; ev[ns] = mxE; eq += r; ns++;
+        for (let i = 0; i < need5; i++) used[cs[nb + i]] = 0;
+      }
+      for (let o = 0; o < np; o++) { used[CA[pick[o]]] = 0; used[CB[pick[o]]] = 0; }
+    }
+    eq = ns ? eq / ns : .5;
+    const wm = t.w[me], hvOf = i => { let v = 1; for (let o = 0; o < no; o++) v *= H[o][i]; return v + (1 - v) * dr[i]; };
+    const myV = hvOf(mi), unit = I.unit, stack = I.stack, rnd = R();
+    const raiseTo = to => {
+      to = Math.round(to / unit) * unit;
+      if (to - I.bet >= stack * .6 || to > lg.max) to = lg.max;
+      return { k: 'raise', to: Math.max(Math.min(lg.min, lg.max), Math.min(lg.max, to)) };
+    };
+    if (call <= 0) {
+      if (!lg.raise) return { k: 'check' };
+      let wet = false;
+      if (nb < 5) { const bs = [0, 0, 0, 0], rs = []; for (const c of bd) { bs[(c / 13) | 0]++; rs.push(c % 13); } rs.sort((a, b) => a - b); const ms = Math.max(...bs); wet = (ms >= 2 && nb === 3) || ms >= 3 || rs[nb - 1] - rs[0] <= 4 || (nb > 3 && (rs[2] - rs[0] <= 3 || rs[3] - rs[1] <= 3)); }
+      const f = stn === 1 ? (wet ? .66 : .33) : stn === 2 ? .66 : rnd < .3 ? 1.1 : .75;
+      let b = Math.max(lg.min, Math.round(f * pot / unit) * unit);
+      if (b >= stack * .6) b = stack;
+      const fe = b / pot, F1 = Math.max(.05, Math.min(.85, fe / (1 + fe) * fr));
+      let nc = 0, wc = 0;
+      for (let s = 0; s < ns; s++) if (ev[s] >= F1) { nc++; wc += wv[s]; }
+      const Fall = ns ? 1 - nc / ns : F1, eqC = nc > 6 ? wc / nc : eq * .6;
+      const EVb = Fall * pot + (1 - Fall) * (eqC * (pot + 2 * b) - b), EVc = eq * pot * (ip ? 1 : .92);
+      const value = eqC > .5 + (3 - stn) * .01 && EVb > EVc;
+      const vt = Math.pow((1 + F1) / 2, Math.sqrt(no));
+      let tot = 0, V = 0, bAbove = 0;
+      const bk = i => (stn < 3 ? dr[i] * 2 : 0) - hvOf(i), myB = bk(mi), air = Math.min(vt, .5);
+      for (let j = 0; j < m; j++) {
+        const i = ord[j], x = wm[i];
+        if (!x) continue;
+        const hv = hvOf(i);
+        tot += x;
+        if (hv >= vt) V += x; else if (hv < air && bk(i) > myB) bAbove += x;
+      }
+      V /= tot || 1; bAbove /= tot || 1;
+      const B = Math.min(.6 * (1 - V), V * fe / (1 + fe) * [2.2, 1.6, 1][stn - 1] * Math.max(.2, Math.min(1.6, fr * fr)) / (no > 1 ? no * 1.2 : 1));
+      const bluff = !value && myV < air && bAbove < B && eq < .45;
+      const pa = t.pagg;
+      if (pa >= 0 && pa !== me && !g.fold[pa] && !g.allin[pa] && pos(pa) > pos(me) && !(value && eq > .8 && rnd < .3)) return { k: 'check' };
+      if (value && myV > .97 && !wet && stn < 3 && rnd > .75) return { k: 'check' };
+      if (value || bluff || (EVb > EVc + pot * .06 && eq < .4)) return raiseTo(lg.cur + b);
+      return { k: 'check' };
+    }
+    const need = call / (pot + call);
+    if (!lg.raise || call >= stack) return eq >= need + .01 ? { k: 'call' } : { k: 'fold' };
+    let tot = 0, below = 0;
+    for (let j = 0; j < m; j++) { const i = ord[j], x = wm[i]; if (!x) continue; tot += x; const hv = hvOf(i); if (hv < myV) below += x; else if (hv === myV) below += x / 2; }
+    const rp = tot ? below / tot : .5, d = dr[mi], deep = stack - call > pot * .8;
+    if (eq >= .78 + (no - 1) * .04 && myV >= .8 && (stn === 3 || rnd < (ip ? .7 : .9))) return raiseTo(lg.cur + (pot + call) * (.6 + rnd * .2));
+    if (stn < 3 && d >= .3 && eq < .6 && deep && no === 1 && rnd < .3) return raiseTo(lg.cur + (pot + call) * .7);
+    const adj = stn === 3 ? 0 : d >= .15 && deep ? -.04 : !ip && call > pot * .25 ? .03 : .01;
+    if (eq >= need + adj) return { k: 'call' };
+    const s = call / Math.max(1, pot - call), D = (stn === 3 ? .8 : .72) * (t.agg >= 0 ? Math.max(.3, Math.min(1.3, t.bm(t.agg)[0])) : 1) / (1 + s) / (no > 1 ? 1.6 : 1);
+    if (rp >= 1 - D && eq >= need * .7) return { k: 'call' };
+    return { k: 'fold' };
+  }
+  function botHardest(I, R) {
+    return I.street === 0 ? hardPre(I, R) : hardPost(I, R);
+  }
+
   const BOTS = [
     ['Ace Mallory', .75, .35, .12], ['Big Tony', .25, .8, .5], ['Luna Vega', .55, .55, .3], ['Doc Holliday', .85, .25, .05],
     ['Mad Max', .12, .9, .7], ['Sofia R.', .6, .65, .25], ['Cowboy Jim', .4, .45, .2], ['Kenji', .7, .5, .35],
     ['Lady Luck', .3, .35, .15], ['Vinnie', .5, .85, .55], ['Professor P', .8, .6, .3], ['Rosa', .45, .4, .22]
   ];
-  const SKILLN = ['Easy', 'Normal', 'Hard'];
+  const SKILLN = ['Easy', 'Normal', 'Hard', 'Hardest'];
 
   const FONT = 'Nunito, "Arial Rounded MT Bold", system-ui, sans-serif';
   const SUITC = ['#14161c', '#d4202c', '#d4202c', '#14161c'];
@@ -1399,7 +1708,7 @@
       if (!M.eng) return;
       const I = M.eng.info(p), pr = M.prof[p];
       let a;
-      try { a = botDecide(I, pr, Math.random); } catch (x) { console.error(x); a = I.lg.check ? { k: 'check' } : { k: 'fold' }; }
+      try { a = pr.skill === 3 && I.trk ? botHardest(I, Math.random) : botDecide(I, pr, Math.random); } catch (x) { console.error(x); a = I.lg.check ? { k: 'check' } : { k: 'fold' }; }
       const big = a.k === 'allin' || (a.k === 'raise' && a.to >= I.lg.max * .6) || (a.k === 'fold' && !I.lg.check && I.lg.call > I.pot * .4);
       const th = (pr.skill === 0 ? rand(.5, 1.2) : rand(.4, 1)) + (big ? rand(.3, .8) : 0) + (I.street ? rand(0, .4) : 0);
       M.plan = { p, at: T + th * SPD(), a };
@@ -1458,6 +1767,7 @@
       if (opt.skill === 'Easy') return Array(k).fill(0);
       if (opt.skill === 'Normal') return Array(k).fill(1);
       if (opt.skill === 'Hard') return Array(k).fill(2);
+      if (opt.skill === 'Hardest') return Array(k).fill(3);
       const base = [1, 0, 2, 1, 2, 0, 1].slice(0, k);
       while (base.length < k) base.push(1);
       return base.sort(() => Math.random() - .5);
@@ -1487,7 +1797,7 @@
       }
       const bbC = STAKES[opt.stakes][1];
       const chips = sng ? opt.stack : opt.buyin * bbC;
-      M.eng = Engine({ n, stacks: Array(n).fill(chips), mode: opt.mode, hpl: sng ? opt.lv : 0, blinds: sng ? null : STAKES[opt.stakes].slice(), buyin: chips });
+      M.eng = Engine({ n, stacks: Array(n).fill(chips), mode: opt.mode, hpl: sng ? opt.lv : 0, blinds: sng ? null : STAKES[opt.stakes].slice(), buyin: chips, track: sk.includes(3) });
       viewer = 0;
       Q.length = 0; fly.length = 0; fx.length = 0; sched.length = 0; tickerL.length = 0; busy = T; pre = null;
       resetD(n);
@@ -1717,7 +2027,7 @@
       const gm = game ? `<p class="pk-sec">Game</p>`
         + orow('Format', '', seg('mode', ['sng', 'cash'], ['Sit & Go', 'Cash game']))
         + orow('Opponents', 'Online: set by the party size', seg('bots', [1, 2, 3, 4, 5, 6, 7]))
-        + orow('Bot skill', 'Mixed seats a range of styles', seg('skill', ['Easy', 'Normal', 'Hard', 'Mixed']))
+        + orow('Bot skill', 'Mixed seats a range of styles', seg('skill', ['Easy', 'Normal', 'Hard', 'Hardest', 'Mixed']))
         + (sng
           ? orow('Starting chips', '', seg('stack', [1000, 1500, 3000, 5000], ['1,000', '1,500', '3,000', '5,000']))
             + orow('Blind levels', 'Hands per level', seg('lv', [0, 12, 8, 4], ['Fixed', 'Slow', 'Normal', 'Turbo']))
@@ -1857,9 +2167,9 @@
     let lastRW = 0;
     function setU() { wrap.style.setProperty('--u', clamp(wrap.clientWidth / W, .62, 1.4).toFixed(3)); }
     api.on(window, 'resize', () => { fit(false); setU(); });
+    let fcnt = 0;
     api.loop(dt => {
-      const rw = root.clientWidth;
-      if (rw !== lastRW) { lastRW = rw; fit(false); setU(); }
+      if (fcnt++ % 10 === 0) { const rw = root.clientWidth; if (rw !== lastRW) { lastRW = rw; fit(false); setU(); } }
       if (!paused) { update(dt); pump(); control(); }
       drawAll();
       syncCtl();
@@ -1882,7 +2192,7 @@
     better: 'high',
     format: v => v + ' pts',
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="12" width="24" height="34" rx="4" transform="rotate(-12 21 29)"/><rect x="29" y="12" width="24" height="34" rx="4" transform="rotate(10 41 29)"/><ellipse cx="32" cy="50" rx="13" ry="5"/><path d="M19 50v4c0 2.8 5.8 5 13 5s13-2.2 13-5v-4"/></svg>',
-    _t: { score, describe, best5, Engine, botDecide, chen, equity },
+    _t: { score, describe, best5, Engine, botDecide, botHardest, chen, equity },
     css: `
 .gm-poker{gap:0}
 .gm-poker [hidden]{display:none!important}
@@ -1954,7 +2264,7 @@
 .gm-poker .pk-opt{display:flex;align-items:center;gap:10px;margin:7px 0;text-align:left}
 .gm-poker .pk-opt>span{flex:0 0 34%;font:800 13px/1.2 var(--sans);color:rgba(255,255,255,.88)}
 .gm-poker .pk-opt>span small{display:block;font:700 11px/1.25 var(--sans);color:rgba(255,255,255,.52);margin-top:2px}
-.gm-poker .pk-seg{flex:1;display:flex;gap:5px}
+.gm-poker .pk-seg{flex:1;display:flex;gap:5px;flex-wrap:wrap}
 .gm-poker .pk-seg button{flex:1;min-height:38px;border-radius:11px;border:2px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font:900 13px var(--sans);padding:0 3px}
 .gm-poker .pk-seg button.on{background:#ffd34a;border-color:#fff;color:#1b1b1f}
 .gm-poker .pk-pane.scroll .pk-box{margin:auto}
