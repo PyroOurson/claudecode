@@ -24,7 +24,7 @@ function fitPR(api, v, hook) {
     lf = f;
     if (lvl > 1 && (sf ^= 1)) r.shadowMap.needsUpdate = true;
     avg += (dt - avg) * Math.min(1, dt * 1.5); t += dt;
-    if ((chk += dt) > 1) { chk = 0; size(); }
+    if (performance.now() - chk > 500) { chk = performance.now(); size(); }
     if (t < 1.5) return;
     if (avg > 0.021 && lvl < Q.length - 1 && (lvl < 2 || avg < was * 0.94)) { if (up && t < 6) wait = Math.min(64, wait * 2); up = 0; was = avg; set(lvl + 1); }
     else if (avg < 0.0175 && lvl && t > wait) { up = 1; set(lvl - 1); }

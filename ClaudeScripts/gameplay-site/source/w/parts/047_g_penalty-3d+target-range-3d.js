@@ -213,7 +213,7 @@ ${g} .hint:empty{display:none}
       lf = f;
       if (lvl > 1 && (sf ^= 1)) r.shadowMap.needsUpdate = true;
       avg += (dt - avg) * Math.min(1, dt * 1.5); t += dt;
-      if ((chk += dt) > 1) { chk = 0; size(); }
+      if (performance.now() - chk > 500) { chk = performance.now(); size(); }
       if (t < 1.5) return;
       if (avg > 0.021 && lvl < Q.length - 1 && (lvl < 2 || avg < was * 0.94)) { if (up && t < 6) wait = Math.min(64, wait * 2); up = 0; was = avg; set(lvl + 1); }
       else if (avg < 0.0175 && lvl && t > wait) { up = 1; set(lvl - 1); }
@@ -559,7 +559,7 @@ ${g} .hint:empty{display:none}
     const ringHits = [], plan = { guess: false, gx: 0, gy: 0 };
     const bp = new V3(0, BR, 0), bv = new V3(), bw = new V3(), tv = new V3(), tmp = new V3(), acc = new V3(), cross = new V3(), sp0 = new V3(), sv0 = new V3(), sw0 = new V3(), axis = new V3(), tq = new THREE.Quaternion(), pv = new V3();
     const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-    const skillFor = r => { const l = r - 1; return { react: Math.max(0.14, 0.3 - l * 0.03), dur: Math.max(0.34, 0.5 - l * 0.03), reach: Math.min(1.6, 0.95 + l * 0.12), lift: Math.min(1.1, 0.7 + l * 0.08), noise: Math.max(0.2, 0.55 - l * 0.07), read: Math.min(0.75, l * 0.14), guess: Math.min(0.32, l * 0.07), catchV: 15 + l * 1.5 }; };
+    const skillFor = r => { const l = r - 1; return { react: Math.max(0.15, 0.3 - l * 0.03), dur: Math.max(0.34, 0.5 - l * 0.03), reach: Math.min(1.6, 0.95 + l * 0.12), lift: Math.min(1.1, 0.7 + l * 0.08), noise: Math.max(0.2, 0.55 - l * 0.07), read: Math.min(0.75, l * 0.14), guess: Math.min(0.32, l * 0.07), catchV: 15 + l * 1.5 }; };
     skill = skillFor(1);
 
     const sw = ui.el('sw', `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline points=""/></svg>`), poly = sw.querySelector('polyline');
@@ -1277,6 +1277,21 @@ ${g} .hint:empty{display:none}
       for (let i = 0; i < n; i++) chips.spawn(p, rnd(-sp, sp), rnd(0, sp * 1.3), rnd(-sp, sp * 0.4) + sp * 0.3, pick(cols), rnd(life * 0.6, life), rnd(size * 0.5, size));
     }
     function puff(p, color, n = 5) { for (let i = 0; i < n; i++) dust.spawn(p, rnd(-0.6, 0.6), rnd(0.2, 1.2), rnd(-0.2, 0.8), color, rnd(0.5, 0.9), rnd(0.06, 0.13), -0.3, 3, 0.35); }
+    {
+      const sets = new Map();
+      for (const m of env) {
+        if (m.parent !== scene || Array.isArray(m.material) || m.rotation.x || m.rotation.y || m.scale.x !== 1 || m.scale.y !== 1 || m.scale.z !== 1 || !m.castShadow || !m.geometry.attributes.uv) continue;
+        const k = m.material.uuid + m.userData.fx;
+        if (!sets.has(k)) sets.set(k, []);
+        sets.get(k).push(m);
+      }
+      for (const g of sets.values()) {
+        if (g.length < 2) continue;
+        const geo = mergeGeo(THREE, g.map(m => [m.geometry, m.position.x, m.position.y, m.position.z, 1, 1, 1, 0, m.rotation.z]));
+        for (const m of g) { scene.remove(m); env.splice(env.indexOf(m), 1); }
+        add(geo, g[0].material, 0, 0, 0, { fx: g[0].userData.fx });
+      }
+    }
     function cast(v) {
       ray.setFromCamera(v, cam);
       list.length = 0;

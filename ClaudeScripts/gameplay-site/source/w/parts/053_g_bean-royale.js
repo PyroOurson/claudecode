@@ -28,7 +28,7 @@
       lf = f;
       if (lvl > 1 && (sf ^= 1)) r.shadowMap.needsUpdate = true;
       avg += (dt - avg) * Math.min(1, dt * 1.5); t += dt;
-      if ((chk += dt) > 1) { chk = 0; size(); }
+      if (performance.now() - chk > 500) { chk = performance.now(); size(); }
       if (t < 1.5) return;
       if (avg > 0.021 && lvl < Q.length - 1 && (lvl < 2 || avg < was * 0.94)) { if (up && t < 6) wait = Math.min(64, wait * 2); up = 0; was = avg; set(lvl + 1); }
       else if (avg < 0.0175 && lvl && t > wait) { up = 1; set(lvl - 1); }
@@ -614,7 +614,7 @@ ${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
         p: new THREE.Vector3(), v: new THREE.Vector3(), yaw: 0, state: 'run', t: 0, ground: false, gc: null, gn: new THREE.Vector3(0, 1, 0),
         coyote: 0, jumpBuf: 0, diveReq: false, grabT: -1, held: null, heldBy: null, holdT: 0, ix: 0, iz: 0, out: false, fin: false, gone: false, place: 0, cp: 0, respawnT: 0, airT: 0, slide: 0,
         phase: Math.random() * 6, sq: 0, sqV: 0, leanX: 0, leanZ: 0, pvx: 0, pvz: 0, spinAx: new THREE.Vector3(1, 0, 0), spinW: 0, q: new THREE.Quaternion(), blink: Math.random() * 4,
-        egg: null, eggCd: 0, team: 0, sk0: null, skill: 1, df: 1, speedMul: 1, wp: 0, lane: 0, dir: 1, think: 0, stuckT: 0, lastZ: 0, door: null, react: 0, tgt: null, hopT: 0, ci: 0, pi: 0
+        egg: null, eggCd: 0, team: 0, sk0: null, skill: 1, df: 1, dgx: 0, dgz: 0, jt: 0, speedMul: 1, wp: 0, lane: 0, dir: 1, think: 0, stuckT: 0, lastZ: 0, door: null, react: 0, tgt: null, hopT: 0, ci: 0, pi: 0
       };
     }
 
@@ -1719,7 +1719,7 @@ ${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
       b.p.set(x, y, z); b.pp.copy(b.p); b.v.set(0, 0, 0); b.state = 'run'; b.t = 0; b.ground = false; b.gc = null; b.fin = false; b.gone = false; b.held = null; b.heldBy = null; b.grabT = -1; b.egg = null; b.eggCd = 0; b.place = 0; b.cp = 0; b.respawnT = 0; b.airT = 0;
       b.yaw = yaw; b.q.identity(); b.jumpBuf = 0; b.diveReq = false; b.ix = b.iz = 0; b.wp = 0; b.lane = rnd(-1, 1); b.lastZ = z; b.stuckT = 0; b.door = null; b.tgt = null; b.hideT = 0; b.pvx = b.pvz = 0; b.think = 0; b.react = 0;
       const DF = show ? show.diff : 1;
-      b.df = DF;
+      b.df = DF; b.dgx = b.dgz = b.jt = 0;
       b.speedMul = b.me || DF === 3 ? 1 : (DF === 0 ? clamp(rnd(0.72, 0.85) + b.skill * 0.04, 0.72, 0.88) : DF === 2 ? clamp(rnd(0.88, 0.96) + b.skill * 0.03, 0.88, 1) : clamp(rnd(0.8, 0.93) + b.skill * 0.04, 0.8, 0.96)) * (R.def.kind === 'final' ? (DF === 2 ? 0.92 : 0.86) : 1);
       b.hes = 0; b.grabCd = rnd(1, 3);
     }
@@ -1889,15 +1889,46 @@ ${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
       if (unl.length) audio.play('check');
     }
 
-    function threat(b, lead) {
+    function threat(b) {
       for (const c of R.kinCols) {
         if (!c.low || !c.on || Math.abs(c.c.y - b.p.y - 0.5) > 1.2) continue;
         T1.copy(b.p).applyMatrix4(c.inv);
         if (Math.abs(T1.x) > c.hx + 0.4 || Math.abs(T1.z) > 2.4) continue;
         T2.set(T1.x, 0, 0).applyMatrix4(c.mat); pointVel(c, T2, U0);
-        if ((b.p.x - T2.x) * U0.x + (b.p.z - T2.z) * U0.z > 0 && Math.abs(T1.z) < 0.9 + Math.hypot(U0.x, U0.z) * (0.13 + (lead || 0))) return true;
+        if ((b.p.x - T2.x) * U0.x + (b.p.z - T2.z) * U0.z > 0 && Math.abs(T1.z) < 0.9 + Math.hypot(U0.x, U0.z) * 0.13) return true;
       }
       return false;
+    }
+    function threatIn(b) {
+      let best = 9;
+      for (const c of R.kinCols) {
+        if (!c.low || !c.on || Math.abs(c.c.y - b.p.y - 0.5) > 1.2) continue;
+        T1.copy(b.p).applyMatrix4(c.inv);
+        if (Math.abs(T1.x) > c.hx + 0.4 || Math.abs(T1.z) > 7) continue;
+        T2.set(T1.x, 0, 0).applyMatrix4(c.mat); pointVel(c, T2, U0);
+        const dx = b.p.x - T2.x, dz = b.p.z - T2.z, d = Math.hypot(dx, dz) || 1, cs = (dx * (U0.x - b.v.x) + dz * (U0.z - b.v.z)) / d;
+        if (cs < 1.5) continue;
+        const t = Math.max(0, d - c.hz - CFG.radius) / cs;
+        if (t < best) best = t;
+      }
+      return best;
+    }
+    function dodge(b, w) {
+      let ax = 0, az = 0;
+      for (const c of R.kinCols) {
+        if (!c.hit || c.low || !c.on || Math.abs(c.c.y - b.p.y - 0.8) > c.br + 1.6) continue;
+        pointVel(c, c.c, U0);
+        const rx = c.c.x - b.p.x, rz = c.c.z - b.p.z, vx = U0.x - b.v.x, vz = U0.z - b.v.z, v2 = vx * vx + vz * vz;
+        if (v2 < 4) continue;
+        const tc = -(rx * vx + rz * vz) / v2;
+        if (tc < 0 || tc > 0.9) continue;
+        const mx = rx + vx * tc, mz = rz + vz * tc, m = Math.hypot(mx, mz), need = c.br + 1;
+        if (m > need) continue;
+        const vl = Math.sqrt(v2), px = -vz / vl, pz = vx / vl, sd = mx * px + mz * pz > 0 ? -1 : 1, k = (need - m + 0.6) * sd;
+        ax += px * k; az += pz * k;
+      }
+      if (w && ((ax > 0 && b.p.x > w[0] + w[2] + 0.3) || (ax < 0 && b.p.x < w[0] - w[2] - 0.3))) ax = 0;
+      b.dgx = ax; b.dgz = az;
     }
     function pickDoor(b, wl, not) {
       if (not && !not.real) not.known = true;
@@ -1927,7 +1958,7 @@ ${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
       if (b.think <= 0) { b.think = rnd(0.7, 1.8); b.lane = rnd(7, 14); b.dir = Math.random() < 0.5 ? 1 : -1; }
       const a = Math.atan2(b.p.z, b.p.x) + b.dir * 0.4, tx = Math.cos(a) * b.lane - b.p.x, tz = Math.sin(a) * b.lane - b.p.z, d = Math.hypot(tx, tz) || 1, th = 0.25 + 0.2 * b.skill;
       b.ix = (tx / d) * th; b.iz = (tz / d) * th;
-      if (b.ground && b.state === 'run') { b.react -= dt; if (b.react <= 0) { b.react = b.df === 3 ? rnd(0.15, 0.2) : 0.07; if (threat(b, b.df === 3 ? 0.05 : 0) && (b.df === 3 || Math.random() < 0.3 + b.skill * 0.62)) b.jumpBuf = CFG.jumpBuf; } }
+      if (b.ground && b.state === 'run') { b.react -= dt; if (b.react <= 0) { if (b.df === 3) { b.react = rnd(0.15, 0.2); const tt = threatIn(b); if (tt < 0.55) b.jt = Math.max(0.001, tt - 0.13); } else { b.react = 0.07; if (threat(b) && Math.random() < 0.3 + b.skill * 0.62) b.jumpBuf = CFG.jumpBuf; } } if (b.jt > 0 && (b.jt -= dt) <= 0) b.jumpBuf = CFG.jumpBuf; } else b.jt = 0;
     }
     function tipAI(b, dt) {
       const T = R.def.tip, f = T.fields.find(q => b.p.z > q.z0 - 2.5 && b.p.z < q.z1 + 0.2);
@@ -1938,7 +1969,7 @@ ${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
       if (!b.tgt || b.tgt.f !== f || b.tgt.st !== 0 || b.tgt.row !== nr) {
         let c = f.tiles.filter(t => t.row === nr && t.st === 0 && (cur ? Math.abs(t.col - cur.col) <= 1 : Math.abs(t.m.position.x - b.p.x) < 4.6));
         if (!c.length) c = f.tiles.filter(t => t.row === nr && t.st === 0);
-        let tot = 0; const w = c.map(t => { const q = t.ok ? 5 : 1 + (t.fake ? 0 : b.skill * 0.7); tot += q; return q; });
+        let tot = 0; const w = c.map(t => { const q = b.df === 3 ? (t.ok ? 40 : 1) : t.ok ? 5 : 1 + (t.fake ? 0 : b.skill * 0.7); tot += q; return q; });
         let r = Math.random() * tot, k = 0; while (k < c.length - 1 && (r -= w[k]) > 0) k++;
         b.tgt = c[k] || null;
       }
@@ -1977,7 +2008,9 @@ ${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
         b.react -= dt;
         if (b.react <= 0) {
           const rt = DF === 3 ? rnd(0.15, 0.2) : 0.07;
-          b.react = rt; if (threat(b, DF === 3 ? 0.05 : 0) && (DF === 3 || Math.random() < 0.3 + b.skill * 0.6)) b.jumpBuf = CFG.jumpBuf;
+          b.react = rt;
+          if (DF === 3) { const tt = threatIn(b); if (tt < 0.55) b.jt = Math.max(0.001, tt - 0.13); dodge(b, w); }
+          else if (threat(b) && Math.random() < 0.3 + b.skill * 0.6) b.jumpBuf = CFG.jumpBuf;
           if (DF >= 2) {
             b.grabCd -= rt;
             if (b.grabCd <= 0) for (const o of R.field) { if (o === b || o.gone || o.fin || o.state !== 'run' || o.heldBy) continue; const ox = o.p.x - b.p.x, oz = o.p.z - b.p.z; if (oz > 0.2 && oz < 1.7 && Math.abs(ox) < 1 && Math.abs(o.p.y - b.p.y) < 0.8) { doGrabB(b); b.grabCd = rnd(2.5, 5); break; } }
@@ -1987,7 +2020,9 @@ ${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
         if (DF < 3 && Math.random() < 0.001) b.jumpBuf = CFG.jumpBuf;
         if (DF > 0 && DF < 3 && Math.random() < 0.0012) doGrabB(b);
         if (fl === 'd' && b.p.z > w[1] - 3.2) b.diveReq = true;
-      }
+        if (b.jt > 0 && (b.jt -= dt) <= 0) b.jumpBuf = CFG.jumpBuf;
+        if (DF === 3 && (b.dgx || b.dgz)) { const qx = b.ix * 0.35 + b.dgx, qz = b.iz * 0.35 + b.dgz, ql = Math.hypot(qx, qz) || 1; b.ix = qx / ql; b.iz = qz / ql; }
+      } else b.dgx = b.dgz = b.jt = 0;
       b.stuckT += dt;
       if (b.p.z > b.lastZ + 0.6) { b.lastZ = b.p.z; b.stuckT = 0; }
       else if (b.stuckT > 2.2) { b.stuckT = 0.8; b.lane = rnd(-1, 1); b.jumpBuf = CFG.jumpBuf; }
