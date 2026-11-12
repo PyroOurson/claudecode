@@ -18,7 +18,8 @@
     PARITY_BONUS: 1.3,
     SWAP_MS: 340,
     BANNER_MS: 1900,
-    CELL: 34
+    CELL: 34,
+    SAMPLES: 600
   };
   const NAMES = CFG.FLEET.map(f => f[0]), LENS = CFG.FLEET.map(f => f[1]);
   const F = (w, px) => `${w} ${px}px Nunito, "Arial Rounded MT Bold", system-ui, sans-serif`;
@@ -59,6 +60,22 @@
       }
       if (ok) return list;
     }
+  }
+  let HEAT = null;
+  function slyFleet(noTouch, rnd = Math.random) {
+    if (!HEAT) {
+      HEAT = new Float64Array(100);
+      for (const len of LENS) for (let v = 0; v < 2; v++) for (let r = 0; r < (v ? 11 - len : 10); r++) for (let c = 0; c < (v ? 10 : 11 - len); c++) for (const i of cellsOf(r, c, v, len)) HEAT[i]++;
+    }
+    const a = [];
+    for (let n = 0; n < 48; n++) {
+      const f = randomFleet(noTouch, rnd);
+      let h = 0;
+      for (const sh of f) for (const i of cellsOf(sh.r, sh.c, sh.v, LENS[sh.k])) h += HEAT[i];
+      a.push({ f, h });
+    }
+    a.sort((x, y) => x.h - y.h);
+    return a[Math.floor(rnd() * 12)].f;
   }
   const mkView = () => ({ cells: new Uint8Array(100), t: new Float64Array(100), sunk: [], reveal: null });
   const mkPlayer = () => ({ ships: [], occ: new Int8Array(100).fill(-1), recv: new Uint8Array(100), recvT: new Float64Array(100), view: mkView(), shots: 0, hits: 0, last: null });
@@ -136,13 +153,83 @@
     const p = rndOf(K, blk, true, rnd);
     return p != null ? p : rndOf(K, blk, false, rnd);
   }
+  function fleetOdds(K, blk, rem, noTouch, rnd, cap) {
+    const L = rem.slice().sort((a, b) => b - a), m = L.length, hits = [], sc = new Float64Array(100);
+    for (let i = 0; i < 100; i++) if (K[i] === 2) hits.push(i);
+    const PL = [], TH = [];
+    for (let j = 0; j < m; j++) {
+      const len = L[j], a = [], th = {};
+      for (let v = 0; v < 2; v++) for (let r = 0; r < (v ? 11 - len : 10); r++) for (let c = 0; c < (v ? 10 : 11 - len); c++) {
+        let ok = true;
+        for (let q = 0; q < len; q++) { const i = v ? (r + q) * 10 + c : r * 10 + c + q, s = K[i]; if (s === 1 || s === 3 || blk[i]) { ok = false; break; } }
+        if (!ok) continue;
+        const n = a.length / len;
+        for (let q = 0; q < len; q++) { const i = v ? (r + q) * 10 + c : r * 10 + c + q; a.push(i); if (K[i] === 2) (th[i] || (th[i] = [])).push(n); }
+      }
+      PL.push(Uint8Array.from(a)); TH.push(th);
+    }
+    const occ = new Uint8Array(100), near = new Uint8Array(100), used = new Uint8Array(m), tmp = new Float64Array(100);
+    let leaves = 0, total = 0;
+    const free = (j, n) => { const len = L[j], a = PL[j], o = n * len; for (let q = 0; q < len; q++) { const i = a[o + q]; if (occ[i] || near[i]) return false; } return true; };
+    const mark = (j, n, d) => { const len = L[j], a = PL[j], o = n * len; for (let q = 0; q < len; q++) { const i = a[o + q]; occ[i] += d; if (noTouch) nb8(i, x => { near[x] += d; }); } };
+    function leaf() {
+      leaves++;
+      let w = 1;
+      tmp.fill(0);
+      for (let j = 0; j < m; j++) {
+        if (used[j]) continue;
+        const len = L[j], a = PL[j], tot = a.length / len;
+        let k = 0;
+        for (let n = 0; n < tot; n++) if (free(j, n)) k++;
+        if (!k) return;
+        w *= k;
+        const u = 1 / k;
+        for (let n = 0; n < tot; n++) if (free(j, n)) { const o = n * len; for (let q = 0; q < len; q++) tmp[a[o + q]] += u; }
+      }
+      total += w;
+      for (let i = 0; i < 100; i++) if (K[i] === 0) sc[i] += w * (occ[i] ? 1 : Math.min(1, tmp[i]));
+    }
+    function go(h) {
+      if (leaves >= cap) return;
+      while (h < hits.length && occ[hits[h]]) h++;
+      if (h >= hits.length) { leaf(); return; }
+      const x = hits[h], opts = [];
+      for (let j = 0; j < m; j++) { if (used[j]) continue; const t = TH[j][x]; if (!t) continue; if (j && L[j] === L[j - 1] && !used[j - 1]) continue; for (let q = 0; q < t.length; q++) if (free(j, t[q])) opts.push(j * 256 + t[q]); }
+      for (let q = opts.length - 1; q > 0; q--) { const z = Math.floor(rnd() * (q + 1)), y = opts[q]; opts[q] = opts[z]; opts[z] = y; }
+      for (const c of opts) {
+        const j = c >> 8, n = c & 255, dup = j + 1 < m && L[j + 1] === L[j] && !used[j + 1] ? 2 : 1;
+        mark(j, n, 1); used[j] = 1;
+        const t0 = total, s0 = dup > 1 ? Float64Array.from(sc) : null;
+        go(h + 1);
+        if (dup > 1) { const dt = total - t0; total += dt; for (let i = 0; i < 100; i++) sc[i] += sc[i] - s0[i]; }
+        used[j] = 0; mark(j, n, -1);
+        if (leaves >= cap) return;
+      }
+    }
+    go(0);
+    return total > 0 ? { sc, hits: hits.length } : null;
+  }
+  function sample(K, blk, rem, noTouch, rnd, cap) {
+    const F = fleetOdds(K, blk, rem, noTouch, rnd, cap);
+    if (!F) return null;
+    const m = rem.length ? Math.min(...rem) : 2;
+    let best = 0, pool = [];
+    for (let i = 0; i < 100; i++) {
+      if (K[i] !== 0 || blk[i]) continue;
+      let v = F.sc[i];
+      if (!v) continue;
+      if (!F.hits && (((i / 10) | 0) + i % 10) % m === 0) v *= CFG.PARITY_BONUS;
+      if (v > best * (1 + 1e-9)) { best = v; pool = [i]; } else if (v >= best * (1 - 1e-9)) pool.push(i);
+    }
+    return pool.length ? pool[Math.floor(rnd() * pool.length)] : null;
+  }
   function aiPick(view, n, diff, noTouch, rnd = Math.random) {
     const K = Uint8Array.from(view.cells), sunkK = new Set(), blk = new Uint8Array(100);
     for (const s of view.sunk) { sunkK.add(s.k); for (const i of s.cells) K[i] = 3; }
     if (noTouch) for (const s of view.sunk) for (const i of s.cells) nb8(i, j => { blk[j] = 1; });
     const rem = LENS.filter((_, k) => !sunkK.has(k)), out = [];
     for (let s = 0; s < n; s++) {
-      const p = diff === 'easy' ? rndOf(K, blk, false, rnd) : diff === 'normal' ? hunt(K, blk, rnd) : diff === 'hard' ? (K.includes(2) ? hunt(K, blk, rnd) : parity(K, blk, rem, rnd)) : dens(K, blk, rem, rnd, 1000);
+      const p = diff === 'easy' ? rndOf(K, blk, false, rnd) : diff === 'normal' ? hunt(K, blk, rnd) : diff === 'hard' ? (K.includes(2) ? hunt(K, blk, rnd) : parity(K, blk, rem, rnd)) : diff === 'expert' ? sample(K, blk, rem, noTouch, rnd, CFG.SAMPLES) ?? dens(K, blk, rem, rnd, 1000) : dens(K, blk, rem, rnd, 1000);
       if (p == null) break;
       out.push(p); K[p] = 1;
     }
@@ -307,7 +394,7 @@
     format: v => v + ' shots',
     width: 920,
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 38h48l-6 10H14z"/><path d="M20 38v-7h16v7M26 31v-6h6"/><path d="M36 34h10"/><circle cx="46" cy="16" r="7"/><path d="M46 6v4M46 22v4M36 16h4M52 16h4"/></svg>',
-    sim: { aiPick, randomFleet, canPlace, defend, absorb, mkPlayer, setFleet, afloat, LENS, CFG },
+    sim: { aiPick, slyFleet, randomFleet, canPlace, defend, absorb, mkPlayer, setFleet, afloat, LENS, CFG },
     mount(root, api) {
       const portrait = (root.clientWidth || innerWidth) < 640;
       const W = portrait ? 400 : 900, H = portrait ? 636 : 590, CELL = CFG.CELL;
@@ -673,7 +760,7 @@
         api.score('—');
         if (S.mode === 'online') { goOnline(); return; }
         S.rules = { salvo: opt.salvo, noTouch: opt.noTouch, chain: opt.chain };
-        setFleet(S.P[1], randomFleet(S.rules.noTouch)); newPlacement(0);
+        setFleet(S.P[1], S.diff === 'expert' ? slyFleet(S.rules.noTouch) : randomFleet(S.rules.noTouch)); newPlacement(0);
       }
       function startBattle(first) {
         S.screen = 'battle'; S.turn = first; S.busy = 0; S.aim = 44; S.sel = []; S.armed = -1;
@@ -907,7 +994,7 @@
 
       const ROWS = [
         { k: 'mode', label: 'Mode', opts: [['cpu', 'vs CPU'], ['online', 'Online']] },
-        { k: 'diff', label: 'CPU', opts: [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard'], ['expert', 'Admiral']], dis: () => opt.mode !== 'cpu' },
+        { k: 'diff', label: 'CPU', opts: [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard'], ['expert', 'Hardest']], dis: () => opt.mode !== 'cpu' },
         { k: 'salvo', label: 'Rules', opts: [[false, 'Classic'], [true, 'Salvo']] },
         { k: 'chain', label: 'On a hit', opts: [[true, 'Fire again'], [false, 'Next player']], dis: () => opt.salvo },
         { k: 'noTouch', label: 'Ships', opts: [[false, 'May touch'], [true, 'No touching']] }
@@ -1280,7 +1367,7 @@
         const cw = portrait ? 364 : 440, ch = 268, x = (W - cw) / 2, y = portrait ? 150 : 150;
         panel(x, y, cw, ch, .96);
         const two = false, win = S.winner === S.me, me = S.P[S.me];
-        const kick = S.newBest ? 'NEW BEST!' : S.mode === 'cpu' ? 'VS CPU · ' + (S.diff === 'expert' ? 'ADMIRAL' : S.diff.toUpperCase()) : 'ONLINE';
+        const kick = S.newBest ? 'NEW BEST!' : S.mode === 'cpu' ? 'VS CPU · ' + (S.diff === 'expert' ? 'HARDEST' : S.diff.toUpperCase()) : 'ONLINE';
         txt(kick, W / 2, y + 26, 13, S.newBest ? '#ffd166' : '#8fb3ff', 'center', 900);
         title3d(two ? `PLAYER ${S.winner + 1} WINS!` : win ? 'VICTORY!' : 'DEFEAT', W / 2, y + 70, portrait ? 38 : 44);
         txt(win ? (two ? `Player ${S.winner + 1} sank the whole fleet.` : 'You sank the entire enemy fleet.') : 'Your whole fleet has been sunk.', W / 2, y + 110, 14, '#cfe0ff', 'center', 800, cw - 30);
