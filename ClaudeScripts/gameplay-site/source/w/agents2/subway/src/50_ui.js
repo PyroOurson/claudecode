@@ -13,6 +13,7 @@
     play: '<svg viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="#fff"/></svg>',
     home: '<svg viewBox="0 0 24 24"><path d="M3 11.5L12 4l9 7.5V20h-6v-5H9v5H3z" fill="#fff"/></svg>',
     check: '<svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    gear: '<svg viewBox="0 0 24 24"><path d="M10.3 2h3.4l.5 2.6 1.7.7 2.2-1.5 2.4 2.4-1.5 2.2.7 1.7 2.6.5v3.4l-2.6.5-.7 1.7 1.5 2.2-2.4 2.4-2.2-1.5-1.7.7-.5 2.6h-3.4l-.5-2.6-1.7-.7-2.2 1.5-2.4-2.4 1.5-2.2-.7-1.7L1.7 13.7v-3.4l2.6-.5.7-1.7-1.5-2.2 2.4-2.4 2.2 1.5 1.7-.7z" fill="#fff"/><circle cx="12" cy="12" r="3.4" fill="#1f6fd9"/></svg>',
     star: '<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.2 6.8.8-5 4.7 1.3 6.7L12 17.1l-6 3.3 1.3-6.7-5-4.7 6.8-.8z" fill="#ffd23f" stroke="#a86a00" stroke-width="1.3"/></svg>'
   };
   const SC = '.gm-' + ID;
@@ -70,6 +71,16 @@ ${SC} .ss-home{flex-direction:column;justify-content:space-between;padding:2.6% 
 ${SC} .ss-bar{display:flex;gap:.6em;justify-content:flex-end;width:100%;flex-wrap:wrap}
 ${SC} .ss-chip{display:flex;align-items:center;gap:.35em;background:rgba(18,34,74,.6);border:.13em solid rgba(255,255,255,.9);border-radius:2em;padding:.3em .75em .3em .35em;font-size:1.2em;${OUT}}
 ${SC} .ss-chip .ss-ic{width:1.35em;height:1.35em}
+${SC} .ss-gear{margin-right:auto;width:2.5em;height:2.5em;border-radius:50%;background:rgba(18,34,74,.6);border:.13em solid rgba(255,255,255,.9);display:grid;place-items:center;font-size:1.2em}
+${SC} .ss-gear svg{width:62%}
+${SC} .ss-daily{font-size:.95em;${OUT};background:rgba(18,34,74,.6);border:.13em solid rgba(255,255,255,.9);border-radius:1.2em;padding:.34em .9em .26em;margin-top:-.2em}
+${SC} .ss-daily b{color:#ffd23f;font-weight:400;margin-left:.3em}
+${SC} .ss-seg{display:flex;gap:.2em;background:rgba(0,0,0,.25);border-radius:.6em;padding:.18em;flex:none}
+${SC} .ss-seg button{padding:.4em .7em .3em;border-radius:.45em;font-size:.95em;${OUT}}
+${SC} .ss-seg button.on{background:linear-gradient(#ffe25a,#ffaa1a);color:#7a3a00;text-shadow:none}
+${SC} .ss-sw{width:2.3em;height:2.3em;border-radius:.5em;border:.13em solid #fff;flex:none;box-shadow:0 .12em 0 rgba(0,0,0,.3)}
+${SC} .ss-sw.none{background:repeating-linear-gradient(45deg,#5b6f8c 0 .3em,#4b5d78 .3em .6em)}
+${SC} .ss-sec{font-size:1.05em;color:#1f56a8;text-shadow:0 .06em 0 #fff;margin:.35em 0 -.1em .2em}
 ${SC} .ss-mid{flex:1;display:flex;align-items:flex-start;justify-content:space-between;width:100%;padding-top:1.2em}
 ${SC} .ss-logo{font-size:3.7em;line-height:.84;transform:rotate(-5deg);transform-origin:left;filter:drop-shadow(0.035em 0em 0 #12224a) drop-shadow(-0.035em 0em 0 #12224a) drop-shadow(0em 0.035em 0 #12224a) drop-shadow(0em -0.035em 0 #12224a) drop-shadow(0.075em 0em 0 #3aa8ff) drop-shadow(-0.075em 0em 0 #3aa8ff) drop-shadow(0em 0.075em 0 #3aa8ff) drop-shadow(0em -0.075em 0 #3aa8ff) drop-shadow(0.03em 0em 0 #12224a) drop-shadow(-0.03em 0em 0 #12224a) drop-shadow(0em 0.03em 0 #12224a) drop-shadow(0em -0.03em 0 #12224a) drop-shadow(0 .09em 0 rgba(0,0,0,.3))}
 ${SC} .ss-logo span{display:block;white-space:nowrap}
@@ -242,7 +253,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
   <div class="ss-toast"></div>
 </div>
 <div class="ss-scr ss-home">
-  <div class="ss-bar"><div class="ss-chip">${ic('crown')}<b class="h-best">0</b></div><div class="ss-chip">${ic('coin')}<b class="h-coins">0</b></div><div class="ss-chip">${ic('key')}<b class="h-keys">0</b></div><div class="ss-chip">${ic('board')}<b class="h-boards">0</b></div></div>
+  <div class="ss-bar"><button class="ss-gear" data-o="set" aria-label="Settings">${ICO.gear}</button><div class="ss-chip">${ic('crown')}<b class="h-best">0</b></div><div class="ss-chip">${ic('coin')}<b class="h-coins">0</b></div><div class="ss-chip">${ic('key')}<b class="h-keys">0</b></div><div class="ss-chip">${ic('board')}<b class="h-boards">0</b></div></div>
   <div class="ss-mid">
     <div class="ss-logo"><span>${logoW('SUBWAY', 0)}</span><span>${logoW('SURFERS', 3)}</span></div>
     <div class="ss-tour"><small>WORLD TOUR</small><div class="row"><button class="t-prev" aria-label="Previous city">&#9664;</button><b class="t-name">Subway City</b><button class="t-next" aria-label="Next city">&#9654;</button></div><div class="sub t-sub"></div></div>
@@ -251,11 +262,12 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
     <div class="ss-tap">TAP TO PLAY</div>
     <div class="ss-modes"><button data-m="classic">Classic<small>0</small></button><button data-m="rush">Rush<small>0</small></button><button data-m="chill">Chill<small>0</small></button></div>
     <div class="ss-msub"></div>
+    <button class="ss-daily" data-o="daily"></button>
     <div class="ss-menu"><button class="ss-btn y" data-o="missions">${ic('star')}Missions<span class="bdg h-mult">x1</span></button><button class="ss-btn g" data-o="shop">${ic('coin')}Shop</button><button class="ss-btn" data-o="chars">Surfers</button><button class="ss-btn" data-o="how">How to play</button></div>
   </div>
 </div>
 <div class="ss-scr ss-dim ss-panel"><div class="ss-card"><button class="x" aria-label="Close">&#10005;</button><h3 class="p-title"></h3><div class="p-body"></div></div></div>
 <div class="ss-scr ss-dim ss-save"><div class="ss-card"><h3>Save me!</h3><div class="ss-ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="9"/><circle class="s-arc" cx="50" cy="50" r="44" fill="none" stroke="#ffd23f" stroke-width="9" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0"/></svg><div class="k">${ic('key')}</div></div><button class="ss-btn g s-go">Use <b class="s-cost">1</b> ${ic('key')}</button><p class="ss-small s-have"></p><div class="ss-btns"><button class="ss-btn r s-skip">No thanks</button></div></div></div>
 <div class="ss-scr ss-dim ss-over"><div class="ss-card"><h3 class="o-title">Game over</h3><div class="o-new"></div><div class="ss-res"><div class="big"><small>SCORE</small><b class="o-score">0</b></div><div><small>HIGH SCORE</small><b class="o-best">0</b></div><div><small>COINS</small><b class="o-coins">0</b></div></div><div class="ss-stats o-st"></div><div class="ss-list o-ms"></div><div class="ss-btns"><button class="ss-btn g o-play">${ic('play')}Play</button><button class="ss-btn o-home">${ic('home')}Home</button><button class="ss-btn y o-shop">${ic('coin')}Shop</button></div></div></div>
-<div class="ss-scr ss-dim ss-pausep"><div class="ss-card"><h3>Paused</h3><div class="ss-list pz-ms"></div><div class="ss-btns"><button class="ss-btn g pz-go">${ic('play')}Resume</button><button class="ss-btn pz-how">How to play</button><button class="ss-btn pz-home">${ic('home')}Home</button></div></div></div>
+<div class="ss-scr ss-dim ss-pausep"><div class="ss-card"><h3>Paused</h3><div class="ss-list pz-ms"></div><div class="ss-btns"><button class="ss-btn g pz-go">${ic('play')}Resume</button><button class="ss-btn pz-how">How to play</button><button class="ss-btn pz-set">Settings</button><button class="ss-btn pz-home">${ic('home')}Home</button></div></div></div>
 `;

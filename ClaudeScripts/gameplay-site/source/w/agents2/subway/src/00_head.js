@@ -90,6 +90,51 @@
     { id: 'yutani', name: 'Yutani', price: 12000, skin: '#f0c49c', hair: '#2a1d16', hat: 'alien', hatA: '#6fd25a', hatB: '#ffffff', top: '#a95ad9', vest: '', under: '#ffd23f', pants: '#2a2f45', shoeA: '#ffd23f', shoeB: '#a95ad9', extra: '' }
   ];
 
+  const PHASES = [
+    null,
+    { name: 'Sunset', sky: ['#3d2c74', '#e0688c', '#ffb65e'], fog: '#e9a88a', hemi: ['#ffd2ae', '#70504c'], hk: 0.9, sun: '#ff9a52', sk: 0.95, line: '#c9788a', disc: '#ffb060', dy: 62, ds: 78, star: 0 },
+    { name: 'Night', sky: ['#060a20', '#12285a', '#27477c'], fog: '#1b2d52', hemi: ['#9db8ff', '#1e2640'], hk: 0.68, sun: '#b9ccff', sk: 0.4, line: '#3a4f86', disc: '#dfe9ff', dy: 150, ds: 40, star: 1 },
+    { name: 'Sunrise', sky: ['#2b4684', '#f0a0aa', '#ffe4ae'], fog: '#efc6b4', hemi: ['#ffe4d2', '#6e5e5a'], hk: 0.93, sun: '#ffd2a0', sk: 0.86, line: '#d9a0a0', disc: '#ffd9a0', dy: 56, ds: 84, star: 0 }
+  ];
+  const PHASE_T = 36;
+  const BOARDS = [
+    { id: 'classic', name: 'Bubblegum', price: 0, c: ['#ff4fa3', '#ffd23f', '#3ad1ff', '#7afcff', '#3ad1ff'] },
+    { id: 'mint', name: 'Mint Chip', price: 800, c: ['#3fd6a0', '#f4fff0', '#2a8f7a', '#a8ffe0', '#3fd6a0'] },
+    { id: 'ember', name: 'Ember', price: 1500, c: ['#ff5a2a', '#2a2a33', '#ffd23f', '#ffb060', '#ff7a1a'] },
+    { id: 'dusk', name: 'Midnight', price: 2500, c: ['#2a2f6a', '#9a6aff', '#3ad1ff', '#b89aff', '#7a4aff'] },
+    { id: 'gold', name: 'Solid Gold', price: 6000, c: ['#ffc21a', '#fff3a8', '#e09a00', '#ffe46b', '#ffb31a'] }
+  ];
+  const TRAILS = [
+    { id: 'none', name: 'No trail', price: 0, c: null },
+    { id: 'spark', name: 'Sparks', price: 1200, c: ['#ffd23f', '#ff9a1a'] },
+    { id: 'bubble', name: 'Bubbles', price: 2000, c: ['#7afcff', '#ffffff'] },
+    { id: 'star', name: 'Stardust', price: 3500, c: ['#b89aff', '#ff8ad6'] },
+    { id: 'flame', name: 'Afterburn', price: 5000, c: ['#ff5a2a', '#ffd23f'] }
+  ];
+  const DAILY = {
+    dist: { t: n => `Run ${fmt(n)} m today`, n: [1500, 2500, 4000], run: false },
+    coins: { t: n => `Grab ${fmt(n)} coins today`, n: [150, 250, 400], run: false },
+    near: { t: n => `Pull off ${n} close calls`, n: [4, 7, 10], run: false },
+    roof: { t: n => `Spend ${fmt(n)} m on rooftops`, n: [200, 350, 500], run: false },
+    air: { t: n => `Stay airborne for ${n} s in total`, n: [20, 30, 45], run: false },
+    lanes: { t: n => `Switch lanes ${n} times`, n: [80, 120, 160], run: false },
+    night: { t: n => `Run ${fmt(n)} m after dark`, n: [250, 400, 600], run: false },
+    best: { t: n => `Reach ${fmt(n)} points in a single run`, n: [800, 1500, 2500], run: true },
+    clean: { t: n => `Run ${fmt(n)} m in one go without a stumble`, n: [500, 800, 1200], run: true },
+    fast: { t: n => `Hit ${n} km/h`, n: [80, 95, 110], run: true }
+  };
+  const DKEYS = Object.keys(DAILY);
+  const dayKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const dailySet = key => {
+    const out = [];
+    let seed = 0;
+    for (let i = 0; i < key.length; i++) seed = (seed * 31 + key.charCodeAt(i)) % 100003;
+    while (out.length < 3) {
+      const k = DKEYS[Math.floor(hash(seed++) * DKEYS.length)];
+      if (!out.some(g => g.k === k)) out.push({ k, n: DAILY[k].n[Math.floor(hash(seed * 1.7) * 3)], p: 0, done: false });
+    }
+    return out;
+  };
   const PU = {
     jet: { name: 'Jetpack', col: '#ff5a3a' },
     sneak: { name: 'Super Sneakers', col: '#3ad16b' },

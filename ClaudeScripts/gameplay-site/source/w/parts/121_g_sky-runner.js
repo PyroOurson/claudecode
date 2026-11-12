@@ -90,6 +90,51 @@
     { id: 'yutani', name: 'Yutani', price: 12000, skin: '#f0c49c', hair: '#2a1d16', hat: 'alien', hatA: '#6fd25a', hatB: '#ffffff', top: '#a95ad9', vest: '', under: '#ffd23f', pants: '#2a2f45', shoeA: '#ffd23f', shoeB: '#a95ad9', extra: '' }
   ];
 
+  const PHASES = [
+    null,
+    { name: 'Sunset', sky: ['#3d2c74', '#e0688c', '#ffb65e'], fog: '#e9a88a', hemi: ['#ffd2ae', '#70504c'], hk: 0.9, sun: '#ff9a52', sk: 0.95, line: '#c9788a', disc: '#ffb060', dy: 62, ds: 78, star: 0 },
+    { name: 'Night', sky: ['#060a20', '#12285a', '#27477c'], fog: '#1b2d52', hemi: ['#9db8ff', '#1e2640'], hk: 0.68, sun: '#b9ccff', sk: 0.4, line: '#3a4f86', disc: '#dfe9ff', dy: 150, ds: 40, star: 1 },
+    { name: 'Sunrise', sky: ['#2b4684', '#f0a0aa', '#ffe4ae'], fog: '#efc6b4', hemi: ['#ffe4d2', '#6e5e5a'], hk: 0.93, sun: '#ffd2a0', sk: 0.86, line: '#d9a0a0', disc: '#ffd9a0', dy: 56, ds: 84, star: 0 }
+  ];
+  const PHASE_T = 36;
+  const BOARDS = [
+    { id: 'classic', name: 'Bubblegum', price: 0, c: ['#ff4fa3', '#ffd23f', '#3ad1ff', '#7afcff', '#3ad1ff'] },
+    { id: 'mint', name: 'Mint Chip', price: 800, c: ['#3fd6a0', '#f4fff0', '#2a8f7a', '#a8ffe0', '#3fd6a0'] },
+    { id: 'ember', name: 'Ember', price: 1500, c: ['#ff5a2a', '#2a2a33', '#ffd23f', '#ffb060', '#ff7a1a'] },
+    { id: 'dusk', name: 'Midnight', price: 2500, c: ['#2a2f6a', '#9a6aff', '#3ad1ff', '#b89aff', '#7a4aff'] },
+    { id: 'gold', name: 'Solid Gold', price: 6000, c: ['#ffc21a', '#fff3a8', '#e09a00', '#ffe46b', '#ffb31a'] }
+  ];
+  const TRAILS = [
+    { id: 'none', name: 'No trail', price: 0, c: null },
+    { id: 'spark', name: 'Sparks', price: 1200, c: ['#ffd23f', '#ff9a1a'] },
+    { id: 'bubble', name: 'Bubbles', price: 2000, c: ['#7afcff', '#ffffff'] },
+    { id: 'star', name: 'Stardust', price: 3500, c: ['#b89aff', '#ff8ad6'] },
+    { id: 'flame', name: 'Afterburn', price: 5000, c: ['#ff5a2a', '#ffd23f'] }
+  ];
+  const DAILY = {
+    dist: { t: n => `Run ${fmt(n)} m today`, n: [1500, 2500, 4000], run: false },
+    coins: { t: n => `Grab ${fmt(n)} coins today`, n: [150, 250, 400], run: false },
+    near: { t: n => `Pull off ${n} close calls`, n: [4, 7, 10], run: false },
+    roof: { t: n => `Spend ${fmt(n)} m on rooftops`, n: [200, 350, 500], run: false },
+    air: { t: n => `Stay airborne for ${n} s in total`, n: [20, 30, 45], run: false },
+    lanes: { t: n => `Switch lanes ${n} times`, n: [80, 120, 160], run: false },
+    night: { t: n => `Run ${fmt(n)} m after dark`, n: [250, 400, 600], run: false },
+    best: { t: n => `Reach ${fmt(n)} points in a single run`, n: [800, 1500, 2500], run: true },
+    clean: { t: n => `Run ${fmt(n)} m in one go without a stumble`, n: [500, 800, 1200], run: true },
+    fast: { t: n => `Hit ${n} km/h`, n: [80, 95, 110], run: true }
+  };
+  const DKEYS = Object.keys(DAILY);
+  const dayKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const dailySet = key => {
+    const out = [];
+    let seed = 0;
+    for (let i = 0; i < key.length; i++) seed = (seed * 31 + key.charCodeAt(i)) % 100003;
+    while (out.length < 3) {
+      const k = DKEYS[Math.floor(hash(seed++) * DKEYS.length)];
+      if (!out.some(g => g.k === k)) out.push({ k, n: DAILY[k].n[Math.floor(hash(seed * 1.7) * 3)], p: 0, done: false });
+    }
+    return out;
+  };
   const PU = {
     jet: { name: 'Jetpack', col: '#ff5a3a' },
     sneak: { name: 'Super Sneakers', col: '#3ad16b' },
@@ -529,10 +574,18 @@
       g.fillStyle = '#8f949c'; g.fillRect(0, 0, 128, 6); g.fillRect(0, 122, 128, 6);
       const t = canvasTex(c, true); return t;
     }
-    function sky(city) {
-      const c = cv(4, 256), g = c.getContext('2d');
-      const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, city.sky[0]); gr.addColorStop(0.55, city.sky[1]); gr.addColorStop(1, city.sky[2]);
-      g.fillStyle = gr; g.fillRect(0, 0, 4, 256);
+    function sky() {
+      const c = cv(4, 256), g = c.getContext('2d'), tex = canvasTex(c);
+      tex.anisotropy = 1; tex.generateMipmaps = false; tex.minFilter = THREE.LinearFilter;
+      return { tex, set(a, b, d) { const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, a); gr.addColorStop(0.55, b); gr.addColorStop(1, d); g.fillStyle = gr; g.fillRect(0, 0, 4, 256); tex.needsUpdate = true; } };
+    }
+    function stars() {
+      const W = 1024, H = 256, c = cv(W, H), g = c.getContext('2d');
+      for (let i = 0; i < 300; i++) {
+        const x = rnd(0, W), y = H * Math.pow(Math.random(), 1.6), r = Math.random() < 0.12 ? rnd(1.6, 2.6) : rnd(0.6, 1.4);
+        g.fillStyle = `rgba(${rint(215, 255)},${rint(225, 255)},255,${rnd(0.45, 1).toFixed(2)})`;
+        g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+      }
       return canvasTex(c);
     }
     function skyline(city) {
@@ -600,7 +653,7 @@
       const t = new THREE.CanvasTexture(c); t.minFilter = t.magFilter = THREE.NearestFilter; t.generateMipmaps = false;
       return t;
     }
-    return { atlas, track, fence, sky, skyline, coin, blob, glow, label, toon, patch };
+    return { atlas, track, fence, sky, stars, skyline, coin, blob, glow, label, toon, patch };
   }
 
   const FACES = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
@@ -1070,7 +1123,7 @@
     const geos = new Map();
     const G = (k, f) => { if (!geos.has(k)) { const g = f(); geos.set(k, g); bin.add(g); } return geos.get(k); };
     const rbox = (w, h, d, n) => G(`rb${w},${h},${d},${n}`, () => {
-      const g = new THREE.SphereGeometry(1, 16, 12), p = g.attributes.position;
+      const big = Math.max(w, h, d), g = big <= 0.1 ? new THREE.SphereGeometry(1, 8, 6) : big <= 0.3 ? new THREE.SphereGeometry(1, 12, 8) : new THREE.SphereGeometry(1, 16, 12), p = g.attributes.position;
       const e = n == null ? 0.45 : n;
       for (let i = 0; i < p.count; i++) {
         const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
@@ -1088,6 +1141,54 @@
       return m;
     };
     const grp = (x, y, z, parent) => { const g = new THREE.Group(); g.position.set(x || 0, y || 0, z || 0); if (parent) parent.add(g); return g; };
+    const toonV = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: toonMap });
+    bin.add(toonV);
+    const bm = new THREE.Matrix4(), bi = new THREE.Matrix4(), bn = new THREE.Matrix3(), bv = new THREE.Vector3();
+    function bake(root, keep) {
+      const kept = new Set(keep), groups = new Map(), made = [];
+      kept.add(root);
+      root.updateMatrixWorld(true);
+      root.traverse(o => {
+        const m = o.material;
+        if (!o.isMesh || o.name || !m.isMeshToonMaterial || m.map || m.transparent || m.emissive.getHex()) return;
+        let a = o.parent;
+        while (a && !kept.has(a)) a = a.parent;
+        if (!a) return;
+        if (!groups.has(a)) groups.set(a, []);
+        groups.get(a).push(o);
+      });
+      groups.forEach((list, anc) => {
+        let nv = 0, ni = 0;
+        for (const o of list) { nv += o.geometry.attributes.position.count; ni += o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count; }
+        const P = new Float32Array(nv * 3), N = new Float32Array(nv * 3), C = new Float32Array(nv * 3), I = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
+        let v0 = 0, i0 = 0;
+        bi.copy(anc.matrixWorld).invert();
+        for (const o of list) {
+          const g = o.geometry, pa = g.attributes.position, na = g.attributes.normal, ix = g.index, c = o.material.color, n = pa.count;
+          bm.multiplyMatrices(bi, o.matrixWorld); bn.getNormalMatrix(bm);
+          for (let i = 0; i < n; i++) {
+            const k = (v0 + i) * 3;
+            bv.fromBufferAttribute(pa, i).applyMatrix4(bm); P[k] = bv.x; P[k + 1] = bv.y; P[k + 2] = bv.z;
+            bv.fromBufferAttribute(na, i).applyMatrix3(bn).normalize(); N[k] = bv.x; N[k + 1] = bv.y; N[k + 2] = bv.z;
+            C[k] = c.r; C[k + 1] = c.g; C[k + 2] = c.b;
+          }
+          if (ix) for (let i = 0; i < ix.count; i++) I[i0 + i] = v0 + ix.getX(i);
+          else for (let i = 0; i < n; i++) I[i0 + i] = v0 + i;
+          v0 += n; i0 += ix ? ix.count : n;
+          o.parent.remove(o);
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(P, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(N, 3)); geo.setAttribute('color', new THREE.BufferAttribute(C, 3));
+        geo.setIndex(new THREE.BufferAttribute(I, 1));
+        geo.computeBoundingSphere();
+        anc.add(new THREE.Mesh(geo, toonV));
+        made.push(geo);
+      });
+      const empty = [];
+      root.traverse(o => { if (o.isGroup && !o.children.length && !kept.has(o)) empty.push(o); });
+      for (const o of empty) o.parent.remove(o);
+      return made;
+    }
 
     function limb(parent, x, y, len1, len2, r1, r2, c1, c2, endGeo, endMat, endPos, flare) {
       const f = flare || 0.9;
@@ -1102,8 +1203,9 @@
       return { top, mid, end };
     }
 
-    function hero(P) {
+    function hero(P, B) {
       const J = P.id === 'jake';
+      B = B || ['#ff4fa3', '#ffd23f', '#3ad1ff', '#7afcff', '#3ad1ff'];
       const root = new THREE.Group();
       const body = grp(0, 0, 0, root);
       const spin = grp(0, 0.55, 0, body);
@@ -1216,10 +1318,10 @@
       for (const lg of [legR, legL]) mesh(cyl(J ? 0.19 : 0.15, J ? 0.19 : 0.15, 0.06, 12), M(shade(P.pants, 0.15)), 0, 0.05, 0, lg.end);
       for (const lg of [legR, legL]) { const sh = shoe(P.shoeA, P.shoeB); if (J) { sh.scale.setScalar(1.3); mesh(rbox(0.1, 0.1, 0.05, 0.8), M('#d8322c'), 0, -0.03, 0.17, sh); mesh(rbox(0.14, 0.05, 0.06, 0.8), M('#5cc43a'), 0, 0.06, 0.15, sh); } lg.end.add(sh); }
       const board = grp(0, 0.06, 0, root);
-      mesh(rbox(0.66, 0.08, 1.6, 0.35), M('#ff4fa3'), 0, 0, 0, board);
-      mesh(rbox(0.56, 0.03, 1.42, 0.35), M('#ffd23f'), 0, 0.045, 0, board);
-      mesh(rbox(0.3, 0.032, 0.5, 0.35), M('#3ad1ff'), 0, 0.05, -0.2, board);
-      mesh(rbox(0.5, 0.05, 1.3, 0.4), M('#7afcff', { emissive: new THREE.Color('#3ad1ff') }), 0, -0.06, 0, board);
+      mesh(rbox(0.66, 0.08, 1.6, 0.35), M(B[0]), 0, 0, 0, board);
+      mesh(rbox(0.56, 0.03, 1.42, 0.35), M(B[1]), 0, 0.045, 0, board);
+      mesh(rbox(0.3, 0.032, 0.5, 0.35), M(B[2]), 0, 0.05, -0.2, board);
+      mesh(rbox(0.5, 0.05, 1.3, 0.4), M(B[3], { emissive: new THREE.Color(B[4]) }), 0, -0.06, 0, board);
       board.visible = false;
       const jet = grp(0, 0.26, 0.2, torso);
       for (const s of [-1, 1]) {
@@ -1231,7 +1333,8 @@
       }
       mesh(rbox(0.12, 0.3, 0.1), M('#c9ccd2'), 0, 0.12, 0, jet);
       jet.visible = false;
-      const R = { root, body, spin, pelvis, torso, neck, head, armL, armR, legL, legR, board, jet, can, ph: 0, lean: 0 };
+      const R = { root, body, spin, pelvis, torso, neck, head, armL, armR, legL, legR, board, jet, can, ph: 0, lean: 0, flames: jet.children.filter(c => c.name === 'fl') };
+      R.geos = bake(root, [body, spin, pelvis, torso, head, armL.top, armL.mid, armL.end, armR.top, armR.mid, armR.end, legL.top, legL.mid, legL.end, legR.top, legR.mid, legR.end, board, jet, can]);
       return R;
     }
 
@@ -1271,6 +1374,7 @@
       const legR = limb(pelvis, 0.18, -0.04, 0.32, 0.3, 0.15, 0.13, ol2, ol2, null, null, null, 1.05);
       const legL = limb(pelvis, -0.18, -0.04, 0.32, 0.3, 0.15, 0.13, ol2, ol2, null, null, null, 1.05);
       legR.end.add(boot()); legL.end.add(boot());
+      bake(root, [body, pelvis, torso, head, armL.top, armL.mid, armL.end, armR.top, armR.mid, armR.end, legL.top, legL.mid, legL.end, legR.top, legR.mid, legR.end]);
       return { root, body, pelvis, torso, head, neck, armL, armR, legL, legR, ph: 0 };
     }
 
@@ -1300,14 +1404,8 @@
         mesh(ball(0.07, 10), M(cream), 0, -0.43, -0.03, l, 1, 0.7, 1.3);
         legs.push(l);
       }
+      bake(root, [body, head, tail].concat(legs));
       return { root, body, head, tail, legs, ph: 0 };
-    }
-
-    function hoverboardModel() {
-      const g = new THREE.Group();
-      mesh(rbox(0.66, 0.08, 1.6, 0.35), M('#ff4fa3'), 0, 0, 0, g);
-      mesh(rbox(0.56, 0.03, 1.42, 0.35), M('#ffd23f'), 0, 0.045, 0, g);
-      return g;
     }
 
     function animHero(R, st, dt, t) {
@@ -1364,7 +1462,7 @@
       R.body.position.y = st.mode === 'board' ? 0.16 + 0.04 * Math.sin(t * 6) : 0;
       R.body.rotation.y = st.mode === 'board' ? 0.55 : 0;
       R.jet.visible = st.mode === 'jet';
-      if (R.jet.visible) for (const ch of R.jet.children) if (ch.name === 'fl') ch.scale.set(0.8, 0.5 + 0.35 * Math.random(), 0.8);
+      if (R.jet.visible) for (let i = 0; i < R.flames.length; i++) R.flames[i].scale.set(0.8, 0.5 + 0.35 * Math.random(), 0.8);
       R.can.visible = !!st.can;
     }
     function animGuard(Gd, sp, dt, t, mode) {
@@ -1397,7 +1495,7 @@
         D.body.position.y = 0.52 + 0.12 * Math.abs(Math.sin(t * 9)); D.tail.rotation.x = -2.3; D.tail.rotation.z = 0.6 * Math.sin(t * 14); D.head.rotation.x = -0.3;
       }
     }
-    return { hero, guard, dog, hoverboardModel, animHero, animGuard, animDog, M, G, rbox, mesh, grp, ball, cyl };
+    return { hero, guard, dog, bake, animHero, animGuard, animDog, M, G, rbox, mesh, grp, ball, cyl };
   }
 
   const trainLen = n => n * CFG.CAR + (n - 1) * CFG.CGAP;
@@ -1415,11 +1513,11 @@
   function newRun() {
     return {
       s: 0, x: 0, lane: 1, xFrom: 0, lt: 1, ldir: 0, y: 0, vy: 0, g: 1, grounded: true, coyote: 0, jumpBuf: 0,
-      ps: 0, px: 0, py: 0, ign: null, edgeT: 0, edgeDir: 0, nearN: 0, nearT: 0, nearPts: 0,
+      ps: 0, px: 0, py: 0, ign: null, cleanS: 0, edgeT: 0, edgeDir: 0, nearN: 0, nearT: 0, nearPts: 0,
       rollT: 0, rollD: 1, h: CFG.H_STAND, t: 0, vk: 1, vs: 1, t0: 0, mb: 0, speed: CFG.V0, score: 0, coins: 0, keys: 0, mult: 1,
       x2: 0, jet: 0, jetD: 1, sneak: 0, sneakD: 1, mag: 0, magD: 1, x2D: 1, board: 0, ghost: 0, stumbleT: 0, chase: CFG.START_CHASE,
       dead: '', deadT: 0, revives: 0, warm: true, landT: 0, jumpT: 0, ev: [], hitObs: null,
-      st: { jump: 0, roll: 0, pu: 0, jet: 0, magCoins: 0, board: 0, bump: 0, dodge: 0, roof: 0, sneakJump: 0, mbox: 0, stumble: 0, coinsRun: 0, near: 0, lanes: 0, air: 0, topV: 0 }
+      st: { jump: 0, roll: 0, pu: 0, jet: 0, magCoins: 0, board: 0, bump: 0, dodge: 0, roof: 0, sneakJump: 0, mbox: 0, stumble: 0, coinsRun: 0, near: 0, lanes: 0, air: 0, topV: 0, night: 0, clean: 0 }
     };
   }
 
@@ -1728,7 +1826,7 @@
     if (R.board > 0) { R.board = 0; R.ghost = CFG.GHOST_T; R.ev.push('board_break'); return; }
     R.st.stumble++;
     if (why === 'train') R.st.bump++;
-    R.stumbleT = 0.45; R.nearN = 0; R.nearT = 0;
+    R.stumbleT = 0.45; R.nearN = 0; R.nearT = 0; R.cleanS = R.s;
     R.ev.push('bump');
     if (R.chase > 0.15 && !R.warm) { die(W, R, 'caught'); return; }
     R.warm = false;
@@ -1789,6 +1887,7 @@
     R.t += dt;
     R.speed = speedAt(R.t * R.vk + R.t0) * R.vs;
     if (R.speed > R.st.topV) R.st.topV = R.speed;
+    if (R.s - R.cleanS > R.st.clean) R.st.clean = R.s - R.cleanS;
     const ps = R.s;
     R.s += R.speed * dt;
     if (R.lt < 1) R.lt = Math.min(1, R.lt + dt / CFG.LANE_T);
@@ -1947,6 +2046,7 @@
     play: '<svg viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="#fff"/></svg>',
     home: '<svg viewBox="0 0 24 24"><path d="M3 11.5L12 4l9 7.5V20h-6v-5H9v5H3z" fill="#fff"/></svg>',
     check: '<svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    gear: '<svg viewBox="0 0 24 24"><path d="M10.3 2h3.4l.5 2.6 1.7.7 2.2-1.5 2.4 2.4-1.5 2.2.7 1.7 2.6.5v3.4l-2.6.5-.7 1.7 1.5 2.2-2.4 2.4-2.2-1.5-1.7.7-.5 2.6h-3.4l-.5-2.6-1.7-.7-2.2 1.5-2.4-2.4 1.5-2.2-.7-1.7L1.7 13.7v-3.4l2.6-.5.7-1.7-1.5-2.2 2.4-2.4 2.2 1.5 1.7-.7z" fill="#fff"/><circle cx="12" cy="12" r="3.4" fill="#1f6fd9"/></svg>',
     star: '<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.2 6.8.8-5 4.7 1.3 6.7L12 17.1l-6 3.3 1.3-6.7-5-4.7 6.8-.8z" fill="#ffd23f" stroke="#a86a00" stroke-width="1.3"/></svg>'
   };
   const SC = '.gm-' + ID;
@@ -2004,6 +2104,16 @@ ${SC} .ss-home{flex-direction:column;justify-content:space-between;padding:2.6% 
 ${SC} .ss-bar{display:flex;gap:.6em;justify-content:flex-end;width:100%;flex-wrap:wrap}
 ${SC} .ss-chip{display:flex;align-items:center;gap:.35em;background:rgba(18,34,74,.6);border:.13em solid rgba(255,255,255,.9);border-radius:2em;padding:.3em .75em .3em .35em;font-size:1.2em;${OUT}}
 ${SC} .ss-chip .ss-ic{width:1.35em;height:1.35em}
+${SC} .ss-gear{margin-right:auto;width:2.5em;height:2.5em;border-radius:50%;background:rgba(18,34,74,.6);border:.13em solid rgba(255,255,255,.9);display:grid;place-items:center;font-size:1.2em}
+${SC} .ss-gear svg{width:62%}
+${SC} .ss-daily{font-size:.95em;${OUT};background:rgba(18,34,74,.6);border:.13em solid rgba(255,255,255,.9);border-radius:1.2em;padding:.34em .9em .26em;margin-top:-.2em}
+${SC} .ss-daily b{color:#ffd23f;font-weight:400;margin-left:.3em}
+${SC} .ss-seg{display:flex;gap:.2em;background:rgba(0,0,0,.25);border-radius:.6em;padding:.18em;flex:none}
+${SC} .ss-seg button{padding:.4em .7em .3em;border-radius:.45em;font-size:.95em;${OUT}}
+${SC} .ss-seg button.on{background:linear-gradient(#ffe25a,#ffaa1a);color:#7a3a00;text-shadow:none}
+${SC} .ss-sw{width:2.3em;height:2.3em;border-radius:.5em;border:.13em solid #fff;flex:none;box-shadow:0 .12em 0 rgba(0,0,0,.3)}
+${SC} .ss-sw.none{background:repeating-linear-gradient(45deg,#5b6f8c 0 .3em,#4b5d78 .3em .6em)}
+${SC} .ss-sec{font-size:1.05em;color:#1f56a8;text-shadow:0 .06em 0 #fff;margin:.35em 0 -.1em .2em}
 ${SC} .ss-mid{flex:1;display:flex;align-items:flex-start;justify-content:space-between;width:100%;padding-top:1.2em}
 ${SC} .ss-logo{font-size:3.7em;line-height:.84;transform:rotate(-5deg);transform-origin:left;filter:drop-shadow(0.035em 0em 0 #12224a) drop-shadow(-0.035em 0em 0 #12224a) drop-shadow(0em 0.035em 0 #12224a) drop-shadow(0em -0.035em 0 #12224a) drop-shadow(0.075em 0em 0 #3aa8ff) drop-shadow(-0.075em 0em 0 #3aa8ff) drop-shadow(0em 0.075em 0 #3aa8ff) drop-shadow(0em -0.075em 0 #3aa8ff) drop-shadow(0.03em 0em 0 #12224a) drop-shadow(-0.03em 0em 0 #12224a) drop-shadow(0em 0.03em 0 #12224a) drop-shadow(0em -0.03em 0 #12224a) drop-shadow(0 .09em 0 rgba(0,0,0,.3))}
 ${SC} .ss-logo span{display:block;white-space:nowrap}
@@ -2176,7 +2286,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
   <div class="ss-toast"></div>
 </div>
 <div class="ss-scr ss-home">
-  <div class="ss-bar"><div class="ss-chip">${ic('crown')}<b class="h-best">0</b></div><div class="ss-chip">${ic('coin')}<b class="h-coins">0</b></div><div class="ss-chip">${ic('key')}<b class="h-keys">0</b></div><div class="ss-chip">${ic('board')}<b class="h-boards">0</b></div></div>
+  <div class="ss-bar"><button class="ss-gear" data-o="set" aria-label="Settings">${ICO.gear}</button><div class="ss-chip">${ic('crown')}<b class="h-best">0</b></div><div class="ss-chip">${ic('coin')}<b class="h-coins">0</b></div><div class="ss-chip">${ic('key')}<b class="h-keys">0</b></div><div class="ss-chip">${ic('board')}<b class="h-boards">0</b></div></div>
   <div class="ss-mid">
     <div class="ss-logo"><span>${logoW('SUBWAY', 0)}</span><span>${logoW('SURFERS', 3)}</span></div>
     <div class="ss-tour"><small>WORLD TOUR</small><div class="row"><button class="t-prev" aria-label="Previous city">&#9664;</button><b class="t-name">Subway City</b><button class="t-next" aria-label="Next city">&#9654;</button></div><div class="sub t-sub"></div></div>
@@ -2185,17 +2295,18 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
     <div class="ss-tap">TAP TO PLAY</div>
     <div class="ss-modes"><button data-m="classic">Classic<small>0</small></button><button data-m="rush">Rush<small>0</small></button><button data-m="chill">Chill<small>0</small></button></div>
     <div class="ss-msub"></div>
+    <button class="ss-daily" data-o="daily"></button>
     <div class="ss-menu"><button class="ss-btn y" data-o="missions">${ic('star')}Missions<span class="bdg h-mult">x1</span></button><button class="ss-btn g" data-o="shop">${ic('coin')}Shop</button><button class="ss-btn" data-o="chars">Surfers</button><button class="ss-btn" data-o="how">How to play</button></div>
   </div>
 </div>
 <div class="ss-scr ss-dim ss-panel"><div class="ss-card"><button class="x" aria-label="Close">&#10005;</button><h3 class="p-title"></h3><div class="p-body"></div></div></div>
 <div class="ss-scr ss-dim ss-save"><div class="ss-card"><h3>Save me!</h3><div class="ss-ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="9"/><circle class="s-arc" cx="50" cy="50" r="44" fill="none" stroke="#ffd23f" stroke-width="9" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0"/></svg><div class="k">${ic('key')}</div></div><button class="ss-btn g s-go">Use <b class="s-cost">1</b> ${ic('key')}</button><p class="ss-small s-have"></p><div class="ss-btns"><button class="ss-btn r s-skip">No thanks</button></div></div></div>
 <div class="ss-scr ss-dim ss-over"><div class="ss-card"><h3 class="o-title">Game over</h3><div class="o-new"></div><div class="ss-res"><div class="big"><small>SCORE</small><b class="o-score">0</b></div><div><small>HIGH SCORE</small><b class="o-best">0</b></div><div><small>COINS</small><b class="o-coins">0</b></div></div><div class="ss-stats o-st"></div><div class="ss-list o-ms"></div><div class="ss-btns"><button class="ss-btn g o-play">${ic('play')}Play</button><button class="ss-btn o-home">${ic('home')}Home</button><button class="ss-btn y o-shop">${ic('coin')}Shop</button></div></div></div>
-<div class="ss-scr ss-dim ss-pausep"><div class="ss-card"><h3>Paused</h3><div class="ss-list pz-ms"></div><div class="ss-btns"><button class="ss-btn g pz-go">${ic('play')}Resume</button><button class="ss-btn pz-how">How to play</button><button class="ss-btn pz-home">${ic('home')}Home</button></div></div></div>
+<div class="ss-scr ss-dim ss-pausep"><div class="ss-card"><h3>Paused</h3><div class="ss-list pz-ms"></div><div class="ss-btns"><button class="ss-btn g pz-go">${ic('play')}Resume</button><button class="ss-btn pz-how">How to play</button><button class="ss-btn pz-set">Settings</button><button class="ss-btn pz-home">${ic('home')}Home</button></div></div></div>
 `;
 
   function mkAudio(api) {
-    let ctx = null, master = null, sfx = null, mus = null, nb = null, jetN = null, musOn = false, nextT = 0, step16 = 0;
+    let ctx = null, master = null, sfx = null, mus = null, nb = null, jetN = null, musOn = false, nextT = 0, step16 = 0, musVol = 1, sfxVol = 1, bpm = 96;
     const AC = window.AudioContext || window.webkitAudioContext;
     function ensure() {
       if (!AC) return false;
@@ -2203,7 +2314,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         try {
           ctx = new AC();
           master = ctx.createGain(); master.gain.value = 0.8; master.connect(ctx.destination);
-          sfx = ctx.createGain(); sfx.gain.value = 0.9; sfx.connect(master);
+          sfx = ctx.createGain(); sfx.gain.value = 0.9 * sfxVol; sfx.connect(master);
           mus = ctx.createGain(); mus.gain.value = 0; mus.connect(master);
           const n = ctx.sampleRate; nb = ctx.createBuffer(1, n, n); const d = nb.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
         } catch (e) { ctx = null; return false; }
@@ -2257,26 +2368,38 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       buy: t => { tone('sine', 1046, 1046, t, 0.08, 0.12); tone('sine', 1568, 1568, t + 0.07, 0.18, 0.12); }
     };
     const BASS = [43, 0, 0, 43, 0, 0, 46, 0, 41, 0, 0, 41, 0, 38, 0, 0];
+    const LEAD = [
+      [67, 0, 70, 0, 72, 0, 70, 67, 0, 65, 0, 67, 0, 0, 62, 0],
+      [67, 0, 70, 0, 72, 0, 74, 0, 77, 0, 74, 72, 0, 70, 0, 0],
+      [65, 0, 69, 0, 72, 0, 69, 65, 0, 62, 0, 65, 0, 0, 60, 0],
+      [62, 0, 65, 0, 69, 0, 72, 0, 74, 0, 72, 69, 0, 67, 0, 0]
+    ];
+    const FORM = [-1, -1, -1, -1, 0, 1, 0, 3, 2, 3, 0, 1, -1, -1, 2, 3];
     const midi = n => 440 * Math.pow(2, (n - 69) / 12);
     function schedule() {
-      const spb = 60 / 96 / 4;
+      const spb = 60 / bpm / 4;
       while (nextT < ctx.currentTime + 0.15) {
-        const t = nextT, k = step16 % 16, bar = (step16 >> 4) % 4;
+        const t = nextT, k = step16 % 16, bar = (step16 >> 4) % 4, tr = bar === 3 ? 2 : 0, ld = FORM[(step16 >> 4) % 16];
         if (k === 0 || k === 7 || k === 10) { tone('sine', 140, 45, t, 0.22, 0.42, mus); }
         if (k === 4 || k === 12) { noise(t, 0.16, 0.32, 'bandpass', 1800, 900, 0.7, mus); tone('triangle', 220, 140, t, 0.08, 0.12, mus); }
         if (k % 2 === 0) noise(t, 0.04, k % 4 === 2 ? 0.12 : 0.06, 'highpass', 7000, 0, 1, mus);
-        const bn = BASS[k]; if (bn) tone('square', midi(bn + (bar === 3 ? 2 : 0)), midi(bn + (bar === 3 ? 2 : 0)), t, spb * 1.8, 0.07, mus, 0.01);
+        if (ld < 0 && k % 2 === 1 && (step16 >> 4) % 16 > 11) noise(t, 0.03, 0.04, 'highpass', 9000, 0, 1, mus);
+        const bn = BASS[k]; if (bn) tone('square', midi(bn + tr), midi(bn + tr), t, spb * 1.8, 0.07, mus, 0.01);
         if (k === 0 && bar % 2 === 0) [67, 70, 74].forEach(n => tone('triangle', midi(n), midi(n), t, spb * 6, 0.02, mus, 0.02));
+        const ln = ld < 0 ? 0 : LEAD[ld][k];
+        if (ln) { tone('square', midi(ln + tr), midi(ln + tr), t, spb * 1.7, 0.026, mus, 0.008); tone('triangle', midi(ln + tr + 12), midi(ln + tr + 12), t, spb * 1.2, 0.022, mus, 0.008); }
         nextT += spb; step16++;
       }
     }
     return {
       unlock() { if (!api.muted) ensure(); },
-      play(name) { if (api.muted || !S[name] || !ensure() || ctx.state === 'closed') return; try { S[name](ctx.currentTime + 0.005); } catch (e) {} },
+      play(name) { if (api.muted || sfxVol <= 0 || !S[name] || !ensure() || ctx.state !== 'running') return; try { S[name](ctx.currentTime + 0.005); } catch (e) {} },
       music(on) { musOn = on; },
+      tempo(k) { bpm = 96 + 24 * k; },
+      setVol(m, f) { musVol = m; sfxVol = f; if (sfx) sfx.gain.value = 0.9 * f; if (f <= 0 && jetN) this.jet(false); },
       jet(on) {
         if (!ctx) return;
-        if (on && !jetN && !api.muted) {
+        if (on && !jetN && !api.muted && sfxVol > 0 && ctx.state === 'running') {
           const s = ctx.createBufferSource(); s.buffer = nb; s.loop = true; const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 700; const g = ctx.createGain(); g.gain.value = 0.12;
           s.connect(f); f.connect(g); g.connect(sfx); s.start(); jetN = { s, g };
         } else if (!on && jetN) { try { jetN.g.gain.setTargetAtTime(0, ctx.currentTime, 0.08); jetN.s.stop(ctx.currentTime + 0.3); } catch (e) {} jetN = null; }
@@ -2284,11 +2407,14 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       tick() {
         if (!ctx || ctx.state !== 'running') return;
         if (api.muted) { if (jetN) this.jet(false); mus.gain.value = 0; return; }
-        const target = musOn ? 0.55 : 0;
+        const target = musOn ? 0.55 * musVol : 0;
         mus.gain.value += (target - mus.gain.value) * 0.05;
         if (mus.gain.value > 0.01) { if (nextT < ctx.currentTime) nextT = ctx.currentTime + 0.05; schedule(); }
       },
-      close() { try { if (jetN) jetN.s.stop(); } catch (e) {} try { ctx && ctx.close(); } catch (e) {} ctx = null; }
+      get state() { return ctx ? ctx.state : 'none'; },
+      get jetOn() { return !!jetN; },
+      get vol() { return mus ? mus.gain.value : 0; },
+      close() { try { if (jetN) jetN.s.stop(); } catch (e) {} jetN = null; try { ctx && ctx.close(); } catch (e) {} ctx = null; }
     };
   }
 
@@ -2365,7 +2491,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         hud: q('.ss-hud'), sv: q('.ss-sv'), cv: q('.ss-cv'), kv: q('.ss-kv'), keyp: q('.ss-keyp'), mult: q('.ss-mult'), pus: q('.ss-pus'), hb: q('.ss-hb'), hbn: q('.ss-hbn'),
         hint: q('.ss-hint'), near: q('.ss-near'), banner: q('.ss-banner'), big: q('.ss-big'), toast: q('.ss-toast'), pause: q('.ss-pause'),
         home: q('.ss-home'), panel: q('.ss-panel'), ptitle: q('.p-title'), pbody: q('.p-body'), save: q('.ss-save'), over: q('.ss-over'), pausep: q('.ss-pausep'),
-        hbest: q('.h-best'), hcoins: q('.h-coins'), hkeys: q('.h-keys'), hboards: q('.h-boards'), hmult: q('.h-mult'), tname: q('.t-name'), tsub: q('.t-sub'),
+        hbest: q('.h-best'), hdaily: q('.ss-daily'), oscore: q('.o-score'), hcoins: q('.h-coins'), hkeys: q('.h-keys'), hboards: q('.h-boards'), hmult: q('.h-mult'), tname: q('.t-name'), tsub: q('.t-sub'),
         sarc: q('.s-arc'), scost: q('.s-cost'), shave: q('.s-have'), sgo: q('.s-go')
       };
 
@@ -2380,8 +2506,16 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         v: 2, coins: loaded.coins | 0, keys: loaded.keys == null ? 2 : loaded.keys | 0, boards: loaded.boards == null ? 3 : loaded.boards | 0,
         upg: Object.assign({ jet: 0, sneak: 0, mag: 0, x2: 0 }, loaded.upg || {}), ms: loaded.ms && loaded.ms.lvl ? loaded.ms : { lvl: 1, base: [0, 0, 0], done: [false, false, false] },
         chars: Array.isArray(loaded.chars) ? loaded.chars : ['jake'], char: loaded.char || 'jake', city: loaded.city | 0, runs: loaded.runs | 0, best: loaded.best | 0,
-        mode: MODES.find(m => m.id === loaded.mode) ? loaded.mode : 'classic', mbest: Object.assign({ rush: 0, chill: 0 }, loaded.mbest || {}), how: loaded.how ? 1 : 0, tot: Object.assign({ m: 0, coins: 0, jumps: 0 }, loaded.tot || {})
+        mode: MODES.find(m => m.id === loaded.mode) ? loaded.mode : 'classic', mbest: Object.assign({ rush: 0, chill: 0 }, loaded.mbest || {}), how: loaded.how ? 1 : 0, tot: Object.assign({ m: 0, coins: 0, jumps: 0 }, loaded.tot || {}),
+        opt: Object.assign({ mus: 1, sfx: 1, q: 'auto', shake: 1 }, loaded.opt || {}), cos: Object.assign({ board: 'classic', trail: 'none', own: [] }, loaded.cos || {}),
+        daily: loaded.daily && loaded.daily.day ? loaded.daily : { day: '', g: [], streak: 0, last: '' }
       };
+      if (!Array.isArray(save.cos.own)) save.cos.own = [];
+      for (const id of ['classic', 'none']) if (!save.cos.own.includes(id)) save.cos.own.push(id);
+      if (!BOARDS.find(b => b.id === save.cos.board) || !save.cos.own.includes(save.cos.board)) save.cos.board = 'classic';
+      if (!TRAILS.find(b => b.id === save.cos.trail) || !save.cos.own.includes(save.cos.trail)) save.cos.trail = 'none';
+      if (!['auto', 'high', 'low'].includes(save.opt.q)) save.opt.q = 'auto';
+      if (!Array.isArray(save.daily.g)) save.daily.g = [];
       if (!CHARS.find(c => c.id === save.char)) save.char = 'jake';
       save.city = clamp(save.city, 0, CITIES.length - 1);
       const persist = () => api.save(save);
@@ -2392,7 +2526,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       const cam = new THREE.PerspectiveCamera(baseFov, baseAsp, 0.1, 520);
       const hemi = new THREE.HemisphereLight(0xffffff, 0x888888, 1);
       const sun = new THREE.DirectionalLight(0xffffff, 0.8);
-      sun.position.set(-0.45, 1, 0.5);
+      sun.position.set(-20, 40, 35);
       scene.add(hemi, sun, sun.target);
       scene.fog = new THREE.Fog(0xffffff, 70, 215);
 
@@ -2422,24 +2556,51 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       const skyPlane = new THREE.Mesh(keep(new THREE.PlaneGeometry(560, 140)), skyMat); skyPlane.renderOrder = -1; scene.add(skyPlane);
       const sunSprite = new THREE.Sprite(keep(new THREE.SpriteMaterial({ map: glowTex.w, fog: false, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending })));
       sunSprite.scale.set(90, 90, 1); scene.add(sunSprite);
+      const skyG = T.sky();
+      keep(skyG.tex);
+      scene.background = skyG.tex;
+      const starMat = keep(new THREE.MeshBasicMaterial({ map: keep(T.stars()), transparent: true, fog: false, depthWrite: false, opacity: 0 }));
+      const starPlane = new THREE.Mesh(keep(new THREE.PlaneGeometry(820, 205)), starMat); starPlane.renderOrder = -2; starPlane.visible = false; scene.add(starPlane);
+      const PAL = PHASES.slice(), dcA = new THREE.Color(), dcB = new THREE.Color();
+      let dayI = -1, dayQ = -1, dayHK = 1, daySK = 1, sunY = 150;
+      const mix = (a, b, w) => dcA.set(a).lerp(dcB.set(b), w);
+      function setDay(i, j, w) {
+        const A = PAL[i], B = PAL[j];
+        skyG.set('#' + mix(A.sky[0], B.sky[0], w).getHexString(), '#' + mix(A.sky[1], B.sky[1], w).getHexString(), '#' + mix(A.sky[2], B.sky[2], w).getHexString());
+        scene.fog.color.copy(mix(A.fog, B.fog, w)).convertSRGBToLinear();
+        hemi.color.copy(mix(A.hemi[0], B.hemi[0], w)).convertSRGBToLinear(); hemi.groundColor.copy(mix(A.hemi[1], B.hemi[1], w)).convertSRGBToLinear();
+        sun.color.copy(mix(A.sun, B.sun, w)).convertSRGBToLinear();
+        skyMat.color.copy(mix(A.line, B.line, w)).convertSRGBToLinear();
+        sunSprite.material.color.copy(mix(A.disc, B.disc, w)).convertSRGBToLinear();
+        const ds = lerp(A.ds, B.ds, w), st = lerp(A.star, B.star, w);
+        sunSprite.scale.set(ds, ds, 1); sunY = lerp(A.dy, B.dy, w);
+        starMat.opacity = st; starPlane.visible = st > 0.01;
+        dayHK = lerp(A.hk, B.hk, w); daySK = lerp(A.sk, B.sk, w);
+        draw = true;
+      }
+      function dayTick() {
+        const u = state === 'home' ? 0 : runT / PHASE_T, i = Math.floor(u) % 4, f = u - Math.floor(u), w = f < 0.7 ? 0 : ease((f - 0.7) / 0.3), qn = Math.round(w * 48);
+        if (i === dayI && qn === dayQ) return;
+        if (i !== dayI && dayI >= 0 && i > 0 && state === 'run') toast(PAL[i].name);
+        dayI = i; dayQ = qn;
+        setDay(i, (i + 1) % 4, qn / 48);
+      }
 
       function buildCity(i) {
         if (ENV) { ENV.dispose(); }
         const city = CITIES[i];
         const AT = T.atlas(city);
         const WG = mkWorld(THREE, AT, city);
-        const trackTex = T.track(city), skyTex = T.sky(city), skylineTex = T.skyline(city);
+        const trackTex = T.track(city), skylineTex = T.skyline(city);
         atlasMat.map = AT.tex; atlasMat.needsUpdate = true;
         trackMat.map = trackTex; trackMat.needsUpdate = true;
         skyMat.map = skylineTex; skyMat.needsUpdate = true;
-        scene.background = skyTex;
-        scene.fog.color.set(city.fog).convertSRGBToLinear();
+        PAL[0] = { name: 'Day', sky: city.sky, fog: city.fog, hemi: city.hemi, hk: 1, sun: city.sun, sk: 1, line: '#ffffff', disc: '#ffffff', dy: 150, ds: 90, star: 0 };
+        dayI = dayQ = -1;
         farMat.color.set(shade(city.walk, -0.12)).convertSRGBToLinear();
-        hemi.color.set(city.hemi[0]).convertSRGBToLinear(); hemi.groundColor.set(city.hemi[1]).convertSRGBToLinear();
-        sun.color.set(city.sun).convertSRGBToLinear();
         if (rails) scene.remove(rails);
         rails = new THREE.Mesh(WG.rails, railMat); scene.add(rails);
-        ENV = { city, AT, WG, light: city.light, dispose() { AT.tex.dispose(); trackTex.dispose(); skyTex.dispose(); skylineTex.dispose(); WG.bin.forEach(g => g.dispose()); } };
+        ENV = { city, AT, WG, light: city.light, dispose() { AT.tex.dispose(); trackTex.dispose(); skylineTex.dispose(); WG.bin.forEach(g => g.dispose()); } };
         clearChunks(); clearObsMeshes();
       }
 
@@ -2543,7 +2704,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       function itemMesh(it) {
         const p = itemPool[it.k] || (itemPool[it.k] = []);
         let g = p.pop();
-        if (!g) { g = new THREE.Group(); g.add(itemModel(it.k)); const sp = new THREE.Sprite(GM[ITEM_GLOW[it.k]]); sp.scale.set(2.1, 2.1, 1); g.add(sp); g.userData.k = it.k; scene.add(g); }
+        if (!g) { g = new THREE.Group(); const im = itemModel(it.k); CH.bake(im, []); g.add(im); const sp = new THREE.Sprite(GM[ITEM_GLOW[it.k]]); sp.scale.set(2.1, 2.1, 1); g.add(sp); g.userData.k = it.k; scene.add(g); }
         g.visible = true; g.position.set(it.x, it.y, -it.s); it.mesh = g;
       }
       for (const k in ITEM_GLOW) { const it = { k, x: 0, y: -50, s: 0, mesh: null }; itemMesh(it); dropMesh(it); }
@@ -2551,11 +2712,46 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       const patchGeo = keep(new THREE.PlaneGeometry(0.4, 0.34)), patchMat = keep(new THREE.MeshLambertMaterial({ map: keep(T.patch()), transparent: true, alphaTest: 0.3 }));
       let hero = null, heroBlob = mkBlob(1.0);
       function buildHero() {
-        if (hero) scene.remove(hero.root);
+        if (hero) { scene.remove(hero.root); for (const g of hero.geos) g.dispose(); }
         const P = CHARS.find(c => c.id === save.char) || CHARS[0];
-        hero = CH.hero(P);
+        hero = CH.hero(P, (BOARDS.find(b => b.id === save.cos.board) || BOARDS[0]).c);
+        draw = true;
         if (P.vest) { const pm = new THREE.Mesh(patchGeo, patchMat); pm.position.set(0, P.id === 'jake' ? 0.3 : 0.33, P.id === 'jake' ? 0.405 : 0.212); P.id === 'jake' ? pm.scale.setScalar(1.2) : 0; hero.torso.add(pm); }
         hero.root.scale.setScalar(1.15); scene.add(hero.root);
+      }
+      const TRN = 30, trP = new Float32Array(TRN * 3), trC = new Float32Array(TRN * 3), trV = new Float32Array(TRN * 3), trB = new Float32Array(TRN * 3), trL = new Float32Array(TRN);
+      const trailGeo = keep(new THREE.BufferGeometry());
+      trailGeo.setAttribute('position', new THREE.BufferAttribute(trP, 3).setUsage(THREE.DynamicDrawUsage)); trailGeo.setAttribute('color', new THREE.BufferAttribute(trC, 3).setUsage(THREE.DynamicDrawUsage));
+      const trail = new THREE.Points(trailGeo, keep(new THREE.PointsMaterial({ map: glowTex.w, size: 0.85, sizeAttenuation: true, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })));
+      trail.frustumCulled = false; trail.visible = false; scene.add(trail);
+      let trailC = null, trI = 0, trT = 0;
+      function setTrail() {
+        const t = TRAILS.find(x => x.id === save.cos.trail);
+        trailC = t && t.c ? t.c.map(h => new THREE.Color(h).convertSRGBToLinear()) : null;
+        trL.fill(0); trC.fill(0); trail.visible = false; trailGeo.attributes.color.needsUpdate = true;
+      }
+      function updTrail(dt) {
+        if (!trailC) return;
+        if (state === 'run' && !R.dead && dt > 0 && (R.grounded || R.board > 0 || R.jet > 0)) {
+          trT -= dt;
+          while (trT <= 0) {
+            trT += 0.034;
+            const i = trI++ % TRN, k = i * 3, c = trailC[i & 1];
+            trP[k] = V.x + rnd(-0.28, 0.28); trP[k + 1] = V.y + rnd(0.1, 0.55); trP[k + 2] = -V.s + rnd(0.2, 0.7);
+            trV[k] = rnd(-0.7, 0.7); trV[k + 1] = rnd(0.4, 1.7); trV[k + 2] = rnd(1.5, 4.5);
+            trB[k] = c.r; trB[k + 1] = c.g; trB[k + 2] = c.b; trL[i] = 1;
+          }
+        }
+        let any = false;
+        for (let i = 0; i < TRN; i++) {
+          if (trL[i] <= 0) continue;
+          const k = i * 3, l = trL[i] = Math.max(0, trL[i] - dt * 2.4);
+          trP[k] += trV[k] * dt; trP[k + 1] += trV[k + 1] * dt; trP[k + 2] += trV[k + 2] * dt;
+          trC[k] = trB[k] * l; trC[k + 1] = trB[k + 1] * l; trC[k + 2] = trB[k + 2] * l;
+          any = true;
+        }
+        if (any || trail.visible) { trailGeo.attributes.position.needsUpdate = true; trailGeo.attributes.color.needsUpdate = true; }
+        trail.visible = any;
       }
       const guard = CH.guard(), dog = CH.dog();
       scene.add(guard.root, dog.root);
@@ -2578,6 +2774,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         acc = 0; gd = 30; leanZ = 0; airW = 0; camY = 0; prevX = 0; fovK = 0; shake = 0; trackS = NaN;
         V.s = 0; V.x = 0; V.y = 0; V.a = 1;
         msnap = Object.assign({}, R.st);
+        trL.fill(0); trail.visible = false;
         draw = true;
       }
 
@@ -2587,6 +2784,8 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       function refreshHome() {
         E.hcoins.textContent = fmt(save.coins); E.hkeys.textContent = save.keys; E.hboards.textContent = save.boards;
         E.hmult.textContent = 'x' + save.ms.lvl;
+        const left = dailyLeft();
+        E.hdaily.innerHTML = left ? `Daily goals <b>${3 - left}/3</b>` : `Daily goals done <b>streak ${save.daily.streak}</b>`;
         const c = CITIES[save.city]; E.tname.textContent = c.name; E.tsub.textContent = c.sub;
         E.hbest.textContent = fmt(bestOf(save.mode));
         q('.ss-modes').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.m === save.mode); b.querySelector('small').textContent = fmt(bestOf(b.dataset.m)); });
@@ -2600,6 +2799,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       }
       function toHome() {
         state = 'home';
+        rollDaily();
         resetWorld();
         show(E.home, 1); show(E.over, 0); show(E.save, 0); show(E.pausep, 0); panel(0);
         E.hud.classList.add('off');
@@ -2764,6 +2964,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         banked = true;
         const sc = Math.floor(R.score), md = modeOf(), isBest = sc > bestOf(md.id);
         bankMissions();
+        checkDaily(); bankDaily();
         save.coins += R.coins; save.runs++;
         if (isBest) { if (md.id === 'classic') save.best = sc; else save.mbest[md.id] = sc; }
         save.tot.m += Math.round(R.s); save.tot.coins += R.coins; save.tot.jumps += R.st.jump;
@@ -2801,39 +3002,98 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         state = 'count'; countT = 0; countN = 3; big('3'); au.play('tick');
       }
 
-      let panelKind = '', shopTab = 'up';
+      const dval = k => k === 'dist' ? R.s : k === 'coins' ? R.coins : k === 'best' ? R.score : k === 'fast' ? R.st.topV * 3.6 : R.st[k];
+      const dprog = g => g.done ? g.n : banked || !R ? g.p : DAILY[g.k].run ? Math.max(g.p, dval(g.k)) : g.p + dval(g.k);
+      const dailyLeft = () => save.daily.g.filter(g => !g.done).length;
+      function rollDaily() {
+        const D = save.daily, today = dayKey(new Date());
+        if (D.day === today && Array.isArray(D.g) && D.g.length === 3 && D.g.every(g => DAILY[g.k])) return;
+        const y = new Date(); y.setDate(y.getDate() - 1);
+        if (D.last !== today && D.last !== dayKey(y)) D.streak = 0;
+        D.day = today; D.g = dailySet(today);
+        persist();
+      }
+      const dailyPay = () => Math.round(150 * (1 + Math.min(save.daily.streak, 6) * 0.25));
+      function checkDaily() {
+        const D = save.daily;
+        let left = 0, hit = false;
+        for (let i = 0; i < D.g.length; i++) {
+          const g = D.g[i];
+          if (!g.done && dprog(g) >= g.n) { g.done = true; g.p = g.n; hit = true; const c = dailyPay(); save.coins += c; runBonus += c; au.play('mission'); flash('Daily goal done!  +' + c, 'gold'); }
+          if (!g.done) left++;
+        }
+        if (hit && !left && D.last !== D.day) { D.last = D.day; D.streak++; save.coins += 300; runBonus += 300; save.keys++; toast('All daily goals: +300 coins, +1 key'); }
+        if (hit) persist();
+      }
+      function bankDaily() {
+        for (const g of save.daily.g) if (!g.done) g.p = DAILY[g.k].run ? Math.max(g.p, dval(g.k)) : g.p + dval(g.k);
+      }
+      function dailyRows() {
+        return save.daily.g.map(g => {
+          const p = Math.min(g.n, Math.floor(dprog(g)));
+          return `<div class="ss-row${g.done ? ' done' : ''}"><span class="ss-chk">${g.done ? ICO.check : ''}</span><div class="t"><b>${DAILY[g.k].t(g.n)}</b><div class="ss-prog"><b style="width:${(100 * p / g.n).toFixed(1)}%"></b></div><small>${fmt(p)} / ${fmt(g.n)}</small></div></div>`;
+        }).join('');
+      }
+
+      const prBase = () => save.opt.q === 'low' ? 0.85 : COARSE ? 1.6 : 2;
+      function applyOpt() {
+        au.setVol(save.opt.mus ? 1 : 0, save.opt.sfx ? 1 : 0);
+        prCap = prBase();
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, prCap));
+        draw = true;
+      }
+
+      let panelKind = '', shopTab = 'up', msTab = 'ms';
       function openPanel(kind) {
         panelKind = kind; au.unlock(); au.play('ui');
         renderPanel();
         panel(1);
       }
+      const seg = (key, opts) => `<div class="ss-seg">${opts.map(o => `<button data-opt="${key}" data-v="${o[0]}" class="${String(save.opt[key]) === String(o[0]) ? 'on' : ''}">${o[1]}</button>`).join('')}</div>`;
+      const sw = c => `<span class="ss-sw" style="background:linear-gradient(135deg,${c[0]} 0 50%,${c[1]} 50% 100%)"></span>`;
+      function cosRow(kind, it) {
+        const own = save.cos.own.includes(it.id), sel = save.cos[kind] === it.id;
+        return `<div class="ss-row${sel ? ' done' : ''}">${it.c ? sw(it.c) : '<span class="ss-sw none"></span>'}<div class="t"><b>${it.name}</b></div>${sel ? '<button class="ss-btn dis">In use</button>' : own ? `<button class="ss-btn" data-cos="${kind}" data-id="${it.id}">Use</button>` : `<button class="ss-btn g${save.coins < it.price ? ' dis' : ''}" data-cos="${kind}" data-id="${it.id}">${ic('coin')}${fmt(it.price)}</button>`}</div>`;
+      }
       function renderPanel() {
         const k = panelKind;
         if (k === 'missions') {
-          E.ptitle.textContent = 'Missions';
-          E.pbody.innerHTML = `<div class="ss-multi">Score multiplier <b>x${save.ms.lvl}</b></div><div class="ss-list">${missionRows()}</div><p class="ss-small">Complete all three missions to raise your multiplier by +1 (up to x30) and win coins.</p><p class="ss-small">${fmt(save.runs)} runs · ${fmt(save.tot.m)} m run · ${fmt(save.tot.coins)} coins collected · ${fmt(save.tot.jumps)} jumps</p>`;
+          E.ptitle.textContent = 'Goals';
+          const left = dailyLeft();
+          let body = `<div class="ss-tabs"><button data-mtab="ms" class="${msTab === 'ms' ? 'on' : ''}">Missions</button><button data-mtab="day" class="${msTab === 'day' ? 'on' : ''}">Daily${left ? ' (' + left + ')' : ''}</button></div>`;
+          if (msTab === 'ms') body += `<div class="ss-multi">Score multiplier <b>x${save.ms.lvl}</b></div><div class="ss-list">${missionRows()}</div><p class="ss-small">Complete all three missions to raise your multiplier by +1 (up to x30) and win coins.</p><p class="ss-small">${fmt(save.runs)} runs · ${fmt(save.tot.m)} m run · ${fmt(save.tot.coins)} coins collected · ${fmt(save.tot.jumps)} jumps</p>`;
+          else {
+            const now = new Date(), mid = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1), mins = Math.max(1, Math.round((mid - now) / 60000));
+            body += `<div class="ss-multi">Day streak <b>${save.daily.streak}</b></div><div class="ss-list">${dailyRows()}</div><p class="ss-small">Each goal pays ${dailyPay()} coins. Finish all three for +300 coins, a key and a longer streak; streaks raise the payout.</p><p class="ss-small">New goals in ${Math.floor(mins / 60)} h ${mins % 60} min.</p>`;
+          }
+          E.pbody.innerHTML = body;
         } else if (k === 'shop') {
           E.ptitle.textContent = 'Shop';
-          let body = `<div class="ss-tabs"><button data-tab="up" class="${shopTab === 'up' ? 'on' : ''}">Upgrades</button><button data-tab="it" class="${shopTab === 'it' ? 'on' : ''}">Items</button></div><div class="ss-multi">${ic('coin')}<b>${fmt(save.coins)}</b></div><div class="ss-list">`;
+          let body = `<div class="ss-tabs"><button data-tab="up" class="${shopTab === 'up' ? 'on' : ''}">Upgrades</button><button data-tab="it" class="${shopTab === 'it' ? 'on' : ''}">Items</button><button data-tab="st" class="${shopTab === 'st' ? 'on' : ''}">Style</button></div><div class="ss-multi">${ic('coin')}<b>${fmt(save.coins)}</b></div><div class="ss-list">`;
           if (shopTab === 'up') {
             for (const pk of ['jet', 'sneak', 'mag', 'x2']) {
               const lvl = save.upg[pk], maxed = lvl >= UPG_COST.length, cost = UPG_COST[lvl];
               body += `<div class="ss-row">${ic(pk)}<div class="t"><b>${PU[pk].name}</b><small>Lasts ${puDur(lvl)} s${maxed ? '' : ' → ' + puDur(lvl + 1) + ' s'}</small><div class="ss-pips">${UPG_COST.map((_, i) => `<i class="${i < lvl ? 'on' : ''}"></i>`).join('')}</div></div>${maxed ? '<button class="ss-btn dis">MAX</button>' : `<button class="ss-btn g${save.coins < cost ? ' dis' : ''}" data-buy="${pk}">${ic('coin')}${fmt(cost)}</button>`}</div>`;
             }
-          } else {
+          } else if (shopTab === 'it') {
             body += `<div class="ss-row">${ic('board')}<div class="t"><b>Hoverboard</b><small>Double tap or Space. Lasts 30 s and saves you from one crash. You have ${save.boards}.</small></div><button class="ss-btn g${save.coins < 300 ? ' dis' : ''}" data-buy="board">${ic('coin')}300</button></div>`;
             body += `<div class="ss-row">${ic('mbox')}<div class="t"><b>Mystery Box</b><small>Coins, keys, hoverboards or a jackpot!</small></div><button class="ss-btn g${save.coins < 500 ? ' dis' : ''}" data-buy="mbox">${ic('coin')}500</button></div>`;
             body += `<div class="ss-row">${ic('key')}<div class="t"><b>Key</b><small>Use keys to keep running after a crash (Save me). You have ${save.keys}.</small></div><button class="ss-btn g${save.coins < 2000 ? ' dis' : ''}" data-buy="key">${ic('coin')}2,000</button></div>`;
+          } else {
+            body += '<div class="ss-sec">Board paint</div>' + BOARDS.map(b => cosRow('board', b)).join('') + '<div class="ss-sec">Trail</div>' + TRAILS.map(t => cosRow('trail', t)).join('');
           }
           E.pbody.innerHTML = body + '</div>';
         } else if (k === 'chars') {
           E.ptitle.textContent = 'Surfers';
           E.pbody.innerHTML = `<div class="ss-multi">${ic('coin')}<b>${fmt(save.coins)}</b></div><div class="ss-chars">${CHARS.map(c => { const own = save.chars.includes(c.id), sel = save.char === c.id; return `<div class="ss-char${sel ? ' sel' : ''}" data-c="${c.id}"><span class="av"></span><b>${c.name}</b>${sel ? '<button class="ss-btn dis">Selected</button>' : own ? `<button class="ss-btn" data-sel="${c.id}">Select</button>` : `<button class="ss-btn g${save.coins < c.price ? ' dis' : ''}" data-unl="${c.id}">${ic('coin')}${fmt(c.price)}</button>`}</div>`; }).join('')}</div>`;
           E.pbody.querySelectorAll('.ss-char').forEach(el => el.querySelector('.av').replaceWith(avatar(CHARS.find(c => c.id === el.dataset.c))));
+        } else if (k === 'set') {
+          E.ptitle.textContent = 'Settings';
+          E.pbody.innerHTML = `<div class="ss-list"><div class="ss-row"><div class="t"><b>Music</b></div>${seg('mus', [[1, 'On'], [0, 'Off']])}</div><div class="ss-row"><div class="t"><b>Sound effects</b></div>${seg('sfx', [[1, 'On'], [0, 'Off']])}</div><div class="ss-row"><div class="t"><b>Graphics</b><small>Auto lowers the resolution only when the game runs slowly.</small></div>${seg('q', [['auto', 'Auto'], ['high', 'Sharp'], ['low', 'Fast']])}</div><div class="ss-row"><div class="t"><b>Screen shake</b></div>${seg('shake', [[1, 'On'], [0, 'Off']])}</div></div>${api.muted ? '<p class="ss-small">Sound is muted for the whole site. Use the speaker button above the game to turn it on.</p>' : ''}<p class="ss-small">${COARSE ? 'Swipe to move, double tap for the hoverboard.' : 'Arrows or WASD to move, Space for the hoverboard, P or Esc to pause.'}</p>`;
         } else if (k === 'how') {
           E.ptitle.textContent = 'How to play';
-          const S = COARSE ? [['Switch lanes', 'Swipe left or right'], ['Jump and roll', 'Swipe up to jump over, down to roll under'], ['Power-ups', 'Grab coins, Magnet, Jetpack, 2X and Super Sneakers'], ['Hoverboard', 'Double tap: it saves you from one crash']] : [['Switch lanes', '\u2190 \u2192 or A / D'], ['Jump and roll', '\u2191 / W to jump, \u2193 / S to roll'], ['Power-ups', 'Grab coins, Magnet, Jetpack, 2X and Super Sneakers'], ['Hoverboard', 'Space: it saves you from one crash']];
-          E.pbody.innerHTML = `<div class="ss-how">${S.map((s, i) => `<div class="ss-step"><i>${i + 1}</i>${howSvg[i]}<b>${s[0]}</b><small>${s[1]}</small></div>`).join('')}</div><p class="ss-small">Trains hurt. Ramps take you onto the roofs. Stumble twice and the guard catches you; keys buy a second chance. ${COARSE ? 'The pause button' : 'P or Esc'} pauses.</p><button class="ss-btn g ss-howgo" data-go="1">${ic('play')}${state === 'pause' ? 'Resume' : 'Let\u2019s go!'}</button>`;
+          const S = COARSE ? [['Switch lanes', 'Swipe left or right'], ['Jump and roll', 'Swipe up to jump over, down to roll under'], ['Power-ups', 'Grab coins, Magnet, Jetpack, 2X and Super Sneakers'], ['Hoverboard', 'Double tap: it saves you from one crash']] : [['Switch lanes', '← → or A / D'], ['Jump and roll', '↑ / W to jump, ↓ / S to roll'], ['Power-ups', 'Grab coins, Magnet, Jetpack, 2X and Super Sneakers'], ['Hoverboard', 'Space: it saves you from one crash']];
+          E.pbody.innerHTML = `<div class="ss-how">${S.map((s, i) => `<div class="ss-step"><i>${i + 1}</i>${howSvg[i]}<b>${s[0]}</b><small>${s[1]}</small></div>`).join('')}</div><p class="ss-small">Trains hurt. Ramps take you onto the roofs. Stumble twice and the guard catches you; keys buy a second chance. Dodge a train at the last moment for a close call bonus. ${COARSE ? 'The pause button' : 'P or Esc'} pauses.</p><button class="ss-btn g ss-howgo" data-go="1">${ic('play')}${state === 'pause' ? 'Resume' : 'Let’s go!'}</button>`;
         }
       }
       function buy(what) {
@@ -2850,12 +3110,23 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         else if (PU[what]) { const l = save.upg[what], c = UPG_COST[l]; if (l >= UPG_COST.length || save.coins < c) return; save.coins -= c; save.upg[what]++; }
         au.play('buy'); persist(); renderPanel(); refreshHome();
       }
+      function cosPick(kind, id) {
+        const it = (kind === 'board' ? BOARDS : TRAILS).find(x => x.id === id);
+        if (!it) return;
+        if (!save.cos.own.includes(id)) { if (save.coins < it.price) return; save.coins -= it.price; save.cos.own.push(id); au.play('buy'); } else au.play('ui');
+        save.cos[kind] = id; persist();
+        if (kind === 'board') buildHero(); else setTrail();
+        renderPanel(); refreshHome();
+      }
       api.on(E.panel, 'click', e => {
         const t = e.target.closest('button');
         if (e.target === E.panel || (t && t.classList.contains('x'))) { closePanel(); au.play('ui'); return; }
-        if (!t) return;
+        if (!t || t.classList.contains('dis')) return;
         if (t.dataset.go) { panel(0); if (state === 'pause') resume(); else startRun(); return; }
         if (t.dataset.tab) { shopTab = t.dataset.tab; au.play('ui'); renderPanel(); }
+        else if (t.dataset.mtab) { msTab = t.dataset.mtab; au.play('ui'); renderPanel(); }
+        else if (t.dataset.opt) { const k = t.dataset.opt, v = t.dataset.v; save.opt[k] = k === 'q' ? v : +v; persist(); applyOpt(); au.play('ui'); renderPanel(); }
+        else if (t.dataset.cos) cosPick(t.dataset.cos, t.dataset.id);
         else if (t.dataset.buy) buy(t.dataset.buy);
         else if (t.dataset.sel) { save.char = t.dataset.sel; persist(); buildHero(); au.play('ui'); renderPanel(); }
         else if (t.dataset.unl) { const c = CHARS.find(x => x.id === t.dataset.unl); if (c && save.coins >= c.price) { save.coins -= c.price; save.chars.push(c.id); save.char = c.id; persist(); buildHero(); au.play('buy'); renderPanel(); refreshHome(); } }
@@ -2864,7 +3135,8 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       const setMode = id => { if (!MODES.find(m => m.id === id) || save.mode === id) return; save.mode = id; persist(); au.unlock(); au.play('ui'); resetWorld(); refreshHome(); };
       api.on(q('.ss-modes'), 'click', e => { const b = e.target.closest('[data-m]'); if (b) setMode(b.dataset.m); });
       api.on(q('.pz-how'), 'click', () => { show(E.pausep, 0); openPanel('how'); });
-      api.on(q('.ss-menu'), 'click', e => { const b = e.target.closest('[data-o]'); if (b) openPanel(b.dataset.o); });
+      api.on(q('.pz-set'), 'click', () => { show(E.pausep, 0); openPanel('set'); });
+      api.on(E.home, 'click', e => { const b = e.target.closest('[data-o]'); if (!b) return; if (b.dataset.o === 'daily') { msTab = 'day'; openPanel('missions'); } else { if (b.dataset.o === 'missions') msTab = 'ms'; openPanel(b.dataset.o); } });
       const city = d => { save.city = (save.city + d + CITIES.length) % CITIES.length; persist(); au.unlock(); au.play('ui'); buildCity(save.city); resetWorld(); refreshHome(); };
       api.on(q('.t-prev'), 'click', () => city(-1));
       api.on(q('.t-next'), 'click', () => city(1));
@@ -3001,6 +3273,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         }
         coinIM.count = n; coinIM.instanceMatrix.needsUpdate = true;
         updBreak(dt);
+        updTrail(dt);
         for (let i = 0; i < sparks.length; i++) { const sp = sparks[i]; if (sp.visible) { sp.userData.t += dt; const f = sp.userData.t / 0.3; if (f >= 1) sp.visible = false; else { const k = sp.userData.s * (0.4 + f); sp.scale.set(k, k, 1); sp.material.opacity = 1 - f; } } }
       }
 
@@ -3117,7 +3390,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       let perfN = 0, perfT = 0, perfCool = 2;
       function perf(dt) {
         perfCool -= dt;
-        if (state !== 'run' || perfCool > 0) { perfN = 0; perfT = 0; return; }
+        if (state !== 'run' || perfCool > 0 || save.opt.q !== 'auto') { perfN = 0; perfT = 0; return; }
         perfN++; perfT += dt;
         if (perfN >= 90) {
           const avg = perfT / perfN;
@@ -3126,6 +3399,8 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         }
       }
 
+      applyOpt();
+      setTrail();
       buildHero();
       buildCity(save.city);
       toHome();
@@ -3137,6 +3412,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         ctx.mult = save.ms.lvl;
         if (R.dead) { step(W, R, dt, ctx); acc = 0; V.a = 1; return; }
         runT += dt; acc += dt;
+        const s0 = R.s;
         let n = 0;
         while (acc >= CFG.STEP && n++ < 10) {
           step(W, R, CFG.STEP, ctx); acc -= CFG.STEP;
@@ -3144,6 +3420,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
           collect(W, R, CFG.STEP, onItem);
         }
         if (n > 10) acc = 0;
+        if (dayI === 2) R.st.night += R.s - s0;
         V.a = R.dead ? 1 : acc / CFG.STEP;
       }
 
@@ -3152,7 +3429,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         dt *= tsc;
         const cw = renderer.domElement.width, chh = renderer.domElement.height;
         if (cw !== lastW || chh !== lastH) { lastW = cw; lastH = chh; draw = true; }
-        const frozen = state === 'pause' || panelOn;
+        const frozen = state === 'pause' || panelOn || (state === 'over' && rollT >= 0.9 && R.deadT > 2.6);
         if (frozen) { au.tick(); fxTick(dt); if (!draw) return; dt = 0; }
         draw = false;
         tvirt += dt;
@@ -3166,7 +3443,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
           if (cullT <= 0) { cullT = 0.3; cull(W, R, dropMesh); }
           handleEvents();
           msT -= dt;
-          if (msT <= 0) { msT = 0.2; checkMissions(); }
+          if (msT <= 0) { msT = 0.2; checkMissions(); checkDaily(); au.tempo(clamp((R.speed - CFG.V0) / (CFG.VMAX - CFG.V0), 0, 1)); }
           hintTick();
           au.jet(R.jet > 0 && !R.dead);
           if (state === 'intro') { introT += dt; if (introT >= 1.0) state = 'run'; }
@@ -3187,7 +3464,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
           const f = clamp(saveT / 4.5, 0, 1);
           E.sarc.style.strokeDashoffset = (276.5 * f).toFixed(1);
           if (f >= 1) gameOver();
-        } else if (state === 'over') { step(W, R, dt, ctx); if (rollT < 0.9) { rollT += dt; q('.o-score').textContent = fmt(rollSc * ease(clamp(rollT / 0.9, 0, 1))); } }
+        } else if (state === 'over') { step(W, R, dt, ctx); if (rollT < 0.9) { rollT += dt; E.oscore.textContent = fmt(rollSc * ease(clamp(rollT / 0.9, 0, 1))); } }
         else if (state === 'home') homeT += dt;
         const a = V.a;
         V.s = R.ps + (R.s - R.ps) * a; V.x = R.px + (R.x - R.px) * a; V.y = R.py + (R.y - R.py) * a;
@@ -3197,7 +3474,8 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         const tun = inTunnel(W, V.s);
         tunK = damp(tunK, tun ? 1 : 0, 4, dt);
         const L = ENV.light;
-        hemi.intensity = (0.95 - 0.42 * tunK) * L; sun.intensity = (0.72 - 0.5 * tunK) * L;
+        dayTick();
+        hemi.intensity = (0.95 - 0.42 * tunK) * L * dayHK; sun.intensity = (0.72 - 0.5 * tunK) * L * daySK;
         if (state === 'home') { camHome(camP, camL); }
         else if (state === 'intro') { camRun(tmpP, tmpL, dt); camIntro(tmpP, tmpL, ease(clamp(introT / 1.0, 0, 1))); camP.copy(tmpP); camL.copy(tmpL); }
         else {
@@ -3211,12 +3489,12 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
           cam.aspect = ca; cam.fov = ca < baseAsp ? 2 * Math.atan(Math.tan(bf * Math.PI / 360) * baseAsp / ca) * 180 / Math.PI : bf; cam.updateProjectionMatrix();
         }
         cam.position.copy(camP);
-        if (shake > 0) { shake = Math.max(0, shake - dt); cam.position.x += (Math.random() - 0.5) * shake * 0.6; cam.position.y += (Math.random() - 0.5) * shake * 0.6; }
+        if (shake > 0) { shake = Math.max(0, shake - dt); if (save.opt.shake) cam.position.x += (Math.random() - 0.5) * shake * 0.6; cam.position.y += (Math.random() - 0.5) * shake * 0.6; }
         cam.lookAt(camL);
         for (let i = 0; i < gantries.length; i++) { const m = gantries[i], dz = cam.position.z - m.position.z; m.visible = !(dz > -0.6 && dz < 2 && cam.position.y > 5.2 && cam.position.y < 7.8); }
         skyPlane.position.set(cam.position.x * 0.9, 52, cam.position.z - 340);
-        sunSprite.position.set(cam.position.x - 120, 150, cam.position.z - 330);
-        sun.position.set(cam.position.x - 20, 40, cam.position.z + 25); sun.target.position.set(cam.position.x, 0, cam.position.z - 10);
+        sunSprite.position.set(cam.position.x - 120, sunY, cam.position.z - 330);
+        if (starPlane.visible) starPlane.position.set(cam.position.x * 0.9, 120, cam.position.z - 346);
         au.tick();
         renderer.render(scene, cam);
       }
@@ -3225,7 +3503,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       wrap._ss = {
         get W() { return W; }, get R() { return R; }, get V() { return V; }, get state() { return state; }, save,
         info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, pr: renderer.getPixelRatio(), geos: renderer.info.memory.geometries, tex: renderer.info.memory.textures, objs: scene.children.length, pool: pool.length }),
-        act: a => input(a), set noBlink(v) { noBlink = v; }, set ts(v) { tsc = v; }, set pr(v) { prCap = v; renderer.setPixelRatio(v); draw = true; }, clearChunks: () => clearChunks(),
+        act: a => input(a), set noBlink(v) { noBlink = v; }, set ts(v) { tsc = v; }, set runT(v) { runT = v; }, set pr(v) { prCap = v; renderer.setPixelRatio(v); draw = true; }, clearChunks: () => clearChunks(),
         give(k) { if (state === 'run') onItem({ k, x: R.x, y: R.y, s: R.s }); }, city: d => city(d), frame,
         bench(n, dt) {
           const gl = renderer.getContext(), keys = ['drawArrays', 'drawElements', 'drawArraysInstanced', 'drawElementsInstanced'], old = {};

@@ -72,7 +72,7 @@
         hud: q('.ss-hud'), sv: q('.ss-sv'), cv: q('.ss-cv'), kv: q('.ss-kv'), keyp: q('.ss-keyp'), mult: q('.ss-mult'), pus: q('.ss-pus'), hb: q('.ss-hb'), hbn: q('.ss-hbn'),
         hint: q('.ss-hint'), near: q('.ss-near'), banner: q('.ss-banner'), big: q('.ss-big'), toast: q('.ss-toast'), pause: q('.ss-pause'),
         home: q('.ss-home'), panel: q('.ss-panel'), ptitle: q('.p-title'), pbody: q('.p-body'), save: q('.ss-save'), over: q('.ss-over'), pausep: q('.ss-pausep'),
-        hbest: q('.h-best'), hcoins: q('.h-coins'), hkeys: q('.h-keys'), hboards: q('.h-boards'), hmult: q('.h-mult'), tname: q('.t-name'), tsub: q('.t-sub'),
+        hbest: q('.h-best'), hdaily: q('.ss-daily'), oscore: q('.o-score'), hcoins: q('.h-coins'), hkeys: q('.h-keys'), hboards: q('.h-boards'), hmult: q('.h-mult'), tname: q('.t-name'), tsub: q('.t-sub'),
         sarc: q('.s-arc'), scost: q('.s-cost'), shave: q('.s-have'), sgo: q('.s-go')
       };
 
@@ -87,8 +87,16 @@
         v: 2, coins: loaded.coins | 0, keys: loaded.keys == null ? 2 : loaded.keys | 0, boards: loaded.boards == null ? 3 : loaded.boards | 0,
         upg: Object.assign({ jet: 0, sneak: 0, mag: 0, x2: 0 }, loaded.upg || {}), ms: loaded.ms && loaded.ms.lvl ? loaded.ms : { lvl: 1, base: [0, 0, 0], done: [false, false, false] },
         chars: Array.isArray(loaded.chars) ? loaded.chars : ['jake'], char: loaded.char || 'jake', city: loaded.city | 0, runs: loaded.runs | 0, best: loaded.best | 0,
-        mode: MODES.find(m => m.id === loaded.mode) ? loaded.mode : 'classic', mbest: Object.assign({ rush: 0, chill: 0 }, loaded.mbest || {}), how: loaded.how ? 1 : 0, tot: Object.assign({ m: 0, coins: 0, jumps: 0 }, loaded.tot || {})
+        mode: MODES.find(m => m.id === loaded.mode) ? loaded.mode : 'classic', mbest: Object.assign({ rush: 0, chill: 0 }, loaded.mbest || {}), how: loaded.how ? 1 : 0, tot: Object.assign({ m: 0, coins: 0, jumps: 0 }, loaded.tot || {}),
+        opt: Object.assign({ mus: 1, sfx: 1, q: 'auto', shake: 1 }, loaded.opt || {}), cos: Object.assign({ board: 'classic', trail: 'none', own: [] }, loaded.cos || {}),
+        daily: loaded.daily && loaded.daily.day ? loaded.daily : { day: '', g: [], streak: 0, last: '' }
       };
+      if (!Array.isArray(save.cos.own)) save.cos.own = [];
+      for (const id of ['classic', 'none']) if (!save.cos.own.includes(id)) save.cos.own.push(id);
+      if (!BOARDS.find(b => b.id === save.cos.board) || !save.cos.own.includes(save.cos.board)) save.cos.board = 'classic';
+      if (!TRAILS.find(b => b.id === save.cos.trail) || !save.cos.own.includes(save.cos.trail)) save.cos.trail = 'none';
+      if (!['auto', 'high', 'low'].includes(save.opt.q)) save.opt.q = 'auto';
+      if (!Array.isArray(save.daily.g)) save.daily.g = [];
       if (!CHARS.find(c => c.id === save.char)) save.char = 'jake';
       save.city = clamp(save.city, 0, CITIES.length - 1);
       const persist = () => api.save(save);
@@ -99,7 +107,7 @@
       const cam = new THREE.PerspectiveCamera(baseFov, baseAsp, 0.1, 520);
       const hemi = new THREE.HemisphereLight(0xffffff, 0x888888, 1);
       const sun = new THREE.DirectionalLight(0xffffff, 0.8);
-      sun.position.set(-0.45, 1, 0.5);
+      sun.position.set(-20, 40, 35);
       scene.add(hemi, sun, sun.target);
       scene.fog = new THREE.Fog(0xffffff, 70, 215);
 
@@ -129,24 +137,51 @@
       const skyPlane = new THREE.Mesh(keep(new THREE.PlaneGeometry(560, 140)), skyMat); skyPlane.renderOrder = -1; scene.add(skyPlane);
       const sunSprite = new THREE.Sprite(keep(new THREE.SpriteMaterial({ map: glowTex.w, fog: false, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending })));
       sunSprite.scale.set(90, 90, 1); scene.add(sunSprite);
+      const skyG = T.sky();
+      keep(skyG.tex);
+      scene.background = skyG.tex;
+      const starMat = keep(new THREE.MeshBasicMaterial({ map: keep(T.stars()), transparent: true, fog: false, depthWrite: false, opacity: 0 }));
+      const starPlane = new THREE.Mesh(keep(new THREE.PlaneGeometry(820, 205)), starMat); starPlane.renderOrder = -2; starPlane.visible = false; scene.add(starPlane);
+      const PAL = PHASES.slice(), dcA = new THREE.Color(), dcB = new THREE.Color();
+      let dayI = -1, dayQ = -1, dayHK = 1, daySK = 1, sunY = 150;
+      const mix = (a, b, w) => dcA.set(a).lerp(dcB.set(b), w);
+      function setDay(i, j, w) {
+        const A = PAL[i], B = PAL[j];
+        skyG.set('#' + mix(A.sky[0], B.sky[0], w).getHexString(), '#' + mix(A.sky[1], B.sky[1], w).getHexString(), '#' + mix(A.sky[2], B.sky[2], w).getHexString());
+        scene.fog.color.copy(mix(A.fog, B.fog, w)).convertSRGBToLinear();
+        hemi.color.copy(mix(A.hemi[0], B.hemi[0], w)).convertSRGBToLinear(); hemi.groundColor.copy(mix(A.hemi[1], B.hemi[1], w)).convertSRGBToLinear();
+        sun.color.copy(mix(A.sun, B.sun, w)).convertSRGBToLinear();
+        skyMat.color.copy(mix(A.line, B.line, w)).convertSRGBToLinear();
+        sunSprite.material.color.copy(mix(A.disc, B.disc, w)).convertSRGBToLinear();
+        const ds = lerp(A.ds, B.ds, w), st = lerp(A.star, B.star, w);
+        sunSprite.scale.set(ds, ds, 1); sunY = lerp(A.dy, B.dy, w);
+        starMat.opacity = st; starPlane.visible = st > 0.01;
+        dayHK = lerp(A.hk, B.hk, w); daySK = lerp(A.sk, B.sk, w);
+        draw = true;
+      }
+      function dayTick() {
+        const u = state === 'home' ? 0 : runT / PHASE_T, i = Math.floor(u) % 4, f = u - Math.floor(u), w = f < 0.7 ? 0 : ease((f - 0.7) / 0.3), qn = Math.round(w * 48);
+        if (i === dayI && qn === dayQ) return;
+        if (i !== dayI && dayI >= 0 && i > 0 && state === 'run') toast(PAL[i].name);
+        dayI = i; dayQ = qn;
+        setDay(i, (i + 1) % 4, qn / 48);
+      }
 
       function buildCity(i) {
         if (ENV) { ENV.dispose(); }
         const city = CITIES[i];
         const AT = T.atlas(city);
         const WG = mkWorld(THREE, AT, city);
-        const trackTex = T.track(city), skyTex = T.sky(city), skylineTex = T.skyline(city);
+        const trackTex = T.track(city), skylineTex = T.skyline(city);
         atlasMat.map = AT.tex; atlasMat.needsUpdate = true;
         trackMat.map = trackTex; trackMat.needsUpdate = true;
         skyMat.map = skylineTex; skyMat.needsUpdate = true;
-        scene.background = skyTex;
-        scene.fog.color.set(city.fog).convertSRGBToLinear();
+        PAL[0] = { name: 'Day', sky: city.sky, fog: city.fog, hemi: city.hemi, hk: 1, sun: city.sun, sk: 1, line: '#ffffff', disc: '#ffffff', dy: 150, ds: 90, star: 0 };
+        dayI = dayQ = -1;
         farMat.color.set(shade(city.walk, -0.12)).convertSRGBToLinear();
-        hemi.color.set(city.hemi[0]).convertSRGBToLinear(); hemi.groundColor.set(city.hemi[1]).convertSRGBToLinear();
-        sun.color.set(city.sun).convertSRGBToLinear();
         if (rails) scene.remove(rails);
         rails = new THREE.Mesh(WG.rails, railMat); scene.add(rails);
-        ENV = { city, AT, WG, light: city.light, dispose() { AT.tex.dispose(); trackTex.dispose(); skyTex.dispose(); skylineTex.dispose(); WG.bin.forEach(g => g.dispose()); } };
+        ENV = { city, AT, WG, light: city.light, dispose() { AT.tex.dispose(); trackTex.dispose(); skylineTex.dispose(); WG.bin.forEach(g => g.dispose()); } };
         clearChunks(); clearObsMeshes();
       }
 
@@ -250,7 +285,7 @@
       function itemMesh(it) {
         const p = itemPool[it.k] || (itemPool[it.k] = []);
         let g = p.pop();
-        if (!g) { g = new THREE.Group(); g.add(itemModel(it.k)); const sp = new THREE.Sprite(GM[ITEM_GLOW[it.k]]); sp.scale.set(2.1, 2.1, 1); g.add(sp); g.userData.k = it.k; scene.add(g); }
+        if (!g) { g = new THREE.Group(); const im = itemModel(it.k); CH.bake(im, []); g.add(im); const sp = new THREE.Sprite(GM[ITEM_GLOW[it.k]]); sp.scale.set(2.1, 2.1, 1); g.add(sp); g.userData.k = it.k; scene.add(g); }
         g.visible = true; g.position.set(it.x, it.y, -it.s); it.mesh = g;
       }
       for (const k in ITEM_GLOW) { const it = { k, x: 0, y: -50, s: 0, mesh: null }; itemMesh(it); dropMesh(it); }
@@ -258,11 +293,46 @@
       const patchGeo = keep(new THREE.PlaneGeometry(0.4, 0.34)), patchMat = keep(new THREE.MeshLambertMaterial({ map: keep(T.patch()), transparent: true, alphaTest: 0.3 }));
       let hero = null, heroBlob = mkBlob(1.0);
       function buildHero() {
-        if (hero) scene.remove(hero.root);
+        if (hero) { scene.remove(hero.root); for (const g of hero.geos) g.dispose(); }
         const P = CHARS.find(c => c.id === save.char) || CHARS[0];
-        hero = CH.hero(P);
+        hero = CH.hero(P, (BOARDS.find(b => b.id === save.cos.board) || BOARDS[0]).c);
+        draw = true;
         if (P.vest) { const pm = new THREE.Mesh(patchGeo, patchMat); pm.position.set(0, P.id === 'jake' ? 0.3 : 0.33, P.id === 'jake' ? 0.405 : 0.212); P.id === 'jake' ? pm.scale.setScalar(1.2) : 0; hero.torso.add(pm); }
         hero.root.scale.setScalar(1.15); scene.add(hero.root);
+      }
+      const TRN = 30, trP = new Float32Array(TRN * 3), trC = new Float32Array(TRN * 3), trV = new Float32Array(TRN * 3), trB = new Float32Array(TRN * 3), trL = new Float32Array(TRN);
+      const trailGeo = keep(new THREE.BufferGeometry());
+      trailGeo.setAttribute('position', new THREE.BufferAttribute(trP, 3).setUsage(THREE.DynamicDrawUsage)); trailGeo.setAttribute('color', new THREE.BufferAttribute(trC, 3).setUsage(THREE.DynamicDrawUsage));
+      const trail = new THREE.Points(trailGeo, keep(new THREE.PointsMaterial({ map: glowTex.w, size: 0.85, sizeAttenuation: true, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })));
+      trail.frustumCulled = false; trail.visible = false; scene.add(trail);
+      let trailC = null, trI = 0, trT = 0;
+      function setTrail() {
+        const t = TRAILS.find(x => x.id === save.cos.trail);
+        trailC = t && t.c ? t.c.map(h => new THREE.Color(h).convertSRGBToLinear()) : null;
+        trL.fill(0); trC.fill(0); trail.visible = false; trailGeo.attributes.color.needsUpdate = true;
+      }
+      function updTrail(dt) {
+        if (!trailC) return;
+        if (state === 'run' && !R.dead && dt > 0 && (R.grounded || R.board > 0 || R.jet > 0)) {
+          trT -= dt;
+          while (trT <= 0) {
+            trT += 0.034;
+            const i = trI++ % TRN, k = i * 3, c = trailC[i & 1];
+            trP[k] = V.x + rnd(-0.28, 0.28); trP[k + 1] = V.y + rnd(0.1, 0.55); trP[k + 2] = -V.s + rnd(0.2, 0.7);
+            trV[k] = rnd(-0.7, 0.7); trV[k + 1] = rnd(0.4, 1.7); trV[k + 2] = rnd(1.5, 4.5);
+            trB[k] = c.r; trB[k + 1] = c.g; trB[k + 2] = c.b; trL[i] = 1;
+          }
+        }
+        let any = false;
+        for (let i = 0; i < TRN; i++) {
+          if (trL[i] <= 0) continue;
+          const k = i * 3, l = trL[i] = Math.max(0, trL[i] - dt * 2.4);
+          trP[k] += trV[k] * dt; trP[k + 1] += trV[k + 1] * dt; trP[k + 2] += trV[k + 2] * dt;
+          trC[k] = trB[k] * l; trC[k + 1] = trB[k + 1] * l; trC[k + 2] = trB[k + 2] * l;
+          any = true;
+        }
+        if (any || trail.visible) { trailGeo.attributes.position.needsUpdate = true; trailGeo.attributes.color.needsUpdate = true; }
+        trail.visible = any;
       }
       const guard = CH.guard(), dog = CH.dog();
       scene.add(guard.root, dog.root);
@@ -285,6 +355,7 @@
         acc = 0; gd = 30; leanZ = 0; airW = 0; camY = 0; prevX = 0; fovK = 0; shake = 0; trackS = NaN;
         V.s = 0; V.x = 0; V.y = 0; V.a = 1;
         msnap = Object.assign({}, R.st);
+        trL.fill(0); trail.visible = false;
         draw = true;
       }
 
@@ -294,6 +365,8 @@
       function refreshHome() {
         E.hcoins.textContent = fmt(save.coins); E.hkeys.textContent = save.keys; E.hboards.textContent = save.boards;
         E.hmult.textContent = 'x' + save.ms.lvl;
+        const left = dailyLeft();
+        E.hdaily.innerHTML = left ? `Daily goals <b>${3 - left}/3</b>` : `Daily goals done <b>streak ${save.daily.streak}</b>`;
         const c = CITIES[save.city]; E.tname.textContent = c.name; E.tsub.textContent = c.sub;
         E.hbest.textContent = fmt(bestOf(save.mode));
         q('.ss-modes').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.m === save.mode); b.querySelector('small').textContent = fmt(bestOf(b.dataset.m)); });
@@ -307,6 +380,7 @@
       }
       function toHome() {
         state = 'home';
+        rollDaily();
         resetWorld();
         show(E.home, 1); show(E.over, 0); show(E.save, 0); show(E.pausep, 0); panel(0);
         E.hud.classList.add('off');
@@ -471,6 +545,7 @@
         banked = true;
         const sc = Math.floor(R.score), md = modeOf(), isBest = sc > bestOf(md.id);
         bankMissions();
+        checkDaily(); bankDaily();
         save.coins += R.coins; save.runs++;
         if (isBest) { if (md.id === 'classic') save.best = sc; else save.mbest[md.id] = sc; }
         save.tot.m += Math.round(R.s); save.tot.coins += R.coins; save.tot.jumps += R.st.jump;
@@ -508,39 +583,98 @@
         state = 'count'; countT = 0; countN = 3; big('3'); au.play('tick');
       }
 
-      let panelKind = '', shopTab = 'up';
+      const dval = k => k === 'dist' ? R.s : k === 'coins' ? R.coins : k === 'best' ? R.score : k === 'fast' ? R.st.topV * 3.6 : R.st[k];
+      const dprog = g => g.done ? g.n : banked || !R ? g.p : DAILY[g.k].run ? Math.max(g.p, dval(g.k)) : g.p + dval(g.k);
+      const dailyLeft = () => save.daily.g.filter(g => !g.done).length;
+      function rollDaily() {
+        const D = save.daily, today = dayKey(new Date());
+        if (D.day === today && Array.isArray(D.g) && D.g.length === 3 && D.g.every(g => DAILY[g.k])) return;
+        const y = new Date(); y.setDate(y.getDate() - 1);
+        if (D.last !== today && D.last !== dayKey(y)) D.streak = 0;
+        D.day = today; D.g = dailySet(today);
+        persist();
+      }
+      const dailyPay = () => Math.round(150 * (1 + Math.min(save.daily.streak, 6) * 0.25));
+      function checkDaily() {
+        const D = save.daily;
+        let left = 0, hit = false;
+        for (let i = 0; i < D.g.length; i++) {
+          const g = D.g[i];
+          if (!g.done && dprog(g) >= g.n) { g.done = true; g.p = g.n; hit = true; const c = dailyPay(); save.coins += c; runBonus += c; au.play('mission'); flash('Daily goal done!  +' + c, 'gold'); }
+          if (!g.done) left++;
+        }
+        if (hit && !left && D.last !== D.day) { D.last = D.day; D.streak++; save.coins += 300; runBonus += 300; save.keys++; toast('All daily goals: +300 coins, +1 key'); }
+        if (hit) persist();
+      }
+      function bankDaily() {
+        for (const g of save.daily.g) if (!g.done) g.p = DAILY[g.k].run ? Math.max(g.p, dval(g.k)) : g.p + dval(g.k);
+      }
+      function dailyRows() {
+        return save.daily.g.map(g => {
+          const p = Math.min(g.n, Math.floor(dprog(g)));
+          return `<div class="ss-row${g.done ? ' done' : ''}"><span class="ss-chk">${g.done ? ICO.check : ''}</span><div class="t"><b>${DAILY[g.k].t(g.n)}</b><div class="ss-prog"><b style="width:${(100 * p / g.n).toFixed(1)}%"></b></div><small>${fmt(p)} / ${fmt(g.n)}</small></div></div>`;
+        }).join('');
+      }
+
+      const prBase = () => save.opt.q === 'low' ? 0.85 : COARSE ? 1.6 : 2;
+      function applyOpt() {
+        au.setVol(save.opt.mus ? 1 : 0, save.opt.sfx ? 1 : 0);
+        prCap = prBase();
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, prCap));
+        draw = true;
+      }
+
+      let panelKind = '', shopTab = 'up', msTab = 'ms';
       function openPanel(kind) {
         panelKind = kind; au.unlock(); au.play('ui');
         renderPanel();
         panel(1);
       }
+      const seg = (key, opts) => `<div class="ss-seg">${opts.map(o => `<button data-opt="${key}" data-v="${o[0]}" class="${String(save.opt[key]) === String(o[0]) ? 'on' : ''}">${o[1]}</button>`).join('')}</div>`;
+      const sw = c => `<span class="ss-sw" style="background:linear-gradient(135deg,${c[0]} 0 50%,${c[1]} 50% 100%)"></span>`;
+      function cosRow(kind, it) {
+        const own = save.cos.own.includes(it.id), sel = save.cos[kind] === it.id;
+        return `<div class="ss-row${sel ? ' done' : ''}">${it.c ? sw(it.c) : '<span class="ss-sw none"></span>'}<div class="t"><b>${it.name}</b></div>${sel ? '<button class="ss-btn dis">In use</button>' : own ? `<button class="ss-btn" data-cos="${kind}" data-id="${it.id}">Use</button>` : `<button class="ss-btn g${save.coins < it.price ? ' dis' : ''}" data-cos="${kind}" data-id="${it.id}">${ic('coin')}${fmt(it.price)}</button>`}</div>`;
+      }
       function renderPanel() {
         const k = panelKind;
         if (k === 'missions') {
-          E.ptitle.textContent = 'Missions';
-          E.pbody.innerHTML = `<div class="ss-multi">Score multiplier <b>x${save.ms.lvl}</b></div><div class="ss-list">${missionRows()}</div><p class="ss-small">Complete all three missions to raise your multiplier by +1 (up to x30) and win coins.</p><p class="ss-small">${fmt(save.runs)} runs · ${fmt(save.tot.m)} m run · ${fmt(save.tot.coins)} coins collected · ${fmt(save.tot.jumps)} jumps</p>`;
+          E.ptitle.textContent = 'Goals';
+          const left = dailyLeft();
+          let body = `<div class="ss-tabs"><button data-mtab="ms" class="${msTab === 'ms' ? 'on' : ''}">Missions</button><button data-mtab="day" class="${msTab === 'day' ? 'on' : ''}">Daily${left ? ' (' + left + ')' : ''}</button></div>`;
+          if (msTab === 'ms') body += `<div class="ss-multi">Score multiplier <b>x${save.ms.lvl}</b></div><div class="ss-list">${missionRows()}</div><p class="ss-small">Complete all three missions to raise your multiplier by +1 (up to x30) and win coins.</p><p class="ss-small">${fmt(save.runs)} runs · ${fmt(save.tot.m)} m run · ${fmt(save.tot.coins)} coins collected · ${fmt(save.tot.jumps)} jumps</p>`;
+          else {
+            const now = new Date(), mid = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1), mins = Math.max(1, Math.round((mid - now) / 60000));
+            body += `<div class="ss-multi">Day streak <b>${save.daily.streak}</b></div><div class="ss-list">${dailyRows()}</div><p class="ss-small">Each goal pays ${dailyPay()} coins. Finish all three for +300 coins, a key and a longer streak; streaks raise the payout.</p><p class="ss-small">New goals in ${Math.floor(mins / 60)} h ${mins % 60} min.</p>`;
+          }
+          E.pbody.innerHTML = body;
         } else if (k === 'shop') {
           E.ptitle.textContent = 'Shop';
-          let body = `<div class="ss-tabs"><button data-tab="up" class="${shopTab === 'up' ? 'on' : ''}">Upgrades</button><button data-tab="it" class="${shopTab === 'it' ? 'on' : ''}">Items</button></div><div class="ss-multi">${ic('coin')}<b>${fmt(save.coins)}</b></div><div class="ss-list">`;
+          let body = `<div class="ss-tabs"><button data-tab="up" class="${shopTab === 'up' ? 'on' : ''}">Upgrades</button><button data-tab="it" class="${shopTab === 'it' ? 'on' : ''}">Items</button><button data-tab="st" class="${shopTab === 'st' ? 'on' : ''}">Style</button></div><div class="ss-multi">${ic('coin')}<b>${fmt(save.coins)}</b></div><div class="ss-list">`;
           if (shopTab === 'up') {
             for (const pk of ['jet', 'sneak', 'mag', 'x2']) {
               const lvl = save.upg[pk], maxed = lvl >= UPG_COST.length, cost = UPG_COST[lvl];
               body += `<div class="ss-row">${ic(pk)}<div class="t"><b>${PU[pk].name}</b><small>Lasts ${puDur(lvl)} s${maxed ? '' : ' → ' + puDur(lvl + 1) + ' s'}</small><div class="ss-pips">${UPG_COST.map((_, i) => `<i class="${i < lvl ? 'on' : ''}"></i>`).join('')}</div></div>${maxed ? '<button class="ss-btn dis">MAX</button>' : `<button class="ss-btn g${save.coins < cost ? ' dis' : ''}" data-buy="${pk}">${ic('coin')}${fmt(cost)}</button>`}</div>`;
             }
-          } else {
+          } else if (shopTab === 'it') {
             body += `<div class="ss-row">${ic('board')}<div class="t"><b>Hoverboard</b><small>Double tap or Space. Lasts 30 s and saves you from one crash. You have ${save.boards}.</small></div><button class="ss-btn g${save.coins < 300 ? ' dis' : ''}" data-buy="board">${ic('coin')}300</button></div>`;
             body += `<div class="ss-row">${ic('mbox')}<div class="t"><b>Mystery Box</b><small>Coins, keys, hoverboards or a jackpot!</small></div><button class="ss-btn g${save.coins < 500 ? ' dis' : ''}" data-buy="mbox">${ic('coin')}500</button></div>`;
             body += `<div class="ss-row">${ic('key')}<div class="t"><b>Key</b><small>Use keys to keep running after a crash (Save me). You have ${save.keys}.</small></div><button class="ss-btn g${save.coins < 2000 ? ' dis' : ''}" data-buy="key">${ic('coin')}2,000</button></div>`;
+          } else {
+            body += '<div class="ss-sec">Board paint</div>' + BOARDS.map(b => cosRow('board', b)).join('') + '<div class="ss-sec">Trail</div>' + TRAILS.map(t => cosRow('trail', t)).join('');
           }
           E.pbody.innerHTML = body + '</div>';
         } else if (k === 'chars') {
           E.ptitle.textContent = 'Surfers';
           E.pbody.innerHTML = `<div class="ss-multi">${ic('coin')}<b>${fmt(save.coins)}</b></div><div class="ss-chars">${CHARS.map(c => { const own = save.chars.includes(c.id), sel = save.char === c.id; return `<div class="ss-char${sel ? ' sel' : ''}" data-c="${c.id}"><span class="av"></span><b>${c.name}</b>${sel ? '<button class="ss-btn dis">Selected</button>' : own ? `<button class="ss-btn" data-sel="${c.id}">Select</button>` : `<button class="ss-btn g${save.coins < c.price ? ' dis' : ''}" data-unl="${c.id}">${ic('coin')}${fmt(c.price)}</button>`}</div>`; }).join('')}</div>`;
           E.pbody.querySelectorAll('.ss-char').forEach(el => el.querySelector('.av').replaceWith(avatar(CHARS.find(c => c.id === el.dataset.c))));
+        } else if (k === 'set') {
+          E.ptitle.textContent = 'Settings';
+          E.pbody.innerHTML = `<div class="ss-list"><div class="ss-row"><div class="t"><b>Music</b></div>${seg('mus', [[1, 'On'], [0, 'Off']])}</div><div class="ss-row"><div class="t"><b>Sound effects</b></div>${seg('sfx', [[1, 'On'], [0, 'Off']])}</div><div class="ss-row"><div class="t"><b>Graphics</b><small>Auto lowers the resolution only when the game runs slowly.</small></div>${seg('q', [['auto', 'Auto'], ['high', 'Sharp'], ['low', 'Fast']])}</div><div class="ss-row"><div class="t"><b>Screen shake</b></div>${seg('shake', [[1, 'On'], [0, 'Off']])}</div></div>${api.muted ? '<p class="ss-small">Sound is muted for the whole site. Use the speaker button above the game to turn it on.</p>' : ''}<p class="ss-small">${COARSE ? 'Swipe to move, double tap for the hoverboard.' : 'Arrows or WASD to move, Space for the hoverboard, P or Esc to pause.'}</p>`;
         } else if (k === 'how') {
           E.ptitle.textContent = 'How to play';
-          const S = COARSE ? [['Switch lanes', 'Swipe left or right'], ['Jump and roll', 'Swipe up to jump over, down to roll under'], ['Power-ups', 'Grab coins, Magnet, Jetpack, 2X and Super Sneakers'], ['Hoverboard', 'Double tap: it saves you from one crash']] : [['Switch lanes', '\u2190 \u2192 or A / D'], ['Jump and roll', '\u2191 / W to jump, \u2193 / S to roll'], ['Power-ups', 'Grab coins, Magnet, Jetpack, 2X and Super Sneakers'], ['Hoverboard', 'Space: it saves you from one crash']];
-          E.pbody.innerHTML = `<div class="ss-how">${S.map((s, i) => `<div class="ss-step"><i>${i + 1}</i>${howSvg[i]}<b>${s[0]}</b><small>${s[1]}</small></div>`).join('')}</div><p class="ss-small">Trains hurt. Ramps take you onto the roofs. Stumble twice and the guard catches you; keys buy a second chance. ${COARSE ? 'The pause button' : 'P or Esc'} pauses.</p><button class="ss-btn g ss-howgo" data-go="1">${ic('play')}${state === 'pause' ? 'Resume' : 'Let\u2019s go!'}</button>`;
+          const S = COARSE ? [['Switch lanes', 'Swipe left or right'], ['Jump and roll', 'Swipe up to jump over, down to roll under'], ['Power-ups', 'Grab coins, Magnet, Jetpack, 2X and Super Sneakers'], ['Hoverboard', 'Double tap: it saves you from one crash']] : [['Switch lanes', '← → or A / D'], ['Jump and roll', '↑ / W to jump, ↓ / S to roll'], ['Power-ups', 'Grab coins, Magnet, Jetpack, 2X and Super Sneakers'], ['Hoverboard', 'Space: it saves you from one crash']];
+          E.pbody.innerHTML = `<div class="ss-how">${S.map((s, i) => `<div class="ss-step"><i>${i + 1}</i>${howSvg[i]}<b>${s[0]}</b><small>${s[1]}</small></div>`).join('')}</div><p class="ss-small">Trains hurt. Ramps take you onto the roofs. Stumble twice and the guard catches you; keys buy a second chance. Dodge a train at the last moment for a close call bonus. ${COARSE ? 'The pause button' : 'P or Esc'} pauses.</p><button class="ss-btn g ss-howgo" data-go="1">${ic('play')}${state === 'pause' ? 'Resume' : 'Let’s go!'}</button>`;
         }
       }
       function buy(what) {
@@ -557,12 +691,23 @@
         else if (PU[what]) { const l = save.upg[what], c = UPG_COST[l]; if (l >= UPG_COST.length || save.coins < c) return; save.coins -= c; save.upg[what]++; }
         au.play('buy'); persist(); renderPanel(); refreshHome();
       }
+      function cosPick(kind, id) {
+        const it = (kind === 'board' ? BOARDS : TRAILS).find(x => x.id === id);
+        if (!it) return;
+        if (!save.cos.own.includes(id)) { if (save.coins < it.price) return; save.coins -= it.price; save.cos.own.push(id); au.play('buy'); } else au.play('ui');
+        save.cos[kind] = id; persist();
+        if (kind === 'board') buildHero(); else setTrail();
+        renderPanel(); refreshHome();
+      }
       api.on(E.panel, 'click', e => {
         const t = e.target.closest('button');
         if (e.target === E.panel || (t && t.classList.contains('x'))) { closePanel(); au.play('ui'); return; }
-        if (!t) return;
+        if (!t || t.classList.contains('dis')) return;
         if (t.dataset.go) { panel(0); if (state === 'pause') resume(); else startRun(); return; }
         if (t.dataset.tab) { shopTab = t.dataset.tab; au.play('ui'); renderPanel(); }
+        else if (t.dataset.mtab) { msTab = t.dataset.mtab; au.play('ui'); renderPanel(); }
+        else if (t.dataset.opt) { const k = t.dataset.opt, v = t.dataset.v; save.opt[k] = k === 'q' ? v : +v; persist(); applyOpt(); au.play('ui'); renderPanel(); }
+        else if (t.dataset.cos) cosPick(t.dataset.cos, t.dataset.id);
         else if (t.dataset.buy) buy(t.dataset.buy);
         else if (t.dataset.sel) { save.char = t.dataset.sel; persist(); buildHero(); au.play('ui'); renderPanel(); }
         else if (t.dataset.unl) { const c = CHARS.find(x => x.id === t.dataset.unl); if (c && save.coins >= c.price) { save.coins -= c.price; save.chars.push(c.id); save.char = c.id; persist(); buildHero(); au.play('buy'); renderPanel(); refreshHome(); } }
@@ -571,7 +716,8 @@
       const setMode = id => { if (!MODES.find(m => m.id === id) || save.mode === id) return; save.mode = id; persist(); au.unlock(); au.play('ui'); resetWorld(); refreshHome(); };
       api.on(q('.ss-modes'), 'click', e => { const b = e.target.closest('[data-m]'); if (b) setMode(b.dataset.m); });
       api.on(q('.pz-how'), 'click', () => { show(E.pausep, 0); openPanel('how'); });
-      api.on(q('.ss-menu'), 'click', e => { const b = e.target.closest('[data-o]'); if (b) openPanel(b.dataset.o); });
+      api.on(q('.pz-set'), 'click', () => { show(E.pausep, 0); openPanel('set'); });
+      api.on(E.home, 'click', e => { const b = e.target.closest('[data-o]'); if (!b) return; if (b.dataset.o === 'daily') { msTab = 'day'; openPanel('missions'); } else { if (b.dataset.o === 'missions') msTab = 'ms'; openPanel(b.dataset.o); } });
       const city = d => { save.city = (save.city + d + CITIES.length) % CITIES.length; persist(); au.unlock(); au.play('ui'); buildCity(save.city); resetWorld(); refreshHome(); };
       api.on(q('.t-prev'), 'click', () => city(-1));
       api.on(q('.t-next'), 'click', () => city(1));
@@ -708,6 +854,7 @@
         }
         coinIM.count = n; coinIM.instanceMatrix.needsUpdate = true;
         updBreak(dt);
+        updTrail(dt);
         for (let i = 0; i < sparks.length; i++) { const sp = sparks[i]; if (sp.visible) { sp.userData.t += dt; const f = sp.userData.t / 0.3; if (f >= 1) sp.visible = false; else { const k = sp.userData.s * (0.4 + f); sp.scale.set(k, k, 1); sp.material.opacity = 1 - f; } } }
       }
 
@@ -824,7 +971,7 @@
       let perfN = 0, perfT = 0, perfCool = 2;
       function perf(dt) {
         perfCool -= dt;
-        if (state !== 'run' || perfCool > 0) { perfN = 0; perfT = 0; return; }
+        if (state !== 'run' || perfCool > 0 || save.opt.q !== 'auto') { perfN = 0; perfT = 0; return; }
         perfN++; perfT += dt;
         if (perfN >= 90) {
           const avg = perfT / perfN;
@@ -833,6 +980,8 @@
         }
       }
 
+      applyOpt();
+      setTrail();
       buildHero();
       buildCity(save.city);
       toHome();
@@ -844,6 +993,7 @@
         ctx.mult = save.ms.lvl;
         if (R.dead) { step(W, R, dt, ctx); acc = 0; V.a = 1; return; }
         runT += dt; acc += dt;
+        const s0 = R.s;
         let n = 0;
         while (acc >= CFG.STEP && n++ < 10) {
           step(W, R, CFG.STEP, ctx); acc -= CFG.STEP;
@@ -851,6 +1001,7 @@
           collect(W, R, CFG.STEP, onItem);
         }
         if (n > 10) acc = 0;
+        if (dayI === 2) R.st.night += R.s - s0;
         V.a = R.dead ? 1 : acc / CFG.STEP;
       }
 
@@ -859,7 +1010,7 @@
         dt *= tsc;
         const cw = renderer.domElement.width, chh = renderer.domElement.height;
         if (cw !== lastW || chh !== lastH) { lastW = cw; lastH = chh; draw = true; }
-        const frozen = state === 'pause' || panelOn;
+        const frozen = state === 'pause' || panelOn || (state === 'over' && rollT >= 0.9 && R.deadT > 2.6);
         if (frozen) { au.tick(); fxTick(dt); if (!draw) return; dt = 0; }
         draw = false;
         tvirt += dt;
@@ -873,7 +1024,7 @@
           if (cullT <= 0) { cullT = 0.3; cull(W, R, dropMesh); }
           handleEvents();
           msT -= dt;
-          if (msT <= 0) { msT = 0.2; checkMissions(); }
+          if (msT <= 0) { msT = 0.2; checkMissions(); checkDaily(); au.tempo(clamp((R.speed - CFG.V0) / (CFG.VMAX - CFG.V0), 0, 1)); }
           hintTick();
           au.jet(R.jet > 0 && !R.dead);
           if (state === 'intro') { introT += dt; if (introT >= 1.0) state = 'run'; }
@@ -894,7 +1045,7 @@
           const f = clamp(saveT / 4.5, 0, 1);
           E.sarc.style.strokeDashoffset = (276.5 * f).toFixed(1);
           if (f >= 1) gameOver();
-        } else if (state === 'over') { step(W, R, dt, ctx); if (rollT < 0.9) { rollT += dt; q('.o-score').textContent = fmt(rollSc * ease(clamp(rollT / 0.9, 0, 1))); } }
+        } else if (state === 'over') { step(W, R, dt, ctx); if (rollT < 0.9) { rollT += dt; E.oscore.textContent = fmt(rollSc * ease(clamp(rollT / 0.9, 0, 1))); } }
         else if (state === 'home') homeT += dt;
         const a = V.a;
         V.s = R.ps + (R.s - R.ps) * a; V.x = R.px + (R.x - R.px) * a; V.y = R.py + (R.y - R.py) * a;
@@ -904,7 +1055,8 @@
         const tun = inTunnel(W, V.s);
         tunK = damp(tunK, tun ? 1 : 0, 4, dt);
         const L = ENV.light;
-        hemi.intensity = (0.95 - 0.42 * tunK) * L; sun.intensity = (0.72 - 0.5 * tunK) * L;
+        dayTick();
+        hemi.intensity = (0.95 - 0.42 * tunK) * L * dayHK; sun.intensity = (0.72 - 0.5 * tunK) * L * daySK;
         if (state === 'home') { camHome(camP, camL); }
         else if (state === 'intro') { camRun(tmpP, tmpL, dt); camIntro(tmpP, tmpL, ease(clamp(introT / 1.0, 0, 1))); camP.copy(tmpP); camL.copy(tmpL); }
         else {
@@ -918,12 +1070,12 @@
           cam.aspect = ca; cam.fov = ca < baseAsp ? 2 * Math.atan(Math.tan(bf * Math.PI / 360) * baseAsp / ca) * 180 / Math.PI : bf; cam.updateProjectionMatrix();
         }
         cam.position.copy(camP);
-        if (shake > 0) { shake = Math.max(0, shake - dt); cam.position.x += (Math.random() - 0.5) * shake * 0.6; cam.position.y += (Math.random() - 0.5) * shake * 0.6; }
+        if (shake > 0) { shake = Math.max(0, shake - dt); if (save.opt.shake) cam.position.x += (Math.random() - 0.5) * shake * 0.6; cam.position.y += (Math.random() - 0.5) * shake * 0.6; }
         cam.lookAt(camL);
         for (let i = 0; i < gantries.length; i++) { const m = gantries[i], dz = cam.position.z - m.position.z; m.visible = !(dz > -0.6 && dz < 2 && cam.position.y > 5.2 && cam.position.y < 7.8); }
         skyPlane.position.set(cam.position.x * 0.9, 52, cam.position.z - 340);
-        sunSprite.position.set(cam.position.x - 120, 150, cam.position.z - 330);
-        sun.position.set(cam.position.x - 20, 40, cam.position.z + 25); sun.target.position.set(cam.position.x, 0, cam.position.z - 10);
+        sunSprite.position.set(cam.position.x - 120, sunY, cam.position.z - 330);
+        if (starPlane.visible) starPlane.position.set(cam.position.x * 0.9, 120, cam.position.z - 346);
         au.tick();
         renderer.render(scene, cam);
       }
@@ -932,7 +1084,7 @@
       wrap._ss = {
         get W() { return W; }, get R() { return R; }, get V() { return V; }, get state() { return state; }, save,
         info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, pr: renderer.getPixelRatio(), geos: renderer.info.memory.geometries, tex: renderer.info.memory.textures, objs: scene.children.length, pool: pool.length }),
-        act: a => input(a), set noBlink(v) { noBlink = v; }, set ts(v) { tsc = v; }, set pr(v) { prCap = v; renderer.setPixelRatio(v); draw = true; }, clearChunks: () => clearChunks(),
+        act: a => input(a), set noBlink(v) { noBlink = v; }, set ts(v) { tsc = v; }, set runT(v) { runT = v; }, set pr(v) { prCap = v; renderer.setPixelRatio(v); draw = true; }, clearChunks: () => clearChunks(),
         give(k) { if (state === 'run') onItem({ k, x: R.x, y: R.y, s: R.s }); }, city: d => city(d), frame,
         bench(n, dt) {
           const gl = renderer.getContext(), keys = ['drawArrays', 'drawElements', 'drawArraysInstanced', 'drawElementsInstanced'], old = {};

@@ -14,11 +14,11 @@
   function newRun() {
     return {
       s: 0, x: 0, lane: 1, xFrom: 0, lt: 1, ldir: 0, y: 0, vy: 0, g: 1, grounded: true, coyote: 0, jumpBuf: 0,
-      ps: 0, px: 0, py: 0, ign: null, edgeT: 0, edgeDir: 0, nearN: 0, nearT: 0, nearPts: 0,
+      ps: 0, px: 0, py: 0, ign: null, cleanS: 0, edgeT: 0, edgeDir: 0, nearN: 0, nearT: 0, nearPts: 0,
       rollT: 0, rollD: 1, h: CFG.H_STAND, t: 0, vk: 1, vs: 1, t0: 0, mb: 0, speed: CFG.V0, score: 0, coins: 0, keys: 0, mult: 1,
       x2: 0, jet: 0, jetD: 1, sneak: 0, sneakD: 1, mag: 0, magD: 1, x2D: 1, board: 0, ghost: 0, stumbleT: 0, chase: CFG.START_CHASE,
       dead: '', deadT: 0, revives: 0, warm: true, landT: 0, jumpT: 0, ev: [], hitObs: null,
-      st: { jump: 0, roll: 0, pu: 0, jet: 0, magCoins: 0, board: 0, bump: 0, dodge: 0, roof: 0, sneakJump: 0, mbox: 0, stumble: 0, coinsRun: 0, near: 0, lanes: 0, air: 0, topV: 0 }
+      st: { jump: 0, roll: 0, pu: 0, jet: 0, magCoins: 0, board: 0, bump: 0, dodge: 0, roof: 0, sneakJump: 0, mbox: 0, stumble: 0, coinsRun: 0, near: 0, lanes: 0, air: 0, topV: 0, night: 0, clean: 0 }
     };
   }
 
@@ -327,7 +327,7 @@
     if (R.board > 0) { R.board = 0; R.ghost = CFG.GHOST_T; R.ev.push('board_break'); return; }
     R.st.stumble++;
     if (why === 'train') R.st.bump++;
-    R.stumbleT = 0.45; R.nearN = 0; R.nearT = 0;
+    R.stumbleT = 0.45; R.nearN = 0; R.nearT = 0; R.cleanS = R.s;
     R.ev.push('bump');
     if (R.chase > 0.15 && !R.warm) { die(W, R, 'caught'); return; }
     R.warm = false;
@@ -388,6 +388,7 @@
     R.t += dt;
     R.speed = speedAt(R.t * R.vk + R.t0) * R.vs;
     if (R.speed > R.st.topV) R.st.topV = R.speed;
+    if (R.s - R.cleanS > R.st.clean) R.st.clean = R.s - R.cleanS;
     const ps = R.s;
     R.s += R.speed * dt;
     if (R.lt < 1) R.lt = Math.min(1, R.lt + dt / CFG.LANE_T);
