@@ -971,6 +971,7 @@ function clGame(v) {
   if (!cur) return;
   let room = null;
   try { const n = cur.api && cur.api.online && cur.api.net; room = n && n.code ? String(n.code) : null; } catch (e) {}
+  if (!room) return;
   gpChatLog('game', cur.g.id, room, v);
 }
 (() => {

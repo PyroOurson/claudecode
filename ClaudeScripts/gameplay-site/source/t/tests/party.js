@@ -1,4 +1,7 @@
-const { launch, player } = require('../party_lib.js');
+const lib = require('../party_lib.js');
+const { launch } = lib;
+let PL = [];
+const player = async (b, who, o) => { const v = await lib.player(b, who, o); PL.push(v); return v; };
 const GAME = process.env.PARTY_GAME || 'last-card';
 const only = (process.env.ONLY || '').split(',').filter(Boolean);
 const results = [];
@@ -14,7 +17,14 @@ async function scenario(name, fn) {
   const b = await launch();
   const t0 = Date.now();
   let err = null, info = '';
-  try { info = (await fn(b)) || ''; } catch (e) { err = String(e && e.message || e).split('\n')[0].slice(0, 300); }
+  PL = [];
+  try { info = (await fn(b)) || ''; }
+  catch (e) {
+    err = String(e && e.message || e).split('\n')[0].slice(0, 300);
+    for (const v of PL) {
+      try { const l = await v.lobby(), n = await v.net(); err += '\n       ' + v.who + ': ' + (l ? l.text.slice(0, 200) : 'no party screen') + '\n       ' + v.who + ' net: ' + n.slice(-7).map(x => x.a + (x.type ? ':' + x.type : '') + (x.via ? ':' + x.via : '') + (x.why ? ':' + x.why : '')).join(' > ') + (v.log.length ? '\n       ' + v.who + ' log: ' + v.log.slice(-3).join(' | ').slice(0, 300) : ''); } catch (x) {}
+    }
+  }
   await b.close().catch(() => {});
   results.push([name, err]);
   console.log((err ? 'FAIL ' : 'PASS ') + name + ' (' + Math.round((Date.now() - t0) / 1000) + ' s)' + (err ? ': ' + err : info ? ': ' + info : ''));
