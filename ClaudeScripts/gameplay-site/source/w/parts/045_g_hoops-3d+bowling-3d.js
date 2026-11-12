@@ -188,10 +188,30 @@
   const setT = (el, s) => { s = String(s); if (el.textContent !== s) el.textContent = s; };
   const COARSE = matchMedia('(pointer: coarse)').matches;
   const glSize = (root, pw, ph) => root.clientWidth && root.clientWidth < 560 ? [pw, ph] : [960, 600];
-  function fitPR(api, v) {
-    if (!COARSE) return;
-    const fit = () => { const cw = v.canvas.clientWidth; if (cw && !document.fullscreenElement) v.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1) * cw / v.w); };
-    fit(); api.on(window, 'resize', fit);
+  function fitPR(api, v, hook) {
+    const r = v.renderer, c = v.canvas, Q = [1, 0.75, 0.55], sz = new v.THREE.Vector2();
+    let lvl = 0, cw = 0, avg = 0.016, t = -2, wait = 8, chk = 0, lf = -1, sf = 0, up = 0;
+    const apply = () => {
+      const d = Math.min(2, window.devicePixelRatio || 1), B = Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * d * d * 1.05);
+      const lw = r.getSize(sz).x || v.w, pr = Math.max(0.5, Math.min(4, d * cw / lw, Math.sqrt(B / (lw * (sz.y || v.h))))) * Q[lvl];
+      if (Math.abs(r.getPixelRatio() - pr) > 0.01) r.setPixelRatio(pr);
+      r.shadowMap.autoUpdate = lvl < 2;
+    };
+    const size = () => { const w = c.getBoundingClientRect().width; if (w && Math.abs(w - cw) > Math.max(2, cw * 0.02)) { cw = w; apply(); } };
+    const set = n => { lvl = n; t = 0; apply(); if (hook) hook(lvl); };
+    r.forceContextLoss = () => {};
+    size(); api.on(window, 'resize', size);
+    api.loop(dt => {
+      const f = r.info.render.frame;
+      if (f === lf || !(dt > 0)) return;
+      lf = f;
+      if (lvl > 1 && (sf ^= 1)) r.shadowMap.needsUpdate = true;
+      avg += (dt - avg) * Math.min(1, dt * 1.5); t += dt;
+      if (performance.now() - chk > 500) { chk = performance.now(); size(); }
+      if (t < 1.5) return;
+      if (avg > 0.021 && lvl < Q.length - 1) { if (up && t < 6) wait = Math.min(64, wait * 2); up = 0; set(lvl + 1); }
+      else if (avg < 0.0175 && lvl && t > wait) { up = 1; set(lvl - 1); }
+    });
   }
 
   const kit = (root, api, v) => {

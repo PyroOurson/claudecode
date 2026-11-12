@@ -604,9 +604,36 @@
     return g;
   }
 
+  function fitPR(api, v, hook) {
+    const r = v.renderer, c = v.canvas, Q = [1, 0.75, 0.55], sz = new v.THREE.Vector2();
+    let lvl = 0, cw = 0, avg = 0.016, t = -2, wait = 8, chk = 0, lf = -1, sf = 0, up = 0;
+    const apply = () => {
+      const d = Math.min(2, window.devicePixelRatio || 1), B = Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * d * d * 1.05);
+      const lw = r.getSize(sz).x || v.w, pr = Math.max(0.5, Math.min(4, d * cw / lw, Math.sqrt(B / (lw * (sz.y || v.h))))) * Q[lvl];
+      if (Math.abs(r.getPixelRatio() - pr) > 0.01) r.setPixelRatio(pr);
+      r.shadowMap.autoUpdate = lvl < 2;
+    };
+    const size = () => { const w = c.getBoundingClientRect().width; if (w && Math.abs(w - cw) > Math.max(2, cw * 0.02)) { cw = w; apply(); } };
+    const set = n => { lvl = n; t = 0; apply(); if (hook) hook(lvl); };
+    r.forceContextLoss = () => {};
+    size(); api.on(window, 'resize', size);
+    api.loop(dt => {
+      const f = r.info.render.frame;
+      if (f === lf || !(dt > 0)) return;
+      lf = f;
+      if (lvl > 1 && (sf ^= 1)) r.shadowMap.needsUpdate = true;
+      avg += (dt - avg) * Math.min(1, dt * 1.5); t += dt;
+      if (performance.now() - chk > 500) { chk = performance.now(); size(); }
+      if (t < 1.5) return;
+      if (avg > 0.021 && lvl < Q.length - 1) { if (up && t < 6) wait = Math.min(64, wait * 2); up = 0; set(lvl + 1); }
+      else if (avg < 0.0175 && lvl && t > wait) { up = 1; set(lvl - 1); }
+    });
+  }
+
   function run(root, api, v, wrap, W, H, touch) {
     const { THREE, renderer, canvas } = v;
     wrap.prepend(canvas);
+    fitPR(api, v);
     Object.assign(canvas.style, { position: 'absolute', left: '0', top: '0', width: '100%', height: '100%', borderRadius: '0' });
     const disp = [], track = o => { disp.push(o); return o; };
     const V3 = (x, y, z) => new THREE.Vector3(x, y, z);

@@ -6,6 +6,31 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const sstep = t => t * t * (3 - 2 * t);
 const COARSE = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 const ID = 'polytrack', G = '.gm-' + ID;
+function fitPR(api, v, hook) {
+  const r = v.renderer, c = v.canvas, Q = [1, 0.75, 0.55], sz = new v.THREE.Vector2();
+  let lvl = 0, cw = 0, avg = 0.016, t = -2, wait = 8, chk = 0, lf = -1, sf = 0, up = 0;
+  const apply = () => {
+    const d = Math.min(2, window.devicePixelRatio || 1), B = Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * d * d * 1.05);
+    const lw = r.getSize(sz).x || v.w, pr = Math.max(0.5, Math.min(4, d * cw / lw, Math.sqrt(B / (lw * (sz.y || v.h))))) * Q[lvl];
+    if (Math.abs(r.getPixelRatio() - pr) > 0.01) r.setPixelRatio(pr);
+    r.shadowMap.autoUpdate = lvl < 2;
+  };
+  const size = () => { const w = c.getBoundingClientRect().width; if (w && Math.abs(w - cw) > Math.max(2, cw * 0.02)) { cw = w; apply(); } };
+  const set = n => { lvl = n; t = 0; apply(); if (hook) hook(lvl); };
+  r.forceContextLoss = () => {};
+  size(); api.on(window, 'resize', size);
+  api.loop(dt => {
+    const f = r.info.render.frame;
+    if (f === lf || !(dt > 0)) return;
+    lf = f;
+    if (lvl > 1 && (sf ^= 1)) r.shadowMap.needsUpdate = true;
+    avg += (dt - avg) * Math.min(1, dt * 1.5); t += dt;
+    if (performance.now() - chk > 500) { chk = performance.now(); size(); }
+    if (t < 1.5) return;
+    if (avg > 0.021 && lvl < Q.length - 1) { if (up && t < 6) wait = Math.min(64, wait * 2); up = 0; set(lvl + 1); }
+    else if (avg < 0.0175 && lvl && t > wait) { up = 1; set(lvl - 1); }
+  });
+}
 const mkRng = seed => { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
 const add3 = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -294,7 +319,7 @@ function decodeTrack(code) {
     if (sum !== b[b.length - 1]) return null;
     let o = 1; const season = b[o++] & 3, nl = b[o++], name = new TextDecoder().decode(b.subarray(o, o + nl)); o += nl;
     const n = b[o] | (b[o + 1] << 8); o += 2;
-    if (o + n * 4 + 1 !== b.length) return null;
+    if (n > 600 || o + n * 4 + 1 !== b.length) return null;
     const pieces = [];
     for (let i = 0; i < n; i++) {
       const t = b[o++], x = b[o++] - 128, z = b[o++] - 128, w = b[o++];
@@ -1244,12 +1269,15 @@ function run(root, wrap, api, V) {
   wrap.style.width = canvas.style.width; wrap.style.aspectRatio = canvas.style.aspectRatio;
   canvas.style.width = '100%'; canvas.style.height = '100%'; wrap.append(canvas);
   const narrow = h > w;
-  if (COARSE) { const fit = () => { const cw = canvas.clientWidth; if (cw && !document.fullscreenElement) renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1) * cw / w); }; fit(); api.on(window, 'resize', fit); }
+  fitPR(api, V);
   const view = makeView(THREE, renderer, canvas, w, h, narrow);
   const saved = api.load() || {};
-  const P = { best: saved.best || {}, med: saved.med || {}, lb: saved.lb || {}, split: saved.split || {}, custom: saved.custom || [], played: saved.played || 0, set: saved.set || {} };
+  const rec = v => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
+  const P = { best: rec(saved.best), med: rec(saved.med), lb: rec(saved.lb), split: rec(saved.split), custom: (Array.isArray(saved.custom) ? saved.custom : []).filter(c => c && typeof c.id === 'string' && typeof c.code === 'string' && decodeTrack(c.code)).slice(0, 200), played: +saved.played || 0, set: rec(saved.set), draft: null };
+  { const d = saved.draft, ok = d && Array.isArray(d.pieces) && d.pieces.length <= 600 && d.pieces.every(q => Array.isArray(q) && q.length === 5 && q.every(Number.isFinite) && PIECES[q[0]]); if (ok) P.draft = { id: typeof d.id === 'string' ? d.id : null, name: String(d.name || 'My track').slice(0, 30), season: clamp(d.season | 0, 0, 2), pieces: d.pieces.map(q => q.slice()) }; }
   const prof = (() => { try { const p = JSON.parse(localStorage.getItem('gameplay:profile')); return (p && (p.username || p.displayName)) || ''; } catch (e) { return ''; } })();
   const prefs = Object.assign({ cam: 0, kmh: 1, sfx: 1, music: 0.5, shadow: 1, ghost: 1, c1: 0, c2: 0, name: prof || 'Player', touch: 'auto', rivals: 0, tags: 1 }, P.set);
+  prefs.cam = clamp(prefs.cam | 0, 0, 2); prefs.c1 = clamp(prefs.c1 | 0, 0, CAR_COLS.length - 1); prefs.c2 = clamp(prefs.c2 | 0, 0, ACC_COLS.length - 1); prefs.name = String(prefs.name || 'Player').slice(0, 24);
   P.set = prefs;
   let saveT = 0;
   const save = () => { clearTimeout(saveT); saveT = setTimeout(() => api.save(P), 250); };
@@ -1362,7 +1390,7 @@ function run(root, wrap, api, V) {
         const bd = board(sel), b = P.best[sel.id], m = P.med[sel.id] || 0;
         side = `<div class="panel"><h2>${esc(sel.label === 'Custom' ? sel.name : sel.label + ' &middot; ' + sel.name)}</h2>${sel.med ? `<div class="kv"><span>Gold</span><b>${fmtT(sel.med[2])}</b><span>Silver</span><b>${fmtT(sel.med[1])}</b><span>Bronze</span><b>${fmtT(sel.med[0])}</b></div>` : ''}<div class="kv" style="margin-top:.5em"><span>Your best</span><b>${b ? fmtT(b) : 'No record'} ${sel.med ? medHtml(m) : ''}</b><span>Pieces</span><b>${sel.tr.pieces.length}</b></div>
 <h3>Leaderboard</h3><table class="lb">${bd.length ? bd.map((e, i) => `<tr class="${e.me ? 'me' : ''}"><td>${i + 1}</td><td>${esc(e.n)}${e.bot ? ' <small style="opacity:.55">AI</small>' : ''}</td><td class="t">${fmtT(e.t)}</td></tr>`).join('') : '<tr><td>No times yet. Be the first.</td></tr>'}</table>
-${S.mode === 'net' ? '' : `<h3>Options</h3><div class="row"><button class="pt-b sm ${S.opt.ghost ? 'on' : ''}" data-a="tg" data-k="ghost">Ghost ${S.opt.ghost ? 'on' : 'off'}</button><button class="pt-b sm" data-a="riv">Rivals: ${S.opt.rivals}</button></div>`}
+${S.mode === 'net' ? '' : `<h3>Options</h3><div class="row"><button class="pt-b sm ${S.opt.ghost ? 'on' : ''}" data-a="tg" data-k="ghost">Ghost ${S.opt.ghost ? 'on' : 'off'}</button><button class="pt-b sm" data-a="riv">Rivals: ${S.opt.rivals === 9 ? 'Hardest' : S.opt.rivals}</button></div>`}
 <div class="row" style="margin-top:.8em"><button class="pt-b go" data-a="${S.mode === 'net' ? 'nstart' : 'race'}">${S.mode === 'net' ? 'Start race' : 'Race'}</button>${sel.custom ? `<button class="pt-b sm" data-a="exp" data-id="${sel.id}">Export</button><button class="pt-b sm" data-a="del" data-id="${sel.id}">Delete</button><button class="pt-b sm" data-a="ed" data-id="${sel.id}">Edit</button>` : ''}</div></div>`;
       }
       const net_ = S.mode === 'net';
@@ -1426,7 +1454,7 @@ ${S.mode === 'net' ? '' : `<h3>Options</h3><div class="row"><button class="pt-b 
       case 'tab': S.tab = +b.dataset.i; show('select'); break;
       case 'pick': S.sel = id; show('select'); break;
       case 'tg': S.opt.ghost = S.opt.ghost ? 0 : 1; show('select'); break;
-      case 'riv': S.opt.rivals = { 0: 1, 1: 3, 3: 5, 5: 0 }[S.opt.rivals]; show('select'); break;
+      case 'riv': S.opt.rivals = { 0: 1, 1: 3, 3: 5, 5: 9, 9: 0 }[S.opt.rivals]; show('select'); break;
       case 'race': startRace(trackById(S.sel), { kind: 'solo', ghost: S.opt.ghost, rivals: S.opt.rivals }); break;
       case 'c1': prefs.c1 = +b.dataset.i; save(); show('garage'); break;
       case 'c2': prefs.c2 = +b.dataset.i; save(); show('garage'); break;
@@ -1512,7 +1540,8 @@ ${S.mode === 'net' ? '' : `<h3>Options</h3><div class="row"><button class="pt-b 
     if (r.kind === 'solo') {
       const g = o.ghost ? loadGhost(track.id) : null;
       if (g) { r.ghost = g; r.gm = view.mkCar(c1, c2, true, 'Ghost', '#ffd23a'); r.gm.g.visible = !!prefs.ghost; }
-      if (o.rivals && T.route && T.route.ok) {
+      if (o.rivals === 9 && T.route && T.route.ok) tuneStart(r, addRival(r, 'Hardest', '#ff3b3b', 1));
+      else if (o.rivals && T.route && T.route.ok) {
         for (let i = 0; i < o.rivals; i++) addRival(r, RIVALS[i][0], RIVALS[i][1], SKILL[i]);
       }
     }
@@ -1533,6 +1562,34 @@ ${S.mode === 'net' ? '' : `<h3>Options</h3><div class="row"><button class="pt-b 
     const v = { name, col, car, bot: Bot(r.T, car, skill), m: view.mkCar(col, '#f4f4f8', true, name, col), fin: null, sp: [0, 0, 0, 0], ex: [0, 0, 0, 0], id: name };
     r.riv.push(v);
     return v;
+  }
+  const hardSkill = new Map();
+  let tune = null;
+  function tuneStart(r, v) {
+    const key = r.track.id + (r.track.code || '');
+    tune = null;
+    if (hardSkill.has(key)) v.bot = Bot(r.T, v.car, hardSkill.get(key));
+    else tune = { r, v, key, cands: [1, 1.12, 1.06, 1.16, 1.1], i: 0, car: null, bot: null, n: 0, best: 1, bestT: 1e9 };
+  }
+  function tuneStep(ms) {
+    const q = tune;
+    if (!q) return;
+    if (R !== q.r) { tune = null; return; }
+    const end = performance.now() + ms, T = q.r.T, last = T.route.pts.length - 3;
+    while (performance.now() < end) {
+      if (!q.car) {
+        if (q.i >= q.cands.length) { tune = null; hardSkill.set(q.key, q.best); if (q.r.st === 'count') q.v.bot = Bot(T, q.v.car, q.best); return; }
+        q.car = Car(T); q.car.reset(T.start.p, T.start.q); q.bot = Bot(T, q.car, q.cands[q.i]); q.n = 0;
+      }
+      for (let k = 0; k < 120 && q.car; k++) {
+        q.car.step(q.bot.input(DT), DT); q.car.events.length = 0; q.n++;
+        const done = q.bot.idx >= last;
+        if (done || q.bot.stuck || q.n * DT >= q.bestT) {
+          if (done && q.n * DT < q.bestT) { q.bestT = q.n * DT; q.best = q.cands[q.i]; }
+          q.car = null; q.i++;
+        }
+      }
+    }
   }
   function botRespawn(T, car, b) {
     const pts = T.route.pts, pt = pts[Math.max(0, Math.min(pts.length - 1, b.idx))], f = pt.f, u = pt.u;
@@ -1687,9 +1744,11 @@ ${S.mode === 'net' ? '' : `<h3>Options</h3><div class="row"><button class="pt-b 
         if (n >= 1 && n <= 3) { setMsg(String(n)); audio.play('beep'); }
         else if (n <= 0) { setMsg('GO!'); audio.play('go'); setTimeout(() => { if (R === r && r.st !== 'count' && !r.hint) setMsg(''); }, 900); }
       }
+      if (tune && tune.r === r) { tuneStep(6); if (n <= 0 && tune && tune.best !== 1) tune.v.bot = Bot(r.T, tune.v.car, tune.best); }
       if (n <= 0) { r.st = 'run'; r.acc = 0; if (r.net && r.net.go) r.net.go(); }
       return;
     }
+    if (tune) tuneStep(1.5);
     r.acc = Math.min(r.acc + dt, DT * 8);
     const run = r.st === 'run';
     let inp = r.kind === 'demo' ? null : run ? readInput() : IDLE;
@@ -2297,18 +2356,29 @@ ${S.mode === 'net' ? '' : `<h3>Options</h3><div class="row"><button class="pt-b 
       api.net.send({ t: 'ps', rd: n.rd, a }, true);
     }, 50);
   }
+  let rafT = 0, bgT = 0;
   api.loop(dt => {
+    rafT = performance.now();
     view.clouds();
     if (S.mode === 'edit' && E && !E.testing) edFrame(dt);
     else if (R) { stepRace(dt); drawRace(dt); }
     view.render();
   });
+  api.interval(() => {
+    const now = performance.now();
+    if (now - rafT < 400 || !R || R.kind !== 'online' || !net || net.role !== 'host') { bgT = 0; return; }
+    let left = Math.min(5, (now - (bgT || rafT)) / 1000);
+    bgT = now;
+    while (left > 1e-4 && R && R.kind === 'online') { const d = Math.min(left, DT * 8); stepRace(d); left -= d; }
+  }, 200);
   api.on(window, 'blur', () => { pressed.up = pressed.dn = pressed.lf = pressed.rt = 0; });
   api.on(document, 'visibilitychange', () => { if (document.hidden) audio.drive(0, 0, 0, 0, 0, false); });
   if (api.net && api.net.invite) goOnline();
   else { S.mode = 'menu'; startDemo(); show('menu'); applyPrefs(); }
   return () => {
-    clearTimeout(saveT); api.save(P);
+    clearTimeout(saveT); clearTimeout(draftTm); clearTimeout(splitTm); clearTimeout(toastT);
+    if (E && S.mode === 'edit') P.draft = { id: E.id, name: E.name, season: E.season, pieces: E.pieces };
+    api.save(P);
     if (net) leaveNet();
     endRace(); audio.close(); view.dispose();
   };

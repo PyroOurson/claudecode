@@ -195,10 +195,30 @@ ${g} .hint:empty{display:none}
   }
 
   const COARSE = matchMedia('(pointer: coarse)').matches;
-  function fitPR(api, v) {
-    if (!COARSE) return;
-    const fit = () => { const cw = v.canvas.clientWidth; if (cw && !document.fullscreenElement) v.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1) * cw / v.w); };
-    fit(); api.on(window, 'resize', fit);
+  function fitPR(api, v, hook) {
+    const r = v.renderer, c = v.canvas, Q = [1, 0.75, 0.55], sz = new v.THREE.Vector2();
+    let lvl = 0, cw = 0, avg = 0.016, t = -2, wait = 8, chk = 0, lf = -1, sf = 0, up = 0;
+    const apply = () => {
+      const d = Math.min(2, window.devicePixelRatio || 1), B = Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * d * d * 1.05);
+      const lw = r.getSize(sz).x || v.w, pr = Math.max(0.5, Math.min(4, d * cw / lw, Math.sqrt(B / (lw * (sz.y || v.h))))) * Q[lvl];
+      if (Math.abs(r.getPixelRatio() - pr) > 0.01) r.setPixelRatio(pr);
+      r.shadowMap.autoUpdate = lvl < 2;
+    };
+    const size = () => { const w = c.getBoundingClientRect().width; if (w && Math.abs(w - cw) > Math.max(2, cw * 0.02)) { cw = w; apply(); } };
+    const set = n => { lvl = n; t = 0; apply(); if (hook) hook(lvl); };
+    r.forceContextLoss = () => {};
+    size(); api.on(window, 'resize', size);
+    api.loop(dt => {
+      const f = r.info.render.frame;
+      if (f === lf || !(dt > 0)) return;
+      lf = f;
+      if (lvl > 1 && (sf ^= 1)) r.shadowMap.needsUpdate = true;
+      avg += (dt - avg) * Math.min(1, dt * 1.5); t += dt;
+      if (performance.now() - chk > 500) { chk = performance.now(); size(); }
+      if (t < 1.5) return;
+      if (avg > 0.021 && lvl < Q.length - 1) { if (up && t < 6) wait = Math.min(64, wait * 2); up = 0; set(lvl + 1); }
+      else if (avg < 0.0175 && lvl && t > wait) { up = 1; set(lvl - 1); }
+    });
   }
   function boot(api, run, root) {
     let dead = false, cleanup = null;
@@ -331,7 +351,8 @@ ${g} .hint:empty{display:none}
     add(new THREE.BoxGeometry(96, 0.5, 10), roofM, 0, topY + 3.6, backZ + 4.5, scene, false);
     add(new THREE.BoxGeometry(96, 1.1, 0.35), M(C.accent, { roughness: 0.5 }), 0, topY + 3.4, backZ + 9.5, scene, false);
     const lampM = new THREE.MeshBasicMaterial({ color: 0xfff6dc });
-    for (let x = -44; x <= 44; x += 4) add(new THREE.BoxGeometry(1.4, 0.12, 0.4), lampM, x, topY + 3.3, backZ + 8.6, scene, false);
+    const lamps = [], lampA = new THREE.BoxGeometry(1.4, 0.12, 0.4), lampB = new THREE.BoxGeometry(0.55, 0.55, 0.12);
+    for (let x = -44; x <= 44; x += 4) lamps.push([lampA, x, topY + 3.3, backZ + 8.6]);
     for (const x of [-30, -12, 12, 30]) add(new THREE.BoxGeometry(0.4, 3.6, 0.4), roofM, x, topY + 1.8, backZ + 1.5, scene, false);
 
     const boardTex = K.tex(1024, 256, (x, w, h) => {
@@ -348,7 +369,8 @@ ${g} .hint:empty{display:none}
     });
     add(new THREE.BoxGeometry(12.6, 3.0, 0.3), M(0x15132b, { roughness: 0.5 }), 0, 10.0, backZ + 0.45, scene, false);
     add(new THREE.PlaneGeometry(12, 2.5), new THREE.MeshBasicMaterial({ map: boardTex }), 0, 10.0, backZ + 0.62, scene, false);
-    for (const sx of [-1, 1]) for (const k of [0, 1, 2]) add(new THREE.BoxGeometry(0.55, 0.55, 0.12), lampM, sx * (9.6 + k * 0.9), 10.0 + (k - 1) * 0.0, backZ + 0.45, scene, false);
+    for (const sx of [-1, 1]) for (const k of [0, 1, 2]) lamps.push([lampB, sx * (9.6 + k * 0.9), 10.0, backZ + 0.45]);
+    add(mergeGeo(THREE, lamps), lampM, 0, 0, 0, scene, false);
     const seats = [];
     for (let r = 0; r < ROWS; r++) for (let x = -46; x <= 46; x += 0.62) if (Math.random() < 0.9) seats.push([x + rnd(-0.07, 0.07), Y0 + r * RH, Z0 - (r + 0.55) * RD]);
     const NC = seats.length, bodyGeo = new THREE.BoxGeometry(0.44, 0.56, 0.3), headGeo = new THREE.SphereGeometry(0.13, 10, 8);
@@ -540,7 +562,7 @@ ${g} .hint:empty{display:none}
     const ringHits = [], plan = { guess: false, gx: 0, gy: 0 };
     const bp = new V3(0, BR, 0), bv = new V3(), bw = new V3(), tv = new V3(), tmp = new V3(), acc = new V3(), cross = new V3(), sp0 = new V3(), sv0 = new V3(), sw0 = new V3(), axis = new V3(), tq = new THREE.Quaternion(), pv = new V3();
     const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-    const skillFor = r => { const l = r - 1; return { react: Math.max(0.14, 0.3 - l * 0.03), dur: Math.max(0.34, 0.5 - l * 0.03), reach: Math.min(1.6, 0.95 + l * 0.12), lift: Math.min(1.1, 0.7 + l * 0.08), noise: Math.max(0.2, 0.55 - l * 0.07), read: Math.min(0.75, l * 0.14), guess: Math.min(0.32, l * 0.07), catchV: 15 + l * 1.5 }; };
+    const skillFor = r => { const l = r - 1; return { react: Math.max(0.15, 0.3 - l * 0.03), dur: Math.max(0.34, 0.5 - l * 0.03), reach: Math.min(1.6, 0.95 + l * 0.12), lift: Math.min(1.1, 0.7 + l * 0.08), noise: Math.max(0.2, 0.55 - l * 0.07), read: Math.min(0.75, l * 0.14), guess: Math.min(0.32, l * 0.07), catchV: 15 + l * 1.5 }; };
     skill = skillFor(1);
 
     const sw = ui.el('sw', `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline points=""/></svg>`), poly = sw.querySelector('polyline');
@@ -1258,6 +1280,21 @@ ${g} .hint:empty{display:none}
       for (let i = 0; i < n; i++) chips.spawn(p, rnd(-sp, sp), rnd(0, sp * 1.3), rnd(-sp, sp * 0.4) + sp * 0.3, pick(cols), rnd(life * 0.6, life), rnd(size * 0.5, size));
     }
     function puff(p, color, n = 5) { for (let i = 0; i < n; i++) dust.spawn(p, rnd(-0.6, 0.6), rnd(0.2, 1.2), rnd(-0.2, 0.8), color, rnd(0.5, 0.9), rnd(0.06, 0.13), -0.3, 3, 0.35); }
+    {
+      const sets = new Map();
+      for (const m of env) {
+        if (m.parent !== scene || Array.isArray(m.material) || m.rotation.x || m.rotation.y || m.scale.x !== 1 || m.scale.y !== 1 || m.scale.z !== 1 || !m.castShadow || !m.geometry.attributes.uv) continue;
+        const k = m.material.uuid + m.userData.fx;
+        if (!sets.has(k)) sets.set(k, []);
+        sets.get(k).push(m);
+      }
+      for (const g of sets.values()) {
+        if (g.length < 2) continue;
+        const geo = mergeGeo(THREE, g.map(m => [m.geometry, m.position.x, m.position.y, m.position.z, 1, 1, 1, 0, m.rotation.z]));
+        for (const m of g) { scene.remove(m); env.splice(env.indexOf(m), 1); }
+        add(geo, g[0].material, 0, 0, 0, { fx: g[0].userData.fx });
+      }
+    }
     function cast(v) {
       ray.setFromCamera(v, cam);
       list.length = 0;

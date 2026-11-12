@@ -10,10 +10,30 @@
   const smooth = t => t * t * (3 - 2 * t);
   const COARSE = matchMedia('(pointer: coarse)').matches;
   const glSize = (root, pw, ph) => root.clientWidth && root.clientWidth < 560 ? [pw, ph] : [960, 600];
-  function fitPR(api, v) {
-    if (!COARSE) return;
-    const fit = () => { const cw = v.canvas.clientWidth; if (cw && !document.fullscreenElement) v.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1) * cw / v.w); };
-    fit(); api.on(window, 'resize', fit);
+  function fitPR(api, v, hook) {
+    const r = v.renderer, c = v.canvas, Q = [1, 0.75, 0.55], sz = new v.THREE.Vector2();
+    let lvl = 0, cw = 0, avg = 0.016, t = -2, wait = 8, chk = 0, lf = -1, sf = 0, up = 0;
+    const apply = () => {
+      const d = Math.min(2, window.devicePixelRatio || 1), B = Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * d * d * 1.05);
+      const lw = r.getSize(sz).x || v.w, pr = Math.max(0.5, Math.min(4, d * cw / lw, Math.sqrt(B / (lw * (sz.y || v.h))))) * Q[lvl];
+      if (Math.abs(r.getPixelRatio() - pr) > 0.01) r.setPixelRatio(pr);
+      r.shadowMap.autoUpdate = lvl < 2;
+    };
+    const size = () => { const w = c.getBoundingClientRect().width; if (w && Math.abs(w - cw) > Math.max(2, cw * 0.02)) { cw = w; apply(); } };
+    const set = n => { lvl = n; t = 0; apply(); if (hook) hook(lvl); };
+    r.forceContextLoss = () => {};
+    size(); api.on(window, 'resize', size);
+    api.loop(dt => {
+      const f = r.info.render.frame;
+      if (f === lf || !(dt > 0)) return;
+      lf = f;
+      if (lvl > 1 && (sf ^= 1)) r.shadowMap.needsUpdate = true;
+      avg += (dt - avg) * Math.min(1, dt * 1.5); t += dt;
+      if (performance.now() - chk > 500) { chk = performance.now(); size(); }
+      if (t < 1.5) return;
+      if (avg > 0.021 && lvl < Q.length - 1) { if (up && t < 6) wait = Math.min(64, wait * 2); up = 0; set(lvl + 1); }
+      else if (avg < 0.0175 && lvl && t > wait) { up = 1; set(lvl - 1); }
+    });
   }
 
   function hash2(x, z) {
@@ -603,7 +623,7 @@
       }
       return V;
     }
-    return { M, build };
+    return { M, build, tireG, rimG };
   }
   function roadWorld(THREE, K, scene, renderer) {
     const { std, canvasTex, G } = K;
@@ -1001,13 +1021,22 @@
     ];
     const PAINTS = ['#e8293b', '#2d8cff', '#f4b400', '#2a9d8f', '#b5179e', '#f2f2f0'];
     const garage = Object.assign({ car: 0, col: 0, km: 0 }, api.load() || {});
+    garage.km = +garage.km || 0;
     if (!CARS[garage.car] || garage.km < CARS[garage.car].km) garage.car = 0;
+    if (!PAINTS[garage.col]) garage.col = 0;
     let CAR = CARS[garage.car], player = null;
     const cockPaint = K.std(PAINTS[garage.col], { roughness: .28, metalness: .35 });
+    const tireI = new THREE.InstancedMesh(CK.tireG, M.rubber, 160), rimI = new THREE.InstancedMesh(CK.rimG, M.chrome, 160);
+    tireI.frustumCulled = rimI.frustumCulled = false; tireI.count = rimI.count = 0;
+    scene.add(tireI, rimI);
+    const hideWheels = V => { for (const w of V.wheels) for (const m of w.children) m.visible = false; };
+    let wheelN = 0;
+    const putWheels = V => { for (const w of V.wheels) { if (wheelN >= 160) return; tireI.setMatrixAt(wheelN, w.children[0].matrixWorld); rimI.setMatrixAt(wheelN, w.children[1].matrixWorld); wheelN++; } };
     const setCar = () => {
       CAR = CARS[garage.car];
       if (player) scene.remove(player.g);
       player = CK.build(CAR.type, PAINTS[garage.col]);
+      hideWheels(player);
       player.g.rotation.order = 'YXZ';
       for (const w of player.wheels) w.rotation.order = 'YXZ';
       player.g.visible = !cockpit;
@@ -1020,8 +1049,16 @@
       for (let i = 0; i < n; i++) {
         const V = CK.build(type, pick(pal || HW_PAL));
         V.on = false; V.g.visible = false; V.bOn = 0; V.bk = false;
+        hideWheels(V);
         scene.add(V.g); pool.push(V);
       }
+    };
+    scene.onBeforeRender = () => {
+      wheelN = 0;
+      if (player && player.g.visible) putWheels(player);
+      for (const V of pool) if (V.g.visible) putWheels(V);
+      tireI.count = rimI.count = wheelN;
+      tireI.instanceMatrix.needsUpdate = rimI.instanceMatrix.needsUpdate = true;
     };
     addPool('sedan', 12); addPool('hatch', 8); addPool('suv', 7);
     addPool('truck', 4, ['#d62828', '#1d3557', '#2a9d8f', '#f77f00', '#fcbf49']);
@@ -1531,7 +1568,7 @@
     updateEnv();
     applyCam();
     menu();
-    return () => { K.dispose(scene); if (envRT) envRT.dispose(); pmrem.dispose(); mirRT.dispose(); gaugeT.dispose(); };
+    return () => { tireI.dispose(); rimI.dispose(); K.dispose(scene); if (envRT) envRT.dispose(); pmrem.dispose(); mirRT.dispose(); gaugeT.dispose(); };
   }
 
   Ameplay.register({
@@ -1920,7 +1957,16 @@
     for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; coinStar.box(.18, .62, .06, Math.sin(a) * .3, Math.cos(a) * .3, .14, null, 0, 0, -a); coinStar.box(.18, .62, .06, Math.sin(a) * .3, Math.cos(a) * .3, -.14, null, 0, 0, -a); }
     const coinStarG = coinStar.build(), coinStarM = std('#fff3b0', { emissive: '#ffcc33', emissiveIntensity: .4, metalness: .6, roughness: .3 });
     const coins = [];
-    for (let i = 0; i < 40; i++) { const m = new THREE.Mesh(coinG, coinM); m.add(new THREE.Mesh(coinStarG, coinStarM)); m.visible = false; scene.add(m); coins.push({ m, on: false, x: 0, y: 0, z: 0 }); }
+    const coinI = new THREE.InstancedMesh(coinG, coinM, 40), starI = new THREE.InstancedMesh(coinStarG, coinStarM, 40);
+    coinI.frustumCulled = starI.frustumCulled = false; coinI.count = starI.count = 0;
+    scene.add(coinI, starI);
+    for (let i = 0; i < 40; i++) { const m = new THREE.Object3D(); m.visible = false; scene.add(m); coins.push({ m, on: false, x: 0, y: 0, z: 0 }); }
+    scene.onBeforeRender = () => {
+      let k = 0;
+      for (const C of coins) if (C.m.visible) { coinI.setMatrixAt(k, C.m.matrixWorld); starI.setMatrixAt(k, C.m.matrixWorld); k++; }
+      coinI.count = starI.count = k;
+      coinI.instanceMatrix.needsUpdate = starI.instanceMatrix.needsUpdate = true;
+    };
     const canG = K.G.acc().box(1.6, 2.1, .8, 0, 0, 0).box(.5, .35, .25, .45, 1.2, 0, lin('#2b2d42')).box(.9, .16, .2, -.25, 1.15, 0, lin('#2b2d42')).box(1.3, .1, .84, 0, .4, 0, lin('#ffd23d')).build();
     const canM = std('#ffffff', { vertexColors: true, roughness: .4, metalness: .3, emissive: '#5a0a10', emissiveIntensity: .4 });
     const cans = [];
@@ -2318,7 +2364,7 @@
 
     reset(false);
     menu();
-    return () => { K.dispose(scene); if (envRT) envRT.dispose(); pmrem.dispose(); };
+    return () => { coinI.dispose(); starI.dispose(); K.dispose(scene); if (envRT) envRT.dispose(); pmrem.dispose(); };
   }
 
   Ameplay.register({

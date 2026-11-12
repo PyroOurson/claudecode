@@ -12,10 +12,30 @@
   const hexRGB = hx => [((hx >> 16) & 255) / 255, ((hx >> 8) & 255) / 255, (hx & 255) / 255];
   const COARSE = matchMedia('(pointer: coarse)').matches;
   const glSize = (root, pw, ph) => root.clientWidth && root.clientWidth < 560 ? [pw, ph] : [960, 600];
-  function fitPR(api, v) {
-    if (!COARSE) return;
-    const fit = () => { const cw = v.canvas.clientWidth; if (cw && !document.fullscreenElement) v.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1) * cw / v.w); };
-    fit(); api.on(window, 'resize', fit);
+  function fitPR(api, v, hook) {
+    const r = v.renderer, c = v.canvas, Q = [1, 0.75, 0.55], sz = new v.THREE.Vector2();
+    let lvl = 0, cw = 0, avg = 0.016, t = -2, wait = 8, chk = 0, lf = -1, sf = 0, up = 0;
+    const apply = () => {
+      const d = Math.min(2, window.devicePixelRatio || 1), B = Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * d * d * 1.05);
+      const lw = r.getSize(sz).x || v.w, pr = Math.max(0.5, Math.min(4, d * cw / lw, Math.sqrt(B / (lw * (sz.y || v.h))))) * Q[lvl];
+      if (Math.abs(r.getPixelRatio() - pr) > 0.01) r.setPixelRatio(pr);
+      r.shadowMap.autoUpdate = lvl < 2;
+    };
+    const size = () => { const w = c.getBoundingClientRect().width; if (w && Math.abs(w - cw) > Math.max(2, cw * 0.02)) { cw = w; apply(); } };
+    const set = n => { lvl = n; t = 0; apply(); if (hook) hook(lvl); };
+    r.forceContextLoss = () => {};
+    size(); api.on(window, 'resize', size);
+    api.loop(dt => {
+      const f = r.info.render.frame;
+      if (f === lf || !(dt > 0)) return;
+      lf = f;
+      if (lvl > 1 && (sf ^= 1)) r.shadowMap.needsUpdate = true;
+      avg += (dt - avg) * Math.min(1, dt * 1.5); t += dt;
+      if (performance.now() - chk > 500) { chk = performance.now(); size(); }
+      if (t < 1.5) return;
+      if (avg > 0.021 && lvl < Q.length - 1) { if (up && t < 6) wait = Math.min(64, wait * 2); up = 0; set(lvl + 1); }
+      else if (avg < 0.0175 && lvl && t > wait) { up = 1; set(lvl - 1); }
+    });
   }
   const NO_GL = { kicker: '3D', title: '3D unavailable', text: 'Your browser could not start WebGL. Try another browser or turn on hardware acceleration.', button: null };
 
@@ -1203,25 +1223,23 @@ void main() { vec4 t = texture2D(map, gl_PointCoord); float a = t.a * vA; if (a 
           for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) A.box(.2, .2, .2, sx * h, sy * h, sz * h, mc);
           return A.build();
         })());
-        function boxUV(sx, sy, sz) {
-          const g = new THREE.BoxGeometry(sx, sy, sz), p = g.attributes.position, n = g.attributes.normal, uv = g.attributes.uv;
-          for (let i = 0; i < p.count; i++) {
-            const nx = Math.abs(n.getX(i)), ny = Math.abs(n.getY(i));
-            uv.setXY(i, (nx > .5 ? p.getZ(i) : p.getX(i)) * .5, (ny > .5 ? p.getZ(i) : p.getY(i)) * .5);
-          }
-          return own(g);
-        }
         const obstacles = [], grid = makeGrid(AX, AZ, 1.1);
         let gridDirty = true;
+        const blockA = { stone: acc(), steel: acc(), trim: acc() };
         function addBlock(cx, cz, sx, sz, kind) {
-          const hh = kind === 'steel' ? 1.5 : 1.8, m = new THREE.Mesh(boxUV(sx, hh, sz), kind === 'steel' ? steelM : stoneM);
-          m.position.set(cx, hh / 2, cz); m.castShadow = m.receiveShadow = true; scene.add(m);
-          const tm = new THREE.Mesh(own(trimGeo(kind, sx, hh, sz)), kind === 'steel' ? gunM : stoneM); tm.castShadow = tm.receiveShadow = true; m.add(tm);
-          obstacles.push({ x0: cx - sx / 2, x1: cx + sx / 2, z0: cz - sz / 2, z1: cz + sz / 2, kind, mesh: m });
+          const hh = kind === 'steel' ? 1.5 : 1.8, tg = trimGeo(kind, sx, hh, sz);
+          blockA[kind].box(sx, hh, sz, cx, hh / 2, cz);
+          blockA[kind === 'steel' ? 'trim' : 'stone'].add(tg, cx, hh / 2, cz);
+          tg.dispose();
+          obstacles.push({ x0: cx - sx / 2, x1: cx + sx / 2, z0: cz - sz / 2, z1: cz + sz / 2, kind, mesh: null });
         }
         addBlock(0, -AZ - .6, AX * 2 + 2.4, 1.2, 'stone'); addBlock(0, AZ + .6, AX * 2 + 2.4, 1.2, 'stone');
         addBlock(-AX - .6, 0, 1.2, AZ * 2, 'stone'); addBlock(AX + .6, 0, 1.2, AZ * 2, 'stone');
         LAYOUT.forEach(b => addBlock(...b));
+        for (const [k, mat] of [['stone', stoneM], ['steel', steelM], ['trim', gunM]]) {
+          const m = new THREE.Mesh(own(blockA[k].build(.5)), mat);
+          m.castShadow = m.receiveShadow = true; scene.add(m);
+        }
         function addCrate(x, z) {
           const m = new THREE.Mesh(crateG, crateM); m.position.set(x, .8, z); m.castShadow = m.receiveShadow = true; scene.add(m);
           const fm = new THREE.Mesh(crateFrameG, gunM); fm.castShadow = true; m.add(fm);
