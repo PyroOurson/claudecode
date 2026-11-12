@@ -1616,7 +1616,7 @@ const MXV = {
       { k: 'Games that failed to load', v: stN(D.game_fail), n: +D.game_fail || 0 }
     ]);
     const lim = (D.limits || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Limit', 'Requests', 'Times at the limit', 'Players'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${D.limits.map(l => `<tr data-k="lm:${esc(l.k)}"><td>${esc(auT(AB_T[l.k] || l.k))}</td><td>${stN(l.n)}</td><td>${+l.full ? adPill(stN(l.full), 'warn') : '0'}</td><td>${stN(l.who)}</td></tr>`).join('')}</tbody></table></div>` : mxNone('Nobody came close to a limit.');
-    const del = SW.deleted && typeof SW.deleted === 'object' ? Object.values(SW.deleted).reduce((s, v) => s + (+v || 0), 0) : 0;
+    const del = SW.deleted && typeof SW.deleted === 'object' ? Object.values(SW.deleted).reduce((s, v) => s + (typeof v === 'number' ? v : 0), 0) : 0;
     return `<div class="st-card mx-now" id="mxhl">${mxHealthLive()}</div>
     ${kp}
     ${mxChart('mxrt', 'Sessions by route per day', D.by_day || [], [{ k: 'direct', l: 'Direct' }, { k: 'relay', l: 'Relay' }, { k: 'none', l: 'No accounts server' }], { agg: 'sum', wide: true })}

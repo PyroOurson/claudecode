@@ -186,8 +186,6 @@ declare
   r record;
 begin
   perform set_config('statement_timeout', '0', true);
-  delete from public.analytics_events a using public.analytics_events b
-    where a.session_id = b.session_id and a.event = b.event and a.client_at = b.client_at and a.props = b.props and a.id > b.id;
   insert into private.an_link (k, user_id)
     select 's:' || x.session_id, x.user_id
     from (select distinct on (e.session_id) e.session_id, e.user_id from public.analytics_events e where e.user_id is not null order by e.session_id, e.id) x
@@ -198,17 +196,6 @@ begin
   for r in select t.user_id as id from public.test_accounts t union select p.id from public.profiles p where p.role in ('admin', 'owner') loop
     perform private.an_reflag(r.id);
   end loop;
-  update public.analytics_events e set props = e.props - array['lh', 'wd', 'asn', 'city', 'isp']
-    where e.event = 'env_geo' and e.props ?| array['lh', 'wd', 'asn', 'city', 'isp'];
-  update public.analytics_events e set props = e.props - array['sw', 'sh', 'aw', 'ah']
-    where e.event = 'env_scr' and e.props ?| array['sw', 'sh', 'aw', 'ah'];
-  update public.analytics_events e set props = (e.props - 'adb') || case when jsonb_typeof(e.props -> 'langs') = 'array' and jsonb_array_length(e.props -> 'langs') > 1 then jsonb_build_object('langs', jsonb_build_array(e.props -> 'langs' -> 0)) else '{}'::jsonb end
-    where e.event = 'env_dev' and (e.props ? 'adb' or (jsonb_typeof(e.props -> 'langs') = 'array' and jsonb_array_length(e.props -> 'langs') > 1));
-  update public.analytics_events e set props = e.props - array['mdist', 'wheel', 'scr', 'copy', 'rsz']
-    where e.event = 'sess_sum' and e.props ?| array['mdist', 'wheel', 'scr', 'copy', 'rsz'];
-  update public.analytics_events e set props = e.props - array['ck', 'dnt', 'gpc', 'pdf', 'sab', 'coi', 'swk', 'notif', 'vib', 'bt', 'usb', 'ser', 'hid', 'xr', 'midi', 'share', 'wl', 'voices', 'mic', 'cam', 'spk', 'sr', 'ach',
-      'h264', 'vp9', 'av1', 'hevc', 'mtex', 'glx', 'gpuv', 'quota', 'used', 'qb', 'pers', 'heap', 'bat', 'batb', 'chg', 'bench', 'benchb', 'loc', 'cal', 'num', 'hc', 'fdw', 'hist', 'plat', 'vend', 'ua']
-    where e.event = 'env_caps' and e.props ?| array['ua', 'bat', 'mic', 'cam', 'bench', 'quota', 'dnt', 'gpc', 'plat', 'vend', 'hist', 'loc', 'voices', 'heap', 'ck'];
 end;
 $$;
 
@@ -1348,6 +1335,7 @@ create table if not exists private.housekeep (
 alter table private.housekeep enable row level security;
 revoke all on table private.housekeep from public, anon, authenticated;
 insert into private.housekeep (id) values (1) on conflict (id) do nothing;
+alter table private.housekeep add column if not exists retention boolean not null default false;
 
 create or replace function private.retention_sweep()
 returns jsonb
@@ -1365,24 +1353,29 @@ begin
     return null;
   end if;
   update private.housekeep set at = now() where id = 1;
-  delete from public.analytics_events where created_at < now() - interval '400 days';
-  get diagnostics v_n = row_count; r := r || jsonb_build_object('analytics_events', v_n);
-  delete from private.an_link where k like 's:%' and at < now() - interval '400 days';
-  get diagnostics v_n = row_count; r := r || jsonb_build_object('an_link', v_n);
-  delete from public.chat_log where created_at < now() - interval '365 days';
-  get diagnostics v_n = row_count; r := r || jsonb_build_object('chat_log', v_n);
-  delete from private.presence_ticks where at < now() - interval '400 days';
-  get diagnostics v_n = row_count; r := r || jsonb_build_object('presence_ticks', v_n);
-  delete from public.presence_samples where at < now() - interval '2 years';
-  get diagnostics v_n = row_count; r := r || jsonb_build_object('presence_samples', v_n);
+  r := r || jsonb_build_object('retention', coalesce((select h.retention from private.housekeep h where h.id = 1), false));
+  if (r ->> 'retention')::boolean then
+    delete from public.analytics_events where created_at < now() - interval '400 days';
+    get diagnostics v_n = row_count; r := r || jsonb_build_object('analytics_events', v_n);
+    delete from private.an_link where k like 's:%' and at < now() - interval '400 days';
+    get diagnostics v_n = row_count; r := r || jsonb_build_object('an_link', v_n);
+    delete from public.chat_log where created_at < now() - interval '365 days';
+    get diagnostics v_n = row_count; r := r || jsonb_build_object('chat_log', v_n);
+    delete from private.presence_ticks where at < now() - interval '400 days';
+    get diagnostics v_n = row_count; r := r || jsonb_build_object('presence_ticks', v_n);
+    delete from public.presence_samples where at < now() - interval '2 years';
+    get diagnostics v_n = row_count; r := r || jsonb_build_object('presence_samples', v_n);
+  end if;
   delete from private.presence_now where at < now() - interval '10 minutes';
   get diagnostics v_n = row_count; r := r || jsonb_build_object('presence_now', v_n);
   delete from private.rate_hits where at < now() - interval '8 days';
   get diagnostics v_n = row_count; r := r || jsonb_build_object('rate_hits', v_n);
   delete from private.analytics_rate where w < now() - interval '3 hours';
   get diagnostics v_n = row_count; r := r || jsonb_build_object('analytics_rate', v_n);
-  delete from public.diag_events where created_at < now() - interval '30 days';
-  get diagnostics v_n = row_count; r := r || jsonb_build_object('diag_events', v_n);
+  if (r ->> 'retention')::boolean then
+    delete from public.diag_events where created_at < now() - interval '30 days';
+    get diagnostics v_n = row_count; r := r || jsonb_build_object('diag_events', v_n);
+  end if;
   delete from private.sync_batches where created_at < now() - interval '60 days';
   get diagnostics v_n = row_count; r := r || jsonb_build_object('sync_batches', v_n);
   delete from private.friend_declines where at < now() - interval '7 days';

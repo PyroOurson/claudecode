@@ -10,8 +10,17 @@ Open the project at https://supabase.com/dashboard, **SQL Editor** > **New query
 |---|---|---|
 | 1 | `round16_moderation.sql` | Only if you have not run it before (chat moderation log). Running it again is harmless |
 | 2 | `round17_platform.sql` | Diagnostics for test accounts, role-based rate limits, online-status heartbeat, 4-character usernames |
-| 3 | `round18_ideas.sql` | Idea box, file attachments in messages and tickets |
-| 4 | `round19_analytics.sql` | Dashboard live numbers, new analytics, retention clean-up |
+| 3 | `round18_ideas.sql` | Idea box, file attachments in ideas, messages and tickets (three private storage buckets with size and type limits) |
+| 4 | `round19_analytics.sql` | Dashboard live numbers, new analytics, duplicate protection for new events |
+
+Keep this order. Some later files replace functions from earlier ones, so if you ever re-run one file, re-run the files after it too. All four were applied twice in this order on the staging copy without errors.
+
+None of these four files deletes or rewrites existing rows of yours. `round19` only adds flags to existing analytics rows (which events came before login, which belong to staff or test accounts) so the dashboard can leave them out.
+
+Two things that do remove data are separate and are your decision:
+
+- **One-time clean-up of old analytics, optional:** `round19b_analytics_cleanup.sql`. It deletes exact duplicate analytics rows (the old site stored the last batch of every visit twice; on staging 1,198 rows became 590) and removes fields the site no longer collects (city, internet provider, battery, device counts and similar) from old events. Without it, historical dashboard numbers stay inflated by the duplicates. It cannot be undone, so export the `analytics_events` table first if you want a copy.
+- **Automatic deletion of old records, off by default:** to switch it on, run `update private.housekeep set retention = true where id = 1;`. Once a day it then deletes analytics events older than 400 days, chat moderation log entries older than 365 days, online-status history older than 400 days (samples older than 2 years) and test-account diagnostics older than 30 days. The Privacy Policy states these periods, so either switch this on or tell me the periods you want and I will change the policy text to match. To switch it off again set it to `false`.
 
 What changes for players as soon as `round17` runs, even before the new site is deployed: ordinary rate limits are three times higher, owners and admins are no longer rate limited (except on the security-sensitive actions), and new usernames need at least 4 characters (existing shorter ones keep working).
 

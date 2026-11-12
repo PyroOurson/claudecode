@@ -777,6 +777,7 @@ ClaudeScripts/gameplay-site/source/w/supabase/round16_moderation.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round17_platform.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round18_ideas.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round19_analytics.sql
+ClaudeScripts/gameplay-site/source/w/supabase/round19b_analytics_cleanup.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round5_admin.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round6.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round7_owner.sql
