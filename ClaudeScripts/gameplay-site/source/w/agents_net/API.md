@@ -22,6 +22,8 @@ Star topology through PeerJS; the party creator's device is the connection hub a
 
 ## Opening the party
 `const r = await api.net.room({ title, sizes, defaultSize, min = 2, max, bots, name })`
+
+The party window opens on a first screen with two choices, "Host a party" and "Join a party". Host leads to a choice between Private (a 4-character code to share) and Public (listed for everyone, no code shown). Join shows the public parties that are open for this game, each with a Join button, and a box for a private code. Pass `intent: 'host'` or `intent: 'join'` to skip the first screen. Connections use two independent routes (the PeerJS signalling server, and the site's own realtime backend with a relayed fallback when WebRTC is not possible); the game does not need to know which one is in use. A relayed party is slower: `fast` messages are thinned for it, so keep sending state in a way that tolerates dropped fast messages.
 - `sizes`: party sizes the leader can pick, e.g. `[2, 3, 4]` (2..16). Without `sizes`: every size from `min` to `max` (default `max` 4, up to 16). A 16 seat game (Werewolf, Kahoot) passes `sizes` or `max` up to 16 and the selector follows. `defaultSize`: preselected size (default: the largest; the last size picked for this game is remembered).
 - `min`: players needed before Play is enabled (default 2). With bots on, Play is enabled with any number of players (the leader alone too).
 - `bots: true`: the game can fill empty seats with bots, so the GUI shows the bots switch (default off).

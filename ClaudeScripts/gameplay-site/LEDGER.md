@@ -8,56 +8,59 @@ Last updated: see the git log of this file.
 
 ## How things were tested
 
-- Staging backend: local Supabase (Postgres, auth, realtime, storage) with `schema.sql`, `round16`, `round17` applied. Staging build: `t/stage.py`. Local server with the hosting headers: `t/serve.js`.
-- Browser tests in `source/t/tests/`: `load_sequence.js`, `gate_locked.js`, `party.js`.
-- Test accounts on staging: `gp_tester`, `gp_tester2` (flagged as test accounts, diagnostics on), plus ordinary users and an owner.
+- Staging backend: a local Supabase stack (Postgres, accounts, live updates, storage) with the full `schema.sql` including rounds 16 to 19. Staging build: `t/stage.py`. Local server with the hosting headers: `t/serve.js`.
+- Browser tests in `source/t/tests/`, all passing on the final merged build: `load_sequence.js` (4 scenarios), `gate_locked.js` (4), `party.js` (12 scenarios, two browsers), `fixes.js` (7 scenarios), `announce.js`.
+- Test accounts on staging: `gp_tester`, `gp_tester2` (diagnostics on), ordinary users and an owner.
 - Production: read-only. The live page was opened anonymously to observe the load sequence; nothing was written.
+- The test browser renders without a graphics card. Two things followed from that and are worth knowing: the site's own one-time graphics probe froze pages for minutes there (fixed, see bug 10), and screenshots of 3D games could not be judged for smoothness.
 
 ## Section 8: test account and diagnostics
 
 | Item | Status | How verified |
 |---|---|---|
-| Diagnostics recorder (errors, console logs, requests and responses, websocket frames, WebRTC connection events and data-channel packets, party connection steps, inputs, frame rate, load timings, storage keys, realtime client logs) | Done | Recorded a session as the staging test account, read the events back from the database and from `Ameplay.diag.dump()` |
-| Recording only for test accounts | Done | Server refuses uploads from any account not in `test_accounts` (HTTP 403 seen for the owner account); recorder stays off for ordinary users |
+| Diagnostics recorder (errors, console logs, requests and responses, websocket frames, WebRTC connection events and data-channel packets, party connection steps on both sides, inputs, frame rate, load timings, realtime client logs) | Done | Recorded sessions as the staging test accounts, read the events back from the database and in the page. The recorder is how the party and presence bugs below were found |
+| Recording only for accounts the owner switches on | Done | The server refuses uploads from any other account (HTTP 403 seen for the owner account); the recorder is switched off on sign-out; typed passwords and session tokens are redacted |
 | On-page indicator, download, full packet capture switch | Done | Seen in the page (red REC chip) |
-| Production test account | Blocked | Sign-up on production needs a confirmation email, and only the owner can create test accounts in the admin dashboard. After `round17_platform.sql` is applied, any account created with "test account" in the admin dashboard gets diagnostics automatically |
-| Diagnostics viewer in the admin dashboard | In progress | Admin workstream |
-| More analytics, accuracy audit, admin metrics | In progress | Admin workstream |
+| Diagnostics viewer in the admin dashboard | Done | Sessions list, timeline with filters, "problems only", search, download, delete, and the "Recorded accounts" panel; seen with the sessions of the staging test accounts |
+| More analytics, accuracy, useful dashboard | Done | 37 dashboard figures compared with independent hand-written SQL after timed plays, a bounce, errors, a real two-player party and a failed join: 0 differences. Collection was reduced (battery, device counts, city, internet provider and similar are no longer collected). The last batch of every visit used to be stored twice; new events can no longer be duplicated |
+| Production test account | Blocked | Only the owner can create one (GOLIVE step 4). Until then nothing has been checked on the real site |
 
 ## Section 4: multiplayer, website, functionality
 
 | Item | Status | How verified |
 |---|---|---|
-| Load sequence: no password flash, no login flash, right page first | Done | `load_sequence.js`: 5 scenarios pass (new visitor, signed-out returning, signed-in fast and slow backend, expired session); `gate_locked.js`: locked gate shows skeleton then the form once, wrong and right password, reload |
-| Skeleton screens | Partly | Gate skeleton now matches what comes next (site grid for signed-in users, card for others); expired-session re-check waits behind a skeleton. Other slow spots are in the settings/UX workstream |
-| Party connectivity: second signalling route, relayed fallback, TURN | Partly | Two routes built (PeerJS and the site's own realtime backend), relayed data fallback when WebRTC is impossible, TURN credential endpoint for the Cloudflare worker. Two-browser tests on staging in progress. TURN needs the owner to add two secrets to the worker (see `server/README.md`) |
-| Cancelling connection attempts, refresh and close | Partly | Root cause fixed (a join attempt saved itself before it succeeded and was resumed after a refresh; Leave did not clear it). Tests in `party.js` (F, G, H) in progress |
-| Public party has no code; no public/private button inside; Join shows available parties | Done | Two-browser run on staging: host picks Public, lobby shows "Public" with no code and no switch; guest clicks "Join a party", sees the host's party in the list and joins |
-| Public parties vanished from the list after about 10 seconds | Done | Found with the diagnostics: the host re-announced every 3 s and the realtime server closed the channel ("Client presence rate limit exceeded"). Announcements are now sent only on change, throttled, and the channel is reopened if closed. Verified in the two-browser run |
-| Presence: online users shown online | Partly | Same rate-limit flaw existed on the "online" channel (fixed the same way), background-tab heartbeats moved to a worker, and a database heartbeat was added as a second source. Two-browser check with the realtime socket blocked still to run |
-| Admin dashboard updates every second | In progress | Admin workstream |
-| Announcements: no replay, not on login or sign-up | Partly | Built (banner only repaints on change, animates only the first time it is seen, hidden while signed out). Needs a staging run with a real announcement |
-| Login and sign-up: Google button prominent, username picker, 4-character minimum | Done | Screenshots at desktop and phone size with Google enabled; live "At least 4 characters", "Available", "Already taken" with suggestions; server rule checked (`abc` refused, `abcd` accepted). Username change window: built, not yet looked at |
+| Load sequence: no password flash, no login flash, right page first | Done | `load_sequence.js` and `gate_locked.js`, all scenarios pass (new visitor, signed-out returning, signed-in with fast and slow backend, expired session, locked gate, wrong and right password, reload) |
+| Skeleton screens | Done | Gate skeleton matches what comes next; game loading shows the cover, name and a progress bar; stats, friends and messages keep their skeletons |
+| Party connectivity: two independent routes and a relayed fallback | Done on staging, not testable on real networks from here | `party.js`: normal route; signalling server blocked for the guest (second route, direct link); signalling blocked and WebRTC unavailable (fully relayed: join, chat, game start); host without the signalling server and guest without WebRTC. The TURN relay for strict firewalls needs two secrets on the Cloudflare worker (GOLIVE step 2) and could not be exercised from this sandbox |
+| Cancelling connection attempts, refresh and close | Done | `party.js` F (unknown code: clear error after 5.7 s, nothing after a refresh), G (Cancel stops everything at once), H (refresh during a failing join does not resume it), I (guest refresh returns to the same seat), J (host refresh keeps the code, guest reconnects), K (guest closes the tab: shown away at once, seat freed after the refresh allowance), L (guest offline for 9 s reconnects) |
+| Public party has no code; no public/private button inside; Join shows available parties | Done | `party.js` A and screenshots: host picks Public, lobby shows "Public" with no code and no switch; "Join a party" lists the available parties with a Join button, plus a box for a private code |
+| Public parties vanished from the list after about 10 seconds | Done | Found with the diagnostics (the realtime server closed the channel for exceeding its presence rate limit). Fixed and covered by `party.js` A |
+| Online users shown online | Done | Online status now comes from a server heartbeat instead of the live channel that kept being closed. `fixes.js` S7: a friend sees "Playing ..." within one heartbeat and offline after the player leaves; S5: two tabs of one player no longer fight over the status |
+| Admin dashboard updates every second | Done | One live call per second (online players and their game, counters, recent errors, party events). Seen with a second browser: game shown after 0.9 s, new sign-up after 0.6 s, tab close after 0.4 s |
+| Announcements: no replay, not on login or sign-up | Done | `announce.js`: hidden on login and sign-up (banner and alert), shown once signed in, animated only the first time, not rebuilt on focus, refresh or navigation |
+| Login and sign-up: Google button prominent, username picker, 4-character minimum, no warnings | Done | Screenshots at desktop and phone size; live availability with suggestions; server rule checked (`abc` refused, `abcd` accepted). Google sign-in itself could not be exercised (disabled on staging) |
 | Rate limits raised; staff exempt on the server; sensitive limits unchanged | Done | On staging through the API: ordinary user stopped at 120 searches a minute (was 40), owner not limited, data export still 5 an hour even for the owner |
-| Game covers consistent | In progress | Settings/UX workstream |
-| Hidden bugs | Ongoing | See "Bugs found" below |
+| Game covers consistent | Done | All 168 games now have a cover in one format and composition (31 were redrawn from the art already in the repository); full-grid before and after screenshots compared |
+| Hidden bugs | Done as far as found | See "Bugs found" and the code review table below |
 
 ## Section 5: user experience
 
-| Item | Status |
-|---|---|
-| Idea box with image and file uploads | In progress (ideas workstream) |
-| Image and file uploads in messages elsewhere | In progress (ideas workstream) |
-| Settings page redesign, useless controls removed | In progress (settings workstream) |
-| No "How to play" under games | In progress (settings workstream) |
-| First-time student pass | In progress (settings workstream) |
+| Item | Status | How verified |
+|---|---|---|
+| Idea box with image and file uploads | Done | Lightbulb in the top bar; five idea types, title, description, up to 4 attachments; "My ideas" with status and staff reply; admin Ideas tab. On staging: all types sent with pictures, PDF, ZIP and text files; wrong types, oversized and empty files refused with clear messages; another user cannot read them |
+| Files in messages elsewhere | Done | Direct messages and support tickets accept files (button, drop, paste) with stated limits; downloads verified byte for byte; senders can delete. Party lobby chat stays text only |
+| Settings page redesign, useless controls removed | Done | Same window and navigation, now with search, seven grouped sections and a danger zone with typed confirmation. Removed controls and why are listed in the pull request. Every switch was exercised; two existing defects fixed ("Sync now" threw an error; "Download my data" closed the window before its message) |
+| No "How to play" under games | Done | Replaced by a compact strip (genre, players, length, your stats) and "More like this"; screenshot |
+| First-time student pass | Partly | Login, home, game page, settings, idea box and party flow were walked at desktop and phone size. Not done: Safari, Firefox, real phones |
+| Sidebar | Unchanged on purpose | A one-click sidebar was built and then reverted, because the brief says navigation stays the same. It is offered as a suggestion |
 
 ## Section 6: legal pages
 
 | Item | Status | How verified |
 |---|---|---|
-| Terms, Privacy, Cookies about 3x longer | Done | Measured with tags stripped: Terms 5,936 to 17,754 words, Privacy 6,243 to 18,597, Cookies 5,821 to 17,275. Rendered in a browser at desktop and phone size |
-| Points for a lawyer, and code that conflicts with the policies | Listed in the final report | |
+| Terms, Privacy, Cookies about 3x longer | Done | Measured with tags stripped: Terms 5,936 to 18,318 words, Privacy 6,243 to 22,419, Cookies 5,821 to 18,883 |
+| Policies match what the code does | Done, with two conditions | A second pass rewrote every passage that described collection or behaviour the code no longer has, and the consent banner now says what is really collected. Two statements depend on owner choices at go-live (deleting old analytics fields, automatic deletion periods): see GOLIVE step 1 |
+| Points for a lawyer | Listed in the pull request and final report | |
 
 ## Section 7: games
 
@@ -81,17 +84,23 @@ Machine limits apply to everything below: this sandbox renders WebGL in software
 | 3D arcade (13 files) | In progress | |
 | Catalogue of 200 | Not done: 168 live | See the final report for the choice the owner has to make |
 
-## Bugs found so far (beyond the list in the brief)
+## Bugs found (beyond the list in the brief)
 
-1. Public parties disappear from the public list after about 10 seconds (presence rate limit). Fixed.
-2. The same flaw can drop a user's "online" status. Fixed.
-3. A failed or cancelled party join is resumed after a refresh. Fixed.
-4. The gate page's loading skeleton used the "wrong password" shake animation (two animations shared one name). Fixed.
+1. Public parties disappeared from the public list after about 10 seconds (presence rate limit). Fixed, tested.
+2. The same flaw could drop a user's "online" status. Fixed by moving presence to a server heartbeat, tested.
+3. A failed or cancelled party join was resumed after a refresh. Fixed, tested.
+4. The gate page's loading skeleton used the "wrong password" shake animation. Fixed.
 5. The login card replayed its entry animation and morphed from login to sign-up on first paint. Fixed.
-6. A WebGL context was created at every session start only to read the graphics card name (slow on weak machines). Now cached.
-7. `Permissions-Policy` header listed an unknown feature (`bluetooth`), logging a console warning on every load. Fixed in `deploy.py`.
-8. `schema.sql` does not contain `round16_moderation.sql`. To be merged into the cumulative file.
-9. Diagnostics could keep part of a session token in websocket frames. Fixed before any production use.
+6. `Permissions-Policy` header listed an unknown feature, logging a console warning on every load. Fixed in `deploy.py`.
+7. `schema.sql` did not contain `round16_moderation.sql`, and could not be re-run on an up-to-date database at all (it stopped at the first function whose shape had changed). Both fixed; the whole file now applies cleanly on staging.
+8. Diagnostics could keep part of a session token, and the password typed for a username login. Fixed before any production use.
+9. A refreshed party guest could come back as a second copy of themselves ("name 2") while the old seat lingered. Fixed, tested (`party.js` I).
+10. Once per page load the analytics code created a throwaway 3D graphics context and destroyed it synchronously. On machines that draw 3D in software this froze the whole page (measured here: 93 to 147 seconds of no timers, no input, no network handling), which also broke party joins in progress. The probe now runs once per browser, off the main thread, and is cached.
+11. "Sync now" in settings threw an error on every click; "Download my data" hid its own result. Fixed.
+12. The admin tab bar could not hold more than six tabs. Fixed.
+13. Storage rate limits written inside storage policies never took effect (the storage service rolls back its permission probe), so the upload limit for pictures in messages was not enforced. Replaced by limits that count stored files.
+14. In several online games a host tab in the background froze or slowed the match for everyone; a refreshed guest could stick on "Connected, waiting". Fixed in the party and word games; the action games are in a second pass.
+15. Game-level bugs are listed per group in Section 7.
 
 ## Code review of the portal (27 findings from an independent read of the client code)
 
@@ -99,18 +108,18 @@ Status of each. "Verified" means a browser test on staging reproduces the scenar
 
 | # | Finding | Status |
 |---|---|---|
-| 1 | A device with an old save could overwrite a newer cloud save | VERIFY_S1 |
-| 2 | A second account on the same browser inherited the first one's saves, plays and display name; a deleted account's history went to the next sign-in | VERIFY_S2 |
-| 3 | A party guest could join under the host's id and get leader powers | VERIFY_S3 |
-| 4 | Esc while rebinding a key left capture armed, so the next key pressed in the game was rebound | VERIFY_S4 |
+| 1 | A device with an old save could overwrite a newer cloud save | Verified (`fixes.js` S1) |
+| 2 | A second account on the same browser inherited the first one's saves, plays and display name; a deleted account's history went to the next sign-in | Verified (S2) |
+| 3 | A party guest could join under the host's id and get leader powers | Verified (S3) |
+| 4 | Esc while rebinding a key left capture armed, so the next key pressed in the game was rebound | Verified (S4) |
 | 5 | Two tabs double-counted plays and playtime and reverted each other's settings | Fixed, not exercised |
 | 6 | A failed or cancelled invite link kept being retried when the lobby was reopened | Fixed, not exercised |
 | 7 | Overlapping realtime nudges to the same user were dropped (late messages, typing, read marks) | Fixed, not exercised |
 | 8 | Message thread refreshes were silently skipped while another was in flight | Fixed, not exercised |
 | 9 | With a party lobby open, Enter and Esc stopped working in chat, search and settings fields | Fixed, not exercised |
-| 10 | Two tabs fought over the online status; closing one showed the player offline | VERIFY_S5 |
-| 11 | "Delete my data" wrote data back while the page reloaded | VERIFY_S6 |
-| 12 | The last analytics batch of every visit was stored twice | Handed to the analytics workstream |
+| 10 | Two tabs fought over the online status; closing one showed the player offline | Verified (S5) |
+| 11 | "Delete my data" wrote data back while the page reloaded | Verified (S6) |
+| 12 | The last analytics batch of every visit was stored twice | Fixed on the server; a session re-sent in full produced no duplicates |
 | 13 | Timed-out writes were replayed through the relay (duplicate messages, and a possible cause of surprise sign-outs) and uploads were cut at 15 s | Fixed, not exercised |
 | 14 | Messages were marked as read while the tab was hidden | Fixed, not exercised |
 | 15 | A favourites sync could undo a click made a moment earlier | Fixed, not exercised |
