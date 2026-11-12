@@ -1211,10 +1211,11 @@ Who was the first woman to win a Nobel Prize?|Marie Curie|Mother Teresa|Jane Add
       function sendProgress(force) {
         if (!R || !R.online || M.role !== 'guest' || R.phase !== 'race') return;
         const n = performance.now();
-        if (!force && n - R.lastSend < 180) return;
-        R.lastSend = n;
+        const c = curC();
+        if (!force && n - R.lastSend < (c === R.sentC && tx.keys === R.sentK ? 1000 : 180)) return;
+        R.lastSend = n; R.sentC = c; R.sentK = tx.keys;
         const me = R.racers[R.me];
-        api.net.send({ t: 'p', c: curC(), k: tx.keys, e: tx.errs, f: me.fin ? Math.round(me.fin * 1000) : 0 }, !me.fin);
+        api.net.send({ t: 'p', c, k: tx.keys, e: tx.errs, f: me.fin ? Math.round(me.fin * 1000) : 0 }, !me.fin);
       }
 
       function finishTyping() {
@@ -1373,7 +1374,7 @@ ${tl ? `<p class="tr-note">Series wins: ${tl}</p>` : ''}<p class="tr-note">${esc
         showPane(`<div class="tr-box2"><p class="tr-kick">Typing race</p><h3 class="tr-big">Typeracer</h3>
 <p class="tr-p">Type the passage as fast as you can. Every typo turns red and must be fixed before you can move on. Your best: <b>${cfg.best || '-'}</b> wpm.</p>
 <p class="tr-sec">Practice ghosts (set their speed)</p><div class="tr-gh">${rows}</div>
-<div class="tr-chips"><button data-a="addg"${cfg.gh.length >= 7 ? ' disabled' : ''}>+ Add ghost</button><button data-a="pre" data-v="25,40">Easy</button><button data-a="pre" data-v="40,60,80">Medium</button><button data-a="pre" data-v="70,95,120">Hard</button><button data-a="pre" data-v="${cfg.best || 40}">My best (${cfg.best || 40})</button></div>
+<div class="tr-chips"><button data-a="addg"${cfg.gh.length >= 7 ? ' disabled' : ''}>+ Add ghost</button><button data-a="pre" data-v="25,40">Easy</button><button data-a="pre" data-v="40,60,80">Medium</button><button data-a="pre" data-v="70,95,120">Hard</button><button data-a="pre" data-v="140,160,180">Hardest</button><button data-a="pre" data-v="${cfg.best || 40}">My best (${cfg.best || 40})</button></div>
 <p class="tr-sec">Passage length</p>${seg('len', [['any', 'Any'], ['s', 'Short'], ['m', 'Medium'], ['l', 'Long']])}
 <div class="tr-btns"><button class="tr-bb ora big" data-a="go">Start race</button></div>
 <div class="tr-btns"><button class="tr-bb ghost" data-a="online">Race online (2-8)</button></div></div>`, onMenuAct);
@@ -1446,6 +1447,7 @@ ${tl ? `<p class="tr-note">Series wins: ${tl}</p>` : ''}<p class="tr-note">${esc
       function onData(d, from) {
         if (!d || !d.t || !api.alive || M.mode !== 'online') return;
         if (api.net.role === 'host') {
+          if (d.t === 'sync') { if (M.role === 'host' && R) resend(from); return; }
           if (d.t !== 'p' || !R || M.role !== 'host' || R.phase !== 'race') return;
           const r = R.racers.find(x => x.id === from);
           if (!r || r.left || r.fin != null) return;
@@ -1484,6 +1486,13 @@ ${tl ? `<p class="tr-note">Series wins: ${tl}</p>` : ''}<p class="tr-note">${esc
         }
       }
 
+      function resend(id) {
+        const i = R.racers.findIndex(x => x.id === id);
+        if (i < 1) return;
+        R.racers[i].left = false;
+        if (R.ended) api.net.sendTo(id, { t: 'end', res: R.lastRes || makeRes(), tally: H.tally, round: R.round });
+        else sendGo(id, i, Math.round(R.racers[i].c));
+      }
       function hookNet() {
         if (M.hooked) return;
         M.hooked = true;
@@ -1495,11 +1504,7 @@ ${tl ? `<p class="tr-note">Series wins: ${tl}</p>` : ''}<p class="tr-note">${esc
         });
         api.net.on('rejoin', p => {
           if (M.mode !== 'online' || M.role !== 'host' || !p || !R) return;
-          const i = R.racers.findIndex(x => x.id === p.id);
-          if (i < 1) return;
-          R.racers[i].left = false;
-          if (R.ended) api.net.sendTo(p.id, { t: 'end', res: R.lastRes || [], tally: H.tally, round: R.round });
-          else sendGo(p.id, i, Math.round(R.racers[i].c));
+          resend(p.id);
         });
         api.net.on('lobby', () => { if (M.mode === 'online' && M.role === 'guest') startOnline(); });
         api.net.on('close', reason => {
@@ -1545,11 +1550,17 @@ ${tl ? `<p class="tr-note">Series wins: ${tl}</p>` : ''}<p class="tr-note">${esc
             });
           } else { if (!sv) { H.round = 0; H.tally = {}; } hostBegin(); }
         } else {
-          showPane('<div class="tr-box2"><p class="tr-kick">Online</p><h3 class="tr-big">Connected!</h3><p class="tr-p">The race starts in a moment. Get your fingers ready.</p><div class="tr-btns"><button class="tr-bb ghost sm" data-a="leave">Leave</button></div></div>', a => { if (a === 'leave') leaveOnline(); });
+          if (!(R && R.online)) showPane('<div class="tr-box2"><p class="tr-kick">Online</p><h3 class="tr-big">Connected!</h3><p class="tr-p">The race starts in a moment. Get your fingers ready.</p><div class="tr-btns"><button class="tr-bb ghost sm" data-a="leave">Leave</button></div></div>', a => { if (a === 'leave') leaveOnline(); });
+          const ask = n => api.timeout(() => {
+            if (tok !== M.tok || M.role !== 'guest' || (R && R.online)) return;
+            api.net.send({ t: 'sync' });
+            if (n < 20) ask(n + 1);
+          }, n ? 3000 : 1200);
+          ask(0);
         }
       }
 
-      api.loop(() => {
+      const frame = () => {
         if (!R) return;
         const now = performance.now(), gap = lastNow ? now - lastNow : 0;
         lastNow = now;
@@ -1602,8 +1613,10 @@ ${tl ? `<p class="tr-note">Series wins: ${tl}</p>` : ''}<p class="tr-note">${esc
             else if (rt > 300 && !R.ended) showResults(makeRes(), null, 0);
           }
         } else if (R.phase === 'done' && R.online && M.role === 'host' && !R.lastRes) R.lastRes = makeRes();
-        draw(now / 1000);
-      });
+        if (!document.hidden) draw(now / 1000);
+      };
+      api.loop(frame);
+      api.interval(() => { if (document.hidden && R && R.online) frame(); }, 250);
 
       q('.tr-track').addEventListener('pointerdown', () => setTimeout(focusIn, 0));
       root._tr = { get R() { return R; }, get tx() { return tx; }, M, H, cfg, startSolo, curC, showMenu };
@@ -1644,11 +1657,11 @@ ${tl ? `<p class="tr-note">Series wins: ${tl}</p>` : ''}<p class="tr-note">${esc
   const svgI = (d, cls) => `<svg class="${cls || ''}" viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" fill="currentColor" fill-rule="evenodd"/></svg>`;
   const chrSvg = i => `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="23.500" fill="${TC[i].col}"/><circle cx="24" cy="28" r="14" fill="#ffd9b8"/><circle cx="18.500" cy="28" r="1.900" fill="#1f2937"/><circle cx="29.500" cy="28" r="1.900" fill="#1f2937"/><path d="M19 34q5 4 10 0" stroke="#7c2d12" stroke-width="1.800" fill="none" stroke-linecap="round"/>${TC[i].acc}</svg>`;
   const mkGame = c => {
-    const base = [.5, .66, .82][c.diff] || .66;
+    const base = [.5, .66, .82, .95][c.diff] || .66, top = c.diff === 3;
     return {
       seq: 0, evn: 0, ev: null, gain: null, cfg: { target: c.target, secs: QSECS, diff: c.diff },
       S: c.names.map((n, i) => ({ n, bot: !!c.bots[i], cr: [0, 0, 0, 0, 0, 0], pu: [1, 1, 1, 1], st: 0, r: 0, w: 0 })),
-      sk: TC.map(() => clamp(base + (Math.random() - .5) * .22, .3, .95)),
+      sk: TC.map(() => clamp(base + (Math.random() - .5) * (top ? .06 : .22), .3, top ? .98 : .95)),
       u: TC.map(() => []), turn: rnd(2), ph: 'spin', tm: IDLE_MS, tmax: 0, ct: 0, spin: null, q: null, duel: null, da: [null, null], cel: null, cn: false, win: -1, hold: false
     };
   };
@@ -1657,7 +1670,7 @@ ${tl ? `<p class="tr-note">Series wins: ${tl}</p>` : ''}<p class="tr-note">${esc
   const botT = (G, lo, hi) => { G.ct = G.S[G.turn].bot ? lo + rnd(hi - lo + 1) : 0; };
   const setPh = (G, ph, tm) => { G.ph = ph; G.tm = tm; G.ct = 0; bump(G); };
   const nCr = s => s.cr.reduce((a, b) => a + b, 0);
-  const thinkMs = G => 2200 + rnd(4200) + (2 - G.cfg.diff) * 1300;
+  const thinkMs = G => G.cfg.diff === 3 ? 1900 + rnd(2400) : 2200 + rnd(4200) + (2 - G.cfg.diff) * 1300;
   function pq(G, ci) {
     const bank = TCQ[ci], u = G.u[ci];
     if (u.length >= bank.length) u.length = 0;
@@ -2037,9 +2050,9 @@ ${tl ? `<p class="tr-note">Series wins: ${tl}</p>` : ''}<p class="tr-note">${esc
     css: tcCss,
     mount(root, api) {
       const saved = api.load() || {};
-      const cfg = { diff: [0, 1, 2].includes(saved.diff) ? saved.diff : 1, target: [3, 4, 6].includes(saved.target) ? saved.target : 6, best: +saved.best || 0 };
+      const cfg = { diff: [0, 1, 2, 3].includes(saved.diff) ? saved.diff : 1, target: [3, 4, 6].includes(saved.target) ? saved.target : 6, best: +saved.best || 0 };
       const persist = () => api.save({ diff: cfg.diff, target: cfg.target, best: cfg.best });
-      const DN = ['Easy', 'Medium', 'Hard'];
+      const DN = ['Easy', 'Medium', 'Hard', 'Hardest'];
       root.innerHTML = `<div class="tc-top"><div class="tc-pl"></div><div class="tc-vs"><b class="tc-turn"></b><small class="tc-goal"></small></div><div class="tc-pl r"></div></div>
 <div class="tc-stage"><div class="tc-wheel" hidden><div class="tc-wcv"><button type="button" class="tc-spin" aria-label="Spin the wheel">SPIN</button></div><p class="tc-say"></p></div><div class="tc-pick" hidden></div><div class="tc-q" hidden></div><div class="tc-cl" hidden></div></div>
 <div class="tc-bar"><span class="tc-hint">Spin, answer, collect crowns</span><button type="button" class="tc-btn tc-quit">Quit match</button></div>
@@ -2241,7 +2254,7 @@ ${tl ? `<p class="tr-note">Series wins: ${tl}</p>` : ''}<p class="tr-note">${esc
         const seg = (k, items, cur) => `<div class="tc-seg">${items.map(([v, t]) => `<button type="button" data-a="${k}" data-v="${v}" aria-pressed="${cur === v}">${t}</button>`).join('')}</div>`;
         showPane(`<div class="tc-box"><p class="tc-kick">Quiz showdown</p><h3 class="tc-big">Trivia Crack</h3>
 <ul class="tc-rules"><li>${svgI(TC_CROWN)}<span>Spin the wheel and answer a question from the category it lands on. Keep going while you are right.</span></li><li>${svgI(TC[4].ic)}<span>Three right in a row gives a crown spin. On the crown slice you pick a character to win, or challenge a rival to a duel for one they hold.</span></li><li>${svgI(TC[1].ic)}<span>Bomb, double chance, extra time and skip power-ups help on tough questions.</span></li></ul>
-<p class="tc-sec">CPU level</p>${seg('diff', [[0, 'Easy'], [1, 'Medium'], [2, 'Hard']], cfg.diff)}
+<p class="tc-sec">CPU level</p>${seg('diff', [[0, 'Easy'], [1, 'Medium'], [2, 'Hard'], [3, 'Hardest']], cfg.diff)}
 <p class="tc-sec">Crowns to win</p>${seg('target', [[3, '3'], [4, '4'], [6, 'All 6']], cfg.target)}
 <div class="tc-btns"><button class="tc-bb ora big" data-a="go">Play vs CPU</button></div><div class="tc-btns"><button class="tc-bb ghost" data-a="online">Play online (1v1)</button></div><p class="tc-note">${cfg.best ? 'Best score ' + cfg.best + ' pts · ' : ''}${TCQ.reduce((a, b) => a + b.length, 0)} questions</p></div>`, (a, b) => {
           if (a === 'go') { startSolo(); }
@@ -2344,9 +2357,11 @@ ${tl ? `<p class="tr-note">Series wins: ${tl}</p>` : ''}<p class="tr-note">${esc
 
       function step() {
         if (!G || (mode !== 'solo' && role !== 'host')) return;
-        const now = performance.now(), d = Math.min(now - lastStep, mode === 'solo' ? 100 : 1500);
+        const now = performance.now();
+        let d = Math.min(now - lastStep, mode === 'solo' ? 100 : 120000);
         lastStep = now;
-        tick(G, d); flush();
+        while (d > 0 && G) { const x = Math.min(d, 1000); tick(G, x); d -= x; }
+        flush();
       }
       api.loop(() => { step(); if (V) uiFrame(performance.now()); });
 
@@ -2354,6 +2369,7 @@ ${tl ? `<p class="tr-note">Series wins: ${tl}</p>` : ''}<p class="tr-note">${esc
         if (!d || !d.t || !api.alive || mode !== 'online') return;
         if (api.net.role === 'host') {
           if (d.t === 'a' && G && role === 'host') { act(G, 1, d.a); flush(); }
+          else if (d.t === 'sync' && G && role === 'host') api.net.send({ t: 's', v: mkView(G, 1) });
           return;
         }
         if (d.t === 's' && d.v && d.v.S) { role = 'guest'; V = d.v; rtAt = performance.now(); gotView(); }
@@ -2429,8 +2445,16 @@ ${tl ? `<p class="tr-note">Series wins: ${tl}</p>` : ''}<p class="tr-note">${esc
             showPane(`<div class="tc-box"><p class="tc-kick">Online</p><h3 class="tc-big">Match saved</h3><p class="tc-p">Your last online match is still here. Resume it where you stopped, or start a new one.</p><div class="tc-btns"><button class="tc-bb ora big" data-a="resume">Resume game</button><button class="tc-bb ghost" data-a="new">New match</button></div></div>`, a => { hidePane(); begin(a === 'resume'); });
           } else begin(false);
         } else {
-          newGameUI();
-          showPane('<div class="tc-box"><p class="tc-kick">Online</p><h3 class="tc-big">Connected!</h3><p class="tc-p">The match starts in a moment. Get ready to spin.</p><div class="tc-btns"><button class="tc-bb ghost sm" data-a="leave">Leave</button></div></div>', waitFn);
+          if (!V) {
+            newGameUI();
+            showPane('<div class="tc-box"><p class="tc-kick">Online</p><h3 class="tc-big">Connected!</h3><p class="tc-p">The match starts in a moment. Get ready to spin.</p><div class="tc-btns"><button class="tc-bb ghost sm" data-a="leave">Leave</button></div></div>', waitFn);
+          }
+          const ask = n => api.timeout(() => {
+            if (my !== tok || role !== 'guest' || V) return;
+            api.net.send({ t: 'sync' });
+            if (n < 20) ask(n + 1);
+          }, n ? 3000 : 1200);
+          ask(0);
         }
       }
 

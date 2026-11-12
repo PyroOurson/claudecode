@@ -13,6 +13,16 @@
   const fmtT = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
   const wait = ms => new Promise(r => setTimeout(r, ms));
   const cleanText = (s, n) => String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, n);
+  const RUDE = /(^|[^a-z])(f+u+c*k+|sh+i+t+|b+i+t+c+h+|c+u+n+t+|n+i+gg+(?:e+r+|a+)|f+a+g+(?:g*o+t+)?|r+e+t+a+r+d+(?:e+d+|s+)|wh+o+r+e+|s+l+u+t+|d+i+c+k+h+e+a+d+|p+u+s+s+y+|c+o+c+k+s+u+c+k+|a+s+s+h+o+l+e+|b+a+s+t+a+r+d+|w+a+n+k+|t+w+a+t+|p+o+r+n+o*|r+a+p+e+|k+y+s+|p+e+d+o+|put(?:e|ain)|salop(?:e|ard)|conn(?:ard|asse)|encul[eé]|merde|niqu(?:e|er))(?:s|e[dr]|ing|y)?(?![a-z])/g;
+  const LEET = { 0: 'o', 1: 'i', 3: 'e', 4: 'a', 5: 's', 7: 't', '@': 'a', $: 's' };
+  const tame = s => {
+    s = String(s == null ? '' : s);
+    const n = s.replace(/[A-Z013457@$]/g, c => LEET[c] || c.toLowerCase());
+      let o = '', at = 0, m;
+    RUDE.lastIndex = 0;
+    while ((m = RUDE.exec(n))) { const i = m.index + m[1].length, j = m.index + m[0].length; o += s.slice(at, i) + s[i] + '*'.repeat(j - i - 1); at = j; }
+    return o + s.slice(at);
+  };
 
   const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
   const B64I = {};
@@ -348,7 +358,7 @@
         const pen = new Pen(board.ctx, sc, '#' + colNow(), st.size);
         st.cur = { type: 'p', pen, ints: [], sent: 0, n: 0, k: ++st.k, col: colNow(), size: st.size, p: e.pointerType === 'pen' ? Math.max(.1, e.pressure || .5) : .85, t: e.timeStamp, x, y, id: e.pointerId };
         addPt(st.cur, x, y, st.cur.p);
-        flushT = setTimeout(function f() { flush(); if (st.cur) flushT = setTimeout(f, 45); }, 45);
+        flushT = setTimeout(function f() { flush(); if (st.cur) flushT = setTimeout(f, 125); }, 125);
       } else st.cur = { type: 's', x0: x, y0: y, x, y, id: e.pointerId };
       cursor(null);
     });
@@ -1010,7 +1020,7 @@ ${M.tab === 'pre' ? `<div class="gp-presets">${Object.keys(GMODES).map(k => `<bu
       const s = seatOf(from);
       if (H.phase !== 'play' || s < 0 || d.r !== H.r || H.sub.has(s)) return;
       const rd = H.plan[H.r], c = chainOf(s, H.r);
-      const v = rd.k === 'w' ? cleanText(d.v, 100) || (H.r === 0 ? randPrompt() : '…') : cleanOps(d.v);
+      const v = rd.k === 'w' ? tame(cleanText(d.v, 100)) || (H.r === 0 ? randPrompt() : '…') : cleanOps(d.v);
       H.chains[c][H.r + off()] = { by: s, k: rd.k === 'w' ? 't' : 'd', v };
       H.sub.add(s);
       P.bcast({ t: 'dn', d: [...H.sub] });
@@ -1989,7 +1999,7 @@ ${padCss('.gm-skribbl')}`;
       const rt = (H.rate[from] || []).filter(t => now - t < 3000);
       if (rt.length >= 4) return;
       rt.push(now); H.rate[from] = rt;
-      const c = H.cur, line = { t: 'chat', k: 'c', f: from, m };
+      const c = H.cur, line = { t: 'chat', k: 'c', f: from, m: tame(m) };
       if (H.phase === 'draw' && c) {
         const got = c.guessed.includes(from);
         if (from === c.id || got) {

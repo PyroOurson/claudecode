@@ -1,6 +1,16 @@
 (() => {
   'use strict';
 
+  const RUDE = /(^|[^a-z])(f+u+c*k+|sh+i+t+|b+i+t+c+h+|c+u+n+t+|n+i+gg+(?:e+r+|a+)|f+a+g+(?:g*o+t+)?|r+e+t+a+r+d+(?:e+d+|s+)|wh+o+r+e+|s+l+u+t+|d+i+c+k+h+e+a+d+|p+u+s+s+y+|c+o+c+k+s+u+c+k+|a+s+s+h+o+l+e+|b+a+s+t+a+r+d+|w+a+n+k+|t+w+a+t+|p+o+r+n+o*|r+a+p+e+|k+y+s+|p+e+d+o+|put(?:e|ain)|salop(?:e|ard)|conn(?:ard|asse)|encul[eé]|merde|niqu(?:e|er))(?:s|e[dr]|ing|y)?(?![a-z])/g;
+  const LEET = { 0: 'o', 1: 'i', 3: 'e', 4: 'a', 5: 's', 7: 't', '@': 'a', $: 's' };
+  const tame = s => {
+    s = String(s == null ? '' : s);
+    const n = s.replace(/[A-Z013457@$]/g, c => LEET[c] || c.toLowerCase());
+      let o = '', at = 0, m;
+    RUDE.lastIndex = 0;
+    while ((m = RUDE.exec(n))) { const i = m.index + m[1].length, j = m.index + m[0].length; o += s.slice(at, i) + s[i] + '*'.repeat(j - i - 1); at = j; }
+    return o + s.slice(at);
+  };
   const ROLE = {
     villager: { n: 'Villager', team: 'village', c: '#7cb342', d: 'No special power. Find the werewolves in the day discussion and vote them out.' },
     werewolf: { n: 'Werewolf', team: 'wolves', c: '#c0392b', d: 'Each night the pack picks one villager to devour. Chat privately with your pack and blend in by day.' },
@@ -311,7 +321,7 @@
         if (!x || !chatOK(q, a.ch)) return false;
         if (G.t - (G.rate[q] || -9999) < 700) return false;
         G.rate[q] = G.t;
-        say(a.ch, q, x);
+        say(a.ch, q, tame(x));
         return true;
       }
       if (ph === 'night' && p.alive) {
@@ -1483,9 +1493,10 @@
       }
       api.interval(() => {
         const now = performance.now();
-        let dt = Math.min(5000, now - lastTick); lastTick = now;
+        const host = M.mode === 'online' && M.role === 'host';
+        let dt = Math.min(host ? 120000 : 5000, now - lastTick); lastTick = now;
         if (!M.eng || M.role === 'guest') return;
-        if (api.paused) return;
+        if (api.paused && !host) return;
         while (dt > 0) { const s = Math.min(dt, 400); M.eng.tick(s); dt -= s; }
         if (M.eng.G.dirty) flush();
       }, 100);
@@ -1512,15 +1523,19 @@
         }
       });
 
+      const flood = {};
+      const rateOk = id => { const now = performance.now(), b = flood[id] || (flood[id] = { t: now, n: 0 }); if (now - b.t > 1000) { b.t = now; b.n = 0; } return ++b.n <= 15; };
       function hookNet() {
         if (M.hooked) return;
         M.hooked = true;
         api.net.on('data', (d, from) => {
           if (!d || !api.alive || M.mode !== 'online') return;
           if (api.net.role === 'host') {
-            if (M.role !== 'host' || !M.eng || d.t !== 'a') return;
+            if (M.role !== 'host' || !M.eng) return;
             const q = M.pids.indexOf(from);
-            if (q < 0) return;
+            if (q < 0 || !rateOk(from)) return;
+            if (d.t === 'sync') { M.eng.G.rs[q] = 1; M.eng.G.dirty = true; return; }
+            if (d.t !== 'a') return;
             if (M.eng.act(q, d.a)) flush();
           } else if (d.t === 'v' && d.v) {
             if (M.role !== 'guest') return;
@@ -1546,7 +1561,15 @@
         if (!api.alive || tok !== M.tok) return;
         if (!r) { M.mode = 'solo'; M.role = 'local'; return showTitle(); }
         if (r.role === 'host') { M.role = 'host'; M.size = +r.size || r.players.length; askResume(r); }
-        else { M.role = 'guest'; pane(`<div class="ww-box"><p class="ww-kick">Online</p><h3>Connected!</h3><p>Dealing the roles...</p><button class="ww-sm" data-a="leave">Leave</button></div>`, '', () => leave()); }
+        else {
+          M.role = 'guest'; pane(`<div class="ww-box"><p class="ww-kick">Online</p><h3>Connected!</h3><p>Dealing the roles...</p><button class="ww-sm" data-a="leave">Leave</button></div>`, '', () => leave());
+          const ask = n => api.timeout(() => {
+            if (tok !== M.tok || M.role !== 'guest' || M.v) return;
+            api.net.send({ t: 'sync' });
+            if (n < 20) ask(n + 1);
+          }, n ? 3000 : 1200);
+          ask(0);
+        }
       }
 
       layout(root.clientWidth < 720); fit();
