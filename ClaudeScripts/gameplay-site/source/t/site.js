@@ -1,7 +1,7 @@
 const { chromium } = (() => { for (const m of ['playwright', 'C:/tmp/pw/node_modules/playwright', '/opt/node22/lib/node_modules/playwright']) { try { return require(m); } catch (e) {} } throw new Error('playwright not found'); })();
 const fs = require('fs'), path = require('path');
 const BASE = process.env.SITE_URL || 'http://127.0.0.1:8080/';
-const ARGS = process.platform === 'win32' ? ['--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] : ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'];
+const ARGS = process.platform === 'win32' ? ['--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] : process.env.SITE_GL === 'swiftshader' ? ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] : ['--disable-gpu', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'];
 async function launch(o = {}) { return chromium.launch({ headless: o.headless !== false, args: ARGS.concat(o.args || []) }); }
 async function visitor(browser, o = {}) {
   const ctx = await browser.newContext(Object.assign({ viewport: o.viewport || { width: 1366, height: 768 }, deviceScaleFactor: o.dpr || 1, isMobile: !!o.mobile, hasTouch: !!o.mobile }, o.storageState ? { storageState: o.storageState } : {}));
