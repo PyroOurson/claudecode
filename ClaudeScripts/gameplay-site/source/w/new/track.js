@@ -182,6 +182,12 @@ async function trGeo() {
   } catch (e) { return null; }
 }
 function trGpu() {
+  try { const k = localStorage.getItem('gameplay:gpu'); if (k != null) return k; } catch (e) {}
+  const r = trGpuRead();
+  try { localStorage.setItem('gameplay:gpu', r); } catch (e) {}
+  return r;
+}
+function trGpuRead() {
   try {
     const c = document.createElement('canvas'), gl = c.getContext('webgl') || c.getContext('experimental-webgl');
     if (!gl) return '';

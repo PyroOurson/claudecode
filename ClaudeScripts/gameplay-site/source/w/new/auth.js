@@ -17,7 +17,7 @@ function gpNetWrap(g, net) {
 
 ['load', 'error'].forEach(t => document.addEventListener(t, e => { const m = e.target; if (m && m.tagName === 'IMG') m.classList.add('ld'); }, true));
 const SB_STORE = 'sb-gameplay-auth', SYK = 'gameplay:sync', VIDK = 'gameplay:vid', SAVE_P = 'gameplay:save:';
-const UN_RE = /^[a-z0-9_.]{3,20}$/, GID_RE = /^[a-z0-9][a-z0-9-]{0,39}$/, EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const UN_RE = /^[a-z0-9_.]{3,20}$/, UN_NEW = /^[a-z0-9_.]{4,20}$/, GID_RE = /^[a-z0-9][a-z0-9-]{0,39}$/, EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const sbBase = () => PATH_MODE ? location.origin + '/' : location.origin + location.pathname;
 const sbRedirect = kind => sbBase() + '?gpauth=' + kind;
 const SB_RET = (() => {
@@ -75,7 +75,7 @@ function sbClient() {
   if (SB.p) return SB.p;
   const p = SB.p = sbLib().then(lib => {
     if (!SB.c) {
-      SB.c = lib.createClient(SBN.best(), SUPABASE_ANON_KEY, { global: { fetch: SBN.fetch }, realtime: SBN.WS ? { transport: SBN.WS } : {}, auth: { flowType: 'pkce', detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storageKey: SB_STORE } });
+      SB.c = lib.createClient(SBN.best(), SUPABASE_ANON_KEY, { global: { fetch: SBN.fetch }, realtime: SBN.WS ? { transport: SBN.WS, worker: true } : { worker: true }, auth: { flowType: 'pkce', detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storageKey: SB_STORE } });
       SB.c.auth.onAuthStateChange((ev, s) => setTimeout(() => auSession(ev, s), 0));
     }
     return SB.c;
@@ -571,18 +571,54 @@ function auReqs(inp) {
   box.classList.toggle('idle', !inp.value && !box.classList.contains('tried'));
   [...box.children].forEach((el, i) => { const ok = AU_REQ[i][1](inp.value), was = el.classList.contains('ok'); el.classList.toggle('ok', ok); el.classList.toggle('pop', ok && !was); });
 }
-function auUserCheck() {
-  clearTimeout(SB.ut);
-  const inp = $('#auuser'), un = inp.value.trim();
-  if (!SB.on || !un || !UN_RE.test(un) || /^\.|\.$|\.\./.test(un)) return;
-  SB.ut = setTimeout(async () => {
+const UN_A = ['swift', 'lucky', 'pixel', 'turbo', 'cosmic', 'sneaky', 'mighty', 'frosty', 'sunny', 'rapid', 'clever', 'neon'], UN_B = ['fox', 'otter', 'panda', 'falcon', 'tiger', 'comet', 'ninja', 'wizard', 'rocket', 'koala', 'lynx', 'gamer'];
+const unHue = v => { let h = 7; for (let i = 0; i < v.length; i++) h = (h * 31 + v.charCodeAt(i)) % 360; return h; };
+function unIdeas(seed) {
+  const base = String(seed || '').toLowerCase().split('@')[0].replace(/[^a-z0-9_.]/g, '').replace(/^\.+|\.+$/g, '').replace(/\.\.+/g, '.').slice(0, 12);
+  const r = a => a[Math.floor(Math.random() * a.length)], n = () => String(10 + Math.floor(Math.random() * 90)), out = [];
+  if (base.length >= 3) { out.push(base + n()); out.push((base + '_' + r(UN_B)).slice(0, 20)); }
+  for (let k = 0; out.length < 4 && k < 30; k++) { const v = r(UN_A) + '_' + r(UN_B) + (Math.random() < .5 ? n() : ''); if (out.indexOf(v) < 0 && v.length <= 20) out.push(v); }
+  return out.slice(0, 4);
+}
+function unChips(o, show) {
+  if (!o.sug) return;
+  o.sug.innerHTML = show ? '<span>' + esc(auT('Try')) + '</span>' + unIdeas(o.seed ? o.seed() : o.inp.value).map(x => '<button type="button" class="au-unc" data-un="' + esc(x) + '" translate="no">' + esc(x) + '</button>').join('') : '';
+}
+function unLive(o) {
+  const v = o.inp.value.trim().toLowerCase();
+  if (o.av) { o.av.textContent = (v.replace(/[^a-z0-9]/g, '').charAt(0) || '?').toUpperCase(); o.av.style.setProperty('--h', String(unHue(v))); }
+  if (o.pv) o.pv.textContent = '@' + (v || 'username');
+  if (o.cnt) o.cnt.textContent = v.length + '/20';
+  const set = (k, t) => { o.st.className = 'au-unst' + (k ? ' ' + k : ''); o.st.textContent = t ? auT(t) : ''; o.state = k; };
+  clearTimeout(o.t); o.seq = (o.seq || 0) + 1;
+  if (!v) { set('', ''); unChips(o, !!o.idle); return; }
+  if (v.length < 4) { set('warn', 'At least 4 characters'); return; }
+  if (!UN_NEW.test(v) || /^\.|\.$|\.\./.test(v)) { set('bad', 'Letters, numbers, dots and underscores only'); return; }
+  if (o.cur && o.cur() === v) { set('', ''); return; }
+  if (!SB.on) { set('', ''); return; }
+  set('wait', 'Checking…');
+  const my = o.seq;
+  o.t = setTimeout(async () => {
     try {
-      const free = await sbRest('rpc/username_available', { method: 'POST', body: { p_name: un }, auth: false });
-      if (inp.value.trim() !== un) return;
-      auFieldErr(inp, free ? '' : 'That username is taken or not allowed. Try another one.');
-    } catch (e) {}
+      const free = await sbRest('rpc/username_available', { method: 'POST', body: { p_name: v }, auth: o.auth });
+      if (my !== o.seq || o.inp.value.trim().toLowerCase() !== v) return;
+      set(free ? 'ok' : 'bad', free ? 'Available' : 'Already taken');
+      unChips(o, !free);
+    } catch (e) { if (my === o.seq) set('', ''); }
   }, 350);
 }
+const UN_UP = {}, UN_MO = {};
+function unWire() {
+  Object.assign(UN_UP, { inp: $('#auuser'), st: $('#auunst'), av: $('#auunav'), sug: $('#auuns'), auth: false, seed: () => $('#auupemail').value || $('#auuser').value });
+  Object.assign(UN_MO, { inp: $('#unew'), st: $('#unst'), av: $('#unav'), sug: $('#unsug'), pv: $('#unpv'), cnt: $('#unn0'), idle: true, cur: () => SB.prof && SB.prof.username || '', seed: () => $('#unew').value || (SB.prof && SB.prof.display_name) || (SB.user && SB.user.email) || getProfile().username || '' });
+  [UN_UP, UN_MO].forEach(o => {
+    if (!o.inp || !o.sug) return;
+    o.sug.addEventListener('click', e => { const b = e.target.closest('[data-un]'); if (!b) return; e.preventDefault(); e.stopPropagation(); o.inp.value = b.dataset.un; o.inp.dispatchEvent(new Event('input', { bubbles: true })); if (!auCoarse()) o.inp.focus(); });
+  });
+  UN_MO.inp.addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; auMsg('unerr', ''); unLive(UN_MO); });
+  if (window.MutationObserver) new MutationObserver(() => { if (!$('#unmodal').hidden) unLive(UN_MO); }).observe($('#unmodal'), { attributes: true, attributeFilter: ['hidden'] });
+}
+function auUserCheck() { unLive(UN_UP); }
 async function auLogin() {
   if (!SB.on) return;
   const id = $('#auemail').value.trim(), pw = $('#aupass').value;
@@ -619,7 +655,7 @@ async function auSignup() {
   auMsg('auupnote', '');
   if (!EMAIL_RE.test(id)) return auBad('auupemail', 'Enter a valid email address.');
   if (id.toLowerCase() !== id2.toLowerCase()) return auBad('auupemail2', 'The two email addresses do not match.');
-  if (!UN_RE.test(un) || /^\.|\.$|\.\./.test(un)) return auBad('auuser', 'Choose a username: 3 to 20 lowercase letters, numbers, dots or underscores.');
+  if (!UN_NEW.test(un) || /^\.|\.$|\.\./.test(un)) return auBad('auuser', 'Choose a username: 4 to 20 lowercase letters, numbers, dots or underscores.');
   if (!auPwOk(pw)) { const rb = document.querySelector('.au-reqs[data-for="auuppass"]'); if (rb) { rb.classList.add('tried'); rb.classList.remove('idle'); } return auBad('auuppass', 'Use at least 8 characters with 1 letter and 1 number.'); }
   auBusy(true);
   try {
@@ -819,15 +855,15 @@ function auChoose() {
   $('#unt').textContent = 'Choose a username'; $('#uncont').textContent = 'Save';
   $('#unmodal').classList.add('un-must');
   const sug = String(getProfile().username || '').toLowerCase().replace(/[^a-z0-9_.]/g, '').slice(0, 20);
-  $('#unew').value = UN_RE.test(sug) ? sug : '';
+  $('#unew').value = UN_NEW.test(sug) ? sug : '';
   $('label[for="unew"]').textContent = 'Username';
-  auMsg('unerr', 'Friends find you by your username: 3 to 20 lowercase letters, numbers, dots or underscores.');
+  auMsg('unerr', 'Friends find you by your username: 4 to 20 lowercase letters, numbers, dots or underscores.');
   $('#unmodal').hidden = false;
   if (!auCoarse()) $('#unew').focus();
 }
 async function auUsername() {
   const raw = unStep === 2 ? unPending : $('#unew').value.trim().toLowerCase();
-  if (!UN_RE.test(raw) || /^\.|\.$|\.\./.test(raw)) { auMsg('unerr', 'Use 3 to 20 lowercase letters, numbers, dots or underscores.', 'bad'); return; }
+  if (!UN_NEW.test(raw) || /^\.|\.$|\.\./.test(raw)) { auMsg('unerr', 'Use 4 to 20 lowercase letters, numbers, dots or underscores.', 'bad'); return; }
   const old = SB.prof && SB.prof.username;
   if (raw === old) { auMsg('unerr', 'That is already your username.', 'bad'); return; }
   if (unStep === 1 && old) {
@@ -1228,7 +1264,7 @@ function auBoot() {
   $('#accode').addEventListener('input', e => { const v = e.target.value, n = v.replace(/\D/g, '').slice(0, 6); if (n !== v) e.target.value = n; if (n.length === 6 && !$('#aumodal').classList.contains('au-busy')) auVerify(); });
   $('#auforgot').addEventListener('click', () => { const v = $('#auemail').value.trim(); if (v.includes('@')) $('#aremail').value = v; auMsg('arnote', ''); auView('reset'); setTimeout(auFocus, 120); });
   $('#auuser').addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; auUserCheck(); });
-  $('#auuser').addEventListener('blur', e => { const v = e.target.value.trim(); if (v && (!UN_RE.test(v) || /^\.|\.$|\.\./.test(v))) auFieldErr(e.target, 'Use 3 to 20 lowercase letters, numbers, dots or underscores.'); });
+  $('#auuser').addEventListener('blur', e => { const v = e.target.value.trim(); if (v && (!UN_NEW.test(v) || /^\.|\.$|\.\./.test(v))) auFieldErr(e.target, 'Use 4 to 20 lowercase letters, numbers, dots or underscores.'); });
   $('#auupemail2').addEventListener('blur', e => { const a = $('#auupemail').value.trim(), b = e.target.value.trim(); if (a && b && a.toLowerCase() !== b.toLowerCase()) auFieldErr(e.target, 'The two email addresses do not match.'); });
   am.querySelectorAll('input').forEach(i => i.addEventListener('input', () => { const f = i.closest('.fld'); if (f) { f.classList.remove('au-shake'); if (i.id !== 'auuser') auFieldErr(i, ''); else if (f.querySelector('.au-err')) auFieldErr(i, ''); } if (i.closest('.au-pw')) auReqs(i); }));
   fm.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'fname') { e.preventDefault(); e.stopPropagation(); clearTimeout(FR.t); frSearch(); } }, true);
@@ -1242,6 +1278,7 @@ function auBoot() {
     if (v) { if (v.dataset.auv === 'main') SB.mode = 'in'; auView(v.dataset.auv); auMsg(auNote(), ''); setTimeout(auFocus, 120); return; }
   });
   auGoogleUi();
+  unWire();
   if (SB.on) {
     Ameplay.analytics.sink = sbSink;
     [[$('#delc').closest('.scard').querySelector('p'), ' You will also be signed out on this device.', 'Type DELETE'], [$('#dl').closest('.srw').querySelector('small'), ' Includes your account data.'], [$('#rr').closest('.srw').querySelector('small'), ' Your account records are cleared too.']].forEach(([el, t, before]) => { if (!el) return; const sp = document.createElement('span'); sp.dataset.au = 'in'; sp.hidden = true; sp.textContent = t; const n = before && [...el.childNodes].find(x => x.nodeType === 3 && x.nodeValue.includes(before)); if (n) { const i = n.nodeValue.indexOf(before); const rest = n.splitText(i); el.insertBefore(sp, rest); sp.textContent = t.trim() + ' '; } else el.append(sp); });

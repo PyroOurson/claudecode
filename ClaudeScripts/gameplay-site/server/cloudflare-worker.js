@@ -1,12 +1,58 @@
 const UPSTREAM = 'uafouyvtcijptspjbsqf.supabase.co';
 const PATHS = /^\/(rest|auth|realtime|storage|functions|graphql)\/v1(\/|$)/;
 const METHODS = new Set(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']);
+const ORIGINS = new Set(['https://gameplaygames.web.app', 'https://gameplaygames.firebaseapp.com', 'https://pyroourson.github.io']);
+let turnCache = null;
+
+async function turn(request, env) {
+  const origin = request.headers.get('Origin') || '';
+  const headers = { 'Access-Control-Allow-Origin': ORIGINS.has(origin) ? origin : 'https://gameplaygames.web.app', 'Vary': 'Origin', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Content-Type': 'application/json' };
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: Object.assign({ 'Access-Control-Allow-Methods': 'GET, OPTIONS', 'Access-Control-Max-Age': '86400' }, headers) });
+  }
+  if (request.method !== 'GET') {
+    return new Response('{"error":"method not allowed"}', { status: 405, headers });
+  }
+  if (origin && !ORIGINS.has(origin)) {
+    return new Response('{"error":"origin not allowed"}', { status: 403, headers });
+  }
+  if (!env || !env.TURN_KEY_ID || !env.TURN_KEY_API_TOKEN) {
+    return new Response('{"iceServers":[]}', { headers });
+  }
+  const now = Date.now();
+  if (turnCache && turnCache.until > now) {
+    return new Response(turnCache.body, { headers });
+  }
+  try {
+    const r = await fetch('https://rtc.live.cloudflare.com/v1/turn/keys/' + env.TURN_KEY_ID + '/credentials/generate-ice-servers', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + env.TURN_KEY_API_TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ttl: 86400 })
+    });
+    if (!r.ok) {
+      return new Response('{"iceServers":[]}', { headers });
+    }
+    const j = await r.json();
+    const list = (Array.isArray(j.iceServers) ? j.iceServers : j.iceServers ? [j.iceServers] : []).map(s => {
+      const urls = (Array.isArray(s.urls) ? s.urls : [s.urls]).filter(u => typeof u === 'string' && !/:53(\?|$)/.test(u));
+      return { urls, username: s.username, credential: s.credential };
+    }).filter(s => s.urls.length);
+    const body = JSON.stringify({ iceServers: list });
+    turnCache = { until: now + 3600000, body };
+    return new Response(body, { headers });
+  } catch (e) {
+    return new Response('{"iceServers":[]}', { headers });
+  }
+}
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === '/health') {
       return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
+    }
+    if (url.pathname === '/turn') {
+      return turn(request, env);
     }
     if (!PATHS.test(url.pathname)) {
       return new Response('gameplay relay', { status: 404, headers: { 'X-Content-Type-Options': 'nosniff' } });

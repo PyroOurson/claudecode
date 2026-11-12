@@ -477,7 +477,7 @@ async function adAct(k, b) {
   } else if (k === 'un') {
     const v = $('#adun').value.trim().toLowerCase().replace(/^@/, '');
     if (v === (u.username || '')) return;
-    if (!UN_RE.test(v) || /^\.|\.$|\.\./.test(v)) { auMsg('adunn', 'Use 3 to 20 lowercase letters, numbers, dots or underscores.', 'bad'); auShake($('#adun')); return; }
+    if (!UN_NEW.test(v) || /^\.|\.$|\.\./.test(v)) { auMsg('adunn', 'Use 4 to 20 lowercase letters, numbers, dots or underscores.', 'bad'); auShake($('#adun')); return; }
     b.disabled = true; b.classList.add('is-busy'); auMsg('adunn', '');
     try { u.username = await adRpc('admin_set_username', { p_uid: u.id, p_name: v }); auMsg('adunn', 'Username saved.', 'ok'); track('admin', { act: 'username' }); rtSend(u.id, { t: 'profile' }); }
     catch (e) { auMsg('adunn', /taken/i.test(e.message || '') ? 'That username is taken.' : /not allowed/i.test(e.message || '') ? 'That username is not allowed.' : adErr(e), 'bad'); }
@@ -1432,7 +1432,7 @@ async function anCreate() {
   if (TA.busy) return;
   const em = $('#anem').value.trim().toLowerCase(), un = $('#anun').value.trim().toLowerCase().replace(/^@/, ''), dn = $('#andn').value.replace(/\s+/g, ' ').trim(), pw = $('#anpw').value, rl = $('#anrl').value, nt = $('#annt').value.trim();
   if (em && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { auMsg('adnnote', 'That email does not look valid.', 'bad'); auShake($('#anem')); return; }
-  if (un && (!UN_RE.test(un) || /^\.|\.$|\.\./.test(un))) { auMsg('adnnote', 'Use 3 to 20 lowercase letters, numbers, dots or underscores.', 'bad'); auShake($('#anun')); return; }
+  if (un && (!UN_NEW.test(un) || /^\.|\.$|\.\./.test(un))) { auMsg('adnnote', 'Use 4 to 20 lowercase letters, numbers, dots or underscores.', 'bad'); auShake($('#anun')); return; }
   if (pw.length < 8) { auMsg('adnnote', 'Choose a password of at least 8 characters.', 'bad'); auShake($('#anpw').closest('.au-pw')); return; }
   if (utf8Len(pw) > 72) { auMsg('adnnote', 'Use at most 72 characters.', 'bad'); return; }
   const b = $('#adnews');

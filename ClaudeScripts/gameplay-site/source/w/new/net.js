@@ -201,7 +201,7 @@ const NET_CSS = `.g-lobby{position:absolute;inset:0;z-index:200;display:flex;ove
 @keyframes glpulse{50%{opacity:.3;transform:scale(.75)}}
 @keyframes glin{from{opacity:0;transform:translateY(6px)}}
 @media (prefers-reduced-motion:reduce){.g-lobby,.g-lobby *{transition:none!important;animation:none!important}}
-.g-lobby .gl-foot.gl-foot1{grid-template-columns:minmax(0,1fr);justify-items:center}
+.g-lobby .gl-foot.gl-foot1{grid-template-columns:minmax(0,1fr);justify-items:center;padding:26px 40px 24px;gap:10px}
 .g-lobby .gl-foot1 .gl-act{grid-column:1}
 .g-lobby .gl-foot1 .gl-hint{grid-column:1;justify-self:center;text-align:center}
 .g-lobby .gl-foot1 .gl-hint:empty{display:none}

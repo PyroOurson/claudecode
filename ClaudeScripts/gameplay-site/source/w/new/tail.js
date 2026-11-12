@@ -897,7 +897,7 @@ function openLegal(k) {
   closeGame();
   showView('legal');
   const d = LEGAL[k];
-  $('#doc').innerHTML = `<h1>${d[0]}</h1><p class="upd">${esc(auT('Last updated {d}').replace('{d}', new Date(2026, 10, 6).toLocaleDateString(window.gpI18n ? gpI18n.lang : 'en', { day: 'numeric', month: 'long', year: 'numeric' })))}</p>${d[1]}`;
+  $('#doc').innerHTML = `<h1>${d[0]}</h1><p class="upd">${esc(auT('Last updated {d}').replace('{d}', new Date(2026, 10, 12).toLocaleDateString(window.gpI18n ? gpI18n.lang : 'en', { day: 'numeric', month: 'long', year: 'numeric' })))}</p>${d[1]}`;
   document.querySelectorAll('.ltabs a').forEach(a => a.setAttribute('aria-current', a.dataset.legal === k ? 'page' : 'false'));
   setHead(d[0] + ' | gameplay', d[0] + ' for gameplay.', '/' + k);
   scrollTo({ top: 0, behavior: 'instant' });
@@ -1283,7 +1283,7 @@ function boot() {
     if (SB.user) { auUsername(); return; }
     if (unStep === 1) {
       const v = $('#unew').value.trim();
-      if (!/^[A-Za-z0-9_.-]{3,20}$/.test(v)) { say('unerr', 'Use 3 to 20 letters, numbers, dots, dashes or underscores.'); return; }
+      if (!/^[A-Za-z0-9_.-]{4,20}$/.test(v)) { say('unerr', 'Use 4 to 20 letters, numbers, dots, dashes or underscores.'); return; }
       if (v === $('#un').value) { say('unerr', 'That is already your username.'); return; }
       if (!$('#un').value) { setProfile({ username: v }); fillProfile(); say('unnote', 'Username saved.', 1); unClose(); return; }
       unPending = v; $('#uno').textContent = $('#un').value; $('#unn').textContent = v;

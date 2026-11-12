@@ -45,6 +45,17 @@ This one runs on Cloudflare's network, so it keeps working when the home connect
 3. **Settings** → **Domains & Routes** → **Add** → **Custom domain** → `gameplay-api.vitalang.net` → **Add domain**. Cloudflare creates the DNS record itself.
 4. Check: https://gameplay-api.vitalang.net/health shows `ok`, and on https://gameplaygames.web.app/check the "relay 1 (gameplay-api.vitalang.net)" lines say Works.
 
+## TURN relay for online parties (same Worker, `/turn`)
+
+Online parties connect players directly when they can. On networks where a direct link is impossible (strict firewalls, some school, hotel and mobile networks), the connection has to pass through a TURN relay. The Worker can hand out short-lived Cloudflare TURN credentials, so the site always has a working relay on ports 443 and 80. Cloudflare gives 1,000 GB of TURN traffic a month for free.
+
+1. In the Cloudflare dashboard: **Realtime** → **TURN Server** → **Create**. Name it `gameplay`. Copy the **Turn Token ID** and the **API Token** (shown once).
+2. Open the `gameplay-api` Worker → **Settings** → **Variables and Secrets** → add two **Secret** values: `TURN_KEY_ID` (the Turn Token ID) and `TURN_KEY_API_TOKEN` (the API Token). Press **Deploy**.
+3. **Edit code**: replace everything with the current `cloudflare-worker.js` from this folder and press **Deploy**.
+4. Check: opening https://gameplay-api.vitalang.net/turn in a browser shows JSON with `iceServers` that contains `turn:turn.cloudflare.com` addresses. Without the two secrets it shows `{"iceServers":[]}` and the site falls back to public STUN servers and the free Open Relay TURN service, which is less reliable.
+
+The endpoint only answers the site's own addresses (`gameplaygames.web.app`, `gameplaygames.firebaseapp.com`, `pyroourson.github.io`), caches one credential for an hour, and never exposes the API token. The site asks every address in `SUPABASE_RELAYS` for `/turn` (see `NET_ICE_URLS` in `source/w/new/consts.js`).
+
 ## What it relays
 
 Only the Supabase paths that the site uses: `/rest/v1/`, `/auth/v1/`, `/realtime/v1/` (websockets for friends, chat and live site switches), `/storage/v1/`, `/functions/v1/` and `/graphql/v1/`. They are forwarded unchanged to `uafouyvtcijptspjbsqf.supabase.co`, so every database rule still applies.

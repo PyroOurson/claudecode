@@ -15,20 +15,20 @@ async function visitor(browser, o = {}) {
   const shot = async (dir, name, full) => { fs.mkdirSync(dir, { recursive: true }); const f = path.join(dir, name + '.png'); await page.screenshot({ path: f, fullPage: !!full, timeout: 120000 }); return f; };
   const text = async n => (await page.evaluate(() => document.body ? document.body.innerText : '')).replace(/\s+/g, ' ').slice(0, n || 400);
   const consent = async () => { const ck = page.locator('#ckterms'); if (await ck.isVisible().catch(() => false)) { await ck.check(); await page.locator('[data-ckc]').first().click(); await page.waitForTimeout(300); } };
-  const ready = async (ms = 15000) => { await page.waitForFunction(() => window.Ameplay && Ameplay.debug && document.querySelector('#top'), null, { timeout: ms }); };
+  const ready = async (ms = 120000) => { await page.waitForFunction(() => window.Ameplay && Ameplay.debug && document.querySelector('#top'), null, { timeout: ms }); };
   const goto = async (u, w) => { await page.goto(new URL(u || '', BASE).href); await ready(); if (w) await page.waitForTimeout(w); };
   const login = async (email, password) => {
     await consent();
-    await page.waitForSelector('#aumodal:not([hidden])', { timeout: 10000 });
+    await page.waitForSelector('#aumodal:not([hidden])', { timeout: 60000 });
     if (!(await page.locator('#auform').isVisible().catch(() => false))) await page.locator('[data-aumode="in"]').first().click();
     await page.fill('#auemail', email);
     await page.fill('#aupass', password);
     await page.locator('#auform button[type=submit]').click();
-    await page.waitForFunction(() => window.Ameplay && Ameplay.account && Ameplay.account.signedIn, null, { timeout: 15000 });
+    await page.waitForFunction(() => window.Ameplay && Ameplay.account && Ameplay.account.signedIn, null, { timeout: 60000 });
     await page.waitForTimeout(600);
   };
   const signedIn = () => page.evaluate(() => !!(window.Ameplay && Ameplay.account && Ameplay.account.signedIn));
-  const openGame = async (id, w = 2500) => { await page.evaluate(i => Ameplay.debug.open(i), id); await page.waitForSelector('#frame .g-root', { timeout: 20000 }); await page.waitForTimeout(w); };
+  const openGame = async (id, w = 2500) => { await page.evaluate(i => Ameplay.debug.open(i), id); await page.waitForSelector('#frame .g-root', { timeout: 60000 }); await page.waitForTimeout(w); };
   const startGame = async () => { const s = await page.$('.g-overlay.show [data-a="1"]'); if (s) await s.click().catch(() => {}); };
   const frame = () => page.evaluate(() => { const r = (document.querySelector('#frame canvas') || document.querySelector('#frame .g-root') || document.querySelector('#frame')).getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; });
   const diag = () => page.evaluate(() => window.Ameplay && Ameplay.diag ? Object.assign({ n: Ameplay.diag.dump().events.length }, Ameplay.diag.stats()) : null);

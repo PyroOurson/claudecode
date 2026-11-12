@@ -15,6 +15,21 @@ def rep(s, old, new, count=1):
     assert s.count(old) == count, (old[:60], s.count(old))
     return s.replace(old, new)
 
+def i18n_js():
+    s = open('new/i18n.js', encoding='utf-8').read()
+    extra = json.load(open('new/i18n_add.json', encoding='utf-8')) if os.path.exists('new/i18n_add.json') else []
+    head = 'const R = [\n'
+    assert s.count(head) == 1
+    seen = set()
+    rows = []
+    for r in extra:
+        assert len(r) == 6 and r[0] not in seen, r[0]
+        seen.add(r[0])
+        if ('\n' + json.dumps(r[0], ensure_ascii=False) + ',') in s.replace('\n[', '\n'):
+            continue
+        rows.append(json.dumps(r, ensure_ascii=False) + ',\n')
+    return s.replace(head, head + ''.join(rows))
+
 old = open('parts_orig/001_portal.js', encoding='utf-8', newline='').read()
 if os.path.exists('new/net.js'):
     _a = old.index('function makeNet(g, add) {'); _b = old.index('function makeApi(g, root) {')
@@ -57,7 +72,7 @@ old = rep(old, "    get alive() { return alive; },", "    get alive() { return a
 old = rep(old, "S.best[g.id] = v; save(); setBest(g, true); toast('New best · ' + fmt(g, v));", "S.best[g.id] = v; save(); setBest(g, true); toast('New best · ' + fmt(g, v)); track('record', { game: g.id });")
 old = rep(old, "    get net() { return net || (net = makeNet(g, add)); },", "    get net() { return net || (net = gpNetWrap(g, makeNet(g, add))); },")
 ca = old.index("const coverCache = new Map();")
-old = old[:ca] + open('new/legal.js', encoding='utf-8').read() + open('new/tail.js', encoding='utf-8').read() + open('new/auth.js', encoding='utf-8').read().replace(chr(10) + 'Ameplay.debug = ', chr(10) + open('new/admin.js', encoding='utf-8').read() + chr(10) + open('new/social.js', encoding='utf-8').read() + chr(10) + open('new/input.js', encoding='utf-8').read() + chr(10) + open('new/track.js', encoding='utf-8').read() + chr(10) + open('new/changelog.js', encoding='utf-8').read() + chr(10) + open('new/site.js', encoding='utf-8').read() + chr(10) + open('new/diagui.js', encoding='utf-8').read() + chr(10) + 'Ameplay.debug = ', 1) + chr(10) + open('new/i18n.js', encoding='utf-8').read()
+old = old[:ca] + open('new/legal.js', encoding='utf-8').read() + open('new/tail.js', encoding='utf-8').read() + open('new/auth.js', encoding='utf-8').read().replace(chr(10) + 'Ameplay.debug = ', chr(10) + open('new/admin.js', encoding='utf-8').read() + chr(10) + open('new/social.js', encoding='utf-8').read() + chr(10) + open('new/input.js', encoding='utf-8').read() + chr(10) + open('new/track.js', encoding='utf-8').read() + chr(10) + open('new/changelog.js', encoding='utf-8').read() + chr(10) + open('new/site.js', encoding='utf-8').read() + chr(10) + open('new/diagui.js', encoding='utf-8').read() + chr(10) + 'Ameplay.debug = ', 1) + chr(10) + i18n_js()
 open('parts/001_portal.js', 'w', encoding='utf-8', newline='').write(old)
 
 SC = ':where(:not(.g-root *))'

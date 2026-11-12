@@ -1,4 +1,5 @@
 const RT = { me: null, ch: null, on: null, pres: {}, seen: false, tt: 0 };
+const PB = { t: 0, db: {}, n: 0, at: 0, miss: false, busy: false };
 const SO_ICO = {
   bell: '<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></svg>',
   chat: '<svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg>',
@@ -21,9 +22,9 @@ const soParty = () => { try { if (cur && cur.api && cur.api.online) { const n = 
 const soGameName = id => id ? (byId.get(id) ? byId.get(id).title : id) : '';
 const soCan = id => { const g = id && byId.get(id); return !!(g && g.info && onlineMax(g.info.pl) > 0); };
 const SO = { pend: null, want: null, act: Date.now(), away: false, party: false, ty: {}, tyAt: 0, tyT: 0, v: 'list', last: null, q: '', pt: 0, key: '', gk: '', more: false, rep: null, bc: null, bat: 0, pAt: 0, pq: Promise.resolve(), cdT: 0 };
-const SO_CD = {}, RT_Q = {}, SO_PCD = 3000;
+const SO_CD = {}, RT_Q = {}, SO_PCD = 1000;
 const soCool = (k, ms) => { const t = SO_CD[k] || 0, now = Date.now(); if (now - t < ms) return Math.ceil((ms - (now - t)) / 1000); SO_CD[k] = now; return 0; };
-const soPWait = () => Math.max(0, SO.pAt + SO_PCD - Date.now());
+const soPWait = () => adIsAdmin() ? 0 : Math.max(0, SO.pAt + SO_PCD - Date.now());
 const soSleep = ms => new Promise(r => setTimeout(r, ms));
 const soSecs = s => s >= 60 ? auT('{n} min').replace('{n}', Math.ceil(s / 60)) : auT('{n} s').replace('{n}', s);
 function soCdApply() {
@@ -80,8 +81,8 @@ function soRepHtml(id, at) {
 }
 function soErr(e, fb) {
   const m = String(e && e.message || '');
-  if (e && e.local) return e.local > 3 ? auT('Slow down a little: {what}. Try again in {t}.').replace('{what}', auT('too many invites')).replace('{t}', soSecs(e.local)) : auT('You can send one party invite every 3 seconds. Try again in {t}.').replace('{t}', soSecs(e.local));
-  if (sbLimit(e) && e.details === 'party') return auT('You can send one party invite every 3 seconds. Try again in {t}.').replace('{t}', soSecs(sbWait(e) || 3));
+  if (e && e.local) return e.local > 3 ? auT('Slow down a little: {what}. Try again in {t}.').replace('{what}', auT('too many invites')).replace('{t}', soSecs(e.local)) : auT('You are sending party invites too fast. Try again in {t}.').replace('{t}', soSecs(e.local));
+  if (sbLimit(e) && e.details === 'party') return auT('You are sending party invites too fast. Try again in {t}.').replace('{t}', soSecs(sbWait(e) || 1));
   if (sbLimit(e)) return sbLimitText(e, /dm_text|dm_image/.test(e.details || '') ? 'too many messages' : 'too many invites');
   if (/not friends/i.test(m)) return auT('You are no longer friends.');
   if (/locked/i.test(m)) return auT('Your account is locked.');
@@ -115,6 +116,26 @@ function rtLater(k, fn, ms) {
 const soIdle = () => Date.now() - SO.act > 300000 || document.visibilityState === 'hidden' && Date.now() - SO.act > 60000;
 const soDot = on => on ? on.a ? ' away' : ' on' : '';
 
+async function pbBeat() {
+  if (!SB.user || PB.miss || PB.busy) return;
+  const uid = SB.user.id, P = S.prefs, g = P.p_game === false || !cur ? null : cur.g.id, pa = soParty();
+  PB.busy = true;
+  try {
+    const r = await sbRest('rpc/presence_beat', { method: 'POST', body: { p_game: g, p_hidden: P.p_status === 'Nobody', p_away: soIdle(), p_party: !!(g && pa && pa.game === g) } });
+    if (SB.user && SB.user.id === uid && r && typeof r === 'object') {
+      const m = {};
+      (Array.isArray(r.on) ? r.on : []).forEach(x => { if (x && typeof x.id === 'string') m[x.id] = x.h ? { h: 1 } : { g: typeof x.g === 'string' ? x.g : null, a: x.a ? 1 : 0, p: x.p ? 1 : 0, t: Date.now() }; });
+      PB.db = m; PB.n = Math.max(0, +r.n || 0); PB.at = Date.now();
+      rtSync();
+    }
+  } catch (e) { if (sbMissing(e)) PB.miss = true; }
+  PB.busy = false;
+}
+function pbStart() { clearInterval(PB.t); PB.t = setInterval(pbBeat, 40000); pbBeat(); }
+function pbStop(bye) {
+  clearInterval(PB.t); PB.t = 0; PB.db = {}; PB.n = 0; PB.at = 0;
+  if (bye && !PB.miss && sbTok()) sbRest('rpc/presence_bye', { method: 'POST', body: {}, keep: true }).catch(() => {});
+}
 function rtStart() {
   if (!SB.c || !SB.user || RT.me === SB.user.id) return;
   rtStop();
@@ -142,6 +163,8 @@ function rtTrack(now) {
 function rtSync() {
   const s = RT.on ? RT.on.presenceState() : {}, prev = RT.pres, P = {};
   for (const k in s) { const a = s[k]; if (a && a.length) P[k] = a[a.length - 1]; }
+  if (Date.now() - PB.at < 110000) for (const k in PB.db) { if (!P[k]) P[k] = PB.db[k]; }
+  if (SB.user && !P[SB.user.id] && PB.at) P[SB.user.id] = S.prefs.p_status === 'Nobody' ? { h: 1 } : { g: cur ? cur.g.id : null, t: Date.now(), a: SO.away ? 1 : 0 };
   RT.pres = P;
   const now = Date.now();
   if (RT.seen && S.prefs.n_on) (FR.list || []).forEach(f => { const id = f.friend_id; if (!blHas(id) && P[id] && !P[id].h && !(prev[id] && !prev[id].h) && now - (NT.on[id] || 0) > 600000) { NT.on[id] = now; ntPush({ k: 'online', from: id, t: auT('{u} is online').replace('{u}', soName(id)), b: P[id].g ? auT('Playing {g}').replace('{g}', soGameName(P[id].g)) : '', a: { type: 'chat', uid: id } }); } });
@@ -185,7 +208,7 @@ function soStatus(id) {
   return on.a ? auT('Away') : auT('Online');
 }
 function soLive() {
-  const n = Object.keys(RT.pres).filter(k => !RT.pres[k].h).length, pill = $('#onl');
+  const n = Math.max(Object.keys(RT.pres).filter(k => !RT.pres[k].h).length, Date.now() - PB.at < 110000 ? PB.n : 0), pill = $('#onl');
   if (pill) { pill.hidden = !SB.user || !n; pill.querySelector('b').textContent = n; pill.title = auT(n === 1 ? '1 player online' : '{n} players online').replace('{n}', n); }
   cardPills();
   if (openK === 'friends' && FR.list) frDraw();
@@ -851,6 +874,7 @@ function soStart() {
   if (!SB.user) return;
   blLoad(); blSync();
   rtStart();
+  pbStart();
   DM.first = true; DM.last = {};
   SO.key = 'gameplay:dock:' + SB.user.id;
   let st = null;
@@ -864,6 +888,7 @@ function soStart() {
   dmPoll();
 }
 function soStop() {
+  pbStop(false);
   rtStop(); dmClose();
   DM.inbox = []; DM.unread = 0; DM.msgs = []; DM.last = {}; DM.urls.clear();
   SO.pend = SO.want = null; SO.last = null; SO.v = 'list'; SO.key = ''; SO.ty = {}; SO.rep = SO.bc = null; SO.more = false; clearInterval(SO.pt);
@@ -900,7 +925,9 @@ function soBoot() {
   }, 1000);
   const act = () => { SO.act = Date.now(); if (SO.away && RT.on) { SO.away = false; rtTrack(true); } };
   ['pointerdown', 'keydown', 'wheel', 'touchstart', 'pointermove'].forEach(t => addEventListener(t, act, { capture: true, passive: true }));
-  document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible') { act(); dmPoll(); rtTrack(); } });
+  document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible') { act(); dmPoll(); rtTrack(true); pbBeat(); } });
+  addEventListener('pagehide', () => { if (SB.user && PB.t) pbStop(true); });
+  addEventListener('pageshow', e => { if (e.persisted && SB.user && !PB.t) pbStart(); });
   ['fullscreenchange', 'webkitfullscreenchange'].forEach(t => document.addEventListener(t, () => setTimeout(soPlace, 0)));
   new MutationObserver(() => { const c = $('#chat'); if (document.body.classList.contains('modal-open') && c && !c.hidden && !c.classList.contains('out')) dmClose(); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   ntLoad();
