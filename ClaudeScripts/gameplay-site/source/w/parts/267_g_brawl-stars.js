@@ -222,8 +222,14 @@
     return hit;
   }
   function losClear(M, x0, y0, x1, y1) {
-    const d = hyp(x1 - x0, y1 - y0), n = Math.max(1, Math.ceil(d / .3));
-    for (let k = 1; k < n; k++) { const f = k / n; if (shotT(tileAt(M, Math.floor(lerp(x0, x1, f)), Math.floor(lerp(y0, y1, f))))) return false; }
+    const d = hyp(x1 - x0, y1 - y0), n = Math.max(1, Math.ceil(d / .25)), dx = (x1 - x0) / n, dy = (y1 - y0) / n;
+    let oi = Math.floor(x0), oj = Math.floor(y0);
+    for (let k = 1; k < n; k++) {
+      const i = Math.floor(x0 + dx * k), j = Math.floor(y0 + dy * k);
+      if (shotT(tileAt(M, i, j))) return false;
+      if (i !== oi && j !== oj) { const fx = ((dx > 0 ? i : oi) - (x0 + dx * (k - 1))) / dx, fy = ((dy > 0 ? j : oj) - (y0 + dy * (k - 1))) / dy; if (shotT(fx < fy ? tileAt(M, i, oj) : tileAt(M, oi, j))) return false; }
+      oi = i; oj = j;
+    }
     return true;
   }
   function walkClear(M, x0, y0, x1, y1, r) {
@@ -543,7 +549,12 @@
       for (let k = 0; k < n && !dead; k++) {
         const ox = p.x, oy = p.y;
         p.x += sx; p.y += sy;
-        const ti = Math.floor(p.x), tj = Math.floor(p.y), tt = tileAt(M, ti, tj);
+        let ti = Math.floor(p.x), tj = Math.floor(p.y), tt = tileAt(M, ti, tj);
+        const ci = Math.floor(ox), cj = Math.floor(oy);
+        if (ci !== ti && cj !== tj) {
+          const fx = ((sx > 0 ? ti : ci) - ox) / sx, fy = ((sy > 0 ? tj : cj) - oy) / sy, mi = fx < fy ? ti : ci, mj = fx < fy ? cj : tj, mt = tileAt(M, mi, mj);
+          if (shotT(mt)) { tt = mt; ti = mi; tj = mj; }
+        }
         if (shotT(tt)) {
           let gone = false;
           if (tt === 6) gone = damageTile(S, ti, tj, p.dmg);
@@ -878,6 +889,7 @@
       if (S.stT <= 0) { S.state = 1; S.ev.push(['go']); }
       return;
     }
+    S.thK = 0;
     if (S.state === 2) {
       S.stT -= DT;
       for (const b of S.brs) { b.px = b.x; b.py = b.y; }
@@ -1322,7 +1334,7 @@
     for (const e of S.brs) {
       if (e.team === b.team) continue;
       let m = H.mem[e.i];
-      if (!m) m = H.mem[e.i] = { x: e.x, y: e.y, t: -99, vis: false, since: 0, q: { e, m: null, x: 0, y: 0, d: 0, vis: false, K: KIT[e.br], age: 0 } };
+      if (!m) m = H.mem[e.i] = { x: e.x, y: e.y, t: -99, vis: false, since: 0, q: { e, m: null, x: 0, y: 0, d: 0, vis: false, K: KIT[e.br], age: 0, r: 1 } };
       if (!e.alive) { m.t = -99; m.vis = false; continue; }
       const v = canSee(S, b.team, e);
       if (v) { if (!m.vis) m.since = S.time; m.x = e.x; m.y = e.y; m.t = S.time; }
@@ -1470,6 +1482,7 @@
       if (e.hp <= burst) r = Math.max(r, 1.6);
       if (hpf < .45) r *= .7;
       if (e.i === H.banI && H.banT > t) r *= .6;
+      q.r = r;
       const want = r - (alive <= 2 ? .8 : alive <= 4 ? 1 : t < 25 ? 1.45 : 1.15) + (e.i === H.tg && q.d < Math.max(K.reach, q.K.danger) + 1 ? .3 : 0);
       if (want > 0 && want / (q.d + 4) > ps) { ps = want / (q.d + 4); prey = q; }
       if (r < .8 && q.d < q.K.danger + 6.5 && 1 / r / (q.d + 1) > ts) { ts = 1 / r / (q.d + 1); thr = q; }
@@ -1535,8 +1548,6 @@
     H.intent = HB_FIGHT; H.focus = -1; H.hurry = .5; H.zone = false; H.grab = false; H.must = false; H.care = false;
     if (S.mode === 'gem') hbPlanGem(S, b, H, hpf); else if (S.mode === 'ball') hbPlanBall(S, b, H); else if (S.mode === 'crown') hbPlanCrown(S, b, H); else hbPlanShow(S, b, H, hpf);
     const show = S.mode === 'show', ox = H.ax, oy = H.ay;
-    if (!H.heal) { if (hpf < (show ? .4 : .32) - (K.cls === 'tank' ? .06 : 0) && nd < 12 && (show || b.gems >= 2 || nd > 4.5 || adv < .5)) H.heal = true; }
-    else if (hpf > (show ? .78 : .6) || nd > 13 && hpf > .45) H.heal = false;
     let chased = false, expQ = null, ed = 99;
     for (const q of E) {
       if (!q.vis || q.d > q.K.danger + .3) continue;
@@ -1544,6 +1555,8 @@
       if (q.K.short && q.d < q.K.reach + .8 && q.K.mv >= K.mv - .25 && los) chased = true;
       if ((los || q.K.lob) && q.d < ed) { ed = q.d; expQ = q; }
     }
+    if (!H.heal) { if (hpf < (show ? .4 : .32) - (K.cls === 'tank' ? .06 : 0) && nd < 12 && (show ? !expQ || expQ.r < .85 : b.gems >= 2 || nd > 4.5 || adv < .5)) H.heal = true; }
+    else if (hpf > (show ? .78 : .6) || nd > 13 && hpf > .45 || show && expQ && expQ.r >= 1.1) H.heal = false;
     if ((H.intent === HB_AVOID || H.heal && !H.zone) && expQ) H.expT += .12; else H.expT = Math.max(0, H.expT - .06);
     if (H.expT > .45) { H.fbT = S.time + 1.6; H.expT = 0; }
     const fb = (H.fbT > S.time || chased) && expQ && !b.ball && !(H.intent === HB_AVOID && (b.gems >= 2 || b.crown));
@@ -1881,7 +1894,7 @@
     }
     if (H.nt && S.time >= H.nt) { H.nt = 0; H.t = 0; }
     if (H.fl && S.time >= H.fl) { H.fl = 0; H.js = -H.js; H.jT = .3 + Math.random() * .4; H.t = 0; }
-    if (H.t <= 0) { H.t = .1 + Math.random() * .04; hbThink(S, b, H); }
+    if (H.t <= 0 && (S.thK < 4 || H.t < -.07)) { S.thK++; H.t = .1 + Math.random() * .04; hbThink(S, b, H); }
     hbSteer(S, b, H);
     hbShoot(S, b, H);
   }
