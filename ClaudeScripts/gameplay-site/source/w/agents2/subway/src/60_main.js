@@ -750,7 +750,7 @@
           if (panelOn) { if (k === 'Escape') { e.preventDefault(); panel(0); } else if (panelKind === 'how' && (k === 'Space' || k === 'Enter')) { e.preventDefault(); panel(0); startRun(); } return; }
           if (k === 'KeyM') { const i = MODES.findIndex(m => m.id === save.mode); setMode(MODES[(i + 1) % MODES.length].id); return; }
           if (k === 'Space' || k === 'Enter' || k === 'ArrowUp' || k === 'KeyW') { e.preventDefault(); if (!e.repeat) startRun(); }
-          else if (k === 'ArrowLeft') city(-1); else if (k === 'ArrowRight') city(1);
+          else if (k === 'ArrowLeft' && !e.repeat) city(-1); else if (k === 'ArrowRight' && !e.repeat) city(1);
         } else if (state === 'over') {
           if (e.repeat) return;
           if (k === 'Space' || k === 'Enter') { e.preventDefault(); playAgain(); }
@@ -975,7 +975,7 @@
         perfN++; perfT += dt;
         if (perfN >= 90) {
           const avg = perfT / perfN;
-          if (avg > 1 / 50 && prCap > 0.8) { prCap = Math.max(0.8, prCap * 0.82); renderer.setPixelRatio(prCap); perfCool = 2.5; }
+          if (avg > 1 / 50 && prCap > 0.8) { prCap = Math.max(0.8, Math.min(prCap, renderer.getPixelRatio()) * 0.82); renderer.setPixelRatio(prCap); perfCool = 2.5; }
           perfN = 0; perfT = 0;
         }
       }
