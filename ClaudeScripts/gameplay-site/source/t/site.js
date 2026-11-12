@@ -6,7 +6,9 @@ async function launch(o = {}) { return chromium.launch({ headless: o.headless !=
 async function visitor(browser, o = {}) {
   const ctx = await browser.newContext(Object.assign({ viewport: o.viewport || { width: 1366, height: 768 }, deviceScaleFactor: o.dpr || 1, isMobile: !!o.mobile, hasTouch: !!o.mobile }, o.storageState ? { storageState: o.storageState } : {}));
   if (o.init) await ctx.addInitScript(o.init);
-  const page = await ctx.newPage();
+  const tune = p => { const wf = p.waitForFunction.bind(p); p.waitForFunction = (fn, arg, opt) => wf(fn, arg, Object.assign({ polling: 250 }, opt || {})); return p; };
+  ctx.on('page', tune);
+  const page = tune(await ctx.newPage());
   const log = [], t0 = Date.now(), T = () => ((Date.now() - t0) / 1000).toFixed(2);
   page.on('console', m => { const k = m.type(); if (k === 'error' || k === 'warning') log.push(T() + ' console.' + k + ' ' + m.text().slice(0, 400)); });
   page.on('pageerror', e => log.push(T() + ' pageerror ' + String(e && e.stack || e).slice(0, 600)));

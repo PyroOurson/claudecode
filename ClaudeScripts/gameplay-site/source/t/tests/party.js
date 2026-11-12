@@ -167,6 +167,7 @@ const must = (c, m) => { if (!c) throw new Error(m); };
     await joinCode(g, code);
     await g.waitLobby(2); await h.waitLobby(2);
     await g.page.close();
+    await h.page.waitForFunction(() => { const l = document.querySelector('.g-lobby .gl-players'); return !!l && (l.querySelectorAll('.gl-pl:not(.gl-seat)').length === 1 || !!l.querySelector('.gl-pl.gl-away, .gl-pl.away')); }, null, { timeout: 30000 });
     await h.page.waitForFunction(() => document.querySelectorAll('.g-lobby .gl-players .gl-pl:not(.gl-seat)').length === 1, null, { timeout: 90000 });
   });
   await scenario('L guest goes offline for a few seconds: reconnects without leaving the party', async b => {

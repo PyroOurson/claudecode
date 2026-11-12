@@ -830,6 +830,7 @@ function makeNet(g, add) {
     const gs = rm.guests.get(id);
     if (!gs) return;
     rm.guests.delete(id); clearTimeout(gs.gt); rm.rate.delete(id);
+    netDiag('guest-removed', { why, hid: !!gs.hid, away: !!gs.away });
     const c = gs.conn; gs.conn = null;
     if (c) { if (why === 'kick') tx(c, { __kick: 1 }); setTimeout(() => { try { c.close(); } catch (e) {} }, why === 'kick' ? 400 : 0); }
     emit('leave', pubOf(gs));
@@ -870,12 +871,13 @@ function makeNet(g, add) {
     if (mode !== 'room' || leaderId() !== rm.me) return;
     if (net.role === 'host') ctl(a, id, n); else tx(rm.conn, { __ctl: { a, id, n } });
   };
-  const goAway = (gs, back) => {
+  const goAway = (gs, back, why) => {
     if (gs.away) return;
+    netDiag('guest-away', { why: back ? 'bye' : why || 'timeout', hid: !!gs.hid, quiet: now() - gs.lastRx });
     const c = gs.conn; gs.conn = null; gs.away = true;
     try { if (c) c.close(); } catch (e) {}
     clearTimeout(gs.gt);
-    gs.gt = setTimeout(() => removeGuest(gs.id, 'lost'), back ? 20000 : gs.hid ? 60000 : 12000);
+    gs.gt = setTimeout(() => removeGuest(gs.id, 'lost'), back ? 40000 : gs.hid ? 60000 : 12000);
     pushList();
   };
   const hostIn = (gid, c, d, fast) => {
@@ -886,7 +888,7 @@ function makeNet(g, add) {
     if (d.__hb) { pong(c, d, fast); return; }
     if (d.__hr) { gs.rtt = Math.round(now() - d.__hr); return; }
     if (d.__hello) { if (!fast) tx(c, welOf(gs)); return; }
-    if (d.__vis !== undefined) { gs.hid = !!d.__vis; return; }
+    if (d.__vis !== undefined) { gs.hid = !!d.__vis; netDiag('guest-vis', { hid: gs.hid }); return; }
     if (fast) { if (gs.inGame && rm.state === 'game') emit('data', d, gid); return; }
     if (d.__bye) { if (d.back) goAway(gs, true); else removeGuest(gid, 'left'); return; }
     if (d.__name) { const n2 = uniqueName(d.__name, gid); if (n2 !== gs.name) { gs.name = n2; pushList(); } return; }
@@ -932,7 +934,7 @@ function makeNet(g, add) {
       }
       hostIn(gid, c, d, false);
     });
-    const gone = () => { const gs = gid && rm.guests.get(gid); if (gs && gs.conn === c) { if (gs.ok) goAway(gs); else removeGuest(gid, 'left'); } };
+    const gone = () => { const gs = gid && rm.guests.get(gid); if (gs && gs.conn === c) { if (gs.ok) goAway(gs, false, 'closed'); else removeGuest(gid, 'left'); } };
     c.on('close', gone);
     c.on('error', gone);
   };
@@ -1093,7 +1095,7 @@ function makeNet(g, add) {
     let why = 'lost', ice = 0;
     rm.rt0 = now();
     netDiag('guest-lost', { via: rm.via });
-    while (my === gen && (now() - rm.rt0 < 45000 || (document.hidden && now() - rm.rt0 < 600000))) {
+    while (my === gen && (now() - rm.rt0 < 60000 || (document.hidden && now() - rm.rt0 < 600000))) {
       await nap(1200);
       if (my !== gen) return;
       try {
@@ -1147,7 +1149,7 @@ function makeNet(g, add) {
       if (!x || typeof x.id !== 'string' || typeof x.key !== 'string') return;
       const id = x.id.slice(0, 16), seq = +x.seq || ++rm.seq;
       rm.seq = Math.max(rm.seq, seq);
-      rm.guests.set(id, { id, key: x.key, name: netName(x.name) || 'Player', conn: null, lastRx: now(), rtt: 0, inGame: false, away: true, gt: setTimeout(() => removeGuest(id, 'lost'), 25000), seq, ok: true, hid: false, tab: '' });
+      rm.guests.set(id, { id, key: x.key, name: netName(x.name) || 'Player', conn: null, lastRx: now(), rtt: 0, inGame: false, away: true, gt: setTimeout(() => removeGuest(id, 'lost'), 40000), seq, ok: true, hid: false, tab: '' });
     });
     if (typeof h.leader === 'string' && rm.guests.has(h.leader)) rm.leader = h.leader;
   };
