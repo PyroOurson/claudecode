@@ -1,6 +1,7 @@
     let EX = 0, EY = 0, EZ = 0;
     const reach = () => mode() === 'creative' ? CFG.REACH_CREATIVE : CFG.REACH;
-    function lookDir() { const cp = Math.cos(P.pitch); return [-Math.sin(P.yaw) * cp, Math.sin(P.pitch), -Math.cos(P.yaw) * cp]; }
+    const LDIR = [0, 0, 0];
+    function lookDir() { const cp = Math.cos(P.pitch); LDIR[0] = -Math.sin(P.yaw) * cp; LDIR[1] = Math.sin(P.pitch); LDIR[2] = -Math.cos(P.yaw) * cp; return LDIR; }
     function attackPress() {
       if (P.dead || gui || scr !== 'game') return;
       swing();

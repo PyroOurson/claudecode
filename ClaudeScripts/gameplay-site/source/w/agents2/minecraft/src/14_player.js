@@ -8,7 +8,14 @@
     const creative = () => W && W.mode === 'creative';
     const canBuild = () => W && (W.mode === 'survival' || W.mode === 'creative');
     const held = () => inv[sel];
-    const playersList = () => { const l = W && W.dead !== true && !P.dead ? [P] : []; for (const e of ENTS) if (e.kind === 'player' && e.y > -500) l.push(e); return l; };
+    let plTick = -1, plWorld = null, plDead = false, plList = [];
+    const playersList = () => {
+      if (plTick === tickN && plWorld === W && plDead === P.dead && W) return plList;
+      const l = W && W.dead !== true && !P.dead ? [P] : [];
+      for (const e of ENTS) if (e.kind === 'player' && e.y > -500) l.push(e);
+      plTick = tickN; plWorld = W; plDead = P.dead; plList = l;
+      return l;
+    };
     const ST = (id, n, d) => ({ id, n: n || 1, d: d || 0 });
     const sameSt = (a, b) => a && b && a.id === b.id && (a.d || 0) === (b.d || 0) && JSON.stringify(a.x || null) === JSON.stringify(b.x || null);
     function giveItem(s, silent) {

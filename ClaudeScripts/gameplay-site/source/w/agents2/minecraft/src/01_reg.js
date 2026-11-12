@@ -111,7 +111,7 @@
     IT.push(it); IN[id] = it;
     return it;
   }
-  function finalizeBlocks() {
+  function* finalizeBlocks() {
     const N = NSTATE;
     STT = new Uint16Array(N); SHP = new Uint8Array(N); OPQ = new Uint8Array(N); SOL = new Uint8Array(N); LAT = new Uint8Array(N); LEM = new Uint8Array(N);
     TIL = new Int16Array(N * 6).fill(-1); TRT = new Uint8Array(N * 6); TNT = new Uint8Array(N); CSM = new Uint16Array(N); FLU = new Uint8Array(N); REP = new Uint8Array(N); FULLT = new Uint8Array(N); ANIMF = new Uint8Array(N); LEAF = new Uint8Array(N); RTK = new Uint8Array(N);
@@ -159,6 +159,7 @@
         if (t.sel) SELB[s] = t.sel(s);
         FULLT[s] = SOL[s] === 1 && t.opq ? 1 : 0;
       }
+      yield;
     }
   }
   function texFace(tex, f) {
