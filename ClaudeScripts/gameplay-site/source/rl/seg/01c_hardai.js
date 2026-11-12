@@ -466,7 +466,7 @@
       return;
     }
     if (why === 'mate') {
-      const m = W.cars[iMate];
+      const m = H.obs[iMate];
       let tx, ty, deep = H.n > 4;
       for (let i = 0; i < H.n; i++) if (i !== me && i !== iMate && W.cars[i].team === c.team && !H.obs[i].demo && (H.obs[i].p.y - c.p.y) * sg < 0) deep = false;
       if (!deep) { tx = bx * 0.45 - Math.sign(m.p.x - bx || 1) * 750; ty = by - sg * 2100; if (ty * sg < -CFG.Y + 900) { ty = ownY + sg * 900; tx = clamp(bx * 0.3, -800, 800) - Math.sign(bx || 1) * 500; } }
