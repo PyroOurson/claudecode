@@ -59,6 +59,33 @@
     return can.surr ? 'surrender' : 'stand';
   }
 
+  function adviceCount(fs, upF, R, can, tc) {
+    const up = pv(upF), v = tot(fs), t = v.t;
+    if (fs.length === 2 && can.split && pv(fs[0]) === 10 && pv(fs[1]) === 10 && ((up === 5 && tc >= 5) || (up === 6 && tc >= 4))) return 'split';
+    const a = advice(fs, upF, R, can);
+    if (a === 'split' || v.soft) return a;
+    if (can.surr) {
+      if (t === 14 && up === 10 && tc >= 3) return 'surrender';
+      if (t === 15 && up === 10) return tc >= 0 ? 'surrender' : 'hit';
+      if (t === 15 && up === 9 && tc >= 2) return 'surrender';
+      if (t === 15 && up === 11 && tc >= (R.h17 ? -1 : 1)) return 'surrender';
+    }
+    if (a === 'surrender') return a;
+    const st = lim => (tc >= lim ? 'stand' : 'hit');
+    if (t === 16 && up === 10) return st(0);
+    if (t === 16 && up === 9) return st(5);
+    if (t === 15 && up === 10) return st(4);
+    if (t === 12 && up <= 6) return st([3, 2, 0, -2, -1][up - 2]);
+    if (t === 13 && up <= 3) return st(up === 2 ? -1 : -2);
+    if (can.dbl) {
+      if (t === 11 && up === 11 && !R.h17) return tc >= 1 ? 'double' : 'hit';
+      if (t === 10 && up >= 10) return tc >= 4 ? 'double' : 'hit';
+      if (t === 9 && up === 2) return tc >= 1 ? 'double' : 'hit';
+      if (t === 9 && up === 7) return tc >= 3 ? 'double' : 'hit';
+    }
+    return a;
+  }
+
   function legalHand(fs, h, nh, bank, R, ph) {
     const L = {};
     if (ph !== 'play' || h.done) return L;
@@ -82,7 +109,7 @@
     if (!rules.max) rules.max = rules.min * 200;
     const online = !!o.online, sp = o.speed || 1;
     const s = { ph: 'idle', rd: 0, shoe: [], pos: 0, cut: 0, disc: 0, need: false, seats: Array(6).fill(null), dl: [], hole: true, turn: null, tl: 0, lk: false };
-    let clock = 0, tid = 0, cn = 0, evs = [], dirty = false, tBet = 0, tTurn = 0, tIns = 0;
+    let clock = 0, tid = 0, cn = 0, evs = [], dirty = false, tBet = 0, tTurn = 0, tIns = 0, rc = 0, hs = false;
     const timers = [];
     const later = (fn, ms, raw) => { const t = { at: clock + (raw ? ms : ms * sp), id: ++tid, fn }; timers.push(t); return t.id; };
     const cancel = id => { const i = timers.findIndex(t => t.id === id); if (i >= 0) timers.splice(i, 1); };
@@ -94,13 +121,16 @@
     const sd = i => s.seats[i];
     const left = () => s.shoe.length - s.pos;
     const rint = k => Math.floor(R() * k);
+    const see = c => { const v = pv(c.f); rc += v >= 10 ? -1 : v <= 6 ? 1 : 0; return c; };
+    const showHole = () => { if (!hs && s.dl[1]) { hs = true; see(s.dl[1]); } };
+    const tc = () => rc / Math.max(.5, left() / 52);
 
     function shuffle() {
       const n = rules.decks * 52, a = new Array(n);
       for (let i = 0; i < n; i++) a[i] = i % 52;
       for (let i = n - 1; i > 0; i--) { const j = rint(i + 1), t = a[i]; a[i] = a[j]; a[j] = t; }
       const pen = rules.decks === 1 ? .55 : rules.decks === 2 ? .68 : .75;
-      s.shoe = a; s.pos = 1; s.disc = 1; s.need = false;
+      s.shoe = a; s.pos = 1; s.disc = 1; s.need = false; rc = 0;
       s.cut = Math.max(Math.floor(n * .3), Math.floor(n * (pen - .04 + R() * .08)));
       E({ k: 'shuf' });
     }
@@ -173,8 +203,8 @@
       const x = sd(i);
       if (s.ph !== 'bet' || !x || x.kind !== 'bot' || x.ready) return;
       if (x.bank < rules.min) { x.bank = rules.start; x.rebuys++; }
-      const mult = x.style === 'cautious' ? [1, 1, 2] : x.style === 'loose' ? [4, 10, 20, 8] : [2, 4, 5, 4];
-      let amt = rules.min * mult[rint(mult.length)];
+      const mult = x.style === 'cautious' ? [1, 1, 2] : x.style === 'loose' ? [4, 10, 20, 8] : [2, 4, 5, 4], t = tc();
+      let amt = rules.min * (x.style === 'count' ? (t < 1 ? 1 : t < 2 ? 2 : t < 3 ? 4 : t < 4 ? 8 : 12) : mult[rint(mult.length)]);
       amt = Math.min(rules.max, Math.max(rules.min, Math.floor(Math.min(amt, x.bank * .25) / rules.min) * rules.min), x.bank);
       if (!setBet(x, amt)) { x.ready = true; x.sit = true; } else { x.ready = true; E({ k: 'rdy', s: i }); }
       change();
@@ -227,13 +257,13 @@
       s.seats.forEach((x, i) => { if (x && x.bet >= rules.min) act.push(i); });
       if (!act.length) return;
       if (left() < 14 + act.length * 8) { shuffle(); }
-      s.ph = 'deal'; s.lk = true;
+      s.ph = 'deal'; s.lk = true; hs = false;
       act.forEach(i => { const x = sd(i); x.last = x.bet; x.hands = [{ cards: [], bet: x.bet, done: false, st: '', res: '', net: 0, split: false, aces: false, dbl: false }]; x.bet = 0; x.hist = []; });
       const order = act.concat(['D'], act, ['H']);
       let k = 0;
       const step = () => {
         const w = order[k++];
-        if (w === 'D' || w === 'H') s.dl.push(draw()); else sd(w).hands[0].cards.push(draw());
+        if (w === 'H') s.dl.push(draw()); else if (w === 'D') s.dl.push(see(draw())); else sd(w).hands[0].cards.push(see(draw()));
         E({ k: 'deal' }); change();
         if (k < order.length) later(step, 330); else later(afterDeal, 600);
       };
@@ -250,7 +280,7 @@
       s.seats.forEach((x, i) => {
         if (!x || !x.hands.length) return;
         x.ans = null;
-        if (x.kind === 'bot') later(() => { if (s.ph === 'ins' && x.ans === null) insAns(i, x, x.style === 'loose' && R() < .35 && x.hands[0].st !== 'bj'); }, 500 + R() * 700);
+        if (x.kind === 'bot') later(() => { if (s.ph === 'ins' && x.ans === null) insAns(i, x, x.style === 'count' ? tc() >= 3 : x.style === 'loose' && R() < .35 && x.hands[0].st !== 'bj'); }, 500 + R() * 700);
       });
       cancel(tIns); s.tl = 0;
       if (online) { s.tl = clock + INS_MS; tIns = later(() => { s.seats.forEach((x, i) => { if (x && x.hands.length && x.ans === null) insAns(i, x, false); }); flush(); }, INS_MS, true); }
@@ -285,7 +315,7 @@
       E({ k: 'peek' }); change();
       later(() => {
         if (tot(fc(s.dl)).t === 21) {
-          s.hole = false; E({ k: 'flip' });
+          s.hole = false; showHole(); E({ k: 'flip' });
           s.seats.forEach((x, i) => { if (x && x.ins) { x.bank = r2(x.bank + x.ins * 3); x.inr = 'win'; E({ k: 'insw', s: i, net: x.ins * 2 }); } });
           change();
           later(settle, 1100);
@@ -311,7 +341,7 @@
       if (!t) { s.turn = null; s.tl = 0; s.lk = true; change(); later(dealerPlay, 450); return; }
       s.turn = { s: t[0], h: t[1] }; s.lk = true; s.tl = 0; change();
       const i = t[0], j = t[1], x = sd(i), h = x.hands[j];
-      if (h.cards.length < 2) later(() => { h.cards.push(draw()); E({ k: 'deal' }); afterCard(i, j); change(); }, 350);
+      if (h.cards.length < 2) later(() => { h.cards.push(see(draw())); E({ k: 'deal' }); afterCard(i, j); change(); }, 350);
       else later(armTurn, 250);
     }
     function armTurn() {
@@ -350,10 +380,10 @@
       const nx = d => later(() => go(nextHand(i, j + 1)), d);
       if (k === 'stand') { h.done = true; h.st = 'stand'; E({ k: 'stand', s: i, h: j }); nx(350); }
       else if (k === 'surrender') { h.done = true; h.st = 'surr'; E({ k: 'surr', s: i, h: j }); nx(700); }
-      else if (k === 'hit') { h.cards.push(draw()); E({ k: 'deal' }); afterCard(i, j); }
+      else if (k === 'hit') { h.cards.push(see(draw())); E({ k: 'deal' }); afterCard(i, j); }
       else if (k === 'double') {
         x.bank = r2(x.bank - h.bet); h.bet = r2(h.bet * 2); h.dbl = true; E({ k: 'dbl', s: i, h: j });
-        later(() => { h.cards.push(draw()); E({ k: 'deal' }); afterCard(i, j); change(); }, 450);
+        later(() => { h.cards.push(see(draw())); E({ k: 'deal' }); afterCard(i, j); change(); }, 450);
       } else if (k === 'split') {
         const ace = pv(h.cards[0].f) === 11;
         x.bank = r2(x.bank - h.bet);
@@ -361,7 +391,7 @@
         h.split = true; h.aces = ace;
         x.hands.splice(j + 1, 0, nh);
         E({ k: 'split', s: i, h: j });
-        later(() => { h.cards.push(draw()); E({ k: 'deal' }); afterCard(i, j); change(); }, 600);
+        later(() => { h.cards.push(see(draw())); E({ k: 'deal' }); afterCard(i, j); change(); }, 600);
       }
       change();
       return true;
@@ -375,7 +405,7 @@
         const pa = fs.length === 2 && pv(fs[0]) === pv(fs[1]) && (pv(fs[0]) === 11 || pv(fs[0]) === 8);
         can.split = can.split && pa;
       }
-      let a = advice(fs, up, rules, can);
+      let a = x.style === 'count' ? adviceCount(fs, up, rules, can, tc()) : advice(fs, up, rules, can);
       if (x.style === 'loose' && a === 'stand' && tot(fs).t <= 16 && R() < .12 && L.hit) a = 'hit';
       if (x.style === 'loose' && a === 'hit' && L.dbl && tot(fs).t >= 9 && tot(fs).t <= 11 && R() < .6) a = 'double';
       if (a === 'split' && !L.split) a = 'hit';
@@ -394,18 +424,18 @@
     }
 
     function dealerPlay() {
-      s.ph = 'dealer'; s.turn = null; s.tl = 0; s.hole = false; E({ k: 'flip' }); change();
+      s.ph = 'dealer'; s.turn = null; s.tl = 0; s.hole = false; showHole(); E({ k: 'flip' }); change();
       const live = s.seats.some(x => x && x.hands.some(h => h.st !== 'bust' && h.st !== 'surr' && h.st !== 'bj' && h.st !== 'even'));
       const more = () => { const v = tot(fc(s.dl)); return v.t < 17 || (v.t === 17 && v.soft && rules.h17); };
       const stepD = () => {
-        if (live && more()) { s.dl.push(draw()); E({ k: 'deal' }); change(); later(stepD, 750); }
+        if (live && more()) { s.dl.push(see(draw())); E({ k: 'deal' }); change(); later(stepD, 750); }
         else later(settle, 750);
       };
       later(stepD, 900);
     }
 
     function settle() {
-      s.ph = 'pay'; s.turn = null; s.tl = 0; s.hole = false;
+      s.ph = 'pay'; s.turn = null; s.tl = 0; s.hole = false; showHole();
       const dv = tot(fc(s.dl)), dbj = s.dl.length === 2 && dv.t === 21, dbust = dv.t > 21;
       s.seats.forEach((x, i) => {
         if (!x) return;
@@ -793,6 +823,7 @@
     ['min', 'Table minimum', [[5, '$5'], [10, '$10'], [25, '$25'], [100, '$100']]],
     ['start', 'Starting bankroll', [[500, '$500'], [1000, '$1,000'], [5000, '$5K'], [10000, '$10K']]],
     ['bots', 'Bots at the table (solo)', [[0, '0'], [1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5']]],
+    ['botlvl', 'Bot skill', [['Mixed', 'Mixed'], ['Hardest', 'Hardest']]],
     ['fast', 'Dealing speed', [[false, 'Normal'], [true, 'Fast']]]
   ];
   const HS = [1, .86, .74, .66], HP = [0, 86, 68, 58];
@@ -810,11 +841,11 @@
     format: v => '$' + Math.round(v).toLocaleString('en-US'),
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="12" width="26" height="38" rx="4" transform="rotate(-12 21 31)"/><rect x="26" y="10" width="26" height="38" rx="4" transform="rotate(10 39 29)"/><path d="M39 22l5 7-5 3-5-3z"/><ellipse cx="46" cy="50" rx="11" ry="6"/><ellipse cx="46" cy="46" rx="11" ry="6"/></svg>',
     css: CSS,
-    _t: { Table, advice, tot, legalHand, hardRow, softRow, pairRow, chipsOf },
+    _t: { Table, advice, adviceCount, tot, legalHand, hardRow, softRow, pairRow, chipsOf },
     mount(root, api) {
       const SV = Object.assign({ bank: 0 }, api.load() || {});
       SV.st = Object.assign({ h: 0, w: 0, l: 0, p: 0, b: 0 }, SV.st || {});
-      const OP = Object.assign({ decks: 6, h17: false, pay: 1.5, surr: true, das: true, rsa: false, dbl: 'any', min: 5, start: 1000, bots: 2, hint: false, fast: false }, SV.op || {});
+      const OP = Object.assign({ decks: 6, h17: false, pay: 1.5, surr: true, das: true, rsa: false, dbl: 'any', min: 5, start: 1000, bots: 2, botlvl: 'Mixed', hint: false, fast: false }, SV.op || {});
       const persist = () => { SV.op = OP; api.save(SV); };
       const rulesOf = () => ({ decks: OP.decks, h17: OP.h17, pay: OP.pay, surr: OP.surr, das: OP.das, rsa: OP.rsa, dbl: OP.dbl, min: OP.min, start: OP.start });
       const now = () => performance.now();
@@ -1584,7 +1615,7 @@
         const bank = !fresh && SV.bank >= OP.min ? SV.bank : OP.start;
         tb.seat(M.me, { kind: 'human', name: 'You', bank });
         const nm = BOTN.slice().sort(() => Math.random() - .5);
-        for (let i = 0; i < OP.bots; i++) tb.seat(PRI[i + 1], { kind: 'bot', name: nm[i], style: STYLES[i % STYLES.length], bank: Math.max(OP.min * 6, Math.round(OP.start * (.5 + Math.random() * 1.2) / 5) * 5) });
+        for (let i = 0; i < OP.bots; i++) tb.seat(PRI[i + 1], { kind: 'bot', name: nm[i], style: OP.botlvl === 'Hardest' ? 'count' : STYLES[i % STYLES.length], bank: Math.max(OP.min * 6, Math.round(OP.start * (.5 + Math.random() * 1.2) / 5) * 5) });
         resetView(); paintBG(); api.label('Bankroll');
         tb.start();
       }
@@ -1752,7 +1783,7 @@ ${lead ? '<button class="bj-big blue" data-a="reset">Reset all bankrolls<small>E
           ps.forEach((p, i) => { M.pids[PRI[i]] = p.id; tb.seat(PRI[i], { kind: 'human', pid: p.id, name: p.name, bank: tb.rules.start }); });
           if (r.bots) {
             const nm = BOTN.slice().sort(() => Math.random() - .5);
-            for (let i = ps.length; i < Math.min(6, r.size); i++) tb.seat(PRI[i], { kind: 'bot', name: nm[i], style: STYLES[i % STYLES.length], bank: tb.rules.start });
+            for (let i = ps.length; i < Math.min(6, r.size); i++) tb.seat(PRI[i], { kind: 'bot', name: nm[i], style: OP.botlvl === 'Hardest' ? 'count' : STYLES[i % STYLES.length], bank: tb.rules.start });
           }
           resetView(); paintBG(); api.label('Bankroll');
           ps.forEach((p, i) => { if (i) api.net.sendTo(p.id, { t: 'setup', me: PRI[i], rules: tb.rules }); });

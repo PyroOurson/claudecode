@@ -473,7 +473,7 @@
 .GM .cg-opt{display:flex;align-items:center;gap:10px;margin:8px 0;text-align:left}
 .GM .cg-opt>span{flex:0 0 36%;font:800 13px/1.2 var(--sans);color:rgba(255,255,255,.88)}
 .GM .cg-opt>span small{display:block;font:700 11px/1.25 var(--sans);color:rgba(255,255,255,.55);margin-top:2px}
-.GM .cg-seg{flex:1;display:flex;gap:5px}
+.GM .cg-seg{flex:1;display:flex;gap:5px;flex-wrap:wrap}
 .GM .cg-seg button{flex:1;min-height:40px;border-radius:12px;border:2px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font:900 13px var(--sans);padding:0 4px}
 .GM .cg-seg button.on{background:var(--cg-hi,#ffd23f);border-color:#fff;color:#1b1b1f}
 .GM .cg-sec{margin:12px 0 2px!important;text-align:left;font:900 11px var(--sans)!important;letter-spacing:1.3px;text-transform:uppercase;color:var(--cg-hi,#ffd23f)!important}
@@ -642,7 +642,8 @@
   const CE_AI = {
     Easy: { think: [1.0, 1.8], noise: 6, keep8: false, smart: 0 },
     Normal: { think: [.75, 1.3], noise: 1.2, keep8: true, smart: 1 },
-    Hard: { think: [.55, 1.0], noise: 0, keep8: true, smart: 2 }
+    Hard: { think: [.55, 1.0], noise: 0, keep8: true, smart: 2 },
+    Hardest: { think: [.5, .9], noise: 0, keep8: true, smart: 2, mc: 1 }
   };
 
   function ceBot(g, p, P, lacks) {
@@ -693,6 +694,53 @@
       if (v > bv) { bv = v; best = id; }
     }
     return mk(best);
+  }
+
+  function ceSim(g, p, lacks) {
+    const s = g.s, n = s.n, h = s.hands[p], HP = CE_AI.Hard, base = ceBot(g, p, HP, lacks), one = s.drew && g.rules.draw === 'one';
+    if (base.t !== 'play' && !one) return base;
+    const cands = [], cnt = [0, 0, 0, 0], seen = new Uint8Array(52), pool = [];
+    for (const id of h) { seen[id] = 1; if (RK(id) !== 8) cnt[ST(id)]++; }
+    for (const id of s.disc) seen[id] = 1;
+    for (let id = 0; id < 52; id++) if (!seen[id]) pool.push(id);
+    let e8 = false;
+    for (const id of h) {
+      if (!g.legal(id)) continue;
+      if (RK(id) !== 8) cands.push({ t: 'play', id });
+      else if (!e8) {
+        e8 = true;
+        const o = [0, 1, 2, 3].sort((a, b) => cnt[b] - cnt[a]);
+        cands.push({ t: 'play', id, suit: o[0] }, { t: 'play', id, suit: o[1] });
+        if (base.t === 'play' && RK(base.id) === 8 && base.suit !== o[0] && base.suit !== o[1]) cands.push({ t: 'play', id, suit: base.suit });
+      }
+    }
+    if (one) cands.push({ t: 'pass' });
+    if (cands.length < 2) return base;
+    const tot = new Float64Array(cands.length), t0 = performance.now();
+    let it = 0;
+    for (; it < 300; it++) {
+      if (it >= 12 && it % 4 === 0 && performance.now() - t0 > 80) break;
+      shuffle(pool);
+      const hands = [], rest = pool.slice();
+      for (let q = 0; q < n; q++) {
+        if (q === p) { hands.push(h); continue; }
+        const need = s.hands[q].length, lk = lacks && lacks[q], no8 = lk && (lk[0] || lk[1] || lk[2] || lk[3]), hq = [];
+        for (let i = rest.length - 1; i >= 0 && hq.length < need; i--) if (!lk || !(lk[ST(rest[i])] || (no8 && RK(rest[i]) === 8))) hq.push(rest.splice(i, 1)[0]);
+        while (hq.length < need && rest.length) hq.push(rest.pop());
+        hands.push(hq);
+      }
+      for (let i = 0; i < cands.length; i++) {
+        const w = CEGame({ n, rules: g.rules }), ws = w.s;
+        ws.hands = hands.map(x => x.slice()); ws.stock = rest.slice(); ws.disc = s.disc.slice(); ws.turn = p; ws.dir = s.dir; ws.suit = s.suit; ws.phase = 'play'; ws.drew = s.drew; ws.passes = s.passes;
+        w.act(p, cands[i]);
+        for (let k = 0; k < 400 && ws.phase === 'play'; k++) { const q = ws.turn; if (!w.act(q, ceBot(w, q, HP, null)) && !w.act(q, { t: 'draw' }) && !w.act(q, { t: 'pass' })) break; }
+        w.take();
+        tot[i] += ws.winner === p ? ws.scores[p] : ws.winner >= 0 ? -ws.scores[ws.winner] / (n - 1) : 0;
+      }
+    }
+    let bi = 0, bv = -1e9;
+    for (let i = 0; i < cands.length; i++) { const c = cands[i], v = tot[i] / it + (c.t === base.t && c.id === base.id && c.suit === base.suit ? 1 : 0); if (v > bv) { bv = v; bi = i; } }
+    return cands[bi];
   }
 
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -750,6 +798,7 @@
     format: v => v + (v === 1 ? ' win' : ' wins'),
     icon: iconSvg('<rect x="8" y="14" width="26" height="38" rx="4" transform="rotate(-14 21 33)"/><rect x="28" y="10" width="26" height="38" rx="4" transform="rotate(10 41 29)" fill="currentColor" fill-opacity=".12"/><text x="41" y="36" font-size="22" font-weight="900" text-anchor="middle" fill="currentColor" stroke="none" font-family="Arial" transform="rotate(10 41 29)">8</text>'),
     css: css('crazy-eights', CE_CSS),
+    _t: { CEGame, ceBot, ceSim, ceFilter, CE_AI },
     mount(root, api) {
       const K = Core(root, api, { id: 'crazy-eights', W: 960, H: 600, PW: 360, PH: 640, defaults: { mode: 'cpu', cpus: 3, diff: 'Normal', draw: 'until', special: false, target: 100, felt: 'green', wins: 0 }, bg: (x, W, H, port) => feltBg(x, W, H, port, K.opt.felt) });
       const opt = K.opt, ctx = K.ctx;
@@ -1179,7 +1228,7 @@
         const P = CE_AI[M.diff] || CE_AI.Normal, tok = M.tok, tid = s.tid, p = nd.p;
         K.after(rnd(P.think[0], P.think[1]), () => {
           if (tok !== M.tok || !M.eng || M.eng.s.tid !== tid || M.eng.need().p !== p) return;
-          const a = ceBot(M.eng, p, P, M.lacks);
+          const a = P.mc ? ceSim(M.eng, p, M.lacks) : ceBot(M.eng, p, P, M.lacks);
           if (!M.eng.act(p, a)) M.eng.act(p, { t: 'draw' }) || M.eng.act(p, { t: 'pass' });
           flush();
         });
@@ -1205,7 +1254,7 @@
       function showOpts(back) {
         K.show(`<div class="cg-box wide"><p class="cg-kick">Options</p><h3>Game setup</h3>
 ${K.optRow('CPU opponents', 'Solo games', 'cpus', [[1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5']])}
-${K.optRow('Difficulty', 'How well the CPUs play', 'diff', [['Easy', 'Easy'], ['Normal', 'Normal'], ['Hard', 'Hard']])}
+${K.optRow('Difficulty', 'How well the CPUs play', 'diff', [['Easy', 'Easy'], ['Normal', 'Normal'], ['Hard', 'Hard'], ['Hardest', 'Hardest']])}
 ${K.optRow('When you can\u2019t play', '', 'draw', [['until', 'Draw until you can'], ['one', 'Draw one card']])}
 ${K.optRow('Special cards', '2 draw, Q skip, A reverse', 'special', [[false, 'Off'], [true, 'On']])}
 ${K.optRow('Play to', 'Points across rounds', 'target', [[0, '1 round'], [50, '50'], [100, '100'], [200, '200']])}
@@ -1973,7 +2022,7 @@ ${M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a="again">
     return e;
   }
 
-  const SP_AI = { Casual: { react: 1.9, chain: .8, smart: 0 }, Quick: { react: 1.15, chain: .6, smart: 1 }, Lightning: { react: .55, chain: .5, smart: 2 } };
+  const SP_AI = { Casual: { react: 1.9, chain: .8, smart: 0 }, Quick: { react: 1.15, chain: .6, smart: 1 }, Lightning: { react: .55, chain: .5, smart: 2 }, Hardest: { react: .42, chain: .6, smart: 3 } };
 
   function spMoves(g, p) {
     const h = g.s.hand[p], out = [];
@@ -1993,6 +2042,12 @@ ${M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a="again">
     return best;
   }
 
+  function spOpen(g, p, a, b) {
+    const c = new Int8Array(15).fill(4), f = r => c[r === 1 ? 13 : r - 1] + c[r === 13 ? 1 : r + 1];
+    for (const id of g.s.hand[p]) if (id != null) c[RK(id)]--;
+    for (const pile of g.s.cen) for (const id of pile) c[RK(id)]--;
+    return f(RK(a)) + (RK(a) === RK(b) ? 0 : f(RK(b)));
+  }
   function spBot(g, p, P) {
     const mv = spMoves(g, p);
     if (!mv.length) return null;
@@ -2003,6 +2058,7 @@ ${M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a="again">
       const rest = []; for (let i = 0; i < 5; i++) if (i !== m.slot && h[i] != null) rest.push(h[i]);
       const t = [g.top(0), g.top(1)]; t[m.pile] = h[m.slot];
       let v = spChain(rest, t[0], t[1]) + Math.random() * (P.smart > 1 ? .01 : .9);
+      if (P.smart > 2) v -= spOpen(g, p, t[0], t[1]) * .03;
       if (v > bv) { bv = v; best = [m]; }
     }
     return best[0];
@@ -2043,13 +2099,14 @@ ${M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a="again">
     title: 'Speed',
     category: 'Board',
     tint: '#d6402b',
-    blurb: 'The real-time card duel: no turns, just play up or down a rank onto the two middle piles faster than your rival. Three CPU speeds, or race a friend online.',
+    blurb: 'The real-time card duel: no turns, just play up or down a rank onto the two middle piles faster than your rival. Four CPU levels, or race a friend online.',
     help: 'Drag or tap cards \u00b7 <kbd>1</kbd>\u2013<kbd>5</kbd> play \u00b7 <kbd>Z</kbd>/<kbd>X</kbd> or arrows pick the pile',
     width: 960,
     better: 'low',
     format: v => v + 's',
     icon: iconSvg('<rect x="6" y="14" width="22" height="32" rx="4" fill="currentColor" fill-opacity=".14"/><rect x="34" y="14" width="22" height="32" rx="4"/><path d="M22 54l10-8-10-2 12-10M40 6l-6 8 8 2" stroke-width="2.5"/>'),
     css: css('speed', SP_CSS),
+    _t: { SpGame, spBot, spFilter, SP_AI },
     mount(root, api) {
       const K = Core(root, api, { id: 'speed', W: 960, H: 600, PW: 360, PH: 640, defaults: { diff: 'Quick', hints: true, back: 'red', wins: 0 }, bg: spBg, back: WAR_BACKS.red });
       const FINE = !!(window.matchMedia && matchMedia('(pointer: fine)').matches);
@@ -2388,7 +2445,7 @@ ${M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a="again">
       function showRules(back) { K.show(`<div class="cg-box wide">${SP_RULES}<button class="cg-big slate" data-a="back">Back</button></div>`, () => (back === 'game' ? showMenu() : showTitle())); }
       function showOpts(back) {
         K.show(`<div class="cg-box wide"><p class="cg-kick">Options</p><h3>Game setup</h3>
-${K.optRow('CPU speed', 'Reaction time of the computer', 'diff', [['Casual', 'Casual'], ['Quick', 'Quick'], ['Lightning', 'Lightning']])}
+${K.optRow('CPU speed', 'Reaction time of the computer', 'diff', [['Casual', 'Casual'], ['Quick', 'Quick'], ['Lightning', 'Lightning'], ['Hardest', 'Hardest']])}
 ${K.optRow('Hints', 'Highlight cards you can play', 'hints', [[true, 'On'], [false, 'Off']])}
 ${K.optRow('Card back', '', 'back', [['red', 'Red'], ['blue', 'Blue'], ['green', 'Green'], ['purple', 'Purple']])}
 <button class="cg-big green" data-a="back">Done</button></div>`, () => (back === 'game' ? showMenu() : showTitle()));
