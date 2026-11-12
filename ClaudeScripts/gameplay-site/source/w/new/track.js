@@ -285,20 +285,22 @@ async function trMore() {
   const n = navigator, A = window.AudioContext || window.webkitAudioContext;
   let sr = null, ach = null, mtex = null, glx = null, voices = null, devs = null, bat = null, est = null, gpuv = null, pers = null;
   try { if (A) { const ac = new A(); sr = ac.sampleRate; ach = ac.destination ? ac.destination.maxChannelCount : null; ac.close(); } } catch (e) {}
-  try { const gi = await trTo(trGl(), 5000); if (gi) { mtex = gi.mtex; glx = gi.glx; } } catch (e) {}
+  let glc = null;
+  try { glc = await trTo(trGl(), 5000); if (glc) { mtex = glc.mtex; glx = glc.glx; if (typeof glc.gv === 'string') gpuv = glc.gv || null; } } catch (e) {}
   try { voices = window.speechSynthesis ? speechSynthesis.getVoices().length : null; } catch (e) {}
   const v = document.createElement('video'), cp = t => { try { return window.MediaSource && MediaSource.isTypeSupported ? MediaSource.isTypeSupported(t) : !!v.canPlayType(t); } catch (e) { return false; } };
   const [dl, b, q, gp, ps] = await Promise.all([
     trTo(n.mediaDevices && n.mediaDevices.enumerateDevices ? n.mediaDevices.enumerateDevices().catch(() => null) : Promise.resolve(null), 2000),
     trTo(n.getBattery ? n.getBattery().catch(() => null) : Promise.resolve(null), 2000),
     trTo(n.storage && n.storage.estimate ? n.storage.estimate().catch(() => null) : Promise.resolve(null), 2000),
-    trTo(n.gpu && n.gpu.requestAdapter ? n.gpu.requestAdapter().catch(() => null) : Promise.resolve(null), 3000),
+    trTo(n.gpu && n.gpu.requestAdapter && glc && glc.gv === undefined && !/swiftshader|llvmpipe|software|basic render/i.test(glc.r || '') ? n.gpu.requestAdapter().catch(() => null) : Promise.resolve(null), 3000),
     trTo(n.storage && n.storage.persisted ? n.storage.persisted().catch(() => null) : Promise.resolve(null), 2000)
   ]);
   if (dl) devs = { mic: dl.filter(d => d.kind === 'audioinput').length, cam: dl.filter(d => d.kind === 'videoinput').length, spk: dl.filter(d => d.kind === 'audiooutput').length };
   if (b) bat = { lvl: Math.round(b.level * 100), chg: !!b.charging };
   if (q) est = { quota: Math.round((q.quota || 0) / 1048576), used: Math.round((q.usage || 0) / 1048576) };
   if (gp) { try { const i = gp.info || (gp.requestAdapterInfo ? await trTo(gp.requestAdapterInfo(), 1500) : null); if (i) gpuv = [i.vendor, i.architecture].filter(Boolean).join(' ').slice(0, 60) || null; } catch (e) {} }
+  if (glc && glc.gv === undefined && glc.r !== undefined) { glc.gv = gpuv || ''; try { localStorage.setItem('gameplay:gpu', JSON.stringify(glc)); } catch (e) {} }
   if (ps != null) pers = !!ps;
   const ro = (() => { try { return Intl.DateTimeFormat().resolvedOptions(); } catch (e) { return {}; } })();
   let hc = null, fdw = null;

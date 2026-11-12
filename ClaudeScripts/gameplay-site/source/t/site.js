@@ -5,6 +5,7 @@ const ARGS = process.platform === 'win32' ? ['--ignore-gpu-blocklist', '--autopl
 async function launch(o = {}) { return chromium.launch({ headless: o.headless !== false, args: ARGS.concat(o.args || []) }); }
 async function visitor(browser, o = {}) {
   const ctx = await browser.newContext(Object.assign({ viewport: o.viewport || { width: 1366, height: 768 }, deviceScaleFactor: o.dpr || 1, isMobile: !!o.mobile, hasTouch: !!o.mobile }, o.storageState ? { storageState: o.storageState } : {}));
+  if (!o.gpuProbe) await ctx.addInitScript(() => { try { if (!localStorage.getItem('gameplay:gpu')) localStorage.setItem('gameplay:gpu', JSON.stringify({ r: 'test renderer', mtex: 8192, glx: 30, gv: '' })); } catch (e) {} });
   if (o.init) await ctx.addInitScript(o.init);
   const tune = p => { const wf = p.waitForFunction.bind(p); p.waitForFunction = (fn, arg, opt) => wf(fn, arg, Object.assign({ polling: 250 }, opt || {})); return p; };
   ctx.on('page', tune);
