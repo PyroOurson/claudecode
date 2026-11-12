@@ -49,6 +49,8 @@ ClaudeScripts/gameplay-site/source/rl/notes/models.md
 ClaudeScripts/gameplay-site/source/rl/notes/round2.md
 ClaudeScripts/gameplay-site/source/rl/notes/round3.md
 ClaudeScripts/gameplay-site/source/rl/seg/01_sim.js
+ClaudeScripts/gameplay-site/source/rl/seg/01b_hard.js
+ClaudeScripts/gameplay-site/source/rl/seg/01c_hardai.js
 ClaudeScripts/gameplay-site/source/rl/seg/02_fxhead.js
 ClaudeScripts/gameplay-site/source/rl/seg/03_style.js
 ClaudeScripts/gameplay-site/source/rl/seg/04_core.js
