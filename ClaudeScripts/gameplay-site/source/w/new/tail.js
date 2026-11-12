@@ -484,6 +484,7 @@ function related(g) {
 }
 
 const SB = { on: !!(SUPABASE_URL && SUPABASE_ANON_KEY), c: null, p: null, lib: null, user: null, session: null, prof: null, syncing: false, again: false, fail: 0, t: 0, loud: false, mode: 'in', choosing: false, view: 'main' };
+(() => { if (!SB.on) return; try { const s = JSON.parse(localStorage.getItem('sb-gameplay-auth') || 'null'); if (s && s.user && typeof s.user.id === 'string' && s.refresh_token && !/[?&]gpauth=/.test(location.search)) { SB.user = s.user; SB.session = s; SB.opt = true; } } catch (e) {} })();
 const AN_KEY = 'gameplay:analytics', CK_KEY = 'gameplay:consent', AN_MAX = 2000;
 const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 let consent = null;

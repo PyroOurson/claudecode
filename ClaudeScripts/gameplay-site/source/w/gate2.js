@@ -90,13 +90,23 @@ button{transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s}button
 @keyframes sh{from{background-position:100% 0}to{background-position:0 0}}
 button.bz{position:relative;color:transparent}button.bz::after{content:"";position:absolute;inset:0;margin:auto;width:18px;height:18px;border-radius:50%;border:2.5px solid var(--ink-a);border-right-color:transparent;animation:spin .7s linear infinite}
 @media (prefers-reduced-motion:reduce){.sp i,button.bz::after{animation:none}}
-.pw{-webkit-text-security:disc;text-security:disc;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.shake{animation:sh .35s}@keyframes sh{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.pw{-webkit-text-security:disc;text-security:disc;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.shake{animation:shk .35s}@keyframes shk{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.sk2{position:fixed;inset:0;padding:0 16px;display:flex;flex-direction:column;animation:fade .3s .15s backwards}.sk2[hidden]{display:none}
+.sk2-top{height:64px;flex:none;display:flex;align-items:center;gap:10px}.sk2-top i{width:34px;height:34px;border-radius:10px;background:var(--accent)}.sk2-top b{width:104px;height:18px;border-radius:8px}
+.sk2-body{flex:1;min-height:0;display:grid;grid-template-columns:184px minmax(0,1fr);gap:24px}.sk2-side{margin-bottom:16px;border-radius:18px;background:var(--card);border:1px solid var(--line)}
+.sk2-main{min-width:0;overflow:hidden}.sk2-bar{height:46px;margin:8px 0 14px;border-radius:14px;max-width:640px}
+.sk2-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:22px 18px;align-content:start}.sk2-grid i{aspect-ratio:16/10;border-radius:16px}
+.sk2 b,.sk2-bar,.sk2-grid i{display:block;background:var(--soft) linear-gradient(100deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%) 0 0/300% 100% no-repeat;animation:sh 1.5s linear infinite}
+@media (max-width:820px){.sk2-body{grid-template-columns:1fr}.sk2-side{display:none}.sk2-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px}}
+@media (prefers-reduced-motion:reduce){.sk2 b,.sk2-bar,.sk2-grid i{animation:none}}
 </style><script>try{var t=(JSON.parse(localStorage.getItem('gameplay:v1')||'{}')||{}).prefs||{};if(t.theme==='dark'||(t.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.className='dk'}catch(e){}</script></head><body>
-<div class="sp" id="sp" hidden aria-label="Loading"><div><i></i><i></i><i></i><i></i><i></i></div><p class="by">gameplay · Made by Gabriel Courtin</p></div><form class="c" id="f" autocomplete="off" onsubmit="return false"><div class="lg"><i>&#9654;</i>gameplay</div><h1 id="h">Enter the password</h1><p id="t">This site is private.</p><input id="p" class="pw" type="text" placeholder="Password" autofocus aria-label="Password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"><button id="b">Unlock</button><div class="m" id="m"></div><p class="by">Made by Gabriel Courtin</p></form>
+<div class="sp" id="sp" hidden aria-label="Loading"><div><i></i><i></i><i></i><i></i><i></i></div><p class="by">gameplay · Made by Gabriel Courtin</p></div><div class="sk2" id="sps" hidden aria-label="Loading"><div class="sk2-top"><i></i><b></b></div><div class="sk2-body"><div class="sk2-side"></div><div class="sk2-main"><div class="sk2-bar"></div><div class="sk2-grid">${'<i></i>'.repeat(15)}</div></div></div></div><form class="c" id="f" autocomplete="off" onsubmit="return false"><div class="lg"><i>&#9654;</i>gameplay</div><h1 id="h">Enter the password</h1><p id="t">This site is private.</p><input id="p" class="pw" type="text" placeholder="Password" autofocus aria-label="Password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"><button id="b">Unlock</button><div class="m" id="m"></div><p class="by">Made by Gabriel Courtin</p></form>
 <script>
 (() => {
   const D = { u: ${JSON.stringify(sbUrl)}, r: ${JSON.stringify(sbRelays)}, a: ${JSON.stringify(sbKey)}, i: '${iv.toString('base64')}', c: '${ct.toString('base64')}', d: ${JSON.stringify(plan.dir)}, p: ${JSON.stringify(pre)}, l: ${JSON.stringify(slot)} };
   const K = 'gameplay:gate', MAX = 5;
+  const GT = window.__gpT = { t0: Math.round(performance.now()) };
+  const mark = (k, v) => { GT[k] = v === undefined ? Math.round(performance.now()) : v; };
   const $ = id => document.getElementById(id);
   const b64 = s => { const t = atob(s), u = new Uint8Array(t.length); for (let i = 0; i < t.length; i++) u[i] = t.charCodeAt(i); return u; };
   const enc = u => btoa(String.fromCharCode.apply(null, u));
@@ -139,8 +149,8 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
   if (only != null && pool.length === 1) window.__gpSbOnly = true;
   const slot = ms => new Promise((res, rej) => {
     let n = 0, over = false, grace = 0, first = null, dFail = false;
-    const end = (u, o) => { if (over) return; over = true; clearTimeout(grace); clearTimeout(lim); window.__gpSbUrl = u; window.__gpSbDown = false; try { sessionStorage.setItem(SBK, u); } catch (e) {} res(o); };
-    const fail = () => { if (over) return; over = true; clearTimeout(grace); clearTimeout(lim); window.__gpSbDown = true; rej(new Error('unreachable')); };
+    const end = (u, o) => { if (over) return; over = true; clearTimeout(grace); clearTimeout(lim); window.__gpSbUrl = u; window.__gpSbDown = false; mark('slot'); mark('route', u === D.u ? 'direct' : 'relay'); try { sessionStorage.setItem(SBK, u); } catch (e) {} res(o); };
+    const fail = () => { if (over) return; over = true; clearTimeout(grace); clearTimeout(lim); window.__gpSbDown = true; mark('slotFail'); rej(new Error('unreachable')); };
     const lim = setTimeout(() => { if (first) end(first[0], first[1]); else fail(); }, ms);
     if (!pool.length) { fail(); return; }
     const direct = pool[0] === D.u;
@@ -149,7 +159,7 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
       if (!first) { first = [u, o]; grace = setTimeout(() => end(u, o), 1500); }
     }, () => { n++; if (u === D.u) dFail = true; if (n >= pool.length) fail(); else if (first && dFail) end(first[0], first[1]); }));
   });
-  const reach = () => { let c = null; try { c = sessionStorage.getItem(SBK); } catch (e) {} if (c && pool.indexOf(c) >= 0) { window.__gpSbUrl = c; window.__gpSbDown = false; return Promise.resolve(); } return slot(5000).catch(() => {}); };
+  const reach = () => { let c = null; try { c = sessionStorage.getItem(SBK); } catch (e) {} if (c && pool.indexOf(c) >= 0) { window.__gpSbUrl = c; window.__gpSbDown = false; return Promise.resolve(); } return slot(6000).then(() => {}, () => {}); };
   const pk = pw => { const u = new TextEncoder().encode(pw), k = crypto.subtle.importKey('raw', u, 'PBKDF2', false, ['deriveBits']); u.fill(0); return k; };
   const unwrap = async (base, o) => {
     const kek = await crypto.subtle.importKey('raw', await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: b64(o.s), iterations: o.n, hash: 'SHA-256' }, base, 256), 'AES-GCM', false, ['decrypt']);
@@ -163,23 +173,24 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
   if (!ok) { $('t').textContent = 'Please update your browser to open this site.'; $('p').remove(); $('b').remove(); return; }
   const left = () => { const n = MAX - (st.f || 0); return n + (n === 1 ? ' try' : ' tries') + ' left'; };
   if (st.f && st.f < MAX) $('m').textContent = left();
-  const view = on => { const f = $('f'); f.style.visibility = on ? '' : 'hidden'; $('sp').hidden = on; if (on) { f.style.animation = 'none'; void f.offsetWidth; f.style.animation = ''; } };
+  let signed = false;
+  try { signed = !!localStorage.getItem('sb-gameplay-auth') && !/[?&]gpauth=/.test(location.search); } catch (e) {}
+  const view = on => { const f = $('f'); f.style.visibility = on ? '' : 'hidden'; $('sp').hidden = on || signed; $('sps').hidden = on || !signed; if (on) { f.style.animation = 'none'; void f.offsetWidth; f.style.animation = ''; } };
   let asked = false;
-  const ask = () => { if (asked) return; asked = true; view(true); if ((st.f || 0) >= MAX) lock(); else $('p').focus(); };
+  const ask = () => { if (asked) return; asked = true; mark('form'); view(true); if ((st.f || 0) >= MAX) lock(); else $('p').focus(); };
   const opened = async o => {
     if (!o || typeof o.o !== 'string' || o.o.length !== 44) return false;
     let raw, txt;
     try { raw = b64(o.o); if (raw.length !== 32) return false; txt = await show(raw); } catch (x) { return false; }
-    st = rd(); st.f = 0; st.k = o.o; wr(st); warm(); view(false);
+    st = rd(); st.f = 0; st.k = o.o; wr(st); warm(); view(false); mark('path', 'open'); mark('show');
     requestAnimationFrame(() => put(txt, raw));
     return true;
   };
   const free = () => {
     view(false);
-    const t = setTimeout(ask, 1500);
-    slot(8000).then(opened, () => false).then(x => { clearTimeout(t); if (!x) ask(); });
+    slot(8000).then(opened, () => false).then(x => { if (!x) ask(); });
   };
-  if (st.k) { view(false); const raw = b64(st.k); warm(); Promise.all([show(raw), reach()]).then(([t]) => { wr(st); put(t, raw); }, () => { delete st.k; wr(st); free(); }); }
+  if (st.k) { view(false); const raw = b64(st.k); warm(); window.__gpReach = reach(); show(raw).then(t => { wr(st); mark('path', 'key'); mark('show'); put(t, raw); }, () => { delete st.k; wr(st); window.__gpReach = null; free(); }); }
   else free();
   $('f').addEventListener('submit', async e => {
     e.preventDefault();
@@ -200,7 +211,7 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
       try { txt = await show(raw); } catch (x) { txt = null; }
       if (txt == null) { soft('Could not open the site. Try again later.'); return; }
     }
-    if (txt != null) { st.f = 0; st.k = enc(raw); wr(st); warm(); $('f').style.visibility = 'hidden'; $('sp').hidden = false; requestAnimationFrame(() => put(txt, raw)); return; }
+    if (txt != null) { st.f = 0; st.k = enc(raw); wr(st); warm(); view(false); mark('path', 'password'); mark('show'); requestAnimationFrame(() => put(txt, raw)); return; }
     $('b').classList.remove('bz');
     {
       st = rd(); st.f = (st.f || 0) + 1; delete st.k; wr(st);

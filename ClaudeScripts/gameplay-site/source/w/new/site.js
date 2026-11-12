@@ -58,7 +58,7 @@ async function fvSync() {
 function fvBar(g) { const b = $('#pFav'); b.dataset.fav = g.id; fvPaint(); }
 
 const SF = { d: null, at: 0, ch: null, peek: false, shown: false, off: new Set(), gk: null, og: null };
-const SF_KEY = 'gameplay:site', SF_HIDE = 'gameplay:sitehide';
+const SF_KEY = 'gameplay:site', SF_HIDE = 'gameplay:sitehide', SF_SAW = 'gameplay:sitesaw';
 try { const o = JSON.parse(localStorage.getItem(SF_KEY) || 'null'); if (o && typeof o === 'object') { SF.d = o; SF.off = new Set(Array.isArray(o.disabled_games) ? o.disabled_games : []); } } catch (e) {}
 const sfOff = id => SF.off.has(id);
 const sfBlocked = g => !!g && sfOff(g.id) && !adIsAdmin();
@@ -135,9 +135,17 @@ function sfPaint() {
   const until = Date.parse(d.banner_until || '') || 0, txt = d.banner && (!until || until > now) ? String(d.banner) : '';
   let hid = '';
   try { hid = localStorage.getItem(SF_HIDE) || ''; } catch (e) {}
-  const lv = d.banner_level === 'warning' ? 'warning' : 'info', showB = !!txt && hid !== syHash(txt), showM = !!d.maintenance && adm;
+  const lv = d.banner_level === 'warning' ? 'warning' : 'info', showB = !!txt && hid !== syHash(txt) && !auLocked() && openK !== 'mauth', showM = !!d.maintenance && adm;
   const top = showB && lv === 'info', mid = showB && lv === 'warning';
-  bar.innerHTML = (showM ? `<div class="sfb sfb-adm">${SF_ICO.tool}<span>${esc(auT('Maintenance mode is on.'))}</span><button class="btn2" type="button" data-adgo="site">${esc(auT('Site switches'))}</button></div>` : '') + (top ? `<div class="sfb sfb-info" role="status">${SF_ICO.info}<span translate="no">${esc(txt)}</span><button class="x" type="button" data-sfhide aria-label="${esc(auT('Hide announcement'))}">${SF_ICO.x}</button></div>` : '');
+  const bh = (showM ? `<div class="sfb sfb-adm">${SF_ICO.tool}<span>${esc(auT('Maintenance mode is on.'))}</span><button class="btn2" type="button" data-adgo="site">${esc(auT('Site switches'))}</button></div>` : '') + (top ? `<div class="sfb sfb-info" role="status">${SF_ICO.info}<span translate="no">${esc(txt)}</span><button class="x" type="button" data-sfhide aria-label="${esc(auT('Hide announcement'))}">${SF_ICO.x}</button></div>` : '');
+  if (SF.bh !== bh) {
+    let saw = '';
+    try { saw = localStorage.getItem(SF_SAW) || ''; } catch (e) {}
+    const hh = showB ? syHash(txt) : '';
+    bar.classList.toggle('sf-still', !hh || saw === hh || SF.bx === hh);
+    SF.bh = bh; bar.innerHTML = bh;
+    if (hh) { SF.bx = hh; if (saw !== hh) { try { localStorage.setItem(SF_SAW, hh); } catch (e) {} } }
+  }
   bar.hidden = !top && !showM;
   let al = $('#sfalert');
   if (mid) {
@@ -146,7 +154,7 @@ function sfPaint() {
     al.querySelector('h2').textContent = auT('Alert');
     al.querySelector('.sfal-t').textContent = txt;
     al.querySelector('.sfal-ok').textContent = auT('OK');
-    if (al.hidden !== false || !al.classList.contains('on')) { SF.af = document.activeElement; al.hidden = false; void al.offsetWidth; al.classList.add('on'); const ok = al.querySelector('.sfal-ok'); requestAnimationFrame(() => ok.focus({ preventScroll: true })); }
+    if (al.hidden !== false || !al.classList.contains('on')) { SF.af = document.activeElement; al.hidden = false; al.classList.toggle('sf-still', SF.bx === syHash(txt)); SF.bx = syHash(txt); void al.offsetWidth; al.classList.add('on'); const ok = al.querySelector('.sfal-ok'); requestAnimationFrame(() => ok.focus({ preventScroll: true })); }
   } else if (al && !al.hidden) { al.classList.remove('on'); al.hidden = true; const f = SF.af; SF.af = null; if (f && f.isConnected && f !== document.body) f.focus({ preventScroll: true }); }
   clearTimeout(SF.bt);
   if (showB && until) SF.bt = setTimeout(sfPaint, Math.min(until - now + 500, 3600000));

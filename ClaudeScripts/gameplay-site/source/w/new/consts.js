@@ -41,6 +41,7 @@ const SBN = (() => {
   const K = 'gameplay:sb';
   const all = (window.__gpSbOnly ? [SUPABASE_URL] : [SUPABASE_URL, SUPABASE_DIRECT].concat(SUPABASE_RELAYS)).filter((x, i, a) => x && a.indexOf(x) === i);
   let best = SUPABASE_URL, wsB = null;
+  let pre = window.__gpReach && typeof window.__gpReach.then === 'function' ? Promise.race([window.__gpReach, new Promise(r => setTimeout(r, 2500))]).then(() => { const u = window.__gpSbUrl; if (typeof u === 'string' && all.indexOf(u) >= 0) best = u; pre = null; }, () => { pre = null; }) : null;
   const bad = {}, wsBad = {}, fresh = (m, b, ms) => (m[b] || 0) > Date.now() - ms;
   const strip = u => { u = String(u).replace(/^ws(s?):/, 'http$1:'); for (const b of all) if (u === b || u.indexOf(b + '/') === 0 || u.indexOf(b + '?') === 0) return u.slice(b.length); return null; };
   const order = () => [best].concat(all.filter(b => b !== best).sort((a, c) => (bad[a] || 0) - (bad[c] || 0)));
@@ -50,6 +51,7 @@ const SBN = (() => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : null;
     const path = url == null ? null : strip(url);
     if (path == null) return fetch(input, init);
+    if (pre) await pre;
     const o = Object.assign({}, init || {}), outer = o.signal;
     let last = null;
     for (const b of order()) {

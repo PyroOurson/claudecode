@@ -85,6 +85,7 @@ function sbClient() {
 }
 async function sbRest(path, o = {}) {
   let tok = null;
+  if (o.auth !== false && !SB.c && SB.opt && !o.keep) { try { await sbClient(); } catch (e) {} }
   if (o.auth !== false && SB.c) {
     if (o.keep) tok = sbTok();
     else { try { const r = await SB.c.auth.getSession(); tok = r && r.data && r.data.session ? r.data.session.access_token : null; } catch (e) { tok = sbTok(); } }
@@ -376,7 +377,7 @@ function auView(v) {
   document.querySelectorAll('#aumodal .au-eye[aria-pressed="true"]').forEach(b => auEye(b, true));
   if (from !== to) {
     if (c.classList.contains('au-morph') || c.querySelector('.au-out')) auSettle();
-    const anim = !!from && motionOK() && openK === 'mauth' && !$('#aumodal').hidden;
+    const anim = !!from && !SB.still && motionOK() && openK === 'mauth' && !$('#aumodal').hidden;
     const h0 = anim ? c.offsetHeight : 0, top = anim ? from.offsetTop : 0;
     c.querySelectorAll('.au-v').forEach(el => { el.hidden = el !== to; });
     if (anim) {
@@ -426,12 +427,15 @@ function auGuest() {
   auDown();
 }
 function auShow() {
+  if (SB.first) SB.first = false; else $('#aumodal').classList.remove('au-first');
   $('#auoff').hidden = SB.on;
   auDown();
   if (SB.on) { sbClient().catch(() => {}); auSettings(); if (gisWanted()) requestAnimationFrame(() => gisPaint()); }
   ['aunote', 'auupnote', 'arnote', 'annote', 'acnote'].forEach(id => auMsg(id, ''));
   document.querySelectorAll('#aumodal .au-err').forEach(e => auFieldErr(e.closest('.fld').querySelector('input'), ''));
+  SB.still = true;
   auView(['newpass', 'reset', 'check', 'wait'].includes(SB.view) ? SB.view : 'main');
+  SB.still = false;
   auBusy(false);
   setTimeout(auFocus, 80);
 }
@@ -896,13 +900,16 @@ function auSignedOut() {
 }
 function auSession(ev, s) {
   SB.session = s || null;
-  const u = s && s.user || null, was = SB.user;
-  if (u && was && u.id === was.id) { SB.user = u; if (ev === 'USER_UPDATED') auRender(); return; }
+  const u = s && s.user || null, was = SB.user, opt = !!SB.opt;
+  SB.opt = false;
+  if (u && was && u.id === was.id && !opt) { SB.user = u; if (ev === 'USER_UPDATED') auRender(); return; }
   SB.chk = true;
   if (!u) { auWait(false); if (openK === 'mauth' && SB.view === 'wait' && !SB.rt) auView('main'); }
   if (!u && !was) { auRender(); return; }
   SB.user = u;
-  if (u) auSignedIn(ev); else auSignedOut();
+  if (u) auSignedIn(ev);
+  else { auSignedOut(); if (opt) toast(auT('Your session ended. Log in again to keep playing.')); }
+  auBootDone();
 }
 async function auReturn() {
   const r = SB_RET;
@@ -1255,12 +1262,20 @@ function auBoot() {
     if (SB_RET && SB_RET.code) SB.rt = true;
     if (!sbHasSession() && !SB.rt) SB.chk = true;
     if (!sbHasSession() && !SB_RET) { let had = false; try { had = localStorage.getItem('gameplay:acct') === '1'; } catch (e) {} if (!had) SB.mode = 'up'; }
-    if (SB_RET || sbHasSession()) sbClient().then(() => auReturn()).catch(() => { auWait(false); SB.rt = false; SB.chk = true; if (openK === 'mauth') auOpen('main', 'Sign-in could not load. Check your connection and reload the page.', 'bad', 'in'); else toast('Sign-in could not load. Check your connection and reload the page.'); });
+    if (SB_RET || sbHasSession()) sbClient().then(() => auReturn()).catch(() => { auWait(false); SB.rt = false; SB.chk = true; if (SB.opt) { SB.opt = false; SB.user = null; SB.session = null; auRender(); auGate(); } auBootDone(); if (openK === 'mauth') auOpen('main', 'Sign-in could not load. Check your connection and reload the page.', 'bad', 'in'); else toast('Sign-in could not load. Check your connection and reload the page.'); });
     auSettings();
   }
   try { localStorage.removeItem('gameplay:guest'); sessionStorage.removeItem('gameplay:guest'); } catch (e) {}
   auRender();
+  const pre = document.documentElement.getAttribute('data-boot');
+  if (pre === 'up' || pre === 'login') { SB.first = true; am.classList.add('au-first'); }
   auGate();
+  if (pre === 'check' && SB.opt) { am.classList.add('au-first'); SB.first = true; SB.bt = setTimeout(auBootDone, 8000); }
+  else document.documentElement.removeAttribute('data-boot');
+}
+function auBootDone() {
+  clearTimeout(SB.bt);
+  if (document.documentElement.getAttribute('data-boot')) document.documentElement.removeAttribute('data-boot');
 }
 Ameplay.account = {
   get enabled() { return SB.on; },
