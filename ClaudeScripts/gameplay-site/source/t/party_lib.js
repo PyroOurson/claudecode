@@ -1,6 +1,6 @@
 const { launch, visitor } = require('./site.js');
 const P = 'Passw0rd123';
-const USERS = { test: ['gp_tester@test.example.com', 'TestAcc0unt!'], test2: ['gp_tester2@test.example.com', 'TestAcc0unt!'], ann: ['ann@example.com', P], bob: ['bob@example.com', P], cat: ['cat@example.com', P], owner: ['tester1@example.com', P] };
+const USERS = { test: ['gp_tester@test.example.com', 'TestAcc0unt!'], test2: ['gp_tester2@test.example.com', 'TestAcc0unt!'], ann: ['ann@example.com', P], bob: ['bob@example.com', P], cat: ['cat@example.com', P], owner: ['tester1@example.com', P], dan: ['adm_dan@example.com', P], eve: ['adm_eve@example.com', P] };
 const fs = require('fs'), path = require('path'), os = require('os');
 const DIR = process.env.STATE_DIR || path.join(os.tmpdir(), 'gameplay-test-states');
 const states = {};

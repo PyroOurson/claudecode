@@ -9,7 +9,7 @@ Last updated: see the git log of this file.
 ## How things were tested
 
 - Staging backend: a local Supabase stack (Postgres, accounts, live updates, storage) with the full `schema.sql` including rounds 16 to 19. Staging build: `t/stage.py`. Local server with the hosting headers: `t/serve.js`.
-- Browser tests in `source/t/tests/`, all passing on the final merged build: `load_sequence.js` (4 scenarios), `gate_locked.js` (4), `party.js` (12 scenarios, two browsers), `fixes.js` (7 scenarios), `dm.js` (direct messages, two browsers), `announce.js`, `legal_pages.js`, and `smoke_all.js` (every game in the catalogue opened and started: 168 of 168 without errors).
+- Browser tests in `source/t/tests/`, all passing on the final merged build: `load_sequence.js` (4 scenarios), `gate_locked.js` (4), `party.js` (12 scenarios, two browsers), `fixes.js` (9 scenarios), `dm.js` (direct messages, two browsers), `announce.js`, `legal_pages.js`, and `smoke_all.js` (every game in the catalogue opened and started: 168 of 168 without errors).
 - Test accounts on staging: `gp_tester`, `gp_tester2` (diagnostics on), ordinary users and an owner.
 - Production: read-only. The live page was opened anonymously to observe the load sequence; nothing was written.
 - The test browser renders without a graphics card. Two things followed from that and are worth knowing: the site's own one-time graphics probe froze pages for minutes there (fixed, see bug 10), and screenshots of 3D games could not be judged for smoothness.
@@ -114,7 +114,7 @@ Status of each. "Verified" means a browser test on staging reproduces the scenar
 | 3 | A party guest could join under the host's id and get leader powers | Verified (S3) |
 | 4 | Esc while rebinding a key left capture armed, so the next key pressed in the game was rebound | Verified (S4) |
 | 5 | Two tabs double-counted plays and playtime and reverted each other's settings | Fixed, not exercised |
-| 6 | A failed or cancelled invite link kept being retried when the lobby was reopened | Fixed, not exercised |
+| 6 | A failed or cancelled invite link kept being retried when the lobby was reopened | Verified (`fixes.js` S8) |
 | 7 | Overlapping realtime nudges to the same user were dropped (late messages, typing, read marks) | Verified (`dm.js`) |
 | 8 | Message thread refreshes were silently skipped while another was in flight | Verified (`dm.js`) |
 | 9 | With a party lobby open, Enter and Esc stopped working in chat, search and settings fields | Verified (`dm.js`) |
@@ -130,7 +130,7 @@ Status of each. "Verified" means a browser test on staging reproduces the scenar
 | 19 | The party "door" channel accepts any answer | Partly: flooding is capped; authenticating the host's key is in the security decisions |
 | 20 | Diagnostics could record the password typed for a username login | Fixed (wider redaction, recorder switched off on sign-out) |
 | 21 | One failed profile request left the session without a profile | Fixed, not exercised |
-| 22 | The chat dock did not reopen after a reload | Fixed, not exercised |
+| 22 | The chat dock did not reopen after a reload | Verified (S9) |
 | 23 | The public-parties channel scheduled two retries after a close | Fixed, not exercised |
 | 24 | "Days played" capped at 60, date off by one across clock changes, export said "downloaded" when the account part failed | Fixed, not exercised |
 | 25 | The site-password page locks for good after five mistakes | Not changed: loosening it needs the owner's go-ahead |

@@ -4,6 +4,7 @@ const { launch, USERS } = lib;
 const { execSync } = require('child_process');
 const only = (process.env.ONLY || '').split(',').filter(Boolean);
 const SITE = process.env.SITE_URL || 'http://127.0.0.1:8080/';
+const PA = process.env.FX_A || 'ann', PB = process.env.FX_B || 'bob';
 const GID = 'dino-run', DBC = process.env.STAGE_DB || 'supabase_db_staging';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const must = (c, m) => { if (!c) throw new Error(m); };
@@ -130,9 +131,9 @@ async function scenario(name, fn) {
     must(ctl0 === ctl1, 'bindings changed after a cancelled capture: ' + ctl0 + ' -> ' + ctl1);
   });
   await scenario('S5 two tabs of one player: the playing tab decides the status, closing one tab does not show the player offline', async b => {
-    const a = await acct('ann');
+    const a = await acct(PA);
     const row = () => sql("select coalesce(game,'-'), extract(epoch from now() - at)::int from private.presence_now where user_id = '" + a.uid + "'");
-    const t1 = await player(b, 'ann');
+    const t1 = await player(b, PA);
     const p2 = await t1.ctx.newPage();
     await p2.goto(SITE + '#/' + GID, { timeout: 180000, waitUntil: 'domcontentloaded' });
     await p2.waitForSelector('#frame .g-root', { timeout: 120000 });
@@ -163,12 +164,13 @@ async function scenario(name, fn) {
     must(!bad.length, 'data came back after the reload: ' + JSON.stringify(left));
   });
   await scenario('S7 a friend playing a game is shown online with the game, and offline soon after leaving', async b => {
-    const bo = await player(b, 'bob');
+    const una = sql("select p.username from public.profiles p join auth.users u on u.id = p.id where u.email = '" + USERS[PA][0] + "'");
+    const bo = await player(b, PB);
     await bo.page.evaluate(() => document.querySelector('#abtn').click());
     await bo.page.waitForSelector('#fmodal:not([hidden]) [data-frc]', { timeout: 60000 });
-    const st = () => bo.page.evaluate(() => { const r = [...document.querySelectorAll('#fmodal [data-frc]')].find(x => /@ann_player/.test(x.innerText)); const e = r && r.querySelector('.fr-st'); return r ? { on: !!e && e.classList.contains('on'), text: e ? e.innerText.trim() : '' } : null; });
-    must(await st(), 'ann is not in bob’s friends list');
-    const an = await player(b, 'ann');
+    const st = () => bo.page.evaluate(un => { const r = [...document.querySelectorAll('#fmodal [data-frc]')].find(x => x.innerText.indexOf('@' + un) >= 0); const e = r && r.querySelector('.fr-st'); return r ? { on: !!e && e.classList.contains('on'), text: e ? e.innerText.trim() : '' } : null; }, una);
+    must(await st(), PA + ' is not in the friends list of ' + PB);
+    const an = await player(b, PA);
     await an.openGame(GID, 1000);
     const t0 = Date.now();
     const on = await until(async () => { const x = await st(); return x && x.on && /Dino/i.test(x.text) ? x : null; }, 90000, 1500);
@@ -179,6 +181,39 @@ async function scenario(name, fn) {
     const off = await until(async () => { const x = await st(); return x && !x.on ? x : null; }, 90000, 1500);
     must(off, 'bob still sees ann online 90 s after she left: ' + JSON.stringify(await st()));
     return 'shown "' + on.text + '" after ' + t1 + ' s, offline ' + Math.round((Date.now() - t2) / 1000) + ' s after leaving';
+  });
+  await scenario('S8 an invite link to a party that is gone fails once and is not retried when the party screen is reopened', async b => {
+    const v = await player(b, 'test2');
+    await v.page.goto('about:blank');
+    await v.page.goto(SITE + '#/last-card/QQ11', { timeout: 180000, waitUntil: 'domcontentloaded' });
+    await v.ready();
+    await v.page.waitForSelector('.g-lobby .gl-jst .gl-bad', { timeout: 90000 });
+    const n1 = (await v.net()).filter(x => x.a === 'join-start').length;
+    must(n1 === 1, 'expected one join attempt for the invite, saw ' + n1);
+    await v.click('jback');
+    await sleep(3000);
+    must((await v.net()).filter(x => x.a === 'join-start').length === 1, 'the dead invite was tried again after going back to the list');
+    for (let i = 0; i < 3 && await v.page.$('.g-lobby .gl-card'); i++) { await v.page.evaluate(() => { const b = document.querySelector('.g-lobby [data-n="pkback"], .g-lobby [data-n="back"]'); if (b) b.click(); }); await sleep(1200); }
+    must(!(await v.page.$('.g-lobby .gl-card')), 'could not close the party screen');
+    await v.tap('#frame button', 'Online party', 20000).catch(() => {});
+    await sleep(600);
+    if (!(await v.page.$('.g-lobby .gl-card'))) await v.tap('#frame button', 'Create or join a party', 8000).catch(() => {});
+    await v.page.waitForSelector('.g-lobby .gl-card', { timeout: 60000 });
+    await sleep(4000);
+    const n2 = (await v.net()).filter(x => x.a === 'join-start').length;
+    must(n2 === 1, 'the dead invite was tried again when the party screen was reopened (' + n2 + ' attempts)');
+    must(await v.page.$('.g-lobby [data-n="gohost"]'), 'the party screen did not return to the first choice');
+  });
+  await scenario('S9 the chat dock is open again after a reload', async b => {
+    const v = await player(b, 'ann');
+    await v.page.evaluate(() => { const c = document.querySelector('#chat'); if (!c || c.hidden) document.querySelector('#sodl').click(); });
+    await v.page.waitForSelector('#chat:not([hidden])', { timeout: 30000 });
+    await sleep(1500);
+    await reload(v);
+    const ok = await v.page.waitForFunction(() => { const c = document.querySelector('#chat'); return !!c && !c.hidden; }, null, { timeout: 30000 }).then(() => true, () => false);
+    must(ok, 'the chat dock stayed closed after the reload');
+    await v.page.evaluate(() => { const x = document.querySelector('#chat [data-ch="close"]'); if (x) x.click(); });
+    await sleep(800);
   });
   const bad = results.filter(r => r[1]);
   console.log(bad.length ? bad.length + ' of ' + results.length + ' failing' : 'all ' + results.length + ' passing');
