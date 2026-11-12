@@ -362,7 +362,16 @@ function lzIdle(now) {
   let budget = 600000;
   S.recent.slice(0, 2).map(id => byId.get(id)).forEach(g => { if (g && !g.mount && g.lazy && (g.size || 0) <= budget) { budget -= g.size || 0; later(() => lzPrefetch(g)); } });
 }
+Ameplay.legalSet = o => { if (o && typeof o === 'object') Object.assign(LEGAL, o); };
+const LEGAL_T = { terms: 'Terms of Service', privacy: 'Privacy Policy', cookies: 'Cookie Policy' };
+let legalN = 0;
+function legalNeed(k) {
+  if (LEGAL[k]) return Promise.resolve();
+  if (!LZ.legal) return Promise.reject(new Error('legal text missing'));
+  return lzRun(LZ.legal).then(() => { if (!LEGAL[k]) { delete LZ.code[LZ.legal]; throw new Error('legal text missing'); } });
+}
 Ameplay.lazy = d => {
+  LZ.legal = typeof d.legal === 'string' ? d.legal : null;
   LZ.key = typeof d.k === 'string' && d.k.length > 20 ? d.k : null;
   LZ.dir = d.dir || '';
   LZ.root = PATH_MODE ? location.origin + '/' : new URL('.', location.href).href;
@@ -930,6 +939,20 @@ function toggleFilter(k, v) {
 function openLegal(k) {
   closeGame();
   showView('legal');
+  const my = ++legalN;
+  if (!LEGAL[k]) {
+    const t = LEGAL_T[k] || '';
+    $('#doc').innerHTML = `<h1>${esc(t)}</h1><p class="upd">${esc(auT('Loading…'))}</p>` + '<i class="sk sk-blk"></i><i class="sk sk-blk2"></i><i class="sk sk-blk"></i>';
+    document.querySelectorAll('.ltabs a').forEach(a => a.setAttribute('aria-current', a.dataset.legal === k ? 'page' : 'false'));
+    setHead(t + ' | gameplay', t + ' for gameplay.', '/' + k);
+    scrollTo({ top: 0, behavior: 'instant' });
+    legalNeed(k).then(() => { if (my === legalN && view === 'legal') openLegal(k); }, () => {
+      if (my !== legalN || view !== 'legal') return;
+      $('#doc').innerHTML = `<h1>${esc(t)}</h1><p class="upd">${esc(auT('Could not load this page. Check your connection and try again.'))}</p><p><button class="btn2 pri" type="button" id="lgretry">${esc(auT('Try again'))}</button></p>`;
+      $('#lgretry').addEventListener('click', () => openLegal(k));
+    });
+    return;
+  }
   const d = LEGAL[k];
   $('#doc').innerHTML = `<h1>${d[0]}</h1><p class="upd">${esc(auT('Last updated {d}').replace('{d}', new Date(2026, 10, 12).toLocaleDateString(window.gpI18n ? gpI18n.lang : 'en', { day: 'numeric', month: 'long', year: 'numeric' })))}</p>${d[1]}`;
   document.querySelectorAll('.ltabs a').forEach(a => a.setAttribute('aria-current', a.dataset.legal === k ? 'page' : 'false'));

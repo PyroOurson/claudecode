@@ -9,3 +9,4 @@ rl/build/
 w/out*.html
 __pycache__/
 node_modules/
+w/parts/002_legal.js

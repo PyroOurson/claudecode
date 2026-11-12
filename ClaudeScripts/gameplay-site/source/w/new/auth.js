@@ -1040,7 +1040,16 @@ function auEye(b, off) {
 }
 function lgOpen(k) {
   const d = LEGAL[k];
-  if (!d) return;
+  if (!d) {
+    if (!LEGAL_T[k]) return;
+    const s0 = $('#lgsheet');
+    $('#lgt').textContent = LEGAL_T[k];
+    $('#lgdoc').innerHTML = `<h1>${esc(LEGAL_T[k])}</h1><p class="upd">${esc(auT('Loading…'))}</p>` + '<i class="sk sk-blk"></i><i class="sk sk-blk2"></i>';
+    s0.hidden = false; s0.scrollTop = 0; s0.dataset.k = k;
+    $('#lgback').focus({ preventScroll: true });
+    legalNeed(k).then(() => { if (!s0.hidden && s0.dataset.k === k) lgOpen(k); }, () => { if (!s0.hidden && s0.dataset.k === k) $('#lgdoc').innerHTML = `<h1>${esc(LEGAL_T[k])}</h1><p class="upd">${esc(auT('Could not load this page. Check your connection and try again.'))}</p>`; });
+    return;
+  }
   $('#lgt').textContent = d[0];
   $('#lgdoc').innerHTML = `<h1>${d[0]}</h1>${d[1]}`;
   const s = $('#lgsheet');

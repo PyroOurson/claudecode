@@ -128,6 +128,7 @@ ClaudeScripts/gameplay-site/source/t/tests/fixes.js
 ClaudeScripts/gameplay-site/source/t/tests/gate_locked.js
 ClaudeScripts/gameplay-site/source/t/tests/load_sequence.js
 ClaudeScripts/gameplay-site/source/t/tests/party.js
+ClaudeScripts/gameplay-site/source/t/tests/smoke_all.js
 ClaudeScripts/gameplay-site/source/w/MASTER.md
 ClaudeScripts/gameplay-site/source/w/NETBRIEF.md
 ClaudeScripts/gameplay-site/source/w/ROUND3.md
