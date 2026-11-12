@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const DIFFS = ['Easy', 'Normal', 'Hard'];
+  const DIFFS = ['Easy', 'Normal', 'Hard', 'Hardest'];
   const now = () => performance.now();
   const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -295,6 +295,7 @@ ${p} .tb-cn.on i{background:#3fcf8e;box-shadow:0 0 0 3px rgba(63,207,142,.2)}
         if (api.paused || document.hidden) { cpuTimer = setTimeout(go, 300); return; }
         if (G.busyUntil && G.busyUntil(T) > now() + 30) { cpuTimer = setTimeout(go, G.busyUntil(T) - now()); return; }
         const i = G.cpu(T, seat);
+        if (i && i.again) { cpuTimer = setTimeout(go, i.again); return; }
         if (!i || !submit(seat, i)) setThink(-1);
       }, wait);
     }
@@ -765,6 +766,7 @@ ${p} .tb-cn.on i{background:#3fcf8e;box-shadow:0 0 0 3px rgba(63,207,142,.2)}
     plays.sort((a, b) => b.v - a.v);
     if (level === 0 && Math.random() < .25) return plays[Math.min(plays.length - 1, Math.random() * 4 | 0)].m;
     if (level < 2) return plays[0].m;
+    if (level > 2) { const st = bgThink(S, seat); while (!bgStep(st, 1e9)); return st.best; }
     const top = plays.slice(0, 9);
     for (const pl of top) {
       let tot = 0, wsum = 0;
@@ -782,14 +784,88 @@ ${p} .tb-cn.on i{background:#3fcf8e;box-shadow:0 0 0 3px rgba(63,207,142,.2)}
     top.sort((a, b) => b.f - a.f);
     return top[0].m;
   }
+  function bgThink(S, seat) {
+    const P = { pts: S.pts.slice(), bar: S.bar.slice(), off: S.off.slice() }, plays = bgPlays(P, seat, S.dice);
+    const st = { seat, top: [], i: 0, best: [], done: false };
+    if (!plays.length) { st.done = true; return st; }
+    if (plays.length === 1) { st.best = plays[0].m; st.done = true; return st; }
+    for (const pl of plays) pl.v = bgEval(pl.P, seat, false);
+    plays.sort((a, b) => b.v - a.v);
+    st.top = plays.filter((pl, k) => k < 4 || (k < 14 && pl.v > plays[0].v - 22));
+    st.best = plays[0].m;
+    return st;
+  }
+  function bgStep(st, ms) {
+    if (st.done) return true;
+    const t0 = performance.now(), me = st.seat, o = 1 - me;
+    while (st.i < st.top.length) {
+      const pl = st.top[st.i++];
+      if (pl.P.off[me] === 15) { pl.f = 1e6; continue; }
+      let tot = 0;
+      pl.reps = [];
+      for (const [a, b, w] of BG_ROLLS) {
+        const reps = bgPlays(pl.P, o, [a, b]);
+        let bv = -1e9, bp = pl.P;
+        if (!reps.length) bv = bgEval(pl.P, o, false);
+        else for (const r of reps) { const v = r.P.off[o] === 15 ? 400 : bgEval(r.P, o, false); if (v > bv) { bv = v; bp = r.P; } }
+        tot -= bv * w;
+        pl.reps.push(bp);
+      }
+      pl.f = tot / 36 + pl.v * .15;
+      if (performance.now() - t0 > ms) return false;
+    }
+    if (!st.deep) {
+      st.top.sort((a, b) => b.f - a.f);
+      st.deep = st.top.filter((pl, k) => k < 5 && pl.f < 1e5 && pl.f > st.top[0].f - 9);
+      st.j = 0; st.r = 0;
+      if (st.top[0].f > 1e5 || st.deep.length < 2) st.deep = [];
+      for (const pl of st.deep) pl.g = 0;
+    }
+    while (st.j < st.deep.length) {
+      const pl = st.deep[st.j];
+      while (st.r < 21) {
+        const Q = pl.reps[st.r], w = BG_ROLLS[st.r][2];
+        st.r++;
+        if (Q.off[o] === 15) { pl.g -= 400 * w; continue; }
+        let tot = 0;
+        for (const [a, b, w2] of BG_ROLLS) {
+          const mine = bgPlays(Q, me, [a, b]);
+          let bv = -1e9;
+          if (!mine.length) bv = bgEval(Q, me, false);
+          else for (const r of mine) { const v = r.P.off[me] === 15 ? 400 : bgEval(r.P, me, false); if (v > bv) bv = v; }
+          tot += bv * w2;
+        }
+        pl.g += tot / 36 * w;
+        if (performance.now() - t0 > ms) return false;
+      }
+      pl.g = pl.g / 36 * .8 + pl.f * .2;
+      st.j++; st.r = 0;
+    }
+    let b = st.top[0];
+    if (st.deep.length) { b = st.deep[0]; for (const pl of st.deep) if (pl.g > b.g) b = pl; }
+    st.best = b.m; st.done = true;
+    return true;
+  }
+  function bgRaceCube(S, seat) {
+    const P = { pts: S.pts, bar: S.bar, off: S.off };
+    let maxM = P.bar[seat] ? 25 : 0, minO = P.bar[1 - seat] ? 0 : 99;
+    for (let p = 1; p <= 24; p++) { const c = bgCnt(P, seat, p); if (c > 0 && p > maxM) maxM = p; if (c < 0 && p < minO) minO = p; }
+    if (maxM > minO) return null;
+    return { pm: bgPips(P, seat), po: bgPips(P, 1 - seat) };
+  }
   function bgCubeWanted(S, seat, level) {
     if (S.crawford || S.len < 2 || S.phase !== 'roll' || (S.cube.own !== -1 && S.cube.own !== seat) || S.cube.v >= 64) return false;
     const need = S.len - S.score[seat], oppNeed = S.len - S.score[1 - seat], v = S.cube.v;
     if (v * 2 >= S.len && v >= oppNeed) return false;
     if (S.score[seat] === S.len - 1) return false;
     const P = { pts: S.pts, bar: S.bar, off: S.off }, wp = bgWp(P, seat);
-    const lo = level === 2 ? .69 : .74, hi = level === 2 ? .92 : .88;
+    const lo = level >= 2 ? .69 : .74, hi = level >= 2 ? .92 : .88;
     if (level === 0) return Math.random() < .08 && wp > .8;
+    if (level > 2) {
+      if (oppNeed === 1) return true;
+      const rc = bgRaceCube(S, seat);
+      if (rc && rc.pm > 30) return rc.po - rc.pm >= (S.cube.own === -1 ? .08 : .09) * rc.pm;
+    }
     const pm = bgPips(P, seat), po = bgPips(P, 1 - seat);
     let contact = false, maxM = P.bar[seat] ? 25 : 0, minO = P.bar[1 - seat] ? 0 : 99;
     for (let p = 1; p <= 24; p++) { const c = bgCnt(P, seat, p); if (c > 0 && p > maxM) maxM = p; if (c < 0 && p < minO) minO = p; }
@@ -801,6 +877,10 @@ ${p} .tb-cn.on i{background:#3fcf8e;box-shadow:0 0 0 3px rgba(63,207,142,.2)}
     const P = { pts: S.pts, bar: S.bar, off: S.off }, wp = bgWp(P, seat);
     const need = S.len - S.score[seat], v = S.cube.v * 2;
     const pt = level === 0 ? .32 : level === 1 ? .27 : .235;
+    if (level > 2) {
+      const rc = bgRaceCube(S, 1 - seat);
+      if (rc && rc.pm > 30 && !(need <= v && S.len - S.score[1 - seat] <= v)) return rc.po - rc.pm <= .12 * rc.pm;
+    }
     if (need <= v && S.len - S.score[1 - seat] <= S.cube.v * 2 && wp < .5) return wp > .15;
     return wp >= pt;
   }
@@ -1550,6 +1630,11 @@ ${p} .tb-cn.on i{background:#3fcf8e;box-shadow:0 0 0 3px rgba(63,207,142,.2)}
         const P = PO(S), lg = bgLegal(P, seat, S.left);
         if (!lg.length) return { t: 'end' };
         const key = S.game + ':' + S.log.length + ':' + S.dice.join('');
+        if (lv > 2 && !S.mvs.length && V.planK !== key) {
+          if (!V.th || V.th.key !== key) { V.th = bgThink(S, seat); V.th.key = key; }
+          if (!bgStep(V.th, 110)) return { again: 4 };
+          V.planK = key; V.plan = V.th.best; V.th = null;
+        }
         if (V.planK !== key) { V.planK = key; V.plan = S.mvs.length ? [] : bgChoose(S, seat, lv); }
         const pm = V.plan[S.mvs.length];
         if (pm && lg.some(m => m.f === pm.f && m.d === pm.d)) return { t: 'mv', f: pm.f, d: pm.d };
@@ -1615,7 +1700,7 @@ ${p} .tb-cn.on i{background:#3fcf8e;box-shadow:0 0 0 3px rgba(63,207,142,.2)}
 
     const cfg = {
       segs: [
-        { k: 'diff', lab: 'Difficulty', vals: [[0, 'Easy'], [1, 'Normal'], [2, 'Hard']], def: 1 },
+        { k: 'diff', lab: 'Difficulty', vals: [[0, 'Easy'], [1, 'Normal'], [2, 'Hard'], [3, 'Hardest']], def: 1 },
         { k: 'match', lab: 'Match length', vals: [[1, '1 pt'], [3, '3 pts'], [5, '5 pts'], [7, '7 pts']], def: 3 }
       ],
       btns: 5, log: true
@@ -1733,7 +1818,74 @@ ${p} .tb-cn.on i{background:#3fcf8e;box-shadow:0 0 0 3px rgba(63,207,142,.2)}
     }
     return any ? best : maEval(P, root);
   }
+  let MA_TT = new Map();
+  function maDeep(P, s, d, al, be) {
+    if (++MA_N % 512 === 0 && performance.now() > MA_T0) MA_STOP = true;
+    if (MA_STOP) return 0;
+    if (d <= 0) {
+      let a = 0, b = 0;
+      for (let i = 0; i < 6; i++) { a += P[i]; b += P[7 + i]; }
+      return P[6] - P[13] + .25 * (a - b);
+    }
+    const key = String.fromCharCode(s, ...P), tt = MA_TT.get(key);
+    let first = -1;
+    if (tt) {
+      if (tt.d >= d) {
+        if (tt.f === 0) return tt.v;
+        if (tt.f === 1) { if (tt.v > al) al = tt.v; } else if (tt.v < be) be = tt.v;
+        if (al >= be) return tt.v;
+      }
+      first = tt.m;
+    }
+    const maxi = s === 0, base = 7 * s, al0 = al, be0 = be;
+    let best = maxi ? -1e9 : 1e9, bm = -1, half = 0;
+    for (let i = 0; i < 14; i++) half += P[i];
+    half /= 2;
+    for (let k = -1; k < 12; k++) {
+      const p = k < 0 ? first : k < 6 ? 5 - k : 11 - k;
+      if (p < 0 || (k >= 0 && p === first)) continue;
+      const n = P[base + p];
+      if (!n) continue;
+      const ext = n % 13 === 6 - p;
+      if (k >= 0 && (k < 6) !== ext) continue;
+      const Q = P.slice(), r = maSow(Q, s, p);
+      let v;
+      if (maSweep(Q) || Q[6] > half || Q[13] > half) { const df = Q[6] - Q[13]; v = df > 0 ? 1000 + df : df < 0 ? -1000 + df : 0; }
+      else v = maDeep(Q, r.extra ? s : 1 - s, r.extra ? d : d - 1, al, be);
+      if (MA_STOP) return 0;
+      if (maxi) { if (v > best) { best = v; bm = p; } if (best > al) al = best; } else { if (v < best) { best = v; bm = p; } if (best < be) be = best; }
+      if (al >= be) break;
+    }
+    if (bm < 0) return P[6] - P[13];
+    if (MA_TT.size > 600000) MA_TT = new Map();
+    MA_TT.set(key, { d, v: best, f: best <= al0 ? 2 : best >= be0 ? 1 : 0, m: bm });
+    return best;
+  }
+  function maThink(P0, s) {
+    const moves = [];
+    for (let p = 0; p < 6; p++) if (P0[7 * s + p]) moves.push(p);
+    return { P: P0.slice(), s, moves, d: 1, best: moves[0], spent: 0, done: moves.length <= 1 };
+  }
+  function maSlice(st, ms, total) {
+    if (st.done) return true;
+    const t0 = performance.now();
+    MA_T0 = t0 + ms;
+    while (!st.done) {
+      MA_STOP = false; MA_N = 0;
+      const v = maDeep(st.P, st.s, st.d, -1e9, 1e9);
+      if (MA_STOP) break;
+      const tt = MA_TT.get(String.fromCharCode(st.s, ...st.P));
+      if (tt && st.moves.includes(tt.m)) st.best = tt.m;
+      st.d++;
+      if (Math.abs(v) >= 1000 || st.d > 60) st.done = true;
+      if (performance.now() > MA_T0) break;
+    }
+    st.spent += performance.now() - t0;
+    if (st.spent >= total) st.done = true;
+    return st.done;
+  }
   function maChoose(P0, s, level, ms) {
+    if (level > 2) { const st = maThink(P0, s); while (!maSlice(st, ms || 1100, ms || 1100)); return st.best; }
     const moves = [];
     for (let p = 0; p < 6; p++) if (P0[7 * s + p]) moves.push(p);
     if (moves.length <= 1) return moves[0];
@@ -2039,7 +2191,13 @@ ${p} .tb-cn.on i{background:#3fcf8e;box-shadow:0 0 0 3px rgba(63,207,142,.2)}
       apply: (T0, seat, i) => maApply(T0, seat, i),
       toAct: T0 => T0.S.phase === 'play' ? [T0.S.turn] : [],
       cpu: (T0, seat) => {
-        const p = maChoose(T0.S.pits, seat, T0.opt.diff | 0);
+        const lv = T0.opt.diff | 0;
+        if (lv < 3) return { t: 'mv', p: maChoose(T0.S.pits, seat, lv) };
+        const key = T0.gen() + ':' + T0.S.n;
+        if (!V.th || V.th.key !== key) { V.th = maThink(T0.S.pits, seat); V.th.key = key; }
+        if (!maSlice(V.th, 120, 1100)) return { again: 4 };
+        const p = V.th.best;
+        V.th = null;
         return { t: 'mv', p };
       },
       wait: () => 750,
@@ -2077,7 +2235,7 @@ ${p} .tb-cn.on i{background:#3fcf8e;box-shadow:0 0 0 3px rgba(63,207,142,.2)}
     };
     const cfg = {
       segs: [
-        { k: 'diff', lab: 'Difficulty', vals: [[0, 'Easy'], [1, 'Normal'], [2, 'Hard']], def: 1 },
+        { k: 'diff', lab: 'Difficulty', vals: [[0, 'Easy'], [1, 'Normal'], [2, 'Hard'], [3, 'Hardest']], def: 1 },
         { k: 'seeds', lab: 'Seeds per pit', vals: [[4, '6 × 4'], [6, '6 × 6']], def: 4 }
       ],
       btns: 4, log: true, snapUndo: true
@@ -2195,7 +2353,49 @@ ${p} .tb-cn.on i{background:#3fcf8e;box-shadow:0 0 0 3px rgba(63,207,142,.2)}
     NM_TT.set(key, { d, v: best, f: best <= al0 ? 2 : best >= be ? 1 : 0, m: bm });
     return best;
   }
+  function nmThink(S, seat) {
+    const [m0, m1] = nmMasks(S), me = seat ? m1 : m0, op = seat ? m0 : m1, hm = S.hand[seat], ho = S.hand[1 - seat];
+    const order = nmMoves(me, op, hm);
+    return { me, op, hm, ho, seat, order, b: S.b.slice(), seen: S.rep || {}, d: 1, best: order.length ? order[0] : -1, spent: 0, done: order.length <= 1 };
+  }
+  function nmStep(st, ms, total) {
+    if (st.done) return true;
+    const t0 = performance.now(), { me, op, hm, ho, seat } = st;
+    NM_T0 = t0 + ms;
+    while (!st.done) {
+      NM_STOP = false; NM_N = 0;
+      let curBest = -1, curV = -1e9, al = -1e9;
+      const sc = [];
+      for (const m of st.order) {
+        const f = m & 31, t = (m >> 5) & 31, r = m >> 10;
+        const nm = (f === 24 ? me : me & ~(1 << f)) | (1 << t), no = r !== 31 ? op & ~(1 << r) : op;
+        let v = -nmSearch(no, nm, ho, f === 24 ? hm - 1 : hm, st.d - 1, -1e9, -al, 1, 0);
+        if (NM_STOP) break;
+        if (hm === 0 && ho === 0 && Math.abs(v) < 900) {
+          const b2 = st.b.slice();
+          if (f !== 24) b2[f] = -1;
+          b2[t] = seat;
+          if (r !== 31) b2[r] = -1;
+          if ((st.seen[b2.map(x => x + 1).join('') + (1 - seat) + '00'] || 0) >= 2) v = Math.min(v, 0) - .5;
+        }
+        sc.push([m, v]);
+        if (v > curV) { curV = v; curBest = m; al = Math.max(al, v - 1e-9); }
+      }
+      if (NM_STOP) break;
+      st.best = curBest;
+      sc.sort((a, b) => b[1] - a[1]);
+      st.order = sc.map(x => x[0]);
+      st.d++;
+      if (Math.abs(curV) >= 900 || st.d > 40) st.done = true;
+      if (performance.now() > NM_T0) break;
+    }
+    st.spent += performance.now() - t0;
+    if (st.spent >= total) st.done = true;
+    return st.done;
+  }
+  const nmDec = m => ({ f: (m & 31) === 24 ? -1 : m & 31, t: (m >> 5) & 31, r: (m >> 10) === 31 ? -1 : m >> 10 });
   function nmChoose(S, seat, level, ms) {
+    if (level > 2) { const st = nmThink(S, seat); if (st.best < 0) return null; while (!nmStep(st, ms || 1200, ms || 1200)); return nmDec(st.best); }
     const [m0, m1] = nmMasks(S), me = seat ? m1 : m0, op = seat ? m0 : m1, hm = S.hand[seat], ho = S.hand[1 - seat];
     const moves = nmMoves(me, op, hm);
     if (!moves.length) return null;
@@ -2709,7 +2909,16 @@ ${p} .tb-cn.on i{background:#3fcf8e;box-shadow:0 0 0 3px rgba(63,207,142,.2)}
           T0.nmPlan = null;
           return { t: 'rm', p };
         }
-        const m = nmChoose(S, seat, T0.opt.diff | 0);
+        const lv = T0.opt.diff | 0;
+        let m;
+        if (lv > 2) {
+          const key = T0.gen() + ':' + S.n;
+          if (!V.th || V.th.key !== key) { V.th = nmThink(S, seat); V.th.key = key; }
+          if (V.th.best < 0) return null;
+          if (!nmStep(V.th, 120, 1200)) return { again: 4 };
+          m = nmDec(V.th.best);
+          V.th = null;
+        } else m = nmChoose(S, seat, lv);
         if (!m) return null;
         T0.nmPlan = m.r >= 0 ? m.r : null;
         return m.f < 0 ? { t: 'pl', p: m.t } : { t: 'mv', f: m.f, p: m.t };
@@ -2750,7 +2959,7 @@ ${p} .tb-cn.on i{background:#3fcf8e;box-shadow:0 0 0 3px rgba(63,207,142,.2)}
       }
     };
     const cfg = {
-      segs: [{ k: 'diff', lab: 'Difficulty', vals: [[0, 'Easy'], [1, 'Normal'], [2, 'Hard']], def: 1 }],
+      segs: [{ k: 'diff', lab: 'Difficulty', vals: [[0, 'Easy'], [1, 'Normal'], [2, 'Hard'], [3, 'Hardest']], def: 1 }],
       btns: 4, log: true, snapUndo: true
     };
     T = table(api, root, G, cfg);
