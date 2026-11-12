@@ -56,6 +56,14 @@
       return tick < s.end;
     }
     if (s.type === 'rev') { r.throttle = s.th; r.steer = s.s; return tick < s.t0 + 80; }
+    if (s.type === 'half') {
+      const q = tick - s.t0;
+      r.throttle = q < 76 ? -1 : 1;
+      r.jump = (q >= 26 && q < 32) || (q >= 36 && q < 40);
+      r.pitch = q < 28 ? 0 : q < 76 ? 1 : -1;
+      if (q >= 76 && c.u.z < 0.9) r.roll = Math.atan2(c.l.z, c.u.z) > 0 ? -1 : 1;
+      return !(c.onGround && q > 90) && q < 250;
+    }
     return false;
   }
 
@@ -107,8 +115,8 @@
   const hxKind = bz => bz < 130 ? 0 : bz < 290 ? 1 : 2;
   const hxUpT = bz => bz < 130 ? 0.2 : bz < 290 ? hxUp(bz - 45) : hxUp2(bz - 20);
 
-  function hxDrive(c, r, tx, ty, want, bo, free) {
-    const dx = tx - c.p.x, dy = ty - c.p.y, lf = dx * c.f.x + dy * c.f.y, ll = dx * c.l.x + dy * c.l.y;
+  function hxDrive(c, r, tx, ty, want, bo, free, tz) {
+    const dx = tx - c.p.x, dy = ty - c.p.y, dz = tz === undefined ? 0 : tz - c.p.z, lf = dx * c.f.x + dy * c.f.y + dz * c.f.z, ll = dx * c.l.x + dy * c.l.y + dz * c.l.z;
     const ang = Math.atan2(ll, lf), dist = Math.hypot(lf, ll), fs = vdot(c.v, c.f), wz = vdot(c.w, c.u), aa = Math.abs(ang);
     if (aa > 2.2 && dist < 600 && fs < 400) {
       r.throttle = -1; r.steer = clamp(-Math.atan2(-ll, -lf) * 3 - wz * 0.3, -1, 1);
@@ -216,7 +224,7 @@
     return out;
   }
 
-  const hxNew = id => ({ S: hxShape(), think: id % 6, plan: null, seq: null, rest: 0, stuck: 0, ban: 0, first: false, tMe: 9, tOpp: 9 });
+  const hxNew = id => ({ S: hxShape(), think: id % 6, plan: null, seq: null, rest: 0, stuck: 0, hfT: -999, ban: 0, first: false, tMe: 9, tOpp: 9 });
   const HXIDLE = { type: 'idle' };
   const hxScript = () => ({ type: 'strike', tj: 0, hold: 4, td: -1, dp: -1, dx: 0, t2: -1, qx: 0, qy: 0, mx: 0, my: 0, lat: 0, thr: 1, bo: false, ax: 0, ap: 0, end: 0, score: -1e9, gen: -1, mode: 'shot', kc: 0, rc: 0 });
   const HXC = hxScript();
@@ -352,7 +360,7 @@
   }
   function hxGo(W, c, X, x, y, want, park, why, safe) {
     const pl = { type: 'goto', tx: clamp(x, -CFG.X + 200, CFG.X - 200), ty: clamp(y, -CFG.Y + 150, CFG.Y - 150), want, park, why, pad: null, bo: true };
-    if (c.boost < 99) {
+    if (c.boost < 99 && why !== 'line') {
       const low = c.boost < 40, pd = hxPad(W, c, pl.tx, pl.ty, safe ? (low ? 2200 : c.boost < 75 ? 700 : 150) : low ? 350 : 100, safe && low);
       const p2 = pd || (safe && low ? hxPad(W, c, pl.tx, pl.ty, 500, false) : null);
       if (p2) { pl.pad = p2; pl.px = pl.tx; pl.py = pl.ty; pl.tx = p2.x; pl.ty = p2.y; pl.park = false; pl.want = 2300; }
@@ -364,11 +372,12 @@
     if (W.state !== 'play' || !H.ok) { X.plan = HXIDLE; return; }
     const o = hxAt(H, W.tick), bx = P[o], by = P[o + 1], fs = vdot(c.v, c.f), ownY = -sg * CFG.Y;
     hxEtas(W, H);
-    let tOpp = 9, tMate = 9, iMate = -1;
+    let tOpp = 9, tMate = 9, iMate = -1, last = true;
     for (let i = 0; i < H.n; i++) {
       if (i === me) continue;
       const e = H.obs[i].eta;
-      if (W.cars[i].team !== c.team) { if (e < tOpp) tOpp = e; } else if (e < tMate) { tMate = e; iMate = i; }
+      if (W.cars[i].team !== c.team) { if (e < tOpp) tOpp = e; }
+      else { if (e < tMate) { tMate = e; iMate = i; } if (!H.obs[i].demo && (H.obs[i].p.y - c.p.y) * sg < 0) last = false; }
     }
     const threat = H.goalK >= 0 && H.goalTeam === c.team ? (H.goalK - W.tick) * H.dt : 99;
     const mode = W.kickoff ? 'kick' : threat < 5 || by * sg < -CFG.Y * 0.35 ? 'clear' : 'shot';
@@ -383,7 +392,7 @@
     else if (!h.ok) why = 'none';
     else if (threat < 6) { go = tMe < threat + 0.1; why = 'save'; }
     else if (h.dy * sg < 0.15 || W.tick < X.ban) why = 'wrong';
-    else { go = tMe < tOpp + (was ? 0.3 : 0.1) || (danger && goalSide && tMe < tOpp + 0.6); why = go ? 'first' : 'late'; }
+    else { go = tMe < tOpp + (last ? 0.1 : 0.7) + (was ? 0.2 : 0) || (danger && goalSide && tMe < tOpp + 0.6); why = go ? 'first' : 'late'; }
     X.first = go || why === 'late' || why === 'wrong' || why === 'none' || why === 'save';
     if (go) {
       const T = W.tick + h.i;
@@ -426,15 +435,20 @@
     if (!c.onGround && c.nwW < 3) { hxRecover(W, c, X, r); return; }
     X.rest = 0;
     if (!pl || pl.type === 'idle') { r.throttle = Math.abs(fs) > 50 ? -Math.sign(fs) : 0; return; }
-    if (c.u.z < 0.5 && c.p.z < 1500) { hxDrive(c, r, c.p.x * 0.85, c.p.y * 0.85, 1600, false); return; }
+    if (c.u.z < 0.5) { hxDrive(c, r, c.p.x * 0.85, c.p.y * 0.85, 1800, false, false, 0); return; }
     if (pl.type === 'strike') { if (!hxStrikeAct(W, H, c, X, r)) r.throttle = 1; }
     else if (pl.type === 'goto') {
       const d = Math.hypot(pl.tx - c.p.x, pl.ty - c.p.y);
       if (pl.park && d < 260) {
         const o = hxAt(H, W.tick), ab = angleTo(c, H.P[o], H.P[o + 1]);
         if (Math.abs(ab) > 0.5) { r.throttle = fs < 350 ? 0.6 : 0; r.steer = clamp(-ab * 2, -1, 1); } else r.throttle = Math.abs(fs) > 40 ? clamp(-fs / 250, -1, 1) : 0;
-      } else hxDrive(c, r, pl.tx, pl.ty, pl.park ? Math.min(pl.want, d * 1.6 + 300) : pl.want, pl.why === 'shadow' || pl.why === 'support' || pl.why === 'kback' ? d > 1800 && c.boost > 50 : pl.pad ? c.boost < 20 || pl.why !== 'shadow' : true);
+      } else {
+        const ang = hxDrive(c, r, pl.tx, pl.ty, pl.park ? Math.min(pl.want, d * 1.6 + 300) : pl.want, pl.why === 'shadow' || pl.why === 'support' || pl.why === 'kback' ? d > 1800 && c.boost > 50 : pl.pad ? c.boost < 20 || pl.why !== 'shadow' : true);
+        if (Math.abs(ang) > 2.5 && d > 1100 && Math.abs(fs) < 500 && c.u.z > 0.95 && W.tick > X.hfT + 220) { X.hfT = W.tick; X.seq = { type: 'half', t0: W.tick }; }
+      }
     }
+    const ly = c.p.y + c.v.y * 0.4;
+    if (Math.abs(ly) > CFG.Y - 30 && Math.abs(c.p.y) < CFG.Y + 40 && Math.abs(c.p.x + c.v.x * 0.4) < GW + 120 && c.v.y * ly > 250 * Math.abs(ly) && !X.seq) { r.throttle = fs > 0 ? -1 : 1; r.boost = false; }
     if (Math.abs(fs) < 90 && Math.abs(r.throttle) > 0.5 && !r.slide) {
       if (++X.stuck > 130) { X.stuck = 0; X.seq = { type: 'rev', t0: W.tick, s: r.steer > 0 ? -1 : 1, th: -Math.sign(r.throttle) }; }
     } else X.stuck = Math.max(0, X.stuck - 1);
