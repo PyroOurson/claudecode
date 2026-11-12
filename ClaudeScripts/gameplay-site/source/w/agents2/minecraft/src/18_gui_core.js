@@ -6,7 +6,7 @@
     function resize() {
       const fs = !!wrap.closest('.fs');
       if (fs || fs !== fsOn) { fsOn = fs; wrap.style.aspectRatio = fs ? (innerWidth / innerHeight).toFixed(4) : ''; wrap.style.height = fs ? 'auto' : ''; wrap.style.borderRadius = fs ? '0' : ''; }
-      const w = wrap.clientWidth || 960, h = wrap.clientHeight || 600, r = wrap.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 3);
+      const w = wrap.clientWidth || 960, h = wrap.clientHeight || 600, r = wrap.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
       const pw = Math.max(64, Math.round((r.width || w) * dpr)), ph = Math.max(64, Math.round((r.height || h) * dpr));
       if (w !== cssW || h !== cssH) { cssW = w; cssH = h; renderer.setSize(w, h, false); cam.aspect = hCam.aspect = w / h; fovDirty = true; hCam.fov = w < h ? 90 : 70; cam.updateProjectionMatrix(); hCam.updateProjectionMatrix(); }
       if (hud.width !== pw || hud.height !== ph) { hud.width = pw; hud.height = ph; }
@@ -115,7 +115,7 @@
       }
       q.putImageData(im, 0, 0); return c;
     })();
-    const SPLASHES = ['Also try Terraria!', 'Now with poplar trees!', 'Wilderness Bound!', '100% blocks!', 'Punch a tree!', 'Mind the creepers!', 'Diamonds below!', 'Pixel perfect!', 'Bring a pickaxe!', 'Infinite worlds!', 'Pigs included!', 'Sulfur caves?!', 'Cushions!', 'Cinnabar!', 'LAN party!', 'Made in a browser!', 'Water flows!', 'Sand falls!', 'Redstone!', 'Craft away!', 'Golden dandelion!', 'Over 1500 items!'];
+    const SPLASHES = ['Now with poplar trees!', 'Runs in a browser tab!', 'Bring a friend, bring a shovel!', 'Poplars sway here!', 'Every hill is new!', 'Homework first?', 'Build it taller!', 'Party code ready!', 'Mind the gap!', 'Torches save lives!', 'Rivers find a way!', 'Sand has opinions!', 'Chromebook approved!', 'Dig sideways too!', 'Sleep is optional!', 'Sheep remember!', 'Hardest is hard!', 'Leave only footprints!', 'Maps are for later!', 'One more block!'];
     const SPLASH = SPLASHES[ri(SPLASHES.length)];
     let btns = [], slots = [], hovSlot = null, mx = -1, my = -1, pRect = [0, 0, 0, 0], fields = [], focusKey = null;
     const inR = (x, y, r) => x >= r.x && y >= r.y && x < r.x + r.w && y < r.y + r.h;

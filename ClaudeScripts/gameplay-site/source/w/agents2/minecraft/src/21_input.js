@@ -96,7 +96,7 @@
       return {
         r, jx, jy, bs, jump,
         sneak: { x: jump.x + bs * .2, y: jump.y - bs * 1.2 - 6, w: bs * 1.4, h: bs * 1.2 },
-        pause: { x: GW - 26, y: 4, w: 22, h: 18 }, inv: { x: GW - 52, y: 4, w: 22, h: 18 }, chat: { x: GW - 78, y: 4, w: 22, h: 18 }, drop: { x: GW - 104, y: 4, w: 22, h: 18 }, persp: { x: GW - 130, y: 4, w: 22, h: 18 }
+        pause: { x: GW - 29, y: 3, w: 26, h: 22 }, inv: { x: GW - 58, y: 3, w: 26, h: 22 }, chat: { x: GW - 87, y: 3, w: 26, h: 22 }, drop: { x: GW - 116, y: 3, w: 26, h: 22 }, persp: { x: GW - 145, y: 3, w: 26, h: 22 }
       };
     }
     function drawTouch() {

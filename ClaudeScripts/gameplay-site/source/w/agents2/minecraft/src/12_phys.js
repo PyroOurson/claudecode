@@ -25,9 +25,11 @@
       if (CBX.length < o + 6) CBX.length = o + 6;
       CBX[o++] = x + a; CBX[o++] = y + b; CBX[o++] = z + c; CBX[o++] = x + d; CBX[o++] = y + e; CBX[o++] = z + f; CBN++;
     }
+    const SWN = new Float64Array(3), SWX = new Float64Array(3);
     function sweep(e, d, ax, hw, hh) {
       if (d === 0) return 0;
-      const mn = [e.x - hw, e.y, e.z - hw], mx = [e.x + hw, e.y + hh, e.z + hw];
+      const mn = SWN, mx = SWX;
+      mn[0] = e.x - hw; mn[1] = e.y; mn[2] = e.z - hw; mx[0] = e.x + hw; mx[1] = e.y + hh; mx[2] = e.z + hw;
       const a1 = (ax + 1) % 3, a2 = (ax + 2) % 3;
       for (let i = 0; i < CBN; i++) {
         const o = i * 6;
@@ -44,10 +46,11 @@
       for (let i = 0; i < CBN; i++) { const o = i * 6; if (CBX[o] < x1 && CBX[o + 3] > x0 && CBX[o + 1] < y1 && CBX[o + 4] > y0 && CBX[o + 2] < z1 && CBX[o + 5] > z0) return false; }
       return true;
     }
+    const edgeSp = v => Math.abs(v) < .05 ? 0 : v - Math.sign(v) * .05;
     function moveE(e, dx, dy, dz, guard, step) {
       const hw = e.w / 2, hh = e.h;
       if (guard && e.onGround) {
-        const st = .05, sp = v => Math.abs(v) < st ? 0 : v - Math.sign(v) * st;
+        const sp = edgeSp;
         while (dx !== 0 && boxFree(e, dx, -1, 0, hh)) dx = sp(dx);
         while (dz !== 0 && boxFree(e, 0, -1, dz, hh)) dz = sp(dz);
         while (dx !== 0 && dz !== 0 && boxFree(e, dx, -1, dz, hh)) { dx = sp(dx); dz = sp(dz); }
@@ -86,17 +89,19 @@
       for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) { const b = getS(x, y, z); if (pred(b, x, y, z)) return b; }
       return 0;
     }
+    const RBR = [0, 0];
     function rayBox(ox, oy, oz, dx, dy, dz, x0, y0, z0, x1, y1, z1) {
       let tmin = 0, tmax = 1e9, fa = -1;
-      const O = [ox, oy, oz], D = [dx, dy, dz], A = [x0, y0, z0], B = [x1, y1, z1];
       for (let i = 0; i < 3; i++) {
-        if (Math.abs(D[i]) < 1e-9) { if (O[i] < A[i] || O[i] > B[i]) return null; continue; }
-        let t1 = (A[i] - O[i]) / D[i], t2 = (B[i] - O[i]) / D[i], f1 = i * 2 + 1, f2 = i * 2;
+        const o = i === 0 ? ox : i === 1 ? oy : oz, d = i === 0 ? dx : i === 1 ? dy : dz, a = i === 0 ? x0 : i === 1 ? y0 : z0, b = i === 0 ? x1 : i === 1 ? y1 : z1;
+        if (Math.abs(d) < 1e-9) { if (o < a || o > b) return null; continue; }
+        let t1 = (a - o) / d, t2 = (b - o) / d, f1 = i * 2 + 1, f2 = i * 2;
         if (t1 > t2) { const t = t1; t1 = t2; t2 = t; const f = f1; f1 = f2; f2 = f; }
         if (t1 > tmin) { tmin = t1; fa = f1; }
         tmax = Math.min(tmax, t2); if (tmin > tmax) return null;
       }
-      return [tmin, fa];
+      RBR[0] = tmin; RBR[1] = fa;
+      return RBR;
     }
     function selBoxes(s, x, y, z) {
       if (SELB[s]) return SELB[s];
@@ -119,10 +124,10 @@
         const s = getB(x, y, z);
         if (s > 0 && (SHP[s] !== 4 || fluids && ((s - TT[STT[s]].base) & 15) === 0) && SHP[s] !== 0) {
           const L = selBoxes(s, x, y, z);
-          let best = null;
-          for (const b of L) { const r = rayBox(ox, oy, oz, dx, dy, dz, x + b[0], y + b[1], z + b[2], x + b[3], y + b[4], z + b[5]); if (r && r[0] <= max && (!best || r[0] < best[0])) best = r.concat([b]); }
-          if (best && best[0] <= 0 && n === 0 && (SHP[s] === 2 || SHP[s] === 3) && !TT[STT[s]].web) best = null;
-          if (best) { HIT.b = true; HIT.x = x; HIT.y = y; HIT.z = z; HIT.d = best[0]; HIT.f = best[1] < 0 ? 2 : best[1]; const D = DIR6[HIT.f]; HIT.fx = D[0]; HIT.fy = D[1]; HIT.fz = D[2]; HIT.px = ox + dx * best[0]; HIT.py = oy + dy * best[0]; HIT.pz = oz + dz * best[0]; HIT.box = best[2]; break; }
+          let best = null, bt = 0, bf = 0;
+          for (let li = 0; li < L.length; li++) { const b = L[li], r = rayBox(ox, oy, oz, dx, dy, dz, x + b[0], y + b[1], z + b[2], x + b[3], y + b[4], z + b[5]); if (r && r[0] <= max && (!best || r[0] < bt)) { best = b; bt = r[0]; bf = r[1]; } }
+          if (best && bt <= 0 && n === 0 && (SHP[s] === 2 || SHP[s] === 3) && !TT[STT[s]].web) best = null;
+          if (best) { HIT.b = true; HIT.x = x; HIT.y = y; HIT.z = z; HIT.d = bt; HIT.f = bf < 0 ? 2 : bf; const D = DIR6[HIT.f]; HIT.fx = D[0]; HIT.fy = D[1]; HIT.fz = D[2]; HIT.px = ox + dx * bt; HIT.py = oy + dy * bt; HIT.pz = oz + dz * bt; HIT.box = best; break; }
         }
         if (tx < ty && tx < tz) { x += sx; t = tx; tx += tdx; } else if (ty < tz) { y += sy; t = ty; ty += tdy; } else { z += sz; t = tz; tz += tdz; }
       }
