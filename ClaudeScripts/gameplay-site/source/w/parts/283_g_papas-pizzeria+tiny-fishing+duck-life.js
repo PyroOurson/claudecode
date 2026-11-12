@@ -3,6 +3,21 @@
   'use strict';
   const TAU = Math.PI * 2;
   const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const svCopy = v => JSON.parse(JSON.stringify(v));
+  const svFix = (def, s) => {
+    if (!s || typeof s !== 'object' || Array.isArray(s)) return svCopy(def);
+    const out = Object.assign({}, s);
+    for (const k of Object.keys(def)) {
+      const a = def[k], b = s[k];
+      if (typeof a === 'number') out[k] = typeof b === 'number' && isFinite(b) ? b : a;
+      else if (typeof a === 'boolean') out[k] = b == null ? a : !!b;
+      else if (typeof a === 'string') out[k] = typeof b === 'string' && b ? b : a;
+      else if (Array.isArray(a)) out[k] = Array.isArray(b) ? b : svCopy(a);
+      else if (a && typeof a === 'object') out[k] = svFix(a, b);
+      else if (b === undefined) out[k] = a;
+    }
+    return out;
+  };
   const lerp = (a, b, t) => a + (b - a) * t;
   const rnd = (a, b) => a + Math.random() * (b - a);
   const rint = (a, b) => Math.floor(rnd(a, b + 1));
@@ -452,8 +467,13 @@
     const W = 960, H = 600, S = makeStage(api, W, H), c = S.ctx, au = S.au;
     const music = makeMusic(au, { bpm: 92, root: 220, scale: [0, 2, 4, 7, 9], pat: [4, -1, 2, 4, 5, -1, 4, 2, 0, -1, 2, 4, 2, -1, -1, -1], bass: [0, 3, 4, 2], vol: .03 });
     const defSave = { coins: 0, lv: { depth: 0, cap: 0, val: 0, reel: 0, off: 0 }, hold: [], dex: {}, auto: false, hasAuto: false, last: Date.now(), earned: 0, casts: 0, bestHaul: 0, deepest: 0, mk: {}, tut: 0, mus: true, sold: 0 };
-    const sv = Object.assign({}, defSave, api.load() || {});
-    sv.lv = Object.assign({}, defSave.lv, sv.lv || {}); sv.dex = sv.dex || {}; sv.hold = Array.isArray(sv.hold) ? sv.hold : []; sv.mk = sv.mk || {};
+    const sv = svFix(defSave, api.load());
+    for (const k of Object.keys(defSave.lv)) sv.lv[k] = clamp(Math.floor(sv.lv[k]) || 0, 0, TF_UP[k].max);
+    sv.hold = sv.hold.filter(h => h && typeof h === 'object' && FBY[h.id] && isFinite(h.v) && isFinite(h.size)).slice(0, 400);
+    for (const k of Object.keys(sv.dex)) { const q = sv.dex[k]; if (!q || typeof q !== 'object' || !FBY[k]) delete sv.dex[k]; }
+    for (const k of Object.keys(sv.mk)) if (typeof sv.mk[k] !== 'number' || !isFinite(sv.mk[k]) || sv.mk[k] <= 0) delete sv.mk[k];
+    sv.coins = Math.max(0, sv.coins); sv.earned = Math.max(0, sv.earned);
+    if (sv.last > Date.now()) sv.last = Date.now();
     if (!sv.mus && music.on) music.toggle();
     const persist = () => { sv.last = Date.now(); api.save(sv); if (Date.now() - lastSub > 30000) { lastSub = Date.now(); api.submit(sv.earned); } };
     const maxM = () => tfDepth(sv.lv.depth), maxPx = () => maxM() * TF_PXM;
@@ -1200,8 +1220,9 @@
     const W = 960, H = 600, S = makeStage(api, W, H), c = S.ctx, au = S.au;
     const music = makeMusic(au, { bpm: 116, root: 261.63, scale: [0, 2, 4, 5, 7, 9, 11], pat: [0, 2, 4, 2, 5, 4, 2, 0, 3, 5, 7, 5, 4, 2, 4, -1], bass: [0, 5, 3, 4], vol: .028, wave: 'triangle' });
     const defSave = { day: 1, money: 0, pts: 0, ups: {}, served: 0, perfects: 0, tipsTotal: 0, earned: 0, bestDay: 0, lostTotal: 0, tut: 0, mus: true, seen: 0 };
-    const sv = Object.assign({}, defSave, api.load() || {});
-    sv.ups = sv.ups || {};
+    const sv = svFix(defSave, api.load());
+    for (const k of Object.keys(sv.ups)) { const u = PZ.UPS.find(q => q.id === k); if (!u || typeof sv.ups[k] !== 'number' || !isFinite(sv.ups[k])) delete sv.ups[k]; else sv.ups[k] = clamp(Math.floor(sv.ups[k]), 0, u.max); }
+    sv.day = Math.max(1, Math.floor(sv.day)); sv.money = Math.max(0, sv.money); sv.pts = Math.max(0, sv.pts);
     if (!sv.mus && music.on) music.toggle();
     const persist = () => { api.save(sv); };
     const up = id => sv.ups[id] || 0;
@@ -2211,7 +2232,13 @@
     const W = 960, H = 600, S = makeStage(api, W, H), c = S.ctx, au = S.au;
     const music = makeMusic(au, { bpm: 126, root: 293.66, scale: [0, 2, 4, 7, 9], pat: [0, 2, 4, 2, 5, 4, 2, -1, 3, 4, 5, 7, 5, 4, 2, 0], bass: [0, 3, 4, 2], vol: .026, wave: 'triangle' });
     const defSave = () => ({ name: 'Quackers', look: dkLook(), owned: {}, cols: { yellow: 1 }, st: { run: { lv: 1, xp: 0 }, swim: { lv: 1, xp: 0 }, fly: { lv: 1, xp: 0 }, climb: { lv: 1, xp: 0 } }, energy: 100, seeds: 6, money: 25, runs: [[], [], [], [], [], []], trophy: [0, 0, 0, 0, 0, 0], champ: false, nraces: 0, wins: 0, trains: 0, tut: 0, mus: true, bestM: { run: 0, swim: 0, fly: 0, climb: 0 } });
-    const sv = Object.assign(defSave(), api.load() || {});
+    const sv = svFix(defSave(), api.load());
+    for (const sl of DK.SLOTS) if (sv.look[sl] != null && !(DK.IB[sv.look[sl]] && DK.IB[sv.look[sl]].slot === sl)) sv.look[sl] = null;
+    if (!DK.CB[sv.look.col]) sv.look.col = 'yellow';
+    for (const k of Object.keys(sv.st)) { const q = sv.st[k]; q.lv = clamp(Math.floor(q.lv) || 1, 1, 40); q.xp = Math.max(0, +q.xp || 0); }
+    sv.runs = sv.runs.length === 6 && sv.runs.every(r => Array.isArray(r) && r.every(x => Array.isArray(x) && Array.isArray(x[1]) && x[1].length === 5)) ? sv.runs : defSave().runs;
+    sv.trophy = sv.trophy.length === 6 ? sv.trophy.map(t => clamp(Math.floor(t) || 0, 0, 5)) : defSave().trophy;
+    sv.energy = clamp(sv.energy, 0, 100); sv.money = Math.max(0, sv.money); sv.seeds = Math.max(0, sv.seeds);
     { const d = defSave(); sv.look = Object.assign(d.look, sv.look); for (const k in d.st) sv.st[k] = Object.assign(d.st[k], sv.st[k]); sv.bestM = Object.assign(d.bestM, sv.bestM); sv.cols = sv.cols || { yellow: 1 }; sv.owned = sv.owned || {}; sv.runs = sv.runs && sv.runs.length === 6 ? sv.runs : d.runs; sv.trophy = sv.trophy && sv.trophy.length === 6 ? sv.trophy : d.trophy; }
     if (!sv.mus && music.on) music.toggle();
     let lastSub = 0;

@@ -21,6 +21,8 @@
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  const svObj = o => o && typeof o === 'object' && !Array.isArray(o) ? o : {};
+  const svBest = b => { const o = {}, s = svObj(b); for (const k of Object.keys(s)) { const v = s[k]; if (v && typeof v === 'object' && typeof v.score === 'number' && isFinite(v.score) && typeof v.acc === 'number' && isFinite(v.acc)) o[k] = v; } return o; };
   const SHARED = {
     get cal() { return clamp(+lsGet('gameplay:fnfosu:cal', 0) || 0, -300, 300); },
     set cal(v) { lsSet('gameplay:fnfosu:cal', clamp(Math.round(v), -300, 300)); },
@@ -1727,10 +1729,12 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     ui.className = 'fo-ui';
     wrap.append(ui);
     const audio = makeAudio(api);
-    const sv = Object.assign({ wk: 0, best: {}, o: {} }, api.load() || {});
-    const O = Object.assign({ scroll: 1, down: por, ghost: true, hs: false, keys: FNF_DEF_KEYS.map(a => a.slice()) }, sv.o);
+    const sv = Object.assign({ wk: 0, best: {}, o: {} }, svObj(api.load()));
+    sv.best = svBest(sv.best); sv.wk = clamp(Math.floor(+sv.wk) || 0, 0, WEEKS.length - 1);
+    const O = Object.assign({ scroll: 1, down: por, ghost: true, hs: false, keys: FNF_DEF_KEYS.map(a => a.slice()) }, svObj(sv.o));
     sv.o = O;
-    if (!Array.isArray(O.keys) || O.keys.length !== 4) O.keys = FNF_DEF_KEYS.map(a => a.slice());
+    O.scroll = clamp(+O.scroll || 1, .5, 1.8);
+    if (!Array.isArray(O.keys) || O.keys.length !== 4 || !O.keys.every(k => Array.isArray(k) && k.every(c => c == null || typeof c === 'string'))) O.keys = FNF_DEF_KEYS.map(a => a.slice());
     const persist = () => api.save(sv);
     let keyLane = {};
     const buildKeys = () => { keyLane = {}; O.keys.forEach((ks, l) => ks.forEach(k => { if (k) keyLane[k] = l; })); };
@@ -2722,9 +2726,11 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     ui.className = 'fo-ui';
     wrap.append(ui);
     const audio = makeAudio(api);
-    const sv = Object.assign({ best: {}, o: {}, sel: 0, di: 1, mods: {} }, api.load() || {});
-    const O = Object.assign({ cur: 1, trail: true, fx: true, hs: true }, sv.o);
+    const sv = Object.assign({ best: {}, o: {}, sel: 0, di: 1, mods: {} }, svObj(api.load()));
+    sv.best = svBest(sv.best);
+    const O = Object.assign({ cur: 1, trail: true, fx: true, hs: true }, svObj(sv.o));
     sv.o = O;
+    O.cur = clamp(+O.cur || 1, .5, 2);
     if (!sv.mods || typeof sv.mods !== 'object') sv.mods = {};
     sv.sel = clamp(sv.sel | 0, 0, OSU_SONGS.length - 1); sv.di = clamp(sv.di | 0, 0, 3);
     const persist = () => api.save(sv);

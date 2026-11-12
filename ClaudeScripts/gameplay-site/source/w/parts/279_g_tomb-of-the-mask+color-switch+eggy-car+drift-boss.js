@@ -110,8 +110,21 @@
   function store(api, def) {
     const d = Object.assign({}, def);
     const s = api.load();
-    if (s && typeof s === 'object') Object.assign(d, s);
-    return { d, save() { api.save(d); } };
+    if (s && typeof s === 'object' && !Array.isArray(s)) {
+      Object.assign(d, s);
+      for (const k of Object.keys(def)) {
+        const a = def[k], b = s[k];
+        if (typeof a === 'number') d[k] = typeof b === 'number' && isFinite(b) ? Math.max(0, b) : a;
+        else if (Array.isArray(a)) { const l = Array.isArray(b) ? b.filter(v => Number.isInteger(v) && v >= 0) : []; d[k] = l.length ? l : a.slice(); }
+        else if (a && typeof a === 'object') {
+          const o = b && typeof b === 'object' && !Array.isArray(b) ? b : {};
+          d[k] = Object.assign({}, a);
+          for (const q of Object.keys(o)) if (typeof o[q] === 'number' && isFinite(o[q])) d[k][q] = o[q];
+        }
+      }
+    }
+    for (const k of Object.keys(def)) if (Array.isArray(d[k]) && d[k] === def[k]) d[k] = def[k].slice();
+    return { d, idx(k, list, own) { if (!Number.isInteger(d[k]) || !list[d[k]] || (own && d[own].indexOf(d[k]) < 0)) d[k] = 0; if (own && d[own].indexOf(0) < 0) d[own].push(0); }, save() { api.save(d); } };
   }
 
   function sprite(rows, pal) {
@@ -502,6 +515,7 @@
     const au = makeAudio(api), ui = hits();
     const sv = store(api, { coins: 0, stars: {}, mask: 0, owned: [0], endless: 0, plays: 0 });
     const d = sv.d;
+    sv.idx('mask', TM_SKINS, 'owned');
     const DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0];
     let mode = 'menu', page = 0, tm = 0, shake = 0, flash = 0, hover = { x: -1, y: -1 }, cardT = 0;
     let wd = null, P = null, cam = 0, parts = [], fly = [], trail = [], lv = 1, endless = false, msg = '', lava = 0, climbed = 0;
@@ -1279,6 +1293,7 @@
     const au = makeAudio(api), ui = hits();
     const sv = store(api, { best: 0, stars: 0, skin: 0, own: [0], chal: {}, plays: 0 });
     const d = sv.d;
+    sv.idx('skin', CS_SKINS, 'own');
     let mode = 'home', tm = 0, hover = { x: -1, y: -1 }, page = 0;
     let ball, obs, items, cam, camT, score, parts, run, chal = null, nextY, lastType, over;
     const G = 1500, V = 430;
@@ -1782,7 +1797,9 @@
     const au = makeAudio(api), ui = hits();
     const sv = store(api, { coins: 0, own: [0], car: 0, best: 0, plays: 0, dist: 0 });
     const d = sv.d;
+    sv.idx('car', EC_CARS, 'own');
     const G = 1000, M = 1, I = 1650, DT = 1 / 240;
+    let pacc = 0;
     let mode = 'menu', tm = 0, hover = { x: -1, y: -1 }, garage = 0;
     let terr, car, egg, wheels, cam, st, parts, coins, P, roof, keys = { gas: false, brake: false }, shake = 0;
     let eng = null, lastM = -1;
@@ -1982,8 +1999,8 @@
       if (shake > 0) shake = Math.max(0, shake - dt);
       const run = mode === 'play' || mode === 'over' || mode === 'menu';
       if (run) {
-        const n = Math.min(10, Math.ceil(dt / DT));
-        for (let i = 0; i < n; i++) stepPhysics(dt / n);
+        pacc = Math.min(pacc + dt, .06);
+        while (pacc >= DT) { pacc -= DT; stepPhysics(DT); }
       }
       if (mode === 'play' || mode === 'over') {
         st.dist = Math.max(st.dist, car.x / 50);
@@ -2288,6 +2305,7 @@
     const au = makeAudio(api), ui = hits();
     const sv = store(api, { coins: 0, own: [0], skin: 0, best: 0, plays: 0, boost: { shield: 0, x2: 0, revive: 0 } });
     const d = sv.d;
+    sv.idx('skin', DB_SKINS, 'own');
     if (!d.boost) d.boost = { shield: 0, x2: 0, revive: 0 };
     const hover = { x: -1, y: -1 };
     const snd = {
@@ -2302,6 +2320,8 @@
     };
     const { FONT, text: shadowText, btn, coin: coinIcon } = uiKit(x, ui, hover, () => snd.ui());
 
+    const DB_H = 1 / 240;
+    let dacc = 0;
     let mode = 'menu', tm = 0, garage = d.skin, theme = 0, thT = 1, thFrom = DB_THEMES[0], cur = DB_THEMES[0], shake = 0, eng = null;
     let cells, runs, corners, car, cam, coinsA, picks, parts, marks, gen, st, hist, histT, hold = false, keyHold = new Set(), ptrHold = new Set(), ignore = false, lastTurn = 0, scrT = 0, reviveT = 0;
 
@@ -2470,10 +2490,14 @@
       const run = playing && (mode === 'menu' || st.started) && !car.fall;
       if (run) {
         const base = 4.7 + Math.min(3.7, st.score * .045);
-        car.spd += (base - car.spd) * Math.min(1, dt * 2.5);
-        const w = car.spd / DB_R;
-        if (car.th < tgt) car.th = Math.min(tgt, car.th + w * dt); else if (car.th > tgt) car.th = Math.max(tgt, car.th - w * dt);
-        car.u += Math.cos(car.th) * car.spd * dt; car.v += Math.sin(car.th) * car.spd * dt;
+        dacc = Math.min(dacc + dt, .06);
+        while (dacc >= DB_H) {
+          dacc -= DB_H;
+          car.spd += (base - car.spd) * DB_H * 2.5;
+          const w = car.spd / DB_R;
+          if (car.th < tgt) car.th = Math.min(tgt, car.th + w * DB_H); else if (car.th > tgt) car.th = Math.max(tgt, car.th - w * DB_H);
+          car.u += Math.cos(car.th) * car.spd * DB_H; car.v += Math.sin(car.th) * car.spd * DB_H;
+        }
         const turning = Math.abs(tgt - car.th) > .02 && car.th > .05 && car.th < Math.PI / 2 - .05;
         if (turning) {
           lastTurn += dt;

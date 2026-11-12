@@ -1809,9 +1809,15 @@
 
   function mountGame(root, api) {
     const on = api.on;
-    const SV = Object.assign({ opt: {}, stats: {}, run: null }, api.load() || {});
-    const OPT = Object.assign({ speed: 1, shake: true, crt: true, sfx: true, music: true, flash: true, sort: 'rank', hints: true }, SV.opt || {});
-    const ST = Object.assign({ runs: 0, wins: 0, bestAnte: 0, bestHand: 0, endless: 0, jokersSeen: {}, bestMoney: 0 }, SV.stats || {});
+    const svO = o => o && typeof o === 'object' && !Array.isArray(o) ? o : {};
+    const SV = Object.assign({ opt: {}, stats: {}, run: null }, svO(api.load()));
+    const OPT = Object.assign({ speed: 1, shake: true, crt: true, sfx: true, music: true, flash: true, sort: 'rank', hints: true }, svO(SV.opt));
+    OPT.speed = [1, 2, 4].indexOf(OPT.speed) >= 0 ? OPT.speed : 1;
+    if (OPT.sort !== 'suit') OPT.sort = 'rank';
+    const ST = Object.assign({ runs: 0, wins: 0, bestAnte: 0, bestHand: 0, endless: 0, jokersSeen: {}, bestMoney: 0 }, svO(SV.stats));
+    for (const k of ['runs', 'wins', 'bestAnte', 'bestHand', 'endless', 'bestMoney']) ST[k] = typeof ST[k] === 'number' && isFinite(ST[k]) ? Math.max(0, ST[k]) : 0;
+    ST.jokersSeen = svO(ST.jokersSeen);
+    if (SV.run && (typeof SV.run !== 'object' || Array.isArray(SV.run))) SV.run = null;
     const persist = () => {
       SV.opt = OPT; SV.stats = ST;
       SV.run = R && (R.ph === 'blinds' || R.ph === 'round' || R.ph === 'shop' || R.ph === 'cash' || R.ph === 'pack') && !busy ? ser() : (R && (R.ph === 'win' || R.ph === 'over') ? null : SV.run);
