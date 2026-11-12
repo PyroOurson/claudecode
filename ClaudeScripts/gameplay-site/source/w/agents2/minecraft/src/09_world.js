@@ -259,8 +259,7 @@
       for (let d = 0; d < 4; d++) {
         const dx = NB4[d][0], dz = NB4[d][1], n = colAt(c.cx + dx, c.cz + dz);
         if (!n || n.st < 2) continue;
-        const ns = Math.min(NSEC - 1, Math.max(n.top, c.top) + 1);
-        for (let s = 0; s <= ns; s++) {
+        for (let s = 0; s < NSEC; s++) {
           const la = c.l[s], lb = n.l ? n.l[s] : null;
           if (!la && !lb) continue;
           for (let k = 0; k < 16; k++) {

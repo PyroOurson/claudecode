@@ -5,3 +5,11 @@ Blockcraft (blockcraft-3d) source notes, round 3
 - New file 20b_adv.js: advancements (inventory checks every 20 ticks, toasts, Advancements screen), statistics (P.st, saved in playerData), sign text meshes in the world (updSigns every 20 frames).
 - GUI scale is always an integer (also on touch) so the bitmap font stays crisp.
 - Menus over the panorama use a CSS blur on the GL canvas (blurOn in 24_main); pause/options/stats/adv in game blur the world too.
+Round 4 (game quality pass)
+- World gen workers (09_world: LIGHTF, CONNF, GENPOST) now also apply saved edits, light the column in isolation and compute a 15 bit face connectivity mask per section. Main thread: stitchLight(c) only fixes the 4 borders. No worker: same functions run in genSync.
+- Visibility (24_main updVis): flood from the camera section through connected section faces, never stepping back toward the camera. c.vs[s] != 0 means visible. Only visible sections (plus the 3x3x3 around the camera) are meshed; c.md[s] stays 1 for hidden ones. Camera inside an opaque block turns culling off. setBlock flags c.cd / W.visd when opacity changes.
+- c.meshed now means "column data ready" (all 8 neighbours lit). Loading waits for pendVis(c) to be false in the 5x5 around the player.
+- Render distance 0 = Auto (RD is the live value, AR the controller in 10_render / autoRD in 24_main). Paused single player redraws the 3D view every 30th frame.
+- Difficulty 4 = Hardest: same numbers as Hard (DFL()), different brain (smartSense, perceive, lead shots in shootAt, flank / intercept in tickMob). Hardcore worlds are created with 4.
+- Debug hooks: wrap.__mc(reset) has pf (frame phase timers), vis, pend, draw; wrap.__mcDbg({ on: false }) turns culling off, { frz: 1 } freezes texture animation; wrap.__mcBench(all) times the mesher.
+- Test gotcha: the portal wipes gameplay:* keys and the gameplay-minecraft database once unless localStorage gameplay:reset is '4'. Set it in an init script before seeding saves.

@@ -32,7 +32,7 @@
       P.x = P.px = W.spawn[0]; P.y = P.py = W.spawn[1]; P.z = P.pz = W.spawn[2];
       P.name = NET.role ? P.name : myName();
       startWorkers();
-      tickN = 0; simT = 0; acc = 0; loadT0 = performance.now(); NET.ready = !o.remote; FANCY = SET.fancy;
+      tickN = 0; simT = 0; acc = 0; loadT0 = performance.now(); NET.ready = !o.remote; FANCY = SET.fancy; VIS.cx = 1e9; VIS.cell = -1; VIS.mask = 63;
       if (!o.pano) { grab(); scr = 'loading'; loadMsg = 'Loading terrain...'; loadP = 0; }
       return W;
     }
@@ -53,7 +53,7 @@
     }
     function createWorld(cfg, host) {
       const id = 'w' + Date.now().toString(36) + ri(1e6).toString(36), hc = cfg.mode === 'hardcore';
-      openWorldObj({ id, name: cfg.name, seed: parseSeed(cfg.seed), type: cfg.type, mode: hc ? 'survival' : cfg.mode, defMode: hc ? 'survival' : cfg.mode, diff: hc ? 3 : cfg.diff, hardcore: hc, cheats: !hc && cfg.cheats, rules: cfg.rules, time: 0, bonus: cfg.bonus });
+      openWorldObj({ id, name: cfg.name, seed: parseSeed(cfg.seed), type: cfg.type, mode: hc ? 'survival' : cfg.mode, defMode: hc ? 'survival' : cfg.mode, diff: hc ? 4 : cfg.diff, hardcore: hc, cheats: !hc && cfg.cheats, rules: cfg.rules, time: 0, bonus: cfg.bonus });
       loadMsg = 'Generating world...';
       saveNow();
       afterOpen(host);
@@ -153,14 +153,14 @@
       const bx = Math.floor(px), by = clamp(Math.floor(py), 0, H - 1), bz = Math.floor(pz), cx = bx >> 4, cz = bz >> 4, sy = by >> 4, cell = (bx & 15) | (bz & 15) << 4 | (by & 15) << 8;
       const c0 = colAt(cx, cz);
       if (!c0 || !c0.meshed) return;
-      VIS.f++;
-      let run = W.visd === 2 || cx !== VIS.cx || cz !== VIS.cz || sy !== VIS.sy || W.visd === 1 && VIS.f >= 6, mask = VIS.mask;
+      const tn = performance.now();
+      let run = W.visd === 2 || cx !== VIS.cx || cz !== VIS.cz || sy !== VIS.sy || W.visd === 1 && tn - VIS.f >= 80, mask = VIS.mask;
       if (W.cdq.size) { for (const c of W.cdq) { for (let s = 0; s < NSEC; s++) if (c.cd >> s & 1) c.cn[s] = W.conn.all(c.s[s]); c.cd = 0; } W.cdq.clear(); }
       if (run || cell !== VIS.cell) { const sec = c0.s[sy]; mask = Math.floor(py) !== by ? 63 : sec && OPQ[sec[cell]] ? 0 : W.conn.from(sec, cell); if (mask !== VIS.mask) run = true; }
       VIS.cell = cell;
       if (!run) return;
       const a = performance.now(), urgent = W.visd === 2 || cx !== VIS.cx || cz !== VIS.cz || sy !== VIS.sy;
-      VIS.cx = cx; VIS.cz = cz; VIS.sy = sy; VIS.mask = mask; VIS.f = 0; W.visd = 0;
+      VIS.cx = cx; VIS.cz = cz; VIS.sy = sy; VIS.mask = mask; VIS.f = tn; W.visd = 0;
       const pair = W.conn.pair, on = VIS.on && mask !== 0;
       W.cols.forEach(c => { if (c.meshed) { c.vs.fill(on ? 0 : 64); c.vt = 1; } });
       if (on) {
@@ -271,6 +271,7 @@
       advTick();
       goalTick();
       tickInteract();
+      if (guiPos && guiBE && gui !== 'sign' && W.be.get(bk(guiPos[0], guiPos[1], guiPos[2])) !== guiBE) closeGui();
       if (host) { tickEnts(); tickSched(); randomTicks(); tickFurnaces(); if (tickN % 2 === 0) checkPlates(); spawnTick(); if (W.pendSpawn) flushPendSpawn(); if (W.pendEnts && nearMeshed(1) >= 1) spawnSaved(); }
       tickMirrors();
       if (swingT >= 0 && ++swingT >= CFG.SWING_TICKS) swingT = -1;
@@ -518,7 +519,7 @@
       const pf2 = performance.now(); PF.ui += pf2 - pf1; PF.fr += pf2 - pf0; PF.n++; if (pf2 - pf0 > PF.mx) PF.mx = pf2 - pf0;
       restT += (Math.min(30, pf2 - pf0 - pfS) - restT) * .1; AR.js += pf2 - pf0; AR.jn++;
     }
-    wrap.__mc = r => ({ pf: (() => { const o = Object.assign({}, PF); if (r) for (const k in PF) PF[k] = 0; return o; })(), fields: fields.map(f => [f.key, f.x, f.y, f.w, f.h]), dirty: W ? W.dirty.size : 0, pend: (() => { let n = 0; if (W) for (const c of W.dirty) for (let s = 0; s < NSEC; s++) if (c.md[s] && c.vs[s]) n++; return n; })(), vis: [VIS.n, VIS.tot], draw: [renderer.info.render.calls, renderer.info.render.triangles, renderer.info.memory.geometries], onGround: P.onGround, fly: P.fly, dead: P.dead, lvl: P.lvl, spawn: P.spawn, heap: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : 0, nEnt: ENTS.length, signs: signG.children.map(m => [+m.position.x.toFixed(3), +(m.position.y - CFG.YOFF).toFixed(3), +m.position.z.toFixed(3), +m.rotation.y.toFixed(2)]), scr, gui, GK, GW, GH, pRect, chatOpen, btns: btns.map(b => [b.l, b.x, b.y, b.w, b.h, b.en]), P: { x: P.x, y: P.y, z: P.z, hp: P.hp, food: P.food, yaw: P.yaw, pitch: P.pitch }, ents: (() => { const o = {}; for (const e of ENTS) { const k = e.kind + ':' + (e.type || (e.st ? IT[e.st.id].id : '')); o[k] = (o[k] || 0) + 1; } return o; })(), keysDown: [...keys], focus: focusKey, mobs: ENTS.filter(e => e.kind === 'mob').map(e => [e.type, +e.x.toFixed(1), +(e.y - CFG.YOFF).toFixed(1), +e.z.toFixed(1), e.root.visible, e.hp, !!e.dead, e.root.parent ? 1 : 0]), fps, cols: W ? W.cols.size : 0, mode: W && W.mode, role: NET.role, time: W && W.time, chat: chatLog.slice(-8).map(c => c.m), hit: HIT.b ? [HIT.x, HIT.y, HIT.z] : null, sel, inv: inv.map(s => s && IT[s.id].id + 'x' + s.n), slots: slots.map(q => { const v = q.get(); return [q.g, q.i, q.x, q.y, v ? IT[v.id].id + 'x' + v.n : null]; }), cursor: cursor && IT[cursor.id].id + 'x' + cursor.n });
+    wrap.__mc = r => ({ pf: (() => { const o = Object.assign({}, PF); if (r) for (const k in PF) PF[k] = 0; return o; })(), fields: fields.map(f => [f.key, f.x, f.y, f.w, f.h]), dirty: W ? W.dirty.size : 0, frame: frameN, tick: tickN, rd: RD, diff: W ? W.diff : -1, st: P.st, setRd: SET.rd, locked: locked(), sleeping: P.sleeping, pend: (() => { let n = 0; if (W) for (const c of W.dirty) for (let s = 0; s < NSEC; s++) if (c.md[s] && c.vs[s]) n++; return n; })(), vis: [VIS.n, VIS.tot], draw: [renderer.info.render.calls, renderer.info.render.triangles, renderer.info.memory.geometries], onGround: P.onGround, fly: P.fly, dead: P.dead, lvl: P.lvl, spawn: P.spawn, heap: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : 0, nEnt: ENTS.length, signs: signG.children.map(m => [+m.position.x.toFixed(3), +(m.position.y - CFG.YOFF).toFixed(3), +m.position.z.toFixed(3), +m.rotation.y.toFixed(2)]), scr, gui, GK, GW, GH, pRect, chatOpen, btns: btns.map(b => [b.l, b.x, b.y, b.w, b.h, b.en]), P: { x: P.x, y: P.y, z: P.z, hp: P.hp, food: P.food, yaw: P.yaw, pitch: P.pitch }, ents: (() => { const o = {}; for (const e of ENTS) { const k = e.kind + ':' + (e.type || (e.st ? IT[e.st.id].id : '')); o[k] = (o[k] || 0) + 1; } return o; })(), keysDown: [...keys], focus: focusKey, mobs: ENTS.filter(e => e.kind === 'mob').map(e => [e.type, +e.x.toFixed(1), +(e.y - CFG.YOFF).toFixed(1), +e.z.toFixed(1), e.root.visible, e.hp, !!e.dead, e.root.parent ? 1 : 0]), fps, cols: W ? W.cols.size : 0, mode: W && W.mode, role: NET.role, time: W && W.time, chat: chatLog.slice(-8).map(c => c.m), hit: HIT.b ? [HIT.x, HIT.y, HIT.z] : null, sel, inv: inv.map(s => s && IT[s.id].id + 'x' + s.n), slots: slots.map(q => { const v = q.get(); return [q.g, q.i, q.x, q.y, v ? IT[v.id].id + 'x' + v.n : null]; }), cursor: cursor && IT[cursor.id].id + 'x' + cursor.n });
     wrap.__mcDbg = o => { Object.assign(VIS, o); if (W) W.visd = 2; };
     wrap.__mcBench = all => { const T = []; let q = 0; W.cols.forEach(c => { if (c.meshed) for (let s = 0; s <= c.top; s++) if ((all || c.vs[s]) && c.s[s]) { const a = performance.now(); meshSection(c, s); T.push(performance.now() - a); q += (MO.ni + MESHT.ni) / 6; } }); return [T, q]; };
     resize();

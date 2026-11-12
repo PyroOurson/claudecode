@@ -121,6 +121,7 @@
           const L = selBoxes(s, x, y, z);
           let best = null;
           for (const b of L) { const r = rayBox(ox, oy, oz, dx, dy, dz, x + b[0], y + b[1], z + b[2], x + b[3], y + b[4], z + b[5]); if (r && r[0] <= max && (!best || r[0] < best[0])) best = r.concat([b]); }
+          if (best && best[0] <= 0 && n === 0 && (SHP[s] === 2 || SHP[s] === 3) && !TT[STT[s]].web) best = null;
           if (best) { HIT.b = true; HIT.x = x; HIT.y = y; HIT.z = z; HIT.d = best[0]; HIT.f = best[1] < 0 ? 2 : best[1]; const D = DIR6[HIT.f]; HIT.fx = D[0]; HIT.fy = D[1]; HIT.fz = D[2]; HIT.px = ox + dx * best[0]; HIT.py = oy + dy * best[0]; HIT.pz = oz + dz * best[0]; HIT.box = best[2]; break; }
         }
         if (tx < ty && tx < tz) { x += sx; t = tx; tx += tdx; } else if (ty < tz) { y += sy; t = ty; ty += tdy; } else { z += sz; t = tz; tz += tdz; }

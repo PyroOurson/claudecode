@@ -251,7 +251,8 @@
       for (const pl of playersList()) if (pl !== P && Math.hypot(pl.x - x, pl.y - y, pl.z - z) < R) { const d = Math.hypot(pl.x - x, pl.y + .9 - y, pl.z - z) / R, imp = 1 - d; netSendTo(pl.pid, { t: 'hurt', d: noBlocks ? 0 : Math.floor((imp * imp + imp) / 2 * 7 * power + 1), kx: (pl.x - x) * imp * .3, ky: imp * .8, kz: (pl.z - z) * imp * .3, k: 'explosion' }); }
       netSend({ t: 'boom', x, y, z, p: power });
     }
-    const difMul = o => o === P || o.kind === 'player' ? [0, .5, 1, 1.5][W.diff] ?? 1 : 1;
+    const DFL = () => W.diff > 3 ? 3 : W.diff;
+    const difMul = o => o === P || o.kind === 'player' ? [0, .5, 1, 1.5][DFL()] ?? 1 : 1;
     function losClear(x0, y0, z0, x1, y1, z1) {
       const d = Math.hypot(x1 - x0, y1 - y0, z1 - z0), n = Math.ceil(d * 2);
       for (let i = 1; i < n; i++) { const t = i / n; if (OPQ[getS(Math.floor(lerp(x0, x1, t)), Math.floor(lerp(y0, y1, t)), Math.floor(lerp(z0, z1, t)))]) return false; }
@@ -336,11 +337,39 @@
       const path = []; let c = best; while (c && c[5]) { path.push([c[0] + .5, c[1], c[2] + .5]); c = c[5]; }
       return path.reverse();
     }
+    const targetable = pl => !(pl.dead || pl.spec || (pl === P && (mode() === 'creative' || mode() === 'spectator')) || (pl.kind === 'player' && (pl.creative || pl.pdead || pl.mode === 'creative' || pl.mode === 'spectator')));
+    function perceive(e, pl, T) {
+      const dx = pl.x - e.x, dy = pl.y - e.y, dz = pl.z - e.z, d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 > 1225) return false;
+      if (d2 < 9) return true;
+      const mv = Math.hypot(pl.x - pl.px, pl.z - pl.pz), noise = pl.sneak ? 0 : mv > .25 ? 16 : mv > .05 ? 9 : 0;
+      if (d2 < noise * noise) return true;
+      const da = Math.abs(((Math.atan2(-dx, -dz) - e.hyaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+      if (da > 1.92 && !(e.hurtT > 0)) return false;
+      return losClear(e.x, e.y + T.eye, e.z, pl.x, pl.y + 1.6, pl.z);
+    }
+    function smartSense(e, T) {
+      if (!e.lk) { e.lk = { x: e.x, y: e.y, z: e.z, w: .6, h: 1.8 }; e.tvx = e.tvz = 0; e.lkT = 0; e.sees = false; e.react = 0; e.strD = RNG() < .5 ? 1 : -1; e.strT = 0; }
+      const tg0 = e.target;
+      if (tg0 && (tg0.dead === true || tg0.pdead || !targetable(tg0))) { e.target = null; e.sees = false; e.path = null; }
+      if ((e.age + (e.id | 0)) % 4) return;
+      if (e.type === 'spider' && !e.angry && brAt(e.x, e.y + .5, e.z) > .55) { e.sees = false; if (e.target && (e.lkT += 4) > 60) e.target = null; return; }
+      let seen = null, bd = 1e9;
+      for (const pl of playersList()) { if (!targetable(pl) || !perceive(e, pl, T)) continue; const d = (pl.x - e.x) ** 2 + (pl.y - e.y) ** 2 + (pl.z - e.z) ** 2; if (d < bd) { bd = d; seen = pl; } }
+      if (seen) {
+        if (!e.target) { e.react = 5; for (const o of ENTS) if (o !== e && o.kind === 'mob' && !o.target && !o.dead && MT[o.type].hostile && !MT[o.type].neutral && Math.abs(o.x - e.x) < 14 && Math.abs(o.z - e.z) < 14 && Math.abs(o.y - e.y) < 6) { if (!o.lk) o.lk = { x: 0, y: 0, z: 0, w: .6, h: 1.8 }; o.target = seen; o.lk.x = seen.x; o.lk.y = seen.y; o.lk.z = seen.z; o.tvx = o.tvz = 0; o.lkT = 0; o.sees = false; o.react = 8 + ri(10); o.strD = 1; o.strT = 0; } }
+        const nvx = seen.x - seen.px, nvz = seen.z - seen.pz;
+        e.tvx = e.target === seen ? e.tvx * .4 + nvx * .6 : nvx; e.tvz = e.target === seen ? e.tvz * .4 + nvz * .6 : nvz;
+        e.target = seen; e.lk.x = seen.x; e.lk.y = seen.y; e.lk.z = seen.z; e.lkT = 0; e.sees = true;
+      } else {
+        e.sees = false; e.tvx = e.tvz = 0;
+        if (e.target) { e.lkT += 4; if (e.lkT > 240) { e.target = null; e.path = null; } else if (Math.hypot(e.lk.x - e.x, e.lk.z - e.z) < 1.6 && e.lkT % 40 === 0) { e.lk.x += (RNG() - .5) * 12; e.lk.z += (RNG() - .5) * 12; e.pathT = 0; } }
+      }
+    }
     function nearestPlayer(e, r, needLos) {
       let best = null, bd = r * r;
       for (const pl of playersList()) {
-        if (pl.dead || pl.spec || (pl === P && (mode() === 'creative' || mode() === 'spectator'))) continue;
-        if (pl.kind === 'player' && pl.creative) continue;
+        if (!targetable(pl)) continue;
         const d = (pl.x - e.x) ** 2 + (pl.y - e.y) ** 2 + (pl.z - e.z) ** 2;
         if (d < bd && (!needLos || losClear(e.x, e.y + e.h * .85, e.z, pl.x, pl.y + 1.6, pl.z))) { bd = d; best = pl; }
       }
@@ -360,34 +389,45 @@
       if (e.baby && --e.babyT <= 0) { e.baby = false; e.md.root.scale.setScalar(1); e.w = T.w; e.h = T.h; }
       if (W.diff === 0 && T.hostile && !e.persist) { delEnt(e); return; }
       const inW = fluidIn(e, 1), inL = fluidIn(e, 2);
-      let fwd = 0, sp = T.sp, lookP = null, jump = false;
-      const daylight = sunB > .5 && !W.raining;
-      if (T.hostile && !T.neutral && e.type !== 'spider') { if (!e.target || e.target.dead || (e.age % 20 === 0 && Math.hypot(e.target.x - e.x, e.target.z - e.z) > 40)) e.target = nearestPlayer(e, 35, true); }
+      let fwd = 0, sp = T.sp, lookP = null, jump = false, str = 0;
+      const daylight = sunB > .5 && !W.raining, smart = W.diff > 3 && T.hostile && !T.neutral;
+      if (smart) smartSense(e, T);
+      else if (T.hostile && !T.neutral && e.type !== 'spider') { if (!e.target || e.target.dead || (e.age % 20 === 0 && Math.hypot(e.target.x - e.x, e.target.z - e.z) > 40)) e.target = nearestPlayer(e, 35, true); }
       else if (e.type === 'spider') { const br2 = brAt(e.x, e.y + .5, e.z); if (e.age % 20 === 0 && (!e.target || br2 > .55 && !e.angry)) e.target = br2 < .5 || e.angry ? nearestPlayer(e, 16, true) : null; }
       else if (e.type === 'enderman') { if (e.age % 5 === 0 && !e.angry) for (const pl of playersList()) { if (pl === P && mode() !== 'survival' && mode() !== 'adventure') continue; const dx = e.x - pl.x, dy = e.y + 2.55 - (pl.y + 1.62), dz = e.z - pl.z, d = Math.hypot(dx, dy, dz); if (d > 64 || pl !== P) continue; const lx = -Math.sin(P.yaw) * Math.cos(P.pitch), ly = Math.sin(P.pitch), lz = -Math.cos(P.yaw) * Math.cos(P.pitch); if ((lx * dx + ly * dy + lz * dz) / d > 1 - .025 / d * 2 && losClear(pl.x, pl.y + 1.62, pl.z, e.x, e.y + 2.55, e.z)) { e.angry = 400; e.target = pl; snd('enderman_scream', e); } } if (e.angry > 0 && --e.angry === 0) e.target = null; if ((inW || (W.raining && skyOpen(e))) && e.age % 10 === 0) { hurtEnt(e, 1, null, 'water'); teleportMob(e); } }
       const tg = e.target;
       if (tg && T.hostile) {
-        const dx = tg.x - e.x, dz = tg.z - e.z, dy = tg.y - e.y, dist = Math.hypot(dx, dz), aim = Math.atan2(-dx, -dz);
-        lookP = tg;
-        if (e.type === 'creeper') {
-          if (dist < 3 && Math.abs(dy) < 3) { if (e.fuse < 0) { e.fuse = 0; snd('fuse', e); } }
+        const B = smart && !e.sees ? e.lk : tg, sees = !smart || e.sees, df = DFL();
+        const dx = B.x - e.x, dz = B.z - e.z, dy = B.y - e.y, dist = Math.hypot(dx, dz), aim = Math.atan2(-dx, -dz);
+        let gx = B.x, gz = B.z;
+        lookP = B;
+        if (smart && e.react > 0) e.react--;
+        else if (e.type === 'creeper') {
+          if (sees && dist < 3 && Math.abs(dy) < 3) { if (e.fuse < 0) { e.fuse = 0; snd('fuse', e); } }
           else if (e.fuse >= 0 && dist > 7) e.fuse = -1;
-          if (e.fuse >= 0) { e.fuse++; fwd = 0; if (e.fuse >= 30) { delEnt(e); explode(e.x, e.y + .8, e.z, 3, e); return; } }
-          else { if (dist > 1.5) fwd = 1; }
+          if (e.fuse >= 0) { e.fuse++; fwd = smart && dist > 1.2 ? 1 : 0; if (e.fuse >= 30) { delEnt(e); explode(e.x, e.y + .8, e.z, 3, e); return; } }
+          else { if (dist > 1.5) fwd = 1; if (smart && sees && dist > 6 && tg.yaw !== undefined) { gx += Math.sin(tg.yaw) * 3; gz += Math.cos(tg.yaw) * 3; } }
         } else if (T.ranged) {
-          if (e.age % 10 === 0) e.see = losClear(e.x, e.y + 1.6, e.z, tg.x, tg.y + 1.6, tg.z);
+          if (e.age % 10 === 0) e.see = sees && losClear(e.x, e.y + 1.6, e.z, tg.x, tg.y + 1.6, tg.z);
           fwd = !e.see || dist > 12 ? 1 : dist < 5 ? -.8 : 0;
-          if (e.see && dist < 14) { e.yaw = turn(e.yaw, aim, .5); if (e.cd === 0) { shootAt(e, tg); e.cd = [60, 40, 30, 20][W.diff] || 40; } }
+          if (smart && e.see && dist >= 4 && dist <= 13) { if (--e.strT <= 0 || e.collH) { e.strD = -e.strD; e.strT = 14 + ri(24); } str = e.strD; }
+          if (e.see && dist < 14) { e.yaw = turn(e.yaw, aim, .5); if (e.cd === 0) { shootAt(e, tg, smart); e.cd = [60, 40, 30, 20][df] || 40; } }
         } else {
           if (dist > 1.1) fwd = 1;
           const reach = e.w * 2 + tg.w;
-          if (dist * dist + dy * dy * .25 < reach * reach * .36 + .9 && Math.abs(dy) < 2 && e.cd === 0) { hurtEnt(tg, (T.dmg + (W.diff === 3 ? T.dmg * .5 : W.diff === 1 ? -T.dmg * .3 : 0)) | 0 || 1, e, 'mob'); e.cd = 20; e.swing = 6; if (e.type === 'spider') { } }
-          if (e.type === 'spider' && e.onGround && dist > 2 && dist < 6 && RNG() < .1) { e.vy = .42; e.vx += dx / dist * .3; e.vz += dz / dist * .3; }
-          if (e.type === 'slime' && e.onGround && --e.jumpT <= 0) { e.jumpT = 20 + ri(20); e.vy = .42 + e.size * .05; e.vx = dx / dist * .25; e.vz = dz / dist * .25; snd('slime', e); }
+          if (sees && dist * dist + dy * dy * .25 < reach * reach * .36 + .9 && Math.abs(dy) < 2 && e.cd === 0) { hurtEnt(tg, (T.dmg + (df === 3 ? T.dmg * .5 : df === 1 ? -T.dmg * .3 : 0)) | 0 || 1, e, 'mob'); e.cd = 20; e.swing = 6; }
+          if (smart && sees && dist > 2.2) {
+            const s = sp * sp * 2.93; let t = dist / s;
+            t = Math.min(30, Math.hypot(dx + e.tvx * t, dz + e.tvz * t) / s); t = Math.min(30, Math.hypot(dx + e.tvx * t, dz + e.tvz * t) / s);
+            gx += e.tvx * t; gz += e.tvz * t;
+            if (e.type === 'zombie' && dist > 3) { let n = 0; for (const o of ENTS) if (o !== e && o.kind === 'mob' && o.target === tg && !o.dead && Math.abs(o.x - e.x) < 10 && Math.abs(o.z - e.z) < 10) n++; if (n) { const a = (e.id | 0) * 2.399, r = Math.min(2.2, dist * .4); gx += Math.cos(a) * r; gz += Math.sin(a) * r; } }
+          }
+          if (e.type === 'spider' && e.onGround && dist > 2 && dist < 6 && RNG() < .1) { const lx = gx - e.x, lz = gz - e.z, ll = Math.hypot(lx, lz) || 1; e.vy = .42; e.vx += lx / ll * .3; e.vz += lz / ll * .3; }
+          if (e.type === 'slime' && e.onGround && --e.jumpT <= 0) { const lx = gx - e.x, lz = gz - e.z, ll = Math.hypot(lx, lz) || 1; e.jumpT = 20 + ri(20); e.vy = .42 + e.size * .05; e.vx = lx / ll * .25; e.vz = lz / ll * .25; snd('slime', e); }
         }
         if (fwd > 0 && e.type !== 'slime') {
-          if (--e.pathT <= 0 || !e.path) { e.path = findPath(e, Math.floor(tg.x), Math.floor(tg.y), Math.floor(tg.z), 300); e.pathT = 15 + ri(10); }
-          let wx = tg.x, wz = tg.z;
+          if (--e.pathT <= 0 || !e.path) { e.path = findPath(e, Math.floor(gx), Math.floor(B.y), Math.floor(gz), smart ? 600 : 300); e.pathT = smart ? 8 + ri(6) : 15 + ri(10); }
+          let wx = gx, wz = gz;
           if (e.path && e.path.length) { const n = e.path[0]; if (Math.hypot(n[0] - e.x, n[2] - e.z) < .45) e.path.shift(); if (e.path.length) { wx = e.path[0][0]; wz = e.path[0][2]; if (e.path[0][1] > e.y + .5) jump = true; } }
           e.yaw = turn(e.yaw, Math.atan2(-(wx - e.x), -(wz - e.z)), .6);
         } else if (fwd < 0) e.yaw = turn(e.yaw, aim, .5);
@@ -421,11 +461,12 @@
       for (const o of ENTS) if (o !== e && o.kind === 'mob' && !o.dead) { const ox = e.x - o.x, oz = e.z - o.z, d2 = Math.hypot(ox, oz), r = (e.w + o.w) / 2; if (d2 < r && d2 > 1e-4 && Math.abs(e.y - o.y) < Math.max(e.h, o.h)) { e.vx += ox / d2 * .03; e.vz += oz / d2 * .03; } }
       for (const pl of playersList()) { if (pl.dead) continue; const dx = e.x - pl.x, dz = e.z - pl.z, d2 = Math.hypot(dx, dz), r = (e.w + pl.w) / 2; if (d2 < r && d2 > 1e-4 && Math.abs(e.y - pl.y) < e.h) { const f = (r - d2) / r * .05; e.vx += dx / d2 * f; e.vz += dz / d2 * f; if (pl === P) { P.vx -= dx / d2 * f * .5; P.vz -= dz / d2 * f * .5; } } }
       if (fwd && e.type !== 'slime') { const a = (inW || inL ? .02 : e.onGround ? sp * sp * 1.33 : .02) * fwd; e.vx -= Math.sin(e.yaw) * a; e.vz -= Math.cos(e.yaw) * a; }
+      if (str && e.onGround) { const a = sp * sp * 1.1 * str; e.vx -= Math.sin(e.yaw + 1.5708) * a; e.vz -= Math.cos(e.yaw + 1.5708) * a; }
       if (inW || inL) { if (e.type !== 'chicken' || true) e.vy += .04; if (e.collH) e.vy = .3; }
       else if ((e.collH && e.onGround && fwd) || (jump && e.onGround)) e.vy = CFG.JUMP;
       if (T.climb && e.collH && fwd) e.vy = .2;
       const vy0 = e.vy;
-      moveE(e, e.vx, e.vy, e.vz, !T.hostile && !e.panic, .6);
+      moveE(e, e.vx, e.vy, e.vz, !T.hostile && !e.panic || str !== 0 && e.onGround, .6);
       if (inW || inL) { e.vx *= .8; e.vy = e.vy * .8 - .02; e.vz *= .8; }
       else {
         e.vy = (e.vy - CFG.GRAVITY) * CFG.VDRAG;
@@ -448,12 +489,26 @@
     }
     function nearestPlayerAny(e) { let best = null, bd = 1e18; for (const pl of playersList()) { const d = (pl.x - e.x) ** 2 + (pl.y - e.y) ** 2 + (pl.z - e.z) ** 2; if (d < bd) { bd = d; best = pl; } } return best; }
     function skyOpen(e) { const L = getL(Math.floor(e.x), Math.floor(e.y + e.h * .9), Math.floor(e.z)); return (L >> 4) === 15; }
-    function shootAt(e, tg) {
-      const sx = e.x, sy = e.y + 1.5, sz = e.z;
-      let dx = tg.x - sx, dy = tg.y + tg.h / 3 - sy, dz = tg.z - sz;
-      dy += Math.hypot(dx, dz) * .2;
-      const l = Math.hypot(dx, dy, dz) || 1, inac = [10, 10, 6, 2][W.diff] * .0075, gs = () => (RNG() + RNG() + RNG() - 1.5) * inac;
-      spawnArrow(sx, sy, sz, (dx / l + gs()) * 1.6, (dy / l + gs()) * 1.6, (dz / l + gs()) * 1.6, e, 2 + W.diff * .1, false);
+    function shootAt(e, tg, smart) {
+      const sx = e.x, sy = e.y + 1.5, sz = e.z, df = DFL();
+      let dx = tg.x - sx, dy = tg.y + tg.h / 3 - sy, dz = tg.z - sz, vx, vy, vz;
+      const inac = [10, 10, 6, 2][df] * .0075, gs = () => (RNG() + RNG() + RNG() - 1.5) * inac;
+      if (smart) {
+        const tvx = tg.x - tg.px, tvz = tg.z - tg.pz;
+        let t = Math.hypot(dx, dy, dz) / 1.6, S = t;
+        for (let k = 0; k < 4; k++) {
+          S = (1 - Math.pow(.99, t)) * 100;
+          vx = (dx + tvx * t) / S; vz = (dz + tvz * t) / S; vy = (dy + 5 * (t - S)) / S;
+          t = Math.max(1, t * Math.hypot(vx, vy, vz) / 1.6);
+        }
+        const l = Math.hypot(vx, vy, vz) || 1;
+        vx = (vx / l + gs()) * 1.6; vy = (vy / l + gs()) * 1.6; vz = (vz / l + gs()) * 1.6;
+      } else {
+        dy += Math.hypot(dx, dz) * .2;
+        const l = Math.hypot(dx, dy, dz) || 1;
+        vx = (dx / l + gs()) * 1.6; vy = (dy / l + gs()) * 1.6; vz = (dz / l + gs()) * 1.6;
+      }
+      spawnArrow(sx, sy, sz, vx, vy, vz, e, 2 + df * .1, false);
       snd('bow', e); e.swing = 6;
     }
     function animEnt(e, a) {

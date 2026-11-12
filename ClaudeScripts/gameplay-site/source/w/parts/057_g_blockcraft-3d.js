@@ -3102,8 +3102,7 @@
       for (let d = 0; d < 4; d++) {
         const dx = NB4[d][0], dz = NB4[d][1], n = colAt(c.cx + dx, c.cz + dz);
         if (!n || n.st < 2) continue;
-        const ns = Math.min(NSEC - 1, Math.max(n.top, c.top) + 1);
-        for (let s = 0; s <= ns; s++) {
+        for (let s = 0; s < NSEC; s++) {
           const la = c.l[s], lb = n.l ? n.l[s] : null;
           if (!la && !lb) continue;
           for (let k = 0; k < 16; k++) {
@@ -4066,6 +4065,7 @@
           const L = selBoxes(s, x, y, z);
           let best = null;
           for (const b of L) { const r = rayBox(ox, oy, oz, dx, dy, dz, x + b[0], y + b[1], z + b[2], x + b[3], y + b[4], z + b[5]); if (r && r[0] <= max && (!best || r[0] < best[0])) best = r.concat([b]); }
+          if (best && best[0] <= 0 && n === 0 && (SHP[s] === 2 || SHP[s] === 3) && !TT[STT[s]].web) best = null;
           if (best) { HIT.b = true; HIT.x = x; HIT.y = y; HIT.z = z; HIT.d = best[0]; HIT.f = best[1] < 0 ? 2 : best[1]; const D = DIR6[HIT.f]; HIT.fx = D[0]; HIT.fy = D[1]; HIT.fz = D[2]; HIT.px = ox + dx * best[0]; HIT.py = oy + dy * best[0]; HIT.pz = oz + dz * best[0]; HIT.box = best[2]; break; }
         }
         if (tx < ty && tx < tz) { x += sx; t = tx; tx += tdx; } else if (ty < tz) { y += sy; t = ty; ty += tdy; } else { z += sz; t = tz; tz += tdz; }
@@ -4330,7 +4330,8 @@
       for (const pl of playersList()) if (pl !== P && Math.hypot(pl.x - x, pl.y - y, pl.z - z) < R) { const d = Math.hypot(pl.x - x, pl.y + .9 - y, pl.z - z) / R, imp = 1 - d; netSendTo(pl.pid, { t: 'hurt', d: noBlocks ? 0 : Math.floor((imp * imp + imp) / 2 * 7 * power + 1), kx: (pl.x - x) * imp * .3, ky: imp * .8, kz: (pl.z - z) * imp * .3, k: 'explosion' }); }
       netSend({ t: 'boom', x, y, z, p: power });
     }
-    const difMul = o => o === P || o.kind === 'player' ? [0, .5, 1, 1.5][W.diff] ?? 1 : 1;
+    const DFL = () => W.diff > 3 ? 3 : W.diff;
+    const difMul = o => o === P || o.kind === 'player' ? [0, .5, 1, 1.5][DFL()] ?? 1 : 1;
     function losClear(x0, y0, z0, x1, y1, z1) {
       const d = Math.hypot(x1 - x0, y1 - y0, z1 - z0), n = Math.ceil(d * 2);
       for (let i = 1; i < n; i++) { const t = i / n; if (OPQ[getS(Math.floor(lerp(x0, x1, t)), Math.floor(lerp(y0, y1, t)), Math.floor(lerp(z0, z1, t)))]) return false; }
@@ -4415,11 +4416,39 @@
       const path = []; let c = best; while (c && c[5]) { path.push([c[0] + .5, c[1], c[2] + .5]); c = c[5]; }
       return path.reverse();
     }
+    const targetable = pl => !(pl.dead || pl.spec || (pl === P && (mode() === 'creative' || mode() === 'spectator')) || (pl.kind === 'player' && (pl.creative || pl.pdead || pl.mode === 'creative' || pl.mode === 'spectator')));
+    function perceive(e, pl, T) {
+      const dx = pl.x - e.x, dy = pl.y - e.y, dz = pl.z - e.z, d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 > 1225) return false;
+      if (d2 < 9) return true;
+      const mv = Math.hypot(pl.x - pl.px, pl.z - pl.pz), noise = pl.sneak ? 0 : mv > .25 ? 16 : mv > .05 ? 9 : 0;
+      if (d2 < noise * noise) return true;
+      const da = Math.abs(((Math.atan2(-dx, -dz) - e.hyaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+      if (da > 1.92 && !(e.hurtT > 0)) return false;
+      return losClear(e.x, e.y + T.eye, e.z, pl.x, pl.y + 1.6, pl.z);
+    }
+    function smartSense(e, T) {
+      if (!e.lk) { e.lk = { x: e.x, y: e.y, z: e.z, w: .6, h: 1.8 }; e.tvx = e.tvz = 0; e.lkT = 0; e.sees = false; e.react = 0; e.strD = RNG() < .5 ? 1 : -1; e.strT = 0; }
+      const tg0 = e.target;
+      if (tg0 && (tg0.dead === true || tg0.pdead || !targetable(tg0))) { e.target = null; e.sees = false; e.path = null; }
+      if ((e.age + (e.id | 0)) % 4) return;
+      if (e.type === 'spider' && !e.angry && brAt(e.x, e.y + .5, e.z) > .55) { e.sees = false; if (e.target && (e.lkT += 4) > 60) e.target = null; return; }
+      let seen = null, bd = 1e9;
+      for (const pl of playersList()) { if (!targetable(pl) || !perceive(e, pl, T)) continue; const d = (pl.x - e.x) ** 2 + (pl.y - e.y) ** 2 + (pl.z - e.z) ** 2; if (d < bd) { bd = d; seen = pl; } }
+      if (seen) {
+        if (!e.target) { e.react = 5; for (const o of ENTS) if (o !== e && o.kind === 'mob' && !o.target && !o.dead && MT[o.type].hostile && !MT[o.type].neutral && Math.abs(o.x - e.x) < 14 && Math.abs(o.z - e.z) < 14 && Math.abs(o.y - e.y) < 6) { if (!o.lk) o.lk = { x: 0, y: 0, z: 0, w: .6, h: 1.8 }; o.target = seen; o.lk.x = seen.x; o.lk.y = seen.y; o.lk.z = seen.z; o.tvx = o.tvz = 0; o.lkT = 0; o.sees = false; o.react = 8 + ri(10); o.strD = 1; o.strT = 0; } }
+        const nvx = seen.x - seen.px, nvz = seen.z - seen.pz;
+        e.tvx = e.target === seen ? e.tvx * .4 + nvx * .6 : nvx; e.tvz = e.target === seen ? e.tvz * .4 + nvz * .6 : nvz;
+        e.target = seen; e.lk.x = seen.x; e.lk.y = seen.y; e.lk.z = seen.z; e.lkT = 0; e.sees = true;
+      } else {
+        e.sees = false; e.tvx = e.tvz = 0;
+        if (e.target) { e.lkT += 4; if (e.lkT > 240) { e.target = null; e.path = null; } else if (Math.hypot(e.lk.x - e.x, e.lk.z - e.z) < 1.6 && e.lkT % 40 === 0) { e.lk.x += (RNG() - .5) * 12; e.lk.z += (RNG() - .5) * 12; e.pathT = 0; } }
+      }
+    }
     function nearestPlayer(e, r, needLos) {
       let best = null, bd = r * r;
       for (const pl of playersList()) {
-        if (pl.dead || pl.spec || (pl === P && (mode() === 'creative' || mode() === 'spectator'))) continue;
-        if (pl.kind === 'player' && pl.creative) continue;
+        if (!targetable(pl)) continue;
         const d = (pl.x - e.x) ** 2 + (pl.y - e.y) ** 2 + (pl.z - e.z) ** 2;
         if (d < bd && (!needLos || losClear(e.x, e.y + e.h * .85, e.z, pl.x, pl.y + 1.6, pl.z))) { bd = d; best = pl; }
       }
@@ -4439,34 +4468,45 @@
       if (e.baby && --e.babyT <= 0) { e.baby = false; e.md.root.scale.setScalar(1); e.w = T.w; e.h = T.h; }
       if (W.diff === 0 && T.hostile && !e.persist) { delEnt(e); return; }
       const inW = fluidIn(e, 1), inL = fluidIn(e, 2);
-      let fwd = 0, sp = T.sp, lookP = null, jump = false;
-      const daylight = sunB > .5 && !W.raining;
-      if (T.hostile && !T.neutral && e.type !== 'spider') { if (!e.target || e.target.dead || (e.age % 20 === 0 && Math.hypot(e.target.x - e.x, e.target.z - e.z) > 40)) e.target = nearestPlayer(e, 35, true); }
+      let fwd = 0, sp = T.sp, lookP = null, jump = false, str = 0;
+      const daylight = sunB > .5 && !W.raining, smart = W.diff > 3 && T.hostile && !T.neutral;
+      if (smart) smartSense(e, T);
+      else if (T.hostile && !T.neutral && e.type !== 'spider') { if (!e.target || e.target.dead || (e.age % 20 === 0 && Math.hypot(e.target.x - e.x, e.target.z - e.z) > 40)) e.target = nearestPlayer(e, 35, true); }
       else if (e.type === 'spider') { const br2 = brAt(e.x, e.y + .5, e.z); if (e.age % 20 === 0 && (!e.target || br2 > .55 && !e.angry)) e.target = br2 < .5 || e.angry ? nearestPlayer(e, 16, true) : null; }
       else if (e.type === 'enderman') { if (e.age % 5 === 0 && !e.angry) for (const pl of playersList()) { if (pl === P && mode() !== 'survival' && mode() !== 'adventure') continue; const dx = e.x - pl.x, dy = e.y + 2.55 - (pl.y + 1.62), dz = e.z - pl.z, d = Math.hypot(dx, dy, dz); if (d > 64 || pl !== P) continue; const lx = -Math.sin(P.yaw) * Math.cos(P.pitch), ly = Math.sin(P.pitch), lz = -Math.cos(P.yaw) * Math.cos(P.pitch); if ((lx * dx + ly * dy + lz * dz) / d > 1 - .025 / d * 2 && losClear(pl.x, pl.y + 1.62, pl.z, e.x, e.y + 2.55, e.z)) { e.angry = 400; e.target = pl; snd('enderman_scream', e); } } if (e.angry > 0 && --e.angry === 0) e.target = null; if ((inW || (W.raining && skyOpen(e))) && e.age % 10 === 0) { hurtEnt(e, 1, null, 'water'); teleportMob(e); } }
       const tg = e.target;
       if (tg && T.hostile) {
-        const dx = tg.x - e.x, dz = tg.z - e.z, dy = tg.y - e.y, dist = Math.hypot(dx, dz), aim = Math.atan2(-dx, -dz);
-        lookP = tg;
-        if (e.type === 'creeper') {
-          if (dist < 3 && Math.abs(dy) < 3) { if (e.fuse < 0) { e.fuse = 0; snd('fuse', e); } }
+        const B = smart && !e.sees ? e.lk : tg, sees = !smart || e.sees, df = DFL();
+        const dx = B.x - e.x, dz = B.z - e.z, dy = B.y - e.y, dist = Math.hypot(dx, dz), aim = Math.atan2(-dx, -dz);
+        let gx = B.x, gz = B.z;
+        lookP = B;
+        if (smart && e.react > 0) e.react--;
+        else if (e.type === 'creeper') {
+          if (sees && dist < 3 && Math.abs(dy) < 3) { if (e.fuse < 0) { e.fuse = 0; snd('fuse', e); } }
           else if (e.fuse >= 0 && dist > 7) e.fuse = -1;
-          if (e.fuse >= 0) { e.fuse++; fwd = 0; if (e.fuse >= 30) { delEnt(e); explode(e.x, e.y + .8, e.z, 3, e); return; } }
-          else { if (dist > 1.5) fwd = 1; }
+          if (e.fuse >= 0) { e.fuse++; fwd = smart && dist > 1.2 ? 1 : 0; if (e.fuse >= 30) { delEnt(e); explode(e.x, e.y + .8, e.z, 3, e); return; } }
+          else { if (dist > 1.5) fwd = 1; if (smart && sees && dist > 6 && tg.yaw !== undefined) { gx += Math.sin(tg.yaw) * 3; gz += Math.cos(tg.yaw) * 3; } }
         } else if (T.ranged) {
-          if (e.age % 10 === 0) e.see = losClear(e.x, e.y + 1.6, e.z, tg.x, tg.y + 1.6, tg.z);
+          if (e.age % 10 === 0) e.see = sees && losClear(e.x, e.y + 1.6, e.z, tg.x, tg.y + 1.6, tg.z);
           fwd = !e.see || dist > 12 ? 1 : dist < 5 ? -.8 : 0;
-          if (e.see && dist < 14) { e.yaw = turn(e.yaw, aim, .5); if (e.cd === 0) { shootAt(e, tg); e.cd = [60, 40, 30, 20][W.diff] || 40; } }
+          if (smart && e.see && dist >= 4 && dist <= 13) { if (--e.strT <= 0 || e.collH) { e.strD = -e.strD; e.strT = 14 + ri(24); } str = e.strD; }
+          if (e.see && dist < 14) { e.yaw = turn(e.yaw, aim, .5); if (e.cd === 0) { shootAt(e, tg, smart); e.cd = [60, 40, 30, 20][df] || 40; } }
         } else {
           if (dist > 1.1) fwd = 1;
           const reach = e.w * 2 + tg.w;
-          if (dist * dist + dy * dy * .25 < reach * reach * .36 + .9 && Math.abs(dy) < 2 && e.cd === 0) { hurtEnt(tg, (T.dmg + (W.diff === 3 ? T.dmg * .5 : W.diff === 1 ? -T.dmg * .3 : 0)) | 0 || 1, e, 'mob'); e.cd = 20; e.swing = 6; if (e.type === 'spider') { } }
-          if (e.type === 'spider' && e.onGround && dist > 2 && dist < 6 && RNG() < .1) { e.vy = .42; e.vx += dx / dist * .3; e.vz += dz / dist * .3; }
-          if (e.type === 'slime' && e.onGround && --e.jumpT <= 0) { e.jumpT = 20 + ri(20); e.vy = .42 + e.size * .05; e.vx = dx / dist * .25; e.vz = dz / dist * .25; snd('slime', e); }
+          if (sees && dist * dist + dy * dy * .25 < reach * reach * .36 + .9 && Math.abs(dy) < 2 && e.cd === 0) { hurtEnt(tg, (T.dmg + (df === 3 ? T.dmg * .5 : df === 1 ? -T.dmg * .3 : 0)) | 0 || 1, e, 'mob'); e.cd = 20; e.swing = 6; }
+          if (smart && sees && dist > 2.2) {
+            const s = sp * sp * 2.93; let t = dist / s;
+            t = Math.min(30, Math.hypot(dx + e.tvx * t, dz + e.tvz * t) / s); t = Math.min(30, Math.hypot(dx + e.tvx * t, dz + e.tvz * t) / s);
+            gx += e.tvx * t; gz += e.tvz * t;
+            if (e.type === 'zombie' && dist > 3) { let n = 0; for (const o of ENTS) if (o !== e && o.kind === 'mob' && o.target === tg && !o.dead && Math.abs(o.x - e.x) < 10 && Math.abs(o.z - e.z) < 10) n++; if (n) { const a = (e.id | 0) * 2.399, r = Math.min(2.2, dist * .4); gx += Math.cos(a) * r; gz += Math.sin(a) * r; } }
+          }
+          if (e.type === 'spider' && e.onGround && dist > 2 && dist < 6 && RNG() < .1) { const lx = gx - e.x, lz = gz - e.z, ll = Math.hypot(lx, lz) || 1; e.vy = .42; e.vx += lx / ll * .3; e.vz += lz / ll * .3; }
+          if (e.type === 'slime' && e.onGround && --e.jumpT <= 0) { const lx = gx - e.x, lz = gz - e.z, ll = Math.hypot(lx, lz) || 1; e.jumpT = 20 + ri(20); e.vy = .42 + e.size * .05; e.vx = lx / ll * .25; e.vz = lz / ll * .25; snd('slime', e); }
         }
         if (fwd > 0 && e.type !== 'slime') {
-          if (--e.pathT <= 0 || !e.path) { e.path = findPath(e, Math.floor(tg.x), Math.floor(tg.y), Math.floor(tg.z), 300); e.pathT = 15 + ri(10); }
-          let wx = tg.x, wz = tg.z;
+          if (--e.pathT <= 0 || !e.path) { e.path = findPath(e, Math.floor(gx), Math.floor(B.y), Math.floor(gz), smart ? 600 : 300); e.pathT = smart ? 8 + ri(6) : 15 + ri(10); }
+          let wx = gx, wz = gz;
           if (e.path && e.path.length) { const n = e.path[0]; if (Math.hypot(n[0] - e.x, n[2] - e.z) < .45) e.path.shift(); if (e.path.length) { wx = e.path[0][0]; wz = e.path[0][2]; if (e.path[0][1] > e.y + .5) jump = true; } }
           e.yaw = turn(e.yaw, Math.atan2(-(wx - e.x), -(wz - e.z)), .6);
         } else if (fwd < 0) e.yaw = turn(e.yaw, aim, .5);
@@ -4500,11 +4540,12 @@
       for (const o of ENTS) if (o !== e && o.kind === 'mob' && !o.dead) { const ox = e.x - o.x, oz = e.z - o.z, d2 = Math.hypot(ox, oz), r = (e.w + o.w) / 2; if (d2 < r && d2 > 1e-4 && Math.abs(e.y - o.y) < Math.max(e.h, o.h)) { e.vx += ox / d2 * .03; e.vz += oz / d2 * .03; } }
       for (const pl of playersList()) { if (pl.dead) continue; const dx = e.x - pl.x, dz = e.z - pl.z, d2 = Math.hypot(dx, dz), r = (e.w + pl.w) / 2; if (d2 < r && d2 > 1e-4 && Math.abs(e.y - pl.y) < e.h) { const f = (r - d2) / r * .05; e.vx += dx / d2 * f; e.vz += dz / d2 * f; if (pl === P) { P.vx -= dx / d2 * f * .5; P.vz -= dz / d2 * f * .5; } } }
       if (fwd && e.type !== 'slime') { const a = (inW || inL ? .02 : e.onGround ? sp * sp * 1.33 : .02) * fwd; e.vx -= Math.sin(e.yaw) * a; e.vz -= Math.cos(e.yaw) * a; }
+      if (str && e.onGround) { const a = sp * sp * 1.1 * str; e.vx -= Math.sin(e.yaw + 1.5708) * a; e.vz -= Math.cos(e.yaw + 1.5708) * a; }
       if (inW || inL) { if (e.type !== 'chicken' || true) e.vy += .04; if (e.collH) e.vy = .3; }
       else if ((e.collH && e.onGround && fwd) || (jump && e.onGround)) e.vy = CFG.JUMP;
       if (T.climb && e.collH && fwd) e.vy = .2;
       const vy0 = e.vy;
-      moveE(e, e.vx, e.vy, e.vz, !T.hostile && !e.panic, .6);
+      moveE(e, e.vx, e.vy, e.vz, !T.hostile && !e.panic || str !== 0 && e.onGround, .6);
       if (inW || inL) { e.vx *= .8; e.vy = e.vy * .8 - .02; e.vz *= .8; }
       else {
         e.vy = (e.vy - CFG.GRAVITY) * CFG.VDRAG;
@@ -4527,12 +4568,26 @@
     }
     function nearestPlayerAny(e) { let best = null, bd = 1e18; for (const pl of playersList()) { const d = (pl.x - e.x) ** 2 + (pl.y - e.y) ** 2 + (pl.z - e.z) ** 2; if (d < bd) { bd = d; best = pl; } } return best; }
     function skyOpen(e) { const L = getL(Math.floor(e.x), Math.floor(e.y + e.h * .9), Math.floor(e.z)); return (L >> 4) === 15; }
-    function shootAt(e, tg) {
-      const sx = e.x, sy = e.y + 1.5, sz = e.z;
-      let dx = tg.x - sx, dy = tg.y + tg.h / 3 - sy, dz = tg.z - sz;
-      dy += Math.hypot(dx, dz) * .2;
-      const l = Math.hypot(dx, dy, dz) || 1, inac = [10, 10, 6, 2][W.diff] * .0075, gs = () => (RNG() + RNG() + RNG() - 1.5) * inac;
-      spawnArrow(sx, sy, sz, (dx / l + gs()) * 1.6, (dy / l + gs()) * 1.6, (dz / l + gs()) * 1.6, e, 2 + W.diff * .1, false);
+    function shootAt(e, tg, smart) {
+      const sx = e.x, sy = e.y + 1.5, sz = e.z, df = DFL();
+      let dx = tg.x - sx, dy = tg.y + tg.h / 3 - sy, dz = tg.z - sz, vx, vy, vz;
+      const inac = [10, 10, 6, 2][df] * .0075, gs = () => (RNG() + RNG() + RNG() - 1.5) * inac;
+      if (smart) {
+        const tvx = tg.x - tg.px, tvz = tg.z - tg.pz;
+        let t = Math.hypot(dx, dy, dz) / 1.6, S = t;
+        for (let k = 0; k < 4; k++) {
+          S = (1 - Math.pow(.99, t)) * 100;
+          vx = (dx + tvx * t) / S; vz = (dz + tvz * t) / S; vy = (dy + 5 * (t - S)) / S;
+          t = Math.max(1, t * Math.hypot(vx, vy, vz) / 1.6);
+        }
+        const l = Math.hypot(vx, vy, vz) || 1;
+        vx = (vx / l + gs()) * 1.6; vy = (vy / l + gs()) * 1.6; vz = (vz / l + gs()) * 1.6;
+      } else {
+        dy += Math.hypot(dx, dz) * .2;
+        const l = Math.hypot(dx, dy, dz) || 1;
+        vx = (dx / l + gs()) * 1.6; vy = (dy / l + gs()) * 1.6; vz = (dz / l + gs()) * 1.6;
+      }
+      spawnArrow(sx, sy, sz, vx, vy, vz, e, 2 + df * .1, false);
       snd('bow', e); e.swing = 6;
     }
     function animEnt(e, a) {
@@ -4653,7 +4708,7 @@
       chatSys(msg); netSend({ t: 'chat', s: 1, m: msg });
       P.deathMsg = msg; P.scoreAtDeath = P.score; P.lifeAtDeath = P.st.sinceDeath || 0; stat('deaths'); P.st.sinceDeath = 0;
       if (W.rules.keepInventory !== true && mode() !== 'creative') {
-        for (const arr of [inv, armor, craft2, craft3]) for (let i = 0; i < arr.length; i++) if (arr[i]) { const s = arr[i]; arr[i] = null; spawnItem(s, P.x, P.y + 1, P.z, (RNG() - .5) * .5, .2 + RNG() * .2, (RNG() - .5) * .5, 40); }
+        for (const arr of [inv, armor, craft2, craft3, scIn]) for (let i = 0; i < arr.length; i++) if (arr[i]) { const s = arr[i]; arr[i] = null; spawnItem(s, P.x, P.y + 1, P.z, (RNG() - .5) * .5, .2 + RNG() * .2, (RNG() - .5) * .5, 40); }
         if (offhand) { spawnItem(offhand, P.x, P.y + 1, P.z); offhand = null; }
         if (cursor) { spawnItem(cursor, P.x, P.y + 1, P.z); cursor = null; }
         const xp = Math.min(100, P.lvl * 7); if (xp) spawnXp(xp, P.x, P.y + .5, P.z);
@@ -5249,7 +5304,7 @@
         const natRegen = W.rules.naturalRegeneration !== false;
         if (natRegen && P.food >= 20 && P.sat > 0 && P.hp < 20) { if (++P.regenT >= 10) { const a = Math.min(P.sat, 6); P.hp = Math.min(20, P.hp + a / 6); exhaust(a); P.regenT = 0; } }
         else if (natRegen && P.food >= 18 && P.hp < 20) { if (++P.regenT >= CFG.REGEN_TICKS) { P.hp = Math.min(20, P.hp + 1); exhaust(CFG.EXH_REGEN); P.regenT = 0; } }
-        else if (P.food <= 0) { if (++P.regenT >= CFG.REGEN_TICKS) { if (P.hp > (W.diff === 3 ? 0 : W.diff === 2 ? 1 : 10)) hurtPlayer(1, null, null, 'starve'); P.regenT = 0; } }
+        else if (P.food <= 0) { if (++P.regenT >= CFG.REGEN_TICKS) { if (P.hp > (W.diff >= 3 ? 0 : W.diff === 2 ? 1 : 10)) hurtPlayer(1, null, null, 'starve'); P.regenT = 0; } }
         else P.regenT = 0;
         if (W.diff === 0 && P.hp < 20 && tickN % 20 === 0) P.hp = Math.min(20, P.hp + 1);
         if (W.diff === 0 && P.food < 20 && tickN % 20 === 0) P.food++;
@@ -6588,7 +6643,7 @@
     let worldsMeta = [], worldsLoaded = false, selWorld = -1, wScroll = 0, mpMode = null, loadMsg = '', loadP = 0, discMsg = '', confirmDel = null, optBack = 'title', ctrlWait = null, ctrlScroll = 0;
     let sliders = [], activeSlider = null;
     const GMODES = ['survival', 'hardcore', 'creative', 'adventure'], GMN = { survival: 'Survival', hardcore: 'Hardcore', creative: 'Creative', adventure: 'Adventure', spectator: 'Spectator' };
-    const DIFFN = ['Peaceful', 'Easy', 'Normal', 'Hard'], WTYPES = ['default', 'flat', 'large', 'amplified'], WTN = { default: 'Default', flat: 'Superflat', large: 'Large Biomes', amplified: 'Amplified' };
+    const DIFFN = ['Peaceful', 'Easy', 'Normal', 'Hard', 'Hardest'], WTYPES = ['default', 'flat', 'large', 'amplified'], WTN = { default: 'Default', flat: 'Superflat', large: 'Large Biomes', amplified: 'Amplified' };
     const RULES = [['keepInventory', 'Keep inventory after death', false], ['doDaylightCycle', 'Advance time of day', true], ['doWeatherCycle', 'Update weather', true], ['doMobSpawning', 'Spawn mobs', true], ['mobGriefing', 'Allow destructive mob actions', true], ['doFireTick', 'Spread and extinguish fire', true], ['naturalRegeneration', 'Regenerate health', true], ['doTileDrops', 'Drop blocks', true], ['doMobLoot', 'Drop mob loot', true], ['fallDamage', 'Fall damage', true], ['doImmediateRespawn', 'Respawn immediately', false], ['showCoordinates', 'Show coordinates', false]];
     const defRules = () => { const r = {}; for (const [k, , v] of RULES) r[k] = v; r.randomTickSpeed = 3; return r; };
     let CW = null;
@@ -6698,10 +6753,10 @@
       let y = 36;
       if (CW.tab === 0) {
         text('World Name', x0, y, '#a0a0a0'); field('wname', x0, y + 11, W2, 20, FIELDV.wname || '', '', null, 32); y += 40;
-        cycleBtn(x0, y, W2, 'Game Mode', GMN[CW.mode], () => { CW.mode = GMODES[(GMODES.indexOf(CW.mode) + 1) % GMODES.length]; if (CW.mode === 'hardcore') CW.diff = 3; CW.cheats = CW.mode === 'creative'; });
+        cycleBtn(x0, y, W2, 'Game Mode', GMN[CW.mode], () => { const was = CW.mode; CW.mode = GMODES[(GMODES.indexOf(CW.mode) + 1) % GMODES.length]; if (CW.mode === 'hardcore') { CW.pdiff = CW.diff; CW.diff = 4; } else if (was === 'hardcore' && CW.pdiff != null) { CW.diff = CW.pdiff; CW.pdiff = null; } CW.cheats = CW.mode === 'creative'; });
         const desc = { survival: 'Search for resources, craft, gain levels, health and hunger', hardcore: 'Same as Survival Mode, locked at hardest difficulty, and one life only', creative: 'Unlimited resources, free flying and destroy blocks instantly', adventure: 'Play maps made by others: blocks cannot be broken or placed freely' }[CW.mode];
         wrapText(desc, W2).forEach((l, i) => text(l, x0, y + 22 + i * 9, '#a0a0a0')); y += 44;
-        cycleBtn(x0, y, W2, 'Difficulty', DIFFN[CW.diff], () => { CW.diff = (CW.diff + 1) % 4; }, CW.mode !== 'hardcore'); y += step;
+        cycleBtn(x0, y, W2, 'Difficulty', DIFFN[CW.diff], () => { CW.diff = (CW.diff + 1) % 5; }, CW.mode !== 'hardcore'); y += step;
         cycleBtn(x0, y, W2, 'Allow Commands', CW.cheats ? 'ON' : 'OFF', () => { CW.cheats = !CW.cheats; }, CW.mode !== 'hardcore'); y += step;
       } else if (CW.tab === 1) {
         cycleBtn(x0, y, W2, 'World Type', WTN[CW.type], () => { CW.type = WTYPES[(WTYPES.indexOf(CW.type) + 1) % WTYPES.length]; }); y += step + 6;
@@ -6755,7 +6810,7 @@
       put((x, yy) => button(x, yy, cw2, 20, 'Music: ' + (SET.music ? 'ON' : 'OFF'), () => { SET.music = !SET.music; if (!SET.music) stopMusic(); }));
       put((x, yy) => button(x, yy, cw2, 20, 'Sounds: ' + (SET.sound ? 'ON' : 'OFF'), () => { SET.sound = !SET.sound; }));
       put((x, yy) => button(x, yy, cw2, 20, 'Controls...', () => { if (inGame) gui = 'controls'; else scr = 'controls'; }));
-      put((x, yy) => button(x, yy, cw2, 20, 'Difficulty: ' + (W && inGame ? DIFFN[W.diff] : '-'), () => { if (W && !W.hardcore && NET.role !== 'guest') { W.diff = (W.diff + 1) % 4; if (W.diff === 0) for (const e of ENTS.slice()) if (e.kind === 'mob' && MT[e.type].hostile) delEnt(e); } }, !!(inGame && W && !W.hardcore && NET.role !== 'guest')));
+      put((x, yy) => button(x, yy, cw2, 20, 'Difficulty: ' + (W && inGame ? DIFFN[W.diff] : '-'), () => { if (W && !W.hardcore && NET.role !== 'guest') { W.diff = (W.diff + 1) % 5; if (W.diff === 0) for (const e of ENTS.slice()) if (e.kind === 'mob' && MT[e.type].hostile) delEnt(e); } }, !!(inGame && W && !W.hardcore && NET.role !== 'guest')));
       if (col) y += step;
       button(GW / 2 - 100, Math.min(GH - 26, y + 6), 200, 20, 'Done', () => { persistSet(); if (inGame) gui = 'pause'; else scr = optBack; });
     }
@@ -7280,7 +7335,7 @@
       else if (cmd === 'gamemode') pool = ['survival', 'creative', 'adventure', 'spectator'];
       else if (cmd === 'time') pool = parts.length === 2 ? ['set', 'add', 'query'] : ['day', 'noon', 'night', 'midnight'];
       else if (cmd === 'weather') pool = ['clear', 'rain', 'thunder'];
-      else if (cmd === 'difficulty') pool = ['peaceful', 'easy', 'normal', 'hard'];
+      else if (cmd === 'difficulty') pool = ['peaceful', 'easy', 'normal', 'hard', 'hardest'];
       else if (cmd === 'gamerule') pool = parts.length === 2 ? RULES.map(r => r[0]).concat(['randomTickSpeed']) : ['true', 'false'];
       else if (cmd === 'summon') pool = Object.keys(MT).concat(['item', 'tnt', 'falling_block']);
       else if (cmd === 'effect') pool = parts.length === 2 ? ['give', 'clear'] : ['regeneration', 'poison', 'hunger', 'fire_resistance', 'water_breathing'];
@@ -7323,7 +7378,7 @@
         W.weatherT = (+a[2] || 300 + ri(600)) * 20;
         say('Set the weather to ' + (k === 'clear' ? 'clear' : k === 'rain' ? 'rain' : 'rain & thunder')); return;
       }
-      if (cmd === 'difficulty') { const i = ['peaceful', 'easy', 'normal', 'hard'].indexOf((a[1] || '').toLowerCase()); if (i < 0) { say('The difficulty is ' + DIFFN[W.diff]); return; } if (W.hardcore) { err('Cannot change difficulty in Hardcore'); return; } W.diff = i; if (i === 0) for (const e of ENTS.slice()) if (e.kind === 'mob' && MT[e.type].hostile) delEnt(e); say('The difficulty has been set to ' + DIFFN[i]); return; }
+      if (cmd === 'difficulty') { const i = ['peaceful', 'easy', 'normal', 'hard', 'hardest'].indexOf((a[1] || '').toLowerCase()); if (i < 0) { say('The difficulty is ' + DIFFN[W.diff]); return; } if (W.hardcore) { err('Cannot change difficulty in Hardcore'); return; } W.diff = i; if (i === 0) for (const e of ENTS.slice()) if (e.kind === 'mob' && MT[e.type].hostile) delEnt(e); say('The difficulty has been set to ' + DIFFN[i]); return; }
       if (cmd === 'gamerule') {
         const k = a[1]; if (!k) { err('Usage: /gamerule <rule> [value]'); return; }
         if (a[2] === undefined) { say('Gamerule ' + k + ' is currently set to: ' + W.rules[k]); return; }
@@ -7332,7 +7387,7 @@
       }
       if (cmd === 'give') {
         let tgt = a[1], nm = a[2], n = parseInt(a[3]) || 1;
-        if (!nm) { nm = tgt; tgt = '@s'; }
+        if (!nm || IN[(tgt || '').replace(/^minecraft:/, '')] && !IN[nm.replace(/^minecraft:/, '')]) { n = parseInt(nm) || 1; nm = tgt; tgt = '@s'; }
         const it = IN[(nm || '').replace(/^minecraft:/, '')];
         if (!it || !it.tab) { err('Unknown item: ' + nm); return; }
         n = clamp(n, 1, 6400);
@@ -7849,7 +7904,7 @@
       P.x = P.px = W.spawn[0]; P.y = P.py = W.spawn[1]; P.z = P.pz = W.spawn[2];
       P.name = NET.role ? P.name : myName();
       startWorkers();
-      tickN = 0; simT = 0; acc = 0; loadT0 = performance.now(); NET.ready = !o.remote; FANCY = SET.fancy;
+      tickN = 0; simT = 0; acc = 0; loadT0 = performance.now(); NET.ready = !o.remote; FANCY = SET.fancy; VIS.cx = 1e9; VIS.cell = -1; VIS.mask = 63;
       if (!o.pano) { grab(); scr = 'loading'; loadMsg = 'Loading terrain...'; loadP = 0; }
       return W;
     }
@@ -7870,7 +7925,7 @@
     }
     function createWorld(cfg, host) {
       const id = 'w' + Date.now().toString(36) + ri(1e6).toString(36), hc = cfg.mode === 'hardcore';
-      openWorldObj({ id, name: cfg.name, seed: parseSeed(cfg.seed), type: cfg.type, mode: hc ? 'survival' : cfg.mode, defMode: hc ? 'survival' : cfg.mode, diff: hc ? 3 : cfg.diff, hardcore: hc, cheats: !hc && cfg.cheats, rules: cfg.rules, time: 0, bonus: cfg.bonus });
+      openWorldObj({ id, name: cfg.name, seed: parseSeed(cfg.seed), type: cfg.type, mode: hc ? 'survival' : cfg.mode, defMode: hc ? 'survival' : cfg.mode, diff: hc ? 4 : cfg.diff, hardcore: hc, cheats: !hc && cfg.cheats, rules: cfg.rules, time: 0, bonus: cfg.bonus });
       loadMsg = 'Generating world...';
       saveNow();
       afterOpen(host);
@@ -7970,14 +8025,14 @@
       const bx = Math.floor(px), by = clamp(Math.floor(py), 0, H - 1), bz = Math.floor(pz), cx = bx >> 4, cz = bz >> 4, sy = by >> 4, cell = (bx & 15) | (bz & 15) << 4 | (by & 15) << 8;
       const c0 = colAt(cx, cz);
       if (!c0 || !c0.meshed) return;
-      VIS.f++;
-      let run = W.visd === 2 || cx !== VIS.cx || cz !== VIS.cz || sy !== VIS.sy || W.visd === 1 && VIS.f >= 6, mask = VIS.mask;
+      const tn = performance.now();
+      let run = W.visd === 2 || cx !== VIS.cx || cz !== VIS.cz || sy !== VIS.sy || W.visd === 1 && tn - VIS.f >= 80, mask = VIS.mask;
       if (W.cdq.size) { for (const c of W.cdq) { for (let s = 0; s < NSEC; s++) if (c.cd >> s & 1) c.cn[s] = W.conn.all(c.s[s]); c.cd = 0; } W.cdq.clear(); }
       if (run || cell !== VIS.cell) { const sec = c0.s[sy]; mask = Math.floor(py) !== by ? 63 : sec && OPQ[sec[cell]] ? 0 : W.conn.from(sec, cell); if (mask !== VIS.mask) run = true; }
       VIS.cell = cell;
       if (!run) return;
       const a = performance.now(), urgent = W.visd === 2 || cx !== VIS.cx || cz !== VIS.cz || sy !== VIS.sy;
-      VIS.cx = cx; VIS.cz = cz; VIS.sy = sy; VIS.mask = mask; VIS.f = 0; W.visd = 0;
+      VIS.cx = cx; VIS.cz = cz; VIS.sy = sy; VIS.mask = mask; VIS.f = tn; W.visd = 0;
       const pair = W.conn.pair, on = VIS.on && mask !== 0;
       W.cols.forEach(c => { if (c.meshed) { c.vs.fill(on ? 0 : 64); c.vt = 1; } });
       if (on) {
@@ -8088,6 +8143,7 @@
       advTick();
       goalTick();
       tickInteract();
+      if (guiPos && guiBE && gui !== 'sign' && W.be.get(bk(guiPos[0], guiPos[1], guiPos[2])) !== guiBE) closeGui();
       if (host) { tickEnts(); tickSched(); randomTicks(); tickFurnaces(); if (tickN % 2 === 0) checkPlates(); spawnTick(); if (W.pendSpawn) flushPendSpawn(); if (W.pendEnts && nearMeshed(1) >= 1) spawnSaved(); }
       tickMirrors();
       if (swingT >= 0 && ++swingT >= CFG.SWING_TICKS) swingT = -1;
@@ -8335,7 +8391,7 @@
       const pf2 = performance.now(); PF.ui += pf2 - pf1; PF.fr += pf2 - pf0; PF.n++; if (pf2 - pf0 > PF.mx) PF.mx = pf2 - pf0;
       restT += (Math.min(30, pf2 - pf0 - pfS) - restT) * .1; AR.js += pf2 - pf0; AR.jn++;
     }
-    wrap.__mc = r => ({ pf: (() => { const o = Object.assign({}, PF); if (r) for (const k in PF) PF[k] = 0; return o; })(), fields: fields.map(f => [f.key, f.x, f.y, f.w, f.h]), dirty: W ? W.dirty.size : 0, pend: (() => { let n = 0; if (W) for (const c of W.dirty) for (let s = 0; s < NSEC; s++) if (c.md[s] && c.vs[s]) n++; return n; })(), vis: [VIS.n, VIS.tot], draw: [renderer.info.render.calls, renderer.info.render.triangles, renderer.info.memory.geometries], onGround: P.onGround, fly: P.fly, dead: P.dead, lvl: P.lvl, spawn: P.spawn, heap: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : 0, nEnt: ENTS.length, signs: signG.children.map(m => [+m.position.x.toFixed(3), +(m.position.y - CFG.YOFF).toFixed(3), +m.position.z.toFixed(3), +m.rotation.y.toFixed(2)]), scr, gui, GK, GW, GH, pRect, chatOpen, btns: btns.map(b => [b.l, b.x, b.y, b.w, b.h, b.en]), P: { x: P.x, y: P.y, z: P.z, hp: P.hp, food: P.food, yaw: P.yaw, pitch: P.pitch }, ents: (() => { const o = {}; for (const e of ENTS) { const k = e.kind + ':' + (e.type || (e.st ? IT[e.st.id].id : '')); o[k] = (o[k] || 0) + 1; } return o; })(), keysDown: [...keys], focus: focusKey, mobs: ENTS.filter(e => e.kind === 'mob').map(e => [e.type, +e.x.toFixed(1), +(e.y - CFG.YOFF).toFixed(1), +e.z.toFixed(1), e.root.visible, e.hp, !!e.dead, e.root.parent ? 1 : 0]), fps, cols: W ? W.cols.size : 0, mode: W && W.mode, role: NET.role, time: W && W.time, chat: chatLog.slice(-8).map(c => c.m), hit: HIT.b ? [HIT.x, HIT.y, HIT.z] : null, sel, inv: inv.map(s => s && IT[s.id].id + 'x' + s.n), slots: slots.map(q => { const v = q.get(); return [q.g, q.i, q.x, q.y, v ? IT[v.id].id + 'x' + v.n : null]; }), cursor: cursor && IT[cursor.id].id + 'x' + cursor.n });
+    wrap.__mc = r => ({ pf: (() => { const o = Object.assign({}, PF); if (r) for (const k in PF) PF[k] = 0; return o; })(), fields: fields.map(f => [f.key, f.x, f.y, f.w, f.h]), dirty: W ? W.dirty.size : 0, frame: frameN, tick: tickN, rd: RD, diff: W ? W.diff : -1, st: P.st, setRd: SET.rd, locked: locked(), sleeping: P.sleeping, pend: (() => { let n = 0; if (W) for (const c of W.dirty) for (let s = 0; s < NSEC; s++) if (c.md[s] && c.vs[s]) n++; return n; })(), vis: [VIS.n, VIS.tot], draw: [renderer.info.render.calls, renderer.info.render.triangles, renderer.info.memory.geometries], onGround: P.onGround, fly: P.fly, dead: P.dead, lvl: P.lvl, spawn: P.spawn, heap: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : 0, nEnt: ENTS.length, signs: signG.children.map(m => [+m.position.x.toFixed(3), +(m.position.y - CFG.YOFF).toFixed(3), +m.position.z.toFixed(3), +m.rotation.y.toFixed(2)]), scr, gui, GK, GW, GH, pRect, chatOpen, btns: btns.map(b => [b.l, b.x, b.y, b.w, b.h, b.en]), P: { x: P.x, y: P.y, z: P.z, hp: P.hp, food: P.food, yaw: P.yaw, pitch: P.pitch }, ents: (() => { const o = {}; for (const e of ENTS) { const k = e.kind + ':' + (e.type || (e.st ? IT[e.st.id].id : '')); o[k] = (o[k] || 0) + 1; } return o; })(), keysDown: [...keys], focus: focusKey, mobs: ENTS.filter(e => e.kind === 'mob').map(e => [e.type, +e.x.toFixed(1), +(e.y - CFG.YOFF).toFixed(1), +e.z.toFixed(1), e.root.visible, e.hp, !!e.dead, e.root.parent ? 1 : 0]), fps, cols: W ? W.cols.size : 0, mode: W && W.mode, role: NET.role, time: W && W.time, chat: chatLog.slice(-8).map(c => c.m), hit: HIT.b ? [HIT.x, HIT.y, HIT.z] : null, sel, inv: inv.map(s => s && IT[s.id].id + 'x' + s.n), slots: slots.map(q => { const v = q.get(); return [q.g, q.i, q.x, q.y, v ? IT[v.id].id + 'x' + v.n : null]; }), cursor: cursor && IT[cursor.id].id + 'x' + cursor.n });
     wrap.__mcDbg = o => { Object.assign(VIS, o); if (W) W.visd = 2; };
     wrap.__mcBench = all => { const T = []; let q = 0; W.cols.forEach(c => { if (c.meshed) for (let s = 0; s <= c.top; s++) if ((all || c.vs[s]) && c.s[s]) { const a = performance.now(); meshSection(c, s); T.push(performance.now() - a); q += (MO.ni + MESHT.ni) / 6; } }); return [T, q]; };
     resize();
