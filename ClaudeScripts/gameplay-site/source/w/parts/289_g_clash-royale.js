@@ -772,7 +772,7 @@
       if (any) tryPlay(S, me, any.i, lx, myBack(me));
     }
   }
-  const HXN = 50, HXDT = .1;
+  const HXN = 50, HXDT = .1, HXS = 25;
   function hxClone(S) {
     const C = { t: S.t, per: S.per, left: S.left, intro: 0, el: [0, 0], over: 0, win: -1, cr: [S.cr[0], S.cr[1]], units: [], projs: [], zones: [], logs: [], ev: [], nid: S.nid, kl: S.kl, lv: S.lv, hands: null, act: [S.act[0], S.act[1]], names: S.names, mult: S.mult, spent: [0, 0], dec: S.dec, m: new Map(), bots: [null, null], me: S.me };
     for (const u of S.units) { const c = Object.assign({}, u); C.units.push(c); C.m.set(c.id, c); }
@@ -791,12 +791,6 @@
       else v += sg * elixVal(u.D) * (.25 + .75 * u.hp / u.mhp);
     }
     return v;
-  }
-  function hxRoll(snap, me, c, n, dt) {
-    const C = hxClone(snap);
-    if (c) spawnCard(C, me, c.key, c.x, c.y);
-    for (let i = 0; i < n && !C.over; i++) { step(C, dt); C.ev.length = 0; }
-    return hxEval(C, me) - (c ? c.cost : 0);
   }
   function hxFit(S, me, key, x, y) {
     const offs = [[0, 0], [0, me === 0 ? -1 : 1], [1, 0], [-1, 0], [0, me === 0 ? 1 : -1], [1.5, 1], [-1.5, 1]];
@@ -840,7 +834,13 @@
     if (S.over || S.intro > 0) return;
     const h = S.hands[me], el = S.el[me];
     if (B.q) {
-      const q = B.q, c = q.list[q.i++], v = hxRoll(q.snap, me, c, q.n, q.dt);
+      const q = B.q;
+      if (!q.C) { q.c = q.list[q.i]; q.C = hxClone(q.snap); q.k = 0; if (q.c) spawnCard(q.C, me, q.c.key, q.c.x, q.c.y); }
+      const C = q.C;
+      for (let j = 0; j < HXS && q.k < q.n && !C.over; j++, q.k++) { step(C, q.dt); C.ev.length = 0; }
+      if (q.k < q.n && !C.over) return;
+      const c = q.c, v = hxEval(C, me) - (c ? c.cost : 0);
+      q.C = null; q.i++;
       if (!c) q.base = v; else if (v > q.bv) { q.bv = v; q.best = c; }
       if (q.i < q.list.length) return;
       B.q = null;
