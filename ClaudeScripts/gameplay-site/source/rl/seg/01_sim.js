@@ -763,9 +763,10 @@
     semipro: { gs: 1000, kd: 260, kk: 0.24, ko: 0, ky: 0, think: 0.25, react: 0.35, aim: 0.6, err: 260, thr: 1, boost: 1, flip: 1, kick: 1, jump: 1, aerial: 0, wall: 0, demo: 0, dribble: 0, rot: 0.5, chal: 0.35, hold: 0.1 },
     pro: { gs: 1200, kd: 260, kk: 0.24, ko: 0, ky: 0, think: 0.12, react: 0.12, aim: 0.8, err: 90, thr: 1, boost: 1, flip: 1, kick: 1, jump: 1, aerial: 760, wall: 1, demo: 0, dribble: 0.3, rot: 0.85, chal: 0.35, hold: 0.12 },
     veteran: { gs: 1200, half: 1, kd: 260, kk: 0.24, ko: 0, ky: 0, think: 0.09, react: 0.07, aim: 0.8, err: 60, thr: 1, boost: 1, flip: 1, kick: 1, jump: 1, aerial: 1000, wall: 1, demo: 0.1, dribble: 0.4, rot: 0.9, chal: 0.3, hold: 0.14 },
-    allstar: { gs: 1200, half: 1, kd: 260, kk: 0.24, ko: 0, ky: 0, think: 0.05, react: 0.02, aim: 0.8, err: 0, thr: 1, boost: 1, flip: 1, kick: 1, jump: 1, aerial: 1300, wall: 1, demo: 0.3, dribble: 0.6, rot: 0.95, chal: 0.25, hold: 0.16, save: 1 }
+    allstar: { gs: 1200, half: 1, kd: 260, kk: 0.24, ko: 0, ky: 0, think: 0.05, react: 0.02, aim: 0.8, err: 0, thr: 1, boost: 1, flip: 1, kick: 1, jump: 1, aerial: 1300, wall: 1, demo: 0.3, dribble: 0.6, rot: 0.95, chal: 0.25, hold: 0.16, save: 1 },
+    hardest: { hx: 1, gs: 1200, half: 1, kd: 260, kk: 0.24, ko: 0, ky: 0, think: 0.05, react: 0.12, aim: 0.8, err: 0, thr: 1, boost: 1, flip: 1, kick: 1, jump: 1, aerial: 1300, wall: 1, demo: 0.3, dribble: 0.6, rot: 0.95, chal: 0.25, hold: 0.16, save: 1 }
   };
-  const DIFF_IDS = ['rookie', 'semipro', 'pro', 'veteran', 'allstar'], DIFF_NAMES = { rookie: 'Rookie', semipro: 'Semi-Pro', pro: 'Pro', veteran: 'Veteran', allstar: 'All-Star' };
+  const DIFF_IDS = ['rookie', 'semipro', 'pro', 'veteran', 'allstar', 'hardest'], DIFF_NAMES = { rookie: 'Rookie', semipro: 'Semi-Pro', pro: 'Pro', veteran: 'Veteran', allstar: 'All-Star', hardest: 'Hardest' };
   const BOTNAMES = ['Armstrong', 'Bandit', 'Beast', 'Boomer', 'Buzz', 'Casper', 'Caveman', 'C-Block', 'Centice', 'Chipper', 'Cougar', 'Dude', 'Foamer', 'Fury', 'Gerwin', 'Goose', 'Heater', 'Hollywood', 'Hound', 'Iceman', 'Imp', 'Jester', 'Junker', 'Khan', 'Marley', 'Maverick', 'Merlin', 'Middy', 'Mountain', 'Myrtle', 'Outlaw', 'Poncho', 'Rainmaker', 'Raja', 'Rex', 'Roundhouse', 'Sabretooth', 'Saltie', 'Samara', 'Scout', 'Shepard', 'Slider', 'Squall', 'Sticks', 'Stinger', 'Storm', 'Sultan', 'Sundown', 'Swabbie', 'Tex', 'Tusk', 'Viper', 'Wolfman', 'Yuri'];
   function rngOf(seed) {
     if (seed == null) return Math.random;
@@ -1199,6 +1200,7 @@
   }
   function aiStep(W, c, dt) {
     const A = c.ai;
+    if ((A.D || DIFF[W.diff]).hx) { hxStep(W, c, dt); return; }
     A.think -= dt;
     if (A.think <= 0) { A.think = (A.D || DIFF[W.diff]).think; aiPlan(W, c); }
     aiControl(W, c, dt);
