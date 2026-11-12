@@ -9,7 +9,7 @@ Last updated: see the git log of this file.
 ## How things were tested
 
 - Staging backend: a local Supabase stack (Postgres, accounts, live updates, storage) with the full `schema.sql` including rounds 16 to 19. Staging build: `t/stage.py`. Local server with the hosting headers: `t/serve.js`.
-- Browser tests in `source/t/tests/`, all passing on the final merged build: `load_sequence.js` (4 scenarios), `gate_locked.js` (4), `party.js` (12 scenarios, two browsers), `fixes.js` (7 scenarios), `announce.js`.
+- Browser tests in `source/t/tests/`, all passing on the final merged build: `load_sequence.js` (4 scenarios), `gate_locked.js` (4), `party.js` (12 scenarios, two browsers), `fixes.js` (7 scenarios), `dm.js` (direct messages, two browsers), `announce.js`, `legal_pages.js`, and `smoke_all.js` (every game in the catalogue opened and started: 168 of 168 without errors).
 - Test accounts on staging: `gp_tester`, `gp_tester2` (diagnostics on), ordinary users and an owner.
 - Production: read-only. The live page was opened anonymously to observe the load sequence; nothing was written.
 - The test browser renders without a graphics card. Two things followed from that and are worth knowing: the site's own one-time graphics probe froze pages for minutes there (fixed, see bug 10), and screenshots of 3D games could not be judged for smoothness.
@@ -30,7 +30,8 @@ Last updated: see the git log of this file.
 | Item | Status | How verified |
 |---|---|---|
 | Load sequence: no password flash, no login flash, right page first | Done | `load_sequence.js` and `gate_locked.js`, all scenarios pass (new visitor, signed-out returning, signed-in with fast and slow backend, expired session, locked gate, wrong and right password, reload) |
-| Skeleton screens | Done | Gate skeleton matches what comes next; game loading shows the cover, name and a progress bar; stats, friends and messages keep their skeletons |
+| Skeleton screens | Done | Gate skeleton matches what comes next; game loading shows the cover, name and a progress bar; legal pages, stats, friends and messages have skeletons |
+| First download size | Done | The legal texts (three times longer) now load only when a legal page is opened. The first download is 497 KB compressed, against about 519 KB before this work |
 | Party connectivity: two independent routes and a relayed fallback | Done on staging, not testable on real networks from here | `party.js`: normal route; signalling server blocked for the guest (second route, direct link); signalling blocked and WebRTC unavailable (fully relayed: join, chat, game start); host without the signalling server and guest without WebRTC. The TURN relay for strict firewalls needs two secrets on the Cloudflare worker (GOLIVE step 2) and could not be exercised from this sandbox |
 | Cancelling connection attempts, refresh and close | Done | `party.js` F (unknown code: clear error after 5.7 s, nothing after a refresh), G (Cancel stops everything at once), H (refresh during a failing join does not resume it), I (guest refresh returns to the same seat), J (host refresh keeps the code, guest reconnects), K (guest closes the tab: shown away at once, seat freed after the refresh allowance), L (guest offline for 9 s reconnects) |
 | Public party has no code; no public/private button inside; Join shows available parties | Done | `party.js` A and screenshots: host picks Public, lobby shows "Public" with no code and no switch; "Join a party" lists the available parties with a Join button, plus a box for a private code |
@@ -114,14 +115,14 @@ Status of each. "Verified" means a browser test on staging reproduces the scenar
 | 4 | Esc while rebinding a key left capture armed, so the next key pressed in the game was rebound | Verified (S4) |
 | 5 | Two tabs double-counted plays and playtime and reverted each other's settings | Fixed, not exercised |
 | 6 | A failed or cancelled invite link kept being retried when the lobby was reopened | Fixed, not exercised |
-| 7 | Overlapping realtime nudges to the same user were dropped (late messages, typing, read marks) | Fixed, not exercised |
-| 8 | Message thread refreshes were silently skipped while another was in flight | Fixed, not exercised |
-| 9 | With a party lobby open, Enter and Esc stopped working in chat, search and settings fields | Fixed, not exercised |
+| 7 | Overlapping realtime nudges to the same user were dropped (late messages, typing, read marks) | Verified (`dm.js`) |
+| 8 | Message thread refreshes were silently skipped while another was in flight | Verified (`dm.js`) |
+| 9 | With a party lobby open, Enter and Esc stopped working in chat, search and settings fields | Verified (`dm.js`) |
 | 10 | Two tabs fought over the online status; closing one showed the player offline | Verified (S5) |
 | 11 | "Delete my data" wrote data back while the page reloaded | Verified (S6) |
 | 12 | The last analytics batch of every visit was stored twice | Fixed on the server; a session re-sent in full produced no duplicates |
 | 13 | Timed-out writes were replayed through the relay (duplicate messages, and a possible cause of surprise sign-outs) and uploads were cut at 15 s | Fixed, not exercised |
-| 14 | Messages were marked as read while the tab was hidden | Fixed, not exercised |
+| 14 | Messages were marked as read while the tab was hidden | Verified (`dm.js`) |
 | 15 | A favourites sync could undo a click made a moment earlier | Fixed, not exercised |
 | 16 | Pictures in messages broke after an hour, and on filtered networks | Fixed, not exercised |
 | 17 | Long offline play can lose playtime (server caps one batch at about an hour) | Not fixed: needs a matching change in the stats function; low impact |
