@@ -313,6 +313,29 @@ ${q} .hs-pb.gold{background:#c78a07}
       if (scr === 'play' && G.result(S)) endMatch();
     }
     api.loop((dt, now) => { if (scr === 'play' || scr === 'over') frame(dt, now); });
+    let bgW = null, bgI = 0, bgT = 0;
+    function bgTick() {
+      if (!document.hidden || role !== 'host' || scr !== 'play' || !S) return;
+      const now = performance.now();
+      let n = Math.min(Math.round(.8 / STEP), Math.floor((now - bgT) / (STEP * 1000)));
+      if (n <= 0) return;
+      bgT += n * STEP * 1000;
+      if (now - bgT > 500) bgT = now;
+      while (n-- > 0 && !S.over) simStep(0);
+      if (now - snapT >= G.snapMs) flushSnap(now);
+      if (now - saveT > 1000) { saveT = now; saveResume(); }
+      if (G.result(S)) endMatch();
+    }
+    function bgStop() { if (bgW) { try { bgW.terminate(); } catch (e) {} bgW = null; } if (bgI) { clearInterval(bgI); bgI = 0; } }
+    function bgStart() {
+      bgStop();
+      try { const u = URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},33)'], { type: 'text/javascript' })); bgW = new Worker(u); URL.revokeObjectURL(u); bgW.onmessage = bgTick; bgW.onerror = () => { bgW = null; if (!bgI) bgI = setInterval(bgTick, 250); }; }
+      catch (e) { bgW = null; bgI = setInterval(bgTick, 250); }
+    }
+    api.on(document, 'visibilitychange', () => {
+      if (document.hidden) { if (role === 'host' && scr === 'play') { bgT = performance.now(); bgStart(); } }
+      else { bgStop(); acc = 0; }
+    });
 
     function saveResume() {
       if (role !== 'host' || !S || S.over || !plan) return;
@@ -458,7 +481,7 @@ ${q} .hs-pb.gold{background:#c78a07}
     sh.start = () => {
       if (invited) goOnline(); else toMenu();
     };
-    sh.destroy = () => { try { if (ac) ac.close(); } catch (e) {} ac = null; };
+    sh.destroy = () => { bgStop(); try { if (ac) ac.close(); } catch (e) {} ac = null; };
     return sh;
   }
 
@@ -473,12 +496,32 @@ ${q} .hs-pb.gold{background:#c78a07}
     }));
   }
 
+  function simCopy(o) {
+    if (o === null || typeof o !== 'object') return o;
+    if (Array.isArray(o)) { const a = new Array(o.length); for (let k = 0; k < o.length; k++) a[k] = simCopy(o[k]); return a; }
+    const r = {};
+    for (const k in o) r[k] = k === 'cfg' ? o[k] : simCopy(o[k]);
+    return r;
+  }
+  const simMute = () => {};
+  function simBelief(step, S, i, mem, lag, dtp, sub, key, oppMask) {
+    const H = mem.hist || (mem.hist = []);
+    H.push({ S: simCopy(S), m: 0 });
+    while (H.length > lag + 1) H.shift();
+    const B = simCopy(H[0].S), n = B[key].length, inp = new Array(n).fill(0);
+    for (let j = 0; j < n; j++) if (j !== i) inp[j] = oppMask(B, j);
+    for (let k = 0; k < H.length - 1; k++) { inp[i] = H[k].m; for (let q = 0; q < sub; q++) step(B, inp, dtp, simMute); }
+    B[key][i] = simCopy(S[key][i]);
+    return B;
+  }
+
   const SVC = { GY: 400, K: .5, NX0: 480, NX1: 520, NTOP: 140, NBOUNCE: 130, MVX: 15, MVY: 22, FUDGE: 5, SR: 100, BR: 25, LIM: [[50, 445], [555, 950]] };
   const SV_AI = [
     { name: 'Rookie Slime', short: 'Rookie', col: '#7fd1ff', tag: 'Slow and sloppy' },
     { name: 'Pathetic White Slime', short: 'Pathetic White', col: '#ffffff', tag: 'The classic first opponent' },
     { name: 'Angry Red Slime', short: 'Angry Red', col: '#e5231f', tag: 'Fast and mean' },
-    { name: 'Slime Master', short: 'Slime Master', col: '#1b1b22', tag: 'The legendary one' }
+    { name: 'Slime Master', short: 'Slime Master', col: '#1b1b22', tag: 'The legendary one' },
+    { name: 'Hardest', short: 'Hardest', col: '#7c1fd6', tag: 'Reads every bounce' }
   ];
   const SV_COLS = ['#27c24c', '#3b82f6', '#a855f7', '#f59e0b', '#ec4899', '#14b8a6'];
   const SV_STAGES = [
@@ -709,9 +752,57 @@ ${q} .hs-pb.gold{background:#c78a07}
       else if (Math.abs(c.bW - c.mW) < 150) { if (c.ball.y > 50 && c.ball.y < 250) c.jump(); }
     }
   }
+  function svHardest(S, i, mem) {
+    const t = i & 1, me = S.sl[i];
+    if ((mem.tk = (mem.tk || 0) - 1) > 0) return mem.hm | 0;
+    mem.tk = 3;
+    const B0 = simBelief(svStep, S, i, mem, 3, 0, 3, 'sl', (B, j) => { const s = B.sl[j]; return s.vx < 0 ? 1 : s.vx > 0 ? 2 : 0; });
+    const H = mem.hist, n = B0.sl.length, inp = new Array(n).fill(0);
+    if (B0.phase !== 'play') { H[H.length - 1].m = 0; return mem.hm = 0; }
+    let ex = 0, en = 0;
+    for (let j = 0; j < n; j++) if ((j & 1) !== t) { ex += B0.sl[j].x; en++; B0.sl[j].y = -5000; B0.sl[j].vy = 0; } else if (j !== i) { B0.sl[j].y = -5000; B0.sl[j].vy = 0; }
+    ex /= en || 1;
+    const b0 = B0.ball, mine = t ? b0.x > 500 : b0.x < 500, coming = t ? b0.vx > 0 : b0.vx < 0;
+    const L = t ? 2 : 1, R = t ? 1 : 2;
+    if (!mine && !coming) {
+      const home = t ? 730 : 270, d = home - me.x, m = Math.abs(d) < 12 ? 0 : d > 0 ? 2 : 1;
+      H[H.length - 1].m = m; return mem.hm = m;
+    }
+    const sc0 = B0.sc[0] + B0.sc[1];
+    let best = -1e9, bm = 0;
+    const DUR = [6, 14, 26, 60], JMP = [-1, 0, 4, 9, 15, 23];
+    for (let mv = 0; mv < 3; mv++) {
+      const bit = mv === 0 ? 0 : mv === 1 ? L : R;
+      for (let di = 0; di < (mv ? DUR.length : 1); di++) {
+        const dur = DUR[di];
+        for (let ji = 0; ji < JMP.length; ji++) {
+          const ja = JMP[ji], B = simCopy(B0), b = B.ball;
+          let k = 0, v = 0, cross = -1, hit = 0;
+          const h0 = B.hits, me2 = B.sl[i];
+          for (; k < 120; k++) {
+            inp[i] = (k < dur ? bit : 0) | (ja >= 0 && k >= ja && k < ja + 2 ? 4 : 0);
+            svStep(B, inp, 0, simMute);
+            if (cross < 0 && (t ? b.x < 475 : b.x > 525)) { cross = k; me2.y = -5000; me2.vy = 0; inp[i] = 0; }
+            if (B.sc[0] + B.sc[1] !== sc0 || B.phase !== 'play') break;
+          }
+          hit = B.hits - h0;
+          if (B.sc[0] + B.sc[1] === sc0) v = cross >= 0 ? 300 : -200;
+          else if (B.last === t) {
+            const need = Math.abs(b.x - ex) / 8, air = k - Math.max(0, cross);
+            v = 1000 + 40 * clamp(need - air + 9, -25, 25) - air * 2 - hit * 6;
+          } else v = -10000 + k * 4 + hit * 30;
+          v -= (ja >= 0 ? 1.5 : 0) + (bit ? .5 : 0);
+          if (v > best) { best = v; bm = (0 < dur ? bit : 0) | (ja === 0 ? 4 : 0); }
+        }
+      }
+    }
+    H[H.length - 1].m = bm;
+    return mem.hm = bm;
+  }
   function svAI(S, i, mem, dt, seat) {
     const lvl = seat.lvl == null ? 2 : seat.lvl, t = i & 1, me = S.sl[i], ball = S.ball;
-    if (S.phase !== 'play') { return 0; }
+    if (S.phase !== 'play') { mem.hist = null; mem.tk = 0; mem.hm = 0; return 0; }
+    if (lvl >= 4 && S.n === 2) return svHardest(S, i, mem);
     if (mem.state === undefined) { mem.state = -1; mem.mv = 0; mem.age = 0; }
     const M = v => svMirror(t, v);
     let bx = ball.x, by = ball.y, bvx = ball.vx, bvy = ball.vy;
@@ -1196,7 +1287,8 @@ ${q} .hs-pb.gold{background:#c78a07}
     { n: 'Amateur', react: .26, spd: .86, dead: 18, err: 44, kick: .7, jump: .6, sp: .3, att: .62, press: .8 },
     { n: 'Pro', react: .17, spd: .94, dead: 12, err: 26, kick: .84, jump: .78, sp: .55, att: .74, press: .64 },
     { n: 'Expert', react: .1, spd: 1, dead: 8, err: 14, kick: .94, jump: .9, sp: .8, att: .86, press: .58 },
-    { n: 'Legend', react: .05, spd: 1.04, dead: 5, err: 6, kick: 1, jump: 1, sp: 1, att: 1, press: .54 }
+    { n: 'Legend', react: .05, spd: 1.04, dead: 5, err: 6, kick: 1, jump: 1, sp: 1, att: 1, press: .54 },
+    { n: 'Hardest', react: .17, spd: 1, dead: 5, err: 0, kick: 1, jump: 1, sp: 1, att: 1, press: .54 }
   ];
   const HS_ITEMS = [
     { k: 'spd', n: 'Speed', c: '#ffd23f', t: 'S' },
@@ -1520,9 +1612,48 @@ ${q} .hs-pb.gold{background:#c78a07}
     }
     return out;
   }
+  const HS_PLANS = [[0, 0, 0], [4, 0, 4], [8, 0, 8], [12, 0, 12], [0, 6, 8], [0, 13, 8], [0, 6, 4], [0, 12, 12]];
+  function hsHardest(S, i, mem) {
+    const p = S.pl[i], t = i & 1, dir = t ? -1 : 1, W = HS.W;
+    if ((mem.tk = (mem.tk || 0) - 1) > 0) return mem.hm | 0;
+    mem.tk = 6;
+    const B0 = simBelief(hsStep, S, i, mem, 3, 1 / 60, 3, 'pl', (B, j) => B.pl[j].pm & 3);
+    const H = mem.hist, inp = [0, 0], o = 1 - i;
+    if (p.fr > 0 || p.st > 0 || (B0.phase !== 'play' && B0.phase !== 'sd')) { H[H.length - 1].m = 0; return mem.hm = 0; }
+    const om = B0.pl[o].pm & 3, s0 = B0.sc[t], c0 = B0.sc[1 - t], L = t ? 2 : 1, R = t ? 1 : 2;
+    let best = -1e9, bm = 0;
+    for (let mv = 0; mv < 3; mv++) {
+      const bit = mv === 0 ? 0 : mv === 1 ? L : R;
+      for (let q = 0; q < HS_PLANS.length + 1; q++) {
+        if (q === HS_PLANS.length && p.g < 100) continue;
+        const pl = q === HS_PLANS.length ? [16, 0, 16] : HS_PLANS[q], B = simCopy(B0), b = B.ball, me = B.pl[i];
+        let k = 0, v = 0;
+        for (; k < 44; k++) {
+          inp[i] = k < 30 ? bit | (k < pl[1] ? pl[0] : pl[2]) : 0; inp[o] = k < 12 ? om : 0;
+          hsStep(B, inp, 1 / 60, simMute);
+          if (B.sc[t] !== s0 || B.sc[1 - t] !== c0 || B.over) break;
+        }
+        if (B.sc[t] !== s0) v = 6000 - k * 20;
+        else if (B.sc[1 - t] !== c0) v = -6000 + k * 20;
+        else {
+          const ahead = (b.x - me.x) * dir, own = t ? W - b.x : b.x;
+          v = (b.x - W / 2) * dir * 1.1 + clamp(b.vx * dir, -900, 900) * .32;
+          if (ahead < 0) v -= 90 - ahead * 1.3;
+          v -= Math.abs(b.x - dir * 46 - me.x) * .3;
+          if (own < 260 && ahead < 30) v -= (260 - own) * .8;
+          if (b.y < HS.GY - 200 && b.vy < 0 && ahead > 0) v += 20;
+        }
+        v -= (pl[0] | pl[2]) & 4 ? 6 : 0;
+        if (v > best) { best = v; bm = bit | pl[0]; }
+      }
+    }
+    H[H.length - 1].m = bm;
+    return mem.hm = bm;
+  }
   function hsAI(S, i, mem, dt, seat) {
-    const L = HS_LV[clamp(seat.lvl == null ? 2 : seat.lvl, 0, 4)], p = S.pl[i], o = S.pl[1 - i], t = i & 1, dir = t ? -1 : 1, b = S.ball, W = HS.W, GY = HS.GY;
-    if (S.phase !== 'play' && S.phase !== 'sd') { mem.tx = p.x; return 0; }
+    const L = HS_LV[clamp(seat.lvl == null ? 2 : seat.lvl, 0, 5)], p = S.pl[i], o = S.pl[1 - i], t = i & 1, dir = t ? -1 : 1, b = S.ball, W = HS.W, GY = HS.GY;
+    if (S.phase !== 'play' && S.phase !== 'sd') { mem.tx = p.x; mem.hist = null; mem.tk = 0; mem.hm = 0; return 0; }
+    if (seat.lvl >= 5) return hsHardest(S, i, mem);
     if (p.fr > 0 || p.st > 0) return 0;
     const spd = 285 * HS_CH[p.ch].spd * (p.sp > 0 ? 1.42 : 1) * L.spd;
     mem.pt = (mem.pt || 0) - dt; mem.kd = (mem.kd || 0) - dt; mem.jd = (mem.jd || 0) - dt;
@@ -2091,7 +2222,8 @@ ${sh.orow('Stadium', sh.chips('stage', HS_STAGES.map((s, i) => [i, s.name])))}
     { n: 'Rookie', react: .34, spd: .8, terr: .085, open: 120, steal: .35, block: .18, cross: .1, pass: .2, ag: .3 },
     { n: 'Pro', react: .22, spd: .9, terr: .055, open: 100, steal: .6, block: .4, cross: .25, pass: .35, ag: .5 },
     { n: 'All-Star', react: .13, spd: .97, terr: .035, open: 85, steal: .85, block: .65, cross: .4, pass: .5, ag: .7 },
-    { n: 'Legend', react: .07, spd: 1.03, terr: .02, open: 72, steal: 1, block: .9, cross: .55, pass: .6, ag: .9 }
+    { n: 'Legend', react: .07, spd: 1.03, terr: .02, open: 72, steal: 1, block: .9, cross: .55, pass: .6, ag: .9 },
+    { n: 'Hardest', react: .17, spd: 1, terr: .008, open: 72, steal: 1, block: 1, cross: 1.3, pass: .6, ag: .9, smart: 1 }
   ];
   const BL_SPDUR = { turbo: 7, fire: 7, giant: 7, lock: 7, freeze: 3.5, phase: 7 };
   const blDir = (S, t) => S.atk[t] > 500 ? 1 : -1;
@@ -2480,7 +2612,7 @@ ${sh.orow('Stadium', sh.chips('stage', HS_STAGES.map((s, i) => [i, s.name])))}
   function blAI(S, i, mem, dt, seat) {
     if (S.phase !== 'play' || S.over) return 0;
     const p = S.pl[i], b = S.ball, t = i & 1, n = S.n, GY = BL.GY, ch = BL_CH[p.ch];
-    const L = BL_LV[clamp((seat && seat.lvl) | 0, 0, 3)];
+    const L = BL_LV[clamp((seat && seat.lvl) | 0, 0, 4)];
     mem.t = (mem.t || 0) + dt;
     const hx = S.atk[t], hd = hx > 500 ? 1 : -1, ox = S.atk[1 - t];
     let think = false;
@@ -2558,7 +2690,12 @@ ${sh.orow('Stadium', sh.chips('stage', HS_STAGES.map((s, i) => [i, s.name])))}
         if (!h.sh) mem.hs = false;
         if (h.dk >= 0 && !mem.hdk) { mem.hdk = true; if (Math.abs(p.x - ox) < 150 && Math.random() < L.block * .7) mem.jumpAt = mem.t + .05; }
         if (h.dk < 0) mem.hdk = false;
-        if (think && ad < 60 && !h.sh && h.dk < 0 && p.stc <= 0 && p.stm <= 0 && Math.random() < L.steal * .45) { m = (m & ~3) | (d > 0 ? 2 : 1); tap(16); }
+        if (L.smart) {
+          if (ad < 58 && !h.sh && h.dk < 0 && p.stc <= 0 && p.stm <= 0 && h.cr <= 0 && h.crc <= .4 && Math.abs(Math.cos(b.ph)) < .5) {
+            if (!mem.sq) mem.sq = mem.t + .03;
+            if (mem.t >= mem.sq) { m = (m & ~3) | (d > 0 ? 2 : 1); tap(16); mem.sq = 0; }
+          } else if (mem.sq && mem.t > mem.sq + .12) mem.sq = 0;
+        } else if (think && ad < 60 && !h.sh && h.dk < 0 && p.stc <= 0 && p.stm <= 0 && Math.random() < L.steal * .45) { m = (m & ~3) | (d > 0 ? 2 : 1); tap(16); }
       } else if (h.dk >= 0 && !mem.hdk) { mem.hdk = true; if (Math.abs(p.x - ox) < 150 && Math.random() < L.block * .6) mem.jumpAt = mem.t + .05; }
       else if (h.dk < 0) mem.hdk = false;
       if (mem.jumpAt && mem.t >= mem.jumpAt) { m |= 4; mem.jumpAt = 0; }

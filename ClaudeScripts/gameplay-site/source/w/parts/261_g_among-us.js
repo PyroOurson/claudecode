@@ -3438,9 +3438,9 @@ function mountGame(root, api) {
     const now = performance.now(), d = (now - lastTick) / 1000;
     lastTick = now;
     if (!G.H || (G.role === 'solo' && api.paused)) return;
-    acc = Math.min(.5, acc + d);
+    acc = Math.min(1.25, acc + d);
     let n = 0;
-    while (acc >= 1 / 30 && n++ < 15) { G.H.step(1 / 30); acc -= 1 / 30; }
+    while (acc >= 1 / 30 && n++ < 40) { G.H.step(1 / 30); acc -= 1 / 30; }
     flushInbox();
   }, 25);
   api.interval(() => { if (G.role === 'host' && G.H && mode === 'game') saveDump(); }, 2000);

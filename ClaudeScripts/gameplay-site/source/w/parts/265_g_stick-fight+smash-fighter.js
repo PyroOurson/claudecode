@@ -13,6 +13,26 @@
   const angLerp = (a, b, t) => { let d = ((b - a + Math.PI) % TAU + TAU) % TAU - Math.PI; return a + d * t; };
   const isTouchDev = () => (window.matchMedia && matchMedia('(pointer: coarse)').matches) || 'ontouchstart' in window;
 
+  function bgHost(api, root, want, fn) {
+    let w = null, iv = 0, last = 0, dead = false;
+    const stop = () => { if (w) { try { w.terminate(); } catch (e) {} w = null; } if (iv) { clearInterval(iv); iv = 0; } };
+    const tick = () => {
+      if (dead || !document.hidden) return;
+      if (!root.isConnected) { dead = true; stop(); return; }
+      const now = performance.now();
+      let dt = Math.min(1, (now - last) / 1000);
+      last = now;
+      if (!want()) return;
+      while (dt > .001) { const d = Math.min(.05, dt); dt -= d; fn(d, now); }
+    };
+    const start = () => {
+      stop(); last = performance.now();
+      try { const u = URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},33)'], { type: 'text/javascript' })); w = new Worker(u); URL.revokeObjectURL(u); w.onmessage = tick; w.onerror = () => { w = null; if (!iv && !dead) iv = setInterval(tick, 250); }; }
+      catch (e) { w = null; iv = setInterval(tick, 250); }
+    };
+    api.on(document, 'visibilitychange', () => { if (dead) return; if (document.hidden && want()) start(); else stop(); });
+    return () => { dead = true; stop(); };
+  }
   function makeAudio(api) {
     let AC = null, master = null, nb = null;
     const last = {};
@@ -2214,9 +2234,10 @@
       render(dt);
     });
 
+    const bgEnd = bgHost(api, root, () => G.role === 'host' && !!G.w, (d, now) => { hostFrame(d); hostSend(now); });
     root.__sf = { G, saved, snapshot, fxEvent };
     if (api.net.invite) { showMenu(); hideUi(); goOnline(); } else showMenu();
-    return { destroy() { aud.close(); } };
+    return { destroy() { bgEnd(); aud.close(); } };
   }
 
   Ameplay.register({
@@ -5957,9 +5978,10 @@ ${TOUCH_CSS('stick-fight')}`,
       pvDraw();
     });
 
+    const bgEnd = bgHost(api, root, () => G.role === 'host' && !!G.W, (d, now) => { hostFrame(d); hostSend(now); });
     root.__sm = { G, saved, snapshot, fxEvent };
     if (api.net.invite) { showMenu(); hideUi(); goOnline(); } else showMenu();
-    return { destroy() { aud.close(); } };
+    return { destroy() { bgEnd(); aud.close(); } };
   }
 
   Ameplay.register({

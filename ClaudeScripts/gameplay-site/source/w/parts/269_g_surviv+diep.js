@@ -11,6 +11,26 @@
   const BOTNAMES = ['Slayer', 'NoScope', 'Lucky7', 'Bandit', 'Ghost', 'Rex', 'Maverick', 'Pixel', 'Viper', 'Nova', 'Echo', 'Tango', 'Zed', 'Kilo', 'Falcon', 'Wolfie', 'Hawk', 'Blaze', 'Cobra', 'Frost', 'Gizmo', 'Havoc', 'Ivy', 'Jinx', 'Kira', 'Lynx', 'Mochi', 'Nitro', 'Onyx', 'Panda', 'Quill', 'Raven', 'Sable', 'Taco', 'Umbra', 'Vex', 'Wraith', 'Xeno', 'Yuki', 'Zephyr', 'Bacon', 'Pickle', 'Waffle', 'Turbo', 'Comet', 'Domino', 'Ember', 'Fuzzy', 'Goose', 'Hazel', 'Iron', 'Juno', 'Koala', 'Luna', 'Mango', 'Ninja', 'Otter', 'Pogo', 'Rusty', 'Scout', 'Toast', 'Yeti', 'Zorro', 'Albert', 'Bruno', 'Cleo', 'Dante', 'Eli', 'Finn', 'Gus', 'Hugo', 'Iris', 'Jade', 'Kai', 'Leo', 'Mia', 'Noah', 'Owen', 'Pia', 'Quinn', 'Ruby', 'Sam', 'Theo', 'Uma', 'Vic', 'Will', 'Xan', 'Yara', 'Zoe'];
   const botName = (used, r = Math.random) => { for (let i = 0; i < 40; i++) { const n = pick(BOTNAMES, r) + (r() < .3 ? ((r() * 90) | 0) + 1 : ''); if (!used.has(n)) { used.add(n); return n; } } return 'Bot' + ((r() * 999) | 0); };
 
+  function bgHost(api, root, want, fn) {
+    let w = null, iv = 0, last = 0, dead = false;
+    const stop = () => { if (w) { try { w.terminate(); } catch (e) {} w = null; } if (iv) { clearInterval(iv); iv = 0; } };
+    const tick = () => {
+      if (dead || !document.hidden) return;
+      if (!root.isConnected) { dead = true; stop(); return; }
+      const now = performance.now();
+      let dt = Math.min(1, (now - last) / 1000);
+      last = now;
+      if (!want()) return;
+      while (dt > .001) { const d = Math.min(.05, dt); dt -= d; fn(d, now); }
+    };
+    const start = () => {
+      stop(); last = performance.now();
+      try { const u = URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},33)'], { type: 'text/javascript' })); w = new Worker(u); URL.revokeObjectURL(u); w.onmessage = tick; w.onerror = () => { w = null; if (!iv && !dead) iv = setInterval(tick, 250); }; }
+      catch (e) { w = null; iv = setInterval(tick, 250); }
+    };
+    api.on(document, 'visibilitychange', () => { if (dead) return; if (document.hidden && want()) start(); else stop(); });
+    return () => { dead = true; stop(); };
+  }
   function makeAudio(api) {
     let ac = null, out = null, nb = null;
     const get = () => {
@@ -2711,9 +2731,10 @@
       } else V = null;
       render(dt);
     });
+    const bgEnd = bgHost(api, root, () => role === 'host' && !!S, (d, now) => { tNow = now; hostFrame(d, now); });
     SVENG.live = () => ({ S, GS, R, V, role, st, inp, G, Wm, sh, doAct, hist });
     if (api.net.invite) goOnline(); else showMenu();
-    return { destroy() { SVENG.live = null; AU.close(); if (role) { try { api.net.close(); } catch (e) {} } } };
+    return { destroy() { bgEnd(); SVENG.live = null; AU.close(); if (role) { try { api.net.close(); } catch (e) {} } } };
   }
 
   Ameplay.register({
@@ -4342,7 +4363,8 @@
     });
     DPENG.live = () => ({ S, GS, R, V, role, st, inp, G, sh, doStat, doCls, hist, saved, ico: dpIcon, cls: DPCLS, ci: DPCI });
     if (api.net.invite) goOnline(); else showMenu();
-    return { destroy() { DPENG.live = null; AU.close(); if (role) { try { api.net.close(); } catch (e) {} } } };
+    const bgEnd = bgHost(api, root, () => role === 'host' && !!S, (d, now) => { tNow = now; hostFrame(d, now); });
+    return { destroy() { bgEnd(); DPENG.live = null; AU.close(); if (role) { try { api.net.close(); } catch (e) {} } } };
   }
 
   Ameplay.register({

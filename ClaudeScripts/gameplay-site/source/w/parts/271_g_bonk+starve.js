@@ -2,6 +2,26 @@
   'use strict';
 {
 const BK_ID = 'bonk';
+function bgHost(api, root, want, fn) {
+  let w = null, iv = 0, last = 0, dead = false;
+  const stop = () => { if (w) { try { w.terminate(); } catch (e) {} w = null; } if (iv) { clearInterval(iv); iv = 0; } };
+  const tick = () => {
+    if (dead || !document.hidden) return;
+    if (!root.isConnected) { dead = true; stop(); return; }
+    const now = performance.now();
+    let dt = Math.min(1, (now - last) / 1000);
+    last = now;
+    if (!want()) return;
+    while (dt > .001) { const d = Math.min(.05, dt); dt -= d; fn(d, now); }
+  };
+  const start = () => {
+    stop(); last = performance.now();
+    try { const u = URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},33)'], { type: 'text/javascript' })); w = new Worker(u); URL.revokeObjectURL(u); w.onmessage = tick; w.onerror = () => { w = null; if (!iv && !dead) iv = setInterval(tick, 250); }; }
+    catch (e) { w = null; iv = setInterval(tick, 250); }
+  };
+  api.on(document, 'visibilitychange', () => { if (dead) return; if (document.hidden && want()) start(); else stop(); });
+  return () => { dead = true; stop(); };
+}
 const PH = (() => {
   const SLOP = .3, BETA = .2, BMAX = 100, BTHR = 90, ITER = 10;
   let UID = 1;
@@ -2080,10 +2100,17 @@ ${m === 1 ? `<div class="bk-row"><span>Arrows</span>${seg('deadly', [[0, 'Knockb
       }
     });
 
+    const bgEnd = bgHost(api, root, () => G.state === 'host' && !!G.A, d => {
+      const A = G.A;
+      if (!A || G.state !== 'host') return;
+      const al = A.advance(d), evs = A.drain(), v0 = viewOf(A, al);
+      for (const e of evs) { handleEv(e, v0); if (e.k === 'rend') pushHostSave(A.scores.slice(), A.round); if (e.k === 'mend') onMend(A, A.scores, e.mw); }
+      hostLoopNet(evs);
+    });
     G.demo = makeArena(demoCfg()); G.demo.start();
     if (api.net.invite) { G.state = 'menu'; goOnline(); }
     else showMenu();
-    return { destroy() { try { snd.t(1, .01, 'sine', .0001); } catch (e) {} } };
+    return { destroy() { bgEnd(); try { snd.t(1, .01, 'sine', .0001); } catch (e) {} } };
   }
 });
 
@@ -4293,10 +4320,28 @@ class StarveGame {
     this.ro = new ResizeObserver(() => this.fit());
     this.ro.observe(wrap);
     api.loop((dt, now) => this.frame(dt, now));
+    this.bgEnd = bgHost(api, wrap, () => this.role === 'host' && !!this.sim && !!this.renderer, d => this.bgStep(d));
+  }
+
+  bgStep(dt) {
+    const sim = this.sim, me = this.me;
+    if (!sim || this.role !== 'host') return;
+    this.acc += dt;
+    let n = 0;
+    while (this.acc >= STEP && n < 4) {
+      this.acc -= STEP; n++;
+      if (me) { me.inp.mx = me.inp.my = 0; me.inp.atk = 0; }
+      sim.step(STEP);
+      this.hostPost();
+      sim.fx.length = 0; sim.ev.length = 0;
+    }
+    if (n === 4) this.acc = 0;
+    if (me) { this.hsaveT -= dt; if (this.hsaveT <= 0) { this.hsaveT = 4; this.hostSave(); } }
   }
 
   destroy() {
     this.dead = true;
+    if (this.bgEnd) this.bgEnd();
     try { this.ro.disconnect(); } catch (e) {}
     this.audio.close();
     this.saveNow();

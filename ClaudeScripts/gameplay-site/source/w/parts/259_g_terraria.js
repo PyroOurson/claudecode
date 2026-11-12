@@ -1,6 +1,26 @@
 (() => {
   'use strict';
   const ID = 'terraria';
+  function bgHost(api, root, want, fn) {
+    let w = null, iv = 0, last = 0, dead = false;
+    const stop = () => { if (w) { try { w.terminate(); } catch (e) {} w = null; } if (iv) { clearInterval(iv); iv = 0; } };
+    const tick = () => {
+      if (dead || !document.hidden) return;
+      if (!root.isConnected) { dead = true; stop(); return; }
+      const now = performance.now();
+      let dt = Math.min(1, (now - last) / 1000);
+      last = now;
+      if (!want()) return;
+      while (dt > .001) { const d = Math.min(.05, dt); dt -= d; fn(d, now); }
+    };
+    const start = () => {
+      stop(); last = performance.now();
+      try { const u = URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},33)'], { type: 'text/javascript' })); w = new Worker(u); URL.revokeObjectURL(u); w.onmessage = tick; w.onerror = () => { w = null; if (!iv && !dead) iv = setInterval(tick, 250); }; }
+      catch (e) { w = null; iv = setInterval(tick, 250); }
+    };
+    api.on(document, 'visibilitychange', () => { if (dead) return; if (document.hidden && want()) start(); else stop(); });
+    return () => { dead = true; stop(); };
+  }
   const TS = 16, CS = 16, TPS = 60, STEP = 1 / TPS;
   const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -6260,6 +6280,10 @@
     showMenu('title');
     lastNow = now(); fps.t = lastNow; fps.n = 0;
     a.loop(frame);
+    const bgEnd = bgHost(a, root, () => alive && SCENE === 'play' && !!G && !!W && NET.role === 'host' && G.players.size > 1, d => {
+      if (!alive || SCENE !== 'play' || !G || !W) return;
+      try { accT += d; let n = 0; while (accT >= STEPS && n < 5) { simTick(); accT -= STEPS; n++; } if (n >= 5) accT = 0; lastNow = now(); } catch (e) { if (++errCount < 8 && window.console) console.error(e); }
+    });
     autoResume();
     root.__tr = {
       G: () => G, W: () => W, M, NET, UI, fps, scene: () => SCENE, paused: () => paused, cam: () => [camX, camY], zs: () => zsDev, bw: () => [BW, BH],
@@ -6275,6 +6299,7 @@
     return {
       destroy() {
         alive = false;
+        bgEnd();
         if (resizeObs) { resizeObs.disconnect(); resizeObs = null; }
         try { if (G && SCENE === 'play') saveNow(); } catch (e) { }
         try { leaveOnline(); } catch (e) { }

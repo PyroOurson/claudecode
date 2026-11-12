@@ -52,7 +52,7 @@
   ];
   const WORM_NAMES = ['Boggy B', 'Spadge', 'Clagnut', 'Wiggles', 'Nobby', 'Slimey', 'Squirt', 'Doris', 'Grub', 'Mulch', 'Stumpy', 'Bernard', 'Noodle', 'Gus', 'Pinkie', 'Lumpy', 'Wriggler', 'Tubby', 'Mabel', 'Sir Reginald', 'Dribble', 'Fergus', 'Ziggy', 'Biscuit', 'Moss', 'Wormy', 'Chunk', 'Sprout', 'Hank', 'Pudding', 'Olive', 'Twitch'];
   const TEAM_NAMES = ['The Wrigglers', 'Slime Time', 'Dirt Squad', 'Pink Menace', 'Bait & Switch', 'Soil Boys', 'The Annelids', 'Mud Pie', 'Early Birds', 'Compost Crew', 'Fishing Hooks', 'Spaghetti'];
-  const LEVELS = ['Easy', 'Normal', 'Hard', 'Expert'];
+  const LEVELS = ['Easy', 'Normal', 'Hard', 'Hardest'];
 
   const THEMES = [
     { id: 'meadow', name: 'Meadow', sky: ['#4aa7ee', '#92d3f7', '#e3f5ff'], sun: '#fff4b8', sunX: .8, sunY: .2, far: '#9bc2de', near1: '#79b39c', near2: '#4f9a58', fog: '#e3f5ff', top: ['#80d83f', '#4fae2f'], td: 9, dirt: ['#b0703d', '#6c3f24'], deep: '#442717', rock: '#b9a98a', out: '#2a160e', under: '#38200f', blades: ['#92e64e', '#5cbc36'], water: ['#49b7f1', '#1d6aa6', '#0b3260'], foam: '#f0fcff', deco: 'trees', cloud: '#ffffff', night: 0 },
@@ -92,6 +92,26 @@
   const GIRDER_ANG = [0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5];
   const GIRDER_LEN = [64, 112, 176];
 
+  function bgHost(api, root, want, fn) {
+    let w = null, iv = 0, last = 0, dead = false;
+    const stop = () => { if (w) { try { w.terminate(); } catch (e) {} w = null; } if (iv) { clearInterval(iv); iv = 0; } };
+    const tick = () => {
+      if (dead || !document.hidden) return;
+      if (!root.isConnected) { dead = true; stop(); return; }
+      const now = performance.now();
+      let dt = Math.min(1, (now - last) / 1000);
+      last = now;
+      if (!want()) return;
+      while (dt > .001) { const d = Math.min(.05, dt); dt -= d; fn(d, now); }
+    };
+    const start = () => {
+      stop(); last = performance.now();
+      try { const u = URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},33)'], { type: 'text/javascript' })); w = new Worker(u); URL.revokeObjectURL(u); w.onmessage = tick; w.onerror = () => { w = null; if (!iv && !dead) iv = setInterval(tick, 250); }; }
+      catch (e) { w = null; iv = setInterval(tick, 250); }
+    };
+    api.on(document, 'visibilitychange', () => { if (dead) return; if (document.hidden && want()) start(); else stop(); });
+    return () => { dead = true; stop(); };
+  }
   function makeAudio(api) {
     let ac = null, out = null, nb = null;
     const get = () => {
@@ -609,7 +629,7 @@
       const ammo = {};
       WORDER.forEach(id => { ammo[id] = WEPS[id].ammo; });
       if (cfg.arsenal === 'plenty') WORDER.forEach(id => { if (ammo[id] > 0) ammo[id] += 2; });
-      G.teams.push({ i, name: t.name, col: t.col == null ? i : t.col, human: !!t.human, pid: t.pid || null, lvl: t.lvl || 1, ammo, ptr: -1, st: { dmg: 0, taken: 0, kills: 0, shots: 0, lost: 0, self: 0, crates: 0 }, voice: .8 + (i * .17) % .7 + (t.vo || 0), worms: [], hp: 0, shown: 0 });
+      G.teams.push({ i, name: t.name, col: t.col == null ? i : t.col, human: !!t.human, pid: t.pid || null, lvl: t.lvl == null ? 1 : clamp(t.lvl | 0, 0, 3), ammo, ptr: -1, st: { dmg: 0, taken: 0, kills: 0, shots: 0, lost: 0, self: 0, crates: 0 }, voice: .8 + (i * .17) % .7 + (t.vo || 0), worms: [], hp: 0, shown: 0 });
       G.inp.push({ l: 0, r: 0, u: 0, d: 0, f: 0, sh: 0, pf: 0 });
     });
     return G;
@@ -3217,7 +3237,7 @@
     function resumeOnline(sv, map) {
       const cfg = JSON.parse(JSON.stringify(sv.cfg));
       pids = cfg.teams.map(() => null);
-      cfg.teams.forEach(t => { t.human = false; t.pid = null; t.lvl = t.lvl || 1; });
+      cfg.teams.forEach(t => { t.human = false; t.pid = null; t.lvl = t.lvl == null ? 1 : t.lvl; });
       players.forEach((p, k) => { cfg.teams[map[k]].human = true; cfg.teams[map[k]].pid = p.id; pids[map[k]] = p.id; });
       begin(cfg, true, map[0], g => {
         g.worms = JSON.parse(JSON.stringify(sv.worms));
@@ -3265,10 +3285,11 @@
       if (V) view.draw(V, dt);
     });
     api.on(window, 'resize', () => view.resize());
+    const bgEnd = bgHost(api, root, () => scene === 'play' && !!G && !!G.host && mode === 'online', d => playFrame(d));
     newDemo();
     root._wk = { sim(sec) { for (let i = 0; i < sec * 60; i++) { botTick(G, STEP); stepGame(G, STEP); const es = G.evq; G.evq = []; for (const e of es) onEvent(e); } }, get G() { return G; }, get demo() { return demoG; }, view, K, opt, exec, startSolo, get scene() { return scene; }, mine, showTitle };
     if (api.net.invite) startOnline(); else showTitle();
-    return { destroy() { tok++; aud.close(); } };
+    return { destroy() { bgEnd(); tok++; aud.close(); } };
   }
 
   const coverWorms = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="wkc-s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f95e8"/><stop offset="1" stop-color="#bfe6fb"/></linearGradient><linearGradient id="wkc-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#86dc45"/><stop offset=".12" stop-color="#4fae2f"/><stop offset=".16" stop-color="#7a5232"/><stop offset="1" stop-color="#3a2416"/></linearGradient><radialGradient id="wkc-e" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff7c0"/><stop offset=".5" stop-color="#ffb03a"/><stop offset="1" stop-color="#ff5a1a" stop-opacity="0"/></radialGradient></defs><rect width="400" height="300" fill="url(#wkc-s)"/><circle cx="330" cy="50" r="26" fill="#fff6b8"/><ellipse cx="90" cy="60" rx="46" ry="14" fill="#fff" opacity=".85"/><ellipse cx="130" cy="52" rx="30" ry="12" fill="#fff" opacity=".85"/><path d="M0 300V190Q40 170 90 180T190 178Q230 150 270 182T360 175Q385 170 400 180V300Z" fill="url(#wkc-g)"/><circle cx="250" cy="200" r="30" fill="#3f95e8"/><circle cx="250" cy="200" r="30" fill="url(#wkc-s)"/><circle cx="250" cy="196" r="44" fill="url(#wkc-e)"/><g transform="translate(95 178)"><path d="M-14 8q-6-14 6-18" stroke="#6a2434" stroke-width="22" stroke-linecap="round" fill="none"/><path d="M-14 8q-6-14 6-18" stroke="#f6a3b5" stroke-width="18" stroke-linecap="round" fill="none"/><circle cx="4" cy="-22" r="15" fill="#6a2434"/><circle cx="4" cy="-22" r="13.6" fill="#f6a3b5"/><path d="M-9-27q13-14 26-2" stroke="#e8433a" stroke-width="5" fill="none" stroke-linecap="round"/><ellipse cx="2" cy="-21" rx="3.4" ry="5" fill="#fff" stroke="#2a1420"/><ellipse cx="10" cy="-21" rx="3.4" ry="5" fill="#fff" stroke="#2a1420"/><circle cx="3.4" cy="-20" r="1.8" fill="#17080e"/><circle cx="11.4" cy="-20" r="1.8" fill="#17080e"/><path d="M4-13q5 4 10 0" stroke="#2a1420" stroke-width="1.6" fill="none"/><rect x="12" y="-10" width="34" height="9" rx="4" fill="#6b7a40" stroke="#2a3418" stroke-width="2" transform="rotate(-22 12 -10)"/></g><g transform="translate(300 168)"><path d="M-12 8q-5-12 5-16" stroke="#6a2434" stroke-width="20" stroke-linecap="round" fill="none"/><path d="M-12 8q-5-12 5-16" stroke="#f6a3b5" stroke-width="16" stroke-linecap="round" fill="none"/><circle cx="3" cy="-20" r="13" fill="#6a2434"/><circle cx="3" cy="-20" r="11.8" fill="#f6a3b5"/><path d="M-8-24q11-12 22-2" stroke="#3f7cf0" stroke-width="5" fill="none" stroke-linecap="round"/><ellipse cx="0" cy="-19" rx="3" ry="4.4" fill="#fff" stroke="#2a1420"/><ellipse cx="7" cy="-19" rx="3" ry="4.4" fill="#fff" stroke="#2a1420"/><circle cx="1" cy="-18" r="1.6" fill="#17080e"/><circle cx="8" cy="-18" r="1.6" fill="#17080e"/><ellipse cx="3.5" cy="-11" rx="2.4" ry="3" fill="#6a1424"/></g><path d="M150 140Q200 60 250 196" stroke="#fff" stroke-width="2.5" stroke-dasharray="3 6" fill="none" opacity=".7"/><g transform="translate(215 98) rotate(35)"><rect x="-14" y="-4" width="26" height="8" rx="4" fill="#d44" stroke="#611" stroke-width="1.5"/><path d="M12-4l8 4-8 4z" fill="#eee" stroke="#611" stroke-width="1.5"/><path d="M-14-4l-6-5v18l6-5z" fill="#ffb02e"/></g><text x="200" y="272" text-anchor="middle" font-family="Trebuchet MS,Segoe UI,sans-serif" font-weight="900" font-size="46" fill="#ffd0dc" stroke="#6a2434" stroke-width="7" paint-order="stroke" letter-spacing="3">WORMS</text></svg>`;
