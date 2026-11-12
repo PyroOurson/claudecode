@@ -1020,7 +1020,9 @@
     ];
     const PAINTS = ['#e8293b', '#2d8cff', '#f4b400', '#2a9d8f', '#b5179e', '#f2f2f0'];
     const garage = Object.assign({ car: 0, col: 0, km: 0 }, api.load() || {});
+    garage.km = +garage.km || 0;
     if (!CARS[garage.car] || garage.km < CARS[garage.car].km) garage.car = 0;
+    if (!PAINTS[garage.col]) garage.col = 0;
     let CAR = CARS[garage.car], player = null;
     const cockPaint = K.std(PAINTS[garage.col], { roughness: .28, metalness: .35 });
     const tireI = new THREE.InstancedMesh(CK.tireG, M.rubber, 160), rimI = new THREE.InstancedMesh(CK.rimG, M.chrome, 160);

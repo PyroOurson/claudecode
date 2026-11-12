@@ -318,7 +318,7 @@ function decodeTrack(code) {
     if (sum !== b[b.length - 1]) return null;
     let o = 1; const season = b[o++] & 3, nl = b[o++], name = new TextDecoder().decode(b.subarray(o, o + nl)); o += nl;
     const n = b[o] | (b[o + 1] << 8); o += 2;
-    if (o + n * 4 + 1 !== b.length) return null;
+    if (n > 600 || o + n * 4 + 1 !== b.length) return null;
     const pieces = [];
     for (let i = 0; i < n; i++) {
       const t = b[o++], x = b[o++] - 128, z = b[o++] - 128, w = b[o++];
@@ -1271,9 +1271,12 @@ function run(root, wrap, api, V) {
   fitPR(api, V);
   const view = makeView(THREE, renderer, canvas, w, h, narrow);
   const saved = api.load() || {};
-  const P = { best: saved.best || {}, med: saved.med || {}, lb: saved.lb || {}, split: saved.split || {}, custom: saved.custom || [], played: saved.played || 0, set: saved.set || {} };
+  const rec = v => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
+  const P = { best: rec(saved.best), med: rec(saved.med), lb: rec(saved.lb), split: rec(saved.split), custom: (Array.isArray(saved.custom) ? saved.custom : []).filter(c => c && typeof c.id === 'string' && typeof c.code === 'string' && decodeTrack(c.code)).slice(0, 200), played: +saved.played || 0, set: rec(saved.set), draft: null };
+  { const d = saved.draft, ok = d && Array.isArray(d.pieces) && d.pieces.length <= 600 && d.pieces.every(q => Array.isArray(q) && q.length === 5 && q.every(Number.isFinite) && PIECES[q[0]]); if (ok) P.draft = { id: typeof d.id === 'string' ? d.id : null, name: String(d.name || 'My track').slice(0, 30), season: clamp(d.season | 0, 0, 2), pieces: d.pieces.map(q => q.slice()) }; }
   const prof = (() => { try { const p = JSON.parse(localStorage.getItem('gameplay:profile')); return (p && (p.username || p.displayName)) || ''; } catch (e) { return ''; } })();
   const prefs = Object.assign({ cam: 0, kmh: 1, sfx: 1, music: 0.5, shadow: 1, ghost: 1, c1: 0, c2: 0, name: prof || 'Player', touch: 'auto', rivals: 0, tags: 1 }, P.set);
+  prefs.cam = clamp(prefs.cam | 0, 0, 2); prefs.c1 = clamp(prefs.c1 | 0, 0, CAR_COLS.length - 1); prefs.c2 = clamp(prefs.c2 | 0, 0, ACC_COLS.length - 1); prefs.name = String(prefs.name || 'Player').slice(0, 24);
   P.set = prefs;
   let saveT = 0;
   const save = () => { clearTimeout(saveT); saveT = setTimeout(() => api.save(P), 250); };
@@ -2321,17 +2324,18 @@ ${S.mode === 'net' ? '' : `<h3>Options</h3><div class="row"><button class="pt-b 
       api.net.send({ t: 'ps', rd: n.rd, a }, true);
     }, 50);
   }
+  let rafT = 0, bgT = 0;
   api.loop(dt => {
+    rafT = performance.now();
     view.clouds();
     if (S.mode === 'edit' && E && !E.testing) edFrame(dt);
     else if (R) { stepRace(dt); drawRace(dt); }
     view.render();
   });
-  let bgT = 0;
   api.interval(() => {
     const now = performance.now();
-    if (!document.hidden || !R || R.kind !== 'online' || !net || net.role !== 'host') { bgT = 0; return; }
-    let left = bgT ? Math.min(2, (now - bgT) / 1000) : 0;
+    if (now - rafT < 400 || !R || R.kind !== 'online' || !net || net.role !== 'host') { bgT = 0; return; }
+    let left = Math.min(5, (now - (bgT || rafT)) / 1000);
     bgT = now;
     while (left > 1e-4 && R && R.kind === 'online') { const d = Math.min(left, DT * 8); stepRace(d); left -= d; }
   }, 200);
@@ -2340,7 +2344,9 @@ ${S.mode === 'net' ? '' : `<h3>Options</h3><div class="row"><button class="pt-b 
   if (api.net && api.net.invite) goOnline();
   else { S.mode = 'menu'; startDemo(); show('menu'); applyPrefs(); }
   return () => {
-    clearTimeout(saveT); api.save(P);
+    clearTimeout(saveT); clearTimeout(draftTm); clearTimeout(splitTm); clearTimeout(toastT);
+    if (E && S.mode === 'edit') P.draft = { id: E.id, name: E.name, season: E.season, pieces: E.pieces };
+    api.save(P);
     if (net) leaveNet();
     endRace(); audio.close(); view.dispose();
   };

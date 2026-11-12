@@ -350,7 +350,8 @@ ${g} .hint:empty{display:none}
     add(new THREE.BoxGeometry(96, 0.5, 10), roofM, 0, topY + 3.6, backZ + 4.5, scene, false);
     add(new THREE.BoxGeometry(96, 1.1, 0.35), M(C.accent, { roughness: 0.5 }), 0, topY + 3.4, backZ + 9.5, scene, false);
     const lampM = new THREE.MeshBasicMaterial({ color: 0xfff6dc });
-    for (let x = -44; x <= 44; x += 4) add(new THREE.BoxGeometry(1.4, 0.12, 0.4), lampM, x, topY + 3.3, backZ + 8.6, scene, false);
+    const lamps = [], lampA = new THREE.BoxGeometry(1.4, 0.12, 0.4), lampB = new THREE.BoxGeometry(0.55, 0.55, 0.12);
+    for (let x = -44; x <= 44; x += 4) lamps.push([lampA, x, topY + 3.3, backZ + 8.6]);
     for (const x of [-30, -12, 12, 30]) add(new THREE.BoxGeometry(0.4, 3.6, 0.4), roofM, x, topY + 1.8, backZ + 1.5, scene, false);
 
     const boardTex = K.tex(1024, 256, (x, w, h) => {
@@ -367,7 +368,8 @@ ${g} .hint:empty{display:none}
     });
     add(new THREE.BoxGeometry(12.6, 3.0, 0.3), M(0x15132b, { roughness: 0.5 }), 0, 10.0, backZ + 0.45, scene, false);
     add(new THREE.PlaneGeometry(12, 2.5), new THREE.MeshBasicMaterial({ map: boardTex }), 0, 10.0, backZ + 0.62, scene, false);
-    for (const sx of [-1, 1]) for (const k of [0, 1, 2]) add(new THREE.BoxGeometry(0.55, 0.55, 0.12), lampM, sx * (9.6 + k * 0.9), 10.0 + (k - 1) * 0.0, backZ + 0.45, scene, false);
+    for (const sx of [-1, 1]) for (const k of [0, 1, 2]) lamps.push([lampB, sx * (9.6 + k * 0.9), 10.0, backZ + 0.45]);
+    add(mergeGeo(THREE, lamps), lampM, 0, 0, 0, scene, false);
     const seats = [];
     for (let r = 0; r < ROWS; r++) for (let x = -46; x <= 46; x += 0.62) if (Math.random() < 0.9) seats.push([x + rnd(-0.07, 0.07), Y0 + r * RH, Z0 - (r + 0.55) * RD]);
     const NC = seats.length, bodyGeo = new THREE.BoxGeometry(0.44, 0.56, 0.3), headGeo = new THREE.SphereGeometry(0.13, 10, 8);
