@@ -203,7 +203,7 @@
     const setW = (t, w) => { t.w = w; t.laserReady = t.rayReady = t.homingReady = true; t.mines = 0; };
     S.setW = setW;
     const addShot = (k, t, x, y, a, speed, sub, life, deadly) => {
-      const s = { id: S.nid++, k, o: t, x, y, px: x, py: y, vx: sx(a) * speed / sub, vy: sy(a) * speed / sub, sub, life, deadly, a, bc: 0 };
+      const s = { id: S.nid++, k, o: t, x, y, px: x, py: y, vx: sx(a) * speed / sub, vy: sy(a) * speed / sub, sub, life, deadly, a, bc: 0, t0: S.tick };
       S.shots.push(s);
       return s;
     };
@@ -481,14 +481,15 @@
       S.bots.forEach(b => b && b.reset());
       ev('round');
     };
-    let TH = { tick: -1, H: 0 };
-    S.threats = H => {
-      if (TH.tick === S.tick && TH.H >= H) return TH;
+    const THC = [];
+    S.threats = (H, lag = 0) => {
+      let TH = THC[lag];
+      if (TH && TH.tick === S.tick && TH.H >= H) return TH;
       const f = [];
       for (let i = 0; i < H; i++) f.push([]);
       let n = 0;
       for (const s of S.shots) {
-        if (s.dead || s.fade) continue;
+        if (s.dead || s.fade || (lag && S.tick - s.t0 < lag)) continue;
         const p = { x: s.x, y: s.y, vx: s.vx, vy: s.vy }, mg = s.k === 'f' ? 24 : s.k === 'x' ? 2 : 4, own = s.k === 'b' || s.k === 'g';
         let bc = s.bc || 0, life = s.life == null ? 99 : s.life;
         for (let i = 0; i < H; i++) {
@@ -503,7 +504,7 @@
         n++;
       }
       for (const mn of S.mines) if (mn.landed) { n++; for (let i = 0; i < H; i++) f[i].push(mn.x, mn.y, 8, -1); }
-      TH = { tick: S.tick, H, f, n };
+      TH = THC[lag] = { tick: S.tick, H, f, n };
       return TH;
     };
     S.step = () => {
@@ -557,9 +558,11 @@
     const P = [
       { every: 2, H: 12, scan: 9, cone: 6, cd: 26, look: 40, miss: .3, pad: -1, dodge: .55, crate: -1 },
       { every: 1, H: 20, scan: 4, cone: 18, cd: 12, look: 60, miss: .12, pad: 0, dodge: .85, crate: 2 },
-      { every: 1, H: 26, scan: 2, cone: 18, cd: 4, look: 80, miss: 0, pad: 1, dodge: 1, crate: 4 }
-    ][Math.max(0, Math.min(2, skill | 0))];
-    const scr = { x: 0, y: 0, rot: 0 }, NB = [0, 0, 0, 0];
+      { every: 1, H: 26, scan: 2, cone: 18, cd: 4, look: 80, miss: 0, pad: 1, dodge: 1, crate: 4 },
+      { every: 1, H: 30, scan: 4, cone: 18, cd: 4, look: 100, miss: 0, pad: 1, dodge: 1, crate: 4, lag: 4, lead: 10, wary: 12 }
+    ][Math.max(0, Math.min(3, skill | 0))];
+    const scr = { x: 0, y: 0, rot: 0 }, ghost = { x: 0, y: 0, rot: 0 }, NB = [0, 0, 0, 0], VT = [];
+    for (let i = 0; i < 16; i++) VT.push([]);
     let tk = 0, shot = null, scanT = 0, cool = 20, dodge = null, dodgeT = 0, stuck = 0, backT = 0, backL = 0, burstT = 0, mineT = 40, lx = 0, ly = 0, lr = 0;
     const COMBOS = [];
     for (const f of [1, 0, -1]) for (const r of [0, -1, 1]) COMBOS.push({ f: f > 0 ? 1 : 0, b: f < 0 ? 1 : 0, l: r < 0 ? 1 : 0, r: r > 0 ? 1 : 0 });
@@ -570,10 +573,27 @@
       let bc = false;
       for (let f = 0; f < L; f++) {
         for (let k = 0; k < sub; k++) if (bounce(S.m, p)) bc = true;
-        for (const e of foes) if (inTank(e, p.x, p.y, P.pad)) return f;
+        if (P.lead) {
+          const k = Math.min(f + 1, P.lead);
+          for (const e of foes) { ghost.x = e.x + (e.x - e.px) * k; ghost.y = e.y + (e.y - e.py) * k; ghost.rot = e.rot; if (inTank(ghost, p.x, p.y, P.pad)) return f; }
+        } else for (const e of foes) if (inTank(e, p.x, p.y, P.pad)) return f;
         if ((bc || f > 1) && inTank(scr, p.x, p.y, 6)) return -1;
       }
       return -1;
+    }
+    function barrels(foes) {
+      let any = false;
+      for (let f = 0; f < P.wary; f++) VT[f].length = 0;
+      for (const e of foes) {
+        if (e.w !== 'bullet' || e.bf >= CFG.bullet.max) continue;
+        const dr = nrm(e.rot - e.prot);
+        for (let k = 0; k < (dr ? 2 : 1); k++) {
+          const rot = nrm(e.rot + k * dr), sub = CFG.bullet.sub, p = { x: e.x + sx(rot) * CFG.muzzle, y: e.y + sy(rot) * CFG.muzzle, vx: sx(rot) * CFG.bullet.speed / sub, vy: sy(rot) * CFG.bullet.speed / sub };
+          for (let f = 0; f < P.wary; f++) { for (let q = 0; q < sub; q++) bounce(S.m, p); VT[f].push(p.x, p.y); }
+          any = true;
+        }
+      }
+      return any ? VT : null;
     }
     function simLaser(me, rot, foes) {
       const p = { x: me.x + sx(rot) * CFG.muzzle, y: me.y + sy(rot) * CFG.muzzle, vx: sx(rot) * 2, vy: sy(rot) * 2 };
@@ -597,14 +617,31 @@
       if (best && Math.random() < P.miss) best.rot = nrm(best.rot + (Math.random() < .5 ? 10 : -10));
       return best;
     }
-    function danger(me, c, th) {
+    function danger(me, c, th, vt) {
       scr.x = me.x; scr.y = me.y; scr.rot = me.rot;
+      let soft = 0;
       for (let f = 0; f < th.H && f < P.H; f++) {
         moveTank(S.m, scr, c.f, c.b, c.l, c.r);
         const a = th.f[f];
         for (let i = 0; i < a.length; i += 4) if (a[i + 3] !== idx && inTank(scr, a[i], a[i + 1], a[i + 2])) return 1000 - f * 20;
+        if (vt && !soft && f < P.wary) { const v = vt[f]; for (let i = 0; i < v.length; i += 2) if (inTank(scr, v[i], v[i + 1], 4)) { soft = 300 - f * 10; break; } }
       }
-      return 0;
+      return soft;
+    }
+    function evade(me, c, foes) {
+      if (Math.random() > P.dodge) return;
+      const th = S.threats(P.H, P.lag || 0), vt = P.wary && !c.fire ? barrels(foes) : null;
+      if (!th.n && !vt) { dodgeT = 0; return; }
+      const base = { f: c.f, b: c.b, l: c.l, r: c.r };
+      if (dodgeT > 0 && dodge && danger(me, dodge, th, vt) === 0) { c.f = dodge.f; c.b = dodge.b; c.l = dodge.l; c.r = dodge.r; dodgeT--; return; }
+      if (danger(me, base, th, vt) > 0) {
+        let bc = base, bd = 1e9;
+        for (const o of COMBOS) {
+          const d = danger(me, o, th, vt) + (o.f !== base.f) + (o.b !== base.b) + (o.l !== base.l) + (o.r !== base.r);
+          if (d < bd) { bd = d; bc = o; }
+        }
+        dodge = bc; dodgeT = 4; c.f = bc.f; c.b = bc.b; c.l = bc.l; c.r = bc.r;
+      } else dodgeT = 0;
     }
     return {
       reset() { shot = null; dodge = null; dodgeT = backT = burstT = stuck = 0; cool = 12 + Math.random() * 14; scanT = 2; },
@@ -614,7 +651,7 @@
         if (P.every > 1 && tk % P.every) { if (!burstT) c.fire = 0; return; }
         c.f = c.b = c.l = c.r = 0; c.fire = 0;
         const foes = S.tanks.filter(t => t.alive && t !== me);
-        if (!foes.length) return;
+        if (!foes.length) { if (P.lag && !S.locked(me)) evade(me, c, foes); return; }
         const myC = m.cell(me.x, me.y);
         let foe = foes[0], fd = 99;
         for (const t of foes) { const d = S.pd(myC, m.cell(t.x, t.y)); if (d < fd) { fd = d; foe = t; } }
@@ -670,19 +707,7 @@
           else stuck = 0;
         }
         lx = me.x; ly = me.y; lr = me.rot;
-        if (Math.random() > P.dodge) return;
-        const th = S.threats(P.H);
-        if (!th.n) { dodgeT = 0; return; }
-        const base = { f: c.f, b: c.b, l: c.l, r: c.r };
-        if (dodgeT > 0 && dodge && danger(me, dodge, th) === 0) { c.f = dodge.f; c.b = dodge.b; c.l = dodge.l; c.r = dodge.r; dodgeT--; return; }
-        if (danger(me, base, th) > 0) {
-          let bc = base, bd = 1e9;
-          for (const o of COMBOS) {
-            const d = danger(me, o, th) + (o.f !== base.f) + (o.b !== base.b) + (o.l !== base.l) + (o.r !== base.r);
-            if (d < bd) { bd = d; bc = o; }
-          }
-          dodge = bc; dodgeT = 4; c.f = bc.f; c.b = bc.b; c.l = bc.l; c.r = bc.r;
-        } else dodgeT = 0;
+        evade(me, c, foes);
       }
     };
   }
@@ -767,10 +792,10 @@
   const MENU = `<div class="mt-card"><div class="mt-logo">Tank Trouble</div><div class="mt-sub">Bullets bounce. Last tank standing scores.</div>
 <div class="mt-modes"><button class="mt-mode" data-m="cpu"><canvas data-t="01"></canvas><b>vs CPU</b><small data-h="cpu"></small></button><button class="mt-mode" data-m="online"><canvas data-t="01"></canvas><b>Online</b><small>2-8 players</small></button></div>
 <div class="mt-opts"><div class="mt-row"><span>Match</span><div class="mt-seg" data-k="target"><button data-v="0">Endless</button><button data-v="5">First to 5</button><button data-v="10">First to 10</button></div></div>
-<div class="mt-row"><span>CPU</span><div class="mt-seg" data-k="bots"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button></div><div class="mt-seg" data-k="skill"><button data-v="0">Easy</button><button data-v="1">Normal</button><button data-v="2">Hard</button></div></div>
+<div class="mt-row"><span>CPU</span><div class="mt-seg" data-k="bots"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button></div><div class="mt-seg" data-k="skill"><button data-v="0">Easy</button><button data-v="1">Normal</button><button data-v="2">Hard</button><button data-v="3">Hardest</button></div></div>
 <div class="mt-row"><span>Crates</span><div class="mt-seg" data-k="pw"><button data-v="1">Weapons</button><button data-v="0">Classic</button></div></div></div>
 <p class="mt-lv" data-lv></p><div class="mt-foot"><button class="mt-link" data-how>How to play</button><span class="mt-stat" data-st></span></div></div>`;
-  const LV = ['Easy: slow aim, misses often, aim guide on', 'Normal: plans bank shots and dodges', 'Hard: long bank shots, dodges everything'];
+  const LV = ['Easy: slow aim, misses often, aim guide on', 'Normal: plans bank shots and dodges', 'Hard: long bank shots, dodges everything', 'Hardest: leads its shots, reads your barrel, human reaction time'];
   const HOW = [
     ['drive', 'Drive', 'Arrow keys turn and move. Touch: drag the joystick. Mouse: point where to go.'],
     ['fire', 'Fire', 'M or Space shoots (click or the Fire button too). Up to 5 bullets at once.'],
@@ -1674,7 +1699,7 @@
           state = 'wait';
           panel({ kicker: 'Online', title: 'Everyone is in', text: 'Starting…', buttons: [['Leave', leave, 1]] });
           clearTimeout(G.wait);
-          G.wait = setTimeout(() => { if (api.alive && G.role === 'host' && state === 'wait') hostStart(); }, 2500);
+          G.wait = api.timeout(() => { if (G.role === 'host' && state === 'wait') hostStart(); }, 2500);
         } else { panel({ kicker: 'Online', title: 'Connected', text: 'Waiting for the host…', buttons: [['Leave', leave, 1]] }); api.net.send({ t: 'hi', p: coarse && innerHeight > innerWidth * 1.1 }); }
       }
       function hostStart() {

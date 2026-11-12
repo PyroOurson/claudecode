@@ -19,7 +19,7 @@
     speedK: 2.1106, speedExp: 0.449, tickMs: 40,
     zoomRef: 64, zoomExp: 0.4,
     boardEvery: 12,
-    bots: [20, 25, 30], aggro: [0.25, 0.4, 0.6], think: [8, 6, 4], splitReach: 640, splitWorth: 0.08,
+    bots: [20, 25, 30, 30], aggro: [0.25, 0.4, 0.6, 0], think: [8, 6, 4, 5], splitReach: 640, splitWorth: 0.08,
     leaveMass: 5000, leaveEvery: 30, leaveChance: 0.3
   };
 
@@ -154,7 +154,7 @@
       const pref = {
         nick: typeof saved.nick === 'string' ? saved.nick.slice(0, 15) : '',
         col: Number.isInteger(saved.col) && saved.col >= 0 && saved.col <= SWATCH.length ? saved.col : SWATCH.length,
-        diff: [0, 1, 2].includes(saved.diff) ? saved.diff : 1,
+        diff: [0, 1, 2, 3].includes(saved.diff) ? saved.diff : 1,
         mass: saved.mass !== false,
         skin: typeof saved.skin === 'string' && SKIN_BY.has(saved.skin) ? saved.skin : '',
         dark: !!saved.dark
@@ -245,7 +245,7 @@
         for (let i = 0; i < n; i++) {
           const b = mkPlayer(names[i % names.length], hsv(Math.random() * 360, 0.92, 1), true), bs = botSkin();
           if (bs && !players.some(p => p.skin === bs[0])) { b.skin = bs[0]; b.name = bs[1]; }
-          b.aggr = Math.random() < CFG.aggro[pref.diff];
+          b.aggr = Math.random() < CFG.aggro[pref.diff]; b.pro = pref.diff === 3;
           players.push(b);
           spawnPlayer(b, i < 3 ? 250 + Math.random() * 700 : 10 + Math.random() * Math.random() * 160);
         }
@@ -494,7 +494,7 @@
           const col = hsv(Math.random() * 360, 0.92, 1), bs = botSkin();
           b.skin = '';
           if (bs && !players.some(p => p.skin === bs[0])) { b.skin = bs[0]; b.name = bs[1]; }
-          b.rgbc = col; b.col = rgb(col); b.bcol = shade(col, 0.82); b.aggr = Math.random() < CFG.aggro[pref.diff];
+          b.rgbc = col; b.col = rgb(col); b.bcol = shade(col, 0.82); b.aggr = Math.random() < CFG.aggro[pref.diff]; b.pro = pref.diff === 3;
         }
         sweep();
       }
@@ -511,13 +511,17 @@
         }
         return best;
       }
+      const TX = new Float64Array(48), TY = new Float64Array(48), TR = new Float64Array(48);
+      let TN = 0;
       function think(b) {
         const cs = b.cells;
         let main = cs[0], cx = 0, cy = 0, tm = 0;
         for (const c of cs) { if (c.m > main.m) main = c; cx += c.x * c.m; cy += c.y * c.m; tm += c.m; }
         cx /= tm; cy /= tm;
         const R = main.s, vis = 650 + R * 4, passive = !b.aggr;
-        let fxv = 0, fyv = 0, danger = 0, prey = null, pScore = 0, near = 1e9;
+        let fxv = 0, fyv = 0, danger = 0, prey = null, pScore = 0, near = 1e9, near2 = 1e9, thr = null, tw = 0;
+        const pro = !!b.pro, mySp = speedOf(R);
+        TN = 0;
         for (const c of cells) {
           if (c.o === b || c.dead) continue;
           const dx = c.x - cx, dy = c.y - cy;
@@ -525,13 +529,20 @@
           const d = Math.hypot(dx, dy) || 1;
           if (c.s > R * 1.1) {
             const splitter = c.m * 0.5 > main.m * 1.33 && c.o.cells.length < CFG.maxCells;
-            const reach = c.s + R + (splitter ? CFG.splitReach : 150) + (passive ? 220 : 0);
-            if (d < reach) { const w = (reach - d) / reach * 3 + 0.4; fxv -= dx / d * w; fyv -= dy / d * w; danger += w; }
+            const reach = c.s + R + (splitter ? CFG.splitReach : pro ? 240 : 150) + (passive ? 220 : 0);
+            if (pro && d < reach + 500 && TN < 48) { TX[TN] = c.x + (c.x - c.px) * 8; TY[TN] = c.y + (c.y - c.py) * 8; TR[TN] = reach - 100; TN++; }
+            if (d < reach) { const w = (reach - d) / reach * 3 + 0.4; fxv -= dx / d * w; fyv -= dy / d * w; danger += w; if (w > tw) { tw = w; thr = c; } }
             if (d - c.s < near) near = d - c.s;
+            if (c.m > main.m * 0.5 * 1.33 && d - c.s < near2) near2 = d - c.s;
           } else if (R > c.s * CFG.eatRatio && !(c.o === me && T - (me.born || 0) < TPS * 6)) {
             const edge = Math.max(1, d - R + 60);
             if (passive && edge > 450) continue;
-            const sc = c.m / edge;
+            let sc = c.m / edge;
+            if (pro) {
+              if (c.m > main.m * 0.5 * 1.33 && d - c.s < near2) near2 = d - c.s;
+              const away = ((c.x - c.px) * dx + (c.y - c.py) * dy) / d, wall = Math.min(c.x, c.y, WORLD - c.x, WORLD - c.y) < 260;
+              if (away >= mySp * 0.9 && !wall && edge > 140 && !(main.m * 0.5 > c.m * 1.4 && d < CFG.splitReach + R * 0.5)) sc *= 0.12;
+            }
             if (sc > pScore) { pScore = sc; prey = c; }
           }
         }
@@ -555,12 +566,27 @@
           if (cy < m) fyv += (m - cy) / m * 3; else if (cy > WORLD - m) fyv -= (cy - WORLD + m) / m * 3;
           const l = Math.hypot(fxv, fyv) || 1;
           gx = cx + fxv / l * 900; gy = cy + fyv / l * 900;
+          if (pro) {
+            let bs = -1e9;
+            for (let k = 0; k < 16; k++) {
+              const ca = Math.cos(k * TAU / 16), sa = Math.sin(k * TAU / 16), qx = Math.max(0, Math.min(WORLD, cx + ca * mySp * 16)), qy = Math.max(0, Math.min(WORLD, cy + sa * mySp * 16));
+              let sc = 1e9;
+              for (let j = 0; j < TN; j++) { const v = Math.hypot(qx - TX[j], qy - TY[j]) - TR[j]; if (v < sc) sc = v; }
+              sc = Math.min(sc, 900) - Math.max(0, 320 - Math.min(qx, qy, WORLD - qx, WORLD - qy)) * 1.2 + (ca * fxv + sa * fyv) / l * 40;
+              if (sc > bs) { bs = sc; gx = cx + ca * 900; gy = cy + sa * 900; }
+            }
+          }
+          if (pro && thr && R < sz(CFG.virusMass) && thr.s > sz(CFG.virusMass) * CFG.eatRatio) {
+            let bv = null, bd = 520;
+            for (const v of viruses) { const vd = Math.hypot(v.x - cx, v.y - cy); if (vd < bd && (v.x - cx) * fxv + (v.y - cy) * fyv > 0) { bd = vd; bv = v; } }
+            if (bv) { const ex = bv.x - thr.x, ey = bv.y - thr.y, ed = Math.hypot(ex, ey) || 1; gx = bv.x + ex / ed * (bv.s * 0.5 + R); gy = bv.y + ey / ed * (bv.s * 0.5 + R); }
+          }
         } else if (prey) {
           gx = prey.x + (prey.x - prey.px) * 6; gy = prey.y + (prey.y - prey.py) * 6;
-          if (b.aggr && cs.length <= 4 && near > 700) {
+          if (pro ? cs.length === 1 && near2 > 800 && near > 400 : b.aggr && cs.length <= 4 && near > 700) {
             const d = Math.hypot(prey.x - main.x, prey.y - main.y);
-            if (main.m * 0.5 > prey.m * 1.4 && prey.m > main.m * CFG.splitWorth && main.s >= CFG.minSplitSize && d > R * 0.6 && d < CFG.splitReach + R * 0.5 && Math.random() < 0.55) {
-              b.tx = prey.x; b.ty = prey.y;
+            if (main.m * 0.5 > prey.m * 1.4 && prey.m > main.m * (pro ? 0.15 : CFG.splitWorth) && main.s >= CFG.minSplitSize && d > R * 0.6 && d < CFG.splitReach * (pro ? 0.8 : 1) + R * 0.5 && (pro || Math.random() < 0.55)) {
+              b.tx = prey.x + (pro ? (prey.x - prey.px) * 7 : 0); b.ty = prey.y + (pro ? (prey.y - prey.py) * 7 : 0);
               split(b);
               return;
             }
@@ -595,7 +621,7 @@
         }
         for (let i = 1; i < players.length; i++) {
           const b = players[i];
-          if (b.cells.length) { if ((T + i) % thinkEvery === 0) think(b); }
+          if (b.cells.length) { if ((T + i) % (b.pro ? CFG.think[3] : thinkEvery) === 0) think(b); }
           else if (T >= b.respawnAt) spawnPlayer(b, CFG.startMass);
         }
         for (let i = 0; i < cells.length; i++) { const c = cells[i]; c.px = c.x; c.py = c.y; moveCell(c); }
@@ -687,7 +713,7 @@
 <input class="cf-nick" maxlength="15" placeholder="Nick" value="${esc(pref.nick)}" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go">
 <div class="cf-sw">${sw}</div>
 <div class="cf-sk"><button type="button" data-skin="" class="${pref.skin ? '' : 'on'}" aria-label="No skin">None</button>${SKINS.map(k => `<button type="button" data-skin="${k[0]}" class="${pref.skin === k[0] ? 'on' : ''}" aria-label="${k[1]}" title="${k[1]}" style="background-image:url(${skinURL(k[0])})"></button>`).join('')}</div>
-<div class="cf-seg">${['Chill', 'Normal', 'Hard'].map((t, i) => `<button type="button" data-diff="${i}" class="${i === pref.diff ? 'on' : ''}">${t}</button>`).join('')}</div>
+<div class="cf-seg">${['Chill', 'Normal', 'Hard', 'Hardest'].map((t, i) => `<button type="button" data-diff="${i}" class="${i === pref.diff ? 'on' : ''}">${t}</button>`).join('')}</div>
 <button type="button" class="cf-play" data-a="1">Play</button>
 <div class="cf-opts"><label><input type="checkbox" data-opt="mass"${pref.mass ? ' checked' : ''}>Show mass</label><label><input type="checkbox" data-opt="dark"${pref.dark ? ' checked' : ''}>Dark theme</label></div>
 <p class="cf-help">${touchUI ? 'Drag to steer your cell.<br>Tap <b>Split</b> to split, <b>Eject</b> to shoot some mass.' : 'Move your mouse to control your cell.<br><b>Space</b> to split · <b>W</b> to eject some mass'}</p>
