@@ -370,23 +370,22 @@
     function randomTicks() {
       const rs = W.rules.randomTickSpeed ?? 3;
       if (!rs) return;
-      const cx0 = Math.floor(P.x) >> 4, cz0 = Math.floor(P.z) >> 4, R2 = Math.min(SET.rd, 6);
-      const centers = [[cx0, cz0]];
-      for (const e of ENTS) if (e.kind === 'player') centers.push([Math.floor(e.x) >> 4, Math.floor(e.z) >> 4]);
-      const done = new Set();
-      for (const [ccx, ccz] of centers) for (let dz = -R2; dz <= R2; dz++) for (let dx = -R2; dx <= R2; dx++) {
-        const c = colAt(ccx + dx, ccz + dz); if (!c || c.st < 2) continue;
-        const k = ck(c.cx, c.cz); if (done.has(k)) continue; done.add(k);
-        for (let sy = 0; sy <= c.top; sy++) {
-          const sec = c.s[sy]; if (!sec) continue;
-          for (let i = 0; i < rs; i++) {
-            const li = ri(4096), s = sec[li]; if (!s) continue;
-            const t = TT[STT[s]];
-            if (!t.tick && !t.crop && !t.sapling && !LEAF[s] && t.id !== 'grass_block' && t.id !== 'mycelium' && t.id !== 'farmland' && !t.fire && t.id !== 'ice' && t.id !== 'snow' && t.ox === undefined && t.id !== 'dirt' && !FLU[s]) continue;
-            randomTick(c.cx * 16 + (li & 15), sy * 16 + (li >> 8), c.cz * 16 + (li >> 4 & 15), s, t);
+      const R2 = Math.min(RD, 6), stamp = tickN;
+      const around = (ccx, ccz) => {
+        for (let dz = -R2; dz <= R2; dz++) for (let dx = -R2; dx <= R2; dx++) {
+          const c = colAt(ccx + dx, ccz + dz); if (!c || c.st < 2 || c.rt === stamp) continue;
+          c.rt = stamp;
+          for (let sy = 0; sy <= c.top; sy++) {
+            const sec = c.s[sy]; if (!sec) continue;
+            for (let i = 0; i < rs; i++) {
+              const li = ri(4096), s = sec[li]; if (!RTK[s]) continue;
+              randomTick(c.cx * 16 + (li & 15), sy * 16 + (li >> 8), c.cz * 16 + (li >> 4 & 15), s, TT[STT[s]]);
+            }
           }
         }
-      }
+      };
+      around(Math.floor(P.x) >> 4, Math.floor(P.z) >> 4);
+      for (const e of RP.values()) around(Math.floor(e.x) >> 4, Math.floor(e.z) >> 4);
     }
     function randomTick(x, y, z, s, t) {
       const L = getL(x, y + 1, z), sky = (L >> 4) * U.sky.value, light = Math.max(sky, L & 15);

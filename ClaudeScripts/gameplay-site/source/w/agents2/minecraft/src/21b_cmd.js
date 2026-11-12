@@ -10,7 +10,7 @@
       else if (cmd === 'gamemode') pool = ['survival', 'creative', 'adventure', 'spectator'];
       else if (cmd === 'time') pool = parts.length === 2 ? ['set', 'add', 'query'] : ['day', 'noon', 'night', 'midnight'];
       else if (cmd === 'weather') pool = ['clear', 'rain', 'thunder'];
-      else if (cmd === 'difficulty') pool = ['peaceful', 'easy', 'normal', 'hard'];
+      else if (cmd === 'difficulty') pool = ['peaceful', 'easy', 'normal', 'hard', 'hardest'];
       else if (cmd === 'gamerule') pool = parts.length === 2 ? RULES.map(r => r[0]).concat(['randomTickSpeed']) : ['true', 'false'];
       else if (cmd === 'summon') pool = Object.keys(MT).concat(['item', 'tnt', 'falling_block']);
       else if (cmd === 'effect') pool = parts.length === 2 ? ['give', 'clear'] : ['regeneration', 'poison', 'hunger', 'fire_resistance', 'water_breathing'];
@@ -53,7 +53,7 @@
         W.weatherT = (+a[2] || 300 + ri(600)) * 20;
         say('Set the weather to ' + (k === 'clear' ? 'clear' : k === 'rain' ? 'rain' : 'rain & thunder')); return;
       }
-      if (cmd === 'difficulty') { const i = ['peaceful', 'easy', 'normal', 'hard'].indexOf((a[1] || '').toLowerCase()); if (i < 0) { say('The difficulty is ' + DIFFN[W.diff]); return; } if (W.hardcore) { err('Cannot change difficulty in Hardcore'); return; } W.diff = i; if (i === 0) for (const e of ENTS.slice()) if (e.kind === 'mob' && MT[e.type].hostile) delEnt(e); say('The difficulty has been set to ' + DIFFN[i]); return; }
+      if (cmd === 'difficulty') { const i = ['peaceful', 'easy', 'normal', 'hard', 'hardest'].indexOf((a[1] || '').toLowerCase()); if (i < 0) { say('The difficulty is ' + DIFFN[W.diff]); return; } if (W.hardcore) { err('Cannot change difficulty in Hardcore'); return; } W.diff = i; if (i === 0) for (const e of ENTS.slice()) if (e.kind === 'mob' && MT[e.type].hostile) delEnt(e); say('The difficulty has been set to ' + DIFFN[i]); return; }
       if (cmd === 'gamerule') {
         const k = a[1]; if (!k) { err('Usage: /gamerule <rule> [value]'); return; }
         if (a[2] === undefined) { say('Gamerule ' + k + ' is currently set to: ' + W.rules[k]); return; }
@@ -62,7 +62,7 @@
       }
       if (cmd === 'give') {
         let tgt = a[1], nm = a[2], n = parseInt(a[3]) || 1;
-        if (!nm) { nm = tgt; tgt = '@s'; }
+        if (!nm || IN[(tgt || '').replace(/^minecraft:/, '')] && !IN[nm.replace(/^minecraft:/, '')]) { n = parseInt(nm) || 1; nm = tgt; tgt = '@s'; }
         const it = IN[(nm || '').replace(/^minecraft:/, '')];
         if (!it || !it.tab) { err('Unknown item: ' + nm); return; }
         n = clamp(n, 1, 6400);

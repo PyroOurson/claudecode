@@ -1,7 +1,7 @@
     let worldsMeta = [], worldsLoaded = false, selWorld = -1, wScroll = 0, mpMode = null, loadMsg = '', loadP = 0, discMsg = '', confirmDel = null, optBack = 'title', ctrlWait = null, ctrlScroll = 0;
     let sliders = [], activeSlider = null;
     const GMODES = ['survival', 'hardcore', 'creative', 'adventure'], GMN = { survival: 'Survival', hardcore: 'Hardcore', creative: 'Creative', adventure: 'Adventure', spectator: 'Spectator' };
-    const DIFFN = ['Peaceful', 'Easy', 'Normal', 'Hard'], WTYPES = ['default', 'flat', 'large', 'amplified'], WTN = { default: 'Default', flat: 'Superflat', large: 'Large Biomes', amplified: 'Amplified' };
+    const DIFFN = ['Peaceful', 'Easy', 'Normal', 'Hard', 'Hardest'], WTYPES = ['default', 'flat', 'large', 'amplified'], WTN = { default: 'Default', flat: 'Superflat', large: 'Large Biomes', amplified: 'Amplified' };
     const RULES = [['keepInventory', 'Keep inventory after death', false], ['doDaylightCycle', 'Advance time of day', true], ['doWeatherCycle', 'Update weather', true], ['doMobSpawning', 'Spawn mobs', true], ['mobGriefing', 'Allow destructive mob actions', true], ['doFireTick', 'Spread and extinguish fire', true], ['naturalRegeneration', 'Regenerate health', true], ['doTileDrops', 'Drop blocks', true], ['doMobLoot', 'Drop mob loot', true], ['fallDamage', 'Fall damage', true], ['doImmediateRespawn', 'Respawn immediately', false], ['showCoordinates', 'Show coordinates', false]];
     const defRules = () => { const r = {}; for (const [k, , v] of RULES) r[k] = v; r.randomTickSpeed = 3; return r; };
     let CW = null;
@@ -111,10 +111,10 @@
       let y = 36;
       if (CW.tab === 0) {
         text('World Name', x0, y, '#a0a0a0'); field('wname', x0, y + 11, W2, 20, FIELDV.wname || '', '', null, 32); y += 40;
-        cycleBtn(x0, y, W2, 'Game Mode', GMN[CW.mode], () => { CW.mode = GMODES[(GMODES.indexOf(CW.mode) + 1) % GMODES.length]; if (CW.mode === 'hardcore') CW.diff = 3; CW.cheats = CW.mode === 'creative'; });
+        cycleBtn(x0, y, W2, 'Game Mode', GMN[CW.mode], () => { const was = CW.mode; CW.mode = GMODES[(GMODES.indexOf(CW.mode) + 1) % GMODES.length]; if (CW.mode === 'hardcore') { CW.pdiff = CW.diff; CW.diff = 4; } else if (was === 'hardcore' && CW.pdiff != null) { CW.diff = CW.pdiff; CW.pdiff = null; } CW.cheats = CW.mode === 'creative'; });
         const desc = { survival: 'Search for resources, craft, gain levels, health and hunger', hardcore: 'Same as Survival Mode, locked at hardest difficulty, and one life only', creative: 'Unlimited resources, free flying and destroy blocks instantly', adventure: 'Play maps made by others: blocks cannot be broken or placed freely' }[CW.mode];
         wrapText(desc, W2).forEach((l, i) => text(l, x0, y + 22 + i * 9, '#a0a0a0')); y += 44;
-        cycleBtn(x0, y, W2, 'Difficulty', DIFFN[CW.diff], () => { CW.diff = (CW.diff + 1) % 4; }, CW.mode !== 'hardcore'); y += step;
+        cycleBtn(x0, y, W2, 'Difficulty', DIFFN[CW.diff], () => { CW.diff = (CW.diff + 1) % 5; }, CW.mode !== 'hardcore'); y += step;
         cycleBtn(x0, y, W2, 'Allow Commands', CW.cheats ? 'ON' : 'OFF', () => { CW.cheats = !CW.cheats; }, CW.mode !== 'hardcore'); y += step;
       } else if (CW.tab === 1) {
         cycleBtn(x0, y, W2, 'World Type', WTN[CW.type], () => { CW.type = WTYPES[(WTYPES.indexOf(CW.type) + 1) % WTYPES.length]; }); y += step + 6;
@@ -156,7 +156,7 @@
       let y = 30, col = 0;
       const put = fn => { const x = col ? x2 : x1; fn(x, y); if (two) { col ^= 1; if (!col) y += step; } else y += step; };
       put((x, yy) => slider(x, yy, cw2, 'FOV: ' + (SET.fov === 70 ? 'Normal' : SET.fov === 110 ? 'Quake Pro' : SET.fov), (SET.fov - 30) / 80, f => { SET.fov = Math.round(30 + f * 80); fovDirty = true; }));
-      put((x, yy) => slider(x, yy, cw2, 'Render Distance: ' + SET.rd + ' chunks', (SET.rd - 2) / 10, f => { SET.rd = Math.round(2 + f * 10); }));
+      put((x, yy) => slider(x, yy, cw2, 'Render Distance: ' + (SET.rd ? SET.rd + ' chunks' : 'Auto (' + RD + ')'), SET.rd ? (SET.rd - 1) / 11 : 0, f => { const v = Math.round(1 + f * 11); SET.rd = v < 2 ? 0 : v; if (SET.rd) RD = SET.rd; else if (v < 2) RD = clamp(SET.rda || RD, AR.min, AR.max); AR.lo = AR.hi = 0; }));
       put((x, yy) => slider(x, yy, cw2, 'Brightness: ' + (SET.gam === 0 ? 'Moody' : SET.gam === 1 ? 'Bright' : Math.round(SET.gam * 100) + '%'), SET.gam, f => { SET.gam = Math.round(f * 20) / 20; U.gam.value = SET.gam; }));
       put((x, yy) => slider(x, yy, cw2, 'Sensitivity: ' + Math.round(SET.sens * 100) + '%', (SET.sens - .1) / 2.9, f => { SET.sens = Math.round((.1 + f * 2.9) * 20) / 20; }));
       put((x, yy) => button(x, yy, cw2, 20, 'Graphics: ' + (SET.fancy ? 'Fancy' : 'Fast'), () => { SET.fancy = !SET.fancy; FANCY = SET.fancy; remeshAll(); }));
@@ -164,11 +164,11 @@
       put((x, yy) => button(x, yy, cw2, 20, 'Clouds: ' + (SET.clouds ? 'Fancy' : 'OFF'), () => { SET.clouds = !SET.clouds; }));
       put((x, yy) => button(x, yy, cw2, 20, 'Particles: ' + ['Minimal', 'Decreased', 'All'][SET.particles], () => { SET.particles = (SET.particles + 1) % 3; }));
       put((x, yy) => button(x, yy, cw2, 20, 'View Bobbing: ' + (SET.bob ? 'ON' : 'OFF'), () => { SET.bob = !SET.bob; }));
-      put((x, yy) => button(x, yy, cw2, 20, 'Smooth Lighting: ' + (SET.smooth ? 'ON' : 'OFF'), () => { SET.smooth = !SET.smooth; remeshAll(); }));
+      put((x, yy) => button(x, yy, cw2, 20, 'Smooth Lighting: ' + (SET.smooth ? 'ON' : 'OFF'), () => { SET.smooth = !SET.smooth; SMOOTH = SET.smooth; remeshAll(); }));
       put((x, yy) => button(x, yy, cw2, 20, 'Music: ' + (SET.music ? 'ON' : 'OFF'), () => { SET.music = !SET.music; if (!SET.music) stopMusic(); }));
       put((x, yy) => button(x, yy, cw2, 20, 'Sounds: ' + (SET.sound ? 'ON' : 'OFF'), () => { SET.sound = !SET.sound; }));
       put((x, yy) => button(x, yy, cw2, 20, 'Controls...', () => { if (inGame) gui = 'controls'; else scr = 'controls'; }));
-      put((x, yy) => button(x, yy, cw2, 20, 'Difficulty: ' + (W && inGame ? DIFFN[W.diff] : '-'), () => { if (W && !W.hardcore && NET.role !== 'guest') { W.diff = (W.diff + 1) % 4; if (W.diff === 0) for (const e of ENTS.slice()) if (e.kind === 'mob' && MT[e.type].hostile) delEnt(e); } }, !!(inGame && W && !W.hardcore && NET.role !== 'guest')));
+      put((x, yy) => button(x, yy, cw2, 20, 'Difficulty: ' + (W && inGame ? DIFFN[W.diff] : '-'), () => { if (W && !W.hardcore && NET.role !== 'guest') { W.diff = (W.diff + 1) % 5; if (W.diff === 0) for (const e of ENTS.slice()) if (e.kind === 'mob' && MT[e.type].hostile) delEnt(e); } }, !!(inGame && W && !W.hardcore && NET.role !== 'guest')));
       if (col) y += step;
       button(GW / 2 - 100, Math.min(GH - 26, y + 6), 200, 20, 'Done', () => { persistSet(); if (inGame) gui = 'pause'; else scr = optBack; });
     }

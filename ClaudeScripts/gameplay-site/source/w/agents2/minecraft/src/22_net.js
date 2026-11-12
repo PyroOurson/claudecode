@@ -21,7 +21,7 @@
       if (y < 0 || y >= H) return;
       const k = ck(x >> 4, z >> 4), li = (x & 15) | (z & 15) << 4 | (y & 15) << 8 | (y >> 4) << 12;
       let ed = W.edits.get(k); if (!ed) W.edits.set(k, ed = new Map());
-      ed.set(li, s);
+      ed.set(li, s); ed.b = null;
     }
     function applyChange(x, y, z, s, flags) {
       if (!fin(x) || !fin(y) || !fin(z) || !(s >= 0 && s < NSTATE)) return;
@@ -73,6 +73,7 @@
         const k = a[i], n = a[i + 1]; i += 2;
         const cx = Math.floor(k / 65536) - 32768, cz = (k % 65536) - 32768;
         let ed = W.edits.get(k); if (!ed) W.edits.set(k, ed = new Map());
+        ed.b = null;
         const c = colAt(cx, cz);
         for (let j = 0; j < n && i < a.length; j++, i++) {
           const v = a[i], li = Math.floor(v / 16384), s = v % 16384;

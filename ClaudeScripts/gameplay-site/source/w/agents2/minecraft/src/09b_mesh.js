@@ -20,7 +20,8 @@
       return [o(a), o(b), o([a[0] + b[0], a[1] + b[1], a[2] + b[2]])];
     });
   }
-  const AOV = [.38, .58, .78, 1];
+  const AOV = [.38, .58, .78, 1], FAO = new Int16Array(72), FCC = new Uint8Array(72), FNO = new Int16Array(6), FSH = new Float32Array(24);
+  FD.forEach((F, f) => { FNO[f] = F.no; for (let k = 0; k < 4; k++) for (let i = 0; i < 3; i++) { FAO[f * 12 + k * 3 + i] = F.ao[k][i]; FCC[f * 12 + k * 3 + i] = F.c[k][i]; } for (let a = 0; a < 4; a++) FSH[f * 4 + a] = AOV[a] * F.s * 255; });
   function mkMB() { return { p: new Float32Array(1 << 16), u: new Float32Array(1 << 15 + 0), l: new Uint8Array(1 << 16), t: new Uint8Array(1 << 16), i: new Uint32Array(1 << 15), nv: 0, ni: 0 }; }
   const MO = mkMB(), MT = mkMB(), MESHT = MT;
   function grow(M) {
@@ -46,29 +47,27 @@
   }
   const ATL = 1024, TU = 16 / ATL;
   const tuv = t => [(t & 63) * TU, (t >> 6) * TU];
-  let FANCY = true;
+  let FANCY = true, SMOOTH = true;
   const BIOC = [];
   function biomeColors() {
     if (BIOC.length) return;
     for (const b of W.gen.BIO) BIOC.push({ g: hx(b.g), f: hx(b.f), w: hx(b.w) });
   }
+  let TPCOL = null;
   function fillPad(c, sy) {
-    const cx = c.cx, cz = c.cz;
-    PB.fill(0); PL.fill(0xF0);
+    const cx = c.cx, cz = c.cz, tint = TPCOL !== c;
     for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
       const n = colAt(cx + dx, cz + dz);
       const xa = dx < 0 ? 15 : 0, xb = dx > 0 ? 0 : 15, za = dz < 0 ? 15 : 0, zb = dz > 0 ? 0 : 15;
       for (let ly = -1; ly <= 16; ly++) {
-        const Y = sy * 16 + ly;
-        if (Y < 0) { for (let z = za; z <= zb; z++) for (let x = xa; x <= xb; x++) { const p = pof(x + dx * 16, ly, z + dz * 16); PB[p] = 1; PL[p] = 0; } continue; }
-        if (Y >= H || !n) continue;
-        const sec = n.s[Y >> 4], la = n.l ? n.l[Y >> 4] : null, yo = (Y & 15) << 8;
+        const Y = sy * 16 + ly, sec = Y >= 0 && Y < H && n ? n.s[Y >> 4] : null, la = Y >= 0 && Y < H && n && n.l ? n.l[Y >> 4] : null, yo = (Y & 15) << 8, bv = Y < 0 ? 1 : 0, lv = Y < 0 ? 0 : 0xF0;
         for (let z = za; z <= zb; z++) {
           const row = pof(dx * 16, ly, z + dz * 16), so = yo | z << 4;
-          for (let x = xa; x <= xb; x++) { PB[row + x] = sec ? sec[so | x] : 0; PL[row + x] = la ? la[so | x] : 0xF0; }
+          if (sec) for (let x = xa; x <= xb; x++) PB[row + x] = sec[so | x]; else for (let x = xa; x <= xb; x++) PB[row + x] = bv;
+          if (la) for (let x = xa; x <= xb; x++) PL[row + x] = la[so | x]; else for (let x = xa; x <= xb; x++) PL[row + x] = lv;
         }
       }
-      if (n && n.bio) {
+      if (tint && n && n.bio) {
         biomeColors();
         for (let z = za; z <= zb; z++) for (let x = xa; x <= xb; x++) {
           const b = BIOC[n.bio[x | z << 4]] || BIOC[0], o = ((x + dx * 16 + 1) + (z + dz * 16 + 1) * PS) * 3;
@@ -76,6 +75,7 @@
         }
       }
     }
+    TPCOL = c;
   }
   const FIXT = { 4: [97, 153, 97], 5: [128, 167, 85], 6: [141, 177, 39], 7: [32, 128, 48], 8: [100, 180, 50], 9: [224, 199, 28] };
   const REDP = [];
@@ -92,22 +92,24 @@
   }
   const UVR = [[0, 1, 2, 3], [1, 2, 3, 0], [2, 3, 0, 1], [3, 0, 1, 2]];
   function cubeFace(M, s, f, x, y, z, p, t, rot, fl) {
-    const F = FD[f], L0 = PL[p + F.no], UV = tuv(t);
-    const u0 = UV[0], v0 = UV[1], u1 = u0 + TU, v1 = v0 + TU;
-    const cu = [u0, u1, u1, u0], cvv = [v1, v1, v0, v0];
-    let a0 = 0, a1 = 0, a2 = 0, a3 = 0;
-    const R = UVR[rot & 3];
-    for (let k = 0; k < 4; k++) {
-      const A = F.ao[k], o1 = OPQ[PB[p + A[0]]], o2 = OPQ[PB[p + A[1]]], o3 = OPQ[PB[p + A[2]]];
-      const ao = o1 && o2 ? 0 : 3 - o1 - o2 - o3;
-      let sk = L0 >> 4, bl = L0 & 15, n = 1, L;
-      if (!o1) { L = PL[p + A[0]]; sk += L >> 4; bl += L & 15; n++; }
-      if (!o2) { L = PL[p + A[1]]; sk += L >> 4; bl += L & 15; n++; }
-      if (!o3 && !(o1 && o2)) { L = PL[p + A[2]]; sk += L >> 4; bl += L & 15; n++; }
-      const C = F.c[k], ri = R[k];
-      vtx(M, x + C[0], y + C[1], z + C[2], cu[ri], cvv[ri], AOV[ao] * F.s * 255 | 0, sk * 17 / n | 0, bl * 17 / n | 0, fl);
+    const L0 = PL[p + FNO[f]], sk0 = L0 >> 4, bl0 = L0 & 15, u0 = (t & 63) * TU, v0 = (t >> 6) * TU, u1 = u0 + TU, v1 = v0 + TU;
+    const MP = M.p, MU = M.u, ML = M.l, MC = M.t, f4 = f * 4, R = UVR[rot & 3];
+    let a0 = 0, a1 = 0, a2 = 0, a3 = 0, o = f * 12, nv = M.nv;
+    for (let k = 0; k < 4; k++, o += 3, nv++) {
+      const q1 = p + FAO[o], q2 = p + FAO[o + 1], o1 = OPQ[PB[q1]], o2 = OPQ[PB[q2]];
+      let ao = 0, sk = sk0, bl = bl0, n = 1, L;
+      if (!SMOOTH) ao = 3;
+      else if (!o1) { L = PL[q1]; sk += L >> 4; bl += L & 15; n++; }
+      if (SMOOTH && !o2) { L = PL[q2]; sk += L >> 4; bl += L & 15; n++; }
+      if (SMOOTH && !(o1 && o2)) { const q3 = p + FAO[o + 2], o3 = OPQ[PB[q3]]; ao = 3 - o1 - o2 - o3; if (!o3) { L = PL[q3]; sk += L >> 4; bl += L & 15; n++; } }
+      const ri = R[k], pp = nv * 3, qq = nv * 4;
+      MP[pp] = x + FCC[o]; MP[pp + 1] = y + FCC[o + 1]; MP[pp + 2] = z + FCC[o + 2];
+      MU[nv * 2] = ri === 0 || ri === 3 ? u0 : u1; MU[nv * 2 + 1] = ri < 2 ? v1 : v0;
+      ML[qq] = FSH[f4 + ao]; ML[qq + 1] = sk * 17 / n; ML[qq + 2] = bl * 17 / n; ML[qq + 3] = fl;
+      MC[qq] = TR; MC[qq + 1] = TG2; MC[qq + 2] = TB; MC[qq + 3] = 255;
       if (k === 0) a0 = ao; else if (k === 1) a1 = ao; else if (k === 2) a2 = ao; else a3 = ao;
     }
+    M.nv = nv;
     idx(M, a0 + a2 < a1 + a3);
   }
   const QP = new Float32Array(12);
@@ -244,11 +246,11 @@
   }
   const nbOff = p => (dx, dy, dz) => PB[p + dx + dz * PS + dy * PSS];
   function meshSection(c, sy) {
-    fillPad(c, sy);
     const M = MO, Mt = MT;
     M.nv = M.ni = Mt.nv = Mt.ni = 0;
     const sec = c.s[sy];
     if (!sec) return;
+    fillPad(c, sy);
     const wx0 = c.cx * 16, wz0 = c.cz * 16, Y0 = sy * 16;
     for (let ly = 0; ly < 16; ly++) for (let lz = 0; lz < 16; lz++) {
       let p = pof(0, ly, lz);
@@ -259,17 +261,18 @@
         if (!shp) continue;
         const x = lx, y = ly + Y0, z = lz;
         if (shp === 1) {
-          const tr = CSM[s] && TT[STT[s]].trans, tg = tr ? Mt : M, leaf = LEAF[s], tk = TNT[s], fl = ANIMF[s] ? 1 : 0;
-          grow(tg);
+          if (OPQ[PB[p + 1]] && OPQ[PB[p - 1]] && OPQ[PB[p + PSS]] && OPQ[PB[p - PSS]] && OPQ[PB[p + PS]] && OPQ[PB[p - PS]]) continue;
+          const csm = CSM[s], tg = csm && TT[STT[s]].trans ? Mt : M, leaf = LEAF[s] && !FANCY, tk = TNT[s], fl = ANIMF[s] ? 1 : 0;
+          let first = true;
           for (let f = 0; f < 6; f++) {
-            const n = PB[p + FD[f].no];
+            const n = PB[p + FNO[f]];
             if (OPQ[n]) continue;
-            if (CSM[s] && CSM[n] === CSM[s]) continue;
-            if (leaf && !FANCY && LEAF[n]) continue;
+            if (csm && CSM[n] === csm) continue;
+            if (leaf && LEAF[n]) continue;
             if (f === 3 && y === 0) continue;
-            if (tk) setTint(tk, lx, lz, s); else TR = TG2 = TB = 255;
+            if (first) { first = false; grow(tg); if (tk) setTint(tk, lx, lz, s); else TR = TG2 = TB = 255; }
             let t = TIL[s * 6 + f];
-            if (leaf && !FANCY) t = TILF[s] !== undefined ? TILF[s] : t;
+            if (leaf && TILF[s] !== undefined) t = TILF[s];
             cubeFace(tg, s, f, x, y, z, p, t, TRT[s * 6 + f], fl);
           }
         } else if (shp === 2 || shp === 3) {
