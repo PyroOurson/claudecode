@@ -516,6 +516,7 @@ ClaudeScripts/gameplay-site/source/w/new/gcss.css
 ClaudeScripts/gameplay-site/source/w/new/i18n.js
 ClaudeScripts/gameplay-site/source/w/new/i18n_add.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_admin.json
+ClaudeScripts/gameplay-site/source/w/new/i18n_consent.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_ideas.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_settings.json
 ClaudeScripts/gameplay-site/source/w/new/ideas.css
