@@ -14,10 +14,10 @@ const BOT_NAMES = ['Nova', 'Orbit', 'Pixel', 'Comet', 'Zed', 'Luna', 'Rex', 'Ech
 const DEF = { imp: 1, speed: 1, cvis: 1, ivis: 1.5, kcd: 30, krange: 1, common: 1, long: 1, short: 2, disc: 15, vote: 60, emerg: 1, ecd: 15, confirm: 1, anon: 0, bar: 0, vtasks: 1 };
 const sec = v => v + 's', xx = v => v + 'x';
 const SPEC = [
-  ['imp', 'Impostors', [1, 2, 3], null],
+  ['imp', 'Intruders', [1, 2, 3], null],
   ['speed', 'Player speed', [.5, .75, 1, 1.25, 1.5, 2], xx],
-  ['cvis', 'Crewmate vision', [.25, .5, .75, 1, 1.25, 1.5, 2], xx],
-  ['ivis', 'Impostor vision', [.5, .75, 1, 1.25, 1.5, 2, 2.5], xx],
+  ['cvis', 'Deckhand vision', [.25, .5, .75, 1, 1.25, 1.5, 2], xx],
+  ['ivis', 'Intruder vision', [.5, .75, 1, 1.25, 1.5, 2, 2.5], xx],
   ['kcd', 'Kill cooldown', [10, 15, 20, 25, 30, 35, 40, 45, 60], sec],
   ['krange', 'Kill distance', [0, 1, 2], v => ['Short', 'Normal', 'Long'][v]],
   ['common', 'Common tasks', [0, 1, 2], null],
@@ -25,8 +25,8 @@ const SPEC = [
   ['short', 'Short tasks', [0, 1, 2, 3, 4, 5], null],
   ['disc', 'Discussion time', [0, 15, 30, 45, 60, 90], sec],
   ['vote', 'Voting time', [15, 30, 45, 60, 90, 120], sec],
-  ['emerg', 'Emergency meetings', [0, 1, 2, 3, 5, 9], null],
-  ['ecd', 'Emergency cooldown', [0, 5, 10, 15, 20, 30], sec],
+  ['emerg', 'All-hands calls', [0, 1, 2, 3, 5, 9], null],
+  ['ecd', 'All-hands cooldown', [0, 5, 10, 15, 20, 30], sec],
   ['confirm', 'Confirm ejects', [0, 1], v => v ? 'On' : 'Off'],
   ['anon', 'Anonymous votes', [0, 1], v => v ? 'On' : 'Off'],
   ['bar', 'Task bar updates', [0, 1, 2], v => ['Always', 'Meetings', 'Never'][v]],
@@ -49,20 +49,20 @@ const fixSettings = o => {
 const maxImp = n => n >= 9 ? 3 : n >= 7 ? 2 : 1;
 
 const ROOMS = [
-  { n: 'Cafeteria', x: 37, y: 3, w: 22, h: 15, a: '#aab6d0', b: '#9ea9c4', t: '#7a86a6' },
-  { n: 'Weapons', x: 66, y: 5, w: 12, h: 10, a: '#7d869b', b: '#737c91', t: '#5b647a' },
-  { n: 'O2', x: 61, y: 19, w: 8, h: 8, a: '#8aa89a', b: '#7f9c8e', t: '#5f8070' },
-  { n: 'Navigation', x: 82, y: 19, w: 12, h: 11, a: '#7388b4', b: '#687da9', t: '#506493' },
-  { n: 'Shields', x: 68, y: 38, w: 12, h: 11, a: '#8c7fb2', b: '#8174a8', t: '#65588f' },
-  { n: 'Communications', x: 54, y: 46, w: 10, h: 9, a: '#6c8f9a', b: '#628590', t: '#4a6d78' },
-  { n: 'Storage', x: 38, y: 42, w: 13, h: 12, a: '#9b8c76', b: '#908169', t: '#75684f' },
-  { n: 'Admin', x: 52, y: 27, w: 11, h: 10, a: '#8ba37f', b: '#809876', t: '#627a58' },
-  { n: 'Electrical', x: 22, y: 35, w: 12, h: 10, a: '#a39a6e', b: '#988f64', t: '#7b7249' },
-  { n: 'Lower Engine', x: 5, y: 40, w: 14, h: 12, a: '#b08c74', b: '#a5806a', t: '#86624c' },
-  { n: 'Upper Engine', x: 5, y: 4, w: 14, h: 12, a: '#b08c74', b: '#a5806a', t: '#86624c' },
-  { n: 'Security', x: 21, y: 24, w: 10, h: 8, a: '#76809c', b: '#6b7591', t: '#515b78' },
-  { n: 'Reactor', x: 2, y: 22, w: 11, h: 12, a: '#a97c80', b: '#9e7175', t: '#80555a' },
-  { n: 'MedBay', x: 22, y: 13, w: 11, h: 8, a: '#8dbab8', b: '#82afad', t: '#5f908e' }
+  { n: 'Mess Hall', x: 37, y: 3, w: 22, h: 15, a: '#aab6d0', b: '#9ea9c4', t: '#7a86a6' },
+  { n: 'Turret Bay', x: 66, y: 5, w: 12, h: 10, a: '#7d869b', b: '#737c91', t: '#5b647a' },
+  { n: 'Air Plant', x: 61, y: 19, w: 8, h: 8, a: '#8aa89a', b: '#7f9c8e', t: '#5f8070' },
+  { n: 'Helm', x: 82, y: 19, w: 12, h: 11, a: '#7388b4', b: '#687da9', t: '#506493' },
+  { n: 'Deflector Room', x: 68, y: 38, w: 12, h: 11, a: '#8c7fb2', b: '#8174a8', t: '#65588f' },
+  { n: 'Radio Room', x: 54, y: 46, w: 10, h: 9, a: '#6c8f9a', b: '#628590', t: '#4a6d78' },
+  { n: 'Cargo Hold', x: 38, y: 42, w: 13, h: 12, a: '#9b8c76', b: '#908169', t: '#75684f' },
+  { n: 'Chart Office', x: 52, y: 27, w: 11, h: 10, a: '#8ba37f', b: '#809876', t: '#627a58' },
+  { n: 'Fuse Room', x: 22, y: 35, w: 12, h: 10, a: '#a39a6e', b: '#988f64', t: '#7b7249' },
+  { n: 'Aft Thruster', x: 5, y: 40, w: 14, h: 12, a: '#b08c74', b: '#a5806a', t: '#86624c' },
+  { n: 'Fore Thruster', x: 5, y: 4, w: 14, h: 12, a: '#b08c74', b: '#a5806a', t: '#86624c' },
+  { n: 'Watch Room', x: 21, y: 24, w: 10, h: 8, a: '#76809c', b: '#6b7591', t: '#515b78' },
+  { n: 'Core', x: 2, y: 22, w: 11, h: 12, a: '#a97c80', b: '#9e7175', t: '#80555a' },
+  { n: 'Sick Bay', x: 22, y: 13, w: 11, h: 8, a: '#8dbab8', b: '#82afad', t: '#5f908e' }
 ];
 const CORR = [
   [19, 8, 18, 3], [26, 11, 3, 2], [15, 16, 3, 24], [7, 16, 3, 6], [7, 34, 3, 6], [13, 27, 2, 3], [18, 26, 3, 3], [18, 15, 4, 3],
@@ -84,48 +84,48 @@ const stn = (id, room, label, cx, cy, side) => {
   ST[id] = { id, room, label, cx, cy, side, x: cx + v[0], y: cy + v[1], r: 1.5 };
   ST[id].nx = ST[id].x; ST[id].ny = ST[id].y;
 };
-stn('w_cafe', 'Cafeteria', 'Wires', 45, 3.5, 'n');
-stn('dl_cafe', 'Cafeteria', 'Data terminal', 58.5, 5.5, 'e');
-stn('garb_caf', 'Cafeteria', 'Garbage chute', 58.5, 16, 'e');
-stn('emerg', 'Cafeteria', 'Emergency button', 48, 10.5, 'n');
+stn('w_cafe', 'Mess Hall', 'Wires', 45, 3.5, 'n');
+stn('dl_cafe', 'Mess Hall', 'Data terminal', 58.5, 5.5, 'e');
+stn('garb_caf', 'Mess Hall', 'Garbage chute', 58.5, 16, 'e');
+stn('emerg', 'Mess Hall', 'All-hands bell', 48, 10.5, 'n');
 ST.emerg.x = 48; ST.emerg.y = 11; ST.emerg.r = 2.4; ST.emerg.nx = 48; ST.emerg.ny = 12.9;
-stn('aster', 'Weapons', 'Weapons console', 70, 5.5, 'n');
-stn('dl_weap', 'Weapons', 'Data terminal', 75, 5.5, 'n');
-stn('o2f', 'O2', 'Filter', 65, 26.5, 's');
-stn('o2_1', 'O2', 'O2 panel', 68.5, 21.5, 'e');
-stn('chart', 'Navigation', 'Chart table', 93.5, 22.5, 'e');
-stn('steer', 'Navigation', 'Steering', 93.5, 26.5, 'e');
-stn('dl_nav', 'Navigation', 'Data terminal', 85, 29.5, 's');
-stn('w_nav', 'Navigation', 'Wires', 90, 19.5, 'n');
-stn('shield', 'Shields', 'Shield panel', 74, 38.5, 'n');
-stn('dl_comm', 'Communications', 'Data terminal', 59, 54.5, 's');
-stn('comms', 'Communications', 'Comms console', 54.5, 52.5, 'w');
-stn('fuel_stor', 'Storage', 'Fuel canisters', 44.5, 53.5, 's');
-stn('garb_stor', 'Storage', 'Garbage chute', 50.5, 44, 'e');
-stn('w_stor', 'Storage', 'Wires', 40.5, 42.5, 'n');
-stn('swipe', 'Admin', 'Card reader', 62.5, 29, 'e');
-stn('up_admin', 'Admin', 'Upload terminal', 62.5, 33.5, 'e');
-stn('w_admin', 'Admin', 'Wires', 58, 36.5, 's');
-stn('o2_2', 'Admin', 'O2 panel', 55, 27.5, 'n');
-stn('admin', 'Admin', 'Admin map', 56, 30.4, 'n');
+stn('aster', 'Turret Bay', 'Turret console', 70, 5.5, 'n');
+stn('dl_weap', 'Turret Bay', 'Data terminal', 75, 5.5, 'n');
+stn('o2f', 'Air Plant', 'Filter', 65, 26.5, 's');
+stn('o2_1', 'Air Plant', 'Air panel', 68.5, 21.5, 'e');
+stn('chart', 'Helm', 'Chart table', 93.5, 22.5, 'e');
+stn('steer', 'Helm', 'Steering', 93.5, 26.5, 'e');
+stn('dl_nav', 'Helm', 'Data terminal', 85, 29.5, 's');
+stn('w_nav', 'Helm', 'Wires', 90, 19.5, 'n');
+stn('shield', 'Deflector Room', 'Deflector panel', 74, 38.5, 'n');
+stn('dl_comm', 'Radio Room', 'Data terminal', 59, 54.5, 's');
+stn('comms', 'Radio Room', 'Radio console', 54.5, 52.5, 'w');
+stn('fuel_stor', 'Cargo Hold', 'Fuel canisters', 44.5, 53.5, 's');
+stn('garb_stor', 'Cargo Hold', 'Garbage chute', 50.5, 44, 'e');
+stn('w_stor', 'Cargo Hold', 'Wires', 40.5, 42.5, 'n');
+stn('swipe', 'Chart Office', 'Card reader', 62.5, 29, 'e');
+stn('up_admin', 'Chart Office', 'Upload terminal', 62.5, 33.5, 'e');
+stn('w_admin', 'Chart Office', 'Wires', 58, 36.5, 's');
+stn('o2_2', 'Chart Office', 'Air panel', 55, 27.5, 'n');
+stn('admin', 'Chart Office', 'Deck map', 56, 30.4, 'n');
 ST.admin.x = 56.5; ST.admin.y = 34; ST.admin.cx = 56.5; ST.admin.cy = 32.4; ST.admin.nx = 56.5; ST.admin.ny = 34;
-stn('calib', 'Electrical', 'Distributor', 28, 35.5, 'n');
-stn('dl_elec', 'Electrical', 'Data terminal', 33.5, 38.5, 'e');
-stn('w_elec', 'Electrical', 'Wires', 25, 44.5, 's');
-stn('lights', 'Electrical', 'Breaker panel', 22.5, 38.5, 'w');
-stn('align_ue', 'Upper Engine', 'Engine control', 12, 4.5, 'n');
-stn('fuel_ue', 'Upper Engine', 'Fuel intake', 7.5, 4.5, 'n');
-stn('align_le', 'Lower Engine', 'Engine control', 12, 51.5, 's');
-stn('fuel_le', 'Lower Engine', 'Fuel intake', 7.5, 51.5, 's');
-stn('manif', 'Reactor', 'Manifolds', 6, 22.5, 'n');
-stn('rstart', 'Reactor', 'Reactor control', 6, 33.5, 's');
-stn('reactor1', 'Reactor', 'Reactor panel', 2.5, 24.4, 'w');
-stn('reactor2', 'Reactor', 'Reactor panel', 2.5, 31.6, 'w');
-stn('scan', 'MedBay', 'Scanner', 28, 17.2, 'n');
+stn('calib', 'Fuse Room', 'Distributor', 28, 35.5, 'n');
+stn('dl_elec', 'Fuse Room', 'Data terminal', 33.5, 38.5, 'e');
+stn('w_elec', 'Fuse Room', 'Wires', 25, 44.5, 's');
+stn('lights', 'Fuse Room', 'Breaker panel', 22.5, 38.5, 'w');
+stn('align_ue', 'Fore Thruster', 'Engine control', 12, 4.5, 'n');
+stn('fuel_ue', 'Fore Thruster', 'Fuel intake', 7.5, 4.5, 'n');
+stn('align_le', 'Aft Thruster', 'Engine control', 12, 51.5, 's');
+stn('fuel_le', 'Aft Thruster', 'Fuel intake', 7.5, 51.5, 's');
+stn('manif', 'Core', 'Manifolds', 6, 22.5, 'n');
+stn('rstart', 'Core', 'Core control', 6, 33.5, 's');
+stn('reactor1', 'Core', 'Core panel', 2.5, 24.4, 'w');
+stn('reactor2', 'Core', 'Core panel', 2.5, 31.6, 'w');
+stn('scan', 'Sick Bay', 'Scanner', 28, 17.2, 'n');
 ST.scan.x = 28; ST.scan.y = 17.2; ST.scan.cy = 15.4; ST.scan.nx = 28; ST.scan.ny = 17.2;
-stn('sample', 'MedBay', 'Sample analyser', 32.5, 16.5, 'e');
-stn('cams', 'Security', 'Cameras', 26, 24.5, 'n');
-stn('w_sec', 'Security', 'Wires', 24, 31.5, 's');
+stn('sample', 'Sick Bay', 'Sample analyser', 32.5, 16.5, 'e');
+stn('cams', 'Watch Room', 'Cameras', 26, 24.5, 'n');
+stn('w_sec', 'Watch Room', 'Wires', 24, 31.5, 's');
 const VENTS = [
   { x: 7, y: 12.5, g: 0 }, { x: 3.4, y: 23.6, g: 0 }, { x: 7, y: 47.5, g: 1 }, { x: 3.4, y: 32.8, g: 1 },
   { x: 31.4, y: 19.8, g: 2 }, { x: 29.4, y: 26.4, g: 2 }, { x: 32.4, y: 36.6, g: 2 },
@@ -137,15 +137,15 @@ const VENTS = [
 VENTS.forEach((v, i) => { v.id = i; });
 VENTS.forEach(v => { v.to = VENTS.filter(o => o.g === v.g && o.id !== v.id).map(o => o.id); });
 const DOORS = [
-  ['Cafeteria', 36, 8, 1, 3], ['Cafeteria', 59, 9, 1, 3], ['Cafeteria', 43, 18, 4, 1],
-  ['Upper Engine', 19, 8, 1, 3], ['Upper Engine', 15, 16, 3, 1], ['Upper Engine', 7, 16, 3, 1],
-  ['Lower Engine', 15, 39, 3, 1], ['Lower Engine', 7, 39, 3, 1], ['Lower Engine', 19, 41, 1, 3],
-  ['MedBay', 21, 15, 1, 3], ['MedBay', 26, 12, 3, 1],
-  ['Security', 20, 26, 1, 3],
-  ['Electrical', 21, 41, 1, 3], ['Electrical', 34, 42, 1, 3],
-  ['Storage', 43, 41, 4, 1], ['Storage', 37, 42, 1, 3], ['Storage', 51, 48, 1, 3]
+  ['Mess Hall', 36, 8, 1, 3], ['Mess Hall', 59, 9, 1, 3], ['Mess Hall', 43, 18, 4, 1],
+  ['Fore Thruster', 19, 8, 1, 3], ['Fore Thruster', 15, 16, 3, 1], ['Fore Thruster', 7, 16, 3, 1],
+  ['Aft Thruster', 15, 39, 3, 1], ['Aft Thruster', 7, 39, 3, 1], ['Aft Thruster', 19, 41, 1, 3],
+  ['Sick Bay', 21, 15, 1, 3], ['Sick Bay', 26, 12, 3, 1],
+  ['Watch Room', 20, 26, 1, 3],
+  ['Fuse Room', 21, 41, 1, 3], ['Fuse Room', 34, 42, 1, 3],
+  ['Cargo Hold', 43, 41, 4, 1], ['Cargo Hold', 37, 42, 1, 3], ['Cargo Hold', 51, 48, 1, 3]
 ].map((d, i) => ({ id: i, room: d[0], x: d[1], y: d[2], w: d[3], h: d[4] }));
-const DOOR_ROOMS = ['Cafeteria', 'Upper Engine', 'Lower Engine', 'MedBay', 'Security', 'Electrical', 'Storage'];
+const DOOR_ROOMS = ['Mess Hall', 'Fore Thruster', 'Aft Thruster', 'Sick Bay', 'Watch Room', 'Fuse Room', 'Cargo Hold'];
 
 const FL = new Uint8Array(MW * MH), RID = new Uint8Array(MW * MH), BLK = new Uint8Array(MW * MH), OPQ = new Uint8Array(MW * MH), DM = new Uint8Array(MW * MH), OBSM = new Uint8Array(MW * MH);
 ROOMS.forEach((r, i) => { for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) { FL[y * MW + x] = 1; RID[y * MW + x] = i + 1; } });
@@ -266,12 +266,12 @@ const SPAWN = i => {
 };
 
 const TASKS = {
-  wires: { n: 'Fix Wiring', len: 'common' }, swipe: { n: 'Swipe Card', len: 'common' },
-  download: { n: 'Download Data', len: 'short' }, calib: { n: 'Calibrate Distributor', len: 'short' }, chart: { n: 'Chart Course', len: 'short' },
-  steer: { n: 'Stabilize Steering', len: 'short' }, o2f: { n: 'Clean O2 Filter', len: 'short' }, aster: { n: 'Clear Asteroids', len: 'short' },
-  shield: { n: 'Prime Shields', len: 'short' }, manif: { n: 'Unlock Manifolds', len: 'short' }, scan: { n: 'Submit Scan', len: 'short' },
-  rstart: { n: 'Start Reactor', len: 'short' },
-  align: { n: 'Align Engine Output', len: 'long' }, garb: { n: 'Empty Garbage', len: 'long' }, fuel: { n: 'Fuel Engines', len: 'long' }, sample: { n: 'Inspect Sample', len: 'long' }
+  wires: { n: 'Match the Cables', len: 'common' }, swipe: { n: 'Slide the Pass', len: 'common' },
+  download: { n: 'Copy the Logs', len: 'short' }, calib: { n: 'Tune the Rotor', len: 'short' }, chart: { n: 'Plot the Route', len: 'short' },
+  steer: { n: 'Center the Helm', len: 'short' }, o2f: { n: 'Clear the Air Filter', len: 'short' }, aster: { n: 'Blast the Rocks', len: 'short' },
+  shield: { n: 'Charge the Deflectors', len: 'short' }, manif: { n: 'Crack the Keypad', len: 'short' }, scan: { n: 'Health Check', len: 'short' },
+  rstart: { n: 'Wake the Core', len: 'short' },
+  align: { n: 'Trim the Thrusters', len: 'long' }, garb: { n: 'Dump the Trash', len: 'long' }, fuel: { n: 'Refuel the Thrusters', len: 'long' }, sample: { n: 'Test the Sample', len: 'long' }
 };
 const WIRE_ST = ['w_cafe', 'w_nav', 'w_elec', 'w_stor', 'w_admin', 'w_sec'];
 const DL_ST = ['dl_cafe', 'dl_weap', 'dl_nav', 'dl_comm', 'dl_elec'];
@@ -420,13 +420,12 @@ function makeHost(env, init) {
     if (dist(a.x, a.y, b.x, b.y) > KRANGE[S.krange] + .7) return false;
     b.alive = false; b.scan = 0;
     H.bodies.push({ i: vi, x: b.x, y: b.y });
-    const kx = a.x, ky = a.y;
     a.x = b.x; a.y = b.y; a.fix = 1; a.kcd = S.kcd; a.lastKill = H.t; a.kc = (a.kc || 0) + 1;
     out(vi, { t: 'ev', k: 'killed', by: ki, x: b.x, y: b.y });
     out(ki, { t: 'ev', k: 'kill', v: vi, x: b.x, y: b.y });
     P.forEach(q => {
       if (q.i === ki || q.i === vi || q.bot) return;
-      if (!q.alive || dist(q.x, q.y, b.x, b.y) < 9) env.send(q.i, { t: 'ev', k: 'snd', s: 'kill', x: b.x, y: b.y, from: kx });
+      if (!q.alive || dist(q.x, q.y, b.x, b.y) < 9) env.send(q.i, { t: 'ev', k: 'snd', s: 'kill' });
     });
     if (H.bots) H.bots.onKill(ki, vi, b.x, b.y);
     checkWin();
@@ -473,7 +472,7 @@ function makeHost(env, init) {
     const p = P[i];
     if (H.phase !== 'play' || !p || !p.alive || p.vent >= 0) return false;
     const b = H.bodies.find(x => x.i === bi);
-    if (!b || dist(p.x, p.y, b.x, b.y) > 3.4) return false;
+    if (!b || dist(p.x, p.y, b.x, b.y) > 3.4 || !inSight(p, b.x, b.y)) return false;
     startMeeting(i, bi);
     return true;
   };
@@ -624,6 +623,7 @@ function makeHost(env, init) {
   };
 
   const botInit = p => { p.bot = true; p.id = null; if (H.bots) H.bots.init(p); };
+  const inSight = (p, x, y) => los(p.x, p.y, x, y) || los(p.x, p.y, x - PR, y) || los(p.x, p.y, x + PR, y) || los(p.x, p.y, x, y - PR) || los(p.x, p.y, x, y + PR);
   const snapFor = p => {
     const R = visR(p) + 2.2, ghost = !p.alive, pl = [];
     P.forEach(q => {
@@ -632,11 +632,11 @@ function makeHost(env, init) {
       if (!ghost && !q.alive) return;
       if (q.ventK && H.t - q.ventT < .7) flags |= q.ventK === 1 ? 4 : 8;
       else if (q.vent >= 0) { if (!ghost) return; flags |= 32; }
-      if (!ghost && dist(p.x, p.y, q.x, q.y) > R) return;
+      if (!ghost && (dist(p.x, p.y, q.x, q.y) > R || !inSight(p, q.x, q.y))) return;
       pl.push([q.i, q2(q.x), q2(q.y), q.fx, flags]);
     });
     const bd = [];
-    H.bodies.forEach(b => { if (ghost || dist(p.x, p.y, b.x, b.y) <= R) bd.push([b.i, q2(b.x), q2(b.y)]); });
+    H.bodies.forEach(b => { if (ghost || (dist(p.x, p.y, b.x, b.y) <= R && inSight(p, b.x, b.y))) bd.push([b.i, q2(b.x), q2(b.y)]); });
     const m = { t: 's', k: ++H.seq, p: pl, b: bd, kc: Math.ceil(p.kcd * 10) / 10, v: p.vent };
     if (p.fix) { m.fix = [q2(p.x), q2(p.y)]; p.fix = 0; }
     if (p.info === 'cams' && !(H.sab && H.sab.k === 'comms')) {
@@ -1075,7 +1075,7 @@ function makeBots(H, E) {
       const crewTargets = P.filter(q => q.alive && q.i !== me && q.role === 0);
       if (Mt.caller === me) {
         if (victim) line(p, R(3.6, 4.2), `Found ${victim.name}'s body in ${room(bp[0], bp[1])}.`, { cl: 1 });
-        else line(p, R(3.6, 4.4), pick(['Emergency meeting!', 'I had to call this, something is off.', 'Meeting! I saw something weird.']));
+        else line(p, R(3.6, 4.4), pick(['All hands on deck!', 'I had to call this, something is off.', 'Meeting! I saw something weird.']));
       }
       if (p.role === 0) {
         const w = b.sus.findIndex((v, j) => v >= 100 && P[j].alive);
@@ -1410,7 +1410,7 @@ const paintWorld = (c, S, ox, oy, wT, hT, tiny) => {
     ROOMS.forEach(r => {
       if (!vis(r.x, r.y, r.w, r.h)) return;
       c.fillStyle = 'rgba(20,28,56,.22)';
-      c.fillText(r.n.toUpperCase(), r.x + r.w / 2, r.n === 'Cafeteria' ? r.y + 1.5 : r.y + r.h - 1.1);
+      c.fillText(r.n.toUpperCase(), r.x + r.w / 2, r.n === 'Mess Hall' ? r.y + 1.5 : r.y + r.h - 1.1);
     });
   }
   c.restore();
@@ -1984,7 +1984,7 @@ MG.reactor = (b, c) => {
 const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const myProfileName = () => { try { const p = JSON.parse(localStorage.getItem('gameplay:profile') || 'null'), n = p && (p.username || p.displayName); if (typeof n === 'string' && n.trim()) return cleanName(n.trim()); } catch (e) {} return 'You'; };
 const VIS_MIN = 1.2;
-const REASON = { tasks: 'Crewmates completed all tasks', ejected: 'All Impostors were ejected', majority: 'Impostors outnumber the crew', sabotage: 'The ship was destroyed' };
+const REASON = { tasks: 'Deckhands completed all tasks', ejected: 'All Intruders were ejected', majority: 'Intruders outnumber the crew', sabotage: 'The ship was destroyed' };
 
 function mountGame(root, api) {
   const coarse = matchMedia('(pointer: coarse)').matches;
@@ -2184,7 +2184,7 @@ function mountGame(root, api) {
     if (!V) return;
     const n = i => V.players[i] ? V.players[i].name : '?';
     switch (m.k) {
-      case 'sab': snd('sab'); V.banner = m.s === 'lights' ? 'Lights are out' : m.s === 'comms' ? 'Communications sabotaged' : m.s === 'reactor' ? 'Reactor meltdown' : 'O2 depleted'; V.bannerT = performance.now(); V.flash = 1; break;
+      case 'sab': snd('sab'); V.banner = m.s === 'lights' ? 'Lights are out' : m.s === 'comms' ? 'Radio jammed' : m.s === 'reactor' ? 'Core overheating' : 'Air running out'; V.bannerT = performance.now(); V.flash = 1; break;
       case 'fixed': snd('fixed'); V.banner = 'Sabotage fixed'; V.bannerT = performance.now(); if (MGP.el && MGP.info && MGP.info.sab) closePanel(); break;
       case 'doors': snd('door'); break;
       case 'kill': snd('kill'); break;
@@ -2468,8 +2468,8 @@ function mountGame(root, api) {
     snd('click');
     if (u.k === 'task') openPanel(u.mg, { title: TASKS[V.tasks[u.ti].key].n, ti: u.ti, si: u.si });
     else if (u.k === 'emerg') sendHost({ t: 'emerg' });
-    else if (u.k === 'cams' || u.k === 'admin') { if (sabK() === 'comms') { toast('Communications are down'); return; } sendHost({ t: 'info', k: u.k }); openPanel(u.k, { title: u.k === 'cams' ? 'Security Cameras' : 'Admin Map', view: u.k }); }
-    else openPanel(u.k, { title: u.k === 'lights' ? 'Fix Lights' : u.k === 'comms' ? 'Restore Comms' : u.k === 'o2' ? 'Clear O2 Canisters' : 'Reactor Panel', sab: 1, panel: u.p || 0 });
+    else if (u.k === 'cams' || u.k === 'admin') { if (sabK() === 'comms') { toast('The radio is down'); return; } sendHost({ t: 'info', k: u.k }); openPanel(u.k, { title: u.k === 'cams' ? 'Deck Cameras' : 'Deck Map', view: u.k }); }
+    else openPanel(u.k, { title: u.k === 'lights' ? 'Fix Lights' : u.k === 'comms' ? 'Retune the Radio' : u.k === 'o2' ? 'Reset the Air Pumps' : 'Core Panel', sab: 1, panel: u.p || 0 });
   }
   const killTarget = () => {
     if (!V.alive || V.vent >= 0) return -1;
@@ -2544,7 +2544,7 @@ function mountGame(root, api) {
     let al = '';
     if (sab) {
       if (sab.k === 'reactor') al = `<b>REACTOR MELTDOWN</b><span>${Math.max(0, Math.ceil(sab.t - (now - V.stT) / 1000))}s</span>`;
-      else if (sab.k === 'o2') al = `<b>O2 DEPLETED</b><span>${Math.max(0, Math.ceil(sab.t - (now - V.stT) / 1000))}s</span>`;
+      else if (sab.k === 'o2') al = `<b>AIR RUNNING OUT</b><span>${Math.max(0, Math.ceil(sab.t - (now - V.stT) / 1000))}s</span>`;
       else if (sab.k === 'lights') al = '<b>LIGHTS OUT</b>';
       else al = '<b>COMMS SABOTAGED</b>';
     }
@@ -2622,7 +2622,7 @@ function mountGame(root, api) {
     b.style.aspectRatio = 'auto'; b.style.padding = '8px';
     const grid = h('div', 'au-cams');
     b.append(grid);
-    const names = ['Security Hall', 'Cafeteria South', 'Navigation', 'Storage Hall'];
+    const names = ['Watch Room Hall', 'Mess Hall South', 'Helm', 'Cargo Hold Hall'];
     const tiles = CAMS.map((r, k) => {
       const w = h('div', 'au-cam'), cvx = document.createElement('canvas');
       cvx.width = 320; cvx.height = 240;
@@ -2708,7 +2708,7 @@ function mountGame(root, api) {
       const rc = n => { const r = ROOMS.find(q => q.n === n); return [r.x + r.w / 2, r.y + r.h / 2]; };
       const sb = (k, xx, yy, txt) => mk(txt, 0, xx, yy, () => { sendHost({ t: 'sab', k }); closeMap(); }, 'sk');
       sb('lights', ST.lights.cx, ST.lights.cy, 'Lights'); sb('comms', ST.comms.cx, ST.comms.cy, 'Comms');
-      sb('reactor', rc('Reactor')[0] + 3, rc('Reactor')[1] - 4, 'Reactor'); sb('o2', rc('O2')[0], rc('O2')[1], 'O2');
+      sb('reactor', rc('Core')[0] + 3, rc('Core')[1] - 4, 'Core'); sb('o2', rc('Air Plant')[0], rc('Air Plant')[1], 'Air Plant');
       DOOR_ROOMS.forEach(n => { const p = rc(n); mk('Doors', 0, p[0], p[1] + 2.5, () => { sendHost({ t: 'sab', k: 'doors', r: n }); closeMap(); }, 'dr').title = n; });
     }
     const upd = () => {
@@ -2754,8 +2754,8 @@ function mountGame(root, api) {
 
 
   const HELP_TXT = [
-    ['Crewmates', 'Finish your tasks around the ship, report bodies and vote out the Impostors. If the task bar fills, the crew wins.'],
-    ['Impostors', 'Blend in with fake tasks, kill crewmates when nobody sees you, use vents and sabotage the ship. Win when Impostors equal the crew or a sabotage timer runs out.'],
+    ['Deckhands', 'Finish your tasks around the ship, report bodies and vote out the Intruders. If the task bar fills, the crew wins.'],
+    ['Intruders', 'Blend in with fake tasks, kill crewmates when nobody sees you, use vents and sabotage the ship. Win when Intruders equal the crew or a sabotage timer runs out.'],
     ['Controls', 'WASD or arrows move. E or Space uses. Q kills. R reports a body. V vents. X sabotages. M or Tab opens the map. On touch drag anywhere to move.'],
     ['Meetings', 'Report a body or press the emergency button. Chat, then vote. Ties and skips eject nobody.']
   ];
@@ -2827,13 +2827,13 @@ function mountGame(root, api) {
       const imp = Math.min(L.S.imp, maxImp(L.roster.length));
       let rows = '';
       if (G.role === 'solo') rows += `<div class="au-row"><span>Players</span><div><button data-p="-1" ${lead ? '' : 'disabled'}>-</button><b>${L.size}</b><button data-p="1" ${lead ? '' : 'disabled'}>+</button></div></div>`;
-      if (G.role === 'solo') rows += `<div class="au-row"><span>Your role</span><div><button data-r="-1">-</button><b>${['Random', 'Crewmate', 'Impostor'][saved.role | 0]}</b><button data-r="1">+</button></div></div>`;
+      if (G.role === 'solo') rows += `<div class="au-row"><span>Your role</span><div><button data-r="-1">-</button><b>${['Random', 'Deckhand', 'Intruder'][saved.role | 0]}</b><button data-r="1">+</button></div></div>`;
       else rows += `<div class="au-row"><span>Players</span><div><b>${L.roster.length}</b></div></div>`;
       SPEC.forEach(([k, label, opts, fmt]) => {
         const v = L.S[k];
         rows += `<div class="au-row"><span>${label}</span><div><button data-k="${k}" data-d="-1" ${lead ? '' : 'disabled'}>-</button><b>${fmt ? fmt(v) : v}</b><button data-k="${k}" data-d="1" ${lead ? '' : 'disabled'}>+</button></div></div>`;
       });
-      lb.innerHTML = rows + `<p class="au-hint">${lead ? 'You control the settings.' : 'Only the party leader can change settings.'} Impostors in play: ${imp}.</p>`;
+      lb.innerHTML = rows + `<p class="au-hint">${lead ? 'You control the settings.' : 'Only the party leader can change settings.'} Intruders in play: ${imp}.</p>`;
     }
     const ok = L.roster.length >= 4;
     lf.innerHTML = `<button class="au-bt" data-a="start" ${lead && ok ? '' : 'disabled'}>${lead ? (ok ? 'Start game' : 'Need 4 players') : 'Waiting for the leader…'}</button><button class="au-bt ghost" data-a="leave">Leave</button>`;
@@ -2911,7 +2911,7 @@ function mountGame(root, api) {
     const imp = V.role === 1, ni = Math.min(V.S.imp, maxImp(V.n));
     const el = h('div', 'au-intro ' + (imp ? 'imp' : 'crew'));
     const list = imp ? [V.me].concat(V.mates) : V.players.map(p => p.i);
-    el.innerHTML = `<div class="au-it">${imp ? 'Impostor' : 'Crewmate'}</div><div class="au-is">${imp ? (ni > 1 ? 'Sabotage and kill the crew with your partners' : 'Sabotage and kill the crew') : `There ${ni === 1 ? 'is 1 Impostor' : 'are ' + ni + ' Impostors'} among us`}</div><div class="au-ir">${list.map(i => `<div>${crewSvg(COLORS[V.players[i].color], 1)}<span>${esc(V.players[i].name)}</span></div>`).join('')}</div>`;
+    el.innerHTML = `<div class="au-it">${imp ? 'Intruder' : 'Deckhand'}</div><div class="au-is">${imp ? (ni > 1 ? 'Sabotage and kill the crew with your partners' : 'Sabotage and kill the crew') : `There ${ni === 1 ? 'is 1 Intruder' : 'are ' + ni + ' Intruders'} among us`}</div><div class="au-ir">${list.map(i => `<div>${crewSvg(COLORS[V.players[i].color], 1)}<span>${esc(V.players[i].name)}</span></div>`).join('')}</div>`;
     showLayer('intro', el);
     snd('start');
     api.timeout(() => hideLayer('intro'), Math.max(500, V.introUntil - performance.now() + 250));
@@ -2950,7 +2950,7 @@ function mountGame(root, api) {
 
   function buildMeet(quiet) {
     const el = h('div', 'au-meet');
-    el.innerHTML = `<div class="au-mhd"><b>Who's the Impostor?</b><span class="au-mt"></span></div>
+    el.innerHTML = `<div class="au-mhd"><b>Who's the Intruder?</b><span class="au-mt"></span></div>
 <div class="au-mbody"><div class="au-mpl"></div><div class="au-mch"><div class="au-mlog"></div><form class="au-mfm"><input maxlength="140" placeholder="Type a message" autocomplete="off"><button type="submit">Send</button></form></div></div>
 <div class="au-mft"><button class="au-bt ghost au-skip" type="button">Skip vote</button><span class="au-mstat"></span></div><div class="au-msplash"></div>`;
     showLayer('meet', el);
@@ -3067,7 +3067,7 @@ function mountGame(root, api) {
     const p = info.i >= 0 ? V.players[info.i] : null;
     let l1, l2 = '';
     if (p) {
-      if (info.imp >= 0) { l1 = `${p.name} was ${info.imp ? '' : 'not '}an Impostor.`; if (info.left >= 0) l2 = `${info.left} Impostor${info.left === 1 ? '' : 's'} remain${info.left === 1 ? 's' : ''}.`; }
+      if (info.imp >= 0) { l1 = `${p.name} was ${info.imp ? '' : 'not '}an Intruder.`; if (info.left >= 0) l2 = `${info.left} Intruder${info.left === 1 ? '' : 's'} remain${info.left === 1 ? 's' : ''}.`; }
       else l1 = `${p.name} was ejected.`;
     } else l1 = `No one was ejected. (${kind === 'tie' ? 'Tie' : 'Skipped'})`;
     EJ = { info, t0: performance.now(), l1, l2, p, dur: info.i >= 0 ? 8200 : 5200 };
@@ -3114,7 +3114,7 @@ function mountGame(root, api) {
     const side = V.players.filter(p => (o.w === 'imp') === !!o.roles[p.i]);
     const mvp = side.length ? side.reduce((a, p) => sc(p.i) > sc(a.i) ? p : a, side[0]) : null;
     const line = i => { const q = ST[i]; if (!q) return ''; return o.roles[i] ? `${q[0]} kill${q[0] === 1 ? '' : 's'}` : `${q[1]}/${q[2]} tasks`; };
-    const rows = V.players.map(p => `<div class="r ${o.roles[p.i] ? 'imp' : ''} ${o.alive[p.i] ? '' : 'dead'}${mvp && mvp.i === p.i ? ' mvp' : ''}">${crewSvg(COLORS[p.color], 1)}<b>${esc(p.name)}</b><em>${o.roles[p.i] ? 'Impostor' : 'Crewmate'}${ST[p.i] ? ' · ' + line(p.i) : ''}${o.alive[p.i] ? '' : ' · out'}</em>${mvp && mvp.i === p.i ? '<i class="mv">MVP</i>' : ''}</div>`).join('');
+    const rows = V.players.map(p => `<div class="r ${o.roles[p.i] ? 'imp' : ''} ${o.alive[p.i] ? '' : 'dead'}${mvp && mvp.i === p.i ? ' mvp' : ''}">${crewSvg(COLORS[p.color], 1)}<b>${esc(p.name)}</b><em>${o.roles[p.i] ? 'Intruder' : 'Deckhand'}${ST[p.i] ? ' · ' + line(p.i) : ''}${o.alive[p.i] ? '' : ' · out'}</em>${mvp && mvp.i === p.i ? '<i class="mv">MVP</i>' : ''}</div>`).join('');
     const lead = G.role === 'solo' || G.role === 'host' ? leaderIdx() === 0 : L.me === L.lead;
     el.innerHTML = `<div class="ot">${win ? 'VICTORY' : 'DEFEAT'}</div><div class="os">${REASON[o.why] || ''}</div><div class="au-orl">${rows}</div><div class="au-ob">${lead ? '<button class="au-bt" data-a="again">Play again</button>' : '<span class="wl">Waiting for the leader…</span>'}${G.role === 'host' ? '<button class="au-bt blue" data-a="party">Party lobby</button>' : ''}<button class="au-bt ghost" data-a="leave">Leave</button></div>`;
     showLayer('over', el);
@@ -3447,6 +3447,7 @@ function mountGame(root, api) {
   api.interval(() => { if (G.role === 'host' && mode === 'lobby') sendLobby(); }, 2000);
 
   resize();
+  root.__au = { G, get mode() { return mode; }, get V() { return V; } };
   if (api.net && api.net.invite) { resumeCand = api.net.invite === 'NEW'; goOnline(); } else showMenu();
   return {
     destroy() {

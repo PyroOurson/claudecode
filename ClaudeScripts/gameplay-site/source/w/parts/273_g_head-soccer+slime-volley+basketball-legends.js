@@ -93,6 +93,28 @@ ${q} .hs-pb.gold{background:#c78a07}
 `;
   };
 
+  function bgHost(api, root, want, fn) {
+    let w = null, iv = 0, last = 0, raf = 0, dead = false;
+    const stop = () => { if (w) { try { w.terminate(); } catch (e) {} w = null; } if (iv) { clearInterval(iv); iv = 0; } };
+    const tick = () => {
+      if (dead) return;
+      if (!root.isConnected) { dead = true; stop(); return; }
+      const now = performance.now();
+      if (!document.hidden || now - raf < 250 || !want()) { last = now; return; }
+      let dt = Math.min(1, (now - last) / 1000);
+      last = now;
+      while (dt > 1e-6) { const d = Math.min(.05, dt); dt -= d; fn(d, now); }
+    };
+    const start = () => {
+      stop(); last = performance.now();
+      try { const u = URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},33)'], { type: 'text/javascript' })); w = new Worker(u); URL.revokeObjectURL(u); w.onmessage = tick; w.onerror = () => { w = null; if (!iv && !dead) iv = setInterval(tick, 250); }; }
+      catch (e) { w = null; iv = setInterval(tick, 250); }
+    };
+    api.loop(() => { raf = performance.now(); });
+    api.on(document, 'visibilitychange', () => { if (dead) return; if (document.hidden && want()) start(); else stop(); });
+    return () => { dead = true; stop(); };
+  }
+
   function makeShell(root, api, G) {
     const net = api.net, invited = !!net.invite;
     const saved = api.load() || {};
@@ -313,29 +335,16 @@ ${q} .hs-pb.gold{background:#c78a07}
       if (scr === 'play' && G.result(S)) endMatch();
     }
     api.loop((dt, now) => { if (scr === 'play' || scr === 'over') frame(dt, now); });
-    let bgW = null, bgI = 0, bgT = 0;
-    function bgTick() {
-      if (!document.hidden || role !== 'host' || scr !== 'play' || !S) return;
-      const now = performance.now();
-      let n = Math.min(Math.round(.8 / STEP), Math.floor((now - bgT) / (STEP * 1000)));
-      if (n <= 0) return;
-      bgT += n * STEP * 1000;
-      if (now - bgT > 500) bgT = now;
-      while (n-- > 0 && !S.over) simStep(0);
+    const bgEnd = bgHost(api, root, () => role === 'host' && scr === 'play' && !!S, (d, now) => {
+      acc += d;
+      let n = 0;
+      while (acc >= STEP && n < 8) { acc -= STEP; n++; simStep(0); if (S.over) break; }
+      if (n >= 8) acc = 0;
       if (now - snapT >= G.snapMs) flushSnap(now);
       if (now - saveT > 1000) { saveT = now; saveResume(); }
       if (G.result(S)) endMatch();
-    }
-    function bgStop() { if (bgW) { try { bgW.terminate(); } catch (e) {} bgW = null; } if (bgI) { clearInterval(bgI); bgI = 0; } }
-    function bgStart() {
-      bgStop();
-      try { const u = URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},33)'], { type: 'text/javascript' })); bgW = new Worker(u); URL.revokeObjectURL(u); bgW.onmessage = bgTick; bgW.onerror = () => { bgW = null; if (!bgI) bgI = setInterval(bgTick, 250); }; }
-      catch (e) { bgW = null; bgI = setInterval(bgTick, 250); }
-    }
-    api.on(document, 'visibilitychange', () => {
-      if (document.hidden) { if (role === 'host' && scr === 'play') { bgT = performance.now(); bgStart(); } }
-      else { bgStop(); acc = 0; }
     });
+    root.__sp = { get S() { return S; }, get role() { return role; }, get scr() { return scr; }, get seats() { return seats; }, opt: sh.opt };
 
     function saveResume() {
       if (role !== 'host' || !S || S.over || !plan) return;
@@ -481,7 +490,7 @@ ${q} .hs-pb.gold{background:#c78a07}
     sh.start = () => {
       if (invited) goOnline(); else toMenu();
     };
-    sh.destroy = () => { bgStop(); try { if (ac) ac.close(); } catch (e) {} ac = null; };
+    sh.destroy = () => { bgEnd(); try { if (ac) ac.close(); } catch (e) {} ac = null; };
     return sh;
   }
 
@@ -2222,8 +2231,7 @@ ${sh.orow('Stadium', sh.chips('stage', HS_STAGES.map((s, i) => [i, s.name])))}
     { n: 'Rookie', react: .34, spd: .8, terr: .085, open: 120, steal: .35, block: .18, cross: .1, pass: .2, ag: .3 },
     { n: 'Pro', react: .22, spd: .9, terr: .055, open: 100, steal: .6, block: .4, cross: .25, pass: .35, ag: .5 },
     { n: 'All-Star', react: .13, spd: .97, terr: .035, open: 85, steal: .85, block: .65, cross: .4, pass: .5, ag: .7 },
-    { n: 'Legend', react: .07, spd: 1.03, terr: .02, open: 72, steal: 1, block: .9, cross: .55, pass: .6, ag: .9 },
-    { n: 'Hardest', react: .17, spd: 1, terr: .008, open: 72, steal: 1, block: 1, cross: 1.3, pass: .6, ag: .9, smart: 1 }
+    { n: 'Legend', react: .07, spd: 1.03, terr: .02, open: 72, steal: 1, block: .9, cross: .55, pass: .6, ag: .9 }
   ];
   const BL_SPDUR = { turbo: 7, fire: 7, giant: 7, lock: 7, freeze: 3.5, phase: 7 };
   const blDir = (S, t) => S.atk[t] > 500 ? 1 : -1;
@@ -2612,7 +2620,7 @@ ${sh.orow('Stadium', sh.chips('stage', HS_STAGES.map((s, i) => [i, s.name])))}
   function blAI(S, i, mem, dt, seat) {
     if (S.phase !== 'play' || S.over) return 0;
     const p = S.pl[i], b = S.ball, t = i & 1, n = S.n, GY = BL.GY, ch = BL_CH[p.ch];
-    const L = BL_LV[clamp((seat && seat.lvl) | 0, 0, 4)];
+    const L = BL_LV[clamp((seat && seat.lvl) | 0, 0, 3)];
     mem.t = (mem.t || 0) + dt;
     const hx = S.atk[t], hd = hx > 500 ? 1 : -1, ox = S.atk[1 - t];
     let think = false;
@@ -2690,12 +2698,7 @@ ${sh.orow('Stadium', sh.chips('stage', HS_STAGES.map((s, i) => [i, s.name])))}
         if (!h.sh) mem.hs = false;
         if (h.dk >= 0 && !mem.hdk) { mem.hdk = true; if (Math.abs(p.x - ox) < 150 && Math.random() < L.block * .7) mem.jumpAt = mem.t + .05; }
         if (h.dk < 0) mem.hdk = false;
-        if (L.smart) {
-          if (ad < 58 && !h.sh && h.dk < 0 && p.stc <= 0 && p.stm <= 0 && h.cr <= 0 && h.crc <= .4 && Math.abs(Math.cos(b.ph)) < .5) {
-            if (!mem.sq) mem.sq = mem.t + .03;
-            if (mem.t >= mem.sq) { m = (m & ~3) | (d > 0 ? 2 : 1); tap(16); mem.sq = 0; }
-          } else if (mem.sq && mem.t > mem.sq + .12) mem.sq = 0;
-        } else if (think && ad < 60 && !h.sh && h.dk < 0 && p.stc <= 0 && p.stm <= 0 && Math.random() < L.steal * .45) { m = (m & ~3) | (d > 0 ? 2 : 1); tap(16); }
+        if (think && ad < 60 && !h.sh && h.dk < 0 && p.stc <= 0 && p.stm <= 0 && Math.random() < L.steal * .45) { m = (m & ~3) | (d > 0 ? 2 : 1); tap(16); }
       } else if (h.dk >= 0 && !mem.hdk) { mem.hdk = true; if (Math.abs(p.x - ox) < 150 && Math.random() < L.block * .6) mem.jumpAt = mem.t + .05; }
       else if (h.dk < 0) mem.hdk = false;
       if (mem.jumpAt && mem.t >= mem.jumpAt) { m |= 4; mem.jumpAt = 0; }

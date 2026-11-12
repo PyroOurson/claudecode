@@ -1,22 +1,23 @@
 (() => {
   'use strict';
 function bgHost(api, root, want, fn) {
-  let w = null, iv = 0, last = 0, dead = false;
+  let w = null, iv = 0, last = 0, raf = 0, dead = false;
   const stop = () => { if (w) { try { w.terminate(); } catch (e) {} w = null; } if (iv) { clearInterval(iv); iv = 0; } };
   const tick = () => {
-    if (dead || !document.hidden) return;
+    if (dead) return;
     if (!root.isConnected) { dead = true; stop(); return; }
     const now = performance.now();
+    if (!document.hidden || now - raf < 250 || !want()) { last = now; return; }
     let dt = Math.min(1, (now - last) / 1000);
     last = now;
-    if (!want()) return;
-    while (dt > .001) { const d = Math.min(.05, dt); dt -= d; fn(d, now); }
+    while (dt > 1e-6) { const d = Math.min(.05, dt); dt -= d; fn(d, now); }
   };
   const start = () => {
     stop(); last = performance.now();
     try { const u = URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},33)'], { type: 'text/javascript' })); w = new Worker(u); URL.revokeObjectURL(u); w.onmessage = tick; w.onerror = () => { w = null; if (!iv && !dead) iv = setInterval(tick, 250); }; }
     catch (e) { w = null; iv = setInterval(tick, 250); }
   };
+  api.loop(() => { raf = performance.now(); });
   api.on(document, 'visibilitychange', () => { if (dead) return; if (document.hidden && want()) start(); else stop(); });
   return () => { dead = true; stop(); };
 }
@@ -1977,7 +1978,7 @@ ${m === 1 ? `<div class="bk-row"><span>Arrows</span>${seg('deadly', [[0, 'Knockb
         const out = evs.filter(e => e.k !== 'hit' || e.v > 260).slice(0, 24);
         api.net.send({ t: 'ev', e: out, ph: A.phase, pt: A.pt, sc: A.scores.slice(), rd: A.round, map: A.map, win: A.winner, mw: A.matchWinner, play: A.play });
       }
-      if (A.world && A.ticks % 2 === 0) api.net.send(snapOf(A), true);
+      if (A.world && Math.abs(A.ticks - (G.snapTick || 0)) >= 2) { G.snapTick = A.ticks; api.net.send(snapOf(A), true); }
     }
 
     function guestInputSend(now) {
@@ -2107,6 +2108,7 @@ ${m === 1 ? `<div class="bk-row"><span>Arrows</span>${seg('deadly', [[0, 'Knockb
       for (const e of evs) { handleEv(e, v0); if (e.k === 'rend') pushHostSave(A.scores.slice(), A.round); if (e.k === 'mend') onMend(A, A.scores, e.mw); }
       hostLoopNet(evs);
     });
+    root.__bk = { G };
     G.demo = makeArena(demoCfg()); G.demo.start();
     if (api.net.invite) { G.state = 'menu'; goOnline(); }
     else showMenu();
@@ -4278,6 +4280,31 @@ class Hud {
 const STEP = 1 / 60;
 const VIEW_X = 840, VIEW_Y = 600;
 const NEWSEED = () => (Math.random() * 4294967295) >>> 0;
+const okNum = v => typeof v === 'number' && isFinite(v);
+function cleanState(st) {
+  if (!st || typeof st !== 'object' || st.v !== 1 || !okNum(st.seed) || !okNum(st.time) || st.time < 0 || !okNum(st.nextId)) return null;
+  if (!Array.isArray(st.res) || !Array.isArray(st.structs) || !Array.isArray(st.players)) return null;
+  if (!st.res.every(r => Array.isArray(r) && okNum(r[0]) && okNum(r[1]) && okNum(r[2]))) return null;
+  if (!st.structs.every(s => s && typeof s === 'object' && !!ST[s.t] && okNum(s.x) && okNum(s.y) && okNum(s.hp) && (s.inv == null || Array.isArray(s.inv)))) return null;
+  for (const p of st.players) {
+    if (!p || typeof p !== 'object' || !okNum(p.x) || !okNum(p.y) || !okNum(p.hp) || !okNum(p.food) || !okNum(p.water) || !okNum(p.cold) || !okNum(p.born) || !Array.isArray(p.inv)) return null;
+    if (!p.inv.every(s => s == null || (typeof s === 'object' && !!ITEMS[s.i] && okNum(s.n)))) return null;
+    p.inv = p.inv.map(s => s || null);
+    if (p.inv.length < SLOTS_MAX) p.inv = p.inv.concat(new Array(SLOTS_MAX - p.inv.length).fill(null));
+    if (!okNum(p.sel)) p.sel = 0;
+    if (!okNum(p.bag)) p.bag = 0;
+    if (!okNum(p.kills)) p.kills = 0;
+    if (!okNum(p.crafted)) p.crafted = 0;
+    p.alive = !!p.alive;
+  }
+  return st;
+}
+function cleanRun(run) {
+  if (!run || typeof run !== 'object') return null;
+  let st = null;
+  try { st = cleanState(run.st); } catch (e) { st = null; }
+  return st ? { st, at: okNum(run.at) ? run.at : 0 } : null;
+}
 const fin = v => typeof v === 'number' && isFinite(v);
 const clean = s => String(s == null ? '' : s).replace(/[<>&"']/g, '').slice(0, 16);
 
@@ -4306,9 +4333,11 @@ class StarveGame {
     ui.className = 'sv-ui';
     wrap.append(ui);
     ui.addEventListener('click', e => this.uiClick(e));
-    const sv = api.load() || {};
-    this.opts = Object.assign({ bots: 3 }, sv.opts || {});
-    this.run = sv.run || null;
+    let sv = api.load();
+    if (!sv || typeof sv !== 'object') sv = {};
+    this.opts = Object.assign({ bots: 3 }, sv.opts && typeof sv.opts === 'object' ? sv.opts : {});
+    this.opts.bots = [0, 3, 7].includes(this.opts.bots) ? this.opts.bots : 3;
+    this.run = cleanRun(sv.run);
     this.state = 'menu'; this.role = null; this.sim = null; this.me = null; this.renderer = null;
     this.paused = false; this.acc = 0; this.fxQ = []; this.evQ = [];
     this.sel = 0; this.keys = new Set(); this.mx = .5; this.my = .5; this.useMouse = false;
@@ -4320,6 +4349,7 @@ class StarveGame {
     this.ro = new ResizeObserver(() => this.fit());
     this.ro.observe(wrap);
     api.loop((dt, now) => this.frame(dt, now));
+    root.__st = this;
     this.bgEnd = bgHost(api, wrap, () => this.role === 'host' && !!this.sim && !!this.renderer, d => this.bgStep(d));
   }
 
@@ -4633,13 +4663,16 @@ class StarveGame {
     this.leaveOnline(true);
     let sim, me;
     if (resume && this.run && this.run.st) {
-      const st = this.run.st;
-      sim = new Sim({ seed: st.seed, solo: true, time: st.time });
-      const list = sim.loadState(st);
-      me = this.restorePlayers(sim, list, s => s.ctl === 'local' ? { ctl: 'local', me: 1 } : s.ctl === 'bot' ? { ctl: 'bot' } : null);
-      if (!me) me = sim.addPlayer({ name: this.myName(), ctl: 'local' });
-      if (!me.alive) sim.respawn(me);
-    } else {
+      try {
+        const st = this.run.st;
+        sim = new Sim({ seed: st.seed, solo: true, time: st.time });
+        const list = sim.loadState(st);
+        me = this.restorePlayers(sim, list, s => s.ctl === 'local' ? { ctl: 'local', me: 1 } : s.ctl === 'bot' ? { ctl: 'bot' } : null);
+        if (!me) me = sim.addPlayer({ name: this.myName(), ctl: 'local' });
+        if (!me.alive) sim.respawn(me);
+      } catch (e) { sim = null; this.run = null; this.persist(); }
+    }
+    if (!sim) {
       sim = new Sim({ seed: NEWSEED(), solo: true });
       me = sim.addPlayer({ name: this.myName(), ctl: 'local' });
       for (let i = 0; i < this.opts.bots; i++) sim.addPlayer({ name: BOTNAMES[(i * 3 + 1) % BOTNAMES.length], ctl: 'bot' });
@@ -4962,6 +4995,7 @@ Object.assign(StarveGame.prototype, {
   link(nid, pid) { this.pmap.set(nid, pid); this.rmap.set(pid, nid); },
 
   hostBegin(r, st) {
+    try { st = st ? cleanState(st) : null; } catch (e) { st = null; }
     const sim = new Sim(st ? { seed: st.seed, time: st.time, sendEv: true } : { seed: NEWSEED(), sendEv: true });
     this.pmap = new Map(); this.rmap = new Map();
     let me = null;

@@ -50,7 +50,7 @@
     { name: 'Green', c: '#34b84a', d: '#1d7a2e', l: '#8fe69c' },
     { name: 'Yellow', c: '#f1b81f', d: '#a97a07', l: '#ffe083' }
   ];
-  const WORM_NAMES = ['Boggy B', 'Spadge', 'Clagnut', 'Wiggles', 'Nobby', 'Slimey', 'Squirt', 'Doris', 'Grub', 'Mulch', 'Stumpy', 'Bernard', 'Noodle', 'Gus', 'Pinkie', 'Lumpy', 'Wriggler', 'Tubby', 'Mabel', 'Sir Reginald', 'Dribble', 'Fergus', 'Ziggy', 'Biscuit', 'Moss', 'Wormy', 'Chunk', 'Sprout', 'Hank', 'Pudding', 'Olive', 'Twitch'];
+  const WORM_NAMES = ['Pebble', 'Tunnel Tim', 'Loam', 'Scoot', 'Dibble', 'Mudge', 'Nib', 'Burrow', 'Squidge', 'Tilly', 'Clod', 'Pip', 'Wobble', 'Root', 'Fidget', 'Dune', 'Bramble', 'Titch', 'Marge', 'Lord Wiggleton', 'Drizzle', 'Angus', 'Zigzag', 'Crumb', 'Fern', 'Noodles', 'Chomp', 'Bud', 'Hector', 'Custard', 'Juniper', 'Twizzle'];
   const TEAM_NAMES = ['The Wrigglers', 'Slime Time', 'Dirt Squad', 'Pink Menace', 'Bait & Switch', 'Soil Boys', 'The Annelids', 'Mud Pie', 'Early Birds', 'Compost Crew', 'Fishing Hooks', 'Spaghetti'];
   const LEVELS = ['Easy', 'Normal', 'Hard', 'Hardest'];
 
@@ -74,14 +74,14 @@
     banana: { n: 'Fruit Bomb', g: 0, ammo: 1, kind: 'nade', aim: 1, charge: 1, fuse: 1, bounce: 1, r: 50, dmg: 50 },
     holy: { n: 'Mega Grenade', g: 0, ammo: 1, kind: 'nade', aim: 1, charge: 1, r: 100, dmg: 100 },
     shotgun: { n: 'Shotgun', g: 1, ammo: 5, kind: 'shot', aim: 1, shots: 2 },
-    uzi: { n: 'Uzi', g: 1, ammo: 3, kind: 'burst', aim: 1 },
-    punch: { n: 'Fire Punch', g: 2, ammo: 3, kind: 'melee', aim: 0 },
+    uzi: { n: 'Burst Gun', g: 1, ammo: 3, kind: 'burst', aim: 1 },
+    punch: { n: 'Uppercut', g: 2, ammo: 3, kind: 'melee', aim: 0 },
     bat: { n: 'Baseball Bat', g: 2, ammo: 3, kind: 'melee', aim: 1 },
     dynamite: { n: 'Dynamite', g: 3, ammo: 2, kind: 'drop', aim: 0, r: 78, dmg: 75 },
-    sheep: { n: 'Sheep', g: 3, ammo: 2, kind: 'drop', aim: 0, r: 62, dmg: 75 },
+    sheep: { n: 'Wind-up Ram', g: 3, ammo: 2, kind: 'drop', aim: 0, r: 62, dmg: 75 },
     airstrike: { n: 'Air Strike', g: 3, ammo: 2, kind: 'target', aim: 0, target: 1 },
     teleport: { n: 'Teleport', g: 4, ammo: 2, kind: 'util', aim: 0, target: 1 },
-    rope: { n: 'Ninja Rope', g: 4, ammo: -1, kind: 'rope', aim: 1 },
+    rope: { n: 'Grapple Line', g: 4, ammo: -1, kind: 'rope', aim: 1 },
     girder: { n: 'Girder', g: 4, ammo: 3, kind: 'util', aim: 0, target: 1 }
   };
   const WORDER = ['bazooka', 'grenade', 'cluster', 'banana', 'holy', 'shotgun', 'uzi', 'punch', 'bat', 'dynamite', 'sheep', 'airstrike', 'teleport', 'rope', 'girder'];
@@ -93,22 +93,23 @@
   const GIRDER_LEN = [64, 112, 176];
 
   function bgHost(api, root, want, fn) {
-    let w = null, iv = 0, last = 0, dead = false;
+    let w = null, iv = 0, last = 0, raf = 0, dead = false;
     const stop = () => { if (w) { try { w.terminate(); } catch (e) {} w = null; } if (iv) { clearInterval(iv); iv = 0; } };
     const tick = () => {
-      if (dead || !document.hidden) return;
+      if (dead) return;
       if (!root.isConnected) { dead = true; stop(); return; }
       const now = performance.now();
+      if (!document.hidden || now - raf < 250 || !want()) { last = now; return; }
       let dt = Math.min(1, (now - last) / 1000);
       last = now;
-      if (!want()) return;
-      while (dt > .001) { const d = Math.min(.05, dt); dt -= d; fn(d, now); }
+      while (dt > 1e-6) { const d = Math.min(.05, dt); dt -= d; fn(d, now); }
     };
     const start = () => {
       stop(); last = performance.now();
       try { const u = URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},33)'], { type: 'text/javascript' })); w = new Worker(u); URL.revokeObjectURL(u); w.onmessage = tick; w.onerror = () => { w = null; if (!iv && !dead) iv = setInterval(tick, 250); }; }
       catch (e) { w = null; iv = setInterval(tick, 250); }
     };
+    api.loop(() => { raf = performance.now(); });
     api.on(document, 'visibilitychange', () => { if (dead) return; if (document.hidden && want()) start(); else stop(); });
     return () => { dead = true; stop(); };
   }
@@ -2680,8 +2681,8 @@
 <li><b>Fire</b> hold Space to charge, release to shoot. Click-weapons: click the map, or press Space on the marker</li>
 <li><b>Jump</b> Enter. <b>Backflip</b> Backspace</li>
 <li><b>Weapons</b> Tab, Q or right panel button. <b>Fuse</b> 1 to 5. <b>Bounce</b> B</li>
-<li><b>Ninja Rope</b> fire to shoot a hook, left / right to swing, up / down to climb, Enter to let go</li>
-<li><b>Sheep</b> press Space again to blow it up. <b>Girder</b> R rotates, T changes length</li>
+<li><b>Grapple Line</b> fire to shoot a hook, left / right to swing, up / down to climb, Enter to let go</li>
+<li><b>Wind-up Ram</b> press Space again to blow it up. <b>Girder</b> R rotates, T changes length</li>
 <li><b>Camera</b> drag or right-drag to pan, wheel or +/- to zoom, C to follow your worm</li>
 <li>After you fire you get a few seconds to retreat. Drown the other teams, use the wind, grab the crates</li>
 <li>Phone: left pad moves, middle pad aims, right buttons jump / flip / fire. Tap the map to place a target, then press Fire</li></ul>`;
