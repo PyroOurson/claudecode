@@ -7,7 +7,7 @@ const DIAG = (() => {
   const rnd = () => { try { const a = new Uint8Array(10); crypto.getRandomValues(a); return Array.from(a, x => (x % 36).toString(36)).join(''); } catch (e) { return Math.random().toString(36).slice(2, 12); } };
   const lim = n => D.full ? n * 6 : n;
   const RED = /"(password|current_password|new_password|access_token|refresh_token|provider_token|provider_refresh_token|token|secret|apikey|api_key|code_verifier|credential|id_token|nonce)"\s*:\s*"[^"]*"/gi;
-  const red = (s, n) => { s = String(s == null ? '' : s); const c = lim(n || 4000); if (s.length > c) s = s.slice(0, c) + '…[' + s.length + ']'; return s.replace(RED, '"$1":"[redacted]"'); };
+  const red = (s, n) => { s = String(s == null ? '' : s); if (s.length < 200000) s = s.replace(RED, '"$1":"[redacted]"'); const c = lim(n || 4000); if (s.length > c) s = s.slice(0, c) + '…[' + s.length + ']'; return s.replace(/eyJ[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{8,}(\.[A-Za-z0-9_-]*)?/g, '[jwt]'); };
   const url = u => String(u || '').replace(/([?&](apikey|token|access_token|code|refresh_token)=)[^&#]*/gi, '$1[redacted]').slice(0, 400);
   const str = (v, n) => {
     try {

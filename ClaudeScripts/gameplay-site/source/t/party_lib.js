@@ -13,7 +13,7 @@ async function player(browser, who, o = {}) {
   await v.goto('', 600);
   if (!(await v.signedIn())) {
     try { await v.login(USERS[who][0], USERS[who][1]); }
-    catch (e) { throw new Error('login failed for ' + who + ': ' + (await v.text(200)) + ' | ' + v.log.slice(-5).join(' | ')); }
+    catch (e) { const st = await v.page.evaluate(() => ({ modal: !document.querySelector('#aumodal').hidden, note: document.querySelector('#aunote').textContent, up: document.querySelector('#auupnote').textContent, email: document.querySelector('#auemail').value, signed: !!(window.Ameplay && Ameplay.account.signedIn), ck: !document.querySelector('#ckbar').hidden })).catch(() => null); throw new Error('login failed for ' + who + ': ' + String(e.message).slice(0, 200) + ' | ' + JSON.stringify(st) + ' | ' + v.log.slice(-5).join(' | ')); }
   }
   await v.page.waitForTimeout(500);
   keep(who, await v.ctx.storageState());

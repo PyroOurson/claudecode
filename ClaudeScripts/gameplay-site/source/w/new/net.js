@@ -479,8 +479,17 @@ async function netRtDoor(sb, gid, code, hubId, onLink) {
     await link.start();
     send();
   });
-  await netRtSub(ch, 7000);
-  try { await ch.track({ t: t0 }); } catch (e) {}
+  await new Promise((res, rej) => {
+    let done = false;
+    const t = setTimeout(() => { if (!done) { done = true; rej({ type: 'network' }); } }, 7000);
+    try {
+      ch.subscribe(st => {
+        if (dead) return;
+        if (st === 'SUBSCRIBED') { try { const r = ch.track({ t: t0 }); if (r && r.catch) r.catch(() => {}); } catch (e) {} if (!done) { done = true; clearTimeout(t); res(); } else netDiag('rt-door-rejoin'); }
+        else if (!done && (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT' || st === 'CLOSED')) { done = true; clearTimeout(t); rej({ type: 'network' }); }
+      });
+    } catch (e) { if (!done) { done = true; clearTimeout(t); rej({ type: 'network' }); } }
+  });
   const st = await Promise.race([first, new Promise(r => setTimeout(() => r(null), 2500))]);
   let taken = false;
   if (st) for (const k in st) { if (k.indexOf('hub:') === 0 && k !== key && (st[k] || []).some(x => (+x.t || 0) <= t0)) taken = true; }

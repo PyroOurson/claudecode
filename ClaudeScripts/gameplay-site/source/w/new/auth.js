@@ -75,7 +75,7 @@ function sbClient() {
   if (SB.p) return SB.p;
   const p = SB.p = sbLib().then(lib => {
     if (!SB.c) {
-      SB.c = lib.createClient(SBN.best(), SUPABASE_ANON_KEY, { global: { fetch: SBN.fetch }, realtime: SBN.WS ? { transport: SBN.WS, worker: true } : { worker: true }, auth: { flowType: 'pkce', detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storageKey: SB_STORE } });
+      SB.c = lib.createClient(SBN.best(), SUPABASE_ANON_KEY, { global: { fetch: SBN.fetch }, realtime: Object.assign({ worker: true, logger: (k, m, d) => { if (DIAG.on && k !== 'push' && k !== 'receive') DIAG.ev('rt', { k: String(k), m: String(m).slice(0, 200), d: d == null ? undefined : String(typeof d === 'object' ? (d.message || d.reason || d.code || d.type || '') : d).slice(0, 160) }); } }, SBN.WS ? { transport: SBN.WS } : {}), auth: { flowType: 'pkce', detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storageKey: SB_STORE } });
       SB.c.auth.onAuthStateChange((ev, s) => setTimeout(() => auSession(ev, s), 0));
     }
     return SB.c;
