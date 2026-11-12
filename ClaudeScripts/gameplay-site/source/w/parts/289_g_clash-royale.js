@@ -739,7 +739,11 @@
     if (Math.random() < df.err * .5) return;
     let lane = B.lane;
     const twL = S.units.find(u => u.s === op && u.ti === 0), twR = S.units.find(u => u.s === op && u.ti === 1);
-    if (Math.random() < .55 && twL && twR) lane = (twL.d ? 0 : twL.hp) < (twR.d ? 0 : twR.hp) ? 0 : 1;
+    if (df.hx) {
+      if (S.per === 'reg' && S.left < 30 && S.cr[me] > S.cr[op] && el < 9.7) return;
+      const hl = twL && !twL.d ? twL.hp : 1e9, hr = twR && !twR.d ? twR.hp : 1e9;
+      if (Math.abs(hl - hr) > 40 && Math.min(hl, hr) < 1e9) lane = hl < hr ? 0 : 1;
+    } else if (Math.random() < .55 && twL && twR) lane = (twL.d ? 0 : twL.hp) < (twR.d ? 0 : twR.hp) ? 0 : 1;
     else if (Math.random() < .5) lane = 1 - lane;
     B.lane = lane;
     const lx = BRX[lane];
