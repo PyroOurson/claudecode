@@ -416,11 +416,11 @@
     if (W.state !== 'play' || !H.ok) { X.plan = HXIDLE; return; }
     const o = hxAt(H, W.tick), bx = P[o], by = P[o + 1], fs = vdot(c.v, c.f), ownY = -sg * CFG.Y;
     hxEtas(W, H);
-    let tOpp = 9, tMate = 9, iMate = -1, last = true;
+    let tOpp = 9, tMate = 9, iMate = -1, iOpp = -1, last = true;
     for (let i = 0; i < H.n; i++) {
       if (i === me) continue;
       const e = H.obs[i].eta;
-      if (W.cars[i].team !== c.team) { if (e < tOpp) tOpp = e; }
+      if (W.cars[i].team !== c.team) { if (e < tOpp) { tOpp = e; iOpp = i; } }
       else { if (e < tMate) { tMate = e; iMate = i; } if (!H.obs[i].demo && (H.obs[i].p.y - c.p.y) * sg < 0) last = false; }
     }
     const threat = H.goalK >= 0 && H.goalTeam === c.team ? (H.goalK - W.tick) * H.dt : 99;
@@ -447,7 +447,7 @@
       if (keep && Math.abs(old.T - T) <= 4) {
         old.slack = h.t - h.eta;
         if (old.nx * h.nx + old.ny * h.ny < 0.9986) { old.nx = h.nx; old.ny = h.ny; old.tx = h.tx; old.ty = h.ty; old.probes = Math.min(old.probes, 1); }
-      } else X.plan = { type: 'strike', mode, why, T, up: Math.round(h.up * 120), gen: H.gen, nx: h.nx, ny: h.ny, tx: h.tx, ty: h.ty, gx: h.gx, lat: keep ? old.lat : 0, probes: keep ? Math.min(old.probes, 1) : 0, e0: keep ? old.e0 : 0, l0: keep ? old.l0 : 0, q: 0, slack: h.t - h.eta };
+      } else X.plan = { type: 'strike', mode, why, T, up: Math.round(h.up * 120), gen: H.gen, nx: h.nx, ny: h.ny, tx: h.tx, ty: h.ty, gx: h.gx, lat: keep ? old.lat : mode === 'kick' ? (W.rng() - 0.5) * 44 : 0, probes: keep ? Math.min(old.probes, 1) : 0, e0: keep ? old.e0 : 0, l0: keep ? old.l0 : 0, q: 0, slack: h.t - h.eta };
       const pl = X.plan;
       if (pl.probes < 3 && mode !== 'kick' && pl.T - W.tick < 170 && H.busy < 100) hxProbe(W, H, c, pl);
       return;
@@ -470,6 +470,7 @@
     }
     if (threat < 6) { hxGo(W, c, X, clamp(P[hxAt(H, H.goalK) + 0] * 0.9, -GW + 120, GW - 120), ownY + sg * 120, 2300, true, 'line', false); return; }
     if (goalSide && why !== 'wrong') {
+      if (last && tOpp < tMe - 0.5 && gl > 2600 && gl < 7000 && tOpp < 1.8 && iOpp >= 0 && (H.obs[iOpp].p.y - by) * sg > 100) { const k = clamp(gl * 0.22, 350, 1100); hxGo(W, c, X, -gx / gl * k, ownY - gy / gl * k, 2300, true, 'keep', false); return; }
       const D = clamp(gl * 0.55, 1200, 2800), k = Math.min(D, gl - 300);
       hxGo(W, c, X, bx + gx / gl * k, by + gy / gl * k, 2300, true, 'shadow', safe);
       return;
