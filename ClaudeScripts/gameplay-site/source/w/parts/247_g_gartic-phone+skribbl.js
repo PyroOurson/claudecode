@@ -18,7 +18,7 @@
   const tame = s => {
     s = String(s == null ? '' : s);
     const n = s.replace(/[A-Z013457@$]/g, c => LEET[c] || c.toLowerCase());
-      let o = '', at = 0, m;
+    let o = '', at = 0, m;
     RUDE.lastIndex = 0;
     while ((m = RUDE.exec(n))) { const i = m.index + m[1].length, j = m.index + m[0].length; o += s.slice(at, i) + s[i] + '*'.repeat(j - i - 1); at = j; }
     return o + s.slice(at);

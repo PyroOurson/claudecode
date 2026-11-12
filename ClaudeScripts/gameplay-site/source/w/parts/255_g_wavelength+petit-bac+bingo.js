@@ -13,7 +13,7 @@
   const tame = s => {
     s = String(s == null ? '' : s);
     const n = s.replace(/[A-Z013457@$]/g, c => LEET[c] || c.toLowerCase());
-      let o = '', at = 0, m;
+    let o = '', at = 0, m;
     RUDE.lastIndex = 0;
     while ((m = RUDE.exec(n))) { const i = m.index + m[1].length, j = m.index + m[0].length; o += s.slice(at, i) + s[i] + '*'.repeat(j - i - 1); at = j; }
     return o + s.slice(at);
@@ -181,6 +181,12 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
       const now = X.now();
       X.view = mine(X.H.view(X.seat, now), X.seat);
       sp.onView(X.view);
+      if (X.view.ph !== 'over') X.told = 0;
+      else if (!X.told && X.mode === 'online' && X.role === 'host') {
+        X.told = 1;
+        const nw = (api.net.players || []).filter(p => !p.host && p.inGame === false).length;
+        if (nw) api.toast(nw + (nw > 1 ? ' players are' : ' player is') + ' waiting. Go back to the lobby to let them in.');
+      }
       if (X.role === 'host') X.H.S.P.forEach((p, i) => {
         const id = X.pids[i];
         if (id && i !== X.seat && !p.bot) api.net.sendTo(id, { t: 'v', s: i, v: mine(X.H.view(i, now), i) });

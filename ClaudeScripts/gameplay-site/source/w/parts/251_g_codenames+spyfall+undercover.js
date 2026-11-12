@@ -10,7 +10,7 @@
   const tame = s => {
     s = String(s == null ? '' : s);
     const n = s.replace(/[A-Z013457@$]/g, c => LEET[c] || c.toLowerCase());
-      let o = '', at = 0, m;
+    let o = '', at = 0, m;
     RUDE.lastIndex = 0;
     while ((m = RUDE.exec(n))) { const i = m.index + m[1].length, j = m.index + m[0].length; o += s.slice(at, i) + s[i] + '*'.repeat(j - i - 1); at = j; }
     return o + s.slice(at);
@@ -158,6 +158,13 @@
       const e = M.eng;
       if (!e) return;
       saveHost();
+      const done = e.s.phase === 'over' || e.s.phase === 'series';
+      if (!done) M.told = 0;
+      else if (!M.told && M.mode === 'host') {
+        M.told = 1;
+        const nw = (api.net.players || []).filter(p => !p.host && p.inGame === false).length;
+        if (nw) ctl.toast(nw + (nw > 1 ? ' players are' : ' player is') + ' waiting. Go back to the lobby to let them in.');
+      }
       e.seats.forEach((s, i) => {
         if (s.bot) return;
         if (i === M.seat) show(e.view(i));

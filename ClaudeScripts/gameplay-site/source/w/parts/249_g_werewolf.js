@@ -6,7 +6,7 @@
   const tame = s => {
     s = String(s == null ? '' : s);
     const n = s.replace(/[A-Z013457@$]/g, c => LEET[c] || c.toLowerCase());
-      let o = '', at = 0, m;
+    let o = '', at = 0, m;
     RUDE.lastIndex = 0;
     while ((m = RUDE.exec(n))) { const i = m.index + m[1].length, j = m.index + m[0].length; o += s.slice(at, i) + s[i] + '*'.repeat(j - i - 1); at = j; }
     return o + s.slice(at);
@@ -20,14 +20,14 @@
     witch: { n: 'Witch', team: 'village', c: '#8e44ad', d: 'One healing potion saves tonight\'s victim, one poison kills anyone. Each can be used once per game.' },
     hunter: { n: 'Hunter', team: 'village', c: '#e67e22', d: 'When you die, for any reason, you shoot one player and take them with you.' },
     bodyguard: { n: 'Bodyguard', team: 'village', c: '#3f6fb5', d: 'Each night, guard another player. If the werewolves attack them, you die in their place.' },
-    jester: { n: 'Jester', team: 'solo', c: '#e91e8c', d: 'You win if the village lynches you. Act suspicious, but not too suspicious. The game goes on for everyone else.' },
+    jester: { n: 'Jester', team: 'solo', c: '#e91e8c', d: 'You win if the village votes you out. Act suspicious, but not too suspicious. The game goes on for everyone else.' },
     cupid: { n: 'Cupid', team: 'village', c: '#ec407a', d: 'On the first night, link two players as lovers. When one dies, the other dies of heartbreak. A wolf and villager couple wins only as the last two alive.' },
     littlegirl: { n: 'Little Girl', team: 'village', c: '#d84315', d: 'You secretly read the werewolves\' night chat, but you never see who is speaking.' }
   };
   const RKEYS = Object.keys(ROLE);
   const TEAM = { village: 'Village', wolves: 'Werewolves', solo: 'Solo' };
   const isWolf = r => r === 'werewolf' || r === 'alpha';
-  const CAUSE = { wolves: 'was killed by the werewolves', poison: 'was poisoned', lynch: 'was lynched', hunter: 'was shot by the Hunter', heartbreak: 'died of a broken heart', guard: 'died protecting someone' };
+  const CAUSE = { wolves: 'was killed by the werewolves', poison: 'was poisoned', lynch: 'was voted out', hunter: 'was shot by the Hunter', heartbreak: 'died of a broken heart', guard: 'died protecting someone' };
   const SPECIALS = ['seer', 'doctor', 'hunter', 'witch', 'bodyguard', 'jester', 'cupid', 'littlegirl'];
   const NAMES = ['Aria', 'Bram', 'Cleo', 'Dax', 'Elin', 'Finn', 'Gwen', 'Hugo', 'Iris', 'Jonas', 'Kira', 'Leo', 'Mina', 'Nico', 'Olga', 'Pablo', 'Quinn', 'Rosa', 'Sven', 'Tara', 'Uma', 'Vik', 'Wren', 'Xavi', 'Yara', 'Zed', 'Ivy', 'Otto', 'Lena', 'Milo', 'Nora', 'Ravi'];
   const SPEED = { Fast: { night: 20, disc: 30, vote: 20 }, Normal: { night: 30, disc: 45, vote: 30 }, Slow: { night: 40, disc: 90, vote: 40 } };
@@ -60,18 +60,18 @@
 
   const L = {
     hello: () => ['Hello everyone!', 'Good morning, village.', 'Okay, who has information?', 'No clues yet. Let us listen carefully.', 'Anyone want to claim a role?', 'Morning all. Let us be careful today.', 'Alright, talk to me. Who saw something?', 'First day, so nothing to go on. Speak up, everyone.', 'Hi! Please do not vote on a coin flip.', 'Let us hear from everybody before we vote.', 'Quiet start. Who wants to go first?', 'I am listening. Convince me.'],
-    idle: () => ['I am just a villager.', 'Let us not rush into a vote.', 'I do not have anything yet.', 'Who is quiet? Wolves usually are.', 'Think about who accused whom.', 'Watch how people vote today, it says a lot.', 'I would rather skip than lynch a villager.', 'Has anyone noticed who keeps changing their story?', 'Be careful about bandwagons.', 'Somebody here is lying to us.', 'If nobody has proof, I will not vote someone random.', 'Let us compare what everyone said last night and today.', 'The wolves want us to fight each other.', 'I keep an eye on whoever pushes too hard.'],
+    idle: () => ['I am just a villager.', 'Let us not rush into a vote.', 'I do not have anything yet.', 'Who is quiet? Wolves usually are.', 'Think about who accused whom.', 'Watch how people vote today, it says a lot.', 'I would rather skip than vote out a villager.', 'Has anyone noticed who keeps changing their story?', 'Be careful about bandwagons.', 'Somebody here is lying to us.', 'If nobody has proof, I will not vote someone random.', 'Let us compare what everyone said last night and today.', 'The wolves want us to fight each other.', 'I keep an eye on whoever pushes too hard.'],
     sus: s => [`I am suspicious of ${s}.`, `${s} is my main suspect.`, `I think ${s} might be a werewolf.`, `Something is off about ${s}.`, `${s}, care to explain yourself?`, `${s} has been too quiet for my taste.`, `Does anyone else find ${s} fishy?`, `My gut says ${s}.`, `I would look closely at ${s}.`, `${s} dodged a question earlier. Just saying.`, `Why has ${s} not said anything useful?`, `If I had to pick right now, it would be ${s}.`],
     dead: d => [`Poor ${d}. The wolves are among us.`, `We lost ${d}. Let us be smart today.`, `${d} did not deserve that. Find the wolves.`, `Rest in peace, ${d}. Who benefits from this?`, `${d} is gone. Think about who wanted that.`, `Losing ${d} hurts. We cannot waste today's vote.`],
     push: t => [`${t} feels off to me. Anyone else?`, `I am suspicious of ${t}.`, `Has ${t} said anything useful? Not really.`, `I do not like how ${t} talks.`, `Let us look at ${t} today.`, `${t} keeps dodging. Vote ${t}?`, `Funny how ${t} always agrees with the crowd.`, `I would start with ${t}.`],
     defW: a => ['Me? Come on, I am just a villager!', `That's a stretch, ${a}. Look elsewhere.`, 'Why me? I have been helpful all day!', `${a}, you are throwing names around with no proof.`, 'I have done nothing wrong. Check the quiet ones.', `Funny that ${a} points at me so fast.`, 'You are wasting a vote on me, and the wolves love it.', 'Seriously? Think about who gains from this.'],
-    defV: a => ['It is not me! I am a villager.', `${a}, why do you say that? I am innocent.`, 'I am with the village, I swear!', `What did I do, ${a}? Give me one reason.`, 'Lynching me helps the wolves. Please think.', `I will answer anything, ${a}. Ask me.`, 'I have been on your side since the start.', 'Wrong target. I want the wolves gone as much as you.'],
+    defV: a => ['It is not me! I am a villager.', `${a}, why do you say that? I am innocent.`, 'I am with the village, I swear!', `What did I do, ${a}? Give me one reason.`, 'Voting me out helps the wolves. Please think.', `I will answer anything, ${a}. Ask me.`, 'I have been on your side since the start.', 'Wrong target. I want the wolves gone as much as you.'],
     counter: a => [`Interesting that ${a} is the one accusing me.`, `Why is ${a} so eager? Look at ${a}.`, `If anyone is acting strange, it is ${a}.`],
     vote: t => [`I vote ${t}.`, `${t} for me.`, `Voting ${t}.`, `My vote goes to ${t}.`, `Sorry ${t}, it is you.`, `${t}. Final answer.`, `Going with ${t}.`],
-    hunter: () => ['Careful, I am the Hunter. Lynch me and I take someone with me.', 'Just so you know, I am the Hunter. Think before you vote me.'],
+    hunter: () => ['Careful, I am the Hunter. Vote me out and I take someone with me.', 'Just so you know, I am the Hunter. Think before you vote me.'],
     jester: () => ['I have a feeling about someone, but I am not sure yet.', 'Hmm, I do not trust the quiet ones.', 'Someone here is hiding something.', 'Honestly I am just trying to read the room.', 'Do not look at me, I just got here.'],
-    bait: () => ['Vote me, I dare you. What could go wrong?', 'I am definitely the wolf. Totally. Trust me.', 'Honestly I want to be lynched, it is boring here.', 'Lynch me, I will make it worth your while.', 'Kill me now, I am the wolf, obviously.', 'Go on, vote me. You know you want to.'],
-    wary: j => [`${j} is begging to be lynched. That smells like a Jester. Ignore them.`, `Do not fall for ${j}. Nobody confesses that loudly unless they are the Jester.`, `${j} wants the rope. Let us not hand it over.`],
+    bait: () => ['Vote me, I dare you. What could go wrong?', 'I am definitely the wolf. Totally. Trust me.', 'Honestly I want to be voted out, it is boring here.', 'Vote me out, I will make it worth your while.', 'Kill me now, I am the wolf, obviously.', 'Go on, vote me. You know you want to.'],
+    wary: j => [`${j} is begging to be voted out. That smells like a Jester. Ignore them.`, `Do not fall for ${j}. Nobody confesses that loudly unless they are the Jester.`, `${j} wants our votes. Let us not hand them over.`],
     believe: (f, t) => [`Thanks ${f}. I will vote ${t}.`, `That is useful, ${f}. ${t} is my target now.`, `If ${f} is the Seer, ${t} is done.`, `Good to hear it, ${f}. ${t}, any defence?`],
     doubt: f => [`Prove it, ${f}. Anyone else claim Seer?`, `${f} claims Seer. Hmm. Let us see who backs that.`, `A Seer claim is easy to make, ${f}.`, `I want to hear a second opinion on ${f}.`],
     clear: (f, t) => [`Good to know ${t} is clean, ${f}.`, `Noted, ${f}. ${t} is safe.`, `So ${t} is not a wolf. That narrows it down.`],
@@ -238,7 +238,7 @@
     }
     function startVote() {
       G.vt = []; G.voteLog = []; setPhase('vote', G.T.vote);
-      sys('Voting has started. Choose who to lynch.');
+      sys('Voting has started. Choose who to vote out.');
       P.forEach(b => { if (b.bot && b.alive) botVote(b); });
     }
     function endVote() {
@@ -251,11 +251,11 @@
       G.lyn = -1;
       if (best >= 0 && !tie && voted * 2 >= a.length) {
         G.defd = best;
-        sys(`${nm(best)} received the most votes (${bc}) and is brought to the gallows. Any last words?`);
+        sys(`${nm(best)} received the most votes (${bc}) and stands before the village. Any last words?`);
         setPhase('defense', 10);
         if (P[best].bot) later(rnd(1500, 4000), () => botLast(P[best]));
       } else {
-        sys(tie ? 'The vote is tied. Nobody is lynched.' : voted * 2 < a.length ? 'Not enough players voted. Nobody is lynched.' : 'Nobody is lynched.');
+        sys(tie ? 'The vote is tied. Nobody is voted out.' : voted * 2 < a.length ? 'Not enough players voted. Nobody is voted out.' : 'Nobody is voted out.');
         learnVotes(-1);
         setPhase('exec', 3);
       }
@@ -267,7 +267,7 @@
       const i = G.defd; G.lyn = i; G.defd = -1;
       const p = P[i], before = P.map(x => x.alive);
       kill(i, 'lynch');
-      sys(`${p.name} was lynched. They were a ${ROLE[p.role].n}.`);
+      sys(`${p.name} was voted out. They were a ${ROLE[p.role].n}.`);
       reportHeart(before);
       if (p.role === 'jester') { G.jw = i; sys(`${p.name} was the Jester and wins! The game goes on.`); }
       learnVotes(i);
@@ -391,7 +391,7 @@
     function hear(e) {
       const f = e.f, txt = String(e.x).toLowerCase(), sender = P[f];
       if (!sender) return;
-      const selfBad = /\b(vote|lynch|kill) me\b|\bi(?: am|'m|m) (?:the |a )?(?:wolf|werewolf)\b/.test(txt);
+      const selfBad = /\b(vote|lynch|banish|kill) me(?: out)?\b|\bi(?: am|'m|m) (?:the |a )?(?:wolf|werewolf)\b/.test(txt);
       P.forEach(b => {
         if (!b.bot || !b.alive || b.i === f) return;
         const m = b.mem;
@@ -1005,10 +1005,10 @@
   };
   const PHT = { deal: 'Get ready', night: 'Night', dawn: 'Day', discuss: 'Discussion', vote: 'Voting', defense: 'Last words', exec: 'Judgement', hunter: 'Hunter\'s shot', hshot: 'Hunter\'s shot', over: 'Game over' };
 
-  const HOW = `<div class="ww-rules"><p><b>The game.</b> A village hides werewolves. Each night the wolves eat one villager. Each day everybody discusses and votes to lynch one suspect. The village wins when all wolves are dead. The wolves win when they equal or outnumber everyone else.</p>
+  const HOW = `<div class="ww-rules"><p><b>The game.</b> A village hides werewolves. Each night the wolves eat one villager. Each day everybody discusses and votes one suspect out. The village wins when all wolves are dead. The wolves win when they equal or outnumber everyone else.</p>
 <p style="margin-top:8px"><b>Night.</b> Roles with powers pick a target secretly. Wolves chat privately in the Wolves tab and must agree on a victim.</p>
-<p style="margin-top:8px"><b>Day.</b> The dead are announced with their roles. Discuss, then vote: click a player to vote, click again to change. Most votes goes to the gallows for last words and is lynched. A tie or fewer than half of the living voting means nobody is lynched.</p>
-<p style="margin-top:8px"><b>Solo winners.</b> The Jester wins if lynched, and the game goes on. Lovers of different teams win only as the last two alive.</p>
+<p style="margin-top:8px"><b>Day.</b> The dead are announced with their roles. Discuss, then vote: click a player to vote, click again to change. The player with the most votes gets a last word and is voted out. A tie or fewer than half of the living voting means nobody is voted out.</p>
+<p style="margin-top:8px"><b>Solo winners.</b> The Jester wins if voted out, and the game goes on. Lovers of different teams win only as the last two alive.</p>
 <div style="margin-top:12px">${RKEYS.map(r => `<div class="ww-rr">${roleIcon(r)}<div><b>${ROLE[r].n}</b> <span style="opacity:.6;font-size:11px">${TEAM[ROLE[r].team]}</span><p>${esc(ROLE[r].d)}</p></div></div>`).join('')}</div></div>`;
 
   Ameplay.register({
@@ -1368,10 +1368,10 @@
           if (v.skips && ph === 'discuss') sm = `Skip votes: ${v.skips[0]}/${v.skips[1]}`;
         } else if (ph === 'vote') {
           const mv = v.players[v.q].v;
-          pr = mv >= 0 ? `You voted for ${nm(mv)}.` : mv === -1 ? 'You abstained.' : 'Click a player to vote to lynch them.'; sm = 'Click the same player again to retract. Ties and low turnout lynch nobody.';
+          pr = mv >= 0 ? `You voted for ${nm(mv)}.` : mv === -1 ? 'You abstained.' : 'Click a player to vote them out.'; sm = 'Click the same player again to retract. Ties and low turnout send nobody out.';
           b.push(['abst', 'Abstain', mv === -1 ? 'on' : '']);
-        } else if (ph === 'defense') { pr = `${nm(v.defd)} stands on the gallows.`; sm = 'Last words...'; }
-        else if (ph === 'exec') pr = v.lyn >= 0 ? `${nm(v.lyn)} was lynched.` : 'Nobody was lynched.';
+        } else if (ph === 'defense') { pr = `${nm(v.defd)} stands before the village.`; sm = 'Last words...'; }
+        else if (ph === 'exec') pr = v.lyn >= 0 ? `${nm(v.lyn)} was voted out.` : 'Nobody was voted out.';
         else if (ph === 'hunter' || ph === 'hshot') pr = 'The Hunter takes a shot...';
         return { pr, sm, b };
       }

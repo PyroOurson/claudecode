@@ -307,7 +307,11 @@ function party(root, api, D) {
       K.pids.forEach((id, q) => { if (id && q !== K.seat && K.human[q]) api.net.sendTo(id, { t: 'v', s: q, v: e.view(q) }); });
       saveHost();
     }
-    if (e.over && !K.overDone) { K.overDone = true; if (D.onOver) D.onOver(K, K.view); try { sessionStorage.removeItem(SK); } catch (x) {} }
+    if (e.over && !K.overDone) {
+      K.overDone = true; if (D.onOver) D.onOver(K, K.view); try { sessionStorage.removeItem(SK); } catch (x) {}
+      const nw = K.mode === 'online' && K.role === 'host' ? (api.net.players || []).filter(p => !p.host && p.inGame === false).length : 0;
+      if (nw) api.toast(nw + (nw > 1 ? ' players are' : ' player is') + ' waiting. Go back to the lobby to let them in.');
+    }
   }
   K.refresh = refresh;
 
