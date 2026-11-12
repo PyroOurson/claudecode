@@ -358,7 +358,7 @@
     const o = hxAt(H, pl.T), qx = P[o] - pl.nx * dC + pl.ny * pl.lat, qy = P[o + 1] - pl.ny * dC - pl.nx * pl.lat;
     const ex = qx - c.p.x, ey = qy - c.p.y, d = Math.hypot(ex, ey) || 1, tl = i * H.dt;
     const al = ex * pl.nx + ey * pl.ny, off = al - clamp(0.8 / curve(HXCURV, Math.max(0, vdot(c.v, c.f))), 250, 1100);
-    hxDrive(c, r, qx - pl.nx * off, qy - pl.ny * off, pl.slack < 0.12 || tl < 0.03 ? 2500 : clamp(d / tl, 300, 2300) + 30, true, true);
+    hxDrive(c, r, qx - pl.nx * off, qy - pl.ny * off, pl.slack < 0.12 || tl < 0.03 ? 2500 : clamp(d / tl, 300, 2300) + 30, pl.slack < 0.3 || X.tOpp < X.tMe + 0.8 || c.boost > 60, true);
     const n = hxAt(H, W.tick), bx = P[n] - c.p.x, by = P[n + 1] - c.p.y, bd = Math.hypot(bx, by) || 1, cl = ((c.v.x - P[n + 3]) * bx + (c.v.y - P[n + 4]) * by) / bd;
     if (cl > 100 && i <= pl.up + 70 && (bd - dC) / cl * 120 <= pl.up + 50 && c.onGround && c.u.z > 0.9 && c.nwW >= 3 && (ex * c.f.x + ey * c.f.y) / d > 0.8) hxCommit(W, H, c, X, pl);
     return true;
@@ -436,7 +436,7 @@
     else if (!h.ok) why = 'none';
     else if (threat < 6) { go = tMe < threat + 0.1; why = 'save'; }
     else if (h.dy * sg < 0.15 || W.tick < X.ban) why = 'wrong';
-    else { go = tMe < tOpp + (last ? 0.1 : 0.7) + (was ? 0.2 : 0) || (danger && goalSide && tMe < tOpp + 0.6); why = go ? 'first' : 'late'; }
+    else { go = tMe < tOpp + (last ? 0.1 : 0.7) + (was ? 0.2 : 0) || (goalSide && tMe < tOpp + (danger ? 0.6 : by * sg < 0 ? 0.35 : 0)); why = go ? 'first' : 'late'; }
     X.first = go || why === 'late' || why === 'wrong' || why === 'none' || why === 'save';
     if (!W.kickoff && why !== 'mate' && c.onGround && c.u.z > 0.9 && c.nwW >= 3 && c.boost > 20 && (!go || h.t > 1) && W.tick > X.ban) {
       const a = hxFindAir(W, H, c, mode, HXF);
@@ -470,7 +470,7 @@
     }
     if (threat < 6) { hxGo(W, c, X, clamp(P[hxAt(H, H.goalK) + 0] * 0.9, -GW + 120, GW - 120), ownY + sg * 120, 2300, true, 'line', false); return; }
     if (goalSide && why !== 'wrong') {
-      const D = clamp(1100 + bd * 0.25, 1300, 2600), k = Math.min(D, gl - 300);
+      const D = clamp(gl * 0.55, 1200, 2800), k = Math.min(D, gl - 300);
       hxGo(W, c, X, bx + gx / gl * k, by + gy / gl * k, 2300, true, 'shadow', safe);
       return;
     }
