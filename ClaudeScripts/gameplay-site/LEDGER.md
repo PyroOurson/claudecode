@@ -9,7 +9,7 @@ Last updated: see the git log of this file.
 ## How things were tested
 
 - Staging backend: a local Supabase stack (Postgres, accounts, live updates, storage) with the full `schema.sql` including rounds 16 to 19. Staging build: `t/stage.py`. Local server with the hosting headers: `t/serve.js`.
-- Browser tests in `source/t/tests/`, all passing on the final merged build: `load_sequence.js` (4 scenarios), `gate_locked.js` (4), `party.js` (12 scenarios, two browsers), `fixes.js` (9 scenarios), `dm.js` (direct messages, two browsers), `announce.js`, `legal_pages.js`, and `smoke_all.js` (every game in the catalogue opened and started: 168 of 168 without errors).
+- Browser tests in `source/t/tests/`, all passing on the final merged build: `load_sequence.js` (4 scenarios), `gate_locked.js` (4), `party.js` (12 scenarios, two browsers), `fixes.js` (10 scenarios), `dm.js` (direct messages, two browsers), `announce.js`, `legal_pages.js`, and `smoke_all.js` (every game in the catalogue opened and started: 168 of 168 without errors).
 - Test accounts on staging: `gp_tester`, `gp_tester2` (diagnostics on), ordinary users and an owner.
 - Production: read-only. The live page was opened anonymously to observe the load sequence; nothing was written.
 - The test browser renders without a graphics card. Two things followed from that and are worth knowing: the site's own one-time graphics probe froze pages for minutes there (fixed, see bug 10), and screenshots of 3D games could not be judged for smoothness.
@@ -113,7 +113,7 @@ Status of each. "Verified" means a browser test on staging reproduces the scenar
 | 2 | A second account on the same browser inherited the first one's saves, plays and display name; a deleted account's history went to the next sign-in | Verified (S2) |
 | 3 | A party guest could join under the host's id and get leader powers | Verified (S3) |
 | 4 | Esc while rebinding a key left capture armed, so the next key pressed in the game was rebound | Verified (S4) |
-| 5 | Two tabs double-counted plays and playtime and reverted each other's settings | Fixed, not exercised |
+| 5 | Two tabs double-counted plays and playtime and reverted each other's settings | Verified (`fixes.js` S10) |
 | 6 | A failed or cancelled invite link kept being retried when the lobby was reopened | Verified (`fixes.js` S8) |
 | 7 | Overlapping realtime nudges to the same user were dropped (late messages, typing, read marks) | Verified (`dm.js`) |
 | 8 | Message thread refreshes were silently skipped while another was in flight | Verified (`dm.js`) |
