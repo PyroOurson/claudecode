@@ -515,7 +515,7 @@ let anQ = [];
 try { anQ = JSON.parse(ckStore().getItem(AN_KEY)) || []; } catch (e) {}
 if (!Array.isArray(anQ)) anQ = [];
 if (!anOk()) anQ = [];
-let anHold = [], anT = 0, anErr = 0, anBusy = false;
+let anHold = [], anT = 0, anErr = 0, anBusy = false, anFly = null;
 const SID = (() => { try { const o = JSON.parse(sessionStorage.getItem('gameplay:sid')); if (o && o.id && Date.now() - o.t < 30 * 60e3) return o.id; } catch (e) {} return rid(); })();
 const T0 = Date.now();
 function anSave() { try { if (anOk()) ckStore().setItem(AN_KEY, JSON.stringify(anQ)); } catch (e) { anQ.splice(0, Math.ceil(anQ.length / 4)); } }
@@ -536,22 +536,36 @@ function track(e, p) {
   DIAG.ev('track', { e, p });
   const ev = { e: e.slice(0, 40), t: Date.now(), s: SID };
   if (SB.user) { ev.u = SB.user.id; if (e === 'game_play' || e === 'game_time' || e === 'record') syNudge(); }
-  if (p && typeof p === 'object') ev.p = anClean(p);
-  try { sessionStorage.setItem('gameplay:sid', JSON.stringify({ id: SID, t: Date.now() })); } catch (x) {}
+  if (p && typeof p === 'object') { ev.p = anClean(p); trTag(e, ev.p); }
   if (!consent) { if (anHold.length < 400) anHold.push(ev); return; }
   if (!anOk()) return;
+  try { sessionStorage.setItem('gameplay:sid', JSON.stringify({ id: SID, t: Date.now() })); } catch (x) {}
   anQ.push(ev);
   if (anQ.length > AN_MAX) anQ.splice(0, anQ.length - AN_MAX);
   clearTimeout(anT); anT = setTimeout(anSave, 500);
 }
-async function anFlush() {
+function anLast() {
+  const out = [];
+  let n = 0;
+  for (let i = anQ.length - 1; i >= 0 && out.length < 120; i--) {
+    const x = anQ[i];
+    if (anFly && anFly.has(x)) continue;
+    n += JSON.stringify(x).length + 160;
+    if (n > 24000) break;
+    out.unshift(x);
+  }
+  return out;
+}
+async function anFlush(last) {
   const A = Ameplay.analytics;
-  if (!anOk() || anBusy || !anQ.length || typeof A.sink !== 'function') return false;
-  const batch = anQ.slice(0, 250), set = new Set(batch);
-  anBusy = true;
+  last = last === true;
+  if (!anOk() || (anBusy && !last) || !anQ.length || typeof A.sink !== 'function') return false;
+  const batch = last ? anLast() : anQ.slice(0, 250), set = new Set(batch), solo = !anBusy;
+  if (!batch.length) return false;
+  if (solo) { anBusy = true; anFly = set; }
   try { await A.sink(batch.map(x => Object.assign({}, x))); anQ = anQ.filter(x => !set.has(x)); anSave(); return true; }
   catch (e) { return false; }
-  finally { anBusy = false; }
+  finally { if (solo) { anBusy = false; anFly = null; } }
 }
 function device() {
   const ua = navigator.userAgent || '', coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
@@ -596,7 +610,7 @@ function anReport() {
 Ameplay.analytics = {
   sink: null,
   track,
-  flush: anFlush,
+  flush: () => anFlush(),
   report: anReport,
   events: () => anQ.map(x => Object.assign({}, x)),
   clear() { anQ = []; anHold = []; try { localStorage.removeItem(AN_KEY); } catch (e) {} },
@@ -607,7 +621,7 @@ function setConsent(an, lv) {
   consent = { v: 2, analytics: !!an, level: lv || (an ? 'all' : 'essential'), terms: true, at: Date.now() };
   try { [localStorage, sessionStorage].forEach(st => { st.removeItem(CK_KEY); st.removeItem(AN_KEY); }); if (lv === 'session') localStorage.removeItem(VIDK); ckStore().setItem(CK_KEY, JSON.stringify(consent)); } catch (e) {}
   if (an) { anQ = anQ.concat(anHold); anHold = []; track('consent', { analytics: true, level: consent.level }); anSave(); setTimeout(trEnv, 500); }
-  else { anQ = []; anHold = []; try { if (SB.on) localStorage.removeItem(VIDK); } catch (e) {} }
+  else { anQ = []; anHold = []; try { if (SB.on) localStorage.removeItem(VIDK); ['gameplay:sid', 'gameplay:env', 'gameplay:geo', 'gameplay:hz'].forEach(k => sessionStorage.removeItem(k)); } catch (e) {} }
   $('#ckbar').hidden = true;
   document.documentElement.classList.remove('ck-open');
   syncSwitches();
@@ -625,7 +639,7 @@ function ttCommit(final) {
   ttAccrue();
   const id = TT.g, sec = TT.acc;
   if (!id) return;
-  if (sec < .5) { if (final && TT.sec >= 1) { track('game_time', { game: id, sec: Math.round(TT.sec) }); TT.sec = 0; } return; }
+  if (sec < .5) { if (final && TT.sec >= 1) { track('game_time', Object.assign({ game: id, sec: Math.round(TT.sec) }, trPerf(id))); TT.sec = 0; } return; }
   TT.acc = 0;
   S.time[id] = (S.time[id] || 0) + sec;
   const k = dayKey(), d = S.daily[k] || (S.daily[k] = { s: 0, p: 0 });
@@ -634,7 +648,7 @@ function ttCommit(final) {
   while (keys.length > 400) delete S.daily[keys.shift()];
   save();
   TT.sec = (TT.sec || 0) + sec;
-  if (final && TT.sec >= 1) { track('game_time', { game: id, sec: Math.round(TT.sec) }); TT.sec = 0; }
+  if (final && TT.sec >= 1) { track('game_time', Object.assign({ game: id, sec: Math.round(TT.sec) }, trPerf(id))); TT.sec = 0; }
 }
 function ttSync() {
   const id = cur ? cur.g.id : null;
@@ -1337,10 +1351,10 @@ function boot() {
   track('session', Object.assign(dv, { ref: ref === location.hostname ? '' : ref, returning: Date.now() - S.since > 864e5, gated: !!LZ.key, path: PATH_MODE, games: games.length }));
   addEventListener('error', e => { if (errN++ > 20) return; track('error', { where: 'window', msg: String(e.message || '').slice(0, 160), src: String(e.filename || '').split('/').pop().slice(0, 40), line: e.lineno || 0, game: cur ? cur.g.id : null }); });
   addEventListener('unhandledrejection', e => { if (errN++ > 20) return; const r = e.reason; track('error', { where: 'promise', msg: String(r && r.message || r).slice(0, 160), game: cur ? cur.g.id : null }); });
-  document.addEventListener('visibilitychange', () => { ttSync(); if (document.visibilityState === 'hidden') { trHidden(); ttCommit(true); anSave(); anFlush(); } });
-  addEventListener('pagehide', () => { trEnd(); ttCommit(true); track('session_end', { sec: Math.round((Date.now() - T0) / 1000) }); anSave(); anFlush(); });
+  document.addEventListener('visibilitychange', () => { ttSync(); if (document.visibilityState === 'hidden') { trHidden(); ttCommit(true); anSave(); anFlush(true); } });
+  addEventListener('pagehide', () => { trEnd(); ttCommit(true); track('session_end', { sec: Math.round((Date.now() - T0) / 1000) }); anSave(); anFlush(true); });
   setInterval(() => { if (cur) { ttCommit(false); infoSync(); } }, 15000);
-  setInterval(anFlush, 30000);
+  setInterval(() => anFlush(), 30000);
 
   const q = $('#q');
   q.addEventListener('input', () => {

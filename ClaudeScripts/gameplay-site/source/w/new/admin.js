@@ -34,7 +34,7 @@ function adAgo(t) {
   if (!d) return auT('Never');
   const s = (d - Date.now()) / 1000, a = Math.abs(s);
   const [n, u] = a < 60 ? [s, 'second'] : a < 3600 ? [s / 60, 'minute'] : a < 86400 ? [s / 3600, 'hour'] : a < 2592000 ? [s / 86400, 'day'] : a < 31536000 ? [s / 2592000, 'month'] : [s / 31536000, 'year'];
-  try { return new Intl.RelativeTimeFormat(adLang(), { numeric: 'auto' }).format(Math.round(n), u); } catch (e) { return new Date(d).toLocaleString(); }
+  try { if (adRtf.l !== adLang() || !adRtf.f) { adRtf.f = new Intl.RelativeTimeFormat(adLang(), { numeric: 'auto' }); adRtf.l = adLang(); } return adRtf.f.format(Math.round(n), u); } catch (e) { return new Date(d).toLocaleString(); }
 }
 function adDate(t, full) {
   const d = Date.parse(t);
@@ -81,13 +81,131 @@ function adMorph(el, html) {
 }
 const adClock = t => { try { return new Date(t).toLocaleTimeString(adLang(), { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); } catch (e) { return new Date(t).toTimeString().slice(0, 8); } };
 function adStamp(ok) {
+  if (ok) AD.ok = Date.now();
+  AD.bad = !ok;
+  lvBar();
+}
+const LV = { t: 0, busy: false, fail: 0, d: null, at: 0, ms: 0, db: {}, key: '', marks: null, miss: false, hk: 0, staff: (() => { try { return localStorage.getItem('gameplay:adstaff') === '1'; } catch (e) { return false; } })() };
+const lvOk = () => !!LV.at && Date.now() - LV.at < 5000;
+const lvWant = () => view === 'admin' && adIsAdmin() && !AD.locked && document.visibilityState !== 'hidden';
+const adOn = id => lvOk() ? LV.db[id] || null : RT.pres[id] || null;
+const adOnIds = () => Object.keys(lvOk() ? LV.db : RT.pres);
+const adDay0 = () => new Date().setHours(0, 0, 0, 0);
+const adData = (what, days, arg) => adRpc('admin_data', { p_what: what, p_days: days || ST.days, p_staff: LV.staff, p_arg: arg == null ? null : String(arg) });
+const adText = (el, s) => { if (el && el.textContent !== s) el.textContent = s; };
+const adRtf = { l: '', f: null };
+function adAgoS(t) {
+  const s = Math.max(0, Math.round((Date.now() - t) / 1000));
+  return s < 2 ? auT('just now') : s < 90 ? auT('{n} s ago').replace('{n}', s) : s < 5400 ? auT('{n} min ago').replace('{n}', Math.round(s / 60)) : auT('{n} h ago').replace('{n}', Math.round(s / 3600));
+}
+function adAgoPaint(el) {
+  const t = +el.dataset.ago;
+  adText(el, t ? auT('Updated {t}').replace('{t}', adAgoS(t)) : '');
+}
+function lvReset() {
+  clearTimeout(LV.t); LV.t = 0; LV.busy = false; LV.fail = 0; LV.d = null; LV.at = 0; LV.db = {}; LV.key = ''; LV.marks = null;
+}
+function lvKick() {
+  if (!lvWant() || LV.miss) { lvBar(); return; }
+  if (LV.t || LV.busy) return;
+  lvPoll();
+}
+async function lvPoll() {
+  clearTimeout(LV.t); LV.t = 0;
+  if (!lvWant() || LV.busy) { lvBar(); return; }
+  LV.busy = true;
+  const t0 = performance.now(), uid = SB.user && SB.user.id;
+  let ok = false;
+  try {
+    const d = await adRpc('admin_live', { p_uid: AD.sel || null, p_staff: LV.staff });
+    if (d && typeof d === 'object' && SB.user && SB.user.id === uid) { LV.ms = Math.round(performance.now() - t0); lvApply(d); ok = true; }
+  } catch (e) {
+    if (sbMissing(e)) LV.miss = true;
+    else if (/admins only/i.test(e.message || '')) { LV.busy = false; adStatus({ role: 'user', locked: false }); return; }
+  }
+  LV.busy = false;
+  LV.fail = ok ? 0 : LV.fail + 1;
+  if (!ok) lvDraw();
+  if (lvWant() && !LV.miss) LV.t = setTimeout(lvPoll, ok ? Math.max(150, 1000 - (performance.now() - t0)) : Math.min(30000, 1000 * Math.pow(2, Math.min(LV.fail, 5))));
+  lvBar();
+}
+function lvApply(d) {
+  const me = SB.user ? SB.user.id : '', m = {}, db = {};
+  (Array.isArray(d.on) ? d.on : []).forEach(x => {
+    if (!x || typeof x.id !== 'string') return;
+    const o = { g: typeof x.g === 'string' ? x.g : null, a: x.a ? 1 : 0, p: x.p ? 1 : 0, h: x.h ? 1 : 0, s: +x.s || 0, l: +x.l || 0, t: Date.now() };
+    db[x.id] = o;
+    if (x.id !== me) m[x.id] = x.h ? { h: 1 } : o;
+  });
+  const key = Object.keys(db).sort().map(k => k + ':' + (db[k].g || '') + db[k].a + db[k].p + db[k].h).join('|'), first = !LV.at;
+  if (LV.at && AD.users) { const iso = new Date().toISOString(); for (const id in LV.db) if (!db[id]) { const u = AD.users.find(x => x.id === id), el = document.querySelector(`#adt tr[data-uid="${CSS.escape(id)}"] .ls-off`); if (u) u.last_seen = iso; if (el) { el.dataset.rtt = iso; el.title = adDate(iso, 1); } } }
+  LV.d = d; LV.at = Date.now(); LV.db = db;
+  PB.db = m; PB.at = Date.now(); if (d.n) PB.n = Math.max(0, +d.n.shown || 0);
+  if (key !== LV.key) { LV.key = key; rtSync(); }
+  const M = d.marks || {}, was = LV.marks;
+  LV.marks = M;
+  if (was) {
+    if (M.users !== was.users) { AD.lt = Date.now(); adLoad(true); }
+    if (M.tickets !== was.tickets) tkLoad(tkBox($('#tka'), 'admin'));
+    if (M.log !== was.log && AD.tab === 'log') alLoad(false, true);
+  }
+  if (d.hk && Date.now() - LV.hk > 600000) { LV.hk = Date.now(); adRpc('admin_housekeep', {}).catch(() => {}); }
+  lvDraw(first);
+}
+function lvDraw() {
+  lvBar();
+  if (view !== 'admin' || !AD.users) return;
+  if (LV.rk !== LV.key || LV.ru !== AD.users) { LV.rk = LV.key; LV.ru = AD.users; document.querySelectorAll('#adt tbody tr[data-uid]').forEach(tr => tr.classList.toggle('on', !!adOn(tr.dataset.uid))); adTiles(); if (AD.tab === 'users' && (AD.f === 'online' || AD.f === 'today' || AD.sort[0] === 'last_seen')) adDraw(); }
+  const u = adCur();
+  if (u && !$('#adpanel').hidden) { adMorph($('#adplive'), adLiveTxt(u)); const b = $('#adpq div:last-child b'); if (b) adText(b, adOn(u.id) ? auT('Online now') : adAgo(u.last_seen)); }
+  if (AD.tab === 'stats') { if (INS.sub === 'ov') stLive(); else if (INS.sub === 'par') adMorph($('#mxpl'), mxPartyLive()); else if (INS.sub === 'hl') adMorph($('#mxhl'), mxHealthLive()); else if (INS.sub === 'act') adText($('#mxln'), stN(adOnIds().length)); }
+}
+function lvBar() {
   let el = $('#adupd');
   if (!el) { const r = $('#adref'); if (!r) return; r.insertAdjacentHTML('beforebegin', '<span class="adm-upd" id="adupd" role="status" translate="no"><i></i><span></span></span>'); el = $('#adupd'); }
-  if (ok) { AD.ok = Date.now(); el.classList.remove('tick'); void el.offsetWidth; el.classList.add('tick'); }
-  AD.bad = !ok;
-  el.classList.toggle('bad', !ok);
-  el.title = auT(ok ? 'The dashboard refreshes by itself every few seconds while this tab is open.' : 'Could not reach the server. Trying again.');
-  el.lastChild.textContent = AD.ok ? auT(ok ? 'Updated {t}' : 'Offline · updated {t}').replace('{t}', adClock(AD.ok)) : auT('Offline');
+  const live = lvOk(), st = LV.miss ? 'old' : live ? 'live' : document.visibilityState === 'hidden' ? 'idle' : LV.fail > 1 ? 'bad' : LV.at ? 'slow' : 'wait';
+  if (el.dataset.s !== st) { el.dataset.s = st; el.classList.toggle('bad', st === 'bad'); el.classList.toggle('live', st === 'live'); }
+  const n = LV.d && LV.d.n ? +LV.d.n.all || 0 : 0;
+  const txt = st === 'live' ? auT(n === 1 ? 'Live · 1 online' : 'Live · {n} online').replace('{n}', stN(n)) : st === 'wait' ? auT('Connecting…') : st === 'slow' ? auT('Updated {t}').replace('{t}', adAgoS(LV.at)) : st === 'old' ? (AD.ok ? auT('Updated {t}').replace('{t}', adAgoS(AD.ok)) : '') : st === 'idle' ? auT('Paused') : LV.at ? auT('Offline · updated {t}').replace('{t}', adAgoS(LV.at)) : auT('Offline');
+  adText(el.lastChild, txt);
+  el.title = auT(st === 'live' ? 'Live numbers refresh every second while this tab is open.' : st === 'old' ? 'Run round19_analytics.sql in the Supabase SQL editor to get live updates every second.' : st === 'bad' ? 'Could not reach the server. Trying again.' : 'Live updates pause while the tab is in the background.');
+}
+function lvErrHtml() {
+  const E = LV.d && Array.isArray(LV.d.errs) ? LV.d.errs : null;
+  if (!E) return (ST.d && ST.d.errors || []).slice(0, 8).map(e => `<div class="st-err"><b>${esc(adGame(e.game_id))}</b><span>${esc(e.message || '')}</span><small>${esc(e.place || '')} · ${esc(e.device || '')} · ${esc(adAgo(e.created_at))}</small></div>`).join('') || `<p class="ins-why">${esc(auT('No errors in this period.'))}</p>`;
+  return E.length ? E.map(e => `<button type="button" class="st-err" data-k="le:${+e.id}" data-mxerr="${esc(e.g || '')}"><b>${esc(e.g ? adGame(e.g) : auT('Site'))}</b><span>${esc(e.m || '')}</span><small>${esc([e.w, e.d].filter(Boolean).join(' · '))} · <i data-rt="${esc(e.at)}">${esc(adAgo(e.at))}</i></small></button>`).join('') : `<p class="ins-why">${esc(auT('No errors in the last hour.'))}</p>`;
+}
+function adTick() {
+  if (view !== 'admin' || document.visibilityState === 'hidden') return;
+  lvBar();
+  if (!adIsAdmin()) return;
+  document.querySelectorAll('#vAdmin [data-ago]').forEach(adAgoPaint);
+  document.querySelectorAll('#vAdmin [data-rt]').forEach(el => adText(el, adAgo(el.dataset.rt)));
+  const tb = $('#adt tbody'), rows = tb ? tb.rows : [];
+  if (AD.tab === 'users' && rows.length && rows[0].dataset.uid) {
+    const tw = tb.closest('.adm-tw'), h = rows[0].offsetHeight || 44, r = tw.getBoundingClientRect(), i0 = Math.max(0, Math.floor((tw.scrollTop + Math.max(0, -r.top)) / h) - 3), i1 = Math.min(rows.length, i0 + Math.ceil(Math.min(innerHeight, r.height || innerHeight) / h) + 8);
+    for (let i = i0; i < i1; i++) rows[i].querySelectorAll('[data-rtt]').forEach(el => adText(el, adAgo(el.dataset.rtt)));
+  }
+  if (!LV.t && !LV.busy) lvKick();
+  adSlow();
+}
+function adSlow() {
+  if (!lvWant()) return;
+  const now = Date.now(), typing = document.activeElement && /^(stgq|mxq|dgq)$/.test(document.activeElement.id);
+  adLive(false);
+  if (AD.tab !== 'stats' || typing) return;
+  const k = INS.sub;
+  if (k === 'ov') { if (now - ST.at > MX_EVERY.ov && !ST.busy) stLoad(true); }
+  else if (k === 'ins') { if (now - INS.at > MX_EVERY.ins && !INS.busy) insLoad(true); }
+  else if (MX_T[k] && now - (MX.at[k] || 0) > MX_EVERY[k] && !MX.busy[k] && now - (MX.try[k] || 0) > 8000) mxLoad(k, true);
+}
+function adStaffSet(on) {
+  LV.staff = !!on;
+  try { localStorage.setItem('gameplay:adstaff', on ? '1' : '0'); } catch (e) {}
+  const b = $('#ststaff'); if (b) { b.classList.toggle('on', LV.staff); b.setAttribute('aria-checked', String(LV.staff)); }
+  ST.at = 0; INS.at = 0; MX.at = {}; ST.anim = 1;
+  stOpen(true);
+  if (LV.t) { clearTimeout(LV.t); LV.t = 0; lvPoll(); }
 }
 
 function adStatus(s) {
@@ -122,6 +240,7 @@ function adSeen(id) {
 }
 function adSignedOut() {
   AD.role = null; AD.at = 0; AD.users = null; AD.sel = null; AD.until = null; AD.ok = 0; clearTimeout(AD.ut);
+  lvReset();
   SG.d = null; SG.err = null; SG.msg = null; SG.cf = false;
   document.querySelectorAll('[data-admin], [data-owner]').forEach(el => { el.hidden = true; });
   if (AD.locked) { AD.locked = false; adBlock(false); }
@@ -176,9 +295,9 @@ async function adEnter() {
   clearTimeout(AD.wait);
   ST.anim = 2; AD.anim = true; AD.lt = Date.now();
   adTab(AD.tab);
+  lvKick();
   await adLoad();
   tkLoad(tkBox($('#tka'), 'admin'));
-  setTimeout(stSample, 15000);
 }
 async function adLoad(quiet) {
   if (!adIsAdmin() || AD.busy) return;
@@ -201,21 +320,21 @@ async function adLoad(quiet) {
   } finally { AD.busy = false; $('#adref').classList.remove('spin'); }
 }
 function adLive(force) {
-  if (view !== 'admin' || !adIsAdmin() || AD.locked || document.visibilityState === 'hidden') return;
+  if (!lvWant()) return;
   const now = Date.now();
-  if (!force && now - AD.lt < 20000) return;
+  if (!force && now - AD.lt < (lvOk() ? 45000 : 20000)) return;
   AD.lt = now;
   adLoad(true);
   tkLoad(tkBox($('#tka'), 'admin'));
   if (AD.tab === 'log') alLoad(false, true);
   if (AD.tab === 'site') sfgLoad();
-  if (AD.tab === 'stats' && !(document.activeElement && document.activeElement.id === 'stgq')) { if (INS.sub === 'ins') { if (now - INS.at > 120000) insLoad(true); } else if (now - ST.at > 18000) stLoad(true); }
 }
 function adTiles(an) {
   const U = AD.users || [], now = Date.now(), tk = ($('#tka')._tk || {}).list || [];
   const open = tk.filter(t => t.status === 'open').length;
-  const T = [['Accounts', U.length, 'all', 'users'], ['New this week', U.filter(u => now - Date.parse(u.created_at) < 6048e5).length, 'new', 'cake'], ['Active today', U.filter(u => RT.pres[u.id] || now - Date.parse(u.last_seen || 0) < 864e5).length, 'today', 'eye'], ['Admins', U.filter(adStaff).length, 'admin', 'star'], ['Locked', U.filter(u => u.locked).length, 'locked', 'lock'], ['Open tickets', open, 'tickets', 'chat']];
+  const T = [['Accounts', U.length, 'all', 'users'], ['New this week', U.filter(u => now - Date.parse(u.created_at) < 6048e5).length, 'new', 'cake'], ['Active today', U.filter(u => adOn(u.id) || Date.parse(u.last_seen || 0) >= adDay0()).length, 'today', 'eye'], ['Admins', U.filter(adStaff).length, 'admin', 'star'], ['Locked', U.filter(u => u.locked).length, 'locked', 'lock'], ['Open tickets', open, 'tickets', 'chat']];
   const box = $('#adtiles'), old = box.querySelectorAll('b[data-n]');
+  if (!U.length && !AD.users) return;
   if (!an && old.length === T.length) T.forEach(([, n], i) => { if (old[i].dataset.n !== String(n)) { old[i].dataset.n = n; old[i].textContent = stN(n); } });
   else { box.innerHTML = T.map(([k, n, f, ic], i) => `<button type="button" class="tile" data-adtile="${f}" style="--i:${i}" title="${esc(auT(f === 'tickets' ? 'Open the tickets' : 'Show these players'))}"><span class="tile-ic" aria-hidden="true">${AD_TI[ic]}</span><small>${esc(auT(k))}</small><b data-n="${n}" data-f="l">${stN(n)}</b></button>`).join(''); countUp(box); }
   box.querySelectorAll('.tile').forEach((t, i) => t.classList.toggle('hot', (T[i][2] === 'locked' || T[i][2] === 'tickets') && T[i][1] > 0));
@@ -224,10 +343,10 @@ function adTiles(an) {
 const AD_TI = { users: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg>', cake: '<svg viewBox="0 0 24 24"><path d="M12 3v4M4 21h16v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2zM4 16c2 1.3 4 1.3 5.3 0 1.4-1.3 3.4-1.3 5.4 0 1.3 1.3 3.3 1.3 5.3 0"/></svg>', eye: '<svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>', star: '<svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/></svg>', lock: '<svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>', chat: '<svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg>' };
 function adTileGo(f) {
   if (f === 'tickets') { adTab('tickets'); return; }
-  const sel = $('#adf'), map = { all: 'all', new: 'all', today: 'active', admin: 'admin', locked: 'locked' }, v = map[f] || 'all';
-  AD.f = v; if (sel) sel.value = v;
+  const sel = $('#adf'), map = { all: 'all', new: 'all', today: 'today', admin: 'admin', locked: 'locked' }, v = map[f] || 'all';
+  AD.f = v; if (sel) { if (v === 'today' && !sel.querySelector('[value="today"]')) sel.insertAdjacentHTML('beforeend', `<option value="today">${esc(auT('Active today'))}</option>`); sel.value = v; }
   if (f === 'new') AD.sort = ['created_at', -1];
-  if (f === 'today') AD.sort = ['last_seen', -1];
+  if (f === 'today') { AD.f = 'today'; AD.sort = ['last_seen', -1]; }
   if (AD.tab !== 'users') adTab('users');
   adDraw(true);
   const tw = $('#adusers .adm-tw'); if (tw) { tw.scrollTop = 0; tw.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'nearest' }); }
@@ -256,8 +375,8 @@ const adDot = () => `<span class="adm-dot" title="${esc(auT('Online now'))}"></s
 const AD_COLS = [
   ['id', 'Player', u => { const n = u.display_name || u.username || u.email || '?'; return `<span class="adm-who"><span class="adm-av" aria-hidden="true">${esc(n.charAt(0).toUpperCase())}${adDot(u)}</span><span class="adm-wn"><b>${esc(n)}</b><small>${u.username ? '@' + esc(u.username) : esc(auT('No username'))}</small></span></span>`; }],
   ['email', 'Email', u => esc(u.email || '—')],
-  ['last_sign_in_at', 'Last log in', u => `<span title="${esc(adDate(u.last_sign_in_at, 1))}">${esc(adAgo(u.last_sign_in_at))}</span>`],
-  ['last_seen', 'Last used website', u => `<span class="ls-on">${adPill('Online now', 'ok')}</span><span class="ls-off" title="${esc(adDate(u.last_seen, 1))}">${esc(adAgo(u.last_seen))}</span>`],
+  ['last_sign_in_at', 'Last log in', u => `<span title="${esc(adDate(u.last_sign_in_at, 1))}"${u.last_sign_in_at ? ` data-rtt="${esc(u.last_sign_in_at)}"` : ''}>${esc(adAgo(u.last_sign_in_at))}</span>`],
+  ['last_seen', 'Last used website', u => `<span class="ls-on">${adPill('Online now', 'ok')}</span><span class="ls-off" title="${esc(adDate(u.last_seen, 1))}"${u.last_seen ? ` data-rtt="${esc(u.last_seen)}"` : ''}>${esc(adAgo(u.last_seen))}</span>`],
   ['providers', 'Log in method', u => esc(adProv(u))],
   ['created_at', 'Account created', u => `<span title="${esc(adDate(u.created_at, 1))}">${esc(adDate(u.created_at))}</span>`],
   ['has_password', 'Password', adPw],
@@ -272,7 +391,7 @@ function adHead() {
 }
 function adSortVal(u, k) {
   const v = k === 'providers' ? adProv(u) : k === 'id' ? u.display_name || u.username || u.email : u[k];
-  if (k === 'last_seen' && RT.pres[u.id]) return Date.now() + 1;
+  if (k === 'last_seen' && adOn(u.id)) return Date.now() + 1;
   if (/_at$|last_seen/.test(k)) return Date.parse(v) || 0;
   if (typeof v === 'boolean') return v ? 1 : 0;
   if (typeof v === 'number') return v;
@@ -287,7 +406,8 @@ function adRows() {
     if (f === 'unconfirmed') return !u.email_confirmed;
     if (f === 'google' || f === 'email') return (u.providers || []).includes(f);
     if (f === 'active') return now - Date.parse(u.last_seen || 0) < 6048e5;
-    if (f === 'online') return !!RT.pres[u.id];
+    if (f === 'today') return !!adOn(u.id) || Date.parse(u.last_seen || 0) >= adDay0();
+    if (f === 'online') return !!adOn(u.id);
     return true;
   }).sort((a, b) => { const x = adSortVal(a, k), y = adSortVal(b, k), dt = /_at$|last_seen/.test(k); const ex = x === '' || (dt && x === 0), ey = y === '' || (dt && y === 0); if (ex !== ey) return ex ? 1 : -1; return (x < y ? -1 : x > y ? 1 : 0) * d; });
 }
@@ -296,7 +416,7 @@ function adDraw(an) {
   const rows = adRows(), tb = $('#adt tbody');
   tb.classList.toggle('an', !!an);
   $('#adcount').textContent = auT('{n} of {t} users').replace('{n}', rows.length).replace('{t}', (AD.users || []).length);
-  const h = rows.length ? rows.map((u, i) => `<tr tabindex="0" data-uid="${esc(u.id)}" class="${[u.id === AD.sel ? 'sel' : '', RT.pres[u.id] ? 'on' : '', AD.fresh.has(u.id) ? 'nw' : ''].filter(Boolean).join(' ')}" style="--i:${Math.min(i, 14)}">${AD_COLS.map(c => `<td>${c[2](u)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${AD_COLS.length}" class="adm-empty">${esc(auT('No users match.'))}</td></tr>`;
+  const h = rows.length ? rows.map((u, i) => `<tr tabindex="0" data-uid="${esc(u.id)}" class="${[u.id === AD.sel ? 'sel' : '', adOn(u.id) ? 'on' : '', AD.fresh.has(u.id) ? 'nw' : ''].filter(Boolean).join(' ')}" style="--i:${Math.min(i, 14)}">${AD_COLS.map(c => `<td>${c[2](u)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${AD_COLS.length}" class="adm-empty">${esc(auT('No users match.'))}</td></tr>`;
   if (an || !tb.querySelector('tr[data-uid]') || !rows.length) { tb.innerHTML = h; return; }
   const tw = tb.closest('.adm-tw'), top = tw ? tw.getBoundingClientRect().top + (tb.previousElementSibling ? tb.previousElementSibling.offsetHeight : 0) : 0;
   const ref = tw && tw.scrollTop > 0 ? [...tb.rows].find(r => r.getBoundingClientRect().bottom > top + 1) : null, y0 = ref ? ref.getBoundingClientRect().top : 0;
@@ -304,11 +424,20 @@ function adDraw(an) {
   if (ref && ref.isConnected) tw.scrollTop += ref.getBoundingClientRect().top - y0;
 }
 const AD_TABS = ['users', 'tickets', 'stats', 'log', 'site', 'ideas'];
+const AD_OPEN = {};
+function adTabBar(tabs) {
+  const B = [...tabs.querySelectorAll('[role="tab"]')], i = B.findIndex(b => b.getAttribute('aria-selected') === 'true');
+  tabs.style.setProperty('--tn', B.length || 1);
+  tabs.style.setProperty('--ti', Math.max(0, i));
+}
 function adTab(t) {
-  const was = AD.tab, tabs = $('#adtabs'), o = $('#ad' + was), fade = was !== t && view === 'admin' && !o.hidden && motionOK(), top = fade ? o.offsetTop : 0;
+  if (!$('#ad' + t)) t = 'users';
+  const was = $('#ad' + AD.tab) ? AD.tab : 'users', tabs = $('#adtabs'), o = $('#ad' + was), fade = was !== t && view === 'admin' && !o.hidden && motionOK(), top = fade ? o.offsetTop : 0;
   AD.tab = t;
   tabs.dataset.m = t;
   tabs.querySelectorAll('[data-adtab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.adtab === t)));
+  adTabBar(tabs);
+  if (AD_OPEN[t]) AD_OPEN[t](was);
   if (tabs.scrollWidth > tabs.clientWidth + 2) { const b = tabs.querySelector(`[data-adtab="${t}"]`); if (b) tabs.scrollTo({ left: Math.max(0, b.offsetLeft - (tabs.clientWidth - b.offsetWidth) / 2), behavior: motionOK() ? 'smooth' : 'auto' }); }
   if (was !== t) tabs.parentNode.dataset.dir = AD_TABS.indexOf(t) < AD_TABS.indexOf(was) ? 'l' : 'r';
   if (t === 'stats' && was !== t) ST.anim = 2;
@@ -320,15 +449,16 @@ function adTab(t) {
     else s.hidden = true;
   });
   if (t === 'tickets') tkLoad(tkBox($('#tka'), 'admin'));
-  if (t === 'stats') { stShell(); if (INS.sub === 'ins') insLoad(false); else stLoad(); }
+  if (t === 'stats') stOpen();
   if (t === 'log') alLoad();
   if (t === 'site') { sfaDraw(); sfgLoad(); }
   if (t === 'ideas') idaTab();
 }
 function adLiveTxt(u) {
-  const pr = RT.pres[u.id];
-  if (!pr) return `<span class="adm-mut">${esc(auT('Offline'))} · ${esc(auT('last seen {t}').replace('{t}', adAgo(u.last_seen)))}</span>`;
-  return `<span class="adm-dot"></span><b>${esc(auT('Online now'))}</b> · ${esc(pr.g ? auT('playing {g}').replace('{g}', adGame(pr.g)) : auT('browsing'))}`;
+  const pr = adOn(u.id), sel = LV.d && LV.d.sel && LV.d.sel.id === u.id ? LV.d.sel : null, seen = sel && sel.seen && Date.parse(sel.seen) > Date.parse(u.last_seen || 0) ? sel.seen : u.last_seen;
+  if (!pr) return `<span class="adm-mut">${esc(auT('Offline'))} · ${esc(auT('last seen {t}').replace('{t}', adAgo(seen)))}</span>`;
+  const what = pr.g ? auT(pr.p ? 'in a party · {g}' : 'playing {g}').replace('{g}', adGame(pr.g)) : auT('browsing');
+  return `<span class="adm-dot${pr.a ? ' away' : ''}"></span><b>${esc(auT(pr.a ? 'Online · away' : 'Online now'))}</b> · ${esc(what)}${pr.h ? ' · ' + esc(auT('hidden from friends')) : ''}`;
 }
 const adPk = u => [u.locked, u.locked_until, u.role, u.email, u.has_password, u.username].join('|');
 function adPanelView(u) {
@@ -340,7 +470,7 @@ function adPanelView(u) {
   $('#adpu').textContent = [u.username ? '@' + u.username : '', u.email || ''].filter(Boolean).join(' · ');
   adMorph($('#adpp'), adRole(u) + (u.locked ? adPill('Locked', 'bad') + adPill(adLeft(u), 'bad') : '') + (u.email_confirmed ? adPill('Email confirmed', 'ok') : adPill('Email not confirmed', 'warn')) + (me ? adPill('You', 'acc') : ''));
   adMorph($('#adplive'), adLiveTxt(u));
-  adMorph($('#adpq'), [['Time played', adHrs(u.seconds_played), 'clock'], ['Plays', stN(u.plays), 'play'], ['Friends', stN(u.friends), 'users'], ['Favourite game', adGame(u.fav_game), 'star'], ['Account created', adAgo(u.created_at), 'cake'], ['Last seen', RT.pres[u.id] ? auT('Online now') : adAgo(u.last_seen), 'eye']].map(([k, v, i], n) => `<div style="--i:${n}">${AD_SI[i]}<small>${esc(auT(k))}</small><b title="${esc(v)}">${esc(v)}</b></div>`).join(''));
+  adMorph($('#adpq'), [['Time played', adHrs(u.seconds_played), 'clock'], ['Plays', stN(u.plays), 'play'], ['Friends', stN(u.friends), 'users'], ['Favourite game', adGame(u.fav_game), 'star'], ['Account created', adAgo(u.created_at), 'cake'], ['Last seen', adOn(u.id) ? auT('Online now') : adAgo(u.last_seen), 'eye']].map(([k, v, i], n) => `<div style="--i:${n}">${AD_SI[i]}<small>${esc(auT(k))}</small><b title="${esc(v)}">${esc(v)}</b></div>`).join(''));
   const F = [['User id', `<code class="adm-uid">${esc(u.id)}</code><button type="button" class="adm-cp" data-adcopy="${esc(u.id)}" aria-label="${esc(auT('Copy user id'))}" title="${esc(auT('Copy user id'))}">${AD_CP}</button>`], ['Email', esc(u.email || '—')], ['Username', u.username ? '@' + esc(u.username) : '—'], ['Display name', esc(u.display_name || '—')], ['Last log in', esc(adDate(u.last_sign_in_at, 1))], ['Last used website', esc(adDate(u.last_seen, 1))], ['Log in method', esc(adProv(u))], ['Account created', esc(adDate(u.created_at, 1))], ['Password', adPw(u)], ['Favourite game', esc(adGame(u.fav_game))], ['Friends', String(+u.friends || 0)], ['Role', adRole(u)], ['Email confirmed', u.email_confirmed ? esc(adDate(u.email_confirmed_at, 1)) : adPill('No', 'warn')], ['Locked', u.locked ? adPill('Locked', 'bad') + ` <span class="adm-mut">${esc(u.locked_until ? auT('until {d}').replace('{d}', adDate(u.locked_until, 1)) : auT('Permanent'))}</span>` + (u.locked_reason ? `<div class="adm-why">${esc(u.locked_reason)}</div>` : '') : adPill('No')], ['Last game opened', esc(adGame(u.last_game))], ['Language', esc(adLangName(u.last_lang))]];
   adMorph($('#adpdl'), F.map(([k, v]) => `<div><dt>${esc(auT(k))}</dt><dd>${v}</dd></div>`).join(''));
 }
@@ -419,14 +549,14 @@ async function adDevices(u, all) {
   box.innerHTML = L.slice(0, more ? 3 : L.length).map((x, i) => {
     const d = x.dev || {}, g = x.geo || {}, sc = x.scr || {}, c = x.caps || {}, sm = x.sum || {};
     const when = new Date(x.last).toLocaleString(adLang()), dur = sm.dur != null ? (sm.dur >= 60 ? Math.round(sm.dur / 60) + ' min' : sm.dur + ' s') : null;
-    const head = [d.osv, d.brv, d.model].filter(Boolean).join(' · ') || x.device || '—', where = [g.city, g.region, g.country].filter(Boolean).join(', ');
+    const head = [d.osv, d.brv, d.model].filter(Boolean).join(' · ') || x.device || '—', where = [g.region, g.country].filter(Boolean).join(', ');
     return `<details class="apc-dv" style="--i:${Math.min(i, 12)}"${i ? '' : ' open'}><summary><b translate="no">${esc(head)}</b><small>${esc(when)}${where ? ' · ' + esc(where) : ''}${dur ? ' · ' + esc(dur) : ''}</small></summary><div class="ins-kv apc-kv">${[
-      kv('Internet provider', g.isp), kv('VPN or datacenter', yn(g.vpn)), kv('Time zone', g.tz), kv('Connection', [g.net, g.ctype, g.dl != null ? g.dl + ' Mb/s' : '', g.rtt != null ? g.rtt + ' ms' : ''].filter(Boolean).join(' · ')),
+      kv('VPN or datacenter', yn(g.vpn)), kv('Time zone', g.tz), kv('Connection', [g.net, g.ctype, g.dl != null ? g.dl + ' Mb/s' : '', g.rtt != null ? g.rtt + ' ms' : ''].filter(Boolean).join(' · ')),
       kv('Screen', sc.res), kv('Window', sc.vw ? sc.vw + '×' + sc.vh : null), kv('Pixel density', sc.dpr), kv('Pointer', sc.ptr), kv('Touch points', sc.tp), kv('Dark mode', yn(sc.dark)),
-      kv('Graphics card', d.gpu), kv('CPU cores', d.cores), kv('Memory (GB)', d.mem), kv('Refresh rate (Hz)', d.hz), kv('Keyboard layout', d.kb), kv('Controllers', (d.pads || []).join(', ')), kv('Ad blocker', yn(d.adb)), kv('Languages', (d.langs || []).join(', ')),
-      kv('Speed test', c.bench != null ? c.bench + ' ms' : null), kv('Battery', c.bat != null ? c.bat + '%' + (c.chg ? ' ⚡' : '') : null), kv('Storage', c.quota != null ? c.used + ' / ' + c.quota + ' MB' : null), kv('Microphones / cameras', c.mic != null ? c.mic + ' / ' + c.cam : null), kv('Region settings', c.loc), kv('Arrived from', c.ref), kv('Bot', yn(c.bot)),
+      kv('Graphics card', d.gpu), kv('CPU cores', d.cores), kv('Memory (GB)', d.mem), kv('Refresh rate (Hz)', d.hz), kv('Keyboard layout', d.kb), kv('Controllers', (d.pads || []).join(', ')), kv('Language', (d.langs || [])[0]),
+      kv('Arrived from', c.ref), kv('Bot', yn(c.bot)),
       kv('Session', dur), kv('Time looking', sm.vis != null ? Math.round(sm.vis / 60) + ' min' : null), kv('Games opened', sm.games), kv('Games', (sm.gl || []).map(adGame).join(', ')), kv('Keys / clicks / taps', sm.keys != null ? [sm.keys, sm.clicks, sm.taps].join(' / ') : null), kv('Connection used', sm.route), kv('Events', x.events)
-    ].join('')}</div>${x.ua ? `<p class="adm-mut apc-ua" translate="no">${esc(x.ua)}</p>` : ''}</details>`;
+    ].join('')}</div></details>`;
   }).join('') + (more ? `<button class="btn2 apc-more" type="button" data-addev>${esc(auT('Show all {n}').replace('{n}', L.length))}</button>` : '');
 }
 function adPanelClose() {
@@ -579,7 +709,7 @@ async function alLoad(more, quiet) {
   finally { AL.busy = false; }
 }
 const AB = { html: '', busy: false, h: 24 };
-const AB_T = { party: 'Party invites (1 per 3 s)', party_h: 'Party invites per hour', people: 'Player list loads per minute', people_h: 'Player list loads per hour', invite: 'Party invites per minute', invite_h: 'Party invites per hour', invite_pair: 'Invite cooldown per friend', dm_text: 'Messages per minute', dm_text_h: 'Messages per hour', dm_image: 'Pictures per minute', dm_image_d: 'Pictures per day', dm_upload: 'Picture uploads per minute', dm_upload_d: 'Picture uploads per day', friend_request: 'Friend requests per hour', friend_request_d: 'Friend requests per day', friend_pair: 'Friend requests to one player', friend_respond: 'Friend request answers', search: 'Player searches per minute', search_h: 'Player searches per hour', username_check: 'Username checks per minute', username_check_h: 'Username checks per hour', username_change: 'Username changes per day', display_change: 'Display name changes per day', ticket_create: 'Tickets per 10 minutes', ticket_create_d: 'Tickets per day', ticket_send: 'Ticket messages per minute', ticket_send_d: 'Ticket messages per day', sync: 'Stat syncs', save_write: 'Save uploads', export: 'Data exports', delete_account: 'Account deletions', block: 'Blocks', unblock: 'Unblocks', report: 'Reports per hour', report_d: 'Reports per day', party: 'Party invites and join requests (one every 3 s)', party_h: 'Party invites and join requests per hour', people: 'Player list loads per minute', people_h: 'Player list loads per hour' };
+const AB_T = { party: 'Party invites (1 per 3 s)', party_h: 'Party invites per hour', people: 'Player list loads per minute', people_h: 'Player list loads per hour', invite: 'Party invites per minute', invite_h: 'Party invites per hour', invite_pair: 'Invite cooldown per friend', dm_text: 'Messages per minute', dm_text_h: 'Messages per hour', dm_image: 'Pictures per minute', dm_image_d: 'Pictures per day', dm_upload: 'Picture uploads per minute', dm_upload_d: 'Picture uploads per day', friend_request: 'Friend requests per hour', friend_request_d: 'Friend requests per day', friend_pair: 'Friend requests to one player', friend_respond: 'Friend request answers', search: 'Player searches per minute', search_h: 'Player searches per hour', username_check: 'Username checks per minute', username_check_h: 'Username checks per hour', username_change: 'Username changes per day', display_change: 'Display name changes per day', ticket_create: 'Tickets per 10 minutes', ticket_create_d: 'Tickets per day', ticket_send: 'Ticket messages per minute', ticket_send_d: 'Ticket messages per day', sync: 'Stat syncs', save_write: 'Save uploads', export: 'Data exports', delete_account: 'Account deletions', block: 'Blocks', unblock: 'Unblocks', report: 'Reports per hour', report_d: 'Reports per day', dm_file: 'Files sent per minute', dm_file_d: 'Files sent per day', login: 'Log in attempts', login_ip: 'Log in attempts per network', idea_create: 'Ideas per hour', idea_create_d: 'Ideas per day', log_chat: 'Party chat lines per minute', log_chat_h: 'Party chat lines per hour', party: 'Party invites and join requests (one every 3 s)', party_h: 'Party invites and join requests per hour', people: 'Player list loads per minute', people_h: 'Player list loads per hour' };
 const AB_R = { spam: 'Spam', harassment: 'Harassment', cheating: 'Cheating', inappropriate: 'Inappropriate', other: 'Something else' };
 function abWho(id, un, dn, fb) {
   const t = un ? '@' + un : dn || fb || auT('A deleted account');
@@ -741,6 +871,7 @@ async function sfaSave(b) {
 }
 
 const ST = { d: null, at: 0, busy: false, days: 30, game: null, ci: -1, anim: 2, ps: 0, ch: {}, lv: new Set() };
+const ST_SUB = [['ov', 'Overview'], ['act', 'Players'], ['use', 'Games'], ['perf', 'Performance'], ['err', 'Errors'], ['par', 'Parties'], ['hl', 'Health'], ['ins', 'Player data']];
 const stN = v => (+v || 0).toLocaleString(adLang());
 const stH = v => { const n = +v || 0; return (n < 10 ? n.toFixed(1) : stN(Math.round(n))) + ' h'; };
 const stDay = (t, o) => { const d = Date.parse(String(t).slice(0, 10) + 'T12:00:00'); try { return new Date(d).toLocaleDateString(adLang(), o || { day: 'numeric', month: 'short' }); } catch (e) { return String(t).slice(0, 10); } };
@@ -748,11 +879,31 @@ const stNice = (v, int) => { if (!(v > 0)) return int ? 2 : 1; if (int && v <= 5
 const ST_DEV = { desktop: 'Desktop', phone: 'Phone', tablet: 'Tablet', unknown: 'Unknown' }, ST_DK = { desktop: 0, phone: 1, tablet: 2, unknown: 'o' };
 function stShell() {
   const box = $('#adstats');
-  if (!$('#stov')) box.innerHTML = `<div class="adm-tabs ins-sub" role="tablist" aria-label="${esc(auT('Stats sections'))}"><button type="button" role="tab" data-stsub="ov">${esc(auT('Overview'))}</button><button type="button" role="tab" data-stsub="ins">${esc(auT('Player data'))}</button><i></i></div><div id="stov"></div><div id="insv"></div>`;
-  box.querySelector('.ins-sub').dataset.m = INS.sub === 'ins' ? 'tickets' : 'users';
+  if (!ST_SUB.some(x => x[0] === INS.sub)) INS.sub = 'ov';
+  if (!$('#stov')) box.innerHTML = `<div class="adm-tabs ins-sub" role="tablist" aria-label="${esc(auT('Stats sections'))}">${ST_SUB.map(([k, l]) => `<button type="button" role="tab" data-stsub="${k}">${esc(auT(l))}</button>`).join('')}<i></i></div>
+   <div class="mx-bar"><div class="sx-rng" role="group" aria-label="${esc(auT('Time range'))}">${[7, 30, 90].map(d => `<button type="button" data-strng="${d}" aria-pressed="${d === ST.days}">${esc(auT('{n} days').replace('{n}', d))}</button>`).join('')}</div><label class="mx-sw" title="${esc(auT('Admins and owners are left out of every number unless this is on. Test accounts are always left out.'))}"><button class="sw${LV.staff ? ' on' : ''}" type="button" role="switch" id="ststaff" aria-checked="${LV.staff}" aria-label="${esc(auT('Count staff activity'))}"></button><span>${esc(auT('Count staff activity'))}</span></label><span class="mx-upd" id="stupd" role="status"><i></i><span data-ago=""></span></span></div>
+   <div id="stov"></div><div id="stmx"></div><div id="insv"></div>`;
+  const tabs = box.querySelector('.ins-sub');
   box.querySelectorAll('[data-stsub]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.stsub === INS.sub)));
-  $('#stov').hidden = INS.sub === 'ins'; $('#insv').hidden = INS.sub !== 'ins';
+  adTabBar(tabs);
+  if (tabs.scrollWidth > tabs.clientWidth + 2) { const b = tabs.querySelector('[aria-selected="true"]'); if (b) tabs.scrollTo({ left: Math.max(0, b.offsetLeft - (tabs.clientWidth - b.offsetWidth) / 2), behavior: motionOK() ? 'smooth' : 'auto' }); }
+  box.querySelectorAll('[data-strng]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.strng === ST.days)));
+  $('#stov').hidden = INS.sub !== 'ov'; $('#insv').hidden = INS.sub !== 'ins'; $('#stmx').hidden = !MX_T[INS.sub];
+  stStamp();
   return $('#stov');
+}
+function stStamp() {
+  const el = $('#stupd');
+  if (!el) return;
+  const k = INS.sub, at = k === 'ov' ? ST.at : k === 'ins' ? INS.at : MX.at[k] || 0, busy = k === 'ov' ? ST.busy : k === 'ins' ? INS.busy : !!MX.busy[k];
+  el.lastChild.dataset.ago = at || '';
+  el.classList.toggle('busy', busy);
+  el.classList.toggle('bad', k === 'ov' ? !!ST.bad : k === 'ins' ? !!INS.bad : !!MX.err[k]);
+  adAgoPaint(el.lastChild);
+}
+function stOpen(force) {
+  stShell();
+  if (INS.sub === 'ins') insLoad(!!force); else if (INS.sub === 'ov') stLoad(!!force); else mxLoad(INS.sub, !!force);
 }
 async function stLoad(force) {
   if (!adIsAdmin() || ST.busy) return;
@@ -760,37 +911,35 @@ async function stLoad(force) {
   ST.busy = true;
   const box = $('#adstats'), el = stShell();
   if (ST.anim || !ST.d) box.classList.add('sx-busy');
-  if (!ST.d) el.innerHTML = '<div class="tiles adm-tiles">' + '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(4) + '</div><i class="sk sk-chart"></i><i class="sk sk-chart"></i>';
+  if (!ST.d) el.innerHTML = '<div class="st-top"><div class="st-card st-livec" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-td"></i><i class="sk sk-td"></i></div><div class="tiles adm-tiles st-tiles">' + '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(5) + '</div></div><i class="sk sk-chart"></i><i class="sk sk-chart"></i>';
   try {
-    ST.d = await adRpc('admin_stats_v2', { p_days: ST.days }).catch(e => { if (/admins only/i.test(e.message || '')) throw e; return adRpc('admin_stats'); });
-    ST.at = Date.now(); stDraw(); adStamp(true);
-  } catch (e) { if (!ST.d) el.innerHTML = `<div class="adm-empty">${esc(auT('Could not load the stats. Check your connection and try again.'))}</div>`; else adStamp(false); }
-  finally { ST.busy = false; box.classList.remove('sx-busy'); }
-}
-function stSample() {
-  if (view !== 'admin' || !adIsAdmin() || document.visibilityState === 'hidden' || Date.now() - ST.ps < 295000) return;
-  ST.ps = Date.now();
-  adRpc('admin_presence_sample', { p_online: Object.keys(RT.pres).length }).catch(() => {});
+    ST.d = await adData('stats', ST.days).catch(e => { if (!sbMissing(e)) throw e; return adRpc('admin_stats_v2', { p_days: ST.days }); });
+    ST.at = Date.now(); ST.bad = false; stDraw(); adStamp(true);
+  } catch (e) { ST.bad = true; if (!ST.d) el.innerHTML = `<div class="adm-empty">${esc(auT('Could not load the stats. Check your connection and try again.'))}</div>`; else adStamp(false); }
+  finally { ST.busy = false; box.classList.remove('sx-busy'); stStamp(); }
 }
 function stLiveParts() {
-  const P = Object.entries(RT.pres), by = {};
+  const ids = adOnIds(), by = {}, U = new Map((AD.users || []).map(u => [u.id, u]));
+  const P = ids.map(id => [id, adOn(id)]).filter(x => x[1]);
   P.forEach(([, p]) => { const k = p.g || ''; by[k] = (by[k] || 0) + 1; });
   const top = Object.entries(by).filter(([k]) => k).sort((a, b) => b[1] - a[1]).slice(0, 6);
   const seen = ST.lv;
   ST.lv = new Set(P.map(([id]) => id));
-  const list = P.length ? P.sort((a, b) => (b[1].g ? 1 : 0) - (a[1].g ? 1 : 0)).map(([id, p]) => {
-    const u = (AD.users || []).find(x => x.id === id), name = (u && (u.display_name || u.username || u.email)) || id.slice(0, 8);
-    return `<button class="st-on${seen.has(id) ? '' : ' nw'}" type="button" data-stu="${esc(id)}" data-k="on:${esc(id)}"><span class="pic">${esc(name.charAt(0).toUpperCase())}<i class="fr-dot on"></i></span><span><b>${esc(name)}</b><small>${esc(u && u.username ? '@' + u.username : '')}${p.h ? ' · ' + esc(auT('hidden from friends')) : ''}</small></span><em>${esc(p.g ? adGame(p.g) : auT('Browsing'))}</em></button>`;
-  }).join('') : '<div class="adm-mut sx-nobody">—</div>';
-  return { n: P.length, lg: top.map(([g, n]) => `<span class="adm-pill acc" data-k="lg:${esc(g)}">${esc(adGame(g))} · ${n}</span>`).join(''), list };
+  const name = id => { const u = U.get(id); return (u && (u.display_name || u.username || u.email)) || id.slice(0, 8); };
+  const list = P.length ? P.sort((a, b) => (b[1].g ? 1 : 0) - (a[1].g ? 1 : 0) || name(a[0]).localeCompare(name(b[0]))).map(([id, p]) => {
+    const u = U.get(id), nm = name(id), st = adStaff(u || {}) ? auT('Staff') : p.l === 2 ? auT('Test account') : '';
+    return `<button class="st-on${seen.has(id) || !seen.size ? '' : ' nw'}" type="button" data-stu="${esc(id)}" data-k="on:${esc(id)}"><span class="pic">${esc(nm.charAt(0).toUpperCase())}<i class="fr-dot ${p.a ? 'away' : 'on'}"></i></span><span><b>${esc(nm)}</b><small>${esc([u && u.username ? '@' + u.username : '', st, p.h ? auT('hidden from friends') : '', p.a ? auT('away') : ''].filter(Boolean).join(' · '))}</small></span><em class="${p.g ? 'pl' : ''}">${esc(p.g ? (p.p ? auT('Party') + ' · ' : '') + adGame(p.g) : auT('Browsing'))}</em></button>`;
+  }).join('') : `<div class="adm-mut sx-nobody">${esc(auT('Nobody is online right now.'))}</div>`;
+  return { n: P.length, play: P.filter(x => x[1].g).length, party: P.filter(x => x[1].p).length, lg: top.map(([g, n]) => `<span class="adm-pill acc" data-k="lg:${esc(g)}">${esc(adGame(g))} · ${n}</span>`).join(''), list };
 }
 function stLive() {
   const box = $('#stlive');
   if (!box) return;
   const L = stLiveParts();
-  $('#stln').textContent = L.n;
+  adText($('#stln'), stN(L.n));
   adMorph($('#stlg'), L.lg);
   adMorph(box, L.list);
+  adMorph($('#stle'), lvErrHtml());
 }
 function stSeries() {
   const D = ST.d || {};
@@ -956,21 +1105,21 @@ function stReveal(box, k) {
 }
 function stDraw() {
   const D = ST.d || {}, O = D.overview || {}, box = $('#adstats'), el = stShell(), S = stSeries();
-  const PL = D.play || null, avg = PL && +PL.visits ? (+PL.hours || 0) * 60 / +PL.visits : null;
-  const T = [['Active 7 days', stN(O.active_7d), +O.active_7d || 0], ['Active 30 days', stN(O.active_30d), +O.active_30d || 0]].concat(PL ? [['Hours played', stH(PL.hours), null, auT('last {d} days').replace('{d}', ST.days)], ['Avg minutes per visit', avg == null ? '—' : avg.toFixed(1), null, auT('{n} visits').replace('{n}', stN(PL.visits))]] : []);
+  const PL = D.play || null, avg = PL && +PL.visits ? (+PL.hours || 0) * 60 / +PL.visits : null, acc = n => n == null ? '' : auT('{n} with an account').replace('{n}', stN(n));
+  const T = (O.active_today != null ? [['Active today', stN(O.active_today), +O.active_today || 0, acc(O.signed_in_today)]] : []).concat([['Active 7 days', stN(O.active_7d), +O.active_7d || 0, acc(O.signed_in_7d)], ['Active 30 days', stN(O.active_30d), +O.active_30d || 0, acc(O.signed_in_30d)]]).concat(PL ? [['Hours played', stH(PL.hours), null, auT('last {d} days').replace('{d}', ST.days)], ['Avg minutes per visit', avg == null ? '—' : avg.toFixed(1), null, auT('{n} visits').replace('{n}', stN(PL.visits))]] : []);
   const ER = D.errors || [], DV = D.devices || [], SQ = D.searches || [], RE = D.retention || [];
-  const peakOk = S.some(r => r.peak != null), NR = new Set(SQ.filter(q => +q.with_no_results).map(q => q.query)), td = new Date().toISOString().slice(0, 10);
+  const peakOk = S.some(r => r.peak != null), NR = new Set(SQ.filter(q => +q.with_no_results).map(q => q.query)), td = D.today || dayKey();
   const reCell = v => v == null ? '<td>—</td>' : `<td><span class="st-hc" style="--a:${Math.min(1, (+v || 0) / 100).toFixed(2)}">${Math.round(+v || 0)}%</span></td>`;
   if (!ST.game || !stGames().some(g => g.game_id === ST.game)) ST.game = (stGames().slice().sort((a, b) => (+b.launches || 0) - (+a.launches || 0))[0] || {}).game_id || null;
   const keep = document.activeElement && document.activeElement.id === 'stgq', an = motionOK() ? ST.anim : 0, live = !an && !!el.querySelector('.st-top');
   ST.anim = an;
-  ST.ch = {};
+  ['act', 'peak', 'ses', 'hrs', 'new', 'lch'].forEach(k => { delete ST.ch[k]; });
   box.classList.toggle('sx-q', !an); box.classList.toggle('sx-r', an === 1);
-  const LV = stLiveParts();
+  const LP = stLiveParts();
   const html = `
-  <div class="st-top"><div class="st-card st-livec"><div class="st-h"><h3><i class="adm-dot"></i>${esc(auT('Live now'))}</h3><b class="st-big" id="stln">${LV.n}</b></div><div class="st-lg" id="stlg">${LV.lg}</div><div class="st-live" id="stlive">${LV.list}</div></div>
+  <div class="st-top"><div class="st-card st-livec"><div class="st-h"><h3><i class="adm-dot"></i>${esc(auT('Live now'))}</h3><b class="st-big" id="stln">${stN(LP.n)}</b></div><div class="st-lg" id="stlg">${LP.lg}</div><div class="st-live" id="stlive">${LP.list}</div></div>
   <div class="tiles adm-tiles st-tiles">${T.map(([k, v, n, sub], i) => `<div class="tile" style="--i:${i}"><small>${esc(auT(k))}</small><b${n != null ? ` data-n="${n}" data-f="l"` : ''}>${esc(v)}</b>${sub ? `<em class="st-ts">${esc(sub)}</em>` : ''}</div>`).join('')}</div></div>
-  <div class="sx-bar"><h3>${esc(auT('Trends'))}</h3><div class="sx-rng" role="group" aria-label="${esc(auT('Time range'))}">${[7, 30, 90].map(d => `<button type="button" data-strng="${d}" aria-pressed="${d === ST.days}">${esc(auT('{n} days').replace('{n}', d))}</button>`).join('')}</div></div>
+  <div class="sx-bar"><h3>${esc(auT('Trends'))}</h3></div>
   ${stChart('act', 'Active players per day', S, [{ k: 'active', l: 'Active players' }, { k: 'signed_in', l: 'Signed in' }], { agg: 'avg', wide: true })}
   <div class="sx-grid">
    ${peakOk ? stChart('peak', 'Peak online per day', S, [{ k: 'peak', l: 'Peak online' }], { agg: 'max', i: 1 }) : stChart('ses', 'Sessions per day', S, [{ k: 'sessions', l: 'Sessions' }], { agg: 'sum', i: 1 })}
@@ -985,11 +1134,10 @@ function stDraw() {
   </div>${D.measure === 2 ? `<p class="sx-note sx-gnote">${esc(auT('Last {d} days. Only active play time counts.').replace('{d}', ST.days))}</p>` : ''}<div id="stgd">${stGameHtml(an)}</div></div>
   <div class="st-grid">
    <div class="st-card"><h3>${esc(auT('Devices'))}</h3>${stDevices()}<div class="st-list sx-dvl">${DV.slice(0, 6).map(d => `<div class="st-kv"><span>${esc([auT(ST_DEV[d.device] || d.device || ''), d.os, d.browser].filter(Boolean).join(' · '))}</span><b>${stN(d.sessions)}</b></div>`).join('')}</div></div>
-   <div class="st-card"><h3>${esc(auT('Recent errors'))}</h3><div class="st-list">${ER.length ? ER.slice(0, 30).map(e => `<div class="st-err"><b>${esc(adGame(e.game_id))}</b><span>${esc(e.message || '')}</span><small>${esc(e.place || '')} · ${esc(e.device || '')} · ${esc(adAgo(e.created_at))}</small></div>`).join('') : insWhy()}</div></div>
+   <div class="st-card"><div class="sx-ch"><div><h3>${esc(auT('Recent errors'))}</h3></div><button class="btn2" type="button" data-stsub="err">${esc(auT('All errors'))}</button></div><div class="st-list" id="stle">${lvErrHtml()}</div></div>
    <div class="st-card"><h3>${esc(auT('Top searches'))}</h3>${insList(SQ.map(q => ({ k: q.query, n: +q.searches || 0 })), { val: r => stN(r.n), fmt: k => esc(k) + (NR.has(k) ? ` <span class="adm-pill warn">${esc(auT('no result'))}</span>` : '') })}</div>
    <div class="st-card"><h3>${esc(auT('Players coming back'))}</h3>${RE.length ? `<div class="adm-tw st-re"><table class="adm-t st-t"><thead><tr>${['First day', 'New', 'Next day', 'Within a week'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${RE.map(r => `<tr><td>${esc(stDay(r.cohort_day))}</td><td>${stN(r.new_players)}</td>${String(r.cohort_day).slice(0, 10) >= td ? `<td><span class="adm-mut" title="${esc(auT('Too early to tell'))}">—</span></td>` : reCell(r.day1_pct)}${reCell(r.back_within_7d_pct)}</tr>`).join('')}</tbody></table></div>` : insWhy()}</div>
-  </div>
-  <p class="adm-mut st-at">${esc(auT('Updated {t}.').replace('{t}', adClock(D.at || Date.now())))}</p>`;
+  </div>`;
   if (live) adMorph(el, html);
   else {
     el.innerHTML = html;
@@ -1003,11 +1151,17 @@ function stBoot() {
   const box = $('#adstats');
   box.addEventListener('click', e => {
     const sb = e.target.closest('[data-stsub]');
-    if (sb) { if (sb.dataset.stsub !== INS.sub) { INS.sub = sb.dataset.stsub; ST.anim = 2; stShell(); adConfetti(e); if (INS.sub === 'ins') insLoad(false); else stLoad(); } return; }
-    const rg = e.target.closest('[data-insrng]');
-    if (rg) { const d = +rg.dataset.insrng; if (d !== INS.days) { INS.days = d; box.querySelectorAll('[data-insrng]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.insrng === d))); adConfetti(e); insLoad(true); } return; }
+    if (sb) { if (sb.dataset.stsub !== INS.sub) { INS.sub = sb.dataset.stsub; ST.anim = 2; stOpen(); scrollTo({ top: Math.min(scrollY, box.getBoundingClientRect().top + scrollY - 80), behavior: 'instant' }); } return; }
     const r = e.target.closest('[data-strng]');
-    if (r) { const d = +r.dataset.strng; if (d === ST.days) return; ST.days = d; ST.anim = 1; adConfetti(e); box.querySelectorAll('[data-strng]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.strng === d))); stLoad(true); return; }
+    if (r) { const d = +r.dataset.strng; if (d === ST.days) return; ST.days = INS.days = d; ST.anim = 1; ST.at = 0; INS.at = 0; MX.at = {}; MX.es = null; stOpen(true); return; }
+    if (e.target.closest('#ststaff')) { adStaffSet(!LV.staff); return; }
+    const so = e.target.closest('[data-mxsort]');
+    if (so) { const [kind, k] = so.dataset.mxsort.split(':'), cur = MX.sort[kind] || []; MX.sort[kind] = cur[0] === k ? [k, -cur[1]] : [k, k === 'name' || k === 'game' || k === 'place' ? 1 : -1]; mxDraw(kind); return; }
+    if (e.target.closest('[data-mxall]')) { MX.all = true; mxDraw('use'); return; }
+    if (e.target.closest('[data-mxsweep]')) { const b = e.target.closest('[data-mxsweep]'); b.disabled = true; adRpc('admin_housekeep', { p_force: true }).then(() => { toast(auT('Old data removed')); mxLoad('hl', true); }, x => toast(auT(adErr(x)))).then(() => { b.disabled = false; }); return; }
+    const es = e.target.closest('[data-mxsig]');
+    if (es && !e.target.closest('.mx-dr')) { mxErrOpen(es.dataset.mxsig); return; }
+    if (e.target.closest('[data-mxerr]')) { INS.sub = 'err'; stOpen(); return; }
     if (e.target.closest('[data-stcb]')) { const inp = $('#stgq'); if ($('#stgl').hidden) { inp.dataset.typed = ''; inp.focus(); stCombo(true); } else stCombo(false); return; }
     const o = e.target.closest('#stgl [data-g]');
     if (o) { if (o.dataset.g !== ST.game) adConfetti(e); stPick(o.dataset.g); return; }
@@ -1017,10 +1171,14 @@ function stBoot() {
     if (g) { e.preventDefault(); go(href(g.dataset.stopen), false); }
   });
   box.addEventListener('mousedown', e => { if (e.target.closest('#stgl, [data-stcb]')) e.preventDefault(); });
-  box.addEventListener('input', e => { if (e.target.id === 'stgq') { e.target.dataset.typed = '1'; ST.ci = e.target.value.trim() ? 0 : -1; stCombo(true); } });
+  box.addEventListener('input', e => { if (e.target.id === 'stgq') { e.target.dataset.typed = '1'; ST.ci = e.target.value.trim() ? 0 : -1; stCombo(true); } else if (e.target.id === 'mxq') { MX.q = e.target.value; mxDraw('use'); } });
   box.addEventListener('focusin', e => { if (e.target.id === 'stgq') { e.target.select(); stCombo(true); } });
   box.addEventListener('focusout', e => { if (e.target.id === 'stgq') setTimeout(() => { if (document.activeElement !== e.target) { stCombo(false); if (ST.game) e.target.value = adGame(ST.game); e.target.dataset.typed = ''; } }, 120); });
   box.addEventListener('keydown', e => {
+    const er = e.target.closest && e.target.closest('tr[data-mxsig]');
+    if (er && e.target === er && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); mxErrOpen(er.dataset.mxsig); return; }
+    const st = e.target.closest && e.target.closest('.ins-sub');
+    if (st && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); const i = ST_SUB.findIndex(x => x[0] === INS.sub); INS.sub = ST_SUB[(i + (e.key === 'ArrowRight' ? 1 : ST_SUB.length - 1)) % ST_SUB.length][0]; ST.anim = 2; stOpen(); const b = box.querySelector('.ins-sub [aria-selected="true"]'); if (b) b.focus(); return; }
     if (e.target.id !== 'stgq') return;
     const ul = $('#stgl'), n = (ST.opts || []).length;
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (ul.hidden) { stCombo(true); return; } if (!n) return; ST.ci = e.key === 'ArrowDown' ? (ST.ci + 1) % n : (ST.ci - 1 + n) % n; stCombo(true); }
@@ -1033,7 +1191,6 @@ function stBoot() {
   box.addEventListener('pointerout', e => { const a = e.target.closest('.sx-area'); if (a && !a.contains(e.relatedTarget)) stUnhover(a); });
   box.addEventListener('pointerover', e => { const dn = e.target.closest('.sx-dn'); if (dn) stSeg(dn, e.target.closest('[data-seg]')); });
   box.addEventListener('pointerout', e => { const dn = e.target.closest('.sx-dn'); if (dn && !dn.contains(e.relatedTarget)) stSeg(dn, null); });
-  setInterval(stSample, 60000);
 }
 
 function adConfetti(e) {
@@ -1075,7 +1232,7 @@ function insCard(title, body, o) {
 function insKpis(T) {
   return `<div class="ins-kpis">${T.map((t, i) => {
     const v = String(t.v == null ? '—' : t.v), num = Number.isInteger(t.n) && v !== '—';
-    return `<div class="ins-k" style="--i:${i}" title="${esc(auT(t.tip || t.k))}"><small>${esc(auT(t.k))}</small>${num ? `<b data-n="${t.n}" data-f="${t.f || 'l'}">${esc(v)}</b>` : insTw(v, 'b')}${t.s ? `<em>${esc(t.s)}</em>` : ''}</div>`;
+    return `<div class="ins-k" style="--i:${i}" title="${esc(auT(t.tip || t.k))}"><small>${esc(auT(t.k))}</small>${t.id ? `<b id="${t.id}">${esc(v)}</b>` : num ? `<b data-n="${t.n}" data-f="${t.f || 'l'}">${esc(v)}</b>` : insTw(v, 'b')}${t.s || t.x ? `<em>${esc(t.s || '')}${t.x ? ' ' + t.x : ''}</em>` : ''}</div>`;
   }).join('')}</div>`;
 }
 function insList(rows, o) {
@@ -1134,7 +1291,7 @@ function insSlots(S) {
   S.forEach(s => (by[s.src] = by[s.src] || []).push(s));
   return Object.entries(by).map(([src, L]) => `<div class="ins-sl"><span>${esc(auT(src === 'grid' ? 'Grid' : src === 'rail' ? 'Row' : src))}</span><div>${L.sort((a, b) => a.pos - b.pos).map((s, i) => { const r = s.imp ? s.clk / s.imp : 0; return `<i class="${r / max > .55 ? 'hi' : ''}" style="--a:${(r / max).toFixed(3)};--i:${i}" title="${esc(auT('Slot {n}').replace('{n}', s.pos + 1) + ': ' + (100 * r).toFixed(1) + '% · ' + auT('{a} clicks of {b} views').replace('{a}', stN(s.clk)).replace('{b}', stN(s.imp)))}"><b>${Math.round(100 * r)}</b></i>`; }).join('')}</div></div>`).join('');
 }
-const INS_SEC = [['ret', 'Retention'], ['games', 'Games'], ['rl', 'Rocket League'], ['beh', 'Clicks and behaviour'], ['geo', 'Where players are'], ['dev', 'Devices'], ['ses', 'Sessions'], ['spd', 'Speed'], ['scr', 'Screens and display'], ['hw', 'Hardware and browser features'], ['ads', 'Ads']];
+const INS_SEC = [['ret', 'Retention'], ['games', 'Games'], ['rl', 'Rocket League'], ['beh', 'Clicks and behaviour'], ['geo', 'Where players are'], ['dev', 'Devices'], ['ses', 'Sessions'], ['scr', 'Screens and display'], ['hw', 'Hardware'], ['ads', 'Ads']];
 function insDraw(an) {
   const box = $('#insv');
   if (!box) return;
@@ -1147,7 +1304,7 @@ function insDraw(an) {
   const K = (k, v, d, tip) => ({ k, v: insNum(v, d), n: v != null && Number.isInteger(+v) ? +v : null, tip });
   const cohT = (d, k) => { const c = coh(d); return c.eligible ? P(k, c.back, c.eligible, { s: auT('of {n} players').replace('{n}', stN(c.eligible)), tip: 'New players seen again exactly that many days after their first visit' }) : { k, v: '—' }; };
   const user = (p, x) => `<button type="button" class="sx-tpr" data-stu="${esc(p.id)}"><span class="pic">${esc((p.name || p.username || '?').charAt(0).toUpperCase())}</span><span class="sx-tpn"><b translate="no">${esc(p.name || p.username || '—')}</b><small>${p.username ? '@' + esc(p.username) : ''}</small></span><em>${esc(x)}</em></button>`;
-  const rng = `<div class="sx-bar"><h3>${esc(auT('Player data'))}</h3><div class="sx-rng" role="group" aria-label="${esc(auT('Time range'))}">${[7, 30, 90].map(d => `<button type="button" data-insrng="${d}" aria-pressed="${d === INS.days}">${esc(auT('{n} days').replace('{n}', d))}</button>`).join('')}</div></div>`;
+  const rng = `<div class="sx-bar"><h3>${esc(auT('Player data'))}</h3></div>`;
   const mau = +R.mau || 0, dau = +R.dau || 0;
   const ret = insKpis([
     { k: 'Stickiness', v: mau ? insPct(dau, mau) + '%' : '—', n: mau ? insPct(dau, mau) : null, f: 'p', tip: 'Average players per day divided by players in the last 30 days' },
@@ -1165,7 +1322,7 @@ function insDraw(an) {
   const insFps = g => { const a = Math.round(+g.fps), lo = g.fps_low != null ? Math.round(+g.fps_low) : null, P = v => Math.max(0, Math.min(100, v / 2.4)).toFixed(1); return `<span class="ins-fps" style="--p:${P(a)}" title="${esc(auT('Average {a} FPS, worst 10% {l} FPS, out of 240').replace('{a}', a).replace('{l}', lo == null ? '—' : lo))}"><i><s style="width:${P(a)}%"></s>${lo == null ? '' : `<u style="left:${P(lo)}%"></u>`}</i><span><b>${a}</b><small>${lo == null ? '' : ' · ' + esc(auT('low {n}').replace('{n}', lo))} / 240</small></span></span>`; };
   const mut = (t, v) => `<span class="adm-mut" title="${esc(auT(t))}">${v || '—'}</span>`;
   const gRows = games.map((g, i) => { const vt = votes.get(g.id) || g.votes || {}, l = g.load || {}, q = insPct(g.early, g.n); return `<tr style="--i:${Math.min(i, 14)}"><td><span class="ins-gn">${adCv(g.id, 'ins-cv')}<span translate="no">${esc(adGame(g.id))}</span></span></td><td><span class="ins-gs"><b>${stN(g.n)}</b>${GD[g.id] ? stSpark(GD[g.id], an) : ''}</span></td><td>${g.n ? `<span class="adm-pill ${q > 40 ? 'bad' : q > 20 ? 'warn' : 'ok'}">${q}%</span>` : '—'}</td><td>${(PI ? (PG.has(g.id) ? PG.get(g.id).sec : null) : g.sec) != null ? esc(adHrs(PI ? PG.get(g.id).sec : g.sec)) : '—'}</td><td>${g.fps != null ? insFps(g) : mut('Not measured: the game was closed within 3 seconds')}</td><td>${l.n ? esc(insMs(l.p50)) + ' <span class="adm-mut">/ ' + esc(insMs(l.p90)) + '</span>' : mut('Part of the page, nothing extra to download')}</td><td>${scoreCell(MS[g.id] || g.scores)}</td><td>${g.lv_n ? `${esc(String(g.lv_avg))} <span class="adm-mut">/ ${esc(String(g.lv_max))}</span>` : mut('This game does not show a level')}</td><td>${inBar(g)}</td><td>${vt.up || vt.down ? `<span class="ins-vt"><b>▲ ${vt.up | 0}</b> <span>▼ ${vt.down | 0}</span></span>` : mut('No thumbs yet. Players are asked after a round or after 90 seconds of play.')}</td></tr>`; }).join('');
-  const gTab = `<div class="st-card ins-tc"><div class="adm-tw"><table class="adm-t st-t ins-t"><thead><tr>${[['Game'], ['Sessions', 'Times the game was opened, with launches per day'], ['Quit < 30 s', 'Share of sessions closed within 30 seconds'], ['Avg session', PI ? 'Play time per visit: game open, tab visible and input in the last minute' : ''], ['FPS', 'Frames per second out of 240: average and worst 10%'], ['Load', 'Download time: median / slowest 10%'], ['Scores', 'Final scores: median, middle half and best'], ['Level', 'Level reached at the end: average / highest'], ['Input', 'Main input used while playing'], ['Votes', 'Thumbs up and down']].map(([h, t]) => `<th${t ? ` title="${esc(auT(t))}"` : ''}><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody class="${an ? 'an' : ''}">${gRows || `<tr><td colspan="10">${insWhy()}</td></tr>`}</tbody></table></div></div>`;
+  const gTab = `<div class="st-card ins-tc"><div class="adm-tw"><table class="adm-t st-t ins-t"><thead><tr>${[['Game'], ['Measured', 'Play sessions that ended normally and sent a summary, with launches per day'], ['Quit < 30 s', 'Share of measured sessions closed within 30 seconds'], ['Avg session', PI ? 'Play time per visit: game open, tab visible and input in the last minute' : ''], ['FPS', 'Frames per second out of 240: average and worst 10%'], ['Load', 'Download time: median / slowest 10%'], ['Scores', 'Final scores: median, middle half and best'], ['Level', 'Level reached at the end: average / highest'], ['Input', 'Main input used while playing'], ['Votes', 'Thumbs up and down']].map(([h, t]) => `<th${t ? ` title="${esc(auT(t))}"` : ''}><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody class="${an ? 'an' : ''}">${gRows || `<tr><td colspan="10">${insWhy()}</td></tr>`}</tbody></table></div></div>`;
   const rl = insKpis([
     { k: 'Matches finished', v: stN(all.n), n: +all.n || 0 },
     P('Win rate', all.wins, all.n),
@@ -1187,14 +1344,11 @@ function insDraw(an) {
    ${insCard('Rage clicks', insList(B.rage, { val: r => stN(r.n) }), { tip: '3 fast clicks in one spot' })}
    ${insCard('Dead clicks', insList(B.dead, { val: r => stN(r.n) }), { tip: 'Clicks where nothing happened' })}
   </div>`;
-  const spd = `<div class="st-card ins-tc">${(D.vitals || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${[['Device'], ['Visits'], ['LCP', 'Main content shown'], ['INP', 'Reaction to input'], ['CLS', 'Layout jumps'], ['FCP', 'First paint'], ['TTFB', 'Server response']].map(([h, t]) => `<th${t ? ` title="${esc(auT(t))}"` : ''}><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${D.vitals.map(v => `<tr><td>${esc(auT(ST_DEV[v.device] || v.device))}</td><td>${stN(v.n)}</td><td>${insVit('lcp', v.lcp)}</td><td>${insVit('inp', v.inp)}</td><td>${insVit('cls', v.cls)}</td><td>${insVit('fcp', v.fcp)}</td><td>${insVit('ttfb', v.ttfb)}</td></tr>`).join('')}</tbody></table></div>` : insWhy()}</div>`;
   const ctype = M.ctype || G.ctype, spd2 = G.speed || {};
   const geo = `${insCard('When people play', (G.hours || []).length ? insHeat(G.hours) : insWhy(), { tip: 'Hours played by local weekday and hour' })}<div class="ins-grid">
    ${insCard('Countries', insList(G.countries, { fmt: c => `<span class="ins-fl" aria-hidden="true">${insFlag(c)}</span>${esc(insCountry(c))} <span class="adm-mut">${esc(c)}</span>`, name: insCountry }))}
    ${insCard('Regions', insList(G.regions))}
-   ${insCard('Cities', insList(G.cities))}
-   ${insCard('Internet providers', insList(G.isps))}
-   ${insCard('Network', insDns([['Connection speed class', insDonut(G.net, { label: 'Connection speed class' })], ['Connection type', insDonut(ctype, { label: 'Connection type', fmt: k => k === 'unknown' ? auT('Not reported') : k })]]) + `<div class="ins-kv ins-kv2"><span>${esc(auT('Median download speed'))}</span><b>${spd2.dl != null ? esc(insNum(spd2.dl)) + ' Mb/s' : '—'}</b><span>${esc(auT('Median latency'))}</span><b>${spd2.rtt != null ? esc(insNum(spd2.rtt, 0)) + ' ms' : '—'}</b></div>` + insMeters([['Behind a VPN or datacenter', G.vpn], ['Datacenter networks', G.dc], ['Data saver on', G.save], ['Time zone differs from location', FL.tzm]]))}
+   ${insCard('Network', insDns([['Connection speed class', insDonut(G.net, { label: 'Connection speed class' })], ['Connection type', insDonut(ctype, { label: 'Connection type', fmt: k => k === 'unknown' ? auT('Not reported') : k })]]) + `<div class="ins-kv ins-kv2"><span>${esc(auT('Median download speed'))}</span><b>${spd2.dl != null ? esc(insNum(spd2.dl)) + ' Mb/s' : '—'}</b><span>${esc(auT('Median latency'))}</span><b>${spd2.rtt != null ? esc(insNum(spd2.rtt, 0)) + ' ms' : '—'}</b></div>` + insMeters([['Behind a VPN or datacenter', G.vpn], ['Data saver on', G.save], ['Time zone differs from location', FL.tzm]]))}
    ${insCard('Time zones', insList(G.tz))}
   </div>`;
   const dev = `<div class="ins-grid">
@@ -1214,10 +1368,9 @@ function insDraw(an) {
     { k: 'Median time actually looking', v: insDur(SS.vis), tip: 'Time the tab was visible on screen' }, { k: 'Longest idle moment (median)', v: insDur(SS.idle) },
     { k: 'Sessions with a game', v: SS.played != null ? SS.played + '%' : '—', n: SS.played != null ? +SS.played : null, f: 'p' },
     K('Games per session', SS.games), K('Different games per session', SS.gset),
-    K('Keys pressed per session', SS.keys, 0), K('Mouse clicks per session', SS.clicks, 0), K('Screen taps per session', SS.taps, 0),
-    K('Mouse travel per session (px)', SS.mdist, 0), K('Scroll distance per session (px)', SS.scr, 0)
+    K('Keys pressed per session', SS.keys, 0), K('Mouse clicks per session', SS.clicks, 0), K('Screen taps per session', SS.taps, 0)
   ]) + `<div class="ins-grid">
-   ${insCard('Other habits per session', `<div class="ins-kv ins-kv2">${[['Mouse wheel turns per session', insNum(SS.wheel, 0)], ['Tab switches per session', insNum(SS.blur)], ['Copies per session', insNum(SS.copy, 2)], ['Window resizes per session', insNum(SS.rsz)], ['Went offline', nm && SS.off != null ? SS.off + '%' : '—'], ['JavaScript errors per session', insNum(SS.errs, 2)], ['Sessions using full screen', nm && SS.fs != null ? SS.fs + '%' : '—']].map(([k, v]) => `<span>${esc(auT(k))}</span><b>${esc(v)}</b>`).join('')}</div>`)}
+   ${insCard('Other habits per session', `<div class="ins-kv ins-kv2">${[['Tab switches per session', insNum(SS.blur)], ['Went offline', nm && SS.off != null ? SS.off + '%' : '—'], ['JavaScript errors per session', insNum(SS.errs, 2)], ['Sessions using full screen', nm && SS.fs != null ? SS.fs + '%' : '—']].map(([k, v]) => `<span>${esc(auT(k))}</span><b>${esc(v)}</b>`).join('')}</div>`)}
    ${insCard('Session length', insHist((SS.b || []).map(r => ({ k: auT(r.k), n: +r.n || 0 }))))}
    ${insCard('Account, server and theme', insDns([['Account state', insDonut(M.acct, { fmt: tr(AC) })], ['Connection to the accounts server', insDonut(M.route, { fmt: tr(RT) })], ['Theme', insDonut(M.theme, { fmt: tr(TH) })]]))}
    ${insCard('Arrived from', insList(M.refs, { fmt: k => esc(k === 'direct' ? auT('Direct') : k), name: k => k === 'direct' ? auT('Direct') : k }))}
@@ -1228,13 +1381,12 @@ function insDraw(an) {
   </div>`;
   const PT = { fine: 'Mouse or trackpad', coarse: 'Touch', none: 'None' }, OM = { browser: 'Browser tab', standalone: 'Installed app', fullscreen: 'Full screen', 'minimal-ui': 'Minimal window' }, OR = { 'landscape-primary': 'Landscape', 'landscape-secondary': 'Landscape (flipped)', 'portrait-primary': 'Portrait', 'portrait-secondary': 'Portrait (flipped)' };
   const scr = `<div class="st-card ins-c">${insMeters([['Dark mode preferred', M.dark], ['Reduced motion', M.rmo], ['HDR screen', M.hdr], ['Mouse or trackpad (hover)', M.hov], ['Several screens', M.ext], ['More contrast', FL.con], ['Forced colours', FL.fcol], ['Reduced transparency', FL.rtr]])}${insStks([insStk('Screen resolutions', M.screens), insStk('Browser window sizes', M.viewports), insStk('Pixel density', M.dpr, { fmt: k => k + '×' }), insStk('Browser zoom', M.zoom, { fmt: k => Math.round(+k * 100) + '%' }), insStk('Main pointer', M.pointer, { fmt: tr(PT) }), insStk('Touch points', M.touch), insStk('Orientation', M.orient, { fmt: tr(OR) }), insStk('Colour range', M.gamut), insStk('Colour depth (bits)', M.depth), insStk('Opened as', M.mode, { fmt: tr(OM) })])}</div>`;
-  const wd = d => { try { return new Date(2024, 0, +d || 1).toLocaleDateString(adLang(), { weekday: 'long' }); } catch (e) { return String(d); } };
-  const hw = `${insCard('Hardware', insStks([insStk('CPU cores', V.cores), insStk('Memory (GB)', V.mem), insStk('Screen refresh rate (Hz)', V.hz), insStk('Keyboard layouts', V.kb, { fmt: k => String(k).toUpperCase() }), insStk('CPU architecture', V.arch), insStk('Main browser language', V.langs)]) + insMeters([['WebGL 2 support', V.gl2], ['WebGPU support', V.wgpu], ['Ad blocker on', A.adblock]]))}<div class="st-card ins-c">${insMeters([['Charging now', M.charging], ['Automated browsers (bots)', M.bot], ['Do Not Track on', M.dnt], ['Global Privacy Control on', M.gpc], ['AV1 video', M.av1], ['HEVC video', M.hevc], ['H.264 video', FL.h264], ['VP9 video', FL.vp9], ['Virtual reality support', M.xr], ['Cross-origin isolated', M.coi], ['WebAssembly', FL.wasm], ['Shared memory', FL.sab], ['Service workers', FL.swk], ['Vibration', FL.vib], ['Bluetooth', FL.bt], ['USB', FL.usb], ['Serial ports', FL.ser], ['HID devices', FL.hid], ['MIDI', FL.midi], ['Share menu', FL.share], ['Keep screen awake', FL.wl], ['PDF viewer', FL.pdf], ['Storage kept', FL.pers], ['Cookies on', FL.ck], ['Accounts server down', FL.down]])}${insStks([insStk('Speed test (ms)', M.bench), insStk('Battery level', M.battery), insStk('Browser storage available', M.quota), insStk('JavaScript memory limit (MB)', M.heap), insStk('WebGPU graphics', M.gpuv), insStk('Largest texture size', M.mtex), insStk('Platforms', M.plat), insStk('Region settings', M.locale), insStk('Clock (h12 or h23)', M.hour), insStk('Notification permission', M.notif), insStk('Microphones', M.mic), insStk('Cameras', M.cam), insStk('Speakers', EX.spk), insStk('Speech voices', M.voices), insStk('Audio sample rate', M.srate, { fmt: k => insNum(k, 0) + ' Hz' }), insStk('Audio channels', EX.ach), insStk('WebGL extensions', EX.glx), insStk('Calendar', EX.cal), insStk('Number system', EX.num), insStk('First day of the week', EX.fdw, { fmt: wd }), insStk('Browser maker', EX.vend), insStk('Pages in tab history', EX.hist)])}</div>`;
+  const hw = insCard('Hardware', insStks([insStk('CPU cores', V.cores), insStk('Memory (GB)', V.mem), insStk('Screen refresh rate (Hz)', V.hz), insStk('Keyboard layouts', V.kb, { fmt: k => String(k).toUpperCase() }), insStk('CPU architecture', V.arch), insStk('Main browser language', V.langs)]) + insMeters([['WebGL 2 support', V.gl2], ['WebGPU support', V.wgpu], ['WebAssembly', FL.wasm], ['Automated browsers (bots)', M.bot]]));
   const ads = `<div class="st-card ins-tc">${(A.slots || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Slot', 'Impressions', 'Clicks', 'Click rate', 'Revenue (USD)', 'Per 1,000 views'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${A.slots.map(s => `<tr><td>${esc(s.slot)}</td><td>${stN(s.imp)}</td><td>${stN(s.clk)}</td><td>${s.imp ? (100 * s.clk / s.imp).toFixed(2) : 0}%</td><td>${(+s.usd || 0).toFixed(2)}</td><td>${s.imp ? (1000 * s.usd / s.imp).toFixed(2) : '—'}</td></tr>`).join('')}</tbody></table></div>` : insWhy()}</div>`;
-  const body = { ret, games: gTab, rl, beh, geo, dev, ses, spd, scr, hw, ads };
+  const body = { ret, games: gTab, rl, beh, geo, dev, ses, scr, hw, ads };
   box.classList.toggle('sx-q', !an);
   if (an) $('#adstats').classList.remove('sx-q', 'sx-r');
-  const html = rng + `<div class="ins-main">${INS_SEC.map(([id, t]) => `<section class="ins-sec" id="ins-${id}">${insTw(auT(t), 'h2')}<div class="ins-body">${body[id]}</div></section>`).join('')}</div><p class="adm-mut st-at">${esc(auT('Updated {t}.').replace('{t}', adClock(D.at || Date.now())))}</p>`;
+  const html = rng + `<div class="ins-main">${INS_SEC.map(([id, t]) => `<section class="ins-sec" id="ins-${id}">${insTw(auT(t), 'h2')}<div class="ins-body">${body[id]}</div></section>`).join('')}</div>`;
   if (an || !box.querySelector('.ins-main')) box.innerHTML = html; else adMorph(box, html);
   if (an) stReveal(box, 'iio');
 }
@@ -1245,9 +1397,481 @@ async function insLoad(force) {
   INS.busy = true;
   if (!INS.d) box.innerHTML = '<div class="tiles adm-tiles">' + '<div class="tile" aria-hidden="true"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(4) + '</div><i class="sk sk-chart"></i><i class="sk sk-chart"></i>';
   box.classList.add('sx-busy');
-  try { const [d, m, pi] = await Promise.all([adRpc('admin_insights', { p_days: INS.days }), adRpc('admin_insights_more', { p_days: INS.days }).catch(e => ({ __err: String(e && e.message || e) })), adRpc('admin_play_insights', { p_days: INS.days }).catch(e => ({ __err: String(e && e.message || e) }))]); INS.d = d; INS.m = m; INS.p = pi; INS.at = Date.now(); insDraw(!INS.drawn || !!ST.anim); INS.drawn = true; ST.anim = 0; adStamp(true); }
-  catch (e) { if (INS.d && force) { adStamp(false); return; } box.innerHTML = `<div class="adm-empty">${esc(/admin_insights|function|404|PGRST/i.test(e.message || '') ? auT('The insights database update is not installed yet. Run round8_insights.sql in the Supabase SQL editor.') : auT('Could not load the stats. Check your connection and try again.'))}</div>`; }
-  finally { INS.busy = false; box.classList.remove('sx-busy'); }
+  stStamp();
+  try {
+    const one = await adData('insights', INS.days).catch(e => { if (!sbMissing(e)) throw e; return null; });
+    const [d, m, pi] = one ? [one.d, one.m, one.p] : await Promise.all([adRpc('admin_insights', { p_days: INS.days }), adRpc('admin_insights_more', { p_days: INS.days }).catch(e => ({ __err: String(e && e.message || e) })), adRpc('admin_play_insights', { p_days: INS.days }).catch(e => ({ __err: String(e && e.message || e) }))]);
+    INS.d = d; INS.m = m; INS.p = pi; INS.at = Date.now(); INS.bad = false; insDraw(!INS.drawn || !!ST.anim); INS.drawn = true; ST.anim = 0; adStamp(true);
+  }
+  catch (e) { INS.bad = true; if (INS.d && force) { adStamp(false); return; } box.innerHTML = `<div class="adm-empty">${esc(/admin_insights|function|404|PGRST/i.test(e.message || '') ? auT('The insights database update is not installed yet. Run round8_insights.sql in the Supabase SQL editor.') : auT('Could not load the stats. Check your connection and try again.'))}</div>`; }
+  finally { INS.busy = false; box.classList.remove('sx-busy'); stStamp(); }
+}
+
+const MX = { d: {}, at: {}, busy: {}, err: {}, try: {}, sort: { use: ['launches', -1], perf: ['n', -1], err: ['last', -1], par: ['attempts', -1] }, q: '', all: false, es: null, ed: null, eb: false };
+const MX_T = { act: 'activity', use: 'usage', perf: 'perf', err: 'errors', par: 'parties', hl: 'health' };
+const MX_EVERY = { ov: 20000, act: 60000, use: 45000, perf: 60000, err: 20000, par: 30000, hl: 45000, ins: 120000 };
+const MX_VIA = { peerjs: 'Direct, PeerJS signalling', 'rt-p2p': 'Direct, own signalling', 'rt-relay': 'Relayed through the server', unknown: 'Unknown' };
+const MX_WHY = { ice: 'No direct route (firewall or strict network)', 'peer-unavailable': 'Party not found or host gone', timeout: 'Timed out', network: 'Network dropped', 'server-error': 'Signalling server error', 'socket-error': 'Signalling connection failed', 'socket-closed': 'Signalling connection closed', disconnected: 'Disconnected from signalling', unknown: 'Unknown', dup: 'Duplicate id', 'unavailable-id': 'Code already in use', 'browser-incompatible': 'Browser cannot connect', 'webrtc': 'WebRTC error' };
+const mxWhy = k => auT(MX_WHY[k] || MX_WHY[String(k).replace(/^peer-/, '')] || k);
+const mxNone = t => `<p class="ins-why">${esc(auT(t))}</p>`;
+const mxPc = (a, b, d) => b > 0 ? (100 * a / b).toFixed(d == null ? 0 : d) + '%' : '—';
+const mxT = s => (+s || 0) < 3600 ? insDur(+s || 0) : adHrs(s);
+const mxList = (rows, o, empty) => (rows || []).some(r => +r.n > 0) ? insList(rows, o) : mxNone(empty || 'Nothing in this period yet.');
+function mxChart(id, title, rows, keys, o, empty) {
+  if (!(rows || []).some(r => keys.some(k => +r[k.k] > 0))) return `<div class="st-card sx-c mx-none${o.wide ? ' sx-wide' : ''}"><div class="sx-ch"><div><h3>${esc(auT(title))}</h3></div></div>${mxNone(empty || 'Nothing in this period yet.')}</div>`;
+  return stChart(id, title, rows, keys, o);
+}
+function mxDelta(cur, prev, bad) {
+  cur = +cur || 0; prev = +prev || 0;
+  if (!prev) return cur ? `<em class="mx-d nw">${esc(auT('new'))}</em>` : '';
+  const p = Math.round(100 * (cur - prev) / prev);
+  return p ? `<em class="mx-d ${(p > 0) !== !!bad ? 'up' : 'dn'}" title="${esc(auT('Compared with the {n} days before').replace('{n}', ST.days))}">${p > 0 ? '▲' : '▼'} ${Math.abs(p)}%</em>` : `<em class="mx-d">=</em>`;
+}
+function mxTh(kind, cols) {
+  const [sk, sd] = MX.sort[kind] || [];
+  return `<thead><tr>${cols.map(([k, l, tip]) => `<th${tip ? ` title="${esc(auT(tip))}"` : ''}>${k ? `<button type="button" data-mxsort="${kind}:${k}" aria-sort="${sk === k ? (sd > 0 ? 'ascending' : 'descending') : 'none'}">${esc(auT(l))}<i></i></button>` : `<span>${esc(auT(l))}</span>`}</th>`).join('')}</tr></thead>`;
+}
+function mxSorted(kind, L, val) {
+  const [k, d] = MX.sort[kind] || [];
+  if (!k) return L;
+  const v = x => { const y = val ? val(x, k) : x[k]; return y == null ? null : typeof y === 'string' && !isNaN(Date.parse(y)) && /^\d{4}-/.test(y) ? Date.parse(y) : y; };
+  return L.slice().sort((a, b) => { const x = v(a), y = v(b); if (x == null || y == null) return (x == null) - (y == null); return (x < y ? -1 : x > y ? 1 : 0) * d; });
+}
+const mxGame = id => `<span class="ins-gn">${adCv(id, 'ins-cv')}<span translate="no">${esc(adGame(id))}</span></span>`;
+function mxSkel() {
+  return '<div class="ins-kpis" aria-hidden="true">' + '<div class="ins-k"><i class="sk sk-tile"></i><i class="sk sk-num"></i></div>'.repeat(6) + '</div><i class="sk sk-chart"></i><div class="st-card" aria-hidden="true">' + '<i class="sk sk-td"></i>'.repeat(6) + '</div>';
+}
+async function mxLoad(k, force) {
+  const el = $('#stmx');
+  if (!el || !adIsAdmin() || !MX_T[k] || MX.busy[k]) return;
+  const fresh = MX.d[k] && MX.d[k].days === ST.days && Date.now() - (MX.at[k] || 0) < MX_EVERY[k] / 2;
+  if (!force && fresh) { mxDraw(k, el.dataset.k !== k); return; }
+  MX.busy[k] = true; MX.try[k] = Date.now();
+  const had = MX.d[k] && el.dataset.k === k;
+  if (!had) { el.dataset.k = k + ':sk'; el.innerHTML = mxSkel(); }
+  stStamp();
+  try {
+    const d = await adData(MX_T[k], ST.days);
+    if (!d || typeof d !== 'object') throw new Error('empty');
+    MX.d[k] = d; MX.at[k] = Date.now(); MX.err[k] = null;
+    if (INS.sub === k) mxDraw(k, !had);
+    adStamp(true);
+  } catch (e) {
+    MX.err[k] = sbMissing(e) ? 'miss' : 'net';
+    if (INS.sub === k && !had) { el.dataset.k = k + ':err'; el.innerHTML = `<div class="adm-empty">${esc(auT(sbMissing(e) ? 'Run round19_analytics.sql in the Supabase SQL editor to see this part.' : 'Could not load the stats. Check your connection and try again.'))}</div>`; }
+  } finally { MX.busy[k] = false; stStamp(); }
+}
+function mxDraw(k, an) {
+  const el = $('#stmx'), d = MX.d[k];
+  if (!el || !d || INS.sub !== k) return;
+  an = an && motionOK();
+  const keep = document.activeElement && document.activeElement.id === 'mxq' ? document.activeElement.selectionStart : null, a0 = ST.anim;
+  ST.anim = an ? 1 : 0;
+  const h = MXV[k](d, an);
+  ST.anim = a0;
+  el.classList.toggle('sx-q', !an);
+  if (an || el.dataset.k !== k) { el.innerHTML = h; el.dataset.k = k; if (an) countUp(el); } else adMorph(el, h);
+  if (keep != null) { const q = $('#mxq'); if (q) { q.focus({ preventScroll: true }); try { q.setSelectionRange(keep, keep); } catch (e) {} } }
+  lvDraw();
+}
+function mxHours(vals) {
+  const max = Math.max(.01, ...vals.map(v => +v || 0)), pk = vals.indexOf(Math.max(...vals));
+  return `<div class="mx-hod" role="img" aria-label="${esc(auT('Average players active in each hour of the day'))}">${vals.map((v, h) => `<div class="${h === pk && +v ? 'pk' : ''}" style="--i:${h}" title="${esc(String(h).padStart(2, '0') + ':00 · ' + insNum(v, 2))}"><i><s style="height:${(100 * (+v || 0) / max).toFixed(1)}%"></s></i><small>${h % 3 ? '' : h}</small></div>`).join('')}</div>`;
+}
+function mxHeat(H) {
+  const M = {}, max = Math.max(.01, ...(H || []).map(x => +x.v || 0));
+  (H || []).forEach(x => { M[x.d + '-' + x.h] = +x.v || 0; });
+  const day = d => { try { return new Date(2024, 0, 1 + d).toLocaleDateString(adLang(), { weekday: 'short' }); } catch (e) { return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d]; } };
+  let h = '<div class="ins-hm" role="img" aria-label="' + esc(auT('Players active by weekday and hour')) + '"><span></span>';
+  for (let c = 0; c < 24; c++) h += `<span class="ins-hh">${c % 3 ? '' : c}</span>`;
+  for (let d = 0; d < 7; d++) { h += `<span class="ins-hd">${esc(day(d))}</span>`; for (let c = 0; c < 24; c++) { const v = M[d + '-' + c] || 0; h += `<i style="--a:${(v / max).toFixed(3)};--i:${d * 24 + c}" title="${esc(day(d) + ' ' + c + ':00 · ' + insNum(v, 1))}"></i>`; } }
+  return h + '</div>';
+}
+const MXV = {
+  act(D, an) {
+    const N = D.now || {}, S = D.sess || {}, SP = D.split || {}, C = D.cohorts || [], t = k => N[k] || {};
+    const sub = o => auT('{n} with an account').replace('{n}', stN(o.accounts));
+    const kp = insKpis([
+      { k: 'Live now', v: stN(adOnIds().length), id: 'mxln', tip: 'Signed-in players with the site open right now' },
+      { k: 'Today', v: stN(t('today').players), n: +t('today').players || 0, s: sub(t('today')), tip: 'Different players seen since midnight (Paris time)' },
+      { k: 'Yesterday', v: stN(t('yesterday').players), n: +t('yesterday').players || 0, s: sub(t('yesterday')) },
+      { k: 'Last 7 days', v: stN(t('d7').players), n: +t('d7').players || 0, s: sub(t('d7')), x: mxDelta(t('d7').players, t('p7').players) },
+      { k: 'Last 30 days', v: stN(t('d30').players), n: +t('d30').players || 0, s: sub(t('d30')), x: mxDelta(t('d30').players, t('p30').players) },
+      { k: 'New players', v: stN(SP.new), n: +SP.new || 0, s: SP.players ? auT('{p} of everyone active').replace('{p}', mxPc(SP.new, SP.players)) : '', tip: 'First seen in this period (looking back 400 days)' },
+      { k: 'Returning players', v: stN(SP.back), n: +SP.back || 0, s: SP.players ? auT('{p} of everyone active').replace('{p}', mxPc(SP.back, SP.players)) : '', tip: 'Seen before this period and active again in it' }
+    ]);
+    const rc = (n, v) => v == null ? `<td><span class="adm-mut" title="${esc(auT('Too early to tell'))}">—</span></td>` : `<td><span class="st-hc" style="--a:${n ? Math.min(1, v / n).toFixed(2) : 0}" title="${esc(auT('{a} of {b}').replace('{a}', stN(v)).replace('{b}', stN(n)))}">${n ? Math.round(100 * v / n) : 0}%</span></td>`;
+    return `${kp}
+    ${mxChart('mxnr', 'Active and new players per day', D.series || [], [{ k: 'active', l: 'Active players' }, { k: 'new', l: 'New players' }, { k: 'back', l: 'Returning players' }], { agg: 'avg', wide: true }, 'No activity in this period yet.')}
+    <div class="sx-grid mx-g2">
+     ${insCard('Session length', insKpis([{ k: 'Sessions', v: stN(S.n), n: +S.n || 0 }, { k: 'Median', v: insDur(S.med) }, { k: 'Longest 10%', v: insDur(S.p90) }, { k: 'Sessions per player', v: S.players ? insNum(S.n / S.players, 1) : '—' }, { k: 'With a game', v: mxPc(S.played, S.n) }, { k: 'Left in 10 s', v: mxPc(S.short, S.n), tip: 'Sessions shorter than 10 seconds without a game' }]) + insHist((S.b || []).map(r => ({ k: auT(r.k), n: +r.n || 0 }))), { cap: auT('A session ends after 30 minutes without activity.') })}
+     ${insCard('Peak hours', (D.hod || []).some(v => +v) ? mxHours(D.hod) + mxHeat(D.hours) : mxNone('No activity in this period yet.'), { cap: auT('Average number of different players active in each hour, Paris time.') })}
+    </div>
+    ${insCard('Weekly retention', C.length ? `<div class="adm-tw st-re"><table class="adm-t st-t"><thead><tr>${['First week', 'New players', 'Week 1', 'Week 2', 'Week 3', 'Week 4'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${C.map(c => `<tr><td>${esc(stDay(c.wk))}</td><td>${stN(c.n)}</td>${(c.r || []).map(v => rc(+c.n || 0, v)).join('')}</tr>`).join('')}</tbody></table></div>` : mxNone('No players yet.'), { cap: auT('Of the players first seen in a week, the share who came back in each of the following weeks.') })}`;
+  },
+  use(D, an) {
+    const T = D.total || {}, q = MX.q.trim().toLowerCase();
+    let L = (D.games || []).filter(g => +g.launches || +g.sec || +g.favs || +g.opens);
+    const kp = insKpis([
+      { k: 'Game launches', v: stN(T.launches), n: +T.launches || 0, x: mxDelta(T.launches, T.prev), tip: 'Times a game finished loading and started' },
+      { k: 'Real plays', v: stN(T.plays), n: +T.plays || 0, s: auT('{p} of launches').replace('{p}', mxPc(T.plays, T.launches)), tip: 'Launches where the player pressed a key, clicked or tapped in the game' },
+      { k: 'Time played', v: mxT(T.sec), x: mxDelta(T.sec, T.sec_prev), tip: 'Active time only: game open, tab visible and input in the last minute' },
+      { k: 'Average per launch', v: +T.launches ? insDur(T.sec / T.launches) : '—' },
+      { k: 'Bounce rate', v: mxPc(T.bounced, T.bn), s: +T.bn ? auT('{a} of {b}').replace('{a}', stN(T.bounced)).replace('{b}', stN(T.bn)) : '', tip: 'Launches left within 10 seconds without any input' },
+      { k: 'Rounds finished', v: stN(T.rounds), n: +T.rounds || 0, tip: 'Game-over or results screens reached' },
+      { k: 'New records', v: stN(T.recs), n: +T.recs || 0, tip: 'Play sessions that ended with a new personal best' },
+      { k: 'Favourites', v: stN(T.favs), n: +T.favs || 0, tip: 'Games currently saved as a favourite' },
+      { k: 'Games played', v: stN(T.games), n: +T.games || 0, s: auT('of {n}').replace('{n}', games.length) }
+    ]);
+    if (q) L = L.filter(g => adGame(g.id).toLowerCase().includes(q) || g.id.includes(q));
+    L = mxSorted('use', L, (g, k) => k === 'rate' ? (+g.launches ? g.plays / g.launches : null) : k === 'avg' ? (+g.launches ? g.sec / g.launches : null) : k === 'bounce' ? (+g.bn ? g.bounced / g.bn : null) : k === 'trend' ? (+g.prev ? (g.launches - g.prev) / g.prev : +g.launches ? 9 : null) : k === 'name' ? adGame(g.id).toLowerCase() : +g[k] || 0);
+    const more = L.length > 40 && !MX.all && !q;
+    const rows = L.slice(0, more ? 40 : L.length).map((g, i) => { const b = +g.bn ? 100 * g.bounced / g.bn : null; return `<tr data-k="u:${esc(g.id)}" style="--i:${Math.min(i, 14)}"><td>${mxGame(g.id)}</td><td><span class="ins-gs"><b>${stN(g.launches)}</b>${g.days ? stSpark(g.days, an) : ''}</span></td><td>${mxDelta(g.launches, g.prev) || '<span class="adm-mut">—</span>'}</td><td>${stN(g.plays)} <span class="adm-mut">· ${mxPc(g.plays, g.launches)}</span></td><td>${stN(g.players)}</td><td>${esc(mxT(g.sec))}</td><td>${+g.launches ? esc(insDur(g.sec / g.launches)) : '—'}</td><td>${b == null ? `<span class="adm-mut" title="${esc(auT('Measured for launches from the updated site only'))}">—</span>` : `<span class="adm-pill ${b > 50 ? 'bad' : b > 25 ? 'warn' : 'ok'}" title="${esc(auT('{a} of {b}').replace('{a}', stN(g.bounced)).replace('{b}', stN(g.bn)))}">${Math.round(b)}%</span>`}</td><td>${stN(g.rounds)}</td><td>${stN(g.recs)}</td><td>${stN(g.favs)}${+g.fav_add ? ` <span class="adm-mut">+${stN(g.fav_add)}</span>` : ''}</td></tr>`; }).join('');
+    return `${kp}
+    <div class="st-card ins-tc mx-tc"><div class="sx-gh"><h3>${esc(auT('Every game'))}</h3><label class="sx-cb mx-q"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="mxq" type="search" placeholder="${esc(auT('Search games'))}" aria-label="${esc(auT('Search games'))}" autocomplete="off" spellcheck="false" value="${esc(MX.q)}"></label></div>
+    <div class="adm-tw"><table class="adm-t st-t ins-t mx-t">${mxTh('use', [['name', 'Game'], ['launches', 'Launches', 'Times the game started, with launches per day'], ['trend', 'Trend', 'Launches compared with the same number of days before'], ['plays', 'Real plays', 'Launches with input, and their share of all launches'], ['players', 'Players', 'Different players who launched it'], ['sec', 'Time played', 'Active play time'], ['avg', 'Per launch', 'Average active time per launch'], ['bounce', 'Bounce', 'Launches left within 10 seconds without any input'], ['rounds', 'Rounds', 'Game-over or results screens reached'], ['recs', 'Records', 'Play sessions that ended with a new personal best'], ['favs', 'Favourites', 'Players who have it as a favourite now, and added in this period']])}<tbody>${rows || `<tr><td colspan="11">${mxNone(q ? 'No games match.' : 'No game was opened in this period.')}</td></tr>`}</tbody></table></div>${more ? `<button class="btn2 al-more" type="button" data-mxall>${esc(auT('Show all {n}').replace('{n}', L.length))}</button>` : ''}</div>`;
+  },
+  perf(D, an) {
+    const P = D.page || [], all = P.find(p => p.device === 'all') || {}, T = D.total || {}, G = D.games || [];
+    const vit = (k, v) => insVit(k, v), ms2 = (a, b) => a == null ? '<span class="adm-mut">—</span>' : `${esc(insMs(b))} <span class="adm-mut">· ${esc(insMs(a))}</span>`;
+    const kp = insKpis([
+      { k: 'Site ready', v: insMs(all.rdy75), tip: 'Time from opening the page until the site can be used, 3 of 4 visits are faster' },
+      { k: 'Page load', v: insMs(all.load75), tip: 'Browser load event, 3 of 4 visits are faster' },
+      { k: 'Main content shown', v: insMs(all.lcp75), tip: 'Largest contentful paint, 3 of 4 visits are faster' },
+      { k: 'Average frame rate', v: T.fps != null || T.fps_all != null ? insNum(T.fps != null ? T.fps : T.fps_all, 0) + ' fps' : '—', s: +T.n ? auT('{n} play sessions').replace('{n}', stN(T.n)) : '' },
+      { k: 'Slow frames', v: T.slow != null ? insNum(T.slow, 1) + '%' : '—', tip: 'Share of frames that took longer than 34 ms (under 30 frames per second)' },
+      { k: 'Slow play sessions', v: mxPc(T.bad, T.n), s: +T.n ? auT('{a} of {b}').replace('{a}', stN(T.bad)).replace('{b}', stN(T.n)) : '', tip: 'Sessions under 30 frames per second on average, or with 1 frame in 5 slow' }
+    ]);
+    const pt = P.length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${[['Device'], ['Visits'], ['Server reply', 'Time to first byte: 3 of 4 visits · median'], ['First paint', 'First contentful paint'], ['Main content', 'Largest contentful paint'], ['Page load', 'Browser load event'], ['Site ready', 'Until the site can be used'], ['Reaction', 'Interaction to next paint'], ['Layout jumps', 'Cumulative layout shift']].map(([h, t]) => `<th${t ? ` title="${esc(auT(t))}"` : ''}><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${P.map(v => `<tr data-k="pg:${esc(v.device)}"><td>${v.device === 'all' ? `<b>${esc(auT('All devices'))}</b>` : esc(auT(ST_DEV[v.device] || v.device))}</td><td>${stN(v.n)}</td><td>${ms2(v.ttfb50, v.ttfb75)}</td><td>${ms2(v.fcp50, v.fcp75)}</td><td>${vit('lcp', v.lcp75)}</td><td>${ms2(v.load50, v.load75)}</td><td>${ms2(v.rdy50, v.rdy75)}</td><td>${vit('inp', v.inp75)}</td><td>${vit('cls', v.cls75)}</td></tr>`).join('')}</tbody></table></div>` : mxNone('No page was measured in this period yet. Timings are sent when a visit ends.');
+    const GL = mxSorted('perf', G, (g, k) => k === 'name' ? adGame(g.id).toLowerCase() : k === 'badp' ? (+g.n ? g.bad / g.n : null) : g[k] == null ? null : +g[k]);
+    const gt = GL.length ? GL.map((g, i) => `<tr data-k="pf:${esc(g.id)}" style="--i:${Math.min(i, 14)}"><td>${mxGame(g.id)}</td><td>${stN(g.n)}</td><td>${g.fps == null ? '<span class="adm-mut">—</span>' : `<span class="adm-pill ${g.fps < 30 ? 'bad' : g.fps < 50 ? 'warn' : 'ok'}">${Math.round(g.fps)}</span>`}</td><td>${g.fps_p10 == null ? '—' : Math.round(g.fps_p10)}</td><td>${g.slow == null ? `<span class="adm-mut" title="${esc(auT('Measured for sessions from the updated site only'))}">—</span>` : esc(insNum(g.slow, 1)) + '%'}</td><td>${g.freezes == null ? '<span class="adm-mut">—</span>' : esc(insNum(g.freezes, 2))}</td><td>${+g.n ? `<span class="adm-pill ${g.bad / g.n > .3 ? 'bad' : g.bad ? 'warn' : 'ok'}">${mxPc(g.bad, g.n)}</span>` : '—'}</td><td>${+g.ln ? esc(insMs(g.l50)) + ' <span class="adm-mut">· ' + esc(insMs(g.l90)) + '</span>' : `<span class="adm-mut" title="${esc(auT('Part of the page, nothing extra to download'))}">—</span>`}</td></tr>`).join('') : '';
+    const worst = G.filter(g => +g.n && (+g.bad || (g.fps != null && g.fps < 50))).sort((a, b) => b.bad / b.n - a.bad / a.n || a.fps - b.fps).slice(0, 8), slowL = G.filter(g => +g.ln).sort((a, b) => b.l90 - a.l90).slice(0, 8);
+    const bl = (rows, f) => insList((rows || []).filter(r => +r.n).map(r => ({ k: r.k, n: +r.bad || .0001, t: +r.n, fps: r.fps })), { fmt: f, val: r => `${mxPc(Math.round(r.n), r.t)} · ${Math.round(r.n)}/${r.t}`, tip: r => `${r.k}: ${auT('{a} of {b} sessions were slow').replace('{a}', Math.round(r.n)).replace('{b}', r.t)}${r.fps != null ? ' · ' + Math.round(r.fps) + ' fps' : ''}` });
+    return `${kp}
+    <div class="st-card ins-tc"><h3>${esc(auT('Page load by device'))}</h3><p class="sx-note">${esc(auT('3 of 4 visits are faster than the first number; the second is the median.'))}</p>${pt}</div>
+    ${mxChart('mxpl', 'Site ready and page load per day', D.page_days || [], [{ k: 'rdy', l: 'Site ready' }, { k: 'load', l: 'Page load' }, { k: 'lcp', l: 'Main content' }], { agg: 'avg', wide: true, dec: true, fmt: insMs }, 'No page was measured in this period yet. Timings are sent when a visit ends.')}
+    <div class="sx-grid mx-g2">
+     ${insCard('Slowest games', worst.length ? insList(worst.map(g => ({ k: g.id, n: 100 * g.bad / g.n || .0001, g })), { fmt: id => adCv(id, 'ins-cv') + esc(adGame(id)), name: adGame, val: r => `${Math.round(r.n)}% · ${r.g.fps == null ? '—' : Math.round(r.g.fps) + ' fps'}` }) : mxNone(+T.n ? 'No game ran slowly in this period.' : 'No frame rates measured yet. They are sent with play time when a game is closed or the tab is hidden.'), { cap: auT('Share of play sessions that were slow, with the average frame rate.') })}
+     ${insCard('Slowest to load', slowL.length ? insList(slowL.map(g => ({ k: g.id, n: +g.l90 || .0001, g })), { fmt: id => adCv(id, 'ins-cv') + esc(adGame(id)), name: adGame, val: r => insMs(r.g.l90) + ' · ' + insMs(r.g.l50) }) : mxNone('No game had to be downloaded in this period.'), { cap: auT('Download time: slowest 10% and median.') })}
+    </div>
+    <div class="st-card ins-tc mx-tc"><h3>${esc(auT('Frame rate and loading by game'))}</h3><div class="adm-tw"><table class="adm-t st-t ins-t mx-t">${mxTh('perf', [['name', 'Game'], ['n', 'Sessions', 'Play sessions with a frame rate measurement'], ['fps', 'Frame rate', 'Average frames per second'], ['fps_p10', 'Worst 10%', 'One session in ten ran below this frame rate'], ['slow', 'Slow frames', 'Share of frames that took longer than 34 ms'], ['freezes', 'Freezes per minute', 'Frames that took longer than 100 ms'], ['badp', 'Slow sessions', 'Sessions under 30 frames per second on average, or with 1 frame in 5 slow'], ['l50', 'Load', 'Download time: median · slowest 10%']])}<tbody>${gt || `<tr><td colspan="8">${mxNone('No frame rates measured yet. They are sent with play time when a game is closed or the tab is hidden.')}</td></tr>`}</tbody></table></div></div>
+    <h3 class="mx-h">${esc(auT('Where slow sessions happen'))}</h3>
+    <div class="ins-grid">
+     ${insCard('By device', +T.n ? bl(D.by_device, k => esc(auT(ST_DEV[k] || k))) : mxNone('No frame rates measured yet.'))}
+     ${insCard('By browser', +T.n ? bl(D.by_browser) : mxNone('No frame rates measured yet.'))}
+     ${insCard('By system', +T.n ? bl(D.by_os) : mxNone('No frame rates measured yet.'))}
+     ${insCard('By graphics card', (D.by_gpu || []).length ? bl(D.by_gpu) : mxNone('No frame rates measured yet.'))}
+    </div>`;
+  },
+  err(D, an) {
+    const G = mxSorted('err', D.groups || [], (g, k) => k === 'game' ? adGame(g.game).toLowerCase() : g[k]);
+    const kp = insKpis([
+      { k: 'Errors', v: stN(D.n), n: +D.n || 0 },
+      { k: 'Different errors', v: stN(D.kinds), n: +D.kinds || 0 },
+      { k: 'Players affected', v: stN(D.users), n: +D.users || 0 },
+      { k: 'Sessions with an error', v: mxPc(D.sessions, D.sess_all, 1), s: auT('{a} of {b}').replace('{a}', stN(D.sessions)).replace('{b}', stN(D.sess_all)) }
+    ]);
+    const WH = { mount: 'Game start', load: 'Game download', window: 'Script error', promise: 'Failed operation', route: 'Missing page', other: 'Other' };
+    const rows = G.map((g, i) => `<tr tabindex="0" role="button" aria-expanded="${MX.es === g.sig}" data-mxsig="${esc(g.sig)}" data-k="e:${esc(g.sig)}" class="${MX.es === g.sig ? 'sel' : ''}" style="--i:${Math.min(i, 14)}"><td>${g.game ? mxGame(g.game) : `<span class="adm-mut">${esc(auT('Site'))}</span>`}</td><td class="mx-msg" title="${esc(g.msg || '')}"><code translate="no">${esc(String(g.msg || '—').slice(0, 140))}</code>${g.src ? `<small translate="no">${esc(g.src)}${g.line ? ':' + esc(String(g.line)) : ''}</small>` : ''}</td><td>${esc(auT(WH[g.place] || g.place || 'Other'))}</td><td><b>${stN(g.n)}</b>${+g.n24 ? ` <span class="adm-pill warn" title="${esc(auT('In the last 24 hours'))}">+${stN(g.n24)}</span>` : ''}</td><td>${stN(g.users)}</td><td title="${esc(adDate(g.first, 1))}">${esc(adDate(g.first))}</td><td title="${esc(adDate(g.last, 1))}"><span data-rt="${esc(g.last)}">${esc(adAgo(g.last))}</span></td></tr>${MX.es === g.sig ? `<tr class="mx-dr" data-k="ed:${esc(g.sig)}"><td colspan="7">${mxErrDetail()}</td></tr>` : ''}`).join('');
+    return `${kp}
+    ${mxChart('mxer', 'Errors per day', D.by_day || [], [{ k: 'n', l: 'Errors' }], { agg: 'sum', type: 'bar', wide: true }, 'No errors in this period.')}
+    <div class="st-card ins-tc mx-tc"><h3>${esc(auT('Errors by game and message'))}</h3><p class="sx-note">${esc(auT('Messages that only differ by a number are grouped. Choose a row to see who was affected and on which devices.'))}</p><div class="adm-tw"><table class="adm-t st-t ins-t mx-t mx-et">${mxTh('err', [['game', 'Game'], [null, 'Message'], ['place', 'Where'], ['n', 'Count'], ['users', 'Players'], ['first', 'First seen'], ['last', 'Last seen']])}<tbody>${rows || `<tr><td colspan="7">${mxNone('No errors in this period.')}</td></tr>`}</tbody></table></div></div>
+    <div class="ins-grid">
+     ${insCard('By kind', mxList((D.by_where || []).map(r => ({ k: auT(WH[r.k] || r.k), n: r.n })), null, 'No errors in this period.'))}
+     ${insCard('Games with the most errors', mxList((D.by_game || []).map(r => ({ k: r.id, n: r.n, u: r.users })), { fmt: id => adCv(id, 'ins-cv') + esc(adGame(id)), name: adGame, val: r => stN(r.n) + ' · ' + auT('{n} players').replace('{n}', stN(r.u)) }, 'No errors in this period.'))}
+    </div>`;
+  },
+  par(D, an) {
+    const ms = D.ms || {}, W = D.waited || {}, BG = mxSorted('par', D.by_game || [], (g, k) => k === 'name' ? adGame(g.id).toLowerCase() : k === 'rate' ? (+g.attempts ? g.joined / g.attempts : null) : k === 'relayp' ? (+g.joined ? g.relay / g.joined : null) : g[k] == null ? null : +g[k]);
+    const kp = insKpis([
+      { k: 'Parties created', v: stN(D.creates), n: +D.creates || 0, s: auT('{n} hosts').replace('{n}', stN(D.hosts)) },
+      { k: 'Join attempts', v: stN(D.attempts), n: +D.attempts || 0, s: auT('{n} retries').replace('{n}', stN(D.retries)), tip: 'Times a player tried to join a party; retries within one try count once' },
+      { k: 'Joined', v: mxPc(D.joined, D.attempts), s: auT('{a} of {b}').replace('{a}', stN(D.joined)).replace('{b}', stN(D.attempts)), tip: 'Share of join attempts that ended connected' },
+      { k: 'Connected first try', v: mxPc(D.first_try, D.joined), tip: 'Joins that needed no retry' },
+      { k: 'Time to connect', v: +ms.n ? insMs(ms.p50) : '—', s: +ms.n ? auT('slowest 10%: {t}').replace('{t}', insMs(ms.p90)) : '', tip: 'From the last click in the lobby until connected (median)' },
+      { k: 'Games started', v: stN(D.plays), n: +D.plays || 0, s: D.play_players ? auT('{n} players on average').replace('{n}', insNum(D.play_players, 1)) : '' }
+    ]);
+    const rows = BG.map((g, i) => `<tr data-k="pg:${esc(g.id)}" style="--i:${Math.min(i, 14)}"><td>${mxGame(g.id)}</td><td>${stN(g.creates)}</td><td>${stN(g.attempts)}</td><td>${+g.attempts ? `<span class="adm-pill ${g.joined / g.attempts < .7 ? 'bad' : g.joined / g.attempts < .9 ? 'warn' : 'ok'}">${mxPc(g.joined, g.attempts)}</span>` : '—'}</td><td>${stN(g.retried)}</td><td>${stN(g.failed)}</td><td>${+g.joined ? mxPc(g.relay, g.joined) : '—'}</td><td>${g.ms50 == null ? '—' : esc(insMs(g.ms50))}</td><td>${stN(g.plays)}</td></tr>`).join('');
+    return `${kp}
+    ${mxChart('mxpd', 'Join attempts per day', D.by_day || [], [{ k: 'attempts', l: 'Join attempts' }, { k: 'joined', l: 'Joined' }, { k: 'creates', l: 'Parties created' }], { agg: 'sum', wide: true }, 'No online party in this period.')}
+    <div class="ins-grid">
+     ${insCard('Route used', (D.routes || []).length ? insDonut((D.routes || []).map(r => ({ k: auT(MX_VIA[r.k] || r.k), n: r.n })), { label: 'Route used' }) : mxNone('Nobody joined a party in this period.'), { cap: auT('How joined players reached the host.') })}
+     ${insCard('Why a try failed', mxList((D.why || []).map(r => ({ k: mxWhy(r.k), n: r.n })), null, 'No failed try in this period.'), { cap: auT('Each failed try that was retried.') })}
+     ${insCard('Why players gave up', mxList((D.fail_why || []).map(r => ({ k: mxWhy(r.k), n: r.n })), null, 'Nobody gave up in this period.'), { cap: auT('Last reason before a join attempt ended without connecting. A party that is full or refused at once is not counted.') })}
+     ${insCard('Time to connect by route', mxList((D.ms_route || []).map(r => ({ k: auT(MX_VIA[r.k] || r.k), n: +r.p50 || .0001, c: r.n })), { val: r => insMs(r.n) + ' · ' + stN(r.c) }, 'Not measured yet. It is recorded by the updated site when a player joins from the lobby.'), { cap: +W.n ? auT('Joins that needed a retry lost {t} on average.').replace('{t}', insDur(W.p50)) : '' })}
+     ${insCard('Happening now', `<div class="st-list" id="mxpl">${mxPartyLive()}</div>`)}
+    </div>
+    <div class="st-card ins-tc mx-tc"><h3>${esc(auT('By game'))}</h3><div class="adm-tw"><table class="adm-t st-t ins-t mx-t">${mxTh('par', [['name', 'Game'], ['creates', 'Created'], ['attempts', 'Join attempts'], ['rate', 'Joined'], ['retried', 'Needed a retry'], ['failed', 'Gave up'], ['relayp', 'Relayed', 'Share of joins that went through the server relay'], ['ms50', 'Time to connect'], ['plays', 'Games started']])}<tbody>${rows || `<tr><td colspan="9">${mxNone('No online party in this period.')}</td></tr>`}</tbody></table></div></div>`;
+  },
+  hl(D, an) {
+    const R = D.req || {}, LT = D.limit_total || {}, RT0 = D.routes || [], rt = k => (RT0.find(r => r.k === k) || {}).n || 0, rtAll = RT0.reduce((s, r) => s + (+r.n || 0), 0), SW = D.sweep || {}, EX = D.excluded || {}, DN = D.down || {};
+    const kp = insKpis([
+      { k: 'Sessions through the relay', v: mxPc(rt('relay'), rtAll), s: rtAll ? auT('{a} of {b}').replace('{a}', stN(rt('relay'))).replace('{b}', stN(rtAll)) : '', tip: 'Sessions that reached the accounts server through the relay instead of directly' },
+      { k: 'Requests', v: stN(R.n), n: +R.n || 0, s: +R.sessions ? auT('{n} sessions measured').replace('{n}', stN(R.sessions)) : '', tip: 'Requests to the accounts server counted by browsers that accepted analytics' },
+      { k: 'Failed requests', v: mxPc((+R.failed || 0) + (+R.s5 || 0), R.n, 2), s: auT('{a} lost · {b} server errors').replace('{a}', stN(R.failed)).replace('{b}', stN(R.s5)), tip: 'Requests that never got an answer, or got a server error' },
+      { k: 'Rejected requests', v: stN(R.s4), n: +R.s4 || 0, tip: 'Answered with a 4xx status, for example a wrong password or a missing permission' },
+      { k: 'Rate-limit hits', v: stN(LT.full), n: +LT.full || 0, s: auT('{n} players · last {d} days').replace('{n}', stN(LT.who)).replace('{d}', LT.days || 8), tip: 'Times a player reached a limit on the server' },
+      { k: 'Average response', v: R.ms != null ? insMs(R.ms) : '—' },
+      { k: 'Sessions that went offline', v: mxPc(R.offline, R.all), tip: 'The browser reported losing its connection at least once' },
+      { k: 'Games that failed to load', v: stN(D.game_fail), n: +D.game_fail || 0 }
+    ]);
+    const lim = (D.limits || []).length ? `<div class="adm-tw"><table class="adm-t st-t"><thead><tr>${['Limit', 'Requests', 'Times at the limit', 'Players'].map(h => `<th><span>${esc(auT(h))}</span></th>`).join('')}</tr></thead><tbody>${D.limits.map(l => `<tr data-k="lm:${esc(l.k)}"><td>${esc(auT(AB_T[l.k] || l.k))}</td><td>${stN(l.n)}</td><td>${+l.full ? adPill(stN(l.full), 'warn') : '0'}</td><td>${stN(l.who)}</td></tr>`).join('')}</tbody></table></div>` : mxNone('Nobody came close to a limit.');
+    const del = SW.deleted && typeof SW.deleted === 'object' ? Object.values(SW.deleted).reduce((s, v) => s + (+v || 0), 0) : 0;
+    return `<div class="st-card mx-now" id="mxhl">${mxHealthLive()}</div>
+    ${kp}
+    ${mxChart('mxrt', 'Sessions by route per day', D.by_day || [], [{ k: 'direct', l: 'Direct' }, { k: 'relay', l: 'Relay' }, { k: 'none', l: 'No accounts server' }], { agg: 'sum', wide: true })}
+    <div class="sx-grid mx-g2">
+     ${mxChart('mxfr', 'Failed requests per day', D.by_day || [], [{ k: 'bad', l: 'Failed requests' }], { agg: 'sum', type: 'bar' }, +R.n ? 'No request failed in this period.' : 'Not measured yet. Requests are counted by the updated site.')}
+     ${mxChart('mxrl', 'Rate-limit hits per day', D.by_day || [], [{ k: 'limited', l: 'Times at the limit' }], { agg: 'sum', type: 'bar' }, 'Nobody reached a limit.')}
+    </div>
+    <div class="sx-grid mx-g2">
+     <div class="st-card ins-c"><h3>${esc(auT('Rate limits'))}</h3><p class="sx-note">${esc(auT('Last {d} days. Staff are not limited.').replace('{d}', LT.days || 8))}</p>${lim}</div>
+     <div class="st-card ins-c"><h3>${esc(auT('Data housekeeping'))}</h3><div class="ins-kv ins-kv2"><span>${esc(auT('Old data last removed'))}</span><b>${SW.at && Date.parse(SW.at) > 1e9 ? `<span data-rt="${esc(SW.at)}">${esc(adAgo(SW.at))}</span>` : esc(auT('Never'))}</b><span>${esc(auT('Rows removed that time'))}</span><b>${stN(del)}</b><span>${esc(auT('Nightly job in the database'))}</span><b>${esc(auT(SW.cron ? 'On' : 'Off'))}</b><span>${esc(auT('Events from test accounts, left out'))}</span><b>${stN(EX.test)}</b><span>${esc(auT('Events from staff'))}</span><b>${stN(EX.staff)} <span class="adm-mut">· ${esc(auT(LV.staff ? 'counted' : 'left out'))}</span></b><span>${esc(auT('Accounts server unreachable at start'))}</span><b>${+DN.n ? mxPc(DN.yes, DN.n, 1) : '—'}</b></div><p class="sx-note">${esc(auT(SW.cron ? 'Data past its keeping time is removed every night.' : 'Data past its keeping time is removed once a day when someone uses the site. Turn on pg_cron in Supabase and run round19_analytics.sql again for a nightly job.'))}</p><button class="btn2" type="button" data-mxsweep>${esc(auT('Remove old data now'))}</button></div>
+    </div>`;
+  }
+};
+function mxPartyLive() {
+  const P = LV.d && Array.isArray(LV.d.party) ? LV.d.party : [], U = new Map((AD.users || []).map(u => [u.id, u])), on = adOnIds().map(id => adOn(id)).filter(p => p && p.p);
+  const K = { create: 'opened a party', join: 'joined a party', retry: 'is retrying', play: 'started the game' };
+  const head = `<div class="st-kv" data-k="pn"><span>${esc(auT('Players in a party right now'))}</span><b>${stN(on.length)}</b></div>`;
+  return head + (P.length ? P.map(e => { const u = U.get(e.u), nm = u ? u.display_name || u.username || u.email : auT('A player'); return `<div class="st-err mx-pe" data-k="pe:${+e.id}"><b>${esc(nm)} <span>${esc(auT(K[e.k] || e.k))}</span></b><span>${esc(adGame(e.g))}${e.via ? ' · ' + esc(auT(MX_VIA[e.via] || e.via)) : ''}${e.why ? ' · ' + esc(mxWhy(e.why)) : ''}${e.ms ? ' · ' + esc(insMs(e.ms)) : ''}</span><small data-rt="${esc(e.at)}">${esc(adAgo(e.at))}</small></div>`; }).join('') : mxNone('No party activity in the last 30 minutes.'));
+}
+function mxHealthLive() {
+  const route = SB.on ? (SBN.best() === SUPABASE_DIRECT ? 'Direct' : 'Relay') : 'Off', ok = lvOk(), E = LV.d && LV.d.ev || {};
+  const cell = (k, v, c) => `<div data-k="h:${esc(k)}"><small>${esc(auT(k))}</small><b class="${c || ''}">${v}</b></div>`;
+  return `<h3><i class="adm-dot${ok ? '' : ' off'}"></i>${esc(auT('Right now'))}</h3><div class="mx-nowg">${cell('This browser reaches the server', esc(auT(route)), route === 'Relay' ? 'warn' : '')}${cell('Live updates', esc(auT(ok ? 'Working' : LV.miss ? 'Not installed' : 'Reconnecting…')), ok ? 'ok' : 'bad')}${cell('Server reply time', ok ? esc(insMs(LV.ms)) : '—', ok && LV.ms > 800 ? 'warn' : '')}${cell('Events in the last minute', stN(E.m1))}${cell('Sessions in the last minute', stN(E.ses))}${cell('Game launches, 5 minutes', stN(E.lau))}${cell('Errors, 5 minutes', stN(E.err), +E.err ? 'bad' : '')}${cell('Rate-limit hits, 5 minutes', stN(E.rl), +E.rl ? 'warn' : '')}</div>`;
+}
+function mxErrDetail() {
+  const d = MX.ed;
+  if (MX.eb || !d) return '<div class="mx-ed"><i class="sk sk-td"></i><i class="sk sk-td"></i><i class="sk sk-td"></i></div>';
+  if (d.__err) return `<div class="mx-ed adm-mut">${esc(auT('Could not load. Check your connection and try again.'))}</div>`;
+  const R = d.rows || [], ls = (t, L) => `<div><small>${esc(auT(t))}</small>${(L || []).length ? L.map(x => `<span class="adm-pill">${esc(t === 'Devices' ? auT(ST_DEV[x.k] || x.k) : x.k)} · ${stN(x.n)}</span>`).join('') : '—'}</div>`;
+  return `<div class="mx-ed"><div class="mx-edh">${ls('Devices', d.devices)}${ls('Browsers', d.browsers)}${ls('Systems', d.os)}</div>
+   <code class="mx-full" translate="no">${esc(R[0] ? R[0].msg || '' : '')}</code>
+   <div class="mx-occ">${R.map(r => `<div class="mx-or"><time title="${esc(adDate(r.at, 1))}">${esc(adDate(r.at, 1))}</time><span>${r.user && (AD.users || []).some(u => u.id === r.user) ? `<button type="button" class="al-u" data-stu="${esc(r.user)}">${esc(r.username ? '@' + r.username : r.name || auT('Player'))}</button>` : `<span class="adm-mut">${esc(auT(r.user ? 'A player' : 'Not signed in'))}</span>`}</span><span translate="no">${esc([auT(ST_DEV[r.device] || r.device || ''), r.os, r.browser].filter(Boolean).join(' · '))}</span><span class="adm-mut" translate="no">${esc([r.src ? r.src + (r.line ? ':' + r.line : '') : '', r.gpu].filter(Boolean).join(' · '))}</span></div>`).join('')}</div>
+   ${+d.n > R.length ? `<p class="sx-note">${esc(auT('Showing the latest {a} of {b}.').replace('{a}', R.length).replace('{b}', stN(d.n)))}</p>` : ''}</div>`;
+}
+async function mxErrOpen(sig) {
+  if (MX.es === sig) { MX.es = null; MX.ed = null; mxDraw('err'); return; }
+  MX.es = sig; MX.ed = null; MX.eb = true;
+  mxDraw('err');
+  try { const d = await adData('error', ST.days, sig); if (MX.es !== sig) return; MX.ed = d || { __err: 1 }; }
+  catch (e) { if (MX.es !== sig) return; MX.ed = { __err: 1 }; }
+  MX.eb = false;
+  mxDraw('err');
+}
+
+const DG_N = 200;
+const DGV = { list: null, acc: null, busy: false, cur: null, info: null, rows: [], total: 0, before: 0, after: 0, kinds: new Set(), bad: false, q: '', open: new Set(), seq: 0, lb: false, at: 0, dl: false };
+const DG_K = [['err', 'Errors', ['err']], ['log', 'Logs', ['log']], ['req', 'Requests', ['req', 'res']], ['ws', 'WebSocket', ['ws', 'rt']], ['dc', 'Data channel', ['dc']], ['pc', 'Connection', ['pc', 'net']], ['fps', 'Frame rate', ['fps', 'perf']], ['in', 'Inputs', ['in']], ['etc', 'Other', ['boot', 'life', 'game', 'cfg', 'track']]];
+const dgCut = (s, n) => { s = String(s == null ? '' : s); return s.length > n ? s.slice(0, n) + '…' : s; };
+const dgPath = u => { try { const x = new URL(u, location.href); return (x.origin === location.origin ? '' : x.host) + x.pathname + (x.search ? '?…' : ''); } catch (e) { return String(u || ''); } };
+function dgSum(k, d) {
+  d = d && typeof d === 'object' ? d : {};
+  if (k === 'err') return d.kind === 'resource' ? auT('Could not load {s}').replace('{s}', dgPath(d.src)) : dgCut(d.m, 220) + (d.src ? ' · ' + dgPath(d.src) + (d.line ? ':' + d.line : '') : '');
+  if (k === 'log') return dgCut((d.a || []).join(' '), 240);
+  if (k === 'req') return (d.m || 'GET') + ' ' + dgPath(d.u);
+  if (k === 'res') return (d.e ? auT('Failed') + ' · ' + dgCut(d.e, 120) : d.s) + ' · ' + insMs(d.ms) + (d.len ? ' · ' + stN(d.len) + ' B' : '');
+  if (k === 'ws') return '#' + d.id + ' ' + d.a + (d.u ? ' ' + dgPath(d.u) : '') + (d.code ? ' ' + d.code : '') + (d.n != null && (d.a === 'rx' || d.a === 'tx') ? ' · ' + stN(d.n) + ' B' : '') + (d.b ? ' · ' + dgCut(d.b, 140) : '');
+  if (k === 'dc') return '#' + d.pc + ' ' + (d.ch || '') + ' ' + d.a + (d.a === 'sum' ? ' · ↑' + stN(d.tx) + ' ↓' + stN(d.rx) : d.n != null ? ' · ' + stN(d.n) + ' B' : '') + (d.b ? ' · ' + dgCut(d.b, 140) : '') + (d.m ? ' · ' + dgCut(d.m, 120) : '');
+  if (k === 'pc') return '#' + d.id + ' ' + d.a + (d.s ? ' ' + d.s : '') + (d.ms != null ? ' · ' + insMs(d.ms) : '') + (d.a === 'pair' ? ' · ' + [d.local, d.remote, d.relay].filter(Boolean).join(' → ') + (d.rtt != null ? ' · ' + Math.round(d.rtt * 1000) + ' ms' : '') : '') + (d.c ? ' · ' + dgCut(d.c, 120) : '') + (d.m ? ' · ' + dgCut(d.m, 100) : '');
+  if (k === 'net') return dgCut(d.a + ' ' + Object.entries(d).filter(x => x[0] !== 'a').map(x => x[0] + '=' + (typeof x[1] === 'object' ? JSON.stringify(x[1]) : x[1])).join(' '), 220);
+  if (k === 'rt') return dgCut([d.k, d.m, d.d].filter(Boolean).join(' · '), 220);
+  if (k === 'fps') return (d.g || '') + ' · ' + d.fps + ' fps · ' + auT('worst frame {n} ms').replace('{n}', d.worst) + (d.slow ? ' · ' + auT('{n} slow').replace('{n}', d.slow) : '') + (d.heap ? ' · ' + d.heap + ' MB' : '');
+  if (k === 'perf') return d.a + (d.u ? ' ' + dgPath(d.u) : '') + (d.ms != null ? ' · ' + insMs(d.ms) : '') + (d.kb ? ' · ' + d.kb + ' kB' : '') + (d.at != null && d.ms == null ? ' · ' + insMs(d.at) : '');
+  if (k === 'in') return d.a + ' ' + (d.c || (d.x != null ? d.x + ',' + d.y + (d.p ? ' ' + d.p : '') : ''));
+  if (k === 'track') return (d.e || '') + (d.p ? ' ' + dgCut(JSON.stringify(d.p), 180) : '');
+  if (k === 'life') return d.a + (d.s ? ' ' + d.s : '') + (d.u ? ' ' + d.u : '');
+  if (k === 'game') return d.id ? auT('Opened {g}').replace('{g}', adGame(d.id)) : auT('Closed the game');
+  if (k === 'boot') return dgCut((d.u || '') + ' · ' + (d.ua || ''), 220);
+  return dgCut(JSON.stringify(d), 220);
+}
+function dgBad(k, d) {
+  d = d || {};
+  return k === 'err' || (k === 'log' && (d.l === 'error' || d.l === 'warn')) || (k === 'res' && (d.e != null || +d.s >= 400)) || (k === 'ws' && (d.a === 'error' || (d.a === 'close' && d.clean === false))) || (k === 'pc' && (d.s === 'failed' || d.s === 'disconnected' || d.a === 'canderr')) || (k === 'dc' && d.a === 'error') || (k === 'net' && /fail|lost|error|timeout/.test(String(d.a))) || (k === 'life' && d.a === 'offline');
+}
+function dgShell() {
+  const box = $('#addiag');
+  if (!box || $('#dgl')) return;
+  box.innerHTML = `<div class="dg">
+   <div class="dg-side">
+    <div class="st-card dg-ses"><div class="sx-ch"><div><h3>${esc(auT('Recorded sessions'))}</h3></div><button class="btn2 danger" type="button" data-dgclear="all">${esc(auT('Delete all'))}</button></div><div class="dg-list" id="dgl" role="list"></div></div>
+    <div class="st-card dg-acc"><h3>${esc(auT('Recorded accounts'))}</h3><p class="sx-note">${esc(auT('Only accounts switched on here are recorded. Use it for test accounts, never for real players.'))}</p><div id="dga"></div></div>
+   </div>
+   <div class="st-card dg-main" id="dgm"><div class="adm-empty">${esc(auT('Choose a session to see what happened in it.'))}</div></div>
+  </div>`;
+}
+function dgOpen() {
+  dgShell();
+  dgLoad();
+  dgAcc();
+}
+async function dgAcc() {
+  const box = $('#dga');
+  if (!box) return;
+  if (!DGV.acc) box.innerHTML = '<i class="sk sk-td"></i><i class="sk sk-td"></i>';
+  try { const r = await adRpc('admin_diag_accounts'); DGV.acc = Array.isArray(r) ? r : []; DGV.accErr = null; }
+  catch (e) { if (!DGV.acc) DGV.accErr = sbMissing(e) ? 'miss' : 'net'; }
+  dgAccDraw();
+}
+function dgAccDraw() {
+  const box = $('#dga'), A = DGV.acc;
+  if (!box) return;
+  if (!A) { box.innerHTML = `<p class="ins-why">${esc(auT(DGV.accErr === 'miss' ? 'Run round17_platform.sql in the Supabase SQL editor to choose which accounts are recorded.' : 'Could not load. Check your connection and try again.'))}</p>`; return; }
+  adMorph(box, A.length ? A.map(a => `<div class="dg-ar" data-k="da:${esc(a.user_id)}"><div><b translate="no">${esc(a.username ? '@' + a.username : a.email || '')}</b><small>${a.note ? esc(a.note) + ' · ' : ''}${a.last_event ? esc(auT('last recorded {t}').replace('{t}', adAgo(a.last_event))) : esc(auT('nothing recorded yet'))}</small></div><button class="sw${a.diag ? ' on' : ''}" type="button" role="switch" aria-checked="${!!a.diag}" data-dgacc="${esc(a.user_id)}" aria-label="${esc(auT('Record {u}').replace('{u}', a.username || a.email || ''))}"></button></div>${DGV.ask === a.user_id ? `<div class="sfg-cf dg-ask" data-k="dq:${esc(a.user_id)}"><span>${esc(auT('Everything this account does on the site will be recorded: requests, messages sent over the network, key presses in games and errors. Only switch it on for an account you test with.'))}</span><div class="sfg-b"><button class="btn2" type="button" data-dgask="no">${esc(auT('Cancel'))}</button><button class="btn2 pri" type="button" data-dgask="yes">${esc(auT('Start recording'))}</button></div></div>` : ''}`).join('') : `<p class="ins-why">${esc(auT('No account created in the dashboard yet. Create one with the + button in the Users tab.'))}</p>`);
+}
+async function dgAccSet(uid, on) {
+  const a = (DGV.acc || []).find(x => x.user_id === uid);
+  if (!a) return;
+  if (on && DGV.ask !== uid) { DGV.ask = uid; dgAccDraw(); return; }
+  DGV.ask = null;
+  const was = a.diag;
+  a.diag = on; dgAccDraw();
+  try { await adRpc('admin_set_diag', { p_uid: uid, p_on: on }); toast(auT(on ? 'Recording switched on' : 'Recording switched off')); rtSend(uid, { t: 'status' }); }
+  catch (e) { a.diag = was; dgAccDraw(); toast(auT(adErr(e))); }
+}
+async function dgLoad(quiet) {
+  const box = $('#dgl');
+  if (!box || DGV.lb) return;
+  DGV.lb = true;
+  if (!DGV.list) box.innerHTML = '<i class="sk sk-msg"></i>'.repeat(3);
+  try {
+    const r = await adRpc('admin_diag_sessions', { p_uid: null, p_limit: 200 });
+    DGV.list = Array.isArray(r) ? r : []; DGV.at = Date.now();
+    dgList();
+  } catch (e) { if (!DGV.list) box.innerHTML = `<div class="adm-empty">${esc(auT(sbMissing(e) ? 'Run round17_platform.sql in the Supabase SQL editor to see recorded sessions.' : 'Could not load. Check your connection and try again.'))}</div>`; }
+  DGV.lb = false;
+}
+function dgList() {
+  const box = $('#dgl'), L = DGV.list || [];
+  if (!box) return;
+  const h = L.length ? L.map(s => { const dur = (Date.parse(s.last_at) - Date.parse(s.first_at)) / 1000, on = DGV.cur && DGV.cur.sid === s.sid; return `<button type="button" class="dg-s${on ? ' on' : ''}" role="listitem" data-dgsid="${esc(s.sid)}" data-k="ds:${esc(s.sid)}" aria-current="${on}"><b translate="no">${esc(s.username ? '@' + s.username : String(s.user_id).slice(0, 8))}</b><span data-rt="${esc(s.last_at)}">${esc(adAgo(s.last_at))}</span><small>${esc(adDate(s.first_at, 1))} · ${esc(insDur(dur))} · ${esc(auT('{n} events').replace('{n}', stN(s.events)))}</small><small>${+s.errors ? `<i class="adm-pill bad">${esc(auT('{n} errors').replace('{n}', stN(s.errors)))}</i>` : ''}${+s.failed_requests ? `<i class="adm-pill warn">${esc(auT('{n} failed requests').replace('{n}', stN(s.failed_requests)))}</i>` : ''}${(s.games || []).slice(0, 3).map(g => `<i class="adm-pill">${esc(adGame(g))}</i>`).join('')}</small></button>`; }).join('') : `<div class="adm-empty">${esc(auT('Nothing recorded yet. Sessions appear here when a recorded account uses the site.'))}</div>`;
+  if (box.querySelector('.dg-s') && L.length) adMorph(box, h); else box.innerHTML = h;
+}
+function dgHead() {
+  const s = DGV.cur, I = DGV.info || {}, K = I.kinds || {}, B = I.boot || {};
+  const n = g => g[2].reduce((t, k) => t + (+K[k] || 0), 0);
+  return `<div class="dg-h"><div class="dg-ht"><button class="back dg-back" type="button" data-dgback>${AD_ICO.back}${esc(auT('All sessions'))}</button><b translate="no">${esc(s.username ? '@' + s.username : String(s.user_id).slice(0, 8))} · ${esc(s.sid)}</b><small>${esc(adDate(s.first_at, 1))} → ${esc(adClock(Date.parse(s.last_at)))} · ${esc(auT('{n} events').replace('{n}', stN(I.n != null ? I.n : s.events)))}</small></div><div class="dg-act"><button class="btn2" type="button" data-dgdl${DGV.dl ? ' disabled' : ''}>${esc(auT(DGV.dl ? 'Preparing…' : 'Download JSON'))}</button><button class="btn2 danger" type="button" data-dgclear="one">${esc(auT('Delete session'))}</button></div></div>
+   ${B.ua ? `<p class="dg-ua adm-mut" translate="no">${esc(dgCut(B.u || '', 80))} · ${esc(dgCut(B.ua, 160))}${B.vp ? ' · ' + esc(B.vp.join('×')) : ''}${B.net && B.net.type ? ' · ' + esc(B.net.type) : ''}</p>` : ''}
+   <div class="dg-f"><label class="search dg-q"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="dgq" type="search" placeholder="${esc(auT('Search in this session'))}" aria-label="${esc(auT('Search in this session'))}" autocomplete="off" spellcheck="false" maxlength="80" value="${esc(DGV.q)}"></label>
+    <div class="dg-chips" role="group" aria-label="${esc(auT('Kinds of events'))}"><button type="button" class="chip dg-c bad" data-dgbad aria-pressed="${DGV.bad}">${esc(auT('Problems only'))}<i>${stN(I.bad)}</i></button>${DG_K.map(g => `<button type="button" class="chip dg-c" data-dgkind="${g[0]}" aria-pressed="${DGV.kinds.has(g[0])}"${n(g) ? '' : ' disabled'}>${esc(auT(g[1]))}<i>${stN(n(g))}</i></button>`).join('')}</div></div>`;
+}
+function dgRow(r, t0) {
+  const [q, t, k, d] = r, bad = dgBad(k, d), open = DGV.open.has(q), off = (t - t0) / 1000;
+  return `<div class="dg-r k-${esc(k)}${bad ? ' bad' : ''}${open ? ' open' : ''}" data-k="dr:${q}"><button type="button" class="dg-rb" data-dgrow="${q}" aria-expanded="${open}"><time title="${esc(adClock(t))}">${off < 0 ? '0.0' : off.toFixed(1)} s</time><i class="dg-k">${esc(k)}${k === 'log' && d && d.l ? ' ' + esc(d.l) : ''}</i><span translate="no">${esc(dgSum(k, d))}</span></button>${open ? `<pre class="dg-j" translate="no" tabindex="0">${esc(JSON.stringify(d, null, 1))}</pre>` : ''}</div>`;
+}
+function dgBody() {
+  const R = DGV.rows, t0 = DGV.info && DGV.info.first ? Date.parse(DGV.info.first) : R.length ? R[0][1] : 0;
+  if (DGV.busy && !R.length) return '<div class="dg-rows" id="dgr"><i class="sk sk-td"></i><i class="sk sk-td"></i><i class="sk sk-td"></i><i class="sk sk-td"></i></div>';
+  const a = DGV.before + 1, b = DGV.before + R.length;
+  const nav = `<div class="dg-nav"><span>${DGV.total ? esc(auT('{a}–{b} of {n}').replace('{a}', stN(a)).replace('{b}', stN(b)).replace('{n}', stN(DGV.total))) : ''}</span><div><button class="btn2" type="button" data-dgpage="first"${DGV.before ? '' : ' disabled'}>${esc(auT('First'))}</button><button class="btn2" type="button" data-dgpage="prev"${DGV.before ? '' : ' disabled'}>${esc(auT('Earlier'))}</button><button class="btn2" type="button" data-dgpage="next"${DGV.after ? '' : ' disabled'}>${esc(auT('Later'))}</button><button class="btn2" type="button" data-dgpage="last"${DGV.after ? '' : ' disabled'}>${esc(auT('Last'))}</button></div></div>`;
+  return nav + `<div class="dg-rows${DGV.busy ? ' busy' : ''}" id="dgr">${R.length ? R.map(r => dgRow(r, t0)).join('') : `<div class="adm-empty">${esc(auT(DGV.err ? 'Could not load. Check your connection and try again.' : DGV.q || DGV.bad || DGV.kinds.size ? 'No events match.' : 'This session has no events.'))}</div>`}</div>` + (R.length > 30 ? nav : '');
+}
+function dgDraw(top) {
+  const m = $('#dgm');
+  if (!m || !DGV.cur) return;
+  const keep = document.activeElement && document.activeElement.id === 'dgq' ? document.activeElement.selectionStart : null, h = dgHead() + `<div id="dgb">${dgBody()}</div>`;
+  if (m.querySelector('.dg-h')) adMorph(m, h); else m.innerHTML = h;
+  if (keep != null) { const q = $('#dgq'); if (q && document.activeElement !== q) { q.focus({ preventScroll: true }); try { q.setSelectionRange(keep, keep); } catch (e) {} } }
+  if (top) { const r = $('#dgr'); if (r) r.scrollTop = 0; }
+}
+function dgKinds() {
+  if (!DGV.kinds.size) return null;
+  return DG_K.filter(g => DGV.kinds.has(g[0])).reduce((a, g) => a.concat(g[2]), []);
+}
+async function dgPage(how) {
+  const s = DGV.cur;
+  if (!s) return;
+  const my = ++DGV.seq, R = DGV.rows, lo = R.length ? R[0][0] : 0, hi = R.length ? R[R.length - 1][0] : 0;
+  const p = { p_uid: s.user_id, p_sid: s.sid, p_after: 0, p_before: null, p_limit: DG_N, p_kinds: dgKinds(), p_q: DGV.q.trim() || null, p_bad: DGV.bad };
+  if (how === 'next') p.p_after = hi; else if (how === 'prev') p.p_before = lo; else if (how === 'last') p.p_before = 2147483647;
+  DGV.busy = true; DGV.err = false;
+  dgDraw();
+  try {
+    const r = await adRpc('admin_diag_page', p);
+    if (my !== DGV.seq || DGV.cur !== s) return;
+    DGV.rows = Array.isArray(r.rows) ? r.rows : []; DGV.total = +r.total || 0; DGV.before = +r.before || 0; DGV.after = +r.after || 0;
+  } catch (e) { if (my !== DGV.seq) return; DGV.err = true; DGV.miss = sbMissing(e); DGV.rows = []; DGV.total = 0; DGV.before = DGV.after = 0; }
+  DGV.busy = false;
+  dgDraw(true);
+  if (DGV.miss) { const b = $('#dgb'); if (b) b.innerHTML = `<div class="adm-empty">${esc(auT('Run round19_analytics.sql in the Supabase SQL editor to see this part.'))}</div>`; }
+}
+async function dgPick(sid) {
+  const s = (DGV.list || []).find(x => x.sid === sid);
+  if (!s) return;
+  DGV.cur = s; DGV.info = null; DGV.rows = []; DGV.total = 0; DGV.before = DGV.after = 0; DGV.kinds = new Set(); DGV.bad = false; DGV.q = ''; DGV.open = new Set();
+  dgList();
+  $('#addiag .dg').classList.add('in');
+  $('#dgm').innerHTML = '';
+  dgPage('first');
+  try { const i = await adRpc('admin_diag_info', { p_uid: s.user_id, p_sid: s.sid }); if (DGV.cur === s) { DGV.info = i; dgDraw(); } } catch (e) {}
+}
+function dgBack() {
+  DGV.cur = null; DGV.seq++;
+  const d = $('#addiag .dg'); if (d) d.classList.remove('in');
+  $('#dgm').innerHTML = `<div class="adm-empty">${esc(auT('Choose a session to see what happened in it.'))}</div>`;
+  dgList();
+}
+async function dgDownload() {
+  const s = DGV.cur;
+  if (!s || DGV.dl) return;
+  DGV.dl = true; dgDraw();
+  const all = [];
+  try {
+    for (let after = 0, i = 0; i < 400; i++) {
+      const r = await adRpc('admin_diag_page', { p_uid: s.user_id, p_sid: s.sid, p_after: after, p_before: null, p_limit: 2000, p_kinds: null, p_q: null, p_bad: false });
+      const R = Array.isArray(r.rows) ? r.rows : [];
+      R.forEach(x => all.push({ q: x[0], t: x[1], k: x[2], d: x[3] }));
+      if (!R.length || !+r.after) break;
+      after = R[R.length - 1][0];
+    }
+    const u = URL.createObjectURL(new Blob([JSON.stringify({ sid: s.sid, user_id: s.user_id, username: s.username, first_at: s.first_at, last_at: s.last_at, events: all })], { type: 'application/json' })), a = document.createElement('a');
+    a.href = u; a.download = 'gameplay-diagnostics-' + s.sid + '.json';
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(u), 4000);
+  } catch (e) { toast(auT('Could not load. Check your connection and try again.')); }
+  DGV.dl = false;
+  if (DGV.cur === s) dgDraw();
+}
+async function dgClear(b, all) {
+  if (!adConfirm(b)) return;
+  b.disabled = true;
+  try {
+    const n = await adRpc('admin_diag_clear', { p_sid: all ? null : DGV.cur.sid });
+    toast(auT('{n} events deleted').replace('{n}', stN(n)));
+    DGV.list = null;
+    if (!all || DGV.cur) dgBack();
+    await dgLoad();
+    AL.list = [];
+  } catch (e) { toast(auT(adErr(e))); }
+  b.disabled = false;
+}
+function dgBoot() {
+  const tabs = $('#adtabs'), sec = document.createElement('section');
+  if (!tabs || $('#addiag')) return;
+  tabs.querySelector('i').insertAdjacentHTML('beforebegin', `<button type="button" role="tab" data-adtab="diag" aria-selected="false">${esc(auT('Diagnostics'))}</button>`);
+  sec.className = 'adm-sec'; sec.id = 'addiag'; sec.hidden = true;
+  tabs.parentNode.append(sec);
+  AD_TABS.push('diag');
+  AD_OPEN.diag = dgOpen;
+  adTabBar(tabs);
+  let qt = 0;
+  sec.addEventListener('click', e => {
+    const t = e.target, c = s => t.closest(s);
+    let b;
+    if ((b = c('[data-dgsid]'))) dgPick(b.dataset.dgsid);
+    else if (c('[data-dgback]')) dgBack();
+    else if ((b = c('[data-dgrow]'))) { const q = +b.dataset.dgrow; if (DGV.open.has(q)) DGV.open.delete(q); else DGV.open.add(q); dgDraw(); }
+    else if ((b = c('[data-dgkind]'))) { const k = b.dataset.dgkind; if (DGV.kinds.has(k)) DGV.kinds.delete(k); else DGV.kinds.add(k); dgPage('first'); }
+    else if (c('[data-dgbad]')) { DGV.bad = !DGV.bad; dgPage('first'); }
+    else if ((b = c('[data-dgpage]'))) dgPage(b.dataset.dgpage);
+    else if (c('[data-dgdl]')) dgDownload();
+    else if ((b = c('[data-dgclear]'))) dgClear(b, b.dataset.dgclear === 'all');
+    else if ((b = c('[data-dgacc]'))) dgAccSet(b.dataset.dgacc, b.getAttribute('aria-checked') !== 'true');
+    else if ((b = c('[data-dgask]'))) { const uid = DGV.ask; if (b.dataset.dgask === 'yes' && uid) dgAccSet(uid, true); else { DGV.ask = null; dgAccDraw(); } }
+  });
+  sec.addEventListener('input', e => { if (e.target.id !== 'dgq') return; DGV.q = e.target.value; clearTimeout(qt); qt = setTimeout(() => dgPage('first'), 350); });
+  setInterval(() => { if (view === 'admin' && AD.tab === 'diag' && lvWant() && Date.now() - DGV.at > 15000) { dgLoad(true); } }, 5000);
 }
 
 function tkBox(el, mode) {
@@ -1486,7 +2110,7 @@ function adBoot() {
     if (s) { const k = s.dataset.adsort; AD.sort = AD.sort[0] === k ? [k, -AD.sort[1]] : [k, /_at$|last_seen|friends|email_confirmed|locked|role|has_password/.test(k) ? -1 : 1]; adDraw(); return; }
     const tb = t.closest('[data-adtab]');
     if (tb) { adTab(tb.dataset.adtab); return; }
-    if (t.closest('#adref')) { AD.lt = Date.now(); adLoad(); tkLoad(tkBox($('#tka'), 'admin')); if (AD.tab === 'stats') { if (INS.sub === 'ins') insLoad(true); else stLoad(true); } if (AD.tab === 'log') alLoad(false, true); if (AD.tab === 'site') sfLoad(true).then(() => { sfaDraw(); sfgLoad(); }); return; }
+    if (t.closest('#adref')) { AD.lt = Date.now(); adLoad(); tkLoad(tkBox($('#tka'), 'admin')); if (AD.tab === 'stats') stOpen(true); if (AD.tab === 'log') alLoad(false, true); if (AD.tab === 'site') sfLoad(true).then(() => { sfaDraw(); sfgLoad(); }); if (AD.tab === 'diag') { dgLoad(); dgAcc(); } if (LV.fail || LV.miss) { LV.miss = false; LV.fail = 0; clearTimeout(LV.t); LV.t = 0; lvPoll(); } return; }
     if (t.closest('[data-almore]')) { alLoad(true); return; }
     if (t.closest('[data-abr], [data-abreset], [data-abh], [data-abt]')) { abAct(t); return; }
     const alu = t.closest('[data-alu]');
@@ -1523,8 +2147,10 @@ function adBoot() {
     const tr = e.target.closest && e.target.closest('#adt tbody tr[data-uid]');
     if (tr && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); tr.click(); }
   });
-  $('#adtabs').addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); const T = AD_TABS, i = T.indexOf(AD.tab); adTab(T[(i + (e.key === 'ArrowRight' ? 1 : T.length - 1)) % T.length]); $('#adtabs [aria-selected="true"]').focus(); } });
+  $('#adtabs').addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); const T = [...$('#adtabs').querySelectorAll('[data-adtab]')].map(b => b.dataset.adtab), i = T.indexOf(AD.tab); adTab(T[(i + (e.key === 'ArrowRight' ? 1 : T.length - 1)) % T.length]); $('#adtabs [aria-selected="true"]').focus(); } });
   stBoot();
+  dgBoot();
+  setInterval(adTick, 1000);
   $('#adq').addEventListener('input', e => { AD.q = e.target.value; adDraw(); });
   $('#adsite').addEventListener('input', e => { if (e.target.id !== 'sfaq') return; const q = e.target.value.trim().toLowerCase(); document.querySelectorAll('#sfag [data-sfg]').forEach(c => { c.hidden = !!q && !c.textContent.toLowerCase().includes(q) && !c.dataset.sfg.includes(q); }); });
   $('#adf').addEventListener('change', e => { AD.f = e.target.value; adDraw(); });
@@ -1542,10 +2168,10 @@ function adBoot() {
     document.querySelectorAll('.tk').forEach(el => { if (!el._tk || el.closest('[hidden]')) return; if (el._tk.cur) tkThread(el); if (++el._tk.n % 5 === 0) tkLoad(el); });
   }, 6000);
   setInterval(() => { if (SB.user && document.visibilityState !== 'hidden') adCheck(); }, 180000);
-  document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible' && Date.now() - AD.at > 60000) adCheck(); if (document.visibilityState === 'visible' && Date.now() - AD.lt > 10000) adLive(true); });
+  document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible' && Date.now() - AD.at > 60000) adCheck(); if (document.visibilityState === 'visible') { lvKick(); if (Date.now() - AD.lt > 10000) adLive(true); adTick(); } else lvBar(); });
   setInterval(() => {
     if (view !== 'admin' || !AD.users) return;
-    const miss = AD.miss || (AD.miss = new Set()), nw = Object.keys(RT.pres).filter(id => !miss.has(id) && !AD.users.some(u => u.id === id));
+    const miss = AD.miss || (AD.miss = new Set()), nw = adOnIds().filter(id => !miss.has(id) && !AD.users.some(u => u.id === id));
     if (nw.length && Date.now() - AD.lt > 8000) { nw.forEach(id => miss.add(id)); adLive(true); }
   }, 4000);
 }
