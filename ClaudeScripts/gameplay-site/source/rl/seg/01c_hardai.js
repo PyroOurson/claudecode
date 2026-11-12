@@ -416,12 +416,18 @@
     if (W.state !== 'play' || !H.ok) { X.plan = HXIDLE; return; }
     const o = hxAt(H, W.tick), bx = P[o], by = P[o + 1], fs = vdot(c.v, c.f), ownY = -sg * CFG.Y;
     hxEtas(W, H);
-    let tOpp = 9, tMate = 9, iMate = -1, iOpp = -1, last = true;
+    let tOpp = 9, tMate = 99, iMate = -1, iOpp = -1, last = true, rank = 0;
+    const cost = i => { const ob = H.obs[i], ah = (ob.p.y - by) * sg; return ob.eta + (ah > 0 ? 0.3 + ah / 2500 : 0) + (ob.demo ? 5 : 0); }, cMe = cost(me) - (X.first ? 0.35 : 0);
     for (let i = 0; i < H.n; i++) {
       if (i === me) continue;
       const e = H.obs[i].eta;
       if (W.cars[i].team !== c.team) { if (e < tOpp) { tOpp = e; iOpp = i; } }
-      else { if (e < tMate) { tMate = e; iMate = i; } if (!H.obs[i].demo && (H.obs[i].p.y - c.p.y) * sg < 0) last = false; }
+      else {
+        const ci = cost(i);
+        if (ci < tMate) { tMate = ci; iMate = i; }
+        if (ci < cMe || (ci === cMe && i < me)) rank++;
+        if (!H.obs[i].demo && (H.obs[i].p.y - c.p.y) * sg < 0) last = false;
+      }
     }
     const threat = H.goalK >= 0 && H.goalTeam === c.team ? (H.goalK - W.tick) * H.dt : 99;
     const mode = W.kickoff ? 'kick' : threat < 5 || by * sg < -CFG.Y * 0.35 ? 'clear' : 'shot';
@@ -432,12 +438,12 @@
     X.tMe = tMe; X.tOpp = tOpp;
     let go = false, why = '';
     if (W.kickoff) { go = W.kicker[c.team] === c; why = 'kick'; }
-    else if (tMate < tMe - (X.first ? 0.3 : 0) && !(threat < 4 && tMe < threat)) why = 'mate';
+    else if (rank > 0 && !(threat < 4 && tMe < threat)) why = 'mate';
     else if (!h.ok) why = 'none';
     else if (threat < 6) { go = tMe < threat + 0.1; why = 'save'; }
     else if (h.dy * sg < 0.15 || W.tick < X.ban) why = 'wrong';
-    else { go = tMe < tOpp + (last ? 0.1 : 0.7) + (was ? 0.2 : 0) || (goalSide && tMe < tOpp + (danger ? 0.6 : by * sg < 0 ? 0.35 : 0)); why = go ? 'first' : 'late'; }
-    X.first = go || why === 'late' || why === 'wrong' || why === 'none' || why === 'save';
+    else { go = tMe < tOpp + (last ? 0.1 : 3) + (was ? 0.2 : 0) || (goalSide && tMe < tOpp + (danger ? 0.6 : by * sg < 0 ? 0.35 : 0)); why = go ? 'first' : 'late'; }
+    X.first = rank === 0;
     if (!W.kickoff && why !== 'mate' && c.onGround && c.u.z > 0.9 && c.nwW >= 3 && c.boost > 20 && (!go || h.t > 1) && W.tick > X.ban) {
       const a = hxFindAir(W, H, c, mode, HXF);
       if (a.ok && a.t < tMe - 0.35 && (a.t < tOpp + (last ? 0.05 : 0.5) || a.t < threat) && hxAirGo(W, H, c, X, a, mode)) return;
@@ -461,11 +467,11 @@
     }
     if (why === 'mate') {
       const m = W.cars[iMate];
-      let back = 2300, tx = bx * 0.5 - Math.sign(m.p.x - bx || 1) * 700, ty;
-      for (let i = 0; i < H.n; i++) if (i !== me && i !== iMate && W.cars[i].team === c.team && !H.obs[i].demo && (W.cars[i].p.y - c.p.y) * sg > 0) back = 4200;
-      ty = by - sg * back;
-      if (ty * sg < -CFG.Y + 700 || back > 3000) { ty = Math.min(ty * sg, -CFG.Y * 0.55) * sg; tx = clamp(bx * 0.25, -700, 700); }
-      hxGo(W, c, X, tx, ty, 2000, true, 'support', threat > 6);
+      let tx, ty, deep = H.n > 4;
+      for (let i = 0; i < H.n; i++) if (i !== me && i !== iMate && W.cars[i].team === c.team && !H.obs[i].demo && (H.obs[i].p.y - c.p.y) * sg < 0) deep = false;
+      if (!deep) { tx = bx * 0.45 - Math.sign(m.p.x - bx || 1) * 750; ty = by - sg * 2100; if (ty * sg < -CFG.Y + 900) { ty = ownY + sg * 900; tx = clamp(bx * 0.3, -800, 800) - Math.sign(bx || 1) * 500; } }
+      else { const k = clamp(gl * 0.3, 700, 2200); tx = clamp(-gx / gl * k, -900, 900); ty = ownY - gy / gl * k; }
+      hxGo(W, c, X, tx, ty, 2300, true, deep ? 'anchor' : 'support', threat > 6 && !deep);
       return;
     }
     if (threat < 6) { hxGo(W, c, X, clamp(P[hxAt(H, H.goalK) + 0] * 0.9, -GW + 120, GW - 120), ownY + sg * 120, 2300, true, 'line', false); return; }
@@ -492,7 +498,7 @@
         const o = hxAt(H, W.tick), ab = angleTo(c, H.P[o], H.P[o + 1]);
         if (Math.abs(ab) > 0.5) { r.throttle = fs < 350 ? 0.6 : 0; r.steer = clamp(-ab * 2, -1, 1); } else r.throttle = Math.abs(fs) > 40 ? clamp(-fs / 250, -1, 1) : 0;
       } else {
-        const ang = hxDrive(c, r, pl.tx, pl.ty, pl.park ? Math.min(pl.want, d * 1.6 + 300) : pl.want, pl.why === 'shadow' || pl.why === 'support' || pl.why === 'kback' ? d > 1800 && c.boost > 50 : pl.pad ? c.boost < 20 || pl.why !== 'shadow' : true);
+        const ang = hxDrive(c, r, pl.tx, pl.ty, pl.park ? Math.min(pl.want, d * 1.6 + 300) : pl.want, pl.why === 'anchor' ? d > 1400 : pl.why === 'shadow' || pl.why === 'support' || pl.why === 'kback' ? d > 1800 && c.boost > 50 : pl.pad ? c.boost < 20 || pl.why !== 'shadow' : true);
         if (Math.abs(ang) > 2.5 && d > 1100 && Math.abs(fs) < 500 && c.u.z > 0.95 && W.tick > X.hfT + 220) { X.hfT = W.tick; X.seq = { type: 'half', t0: W.tick }; }
       }
     }
