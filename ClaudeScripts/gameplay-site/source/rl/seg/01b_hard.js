@@ -3,7 +3,7 @@
   const HXB = makeBall(), HXR = { throttle: 0, steer: 0, pitch: 0, roll: 0, boost: false, jump: false, slide: false };
   function hxInit(W) {
     const n = W.cars.length;
-    const H = { tick: -9, t0: 0, ok: false, hid: false, dt: 1 / CFG.hz, P: new Float64Array(HXN * 9), bh: new Float64Array(HXRING * 9), ch: new Float64Array(HXRING * n * 10), n, obs: [], pads: new Uint8Array(W.pads.length), goalK: -1, goalTeam: -1, gen: 0, was: new Uint8Array(n), busy: 0 };
+    const H = { tick: -9, t0: 0, ok: false, hid: false, dt: 1 / CFG.hz, P: new Float64Array(HXN * 9), bh: new Float64Array(HXRING * 9), ch: new Float64Array(HXRING * n * 10), n, obs: [], pads: new Uint8Array(W.pads.length), goalK: -1, goalTeam: -1, gen: 0, was: new Uint8Array(n), busy: 0, etaT: -99 };
     for (let i = 0; i < n; i++) H.obs.push({ p: v3(), v: v3(), f: v3(1, 0, 0), air: false, demo: false, boost: CFG.kickBoost, eta: 9 });
     return (W.hx = H);
   }
