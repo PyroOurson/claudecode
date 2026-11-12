@@ -146,9 +146,6 @@
 .chat.so-drop .so-dropn{display:grid}
 .ach-file{display:inline-flex;align-items:center;gap:6px;max-width:100%}
 .ach-file svg{width:15px;height:15px;stroke:var(--muted);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
-#adtabs{grid-template-columns:repeat(6,minmax(0,1fr));width:min(760px,100%)}
-#adtabs i{width:calc((100% - 8px) / 6)}
-#adtabs[data-m="ideas"] i{transform:translateX(500%)}
 .ida{display:flex;flex-direction:column;min-width:0}
 .ida-tools select{height:46px;border-radius:14px;padding:0 12px;font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);max-width:100%}
 .ida-grid{display:grid;grid-template-columns:minmax(260px,380px) 1fr;gap:12px;align-items:start;min-width:0}
@@ -209,7 +206,6 @@
 .ida-main{padding:12px}
 #idmodal{padding:0;place-items:end stretch}
 #idmodal .mc{width:100%;max-height:calc(100dvh - max(12px,env(safe-area-inset-top,0px)));border-radius:22px 22px 0 0;border-bottom:0;padding-bottom:env(safe-area-inset-bottom,0px)}}
-@media (max-width:560px){#adtabs{width:100%}}
 @media (max-width:380px){#top #ibtn{display:none}}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .id-ok,:root:not([data-theme="light"]) .fx-i.done small{color:#4fd6a2}}
 :root[data-theme="dark"] .id-ok,:root[data-theme="dark"] .fx-i.done small{color:#4fd6a2}
