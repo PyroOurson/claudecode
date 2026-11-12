@@ -9,7 +9,7 @@ Last updated: see the git log of this file.
 ## How things were tested
 
 - Staging backend: a local Supabase stack (Postgres, accounts, live updates, storage) with the full `schema.sql` including rounds 16 to 19. Staging build: `t/stage.py`. Local server with the hosting headers: `t/serve.js`.
-- Browser tests in `source/t/tests/`, all passing on the final merged build: `load_sequence.js` (4 scenarios), `gate_locked.js` (4), `party.js` (12 scenarios, two browsers), `fixes.js` (10 scenarios), `dm.js` (direct messages, two browsers), `announce.js`, `legal_pages.js`, and `smoke_all.js` (every game in the catalogue opened and started: 168 of 168 without errors).
+- Browser tests in `source/t/tests/`, all passing on the final merged build: `load_sequence.js` (4 scenarios), `gate_locked.js` (4), `party.js` (12 scenarios, two browsers), `fixes.js` (13 scenarios), `dm.js` (direct messages, two browsers), `announce.js`, `legal_pages.js`, and `smoke_all.js` (every game in the catalogue opened and started: 168 of 168 without errors).
 - Test accounts on staging: `gp_tester`, `gp_tester2` (diagnostics on), ordinary users and an owner.
 - Production: read-only. The live page was opened anonymously to observe the load sequence; nothing was written.
 - The test browser renders without a graphics card. Two things followed from that and are worth knowing: the site's own one-time graphics probe froze pages for minutes there (fixed, see bug 10), and screenshots of 3D games could not be judged for smoothness.
@@ -126,16 +126,16 @@ Status of each. "Verified" means a browser test on staging reproduces the scenar
 | 15 | A favourites sync could undo a click made a moment earlier | Fixed, not exercised |
 | 16 | Pictures in messages broke after an hour, and on filtered networks | Fixed, not exercised |
 | 17 | Long offline play can lose playtime (server caps one batch at about an hour) | Not fixed: needs a matching change in the stats function; low impact |
-| 18 | "What's new" could open over a running game and Esc did not close it | Fixed, not exercised |
+| 18 | "What's new" could open over a running game and Esc did not close it | Verified (S12) |
 | 19 | The party "door" channel accepts any answer | Partly: flooding is capped; authenticating the host's key is in the security decisions |
 | 20 | Diagnostics could record the password typed for a username login | Fixed (wider redaction, recorder switched off on sign-out) |
-| 21 | One failed profile request left the session without a profile | Fixed, not exercised |
+| 21 | One failed profile request left the session without a profile | Verified (S13) |
 | 22 | The chat dock did not reopen after a reload | Verified (S9) |
 | 23 | The public-parties channel scheduled two retries after a close | Fixed, not exercised |
 | 24 | "Days played" capped at 60, date off by one across clock changes, export said "downloaded" when the account part failed | Fixed, not exercised |
 | 25 | The site-password page locks for good after five mistakes | Not changed: loosening it needs the owner's go-ahead |
 | 26 | Typing and read nudges can be spoofed | Owner decision (private realtime channels), with the other security items |
-| 27 | Arrow keys and Space were blocked on drop-downs inside the lobby | Fixed, not exercised |
+| 27 | Arrow keys and Space were blocked on drop-downs inside the lobby | Verified (S11) |
 
 ## Points for a lawyer
 

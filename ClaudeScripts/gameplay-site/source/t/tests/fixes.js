@@ -250,6 +250,46 @@ async function scenario(name, fn) {
     must(p1 === p0 + 1, 'the play was counted ' + (p1 - p0) + ' times on the server');
     must(theme === 'dark', 'the theme chosen in the other tab was undone (theme is ' + theme + ')');
   });
+  await scenario('S11 the party size list in the lobby can be changed with the keyboard', async b => {
+    const v = await player(b, 'cat');
+    await v.toParty('last-card'); await v.click('gohost'); await v.click('mkpriv'); await v.waitLobby(1);
+    const sel = '.g-lobby select[data-n="sizesel"]';
+    await v.page.waitForSelector(sel, { timeout: 30000 });
+    const v0 = await v.page.evaluate(q => document.querySelector(q).value, sel);
+    await v.page.focus(sel);
+    await v.page.keyboard.press('ArrowDown');
+    await sleep(700);
+    let v1 = await v.page.evaluate(q => document.querySelector(q).value, sel);
+    if (v1 === v0) { await v.page.focus(sel); await v.page.keyboard.press('ArrowUp'); await sleep(700); v1 = await v.page.evaluate(q => document.querySelector(q).value, sel); }
+    must(v1 !== v0, 'arrow keys did not change the party size (still ' + v0 + ')');
+    return 'size ' + v0 + ' -> ' + v1;
+  });
+  await scenario('S12 "What\'s new" waits while a game is open and Esc closes it', async b => {
+    const un = sql("select p.username from public.profiles p join auth.users u on u.id = p.id where u.email = '" + USERS[PA][0] + "'");
+    sql("update public.profiles set seen_version = 0 where username = '" + un + "'");
+    const v = await player(b, PA);
+    await v.page.evaluate(() => { localStorage.setItem('gameplay:seen', '0'); const s = JSON.parse(localStorage.getItem('gameplay:v1') || '{}'); s.since = Date.now() - 864e5; localStorage.setItem('gameplay:v1', JSON.stringify(s)); });
+    await sleep(2500);
+    sql("update public.profiles set seen_version = 0 where username = '" + un + "'");
+    await reload(v, GID);
+    await v.page.waitForSelector('#frame .g-root', { timeout: 120000 });
+    await sleep(11000);
+    must(await v.page.evaluate(() => { const c = document.querySelector('#clp'); return !c || c.hidden; }), '"What\'s new" opened over the running game');
+    await v.page.evaluate(() => Ameplay.debug.close());
+    const shown = await v.page.waitForFunction(() => { const c = document.querySelector('#clp'); return !!c && !c.hidden; }, null, { timeout: 20000 }).then(() => true, () => false);
+    must(shown, '"What\'s new" never appeared after leaving the game');
+    await v.page.keyboard.press('Escape');
+    await sleep(800);
+    must(await v.page.evaluate(() => document.querySelector('#clp').hidden), 'Esc did not close "What\'s new"');
+  });
+  await scenario('S13 a failed profile request is retried instead of leaving the session without a profile', async b => {
+    let n = 0;
+    const v = await player(b, 'cat', { setup: async x => { await x.ctx.route(/rest\/v1\/profiles\?select=/, r => { if (r.request().method() === 'GET' && n++ === 0) return r.abort(); return r.continue(); }); } });
+    const un = await until(() => v.page.evaluate(() => Ameplay.account.username), 25000, 500);
+    must(n >= 1, 'the profile request was never intercepted');
+    must(un, 'the profile never loaded after the first request failed');
+    return 'profile loaded on retry: @' + un;
+  });
   const bad = results.filter(r => r[1]);
   console.log(bad.length ? bad.length + ' of ' + results.length + ' failing' : 'all ' + results.length + ' passing');
   process.exit(bad.length ? 1 : 0);
