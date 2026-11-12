@@ -53,7 +53,7 @@
       capPR();
 
       const wrap = document.createElement('div');
-      wrap.className = 'ss-stage';
+      wrap.className = portrait ? 'ss-stage port' : 'ss-stage';
       wrap.style.width = v.canvas.style.width;
       wrap.style.aspectRatio = v.canvas.style.aspectRatio;
       v.canvas.style.width = '100%';
@@ -538,7 +538,7 @@
         revive(W, R);
         for (const o of W.obs) if (o.done) dropMesh(o);
         acc = 0; V.a = 1;
-        state = 'run'; big('GO!');
+        pausedFrom = 'run'; state = 'count'; countT = 0; countN = 3; big('3'); au.play('tick');
       }
       function bank() {
         if (banked) return false;
@@ -796,13 +796,13 @@
         const now = performance.now(), dx = e.clientX - p.x, dy = e.clientY - p.y;
         if (Math.max(Math.abs(dx), Math.abs(dy)) >= swipeTh() * 0.6 && now - p.t < 350) { input(swipeDir(dx, dy)); return; }
         if (now - p.t < 300) {
-          if (now - lastTap < 330 && Math.hypot(e.clientX - lastTapX, e.clientY - lastTapY) < 60) { useBoard(); lastTap = 0; }
+          if (now - lastTap < 380 && Math.hypot(e.clientX - lastTapX, e.clientY - lastTapY) < 70) { useBoard(); lastTap = 0; }
           else { lastTap = now; lastTapX = e.clientX; lastTapY = e.clientY; }
         }
       };
       api.on(wrap, 'pointerup', pend);
       api.on(wrap, 'pointercancel', pend);
-      api.on(document, 'visibilitychange', () => { if (document.hidden) pause(); });
+      api.on(document, 'visibilitychange', () => { if (document.hidden) pause(); else draw = true; });
       api.on(window, 'blur', () => pause());
 
       const HINTS = COARSE ? [['Swipe left or right', 'to switch lanes'], ['Swipe up to jump', 'swipe down to roll'], ['Double tap', 'to use a hoverboard']] : [['← → to switch lanes', 'or A / D'], ['↑ jump  ·  ↓ roll', 'roll in the air to drop fast'], ['Space: hoverboard', 'it saves you from one crash']];
@@ -987,6 +987,7 @@
       toHome();
       try { if (document.fonts && !document.fonts.check('40px "Lilita One"')) document.fonts.load('40px "Lilita One"').then(() => { if (api.alive && state === 'home' && document.fonts.check('40px "Lilita One"')) { buildCity(save.city); resetWorld(); } }).catch(() => {}); } catch (e) {}
       camHome(camP, camL);
+      try { renderer.compile(scene, cam); } catch (e) {}
 
       const ctx = { mult: 1 };
       function simulate(dt) {
@@ -1005,13 +1006,13 @@
         V.a = R.dead ? 1 : acc / CFG.STEP;
       }
 
-      let tsc = 1, tvirt = 0, lastW = 0, lastH = 0, lastAsp = 0, lastFov = 0;
+      let tsc = 1, tvirt = 0, lastW = 0, lastH = 0, lastAsp = 0, lastFov = 0, idleT = 0;
       function frame(dt) {
         dt *= tsc;
         const cw = renderer.domElement.width, chh = renderer.domElement.height;
         if (cw !== lastW || chh !== lastH) { lastW = cw; lastH = chh; draw = true; }
         const frozen = state === 'pause' || panelOn || (state === 'over' && rollT >= 0.9 && R.deadT > 2.6);
-        if (frozen) { au.tick(); fxTick(dt); if (!draw) return; dt = 0; }
+        if (frozen) { au.tick(); fxTick(dt); idleT += dt; if (idleT > 1) draw = true; if (!draw) return; idleT = 0; dt = 0; }
         draw = false;
         tvirt += dt;
         const t = tvirt;
@@ -1079,13 +1080,15 @@
         au.tick();
         renderer.render(scene, cam);
       }
-      api.loop(frame);
+      let hold = false;
+      api.loop(dt => { if (!hold) frame(dt); });
 
       wrap._ss = {
         get W() { return W; }, get R() { return R; }, get V() { return V; }, get state() { return state; }, save,
-        info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, pr: renderer.getPixelRatio(), geos: renderer.info.memory.geometries, tex: renderer.info.memory.textures, objs: scene.children.length, pool: pool.length }),
-        act: a => input(a), set noBlink(v) { noBlink = v; }, set ts(v) { tsc = v; }, set runT(v) { runT = v; }, set pr(v) { prCap = v; renderer.setPixelRatio(v); draw = true; }, clearChunks: () => clearChunks(),
-        give(k) { if (state === 'run') onItem({ k, x: R.x, y: R.y, s: R.s }); }, city: d => city(d), frame,
+        info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, pr: renderer.getPixelRatio(), geos: renderer.info.memory.geometries, tex: renderer.info.memory.textures, objs: scene.children.length, pool: pool.length, frame: renderer.info.render.frame }),
+        act: a => input(a), set noBlink(v) { noBlink = v; }, set ts(v) { tsc = v; }, set runT(v) { runT = v; }, set hold(v) { hold = v; }, set pr(v) { prCap = v; renderer.setPixelRatio(v); draw = true; }, clearChunks: () => clearChunks(),
+        give(k) { if (state === 'run') onItem({ k, x: R.x, y: R.y, s: R.s }); },
+        pat(k, d) { for (const o of W.obs) o.done = true; for (const c of W.coins) c.got = true; W.free = [-1e9, -1e9, -1e9]; const v = R.speed * 1.03, end = PAT[k](W, R.s + 26, v, d || 0, Math.max(13, v * (0.95 - 0.2 * (d || 0)))); W.coins.sort((a, b) => a.s - b.s); W.genS = Math.max(end, R.s) + 30; return end; }, city: d => city(d), frame,
         bench(n, dt) {
           const gl = renderer.getContext(), keys = ['drawArrays', 'drawElements', 'drawArraysInstanced', 'drawElementsInstanced'], old = {};
           for (const k of keys) { old[k] = gl[k]; gl[k] = () => {}; }

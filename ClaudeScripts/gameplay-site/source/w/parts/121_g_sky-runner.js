@@ -817,7 +817,10 @@
       return fin(b);
     }
     out.car = { front: [], lit: [], mid: [] };
-    for (let i = 0; i < trainsOf(city).length; i++) { out.car.front.push(car(i, 'front')); out.car.lit.push(car(i, 'lit')); out.car.mid.push(car(i, 'mid')); }
+    for (let i = 0; i < trainsOf(city).length; i++) {
+      const f = car(i, 'front'), same = !!trainsOf(city)[i][3];
+      out.car.front.push(f); out.car.lit.push(same ? f : car(i, 'lit')); out.car.mid.push(same ? f : car(i, 'mid'));
+    }
 
     {
       const b = GB(), L = C.RAMP, w = 2.2, top = C.ROOF + 0.02, r = uv(R.ramp), sd = uv(R.rampSide);
@@ -2245,8 +2248,20 @@ ${SC} .ss-btn{background:linear-gradient(#6f86a6,#3d5070);border-color:#fff}
 ${SC} .ss-btn.g{background:linear-gradient(#7be04a,#2e9a1a)}
 ${SC} .ss-dim{background:rgba(8,18,44,.45)}
 @container (max-width: 640px){${SC} .ss-hud,${SC} .ss-scr{font-size:clamp(10px,3.1cqw,18px)}}
-@container (max-width: 640px) and (max-aspect-ratio: 1/1){${SC} .ss-logo{font-size:3em}${SC} .ss-mid{flex-direction:column;gap:1em;align-items:center}${SC} .ss-logo{transform:rotate(-4deg);transform-origin:center;text-align:center}}
-@container (max-width: 640px) and (min-aspect-ratio: 1/1){${SC} .ss-logo{font-size:2.6em}}
+${SC} .ss-stage.port .ss-hud,${SC} .ss-stage.port .ss-scr{font-size:clamp(11px,3.55cqw,20px)}
+${SC} .ss-stage.port .ss-mid{flex-direction:column;gap:.7em;align-items:center;padding-top:.7em}
+${SC} .ss-stage.port .ss-logo{font-size:3em;transform:rotate(-4deg);transform-origin:center;text-align:center}
+${SC} .ss-stage.port .ss-tap{font-size:2.6em}
+${SC} .ss-stage.port .ss-bar{gap:.35em}
+${SC} .ss-stage.port .ss-chip{font-size:1.05em;padding:.28em .6em .28em .3em}
+${SC} .ss-stage.port .ss-gear{font-size:1.05em}
+${SC} .ss-stage.port .ss-menu{display:grid;grid-template-columns:1fr 1fr;gap:.6em;width:94%}
+${SC} .ss-stage.port .ss-menu .ss-btn{min-width:0;font-size:1.15em}
+${SC} .ss-stage.port .ss-bot{gap:.7em}
+${SC} .ss-stage.port .ss-chars{grid-template-columns:repeat(2,1fr)}
+${SC} .ss-stage.port .ss-how{grid-template-columns:repeat(2,1fr)}
+${SC} .ss-stage.port .ss-seg button{padding:.4em .5em .3em}
+@container (max-width: 640px){${SC} .ss-stage:not(.port) .ss-logo{font-size:2.6em}}
 `;
   const ic = k => `<span class="ss-ic">${ICO[k]}</span>`;
 
@@ -2472,7 +2487,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       capPR();
 
       const wrap = document.createElement('div');
-      wrap.className = 'ss-stage';
+      wrap.className = portrait ? 'ss-stage port' : 'ss-stage';
       wrap.style.width = v.canvas.style.width;
       wrap.style.aspectRatio = v.canvas.style.aspectRatio;
       v.canvas.style.width = '100%';
@@ -2957,7 +2972,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         revive(W, R);
         for (const o of W.obs) if (o.done) dropMesh(o);
         acc = 0; V.a = 1;
-        state = 'run'; big('GO!');
+        pausedFrom = 'run'; state = 'count'; countT = 0; countN = 3; big('3'); au.play('tick');
       }
       function bank() {
         if (banked) return false;
@@ -3215,13 +3230,13 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         const now = performance.now(), dx = e.clientX - p.x, dy = e.clientY - p.y;
         if (Math.max(Math.abs(dx), Math.abs(dy)) >= swipeTh() * 0.6 && now - p.t < 350) { input(swipeDir(dx, dy)); return; }
         if (now - p.t < 300) {
-          if (now - lastTap < 330 && Math.hypot(e.clientX - lastTapX, e.clientY - lastTapY) < 60) { useBoard(); lastTap = 0; }
+          if (now - lastTap < 380 && Math.hypot(e.clientX - lastTapX, e.clientY - lastTapY) < 70) { useBoard(); lastTap = 0; }
           else { lastTap = now; lastTapX = e.clientX; lastTapY = e.clientY; }
         }
       };
       api.on(wrap, 'pointerup', pend);
       api.on(wrap, 'pointercancel', pend);
-      api.on(document, 'visibilitychange', () => { if (document.hidden) pause(); });
+      api.on(document, 'visibilitychange', () => { if (document.hidden) pause(); else draw = true; });
       api.on(window, 'blur', () => pause());
 
       const HINTS = COARSE ? [['Swipe left or right', 'to switch lanes'], ['Swipe up to jump', 'swipe down to roll'], ['Double tap', 'to use a hoverboard']] : [['← → to switch lanes', 'or A / D'], ['↑ jump  ·  ↓ roll', 'roll in the air to drop fast'], ['Space: hoverboard', 'it saves you from one crash']];
@@ -3406,6 +3421,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       toHome();
       try { if (document.fonts && !document.fonts.check('40px "Lilita One"')) document.fonts.load('40px "Lilita One"').then(() => { if (api.alive && state === 'home' && document.fonts.check('40px "Lilita One"')) { buildCity(save.city); resetWorld(); } }).catch(() => {}); } catch (e) {}
       camHome(camP, camL);
+      try { renderer.compile(scene, cam); } catch (e) {}
 
       const ctx = { mult: 1 };
       function simulate(dt) {
@@ -3424,13 +3440,13 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         V.a = R.dead ? 1 : acc / CFG.STEP;
       }
 
-      let tsc = 1, tvirt = 0, lastW = 0, lastH = 0, lastAsp = 0, lastFov = 0;
+      let tsc = 1, tvirt = 0, lastW = 0, lastH = 0, lastAsp = 0, lastFov = 0, idleT = 0;
       function frame(dt) {
         dt *= tsc;
         const cw = renderer.domElement.width, chh = renderer.domElement.height;
         if (cw !== lastW || chh !== lastH) { lastW = cw; lastH = chh; draw = true; }
         const frozen = state === 'pause' || panelOn || (state === 'over' && rollT >= 0.9 && R.deadT > 2.6);
-        if (frozen) { au.tick(); fxTick(dt); if (!draw) return; dt = 0; }
+        if (frozen) { au.tick(); fxTick(dt); idleT += dt; if (idleT > 1) draw = true; if (!draw) return; idleT = 0; dt = 0; }
         draw = false;
         tvirt += dt;
         const t = tvirt;
@@ -3498,13 +3514,15 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         au.tick();
         renderer.render(scene, cam);
       }
-      api.loop(frame);
+      let hold = false;
+      api.loop(dt => { if (!hold) frame(dt); });
 
       wrap._ss = {
         get W() { return W; }, get R() { return R; }, get V() { return V; }, get state() { return state; }, save,
-        info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, pr: renderer.getPixelRatio(), geos: renderer.info.memory.geometries, tex: renderer.info.memory.textures, objs: scene.children.length, pool: pool.length }),
-        act: a => input(a), set noBlink(v) { noBlink = v; }, set ts(v) { tsc = v; }, set runT(v) { runT = v; }, set pr(v) { prCap = v; renderer.setPixelRatio(v); draw = true; }, clearChunks: () => clearChunks(),
-        give(k) { if (state === 'run') onItem({ k, x: R.x, y: R.y, s: R.s }); }, city: d => city(d), frame,
+        info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, pr: renderer.getPixelRatio(), geos: renderer.info.memory.geometries, tex: renderer.info.memory.textures, objs: scene.children.length, pool: pool.length, frame: renderer.info.render.frame }),
+        act: a => input(a), set noBlink(v) { noBlink = v; }, set ts(v) { tsc = v; }, set runT(v) { runT = v; }, set hold(v) { hold = v; }, set pr(v) { prCap = v; renderer.setPixelRatio(v); draw = true; }, clearChunks: () => clearChunks(),
+        give(k) { if (state === 'run') onItem({ k, x: R.x, y: R.y, s: R.s }); },
+        pat(k, d) { for (const o of W.obs) o.done = true; for (const c of W.coins) c.got = true; W.free = [-1e9, -1e9, -1e9]; const v = R.speed * 1.03, end = PAT[k](W, R.s + 26, v, d || 0, Math.max(13, v * (0.95 - 0.2 * (d || 0)))); W.coins.sort((a, b) => a.s - b.s); W.genS = Math.max(end, R.s) + 30; return end; }, city: d => city(d), frame,
         bench(n, dt) {
           const gl = renderer.getContext(), keys = ['drawArrays', 'drawElements', 'drawArraysInstanced', 'drawElementsInstanced'], old = {};
           for (const k of keys) { old[k] = gl[k]; gl[k] = () => {}; }

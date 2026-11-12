@@ -212,8 +212,20 @@ ${SC} .ss-btn{background:linear-gradient(#6f86a6,#3d5070);border-color:#fff}
 ${SC} .ss-btn.g{background:linear-gradient(#7be04a,#2e9a1a)}
 ${SC} .ss-dim{background:rgba(8,18,44,.45)}
 @container (max-width: 640px){${SC} .ss-hud,${SC} .ss-scr{font-size:clamp(10px,3.1cqw,18px)}}
-@container (max-width: 640px) and (max-aspect-ratio: 1/1){${SC} .ss-logo{font-size:3em}${SC} .ss-mid{flex-direction:column;gap:1em;align-items:center}${SC} .ss-logo{transform:rotate(-4deg);transform-origin:center;text-align:center}}
-@container (max-width: 640px) and (min-aspect-ratio: 1/1){${SC} .ss-logo{font-size:2.6em}}
+${SC} .ss-stage.port .ss-hud,${SC} .ss-stage.port .ss-scr{font-size:clamp(11px,3.55cqw,20px)}
+${SC} .ss-stage.port .ss-mid{flex-direction:column;gap:.7em;align-items:center;padding-top:.7em}
+${SC} .ss-stage.port .ss-logo{font-size:3em;transform:rotate(-4deg);transform-origin:center;text-align:center}
+${SC} .ss-stage.port .ss-tap{font-size:2.6em}
+${SC} .ss-stage.port .ss-bar{gap:.35em}
+${SC} .ss-stage.port .ss-chip{font-size:1.05em;padding:.28em .6em .28em .3em}
+${SC} .ss-stage.port .ss-gear{font-size:1.05em}
+${SC} .ss-stage.port .ss-menu{display:grid;grid-template-columns:1fr 1fr;gap:.6em;width:94%}
+${SC} .ss-stage.port .ss-menu .ss-btn{min-width:0;font-size:1.15em}
+${SC} .ss-stage.port .ss-bot{gap:.7em}
+${SC} .ss-stage.port .ss-chars{grid-template-columns:repeat(2,1fr)}
+${SC} .ss-stage.port .ss-how{grid-template-columns:repeat(2,1fr)}
+${SC} .ss-stage.port .ss-seg button{padding:.4em .5em .3em}
+@container (max-width: 640px){${SC} .ss-stage:not(.port) .ss-logo{font-size:2.6em}}
 `;
   const ic = k => `<span class="ss-ic">${ICO[k]}</span>`;
 
