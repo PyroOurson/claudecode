@@ -15,6 +15,8 @@ Open the project at https://supabase.com/dashboard, **SQL Editor** > **New query
 
 Keep this order. Some later files replace functions from earlier ones, so if you ever re-run one file, re-run the files after it too. All four were applied twice in this order on the staging copy without errors.
 
+Alternative: `schema.sql` now contains all four rounds at its end and can be run as one file on the live database (checked on the staging copy: it applies from top to bottom without errors on a database that is already up to date; before this work it stopped at the first function whose shape had changed since).
+
 None of these four files deletes or rewrites existing rows of yours. `round19` only adds flags to existing analytics rows (which events came before login, which belong to staff or test accounts) so the dashboard can leave them out.
 
 Two things that do remove data are separate and are your decision:
