@@ -52,9 +52,9 @@ Online parties connect players directly when they can. On networks where a direc
 1. In the Cloudflare dashboard: **Realtime** → **TURN Server** → **Create**. Name it `gameplay`. Copy the **Turn Token ID** and the **API Token** (shown once).
 2. Open the `gameplay-api` Worker → **Settings** → **Variables and Secrets** → add two **Secret** values: `TURN_KEY_ID` (the Turn Token ID) and `TURN_KEY_API_TOKEN` (the API Token). Press **Deploy**.
 3. **Edit code**: replace everything with the current `cloudflare-worker.js` from this folder and press **Deploy**.
-4. Check: opening https://gameplay-api.vitalang.net/turn in a browser shows JSON with `iceServers` that contains `turn:turn.cloudflare.com` addresses. Without the two secrets it shows `{"iceServers":[]}` and the site falls back to public STUN servers and the free Open Relay TURN service, which is less reliable.
+4. Check: open https://gameplaygames.web.app/check while signed in to the site in the same browser. The line "Relayed connections (site TURN 1)" should say Works. The endpoint only answers the site itself and only for signed-in players (it checks the player's session with the accounts server), so opening `/turn` directly in a browser shows `origin not allowed`: that is expected. Without the two secrets the site falls back to public STUN servers and the free Open Relay TURN service, which is less reliable.
 
-The endpoint only answers the site's own addresses (`gameplaygames.web.app`, `gameplaygames.firebaseapp.com`, `pyroourson.github.io`), caches one credential for an hour, and never exposes the API token. The site asks every address in `SUPABASE_RELAYS` for `/turn` (see `NET_ICE_URLS` in `source/w/new/consts.js`).
+The endpoint only answers the site's own addresses (`gameplaygames.web.app`, `gameplaygames.firebaseapp.com`, `pyroourson.github.io`) and signed-in players, caches one credential for an hour, and never exposes the API token. TURN traffic above the free 1,000 GB a month is billed by Cloudflare, which is why the endpoint is not open to everyone. The site asks every address in `SUPABASE_RELAYS` for `/turn` (see `NET_ICE_URLS` in `source/w/new/consts.js`).
 
 ## What it relays
 

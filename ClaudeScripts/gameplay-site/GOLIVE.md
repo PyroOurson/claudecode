@@ -21,7 +21,7 @@ Check: in the SQL editor run `select private.username_ok('abc'), private.usernam
 
 Follow "TURN relay for online parties" in `server/README.md`: create a TURN key, add the two secrets to the `gameplay-api` worker, paste the new `cloudflare-worker.js`, deploy.
 
-Check: https://gameplay-api.vitalang.net/health shows `ok`, and https://gameplay-api.vitalang.net/turn shows JSON containing `turn.cloudflare.com`. While testing from my side the worker's address did not answer at all, so check `/health` first: if it fails, the relay for school networks is down today, independent of this work.
+Check: https://gameplay-api.vitalang.net/health shows `ok`. After the new site is deployed, https://gameplaygames.web.app/check (opened while signed in) shows "Relayed connections (site TURN 1): Works". While testing from my side the worker's address did not answer at all, so check `/health` first: if it fails, the relay for school networks is down today, independent of this work.
 
 ## 3. Preview before production
 
@@ -37,7 +37,9 @@ Google sign-in will not work on the preview address unless you add that address 
 
 ## 4. A test account on production
 
-In the admin dashboard, create a test account (Users > New test account). After step 1, every test account automatically records full diagnostics (errors, requests, connection steps, packets, frame rate), shown by a red REC chip at the bottom left when signed in with it. Ordinary accounts are never recorded: the server refuses it.
+In the admin dashboard, create an ordinary account for testing, then switch on **Diagnostics** for it (Diagnostics tab). Only accounts with that switch on record full diagnostics (errors, requests, connection steps, packets, frame rate), shown by a red REC chip at the bottom left when signed in with them. Every other account is never recorded: the server refuses it. Accounts you created in the dashboard for real people are not recorded unless you switch it on for them, so do not.
+
+Optional clean-up, recommended: accounts created in the dashboard keep a readable copy of their password in `public.test_accounts` so you can hand it out. For staff accounts that copy is a risk. To remove the copies kept for admin and owner accounts, run `delete from public.test_accounts t using public.profiles p where p.id = t.user_id and p.role <> 'user';` in the SQL editor (new staff accounts no longer keep one).
 
 Give me that account's email and password if you want me to run the production checks.
 

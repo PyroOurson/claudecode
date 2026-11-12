@@ -302,3 +302,173 @@ as $$
     and p_name !~ '^\.|\.$|\.\.'
     and p_name not in ('admin', 'administrator', 'gameplay', 'support', 'help', 'root', 'system', 'moderator', 'mod', 'staff', 'official', 'owner', 'null', 'undefined', 'guest', 'anonymous', 'everyone', 'nobody', 'me', 'you');
 $$;
+
+alter table public.test_accounts add column if not exists diag boolean not null default false;
+
+create or replace function private.is_test(p_uid uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select p_uid is not null and exists (
+    select 1 from public.test_accounts t join public.profiles p on p.id = t.user_id
+    where t.user_id = p_uid and t.diag and p.role = 'user'
+  );
+$$;
+
+create or replace function public.admin_set_diag(p_uid uuid, p_on boolean)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+begin
+  if not exists (select 1 from public.test_accounts t join public.profiles p on p.id = t.user_id where t.user_id = p_uid and p.role = 'user') then
+    raise exception 'Diagnostics can only be switched on for an ordinary account created in the dashboard' using errcode = '22023';
+  end if;
+  update public.test_accounts t set diag = coalesce(p_on, false) where t.user_id = p_uid;
+  perform private.admin_log('diag', p_uid, jsonb_build_object('on', coalesce(p_on, false)));
+  return coalesce(p_on, false);
+end;
+$$;
+
+create or replace function public.admin_diag_accounts()
+returns table (user_id uuid, username text, email text, diag boolean, note text, created_at timestamptz, last_event timestamptz)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+begin
+  return query
+  select t.user_id, p.username, t.email, t.diag, t.note, t.created_at, (select max(d.at) from public.diag_events d where d.user_id = t.user_id)
+  from public.test_accounts t
+  join public.profiles p on p.id = t.user_id
+  where p.role = 'user'
+  order by t.diag desc, t.created_at desc;
+end;
+$$;
+revoke all on function public.admin_set_diag(uuid, boolean) from public, anon, authenticated;
+revoke all on function public.admin_diag_accounts() from public, anon, authenticated;
+grant execute on function public.admin_set_diag(uuid, boolean) to authenticated;
+grant execute on function public.admin_diag_accounts() to authenticated;
+
+create or replace function public.admin_create_user(p_email text, p_username text, p_display text, p_password text, p_role text default 'user', p_note text default null)
+returns jsonb
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_role text := coalesce(nullif(lower(btrim(coalesce(p_role, ''))), ''), 'user');
+  v_out jsonb;
+  v_id uuid;
+  v_name text := private.clean_text(p_display, 32);
+begin
+  if v_role not in ('user', 'admin', 'owner') then
+    raise exception 'Role must be user, admin or owner' using errcode = '22023';
+  end if;
+  if v_role <> 'user' then
+    perform private.need_owner();
+  end if;
+  v_out := public.admin_create_test_account(p_username, p_password, p_email, p_note);
+  v_id := (v_out ->> 'id')::uuid;
+  update public.profiles p set display_name = coalesce(v_name, p.display_name), role = v_role where p.id = v_id;
+  if v_role <> 'user' then
+    delete from public.test_accounts t where t.user_id = v_id;
+  end if;
+  perform private.admin_log('create_user', v_id, jsonb_build_object('email', v_out ->> 'email', 'role', v_role));
+  return v_out || jsonb_build_object('display_name', coalesce(v_name, v_out ->> 'username'), 'role', v_role);
+end;
+$$;
+
+create or replace function private.rate_sensitive(p_action text)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select p_action in ('delete_account', 'export', 'username_change', 'username_check', 'username_check_h', 'friend_pair', 'report', 'report_d', 'login', 'login_ip', 'idea_create', 'idea_create_d', 'log_chat', 'log_chat_h');
+$$;
+
+create or replace function public.log_chat(p_kind text, p_game text, p_room text, p_body text)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_body text;
+begin
+  if v_uid is null or p_kind is null or p_kind not in ('party', 'game') then
+    return;
+  end if;
+  v_body := nullif(btrim(regexp_replace(left(coalesce(p_body, ''), 500), E'[\\x01-\\x1f\\x7f]', ' ', 'g')), '');
+  if v_body is null then
+    return;
+  end if;
+  if not private.rate_ok('log_chat', 60, interval '1 minute') or not private.rate_ok('log_chat_h', 900, interval '1 hour') then
+    return;
+  end if;
+  insert into public.chat_log (user_id, kind, game, room, body)
+  values (v_uid, p_kind, left(nullif(btrim(coalesce(p_game, '')), ''), 40), upper(left(nullif(regexp_replace(coalesce(p_room, ''), '[^A-Za-z0-9]', '', 'g'), ''), 16)), v_body);
+  if random() < 0.01 then
+    delete from public.chat_log where created_at < now() - interval '365 days';
+  end if;
+end;
+$$;
+
+create or replace function public.presence_beat(p_game text default null, p_hidden boolean default false, p_away boolean default false, p_party boolean default false)
+returns jsonb
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_game text := lower(btrim(coalesce(p_game, '')));
+  v_staff boolean;
+  v_on jsonb;
+  v_games jsonb;
+  v_n integer;
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if private.over('pb:' || v_uid::text, date_trunc('minute', now()), 20) then
+    return '{}'::jsonb;
+  end if;
+  if v_game !~ '^[a-z0-9][a-z0-9-]{0,39}$' then
+    v_game := null;
+  end if;
+  insert into private.presence_now as n (user_id, at, game, hidden, away, party)
+  values (v_uid, now(), v_game, coalesce(p_hidden, false), coalesce(p_away, false), coalesce(p_party, false))
+  on conflict (user_id) do update set at = excluded.at, game = excluded.game, hidden = excluded.hidden, away = excluded.away, party = excluded.party;
+  update public.profiles p set last_seen = now(), last_game = coalesce(v_game, p.last_game) where p.id = v_uid and (p.last_seen is null or p.last_seen < now() - interval '60 seconds');
+  if random() < 0.02 then
+    delete from private.presence_now where at < now() - interval '10 minutes';
+  end if;
+  v_staff := private.is_staff(v_uid);
+  select count(*) into v_n from private.presence_now n where n.at > now() - interval '100 seconds' and not n.hidden;
+  select coalesce(jsonb_object_agg(x.game, x.c), '{}'::jsonb) into v_games
+  from (select n.game, count(*) as c from private.presence_now n where n.at > now() - interval '100 seconds' and not n.hidden and n.game is not null group by n.game) x;
+  select coalesce(jsonb_agg(jsonb_build_object('id', n.user_id, 'g', n.game, 'a', case when n.away then 1 else 0 end, 'p', case when n.party then 1 else 0 end, 'h', case when n.hidden then 1 else 0 end)), '[]'::jsonb) into v_on
+  from private.presence_now n
+  where n.at > now() - interval '100 seconds' and n.user_id <> v_uid
+    and ((v_staff) or (not n.hidden and exists (select 1 from public.friends f where f.user_id = v_uid and f.friend_id = n.user_id)));
+  return jsonb_build_object('n', v_n, 'on', v_on, 'games', v_games, 'staff', v_staff);
+end;
+$$;
+notify pgrst, 'reload schema';

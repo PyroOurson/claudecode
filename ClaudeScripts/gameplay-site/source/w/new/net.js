@@ -292,7 +292,9 @@ const netIceRemote = async () => {
   for (const u of urls) {
     const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 3500);
     try {
-      const r = await fetch(u, { signal: ctl.signal, credentials: 'omit', cache: 'no-store' });
+      const tok = typeof sbTok === 'function' ? sbTok() : null;
+      if (!tok) continue;
+      const r = await fetch(u, { signal: ctl.signal, credentials: 'omit', cache: 'no-store', headers: { Authorization: 'Bearer ' + tok, apikey: SUPABASE_ANON_KEY } });
       if (!r.ok) continue;
       const j = await r.json(), l = j && (j.iceServers || j.ice_servers);
       const ok = (Array.isArray(l) ? l : l ? [l] : []).filter(x => x && (typeof x.urls === 'string' || Array.isArray(x.urls))).slice(0, 6).map(x => ({ urls: x.urls, username: x.username, credential: x.credential }));
@@ -302,7 +304,7 @@ const netIceRemote = async () => {
   return [];
 };
 const netIce = () => {
-  if (netIceC && Date.now() - netIceC.t < 3600e3) return netIceC.p;
+  if (netIceC && Date.now() - netIceC.t < 3600e3 && netIceC.s === (typeof sbTok === 'function' && !!sbTok())) return netIceC.p;
   const p = (async () => {
     const ice = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }];
     const more = await netIceRemote();
@@ -315,7 +317,7 @@ const netIce = () => {
     } catch (e) {}
     return ice;
   })();
-  netIceC = { t: Date.now(), p };
+  netIceC = { t: Date.now(), p, s: typeof sbTok === 'function' && !!sbTok() };
   return p;
 };
 const netB64 = u => btoa(String.fromCharCode.apply(null, new Uint8Array(u)));

@@ -99,7 +99,10 @@ textarea{width:100%;min-height:160px;margin-top:12px;border-radius:12px;border:1
     let servers = t.servers;
     if (t.cred) {
       try {
-        const r = await limit(fetch(t.cred, { cache: 'no-store', credentials: 'omit' }), 6000);
+        let tok = '';
+        try { const ses = JSON.parse(localStorage.getItem('sb-gameplay-auth') || 'null'); tok = ses && ses.access_token && (!ses.expires_at || ses.expires_at * 1000 > Date.now()) ? ses.access_token : ''; } catch (e) {}
+        if (!tok) return { ok: false, ms: 0, info: 'sign in to the site in this browser first, then run the check again (the relay is only given to signed-in players)' };
+        const r = await limit(fetch(t.cred, { cache: 'no-store', credentials: 'omit', headers: { Authorization: 'Bearer ' + tok, apikey: C.key } }), 6000);
         if (!r.ok) return { ok: false, ms: Math.round(now() - t0), info: 'HTTP ' + r.status + ' from the credential endpoint' };
         const j = await r.json(), l = (Array.isArray(j.iceServers) ? j.iceServers : []).filter(x => x && x.username);
         if (!l.length) return { ok: false, ms: Math.round(now() - t0), info: 'not set up yet (the endpoint returned no relay)' };

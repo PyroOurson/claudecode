@@ -1,5 +1,5 @@
 const RT = { me: null, ch: null, on: null, pres: {}, seen: false, tt: 0, pr: {}, rj: 0, rn: 0 };
-const PB = { t: 0, db: {}, n: 0, at: 0, miss: false, busy: false };
+const PB = { t: 0, db: {}, n: 0, at: 0, miss: false, busy: false, sent: 0, games: {} };
 const SO_ICO = {
   bell: '<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></svg>',
   chat: '<svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg>',
@@ -119,21 +119,23 @@ const soDot = on => on ? on.a ? ' away' : ' on' : '';
 async function pbBeat() {
   if (!SB.user || PB.miss || PB.busy) return;
   const uid = SB.user.id, P = S.prefs, g = P.p_game === false || !cur ? null : cur.g.id, pa = soParty();
-  PB.busy = true;
+  PB.busy = true; PB.sent = Date.now();
+  SO.away = soIdle(); SO.party = !!(g && pa && pa.game === g);
   try {
-    const r = await sbRest('rpc/presence_beat', { method: 'POST', body: { p_game: g, p_hidden: P.p_status === 'Nobody', p_away: soIdle(), p_party: !!(g && pa && pa.game === g) } });
-    if (SB.user && SB.user.id === uid && r && typeof r === 'object') {
-      const m = {};
-      (Array.isArray(r.on) ? r.on : []).forEach(x => { if (x && typeof x.id === 'string') m[x.id] = x.h ? { h: 1 } : { g: typeof x.g === 'string' ? x.g : null, a: x.a ? 1 : 0, p: x.p ? 1 : 0, t: Date.now() }; });
-      PB.db = m; PB.n = Math.max(0, +r.n || 0); PB.at = Date.now();
+    const r = await sbRest('rpc/presence_beat', { method: 'POST', body: { p_game: g, p_hidden: P.p_status === 'Nobody', p_away: SO.away, p_party: SO.party } });
+    if (SB.user && SB.user.id === uid && r && typeof r === 'object' && Array.isArray(r.on)) {
+      const m = {}, gm = {};
+      r.on.forEach(x => { if (x && typeof x.id === 'string') m[x.id] = x.h ? { h: 1 } : { g: typeof x.g === 'string' ? x.g : null, a: x.a ? 1 : 0, p: x.p ? 1 : 0, t: Date.now() }; });
+      if (r.games && typeof r.games === 'object') for (const k in r.games) { const n = Math.round(+r.games[k]); if (n > 0 && /^[a-z0-9][a-z0-9-]{0,39}$/.test(k)) gm[k] = Math.min(n, 99999); }
+      PB.db = m; PB.games = gm; PB.n = Math.max(0, +r.n || 0); PB.at = Date.now();
       rtSync();
     }
   } catch (e) { if (sbMissing(e)) PB.miss = true; }
   PB.busy = false;
 }
-function pbStart() { clearInterval(PB.t); PB.t = setInterval(pbBeat, 40000); pbBeat(); }
+function pbStart() { clearInterval(PB.t); PB.t = setInterval(pbBeat, 30000); pbBeat(); }
 function pbStop(bye) {
-  clearInterval(PB.t); PB.t = 0; PB.db = {}; PB.n = 0; PB.at = 0;
+  clearInterval(PB.t); PB.t = 0; PB.db = {}; PB.games = {}; PB.n = 0; PB.at = 0;
   if (bye && !PB.miss && sbTok()) sbRest('rpc/presence_bye', { method: 'POST', body: {}, keep: true }).catch(() => {});
 }
 const PR_GAP = 8000;
@@ -155,40 +157,24 @@ function rtStart() {
   if (!SB.c || !SB.user || RT.me === SB.user.id) return;
   rtStop();
   const me = RT.me = SB.user.id;
-  try {
-    RT.ch = SB.c.channel('u:' + me).on('broadcast', { event: 'n' }, m => rtNudge(m && m.payload || {})).subscribe();
-    rtOnline(me);
-  } catch (e) {}
-}
-function rtOnline(me) {
-  if (!SB.c || RT.me !== me) return;
-  clearTimeout(RT.rj);
-  try { if (RT.on) SB.c.removeChannel(RT.on); } catch (e) {}
-  prDrop(RT.pr);
-  const ch = RT.on = SB.c.channel('online', { config: { presence: { key: me } } });
-  ch.on('presence', { event: 'sync' }, rtSync).subscribe(s => {
-    if (RT.on !== ch) return;
-    if (s === 'SUBSCRIBED') { RT.rn = 0; RT.pr.last = null; rtTrack(true); }
-    else if (s === 'CLOSED') { DIAG.ev('net', { a: 'presence-closed', ch: 'online' }); RT.rj = setTimeout(() => rtOnline(me), Math.min(60000, 9000 * Math.pow(2, RT.rn = (RT.rn || 0) + 1))); }
-  });
+  try { RT.ch = SB.c.channel('u:' + me).on('broadcast', { event: 'n' }, m => rtNudge(m && m.payload || {})).subscribe(); } catch (e) {}
 }
 function rtStop() {
-  clearTimeout(RT.rj); prDrop(RT.pr);
-  try { if (RT.ch) SB.c.removeChannel(RT.ch); if (RT.on) SB.c.removeChannel(RT.on); } catch (e) {}
+  clearTimeout(RT.tt);
+  try { if (RT.ch) SB.c.removeChannel(RT.ch); } catch (e) {}
   RT.ch = RT.on = RT.me = null; RT.seen = false; RT.pres = {};
   soLive();
 }
 function rtTrack(now) {
-  if (!RT.on || !SB.user) return;
-  const P = S.prefs, hide = P.p_status === 'Nobody', g = P.p_game === false || !cur ? null : cur.g.id, pa = soParty();
-  SO.away = soIdle(); SO.party = !!(g && pa && pa.game === g);
-  prSend(RT.pr, RT.on, hide ? { h: 1 } : { g, a: SO.away ? 1 : 0, p: SO.party ? 1 : 0 }, now === true && RT.pr.last == null);
+  if (!SB.user) return;
+  SO.away = soIdle();
+  clearTimeout(RT.tt);
+  RT.tt = setTimeout(pbBeat, Math.max(now === true ? 300 : 1200, PB.sent + 5000 - Date.now()));
 }
 function rtSync() {
-  const s = RT.on ? RT.on.presenceState() : {}, prev = RT.pres, P = {};
-  for (const k in s) { const a = s[k]; if (a && a.length) P[k] = a[a.length - 1]; }
-  if (Date.now() - PB.at < 110000) for (const k in PB.db) { if (!P[k]) P[k] = PB.db[k]; }
-  if (SB.user && !P[SB.user.id] && PB.at) P[SB.user.id] = S.prefs.p_status === 'Nobody' ? { h: 1 } : { g: cur ? cur.g.id : null, t: Date.now(), a: SO.away ? 1 : 0 };
+  const prev = RT.pres, P = {};
+  if (Date.now() - PB.at < 110000) for (const k in PB.db) P[k] = PB.db[k];
+  if (SB.user && PB.at) P[SB.user.id] = S.prefs.p_status === 'Nobody' ? { h: 1 } : { g: S.prefs.p_game === false || !cur ? null : cur.g.id, t: Date.now(), a: SO.away ? 1 : 0, p: SO.party ? 1 : 0 };
   RT.pres = P;
   const now = Date.now();
   if (RT.seen && S.prefs.n_on) (FR.list || []).forEach(f => { const id = f.friend_id; if (!blHas(id) && P[id] && !P[id].h && !(prev[id] && !prev[id].h) && now - (NT.on[id] || 0) > 600000) { NT.on[id] = now; ntPush({ k: 'online', from: id, t: auT('{u} is online').replace('{u}', soName(id)), b: P[id].g ? auT('Playing {g}').replace('{g}', soGameName(P[id].g)) : '', a: { type: 'chat', uid: id } }); } });
@@ -232,7 +218,7 @@ function soStatus(id) {
   return on.a ? auT('Away') : auT('Online');
 }
 function soLive() {
-  const n = Math.max(Object.keys(RT.pres).filter(k => !RT.pres[k].h).length, Date.now() - PB.at < 110000 ? PB.n : 0), pill = $('#onl');
+  const n = Date.now() - PB.at < 110000 ? Math.max(PB.n, 1) : 0, pill = $('#onl');
   if (pill) { pill.hidden = !SB.user || !n; pill.querySelector('b').textContent = n; pill.title = auT(n === 1 ? '1 player online' : '{n} players online').replace('{n}', n); }
   cardPills();
   if (openK === 'friends' && FR.list) frDraw();
@@ -945,11 +931,11 @@ function soBoot() {
     if (!SB.user) return;
     const pa = soParty(), k = (cur ? cur.g.id : '') + '|' + (pa ? pa.code : '');
     if (k !== SO.gk) { SO.gk = k; if (DM.open) dmHead(); if (openK === 'friends' && FR.list) frDraw(); rtTrack(true); }
-    else if (RT.on && soIdle() !== SO.away) rtTrack(true);
+    else if (soIdle() !== SO.away) rtTrack(true);
   }, 1000);
-  const act = () => { SO.act = Date.now(); if (SO.away && RT.on) { SO.away = false; rtTrack(true); } };
+  const act = () => { SO.act = Date.now(); if (SO.away) { SO.away = false; rtTrack(true); } };
   ['pointerdown', 'keydown', 'wheel', 'touchstart', 'pointermove'].forEach(t => addEventListener(t, act, { capture: true, passive: true }));
-  document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible') { act(); dmPoll(); rtTrack(true); pbBeat(); } });
+  document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible') { act(); dmPoll(); rtTrack(true); } });
   addEventListener('pagehide', () => { if (SB.user && PB.t) pbStop(true); });
   addEventListener('pageshow', e => { if (e.persisted && SB.user && !PB.t) pbStart(); });
   ['fullscreenchange', 'webkitfullscreenchange'].forEach(t => document.addEventListener(t, () => setTimeout(soPlace, 0)));
@@ -1045,8 +1031,7 @@ window.gpPubSet = (gid, o) => {
 };
 window.gpPubList = gid => (PUB.list[gid] || []).slice();
 function cardPills() {
-  const by = {};
-  Object.values(RT.pres).forEach(p => { if (p.g && !p.h) by[p.g] = (by[p.g] || 0) + 1; });
+  const by = Date.now() - PB.at < 110000 ? PB.games : {};
   document.querySelectorAll('.card[data-id]').forEach(el => {
     const id = el.dataset.id, art = el.querySelector('.art') || el, c = by[id] || 0, P = PUB.list[id];
     let b = el.querySelector('.livepill');
