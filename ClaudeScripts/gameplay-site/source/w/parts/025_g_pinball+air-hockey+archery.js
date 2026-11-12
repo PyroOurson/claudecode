@@ -689,7 +689,7 @@
         { name: 'Easy', speed: 520, acc: 3000, err: 70, aim: 80, react: .2, mul: 1 },
         { name: 'Normal', speed: 860, acc: 5600, err: 34, aim: 34, react: .1, mul: 2 },
         { name: 'Hard', speed: 1250, acc: 9500, err: 12, aim: 20, react: .045, mul: 3 },
-        { name: 'Hardest', speed: 1700, acc: 14000, err: 0, aim: 0, react: .14, mul: 4, pro: true, slow: 380, lead: .8, bankPen: 30, reach: 12, swing: .26, home: 150 }
+        { name: 'Hardest', speed: 2000, acc: 17000, err: 0, aim: 0, react: .14, mul: 4, pro: true, slow: 250, lead: .4, bankPen: 30, reach: 12, swing: .26, home: 150 }
       ];
       const MODES = [['cpu', 'vs CPU'], ['net', 'Online']], CRZ = 88, CRL = 110;
       const net = api.net, invited = !!net.invite, coarse = matchMedia('(pointer: coarse)').matches;
