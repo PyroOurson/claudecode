@@ -18,12 +18,15 @@
     const g = hud.getContext('2d');
     let touch = false;
     try { touch = matchMedia('(pointer: coarse)').matches; } catch (e) { }
-    renderer.outputEncoding = THREE.LinearEncoding; renderer.toneMapping = THREE.NoToneMapping; renderer.shadowMap.enabled = false; renderer.autoClear = false;
+    renderer.outputEncoding = THREE.LinearEncoding; renderer.toneMapping = THREE.NoToneMapping; renderer.shadowMap.enabled = false; renderer.autoClear = false; renderer.info.autoReset = false;
     if (touch) renderer.setPixelRatio(Math.min(renderer.getPixelRatio(), 1.5));
     let SV = api.load(); if (!SV || typeof SV !== 'object') SV = {};
     const s0 = SV.set || {};
-    const SET = { rd: clamp(s0.rd | 0 || (touch ? CFG.RD_TOUCH : CFG.RD), 2, 12), fancy: s0.fancy != null ? !!s0.fancy : !touch, fov: clamp(+s0.fov || CFG.FOV, 30, 110), sens: clamp(+s0.sens || 1, .1, 3), music: s0.music !== false, sound: s0.sound !== false, gam: s0.gam != null ? clamp(+s0.gam, 0, 1) : .5, clouds: s0.clouds != null ? s0.clouds !== false : !touch, bob: s0.bob !== false, gui: s0.gui | 0, smooth: s0.smooth !== false, particles: s0.particles != null ? s0.particles | 0 : 2 };
+    const SET = { rd: s0.rd ? clamp(s0.rd | 0, 2, 12) : 0, rda: s0.rda | 0, fancy: s0.fancy != null ? !!s0.fancy : !touch, fov: clamp(+s0.fov || CFG.FOV, 30, 110), sens: clamp(+s0.sens || 1, .1, 3), music: s0.music !== false, sound: s0.sound !== false, gam: s0.gam != null ? clamp(+s0.gam, 0, 1) : .5, clouds: s0.clouds != null ? s0.clouds !== false : !touch, bob: s0.bob !== false, gui: s0.gui | 0, smooth: s0.smooth !== false, particles: s0.particles != null ? s0.particles | 0 : 2 };
     const persistSet = () => { SV.set = SET; api.save(SV); };
+    const AR = { min: touch ? 2 : 3, max: touch ? 6 : 8, lo: 0, hi: 0, cap: 99, capT: 0, f0: 0, r0: 0, noDown: false, js: 0, jn: 0, gap: false };
+    let RD = SET.rd || clamp(SET.rda || (touch ? CFG.RD_TOUCH : CFG.RD), AR.min, AR.max), fogRD = RD;
+    SMOOTH = SET.smooth;
     const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(CFG.FOV, 1.6, .05, 1200);
     cam.rotation.order = 'YXZ';
     const hScene = new THREE.Scene(), hCam = new THREE.PerspectiveCamera(70, 1.6, .01, 10);
@@ -79,12 +82,12 @@
         const gq = buildGeo(M);
         gq.boundingSphere = new THREE.Sphere(new THREE.Vector3(8, sy * 16 + 8, 8), 14);
         const m = new THREE.Mesh(gq, mat);
-        m.position.set(c.cx * 16, 0, c.cz * 16); m.matrixAutoUpdate = false; m.updateMatrix(); m.renderOrder = ro;
+        m.position.set(c.cx * 16, 0, c.cz * 16); m.matrixAutoUpdate = false; m.updateMatrix(); m.renderOrder = ro; m.visible = !!c.vs[sy];
         scene.add(m); r[k] = m;
       }
       c.m[sy] = r;
     }
-    function unloadCol(c, k) { for (let s = 0; s < NSEC; s++) { const r = c.m[s]; if (r) for (const kk of ['o', 't']) if (r[kk]) { scene.remove(r[kk]); r[kk].geometry.dispose(); } } W.cols.delete(k); W.dirty.delete(c); W.lastK = -1; }
+    function unloadCol(c, k) { for (let s = 0; s < NSEC; s++) { const r = c.m[s]; if (r) for (const kk of ['o', 't']) if (r[kk]) { scene.remove(r[kk]); r[kk].geometry.dispose(); } } W.cols.delete(k); W.dirty.delete(c); W.cdq.delete(c); W.lastK = -1; if (c.meshed && W.visd < 1) W.visd = 1; }
     const skyU = { top: { value: new THREE.Color() }, fog: { value: new THREE.Color() }, glow: { value: new THREE.Color(1, .5, .2) }, glowA: { value: 0 }, sun: { value: new THREE.Vector3(1, 0, 0) }, day: { value: 1 }, rain: { value: 0 } };
     const sky = new THREE.Mesh(keep(new THREE.SphereGeometry(500, 24, 12)), keep(new THREE.ShaderMaterial({
       uniforms: skyU, side: THREE.BackSide, depthWrite: false, fog: false,
@@ -173,7 +176,7 @@
     function blockGeom(s, size) {
       const key = s * 100 + Math.round(size * 50);
       if (geoCache.has(key)) return geoCache.get(key);
-      PB.fill(0); PL.fill(0xF0); TGc.fill(0); TFc.fill(0); TWc.fill(0);
+      PB.fill(0); PL.fill(0xF0); TGc.fill(0); TFc.fill(0); TWc.fill(0); TPCOL = null;
       biomeColors(); for (let i = 0; i < PSS; i++) { const b = BIOC[0]; TGc.set(b.g, i * 3); TFc.set(b.f, i * 3); TWc.set(b.w, i * 3); }
       const p = pof(0, 0, 0);
       PB[p] = s;

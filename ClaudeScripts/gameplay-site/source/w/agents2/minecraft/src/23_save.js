@@ -38,7 +38,7 @@
     function renameWorld(id, name) { return kv('meta', 'get', id).then(m => m ? kv('meta', 'put', Object.assign(m, { name })) : null); }
     function metaOf() { return { id: W.id, name: W.name, folder: W.folder || W.name, seed: W.seed, type: W.type, mode: W.mode, defMode: W.defMode, hardcore: W.hardcore, diff: W.diff, cheats: W.cheats, created: W.created || Date.now(), last: Date.now(), rules: W.rules }; }
     function worldData() {
-      const edits = []; W.edits.forEach((ed, k) => { const a = new Uint32Array(ed.size); let i = 0; ed.forEach((s, li) => { a[i++] = li * 16384 + s; }); edits.push([k, u32b64(a)]); });
+      const edits = []; W.edits.forEach((ed, k) => { if (!ed.size) return; if (!ed.b) { const a = new Uint32Array(ed.size); let i = 0; ed.forEach((s, li) => { a[i++] = li * 16384 + s; }); ed.b = u32b64(a); } edits.push([k, ed.b]); });
       const be = []; W.be.forEach((v, k) => be.push([k, v]));
       const ents = [];
       for (const e of ENTS) {
@@ -63,7 +63,7 @@
     api.on(document, 'visibilitychange', () => { if (document.visibilityState === 'hidden') saveNow(); });
     function restoreData(d) {
       if (!d) return;
-      if (Array.isArray(d.edits)) for (const [k, b] of d.edits) { if (typeof b !== 'string') continue; const a = b64u32(b), ed = new Map(); for (const v of a) { const s = v % 16384; if (s < NSTATE) ed.set(Math.floor(v / 16384), s); } W.edits.set(k, ed); }
+      if (Array.isArray(d.edits)) for (const [k, b] of d.edits) { if (typeof b !== 'string') continue; const a = b64u32(b), ed = new Map(); for (const v of a) { const s = v % 16384; if (s < NSTATE) ed.set(Math.floor(v / 16384), s); } if (ed.size === a.length) ed.b = b; W.edits.set(k, ed); }
       if (Array.isArray(d.be)) for (const [k, v] of d.be) if (v) W.be.set(k, v);
       if (d.players) W.players = d.players;
       if (fin(d.time)) W.time = d.time;
