@@ -18,9 +18,9 @@
   const CRATE_HP = 3200, BOX_HP = 3600;
 
   const MODES = {
-    gem: { id: 'gem', name: 'Gem Grab', short: '3v3', teams: 2, per: 3, time: 180, blurb: 'Collect 10 gems and hold them for 15 seconds to win.', col: '#b45cff', col2: '#6b2bd8' },
-    show: { id: 'show', name: 'Showdown', short: 'Solo', teams: 10, per: 1, time: 0, blurb: 'Last brawler standing. Smash boxes for power cubes. Stay out of the poison.', col: '#6dd13a', col2: '#2e8f1e' },
-    ball: { id: 'ball', name: 'Brawl Ball', short: '3v3', teams: 2, per: 3, time: 120, blurb: 'Score 2 goals before the other team. Pass, kick and tackle.', col: '#3fa9ff', col2: '#1e63c9' },
+    gem: { id: 'gem', name: 'Shard Heist', short: '3v3', teams: 2, per: 3, time: 180, blurb: 'Collect 10 shards and hold them for 15 seconds to win.', col: '#b45cff', col2: '#6b2bd8' },
+    show: { id: 'show', name: 'Lone Wolf', short: 'Solo', teams: 10, per: 1, time: 0, blurb: 'Ten fighters, one winner. Break supply boxes for boosts. Stay inside the storm ring.', col: '#6dd13a', col2: '#2e8f1e' },
+    ball: { id: 'ball', name: 'Rush Ball', short: '3v3', teams: 2, per: 3, time: 120, blurb: 'Score 2 goals before the other team. Pass, kick and tackle.', col: '#3fa9ff', col2: '#1e63c9' },
     crown: { id: 'crown', name: 'Crown Rush', short: '3v3', teams: 2, per: 3, time: 150, blurb: 'Wear the crown to score a point every second. First team to 50 wins. KO the wearer to steal it.', col: '#ffb81f', col2: '#d17a00' }
   };
 
@@ -31,12 +31,12 @@
     { id: 'talon', name: 'Talon', role: 'Sniper', cls: 'sniper', hp: 2400, spd: 3.3, ammo: 3, reload: 1.9, cd: .8, need: 2100,
       atk: { k: 'bolt', range: 11.8, spd: 44, r: .22, dmg: [650, 1500], st: 1 }, sup: { k: 'hop', back: 4.2, bombs: 4, fuse: .7, rad: 1.75, dmg: 950, wall: 1200 },
       supName: 'Backflip Bombs', desc: 'Long-range shots hit harder the farther they travel. Super flips away dropping bombs.', c1: '#6f8fb8', c2: '#f2c14a' },
-    { id: 'dyna', name: 'Dyna', role: 'Thrower', cls: 'thrower', hp: 2700, spd: 3.2, ammo: 3, reload: 1.8, cd: .6, need: 2200,
+    { id: 'dyna', name: 'Fuse', role: 'Thrower', cls: 'thrower', hp: 2700, spd: 3.2, ammo: 3, reload: 1.8, cd: .6, need: 2200,
       atk: { k: 'lob', range: 8.2, dur: .62, rad: 1.55, dmg: 1000, wall: 1300, st: 2 }, sup: { k: 'lob', range: 8, dur: .75, rad: 3.5, dmg: 2200, wall: 4200, kb: 3, st: 2, big: 1 },
-      supName: 'Big Barrel', desc: 'Lobs dynamite over walls. Splash damage and cracks cover apart. Super is a huge blast.', c1: '#a58fa8', c2: '#f2b233' },
+      supName: 'Mega Charge', desc: 'Lobs dynamite over walls. Splash damage and cracks cover apart. Super is a huge blast.', c1: '#a58fa8', c2: '#f2b233' },
     { id: 'lulu', name: 'Lulu', role: 'Healer', cls: 'healer', hp: 3200, spd: 3.4, ammo: 3, reload: 1.5, cd: .5, need: 2000,
       atk: { k: 'wave', range: 6.8, spd: 15, r: .7, dmg: 480, heal: 420, st: 3 }, sup: { k: 'aoeheal', rad: 4.8, heal: 1500, self: .6 },
-      supName: 'Encore', desc: 'Sound waves hurt enemies and heal friends. Super heals every ally around her.', c1: '#58c24a', c2: '#e8503a' },
+      supName: 'Chorus', desc: 'Sound waves hurt enemies and heal friends. Super heals every ally around her.', c1: '#58c24a', c2: '#e8503a' },
     { id: 'vex', name: 'Vex', role: 'Assassin', cls: 'assassin', hp: 2700, spd: 4.1, ammo: 3, reload: 1.2, cd: .45, need: 1800,
       atk: { k: 'slash', dist: 2.7, dur: .13, dmg: 820, r: .8 }, sup: { k: 'leap', range: 6.2, dur: .5, rad: 1.9, dmg: 1500, self: 700, stun: .4 },
       supName: 'Pounce', desc: 'Fast slasher who dashes through enemies. Super leaps over walls and heals on impact.', c1: '#4b3a73', c2: '#ffd23a' },
@@ -45,14 +45,14 @@
       supName: 'Pinball', desc: 'Bullets bounce off walls to hit hiding enemies. Super fires a volley of ricochets.', c1: '#b9c4d2', c2: '#33d6e8' },
     { id: 'dusty', name: 'Dusty', role: 'Gunslinger', cls: 'gunner', hp: 3000, spd: 3.4, ammo: 3, reload: 1.6, cd: .75, need: 2200,
       atk: { k: 'burst', n: 6, gap: .07, range: 9.2, spd: 30, r: .2, dmg: 290, st: 5 }, sup: { k: 'burst', n: 14, gap: .05, range: 10.5, spd: 32, r: .22, dmg: 330, st: 5, wall: 1600 },
-      supName: 'Bullet Storm', desc: 'Six-shot bursts at mid range. Super unloads a storm that tears through walls.', c1: '#8a8f99', c2: '#a8683a' },
-    { id: 'rocco', name: 'Rocco', role: 'Heavy Brawler', cls: 'tank', hp: 6000, spd: 3.5, ammo: 3, reload: 1.2, cd: .5, need: 2000,
+      supName: 'Lead Rain', desc: 'Six-shot bursts at mid range. Super unloads a storm that tears through walls.', c1: '#8a8f99', c2: '#a8683a' },
+    { id: 'rocco', name: 'Rocco', role: 'Heavyweight', cls: 'tank', hp: 6000, spd: 3.5, ammo: 3, reload: 1.2, cd: .5, need: 2000,
       atk: { k: 'punch', n: 2, gap: .12, range: 2.4, spd: 22, r: .95, dmg: 620, st: 6 }, sup: { k: 'leap', range: 6.8, dur: .55, rad: 2.3, dmg: 1600, stun: .9, self: 0 },
       supName: 'Body Slam', desc: 'Huge health, hits hard in your face. Super leaps over walls and stuns on landing.', c1: '#7c8794', c2: '#d63b3b' },
     { id: 'gizmo', name: 'Gizmo', role: 'Engineer', cls: 'turret', hp: 2900, spd: 3.4, ammo: 3, reload: 1.5, cd: .5, need: 2000,
       atk: { k: 'spark', range: 8.4, spd: 24, r: .26, dmg: 720, chain: 3.6, chainMul: .6, st: 7 }, sup: { k: 'turret', range: 6.5, hp: 1500, life: 12, cd: .7, dmg: 320, trange: 8.6 },
       supName: 'Auto Turret', desc: 'Sparks jump to a second enemy. Super builds a turret that shoots on its own.', c1: '#e9863a', c2: '#37c7b5' },
-    { id: 'ember', name: 'Ember', role: 'Flamethrower', cls: 'flamer', hp: 3400, spd: 3.4, ammo: 3, reload: 1.5, cd: .7, need: 2100,
+    { id: 'ember', name: 'Cinder', role: 'Flamethrower', cls: 'flamer', hp: 3400, spd: 3.4, ammo: 3, reload: 1.5, cd: .7, need: 2100,
       atk: { k: 'flame', n: 6, gap: .07, range: 4.7, spd: 15, r: .55, dmg: 230, st: 8 }, sup: { k: 'puddle', range: 6.2, dur: .55, rad: 2.3, life: 5, dps: 900 },
       supName: 'Oil Fire', desc: 'Short-range flame bursts melt anything nearby. Super leaves a burning puddle.', c1: '#ee7a2a', c2: '#fff1d0' },
     { id: 'glacia', name: 'Glacia', role: 'Frost Mage', cls: 'frost', hp: 2800, spd: 3.3, ammo: 3, reload: 1.7, cd: .6, need: 2100, bot: [7, 9],
@@ -269,7 +269,9 @@
 
 
   const HIT_R = .5, BR_R = .4, KB_MAX = 27;
-  const SIGHT = 2.7, SPAWN_SHIELD = 2, RESPAWN = 3, GEM_WIN = 10, GEM_CD = 15, BALL_WIN = 2, CROWN_WIN = 50, INBUF = 8;
+  const SIGHT = 2.7, SPAWN_SHIELD = 2, RESPAWN = 3, GEM_WIN = 10, GEM_CD = 15, BALL_WIN = 2, CROWN_WIN = 50, INBUF = 8, NET_DELAY = 4, RW_MAX = NET_DELAY + 6;
+  const PRED_K = { fan: 1, bolt: 1, bounce: 1, wave: 1, spark: 1, burst: 1, punch: 1, flame: 1, lob: 1, puddle: 1 };
+  let RWX = 0, RWY = 0;
 
   function newBr(i, p, slot) {
     const d = BR[p.br];
@@ -290,11 +292,13 @@
       S.brs.push(b);
     });
     for (const b of S.brs) placeSpawn(S, b);
+    S.hist = { x: new Float32Array(S.brs.length * 16), y: new Float32Array(S.brs.length * 16) };
+    for (const b of S.brs) histFill(S, b);
     if (mode === 'ball') S.ball = { x: M.ball[0], y: M.ball[1], px: M.ball[0], py: M.ball[1], vx: 0, vy: 0, car: -1, noPick: 0, last: -1 };
     if (mode === 'show') {
       const sp = M.sp[0], rs = S.rng;
       for (let k = sp.length - 1; k > 0; k--) { const j = rs() * (k + 1) | 0; [sp[k], sp[j]] = [sp[j], sp[k]]; }
-      for (const b of S.brs) placeSpawn(S, b);
+      for (const b of S.brs) { placeSpawn(S, b); histFill(S, b); }
       S.poison = { cx: M.center[0], cy: M.center[1], r: hyp(M.W, M.H) / 2 + 2, t: 0, tick: 1 };
       S.left = 0;
     }
@@ -310,6 +314,19 @@
     const cx = M.W / 2, cy = M.H / 2;
     b.aim = b.face = Math.atan2(cy - b.y, cx - b.x);
     b.kbx = b.kby = 0;
+    histFill(S, b);
+  }
+  function histFill(S, b) {
+    const H = S.hist;
+    if (!H) return;
+    const o = b.i * 16;
+    for (let k = 0; k < 16; k++) { H.x[o + k] = b.x; H.y[o + k] = b.y; }
+  }
+  function rwPos(S, t, rw) {
+    const H = S.hist, f = S.tk - rw, i0 = Math.floor(f), a = f - i0, o = t.i * 16, x0 = H.x[o + (i0 & 15)], y0 = H.y[o + (i0 & 15)];
+    let x1 = t.x, y1 = t.y;
+    if (i0 + 1 < S.tk) { x1 = H.x[o + ((i0 + 1) & 15)]; y1 = H.y[o + ((i0 + 1) & 15)]; }
+    RWX = x0 + (x1 - x0) * a; RWY = y0 + (y1 - y0) * a;
   }
 
   const bushAt = (S, b) => tileAt(S.M, Math.floor(b.x), Math.floor(b.y)) === T_BUSH;
@@ -328,6 +345,7 @@
   }
 
   function hurt(S, t, amt, src, o) {
+    if (S.pred) return 1;
     if (!t.alive || t.jmp || t.shield > 0 || S.state !== 1) return 0;
     o = o || {};
     if (src && src !== t) amt *= 1 + .1 * src.cubes;
@@ -350,7 +368,7 @@
     t.dash = null;
   }
   function heal(S, t, amt, src) {
-    if (!t.alive) return 0;
+    if (!t.alive || S.pred) return 0;
     const real = Math.min(Math.round(amt), t.mhp - t.hp);
     if (real <= 0) return 0;
     t.hp += real;
@@ -388,25 +406,25 @@
   }
 
   function doAtk(S, b, a, ang, dist, sup) {
-    const cx = Math.cos(ang), cy = Math.sin(ang), M = S.M;
-    const bul = (an, ex) => emitBullet(S, b, b.x + Math.cos(an) * .45, b.y + Math.sin(an) * .45, an, a, ex);
+    const cx = Math.cos(ang), cy = Math.sin(ang), M = S.M, rw = b.rw || 0, sh = sup ? -b.sc : b.fc;
+    const bul = (an, ex) => { const p = emitBullet(S, b, b.x + Math.cos(an) * .45, b.y + Math.sin(an) * .45, an, a, ex); p.rw = rw; p.sh = sh; };
     switch (a.k) {
       case 'fan': for (let k = 0; k < a.n; k++) bul(ang + (a.n > 1 ? k / (a.n - 1) - .5 : 0) * a.sp * DEG); break;
       case 'bolt': bul(ang, { d0: a.dmg[0], d1: a.dmg[1], dmg: a.dmg[0] }); break;
       case 'bounce': bul(ang); break;
       case 'wave': bul(ang, { pierce: 1 }); break;
       case 'spark': bul(ang); break;
-      case 'burst': for (let k = 0; k < a.n; k++) b.q.push({ at: S.time + k * a.gap, ang, a, jit: 0 }); break;
-      case 'punch': for (let k = 0; k < a.n; k++) b.q.push({ at: S.time + k * a.gap, ang, a, pierce: 1, off: .2 }); break;
-      case 'flame': for (let k = 0; k < a.n; k++) b.q.push({ at: S.time + k * a.gap, ang, a, pierce: 1, jit: 7 }); break;
+      case 'burst': for (let k = 0; k < a.n; k++) b.q.push({ at: S.time + k * a.gap, ang, a, jit: 0, rw, sh }); break;
+      case 'punch': for (let k = 0; k < a.n; k++) b.q.push({ at: S.time + k * a.gap, ang, a, pierce: 1, off: .2, rw, sh }); break;
+      case 'flame': for (let k = 0; k < a.n; k++) b.q.push({ at: S.time + k * a.gap, ang, a, pierce: 1, jit: 7, rw, sh }); break;
       case 'lob': {
-        const dd = clamp(dist, 1.6, a.range), t = lobTarget(S, b, ang, dd);
-        lobShot(S, b, a, t[0], t[1], a.dur);
+        const dd = clamp(dist, 1.6, a.range), t = lobTarget(S, b, ang, dd), p = lobShot(S, b, a, t[0], t[1], a.dur);
+        p.rw = rw; p.sh = sh;
         break;
       }
       case 'puddle': {
-        const dd = clamp(dist, 1.6, a.range), t = lobTarget(S, b, ang, dd);
-        lobShot(S, b, a, t[0], t[1], a.dur, { zone: { life: a.life, dps: a.dps, slow: a.slow || 0, k: a.zk || 0 }, rad: a.rad, dmg: 0, st: a.zk ? 13 : 11 });
+        const dd = clamp(dist, 1.6, a.range), t = lobTarget(S, b, ang, dd), p = lobShot(S, b, a, t[0], t[1], a.dur, { zone: { life: a.life, dps: a.dps, slow: a.slow || 0, k: a.zk || 0 }, rad: a.rad, dmg: 0, st: a.zk ? 13 : 11 });
+        p.rw = rw; p.sh = sh;
         break;
       }
       case 'slash': b.dash = { dx: cx, dy: cy, spd: a.dist / a.dur, left: a.dur, dmg: a.dmg, r: a.r, hit: [] }; b.face = ang; break;
@@ -449,7 +467,7 @@
     return [x, y];
   }
   function lobShot(S, b, a, tx, ty, dur, ex) {
-    const p = { id: ++S.pid, o: b.i, team: b.team, st: a.st, x: b.x, y: b.y, px: b.x, py: b.y, vx: 0, vy: 0, r: .2, dmg: a.dmg, rad: a.rad, kb: a.kb || 0, wall: a.wall || 0, stun: 0, lob: { sx: b.x, sy: b.y, tx, ty, t: 0, dur }, left: 99, hit: [], big: a.big || 0, bounce: 0, pierce: 0, heal: 0, chain: 0 };
+    const p = { id: ++S.pid, o: b.i, team: b.team, st: a.st, x: b.x, y: b.y, px: b.x, py: b.y, vx: 0, vy: 0, r: .2, dmg: a.dmg, rad: a.rad, kb: a.kb || 0, wall: a.wall || 0, stun: 0, lob: { sx: b.x, sy: b.y, tx, ty, t: 0, dur }, left: 99, hit: [], big: a.big || 0, bounce: 0, pierce: 0, heal: 0, chain: 0, rw: 0, sh: 0 };
     if (ex) Object.assign(p, ex);
     p.vx = (tx - b.x) / dur; p.vy = (ty - b.y) / dur;
     S.proj.push(p);
@@ -457,7 +475,7 @@
   }
   function emitBullet(S, b, x, y, ang, a, ex) {
     const p = { id: ++S.pid, o: b.i, team: b.team, st: a.st || 0, x, y, px: x, py: y, vx: Math.cos(ang) * a.spd, vy: Math.sin(ang) * a.spd, r: a.r, dmg: a.dmg, left: a.range, range: a.range, hit: [], pierce: 0, bounce: a.bounce | 0,
-      kb: a.kb || 0, wall: a.wall || 0, heal: a.heal || 0, chain: a.chain || 0, cm: a.chainMul || 0, slow: a.slow || 0, tur: -1, a: ang };
+      kb: a.kb || 0, wall: a.wall || 0, heal: a.heal || 0, chain: a.chain || 0, cm: a.chainMul || 0, slow: a.slow || 0, tur: -1, a: ang, rw: 0, sh: 0 };
     if (ex) Object.assign(p, ex);
     S.proj.push(p);
     return p;
@@ -493,7 +511,7 @@
 
   function damageTile(S, i, j, dmg) {
     const M = S.M, k = j * M.W + i, t = M.t[k];
-    if (t !== 2 && t !== 6) return false;
+    if (t !== 2 && t !== 6 || S.pred) return false;
     M.hp[k] -= dmg;
     S.ev.push(['tw', k, M.hp[k]]);
     if (M.hp[k] <= 0) {
@@ -509,10 +527,13 @@
   }
 
   function boom(S, p) {
+    if (S.pred) return;
     const o = S.brs[p.o], rad = p.rad, r2 = rad * rad;
     if (p.dmg > 0) for (const t of S.brs) {
       if (!t.alive || t.team === p.team || t.jmp) continue;
-      if (rad2(t.x - p.x, t.y - p.y) <= (rad + .3) * (rad + .3)) hurt(S, t, p.dmg, o, { kb: p.kb, dx: t.x - p.x, dy: t.y - p.y });
+      let tx = t.x, ty = t.y;
+      if (p.rw) { rwPos(S, t, p.rw); tx = RWX; ty = RWY; }
+      if (rad2(tx - p.x, ty - p.y) <= (rad + .3) * (rad + .3)) hurt(S, t, p.dmg, o, { kb: p.kb, dx: tx - p.x, dy: ty - p.y });
     }
     for (const t of S.turrets) if (t.team !== p.team && rad2(t.x - p.x, t.y - p.y) <= r2) hurtTurret(S, t, p.dmg);
     if (p.wall) {
@@ -527,6 +548,7 @@
     S.ev.push(['x', +p.x.toFixed(2), +p.y.toFixed(2), rad, p.st, p.big || 0]);
   }
   function hurtTurret(S, t, dmg) {
+    if (S.pred) return;
     t.hp -= dmg;
     S.ev.push(['dt', t.id, Math.round(dmg), +t.x.toFixed(2), +t.y.toFixed(2)]);
     if (t.hp <= 0) { t.life = 0; S.ev.push(['x', +t.x.toFixed(2), +t.y.toFixed(2), 1.2, 22, 0]); }
@@ -582,7 +604,9 @@
             if (p.heal && t.i !== p.o && rad2(t.x - p.x, t.y - p.y) < (p.r + HIT_R) * (p.r + HIT_R)) { heal(S, t, p.heal, own); p.hit.push(t.i); S.ev.push(['hi', +p.x.toFixed(2), +p.y.toFixed(2), p.st, 1]); }
             continue;
           }
-          if (rad2(t.x - p.x, t.y - p.y) < (p.r + HIT_R) * (p.r + HIT_R)) {
+          let tx = t.x, ty = t.y;
+          if (p.rw) { rwPos(S, t, p.rw); tx = RWX; ty = RWY; }
+          if (rad2(tx - p.x, ty - p.y) < (p.r + HIT_R) * (p.r + HIT_R)) {
             let dmg = p.dmg;
             if (p.d1) { const f = clamp((p.range - p.left) / p.range, 0, 1); dmg = lerp(p.d0, p.d1, f); }
             const real = hurt(S, t, dmg, own, { kb: p.kb, dx: p.vx, dy: p.vy });
@@ -666,15 +690,17 @@
     }
     b.aim = inp.aim;
     if (S.time - b.lastAtk < .35) b.face = b.aim;
-    if (b.q.length) {
-      for (let k = b.q.length - 1; k >= 0; k--) {
-        const e = b.q[k];
-        if (S.time >= e.at - 1e-6) {
-          b.q.splice(k, 1);
-          if (b.stun > 0 || b.jmp) continue;
-          const an = e.ang + (e.jit ? (S.rng() - .5) * 2 * e.jit * DEG : 0), off = e.off || .45;
-          emitBullet(S, b, b.x + Math.cos(an) * off, b.y + Math.sin(an) * off, an, e.a, e.pierce ? { pierce: 1 } : null);
-        }
+    if (b.q.length) fireQ(S, b);
+  }
+  function fireQ(S, b) {
+    for (let k = b.q.length - 1; k >= 0; k--) {
+      const e = b.q[k];
+      if (S.time >= e.at - 1e-6) {
+        b.q.splice(k, 1);
+        if (b.stun > 0 || b.jmp) continue;
+        const an = e.ang + (e.jit ? (S.rng() - .5) * 2 * e.jit * DEG : 0), off = e.off || .45;
+        const p = emitBullet(S, b, b.x + Math.cos(an) * off, b.y + Math.sin(an) * off, an, e.a, e.pierce ? { pierce: 1 } : null);
+        p.rw = e.rw || 0; p.sh = e.sh || 0;
       }
     }
   }
@@ -682,10 +708,10 @@
   function stepInput(S, b) {
     if (!b.human) return;
     const I = b.in;
-    if (b.iq.length) { const q = b.iq.shift(); b.ack = q.s; b.lastIn = q; I.mx = q.mx; I.my = q.my; I.aim = q.aim; if (q.f > b.fc) { b.fc = q.f; I.fa = q.fa; I.fd = q.fd; I.fireNow = INBUF; } if (q.sc > b.sc) { b.sc = q.sc; I.sa = q.sa; I.sd = q.sd; I.supNow = INBUF; } }
+    if (b.iq.length) { const q = b.iq.shift(); b.ack = q.s; b.lastIn = q; I.mx = q.mx; I.my = q.my; I.aim = q.aim; if (q.f > b.fc) { b.fc = q.f; I.fa = q.fa; I.fd = q.fd; I.fireNow = INBUF; I.frw = q.vt > 0 ? clamp(S.tk - q.vt, 0, RW_MAX) : 0; } if (q.sc > b.sc) { b.sc = q.sc; I.sa = q.sa; I.sd = q.sd; I.supNow = INBUF; I.srw = q.vt > 0 ? clamp(S.tk - q.vt, 0, RW_MAX) : 0; } }
     if (!b.alive || b.bot) { I.fireNow = I.supNow = 0; return; }
-    if (I.supNow > 0) { if (trySuper(S, b, I.sa, I.sd)) I.supNow = 0; else I.supNow--; }
-    if (I.fireNow > 0) { if (tryAttack(S, b, I.fa, I.fd)) I.fireNow = 0; else I.fireNow--; }
+    if (I.supNow > 0) { b.rw = I.srw || 0; if (trySuper(S, b, I.sa, I.sd)) I.supNow = 0; else I.supNow--; b.rw = 0; }
+    if (I.fireNow > 0) { b.rw = I.frw || 0; if (tryAttack(S, b, I.fa, I.fd)) I.fireNow = 0; else I.fireNow--; b.rw = 0; }
   }
 
   function stepItems(S) {
@@ -811,8 +837,8 @@
     if (S.mode === 'gem') {
       S.gemT -= DT;
       if (S.gemT <= 0) { S.gemT = 6.5; if (S.items.length < 24) popItem(S, 0, M.mine[0], M.mine[1], S.rng() * TAU, 3 + S.rng() * 2); }
-      const g = [teamGems(S, 0), teamGems(S, 1)];
-      S.g = g;
+      const g = S.g || (S.g = [0, 0]);
+      g[0] = teamGems(S, 0); g[1] = teamGems(S, 1);
       for (let t = 0; t < 2; t++) {
         if (g[t] >= GEM_WIN) { if (S.cd[t] < 0) { S.cd[t] = GEM_CD; S.ev.push(['cd', t, 1]); } }
         else if (S.cd[t] >= 0) { S.cd[t] = -1; S.ev.push(['cd', t, 0]); }
@@ -872,16 +898,19 @@
         const dmg = 450 + Math.max(0, t - t0) * 6;
         for (const b of S.brs) if (b.alive && !b.jmp && hyp(b.x - P.cx, b.y - P.cy) > P.r) hurt(S, b, dmg, null, { poison: 1 });
       }
-      const al = S.brs.filter(b => b.alive);
-      if (al.length <= 1) {
-        al.forEach(b => { b.place = 1; });
-        endMatch(S, al.length ? al[0].i : -1);
+      let an = 0, lastB = null;
+      for (const b of S.brs) if (b.alive) { an++; lastB = b; }
+      if (an <= 1) {
+        if (lastB) lastB.place = 1;
+        endMatch(S, lastB ? lastB.i : -1);
       }
     }
   }
 
   function step(S, botFn) {
     S.tk++;
+    const HS = S.hist, hk = (S.tk - 1) & 15;
+    for (const b of S.brs) { HS.x[b.i * 16 + hk] = b.x; HS.y[b.i * 16 + hk] = b.y; }
     if (S.state === 3) { S.stT -= DT; for (const b of S.brs) { b.px = b.x; b.py = b.y; } if (S.stT <= 0) S.over = 1; return; }
     if (S.state === 0) {
       S.stT -= DT;
@@ -925,6 +954,7 @@
     d.brs.forEach((o, i) => { if (S.brs[i]) Object.assign(S.brs[i], JSON.parse(JSON.stringify(o))); });
     applyGone(S.M, d.gone);
     for (const [i, v] of d.hp) S.M.hp[i] = v;
+    for (const b of S.brs) { b.rw = 0; histFill(S, b); }
     S.ev = [];
   }
 
@@ -1282,6 +1312,7 @@
     K.danger = K.lob ? K.rng + K.rad + .3 : K.rng + .45 + K.w;
     K.ideal = a.k === 'fan' ? 2.3 : a.k === 'flame' ? 2.4 : a.k === 'punch' ? 1.5 : a.k === 'slash' ? 2.2 : K.lob ? K.rng - 1 : K.rng - .7;
     K.short = K.reach < 6.5;
+    K.amb = a.k === 'fan' ? 2.9 : a.k === 'flame' ? 3.3 : K.reach - .25;
     const s = d.sup;
     K.sup = s; K.supR = s.k === 'fan' ? s.range * .7 : s.k === 'burst' ? s.range : s.k === 'lob' || s.k === 'leap' || s.k === 'puddle' ? s.range + s.rad : s.k === 'hop' ? 3 : 0;
     return K;
@@ -1334,14 +1365,17 @@
     for (const e of S.brs) {
       if (e.team === b.team) continue;
       let m = H.mem[e.i];
-      if (!m) m = H.mem[e.i] = { x: e.x, y: e.y, t: -99, vis: false, since: 0, q: { e, m: null, x: 0, y: 0, d: 0, vis: false, K: KIT[e.br], age: 0, r: 1 } };
-      if (!e.alive) { m.t = -99; m.vis = false; continue; }
+      if (!m) m = H.mem[e.i] = { x: e.x, y: e.y, t: -99, vis: false, since: 0, am: BR[e.br].ammo, rt: 0, la: e.lastAtk, sr: e.supR, st: S.time, q: { e, m: null, x: 0, y: 0, d: 0, vis: false, K: KIT[e.br], age: 0, r: 1, am: 3 } };
+      const mxa = BR[e.br].ammo, sdt = S.time - m.st;
+      m.st = S.time;
+      if (!e.alive) { m.t = -99; m.vis = false; m.am = mxa; m.rt = 0; m.la = e.lastAtk; continue; }
+      if (m.am < mxa) { m.rt += sdt; const rl = BR[e.br].reload; while (m.rt >= rl && m.am < mxa) { m.rt -= rl; m.am++; } if (m.am >= mxa) m.rt = 0; }
       const v = canSee(S, b.team, e);
-      if (v) { if (!m.vis) m.since = S.time; m.x = e.x; m.y = e.y; m.t = S.time; }
-      m.vis = v;
+      if (v) { if (!m.vis) m.since = S.time; m.x = e.x; m.y = e.y; m.t = S.time; if (e.lastAtk > m.la && !(m.sr && !e.supR)) m.am = Math.max(0, m.am - 1); m.sr = e.supR; }
+      m.la = e.lastAtk; m.vis = v;
       const age = S.time - m.t;
       if (age > 3) continue;
-      const q = m.q; q.m = m; q.x = m.x; q.y = m.y; q.d = hyp(m.x - b.x, m.y - b.y); q.vis = v && !e.jmp && S.time - m.since >= H.react; q.age = age;
+      const q = m.q; q.m = m; q.x = m.x; q.y = m.y; q.d = hyp(m.x - b.x, m.y - b.y); q.vis = v && !e.jmp && S.time - m.since >= H.react; q.age = age; q.am = m.am;
       if (q.d < 19) E.push(q);
     }
   }
@@ -1479,6 +1513,7 @@
       if (t - e.lastHit < 1.5) r *= 1.25;
       if (e.supR) r *= .75;
       if (b.sup >= 1) r *= 1.2;
+      if (q.am < 1 && b.ammo >= 2) r *= 1.3; else if (b.ammo < 1 && q.am >= 2) r *= .8;
       if (e.hp <= burst) r = Math.max(r, 1.6);
       if (hpf < .45) r *= .7;
       if (e.i === H.banI && H.banT > t) r *= .6;
@@ -1486,6 +1521,23 @@
       const want = r - (alive <= 2 ? .8 : alive <= 4 ? 1 : t < 25 ? 1.45 : 1.15) + (e.i === H.tg && q.d < Math.max(K.reach, q.K.danger) + 1 ? .3 : 0);
       if (want > 0 && want / (q.d + 4) > ps) { ps = want / (q.d + 4); prey = q; }
       if (r < .8 && q.d < q.K.danger + 6.5 && 1 / r / (q.d + 1) > ts) { ts = 1 / r / (q.d + 1); thr = q; }
+    }
+    if (K.short && !K.lob && K.k !== 'punch' && !H.heal && t >= b.rev) {
+      let nq = null;
+      for (const q of E) if (q.d < 12 && (!nq || q.d < nq.d)) nq = q;
+      if (nq && nq.d > SIGHT + .4 && !(nq.e.hp <= burst && nq.d < K.reach + 2)) {
+        if (M.t[(b.y | 0) * M.W + (b.x | 0)] === T_BUSH) { H.ax = b.x; H.ay = b.y; H.amb = t + .45; H.focus = nq.e.i; return; }
+        if (H.ambT <= t) {
+          H.ambT = t + .8; H.ambB = null;
+          let bd = 4.2;
+          for (let j = (b.y | 0) - 4; j <= (b.y | 0) + 4; j++) for (let i = (b.x | 0) - 4; i <= (b.x | 0) + 4; i++) {
+            if (tileAt(M, i, j) !== T_BUSH) continue;
+            const qx = i + .5, qy = j + .5, dm = hyp(qx - b.x, qy - b.y);
+            if (dm < bd && hyp(qx - nq.x, qy - nq.y) > Math.max(SIGHT + 1.2, dm * 1.6) && hyp(qx - cx, qy - cy) < P.r - margin - 1.5 && walkClear(M, b.x, b.y, qx, qy, .38)) { bd = dm; H.ambB = [qx, qy]; }
+          }
+        }
+        if (H.ambB) { H.ax = H.ambB[0]; H.ay = H.ambB[1]; H.hurry = 1.6; H.care = true; return; }
+      }
     }
     if (thr && alive > 2 && !(prey && prey.d < 5)) {
       const l = thr.d || 1;
@@ -1542,12 +1594,13 @@
     for (const o of S.brs) if (o.alive && o.team === b.team && o !== b) A.push(o);
     let myPow = b.hp * K.dmg / K.rl, enPow = 0, nd = 99;
     for (const o of A) if (rad2(o.x - b.x, o.y - b.y) < 49) { const Ko = KIT[o.br]; myPow += o.hp * Ko.dmg / Ko.rl; }
-    for (const q of E) { if (q.d < 8.5) enPow += q.e.hp * (1 + .1 * q.e.cubes) * q.K.dmg / q.K.rl; if (q.d < nd) nd = q.d; }
+    for (const q of E) { if (q.d < 8.5) enPow += q.e.hp * (1 + .1 * q.e.cubes) * q.K.dmg / q.K.rl * (q.am < 1 ? .6 : 1); if (q.d < nd) nd = q.d; }
     const adv = clamp(enPow > 0 ? myPow * (1 + .1 * b.cubes) / enPow : 2.2, .2, 2.2);
     H.adv = adv; H.nd = nd;
     H.intent = HB_FIGHT; H.focus = -1; H.hurry = .5; H.zone = false; H.grab = false; H.must = false; H.care = false;
     if (S.mode === 'gem') hbPlanGem(S, b, H, hpf); else if (S.mode === 'ball') hbPlanBall(S, b, H); else if (S.mode === 'crown') hbPlanCrown(S, b, H); else hbPlanShow(S, b, H, hpf);
     const show = S.mode === 'show', ox = H.ax, oy = H.ay;
+    if (H.amb > S.time) { H.mvx = H.mvy = 0; H.hasDst = false; H.tg = H.focus; return; }
     let chased = false, expQ = null, ed = 99;
     for (const q of E) {
       if (!q.vis || q.d > q.K.danger + .3) continue;
@@ -1627,7 +1680,7 @@
     if (H.must) { fear *= .4; wA += .3; }
     if (H.care) fear *= 1.5;
     const cmK = K.short && !K.lob;
-    if (cmK && T && T.d < K.reach + 2 && hpf > .3 && (adv >= .75 && b.ammo >= 2 || T.e.hp <= kitDmg(K, K.ideal) * cm * b.ammo)) H.cmT = S.time + 1.2;
+    if (cmK && T && T.d < K.reach + 2 && hpf > .3 && (adv >= .75 && b.ammo >= 2 || T.e.hp <= kitDmg(K, K.ideal) * cm * b.ammo || T.am < 1 && b.ammo >= 1 && T.vis)) H.cmT = S.time + 1.2;
     const commit = cmK && H.cmT > S.time && !healing && H.intent !== HB_AVOID;
     if (commit) { fear *= .45; agg = Math.max(agg, 1.3); } else if (K.cls === 'assassin' && H.intent !== HB_HUNT) agg *= .45;
     if (b.shield > 0) fear *= .3;
@@ -1653,7 +1706,7 @@
         const dd = hyp(qx - q.x, qy - q.y), R = q.K.danger + (q.vis ? 0 : .6), sr = q.e.supR ? q.K.supR : 0;
         if (dd >= R + 1.2 && dd >= sr) continue;
         const los = losClear(M, qx, qy, q.x, q.y), ec = 1 + .1 * q.e.cubes;
-        if (dd < R + 1.2 && (los || q.K.lob)) s -= fear * Math.min(2.5, kitDmg(q.K, dd) * ec / q.K.rl / b.hp * 2.6) * (dd < R ? .45 + .55 * (1 - dd / R) : .2);
+        if (dd < R + 1.2 && (los || q.K.lob)) s -= fear * (q.am < 1 ? .4 : 1) * Math.min(2.5, kitDmg(q.K, dd) * ec / q.K.rl / b.hp * 2.6) * (dd < R ? .45 + .55 * (1 - dd / R) : .2);
         if (dd < sr) s -= fear * Math.min(2.2, supDmg(q.K, dd, los) * ec / b.hp) * .8;
       }
       if (T && agg > 0) {
@@ -1867,19 +1920,20 @@
     I.aim = ang;
     if (b.sup >= 1 && T.shield <= 0 && hbSuper(S, b, H, T, ang, dp, tvx, tvy)) return;
     if (b.ammo < 1 || b.cdT > 0 || T.shield > 0) return;
-    if (K.lob ? dp > K.rng + K.rad * .5 : dp > K.reach || K.short && dist > K.reach - .1) return;
+    if (H.amb > S.time && dist > K.amb && S.time >= b.rev) return;
+    if (K.lob ? dp > K.rng + K.rad * .5 : dp > K.reach + (K.k === 'fan' ? .2 : 0) || K.short && K.k !== 'fan' && dist > K.reach - .1) return;
     if (!K.lob && !(tl && losClear(M, b.x, b.y, px, py))) return;
     const room = T.stun > 0 ? 0 : Math.max(0, tf - .17) * tmv, hw = K.lob ? K.rad + .2 : K.w, ph = clamp(hw / (hw * .55 + room), 0, 1), dm = kitDmg(K, dp) * cm;
     const val = ph * dm / (K.dmg * cm) + (T.hp <= dm ? .25 : 0) + (hpf < .3 ? .2 : 0) + (dist < 3.2 ? .3 : 0) + (H.must ? .3 : 0);
     if (val < (b.ammo >= d.ammo ? .12 : b.ammo >= 2 ? .28 : .45)) return;
-    if (K.k === 'fan' && dist > 3.2 && dist < 5.2 && T.hp > dm && hpf > .3 && -((T.x - b.x) * (tvx - (b.x - b.px) / DT) + (T.y - b.y) * (tvy - (b.y - b.py) / DT)) / dist > 3) return;
-    const sig = (1.1 + 1.9 * Math.min(1, tsp / 4) * Math.min(1, tf / .3)) * DEG;
+    if (K.k === 'fan' && !KIT[T.br].short && dist > 3.2 && dist < 5.2 && T.hp > dm && hpf > .3 && -((T.x - b.x) * (tvx - (b.x - b.px) / DT) + (T.y - b.y) * (tvy - (b.y - b.py) / DT)) / dist > 3) return;
+    const sig = (.8 + 1.1 * Math.min(1, tsp / 4) * Math.min(1, tf / .3)) * DEG;
     tryAttack(S, b, ang + (Math.random() + Math.random() + Math.random() - 1.5) * 2 * sig, dp);
   }
   function hbAct(S, b) {
     const st = b.bot;
     let H = st.h;
-    if (!H) H = st.h = { t: Math.random() * .1, pid: 0, nt: 0, fl: 0, react: .16 + Math.random() * .07, mem: [], E: [], A: [], shots: [], lobs: [], path: [], pi: 0, rp: 0, gl: null, ax: b.x, ay: b.y, mvx: 0, mvy: 0, dx: b.x, dy: b.y, hasDst: false, tg: -1, focus: -1, intent: 0, hurry: .5, adv: 1, nd: 99, heal: false, safe: null, safeT: 0, zone: false, grab: false, must: false, box: null, cmT: 0, care: false, expT: 0, fbT: 0, chI: -1, chT: 0, chD: 0, banI: -1, banT: 0, boxK: -1, boxT: 0, boxOk: false, boxBad: -1, roam: null, kt: 0, jT: 0, js: 1, stT: 0, lx: b.x, ly: b.y, un: 0, ua: 0 };
+    if (!H) H = st.h = { t: Math.random() * .1, pid: 0, nt: 0, fl: 0, react: .16 + Math.random() * .07, mem: [], E: [], A: [], shots: [], lobs: [], path: [], pi: 0, rp: 0, gl: null, ax: b.x, ay: b.y, mvx: 0, mvy: 0, dx: b.x, dy: b.y, hasDst: false, tg: -1, focus: -1, intent: 0, hurry: .5, adv: 1, nd: 99, heal: false, safe: null, safeT: 0, zone: false, grab: false, must: false, box: null, cmT: 0, care: false, amb: 0, ambT: 0, ambB: null, expT: 0, fbT: 0, chI: -1, chT: 0, chD: 0, banI: -1, banT: 0, boxK: -1, boxT: 0, boxOk: false, boxBad: -1, roam: null, kt: 0, jT: 0, js: 1, stT: 0, lx: b.x, ly: b.y, un: 0, ua: 0 };
     if (S.state !== 1) { b.in.mx = b.in.my = 0; return; }
     H.t -= DT;
     if (S.proj.length) {
@@ -2072,7 +2126,7 @@
       const sideB = texBox(false), topB = texBox(true);
       boxesI = mkI(G.box, [0, 0, 1, 1, 0, 0].map(k => new THREE.MeshLambertMaterial({ map: k ? topB : sideB })), cnt[6], 1, 2);
       boxCapI = mkI(G.oct, new THREE.MeshLambertMaterial({ color: col('#e8b8ff'), emissive: col('#a040ff') }), cnt[6], 1, 0);
-      const bushI = mkI(G.ico, new THREE.MeshLambertMaterial({ map: texBush(), flatShading: true }), cnt[3], 4, 1);
+      const bushI = mkI(G.ico, new THREE.MeshLambertMaterial({ map: texBush() }), cnt[3], 4, 1);
       waterTex = texWater();
       waterTex.repeat.set(1, 1);
       const waterI = mkI(G.plane, new THREE.MeshBasicMaterial({ map: waterTex, transparent: true, opacity: .93 }), cnt[4], 1, 0);
@@ -2106,7 +2160,7 @@
       const g = new THREE.Group(); g.position.set(M.mine[0], 0, M.mine[1]);
       const cr = [[-.6, -.3, .38, '#c06bff'], [.5, -.5, .3, '#ff6ad5'], [.2, .6, .42, '#8a55ff'], [-.5, .5, .28, '#ff6ad5'], [0, 0, .5, '#d38aff']];
       for (const [x, z, s, c] of cr) {
-        const m = new THREE.Mesh(G.oct, new THREE.MeshLambertMaterial({ color: col(c), emissive: col(c).multiplyScalar(.55), flatShading: true }));
+        const m = new THREE.Mesh(G.oct, new THREE.MeshLambertMaterial({ color: col(c), emissive: col(c).multiplyScalar(.55) }));
         m.position.set(x, s * 1.1, z); m.scale.set(s * .6, s * 1.4, s * .6); m.rotation.y = x * 3; g.add(m);
       }
       mapG.add(g);
@@ -2134,11 +2188,11 @@
         items.push([x, y, kinds[R() < .35 ? 1 : 0], .7 + R() * .9, R() * TAU]);
       }
       const grp = new THREE.Group(); mapG.add(grp);
-      const rm = new THREE.MeshLambertMaterial({ color: col(hexMix(TH.wall, '#ffffff', .1)), flatShading: true });
-      const mk = (type, geo, matc, em) => { const arr = items.filter(i => i[2] === type); const m = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color: col(matc), flatShading: true, emissive: em ? col(em) : 0x000000 }), Math.max(1, arr.length)); arr.forEach((it, q) => { dummy.position.set(it[0], 0, it[1]); dummy.scale.set(1, 1, 1); dummy.rotation.set(0, it[4], 0); dummy.updateMatrix(); m.setMatrixAt(q, dummy.matrix); }); m.count = arr.length; grp.add(m); return arr; };
+      const rm = new THREE.MeshLambertMaterial({ color: col(hexMix(TH.wall, '#ffffff', .1)) });
+      const mk = (type, geo, matc, em) => { const arr = items.filter(i => i[2] === type); const m = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color: col(matc), emissive: em ? col(em) : 0x000000 }), Math.max(1, arr.length)); arr.forEach((it, q) => { dummy.position.set(it[0], 0, it[1]); dummy.scale.set(1, 1, 1); dummy.rotation.set(0, it[4], 0); dummy.updateMatrix(); m.setMatrixAt(q, dummy.matrix); }); m.count = arr.length; grp.add(m); return arr; };
       const rocks = items.filter(i => i[2] === 'rock'), rI = new THREE.InstancedMesh(G.dode, rm, Math.max(1, rocks.length));
       rocks.forEach((it, q) => { dummy.position.set(it[0], .3 * it[3], it[1]); dummy.scale.set(.6 * it[3], .45 * it[3], .6 * it[3]); dummy.rotation.set(0, it[4], 0); dummy.updateMatrix(); rI.setMatrixAt(q, dummy.matrix); }); rI.count = rocks.length; grp.add(rI);
-      const prop = (type, geo, matc, y0, sx, sy, em) => { const arr = items.filter(i => i[2] === type); const m = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color: col(matc), flatShading: true, emissive: em ? col(em) : 0x000000 }), Math.max(1, arr.length)); arr.forEach((it, q) => { dummy.position.set(it[0], y0 * it[3], it[1]); dummy.scale.set(sx * it[3], sy * it[3], sx * it[3]); dummy.rotation.set(0, it[4], 0); dummy.updateMatrix(); m.setMatrixAt(q, dummy.matrix); }); m.count = arr.length; grp.add(m); return m; };
+      const prop = (type, geo, matc, y0, sx, sy, em) => { const arr = items.filter(i => i[2] === type); const m = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color: col(matc), emissive: em ? col(em) : 0x000000 }), Math.max(1, arr.length)); arr.forEach((it, q) => { dummy.position.set(it[0], y0 * it[3], it[1]); dummy.scale.set(sx * it[3], sy * it[3], sx * it[3]); dummy.rotation.set(0, it[4], 0); dummy.updateMatrix(); m.setMatrixAt(q, dummy.matrix); }); m.count = arr.length; grp.add(m); return m; };
       prop('tree', G.ico, '#2f8f3a', 1.3, .9, 1.0); prop('tree', G.cyl, '#7a4a28', .45, .16, .9);
       prop('pine', G.cone, th === 'snow' ? '#e8f4ff' : '#2f7a4a', 1.4, .8, 2.2); prop('cactus', G.cyl, '#4f9a3a', .9, .22, 1.8); prop('crystal', G.oct, '#a766ff', .9, .35, 1.7, '#5a2aa0');
     }
@@ -2493,7 +2547,7 @@
       return turMeshes[i];
     }
 
-    const gemI = new THREE.InstancedMesh(G.oct, new THREE.MeshLambertMaterial({ color: col('#c27bff'), emissive: col('#7a30d0'), flatShading: true }), 48);
+    const gemI = new THREE.InstancedMesh(G.oct, new THREE.MeshLambertMaterial({ color: col('#c27bff'), emissive: col('#7a30d0') }), 48);
     const cubeI = new THREE.InstancedMesh(G.box, new THREE.MeshLambertMaterial({ color: col('#b46bff'), emissive: col('#6a20c0') }), 48);
     gemI.frustumCulled = false; cubeI.frustumCulled = false; gemI.count = 0; cubeI.count = 0; dyn.add(gemI, cubeI);
     const itemSh = new THREE.InstancedMesh(G.cir, new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false }), 96); itemSh.frustumCulled = false; dyn.add(itemSh);
@@ -3173,6 +3227,7 @@
 .gm-brawl-stars .bs-por .bs-feed{top:14em}
 .gm-brawl-stars .bs-por .bs-ctl{right:1.2em;bottom:2em}
 .gm-brawl-stars .bs-por .bs-menu{width:4.6em;height:4.6em;right:.7em;top:.7em}
+.gm-brawl-stars .bs-por .bs-menu::after{content:'';position:absolute;inset:-.9em -.7em -1.8em -.9em}
 .gm-brawl-stars .bs-por .bs-rsp{font-size:.8em}
 .gm-brawl-stars .bs-short .bs-logo{font-size:3.4em}
 .gm-brawl-stars .bs-short .bs-desc{display:none}
@@ -3208,10 +3263,16 @@
     const R = makeRenderer(api, V, { small: coarse });
     wrap.append(R.hudC);
     const AU = makeAudio(api);
-    const sv = Object.assign({ tro: {}, sel: 'bramble', mode: 'gem', maps: { gem: 0, ball: 0, show: 0, crown: 0 }, lvl: 1, st: { m: 0, w: 0, k: 0 } }, api.load() || {});
-    sv.maps = Object.assign({ gem: 0, ball: 0, show: 0, crown: 0 }, sv.maps);
-    if (!MODES[sv.mode]) sv.mode = 'gem'; sv.tro = sv.tro || {}; sv.st = Object.assign({ m: 0, w: 0, k: 0 }, sv.st);
-    if (BRI[sv.sel] == null) sv.sel = 'bramble';
+    const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k), obj = v => v && typeof v === 'object' && !Array.isArray(v) ? v : {};
+    const nint = (v, lo, hi, d) => { v = typeof v === 'number' || typeof v === 'string' ? Math.floor(+v) : NaN; return v >= lo && v <= hi ? v : d; };
+    let rs = null;
+    try { rs = api.load(); } catch (e) { rs = null; }
+    rs = obj(rs);
+    const sv = { tro: {}, sel: typeof rs.sel === 'string' && own(BRI, rs.sel) ? rs.sel : 'bramble', mode: typeof rs.mode === 'string' && own(MODES, rs.mode) ? rs.mode : 'gem', maps: {}, lvl: nint(rs.lvl, 0, LVLS.length - 1, 1), st: { m: 0, w: 0, k: 0 } };
+    const rt = obj(rs.tro), rm = obj(rs.maps), rq = obj(rs.st);
+    for (const d of BR) { const v = nint(own(rt, d.id) ? rt[d.id] : 0, 0, 1e7, 0); if (v) sv.tro[d.id] = v; }
+    for (const k in MAPS) sv.maps[k] = nint(own(rm, k) ? rm[k] : 0, 0, MAPS[k].length - 1, 0);
+    for (const k of ['m', 'w', 'k']) sv.st[k] = nint(own(rq, k) ? rq[k] : 0, 0, 1e9, 0);
     const persist = () => api.save(sv);
     const troTotal = () => { let n = 0; for (const k in sv.tro) n += sv.tro[k] | 0; return n; };
     api.label('Trophies'); api.score(troTotal());
@@ -3274,7 +3335,7 @@
       leaveMatchState();
       state = 'home'; hudShow(false);
       const s = setScr(el('<div class="bs-scr"></div>'));
-      s.innerHTML = `<div class="bs-top"><div class="bs-logo">BRAWL<b>STARS</b></div><div class="bs-pill ot">${CUP}<span class="tt">${troTotal()}</span></div></div><div class="bs-body"><div class="bs-mid"><div class="bs-lbl ot">Choose your brawler</div><div class="bs-grid">${gridHtml()}</div></div><div class="bs-right"><div class="bs-modes">${modeBtns()}</div><div class="bs-card" style="display:flex;flex-direction:column;gap:.5em"><div class="bs-mapnav"><button class="bs-btn s" data-a="mp" type="button">‹</button><span class="ot mn"></span><button class="bs-btn s" data-a="mn" type="button">›</button></div><div class="bs-desc mb"></div><div class="bs-seg">${LVLS.map((l, k) => `<button class="bs-btn s" data-l="${k}" type="button">${l}</button>`).join('')}</div></div><button class="bs-btn y big" data-a="play" type="button">PLAY</button><button class="bs-btn g" data-a="online" type="button">Play online</button></div></div>`;
+      s.innerHTML = `<div class="bs-top"><div class="bs-logo">BRAWL<b>STARS</b></div><div class="bs-pill ot">${CUP}<span class="tt">${troTotal()}</span></div></div><div class="bs-body"><div class="bs-mid"><div class="bs-lbl ot">Choose your fighter</div><div class="bs-grid">${gridHtml()}</div></div><div class="bs-right"><div class="bs-modes">${modeBtns()}</div><div class="bs-card" style="display:flex;flex-direction:column;gap:.5em"><div class="bs-mapnav"><button class="bs-btn s" data-a="mp" type="button">‹</button><span class="ot mn"></span><button class="bs-btn s" data-a="mn" type="button">›</button></div><div class="bs-desc mb"></div><div class="bs-seg">${LVLS.map((l, k) => `<button class="bs-btn s" data-l="${k}" type="button">${l}</button>`).join('')}</div></div><button class="bs-btn y big" data-a="play" type="button">PLAY</button><button class="bs-btn g" data-a="online" type="button">Play online</button></div></div>`;
       const left = leftCard(); s.querySelector('.bs-body').prepend(left);
       const grid = s.querySelector('.bs-grid'); fillGrid(grid);
       const upd = () => {
@@ -3324,13 +3385,13 @@
       const first = !Mt.counted; Mt.counted = true;
       const dt = first ? applyTrophies(res, me) : (Mt.dtro || 0); Mt.dtro = dt;
       let cls = 'd', big = 'DRAW', sub = '';
-      if (res.mode === 'show') { const pl = mp ? mp.place : 10; cls = pl === 1 ? 'w' : pl <= 3 ? 'd' : 'l'; big = pl === 1 ? 'VICTORY' : '#' + pl; sub = pl === 1 ? 'Last brawler standing' : 'You placed #' + pl + ' of ' + res.players.length; }
+      if (res.mode === 'show') { const pl = mp ? mp.place : 10; cls = pl === 1 ? 'w' : pl <= 3 ? 'd' : 'l'; big = pl === 1 ? 'VICTORY' : '#' + pl; sub = pl === 1 ? 'Last one standing' : 'You placed #' + pl + ' of ' + res.players.length; }
       else if (res.win >= 0) { const w = res.win === myTeam; cls = w ? 'w' : 'l'; big = w ? 'VICTORY' : 'DEFEAT'; }
       const mvp = res.players.find(q => q.mvp) || res.players[0];
       const rows = res.players.slice().sort((a, b) => res.mode === 'show' ? a.place - b.place : (a.team === b.team ? b.score - a.score : (a.team === myTeam ? -1 : 1)));
-      const col2 = res.mode === 'ball' ? ['Goals', p => p.pts] : res.mode === 'gem' ? ['Gems', p => p.pts] : res.mode === 'crown' ? ['Crown', p => p.pts + 's'] : ['Cubes', p => p.pts];
+      const col2 = res.mode === 'ball' ? ['Goals', p => p.pts] : res.mode === 'gem' ? ['Shards', p => p.pts] : res.mode === 'crown' ? ['Crown', p => p.pts + 's'] : ['Boosts', p => p.pts];
       const tr = rows.map(p => `<tr class="${p.i === me ? 'me ' : ''}t${res.mode === 'show' ? 1 : (p.team === myTeam ? 0 : 1)}"><td class="nm"><canvas width="64" height="64" data-b="${p.br}"></canvas>${esc(p.name)}${p.mvp ? ' <b>MVP</b>' : ''}</td><td>${res.mode === 'show' ? '#' + p.place : p.kills}</td><td>${Math.round(p.dmg)}</td><td>${Math.round(p.heal)}</td><td>${col2[1](p)}</td></tr>`).join('');
-      const s = setScr(el(`<div class="bs-scr bs-end"><div class="bs-eb ot ${cls}">${big}</div><div class="bs-es ot">${sub || esc(res.map)}</div><div class="bs-ebody"><div class="bs-card bs-mvp"><div class="tag">MVP</div><div class="bs-port"></div><div class="bs-nm ot" style="font-size:2.6em">${esc(mvp.name)}</div><div class="bs-role ot">${BR[mvp.br].name} · ${mvp.kills} KOs</div></div><div class="bs-card bs-tbl"><table><tr><th>Brawler</th><th>${res.mode === 'show' ? 'Place' : 'KOs'}</th><th>Damage</th><th>Healed</th><th>${col2[0]}</th></tr>${tr}</table></div></div><div class="bs-tro2 ot">${CUP}<span>${dt >= 0 ? '+' : ''}${dt}</span><span style="opacity:.8;font-size:.6em">${troTotal()} total</span></div><div class="bs-ebtn"></div></div>`));
+      const s = setScr(el(`<div class="bs-scr bs-end"><div class="bs-eb ot ${cls}">${big}</div><div class="bs-es ot">${sub || esc(res.map)}</div><div class="bs-ebody"><div class="bs-card bs-mvp"><div class="tag">MVP</div><div class="bs-port"></div><div class="bs-nm ot" style="font-size:2.6em">${esc(mvp.name)}</div><div class="bs-role ot">${BR[mvp.br].name} · ${mvp.kills} KOs</div></div><div class="bs-card bs-tbl"><table><tr><th>Fighter</th><th>${res.mode === 'show' ? 'Place' : 'KOs'}</th><th>Damage</th><th>Healed</th><th>${col2[0]}</th></tr>${tr}</table></div></div><div class="bs-tro2 ot">${CUP}<span>${dt >= 0 ? '+' : ''}${dt}</span><span style="opacity:.8;font-size:.6em">${troTotal()} total</span></div><div class="bs-ebtn"></div></div>`));
       s.querySelector('.bs-mvp .bs-port').append(portCanvas(mvp.br));
       s.querySelectorAll('canvas[data-b]').forEach(c => { const p = portOf(+c.dataset.b); if (p) c.getContext('2d').drawImage(p, 0, 0, 64, 64); });
       const eb = s.querySelector('.bs-ebtn');
@@ -3536,7 +3597,8 @@
       api.timeout(() => { try { wrap.focus({ preventScroll: true }); } catch (e) {} }, 50);
     }
 
-    function hostInfo(S) { return { st: S.state, stT: S.stT, left: S.left, ot: S.ot, sc: S.score, cd: S.cd, g: S.g || [0, 0], shown: S.shown, pr: S.poison ? S.poison.r : 0, tm: S.time, win: S.win }; }
+    const HINFO = { st: 0, stT: 0, left: 0, ot: false, sc: null, cd: null, g: null, shown: 0, pr: 0, tm: 0, win: -2 }, G00 = [0, 0];
+    function hostInfo(S) { const I = HINFO; I.st = S.state; I.stT = S.stT; I.left = S.left; I.ot = S.ot; I.sc = S.score; I.cd = S.cd; I.g = S.g || G00; I.shown = S.shown; I.pr = S.poison ? S.poison.r : 0; I.tm = S.time; I.win = S.win; return I; }
     const pool = (arr, pl, n) => { arr.length = n; for (let k = 0; k < n; k++) arr[k] = pl[k] || (pl[k] = {}); };
     const newView = (list, show) => ({ brs: list.map((p, i) => ({ i, name: p.name, br: p.br, team: p.team, mam: BR[p.br].ammo, x: 0, y: 0, face: 0, hp: 0, mhp: 1, alive: false, vis: false, mv: 0, bush: false, shield: 0, stun: 0, dash: false, jmp: 0, kind: '', gems: 0, cubes: 0, ball: false, ammo: 0, supR: false, sup: 0, resp: 0, crown: false, guard: 0, slow: 0 })), me: Mt.me, myTeam: Mt.myTeam, mode: Mt.mode, items: [], proj: [], ball: null, zones: [], turrets: [], poison: show ? { cx: Mt.M.W / 2, cy: Mt.M.H / 2, r: 99 } : null, vig: 0, pI: [], pP: [], pZ: [], pU: [], pB: { x: 0, y: 0, vx: 0, vy: 0, car: -1 } });
     function hostView(alpha) {
@@ -3694,7 +3756,7 @@
       }
       if (show) {
         const me = view.brs[Mt.me]; hs[1].hidden = true;
-        if (info.pr < 80 && !Mt.pz) { Mt.pz = 1; banner('Poison closing in', 'Stay inside the safe area', 2); AU.play('poison'); }
+        if (info.pr < 80 && !Mt.pz) { Mt.pz = 1; banner('Storm closing in', 'Stay inside the ring', 2); AU.play('poison'); }
       }
     }
     function updCtl(me) {
@@ -3718,7 +3780,7 @@
         case 'k': {
           AU.play('ko', ev[3], ev[4], 1);
           const v = brs[ev[1]], s = ev[2] >= 0 ? brs[ev[2]] : null;
-          if (v) feed(s ? `<b style="color:#ffd21f">${esc(s.name)}</b> KO'd ${esc(v.name)}` : `${esc(v.name)} was poisoned`);
+          if (v) feed(s ? `<b style="color:#ffd21f">${esc(s.name)}</b> KO'd ${esc(v.name)}` : `${esc(v.name)} was lost to the storm`);
           if (ev[1] === me) { Mt.kby = s ? s.name : ''; if (Mt.mode === 'show') banner('ELIMINATED', '', 2.2); }
           else if (ev[2] === me) AU.play('kc');
           break;
@@ -3732,7 +3794,7 @@
         case 'cx': AU.play('bounce'); break;
         case 'sr': if (ev[1] === me) AU.play('sup'); break;
         case 'go': banner('GO!', '', 1.2); AU.play('go'); break;
-        case 'cd': if (ev[2]) { banner(ev[1] === Mt.myTeam ? 'HOLD ON!' : 'STOP THEM!', 'Gem countdown', 1.6); AU.play('whistle'); } break;
+        case 'cd': if (ev[2]) { banner(ev[1] === Mt.myTeam ? 'HOLD ON!' : 'STOP THEM!', 'Shard countdown', 1.6); AU.play('whistle'); } break;
         case 'ot': banner('OVERTIME', '', 1.8); AU.play('whistle'); break;
         case 'goal': banner(ev[1] === Mt.myTeam ? 'GOAL!' : 'ENEMY GOAL', '', 2); AU.play('goal'); break;
         case 'bn': case 'bb': AU.play('bounce', ev[1], ev[2], .6); break;
@@ -3791,7 +3853,7 @@
 
 
     const NET = { bound: false, role: null, r: null, hum: [], mode: 'gem', mapIdx: 0, end: 0, phase: '', tryResume: api.net.invite === 'NEW', rdy: false, lastBr: -1 };
-    const NET_DELAY = 4, r1 = v => Math.round(v * 10) / 10, r2 = v => Math.round(v * 100) / 100, r3 = v => Math.round(v * 1000) / 1000;
+    const r1 = v => Math.round(v * 10) / 10, r2 = v => Math.round(v * 100) / 100, r3 = v => Math.round(v * 1000) / 1000;
     const isHost = () => NET.role === 'host';
     const netSendEv = (k, e) => { try { api.net.send({ t: 'ev', k, e }); } catch (x) {} };
     const netSendAll = m => { try { api.net.send(m); } catch (x) {} };
@@ -3810,7 +3872,7 @@
         m: [S.state, r2(S.stT), r1(S.left), S.ot ? 1 : 0, S.score[0], S.score[1], S.cd[0] < 0 ? -1 : r1(S.cd[0]), S.cd[1] < 0 ? -1 : r1(S.cd[1]), S.g ? S.g[0] : 0, S.g ? S.g[1] : 0, S.shown, S.poison ? r1(S.poison.r) : 0, r1(S.time), S.win],
         b: brs,
         i: S.items.map(it => [it.id, it.k, r2(it.x), r2(it.y), r2(it.age)]),
-        p: S.proj.map(p => [p.id, p.st, r2(p.x), r2(p.y), r1(p.vx), r1(p.vy), (p.lob ? 1 : 0) | (p.big ? 2 : 0), p.lob ? r2(Math.min(1, p.lob.t / p.lob.dur)) : 0, p.range ? r2(clamp((p.range - p.left) / p.range, 0, 1)) : 0]),
+        p: S.proj.map(p => { const a = [p.id, p.st, r2(p.x), r2(p.y), r1(p.vx), r1(p.vy), (p.lob ? 1 : 0) | (p.big ? 2 : 0), p.lob ? r2(Math.min(1, p.lob.t / p.lob.dur)) : 0, p.range ? r2(clamp((p.range - p.left) / p.range, 0, 1)) : 0]; if (p.sh && p.o === rb.i) a.push(p.sh); return a; }),
         z: S.zones.map(z => [z.id, r2(z.x), r2(z.y), r2(z.r), z.k]),
         u: S.turrets.map(u => [u.id, u.team, r2(u.x), r2(u.y), Math.round(u.hp), u.mhp, r2(u.ang)]),
         l: S.ball ? [r2(S.ball.x), r2(S.ball.y), r1(S.ball.vx), r1(S.ball.vy), S.ball.car] : 0
@@ -3821,10 +3883,10 @@
       for (const b of S.brs) if (b.human && b.pid && b.pid !== api.net.id) { try { api.net.sendTo(b.pid, makeSnap(S, b), true); } catch (x) {} }
     }
     function startMsg(i) {
-      return { t: 'start', mode: Mt.mode, map: Mt.def.id, seed: Mt.seed, pl: Mt.players.map(p => [p.name, p.br, p.team]), me: i, gone: Mt.S.M.gone.slice(), lvl: Mt.lvl };
+      return { t: 'start', mode: Mt.mode, map: Mt.def.id, seed: Mt.seed, pl: Mt.players.map(p => [p.name, p.br, p.team]), me: i, gone: Mt.S.M.gone.slice(), lvl: Mt.lvl, lc: 1 };
     }
     function saveRes() {
-      if (!Mt || Mt.role !== 'host' || !api.net.code) return;
+      if (!Mt || Mt.role !== 'host' || Mt.ended || !api.net.code) return;
       try {
         sessionStorage.setItem(resKey(), JSON.stringify({ v: 1, mode: Mt.mode, def: Mt.def.id, seed: Mt.seed, lvl: Mt.lvl, t: Date.now(), pl: Mt.players.map((p, i) => ({ name: p.name, br: p.br, team: p.team, human: !!p.human, pid: p.pid || null, h: i === Mt.me ? 1 : 0 })), sim: saveSim(Mt.S) }));
       } catch (x) {}
@@ -3872,7 +3934,7 @@
       NET.hum = r.players.map(p => ({ id: p.id, name: p.name, br: p.id === api.net.id ? selIdx() : -1, rdy: false }));
       const saved = NET.tryResume ? loadRes() : null;
       NET.tryResume = false;
-      if (saved && MAPS[saved.mode]) {
+      if (saved && MAPS[saved.mode] && saved.sim.core && saved.sim.core.state !== 3 && Array.isArray(saved.pl) && Array.isArray(saved.sim.brs) && saved.sim.brs.length === saved.pl.length) {
         NET.phase = 'resume';
         msgScreen('Resume game?', 'A match was running before you refreshed.', [['Resume game', () => hostResume(saved), 'y'], ['New game', () => { clearRes(); hostPick(); }, '']]);
         return;
@@ -3880,6 +3942,9 @@
       hostPick();
     }
     function hostResume(sv2) {
+      try { hostResume2(sv2); } catch (e) { clearRes(); leaveMatchState(true); hostPick(); }
+    }
+    function hostResume2(sv2) {
       const r = NET.r, def = MAPS[sv2.mode].find(d => d.id === sv2.def) || MAPS[sv2.mode][0];
       const pl = sv2.pl.map(p => {
         let human = false, pid = null;
@@ -3964,7 +4029,7 @@
           for (const q of m.i) {
             if (!Array.isArray(q) || q.length < 10 || !(q[0] > (b.lastS || 0))) continue;
             b.lastS = q[0];
-            const it = { s: q[0], mx: clamp(+q[1] || 0, -1, 1), my: clamp(+q[2] || 0, -1, 1), aim: +q[3] || 0, f: q[4] | 0, fa: +q[5] || 0, fd: +q[6] || 0, sc: q[7] | 0, sa: +q[8] || 0, sd: +q[9] || 0 };
+            const it = { s: q[0], mx: clamp(+q[1] || 0, -1, 1), my: clamp(+q[2] || 0, -1, 1), aim: +q[3] || 0, f: q[4] | 0, fa: +q[5] || 0, fd: +q[6] || 0, sc: q[7] | 0, sa: +q[8] || 0, sd: +q[9] || 0, vt: +q[10] || 0 };
             b.iq.push(it);
           }
           while (b.iq.length > 4) { const d = b.iq.shift(), n = b.iq[0]; if (d.f > n.f) { n.f = d.f; n.fa = d.fa; n.fd = d.fd; } if (d.sc > n.sc) { n.sc = d.sc; n.sa = d.sa; n.sd = d.sd; } }
@@ -3994,15 +4059,18 @@
       for (const k of m.gone || []) { M.t[k] = 0; M.hp[k] = 0; M.gone.push(k); }
       const players = m.pl.map(a => ({ name: a[0], br: a[1], team: a[2], human: true }));
       NET.phase = 'guest';
-      beginMatch({ role: 'guest', mode: m.mode, M, players, me: m.me, myTeam: players[m.me].team, def, seed: m.seed, lvl: m.lvl, pred: null, off: { x: 0, y: 0 }, pend: [], isq: 0, fc: 0, sc: 0, fa: 0, fd: 0, sa: 0, sd: 0, last3: [], gacc: 0, clkInit: false, usePred: false, myFace: null, faceT: 0, myMv: 0 });
+      beginMatch({ role: 'guest', mode: m.mode, M, players, me: m.me, myTeam: players[m.me].team, def, seed: m.seed, lvl: m.lvl, pred: null, off: { x: 0, y: 0 }, pend: [], isq: 0, fc: 0, sc: 0, fa: 0, fd: 0, sa: 0, sd: 0, last3: [], gacc: 0, clkInit: false, usePred: false, myFace: null, faceT: 0, myMv: 0, lc: !!m.lc, ps: null, pshots: [], pfs: [], pbuf: null, pcd: 0, psupS: -99, lagT: 8, evNow: [] });
     }
     function onEv(m) {
       if (!Mt || Mt.role !== 'guest') return;
-      for (const e of m.e) { if (e[0] === 'w') { Mt.M.t[e[1]] = 0; Mt.M.hp[e[1]] = 0; } else if (e[0] === 'tw') Mt.M.hp[e[1]] = e[2]; }
+      let own = 0;
+      for (const e of m.e) { if (e[0] === 'w') { Mt.M.t[e[1]] = 0; Mt.M.hp[e[1]] = 0; } else if (e[0] === 'tw') Mt.M.hp[e[1]] = e[2]; else if (e[0] === 'd' && e[5] === Mt.me && e[1] !== Mt.me && Mt.lc) { own++; Mt.evNow.push(e); } }
+      if (own) m.e = m.e.filter(e => !(e[0] === 'd' && e[5] === Mt.me && e[1] !== Mt.me));
       Mt.evq.push(m);
     }
     function g_takeEv(view) {
-      const q = Mt.evq;
+      const q = Mt.evq, en = Mt.evNow;
+      if (en.length) { for (const e of en) { const v = view.brs[e[1]]; if (v && v.vis) { e[3] = v.x; e[4] = v.y; } handleEv(e, view); } en.length = 0; }
       let n = 0;
       while (n < q.length && (q[n].k <= Mt.clk || q.length - n > 60)) { for (const e of q[n].e) handleEv(e, view); n++; }
       if (n) q.splice(0, n);
@@ -4012,6 +4080,8 @@
       const sn = Mt.snaps;
       if (sn.length && m.k <= sn[sn.length - 1].k) return;
       sn.push(m); if (sn.length > 12) sn.shift();
+      while (Mt.pfs.length && Mt.pfs[0] <= m.a) Mt.pfs.shift();
+      if (Mt.lc) predSync(m);
       const target = m.k - NET_DELAY;
       if (!Mt.clkInit || Math.abs(Mt.clk - target) > 10) { Mt.clk = target; Mt.clkInit = true; } else Mt.clk += (target - Mt.clk) * .12;
       const my = m.b[Mt.me]; if (!my || my.length < 10) return;
@@ -4027,21 +4097,83 @@
       if (!Mt.usePred || hyp(dx, dy) > 2) Mt.off = { x: 0, y: 0 }; else { Mt.off.x -= dx; Mt.off.y -= dy; }
       Mt.usePred = true;
     }
+    function predSim() {
+      return { pred: 1, mode: Mt.mode, M: Mt.M, brs: Mt.players.map((p, i) => ({ i, team: p.team, alive: false, jmp: null, x: 0, y: 0, shield: 0, crown: false, rev: 0, hp: 1, mhp: 1, slow: 0, stun: 0, cubes: 0, fc: 0, sc: 0, q: [] })), proj: [], held: [], turrets: [], zones: [], items: [], ball: null, ev: [], pid: 0, tk: 0, time: 0, state: 1, rng: Math.random, hist: null };
+    }
+    function predShot(a, ang, dist, sup) {
+      const P = Mt.ps || (Mt.ps = predSim()), me = P.brs[Mt.me];
+      me.x = Mt.pred.x; me.y = Mt.pred.y; me.fc = Mt.fc; me.sc = Mt.sc;
+      doAtk(P, me, a, ang, dist, sup);
+      Mt.pshots.push({ sh: sup ? -Mt.sc : Mt.fc, s: Mt.isq, seen: false, done: false, td: 0, exp: Mt.isq + 150 });
+    }
+    function predTick() {
+      const P = Mt.ps, me = P.brs[Mt.me], V = Mt.lastView, ps = Mt.pshots;
+      if (!ps.length && !P.proj.length && !P.held.length) return;
+      if (Mt.pred) { me.x = Mt.pred.x; me.y = Mt.pred.y; }
+      for (let i = 0; i < P.brs.length; i++) { const o = P.brs[i], v = V && V.brs[i]; o.alive = !!(v && v.vis && v.alive && i !== Mt.me && !(v.jmp > 0)); if (o.alive) { o.x = v.x; o.y = v.y; } }
+      P.turrets.length = 0;
+      if (V) for (const u of V.turrets) if (u.team !== Mt.myTeam) P.turrets.push({ id: u.id, team: u.team, x: u.x, y: u.y, life: 1 });
+      if (me.q.length) fireQ(P, me);
+      for (let k = P.proj.length - 1; k >= 0; k--) { const p = P.proj[k]; if (p.lob && p.lob.t + DT >= p.lob.dur) { p.x = p.px = p.lob.tx; p.y = p.py = p.lob.ty; p.lob.t = p.lob.dur; p.until = Mt.isq + Mt.lagT + 8; P.held.push(p); P.proj.splice(k, 1); } }
+      stepProj(P);
+      for (let k = P.held.length - 1; k >= 0; k--) if (Mt.isq > P.held[k].until) P.held.splice(k, 1);
+      P.ev.length = 0; P.zones.length = 0; P.tk++; P.time += DT;
+      for (const r of ps) if (!r.done) {
+        let live = false;
+        for (const p of P.proj) if (p.sh === r.sh) { live = true; break; }
+        if (!live) for (const e of me.q) if (e.sh === r.sh) { live = true; break; }
+        if (!live) { r.done = true; r.td = Mt.isq; }
+      }
+    }
+    function predKill(r) {
+      const P = Mt.ps, me = P.brs[Mt.me];
+      for (let k = P.proj.length - 1; k >= 0; k--) if (P.proj[k].sh === r.sh) P.proj.splice(k, 1);
+      for (const p of P.held) if (p.sh === r.sh) p.until = Math.min(p.until, Mt.isq + NET_DELAY);
+      for (let k = me.q.length - 1; k >= 0; k--) if (me.q[k].sh === r.sh) me.q.splice(k, 1);
+      r.done = true; r.td = Mt.isq;
+    }
+    function predSync(m) {
+      const ps = Mt.pshots, L = m.p;
+      Mt.lagT = clamp(Mt.isq - m.a, 0, 30) + NET_DELAY;
+      for (let k = ps.length - 1; k >= 0; k--) {
+        const r = ps[k];
+        let inL = false;
+        for (let j = 0; j < L.length; j++) if (L[j][9] === r.sh) { inL = true; break; }
+        if (inL) r.seen = true;
+        else if (!r.done && (r.seen || m.a > r.s + INBUF + 3)) predKill(r);
+        if (Mt.isq > r.exp) ps.splice(k, 1);
+      }
+    }
+    function predHides(sh) {
+      const ps = Mt.pshots;
+      for (let k = 0; k < ps.length; k++) if (ps[k].sh === sh) return !(ps[k].done && Mt.isq - ps[k].td > Mt.lagT + 4);
+      return false;
+    }
     function guestTick() {
       const inp = sampleInput(), f = takeFire(), s = takeSup(), now = performance.now();
       const mx = r2(inp.mx), my = r2(inp.my);
       Mt.isq++;
-      if (f) {
-        Mt.fc++; Mt.fa = f.a; Mt.fd = f.d; Mt.faceT = now; Mt.myFace = f.a;
-        const mv = Mt.lastView && Mt.lastView.brs[Mt.me];
-        if (mv && mv.alive && !mv.ball && mv.ammo >= 1 && !(mv.stun > 0) && now - Mt.locF > BR[mv.br].cd * 900) { Mt.locF = now; AU.atk(mv.br, false, mv.x, mv.y, true); R.burst(mv.x + Math.cos(f.a) * .7, .75, mv.y + Math.sin(f.a) * .7, 6, '#fff2b0', 3, .2, .15); if (R.models[Mt.me]) R.models[Mt.me].atk = 1; }
+      const mv = Mt.lastView && Mt.lastView.brs[Mt.me], free = !!mv && mv.alive && Mt.myAlive !== false && !(mv.stun > 0) && !mv.dash && !(mv.jmp > 0), canPred = Mt.lc && Mt.usePred && !!Mt.pred;
+      if (f) { Mt.fc++; Mt.fa = f.a; Mt.fd = f.d; Mt.faceT = now; Mt.myFace = f.a; Mt.pbuf = { a: f.a, d: f.d, n: INBUF }; }
+      if (Mt.pcd > 0) Mt.pcd -= DT;
+      if (Mt.pbuf) {
+        const q = Mt.pbuf;
+        if (free && !mv.ball && Mt.pcd <= 0 && mv.ammo - Mt.pfs.length >= 1) {
+          Mt.pbuf = null; Mt.pcd = BR[mv.br].cd; Mt.locF = now; Mt.pfs.push(Mt.isq);
+          AU.atk(mv.br, false, mv.x, mv.y, true); R.burst(mv.x + Math.cos(q.a) * .7, .75, mv.y + Math.sin(q.a) * .7, 6, '#fff2b0', 3, .2, .15); if (R.models[Mt.me]) R.models[Mt.me].atk = 1;
+          if (canPred && PRED_K[BR[mv.br].atk.k]) predShot(BR[mv.br].atk, q.a, q.d, false);
+        } else if (--q.n <= 0) Mt.pbuf = null;
       }
-      if (s) { Mt.sc++; Mt.sa = s.a; Mt.sd = s.d; Mt.faceT = now; Mt.myFace = s.a; }
+      if (s) {
+        Mt.sc++; Mt.sa = s.a; Mt.sd = s.d; Mt.faceT = now; Mt.myFace = s.a;
+        if (canPred && free && mv.supR && PRED_K[BR[mv.br].sup.k] && Mt.isq - Mt.psupS > Mt.lagT + 20) { Mt.psupS = Mt.isq; predShot(BR[mv.br].sup, s.a, s.d, true); }
+      }
       Mt.myMv = hyp(mx, my) > .05 ? 1 : 0;
       if (Mt.myMv && now - Mt.faceT > 450) Mt.myFace = Math.atan2(my, mx);
-      Mt.last3.push([Mt.isq, mx, my, r3(inp.aim), Mt.fc, r3(Mt.fa), r2(Mt.fd), Mt.sc, r3(Mt.sa), r2(Mt.sd)]);
+      Mt.last3.push([Mt.isq, mx, my, r3(inp.aim), Mt.fc, r3(Mt.fa), r2(Mt.fd), Mt.sc, r3(Mt.sa), r2(Mt.sd), r1(Mt.clk)]);
       if (Mt.last3.length > 3) Mt.last3.shift();
       if (Mt.usePred && Mt.pred) { snapMove(Mt.M, Mt.pred, mx, my, BR[Mt.players[Mt.me].br].spd); Mt.pend.push({ s: Mt.isq, mx, my }); if (Mt.pend.length > 90) Mt.pend.shift(); }
+      if (Mt.ps) predTick();
       try { api.net.send({ t: 'in', i: Mt.last3 }, !(f || s)); } catch (x) {}
     }
     const NOB = [0], GINFO = { st: 0, stT: 0, left: 0, ot: 0, sc: [0, 0], cd: [-1, -1], g: [0, 0], shown: 0, pr: 0, tm: 0, win: -2 }, GRES = { view: null, info: GINFO };
@@ -4071,17 +4203,28 @@
           if (Mt.usePred && Mt.pred && Mt.myAlive) { o.x = Mt.pred.x + Mt.off.x; o.y = Mt.pred.y + Mt.off.y; o.mv = Mt.myMv; if (Mt.myFace != null) o.face = Mt.myFace; }
         }
       }
-      const pa = A.p, pb = B.p, ia = A.i, ib = B.i, back = Math.max(0, B.k - Mt.clk) * DT;
-      let ai = 0;
-      pool(V.proj, V.pP, pb.length);
+      const pa = A.p, pb = B.p, ia = A.i, ib = B.i, back = Math.max(0, B.k - Mt.clk) * DT, hide = Mt.pshots.length > 0, PP = V.pP, PS = Mt.ps;
+      let ai = 0, np = 0;
       for (let j = 0; j < pb.length; j++) {
-        const q = pb[j], o = V.proj[j];
+        const q = pb[j];
         while (ai < pa.length && pa[ai][0] < q[0]) ai++;
-        const a = ai < pa.length && pa[ai][0] === q[0] ? pa[ai] : null;
+        if (hide && q.length > 9 && predHides(q[9])) continue;
+        const a = ai < pa.length && pa[ai][0] === q[0] ? pa[ai] : null, o = PP[np] || (PP[np] = {});
+        V.proj[np++] = o;
         o.id = q[0]; o.st = q[1]; o.vx = q[4]; o.vy = q[5]; o.lob = !!(q[6] & 1); o.big = (q[6] & 2) ? 1 : 0; o.life = q[8];
         if (a && A !== B) { o.x = lerp(a[2], q[2], f); o.y = lerp(a[3], q[3], f); } else { o.x = q[2] - q[4] * back; o.y = q[3] - q[5] * back; }
         o.f = a ? lerp(a[7], q[7], f) : q[7];
       }
+      if (PS && (PS.proj.length || PS.held.length)) {
+        const al = clamp(Mt.gacc / DT, 0, 1), n1 = PS.proj.length, n2 = n1 + PS.held.length;
+        for (let j = 0; j < n2; j++) {
+          const p = j < n1 ? PS.proj[j] : PS.held[j - n1], o = PP[np] || (PP[np] = {});
+          V.proj[np++] = o;
+          o.id = -p.id; o.st = p.st; o.vx = p.vx; o.vy = p.vy; o.lob = !!p.lob; o.big = p.big ? 1 : 0; o.life = p.range ? clamp((p.range - p.left) / p.range, 0, 1) : 0;
+          o.x = lerp(p.px, p.x, al); o.y = lerp(p.py, p.y, al); o.f = p.lob ? clamp((p.lob.t + (al - 1) * DT) / p.lob.dur, 0, 1) : 0;
+        }
+      }
+      V.proj.length = np;
       ai = 0;
       pool(V.items, V.pI, ib.length);
       for (let j = 0; j < ib.length; j++) {
@@ -4107,7 +4250,7 @@
       const host = isHost(), md = MODES[NET.mode];
       const mp = MAPS[NET.mode], def = host ? mp[NET.mapIdx % mp.length] : (mp.find(d => d.id === NET.mapId) || mp[0]);
       const s = setScr(el('<div class="bs-scr"></div>'));
-      s.innerHTML = `<div class="bs-top"><div class="bs-logo" style="font-size:3.4em;text-shadow:${OT}"><span class="pm">${md.name}</span><b class="pn">${def.name}</b></div><div class="bs-pill ot"><span class="pt">30</span>s</div></div><div class="bs-body"><div class="bs-mid"><div class="bs-lbl ot">Pick your brawler</div><div class="bs-grid">${gridHtml()}</div></div><div class="bs-right">${host ? `<div class="bs-modes">${modeBtns()}</div><div class="bs-card"><div class="bs-mapnav"><button class="bs-btn s" data-a="mp" type="button">‹</button><span class="ot mn"></span><button class="bs-btn s" data-a="mn" type="button">›</button></div></div>` : ''}<div class="bs-card" style="flex:1"><div class="bs-lbl ot">Players</div><div class="bs-pl"></div></div><button class="bs-btn y big" data-a="rdy" type="button">READY</button><button class="bs-btn r" data-a="leave" type="button">Leave</button></div></div>`;
+      s.innerHTML = `<div class="bs-top"><div class="bs-logo" style="font-size:3.4em;text-shadow:${OT}"><span class="pm">${md.name}</span><b class="pn">${def.name}</b></div><div class="bs-pill ot"><span class="pt">30</span>s</div></div><div class="bs-body"><div class="bs-mid"><div class="bs-lbl ot">Pick your fighter</div><div class="bs-grid">${gridHtml()}</div></div><div class="bs-right">${host ? `<div class="bs-modes">${modeBtns()}</div><div class="bs-card"><div class="bs-mapnav"><button class="bs-btn s" data-a="mp" type="button">‹</button><span class="ot mn"></span><button class="bs-btn s" data-a="mn" type="button">›</button></div></div>` : ''}<div class="bs-card" style="flex:1"><div class="bs-lbl ot">Players</div><div class="bs-pl"></div></div><button class="bs-btn y big" data-a="rdy" type="button">READY</button><button class="bs-btn r" data-a="leave" type="button">Leave</button></div></div>`;
       const left = leftCard(); s.querySelector('.bs-body').prepend(left);
       const grid = s.querySelector('.bs-grid'); fillGrid(grid);
       s._upd = () => { markSel(grid, selIdx()); fillBr(left, selIdx()); };
@@ -4160,7 +4303,7 @@
     title: 'Brawl Stars',
     category: 'Action',
     tint: '#ffb81f',
-    blurb: 'Pick a brawler and fight 3v3 in Gem Grab, Brawl Ball and Crown Rush or last alone in Showdown, with supers, bushes and bots.',
+    blurb: 'Pick a fighter and battle 3v3 in Shard Heist, Rush Ball and Crown Rush or go solo in Lone Wolf, with supers, bushes and bots.',
     help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · click or <kbd>Space</kbd> attack (aim with the mouse) · right click or <kbd>E</kbd> super · touch: left stick, drag the attack and super buttons to aim',
     better: 'high',
     width: 960,
