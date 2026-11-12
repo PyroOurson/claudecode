@@ -226,7 +226,7 @@
   const SAVE_V = 1;
 
 
-  const HIT_R = .5, BR_R = .4;
+  const HIT_R = .5, BR_R = .4, KB_MAX = 27;
   const SIGHT = 2.7, SPAWN_SHIELD = 2, RESPAWN = 3, GEM_WIN = 10, GEM_CD = 15, BALL_WIN = 2, INBUF = 8;
 
   function newBr(i, p, slot) {
@@ -302,6 +302,8 @@
   function knock(t, dx, dy, dist) {
     const l = hyp(dx, dy) || 1;
     t.kbx += dx / l * dist * 9; t.kby += dy / l * dist * 9;
+    const m = hyp(t.kbx, t.kby);
+    if (m > KB_MAX) { t.kbx *= KB_MAX / m; t.kby *= KB_MAX / m; }
     t.dash = null;
   }
   function heal(S, t, amt, src) {
@@ -1193,7 +1195,7 @@
     if (a.k === 'slash') { K.rng = a.dist; K.spd = a.dist / a.dur; K.w = a.r + .45; }
     K.reach = K.lob ? K.rng : K.rng + .45 + (K.melee ? K.w * .6 : 0);
     K.danger = K.lob ? K.rng + K.rad + .3 : K.rng + .45 + K.w;
-    K.ideal = a.k === 'fan' ? 2.3 : a.k === 'flame' ? 3 : a.k === 'punch' ? 1.5 : a.k === 'slash' ? 2.2 : K.lob ? K.rng - 1 : K.rng - .7;
+    K.ideal = a.k === 'fan' ? 2.3 : a.k === 'flame' ? 2.4 : a.k === 'punch' ? 1.5 : a.k === 'slash' ? 2.2 : K.lob ? K.rng - 1 : K.rng - .7;
     K.short = K.reach < 6.5;
     const s = d.sup;
     K.sup = s; K.supR = s.k === 'fan' ? s.range * .7 : s.k === 'burst' ? s.range : s.k === 'lob' || s.k === 'leap' || s.k === 'puddle' ? s.range + s.rad : s.k === 'hop' ? 3 : 0;
@@ -1272,11 +1274,12 @@
       for (let k = 0; k < E.length; k++) {
         const q = E[k], dd = hyp(qx - q.x, qy - q.y);
         if (dd < md) md = dd;
-        if (dd < 4.5 || dd < q.K.danger + 1.5 && (q.K.lob || losClear(M, qx, qy, q.x, q.y))) { bad = true; break; }
+        if (dd < 4.5) { bad = true; break; }
+        if (dd < q.K.danger + 1.5) { const nx = (qy - q.y) / dd * 1.4, ny = -(qx - q.x) / dd * 1.4; if (q.K.lob || losClear(M, qx, qy, q.x, q.y) || losClear(M, qx, qy, q.x + nx, q.y + ny) || losClear(M, qx, qy, q.x - nx, q.y - ny)) { bad = true; break; } }
         if (dd < dm * .8) c += 2;
       }
       if (bad) continue;
-      c -= md * .25;
+      c -= md * .4;
       if (c < bs) { bs = c; best = [qx, qy]; }
     }
     return best;
@@ -1368,7 +1371,8 @@
       if (b.sup >= 1) r *= 1.2;
       if (e.hp <= burst) r = Math.max(r, 1.6);
       if (hpf < .45) r *= .7;
-      const want = r - (alive <= 2 ? .8 : alive <= 4 ? 1 : t < 25 ? 1.45 : 1.15);
+      if (e.i === H.banI && H.banT > t) r *= .6;
+      const want = r - (alive <= 2 ? .8 : alive <= 4 ? 1 : t < 25 ? 1.45 : 1.15) + (e.i === H.tg && q.d < Math.max(K.reach, q.K.danger) + 1 ? .3 : 0);
       if (want > 0 && want / (q.d + 4) > ps) { ps = want / (q.d + 4); prey = q; }
       if (r < .8 && q.d < q.K.danger + 6.5 && 1 / r / (q.d + 1) > ts) { ts = 1 / r / (q.d + 1); thr = q; }
     }
@@ -1435,9 +1439,18 @@
     const show = S.mode === 'show', ox = H.ax, oy = H.ay;
     if (!H.heal) { if (hpf < (show ? .4 : .32) - (K.cls === 'tank' ? .06 : 0) && nd < 12 && (show || b.gems >= 2 || nd > 4.5 || adv < .5)) H.heal = true; }
     else if (hpf > (show ? .78 : .6) || nd > 13 && hpf > .45) H.heal = false;
-    let chased = false;
-    for (const q of E) if (q.vis && q.K.short && q.d < q.K.reach + .8 && q.K.mv >= K.mv - .25 && losClear(M, b.x, b.y, q.x, q.y)) chased = true;
-    const healing = H.heal && !b.ball && !H.zone && !H.must && !H.grab && !chased && (show || H.intent !== HB_AVOID);
+    let chased = false, expQ = null, ed = 99;
+    for (const q of E) {
+      if (!q.vis || q.d > q.K.danger + .3) continue;
+      const los = losClear(M, b.x, b.y, q.x, q.y);
+      if (q.K.short && q.d < q.K.reach + .8 && q.K.mv >= K.mv - .25 && los) chased = true;
+      if ((los || q.K.lob) && q.d < ed) { ed = q.d; expQ = q; }
+    }
+    if ((H.intent === HB_AVOID || H.heal && !H.zone) && expQ) H.expT += .12; else H.expT = Math.max(0, H.expT - .06);
+    if (H.expT > .45) { H.fbT = S.time + 1.6; H.expT = 0; }
+    const fb = (H.fbT > S.time || chased) && expQ && !b.ball && !(H.intent === HB_AVOID && b.gems >= 2);
+    if (fb && H.intent === HB_AVOID) { const l = expQ.d || 1, k = Math.max(0, expQ.d - K.reach + .6); H.intent = HB_FIGHT; H.focus = expQ.e.i; H.ax = b.x + (expQ.x - b.x) / l * k; H.ay = b.y + (expQ.y - b.y) / l * k; }
+    const healing = H.heal && !b.ball && !H.zone && !H.must && !H.grab && !fb && (show || H.intent !== HB_AVOID);
     if (healing) {
       if (H.safeT <= S.time) { H.safeT = S.time + .5; H.safe = hbSafe(S, b, H, ox, oy); }
       if (H.safe) { H.ax = H.safe[0]; H.ay = H.safe[1]; } else if (S.mode !== 'show') { const sp = M.sp[b.team][b.slot % 3]; H.ax = sp[0]; H.ay = sp[1]; }
@@ -1458,11 +1471,15 @@
     let T = null, tb = -1e9;
     for (const q of E) {
       const e = q.e;
-      if (q.age > 2 || e.jmp) continue;
+      if (q.age > 2 || e.jmp || e.i === H.banI && H.banT > S.time && q.d > K.reach - .5 && !H.must) continue;
       const s = (q.vis ? 1.5 : 0) - q.d * .22 + (1 - e.hp / e.mhp) * 1.5 + (e.i === H.focus ? 3 : 0) + (e.hp <= kitDmg(K, q.d) * (1 + .1 * b.cubes) ? 2 : 0) + e.gems * .25 + (e.ball ? 2 : 0) + (e.i === H.tg ? .5 : 0);
       if (s > tb) { tb = s; T = q; }
     }
     if (T && T.d > 15 && T.e.i !== H.focus) T = null;
+    if (T && K.short && !K.lob) {
+      if (T.e.i !== H.chI || T.d < K.reach - .3) { H.chI = T.e.i; H.chT = S.time; H.chD = T.d; }
+      else if (S.time - H.chT > 2.5) { if (T.d > H.chD - 1.2) { H.banI = T.e.i; H.banT = S.time + 5; } H.chT = S.time; H.chD = T.d; }
+    }
     H.tg = T ? T.e.i : -1;
     H.rp -= .12;
     if (!H.gl || hyp(H.gl[0] - H.ax, H.gl[1] - H.ay) > 1.2 || H.rp <= 0 || !H.path.length) {
@@ -1514,7 +1531,7 @@
     let jx = 0, jy = 0, juke = 0, expNow = false;
     for (const q of E) if (q.vis && q.d < q.K.danger + .5 && !q.K.melee && (q.K.lob || losClear(M, b.x, b.y, q.x, q.y))) {
       expNow = true;
-      if (!juke && q.d / (q.K.spd || 12) > .2) { juke = .45; jx = -(q.y - b.y) / (q.d || 1) * H.js; jy = (q.x - b.x) / (q.d || 1) * H.js; }
+      if (!juke && q.d / (q.K.spd || 12) > .12) { juke = q.d / (q.K.spd || 12) > .16 ? 1 : .6; jx = -(q.y - b.y) / (q.d || 1) * H.js; jy = (q.x - b.x) / (q.d || 1) * H.js; }
     }
     const bushW = healing ? 1.2 : K.short ? .45 : .12, pm = H.zone ? 2 : 1.2;
     const score = (qx, qy, ux, uy) => {
@@ -1633,21 +1650,20 @@
     switch (s.k) {
       case 'fan':
         if (s.bounce) { if (los && dist < s.range * .55 && (T.hp > K.dmg * .8 || near(T.x, T.y, 3) >= 2)) return trySuper(S, b, ang, dist); }
-        else if (dist < 4.3 && (T.hp > 900 || prize) && (los || dist < 2.5)) return trySuper(S, b, ang, dist);
+        else if (los && (dist < 2.7 && T.hp > 900 || dist < 4.3 && (prize || T.hp <= s.dmg * cm * 3 || hpf < .35))) return trySuper(S, b, ang, dist);
         break;
       case 'lob': case 'puddle': {
         const lx = T.x + tvx * s.dur * .85, ly = T.y + tvy * s.dur * .85, ld = hyp(lx - b.x, ly - b.y);
         if (ld > s.range + .4 || ld < 1.7) break;
-        const n = near(lx, ly, s.rad);
-        if (s.k === 'puddle' ? (T.hp > 800 && (n >= 1 && (dist < 5 || prize || T.stun > 0 || n >= 2))) : (n >= 2 || T.stun > .3 || prize || T.hp <= s.dmg * cm && T.hp > K.dmg * cm * .8)) return trySuper(S, b, Math.atan2(ly - b.y, lx - b.x), ld);
+        if (near(lx, ly, s.rad) >= 1 && T.hp > 800 && (s.k === 'lob' || dist < 5.5 || prize || T.stun > 0)) return trySuper(S, b, Math.atan2(ly - b.y, lx - b.x), ld);
         break;
       }
       case 'leap': {
         const lx = T.x + tvx * s.dur * .8, ly = T.y + tvy * s.dur * .8, ld = hyp(lx - b.x, ly - b.y);
-        if (ld > s.range || ld < 2.2 || !safeAt(lx, ly)) break;
+        if (ld > s.range || !safeAt(lx, ly)) break;
         const n = near(lx, ly, s.rad + .2), kill = T.hp <= s.dmg * cm + K.dmg * cm * .6;
         if (n >= 3 && H.adv < .6 && !kill) break;
-        if (kill || prize || n >= 2 || K.cls === 'tank' && H.adv > .85 && hpf > .45 || K.cls !== 'tank' && H.adv > .8 && T.hp < T.mhp * .6 && hpf > .4) return trySuper(S, b, Math.atan2(ly - b.y, lx - b.x), ld);
+        if (kill || prize || n >= 2 || H.adv > .65 && T.hp > 500) return trySuper(S, b, Math.atan2(ly - b.y, lx - b.x), Math.max(1.6, ld));
         break;
       }
       case 'burst':
@@ -1699,7 +1715,7 @@
       if (d.sup.k === 'aoeheal') {
         let need = 0, low = 0;
         for (const o of S.brs) if (o.alive && o.team === b.team && rad2(o.x - b.x, o.y - b.y) <= d.sup.rad * d.sup.rad) { need += Math.min(o === b ? d.sup.heal * d.sup.self : d.sup.heal, o.mhp - o.hp); if (o.hp < o.mhp * .45) low++; }
-        if (need > 2100 || low && need > 1000) { trySuper(S, b, b.face, 0); return; }
+        if (need > 2100 || low && need >= 850) { trySuper(S, b, b.face, 0); return; }
       } else if (hbEscape(S, b, H)) return;
     }
     let T = null, best = -1e9, tl = false;
@@ -1735,20 +1751,33 @@
     I.aim = ang;
     if (b.sup >= 1 && T.shield <= 0 && hbSuper(S, b, H, T, ang, dp, tvx, tvy)) return;
     if (b.ammo < 1 || b.cdT > 0 || T.shield > 0) return;
-    if (K.lob ? dp > K.rng + K.rad * .5 : dp > K.reach) return;
+    if (K.lob ? dp > K.rng + K.rad * .5 : dp > K.reach || K.short && dist > K.reach - .1) return;
     if (!K.lob && !(tl && losClear(M, b.x, b.y, px, py))) return;
     const room = T.stun > 0 ? 0 : Math.max(0, tf - .17) * tmv, hw = K.lob ? K.rad + .2 : K.w, ph = clamp(hw / (hw * .55 + room), 0, 1), dm = kitDmg(K, dp) * cm;
     const val = ph * dm / (K.dmg * cm) + (T.hp <= dm ? .25 : 0) + (hpf < .3 ? .2 : 0) + (dist < 3.2 ? .3 : 0) + (H.must ? .3 : 0);
-    if (val < (b.ammo >= d.ammo ? .16 : b.ammo >= 2 ? .4 : .58)) return;
-    const sig = (1.3 + 2.4 * Math.min(1, tsp / 4) * Math.min(1, tf / .3)) * DEG;
+    if (val < (b.ammo >= d.ammo ? .12 : b.ammo >= 2 ? .28 : .45)) return;
+    if (K.k === 'fan' && dist > 3.2 && dist < 5.2 && T.hp > dm && hpf > .3 && -((T.x - b.x) * (tvx - (b.x - b.px) / DT) + (T.y - b.y) * (tvy - (b.y - b.py) / DT)) / dist > 3) return;
+    const sig = (1.1 + 1.9 * Math.min(1, tsp / 4) * Math.min(1, tf / .3)) * DEG;
     tryAttack(S, b, ang + (Math.random() + Math.random() + Math.random() - 1.5) * 2 * sig, dp);
   }
   function hbAct(S, b) {
     const st = b.bot;
     let H = st.h;
-    if (!H) H = st.h = { t: Math.random() * .1, react: .16 + Math.random() * .07, mem: [], E: [], A: [], shots: [], lobs: [], path: [], pi: 0, rp: 0, gl: null, ax: b.x, ay: b.y, mvx: 0, mvy: 0, dx: b.x, dy: b.y, hasDst: false, tg: -1, focus: -1, intent: 0, hurry: .5, adv: 1, nd: 99, heal: false, safe: null, safeT: 0, zone: false, grab: false, must: false, box: null, cmT: 0, care: false, boxK: -1, boxT: 0, boxOk: false, boxBad: -1, roam: null, kt: 0, jT: 0, js: 1, stT: 0, lx: b.x, ly: b.y, un: 0, ua: 0 };
+    if (!H) H = st.h = { t: Math.random() * .1, pid: 0, nt: 0, fl: 0, react: .16 + Math.random() * .07, mem: [], E: [], A: [], shots: [], lobs: [], path: [], pi: 0, rp: 0, gl: null, ax: b.x, ay: b.y, mvx: 0, mvy: 0, dx: b.x, dy: b.y, hasDst: false, tg: -1, focus: -1, intent: 0, hurry: .5, adv: 1, nd: 99, heal: false, safe: null, safeT: 0, zone: false, grab: false, must: false, box: null, cmT: 0, care: false, expT: 0, fbT: 0, chI: -1, chT: 0, chD: 0, banI: -1, banT: 0, boxK: -1, boxT: 0, boxOk: false, boxBad: -1, roam: null, kt: 0, jT: 0, js: 1, stT: 0, lx: b.x, ly: b.y, un: 0, ua: 0 };
     if (S.state !== 1) { b.in.mx = b.in.my = 0; return; }
     H.t -= DT;
+    if (S.proj.length) {
+      const pl = S.proj;
+      for (let k = pl.length - 1; k >= 0 && pl[k].id > H.pid; k--) {
+        const p = pl[k];
+        if (p.team === b.team || p.lob) continue;
+        const rx = b.x - p.x, ry = b.y - p.y, sp = hyp(p.vx, p.vy) || 1, al = (rx * p.vx + ry * p.vy) / sp;
+        if (al > 0 && al < p.left + 1 && Math.abs(rx * p.vy - ry * p.vx) / sp < 1.6) { if (!H.nt) H.nt = S.time + .135; if (p.tur < 0) H.fl = S.time + KIT[S.brs[p.o].br].cd + .05; break; }
+      }
+      H.pid = pl[pl.length - 1].id;
+    }
+    if (H.nt && S.time >= H.nt) { H.nt = 0; H.t = 0; }
+    if (H.fl && S.time >= H.fl) { H.fl = 0; H.js = -H.js; H.jT = .3 + Math.random() * .4; H.t = 0; }
     if (H.t <= 0) { H.t = .1 + Math.random() * .04; hbThink(S, b, H); }
     hbSteer(S, b, H);
     hbShoot(S, b, H);
