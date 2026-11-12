@@ -9,10 +9,22 @@
 @media (max-width:900px) and (min-height:521px),(max-width:900px) and (orientation:portrait){.am-gamebox.theater .play-stage{display:block;min-height:0;padding:clamp(8px,2vw,22px);height:auto!important;overflow:visible;background:#fbfbfd}
 .am-gamebox.theater .play-frame{margin:0 auto;transform:none!important;--goff:250px;will-change:auto}}
 @media (max-width:760px){.pgrid{grid-template-columns:minmax(0,1fr)}
-.setgrid{grid-template-columns:minmax(0,1fr)}
-.snav{flex-direction:row;overflow-x:auto;position:static;padding-bottom:4px}
-.snav button{white-space:nowrap}
+.setgrid{grid-template-columns:minmax(0,1fr);gap:10px}
+.se-side{display:contents}
+.snav{flex-direction:row;gap:6px;overflow-x:auto;scrollbar-width:none;position:sticky;top:0;z-index:7;margin:0 -16px;padding:8px 16px;background:var(--bg)}
+.snav::-webkit-scrollbar{display:none}
+.snav button{flex:none;white-space:nowrap;gap:7px;padding:8px 13px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font-size:14px}
+.snav svg{width:16px;height:16px}
+.snav button[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.se-main{gap:22px}
+.pane .scard{padding:4px 16px}
+.pane .srw{gap:12px}
+.seg.lg button{padding:7px 11px}
+.seg.lg svg{display:none}
+.mc .dz-b input{flex-basis:100%;max-width:none}
+.mh{position:relative}
 .mh-sp{width:0}
+.se-saved{position:absolute;right:16px;top:50%;margin-top:-10px}
 .ckbar{flex-direction:column;align-items:stretch;gap:12px}
 .ckbtns{justify-content:stretch}
 .ckbtns .btn2{flex:1}
@@ -56,13 +68,13 @@
 .gd-card{grid-template-columns:minmax(0,360px) minmax(0,1fr)}}
 @media (max-width:900px){.hbar .center{max-width:none}
 .shelf-row{grid-auto-columns:calc((100% - 2 * 18px) / 3)}
-.ginfo{grid-template-columns:minmax(0,1fr)}
-.gi-me{grid-template-columns:repeat(4,minmax(0,1fr))}}
+}
 @media (max-width:640px){.gd-card{grid-template-columns:minmax(0,1fr)}
 .gd-art .art{aspect-ratio:16/9;height:auto}
 .gd-txt{padding:16px 16px 18px;gap:6px}
 .gd-go{height:40px}
-.gi-me{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.gi-stats{width:100%}
+.gi-me{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:520px){.brand{font-size:22px}
 .rnd{padding:0 13px}
 .rnd span{display:none}
@@ -72,7 +84,7 @@
 .shelves{gap:30px}
 .shelf-row{grid-auto-columns:calc((100% - 12px) / 2.25);gap:12px}
 .sh-all{font-size:13px}
-.ginfo{padding:16px;margin-top:16px}
+.ginfo{padding:14px 16px;margin-top:14px}
 .play-side #pCtl{display:none}
 .play-side .icon{width:34px}
 .play-side .am-pstat{padding:0 6px}
