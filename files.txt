@@ -32,6 +32,7 @@ ClaudeScripts/gameplay-site/source/BUILD.md
 ClaudeScripts/gameplay-site/source/design/gameplay-home.html
 ClaudeScripts/gameplay-site/source/design/lobby.webp
 ClaudeScripts/gameplay-site/source/design/party-lobby.html
+ClaudeScripts/gameplay-site/source/notes/analytics_audit_round19.md
 ClaudeScripts/gameplay-site/source/notes/fps_report.md
 ClaudeScripts/gameplay-site/source/notes/stats_audit.md
 ClaudeScripts/gameplay-site/source/rl/RLBRIEF.md
@@ -514,6 +515,7 @@ ClaudeScripts/gameplay-site/source/w/new/fit.js
 ClaudeScripts/gameplay-site/source/w/new/gcss.css
 ClaudeScripts/gameplay-site/source/w/new/i18n.js
 ClaudeScripts/gameplay-site/source/w/new/i18n_add.json
+ClaudeScripts/gameplay-site/source/w/new/i18n_admin.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_ideas.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_settings.json
 ClaudeScripts/gameplay-site/source/w/new/ideas.css
@@ -774,6 +776,7 @@ ClaudeScripts/gameplay-site/source/w/supabase/round15_admin.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round16_moderation.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round17_platform.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round18_ideas.sql
+ClaudeScripts/gameplay-site/source/w/supabase/round19_analytics.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round5_admin.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round6.sql
 ClaudeScripts/gameplay-site/source/w/supabase/round7_owner.sql
