@@ -136,6 +136,35 @@ Status of each. "Verified" means a browser test on staging reproduces the scenar
 | 26 | Typing and read nudges can be spoofed | Owner decision (private realtime channels), with the other security items |
 | 27 | Arrow keys and Space were blocked on drop-downs inside the lobby | Fixed, not exercised |
 
+## Points for a lawyer
+
+The three documents are honest descriptions of what the site does; they are not legal advice and nothing in them makes the site "impossible to sue". A lawyer should look at these before they go live.
+
+About the site and its operator:
+
+1. Who the operator is. The documents say "a private individual identified on the Service as its creator" and give no legal name or address. If that person is a minor, a parent or guardian may have to be the contracting party and data controller, and data protection and imprint rules may require a name and address.
+2. Governing law and courts (Monaco, kept from the old text, with carve-outs for consumers and minors), and the citation of the Monaco data protection law.
+3. Minors. Under-13s are excluded with no age check and no parental consent mechanism. Open questions: ages of digital consent, validity of contracts with minors, whether the site counts as directed to children given its school audience, whether an impact assessment is required.
+4. Third-party names and artwork. Many games are listed under the titles of commercial games and some covers come from official artwork. The Terms state this plainly and claim no licence; no disclaimer cures it.
+5. Consumer and platform rules: liability cap, unilateral changes, termination without cause, deletion after long inactivity (a reserved right, not implemented), no participation in consumer dispute bodies.
+6. The licence over submitted ideas is perpetual and free, including from minors, yet users can now delete their ideas.
+7. No data protection officer, no EU or UK representative, no Monaco formalities; the policy says so.
+
+About data:
+
+8. Staff can read direct messages, including those of minors (logged once per 30 minutes per conversation), and in-game party text is logged for moderation.
+9. Per-account visit summaries and the "at risk of leaving" list in the dashboard are individual-level use of analytics on minors, with no age check.
+10. Google Fonts loads before any consent choice, and the location lookup (GeoJS, country and region kept, city and provider discarded in the browser) has no contract behind it.
+11. Analytics events held in memory before the consent choice are sent after "Accept".
+12. Hiding online status does not hide it from staff; the game name is still sent unless the second switch is also off.
+13. Diagnostics on a test account also record what other players in the same party send (packets, chat) and possibly their network addresses.
+14. A deleted file's database row goes at once, but the stored copy may persist at the storage provider and in back-ups for an unknown time.
+15. Retention: reports, the admin log, ratings, ideas and direct messages have no time limit. The periods the policy states for analytics, chat log, online history and diagnostics are only enforced once automatic deletion is switched on (GOLIVE step 1), and "old values were deleted" is only true once the optional clean-up has run.
+16. Bug reports store the full browser identification string.
+17. Processors and transfers: Supabase, Google, Cloudflare (the relay sees session tokens), the public PeerJS server, the Open Relay TURN service, GeoJS, Firebase Hosting, GitHub Pages. Whether contracts and transfer safeguards exist for each.
+18. The data export leaves out direct messages and file contents.
+19. Cookie consent: whether the "functional" items are exempt, the 13-month validity, consent by minors, and the Terms tick-box sharing a notice with the cookie choice.
+
 ## Could not test
 
 - Real TURN relays, real NATs, VPNs and school firewalls: this sandbox has no direct UDP or TCP sockets to the internet. The fallback order was tested by blocking the signalling server and WebRTC in the browser.
