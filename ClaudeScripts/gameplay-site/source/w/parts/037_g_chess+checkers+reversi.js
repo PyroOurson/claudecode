@@ -1,7 +1,7 @@
 
 (() => {
   'use strict';
-  const DIFFS = ['Easy', 'Normal', 'Hard'];
+  const DIFFS = ['Easy', 'Normal', 'Hard', 'Hardest'];
   const SZ = 560, FR = 24, SQ = 64, INF = 1e9, WIN = 100000;
   const now = () => performance.now();
   const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
@@ -56,7 +56,7 @@
       [-20, -10, -10, -5, -5, -10, -10, -20, -10, 0, 0, 0, 0, 0, 0, -10, -10, 0, 5, 5, 5, 5, 0, -10, -5, 0, 5, 5, 5, 5, 0, -5, 0, 0, 5, 5, 5, 5, 0, -5, -10, 5, 5, 5, 5, 5, 0, -10, -10, 0, 5, 0, 0, 0, 0, -10, -20, -10, -10, -5, -5, -10, -10, -20]];
     const K_MID = [-30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30, -20, -30, -30, -40, -40, -30, -30, -20, -10, -20, -20, -20, -20, -20, -20, -10, 20, 20, 0, 0, 0, 0, 20, 20, 20, 30, 10, 0, 0, 10, 30, 20];
     const K_END = [-50, -40, -30, -20, -20, -30, -40, -50, -30, -20, -10, 0, 0, -10, -20, -30, -30, -10, 20, 30, 30, 20, -10, -30, -30, -10, 30, 40, 40, 30, -10, -30, -30, -10, 30, 40, 40, 30, -10, -30, -30, -10, 20, 30, 30, 20, -10, -30, -30, -30, 0, 0, 0, 0, -30, -30, -50, -30, -30, -30, -30, -30, -30, -50];
-    const PASSED = [0, 10, 14, 22, 38, 62, 95, 0];
+    const PASSED = [0, 10, 14, 22, 38, 62, 95, 0], MOBW = [0, 0, 4, 4, 2, 1], MOB0 = [0, 0, 4, 6, 6, 13], KATW = [0, 0, 5, 5, 8, 12];
     const TBL = [];
     for (let p = -5; p <= 5; p++) {
       const t = new Int16Array(128);
@@ -327,6 +327,43 @@
           if ((kbf <= 2 || kbf >= 5) && (kb >> 4) >= 6) ks -= shield(kb, -16, -1) * 6;
           s += (ks * ph) / 24 | 0;
         }
+        if (T.xe) {
+          let mob = 0, kat = 0;
+          for (let sq = 0; sq < 120; sq++) {
+            if (sq & 0x88) { sq += 7; continue; }
+            const p = b[sq], a = p < 0 ? -p : p;
+            if (a < 2 || a > 5) continue;
+            const us = p > 0 ? 1 : -1, ek = us > 0 ? kb : kw, ef = ek & 7, er = ek >> 4;
+            let cnt = 0, hit = 0;
+            if (a === 2) {
+              for (let i = 0; i < 8; i++) {
+                const to = sq + KN[i];
+                if (to & 0x88 || b[to] * us > 0) continue;
+                cnt++;
+                const df = (to & 7) - ef, dr = (to >> 4) - er;
+                if (df * df < 2 && dr * dr < 2) hit++;
+              }
+            } else {
+              const D = a === 3 ? DG : a === 4 ? OR : KG, nd = a === 5 ? 8 : 4;
+              for (let i = 0; i < nd; i++) {
+                const dd = D[i];
+                let to = sq + dd;
+                while (!(to & 0x88)) {
+                  const q = b[to];
+                  if (q * us > 0) break;
+                  cnt++;
+                  const df = (to & 7) - ef, dr = (to >> 4) - er;
+                  if (df * df < 2 && dr * dr < 2) hit++;
+                  if (q) break;
+                  to += dd;
+                }
+              }
+            }
+            mob += us * MOBW[a] * (cnt - MOB0[a]);
+            kat += us * hit * KATW[a];
+          }
+          s += mob + (kat * ph / 24 | 0);
+        }
         if (ph < 10 && Math.abs(mw - mb) >= 200) {
           const w = mw > mb ? 1 : -1, lk = w === 1 ? kb : kw, lf = lk & 7, lr = lk >> 4;
           const kd = Math.abs((kw & 7) - (kb & 7)) + Math.abs((kw >> 4) - (kb >> 4));
@@ -432,9 +469,15 @@
             if (f === 0 || (f === 1 && v >= beta) || (f === 2 && v <= alpha)) return v;
           }
         }
-        const pv = beta - alpha > 1;
+        const pv = beta - alpha > 1, X = T.x && !pv && !chk && Math.abs(beta) < WIN / 2;
+        let st = 0;
+        if (X) {
+          st = evaluate();
+          if (d <= 6 && st - 85 * d >= beta) return st;
+          if (!ttm && d >= 5) d--;
+        }
         if (!pv && !chk && nullOk && d >= 3 && Math.abs(beta) < WIN / 2 && hasPieces(side)) {
-          const st = evaluate();
+          if (!X) st = evaluate();
           if (st >= beta) {
             makeNull();
             const v = -ab(d - 1 - (d > 6 ? 3 : 2), -beta, -beta + 1, ply + 1, false);
@@ -453,10 +496,11 @@
           if (illegal()) { unmake(); continue; }
           n++;
           const quiet = !uC[sp - 1] && !(m >> 14 & 7), gc = inCheck();
+          if (X && quiet && !gc && n > 1 && d <= 3 && best > -WIN / 2 && (n > 5 + 3 * d * d || st + 110 * d + 60 <= alpha)) { unmake(); continue; }
           let v;
           if (n === 1) v = -ab(d - 1, -beta, -alpha, ply + 1, true);
           else {
-            const r = d >= 3 && n > 3 && quiet && !chk && !gc ? (n > 9 ? 2 : 1) : 0;
+            const r = d >= 3 && n > 3 && quiet && !chk && !gc ? (T.x ? (n > 14 && d > 6 ? 3 : n > 6 ? 2 : 1) : n > 9 ? 2 : 1) : 0;
             v = -ab(d - 1 - r, -alpha - 1, -alpha, ply + 1, true);
             if (v > alpha && r) v = -ab(d - 1, -alpha - 1, -alpha, ply + 1, true);
             if (v > alpha && v < beta) v = -ab(d - 1, -beta, -alpha, ply + 1, true);
@@ -511,7 +555,7 @@
         T.book = false;
         if (ms.length === 1) return ms[0];
         if (o.blunder && Math.random() < o.blunder) return ms[Math.random() * ms.length | 0];
-        T.t0 = now(); T.stop = false; T.nodes = 0; T.depth = 0; T.tl = o.time; T.max = o.nodes || 4e7;
+        T.t0 = now(); T.stop = false; T.nodes = 0; T.depth = 0; T.tl = o.time; T.max = o.nodes || 4e7; T.x = !!o.x; T.xe = !!o.xe;
         const ss = [], ti = hA & TMASK;
         order(ms, ss, 0, TK[ti] === hB ? TMv[ti] : 0);
         const idx = ms.map((_, i) => i).sort((a, c) => ss[c] - ss[a]), root = idx.map(i => ms[i]), rs = root.map(() => -INF);
@@ -658,10 +702,88 @@
       return best;
     }
     const think = o => deepen(T, moves(), o, make, unmake, ab);
+    let H = null;
+    function think2(ms) {
+      const root = moves();
+      if (root.length < 2) return root[0] || null;
+      if (!H) {
+        const r = rng(90210), n = 1 << 19, zs = () => Int32Array.from({ length: 322 }, () => r() * 4294967296 | 0);
+        H = { zA: zs(), zB: zs(), k: new Int32Array(n), v: new Int32Array(n), d: new Int8Array(n), f: new Int8Array(n), m: new Int16Array(n), hist: new Int32Array(4096), mask: n - 1 };
+      }
+      const { zA, zB, k: TK, v: TV, d: TD, f: TF, m: TMv, hist, mask } = H;
+      hist.fill(0);
+      T.t0 = now(); T.stop = false; T.nodes = 0; T.tl = ms; T.depth = 0;
+      const code = m => m.path[0] | m.path[m.path.length - 1] << 6 | m.caps.length << 12;
+      function ab2(d, alpha, beta, ply) {
+        if ((++T.nodes & 255) === 0 && now() - T.t0 > T.tl) T.stop = true;
+        if (T.stop) return 0;
+        const ms2 = moves();
+        if (!ms2.length) return -WIN + ply;
+        if (quiet >= 80) return 0;
+        const capt = ms2[0].caps.length > 0;
+        if ((d <= 0 && !capt) || ply > 60) return evaluate();
+        if (ms2.length === 1) d++;
+        let ka = side > 0 ? zA[320] : zA[321], kb = side > 0 ? zB[320] : zB[321];
+        for (let i = 0; i < 64; i++) { const p = b[i]; if (p) { const z = i * 5 + p + 2; ka ^= zA[z]; kb ^= zB[z]; } }
+        const ti = ka & mask, dd = d < 0 ? 0 : d;
+        let tm = -1;
+        if (TK[ti] === kb) {
+          tm = TMv[ti];
+          if (TD[ti] >= dd && quiet < 60) {
+            let v = TV[ti];
+            if (v > WIN / 2) v -= ply; else if (v < -WIN / 2) v += ply;
+            const f = TF[ti];
+            if (f === 0 || (f === 1 && v >= beta) || (f === 2 && v <= alpha)) return v;
+          }
+        }
+        if (ms2.length > 1) {
+          for (const m of ms2) { const c = code(m); m.s = c === tm ? 1e9 : m.caps.length * 1e7 + hist[c & 4095]; }
+          ms2.sort((a, c) => c.s - a.s);
+        }
+        let best = -INF, bm = -1, n = 0;
+        const a0 = alpha;
+        for (const m of ms2) {
+          n++;
+          make(m);
+          let v;
+          if (n > 3 && d >= 3 && !capt) { v = -ab2(d - 2, -alpha - 1, -alpha, ply + 1); if (v > alpha && !T.stop) v = -ab2(d - 1, -beta, -alpha, ply + 1); }
+          else v = -ab2(d - 1, -beta, -alpha, ply + 1);
+          unmake();
+          if (T.stop) return 0;
+          if (v > best) {
+            best = v; bm = code(m);
+            if (v > alpha) { alpha = v; if (v >= beta) { if (!capt) hist[bm & 4095] += dd * dd + 1; break; } }
+          }
+        }
+        TK[ti] = kb; TD[ti] = dd; TMv[ti] = bm; TF[ti] = best >= beta ? 1 : best > a0 ? 0 : 2;
+        TV[ti] = best > WIN / 2 ? best + ply : best < -WIN / 2 ? best - ply : best;
+        return best;
+      }
+      let best = root[0];
+      const rs = root.map(() => 0);
+      for (let d = 1; d <= 60; d++) {
+        let alpha = -INF, cur = null;
+        for (let i = 0; i < root.length; i++) {
+          make(root[i]);
+          const v = -ab2(d - 1, -INF, -alpha, 1);
+          unmake();
+          if (T.stop) break;
+          rs[i] = v;
+          if (v > alpha) { alpha = v; cur = root[i]; }
+        }
+        if (cur) best = cur;
+        if (T.stop) break;
+        T.depth = d; T.score = alpha;
+        const bi = root.indexOf(cur);
+        if (bi > 0) { root.splice(bi, 1); root.unshift(cur); }
+        if (Math.abs(alpha) > WIN / 2 || now() - T.t0 > T.tl * .6) break;
+      }
+      return best;
+    }
     const snap = () => ({ b: b.slice(), side, quiet });
     const restore = s => { b.set(s.b); side = s.side; quiet = s.quiet; stack.length = 0; };
     reset();
-    return { reset, moves, make, unmake, think, snap, restore, evaluate, T, at: i => b[i], set: (i, v) => { b[i] = v; }, get side() { return side; }, set side(v) { side = v; }, get quiet() { return quiet; } };
+    return { reset, moves, make, unmake, think, think2, snap, restore, evaluate, T, at: i => b[i], set: (i, v) => { b[i] = v; }, get side() { return side; }, set side(v) { side = v; }, get quiet() { return quiet; } };
   }
 
   const RV_DR = [-1, -1, -1, 0, 0, 1, 1, 1], RV_DC = [-1, 0, 1, -1, 1, -1, 0, 1];
@@ -741,6 +863,172 @@
     const restore = s => { b.set(s.b); side = s.side; stack.length = 0; };
     reset();
     return { reset, moves, make, unmake, count, think, snap, restore, T, at: i => b[i], get side() { return side; } };
+  }
+
+  function rvCore() {
+    const D = [-11, -10, -9, -1, 1, 9, 10, 11], b = new Int8Array(100), fs = new Int8Array(2048), now = () => performance.now();
+    const Q = [[100, -20, 10, 5], [-20, -50, -2, -2], [10, -2, 1, 0], [5, -2, 0, 0]], PW = new Int16Array(100), ORD = [];
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const sq = r * 10 + c + 11; PW[sq] = Q[Math.min(r, 7 - r)][Math.min(c, 7 - c)]; ORD.push(sq); }
+    ORD.sort((x, y) => PW[y] - PW[x]);
+    const EDGE = [[11, 1, 10], [18, -1, 10], [81, 1, -10], [88, -1, -10]], XSQ = [22, 27, 72, 77], CSQ = [[12, 21], [17, 28], [82, 71], [87, 78]];
+    let sd = 88172645;
+    const r32 = () => { sd ^= sd << 13; sd ^= sd >>> 17; sd ^= sd << 5; return sd | 0; };
+    const ZA = new Int32Array(200), ZB = new Int32Array(200), FA = new Int32Array(100), FB = new Int32Array(100), SA = r32(), SB = r32();
+    for (let i = 0; i < 200; i++) { ZA[i] = r32(); ZB[i] = r32(); }
+    for (let i = 0; i < 100; i++) { FA[i] = ZA[i] ^ ZA[i + 100]; FB[i] = ZB[i] ^ ZB[i + 100]; }
+    const TS = 1 << 20, TM = TS - 1, TK = new Int32Array(TS), TV = new Int16Array(TS), TD = new Int8Array(TS), TF = new Int8Array(TS), TMv = new Int8Array(TS);
+    const ML = [], MS = [];
+    for (let i = 0; i < 80; i++) { ML.push(new Int8Array(40)); MS.push(new Int32Array(40)); }
+    let diff = 0, emp = 0, hA = 0, hB = 0, sp = 0, nodes = 0, t0 = 0, tl = 0, stop = false;
+    function put(sq, s) {
+      const o = -s, s0 = sp;
+      for (let k = 0; k < 8; k++) {
+        const d = D[k];
+        let x = sq + d;
+        if (b[x] !== o) continue;
+        x += d;
+        while (b[x] === o) x += d;
+        if (b[x] !== s) continue;
+        x -= d;
+        while (x !== sq) { b[x] = s; fs[sp++] = x; hA ^= FA[x]; hB ^= FB[x]; x -= d; }
+      }
+      const n = sp - s0;
+      if (!n) return 0;
+      const z = s > 0 ? sq : sq + 100;
+      b[sq] = s; emp--; diff += s * (2 * n + 1); hA ^= ZA[z]; hB ^= ZB[z];
+      return n;
+    }
+    function take(sq, s, n) {
+      const z = s > 0 ? sq : sq + 100;
+      b[sq] = 0; emp++; diff -= s * (2 * n + 1); hA ^= ZA[z]; hB ^= ZB[z];
+      for (let k = 0; k < n; k++) { const x = fs[--sp]; b[x] = -s; hA ^= FA[x]; hB ^= FB[x]; }
+    }
+    function can(sq, s) {
+      const o = -s;
+      for (let k = 0; k < 8; k++) { const d = D[k]; let x = sq + d; if (b[x] !== o) continue; x += d; while (b[x] === o) x += d; if (b[x] === s) return true; }
+      return false;
+    }
+    function mob(s) { let n = 0; for (let i = 0; i < 64; i++) { const sq = ORD[i]; if (!b[sq] && can(sq, s)) n++; } return n; }
+    function evaluate(s, my) {
+      const op = mob(-s);
+      let fr = 0, cr = 0, st = 0, xs = 0;
+      for (let i = 0; i < 64; i++) {
+        const sq = ORD[i], c = b[sq];
+        if (c && (!b[sq - 11] || !b[sq - 10] || !b[sq - 9] || !b[sq - 1] || !b[sq + 1] || !b[sq + 9] || !b[sq + 10] || !b[sq + 11])) fr += c;
+      }
+      for (let k = 0; k < 4; k++) {
+        const e = EDGE[k], c = b[e[0]];
+        if (c) {
+          cr += c;
+          let x = e[0] + e[1];
+          while (b[x] === c) { st += c; x += e[1]; }
+          x = e[0] + e[2];
+          while (b[x] === c) { st += c; x += e[2]; }
+        } else xs += b[XSQ[k]] * 3 + b[CSQ[k][0]] + b[CSQ[k][1]];
+      }
+      return (cr * 90 + st * 22 - xs * 16 - fr * 6 + diff * (emp < 14 ? 2 : -1)) * s + (my - op) * 10 + ((my - op) * 60 / (my + op + 2) | 0) + (emp & 1 ? 5 : -5);
+    }
+    const fin = d => d > 0 ? 20000 + d * 100 : d < 0 ? -20000 + d * 100 : 0;
+    function ab(s, d, al, be, ply, passed) {
+      if ((++nodes & 1023) === 0 && now() - t0 > tl) stop = true;
+      if (stop) return 0;
+      const ml = ML[ply], ms = MS[ply];
+      let m = 0;
+      for (let i = 0; i < 64; i++) { const sq = ORD[i]; if (!b[sq] && can(sq, s)) ml[m++] = sq; }
+      if (!m) return passed ? fin(diff * s) : -ab(-s, d, -be, -al, ply + 1, true);
+      if (d > emp) d = emp;
+      if (d <= 0) return evaluate(s, m);
+      const kA = s > 0 ? hA : hA ^ SA, kB = s > 0 ? hB : hB ^ SB, ti = kA & TM, a0 = al;
+      let tm = 0;
+      if (TK[ti] === kB) {
+        tm = TMv[ti];
+        if (TD[ti] >= d) { const v = TV[ti], f = TF[ti]; if (f === 0 || (f === 1 && v >= be) || (f === 2 && v <= al)) return v; }
+      }
+      if (m > 1) for (let i = 0; i < m; i++) {
+        const sq = ml[i];
+        if (sq === tm) ms[i] = 1 << 20;
+        else if (d < 3) ms[i] = PW[sq];
+        else { const n = put(sq, s); ms[i] = PW[sq] - 30 * mob(-s); take(sq, s, n); }
+      }
+      let best = -32000, bm = ml[0];
+      for (let i = 0; i < m; i++) {
+        let bi = i;
+        for (let j = i + 1; j < m; j++) if (ms[j] > ms[bi]) bi = j;
+        const sq = ml[bi];
+        ml[bi] = ml[i]; ms[bi] = ms[i]; ml[i] = sq;
+        const n = put(sq, s);
+        let v;
+        if (i === 0) v = -ab(-s, d - 1, -be, -al, ply + 1, false);
+        else { v = -ab(-s, d - 1, -al - 1, -al, ply + 1, false); if (v > al && v < be && !stop) v = -ab(-s, d - 1, -be, -al, ply + 1, false); }
+        take(sq, s, n);
+        if (stop) return 0;
+        if (v > best) { best = v; bm = sq; if (v > al) { al = v; if (v >= be) break; } }
+      }
+      if (TK[ti] !== kB || TD[ti] <= d) { TK[ti] = kB; TD[ti] = d; TMv[ti] = bm; TV[ti] = best; TF[ti] = best >= be ? 1 : best > a0 ? 0 : 2; }
+      return best;
+    }
+    function think(cells, side, ms, full, wld) {
+      b.fill(2); diff = 0; emp = 0; hA = 0; hB = 0; sp = 0;
+      for (let i = 0; i < 64; i++) { const sq = (i >> 3) * 10 + (i & 7) + 11, c = cells[i]; b[sq] = c; if (c) { diff += c; const z = c > 0 ? sq : sq + 100; hA ^= ZA[z]; hB ^= ZB[z]; } else emp++; }
+      const root = ORD.filter(sq => !b[sq] && can(sq, side)), out = sq => ((sq / 10 | 0) - 1) * 8 + sq % 10 - 1;
+      if (!root.length) return { m: -1, d: 0, v: 0, nodes: 0 };
+      if (root.length === 1) return { m: out(root[0]), d: 0, v: 0, nodes: 0 };
+      t0 = now(); stop = false; nodes = 0;
+      const solve = emp <= (full || 16) ? 2 : emp <= (wld || 19) ? 1 : 0;
+      tl = solve ? ms * .25 : ms;
+      const run = (d, lo, hi) => {
+        let al = lo, cur = 0, curV = -32000;
+        for (let i = 0; i < root.length; i++) {
+          const sq = root[i], n = put(sq, side);
+          let v;
+          if (i === 0) v = -ab(-side, d - 1, -hi, -al, 1, false);
+          else { v = -ab(-side, d - 1, -al - 1, -al, 1, false); if (v > al && v < hi && !stop) v = -ab(-side, d - 1, -hi, -al, 1, false); }
+          take(sq, side, n);
+          if (stop) break;
+          if (v > curV) { curV = v; cur = sq; if (v > al) al = v; if (v >= hi) break; }
+        }
+        return [cur, curV];
+      };
+      let best = root[0], depth = 0, val = 0;
+      const front = c => { root.splice(root.indexOf(c), 1); root.unshift(c); };
+      for (let d = 1; d <= emp; d++) {
+        const [c, v] = run(d, -32000, 32000);
+        if (stop) break;
+        best = c; val = v; depth = d;
+        front(c);
+      }
+      if (solve && depth < emp) {
+        tl = ms; stop = false;
+        const [c, v] = run(emp, -1, 1), sure = !stop;
+        if (c && (stop ? v > 0 : v >= 0)) { best = c; val = v; depth = emp; front(c); }
+        if (sure && v && solve === 2) {
+          const [c2, v2] = v > 0 ? run(emp, 0, 32000) : run(emp, -32000, 1);
+          if (c2 && !stop) { best = c2; val = v2; depth = emp; }
+        }
+      }
+      return { m: out(best), d: depth, v: val, nodes, exact: depth >= emp };
+    }
+    return { think };
+  }
+  function brain(src) {
+    let w = null, url = '', id = 0;
+    const pend = new Map();
+    return {
+      ask(msg, local, done) {
+        if (w === null) {
+          try {
+            url = URL.createObjectURL(new Blob([src()], { type: 'text/javascript' }));
+            w = new Worker(url);
+            w.onmessage = e => { const f = pend.get(e.data.id); pend.delete(e.data.id); if (f) f(e.data.m); };
+            w.onerror = () => { const x = w; w = false; try { x.terminate(); } catch (er) {} const list = [...pend.values()]; pend.clear(); list.forEach(f => f(undefined)); };
+          } catch (e) { w = false; }
+        }
+        if (!w) return done(local());
+        pend.set(++id, m => done(m === undefined ? local() : m));
+        w.postMessage({ id, ...msg });
+      },
+      kill() { pend.clear(); if (w) { try { w.terminate(); } catch (e) {} } if (url) URL.revokeObjectURL(url); w = false; }
+    };
   }
 
   function rr(c, x, y, w, h, r) {
@@ -879,6 +1167,7 @@ ${p} .seg{display:flex;padding:3px;border-radius:999px;background:var(--sunk)}
 ${p} .seg button{flex:1;min-width:0;border:0;background:none;padding:8px 4px;border-radius:999px;font:800 12.5px/1 var(--sans);color:var(--muted);cursor:pointer;white-space:nowrap;transition:background .2s,color .2s,box-shadow .2s}
 ${p} .seg button:hover{color:var(--ink)}
 ${p} .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(31,29,43,.08),0 4px 10px -4px rgba(31,29,43,.3)}
+${p} .seg[data-k="diff"] button{padding:8px 1px;font-size:11.5px;letter-spacing:-.2px}
 ${p} .pcs{display:flex;flex-direction:column;gap:8px}
 ${p} .pc{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:var(--sunk);border:2px solid transparent;transition:border-color .25s,background .25s,box-shadow .25s}
 ${p} .pc.on{background:#fff;border-color:var(--accent);box-shadow:0 8px 18px -12px rgba(108,92,231,.9)}
@@ -911,6 +1200,7 @@ ${p} .seg button.tb{display:none}
 ${p}.touch .seg button.tb{display:block}
 ${p} .elo{display:flex;flex-direction:column;gap:4px;padding:8px 10px 6px;border-radius:14px;background:var(--sunk)}
 ${p} .elo-h{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:11.5px;font-weight:800;color:var(--muted)}
+${p} .elo-h span{white-space:nowrap}
 ${p} .elo-h b{font-size:12.5px;font-weight:900;color:var(--ink);white-space:nowrap}
 ${p} .elo input{width:100%;accent-color:var(--accent);margin:2px 0;cursor:pointer}
 ${p} .elo-s{display:flex;justify-content:space-between;font-size:9.5px;font-weight:800;color:var(--soft)}
@@ -929,7 +1219,8 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
   ${p} .main>canvas{width:min(100%,560px);min-width:0}
   ${p} .side{max-width:none;width:100%;flex-flow:row wrap}
   ${p} .side>*{flex:1 1 100%;min-width:0}
-  ${p} .side>.seg[data-k="diff"],${p} .side>.seg[data-k="side"]{flex-basis:40%}
+  ${p} .side>.seg[data-k="diff"]{flex-basis:50%}
+  ${p} .side>.seg[data-k="side"]{flex-basis:40%}
   ${p} .side>.st{flex:1 1 0;align-self:center}
   ${p} .side>.st.turn{flex:0 1 auto;margin:0 auto}
   ${p} .pcs{flex-direction:row}
@@ -957,11 +1248,11 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       + '<div class="st" role="status"></div><div class="hist"></div><div class="btns"><button class="g-btn ghost sm"></button><button class="g-btn sm"></button><button class="g-btn ghost sm" hidden></button><button class="g-btn ghost sm" hidden></button></div>');
     main.append(side);
     if (o.elo) {
-      const ew = el('div', 'elo', `<div class="elo-h"><span>AI strength</span><b></b></div><input type="range" min="400" max="2400" step="50" aria-label="AI strength in Elo"><div class="elo-s"><i>400</i><i>Beginner</i><i>Club</i><i>Master</i><i>2400</i></div>`);
+      const ew = el('div', 'elo', `<div class="elo-h"><span>AI strength</span><b></b></div><input type="range" min="400" max="2400" step="50" aria-label="AI strength in Elo"><div class="elo-s"><i>400</i><i>Beginner</i><i>Club</i><i>Master</i><i>Hardest</i></div>`);
       ew.dataset.only = 'CPU';
       side.children[0].after(ew);
       const rg = ew.querySelector('input'), lb = ew.querySelector('b');
-      const show = () => { lb.textContent = opt.elo + ' Elo · ' + o.elo(opt.elo); };
+      const show = () => { lb.textContent = opt.elo + (opt.elo >= 2400 ? ' · ' : ' Elo · ') + o.elo(opt.elo); };
       rg.value = opt.elo; show();
       rg.addEventListener('input', () => { opt.elo = +rg.value; show(); paint(); });
       rg.addEventListener('change', () => { api.save({ ...opt }); api.sfx('tick'); });
@@ -1385,9 +1676,9 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     let i = 0;
     while (i < ELO_PTS.length - 2 && e > ELO_PTS[i + 1][0]) i++;
     const a = ELO_PTS[i], b = ELO_PTS[i + 1], t = Math.max(0, Math.min(1, (e - a[0]) / (b[0] - a[0]))), L = k => a[k] + (b[k] - a[k]) * t;
-    return { depth: Math.round(L(1)), noise: L(2), blunder: L(3), time: L(4), book: e >= 900 };
+    return { depth: Math.round(L(1)), noise: L(2), blunder: L(3), time: Math.min(2000, L(4)), book: e >= 900, x: e >= 2400, xe: e >= 2400 };
   }
-  const eloName = e => e < 700 ? 'Beginner' : e < 1100 ? 'Casual' : e < 1500 ? 'Club' : e < 1900 ? 'Strong' : e < 2200 ? 'Expert' : 'Master';
+  const eloName = e => e < 700 ? 'Beginner' : e < 1100 ? 'Casual' : e < 1500 ? 'Club' : e < 1900 ? 'Strong' : e < 2200 ? 'Expert' : e < 2400 ? 'Master' : 'Hardest';
   const CHIP_W = 'radial-gradient(circle at 35% 30%,#fff,#efe5d0 55%,#a38d68)', CHIP_B = 'radial-gradient(circle at 35% 30%,#77707f,#2e2a33 55%,#0b0a0d)';
   const MAT = [0, 1, 3, 3, 5, 9, 0];
 
@@ -1635,11 +1926,14 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
   }
 
   const CK_AI = { Easy: { depth: 2, minDepth: 2, time: 300, noise: 70, blunder: .1 }, Normal: { depth: 5, minDepth: 4, time: 300, cap: 300, noise: 10 }, Hard: { depth: 30, minDepth: 6, time: 300, cap: 320 } };
+  const CK_SRC = () => 'const INF=1e9,WIN=100000,now=()=>performance.now(),CK_DR=[-1,-1,1,1],CK_DC=[-1,1,-1,1],rng=' + rng.toString() + ';' + deepen.toString() + checkersEngine.toString() + 'const E=checkersEngine();onmessage=e=>{const d=e.data;E.restore(d.s);const m=E.think2(d.ms);postMessage({id:d.id,m:m?m.path.join("."):""});};';
+  const RV_SRC = () => 'const R=(' + rvCore.toString() + ')();onmessage=e=>{const d=e.data;postMessage({id:d.id,m:R.think(d.b,d.side,d.ms).m});};';
   function mountCheckers(root, api) {
     const E = checkersEngine(), d = dprOf();
     const spr = { 1: checkerSprite(true, false, SQ * d * 1.2), 2: checkerSprite(true, true, SQ * d * 1.2), '-1': checkerSprite(false, false, SQ * d * 1.2), '-2': checkerSprite(false, true, SQ * d * 1.2) };
     const tex = frameTex(23, woodSquares(['#ecd7a8', ['#d2b47c', '#f8e9c8', '#c19f63']], ['#2e6a47', ['#1f5136', '#3d8059', '#173f29']]));
-    let hist = [], sel = -1, cands = [], anims = [], last = null, thinking = false, forced = [], all = [], flip = false;
+    let hist = [], sel = -1, cands = [], anims = [], last = null, thinking = false, forced = [], all = [], flip = false, aiTok = 0;
+    const mind = brain(CK_SRC);
     const k = kit(root, api, {
       title: 'Checkers', segs: [{ key: 'side', opts: ['Red', 'White'], only: 'CPU', txt: { Red: 'Play Red', White: 'Play White' } }], cpuSide: () => k.opt.side === 'White' ? -1 : 1, sides: { 1: ['Red', 'radial-gradient(circle at 35% 30%,#ff9a86,#de3b33 55%,#7c1a14)'], '-1': ['White', 'radial-gradient(circle at 35% 30%,#fff,#f2e8d0 55%,#a89470)'] },
       flip: f => { if (flip !== f) { flip = f; k.dirty(); } },
@@ -1652,7 +1946,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     const myTurn = () => !k.over && !thinking && k.local(E.side);
 
     function newGame() {
-      E.reset();
+      E.reset(); aiTok++;
       hist = []; sel = -1; cands = []; anims = []; last = null; thinking = false;
       k.turnTo(E.side, k.mode === 'CPU' ? 'you play ' + (k.me === 1 ? 'Red' : 'White') : '');
       refresh();
@@ -1668,6 +1962,16 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     }
     function aiTurn() {
       thinking = true; k.turn(-k.me, true); k.status('AI is thinking…');
+      if (k.opt.diff === 'Hardest') {
+        const tok = ++aiTok, t0 = now(), s0 = E.snap();
+        mind.ask({ s: s0, ms: 1400 }, () => { const m = tok === aiTok ? E.think2(350) : null; return m ? m.path.join('.') : ''; }, enc => api.timeout(() => {
+          if (tok !== aiTok || !thinking || k.over) return;
+          const m = E.moves().find(x => x.path.join('.') === enc) || E.think(CK_AI.Hard);
+          thinking = false;
+          if (m) play(m, null);
+        }, Math.max(0, 420 - (now() - t0))));
+        return;
+      }
       k.later(() => {
         const m = E.think(CK_AI[k.opt.diff]);
         thinking = false;
@@ -1710,7 +2014,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     function undo() {
       const two = k.mode === '2P';
       if (k.over || k.mode === 'Online' || !(two ? hist.length : hist.some(h => h.by === k.me))) return;
-      k.bump(); thinking = false;
+      k.bump(); thinking = false; aiTok++;
       let h;
       while (hist.length) { h = hist.pop(); if (two || h.by === k.me) break; }
       E.restore(h.snap);
@@ -1783,6 +2087,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       k.drawCursor();
     }
     k.start();
+    return { destroy() { aiTok++; mind.kill(); } };
   }
 
   const RV_AI = { Easy: { depth: 1, minDepth: 1, time: 200, noise: 80, blunder: .1 }, Normal: { depth: 3, minDepth: 3, time: 300, cap: 300, noise: 8 }, Hard: { depth: 30, minDepth: 4, time: 300, cap: 320 } };
@@ -1791,7 +2096,8 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     const spr = { 1: discSprite(true, SQ * d * 1.2), '-1': discSprite(false, SQ * d * 1.2) };
     const tex = feltTex();
     const flipAt = new Float64Array(64), dropAt = new Float64Array(64).fill(-1e9);
-    let hist = [], last = -1, thinking = false, legal = [], animEnd = 0;
+    let hist = [], last = -1, thinking = false, legal = [], animEnd = 0, aiTok = 0, core = null;
+    const mind = brain(RV_SRC);
     const k = kit(root, api, {
       title: 'Reversi', segs: [{ key: 'side', opts: ['Black', 'White'], only: 'CPU', txt: { Black: 'Play Black', White: 'Play White' } }], cpuSide: () => k.opt.side === 'White' ? -1 : 1, sides: { 1: ['Black', 'radial-gradient(circle at 35% 30%,#6a6a75,#25252b 55%,#050507)'], '-1': ['White', 'radial-gradient(circle at 35% 30%,#fff,#f1f1f5 55%,#9d9da8)'] },
       newGame, undo, draw, down, drop: () => {}, remote, load, ai: aiTurn, ply: () => hist.length, list: () => hist.map(h => h.enc),
@@ -1802,7 +2108,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     const myTurn = () => !k.over && !thinking && k.local(E.side);
 
     function newGame() {
-      E.reset();
+      E.reset(); aiTok++;
       hist = []; last = -1; thinking = false; animEnd = 0; flipAt.fill(-1e9); dropAt.fill(-1e9);
       k.turnTo(E.side, k.mode === 'CPU' ? 'you play ' + (k.me === 1 ? 'Black' : 'White') : '');
       refresh();
@@ -1817,6 +2123,16 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     }
     function aiTurn() {
       thinking = true; k.turn(-k.me, true); k.status('AI is thinking…');
+      if (k.opt.diff === 'Hardest') {
+        const tok = ++aiTok, wait = Math.max(420, animEnd - now() + 120), t0 = now(), cells = Array.from(E.snap().b), sd = E.side;
+        mind.ask({ b: cells, side: sd, ms: 1400 }, () => { core = core || rvCore(); return core.think(cells, sd, 350, 12, 14).m; }, m => api.timeout(() => {
+          if (tok !== aiTok || !thinking || k.over) return;
+          thinking = false;
+          if (E.moves(E.side).includes(m)) play(m);
+          else { const f = E.think(RV_AI.Hard); if (f !== null) play(f); }
+        }, Math.max(0, wait - (now() - t0))));
+        return;
+      }
       k.later(() => {
         const m = E.think(RV_AI[k.opt.diff]);
         thinking = false;
@@ -1864,7 +2180,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     function undo() {
       const two = k.mode === '2P';
       if (k.over || k.mode === 'Online' || !hist.some(h => !h.pass && (two || h.by === k.me))) return;
-      k.bump(); thinking = false;
+      k.bump(); thinking = false; aiTok++;
       let h;
       while (hist.length) { h = hist.pop(); if (!h.pass && (two || h.by === k.me)) break; }
       E.restore(h.snap);
@@ -1912,6 +2228,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       k.drawCursor();
     }
     k.start();
+    return { destroy() { aiTok++; mind.kill(); } };
   }
 
   Ameplay.register({
@@ -1982,7 +2299,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     better: 'high',
     format: winsFmt,
     width: 760,
-    engine: { reversiEngine },
+    engine: { reversiEngine, rvCore },
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="48" height="48" rx="8"/><circle cx="23" cy="23" r="8"/><circle cx="41" cy="23" r="8" fill="currentColor"/><circle cx="23" cy="41" r="8" fill="currentColor"/><circle cx="41" cy="41" r="8"/></svg>',
     css: kitCss('.gm-reversi'),
     mount: mountReversi

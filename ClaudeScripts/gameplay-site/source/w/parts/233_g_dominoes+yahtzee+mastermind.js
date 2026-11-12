@@ -423,7 +423,7 @@
     });
     scored.sort((x, y) => y.v - x.v);
     if (lvl !== 'Hard' || scored.length < 2) return scored[0].m;
-    return dmMC(s, p, scored.slice(0, 5).map(x => x.m), uns, R);
+    return dmMC(s, p, scored.slice(0, 6).map(x => x.m), uns, R);
   }
 
   function dmQuick(s, p, R) {
@@ -454,7 +454,7 @@
   }
 
   function dmMC(s, p, cands, uns, R) {
-    const K = 36, opp = [];
+    const K = 64, opp = [];
     for (let q = 0; q < s.n; q++) if (q !== p) opp.push(q);
     const tot = cands.map(() => 0);
     for (let k = 0; k < K; k++) {
@@ -607,7 +607,7 @@
   const dmLogo = `<svg viewBox="0 0 220 84" width="190" height="73" style="display:block;margin:2px auto 6px"><g transform="translate(46 42) rotate(-12)"><rect x="-32" y="-16" width="64" height="32" rx="6" fill="#fffbe9" stroke="#9d8f68" stroke-width="2"/><path d="M0-12V12" stroke="#8c7d57" stroke-width="2"/><g fill="#14161a"><circle cx="-22" cy="-7" r="3.3"/><circle cx="-16" cy="0" r="3.3"/><circle cx="-10" cy="7" r="3.3"/><circle cx="10" cy="-7" r="3.3"/><circle cx="22" cy="-7" r="3.3"/><circle cx="10" cy="7" r="3.3"/><circle cx="22" cy="7" r="3.3"/><circle cx="16" cy="0" r="3.3"/></g></g><g transform="translate(112 44)"><rect x="-32" y="-16" width="64" height="32" rx="6" fill="#fffbe9" stroke="#9d8f68" stroke-width="2"/><path d="M0-12V12" stroke="#8c7d57" stroke-width="2"/><g fill="#14161a"><circle cx="-16" cy="0" r="3.3"/><circle cx="16" cy="-7" r="3.3"/><circle cx="16" cy="7" r="3.3"/><circle cx="22" cy="0" r="3.3"/><circle cx="10" cy="0" r="3.3"/></g></g><g transform="translate(176 40) rotate(14)"><rect x="-32" y="-16" width="64" height="32" rx="6" fill="#fffbe9" stroke="#9d8f68" stroke-width="2"/><path d="M0-12V12" stroke="#8c7d57" stroke-width="2"/><g fill="#14161a"><circle cx="-22" cy="-7" r="3.3"/><circle cx="-10" cy="7" r="3.3"/><circle cx="-16" cy="0" r="3.3"/><circle cx="22" cy="-7" r="3.3"/><circle cx="10" cy="7" r="3.3"/><circle cx="22" cy="7" r="3.3"/><circle cx="10" cy="-7" r="3.3"/></g></g></svg>`;
 
   Ameplay.register({
-    id: 'dominoes',
+    id: 'dominoes', engine: { dmCreate, dmDeal, dmMoves, dmPick, dmPlay, dmDraw, dmView },
     title: 'Dominoes',
     category: 'Board',
     tint: '#2f9a5f',
@@ -1278,7 +1278,7 @@
         return `${row('Variant', 'Scoring rules', seg('mode', [['draw', 'Draw'], ['block', 'Block'], ['fives', 'All Fives']], opt.mode))}
 ${row('Tiles', '', seg('set', [[6, 'Double six'], [9, 'Double nine']], opt.set))}
 ${online ? '' : row('Players', 'You and bots', seg('n', [[2, '2'], [3, '3'], [4, '4']], opt.n))}
-${online ? '' : row('Bots', '', seg('diff', [['Easy', 'Easy'], ['Normal', 'Normal'], ['Hard', 'Hard']], opt.diff))}
+${online ? '' : row('Bots', '', seg('diff', [['Easy', 'Easy'], ['Normal', 'Normal'], ['Hard', 'Hardest']], opt.diff))}
 ${row('Spinner', 'First double opens its sides', seg('spin', [['auto', 'Auto'], ['on', 'On'], ['off', 'Off']], opt.spin))}
 ${row('Game to', 'Points', seg('target', [[50, '50'], [100, '100'], [150, '150'], [200, '200'], [250, '250']], opt.target))}
 ${row('Highlight', 'Playable tiles', seg('assist', [[true, 'On'], [false, 'Off']], opt.assist))}`;
@@ -1793,7 +1793,7 @@ ${row('Highlight', 'Playable tiles', seg('assist', [[true, 'On'], [false, 'Off']
   };
 
   Ameplay.register({
-    id: 'yahtzee',
+    id: 'yahtzee', engine: { yzNew, yzApply, yzBot, yzTot },
     title: 'Yahtzee',
     category: 'Board',
     tint: '#c8342a',
@@ -2425,7 +2425,7 @@ ${row('Highlight', 'Playable tiles', seg('assist', [[true, 'On'], [false, 'Off']
 
       function settingsHtml(online) {
         return `${online ? '' : row('Players', 'You and bots', seg('n', [[1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']], opt.n))}
-${row('Bots', online ? 'Empty seats' : '', seg('diff', [['Easy', 'Easy'], ['Normal', 'Normal'], ['Hard', 'Hard']], opt.diff))}
+${row('Bots', online ? 'Empty seats' : '', seg('diff', [['Easy', 'Easy'], ['Normal', 'Normal'], ['Hard', 'Hardest']], opt.diff))}
 ${row('Dice speed', '', seg('fast', [[false, 'Normal'], [true, 'Fast']], opt.fast))}
 ${row('Score preview', 'Show points per box', seg('prev', [[true, 'On'], [false, 'Off']], opt.prev))}`;
       }
@@ -2739,7 +2739,7 @@ ${row('Score preview', 'Show points per box', seg('prev', [[true, 'On'], [false,
   const mmLogo = `<svg viewBox="0 0 220 74" width="180" height="61" style="display:block;margin:2px auto 6px"><rect x="8" y="6" width="204" height="62" rx="12" fill="#24262d" stroke="#e8e4d4" stroke-width="3"/>${[0, 1, 2, 3].map(i => `<circle cx="${42 + i * 38}" cy="30" r="13" fill="${MM_COL[[0, 4, 3, 2][i]]}" stroke="rgba(0,0,0,.35)" stroke-width="2"/><circle cx="${38 + i * 38}" cy="25" r="4" fill="rgba(255,255,255,.55)"/>`).join('')}<circle cx="174" cy="22" r="5" fill="#16161a" stroke="#777"/><circle cx="190" cy="22" r="5" fill="#f4f4f0"/><circle cx="174" cy="38" r="5" fill="#f4f4f0"/><circle cx="190" cy="38" r="5" fill="#2a2c33" stroke="#555"/><text x="110" y="60" font-family="Nunito,Arial,sans-serif" font-weight="900" font-size="11" fill="#e8e4d4" text-anchor="middle" letter-spacing="3">MASTERMIND</text></svg>`;
 
   Ameplay.register({
-    id: 'mastermind',
+    id: 'mastermind', engine: { mmAll, mmFb, mmPick, mmView, mmNew },
     title: 'Mastermind',
     category: 'Board',
     tint: '#2f6fe8',
@@ -3259,7 +3259,7 @@ ${MM_COL.map((c, i) => `.gm-mastermind .pg.c${i}{background:radial-gradient(circ
 ${row('Colours', '', seg('colors', [[6, '6'], [8, '8']], opt.colors))}
 ${row('Rows', 'Guesses allowed', seg('rows', [[10, '10'], [12, '12']], opt.rows))}
 ${row('Repeats', 'Same colour twice', seg('dup', [[true, 'Allowed'], [false, 'No']], opt.dup))}
-${row('Bots', 'Solver strength', seg('diff', [['Easy', 'Easy'], ['Normal', 'Normal'], ['Hard', 'Hard']], opt.diff))}
+${row('Bots', 'Solver strength', seg('diff', [['Easy', 'Easy'], ['Normal', 'Normal'], ['Hard', 'Hardest']], opt.diff))}
 ${row('Turns match', 'Rounds', seg('rounds', [[2, '2'], [4, '4'], [6, '6']], opt.rounds))}
 ${row('Online mode', '1 v 1', seg('omode', [['race', 'Duel'], ['turns', 'Turns']], opt.omode))}
 ${row('Colour marks', 'Numbers on pegs', seg('sym', [[false, 'Off'], [true, 'On']], opt.sym))}</div>`;
