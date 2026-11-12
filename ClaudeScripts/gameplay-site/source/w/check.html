@@ -97,7 +97,15 @@ textarea{width:100%;min-height:160px;margin-top:12px;border-radius:12px;border:1
     const t0 = now();
     if (!window.RTCPeerConnection) return { ok: false, ms: 0, info: 'WebRTC not available in this browser' };
     let servers = t.servers;
-    if (t.turn) {
+    if (t.cred) {
+      try {
+        const r = await limit(fetch(t.cred, { cache: 'no-store', credentials: 'omit' }), 6000);
+        if (!r.ok) return { ok: false, ms: Math.round(now() - t0), info: 'HTTP ' + r.status + ' from the credential endpoint' };
+        const j = await r.json(), l = (Array.isArray(j.iceServers) ? j.iceServers : []).filter(x => x && x.username);
+        if (!l.length) return { ok: false, ms: Math.round(now() - t0), info: 'not set up yet (the endpoint returned no relay)' };
+        servers = l;
+      } catch (e) { return { ok: false, ms: Math.round(now() - t0), info: errOf(e) }; }
+    } else if (t.turn) {
       try {
         const te = new TextEncoder(), user = (Math.floor(Date.now() / 1000) + 86400) + ':gameplay';
         const k = await crypto.subtle.importKey('raw', te.encode('openrelayprojectsecret'), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
@@ -106,7 +114,7 @@ textarea{width:100%;min-height:160px;margin-top:12px;border-radius:12px;border:1
       } catch (e) { return { ok: false, ms: 0, info: errOf(e) }; }
     }
     return new Promise(res => {
-      const pc = new RTCPeerConnection({ iceServers: servers, iceTransportPolicy: t.turn ? 'relay' : 'all' });
+      const pc = new RTCPeerConnection({ iceServers: servers, iceTransportPolicy: t.turn || t.cred ? 'relay' : 'all' });
       const seen = new Set();
       const done = () => { clearTimeout(k); try { pc.close(); } catch (e) {} const ok = seen.has(t.want); res({ ok, ms: Math.round(now() - t0), info: seen.size ? 'candidates: ' + [...seen].join(', ') : 'no candidates' }); };
       const k = setTimeout(done, 8000);
@@ -149,8 +157,8 @@ textarea{width:100%;min-height:160px;margin-top:12px;border-radius:12px;border:1
       { id: 'peer-api', name: 'PeerJS matchmaking server', url: 'https://0.peerjs.com/peerjs/id?ts=' + Date.now(), check: r => r.ok, quiet: true },
       { id: 'peer-ws', name: 'PeerJS live connection', kind: 'ws', url: 'wss://0.peerjs.com/peerjs?key=peerjs&id=check' + Math.random().toString(36).slice(2, 10) + '&token=' + Math.random().toString(36).slice(2, 10), expect: /OPEN|"type"/ },
       { id: 'stun', name: 'Direct connections (STUN)', kind: 'ice', url: 'stun:stun.l.google.com:19302', servers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }], want: 'srflx' },
-      { id: 'turn', name: 'Relayed connections (TURN)', kind: 'ice', url: 'turn:staticauth.openrelay.metered.ca', turn: ['turn:staticauth.openrelay.metered.ca:80', 'turn:staticauth.openrelay.metered.ca:80?transport=tcp', 'turn:staticauth.openrelay.metered.ca:443', 'turns:staticauth.openrelay.metered.ca:443?transport=tcp'], want: 'relay' }
-    ] }
+      { id: 'turn', name: 'Relayed connections (public TURN)', kind: 'ice', url: 'turn:staticauth.openrelay.metered.ca', turn: ['turn:staticauth.openrelay.metered.ca:80', 'turn:staticauth.openrelay.metered.ca:80?transport=tcp', 'turn:staticauth.openrelay.metered.ca:443', 'turns:staticauth.openrelay.metered.ca:443?transport=tcp'], want: 'relay' }
+    ].concat(C.relays.map((r, i) => ({ id: 'turnsite' + i, name: 'Relayed connections (site TURN ' + (i + 1) + ')', kind: 'ice', url: r + '/turn', cred: r + '/turn', want: 'relay' }))) }
   ]);
   const R = {};
   function paintRow(t) {
@@ -177,8 +185,10 @@ textarea{width:100%;min-height:160px;margin-top:12px;border-radius:12px;border:1
     else v.push([gOk && relay ? 'ok' : 'bad', gOk && relay ? 'Google sign-in works through the Google button (accounts.google.com is reachable).' : 'Google sign-in is not possible here' + (gOk ? ' without the relay.' : ' (accounts.google.com is blocked).')]);
     const libs = okAll('lib') || any('cdnjs', 'jsdelivr', 'unpkg');
     v.push([libs ? 'ok' : 'bad', libs ? '3D games and online play can load their libraries.' : '3D games cannot load their 3D engine here.']);
-    const online = okAll('peer-api', 'peer-ws') && any('stun', 'turn');
-    v.push([online ? 'ok' : 'bad', online ? 'Online games can connect.' : 'Online games are blocked here (' + ['peer-api', 'peer-ws', 'stun', 'turn'].filter(i => !(R[i] && R[i].ok)).join(', ') + ' failed).']);
+    const sig = okAll('peer-api', 'peer-ws'), turnOk = any('turn') || C.relays.some((r, i) => okAll('turnsite' + i)), p2p = any('stun') || turnOk;
+    const online = (sig || live) && (p2p || live);
+    v.push([online ? ((sig || live) && p2p ? 'ok' : 'warn') : 'bad', !online ? 'Online parties cannot connect here: neither the matchmaking server nor the site\u2019s live connection is reachable.' : (sig || live) && any('stun') ? 'Online parties can connect directly.' : (sig || live) && turnOk ? 'Online parties connect through a relay on this network (direct links are blocked).' : 'Direct and relayed links are blocked here: online parties still work through the site\u2019s live connection, but fast games will feel slower.']);
+    if (online && !sig) v.push(['warn', 'The public matchmaking server is blocked here; parties use the site\u2019s own connection instead.']);
     return v;
   }
   function report() {

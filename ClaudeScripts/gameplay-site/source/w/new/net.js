@@ -399,17 +399,24 @@ function netRtLink(sb, name, role, o) {
       say('s', { d: { type: pc.localDescription.type, sdp: pc.localDescription.sdp } });
     } else pc.ondatachannel = e => { if (e.channel && e.channel.label === 'gp') wire(e.channel); };
   };
-  const sigIn = async p => {
+  let sigQ = Promise.resolve(), cands = [];
+  const sigOne = async p => {
     try {
-      if (!p || dead) return;
+      if (!p || dead || mode === 'relay') return;
       if (p.d) {
         if (!pc) await rtc();
-        if (!pc) return;
+        if (!pc || dead) return;
         await pc.setRemoteDescription(p.d);
         if (p.d.type === 'offer') { const an = await pc.createAnswer(); await pc.setLocalDescription(an); say('s', { d: { type: pc.localDescription.type, sdp: pc.localDescription.sdp } }); }
-      } else if (p.c && pc) await pc.addIceCandidate(p.c).catch(() => {});
+        const l = cands; cands = [];
+        for (const c of l) await pc.addIceCandidate(c).catch(() => {});
+      } else if (p.c) {
+        if (!pc || !pc.remoteDescription) { if (cands.length < 60) cands.push(p.c); return; }
+        await pc.addIceCandidate(p.c).catch(() => {});
+      }
     } catch (e) { netDiag('rt-sig-error', { role, m: String(e && e.message || e).slice(0, 120) }); }
   };
+  const sigIn = p => { sigQ = sigQ.then(() => sigOne(p)); };
   const go = () => {
     if (dead || L.open || !mode) return;
     if (mode === 'p2p' && !(dc && dc.readyState === 'open')) return;
@@ -983,8 +990,10 @@ function makeNet(g, add) {
     if (rm.state === 'game' && rm.inGame) emit('data', d, rm.hostId);
   };
   const guestConnect = async (code, my, opt) => {
-    opt = opt || {};
-    let w = null;
+    opt = Object.assign({}, opt || {});
+    let w = null, slowT = 0;
+    try { slowT = +sessionStorage.getItem('gameplay:netrelay') || 0; } catch (e) {}
+    if (netRtOk() && Date.now() - slowT < 900000) { opt.noP2p = true; opt.rtFirst = true; opt.noPeer = true; }
     const hello = { __hello: { id: rm.me, key: rm.key, name: rm.name, tab: NET_TAB } };
     const done = d => { if (d && d.__full) return { type: d.why ? 'dup' : 'room-full' }; if (d && d.__wel) { w = d.__wel; return true; } return false; };
     const alive = () => my === gen, t0 = now(), rtOk = netRtOk();
@@ -999,7 +1008,7 @@ function makeNet(g, add) {
       if (over) { lose(c); throw { type: 'cancel' }; }
       return c;
     })();
-    viaPeer.catch(e => { pe = e || { type: 'network' }; netDiag('join-peer-fail', { type: pe.type, ms: now() - t0 }); });
+    viaPeer.catch(e => { pe = e || { type: 'network' }; if (pe.type !== 'off' && pe.type !== 'cancel') netDiag('join-peer-fail', { type: pe.type, ms: now() - t0 }); });
     const viaRt = (async () => {
       if (!rtOk) throw { type: 'off' };
       await Promise.race([viaPeer.then(() => new Promise(() => {}), () => {}), sleepMs(opt.rtFirst ? 0 : 1800)]);
@@ -1029,6 +1038,7 @@ function makeNet(g, add) {
     catch (e) { netDiag('join-hand-fail', { via, type: e && e.type }); throw e; }
     netDiag('join-ok', { via, ms: now() - t0 });
     rm.via = via;
+    try { if (via === 'rt-relay' && !opt.noP2p) sessionStorage.setItem('gameplay:netrelay', String(Date.now())); else if (via !== 'rt-relay') sessionStorage.removeItem('gameplay:netrelay'); } catch (e) {}
     return { c, w };
   };
   const guestAttach = (c, w) => {
