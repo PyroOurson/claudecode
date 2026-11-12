@@ -181,21 +181,49 @@ async function trGeo() {
     return o;
   } catch (e) { return null; }
 }
-function trGpu() {
-  try { const k = localStorage.getItem('gameplay:gpu'); if (k != null) return k; } catch (e) {}
-  const r = trGpuRead();
-  try { localStorage.setItem('gameplay:gpu', r); } catch (e) {}
-  return r;
-}
-function trGpuRead() {
+const TR_GLW = 'onmessage=function(e){var o={r:"",mtex:null,glx:null,ok:false};try{var c=new OffscreenCanvas(1,1),gl=c.getContext("webgl");if(gl){var x=e.data?null:gl.getExtension("WEBGL_debug_renderer_info");o.r=String(gl.getParameter(x?x.UNMASKED_RENDERER_WEBGL:gl.RENDERER)||"");o.mtex=gl.getParameter(gl.MAX_TEXTURE_SIZE);o.glx=(gl.getSupportedExtensions()||[]).length;o.ok=true}}catch(_){}postMessage(o)}';
+let TR_GLP = null, TR_GLK = null;
+function trGlName(r) { return String(r || '').replace(/^ANGLE \((.*)\)$/, '$1').replace(/,? ?(Direct3D|D3D|OpenGL|Vulkan|Metal).*$/i, '').replace(/ \(0x[0-9a-f]+\)/gi, '').replace(/^[^,]{2,24}, (?=.*\S)/, '').trim().slice(0, 100); }
+function trGlMain(ff) {
+  const o = { r: '', mtex: null, glx: null, ok: false };
   try {
-    const c = document.createElement('canvas'), gl = c.getContext('webgl') || c.getContext('experimental-webgl');
-    if (!gl) return '';
-    const x = /Firefox\//.test(navigator.userAgent) ? null : gl.getExtension('WEBGL_debug_renderer_info');
-    const r = String(gl.getParameter(x ? x.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || '');
-    const lc = gl.getExtension('WEBGL_lose_context'); if (lc) lc.loseContext();
-    return r.replace(/^ANGLE \((.*)\)$/, '$1').replace(/,? ?(Direct3D|D3D|OpenGL|Vulkan|Metal).*$/i, '').replace(/ \(0x[0-9a-f]+\)/gi, '').replace(/^[^,]{2,24}, (?=.*\S)/, '').trim().slice(0, 100);
-  } catch (e) { return ''; }
+    const c = document.createElement('canvas'); c.width = c.height = 1;
+    const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+    if (!gl) return o;
+    TR_GLK = gl;
+    const x = ff ? null : gl.getExtension('WEBGL_debug_renderer_info');
+    o.r = String(gl.getParameter(x ? x.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || '');
+    o.mtex = gl.getParameter(gl.MAX_TEXTURE_SIZE); o.glx = (gl.getSupportedExtensions() || []).length; o.ok = true;
+  } catch (e) {}
+  return o;
+}
+function trGlWorker(ff) {
+  return new Promise(res => {
+    let w = null, u = null, t = 0, fin = false;
+    const end = o => { if (fin) return; fin = true; clearTimeout(t); try { if (w) w.terminate(); } catch (e) {} try { if (u) URL.revokeObjectURL(u); } catch (e) {} res(o); };
+    try {
+      if (!window.OffscreenCanvas || !window.Worker || !window.Blob) return end(null);
+      u = URL.createObjectURL(new Blob([TR_GLW], { type: 'text/javascript' }));
+      w = new Worker(u);
+      w.onmessage = e => end(e.data && e.data.ok ? e.data : null);
+      w.onerror = () => end(null);
+      t = setTimeout(() => end(undefined), 60000);
+      w.postMessage(ff);
+    } catch (e) { end(null); }
+  });
+}
+function trGl() {
+  if (TR_GLP) return TR_GLP;
+  return TR_GLP = (async () => {
+    try { const k = JSON.parse(localStorage.getItem('gameplay:gpu') || 'null'); if (k && typeof k === 'object' && typeof k.r === 'string') return k; } catch (e) {}
+    const ff = /Firefox\//.test(navigator.userAgent);
+    let o = await trGlWorker(ff);
+    if (o === undefined) return { r: '', mtex: null, glx: null };
+    if (!o) o = trGlMain(ff);
+    const v = { r: trGlName(o.r), mtex: o.mtex == null ? null : +o.mtex || null, glx: o.glx == null ? null : +o.glx || 0 };
+    try { localStorage.setItem('gameplay:gpu', JSON.stringify(v)); } catch (e) {}
+    return v;
+  })();
 }
 function trOs(hi) {
   const ua = navigator.userAgent, d = device().os, pv = hi && hi.platformVersion ? String(hi.platformVersion) : '';
@@ -229,15 +257,15 @@ async function trEnv() {
   TR.env = 1;
   try { if (sessionStorage.getItem('gameplay:env') === SID) return; sessionStorage.setItem('gameplay:env', SID); } catch (e) {}
   const ud = navigator.userAgentData, c = navigator.connection || {}, now = new Date(), tz = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { return ''; } })();
-  const [hi, kbm, geo, hz, adb] = await Promise.all([
+  const [hi, kbm, geo, hz, adb, glI] = await Promise.all([
     trTo(ud && ud.getHighEntropyValues ? ud.getHighEntropyValues(['platformVersion', 'model', 'architecture', 'bitness', 'fullVersionList']).catch(() => null) : Promise.resolve(null), 2000),
     trTo(navigator.keyboard && navigator.keyboard.getLayoutMap ? navigator.keyboard.getLayoutMap().catch(() => null) : Promise.resolve(null), 2000),
-    trTo(trGeo(), 6000), trTo(trHz(), 4000), trTo(trAdb(), 2000)
+    trTo(trGeo(), 6000), trTo(trHz(), 4000), trTo(trAdb(), 2000), trTo(trGl(), 5000)
   ]);
   if (hz) { TR.hz = hz; try { sessionStorage.setItem('gameplay:hz', hz); } catch (e) {} }
   if (kbm && !TR.kb) TR.kb = trKbOf(kbm.get('KeyQ'), kbm.get('KeyY'), kbm.get('KeyW'));
   const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean).map(p => trPadKind(p.id)) : [];
-  track('env_dev', { osv: trOs(hi), brv: trBr(hi), model: hi && hi.model ? hi.model : device().type === 'desktop' ? null : /iPhone/.test(navigator.userAgent) ? 'iPhone' : /iPad|Macintosh/.test(navigator.userAgent) ? 'iPad' : 'Unknown model', arch: hi && hi.architecture ? hi.architecture + (hi.bitness ? '-' + hi.bitness : '') : null, cores: navigator.hardwareConcurrency || null, mem: navigator.deviceMemory || null, gpu: trGpu() || null, gl2: 'WebGL2RenderingContext' in window, wgpu: 'gpu' in navigator, hz, kb: TR.kb || null, pads, adb, langs: (navigator.languages || []).slice(0, 6) });
+  track('env_dev', { osv: trOs(hi), brv: trBr(hi), model: hi && hi.model ? hi.model : device().type === 'desktop' ? null : /iPhone/.test(navigator.userAgent) ? 'iPhone' : /iPad|Macintosh/.test(navigator.userAgent) ? 'iPad' : 'Unknown model', arch: hi && hi.architecture ? hi.architecture + (hi.bitness ? '-' + hi.bitness : '') : null, cores: navigator.hardwareConcurrency || null, mem: navigator.deviceMemory || null, gpu: glI && glI.r ? glI.r : null, gl2: 'WebGL2RenderingContext' in window, wgpu: 'gpu' in navigator, hz, kb: TR.kb || null, pads, adb, langs: (navigator.languages || []).slice(0, 6) });
   const g = geo || {}, dc = TR_DC.test(g.isp || ''), tzm = !!(g.gtz && tz && g.gtz !== tz && trOff(g.gtz) !== trOff(tz));
   setTimeout(() => trMore().catch(() => {}), 2500);
   track('env_geo', { tz, off: -now.getTimezoneOffset(), lh: now.getHours(), wd: now.getDay(), net: c.effectiveType || null, ctype: c.type || 'unknown', dl: c.downlink != null ? c.downlink : null, rtt: c.rtt != null ? c.rtt : null, save: c.saveData != null ? !!c.saveData : null, cc: g.cc || null, country: g.country || null, region: g.region || null, city: g.city || null, isp: g.isp || null, asn: g.asn || null, dc, tzm, vpn: dc || tzm });
@@ -257,7 +285,7 @@ async function trMore() {
   const n = navigator, A = window.AudioContext || window.webkitAudioContext;
   let sr = null, ach = null, mtex = null, glx = null, voices = null, devs = null, bat = null, est = null, gpuv = null, pers = null;
   try { if (A) { const ac = new A(); sr = ac.sampleRate; ach = ac.destination ? ac.destination.maxChannelCount : null; ac.close(); } } catch (e) {}
-  try { const gl = document.createElement('canvas').getContext('webgl'); if (gl) { mtex = gl.getParameter(gl.MAX_TEXTURE_SIZE); glx = (gl.getSupportedExtensions() || []).length; const lc = gl.getExtension('WEBGL_lose_context'); if (lc) lc.loseContext(); } } catch (e) {}
+  try { const gi = await trTo(trGl(), 5000); if (gi) { mtex = gi.mtex; glx = gi.glx; } } catch (e) {}
   try { voices = window.speechSynthesis ? speechSynthesis.getVoices().length : null; } catch (e) {}
   const v = document.createElement('video'), cp = t => { try { return window.MediaSource && MediaSource.isTypeSupported ? MediaSource.isTypeSupported(t) : !!v.canPlayType(t); } catch (e) { return false; } };
   const [dl, b, q, gp, ps] = await Promise.all([
