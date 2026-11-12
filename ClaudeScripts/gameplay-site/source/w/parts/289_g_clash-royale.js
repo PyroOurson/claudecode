@@ -100,7 +100,8 @@
     { n: 'Rookie', pe: 9, lv: -2, rt: 2.2, tk: .9, er: 0, win: 14, loss: 0, gold: 14, err: .35 },
     { n: 'Fighter', pe: 8, lv: -1, rt: 1.3, tk: .55, er: .35, win: 25, loss: 10, gold: 22, err: .15 },
     { n: 'Veteran', pe: 7, lv: 0, rt: .75, tk: .35, er: .7, win: 32, loss: 20, gold: 30, err: .05 },
-    { n: 'Champion', pe: 6, lv: 1, rt: .35, tk: .2, er: 1, win: 40, loss: 26, gold: 40, err: 0 }
+    { n: 'Champion', pe: 6, lv: 1, rt: .35, tk: .2, er: 1, win: 40, loss: 26, gold: 40, err: 0 },
+    { n: 'Hardest', pe: 8.5, pa: 6, lv: 0, rt: .3, tk: .2, er: 1, win: 48, loss: 28, gold: 48, err: 0, hx: 1 }
   ];
   const towerDef = (key, lv) => { const d = DEF[key], m = lm(lv); return { hp: Math.round(d.hp * m), dmg: Math.round(d.dmg * m) }; };
 
@@ -727,8 +728,12 @@
         if (tryPlay(S, me, best.i, p.x, p.y)) { B.lastDef = S.t; return; }
       }
     }
+    botPush(S, B, df, hand, el);
+  }
+  function botPush(S, B, df, hand, el) {
+    const me = B.side, op = 1 - me, di = DIFFS.indexOf(df);
     if (S.t < B.nextOpen) return;
-    const pushEl = df.pe - (B.oe < el - 3 ? 1 : 0);
+    const pushEl = df.pa && B.oe < el - 1.5 ? df.pa : df.pe - (B.oe < el - 3 ? 1 : 0);
     if (el < pushEl && el < 9.7) return;
     if (S.t - B.lastPush < df.rt + 2 && el < 9.7) return;
     if (Math.random() < df.err * .5) return;
@@ -747,7 +752,7 @@
     const tanks = hand.filter(c => c.D.k === 't' && (c.D.bo || c.D.hp >= 1500) && c.D.c <= el);
     if (tanks.length && el >= 6) {
       const c = tanks[0];
-      const bridge = c.key === 'hog' && (B.oe < 6 || di === 3);
+      const bridge = c.key === 'hog' && (B.oe < 6 || di >= 3);
       if (tryPlay(S, me, c.i, lx, bridge ? (me === 0 ? RV1 + 1.4 : RV0 - 1.4) : myBack(me))) { B.lastPush = S.t; return; }
     }
     const trs = hand.filter(c => c.D.k !== 's' && c.D.c <= el && !(c.D.k === 'b' && c.key !== 'mortar' && c.key !== 'tomb')).sort((a, b) => b.D.c - a.D.c);
@@ -763,10 +768,108 @@
       if (any) tryPlay(S, me, any.i, lx, myBack(me));
     }
   }
+  const HXN = 50, HXDT = .1;
+  function hxClone(S) {
+    const C = { t: S.t, per: S.per, left: S.left, intro: 0, el: [0, 0], over: 0, win: -1, cr: [S.cr[0], S.cr[1]], units: [], projs: [], zones: [], logs: [], ev: [], nid: S.nid, kl: S.kl, lv: S.lv, hands: null, act: [S.act[0], S.act[1]], names: S.names, mult: S.mult, spent: [0, 0], dec: S.dec, m: new Map(), bots: [null, null], me: S.me };
+    for (const u of S.units) { const c = Object.assign({}, u); C.units.push(c); C.m.set(c.id, c); }
+    for (const p of S.projs) C.projs.push(Object.assign({}, p));
+    for (const z of S.zones) C.zones.push(Object.assign({}, z));
+    for (const L of S.logs) { const c = Object.assign({}, L); c.hit = L.hit.slice(); C.logs.push(c); }
+    return C;
+  }
+  function hxEval(C, me) {
+    if (C.over) return C.win === me ? 400 : C.win === 2 ? 0 : -400;
+    let v = 0;
+    for (const u of C.units) {
+      if (u.d || u.hp <= 0) continue;
+      const sg = u.s === me ? 1 : -1;
+      if (u.D.k === 'w') v += sg * (u.key === 'kt' ? 30 + 16 * u.hp / u.mhp : 9 + 13 * u.hp / u.mhp);
+      else v += sg * elixVal(u.D) * (.25 + .75 * u.hp / u.mhp);
+    }
+    return v;
+  }
+  function hxRoll(snap, me, c, n, dt) {
+    const C = hxClone(snap);
+    if (c) spawnCard(C, me, c.key, c.x, c.y);
+    for (let i = 0; i < n && !C.over; i++) { step(C, dt); C.ev.length = 0; }
+    return hxEval(C, me) - (c ? c.cost : 0);
+  }
+  function hxFit(S, me, key, x, y) {
+    const offs = [[0, 0], [0, me === 0 ? -1 : 1], [1, 0], [-1, 0], [0, me === 0 ? 1 : -1], [1.5, 1], [-1.5, 1]];
+    for (const o of offs) { const p = placeOK(S, me, key, clamp(x + o[0], .8, AW - .8), y + o[1]); if (p) return p; }
+    return null;
+  }
+  function hxCands(S, me, hand, el, lanes) {
+    const out = [], L = lanes[0];
+    const add = (c, x, y) => { const p = hxFit(S, me, c.key, x, y); if (p && !out.some(o => o.key === c.key && Math.abs(o.x - p.x) + Math.abs(o.y - p.y) < 1.2)) out.push({ key: c.key, cost: c.D.c, x: p.x, y: p.y }); };
+    const tr = hand.filter(c => c.D.k !== 's' && c.D.c <= el + 1e-6).map(c => ({ c, sc: counterScore(c, L) })).sort((a, b) => b.sc - a.sc).slice(0, 3);
+    tr.forEach((t, i) => {
+      const c = t.c, p = counterPos(c, L, me);
+      add(c, p.x, p.y);
+      if (c.D.k === 'b' || i > 1) return;
+      add(c, clamp(L.x, 2, 16), me === 0 ? Math.max(L.y + .9, RV1 + 1) : Math.min(L.y - .9, RV0 - 1));
+      add(c, 9 + (L.x < 9 ? -1.6 : 1.6), me === 0 ? 21.2 : AH - 21.2);
+      if (lanes[1] && i === 0) { const q = counterPos(c, lanes[1], me); add(c, q.x, q.y); }
+    });
+    const E = S.units.filter(u => u.s !== me && !u.d);
+    for (const c of hand) {
+      if (c.D.k !== 's' || c.D.c > el + 1e-6) continue;
+      if (c.key === 'log') { out.push({ key: c.key, cost: c.D.c, x: clamp(L.x, 2, 16), y: me === 0 ? RV1 + 1 : RV0 - 1 }); continue; }
+      let bu = null, bs = 0;
+      for (const u of E) { const sc = spellScore(S, me, c, u.x, u.y); if (sc > bs) { bs = sc; bu = u; } }
+      if (bu && bs >= c.D.c * .45) out.push({ key: c.key, cost: c.D.c, x: bu.x, y: bu.y });
+    }
+    return out;
+  }
+  function hxFinish(S, me, hand, el) {
+    for (const c of hand) {
+      if (c.D.k !== 's' || c.key === 'log' || c.D.c > el + 1e-6) continue;
+      const dm = Math.round(c.D.dmg * lm(lvOf(S, me, c.key))) * (c.D.dur ? c.D.dur : 1) * c.D.tf;
+      for (const u of S.units) if (u.s !== me && !u.d && u.D.k === 'w' && u.hp <= dm * .96 && (u.key !== 'kt' || S.cr[me] >= 1)) return { i: c.i, x: u.x, y: u.y };
+    }
+    return null;
+  }
+  function hxTick(S, B, df, dt) {
+    const me = B.side, op = 1 - me;
+    B.oe = Math.min(10, B.oe + dt * S.mult / 2.8);
+    if (S.spent[op] > B.lastOp) { B.oe = Math.max(0, B.oe - (S.spent[op] - B.lastOp)); B.lastOp = S.spent[op]; }
+    if (S.over || S.intro > 0) return;
+    const h = S.hands[me], el = S.el[me];
+    if (B.q) {
+      const q = B.q, c = q.list[q.i++], v = hxRoll(q.snap, me, c, q.n, q.dt);
+      if (!c) q.base = v; else if (v > q.bv) { q.bv = v; q.best = c; }
+      if (q.i < q.list.length) return;
+      B.q = null;
+      const b = q.best;
+      if (b && q.bv > q.base + q.need && el >= b.cost - 1e-6) {
+        const slot = h.slots.findIndex(d => h.deck[d] === b.key);
+        if (slot >= 0 && tryPlay(S, me, slot, b.x, b.y)) { B.lastDef = S.t; B.idle = 0; B.th = df.tk; return; }
+      }
+      B.idle = S.t + .4;
+      return;
+    }
+    B.th -= dt;
+    if (B.th > 0) return;
+    B.th = df.tk * rnd(.8, 1.25);
+    const hand = h.slots.map((d, i) => ({ i, key: h.deck[d], D: DEF[h.deck[d]] }));
+    const cheap = Math.min.apply(null, hand.map(c => c.D.c));
+    if (el < cheap) return;
+    const fin = hxFinish(S, me, hand, el);
+    if (fin && tryPlay(S, me, fin.i, fin.x, fin.y)) return;
+    const lanes = botThreats(S, B, df, me).sort((a, b) => b.ev - a.ev);
+    if (lanes.length && S.t >= (B.idle || 0)) {
+      const list = hxCands(S, me, hand, el, lanes);
+      if (list.length) { list.unshift(null); B.q = { snap: hxClone(S), list, i: 0, base: 0, bv: -1e9, best: null, n: HXN, dt: HXDT, need: .45 }; return; }
+    }
+    const sp = botSpell(S, B, me, hand, el, df);
+    if (sp && !lanes.length && tryPlay(S, me, sp.i, sp.x, sp.y)) return;
+    if (lanes.some(L => L.ev >= 3 && L.deep > 0) && el < 9.7) return;
+    botPush(S, B, df, hand, el);
+  }
   function makeBot(side, di) {
     const df = DIFFS[di];
-    const B = { side, th: 1, seen: {}, oe: 5, lastOp: 0, nextOpen: 1.5 + df.rt * 1.4 + rnd(0, 2), lane: ri(0, 1), lastPush: -99, lastDef: -99 };
-    B.tick = (S, dt) => botTick(S, B, df, dt);
+    const B = { side, th: 1, seen: {}, oe: 5, lastOp: 0, nextOpen: 1.5 + df.rt * 1.4 + rnd(0, 2), lane: ri(0, 1), lastPush: -99, lastDef: -99, q: null, idle: 0 };
+    B.tick = df.hx ? (S, dt) => hxTick(S, B, df, dt) : (S, dt) => botTick(S, B, df, dt);
     return B;
   }
 
@@ -1722,8 +1825,9 @@
   }
   function loadProfile(api) {
     const P0 = newProfile(), s = api.load();
-    if (!s || s.v !== 1 || !s.cards || !Array.isArray(s.deck)) return P0;
+    if (!s || s.v !== 1 || !s.cards || typeof s.cards !== 'object' || !Array.isArray(s.deck)) return P0;
     const P = Object.assign(P0, s);
+    for (const k of ['tr', 'hi', 'gold', 'cyc', 'w', 'l', 'd', 'cw', 'crowns', 'hint']) P[k] = Math.max(0, Math.floor(+P[k]) || 0);
     const ok = {};
     for (const k of Object.keys(P.cards)) if (DEF[k] && DEF[k].c && P.cards[k] && P.cards[k].lv >= 1) ok[k] = { lv: clamp(P.cards[k].lv | 0, 1, MAXLV), n: Math.max(0, P.cards[k].n | 0) };
     P.cards = ok;
@@ -2014,7 +2118,7 @@
       const ai = arenaOf(P.tr), A = ARENAS[ai], nx = ARENAS[ai + 1];
       const prog = nx ? clamp((P.tr - A.t) / (nx.t - A.t), 0, 1) : 1;
       return `<div class="cr-page"><div class="cr-hero" style="background-image:url(${arenaImg(A.th)})"><div class="shade"></div><div class="cr-an"><small>Arena ${ai + 1}</small><b>${esc(A.n)}</b></div><div class="cr-road"><div class="rb"><s style="width:${prog * 100}%"></s></div><span>${nx ? P.tr + ' / ' + nx.t + ' ' + IC.trophy : 'Top arena reached'}</span></div><button type="button" class="cr-go" data-a="battle"><span>Battle</span><small>vs ${esc(DIFFS[P.diff].n)} bot</small></button></div>
-<div class="cr-row"><span>Opponent</span><div class="cr-seg">${DIFFS.map((d, i) => `<button type="button" data-a="diff" data-v="${i}" class="${i === P.diff ? 'on' : ''}">${d.n}</button>`).join('')}</div></div>
+<div class="cr-row cr-opp"><span>Opponent</span><div class="cr-seg">${DIFFS.map((d, i) => `<button type="button" data-a="diff" data-v="${i}" class="${i === P.diff ? 'on' : ''}">${d.n}</button>`).join('')}</div></div>
 <button type="button" class="cr-b blue wide" data-a="online">${IC.swords}<span>Friendly battle online</span></button>
 <h4>Chests <span>Win battles to earn chests</span></h4>${chestHtml()}
 <p class="cr-rec">Wins ${P.w} &middot; Losses ${P.l} &middot; Draws ${P.d} &middot; Three-crown wins ${P.cw} &middot; Best ${P.hi}</p></div>`;
@@ -2791,6 +2895,9 @@ ${swap ? `<p class="cr-hint">Tap a card in your deck to replace it with <b>${esc
 .gm-clash-royale .cr-seg{display:flex;background:rgba(0,0,0,.4);border-radius:999px;padding:${u(3)};border:${u(2)} solid #0f0d33}
 .gm-clash-royale .cr-seg button{border:0;background:none;font-size:${u(12)};padding:${u(7)} ${u(10)};border-radius:999px;cursor:pointer;color:#b9c0ff}
 .gm-clash-royale .cr-seg button.on{background:#ffd23a;color:#3a2200}
+.gm-clash-royale .cr-opp{flex-wrap:wrap;gap:${u(5)}}
+.gm-clash-royale .cr-opp .cr-seg{width:100%}
+.gm-clash-royale .cr-opp .cr-seg button{flex:1 1 auto;font-size:${u(11.5)};padding:${u(7)} ${u(3)};white-space:nowrap}
 .gm-clash-royale .cr-b{display:flex;align-items:center;justify-content:center;gap:${u(8)};width:100%;padding:${u(11)} ${u(14)};border:${u(3)} solid #0f0d33;border-radius:${u(13)};font-size:${u(17)};line-height:1.1;background:linear-gradient(#a2a7d8,#5f64a4);box-shadow:0 ${u(4)} 0 #0f0d33,inset 0 ${u(2)} 0 rgba(255,255,255,.35);text-shadow:0 ${u(2)} 0 rgba(0,0,0,.4);cursor:pointer}
 .gm-clash-royale .cr-b:active{transform:translateY(${u(3)});box-shadow:0 ${u(1)} 0 #0f0d33}
 .gm-clash-royale .cr-b.green{background:linear-gradient(#80f263,#2fae35)}

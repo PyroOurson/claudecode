@@ -1227,6 +1227,8 @@ const RD = [
     };
   }
   function restore(o, sfx) {
+    if (!Number.isInteger(o.map) || !MAPS[o.map] || !MODES[o.mode] || !Number.isInteger(o.round) || o.round < 0 || !isFinite(o.cash) || !isFinite(o.lives) || o.lives <= 0 || !Array.isArray(o.towers) || (o.running && !Array.isArray(o.bloons))) throw new Error('bad save');
+    for (const t of o.towers) if (!t || !TW[t.id] || !isFinite(t.x) || !isFinite(t.y) || !Array.isArray(t.tr)) throw new Error('bad save');
     const g = makeGame({ map: o.map, mode: o.mode, sfx });
     g.round = o.round; g.cash = o.cash; g.lives = o.lives; g.free2 = !!o.free2; g.won = !!o.won; g.pops = o.pops || 0; g.earned = o.earned || 0;
     g.bs = blimpSp(g.round);
@@ -1885,9 +1887,10 @@ const RD = [
   function mount(root, api) {
     const mqV = matchMedia('(orientation: portrait) and (max-width: 900px)');
     let V = false, CW = 960, CH = 600, K = 1, cv = null, ctx = null, toLocal = null, PL = null;
-    const saved = api.load() || {};
-    const prof = { wins: saved.wins || {}, auto: !!saved.auto, last: saved.last || { map: 0, mode: 'medium' } };
-    let gameSave = saved.game || null;
+    const saved = (s => s && typeof s === 'object' && !Array.isArray(s) ? s : {})(api.load());
+    const isObj = o => !!o && typeof o === 'object' && !Array.isArray(o);
+    const prof = { wins: isObj(saved.wins) ? saved.wins : {}, auto: !!saved.auto, last: isObj(saved.last) ? saved.last : { map: 0, mode: 'medium' } };
+    let gameSave = isObj(saved.game) ? saved.game : null;
     let scr = 'menu', G = null, sel = null, place = null, spd = 1, accT = 0, clock = 0, hits = [], msg = null, ban = null, over = false, autoT = 0, wasRun = false, lastPops = 0, saveT = 0, helpOpen = false;
     const ptr = { x: -99, y: -99, down: false, type: 'mouse' };
     const menuSel = { map: clamp(prof.last.map | 0, 0, MAPS.length - 1), mode: MODES[prof.last.mode] ? prof.last.mode : 'medium' };
@@ -2588,7 +2591,7 @@ const RD = [
     category: 'Strategy',
     tint: '#5cb83c',
     blurb: 'Place monkeys, upgrade three paths and pop every bloon on ten maps and four modes.',
-    help: 'Pick a monkey and click the map (touch: tap, then OK) · click a monkey to upgrade or sell · <kbd>Space</kbd> start and fast forward x3 · <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd><kbd>T</kbd><kbd>Y</kbd><kbd>Z</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>H</kbd><kbd>L</kbd><kbd>X</kbd><kbd>C</kbd> pick a monkey · <kbd>,</kbd><kbd>.</kbd><kbd>/</kbd> upgrades · <kbd>Tab</kbd> targeting · <kbd>Backspace</kbd> sell · <kbd>1</kbd>-<kbd>8</kbd> abilities',
+    help: 'Pick a monkey and click the map (touch: tap, then OK) · click a monkey to upgrade or sell · <kbd>Space</kbd> start and fast forward x3 · <kbd>Q</kbd><wbr><kbd>W</kbd><wbr><kbd>E</kbd><wbr><kbd>R</kbd><wbr><kbd>T</kbd><wbr><kbd>Y</kbd><wbr><kbd>Z</kbd><wbr><kbd>A</kbd><wbr><kbd>S</kbd><wbr><kbd>D</kbd><wbr><kbd>H</kbd><wbr><kbd>L</kbd><wbr><kbd>X</kbd><wbr><kbd>C</kbd> pick a monkey · <kbd>,</kbd><wbr><kbd>.</kbd><wbr><kbd>/</kbd> upgrades · <kbd>Tab</kbd> targeting · <kbd>Backspace</kbd> sell · <kbd>1</kbd>-<kbd>8</kbd> abilities',
     better: 'high',
     format: v => 'R' + v,
     width: 960,

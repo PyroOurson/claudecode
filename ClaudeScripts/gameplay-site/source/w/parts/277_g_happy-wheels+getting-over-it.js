@@ -1962,9 +1962,11 @@
     const cv = api.canvas(CW, CH), canvas = cv.canvas, ctx = cv.ctx;
     const VW = CW, VH = CH - PANEL;
     const snd = makeSnd(api);
-    const sv = Object.assign({ best: {}, splat: 0, shake: 1, char: null, mine: [], hint: 1, touch: 0 }, api.load() || {});
-    if (!sv.best || typeof sv.best !== 'object') sv.best = {};
-    if (!Array.isArray(sv.mine)) sv.mine = [];
+    const sv = Object.assign({ best: {}, splat: 0, shake: 1, char: null, mine: [], hint: 1, touch: 0 }, (s => s && typeof s === 'object' && !Array.isArray(s) ? s : {})(api.load()));
+    if (!sv.best || typeof sv.best !== 'object' || Array.isArray(sv.best)) sv.best = {};
+    for (const k of Object.keys(sv.best)) { const b = sv.best[k]; if (!b || typeof b !== 'object' || typeof b.s !== 'number' || !isFinite(b.s)) delete sv.best[k]; }
+    sv.mine = (Array.isArray(sv.mine) ? sv.mine : []).slice(0, 6).map(L => L && typeof L === 'object' && typeof L.name === 'string' && Array.isArray(L.items) && L.items.every(it => it && typeof it === 'object' && typeof it.t === 'string') && L.items.some(it => it.t === 'spawn') ? L : null);
+    if (sv.char && (typeof sv.char !== 'object' || Array.isArray(sv.char))) sv.char = null;
     const persist = () => api.save(sv);
     let touchSeen = matchMedia('(pointer: coarse)').matches || PORT;
     const MED = ['#cd7f32', '#c0c8d4', '#ffc928'];
