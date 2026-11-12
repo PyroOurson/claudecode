@@ -944,7 +944,7 @@ function auSession(ev, s) {
   if (!u && !was) { auRender(); return; }
   SB.user = u;
   if (u) auSignedIn(ev);
-  else { auSignedOut(); if (opt) toast(auT('Your session ended. Log in again to keep playing.')); }
+  else { auSignedOut(); if (opt && !window.__gpSbDown && navigator.onLine !== false) toast(auT('Your session ended. Log in again to keep playing.')); }
   auBootDone();
 }
 async function auReturn() {

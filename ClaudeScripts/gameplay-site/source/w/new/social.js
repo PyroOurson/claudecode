@@ -148,7 +148,7 @@ function prSend(o, ch, payload, fresh) {
     o.last = j; o.at = Date.now();
     try { const r = w ? c.track(w) : c.untrack(); if (r && r.catch) r.catch(() => {}); } catch (e) {}
   };
-  o.t = setTimeout(run, Math.max(fresh ? 0 : 250, (o.at || 0) + PR_GAP - Date.now()));
+  o.t = setTimeout(run, Math.max(fresh ? 0 : 250, (o.at || 0) + (payload ? PR_GAP : 2000) - Date.now()));
 }
 function prDrop(o) { clearTimeout(o.t); o.t = 0; o.last = null; o.want = null; o.ch = null; }
 function rtStart() {
