@@ -718,6 +718,31 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
 .gm-slope-3d .steps p{margin:0;font-size:.76em;color:rgba(255,255,255,.75);line-height:1.3}
 @media (max-width:560px){.gm-slope-3d .panel{gap:.8em}.gm-slope-3d .sw i{width:34px;height:34px}.gm-slope-3d .st2{grid-template-columns:repeat(2,auto)}.gm-slope-3d .steps{gap:.5em}.gm-slope-3d .steps>div{width:7.3em;padding:.6em .35em}.gm-slope-3d .steps svg{width:4.6em;height:3.2em}.gm-slope-3d .sw{gap:.4em}.gm-slope-3d .sw i{width:27px;height:27px}}`;
 
+  function fitPR(api, v, hook) {
+    const r = v.renderer, c = v.canvas, Q = [1, 0.8, 0.64, 0.5];
+    let lvl = 0, cw = 0, avg = 0.016, t = -2, wait = 8, chk = 0, lf = -1, sf = 0, up = 0, was = 1;
+    const apply = () => {
+      const d = Math.min(2, window.devicePixelRatio || 1), B = Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * d * d * 1.05);
+      const pr = Math.max(0.5, Math.min(4, d * cw / v.w, Math.sqrt(B / (v.w * v.h)))) * Q[lvl];
+      if (Math.abs(r.getPixelRatio() - pr) > 0.01) r.setPixelRatio(pr);
+      r.shadowMap.autoUpdate = lvl < 2;
+    };
+    const size = () => { const w = c.getBoundingClientRect().width; if (w && Math.abs(w - cw) > Math.max(2, cw * 0.02)) { cw = w; apply(); } };
+    const set = n => { lvl = n; t = 0; apply(); if (hook) hook(lvl); };
+    size(); api.on(window, 'resize', size);
+    api.loop(dt => {
+      const f = r.info.render.frame;
+      if (f === lf || !(dt > 0)) return;
+      lf = f;
+      if (lvl > 1 && (sf ^= 1)) r.shadowMap.needsUpdate = true;
+      avg += (dt - avg) * Math.min(1, dt * 1.5); t += dt;
+      if ((chk += dt) > 1) { chk = 0; size(); }
+      if (t < 1.5) return;
+      if (avg > 0.021 && lvl < Q.length - 1 && (lvl < 2 || avg < was * 0.94)) { if (up && t < 6) wait = Math.min(64, wait * 2); up = 0; was = avg; set(lvl + 1); }
+      else if (avg < 0.0175 && lvl && t > wait) { up = 1; set(lvl - 1); }
+    });
+  }
+
   Ameplay.register({
     id: ID,
     title: 'Slope',
@@ -764,6 +789,7 @@ float f=smoothstep(uFog.x,uFog.y*1.2,vD);gl_FragColor=vec4(uLine*max(l*0.85,b)*s
       }
       root.append(wrap);
       wrap.append(v.canvas);
+      fitPR(api, v);
       wrap.insertAdjacentHTML('beforeend', `
 <div class="hud" hidden><b class="sc">0</b><span class="sp">Speed 0</span></div>
 <div class="zt" hidden></div>

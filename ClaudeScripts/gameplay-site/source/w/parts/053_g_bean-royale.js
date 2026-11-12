@@ -10,6 +10,30 @@
   const wrapA = a => ((((a + Math.PI) % TAU) + TAU) % TAU) - Math.PI;
   const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0, t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
   const COARSE = matchMedia('(pointer: coarse)').matches;
+  function fitPR(api, v, hook) {
+    const r = v.renderer, c = v.canvas, Q = [1, 0.8, 0.64, 0.5];
+    let lvl = 0, cw = 0, avg = 0.016, t = -2, wait = 8, chk = 0, lf = -1, sf = 0, up = 0, was = 1;
+    const apply = () => {
+      const d = Math.min(2, window.devicePixelRatio || 1), B = Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * d * d * 1.05);
+      const pr = Math.max(0.5, Math.min(4, d * cw / v.w, Math.sqrt(B / (v.w * v.h)))) * Q[lvl];
+      if (Math.abs(r.getPixelRatio() - pr) > 0.01) r.setPixelRatio(pr);
+      r.shadowMap.autoUpdate = lvl < 2;
+    };
+    const size = () => { const w = c.getBoundingClientRect().width; if (w && Math.abs(w - cw) > Math.max(2, cw * 0.02)) { cw = w; apply(); } };
+    const set = n => { lvl = n; t = 0; apply(); if (hook) hook(lvl); };
+    size(); api.on(window, 'resize', size);
+    api.loop(dt => {
+      const f = r.info.render.frame;
+      if (f === lf || !(dt > 0)) return;
+      lf = f;
+      if (lvl > 1 && (sf ^= 1)) r.shadowMap.needsUpdate = true;
+      avg += (dt - avg) * Math.min(1, dt * 1.5); t += dt;
+      if ((chk += dt) > 1) { chk = 0; size(); }
+      if (t < 1.5) return;
+      if (avg > 0.021 && lvl < Q.length - 1 && (lvl < 2 || avg < was * 0.94)) { if (up && t < 6) wait = Math.min(64, wait * 2); up = 0; was = avg; set(lvl + 1); }
+      else if (avg < 0.0175 && lvl && t > wait) { up = 1; set(lvl - 1); }
+    });
+  }
   const ID = 'bean-royale', G = '.gm-' + ID;
 
   const CFG = {
@@ -29,8 +53,8 @@
   const HATS = ['None', 'Beanie', 'Cat', 'Bunny', 'Party', 'Viking', 'Propeller', 'Chef', 'Antenna', 'Bow', 'Phones', 'Halo', 'Crown'];
   const FREE_HATS = 11;
   const HAT_REQ = [null, null, null, null, null, null, null, null, null, null, null, { k: 'shows', n: 5, t: 'Play 5 shows' }, { k: 'crowns', n: 1, t: 'Win a crown' }];
-  const DIFFS = ['Easy', 'Normal', 'Hard'];
-  const DIFF_TXT = ['Bots wobble and hesitate', 'Bots race properly', 'Bots dive, grab and push'];
+  const DIFFS = ['Easy', 'Normal', 'Hard', 'Hardest'];
+  const DIFF_TXT = ['Bots wobble and hesitate', 'Bots race properly', 'Bots dive, grab and push', 'Bots run at your pace and never slip'];
   const MODES = ['Show', 'Quick', 'Rush'];
   const MODE_TXT = ['4 rounds to the crown', 'Practice one round', 'Straight to the final'];
   const RKEYS = ['whirl', 'doors', 'tiptoe', 'hit', 'fruit', 'slime', 'hex', 'jump', 'egg', 'crown'];
@@ -277,7 +301,7 @@ ${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
     const { THREE, renderer, canvas, w, h } = V;
     wrap.style.width = canvas.style.width; wrap.style.aspectRatio = canvas.style.aspectRatio;
     canvas.style.width = '100%'; wrap.append(canvas);
-    if (COARSE) { const fit = () => { const cw = canvas.clientWidth; if (cw && !document.fullscreenElement) renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1) * cw / w); }; fit(); api.on(window, 'resize', fit); }
+    fitPR(api, V);
     renderer.toneMappingExposure = 1.0;
     const bin = [], own = x => (bin.push(x), x);
     const col = hex => new THREE.Color(hex).convertSRGBToLinear();
@@ -590,7 +614,7 @@ ${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
         p: new THREE.Vector3(), v: new THREE.Vector3(), yaw: 0, state: 'run', t: 0, ground: false, gc: null, gn: new THREE.Vector3(0, 1, 0),
         coyote: 0, jumpBuf: 0, diveReq: false, grabT: -1, held: null, heldBy: null, holdT: 0, ix: 0, iz: 0, out: false, fin: false, gone: false, place: 0, cp: 0, respawnT: 0, airT: 0, slide: 0,
         phase: Math.random() * 6, sq: 0, sqV: 0, leanX: 0, leanZ: 0, pvx: 0, pvz: 0, spinAx: new THREE.Vector3(1, 0, 0), spinW: 0, q: new THREE.Quaternion(), blink: Math.random() * 4,
-        egg: null, eggCd: 0, team: 0, sk0: null, skill: 1, speedMul: 1, wp: 0, lane: 0, dir: 1, think: 0, stuckT: 0, lastZ: 0, door: null, react: 0, tgt: null, hopT: 0, ci: 0, pi: 0
+        egg: null, eggCd: 0, team: 0, sk0: null, skill: 1, df: 1, speedMul: 1, wp: 0, lane: 0, dir: 1, think: 0, stuckT: 0, lastZ: 0, door: null, react: 0, tgt: null, hopT: 0, ci: 0, pi: 0
       };
     }
 
@@ -1685,7 +1709,7 @@ ${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
       used.clear();
       for (const b of beans) {
         if (b.me) continue;
-        b.name = botName(used); setTag(b); b.skill = prefs.diff === 0 ? rnd(0.15, 0.6) : prefs.diff === 2 ? rnd(0.8, 1.1) : rnd(0.45, 1);
+        b.name = botName(used); setTag(b); b.skill = prefs.diff === 0 ? rnd(0.15, 0.6) : prefs.diff === 3 ? 1.1 : prefs.diff === 2 ? rnd(0.8, 1.1) : rnd(0.45, 1);
         const ci = (Math.random() * PAL.length) | 0; let ai = (Math.random() * PAL.length) | 0; if (ai === ci) ai = (ai + 3) % PAL.length;
         skinBean(b, ci, (Math.random() * PATS.length) | 0, Math.random() < 0.5 ? null : ai);
         setHat(b, Math.random() < 0.65 ? 1 + ((Math.random() * (FREE_HATS - 1)) | 0) : 0);
@@ -1695,7 +1719,8 @@ ${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
       b.p.set(x, y, z); b.pp.copy(b.p); b.v.set(0, 0, 0); b.state = 'run'; b.t = 0; b.ground = false; b.gc = null; b.fin = false; b.gone = false; b.held = null; b.heldBy = null; b.grabT = -1; b.egg = null; b.eggCd = 0; b.place = 0; b.cp = 0; b.respawnT = 0; b.airT = 0;
       b.yaw = yaw; b.q.identity(); b.jumpBuf = 0; b.diveReq = false; b.ix = b.iz = 0; b.wp = 0; b.lane = rnd(-1, 1); b.lastZ = z; b.stuckT = 0; b.door = null; b.tgt = null; b.hideT = 0; b.pvx = b.pvz = 0; b.think = 0; b.react = 0;
       const DF = show ? show.diff : 1;
-      b.speedMul = b.me ? 1 : (DF === 0 ? clamp(rnd(0.72, 0.85) + b.skill * 0.04, 0.72, 0.88) : DF === 2 ? clamp(rnd(0.88, 0.96) + b.skill * 0.03, 0.88, 1) : clamp(rnd(0.8, 0.93) + b.skill * 0.04, 0.8, 0.96)) * (R.def.kind === 'final' ? (DF === 2 ? 0.92 : 0.86) : 1);
+      b.df = DF;
+      b.speedMul = b.me || DF === 3 ? 1 : (DF === 0 ? clamp(rnd(0.72, 0.85) + b.skill * 0.04, 0.72, 0.88) : DF === 2 ? clamp(rnd(0.88, 0.96) + b.skill * 0.03, 0.88, 1) : clamp(rnd(0.8, 0.93) + b.skill * 0.04, 0.8, 0.96)) * (R.def.kind === 'final' ? (DF === 2 ? 0.92 : 0.86) : 1);
       b.hes = 0; b.grabCd = rnd(1, 3);
     }
     function tryStart() {
@@ -1864,13 +1889,13 @@ ${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
       if (unl.length) audio.play('check');
     }
 
-    function threat(b) {
+    function threat(b, lead) {
       for (const c of R.kinCols) {
         if (!c.low || !c.on || Math.abs(c.c.y - b.p.y - 0.5) > 1.2) continue;
         T1.copy(b.p).applyMatrix4(c.inv);
         if (Math.abs(T1.x) > c.hx + 0.4 || Math.abs(T1.z) > 2.4) continue;
         T2.set(T1.x, 0, 0).applyMatrix4(c.mat); pointVel(c, T2, U0);
-        if ((b.p.x - T2.x) * U0.x + (b.p.z - T2.z) * U0.z > 0 && Math.abs(T1.z) < 0.9 + Math.hypot(U0.x, U0.z) * 0.13) return true;
+        if ((b.p.x - T2.x) * U0.x + (b.p.z - T2.z) * U0.z > 0 && Math.abs(T1.z) < 0.9 + Math.hypot(U0.x, U0.z) * (0.13 + (lead || 0))) return true;
       }
       return false;
     }
@@ -1902,7 +1927,7 @@ ${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
       if (b.think <= 0) { b.think = rnd(0.7, 1.8); b.lane = rnd(7, 14); b.dir = Math.random() < 0.5 ? 1 : -1; }
       const a = Math.atan2(b.p.z, b.p.x) + b.dir * 0.4, tx = Math.cos(a) * b.lane - b.p.x, tz = Math.sin(a) * b.lane - b.p.z, d = Math.hypot(tx, tz) || 1, th = 0.25 + 0.2 * b.skill;
       b.ix = (tx / d) * th; b.iz = (tz / d) * th;
-      if (b.ground && b.state === 'run') { b.react -= dt; if (b.react <= 0) { b.react = 0.07; if (threat(b) && Math.random() < 0.3 + b.skill * 0.62) b.jumpBuf = CFG.jumpBuf; } }
+      if (b.ground && b.state === 'run') { b.react -= dt; if (b.react <= 0) { b.react = b.df === 3 ? rnd(0.15, 0.2) : 0.07; if (threat(b, b.df === 3 ? 0.05 : 0) && (b.df === 3 || Math.random() < 0.3 + b.skill * 0.62)) b.jumpBuf = CFG.jumpBuf; } }
     }
     function tipAI(b, dt) {
       const T = R.def.tip, f = T.fields.find(q => b.p.z > q.z0 - 2.5 && b.p.z < q.z1 + 0.2);
@@ -1924,14 +1949,14 @@ ${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
     }
     function botAI(b, dt) {
       if (b.fin || phase !== 'play') { b.ix = b.iz = 0; if (b.fin && b.ground && b.state === 'run' && Math.random() < 0.02) b.jumpBuf = CFG.jumpBuf; return; }
-      const DF = show.diff;
+      const DF = b.df;
       if (DF === 0 && R.def.kind !== 'team') { if (b.hes > 0) { b.hes -= dt; b.ix = b.iz = 0; return; } if (b.ground && b.state === 'run' && Math.random() < dt * 0.2) b.hes = rnd(0.25, 0.75); }
       if (R.def.kind === 'team') return eggAI(b, dt);
       if (R.def.ring) return jumpAI(b, dt);
       if (R.def.kind === 'survival') return hexAI(b, dt);
       if (R.def.tip && tipAI(b, dt)) return;
       const P = R.def.path;
-      while (b.wp < P.length - 1 && b.p.z >= P[b.wp][1] - 0.6) { b.wp++; b.lane = rnd(-1, 1); }
+      while (b.wp < P.length - 1 && b.p.z >= P[b.wp][1] - 0.6) { b.wp++; b.lane = DF === 3 ? clamp((b.p.x - P[b.wp][0]) / (P[b.wp][2] || 1), -0.7, 0.7) : rnd(-1, 1); }
       const w = P[b.wp], fl = w[3];
       let tx = w[0] + b.lane * w[2], tz = w[1];
       if (fl === 'D') {
@@ -1944,22 +1969,23 @@ ${G} .rkc.no{background:#ff4f7a;box-shadow:0 .18em 0 #a01d43}
         }
       }
       let dx = tx - b.p.x, dz = tz - b.p.z; const dl = Math.hypot(dx, dz) || 1;
-      dx = dx / dl + Math.sin(R.t * 1.7 + b.phase * 5) * 0.1; dz /= dl;
+      dx = dx / dl + Math.sin(R.t * 1.7 + b.phase * 5) * (DF === 3 ? 0.02 : 0.1); dz /= dl;
       const m = Math.hypot(dx, dz) || 1; b.ix = dx / m; b.iz = dz / m;
       if (b.ground && b.state === 'run') {
         if (fl === 'j' && b.p.z > w[1] - 1.5 && (Math.hypot(b.v.x, b.v.z) > 3.5 * b.speedMul || b.p.z > w[1] - 0.4)) b.jumpBuf = CFG.jumpBuf;
         else if (fl === 'c' && Math.hypot(b.p.x - w[0], b.p.z - w[1]) < 1.8 && Math.random() < 0.02 + b.skill * 0.03) b.jumpBuf = CFG.jumpBuf;
         b.react -= dt;
         if (b.react <= 0) {
-          b.react = 0.07; if (threat(b) && Math.random() < 0.3 + b.skill * 0.6) b.jumpBuf = CFG.jumpBuf;
-          if (DF === 2) {
-            b.grabCd -= 0.07;
+          const rt = DF === 3 ? rnd(0.15, 0.2) : 0.07;
+          b.react = rt; if (threat(b, DF === 3 ? 0.05 : 0) && (DF === 3 || Math.random() < 0.3 + b.skill * 0.6)) b.jumpBuf = CFG.jumpBuf;
+          if (DF >= 2) {
+            b.grabCd -= rt;
             if (b.grabCd <= 0) for (const o of R.field) { if (o === b || o.gone || o.fin || o.state !== 'run' || o.heldBy) continue; const ox = o.p.x - b.p.x, oz = o.p.z - b.p.z; if (oz > 0.2 && oz < 1.7 && Math.abs(ox) < 1 && Math.abs(o.p.y - b.p.y) < 0.8) { doGrabB(b); b.grabCd = rnd(2.5, 5); break; } }
             if (R.def.finishZ && b.p.z > R.def.finishZ - 3.6 && b.p.z < R.def.finishZ - 0.9) b.diveReq = true;
           }
         }
-        if (Math.random() < 0.001) b.jumpBuf = CFG.jumpBuf;
-        if (DF > 0 && Math.random() < 0.0012) doGrabB(b);
+        if (DF < 3 && Math.random() < 0.001) b.jumpBuf = CFG.jumpBuf;
+        if (DF > 0 && DF < 3 && Math.random() < 0.0012) doGrabB(b);
         if (fl === 'd' && b.p.z > w[1] - 3.2) b.diveReq = true;
       }
       b.stuckT += dt;

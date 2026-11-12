@@ -6,6 +6,30 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const sstep = t => t * t * (3 - 2 * t);
 const COARSE = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 const ID = 'polytrack', G = '.gm-' + ID;
+function fitPR(api, v, hook) {
+  const r = v.renderer, c = v.canvas, Q = [1, 0.8, 0.64, 0.5];
+  let lvl = 0, cw = 0, avg = 0.016, t = -2, wait = 8, chk = 0, lf = -1, sf = 0, up = 0, was = 1;
+  const apply = () => {
+    const d = Math.min(2, window.devicePixelRatio || 1), B = Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * d * d * 1.05);
+    const pr = Math.max(0.5, Math.min(4, d * cw / v.w, Math.sqrt(B / (v.w * v.h)))) * Q[lvl];
+    if (Math.abs(r.getPixelRatio() - pr) > 0.01) r.setPixelRatio(pr);
+    r.shadowMap.autoUpdate = lvl < 2;
+  };
+  const size = () => { const w = c.getBoundingClientRect().width; if (w && Math.abs(w - cw) > Math.max(2, cw * 0.02)) { cw = w; apply(); } };
+  const set = n => { lvl = n; t = 0; apply(); if (hook) hook(lvl); };
+  size(); api.on(window, 'resize', size);
+  api.loop(dt => {
+    const f = r.info.render.frame;
+    if (f === lf || !(dt > 0)) return;
+    lf = f;
+    if (lvl > 1 && (sf ^= 1)) r.shadowMap.needsUpdate = true;
+    avg += (dt - avg) * Math.min(1, dt * 1.5); t += dt;
+    if ((chk += dt) > 1) { chk = 0; size(); }
+    if (t < 1.5) return;
+    if (avg > 0.021 && lvl < Q.length - 1 && (lvl < 2 || avg < was * 0.94)) { if (up && t < 6) wait = Math.min(64, wait * 2); up = 0; was = avg; set(lvl + 1); }
+    else if (avg < 0.0175 && lvl && t > wait) { up = 1; set(lvl - 1); }
+  });
+}
 const mkRng = seed => { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
 const add3 = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -1244,7 +1268,7 @@ function run(root, wrap, api, V) {
   wrap.style.width = canvas.style.width; wrap.style.aspectRatio = canvas.style.aspectRatio;
   canvas.style.width = '100%'; canvas.style.height = '100%'; wrap.append(canvas);
   const narrow = h > w;
-  if (COARSE) { const fit = () => { const cw = canvas.clientWidth; if (cw && !document.fullscreenElement) renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1) * cw / w); }; fit(); api.on(window, 'resize', fit); }
+  fitPR(api, V);
   const view = makeView(THREE, renderer, canvas, w, h, narrow);
   const saved = api.load() || {};
   const P = { best: saved.best || {}, med: saved.med || {}, lb: saved.lb || {}, split: saved.split || {}, custom: saved.custom || [], played: saved.played || 0, set: saved.set || {} };
@@ -2303,6 +2327,14 @@ ${S.mode === 'net' ? '' : `<h3>Options</h3><div class="row"><button class="pt-b 
     else if (R) { stepRace(dt); drawRace(dt); }
     view.render();
   });
+  let bgT = 0;
+  api.interval(() => {
+    const now = performance.now();
+    if (!document.hidden || !R || R.kind !== 'online' || !net || net.role !== 'host') { bgT = 0; return; }
+    let left = bgT ? Math.min(2, (now - bgT) / 1000) : 0;
+    bgT = now;
+    while (left > 1e-4 && R && R.kind === 'online') { const d = Math.min(left, DT * 8); stepRace(d); left -= d; }
+  }, 200);
   api.on(window, 'blur', () => { pressed.up = pressed.dn = pressed.lf = pressed.rt = 0; });
   api.on(document, 'visibilitychange', () => { if (document.hidden) audio.drive(0, 0, 0, 0, 0, false); });
   if (api.net && api.net.invite) goOnline();
