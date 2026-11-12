@@ -24,7 +24,7 @@ async function visitor(browser, o = {}) {
     await page.fill('#auemail', email);
     await page.fill('#aupass', password);
     await page.locator('#auform button[type=submit]').click();
-    await page.waitForFunction(() => window.Ameplay && Ameplay.account && Ameplay.account.signedIn, null, { timeout: 60000 });
+    await page.waitForFunction(() => window.Ameplay && Ameplay.account && Ameplay.account.signedIn, null, { timeout: 180000 });
     await page.waitForTimeout(600);
   };
   const signedIn = () => page.evaluate(() => !!(window.Ameplay && Ameplay.account && Ameplay.account.signedIn));

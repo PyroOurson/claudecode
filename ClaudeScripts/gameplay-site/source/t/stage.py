@@ -8,8 +8,8 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 W = os.path.join(os.path.dirname(HERE), 'w')
 PARTS = os.path.join(W, 'parts')
-STAGE = os.path.join(W, 'parts_stage')
-OUT = os.path.join(W, 'site_stage')
+STAGE = os.environ.get('STAGE_PARTS') or os.path.join(W, 'parts_stage')
+OUT = os.environ.get('STAGE_OUT') or os.path.join(W, 'site_stage')
 SECRET = os.environ.get('STAGE_GATE_PASS', 'stage-build-secret')
 SITE_PASS = os.environ.get('STAGE_SITE_PASS', 'stagepass1')
 

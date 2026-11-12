@@ -3,6 +3,7 @@ const api = require('../stage_api.js');
 const { launch, USERS } = lib;
 const { execSync } = require('child_process');
 const only = (process.env.ONLY || '').split(',').filter(Boolean);
+const SITE = process.env.SITE_URL || 'http://127.0.0.1:8080/';
 const GID = 'dino-run', DBC = process.env.STAGE_DB || 'supabase_db_staging';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const must = (c, m) => { if (!c) throw new Error(m); };
@@ -11,14 +12,15 @@ const results = [];
 let PL = [];
 const player = async (b, who, o) => { const v = await lib.player(b, who, o); PL.push(v); return v; };
 const until = async (fn, ms, step = 500) => { const t0 = Date.now(); for (;;) { const r = await fn(); if (r) return r; if (Date.now() - t0 > ms) return null; await sleep(step); } };
-const reload = async (v, u) => { if (u) await v.page.goto(new URL(u, lib.BASE || 'http://127.0.0.1:8080/').href, { timeout: 180000, waitUntil: 'domcontentloaded' }); else await v.page.reload({ timeout: 180000, waitUntil: 'domcontentloaded' }); await v.ready(); };
+const reload = async (v, u) => { if (u) await v.page.goto(new URL(u, SITE).href, { timeout: 180000, waitUntil: 'domcontentloaded' }); else await v.page.reload({ timeout: 180000, waitUntil: 'domcontentloaded' }); await v.ready(); };
 const acct = async who => { const s = await api.login(USERS[who][0], USERS[who][1]); return { uid: s.user.id, token: s.access_token }; };
 const cloud = async (a, gid) => { const r = await api.rest('game_saves?select=data,updated_at&user_id=eq.' + a.uid + '&game_id=eq.' + gid, { method: 'GET', token: a.token }); return r && r[0] ? r[0].data : null; };
 const cloudSet = (a, gid, data) => api.call('/rest/v1/game_saves?on_conflict=user_id,game_id', { method: 'POST', token: a.token, body: [{ user_id: a.uid, game_id: gid, data }] }).catch(async e => { if (e.status === 409 || e.status === 400) return api.rest('game_saves?user_id=eq.' + a.uid + '&game_id=eq.' + gid, { method: 'PATCH', token: a.token, body: { data } }); throw e; });
 const local = (v, gid) => v.page.evaluate(g => localStorage.getItem('gameplay:save:' + g), gid);
 const setLocal = (v, gid, o) => v.page.evaluate(([g, s]) => localStorage.setItem('gameplay:save:' + g, s), [gid, JSON.stringify(o)]);
 const sync = v => v.page.evaluate(() => Ameplay.account.sync());
-const ageSync = v => v.page.evaluate(() => { const o = JSON.parse(localStorage.getItem('gameplay:sync') || '{}'); o.at = Date.now() - 600000; localStorage.setItem('gameplay:sync', JSON.stringify(o)); });
+const AGE = () => { try { if (sessionStorage.getItem('__age')) { sessionStorage.removeItem('__age'); const o = JSON.parse(localStorage.getItem('gameplay:sync') || '{}'); o.at = Date.now() - 600000; localStorage.setItem('gameplay:sync', JSON.stringify(o)); } } catch (e) {} };
+const ageSync = v => v.page.evaluate(() => sessionStorage.setItem('__age', '1'));
 async function scenario(name, fn) {
   if (only.length && !only.some(k => name.indexOf(k) === 0)) return;
   const b = await launch();
@@ -35,7 +37,7 @@ async function scenario(name, fn) {
   await scenario('S1 a device with an old save opens the game after another device saved: it gets the newer save and never overwrites it', async b => {
     const a = await acct('cat');
     await api.rest('game_saves?user_id=eq.' + a.uid + '&game_id=eq.' + GID, { method: 'DELETE', token: a.token }).catch(() => {});
-    const v = await player(b, 'cat');
+    const v = await player(b, 'cat', { init: AGE });
     await setLocal(v, GID, { t: 'old', n: 1 });
     await sync(v);
     must(await until(async () => { const c = await cloud(a, GID); return c && c.t === 'old'; }, 30000), 'the first save never reached the cloud');
@@ -132,7 +134,7 @@ async function scenario(name, fn) {
     const row = () => sql("select coalesce(game,'-'), extract(epoch from now() - at)::int from private.presence_now where user_id = '" + a.uid + "'");
     const t1 = await player(b, 'ann');
     const p2 = await t1.ctx.newPage();
-    await p2.goto('http://127.0.0.1:8080/' + GID, { timeout: 180000, waitUntil: 'domcontentloaded' });
+    await p2.goto(new URL(GID, SITE).href, { timeout: 180000, waitUntil: 'domcontentloaded' });
     await p2.waitForSelector('#frame .g-root', { timeout: 120000 });
     must(await until(async () => row().startsWith(GID + '|'), 60000, 2000), 'the playing tab never set the status: ' + row());
     const seen = [];
@@ -159,6 +161,24 @@ async function scenario(name, fn) {
     const left = await v.page.evaluate(() => { const o = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^gameplay:(sync|analytics|save:)|^sb-gameplay/.test(k)) o[k] = localStorage.getItem(k).slice(0, 120); } return o; });
     const bad = Object.keys(left).filter(k => !(k === 'gameplay:sync' && /"p":\{\}/.test(left[k]) && /"uid":null/.test(left[k])));
     must(!bad.length, 'data came back after the reload: ' + JSON.stringify(left));
+  });
+  await scenario('S7 a friend playing a game is shown online with the game, and offline soon after leaving', async b => {
+    const bo = await player(b, 'bob');
+    await bo.page.evaluate(() => document.querySelector('#abtn').click());
+    await bo.page.waitForSelector('#fmodal:not([hidden]) [data-frc]', { timeout: 60000 });
+    const st = () => bo.page.evaluate(() => { const r = [...document.querySelectorAll('#fmodal [data-frc]')].find(x => /@ann_player/.test(x.innerText)); const e = r && r.querySelector('.fr-st'); return r ? { on: !!e && e.classList.contains('on'), text: e ? e.innerText.trim() : '' } : null; });
+    must(await st(), 'ann is not in bob’s friends list');
+    const an = await player(b, 'ann');
+    await an.openGame(GID, 1000);
+    const t0 = Date.now();
+    const on = await until(async () => { const x = await st(); return x && x.on && /Dino/i.test(x.text) ? x : null; }, 90000, 1500);
+    must(on, 'bob never saw ann playing: ' + JSON.stringify(await st()));
+    const t1 = Math.round((Date.now() - t0) / 1000);
+    await an.close();
+    const t2 = Date.now();
+    const off = await until(async () => { const x = await st(); return x && !x.on ? x : null; }, 90000, 1500);
+    must(off, 'bob still sees ann online 90 s after she left: ' + JSON.stringify(await st()));
+    return 'shown "' + on.text + '" after ' + t1 + ' s, offline ' + Math.round((Date.now() - t2) / 1000) + ' s after leaving';
   });
   const bad = results.filter(r => r[1]);
   console.log(bad.length ? bad.length + ' of ' + results.length + ' failing' : 'all ' + results.length + ' passing');

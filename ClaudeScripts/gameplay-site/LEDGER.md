@@ -87,6 +87,40 @@ Machine limits apply to everything below: this sandbox renders WebGL in software
 8. `schema.sql` does not contain `round16_moderation.sql`. To be merged into the cumulative file.
 9. Diagnostics could keep part of a session token in websocket frames. Fixed before any production use.
 
+## Code review of the portal (27 findings from an independent read of the client code)
+
+Status of each. "Verified" means a browser test on staging reproduces the scenario and passes (`source/t/tests/fixes.js`, `party.js`); "Fixed, not exercised" means the code is changed and builds, but no test drives that exact path.
+
+| # | Finding | Status |
+|---|---|---|
+| 1 | A device with an old save could overwrite a newer cloud save | VERIFY_S1 |
+| 2 | A second account on the same browser inherited the first one's saves, plays and display name; a deleted account's history went to the next sign-in | VERIFY_S2 |
+| 3 | A party guest could join under the host's id and get leader powers | VERIFY_S3 |
+| 4 | Esc while rebinding a key left capture armed, so the next key pressed in the game was rebound | VERIFY_S4 |
+| 5 | Two tabs double-counted plays and playtime and reverted each other's settings | Fixed, not exercised |
+| 6 | A failed or cancelled invite link kept being retried when the lobby was reopened | Fixed, not exercised |
+| 7 | Overlapping realtime nudges to the same user were dropped (late messages, typing, read marks) | Fixed, not exercised |
+| 8 | Message thread refreshes were silently skipped while another was in flight | Fixed, not exercised |
+| 9 | With a party lobby open, Enter and Esc stopped working in chat, search and settings fields | Fixed, not exercised |
+| 10 | Two tabs fought over the online status; closing one showed the player offline | VERIFY_S5 |
+| 11 | "Delete my data" wrote data back while the page reloaded | VERIFY_S6 |
+| 12 | The last analytics batch of every visit was stored twice | Handed to the analytics workstream |
+| 13 | Timed-out writes were replayed through the relay (duplicate messages, and a possible cause of surprise sign-outs) and uploads were cut at 15 s | Fixed, not exercised |
+| 14 | Messages were marked as read while the tab was hidden | Fixed, not exercised |
+| 15 | A favourites sync could undo a click made a moment earlier | Fixed, not exercised |
+| 16 | Pictures in messages broke after an hour, and on filtered networks | Fixed, not exercised |
+| 17 | Long offline play can lose playtime (server caps one batch at about an hour) | Not fixed: needs a matching change in the stats function; low impact |
+| 18 | "What's new" could open over a running game and Esc did not close it | Fixed, not exercised |
+| 19 | The party "door" channel accepts any answer | Partly: flooding is capped; authenticating the host's key is in the security decisions |
+| 20 | Diagnostics could record the password typed for a username login | Fixed (wider redaction, recorder switched off on sign-out) |
+| 21 | One failed profile request left the session without a profile | Fixed, not exercised |
+| 22 | The chat dock did not reopen after a reload | Fixed, not exercised |
+| 23 | The public-parties channel scheduled two retries after a close | Fixed, not exercised |
+| 24 | "Days played" capped at 60, date off by one across clock changes, export said "downloaded" when the account part failed | Fixed, not exercised |
+| 25 | The site-password page locks for good after five mistakes | Not changed: loosening it needs the owner's go-ahead |
+| 26 | Typing and read nudges can be spoofed | Owner decision (private realtime channels), with the other security items |
+| 27 | Arrow keys and Space were blocked on drop-downs inside the lobby | Fixed, not exercised |
+
 ## Could not test
 
 - Real TURN relays, real NATs, VPNs and school firewalls: this sandbox has no direct UDP or TCP sockets to the internet. The fallback order was tested by blocking the signalling server and WebRTC in the browser.
