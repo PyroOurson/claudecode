@@ -1488,6 +1488,7 @@
     if (P.phase === 'over') P.deadT += dt;
   }
   function kickRelease() {
+    if (!P || !P.kk) return;
     const k = P.kk;
     if (!P.snapped || k.state !== 'charge') return;
     if (k.ph < 0.55) { k.early = true; return; }
@@ -2876,7 +2877,9 @@
     else if (dr.res === 'int' || dr.res === 'fum' || dr.res === 'downs' || dr.res === 'pick6' || dr.res === 'safety' || dr.res === 'miss') snd('cheer');
   }
   function afterDrive() {
+    if (!G || !G.dr) return;
     const dr = G.dr;
+    G.dr = null;
     popEl.hidden = true; popEl.innerHTML = '';
     if (M.ot && M.sc[0] !== M.sc[1]) M.over = true;
     if (M.over) { finishGame(); return; }
