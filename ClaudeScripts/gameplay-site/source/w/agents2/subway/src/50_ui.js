@@ -44,7 +44,7 @@ ${SC} .ss-pus{position:absolute;left:2%;bottom:4%;display:flex;flex-direction:co
 ${SC} .ss-pu{display:flex;align-items:center;gap:.3em}
 ${SC} .ss-pu .ss-ic{width:2.1em;height:2.1em;background:linear-gradient(#ffffff,#d9e2ec);border:.12em solid #2a3a52;border-radius:.4em;padding:.15em;box-sizing:border-box;box-shadow:0 .12em 0 rgba(0,0,0,.35)}
 ${SC} .ss-pu i{display:block;width:6.4em;height:1.15em;border-radius:.3em;background:#fff;border:.12em solid #2a3a52;padding:.14em;box-sizing:border-box;box-shadow:0 .12em 0 rgba(0,0,0,.35)}
-${SC} .ss-pu i b{display:block;height:100%;border-radius:.12em;background:repeating-linear-gradient(90deg,#4fd12a 0 .3em,#2f9a14 .3em .38em)}
+${SC} .ss-pu i b{display:block;height:100%;border-radius:.12em;background:repeating-linear-gradient(90deg,#4fd12a 0 .3em,#2f9a14 .3em .38em);transform-origin:0 50%;transition:transform .12s linear}
 ${SC} .ss-pu.low i b{background:repeating-linear-gradient(90deg,#ffb31a 0 .3em,#d9700a .3em .38em)}
 ${SC} .ss-hb{position:absolute;right:2.4%;bottom:4%;width:5em;height:5em;border-radius:50%;background:radial-gradient(circle at 50% 35%,#ff8ac6,#d61f7c);border:.2em solid #fff;box-shadow:0 .28em 0 #12224a;display:grid;place-items:center;transition:transform .12s,opacity .2s}
 ${SC} .ss-hb .ss-ic{width:64%;height:64%}
@@ -60,6 +60,10 @@ ${SC} .ss-banner.gold{background:linear-gradient(#ffe25a,#ffaa1a)}
 ${SC} .ss-banner.blue{background:linear-gradient(#4fb3ff,#1f6fd9)}
 ${SC} .ss-big{position:absolute;left:0;right:0;top:38%;text-align:center;font-size:3.4em;${OUT};opacity:0;transform:scale(.6);transition:all .25s}
 ${SC} .ss-big.on{opacity:1;transform:scale(1)}
+${SC} .ss-near{position:absolute;left:0;right:0;top:57%;text-align:center;font-size:1.45em;color:#ffe46b;${OUT};opacity:0;pointer-events:none}
+${SC} .ss-near small{display:block;font-size:.8em;color:#fff;margin-top:.2em}
+${SC} .ss-near.on{animation:ss-near .9s ease-out forwards}
+@keyframes ss-near{0%{opacity:0;transform:translateY(.7em) scale(.7)}18%{opacity:1;transform:translateY(0) scale(1.12)}70%{opacity:1;transform:translateY(-.9em) scale(1)}100%{opacity:0;transform:translateY(-1.7em) scale(1)}}
 ${SC} .ss-scr{display:none;align-items:center;justify-content:center}
 ${SC} .ss-scr.on{display:flex}
 ${SC} .ss-home{flex-direction:column;justify-content:space-between;padding:2.6% 2.6% 3%;box-sizing:border-box;background:linear-gradient(rgba(0,0,0,.05),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 65%,rgba(0,20,60,.35))}
@@ -232,6 +236,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
   <div class="ss-pus"></div>
   <button class="ss-hb" aria-label="Hoverboard">${ic('board')}<b class="ss-hbn">0</b></button>
   <div class="ss-hint"></div>
+  <div class="ss-near"></div>
   <div class="ss-banner"></div>
   <div class="ss-big"></div>
   <div class="ss-toast"></div>

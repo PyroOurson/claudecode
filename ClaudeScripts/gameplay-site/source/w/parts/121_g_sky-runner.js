@@ -17,7 +17,7 @@
     LANE: 2.5, PHW: 0.36, PHD: 0.32, H_STAND: 1.7, H_ROLL: 0.85,
     V0: 16.5, VMAX: 33, VTAU: 105,
     JUMP_H: 1.55, JUMP_T: 0.64, SNEAK_H: 4.6, SNEAK_T: 1.0, ROLL_T: 0.62, FALL_V: 34,
-    LANE_T: 0.13, COYOTE: 0.09, BUFFER: 0.16, STEP: 1 / 120,
+    LANE_T: 0.13, COYOTE: 0.1, BUFFER: 0.22, GRAZE: 0.55, TRIP: 0.42, NEAR_T: 0.2, STEP: 1 / 120,
     ROOF: 3.55, THW: 1.17, CAR: 12, CGAP: 0.7, RAMP: 8.5,
     LOW_H: 1.0, HIGH_B: 1.12, HIGH_T: 2.95, BAR_D: 0.25,
     CHASE_T: 4.2, START_CHASE: 3.4, GHOST_T: 1.4, REVIVE_GHOST: 2.6,
@@ -1403,37 +1403,40 @@
   const trainLen = n => n * CFG.CAR + (n - 1) * CFG.CGAP;
   const HW = { train: CFG.THW, ramp: 1.1, low: 1.05, high: 1.1 };
   const laneOf = x => clamp(Math.round(x / CFG.LANE) + 1, 0, 2);
+  const TIMED = ['sneak', 'mag', 'x2'];
 
   function newWorld() {
     return {
       obs: [], coins: [], items: [], tunnels: [], genS: 0, free: [-1e9, -1e9, -1e9], uid: 0,
       nextPU: rnd(180, 260), nextKey: rnd(1200, 2000), nextBox: rnd(600, 1000), nextTun: rnd(450, 700),
-      clear: [], lastKind: '', puBag: []
+      clear: [], lastKind: '', puBag: [], kinds: {}
     };
   }
   function newRun() {
     return {
       s: 0, x: 0, lane: 1, xFrom: 0, lt: 1, ldir: 0, y: 0, vy: 0, g: 1, grounded: true, coyote: 0, jumpBuf: 0,
+      ps: 0, px: 0, py: 0, ign: null, edgeT: 0, edgeDir: 0, nearN: 0, nearT: 0, nearPts: 0,
       rollT: 0, rollD: 1, h: CFG.H_STAND, t: 0, vk: 1, vs: 1, t0: 0, mb: 0, speed: CFG.V0, score: 0, coins: 0, keys: 0, mult: 1,
       x2: 0, jet: 0, jetD: 1, sneak: 0, sneakD: 1, mag: 0, magD: 1, x2D: 1, board: 0, ghost: 0, stumbleT: 0, chase: CFG.START_CHASE,
       dead: '', deadT: 0, revives: 0, warm: true, landT: 0, jumpT: 0, ev: [], hitObs: null,
-      st: { jump: 0, roll: 0, pu: 0, jet: 0, magCoins: 0, board: 0, bump: 0, dodge: 0, roof: 0, sneakJump: 0, mbox: 0, stumble: 0, coinsRun: 0 }
+      st: { jump: 0, roll: 0, pu: 0, jet: 0, magCoins: 0, board: 0, bump: 0, dodge: 0, roof: 0, sneakJump: 0, mbox: 0, stumble: 0, coinsRun: 0, near: 0, lanes: 0, air: 0, topV: 0 }
     };
   }
 
   function addObs(W, k, lane, s0, len, extra) {
-    const o = Object.assign({ k, lane, s0, s1: s0 + len, ps0: s0, len, v: 0, act: false, id: ++W.uid, mesh: null, hit: false, done: false }, extra || {});
+    const o = Object.assign({ k, lane, s0, s1: s0 + len, ps0: s0, len, v: 0, act: false, id: ++W.uid, mesh: null, hit: false, done: false, nm: false, passed: false, moving: false, cars: 0, liv: 0 }, extra || {});
     W.obs.push(o);
     W.free[lane] = Math.max(W.free[lane], o.s1 + 2);
     return o;
   }
   const addTrain = (W, lane, s0, cars, liv) => addObs(W, 'train', lane, s0, trainLen(cars), { cars, liv: liv == null ? rint(0, NLIV - 1) : liv });
+  const addWagon = (W, lane, s0) => addTrain(W, lane, s0, 1, rint(NLIV - FREIGHT.length, NLIV - 1));
   const addRamp = (W, lane, s0) => addObs(W, 'ramp', lane, s0, CFG.RAMP);
   const addBar = (W, k, lane, s) => addObs(W, k, lane, s - CFG.BAR_D, CFG.BAR_D * 2);
-  const addCoin = (W, lane, s, y) => W.coins.push({ lane, x: LX(lane), s, y, got: false, pull: false, px: 0, py: 0, ps: 0 });
+  const addCoin = (W, lane, s, y) => W.coins.push({ lane, x: LX(lane), s, y, got: false, pull: false, mag: false, missed: false });
   const addItem = (W, k, lane, s, y) => W.items.push({ k, lane, x: LX(lane), s, y, got: false, mesh: null });
 
-  function inTunnel(W, s) { for (const t of W.tunnels) if (s >= t.s0 && s < t.s1) return t; return null; }
+  function inTunnel(W, s) { const T = W.tunnels; for (let i = 0; i < T.length; i++) if (s >= T[i].s0 && s < T[i].s1) return T[i]; return null; }
   function blocked(W, s0, s1) { for (const c of W.clear) if (s1 > c[0] && s0 < c[1]) return true; return false; }
 
   function coinLine(W, lane, s, n, y, gap) { for (let i = 0; i < n; i++) addCoin(W, lane, s + i * (gap || 2.2), y == null ? 0.9 : y); }
@@ -1442,6 +1445,7 @@
     for (let i = 0; i < n; i++) { const f = i / (n - 1); addCoin(W, lane, s - L / 2 + f * L, (base || 0) + 0.9 + CFG.JUMP_H * 4 * f * (1 - f)); }
   }
   function rampCoins(W, lane, s) { for (let i = 0; i < 4; i++) { const f = (i + 0.5) / 4; addCoin(W, lane, s + f * CFG.RAMP, 0.9 + CFG.ROOF * f); } }
+  function barCoins(W, k, lane, s, v) { if (k === 'low') coinArc(W, lane, s, v); else coinLine(W, lane, s - 2.2, 3, 0.55); }
 
   function placePending(W, s, lanes, y) {
     if (!lanes.length) return;
@@ -1455,61 +1459,47 @@
     return false;
   }
 
-  function freeLanes(W, s, margin) { const r = []; for (let l = 0; l < 3; l++) if (W.free[l] < s - (margin || 0)) r.push(l); return r; }
+  const maxFree = W => Math.max(W.free[0], W.free[1], W.free[2]);
+  const shuffled = () => [0, 1, 2].sort(() => Math.random() - 0.5);
 
-  function section(W, R) {
-    const v = Math.max(R.speed, CFG.V0) * 1.03;
-    const d = clamp((v - CFG.V0) / (CFG.VMAX - CFG.V0) + R.s / 9000, 0, 1);
-    let s = W.genS;
-    if (s > W.nextTun && !blocked(W, s, s + 200)) {
-      const t0 = Math.ceil((s + 30) / CFG.CHUNK) * CFG.CHUNK, n = rint(2, 4);
-      W.tunnels.push({ s0: t0, s1: t0 + n * CFG.CHUNK });
-      W.nextTun = t0 + n * CFG.CHUNK + rnd(800, 1400);
-    }
-    if (blocked(W, s, s + 40)) { W.genS = s + 20; return; }
-    const r = Math.random();
-    let kind;
-    if (s < 60) kind = 'coins';
-    else if (W.lastKind === 'coins') kind = r < 0.45 ? 'bars' : r < 0.8 ? 'side' : 'mixed';
-    else {
-      const wt = { bars: 1.2, side: 1.3, mixed: 1.0, roof: 0.35 + 0.8 * d, moving: 0.25 + 1.0 * d, coins: 0.55 - 0.3 * d };
-      let tot = 0; for (const k in wt) tot += wt[k];
-      let q = Math.random() * tot; kind = 'bars';
-      for (const k in wt) { q -= wt[k]; if (q <= 0) { kind = k; break; } }
-      if (kind === W.lastKind && kind !== 'side' && Math.random() < 0.6) kind = 'side';
-    }
-    let end = s;
-    const SP = Math.max(13, v * (0.95 - 0.2 * d));
-    if (kind === 'coins') {
+  const PAT = {
+    coins(W, s, v, d) {
       const lane = rint(0, 2), n = rint(8, 13);
       coinLine(W, lane, s + 4, n);
-      end = s + 4 + n * 2.2;
+      const end = s + 4 + n * 2.2;
       placePending(W, end + 6, [0, 1, 2].filter(l => l !== lane));
-    } else if (kind === 'bars') {
-      const rows = rint(2, 3 + Math.round(d * 2));
-      const cl = rint(0, 2);
+      return end;
+    },
+    bars(W, s, v, d, SP) {
+      const rows = rint(2, 3 + Math.round(d * 2)), cl = rint(0, 2), SPb = Math.max(12, v * (0.86 - 0.3 * d));
+      let end = s, sr = s + 8;
       for (let i = 0; i < rows; i++) {
-        const sr = s + 8 + i * SP * rnd(1.0, 1.25);
+        if (i) sr += SPb * rnd(1.0, 1.3);
         const k = Math.random() < 0.55 - 0.35 * d ? 1 : Math.random() < 0.75 ? 2 : 3;
-        const lanes = [0, 1, 2].sort(() => Math.random() - 0.5).slice(0, k);
-        const types = {};
-        for (const l of lanes) { types[l] = Math.random() < 0.55 ? 'low' : 'high'; addBar(W, types[l], l, sr); }
+        const lanes = shuffled().slice(0, k), types = {};
+        const wag = k === 3 && d > 0.15 && chance(0.4) ? lanes[2] : -1;
+        for (const l of lanes) {
+          if (l === wag) { addWagon(W, l, sr - 1); continue; }
+          types[l] = Math.random() < 0.55 ? 'low' : 'high'; addBar(W, types[l], l, sr);
+        }
         const tl = types[cl];
-        if (tl === 'low') coinArc(W, cl, sr, v);
-        else if (tl === 'high') coinLine(W, cl, sr - 2.2, 3, 0.55);
-        else coinLine(W, cl, sr - 4, 4);
-        end = sr + 2;
+        if (tl) barCoins(W, tl, cl, sr, v);
+        else if (cl !== wag) coinLine(W, cl, sr - 4, 4);
+        end = wag >= 0 ? sr - 1 + CFG.CAR : sr + 2;
+        if (wag >= 0) sr = end;
       }
       placePending(W, end + 8, [0, 1, 2]);
-    } else if (kind === 'side' || kind === 'mixed') {
-      const nT = kind === 'mixed' ? 1 : (Math.random() < 0.35 + 0.4 * d ? 2 : 1);
-      const lanes = [0, 1, 2].sort(() => Math.random() - 0.5);
-      if (nT === 2) s = Math.max(s, Math.max(...W.free) + v * 0.8);
+      return end;
+    },
+    side(W, s, v, d, SP, mixed) {
+      const nT = mixed ? 1 : (Math.random() < 0.35 + 0.4 * d ? 2 : 1);
+      const lanes = shuffled();
+      if (nT === 2) s = Math.max(s, maxFree(W) + v * 0.8);
       const tl = lanes.slice(0, nT), fl = lanes.slice(nT);
       let rampLane = -1, maxEnd = s;
       tl.forEach((l, i) => {
         const cars = rint(1, 3), st = s + 6 + rnd(0, 10) + (i ? rnd(0, 8) : 0);
-        const ramp = (i === 0 && Math.random() < 0.55) || kind === 'mixed' && Math.random() < 0.6;
+        const ramp = (i === 0 && Math.random() < 0.55) || mixed && Math.random() < 0.6;
         if (ramp && rampLane < 0) { addRamp(W, l, st - CFG.RAMP); rampLane = l; }
         const o = addTrain(W, l, st, cars);
         maxEnd = Math.max(maxEnd, o.s1);
@@ -1519,23 +1509,24 @@
           if (s + 80 > W.nextPU || s > W.nextKey) placePending(W, o.s1 - 4, [l], CFG.ROOF);
         }
       });
-      if (kind === 'mixed' && fl.length) {
+      if (mixed && fl.length) {
         const bl = fl[0];
         for (let sb = s + 14; sb < maxEnd - 4; sb += SP * rnd(1.1, 1.5)) addBar(W, Math.random() < 0.5 ? 'low' : 'high', bl, sb);
         if (fl[1] != null) coinLine(W, fl[1], s + 8, Math.max(4, Math.floor((maxEnd - s - 12) / 2.2)));
       } else if (fl.length) {
         const bl = pick(fl);
-        if (Math.random() < 0.5 + 0.3 * d) for (let sb = s + 24; sb < maxEnd - 8; sb += SP * rnd(1.4, 2.0)) { addBar(W, Math.random() < 0.5 ? 'low' : 'high', bl, sb); if (Math.random() < 0.4) coinArc(W, bl, sb, v); }
+        if (Math.random() < 0.5 + 0.3 * d) for (let sb = s + 24; sb < maxEnd - 8; sb += SP * rnd(1.4, 2.0)) { const k = Math.random() < 0.5 ? 'low' : 'high'; addBar(W, k, bl, sb); if (Math.random() < 0.4) barCoins(W, k, bl, sb, v); }
         else coinLine(W, bl, s + 10, Math.max(4, Math.floor((maxEnd - s - 16) / 2.2)));
       }
-      end = maxEnd;
-      placePending(W, end + 8, [0, 1, 2]);
-    } else if (kind === 'roof') {
-      s = Math.max(s, Math.max(...W.free) + v * 1.05);
+      placePending(W, maxEnd + 8, [0, 1, 2]);
+      return maxEnd;
+    },
+    mixed(W, s, v, d, SP) { return PAT.side(W, s, v, d, SP, true); },
+    roof(W, s, v, d) {
+      s = Math.max(s, maxFree(W) + v * 1.05);
       const rl = rint(0, 2), st = s + 6 + CFG.RAMP;
       addRamp(W, rl, st - CFG.RAMP); rampCoins(W, rl, st - CFG.RAMP);
-      const carsR = rint(2, 4);
-      const o = addTrain(W, rl, st, carsR);
+      const o = addTrain(W, rl, st, rint(2, 4));
       coinLine(W, rl, st + 2, Math.floor((o.len - 4) / 2.2), CFG.ROOF + 0.9);
       let maxEnd = o.s1;
       if (Math.random() < 0.45) {
@@ -1543,35 +1534,123 @@
         coinArc(W, rl, o.s1 + gap / 2, v, CFG.ROOF);
         maxEnd = o2.s1;
       }
-      for (const l of [0, 1, 2]) if (l !== rl) {
-        const off = rnd(0, 8), cars = rint(1, 3);
-        const o3 = addTrain(W, l, st + off, cars);
-        maxEnd = Math.max(maxEnd, o3.s1);
-      }
+      for (let l = 0; l < 3; l++) if (l !== rl) maxEnd = Math.max(maxEnd, addTrain(W, l, st + rnd(0, 8), rint(1, 3)).s1);
       placePending(W, o.s1 - 6, [rl], CFG.ROOF);
-      end = maxEnd;
-      placePending(W, end + 8, [0, 1, 2]);
-    } else if (kind === 'moving') {
-      const vt = rnd(8, 11) * (0.85 + 0.35 * d);
-      const sm = s + 30;
+      placePending(W, maxEnd + 8, [0, 1, 2]);
+      return maxEnd;
+    },
+    moving(W, s, v, d, SP) {
+      const vt = rnd(8, 11) * (0.85 + 0.35 * d), sm = s + 30;
       const meet = sm - vt * CFG.ACT_D / (v + vt);
       const cand = [0, 1, 2].filter(l => W.free[l] < meet - 16).sort(() => Math.random() - 0.5);
       let ml = -1, esc = -1;
       for (const l of cand) { const e = [0, 1, 2].filter(x => Math.abs(x - l) === 1 && W.free[x] < meet - 26); if (e.length) { ml = l; esc = pick(e); break; } }
-      if (ml < 0) { W.genS = s + 12; W.lastKind = 'x'; return; }
-      const cars = rint(1, 3);
-      const o = addTrain(W, ml, sm, cars, rint(0, NLIV - 1));
+      if (ml < 0) return -1;
+      const o = addTrain(W, ml, sm, rint(1, 3), rint(0, NLIV - FREIGHT.length - 1));
       o.v = vt; o.moving = true;
       const third = 3 - ml - esc;
       let maxEnd = o.s1;
       if (W.free[third] < meet - 26) {
-        if (Math.random() < 0.55) { const o2 = addTrain(W, third, meet - rnd(4, 14), rint(1, 2)); maxEnd = Math.max(maxEnd, o2.s1); }
+        if (Math.random() < 0.55) maxEnd = Math.max(maxEnd, addTrain(W, third, meet - rnd(4, 14), rint(1, 2)).s1);
         else for (let sb = meet - 18; sb < meet + 26; sb += SP * 1.3) addBar(W, Math.random() < 0.5 ? 'low' : 'high', third, sb);
       }
       coinLine(W, esc, meet - 24, 10);
       W.free[esc] = Math.max(W.free[esc], meet + 8);
-      end = Math.max(maxEnd, sm + 4);
+      return Math.max(maxEnd, sm + 4);
+    },
+    weave(W, s, v, d) {
+      s = Math.max(s, maxFree(W) + v * 0.7);
+      const n = rint(3, 4 + Math.round(d * 2)), D = CFG.CAR + v * (0.66 - 0.2 * d);
+      let f = rint(0, 2), st = s + 8, end = st;
+      for (let i = 0; i < n; i++) {
+        for (let l = 0; l < 3; l++) if (l !== f) addWagon(W, l, st);
+        coinLine(W, f, st + 1.5, 4, 0.9, 2.8);
+        end = st + CFG.CAR;
+        st += D;
+        f = f === 1 ? (chance(0.5) ? 0 : 2) : 1;
+      }
+      placePending(W, end + 8, [0, 1, 2]);
+      return end;
+    },
+    canyon(W, s, v, d) {
+      s = Math.max(s, maxFree(W) + v * 0.7);
+      const c = rint(0, 2), cars = rint(2, 3 + Math.round(d)), st = s + 8, L = trainLen(cars);
+      for (let l = 0; l < 3; l++) if (l !== c) addTrain(W, l, st, cars);
+      const SPc = v * (0.84 - 0.24 * d);
+      let any = false;
+      for (let sb = st + Math.max(7, v * 0.4); sb < st + L - 4; sb += SPc * rnd(1.0, 1.35)) {
+        const k = chance(0.5) ? 'low' : 'high';
+        addBar(W, k, c, sb); barCoins(W, k, c, sb, v); any = true;
+      }
+      if (!any) coinLine(W, c, st + 2, Math.floor((L - 4) / 2.2));
+      placePending(W, st + L + 8, [0, 1, 2]);
+      return st + L;
+    },
+    stairs(W, s, v, d) {
+      s = Math.max(s, maxFree(W) + v * 0.9);
+      const a = pick([0, 2]), c = 2 - a, st = s + 6 + CFG.RAMP, ov = 11;
+      addRamp(W, a, st - CFG.RAMP); rampCoins(W, a, st - CFG.RAMP);
+      const A = addTrain(W, a, st, 2);
+      coinLine(W, a, st + 2, 5, CFG.ROOF + 0.9, 2.6);
+      const B = addTrain(W, 1, A.s1 - ov, rint(2, 3));
+      coinLine(W, 1, B.s0 + 3, Math.floor((B.len - ov - 4) / 2.6), CFG.ROOF + 0.9, 2.6);
+      let last = B, maxEnd = B.s1;
+      if (chance(0.55 + 0.25 * d)) {
+        last = addTrain(W, a, B.s1 - ov, rint(1, 2));
+        coinLine(W, a, last.s0 + 3, Math.floor((last.len - 5) / 2.6), CFG.ROOF + 0.9, 2.6);
+        maxEnd = last.s1;
+      }
+      const SPg = v * (0.95 - 0.2 * d);
+      if (chance(0.6)) for (let sb = st + 10; sb < maxEnd - 6; sb += SPg * rnd(1.3, 1.9)) addBar(W, chance(0.5) ? 'low' : 'high', c, sb);
+      placePending(W, last.s1 - 5, [last.lane], CFG.ROOF);
+      placePending(W, maxEnd + 8, [0, 1, 2]);
+      return maxEnd;
+    },
+    pincer(W, s, v, d) {
+      const p = pick([0, 2]), m1 = chance(0.5) ? 1 : 2 - p, m2 = 3 - p - m1;
+      const vt = rnd(8, 10.5) * (0.85 + 0.3 * d), k = vt * CFG.ACT_D / (v + vt);
+      const meet1 = Math.max(s, maxFree(W) + v * 0.5) + 14, S1 = meet1 + k;
+      const o1 = addTrain(W, m1, S1, rint(1, 2), rint(0, NLIV - FREIGHT.length - 1));
+      o1.v = vt; o1.moving = true;
+      const S2 = S1 + v * (o1.len / (v + vt) + 1.25 - 0.3 * d), meet2 = S2 - k;
+      const o2 = addTrain(W, m2, S2, rint(1, 2), rint(0, NLIV - FREIGHT.length - 1));
+      o2.v = vt; o2.moving = true;
+      const pc = Math.max(1, Math.min(4, Math.ceil((meet2 - meet1 + 16 + CFG.CGAP) / (CFG.CAR + CFG.CGAP))));
+      const po = addTrain(W, p, meet1 - 6, pc);
+      coinLine(W, m2, meet1 - 22, 8);
+      coinLine(W, m1, meet2 - 14, 6);
+      return Math.max(po.s1, S2 + 4);
     }
+  };
+
+  function section(W, R) {
+    const v = Math.max(R.speed, CFG.V0) * 1.03;
+    const d = clamp((v - CFG.V0) / (CFG.VMAX - CFG.V0) + R.s / 9000, 0, 1);
+    const s = W.genS;
+    if (s > W.nextTun && !blocked(W, s, s + 200)) {
+      const t0 = Math.ceil((s + 30) / CFG.CHUNK) * CFG.CHUNK, n = rint(2, 4);
+      W.tunnels.push({ s0: t0, s1: t0 + n * CFG.CHUNK });
+      W.nextTun = t0 + n * CFG.CHUNK + rnd(800, 1400);
+    }
+    if (blocked(W, s, s + 40)) { W.genS = s + 20; return; }
+    const r = Math.random();
+    let kind;
+    if (s < 60) kind = 'coins';
+    else if (W.lastKind === 'coins') kind = r < 0.4 ? 'bars' : r < 0.7 ? 'side' : r < 0.85 ? 'mixed' : 'canyon';
+    else {
+      const wt = {
+        bars: 1.2, side: 1.2, mixed: 0.95, roof: 0.35 + 0.7 * d, moving: 0.25 + 0.9 * d, coins: 0.55 - 0.3 * d,
+        weave: s > 350 ? 0.45 + 0.35 * d : 0, canyon: s > 220 ? 0.5 + 0.3 * d : 0, stairs: s > 450 ? 0.5 : 0, pincer: d > 0.3 ? 0.75 * (d - 0.15) : 0
+      };
+      let tot = 0; for (const k in wt) tot += wt[k];
+      let q = Math.random() * tot; kind = 'bars';
+      for (const k in wt) { q -= wt[k]; if (q <= 0) { kind = k; break; } }
+      if (kind === W.lastKind && kind !== 'side' && Math.random() < 0.65) kind = 'side';
+    }
+    const SP = Math.max(13, v * (0.95 - 0.2 * d));
+    const end = PAT[kind](W, s, v, d, SP);
+    if (end < 0) { W.genS = s + 12; W.lastKind = 'x'; return; }
+    W.kinds[kind] = (W.kinds[kind] || 0) + 1;
     W.lastKind = kind;
     W.genS = end + v * rnd(0.55, 0.85) * (1.25 - 0.4 * d);
   }
@@ -1591,12 +1670,29 @@
 
   function supportAt(W, lane, s) {
     let h = 0;
-    for (const o of W.obs) {
-      if (o.lane !== lane || o.done || s < o.s0 - 0.05 || s > o.s1 + 0.05) continue;
-      if (o.k === 'train') { if (o.v && !o.act) {} h = Math.max(h, CFG.ROOF); }
+    const O = W.obs;
+    for (let i = 0; i < O.length; i++) {
+      const o = O[i];
+      if (o.lane !== lane || o.done || o.hit || s < o.s0 - 0.05 || s > o.s1 + 0.05) continue;
+      if (o.k === 'train') h = CFG.ROOF;
       else if (o.k === 'ramp') h = Math.max(h, CFG.ROOF * clamp((s - o.s0) / o.len, 0, 1));
     }
     return h;
+  }
+  function vsolid(o, R) {
+    if (o.k === 'train') return R.y < CFG.ROOF - 0.45;
+    if (o.k === 'ramp') return R.y < CFG.ROOF * clamp((R.s - o.s0) / o.len, 0, 1) - 1.3;
+    if (o.k === 'low') return R.y < CFG.LOW_H - 0.08;
+    return R.y + R.h > CFG.HIGH_B + 0.06 && R.y < CFG.HIGH_T;
+  }
+  function laneBlocked(W, R, lane) {
+    const O = W.obs;
+    for (let i = 0; i < O.length; i++) {
+      const o = O[i];
+      if (o.lane !== lane || o.done || o.hit) continue;
+      if (R.s + CFG.PHD > o.s0 && R.s - CFG.PHD < o.s1 && vsolid(o, R)) return true;
+    }
+    return false;
   }
 
   function startJump(R) {
@@ -1606,53 +1702,70 @@
     R.ev.push('jump');
   }
   function act(W, R, a) {
-    if (R.dead) return;
+    if (R.dead) return false;
     if (a === 'left' || a === 'right') {
       const dir = a === 'left' ? -1 : 1, nl = R.lane + dir;
-      if (nl < 0 || nl > 2) { if (R.jet <= 0) stumble(W, R, 'edge'); return; }
-      R.xFrom = R.x; R.lane = nl; R.lt = 0; R.ldir = dir; R.ev.push('lane');
-    } else if (a === 'up') {
-      if (R.jet > 0) return;
-      if (R.grounded || R.coyote > 0) startJump(R); else R.jumpBuf = CFG.BUFFER;
-    } else if (a === 'down') {
-      if (R.jet > 0) return;
-      R.rollD = CFG.ROLL_T * tscale(R.speed); R.rollT = R.rollD; R.st.roll++; R.jumpBuf = 0;
-      if (!R.grounded) { R.vy = Math.min(R.vy, -CFG.FALL_V); }
-      R.ev.push('roll');
+      if (nl < 0 || nl > 2) { if (R.edgeT <= 0) { R.edgeT = 0.24; R.edgeDir = dir; R.ev.push('edge'); } return false; }
+      R.xFrom = R.x; R.lane = nl; R.lt = 0; R.ldir = dir; R.st.lanes++; R.ev.push('lane');
+      return true;
     }
+    if (R.jet > 0) return false;
+    if (a === 'up') {
+      if (R.grounded || R.coyote > 0) startJump(R); else R.jumpBuf = CFG.BUFFER;
+      return true;
+    }
+    if (a === 'down') {
+      R.rollD = CFG.ROLL_T * tscale(R.speed); R.rollT = R.rollD; R.st.roll++; R.jumpBuf = 0;
+      if (!R.grounded) R.vy = Math.min(R.vy, -CFG.FALL_V);
+      R.ev.push('roll');
+      return true;
+    }
+    return false;
   }
 
   function stumble(W, R, why) {
     if (R.ghost > 0 || R.dead || R.stumbleT > 0) return;
-    if (R.board > 0 && why !== 'edge') { R.board = 0; R.ghost = CFG.GHOST_T; R.ev.push('board_break'); return; }
+    if (R.board > 0) { R.board = 0; R.ghost = CFG.GHOST_T; R.ev.push('board_break'); return; }
     R.st.stumble++;
     if (why === 'train') R.st.bump++;
-    R.stumbleT = 0.45;
+    R.stumbleT = 0.45; R.nearN = 0; R.nearT = 0;
     R.ev.push('bump');
     if (R.chase > 0.15 && !R.warm) { die(W, R, 'caught'); return; }
     R.warm = false;
     R.chase = CFG.CHASE_T;
   }
   function die(W, R, why) {
-    R.dead = why; R.deadT = 0; R.vy = Math.min(R.vy, 0); R.rollT = 0;
+    R.dead = why; R.deadT = 0; R.vy = Math.min(R.vy, 0); R.rollT = 0; R.ps = R.s; R.px = R.x; R.py = R.y;
     R.ev.push(why === 'caught' ? 'caught' : 'crash');
   }
   function crash(W, R, o) {
-    if (R.ghost > 0 || o.hit) return;
     if (R.board > 0) { R.board = 0; R.ghost = CFG.GHOST_T; o.hit = true; R.ev.push('board_break'); return; }
     R.hitObs = o;
     die(W, R, 'crash');
   }
-  function bounce(R) {
-    const back = laneOf(R.xFrom);
-    if (back !== R.lane) { R.xFrom = R.x; R.lane = back; R.lt = 0; R.ldir = -R.ldir; }
+  function sideBounce(W, R, o) {
+    const ox = LX(o.lane);
+    let back = -1;
+    if (Math.abs(R.x - ox) < 0.05) { for (let l = o.lane - 1; l <= o.lane + 1; l += 2) if (back < 0 && l >= 0 && l <= 2 && !laneBlocked(W, R, l)) back = l; }
+    else { back = o.lane + (R.x < ox ? -1 : 1); if (back < 0 || back > 2 || laneBlocked(W, R, back)) back = -1; }
+    if (back < 0) return false;
+    R.xFrom = R.x; R.lane = back; R.lt = 0; R.ldir = back > o.lane ? 1 : -1; R.ign = o;
+    stumble(W, R, o.k === 'train' ? 'train' : 'bar');
+    return true;
+  }
+  function nearMiss(R, o) {
+    o.nm = true;
+    R.nearN = R.nearT > 0 ? Math.min(5, R.nearN + 1) : 1; R.nearT = 6;
+    R.st.near++;
+    R.nearPts = 20 * R.nearN * R.mult; R.score += R.nearPts;
+    R.ev.push('near');
   }
 
   function givePU(W, R, k, lvl) {
     const D = puDur(lvl || 0);
     R.st.pu++;
     if (k === 'jet') {
-      R.jet = D; R.jetD = D; R.st.jet++; R.board = R.board > 0 ? R.board : 0; R.rollT = 0;
+      R.jet = D; R.jetD = D; R.st.jet++; R.rollT = 0; R.ign = null;
       const sEnd = R.s + D * R.speed * 1.05;
       jetCoins(W, R.s + 18, sEnd - 12);
       W.clear.push([sEnd - 30, sEnd + 70]);
@@ -1664,29 +1777,36 @@
     R.ev.push('pu_' + k);
   }
 
+  function land(R, y) {
+    R.y = y; R.grounded = true; R.landT = 0.18;
+    R.ev.push(R.vy < -14 ? 'land_hard' : 'land'); R.vy = 0;
+    if (R.jumpBuf > 0) startJump(R);
+  }
+
   function step(W, R, dt, ctx) {
-    if (R.dead) { R.deadT += dt; R.speed = damp(R.speed, 0, 9, dt); return; }
+    if (R.dead) { R.deadT += dt; R.speed = damp(R.speed, 0, 9, dt); R.ps = R.s; R.px = R.x; R.py = R.y; return; }
+    R.ps = R.s; R.px = R.x; R.py = R.y;
     R.t += dt;
     R.speed = speedAt(R.t * R.vk + R.t0) * R.vs;
+    if (R.speed > R.st.topV) R.st.topV = R.speed;
     const ps = R.s;
     R.s += R.speed * dt;
-    if (R.lt < 1) { R.lt = Math.min(1, R.lt + dt / CFG.LANE_T); }
+    if (R.lt < 1) R.lt = Math.min(1, R.lt + dt / CFG.LANE_T);
     R.x = lerp(R.xFrom, LX(R.lane), ease(R.lt));
-    const px = R.x;
-    if (R.rollT > 0) { if (R.grounded || R.vy < 0) R.rollT -= dt; if (R.rollT < 0) R.rollT = 0; }
+    if (R.rollT > 0 && R.grounded) { R.rollT -= dt; if (R.rollT < 0) R.rollT = 0; }
     R.h = R.rollT > 0 ? CFG.H_ROLL : CFG.H_STAND;
     R.ghost = Math.max(0, R.ghost - dt); R.stumbleT = Math.max(0, R.stumbleT - dt);
+    if (R.edgeT > 0) R.edgeT -= dt;
+    if (R.nearT > 0) { R.nearT -= dt; if (R.nearT <= 0) R.nearN = 0; }
     if (R.chase > 0) { R.chase = Math.max(0, R.chase - dt); if (R.chase === 0) R.warm = false; }
-    for (const k of ['sneak', 'mag', 'x2']) if (R[k] > 0) R[k] = Math.max(0, R[k] - dt);
+    for (let i = 0; i < 3; i++) { const k = TIMED[i]; if (R[k] > 0) R[k] = Math.max(0, R[k] - dt); }
     if (R.board > 0) { R.board -= dt; if (R.board <= 0) { R.board = 0; R.ghost = Math.max(R.ghost, 0.6); R.ev.push('board_end'); } }
     if (R.jumpBuf > 0) R.jumpBuf -= dt;
-    const lane = laneOf(R.x);
-    const sup = supportAt(W, lane, R.s);
+    const sup = supportAt(W, laneOf(R.x), R.s);
     if (R.jet > 0) {
       R.jet -= dt;
       const tun = inTunnel(W, R.s + 25) || inTunnel(W, R.s);
-      const ty = tun ? 5.4 : CFG.JET_Y;
-      R.y = damp(R.y, ty, 3.2, dt); R.vy = 0; R.grounded = false; R.chase = 0;
+      R.y = damp(R.y, tun ? 5.4 : CFG.JET_Y, 3.2, dt); R.vy = 0; R.grounded = false; R.chase = 0;
       if (R.jet <= 0) { R.jet = 0; R.g = 22; R.vy = 0; R.ghost = Math.max(R.ghost, 2.2); R.ev.push('jet_end'); }
     } else {
       if (R.grounded) {
@@ -1695,77 +1815,83 @@
       }
       if (!R.grounded) {
         if (R.coyote > 0) R.coyote -= dt;
+        R.st.air += dt;
         R.vy -= R.g * dt; R.y += R.vy * dt;
-        if (R.y <= sup && R.vy <= 0) {
-          R.y = sup; R.grounded = true; R.landT = 0.18;
-          R.ev.push(R.vy < -14 ? 'land_hard' : 'land'); R.vy = 0;
-          if (R.jumpBuf > 0) startJump(R);
+        if (R.vy <= 0) {
+          if (R.y <= sup && R.py >= sup - 0.6) land(R, sup);
+          else if (R.y <= 0) land(R, 0);
         }
       }
     }
     if (R.landT > 0) R.landT -= dt;
     if (R.grounded && R.y > CFG.ROOF - 0.1) R.st.roof += R.speed * dt;
 
-    for (const o of W.obs) {
-      if (o.done) continue;
-      if (o.moving) {
-        o.ps0 = o.s0;
-        if (!o.act && o.s0 - R.s < CFG.ACT_D) { o.act = true; R.ev.push('horn'); }
-        if (o.act) { o.s0 -= o.v * dt; o.s1 = o.s0 + o.len; }
-      } else o.ps0 = o.s0;
+    const O = W.obs;
+    for (let i = 0; i < O.length; i++) {
+      const o = O[i];
+      o.ps0 = o.s0;
+      if (o.done || !o.moving) continue;
+      if (!o.act && o.s0 - R.s < CFG.ACT_D) { o.act = true; R.ev.push('horn'); }
+      if (o.act) { o.s0 -= o.v * dt; o.s1 = o.s0 + o.len; }
     }
     R.mult = (ctx.mult + R.mb) * (R.x2 > 0 ? 2 : 1);
     R.score += R.speed * dt * CFG.SCORE_K * R.mult;
     if (R.jet > 0) return;
-    for (const o of W.obs) {
+    for (let i = 0; i < O.length; i++) {
+      const o = O[i];
       if (o.done || o.hit) continue;
-      if (o.s0 > R.s + 3 || o.s1 < R.s - 3) {
-        if ((o.k === 'low' || o.k === 'high') && !o.passed && o.s1 < R.s - 1) { o.passed = true; if (Math.abs(R.x - LX(o.lane)) < 1.3) R.st.dodge++; }
+      if (o.s0 > R.s + 12 || o.s1 < R.s - 3) {
+        if (o === R.ign) R.ign = null;
+        if (!o.passed && o.s1 < R.s - 1 && (o.k === 'low' || o.k === 'high')) { o.passed = true; if (Math.abs(R.x - LX(o.lane)) < 1.3) R.st.dodge++; }
         continue;
       }
       const ox = LX(o.lane), hw = HW[o.k] + CFG.PHW, dx = Math.abs(R.x - ox);
-      if (dx >= hw) continue;
       const sNow = R.s + CFG.PHD > o.s0 && R.s - CFG.PHD < o.s1;
-      if (!sNow) continue;
-      const sPrev = ps + CFG.PHD > o.ps0 && ps - CFG.PHD < o.s1 + (o.ps0 - o.s0);
-      const xPrev = Math.abs(px - ox) < hw;
-      let solid = false;
-      if (o.k === 'train') solid = R.y < CFG.ROOF - 0.45;
-      else if (o.k === 'ramp') { const ry = CFG.ROOF * clamp((R.s - o.s0) / o.len, 0, 1); solid = R.y < ry - 1.3; }
-      else if (o.k === 'low') solid = R.y < CFG.LOW_H - 0.08;
-      else if (o.k === 'high') solid = R.y + R.h > CFG.HIGH_B + 0.06 && R.y < CFG.HIGH_T;
-      if (!solid) continue;
-      const shallow = dx > hw - 0.55 && R.lt < 1;
-      if (!sPrev && !shallow) {
-        if (R.ghost > 0) continue;
-        crash(W, R, o); if (R.dead) return; continue;
+      if (dx >= hw || !sNow) {
+        if (o === R.ign) R.ign = null;
+        if (o.k === 'train' && !o.nm && dx >= hw && Math.abs(R.px - ox) < hw && R.lane !== o.lane && R.ghost <= 0 && R.stumbleT <= 0 && R.y < CFG.ROOF - 0.45) {
+          const gap = o.s0 - R.s - CFG.PHD;
+          if (gap > -1.2 && gap < (R.speed + (o.act ? o.v : 0)) * CFG.NEAR_T) nearMiss(R, o);
+        }
+        continue;
       }
-      if (R.ghost > 0) continue;
-      bounce(R);
-      stumble(W, R, o.k === 'train' ? 'train' : 'bar');
+      if (!vsolid(o, R)) continue;
+      if (R.ghost > 0) { o.hit = true; continue; }
+      if (o === R.ign) continue;
+      const sPrev = ps + CFG.PHD > o.ps0 && ps - CFG.PHD < o.ps0 + o.len;
+      const moving = R.lt < 1, bar = o.k === 'low' || o.k === 'high';
+      if (!sPrev) {
+        if (moving && hw - dx <= CFG.GRAZE) {
+          if (R.lane !== o.lane) { R.ign = o; stumble(W, R, bar ? 'bar' : 'train'); }
+          else if (!sideBounce(W, R, o)) crash(W, R, o);
+        } else if (o.k === 'low' && R.y > CFG.LOW_H - CFG.TRIP) { R.ign = o; stumble(W, R, 'bar'); }
+        else crash(W, R, o);
+      } else if (bar && !moving && R.lane === o.lane) { R.ign = o; stumble(W, R, 'bar'); }
+      else if (!sideBounce(W, R, o)) crash(W, R, o);
       if (R.dead) return;
     }
   }
 
-  function collect(W, R, dt, lvl, onItem) {
+  function collect(W, R, dt, onItem) {
     const cy = R.y + (R.rollT > 0 ? 0.45 : 0.85);
     const magR = R.mag > 0 ? CFG.MAG_R : 0;
-    for (const c of W.coins) {
+    const C = W.coins, k = magR ? 1 - Math.exp(-14 * dt) : 0;
+    for (let i = 0; i < C.length; i++) {
+      const c = C[i];
       if (c.got) continue;
       const ds = c.s - R.s;
       if (ds > 40) break;
       if (ds < -4) { c.got = true; c.missed = true; continue; }
       if (magR && !c.pull && ds < magR + 6 && ds > -2 && Math.abs(c.y - cy) < 12) { c.pull = true; c.mag = true; }
-      if (c.pull) {
-        const k = 1 - Math.exp(-14 * dt);
-        c.x += (R.x - c.x) * k; c.y += (cy - c.y) * k; c.s += (R.s + 0.4 - c.s) * k + R.speed * dt * 0.0;
-      }
+      if (c.pull) { c.x += (R.x - c.x) * k; c.y += (cy - c.y) * k; c.s += (R.s + 0.4 - c.s) * k; }
       if (Math.abs(c.s - R.s) < 0.9 && Math.abs(c.x - R.x) < 0.95 && Math.abs(c.y - cy) < 1.05) {
         c.got = true; R.coins++; R.st.coinsRun++; if (c.mag) R.st.magCoins++;
         R.ev.push('coin');
       }
     }
-    for (const it of W.items) {
+    const I = W.items;
+    for (let i = 0; i < I.length; i++) {
+      const it = I[i];
       if (it.got) continue;
       if (it.s < R.s - 4) { it.got = true; continue; }
       if (Math.abs(it.s - R.s) < 1.1 && Math.abs(it.x - R.x) < 1.1 && Math.abs(it.y - cy) < 1.4) { it.got = true; onItem(it); }
@@ -1774,20 +1900,27 @@
 
   function cull(W, R, onDrop) {
     const lim = R.s - CFG.BEHIND;
-    if (W.obs.length) { const keep = []; for (const o of W.obs) { if (o.s1 < lim || o.done && !o.mesh) { onDrop(o); } else if (o.done) { onDrop(o); } else keep.push(o); } W.obs = keep; }
-    let i = 0; while (i < W.coins.length && (W.coins[i].got || W.coins[i].s < lim)) i++;
-    if (i > 0) W.coins.splice(0, i);
-    if (W.coins.length > 1) {
-      let sorted = true; for (let k = 1; k < Math.min(W.coins.length, 60); k++) if (W.coins[k].s < W.coins[k - 1].s - 0.01 && !W.coins[k].pull) { sorted = false; break; }
-      if (!sorted) W.coins.sort((a, b) => a.s - b.s);
-    }
-    W.items = W.items.filter(it => { if (it.got || it.s < lim) { onDrop(it); return false; } return true; });
-    W.tunnels = W.tunnels.filter(t => t.s1 > lim - 100);
-    W.clear = W.clear.filter(c => c[1] > lim);
+    let n = 0;
+    for (let i = 0; i < W.obs.length; i++) { const o = W.obs[i]; if (o.done || o.s1 < lim) { if (o === R.ign) R.ign = null; onDrop(o); } else W.obs[n++] = o; }
+    W.obs.length = n;
+    n = 0;
+    let sorted = true, last = -1e9;
+    for (let i = 0; i < W.coins.length; i++) { const c = W.coins[i]; if (c.got || c.s < lim) continue; if (c.s < last - 0.01 && !c.pull) sorted = false; if (!c.pull) last = c.s; W.coins[n++] = c; }
+    W.coins.length = n;
+    if (!sorted) W.coins.sort((a, b) => a.s - b.s);
+    n = 0;
+    for (let i = 0; i < W.items.length; i++) { const it = W.items[i]; if (it.got || it.s < lim) onDrop(it); else W.items[n++] = it; }
+    W.items.length = n;
+    n = 0;
+    for (let i = 0; i < W.tunnels.length; i++) if (W.tunnels[i].s1 > lim - 100) W.tunnels[n++] = W.tunnels[i];
+    W.tunnels.length = n;
+    n = 0;
+    for (let i = 0; i < W.clear.length; i++) if (W.clear[i][1] > lim) W.clear[n++] = W.clear[i];
+    W.clear.length = n;
   }
 
   function revive(W, R) {
-    R.dead = ''; R.deadT = 0; R.ghost = CFG.REVIVE_GHOST; R.chase = 0; R.stumbleT = 0; R.revives++;
+    R.dead = ''; R.deadT = 0; R.ghost = CFG.REVIVE_GHOST; R.chase = 0; R.stumbleT = 0; R.revives++; R.ign = null; R.jumpBuf = 0; R.rollT = 0;
     R.t = Math.max(0, R.t * 0.9); R.speed = speedAt(R.t * R.vk + R.t0) * R.vs;
     R.vy = 0; R.lt = 1; R.x = LX(R.lane); R.xFrom = R.x;
     for (const o of W.obs) {
@@ -1796,6 +1929,7 @@
     }
     if (R.hitObs) R.hitObs.done = true; R.hitObs = null;
     R.y = supportAt(W, R.lane, R.s); R.grounded = true;
+    R.ps = R.s; R.px = R.x; R.py = R.y;
     W.clear.push([R.s, R.s + 45]);
   }
 
@@ -1844,7 +1978,7 @@ ${SC} .ss-pus{position:absolute;left:2%;bottom:4%;display:flex;flex-direction:co
 ${SC} .ss-pu{display:flex;align-items:center;gap:.3em}
 ${SC} .ss-pu .ss-ic{width:2.1em;height:2.1em;background:linear-gradient(#ffffff,#d9e2ec);border:.12em solid #2a3a52;border-radius:.4em;padding:.15em;box-sizing:border-box;box-shadow:0 .12em 0 rgba(0,0,0,.35)}
 ${SC} .ss-pu i{display:block;width:6.4em;height:1.15em;border-radius:.3em;background:#fff;border:.12em solid #2a3a52;padding:.14em;box-sizing:border-box;box-shadow:0 .12em 0 rgba(0,0,0,.35)}
-${SC} .ss-pu i b{display:block;height:100%;border-radius:.12em;background:repeating-linear-gradient(90deg,#4fd12a 0 .3em,#2f9a14 .3em .38em)}
+${SC} .ss-pu i b{display:block;height:100%;border-radius:.12em;background:repeating-linear-gradient(90deg,#4fd12a 0 .3em,#2f9a14 .3em .38em);transform-origin:0 50%;transition:transform .12s linear}
 ${SC} .ss-pu.low i b{background:repeating-linear-gradient(90deg,#ffb31a 0 .3em,#d9700a .3em .38em)}
 ${SC} .ss-hb{position:absolute;right:2.4%;bottom:4%;width:5em;height:5em;border-radius:50%;background:radial-gradient(circle at 50% 35%,#ff8ac6,#d61f7c);border:.2em solid #fff;box-shadow:0 .28em 0 #12224a;display:grid;place-items:center;transition:transform .12s,opacity .2s}
 ${SC} .ss-hb .ss-ic{width:64%;height:64%}
@@ -1860,6 +1994,10 @@ ${SC} .ss-banner.gold{background:linear-gradient(#ffe25a,#ffaa1a)}
 ${SC} .ss-banner.blue{background:linear-gradient(#4fb3ff,#1f6fd9)}
 ${SC} .ss-big{position:absolute;left:0;right:0;top:38%;text-align:center;font-size:3.4em;${OUT};opacity:0;transform:scale(.6);transition:all .25s}
 ${SC} .ss-big.on{opacity:1;transform:scale(1)}
+${SC} .ss-near{position:absolute;left:0;right:0;top:57%;text-align:center;font-size:1.45em;color:#ffe46b;${OUT};opacity:0;pointer-events:none}
+${SC} .ss-near small{display:block;font-size:.8em;color:#fff;margin-top:.2em}
+${SC} .ss-near.on{animation:ss-near .9s ease-out forwards}
+@keyframes ss-near{0%{opacity:0;transform:translateY(.7em) scale(.7)}18%{opacity:1;transform:translateY(0) scale(1.12)}70%{opacity:1;transform:translateY(-.9em) scale(1)}100%{opacity:0;transform:translateY(-1.7em) scale(1)}}
 ${SC} .ss-scr{display:none;align-items:center;justify-content:center}
 ${SC} .ss-scr.on{display:flex}
 ${SC} .ss-home{flex-direction:column;justify-content:space-between;padding:2.6% 2.6% 3%;box-sizing:border-box;background:linear-gradient(rgba(0,0,0,.05),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 65%,rgba(0,20,60,.35))}
@@ -2032,6 +2170,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
   <div class="ss-pus"></div>
   <button class="ss-hb" aria-label="Hoverboard">${ic('board')}<b class="ss-hbn">0</b></button>
   <div class="ss-hint"></div>
+  <div class="ss-near"></div>
   <div class="ss-banner"></div>
   <div class="ss-big"></div>
   <div class="ss-toast"></div>
@@ -2111,6 +2250,10 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       jet_end: t => { tone('sine', 700, 200, t, 0.4, 0.1); },
       mission: t => { [784, 988, 1175, 1568].forEach((f, i) => tone('triangle', f, f, t + i * 0.09, 0.25, 0.14)); },
       ui: t => tone('sine', 880, 1200, t, 0.06, 0.1),
+      edge: t => { tone('sine', 150, 80, t, 0.09, 0.16); noise(t, 0.05, 0.07, 'lowpass', 700, 250); },
+      near: t => { noise(t, 0.22, 0.12, 'bandpass', 500, 3200, 1.4); tone('triangle', 988, 1480, t + 0.02, 0.14, 0.1); },
+      tick: t => tone('square', 660, 660, t, 0.07, 0.07),
+      go: t => { tone('square', 990, 990, t, 0.16, 0.08); tone('triangle', 1320, 1320, t, 0.22, 0.1); },
       buy: t => { tone('sine', 1046, 1046, t, 0.08, 0.12); tone('sine', 1568, 1568, t + 0.07, 0.18, 0.12); }
     };
     const BASS = [43, 0, 0, 43, 0, 0, 46, 0, 41, 0, 0, 41, 0, 38, 0, 0];
@@ -2183,10 +2326,11 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
     better: 'high',
     width: 960,
     blurb: 'Dash through the subway, surf the trains and outrun the Inspector and his dog.',
-    help: '<kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd> switch lane · <kbd>↑</kbd>/<kbd>W</kbd> jump · <kbd>↓</kbd>/<kbd>S</kbd> roll · <kbd>Space</kbd> hoverboard · <kbd>P</kbd> pause · swipe and double-tap on touch',
+    help: '<kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd> switch lane · <kbd>↑</kbd>/<kbd>W</kbd> jump · <kbd>↓</kbd>/<kbd>S</kbd> roll · <kbd>Space</kbd> hoverboard · <kbd>P</kbd> or <kbd>Esc</kbd> pause · swipe and double-tap on touch',
+    ownPause: true,
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="40" cy="10" r="5"/><path d="M37 18l-7 14 8 7v11M30 32l-9 4h-5M26 22l11-4 6 8 8-1"/><path d="M8 60l10-20M56 60L46 40M18 50h28"/></svg>',
     css: CSS,
-    core: { CFG, newWorld, newRun, step, act, gen, supportAt, speedAt },
+    core: { CFG, PAT, newWorld, newRun, step, act, gen, collect, cull, revive, givePU, supportAt, speedAt, addTrain, addObs, addBar, addRamp, addCoin, addItem },
     async mount(root, api) {
       ensureFont();
       const portrait = root.clientWidth > 0 && root.clientWidth < 600;
@@ -2219,7 +2363,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       const q = s => wrap.querySelector(s);
       const E = {
         hud: q('.ss-hud'), sv: q('.ss-sv'), cv: q('.ss-cv'), kv: q('.ss-kv'), keyp: q('.ss-keyp'), mult: q('.ss-mult'), pus: q('.ss-pus'), hb: q('.ss-hb'), hbn: q('.ss-hbn'),
-        hint: q('.ss-hint'), banner: q('.ss-banner'), big: q('.ss-big'), toast: q('.ss-toast'), pause: q('.ss-pause'),
+        hint: q('.ss-hint'), near: q('.ss-near'), banner: q('.ss-banner'), big: q('.ss-big'), toast: q('.ss-toast'), pause: q('.ss-pause'),
         home: q('.ss-home'), panel: q('.ss-panel'), ptitle: q('.p-title'), pbody: q('.p-body'), save: q('.ss-save'), over: q('.ss-over'), pausep: q('.ss-pausep'),
         hbest: q('.h-best'), hcoins: q('.h-coins'), hkeys: q('.h-keys'), hboards: q('.h-boards'), hmult: q('.h-mult'), tname: q('.t-name'), tsub: q('.t-sub'),
         sarc: q('.s-arc'), scost: q('.s-cost'), shave: q('.s-have'), sgo: q('.s-go')
@@ -2299,45 +2443,64 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         clearChunks(); clearObsMeshes();
       }
 
+      const pool = [], sprPool = [], arrPool = [], gantries = [];
+      function take(geo, mat, x, y, z, dz) {
+        let m = pool.pop();
+        if (!m) { m = new THREE.Mesh(geo, mat); m.matrixAutoUpdate = false; scene.add(m); }
+        else { m.geometry = geo; m.material = mat; m.visible = true; }
+        m.position.set(x, y, z); m.updateMatrix(); m.userData.dz = dz || 0;
+        return m;
+      }
+      function give(m) { m.visible = false; pool.push(m); }
       const chunks = new Map();
-      function clearChunks() { for (const arr of chunks.values()) for (const m of arr) scene.remove(m); chunks.clear(); }
+      let ci0 = 1, ci1 = 0;
+      function dropChunk(arr) { for (let k = 0; k < arr.length; k++) give(arr[k]); arr.length = 0; arrPool.push(arr); }
+      function clearChunks() { chunks.forEach(dropChunk); chunks.clear(); gantries.length = 0; ci0 = 1; ci1 = 0; }
       function chunkKind(i, side) { if (i >= -2 && i <= 0) return side < 0 ? 4 : 1; const h = hash(Math.floor(i / 2) * 7.31 + side * 13.7 + save.city * 3.3); return h < 0.36 ? 4 : h < 0.55 ? 0 : h < 0.72 ? 1 : h < 0.84 ? 2 : 3; }
       function makeChunk(i) {
-        const arr = [], s0 = i * CFG.CHUNK, z = -s0, WG = ENV.WG;
-        const add = (geo, mat, zz) => { const m = new THREE.Mesh(geo, mat); m.position.set(0, 0, zz); m.matrixAutoUpdate = false; m.updateMatrix(); scene.add(m); arr.push(m); };
-        const tun = W.tunnels.find(t => s0 >= t.s0 && s0 < t.s1);
-        if (tun) { add(WG.tunnel, atlasMat, z); add(WG.tunnelLamp, lampMat, z); if (s0 === tun.s0) add(WG.portal, atlasMat, z); }
+        const arr = arrPool.pop() || [], s0 = i * CFG.CHUNK, z = -s0, WG = ENV.WG;
+        const tun = inTunnel(W, s0);
+        if (tun) { arr.push(take(WG.tunnel, atlasMat, 0, 0, z), take(WG.tunnelLamp, lampMat, 0, 0, z)); if (s0 === tun.s0) arr.push(take(WG.portal, atlasMat, 0, 0, z)); }
         else {
           const kl = chunkKind(i, -1) * 2 + (i & 1), kr = chunkKind(i, 1) * 2 + ((i >> 1) & 1);
           const L = WG.side.L[kl], Rr = WG.side.R[kr];
-          add(L.geo, atlasMat, z); if (L.fence) add(L.fence, fenceMat, z);
-          add(Rr.geo, atlasMat, z); if (Rr.fence) add(Rr.fence, fenceMat, z);
-          if (((i % 3) + 3) % 3 === 1) { add(WG.gantry, atlasMat, z - 20); add(WG.gantryLamp, lampMat, z - 20); arr[arr.length - 1].userData.g = arr[arr.length - 2].userData.g = 1; }
-          add(WG.wires, atlasMat, z);
+          arr.push(take(L.geo, atlasMat, 0, 0, z)); if (L.fence) arr.push(take(L.fence, fenceMat, 0, 0, z));
+          arr.push(take(Rr.geo, atlasMat, 0, 0, z)); if (Rr.fence) arr.push(take(Rr.fence, fenceMat, 0, 0, z));
+          if (((i % 3) + 3) % 3 === 1) { const ga = take(WG.gantry, atlasMat, 0, 0, z - 20), gb = take(WG.gantryLamp, lampMat, 0, 0, z - 20); arr.push(ga, gb); gantries.push(ga, gb); }
+          arr.push(take(WG.wires, atlasMat, 0, 0, z));
         }
         return arr;
       }
       function syncChunks(s) {
         const i0 = Math.floor((s - 50) / CFG.CHUNK), i1 = Math.floor((s + 215) / CFG.CHUNK);
-        for (const [i, arr] of chunks) if (i < i0 || i > i1) { for (const m of arr) scene.remove(m); chunks.delete(i); }
+        if (i0 === ci0 && i1 === ci1) return;
+        ci0 = i0; ci1 = i1;
+        chunks.forEach((arr, i) => { if (i < i0 || i > i1) { for (let k = 0; k < arr.length; k++) { const g = gantries.indexOf(arr[k]); if (g >= 0) gantries.splice(g, 1); } dropChunk(arr); chunks.delete(i); } });
         for (let i = i0; i <= i1; i++) if (!chunks.has(i)) chunks.set(i, makeChunk(i));
       }
 
       function obsMesh(o) {
-        const WG = ENV.WG, g = new THREE.Group();
+        const WG = ENV.WG, x = LX(o.lane), z = -o.s0, a = o.mesh = arrPool.pop() || [], CL = CFG.CAR + CFG.CGAP;
         if (o.k === 'train') {
-          for (let c = 0; c < o.cars; c++) {
-            const geo = c === 0 ? (o.moving ? WG.car.lit[o.liv] : WG.car.front[o.liv]) : WG.car.mid[o.liv];
-            const m = new THREE.Mesh(geo, atlasMat); m.position.z = -c * (CFG.CAR + CFG.CGAP); g.add(m);
+          for (let c = 0; c < o.cars; c++) a.push(take(c === 0 ? (o.moving ? WG.car.lit[o.liv] : WG.car.front[o.liv]) : WG.car.mid[o.liv], atlasMat, x, 0, z - c * CL, -c * CL));
+          if (o.moving) for (let k = -1; k <= 1; k += 2) {
+            let sp = sprPool.pop();
+            if (!sp) { sp = new THREE.Sprite(GM.w); sp.scale.set(2.2, 2.2, 1); sp.userData.dz = 0.25; scene.add(sp); }
+            sp.visible = true; sp.userData.dx = k * 0.73; sp.position.set(x + k * 0.73, 1.0, z + 0.25); a.push(sp);
           }
-          if (o.moving) for (const sx of [-0.73, 0.73]) { const sp = new THREE.Sprite(GM.w); sp.scale.set(2.2, 2.2, 1); sp.position.set(sx, 1.0, 0.25); g.add(sp); }
-        } else if (o.k === 'ramp') g.add(new THREE.Mesh(WG.ramp, atlasMat));
-        else if (o.k === 'low') { const m = new THREE.Mesh(WG.low, atlasMat); m.position.z = -CFG.BAR_D; g.add(m); }
-        else if (o.k === 'high') { const m = new THREE.Mesh(WG.high, atlasMat); m.position.z = -CFG.BAR_D; g.add(m); const l = new THREE.Mesh(WG.highLamp, lampMat); l.position.z = -CFG.BAR_D; g.add(l); }
-        g.position.set(LX(o.lane), 0, -o.s0);
-        scene.add(g); o.mesh = g;
+        } else if (o.k === 'ramp') a.push(take(WG.ramp, atlasMat, x, 0, z));
+        else if (o.k === 'low') a.push(take(WG.low, atlasMat, x, 0, z - CFG.BAR_D));
+        else a.push(take(WG.high, atlasMat, x, 0, z - CFG.BAR_D), take(WG.highLamp, lampMat, x, 0, z - CFG.BAR_D));
       }
-      function dropMesh(o) { if (o.mesh) { scene.remove(o.mesh); o.mesh = null; } }
+      const itemPool = {};
+      function dropMesh(o) {
+        const a = o.mesh;
+        if (!a) return;
+        o.mesh = null;
+        if (a.isGroup) { a.visible = false; itemPool[a.userData.k].push(a); return; }
+        for (let i = 0; i < a.length; i++) { const m = a[i]; if (m.isSprite) { m.visible = false; sprPool.push(m); } else give(m); }
+        a.length = 0; arrPool.push(a);
+      }
       function clearObsMeshes() { if (W) { for (const o of W.obs) dropMesh(o); for (const it of W.items) dropMesh(it); } }
 
       const coinGeo = keep(new THREE.CylinderGeometry(0.5, 0.5, 0.12, 24)); coinGeo.rotateX(Math.PI / 2);
@@ -2345,7 +2508,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       const coinMats = [keep(new THREE.MeshLambertMaterial({ color: new THREE.Color('#ffb31a').convertSRGBToLinear(), emissive: new THREE.Color('#5a3200') })), keep(new THREE.MeshLambertMaterial({ map: coinFace, emissive: new THREE.Color('#3a2400') })), keep(new THREE.MeshLambertMaterial({ map: coinFace, emissive: new THREE.Color('#3a2400') }))];
       const MAXC = 480;
       const coinIM = new THREE.InstancedMesh(coinGeo, coinMats, MAXC); coinIM.instanceMatrix.setUsage(THREE.DynamicDrawUsage); coinIM.frustumCulled = false; coinIM.count = 0; scene.add(coinIM);
-      const dummy = new THREE.Object3D();
+      { const M = coinIM.instanceMatrix.array; for (let i = 0; i < MAXC; i++) { M[i * 16 + 5] = 1; M[i * 16 + 15] = 1; } }
 
       const sparks = [];
       for (let i = 0; i < 14; i++) { const sp = new THREE.Sprite(GM.y); sp.visible = false; sp.userData.t = 0; scene.add(sp); sparks.push(sp); }
@@ -2366,7 +2529,6 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         if (ringT < 0.55) { ringT += dt; const k = ringT / 0.55; ring.visible = true; ring.scale.setScalar(1 + k * 11); ring.material.opacity = 1 - k; } else ring.visible = false;
       }
 
-      const IM = {};
       const itemModel = k => {
         const g = new THREE.Group(), M = CH.M, m = CH.mesh, rb = CH.rbox, cy = CH.cyl;
         if (k === 'jet') { for (const s of [-1, 1]) { m(cy(0.17, 0.17, 0.62, 12), M('#7cd23a'), s * 0.2, 0.31, 0, g); m(CH.ball(0.17, 10), M('#ff8a1a'), s * 0.2, 0.33, 0, g); m(cy(0.1, 0.15, 0.14, 10), M('#c9ccd2'), s * 0.2, -0.31, 0, g); } m(rb(0.18, 0.5, 0.12), M('#ffd23f'), 0, 0.05, 0, g); }
@@ -2379,11 +2541,12 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       };
       const ITEM_GLOW = { jet: 'g', sneak: 'y', mag: 'r', x2: 'y', key: 'r', mbox: 'p' };
       function itemMesh(it) {
-        if (!IM[it.k]) IM[it.k] = itemModel(it.k);
-        const g = new THREE.Group(); g.add(IM[it.k].clone());
-        const sp = new THREE.Sprite(GM[ITEM_GLOW[it.k]]); sp.scale.set(2.1, 2.1, 1); g.add(sp);
-        g.position.set(it.x, it.y, -it.s); scene.add(g); it.mesh = g;
+        const p = itemPool[it.k] || (itemPool[it.k] = []);
+        let g = p.pop();
+        if (!g) { g = new THREE.Group(); g.add(itemModel(it.k)); const sp = new THREE.Sprite(GM[ITEM_GLOW[it.k]]); sp.scale.set(2.1, 2.1, 1); g.add(sp); g.userData.k = it.k; scene.add(g); }
+        g.visible = true; g.position.set(it.x, it.y, -it.s); it.mesh = g;
       }
+      for (const k in ITEM_GLOW) { const it = { k, x: 0, y: -50, s: 0, mesh: null }; itemMesh(it); dropMesh(it); }
 
       const patchGeo = keep(new THREE.PlaneGeometry(0.4, 0.34)), patchMat = keep(new THREE.MeshLambertMaterial({ map: keep(T.patch()), transparent: true, alphaTest: 0.3 }));
       let hero = null, heroBlob = mkBlob(1.0);
@@ -2398,40 +2561,49 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       scene.add(guard.root, dog.root);
       const gBlob = mkBlob(1.3), dBlob = mkBlob(0.9);
 
-      let W = null, R = null, state = 'home', acc = 0, introT = 0, saveT = 0, overShown = false, hudScore = -1, hudCoins = -1, hudMult = -1, cullT = 0, tunK = 0, shake = 0;
-      let gd = 30, gx = 0, gy = 0, dgx = 0, homeT = 0, sprayT = 0, leanZ = 0, prevX = 0, airW = 0, bannerT = 0, bigT = 0, toastT = 0, hintI = 0, msnap = null, saveCost = 1, runKeys = 0, runBonus = 0, runT = 0, rollT = 9, rollSc = 0;
+      let W = null, R = null, state = 'home', acc = 0, introT = 0, saveT = 0, countT = 0, countN = 0, pausedFrom = 'run', hudScore = -1, hudCoins = -1, hudMult = -1, hudT = 0, apiT = 0, msT = 0, cullT = 0, tunK = 0, shake = 0, draw = true, panelOn = false, banked = true;
+      let gd = 30, gx = 0, gy = 0, dgx = 0, homeT = 0, sprayT = 0, leanZ = 0, prevX = 0, airW = 0, bannerT = 0, bigT = 0, toastT = 0, nearT = 0, hintI = 0, msnap = null, saveCost = 1, runKeys = 0, runBonus = 0, runT = 0, rollT = 9, rollSc = 0, trackS = NaN, fovK = 0;
       const camP = new THREE.Vector3(), camL = new THREE.Vector3(), tmpP = new THREE.Vector3(), tmpL = new THREE.Vector3();
+      const V = { s: 0, x: 0, y: 0, a: 1 };
       let camY = 0, noBlink = false;
 
       function resetWorld() {
         clearObsMeshes();
         W = newWorld(); R = newRun();
         const md = modeOf(); R.vk = md.vk; R.vs = md.vs; R.t0 = md.t0; R.mb = md.mb; R.speed = speedAt(R.t0) * md.vs;
-        addTrain(W, 0, -16, 3, 0);
+        addTrain(W, 0, 5 - trainLen(3), 3, 0);
         W.genS = 36;
         clearChunks();
         gen(W, R);
-        acc = 0; gd = 30; leanZ = 0; airW = 0; camY = 0;
+        acc = 0; gd = 30; leanZ = 0; airW = 0; camY = 0; prevX = 0; fovK = 0; shake = 0; trackS = NaN;
+        V.s = 0; V.x = 0; V.y = 0; V.a = 1;
         msnap = Object.assign({}, R.st);
+        draw = true;
       }
 
       const modeOf = () => MODES.find(m => m.id === save.mode) || MODES[0];
       const bestOf = id => id === 'classic' ? save.best : save.mbest[id] | 0;
       function hudBoards() { E.hbn.textContent = save.boards; E.hb.classList.toggle('none', save.boards <= 0); }
       function refreshHome() {
-        E.hbest.textContent = fmt(save.best); E.hcoins.textContent = fmt(save.coins); E.hkeys.textContent = save.keys; E.hboards.textContent = save.boards;
+        E.hcoins.textContent = fmt(save.coins); E.hkeys.textContent = save.keys; E.hboards.textContent = save.boards;
         E.hmult.textContent = 'x' + save.ms.lvl;
         const c = CITIES[save.city]; E.tname.textContent = c.name; E.tsub.textContent = c.sub;
         E.hbest.textContent = fmt(bestOf(save.mode));
         q('.ss-modes').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.m === save.mode); b.querySelector('small').textContent = fmt(bestOf(b.dataset.m)); });
         q('.ss-msub').textContent = modeOf().sub;
       }
-      function show(el, on) { el.classList.toggle('on', !!on); }
+      function show(el, on) { el.classList.toggle('on', !!on); draw = true; }
+      function panel(on) { show(E.panel, on); panelOn = !!on; }
+      function clearFx() {
+        bannerT = bigT = toastT = nearT = 0;
+        E.banner.classList.remove('on'); E.big.classList.remove('on'); E.toast.classList.remove('on'); E.near.classList.remove('on'); E.hint.classList.remove('on');
+      }
       function toHome() {
         state = 'home';
         resetWorld();
-        show(E.home, 1); show(E.over, 0); show(E.save, 0); show(E.pausep, 0); show(E.panel, 0);
+        show(E.home, 1); show(E.over, 0); show(E.save, 0); show(E.pausep, 0); panel(0);
         E.hud.classList.add('off');
+        clearFx();
         refreshHome();
         au.music(true); au.jet(false);
         homeT = 0;
@@ -2441,19 +2613,21 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         if (state !== 'home') return;
         if (!save.how) { save.how = 1; persist(); openPanel('how'); return; }
         au.unlock(); au.play('ui');
-        show(E.home, 0); show(E.panel, 0);
+        show(E.home, 0); panel(0);
         E.hud.classList.remove('off');
         state = 'intro'; introT = 0; R.chase = CFG.START_CHASE; gd = 4.2; gx = 0; au.play('whistle');
-        hudScore = hudCoins = hudMult = -1; runKeys = 0; runBonus = 0; saveCost = 1; runT = 0;
+        hudScore = hudCoins = hudMult = -1; hudT = 0; apiT = 0; runKeys = 0; runBonus = 0; saveCost = 1; runT = 0; banked = false;
+        E.kv.textContent = '0'; E.keyp.classList.add('hide');
+        clearFx();
         hudBoards(); updPU(true);
-        hintI = save.runs < 3 ? 0 : 99; E.hint.classList.remove('on');
+        hintI = save.runs < 3 ? 0 : 99;
         au.music(true);
         if (window.Ameplay && Ameplay.analytics) try { Ameplay.analytics.track('subway_start', { city: CITIES[save.city].id, mode: save.mode }); } catch (e) {}
       }
       function playAgain() { show(E.over, 0); toHome(); startRun(); }
 
       function useBoard() {
-        if ((state !== 'run' && state !== 'intro') || R.dead || R.board > 0 || save.boards <= 0) return;
+        if ((state !== 'run' && state !== 'intro') || R.dead || R.board > 0 || R.jet > 0 || save.boards <= 0) return;
         save.boards--; R.board = CFG.BOARD_T; R.st.board++; R.ghost = Math.max(R.ghost, 0.3);
         au.play('board_on'); hudBoards(); persist();
         flash('HOVERBOARD!', 'blue');
@@ -2462,8 +2636,10 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       function flash(text, cls) { E.banner.textContent = text; E.banner.className = 'ss-banner on' + (cls ? ' ' + cls : ''); bannerT = 1.6; }
       function toast(text) { E.toast.textContent = text; E.toast.classList.add('on'); toastT = 1.8; }
       function big(text) { E.big.textContent = text; E.big.classList.add('on'); bigT = 0.9; }
+      function nearPop(text, sub) { E.near.innerHTML = text + (sub ? '<small>' + sub + '</small>' : ''); E.near.classList.remove('on'); void E.near.offsetWidth; E.near.classList.add('on'); nearT = 0.9; }
 
-      const msets = () => missionSet(save.ms.lvl);
+      let mset = null, msetLvl = -1;
+      const msets = () => { if (msetLvl !== save.ms.lvl) { msetLvl = save.ms.lvl; mset = missionSet(msetLvl); } return mset; };
       const MKEY = { coins: 'coinsRun', jump: 'jump', roll: 'roll', pu: 'pu', jet: 'jet', magCoins: 'magCoins', board: 'board', bump: 'bump', dodge: 'dodge', roof: 'roof', sneakJump: 'sneakJump', mbox: 'mbox', stumble: 'stumble' };
       function mprog(i, m) {
         if (save.ms.done[i]) return m.n;
@@ -2477,10 +2653,11 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       function checkMissions() {
         const set = msets();
         let all = true;
-        set.forEach((m, i) => {
+        for (let i = 0; i < set.length; i++) {
+          const m = set[i];
           if (!save.ms.done[i] && mprog(i, m) >= m.n) { save.ms.done[i] = true; au.play('mission'); flash('Mission complete!'); }
           if (!save.ms.done[i]) all = false;
-        });
+        }
         if (all) {
           const lvl = save.ms.lvl;
           if (lvl < 30) save.ms.lvl++;
@@ -2489,7 +2666,7 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
           const reward = 100 + lvl * 50;
           save.coins += reward; if (lvl % 3 === 0) save.keys++;
           flash('Multiplier x' + save.ms.lvl + '!  +' + reward, 'gold');
-          E.mult.classList.add('pop'); setTimeout(() => E.mult.classList.remove('pop'), 300);
+          E.mult.classList.add('pop'); api.timeout(() => E.mult.classList.remove('pop'), 300);
           persist();
         }
       }
@@ -2510,20 +2687,21 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         }).join('');
       }
 
-      const puState = {};
+      const puState = { key: '', els: [] }, PUK = ['jet', 'sneak', 'mag', 'x2'];
       function updPU(force) {
-        const act = ['jet', 'sneak', 'mag', 'x2'].filter(k => R[k] > 0);
-        if (R.board > 0) act.push('board');
-        const key = act.join(',');
+        let key = '';
+        for (let i = 0; i < 4; i++) if (R[PUK[i]] > 0) key += PUK[i] + ',';
+        if (R.board > 0) key += 'board,';
         if (force || key !== puState.key) {
           puState.key = key;
-          E.pus.innerHTML = act.map(k => `<div class="ss-pu" data-k="${k}">${ic(k === 'board' ? 'board' : k)}<i><b></b></i></div>`).join('');
-          puState.els = act.map(k => [k, E.pus.querySelector(`[data-k="${k}"]`)]);
+          const act = key.split(',').filter(Boolean);
+          E.pus.innerHTML = act.map(k => `<div class="ss-pu" data-k="${k}">${ic(k)}<i><b></b></i></div>`).join('');
+          puState.els = act.map(k => { const el = E.pus.querySelector(`[data-k="${k}"]`); return { k, el, bar: el.querySelector('b'), low: false }; });
         }
-        for (const [k, el] of puState.els || []) {
-          const f = k === 'board' ? R.board / CFG.BOARD_T : R[k] / (R[k + 'D'] || 1);
-          el.querySelector('b').style.width = (clamp(f, 0, 1) * 100).toFixed(1) + '%';
-          el.classList.toggle('low', f < 0.25);
+        for (let i = 0; i < puState.els.length; i++) {
+          const p = puState.els[i], f = clamp(p.k === 'board' ? R.board / CFG.BOARD_T : R[p.k] / (R[p.k + 'D'] || 1), 0, 1);
+          p.bar.style.transform = 'scaleX(' + f.toFixed(3) + ')';
+          if ((f < 0.25) !== p.low) { p.low = f < 0.25; p.el.classList.toggle('low', p.low); }
         }
       }
 
@@ -2547,19 +2725,23 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       }
 
       function handleEvents() {
-        for (const e of R.ev) {
-          if (e === 'coin') { au.play('coin'); spark(R.x, R.y + 1.0, -R.s - 0.6, 'y', 1.1); }
-          else if (e.startsWith('pu_')) {}
+        const ev = R.ev;
+        let coin = false;
+        for (let i = 0; i < ev.length; i++) {
+          const e = ev[i];
+          if (e === 'coin') coin = true;
           else if (e === 'crash') { au.play('crash'); shake = 0.5; }
           else if (e === 'caught') { au.play('bump'); au.play('caught'); }
           else if (e === 'bump') { au.play('bump'); shake = 0.25; }
+          else if (e === 'edge') { au.play('edge'); shake = Math.max(shake, 0.1); }
+          else if (e === 'near') { au.play('near'); spark(R.x, R.y + 1.2, -R.s + 0.4, 'w', 2.6); nearPop('CLOSE CALL' + (R.nearN > 1 ? ' x' + R.nearN : ''), '+' + fmt(R.nearPts)); }
           else if (e === 'board_break') { au.play('board_break'); shake = 0.45; boardBreak(R.x, R.y, -R.s); spark(R.x, R.y + 0.3, -R.s, 'p', 4); hudBoards(); }
           else if (e === 'board_end') { au.play('board_end'); au.play('power_down'); }
-          else if (e === 'jet_end') au.play('jet_end');
           else if (e === 'jump') au.play(R.sneak > 0 ? 'spring' : 'jump');
-          else au.play(e);
+          else if (!e.startsWith('pu_')) au.play(e);
         }
-        R.ev.length = 0;
+        if (coin) { au.play('coin'); spark(R.x, R.y + 1.0, -R.s - 0.6, 'y', 1.1); }
+        ev.length = 0;
       }
 
       function showSave() {
@@ -2573,25 +2755,30 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         save.keys -= saveCost; saveCost *= 2; persist();
         show(E.save, 0); au.play('key');
         revive(W, R);
-        clearObsDone();
+        for (const o of W.obs) if (o.done) dropMesh(o);
+        acc = 0; V.a = 1;
         state = 'run'; big('GO!');
       }
-      function clearObsDone() { for (const o of W.obs) if (o.done) dropMesh(o); }
+      function bank() {
+        if (banked) return false;
+        banked = true;
+        const sc = Math.floor(R.score), md = modeOf(), isBest = sc > bestOf(md.id);
+        bankMissions();
+        save.coins += R.coins; save.runs++;
+        if (isBest) { if (md.id === 'classic') save.best = sc; else save.mbest[md.id] = sc; }
+        save.tot.m += Math.round(R.s); save.tot.coins += R.coins; save.tot.jumps += R.st.jump;
+        persist();
+        return isBest;
+      }
       function gameOver() {
         if (state === 'over') return;
         state = 'over'; show(E.save, 0);
         au.jet(false); au.music(false);
-        const sc = Math.floor(R.score);
-        bankMissions();
-        save.coins += R.coins; save.runs++;
-        const md = modeOf(), isBest = sc > bestOf(md.id);
-        if (isBest) { if (md.id === 'classic') save.best = sc; else save.mbest[md.id] = sc; }
-        save.tot.m += Math.round(R.s); save.tot.coins += R.coins; save.tot.jumps += R.st.jump;
-        persist();
+        const sc = Math.floor(R.score), md = modeOf(), isBest = bank();
         api.score(sc); if (md.id === 'classic') api.submit(sc);
-        q('.o-title').textContent = (R.dead === 'caught' ? 'Caught!' : R.dead === 'quit' ? 'Run over' : 'Crashed!') + (md.id === 'classic' ? '' : ' \u00b7 ' + md.name);
+        q('.o-title').textContent = (R.dead === 'caught' ? 'Caught!' : R.dead === 'quit' ? 'Run over' : 'Crashed!') + (md.id === 'classic' ? '' : ' · ' + md.name);
         const mm = Math.floor(runT / 60), ss = Math.floor(runT % 60);
-        q('.o-st').innerHTML = [['DISTANCE', fmt(R.s) + ' m'], ['TIME', mm + ':' + String(ss).padStart(2, '0')], ['JUMPS / ROLLS', R.st.jump + ' / ' + R.st.roll], ['POWER-UPS', R.st.pu]].map(a => `<div><small>${a[0]}</small><b>${a[1]}</b></div>`).join('');
+        q('.o-st').innerHTML = [['DISTANCE', fmt(R.s) + ' m'], ['TIME', mm + ':' + String(ss).padStart(2, '0')], ['CLOSE CALLS', R.st.near], ['TOP SPEED', Math.round(R.st.topV * 3.6) + ' km/h']].map(a => `<div><small>${a[0]}</small><b>${a[1]}</b></div>`).join('');
         q('.o-new').innerHTML = isBest && sc > 0 ? '<span class="ss-new">NEW HIGH SCORE!</span>' : '';
         q('.o-score').textContent = '0'; rollT = 0; rollSc = sc; q('.o-best').textContent = fmt(bestOf(md.id)); q('.o-coins').textContent = fmt(R.coins + runBonus);
         q('.o-ms').innerHTML = missionRows();
@@ -2600,18 +2787,25 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         if (window.Ameplay && Ameplay.analytics) try { Ameplay.analytics.track('subway_over', { score: sc, coins: R.coins, city: CITIES[save.city].id, mode: md.id, t: Math.round(runT) }); } catch (e) {}
       }
       function pause() {
-        if (state !== 'run' && state !== 'intro') return;
+        if (state !== 'run' && state !== 'intro' && state !== 'count') return;
+        if (R.dead) return;
+        if (state !== 'count') pausedFrom = state;
         state = 'pause'; au.jet(false); au.music(false);
         q('.pz-ms').innerHTML = missionRows();
+        E.big.classList.remove('on'); bigT = 0;
         show(E.pausep, 1);
       }
-      function resume() { if (state !== 'pause') return; show(E.pausep, 0); state = 'run'; au.music(true); big('GO!'); }
+      function resume() {
+        if (state !== 'pause') return;
+        show(E.pausep, 0); panel(0);
+        state = 'count'; countT = 0; countN = 3; big('3'); au.play('tick');
+      }
 
       let panelKind = '', shopTab = 'up';
       function openPanel(kind) {
         panelKind = kind; au.unlock(); au.play('ui');
         renderPanel();
-        show(E.panel, 1);
+        panel(1);
       }
       function renderPanel() {
         const k = panelKind;
@@ -2660,13 +2854,13 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         const t = e.target.closest('button');
         if (e.target === E.panel || (t && t.classList.contains('x'))) { closePanel(); au.play('ui'); return; }
         if (!t) return;
-        if (t.dataset.go) { show(E.panel, 0); if (state === 'pause') resume(); else startRun(); return; }
+        if (t.dataset.go) { panel(0); if (state === 'pause') resume(); else startRun(); return; }
         if (t.dataset.tab) { shopTab = t.dataset.tab; au.play('ui'); renderPanel(); }
         else if (t.dataset.buy) buy(t.dataset.buy);
         else if (t.dataset.sel) { save.char = t.dataset.sel; persist(); buildHero(); au.play('ui'); renderPanel(); }
         else if (t.dataset.unl) { const c = CHARS.find(x => x.id === t.dataset.unl); if (c && save.coins >= c.price) { save.coins -= c.price; save.chars.push(c.id); save.char = c.id; persist(); buildHero(); au.play('buy'); renderPanel(); refreshHome(); } }
       });
-      function closePanel() { show(E.panel, 0); if (state === 'pause') show(E.pausep, 1); }
+      function closePanel() { panel(0); if (state === 'pause') show(E.pausep, 1); }
       const setMode = id => { if (!MODES.find(m => m.id === id) || save.mode === id) return; save.mode = id; persist(); au.unlock(); au.play('ui'); resetWorld(); refreshHome(); };
       api.on(q('.ss-modes'), 'click', e => { const b = e.target.closest('[data-m]'); if (b) setMode(b.dataset.m); });
       api.on(q('.pz-how'), 'click', () => { show(E.pausep, 0); openPanel('how'); });
@@ -2691,39 +2885,64 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       const KM = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down' };
       api.on(window, 'keydown', e => {
         const k = e.code;
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
         if (state === 'run' || state === 'intro') {
           if (KM[k]) { e.preventDefault(); if (!e.repeat) input(KM[k]); }
           else if (k === 'Space') { e.preventDefault(); if (!e.repeat) useBoard(); }
-          else if (k === 'KeyP') pause();
+          else if (k === 'KeyP' || k === 'Escape') { e.preventDefault(); if (!e.repeat) pause(); }
+        } else if (state === 'count') {
+          if (KM[k] || k === 'Space') e.preventDefault();
+          else if ((k === 'KeyP' || k === 'Escape') && !e.repeat) { e.preventDefault(); pause(); }
         } else if (state === 'home') {
-          if (E.panel.classList.contains('on')) { if (k === 'Escape') show(E.panel, 0); else if (panelKind === 'how' && (k === 'Space' || k === 'Enter')) { e.preventDefault(); show(E.panel, 0); startRun(); } return; }
+          if (panelOn) { if (k === 'Escape') { e.preventDefault(); panel(0); } else if (panelKind === 'how' && (k === 'Space' || k === 'Enter')) { e.preventDefault(); panel(0); startRun(); } return; }
           if (k === 'KeyM') { const i = MODES.findIndex(m => m.id === save.mode); setMode(MODES[(i + 1) % MODES.length].id); return; }
-          if (k === 'Space' || k === 'Enter' || k === 'ArrowUp' || k === 'KeyW') { e.preventDefault(); startRun(); }
+          if (k === 'Space' || k === 'Enter' || k === 'ArrowUp' || k === 'KeyW') { e.preventDefault(); if (!e.repeat) startRun(); }
           else if (k === 'ArrowLeft') city(-1); else if (k === 'ArrowRight') city(1);
-        } else if (state === 'over') { if (k === 'Space' || k === 'Enter') { e.preventDefault(); playAgain(); } }
-        else if (state === 'pause') { if (E.panel.classList.contains('on')) { if (k === 'Escape') closePanel(); else if (k === 'KeyP' || k === 'Space' || k === 'Enter') { e.preventDefault(); show(E.panel, 0); resume(); } return; } if (k === 'KeyP' || k === 'Space' || k === 'Enter') { e.preventDefault(); resume(); } }
-        else if (state === 'save') { if (k === 'Space' || k === 'Enter') { e.preventDefault(); useSave(); } }
+        } else if (state === 'over') {
+          if (e.repeat) return;
+          if (k === 'Space' || k === 'Enter') { e.preventDefault(); playAgain(); }
+          else if (k === 'Escape') { e.preventDefault(); toHome(); }
+        } else if (state === 'pause') {
+          if (e.repeat) return;
+          if (panelOn) { if (k === 'Escape') { e.preventDefault(); closePanel(); } else if (k === 'KeyP' || k === 'Space' || k === 'Enter') { e.preventDefault(); resume(); } return; }
+          if (k === 'KeyP' || k === 'Space' || k === 'Enter' || k === 'Escape') { e.preventDefault(); resume(); }
+        } else if (state === 'save') {
+          if (e.repeat) return;
+          if (k === 'Space' || k === 'Enter') { e.preventDefault(); useSave(); }
+          else if (k === 'Escape') { e.preventDefault(); gameOver(); }
+        }
       });
       let pd = null, lastTap = 0, lastTapX = 0, lastTapY = 0;
+      const swipeTh = () => clamp(wrap.clientWidth * 0.04, 14, 28);
+      const swipeDir = (dx, dy) => Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
       api.on(wrap, 'pointerdown', e => {
         if (e.target.closest('button') || e.target.closest('.ss-card')) return;
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
         au.unlock();
-        pd = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), fired: false };
+        pd = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), n: 0, dir: '' };
+        try { wrap.setPointerCapture(e.pointerId); } catch (err) {}
       });
       api.on(wrap, 'pointermove', e => {
-        if (!pd || pd.id !== e.pointerId || pd.fired) return;
-        const dx = e.clientX - pd.x, dy = e.clientY - pd.y, th = Math.max(16, wrap.clientWidth * 0.035);
-        if (Math.max(Math.abs(dx), Math.abs(dy)) < th) return;
-        pd.fired = true;
-        input(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+        if (!pd || pd.id !== e.pointerId) return;
+        if (state !== 'run' && state !== 'intro') return;
+        const dx = e.clientX - pd.x, dy = e.clientY - pd.y;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < swipeTh() * (pd.n ? 1.5 : 1)) return;
+        const dir = swipeDir(dx, dy);
+        pd.x = e.clientX; pd.y = e.clientY;
+        if (dir === pd.dir) return;
+        pd.dir = dir; pd.n++;
+        input(dir);
       });
       const pend = e => {
         if (!pd || pd.id !== e.pointerId) return;
         const p = pd; pd = null;
-        if (p.fired) return;
-        const now = performance.now();
-        if (state === 'home' && e.type === 'pointerup' && !E.panel.classList.contains('on')) { startRun(); return; }
-        if ((state === 'run' || state === 'intro') && now - p.t < 300) {
+        if (p.n) return;
+        if (e.type !== 'pointerup') return;
+        if (state === 'home') { if (!panelOn) startRun(); return; }
+        if (state !== 'run' && state !== 'intro') return;
+        const now = performance.now(), dx = e.clientX - p.x, dy = e.clientY - p.y;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) >= swipeTh() * 0.6 && now - p.t < 350) { input(swipeDir(dx, dy)); return; }
+        if (now - p.t < 300) {
           if (now - lastTap < 330 && Math.hypot(e.clientX - lastTapX, e.clientY - lastTapY) < 60) { useBoard(); lastTap = 0; }
           else { lastTap = now; lastTapX = e.clientX; lastTapY = e.clientY; }
         }
@@ -2731,12 +2950,13 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       api.on(wrap, 'pointerup', pend);
       api.on(wrap, 'pointercancel', pend);
       api.on(document, 'visibilitychange', () => { if (document.hidden) pause(); });
+      api.on(window, 'blur', () => pause());
 
       const HINTS = COARSE ? [['Swipe left or right', 'to switch lanes'], ['Swipe up to jump', 'swipe down to roll'], ['Double tap', 'to use a hoverboard']] : [['← → to switch lanes', 'or A / D'], ['↑ jump  ·  ↓ roll', 'roll in the air to drop fast'], ['Space: hoverboard', 'it saves you from one crash']];
       const hintDone = [() => R.lane !== 1, () => R.st.jump + R.st.roll > 0, () => R.st.board > 0];
       function hintTick() {
-        if (R.dead) { E.hint.classList.remove('on'); return; }
         if (hintI >= HINTS.length) return;
+        if (R.dead) { E.hint.classList.remove('on'); return; }
         const at = 1.0 + hintI * 3.4, t = R.t;
         if (hintDone[hintI]()) { E.hint.classList.remove('on'); hintI++; return; }
         if (t > at && t < at + 3.0) { if (!E.hint.classList.contains('on')) { E.hint.innerHTML = HINTS[hintI][0] + '<small>' + HINTS[hintI][1] + '</small>'; E.hint.classList.add('on'); } }
@@ -2744,39 +2964,50 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       }
 
       function syncWorld(dt, t) {
-        const s = R.s;
+        const s = V.s;
         syncChunks(s);
         const ts = Math.floor(s / 4) * 4;
-        track.position.z = -ts; rails.position.z = -ts;
-        far.position.set(0, -0.08, -s - 200);
-        for (const o of W.obs) {
-          if (o.done) { dropMesh(o); continue; }
-          if (!o.mesh && o.s0 < s + 215) obsMesh(o);
-          if (o.mesh && o.moving) o.mesh.position.z = -o.s0;
+        if (ts !== trackS) { trackS = ts; track.position.z = -ts; rails.position.z = -ts; }
+        far.position.z = -s - 200;
+        const O = W.obs;
+        for (let i = 0; i < O.length; i++) {
+          const o = O[i];
+          if (o.done) { if (o.mesh) dropMesh(o); continue; }
+          if (!o.mesh) { if (o.s0 < s + 215) obsMesh(o); else continue; }
+          if (o.act) {
+            const a = o.mesh, z = -lerp(o.ps0, o.s0, V.a);
+            for (let j = 0; j < a.length; j++) { const m = a[j]; m.position.z = z + m.userData.dz; if (!m.isSprite) m.updateMatrix(); }
+          }
         }
-        for (const it of W.items) {
-          if (it.got) { dropMesh(it); continue; }
-          if (!it.mesh && it.s < s + 190) itemMesh(it);
-          if (it.mesh) { it.mesh.children[0].rotation.y = t * 2.4; it.mesh.position.y = it.y + Math.sin(t * 3 + it.s) * 0.12; const sp = it.mesh.children[1]; const k = 1.9 + 0.25 * Math.sin(t * 6); sp.scale.set(k, k, 1); }
+        const I = W.items;
+        for (let i = 0; i < I.length; i++) {
+          const it = I[i];
+          if (it.got) { if (it.mesh) dropMesh(it); continue; }
+          if (!it.mesh) { if (it.s < s + 190) itemMesh(it); else continue; }
+          const g = it.mesh, k = 1.9 + 0.25 * Math.sin(t * 6);
+          g.children[0].rotation.y = t * 2.4; g.position.y = it.y + Math.sin(t * 3 + it.s) * 0.12; g.children[1].scale.set(k, k, 1);
         }
-        const spin = t * 3.2;
+        const C = W.coins, M = coinIM.instanceMatrix.array, cs = Math.cos(t * 3.2), sn = Math.sin(t * 3.2);
         let n = 0;
-        for (const c of W.coins) {
+        for (let i = 0; i < C.length && n < MAXC; i++) {
+          const c = C[i];
           if (c.got) continue;
           const ds = c.s - s;
-          if (ds > 180 || ds < -6) continue;
-          dummy.position.set(c.x, c.y, -c.s); dummy.rotation.set(0, spin, 0); dummy.updateMatrix();
-          coinIM.setMatrixAt(n++, dummy.matrix);
-          if (n >= MAXC) break;
+          if (ds > 180) break;
+          if (ds < -6) continue;
+          const b = n * 16;
+          M[b] = cs; M[b + 2] = -sn; M[b + 8] = sn; M[b + 10] = cs; M[b + 12] = c.x; M[b + 13] = c.y; M[b + 14] = -c.s;
+          n++;
         }
         coinIM.count = n; coinIM.instanceMatrix.needsUpdate = true;
         updBreak(dt);
-        for (const sp of sparks) if (sp.visible) { sp.userData.t += dt; const f = sp.userData.t / 0.3; if (f >= 1) sp.visible = false; else { const k = sp.userData.s * (0.4 + f); sp.scale.set(k, k, 1); sp.material.opacity = 1 - f; } }
+        for (let i = 0; i < sparks.length; i++) { const sp = sparks[i]; if (sp.visible) { sp.userData.t += dt; const f = sp.userData.t / 0.3; if (f >= 1) sp.visible = false; else { const k = sp.userData.s * (0.4 + f); sp.scale.set(k, k, 1); sp.material.opacity = 1 - f; } } }
       }
 
+      const HS = { mode: 'run', speed: 0, air: 0, vy: 0, roll: 0, rollP: 0, stumble: 0, leanZ: 0, spray: false, can: false, deadT: 0 };
       function syncHero(dt, t) {
         const H = hero;
-        const xv = (R.x - prevX) / Math.max(dt, 1e-3); prevX = R.x;
+        const xv = dt > 0 ? (V.x - prevX) / dt : 0; prevX = V.x;
         leanZ = damp(leanZ, clamp(-xv * 0.018, -0.38, 0.38), 14, dt);
         airW = damp(airW, R.grounded || R.jet > 0 ? 0 : 1, 16, dt);
         let mode = 'run';
@@ -2784,23 +3015,25 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         else if (R.dead) mode = R.dead === 'caught' ? 'caught' : 'dead';
         else if (R.jet > 0) mode = 'jet';
         else if (R.board > 0) mode = 'board';
-        const st = { mode, speed: R.speed, air: airW, vy: R.vy, roll: R.rollT > 0 ? 1 : 0, rollP: R.rollT > 0 ? 1 - R.rollT / R.rollD : 0, stumble: R.stumbleT / 0.45, leanZ: mode === 'run' || mode === 'board' ? leanZ : 0, spray: false, can: false, deadT: R.deadT };
+        const st = HS;
+        st.mode = mode; st.speed = R.speed; st.air = airW; st.vy = R.vy; st.roll = R.rollT > 0 ? 1 : 0; st.rollP = R.rollT > 0 ? 1 - R.rollT / R.rollD : 0; st.stumble = R.stumbleT / 0.45; st.leanZ = mode === 'run' || mode === 'board' ? leanZ : 0; st.spray = false; st.can = false; st.deadT = R.deadT;
         if (state === 'home') { sprayT += dt; st.spray = (sprayT % 7) > 3.5; st.can = true; }
         CH.animHero(H, st, dt, t);
-        if (mode === 'run' && R.grounded) { const sp = Math.floor(H.ph / Math.PI); if (sp !== H.lastStep) { H.lastStep = sp; au.play(R.y > 3 ? 'step_roof' : 'step'); } }
-        H.root.position.set(R.x, R.y, -R.s);
+        if (mode === 'run' && R.grounded && dt > 0) { const sp = Math.floor(H.ph / Math.PI); if (sp !== H.lastStep) { H.lastStep = sp; au.play(R.y > 3 ? 'step_roof' : 'step'); } }
+        const ex = R.edgeT > 0 ? R.edgeDir * 0.26 * Math.sin(Math.PI * (1 - R.edgeT / 0.24)) : 0;
+        H.root.position.set(V.x + ex, V.y, -V.s);
         let yaw = 0;
         if (state === 'home') yaw = st.spray ? 0.95 : 0.12 + 0.08 * Math.sin(t * 0.8);
         else if (state === 'intro') yaw = lerp(0.6, 0, ease(clamp(introT / 0.5, 0, 1)));
         else if (mode === 'run') yaw = clamp(-xv * 0.012, -0.35, 0.35);
         H.root.rotation.y = damp(H.root.rotation.y, yaw, 12, dt);
-        if (mode === 'dead') { const k = clamp(R.deadT * 4, 0, 1), bn = Math.abs(Math.sin(R.deadT * 8)) * 0.5 * Math.exp(-R.deadT * 3.4); H.root.position.z += 0.75 * ease(k); H.body.rotation.x = lerp(0, 1.45, ease(k)); H.body.rotation.y = 0.8 * ease(k); H.root.position.y = R.y + bn + 0.2 * Math.sin(k * Math.PI); }
+        if (mode === 'dead') { const k = clamp(R.deadT * 4, 0, 1), bn = Math.abs(Math.sin(R.deadT * 8)) * 0.5 * Math.exp(-R.deadT * 3.4); H.root.position.z += 0.75 * ease(k); H.body.rotation.x = lerp(0, 1.45, ease(k)); H.body.rotation.y = 0.8 * ease(k); H.root.position.y = V.y + bn + 0.2 * Math.sin(k * Math.PI); }
         else if (mode === 'board' && CFG.BOARD_T - R.board < 0.7) { const q = clamp((CFG.BOARD_T - R.board) / 0.7, 0, 1); H.body.rotation.y += TAU * ease(q); H.root.position.y += 0.5 * Math.sin(q * Math.PI); H.body.rotation.x = 0; }
         else H.body.rotation.x = 0;
         H.root.visible = noBlink || !(R.ghost > 0 && R.jet <= 0 && !R.dead && Math.floor(t * 12) % 3 === 0);
-        const sup = R.jet > 0 ? supportAt(W, laneOf(R.x), R.s) : supportAt(W, laneOf(R.x), R.s);
-        const hgt = Math.max(0, R.y - sup);
-        heroBlob.position.set(R.x, sup + 0.03, -R.s);
+        const sup = supportAt(W, laneOf(V.x), V.s);
+        const hgt = Math.max(0, V.y - sup);
+        heroBlob.position.set(V.x + ex, sup + 0.03, -V.s);
         const bs = clamp(1 - hgt * 0.1, 0.35, 1);
         heroBlob.scale.set(0.95 * bs, 1, 1.1 * bs);
       }
@@ -2814,10 +3047,10 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         const k = target < gd ? (R.dead ? 4 : 2.6) : 0.7;
         gd = damp(gd, target, k, dt);
         if (gd > 20) vis = false;
-        guard.root.visible = dog.root.visible = gBlob.visible = dBlob.visible = vis;
+        if (guard.root.visible !== vis) guard.root.visible = dog.root.visible = gBlob.visible = dBlob.visible = vis;
         if (!vis) return;
-        gx = damp(gx, R.x + (R.dead ? 0.15 : R.x > 0.5 ? -0.85 : 0.85), 5, dt);
-        const gs = R.s - gd;
+        gx = damp(gx, V.x + (R.dead ? 0.15 : V.x > 0.5 ? -0.85 : 0.85), 5, dt);
+        const gs = V.s - gd;
         const sup = supportAt(W, laneOf(gx), gs);
         gy = damp(gy, sup, 10, dt);
         const run = !(R.dead && gd < target + 0.25);
@@ -2825,9 +3058,8 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         guard.grab = !!R.dead;
         CH.animGuard(guard, sp, dt, t, run ? 'run' : 'grab');
         guard.root.position.set(gx, gy, -gs);
-        guard.root.rotation.y = 0;
         gBlob.position.set(gx, gy + 0.03, -gs);
-        dgx = damp(dgx, R.x + (gx > R.x ? -0.75 : 0.75), 6, dt);
+        dgx = damp(dgx, V.x + (gx > V.x ? -0.75 : 0.75), 6, dt);
         const ds = gs + (R.dead ? 0.2 : 1.1);
         const dsup = supportAt(W, laneOf(dgx), ds);
         CH.animDog(dog, sp * 1.05, dt, t, run ? 'run' : 'bark');
@@ -2835,32 +3067,51 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
         dBlob.position.set(dgx, dsup + 0.03, -ds);
       }
 
+      const camBack = portrait ? 7.2 : 6.2, camBase = portrait ? 6.7 : 5.8;
       function camRun(out, look, dt) {
-        const back = portrait ? 7.2 : 6.2, tun = inTunnel(W, R.s + 2) || inTunnel(W, R.s - back - 1);
-        const sp0 = supportAt(W, laneOf(R.x), R.s), yT = R.jet > 0 || R.grounded ? R.y : lerp(sp0, R.y, 0.6);
+        const tun = inTunnel(W, V.s + 2) || inTunnel(W, V.s - camBack - 1);
+        const yT = R.jet > 0 || R.grounded ? V.y : lerp(supportAt(W, laneOf(V.x), V.s), V.y, 0.6);
         camY = damp(camY, yT, R.jet > 0 ? 3 : 6, dt);
-        const base = portrait ? 6.7 : 5.8;
-        let cy = base + camY * 0.9;
+        let cy = camBase + camY * 0.9;
         if (tun) cy = Math.min(cy, 8.6);
-        out.set(R.x * 0.62, cy, -R.s + back);
-        look.set(R.x * 0.85, 0.9 + camY * 0.88, -R.s - (portrait ? 6.5 : 7));
+        out.set(V.x * 0.62, cy, -V.s + camBack);
+        look.set(V.x * 0.85, 0.9 + camY * 0.88, -V.s - (portrait ? 6.5 : 7));
       }
       function camHome(out, look) {
-        out.set(portrait ? 0.55 : 1.05, portrait ? 1.7 : 1.55, -R.s - (portrait ? 4.6 : 3.7));
-        look.set(portrait ? 0.05 : -0.55, portrait ? 1.25 : 1.12, -R.s + 0.2);
+        out.set(portrait ? 0.55 : 1.05, portrait ? 1.7 : 1.55, -V.s - (portrait ? 4.6 : 3.7));
+        look.set(portrait ? 0.05 : -0.55, portrait ? 1.25 : 1.12, -V.s + 0.2);
+      }
+      function camIntro(out, look, k) {
+        camHome(camP, camL);
+        const hx = camP.x, hy = camP.y, hz = camP.z + V.s;
+        const a0 = Math.atan2(hx, -hz), r0 = Math.hypot(hx, hz), a = lerp(a0, Math.PI, k), r = lerp(r0, camBack, k) - 1.1 * Math.sin(Math.PI * k);
+        out.set(Math.sin(a) * r + tmpP.x * k, lerp(hy, tmpP.y, k * k), -V.s - Math.cos(a) * r);
+        look.lerpVectors(camL, tmpL, k);
       }
 
       function frameUI(dt) {
-        const sc = Math.floor(R.score);
-        if (sc !== hudScore) { hudScore = sc; E.sv.textContent = String(sc).padStart(6, '0'); if (state === 'run') api.score(sc); }
+        hudT -= dt;
+        if (hudT <= 0) {
+          hudT = 0.1;
+          const sc = Math.floor(R.score);
+          if (sc !== hudScore) { hudScore = sc; E.sv.textContent = String(sc).padStart(6, '0'); }
+          const m = (save.ms.lvl + R.mb) * (R.x2 > 0 ? 2 : 1);
+          if (m !== hudMult) { hudMult = m; E.mult.textContent = 'x' + m; E.mult.classList.toggle('x2', R.x2 > 0); }
+          updPU(false);
+          const on = R.board > 0;
+          if (on !== hbOn) { hbOn = on; E.hb.classList.toggle('on', on); }
+          apiT -= 0.1;
+          if (apiT <= 0 && state === 'run') { apiT = 0.3; api.score(sc); }
+        }
         if (R.coins !== hudCoins) { hudCoins = R.coins; E.cv.textContent = fmt(R.coins); }
-        const m = save.ms.lvl * (R.x2 > 0 ? 2 : 1);
-        if (m !== hudMult) { hudMult = m; E.mult.textContent = 'x' + m; E.mult.classList.toggle('x2', R.x2 > 0); }
-        updPU(false);
-        E.hb.classList.toggle('on', R.board > 0);
+        fxTick(dt);
+      }
+      let hbOn = false;
+      function fxTick(dt) {
         if (bannerT > 0) { bannerT -= dt; if (bannerT <= 0) E.banner.classList.remove('on'); }
         if (bigT > 0) { bigT -= dt; if (bigT <= 0) E.big.classList.remove('on'); }
         if (toastT > 0) { toastT -= dt; if (toastT <= 0) E.toast.classList.remove('on'); }
+        if (nearT > 0) { nearT -= dt; if (nearT <= 0) E.near.classList.remove('on'); }
       }
 
       let perfN = 0, perfT = 0, perfCool = 2;
@@ -2881,73 +3132,120 @@ ${SC} .ss-dim{background:rgba(8,18,44,.45)}
       try { if (document.fonts && !document.fonts.check('40px "Lilita One"')) document.fonts.load('40px "Lilita One"').then(() => { if (api.alive && state === 'home' && document.fonts.check('40px "Lilita One"')) { buildCity(save.city); resetWorld(); } }).catch(() => {}); } catch (e) {}
       camHome(camP, camL);
 
-      let tsc = 1, tvirt = 0;
-      api.loop((dt, t) => {
-        dt *= tsc; tvirt += dt; t = tvirt;
+      const ctx = { mult: 1 };
+      function simulate(dt) {
+        ctx.mult = save.ms.lvl;
+        if (R.dead) { step(W, R, dt, ctx); acc = 0; V.a = 1; return; }
+        runT += dt; acc += dt;
+        let n = 0;
+        while (acc >= CFG.STEP && n++ < 10) {
+          step(W, R, CFG.STEP, ctx); acc -= CFG.STEP;
+          if (R.dead) { acc = 0; break; }
+          collect(W, R, CFG.STEP, onItem);
+        }
+        if (n > 10) acc = 0;
+        V.a = R.dead ? 1 : acc / CFG.STEP;
+      }
+
+      let tsc = 1, tvirt = 0, lastW = 0, lastH = 0, lastAsp = 0, lastFov = 0;
+      function frame(dt) {
+        dt *= tsc;
+        const cw = renderer.domElement.width, chh = renderer.domElement.height;
+        if (cw !== lastW || chh !== lastH) { lastW = cw; lastH = chh; draw = true; }
+        const frozen = state === 'pause' || panelOn;
+        if (frozen) { au.tick(); fxTick(dt); if (!draw) return; dt = 0; }
+        draw = false;
+        tvirt += dt;
+        const t = tvirt;
         capPR(); perf(dt);
+        let adt = dt;
         if (state === 'run' || state === 'intro') {
-          acc += dt;
-          let n = 0;
-          const ctx = { mult: save.ms.lvl };
-          if (!R.dead) runT += dt;
-          if (R.dead) { step(W, R, dt, ctx); acc = 0; }
-          else while (acc >= CFG.STEP && n++ < 10) { step(W, R, CFG.STEP, ctx); acc -= CFG.STEP; if (R.dead) break; }
-          if (n >= 10) acc = 0;
-          collect(W, R, dt, 0, onItem);
+          simulate(dt);
           if (!R.dead) gen(W, R);
           cullT -= dt;
-          if (cullT <= 0) { cullT = 0.3; cull(W, R, dropMesh); W.coins = W.coins.filter(c => !c.got && c.s > R.s - CFG.BEHIND); }
+          if (cullT <= 0) { cullT = 0.3; cull(W, R, dropMesh); }
           handleEvents();
-          checkMissions();
+          msT -= dt;
+          if (msT <= 0) { msT = 0.2; checkMissions(); }
           hintTick();
           au.jet(R.jet > 0 && !R.dead);
           if (state === 'intro') { introT += dt; if (introT >= 1.0) state = 'run'; }
-          if (R.dead && R.dead !== 'quit' && R.deadT > 1.1) { if (R.dead === 'crash' || R.dead === 'caught') showSave(); }
+          if (R.dead && R.dead !== 'quit' && R.deadT > 1.1) showSave();
           frameUI(dt);
+        } else if (state === 'count') {
+          countT += dt; adt = 0;
+          const n = 3 - Math.floor(countT / 0.42);
+          if (n !== countN) {
+            countN = n;
+            if (n > 0) { big(String(n)); au.play('tick'); }
+            else { state = pausedFrom; acc = 0; big('GO!'); au.play('go'); au.music(true); }
+          }
+          fxTick(dt);
         } else if (state === 'save') {
           saveT += dt;
-          step(W, R, dt, { mult: save.ms.lvl });
+          step(W, R, dt, ctx);
           const f = clamp(saveT / 4.5, 0, 1);
           E.sarc.style.strokeDashoffset = (276.5 * f).toFixed(1);
           if (f >= 1) gameOver();
-        } else if (state === 'over') { step(W, R, dt, { mult: 1 }); if (rollT < 0.9) { rollT += dt; q('.o-score').textContent = fmt(rollSc * ease(clamp(rollT / 0.9, 0, 1))); } }
+        } else if (state === 'over') { step(W, R, dt, ctx); if (rollT < 0.9) { rollT += dt; q('.o-score').textContent = fmt(rollSc * ease(clamp(rollT / 0.9, 0, 1))); } }
         else if (state === 'home') homeT += dt;
-        syncWorld(dt, t);
-        syncHero(dt, t);
-        syncGuard(dt, t);
-        const tun = inTunnel(W, R.s);
+        const a = V.a;
+        V.s = R.ps + (R.s - R.ps) * a; V.x = R.px + (R.x - R.px) * a; V.y = R.py + (R.y - R.py) * a;
+        syncWorld(adt, t);
+        syncHero(adt, t);
+        syncGuard(adt, t);
+        const tun = inTunnel(W, V.s);
         tunK = damp(tunK, tun ? 1 : 0, 4, dt);
         const L = ENV.light;
         hemi.intensity = (0.95 - 0.42 * tunK) * L; sun.intensity = (0.72 - 0.5 * tunK) * L;
-        if (state === 'home') camHome(tmpP, tmpL);
-        else if (state === 'intro') { camHome(camP, camL); camRun(tmpP, tmpL, dt); const k = ease(clamp(introT / 1.0, 0, 1)); tmpP.lerpVectors(camP, tmpP, k); tmpL.lerpVectors(camL, tmpL, k); }
-        else if (state === 'pause') {}
-        else camRun(tmpP, tmpL, dt);
-        if (state !== 'pause') {
-          if (state === 'run' || state === 'save' || state === 'over') { camP.x = damp(camP.x, tmpP.x, 9, dt); camP.y = damp(camP.y, tmpP.y, 7, dt); camP.z = tmpP.z; camL.x = damp(camL.x, tmpL.x, 9, dt); camL.y = damp(camL.y, tmpL.y, 7, dt); camL.z = tmpL.z; }
-          else { camP.copy(tmpP); camL.copy(tmpL); }
+        if (state === 'home') { camHome(camP, camL); }
+        else if (state === 'intro') { camRun(tmpP, tmpL, dt); camIntro(tmpP, tmpL, ease(clamp(introT / 1.0, 0, 1))); camP.copy(tmpP); camL.copy(tmpL); }
+        else {
+          camRun(tmpP, tmpL, adt);
+          camP.x = damp(camP.x, tmpP.x, 9, adt); camP.y = damp(camP.y, tmpP.y, 7, adt); camP.z = tmpP.z; camL.x = damp(camL.x, tmpL.x, 9, adt); camL.y = damp(camL.y, tmpL.y, 7, adt); camL.z = tmpL.z;
         }
-        const ca = renderer.domElement.width / Math.max(1, renderer.domElement.height);
-        cam.aspect = ca; cam.fov = ca < baseAsp ? 2 * Math.atan(Math.tan(baseFov * Math.PI / 360) * baseAsp / ca) * 180 / Math.PI : baseFov; cam.updateProjectionMatrix();
+        fovK = damp(fovK, state === 'home' ? 0 : clamp((R.speed - CFG.V0) / (CFG.VMAX - CFG.V0), 0, 1) * 5 + (R.jet > 0 ? 3 : 0), 2.5, dt);
+        const ca = cw / Math.max(1, chh), bf = baseFov + fovK;
+        if (Math.abs(ca - lastAsp) > 1e-4 || Math.abs(bf - lastFov) > 0.02) {
+          lastAsp = ca; lastFov = bf;
+          cam.aspect = ca; cam.fov = ca < baseAsp ? 2 * Math.atan(Math.tan(bf * Math.PI / 360) * baseAsp / ca) * 180 / Math.PI : bf; cam.updateProjectionMatrix();
+        }
         cam.position.copy(camP);
         if (shake > 0) { shake = Math.max(0, shake - dt); cam.position.x += (Math.random() - 0.5) * shake * 0.6; cam.position.y += (Math.random() - 0.5) * shake * 0.6; }
         cam.lookAt(camL);
-        for (const arr of chunks.values()) for (const m of arr) if (m.userData.g) { const dz = cam.position.z - m.position.z; m.visible = !(dz > -0.6 && dz < 2 && cam.position.y > 5.2 && cam.position.y < 7.8); }
+        for (let i = 0; i < gantries.length; i++) { const m = gantries[i], dz = cam.position.z - m.position.z; m.visible = !(dz > -0.6 && dz < 2 && cam.position.y > 5.2 && cam.position.y < 7.8); }
         skyPlane.position.set(cam.position.x * 0.9, 52, cam.position.z - 340);
         sunSprite.position.set(cam.position.x - 120, 150, cam.position.z - 330);
         sun.position.set(cam.position.x - 20, 40, cam.position.z + 25); sun.target.position.set(cam.position.x, 0, cam.position.z - 10);
         au.tick();
         renderer.render(scene, cam);
-      });
+      }
+      api.loop(frame);
 
-      wrap._ss = { get W() { return W; }, get R() { return R; }, get state() { return state; }, save, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, pr: renderer.getPixelRatio(), geos: renderer.info.memory.geometries, tex: renderer.info.memory.textures }), act: a => input(a), set noBlink(v) { noBlink = v; }, set ts(v) { tsc = v; }, clearChunks: () => clearChunks(), give(k) { if (state === 'run') onItem({ k, x: R.x, y: R.y, s: R.s }); }, city: d => city(d) };
+      wrap._ss = {
+        get W() { return W; }, get R() { return R; }, get V() { return V; }, get state() { return state; }, save,
+        info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, pr: renderer.getPixelRatio(), geos: renderer.info.memory.geometries, tex: renderer.info.memory.textures, objs: scene.children.length, pool: pool.length }),
+        act: a => input(a), set noBlink(v) { noBlink = v; }, set ts(v) { tsc = v; }, set pr(v) { prCap = v; renderer.setPixelRatio(v); draw = true; }, clearChunks: () => clearChunks(),
+        give(k) { if (state === 'run') onItem({ k, x: R.x, y: R.y, s: R.s }); }, city: d => city(d), frame,
+        bench(n, dt) {
+          const gl = renderer.getContext(), keys = ['drawArrays', 'drawElements', 'drawArraysInstanced', 'drawElementsInstanced'], old = {};
+          for (const k of keys) { old[k] = gl[k]; gl[k] = () => {}; }
+          const a = [], B = 10, T0 = performance.now();
+          for (let i = 0; i < n; i += B) { const t0 = performance.now(); for (let j = 0; j < B; j++) frame(dt); a.push((performance.now() - t0) / B); }
+          const tot = performance.now() - T0;
+          for (const k of keys) gl[k] = old[k];
+          a.sort((x, y) => x - y);
+          const m = a.length;
+          return { avg: tot / n, p50: a[m >> 1], p90: a[Math.floor(m * 0.9)], max: a[m - 1], min: a[0] };
+        }
+      };
       return {
         destroy() {
+          try { if (!banked && R && R.t > 1) bank(); } catch (e) {}
           au.close();
           if (ENV) ENV.dispose();
           const all = new Set(bin);
           scene.traverse(o => { if (o.geometry) all.add(o.geometry); const m = o.material; if (m) for (const x of Array.isArray(m) ? m : [m]) { all.add(x); if (x.map) all.add(x.map); } });
-          for (const k in IM) IM[k].traverse(o => { if (o.geometry) all.add(o.geometry); });
           all.forEach(x => { try { x.dispose && x.dispose(); } catch (e) {} });
         }
       };

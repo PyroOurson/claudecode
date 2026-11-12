@@ -55,6 +55,10 @@
       jet_end: t => { tone('sine', 700, 200, t, 0.4, 0.1); },
       mission: t => { [784, 988, 1175, 1568].forEach((f, i) => tone('triangle', f, f, t + i * 0.09, 0.25, 0.14)); },
       ui: t => tone('sine', 880, 1200, t, 0.06, 0.1),
+      edge: t => { tone('sine', 150, 80, t, 0.09, 0.16); noise(t, 0.05, 0.07, 'lowpass', 700, 250); },
+      near: t => { noise(t, 0.22, 0.12, 'bandpass', 500, 3200, 1.4); tone('triangle', 988, 1480, t + 0.02, 0.14, 0.1); },
+      tick: t => tone('square', 660, 660, t, 0.07, 0.07),
+      go: t => { tone('square', 990, 990, t, 0.16, 0.08); tone('triangle', 1320, 1320, t, 0.22, 0.1); },
       buy: t => { tone('sine', 1046, 1046, t, 0.08, 0.12); tone('sine', 1568, 1568, t + 0.07, 0.18, 0.12); }
     };
     const BASS = [43, 0, 0, 43, 0, 0, 46, 0, 41, 0, 0, 41, 0, 38, 0, 0];
