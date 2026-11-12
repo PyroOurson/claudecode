@@ -5125,7 +5125,30 @@
     });
   }
   const listWorlds = () => kv('worlds', 'all').then(l => (l || []).filter(w => w && w.id).sort((a, b) => (b.last || 0) - (a.last || 0)));
-  const listChars = () => kv('chars', 'all').then(l => (l || []).filter(c => c && c.id).sort((a, b) => (b.last || b.created || 0) - (a.last || a.created || 0)));
+  const okNum = v => typeof v === 'number' && isFinite(v);
+  function fixSlots(a, n) {
+    const out = new Array(n).fill(null);
+    if (Array.isArray(a)) for (let i = 0; i < n && i < a.length; i++) { const s = a[i]; if (s && typeof s === 'object' && IT[s.id] && okNum(s.n) && s.n > 0) out[i] = s; }
+    return out;
+  }
+  function fixChar(c) {
+    if (!c || typeof c !== 'object' || typeof c.id !== 'string' || !c.id) return null;
+    c.name = String(c.name == null ? 'Player' : c.name).slice(0, 20) || 'Player';
+    c.inv = fixSlots(c.inv, 40); c.ammo = fixSlots(c.ammo, 4); c.armor = fixSlots(c.armor, 6);
+    c.hpMax = okNum(c.hpMax) && c.hpMax >= 20 ? c.hpMax : 100;
+    c.manaMax = okNum(c.manaMax) && c.manaMax >= 0 ? c.manaMax : 20;
+    c.hp = okNum(c.hp) && c.hp > 0 ? Math.min(c.hp, c.hpMax) : c.hpMax;
+    c.coins = okNum(c.coins) && c.coins > 0 ? Math.floor(c.coins) : 0;
+    for (const k of ['sk', 'hs', 'hc', 'sh', 'pn', 'ey', 'played', 'deaths', 'kills']) if (!okNum(c[k])) c[k] = k === 'sk' || k === 'hc' || k === 'pn' ? 1 : 0;
+    if (!c.spawns || typeof c.spawns !== 'object') c.spawns = {};
+    if (!c.maps || typeof c.maps !== 'object') c.maps = {};
+    for (const k in c.spawns) { const s = c.spawns[k]; if (!s || typeof s !== 'object' || !okNum(s.x) || !okNum(s.y)) delete c.spawns[k]; }
+    for (const k in c.maps) if (typeof c.maps[k] !== 'string') delete c.maps[k];
+    if (c.spawn && (typeof c.spawn !== 'object' || !okNum(c.spawn.x) || !okNum(c.spawn.y))) c.spawn = null;
+    return c;
+  }
+  const safeChar = c => { try { return fixChar(c); } catch (e) { return null; } };
+  const listChars = () => kv('chars', 'all').then(l => (l || []).map(safeChar).filter(c => c && c.id).sort((a, b) => (b.last || b.created || 0) - (a.last || a.created || 0)));
   const deleteWorld = id => Promise.all([kv('worlds', 'del', id), kv('wdata', 'del', id)]);
   const deleteChar = id => kv('chars', 'del', id);
   const saveChar = ch => { ch.last = Date.now(); return kv('chars', 'put', JSON.parse(JSON.stringify(ch))); };
@@ -5168,7 +5191,24 @@
   async function loadWorld(id) {
     const [meta, d] = [await kv('worlds', 'get', id), await kv('wdata', 'get', id)];
     if (!meta || !d) return null;
-    return restoreWorld(meta, d);
+    try {
+      if (!okNum(meta.w) || !okNum(meta.h) || meta.w < 200 || meta.h < 200 || meta.w * meta.h > 8e6 || meta.w !== Math.floor(meta.w) || meta.h !== Math.floor(meta.h)) return null;
+      for (const k of ['t', 'wl', 'lq', 'fl', 'fr', 'surf', 'bio']) if (!d[k] || !okNum(d[k].length)) return null;
+      if (d.surf.length !== meta.w || d.bio.length !== meta.w) return null;
+      if (d.chests && !Array.isArray(d.chests)) d.chests = [];
+      if (d.npcs && !Array.isArray(d.npcs)) d.npcs = [];
+      if (d.sap && !Array.isArray(d.sap)) d.sap = [];
+      const Wd = restoreWorld(meta, d);
+      if (!okNum(Wd.spawnX) || Wd.spawnX < 0 || Wd.spawnX >= Wd.w) Wd.spawnX = Wd.w >> 1;
+      if (!okNum(Wd.spawnY) || Wd.spawnY < 0 || Wd.spawnY >= Wd.h) Wd.spawnY = Math.max(0, Wd.top[Wd.spawnX | 0] - 3);
+      if (!okNum(Wd.tod)) Wd.tod = 13500;
+      if (!okNum(Wd.days)) Wd.days = 0;
+      if (!okNum(Wd.moon)) Wd.moon = 0;
+      Wd.day = !!Wd.day;
+      if (!Wd.npcDead || typeof Wd.npcDead !== 'object') Wd.npcDead = {};
+      Wd.name = String(Wd.name == null ? 'World' : Wd.name).slice(0, 24) || 'World';
+      return Wd;
+    } catch (e) { return null; }
   }
   let saving = false;
   async function saveFog(ch) {
@@ -5368,7 +5408,7 @@
     async pickworld(d) {
       showMenu('gen', { t: 'Loading world', s: 'Reading save...' });
       const Wd = await loadWorld(d.id);
-      if (!Wd) { showMenu('worlds'); return; }
+      if (!Wd) { try { api.toast('That world could not be read.'); } catch (e) { } showMenu('worlds'); return; }
       beginWorld(Wd);
     },
     joingame() { openRoom(M.ch, null); },
@@ -6270,7 +6310,7 @@
         Wd.id = 'wq' + Date.now().toString(36);
         M.ch = ch; startSolo(ch, Wd);
         return true;
-      }
+      },
     };
     return {
       destroy() {

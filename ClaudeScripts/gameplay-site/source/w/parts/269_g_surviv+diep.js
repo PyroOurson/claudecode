@@ -11,6 +11,27 @@
   const BOTNAMES = ['Slayer', 'NoScope', 'Lucky7', 'Bandit', 'Ghost', 'Rex', 'Maverick', 'Pixel', 'Viper', 'Nova', 'Echo', 'Tango', 'Zed', 'Kilo', 'Falcon', 'Wolfie', 'Hawk', 'Blaze', 'Cobra', 'Frost', 'Gizmo', 'Havoc', 'Ivy', 'Jinx', 'Kira', 'Lynx', 'Mochi', 'Nitro', 'Onyx', 'Panda', 'Quill', 'Raven', 'Sable', 'Taco', 'Umbra', 'Vex', 'Wraith', 'Xeno', 'Yuki', 'Zephyr', 'Bacon', 'Pickle', 'Waffle', 'Turbo', 'Comet', 'Domino', 'Ember', 'Fuzzy', 'Goose', 'Hazel', 'Iron', 'Juno', 'Koala', 'Luna', 'Mango', 'Ninja', 'Otter', 'Pogo', 'Rusty', 'Scout', 'Toast', 'Yeti', 'Zorro', 'Albert', 'Bruno', 'Cleo', 'Dante', 'Eli', 'Finn', 'Gus', 'Hugo', 'Iris', 'Jade', 'Kai', 'Leo', 'Mia', 'Noah', 'Owen', 'Pia', 'Quinn', 'Ruby', 'Sam', 'Theo', 'Uma', 'Vic', 'Will', 'Xan', 'Yara', 'Zoe'];
   const botName = (used, r = Math.random) => { for (let i = 0; i < 40; i++) { const n = pick(BOTNAMES, r) + (r() < .3 ? ((r() * 90) | 0) + 1 : ''); if (!used.has(n)) { used.add(n); return n; } } return 'Bot' + ((r() * 999) | 0); };
 
+  function bgHost(api, root, want, fn) {
+    let w = null, iv = 0, last = 0, raf = 0, dead = false;
+    const stop = () => { if (w) { try { w.terminate(); } catch (e) {} w = null; } if (iv) { clearInterval(iv); iv = 0; } };
+    const tick = () => {
+      if (dead) return;
+      if (!root.isConnected) { dead = true; stop(); return; }
+      const now = performance.now();
+      if (!document.hidden || now - raf < 250 || !want()) { last = now; return; }
+      let dt = Math.min(1, (now - last) / 1000);
+      last = now;
+      while (dt > 1e-6) { const d = Math.min(.05, dt); dt -= d; fn(d, now); }
+    };
+    const start = () => {
+      stop(); last = performance.now();
+      try { const u = URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},33)'], { type: 'text/javascript' })); w = new Worker(u); URL.revokeObjectURL(u); w.onmessage = tick; w.onerror = () => { w = null; if (!iv && !dead) iv = setInterval(tick, 250); }; }
+      catch (e) { w = null; iv = setInterval(tick, 250); }
+    };
+    api.loop(() => { raf = performance.now(); });
+    api.on(document, 'visibilitychange', () => { if (dead) return; if (document.hidden && want()) start(); else stop(); });
+    return () => { dead = true; stop(); };
+  }
   function makeAudio(api) {
     let ac = null, out = null, nb = null;
     const get = () => {
@@ -88,7 +109,7 @@
   const bindSeg = (root, onPick) => root.querySelectorAll('.io-seg').forEach(s => s.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; s.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); onPick(s.dataset.seg, b.dataset.v); }));
   const strHash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
 
-  const AM = { '9mm': ['9mm', '#ffc400'], '762': ['7.62mm', '#2f74ff'], '556': ['5.56mm', '#1fae55'], '12g': ['12 gauge', '#ff3b30'], '50ae': ['.50 AE', '#ff8c1a'], '308': ['.308', '#555b66'], '45': ['.45 ACP', '#a050ff'] };
+  const AM = { '9mm': ['Light rounds', '#ffc400'], '762': ['Heavy rounds', '#2f74ff'], '556': ['Rifle rounds', '#1fae55'], '12g': ['Shells', '#ff3b30'], '50ae': ['Magnum rounds', '#ff8c1a'], '308': ['Long rounds', '#555b66'], '45': ['Stopper rounds', '#a050ff'] };
   const AMK = Object.keys(AM);
   const AMSTACK = { '9mm': 30, '762': 30, '556': 30, '12g': 6, '50ae': 14, '308': 6, '45': 30 };
   const GUNS = [];
@@ -97,30 +118,30 @@
     const g = Object.assign({ id, name, cls, am, d, r, rl, mg, sp, rg, sd, au: 0, pe: 1, t: 1, col: '#2b2f36', wood: 0, len: 1.9, mv: 1, sh: 0, bolt: 0 }, o);
     GI[id] = GUNS.length; GUNS.push(g);
   };
-  gun('m9', 'M9', 'pistol', '9mm', 12, .12, 1.9, 15, 90, 62, 3.5, { len: 1.05, t: 1 });
-  gun('m1911', 'M1911', 'pistol', '45', 15, .13, 2.1, 7, 92, 64, 3, { len: 1.1, t: 1, col: '#4a4f58' });
-  gun('m93r', 'M93R', 'pistol', '9mm', 11, .3, 2.2, 20, 90, 62, 2.5, { len: 1.15, t: 2, burst: [3, .055] });
-  gun('deagle', 'DEagle 50', 'pistol', '50ae', 30, .22, 2.5, 7, 118, 90, 2, { len: 1.3, t: 4, col: '#8b8f98' });
-  gun('mac10', 'MAC-10', 'smg', '9mm', 9, .056, 2, 32, 88, 52, 6.5, { au: 1, len: 1.35, t: 1 });
-  gun('mp5', 'MP5', 'smg', '9mm', 11, .082, 2.4, 30, 96, 64, 4.5, { au: 1, len: 1.55, t: 2 });
-  gun('ump9', 'UMP9', 'smg', '45', 14, .1, 2.6, 30, 100, 70, 3.8, { au: 1, len: 1.6, t: 2 });
-  gun('vector', 'Vector', 'smg', '45', 12, .058, 2.7, 35, 98, 62, 5.5, { au: 1, len: 1.45, t: 3 });
-  gun('ak47', 'AK-47', 'ar', '762', 18, .1, 2.5, 30, 108, 100, 4.2, { au: 1, len: 2.2, t: 2, wood: 1 });
-  gun('m416', 'M416', 'ar', '556', 14, .085, 2.35, 30, 112, 105, 3.2, { au: 1, len: 2.15, t: 3 });
-  gun('famas', 'FAMAS', 'ar', '556', 14, .4, 2.4, 25, 112, 104, 2.5, { len: 2, t: 3, burst: [3, .055] });
-  gun('scarh', 'SCAR-H', 'ar', '762', 21, .1, 2.6, 20, 112, 110, 2.8, { au: 1, len: 2.25, t: 3, col: '#6b5a3a' });
-  gun('bar', 'BAR M1918', 'ar', '762', 25, .12, 3, 20, 116, 118, 3, { au: 1, len: 2.4, t: 3, wood: 1 });
-  gun('m39', 'M39 EMR', 'ar', '762', 34, .22, 2.5, 20, 142, 150, 1.2, { len: 2.5, t: 3, wood: 1, mv: .96 });
-  gun('dp28', 'DP-28', 'lmg', '762', 16, .1, 5, 47, 106, 100, 5, { au: 1, len: 2.3, t: 3, wood: 1, mv: .94 });
-  gun('m249', 'M249', 'lmg', '556', 13, .075, 5.5, 100, 110, 100, 5, { au: 1, len: 2.4, t: 4, mv: .92 });
-  gun('mosin', 'Mosin-Nagant', 'sniper', '762', 85, 1.15, 2.8, 5, 190, 230, .4, { len: 2.9, t: 2, wood: 1, bolt: 1, mv: .95 });
-  gun('sv98', 'SV-98', 'sniper', '308', 90, 1.25, 3.2, 5, 205, 240, .3, { len: 2.9, t: 3, bolt: 1, mv: .95 });
-  gun('awms', 'AWM-S', 'sniper', '308', 132, 1.5, 3.4, 5, 230, 270, .2, { len: 3, t: 4, bolt: 1, mv: .93, col: '#1f3a2a' });
-  gun('m870', 'M870', 'shotgun', '12g', 8, .9, .62, 5, 82, 38, 6.5, { pe: 9, sh: 1, len: 2, t: 1, wood: 1 });
-  gun('mp220', 'MP220', 'shotgun', '12g', 9, .35, 2.2, 2, 80, 36, 8, { pe: 9, sh: 0, len: 1.7, t: 1, wood: 1 });
-  gun('spas12', 'SPAS-12', 'shotgun', '12g', 8, .42, .5, 9, 84, 40, 6, { pe: 9, sh: 1, len: 2.1, t: 3 });
-  gun('saiga', 'Saiga-12', 'shotgun', '12g', 7, .25, 2.7, 5, 84, 40, 6.5, { pe: 9, au: 1, len: 2, t: 2 });
-  gun('usas', 'USAS-12', 'shotgun', '12g', 6.5, .2, 3.4, 12, 86, 42, 7, { pe: 9, au: 1, len: 2.1, t: 4, mv: .95 });
+  gun('m9', 'Pocket P1', 'pistol', '9mm', 12, .12, 1.9, 15, 90, 62, 3.5, { len: 1.05, t: 1 });
+  gun('m1911', 'Stubby 45', 'pistol', '45', 15, .13, 2.1, 7, 92, 64, 3, { len: 1.1, t: 1, col: '#4a4f58' });
+  gun('m93r', 'Tri-Tap', 'pistol', '9mm', 11, .3, 2.2, 20, 90, 62, 2.5, { len: 1.15, t: 2, burst: [3, .055] });
+  gun('deagle', 'Big Iron', 'pistol', '50ae', 30, .22, 2.5, 7, 118, 90, 2, { len: 1.3, t: 4, col: '#8b8f98' });
+  gun('mac10', 'Buzzer', 'smg', '9mm', 9, .056, 2, 32, 88, 52, 6.5, { au: 1, len: 1.35, t: 1 });
+  gun('mp5', 'Hornet', 'smg', '9mm', 11, .082, 2.4, 30, 96, 64, 4.5, { au: 1, len: 1.55, t: 2 });
+  gun('ump9', 'Thumper', 'smg', '45', 14, .1, 2.6, 30, 100, 70, 3.8, { au: 1, len: 1.6, t: 2 });
+  gun('vector', 'Zipline', 'smg', '45', 12, .058, 2.7, 35, 98, 62, 5.5, { au: 1, len: 1.45, t: 3 });
+  gun('ak47', 'Timberwolf', 'ar', '762', 18, .1, 2.5, 30, 108, 100, 4.2, { au: 1, len: 2.2, t: 2, wood: 1 });
+  gun('m416', 'Kestrel', 'ar', '556', 14, .085, 2.35, 30, 112, 105, 3.2, { au: 1, len: 2.15, t: 3 });
+  gun('famas', 'Trident', 'ar', '556', 14, .4, 2.4, 25, 112, 104, 2.5, { len: 2, t: 3, burst: [3, .055] });
+  gun('scarh', 'Sandstorm', 'ar', '762', 21, .1, 2.6, 20, 112, 110, 2.8, { au: 1, len: 2.25, t: 3, col: '#6b5a3a' });
+  gun('bar', 'Old Reliable', 'ar', '762', 25, .12, 3, 20, 116, 118, 3, { au: 1, len: 2.4, t: 3, wood: 1 });
+  gun('m39', 'Marksman 7', 'ar', '762', 34, .22, 2.5, 20, 142, 150, 1.2, { len: 2.5, t: 3, wood: 1, mv: .96 });
+  gun('dp28', 'Pan Feeder', 'lmg', '762', 16, .1, 5, 47, 106, 100, 5, { au: 1, len: 2.3, t: 3, wood: 1, mv: .94 });
+  gun('m249', 'Hailstorm', 'lmg', '556', 13, .075, 5.5, 100, 110, 100, 5, { au: 1, len: 2.4, t: 4, mv: .92 });
+  gun('mosin', 'Long Tom', 'sniper', '762', 85, 1.15, 2.8, 5, 190, 230, .4, { len: 2.9, t: 2, wood: 1, bolt: 1, mv: .95 });
+  gun('sv98', 'Whisper', 'sniper', '308', 90, 1.25, 3.2, 5, 205, 240, .3, { len: 2.9, t: 3, bolt: 1, mv: .95 });
+  gun('awms', 'Glacier', 'sniper', '308', 132, 1.5, 3.4, 5, 230, 270, .2, { len: 3, t: 4, bolt: 1, mv: .93, col: '#1f3a2a' });
+  gun('m870', 'Pump Action', 'shotgun', '12g', 8, .9, .62, 5, 82, 38, 6.5, { pe: 9, sh: 1, len: 2, t: 1, wood: 1 });
+  gun('mp220', 'Twin Barrel', 'shotgun', '12g', 9, .35, 2.2, 2, 80, 36, 8, { pe: 9, sh: 0, len: 1.7, t: 1, wood: 1 });
+  gun('spas12', 'Brawler', 'shotgun', '12g', 8, .42, .5, 9, 84, 40, 6, { pe: 9, sh: 1, len: 2.1, t: 3 });
+  gun('saiga', 'Rattler', 'shotgun', '12g', 7, .25, 2.7, 5, 84, 40, 6.5, { pe: 9, au: 1, len: 2, t: 2 });
+  gun('usas', 'Avalanche', 'shotgun', '12g', 6.5, .2, 3.4, 12, 86, 42, 7, { pe: 9, au: 1, len: 2.1, t: 4, mv: .95 });
   const GT = [[], [], [], [], []];
   GUNS.forEach((g, i) => GT[g.t].push(i));
   const CLSCOL = { pistol: '#c0c4cc', smg: '#ffd24a', ar: '#4f8cff', lmg: '#ff8c42', sniper: '#3ec9a7', shotgun: '#ff5a4f' };
@@ -2711,9 +2732,11 @@
       } else V = null;
       render(dt);
     });
+    const bgEnd = bgHost(api, root, () => role === 'host' && !!S, (d, now) => { tNow = now; hostFrame(d, now); });
     SVENG.live = () => ({ S, GS, R, V, role, st, inp, G, Wm, sh, doAct, hist });
+    root.__sv = SVENG.live;
     if (api.net.invite) goOnline(); else showMenu();
-    return { destroy() { SVENG.live = null; AU.close(); if (role) { try { api.net.close(); } catch (e) {} } } };
+    return { destroy() { bgEnd(); SVENG.live = null; AU.close(); if (role) { try { api.net.close(); } catch (e) {} } } };
   }
 
   Ameplay.register({
@@ -2734,7 +2757,7 @@
 
   const DPW = 12000, DPDT = 1 / 30, DPMAXLV = 45, DPMAXPT = 7;
   const DPLV = [0, 0, 4, 13, 28, 50, 78, 113, 157, 211, 275, 350, 437, 538, 655, 787, 938, 1109, 1301, 1516, 1757, 2026, 2325, 2658, 3026, 3433, 3883, 4379, 4925, 5525, 6184, 6907, 7698, 8537, 9400, 10300, 11200, 12100, 13000, 14000, 15000, 16000, 17000, 18000, 19000, 23536];
-  const DPSTAT = ['Health Regen', 'Max Health', 'Body Damage', 'Bullet Speed', 'Bullet Penetration', 'Bullet Damage', 'Reload', 'Movement Speed'];
+  const DPSTAT = ['Repair', 'Armor', 'Ram Power', 'Shot Speed', 'Shot Toughness', 'Shot Power', 'Fire Rate', 'Engine'];
   const DPSCOL = ['#e8b18d', '#f677d9', '#9a6ee8', '#6e8bff', '#f4d94b', '#f2605f', '#78e55e', '#5ee0ea'];
   const DPCOL = { me: ['#00b2e1', '#0083a8'], foe: ['#f14e54', '#b2373b'], t0: ['#00b2e1', '#0083a8'], t1: ['#f14e54', '#b2373b'], gun: ['#999999', '#727272'], bg: '#cdcdcd', out: '#b9b9b9', grid: 'rgba(0,0,0,.11)' };
   const DPSHAPE = [
@@ -2756,43 +2779,43 @@
     return c;
   };
   const dpRing = (n, f, off = 0) => Array.from({ length: n }, (_, i) => f(off + i * TAU / n, i));
-  dpCls('tank', 'Tank', 0, { b: [{}] });
-  dpCls('twin', 'Twin', 1, { b: [{ w: .58, x: -.46, dm: .8 }, { w: .58, x: .46, d: .5, dm: .8 }] });
-  dpCls('sniper', 'Sniper', 1, { b: [{ l: 2.45, w: .78, sp: 1.5, rl: 1.5, dm: 1.15, pn: 1.4 }], fov: 1.25 });
-  dpCls('machine', 'Machine Gun', 1, { b: [{ l: 1.55, w: .98, w2: 1.5, rl: .45, dm: .7, sd: .2, sp: .95, bs: .8, kick: .5 }] });
-  dpCls('flank', 'Flank Guard', 1, { b: [{ w: .8 }, { a: PI, w: .8 }] });
-  dpCls('smasher', 'Smasher', 1, { b: [], body: 1, bd: 1.45, hp: 1.12, spd: 1.04 });
-  dpCls('triple', 'Triple Shot', 2, { b: [{ a: -.58, l: 1.65, w: .6, rl: 1.2, dm: .8 }, { a: .58, l: 1.65, w: .6, rl: 1.2, dm: .8 }, { l: 2, w: .62, rl: 1.2, dm: .8 }] });
-  dpCls('quad', 'Quad Tank', 2, { b: dpRing(4, a => ({ a, w: .78, rl: 1.3, dm: .85 })) });
-  dpCls('twinflank', 'Twin Flank', 2, { b: [{ w: .5, x: -.42, rl: 1.1, dm: .8 }, { w: .5, x: .42, d: .5, rl: 1.1, dm: .8 }, { a: PI, w: .5, x: -.42, rl: 1.1, dm: .8 }, { a: PI, w: .5, x: .42, d: .5, rl: 1.1, dm: .8 }] });
-  dpCls('assassin', 'Assassin', 2, { b: [{ l: 3, w: .8, sp: 1.75, rl: 1.85, dm: 1.4, pn: 1.7 }], fov: 1.45 });
-  dpCls('overseer', 'Overseer', 2, { b: [{ a: PI / 2, l: 1.5, w: .9, w2: 1.3, k: 'd', rl: 1.8, dm: .9, pn: 1.3 }, { a: -PI / 2, l: 1.5, w: .9, w2: 1.3, k: 'd', rl: 1.8, dm: .9, pn: 1.3 }], dmax: 8 });
-  dpCls('hunter', 'Hunter', 2, { b: [{ l: 2.45, w: .7, sp: 1.5, rl: 1.45, dm: .85, pn: 1.2 }, { l: 2.05, w: 1, sp: 1.4, rl: 1.45, dm: 1.15, pn: 1.5, d: .2 }], fov: 1.3 });
-  dpCls('trapper', 'Trapper', 2, { b: [{ l: 1.4, w: .8, w2: 1.05, k: 't', rl: 2.2, dm: 1.1, pn: 1.3, kick: .6 }], fov: 1.08 });
-  dpCls('destroyer', 'Destroyer', 2, { b: [{ l: 1.65, w: 1.4, sp: .75, rl: 3.2, dm: 3.2, pn: 3, kick: 5 }] });
-  dpCls('gunner', 'Gunner', 2, { b: [{ l: 1.75, w: .38, x: -.78, rl: 1.1, dm: .5, sd: .05, d: 0 }, { l: 1.45, w: .38, x: -.26, rl: 1.1, dm: .5, sd: .05, d: .5 }, { l: 1.45, w: .38, x: .26, rl: 1.1, dm: .5, sd: .05, d: .25 }, { l: 1.75, w: .38, x: .78, rl: 1.1, dm: .5, sd: .05, d: .75 }] });
-  dpCls('triangle', 'Tri-Angle', 2, { b: [{ w: .84, dm: .9 }, { a: 2.62, l: 1.55, w: .66, dm: .6, kick: 2.6 }, { a: -2.62, l: 1.55, w: .66, dm: .6, kick: 2.6 }], spd: 1.08 });
-  dpCls('auto3', 'Auto 3', 2, { au: dpRing(3, (a) => ({ x: Math.cos(a) * .55, y: Math.sin(a) * .55 })), fov: 1.15 });
-  dpCls('spike', 'Spike', 2, { b: [], body: 2, bd: 1.9, hp: 1.05, spd: 1.04 });
-  dpCls('autosmasher', 'Auto Smasher', 2, { b: [], body: 1, bd: 1.45, hp: 1.12, au: [{ x: 0, y: 0, l: 1.2, w: .7, rl: 1.2, dm: .8 }] });
-  dpCls('triplet', 'Triplet', 3, { b: [{ l: 2.1, w: .62, rl: 1.1, dm: .75 }, { l: 1.8, w: .62, x: -.55, d: .33, rl: 1.1, dm: .75 }, { l: 1.8, w: .62, x: .55, d: .66, rl: 1.1, dm: .75 }] });
-  dpCls('penta', 'Penta Shot', 3, { b: [{ a: -.9, l: 1.5, w: .58, rl: 1.4, dm: .75 }, { a: .9, l: 1.5, w: .58, rl: 1.4, dm: .75 }, { a: -.45, l: 1.75, w: .58, rl: 1.4, dm: .75 }, { a: .45, l: 1.75, w: .58, rl: 1.4, dm: .75 }, { l: 2.05, w: .6, rl: 1.4, dm: .75 }] });
-  dpCls('spread', 'Spread Shot', 3, { b: [{ a: -.72, l: 1.35, w: .42, rl: 1.5, dm: .5, d: .2, sd: .03 }, { a: .72, l: 1.35, w: .42, rl: 1.5, dm: .5, d: .2, sd: .03 }, { a: -.36, l: 1.55, w: .46, rl: 1.5, dm: .55, d: .1, sd: .03 }, { a: .36, l: 1.55, w: .46, rl: 1.5, dm: .55, d: .1, sd: .03 }, { l: 2, w: .85, rl: 1.5, dm: 1 }] });
-  dpCls('octo', 'Octo Tank', 3, { b: dpRing(8, (a, i) => ({ a, w: .66, l: 1.65, rl: 1.5, dm: .8, d: i % 2 ? .5 : 0 })) });
-  dpCls('tritwin', 'Triple Twin', 3, { b: [].concat(...dpRing(3, a => [{ a, w: .5, x: -.42, rl: 1.15, dm: .75 }, { a, w: .5, x: .42, d: .5, rl: 1.15, dm: .75 }])) });
-  dpCls('ranger', 'Ranger', 3, { b: [{ l: 3.2, w: .8, sp: 1.95, rl: 2, dm: 1.6, pn: 2 }], fov: 1.7 });
-  dpCls('overlord', 'Overlord', 3, { b: dpRing(4, a => ({ a, l: 1.45, w: .85, w2: 1.25, k: 'd', rl: 1.9, dm: .9, pn: 1.3 })), dmax: 8 });
-  dpCls('predator', 'Predator', 3, { b: [{ l: 2.3, w: .65, sp: 1.55, rl: 1.6, dm: .8, pn: 1.2 }, { l: 2.05, w: .9, sp: 1.5, rl: 1.6, dm: .95, pn: 1.4, d: .25 }, { l: 1.8, w: 1.15, sp: 1.45, rl: 1.6, dm: 1.15, pn: 1.6, d: .5 }], fov: 1.4 });
-  dpCls('stream', 'Streamliner', 3, { b: [{ l: 2.3, w: .42, rl: .55, dm: .4, sp: 1.4, d: 0 }, { l: 2.1, w: .42, x: -.3, rl: .55, dm: .4, sp: 1.4, d: .2 }, { l: 2.1, w: .42, x: .3, rl: .55, dm: .4, sp: 1.4, d: .4 }, { l: 1.9, w: .42, x: -.6, rl: .55, dm: .4, sp: 1.4, d: .6 }, { l: 1.9, w: .42, x: .6, rl: .55, dm: .4, sp: 1.4, d: .8 }], fov: 1.25 });
-  dpCls('megatrap', 'Mega Trapper', 3, { b: [{ l: 1.4, w: 1.2, w2: 1.55, k: 't', rl: 2.5, dm: 1.6, pn: 1.8, bs: 1.45, kick: 1 }], fov: 1.1 });
-  dpCls('tritrap', 'Tri-Trapper', 3, { b: dpRing(3, a => ({ a, l: 1.3, w: .8, w2: 1.05, k: 't', rl: 2.2, dm: 1.1, pn: 1.3, kick: .6 })), fov: 1.08 });
-  dpCls('overtrap', 'Overtrapper', 3, { b: [{ l: 1.4, w: .8, w2: 1.05, k: 't', rl: 2.2, dm: 1.1, pn: 1.3, kick: .6 }, { a: 2.35, l: 1.4, w: .8, w2: 1.15, k: 'd', rl: 2, dm: .85, pn: 1.2 }, { a: -2.35, l: 1.4, w: .8, w2: 1.15, k: 'd', rl: 2, dm: .85, pn: 1.2 }], dmax: 6 });
-  dpCls('annihilator', 'Annihilator', 3, { b: [{ l: 1.7, w: 1.9, sp: .72, rl: 4.4, dm: 4.6, pn: 4.5, kick: 8 }] });
-  dpCls('hybrid', 'Hybrid', 3, { b: [{ l: 1.65, w: 1.4, sp: .75, rl: 3.4, dm: 3.1, pn: 3, kick: 5 }, { a: PI, l: 1.3, w: .95, w2: 1.3, k: 'd', rl: 2.4, dm: .9, pn: 1.3 }], dmax: 3 });
-  dpCls('autogun', 'Auto Gunner', 3, { b: [{ l: 1.75, w: .38, x: -.78, rl: 1.2, dm: .5, d: 0 }, { l: 1.45, w: .38, x: -.26, rl: 1.2, dm: .5, d: .5 }, { l: 1.45, w: .38, x: .26, rl: 1.2, dm: .5, d: .25 }, { l: 1.75, w: .38, x: .78, rl: 1.2, dm: .5, d: .75 }], au: [{ x: 0, y: 0, l: 1.1, w: .6, rl: 1.4, dm: .6 }] });
-  dpCls('booster', 'Booster', 3, { b: [{ w: .84, dm: .9 }, { a: 2.62, l: 1.55, w: .62, dm: .55, kick: 3.4 }, { a: -2.62, l: 1.55, w: .62, dm: .55, kick: 3.4 }, { a: 2.95, l: 1.75, w: .62, dm: .55, kick: 3.4 }, { a: -2.95, l: 1.75, w: .62, dm: .55, kick: 3.4 }], spd: 1.18 });
-  dpCls('fighter', 'Fighter', 3, { b: [{ w: .84, dm: .9 }, { a: PI / 2, l: 1.5, w: .66, dm: .65, kick: 1 }, { a: -PI / 2, l: 1.5, w: .66, dm: .65, kick: 1 }, { a: 2.62, l: 1.55, w: .62, dm: .55, kick: 2.2 }, { a: -2.62, l: 1.55, w: .62, dm: .55, kick: 2.2 }], spd: 1.1 });
-  dpCls('auto5', 'Auto 5', 3, { au: dpRing(5, a => ({ x: Math.cos(a) * .6, y: Math.sin(a) * .6, rl: 1.35 })), fov: 1.2 });
+  dpCls('tank', 'Basic', 0, { b: [{}] });
+  dpCls('twin', 'Double', 1, { b: [{ w: .58, x: -.46, dm: .8 }, { w: .58, x: .46, d: .5, dm: .8 }] });
+  dpCls('sniper', 'Longshot', 1, { b: [{ l: 2.45, w: .78, sp: 1.5, rl: 1.5, dm: 1.15, pn: 1.4 }], fov: 1.25 });
+  dpCls('machine', 'Sprayer', 1, { b: [{ l: 1.55, w: .98, w2: 1.5, rl: .45, dm: .7, sd: .2, sp: .95, bs: .8, kick: .5 }] });
+  dpCls('flank', 'Backguard', 1, { b: [{ w: .8 }, { a: PI, w: .8 }] });
+  dpCls('smasher', 'Rammer', 1, { b: [], body: 1, bd: 1.45, hp: 1.12, spd: 1.04 });
+  dpCls('triple', 'Three Prong', 2, { b: [{ a: -.58, l: 1.65, w: .6, rl: 1.2, dm: .8 }, { a: .58, l: 1.65, w: .6, rl: 1.2, dm: .8 }, { l: 2, w: .62, rl: 1.2, dm: .8 }] });
+  dpCls('quad', 'Crossfire', 2, { b: dpRing(4, a => ({ a, w: .78, rl: 1.3, dm: .85 })) });
+  dpCls('twinflank', 'Double Back', 2, { b: [{ w: .5, x: -.42, rl: 1.1, dm: .8 }, { w: .5, x: .42, d: .5, rl: 1.1, dm: .8 }, { a: PI, w: .5, x: -.42, rl: 1.1, dm: .8 }, { a: PI, w: .5, x: .42, d: .5, rl: 1.1, dm: .8 }] });
+  dpCls('assassin', 'Stalker', 2, { b: [{ l: 3, w: .8, sp: 1.75, rl: 1.85, dm: 1.4, pn: 1.7 }], fov: 1.45 });
+  dpCls('overseer', 'Shepherd', 2, { b: [{ a: PI / 2, l: 1.5, w: .9, w2: 1.3, k: 'd', rl: 1.8, dm: .9, pn: 1.3 }, { a: -PI / 2, l: 1.5, w: .9, w2: 1.3, k: 'd', rl: 1.8, dm: .9, pn: 1.3 }], dmax: 8 });
+  dpCls('hunter', 'Tracker', 2, { b: [{ l: 2.45, w: .7, sp: 1.5, rl: 1.45, dm: .85, pn: 1.2 }, { l: 2.05, w: 1, sp: 1.4, rl: 1.45, dm: 1.15, pn: 1.5, d: .2 }], fov: 1.3 });
+  dpCls('trapper', 'Minelayer', 2, { b: [{ l: 1.4, w: .8, w2: 1.05, k: 't', rl: 2.2, dm: 1.1, pn: 1.3, kick: .6 }], fov: 1.08 });
+  dpCls('destroyer', 'Cannon', 2, { b: [{ l: 1.65, w: 1.4, sp: .75, rl: 3.2, dm: 3.2, pn: 3, kick: 5 }] });
+  dpCls('gunner', 'Needler', 2, { b: [{ l: 1.75, w: .38, x: -.78, rl: 1.1, dm: .5, sd: .05, d: 0 }, { l: 1.45, w: .38, x: -.26, rl: 1.1, dm: .5, sd: .05, d: .5 }, { l: 1.45, w: .38, x: .26, rl: 1.1, dm: .5, sd: .05, d: .25 }, { l: 1.75, w: .38, x: .78, rl: 1.1, dm: .5, sd: .05, d: .75 }] });
+  dpCls('triangle', 'Delta', 2, { b: [{ w: .84, dm: .9 }, { a: 2.62, l: 1.55, w: .66, dm: .6, kick: 2.6 }, { a: -2.62, l: 1.55, w: .66, dm: .6, kick: 2.6 }], spd: 1.08 });
+  dpCls('auto3', 'Turret 3', 2, { au: dpRing(3, (a) => ({ x: Math.cos(a) * .55, y: Math.sin(a) * .55 })), fov: 1.15 });
+  dpCls('spike', 'Burr', 2, { b: [], body: 2, bd: 1.9, hp: 1.05, spd: 1.04 });
+  dpCls('autosmasher', 'Turret Rammer', 2, { b: [], body: 1, bd: 1.45, hp: 1.12, au: [{ x: 0, y: 0, l: 1.2, w: .7, rl: 1.2, dm: .8 }] });
+  dpCls('triplet', 'Trio', 3, { b: [{ l: 2.1, w: .62, rl: 1.1, dm: .75 }, { l: 1.8, w: .62, x: -.55, d: .33, rl: 1.1, dm: .75 }, { l: 1.8, w: .62, x: .55, d: .66, rl: 1.1, dm: .75 }] });
+  dpCls('penta', 'Fan Five', 3, { b: [{ a: -.9, l: 1.5, w: .58, rl: 1.4, dm: .75 }, { a: .9, l: 1.5, w: .58, rl: 1.4, dm: .75 }, { a: -.45, l: 1.75, w: .58, rl: 1.4, dm: .75 }, { a: .45, l: 1.75, w: .58, rl: 1.4, dm: .75 }, { l: 2.05, w: .6, rl: 1.4, dm: .75 }] });
+  dpCls('spread', 'Wide Fan', 3, { b: [{ a: -.72, l: 1.35, w: .42, rl: 1.5, dm: .5, d: .2, sd: .03 }, { a: .72, l: 1.35, w: .42, rl: 1.5, dm: .5, d: .2, sd: .03 }, { a: -.36, l: 1.55, w: .46, rl: 1.5, dm: .55, d: .1, sd: .03 }, { a: .36, l: 1.55, w: .46, rl: 1.5, dm: .55, d: .1, sd: .03 }, { l: 2, w: .85, rl: 1.5, dm: 1 }] });
+  dpCls('octo', 'Compass', 3, { b: dpRing(8, (a, i) => ({ a, w: .66, l: 1.65, rl: 1.5, dm: .8, d: i % 2 ? .5 : 0 })) });
+  dpCls('tritwin', 'Six Pack', 3, { b: [].concat(...dpRing(3, a => [{ a, w: .5, x: -.42, rl: 1.15, dm: .75 }, { a, w: .5, x: .42, d: .5, rl: 1.15, dm: .75 }])) });
+  dpCls('ranger', 'Farsight', 3, { b: [{ l: 3.2, w: .8, sp: 1.95, rl: 2, dm: 1.6, pn: 2 }], fov: 1.7 });
+  dpCls('overlord', 'Flockmaster', 3, { b: dpRing(4, a => ({ a, l: 1.45, w: .85, w2: 1.25, k: 'd', rl: 1.9, dm: .9, pn: 1.3 })), dmax: 8 });
+  dpCls('predator', 'Apex', 3, { b: [{ l: 2.3, w: .65, sp: 1.55, rl: 1.6, dm: .8, pn: 1.2 }, { l: 2.05, w: .9, sp: 1.5, rl: 1.6, dm: .95, pn: 1.4, d: .25 }, { l: 1.8, w: 1.15, sp: 1.45, rl: 1.6, dm: 1.15, pn: 1.6, d: .5 }], fov: 1.4 });
+  dpCls('stream', 'Jetstream', 3, { b: [{ l: 2.3, w: .42, rl: .55, dm: .4, sp: 1.4, d: 0 }, { l: 2.1, w: .42, x: -.3, rl: .55, dm: .4, sp: 1.4, d: .2 }, { l: 2.1, w: .42, x: .3, rl: .55, dm: .4, sp: 1.4, d: .4 }, { l: 1.9, w: .42, x: -.6, rl: .55, dm: .4, sp: 1.4, d: .6 }, { l: 1.9, w: .42, x: .6, rl: .55, dm: .4, sp: 1.4, d: .8 }], fov: 1.25 });
+  dpCls('megatrap', 'Big Minelayer', 3, { b: [{ l: 1.4, w: 1.2, w2: 1.55, k: 't', rl: 2.5, dm: 1.6, pn: 1.8, bs: 1.45, kick: 1 }], fov: 1.1 });
+  dpCls('tritrap', 'Tri-Minelayer', 3, { b: dpRing(3, a => ({ a, l: 1.3, w: .8, w2: 1.05, k: 't', rl: 2.2, dm: 1.1, pn: 1.3, kick: .6 })), fov: 1.08 });
+  dpCls('overtrap', 'Mine Shepherd', 3, { b: [{ l: 1.4, w: .8, w2: 1.05, k: 't', rl: 2.2, dm: 1.1, pn: 1.3, kick: .6 }, { a: 2.35, l: 1.4, w: .8, w2: 1.15, k: 'd', rl: 2, dm: .85, pn: 1.2 }, { a: -2.35, l: 1.4, w: .8, w2: 1.15, k: 'd', rl: 2, dm: .85, pn: 1.2 }], dmax: 6 });
+  dpCls('annihilator', 'Wrecker', 3, { b: [{ l: 1.7, w: 1.9, sp: .72, rl: 4.4, dm: 4.6, pn: 4.5, kick: 8 }] });
+  dpCls('hybrid', 'Mixed Cannon', 3, { b: [{ l: 1.65, w: 1.4, sp: .75, rl: 3.4, dm: 3.1, pn: 3, kick: 5 }, { a: PI, l: 1.3, w: .95, w2: 1.3, k: 'd', rl: 2.4, dm: .9, pn: 1.3 }], dmax: 3 });
+  dpCls('autogun', 'Turret Needler', 3, { b: [{ l: 1.75, w: .38, x: -.78, rl: 1.2, dm: .5, d: 0 }, { l: 1.45, w: .38, x: -.26, rl: 1.2, dm: .5, d: .5 }, { l: 1.45, w: .38, x: .26, rl: 1.2, dm: .5, d: .25 }, { l: 1.75, w: .38, x: .78, rl: 1.2, dm: .5, d: .75 }], au: [{ x: 0, y: 0, l: 1.1, w: .6, rl: 1.4, dm: .6 }] });
+  dpCls('booster', 'Afterburner', 3, { b: [{ w: .84, dm: .9 }, { a: 2.62, l: 1.55, w: .62, dm: .55, kick: 3.4 }, { a: -2.62, l: 1.55, w: .62, dm: .55, kick: 3.4 }, { a: 2.95, l: 1.75, w: .62, dm: .55, kick: 3.4 }, { a: -2.95, l: 1.75, w: .62, dm: .55, kick: 3.4 }], spd: 1.18 });
+  dpCls('fighter', 'Dogfighter', 3, { b: [{ w: .84, dm: .9 }, { a: PI / 2, l: 1.5, w: .66, dm: .65, kick: 1 }, { a: -PI / 2, l: 1.5, w: .66, dm: .65, kick: 1 }, { a: 2.62, l: 1.55, w: .62, dm: .55, kick: 2.2 }, { a: -2.62, l: 1.55, w: .62, dm: .55, kick: 2.2 }], spd: 1.1 });
+  dpCls('auto5', 'Turret 5', 3, { au: dpRing(5, a => ({ x: Math.cos(a) * .6, y: Math.sin(a) * .6, rl: 1.35 })), fov: 1.2 });
   const DPTREE = { tank: ['twin', 'sniper', 'machine', 'flank', 'smasher'], twin: ['triple', 'quad', 'twinflank'], sniper: ['assassin', 'overseer', 'hunter', 'trapper'], machine: ['destroyer', 'gunner'], flank: ['triangle', 'quad', 'twinflank', 'auto3'], smasher: ['spike', 'autosmasher'], triple: ['triplet', 'penta', 'spread'], quad: ['octo'], twinflank: ['tritwin'], assassin: ['ranger'], overseer: ['overlord', 'overtrap'], hunter: ['predator', 'stream'], trapper: ['megatrap', 'tritrap', 'overtrap'], destroyer: ['hybrid', 'annihilator'], gunner: ['autogun', 'stream'], triangle: ['booster', 'fighter'], auto3: ['auto5', 'autogun'] };
   const dpUpOpts = (cid, lv) => {
     const c = DPCLS[DPCI[cid]];
@@ -2885,7 +2908,7 @@
     }
     function killShape(s, killer) {
       s.hp = 0;
-      if (killer && killer.alive) gain(killer, DPSHAPE[s.k].xp * (killer.bot ? .45 + .15 * S.skill : 1));
+      if (killer && killer.alive) gain(killer, DPSHAPE[s.k].xp * (killer.bot ? .45 + .15 * (killer.bsk == null ? S.skill : killer.bsk) : 1));
       ev({ k: 'sd', x: Math.round(s.x), y: Math.round(s.y), sk: s.k, a: Math.round(s.a * 100) });
     }
     function mkShape(k, x, y) {
@@ -3250,16 +3273,16 @@
   function dpBotTick(S, p, dt, rnd) {
     const B = p.br;
     if (!B) { dpBotInit(S, p, rnd); return; }
-    const I = p.in, sk = S.skill, C = DPCLS[p.ci];
+    const I = p.in, sk = p.bsk == null ? S.skill : p.bsk, C = DPCLS[p.ci];
     B.tt -= dt;
-    if (B.tt <= 0) { B.tt = .14 + rnd() * .1 - sk * .03; dpBotThink(S, p, B, rnd, C); }
+    if (B.tt <= 0) { B.tt = sk >= 3 ? .15 + rnd() * .1 : .14 + rnd() * .1 - sk * .03; dpBotThink(S, p, B, rnd, C); }
     const tg = B.tg;
     const ok = tg && (tg.alive === undefined ? tg.hp > 0 : tg.alive);
     const bsp = dpBulSpd(p), rng = bsp * 1.5 * (C.b.length && C.b[0].sp ? Math.max(C.b[0].sp, .8) : 1);
     let mx = 0, my = 0, f = 0;
     if (ok) {
       const dx = tg.x - p.x, dy = tg.y - p.y, d = Math.hypot(dx, dy) || 1;
-      const tl = Math.min(1.3, d / (bsp * (C.dmax ? .55 : 1))) * (.55 + .2 * sk);
+      const tl = Math.min(1.3, d / (bsp * (C.dmax ? .55 : 1))) * (sk >= 3 ? 1 : .55 + .2 * sk);
       let ax = tg.x + (tg.vx || 0) * tl, ay = tg.y + (tg.vy || 0) * tl;
       B.aimT -= dt;
       if (B.aimT <= 0) { B.aimT = .3 + rnd() * .4; B.aimE = (rnd() - .5) * (.14 - sk * .04) * (1 + d / 1500); }
@@ -3297,7 +3320,7 @@
     I.mx = mx; I.my = my; I.f = f; I.f2 = 0;
   }
   function dpBotThink(S, p, B, rnd, C) {
-    const sk = S.skill;
+    const sk = p.bsk == null ? S.skill : p.bsk;
     while (p.pts > 0) {
       let done = false;
       for (const i of B.build) if (p.st[i] < DPMAXPT) { S.setStat(p, i); done = true; break; }
@@ -3735,7 +3758,7 @@
       return `<div class="io-logo">diep<i>.io</i></div><div class="io-sub">Shoot shapes, level up to <b>45</b>, evolve your tank and become the biggest on the scoreboard.</div>
 <input class="io-nick" maxlength="16" placeholder="Nickname" value="${esc(saved.nick || '')}" data-nick>
 <div class="io-row"><span class="io-lab">Mode</span>${segHtml('mode', [['ffa', 'Free for all'], ['team', '2 Teams']], saved.mode)}</div>
-<div class="io-row"><span class="io-lab">Tanks</span>${segHtml('n', [[10, '10'], [20, '20'], [30, '30']], saved.n)}<span class="io-lab">Bots</span>${segHtml('skill', [[0, 'Easy'], [1, 'Normal'], [2, 'Hard']], saved.skill)}</div>
+<div class="io-row"><span class="io-lab">Tanks</span>${segHtml('n', [[10, '10'], [20, '20'], [30, '30']], saved.n)}<span class="io-lab">Bots</span>${segHtml('skill', [[0, 'Easy'], [1, 'Normal'], [2, 'Hard'], [3, 'Hardest']], saved.skill)}</div>
 <div class="io-row"><span class="io-lab">Match</span>${segHtml('tl', [[0, 'Endless'], [300, '5 min'], [600, '10 min']], saved.tl)}</div>
 <div class="io-row">${ioBtn('play', 'Play vs bots', 'big go')}${ioBtn('online', 'Play online', 'big')}</div><div class="io-hint">${hint}</div>`;
     }
@@ -4089,7 +4112,7 @@
     function startPanel() {
       sh.show(`<div class="io-kick">Online</div><div class="io-title">Start the match</div><div class="io-sub">${G.players.length} player${G.players.length > 1 ? 's' : ''} in the party. Bots fill the rest.</div>
 <div class="io-row"><span class="io-lab">Mode</span>${segHtml('mode', [['ffa', 'Free for all'], ['team', '2 Teams']], saved.mode)}</div>
-<div class="io-row"><span class="io-lab">Tanks</span>${segHtml('n', [[10, '10'], [20, '20'], [30, '30']], saved.n)}<span class="io-lab">Bots</span>${segHtml('skill', [[0, 'Easy'], [1, 'Normal'], [2, 'Hard']], saved.skill)}</div>
+<div class="io-row"><span class="io-lab">Tanks</span>${segHtml('n', [[10, '10'], [20, '20'], [30, '30']], saved.n)}<span class="io-lab">Bots</span>${segHtml('skill', [[0, 'Easy'], [1, 'Normal'], [2, 'Hard'], [3, 'Hardest']], saved.skill)}</div>
 <div class="io-row"><span class="io-lab">Match</span>${segHtml('otl', [[0, 'Endless'], [300, '5 min'], [600, '10 min'], [900, '15 min']], saved.otl)}</div>
 <div class="io-row">${ioBtn('go', 'Start', 'big go')}${ioBtn('leave', 'Leave', 'alt')}</div>`, a => { if (a === 'go') hostStart(null); else if (a === 'leave') leaveOnline(); }, 'io-ui io-panel');
       bindSeg(sh.ui, (k, v) => { saved[k] = k === 'mode' ? v : +v; api.save(saved); });
@@ -4341,8 +4364,10 @@
       render();
     });
     DPENG.live = () => ({ S, GS, R, V, role, st, inp, G, sh, doStat, doCls, hist, saved, ico: dpIcon, cls: DPCLS, ci: DPCI });
+    root.__dp = DPENG.live;
     if (api.net.invite) goOnline(); else showMenu();
-    return { destroy() { DPENG.live = null; AU.close(); if (role) { try { api.net.close(); } catch (e) {} } } };
+    const bgEnd = bgHost(api, root, () => role === 'host' && !!S, (d, now) => { tNow = now; hostFrame(d, now); });
+    return { destroy() { bgEnd(); DPENG.live = null; AU.close(); if (role) { try { api.net.close(); } catch (e) {} } } };
   }
 
   Ameplay.register({
