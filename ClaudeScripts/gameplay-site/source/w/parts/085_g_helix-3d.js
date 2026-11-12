@@ -153,11 +153,11 @@
   const HAND = '<svg class="hand" viewBox="0 0 64 64"><path d="M26 30V12a4 4 0 0 1 8 0v14l14 3c4 1 6 4 5 8l-3 13c-1 4-4 6-8 6H30c-3 0-5-1-7-4l-9-12c-2-3 2-7 6-4l6 5z" fill="#fff" stroke="rgba(31,29,43,.3)" stroke-width="2"/></svg>';
 
   function fitPR(api, v, hook) {
-    const r = v.renderer, c = v.canvas, Q = [1, 0.75, 0.55];
+    const r = v.renderer, c = v.canvas, Q = [1, 0.75, 0.55], sz = new v.THREE.Vector2();
     let lvl = 0, cw = 0, avg = 0.016, t = -2, wait = 8, chk = 0, lf = -1, sf = 0, up = 0;
     const apply = () => {
       const d = Math.min(2, window.devicePixelRatio || 1), B = Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * d * d * 1.05);
-      const pr = Math.max(0.5, Math.min(4, d * cw / v.w, Math.sqrt(B / (v.w * v.h)))) * Q[lvl];
+      const lw = r.getSize(sz).x || v.w, pr = Math.max(0.5, Math.min(4, d * cw / lw, Math.sqrt(B / (lw * (sz.y || v.h))))) * Q[lvl];
       if (Math.abs(r.getPixelRatio() - pr) > 0.01) r.setPixelRatio(pr);
       r.shadowMap.autoUpdate = lvl < 2;
     };

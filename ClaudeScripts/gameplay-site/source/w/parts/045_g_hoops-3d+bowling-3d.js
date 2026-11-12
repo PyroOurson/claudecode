@@ -189,11 +189,11 @@
   const COARSE = matchMedia('(pointer: coarse)').matches;
   const glSize = (root, pw, ph) => root.clientWidth && root.clientWidth < 560 ? [pw, ph] : [960, 600];
   function fitPR(api, v, hook) {
-    const r = v.renderer, c = v.canvas, Q = [1, 0.75, 0.55];
+    const r = v.renderer, c = v.canvas, Q = [1, 0.75, 0.55], sz = new v.THREE.Vector2();
     let lvl = 0, cw = 0, avg = 0.016, t = -2, wait = 8, chk = 0, lf = -1, sf = 0, up = 0;
     const apply = () => {
       const d = Math.min(2, window.devicePixelRatio || 1), B = Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * d * d * 1.05);
-      const pr = Math.max(0.5, Math.min(4, d * cw / v.w, Math.sqrt(B / (v.w * v.h)))) * Q[lvl];
+      const lw = r.getSize(sz).x || v.w, pr = Math.max(0.5, Math.min(4, d * cw / lw, Math.sqrt(B / (lw * (sz.y || v.h))))) * Q[lvl];
       if (Math.abs(r.getPixelRatio() - pr) > 0.01) r.setPixelRatio(pr);
       r.shadowMap.autoUpdate = lvl < 2;
     };
