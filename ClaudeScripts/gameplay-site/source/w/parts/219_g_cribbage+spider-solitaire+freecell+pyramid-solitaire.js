@@ -1766,14 +1766,27 @@
     const have = new Set(hand), unseen = [];
     for (let f = 0; f < 52; f++) if (!have.has(f)) unseen.push(f);
     let best = null;
-    const res = [];
+    const res = [], smp = [];
+    if (level > 2) for (let t = 0; t < 420; t++) {
+      const a = unseen[Math.floor(Math.random() * 46)];
+      let b, s2;
+      do b = unseen[Math.floor(Math.random() * 46)]; while (b === a);
+      do s2 = unseen[Math.floor(Math.random() * 46)]; while (s2 === a || s2 === b);
+      const ra = cbR(a), rb = cbR(b), sum = cbV(a) + cbV(b);
+      const w = dealer ? (ra === rb || sum === 15 ? .45 : ra === 5 || rb === 5 ? .5 : Math.abs(ra - rb) === 1 ? .7 : 1) : (ra === rb || sum === 15 ? 1.5 : ra === 5 || rb === 5 ? 1.4 : 1);
+      smp.push([a, b, s2, w]);
+    }
     for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) {
       const keep = hand.filter((_, x) => x !== i && x !== j), d1 = hand[i], d2 = hand[j];
       let h = 0;
       for (const st of unseen) h += cbCount(keep, st, false).total;
       h /= unseen.length;
       let c = 0;
-      if (level === 2) {
+      if (level > 2) {
+        let ws = 0;
+        for (const [a, b, s2, w] of smp) { c += w * cbCount([d1, d2, a, b], s2, true).total; ws += w; }
+        c /= ws;
+      } else if (level === 2) {
         const n = 90;
         for (let t = 0; t < n; t++) {
           const a = unseen[Math.floor(Math.random() * 46)];
@@ -1808,7 +1821,7 @@
         if (nc + Math.min(q, 10) <= 31) { risk += pr * cbPegTotal(ns.concat(q), nc + Math.min(q, 10)); none *= 1 - pr; }
       }
       const goBonus = nc >= 20 && nc < 31 ? none * .7 : 0;
-      return { i, pts, score: level === 2 ? pts - risk + goBonus - v * .02 : pts + (Math.random() - .5) * 1.2 };
+      return { i, pts, score: level >= 2 ? pts - risk + goBonus - v * .02 : pts + (Math.random() - .5) * 1.2 };
     });
     if (level === 0) {
       if (Math.random() < .6) return legal[Math.floor(Math.random() * legal.length)];
@@ -1827,8 +1840,8 @@
 <p><b>Counting.</b> Auto counts for you. Manual means you must enter your own total, and any shortfall is lost. Muggins means the opponent may claim whatever you missed.</p>
 <p><b>Keys.</b> <kbd>&larr;</kbd><kbd>&rarr;</kbd> pick a card, <kbd>Enter</kbd> or <kbd>&uarr;</kbd> play or select it, <kbd>1</kbd>-<kbd>6</kbd> pick directly, digits and <kbd>+</kbd><kbd>-</kbd> set your count, <kbd>Enter</kbd> confirms.</p></div>`;
 
-  const CB_NAMES = ['Rookie', 'Regular', 'Sharp'];
-  const CB_LVL = ['Easy', 'Medium', 'Hard'];
+  const CB_NAMES = ['Rookie', 'Regular', 'Sharp', 'Master'];
+  const CB_LVL = ['Easy', 'Medium', 'Hard', 'Hardest'];
 
   Ameplay.register({
     id: 'cribbage',
@@ -1872,7 +1885,7 @@
       root.classList.toggle('cb-n', narrow);
       const snd = mkSnd(api);
       const saved = api.load() || {};
-      const opt = { mode: saved.mode === 'online' ? 'online' : 'cpu', lvl: [0, 1, 2].includes(saved.lvl) ? saved.lvl : 1, counting: ['auto', 'manual', 'muggins'].includes(saved.counting) ? saved.counting : 'auto' };
+      const opt = { mode: saved.mode === 'online' ? 'online' : 'cpu', lvl: [0, 1, 2, 3].includes(saved.lvl) ? saved.lvl : 1, counting: ['auto', 'manual', 'muggins'].includes(saved.counting) ? saved.counting : 'auto' };
       const stats = Object.assign({ w: 0, l: 0, sk: 0 }, saved.stats);
       const saveAll = () => api.save({ mode: opt.mode, lvl: opt.lvl, counting: opt.counting, stats });
 
@@ -2432,7 +2445,7 @@
         refreshHead(); refreshUI(true);
         showPane(`<div class="cb-box"><p class="cb-k">Card game</p><h3>Cribbage</h3>
 <div class="cb-row"><span>Play</span>${seg('mode', ['cpu', 'online'], ['vs CPU', 'Online'])}</div>
-${opt.mode === 'cpu' ? `<div class="cb-row"><span>Opponent</span>${seg('lvl', [0, 1, 2], CB_LVL)}</div>` : ''}
+${opt.mode === 'cpu' ? `<div class="cb-row"><span>Opponent</span>${seg('lvl', [0, 1, 2, 3], CB_LVL)}</div>` : ''}
 <div class="cb-row"><span>Counting</span>${seg('counting', ['auto', 'manual', 'muggins'], ['Auto', 'Manual', 'Muggins'])}</div>
 <p class="cb-st">${opt.counting === 'auto' ? 'Hands are counted for you.' : opt.counting === 'manual' ? 'You count your own hands. Missed points are lost.' : 'Count your own hands. Missed points can be stolen by the opponent.'}</p>
 <div class="cb-btns"><button type="button" class="g-btn" data-a="play">${opt.mode === 'online' ? 'Create or join a party' : 'Deal'}</button><button type="button" class="g-btn ghost" data-a="rules">How to play</button></div>
@@ -2557,7 +2570,7 @@ ${opt.mode === 'cpu' ? `<div class="cb-row"><span>Opponent</span>${seg('lvl', [0
         }
         if (need === 'mug') {
           const tot = cbCount(z.show.map(k => v.f[k]), v.f[z.st], v.cs.what === 'crib').total;
-          return tot > v.cs.claim && Math.random() < [.35, .75, 1][lvl] ? { t: 'mug' } : { t: 'pass' };
+          return tot > v.cs.claim && Math.random() < [.35, .75, 1, 1][lvl] ? { t: 'mug' } : { t: 'pass' };
         }
         return { t: 'next' };
       }

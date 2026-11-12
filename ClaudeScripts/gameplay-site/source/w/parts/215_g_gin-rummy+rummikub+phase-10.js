@@ -735,7 +735,17 @@ ${!online ? '<button class="gx-big y" data-a="again">New game</button>' : ''}
     }
     return d;
   }
+  function ginFeeds(s, p, id) {
+    const o = 1 - p, seen = ginUnseen(s, p), held = new Set(s.picks[o].filter(x => !seen.has(x)));
+    const u = Math.min(.6, s.hands[o].length / Math.max(8, 52 - seen.size - held.size));
+    const w = x => x === id ? 0 : held.has(x) ? 1 : seen.has(x) ? 0 : u;
+    const r = gRk(id), su = gSu(id), at = k => k < 0 || k > 12 ? 0 : w(su * 13 + k);
+    const q = [0, 1, 2, 3].filter(x => x !== su).map(x => w(x * 13 + r));
+    return q[0] * q[1] + q[0] * q[2] + q[1] * q[2] + at(r - 2) * at(r - 1) + at(r - 1) * at(r + 1) + at(r + 1) * at(r + 2);
+  }
   function ginBestDiscard(s, p, lvl) {
+    const top = lvl === 'Hardest';
+    if (top) lvl = 'Hard';
     const h = s.hands[p], forbid = s.drew && s.drew.from === 'disc' ? s.drew.id : -1;
     let best = null;
     for (const d of h) {
@@ -744,6 +754,7 @@ ${!online ? '<button class="gx-big y" data-a="again">New game</button>' : ''}
       let sc = -b.dw * 10 + gPts(d) * (lvl === 'Easy' ? 0 : .2);
       if (lvl !== 'Easy') sc += ginPotential(s, p, rest, b) * (lvl === 'Hard' ? 1.7 : 1.2);
       if (lvl === 'Hard') sc -= ginDanger(s, p, d) * 1.3;
+      if (top) sc -= ginFeeds(s, p, d) * 9;
       if (lvl === 'Normal' || lvl === 'Hard') {
         const sib = b.melds.some(m => m.includes(d));
         if (sib) sc -= 40;
@@ -753,6 +764,7 @@ ${!online ? '<button class="gx-big y" data-a="again">New game</button>' : ''}
     return best;
   }
   function ginWantsDisc(s, p, lvl) {
+    if (lvl === 'Hardest') lvl = 'Hard';
     const h = s.hands[p], c = s.disc[s.disc.length - 1], cur = ginBest(h).dw;
     const h11 = h.concat([c]);
     let bestAfter = 999, joins = false;
@@ -769,6 +781,7 @@ ${!online ? '<button class="gx-big y" data-a="again">New game</button>' : ''}
     return false;
   }
   function ginBotKnock(s, p, lvl, bd) {
+    if (lvl === 'Hardest') lvl = 'Hard';
     const h = s.hands[p];
     let kb = null;
     for (const d of h) {
@@ -1444,7 +1457,7 @@ ${f.shut ? '<p>Shutout! The winner\'s total is doubled.</p>' : ''}${C.endButtons
         rules: ginRules,
         defaults: { diff: 'Normal', target: 100, bigOn: true },
         options: [
-          { k: 'diff', label: 'Opponent', opts: [['Easy', 'Easy'], ['Normal', 'Normal'], ['Hard', 'Hard']] },
+          { k: 'diff', label: 'Opponent', opts: [['Easy', 'Easy'], ['Normal', 'Normal'], ['Hard', 'Hard'], ['Hardest', 'Hardest']] },
           { k: 'target', label: 'Play to', opts: [[50, '50'], [100, '100'], [150, '150']] },
           { k: 'bigOn', label: 'Big Gin', sub: '11 melded cards, 31 bonus', opts: [[true, 'On'], [false, 'Off']] }
         ],
@@ -1638,7 +1651,7 @@ ${f.shut ? '<p>Shutout! The winner\'s total is doubled.</p>' : ''}${C.endButtons
 
   function rkPlan(s, p, lvl) {
     const rack = s.racks[p], table = s.table, melded = s.melded[p];
-    const hard = lvl === 'Hard', cap = hard ? 90000 : 12000, ms = hard ? 110 : 40;
+    const top = lvl === 'Hardest', hard = top || lvl === 'Hard', cap = top ? 400000 : hard ? 90000 : 12000, ms = top ? 140 : hard ? 110 : 40;
     const queues = tbl => {
       const q = Array.from({ length: 52 }, () => []), jq = [], avail = new Int8Array(52), rc = new Int8Array(52);
       let jA = 0, jR = 0;
@@ -2531,7 +2544,7 @@ ${p}.port .rk-pn small{font-size:10px}
         defaults: { diff: 'Normal', opp: 1, rounds: 1, timer: 0 },
         options: [
           { k: 'opp', label: 'Opponents', solo: true, opts: [[1, '1'], [2, '2'], [3, '3']] },
-          { k: 'diff', label: 'Computer', opts: [['Easy', 'Easy'], ['Normal', 'Normal'], ['Hard', 'Hard']] },
+          { k: 'diff', label: 'Computer', opts: [['Easy', 'Easy'], ['Normal', 'Normal'], ['Hard', 'Hard'], ['Hardest', 'Hardest']] },
           { k: 'rounds', label: 'Rounds', opts: [[1, '1'], [3, '3'], [5, '5']] },
           { k: 'timer', label: 'Turn timer', sub: 'Snaps back and draws', opts: [[0, 'Off'], [30, '30s'], [60, '60s'], [90, '90s'], [120, '2m']] }
         ],
@@ -2552,7 +2565,7 @@ ${p}.port .rk-pn small{font-size:10px}
   Ameplay.covers['rummikub'] = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="rkc" cx="50%" cy="40%" r="80%"><stop offset="0" stop-color="#3a6d92"/><stop offset="1" stop-color="#0e2336"/></radialGradient><linearGradient id="rkt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffdf3"/><stop offset="1" stop-color="#e5d7ac"/></linearGradient><linearGradient id="rkr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#efe7d0"/><stop offset="1" stop-color="#b9ad86"/></linearGradient></defs><rect width="400" height="300" fill="url(#rkc)"/><g font-family="Trebuchet MS,Arial,sans-serif" font-weight="900" text-anchor="middle">${rkCoverRow([[20, '1', '#1c5fd4'], [68, '2', '#1c5fd4'], [116, '3', '#1c5fd4'], [164, '4', '#1c5fd4'], [240, '9', '#d8291f'], [288, '9', '#23252c'], [336, '9', '#ec8a00']], 30, 40, 54, 32)}${rkCoverRow([[44, '11', '#d8291f'], [92, '12', '#d8291f'], [140, '13', '#d8291f'], [240, '5', '#ec8a00'], [288, '5', '#1c5fd4']], 100, 40, 54, 32)}<g transform="translate(336 100)"><rect width="40" height="54" rx="6" fill="#8f7f52" transform="translate(0 3)"/><rect width="40" height="54" rx="6" fill="url(#rkt)"/><circle cx="20" cy="29" r="13" fill="none" stroke="#d8291f" stroke-width="3.5"/><circle cx="15" cy="25" r="2.4" fill="#1d1e24"/><circle cx="25" cy="25" r="2.4" fill="#1d1e24"/><path d="M11 32c2 8 16 8 18 0" fill="none" stroke="#1d1e24" stroke-width="3" stroke-linecap="round"/></g><rect x="30" y="190" width="340" height="86" rx="14" fill="url(#rkr)" stroke="#7a6a3a" stroke-width="2"/>${rkCoverRow([[44, '2', '#23252c'], [84, '6', '#1c5fd4'], [124, '6', '#ec8a00'], [164, '10', '#d8291f'], [204, '3', '#1c5fd4'], [244, '8', '#23252c'], [284, '12', '#ec8a00'], [324, '1', '#d8291f']], 206, 34, 46, 27)}</g></svg>`;
 
   const P10_COL = ['#d93a32', '#2f6fdb', '#2f9f58', '#f2b81a'];
-  const P10_ERR = { Easy: .34, Normal: .1, Hard: 0 };
+  const P10_ERR = { Easy: .34, Normal: .1, Hard: 0, Hardest: 0 };
   const P10_CN = ['Red', 'Blue', 'Green', 'Yellow'];
   const P10_PH = [
     [['s', 3], ['s', 3]], [['s', 3], ['r', 4]], [['s', 4], ['r', 4]], [['r', 7]], [['r', 8]],
@@ -2867,13 +2880,23 @@ ${p}.port .rk-pn small{font-size:10px}
       return { id, nd, cov, pt: p10Pts(id), outs: 0 };
     });
     sc.sort((a, b) => a.nd - b.nd || b.cov - a.cov || b.pt - a.pt || a.id - b.id);
-    if (lvl === 'Hard' && !laid && sc.length > 1) {
-      const top = sc.filter(x => x.nd === sc[0].nd).slice(0, 4);
+    const best = lvl === 'Hardest';
+    let nx = p;
+    if (best) { for (let i = 1; i < s.n; i++) { const q = (p + i) % s.n; if (!(s.skipped && s.skipped[q])) { nx = q; break; } } }
+    const feed = id => best && nx !== p && s.lay[nx] && !p10S(id) && p10Targets(s, nx, id).length ? 1 : 0;
+    if ((best || lvl === 'Hard') && !laid && sc.length > 1) {
+      const top = sc.filter(x => x.nd === sc[0].nd).slice(0, best ? 6 : 4);
       if (top.length > 1 && sc[0].nd > 0) {
-        top.forEach(x => { x.outs = p10Outs(s, p, H.filter(y => y !== x.id), x.nd); });
-        top.sort((a, b) => b.outs - a.outs || b.cov - a.cov || b.pt - a.pt);
+        top.forEach(x => { x.outs = p10Outs(s, p, H.filter(y => y !== x.id), x.nd); x.fd = feed(x.id); });
+        top.sort((a, b) => b.outs - a.outs || a.fd - b.fd || b.cov - a.cov || b.pt - a.pt);
         return top[0].id;
       }
+    }
+    if (best && sc.length > 1) {
+      const top = sc.filter(x => x.nd === sc[0].nd && x.cov === sc[0].cov);
+      top.forEach(x => { x.fd = feed(x.id); });
+      top.sort((a, b) => a.fd - b.fd || b.pt - a.pt || a.id - b.id);
+      return top[0].id;
     }
     if (s.R() < P10_ERR[lvl]) return sc[Math.floor(s.R() * Math.min(3, sc.length))].id;
     return sc[0].id;
@@ -3450,7 +3473,7 @@ ${p} .p1-mt.c0{background:#c42a22}${p} .p1-mt.c1{background:#1d55bd}${p} .p1-mt.
         defaults: { diff: 'Normal', opp: 2, last: 10, timer: 0 },
         options: [
           { k: 'opp', label: 'Opponents', solo: true, opts: [[1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5']] },
-          { k: 'diff', label: 'Computer', opts: [['Easy', 'Easy'], ['Normal', 'Normal'], ['Hard', 'Hard']] },
+          { k: 'diff', label: 'Computer', opts: [['Easy', 'Easy'], ['Normal', 'Normal'], ['Hard', 'Hard'], ['Hardest', 'Hardest']] },
           { k: 'last', label: 'Game length', sub: 'Phases to complete', opts: [[10, '10 phases'], [5, 'Short: 5']] },
           { k: 'timer', label: 'Turn timer', sub: 'Auto-discards when out of time', opts: [[0, 'Off'], [30, '30s'], [60, '60s'], [90, '90s']] }
         ],
