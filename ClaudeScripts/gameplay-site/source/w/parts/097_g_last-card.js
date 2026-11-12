@@ -263,7 +263,7 @@
     Easy: { noise: 70, callP: .7, lateP: .3, catchP: .4, catchT: [1500, 3200], bluff: 0, chal: .18, stack: .8, hold: false, think: [900, 1600], jumpP: .15, jumpT: [1300, 2200], smart: false },
     Normal: { noise: 7, callP: .9, lateP: .55, catchP: .7, catchT: [1000, 2100], bluff: .12, chal: .8, stack: 1, hold: false, think: [700, 1300], jumpP: .45, jumpT: [900, 1700], smart: false },
     Hard: { noise: 2, callP: .97, lateP: .85, catchP: .9, catchT: [650, 1350], bluff: .3, chal: .7, stack: 1, hold: true, think: [550, 1050], jumpP: .75, jumpT: [650, 1200], smart: true },
-    Expert: { noise: 0, callP: 1, lateP: 1, catchP: 1, catchT: [380, 820], bluff: .35, chal: .52, stack: 1, hold: true, think: [480, 900], jumpP: .95, jumpT: [420, 800], smart: true }
+    Hardest: { noise: 0, callP: 1, lateP: 1, catchP: 1, catchT: [380, 820], bluff: .35, chal: .52, stack: 1, hold: true, think: [480, 900], jumpP: .95, jumpT: [420, 800], smart: true, mc: true }
   };
 
   function aiMove(g, p, P, lacks, R) {
@@ -424,10 +424,10 @@
     let i = 0;
     return {
       base,
-      step(ms) {
+      step(ms, cap = 20000) {
         if (cands.length < 2) return;
         const t0 = performance.now();
-        while (performance.now() - t0 < ms && i < 20000) {
+        while (performance.now() - t0 < ms && i < cap) {
           const ci = i % cands.length; i++;
           const g2 = determinize(g, p, lacks, R);
           if (!g2.act(p, cands[ci])) { tot[ci] -= 99; cnt[ci]++; continue; }
@@ -679,6 +679,7 @@
       const opt = Object.assign({ mode: 'cpu', cpus: 2, diff: 'Normal', target: CFG.TARGET, felt: 'blue', obots: 0 }, RULE_DEF, api.load() || {});
       if (opt.v !== 3) Object.assign(opt, RULE_DEF, { felt: 'blue', v: 3 });
       if (opt.mode !== 'cpu' && opt.mode !== 'online') opt.mode = 'cpu';
+      if (opt.diff === 'Expert') opt.diff = 'Hardest';
       if (!AIP[opt.diff]) opt.diff = 'Normal';
       const saveOpt = () => api.save(opt);
       const now = () => performance.now();
@@ -1114,7 +1115,7 @@ ${[1, 2, 3, 4, 5, 6, 7].map(i => `<button class="lc-catch" data-u="c${i}" hidden
         M.cpuTid = tid;
         const tok = M.tok, P = AIP[M.diff] || AIP.Normal;
         const delay = s.phase === 'drawn' ? rnd(420, 760) : s.phase === 'chal' ? rnd(900, 1600) : rnd(P.think[0], P.think[1]);
-        const S = M.diff === 'Expert' ? mcSearch(M.eng, p, P, M.lacks, Math.random) : null;
+        const S = P.mc ? mcSearch(M.eng, p, P, M.lacks, Math.random) : null;
         if (S) { const t0 = now(), chunk = () => { if (tok !== M.tok || !M.eng || M.eng.s.tid !== tid || now() - t0 > delay - 30) return; S.step(9); api.timeout(chunk, 16); }; api.timeout(chunk, 16); }
         api.timeout(() => {
           if (tok !== M.tok || !M.eng || M.eng.s.tid !== tid) return;
@@ -1251,8 +1252,8 @@ ${[1, 2, 3, 4, 5, 6, 7].map(i => `<button class="lc-catch" data-u="c${i}" hidden
       function setup() {
         const m = opt.mode;
         const body = m === 'cpu'
-          ? `<h3>vs CPU</h3><div class="lc-opt"><span>Opponents</span>${seg('cpus', [1, 2, 3, 4, 5, 6, 7])}</div><div class="lc-opt"><span>CPU skill</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Expert'])}</div>`
-          : `<h3>Online party</h3><div class="lc-opt"><span>Bot skill</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Expert'])}</div><p>Party of 2-8 players, each on their own device. Pick the party size and turn on bots for empty seats in the party screen. The host's house rules are used.</p>`;
+          ? `<h3>vs CPU</h3><div class="lc-opt"><span>Opponents</span>${seg('cpus', [1, 2, 3, 4, 5, 6, 7])}</div><div class="lc-opt"><span>CPU skill</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Hardest'])}</div>`
+          : `<h3>Online party</h3><div class="lc-opt"><span>Bot skill</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Hardest'])}</div><p>Party of 2-8 players, each on their own device. Pick the party size and turn on bots for empty seats in the party screen. The host's house rules are used.</p>`;
         showPane('setup', `<div class="lc-box">${body}<div class="lc-opt"><span>Points to win</span>${seg('target', [0, 100, 200, 500], ['1 round', '100', '200', '500'])}</div>
 <button class="lc-big ${m === 'cpu' ? 'red' : 'green'}" data-a="go">${m === 'online' ? 'Create or join a party' : 'Deal!'}</button>
 <div class="lc-row"><button class="lc-sm" data-a="house">House rules</button><button class="lc-sm" data-a="back">Back</button></div></div>`, (a, b) => {
