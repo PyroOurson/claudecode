@@ -3206,7 +3206,7 @@ ${SC} .ss-stage.port .ss-seg button{padding:.4em .5em .3em}
         if (e.target.closest('button') || e.target.closest('.ss-card')) return;
         if (e.pointerType === 'mouse' && e.button !== 0) return;
         au.unlock();
-        pd = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), n: 0, dir: '' };
+        pd = { id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp, n: 0, dir: '' };
         try { wrap.setPointerCapture(e.pointerId); } catch (err) {}
       });
       api.on(wrap, 'pointermove', e => {
@@ -3227,7 +3227,7 @@ ${SC} .ss-stage.port .ss-seg button{padding:.4em .5em .3em}
         if (e.type !== 'pointerup') return;
         if (state === 'home') { if (!panelOn) startRun(); return; }
         if (state !== 'run' && state !== 'intro') return;
-        const now = performance.now(), dx = e.clientX - p.x, dy = e.clientY - p.y;
+        const now = e.timeStamp, dx = e.clientX - p.x, dy = e.clientY - p.y;
         if (Math.max(Math.abs(dx), Math.abs(dy)) >= swipeTh() * 0.6 && now - p.t < 350) { input(swipeDir(dx, dy)); return; }
         if (now - p.t < 300) {
           if (now - lastTap < 380 && Math.hypot(e.clientX - lastTapX, e.clientY - lastTapY) < 70) { useBoard(); lastTap = 0; }
