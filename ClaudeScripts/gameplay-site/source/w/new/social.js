@@ -116,13 +116,33 @@ function rtLater(k, fn, ms) {
 const soIdle = () => Date.now() - SO.act > 300000 || document.visibilityState === 'hidden' && Date.now() - SO.act > 60000;
 const soDot = on => on ? on.a ? ' away' : ' on' : '';
 
+const PT = { bc: null, tabs: {}, s: -1 };
+const ptScore = () => (cur ? 2 : 0) + (document.visibilityState === 'visible' ? 1 : 0);
+function ptSay(bye, ask) { PT.s = bye ? -1 : ptScore(); try { if (PT.bc) PT.bc.postMessage({ id: NET_TAB, s: PT.s, ask: ask ? 1 : 0 }); } catch (e) {} }
+function ptTop() { const t = Date.now(); let top = -1; for (const k in PT.tabs) { if (t - PT.tabs[k].t > 70000) delete PT.tabs[k]; else if (PT.tabs[k].s > top) top = PT.tabs[k].s; } return top; }
+function ptStart() {
+  if (PT.bc || !window.BroadcastChannel) return;
+  try {
+    PT.bc = new BroadcastChannel('gameplay-presence');
+    PT.bc.onmessage = e => {
+      const d = e.data;
+      if (!d || typeof d.id !== 'string' || d.id === NET_TAB || !SB.user) return;
+      if (d.s < 0) { delete PT.tabs[d.id]; if (PB.t) rtLater('pt', pbBeat, 1200); return; }
+      PT.tabs[d.id] = { s: +d.s || 0, t: Date.now() };
+      if (d.ask) ptSay();
+    };
+    ptSay(false, true);
+  } catch (e) { PT.bc = null; }
+}
 async function pbBeat() {
   if (!SB.user || PB.miss || PB.busy) return;
+  ptSay();
+  const quiet = ptTop() > PT.s;
   const uid = SB.user.id, P = S.prefs, g = P.p_game === false || !cur ? null : cur.g.id, pa = soParty();
   PB.busy = true; PB.sent = Date.now();
   SO.away = soIdle(); SO.party = !!(g && pa && pa.game === g);
   try {
-    const r = await sbRest('rpc/presence_beat', { method: 'POST', body: { p_game: g, p_hidden: P.p_status === 'Nobody', p_away: SO.away, p_party: SO.party } });
+    const r = await sbRest('rpc/presence_beat', { method: 'POST', body: { p_game: g, p_hidden: P.p_status === 'Nobody', p_away: SO.away, p_party: SO.party, p_quiet: quiet } });
     if (SB.user && SB.user.id === uid && r && typeof r === 'object' && Array.isArray(r.on)) {
       const m = {}, gm = {};
       r.on.forEach(x => { if (x && typeof x.id === 'string') m[x.id] = x.h ? { h: 1 } : { g: typeof x.g === 'string' ? x.g : null, a: x.a ? 1 : 0, p: x.p ? 1 : 0, t: Date.now() }; });
@@ -133,10 +153,12 @@ async function pbBeat() {
   } catch (e) { if (sbMissing(e)) PB.miss = true; }
   PB.busy = false;
 }
-function pbStart() { clearInterval(PB.t); PB.t = setInterval(pbBeat, 30000); pbBeat(); }
+function pbStart() { ptStart(); clearInterval(PB.t); PB.t = setInterval(pbBeat, 30000); pbBeat(); }
 function pbStop(bye) {
   clearInterval(PB.t); PB.t = 0; PB.db = {}; PB.games = {}; PB.n = 0; PB.at = 0;
-  if (bye && !PB.miss && sbTok()) sbRest('rpc/presence_bye', { method: 'POST', body: {}, keep: true }).catch(() => {});
+  const others = ptTop() >= 0;
+  ptSay(true);
+  if (bye && !others && !PB.miss && sbTok()) sbRest('rpc/presence_bye', { method: 'POST', body: {}, keep: true }).catch(() => {});
 }
 const PR_GAP = 8000;
 function prSend(o, ch, payload, fresh) {
@@ -182,12 +204,20 @@ function rtSync() {
   RT.seen = true;
   rtLater('live', soLive, 400);
 }
+const RTS = {};
 function rtSend(uid, p) {
+  if (!SB.c || !uid) return Promise.resolve();
+  if (uid === RT.me && RT.ch) { try { const r = RT.ch.send({ type: 'broadcast', event: 'n', payload: p }); return Promise.resolve(r).then(() => {}, () => {}); } catch (e) { return Promise.resolve(); } }
+  const run = () => rtSend1(uid, p), q = RTS[uid] = (RTS[uid] || Promise.resolve()).then(run, run);
+  q.then(() => { if (RTS[uid] === q) delete RTS[uid]; });
+  return q;
+}
+function rtSend1(uid, p) {
   if (!SB.c || !uid) return Promise.resolve();
   return new Promise(res => {
     let done = false;
     const ch = SB.c.channel('u:' + uid);
-    const fin = () => { if (done) return; done = true; try { SB.c.removeChannel(ch); } catch (e) {} res(); };
+    const fin = () => { if (done) return; done = true; let r = null; try { r = SB.c.removeChannel(ch); } catch (e) {} Promise.resolve(r).then(res, res); };
     try { ch.subscribe(s => { if (s === 'SUBSCRIBED') ch.send({ type: 'broadcast', event: 'n', payload: p }).then(fin, fin); else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT') fin(); }); } catch (e) { fin(); }
     setTimeout(fin, 6000);
   });
@@ -718,16 +748,17 @@ async function dmSeenSync() {
 }
 async function dmThread() {
   const uid = DM.open;
-  if (!uid || DM.busy) return;
+  if (!uid) return;
+  if (DM.busy) { DM.again = true; return; }
   DM.busy = true;
   try {
     const after = DM.msgs.length ? DM.msgs[DM.msgs.length - 1].id : 0;
     const r = await adRpc('dm_thread', { p_with: uid, p_after: after });
-    if (DM.open !== uid) return;
+    if (DM.open !== uid || after !== (DM.msgs.length ? DM.msgs[DM.msgs.length - 1].id : 0)) { DM.again = !!DM.open; return; }
     const add = Array.isArray(r) ? r : [];
     const box = $('#chat .ch-m'), first = !after;
     if (first) { box.innerHTML = ''; DM.prev = null; }
-    if (!add.length) { if (first) box.innerHTML = `<div class="ch-empty">${SO_ICO.chat}<span>${esc(auT('Say hi! Messages are only seen by the two of you.'))}</span></div>`; return; }
+    if (!add.length) { if (first) box.innerHTML = `<div class="ch-empty">${SO_ICO.chat}<span>${esc(auT('Say hi! This chat is between you two. Staff can review messages to keep the site safe.'))}</span></div>`; return; }
     const near = first || box.scrollHeight - box.scrollTop - box.clientHeight < 120;
     const em = box.querySelector('.ch-empty'); if (em) em.remove();
     const un = first ? add.findIndex(m => !m.mine && !m.read_at) : -1;
@@ -748,14 +779,17 @@ async function dmThread() {
     if (nw) box.scrollTop = Math.max(0, nw.offsetTop - 12);
     else if (near || add.some(m => m.mine)) box.scrollTop = box.scrollHeight;
     if (!first && add.some(m => !m.mine)) { delete SO.ty[uid]; soTyDraw(); sfx('pop'); }
-    if (add.some(m => !m.mine && !m.read_at)) {
-      await adRpc('dm_read', { p_with: uid }).catch(() => {});
-      rtLater('r:' + uid, () => { if (SB.user) rtSend(uid, { t: 'rd', f: SB.user.id }); }, 2000);
-      const c = DM.inbox.find(x => x.other_id === uid); if (c) c.unread = 0;
-      DM.unread = DM.inbox.reduce((n, c) => n + (c.other_id === DM.open ? 0 : +c.unread || 0), 0); ntBadge();
-    }
+    if (add.some(m => !m.mine && !m.read_at)) { if (dmSeeing()) await dmRead(uid); else DM.unseen = uid; }
   } catch (e) { auMsg2('Could not load the messages. Check your connection and try again.', 'bad'); }
-  finally { DM.busy = false; }
+  finally { DM.busy = false; if (DM.again) { DM.again = false; if (DM.open) dmThread(); } }
+}
+const dmSeeing = () => document.visibilityState === 'visible' && !!$('#chat') && !$('#chat').hidden;
+async function dmRead(uid) {
+  DM.unseen = null;
+  await adRpc('dm_read', { p_with: uid }).catch(() => {});
+  rtLater('r:' + uid, () => { if (SB.user) rtSend(uid, { t: 'rd', f: SB.user.id }); }, 2000);
+  const c = DM.inbox.find(x => x.other_id === uid); if (c) c.unread = 0;
+  DM.unread = DM.inbox.reduce((n, c) => n + (c.other_id === DM.open ? 0 : +c.unread || 0), 0); ntBadge();
 }
 function dmRow(m, anim, grp) {
   const d = new Date(m.created_at), hm = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -768,13 +802,17 @@ function dmRow(m, anim, grp) {
 async function dmImg(img) {
   const p = img.dataset.path;
   if (!p) return;
-  if (DM.urls.has(p)) { img.src = DM.urls.get(p); return; }
+  const k = DM.urls.get(p);
+  if (!img.dataset.rt) { img.dataset.rt = '1'; img.addEventListener('error', () => { if (img.dataset.rt === '1' && img.getAttribute('src')) { img.dataset.rt = '2'; DM.urls.delete(p); dmImg(img); } }); }
+  if (k && k.u && Date.now() - k.at < 3000000) { img.src = k.u; return; }
   try {
     const c = await sbClient();
     const { data, error } = await c.storage.from('dm').createSignedUrl(p, 3600);
     if (error || !data) throw error;
-    DM.urls.set(p, data.signedUrl);
-    img.src = data.signedUrl;
+    let u = data.signedUrl;
+    try { const x = new URL(u); u = SBN.url(x.pathname + x.search); } catch (e) {}
+    DM.urls.set(p, { u, at: Date.now() });
+    img.src = u;
   } catch (e) { img.alt = auT('Picture not available'); img.classList.add('bad'); }
 }
 async function dmSendText() {
@@ -893,7 +931,7 @@ function soStart() {
   soDockSync();
   frLoad().then(() => {
     ntBadge(); rtSync();
-    if (st && st.o && !auCoarse() && matchMedia('(min-width:761px)').matches && $('#chat') && $('#chat').hidden) { if (SO.v === 'conv' && soFriend(SO.last)) dmOpen(SO.last); else { soView('list'); soShow(true); soList(); } }
+    if (st && st.o && !auCoarse() && matchMedia('(min-width:761px)').matches && (!$('#chat') || $('#chat').hidden)) { if (SO.v === 'conv' && soFriend(SO.last)) dmOpen(SO.last); else { soView('list'); soShow(true); soList(); } }
   });
   dmPoll();
 }
@@ -935,7 +973,7 @@ function soBoot() {
   }, 1000);
   const act = () => { SO.act = Date.now(); if (SO.away) { SO.away = false; rtTrack(true); } };
   ['pointerdown', 'keydown', 'wheel', 'touchstart', 'pointermove'].forEach(t => addEventListener(t, act, { capture: true, passive: true }));
-  document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible') { act(); dmPoll(); rtTrack(true); } });
+  document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible') { act(); dmPoll(); rtTrack(true); if (DM.unseen && DM.unseen === DM.open && dmSeeing()) dmRead(DM.unseen); } else if (SB.user) rtTrack(true); });
   addEventListener('pagehide', () => { if (SB.user && PB.t) pbStop(true); });
   addEventListener('pageshow', e => { if (e.persisted && SB.user && !PB.t) pbStart(); });
   ['fullscreenchange', 'webkitfullscreenchange'].forEach(t => document.addEventListener(t, () => setTimeout(soPlace, 0)));
@@ -997,8 +1035,10 @@ function pubStart() {
       if (s === 'SUBSCRIBED') { PUB.rn = 0; PUB.pr.last = null; pubTrack(true); }
       else if (s === 'CLOSED') {
         DIAG.ev('net', { a: 'presence-closed', ch: 'parties' });
+        if (PUB.dead === ch) return;
+        PUB.dead = ch;
         clearTimeout(PUB.rj);
-        PUB.rj = setTimeout(() => { try { c.removeChannel(ch); } catch (e) {} if (PUB.ch === ch) { PUB.ch = null; PUB.st = false; pubStart(); } }, Math.min(60000, 9000 * Math.pow(2, PUB.rn = (PUB.rn || 0) + 1)));
+        PUB.rj = setTimeout(() => { if (PUB.ch !== ch) return; PUB.ch = null; PUB.st = false; try { c.removeChannel(ch); } catch (e) {} pubStart(); }, Math.min(60000, 9000 * Math.pow(2, PUB.rn = (PUB.rn || 0) + 1)));
       }
     });
   }).catch(() => { PUB.st = false; });

@@ -45,7 +45,8 @@ const SBN = (() => {
   const bad = {}, wsBad = {}, fresh = (m, b, ms) => (m[b] || 0) > Date.now() - ms;
   const strip = u => { u = String(u).replace(/^ws(s?):/, 'http$1:'); for (const b of all) if (u === b || u.indexOf(b + '/') === 0 || u.indexOf(b + '?') === 0) return u.slice(b.length); return null; };
   const order = () => [best].concat(all.filter(b => b !== best).sort((a, c) => (bad[a] || 0) - (bad[c] || 0)));
-  const good = b => { delete bad[b]; window.__gpSbDown = false; if (best === b) return; best = b; try { sessionStorage.setItem(K, b); } catch (e) {} };
+  const okAt = {}, bodySize = b => b == null ? 0 : typeof b === 'string' ? b.length : typeof b.size === 'number' ? b.size : typeof b.byteLength === 'number' ? b.byteLength : 2e6;
+  const good = b => { delete bad[b]; okAt[b] = Date.now(); window.__gpSbDown = false; if (best === b) return; best = b; try { sessionStorage.setItem(K, b); } catch (e) {} };
   const page = r => /text\/html/i.test(r.headers.get('content-type') || '');
   async function viaFetch(input, init) {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : null;
@@ -53,12 +54,13 @@ const SBN = (() => {
     if (path == null) return fetch(input, init);
     if (pre) await pre;
     const o = Object.assign({}, init || {}), outer = o.signal;
+    const mth = String(o.method || 'GET').toUpperCase(), safe = mth === 'GET' || mth === 'HEAD' || mth === 'OPTIONS', extra = Math.min(285000, Math.round(bodySize(o.body) / 20));
     let last = null;
     for (const b of order()) {
       if (outer && outer.aborted) throw outer.reason || new DOMException('Aborted', 'AbortError');
       const ctl = new AbortController(), stop = () => ctl.abort(outer.reason);
       if (outer) outer.addEventListener('abort', stop, { once: true });
-      const tm = setTimeout(() => ctl.abort(new DOMException('Timed out', 'TimeoutError')), b === best ? 15000 : 12000);
+      const tm = setTimeout(() => ctl.abort(new DOMException('Timed out', 'TimeoutError')), (b === best ? 15000 : 12000) + extra);
       try {
         const r = await fetch(b + path, Object.assign({}, o, { signal: ctl.signal }));
         if (page(r)) { bad[b] = Date.now(); last = new TypeError('The network answered with a web page'); continue; }
@@ -67,6 +69,7 @@ const SBN = (() => {
       } catch (e) {
         if (outer && outer.aborted) throw e;
         bad[b] = Date.now(); last = e;
+        if (!safe && okAt[b] && e && e.name === 'TimeoutError') throw e;
       } finally { clearTimeout(tm); if (outer) outer.removeEventListener('abort', stop); }
     }
     throw last || new TypeError('Failed to fetch');

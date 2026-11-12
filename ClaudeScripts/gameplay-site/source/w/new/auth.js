@@ -205,9 +205,37 @@ function syUpBody(uid, ids, loc) {
   });
   return body;
 }
+function syWipe() {
+  try { const ks = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && (k.startsWith(SAVE_P) || k === 'gameplay:profile' || k === 'gameplay:netname')) ks.push(k); } ks.forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  S.best = {}; S.plays = {}; S.time = {}; S.last = {}; S.daily = {}; S.recent = []; S.since = Date.now();
+  save();
+  SY = syNew(); sySave();
+}
+const SYP = {};
+const syPullDue = id => !!(SB.on && SB.user && GID_RE.test(id) && navigator.onLine !== false && (!SY.uid || SY.uid === SB.user.id) && Date.now() - syNum(SYP[id]) > 60000 && Date.now() - syNum(SY.at) > 60000);
+function syPull(id) {
+  if (!syPullDue(id)) return Promise.resolve();
+  const uid = SB.user.id;
+  let live = true;
+  const job = (async () => {
+    const rows = await sbRest('game_saves?select=game_id,data,updated_at&game_id=eq.' + id);
+    if (!live || !SB.user || SB.user.id !== uid || (SY.uid && SY.uid !== uid)) return;
+    SYP[id] = Date.now();
+    const r = rows && rows[0], t = r ? Date.parse(r.updated_at) || 0 : 0, M = SY.saves, m = M[id];
+    if (!t || (m && t <= syNum(m.at) + 1)) return;
+    let loc = null;
+    try { loc = localStorage.getItem(SAVE_P + id); } catch (e) {}
+    if (loc != null && (!m || m.h !== syHash(loc)) && ((m && m.d) || syNum(S.last[id])) >= t && !(m && m.hold)) return;
+    const d = JSON.stringify(r.data);
+    try { localStorage.setItem(SAVE_P + id, d); } catch (e) { return; }
+    M[id] = { h: syHash(d), at: t, d: 0 }; sySave();
+  })().catch(() => {});
+  return Promise.race([job, new Promise(r => setTimeout(() => { live = false; r(); }, 2500))]);
+}
 function sySavesKeep(uid) {
+  if (!SY.at) return;
   const loc = syLocalSaves(), M = SY.saves;
-  const ids = Object.keys(loc).filter(id => { const h = syHash(loc[id]), m = M[id]; return !(m && (m.h === h || m.big === h)); });
+  const ids = Object.keys(loc).filter(id => { const h = syHash(loc[id]), m = M[id]; return !(m && (m.h === h || m.big === h || m.hold)); });
   const body = syUpBody(uid, ids, loc);
   if (!body.length || JSON.stringify(body).length > 50000) return;
   sbRest('game_saves?on_conflict=user_id,game_id', { method: 'POST', body, prefer: 'resolution=merge-duplicates,return=minimal', keep: true }).catch(() => {});
@@ -229,13 +257,14 @@ async function sySaves(uid) {
     const m = M[id], has = id in loc, h = has ? syHash(loc[id]) : '', r = R[id];
     if (has && m && m.big === h) return;
     const dirty = has && (!m || m.h !== h), rnew = !!r && (!m || r > syNum(m.at) + 1);
-    if (dirty && rnew) { const lt = (m && m.d) || syNum(S.last[id]); (lt >= r ? up : down).push(id); }
+    if (dirty && rnew) { const lt = (m && m.d) || syNum(S.last[id]); (m && m.hold ? down : lt >= r ? up : down).push(id); }
     else if (dirty) up.push(id);
     else if (rnew) down.push(id);
     else if (!r && m && m.at && has && !dirty && !(cur && cur.g.id === id)) { try { localStorage.removeItem(SAVE_P + id); } catch (e) {} delete M[id]; }
     else if (!r && !has && m) delete M[id];
   });
   const dl = down.filter(id => !(cur && cur.g.id === id));
+  if (cur && down.indexOf(cur.g.id) >= 0) (M[cur.g.id] || (M[cur.g.id] = { h: '', at: 0, d: 0 })).hold = R[cur.g.id];
   if (dl.length) {
     const rows = await sbRest('game_saves?select=game_id,data,updated_at&game_id=in.(' + dl.join(',') + ')');
     (rows || []).forEach(r => {
@@ -258,6 +287,26 @@ function syRefresh(before) {
   if (openK === 'mstats') renderStats();
   if (openK === 'mprofile') { $('#pcg').textContent = Object.keys(S.plays).filter(id => byId.has(id)).length; $('#pcr').textContent = Object.keys(S.best).filter(id => byId.has(id)).length; }
 }
+function syAdopt() {
+  if (!SB.on || SY.pend || !SY.uid) return false;
+  let o = null;
+  try { o = JSON.parse(localStorage.getItem(SYK) || 'null'); } catch (e) {}
+  if (!o || typeof o !== 'object' || !o.base || typeof o.base !== 'object' || o.uid !== SY.uid || !(syNum(o.at) > syNum(SY.at))) return false;
+  const B = SY.base, nb = {};
+  ['p', 't', 'b'].forEach(k => { nb[k] = o.base[k] && typeof o.base[k] === 'object' ? o.base[k] : {}; });
+  [['p', S.plays], ['t', S.time]].forEach(([k, m]) => {
+    new Set([...Object.keys(m), ...Object.keys(B[k]), ...Object.keys(nb[k])]).forEach(id => {
+      const v = syNum(nb[k][id]) + Math.max(0, syNum(m[id]) - syNum(B[k][id]));
+      if (v > 0) m[id] = v; else delete m[id];
+    });
+  });
+  Object.keys(nb.b).forEach(id => { if (S.best[id] == null || S.best[id] === B.b[id]) S.best[id] = nb.b[id]; });
+  const held = {};
+  Object.keys(SY.saves).forEach(id => { if (SY.saves[id] && SY.saves[id].hold) held[id] = SY.saves[id]; });
+  SY.base = nb; SY.at = syNum(o.at);
+  if (o.saves && typeof o.saves === 'object') SY.saves = Object.assign({}, o.saves, held);
+  return true;
+}
 function syNudge(ms = 4000) { if (!SB.user) return; clearTimeout(SB.t); SB.t = setTimeout(() => sySync(), ms); }
 async function sySync(o = {}) {
   if (!SB.user || !SB.c) return;
@@ -268,7 +317,8 @@ async function sySync(o = {}) {
   const before = JSON.stringify(S.recent);
   try {
     if (cur && !o.keep) ttCommit(false);
-    if (SY.uid !== uid) { if (SY.pend && SY.pend.uid !== uid) syAck(SY.pend); SY.pend = null; SY.uid = uid; SY.saves = {}; SY.at = 0; }
+    syAdopt();
+    if (SY.uid !== uid) { if (SY.uid) syWipe(); const keepM = SY.saves; SY.pend = null; SY.uid = uid; SY.saves = SY.at ? {} : keepM; SY.at = 0; }
     if (!SY.pend) { const rows = syRows(); if (rows.length) SY.pend = { id: syUuid(), uid, rows }; }
     sySave();
     if (o.keep) {
@@ -804,7 +854,7 @@ async function auDeleteAccount() {
   const b = $('#adelbtn'); b.disabled = true; b.classList.add('is-busy'); auMsg('adelnote', 'Deleting your account…');
   try {
     const r = await sbRest('rpc/delete_my_account', { method: 'POST', body: {} });
-    SY = syNew(); sySave();
+    syWipe();
     try { await SB.c.auth.signOut({ scope: 'local' }); } catch (e) {}
     $('#adelc').value = ''; b.classList.remove('is-busy');
     auMsg('adelnote', '');
@@ -864,6 +914,7 @@ function auChoose() {
 async function auUsername() {
   const raw = unStep === 2 ? unPending : $('#unew').value.trim().toLowerCase();
   if (!UN_NEW.test(raw) || /^\.|\.$|\.\./.test(raw)) { auMsg('unerr', 'Use 4 to 20 lowercase letters, numbers, dots or underscores.', 'bad'); return; }
+  if (!SB.prof) { auMsg('unerr', 'Your profile is still loading. Try again in a moment.', 'bad'); auProfLater(0); return; }
   const old = SB.prof && SB.prof.username;
   if (raw === old) { auMsg('unerr', 'That is already your username.', 'bad'); return; }
   if (unStep === 1 && old) {
@@ -898,6 +949,17 @@ async function auDisplayName(v) {
   } catch (e) { say('dnnote', 'Could not save. Check your connection and try again.'); }
   finally { b.disabled = false; b.classList.remove('is-busy'); }
 }
+function auProfLater(n) {
+  clearTimeout(SB.pt);
+  if (!SB.user || SB.prof) return;
+  SB.pt = setTimeout(async () => {
+    if (!SB.user || SB.prof) return;
+    const uid = SB.user.id;
+    try { await auLoadProfile(); } catch (e) {}
+    if (!SB.user || SB.user.id !== uid) return;
+    if (SB.prof) { auRender(); if (!SB.prof.username) auChoose(); } else auProfLater(Math.min(n + 1, 5));
+  }, Math.min(60000, 2000 * Math.pow(2, n)));
+}
 async function auSignedIn(ev) {
   try { localStorage.setItem('gameplay:acct', '1'); } catch (e) {}
   const uid = SB.user.id, loud = SB.loud;
@@ -907,8 +969,10 @@ async function auSignedIn(ev) {
   FR.pp = FR.ppRes = null; FR.ppAt = 0; FR.ppErr = ''; FR.ppAll = false;
   auRender();
   if (openK === 'mauth' && SB.view !== 'newpass' && !SB.rec) closeAll();
+  if (SY.uid && SY.uid !== uid) syWipe();
   if (SB.blk && openK !== 'mauth') { SB.blk = 0; route(); }
   try { await auLoadProfile(); } catch (e) {}
+  auProfLater(0);
   auWait(false);
   if (!SB.user || SB.user.id !== uid) return;
   auRender();
@@ -921,7 +985,8 @@ async function auSignedIn(ev) {
   if (SB.prof && !SB.prof.username) setTimeout(auChoose, loud ? 400 : 0);
 }
 function auSignedOut() {
-  SB.prof = null; SB.fail = 0;
+  SB.prof = null; SB.fail = 0; clearTimeout(SB.pt);
+  try { if (DIAG.on) DIAG.disarm(); } catch (e) {}
   FR.list = FR.req = FR.res = null; FR.rq = '';
   clearTimeout(SB.t);
   if (SB.choosing && !$('#unmodal').hidden) unClose();
@@ -1295,6 +1360,16 @@ function auBoot() {
     addEventListener('online', () => { if (SB.user) sySync(); });
     document.addEventListener('visibilitychange', () => { if (!SB.user) return; if (document.visibilityState === 'hidden') sySync({ keep: true }); else if (Date.now() - syNum(SY.at) > 180000) sySync(); });
     addEventListener('pagehide', () => { if (SB.user) sySync({ keep: true }); });
+    addEventListener('storage', e => {
+      if (e.key === SYK && SB.user && !SB.syncing) { const before = JSON.stringify(S.recent); if (syAdopt()) syRefresh(before); }
+      if (e.key === KEY && e.newValue && e.oldValue) {
+        let n = null, old = null;
+        try { n = JSON.parse(e.newValue); old = JSON.parse(e.oldValue); } catch (x) { return; }
+        if (!n || !old || typeof n !== 'object' || typeof old !== 'object') return;
+        if (n.prefs && typeof n.prefs === 'object' && JSON.stringify(n.prefs) !== JSON.stringify(old.prefs || {})) { S.prefs = n.prefs; try { applyTheme(); } catch (x) {} }
+        if (typeof n.muted === 'boolean' && n.muted !== !!old.muted && n.muted !== !!S.muted) { try { setMuted(n.muted); } catch (x) {} }
+      }
+    });
     setInterval(() => { if (SB.user && cur && document.visibilityState !== 'hidden') sySync(); }, 120000);
     if (SB_RET && SB_RET.code) SB.rt = true;
     if (!sbHasSession() && !SB.rt) SB.chk = true;

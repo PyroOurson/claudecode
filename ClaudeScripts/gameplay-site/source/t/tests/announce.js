@@ -1,0 +1,53 @@
+const lib = require('../party_lib.js');
+const { launch, visitor } = require('../site.js');
+const { execSync } = require('child_process');
+const DBC = process.env.STAGE_DB || 'supabase_db_staging';
+const sql = q => execSync('docker exec -i ' + DBC + ' psql -U postgres -d postgres -At -c ' + JSON.stringify(q), { encoding: 'utf8' }).trim();
+const must = (c, m) => { if (!c) throw new Error(m); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const TXT = 'Staging announcement ' + Date.now().toString(36);
+const set = (txt, lv) => sql("update public.site_flags set banner = " + (txt ? "'" + txt + "'" : 'null') + ", banner_level = '" + (lv || 'info') + "', banner_until = null where id = 1");
+const bar = p => p.evaluate(() => { const b = document.querySelector('#sfbar'), a = document.querySelector('#sfalert'), i = b && b.querySelector('.sfb-info'); return { bar: !!b && !b.hidden && !!i, still: !!b && b.classList.contains('sf-still'), text: i ? i.innerText.trim().slice(0, 80) : '', alert: !!a && !a.hidden, auth: !document.querySelector('#aumodal').hidden, mark: i ? i.__mark || 0 : 0 }; });
+(async () => {
+  let fail = null;
+  const b = await launch();
+  try {
+    set(TXT, 'info');
+    const v = await visitor(b, {});
+    await v.goto('', 1500); await v.consent(); await sleep(4000);
+    let s = await bar(v.page);
+    must(s.auth, 'expected the login page for a new visitor');
+    must(!s.bar && !s.alert, 'announcement shown on the login page: ' + JSON.stringify(s));
+    await v.page.locator('[data-aumode="up"]').first().click().catch(() => {});
+    await sleep(1500);
+    s = await bar(v.page);
+    must(!s.bar && !s.alert, 'announcement shown on the sign-up page: ' + JSON.stringify(s));
+    set(TXT, 'warning');
+    await v.page.reload({ waitUntil: 'domcontentloaded', timeout: 180000 }); await v.ready(); await sleep(5000);
+    s = await bar(v.page);
+    must(!s.bar && !s.alert, 'warning alert shown on the login page: ' + JSON.stringify(s));
+    await v.close();
+    set(TXT, 'info');
+    const p = await lib.player(b, 'bob', { fresh: true });
+    const got = await p.page.waitForFunction(() => { const b = document.querySelector('#sfbar'); return b && !b.hidden && b.querySelector('.sfb-info'); }, null, { timeout: 60000 }).then(() => true, () => false);
+    must(got, 'signed-in player never saw the announcement');
+    s = await bar(p.page);
+    must(s.text.indexOf(TXT) >= 0, 'wrong text: ' + s.text);
+    must(!s.still, 'first sight should be animated once');
+    await p.page.evaluate(() => { document.querySelector('#sfbar .sfb-info').__mark = 7; });
+    for (let i = 0; i < 5; i++) { await p.page.evaluate(() => { window.dispatchEvent(new Event('focus')); document.dispatchEvent(new Event('visibilitychange')); }); await sleep(4500); }
+    s = await bar(p.page);
+    must(s.bar && s.mark === 7, 'the banner was rebuilt (it would replay its animation) while nothing changed: ' + JSON.stringify(s));
+    await p.page.reload({ waitUntil: 'domcontentloaded', timeout: 180000 }); await p.ready(); await sleep(5000);
+    s = await bar(p.page);
+    must(s.bar && s.still, 'after a refresh the announcement animates again: ' + JSON.stringify(s));
+    await p.page.evaluate(() => Ameplay.debug.open('dino-run')); await sleep(4000);
+    await p.page.evaluate(() => Ameplay.debug.close()); await sleep(2500);
+    s = await bar(p.page);
+    must(s.bar && s.still, 'after opening and closing a game the announcement animates again: ' + JSON.stringify(s));
+    console.log('PASS announcements: hidden on login and sign-up (info and warning), shown once signed in, animated only the first time, not rebuilt on focus, refresh or navigation');
+  } catch (e) { fail = e; console.log('FAIL announcements: ' + String(e && e.message || e).split('\n')[0]); }
+  set(null, 'info');
+  await b.close().catch(() => {});
+  process.exit(fail ? 1 : 0);
+})();

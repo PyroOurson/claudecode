@@ -21,6 +21,7 @@ function fvRail() {
 function fvToggle(id) {
   if (!byId.get(id)) return;
   const on = !fvHas(id), uid = FV.uid;
+  FV.v = (FV.v || 0) + 1;
   FV.ids = on ? [id, ...FV.ids.filter(x => x !== id)] : FV.ids.filter(x => x !== id);
   fvStore(); fvPaint();
   toast(auT(on ? 'Added to favourites' : 'Removed from favourites'));
@@ -49,8 +50,10 @@ async function fvSync() {
   try {
     if (guest.length) { await sbRest('favourites', { method: 'POST', body: guest.map(g => ({ user_id: uid, game_id: g })), prefer: 'resolution=ignore-duplicates,return=minimal' }); try { localStorage.removeItem(FV_KEY); } catch (e) {} }
     await FV.q;
+    const v = FV.v || 0;
     const r = await sbRest('favourites?select=game_id&order=created_at.desc&limit=300');
     if (!SB.user || SB.user.id !== uid || !Array.isArray(r)) return;
+    if ((FV.v || 0) !== v) return fvSync();
     FV.ids = r.map(x => x.game_id).filter(x => FV_RE.test(x));
     fvStore(); fvPaint();
   } catch (e) {}
@@ -220,6 +223,7 @@ function clAuto(seenRemote) {
   if (clSeen() >= top) { CL.done = true; if (seenRemote !== undefined && (+seenRemote || 0) < top) clMark(true); return; }
   if (seenRemote != null && +seenRemote >= top) { CL.done = true; clMark(false); return; }
   if (CL_NEW && !clSeen()) { CL.done = true; clMark(false); return; }
+  if (cur || pend || openK || auLocked() || document.visibilityState !== 'visible') { clearTimeout(CL.t); CL.t = setTimeout(() => clAuto(seenRemote), 5000); return; }
   clOpen();
 }
 

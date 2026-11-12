@@ -237,7 +237,8 @@ create index if not exists presence_now_at_idx on private.presence_now (at);
 alter table private.presence_now enable row level security;
 revoke all on table private.presence_now from public, anon, authenticated;
 
-create or replace function public.presence_beat(p_game text default null, p_hidden boolean default false, p_away boolean default false, p_party boolean default false)
+drop function if exists public.presence_beat(text, boolean, boolean, boolean);
+create or replace function public.presence_beat(p_game text default null, p_hidden boolean default false, p_away boolean default false, p_party boolean default false, p_quiet boolean default false)
 returns jsonb
 language plpgsql
 volatile
@@ -285,9 +286,9 @@ set search_path = ''
 as $$
   delete from private.presence_now where user_id = auth.uid();
 $$;
-revoke all on function public.presence_beat(text, boolean, boolean, boolean) from public, anon, authenticated;
+revoke all on function public.presence_beat(text, boolean, boolean, boolean, boolean) from public, anon, authenticated;
 revoke all on function public.presence_bye() from public, anon, authenticated;
-grant execute on function public.presence_beat(text, boolean, boolean, boolean) to authenticated;
+grant execute on function public.presence_beat(text, boolean, boolean, boolean, boolean) to authenticated;
 grant execute on function public.presence_bye() to authenticated;
 notify pgrst, 'reload schema';
 
@@ -429,7 +430,7 @@ begin
 end;
 $$;
 
-create or replace function public.presence_beat(p_game text default null, p_hidden boolean default false, p_away boolean default false, p_party boolean default false)
+create or replace function public.presence_beat(p_game text default null, p_hidden boolean default false, p_away boolean default false, p_party boolean default false, p_quiet boolean default false)
 returns jsonb
 language plpgsql
 volatile
@@ -453,10 +454,14 @@ begin
   if v_game !~ '^[a-z0-9][a-z0-9-]{0,39}$' then
     v_game := null;
   end if;
-  insert into private.presence_now as n (user_id, at, game, hidden, away, party)
-  values (v_uid, now(), v_game, coalesce(p_hidden, false), coalesce(p_away, false), coalesce(p_party, false))
-  on conflict (user_id) do update set at = excluded.at, game = excluded.game, hidden = excluded.hidden, away = excluded.away, party = excluded.party;
-  update public.profiles p set last_seen = now(), last_game = coalesce(v_game, p.last_game) where p.id = v_uid and (p.last_seen is null or p.last_seen < now() - interval '60 seconds');
+  if coalesce(p_quiet, false) and exists (select 1 from private.presence_now n where n.user_id = v_uid and n.at > now() - interval '70 seconds') then
+    null;
+  else
+    insert into private.presence_now as n (user_id, at, game, hidden, away, party)
+    values (v_uid, now(), v_game, coalesce(p_hidden, false), coalesce(p_away, false), coalesce(p_party, false))
+    on conflict (user_id) do update set at = excluded.at, game = excluded.game, hidden = excluded.hidden, away = excluded.away, party = excluded.party;
+    update public.profiles p set last_seen = now(), last_game = coalesce(v_game, p.last_game) where p.id = v_uid and (p.last_seen is null or p.last_seen < now() - interval '60 seconds');
+  end if;
   if random() < 0.02 then
     delete from private.presence_now where at < now() - interval '10 minutes';
   end if;

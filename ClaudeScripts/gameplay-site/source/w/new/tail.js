@@ -612,7 +612,7 @@ function ttCommit(final) {
   const k = dayKey(), d = S.daily[k] || (S.daily[k] = { s: 0, p: 0 });
   d.s += sec;
   const keys = Object.keys(S.daily).sort();
-  while (keys.length > 60) delete S.daily[keys.shift()];
+  while (keys.length > 400) delete S.daily[keys.shift()];
   save();
   TT.sec = (TT.sec || 0) + sec;
   if (final && TT.sec >= 1) { track('game_time', { game: id, sec: Math.round(TT.sec) }); TT.sec = 0; }
@@ -726,7 +726,7 @@ function waitStart(g) {
   box.style.cssText = 'position:relative;width:min(100%,' + (g.width || 880) + 'px);aspect-ratio:16/10;max-height:calc(100dvh - var(--goff, 250px));margin:0 auto';
   frame.append(box);
   const t = setTimeout(() => { if (pend !== g || !box.isConnected) return; const el = document.createElement('div'); el.className = 'g-loading pg-sk'; el.innerHTML = '<i></i><span>Loading…</span>'; box.append(el); }, 200);
-  need(g).then(r => {
+  Promise.all([need(g), syPull(g.id)]).then(([r]) => {
     clearTimeout(t);
     if (pend !== g) return;
     pend = null; start(r); markSide();
@@ -770,7 +770,7 @@ function openGame(g) {
   syncTheater();
   if (shortQuery.matches) requestAnimationFrame(toStage);
   SF.og = null;
-  if (sfBlocked(g)) sfOffFrame(g); else if (g.mount) { start(g); track('game_launch', { game: g.id, ms: 0, lazy: false }); } else waitStart(g);
+  if (sfBlocked(g)) sfOffFrame(g); else if (g.mount && !syPullDue(g.id)) { start(g); track('game_launch', { game: g.id, ms: 0, lazy: false }); } else waitStart(g);
   markSide();
   lzScan();
 }
@@ -1019,7 +1019,7 @@ function renderFriends() { frOpen(); }
 const fmtDur = s => { s = Math.round(s || 0); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + 'h ' + m + 'm' : m ? m + 'm' : s + 's'; };
 function ago(t) {
   if (!t) return '—';
-  const d = Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(t).setHours(0, 0, 0, 0)) / 864e5);
+  const d = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(t).setHours(0, 0, 0, 0)) / 864e5);
   return d <= 0 ? 'Today' : d === 1 ? 'Yesterday' : d < 7 ? d + ' days ago' : d < 14 ? 'Last week' : new Date(t).toLocaleDateString('en', { month: 'short', day: 'numeric' });
 }
 function renderStats() {
@@ -1101,8 +1101,10 @@ function deleteData() {
   try { const ks = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('gameplay:') && k !== 'gameplay:gate') ks.push(k); } ks.forEach(k => localStorage.removeItem(k)); } catch (e) {}
   try { sessionStorage.removeItem('gameplay:sid'); } catch (e) {}
   if (SB.on) { try { [SB_STORE, SB_STORE + '-code-verifier', SB_STORE + '-user'].forEach(k => localStorage.removeItem(k)); } catch (e) {} }
-  S = { best: {}, plays: {}, recent: [], muted: false };
-  setTimeout(() => location.reload(), 600);
+  S.best = {}; S.plays = {}; S.time = {}; S.last = {}; S.daily = {}; S.recent = [];
+  anQ = []; anHold = [];
+  try { const si = Storage.prototype.setItem; Storage.prototype.setItem = function (k, v) { if (typeof k === 'string' && k !== 'gameplay:gate' && (k.indexOf('gameplay:') === 0 || k.indexOf('sb-gameplay') === 0)) return; return si.call(this, k, v); }; } catch (e) {}
+  setTimeout(() => location.reload(), 300);
 }
 
 let fromPop = false, progNav = false, navFromHome = false, rndLast = null;
@@ -1296,7 +1298,7 @@ function boot() {
   $('#dosignout').addEventListener('click', () => { closeAll(); if (SB.user) { auSignOut(); return; } toast('Accounts are coming soon.'); track('soon', { what: 'sign_out' }); });
   $('#delc').addEventListener('input', e => { $('#delbtn').disabled = e.target.value !== 'DELETE'; });
   $('#delbtn').addEventListener('click', () => { say('delnote', 'Your data was deleted. Reloading…', 1); deleteData(); });
-  $('#dl').addEventListener('click', async () => { let extra = null, lim = ''; if (SB.user) { say('datanote', 'Preparing your file…'); try { extra = await sbRest('rpc/export_my_data', { method: 'POST', body: {} }); } catch (e) { if (sbLimit(e)) lim = sbLimitText(e, 'too many exports'); extra = { error: 'Could not download your account data. Try again later.' }; } } downloadData(extra); if (lim) say('datanote', lim); else say('datanote', 'Your data file was downloaded.', 1); track('data_download', { limited: !!lim }); });
+  $('#dl').addEventListener('click', async () => { let extra = null, lim = ''; if (SB.user) { say('datanote', 'Preparing your file…'); try { extra = await sbRest('rpc/export_my_data', { method: 'POST', body: {} }); } catch (e) { if (sbLimit(e)) lim = sbLimitText(e, 'too many exports'); else lim = 'The file has what is stored in this browser. Your account data could not be added. Try again later.'; extra = { error: 'Could not download your account data. Try again later.' }; } } downloadData(extra); if (lim) say('datanote', lim); else say('datanote', 'Your data file was downloaded.', 1); track('data_download', { limited: !!lim }); });
   $('#rr').addEventListener('click', () => { const b = $('#rr'); if (b.dataset.c) { b.textContent = 'Reset'; delete b.dataset.c; b.classList.remove('dangerfill'); if (SB.user) { say('datanote', 'Resetting…'); auResetCloud().then(() => { resetRecords(); say('datanote', 'Your records were reset on this device and in your account.', 1); }, () => say('datanote', 'Could not reset your account records. Check your connection and try again.')); } else { resetRecords(); say('datanote', 'Your records were reset.', 1); } track('records_reset', {}); } else { b.dataset.c = '1'; b.textContent = 'Click again to confirm'; b.classList.add('dangerfill'); } });
   document.querySelectorAll('[data-sound]').forEach(b => b.addEventListener('click', () => { setMuted(!S.muted); b.blur(); if (!S.muted) sfx('tap'); }));
   const th = $('[data-theater]');
@@ -1315,7 +1317,9 @@ function boot() {
   addEventListener('keyup', e => { if (PAUSE.on && !isField(e.target) && !openK) e.stopImmediatePropagation(); }, true);
   const unmodal = $('#unmodal');
   addEventListener('keydown', e => {
+    if (CL.open) return;
     if (!unmodal.hidden) { if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); unClose(); } return; }
+    if (openK === 'mctl' && IN.cap && e.key === 'Escape') { IN.cap = null; inDraw(); e.preventDefault(); e.stopImmediatePropagation(); return; }
     if (openK) { if (e.key === 'Escape' && !e.repeat) { e.preventDefault(); e.stopImmediatePropagation(); closeAll(); } else if (e.key === 'Tab') focusTrap(e); return; }
     if (e.key === 'Escape' && gamebox.classList.contains('pfs')) { e.preventDefault(); e.stopImmediatePropagation(); fsExit(); return; }
     if (e.key === '/' && !isField(e.target) && !cur && !pend && view === 'home') { e.preventDefault(); q.focus(); return; }
@@ -1334,7 +1338,7 @@ function boot() {
       if (!e.repeat && performance.now() - ov.at > 600) ov.fire();
       return;
     }
-    if ([' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && !isField(e.target)) e.preventDefault();
+    if ([' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && !isField(e.target) && !(e.target.closest && e.target.closest('select, .g-lobby, [role="switch"], [role="slider"], [role="listbox"]'))) e.preventDefault();
   }, true);
   if (PATH_MODE) addEventListener('popstate', () => { fromPop = true; route(); });
   else addEventListener('hashchange', () => { fromPop = !progNav; progNav = false; route(); });

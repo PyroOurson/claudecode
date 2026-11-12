@@ -468,7 +468,7 @@ function netRtLink(sb, name, role, o) {
   return L;
 }
 async function netRtDoor(sb, gid, code, hubId, onLink) {
-  const keys = await netRtKeys(), pub = await netRtPub(keys), key = 'hub:' + hubId, seen = new Map(), t0 = Date.now();
+  const keys = await netRtKeys(), pub = await netRtPub(keys), key = 'hub:' + hubId, seen = new Map(), burst = [], t0 = Date.now();
   let dead = false, sync = null;
   const first = new Promise(r => { sync = r; });
   const ch = sb.channel(netRtName(gid, code), { config: { broadcast: { self: false, ack: false }, presence: { key } } });
@@ -478,6 +478,10 @@ async function netRtDoor(sb, gid, code, hubId, onLink) {
     if (dead || !p || typeof p.n !== 'string' || typeof p.p !== 'string' || p.n.length > 24 || p.p.length > 200) return;
     const send = () => { try { const r = ch.send({ type: 'broadcast', event: 'o', payload: { n: p.n, p: pub } }); if (r && r.catch) r.catch(() => {}); } catch (e) {} };
     if (seen.has(p.n)) return send();
+    const tn = Date.now();
+    while (burst.length && tn - burst[0] > 10000) burst.shift();
+    if (burst.length >= 40) return;
+    burst.push(tn);
     if (seen.size > 400) seen.clear();
     seen.set(p.n, 1);
     let id;
@@ -515,15 +519,19 @@ async function netRtDial(sb, gid, code, o, alive) {
   ch.on('presence', { event: 'sync' }, () => sync(ch.presenceState()));
   ch.on('broadcast', { event: 'o' }, m => { const p = m && m.payload; if (p && p.n === n && typeof p.p === 'string') got(p.p); });
   const drop = () => { try { sb.removeChannel(ch); } catch (e) {} };
+  let stopT = 0;
+  const gone = new Promise((r, j) => { stopT = setInterval(() => { if (!alive()) j({ type: 'cancel' }); }, 150); });
+  gone.catch(() => {});
+  const or = p => { p.catch(() => {}); return Promise.race([p, gone]); };
   try {
-    await netRtSub(ch, 7000);
-    const st = await Promise.race([first, new Promise(r => setTimeout(() => r(null), 3000))]);
+    await or(netRtSub(ch, 7000));
+    const st = await or(Promise.race([first, new Promise(r => setTimeout(() => r(null), 3000))]));
     if (!alive()) throw { type: 'cancel' };
     if (st && !Object.keys(st).some(k => k.indexOf('hub:') === 0)) throw { type: 'peer-unavailable' };
     let hp = null;
     for (let i = 0; i < 7 && !hp; i++) {
       try { const r = ch.send({ type: 'broadcast', event: 'k', payload: { n, p: pub } }); if (r && r.catch) r.catch(() => {}); } catch (e) {}
-      hp = await Promise.race([reply, new Promise(r => setTimeout(() => r(null), 900))]);
+      hp = await or(Promise.race([reply, new Promise(r => setTimeout(() => r(null), 900))]));
       if (!alive()) throw { type: 'cancel' };
     }
     if (!hp) throw { type: st ? 'timeout' : 'peer-unavailable' };
@@ -531,10 +539,10 @@ async function netRtDial(sb, gid, code, o, alive) {
     const link = netRtLink(sb, netRtName(gid, code, id), 'guest', o);
     const opened = new Promise((res, rej) => { link.on('open', () => res(link)); link.on('error', e => rej(e && e.type ? e : { type: 'network' })); });
     link.start();
-    const out = await Promise.race([opened, new Promise((r, j) => setTimeout(() => j({ type: 'timeout' }), 16000))]).catch(e => { try { link.close(); } catch (x) {} throw e; });
+    const out = await or(Promise.race([opened, new Promise((r, j) => setTimeout(() => j({ type: 'timeout' }), 16000))])).catch(e => { try { link.close(); } catch (x) {} opened.then(l => { try { l.close(); } catch (x) {} }, () => {}); throw e; });
     if (!alive()) { try { out.close(); } catch (x) {} throw { type: 'cancel' }; }
     return out;
-  } finally { drop(); }
+  } finally { clearInterval(stopT); drop(); }
 }
 const NET_SOFT = ['network', 'server-error', 'socket-error', 'socket-closed', 'load'];
 const netWhy = (e, code) => {
@@ -899,6 +907,7 @@ function makeNet(g, add) {
         if (!h || typeof h.id !== 'string' || typeof h.key !== 'string') return;
         clearTimeout(kill);
         const id = h.id.slice(0, 16), old = rm.guests.get(id);
+        if (id === rm.me || !/^[a-z0-9]{6,16}$/.test(id) || h.key.length < 8 || h.key.length > 64) { tx(c, { __full: 1, why: 'id' }); setTimeout(() => { try { c.close(); } catch (e) {} }, 400); return; }
         if (old) {
           const dup = !!(old.conn && old.conn !== c && old.conn.open && !old.away && h.tab && old.tab && h.tab !== old.tab && now() - old.lastRx < 2500);
           if (old.key !== h.key || dup) { tx(c, { __full: 1, why: dup ? 'dup' : 'id' }); setTimeout(() => { try { c.close(); } catch (e) {} }, 400); return; }
@@ -1206,7 +1215,7 @@ function makeNet(g, add) {
     rm.state = 'lobby'; rm.inGame = false; rm.list = []; rm.leader = null; rm.chat = []; rm.go = null; net.closeReason = null;
     const t0 = now(), END = res ? 22000 : 16000, MISS = res ? 6 : 3;
     let a = 0, miss = 0, ice = 0, r = null;
-    const fatal = e => { netSes(null); shut(false); netDiag('join-fail', { type: e && e.type, n: a, ms: now() - t0 }); netTrack('party_fail', { game: g.id, why: String(e && e.type || 'unknown').slice(0, 24), n: a, ms: now() - t0, resume: !!res }); throw e; };
+    const fatal = e => { netSes(null); if (invite && invite.id === g.id && !invite.host) invite = null; shut(false); netDiag('join-fail', { type: e && e.type, n: a, ms: now() - t0 }); netTrack('party_fail', { game: g.id, why: String(e && e.type || 'unknown').slice(0, 24), n: a, ms: now() - t0, resume: !!res }); throw e; };
     netDiag('join-start', { resume: !!res });
     while (!r) {
       if (a) {
@@ -1298,7 +1307,7 @@ function makeNet(g, add) {
         if ([W, H, k.toFixed(3), screen, rows].join() !== lastFit || (!vp && !box())) fit();
       }, 400);
       const onFs = () => { setTimeout(fit, 60); setTimeout(fit, 450); };
-      const guard = e => { if (e.type === 'keydown' && e.key === 'Escape' && el.querySelector('.gl-inv')) { e.preventDefault(); e.stopPropagation(); invClose(); return; } if (!el.contains(e.target)) e.stopPropagation(); };
+      const guard = e => { if (e.type === 'keydown' && e.key === 'Escape' && el.querySelector('.gl-inv')) { e.preventDefault(); e.stopPropagation(); invClose(); return; } const t = e.target; if (el.contains(t)) return; if (t && t.closest && !t.closest('#frame') && t.closest('input, textarea, select, button, a, [contenteditable], [role], [tabindex]')) return; e.stopPropagation(); };
       window.addEventListener('resize', onFs);
       window.addEventListener('keydown', guard, true);
       window.addEventListener('keyup', guard, true);
@@ -1508,7 +1517,7 @@ function makeNet(g, add) {
           fail(t === 'room-full' ? T('Party {code} is full.').replace('{code}', code) : netWhy(e, rm.pub || jst.who ? '' : code), fn);
         }
       };
-      const unjoin = () => { op++; note = null; note0 = ''; phase = ''; again = null; jst = { phase: 'idle', code: '', msg: '', who: '' }; shut(true); };
+      const unjoin = () => { if (invite && invite.id === g.id && !invite.host) invite = null; op++; note = null; note0 = ''; phase = ''; again = null; jst = { phase: 'idle', code: '', msg: '', who: '' }; shut(true); };
       const fresh = () => { rm.botsOk = !!o.bots && !rm.compat; rm.bots = false; rm.pub = false; rows = 0; phase = ''; again = null; jst = { phase: 'idle', code: '', msg: '', who: '' }; show('pick'); };
       const play = () => {
         if (done || screen !== 'lobby' || net.role !== 'host' || mode !== 'room' || rm.state === 'game') return;
