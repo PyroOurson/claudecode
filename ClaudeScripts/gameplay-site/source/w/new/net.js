@@ -200,7 +200,34 @@ const NET_CSS = `.g-lobby{position:absolute;inset:0;z-index:200;display:flex;ove
 @keyframes glspin{to{transform:rotate(360deg)}}
 @keyframes glpulse{50%{opacity:.3;transform:scale(.75)}}
 @keyframes glin{from{opacity:0;transform:translateY(6px)}}
-@media (prefers-reduced-motion:reduce){.g-lobby,.g-lobby *{transition:none!important;animation:none!important}}`;
+@media (prefers-reduced-motion:reduce){.g-lobby,.g-lobby *{transition:none!important;animation:none!important}}
+.g-lobby .gl-foot.gl-foot1{grid-template-columns:minmax(0,1fr);justify-items:center}
+.g-lobby .gl-foot1 .gl-act{grid-column:1}
+.g-lobby .gl-foot1 .gl-hint{grid-column:1;justify-self:center;text-align:center}
+.g-lobby .gl-foot1 .gl-hint:empty{display:none}
+.g-lobby .gl-pkh{margin:0;font-size:24px;font-weight:800;letter-spacing:-.02em;color:var(--gl-fg);text-align:center}
+.g-lobby .gl-pk .gl-body{display:flex}
+.g-lobby .gl-jbody{display:flex;flex-direction:column;gap:28px;min-height:260px}
+.g-lobby .gl-jcode h2,.g-lobby .gl-pkl h2{margin:0 0 12px;font-size:20px;font-weight:700;color:var(--gl-fg)}
+.g-lobby .gl-jcode .gl-join{width:320px}
+.g-lobby .gl-pubj .gl-av{width:40px;height:40px;font-size:15px;flex:none}
+.g-lobby .gl-pubj{min-width:250px;flex:1 1 250px;max-width:100%}
+.g-lobby .gl-pubj i{margin-left:auto}
+.g-lobby .gl-pubn b{max-width:220px}
+.g-lobby .gl-jst{grid-column:auto;flex:1;gap:10px}
+.g-lobby .gl-jst .gl-txt{margin:0;color:var(--gl-muted);font-size:17px;max-width:520px}
+.g-lobby .gl-jst .gl-txt.gl-bad{color:var(--gl-danger)}
+.g-lobby .gl-jact{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:18px}
+.g-lobby .gl-jact .gl-play{min-width:200px;height:54px;font-size:17px}
+.g-lobby .gl-spin{width:44px;height:44px;border-radius:50%;border:4px solid var(--gl-chip);border-top-color:var(--gl-accent);animation:glspin .8s linear infinite;margin-bottom:8px}
+.g-lobby .gl-pubbox{min-width:200px}
+.g-lobby .gl-pubt{display:flex;align-items:center;gap:10px;font-size:22px;letter-spacing:0}
+.g-lobby .gl-pubt svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.g-lobby.gl-stack .gl-jcode .gl-join{width:100%}
+.g-lobby.gl-stack .gl-pkh{font-size:20px}
+.g-lobby.gl-stack .gl-jact .gl-play{min-width:0;flex:1 1 140px}
+@keyframes glspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.g-lobby .gl-spin{animation-duration:2.4s}}`;
 const NET_I = {
   crown: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5zM5 21h14"/></svg>',
   x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
@@ -215,6 +242,7 @@ const NET_I = {
   lock: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
   globe: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
   pen: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></svg>',
+  users: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.8a3.5 3.5 0 0 1 0 6.4M17.5 14.2A6.5 6.5 0 0 1 21.5 20"/></svg>',
   bot: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4M9 13v1M15 13v1M9.5 17h5"/><circle cx="12" cy="3.5" r=".5"/></svg>'
 };
 const netEsc = s => String(s == null ? '' : s).replace(/[&<>"'`]/g, c => '&#' + c.charCodeAt(0) + ';');
@@ -258,10 +286,27 @@ const netSizes = o => {
 };
 const NET_TURN = 'staticauth.openrelay.metered.ca', NET_TURN_KEY = 'openrelayprojectsecret';
 let netIceC = null;
+const netDiag = (a, d) => { try { DIAG.ev('net', Object.assign({ a }, d || {})); } catch (e) {} };
+const netIceRemote = async () => {
+  const urls = typeof NET_ICE_URLS !== 'undefined' && Array.isArray(NET_ICE_URLS) ? NET_ICE_URLS : [];
+  for (const u of urls) {
+    const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 3500);
+    try {
+      const r = await fetch(u, { signal: ctl.signal, credentials: 'omit', cache: 'no-store' });
+      if (!r.ok) continue;
+      const j = await r.json(), l = j && (j.iceServers || j.ice_servers);
+      const ok = (Array.isArray(l) ? l : l ? [l] : []).filter(x => x && (typeof x.urls === 'string' || Array.isArray(x.urls))).slice(0, 6).map(x => ({ urls: x.urls, username: x.username, credential: x.credential }));
+      if (ok.length) { netDiag('ice-remote', { u: u.slice(0, 80), n: ok.length }); return ok; }
+    } catch (e) {} finally { clearTimeout(tm); }
+  }
+  return [];
+};
 const netIce = () => {
-  if (netIceC && Date.now() - netIceC.t < 6 * 3600e3) return netIceC.p;
+  if (netIceC && Date.now() - netIceC.t < 3600e3) return netIceC.p;
   const p = (async () => {
     const ice = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }];
+    const more = await netIceRemote();
+    more.forEach(x => ice.push(x));
     try {
       const te = new TextEncoder(), user = (Math.floor(Date.now() / 1000) + 86400) + ':gameplay';
       const k = await crypto.subtle.importKey('raw', te.encode(NET_TURN_KEY), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
@@ -273,6 +318,206 @@ const netIce = () => {
   netIceC = { t: Date.now(), p };
   return p;
 };
+const netB64 = u => btoa(String.fromCharCode.apply(null, new Uint8Array(u)));
+const netUnb = s => Uint8Array.from(atob(String(s)), c => c.charCodeAt(0));
+const netRtOk = () => !!(typeof SB !== 'undefined' && SB.on && !window.__gpSbDown && window.crypto && crypto.subtle && typeof sbClient === 'function');
+const netRtName = (gid, code, id) => 'gp:' + gid + ':' + code + (id ? ':' + id : '');
+const netRtKeys = () => crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveBits']);
+const netRtPub = async k => netB64(await crypto.subtle.exportKey('raw', k.publicKey));
+const netRtShare = async (priv, pub) => {
+  const pk = await crypto.subtle.importKey('raw', netUnb(pub), { name: 'ECDH', namedCurve: 'P-256' }, false, []);
+  const bits = await crypto.subtle.deriveBits({ name: 'ECDH', public: pk }, priv, 256);
+  return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bits)), x => x.toString(16).padStart(2, '0')).join('').slice(0, 32);
+};
+const netRtSub = (ch, ms) => new Promise((res, rej) => {
+  let done = false;
+  const t = setTimeout(() => { if (!done) { done = true; rej({ type: 'network' }); } }, ms);
+  try {
+    ch.subscribe(st => {
+      if (done) return;
+      if (st === 'SUBSCRIBED') { done = true; clearTimeout(t); res(); }
+      else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT' || st === 'CLOSED') { done = true; clearTimeout(t); rej({ type: 'network' }); }
+    });
+  } catch (e) { done = true; clearTimeout(t); rej({ type: 'network' }); }
+});
+function netRtLink(sb, name, role, o) {
+  const ls = {}, emit = (t, a) => (ls[t] || []).slice().forEach(f => { try { f(a); } catch (e) { console.error(e); } });
+  const L = { open: false, serialization: 'json', peerConnection: null, dataChannel: null, slow: true, kind: 'relay', rt: true };
+  let ch = null, dead = false, sq = 0, rq = 0, out = [], ft = 0, last = 0, pc = null, dc = null, mode = null, ckn = 0, dcOpen = null, wantGo = null;
+  const dcReady = new Promise(r => { dcOpen = r; });
+  const say = (event, payload) => { if (!dead && ch) { try { const r = ch.send({ type: 'broadcast', event, payload }); if (r && r.catch) r.catch(() => {}); } catch (e) {} } };
+  const flush = () => { ft = 0; if (dead || !out.length) return; const b = out; out = []; last = Date.now(); say('m', { s: ++sq, b }); };
+  const push = m => { out.push(m); if (!ft) ft = setTimeout(flush, Date.now() - last > 90 ? 0 : 70); };
+  L.on = (t, f) => { (ls[t] = ls[t] || []).push(f); return L; };
+  L.send = m => {
+    if (dead) return;
+    if (dc && dc.readyState === 'open' && L.kind === 'p2p') { try { dc.send(JSON.stringify(m)); return; } catch (e) {} }
+    let s = null;
+    try { s = JSON.stringify(m); } catch (e) { return; }
+    if (s.length < 60000) { push(m); return; }
+    const id = ++ckn, n = Math.ceil(s.length / 40000);
+    for (let i = 0; i < n; i++) push({ __ck: [id, i, n, s.slice(i * 40000, i * 40000 + 40000)] });
+  };
+  const end = why => {
+    if (dead) return;
+    const was = L.open;
+    dead = true; L.open = false; clearTimeout(ft);
+    try { if (dc) dc.close(); } catch (e) {}
+    try { if (pc) pc.close(); } catch (e) {}
+    const c = ch; ch = null;
+    if (c) { try { sb.removeChannel(c); } catch (e) {} }
+    netDiag('rt-link-end', { role, why: String(why || ''), kind: L.kind });
+    if (was) emit('close'); else emit('error', { type: why || 'network' });
+  };
+  L.close = () => { if (dead) return; say('x', { why: 'bye' }); setTimeout(() => end('closed'), 0); };
+  const wire = d => {
+    dc = d;
+    try { d.binaryType = 'arraybuffer'; } catch (e) {}
+    d.onopen = () => { netDiag('rt-dc-open', { role }); dcOpen(true); go(); };
+    d.onmessage = e => {
+      if (dead) return;
+      let v = e.data;
+      try { if (typeof v !== 'string') v = new TextDecoder().decode(v); v = JSON.parse(v); } catch (x) { return; }
+      emit('data', v);
+    };
+    d.onclose = () => { if (L.kind === 'p2p' && !dead) end('dc-closed'); };
+    d.onerror = () => { if (L.kind === 'p2p' && !dead) end('dc-error'); };
+  };
+  const rtc = async () => {
+    if (pc || dead || typeof RTCPeerConnection !== 'function') return;
+    const cfg = { iceServers: await netIce(), iceCandidatePoolSize: 2 };
+    if (o && o.relayOnly) cfg.iceTransportPolicy = 'relay';
+    if (dead) return;
+    pc = new RTCPeerConnection(cfg);
+    L.peerConnection = pc;
+    pc.onicecandidate = e => { if (e.candidate) say('s', { c: e.candidate.toJSON ? e.candidate.toJSON() : e.candidate }); };
+    pc.oniceconnectionstatechange = () => { if (pc && pc.iceConnectionState === 'failed') { if (L.kind === 'p2p' && !dead) end('ice-failed'); else dcOpen(false); } };
+    if (role === 'guest') {
+      wire(pc.createDataChannel('gp', { ordered: true }));
+      const of = await pc.createOffer();
+      await pc.setLocalDescription(of);
+      say('s', { d: { type: pc.localDescription.type, sdp: pc.localDescription.sdp } });
+    } else pc.ondatachannel = e => { if (e.channel && e.channel.label === 'gp') wire(e.channel); };
+  };
+  const sigIn = async p => {
+    try {
+      if (!p || dead) return;
+      if (p.d) {
+        if (!pc) await rtc();
+        if (!pc) return;
+        await pc.setRemoteDescription(p.d);
+        if (p.d.type === 'offer') { const an = await pc.createAnswer(); await pc.setLocalDescription(an); say('s', { d: { type: pc.localDescription.type, sdp: pc.localDescription.sdp } }); }
+      } else if (p.c && pc) await pc.addIceCandidate(p.c).catch(() => {});
+    } catch (e) { netDiag('rt-sig-error', { role, m: String(e && e.message || e).slice(0, 120) }); }
+  };
+  const go = () => {
+    if (dead || L.open || !mode) return;
+    if (mode === 'p2p' && !(dc && dc.readyState === 'open')) return;
+    L.kind = mode; L.slow = mode !== 'p2p'; L.dataChannel = mode === 'p2p' ? dc : null;
+    if (mode !== 'p2p') { try { if (dc) dc.close(); } catch (e) {} try { if (pc) pc.close(); } catch (e) {} pc = null; dc = null; L.peerConnection = null; }
+    L.open = true;
+    netDiag('rt-link-open', { role, kind: L.kind });
+    emit('open');
+  };
+  L.start = async () => {
+    try {
+      ch = sb.channel(name, { config: { broadcast: { self: false, ack: false } } });
+      ch.on('broadcast', { event: 'm' }, m => {
+        const p = m && m.payload;
+        if (dead || !p || !Array.isArray(p.b)) return;
+        if (p.s !== rq + 1) { end('gap'); return; }
+        rq = p.s;
+        p.b.forEach(d => { if (!dead) emit('data', d); });
+      });
+      ch.on('broadcast', { event: 's' }, m => sigIn(m && m.payload));
+      ch.on('broadcast', { event: 'x' }, () => end('peer-closed'));
+      ch.on('broadcast', { event: 'r' }, () => { if (role === 'guest' && wantGo) wantGo(); });
+      ch.on('broadcast', { event: 'g' }, m => { if (role === 'hub' && !mode) { mode = m && m.payload && m.payload.k === 'p2p' ? 'p2p' : 'relay'; go(); if (mode === 'p2p') setTimeout(() => { if (!L.open && !dead) end('timeout'); }, 8000); } });
+      await netRtSub(ch, 7000);
+      if (dead) return;
+      if (role === 'hub') {
+        let n = 0;
+        const t = setInterval(() => { if (dead || L.open || mode || ++n > 14) return clearInterval(t); say('r', { t: Date.now() }); }, 500);
+        say('r', { t: Date.now() });
+        setTimeout(() => { if (!L.open && !dead) end('timeout'); }, 20000);
+        return;
+      }
+      await new Promise((res, rej) => { const t = setTimeout(() => rej({ type: 'timeout' }), 6000); wantGo = () => { clearTimeout(t); wantGo = null; res(); }; });
+      if (dead) return;
+      let p2p = false;
+      if (o && o.p2p && typeof RTCPeerConnection === 'function') {
+        rtc().catch(() => dcOpen(false));
+        p2p = await Promise.race([dcReady, new Promise(r => setTimeout(() => r(false), o.wait || 6500))]);
+      }
+      if (dead) return;
+      mode = p2p ? 'p2p' : 'relay';
+      say('g', { k: mode });
+      setTimeout(() => say('g', { k: mode }), 400);
+      go();
+    } catch (e) { end(e && e.type || 'network'); }
+  };
+  return L;
+}
+async function netRtDoor(sb, gid, code, hubId, onLink) {
+  const keys = await netRtKeys(), pub = await netRtPub(keys), key = 'hub:' + hubId, seen = new Map(), t0 = Date.now();
+  let dead = false, sync = null;
+  const first = new Promise(r => { sync = r; });
+  const ch = sb.channel(netRtName(gid, code), { config: { broadcast: { self: false, ack: false }, presence: { key } } });
+  ch.on('presence', { event: 'sync' }, () => sync(ch.presenceState()));
+  ch.on('broadcast', { event: 'k' }, async m => {
+    const p = m && m.payload;
+    if (dead || !p || typeof p.n !== 'string' || typeof p.p !== 'string' || p.n.length > 24 || p.p.length > 200) return;
+    const send = () => { try { const r = ch.send({ type: 'broadcast', event: 'o', payload: { n: p.n, p: pub } }); if (r && r.catch) r.catch(() => {}); } catch (e) {} };
+    if (seen.has(p.n)) return send();
+    if (seen.size > 400) seen.clear();
+    seen.set(p.n, 1);
+    let id;
+    try { id = await netRtShare(keys.privateKey, p.p); } catch (e) { return; }
+    if (dead) return;
+    const link = netRtLink(sb, netRtName(gid, code, id), 'hub', {});
+    onLink(link);
+    await link.start();
+    send();
+  });
+  await netRtSub(ch, 7000);
+  try { await ch.track({ t: t0 }); } catch (e) {}
+  const st = await Promise.race([first, new Promise(r => setTimeout(() => r(null), 2500))]);
+  let taken = false;
+  if (st) for (const k in st) { if (k.indexOf('hub:') === 0 && k !== key && (st[k] || []).some(x => (+x.t || 0) <= t0)) taken = true; }
+  const close = () => { if (dead) return; dead = true; try { sb.removeChannel(ch); } catch (e) {} };
+  if (taken) close();
+  return { taken, close };
+}
+async function netRtDial(sb, gid, code, o, alive) {
+  let sync = null, got = null;
+  const first = new Promise(r => { sync = r; });
+  const keys = await netRtKeys(), pub = await netRtPub(keys), n = netUid();
+  const ch = sb.channel(netRtName(gid, code), { config: { broadcast: { self: false, ack: false }, presence: { key: '' } } });
+  const reply = new Promise(r => { got = r; });
+  ch.on('presence', { event: 'sync' }, () => sync(ch.presenceState()));
+  ch.on('broadcast', { event: 'o' }, m => { const p = m && m.payload; if (p && p.n === n && typeof p.p === 'string') got(p.p); });
+  const drop = () => { try { sb.removeChannel(ch); } catch (e) {} };
+  try {
+    await netRtSub(ch, 7000);
+    const st = await Promise.race([first, new Promise(r => setTimeout(() => r(null), 3000))]);
+    if (!alive()) throw { type: 'cancel' };
+    if (st && !Object.keys(st).some(k => k.indexOf('hub:') === 0)) throw { type: 'peer-unavailable' };
+    let hp = null;
+    for (let i = 0; i < 7 && !hp; i++) {
+      try { const r = ch.send({ type: 'broadcast', event: 'k', payload: { n, p: pub } }); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+      hp = await Promise.race([reply, new Promise(r => setTimeout(() => r(null), 900))]);
+      if (!alive()) throw { type: 'cancel' };
+    }
+    if (!hp) throw { type: st ? 'timeout' : 'peer-unavailable' };
+    const id = await netRtShare(keys.privateKey, hp);
+    const link = netRtLink(sb, netRtName(gid, code, id), 'guest', o);
+    const opened = new Promise((res, rej) => { link.on('open', () => res(link)); link.on('error', e => rej(e && e.type ? e : { type: 'network' })); });
+    link.start();
+    const out = await Promise.race([opened, new Promise((r, j) => setTimeout(() => j({ type: 'timeout' }), 16000))]).catch(e => { try { link.close(); } catch (x) {} throw e; });
+    if (!alive()) { try { out.close(); } catch (x) {} throw { type: 'cancel' }; }
+    return out;
+  } finally { drop(); }
+}
 const NET_SOFT = ['network', 'server-error', 'socket-error', 'socket-closed', 'load'];
 const netWhy = (e, code) => {
   const t = e && e.type;
@@ -289,7 +534,7 @@ function makeNet(g, add) {
   const emit = (t, ...a) => (ls[t] || []).slice().forEach(f => { try { f(...a); } catch (e) { console.error(e); } });
   let peer = null, conn = null, hb = 0, lastRx = 0, gen = 0, mode = null, note = null, ckId = 0, pairHid = false, resumed = false, nudge = null;
   const now = () => Date.now();
-  const lim = hid => (document.hidden || hid ? 180000 : 7000);
+  const lim = (hid, slow) => (document.hidden || hid ? 180000 : slow ? 16000 : 7000);
   const nap = ms => new Promise(r => { const t = setTimeout(() => { nudge = null; r(); }, ms); nudge = () => { clearTimeout(t); nudge = null; r(); }; });
   const pid = code => 'gameplay-' + g.id + '-' + code;
   const sleepMs = ms => new Promise(r => setTimeout(r, ms));
@@ -396,22 +641,25 @@ function makeNet(g, add) {
       try { p.reconnect(); } catch (e) {}
     }, 1000);
   };
-  const newPeer = async (id, my, relay) => {
+  const newPeer = async (id, my, relay, quiet) => {
     let Peer;
-    try { Peer = await loadPeer(); } catch (e) { try { Peer = await loadPeer(); } catch (x) { throw { type: 'load' }; } }
+    try { Peer = await loadPeer(); } catch (e) { try { Peer = await loadPeer(); } catch (x) { netDiag('peer-lib-fail'); throw { type: 'load' }; } }
     const config = { iceServers: await netIce(), sdpSemantics: 'unified-plan', iceCandidatePoolSize: 4 };
     if (relay) config.iceTransportPolicy = 'relay';
     let last = null;
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < (quiet ? 2 : 3); i++) {
       if (i) {
-        if (note) note(netT('Server busy, trying again ({n}/3)…').replace('{n}', i + 1));
+        if (note && !quiet) note(netT('Server busy, trying again ({n}/3)…').replace('{n}', i + 1));
         await sleepMs(1500 * i);
       }
       if (my != null && my !== gen) throw { type: 'cancel' };
-      const p = new Peer(id, { debug: 0, config });
-      try { await wait((res, rej) => { p.on('open', res); p.on('error', rej); }, 10000, 'network'); }
-      catch (e) { try { p.destroy(); } catch (x) {} last = e; if (!e || NET_SOFT.indexOf(e.type) < 0) throw e; continue; }
-      p.on('error', e => emit('error', e));
+      const p = new Peer(id, { debug: 0, config }), t0 = now();
+      try { await wait((res, rej) => { p.on('open', res); p.on('error', rej); }, quiet ? 7000 : 10000, 'network'); }
+      catch (e) { try { p.destroy(); } catch (x) {} last = e; netDiag('peer-open-fail', { host: !!id, type: e && e.type || 'unknown', n: i + 1, ms: now() - t0 }); if (!e || NET_SOFT.indexOf(e.type) < 0) throw e; continue; }
+      if (my != null && my !== gen) { try { p.destroy(); } catch (x) {} throw { type: 'cancel' }; }
+      netDiag('peer-open', { host: !!id, ms: now() - t0, relay: !!relay });
+      p.on('error', e => { netDiag('peer-error', { type: e && e.type || 'unknown' }); emit('error', e); });
+      p.on('disconnected', () => netDiag('peer-disconnected'));
       keep(p);
       return p;
     }
@@ -436,6 +684,7 @@ function makeNet(g, add) {
     try { c = p.connect(pid(code), { reliable: true, serialization: 'json' }); } catch (e) { return fin({ type: 'network' }); }
     if (!c) return fin({ type: 'network' });
     c.on('open', () => {
+      if (done === null) return fin(null, c);
       const say = () => { if (!settled) tx(c, hello || { __hey: 1 }); };
       say(); rs = setInterval(say, 1000);
     });
@@ -453,7 +702,33 @@ function makeNet(g, add) {
     try { return await dial1(p, code, my, hello, done); }
     catch (e) { if (e && e.type === 'timeout' && hello && my === gen && p && !p.destroyed) return dial1(p, code, my, hello, done); throw e; }
   };
-  const rm = { pub: false, me: null, key: null, name: '', hostId: null, list: [], guests: new Map(), seq: 0, min: 2, max: 4, sizes: [2, 3, 4], state: 'lobby', conn: null, lastRx: 0, hb: 0, ui: null, busy: false, reconn: false, pendingGo: null, inGame: false, leader: null, chat: [], rate: new Map(), go: null, hubHid: false, rt0: 0, compat: false, compatO: null, tick: 0, lastTick: 0, bots: false, botsOk: false, renamed: false };
+  const hand = (c, my, hello, done, ms) => new Promise((res, rej) => {
+    let fin = false, rs = 0;
+    const end = (e, v) => { if (fin) return; fin = true; clearTimeout(t); clearInterval(rs); if (e) { try { c.close(); } catch (x) {} rej(e); } else res(v); };
+    const t = setTimeout(() => end({ type: 'timeout' }), ms);
+    c.on('data', d0 => {
+      if (fin) return;
+      const d = unck(c, d0);
+      if (d === null) return;
+      if (my !== gen) return end({ type: 'cancel' });
+      const r = done(d);
+      if (r === true) end(null, c); else if (r) end(r);
+    });
+    c.on('close', () => end({ type: 'timeout' }));
+    c.on('error', () => end({ type: 'network' }));
+    const say = () => { if (!fin) tx(c, hello); };
+    say(); rs = setInterval(say, 1000);
+  });
+  const slowFast = (c, m) => {
+    if (!c || !c.open) return;
+    const q = c.__q || (c.__q = new Map());
+    let k = '';
+    for (const x in m) { k = x; break; }
+    q.set(k + '|' + (typeof m.t === 'string' ? m.t : typeof m.k === 'string' ? m.k : ''), m);
+    if (c.__qt) return;
+    c.__qt = setTimeout(() => { c.__qt = 0; const l = [...q.values()]; q.clear(); l.forEach(x => tx(c, x)); }, 120);
+  };
+  const rm = { door: null, via: '', pub: false, me: null, key: null, name: '', hostId: null, list: [], guests: new Map(), seq: 0, min: 2, max: 4, sizes: [2, 3, 4], state: 'lobby', conn: null, lastRx: 0, hb: 0, ui: null, busy: false, reconn: false, pendingGo: null, inGame: false, leader: null, chat: [], rate: new Map(), go: null, hubHid: false, rt0: 0, compat: false, compatO: null, tick: 0, lastTick: 0, bots: false, botsOk: false, renamed: false };
   const leaderId = () => {
     if (net.role === 'host') return rm.leader && (rm.leader === rm.me || rm.guests.has(rm.leader)) ? rm.leader : rm.me;
     return rm.leader || rm.hostId;
@@ -558,19 +833,11 @@ function makeNet(g, add) {
     sysLine(v ? 'Bots will fill the empty seats' : 'Bots are off');
     pushList();
   };
-  const setPub = v => {
-    v = !!v;
-    if (rm.compat || rm.pub === v) return;
-    rm.pub = v;
-    sysLine(v ? 'The party is now public' : 'The party is now invite only');
-    pushList();
-  };
   const ctl = (a, id, n) => {
     if (a === 'kick') { if (typeof id === 'string' && rm.guests.has(id)) removeGuest(id, 'kick'); }
     else if (a === 'lead') { if (typeof id === 'string') setLeader(id); }
     else if (a === 'size') setSize(n);
     else if (a === 'bots') setBots(n);
-    else if (a === 'pub') setPub(n);
     else if (a === 'play') { if (rm.ui && rm.ui.play) rm.ui.play(); }
   };
   const leadAct = (a, id, n) => {
@@ -649,8 +916,8 @@ function makeNet(g, add) {
     rm.guests.forEach(gs => {
       if (!gs.conn) return;
       if (stall) gs.lastRx = Math.max(gs.lastRx, t - 1000);
-      if (!gs.conn.open || t - gs.lastRx > lim(gs.hid)) return goAway(gs);
-      ping(gs.conn, t);
+      if (!gs.conn.open || t - gs.lastRx > lim(gs.hid, gs.conn.slow)) return goAway(gs);
+      if (!gs.conn.slow || rm.tick % 3 === 0) ping(gs.conn, t);
       if (gs.inGame || rm.state !== 'game') mx = Math.max(mx, gs.rtt || 0);
     });
     net.rtt = mx;
@@ -706,13 +973,53 @@ function makeNet(g, add) {
     if (d.__wel || d.__full || d.__hi || d.__ch) return;
     if (rm.state === 'game' && rm.inGame) emit('data', d, rm.hostId);
   };
-  const guestConnect = async (code, my) => {
+  const guestConnect = async (code, my, opt) => {
+    opt = opt || {};
     let w = null;
-    const c = await dial(peer, code, my, { __hello: { id: rm.me, key: rm.key, name: rm.name, tab: NET_TAB } }, d => {
-      if (d && d.__full) return { type: d.why ? 'dup' : 'room-full' };
-      if (d && d.__wel) { w = d.__wel; return true; }
-      return false;
-    });
+    const hello = { __hello: { id: rm.me, key: rm.key, name: rm.name, tab: NET_TAB } };
+    const done = d => { if (d && d.__full) return { type: d.why ? 'dup' : 'room-full' }; if (d && d.__wel) { w = d.__wel; return true; } return false; };
+    const alive = () => my === gen, t0 = now(), rtOk = netRtOk();
+    let won = null, over = false, pe = null, re = null, pc0 = null;
+    const lose = c => { if (c && c !== won) { try { c.close(); } catch (e) {} } };
+    const viaPeer = (async () => {
+      if (opt.noPeer) throw { type: 'off' };
+      if (!peer || peer.destroyed) { const q = await newPeer(undefined, my, !!opt.relayOnly, rtOk); if (my !== gen) { try { q.destroy(); } catch (e) {} throw { type: 'cancel' }; } peer = q; }
+      else if (peer.disconnected) { try { peer.reconnect(); } catch (e) {} await sleepMs(1200); }
+      const c = await dial1(peer, code, my, null, null);
+      pc0 = c;
+      if (over) { lose(c); throw { type: 'cancel' }; }
+      return c;
+    })();
+    viaPeer.catch(e => { pe = e || { type: 'network' }; netDiag('join-peer-fail', { type: pe.type, ms: now() - t0 }); });
+    const viaRt = (async () => {
+      if (!rtOk) throw { type: 'off' };
+      await Promise.race([viaPeer.then(() => new Promise(() => {}), () => {}), sleepMs(opt.rtFirst ? 0 : 1800)]);
+      if (over || my !== gen) throw { type: 'cancel' };
+      if (note) note(netT('Trying another route…'));
+      const sb = await sbClient();
+      const l = await netRtDial(sb, g.id, code, { p2p: !opt.noP2p && !(pe && pe.type === 'ice'), relayOnly: !!opt.relayOnly, wait: 5500 }, () => alive() && !over);
+      if (over) { lose(l); throw { type: 'cancel' }; }
+      return l;
+    })();
+    viaRt.catch(e => { re = e || { type: 'network' }; if (re.type !== 'off' && re.type !== 'cancel') netDiag('join-rt-fail', { type: re.type, ms: now() - t0 }); });
+    let c = null;
+    try { c = await Promise.any([viaPeer, viaRt]); }
+    catch (x) {
+      over = true;
+      if (my !== gen) throw { type: 'cancel' };
+      const a = pe && pe.type, b = re && re.type;
+      const pick = b === 'peer-unavailable' && (a === 'peer-unavailable' || !a || a === 'off' || NET_SOFT.indexOf(a) >= 0) ? 'peer-unavailable' : a === 'peer-unavailable' && (b === 'off' || !b) ? 'peer-unavailable' : a === 'ice' ? 'ice' : b && b !== 'off' && b !== 'cancel' ? b : a && a !== 'off' ? a : 'network';
+      throw { type: pick };
+    }
+    won = c; over = true;
+    viaPeer.then(lose, () => {}); viaRt.then(lose, () => {});
+    if (my !== gen) { try { c.close(); } catch (e) {} throw { type: 'cancel' }; }
+    const via = c.rt ? (c.kind === 'p2p' ? 'rt-p2p' : 'rt-relay') : 'peerjs';
+    netDiag('join-link', { via, ms: now() - t0 });
+    try { await hand(c, my, hello, done, 9000); }
+    catch (e) { netDiag('join-hand-fail', { via, type: e && e.type }); throw e; }
+    netDiag('join-ok', { via, ms: now() - t0 });
+    rm.via = via;
     return { c, w };
   };
   const guestAttach = (c, w) => {
@@ -737,8 +1044,8 @@ function makeNet(g, add) {
       const t = now();
       if (t - last > 2500) rm.lastRx = Math.max(rm.lastRx, t - 1000);
       last = t;
-      if (!c.open || t - rm.lastRx > lim(rm.hubHid)) return guestLost();
-      ping(c, t);
+      if (!c.open || t - rm.lastRx > lim(rm.hubHid, c.slow)) return guestLost();
+      if (!c.slow || sv % 3 === 0) ping(c, t);
       if (++sv % 5 === 0) sesSave();
     }, 1000);
     sesSave();
@@ -753,15 +1060,14 @@ function makeNet(g, add) {
     try { c.close(); } catch (e) {}
     if (rm.ui) rm.ui.update();
     const my = gen, code = net.code;
-    let why = 'lost';
+    let why = 'lost', ice = 0;
     rm.rt0 = now();
+    netDiag('guest-lost', { via: rm.via });
     while (my === gen && (now() - rm.rt0 < 45000 || (document.hidden && now() - rm.rt0 < 600000))) {
       await nap(1200);
       if (my !== gen) return;
       try {
-        if (!peer || peer.destroyed) { const p = await newPeer(undefined, my); if (my !== gen) { p.destroy(); return; } peer = p; }
-        else if (peer.disconnected) { try { peer.reconnect(); } catch (e) {} await nap(1500); }
-        const { c: c2, w } = await guestConnect(code, my);
+        const { c: c2, w } = await guestConnect(code, my, { relayOnly: ice > 1, noP2p: ice > 2 });
         if (my !== gen) { try { c2.close(); } catch (e) {} return; }
         guestAttach(c2, w);
         if (rm.state === 'game' && rm.inGame && !w.inGame) {
@@ -773,17 +1079,21 @@ function makeNet(g, add) {
       } catch (e) {
         const t = e && e.type;
         why = t === 'peer-unavailable' ? 'host-left' : 'lost';
+        if (t === 'ice') ice++;
+        if (t === 'cancel') return;
         if (t === 'room-full' || t === 'dup') { why = 'lost'; break; }
       }
     }
     if (my === gen) guestEnd(why);
   };
   const shut = (polite, keep) => {
-    keep = keep || (mode === 'room' && !!invite && invite.id === g.id && !!invite.code && invite.code === net.code);
-    if (keep) sesSave(); else if (mode === 'room') netSes(null);
+    keep = (keep && mode === 'room') || (mode === 'room' && !!invite && invite.id === g.id && !!invite.code && invite.code === net.code);
+    if (keep) sesSave(); else { const o = netSes(); if (o && o.g === g.id) netSes(null); }
+    if (mode || peer || rm.door) netDiag('shut', { mode, role: net.role, keep: !!keep, polite: !!polite });
     gen++; clearInterval(hb); clearInterval(rm.hb);
-    const c = conn, p = peer, gc = rm.conn, gs = [...rm.guests.values()], wasHost = mode === 'room' && net.role === 'host';
-    conn = null; peer = null; rm.conn = null; rm.reconn = false;
+    if (nudge) nudge();
+    const c = conn, p = peer, gc = rm.conn, gs = [...rm.guests.values()], wasHost = mode === 'room' && net.role === 'host', door = rm.door;
+    conn = null; peer = null; rm.conn = null; rm.reconn = false; rm.door = null; rm.via = '';
     gs.forEach(x => clearTimeout(x.gt)); rm.guests.clear();
     let delay = 0;
     if (polite && mode === 'room') {
@@ -795,6 +1105,7 @@ function makeNet(g, add) {
       try { if (gc) gc.close(); } catch (e) {}
       gs.forEach(x => { try { if (x.conn) x.conn.close(); } catch (e) {} });
       try { if (p) p.destroy(); } catch (e) {}
+      try { if (door) door.close(); } catch (e) {}
     };
     if (delay) setTimeout(bye, delay); else bye();
     net.role = null; net.code = null; mode = null; net.rtt = 0;
@@ -812,26 +1123,55 @@ function makeNet(g, add) {
   };
   const roomHost = async res => {
     shut(true);
-    const my = gen, want = res && res.code, t0 = now();
-    let p = null, code = null, left = 5;
-    while (!p) {
-      const old = !!want && now() - t0 < 20000;
+    const my = gen, want = res && res.code, t0 = now(), rtOk = netRtOk();
+    const me = want && res.me ? res.me : netUid();
+    let p = null, door = null, code = null, left = 6, ready = false;
+    const early = [];
+    const onLink = l => { if (my !== gen) { try { l.close(); } catch (e) {} return; } if (ready) hostConn(l, my); else early.push(l); };
+    const adopt = (c, n) => {
+      if (my !== gen || net.code !== c || peer) return;
+      newPeer(pid(c), my, false, true).then(q => {
+        if (my !== gen || net.code !== c || peer) { try { q.destroy(); } catch (e) {} return; }
+        peer = q; q.on('connection', x => hostConn(x, my)); netDiag('host-peer-late', { n });
+      }, e => { if (n < 8 && my === gen && net.code === c && !peer && (!e || e.type !== 'cancel')) setTimeout(() => adopt(c, n + 1), e && e.type === 'unavailable-id' ? 2500 : 6000); });
+    };
+    netDiag('host-start', { restore: !!want, rt: rtOk });
+    for (;;) {
+      const old = !!want && now() - t0 < 15000;
       code = old ? want : Array.from({ length: 4 }, () => CODE_ABC[Math.floor(Math.random() * CODE_ABC.length)]).join('');
-      try { p = await newPeer(pid(code), my); }
-      catch (e) {
-        if (!e || e.type !== 'unavailable-id') throw e;
+      let pr = null, dr = null;
+      const pP = newPeer(pid(code), my, false, rtOk).then(x => ({ p: x }), e => ({ e: e || { type: 'network' } }));
+      const dP = rtOk ? sbClient().then(sb => netRtDoor(sb, g.id, code, me, onLink)).then(d => ({ d }), e => ({ e: e || { type: 'network' } })) : Promise.resolve({ e: { type: 'off' } });
+      pP.then(x => { pr = x; }); dP.then(x => { dr = x; });
+      await Promise.race([Promise.all([pP, dP]), dP.then(x => x.d && !x.d.taken ? sleepMs(3000) : new Promise(() => {})), pP.then(x => x.p ? sleepMs(2500) : new Promise(() => {}))]);
+      if (my !== gen) { pP.then(x => { if (x.p) { try { x.p.destroy(); } catch (e) {} } }); dP.then(x => { if (x.d) x.d.close(); }); return null; }
+      const pTaken = !!(pr && pr.e && pr.e.type === 'unavailable-id'), dTaken = !!(dr && dr.d && dr.d.taken);
+      if (dTaken || (pTaken && !(old && dr && dr.d))) {
+        pP.then(x => { if (x.p) { try { x.p.destroy(); } catch (e) {} } }); dP.then(x => { if (x.d) x.d.close(); });
+        early.splice(0).forEach(l => { try { l.close(); } catch (e) {} });
         if (old) await nap(1200); else if (--left <= 0) throw { type: 'network' };
         if (my !== gen) return null;
+        continue;
       }
+      p = pr && pr.p || null; door = dr && dr.d && !dr.d.taken ? dr.d : null;
+      if (!p && !door) {
+        if (!pr || !dr) { const both = await Promise.all([pP, dP]); if (my !== gen) { if (both[0].p) { try { both[0].p.destroy(); } catch (e) {} } if (both[1].d) both[1].d.close(); return null; } p = both[0].p || null; door = both[1].d && !both[1].d.taken ? both[1].d : null; pr = both[0]; }
+        if (!p && !door) throw (pr && pr.e && pr.e.type && pr.e.type !== 'off' ? pr.e : { type: 'network' });
+      }
+      if (!door && rtOk) dP.then(x => { if (x.d && !x.d.taken && my === gen && net.code === code && !rm.door) { rm.door = x.d; netDiag('host-door-late'); } else if (x.d) x.d.close(); });
+      if (!p) { const c0 = code; pP.then(x => { if (x.p) { if (my === gen && net.code === c0 && !peer) { peer = x.p; x.p.on('connection', c => hostConn(c, my)); netDiag('host-peer-late', { n: 0 }); } else { try { x.p.destroy(); } catch (e) {} } } else setTimeout(() => adopt(c0, 1), 3000); }); }
+      break;
     }
-    if (my !== gen) { p.destroy(); return null; }
     const same = !!want && code === want;
-    peer = p; net.code = code; net.role = 'host'; mode = 'room';
-    rm.me = same ? res.me : netUid(); rm.state = 'lobby'; rm.guests.clear(); rm.tick = 0; rm.lastTick = 0; rm.hostId = rm.me; rm.leader = rm.me; rm.chat = []; rm.go = null; net.closeReason = null;
+    peer = p; rm.door = door; net.code = code; net.role = 'host'; mode = 'room';
+    rm.me = same ? me : netUid(); rm.state = 'lobby'; rm.guests.clear(); rm.tick = 0; rm.lastTick = 0; rm.hostId = rm.me; rm.leader = rm.me; rm.chat = []; rm.go = null; net.closeReason = null;
     if (same && res.h) restoreGuests(res.h);
-    p.on('connection', c => hostConn(c, my));
+    if (p) p.on('connection', c => hostConn(c, my));
+    ready = true;
+    early.splice(0).forEach(l => hostConn(l, my));
     clearInterval(rm.hb);
     rm.hb = setInterval(() => { if (my === gen) hostTick(); }, 1000);
+    netDiag('host-ready', { code, peer: !!p, rt: !!door, ms: now() - t0 });
     pushList();
     return code;
   };
@@ -843,35 +1183,27 @@ function makeNet(g, add) {
     const my = gen;
     rm.me = res ? res.me : netUid(); rm.key = res ? res.key : netUid() + netUid();
     rm.state = 'lobby'; rm.inGame = false; rm.list = []; rm.leader = null; rm.chat = []; rm.go = null; net.closeReason = null;
-    const save = () => netSes({ g: g.id, role: 'guest', code, me: rm.me, key: rm.key, name: rm.name, t: Date.now() });
-    save();
-    const t0 = now(), END = 50000;
-    let p = null, a = 0, fails = 0, ice = 0, r = null;
-    const drop = () => { if (p) { try { p.destroy(); } catch (x) {} if (peer === p) peer = null; p = null; } };
-    const fatal = e => { netSes(null); shut(false); throw e; };
+    const t0 = now(), END = res ? 22000 : 16000, MISS = res ? 6 : 3;
+    let a = 0, miss = 0, ice = 0, r = null;
+    const fatal = e => { netSes(null); shut(false); netDiag('join-fail', { type: e && e.type, n: a, ms: now() - t0 }); throw e; };
+    netDiag('join-start', { resume: !!res });
     while (!r) {
       if (a) {
-        if (note) note(netT('Party {code} is not open yet, trying again…').replace('{code}', code));
-        await nap(Math.min(2000, 300 + 250 * a));
+        if (note) note(netT(miss ? 'Party {code} is not open yet, trying again…' : 'Still trying to connect…').replace('{code}', code));
+        await nap(Math.min(2000, 400 + 300 * a));
         if (my !== gen) return false;
       }
       a++;
-      try {
-        if (p && p.disconnected) { try { p.reconnect(); } catch (x) {} await nap(1500); if (p.disconnected) drop(); }
-        if (!p) {
-          const q = await newPeer(undefined, my, ice > 2);
-          if (my !== gen) { q.destroy(); return false; }
-          p = peer = q;
-        }
-        r = await guestConnect(code, my);
-      } catch (e) {
-        if (my !== gen || (e && e.type === 'cancel')) { drop(); return false; }
+      try { r = await guestConnect(code, my, { relayOnly: ice > 1, noP2p: ice > 1, rtFirst: ice > 0 }); }
+      catch (e) {
+        if (my !== gen || (e && e.type === 'cancel')) return false;
         const t = e && e.type;
         if (t === 'room-full') fatal(e);
-        if (t === 'dup') { rm.me = netUid(); rm.key = netUid() + netUid(); res = null; save(); continue; }
-        if (now() - t0 > END) fatal(e);
+        if (t === 'dup') { rm.me = netUid(); rm.key = netUid() + netUid(); res = null; continue; }
+        if (t === 'ice') ice++;
+        if (t === 'peer-unavailable') miss++;
+        if (now() - t0 > END || miss >= MISS || a >= 7) fatal(e);
         netTrack('party_retry', { game: g.id, why: String(t || 'unknown').slice(0, 24), n: a });
-        if (t !== 'peer-unavailable') { if (t === 'ice') ice++; drop(); if (++fails >= 6) fatal(e); }
       }
     }
     if (my !== gen) { try { r.c.close(); } catch (e) {} return false; }
@@ -889,7 +1221,7 @@ function makeNet(g, add) {
     o = o && typeof o === 'object' ? o : {};
     const cfg = netSizes(o);
     rm.compat = !!compat; rm.compatO = compat ? o : null;
-    if (mode !== 'room') { rm.name = (rm.renamed && rm.name) || netLoadName() || netName(o.name) || netGuest(); rm.botsOk = !!o.bots && !compat; rm.bots = false; rm.pub = !compat && netLs('gameplay:pubparty') === '1'; }
+    if (mode !== 'room') { rm.name = (rm.renamed && rm.name) || netLoadName() || netName(o.name) || netGuest(); rm.botsOk = !!o.bots && !compat; rm.bots = false; rm.pub = false; }
     if (mode === 'room' && net.role === 'guest' && rm.pendingGo) {
       const r = rm.pendingGo; rm.pendingGo = null;
       if (rm.compat) emit('open', 'guest');
@@ -904,6 +1236,7 @@ function makeNet(g, add) {
       const box = () => { const r = document.querySelector('.g-root.gm-' + g.id); return r && r.isConnected ? r : null; };
       const place = () => { const r = box(), p = r || document.fullscreenElement || document.body; el.classList.toggle('gl-fixed', !r); if (el.parentNode !== p) p.append(el); return p; };
       place(); void el.offsetWidth; el.classList.add('gl-on');
+      let jst = { phase: 'idle', code: '', msg: '', who: '' };
       let note0 = '', done = false, screen = '', phase = '', err = '', again = null, op = 0, pick = 0, hidden = netLs('gameplay:hidecode') === '1', sent = [], cache = {}, playT = 0, slowT = 0, editing = false, lastFit = '', rows = 0, seen = new Set(), chatN = 0, flashT = 0, flashM = '';
       const saved = Math.round(+netLs('gameplay:partysize:' + g.id));
       pick = cfg.sizes.indexOf(saved) >= 0 ? saved : cfg.def;
@@ -972,9 +1305,10 @@ function makeNet(g, add) {
       const codeHtml = () => {
         const c = ready() ? net.code : phase === 'joining' || phase === 'error' && again && again.code ? (again && again.code) || '' : '';
         const on = ready();
+        if (rm.pub && !rm.compat) return `<small>${T('Party')}</small><div class="gl-codebox gl-pubbox"><b class="gl-codetxt gl-pubt${on ? '' : ' gl-pend'}">${NET_I.globe}<span>${T('Public')}</span></b><span class="gl-tools"><button class="gl-sq gl-crown" type="button" data-n="share" title="${shareLbl}" aria-label="${shareLbl}"${on ? '' : ' disabled'}>${NET_I.link}</button></span></div>`;
         return `<small>${T('Party code')}</small><div class="gl-codebox"><b class="gl-codetxt${on ? '' : ' gl-pend'}">${on && hidden ? '••••' : c ? netEsc(c) : '····'}</b><span class="gl-tools"><button class="gl-hide" type="button" data-n="hide" aria-pressed="${hidden}" aria-label="${T(hidden ? 'Show party code' : 'Hide party code')}"${on ? '' : ' disabled'}>${eye()}</button><button class="gl-sq gl-crown" type="button" data-n="share" title="${shareLbl}" aria-label="${shareLbl}"${on ? '' : ' disabled'}>${NET_I.link}</button></span></div>`;
       };
-      const head = (lbl, code) => `<header class="gl-head"><button class="gl-leave" type="button" data-n="back">${NET_I.back}<span>${T(lbl)}</span></button><h1>${netEsc(g.title || o.title || 'Online party')}</h1>${code ? '<div class="gl-code"></div>' : ''}</header>`;
+      const head = (lbl, code, n) => `<header class="gl-head"><button class="gl-leave" type="button" data-n="${n || 'back'}">${NET_I.back}<span>${T(lbl)}</span></button><h1>${netEsc(g.title || o.title || 'Online party')}</h1>${code ? '<div class="gl-code"></div>' : ''}</header>`;
       const joinForm = () => `<form class="gl-join" autocomplete="off"><input class="gl-code-in" maxlength="4" placeholder="${T('Join with a code')}" aria-label="${T('Join with a code')}" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go"><button class="gl-jbtn" type="submit">${T('Join')}</button></form>`;
       const row = (p, lead, amLead) => {
         const isL = p.id === lead, me = p.id === rm.me, nm = netEsc(p.name);
@@ -1007,25 +1341,43 @@ function makeNet(g, add) {
         return true;
       };
       const show = s => {
-        screen = s; note = null; cache = {}; editing = false;
+        screen = s; cache = {}; editing = false;
+        if (s !== 'join') note = null;
         if (s === 'lobby') {
-          el.innerHTML = `<div class="gl-card gl-lob" tabindex="-1">${head('Leave', true)}<div class="gl-body"><section class="gl-sec gl-plsec" aria-label="${T('Players')}"><div class="gl-sec-h"><h2>${T('Players')}</h2><span class="gl-cnt"></span></div><ul class="gl-players"></ul><div class="gl-bots"></div><div class="gl-bots gl-pubsw"></div></section><div class="gl-rule"></div><section class="gl-sec gl-chat" aria-label="${T('Live chat')}"><div class="gl-sec-h"><h2>${T('Live chat')}</h2><span class="gl-pill gl-live">${T('Live')}</span></div><div class="gl-msgs" role="log" aria-live="polite"></div><form class="gl-send" autocomplete="off"><input class="gl-chat-in" maxlength="200" placeholder="${T('Type a message...')}" autocomplete="off" enterkeyhint="send" aria-label="${T('Message')}"><button class="gl-go" type="submit" aria-label="${T('Send')}">${NET_I.send}</button></form></section></div><footer class="gl-foot">${joinForm()}<div class="gl-act"></div><p class="gl-hint" role="status"></p></footer></div>`;
+          el.innerHTML = `<div class="gl-card gl-lob" tabindex="-1">${head('Leave', true)}<div class="gl-body"><section class="gl-sec gl-plsec" aria-label="${T('Players')}"><div class="gl-sec-h"><h2>${T('Players')}</h2><span class="gl-cnt"></span></div><ul class="gl-players"></ul><div class="gl-bots"></div></section><div class="gl-rule"></div><section class="gl-sec gl-chat" aria-label="${T('Live chat')}"><div class="gl-sec-h"><h2>${T('Live chat')}</h2><span class="gl-pill gl-live">${T('Live')}</span></div><div class="gl-msgs" role="log" aria-live="polite"></div><form class="gl-send" autocomplete="off"><input class="gl-chat-in" maxlength="200" placeholder="${T('Type a message...')}" autocomplete="off" enterkeyhint="send" aria-label="${T('Message')}"><button class="gl-go" type="submit" aria-label="${T('Send')}">${NET_I.send}</button></form></section></div><footer class="gl-foot gl-foot1"><div class="gl-act"></div><p class="gl-hint" role="status"></p></footer></div>`;
           ui.update(); ui.chat(true);
         } else if (s === 'pick') {
-          el.innerHTML = `<div class="gl-card gl-pk" tabindex="-1">${head('Leave')}<div class="gl-body gl-pkb"><div class="gl-pkr"><button class="gl-pkc" type="button" data-n="mkpriv"><span class="gl-pki">${NET_I.lock}</span><b>${T('Private party')}</b><small>${T('Invite only')}</small></button><button class="gl-pkc" type="button" data-n="mkpub"><span class="gl-pki">${NET_I.globe}</span><b>${T('Public party')}</b><small>${T('Anyone can join')}</small></button></div><div class="gl-pkl"></div></div><footer class="gl-foot">${joinForm()}<div class="gl-act"></div><p class="gl-hint" role="status"></p></footer></div>`;
+          el.innerHTML = `<div class="gl-card gl-pk" tabindex="-1">${head('Leave')}<div class="gl-body gl-pkb"><div class="gl-pkr"><button class="gl-pkc" type="button" data-n="gohost"><span class="gl-pki">${NET_I.crown}</span><b>${T('Host a party')}</b><small>${T('Create a party and invite players')}</small></button><button class="gl-pkc" type="button" data-n="gojoin"><span class="gl-pki">${NET_I.users}</span><b>${T('Join a party')}</b><small class="gl-pkn"></small></button></div></div></div>`;
           ui.pick();
+        } else if (s === 'host') {
+          el.innerHTML = `<div class="gl-card gl-pk" tabindex="-1">${head('Back', false, 'pkback')}<div class="gl-body gl-pkb"><h2 class="gl-pkh">${T('Who can join?')}</h2><div class="gl-pkr"><button class="gl-pkc" type="button" data-n="mkpriv"><span class="gl-pki">${NET_I.lock}</span><b>${T('Private party')}</b><small>${T('Only players with your code or link')}</small></button><button class="gl-pkc" type="button" data-n="mkpub"><span class="gl-pki">${NET_I.globe}</span><b>${T('Public party')}</b><small>${T('Anyone can join, no code needed')}</small></button></div></div></div>`;
+        } else if (s === 'join') {
+          el.innerHTML = `<div class="gl-card gl-pk gl-jn" tabindex="-1">${head('Back', false, 'pkback')}<div class="gl-body gl-pkb"><div class="gl-jbody"></div></div></div>`;
+          ui.join();
         } else if (s === 'ended') {
-          el.innerHTML = `<div class="gl-card" tabindex="-1">${head('Close')}<div class="gl-body"><div class="gl-center"><p class="gl-msg">${netEsc(ui.endMsg[0])}</p><p class="gl-txt">${netEsc(ui.endMsg[1])}</p></div></div><footer class="gl-foot">${joinForm()}<div class="gl-act"><button class="gl-play" type="button" data-n="new">${NET_I.plus}${T('New party')}</button></div><p class="gl-hint"></p></footer></div>`;
+          el.innerHTML = `<div class="gl-card" tabindex="-1">${head('Close')}<div class="gl-body"><div class="gl-center"><p class="gl-msg">${netEsc(ui.endMsg[0])}</p><p class="gl-txt">${netEsc(ui.endMsg[1])}</p></div></div><footer class="gl-foot gl-foot1"><div class="gl-act"><button class="gl-play" type="button" data-n="new">${T('Host or join another party')}</button></div><p class="gl-hint"></p></footer></div>`;
         }
         const c = el.querySelector('.gl-card');
         fit();
         if (!el.contains(document.activeElement)) { try { c.focus({ preventScroll: true }); } catch (e) {} }
       };
       ui.finish = finish;
+      const pubs = () => (typeof window.gpPubList === 'function' ? window.gpPubList(g.id) : []).filter(p => !(mode === 'room' && p.c === net.code));
       ui.pick = () => {
         if (done || screen !== 'pick') return;
-        const L = typeof window.gpPubList === 'function' ? window.gpPubList(g.id) : [];
-        put('pkl', '.gl-pkl', `<h2>${T('Public parties')}</h2>` + (L.length ? `<div class="gl-publw">${L.slice(0, 8).map(p => `<button type="button" class="gl-pubj" data-n="pubjoin" data-c="${netEsc(p.c)}"><span class="gl-pubn"><b>${netEsc(p.h || p.c)}</b><small>${netEsc(T('{n} / {m} joined').replace('{n}', p.n).replace('{m}', p.m))}${p.b ? ' · ' + T('In game') : ''}</small></span><i>${T('Join')}</i></button>`).join('')}</div>` : `<p class="gl-empty">${T('None right now')}</p>`));
+        const n = pubs().length;
+        put('pkn', '.gl-pkn', netEsc(n ? T(n === 1 ? '1 public party open now' : '{n} public parties open now').replace('{n}', n) : T('See open parties or enter a code')));
+      };
+      ui.join = () => {
+        if (done || screen !== 'join') return;
+        let h;
+        if (jst.phase === 'joining') h = `<div class="gl-center gl-jst"><span class="gl-spin" aria-hidden="true"></span><p class="gl-msg">${netEsc(jst.who ? T('Joining {name}’s party…').replace('{name}', jst.who) : T('Joining the party…'))}</p><p class="gl-txt" role="status">${netEsc(note0 || T('Connecting…'))}</p><div class="gl-jact"><button class="gl-play gl-ghost" type="button" data-n="jcancel">${T('Cancel')}</button></div></div>`;
+        else if (jst.phase === 'error') h = `<div class="gl-center gl-jst"><p class="gl-msg">${netEsc(T('Could not join this party'))}</p><p class="gl-txt gl-bad" role="alert">${netEsc(jst.msg)}</p><div class="gl-jact"><button class="gl-play" type="button" data-n="retry">${T('Try again')}</button><button class="gl-play gl-ghost" type="button" data-n="jback">${T('Back to the list')}</button></div></div>`;
+        else {
+          const L = pubs();
+          h = `<div class="gl-pkl"><h2>${T('Available parties')}</h2>` + (L.length ? `<div class="gl-publw">${L.slice(0, 12).map(p => `<button type="button" class="gl-pubj" data-n="pubjoin" data-c="${netEsc(p.c)}" data-h="${netEsc(p.h || '')}"><span class="gl-av" aria-hidden="true">${netEsc(netInit(p.h || '?'))}</span><span class="gl-pubn"><b>${netEsc(p.h ? T('{name}’s party').replace('{name}', p.h) : T('Public party'))}</b><small>${netEsc(T('{n} / {m} joined').replace('{n}', p.n).replace('{m}', p.m))}${p.b ? ' · ' + T('In game') : ''}</small></span><i>${T('Join')}</i></button>`).join('')}</div>` : `<p class="gl-empty">${T('No public parties right now. Host one, or join a private party with its code.')}</p>`) + `</div><div class="gl-jcode"><h2>${T('Have a party code?')}</h2>${joinForm()}</div>`;
+        }
+        put('jb', '.gl-jbody', h);
       };
       ui.update = () => {
         if (done || screen !== 'lobby') return;
@@ -1045,18 +1397,17 @@ function makeNet(g, add) {
         put('cnt', '.gl-cnt', opts.length > 1 ? `<label class="gl-pill gl-pick">${jt}${NET_I.down}<select data-n="sizesel" aria-label="${T('Party size')}">${opts.map(s => `<option value="${s}"${s === size ? ' selected' : ''}>${T('{n} players').replace('{n}', s)}</option>`).join('')}</select></label>` : `<span class="gl-pill">${jt}</span>`);
         const botsOk = on ? rm.botsOk : !jn && rm.botsOk;
         put('bots', '.gl-bots', botsOk ? `<span class="gl-av" aria-hidden="true">${NET_I.bot}</span><div class="gl-who"><b><i>${T('Fill empty seats with bots')}</i></b><span>${T(!amLead ? (rm.bots ? 'On · set by the host' : 'Off · set by the host') : rm.bots ? 'Bots play the empty seats' : 'Only real players play')}</span></div><button class="gl-sw" type="button" role="switch" data-n="bots" aria-checked="${rm.bots}" aria-label="${T('Fill empty seats with bots')}"${amLead && !rm.busy && !rm.reconn ? '' : ' disabled'}></button>` : '');
-        const canPub = !rm.compat && !jn;
-        put('pubsw', '.gl-pubsw', canPub ? `<span class="gl-av" aria-hidden="true">${NET_I.globe}</span><div class="gl-who"><b><i>${T('Public party')}</i></b><span>${T(!amLead ? (rm.pub ? 'On · set by the host' : 'Off · set by the host') : rm.pub ? 'Anyone can join' : 'Invite only')}</span></div><button class="gl-sw" type="button" role="switch" data-n="pub" aria-checked="${rm.pub}" aria-label="${T('Public party')}"${amLead && !rm.reconn ? '' : ' disabled'}></button>` : '');
         const need = rm.bots ? 1 : on ? rm.min : cfg.min;
         let f, hint = '', bad = false;
         if (phase === 'creating') { f = `<div class="gl-wait" role="status">${T('Creating party…')}</div>`; hint = note0 || ''; }
         else if (phase === 'joining') { f = `<div class="gl-wait" role="status">${netEsc(T('Joining party {code}…').replace('{code}', (again && again.code) || ''))}</div>`; hint = note0 || ''; }
-        else if (phase === 'error') { f = `<button class="gl-play" type="button" data-n="retry">${T('Try again')}</button>${again && again.code ? `<button class="gl-play gl-ghost" type="button" data-n="new">${T('Create my own party')}</button>` : ''}`; hint = err; bad = true; }
+        else if (phase === 'error') { f = `<button class="gl-play" type="button" data-n="retry">${T('Try again')}</button><button class="gl-play gl-ghost" type="button" data-n="new">${T('Back')}</button>`; hint = err; bad = true; }
         else if (amLead) {
           const blocked = rm.busy && net.role !== 'host';
           hint = rm.reconn ? T('Connection lost. Reconnecting…') : blocked ? T('A game is in progress. You can start when it ends.') : n < need ? T(need - n > 1 ? 'Waiting for {n} more players…' : 'Waiting for 1 more player…').replace('{n}', need - n) : '';
           f = `<button class="gl-play" type="button" data-n="play"${n < need || blocked || rm.reconn ? ' disabled' : ''}>${NET_I.play}${T('Play')}</button>`;
         } else f = `<div class="gl-wait" role="status">${T(rm.reconn ? 'Connection lost. Reconnecting…' : rm.busy ? 'A game is in progress. You will join the next one.' : 'Waiting for the host…')}</div>`;
+        if (!hint && on && net.role === 'guest' && rm.via === 'rt-relay' && !rm.reconn) hint = T('Connected through the relay. Fast games may feel a little slower.');
         put('ft', '.gl-act', f);
         const h = el.querySelector('.gl-hint');
         if (flashM) { hint = flashM; bad = false; }
@@ -1083,12 +1434,17 @@ function makeNet(g, add) {
       };
       rm.ui = ui;
       const canRetry = e => { const t = e && e.type; return t === 'ice' || t === 'timeout' || t === 'peer-unavailable' || NET_SOFT.indexOf(t) >= 0; };
-      const fail = (m, fn) => { phase = 'error'; err = m; again = fn; if (screen !== 'lobby') show('lobby'); else { cache = {}; ui.update(); } };
+      const fail = (m, fn) => {
+        phase = 'error'; err = m; again = fn;
+        if (fn && fn.code) { jst = { phase: 'error', code: fn.code, msg: m, who: jst.who }; if (screen !== 'join') show('join'); else { cache = {}; ui.join(); } return; }
+        if (screen !== 'lobby') show('lobby'); else { cache = {}; ui.update(); }
+      };
       const hosting = async res => {
         const my = ++op;
         if (res && res.h && cfg.sizes.indexOf(Math.round(+res.h.max)) >= 0) pick = Math.round(+res.h.max);
         phase = 'creating'; err = ''; again = null; note0 = res ? T('Restoring party {code}…').replace('{code}', res.code) : '';
         note = t => { if (!done && my === op) { note0 = t; ui.update(); } };
+        if (res && res.h) rm.pub = !!res.h.pub && !rm.compat;
         show('lobby');
         try {
           rm.min = cfg.min; rm.max = pick; rm.sizes = cfg.sizes;
@@ -1101,36 +1457,37 @@ function makeNet(g, add) {
           netTrack('party_create', { game: g.id, size: pick });
         } catch (e) { if (!done && my === op && !(e && e.type === 'cancel')) { note = null; fail(netWhy(e), hosting); } }
       };
-      const joining = async code => {
+      const joining = async (code, who) => {
         code = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
         if (!/^[A-Z0-9]{4}$/.test(code)) { const f = el.querySelector('.gl-join'), i = f && f.querySelector('input'); if (f) { f.classList.add('gl-bad'); try { i.focus({ preventScroll: true }); } catch (e) {} } return; }
-        if (ready() && code === net.code) { const i = el.querySelector('.gl-code-in'); if (i) i.value = ''; return; }
+        if (ready() && code === net.code) { if (screen !== 'lobby') show('lobby'); return; }
         if (phase === 'joining' && again && again.code === code) return;
         const ses = netSes();
         if (ses && ses.g === g.id && ses.code === code && ses.role === 'host' && mode !== 'room') { if (invite && invite.id === g.id) invite = null; return hosting(ses); }
         const resume = !!(ses && ses.g === g.id && ses.code === code && ses.role === 'guest');
-        const my = ++op, fn = () => joining(code);
+        const my = ++op, fn = () => joining(code, who);
         fn.code = code;
         phase = 'joining'; err = ''; again = fn; note0 = '';
-        note = t => { if (!done && my === op) { note0 = t; ui.update(); } };
+        jst = { phase: 'joining', code, msg: '', who: netName(who) || '' };
+        note = t => { if (!done && my === op) { note0 = t; cache = {}; ui.join(); } };
         rm.botsOk = false; rm.bots = false;
-        if (screen !== 'lobby') show('lobby'); else { cache = {}; ui.update(); }
+        if (screen !== 'join') show('join'); else { cache = {}; ui.join(); }
         try {
           const ok = await roomJoin(code);
           if (done || my !== op || !ok) return;
-          note = null; note0 = ''; phase = 'ready'; cache = {};
-          el.querySelectorAll('.gl-code-in').forEach(i => { i.value = ''; });
-          netTrack('party_join', { game: g.id });
-          ui.update(); ui.chat(true); fit();
+          note = null; note0 = ''; phase = 'ready'; cache = {}; jst = { phase: 'idle', code: '', msg: '', who: '' };
+          netTrack('party_join', { game: g.id, via: rm.via });
+          show('lobby'); fit();
         } catch (e) {
           const t = e && e.type;
           if (done || my !== op || t === 'cancel') return;
           note = null;
           if (resume && t === 'peer-unavailable') return ui.ended('host-left');
-          fail(t === 'room-full' ? T('Party {code} is full.').replace('{code}', code) : netWhy(e, code), canRetry(e) ? fn : Object.assign(() => joining(code), { code }));
+          fail(t === 'room-full' ? T('Party {code} is full.').replace('{code}', code) : netWhy(e, rm.pub || jst.who ? '' : code), fn);
         }
       };
-      const fresh = () => { rm.botsOk = !!o.bots && !rm.compat; rm.bots = false; rows = 0; if (rm.compat) hosting(); else show('pick'); };
+      const unjoin = () => { op++; note = null; note0 = ''; phase = ''; again = null; jst = { phase: 'idle', code: '', msg: '', who: '' }; shut(true); };
+      const fresh = () => { rm.botsOk = !!o.bots && !rm.compat; rm.bots = false; rm.pub = false; rows = 0; phase = ''; again = null; jst = { phase: 'idle', code: '', msg: '', who: '' }; show('pick'); };
       const play = () => {
         if (done || screen !== 'lobby' || net.role !== 'host' || mode !== 'room' || rm.state === 'game') return;
         const players = hostPlayers().filter(p => !p.away);
@@ -1192,9 +1549,12 @@ function makeNet(g, add) {
         else if (n === 'rename') { editing = true; cache.pl = ''; ui.update(); const i = el.querySelector('.gl-rnin'); if (i) { try { i.focus({ preventScroll: true }); i.select(); } catch (x) {} } }
         else if (n === 'kick' || n === 'lead') leadAct(n, b.dataset.id);
         else if (n === 'bots') { if (ready()) leadAct('bots', null, !rm.bots); else { rm.bots = !rm.bots; ui.update(); } }
-        else if (n === 'pub') { const v = !rm.pub; netLs('gameplay:pubparty', v ? '1' : null); if (ready()) leadAct('pub', null, v); else { rm.pub = v; ui.update(); } }
-        else if (n === 'pubjoin') { const c = b.dataset.c; if (c) joining(c); }
-        else if (n === 'mkpriv' || n === 'mkpub') { rm.pub = n === 'mkpub'; netLs('gameplay:pubparty', rm.pub ? '1' : null); hosting(); }
+        else if (n === 'pubjoin') { const c = b.dataset.c; if (c) joining(c, b.dataset.h); }
+        else if (n === 'gohost') { if (rm.compat) { rm.pub = false; hosting(); } else show('host'); }
+        else if (n === 'gojoin') { jst = { phase: 'idle', code: '', msg: '', who: '' }; show('join'); }
+        else if (n === 'pkback') { if (phase === 'joining' || jst.phase !== 'idle') unjoin(); show('pick'); }
+        else if (n === 'jcancel' || n === 'jback') { unjoin(); show('join'); }
+        else if (n === 'mkpriv' || n === 'mkpub') { rm.pub = n === 'mkpub' && !rm.compat; hosting(); }
         else if (n === 'invf') invOpen();
         else if (n === 'invx') invClose();
         else if (n === 'invcopy') shareLink();
@@ -1225,7 +1585,7 @@ function makeNet(g, add) {
         try { await P.invite(b.dataset.id); b.textContent = T('Invited'); b.classList.add('gl-done'); if (n) n.textContent = ''; }
         catch (e) { b.disabled = false; b.textContent = T('Invite'); if (n) n.textContent = P.err(e); }
       };
-      const onPub = () => { if (!done) { ui.update(); ui.pick(); } };
+      const onPub = () => { if (!done) { ui.pick(); if (jst.phase === 'idle') ui.join(); } };
       document.addEventListener('gp:pub', onPub);
       el.addEventListener('submit', e => {
         e.preventDefault();
@@ -1250,7 +1610,7 @@ function makeNet(g, add) {
         if (ready()) leadAct('size', null, v); else if (cfg.sizes.indexOf(v) >= 0) { pick = v; rm.max = v; ui.update(); }
       });
       add(() => finish(null, true));
-      if (mode === 'room' && net.role === 'host' && peer && !peer.destroyed) {
+      if (mode === 'room' && net.role === 'host' && ((peer && !peer.destroyed) || rm.door)) {
         rm.min = cfg.min; rm.sizes = cfg.sizes; rm.state = 'lobby'; phase = 'ready';
         if (cfg.sizes.indexOf(rm.max) < 0) rm.max = cfg.sizes.find(s => s >= rm.guests.size + 1) || cfg.sizes[cfg.sizes.length - 1];
         rm.guests.forEach(gs => { gs.inGame = false; tx(gs.conn, { __lob: 1 }); });
@@ -1258,7 +1618,7 @@ function makeNet(g, add) {
         show('lobby');
       } else if (mode === 'room' && net.role === 'guest' && (rm.conn || rm.reconn)) { phase = 'ready'; show('lobby'); }
       else if (net.invite && !invite.host) joining(net.invite);
-      else { const ho = !!(invite && invite.host && invite.id === g.id); if (ho) invite = null; const ses = ho ? netSes() : null; if (ho || rm.compat) { if (ho) rm.pub = false; hosting(ses && ses.g === g.id && ses.role === 'host' ? ses : undefined); } else show('pick'); }
+      else { const ho = !!(invite && invite.host && invite.id === g.id); if (ho) invite = null; const ses = ho ? netSes() : null; if (ho) { rm.pub = false; hosting(ses && ses.g === g.id && ses.role === 'host' ? ses : undefined); } else if (o.intent === 'host' && !rm.compat) show('host'); else if (o.intent === 'join') show('join'); else show('pick'); }
       loadPeer().catch(() => {}); netIce();
     });
   };
@@ -1273,7 +1633,7 @@ function makeNet(g, add) {
       if (mode === 'room') {
         if (net.role !== 'host') return !!(rm.conn && rm.conn.open);
         if (rm.compat) return [...rm.guests.values()].some(gs => gs.conn && gs.conn.open);
-        return !!(peer && !peer.destroyed);
+        return !!((peer && !peer.destroyed) || rm.door);
       }
       return !!(conn && conn.open);
     },
@@ -1291,7 +1651,7 @@ function makeNet(g, add) {
       try { s = JSON.stringify(msg); } catch (e) { return; }
       if (s === undefined) return;
       let b = null;
-      const one = c => { if (fast && fastTx(c, s)) return; if (!b && s.length < 16000) b = netTe.encode(s); tx(c, msg, s, b); };
+      const one = c => { if (fast && fastTx(c, s)) return; if (fast && c && c.slow) return slowFast(c, msg); if (!b && s.length < 16000) b = netTe.encode(s); tx(c, msg, s, b); };
       if (mode === 'room') {
         if (net.role === 'host') rm.guests.forEach(gs => { if (gs.inGame) one(gs.conn); });
         else one(rm.conn);
@@ -1305,7 +1665,9 @@ function makeNet(g, add) {
       if (!c) return false;
       let s;
       try { s = JSON.stringify(msg); } catch (e) { return false; }
-      return (fast && fastTx(c, s)) || tx(c, msg, s);
+      if (fast && fastTx(c, s)) return true;
+      if (fast && c.slow) { slowFast(c, msg); return true; }
+      return tx(c, msg, s);
     },
     kick(id) { if (mode === 'room' && net.role === 'host') removeGuest(id, 'kick'); },
     link(code = net.code) { return location.origin + (PATH_MODE ? '/' : location.pathname + '#/') + g.id + '/' + code; },
@@ -1354,7 +1716,7 @@ function makeNet(g, add) {
     if (navigator.share) navigator.share({ title: g.title + ' on gameplay', text: `Join my ${g.title} party on gameplay! Party code ${net.code}`, url }).catch(e => { if (!e || e.name !== 'AbortError') copy(); });
     else copy();
   };
-  const onHide = () => { if (mode) shut(true, true); };
+  const onHide = () => { shut(true, !!mode); };
   const onShow = e => { if (e.persisted && netSes()) location.reload(); };
   window.addEventListener('pagehide', onHide);
   window.addEventListener('pageshow', onShow);

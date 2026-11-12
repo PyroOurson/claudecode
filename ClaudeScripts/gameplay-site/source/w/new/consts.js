@@ -84,6 +84,7 @@ const SBN = (() => {
   } : undefined;
   return { fetch: viaFetch, WS, best: () => best, ws: () => wsB, all: () => all.slice(), url: p => best + p };
 })();
+const NET_ICE_URLS = SUPABASE_RELAYS.map(u => u + '/turn');
 const GOOGLE_CLIENT_ID = '114405851703-b6u2jan6mapjucijipcecr6g8nbgf73s.apps.googleusercontent.com';
 const SUPABASE_ANON_KEY = 'sb_publishable_Lry5e9J350lXelAUPHU1rg_3YYvTuAf';
 const SUPABASE_JS_FILE = 'supabase-js-2.117.2.js';

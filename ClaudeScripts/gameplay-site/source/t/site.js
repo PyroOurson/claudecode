@@ -12,7 +12,7 @@ async function visitor(browser, o = {}) {
   page.on('pageerror', e => log.push(T() + ' pageerror ' + String(e && e.stack || e).slice(0, 600)));
   page.on('requestfailed', r => { const f = r.failure(); if (!f || !/ERR_ABORTED/.test(f.errorText)) log.push(T() + ' reqfailed ' + r.url().slice(0, 160) + ' ' + (f && f.errorText)); });
   page.on('response', r => { if (r.status() >= 400) log.push(T() + ' http ' + r.status() + ' ' + r.request().method() + ' ' + r.url().slice(0, 160)); });
-  const shot = async (dir, name, full) => { fs.mkdirSync(dir, { recursive: true }); const f = path.join(dir, name + '.png'); await page.screenshot({ path: f, fullPage: !!full }); return f; };
+  const shot = async (dir, name, full) => { fs.mkdirSync(dir, { recursive: true }); const f = path.join(dir, name + '.png'); await page.screenshot({ path: f, fullPage: !!full, timeout: 120000 }); return f; };
   const text = async n => (await page.evaluate(() => document.body ? document.body.innerText : '')).replace(/\s+/g, ' ').slice(0, n || 400);
   const consent = async () => { const ck = page.locator('#ckterms'); if (await ck.isVisible().catch(() => false)) { await ck.check(); await page.locator('[data-ckc]').first().click(); await page.waitForTimeout(300); } };
   const ready = async (ms = 15000) => { await page.waitForFunction(() => window.Ameplay && Ameplay.debug && document.querySelector('#top'), null, { timeout: ms }); };
