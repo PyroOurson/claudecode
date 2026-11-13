@@ -151,6 +151,7 @@ ClaudeScripts/gameplay-site/source/t/tests/gate_locked.js
 ClaudeScripts/gameplay-site/source/t/tests/invite_state.js
 ClaudeScripts/gameplay-site/source/t/tests/ipban.js
 ClaudeScripts/gameplay-site/source/t/tests/legal_pages.js
+ClaudeScripts/gameplay-site/source/t/tests/level_codes.js
 ClaudeScripts/gameplay-site/source/t/tests/load_sequence.js
 ClaudeScripts/gameplay-site/source/t/tests/party.js
 ClaudeScripts/gameplay-site/source/t/tests/peak.js
