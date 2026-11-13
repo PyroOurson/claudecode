@@ -33,6 +33,8 @@ Genre model: the best-known browser ragdoll obstacle-course game (2010, Flash, l
 
 ## Decisions for our version
 - Keys follow the convention above (Space main action, Shift/Ctrl secondary, Z eject, R restart).
-- Five original riders (see the code): Gran Turbo (rocket wheelchair), Rudy and Biscuit the dog (cargo bike), Dot (gyro board), Lou and Ziggy (pizza moped), Joey (pogo stick, kangaroo suit).
+- Five original riders: Gran Turbo (granny, rocket wheelchair), Rudy and Pia (bike with a child seat), Dot (courier on a gyro board), Lou and Ziggy (two friends on a moped), Joey (kid in a kangaroo suit on a pogo stick).
 - Score: finish bonus, a time bonus against par, a bonus for intact limbs; three medals per level.
-- Level codes: the level itself is compressed into the code (works offline). A short server-stored code would need a portal change (see the agent report).
+- 19 levels (14 kept from the unlisted file and renamed where needed, 5 new). Par times come from test runs, so gold needs a fast clean run.
+- Level codes: the level is cleaned, compressed (deflate) and written as text starting with WR1 (WR0 without compression). Imports are checked field by field; level names go through a short word filter and sign texts must be one of the editor's sign texts. A short server-stored code would need a portal change.
+- Testing: every level was finished by a scripted controller in the real game (hold gas, simple lean rules, Space in set windows); the inputs for each level are in the round report.

@@ -2424,8 +2424,8 @@
       const [ia, it] = limbsOf(v);
       for (let i = 0; i < it; i++) { ctx.beginPath(); ctx.arc(26 + (i % 18) * 12.5, 79, 4.2, 0, TAU); ctx.fillStyle = i < ia ? '#7cf29a' : 'rgba(255,255,255,.2)'; ctx.fill(); }
       const bar = (lab, f, col, y) => { TX(lab, CW / 2 - 60, y, 11, '#fff', 'right', 800); rr(ctx, CW / 2 - 52, y - 6, 104, 12, 6); ctx.fillStyle = 'rgba(10,12,32,.6)'; ctx.fill(); if (f > .01) { rr(ctx, CW / 2 - 52, y - 6, 104 * f, 12, 6); ctx.fillStyle = col; ctx.fill(); } };
-      if (k === 'wheelchair') bar('ROCKET', v.fuel, v.fuel < .2 ? '#e03131' : '#f08c00', PORT ? 112 : 22);
-      else if (k === 'bike' || k === 'moped') bar(k === 'bike' ? 'SPRINT' : 'TURBO', v.stamina, '#f08c00', PORT ? 112 : 22);
+      if (k === 'wheelchair') bar('ROCKET', v.fuel, v.fuel < .2 ? '#e03131' : '#f08c00', PORT ? 126 : 22);
+      else if (k === 'bike' || k === 'moped') bar(k === 'bike' ? 'SPRINT' : 'TURBO', v.stamina, '#f08c00', PORT ? 126 : 22);
       const f = r.lv.finish, m = v.main;
       if (f) {
         const d0 = hyp(f.x - r.lv.spawn.x, f.y - r.lv.spawn.y) || 1, d = hyp(f.x - m.x, f.y - m.y), p = clamp(1 - d / d0, 0, 1), bw = PORT ? 250 : 292, by = PORT ? 100 : 100;

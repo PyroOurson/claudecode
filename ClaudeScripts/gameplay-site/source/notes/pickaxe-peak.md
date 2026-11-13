@@ -26,5 +26,6 @@ Genre model: the best-known hammer-climbing game (2017): a man sitting in a pot 
 
 ## Decisions for our version
 - Character: Pip, a mole sitting in a copper bucket, climbing out of his molehill with a long miner's pickaxe.
-- Physics: a fixed 240 Hz step. The bucket is a heavy round body; the pick head is a small light body linked to the bucket by a stiff spring towards the target offset; contacts give the head high grip (low on ice and metal). The handle between hand and head is a chain of contact points.
-- One climb of about 400 m with eight zones, built so that upper falls cost a lot. Continue from the exact saved position; best time and number of summits kept.
+- Physics: a fixed 240 Hz step. Bucket and pick form one point body with contact probes (bucket circle, pick head, two points on the handle). The pick offset follows the cursor at most 9.5 m/s; when a probe touches rock the body moves instead (position-based contacts with friction per material). This gives planting, pushing, hooking and flick-launches without extra rules, and the same result at any frame rate.
+- Testing: a search bot (random pick gestures, beam search along a route line) climbed the whole course in 862 gestures; the same input stream replayed in the real game reached the summit in 14:14. Use the bot again after any course change.
+- One climb of 146 m with nine zones (Molehill Meadow, Shelf Steps, The Chimney, Clay Chute, Junk Heap, Long Pipe, Ice Shelf, The Spires, Summit), built so that falls in the upper zones drop far. Continue from the exact saved position; best time and number of summits kept.
