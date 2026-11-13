@@ -1918,7 +1918,7 @@
       const b = P(67, 1).s(14, 1.4).c(16, 2).f(8).c(14, -2).f(6).c(16, -2.4).f(10);
       const cx = b.x1() + 4;
       const c = P(cx, b.at(b.x1()) + 1).f(34);
-      L.push(LV('l1', 'First Roll', 'meadow', 'wheelchair', 55, 'Gran learns to roll, lean and fire her rockets. The gap near the start is a ramp jump: boost into it.',
+      L.push(LV('l1', 'First Roll', 'meadow', 'wheelchair', 40, 'Gran learns to roll, lean and fire her rockets. The gap near the start is a ramp jump: boost into it.',
         a, b, c, K.sp0(a, 0), K.sg(a, 2, 'Up: roll|Left and Right: lean'), K.sg(a, 30, 'Hills are your friends'), K.sg(a, 48, 'Hold Space for rockets|then hit the ramp'),
         K.rp(a, 56, 4, 1), K.sg(b, 74, 'Nice landing'), K.sg(c, cx + 5, 'Almost there'), K.fin(c, cx + 24)));
     }
@@ -1927,7 +1927,7 @@
       const a = P(-16, 0).f(26).c(14, -2).c(14, 2).f(8).c(12, -1.5).f(34);
       const ax = a.x1(), bx = ax + 9;
       const b = P(bx, a.at(ax) + 1).c(14, 1.5).f(14).c(10, 1).f(60);
-      L.push(LV('l2', 'Sunday Spin', 'meadow', 'bike', 55, 'Rudy takes Pia out on the bike. Pop the big jump, smash the crates, hop the spikes.',
+      L.push(LV('l2', 'Sunday Spin', 'meadow', 'bike', 25, 'Rudy takes Pia out on the bike. Pop the big jump, smash the crates, hop the spikes.',
         a, b, K.sp0(a, 0), K.sg(a, 3, 'Up: gas|Left, Right: tilt|Down: brake'), K.sg(a, ax - 20, 'Big jump ahead|keep your speed'), K.rp(a, ax - 2, 4, 1),
         K.sg(b, bx + 6, 'Crates are fun'), K.cr(b, bx + 28, .4), K.cr(b, bx + 31, .4), K.cr(b, bx + 34, .4), K.rp(b, bx + 52, 3.5, 1), K.sp(b, bx + 58, 3), K.fin(b, bx + 80)));
     }
@@ -1936,7 +1936,7 @@
       const a = P(-16, 0).f(60).c(14, -3).f(10).c(18, 5).f(8).c(18, -6).f(10);
       const ax = a.x1();
       const b = P(ax + 4, a.at(ax) - .4).f(30).c(10, 2).f(24);
-      L.push(LV('l3', 'Spike Valley', 'desert', 'segway', 70, 'Dot balances her gyro board through the desert. Space hops over the spike strips. The valley floor is the worst.',
+      L.push(LV('l3', 'Spike Valley', 'desert', 'segway', 35, 'Dot balances her gyro board through the desert. Space hops over the spike strips. The valley floor is the worst.',
         a, b, K.sp0(a, 0), K.sg(a, 3, 'Up: go|Left, Right: lean|Space: hop'), K.sp(a, 12, 2.5), K.sp(a, 24, 2.5), K.sp(a, 35, 3), K.sg(a, 66, 'Valley ahead'), K.sp(a, 90.5, 3),
         K.sp(b, ax + 22, 2.5), K.fin(b, ax + 62)));
     }
@@ -1945,7 +1945,7 @@
       const a = P(-16, 0).f(100).c(14, -2.5).f(10);
       const bx = a.x1() + 2;
       const b = P(bx, a.at(a.x1()) + .6).f(14).c(30, 4).f(10).c(24, -3).f(28);
-      L.push(LV('l4', 'Moped Mayhem', 'night', 'moped', 60, 'A neon night run. Boost pads, glass walls and a row of mines. Jump the mines, drive through the glass.',
+      L.push(LV('l4', 'Moped Mayhem', 'night', 'moped', 20, 'A neon night run. Boost pads, glass walls and a row of mines. Jump the mines, drive through the glass.',
         a, b, K.sp0(a, 0), K.sg(a, 3, 'Up: gas|Space: turbo'), K.bo(a, 12, 6, 20), K.gl(a, 76, .35, 3), K.gl(a, 83, .35, 3.2), K.sg(a, 38, 'Mines ahead|use the ramp'), K.rp(a, 50, 3.6, 1),
         K.mn(a, 56), K.mn(a, 59), K.mn(a, 62), K.bo(b, bx + 5, 5, 16), K.gl(b, bx + 46, .35, 3.4), K.gl(b, bx + 51, .35, 3.4), K.fin(b, bx + 86)));
     }
@@ -1958,21 +1958,21 @@
       const c = P(bx + 5.5, b.at(bx) - 3).f(12).c(14, 3).f(6);
       const cx = c.x1();
       const d = P(cx + 7, c.at(cx) + 2).f(40);
-      L.push(LV('l5', 'Pogo Peaks', 'snow', 'pogo', 120, 'Joey hops up the frozen peaks. Up to bounce, hold Space for a mega jump, lean to steer. Springs fling you across the gaps.',
+      L.push(LV('l5', 'Pogo Peaks', 'snow', 'pogo', 70, 'Joey hops up the frozen peaks. Up to bounce, hold Space for a mega jump, lean to steer. Springs fling you across the gaps.',
         a, b, c, d, K.sp0(a, 0), K.sg(a, 2, 'Up: hop|Space: mega hop|Left, Right: lean'), K.sr(a, ax - 3.6, 2.6, 13), K.sg(b, ax + 12, 'Wheee'), K.sr(b, bx - 3.6, 2.4, 13),
         K.sr(c, cx - 3.6, 2.4, 11), K.sg(d, cx + 12, 'Almost there'), K.fin(d, cx + 34)));
     }
 
     {
       const a = P(-16, 0).f(130).c(14, -3).f(30);
-      L.push(LV('l6', 'Mine Field', 'desert', 'bike', 75, 'Mines everywhere. Hit each ramp at speed and fly over the rows.',
+      L.push(LV('l6', 'Mine Field', 'desert', 'bike', 20, 'Mines everywhere. Hit each ramp at speed and fly over the rows.',
         a, K.sp0(a, 0), K.sg(a, 3, 'Careful. Those are mines.'), K.sg(a, 18, 'Ramp up|then fly over'), K.rp(a, 24, 4, 1.1), K.mn(a, 30), K.mn(a, 32), K.rp(a, 50, 4, 1.1), K.mn(a, 56), K.mn(a, 58), K.mn(a, 60),
         K.rp(a, 78, 4, 1.1), K.mn(a, 84), K.mn(a, 86), K.rp(a, 100, 4, 1.1), K.mn(a, 106), K.mn(a, 108), K.mn(a, 110), K.fin(a, 165)));
     }
 
     {
       const a = P(-16, 0).f(172);
-      L.push(LV('l7', 'Wrecking Yard', 'factory', 'moped', 70, 'The yard is full of swinging wrecking balls. Watch the rhythm, slip between swings, and use the boost pads.',
+      L.push(LV('l7', 'Wrecking Yard', 'factory', 'moped', 45, 'The yard is full of swinging wrecking balls. Watch the rhythm, slip between swings, and use the boost pads.',
         a, K.sp0(a, 0), K.sg(a, 3, 'Time the swings|ease off, brake, go'),
         K.wr(36, -9.2, { len: 8.1, amp: 1.25, per: 3.8, ph: 0 }), K.wr(62, -9.2, { len: 8.1, amp: 1.25, per: 3.8, ph: 2 }), K.wr(86, -9.2, { len: 8.1, amp: 1.25, per: 3.6, ph: 4 }),
         K.bo(a, 100, 5, 22), K.wr(114, -9.2, { len: 8.1, amp: 1.25, per: 3.8, ph: 0 }), K.wr(128, -9.2, { len: 8.1, amp: 1.25, per: 3.8, ph: PI }), K.rp(a, 144, 4, 1.1), K.fin(a, 156)));
@@ -1981,7 +1981,7 @@
     {
       const a = P(-16, 0).f(40).c(10, -2).f(30).c(10, 2).f(40).c(14, -3).f(58);
       const T = (x, y, o) => [{ t: 'box', x, y, w: 4, h: .7, m: 'hazard' }, K.hp(x - 1.2, y - .55, PI - .5, o || 22)];
-      L.push(LV('l8', 'Harpoon Alley', 'night', 'segway', 80, 'Turrets watch the road from above. Step into a beam and they fire. Hop or keep moving.',
+      L.push(LV('l8', 'Harpoon Alley', 'night', 'segway', 40, 'Turrets watch the road from above. Step into a beam and they fire. Hop or keep moving.',
         a, K.sp0(a, 0), K.sg(a, 3, 'Lights blink before they shoot'), T(44, -6.5), T(76, -7), T(104, -7), T(104 + 14, -6.2), T(150, -7.5), K.sp(a, 141, 3), K.fin(a, 176)));
     }
 
@@ -1991,7 +1991,7 @@
       const c = P(b.x1() + 8, -3.8).f(14);
       const d = P(c.x1() + 8, -6.6).f(40);
       const ax = a.x1(), bx = b.x1(), cx = c.x1();
-      L.push(LV('l9', 'Fan Tower', 'factory', 'wheelchair', 90, 'Giant fans blow up from the pits between the platforms. Fall in, float out, and climb the tower.',
+      L.push(LV('l9', 'Fan Tower', 'factory', 'wheelchair', 40, 'Giant fans blow up from the pits between the platforms. Fall in, float out, and climb the tower.',
         a, b, c, d, K.sp0(a, 0), K.sg(a, 3, 'Fans lift you up|lean to steer'), K.fn(ax + 3, 6.5, -PI / 2 + .3, { w: 12, h: 10, f: 19 }), K.fn(bx + 3, 5, -PI / 2 + .3, { w: 13, h: 10, f: 19 }), K.fn(cx + 3, 3, -PI / 2 + .3, { w: 14, h: 10, f: 21 }),
         K.sg(d, cx + 14, 'Top of the tower'), K.fin(d, cx + 34)));
     }
@@ -2001,38 +2001,38 @@
       const b = P(a.x1() + 14, -3).f(34);
       const c = P(b.x1() + 14, -6).f(40);
       const ax = a.x1(), bx = b.x1();
-      L.push(LV('l10', 'Spring Fling', 'meadow', 'bike', 60, 'Hit the springs at full speed and fly. Each landing zone sits higher than the last.',
+      L.push(LV('l10', 'Spring Fling', 'meadow', 'bike', 15, 'Hit the springs at full speed and fly. Each landing zone sits higher than the last.',
         a, b, c, K.sp0(a, 0), K.sg(a, 3, 'Springs bounce you|keep your speed'), K.sr(a, ax - 4, 3, 13), K.sr(b, bx - 4, 3, 13), K.sg(c, bx + 32, 'You flew!'), K.fin(c, bx + 54)));
     }
 
     {
       const a = P(-16, 0).f(40).c(12, -1).f(130);
       const w = (x, n) => { const o = []; for (let i = 0; i < n; i++) o.push(K.gl(a, x, .35, 1.6)); for (let i = 1; i < n; i++) o[i].y = o[0].y - i * 1.62; return o; };
-      L.push(LV('l11', 'Glass House', 'snow', 'moped', 65, 'Glass walls, then spike pits behind them. Smash through at speed, then hit the ramp to jump the spikes.',
+      L.push(LV('l11', 'Glass House', 'snow', 'moped', 20, 'Glass walls, then spike pits behind them. Smash through at speed, then hit the ramp to jump the spikes.',
         a, K.sp0(a, 0), K.sg(a, 3, 'Glass breaks if you hit it hard'), K.gl(a, 30, .35, 3), w(46, 3), K.rp(a, 53, 4, 1.1), K.sp(a, 60.5, 3), w(72, 3), K.rp(a, 80, 4, 1.1), K.sp(a, 87.5, 3), K.bo(a, 98, 5, 22), w(112, 3), w(116, 3), K.rp(a, 121, 4, 1.1), K.sp(a, 128.5, 3), K.fin(a, 150)));
     }
 
     {
       const isl = [P(-16, 0).f(46), P(38, 0).f(14), P(60, 0).f(14), P(82, 0).f(14), P(104, 0).f(66)];
       const lifts = [34, 56, 78, 100].map((x, i) => K.lf(x, 0.2, { w: 12, dx: 2.5, per: 5, ph: i * 1.7 }));
-      L.push(LV('l12', 'Lava Run', 'lava', 'wheelchair', 110, 'The floor is lava. Cross the rickety sliding bridges between the islands. Do not stop, and keep your rockets for the slips.',
+      L.push(LV('l12', 'Lava Run', 'lava', 'wheelchair', 25, 'The floor is lava. Cross the rickety sliding bridges between the islands. Do not stop, and keep your rockets for the slips.',
         ...isl, K.sp0(isl[0], 0), K.sg(isl[0], 3, 'Cross the bridges'), ...lifts, K.fin(isl[4], 160)));
     }
 
     {
       const a = P(-16, 0).f(30).c(12, -2).f(20).c(12, 2).f(20);
       const ax = a.x1();
-      const b = P(ax + 6, 0.6).f(30).c(16, 2).f(24).c(16, -3).f(52);
+      const b = P(ax + 5, 0.6).f(30).c(16, 2).f(24).c(16, -3).f(52);
       const bx = b.x1();
-      L.push(LV('l13', 'Grand Finale', 'factory', 'moped', 100, 'Everything at once: boost pads, mines, swinging balls, turrets and a big jump. Show them what you learned.',
-        a, b, K.sp0(a, 0), K.bo(a, 10, 5, 15), K.sg(a, 22, 'Ramp, then mines'), K.rp(a, 28, 4, 1.2), K.mn(a, 33.5), K.mn(a, 35.5), K.wr(58, -9.2, { len: 8.1, amp: 1.25, per: 3.8, ph: 1 }), K.rp(a, ax - 4, 4, 1.2), K.sg(a, ax - 12, 'Big jump'),
+      L.push(LV('l13', 'Grand Finale', 'factory', 'moped', 50, 'Everything at once: boost pads, mines, swinging balls, turrets and a big jump. Show them what you learned.',
+        a, b, K.sp0(a, 0), K.bo(a, 10, 5, 15), K.sg(a, 22, 'Ramp, then mines'), K.rp(a, 28, 4, 1.2), K.mn(a, 33.5), K.mn(a, 35.5), K.wr(58, -9.2, { len: 8.1, amp: 1.25, per: 3.8, ph: 1 }), K.rp(a, ax - 2, 4, 1.2), K.sg(a, ax - 12, 'Big jump'),
         K.bo(b, 100, 5, 22), K.rp(b, 142, 4, 1.2), K.sp(b, 150, 3), K.wr(187, -9.2, { len: 8.1, amp: 1.25, per: 3.8, ph: 0 }), K.rp(b, 199, 4, 1.2), K.mn(b, 204.5), K.mn(b, 206.5), K.fin(b, bx - 4)));
     }
 
     {
       const a = P(-16, -14).f(10).s(60, 14).c(10, 0).f(70);
       const cx = 74;
-      L.push(LV('l14', 'Eject Express', 'meadow', 'wheelchair', 45, 'Down the big hill. Press Z to eject and fly the rest of the way. Balls and crates are waiting.',
+      L.push(LV('l14', 'Eject Express', 'meadow', 'wheelchair', 25, 'Down the big hill. Press Z to eject and fly the rest of the way. Balls and crates are waiting.',
         a, K.sp0(a, -9), K.sg(a, -12, 'Z ejects you'), K.rp(a, cx + 14, 4, 1.2), K.ba(cx + 38, -1, .7), K.ba(cx + 40, -1, .7), K.ba(cx + 42, -1, .7), K.fin(a, cx + 62)));
     }
 
@@ -2040,14 +2040,16 @@
       const a = P(-16, 0).f(44).c(12, -2.5).f(14);
       const ax = a.x1(), bx = ax + 7;
       const b = P(bx, a.at(ax) + 1.2).f(26).c(14, 2).f(16).c(12, -1.5).f(30);
-      L.push(LV('l15', 'Crate Canyon', 'desert', 'bike', 60, 'A canyon full of crates. Plough through the stacks, jump the gap and keep Pia on board.',
-        a, b, K.sp0(a, 0), K.sg(a, 3, 'Crates are fun'), K.st(a, 14, 2, .45), K.cr(a, 22, .45), K.rp(a, ax - 3, 4, 1.1), K.sg(b, bx + 5, 'Nice landing'), K.st(b, bx + 14, 2, .45), K.cr(b, bx + 20, .45),
-        K.bo(b, bx + 32, 5, 18), K.rp(b, bx + 56, 3.5, 1), K.sp(b, bx + 61, 3), K.cr(b, bx + 76, .6), K.cr(b, bx + 77.2, .6), K.fin(b, bx + 92)));
+      const l15 = LV('l15', 'Crate Canyon', 'desert', 'bike', 20, 'A canyon full of crates. Plough through the stacks, jump the gap and keep Pia on board.',
+        a, b, K.sp0(a, 0), K.sg(a, 3, 'Crates are fun'), K.st(a, 14, 2, .45), K.rp(a, ax - 3, 4, 1.1), K.sg(b, bx + 5, 'Nice landing'), K.st(b, bx + 14, 2, .45),
+        K.bo(b, bx + 32, 5, 18), K.rp(b, bx + 56, 3.5, 1), K.sp(b, bx + 61, 3), K.sg(b, bx + 78, 'Almost there'), K.fin(b, bx + 92));
+      for (const it of l15.items) if (it.t === 'crate') it.d = 2.5;
+      L.push(l15);
     }
 
     {
       const a = P(-16, 0).f(150);
-      L.push(LV('l16', 'Frosty Steps', 'snow', 'segway', 70, 'Dot rides over icy ramps and hops the spike strips with Space. The ice is slippery, so lean gently.',
+      L.push(LV('l16', 'Frosty Steps', 'snow', 'segway', 20, 'Dot rides over icy ramps and hops the spike strips with Space. The ice is slippery, so lean gently.',
         a, K.sp0(a, 0), K.sg(a, 3, 'Up: go|Left, Right: lean|Space: hop'), K.rp(a, 16, 3, .6), K.bx(a, 20.5, 6, .6, 'ice'), K.rp(a, 25, 3, .6, 1), K.sp(a, 36, 2),
         K.rp(a, 48, 3, .8), K.bx(a, 53.5, 8, .8, 'ice'), K.rp(a, 59, 3, .8, 1), K.sp(a, 70, 2.5), K.bx(a, 84, 10, .25, 'ice'), K.sp(a, 98, 2), K.sg(a, 106, 'Almost there'), K.fin(a, 124)));
     }
@@ -2058,7 +2060,7 @@
       const bx = b.x1();
       const c = P(bx + 15, -2).f(50);
       const T = (x, y) => [{ t: 'box', x, y, w: 4, h: .7, m: 'hazard' }, K.hp(x - 1.2, y - .55, PI - .5, 22)];
-      L.push(LV('l17', 'Night Market', 'night', 'moped', 70, 'Lou and Ziggy ride through the night market. Smash the glass stalls, cross the moving bridges and dodge the turret.',
+      L.push(LV('l17', 'Night Market', 'night', 'moped', 15, 'Lou and Ziggy ride through the night market. Smash the glass stalls, cross the moving bridges and dodge the turret.',
         a, b, c, K.sp0(a, 0), K.sg(a, 3, 'Up: gas|Space: turbo'), K.gl(a, 18, .35, 2.6), K.gl(a, 23, .35, 2.6), K.lf(39, .23, { w: 9, dx: 1.2, per: 5 }), K.bo(b, 50, 5, 18),
         T(66, -6.5), K.gl(b, 72, .35, 3), K.lf(bx + 7.5, -1.77, { w: 11, dx: 1.5, per: 6 }), K.sg(c, bx + 20, 'Almost there'), K.fin(c, bx + 48)));
     }
@@ -2067,14 +2069,14 @@
       const a = P(-16, 0).f(66);
       const b = P(58, .6).f(30);
       const c = P(96, 1.2).f(60);
-      L.push(LV('l18', 'Gran Prix', 'meadow', 'wheelchair', 80, 'Gran races for the cup. Fire the rockets off every ramp to clear the gaps, then mind the swinging ball.',
+      L.push(LV('l18', 'Gran Prix', 'meadow', 'wheelchair', 20, 'Gran races for the cup. Fire the rockets off every ramp to clear the gaps, then mind the swinging ball.',
         a, b, c, K.sp0(a, 0), K.sg(a, 3, 'Hold Space for rockets|then hit the ramp'), K.bo(a, 14, 5, 16), K.rp(a, 46, 4, 1), K.rp(b, 84, 4, 1),
         K.wr(118, 1.2 - 9.2, { len: 8.1, amp: 1.2, per: 4, ph: 1 }), K.sg(c, 128, 'Almost there'), K.fin(c, 146)));
     }
 
     {
       const a = P(-16, 0).f(22).c(10, -1.5).f(18).c(10, 1.5).f(60);
-      L.push(LV('l19', 'Bounce House', 'factory', 'pogo', 90, 'Joey bounces over the factory hill. Small spike strips everywhere. Small hops are safer than big ones.',
+      L.push(LV('l19', 'Bounce House', 'factory', 'pogo', 45, 'Joey bounces over the factory hill. Small spike strips everywhere. Small hops are safer than big ones.',
         a, K.sp0(a, 0), K.sg(a, 2, 'Up: hop|Space: mega hop|Left, Right: lean'), K.sp(a, 12, 1.5), K.sp(a, 26, 1.5), K.sp(a, 38, 2), K.sp(a, 60, 1.5), K.sp(a, 74, 2), K.sg(a, 82, 'Almost there'), K.fin(a, 96)));
     }
   }
@@ -2102,7 +2104,7 @@
     publish();
 
     let screen = 'title', tScreen = 0, clock = 0;
-    const go = s => { screen = s; tScreen = 0; ui.f = 0; ui.nav = null; touchPtr.clear(); keysHeld.clear(); if (s !== 'play') snd.engine.off(), snd.rocket.off(); };
+    const go = s => { const was = screen; screen = s; tScreen = 0; ui.f = 0; ui.nav = null; if (!(was === 'play' && s === 'play')) { touchPtr.clear(); keysHeld.clear(); } if (s !== 'play') snd.engine.off(), snd.rocket.off(); };
 
     const parts = [], texts = [];
     let shakeA = 0, run = null, lastText = 0;
@@ -2614,7 +2616,7 @@
     const drawResult = () => {
       drawRun();
       ctx.fillStyle = 'rgba(8,10,30,.55)'; ctx.fillRect(0, 0, CW, CH);
-      const r = run, res = r.res, pw = PORT ? CW - 40 : 480, px = CW / 2 - pw / 2, ph = PORT ? 440 : 392, py = (CH - ph) / 2 - (PORT ? 40 : 0);
+      const r = run, res = r.res, pw = PORT ? CW - 40 : 480, px = CW / 2 - pw / 2, ph = PORT ? 470 : 420, py = (CH - ph) / 2 - (PORT ? 40 : 0);
       const e = Math.min(1, tScreen * 4), ez = 1 - Math.pow(1 - e, 3);
       ctx.save(); ctx.translate(CW / 2, py + ph / 2); ctx.scale(.88 + .12 * ez, .88 + .12 * ez); ctx.globalAlpha = ez; ctx.translate(-CW / 2, -(py + ph / 2));
       panel(px, py, pw, ph, 22, 'rgba(14,16,44,.95)', 'rgba(255,255,255,.2)');
