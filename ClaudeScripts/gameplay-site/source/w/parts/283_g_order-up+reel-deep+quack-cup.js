@@ -47,6 +47,7 @@
   const rrp = (c, x, y, w, h, r) => { r = Math.min(r, w / 2, h / 2); c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); };
   const mulberry = s => () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   const tr = (s, o) => { const g = window.gpI18n; if (g && g.t) return g.t(s, o); return o ? String(s).replace(/\{(\w+)\}/g, (m, k) => k in o ? o[k] : m) : s; };
+  const i18 = (s, o) => tr(s, o);
   const fmtTime = s => { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 
   const makeAudio = api => {
@@ -114,13 +115,13 @@
     canvas.style.touchAction = 'none';
     const S = {
       W, H, ctx, canvas, api, mx: -999, my: -999, down: false, downX: 0, downY: 0, pressed: false, released: false, moved: 0,
-      keys: new Set(), hit: new Set(), lock: false, mkScr: false, downBtn: false, cursor: 'default', t: 0, fx: [], shake: 0, onKey: null, onWheel: null, wheel: 0, touch: false
+      keys: new Set(), hit: new Set(), hitS: new Set(), pressedS: false, lock: false, mkScr: false, downBtn: false, cursor: 'default', t: 0, fx: [], shake: 0, onKey: null, onWheel: null, wheel: 0, touch: false
     };
     const au = S.au = makeAudio(api);
     api.on(canvas, 'pointerdown', e => {
       const p = toLocal(e);
       S.mx = p.x; S.my = p.y; S.downX = p.x; S.downY = p.y; S.down = true; S.pressed = true; S.moved = 0;
-      S.touch = e.pointerType === 'touch'; S.downBtn = false;
+      S.touch = e.pointerType === 'touch'; S.downBtn = false; S.pressedS = true;
       try { canvas.setPointerCapture(e.pointerId); } catch (x) {}
       au.get();
       e.preventDefault();
@@ -143,7 +144,7 @@
     api.on(canvas, 'wheel', e => { S.wheel += Math.sign(e.deltaY); if (S.onWheel) { e.preventDefault(); } }, { passive: false });
     api.on(window, 'keydown', e => {
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
-      if (!S.keys.has(e.code)) S.hit.add(e.code);
+      if (!S.keys.has(e.code)) { S.hit.add(e.code); S.hitS.add(e.code); }
       S.keys.add(e.code);
       S.lastKey = e.key;
       if (S.onKey) S.onKey(e);
@@ -155,6 +156,8 @@
     S.clickIn = (x, y, w, h) => !S.lock && S.released && S.inside(x, y, w, h) && S.inside(x, y, w, h, S.downX, S.downY);
     S.pressIn = (x, y, w, h) => !S.lock && S.pressed && S.inside(x, y, w, h);
     S.key = c => S.hit.has(c);
+    S.ks = c => S.hitS.has(c);
+    S.clearSim = () => { S.hitS.clear(); S.pressedS = false; };
     S.endFrame = () => {
       S.pressed = false; S.released = false; S.hit.clear(); S.wheel = 0;
       const c = S.lock ? 'default' : S.cursor;
@@ -532,12 +535,12 @@
     };
     const finishHaul = () => {
       if (haulTot > sv.bestHaul) sv.bestHaul = haulTot;
-      sPop(W / 2, 150, haulN ? `HAUL  ${haulN} fish  ${money(haulTot)}` : 'Nothing this time!', haulN ? '#fff' : '#ffd0d0', 30, { life: 1.8, vy: -20 });
+      sPop(W / 2, 150, haulN ? tr('HAUL  {n} fish  {m}', { n: haulN, m: money(haulTot) }) : 'Nothing this time!', haulN ? '#fff' : '#ffd0d0', 30, { life: 1.8, vy: -20 });
       state = 'idle'; idleT = 0;
       if (sv.tut < 3) { sv.tut++; startHint(); }
       if (sv.auto && sv.hasAuto) sellAll(true);
       persist();
-      const nt = tier(); if (nt !== lastTier) { lastTier = nt; msg = { s: `New boat: ${BOATS[nt][1]}!`, t: 0 }; au.tone(523, .5, 'triangle', .08, 1046); S.mkScr = true; S.confetti(W / 2, 260, 40); S.mkScr = false; }
+      const nt = tier(); if (nt !== lastTier) { lastTier = nt; msg = { s: tr('New boat: {b}!', { b: tr(BOATS[nt][1]) }), t: 0 }; au.tone(523, .5, 'triangle', .08, 1046); S.mkScr = true; S.confetti(W / 2, 260, 40); S.mkScr = false; }
     };
     const sellAll = quiet => {
       if (!sv.hold.length) return;
@@ -630,20 +633,17 @@
 
     const update = dt => {
       S.t += dt; skyT += dt;
+      if (msg) msg.t += dt;
       if (music) music.update(dt);
-      if (S.key('KeyM')) { music.toggle(); sv.mus = music.on; }
       mk(dt);
       if (modal) {
-        if (S.key('Escape')) modal = null;
-        if (modal && modal.k === 'welcome') { modal.t += dt; }
+        if (modal.k === 'welcome') modal.t += dt;
         stepFish(dt);
         return;
       }
       const inPlay = state === 'drop' || state === 'rise';
       if (state === 'idle') {
         idleT += dt;
-        const go = S.key('Space') || S.key('Enter') || S.key('ArrowDown') || S.key('KeyS');
-        if (go) cast();
         if (sv.auto && sv.hasAuto && idleT > .9 && !modal) cast();
         hook.x = lerp(hook.x, boatTip[0], Math.min(1, dt * 6)); hook.tx = hook.x;
       }
@@ -662,7 +662,6 @@
         if (state === 'drop') {
           hook.y += spd * dt * (1 + Math.min(.35, hook.y / maxPx() * .35));
           if (hook.y >= maxPx()) { hook.y = maxPx(); state = 'rise'; S.ring(hook.x, hook.y, 4, 40, '#9ff', .5); au.tone(300, .25, 'sine', .05, 150); sv.deepest = Math.max(sv.deepest, maxM()); }
-          if (S.key('Space') && hook.y > 60) state = 'rise';
         } else {
           const full = hooked.length >= capN();
           hook.y -= spd * dt * (full ? 2.8 : 1.7);
@@ -685,7 +684,7 @@
           const id = f.sp.id;
           sv.hold.push({ id, v: f.val, size: f.size, gold: f.gold });
           const dx = sv.dex[id] || (sv.dex[id] = { n: 0, best: 0, gold: 0 });
-          if (!dx.n) { newDex.push(f.sp.n); sPop(W / 2, 200 + newDex.length * 30, 'NEW: ' + f.sp.n + '!', '#9ef0ff', 26, { life: 1.8, vy: -15 }); au.tone(784, .15, 'triangle', .07); au.tone(1047, .3, 'triangle', .07, 0, .12); }
+          if (!dx.n) { newDex.push(f.sp.n); sPop(W / 2, 200 + newDex.length * 30, tr('NEW: {f}!', { f: tr(f.sp.n) }), '#9ef0ff', 26, { life: 1.8, vy: -15 }); au.tone(784, .15, 'triangle', .07); au.tone(1047, .3, 'triangle', .07, 0, .12); }
           dx.n++; dx.best = Math.max(dx.best, f.size); if (f.gold) dx.gold++;
           const pit = Math.min(2200, 480 * Math.pow(1.045, haulN));
           au.tone(pit, .1, 'sine', .08, pit * 1.6); au.noise(.05, .04, 4000, 0, 'highpass');
@@ -831,7 +830,7 @@
         upIcon(k === 'cap' ? 'cap' : k, x + 20, y + 15, 9);
         S.text(U.n, x + 38 + (bw - 38) / 2 - 2, y + 15, S.fit(U.n, bw - 52, 13), '#2a2438', 'center', null, 900);
         S.text(maxed ? 'MAX' : U.eff(lv) + '  >  ' + U.eff(lv + 1), x + bw / 2, y + 40, S.fit(maxed ? 'MAX' : U.eff(lv) + ' > ' + U.eff(lv + 1), bw - 10, 12), '#5a4a6a', 'center', null, 800);
-        S.text('Lv ' + (lv + 1), x + bw / 2, y + 55, 11, '#8a7a9a', 'center', null, 800);
+        S.text(tr('Lv {n}', { n: lv + 1 }), x + bw / 2, y + 55, 11, '#8a7a9a', 'center', null, 800);
         if (S.btn(x + 8, y + 62, bw - 16, 24, maxed ? 'MAXED' : money(cst), { color: can ? '#3ecf6c' : '#c9c1d6', size: 14, enabled: can, r: 10 })) buy(k);
         if (pulse) { c.save(); c.globalAlpha = pulse * .5; rrp(c, x - 2, y - 2, bw + 4, 96, 16); c.strokeStyle = '#7bff9a'; c.lineWidth = 3; c.stroke(); c.restore(); }
       });
@@ -848,13 +847,13 @@
       const hv = holdValue(), hn = sv.hold.length;
       if (hn) {
         S.panel(14, 70, 236, 76, { fill: '#fff8e7', r: 16, lw: 3, sh: 4 });
-        S.text(`Catch: ${hn} fish`, 28, 88, 15, '#2a2438', 'left', null, 900);
-        S.text('worth ' + money(hv), 28, 108, 13, '#6a4a2a', 'left', null, 800);
+        S.text(tr('Catch: {n} fish', { n: hn }), 28, 88, 15, '#2a2438', 'left', null, 900);
+        S.text(tr('worth {m}', { m: money(hv) }), 28, 108, 13, '#6a4a2a', 'left', null, 800);
         if (S.btn(142, 82, 100, 54, 'SELL', { color: '#ffb703', size: 24, sub: money(hv), r: 14 }) || (state === 'idle' && S.key('KeyE'))) sellAll();
         if (sellT > 0 && sellT < .6) { c.save(); c.globalAlpha = 1 - sellT / .6; c.fillStyle = '#fff'; rrp(c, 14, 70, 236, 76, 16); c.fill(); c.restore(); }
       }
       if (state === 'idle') {
-        hudBtn(W - 14 - 100, 14, 'Fishdex', () => { modal = { k: 'dex' }; }, { w: 100, color: '#2ba7a0' });
+        hudBtn(W - 14 - 100, 14, 'Fish Book', () => { modal = { k: 'dex' }; }, { w: 100, color: '#2ba7a0' });
         hudBtn(W - 14 - 204, 14, 'Market', () => { modal = { k: 'market' }; }, { w: 100, color: '#e8734a' });
       }
       hudBtn(W - 14 - 46, 58 - 0, '', () => { music.toggle(); sv.mus = music.on; persist(); }, { w: 46, color: music.on ? '#5e7ce2' : '#8a7fa8', icon: (x, y) => note(c, x, y) });
@@ -880,7 +879,7 @@
         if (S.released && !S.downBtn && !S.lock && S.my > 70 && S.my < H - 118 && !S.inside(14, 70, 236, 76)) cast();
       }
       if (msg) {
-        msg.t += .016; const a = Math.min(1, msg.t * 3) * (msg.t > 6 ? Math.max(0, 1 - (msg.t - 6)) : 1);
+        const a = Math.min(1, msg.t * 3) * (msg.t > 6 ? Math.max(0, 1 - (msg.t - 6)) : 1);
         c.save(); c.globalAlpha = a; S.panel(W / 2 - 260, H - 168, 520, 40, { fill: 'rgba(20,18,42,.88)', r: 20, lw: 3, sh: 3 }); S.text(msg.s, W / 2, H - 148, S.fit(msg.s, 480, 17), '#fff', 'center', null, 800); c.restore();
         if (msg.t > 7) msg = null;
       }
@@ -902,18 +901,18 @@
       S.lock = false;
       if (modal.k === 'welcome') {
         modalFrame(S, 250, 130, 460, 300, 'Welcome back!', { head: '#2ba7a0' });
-        S.text(`Your crew fished for ${modal.secs >= 3600 ? Math.floor(modal.secs / 3600) + 'h ' : ''}${Math.floor(modal.secs % 3600 / 60)}m`, W / 2, 190, 18, '#5a4a6a', 'center', null, 800);
+        S.text(tr('Your crew fished for {t}', { t: (modal.secs >= 3600 ? Math.floor(modal.secs / 3600) + 'h ' : '') + Math.floor(modal.secs % 3600 / 60) + 'm' }), W / 2, 190, 18, '#5a4a6a', 'center', null, 800);
         if (modal.capped) S.text('Offline limit reached. Upgrade Offline Earnings to stay away longer.', W / 2, 214, 12, '#c0392b', 'center', null, 800);
         icoCoin(c, W / 2 - 100, 270, 26); const cnt = Math.floor(modal.earn * eo(modal.t / 1.2));
         S.text('+' + short(cnt), W / 2 - 62, 272, 46, '#e69b00', 'left', '#fff6dc');
-        S.text(`${Math.round(tfOffFrac(sv.lv.off) * 100)}% of your normal haul, up to ${tfOffHours(sv.lv.off)}h`, W / 2, 330, 13, '#6a5a7a', 'center', null, 700);
+        S.text(tr('{p}% of your normal haul, up to {h}h', { p: Math.round(tfOffFrac(sv.lv.off) * 100), h: tfOffHours(sv.lv.off) }), W / 2, 330, 13, '#6a5a7a', 'center', null, 700);
         if (S.btn(W / 2 - 90, 362, 180, 52, 'Collect', { color: '#3ecf6c', size: 24 }) || S.key('Enter') || S.key('Space')) { modal = null; au.tone(880, .2, 'triangle', .07, 1320); persist(); }
       } else if (modal.k === 'dex') {
-        modalFrame(S, 40, 50, W - 80, H - 90, `Fishdex  ${Object.keys(sv.dex).length}/${FISH.length}`, { head: '#2ba7a0' });
+        modalFrame(S, 40, 50, W - 80, H - 90, tr('Fish Book  {a}/{b}', { a: Object.keys(sv.dex).length, b: FISH.length }), { head: '#2ba7a0' });
         const cw = 122, ch = 118, cols = 7;
         FISH.forEach((f, i) => drawDexCard(58 + (i % cols) * (cw + 8), 92 + Math.floor(i / cols) * (ch + 8), cw, ch, f));
         const tot = Object.values(sv.dex).reduce((a, d) => a + d.n, 0);
-        S.text(`Total caught ${short(tot)}   ·   Casts ${short(sv.casts)}   ·   Best haul ${money(sv.bestHaul)}   ·   Earned ${money(sv.earned)}`, W / 2, H - 82, 14, '#5a4a6a', 'center', null, 800);
+        S.text(tr('Total caught {a}   ·   Casts {b}   ·   Best haul {c}   ·   Earned {d}', { a: short(tot), b: short(sv.casts), c: money(sv.bestHaul), d: money(sv.earned) }), W / 2, H - 82, 14, '#5a4a6a', 'center', null, 800);
         if (S.btn(W / 2 - 70, H - 68, 140, 40, 'Close', { color: '#e8734a', size: 18 })) modal = null;
       } else if (modal.k === 'market') {
         modalFrame(S, 150, 50, W - 300, H - 90, 'Fish Market', { head: '#e8734a' });
@@ -924,20 +923,26 @@
         ids.slice(0, 8).forEach((id, i) => {
           const f = FBY[id], y = 112 + i * 42, m = mult(id), tot = sv.hold.filter(h => h.id === id).reduce((a, h) => a + sellPrice(h), 0);
           c.save(); c.translate(190, y + 18); const sc = Math.min(1, 40 / f.len); c.scale(sc, sc); drawFishBody(c, f, 1, S.t, 0, false); c.restore();
-          S.text(`${f.n}  x${have[id]}`, 230, y + 18, 15, '#2a2438', 'left', null, 900);
+          S.text(`${tr(f.n)}  x${have[id]}`, 230, y + 18, 15, '#2a2438', 'left', null, 900);
           const col = m >= 1.12 ? '#2e9c53' : m <= .88 ? '#c0392b' : '#8a6a1a';
           S.text(`${m >= 1.02 ? '▲' : m <= .98 ? '▼' : '•'} ${Math.round(m * 100)}%`, 420, y + 18, 15, col, 'left', null, 900);
           S.text(money(tot), 520, y + 18, 16, '#b86b00', 'left', null, 900);
           if (S.btn(640, y + 4, 90, 32, 'Sell', { color: '#ffb703', size: 15, r: 10 })) sellOne(id);
         });
-        if (sv.hold.length && S.btn(W / 2 - 220, H - 76, 200, 40, 'Sell all ' + money(holdValue()), { color: '#ffb703', size: 16 })) { sellAll(); modal = null; }
+        if (sv.hold.length && S.btn(W / 2 - 220, H - 76, 200, 40, tr('Sell all {m}', { m: money(holdValue()) }), { color: '#ffb703', size: 16 })) { sellAll(); modal = null; }
         if (S.btn(W / 2 + 20, H - 76, 140, 40, 'Close', { color: '#e8734a', size: 18 })) modal = null;
       }
       if (S.pressed && modal && modal.k !== 'welcome' && !S.inside(40, 50, W - 80, H - 90)) modal = null;
     };
 
     api.score(sv.coins);
-    api.loop(dt => {
+    const keysFrame = () => {
+      if (S.key('KeyM')) { music.toggle(); sv.mus = music.on; }
+      if (modal) { if (S.key('Escape')) modal = null; return; }
+      if (state === 'idle' && (S.key('Space') || S.key('Enter') || S.key('ArrowDown') || S.key('KeyS'))) cast();
+      else if (state === 'drop' && S.key('Space') && hook.y > 60) state = 'rise';
+    };
+    const sim = dt => {
       update(dt);
       for (let i = bubbles.length - 1; i >= 0; i--) { const b = bubbles[i]; b.t += dt; b.y -= b.v * dt; if (b.t > b.life || b.y < 0) bubbles.splice(i, 1); }
       S.stepFx(dt);
@@ -945,6 +950,13 @@
       let camT;
       if (state === 'idle' || state === 'haul') camT = -170; else camT = clamp(hook.y - H * .42, -170, Math.max(-170, maxPx() + 140 - H));
       camY = lerp(camY, camT, Math.min(1, dt * (state === 'haul' ? 5 : 6.5)));
+    };
+    let accF = 0;
+    api.loop(dt => {
+      keysFrame();
+      accF += dt; let n = 0;
+      while (accF >= 1 / 120 && n < 8) { sim(1 / 120); accF -= 1 / 120; n++; }
+      if (n >= 8) accF = 0;
       c.save();
       if (S.shake > 0) c.translate(rnd(-S.shake, S.shake) * .5, rnd(-S.shake, S.shake) * .5);
       drawWorld();
@@ -1238,10 +1250,15 @@
   };
   const shCream = (c, x, y, w, amt, k = 1) => {
     if (amt <= 0) return 0;
-    const n = 3, hh = 22 * k * clamp(amt, 0, 1.4);
-    c.save(); c.lineWidth = 2 * k; c.strokeStyle = '#c9c3d6'; c.fillStyle = '#fffdf8';
-    for (let i = 0; i < n; i++) { const ww = w * (1 - i * .27) * .5, yy = y - i * hh * .8; c.beginPath(); c.ellipse(x, yy, ww, hh * .55, 0, Math.PI, TAU); c.quadraticCurveTo(x + ww * 1.05, yy + hh * .35, x, yy + hh * .3); c.quadraticCurveTo(x - ww * 1.05, yy + hh * .35, x - ww, yy); c.fill(); c.stroke(); }
-    c.beginPath(); c.moveTo(x - 4 * k, y - hh * 2.1); c.quadraticCurveTo(x, y - hh * 2.9, x + 5 * k, y - hh * 2.2); c.fill(); c.stroke();
+    const hh = 22 * k * clamp(amt, 0, 1.4);
+    c.save(); c.lineWidth = Math.max(1.5, 2.4 * k); c.lineJoin = 'round'; c.strokeStyle = '#a9a2bb';
+    for (let i = 0; i < 3; i++) {
+      const ww = w * (1 - i * .26) * .5, yy = y - i * hh * .78 - hh * .3;
+      c.beginPath(); c.ellipse(x, yy, ww, hh * .5, 0, 0, TAU); c.fillStyle = '#fffdf8'; c.fill(); c.stroke();
+      c.fillStyle = 'rgba(200,190,220,.45)'; c.beginPath(); c.ellipse(x + ww * .15, yy + hh * .22, ww * .8, hh * .18, 0, 0, Math.PI); c.fill();
+      c.fillStyle = 'rgba(255,255,255,.9)'; c.beginPath(); c.ellipse(x - ww * .35, yy - hh * .18, ww * .28, hh * .12, -.3, 0, TAU); c.fill();
+    }
+    c.beginPath(); c.moveTo(x - 7 * k, y - hh * 2.05); c.quadraticCurveTo(x - 2 * k, y - hh * 2.9, x + 6 * k, y - hh * 2.75); c.quadraticCurveTo(x + 4 * k, y - hh * 2.3, x + 8 * k, y - hh * 2.05); c.closePath(); c.fillStyle = '#fffdf8'; c.fill(); c.stroke();
     c.restore();
     return hh * 2.6;
   };
@@ -1946,7 +1963,7 @@
         const x = 18 + (i % 3) * 66, y = 160 + Math.floor(i / 3) * 70, sel = b.held && b.held.id === id && id !== 'patty', hov = S.hover(x, y, 60, 64);
         rrp(c, x, y, 60, 64, 10); c.fillStyle = sel ? '#ffe14d' : hov ? '#fff8e0' : '#fff3dc'; c.fill(); c.lineWidth = 3; c.strokeStyle = '#2a2438'; c.stroke();
         bgIcon(c, id, x + 30, y + 26, id === 'patty' ? .9 : 1.15);
-        S.text(BG.B[id].n.split(' ').pop(), x + 30, y + 54, S.fit(tr(BG.B[id].n), 56, 10), '#2a2438', 'center', null, 900);
+        S.text(BG.B[id].n, x + 30, y + 54, S.fit(tr(BG.B[id].n), 56, 10), '#2a2438', 'center', null, 900);
         if (hov) S.cursor = 'pointer';
         if (!b.drop && S.clickIn(x, y, 60, 64)) {
           if (id === 'patty') { const p = k.tray[0]; if (!p) { toast('No cooked patties. Grill some first (2)'); au.tone(200, .12, 'sawtooth', .04); } else { b.held = { id: 'patty', p }; au.tone(520, .06, 'sine', .05); } }
@@ -1988,7 +2005,7 @@
       rows: [['Grilling', 'grill'], ['Building', 'build']],
       hint0: 'Click the customer to take the order. Grill patties (2), then stack the burger (3).',
       help: [['GRILL', 'Put raw patties on the grill. Click a patty to flip it: both sides must reach the doneness on the ticket (rare, medium or well done). Move cooked patties to the warming tray.'], ['BUILD', 'Stack the burger from the bottom bun up, in the order on the ticket. Pick a layer, then click to drop it: the closer to the middle, the better. Press Serve when the top bun is on.']],
-      menu: day => ['bunT', 'patty'].concat(avail(day).map(t => t.id)).map(id => (x, y) => bgIcon(c, id, x, y, .7)),
+      menu: day => ['bunT', 'patty'].concat(avail(day).map(t => t.id)).map(id => (x, y) => bgIcon(c, id, x, y, id === 'patty' ? .75 : .85)),
       newItems: day => BG.L.filter(t => t.day === day && day > 1).map(t => ({ n: t.n, d: (x, y) => bgIcon(c, t.id, x, y, .8) })).concat(BG.DONE.filter(t => t.day === day && day > 1).map(t => ({ n: t.n, d: (x, y) => { c.beginPath(); c.arc(x, y, 12, 0, TAU); c.fillStyle = pattyCol(t.v); c.fill(); c.strokeStyle = '#2a2438'; c.lineWidth = 2.5; c.stroke(); } }))),
       icon: (x, y, s) => { c.save(); c.translate(x, y); c.scale(s, s); c.fillStyle = 'rgba(0,0,0,.2)'; c.beginPath(); c.ellipse(0, 44, 70, 10, 0, 0, TAU); c.fill(); bgStack(c, ['bunB', 'patty', 'cheese', 'lettuce', 'tomato', 'bunT'], 0, 42, 118); c.restore(); },
       floaty: t => { const ids = ['patty', 'cheese', 'tomato', 'lettuce', 'bunT', 'pickle']; for (let i = 0; i < 12; i++) { c.save(); c.translate((i * 151 + t * 20) % 1020 - 30, ((i * 97) % 520) + 40); c.rotate(Math.sin(t * .5 + i) * .3); bgIcon(c, ids[i % 6], 0, 0, 1.6); c.restore(); } },
@@ -2196,7 +2213,7 @@
       const g = drawCupTop(b, tk);
       const tool = b.tool, overCup = S.inside(CX - g.w / 2 - 20, g.top - 120, g.w + 40, 160);
       if (tool && tool.k === 'driz' && S.down && overCup && !S.downBtn && !S.lock) {
-        const p = [S.mx, S.my];
+        const p = [clamp(S.mx, CX - g.w * .4, CX + g.w * .4), clamp(S.my, g.cTop - g.cH * .95, g.cTop - 6)];
         if (!b.last || Math.hypot(p[0] - b.last[0], p[1] - b.last[1]) > 6) { if (b.last && b.driz.length < 300) b.driz.push([b.last[0] - CX, b.last[1] - g.cTop, p[0] - CX, p[1] - g.cTop]); b.dAmt += b.last ? Math.hypot(p[0] - b.last[0], p[1] - b.last[1]) / 520 : 0; b.dType = tool.id; b.last = p; }
       } else b.last = null;
       if (tool && tool.k === 'spr' && S.clickIn(CX - g.w / 2 - 20, g.top - 120, g.w + 40, 160)) { b.sType = tool.id; b.sN++; const cols = SH.SPRB[tool.id].cols; for (let j = 0; j < 14; j++) b.spr.push([rnd(-g.w * .38, g.w * .38), rnd(-g.cH * .9, -4), cols[j % cols.length], rnd(0, 3)]); au.noise(.18, .06, 6000, 0, 'highpass'); }
@@ -2232,7 +2249,7 @@
       if (!b.cream) { c.setLineDash([6, 5]); c.strokeStyle = 'rgba(42,36,56,.5)'; c.lineWidth = 2; const ly = cTop - 22 * k * 2.6; c.beginPath(); c.moveTo(CX - w * .3, ly); c.lineTo(CX + w * .3, ly); c.stroke(); c.setLineDash([]); }
       const ch = shCream(c, CX, cTop, w * .92, b.cream, k);
       if (b.cream > 0) { c.setLineDash([6, 5]); c.strokeStyle = 'rgba(42,36,56,.5)'; c.lineWidth = 2; const ly = cTop - 22 * k * 2.6; c.beginPath(); c.moveTo(CX - w * .45, ly); c.lineTo(CX - w * .3, ly); c.moveTo(CX + w * .3, ly); c.lineTo(CX + w * .45, ly); c.stroke(); c.setLineDash([]); }
-      if (b.driz.length && b.dType) { c.save(); c.strokeStyle = SH.DRIZB[b.dType].col; c.lineWidth = 5; c.lineCap = 'round'; c.beginPath(); for (const s of b.driz) { c.moveTo(CX + s[0], cTop + s[1]); c.lineTo(CX + s[2], cTop + s[3]); } c.stroke(); c.restore(); }
+      if (b.driz.length && b.dType) { c.save(); c.strokeStyle = SH.DRIZB[b.dType].col; c.lineWidth = 4; c.lineCap = 'round'; c.beginPath(); for (const s of b.driz) { c.moveTo(CX + s[0], cTop + s[1]); c.lineTo(CX + s[2], cTop + s[3]); } c.stroke(); c.restore(); }
       for (const s of b.spr) { c.save(); c.translate(CX + s[0], cTop + s[1] * clamp(b.cream, .2, 1.2)); c.rotate(s[3]); c.fillStyle = s[2]; c.fillRect(-3, -1, 6, 2.4); c.restore(); }
       const cH = Math.max(ch, 22 * k * 2.6 * .4);
       for (const t of b.tops) shTopping(c, t.t, CX + (t.p - 1) * w * .3, cTop - cH * (t.p === 1 ? .9 : .5), 1.3);
@@ -2781,7 +2798,7 @@
       { id: 'cape', n: 'Hero Cape', slot: 'neck', cost: 300, b: { run: 1, fly: 2 }, d: '+1 Running, +2 Flying' }
     ],
     SLOTS: ['hat', 'face', 'neck'],
-    NAMES: ['Quackers', 'Waddles', 'Puddles', 'Sir Quacksalot', 'Daffy', 'Ducky', 'Feathers', 'Splash', 'Biscuit', 'Nugget', 'Pip', 'Maple']
+    NAMES: ['Quackers', 'Waddles', 'Puddles', 'Sir Quacksalot', 'Pebble', 'Ducky', 'Feathers', 'Splash', 'Biscuit', 'Nugget', 'Pip', 'Maple']
   };
   DK.CB = {}; DK.COLS.forEach(x => { DK.CB[x.id] = x; });
   DK.IB = {}; DK.ITEMS.forEach(x => { DK.IB[x.id] = x; });
@@ -2976,6 +2993,7 @@
   };
 
   const mountDuck = (root, api) => {
+    let FD = 1 / 60;
     const W = 960, H = 600, S = makeStage(api, W, H), c = S.ctx, au = S.au;
     const music = makeMusic(au, { bpm: 126, root: 293.66, scale: [0, 2, 4, 7, 9], pat: [0, 2, 4, 2, 5, 4, 2, -1, 3, 4, 5, 7, 5, 4, 2, 0], bass: [0, 3, 4, 2], vol: .026, wave: 'triangle' });
     const defSave = () => ({ name: 'Quackers', look: dkLook(), owned: {}, cols: { yellow: 1 }, st: { run: { lv: 1, xp: 0 }, swim: { lv: 1, xp: 0 }, fly: { lv: 1, xp: 0 }, climb: { lv: 1, xp: 0 } }, energy: 100, seeds: 6, money: 25, runs: [[], [], [], [], [], []], trophy: [0, 0, 0, 0, 0, 0], champ: false, nraces: 0, wins: 0, trains: 0, tut: 0, mus: true, bestM: { run: 0, swim: 0, fly: 0, climb: 0 } });
@@ -3089,7 +3107,7 @@
       return pick(['Quack!', 'Let us win a trophy!', 'Check the shop for hats!', 'Train the skill the next cup needs.', 'Mash those arrow keys in races!']);
     };
     const drawHub = () => {
-      st.t += 1 / 60; S.lock = !!modal;
+      st.t += FD; S.lock = !!modal;
       drawFarm(S.t);
       const bx = 480, by = 482, s = 2.6;
       c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(bx, by + 4, 56 * (1 - hubDuck.hop * .003), 12, 0, 0, TAU); c.fill();
@@ -3097,7 +3115,7 @@
       duckDraw(c, bx, by - Math.sin(clamp(hubDuck.hop / 40, 0, 1) * Math.PI) * 40, s, { look: sv.look, t: S.t, pose: sv.energy < TCOST ? 'sad' : hubDuck.hop > 0 ? 'happy' : 'idle', talk: hubDuck.say > 0 });
       if (S.hover(bx - 70, by - 150, 140, 160)) S.cursor = 'pointer';
       if (S.clickIn(bx - 70, by - 150, 140, 160)) { hubDuck.hop = 40; hubDuck.say = 1.6; hubDuck.msg = tipMsg(); quack(1 + rnd(-.1, .15)); }
-      hubDuck.say = Math.max(0, hubDuck.say - 1 / 60);
+      hubDuck.say = Math.max(0, hubDuck.say - FD);
       if (hubDuck.say > 0) { const w = Math.min(380, S.tw(hubDuck.msg, 15) + 36); S.panel(bx - w / 2, 230, w, 40, { fill: '#fff', r: 14, lw: 3, sh: 3 }); S.text(hubDuck.msg, bx, 250, 15, '#2a2438'); c.fillStyle = '#fff'; c.beginPath(); c.moveTo(bx - 8, 269); c.lineTo(bx, 282); c.lineTo(bx + 8, 269); c.fill(); }
       drawHud();
       S.panel(12, 66, 232, 232, { fill: 'rgba(255,248,231,.95)', r: 16, lw: 3, sh: 4 });
@@ -3105,17 +3123,17 @@
       DK.STATS.forEach((s2, i) => {
         const y = 100 + i * 48, lv = sv.st[s2.id].lv, b = bonus(s2.id);
         stIcon(s2.id, 40, y + 18, 15);
-        S.text(s2.n, 64, y + 8, 15, '#2a2438', 'left'); S.text('Lv ' + lv + (b ? ' +' + b : ''), 232, y + 8, 15, b ? '#2e9c53' : '#2a2438', 'right');
+        S.text(s2.n, 64, y + 8, 15, '#2a2438', 'left'); S.text(i18('Lv {n}', { n: lv }) + (b ? ' +' + b : ''), 232, y + 8, 15, b ? '#2e9c53' : '#2a2438', 'right');
         bar(64, y + 22, 168, 11, lv >= MAXLV ? 1 : sv.st[s2.id].xp / dkNeed(lv), s2.col);
       });
       S.panel(W - 244, 66, 232, 172, { fill: 'rgba(255,248,231,.95)', r: 16, lw: 3, sh: 4 });
       S.text('CUPS', W - 128, 84, 14, '#8a7a9a', 'center', null, 900);
       CUPS.forEach((cp, i) => { const x = W - 226 + (i % 3) * 72, y = 112 + Math.floor(i / 3) * 52; trophyIcon(x + 22, y + 10, 17, sv.trophy[i]); S.text(cp.short, x + 22, y + 38, 11, '#6a5a7a', 'center', null, 800); });
-      S.text(`${sv.wins} race wins`, W - 128, 222, 14, '#2a2438', 'center', null, 800);
+      S.text(i18('{n} race wins', { n: sv.wins }), W - 128, 222, 14, '#2a2438', 'center', null, 800);
       const need = sv.energy < TCOST;
       const bw = 190, gap = 18, x0 = W / 2 - (bw * 3 + gap * 2) / 2;
-      if (S.btn(x0, 508, bw, 70, 'TRAIN', { color: '#ff7b54', size: 28, sub: `-${TCOST} energy`, badge: need ? '!' : null })) { scene = 'trainmenu'; sfx.click(); }
-      if (S.btn(x0 + bw + gap, 508, bw, 70, 'RACE', { color: '#3fa9f5', size: 28, sub: `-${RCOST} energy` })) { scene = 'map'; sfx.click(); }
+      if (S.btn(x0, 508, bw, 70, 'TRAIN', { color: '#ff7b54', size: 28, sub: i18('-{n} energy', { n: TCOST }), badge: need ? '!' : null })) { scene = 'trainmenu'; sfx.click(); }
+      if (S.btn(x0 + bw + gap, 508, bw, 70, 'RACE', { color: '#3fa9f5', size: 28, sub: i18('-{n} energy', { n: RCOST }) })) { scene = 'map'; sfx.click(); }
       if (S.btn(x0 + (bw + gap) * 2, 508, bw, 70, 'SHOP', { color: '#9b7cf0', size: 28, sub: 'hats and colours' })) { scene = 'shop'; shopSel = null; sfx.click(); }
       if (S.btn(W - 58, H - 56, 46, 44, '?', { color: '#4cc9f0', size: 24, r: 12 })) modal = { k: 'help' };
       if (S.btn(12, H - 56, 46, 44, '', { color: music.on ? '#f08a4b' : '#8a7fa8', r: 12, icon: (x, y) => note(c, x, y) })) { music.toggle(); sv.mus = music.on; persist(); }
@@ -3147,7 +3165,7 @@
       if (shopSel) { if (shopSel.kind === 'item') pv[DK.IB[shopSel.id].slot] = shopSel.id; else pv.col = shopSel.id; }
       c.fillStyle = 'rgba(138,111,208,.25)'; c.beginPath(); c.ellipse(180, 380, 100, 20, 0, 0, TAU); c.fill();
       duckDraw(c, 180, 380, 3.4, { look: pv, t: S.t, pose: 'idle' });
-      DK.STATS.forEach((s2, i) => { const x = 50 + (i % 2) * 140, y = 410 + Math.floor(i / 2) * 42; stIcon(s2.id, x + 12, y + 14, 11); const b = bonus(s2.id); S.text('Lv ' + sv.st[s2.id].lv, x + 30, y + 14, 14, '#2a2438', 'left'); if (b) S.text('+' + b, x + 82, y + 14, 14, '#2e9c53', 'left'); });
+      DK.STATS.forEach((s2, i) => { const x = 50 + (i % 2) * 140, y = 410 + Math.floor(i / 2) * 42; stIcon(s2.id, x + 12, y + 14, 11); const b = bonus(s2.id); S.text(i18('Lv {n}', { n: sv.st[s2.id].lv }), x + 30, y + 14, 14, '#2a2438', 'left'); if (b) S.text('+' + b, x + 82, y + 14, 14, '#2e9c53', 'left'); });
       S.text('Click an owned item to wear it again to remove it', 180, 560, 11, '#8a7a9a', 'center', null, 800);
       const tabs = ['Hats', 'Faces', 'Neck', 'Colours'];
       tabs.forEach((t, i) => { if (S.btn(350 + i * 144, 64, 136, 40, t, { color: shopTab === i ? '#ffd23f' : '#c9bfe6', textc: shopTab === i ? '#6a3a00' : '#fff', size: 17, on: shopTab === i, r: 12 })) { shopTab = i; shopPage = 0; sfx.click(); } });
@@ -3203,11 +3221,11 @@
         thumb(s2.id, x + 12, y + 12, 180, 152, S.t);
         const lv = sv.st[s2.id].lv, b = bonus(s2.id), can = sv.energy >= TCOST;
         stIcon(s2.id, x + 218, y + 32, 15); S.text(s2.n, x + 240, y + 30, 21, '#2a2438', 'left');
-        S.text('Lv ' + lv + (b ? ' +' + b : ''), x + w - 16, y + 30, 20, b ? '#2e9c53' : '#c0392b', 'right');
+        S.text(i18('Lv {n}', { n: lv }) + (b ? ' +' + b : ''), x + w - 16, y + 30, 20, b ? '#2e9c53' : '#c0392b', 'right');
         bar(x + 204, y + 52, w - 224, 12, lv >= MAXLV ? 1 : sv.st[s2.id].xp / dkNeed(lv), s2.col);
         S.text(lv >= MAXLV ? 'MAX' : `${sv.st[s2.id].xp} / ${dkNeed(lv)} XP`, x + 204, y + 78, 13, '#6a5a7a', 'left', null, 800);
-        S.text('Best ' + Math.round(sv.bestM[s2.id]) + ' m', x + w - 16, y + 78, 13, '#6a5a7a', 'right', null, 800);
-        if (S.btn(x + 204, y + 96, w - 224, 56, can ? 'Train!' : 'Too tired', { color: can ? s2.col : '#b9b2c9', size: 22, sub: can ? `-${TCOST} energy` : 'eat a seed first', enabled: can })) startTrain(s2.id);
+        S.text(i18('Best {n} m', { n: Math.round(sv.bestM[s2.id]) }), x + w - 16, y + 78, 13, '#6a5a7a', 'right', null, 800);
+        if (S.btn(x + 204, y + 96, w - 224, 56, can ? 'Train!' : 'Too tired', { color: can ? s2.col : '#b9b2c9', size: 22, sub: can ? i18('-{n} energy', { n: TCOST }) : 'eat a seed first', enabled: can })) startTrain(s2.id);
       });
       if (S.btn(30, 520, 120, 48, 'Back', { color: '#e8584a', size: 20 })) { scene = 'hub'; sfx.click(); }
     };
@@ -3216,9 +3234,9 @@
     const inR = (r, x = S.mx, y = S.my) => S.inside(r[0], r[1], r[2], r[3], x, y);
     let tapSide = 0;
     const readCtl = mode => {
-      const k = c2 => S.key(c2), has = c2 => S.keys.has(c2);
+      const k = c2 => S.ks(c2), has = c2 => S.keys.has(c2);
       const ctl = { l: k('ArrowLeft') || k('KeyA'), r: k('ArrowRight') || k('KeyD'), a: k('Space') || k('ArrowUp') || k('KeyW'), up: has('ArrowUp') || has('KeyW'), dn: has('ArrowDown') || has('KeyS'), ptrY: null, hl: has('ArrowLeft') || has('KeyA'), hr: has('ArrowRight') || has('KeyD'), ha: has('Space') || has('ArrowUp') || has('KeyW') };
-      if (S.pressed) {
+      if (S.pressedS) {
         if (mode === 'fly') { if (!inR(CB.d)) ctl.a = true; }
         else if (inR(CB.l)) ctl.l = true;
         else if (inR(CB.r)) ctl.r = true;
@@ -3470,7 +3488,7 @@
       S.text(Math.ceil(Math.max(0, tr.time)) + 's', W / 2, 52, 18, '#fff', 'center', '#2a2438');
       S.panel(12, 8, 150, 44, { fill: 'rgba(255,248,231,.95)', r: 14, lw: 3, sh: 2 }); S.text(Math.round(tr.dist / 10) + ' m', 87, 32, 24, '#2a2438');
       if (k !== 'run' && k !== 'climb') { S.panel(W - 150, 8, 138, 44, { fill: 'rgba(255,248,231,.95)', r: 14, lw: 3, sh: 2 }); drawRing(W - 128, 30, 8, 14, S.t); S.text('x ' + tr.rings, W - 106, 31, 22, '#2a2438', 'left'); }
-      else { S.panel(W - 150, 8, 138, 44, { fill: 'rgba(255,248,231,.95)', r: 14, lw: 3, sh: 2 }); S.text('Jumped ' + tr.cleared, W - 81, 31, 16, '#2a2438'); }
+      else { S.panel(W - 150, 8, 138, 44, { fill: 'rgba(255,248,231,.95)', r: 14, lw: 3, sh: 2 }); S.text(i18('Jumped {n}', { n: tr.cleared }), W - 81, 31, 16, '#2a2438'); }
       const eff = effOf(tr.m, k === 'fly');
       S.panel(300, 512, 270, 54, { fill: 'rgba(255,248,231,.9)', r: 14, lw: 3, sh: 2 }); S.text(k === 'fly' ? 'FLAP RHYTHM' : 'POWER', 435, 526, 12, '#6a5a7a', 'center', null, 900); bar(314, 538, 242, 16, eff, eff > .85 ? '#3ecf6c' : eff > .45 ? '#ffb703' : '#ff7b54');
       drawCtl(k, ctl);
@@ -3484,13 +3502,13 @@
         S.lock = false; trainBgPreview(k);
         c.fillStyle = 'rgba(20,14,40,.55)'; c.fillRect(0, 0, W, H);
         const x = 180, y = 80, w = 600, h = 440; S.panel(x, y, w, h, { fill: '#fff8e7', r: 24, lw: 4, sh: 8 });
-        S.panel(x + 160, y - 20, w - 320, 46, { fill: s2.col, r: 14, lw: 3, sh: 3 }); S.text(s2.n + ' training', x + w / 2, y + 3, 24, '#fff', 'center', s2.dk);
+        S.panel(x + 160, y - 20, w - 320, 46, { fill: s2.col, r: 14, lw: 3, sh: 3 }); S.text(i18('{s} training', { s: i18(s2.n) }), x + w / 2, y + 3, 24, '#fff', 'center', s2.dk);
         stIcon(k, x + 70, y + 110, 34);
-        S.text('Lv ' + sv.st[k].lv + (bonus(k) ? ' +' + bonus(k) : ''), x + 70, y + 160, 20, '#2a2438');
+        S.text(i18('Lv {n}', { n: sv.st[k].lv }) + (bonus(k) ? ' +' + bonus(k) : ''), x + 70, y + 160, 20, '#2a2438');
         trainText(TXT[k], x + 130, y + 76, w - 160, 18);
         S.text('Your top speed grows with every level.', x + w / 2, y + 222, 15, '#6a5a7a', 'center', null, 800);
         duckDraw(c, x + w / 2, y + 340, 2.2, { look: sv.look, t: S.t, pose: k, rot: k === 'climb' ? -.4 : 0 });
-        S.text(`Costs ${TCOST} energy   (you have ${Math.round(sv.energy)})`, x + w / 2, y + 366, 15, sv.energy < TCOST ? '#c0392b' : '#6a5a7a', 'center', null, 800);
+        S.text(i18('Costs {a} energy   (you have {b})', { a: TCOST, b: Math.round(sv.energy) }), x + w / 2, y + 366, 15, sv.energy < TCOST ? '#c0392b' : '#6a5a7a', 'center', null, 800);
         if (S.btn(x + w / 2 - 110, y + 380, 220, 48, 'Start', { color: sv.energy >= TCOST ? '#3ecf6c' : '#b9b2c9', size: 24, enabled: sv.energy >= TCOST }) || (S.key('Enter') && sv.energy >= TCOST)) { beginPlay(); sfx.click(); }
         if (S.btn(x + 14, y + h - 56, 100, 40, 'Back', { color: '#e8584a', size: 16, r: 12 })) { scene = 'trainmenu'; sfx.click(); }
         return;
@@ -3504,20 +3522,20 @@
       }
       drawTrainPlay();
       c.fillStyle = 'rgba(20,14,40,.6)'; c.fillRect(0, 0, W, H);
-      const r = tr.res; r.t += 1 / 60;
+      const r = tr.res; r.t += FD;
       const x = 200, y = 60, w = 560, h = 480; S.panel(x, y, w, h, { fill: '#fff8e7', r: 24, lw: 4, sh: 8 });
       S.panel(x + 140, y - 20, w - 280, 46, { fill: r.up > 0 ? '#ffb703' : s2.col, r: 14, lw: 3, sh: 3 }); S.text(r.up > 0 ? 'LEVEL UP!' : 'Time!', x + w / 2, y + 3, 26, '#fff', 'center', '#6a3a00');
       duckDraw(c, x + 130, y + 190, 2.4, { look: sv.look, t: S.t, pose: r.xp > 30 ? 'happy' : 'idle', talk: r.t < 1.5 });
       S.text(Math.round(r.meters * eo(r.t * 1.6)) + ' m', x + 380, y + 90, 44, '#2a2438');
-      S.text(k === 'run' || k === 'climb' ? `${tr.cleared} obstacles cleared` : `${tr.rings} rings collected`, x + 380, y + 128, 17, '#6a5a7a', 'center', null, 800);
+      S.text(k === 'run' || k === 'climb' ? i18('{n} obstacles cleared', { n: tr.cleared }) : i18('{n} rings collected', { n: tr.rings }), x + 380, y + 128, 17, '#6a5a7a', 'center', null, 800);
       const shown = Math.round(r.xp * eo((r.t - .4) * 1.4));
       S.text('+' + shown + ' XP', x + 380, y + 172, 30, s2.col === '#ffffff' ? '#000' : s2.dk, 'center');
       S.text('+$' + Math.round(r.coins * eo((r.t - .4) * 1.4)), x + 380, y + 206, 20, '#b86b00', 'center');
-      stIcon(k, x + 60, y + 300, 18); S.text(s2.n + '  Lv ' + sv.st[k].lv, x + 90, y + 300, 22, '#2a2438', 'left');
+      stIcon(k, x + 60, y + 300, 18); S.text(i18(s2.n) + '  ' + i18('Lv {n}', { n: sv.st[k].lv }), x + 90, y + 300, 22, '#2a2438', 'left');
       const xp0 = r.up > 0 ? 0 : r.before.xp, frac = sv.st[k].lv >= MAXLV ? 1 : (r.up > 0 ? sv.st[k].xp : lerp(r.before.xp, sv.st[k].xp, eo((r.t - .4) * 1.2))) / dkNeed(sv.st[k].lv); void xp0;
       bar(x + 60, y + 326, w - 120, 18, frac, s2.col);
-      S.text(`${sv.st[k].xp} / ${dkNeed(sv.st[k].lv)} XP to next level`, x + w / 2, y + 366, 14, '#6a5a7a', 'center', null, 800);
-      if (r.up > 0) S.text(`+${r.up} level${r.up > 1 ? 's' : ''}!`, x + w - 70, y + 300, 22, '#c0392b', 'right');
+      S.text(i18('{a} / {b} XP to next level', { a: sv.st[k].xp, b: dkNeed(sv.st[k].lv) }), x + w / 2, y + 366, 14, '#6a5a7a', 'center', null, 800);
+      if (r.up > 0) S.text(r.up > 1 ? i18('+{n} levels!', { n: r.up }) : '+1 level!', x + w - 70, y + 300, 22, '#c0392b', 'right');
       const again = sv.energy >= TCOST;
       if (S.btn(x + 40, y + h - 70, 220, 52, again ? 'Train again' : 'Too tired', { color: again ? '#3ecf6c' : '#b9b2c9', size: 20, enabled: again, sub: again ? `-${TCOST} energy` : null }) || (again && S.key('Enter'))) { const kk = tr.k; startTrain(kk); beginPlay(); }
       if (S.btn(x + w - 260, y + h - 70, 220, 52, 'Back', { color: '#ff7b54', size: 20 }) || S.key('Escape')) { scene = 'trainmenu'; sfx.click(); }
@@ -3587,7 +3605,7 @@
         races: [{ n: 'The Grand Final', segs: [['run', 2200], ['swim', 1800], ['climb', 2200], ['fly', 2600], ['run', 1800], ['swim', 1600], ['climb', 2400], ['fly', 2400], ['run', 2000]] }]
       }
     ];
-    const ordn = n => n + (n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th');
+    const ordn = n => i18(n + (n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'));
     const PTS = [10, 6, 3, 1, 0], MONEY = [3, 2, 1.3, .7, .3];
     const TERRN = { run: 'RUN', swim: 'SWIM', fly: 'FLY', climb: 'CLIMB' };
     const cupOpen = i => i === 0 || sv.trophy[i - 1] > 0;
@@ -3920,14 +3938,14 @@
     const drawRaceHud = R => {
       const P = R.P, s = segAt(P.x), mode = s.k, st2 = standings(R), place = st2.indexOf(P) + 1;
       S.panel(12, 8, 150, 60, { fill: 'rgba(255,248,231,.95)', r: 14, lw: 3, sh: 2 });
-      S.text(ordn(place), 87, 34, 40, place === 1 ? '#e0a000' : '#2a2438', 'center', place === 1 ? '#6a3a00' : null); S.text('of ' + R.racers.length, 87, 58, 12, '#6a5a7a', 'center', null, 800);
+      S.text(ordn(place), 87, 34, 40, place === 1 ? '#e0a000' : '#2a2438', 'center', place === 1 ? '#6a3a00' : null); S.text(i18('of {n}', { n: R.racers.length }), 87, 58, 12, '#6a5a7a', 'center', null, 800);
       const bx = 190, bw = 580, by = 16; S.panel(bx - 12, 6, bw + 24, 40, { fill: 'rgba(255,248,231,.95)', r: 14, lw: 3, sh: 2 });
       const total = R.fin; let cx = 0;
       for (const sg of R.segs) { const a = bx + Math.min(sg.xs, total) / total * bw, b = bx + Math.min(sg.xe, total) / total * bw; if (b <= a) continue; const col = sg.lead || sg.tail ? '#c9bfe0' : DK.STATS.find(q => q.id === sg.k).col; c.fillStyle = col; c.fillRect(a, by + 8, b - a, 8); cx = b; }
       c.strokeStyle = '#2a2438'; c.lineWidth = 2; rrp(c, bx, by + 7, bw, 10, 5); c.stroke();
       for (const r of R.riv) { const x = bx + clamp(r.x / total, 0, 1) * bw; c.fillStyle = DK.CB[r.look.col].c; c.beginPath(); c.arc(x, by + 12, 7, 0, TAU); c.fill(); c.strokeStyle = '#2a2438'; c.lineWidth = 2; c.stroke(); }
       { const x = bx + clamp(P.x / total, 0, 1) * bw; c.fillStyle = DK.CB[sv.look.col].c; c.beginPath(); c.arc(x, by + 12, 10, 0, TAU); c.fill(); c.strokeStyle = '#e63946'; c.lineWidth = 3.5; c.stroke(); }
-      S.text(Math.max(0, Math.round((total - P.x) / 10)) + ' m to go', bx + bw / 2, 40, 11, '#6a5a7a', 'center', null, 900);
+      S.text(i18('{n} m to go', { n: Math.max(0, Math.round((total - P.x) / 10)) }), bx + bw / 2, 40, 11, '#6a5a7a', 'center', null, 900);
       S.panel(W - 160, 8, 148, 44, { fill: 'rgba(255,248,231,.95)', r: 14, lw: 3, sh: 2 }); S.text(fmtTime(P.fin != null ? P.fin : R.t), W - 86, 31, 24, '#2a2438');
       const eff = effOf(P.m, mode === 'fly');
       S.panel(300, 512, 270, 54, { fill: 'rgba(255,248,231,.9)', r: 14, lw: 3, sh: 2 }); S.text(mode === 'fly' ? 'FLAP RHYTHM' : 'POWER', 435, 526, 12, '#6a5a7a', 'center', null, 900); bar(314, 538, 242, 16, eff, eff > .85 ? '#3ecf6c' : eff > .45 ? '#ffb703' : '#ff7b54');
@@ -3954,7 +3972,7 @@
       c.fillStyle = 'rgba(20,14,40,.5)'; c.fillRect(0, 0, W, H);
       S.panel(x, y, w, h, { fill: '#fff8e7', r: 24, lw: 4, sh: 8 });
       S.panel(x + 140, y - 20, w - 280, 48, { fill: cup.col, r: 14, lw: 3, sh: 3 }); S.text(cup.n, x + w / 2, y + 4, 24, '#fff', 'center', '#2a2438');
-      S.text(`Race ${R.ri + 1} of ${cup.races.length}:  ${R.def.n}`, x + w / 2, y + 52, 22, '#2a2438');
+      S.text(i18('Race {a} of {b}:  {c}', { a: R.ri + 1, b: cup.races.length, c: i18(R.def.n) }), x + w / 2, y + 52, 22, '#2a2438');
       const total = R.def.segs.reduce((a, s) => a + s[1], 0);
       stripDraw(x + 50, y + 76, w - 100, 24, R.def.segs);
       S.text(`${Math.round(total / 10)} m`, x + w - 50, y + 118, 15, '#6a5a7a', 'right', null, 800);
@@ -3965,7 +3983,7 @@
         const bx = x + 50 + i * ((w - 100) / used.length), bw = (w - 100) / used.length - 14, mine = lvE(k), rv = rivLv(cup, k), st2 = DK.STATS.find(q => q.id === k);
         S.panel(bx, y + 172, bw, 78, { fill: '#fff', r: 14, lw: 3, sh: 2 }); stIcon(k, bx + 24, y + 196, 13);
         S.text(st2.n, bx + 44, y + 196, 15, '#2a2438', 'left');
-        S.text('You  Lv ' + mine, bx + 14, y + 222, 15, mine >= rv ? '#2e9c53' : '#c0392b', 'left'); S.text('Rivals ~' + rv, bx + 14, y + 240, 13, '#6a5a7a', 'left', null, 800);
+        S.text(i18('You  Lv {n}', { n: mine }), bx + 14, y + 222, 15, mine >= rv ? '#2e9c53' : '#c0392b', 'left'); S.text(i18('Rivals ~{n}', { n: rv }), bx + 14, y + 240, 13, '#6a5a7a', 'left', null, 800);
       });
       S.text('Starting grid', x + w / 2, y + 276, 14, '#8a7a9a', 'center', null, 900);
       R.racers.slice().sort((a, b) => a.id - b.id).forEach((r, i) => {
@@ -3975,7 +3993,7 @@
         S.text(r.n, bx + 64, y + 386, S.fit(r.n, 116, 14), '#2a2438');
       });
       const can = sv.energy >= RCOST;
-      S.text(`Costs ${RCOST} energy   (you have ${Math.round(sv.energy)})`, x + w / 2, y + 424, 14, can ? '#6a5a7a' : '#c0392b', 'center', null, 800);
+      S.text(i18('Costs {a} energy   (you have {b})', { a: RCOST, b: Math.round(sv.energy) }), x + w / 2, y + 424, 14, can ? '#6a5a7a' : '#c0392b', 'center', null, 800);
       S.text('Mash LEFT and RIGHT to run, swim, climb. SPACE jumps and flaps. UP and DOWN steer in water.', x + w / 2, y + 446, 13, '#6a5a7a', 'center', null, 800);
       if (S.btn(x + w / 2 - 120, y + 460, 240, 54, can ? 'Start race!' : 'Too tired', { color: can ? '#3ecf6c' : '#b9b2c9', size: 24, enabled: can }) || (can && S.key('Enter'))) beginRace();
       if (S.btn(x + 16, y + h - 58, 100, 42, 'Back', { color: '#e8584a', size: 17, r: 12 })) { scene = 'cup'; sfx.click(); }
@@ -3990,26 +4008,26 @@
       const k = eo(clamp(res.t * 2, 0, 1));
       c.save(); c.translate(x + 120, y + 130); c.scale(k, k); medal(0, 0, 62, res.place <= 3 ? res.place : 0); S.text(ordn(res.place), 0, 2, 46, '#fff', 'center', '#2a2438'); c.restore();
       S.text(res.time != null ? tf(res.time) : 'DNF', x + 120, y + 218, 28, '#2a2438');
-      S.text('+' + PTS[res.place - 1] + ' cup points', x + 120, y + 250, 17, '#2e9c53');
+      S.text(i18('+{n} cup points', { n: PTS[res.place - 1] }), x + 120, y + 250, 17, '#2e9c53');
       res.arr.forEach((r, i) => {
         const ry = y + 66 + i * 52, me = r.id === 0, info = racerInfo(cup, r.id);
         S.panel(x + 250, ry, w - 280, 46, { fill: me ? '#e5ffe9' : '#fff', line: me ? '#2e9c53' : '#2a2438', r: 12, lw: 3, sh: 2 });
         S.text(String(i + 1), x + 272, ry + 24, 22, '#2a2438');
         c.save(); c.beginPath(); rrp(c, x + 296, ry + 3, 56, 40, 8); c.clip(); duckDraw(c, x + 324, ry + 52, .62, { look: info.look, t: S.t, pose: 'idle' }); c.restore();
         S.text(info.n, x + 366, ry + 24, S.fit(info.n, 150, 18), '#2a2438', 'left');
-        S.text(r.dnf ? 'Gave up' : r.fin != null ? tf(r.fin) : Math.max(1, Math.round((R.fin - r.x) / 10)) + ' m behind', x + w - 150, ry + 24, 17, '#6a5a7a', 'right', null, 800);
+        S.text(r.dnf ? 'Gave up' : r.fin != null ? tf(r.fin) : i18('{n} m behind', { n: Math.max(1, Math.round((R.fin - r.x) / 10)) }), x + w - 150, ry + 24, 17, '#6a5a7a', 'right', null, 800);
         S.text('+' + res.pts[r.id], x + w - 60, ry + 24, 20, me ? '#2e9c53' : '#6a5a7a', 'right');
       });
       const ry = y + 340;
       S.panel(x + 30, ry, w - 60, 140, { fill: '#fff', r: 16, lw: 3, sh: 3 });
       S.text('REWARDS', x + w / 2, ry + 16, 13, '#8a7a9a', 'center', null, 900);
       icoCoin(c, x + 70, ry + 52, 14); S.text('+$' + Math.round(res.money * eo(clamp(res.t * 1.5, 0, 1))), x + 94, ry + 53, 22, '#b86b00', 'left');
-      seed(x + 70, ry + 96, 12); S.text('+' + res.seeds + ' seed' + (res.seeds === 1 ? '' : 's'), x + 94, ry + 97, 20, '#6a4a1a', 'left');
+      seed(x + 70, ry + 96, 12); S.text(res.seeds === 1 ? '+1 seed' : i18('+{n} seeds', { n: res.seeds }), x + 94, ry + 97, 20, '#6a4a1a', 'left');
       const ks = DK.STATS.filter(q => res.xp[q.id] > 0);
       ks.forEach((q, i) => {
         const cx = x + 280 + (i % 2) * 240, cy = ry + 44 + Math.floor(i / 2) * 50;
         stIcon(q.id, cx, cy, 13); S.text('+' + Math.round(res.xp[q.id] * eo(clamp(res.t * 1.4, 0, 1))) + ' XP', cx + 22, cy + 1, 18, q.dk, 'left');
-        if (res.ups[q.id] > 0) S.text('LEVEL UP! Lv ' + sv.st[q.id].lv, cx + 22, cy + 22, 13, '#c0392b', 'left');
+        if (res.ups[q.id] > 0) S.text(i18('LEVEL UP! Lv {n}', { n: sv.st[q.id].lv }), cx + 22, cy + 22, 13, '#c0392b', 'left');
       });
       if (S.btn(x + w / 2 - 110, y + h - 52, 220, 44, 'Continue', { color: '#3ecf6c', size: 22 }) || S.key('Enter')) { scene = 'cup'; sfx.click(); }
     };
@@ -4025,11 +4043,11 @@
         S.text('Get ready to mash!', W / 2, 340, 22, '#fff', 'center', '#2a2438');
       } else if (R.phase === 'race') {
         if (R.t < .8) { c.save(); c.globalAlpha = 1 - R.t / .8; S.text('GO!', W / 2, 250 - R.t * 40, 130, '#ffe14d', 'center', '#2a2438'); c.restore(); }
-        if (R.fq > 0) R.fq -= 1 / 60;
+        if (R.fq > 0) R.fq -= FD;
         if (S.btn(W - 160, 58, 148, 30, R.fq > 0 ? 'Really quit?' : 'Give up', { color: R.fq > 0 ? '#e63946' : '#8a7fa8', size: 13, r: 10 })) { if (R.fq > 0) { R.P.dnf = true; R.P.fin = null; finishRace(R); } else R.fq = 3; }
       } else {
         const st2 = standings(R), pl = st2.indexOf(R.P) + 1;
-        S.text('FINISH!', W / 2, 190, 90, '#ffe14d', 'center', '#2a2438'); S.text(ordn(pl) + ' place', W / 2, 262, 36, '#fff', 'center', '#2a2438');
+        S.text('FINISH!', W / 2, 190, 90, '#ffe14d', 'center', '#2a2438'); S.text(i18('{p} place', { p: ordn(pl) }), W / 2, 262, 36, '#fff', 'center', '#2a2438');
       }
     };
 
@@ -4063,7 +4081,7 @@
         const lw = 128; S.panel(x - lw / 2, y + r + 6, lw, 26, { fill: '#fff8e7', r: 10, lw: 3, sh: 2 }); S.text(cp.n, x, y + r + 20, S.fit(cp.n, lw - 10, 14), '#2a2438');
         if (open) cp.terr.forEach((k, j) => stIcon(k, x - (cp.terr.length - 1) * 11 + j * 22, y - r - 12, 9));
         if (sv.runs[i].length && open) S.text(`${sv.runs[i].length}/${cp.races.length}`, x + r - 6, y - r + 10, 13, '#fff', 'center', '#2a2438');
-        if (h2 && S.released && S.inside(x - r, y - r, r * 2, r * 2, S.downX, S.downY) && !S.lock) { if (open) { cupSel = i; scene = 'cup'; sfx.click(); } else { toast('Finish top 3 in ' + CUPS[i - 1].n + ' to unlock this.'); sfx.thud(); } }
+        if (h2 && S.released && S.inside(x - r, y - r, r * 2, r * 2, S.downX, S.downY) && !S.lock) { if (open) { cupSel = i; scene = 'cup'; sfx.click(); } else { toast(i18('Finish top 3 in {c} to unlock this.', { c: i18(CUPS[i - 1].n) })); sfx.thud(); } }
       });
       if (hov >= 0) { const cp = CUPS[hov]; S.panel(W / 2 - 250, 114, 500, 64, { fill: 'rgba(255,248,231,.97)', r: 14, lw: 3, sh: 3 }); S.wrap(cp.blurb, W / 2, 128, 464, 19, 15, '#2a2438', 'center', 700); }
       if (S.btn(12, H - 56, 120, 44, 'Back', { color: '#e8584a', size: 18 })) { scene = 'hub'; sfx.click(); }
@@ -4079,7 +4097,7 @@
       S.panel(30, 60, 900, 66, { fill: cp.col, r: 18, lw: 4, sh: 5 }); S.text(cp.n, 52, 92, 34, '#fff', 'left', '#2a2438');
       cp.terr.forEach((k, j) => stIcon(k, 480 + j * 38, 92, 14));
       trophyIcon(880, 92, 26, sv.trophy[i]);
-      S.text(sv.trophy[i] ? ['', 'Gold', 'Silver', 'Bronze'][sv.trophy[i]] + ' trophy' : 'No trophy yet', 800, 94, 15, '#fff', 'right', '#2a2438');
+      S.text(sv.trophy[i] ? ['', 'Gold trophy', 'Silver trophy', 'Bronze trophy'][sv.trophy[i]] : 'No trophy yet', 800, 94, 15, '#fff', 'right', '#2a2438');
       S.panel(30, 140, 520, 356, { fill: 'rgba(255,248,231,.96)', r: 18, lw: 4, sh: 5 });
       S.text('RACES', 290, 160, 14, '#8a7a9a', 'center', null, 900);
       cp.races.forEach((rc2, r) => {
@@ -4089,7 +4107,7 @@
         S.text(rc2.n, 116, y + 28, 22, '#2a2438', 'left');
         S.text(Math.round(rc2.segs.reduce((a, s) => a + s[1], 0) / 10) + ' m', 518, y + 28, 15, '#6a5a7a', 'right', null, 800);
         stripDraw(66, y + 58, 448, 20, rc2.segs);
-        if (isDone) S.text('+' + rs[r][1][0] + ' pts', 518, y + 8, 14, '#2e9c53', 'right');
+        if (isDone) S.text(i18('+{n} pts', { n: rs[r][1][0] }), 518, y + 8, 14, '#2e9c53', 'right');
       });
       S.panel(570, 140, 360, 356, { fill: 'rgba(255,248,231,.96)', r: 18, lw: 4, sh: 5 });
       S.text(rs.length ? 'STANDINGS' : 'THE RIVALS', 750, 160, 14, '#8a7a9a', 'center', null, 900);
@@ -4101,12 +4119,12 @@
         c.save(); c.beginPath(); rrp(c, 624, y + 4, 56, 44, 8); c.clip(); duckDraw(c, 652, y + 58, .66, { look: info.look, t: S.t + idx, pose: 'idle' }); c.restore();
         S.text(info.n, 692, y + 18, S.fit(info.n, 150, 17), '#2a2438', 'left');
         if (me) S.text('You', 692, y + 37, 12, '#2e9c53', 'left', null, 900);
-        else S.text('Lv ~' + Math.round((cp.rivals[idx - 1].lv[cp.terr[0]] + cp.rivals[idx - 1].lv[cp.terr[cp.terr.length - 1]]) / 2), 692, y + 37, 12, '#6a5a7a', 'left', null, 800);
+        else S.text(i18('Lv ~{n}', { n: Math.round((cp.rivals[idx - 1].lv[cp.terr[0]] + cp.rivals[idx - 1].lv[cp.terr[cp.terr.length - 1]]) / 2) }), 692, y + 37, 12, '#6a5a7a', 'left', null, 800);
         if (rs.length) S.text(tot[idx] + ' pts', 900, y + 27, 20, me ? '#2e9c53' : '#2a2438', 'right');
       });
       if (!rs.length) S.text('Top 3 in the standings wins a trophy.', 750, 478, 12, '#6a5a7a', 'center', null, 800);
       const can = sv.energy >= RCOST && !done;
-      if (!done && S.btn(560, 510, 300, 66, can ? 'Race: ' + cp.races[rs.length].n : 'Too tired', { color: can ? '#3ecf6c' : '#b9b2c9', size: 22, enabled: can, sub: can ? `-${RCOST} energy` : 'eat a seed (E)' })) startRace(i, rs.length);
+      if (!done && S.btn(560, 510, 300, 66, can ? i18('Race: {r}', { r: i18(cp.races[rs.length].n) }) : 'Too tired', { color: can ? '#3ecf6c' : '#b9b2c9', size: 22, enabled: can, sub: can ? i18('-{n} energy', { n: RCOST }) : 'eat a seed (E)' })) startRace(i, rs.length);
       if (S.btn(30, 520, 120, 52, 'Back', { color: '#e8584a', size: 20 })) { scene = 'map'; sfx.click(); }
       if (S.key('KeyE')) eat();
       if (done && !cupFinal) {
@@ -4116,12 +4134,12 @@
       if (cupFinal) drawCupFinal(i);
     };
     const drawCupFinal = i => {
-      const cp = CUPS[i], f = cupFinal, rank = f.rank; f.k += 1 / 60; S.lock = false;
+      const cp = CUPS[i], f = cupFinal, rank = f.rank; f.k += FD; S.lock = false;
       c.fillStyle = 'rgba(20,14,40,.68)'; c.fillRect(0, 0, W, H);
       const x = 200, y = 80, w = 560, h = 440; S.panel(x, y, w, h, { fill: '#fff8e7', r: 24, lw: 4, sh: 8 });
-      S.panel(x + 100, y - 20, w - 200, 48, { fill: rank <= 3 ? '#ffb703' : '#8a7fa8', r: 14, lw: 3, sh: 3 }); S.text(cp.n + ' complete', x + w / 2, y + 4, 22, '#fff', 'center', '#2a2438');
+      S.panel(x + 100, y - 20, w - 200, 48, { fill: rank <= 3 ? '#ffb703' : '#8a7fa8', r: 14, lw: 3, sh: 3 }); S.text(i18('{c} complete', { c: i18(cp.n) }), x + w / 2, y + 4, 22, '#fff', 'center', '#2a2438');
       const k = eo(clamp(f.k * 2, 0, 1)); c.save(); c.translate(x + w / 2, y + 130); c.scale(k * 2.4, k * 2.4); trophyIcon(0, 0, 30, rank <= 3 ? rank : 0); c.restore();
-      S.text(rank <= 3 ? ['', 'CHAMPION OF THE CUP!', 'Silver. So close!', 'Bronze. Well raced!'][rank] : 'You finished ' + ordn(rank), x + w / 2, y + 230, 26, '#2a2438');
+      S.text(rank <= 3 ? ['', 'CHAMPION OF THE CUP!', 'Silver. So close!', 'Bronze. Well raced!'][rank] : i18('You finished {p}', { p: ordn(rank) }), x + w / 2, y + 230, 26, '#2a2438');
       const better = rank <= 3 && (!sv.trophy[i] || rank < sv.trophy[i]), bonusM = better ? [0, 100, 60, 30][rank] * (i + 1) : 0, bonusS = better && rank === 1 ? 3 : 0;
       if (rank <= 3) {
         S.text(better ? 'New trophy!' : 'You already own a better trophy.', x + w / 2, y + 266, 16, better ? '#2e9c53' : '#6a5a7a', 'center', null, 800);
@@ -4136,29 +4154,29 @@
       }
     };
     const drawEnding = () => {
-      st.t += 1 / 60; S.lock = false;
+      st.t += FD; S.lock = false;
       drawSky(S.t, '#2a2a5a', '#7a66b0'); c.fillStyle = '#e2674d'; c.fillRect(0, 470, W, 130); c.fillStyle = '#b8402c'; c.fillRect(0, 470, W, 10);
       const sr = mulberry(9); for (let i = 0; i < 60; i++) { c.fillStyle = ['#ff6b8b', '#ffd23f', '#6bd6ff', '#9be37e', '#fff'][i % 5]; c.beginPath(); c.arc(sr() * W, 380 + sr() * 80, 6, 0, TAU); c.fill(); }
       c.lineWidth = 4; c.strokeStyle = '#2a2438'; c.fillStyle = '#ffd23f'; c.beginPath(); rrp(c, 380, 420, 200, 70, 8); c.fill(); c.stroke(); S.text('1', 480, 456, 46, '#fff', 'center', '#6a3a00');
       duckDraw(c, 480, 420 - Math.abs(Math.sin(st.t * 3)) * 18, 3, { look: sv.look, t: S.t, pose: 'happy', talk: true });
       if (Math.random() < .12) { S.mkScr = true; S.confetti(rnd(100, 860), 80, 8); S.mkScr = false; }
       S.panel(W / 2 - 300, 40, 600, 100, { fill: '#ffb703', r: 22, lw: 5, sh: 6 }); S.text('GRAND CHAMPION!', W / 2, 78, 52, '#fff', 'center', '#6a3a00');
-      S.text(sv.name + ' beat the best ducks in the world.', W / 2, 118, 18, '#6a3a00');
+      S.text(i18('{n} beat the best ducks in the world.', { n: sv.name }), W / 2, 118, 18, '#6a3a00');
       trophyIcon(250, 330, 60, 1); trophyIcon(710, 330, 60, 1);
       if (S.btn(W / 2 - 130, 520, 260, 54, 'Keep playing', { color: '#3ecf6c', size: 22 })) { scene = 'hub'; sfx.click(); }
     };
 
     const drawTitle = () => {
-      st.t += 1 / 60; S.lock = false;
+      st.t += FD; S.lock = false;
       drawFarm(S.t);
       const bob = Math.sin(S.t * 2.4) * 8;
       S.panel(W / 2 - 290, 40, 580, 130, { fill: '#ffb703', r: 28, lw: 6, sh: 8 });
-      S.text('DUCK LIFE', W / 2, 98, 84, '#fff', 'center', '#7a3a00');
+      S.text('QUACK CUP', W / 2, 98, 84, '#fff', 'center', '#7a3a00');
       S.text('train  .  race  .  become champion', W / 2, 148, 19, '#7a3a00', 'center', null, 900);
       c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(W / 2, 520, 64, 13, 0, 0, TAU); c.fill();
       duckDraw(c, W / 2, 516 - Math.abs(Math.sin(S.t * 2.4)) * 14, 2.7, { look: sv.look, t: S.t, pose: 'idle', talk: Math.sin(S.t * .8) > .9 });
       const fresh = sv.trains === 0 && sv.nraces === 0;
-      if (S.btn(W / 2 - 150, 196, 300, 74, fresh ? 'PLAY' : 'CONTINUE', { color: '#3ecf6c', size: 36, sub: fresh ? null : `${sv.name}  .  ${sv.wins} wins` }) || S.key('Enter') || S.key('Space')) { scene = 'hub'; sfx.click(); quack(); if (fresh) { hubDuck.say = 4.5; hubDuck.msg = tipMsg(); } }
+      if (S.btn(W / 2 - 150, 196, 300, 74, fresh ? 'PLAY' : 'CONTINUE', { color: '#3ecf6c', size: 36, sub: fresh ? null : sv.name + '  .  ' + i18('{n} wins', { n: sv.wins }) }) || S.key('Enter') || S.key('Space')) { scene = 'hub'; sfx.click(); quack(); if (fresh) { hubDuck.say = 4.5; hubDuck.msg = tipMsg(); } }
       if (S.btn(W / 2 - 150, 284, 144, 44, '?  How to play', { color: '#4cc9f0', size: 15, r: 12 })) { scene = 'hub'; modal = { k: 'help' }; sfx.click(); }
       if (!fresh) {
         if (S.btn(W / 2 + 6, 284, 144, 44, confirmReset ? 'Really erase?' : 'New game', { color: confirmReset ? '#e63946' : '#8a7fa8', size: 15, r: 12 })) {
@@ -4170,11 +4188,17 @@
       S.text('Arrow keys / A D to mash  .  Space to jump and flap', W / 2, H - 28, 14, '#fff', 'center', '#3a6a2a', 800);
     };
 
+    let accD = 0;
     api.loop(dt => {
-      dt = Math.min(dt, .05);
-      S.t += dt; S.stepFx(dt); music.update(dt);
-      if (toastT > 0) toastT -= dt;
-      if (scene === 'train' && tr) stepTrain(dt); else if (scene === 'race' && rc) stepRace(dt);
+      FD = dt; accD += dt; let n = 0;
+      while (accD >= 1 / 120 && n < 8) {
+        const h = 1 / 120; accD -= h; n++;
+        S.t += h; S.stepFx(h); music.update(h);
+        if (toastT > 0) toastT -= h;
+        if (scene === 'train' && tr) stepTrain(h); else if (scene === 'race' && rc) stepRace(h);
+        S.clearSim();
+      }
+      if (n >= 8) accD = 0;
       c.setTransform(1, 0, 0, 1, 0, 0);
       if (scene === 'title') drawTitle();
       else if (scene === 'hub') drawHub();
