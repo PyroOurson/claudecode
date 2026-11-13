@@ -1307,7 +1307,7 @@ Kite: Paper+Wind, Bird+Paper
   };
 
   const LA_CSS = `
-.gm-element-lab{--ink:#3b3447;--mut:#8a8499;--ac:#2f9e8f;--acd:#237d71;--line:#e4dfd2;--paper:#fffdf8;--ws:#f7f4ec;--iw:76px;--ih:90px;position:relative;align-items:stretch;justify-content:flex-start;gap:0;padding:0;overflow:hidden;border-radius:14px;background:var(--paper);color:var(--ink);font-family:var(--sans);height:clamp(500px,calc(100dvh - max(var(--goff,250px),168px)),780px);min-height:0;touch-action:manipulation}
+.gm-element-lab{--ink:#3b3447;--mut:#8a8499;--ac:#2f9e8f;--acd:#237d71;--line:#e4dfd2;--paper:#fffdf8;--ws:#f7f4ec;--iw:76px;--ih:90px;position:relative;align-items:stretch;justify-content:flex-start;gap:0;padding:0;overflow:hidden;border-radius:14px;background:var(--paper);color:var(--ink);font-family:var(--sans);height:clamp(400px,calc(100dvh - max(var(--goff,250px),168px)),780px);min-height:0;touch-action:manipulation}
 .gm-element-lab [hidden]{display:none!important}
 .gm-element-lab button{font-family:inherit;color:inherit}
 .gm-element-lab .la-top{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--paper)}
@@ -1437,7 +1437,7 @@ Kite: Paper+Wind, Bird+Paper
 .gm-element-lab .la-b{padding:0 10px}
 .gm-element-lab .la-b em{display:inline-block}
 .gm-element-lab .la-main{flex-direction:column}
-.gm-element-lab .la-lib{width:auto;height:196px;border-left:0;border-top:1px solid var(--line)}
+.gm-element-lab .la-lib{width:auto;height:clamp(150px,44%,216px);border-left:0;border-top:1px solid var(--line)}
 .gm-element-lab .la-lh{padding:6px 10px}
 .gm-element-lab .la-sb span{display:none}
 .gm-element-lab .la-grid{display:grid;grid-template-columns:none;grid-template-rows:repeat(2,84px);grid-auto-flow:column;grid-auto-columns:68px;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;padding:2px 8px 6px}
@@ -1783,6 +1783,7 @@ Kite: Paper+Wind, Bird+Paper
       const w = root.offsetWidth;
       root.classList.toggle('la-narrow', w > 0 && w < 720);
       IW = w < 720 ? 62 : 76; IH = IW + 14;
+      grid.style.gridTemplateRows = w > 0 && w < 720 ? (grid.clientHeight >= 172 ? 'repeat(2,84px)' : '84px') : '';
       items.forEach(it => { [it.x, it.y] = clampPt(it.x, it.y); place(it); });
     }
     let wb = null;
@@ -3638,7 +3639,7 @@ Kite: Paper+Wind, Bird+Paper
   }
 
   const OL_CSS = `
-.gm-one-life{--bg:#eef2f8;--card:#fff;--ink:#1d2738;--mut:#69768b;--line:#e2e7ef;--acc:#22b573;--accd:#17925b;--blue:#3d7be0;--bad:#e5533d;--good:#1fa463;position:relative;padding:0;gap:0;align-items:stretch;justify-content:flex-start;overflow:hidden;border-radius:14px;background:var(--bg);color:var(--ink);font-family:var(--sans);height:clamp(520px,calc(100dvh - max(var(--goff,250px),168px)),880px);min-height:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.gm-one-life{--bg:#eef2f8;--card:#fff;--ink:#1d2738;--mut:#69768b;--line:#e2e7ef;--acc:#22b573;--accd:#17925b;--blue:#3d7be0;--bad:#e5533d;--good:#1fa463;position:relative;padding:0;gap:0;align-items:stretch;justify-content:flex-start;overflow:hidden;border-radius:14px;background:var(--bg);color:var(--ink);font-family:var(--sans);height:clamp(400px,calc(100dvh - max(var(--goff,250px),168px)),880px);min-height:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .gm-one-life [hidden]{display:none!important}
 .gm-one-life button{font-family:inherit;color:inherit;cursor:pointer}
 .gm-one-life svg{display:block}
