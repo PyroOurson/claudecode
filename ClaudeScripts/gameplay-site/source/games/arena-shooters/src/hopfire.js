@@ -19,7 +19,7 @@
       { key: 'brawler', name: 'Brawler', hp: 100, speed: 1, prim: 'shotgun', sec: 'pistol', hat: 'mohawk', desc: 'Two shell shotgun that wins every close fight.' },
       { key: 'gunslinger', name: 'Gunslinger', hp: 100, speed: 1.02, prim: 'revolver', sec: null, hat: 'cowboy', desc: 'Six heavy revolver shots. Two body shots win.' },
       { key: 'blaster', name: 'Blaster', hp: 130, speed: 0.88, prim: 'rocket', sec: 'pistol', hat: 'goggles', desc: 'Rockets with splash damage. Rocket jump with them.' },
-      { key: 'runner', name: 'Runner', hp: 120, speed: 1.22, prim: 'knife', sec: null, hat: 'none', desc: 'Only a knife, but the fastest feet in the game.' }
+      { key: 'runner', name: 'Sprinter', hp: 120, speed: 1.22, prim: 'knife', sec: null, hat: 'none', desc: 'Only a knife, but the fastest feet in the game.' }
     ];
     const HUE = ['#ff6b3d', '#3d9bff', '#ffd23d', '#55d66b', '#b46bff', '#ff5fa8', '#3de0d0', '#f0f0f0', '#ff9a3d', '#7a8cff', '#c0e050', '#e05050'];
     const TEAMC = ['#ff5a4a', '#3d8bff'];
@@ -262,8 +262,8 @@
       fovFor(p) { const w = p.weps[p.cur]; return w ? 1 + ((w.d.zoom || 1) - 1) * p.adsF : 1; },
       colorFor(p, teams) { return teams ? TEAMC[p.team] : HUE[p.slot % HUE.length]; },
       wepIcon: (k, s) => svgI(k, s),
-      statBars(c) { const w = WEP[c.prim]; const dps = w.kind === 'melee' ? 90 : w.kind === 'rocket' ? 120 : w.dmg * (w.pellets || 1) / w.rate; return [['Health', c.hp / 170], ['Speed', (c.speed - 0.8) / 0.45], ['Damage', Math.min(1, (w.kind === 'rocket' ? 145 : w.dmg * (w.pellets || 1)) / 110)], ['Fire rate', Math.min(1, dps / 260)]]; },
-      streakName(n) { return n === 2 ? 'Double kill' : n === 3 ? 'Triple kill' : n === 5 ? 'Rampage! 5 in a row' : n === 10 ? 'Unstoppable! 10 in a row' : n === 15 ? 'Legendary! 15 in a row' : n > 3 && n % 5 === 0 ? 'Streak of ' + n : ''; },
+      statBars(c) { const w = WEP[c.prim]; const dps = w.kind === 'melee' ? 90 : w.kind === 'rocket' ? 120 : w.dmg * (w.pellets || 1) / w.rate; return [['Hit points', c.hp / 170], ['Speed', (c.speed - 0.8) / 0.45], ['Damage', Math.min(1, (w.kind === 'rocket' ? 145 : w.dmg * (w.pellets || 1)) / 110)], ['Fire rate', Math.min(1, dps / 260)]]; },
+      streakName(n) { return n === 2 ? 'Double kill' : n === 3 ? 'Triple kill' : n === 5 ? 'Rampage! 5 in a row' : n === 10 ? 'Unstoppable! 10 in a row' : n === 15 ? 'Legendary! 15 in a row' : n > 3 && n % 5 === 0 ? 'Streak of {n}' : ''; },
       streaks: null,
       pickup: () => false, pickupName: () => '',
       logo: () => `<div class="hf-logo"><span class="a">HOP</span><span class="b">FIRE</span></div><p class="hf-tag">${escH(T('Slide. Hop. Frag.'))}</p>`,

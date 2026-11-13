@@ -2451,7 +2451,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
             hitMark(3); audio.play('kill');
             const s = e[5];
             const nm = G.streakName(s);
-            if (nm) pop(T(nm), 'st', 1.6); else pop(T('Eliminated {name}', { name: v ? v.name : '' }), 'el', 1.2);
+            if (nm) pop(T(nm, { n: s }), 'st', 1.6); else pop(T('Eliminated {name}', { name: v ? v.name : '' }), 'el', 1.2);
             subPop('+' + (G.killScore + (e[4] ? G.headScore : 0)));
           }
           if (v === me) { dmgFlash = 1; api.timeout(() => showDeath(), 700); audio.play('dead'); }
@@ -3312,7 +3312,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
       if (eggGeo) return eggGeo;
       const { THREE } = kit, pts = [];
       for (let i = 0; i <= 16; i++) { const t = i / 16, y = 1.42 * t, r = 0.47 * Math.pow(Math.sin(Math.PI * t), 0.82) * (1 - 0.2 * t); pts.push(new THREE.Vector2(Math.max(0.001, r), y)); }
-      eggGeo = kit.own(new THREE.LatheGeometry(pts, 18).toNonIndexed());
+      eggGeo = kit.own(new THREE.LatheGeometry(pts, 22));
       eggGeo.computeVertexNormals();
       return eggGeo;
     }
@@ -3355,7 +3355,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
       colorFor(p, teams) { return teams ? TEAMC[p.team] : EGGC[p.slot % EGGC.length]; },
       wepIcon: k => svgI(k),
       statBars(c) { const w = WEP[c.prim]; const per = w.kind === 'rocket' ? 145 : w.dmg * (w.pellets || 1) * (w.burst || 1); const dps = w.kind === 'rocket' ? 110 : w.dmg * (w.pellets || 1) * (w.burst || 1) / w.rate; return [['Damage', Math.min(1, per / 150)], ['Fire rate', Math.min(1, dps / 250)], ['Range', w.scope ? 1 : w.pellets ? 0.15 : w.kind === 'rocket' ? 0.45 : Math.min(1, (w.fall1 || 60) / 90)], ['Ammo', Math.min(1, (w.mag + w.reserve) / 280)]]; },
-      streakName(n) { return n === 2 ? 'Double crack' : n === 3 ? 'Triple crack' : n === 5 ? 'Egg-cellent! 5 in a row' : n === 10 ? 'Hard boiled! 10 in a row' : n > 3 && n % 5 === 0 ? 'Streak of ' + n : ''; },
+      streakName(n) { return n === 2 ? 'Double crack' : n === 3 ? 'Triple crack' : n === 5 ? 'Egg-cellent! 5 in a row' : n === 10 ? 'Hard boiled! 10 in a row' : n > 3 && n % 5 === 0 ? 'Streak of {n}' : ''; },
       streaks: [
         { n: 3, key: 'fresh', name: 'Fresh Shell: health restored', give(W, p) { p.hp = p.maxHp; } },
         { n: 5, key: 'hard', name: 'Hard Shell: armour on', give(W, p) { p.shield = 60; } },

@@ -724,7 +724,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
             hitMark(3); audio.play('kill');
             const s = e[5];
             const nm = G.streakName(s);
-            if (nm) pop(T(nm), 'st', 1.6); else pop(T('Eliminated {name}', { name: v ? v.name : '' }), 'el', 1.2);
+            if (nm) pop(T(nm, { n: s }), 'st', 1.6); else pop(T('Eliminated {name}', { name: v ? v.name : '' }), 'el', 1.2);
             subPop('+' + (G.killScore + (e[4] ? G.headScore : 0)));
           }
           if (v === me) { dmgFlash = 1; api.timeout(() => showDeath(), 700); audio.play('dead'); }
