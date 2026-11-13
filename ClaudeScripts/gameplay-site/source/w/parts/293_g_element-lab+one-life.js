@@ -1140,124 +1140,124 @@ Reef Fish: Fish+Coral
   };
 
   const LA_CSS = `
-.gm-little-alchemy{--ink:#3b3447;--mut:#8a8499;--ac:#2f9e8f;--acd:#237d71;--line:#e4dfd2;--paper:#fffdf8;--ws:#f7f4ec;--iw:76px;--ih:90px;position:relative;align-items:stretch;justify-content:flex-start;gap:0;padding:0;overflow:hidden;border-radius:14px;background:var(--paper);color:var(--ink);font-family:var(--sans);height:clamp(500px,calc(100dvh - var(--goff,250px)),780px);min-height:0;touch-action:manipulation}
-.gm-little-alchemy [hidden]{display:none!important}
-.gm-little-alchemy button{font-family:inherit;color:inherit}
-.gm-little-alchemy .la-top{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--paper)}
-.gm-little-alchemy .la-prog{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
-.gm-little-alchemy .la-cnt{font:800 16px/1 var(--sans);white-space:nowrap;font-variant-numeric:tabular-nums}
-.gm-little-alchemy .la-bar{position:relative;flex:1;max-width:240px;height:9px;border-radius:99px;background:#ece7d9;overflow:hidden}
-.gm-little-alchemy .la-bar i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;background:linear-gradient(90deg,#46c2b1,var(--ac));transition:width .5s}
-.gm-little-alchemy .la-btns{display:flex;gap:6px}
-.gm-little-alchemy .la-b{position:relative;display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 13px;border:1.5px solid var(--line);border-radius:999px;background:#fff;font:800 13px/1 var(--sans);cursor:pointer;transition:background .15s,border-color .15s,transform .15s;white-space:nowrap}
-.gm-little-alchemy .la-b:hover{border-color:var(--ac);background:#f1fbf9}
-.gm-little-alchemy .la-b:active{transform:scale(.95)}
-.gm-little-alchemy .la-b svg{width:18px;height:18px;flex:none}
-.gm-little-alchemy .la-b em{font-style:normal;min-width:19px;height:19px;padding:0 5px;border-radius:99px;background:var(--ac);color:#fff;font:800 11px/19px var(--sans);text-align:center}
-.gm-little-alchemy .la-b.off{opacity:.55}
-.gm-little-alchemy .la-main{flex:1;min-height:0;display:flex;position:relative}
-.gm-little-alchemy .la-ws{position:relative;flex:1;min-width:0;background:radial-gradient(#d8d1bf 1.2px,transparent 1.6px) 0 0/24px 24px,var(--ws)}
-.gm-little-alchemy .la-tip{position:absolute;inset:0;display:grid;place-items:center;margin:0;padding:24px;text-align:center;font:700 15px/1.4 var(--sans);color:#b3ac9a;pointer-events:none;transition:opacity .4s}
-.gm-little-alchemy .la-tip.gone{opacity:0}
-.gm-little-alchemy .la-lib{flex:none;width:276px;display:flex;flex-direction:column;border-left:1px solid var(--line);background:var(--paper);transition:background .2s}
-.gm-little-alchemy .la-lib.over{background:#ffe9e6}
-.gm-little-alchemy .la-lib.over::after{content:"Drop to remove";position:absolute;inset:0;display:grid;place-items:center;font:800 15px var(--sans);color:#c4473a;pointer-events:none}
-.gm-little-alchemy .la-lh{flex:none;display:flex;align-items:center;justify-content:space-between;padding:9px 12px;font:800 13px/1 var(--sans);color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
-.gm-little-alchemy .la-lh button{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border:1.5px solid var(--line);border-radius:99px;background:#fff;font:800 11px/1 var(--sans);cursor:pointer;letter-spacing:0;text-transform:none}
-.gm-little-alchemy .la-lh button svg{width:14px;height:14px}
-.gm-little-alchemy .la-grid{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));grid-auto-rows:88px;gap:2px;padding:4px 8px 12px;align-content:start;touch-action:pan-y;overscroll-behavior:contain;scrollbar-width:thin}
-.gm-little-alchemy .lt{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;padding:6px 2px 2px;border:0;border-radius:12px;background:none;cursor:grab;touch-action:pan-y;min-width:0;-webkit-user-drag:none}
-.gm-little-alchemy .lt:hover{background:#f1ede1}
-.gm-little-alchemy .lt:focus-visible,.gm-little-alchemy .bt:focus-visible,.gm-little-alchemy .la-b:focus-visible{outline:3px solid var(--ac);outline-offset:1px}
-.gm-little-alchemy .lt .ic{width:50px;height:50px;pointer-events:none}
-.gm-little-alchemy .lt .nm{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 11.5px/1.2 var(--sans);color:#4a4358;pointer-events:none}
-.gm-little-alchemy .lt.fresh{animation:la-fresh 1.6s ease 2}
-.gm-little-alchemy .lt.hint{background:#fff3c4;box-shadow:0 0 0 2.5px #f5c542;animation:la-hint 1s ease-in-out infinite}
+.gm-element-lab{--ink:#3b3447;--mut:#8a8499;--ac:#2f9e8f;--acd:#237d71;--line:#e4dfd2;--paper:#fffdf8;--ws:#f7f4ec;--iw:76px;--ih:90px;position:relative;align-items:stretch;justify-content:flex-start;gap:0;padding:0;overflow:hidden;border-radius:14px;background:var(--paper);color:var(--ink);font-family:var(--sans);height:clamp(500px,calc(100dvh - var(--goff,250px)),780px);min-height:0;touch-action:manipulation}
+.gm-element-lab [hidden]{display:none!important}
+.gm-element-lab button{font-family:inherit;color:inherit}
+.gm-element-lab .la-top{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--paper)}
+.gm-element-lab .la-prog{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.gm-element-lab .la-cnt{font:800 16px/1 var(--sans);white-space:nowrap;font-variant-numeric:tabular-nums}
+.gm-element-lab .la-bar{position:relative;flex:1;max-width:240px;height:9px;border-radius:99px;background:#ece7d9;overflow:hidden}
+.gm-element-lab .la-bar i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;background:linear-gradient(90deg,#46c2b1,var(--ac));transition:width .5s}
+.gm-element-lab .la-btns{display:flex;gap:6px}
+.gm-element-lab .la-b{position:relative;display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 13px;border:1.5px solid var(--line);border-radius:999px;background:#fff;font:800 13px/1 var(--sans);cursor:pointer;transition:background .15s,border-color .15s,transform .15s;white-space:nowrap}
+.gm-element-lab .la-b:hover{border-color:var(--ac);background:#f1fbf9}
+.gm-element-lab .la-b:active{transform:scale(.95)}
+.gm-element-lab .la-b svg{width:18px;height:18px;flex:none}
+.gm-element-lab .la-b em{font-style:normal;min-width:19px;height:19px;padding:0 5px;border-radius:99px;background:var(--ac);color:#fff;font:800 11px/19px var(--sans);text-align:center}
+.gm-element-lab .la-b.off{opacity:.55}
+.gm-element-lab .la-main{flex:1;min-height:0;display:flex;position:relative}
+.gm-element-lab .la-ws{position:relative;flex:1;min-width:0;background:radial-gradient(#d8d1bf 1.2px,transparent 1.6px) 0 0/24px 24px,var(--ws)}
+.gm-element-lab .la-tip{position:absolute;inset:0;display:grid;place-items:center;margin:0;padding:24px;text-align:center;font:700 15px/1.4 var(--sans);color:#b3ac9a;pointer-events:none;transition:opacity .4s}
+.gm-element-lab .la-tip.gone{opacity:0}
+.gm-element-lab .la-lib{flex:none;width:276px;display:flex;flex-direction:column;border-left:1px solid var(--line);background:var(--paper);transition:background .2s}
+.gm-element-lab .la-lib.over{background:#ffe9e6}
+.gm-element-lab .la-lib.over::after{content:"Drop to remove";position:absolute;inset:0;display:grid;place-items:center;font:800 15px var(--sans);color:#c4473a;pointer-events:none}
+.gm-element-lab .la-lh{flex:none;display:flex;align-items:center;justify-content:space-between;padding:9px 12px;font:800 13px/1 var(--sans);color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.gm-element-lab .la-lh button{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border:1.5px solid var(--line);border-radius:99px;background:#fff;font:800 11px/1 var(--sans);cursor:pointer;letter-spacing:0;text-transform:none}
+.gm-element-lab .la-lh button svg{width:14px;height:14px}
+.gm-element-lab .la-grid{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));grid-auto-rows:88px;gap:2px;padding:4px 8px 12px;align-content:start;touch-action:pan-y;overscroll-behavior:contain;scrollbar-width:thin}
+.gm-element-lab .lt{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;padding:6px 2px 2px;border:0;border-radius:12px;background:none;cursor:grab;touch-action:pan-y;min-width:0;-webkit-user-drag:none}
+.gm-element-lab .lt:hover{background:#f1ede1}
+.gm-element-lab .lt:focus-visible,.gm-element-lab .bt:focus-visible,.gm-element-lab .la-b:focus-visible{outline:3px solid var(--ac);outline-offset:1px}
+.gm-element-lab .lt .ic{width:50px;height:50px;pointer-events:none}
+.gm-element-lab .lt .nm{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 11.5px/1.2 var(--sans);color:#4a4358;pointer-events:none}
+.gm-element-lab .lt.fresh{animation:la-fresh 1.6s ease 2}
+.gm-element-lab .lt.hint{background:#fff3c4;box-shadow:0 0 0 2.5px #f5c542;animation:la-hint 1s ease-in-out infinite}
 @keyframes la-fresh{0%,100%{background:none}50%{background:#d9f5ef}}
 @keyframes la-hint{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
-.gm-little-alchemy .ic svg{display:block;width:100%;height:100%;overflow:visible;pointer-events:none}
-.gm-little-alchemy .la-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:5}
-.gm-little-alchemy .it{position:absolute;left:0;top:0;width:var(--iw);height:var(--ih);display:flex;flex-direction:column;align-items:center;pointer-events:auto;cursor:grab;touch-action:none;will-change:translate}
-.gm-little-alchemy .it .ic{width:calc(var(--iw) - 14px);height:calc(var(--iw) - 14px);filter:drop-shadow(0 3px 3px rgba(60,50,70,.22));transition:transform .15s}
-.gm-little-alchemy .it .nm{margin-top:1px;max-width:130%;padding:1px 6px;border-radius:99px;background:rgba(255,253,248,.82);font:800 11.5px/1.25 var(--sans);color:#4a4358;white-space:nowrap;pointer-events:none}
-.gm-little-alchemy .it.drag{cursor:grabbing}
-.gm-little-alchemy .it.drag .ic{transform:scale(1.14) rotate(-3deg);filter:drop-shadow(0 8px 8px rgba(60,50,70,.3))}
-.gm-little-alchemy .it.target .ic{transform:scale(1.18);filter:drop-shadow(0 0 7px #46c2b1) drop-shadow(0 0 2px #46c2b1)}
-.gm-little-alchemy .it.slide{transition:translate .24s cubic-bezier(.2,.8,.3,1)}
-.gm-little-alchemy .it.pop{animation:la-pop .5s cubic-bezier(.2,1.4,.4,1)}
-.gm-little-alchemy .it.out{animation:la-out .22s ease forwards;pointer-events:none}
-.gm-little-alchemy .it.shake .ic{animation:la-shake .3s}
+.gm-element-lab .ic svg{display:block;width:100%;height:100%;overflow:visible;pointer-events:none}
+.gm-element-lab .la-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:5}
+.gm-element-lab .it{position:absolute;left:0;top:0;width:var(--iw);height:var(--ih);display:flex;flex-direction:column;align-items:center;pointer-events:auto;cursor:grab;touch-action:none;will-change:translate}
+.gm-element-lab .it .ic{width:calc(var(--iw) - 14px);height:calc(var(--iw) - 14px);filter:drop-shadow(0 3px 3px rgba(60,50,70,.22));transition:transform .15s}
+.gm-element-lab .it .nm{margin-top:1px;max-width:130%;padding:1px 6px;border-radius:99px;background:rgba(255,253,248,.82);font:800 11.5px/1.25 var(--sans);color:#4a4358;white-space:nowrap;pointer-events:none}
+.gm-element-lab .it.drag{cursor:grabbing}
+.gm-element-lab .it.drag .ic{transform:scale(1.14) rotate(-3deg);filter:drop-shadow(0 8px 8px rgba(60,50,70,.3))}
+.gm-element-lab .it.target .ic{transform:scale(1.18);filter:drop-shadow(0 0 7px #46c2b1) drop-shadow(0 0 2px #46c2b1)}
+.gm-element-lab .it.slide{transition:translate .24s cubic-bezier(.2,.8,.3,1)}
+.gm-element-lab .it.pop{animation:la-pop .5s cubic-bezier(.2,1.4,.4,1)}
+.gm-element-lab .it.out{animation:la-out .22s ease forwards;pointer-events:none}
+.gm-element-lab .it.shake .ic{animation:la-shake .3s}
 @keyframes la-pop{0%{scale:.2;opacity:0}60%{scale:1.25;opacity:1}100%{scale:1}}
 @keyframes la-out{to{scale:.1;opacity:0}}
 @keyframes la-shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-.gm-little-alchemy .ring{position:absolute;left:0;top:0;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;border:3px solid #46c2b1;pointer-events:none;animation:la-ring .55s ease-out forwards}
+.gm-element-lab .ring{position:absolute;left:0;top:0;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;border:3px solid #46c2b1;pointer-events:none;animation:la-ring .55s ease-out forwards}
 @keyframes la-ring{to{transform:scale(6);opacity:0}}
-.gm-little-alchemy .la-new{position:absolute;left:50%;top:62px;z-index:8;display:flex;align-items:center;gap:10px;padding:8px 18px 8px 10px;border-radius:99px;background:#fff;border:2px solid var(--ac);box-shadow:0 12px 28px -10px rgba(35,125,113,.55);animation:la-ban 2.4s ease forwards;pointer-events:none;translate:-50% 0}
-.gm-little-alchemy .la-new .ic{width:42px;height:42px}
-.gm-little-alchemy .la-new small{display:block;font:800 10.5px/1 var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--ac)}
-.gm-little-alchemy .la-new b{display:block;font:800 17px/1.2 var(--sans)}
+.gm-element-lab .la-new{position:absolute;left:50%;top:62px;z-index:8;display:flex;align-items:center;gap:10px;padding:8px 18px 8px 10px;border-radius:99px;background:#fff;border:2px solid var(--ac);box-shadow:0 12px 28px -10px rgba(35,125,113,.55);animation:la-ban 2.4s ease forwards;pointer-events:none;translate:-50% 0}
+.gm-element-lab .la-new .ic{width:42px;height:42px}
+.gm-element-lab .la-new small{display:block;font:800 10.5px/1 var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--ac)}
+.gm-element-lab .la-new b{display:block;font:800 17px/1.2 var(--sans)}
 @keyframes la-ban{0%{opacity:0;margin-top:-16px}12%{opacity:1;margin-top:0}85%{opacity:1}100%{opacity:0}}
-.gm-little-alchemy .la-book{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;background:var(--paper);animation:la-in .22s ease}
+.gm-element-lab .la-book{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;background:var(--paper);animation:la-in .22s ease}
 @keyframes la-in{from{opacity:0;transform:translateY(12px)}}
-.gm-little-alchemy .bk-h{flex:none;display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line)}
-.gm-little-alchemy .bk-h h3{margin:0;font:800 19px/1 var(--sans)}
-.gm-little-alchemy .bk-h .sp{flex:1}
-.gm-little-alchemy .bk-st{font:700 12.5px/1.3 var(--sans);color:var(--mut);text-align:right}
-.gm-little-alchemy .bk-st b{color:var(--ink)}
-.gm-little-alchemy .bk-x{width:38px;height:38px;display:grid;place-items:center;border:1.5px solid var(--line);border-radius:50%;background:#fff;cursor:pointer;flex:none}
-.gm-little-alchemy .bk-x svg{width:18px;height:18px}
-.gm-little-alchemy .bk-c{flex:none;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px}
-.gm-little-alchemy .bk-tabs{display:inline-flex;padding:3px;border-radius:99px;background:#efeadc}
-.gm-little-alchemy .bk-tabs button{border:0;background:none;padding:7px 13px;border-radius:99px;font:800 12.5px/1 var(--sans);color:var(--mut);cursor:pointer;white-space:nowrap}
-.gm-little-alchemy .bk-tabs button[aria-pressed="true"]{background:#fff;color:var(--ac);box-shadow:0 1px 3px rgba(60,50,70,.2)}
-.gm-little-alchemy .la-q{flex:1;min-width:130px;height:36px;padding:0 14px;border:1.5px solid var(--line);border-radius:99px;font:700 14px var(--sans);color:var(--ink);background:#fff;outline:0}
-.gm-little-alchemy .la-q:focus{border-color:var(--ac)}
-.gm-little-alchemy .bk-b{flex:1;min-height:0;display:flex;position:relative}
-.gm-little-alchemy .bk-g{flex:1;min-width:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));grid-auto-rows:90px;gap:2px;padding:4px 10px 16px;align-content:start;scrollbar-width:thin}
-.gm-little-alchemy .bt{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 2px;border:0;border-radius:12px;background:none;cursor:pointer;min-width:0}
-.gm-little-alchemy .bt:hover,.gm-little-alchemy .bt.sel{background:#f1ede1}
-.gm-little-alchemy .bt .ic{width:50px;height:50px}
-.gm-little-alchemy .bt .nm{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 11.5px/1.2 var(--sans)}
-.gm-little-alchemy .bt.sil .ic{filter:brightness(0);opacity:.16}
-.gm-little-alchemy .bt.sil .nm{color:#c0b9a8}
-.gm-little-alchemy .bt.fin::after,.gm-little-alchemy .tag.fin::before{content:"";position:absolute;right:10px;top:6px;width:11px;height:11px;border-radius:50%;background:#f5c542;border:2px solid #fff;box-shadow:0 0 0 1px #d9a21f}
-.gm-little-alchemy .bk-e{grid-column:1/-1;padding:40px 12px;text-align:center;font:700 14px/1.5 var(--sans);color:var(--mut)}
-.gm-little-alchemy .bk-d{flex:none;width:286px;overflow:auto;padding:16px;border-left:1px solid var(--line);background:#fcfaf3}
-.gm-little-alchemy .bk-d .bd-ic{width:96px;height:96px;margin:4px auto 6px}
-.gm-little-alchemy .bk-d .bd-ic.sil{filter:brightness(0);opacity:.16}
-.gm-little-alchemy .bk-d h4{margin:0 0 6px;text-align:center;font:800 21px/1.2 var(--sans)}
-.gm-little-alchemy .bk-d h5{margin:14px 0 6px;font:800 11px/1 var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
-.gm-little-alchemy .bk-d .mut{margin:10px 0;text-align:center;font:700 13px/1.45 var(--sans);color:var(--mut)}
-.gm-little-alchemy .bk-d .tags{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
-.gm-little-alchemy .tag{position:relative;padding:4px 10px;border-radius:99px;background:#efeadc;font:800 11px/1.2 var(--sans)}
-.gm-little-alchemy .tag.fin{padding-left:24px;background:#fff3c4}
-.gm-little-alchemy .tag.fin::before{left:7px;top:5px;right:auto}
-.gm-little-alchemy .rc{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px}
-.gm-little-alchemy .rc>b{color:var(--mut)}
-.gm-little-alchemy .ch{display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 4px;border:1.5px solid var(--line);border-radius:99px;background:#fff;font:700 12px/1 var(--sans);cursor:pointer}
-.gm-little-alchemy .ch .ic{width:26px;height:26px}
-.gm-little-alchemy .ch.sil{cursor:default;color:#b9b2a1}
-.gm-little-alchemy .ch.sil .ic{filter:brightness(0);opacity:.16}
-.gm-little-alchemy .mk{display:flex;flex-wrap:wrap;gap:4px}
-.gm-little-alchemy .mk .ch{padding-right:4px}
-.gm-little-alchemy .mk .ch .ic{width:30px;height:30px}
-.gm-little-alchemy .bk-d .bk-x{display:none}
+.gm-element-lab .bk-h{flex:none;display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.gm-element-lab .bk-h h3{margin:0;font:800 19px/1 var(--sans)}
+.gm-element-lab .bk-h .sp{flex:1}
+.gm-element-lab .bk-st{font:700 12.5px/1.3 var(--sans);color:var(--mut);text-align:right}
+.gm-element-lab .bk-st b{color:var(--ink)}
+.gm-element-lab .bk-x{width:38px;height:38px;display:grid;place-items:center;border:1.5px solid var(--line);border-radius:50%;background:#fff;cursor:pointer;flex:none}
+.gm-element-lab .bk-x svg{width:18px;height:18px}
+.gm-element-lab .bk-c{flex:none;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px}
+.gm-element-lab .bk-tabs{display:inline-flex;padding:3px;border-radius:99px;background:#efeadc}
+.gm-element-lab .bk-tabs button{border:0;background:none;padding:7px 13px;border-radius:99px;font:800 12.5px/1 var(--sans);color:var(--mut);cursor:pointer;white-space:nowrap}
+.gm-element-lab .bk-tabs button[aria-pressed="true"]{background:#fff;color:var(--ac);box-shadow:0 1px 3px rgba(60,50,70,.2)}
+.gm-element-lab .la-q{flex:1;min-width:130px;height:36px;padding:0 14px;border:1.5px solid var(--line);border-radius:99px;font:700 14px var(--sans);color:var(--ink);background:#fff;outline:0}
+.gm-element-lab .la-q:focus{border-color:var(--ac)}
+.gm-element-lab .bk-b{flex:1;min-height:0;display:flex;position:relative}
+.gm-element-lab .bk-g{flex:1;min-width:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));grid-auto-rows:90px;gap:2px;padding:4px 10px 16px;align-content:start;scrollbar-width:thin}
+.gm-element-lab .bt{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 2px;border:0;border-radius:12px;background:none;cursor:pointer;min-width:0}
+.gm-element-lab .bt:hover,.gm-element-lab .bt.sel{background:#f1ede1}
+.gm-element-lab .bt .ic{width:50px;height:50px}
+.gm-element-lab .bt .nm{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 11.5px/1.2 var(--sans)}
+.gm-element-lab .bt.sil .ic{filter:brightness(0);opacity:.16}
+.gm-element-lab .bt.sil .nm{color:#c0b9a8}
+.gm-element-lab .bt.fin::after,.gm-element-lab .tag.fin::before{content:"";position:absolute;right:10px;top:6px;width:11px;height:11px;border-radius:50%;background:#f5c542;border:2px solid #fff;box-shadow:0 0 0 1px #d9a21f}
+.gm-element-lab .bk-e{grid-column:1/-1;padding:40px 12px;text-align:center;font:700 14px/1.5 var(--sans);color:var(--mut)}
+.gm-element-lab .bk-d{flex:none;width:286px;overflow:auto;padding:16px;border-left:1px solid var(--line);background:#fcfaf3}
+.gm-element-lab .bk-d .bd-ic{width:96px;height:96px;margin:4px auto 6px}
+.gm-element-lab .bk-d .bd-ic.sil{filter:brightness(0);opacity:.16}
+.gm-element-lab .bk-d h4{margin:0 0 6px;text-align:center;font:800 21px/1.2 var(--sans)}
+.gm-element-lab .bk-d h5{margin:14px 0 6px;font:800 11px/1 var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
+.gm-element-lab .bk-d .mut{margin:10px 0;text-align:center;font:700 13px/1.45 var(--sans);color:var(--mut)}
+.gm-element-lab .bk-d .tags{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.gm-element-lab .tag{position:relative;padding:4px 10px;border-radius:99px;background:#efeadc;font:800 11px/1.2 var(--sans)}
+.gm-element-lab .tag.fin{padding-left:24px;background:#fff3c4}
+.gm-element-lab .tag.fin::before{left:7px;top:5px;right:auto}
+.gm-element-lab .rc{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.gm-element-lab .rc>b{color:var(--mut)}
+.gm-element-lab .ch{display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 4px;border:1.5px solid var(--line);border-radius:99px;background:#fff;font:700 12px/1 var(--sans);cursor:pointer}
+.gm-element-lab .ch .ic{width:26px;height:26px}
+.gm-element-lab .ch.sil{cursor:default;color:#b9b2a1}
+.gm-element-lab .ch.sil .ic{filter:brightness(0);opacity:.16}
+.gm-element-lab .mk{display:flex;flex-wrap:wrap;gap:4px}
+.gm-element-lab .mk .ch{padding-right:4px}
+.gm-element-lab .mk .ch .ic{width:30px;height:30px}
+.gm-element-lab .bk-d .bk-x{display:none}
 @media (max-width:720px){
-.gm-little-alchemy{--iw:62px;--ih:78px}
-.gm-little-alchemy .la-top{padding:8px 10px;gap:6px}
-.gm-little-alchemy .la-b span{display:none}
-.gm-little-alchemy .la-b{padding:0 10px}
-.gm-little-alchemy .la-b em{display:inline-block}
-.gm-little-alchemy .la-main{flex-direction:column}
-.gm-little-alchemy .la-lib{width:auto;height:196px;border-left:0;border-top:1px solid var(--line)}
-.gm-little-alchemy .la-lh{padding:6px 12px}
-.gm-little-alchemy .la-grid{display:grid;grid-template-columns:none;grid-template-rows:repeat(2,84px);grid-auto-flow:column;grid-auto-columns:68px;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;padding:2px 8px 6px}
-.gm-little-alchemy .lt{touch-action:pan-x}
-.gm-little-alchemy .la-new{top:52px}
-.gm-little-alchemy .bk-b{flex-direction:column}
-.gm-little-alchemy .bk-d{position:absolute;left:0;right:0;bottom:0;width:auto;max-height:62%;border-left:0;border-top:1px solid var(--line);box-shadow:0 -14px 30px -14px rgba(60,50,70,.45);z-index:2}
-.gm-little-alchemy .bk-d .bk-x{display:grid;position:absolute;right:10px;top:10px}
-.gm-little-alchemy .bk-st{display:none}
+.gm-element-lab{--iw:62px;--ih:78px}
+.gm-element-lab .la-top{padding:8px 10px;gap:6px}
+.gm-element-lab .la-b span{display:none}
+.gm-element-lab .la-b{padding:0 10px}
+.gm-element-lab .la-b em{display:inline-block}
+.gm-element-lab .la-main{flex-direction:column}
+.gm-element-lab .la-lib{width:auto;height:196px;border-left:0;border-top:1px solid var(--line)}
+.gm-element-lab .la-lh{padding:6px 12px}
+.gm-element-lab .la-grid{display:grid;grid-template-columns:none;grid-template-rows:repeat(2,84px);grid-auto-flow:column;grid-auto-columns:68px;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;padding:2px 8px 6px}
+.gm-element-lab .lt{touch-action:pan-x}
+.gm-element-lab .la-new{top:52px}
+.gm-element-lab .bk-b{flex-direction:column}
+.gm-element-lab .bk-d{position:absolute;left:0;right:0;bottom:0;width:auto;max-height:62%;border-left:0;border-top:1px solid var(--line);box-shadow:0 -14px 30px -14px rgba(60,50,70,.45);z-index:2}
+.gm-element-lab .bk-d .bk-x{display:grid;position:absolute;right:10px;top:10px}
+.gm-element-lab .bk-st{display:none}
 }
 `;
   const LA_ICON = ICON('<path d="M26 6h12M29 6v16L15 48a6 6 0 0 0 5.4 9h23.2A6 6 0 0 0 49 48L35 22V6"/><path d="M20 40h24" opacity=".6"/><circle cx="29" cy="48" r="2.4" fill="currentColor"/><circle cx="38" cy="44" r="1.8" fill="currentColor"/>');
@@ -1633,8 +1633,8 @@ Reef Fish: Fish+Coral
   const isFieldEl = t => t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
 
   Ameplay.register({
-    id: 'little-alchemy',
-    title: 'Little Alchemy 2',
+    id: 'element-lab',
+    title: 'Element Lab',
     category: 'Puzzle',
     better: 'high',
     width: 1000,
@@ -1643,5 +1643,2884 @@ Reef Fish: Fish+Coral
     icon: LA_ICON,
     css: LA_CSS,
     mount: mountAlchemy
+  });
+})();
+(() => {
+  'use strict';
+
+  const OL_NM = {
+    m: ['Liam', 'Noah', 'Lucas', 'Hugo', 'Gabriel', 'Louis', 'Léo', 'Adam', 'Ethan', 'Nathan', 'Mateo', 'Arthur', 'Jules', 'Raphaël', 'Samuel', 'Omar', 'Yusuf', 'Kenji', 'Marco', 'Luca', 'Diego', 'Felix', 'Oscar', 'Théo', 'Max', 'Elias', 'Malik', 'Ravi', 'Tom', 'Daniel', 'Victor', 'Paul', 'Sacha', 'Enzo', 'Isaac', 'Kofi', 'Karim', 'Ben', 'Jonas', 'Antoine', 'Rayan', 'Milo', 'Aaron', 'Nils', 'Tiago', 'Hiro', 'Idris', 'Simon'],
+    f: ['Emma', 'Léa', 'Chloé', 'Mia', 'Jade', 'Louise', 'Alice', 'Inès', 'Lina', 'Zoé', 'Sofia', 'Olivia', 'Ava', 'Rose', 'Anna', 'Clara', 'Nora', 'Maya', 'Amira', 'Yasmin', 'Aiko', 'Giulia', 'Lucia', 'Elena', 'Hannah', 'Lena', 'Sara', 'Camille', 'Manon', 'Julia', 'Isla', 'Grace', 'Priya', 'Amara', 'Nina', 'Eva', 'Margot', 'Ella', 'Charlotte', 'Laura', 'Mila', 'Aya', 'Lou', 'Iris', 'Salomé', 'Naomi', 'Leila', 'Ambre'],
+    l: ['Martin', 'Bernard', 'Dubois', 'Moreau', 'Laurent', 'Garcia', 'Rossi', 'Silva', 'Müller', 'Smith', 'Johnson', 'Brown', 'Wilson', 'Taylor', 'Lopez', 'Fernandez', 'Costa', 'Ferrari', 'Bianchi', 'Schmidt', 'Weber', 'Novak', 'Kowalski', 'Haddad', 'Benali', 'Diallo', 'Mensah', 'Okafor', 'Nakamura', 'Tanaka', 'Kim', 'Chen', 'Patel', 'Singh', 'Murphy', 'O’Brien', 'Jensen', 'Larsen', 'Lambert', 'Fontaine', 'Girard', 'Romero', 'Santos', 'Pereira', 'Meyer', 'Fischer', 'Petit', 'Roux', 'Blanc', 'Morel', 'Nguyen', 'Rahman']
+  };
+  const OL_CITY = [['Lyon', 'Lyon', 'France', 'en France'], ['Marseille', 'Marseille', 'France', 'en France'], ['Paris', 'Paris', 'France', 'en France'], ['Nice', 'Nice', 'France', 'en France'], ['Monaco', 'Monaco', 'Monaco', 'à Monaco'], ['Brussels', 'Bruxelles', 'Belgium', 'en Belgique'], ['Geneva', 'Genève', 'Switzerland', 'en Suisse'], ['Montreal', 'Montréal', 'Canada', 'au Canada'], ['London', 'Londres', 'the United Kingdom', 'au Royaume-Uni'], ['Dublin', 'Dublin', 'Ireland', 'en Irlande'], ['Madrid', 'Madrid', 'Spain', 'en Espagne'], ['Barcelona', 'Barcelone', 'Spain', 'en Espagne'], ['Lisbon', 'Lisbonne', 'Portugal', 'au Portugal'], ['Rome', 'Rome', 'Italy', 'en Italie'], ['Milan', 'Milan', 'Italy', 'en Italie'], ['Berlin', 'Berlin', 'Germany', 'en Allemagne'], ['Munich', 'Munich', 'Germany', 'en Allemagne'], ['Amsterdam', 'Amsterdam', 'the Netherlands', 'aux Pays-Bas'], ['New York', 'New York', 'the United States', 'aux États-Unis'], ['Toronto', 'Toronto', 'Canada', 'au Canada'], ['Sydney', 'Sydney', 'Australia', 'en Australie'], ['Dakar', 'Dakar', 'Senegal', 'au Sénégal'], ['Casablanca', 'Casablanca', 'Morocco', 'au Maroc'], ['Tokyo', 'Tokyo', 'Japan', 'au Japon']];
+  const OL_SPORT = [['football', 'football'], ['basketball', 'basket'], ['tennis', 'tennis'], ['swimming', 'natation'], ['athletics', 'athlétisme'], ['volleyball', 'volley'], ['rugby', 'rugby'], ['handball', 'handball'], ['gymnastics', 'gymnastique'], ['judo', 'judo']];
+  const OL_SUBJ = [['maths', 'les maths'], ['history', 'l’histoire'], ['biology', 'la biologie'], ['chemistry', 'la chimie'], ['physics', 'la physique'], ['art', 'les arts plastiques'], ['music', 'la musique'], ['literature', 'la littérature'], ['geography', 'la géographie'], ['computer science', 'l’informatique'], ['languages', 'les langues'], ['PE', 'le sport']];
+  const OL_TOPIC = [['dinosaurs', 'les dinosaures'], ['space', 'l’espace'], ['our favourite films', 'nos films préférés'], ['the meaning of life', 'le sens de la vie'], ['old family stories', 'de vieilles histoires de famille'], ['football', 'le football'], ['music', 'la musique'], ['the weather', 'la météo'], ['our plans for the future', 'nos projets d’avenir'], ['the best pizza toppings', 'les meilleures garnitures de pizza'], ['books', 'des livres'], ['animals', 'les animaux']];
+  const OL_CAUSE = {
+    age: ['old age', 'de vieillesse'], sleep: ['peacefully in my sleep', 'paisiblement dans mon sommeil'], heart: ['heart failure', 'd’une insuffisance cardiaque'], stroke: ['a stroke', 'd’un AVC'], ill: ['a long illness', 'd’une longue maladie'], pneu: ['pneumonia', 'd’une pneumonie'], acc: ['an accident', 'dans un accident'], sudden: ['a sudden illness', 'd’une maladie soudaine']
+  };
+
+  const OL_MAJ = [
+    ['med', 'Medicine', 'Médecine', 85, 3, 's'],
+    ['law', 'Law', 'Droit', 78, 3, 's'],
+    ['cs', 'Computer science', 'Informatique', 68, 3, 'cod'],
+    ['eng', 'Engineering', 'Ingénierie', 70, 3, 's'],
+    ['phy', 'Physics', 'Physique', 76, 3, 's'],
+    ['bus', 'Business', 'Commerce', 58, 3, 's'],
+    ['edu', 'Education', 'Sciences de l’éducation', 50, 3, 's'],
+    ['nur', 'Nursing', 'Soins infirmiers', 55, 3, 's'],
+    ['bio', 'Biology', 'Biologie', 64, 3, 's'],
+    ['psy', 'Psychology', 'Psychologie', 60, 3, 's'],
+    ['arc', 'Architecture', 'Architecture', 70, 4, 'art'],
+    ['art', 'Art and design', 'Arts et design', 45, 3, 'art'],
+    ['mus', 'Music', 'Musique', 45, 3, 'mus'],
+    ['jou', 'Journalism', 'Journalisme', 55, 3, 'wri'],
+    ['spo', 'Sports science', 'Sciences du sport', 45, 3, 'a'],
+    ['lan', 'Languages', 'Langues', 52, 3, 'lan']
+  ];
+  const OL_GRAD = [
+    ['mds', 'Medical school', 'École de médecine', 4, ['med'], 0],
+    ['lws', 'Law school', 'École d’avocats', 2, ['law'], 0],
+    ['vet', 'Veterinary school', 'École vétérinaire', 4, ['bio', 'med'], 70],
+    ['den', 'Dental school', 'École dentaire', 4, ['bio', 'med'], 72],
+    ['phd', 'Doctorate (PhD)', 'Doctorat', 4, null, 82],
+    ['msc', 'Master’s degree', 'Master', 2, null, 60]
+  ];
+
+  const OL_JOB = [
+    ['babysit', 'p', 14, 0, 0, null, [['Babysitter', 'Baby-sitter', 2400]]],
+    ['dogwalk', 'p', 13, 0, 0, null, [['Dog walker', 'Promeneur de chiens', 2000]]],
+    ['paper', 'p', 13, 0, 0, null, [['Newspaper delivery', 'Livreur de journaux', 1800]]],
+    ['cashp', 'p', 16, 0, 0, null, [['Part-time cashier', 'Caissier à temps partiel', 6200]]],
+    ['lifeg', 'p', 16, 0, 0, { H: 60, a: 40 }, [['Lifeguard', 'Maître-nageur sauveteur', 5600]]],
+    ['tutor', 'p', 16, 0, 0, { s: 72 }, [['Tutor', 'Professeur particulier', 4800]]],
+    ['cafep', 'p', 16, 0, 0, null, [['Café server', 'Serveur en café', 5200]]],
+    ['libp', 'p', 15, 0, 0, null, [['Library assistant', 'Aide-bibliothécaire', 4200]]],
+    ['retail', 'f', 18, 0, 0, null, [['Shop assistant', 'Vendeur', 21500], ['Senior shop assistant', 'Vendeur senior', 25500], ['Store manager', 'Directeur de magasin', 38000], ['Regional manager', 'Directeur régional', 56000]]],
+    ['cook', 'f', 18, 0, 0, null, [['Kitchen porter', 'Plongeur', 19500], ['Line cook', 'Commis de cuisine', 25500], ['Sous-chef', 'Second de cuisine', 35000], ['Head chef', 'Chef de cuisine', 58000]], 'coo'],
+    ['wareh', 'f', 18, 0, 0, null, [['Warehouse worker', 'Préparateur de commandes', 23500], ['Team leader', 'Chef d’équipe', 30500], ['Logistics manager', 'Responsable logistique', 46000]]],
+    ['driver', 'f', 18, 0, 0, { lic: 1 }, [['Delivery driver', 'Chauffeur-livreur', 24500], ['Bus driver', 'Conducteur de bus', 29000], ['Fleet manager', 'Responsable de flotte', 42000]]],
+    ['build', 'f', 18, 0, 0, { H: 50 }, [['Construction worker', 'Ouvrier du bâtiment', 27000], ['Site foreman', 'Chef de chantier', 38500], ['Construction manager', 'Conducteur de travaux', 61000]]],
+    ['hair', 'f', 17, 0, 0, null, [['Trainee hairdresser', 'Apprenti coiffeur', 16500], ['Hairdresser', 'Coiffeur', 24500], ['Salon owner', 'Propriétaire de salon', 46000]], 'art'],
+    ['farm', 'f', 17, 0, 0, { H: 45 }, [['Farmhand', 'Ouvrier agricole', 20500], ['Farmer', 'Agriculteur', 28000], ['Farm manager', 'Exploitant agricole', 41000]]],
+    ['police', 'f', 18, 1, 0, { H: 60, s: 45 }, [['Police officer', 'Agent de police', 31500], ['Sergeant', 'Brigadier', 41000], ['Inspector', 'Inspecteur', 55000], ['Chief inspector', 'Commissaire', 76000]]],
+    ['fire', 'f', 18, 1, 0, { H: 65, a: 45 }, [['Firefighter', 'Pompier', 30500], ['Crew commander', 'Chef d’agrès', 40500], ['Station commander', 'Chef de centre', 58000]]],
+    ['mech', 'f', 17, 0, 0, null, [['Apprentice mechanic', 'Apprenti mécanicien', 17500], ['Mechanic', 'Mécanicien', 30000], ['Garage owner', 'Propriétaire de garage', 52000]]],
+    ['elec', 'f', 17, 1, 0, null, [['Apprentice electrician', 'Apprenti électricien', 18500], ['Electrician', 'Électricien', 36000], ['Master electrician', 'Maître électricien', 55000]]],
+    ['post', 'f', 18, 0, 0, null, [['Postal worker', 'Facteur', 25000], ['Postal supervisor', 'Chef d’équipe postale', 33500]]],
+    ['care', 'f', 18, 0, 0, null, [['Care assistant', 'Aide-soignant', 22000], ['Senior carer', 'Aide-soignant principal', 27500]]],
+    ['clean', 'f', 18, 0, 0, null, [['Cleaner', 'Agent d’entretien', 19000], ['Cleaning supervisor', 'Chef d’équipe propreté', 25500]]],
+    ['secur', 'f', 18, 0, 0, { H: 45 }, [['Security guard', 'Agent de sécurité', 23000], ['Security supervisor', 'Responsable sécurité', 31000]]],
+    ['call', 'f', 18, 0, 0, null, [['Call centre agent', 'Téléconseiller', 21000], ['Call centre team leader', 'Superviseur de centre d’appels', 28500]]],
+    ['barista', 'f', 18, 0, 0, null, [['Barista', 'Barista', 19500], ['Café manager', 'Gérant de café', 29500]]],
+    ['teach', 'f', 22, 2, ['edu', 'lan', 'mus', 'art', 'spo', 'bio', 'phy'], null, [['Teacher', 'Professeur', 34000], ['Senior teacher', 'Professeur principal', 42000], ['Deputy head teacher', 'Directeur adjoint', 55000], ['Head teacher', 'Chef d’établissement', 70000]]],
+    ['nurse', 'f', 21, 2, ['nur'], null, [['Nurse', 'Infirmier', 33000], ['Senior nurse', 'Infirmier principal', 41000], ['Head nurse', 'Cadre de santé', 52000]]],
+    ['dev', 'f', 21, 2, ['cs'], null, [['Junior developer', 'Développeur junior', 42000], ['Software developer', 'Développeur', 58000], ['Senior developer', 'Développeur senior', 80000], ['Lead engineer', 'Ingénieur principal', 105000], ['Chief technology officer', 'Directeur technique', 160000]]],
+    ['engin', 'f', 21, 2, ['eng', 'phy'], null, [['Graduate engineer', 'Ingénieur débutant', 40000], ['Engineer', 'Ingénieur', 55000], ['Senior engineer', 'Ingénieur senior', 76000], ['Chief engineer', 'Ingénieur en chef', 110000]]],
+    ['acct', 'f', 21, 2, ['bus'], null, [['Junior accountant', 'Comptable junior', 36000], ['Accountant', 'Comptable', 48000], ['Finance manager', 'Responsable financier', 70000], ['Finance director', 'Directeur financier', 120000]]],
+    ['mkt', 'f', 21, 2, true, null, [['Marketing assistant', 'Assistant marketing', 30000], ['Marketing manager', 'Responsable marketing', 52000], ['Marketing director', 'Directeur marketing', 95000]]],
+    ['journ', 'f', 21, 2, ['jou', 'lan'], null, [['Junior reporter', 'Journaliste stagiaire', 28000], ['Journalist', 'Journaliste', 38000], ['Editor', 'Rédacteur en chef adjoint', 55000], ['Editor-in-chief', 'Rédacteur en chef', 90000]], 'wri'],
+    ['archi', 'f', 22, 2, ['arc'], null, [['Junior architect', 'Architecte junior', 35000], ['Architect', 'Architecte', 55000], ['Senior partner architect', 'Architecte associé', 110000]]],
+    ['psych', 'f', 21, 2, ['psy'], null, [['Assistant psychologist', 'Psychologue assistant', 30000], ['Psychologist', 'Psychologue', 50000], ['Clinical lead', 'Psychologue responsable', 72000]]],
+    ['lab', 'f', 21, 2, ['bio', 'phy', 'med'], null, [['Lab technician', 'Technicien de laboratoire', 29000], ['Research scientist', 'Chercheur', 45000], ['Lead scientist', 'Directeur de recherche', 78000]]],
+    ['design', 'f', 21, 2, ['art', 'arc'], null, [['Junior designer', 'Graphiste junior', 26000], ['Graphic designer', 'Graphiste', 38000], ['Art director', 'Directeur artistique', 72000]], 'art'],
+    ['physio', 'f', 21, 2, ['spo', 'nur'], null, [['Physiotherapist', 'Kinésithérapeute', 34000], ['Senior physiotherapist', 'Kinésithérapeute senior', 50000]]],
+    ['coach', 'f', 21, 2, ['spo'], { a: 55 }, [['Assistant coach', 'Entraîneur adjoint', 25000], ['Head coach', 'Entraîneur principal', 60000]]],
+    ['civil', 'f', 21, 2, true, null, [['Civil servant', 'Fonctionnaire', 28000], ['Senior civil servant', 'Haut fonctionnaire', 42000], ['Head of department', 'Directeur de service', 75000]]],
+    ['bank', 'f', 21, 2, ['bus', 'phy', 'eng', 'cs'], { s: 70 }, [['Bank analyst', 'Analyste bancaire', 45000], ['Investment banker', 'Banquier d’affaires', 95000], ['Bank director', 'Directeur de banque', 200000]]],
+    ['interp', 'f', 21, 2, ['lan'], { lan: 60 }, [['Translator', 'Traducteur', 31000], ['Conference interpreter', 'Interprète de conférence', 52000]], 'lan'],
+    ['pilot', 'f', 21, 1, 0, { H: 70, s: 70 }, [['Trainee pilot', 'Élève pilote', 32000], ['First officer', 'Copilote', 70000], ['Airline captain', 'Commandant de bord', 140000]]],
+    ['doctor', 'f', 25, 3, ['mds'], null, [['Junior doctor', 'Interne', 45000], ['Doctor', 'Médecin', 80000], ['Consultant surgeon', 'Chirurgien', 150000], ['Chief of medicine', 'Chef de service', 220000]]],
+    ['lawyer', 'f', 23, 3, ['lws'], null, [['Trainee lawyer', 'Avocat stagiaire', 40000], ['Lawyer', 'Avocat', 75000], ['Senior partner', 'Associé principal', 160000], ['Judge', 'Juge', 180000]]],
+    ['vetj', 'f', 25, 3, ['vet'], null, [['Vet', 'Vétérinaire', 40000], ['Senior vet', 'Vétérinaire senior', 60000], ['Clinic owner', 'Propriétaire de clinique', 95000]]],
+    ['dent', 'f', 25, 3, ['den'], null, [['Dentist', 'Dentiste', 55000], ['Senior dentist', 'Dentiste senior', 85000], ['Practice owner', 'Propriétaire de cabinet', 140000]]],
+    ['prof', 'f', 25, 3, ['phd'], null, [['Lecturer', 'Maître de conférences', 40000], ['Senior lecturer', 'Maître de conférences HDR', 55000], ['Professor', 'Professeur d’université', 85000]]],
+    ['astro', 'f', 27, 3, ['phd'], { H: 80, s: 88 }, [['Astronaut candidate', 'Candidat astronaute', 70000], ['Astronaut', 'Astronaute', 120000]]],
+    ['music', 't', 16, 0, 0, { mus: 65 }, [['Street musician', 'Musicien de rue', 6000], ['Session musician', 'Musicien de studio', 25000], ['Recording artist', 'Artiste signé', 70000], ['Music star', 'Star de la musique', 420000]], 'mus'],
+    ['actor', 't', 16, 0, 0, { act: 60, l: 45 }, [['Film extra', 'Figurant', 8000], ['Stage actor', 'Comédien de théâtre', 24000], ['TV actor', 'Acteur de télévision', 80000], ['Film star', 'Star de cinéma', 600000]], 'act'],
+    ['athl', 't', 17, 0, 0, { a: 78, H: 70 }, [['Semi-professional athlete', 'Athlète semi-professionnel', 15000], ['Professional athlete', 'Athlète professionnel', 90000], ['National team star', 'Star de l’équipe nationale', 500000]], 'a'],
+    ['writer', 't', 18, 0, 0, { wri: 60 }, [['Freelance writer', 'Rédacteur indépendant', 12000], ['Published author', 'Auteur publié', 35000], ['Bestselling author', 'Auteur à succès', 250000]], 'wri'],
+    ['creator', 't', 16, 0, 0, { art: 45, l: 40 }, [['Video creator', 'Créateur de vidéos', 3000], ['Popular creator', 'Créateur populaire', 40000], ['Online star', 'Star du web', 300000]], 'art'],
+    ['artist', 't', 18, 0, 0, { art: 70 }, [['Painter', 'Peintre', 9000], ['Exhibited artist', 'Artiste exposé', 32000], ['Famous artist', 'Artiste célèbre', 210000]], 'art']
+  ];
+  const OL_FAME_JOBS = ['music', 'actor', 'athl', 'writer', 'creator', 'artist'];
+
+  const OL_ACT = [
+    ['play', 3, 11, 0, 'play', ['Play outside', 'Jouer dehors']],
+    ['read', 5, 120, 0, 'book', ['Read a book', 'Lire un livre']],
+    ['games', 7, 120, 0, 'pad', ['Play video games', 'Jouer aux jeux vidéo']],
+    ['library', 8, 120, 0, 'lib', ['Go to the library', 'Aller à la bibliothèque']],
+    ['run', 9, 90, 0, 'run', ['Go for a run', 'Aller courir']],
+    ['gym', 14, 100, 350, 'gym', ['Go to the gym', 'Aller à la salle de sport']],
+    ['meditate', 10, 120, 0, 'lotus', ['Meditate', 'Méditer']],
+    ['doctor', 0, 120, 60, 'doc', ['See a doctor', 'Voir un médecin']],
+    ['music', 6, 100, 400, 'note', ['Music lessons', 'Cours de musique']],
+    ['art', 5, 110, 250, 'brush', ['Art class', 'Cours de dessin']],
+    ['code', 9, 90, 200, 'code', ['Coding club', 'Club de programmation']],
+    ['lang', 9, 100, 300, 'globe', ['Learn a language', 'Apprendre une langue']],
+    ['cook', 11, 110, 200, 'chef', ['Cooking class', 'Cours de cuisine']],
+    ['drama', 7, 90, 200, 'mask', ['Drama class', 'Cours de théâtre']],
+    ['write', 10, 120, 0, 'pen', ['Write stories', 'Écrire des histoires']],
+    ['sport', 6, 50, 250, 'ball', ['Sports club', 'Club de sport']],
+    ['volunteer', 12, 110, 0, 'hands', ['Volunteer', 'Faire du bénévolat']],
+    ['hair', 10, 120, 45, 'scissors', ['Get a new haircut', 'Changer de coiffure']],
+    ['holiday', 18, 110, 1500, 'plane', ['Go on holiday', 'Partir en vacances']],
+    ['spa', 18, 120, 150, 'spa', ['Spa day', 'Journée au spa']],
+    ['drive', 17, 90, 600, 'car', ['Take the driving test', 'Passer le permis de conduire']],
+    ['talent', 9, 60, 0, 'mic', ['Enter a talent show', 'Participer à un concours de talents']],
+    ['garden', 30, 120, 0, 'leaf', ['Do some gardening', 'Jardiner']],
+    ['shelter', 18, 100, 150, 'paw', ['Adopt a pet', 'Adopter un animal']]
+  ];
+
+  const OL_ILL = [
+    ['cold', ['a cold', 'un rhume'], 0, 200, 0.1, 2, 0, 1, 1, 0],
+    ['flu', ['the flu', 'la grippe'], 0, 200, 0.05, 5, 2, 0.85, 0.95, 0],
+    ['pox', ['chickenpox', 'la varicelle'], 2, 10, 0.06, 3, 2, 1, 1, 0],
+    ['ear', ['an ear infection', 'une otite'], 0, 9, 0.05, 2, 1, 0.7, 0.98, 0],
+    ['allergy', ['hay fever', 'le rhume des foins'], 4, 60, 0.008, 0, 1, 0.05, 0, 1],
+    ['asthma', ['asthma', 'de l’asthme'], 2, 40, 0.005, 1, 1, 0.08, 0, 1],
+    ['migraine', ['migraines', 'des migraines'], 14, 70, 0.015, 1, 3, 0.25, 0.6, 0],
+    ['back', ['back pain', 'des douleurs au dos'], 28, 200, 0.03, 2, 2, 0.3, 0.7, 0],
+    ['bp', ['high blood pressure', 'de l’hypertension'], 40, 200, 0.02, 1.5, 0, 0.02, 0, 1],
+    ['diab', ['diabetes', 'du diabète'], 45, 200, 0.01, 2, 1, 0, 0, 1],
+    ['arth', ['arthritis', 'de l’arthrose'], 55, 200, 0.025, 1, 2, 0, 0, 1],
+    ['heart', ['heart disease', 'une maladie cardiaque'], 55, 200, 0.012, 3, 2, 0, 0, 1],
+    ['cat', ['cataracts', 'la cataracte'], 60, 200, 0.03, 1, 1, 0, 0.95, 0],
+    ['hear', ['hearing loss', 'une perte d’audition'], 65, 200, 0.04, 0, 2, 0, 0, 1],
+    ['memory', ['memory problems', 'des troubles de la mémoire'], 75, 200, 0.02, 1, 2, 0, 0, 1],
+    ['pneu', ['pneumonia', 'une pneumonie'], 65, 200, 0.03, 10, 3, 0.5, 0.9, 0],
+    ['serious', ['a serious illness', 'une maladie grave'], 35, 200, 0.004, 14, 5, 0.05, 0.6, 0],
+    ['arm', ['a broken arm', 'un bras cassé'], 0, 0, 0, 5, 2, 0.6, 1, 0],
+    ['ankle', ['a sprained ankle', 'une entorse à la cheville'], 0, 0, 0, 3, 1, 0.8, 1, 0],
+    ['hip', ['a broken hip', 'une fracture de la hanche'], 0, 0, 0, 9, 3, 0.4, 0.9, 0]
+  ];
+
+  const OL_HOUSE = [
+    ['studio', ['Studio flat', 'Studio'], 85000, 'flat'],
+    ['flat2', ['Two-bedroom flat', 'Appartement deux chambres'], 165000, 'flat'],
+    ['terrace', ['Terraced house', 'Maison mitoyenne'], 230000, 'house'],
+    ['cottage', ['Country cottage', 'Maison de campagne'], 260000, 'cottage'],
+    ['family', ['Family house with a garden', 'Maison familiale avec jardin'], 340000, 'house'],
+    ['loft', ['City loft', 'Loft en centre-ville'], 480000, 'flat'],
+    ['seaside', ['Seaside villa', 'Villa en bord de mer'], 950000, 'villa'],
+    ['pent', ['Penthouse with a view', 'Penthouse avec vue'], 1700000, 'flat']
+  ];
+  const OL_CAR = [
+    ['bike', ['Bicycle', 'Vélo'], 450, 'bike', 0],
+    ['scooter', ['Electric scooter', 'Scooter électrique'], 1900, 'scooter', 0],
+    ['used', ['Used hatchback', 'Citadine d’occasion'], 4500, 'car', 1],
+    ['city', ['New city car', 'Petite voiture neuve'], 17000, 'car', 1],
+    ['estate', ['Family estate car', 'Break familial'], 29000, 'car', 1],
+    ['ev', ['Electric saloon', 'Berline électrique'], 42000, 'car', 1],
+    ['van', ['Camper van', 'Van aménagé'], 48000, 'van', 1],
+    ['classic', ['Restored classic car', 'Voiture de collection'], 65000, 'car', 1],
+    ['sport', ['Sports car', 'Voiture de sport'], 98000, 'car', 1]
+  ];
+  const OL_PET = [
+    ['dog', ['dog', 'chien'], 11, 16, 300],
+    ['cat', ['cat', 'chat'], 13, 19, 150],
+    ['rabbit', ['rabbit', 'lapin'], 7, 11, 80],
+    ['hamster', ['hamster', 'hamster'], 2, 3, 30],
+    ['parrot', ['parrot', 'perroquet'], 30, 55, 600],
+    ['fish', ['goldfish', 'poisson rouge'], 5, 12, 20],
+    ['tortoise', ['tortoise', 'tortue'], 50, 90, 200],
+    ['guinea', ['guinea pig', 'cochon d’Inde'], 5, 8, 50]
+  ];
+  const OL_PETN = ['Biscuit', 'Pepper', 'Luna', 'Milo', 'Coco', 'Noisette', 'Oreo', 'Ziggy', 'Pixel', 'Caramel', 'Nugget', 'Mochi', 'Rocket', 'Pistache', 'Bubbles', 'Tofu', 'Sushi', 'Waffles', 'Gizmo', 'Clémentine', 'Kiwi', 'Bandit', 'Olive', 'Tiger'];
+
+  const OL_AW = [
+    ['century', ['Centenarian', 'Centenaire'], ['Lived to 100 or more.', 'A vécu jusqu’à 100 ans ou plus.'], '#c9a227'],
+    ['tycoon', ['Tycoon', 'Magnat'], ['Left a fortune of 10 million or more.', 'A laissé une fortune de 10 millions ou plus.'], '#2e9e5b'],
+    ['genius', ['Genius', 'Génie'], ['Earned a doctorate-level degree with brilliant smarts.', 'A obtenu un diplôme de haut niveau avec une intelligence brillante.'], '#3d6fd8'],
+    ['star', ['Superstar', 'Superstar'], ['Became truly famous.', 'Est devenu vraiment célèbre.'], '#e0469a'],
+    ['healer', ['Healer', 'Soignant'], ['Cared for patients for 15 years or more.', 'A soigné des patients pendant 15 ans ou plus.'], '#e5533d'],
+    ['mentor', ['Mentor', 'Mentor'], ['Taught for 15 years or more.', 'A enseigné pendant 15 ans ou plus.'], '#8a5ad6'],
+    ['clan', ['Big family', 'Grande famille'], ['Raised four children or more.', 'A élevé quatre enfants ou plus.'], '#f08a24'],
+    ['kind', ['Kind heart', 'Cœur d’or'], ['Was kind to everyone, all life long.', 'A été gentil avec tout le monde, toute sa vie.'], '#ef6f8e'],
+    ['athlete', ['Athlete', 'Athlète'], ['Reached the top in sport.', 'A atteint le sommet dans le sport.'], '#1aa3a3'],
+    ['artist', ['Virtuoso', 'Virtuose'], ['Mastered an art.', 'A maîtrisé un art.'], '#b04fd0'],
+    ['globe', ['Globetrotter', 'Globe-trotteur'], ['Went on 12 holidays or more.', 'Est parti en vacances 12 fois ou plus.'], '#2b8fd6'],
+    ['rich', ['Wealthy', 'Fortuné'], ['Left a fortune of 2 million or more.', 'A laissé une fortune de 2 millions ou plus.'], '#4caf50'],
+    ['scholar', ['Scholar', 'Érudit'], ['Graduated from university with high smarts.', 'Diplômé de l’université avec une grande intelligence.'], '#4f7bd9'],
+    ['boss', ['Top of the ladder', 'Au sommet'], ['Reached the highest rank of a career.', 'A atteint le plus haut poste d’une carrière.'], '#6d5bd0'],
+    ['love', ['Soulmates', 'Âmes sœurs'], ['Stayed married for 40 years or more.', 'Est resté marié 40 ans ou plus.'], '#e4405f'],
+    ['happy', ['Sunny', 'Rayonnant'], ['Stayed happy for most of life.', 'Est resté heureux presque toute sa vie.'], '#f2b531'],
+    ['healthy', ['Fit for life', 'En pleine forme'], ['Lived past 85 in great health.', 'A dépassé 85 ans en excellente santé.'], '#33b679'],
+    ['book', ['Bookworm', 'Rat de bibliothèque'], ['Read and studied in libraries 40 times or more.', 'A lu et étudié en bibliothèque 40 fois ou plus.'], '#a0703c'],
+    ['social', ['Social butterfly', 'Papillon social'], ['Had six or more close friends.', 'A eu six amis proches ou plus.'], '#f06fb0'],
+    ['jack', ['Jack of all trades', 'Touche-à-tout'], ['Worked in six or more different jobs.', 'A travaillé dans six métiers différents ou plus.'], '#8c8c3a'],
+    ['animal', ['Animal friend', 'Ami des bêtes'], ['Cared for four or more pets.', 'S’est occupé de quatre animaux ou plus.'], '#c98a3a'],
+    ['brief', ['Gone too soon', 'Parti trop tôt'], ['Life ended before 30.', 'Une vie terminée avant 30 ans.'], '#7f8aa3'],
+    ['ordinary', ['A quiet life', 'Une vie paisible'], ['An ordinary, honest life.', 'Une vie ordinaire et honnête.'], '#9aa3b2']
+  ];
+
+  const OL_EV = [
+    ['firstword', 1, 2, 9, null, null, ['You are about to say your very first word. Which one will it be?', 'Tu vas dire ton tout premier mot. Lequel sera-ce ?'], [
+      [['“Mama”', '« Maman »'], [[1, 'h+2 B+3', ['My first word was “mama”. My mother cried with joy.', 'Mon premier mot a été « maman ». Ma mère en a pleuré de joie.']]]],
+      [['“Papa”', '« Papa »'], [[1, 'h+2 B+3', ['My first word was “papa”. My father told the whole street.', 'Mon premier mot a été « papa ». Mon père l’a raconté à toute la rue.']]]],
+      [['“Biscuit”', '« Gâteau »'], [[1, 'h+4', ['My first word was “biscuit”. I was rewarded with a biscuit.', 'Mon premier mot a été « gâteau ». On m’a récompensé{e} avec un gâteau.']]]],
+      [['“Dinosaur”', '« Dinosaure »'], [[1, 's+3 h+2', ['My first word was “dinosaur”. Nobody knows where I learned it.', 'Mon premier mot a été « dinosaure ». Personne ne sait où je l’ai appris.']]]]
+    ]],
+    ['crayon', 2, 4, 8, null, null, ['You found a box of crayons next to a very clean, very white wall.', 'Tu as trouvé une boîte de crayons à côté d’un mur très propre et très blanc.'], [
+      [['Draw a masterpiece on the wall', 'Dessiner un chef-d’œuvre sur le mur'], [[3, 'xart+3 B-3', ['I drew a giant purple cat on the living room wall. My parents were not impressed.', 'J’ai dessiné un énorme chat violet sur le mur du salon. Mes parents n’ont pas apprécié.']], [2, 'xart+3 h+4', ['I drew a sunset on the wall. My parents laughed and took a photo before scrubbing it off.', 'J’ai dessiné un coucher de soleil sur le mur. Mes parents ont ri et l’ont pris en photo avant de l’effacer.']]]],
+      [['Find some paper first', 'Chercher d’abord du papier'], [[1, 'xart+2 k+2 B+2', ['I drew on paper like a very sensible toddler. The drawing went on the fridge.', 'J’ai dessiné sur du papier, comme un enfant très sage. Le dessin a fini sur le frigo.']]]],
+      [['Taste a crayon', 'Goûter un crayon'], [[1, 'h+1', ['I ate a blue crayon. It tasted exactly like blue.', 'J’ai mangé un crayon bleu. Il avait exactement le goût du bleu.']]]]
+    ]],
+    ['bath', 1, 4, 6, 'par', null, ['It’s bath time, and you have strong opinions about it.', 'C’est l’heure du bain, et tu as un avis très tranché sur la question.'], [
+      [['Splash everything', 'Éclabousser partout'], [[1, 'h+4 b-2', ['I turned bath time into a water park. The bathroom floor never recovered.', 'J’ai transformé le bain en parc aquatique. Le sol de la salle de bains ne s’en est jamais remis.']]]],
+      [['Sit nicely with the rubber duck', 'Rester sage avec le canard en plastique'], [[1, 'b+4 H+1', ['I had a calm bath with my rubber duck. {Myrel} {p} could not believe it.', 'J’ai pris un bain calme avec mon canard. {Myrel} {p} n’en revenait pas.']]]],
+      [['Hide under the bed', 'Se cacher sous le lit'], [[1, 'h+2 b-1', ['I hid under the bed for twenty minutes. They found me because I was giggling.', 'Je me suis caché{e} sous le lit pendant vingt minutes. On m’a trouvé{e} parce que je riais.']]]]
+    ]],
+    ['broccoli', 2, 6, 7, 'par', null, ['Broccoli is on your plate again.', 'Il y a encore du brocoli dans ton assiette.'], [
+      [['Eat it all', 'Tout manger'], [[1, 'H+3 b+3', ['I ate all my broccoli and announced that I was now a tree.', 'J’ai mangé tout mon brocoli et j’ai annoncé que j’étais devenu{e} un arbre.']]]],
+      [['Hide it under the plate', 'Le cacher sous l’assiette'], [[1, 'h+2 b-2', ['I hid my broccoli under the plate. It was found the next morning.', 'J’ai caché mon brocoli sous l’assiette. Il a été retrouvé le lendemain matin.']]]],
+      [['Throw a tantrum', 'Piquer une colère'], [[1, 'h-2 b-4', ['I screamed at the broccoli for ten minutes. The broccoli won.', 'J’ai crié sur le brocoli pendant dix minutes. Le brocoli a gagné.']]]]
+    ]],
+    ['zoo', 3, 7, 6, 'par', null, ['{Yrel} {p} takes you to the zoo. Which animals do you visit first?', '{Yrel} {p} t’emmène au zoo. Quels animaux vas-tu voir en premier ?'], [
+      [['The lions', 'Les lions'], [[1, 'h+4 b+3', ['We watched the lions nap in the sun. I roared at them all the way home.', 'On a regardé les lions faire la sieste au soleil. J’ai rugi tout le long du retour.']]]],
+      [['The penguins', 'Les manchots'], [[1, 'h+4 b+3', ['I watched the penguins waddle and copied them for a week.', 'J’ai regardé les manchots se dandiner et je les ai imités pendant une semaine.']]]],
+      [['The reptile house', 'Le vivarium'], [[1, 's+3 b+2', ['I learned that some lizards can run on water. I told everyone.', 'J’ai appris que certains lézards peuvent courir sur l’eau. Je l’ai raconté à tout le monde.']]]]
+    ]],
+    ['share', 3, 6, 6, 'X', null, ['At nursery, {p} wants to play with your favourite toy.', 'À la crèche, {p} veut jouer avec ton jouet préféré.'], [
+      [['Share it', 'Le prêter'], [[2, 'k+3 h+2 F', ['I shared my toy with {p}. We became friends on the spot.', 'J’ai prêté mon jouet à {p}. On est devenus amis sur-le-champ.']], [1, 'k+3', ['I shared my toy with {p}, who broke it a little. I forgave {him}.', 'J’ai prêté mon jouet à {p}, qui l’a un peu cassé. Je l’ai pardonné{pe}.']]]],
+      [['Keep it', 'Le garder'], [[1, 'k-2 h+1', ['I kept my toy and hugged it very tightly.', 'J’ai gardé mon jouet en le serrant très fort.']]]],
+      [['Swap toys', 'Échanger les jouets'], [[1, 's+2 k+1 F', ['I offered {p} a swap. It was my first business deal.', 'J’ai proposé un échange à {p}. C’était ma première négociation.']]]]
+    ]],
+    ['tooth', 5, 8, 8, null, null, ['Your first baby tooth just fell out!', 'Ta première dent de lait vient de tomber !'], [
+      [['Put it under the pillow', 'La mettre sous l’oreiller'], [[1, 'h+4 m+2', ['I put my tooth under my pillow and woke up with a shiny coin.', 'J’ai mis ma dent sous l’oreiller et je me suis réveillé{e} avec une pièce toute brillante.']]]],
+      [['Show it to the whole class', 'La montrer à toute la classe'], [[1, 'h+3 f+1', ['I showed my tooth to the whole class. I was famous until lunchtime.', 'J’ai montré ma dent à toute la classe. J’ai été célèbre jusqu’à midi.']]]],
+      [['Keep it in a tiny box', 'La garder dans une petite boîte'], [[1, 'h+1', ['I keep my tooth in a tiny box. Nobody else finds it as interesting as I do.', 'Je garde ma dent dans une petite boîte. Personne ne la trouve aussi intéressante que moi.']]]]
+    ]],
+    ['homework', 8, 17, 6, 'X', 'school', ['{p}, a classmate, asks to copy your homework.', '{p}, {un} camarade de classe, veut copier tes devoirs.'], [
+      [['Let {him} copy it', '{Lp} laisser copier'], [[2, 'k-2 F', ['I let {p} copy my homework. We are sort of friends now.', 'J’ai laissé {p} copier mes devoirs. On est un peu amis maintenant.']], [1, 'k-3 p-8 h-3', ['I let {p} copy my homework. The teacher noticed the identical mistakes.', 'J’ai laissé {p} copier mes devoirs. Le professeur a remarqué les mêmes fautes.']]]],
+      [['Say no', 'Refuser'], [[1, 'k+1', ['I told {p} to do {his} own homework.', 'J’ai dit à {p} de faire ses devoirs tout{pe} seul{pe}.']]]],
+      [['Offer to explain it', 'Proposer de lui expliquer'], [[2, 'k+4 s+2 F', ['I explained the homework to {p}. {He} finally understood fractions.', 'J’ai expliqué les devoirs à {p}. {Il} a enfin compris les fractions.']], [1, 'k+3 s+1', ['I tried to explain the homework to {p}, who fell asleep.', 'J’ai essayé d’expliquer les devoirs à {p}, qui s’est endormi{pe}.']]]]
+    ]],
+    ['bully', 6, 15, 6, 'X', 'school', ['{p} keeps making fun of you at school.', '{p} n’arrête pas de se moquer de toi à l’école.'], [
+      [['Tell a teacher', 'Le dire à un professeur'], [[3, 'h+3', ['I told a teacher about {p}. The teasing stopped.', 'J’ai parlé de {p} à un professeur. Les moqueries ont cessé.']], [1, 'h-3', ['I told a teacher, but {p} carried on when nobody was looking.', 'Je l’ai dit à un professeur, mais {p} a continué quand personne ne regardait.']]]],
+      [['Stand up for yourself calmly', 'Lui tenir tête calmement'], [[s => 30 + s.me.st.s / 2, 'h+5 k+1', ['I calmly told {p} to stop. {He} looked surprised and left me alone.', 'J’ai dit calmement à {p} d’arrêter. {Il} a eu l’air surpris{pe} et m’a laissé{e} tranquille.']], [40, 'h-2', ['I stood up to {p}, but {he} just laughed. It still felt good to try.', 'J’ai tenu tête à {p}, mais {il} a juste ri. C’était quand même bien d’essayer.']]]],
+      [['Ignore it', 'Ignorer'], [[1, 'h-3', ['I ignored {p}. It still hurt.', 'J’ai ignoré {p}. Ça m’a quand même fait de la peine.']]]],
+      [['Make a joke back', 'Répondre par une blague'], [[1, 'h+5 f+1', ['I made a joke back and the whole class laughed with me, not at me.', 'J’ai répondu par une blague et toute la classe a ri avec moi, pas de moi.']], [1, 'h-3', ['My joke fell flat. {p} enjoyed that a lot.', 'Ma blague est tombée à plat. {p} a adoré.']]]]
+    ]],
+    ['newkid', 6, 16, 6, 'X', 'school', ['A new student, {p}, is sitting alone at lunch.', '{p}, qui vient d’arriver dans ta classe, mange seul{pe} à la cantine.'], [
+      [['Sit with {him}', 'S’asseoir avec {lui}'], [[3, 'k+4 h+2 F', ['I sat with {p} at lunch. We have the same weird taste in music.', 'Je me suis assis{e} avec {p} à la cantine. On a les mêmes goûts bizarres en musique.']], [1, 'k+3', ['I sat with {p}, who barely spoke. At least {he} wasn’t alone.', 'Je me suis assis{e} avec {p}, qui a à peine parlé. Au moins, {il} n’était pas seul{pe}.']]]],
+      [['Invite {him} to your group', 'L’inviter dans ton groupe'], [[1, 'k+4 h+3 F', ['I brought {p} over to my friends. {He} fitted right in.', 'J’ai présenté {p} à mes amis. {Il} s’est tout de suite intégré{pe}.']]]],
+      [['Stay with your friends', 'Rester avec tes amis'], [[1, 'k-1', ['I stayed with my friends. I kept thinking about the new kid.', 'Je suis resté{e} avec mes amis. J’ai pensé au nouveau toute la journée.']]]]
+    ]],
+    ['play', 6, 12, 5, null, 'school', ['Your class is putting on a play.', 'Ta classe monte une pièce de théâtre.'], [
+      [['Ask for the main role', 'Demander le rôle principal'], [[s => 20 + s.me.sk.act + s.me.st.l / 3, 'xact+6 h+5 f+1', ['I got the main role in the class play and remembered every line.', 'J’ai eu le rôle principal de la pièce et je n’ai oublié aucune réplique.']], [50, 'xact+2 h-1', ['I asked for the main role and was cast as Tree Number Three.', 'J’ai demandé le rôle principal et j’ai joué l’Arbre numéro trois.']]]],
+      [['Paint the scenery', 'Peindre les décors'], [[1, 'xart+4 h+2', ['I painted a castle for the play. Parents kept asking who made it.', 'J’ai peint un château pour la pièce. Les parents demandaient tous qui l’avait fait.']]]],
+      [['Take a small part', 'Prendre un petit rôle'], [[1, 'xact+2 h+2', ['I had one line in the play and delivered it beautifully.', 'J’avais une seule réplique et je l’ai dite à la perfection.']]]]
+    ]],
+    ['spelling', 7, 12, 5, null, 'school', ['You’ve been entered into the school spelling contest.', 'Tu participes au concours d’orthographe de l’école.'], [
+      [['Practise every evening', 'S’entraîner tous les soirs'], [[s => s.me.st.s, 's+3 h+5 f+1 xwri+2', ['I won the school spelling contest. The winning word was “rhythm”.', 'J’ai gagné le concours d’orthographe. Le mot décisif était « rythme ».']], [40, 's+3 h+1', ['I practised hard and came third in the spelling contest.', 'Je me suis bien entraîné{e} et je suis arrivé{e} troisième au concours d’orthographe.']]]],
+      [['Just turn up on the day', 'Y aller sans préparation'], [[1, 'h+1', ['I went to the spelling contest unprepared and was out in round two.', 'Je suis allé{e} au concours sans préparation et j’ai été éliminé{e} au deuxième tour.']], [s => s.me.st.s / 4, 'h+4', ['I didn’t prepare at all and still reached the final.', 'Je ne me suis pas préparé{e} du tout et je suis quand même arrivé{e} en finale.']]]],
+      [['Pretend to be ill', 'Faire semblant d’être malade'], [[1, 'k-2 h-1', ['I pretended to be ill on the day of the contest. Nobody believed me.', 'J’ai fait semblant d’être malade le jour du concours. Personne ne m’a cru{e}.']]]]
+    ]],
+    ['sciencefair', 9, 15, 5, null, 'school', ['The school science fair is next week. What will you build?', 'L’expo-sciences de l’école a lieu la semaine prochaine. Que vas-tu présenter ?'], [
+      [['An erupting volcano', 'Un volcan en éruption'], [[1, 's+2 h+3', ['My baking-soda volcano erupted all over the judges. They still gave me a ribbon.', 'Mon volcan au bicarbonate a éclaboussé le jury. J’ai quand même eu un ruban.']]]],
+      [['A little robot', 'Un petit robot'], [[s => 10 + s.me.sk.cod, 's+4 xcod+5 h+5 f+1', ['My little robot drew a smiley face on its own. I won first prize!', 'Mon petit robot a dessiné un smiley tout seul. J’ai gagné le premier prix !']], [40, 's+2 xcod+3', ['My robot spun in circles and fell off the table. I learned a lot.', 'Mon robot a tourné en rond puis il est tombé de la table. J’ai beaucoup appris.']]]],
+      [['How music affects plants', 'L’effet de la musique sur les plantes'], [[1, 's+4 h+2', ['I proved that my bean plants grew best with classical music. Probably.', 'J’ai prouvé que mes haricots poussaient mieux avec de la musique classique. Probablement.']]]]
+    ]],
+    ['chores', 6, 13, 6, 'par', null, ['{Yrel} {p} offers you pocket money for doing chores.', '{Yrel} {p} te propose de l’argent de poche contre des corvées.'], [
+      [['Do the chores', 'Faire les corvées'], [[1, 'm+25 b+3 k+1', ['I washed the dishes all month and earned my first pocket money.', 'J’ai fait la vaisselle tout le mois et j’ai gagné mon premier argent de poche.']]]],
+      [['Negotiate a better deal', 'Négocier un meilleur tarif'], [[s => s.me.st.s, 'm+45 s+2', ['I negotiated like a professional and doubled my pay.', 'J’ai négocié comme un pro et j’ai doublé ma paie.']], [50, 'b-2', ['I tried to negotiate. {Myrel} said the price had just gone down.', 'J’ai essayé de négocier. {Myrel} a dit que le prix venait de baisser.']]]],
+      [['Refuse', 'Refuser'], [[1, 'b-3', ['I refused to do chores. My room stayed a disaster zone.', 'J’ai refusé de faire les corvées. Ma chambre est restée une zone sinistrée.']]]]
+    ]],
+    ['wallet', 9, 90, 5, null, null, ['You found a wallet on the pavement with {amt} inside.', 'Tu as trouvé un portefeuille sur le trottoir avec {amt} dedans.'], [
+      [['Find the owner', 'Retrouver le propriétaire'], [[2, 'k+6 h+3', ['I found the owner of the wallet. She hugged me and told her whole family.', 'J’ai retrouvé la propriétaire du portefeuille. Elle m’a serré{e} dans ses bras et l’a raconté à toute sa famille.']], [1, 'k+6 h+3 m+amt', ['I returned the wallet and the owner insisted I keep the cash as a reward.', 'J’ai rendu le portefeuille et le propriétaire a tenu à me laisser l’argent en récompense.']]]],
+      [['Take it to the police station', 'L’apporter au commissariat'], [[1, 'k+5 h+1', ['I handed the wallet in at the police station. The officer said thank you.', 'J’ai déposé le portefeuille au commissariat. L’agent m’a remercié{e}.']]]],
+      [['Keep the money', 'Garder l’argent'], [[1, 'k-8 m+amt h-1', ['I kept the money from the wallet. It didn’t feel as good as I expected.', 'J’ai gardé l’argent du portefeuille. Ce n’était pas aussi agréable que prévu.']]]]
+    ], { amt: [20, 120] }],
+    ['sleepover', 8, 14, 6, 'friend', null, ['Your friend {p} invites you to a sleepover.', 'Ton ami{pe} {p} t’invite à une soirée pyjama.'], [
+      [['Go', 'Y aller'], [[1, 'h+5 b+7', ['I went to {p}’s sleepover. We stayed up until 2 a.m. telling ghost stories.', 'Je suis allé{e} à la soirée pyjama de {p}. On a raconté des histoires de fantômes jusqu’à 2 h du matin.']]]],
+      [['Invite {him} to yours instead', 'L’inviter chez toi plutôt'], [[1, 'h+4 b+6 B+1', ['{p} came to my house instead. We built a blanket fort in the living room.', '{p} est venu{pe} chez moi. On a construit une cabane en couvertures dans le salon.']]]],
+      [['Stay home', 'Rester à la maison'], [[1, 'b-3', ['I stayed home. {p} told me all about it on Monday.', 'Je suis resté{e} à la maison. {p} m’a tout raconté lundi.']]]]
+    ]],
+    ['snowday', 6, 17, 4, null, 'school', ['School is closed because of snow!', 'L’école est fermée à cause de la neige !'], [
+      [['Build a snowman', 'Faire un bonhomme de neige'], [[1, 'h+4 xart+1', ['I built a snowman with a carrot nose and my father’s hat.', 'J’ai fait un bonhomme de neige avec un nez en carotte et le chapeau de mon père.']]]],
+      [['Snowball fight', 'Bataille de boules de neige'], [[5, 'h+6 a+1', ['I won the great snowball war of the neighbourhood.', 'J’ai gagné la grande bataille de boules de neige du quartier.']], [1, 'h+2 i:cold', ['I had a huge snowball fight and caught a cold.', 'J’ai fait une énorme bataille de boules de neige et j’ai attrapé un rhume.']]]],
+      [['Stay in and read', 'Rester lire au chaud'], [[1, 's+3 h+2', ['I spent the snow day reading by the window with hot chocolate.', 'J’ai passé la journée à lire près de la fenêtre avec un chocolat chaud.']]]]
+    ], { r: 3 }],
+    ['petbeg', 6, 13, 6, 'par', s => !olHasPet(s), ['You really want a pet. Which one will you beg for?', 'Tu veux vraiment un animal. Lequel vas-tu réclamer ?'], [
+      [['A dog', 'Un chien'], [[s => 20 + s.pw * 15, 'h+8 pet:dog', ['After weeks of begging, my parents brought home a puppy!', 'Après des semaines de supplications, mes parents ont ramené un chiot !']], [50, 'h-3', ['My parents said a dog was too much work. I sulked for a week.', 'Mes parents ont dit qu’un chien, c’était trop de travail. J’ai boudé une semaine.']]]],
+      [['A cat', 'Un chat'], [[s => 30 + s.pw * 15, 'h+7 pet:cat', ['My parents agreed to adopt a kitten from the shelter!', 'Mes parents ont accepté d’adopter un chaton au refuge !']], [40, 'h-2', ['My parents said no to a cat. Maybe next year.', 'Mes parents ont refusé le chat. Peut-être l’année prochaine.']]]],
+      [['A hamster', 'Un hamster'], [[3, 'h+5 pet:hamster', ['I got a hamster! It runs on its wheel all night.', 'J’ai eu un hamster ! Il fait tourner sa roue toute la nuit.']], [1, 'h-1', ['My parents said no to the hamster. I named my sock Hammy instead.', 'Mes parents ont refusé le hamster. J’ai appelé ma chaussette Hammy à la place.']]]]
+    ]],
+    ['bday', 6, 12, 5, 'par', null, ['It’s your birthday! What kind of party do you want?', 'C’est ton anniversaire ! Quel genre de fête veux-tu ?'], [
+      [['A pool party', 'Une fête à la piscine'], [[1, 'h+6 F2', ['I had a pool party for my birthday. Everyone came, even the shy kids.', 'J’ai fait une fête à la piscine pour mon anniversaire. Tout le monde est venu, même les timides.']]]],
+      [['A games tournament', 'Un tournoi de jeux'], [[1, 'h+5 s+1', ['I organised a games tournament for my birthday and lost every round. Best day ever.', 'J’ai organisé un tournoi de jeux pour mon anniversaire et j’ai perdu toutes les parties. Meilleur jour de ma vie.']]]],
+      [['A quiet cake with family', 'Un gâteau en famille'], [[1, 'h+4 B+4', ['I had a small birthday with my family and the biggest chocolate cake I have ever seen.', 'J’ai fêté mon anniversaire en famille avec le plus gros gâteau au chocolat que j’aie jamais vu.']]]]
+    ]],
+    ['window', 8, 14, 5, null, null, ['Your ball just smashed a neighbour’s window.', 'Ton ballon vient de briser la fenêtre d’un voisin.'], [
+      [['Own up', 'Avouer'], [[1, 'k+6 h-1 B+1', ['I knocked on the neighbour’s door and owned up. I paid for the glass with my pocket money.', 'J’ai sonné chez le voisin et j’ai tout avoué. J’ai payé la vitre avec mon argent de poche.']]]],
+      [['Run away', 'S’enfuir'], [[3, 'k-5 B-6', ['I ran away, but the neighbour had seen everything. My parents were furious.', 'Je me suis enfui{e}, mais le voisin avait tout vu. Mes parents étaient furieux.']], [1, 'k-4 h-2', ['I ran away and got away with it. I felt guilty for months.', 'Je me suis enfui{e} sans être vu{e}. Je me suis senti{e} coupable pendant des mois.']]]],
+      [['Blame a friend', 'Accuser un ami'], [[1, 'k-9 h-2', ['I blamed my friend for the window. That was a terrible idea.', 'J’ai accusé mon ami pour la vitre. C’était une très mauvaise idée.']]]]
+    ]],
+    ['talentkid', 8, 14, 5, null, 'school', ['The school talent show is coming up. What will you do?', 'Le spectacle de talents de l’école approche. Que vas-tu faire ?'], [
+      [['Sing a song', 'Chanter une chanson'], [[s => 10 + s.me.sk.mus, 'h+7 f+2 xmus+3', ['I sang at the talent show and got a standing ovation.', 'J’ai chanté au spectacle de l’école et j’ai eu une ovation debout.']], [50, 'h-2 xmus+2', ['I sang at the talent show. My voice cracked, but I finished the song.', 'J’ai chanté au spectacle. Ma voix a déraillé, mais j’ai fini la chanson.']]]],
+      [['Magic tricks', 'Des tours de magie'], [[s => 20 + s.me.st.s / 2, 'h+6 f+1 s+1', ['My magic tricks amazed everyone. I still won’t say how the coin trick works.', 'Mes tours de magie ont épaté tout le monde. Je ne dirai jamais comment marche celui de la pièce.']], [40, 'h-1', ['I dropped the cards in the middle of my magic trick. People clapped anyway.', 'J’ai fait tomber les cartes au milieu de mon tour. Le public a applaudi quand même.']]]],
+      [['A dance routine', 'Une chorégraphie'], [[s => 20 + s.me.a / 2, 'h+6 a+2 f+1', ['My dance routine brought the house down.', 'Ma chorégraphie a fait un tabac.']], [40, 'h+1 a+1', ['I danced with all my heart. My heart was a little off the beat.', 'J’ai dansé de tout mon cœur. Mon cœur était un peu à contretemps.']]]],
+      [['Stay in the audience', 'Rester dans le public'], [[1, 'h+1', ['I watched the talent show from the audience and cheered for everyone.', 'J’ai regardé le spectacle depuis le public et j’ai applaudi tout le monde.']]]]
+    ]],
+    ['museum', 7, 15, 4, null, 'school', ['On a school trip to the museum, you lose sight of your class.', 'Pendant une sortie au musée, tu perds ta classe de vue.'], [
+      [['Ask a guard for help', 'Demander de l’aide à un gardien'], [[1, 's+1', ['A guard helped me find my class. The teacher looked very relieved.', 'Un gardien m’a aidé{e} à retrouver ma classe. Le professeur avait l’air très soulagé.']]]],
+      [['Explore on your own', 'Explorer tout{e} seul{e}'], [[2, 's+4 h+3', ['I explored the dinosaur hall on my own and learned more than anyone else that day.', 'J’ai exploré la salle des dinosaures tout{e} seul{e} et j’ai appris plus que tout le monde ce jour-là.']], [1, 's+2 p-4 h-2', ['I explored the museum alone and got a long lecture from my teacher.', 'J’ai exploré le musée seul{e} et j’ai eu droit à un long sermon du professeur.']]]],
+      [['Wait where you are', 'Attendre sur place'], [[1, 'k+1', ['I waited by the exit until my class came back. Very sensible.', 'J’ai attendu près de la sortie que ma classe revienne. Très raisonnable.']]]]
+    ]],
+    ['newgame', 8, 30, 5, null, null, ['A new video game is out and everyone is talking about it.', 'Un nouveau jeu vidéo vient de sortir et tout le monde en parle.'], [
+      [['Play it all weekend', 'Y jouer tout le week-end'], [[1, 'h+6 p-4 H-1', ['I played the new game all weekend and reached the final boss.', 'J’ai joué au nouveau jeu tout le week-end et j’ai atteint le boss final.']]]],
+      [['Play a little each day', 'Y jouer un peu chaque jour'], [[1, 'h+4', ['I played the new game a little every day. Perfect balance.', 'J’ai joué un peu chaque jour. L’équilibre parfait.']]]],
+      [['Skip it', 'Passer son tour'], [[1, 's+1', ['I skipped the new game and read a book instead.', 'J’ai fait l’impasse sur le jeu et j’ai lu un livre à la place.']]]]
+    ], { r: 4 }],
+    ['tree', 6, 13, 5, null, null, ['There’s a huge old tree in the park, perfect for climbing.', 'Il y a un grand vieil arbre dans le parc, parfait pour grimper.'], [
+      [['Climb to the very top', 'Grimper tout en haut'], [[4, 'h+6 a+3', ['I climbed to the top of the old tree and could see my school from there.', 'J’ai grimpé tout en haut du vieil arbre et j’ai vu mon école de là-haut.']], [1, 'h-3 i:arm', ['I climbed the tree, slipped and broke my arm. Everyone signed my cast.', 'J’ai grimpé à l’arbre, j’ai glissé et je me suis cassé le bras. Tout le monde a signé mon plâtre.']]]],
+      [['Climb a few branches', 'Monter sur quelques branches'], [[1, 'h+3 a+1', ['I climbed a few branches and sat there feeling like a bird.', 'Je suis monté{e} sur quelques branches et je me suis senti{e} comme un oiseau.']]]],
+      [['Stay on the ground', 'Rester au sol'], [[1, 'h+1', ['I stayed on the ground and collected the best conkers.', 'Je suis resté{e} au sol et j’ai ramassé les plus beaux marrons.']]]]
+    ]],
+    ['lemonade', 6, 11, 5, null, null, ['You want to set up a lemonade stand. How much will you charge?', 'Tu veux ouvrir un stand de limonade. Quel prix vas-tu demander ?'], [
+      [['A fair price', 'Un prix juste'], [[1, 'm+30 s+2 h+3', ['My lemonade stand was a success. I made 30 in one afternoon.', 'Mon stand de limonade a été un succès. J’ai gagné 30 en un après-midi.']]]],
+      [['A fortune', 'Une fortune'], [[1, 'm+6 s+1', ['I charged a fortune for my lemonade. Only one very thirsty man bought a glass.', 'J’ai vendu ma limonade hors de prix. Seul un monsieur très assoiffé en a acheté.']]]],
+      [['Give it away for free', 'La donner gratuitement'], [[1, 'k+5 h+4', ['I gave away free lemonade all afternoon. The whole street smiled at me.', 'J’ai offert de la limonade tout l’après-midi. Toute la rue m’a souri.']]]]
+    ]],
+    ['dogwork', 7, 14, 4, 'dog', 'school', ['Your dog {p} has actually eaten your homework.', 'Ton chien {p} a vraiment mangé tes devoirs.'], [
+      [['Tell the teacher the truth', 'Dire la vérité au professeur'], [[1, 'h+2 k+1', ['I told my teacher my dog ate my homework. She gave me one more day.', 'J’ai dit à ma professeure que mon chien avait mangé mes devoirs. Elle m’a laissé un jour de plus.']], [1, 'p-3', ['I told the teacher my dog ate my homework. She did not believe a word.', 'J’ai dit au professeur que mon chien avait mangé mes devoirs. Il n’en a pas cru un mot.']]]],
+      [['Redo it all tonight', 'Tout refaire ce soir'], [[1, 's+2 p+2 h-1', ['I redid my homework from scratch. It was better the second time.', 'J’ai refait mes devoirs depuis le début. Ils étaient meilleurs la deuxième fois.']]]],
+      [['Bring the chewed pages as proof', 'Apporter les pages mâchouillées comme preuve'], [[1, 'h+4 f+1', ['I brought the chewed pages to school as evidence. The class loved it.', 'J’ai apporté les pages mâchouillées comme preuve. La classe a adoré.']]]]
+    ]],
+    ['phone', 11, 14, 6, 'par', s => !s.me.fl.phone, ['Everyone in your class has a smartphone except you.', 'Tout le monde dans ta classe a un smartphone sauf toi.'], [
+      [['Ask your parents for one', 'En demander un à tes parents'], [[s => 20 + s.pw * 20, 'h+5 !phone', ['My parents gave me my first smartphone, with lots of rules attached.', 'Mes parents m’ont offert mon premier smartphone, avec beaucoup de règles.']], [40, 'h-2', ['My parents said I could have a phone when I am older.', 'Mes parents ont dit que j’aurais un téléphone plus tard.']]]],
+      [['Save up for one', 'Économiser pour en acheter un'], [[1, 's+1 h+2 !phone', ['I saved my pocket money for a year and bought a second-hand phone myself.', 'J’ai économisé mon argent de poche pendant un an et je me suis acheté un téléphone d’occasion.']]]],
+      [['Who needs one anyway?', 'Qui en a besoin, de toute façon ?'], [[1, 's+2 h-1', ['I decided I didn’t need a phone. I read three extra books instead.', 'J’ai décidé que je n’avais pas besoin de téléphone. J’ai lu trois livres de plus.']]]]
+    ]],
+    ['cheat', 13, 17, 5, 'X', 'school', ['{p} is selling the answers to tomorrow’s test.', '{p} vend les réponses du contrôle de demain.'], [
+      [['Buy them', 'Les acheter'], [[3, 'k-6 p+3', ['I bought the answers. I got a good mark, but it didn’t feel like mine.', 'J’ai acheté les réponses. J’ai eu une bonne note, mais elle ne me ressemblait pas.']], [2, 'k-7 p-15 h-5 B-6', ['I bought the answers and got caught. I was suspended for two days.', 'J’ai acheté les réponses et je me suis fait prendre. J’ai été exclu{e} deux jours.']]]],
+      [['Report it to a teacher', 'Le signaler à un professeur'], [[1, 'k+5 h-1', ['I reported {p} to a teacher. The test was changed at the last minute.', 'J’ai signalé {p} à un professeur. Le contrôle a été changé à la dernière minute.']]]],
+      [['Study instead', 'Réviser plutôt'], [[1, 's+3 p+4', ['I ignored {p} and studied all evening. I passed with a good mark.', 'J’ai ignoré {p} et j’ai révisé toute la soirée. J’ai eu une bonne note.']]]]
+    ]],
+    ['crush', 13, 17, 6, 'X', s => !olLove(s), ['You have a crush on {p} from your class.', 'Tu as le béguin pour {p}, de ta classe.'], [
+      [['Ask {him} out', 'Lui proposer de sortir'], [[s => 25 + s.me.st.l / 2, 'h+8 P', ['I asked {p} out and {he} said yes! We went for ice cream.', 'J’ai proposé à {p} de sortir et {il} a dit oui ! On est allés manger une glace.']], [55, 'h-4', ['I asked {p} out. {He} said {he} just wants to be friends.', 'J’ai proposé à {p} de sortir. {Il} a dit qu’{il} voulait juste qu’on soit amis.']]]],
+      [['Write {him} a note', 'Lui écrire un mot'], [[s => 20 + s.me.sk.wri / 2 + s.me.st.l / 3, 'h+7 xwri+2 P', ['I wrote {p} a note. {He} wrote back: “Yes.” With three exclamation marks.', 'J’ai écrit un mot à {p}. {Il} a répondu : « Oui. » Avec trois points d’exclamation.']], [50, 'h-3 xwri+1', ['I wrote {p} a note. The whole class read it before {he} did.', 'J’ai écrit un mot à {p}. Toute la classe l’a lu avant {lui}.']]]],
+      [['Keep it a secret', 'Garder le secret'], [[1, 'h-1', ['I kept my crush on {p} a secret. It is safely locked in my diary.', 'J’ai gardé mon béguin pour {p} secret. Il est bien caché dans mon journal.']]]]
+    ]],
+    ['partyhome', 14, 17, 5, 'X', null, ['{p} invites you to a party while {his} parents are away.', '{p} t’invite à une fête pendant que ses parents sont absents.'], [
+      [['Go', 'Y aller'], [[2, 'h+5 F', ['I went to {p}’s party. We danced until the neighbours complained.', 'Je suis allé{e} à la fête de {p}. On a dansé jusqu’à ce que les voisins se plaignent.']], [1, 'h+2 B-5', ['I went to the party without telling my parents. They found out.', 'Je suis allé{e} à la fête sans le dire à mes parents. Ils l’ont découvert.']]]],
+      [['Ask your parents first', 'Demander d’abord à tes parents'], [[1, 'B+3 h+3', ['I asked my parents, who said yes as long as I was home by eleven.', 'J’ai demandé à mes parents, qui ont accepté à condition que je rentre avant 23 h.']], [1, 'B+3 h-2', ['I asked my parents and they said no. At least they trust me more now.', 'J’ai demandé à mes parents et ils ont refusé. Au moins, ils me font plus confiance.']]]],
+      [['Stay home', 'Rester à la maison'], [[1, 'h-1', ['I stayed home that night and watched a film.', 'Je suis resté{e} à la maison ce soir-là et j’ai regardé un film.']]]]
+    ]],
+    ['tryout', 11, 17, 6, null, 'school', ['Tryouts for the school {sport} team are this week.', 'Les sélections pour l’équipe de {sport} du lycée ont lieu cette semaine.'], [
+      [['Try out', 'Tenter sa chance'], [[s => 10 + s.me.a, 'h+6 a+5 !team', ['I made the school {sport} team!', 'J’ai été sélectionné{e} dans l’équipe de {sport} !']], [50, 'h-3 a+2', ['I didn’t make the {sport} team this year.', 'Je n’ai pas été pris{e} dans l’équipe de {sport} cette année.']]]],
+      [['Train hard first', 'S’entraîner d’abord'], [[s => 25 + s.me.a, 'h+6 a+7 H+2 !team', ['I trained every morning for a month and made the {sport} team.', 'Je me suis entraîné{e} tous les matins pendant un mois et j’ai intégré l’équipe de {sport}.']], [40, 'a+4 H+2', ['I trained hard but missed the team by one place.', 'Je me suis bien entraîné{e}, mais j’ai raté l’équipe d’une place.']]]],
+      [['Not for me', 'Ce n’est pas pour moi'], [[1, '', ['I skipped the tryouts.', 'Je ne suis pas allé{e} aux sélections.']]]]
+    ]],
+    ['band', 13, 22, 5, 'friend', null, ['{p} wants to start a band with you.', '{p} veut monter un groupe de musique avec toi.'], [
+      [['Be the singer', 'Être au chant'], [[1, 'xmus+5 h+5 b+5', ['We started a band. I sing, and we practise in {p}’s garage.', 'On a monté un groupe. Je chante, et on répète dans le garage de {p}.']]]],
+      [['Play the drums', 'Jouer de la batterie'], [[1, 'xmus+5 h+5 b+5 a+1', ['I became the drummer of our band. The neighbours bought earplugs.', 'Je joue maintenant de la batterie dans le groupe. Les voisins ont acheté des bouchons d’oreille.']]]],
+      [['Be the manager', 'Être le manager'], [[1, 's+3 b+4', ['I became the band’s manager and booked our first gig at the school fair.', 'Je suis devenu{e} le manager du groupe et j’ai décroché notre premier concert à la fête de l’école.']]]],
+      [['No thanks', 'Non merci'], [[1, 'b-3', ['I said no to the band. {p} found another singer.', 'J’ai refusé de rejoindre le groupe. {p} a trouvé quelqu’un d’autre.']]]]
+    ]],
+    ['photo', 12, 30, 5, null, null, ['An embarrassing photo of you is being shared online.', 'Une photo gênante de toi circule en ligne.'], [
+      [['Laugh it off', 'En rire'], [[1, 'h+2 f+1', ['I laughed about the photo with everyone. By Friday nobody cared.', 'J’ai ri de la photo avec tout le monde. Vendredi, plus personne n’en parlait.']]]],
+      [['Ask for it to be taken down', 'Demander qu’elle soit supprimée'], [[2, 'h+2 s+1', ['I asked for the photo to be removed and reported it. It disappeared quickly.', 'J’ai demandé qu’on supprime la photo et je l’ai signalée. Elle a vite disparu.']], [1, 'h-2', ['I asked for the photo to be removed, but it took weeks to go away.', 'J’ai demandé qu’on supprime la photo, mais elle a mis des semaines à disparaître.']]]],
+      [['Tell a trusted adult', 'En parler à un adulte de confiance'], [[1, 'h+3 B+2 k+1', ['I talked to my family about the photo. They helped me sort it out.', 'J’ai parlé de la photo à ma famille. Ils m’ont aidé{e} à régler le problème.']]]]
+    ]],
+    ['detention', 12, 17, 5, null, 'school', ['You got detention for talking during class.', 'Tu as une heure de retenue pour avoir bavardé en classe.'], [
+      [['Accept it', 'L’accepter'], [[1, 'k+1 h-1', ['I served my detention without complaining.', 'J’ai fait mon heure de retenue sans me plaindre.']]]],
+      [['Argue with the teacher', 'Discuter avec le professeur'], [[1, 'p-5 h-2', ['I argued about my detention and got a second one.', 'J’ai contesté ma retenue et j’en ai eu une deuxième.']]]],
+      [['Use the time for homework', 'En profiter pour faire tes devoirs'], [[1, 's+2 p+3', ['I finished all my homework during detention. The most productive hour of my week.', 'J’ai fini tous mes devoirs pendant la retenue. L’heure la plus productive de ma semaine.']]]]
+    ], { r: 3 }],
+    ['trip', 13, 17, 4, 'par', 'school', ['Your school is organising a trip to {city}.', 'Ton école organise un voyage à {city}.'], [
+      [['Ask your parents to pay for it', 'Demander à tes parents de payer'], [[s => 30 + s.pw * 20, 'h+7 xlan+5 s+2', ['I went on the school trip to {city}. I tried every local dish I could find.', 'Je suis parti{e} en voyage scolaire à {city}. J’ai goûté tous les plats locaux possibles.']], [40, 'h-3', ['My parents couldn’t afford the trip to {city} this year.', 'Mes parents n’ont pas pu payer le voyage à {city} cette année.']]]],
+      [['Earn the money yourself', 'Gagner l’argent toi-même'], [[1, 'h+6 xlan+4 k+2', ['I washed cars all spring to pay for the trip to {city}. Worth every bucket.', 'J’ai lavé des voitures tout le printemps pour payer le voyage à {city}. Chaque seau en valait la peine.']]]],
+      [['Stay home', 'Ne pas y aller'], [[1, 'h-1', ['I didn’t go on the school trip.', 'Je ne suis pas parti{e} en voyage scolaire.']]]]
+    ]],
+    ['screens', 12, 17, 6, 'par', null, ['{Yrel} {p} says you spend far too much time on screens.', '{Yrel} {p} trouve que tu passes beaucoup trop de temps sur les écrans.'], [
+      [['Agree to some limits', 'Accepter des limites'], [[1, 'b+5 s+1 H+1', ['I agreed to put my phone away after nine. I sleep better now.', 'J’ai accepté de ranger mon téléphone après 21 h. Je dors mieux maintenant.']]]],
+      [['Argue', 'Protester'], [[1, 'b-6 h+1', ['I argued with {myrel} about screen time. Doors were slammed.', 'Je me suis disputé{e} avec {myrel} à propos des écrans. Des portes ont claqué.']]]],
+      [['Make a deal', 'Négocier un accord'], [[1, 'b+3 s+2', ['I negotiated one extra hour of screen time in exchange for walking the dog.', 'J’ai négocié une heure d’écran en plus en échange des promenades du chien.']]]]
+    ]],
+    ['shelter', 12, 17, 4, null, null, ['The local animal shelter needs young volunteers.', 'Le refuge pour animaux du quartier cherche de jeunes bénévoles.'], [
+      [['Help every weekend', 'Aider tous les week-ends'], [[1, 'k+6 h+4 !vol', ['I volunteered at the animal shelter every weekend. The dogs know my name now.', 'J’ai été bénévole au refuge tous les week-ends. Les chiens connaissent mon prénom maintenant.']]]],
+      [['Help once a month', 'Aider une fois par mois'], [[1, 'k+3 h+2', ['I helped at the animal shelter once a month.', 'J’ai aidé au refuge une fois par mois.']]]],
+      [['Not right now', 'Pas pour le moment'], [[1, '', ['I didn’t have time to volunteer this year.', 'Je n’ai pas eu le temps de faire du bénévolat cette année.']]]]
+    ]],
+    ['dye', 13, 30, 5, null, null, ['You are thinking about dyeing your hair a bold colour.', 'Tu penses te teindre les cheveux d’une couleur audacieuse.'], [
+      [['Electric blue', 'Bleu électrique'], [[1, 'h+4 l+1 hair:blue', ['I dyed my hair electric blue. People notice me from across the street.', 'Je me suis teint les cheveux en bleu électrique. On me remarque de l’autre côté de la rue.']]]],
+      [['Bubblegum pink', 'Rose bonbon'], [[1, 'h+4 l+1 hair:pink', ['I dyed my hair bubblegum pink and it looks fantastic.', 'Je me suis teint les cheveux en rose bonbon et c’est superbe.']]]],
+      [['Forest green', 'Vert forêt'], [[1, 'h+3 hair:green', ['I dyed my hair green. My grandmother asked if I was feeling well.', 'Je me suis teint les cheveux en vert. Ma grand-mère m’a demandé si j’allais bien.']]]],
+      [['Keep my natural colour', 'Garder ma couleur naturelle'], [[1, '', ['I decided to keep my natural hair colour.', 'J’ai décidé de garder ma couleur naturelle.']]]]
+    ]],
+    ['olympiad', 13, 17, 5, null, s => olAt(s, 'high', 'mid') && s.me.st.s >= 70, ['Your teacher wants you to compete in the national maths olympiad.', 'Ton professeur veut que tu participes aux olympiades nationales de maths.'], [
+      [['Accept the challenge', 'Relever le défi'], [[s => s.me.st.s - 40, 's+5 h+7 f+2 !olymp', ['I won a medal at the national maths olympiad!', 'J’ai gagné une médaille aux olympiades nationales de maths !']], [50, 's+4 h+1', ['I competed in the maths olympiad and finished in the top half.', 'J’ai participé aux olympiades de maths et j’ai fini dans la première moitié.']]]],
+      [['Politely decline', 'Refuser poliment'], [[1, '', ['I turned down the maths olympiad.', 'J’ai décliné les olympiades de maths.']]]]
+    ]],
+    ['stress', 15, 17, 6, null, s => olAt(s, 'high'), ['Exams are coming and you feel very stressed.', 'Les examens approchent et tu te sens très stressé{e}.'], [
+      [['Make a revision plan', 'Faire un planning de révisions'], [[1, 's+3 p+6 h-1', ['I made a revision timetable and stuck to it. I felt in control.', 'J’ai fait un planning de révisions et je m’y suis tenu{e}. Je me sentais prêt{e}.']]]],
+      [['Take breaks and exercise', 'Faire des pauses et du sport'], [[1, 'h+3 H+2 p+3', ['I studied in short bursts and went running in between. It really helped.', 'J’ai révisé par petites sessions avec des footings entre deux. Ça m’a beaucoup aidé{e}.']]]],
+      [['Stay up all night', 'Réviser toute la nuit'], [[1, 'p+2 H-3 h-3', ['I studied all night before every exam. I was exhausted.', 'J’ai révisé toute la nuit avant chaque examen. J’étais épuisé{e}.']]]]
+    ], { r: 2 }],
+    ['careersfair', 14, 17, 4, null, 'school', ['At the careers fair, which stand do you visit first?', 'Au salon des métiers, quel stand visites-tu en premier ?'], [
+      [['Hospitals and medicine', 'Hôpitaux et médecine'], [[1, 's+2 !medint', ['At the careers fair, a surgeon let me try stitching up a banana.', 'Au salon des métiers, une chirurgienne m’a laissé{e} recoudre une banane.']]]],
+      [['Technology and games', 'Technologie et jeux vidéo'], [[1, 'xcod+3', ['At the careers fair, I tested a video game before it came out.', 'Au salon des métiers, j’ai testé un jeu vidéo avant sa sortie.']]]],
+      [['Arts and media', 'Arts et médias'], [[1, 'xart+3', ['At the careers fair, I met an animator who drew me as a superhero.', 'Au salon des métiers, j’ai rencontré une animatrice qui m’a dessiné{e} en super-héros.']]]],
+      [['Sport and fitness', 'Sport et forme'], [[1, 'a+3', ['At the careers fair, I beat a fitness coach at a plank challenge.', 'Au salon des métiers, j’ai battu un coach sportif au gainage.']]]]
+    ]],
+    ['classrep', 10, 17, 4, null, 'school', ['Class representative elections are coming up.', 'Les élections de délégués de classe approchent.'], [
+      [['Promise longer breaks', 'Promettre des récrés plus longues'], [[1, 'h+4 f+1', ['I promised longer breaks and won the election. The breaks stayed the same length.', 'J’ai promis des récrés plus longues et j’ai gagné l’élection. Les récrés n’ont pas changé.']], [1, 'h-1', ['I promised longer breaks. Nobody believed me and I lost.', 'J’ai promis des récrés plus longues. Personne ne m’a cru{e} et j’ai perdu.']]]],
+      [['Run with serious ideas', 'Te présenter avec des idées sérieuses'], [[s => s.me.st.s, 's+2 h+4 k+2 f+1', ['I won the election with a plan for a recycling club. It actually happened.', 'J’ai gagné l’élection avec un projet de club de recyclage. Il a vraiment vu le jour.']], [50, 's+1', ['I ran with serious ideas and lost by two votes.', 'Je me suis présenté{e} avec des idées sérieuses et j’ai perdu de deux voix.']]]],
+      [['Vote for a friend', 'Voter pour un ami'], [[1, 'k+1 h+1', ['I voted for my friend, who won and made me vice-representative.', 'J’ai voté pour mon ami, qui a gagné et m’a nommé{e} suppléant{e}.']]]]
+    ]],
+    ['sibtoy', 5, 13, 5, 'sib', s => true, ['{Yrel} {p} broke something you love.', '{Yrel} {p} a cassé un objet auquel tu tiens.'], [
+      [['Forgive {him}', 'Lui pardonner'], [[1, 'k+4 b+4', ['{Myrel} {p} broke my favourite thing. I forgave {him}. Mostly.', '{Myrel} {p} a cassé mon objet préféré. Je lui ai pardonné. Presque.']]]],
+      [['Tell your parents', 'Le dire aux parents'], [[1, 'b-3', ['I told my parents that {p} broke my things. {He} got no dessert.', 'J’ai dit à mes parents que {p} avait cassé mes affaires. {Il} a été privé{pe} de dessert.']]]],
+      [['Break something of theirs', 'Casser un de ses objets'], [[1, 'k-5 b-9', ['I broke something of {p}’s in revenge. We both got grounded.', 'J’ai cassé un objet de {p} pour me venger. On a été punis tous les deux.']]]]
+    ]],
+    ['diary', 9, 15, 4, 'ysib', null, ['{Yrel} {p} read your secret diary!', '{Yrel} {p} a lu ton journal intime !'], [
+      [['Talk about privacy', 'Parler de vie privée'], [[1, 'b+3 k+2', ['I explained to {p} why diaries are private. {He} promised never to do it again.', 'J’ai expliqué à {p} pourquoi un journal est privé. {Il} a promis de ne jamais recommencer.']]]],
+      [['Hide it somewhere better', 'Le cacher ailleurs'], [[1, 's+1', ['I now hide my diary inside an old maths book. Nobody will ever look there.', 'Je cache maintenant mon journal dans un vieux livre de maths. Personne n’ira jamais regarder là.']]]],
+      [['Read {his} diary back', 'Lire son journal en retour'], [[1, 'k-3 b-5 h+2', ['I read {p}’s diary in revenge. It was mostly about dinosaurs.', 'J’ai lu le journal de {p} pour me venger. Il parlait surtout de dinosaures.']]]]
+    ]],
+    ['gpstory', 5, 40, 5, 'gp', null, ['You visit {yrel} {p}, who starts telling stories about the old days.', 'Tu rends visite à {yrel} {p}, qui commence à raconter le bon vieux temps.'], [
+      [['Listen carefully', 'Écouter attentivement'], [[1, 'b+8 s+1 h+2', ['{Myrel} {p} told me how {he} met the love of {his} life at a dance. I listened to every word.', '{Myrel} {p} m’a raconté comment {il} a rencontré l’amour de sa vie dans un bal. J’ai écouté chaque mot.']]]],
+      [['Ask to see old photos', 'Demander à voir de vieilles photos'], [[1, 'b+7 h+3', ['{Myrel} {p} showed me photos of my parents as babies. Hilarious.', '{Myrel} {p} m’a montré des photos de mes parents bébés. Hilarant.']]]],
+      [['Check your phone', 'Regarder ton téléphone'], [[1, 'b-5', ['I checked my phone while {myrel} {p} was talking. {He} noticed.', 'J’ai regardé mon téléphone pendant que {myrel} {p} parlait. {Il} l’a remarqué.']]]]
+    ], { r: 5 }],
+    ['roommate', 18, 23, 6, 'X', s => olAt(s, 'uni', 'grad'), ['Your new flatmate, {p}, leaves dirty dishes everywhere.', '{Un} colocataire, {p}, laisse de la vaisselle sale partout.'], [
+      [['Talk to {him} about it', 'Lui en parler'], [[2, 'h+2 F', ['I talked to {p} about the dishes. We made a rota and became friends.', 'J’ai parlé de la vaisselle avec {p}. On a fait un planning et on est devenus amis.']], [1, 'h-1', ['I talked to {p} about the dishes. Nothing changed.', 'J’ai parlé de la vaisselle avec {p}. Rien n’a changé.']]]],
+      [['Wash them yourself', 'La laver toi-même'], [[1, 'k+2 h-2', ['I washed {p}’s dishes for a whole term. I deserve a medal.', 'J’ai lavé la vaisselle de {p} pendant tout un trimestre. Je mérite une médaille.']]]],
+      [['Leave a passive-aggressive note', 'Laisser un mot passif-agressif'], [[1, 'h+1 xwri+1', ['I left {p} a note on the sink. {He} left one back. This continued for months.', 'J’ai laissé un mot à {p} sur l’évier. {Il} m’a répondu par un autre mot. Ça a duré des mois.']]]]
+    ]],
+    ['fresher', 18, 22, 6, null, s => olAt(s, 'uni'), ['It’s the student clubs fair. Which club do you join?', 'C’est le salon des associations étudiantes. Laquelle rejoins-tu ?'], [
+      [['Debating society', 'Club de débat'], [[1, 's+4 f+1', ['I joined the debating society and learned to argue with style.', 'J’ai rejoint le club de débat et j’ai appris à argumenter avec style.']]]],
+      [['Hiking club', 'Club de randonnée'], [[1, 'H+4 a+3 h+3', ['I joined the hiking club and climbed my first real mountain.', 'J’ai rejoint le club de randonnée et j’ai gravi ma première vraie montagne.']]]],
+      [['Student theatre', 'Théâtre étudiant'], [[1, 'xact+6 h+4', ['I joined the student theatre and played a very dramatic ghost.', 'J’ai rejoint le théâtre étudiant et j’ai joué un fantôme très dramatique.']]]],
+      [['Volunteering group', 'Groupe de bénévoles'], [[1, 'k+5 h+3', ['I joined the volunteering group and helped at a food bank every week.', 'J’ai rejoint les bénévoles et j’ai aidé à la banque alimentaire chaque semaine.']]]]
+    ]],
+    ['essay', 18, 26, 6, null, s => olAt(s, 'uni', 'grad'), ['You have a big essay due tomorrow and haven’t started it.', 'Tu as un gros devoir à rendre demain et tu ne l’as pas commencé.'], [
+      [['Pull an all-nighter', 'Y passer la nuit'], [[2, 'p+3 H-3 h-2', ['I wrote my whole essay overnight. It was surprisingly good.', 'J’ai écrit tout mon devoir en une nuit. Il était étonnamment bon.']], [1, 'p-3 H-3', ['I wrote my essay overnight and fell asleep on the keyboard.', 'J’ai écrit mon devoir en une nuit et je me suis endormi{e} sur le clavier.']]]],
+      [['Ask for an extension', 'Demander un délai'], [[1, 'p+1 h+2', ['My tutor gave me three extra days. I used all of them.', 'Mon directeur d’études m’a accordé trois jours de plus. Je les ai tous utilisés.']], [1, 'p-4', ['My extension was refused, so I handed in a rushed essay.', 'Mon délai a été refusé, j’ai rendu un devoir bâclé.']]]],
+      [['Hand in something quick', 'Rendre quelque chose de rapide'], [[1, 'p-5 h+1', ['I handed in a very short essay. The feedback was even shorter.', 'J’ai rendu un devoir très court. La correction était encore plus courte.']]]]
+    ], { r: 2 }],
+    ['intern', 19, 25, 5, null, s => olAt(s, 'uni', 'grad'), ['A company offers you a summer internship.', 'Une entreprise te propose un stage d’été.'], [
+      [['Accept it', 'Accepter'], [[1, 'p+5 s+2 m+1500 !intern', ['I did a summer internship and learned how real offices work.', 'J’ai fait un stage d’été et j’ai découvert le vrai monde du travail.']]]],
+      [['Travel instead', 'Voyager plutôt'], [[1, 'h+7 xlan+4 m-800', ['I spent the summer travelling with a backpack and a very old map.', 'J’ai passé l’été à voyager avec un sac à dos et une très vieille carte.']]]],
+      [['Rest at home', 'Se reposer à la maison'], [[1, 'h+3 H+2', ['I spent the summer resting at home and recharging.', 'J’ai passé l’été à me reposer à la maison.']]]]
+    ]],
+    ['overtime', 20, 70, 6, null, 'job', ['Your boss asks you to work this weekend.', 'Ton patron te demande de travailler ce week-end.'], [
+      [['Agree', 'Accepter'], [[1, 'p+6 h-3 m+300', ['I worked all weekend. My boss noticed.', 'J’ai travaillé tout le week-end. Mon patron l’a remarqué.']]]],
+      [['Politely refuse', 'Refuser poliment'], [[1, 'p-2 h+2', ['I said no to weekend work and spent Saturday in the park.', 'J’ai refusé de travailler le week-end et j’ai passé le samedi au parc.']]]],
+      [['Ask for a day off later', 'Demander un jour de repos en échange'], [[1, 'p+3', ['I worked the weekend in exchange for a long weekend next month.', 'J’ai travaillé ce week-end en échange d’un long week-end le mois prochain.']]]]
+    ], { r: 4 }],
+    ['credit', 20, 70, 6, 'Xw', 'job', ['Your coworker {p} took credit for your idea in a meeting.', '{Un} collègue, {p}, s’est attribué ton idée en réunion.'], [
+      [['Talk to {him} privately', 'Lui en parler en privé'], [[2, 'h+2 k+2', ['I talked to {p} privately. {He} apologised and corrected it with the team.', 'J’ai parlé à {p} en privé. {Il} s’est excusé{pe} et a rétabli la vérité devant l’équipe.']], [1, 'h-2', ['I talked to {p}, who pretended not to understand.', 'J’ai parlé à {p}, qui a fait semblant de ne pas comprendre.']]]],
+      [['Tell your manager', 'En parler à ton responsable'], [[1, 'p+4', ['I showed my manager the email where I first shared the idea.', 'J’ai montré à ma responsable l’e-mail où j’avais proposé l’idée en premier.']], [1, 'p-2', ['I complained to my manager, who said I should sort it out myself.', 'Je me suis plaint{e} à mon responsable, qui m’a dit de régler ça moi-même.']]]],
+      [['Let it go', 'Laisser tomber'], [[1, 'h-3 k+1', ['I let it go. I keep my best ideas to myself in meetings now.', 'J’ai laissé tomber. Je garde mes meilleures idées pour moi en réunion maintenant.']]]]
+    ], { r: 6 }],
+    ['officeparty', 20, 70, 5, null, 'job', ['It’s the office end-of-year party.', 'C’est la fête de fin d’année au bureau.'], [
+      [['Dance all night', 'Danser toute la nuit'], [[1, 'h+5 p+1 F', ['I danced all night at the office party and made friends with someone from accounts.', 'J’ai dansé toute la nuit à la fête du bureau et je me suis fait un ami à la comptabilité.']]]],
+      [['Give a speech', 'Faire un discours'], [[s => s.me.st.s, 'p+5 f+1 h+3', ['I gave a funny speech at the office party. People quoted it all year.', 'J’ai fait un discours drôle à la fête du bureau. On l’a cité toute l’année.']], [40, 'h-3', ['I gave a speech at the office party and forgot what I was saying halfway through.', 'J’ai fait un discours à la fête et j’ai oublié ce que je disais au milieu.']]]],
+      [['Skip it', 'Ne pas y aller'], [[1, 'p-1 h+1', ['I skipped the office party and had an early night.', 'J’ai fait l’impasse sur la fête et je me suis couché{e} tôt.']]]]
+    ], { r: 3 }],
+    ['rival', 23, 60, 4, null, s => s.me.job && s.me.job.t === 'f', ['A rival company offers you the same job for 20% more money.', 'Une entreprise concurrente te propose le même poste pour 20 % de plus.'], [
+      [['Accept the offer', 'Accepter l’offre'], [[1, 'h+3 jobmove', ['I moved to a rival company for a better salary.', 'Je suis parti{e} chez un concurrent pour un meilleur salaire.']]]],
+      [['Use it to ask for a raise', 'S’en servir pour demander une augmentation'], [[1, 'h+3 raise:10', ['I showed my boss the offer and got a 10% raise to stay.', 'J’ai montré l’offre à mon patron et j’ai obtenu 10 % d’augmentation pour rester.']], [1, 'p-3', ['I asked my boss to match the offer. He said no, and things got awkward.', 'J’ai demandé à mon patron de s’aligner sur l’offre. Il a refusé et l’ambiance est devenue gênante.']]]],
+      [['Stay loyal', 'Rester fidèle'], [[1, 'p+3 k+1', ['I turned down the rival offer. My team was glad I stayed.', 'J’ai refusé l’offre du concurrent. Mon équipe était contente que je reste.']]]]
+    ]],
+    ['mistake', 20, 70, 5, null, 'job', ['You made an expensive mistake at work.', 'Tu as fait une erreur coûteuse au travail.'], [
+      [['Admit it straight away', 'L’avouer tout de suite'], [[1, 'k+4 p-2', ['I admitted my mistake straight away. My boss thanked me for being honest.', 'J’ai avoué mon erreur tout de suite. Ma patronne m’a remercié{e} pour mon honnêteté.']]]],
+      [['Fix it quietly', 'La réparer discrètement'], [[s => s.me.st.s, 'p+2 s+1', ['I fixed my mistake before anyone noticed.', 'J’ai réparé mon erreur avant que quelqu’un ne la remarque.']], [40, 'p-8 k-2', ['I tried to fix my mistake quietly and made it worse.', 'J’ai essayé de réparer mon erreur discrètement et j’ai empiré les choses.']]]],
+      [['Blame the computer', 'Accuser l’ordinateur'], [[1, 'k-3 p-3', ['I blamed the computer. IT checked. It was not the computer.', 'J’ai accusé l’ordinateur. Le service informatique a vérifié. Ce n’était pas l’ordinateur.']]]]
+    ], { r: 6 }],
+    ['worktrip', 22, 65, 4, null, s => s.me.job && s.me.job.t === 'f', ['You are sent on a business trip to {city}.', 'Tu pars en voyage d’affaires à {city}.'], [
+      [['Explore the city', 'Explorer la ville'], [[1, 'h+5 xlan+3', ['I explored {city} between meetings and found the best bakery in town.', 'J’ai exploré {city} entre deux réunions et j’ai trouvé la meilleure boulangerie de la ville.']]]],
+      [['Work from the hotel', 'Travailler depuis l’hôtel'], [[1, 'p+5', ['I worked from my hotel room in {city} and closed the deal.', 'J’ai travaillé depuis ma chambre d’hôtel à {city} et j’ai conclu l’affaire.']]]],
+      [['Bring back gifts for everyone', 'Rapporter des cadeaux à tout le monde'], [[1, 'B+4 m-150 h+2', ['I brought back gifts from {city} for the whole family.', 'J’ai rapporté des cadeaux de {city} pour toute la famille.']]]]
+    ], { r: 5 }],
+    ['teamday', 22, 65, 4, null, s => s.me.job && s.me.job.t === 'f', ['Your company organises a team-building day of paintball.', 'Ton entreprise organise une journée de cohésion au paintball.'], [
+      [['Play to win', 'Jouer pour gagner'], [[s => s.me.a, 'h+5 p+2 a+2', ['My team won the paintball day. I was named most valuable player.', 'Mon équipe a gagné au paintball. J’ai reçu le titre de meilleur joueur de la journée.']], [50, 'h+2', ['I played to win and was eliminated in the first minute.', 'J’ai joué pour gagner et j’ai été éliminé{e} à la première minute.']]]],
+      [['Hide behind a tree', 'Se cacher derrière un arbre'], [[1, 'h+2', ['I hid behind a tree all day and survived every round.', 'Je me suis caché{e} derrière un arbre toute la journée et j’ai survécu à chaque manche.']]]],
+      [['Accidentally hit your boss', 'Toucher ton patron sans le faire exprès'], [[1, 'h+5 p-2', ['I accidentally hit my boss with a yellow paintball. Mostly accidentally.', 'J’ai touché mon patron avec une bille jaune. Presque sans le faire exprès.']]]]
+    ], { r: 8 }],
+    ['charityrun', 18, 60, 4, null, null, ['Your friends are running a 10K for a children’s charity.', 'Tes amis courent 10 km pour une association d’enfants.'], [
+      [['Run with them', 'Courir avec eux'], [[6, 'H+4 a+3 k+3 h+3', ['I ran the charity 10K and raised money for the children’s hospital.', 'J’ai couru les 10 km solidaires et récolté des fonds pour l’hôpital des enfants.']], [1, 'k+2 i:ankle', ['I ran the charity 10K and twisted my ankle at the 8th kilometre.', 'J’ai couru les 10 km et je me suis tordu la cheville au 8e kilomètre.']]]],
+      [['Sponsor them', 'Les parrainer'], [[1, 'm-50 k+3', ['I sponsored my friends for the charity run.', 'J’ai parrainé mes amis pour la course solidaire.']]]],
+      [['Cheer from the finish line', 'Les encourager à l’arrivée'], [[1, 'h+2 k+1', ['I cheered at the finish line with a giant homemade sign.', 'J’ai encouragé tout le monde à l’arrivée avec une immense pancarte faite maison.']]]]
+    ], { r: 6 }],
+    ['noise', 18, 90, 5, null, s => s.me.mv, ['Your neighbour plays loud music late every night.', 'Ton voisin met de la musique forte tard tous les soirs.'], [
+      [['Knock and ask politely', 'Frapper et demander poliment'], [[3, 'h+3 k+1', ['I asked my neighbour politely to turn it down. He did, and brought me cake.', 'J’ai demandé poliment au voisin de baisser le son. Il l’a fait et m’a apporté un gâteau.']], [1, 'h-2', ['I asked my neighbour to turn it down. He turned it up.', 'J’ai demandé au voisin de baisser le son. Il l’a monté.']]]],
+      [['Buy earplugs', 'Acheter des bouchons d’oreilles'], [[1, 'm-10 H+1', ['I bought earplugs. I can no longer hear my alarm either.', 'J’ai acheté des bouchons d’oreilles. Je n’entends plus mon réveil non plus.']]]],
+      [['Play your own music louder', 'Mettre ta musique encore plus fort'], [[1, 'h+1 k-3', ['I played my music even louder. The whole building now hates us both.', 'J’ai mis ma musique encore plus fort. Tout l’immeuble nous déteste tous les deux.']]]]
+    ], { r: 6 }],
+    ['breakdown', 18, 85, 5, null, s => olHasCar(s), ['Your car breaks down on the motorway.', 'Ta voiture tombe en panne sur l’autoroute.'], [
+      [['Call a mechanic', 'Appeler un dépanneur'], [[1, 'm-400', ['My car broke down. The tow truck and repairs cost a lot.', 'Ma voiture est tombée en panne. Le dépannage et la réparation ont coûté cher.']]]],
+      [['Try to fix it yourself', 'Essayer de la réparer toi-même'], [[s => s.me.st.s / 2, 'h+4 s+1', ['I fixed my car myself on the hard shoulder. I felt like a genius.', 'J’ai réparé ma voiture moi-même sur la bande d’arrêt d’urgence. Je me suis senti{e} génial{e}.']], [50, 'm-900 h-3', ['I tried to fix my car and made it much worse.', 'J’ai essayé de réparer ma voiture et je l’ai encore plus abîmée.']]]],
+      [['Leave it and take the train', 'L’abandonner et prendre le train'], [[1, 'carhit', ['I left the car at a garage and took the train home.', 'J’ai laissé la voiture au garage et je suis rentré{e} en train.']]]]
+    ], { r: 5 }],
+    ['tip', 25, 75, 4, 'friend', s => s.me.m > 3000, ['{p} tells you about a “sure thing” investment.', '{p} te parle d’un placement « sans risque ».'], [
+      [['Invest a lot', 'Investir beaucoup'], [[1, 'invest:big', ['I invested a lot in {p}’s tip.', 'J’ai beaucoup investi sur le conseil de {p}.']]]],
+      [['Invest a little', 'Investir un peu'], [[1, 'invest:small', ['I invested a little in {p}’s tip.', 'J’ai investi un peu sur le conseil de {p}.']]]],
+      [['Politely say no', 'Refuser poliment'], [[1, 's+1', ['I told {p} there is no such thing as a sure thing.', 'J’ai dit à {p} que le risque zéro n’existe pas.']]]]
+    ], { r: 8 }],
+    ['scam', 14, 95, 6, null, null, ['A message says you have won a prize, but they need your bank details first.', 'Un message dit que tu as gagné un prix, mais il faut d’abord donner tes coordonnées bancaires.'], [
+      [['Send your details', 'Envoyer tes coordonnées'], [[1, 'scam h-6', ['I sent my bank details to claim a prize. It was a scam.', 'J’ai envoyé mes coordonnées bancaires pour un prix. C’était une arnaque.']]]],
+      [['Delete it', 'Le supprimer'], [[1, 's+2', ['I deleted the fake prize message. Nice try, scammers.', 'J’ai supprimé le faux message. Bien essayé, les arnaqueurs.']]]],
+      [['Report it', 'Le signaler'], [[1, 's+2 k+2', ['I reported the scam message so others would not fall for it.', 'J’ai signalé le message d’arnaque pour que d’autres ne tombent pas dans le piège.']]]]
+    ], { r: 10 }],
+    ['jury', 25, 70, 3, null, null, ['You have been called for jury service.', 'Tu as été convoqué{e} comme juré{e}.'], [
+      [['Serve on the jury', 'Siéger au jury'], [[1, 'k+4 s+2', ['I served on a jury for two weeks. It made me think about justice a lot.', 'J’ai été juré{e} pendant deux semaines. Ça m’a fait beaucoup réfléchir à la justice.']]]],
+      [['Ask to be excused', 'Demander une dispense'], [[1, '', ['I asked to be excused from jury service and was allowed.', 'J’ai demandé une dispense et je l’ai obtenue.']], [1, 'k+3 s+1', ['My request was refused, so I served on the jury. It was fascinating.', 'Ma demande a été refusée, alors j’ai siégé. C’était passionnant.']]]]
+    ]],
+    ['marathon', 22, 60, 4, null, s => s.me.st.H > 50, ['Will you train for a marathon this year?', 'Vas-tu t’entraîner pour un marathon cette année ?'], [
+      [['Train seriously', 'S’entraîner sérieusement'], [[s => s.me.a + 20, 'H+6 a+6 h+6 !marathon', ['I ran a full marathon! My legs did not work for three days.', 'J’ai couru un marathon complet ! Mes jambes n’ont plus fonctionné pendant trois jours.']], [30, 'H+3 a+3 h-2', ['I trained for a marathon but had to stop at the 30th kilometre.', 'Je me suis entraîné{e} pour un marathon mais j’ai dû abandonner au 30e kilomètre.']]]],
+      [['Run a half marathon instead', 'Plutôt un semi-marathon'], [[1, 'H+4 a+3 h+4', ['I ran a half marathon and smiled in every photo.', 'J’ai couru un semi-marathon et j’ai souri sur toutes les photos.']]]],
+      [['Not this year', 'Pas cette année'], [[1, '', ['I decided not to run a marathon this year.', 'J’ai décidé de ne pas courir de marathon cette année.']]]]
+    ]],
+    ['reunion', 28, 70, 4, null, null, ['It’s your old school reunion.', 'C’est la réunion des anciens élèves de ton lycée.'], [
+      [['Go', 'Y aller'], [[2, 'h+4 F', ['I went to my school reunion and reconnected with an old classmate.', 'Je suis allé{e} à la réunion des anciens et j’ai retrouvé un ancien camarade.']], [1, 'h+1', ['I went to the reunion. Everyone looked older except me, obviously.', 'Je suis allé{e} à la réunion. Tout le monde avait vieilli sauf moi, évidemment.']]]],
+      [['Skip it', 'Ne pas y aller'], [[1, '', ['I skipped my school reunion.', 'Je ne suis pas allé{e} à la réunion des anciens.']]]]
+    ], { r: 10 }],
+    ['dinner', 20, 90, 5, null, s => s.me.mv, ['You are hosting dinner for friends and the main dish is burnt.', 'Tu reçois des amis à dîner et le plat principal a brûlé.'], [
+      [['Order pizza', 'Commander des pizzas'], [[1, 'm-60 h+3', ['My dinner was burnt, so we ordered pizza. Nobody complained.', 'Mon dîner a brûlé, alors on a commandé des pizzas. Personne ne s’est plaint.']]]],
+      [['Serve it anyway', 'Le servir quand même'], [[1, 'h-1 f+1', ['I served the burnt dinner and called it “smoky”. My friends still tease me.', 'J’ai servi le dîner brûlé en le qualifiant de « fumé ». Mes amis me taquinent encore.']]]],
+      [['Cook something quickly', 'Cuisiner vite autre chose'], [[s => 10 + s.me.sk.coo, 'h+5 xcoo+3', ['I made a delicious pasta dish in fifteen minutes. My friends were amazed.', 'J’ai préparé de délicieuses pâtes en quinze minutes. Mes amis étaient bluffés.']], [40, 'h-2 xcoo+1', ['I rushed a second dish and it was even worse than the first.', 'J’ai improvisé un second plat et il était encore pire que le premier.']]]]
+    ], { r: 6 }],
+    ['straycat', 20, 90, 4, null, s => !olHasPet(s) && s.me.mv, ['A stray cat keeps visiting your doorstep.', 'Un chat errant vient sans cesse devant ta porte.'], [
+      [['Adopt it', 'L’adopter'], [[1, 'h+6 k+3 pet:cat', ['I adopted the stray cat. It now owns my sofa.', 'J’ai adopté le chat errant. Il possède désormais mon canapé.']]]],
+      [['Take it to a shelter', 'L’emmener au refuge'], [[1, 'k+3', ['I took the stray cat to a shelter, where a family adopted it.', 'J’ai emmené le chat au refuge, où une famille l’a adopté.']]]],
+      [['Leave it be', 'Le laisser tranquille'], [[1, '', ['I left the stray cat alone. It still visits.', 'J’ai laissé le chat tranquille. Il vient toujours.']]]]
+    ]],
+    ['roof', 25, 95, 4, null, s => olHouse(s), ['Your home needs a new roof.', 'Ton logement a besoin d’une nouvelle toiture.'], [
+      [['Pay for a proper repair', 'Payer une vraie réparation'], [[1, 'roof:fix', ['I paid for a brand-new roof. The house is worth more now.', 'J’ai payé une toiture neuve. La maison vaut plus cher maintenant.']]]],
+      [['Patch it yourself', 'Rafistoler toi-même'], [[1, 'h+2 m-300', ['I patched the roof myself. It holds, mostly.', 'J’ai rafistolé le toit moi-même. Il tient, en gros.']], [1, 'roof:bad h-3', ['I patched the roof myself, and the next storm found every gap.', 'J’ai rafistolé le toit moi-même, et la tempête suivante a trouvé chaque trou.']]]],
+      [['Ignore it', 'Ignorer'], [[1, 'roof:bad', ['I ignored the roof. Now there are buckets in the attic.', 'J’ai ignoré le toit. Il y a maintenant des seaux dans le grenier.']]]]
+    ], { r: 12 }],
+    ['hobby', 30, 75, 5, null, null, ['You feel like starting a new hobby.', 'Tu as envie de commencer un nouveau loisir.'], [
+      [['Painting', 'La peinture'], [[1, 'xart+6 h+4', ['I started painting landscapes on Sunday mornings.', 'J’ai commencé à peindre des paysages le dimanche matin.']]]],
+      [['Learning the guitar', 'La guitare'], [[1, 'xmus+6 h+3', ['I started learning the guitar. My family is very patient.', 'J’ai commencé la guitare. Ma famille est très patiente.']]]],
+      [['Bird-watching', 'L’observation des oiseaux'], [[1, 's+2 h+4 H+1', ['I took up bird-watching and spotted a kingfisher.', 'Je me suis mis{e} à observer les oiseaux et j’ai vu un martin-pêcheur.']]]],
+      [['Baking bread', 'Faire du pain'], [[1, 'xcoo+6 h+4', ['I started baking my own bread. The kitchen smells wonderful.', 'Je me suis mis{e} à faire mon propre pain. La cuisine sent merveilleusement bon.']]]]
+    ], { r: 10 }],
+    ['adventure', 38, 58, 4, null, null, ['You wake up feeling your life needs an adventure.', 'Tu te réveilles avec l’envie de vivre une aventure.'], [
+      [['Go backpacking for a month', 'Partir un mois sac au dos'], [[1, 'h+9 xlan+3 m-2500 !trip', ['I went backpacking for a month and came back with a beard of stories.', 'Je suis parti{e} un mois sac au dos et je suis revenu{e} plein{e} d’histoires.']]]],
+      [['Learn to scuba dive', 'Apprendre la plongée'], [[1, 'h+7 a+3 H+2 m-900', ['I learned to scuba dive and swam with a sea turtle.', 'J’ai appris la plongée et j’ai nagé avec une tortue de mer.']]]],
+      [['Take a pottery class', 'Prendre des cours de poterie'], [[1, 'xart+5 h+5 m-200', ['I took a pottery class. My first bowl leans to the left.', 'J’ai pris des cours de poterie. Mon premier bol penche à gauche.']]]],
+      [['Life is fine as it is', 'La vie est bien comme elle est'], [[1, 'h+1', ['I decided my life was adventurous enough.', 'J’ai décidé que ma vie était assez aventureuse comme ça.']]]]
+    ]],
+    ['wedspeech', 22, 50, 5, 'friend', null, ['{p} is getting married and asks you to give a speech.', '{p} se marie et te demande de faire un discours.'], [
+      [['Accept', 'Accepter'], [[s => s.me.st.s + s.me.sk.wri, 'b+10 h+5 f+1', ['My speech at {p}’s wedding made everybody laugh and cry.', 'Mon discours au mariage de {p} a fait rire et pleurer tout le monde.']], [40, 'b+4 h-2', ['I gave a speech at {p}’s wedding and forgot the bride’s name for a second.', 'J’ai fait un discours au mariage de {p} et j’ai oublié un instant le prénom de la mariée.']]]],
+      [['Decline politely', 'Refuser poliment'], [[1, 'b-5', ['I declined to give a speech at {p}’s wedding.', 'J’ai refusé de faire un discours au mariage de {p}.']]]]
+    ]],
+    ['borrow', 20, 80, 5, 'friend', null, ['Your friend {p} asks to borrow {amt}.', 'Ton ami{pe} {p} te demande de lui prêter {amt}.'], [
+      [['Lend it', 'Le prêter'], [[3, 'b+6 k+2', ['I lent money to {p}, who paid me back a month later.', 'J’ai prêté de l’argent à {p}, qui m’a remboursé{e} un mois plus tard.']], [2, 'm-amt b+3 h-2', ['I lent money to {p}. I am still waiting to be paid back.', 'J’ai prêté de l’argent à {p}. J’attends toujours d’être remboursé{e}.']]]],
+      [['Give it as a gift', 'Le donner'], [[1, 'm-amt b+10 k+4', ['I gave {p} the money as a gift. {He} hugged me for a long time.', 'J’ai donné l’argent à {p}. {Il} m’a serré{e} longtemps dans ses bras.']]]],
+      [['Say no', 'Refuser'], [[1, 'b-6', ['I said no to {p}. Things were awkward for a while.', 'J’ai dit non à {p}. Ça a été gênant pendant un moment.']]]]
+    ], { amt: [100, 600], r: 8 }],
+    ['anniv', 18, 95, 6, 'love', null, ['It’s your anniversary with {p}.', 'C’est ton anniversaire de couple avec {p}.'], [
+      [['A romantic dinner', 'Un dîner romantique'], [[1, 'm-150 b+7 h+4', ['I took {p} out for a candlelit dinner for our anniversary.', 'J’ai invité {p} à un dîner aux chandelles pour notre anniversaire.']]]],
+      [['A homemade gift', 'Un cadeau fait main'], [[1, 'b+7 xart+2 h+3', ['I made {p} a photo album of our best memories.', 'J’ai fabriqué pour {p} un album photo de nos plus beaux souvenirs.']]]],
+      [['Forget about it', 'L’oublier'], [[1, 'b-10 h-3', ['I completely forgot our anniversary. {p} did not forget that I forgot.', 'J’ai complètement oublié notre anniversaire. {p} n’a pas oublié que j’avais oublié.']]]]
+    ], { r: 3 }],
+    ['worktoo', 22, 70, 5, 'love', 'job', ['{p} is upset that you work too much.', '{p} est contrarié{pe} que tu travailles autant.'], [
+      [['Promise to change', 'Promettre de changer'], [[1, 'b+6 p-2', ['I promised {p} to leave work on time. I mostly keep the promise.', 'J’ai promis à {p} de quitter le travail à l’heure. Je tiens presque toujours parole.']]]],
+      [['Plan a weekend away', 'Organiser un week-end à deux'], [[1, 'b+8 m-400 h+4', ['I planned a surprise weekend away with {p}. No laptops allowed.', 'J’ai organisé un week-end surprise avec {p}. Ordinateurs interdits.']]]],
+      [['Argue back', 'Répliquer'], [[1, 'b-8 h-2', ['I argued with {p} about work. We didn’t speak for two days.', 'Je me suis disputé{e} avec {p} à propos du travail. On ne s’est pas parlé pendant deux jours.']]]]
+    ], { r: 5 }],
+    ['inlaws', 24, 70, 4, 'spouse', null, ['Your in-laws are coming to stay for two weeks.', 'Ta belle-famille vient passer deux semaines chez vous.'], [
+      [['Welcome them warmly', 'Les accueillir chaleureusement'], [[1, 'b+6 h-1 k+2', ['I welcomed my in-laws warmly. My mother-in-law taught me her famous recipe.', 'J’ai accueilli ma belle-famille chaleureusement. Ma belle-mère m’a appris sa fameuse recette.']]]],
+      [['Book a work trip that week', 'Prévoir un déplacement cette semaine-là'], [[1, 'b-6 h+2', ['I booked a work trip during my in-laws’ visit. {p} saw right through it.', 'J’ai prévu un déplacement pendant la visite de ma belle-famille. {p} n’a pas été dupe.']]]],
+      [['Plan days out together', 'Prévoir des sorties ensemble'], [[1, 'b+5 h+2 m-200', ['I planned day trips with my in-laws. We all got along brilliantly.', 'J’ai organisé des sorties avec ma belle-famille. On s’est tous très bien entendus.']]]]
+    ], { r: 8 }],
+    ['kidplay', 25, 70, 6, 'kidsmall', null, ['Your child {p} has a part in the school play.', 'Ton enfant {p} joue dans la pièce de l’école.'], [
+      [['Go and cheer loudly', 'Aller l’applaudir très fort'], [[1, 'b+8 h+5', ['I cheered so loudly at {p}’s school play that {he} waved at me from the stage.', 'J’ai applaudi si fort à la pièce de {p} qu’{il} m’a fait coucou depuis la scène.']]]],
+      [['Film it for the family', 'Le filmer pour la famille'], [[1, 'b+5 h+3', ['I filmed {p}’s school play for the whole family.', 'J’ai filmé la pièce de {p} pour toute la famille.']]]],
+      [['Miss it for work', 'La manquer pour le travail'], [[1, 'b-10 p+2 h-3', ['I missed {p}’s school play because of work. I still regret it.', 'J’ai manqué la pièce de {p} à cause du travail. Je le regrette encore.']]]]
+    ], { r: 3 }],
+    ['kidhomework', 25, 70, 6, 'kidsmall', null, ['{p} asks for help with {his} maths homework.', '{p} te demande de l’aide pour ses devoirs de maths.'], [
+      [['Sit down and help', 'S’asseoir et aider'], [[s => s.me.st.s, 'b+7 s+1', ['I helped {p} with fractions and we both understood them better.', 'J’ai aidé {p} avec les fractions et on les a mieux comprises tous les deux.']], [40, 'b+4', ['I tried to help {p} with maths, but the methods have changed since my day.', 'J’ai essayé d’aider {p} en maths, mais les méthodes ont changé depuis mon époque.']]]],
+      [['Teach {him} to find the answer', 'Lui apprendre à chercher'], [[1, 'b+5 k+1', ['I showed {p} how to work it out alone. {He} was proud of {him}self.', 'J’ai montré à {p} comment trouver seul{pe}. {Il} était très content{pe} de {lui}.']]]],
+      [['Say you’re busy', 'Dire que tu es occupé{e}'], [[1, 'b-5', ['I told {p} I was too busy to help.', 'J’ai dit à {p} que j’étais trop occupé{e} pour l’aider.']]]]
+    ], { r: 3 }],
+    ['curfew', 30, 75, 6, 'kidteen', null, ['Your teenager {p} came home two hours after curfew.', 'Ton ado {p} est rentré{pe} deux heures après l’heure prévue.'], [
+      [['Talk calmly', 'En parler calmement'], [[1, 'b+4 k+1', ['I talked calmly with {p} about the curfew. {He} apologised.', 'J’ai parlé calmement avec {p}. {Il} s’est excusé{pe}.']]]],
+      [['Ground {him}', '{Lp} priver de sortie'], [[1, 'b-5', ['I grounded {p} for two weeks. The house was very quiet.', 'J’ai privé {p} de sortie pendant deux semaines. La maison était très calme.']]]],
+      [['Let it slide', 'Laisser passer'], [[1, 'b+2', ['I let the late night slide. {p} was home safe, that’s what mattered.', 'J’ai laissé passer. {p} était bien rentré{pe}, c’est ce qui comptait.']]]]
+    ], { r: 4 }],
+    ['kidcar', 35, 80, 5, 'kidadult', s => s.me.m > 3000, ['{p} asks if you can help pay for {his} first car.', '{p} te demande si tu peux l’aider à payer sa première voiture.'], [
+      [['Pay for all of it', 'Tout payer'], [[1, 'm-6000 b+12', ['I bought {p} {his} first car. {He} drove me around all afternoon.', 'J’ai offert sa première voiture à {p}. {Il} m’a promené{e} tout l’après-midi.']]]],
+      [['Pay half', 'Payer la moitié'], [[1, 'm-3000 b+7', ['I paid half of {p}’s first car.', 'J’ai payé la moitié de la première voiture de {p}.']]]],
+      [['Say no', 'Refuser'], [[1, 'b-6', ['I told {p} to save up for the car.', 'J’ai dit à {p} d’économiser pour sa voiture.']]]]
+    ]],
+    ['oldparent', 40, 80, 6, 'oldpar', null, ['{Yrel} {p} is getting older and needs more help at home.', '{Yrel} {p} vieillit et a besoin de plus d’aide à la maison.'], [
+      [['Visit every week', 'Lui rendre visite chaque semaine'], [[1, 'b+9 h-1 k+3', ['I now visit {myrel} {p} every Sunday. We play cards and talk.', 'Je rends visite à {myrel} {p} tous les dimanches. On joue aux cartes et on discute.']]]],
+      [['Pay for a carer', 'Payer une aide à domicile'], [[1, 'm-3000 b+4', ['I hired a carer to help {myrel} {p} at home.', 'J’ai engagé une aide à domicile pour {myrel} {p}.']]]],
+      [['Move {him} in with you', 'L’accueillir chez toi'], [[1, 'b+12 h-2 k+4', ['{Myrel} {p} moved in with me. The house is fuller and warmer.', '{Myrel} {p} est venu{pe} vivre chez moi. La maison est plus pleine et plus chaleureuse.']]]]
+    ]],
+    ['sibwed', 20, 60, 5, 'sib', s => true, ['{Yrel} {p} is getting married!', '{Yrel} {p} se marie !'], [
+      [['Give a heartfelt toast', 'Porter un toast émouvant'], [[1, 'b+7 h+4', ['I gave a toast at {myrel} {p}’s wedding. Even the waiters cried.', 'J’ai porté un toast au mariage de {myrel} {p}. Même les serveurs ont pleuré.']]]],
+      [['Dance all night', 'Danser toute la nuit'], [[1, 'h+6 b+4', ['I danced all night at {p}’s wedding.', 'J’ai dansé toute la nuit au mariage de {p}.']]]],
+      [['Bring a big gift', 'Offrir un beau cadeau'], [[1, 'm-300 b+6', ['I gave {p} and {his} new spouse a beautiful gift.', 'J’ai offert un très beau cadeau à {p} et à son conjoint.']]]]
+    ]],
+    ['petsick', 1, 120, 6, 'pet', null, ['Your {pet} {p} isn’t eating and seems unwell.', '{Ton} {pet} {p} ne mange plus et a l’air malade.'], [
+      [['Go to the vet', 'Aller chez le vétérinaire'], [[6, 'm-150 b+5', ['I took {p} to the vet. A few days of medicine and {he} was fine.', 'J’ai emmené {p} chez le vétérinaire. Quelques jours de médicaments et tout allait bien.']], [1, 'm-150 petdie', ['I took {p} to the vet, but there was nothing they could do.', 'J’ai emmené {p} chez le vétérinaire, mais il n’y avait rien à faire.']]]],
+      [['Wait and see', 'Attendre de voir'], [[1, 'b-2', ['I waited, and {p} got better on {his} own.', 'J’ai attendu, et {p} s’est remis{pe} tout{pe} seul{pe}.']], [1, 'b-4 h-2', ['I waited too long and {p} was ill for weeks.', 'J’ai trop attendu et {p} a été malade pendant des semaines.']]]],
+      [['Cook {him} something special', 'Lui préparer un repas spécial'], [[1, 'b+4 xcoo+1', ['I cooked {p} a special meal. {He} ate every bite.', 'J’ai préparé un repas spécial pour {p}. {Il} a tout mangé.']]]]
+    ], { r: 5 }],
+    ['pettrick', 6, 100, 5, 'pet', s => true, ['You could try to teach {p} a trick.', 'Tu pourrais essayer d’apprendre un tour à {p}.'], [
+      [['“Sit”', '« Assis »'], [[1, 'b+5 h+3', ['I taught {p} to sit. Well, {he} sits when there is food.', 'J’ai appris à {p} à s’asseoir. Enfin, {il} s’assoit quand il y a à manger.']]]],
+      [['“High five”', '« Tope là »'], [[1, 'b+5 h+4', ['{p} can now give me a high five. Best moment of my week.', '{p} sait maintenant me taper dans la main. Meilleur moment de ma semaine.']], [1, 'b+2', ['I tried to teach {p} a high five. {He} looked at me as if I were silly.', 'J’ai essayé d’apprendre à {p} à taper dans la main. {Il} m’a regardé{e} comme si j’étais idiot{e}.']]]],
+      [['Just cuddle instead', 'Faire plutôt un câlin'], [[1, 'b+6 h+3', ['I gave up on tricks and cuddled {p} on the sofa.', 'J’ai abandonné les tours et j’ai fait un câlin à {p} sur le canapé.']]]]
+    ], { r: 6 }],
+    ['cruise', 60, 95, 5, null, s => s.me.ret, ['Now that you’re retired, you have time to travel.', 'Maintenant que tu es à la retraite, tu as le temps de voyager.'], [
+      [['Book a cruise', 'Réserver une croisière'], [[1, 'h+9 m-6000 !trip', ['I went on a cruise and learned to dance the tango on deck.', 'J’ai fait une croisière et j’ai appris le tango sur le pont.']]]],
+      [['Visit old friends', 'Rendre visite à de vieux amis'], [[1, 'h+6 m-800', ['I travelled around visiting old friends. We laughed like teenagers.', 'J’ai voyagé pour revoir de vieux amis. On a ri comme des ados.']]]],
+      [['Stay home and garden', 'Rester jardiner'], [[1, 'H+3 h+3', ['I stayed home and grew the biggest tomatoes on the street.', 'Je suis resté{e} à la maison et j’ai fait pousser les plus grosses tomates de la rue.']]]]
+    ], { r: 5 }],
+    ['gkidvisit', 50, 110, 6, 'gkid', null, ['Your grandchild {p} comes to stay for the weekend.', 'Ton petit-enfant {p} vient passer le week-end chez toi.'], [
+      [['Bake cookies together', 'Faire des biscuits ensemble'], [[1, 'b+8 h+5 xcoo+1', ['{p} and I baked cookies. Most of the dough was eaten raw.', '{p} et moi avons fait des biscuits. La pâte a été mangée crue en grande partie.']]]],
+      [['Teach {him} to play chess', 'Lui apprendre les échecs'], [[1, 'b+6 s+1', ['I taught {p} to play chess. {He} beat me by the end of the weekend.', 'J’ai appris les échecs à {p}. {Il} m’a battu{e} avant la fin du week-end.']]]],
+      [['Tell stories from your life', 'Raconter des histoires de ta vie'], [[1, 'b+7 h+4', ['I told {p} stories from my life. {He} asked for more every night.', 'J’ai raconté à {p} des histoires de ma vie. {Il} en redemandait chaque soir.']]]]
+    ], { r: 3 }],
+    ['tablet', 62, 100, 4, null, null, ['Your family gives you a tablet, but it’s very confusing.', 'Ta famille t’offre une tablette, mais c’est très compliqué.'], [
+      [['Take a class', 'Prendre un cours'], [[1, 's+3 h+2', ['I took a tablet class at the library. I now send video messages to everyone.', 'J’ai suivi un cours de tablette à la bibliothèque. J’envoie maintenant des vidéos à tout le monde.']]]],
+      [['Ask a young relative', 'Demander à un jeune de la famille'], [[1, 'B+3 s+1', ['A young relative showed me the tablet. I now know seven different emojis.', 'Un jeune de la famille m’a montré la tablette. Je connais maintenant sept émojis différents.']]]],
+      [['Use it as a tray', 'S’en servir de plateau'], [[1, 'h+1', ['I use the tablet as a tray for my tea. It works perfectly.', 'J’utilise la tablette comme plateau pour mon thé. Ça marche parfaitement.']]]]
+    ]],
+    ['memoir', 62, 100, 4, null, null, ['Will you write the story of your life?', 'Vas-tu écrire l’histoire de ta vie ?'], [
+      [['Write a memoir', 'Écrire des mémoires'], [[s => s.me.sk.wri + s.me.f, 'xwri+5 h+6 f+3 m+8000', ['I wrote my memoir and a publisher actually printed it!', 'J’ai écrit mes mémoires et un éditeur les a vraiment publiées !']], [60, 'xwri+4 h+4 B+3', ['I wrote my memoir. My family read it and loved it.', 'J’ai écrit mes mémoires. Ma famille les a lues et adorées.']]]],
+      [['Record videos for the family', 'Enregistrer des vidéos pour la famille'], [[1, 'B+5 h+4', ['I recorded videos telling my life story for my family.', 'J’ai enregistré des vidéos de l’histoire de ma vie pour ma famille.']]]],
+      [['Not interested', 'Pas intéressé{e}'], [[1, '', ['I decided my life story would stay in my head.', 'J’ai décidé que l’histoire de ma vie resterait dans ma tête.']]]]
+    ]],
+    ['parkchess', 55, 100, 4, 'X', null, ['{p}, a regular at the park, challenges you to a game of chess.', '{p}, un{pe} habitué{pe} du parc, te défie aux échecs.'], [
+      [['Accept', 'Accepter'], [[s => s.me.st.s, 's+3 h+5 F', ['I beat {p} at chess in the park. We play every Thursday now.', 'J’ai battu {p} aux échecs au parc. On joue tous les jeudis maintenant.']], [50, 's+2 h+2 F', ['{p} beat me at chess but taught me a brilliant opening.', '{p} m’a battu{e} aux échecs mais m’a appris une ouverture géniale.']]]],
+      [['Decline', 'Refuser'], [[1, '', ['I declined the chess challenge.', 'J’ai décliné la partie d’échecs.']]]]
+    ]],
+    ['checkup', 40, 100, 5, null, null, ['Your doctor recommends a yearly check-up.', 'Ton médecin recommande un bilan de santé annuel.'], [
+      [['Go to the check-up', 'Faire le bilan'], [[1, 'checkup', ['I went for a full check-up.', 'J’ai fait un bilan de santé complet.']]]],
+      [['Skip it this year', 'Le sauter cette année'], [[1, '', ['I skipped my check-up this year.', 'J’ai sauté mon bilan de santé cette année.']]]]
+    ], { r: 5 }],
+    ['diet', 22, 90, 5, null, null, ['You are thinking about changing your diet.', 'Tu penses à changer ton alimentation.'], [
+      [['Eat more vegetables', 'Manger plus de légumes'], [[1, 'H+4 h+1', ['I started eating more vegetables. I feel lighter.', 'J’ai commencé à manger plus de légumes. Je me sens mieux.']]]],
+      [['Cut down on sugar', 'Réduire le sucre'], [[1, 'H+3 h-1 l+1', ['I cut down on sugar. The first month was the hardest.', 'J’ai réduit le sucre. Le premier mois a été le plus dur.']]]],
+      [['Keep eating what I love', 'Continuer à manger ce que j’aime'], [[1, 'h+2 H-1', ['I kept eating exactly what I love.', 'J’ai continué à manger exactement ce que j’aime.']]]]
+    ], { r: 8 }],
+    ['sleep', 16, 90, 5, null, null, ['You have been sleeping badly for weeks.', 'Tu dors mal depuis des semaines.'], [
+      [['Go to bed earlier', 'Se coucher plus tôt'], [[1, 'H+3 h+2', ['I started going to bed earlier and feel like a new person.', 'J’ai commencé à me coucher plus tôt et je me sens en pleine forme.']]]],
+      [['No screens at night', 'Plus d’écrans le soir'], [[1, 'H+3 s+1', ['I stopped using screens before bed and started reading instead.', 'J’ai arrêté les écrans avant de dormir et je lis à la place.']]]],
+      [['Ignore it', 'Ignorer'], [[1, 'H-2 h-2', ['I ignored my sleep problems. Coffee became my best friend.', 'J’ai ignoré mes problèmes de sommeil. Le café est devenu mon meilleur ami.']]]]
+    ], { r: 8 }],
+    ['flood', 20, 100, 3, null, s => olHouse(s), ['A storm has flooded your ground floor.', 'Un orage a inondé ton rez-de-chaussée.'], [
+      [['Pay for repairs', 'Payer les réparations'], [[1, 'm-4000 h-3', ['A storm flooded my home. The repairs were expensive.', 'Un orage a inondé mon logement. Les réparations ont coûté cher.']]]],
+      [['Call the insurance company', 'Appeler l’assurance'], [[2, 'm-500 h-1', ['My insurance paid for most of the flood repairs.', 'Mon assurance a payé la plupart des réparations après l’inondation.']], [1, 'm-3000 h-4', ['My insurance found a reason not to pay for the flood.', 'Mon assurance a trouvé une excuse pour ne pas payer l’inondation.']]]]
+    ], { r: 15 }],
+    ['neighbour', 25, 90, 5, null, null, ['Your elderly neighbour is struggling with heavy shopping bags.', 'Ta voisine âgée a du mal à porter ses courses.'], [
+      [['Carry them for her', 'Les porter pour elle'], [[1, 'k+5 h+3', ['I carried my neighbour’s shopping. She gave me homemade jam.', 'J’ai porté les courses de ma voisine. Elle m’a donné de la confiture maison.']]]],
+      [['Offer to do her shopping weekly', 'Proposer de faire ses courses chaque semaine'], [[1, 'k+8 h+4', ['I now do my neighbour’s shopping every week. She tells everyone about me.', 'Je fais les courses de ma voisine chaque semaine. Elle parle de moi à tout le monde.']]]],
+      [['Pretend not to see', 'Faire semblant de ne pas voir'], [[1, 'k-3', ['I pretended not to see my neighbour struggling.', 'J’ai fait semblant de ne pas voir ma voisine en difficulté.']]]]
+    ], { r: 8 }],
+    ['blood', 18, 65, 4, null, s => s.me.st.H > 40, ['There’s a blood donation drive in town.', 'Il y a une collecte de sang en ville.'], [
+      [['Donate', 'Donner son sang'], [[1, 'k+6 H-1 h+2', ['I donated blood. They gave me a biscuit and a sticker.', 'J’ai donné mon sang. On m’a offert un biscuit et un autocollant.']]]],
+      [['Not today', 'Pas aujourd’hui'], [[1, '', ['I didn’t donate blood this time.', 'Je n’ai pas donné mon sang cette fois.']]]]
+    ], { r: 3 }],
+    ['celeb', 12, 90, 4, null, null, ['You spot a famous actor in a café.', 'Tu repères un acteur célèbre dans un café.'], [
+      [['Ask for a selfie', 'Demander un selfie'], [[2, 'h+5', ['I got a selfie with a famous actor. I have looked at it about a thousand times.', 'J’ai eu un selfie avec un acteur célèbre. Je l’ai regardé environ mille fois.']], [1, 'h-1', ['I asked a famous actor for a selfie. He said he was not who I thought.', 'J’ai demandé un selfie à un acteur célèbre. Il a dit qu’il n’était pas celui que je croyais.']]]],
+      [['Play it cool', 'Rester naturel{le}'], [[1, 'h+2', ['I played it cool near the famous actor. He nodded at me.', 'Je suis resté{e} naturel{le} près de l’acteur. Il m’a fait un signe de tête.']]]],
+      [['Tell him you loved his last film', 'Lui dire que tu as adoré son dernier film'], [[1, 'h+4', ['I told the actor I loved his last film. He bought me a hot chocolate.', 'J’ai dit à l’acteur que j’avais adoré son dernier film. Il m’a offert un chocolat chaud.']]]]
+    ]],
+    ['startup', 22, 55, 4, null, s => s.me.sk.cod >= 50 || s.me.st.s >= 78, ['You have an idea for an app. Will you start your own company?', 'Tu as une idée d’application. Vas-tu créer ta propre entreprise ?'], [
+      [['Go for it', 'Se lancer'], [[1, 'startup', ['I started my own company.', 'J’ai créé ma propre entreprise.']]]],
+      [['Keep it as a side project', 'En faire un projet perso'], [[1, 'xcod+4 s+2 h+2', ['I built my app idea on weekends. A few hundred people use it.', 'J’ai développé mon idée le week-end. Quelques centaines de personnes l’utilisent.']]]],
+      [['Forget about it', 'Oublier'], [[1, '', ['I let my app idea go.', 'J’ai laissé tomber mon idée d’application.']]]]
+    ]],
+    ['quiz', 18, 85, 4, null, s => s.me.st.s >= 65, ['You have been invited onto a TV quiz show.', 'Tu es invité{e} à un jeu télévisé.'], [
+      [['Go for the big prize', 'Viser le gros lot'], [[s => s.me.st.s - 45, 'm+50000 f+5 h+10 !quiz', ['I won the big prize on a TV quiz show!', 'J’ai gagné le gros lot d’un jeu télévisé !']], [55, 'f+2 h-2', ['I went for the big prize on the quiz show and lost it all on the last question.', 'J’ai visé le gros lot du jeu télévisé et tout perdu à la dernière question.']]]],
+      [['Take the safe money', 'Prendre le gain assuré'], [[1, 'm+5000 f+2 h+4', ['I took the safe money on the TV quiz show and went home happy.', 'J’ai pris le gain assuré du jeu télévisé et je suis rentré{e} content{e}.']]]],
+      [['Decline', 'Refuser'], [[1, '', ['I said no to the TV quiz show.', 'J’ai refusé le jeu télévisé.']]]]
+    ]],
+    ['donate', 30, 100, 4, null, s => s.me.m > 20000, ['A children’s hospital is raising money for a new wing.', 'Un hôpital pour enfants récolte des fonds pour une nouvelle aile.'], [
+      [['Donate generously', 'Donner généreusement'], [[1, 'donate:10 k+10 f+2 h+5', ['I gave a generous donation to the children’s hospital.', 'J’ai fait un don généreux à l’hôpital pour enfants.']]]],
+      [['Give a little', 'Donner un peu'], [[1, 'm-200 k+3 h+2', ['I gave a small donation to the children’s hospital.', 'J’ai fait un petit don à l’hôpital pour enfants.']]]],
+      [['Not this time', 'Pas cette fois'], [[1, 'k-1', ['I didn’t donate this time.', 'Je n’ai pas fait de don cette fois.']]]]
+    ], { r: 10 }],
+    ['oldfriend', 30, 100, 5, 'friend', null, ['{p}, an old friend, calls you out of the blue.', '{p}, {un} ami{pe} de longue date, t’appelle sans prévenir.'], [
+      [['Meet for coffee', 'Se retrouver autour d’un café'], [[1, 'b+9 h+4', ['I met {p} for coffee. Three hours flew by.', 'J’ai retrouvé {p} pour un café. Trois heures sont passées en un éclair.']]]],
+      [['Have a long chat on the phone', 'Discuter longuement au téléphone'], [[1, 'b+5 h+2', ['I chatted with {p} on the phone for an hour.', 'J’ai discuté avec {p} au téléphone pendant une heure.']]]],
+      [['Let it ring', 'Laisser sonner'], [[1, 'b-6', ['I let {p}’s call go to voicemail.', 'J’ai laissé l’appel de {p} partir sur la messagerie.']]]]
+    ], { r: 5 }],
+    ['concert', 14, 80, 4, null, null, ['There’s a free concert in the park tonight.', 'Il y a un concert gratuit au parc ce soir.'], [
+      [['Go and dance', 'Y aller et danser'], [[1, 'h+5 a+1', ['I danced at a free concert in the park until the last song.', 'J’ai dansé au concert gratuit du parc jusqu’à la dernière chanson.']]]],
+      [['Listen from your window', 'Écouter depuis ta fenêtre'], [[1, 'h+2', ['I listened to the concert from my window with a cup of tea.', 'J’ai écouté le concert depuis ma fenêtre avec une tasse de thé.']]]]
+    ], { r: 4 }],
+    ['relocate', 25, 58, 4, null, s => s.me.job && s.me.job.t === 'f' && olCanPromote(s), ['Your company offers you a promotion if you move to {city}.', 'Ton entreprise te propose une promotion si tu déménages à {city}.'], [
+      [['Accept and move', 'Accepter et déménager'], [[1, 'promote h+2 friendsdown', ['I accepted a promotion and moved to {city}.', 'J’ai accepté une promotion et j’ai déménagé à {city}.']]]],
+      [['Decline and stay', 'Refuser et rester'], [[1, 'B+2', ['I turned down the promotion to stay close to my family and friends.', 'J’ai refusé la promotion pour rester près de ma famille et de mes amis.']]]]
+    ]],
+    ['learnlang', 18, 80, 4, null, null, ['A friend suggests learning a new language together.', 'Un ami te propose d’apprendre une nouvelle langue ensemble.'], [
+      [['Japanese', 'Le japonais'], [[1, 'xlan+6 s+2', ['I started learning Japanese. I can now order noodles very politely.', 'J’ai commencé le japonais. Je sais maintenant commander des nouilles très poliment.']]]],
+      [['Spanish', 'L’espagnol'], [[1, 'xlan+6 s+2', ['I started learning Spanish and practise with a pen pal in Seville.', 'J’ai commencé l’espagnol et je m’entraîne avec une correspondante à Séville.']]]],
+      [['Sign language', 'La langue des signes'], [[1, 'xlan+5 k+3 s+2', ['I learned sign language and can now chat with my deaf neighbour.', 'J’ai appris la langue des signes et je peux discuter avec mon voisin sourd.']]]],
+      [['Maybe later', 'Peut-être plus tard'], [[1, '', ['I decided not to learn a language this year.', 'J’ai décidé de ne pas apprendre de langue cette année.']]]]
+    ]],
+    ['lostdog', 10, 90, 4, null, null, ['You find a lost dog with a name tag.', 'Tu trouves un chien perdu avec une médaille.'], [
+      [['Call the number on the tag', 'Appeler le numéro de la médaille'], [[1, 'k+5 h+4', ['I found a lost dog and called its owner. The dog licked my whole face.', 'J’ai trouvé un chien perdu et j’ai appelé sa propriétaire. Le chien m’a léché tout le visage.']]]],
+      [['Take it to a vet', 'L’emmener chez un vétérinaire'], [[1, 'k+4 h+2', ['I took the lost dog to a vet, who scanned its chip and found the family.', 'J’ai emmené le chien chez un vétérinaire, qui a lu sa puce et retrouvé sa famille.']]]],
+      [['Walk away', 'Passer ton chemin'], [[1, 'k-3', ['I walked past the lost dog. I hope someone helped it.', 'Je suis passé{e} devant le chien perdu sans m’arrêter. J’espère que quelqu’un l’a aidé.']]]]
+    ]],
+    ['garage', 30, 90, 3, null, s => olHouse(s), ['Your garage is full of things you never use.', 'Ton garage est plein d’objets dont tu ne te sers jamais.'], [
+      [['Hold a garage sale', 'Organiser un vide-grenier'], [[1, 'm+400 h+3', ['I held a garage sale and made some money. I bought nothing back. Almost.', 'J’ai fait un vide-grenier et gagné un peu d’argent. Je n’ai rien racheté. Presque.']]]],
+      [['Give everything to charity', 'Tout donner à une association'], [[1, 'k+5 h+3', ['I gave everything in my garage to charity.', 'J’ai donné tout le contenu de mon garage à une association.']]]],
+      [['Keep it all, just in case', 'Tout garder, au cas où'], [[1, '', ['I kept everything in the garage, just in case.', 'J’ai tout gardé dans le garage, au cas où.']]]]
+    ]]
+  ];
+
+  const OL_PE = [
+    [0, 1, 6, null, 'h+2', ['I learned to crawl, mostly backwards.', 'J’ai appris à ramper, surtout en marche arrière.']],
+    [1, 1, 8, null, 'a+1 h+2', ['I took my first steps and walked straight into the sofa.', 'J’ai fait mes premiers pas, droit dans le canapé.']],
+    [0, 2, 4, null, 'h+3', ['I laughed for the first time when the dog sneezed.', 'J’ai ri pour la première fois quand le chien a éternué.']],
+    [1, 3, 4, null, 'h+1', ['I spent most of the year saying “no” to everything.', 'J’ai passé presque toute l’année à dire « non » à tout.']],
+    [2, 4, 4, null, 's+1', ['I learned to count to ten. Eleven is still a mystery.', 'J’ai appris à compter jusqu’à dix. Onze reste un mystère.']],
+    [2, 4, 3, null, 'h+2', ['I insisted on wearing my rain boots every day, even in summer.', 'J’ai tenu à porter mes bottes de pluie tous les jours, même en été.']],
+    [3, 5, 3, null, 's+2', ['I asked “why?” about four hundred times a day.', 'J’ai demandé « pourquoi ? » environ quatre cents fois par jour.']],
+    [3, 6, 3, null, 'xart+2', ['I drew a portrait of my family. Everyone had seven fingers.', 'J’ai dessiné ma famille. Tout le monde avait sept doigts.']],
+    [4, 7, 4, null, 'a+2 h+2', ['I learned to ride a bike without stabilisers.', 'J’ai appris à faire du vélo sans petites roues.']],
+    [4, 8, 4, null, 'H+2 a+2', ['I learned to swim.', 'J’ai appris à nager.']],
+    [5, 9, 3, null, 'h-2', ['I lost my favourite teddy bear at the supermarket.', 'J’ai perdu mon doudou préféré au supermarché.']],
+    [5, 10, 3, null, 's+2', ['I learned to read my first real book on my own.', 'J’ai lu mon premier vrai livre tout{e} seul{e}.']],
+    [6, 11, 3, null, 'h+3', ['I won a goldfish at the funfair.', 'J’ai gagné un poisson rouge à la fête foraine.'], 'pet:fish'],
+    [6, 12, 3, null, 'h+2', ['I built a treehouse with some friends. It is mostly a platform.', 'J’ai construit une cabane avec des amis. C’est surtout une plateforme.']],
+    [6, 12, 3, null, 's+1 h+1', ['I started collecting stones that look like animals.', 'J’ai commencé une collection de cailloux qui ressemblent à des animaux.']],
+    [7, 12, 3, null, 'h-3', ['My best friend moved to another city.', 'Mon meilleur ami a déménagé dans une autre ville.']],
+    [7, 13, 3, null, 'h+2', ['I learned to whistle. Nobody at home can stop me now.', 'J’ai appris à siffler. Plus personne à la maison ne peut m’arrêter.']],
+    [8, 13, 2, null, 's+2', ['I read every book about space in the school library.', 'J’ai lu tous les livres sur l’espace de la bibliothèque de l’école.']],
+    [8, 14, 3, null, 'h+2', ['I discovered that I really love {subj}.', 'J’ai découvert que j’adore {subj}.']],
+    [8, 16, 2, null, 'h-2', ['I discovered that I really don’t like {subj}.', 'J’ai découvert que je n’aime vraiment pas {subj}.']],
+    [10, 14, 3, null, 'l-1', ['I got braces. Smiling feels strange.', 'J’ai eu un appareil dentaire. Sourire me fait bizarre.']],
+    [12, 16, 4, null, 'l+2 a+1', ['I grew ten centimetres this year.', 'J’ai pris dix centimètres cette année.']],
+    [12, 15, 3, null, 'h+1', ['I started keeping a diary.', 'J’ai commencé à tenir un journal intime.']],
+    [12, 17, 3, null, 'h-2', ['I had a big argument with my best friend. We made up a week later.', 'Je me suis disputé{e} avec mon meilleur ami. On s’est réconciliés une semaine plus tard.']],
+    [13, 17, 3, null, 's+1', ['I stayed up late reading about black holes.', 'J’ai veillé tard en lisant des articles sur les trous noirs.']],
+    [13, 18, 3, null, 'h+3', ['I went to my first concert with friends.', 'Je suis allé{e} à mon premier concert avec des amis.']],
+    [14, 18, 3, null, 'xcoo+2', ['I cooked dinner for the whole family for the first time.', 'J’ai préparé le dîner pour toute la famille pour la première fois.']],
+    [15, 19, 2, null, 'h-1', ['I realised that adults also don’t know what they are doing.', 'J’ai compris que les adultes non plus ne savent pas toujours ce qu’ils font.']],
+    [18, 30, 3, null, 'xcoo+3', ['I learned to cook a proper risotto.', 'J’ai appris à faire un vrai risotto.']],
+    [18, 30, 3, null, 'h+2', ['I finally put together a piece of flat-pack furniture without spare screws.', 'J’ai enfin monté un meuble en kit sans qu’il reste de vis.']],
+    [18, 40, 3, null, 'H+2 a+1', ['I ran my first 5K.', 'J’ai couru mes premiers 5 km.']],
+    [18, 50, 2, null, 'h+3', ['I watched the sunrise from a mountain top.', 'J’ai regardé le lever du soleil depuis le sommet d’une montagne.']],
+    [20, 60, 3, null, 'h+2', ['I grew herbs on my windowsill. The basil is thriving.', 'J’ai fait pousser des herbes sur mon rebord de fenêtre. Le basilic se porte très bien.']],
+    [20, 60, 2, null, 'h-2', ['I lost my keys four times this year.', 'J’ai perdu mes clés quatre fois cette année.']],
+    [20, 70, 2, null, 'h+2', ['A neighbour’s cat decided my home is its second home.', 'Le chat d’un voisin a décidé que chez moi était sa résidence secondaire.']],
+    [22, 60, 3, null, 's+2', ['I read twenty books this year.', 'J’ai lu vingt livres cette année.']],
+    [25, 60, 2, null, 'H+2', ['I took up yoga.', 'Je me suis mis{e} au yoga.']],
+    [25, 70, 2, null, 'h+2', ['I learned the names of all the stars I can see from my window.', 'J’ai appris le nom de toutes les étoiles visibles depuis ma fenêtre.']],
+    [28, 45, 2, null, 'l-1', ['I needed glasses for the first time.', 'J’ai eu besoin de lunettes pour la première fois.']],
+    [35, 50, 3, null, 'l-1', ['I found my first grey hair.', 'J’ai trouvé mon premier cheveu blanc.']],
+    [35, 70, 2, null, 'h+2', ['I finally learned how to fold a fitted sheet.', 'J’ai enfin appris à plier un drap-housse.']],
+    [40, 70, 2, null, 'H-1', ['My knees started making noises on the stairs.', 'Mes genoux ont commencé à grincer dans les escaliers.']],
+    [45, 80, 2, null, 'h+2', ['I planted a tree. Someone will enjoy its shade one day.', 'J’ai planté un arbre. Quelqu’un profitera de son ombre un jour.']],
+    [55, 90, 3, null, 'H+2 h+2', ['I joined a walking group.', 'J’ai rejoint un groupe de marche.']],
+    [60, 100, 3, null, 'h+2', ['I learned to make video calls to see the family.', 'J’ai appris à faire des appels vidéo pour voir la famille.']],
+    [60, 100, 2, null, 'h+3', ['I became the best gardener on my street.', 'Je suis devenu{e} le meilleur jardinier de ma rue.']],
+    [65, 100, 2, null, 'H-1', ['My knees now predict the weather better than the forecast.', 'Mes genoux prédisent la météo mieux que la télévision.']],
+    [65, 100, 2, null, 's+1', ['I started doing a crossword every morning.', 'J’ai commencé à faire des mots croisés chaque matin.']],
+    [70, 110, 2, null, 'h+2', ['I told the same funny story at every family dinner. It got funnier every time.', 'J’ai raconté la même histoire drôle à chaque repas de famille. Elle était plus drôle à chaque fois.']],
+    [70, 110, 2, null, 'h+1', ['I finally finished the jigsaw puzzle I started twenty years ago.', 'J’ai enfin terminé le puzzle commencé il y a vingt ans.']],
+    [8, 17, 3, s => s.me.fl.team, 'a+2 h+3', ['My {sport} team won the regional final!', 'Mon équipe de {sport} a gagné la finale régionale !']],
+    [8, 17, 2, s => s.me.fl.team, 'a+1 h-2', ['My {sport} team lost every match this season, but we had fun.', 'Mon équipe de {sport} a perdu tous ses matchs cette saison, mais on s’est bien amusés.']],
+    [6, 70, 2, s => s.me.sk.mus >= 50, 'xmus+2 h+3', ['I played music in front of an audience and nobody left.', 'J’ai joué de la musique devant un public et personne n’est parti.']],
+    [6, 90, 2, s => s.me.sk.art >= 50, 'xart+2 h+3', ['One of my paintings was hung in a local exhibition.', 'Un de mes tableaux a été exposé dans une galerie du quartier.']],
+    [10, 90, 2, s => s.me.sk.cod >= 50, 'xcod+2 s+1', ['I built a small game in my spare time. My friends are hooked.', 'J’ai créé un petit jeu sur mon temps libre. Mes amis sont accros.']],
+    [10, 90, 2, s => s.me.sk.wri >= 50, 'xwri+2 h+2', ['One of my short stories won a local writing prize.', 'Une de mes nouvelles a gagné un prix d’écriture local.']],
+    [10, 90, 2, s => s.me.sk.coo >= 50, 'xcoo+2 h+2', ['My signature dish is now famous among my friends.', 'Mon plat signature est maintenant célèbre parmi mes amis.']],
+    [10, 90, 2, s => s.me.sk.lan >= 50, 'xlan+2 h+2', ['I had a whole conversation with a tourist in their own language.', 'J’ai tenu toute une conversation avec un touriste dans sa langue.']],
+    [16, 80, 2, s => s.me.f >= 40, 'f+1 h+2', ['A stranger recognised me in the street and asked for an autograph.', 'Un inconnu m’a reconnu{e} dans la rue et m’a demandé un autographe.']],
+    [5, 100, 2, s => s.me.k >= 75, 'h+3', ['People keep telling me I am the kindest person they know.', 'On me répète que je suis la personne la plus gentille qu’on connaisse.']],
+    [18, 90, 2, s => s.me.m < 0, 'h-3', ['I am struggling to pay my bills.', 'J’ai du mal à payer mes factures.']]
+  ];
+
+  const OL_JP = {
+    teach: [['One of my former students wrote to thank me for believing in them.', 'Un ancien élève m’a écrit pour me remercier d’avoir cru en lui.'], ['My class put on a play that made the whole school laugh.', 'Ma classe a monté une pièce qui a fait rire toute l’école.']],
+    nurse: [['I held a frightened patient’s hand all night. She recovered.', 'J’ai tenu la main d’une patiente effrayée toute la nuit. Elle s’est rétablie.'], ['I worked through a very long winter of flu season.', 'J’ai travaillé pendant un très long hiver de grippe.']],
+    doctor: [['I saved a patient’s life in the emergency room.', 'J’ai sauvé la vie d’un patient aux urgences.'], ['I spotted a rare illness that three other doctors had missed.', 'J’ai repéré une maladie rare que trois autres médecins n’avaient pas vue.']],
+    dev: [['I fixed a bug that had haunted the whole team for weeks.', 'J’ai corrigé un bug qui hantait toute l’équipe depuis des semaines.'], ['An app I helped build reached a million users.', 'Une application à laquelle j’ai participé a atteint un million d’utilisateurs.']],
+    engin: [['A bridge I helped design opened to the public.', 'Un pont que j’ai aidé à concevoir a été inauguré.']],
+    cook: [['A food critic praised my dessert in the newspaper.', 'Un critique gastronomique a vanté mon dessert dans le journal.'], ['I survived the busiest Saturday service of the year.', 'J’ai survécu au service du samedi le plus chargé de l’année.']],
+    police: [['I found a lost child in the market and brought her back to her parents.', 'J’ai retrouvé une enfant perdue au marché et je l’ai ramenée à ses parents.']],
+    fire: [['I rescued a family’s dog from a burning house.', 'J’ai sauvé le chien d’une famille d’une maison en feu.'], ['I visited a primary school to teach fire safety. The children loved the helmet.', 'J’ai fait une intervention de prévention dans une école. Les enfants ont adoré le casque.']],
+    lawyer: [['I won a difficult case for a family who had lost everything.', 'J’ai gagné une affaire difficile pour une famille qui avait tout perdu.']],
+    vetj: [['I helped a cow give birth to twin calves at 3 a.m.', 'J’ai aidé une vache à mettre bas des jumeaux à 3 h du matin.']],
+    music: [['A song I wrote was played on the radio.', 'Une chanson que j’ai écrite est passée à la radio.']],
+    actor: [['I was recognised in a supermarket for a role I played.', 'On m’a reconnu{e} au supermarché pour un rôle que j’ai joué.']],
+    athl: [['I broke my personal record in front of a full stadium.', 'J’ai battu mon record personnel devant un stade plein.']],
+    writer: [['A reader sent me a letter saying my book changed their life.', 'Un lecteur m’a écrit que mon livre avait changé sa vie.']],
+    farm: [['We had the best harvest in ten years.', 'On a eu la meilleure récolte depuis dix ans.']],
+    retail: [['A customer came back just to thank me for my help.', 'Un client est revenu uniquement pour me remercier de mon aide.']],
+    pilot: [['I landed a plane safely in a storm. The passengers applauded.', 'J’ai posé un avion en pleine tempête. Les passagers ont applaudi.']],
+    astro: [['I spent six months on the space station and saw sixteen sunrises a day.', 'J’ai passé six mois dans la station spatiale et vu seize levers de soleil par jour.']],
+    prof: [['I published a paper that other researchers keep quoting.', 'J’ai publié un article que d’autres chercheurs citent sans arrêt.']],
+    lab: [['My experiment finally worked after two hundred tries.', 'Mon expérience a enfin marché après deux cents essais.']]
+  };
+
+  const OL_IV = [
+    [['Why do you want this job?', 'Pourquoi voulez-vous ce poste ?'], [[['I love this kind of work and I learn fast.', 'J’aime ce type de travail et j’apprends vite.'], 12], [['Mainly for the money, honestly.', 'Surtout pour l’argent, honnêtement.'], -8], [['My parents told me to apply.', 'Mes parents m’ont dit de postuler.'], -12]]],
+    [['What is your biggest weakness?', 'Quel est votre plus grand défaut ?'], [[['I can be too much of a perfectionist.', 'Je suis parfois trop perfectionniste.'], 0], [['I used to be shy, but I’m working on it.', 'J’étais timide, mais je travaille dessus.'], 10], [['I don’t have any.', 'Je n’en ai aucun.'], -10]]],
+    [['Tell us about a time you solved a problem.', 'Racontez-nous une fois où vous avez résolu un problème.'], [[['I organised a team to fix a project that was going wrong.', 'J’ai réuni une équipe pour sauver un projet qui partait mal.'], 12], [['I can’t think of one right now.', 'Je n’en vois pas pour l’instant.'], -12], [['I usually ask someone else to solve them.', 'D’habitude, je demande à quelqu’un d’autre.'], -6]]],
+    [['Where do you see yourself in five years?', 'Où vous voyez-vous dans cinq ans ?'], [[['Growing with this company and taking on more responsibility.', 'En train d’évoluer dans cette entreprise avec plus de responsabilités.'], 10], [['In your chair.', 'Dans votre fauteuil.'], 3], [['On a beach, retired.', 'Sur une plage, à la retraite.'], -10]]],
+    [['How do you handle pressure?', 'Comment gérez-vous la pression ?'], [[['I make a plan and take things one step at a time.', 'Je fais un plan et j’avance étape par étape.'], 12], [['I panic, but quietly.', 'Je panique, mais discrètement.'], -4], [['I avoid pressure completely.', 'J’évite complètement la pression.'], -8]]],
+    [['Why should we choose you?', 'Pourquoi devrions-nous vous choisir ?'], [[['I am reliable, curious and I work well with others.', 'Je suis fiable, curieux et j’aime travailler en équipe.'], 12], [['Because I really need a job.', 'Parce que j’ai vraiment besoin d’un travail.'], -4], [['Because the other candidates are worse.', 'Parce que les autres candidats sont moins bons.'], -10]]]
+  ];
+
+  const OL_FEM = { Infirmier: 'Infirmière', Pompier: 'Pompière', Facteur: 'Factrice', Vendeur: 'Vendeuse', Directeur: 'Directrice', Chercheur: 'Chercheuse', Développeur: 'Développeuse', Coiffeur: 'Coiffeuse', Agriculteur: 'Agricultrice', Conducteur: 'Conductrice', Traducteur: 'Traductrice', Mécanicien: 'Mécanicienne', Électricien: 'Électricienne', Technicien: 'Technicienne', Musicien: 'Musicienne', Plongeur: 'Plongeuse', Avocat: 'Avocate', Associé: 'Associée', associé: 'associée', Candidat: 'Candidate', Auteur: 'Autrice', Créateur: 'Créatrice', Entraîneur: 'Entraîneuse', Inspecteur: 'Inspectrice', Rédacteur: 'Rédactrice', Chirurgien: 'Chirurgienne', Professeur: 'Professeure', Banquier: 'Banquière', Commandant: 'Commandante', Préparateur: 'Préparatrice', Ouvrier: 'Ouvrière', Exploitant: 'Exploitante', Brigadier: 'Brigadière', Apprenti: 'Apprentie', 'Aide-soignant': 'Aide-soignante', Téléconseiller: 'Téléconseillère', Superviseur: 'Superviseuse', Gérant: 'Gérante', Promeneur: 'Promeneuse', Livreur: 'Livreuse', 'Chauffeur-livreur': 'Chauffeuse-livreuse', Caissier: 'Caissière', Serveur: 'Serveuse', Figurant: 'Figurante', Comédien: 'Comédienne', Acteur: 'Actrice', Assistant: 'Assistante', assistant: 'assistante', Ingénieur: 'Ingénieure', Analyste: 'Analyste', Agent: 'Agente', Élève: 'Élève', Fonctionnaire: 'Fonctionnaire', 'Haut': 'Haute', junior: 'junior', principal: 'principale', adjoint: 'adjointe', débutant: 'débutante', signé: 'signée', exposé: 'exposée', indépendant: 'indépendante', publié: 'publiée', 'semi-professionnel': 'semi-professionnelle', professionnel: 'professionnelle', mécanicien: 'mécanicienne', électricien: 'électricienne', Maître: 'Maîtresse', Athlète: 'Athlète', Interprète: 'Interprète', Copilote: 'Copilote', Peintre: 'Peintre', Chef: 'Cheffe', Commissaire: 'Commissaire', particulier: 'particulière', financier: 'financière', régional: 'régionale', Second: 'Seconde', coiffeur: 'coiffeuse' };
+
+  const OL_V = 1;
+  const OL_SK = ['mus', 'art', 'cod', 'act', 'lan', 'coo', 'wri'];
+  const OL_SKN = { mus: 'Music', art: 'Art', cod: 'Coding', act: 'Acting', lan: 'Languages', coo: 'Cooking', wri: 'Writing' };
+  const OL_JOBM = {}, OL_HOUSEM = {}, OL_CARM = {}, OL_PETM = {}, OL_ILLM = {}, OL_MAJM = {}, OL_GRADM = {}, OL_AWM = {}, OL_EVM = {};
+  OL_JOB.forEach(j => { OL_JOBM[j[0]] = j; });
+  OL_HOUSE.forEach(h => { OL_HOUSEM[h[0]] = h; });
+  OL_CAR.forEach(c => { OL_CARM[c[0]] = c; });
+  OL_PET.forEach(p => { OL_PETM[p[0]] = p; });
+  OL_ILL.forEach(i => { OL_ILLM[i[0]] = i; });
+  OL_MAJ.forEach(m => { OL_MAJM[m[0]] = m; });
+  OL_GRAD.forEach(g => { OL_GRADM[g[0]] = g; });
+  OL_AW.forEach(a => { OL_AWM[a[0]] = a; });
+  OL_EV.forEach(e => { OL_EVM[e[0]] = e; });
+  const OL_SKIN = ['#f7dcc8', '#efc3a2', '#dba47c', '#bb7d57', '#8f5b3c', '#5f3c29'];
+  const OL_HAIR = ['#2a211e', '#4b3122', '#7b4a2a', '#a4532c', '#d8b066', '#c25230', '#3b78d6', '#ee6aa7', '#3f9e52'];
+  const OL_EYE = ['#5b3a24', '#3b5f8a', '#4f7a43', '#2c2420'];
+  const OL_SHIRT = ['#5b8def', '#ef6f6c', '#40b98c', '#f2b542', '#9b6be0', '#ef8a3c', '#3fb3c9', '#e46fa8'];
+  const OL_INST = [['piano', 'du piano'], ['guitar', 'de la guitare'], ['violin', 'du violon'], ['drums', 'de la batterie'], ['singing', 'du chant'], ['trumpet', 'de la trompette']];
+  const OL_TRAIT = [['funny', 'drôle'], ['kind', 'gentil'], ['clever', 'brillant'], ['sporty', 'sportif'], ['artistic', 'artiste'], ['calm', 'calme'], ['chatty', 'bavard'], ['curious', 'curieux'], ['loyal', 'loyal'], ['adventurous', 'aventurier']];
+  const OL_TRAITF = { gentil: 'gentille', brillant: 'brillante', sportif: 'sportive', bavard: 'bavarde', curieux: 'curieuse', loyal: 'loyale', aventurier: 'aventurière' };
+  const OL_TRIP = [[['a beach holiday in Portugal', 'des vacances à la plage au Portugal'], 1200], [['a city break in Rome', 'un week-end à Rome'], 900], [['a ski trip in the Alps', 'un séjour au ski dans les Alpes'], 2100], [['a road trip across Canada', 'un road trip à travers le Canada'], 3600], [['a safari in Kenya', 'un safari au Kenya'], 4800], [['an adventure in Tokyo', 'une aventure à Tokyo'], 4200], [['a camping trip in the mountains', 'du camping en montagne'], 400], [['a cruise around Greece', 'une croisière en Grèce'], 3000]];
+
+  const olR = Math.random;
+  const olI = (a, b) => a + Math.floor(olR() * (b - a + 1));
+  const olP = a => a[Math.floor(olR() * a.length)];
+  const olC = (v, a = 0, b = 100) => (v < a ? a : v > b ? b : v);
+  const olLang = () => (window.gpI18n && gpI18n.lang) || 'en';
+  const olFr = () => olLang() === 'fr';
+  const L = (s, o) => { let t = window.gpI18n && gpI18n.t ? gpI18n.t(s) : s; if (typeof t !== 'string') t = s; return o ? t.replace(/\{(\w+)\}/g, (m, k) => (k in o ? o[k] : m)) : t; };
+  const X = p => (p == null ? '' : typeof p === 'string' ? p : (olFr() && p[1]) || p[0]);
+  const olEsc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const olW = (list, wf) => { let t = 0; const w = list.map(x => { const v = Math.max(0, wf(x)); t += v; return v; }); if (t <= 0) return null; let r = olR() * t; for (let i = 0; i < list.length; i++) { r -= w[i]; if (r < 0) return list[i]; } return list[list.length - 1]; };
+  const olNF = {};
+  function olMoney(v, li) {
+    const lg = li === 0 ? 'en' : li === 1 ? 'fr' : olLang();
+    const key = lg + (Math.abs(v) >= 1e7 ? 'c' : '');
+    if (!olNF[key]) {
+      const loc = { en: 'en-US', fr: 'fr-FR', es: 'es-ES', de: 'de-DE', it: 'it-IT', pt: 'pt-PT' }[lg] || 'en-US';
+      try { olNF[key] = new Intl.NumberFormat(loc, { style: 'currency', currency: lg === 'en' ? 'USD' : 'EUR', maximumFractionDigits: key.endsWith('c') ? 1 : 0, notation: key.endsWith('c') ? 'compact' : 'standard' }); } catch (e) { olNF[key] = { format: n => (lg === 'en' ? '$' : '€') + Math.round(n) }; }
+    }
+    return olNF[key].format(Math.round(v));
+  }
+  const olMoneyTxt = s => s.replace(/\{\$(-?\d+)\}/g, (m, n) => olMoney(+n));
+  const olLow = s => s.charAt(0).toLowerCase() + s.slice(1);
+  const olArt = s => (/^[aeiou]/i.test(s) ? 'an ' : 'a ') + olLow(s);
+  function olFem(t) { return t.split(' ').map(w => OL_FEM[w] || w).join(' '); }
+  function olJobT(id, lvl, g, li) {
+    const j = OL_JOBM[id];
+    if (!j) return '';
+    const l = j[6][Math.min(lvl, j[6].length - 1)];
+    if (li === 0) return l[0];
+    if (li === 1) return g === 'f' ? olFem(l[1]) : l[1];
+    return olFr() ? (g === 'f' ? olFem(l[1]) : l[1]) : l[0];
+  }
+  const olJobPair = (id, lvl, g) => [olJobT(id, lvl, g, 0), olJobT(id, lvl, g, 1)];
+  const olTrait = (t, g, li) => (li === 1 ? (g === 'f' && OL_TRAITF[t[1]]) || t[1] : t[0]);
+
+  function olName(g) { return olP(OL_NM[g === 'f' ? 'f' : 'm']); }
+  function olLook(g) { const lg = olR() < 0.72; return { sk: olI(0, 5), hc: olI(0, 5), hs: g === 'f' ? (lg ? olP([1, 3]) : olP([0, 2])) : g === 'm' ? (lg ? olP([0, 2]) : olP([1, 3])) : olI(0, 3), ec: olI(0, 3), sh: olI(0, 7), bd: g === 'm' && olR() < 0.35 ? 1 : 0, gl: olR() < 0.3 ? 1 : 0 }; }
+  function olPerson(s, r, g, age, o) {
+    let n = olName(g);
+    for (let t = 0; t < 8 && (s.pp.some(q => q.al && q.n === n && q.r !== 'friend') || (s.me && s.me.fn === n)); t++) n = olName(g);
+    const p = Object.assign({ i: ++s.nid, r, n, g, age, al: 1, b: olI(55, 80), lk: olLook(g), d: [] }, o || {});
+    if (p.lk && r === 'kid' && s.me) p.lk.sk = olR() < 0.5 ? s.me.lk.sk : olC(s.me.lk.sk + olI(-1, 1), 0, 5);
+    s.pp.push(p);
+    return p;
+  }
+  function olTemp(s, age) { const g = olP(['m', 'f']); return { t: 1, i: 0, r: 'tmp', n: olName(g), ln: olP(OL_NM.l), g, age: Math.max(3, age), lk: olLook(g), b: 50, al: 1, d: [] }; }
+  const olAlive = (s, r) => s.pp.filter(p => p.al && (!r || p.r === r));
+  const olLove = s => s.pp.find(p => p.al && p.r === 'love');
+  function olHasPet(s) { return s.pp.some(p => p.al && p.r === 'pet'); }
+  function olHasCar(s) { return s.me.as.some(a => a.t === 'car' && OL_CARM[a.id] && OL_CARM[a.id][4]); }
+  function olHouse(s) { return s.me.as.find(a => a.t === 'house'); }
+  function olAt(s, ...k) { return !!s.me.sch && k.includes(s.me.sch.k); }
+  function olCanPromote(s) { const j = s.me.job; if (!j) return false; const d = OL_JOBM[j.id]; return !!d && j.lvl < d[6].length - 1; }
+  function olWorth(s) { const me = s.me; let w = me.m - me.debt; me.as.forEach(a => { w += a.v - (a.lo || 0); }); return Math.round(w); }
+
+  function olRel(p, me) {
+    const f = p.g === 'f';
+    switch (p.r) {
+      case 'mom': return ['mother', 'mère', 'ta', 'ma'];
+      case 'dad': return ['father', 'père', 'ton', 'mon'];
+      case 'sib': return f ? ['sister', 'sœur', 'ta', 'ma'] : ['brother', 'frère', 'ton', 'mon'];
+      case 'gp': return f ? ['grandmother', 'grand-mère', 'ta', 'ma'] : ['grandfather', 'grand-père', 'ton', 'mon'];
+      case 'friend': return f ? ['friend', 'amie', 'ton', 'mon'] : ['friend', 'ami', 'ton', 'mon'];
+      case 'love':
+        if (p.st === 'mar') return f ? ['wife', 'femme', 'ta', 'ma'] : ['husband', 'mari', 'ton', 'mon'];
+        if (p.st === 'eng') return f ? ['fiancée', 'fiancée', 'ta', 'ma'] : ['fiancé', 'fiancé', 'ton', 'mon'];
+        return f ? ['girlfriend', 'petite amie', 'ta', 'ma'] : ['boyfriend', 'petit ami', 'ton', 'mon'];
+      case 'kid': return f ? ['daughter', 'fille', 'ta', 'ma'] : ['son', 'fils', 'ton', 'mon'];
+      case 'gkid': return f ? ['granddaughter', 'petite-fille', 'ta', 'ma'] : ['grandson', 'petit-fils', 'ton', 'mon'];
+      case 'pet': { const sp = OL_PETM[p.sp] || OL_PET[0], fe = p.sp === 'tortoise'; return [sp[1][0], sp[1][1], fe ? 'ta' : 'ton', fe ? 'ma' : 'mon']; }
+      default: return ['classmate', 'camarade', 'ton', 'mon'];
+    }
+  }
+  const olCap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  function olTok(k, c, li, s) {
+    const me = s.me, p = c.p, pf = p && p.g === 'f', mf = me.g === 'f';
+    switch (k) {
+      case 'p': return p ? p.n : '';
+      case 'e': return li === 1 && mf ? 'e' : '';
+      case 'le': return li === 1 && mf ? 'le' : '';
+      case 'pe': return li === 1 && pf ? 'e' : '';
+      case 'he': return pf ? 'she' : 'he';
+      case 'He': return pf ? 'She' : 'He';
+      case 'him': return pf ? 'her' : 'him';
+      case 'his': return pf ? 'her' : 'his';
+      case 'il': return pf ? 'elle' : 'il';
+      case 'Il': return pf ? 'Elle' : 'Il';
+      case 'lui': return pf ? 'elle' : 'lui';
+      case 'Lp': return pf ? 'La' : 'Le';
+      case 'un': return pf ? 'une' : 'un';
+      case 'Un': return pf ? 'Une' : 'Un';
+      case 'rel': case 'yrel': case 'Yrel': case 'myrel': case 'Myrel': case 'Ton': case 'pet': {
+        if (!p) return '';
+        const r = olRel(p, me);
+        if (k === 'pet') return li === 1 ? r[1] : r[0];
+        if (k === 'Ton') return li === 1 ? olCap(r[2]) : 'Your';
+        if (k === 'rel') return li === 1 ? r[1] : r[0];
+        const v = li === 1 ? (k[0].toLowerCase() === 'y' ? r[2] : r[3]) + ' ' + r[1] : (k[0].toLowerCase() === 'y' ? 'your ' : 'my ') + r[0];
+        return k[0] === 'Y' || k[0] === 'M' ? olCap(v) : v;
+      }
+      case 'amt': return '{$' + Math.round(c.amt || 0) + '}';
+      case 'job': return me.job ? olJobT(me.job.id, me.job.lvl, me.g, li) : '';
+      default: { const v = c[k]; if (Array.isArray(v)) return v[li] || v[0]; return v === undefined ? undefined : String(v); }
+    }
+  }
+  function olFill(str, c, li, s) { return str.replace(/\{(\w+)\}/g, (m, k) => { const v = olTok(k, c, li, s); return v === undefined ? m : v; }); }
+  const olFP = (pair, c, s) => [olFill(pair[0], c, 0, s), olFill(pair[1] || pair[0], c, 1, s)];
+  const olNoC = {};
+
+  function olNewLife(o) {
+    o = o || {};
+    const g = o.g === 'f' || o.g === 'm' ? o.g : olP(['m', 'f']);
+    const yr = o.yr || new Date().getFullYear();
+    const s = { v: OL_V, nid: 0, pp: [], log: [], q: [], gen: o.gen || 1, line: o.line || Math.floor(olR() * 1e9), pw: o.pw !== undefined ? o.pw : olW([0, 1, 2, 3], x => [2, 4, 3, 1][x]), net: 0 };
+    const ln = o.ln || olP(OL_NM.l);
+    s.me = {
+      fn: o.fn || olName(g), ln, g, age: 0, yr, born: yr, city: o.city !== undefined ? o.city : olI(0, OL_CITY.length - 1), lk: o.lk || olLook(g), al: 1,
+      st: { h: olI(62, 96), H: olI(72, 100), s: olI(18, 92), l: olI(18, 96) }, k: 50, f: 0, a: olI(10, 30),
+      sk: { mus: 0, art: 0, cod: 0, act: 0, lan: 0, coo: 0, wri: 0 }, m: 0, debt: 0, fl: {}, cnt: {}, ev: {}, dn: [], ill: [], as: [], lic: 0, mv: 0, ret: 0, pen: 0,
+      sch: null, edu: { hs: 0, deg: null, grad: null, ex: 0, gpa: 0, left: 0 }, job: null, hist: [], top: 0, sum: [0, 0, 0], kids: 0, pets: 0, mar: 0, inst: -1, spt: -1
+    };
+    const me = s.me;
+    me.lk.bd = 0;
+    const pj = [['retail', 'clean', 'care', 'farm', 'wareh', 'call', 'post'], ['police', 'post', 'elec', 'teach', 'mech', 'nurse', 'driver', 'cook'], ['engin', 'acct', 'nurse', 'dev', 'archi', 'psych', 'teach', 'mkt'], ['doctor', 'lawyer', 'bank', 'dent', 'pilot', 'prof']][s.pw];
+    const ma = olI(22, 40), da = olC(ma + olI(-3, 6), 22, 50);
+    const mk = (r, g2, age) => { const p = olPerson(s, r, g2, age, { ln, w: s.pw }); const jid = olP(pj), lv = Math.min(OL_JOBM[jid][6].length - 1, olI(age > 32 ? 1 : 0, 2)); p.job = olJobPair(jid, lv, g2); p.b = olI(70, 95); return p; };
+    const mom = mk('mom', 'f', ma), dad = mk('dad', 'm', da);
+    mom.lk.bd = 0;
+    dad.lk.sk = mom.lk.sk = olC(me.lk.sk + olI(-1, 1), 0, 5);
+    [[ma, 'f'], [ma, 'm'], [da, 'f'], [da, 'm']].forEach(([pa, g2]) => { const age = pa + olI(22, 34); if (age <= 92 && olR() < 0.8) { const p = olPerson(s, 'gp', g2, age); p.b = olI(60, 90); p.lk.hc = 0; } });
+    const ns = olW([0, 1, 2], x => [5, 4, 1][x]);
+    for (let i = 0; i < ns; i++) { const g2 = olP(['m', 'f']); const p = olPerson(s, 'sib', g2, olI(1, 8), { ln }); p.lk.sk = me.lk.sk; p.b = olI(55, 85); }
+    olYearStart(s);
+    const ci = OL_CITY[me.city];
+    olSay(s, [`I was born a ${g === 'f' ? 'girl' : 'boy'} in ${ci[0]}, ${ci[2]}.`, `Je suis ${g === 'f' ? 'une fille, née' : 'un garçon, né'} à ${ci[1]}, ${ci[3]}.`], 'm');
+    olSay(s, [`My mother is ${mom.n} ${ln}, ${olArt(mom.job[0])}. My father is ${dad.n} ${ln}, ${olArt(dad.job[0])}.`, `Ma mère s’appelle ${mom.n} ${ln}, elle est ${olLow(mom.job[1])}. Mon père s’appelle ${dad.n} ${ln}, il est ${olLow(dad.job[1])}.`]);
+    const sibs = olAlive(s, 'sib');
+    if (sibs.length) olSay(s, [`I have ${sibs.length === 1 ? 'one older sibling' : sibs.length + ' older siblings'}: ${sibs.map(x => x.n).join(' and ')}.`, `J’ai ${sibs.length === 1 ? 'un aîné' : sibs.length + ' aînés'} : ${sibs.map(x => x.n).join(' et ')}.`]);
+    return s;
+  }
+
+  function olYearStart(s) {
+    s.log.push({ a: s.me.age, y: s.me.yr, l: [] });
+    if (s.log.length > 130) s.log.splice(0, s.log.length - 130);
+  }
+  function olSay(s, pair, tone) {
+    const b = s.log[s.log.length - 1];
+    if (!b) return;
+    b.l.push([pair[0], pair[1] || pair[0], tone || '']);
+    if (b.l.length > 40) b.l.splice(0, b.l.length - 40);
+    s.dirty = 1;
+  }
+  function olSayC(s, pair, c, tone) { olSay(s, olFP(pair, c || olNoC, s), tone); }
+
+  function olAddIll(s, id) {
+    const me = s.me, d = OL_ILLM[id];
+    if (!d || me.ill.some(x => x[0] === id)) return false;
+    me.ill.push([id, 0, 0]);
+    return true;
+  }
+  function olGain(s, k, v) {
+    const me = s.me;
+    if (k === 'h' || k === 'H' || k === 's' || k === 'l') { const o = me.st[k]; me.st[k] = olC(o + v); return me.st[k] - o; }
+    if (k === 'k' || k === 'f' || k === 'a') { const o = me[k]; me[k] = olC(o + v); return me[k] - o; }
+    return 0;
+  }
+  function olAddPet(s, sp, age) {
+    const d = OL_PETM[sp];
+    if (!d) return null;
+    const p = olPerson(s, 'pet', olP(['m', 'f']), age === undefined ? olI(0, 2) : age, { sp, n: olP(OL_PETN), ly: olI(d[2], d[3]) });
+    p.b = olI(70, 90);
+    s.me.pets++;
+    return p;
+  }
+  function olMoveTemp(s, c, r, o) {
+    const t = c.p;
+    if (!t || !t.t) return t;
+    const p = olPerson(s, r, t.g, t.age, Object.assign({ n: t.n, ln: t.ln, lk: t.lk }, o || {}));
+    p.b = olI(50, 70);
+    c.p = p;
+    return p;
+  }
+
+  function olApply(s, eff, c, out) {
+    const me = s.me, ch = out || {};
+    const add = (k, v) => { if (v) ch[k] = (ch[k] || 0) + v; };
+    (eff || '').split(' ').forEach(tk => {
+      if (!tk) return;
+      let m = /^([hHslkfa])([+-]\d+)$/.exec(tk);
+      if (m) { add(m[1], olGain(s, m[1], +m[2])); return; }
+      m = /^m([+-])(\d+|amt)$/.exec(tk);
+      if (m) { const v = (m[2] === 'amt' ? c.amt || 0 : +m[2]) * (m[1] === '-' ? -1 : 1); me.m += v; add('m', v); return; }
+      m = /^b([+-]\d+)$/.exec(tk);
+      if (m) { if (c.p && !c.p.t) c.p.b = olC(c.p.b + +m[1]); return; }
+      m = /^B([+-]\d+)$/.exec(tk);
+      if (m) { s.pp.forEach(p => { if (p.al && (p.r === 'mom' || p.r === 'dad' || p.r === 'sib')) p.b = olC(p.b + +m[1]); }); return; }
+      m = /^p([+-]\d+)$/.exec(tk);
+      if (m) { if (me.job) me.job.perf = olC(me.job.perf + +m[1]); else if (me.sch) me.sch.perf = olC(me.sch.perf + +m[1]); return; }
+      m = /^x([a-z]{3})([+-]\d+)$/.exec(tk);
+      if (m && m[1] in me.sk) { const o = me.sk[m[1]]; me.sk[m[1]] = olC(o + +m[2]); return; }
+      if (tk[0] === '!') { me.fl[tk.slice(1)] = 1; return; }
+      if (tk.startsWith('i:')) { if (olAddIll(s, tk.slice(2))) add('H', 0); return; }
+      if (tk.startsWith('pet:')) { olAddPet(s, tk.slice(4)); return; }
+      if (tk.startsWith('hair:')) { const ix = { blue: 6, pink: 7, green: 8 }[tk.slice(5)]; if (ix) me.lk.hc = ix; return; }
+      if (tk === 'F') { if (c.p && c.p.t && olAlive(s, 'friend').length < 12) olMoveTemp(s, c, 'friend'); return; }
+      if (tk === 'F2') { for (let i = 0; i < 2; i++) if (olAlive(s, 'friend').length < 12) { const g = olP(['m', 'f']); olPerson(s, 'friend', g, me.age + olI(-1, 1)); } return; }
+      if (tk === 'P') { if (c.p && c.p.t && !olLove(s)) olMoveTemp(s, c, 'love', { st: 'date', yrs: 0 }); return; }
+      if (tk === 'jobmove') { const j = me.job; if (j) { j.sal = Math.round(j.sal * 1.2); j.perf = 55; j.ly = 0; add('m', 0); } return; }
+      m = /^raise:(\d+)$/.exec(tk);
+      if (m) { if (me.job) me.job.sal = Math.round(me.job.sal * (1 + +m[1] / 100)); return; }
+      if (tk === 'carhit') { const a = me.as.find(x => x.t === 'car' && OL_CARM[x.id][4]); if (a) a.v = Math.round(a.v * 0.5); return; }
+      m = /^invest:(big|small)$/.exec(tk);
+      if (m) {
+        const amt = Math.round(Math.min(m[1] === 'big' ? 50000 : 5000, Math.max(0, me.m) * (m[1] === 'big' ? 0.3 : 0.1)));
+        const r = olR(), back = r < 0.4 ? amt * 2 : r < 0.6 ? Math.round(amt * 1.2) : 0;
+        me.m += back - amt; add('m', back - amt);
+        c.amt = Math.abs(back - amt);
+        olSayC(s, back > amt ? ['The investment paid off: I made {amt}.', 'Le placement a payé : j’ai gagné {amt}.'] : ['The investment failed and I lost {amt}.', 'Le placement a échoué et j’ai perdu {amt}.'], c, back > amt ? 'g' : 'b');
+        return;
+      }
+      if (tk === 'scam') { const v = Math.min(Math.max(0, me.m), olI(300, 2000)); me.m -= v; add('m', -v); return; }
+      if (tk === 'roof:fix') { const h = olHouse(s); if (h) { me.m -= 8000; add('m', -8000); h.v = Math.round(h.v * 1.05); } return; }
+      if (tk === 'roof:bad') { const h = olHouse(s); if (h) h.v = Math.round(h.v * 0.94); return; }
+      if (tk === 'checkup') { add('H', olGain(s, 'H', 2)); me.ill = me.ill.filter(x => { const d = OL_ILLM[x[0]]; if (d[9]) { x[2] = 1; return true; } return olR() > d[8]; }); return; }
+      if (tk === 'startup') {
+        const cost = 4000, r = olR();
+        me.m -= cost; me.fl.startup = 1;
+        if (r < 0.15) { const v = olI(25, 200) * 10000; me.m += v; add('m', v - cost); add('f', olGain(s, 'f', 8)); c.amt = v; olSayC(s, ['My company took off! A bigger firm bought it for {amt}.', 'Mon entreprise a décollé ! Un grand groupe l’a rachetée pour {amt}.'], c, 'g'); }
+        else if (r < 0.5) { const v = olI(2, 6) * 10000; me.m += v; add('m', v - cost); c.amt = v; olSayC(s, ['My little company did well and earned me {amt}.', 'Ma petite entreprise a bien marché et m’a rapporté {amt}.'], c, 'g'); }
+        else { add('m', -cost); add('h', olGain(s, 'h', -5)); olSayC(s, ['My company failed after a year. I learned a lot.', 'Mon entreprise a fait faillite au bout d’un an. J’ai beaucoup appris.'], c, 'b'); }
+        return;
+      }
+      m = /^donate:(\d+)$/.exec(tk);
+      if (m) { const v = Math.round(Math.max(0, me.m) * +m[1] / 100); me.m -= v; add('m', -v); return; }
+      if (tk === 'promote') { olPromote(s); return; }
+      if (tk === 'friendsdown') { olAlive(s, 'friend').forEach(p => { p.b = olC(p.b - 15); }); return; }
+      if (tk === 'petdie') { if (c.p && c.p.r === 'pet') { c.p.al = 0; c.p.dz = c.p.age; add('h', olGain(s, 'h', -6)); } }
+    });
+    s.dirty = 1;
+    return ch;
+  }
+
+  function olRoleOk(s, role) {
+    const me = s.me, A = s.pp;
+    const has = f => A.some(p => p.al && f(p));
+    switch (role) {
+      case 'par': return has(p => p.r === 'mom' || p.r === 'dad');
+      case 'oldpar': return me.age >= 40 && has(p => (p.r === 'mom' || p.r === 'dad') && p.age >= 70);
+      case 'sib': return has(p => p.r === 'sib');
+      case 'ysib': return has(p => p.r === 'sib' && p.age < me.age);
+      case 'gp': return has(p => p.r === 'gp');
+      case 'friend': return has(p => p.r === 'friend');
+      case 'love': return has(p => p.r === 'love');
+      case 'spouse': return has(p => p.r === 'love' && p.st === 'mar');
+      case 'kidsmall': return has(p => p.r === 'kid' && p.age >= 5 && p.age <= 12);
+      case 'kidteen': return has(p => p.r === 'kid' && p.age >= 13 && p.age <= 17);
+      case 'kidadult': return has(p => p.r === 'kid' && p.age >= 18);
+      case 'gkid': return has(p => p.r === 'gkid' && p.age >= 3);
+      case 'pet': return has(p => p.r === 'pet');
+      case 'dog': return has(p => p.r === 'pet' && p.sp === 'dog');
+      default: return true;
+    }
+  }
+  function olRolePick(s, role) {
+    const me = s.me, A = s.pp.filter(p => p.al);
+    const f = {
+      par: p => p.r === 'mom' || p.r === 'dad', oldpar: p => (p.r === 'mom' || p.r === 'dad') && p.age >= 70, sib: p => p.r === 'sib', ysib: p => p.r === 'sib' && p.age < me.age,
+      gp: p => p.r === 'gp', friend: p => p.r === 'friend', love: p => p.r === 'love', spouse: p => p.r === 'love' && p.st === 'mar', kidsmall: p => p.r === 'kid' && p.age >= 5 && p.age <= 12,
+      kidteen: p => p.r === 'kid' && p.age >= 13 && p.age <= 17, kidadult: p => p.r === 'kid' && p.age >= 18, gkid: p => p.r === 'gkid' && p.age >= 3, pet: p => p.r === 'pet', dog: p => p.r === 'pet' && p.sp === 'dog'
+    }[role];
+    if (role === 'X') return olTemp(s, me.age + olI(-1, 1));
+    if (role === 'Xw') return olTemp(s, olI(23, 60));
+    if (!f) return null;
+    const c = A.filter(f);
+    return c.length ? olP(c) : null;
+  }
+  function olEventOk(s, ev) {
+    const me = s.me, [id, a0, a1, , role, cond, , , fl] = ev;
+    if (me.age < a0 || me.age > a1) return false;
+    const last = me.ev[id];
+    if (last !== undefined && (!fl || !fl.r || me.age - last < fl.r)) return false;
+    if (cond === 'school' && !me.sch) return false;
+    if (cond === 'job' && !me.job) return false;
+    if (typeof cond === 'function' && !cond(s)) return false;
+    if (role && role !== 'X' && role !== 'Xw' && !olRoleOk(s, role)) return false;
+    return true;
+  }
+  function olCtx(s, ev) {
+    const c = { p: ev[4] ? olRolePick(s, ev[4]) : null, sport: olP(OL_SPORT), city: (() => { const ci = olP(OL_CITY); return [ci[0], ci[1]]; })(), subj: olP(OL_SUBJ), topic: olP(OL_TOPIC) };
+    if (s.me.spt >= 0) c.sport = OL_SPORT[s.me.spt];
+    const fl = ev[8];
+    if (fl && fl.amt) c.amt = olI(fl.amt[0] / 10, fl.amt[1] / 10) * 10;
+    return c;
+  }
+  function olCtxSave(c) { const o = Object.assign({}, c); if (o.p) o.p = o.p.t ? Object.assign({}, o.p) : o.p.i; return o; }
+  function olCtxLoad(s, o) { const c = Object.assign({}, o); if (typeof c.p === 'number') c.p = s.pp.find(p => p.i === c.p) || null; return c; }
+  function olPickEvent(s) {
+    const list = OL_EV.filter(ev => olEventOk(s, ev));
+    return list.length ? olW(list, ev => ev[3]) : null;
+  }
+  function olResolve(s, ev, ci, c) {
+    const ch = ev[7][ci];
+    if (!ch) return null;
+    const o = olW(ch[1], x => (typeof x[0] === 'function' ? x[0](s) : x[0])) || ch[1][0];
+    s.me.ev[ev[0]] = s.me.age;
+    const out = {};
+    const before = s.log[s.log.length - 1].l.length;
+    const txt = olFP(o[2], c, s);
+    olSay(s, txt, '');
+    const idx = before;
+    olApply(s, o[1], c, out);
+    const good = (out.h || 0) + (out.H || 0) + (out.s || 0) + (out.l || 0) + (out.k || 0) / 2 + Math.sign(out.m || 0) * 3;
+    const b = s.log[s.log.length - 1];
+    if (b.l[idx]) b.l[idx][2] = good > 1 ? 'g' : good < -1 ? 'b' : '';
+    return { txt, out, good };
+  }
+
+  function olDeathP(age, H) {
+    if (age >= 118) return 1;
+    if (age < 40) return H < 6 ? 0.2 : 0.00025;
+    const base = 0.00003 * Math.exp(0.094 * age);
+    return Math.min(0.95, base * Math.pow(Math.max(0.2, 1.7 - H / 80), 2) + (H < 6 ? 0.3 : 0));
+  }
+
+  function olPromote(s) {
+    const me = s.me, j = me.job;
+    if (!j) return false;
+    const d = OL_JOBM[j.id];
+    if (!d || j.lvl >= d[6].length - 1) return false;
+    j.lvl++; j.ly = 0;
+    j.sal = Math.round(Math.max(j.sal * 1.08, d[6][j.lvl][2] * (0.95 + olR() * 0.1)));
+    j.perf = olC(j.perf - 10);
+    if (j.lvl === d[6].length - 1) me.top = Math.max(me.top, d[6].length >= 3 ? 2 : 1);
+    if (j.t === 't') olGain(s, 'f', 6 + j.lvl * 6);
+    olSay(s, [`I was promoted to ${olLow(olJobT(j.id, j.lvl, me.g, 0))}!`, `J’ai été promu${me.g === 'f' ? 'e' : ''} ${olLow(olJobT(j.id, j.lvl, me.g, 1))} !`], 'g');
+    olGain(s, 'h', 6);
+    s.fx = 'win';
+    return true;
+  }
+  function olStartJob(s, id, lvl) {
+    const me = s.me, d = OL_JOBM[id];
+    if (!d) return;
+    lvl = Math.min(lvl || 0, d[6].length - 1);
+    const sal = Math.round(d[6][lvl][2] * (0.94 + olR() * 0.12) * (me.edu.grad === 'msc' && d[1] === 'f' && d[3] >= 2 ? 1.1 : 1));
+    me.job = { id, lvl, perf: 55, yrs: 0, ly: 0, sal, t: d[1] };
+    if (!me.hist.includes(id)) me.hist.push(id);
+    if (d[1] !== 'p' && me.age >= 18) me.mv = 1;
+    if (lvl === d[6].length - 1) me.top = Math.max(me.top, d[6].length >= 3 ? 2 : 1);
+  }
+  function olQuitJob(s, why) {
+    const me = s.me, j = me.job;
+    if (!j) return;
+    const t = olJobPair(j.id, j.lvl, me.g);
+    if (why === 'fired') olSay(s, [`I was fired from my job as ${olLow(t[0])}.`, `J’ai été licencié${me.g === 'f' ? 'e' : ''} de mon poste de ${olLow(t[1])}.`], 'b');
+    else if (why === 'retire') olSay(s, [`I retired after working as ${olArt(t[0])}.`, `J’ai pris ma retraite après avoir été ${olLow(t[1])}.`], 'm');
+    else olSay(s, [`I quit my job as ${olLow(t[0])}.`, `J’ai quitté mon poste de ${olLow(t[1])}.`], '');
+    me.lastJob = { id: j.id, lvl: j.lvl, yrs: j.yrs };
+    me.cnt['y_' + j.id] = (me.cnt['y_' + j.id] || 0) + j.yrs;
+    me.job = null;
+  }
+
+  function olReqOk(s, d) {
+    const me = s.me, rq = d[5] || {}, why = [];
+    if (me.age < d[2]) why.push(L('Minimum age {n}', { n: d[2] }));
+    if (d[1] === 'p' && me.age > 25) why.push(L('For students and teenagers'));
+    if (d[3] >= 1 && !me.edu.hs) why.push(L('Needs a high school diploma'));
+    if (d[3] === 2) { if (!me.edu.deg) why.push(L('Needs a university degree')); else if (Array.isArray(d[4]) && !d[4].includes(me.edu.deg)) why.push(L('Needs a degree in {x}', { x: d[4].filter(x => OL_MAJM[x]).map(x => X(OL_MAJM[x].slice(1, 3))).join(L(' or ')) })); }
+    if (d[3] === 3 && !(Array.isArray(d[4]) && d[4].includes(me.edu.grad))) why.push(L('Needs: {x}', { x: d[4].map(x => X(OL_GRADM[x].slice(1, 3))).join(L(' or ')) }));
+    if (rq.H && me.st.H < rq.H) why.push(L('Needs better health'));
+    if (rq.s && me.st.s < rq.s) why.push(L('Needs more smarts'));
+    if (rq.l && me.st.l < rq.l) why.push(L('Needs better looks'));
+    if (rq.a && me.a < rq.a) why.push(L('Needs more fitness'));
+    if (rq.lic && !me.lic) why.push(L('Needs a driving licence'));
+    OL_SK.forEach(k => { if (rq[k] && me.sk[k] < rq[k]) why.push(L('Needs more {x} skill', { x: L(OL_SKN[k]).toLowerCase() })); });
+    return why;
+  }
+  function olListings(s) {
+    const me = s.me;
+    if (s.lst && s.lst.y === me.age) return s.lst.ids;
+    const teen = me.age < 18 || olAt(s, 'uni', 'grad', 'high', 'mid');
+    let pool = OL_JOB.filter(d => me.age >= d[2] - 1 && (teen ? d[1] === 'p' || (me.age >= 16 && d[1] === 't') : d[1] !== 'p' || me.age <= 25));
+    const ok = pool.filter(d => !olReqOk(s, d).length), no = pool.filter(d => olReqOk(s, d).length);
+    const pickN = (a, n) => { const c = a.slice(), o = []; while (c.length && o.length < n) o.push(c.splice(Math.floor(olR() * c.length), 1)[0]); return o; };
+    const ids = pickN(ok, teen ? 5 : 7).concat(pickN(no, teen ? 2 : 4)).map(d => d[0]);
+    s.lst = { y: me.age, ids };
+    return ids;
+  }
+
+  function olFamilyYear(s) {
+    const me = s.me;
+    s.pp.forEach(p => {
+      if (!p.al) return;
+      p.age++;
+      p.d = [];
+      if (p.r === 'pet') {
+        p.b = olC(p.b - 1);
+        if (p.age >= p.ly) { p.al = 0; p.dz = p.age; olSayC(s, ['{Myrel} {p} passed away at the age of ' + p.age + '. I will always remember {him}.', '{Myrel} {p} nous a quittés à l’âge de ' + p.age + ' ans. Je ne l’oublierai jamais.'], { p }, 'b'); olGain(s, 'h', -6); }
+        return;
+      }
+      const dec = { friend: 4, love: 3, mom: 2, dad: 2, sib: 3, gp: 2, kid: 2, gkid: 2 }[p.r] || 2;
+      p.b = olC(p.b - dec);
+      if (p.r === 'love') p.yrs = (p.yrs || 0) + 1;
+      if (p.r === 'love' && p.st === 'mar') me.mar++;
+      if (p.age > 35 && olR() < olDeathP(p.age, p.r === 'gp' ? 52 : 62)) {
+        p.al = 0; p.dz = p.age;
+        const close = { mom: 1, dad: 1, love: 1, kid: 1, sib: 0.8, gp: 0.6, friend: 0.5, gkid: 0.8 }[p.r] || 0.4;
+        olSayC(s, ['{Myrel} {p} died at the age of ' + p.age + '.', '{Myrel} {p} est décédé{pe} à l’âge de ' + p.age + ' ans.'], { p }, 'b');
+        olGain(s, 'h', -Math.round((4 + p.b / 10) * close));
+        if ((p.r === 'mom' || p.r === 'dad') && !s.pp.some(q => q.al && (q.r === 'mom' || q.r === 'dad'))) {
+          const w = p.w || 0, base = [olI(2, 12), olI(20, 90), olI(120, 600), olI(800, 3000)][w] * 1000, n = olAlive(s, 'sib').length + 1;
+          const v = Math.round(base / n / 100) * 100;
+          if (v > 0) { me.m += v; olSayC(s, ['I inherited {amt} from my parents.', 'J’ai hérité de {amt} de mes parents.'], { amt: v }, 'g'); }
+        }
+        if (p.r === 'love') { p.r = 'love'; me.widow = 1; }
+        return;
+      }
+      if (p.b <= 0 && p.r === 'friend') { p.al = 0; p.gone = 1; olSayC(s, ['{p} and I drifted apart.', '{p} et moi, on s’est perdus de vue.'], { p }, 'b'); return; }
+      if (p.r === 'love' && p.st !== 'mar') {
+        const risk = (p.b < 25 ? 0.45 : 0.04) + (me.age < 18 ? 0.25 : 0);
+        if (olR() < risk) { p.al = 0; p.gone = 1; olSayC(s, ['{p} and I broke up.', '{p} et moi, on s’est séparés.'], { p }, 'b'); olGain(s, 'h', -6); return; }
+      }
+      if (p.r === 'love' && p.st === 'mar' && p.b < 12 && olR() < 0.3) { olDivorce(s, p, 1); return; }
+      if (p.r === 'kid') {
+        if (p.age === 18) olSayC(s, ['{Myrel} {p} turned 18 and moved out.', '{Myrel} {p} a eu 18 ans et a quitté la maison.'], { p }, 'm');
+        if (p.age === 23 && !p.job) { const jid = olP(['teach', 'nurse', 'dev', 'engin', 'cook', 'retail', 'police', 'design', 'acct', 'mech', 'lab', 'journ']); p.job = olJobPair(jid, 0, p.g); }
+        const gk = s.pp.filter(q => q.r === 'gkid' && q.par === p.i).length;
+        if (p.age >= 24 && p.age <= 42 && gk < 3 && olR() < 0.1) {
+          const g = olP(['m', 'f']), k = olPerson(s, 'gkid', g, 0, { par: p.i });
+          k.b = olI(60, 85);
+          const first = !me.fl.gp;
+          me.fl.gp = 1;
+          olSay(s, [`${olCap(olFP(['{myrel}', ''], { p }, s)[0])} ${p.n} had a baby ${g === 'f' ? 'girl' : 'boy'} named ${k.n}.${first ? ' I am a grandparent!' : ''}`, `${olCap(olFP(['', '{myrel}'], { p }, s)[1])} ${p.n} a eu ${g === 'f' ? 'une petite fille' : 'un petit garçon'} prénommé${g === 'f' ? 'e' : ''} ${k.n}.${first ? ' Je suis grand-' + (me.g === 'f' ? 'mère' : 'père') + ' !' : ''}`], 'g');
+          olGain(s, 'h', 6);
+        }
+      }
+    });
+    const mom = s.pp.find(p => p.r === 'mom' && p.al), dad = s.pp.find(p => p.r === 'dad' && p.al);
+    if (mom && dad && me.age <= 10 && mom.age <= 42 && olAlive(s, 'sib').length < 3 && olR() < 0.11) {
+      const g = olP(['m', 'f']), k = olPerson(s, 'sib', g, 0, { ln: me.ln });
+      k.lk.sk = me.lk.sk;
+      olSay(s, [`My mother gave birth to a baby ${g === 'f' ? 'girl' : 'boy'} named ${k.n}.`, `Ma mère a donné naissance à ${g === 'f' ? 'une petite fille' : 'un petit garçon'} prénommé${g === 'f' ? 'e' : ''} ${k.n}.`], 'g');
+    }
+    if (s.preg) {
+      s.preg = 0;
+      const love = olLove(s);
+      s.q.push({ k: 'baby', tw: olR() < 0.03 ? 1 : 0, g: olP(['m', 'f']) });
+      if (!love) s.q.pop();
+    }
+  }
+  function olDivorce(s, p, them) {
+    const me = s.me;
+    const v = Math.round(Math.max(0, me.m) * 0.4);
+    me.m -= v;
+    p.al = 0; p.gone = 1;
+    olSayC(s, them ? ['{p} asked for a divorce. We split our savings.', '{p} a demandé le divorce. Nous avons partagé nos économies.'] : ['{p} and I divorced. We split our savings.', '{p} et moi avons divorcé. Nous avons partagé nos économies.'], { p }, 'b');
+    olGain(s, 'h', -10);
+  }
+
+  function olDrift(s) {
+    const me = s.me, st = me.st, a = me.age;
+    st.h = olC(st.h + (62 - st.h) * 0.08 + (olR() - 0.5) * 4);
+    if (a < 25) st.H = olC(st.H + (90 - st.H) * 0.12 + (olR() - 0.5) * 2);
+    else if (a < 50) st.H = olC(st.H - 0.2 - olR() * 0.4);
+    else if (a < 70) st.H = olC(st.H - 0.5 - olR() * 0.8);
+    else st.H = olC(st.H - 0.9 - olR() * 1.1);
+    if (a < 12) st.l = olC(st.l + (olR() - 0.5) * 2);
+    else if (a < 20) st.l = olC(st.l + olI(-2, 3));
+    else if (a < 36) st.l = olC(st.l + (olR() - 0.55) * 2);
+    else if (a < 60) st.l = olC(st.l - olR() * 1.2);
+    else st.l = olC(st.l - 0.5 - olR());
+    if (a > 72) st.s = olC(st.s - olR() * 1.5);
+    if (a < 18) me.a = olC(me.a + olR() * 1.5);
+    else if (a > 30) me.a = olC(me.a - olR() * 1.6);
+    if (!(me.job && me.job.t === 't')) me.f = olC(me.f - 2);
+    if (me.m < 0 && a >= 18) st.h = olC(st.h - 3);
+    me.k = olC(me.k + (50 - me.k) * 0.01);
+    me.sum[0] += st.h; me.sum[1] += st.H; me.sum[2]++;
+  }
+
+  function olGrade(v, li) {
+    if (li === 1) return Math.round(v / 5) + '/20';
+    return (v >= 93 ? 'A+' : v >= 85 ? 'A' : v >= 75 ? 'B' : v >= 65 ? 'C' : v >= 55 ? 'D' : 'F') + ' (' + Math.round(v) + '%)';
+  }
+  function olSchoolStart(s, k, n, o) {
+    s.me.sch = Object.assign({ k, y: 0, n, perf: 55, gr: 0, sum: 0 }, o || {});
+  }
+  function olSchoolYear(s) {
+    const me = s.me;
+    if (!me.sch) {
+      if (me.age === 5 && !me.edu.left) { olSchoolStart(s, 'pri', 6); olSay(s, ['I started primary school.', 'Je suis entré' + (me.g === 'f' ? 'e' : '') + ' à l’école primaire.'], 'm'); }
+      return;
+    }
+    const sc = me.sch;
+    const g = olC(0.55 * me.st.s + 0.45 * sc.perf + (olR() - 0.5) * 16);
+    sc.gr = g; sc.sum += g; sc.y++;
+    me.st.s = olC(me.st.s + (0.6 + olR() * 1.6) * (0.6 + sc.perf / 100));
+    sc.perf = olC(sc.perf + (48 - sc.perf) * 0.3);
+    if (sc.club) { const ck = sc.club; if (ck === 'a') me.a = olC(me.a + 3); else if (ck === 's') me.st.s = olC(me.st.s + 1.5); else if (me.sk[ck] !== undefined) me.sk[ck] = olC(me.sk[ck] + 4); }
+    if (sc.k === 'uni' || sc.k === 'grad') {
+      const fund = sc.fund;
+      if (fund === 'loan') { me.debt += 9000; }
+      else if (fund === 'self') { me.m -= 9000; }
+    }
+    if (sc.k !== 'pri') olSay(s, [`My report card: ${olGrade(g, 0)}.`, `Mon bulletin : ${olGrade(g, 1)} de moyenne.`], g >= 75 ? 'g' : g < 55 ? 'b' : '');
+    else if (sc.y % 2 === 0) olSay(s, g >= 70 ? ['My teacher says I am doing really well.', 'Ma maîtresse dit que je travaille très bien.'] : g >= 50 ? ['My teacher says I could try a little harder.', 'Ma maîtresse dit que je pourrais faire un peu plus d’efforts.'] : ['My teacher is worried about my school work.', 'Ma maîtresse s’inquiète pour mon travail scolaire.'], g >= 70 ? 'g' : g < 50 ? 'b' : '');
+    if (sc.y < sc.n) return;
+    const avg = sc.sum / Math.max(1, sc.y);
+    if (sc.k === 'pri') { olSchoolStart(s, 'mid', 4, { club: sc.club, ci: sc.ci }); olSay(s, ['I finished primary school and started middle school.', 'J’ai fini l’école primaire et je suis entré' + (me.g === 'f' ? 'e' : '') + ' au collège.'], 'm'); return; }
+    if (sc.k === 'mid') { olSchoolStart(s, 'high', 3, { club: sc.club, ci: sc.ci }); olSay(s, ['I started high school.', 'Je suis entré' + (me.g === 'f' ? 'e' : '') + ' au lycée.'], 'm'); return; }
+    if (sc.k === 'high') {
+      const ex = Math.round(olC(0.6 * me.st.s + 0.4 * avg + (olR() - 0.5) * 12));
+      me.edu.ex = ex;
+      me.sch = null;
+      if (ex >= 50) {
+        me.edu.hs = 1;
+        olSay(s, [`I passed my final exams with ${ex}% and got my high school diploma!`, `J’ai eu mon bac avec ${Math.round(ex / 5)}/20 de moyenne !`], 'g');
+        olGain(s, 'h', 6); s.fx = 'win';
+        s.q.push({ k: 'after' });
+      } else {
+        olSay(s, [`I failed my final exams with ${ex}%.`, `J’ai raté mon bac avec ${Math.round(ex / 5)}/20.`], 'b');
+        olGain(s, 'h', -8);
+        s.q.push({ k: 'fail' });
+      }
+      return;
+    }
+    if (sc.k === 'uni') {
+      me.edu.deg = sc.maj; me.edu.gpa = Math.round(avg);
+      me.sch = null;
+      const mj = OL_MAJM[sc.maj];
+      olSay(s, [`I graduated from university with a degree in ${olLow(mj[1])}${avg >= 85 ? ', with honours' : ''}!`, `J’ai obtenu mon diplôme universitaire en ${olLow(mj[2])}${avg >= 85 ? ', avec mention' : ''} !`], 'g');
+      olGain(s, 'h', 7); s.fx = 'win';
+      s.q.push({ k: 'grad' });
+      return;
+    }
+    if (sc.k === 'grad') {
+      me.edu.grad = sc.maj; me.sch = null;
+      const gd = OL_GRADM[sc.maj];
+      olSay(s, gd[0] === 'msc' ? ['I completed my master’s degree!', 'J’ai obtenu mon master !'] : gd[0] === 'phd' ? ['I completed my doctorate!', 'J’ai obtenu mon doctorat !'] : [`I graduated from ${olLow(gd[1])}!`, `J’ai terminé l’${olLow(gd[2])} !`], 'g');
+      olGain(s, 'h', 7); s.fx = 'win';
+      s.q.push({ k: 'work' });
+    }
+  }
+
+  function olJobYear(s) {
+    const me = s.me, j = me.job;
+    if (!j) return;
+    const d = OL_JOBM[j.id];
+    j.yrs++; j.ly++;
+    const sk = d[7], skv = sk ? (sk === 'a' ? me.a : me.sk[sk] || 0) : 50;
+    j.perf = olC(j.perf + (50 - j.perf) * 0.18 + (olR() - 0.5) * 8 + (skv - 50) / 25 + (me.st.h - 50) / 40);
+    j.sal = Math.round(j.sal * 1.02);
+    if (j.t === 't') {
+      olGain(s, 'f', j.lvl * 2);
+      if (sk && me.sk[sk] !== undefined) me.sk[sk] = olC(me.sk[sk] + 1);
+      if (sk === 'a') me.a = olC(me.a + 1);
+    }
+    if (j.id === 'athl' && me.age >= 35 + olI(0, 3)) { olQuitJob(s, 'retire'); return; }
+    if (olCanPromote(s) && j.ly >= 2) {
+      const ch = j.t === 't' ? (skv - 45) / 120 + me.f / 300 + j.perf / 400 : j.perf >= 68 ? 0.45 : 0;
+      const nx = d[6][j.lvl + 1];
+      if (olR() < ch && !(j.id === 'lawyer' && j.lvl === 2 && me.age < 45)) olPromote(s);
+    }
+    if (j.perf < 18 && olR() < 0.55) { olQuitJob(s, 'fired'); olGain(s, 'h', -8); return; }
+    if (olR() < 0.14 && OL_JP[j.id]) { olSay(s, olFP(olP(OL_JP[j.id]), olNoC, s), 'g'); olGain(s, 'h', 3); j.perf = olC(j.perf + 3); }
+  }
+  function olTax(v) { let t = 0; if (v > 11000) t += (Math.min(v, 50000) - 11000) * 0.22; if (v > 50000) t += (Math.min(v, 150000) - 50000) * 0.35; if (v > 150000) t += (v - 150000) * 0.45; return t; }
+  function olMoneyYear(s) {
+    const me = s.me;
+    let inc = 0, cost = 0;
+    if (me.job) inc += me.job.sal;
+    if (me.ret || (me.age >= 67 && !me.job)) { if (!me.pen) { me.pen = 9000; if (me.age >= 18) olSay(s, ['I started receiving the state pension.', 'J’ai commencé à toucher la retraite de base.'], 'm'); } inc += me.pen; }
+    const net = inc - olTax(inc);
+    const love = olLove(s), mar = love && love.st === 'mar';
+    let hh = 0;
+    if (mar && love.age < 67) hh = (love.inc || 24000) * 0.35;
+    const kids = s.pp.filter(p => p.al && p.r === 'kid' && p.age < 18).length;
+    const stu = olAt(s, 'uni', 'grad');
+    const fund = stu ? me.sch.fund : '';
+    if (stu && fund !== 'self') { if (fund === 'loan') me.debt += 7000; }
+    else if (me.mv) {
+      if (!olHouse(s)) cost += stu ? 6500 : 11000 + (mar ? 3000 : 0);
+      cost += stu ? 4500 : 9000 + (mar ? 3000 : 0);
+      cost += kids * 4500;
+    } else if (me.age >= 18) cost += 1500;
+    me.as.forEach(a => {
+      if (a.t === 'house') {
+        cost += a.v * 0.01;
+        a.v = Math.round(a.v * (1 + (olR() * 0.08 - 0.02)));
+        if (a.lo > 0) { const it = a.lo * 0.04, pr = Math.min(a.lo, Math.max(0, a.pm - it)); cost += it + pr; a.lo = Math.round(a.lo - pr); if (a.lo <= 0) { a.lo = 0; olSay(s, [`I paid off the mortgage on my ${olLow(OL_HOUSEM[a.id][1][0])}.`, `J’ai fini de rembourser le crédit de mon logement.`], 'g'); } }
+      } else {
+        const d = OL_CARM[a.id];
+        a.v = Math.round(a.v * (d[0] === 'classic' ? 1.03 : 0.88));
+        cost += d[4] ? 1100 : 60;
+      }
+    });
+    if (me.debt > 0) { const pay = Math.min(me.debt, Math.max(0, inc - 25000) * 0.09); cost += pay; me.debt = Math.round((me.debt - pay) * 1.02); }
+    const delta = net + hh - cost;
+    me.m += delta;
+    if (me.m > 0) me.m *= 1.005; else me.m *= 1.07;
+    me.m = Math.round(me.m);
+    s.net = Math.round(delta);
+  }
+  function olHealthYear(s) {
+    const me = s.me;
+    me.ill = me.ill.filter(x => {
+      const d = OL_ILLM[x[0]];
+      if (!d) return false;
+      const k = x[2] ? 0.4 : 1;
+      olGain(s, 'H', -d[5] * k);
+      olGain(s, 'h', -d[6] * k);
+      x[1]++; x[2] = 0;
+      if (!d[9] && olR() < d[7]) { olSay(s, [`I got over ${d[1][0]}.`, `Je me suis remis${me.g === 'f' ? 'e' : ''} ${d[1][1].replace(/^un /, 'd’un ').replace(/^une /, 'd’une ').replace(/^la /, 'de la ').replace(/^des /, 'de mes ')}.`], 'g'); return false; }
+      return true;
+    });
+    let nw = 0;
+    for (const d of OL_ILL) {
+      if (nw >= 1 || !d[4] || me.age < d[2] || me.age > d[3]) continue;
+      if (me.ill.some(x => x[0] === d[0]) || (d[0] === 'pox' && me.fl.pox)) continue;
+      if (olR() < d[4] * (1.7 - me.st.H / 100)) {
+        olAddIll(s, d[0]); nw++;
+        if (d[0] === 'pox') me.fl.pox = 1;
+        olSay(s, [`I came down with ${d[1][0]}.`, `J’ai attrapé ${d[1][1]}.`].map((x, i) => (d[9] && i === 0 ? `I was diagnosed with ${d[1][0]}.` : d[9] && i === 1 ? `On m’a diagnostiqué ${d[1][1]}.` : x)), 'b');
+      }
+    }
+    if (me.age >= 72 && olR() < 0.03 && !me.ill.some(x => x[0] === 'hip')) { olAddIll(s, 'hip'); olSay(s, ['I slipped on the stairs and broke my hip.', 'J’ai glissé dans l’escalier et je me suis cassé la hanche.'], 'b'); }
+  }
+  function olCause(s) {
+    const me = s.me, has = id => me.ill.some(x => x[0] === id);
+    if (has('heart')) return OL_CAUSE.heart;
+    if (has('serious')) return OL_CAUSE.ill;
+    if (has('pneu')) return OL_CAUSE.pneu;
+    if (me.age >= 80) return olR() < 0.5 ? OL_CAUSE.sleep : OL_CAUSE.age;
+    if (me.age >= 65) return olP([OL_CAUSE.age, OL_CAUSE.heart, OL_CAUSE.stroke]);
+    return me.age < 40 && olR() < 0.4 ? OL_CAUSE.acc : OL_CAUSE.sudden;
+  }
+
+  function olAgeUp(s) {
+    const me = s.me;
+    if (!me.al || s.q.length) return false;
+    me.age++; me.yr++;
+    me.dn = [];
+    olYearStart(s);
+    olFamilyYear(s);
+    olDrift(s);
+    olSchoolYear(s);
+    olJobYear(s);
+    if (me.age >= 16 || me.mv) olMoneyYear(s);
+    olHealthYear(s);
+    if (me.age === 18 && !me.edu.hs && !me.sch && !s.q.length) s.q.push({ k: 'after' });
+    if (me.age === 66 && me.job && me.job.t === 'f') s.q.push({ k: 'retire' });
+    let pdie = olDeathP(me.age, me.st.H);
+    if (me.ill.some(x => x[0] === 'heart')) pdie *= 1.8;
+    if (me.ill.some(x => x[0] === 'serious')) pdie = pdie * 2.5 + 0.02;
+    if (me.age > 0 && olR() < pdie) { olDie(s); return true; }
+    if (me.age >= 1 && olR() < 0.75) {
+      const list = OL_PE.filter(e => me.age >= e[0] && me.age <= e[1] && (!e[3] || e[3](s)) && !me.ev['pe' + OL_PE.indexOf(e)]);
+      const e = list.length ? olW(list, x => x[2]) : null;
+      if (e) {
+        me.ev['pe' + OL_PE.indexOf(e)] = me.age;
+        const c = { sport: me.spt >= 0 ? OL_SPORT[me.spt] : olP(OL_SPORT), subj: olP(OL_SUBJ) };
+        const out = olApply(s, e[4], c);
+        olSay(s, olFP(e[5], c, s), (out.h || 0) + (out.H || 0) > 0 ? 'g' : (out.h || 0) + (out.H || 0) < 0 ? 'b' : '');
+        if (e[6]) olApply(s, e[6], c);
+      }
+    }
+    const pc = me.age < 1 ? 0 : me.age < 5 ? 0.55 : s.q.length ? 0.3 : 0.82;
+    if (olR() < pc) {
+      const ev = olPickEvent(s);
+      if (ev) { const c = olCtx(s, ev); if (!ev[4] || c.p) s.q.push({ k: 'ev', id: ev[0], c: olCtxSave(c) }); }
+    }
+    return true;
+  }
+  function olAward(s) {
+    const me = s.me, w = olWorth(s), kids = s.pp.filter(p => p.r === 'kid').length;
+    const avgH = me.sum[2] ? me.sum[0] / me.sum[2] : 0, avgHe = me.sum[2] ? me.sum[1] / me.sum[2] : 0;
+    const yrsIn = ids => ids.reduce((t, id) => t + (me.cnt['y_' + id] || 0) + (me.job && me.job.id === id ? me.job.yrs : 0), 0);
+    const friends = olAlive(s, 'friend').length;
+    const top = Math.max(...OL_SK.map(k => me.sk[k]));
+    const list = [
+      ['century', me.age >= 100], ['tycoon', w >= 1e7], ['genius', (me.edu.grad === 'phd' || me.edu.grad === 'mds') && me.st.s >= 85], ['star', me.f >= 70 || me.fl.fame],
+      ['healer', yrsIn(['doctor', 'nurse', 'vetj', 'dent', 'psych', 'physio']) >= 15], ['mentor', yrsIn(['teach', 'prof', 'coach']) >= 15], ['clan', kids >= 4], ['kind', me.k >= 85],
+      ['athlete', me.a >= 88 || yrsIn(['athl']) >= 5], ['artist', top >= 90], ['globe', (me.cnt.hol || 0) >= 12], ['rich', w >= 2e6], ['scholar', !!me.edu.deg && me.st.s >= 82],
+      ['boss', me.top >= 2], ['love', me.mar >= 40], ['happy', avgH >= 78], ['healthy', me.age >= 85 && avgHe >= 70], ['book', (me.cnt.read || 0) + (me.cnt.lib || 0) >= 40],
+      ['social', friends >= 6], ['jack', me.hist.filter(id => OL_JOBM[id][1] !== 'p').length >= 6], ['animal', me.pets >= 4], ['brief', me.age < 30]
+    ];
+    const got = list.filter(x => x[1]).map(x => x[0]);
+    return got.length ? got : ['ordinary'];
+  }
+  function olDie(s) {
+    const me = s.me;
+    me.al = 0;
+    const cause = olCause(s);
+    me.cause = cause;
+    olSay(s, [`I died ${cause[0] === 'peacefully in my sleep' ? cause[0] : 'of ' + cause[0]} at the age of ${me.age}.`.replace('of an accident', 'in an accident'), `Je suis mort${me.g === 'f' ? 'e' : ''} ${cause[1]} à l’âge de ${me.age} ans.`], 'b');
+    me.aw = olAward(s);
+    me.worth = olWorth(s);
+    s.q = [];
+    s.fx = 'lose';
+  }
+  function olHeir(s, kid) {
+    const me = s.me, kids = s.pp.filter(p => p.al && p.r === 'kid');
+    const share = Math.max(0, Math.round((me.worth || 0) * 0.9 / Math.max(1, kids.length)));
+    const n = olNewLife({ g: kid.g, fn: kid.n, ln: me.ln, yr: me.yr - kid.age, gen: s.gen + 1, line: s.line, lk: kid.lk, city: me.city, pw: share > 600000 ? 3 : share > 120000 ? 2 : share > 15000 ? 1 : 0 });
+    n.log = [];
+    n.pp = [];
+    n.nid = 0;
+    const nm = n.me;
+    nm.age = kid.age; nm.yr = me.yr;
+    const par = (src, r) => { const p = olPerson(n, r, src.g, src.age, { n: src.n, lk: src.lk, al: src.al, w: n.pw, job: src.job || null, dz: src.dz }); p.b = src.al ? olI(70, 95) : 80; return p; };
+    const dad = par({ g: me.g, n: me.fn, age: me.age, lk: me.lk, al: 0, dz: me.age, job: me.job ? olJobPair(me.job.id, me.job.lvl, me.g) : me.lastJob ? olJobPair(me.lastJob.id, me.lastJob.lvl, me.g) : null }, me.g === 'f' ? 'mom' : 'dad');
+    const sp = s.pp.find(p => p.r === 'love' && p.st === 'mar' && !p.gone);
+    if (sp) par(sp, sp.g === 'f' ? 'mom' : 'dad');
+    s.pp.filter(p => p.r === 'kid' && p !== kid).forEach(k => { const p = olPerson(n, 'sib', k.g, k.age, { n: k.n, lk: k.lk, al: k.al, job: k.job || null }); p.b = k.al ? olC(k.b + olI(-10, 10)) : 60; });
+    s.pp.filter(p => p.r === 'gkid' && p.par === kid.i && p.al).forEach(k => { const p = olPerson(n, 'kid', k.g, k.age, { n: k.n, lk: k.lk }); p.b = olI(65, 90); nm.kids++; });
+    s.pp.filter(p => p.r === 'pet' && p.al && kid.age < 25).forEach(k => { const p = olPerson(n, 'pet', k.g, k.age, { n: k.n, sp: k.sp, ly: k.ly, lk: k.lk }); p.b = k.b; });
+    nm.st = { h: olI(55, 85), H: olC(95 - Math.max(0, kid.age - 25) * 0.8 + olI(-8, 4)), s: olI(25, 90), l: olC(olI(30, 90) - Math.max(0, kid.age - 40) * 0.6) };
+    if (kid.age >= 18) { nm.edu.hs = olR() < 0.9 ? 1 : 0; nm.mv = 1; nm.lic = olR() < 0.7 ? 1 : 0; }
+    if (kid.age >= 22 && nm.edu.hs && olR() < 0.55) nm.edu.deg = olP(OL_MAJ)[0];
+    if (kid.age >= 5 && kid.age < 18) olSchoolStart(n, kid.age < 11 ? 'pri' : kid.age < 15 ? 'mid' : 'high', kid.age < 11 ? 6 : kid.age < 15 ? 4 : 3, { y: kid.age < 11 ? kid.age - 5 : kid.age < 15 ? kid.age - 11 : kid.age - 15 });
+    if (kid.age >= 23 && kid.job) {
+      const pool = OL_JOB.filter(d => d[1] === 'f' && !olReqOk(n, d).length);
+      if (pool.length) { olStartJob(n, olP(pool)[0], Math.min(3, Math.floor((kid.age - 22) / 8))); nm.job.yrs = Math.max(0, kid.age - 23); }
+    }
+    if (kid.age >= 67) { nm.ret = 1; nm.pen = 12000; nm.job = null; }
+    nm.m = share;
+    olYearStart(n);
+    n.log[0].y = nm.yr;
+    olSay(n, [`I am ${kid.n} ${me.ln}, ${me.g === 'f' ? 'daughter' : 'son'} of ${me.fn}. Our family story continues with me, at the age of ${kid.age}.`.replace(me.g === 'f' ? 'daughter' : 'son', kid.g === 'f' ? 'daughter' : 'son'), `Je suis ${kid.n} ${me.ln}, ${kid.g === 'f' ? 'fille' : 'fils'} de ${me.fn}. L’histoire de notre famille continue avec moi, à ${kid.age} ans.`], 'm');
+    if (share > 0) olSayC(n, ['I inherited {amt}.', 'J’ai hérité de {amt}.'], { amt: share }, 'g');
+    return n;
+  }
+
+  const olSvg = (p, vb) => `<svg viewBox="${vb || '0 0 24 24'}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  const OL_IC = {
+    job: '<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3 13h18"/>',
+    school: '<path d="M2 9.5 12 5l10 4.5L12 14z"/><path d="M6 11.5V16c2.5 2.2 9.5 2.2 12 0v-4.5M22 9.5V15"/>',
+    home: '<path d="M3.5 11 12 4l8.5 7"/><path d="M5.5 9.5V20h13V9.5M10 20v-5.5h4V20"/>',
+    people: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.6 2.7-6 6-6s6 2.4 6 6"/><path d="M16 4.6a3.2 3.2 0 0 1 0 6.3M18 14.4c1.8.8 3 2.8 3 5.6"/>',
+    acts: '<path d="M12 3.5l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    x: '<path d="M6 6l12 12M18 6 6 18"/>',
+    back: '<path d="M15 5l-7 7 7 7"/>',
+    chev: '<path d="M9 5l7 7-7 7"/>',
+    h: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1.8 2 5.2 2 7 0M9 9.5h.01M15 9.5h.01"/>',
+    H: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/>',
+    s: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/>',
+    l: '<path d="M12 3l1.8 5.2L19 9.5l-4.2 3.3 1.4 5.4L12 15.1l-4.2 3.1 1.4-5.4L5 9.5l5.2-1.3z"/>',
+    play: '<path d="M12 3 4 13h6l-1 8 8-11h-6z"/>',
+    book: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5"/>',
+    pad: '<rect x="2.5" y="7" width="19" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3M15.5 12h.01M18 13.5h.01"/>',
+    lib: '<path d="M3 9.5 12 4l9 5.5M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20.5h18"/>',
+    run: '<circle cx="14" cy="4.5" r="2"/><path d="M7 21l3.5-6.5L14 17v4M10.5 14.5 12 9l-4 1.5L6 14M12 9l3 3 3.5 1"/>',
+    gym: '<path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/>',
+    lotus: '<path d="M12 20c-4.5 0-8-2.2-9-5.5 3 .3 5.4 1.5 7 3.3M12 20c4.5 0 8-2.2 9-5.5-3 .3-5.4 1.5-7 3.3M12 20c-2.6-2.4-3.5-5.8-2.6-9.5L12 6l2.6 4.5c.9 3.7 0 7.1-2.6 9.5z"/>',
+    doc: '<path d="M6 3v6a4 4 0 0 0 8 0V3M10 13v2a5 5 0 0 0 10 0v-2"/><circle cx="20" cy="11" r="2"/>',
+    note: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+    brush: '<path d="M14.5 4.5l5 5-8 8-5-5z"/><path d="M6.5 12.5c-2.5 0-3.5 2-3.5 4.5v3.5H7c2.5 0 4.5-1.5 4.5-3.5"/>',
+    code: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16"/>',
+    globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>',
+    chef: '<path d="M7 14v6h10v-6M7 14a4 4 0 0 1-.8-7.9A4.5 4.5 0 0 1 12 3.5a4.5 4.5 0 0 1 5.8 2.6A4 4 0 0 1 17 14z"/>',
+    mask: '<path d="M4 5c5 1.5 11 1.5 16 0v6c0 5-3.6 9-8 9s-8-4-8-9z"/><path d="M8 10.5h2M14 10.5h2M9 15c1.8 1.4 4.2 1.4 6 0"/>',
+    pen: '<path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 7l3 3"/>',
+    ball: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5l3.8 2.7-1.4 4.4H9.6l-1.4-4.4zM12 3v4.5M3.6 9.5l4.6.7M20.4 9.5l-4.6.7M6.5 19.5l3.1-4.9M17.5 19.5l-3.1-4.9"/>',
+    hands: '<path d="M12 20s-6-3.8-6-8.2A3.3 3.3 0 0 1 12 9.6a3.3 3.3 0 0 1 6 2.2C18 16.2 12 20 12 20z"/><path d="M4 9V6M20 9V6M8 4.5 7 3M16 4.5 17 3"/>',
+    scissors: '<circle cx="6" cy="6.5" r="2.8"/><circle cx="6" cy="17.5" r="2.8"/><path d="M8.3 8.2 20 18M8.3 15.8 20 6"/>',
+    plane: '<path d="M10.5 13.5 3 11l1.5-2 8 1 4.5-5c1-1 2.8-1.3 3.5-.5.8.7.5 2.5-.5 3.5l-5 4.5 1 8-2 1.5-2.5-7.5-4 3.5v2.5L6 21l-1.5-3L2 16.5 3.5 15H6z"/>',
+    spa: '<path d="M12 21c-4.4 0-7.5-3-7.5-7 0-4.6 7.5-11 7.5-11s7.5 6.4 7.5 11c0 4-3.1 7-7.5 7z"/><path d="M9 14.5a3 3 0 0 0 3 3"/>',
+    car: '<path d="M4 16.5V12l2-5h12l2 5v4.5z"/><path d="M4 12h16"/><circle cx="7.5" cy="16.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/>',
+    mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/>',
+    leaf: '<path d="M5 19C4 11 9 4.5 20 4c.5 10-5.5 16-15 15z"/><path d="M5 19c3-5 6-8 10-10"/>',
+    paw: '<circle cx="7" cy="9.5" r="2"/><circle cx="17" cy="9.5" r="2"/><circle cx="10" cy="5.5" r="2"/><circle cx="14" cy="5.5" r="2"/><path d="M7.5 17c0-3.2 2-5.5 4.5-5.5s4.5 2.3 4.5 5.5c0 2.2-2 3-4.5 3s-4.5-.8-4.5-3z"/>',
+    tree: '<circle cx="12" cy="4.5" r="2.3"/><circle cx="5.5" cy="18.5" r="2.3"/><circle cx="12" cy="18.5" r="2.3"/><circle cx="18.5" cy="18.5" r="2.3"/><path d="M12 7v9M12 11.5H5.5V16M12 11.5h6.5V16"/>',
+    award: '<circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.2 7 21l5-2.5 5 2.5-1.5-7.8"/>',
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M14.8 9c-.5-1-1.6-1.6-2.8-1.6-1.6 0-2.9 1-2.9 2.3 0 3 5.8 1.6 5.8 4.6 0 1.3-1.3 2.3-2.9 2.3-1.3 0-2.4-.6-2.9-1.6M12 5.8v1.6M12 16.6v1.6"/>',
+    dice: '<rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><path d="M8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01"/>',
+    heart: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7.5 8-7.5s8 3.1 8 7.5"/>',
+    bank: '<path d="M3 9.5 12 4l9 5.5zM5 10v7M9.5 10v7M14.5 10v7M19 10v7M3 20h18"/>',
+    up: '<path d="M12 19V5M6 11l6-6 6 6"/>',
+    flat: '<rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h.01M15 15h.01M11 21v-3h2v3"/>',
+    house: '<path d="M3.5 11 12 4l8.5 7"/><path d="M5.5 9.5V20h13V9.5M10 20v-5.5h4V20"/>',
+    cottage: '<path d="M3 12 12 5l9 7M5 10.5V20h14v-9.5M10 20v-5h4v5M16 7.5V5h2v4"/>',
+    villa: '<path d="M2.5 20h19M4 20v-8h16v8M3 12l9-6 9 6M8 20v-4h3v4M14.5 15h3"/><path d="M19.5 6.5a2 2 0 1 1-3-2.5"/>',
+    bike: '<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h5l3 7M10 9 8.5 6.5H7M15 9l-3 7"/>',
+    scooter: '<circle cx="6" cy="17.5" r="2.5"/><circle cx="18" cy="17.5" r="2.5"/><path d="M8.5 17.5h7M16 5h2.5l-2 12.5M9.5 14h6"/>',
+    van: '<path d="M3 16.5V8.5A2.5 2.5 0 0 1 5.5 6H15l5 5v5.5z"/><path d="M15 6v5h5M3 11h12"/><circle cx="7.5" cy="16.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/>',
+    gift: '<rect x="3.5" y="8.5" width="17" height="4" rx="1"/><path d="M5 12.5V20h14v-7.5M12 8.5V20M12 8.5C9 8.5 7 7.5 7 5.8 7 4.7 8 4 9 4c2 0 3 2.5 3 4.5zM12 8.5c3 0 5-1 5-2.7C17 4.7 16 4 15 4c-2 0-3 2.5-3 4.5z"/>',
+    chat: '<path d="M4 5.5h16v10H10l-4.5 3.5v-3.5H4z"/>',
+    smile: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1.8 2 5.2 2 7 0M9 9.5h.01M15 9.5h.01"/>',
+    ring: '<circle cx="12" cy="14.5" r="6"/><path d="M9.5 4h5l1.5 2.5-4 3-4-3z"/>',
+    baby: '<circle cx="12" cy="12.5" r="7.5"/><path d="M9.5 12h.01M14.5 12h.01M10 15.5c1.2.9 2.8.9 4 0M12 5c-1.5 0-2 1-1 2"/>',
+    broken: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/><path d="M12 7.2 10.5 11l3 2-1.5 3"/>',
+    walk: '<circle cx="13" cy="4.5" r="2"/><path d="M9 21l2-6 3 2.5V21M11 15l1-6-3.5 2L7 14.5M12 9l2.5 3 3 .5"/>',
+    sell: '<path d="M3 12V4h8l10 10-8 7z"/><circle cx="7.5" cy="8" r="1.5"/>',
+    star: '<path d="M12 3.5l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>'
+  };
+  const olI2 = k => olSvg(OL_IC[k] || OL_IC.star);
+  const OL_PETC = ['#c98b4f', '#3d3532', '#e9e2d6', '#9a7c63', '#f0a95a', '#7d7f86'];
+  function olPetSvg(p) {
+    const c = OL_PETC[(p.lk && p.lk.hc) % OL_PETC.length || 0], d = '#2a2420', bg = '#ffefd9';
+    let o = `<circle cx="32" cy="32" r="32" fill="${bg}"/>`;
+    switch (p.sp) {
+      case 'dog': o += `<path d="M14 22c-3 8-1 17 5 18l3-14z" fill="${c}" opacity=".75"/><path d="M50 22c3 8 1 17-5 18l-3-14z" fill="${c}" opacity=".75"/><ellipse cx="32" cy="33" rx="15" ry="16" fill="${c}"/><ellipse cx="32" cy="41" rx="8" ry="6" fill="#f6e6d2"/><circle cx="26" cy="30" r="2.2" fill="${d}"/><circle cx="38" cy="30" r="2.2" fill="${d}"/><ellipse cx="32" cy="38" rx="3.4" ry="2.4" fill="${d}"/><path d="M32 40v3M28.5 44c2 1.6 5 1.6 7 0" stroke="${d}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`; break;
+      case 'cat': o += `<path d="M18 26l2-14 10 8zM46 26l-2-14-10 8z" fill="${c}"/><ellipse cx="32" cy="35" rx="16" ry="14" fill="${c}"/><path d="M26 31c1 2 3 2 4 0M34 31c1 2 3 2 4 0" stroke="${d}" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M30.5 37h3l-1.5 2z" fill="#e9837f"/><path d="M14 36l9 1M14 41l9-1M50 36l-9 1M50 41l-9-1" stroke="${d}" stroke-width="1" opacity=".6"/>`; break;
+      case 'rabbit': o += `<ellipse cx="25" cy="16" rx="4.5" ry="12" fill="${c}"/><ellipse cx="39" cy="16" rx="4.5" ry="12" fill="${c}"/><ellipse cx="25" cy="17" rx="2" ry="8" fill="#f3b6b6"/><ellipse cx="39" cy="17" rx="2" ry="8" fill="#f3b6b6"/><ellipse cx="32" cy="38" rx="14" ry="13" fill="${c}"/><circle cx="27" cy="36" r="2" fill="${d}"/><circle cx="37" cy="36" r="2" fill="${d}"/><ellipse cx="32" cy="41" rx="2" ry="1.5" fill="#e9837f"/>`; break;
+      case 'hamster': case 'guinea': o += `<ellipse cx="32" cy="36" rx="19" ry="15" fill="${c}"/><circle cx="19" cy="24" r="5" fill="${c}"/><circle cx="45" cy="24" r="5" fill="${c}"/><circle cx="19" cy="24" r="2.5" fill="#f3b6b6"/><circle cx="45" cy="24" r="2.5" fill="#f3b6b6"/><ellipse cx="32" cy="42" rx="10" ry="7" fill="#f6e6d2"/><circle cx="26" cy="33" r="2" fill="${d}"/><circle cx="38" cy="33" r="2" fill="${d}"/><ellipse cx="32" cy="38" rx="1.8" ry="1.3" fill="#e9837f"/>`; break;
+      case 'parrot': o += `<ellipse cx="32" cy="36" rx="13" ry="17" fill="#3fb36b"/><path d="M32 14c8 0 13 6 13 12H19c0-6 5-12 13-12z" fill="#e8483d"/><path d="M36 26c6 0 8 4 7 8-3-2-5-2-7-1z" fill="#f2c13c"/><circle cx="29" cy="25" r="2.2" fill="${d}"/><path d="M20 40c-6 6-6 12-4 16l8-9z" fill="#2f86d8"/>`; break;
+      case 'fish': o += `<path d="M46 32l12-9v18z" fill="#f08a2e"/><ellipse cx="30" cy="32" rx="18" ry="12" fill="#f5a23b"/><path d="M26 22c4-4 10-4 13 1z" fill="#f08a2e"/><circle cx="20" cy="30" r="2.4" fill="${d}"/><path d="M34 27c2 3 2 7 0 10" stroke="#e07a22" stroke-width="1.6" fill="none"/>`; break;
+      case 'tortoise': o += `<ellipse cx="13" cy="35" rx="6" ry="5" fill="#9ab86a"/><ellipse cx="32" cy="34" rx="18" ry="13" fill="#7a9a4a"/><path d="M22 30l5-5h10l5 5-5 5H27z" fill="#a3bf6c"/><circle cx="11" cy="34" r="1.4" fill="${d}"/><path d="M20 46v4M44 46v4" stroke="#9ab86a" stroke-width="4" stroke-linecap="round"/>`; break;
+    }
+    return `<svg viewBox="0 0 64 64" aria-hidden="true">${o}</svg>`;
+  }
+  function olFace(lk, g, age, mood, al) {
+    if (!lk) lk = { sk: 1, hc: 0, hs: 0, ec: 0, sh: 0 };
+    const sk = OL_SKIN[lk.sk] || OL_SKIN[1];
+    let hc = OL_HAIR[lk.hc] || OL_HAIR[0];
+    if (lk.hc < 6) { if (age >= 74) hc = '#e6e3de'; else if (age >= 56) hc = '#aba59d'; }
+    const baby = age < 3, kid = age < 13, old = age >= 64;
+    const bg = ['#dbe6ff', '#ffe0e0', '#dcf4e7', '#fff0cc', '#ece2ff', '#ffe6d3', '#d9f2f7', '#fde0ef'][lk.sh] || '#e6ecf5';
+    const sh = OL_SHIRT[lk.sh] || OL_SHIRT[0], eye = OL_EYE[lk.ec] || OL_EYE[0];
+    const hy = baby ? 30 : 27, rx = baby ? 15 : 13.2, ry = baby ? 14.5 : 15.2;
+    let o = `<circle cx="32" cy="32" r="32" fill="${bg}"/>`;
+    const longHair = !baby && (lk.hs === 1) ;
+    if (longHair) o += `<path d="M17.5 27c-1.5 12 .5 22 4 25h21c3.5-3 5.5-13 4-25-1-10-7-15-14.5-15S18.5 17 17.5 27z" fill="${hc}"/>`;
+    o += baby ? `<path d="M15 64c1-9 7-14 17-14s16 5 17 14z" fill="${sh}"/>` : `<path d="M9 64c1.5-11 9-17.5 23-17.5S53.5 53 55 64z" fill="${sh}"/><path d="M26 46.5c1.5 3 10.5 3 12 0" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="2"/>`;
+    if (!baby) o += `<rect x="27" y="37" width="10" height="11" rx="4.5" fill="${sk}"/>`;
+    o += `<circle cx="${32 - rx}" cy="${hy + 1}" r="3.2" fill="${sk}"/><circle cx="${32 + rx}" cy="${hy + 1}" r="3.2" fill="${sk}"/>`;
+    o += `<ellipse cx="32" cy="${hy}" rx="${rx}" ry="${ry}" fill="${sk}"/>`;
+    if (kid) o += `<circle cx="24" cy="${hy + 5}" r="2.6" fill="#ff8f8f" opacity=".3"/><circle cx="40" cy="${hy + 5}" r="2.6" fill="#ff8f8f" opacity=".3"/>`;
+    const ey = hy + (baby ? 1 : 0), er = baby ? 2.3 : 1.9;
+    if (al === 0) o += `<path d="M${26 - er} ${ey}h${er * 2}M${38 - er} ${ey}h${er * 2}" stroke="#2a211e" stroke-width="1.7" stroke-linecap="round"/>`;
+    else o += `<circle cx="26.5" cy="${ey}" r="${er}" fill="${eye}"/><circle cx="37.5" cy="${ey}" r="${er}" fill="${eye}"/><circle cx="27.1" cy="${ey - 0.6}" r=".65" fill="#fff"/><circle cx="38.1" cy="${ey - 0.6}" r=".65" fill="#fff"/>`;
+    if (!baby) o += `<path d="M23.5 ${ey - 4.2}q3-1.6 5.5 0M35 ${ey - 4.2}q2.5-1.6 5.5 0" stroke="${lk.hc < 6 && age >= 56 ? '#8f877d' : hc}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
+    if (old) o += `<path d="M21.5 ${ey + 1.5}l-1.5 1M42.5 ${ey + 1.5}l1.5 1M28 ${hy - 9}h8" stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linecap="round"/>`;
+    const my = hy + (baby ? 6.5 : 7.5);
+    const mp = mood >= 62 ? `M27.5 ${my}q4.5 4 9 0` : mood >= 38 ? `M28.5 ${my + 1}q3.5 1 7 0` : `M28.5 ${my + 2}q3.5-2.6 7 0`;
+    o += `<path d="${mp}" stroke="#8a3d33" stroke-width="1.7" fill="none" stroke-linecap="round"/>`;
+    if (!baby && g === 'm' && lk.bd && age >= 19) o += `<path d="M19.5 ${hy + 1}c0 9 5 15.5 12.5 15.5S44.5 ${hy + 10} 44.5 ${hy + 1}c-2 5-6 7-12.5 7s-10.5-2-12.5-7z" fill="${hc}"/><path d="${mp}" stroke="#8a3d33" stroke-width="1.7" fill="none" stroke-linecap="round"/>`;
+    if (baby) o += `<path d="M30 ${hy - 13}c-1-3 2-5 4-3.5-2 0-2.5 2-1 3.5" stroke="${hc}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+    else if (lk.hs === 2) { [[20, 21, 5.2], [24.5, 15, 5.4], [31.5, 12.5, 5.8], [38.5, 15, 5.4], [43.5, 21, 5.2], [19, 27, 3.6], [45, 27, 3.6]].forEach(([x, y, r]) => { o += `<circle cx="${x}" cy="${y + hy - 27}" r="${r}" fill="${hc}"/>`; }); }
+    else if (lk.hs === 3) o += `<circle cx="32" cy="${hy - 17}" r="5.5" fill="${hc}"/><path d="M18.8 ${hy - 1}c0-9 5.5-14.5 13.2-14.5S45.2 ${hy - 10} 45.2 ${hy - 1}c-3-6-7.5-8.5-13.2-8.5S21.8 ${hy - 7} 18.8 ${hy - 1}z" fill="${hc}"/>`;
+    else if (lk.hs === 1) o += `<path d="M18.8 ${hy}c0-10 5.5-15.5 13.2-15.5S45.2 ${hy - 10} 45.2 ${hy}c-4-6-8-8.2-11-8.2-3 2-8.5 4-15.4 8.2z" fill="${hc}"/>`;
+    else if (g === 'm' && age >= 62) o += `<path d="M19 ${hy - 2}c0-5 1.5-8 3.5-9.5-1 3-1 6-1 9.5zM45 ${hy - 2}c0-5-1.5-8-3.5-9.5 1 3 1 6 1 9.5z" fill="${hc}"/>`;
+    else o += `<path d="M19 ${hy - 1}c0-10 5.5-14.5 13-14.5s13 4.5 13 14.5c-2.5-5-7-7.2-13-7.2s-10.5 2.2-13 7.2z" fill="${hc}"/>`;
+    if (!baby && (lk.gl && age >= 9 || age >= 66)) o += `<g fill="none" stroke="#2f3542" stroke-width="1.4"><circle cx="26.5" cy="${ey}" r="4.4"/><circle cx="37.5" cy="${ey}" r="4.4"/><path d="M30.9 ${ey}h2.2M22.1 ${ey - 0.5}l-3-1M41.9 ${ey - 0.5}l3-1"/></g>`;
+    return `<svg viewBox="0 0 64 64" aria-hidden="true"${al === 0 ? ' style="filter:grayscale(1);opacity:.75"' : ''}>${o}</svg>`;
+  }
+  const olAv = (p, me) => (p.r === 'pet' ? olPetSvg(p) : olFace(p.lk, p.g, p.age, p.al ? 50 + p.b / 3 : 50, p.al ? 1 : 0));
+  const olMeAv = me => olFace(me.lk, me.g, me.age, me.st.h, me.al ? 1 : 0);
+  function olBadge(id, sz) {
+    const a = OL_AWM[id] || OL_AWM.ordinary, c = a[3];
+    const glyph = { century: '100', tycoon: '$', genius: 'Ph', star: '★', healer: '+', mentor: 'A', clan: '4', kind: '♥', athlete: '1', artist: '♪', globe: '✈', rich: '$', scholar: '∑', boss: '▲', love: '∞', happy: '☀', healthy: '♡', book: '¶', social: '☺', jack: '⚙', animal: '❀', brief: '·', ordinary: '○' }[a[0]] || '○';
+    return `<svg viewBox="0 0 64 64" width="${sz || 56}" height="${sz || 56}" aria-hidden="true"><path d="M20 38 14 62l10-5 6 7 2-24zM44 38l6 24-10-5-6 7-2-24z" fill="${c}" opacity=".75"/><circle cx="32" cy="26" r="22" fill="${c}"/><circle cx="32" cy="26" r="17" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="2"/><text x="32" y="${glyph.length > 1 ? 31.5 : 33}" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="${glyph.length > 2 ? 13 : glyph.length > 1 ? 15 : 20}" fill="#fff">${glyph}</text></svg>`;
+  }
+
+  const OL_CSS = `
+.gm-one-life{--bg:#eef2f8;--card:#fff;--ink:#1d2738;--mut:#69768b;--line:#e2e7ef;--acc:#22b573;--accd:#17925b;--blue:#3d7be0;--bad:#e5533d;--good:#1fa463;position:relative;padding:0;gap:0;align-items:stretch;justify-content:flex-start;overflow:hidden;border-radius:14px;background:var(--bg);color:var(--ink);font-family:var(--sans);height:clamp(520px,calc(100dvh - max(var(--goff,250px),168px)),880px);min-height:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.gm-one-life [hidden]{display:none!important}
+.gm-one-life button{font-family:inherit;color:inherit;cursor:pointer}
+.gm-one-life svg{display:block}
+.gm-one-life .ol-app{position:absolute;inset:0;display:grid;grid-template-rows:auto minmax(0,1fr)}
+.gm-one-life .ol-hd{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--line)}
+.gm-one-life .ol-me{display:flex;align-items:center;gap:11px;min-width:0;flex:1;border:0;background:none;padding:2px 6px 2px 2px;border-radius:14px;text-align:left}
+.gm-one-life .ol-me:hover{background:#f3f6fb}
+.gm-one-life .ol-av{flex:none;width:50px;height:50px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 2px #fff,0 0 0 3.5px var(--line)}
+.gm-one-life .ol-av svg{width:100%;height:100%}
+.gm-one-life .ol-nm{display:block;font:800 17px/1.2 var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gm-one-life .ol-sub{display:block;font-size:13px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.gm-one-life .ol-cash{flex:none;text-align:right}
+.gm-one-life .ol-cash small{display:block;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.gm-one-life .ol-cash b{display:block;font:800 18px/1.2 var(--sans);font-variant-numeric:tabular-nums;color:var(--good)}
+.gm-one-life .ol-cash b.neg{color:var(--bad)}
+.gm-one-life .ol-body{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,390px);min-height:0}
+.gm-one-life .ol-main{display:flex;flex-direction:column;min-height:0;min-width:0}
+.gm-one-life .ol-feed{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:10px 14px 16px;scroll-behavior:smooth}
+.gm-one-life .yb{background:var(--card);border-radius:14px;padding:10px 14px 11px;margin-bottom:9px;box-shadow:0 1px 2px rgba(20,30,50,.06)}
+.gm-one-life .yh{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:5px}
+.gm-one-life .yh b{font:800 15px/1.3 var(--sans);color:var(--blue)}
+.gm-one-life .yh span{font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
+.gm-one-life .yb p{position:relative;margin:3px 0 0;padding-left:14px;font-size:15px;line-height:1.42}
+.gm-one-life .yb p:before{content:"";position:absolute;left:0;top:.55em;width:6px;height:6px;border-radius:50%;background:#c4ccd8}
+.gm-one-life .yb p.g:before{background:var(--good)}
+.gm-one-life .yb p.b:before{background:var(--bad)}
+.gm-one-life .yb p.m{font-weight:700}
+.gm-one-life .yb p.m:before{background:var(--blue)}
+.gm-one-life .yb.new{animation:olIn .35s ease-out}
+@keyframes olIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.gm-one-life .ol-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px 46px;padding:10px 14px 16px;background:var(--card);border-top:1px solid var(--line)}
+.gm-one-life .st{display:grid;grid-template-columns:20px auto 1fr 38px;align-items:center;gap:7px;font-size:13px;font-weight:700}
+.gm-one-life .st svg{width:18px;height:18px;color:var(--mut)}
+.gm-one-life .st .br{position:relative;height:10px;border-radius:99px;background:#e9edf3;overflow:hidden}
+.gm-one-life .st .br i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;transition:width .5s,background .5s}
+.gm-one-life .st em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums;color:var(--mut)}
+.gm-one-life .st .dl{position:absolute;right:0;top:-1px;font-size:10px}
+.gm-one-life .ol-nav{display:grid;grid-template-columns:repeat(5,1fr);align-items:end;background:var(--card);border-top:1px solid var(--line);padding:4px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+.gm-one-life .nb{display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;padding:7px 2px 4px;border-radius:12px;font-size:12px;font-weight:700;color:var(--mut);min-width:0}
+.gm-one-life .nb svg{width:23px;height:23px}
+.gm-one-life .nb span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gm-one-life .nb:hover{background:#f2f5fa;color:var(--ink)}
+.gm-one-life .nb[aria-pressed="true"]{color:var(--blue)}
+.gm-one-life .nb.age{position:relative;margin-top:-22px}
+.gm-one-life .nb.age i{display:grid;place-items:center;width:66px;height:66px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd896,var(--acc) 60%,var(--accd));color:#fff;box-shadow:0 6px 14px rgba(23,146,91,.35),0 0 0 5px var(--card);transition:transform .12s}
+.gm-one-life .nb.age i svg{width:30px;height:30px;stroke-width:3}
+.gm-one-life .nb.age:hover{background:none}
+.gm-one-life .nb.age:hover i{transform:scale(1.05)}
+.gm-one-life .nb.age:active i{transform:scale(.95)}
+.gm-one-life .nb.age span{color:var(--accd);font-weight:800}
+.gm-one-life .nb.age:disabled{opacity:.5;cursor:default}
+.gm-one-life .ol-side{min-height:0;overflow-y:auto;overscroll-behavior:contain;background:var(--card);border-left:1px solid var(--line)}
+.gm-one-life .ol-side .sx{display:none}
+.gm-one-life.narrow .ol-body{grid-template-columns:minmax(0,1fr)}
+.gm-one-life.narrow .ol-side{position:absolute;inset:0 0 var(--nh,70px);z-index:5;border-left:0;transform:translateY(100%);transition:transform .25s ease;visibility:hidden}
+.gm-one-life.narrow .ol-side.open{transform:none;visibility:visible}
+.gm-one-life.narrow .ol-side .sx{display:grid}
+.gm-one-life .ph{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:12px 14px 10px;background:var(--card);border-bottom:1px solid var(--line)}
+.gm-one-life .ph h3{flex:1;margin:0;font:800 17px/1.2 var(--sans)}
+.gm-one-life .ib{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:50%;border:0;background:#eef2f8}
+.gm-one-life .ib svg{width:18px;height:18px}
+.gm-one-life .ib:hover{background:#e2e8f2}
+.gm-one-life .pc{padding:10px 14px 18px}
+.gm-one-life .sec{margin:14px 0 6px;font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--mut)}
+.gm-one-life .sec:first-child{margin-top:4px}
+.gm-one-life .card{background:#f6f8fc;border:1px solid var(--line);border-radius:14px;padding:12px}
+.gm-one-life .card h4{margin:0 0 3px;font:800 16px/1.25 var(--sans)}
+.gm-one-life .card p{margin:2px 0;font-size:13.5px;color:var(--mut)}
+.gm-one-life .row{display:flex;align-items:center;gap:11px;width:100%;margin:0 0 6px;padding:9px 11px;border:1px solid var(--line);border-radius:13px;background:var(--card);text-align:left;font-size:14.5px}
+.gm-one-life button.row:hover:not(:disabled){border-color:#c9d3e2;background:#f8fafd}
+.gm-one-life button.row:disabled{opacity:.55;cursor:default}
+.gm-one-life .row .ri{display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:11px;background:#eef3fb;color:var(--blue)}
+.gm-one-life .row .ri svg{width:21px;height:21px}
+.gm-one-life .row .ra{flex:none;width:42px;height:42px;border-radius:50%;overflow:hidden}
+.gm-one-life .row .ra svg{width:100%;height:100%}
+.gm-one-life .row .rt{flex:1;min-width:0}
+.gm-one-life .row .rt b{display:block;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gm-one-life .row .rt small{display:block;font-size:12.5px;color:var(--mut);margin-top:1px;white-space:normal}
+.gm-one-life .row .rv{flex:none;font-size:13px;font-weight:800;color:var(--mut);font-variant-numeric:tabular-nums;text-align:right}
+.gm-one-life .row .rv.ok{color:var(--good)}
+.gm-one-life .row .rv.no{color:var(--bad)}
+.gm-one-life .row.done .rv{color:var(--good)}
+.gm-one-life .bond{display:block;height:6px;border-radius:99px;background:#e9edf3;margin-top:5px;overflow:hidden;max-width:190px}
+.gm-one-life .bond i{display:block;height:100%;border-radius:99px}
+.gm-one-life .pbar{height:9px;border-radius:99px;background:#e3e8f0;overflow:hidden;margin:7px 0 3px}
+.gm-one-life .pbar i{display:block;height:100%;border-radius:99px;background:var(--blue);transition:width .4s}
+.gm-one-life .kv{display:grid;grid-template-columns:1fr auto;gap:5px 10px;font-size:14px}
+.gm-one-life .kv span{color:var(--mut)}
+.gm-one-life .kv b{text-align:right;font-variant-numeric:tabular-nums}
+.gm-one-life .hint{font-size:13px;color:var(--mut);margin:6px 2px;line-height:1.4}
+.gm-one-life .pf{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.gm-one-life .pf .ra{width:76px;height:76px;border-radius:50%;overflow:hidden;flex:none;box-shadow:0 0 0 3px #fff,0 0 0 4.5px var(--line)}
+.gm-one-life .pf .ra svg{width:100%;height:100%}
+.gm-one-life .pf h4{margin:0;font:800 19px/1.2 var(--sans)}
+.gm-one-life .pf p{margin:3px 0 0;font-size:13.5px;color:var(--mut)}
+.gm-one-life .sk{display:grid;grid-template-columns:110px 1fr 34px;align-items:center;gap:8px;font-size:13.5px;margin:5px 0}
+.gm-one-life .sk .pbar{margin:0}
+.gm-one-life .sk em{font-style:normal;color:var(--mut);text-align:right;font-variant-numeric:tabular-nums}
+.gm-one-life .aw{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.gm-one-life .aw div{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:10px 6px;border:1px solid var(--line);border-radius:13px;background:#fafbfd;font-size:12.5px;font-weight:700}
+.gm-one-life .aw div.lk{opacity:.45;filter:grayscale(1)}
+.gm-one-life .aw small{font-weight:600;color:var(--mut);font-size:11.5px;line-height:1.3}
+.gm-one-life .tr{display:flex;flex-direction:column;align-items:center;gap:0}
+.gm-one-life .tg{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:8px 0;position:relative}
+.gm-one-life .tg+.tg:before{content:"";position:absolute;left:50%;top:-6px;height:12px;border-left:2px solid #cfd7e4}
+.gm-one-life .tn{display:flex;flex-direction:column;align-items:center;width:76px;text-align:center;font-size:11.5px;line-height:1.25}
+.gm-one-life .tn .ra{width:46px;height:46px;border-radius:50%;overflow:hidden;margin-bottom:3px}
+.gm-one-life .tn .ra svg{width:100%;height:100%}
+.gm-one-life .tn b{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:76px}
+.gm-one-life .tn span{color:var(--mut)}
+.gm-one-life .tn.me .ra{box-shadow:0 0 0 3px var(--acc)}
+.gm-one-life .tlab{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin-top:6px}
+.gm-one-life .gl{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;margin-bottom:6px;background:#fafbfd}
+.gm-one-life .gl .ra{width:40px;height:40px;border-radius:50%;overflow:hidden;flex:none}
+.gm-one-life .gl .ra svg{width:100%;height:100%}
+.gm-one-life .gl div{flex:1;min-width:0;font-size:13px}
+.gm-one-life .gl b{display:block;font-size:14px}
+.gm-one-life .gl span{color:var(--mut)}
+.gm-one-life .ol-pop{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(18,26,40,.42);animation:olFade .18s ease-out}
+@keyframes olFade{from{opacity:0}to{opacity:1}}
+.gm-one-life .pk{width:min(460px,100%);max-height:100%;overflow-y:auto;background:var(--card);border-radius:20px;padding:18px 18px 16px;box-shadow:0 20px 50px rgba(10,20,40,.3);animation:olPop .22s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes olPop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+.gm-one-life .pk .pa{width:64px;height:64px;border-radius:50%;overflow:hidden;margin:0 auto 8px}
+.gm-one-life .pk .pa svg{width:100%;height:100%}
+.gm-one-life .pk .pi{display:grid;place-items:center;width:58px;height:58px;border-radius:18px;margin:0 auto 8px;background:#eef3fb;color:var(--blue)}
+.gm-one-life .pk .pi svg{width:30px;height:30px}
+.gm-one-life .pk h3{margin:0 0 6px;text-align:center;font:800 19px/1.25 var(--sans)}
+.gm-one-life .pk .pt{margin:0 0 14px;text-align:center;font-size:15.5px;line-height:1.45;color:#38445a}
+.gm-one-life .pk .ch{display:block;width:100%;margin:0 0 8px;padding:12px 14px;border:0;border-radius:13px;background:var(--blue);color:#fff!important;font-size:15px;font-weight:750;text-align:left;line-height:1.3;transition:filter .12s,transform .08s}
+.gm-one-life .pk .ch small{display:block;font-weight:600;font-size:12.5px;opacity:.85;margin-top:2px}
+.gm-one-life .pk .ch:hover:not(:disabled){filter:brightness(1.08)}
+.gm-one-life .pk .ch:active:not(:disabled){transform:scale(.985)}
+.gm-one-life .pk .ch:disabled{background:#c7cfdc;cursor:default}
+.gm-one-life .pk .ch.alt{background:#eef2f8;color:var(--ink)!important}
+.gm-one-life .pk .ch.go{background:var(--acc)}
+.gm-one-life .pk .ch.warn{background:var(--bad)}
+.gm-one-life .pk .ch kbd{float:right;font:700 11px/1 var(--sans);opacity:.7;border:1px solid rgba(255,255,255,.5);border-radius:5px;padding:3px 5px;margin-left:8px}
+.gm-one-life .pk .ch.alt kbd{border-color:#c5cedb}
+.gm-one-life .chips{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:-4px 0 14px}
+.gm-one-life .chips span{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:99px;font-size:12.5px;font-weight:800;background:#e8f7ef;color:var(--good)}
+.gm-one-life .chips span.n{background:#fdeceа;background:#fdece9;color:var(--bad)}
+.gm-one-life .pk input[type=text]{width:100%;box-sizing:border-box;margin:0 0 10px;padding:11px 13px;border:1.5px solid var(--line);border-radius:12px;font:600 16px var(--sans);color:var(--ink);background:#fff}
+.gm-one-life .pk input[type=text]:focus{outline:none;border-color:var(--blue)}
+.gm-one-life .seg{display:flex;gap:6px;margin:0 0 10px}
+.gm-one-life .seg button{flex:1;padding:9px;border-radius:11px;border:1.5px solid var(--line);background:#fff;font-weight:750;font-size:14px}
+.gm-one-life .seg button[aria-pressed="true"]{border-color:var(--blue);background:#eef4ff;color:var(--blue)}
+.gm-one-life .ol-scr{position:absolute;inset:0;z-index:30;overflow-y:auto;background:linear-gradient(160deg,#dff3ea,#e4ecfb 55%,#f3e6f6);display:flex;align-items:flex-start;justify-content:center;padding:22px 16px}
+.gm-one-life .scr{width:min(520px,100%);margin:auto 0}
+.gm-one-life .logo{text-align:center;margin:4px 0 14px}
+.gm-one-life .logo b{display:block;font:900 clamp(34px,6vw,46px)/1 var(--sans);letter-spacing:-.02em;color:#173a5c}
+.gm-one-life .logo b em{font-style:normal;color:var(--acc)}
+.gm-one-life .logo span{display:block;margin-top:6px;color:var(--mut);font-size:15px}
+.gm-one-life .scr .pk{width:100%;animation:none}
+.gm-one-life .nw{display:flex;gap:14px;align-items:center;margin-bottom:12px}
+.gm-one-life .nw .pa{width:84px;height:84px;margin:0;flex:none}
+.gm-one-life .nw .f{flex:1;min-width:0}
+.gm-one-life .nw input[type=text]{margin-bottom:7px}
+.gm-one-life .lbl{display:block;font-size:12px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:0 0 5px}
+.gm-one-life .mini{display:flex;justify-content:center;gap:16px;margin-top:12px;font-size:13px;color:var(--mut);flex-wrap:wrap}
+.gm-one-life .mini b{color:var(--ink)}
+.gm-one-life .end .big{display:flex;flex-direction:column;align-items:center;margin:2px 0 10px}
+.gm-one-life .end .big .pa{width:92px;height:92px}
+.gm-one-life .end .yrs{font-size:14px;color:var(--mut);font-weight:700;margin-top:-2px}
+.gm-one-life .end .awd{display:flex;align-items:center;gap:12px;padding:10px 12px;margin:0 0 12px;border-radius:14px;background:#fff8e6;border:1px solid #f2e3b8}
+.gm-one-life .end .awd b{display:block;font-size:16px}
+.gm-one-life .end .awd small{display:block;color:var(--mut);font-size:13px}
+.gm-one-life .end .awd em{display:inline-block;margin-left:6px;font-style:normal;font-size:11px;font-weight:800;color:#b5801b;text-transform:uppercase;letter-spacing:.05em}
+.gm-one-life .end .kv{margin-bottom:14px}
+.gm-one-life.narrow .ol-hd{padding:8px 12px}
+.gm-one-life.narrow .ol-av{width:44px;height:44px}
+.gm-one-life.narrow .ol-feed{padding:8px 10px 12px}
+.gm-one-life.narrow .yb p{font-size:14.5px}
+.gm-one-life.narrow .ol-stats{gap:5px 40px;padding:8px 12px 14px}
+.gm-one-life.narrow .st{grid-template-columns:18px 1fr 34px;font-size:12px}
+.gm-one-life.narrow .st .lb{display:none}
+.gm-one-life.narrow .nb{font-size:11px}
+.gm-one-life.tiny .ol-stats{grid-template-columns:1fr 1fr}
+`;
+
+  function olSan(raw) {
+    const G = { v: OL_V, cur: null, tree: [], aw: {}, best: 0, lives: 0, tab: 'occ' };
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return G;
+    const num = (v, a, b, d) => (typeof v === 'number' && isFinite(v) ? Math.max(a, Math.min(b, v)) : d);
+    const str = (v, n, d) => (typeof v === 'string' ? v.slice(0, n) : d);
+    if (raw.aw && typeof raw.aw === 'object') Object.keys(raw.aw).slice(0, 40).forEach(k => { if (OL_AWM[k]) G.aw[k] = num(raw.aw[k], 0, 1e6, 0) | 0; });
+    G.best = num(raw.best, 0, 130, 0) | 0;
+    G.lives = num(raw.lives, 0, 1e6, 0) | 0;
+    if (['occ', 'assets', 'people', 'acts'].includes(raw.tab)) G.tab = raw.tab;
+    if (Array.isArray(raw.tree)) raw.tree.slice(-60).forEach(t => {
+      if (!t || typeof t !== 'object') return;
+      G.tree.push({ n: str(t.n, 60, '?'), g: t.g === 'f' ? 'f' : 'm', b: num(t.b, -1e4, 1e5, 0) | 0, d: num(t.d, -1e4, 1e5, 0) | 0, a: num(t.a, 0, 130, 0) | 0, aw: OL_AWM[t.aw] ? t.aw : 'ordinary', j: Array.isArray(t.j) ? [str(t.j[0], 80, ''), str(t.j[1], 80, '')] : null, w: num(t.w, -1e10, 1e11, 0), k: num(t.k, 0, 50, 0) | 0, ln: num(t.ln, 0, 1e10, 0), gen: num(t.gen, 1, 999, 1) | 0, lk: olSanLook(t.lk) });
+    });
+    try { G.cur = olSanState(raw.cur); } catch (e) { G.cur = null; }
+    return G;
+  }
+  function olSanLook(l) {
+    const n = (v, b) => (Number.isInteger(v) && v >= 0 && v <= b ? v : 0);
+    l = l && typeof l === 'object' ? l : {};
+    return { sk: n(l.sk, 5), hc: n(l.hc, 8), hs: n(l.hs, 3), ec: n(l.ec, 3), sh: n(l.sh, 7), bd: l.bd ? 1 : 0, gl: l.gl ? 1 : 0 };
+  }
+  function olSanState(c) {
+    if (!c || typeof c !== 'object' || c.v !== OL_V) return null;
+    const ok = (v, a, b) => typeof v === 'number' && isFinite(v) && v >= a && v <= b;
+    const me = c.me;
+    if (!me || typeof me !== 'object' || typeof me.fn !== 'string' || typeof me.ln !== 'string') return null;
+    if (!ok(me.age, 0, 130) || !ok(me.yr, -1e4, 1e5) || !ok(me.m, -1e11, 1e11) || !ok(me.debt, 0, 1e9)) return null;
+    if (!me.st || !['h', 'H', 's', 'l'].every(k => ok(me.st[k], 0, 100))) return null;
+    if (!['k', 'f', 'a'].every(k => ok(me[k], 0, 100))) return null;
+    if (!me.sk || !OL_SK.every(k => ok(me.sk[k], 0, 100))) return null;
+    if (!Array.isArray(c.pp) || c.pp.length > 300 || !Array.isArray(c.log) || c.log.length > 140 || !Array.isArray(c.q) || c.q.length > 12) return null;
+    if (!Array.isArray(me.ill) || !Array.isArray(me.as) || !Array.isArray(me.dn) || !Array.isArray(me.hist) || !Array.isArray(me.sum)) return null;
+    if (!me.fl || typeof me.fl !== 'object' || !me.cnt || typeof me.cnt !== 'object' || !me.ev || typeof me.ev !== 'object' || !me.edu || typeof me.edu !== 'object') return null;
+    me.fn = me.fn.slice(0, 24); me.ln = me.ln.slice(0, 24);
+    me.g = me.g === 'f' ? 'f' : 'm';
+    me.lk = olSanLook(me.lk);
+    me.city = Number.isInteger(me.city) && OL_CITY[me.city] ? me.city : 0;
+    me.ill = me.ill.filter(x => Array.isArray(x) && OL_ILLM[x[0]]).slice(0, 20).map(x => [x[0], x[1] | 0, x[2] ? 1 : 0]);
+    me.as = me.as.filter(a => a && (a.t === 'house' ? OL_HOUSEM[a.id] : a.t === 'car' ? OL_CARM[a.id] : 0) && ok(a.v, 0, 1e10) && (a.lo === undefined || ok(a.lo, 0, 1e10))).slice(0, 30).map(a => ({ t: a.t, id: a.id, v: a.v, lo: a.lo || 0, pm: ok(a.pm, 0, 1e9) ? a.pm : 0, y: a.y | 0 }));
+    me.dn = me.dn.filter(x => typeof x === 'string').slice(0, 60);
+    me.hist = me.hist.filter(x => OL_JOBM[x]).slice(0, 60);
+    if (me.sum.length !== 3 || !me.sum.every(v => ok(v, 0, 1e7))) me.sum = [0, 0, 0];
+    if (me.job) { const j = me.job, d = OL_JOBM[j.id]; if (!d || !Number.isInteger(j.lvl) || j.lvl < 0 || j.lvl >= d[6].length || !ok(j.perf, 0, 100) || !ok(j.sal, 0, 1e8)) me.job = null; else { j.yrs = j.yrs | 0; j.ly = j.ly | 0; j.t = d[1]; } }
+    if (me.sch) { const k = me.sch; if (!['pri', 'mid', 'high', 'uni', 'grad'].includes(k.k) || !ok(k.perf, 0, 100) || !ok(k.y, 0, 20) || !ok(k.n, 1, 20) || (k.k === 'uni' && !OL_MAJM[k.maj]) || (k.k === 'grad' && !OL_GRADM[k.maj])) me.sch = null; else { k.sum = ok(k.sum, 0, 3000) ? k.sum : 0; k.gr = ok(k.gr, 0, 100) ? k.gr : 0; if (k.club && !['s', 'a', 'act', 'art', 'mus', 'cod', 'wri'].includes(k.club)) k.club = null; k.ci = Number.isInteger(k.ci) && OL_CLUBS[k.ci] ? k.ci : 0; } }
+    const e = me.edu;
+    e.hs = e.hs ? 1 : 0; if (!OL_MAJM[e.deg]) e.deg = null; if (!OL_GRADM[e.grad]) e.grad = null; e.ex = ok(e.ex, 0, 100) ? e.ex : 0; e.gpa = ok(e.gpa, 0, 100) ? e.gpa : 0;
+    ['kids', 'pets', 'mar', 'top', 'lic', 'mv', 'ret'].forEach(k => { me[k] = ok(me[k], 0, 1e4) ? me[k] | 0 : 0; });
+    me.pen = ok(me.pen, 0, 1e7) ? me.pen : 0;
+    me.inst = Number.isInteger(me.inst) && OL_INST[me.inst] ? me.inst : -1;
+    me.spt = Number.isInteger(me.spt) && OL_SPORT[me.spt] ? me.spt : -1;
+    me.al = me.al ? 1 : 0;
+    const ids = new Set();
+    c.pp = c.pp.filter(p => p && typeof p === 'object' && Number.isInteger(p.i) && !ids.has(p.i) && ids.add(p.i) && typeof p.n === 'string' && ['mom', 'dad', 'sib', 'gp', 'friend', 'love', 'kid', 'gkid', 'pet'].includes(p.r) && ok(p.age, 0, 130) && ok(p.b, 0, 100) && (p.r !== 'pet' || OL_PETM[p.sp]));
+    c.pp.forEach(p => { p.n = p.n.slice(0, 24); p.g = p.g === 'f' ? 'f' : 'm'; p.al = p.al ? 1 : 0; p.lk = olSanLook(p.lk); p.d = Array.isArray(p.d) ? p.d.filter(x => typeof x === 'string').slice(0, 20) : []; if (p.job && !(Array.isArray(p.job) && typeof p.job[0] === 'string')) p.job = null; if (p.r === 'love' && !['date', 'eng', 'mar'].includes(p.st)) p.st = 'date'; if (p.r === 'pet') p.ly = ok(p.ly, 1, 120) ? p.ly : 10; });
+    c.nid = Math.max(c.nid | 0, ...c.pp.map(p => p.i), 0);
+    c.log = c.log.filter(b => b && ok(b.a, 0, 130) && Array.isArray(b.l)).map(b => ({ a: b.a, y: ok(b.y, -1e4, 1e5) ? b.y : 0, l: b.l.filter(x => Array.isArray(x) && typeof x[0] === 'string').slice(-40).map(x => [x[0].slice(0, 500), typeof x[1] === 'string' ? x[1].slice(0, 500) : x[0].slice(0, 500), ['g', 'b', 'm', ''].includes(x[2]) ? x[2] : '']) }));
+    if (!c.log.length) c.log.push({ a: me.age, y: me.yr, l: [] });
+    c.q = c.q.filter(d => d && typeof d === 'object' && ['ev', 'after', 'fail', 'grad', 'work', 'retire', 'baby'].includes(d.k) && (d.k !== 'ev' || OL_EVM[d.id]));
+    c.pw = Number.isInteger(c.pw) && c.pw >= 0 && c.pw <= 3 ? c.pw : 1;
+    c.gen = ok(c.gen, 1, 999) ? c.gen | 0 : 1;
+    c.line = ok(c.line, 0, 1e10) ? c.line : 1;
+    c.net = ok(c.net, -1e10, 1e10) ? c.net : 0;
+    c.preg = c.preg ? 1 : 0;
+    if (c.lst && !(Array.isArray(c.lst.ids) && c.lst.ids.every(x => OL_JOBM[x]))) c.lst = null;
+    if (c.shop && !(Array.isArray(c.shop.h) && Array.isArray(c.shop.c))) c.shop = null;
+    if (!me.al && !Array.isArray(me.aw)) me.aw = olAward(c);
+    if (Array.isArray(me.aw)) me.aw = me.aw.filter(x => OL_AWM[x]);
+    if (!me.al && !me.cause) me.cause = OL_CAUSE.age;
+    return c;
+  }
+
+  const OL_EVI = { firstword: 'chat', crayon: 'brush', tooth: 'smile', spelling: 'pen', sciencefair: 'code', wallet: 'coin', snowday: 'star', window: 'ball', talentkid: 'mic', museum: 'lib', newgame: 'pad', tree: 'leaf', lemonade: 'coin', play: 'mask', photo: 'chat', detention: 'school', shelter: 'paw', dye: 'scissors', olympiad: 'award', stress: 'book', careersfair: 'job', classrep: 'award', fresher: 'star', essay: 'pen', intern: 'job', overtime: 'job', officeparty: 'note', rival: 'job', mistake: 'job', worktrip: 'plane', teamday: 'star', charityrun: 'run', noise: 'note', breakdown: 'car', scam: 'chat', jury: 'lib', marathon: 'run', reunion: 'school', dinner: 'chef', straycat: 'paw', roof: 'house', hobby: 'brush', adventure: 'globe', cruise: 'plane', tablet: 'chat', memoir: 'pen', checkup: 'doc', diet: 'leaf', sleep: 'lotus', flood: 'house', neighbour: 'hands', blood: 'H', celeb: 'star', startup: 'code', quiz: 's', donate: 'hands', concert: 'note', relocate: 'plane', learnlang: 'globe', lostdog: 'paw', garage: 'home', tryout: 'ball', trip: 'plane' };
+  const OL_CLUBS = [['s', ['Chess club', 'Club d’échecs']], ['s', ['Debate club', 'Club de débat']], ['act', ['Drama club', 'Club de théâtre']], ['art', ['Art club', 'Club d’arts plastiques']], ['mus', ['School choir', 'Chorale']], ['cod', ['Robotics club', 'Club de robotique']], ['a', ['School sports team', 'Équipe de sport']], ['wri', ['School newspaper', 'Journal du lycée']]];
+
+  function mountOneLife(root, api) {
+    let G = olSan(api.load());
+    let s = G.cur, tab = G.tab, sel = null, sub = null, pop = null, res = null, tq = [], fed = { n: -1, l: 0 }, lastLang = olLang(), saveT = 0, ageLock = 0, newF = null;
+    root.innerHTML = `<div class="ol-app"><header class="ol-hd"><button type="button" class="ol-me" data-a="me"><span class="ol-av"></span><span style="min-width:0"><b class="ol-nm"></b><small class="ol-sub"></small></span></button><div class="ol-cash"><small></small><b></b></div></header><div class="ol-body"><section class="ol-main"><div class="ol-feed" aria-live="polite"></div><div class="ol-stats"></div><nav class="ol-nav"></nav></section><aside class="ol-side"></aside></div></div><div class="ol-pop" hidden></div><div class="ol-scr" hidden></div>`;
+    const $ = q => root.querySelector(q);
+    const feed = $('.ol-feed'), side = $('.ol-side'), nav = $('.ol-nav'), stats = $('.ol-stats'), popEl = $('.ol-pop'), scr = $('.ol-scr');
+    const narrow = () => root.classList.contains('narrow');
+    const persist = () => { clearTimeout(saveT); saveT = setTimeout(snap, 250); };
+    function snap() { clearTimeout(saveT); G.cur = s; G.tab = tab; try { api.save(G); } catch (e) {} }
+    api.on(window, 'pagehide', snap);
+    const sfx = n => api.sfx(n);
+    const me = () => s.me;
+
+    function stage() {
+      const m = me(), sc = m.sch;
+      if (!m.al) return L('Deceased');
+      if (sc) return sc.k === 'pri' ? L('Primary school') : sc.k === 'mid' ? L('Middle school') : sc.k === 'high' ? L('High school') : sc.k === 'uni' ? L('University student') : L('Graduate student');
+      if (m.job) return olJobT(m.job.id, m.job.lvl, m.g);
+      if (m.ret) return L('Retired');
+      if (m.age < 5) return m.age < 2 ? L('Baby') : L('Toddler');
+      if (m.age < 18) return L('Child');
+      return L('Unemployed');
+    }
+    function renderHead() {
+      const m = me();
+      $('.ol-av').innerHTML = olMeAv(m);
+      $('.ol-nm').textContent = m.fn + ' ' + m.ln;
+      $('.ol-sub').textContent = L('Age {n}', { n: m.age }) + ' · ' + stage();
+      $('.ol-cash small').textContent = L('Bank balance');
+      const b = $('.ol-cash b');
+      b.textContent = olMoney(m.m);
+      b.classList.toggle('neg', m.m < 0);
+      api.score(m.age);
+    }
+    const barC = v => (v < 25 ? '#e5533d' : v < 45 ? '#f08a24' : v < 65 ? '#e8c22e' : v < 82 ? '#7cc443' : '#22b573');
+    let prevSt = null;
+    function renderStats() {
+      const st = me().st, names = { h: L('Happiness'), H: L('Health'), s: L('Smarts'), l: L('Looks') };
+      if (!stats.firstChild) stats.innerHTML = ['h', 'H', 's', 'l'].map(k => `<div class="st" data-k="${k}">${olI2(k)}<span class="lb"></span><span class="br"><i></i></span><em></em></div>`).join('');
+      ['h', 'H', 's', 'l'].forEach(k => {
+        const v = Math.round(st[k]), r = stats.querySelector(`[data-k="${k}"]`);
+        r.querySelector('.lb').textContent = names[k];
+        r.title = names[k];
+        const i = r.querySelector('i');
+        i.style.width = v + '%'; i.style.background = barC(v);
+        r.querySelector('em').textContent = v + '%';
+      });
+      prevSt = Object.assign({}, st);
+    }
+    function lineHtml(x) {
+      const t = olMoneyTxt(olFr() ? x[1] : x[0]);
+      return `<p class="${x[2]}">${olEsc(t)}</p>`;
+    }
+    function blockHtml(b, nw) {
+      const h = b.a === 0 ? L('Born') : L('Age {n}', { n: b.a });
+      return `<div class="yb${nw ? ' new' : ''}"><div class="yh"><b>${h}</b><span>${b.y}</span></div>${b.l.map(lineHtml).join('')}</div>`;
+    }
+    function renderFeed(full) {
+      const log = s.log;
+      if (full || fed.n < 0 || fed.n > log.length || feed.children.length !== fed.n) {
+        feed.innerHTML = log.map(b => blockHtml(b)).join('');
+        fed = { n: log.length, l: log.length ? log[log.length - 1].l.length : 0 };
+      } else {
+        if (fed.n === log.length) {
+          const b = log[log.length - 1], el = feed.lastElementChild;
+          if (el && b.l.length !== fed.l) { el.insertAdjacentHTML('beforeend', b.l.slice(fed.l).map(lineHtml).join('')); fed.l = b.l.length; }
+        } else {
+          const last = feed.lastElementChild, pb = log[fed.n - 1];
+          if (last && pb && pb.l.length !== fed.l) last.insertAdjacentHTML('beforeend', pb.l.slice(fed.l).map(lineHtml).join(''));
+          feed.insertAdjacentHTML('beforeend', log.slice(fed.n).map(b => blockHtml(b, 1)).join(''));
+          while (feed.children.length > log.length) feed.firstElementChild.remove();
+          fed = { n: log.length, l: log[log.length - 1].l.length };
+        }
+      }
+      requestAnimationFrame(() => { feed.scrollTop = feed.scrollHeight; });
+    }
+    function renderNav() {
+      const m = me(), occ = m.sch || (m.age < 18 && !m.job) ? ['school', L('School')] : ['job', L('Job')];
+      const b = (k, ic, lb) => `<button type="button" class="nb" data-a="tab:${k}" aria-pressed="${tab === k && (!narrow() || side.classList.contains('open'))}">${olI2(ic)}<span>${lb}</span></button>`;
+      nav.innerHTML = b('occ', occ[0], occ[1]) + b('assets', 'home', L('Assets')) + `<button type="button" class="nb age" data-a="age" ${!m.al || pop ? 'disabled' : ''} aria-label="${L('Age up')}"><i>${olI2('plus')}</i><span>${L('Age')}</span></button>` + b('people', 'people', L('People')) + b('acts', 'acts', L('Activities'));
+      const nh = nav.offsetHeight;
+      if (nh) root.style.setProperty('--nh', nh + 'px');
+    }
+    function renderAll() {
+      if (!s) return;
+      renderHead(); renderStats(); renderFeed(true); renderNav(); renderSide();
+    }
+    function refresh() {
+      if (!s) return;
+      renderHead(); renderStats(); renderFeed(); renderNav(); renderSide();
+      persist();
+    }
+
+    const row = (o) => `<button type="button" class="row${o.done ? ' done' : ''}" data-a="${o.a}"${o.dis ? ' disabled' : ''}>${o.av ? `<span class="ra">${o.av}</span>` : `<span class="ri">${olI2(o.ic || 'star')}</span>`}<span class="rt"><b>${olEsc(o.t)}</b>${o.s ? `<small>${o.s}</small>` : ''}${o.bond !== undefined ? `<span class="bond"><i style="width:${Math.round(o.bond)}%;background:${barC(o.bond)}"></i></span>` : ''}</span>${o.v !== undefined ? `<span class="rv ${o.vc || ''}">${o.v}</span>` : ''}</button>`;
+    const head = (t, back) => `<div class="ph">${back ? `<button type="button" class="ib" data-a="${back}" aria-label="${L('Back')}">${olI2('back')}</button>` : ''}<h3>${olEsc(t)}</h3><button type="button" class="ib sx" data-a="close" aria-label="${L('Close')}">${olI2('x')}</button></div>`;
+    const doneTag = () => L('Done this year');
+
+    function renderSide() {
+      if (!s) return;
+      let h = '';
+      if (sub === 'me') h = vMe();
+      else if (sub === 'tree') h = vTree();
+      else if (sub === 'awards') h = vAwards();
+      else if (sel) h = vPerson();
+      else if (tab === 'occ') h = vOcc();
+      else if (tab === 'assets') h = vAssets();
+      else if (tab === 'people') h = vPeople();
+      else h = vActs();
+      const y = side.scrollTop, key = (sub || '') + (sel ? sel.i : '') + tab;
+      side.innerHTML = h;
+      if (side.dataset.k === key) side.scrollTop = y; else side.scrollTop = 0;
+      side.dataset.k = key;
+    }
+
+    function vOcc() {
+      const m = me(), sc = m.sch, j = m.job;
+      let h = head(sc || (m.age < 18 && !j) ? L('School') : L('Job')) + '<div class="pc">';
+      if (!m.al) return h + '</div>';
+      if (sc) {
+        const nm = sc.k === 'uni' ? L('University') + ' · ' + X(OL_MAJM[sc.maj].slice(1, 3)) : sc.k === 'grad' ? X(OL_GRADM[sc.maj].slice(1, 3)) : stage();
+        h += `<div class="card"><h4>${olEsc(nm)}</h4><p>${L('Year {a} of {b}', { a: Math.min(sc.y + 1, sc.n), b: sc.n })}${sc.gr ? ' · ' + L('Last report: {g}', { g: olGrade(sc.gr, olFr() ? 1 : 0) }) : ''}</p>${sc.club ? `<p>${L('Club: {c}', { c: olEsc(X(OL_CLUBS[sc.ci | 0][1])) })}</p>` : ''}<div class="pbar"><i style="width:${Math.round(sc.perf)}%"></i></div><p>${L('Performance {n}%', { n: Math.round(sc.perf) })}</p></div>`;
+        h += `<div class="sec">${L('Actions')}</div>`;
+        const dn = k => m.dn.includes(k);
+        h += row({ a: 'sch:study', ic: 'book', t: L('Study harder'), s: L('Better grades, a little less fun'), done: dn('study'), dis: dn('study'), v: dn('study') ? '✓' : undefined });
+        if (sc.k !== 'pri' || m.age >= 7) h += row({ a: 'sch:teach', ic: 'chat', t: sc.k === 'uni' || sc.k === 'grad' ? L('Visit your professor') : L('Talk to your teacher'), done: dn('teach'), dis: dn('teach'), v: dn('teach') ? '✓' : undefined });
+        if (sc.k !== 'pri' && sc.k !== 'grad') h += row({ a: 'sch:club', ic: 'star', t: sc.club ? L('Change or leave your club') : L('Join a club'), s: L('Grow a skill every year') });
+        if ((sc.k === 'high' && m.age >= 16) || sc.k === 'uni' || sc.k === 'grad') h += row({ a: 'sch:quit', ic: 'x', t: sc.k === 'high' ? L('Leave school') : L('Drop out') });
+      }
+      if (j) {
+        h += `<div class="sec">${L('Current job')}</div><div class="card"><h4>${olEsc(olJobT(j.id, j.lvl, m.g))}</h4><p>${L('{m} a year', { m: olMoney(j.sal) })} · ${L('{n} years here', { n: j.yrs })}</p><div class="pbar"><i style="width:${Math.round(j.perf)}%"></i></div><p>${L('Performance {n}%', { n: Math.round(j.perf) })}</p></div>`;
+        const dn = k => m.dn.includes(k);
+        h += row({ a: 'job:hard', ic: 'up', t: L('Work harder'), s: L('Raise your performance'), done: dn('hard'), dis: dn('hard') || dn('easy'), v: dn('hard') ? '✓' : undefined });
+        h += row({ a: 'job:easy', ic: 'lotus', t: L('Take it easy'), s: L('More happiness, less performance'), done: dn('easy'), dis: dn('hard') || dn('easy'), v: dn('easy') ? '✓' : undefined });
+        if (j.t !== 'p') h += row({ a: 'job:raise', ic: 'coin', t: L('Ask for a raise'), done: dn('raise'), dis: dn('raise'), v: dn('raise') ? '✓' : undefined });
+        if (j.t !== 'p' && olCanPromote(s)) h += row({ a: 'job:promo', ic: 'award', t: L('Ask for a promotion'), done: dn('promo'), dis: dn('promo'), v: dn('promo') ? '✓' : undefined });
+        h += row({ a: 'job:quit', ic: 'x', t: L('Quit job') });
+        if (m.age >= 60 && j.t !== 'p') h += row({ a: 'job:retire', ic: 'leaf', t: L('Retire'), s: L('Stop working and receive a pension') });
+      }
+      if (!sc && m.age >= 18) {
+        const ed = [];
+        if (!m.edu.hs) ed.push(row({ a: 'edu:adult', ic: 'school', t: L('Finish high school'), s: L('A one-year adult education course') }));
+        else if (!m.edu.deg) ed.push(row({ a: 'edu:uni', ic: 'school', t: L('Apply to university'), s: L('Your exam score: {n}%', { n: m.edu.ex }) }));
+        else if (!m.edu.grad) ed.push(row({ a: 'edu:grad', ic: 'school', t: L('Apply to graduate school') }));
+        if (ed.length) h += `<div class="sec">${L('Education')}</div>` + ed.join('');
+      }
+      if (m.age >= 13) {
+        h += `<div class="sec">${m.age < 18 || sc ? L('Part-time jobs') : L('Job listings')}</div>`;
+        olListings(s).forEach(id => {
+          const d = OL_JOBM[id], why = olReqOk(s, d), mine = j && j.id === id;
+          h += row({ a: 'apply:' + id, ic: d[1] === 't' ? 'star' : d[1] === 'p' ? 'coin' : 'job', t: olJobT(id, 0, m.g), s: mine ? L('Your current job') : why.length ? olEsc(why[0]) : d[1] === 'p' ? L('Part-time') : d[1] === 't' ? L('Talent career') : L('Full-time'), v: olMoney(d[6][0][2]), vc: why.length ? 'no' : 'ok', dis: mine || why.length > 0 });
+        });
+        h += `<p class="hint">${L('New listings appear every year.')}</p>`;
+      } else if (!sc) h += `<p class="hint">${L('You are too young for school or work. Enjoy being little!')}</p>`;
+      if (m.ret) h += `<p class="hint">${L('You are retired. Your pension is {m} a year.', { m: olMoney(m.pen) })}</p>`;
+      return h + '</div>';
+    }
+
+    function shopList() {
+      const m = me();
+      if (!s.shop || s.shop.y !== m.age) {
+        const pk = (a, n) => { const c = a.slice(), o = []; while (c.length && o.length < n) o.push(c.splice(Math.floor(olR() * c.length), 1)[0]); return o; };
+        s.shop = { y: m.age, h: pk(OL_HOUSE, 4).map(d => [d[0], Math.round(d[2] * (0.85 + olR() * 0.3) * Math.pow(1.02, Math.max(0, m.yr - m.born - m.age)) / 500) * 500]).sort((a, b) => a[1] - b[1]), c: pk(OL_CAR, 5).map(d => [d[0], Math.round(d[2] * (0.9 + olR() * 0.2) / 50) * 50]).sort((a, b) => a[1] - b[1]) };
+      }
+      return s.shop;
+    }
+    function vAssets() {
+      const m = me();
+      let h = head(L('Assets')) + '<div class="pc">';
+      h += `<div class="card"><div class="kv"><span>${L('Bank balance')}</span><b style="color:${m.m < 0 ? 'var(--bad)' : 'var(--good)'}">${olMoney(m.m)}</b><span>${L('Last year')}</span><b>${(s.net > 0 ? '+' : '') + olMoney(s.net)}</b>${m.debt > 0 ? `<span>${L('Student loan')}</span><b>${olMoney(-m.debt)}</b>` : ''}${m.job ? `<span>${L('Salary')}</span><b>${olMoney(m.job.sal)}</b>` : ''}${m.pen ? `<span>${L('Pension')}</span><b>${olMoney(m.pen)}</b>` : ''}<span>${L('Net worth')}</span><b>${olMoney(olWorth(s))}</b></div></div>`;
+      h += `<div class="sec">${L('What you own')}</div>`;
+      if (!m.as.length) h += `<p class="hint">${L('You don’t own anything yet.')}</p>`;
+      m.as.forEach((a, i) => {
+        const d = a.t === 'house' ? OL_HOUSEM[a.id] : OL_CARM[a.id];
+        h += row({ a: 'sell:' + i, ic: d[3], t: X(d[1]), s: (a.lo ? L('Mortgage left: {m}', { m: olMoney(a.lo) }) + ' · ' : '') + L('Tap to sell'), v: olMoney(a.v) });
+      });
+      if (!m.al) return h + '</div>';
+      if (m.age < 18) { h += `<p class="hint">${L('You can buy homes and cars once you are 18. Until then, save your pocket money!')}</p>`; if (m.age >= 10) { const bk = OL_CARM.bike; h += row({ a: 'buy:c:bike:' + bk[2], ic: 'bike', t: X(bk[1]), v: olMoney(bk[2]), vc: m.m >= bk[2] ? 'ok' : 'no', dis: m.m < bk[2] || m.as.some(a => a.id === 'bike') }); } return h + '</div>'; }
+      const sh = shopList();
+      h += `<div class="sec">${L('Homes for sale')}</div>`;
+      const inc = (m.job ? m.job.sal : 0) + (olLove(s) && olLove(s).st === 'mar' ? olLove(s).inc || 0 : 0);
+      sh.h.forEach(([id, pr]) => {
+        const d = OL_HOUSEM[id], cash = m.m >= pr, mort = !cash && m.m >= pr * 0.2 && inc * 5 >= pr * 0.8 && !olHouse(s);
+        h += row({ a: 'buy:h:' + id + ':' + pr, ic: d[3], t: X(d[1]), s: cash ? L('Buy outright') : mort ? L('Mortgage: {m} deposit', { m: olMoney(pr * 0.2) }) : L('Not enough money or income'), v: olMoney(pr), vc: cash || mort ? 'ok' : 'no', dis: !(cash || mort) });
+      });
+      h += `<div class="sec">${L('Vehicles for sale')}</div>`;
+      sh.c.forEach(([id, pr]) => {
+        const d = OL_CARM[id], lic = !d[4] || m.lic;
+        h += row({ a: 'buy:c:' + id + ':' + pr, ic: d[3], t: X(d[1]), s: lic ? '' : L('Needs a driving licence'), v: olMoney(pr), vc: m.m >= pr && lic ? 'ok' : 'no', dis: m.m < pr || !lic });
+      });
+      return h + '</div>';
+    }
+
+    const relName = p => { const r = olRel(p, me()); return olCap(olFr() ? r[1] : r[0]); };
+    function vPeople() {
+      const m = me();
+      let h = head(L('People')) + '<div class="pc">';
+      const grp = [[L('Family'), p => ['mom', 'dad', 'sib', 'gp'].includes(p.r)], [L('Partner'), p => p.r === 'love'], [L('Children'), p => p.r === 'kid'], [L('Grandchildren'), p => p.r === 'gkid'], [L('Friends'), p => p.r === 'friend'], [L('Pets'), p => p.r === 'pet']];
+      grp.forEach(([t, f]) => {
+        const list = s.pp.filter(p => p.al && f(p));
+        if (!list.length) return;
+        h += `<div class="sec">${t}</div>`;
+        list.forEach(p => { h += row({ a: 'pp:' + p.i, av: olAv(p), t: p.n + (p.r === 'pet' || p.r === 'friend' ? '' : ''), s: relName(p) + ' · ' + L('Age {n}', { n: p.age }) + (p.job && p.age >= 18 ? ' · ' + olEsc(X(p.job)) : ''), bond: p.b }); });
+      });
+      if (m.al) {
+        h += `<div class="sec">${L('Meet people')}</div>`;
+        h += row({ a: 'meet:friend', ic: 'smile', t: L('Make a new friend'), dis: m.age < 4 || m.dn.includes('friend'), done: m.dn.includes('friend'), v: m.dn.includes('friend') ? '✓' : undefined, s: m.age < 4 ? L('From age 4') : '' });
+        if (!olLove(s)) h += row({ a: 'meet:love', ic: 'heart', t: L('Find love'), dis: m.age < 16 || m.dn.includes('love'), done: m.dn.includes('love'), v: m.dn.includes('love') ? '✓' : undefined, s: m.age < 16 ? L('From age 16') : '' });
+        const love = olLove(s);
+        if (m.age >= 25 && m.m >= 4000 && !m.dn.includes('adopt')) h += row({ a: 'meet:adopt', ic: 'baby', t: L('Adopt a child'), s: L('Costs {m}', { m: olMoney(4000) }) });
+      }
+      const gone = s.pp.filter(p => !p.al && !p.gone && p.r !== 'pet').length;
+      if (gone) h += `<p class="hint">${L('{n} loved ones have passed away. See the family tree in your profile.', { n: gone })}</p>`;
+      return h + '</div>';
+    }
+    function pActs(p) {
+      const m = me(), r = p.r, a = [];
+      const add = (k, ic, t, sub2) => a.push([k, ic, t, sub2]);
+      if (r === 'pet') { add('play', 'paw', L('Play together')); if (p.sp === 'dog') add('walk', 'walk', L('Go for a walk')); add('treat', 'gift', L('Give a treat')); add('vet', 'doc', L('Take to the vet'), olMoney(80)); return a; }
+      add('time', 'smile', L('Spend time together'));
+      add('talk', 'chat', L('Have a conversation'));
+      if (r !== 'gkid' || p.age >= 4) add('compl', 'star', L('Give a compliment'));
+      add('gift', 'gift', L('Give a gift'), olMoney(m.age < 18 ? 10 : 80));
+      if ((r === 'mom' || r === 'dad' || r === 'gp') && m.age >= 6) add('money', 'coin', L('Ask for money'));
+      if (r === 'kid' && p.age < 18 && m.age >= 18) add('pocket', 'coin', L('Give pocket money'), olMoney(100));
+      if (r === 'love') {
+        if (m.age >= 16) add('date', 'heart', L('Go on a date'), olMoney(m.age < 18 ? 15 : 60));
+        if (p.st === 'date' && m.age >= 18 && p.age >= 18) add('propose', 'ring', L('Propose'));
+        if (p.st === 'eng') add('wed', 'ring', L('Plan the wedding'));
+        if (p.st === 'mar' && m.age >= 18 && m.age <= 50 && p.age <= 50) add('baby', 'baby', L('Try for a baby'));
+        add('split', 'broken', p.st === 'mar' ? L('Ask for a divorce') : L('Break up'));
+      }
+      if (r === 'friend') add('end', 'broken', L('End the friendship'));
+      return a;
+    }
+    function vPerson() {
+      const p = sel, m = me();
+      if (!p.al) { sel = null; return vPeople(); }
+      let h = head(p.n, 'back') + '<div class="pc">';
+      h += `<div class="pf"><span class="ra">${olAv(p)}</span><div><h4>${olEsc(p.n + (p.ln && p.r !== 'pet' ? ' ' + p.ln : ''))}</h4><p>${relName(p)} · ${L('Age {n}', { n: p.age })}</p>${p.job && p.age >= 18 ? `<p>${olEsc(X(p.job))}</p>` : ''}</div></div>`;
+      h += `<div class="kv" style="margin:8px 0 4px"><span>${L('Relationship')}</span><b>${Math.round(p.b)}%</b></div><div class="pbar"><i style="width:${Math.round(p.b)}%;background:${barC(p.b)}"></i></div>`;
+      if (m.al) {
+        h += `<div class="sec">${L('Interactions')}</div>`;
+        pActs(p).forEach(([k, ic, t, sb]) => { const d = p.d.includes(k); h += row({ a: 'pa:' + k, ic, t, s: sb, done: d, dis: d, v: d ? '✓' : undefined }); });
+        h += `<p class="hint">${L('Each interaction can be done once a year.')}</p>`;
+      }
+      return h + '</div>';
+    }
+
+    function vActs() {
+      const m = me();
+      let h = head(L('Activities')) + '<div class="pc">';
+      if (!m.al) return h + '</div>';
+      const list = OL_ACT.filter(a => m.age >= a[1] && m.age <= a[2]);
+      if (!list.length) h += `<p class="hint">${L('Babies mostly sleep, eat and smile. Age up to do more!')}</p>`;
+      list.forEach(a => {
+        const d = m.dn.includes(a[0]), cost = m.age < 18 ? 0 : a[3];
+        let sb = cost ? L('Costs {m}', { m: olMoney(cost) }) : '';
+        if (a[0] === 'doctor') sb = m.ill.length ? m.ill.map(x => X(OL_ILLM[x[0]][1])).join(', ') : L('No health problems');
+        if (a[0] === 'drive' && m.lic) return;
+        if (a[0] === 'shelter' && !m.mv) return;
+        h += row({ a: 'act:' + a[0], ic: a[4], t: X(a[5]), s: sb, done: d, dis: d || (cost > 0 && m.m < cost && a[0] !== 'doctor'), v: d ? '✓' : undefined });
+      });
+      h += `<div class="sec">${L('Your life')}</div>`;
+      h += row({ a: 'sub:me', ic: 'user', t: L('Profile and skills') }) + row({ a: 'sub:tree', ic: 'tree', t: L('Family tree') }) + row({ a: 'sub:awards', ic: 'award', t: L('Life awards'), v: Object.keys(G.aw).length + ' / ' + OL_AW.length });
+      return h + '</div>';
+    }
+    function vMe() {
+      const m = me(), ci = OL_CITY[m.city];
+      let h = head(L('Profile'), 'back') + '<div class="pc">';
+      h += `<div class="pf"><span class="ra">${olMeAv(m)}</span><div><h4>${olEsc(m.fn + ' ' + m.ln)}</h4><p>${L('Born in {y} in {c}', { y: m.born, c: olFr() ? ci[1] : ci[0] })}</p><p>${L('Generation {n}', { n: s.gen })}</p></div></div>`;
+      const edu = m.edu.grad ? X(OL_GRADM[m.edu.grad].slice(1, 3)) : m.edu.deg ? L('Degree in {x}', { x: X(OL_MAJM[m.edu.deg].slice(1, 3)) }) : m.edu.hs ? L('High school diploma') : L('None yet');
+      h += `<div class="kv" style="margin-top:10px"><span>${L('Education')}</span><b>${olEsc(edu)}</b><span>${L('Occupation')}</span><b>${olEsc(stage())}</b><span>${L('Net worth')}</span><b>${olMoney(olWorth(s))}</b><span>${L('Driving licence')}</span><b>${m.lic ? L('Yes') : L('No')}</b></div>`;
+      h += `<div class="sec">${L('Hidden traits')}</div>`;
+      const sk = (t, v) => `<div class="sk"><span>${t}</span><div class="pbar"><i style="width:${Math.round(v)}%;background:${barC(v)}"></i></div><em>${Math.round(v)}%</em></div>`;
+      h += sk(L('Kindness'), m.k) + sk(L('Fitness'), m.a) + sk(L('Fame'), m.f);
+      h += `<div class="sec">${L('Skills')}</div>`;
+      const has = OL_SK.filter(k => m.sk[k] >= 1);
+      h += has.length ? has.map(k => sk(L(OL_SKN[k]), m.sk[k])).join('') : `<p class="hint">${L('Take lessons and classes in Activities to build skills.')}</p>`;
+      if (m.ill.length) h += `<div class="sec">${L('Health conditions')}</div><p class="hint">${m.ill.map(x => olEsc(olCap(X(OL_ILLM[x[0]][1])))).join(' · ')}</p>`;
+      h += `<div class="sec">${L('Your life')}</div>` + row({ a: 'sub:tree', ic: 'tree', t: L('Family tree') }) + row({ a: 'sub:awards', ic: 'award', t: L('Life awards'), v: Object.keys(G.aw).length + ' / ' + OL_AW.length }) + row({ a: 'restart', ic: 'dice', t: L('Start a new life') });
+      return h + '</div>';
+    }
+    function tnode(p, lab, isMe) { return `<div class="tn${isMe ? ' me' : ''}"><span class="ra">${p.r === 'pet' ? olPetSvg(p) : olFace(p.lk, p.g, p.age, 60, p.al === 0 ? 0 : 1)}</span><b>${olEsc(p.n)}</b><span>${lab}</span></div>`; }
+    function vTree() {
+      const m = me();
+      let h = head(L('Family tree'), 'back') + '<div class="pc">';
+      const line = G.tree.filter(t => t.ln === s.line);
+      if (line.length) {
+        h += `<div class="sec">${L('Family line')}</div>`;
+        line.forEach(t => { h += `<div class="gl"><span class="ra">${olFace(t.lk, t.g, t.a, 60, 0)}</span><div><b>${olEsc(t.n)}</b><span>${L('Generation {n}', { n: t.gen })} · ${t.b}–${t.d} · ${t.j ? olEsc(X(t.j)) : ''}</span></div>${olBadge(t.aw, 34)}</div>`; });
+      }
+      const A = s.pp, lab = p => (p.al ? L('Age {n}', { n: p.age }) : L('Died at {n}', { n: p.dz || p.age }));
+      const gps = A.filter(p => p.r === 'gp'), par = A.filter(p => p.r === 'mom' || p.r === 'dad'), sib = A.filter(p => p.r === 'sib' && !p.gone), love = A.filter(p => p.r === 'love' && !p.gone), kids = A.filter(p => p.r === 'kid'), gk = A.filter(p => p.r === 'gkid');
+      h += `<div class="sec">${L('Your family')}</div><div class="tr">`;
+      if (gps.length) h += `<div class="tlab">${L('Grandparents')}</div><div class="tg">${gps.map(p => tnode(p, lab(p))).join('')}</div>`;
+      if (par.length) h += `<div class="tlab">${L('Parents')}</div><div class="tg">${par.map(p => tnode(p, lab(p))).join('')}</div>`;
+      h += `<div class="tg">${tnode({ n: m.fn, g: m.g, age: m.age, lk: m.lk, al: m.al }, L('You'), 1)}${love.map(p => tnode(p, relName(p))).join('')}${sib.map(p => tnode(p, relName(p))).join('')}</div>`;
+      if (kids.length) h += `<div class="tlab">${L('Children')}</div><div class="tg">${kids.map(p => tnode(p, lab(p))).join('')}</div>`;
+      if (gk.length) h += `<div class="tlab">${L('Grandchildren')}</div><div class="tg">${gk.map(p => tnode(p, lab(p))).join('')}</div>`;
+      return h + '</div></div>';
+    }
+    function vAwards() {
+      let h = head(L('Life awards'), 'back') + '<div class="pc"><p class="hint">' + L('Each life earns awards for how it was lived. Collect them all across your lives.') + '</p><div class="aw">';
+      OL_AW.forEach(a => { const n = G.aw[a[0]] || 0; h += `<div class="${n ? '' : 'lk'}" title="${olEsc(X(a[2]))}">${olBadge(a[0], 46)}<span>${olEsc(X(a[1]))}</span><small>${n ? '×' + n : olEsc(X(a[2]))}</small></div>`; });
+      return h + `</div><p class="hint">${L('Lives lived: {n}', { n: G.lives })} · ${L('Oldest age: {n}', { n: G.best })}</p></div>`;
+    }
+
+    function chips(out) {
+      const nm = { h: L('Happiness'), H: L('Health'), s: L('Smarts'), l: L('Looks') };
+      const c = [];
+      ['h', 'H', 's', 'l'].forEach(k => { const v = Math.round(out[k] || 0); if (v) c.push(`<span class="${v < 0 ? 'n' : ''}">${nm[k]} ${v > 0 ? '+' : ''}${v}</span>`); });
+      if (out.m) c.push(`<span class="${out.m < 0 ? 'n' : ''}">${out.m > 0 ? '+' : ''}${olMoney(out.m)}</span>`);
+      return c.length ? `<div class="chips">${c.join('')}</div>` : '';
+    }
+    function showCard(o) {
+      pop = o;
+      const ch = (o.ch || []).map((c, i) => `<button type="button" class="ch ${c.cls || ''}" data-pc="${i}"${c.dis ? ' disabled' : ''}>${c.kb !== false && i < 6 ? `<kbd>${i + 1}</kbd>` : ''}${olEsc(c.t)}${c.s ? `<small>${c.s}</small>` : ''}</button>`).join('');
+      popEl.innerHTML = `<div class="pk" role="dialog" aria-modal="true">${o.av ? `<div class="pa">${o.av}</div>` : o.ic ? `<div class="pi">${olI2(o.ic)}</div>` : ''}${o.title ? `<h3>${olEsc(o.title)}</h3>` : ''}${o.text ? `<p class="pt">${o.text}</p>` : ''}${o.chips || ''}${o.html || ''}${ch}</div>`;
+      popEl.hidden = false;
+      renderNav();
+      const f = popEl.querySelector('input[type=text]') || popEl.querySelector('.ch:not(:disabled)');
+      if (f && f.tagName === 'INPUT') f.focus({ preventScroll: true });
+    }
+    function closeCard() { pop = null; popEl.hidden = true; popEl.innerHTML = ''; }
+    function nextPop() {
+      closeCard();
+      if (tq.length) { const t = tq.shift(); showCard(t); return; }
+      if (!s || !s.me.al) { refresh(); if (s && !s.me.al) showEnd(); return; }
+      if (s.q.length) { const d = s.q[0]; const c = cardFor(d); if (c) { showCard(c); refresh(); return; } s.q.shift(); return nextPop(); }
+      refresh();
+    }
+    const done = (q) => { if (q) s.q.shift(); nextPop(); };
+    function result(txt, out, tone, icon, av) {
+      const t = olEsc(olMoneyTxt(olFr() ? txt[1] : txt[0]));
+      return { av, ic: av ? null : icon || (tone === 'b' ? 'broken' : 'star'), text: t, chips: chips(out || {}), ch: [{ t: L('Continue'), cls: 'go', kb: false, fn: () => done(0) }] };
+    }
+
+    function cardFor(d) {
+      const m = me();
+      if (d.k === 'ev') {
+        const ev = OL_EVM[d.id], c = olCtxLoad(s, d.c);
+        if (!ev || (ev[4] && !c.p)) return null;
+        const p = c.p;
+        return {
+          av: p ? olAv(p) : null, ic: p ? null : OL_EVI[ev[0]] || 'star',
+          text: olEsc(olMoneyTxt(olFr() ? olFill(ev[6][1], c, 1, s) : olFill(ev[6][0], c, 0, s))),
+          ch: ev[7].map((x, i) => ({ t: olFr() ? olFill(x[0][1], c, 1, s) : olFill(x[0][0], c, 0, s), cls: i === 0 ? '' : '', fn: () => {
+            s.q.shift();
+            const r = olResolve(s, ev, i, c);
+            sfx(r.good > 1 ? 'good' : r.good < -1 ? 'bad' : 'tap');
+            tq.unshift(result(r.txt, r.out, r.good < -1 ? 'b' : 'g', null, c.p && c.p.al !== 0 ? olAv(c.p) : null));
+            nextPop();
+          } }))
+        };
+      }
+      if (d.k === 'after') {
+        return { ic: 'school', title: L('What will you do next?'), text: olEsc(L('You are {n}. Your final exam score was {e}%.', { n: m.age, e: m.edu.ex })), ch: [
+          { t: L('Go to university'), s: L('Choose a subject to study'), fn: () => { s.q.shift(); uniPick(); } },
+          { t: L('Look for a job'), s: L('Open the job listings'), cls: 'alt', fn: () => { s.q.shift(); m.mv = 1; olSay(s, ['I decided to start working.', 'J’ai décidé de commencer à travailler.'], 'm'); openTab('occ'); nextPop(); } },
+          { t: L('Take a gap year'), s: L('Travel and decide later'), cls: 'alt', fn: () => { s.q.shift(); m.fl.gap = 1; olGain(s, 'h', 6); m.sk.lan = olC(m.sk.lan + 5); olSay(s, ['I took a gap year to travel and think about my future.', 'J’ai pris une année sabbatique pour voyager et réfléchir à mon avenir.'], 'g'); nextPop(); } }
+        ].filter((x, i) => i !== 0 || m.edu.hs) };
+      }
+      if (d.k === 'fail') {
+        return { ic: 'school', title: L('You failed your exams'), text: L('You can repeat your final year and try again, or leave school now.'), ch: [
+          { t: L('Repeat the year'), fn: () => { s.q.shift(); olSchoolStart(s, 'high', 1, { sum: 60 }); olSay(s, ['I decided to repeat my final year of high school.', 'J’ai décidé de redoubler ma terminale.'], 'm'); nextPop(); } },
+          { t: L('Leave school'), cls: 'alt', fn: () => { s.q.shift(); m.edu.left = 1; olSay(s, ['I left school without a diploma.', 'J’ai quitté l’école sans diplôme.'], 'b'); nextPop(); } }
+        ] };
+      }
+      if (d.k === 'grad') {
+        const opts = OL_GRAD.filter(g => (!g[4] || g[4].includes(m.edu.deg)) && m.st.s >= g[5] - 8);
+        return { ic: 'school', title: d.m ? L('Graduate school') : L('You graduated!'), text: d.m ? L('Which programme will you apply to?') : L('What will you do now?'), ch: opts.slice(0, 4).map(g => ({ t: X(g.slice(1, 3)), s: L('{n} years', { n: g[3] }), fn: () => { s.q.shift(); gradApply(g); } })).concat([{ t: d.m ? L('Cancel') : L('Look for a job'), cls: 'alt', fn: () => { s.q.shift(); if (!d.m) openTab('occ'); nextPop(); } }]) };
+      }
+      if (d.k === 'work') return { ic: 'job', title: L('Time to work'), text: L('Your studies are finished. Open the job listings to start your career.'), ch: [{ t: L('Open the job listings'), cls: 'go', fn: () => { s.q.shift(); openTab('occ'); nextPop(); } }] };
+      if (d.k === 'retire') return { ic: 'leaf', title: L('Retirement age'), text: L('You have reached retirement age. Will you retire?'), ch: [
+        { t: L('Retire'), fn: () => { s.q.shift(); retire(); nextPop(); } },
+        { t: L('Keep working'), cls: 'alt', fn: () => { s.q.shift(); nextPop(); } }
+      ] };
+      if (d.k === 'baby') {
+        const love = olLove(s);
+        const sug = olName(d.g);
+        return { ic: 'baby', title: d.tw ? L('Twins!') : d.g === 'f' ? L('It’s a girl!') : L('It’s a boy!'), text: L('What will you name your baby?'), html: `<input type="text" maxlength="20" value="${olEsc(sug)}" aria-label="${L('Name')}">`, ch: [{ t: L('Choose this name'), cls: 'go', kb: false, fn: () => {
+          const inp = popEl.querySelector('input');
+          const nm = (inp && inp.value.trim().replace(/[<>]/g, '').slice(0, 20)) || sug;
+          s.q.shift();
+          const k = olPerson(s, 'kid', d.g, 0, { n: nm, ln: m.ln }); k.b = olI(80, 95); m.kids++;
+          olSay(s, [`My ${d.g === 'f' ? 'daughter' : 'son'} ${nm} was born!`, `${d.g === 'f' ? 'Ma fille' : 'Mon fils'} ${nm} est né${d.g === 'f' ? 'e' : ''} !`], 'g');
+          if (d.tw) { const g2 = olP(['m', 'f']), k2 = olPerson(s, 'kid', g2, 0, { ln: m.ln }); k2.b = olI(80, 95); m.kids++; olSay(s, [`${k2.n} arrived a few minutes later. Twins!`, `${k2.n} est arrivé${g2 === 'f' ? 'e' : ''} quelques minutes plus tard. Des jumeaux !`], 'g'); }
+          olGain(s, 'h', 10); sfx('win');
+          nextPop();
+        } }] };
+      }
+      return null;
+    }
+
+    function uniPick() {
+      const m = me();
+      tq.unshift({ ic: 'school', title: L('Choose your subject'), text: L('Your chances depend on your exam score and skills.'), ch: OL_MAJ.map(mj => {
+        const sc = mj[5] === 's' ? m.edu.ex : (m.edu.ex + (mj[5] === 'a' ? m.a : m.sk[mj[5]] || 0)) / 2 + 10;
+        const odds = sc >= mj[3] + 8 ? L('Very likely') : sc >= mj[3] ? L('Likely') : sc >= mj[3] - 10 ? L('Possible') : L('Unlikely');
+        return { t: X(mj.slice(1, 3)), s: odds + ' · ' + L('{n} years', { n: mj[4] }), kb: false, fn: () => {
+          const ok = sc + olI(-6, 6) >= mj[3];
+          if (!ok) { olSay(s, [`My application to study ${olLow(mj[1])} was rejected.`, `Ma candidature en ${olLow(mj[2])} a été refusée.`], 'b'); sfx('bad'); tq.unshift({ ic: 'broken', title: L('Application rejected'), text: L('You were not accepted. You can try another subject.'), ch: [{ t: L('Try another subject'), fn: () => { uniPick(); nextPop(); } }, { t: L('Not now'), cls: 'alt', fn: () => { m.mv = 1; nextPop(); } }] }); nextPop(); return; }
+          fund(mj, 'uni');
+        } };
+      }) });
+      nextPop();
+    }
+    function fund(item, kind) {
+      const m = me();
+      const par = s.pp.filter(p => p.al && (p.r === 'mom' || p.r === 'dad'));
+      const parOk = par.length && s.pw >= 2 && par.some(p => p.b >= 40);
+      const schol = m.edu.ex >= 90 || m.a >= 85 || (kind === 'grad' && m.st.s >= 92);
+      const start = f => {
+        if (kind === 'uni') { olSchoolStart(s, 'uni', item[4], { maj: item[0], fund: f }); olSay(s, [`I started university to study ${olLow(item[1])}.`, `Je suis entré${m.g === 'f' ? 'e' : ''} à l’université en ${olLow(item[2])}.`], 'm'); }
+        else { olSchoolStart(s, 'grad', item[3], { maj: item[0], fund: f }); olSay(s, [`I started ${item[0] === 'msc' ? 'a master’s degree' : item[0] === 'phd' ? 'a doctorate' : olLow(item[1])}.`, `J’ai commencé ${item[0] === 'msc' ? 'un master' : item[0] === 'phd' ? 'un doctorat' : 'l’' + olLow(item[2])}.`], 'm'); }
+        if (m.job && m.job.t === 'f') olQuitJob(s, 'quit');
+        m.mv = 1;
+        if (f === 'sch') olSay(s, ['I won a scholarship that pays for my studies!', 'J’ai obtenu une bourse qui paie mes études !'], 'g');
+        if (f === 'par') olSay(s, ['My parents are paying for my studies.', 'Mes parents paient mes études.'], 'g');
+        if (f === 'loan') olSay(s, ['I took out a student loan to pay for my studies.', 'J’ai pris un prêt étudiant pour payer mes études.'], '');
+        sfx('good');
+        s.lst = null;
+        refresh();
+        nextPop();
+      };
+      if (schol) { start('sch'); return; }
+      const cost = 9000;
+      tq.unshift({ ic: 'coin', title: L('You got in!'), text: L('Studies cost {m} a year. How will you pay?', { m: olMoney(cost) }), ch: [
+        { t: L('Ask my parents'), dis: !par.length, s: parOk ? L('They can probably afford it') : L('Money is tight at home'), fn: () => { if (parOk || olR() < 0.25 + s.pw * 0.15) start('par'); else { tq.unshift({ ic: 'broken', text: L('Your parents can’t afford to pay. Choose another way.'), ch: [{ t: L('OK'), fn: () => fund(item, kind) }] }); nextPop(); } } },
+        { t: L('Take a student loan'), s: L('Paid back later from your salary'), fn: () => start('loan') },
+        { t: L('Pay myself'), dis: m.m < cost, s: L('Bank balance: {m}', { m: olMoney(m.m) }), fn: () => start('self') }
+      ] });
+      nextPop();
+    }
+    function gradApply(g) {
+      const m = me();
+      const need = g[0] === 'mds' ? 80 : g[0] === 'lws' ? 72 : g[5];
+      const sc = m.st.s * 0.6 + m.edu.gpa * 0.4 + olI(-6, 6);
+      if (sc < need) { olSay(s, [`I was not accepted into ${olLow(g[1])}.`, `Je n’ai pas été accepté${m.g === 'f' ? 'e' : ''} en ${olLow(g[2])}.`], 'b'); sfx('bad'); tq.unshift({ ic: 'broken', title: L('Application rejected'), text: L('You can look for a job instead, and apply again another year.'), ch: [{ t: L('Open the job listings'), fn: () => { openTab('occ'); nextPop(); } }] }); nextPop(); return; }
+      fund(g, 'grad');
+    }
+
+    function retire() {
+      const m = me();
+      if (!m.job) return;
+      const j = m.job;
+      m.pen = Math.max(9000, Math.round(j.sal * 0.45));
+      olQuitJob(s, 'retire');
+      m.ret = 1;
+      olGain(s, 'h', 6);
+      sfx('win');
+    }
+    function openTab(k) { tab = k; sel = null; sub = null; if (narrow()) side.classList.add('open'); renderSide(); renderNav(); }
+    function closeSide() { side.classList.remove('open'); sel = null; sub = null; renderNav(); }
+
+    function ageUp() {
+      if (!s || pop || !me().al || performance.now() < ageLock) return;
+      if (s.q.length || tq.length) { nextPop(); return; }
+      ageLock = performance.now() + 220;
+      if (narrow()) closeSide();
+      sel = null; sub = null;
+      olAgeUp(s);
+      const fx = s.fx; s.fx = null;
+      if (!me().al) { recordDeath(); sfx('lose'); refresh(); snap(); api.timeout(showEnd, 900); return; }
+      sfx(fx || 'pop');
+      refresh();
+      if (s.q.length) api.timeout(() => { if (!pop && s && s.q.length) nextPop(); }, 380);
+    }
+
+    function act(id) {
+      const m = me(), a = OL_ACT.find(x => x[0] === id);
+      if (!a || m.dn.includes(id) || m.age < a[1] || m.age > a[2] || !m.al) return;
+      const cost = m.age < 18 ? 0 : a[3];
+      if (cost > 0 && m.m < cost && id !== 'doctor') { api.toast(L('Not enough money')); return; }
+      const out = {}, c = { topic: olP(OL_TOPIC), sport: m.spt >= 0 ? OL_SPORT[m.spt] : olP(OL_SPORT), inst: m.inst >= 0 ? OL_INST[m.inst] : OL_INST[0] };
+      const say = (pair, eff, tone) => { if (eff) olApply(s, eff, c, out); const t = olFP(pair, c, s); olSay(s, t, tone === undefined ? ((out.h || 0) + (out.H || 0) + (out.s || 0) + (out.l || 0) >= 0 ? 'g' : 'b') : tone); return t; };
+      const fin = (t, tone) => { m.dn.push(id); if (cost && id !== 'doctor') { m.m -= cost; out.m = (out.m || 0) - cost; } sfx(tone === 'b' ? 'bad' : 'good'); tq.unshift(result(t, out, tone, a[4])); nextPop(); };
+      const r = (x, y) => olI(x, y);
+      switch (id) {
+        case 'play': return fin(say(olP([['I played outside until it got dark.', 'J’ai joué dehors jusqu’à la tombée de la nuit.'], ['I built a den in the garden with sticks and blankets.', 'J’ai construit une cabane dans le jardin avec des bâtons et des couvertures.'], ['I chased butterflies in the park.', 'J’ai couru après les papillons au parc.']]), `h+${r(3, 6)} H+${r(1, 2)} a+2`));
+        case 'read': m.cnt.read = (m.cnt.read || 0) + 1; return fin(say(['I read a book about {topic}.', 'J’ai lu un livre sur {topic}.'], `s+${r(2, 4)} h+1 xwri+1`));
+        case 'games': return fin(say(olP([['I played video games all afternoon.', 'J’ai joué aux jeux vidéo tout l’après-midi.'], ['I finally beat a level I had been stuck on for weeks.', 'J’ai enfin réussi un niveau sur lequel je bloquais depuis des semaines.']]), `h+${r(3, 6)} s+${r(0, 1)}`));
+        case 'library': m.cnt.lib = (m.cnt.lib || 0) + 1; return fin(say(['I spent the afternoon studying at the library.', 'J’ai passé l’après-midi à étudier à la bibliothèque.'], `s+${r(3, 6)} p+3`));
+        case 'run': if (olR() < 0.05) { olAddIll(s, 'ankle'); return fin(say(['I went for a run and twisted my ankle.', 'Je suis allé' + (m.g === 'f' ? 'e' : '') + ' courir et je me suis tordu la cheville.'], 'h-2', 'b'), 'b'); } return fin(say(['I went for a run around the park.', 'Je suis allé' + (m.g === 'f' ? 'e' : '') + ' courir autour du parc.'], `H+${r(2, 4)} a+${r(2, 4)} h+1`));
+        case 'gym': return fin(say(['I worked out at the gym.', 'Je me suis entraîné' + (m.g === 'f' ? 'e' : '') + ' à la salle de sport.'], `H+${r(3, 5)} l+${r(1, 2)} a+${r(3, 5)}`));
+        case 'meditate': return fin(say(['I meditated for twenty minutes every morning.', 'J’ai médité vingt minutes chaque matin.'], `h+${r(3, 6)} H+1`));
+        case 'doctor': {
+          if (!m.ill.length) return fin(say(['The doctor said I am in good health.', 'Le médecin a dit que j’étais en bonne santé.'], 'H+1'), 'g');
+          const fee = m.age < 18 ? 0 : 60 * m.ill.length;
+          m.m -= fee; out.m = -fee;
+          const lines = [];
+          m.ill = m.ill.filter(x => {
+            const d = OL_ILLM[x[0]];
+            if (d[9]) { x[2] = 1; lines.push([`The doctor helped me manage my ${d[1][0].replace(/^(a |an |the )/, '')}.`, `Le médecin m’a aidé${m.g === 'f' ? 'e' : ''} à soigner ${d[1][1]}.`]); return true; }
+            if (olR() < d[8]) { lines.push([`The doctor cured my ${d[1][0].replace(/^(a |an |the )/, '')}.`, `Le médecin m’a guéri${m.g === 'f' ? 'e' : ''} : fini, ${d[1][1]}.`]); olGain(s, 'H', 4); out.H = (out.H || 0) + 4; return false; }
+            lines.push([`The treatment for ${d[1][0]} did not work yet.`, `Le traitement contre ${d[1][1]} n’a pas encore marché.`]);
+            return true;
+          });
+          lines.forEach(t => olSay(s, t, 'g'));
+          return fin([lines.map(x => x[0]).join(' '), lines.map(x => x[1]).join(' ')], 'g');
+        }
+        case 'music': {
+          if (m.inst < 0) { tq.unshift({ ic: 'note', title: L('Choose an instrument'), ch: OL_INST.map((x, i) => ({ t: L(olCap(x[0])), kb: false, fn: () => { m.inst = i; act('music'); } })) }); return nextPop(); }
+          return fin(say(['I practised {inst} at my music lessons.', 'J’ai pratiqué {inst} en cours de musique.'].map((x, i) => x.replace('{inst}', i ? OL_INST[m.inst][1] : 'the ' + OL_INST[m.inst][0]).replace('the singing', 'singing')), `xmus+${r(4, 8)} h+2`));
+        }
+        case 'art': return fin(say(olP([['I painted a portrait in my art class.', 'J’ai peint un portrait en cours de dessin.'], ['I learned to draw people in perspective.', 'J’ai appris à dessiner en perspective.']]), `xart+${r(4, 8)} h+2`));
+        case 'code': return fin(say(olP([['I built a small website at coding club.', 'J’ai créé un petit site web au club de programmation.'], ['I programmed a robot to follow a line.', 'J’ai programmé un robot qui suit une ligne.']]), `xcod+${r(4, 8)} s+2`));
+        case 'lang': return fin(say(['I spent the year learning a new language.', 'J’ai passé l’année à apprendre une nouvelle langue.'], `xlan+${r(4, 8)} s+1`));
+        case 'cook': return fin(say(olP([['I learned to make fresh pasta.', 'J’ai appris à faire des pâtes fraîches.'], ['I baked a lemon tart from scratch.', 'J’ai préparé une tarte au citron maison.']]), `xcoo+${r(4, 8)} h+2`));
+        case 'drama': return fin(say(['I rehearsed a play in drama class.', 'J’ai répété une pièce en cours de théâtre.'], `xact+${r(4, 8)} h+2 l+1`));
+        case 'write': return fin(say(['I wrote a short story about {topic}.', 'J’ai écrit une nouvelle sur {topic}.'], `xwri+${r(3, 7)} h+1`));
+        case 'sport': {
+          if (m.spt < 0) { tq.unshift({ ic: 'ball', title: L('Choose a sport'), ch: OL_SPORT.slice(0, 8).map((x, i) => ({ t: olCap(X(x)), kb: false, fn: () => { m.spt = i; act('sport'); } })) }); return nextPop(); }
+          return fin(say(['I trained hard at my {sport} club.', 'Je me suis bien entraîné' + (m.g === 'f' ? 'e' : '') + ' au club de {sport}.'], `a+${r(3, 6)} H+${r(2, 3)} h+2`));
+        }
+        case 'volunteer': m.cnt.vol = (m.cnt.vol || 0) + 1; return fin(say(olP([['I volunteered at a food bank.', 'J’ai été bénévole à la banque alimentaire.'], ['I volunteered to clean up the beach.', 'J’ai participé au nettoyage de la plage.'], ['I read stories to children at the hospital.', 'J’ai lu des histoires aux enfants à l’hôpital.']]), `k+${r(3, 6)} h+3`));
+        case 'hair': m.lk.hs = (m.lk.hs + 1 + olI(0, 2)) % 4; if (m.lk.hc >= 6 && olR() < 0.5) m.lk.hc = olI(0, 5); return fin(say(['I got a new haircut. I love it.', 'J’ai changé de coiffure. J’adore.'], `l+${r(1, 3)} h+2`));
+        case 'holiday': {
+          tq.unshift({ ic: 'plane', title: L('Where will you go?'), ch: OL_TRIP.map(tp => ({ t: olCap(X(tp[0])), s: olMoney(tp[1]), dis: m.m < tp[1], kb: false, fn: () => {
+            m.cnt.hol = (m.cnt.hol || 0) + 1; m.m -= tp[1]; out.m = -tp[1];
+            const t = say([`I went on ${tp[0][0]}.`, `Je suis parti${m.g === 'f' ? 'e' : ''} en vacances : ${tp[0][1]}.`], `h+${r(6, 12)} xlan+2 H+1`);
+            m.dn.push('holiday'); sfx('good'); tq.unshift(result(t, out, 'g', 'plane')); nextPop();
+          } })).concat([{ t: L('Cancel'), cls: 'alt', kb: false, fn: () => nextPop() }]) });
+          return nextPop();
+        }
+        case 'spa': return fin(say(['I spent a relaxing day at the spa.', 'J’ai passé une journée relaxante au spa.'], `h+${r(4, 7)} l+1 H+1`));
+        case 'drive': {
+          if (olR() * 100 < 45 + m.st.s / 2) { m.lic = 1; return fin(say(['I passed my driving test!', 'J’ai eu mon permis de conduire !'], 'h+8'), 'g'); }
+          return fin(say(['I failed my driving test. I will try again next year.', 'J’ai raté mon permis. Je retenterai l’année prochaine.'], 'h-4', 'b'), 'b');
+        }
+        case 'talent': {
+          const best = Math.max(m.sk.mus, m.sk.act, m.a * 0.6);
+          if (olR() * 100 < best * 0.9 + m.st.l * 0.1) { const pr = m.age < 18 ? 200 : 1000; return fin(say(['I won the talent show! The crowd went wild.', 'J’ai gagné le concours de talents ! Le public était en délire.'], `h+8 f+5 m+${pr}`), 'g'); }
+          return fin(say(['I performed at a talent show but didn’t win. I’ll practise more.', 'J’ai participé à un concours de talents sans gagner. Je vais m’entraîner davantage.'], 'h-2 f+1', 'b'), 'b');
+        }
+        case 'garden': return fin(say(['I spent the spring gardening. The tomatoes were delicious.', 'J’ai jardiné tout le printemps. Les tomates étaient délicieuses.'], 'H+2 h+3'));
+        case 'shelter': {
+          const opts = [0, 1, 2].map(() => { const d = olP(OL_PET); return { sp: d[0], n: olP(OL_PETN), age: olI(0, Math.min(6, d[2] - 1)), g: olP(['m', 'f']), lk: { hc: olI(0, 5) } }; });
+          tq.unshift({ ic: 'paw', title: L('Adopt a pet'), text: L('These animals at the shelter need a home.'), ch: opts.map(o => ({ t: `${o.n} · ${olCap(X(OL_PETM[o.sp][1]))}`, s: L('Age {n}', { n: o.age }) + ' · ' + olMoney(OL_PETM[o.sp][4]), dis: m.m < OL_PETM[o.sp][4], kb: false, fn: () => {
+            const p = olAddPet(s, o.sp, o.age); p.n = o.n; p.g = o.g; p.lk = Object.assign(p.lk, o.lk);
+            m.m -= OL_PETM[o.sp][4];
+            m.dn.push('shelter');
+            const t = olFP(['I adopted {p}, a {pet}, from the shelter.', 'J’ai adopté {p} au refuge.'], { p }, s);
+            olSay(s, t, 'g'); olGain(s, 'h', 6); sfx('good');
+            tq.unshift(result(t, { h: 6, m: -OL_PETM[o.sp][4] }, 'g', null, olPetSvg(p))); nextPop();
+          } })).concat([{ t: L('Cancel'), cls: 'alt', kb: false, fn: () => nextPop() }]) });
+          return nextPop();
+        }
+      }
+    }
+
+    function schAct(k) {
+      const m = me(), sc = m.sch;
+      if (!sc) return;
+      const out = {};
+      if (k === 'study') { if (m.dn.includes('study')) return; m.dn.push('study'); sc.perf = olC(sc.perf + olI(10, 16)); out.s = olGain(s, 's', olI(1, 3)); out.h = olGain(s, 'h', -olI(1, 3)); const t = ['I studied harder than ever this year.', 'J’ai travaillé plus dur que jamais cette année.']; olSay(s, t, 'g'); sfx('good'); tq.unshift(result(t, out, 'g', 'book')); return nextPop(); }
+      if (k === 'teach') {
+        if (m.dn.includes('teach')) return; m.dn.push('teach');
+        const good = olR() < 0.7, t = good ? ['My teacher gave me great advice on how to improve.', 'Mon professeur m’a donné de précieux conseils pour progresser.'] : ['My teacher was too busy to talk to me.', 'Mon professeur était trop occupé pour me parler.'];
+        if (good) sc.perf = olC(sc.perf + olI(4, 8));
+        olSay(s, t, good ? 'g' : ''); sfx(good ? 'good' : 'tap'); tq.unshift(result(t, out, good ? 'g' : '', 'chat')); return nextPop();
+      }
+      if (k === 'club') {
+        tq.unshift({ ic: 'star', title: L('School clubs'), ch: OL_CLUBS.map((c, ci) => ({ t: X(c[1]), kb: false, fn: () => { sc.club = c[0]; sc.ci = ci; olSay(s, [`I joined the ${olLow(c[1][0])}.`, `J’ai rejoint : ${olLow(c[1][1])}.`], 'g'); sfx('good'); refresh(); nextPop(); } })).concat(sc.club ? [{ t: L('Leave my club'), cls: 'alt', kb: false, fn: () => { sc.club = null; refresh(); nextPop(); } }] : []).concat([{ t: L('Cancel'), cls: 'alt', kb: false, fn: () => nextPop() }]) });
+        return nextPop();
+      }
+      if (k === 'quit') {
+        tq.unshift({ ic: 'x', title: sc.k === 'high' ? L('Leave school?') : L('Drop out?'), text: L('Many jobs need a diploma. Are you sure?'), ch: [{ t: L('Yes, leave'), cls: 'warn', kb: false, fn: () => {
+          if (sc.k === 'high') { m.edu.left = 1; olSay(s, ['I left high school without a diploma.', 'J’ai quitté le lycée sans diplôme.'], 'b'); }
+          else olSay(s, ['I dropped out of my studies.', 'J’ai abandonné mes études.'], 'b');
+          m.sch = null; s.lst = null; olGain(s, 'h', -2); sfx('bad'); refresh(); nextPop();
+        } }, { t: L('Stay'), cls: 'alt', kb: false, fn: () => nextPop() }] });
+        return nextPop();
+      }
+    }
+    function jobAct(k) {
+      const m = me(), j = m.job;
+      if (!j) return;
+      const out = {};
+      if (k === 'hard' || k === 'easy') {
+        if (m.dn.includes('hard') || m.dn.includes('easy')) return;
+        m.dn.push(k);
+        if (k === 'hard') { j.perf = olC(j.perf + olI(9, 15)); out.h = olGain(s, 'h', -2); out.H = olGain(s, 'H', -1); }
+        else { j.perf = olC(j.perf - olI(5, 9)); out.h = olGain(s, 'h', olI(3, 5)); }
+        const t = k === 'hard' ? ['I worked harder than anyone in the office.', 'J’ai travaillé plus dur que tout le monde.'] : ['I took it easy at work this year.', 'J’ai levé le pied au travail cette année.'];
+        olSay(s, t, k === 'hard' ? 'g' : ''); sfx('tap'); tq.unshift(result(t, out, '', k === 'hard' ? 'up' : 'lotus')); return nextPop();
+      }
+      if (k === 'raise') {
+        if (m.dn.includes('raise')) return; m.dn.push('raise');
+        const ok = olR() * 100 < j.perf - 15, pct = olI(4, 10), t = ok ? [`My boss gave me a ${pct}% raise!`, `Mon patron m’a accordé ${pct} % d’augmentation !`] : ['My boss said no to a raise this year.', 'Mon patron a refusé de m’augmenter cette année.'];
+        if (ok) { j.sal = Math.round(j.sal * (1 + pct / 100)); out.h = olGain(s, 'h', 4); } else { j.perf = olC(j.perf - 3); out.h = olGain(s, 'h', -2); }
+        olSay(s, t, ok ? 'g' : 'b'); sfx(ok ? 'good' : 'bad'); tq.unshift(result(t, out, ok ? 'g' : 'b', 'coin')); return nextPop();
+      }
+      if (k === 'promo') {
+        if (m.dn.includes('promo')) return; m.dn.push('promo');
+        const ok = j.ly >= 1 && olR() * 100 < (j.perf - 40) * 1.4;
+        if (ok && olPromote(s)) { sfx('win'); tq.unshift(result([`Promoted to ${olLow(olJobT(j.id, j.lvl, m.g, 0))}!`, `Promu${m.g === 'f' ? 'e' : ''} ${olLow(olJobT(j.id, j.lvl, m.g, 1))} !`], { h: 6 }, 'g', 'award')); return nextPop(); }
+        const t = ['My boss said I am not ready for a promotion yet.', 'Mon patron trouve que je ne suis pas encore prêt' + (m.g === 'f' ? 'e' : '') + ' pour une promotion.'];
+        olSay(s, t, 'b'); out.h = olGain(s, 'h', -2); sfx('bad'); tq.unshift(result(t, out, 'b', 'award')); return nextPop();
+      }
+      if (k === 'quit') {
+        tq.unshift({ ic: 'x', title: L('Quit your job?'), text: olEsc(olJobT(j.id, j.lvl, m.g)), ch: [{ t: L('Yes, quit'), cls: 'warn', kb: false, fn: () => { olQuitJob(s, 'quit'); sfx('tap'); refresh(); nextPop(); } }, { t: L('Stay'), cls: 'alt', kb: false, fn: () => nextPop() }] });
+        return nextPop();
+      }
+      if (k === 'retire') {
+        tq.unshift({ ic: 'leaf', title: L('Retire now?'), text: L('Your pension would be about {m} a year.', { m: olMoney(Math.max(9000, Math.round(j.sal * 0.45))) }), ch: [{ t: L('Retire'), cls: 'go', kb: false, fn: () => { retire(); refresh(); nextPop(); } }, { t: L('Keep working'), cls: 'alt', kb: false, fn: () => nextPop() }] });
+        return nextPop();
+      }
+    }
+    function apply(id) {
+      const m = me(), d = OL_JOBM[id];
+      if (!d || olReqOk(s, d).length || (m.job && m.job.id === id)) return;
+      const q = olP(OL_IV);
+      const ans = q[1].map((a, i) => [a, i]).sort(() => olR() - 0.5);
+      tq.unshift({ ic: 'job', title: L('Job interview'), text: olEsc(olJobT(id, 0, m.g)) + '<br><br>' + olEsc(X(q[0])), ch: ans.map(([a]) => ({ t: X(a[0]), kb: true, fn: () => {
+        let ch = d[1] === 'p' ? 62 : 42;
+        ch += a[1] + (m.st.s - 50) / 4 + (m.st.l - 50) / 10 + (m.fl.intern ? 8 : 0) + (m.edu.gpa >= 85 ? 6 : 0);
+        if (d[1] === 't') { const sk = d[7]; ch = 30 + a[1] + ((sk === 'a' ? m.a : m.sk[sk] || 0) - 60) + m.f / 4; }
+        const ok = olR() * 100 < ch;
+        if (ok) {
+          if (m.job) olQuitJob(s, 'quit');
+          let lvl = 0;
+          if (m.lastJob && m.lastJob.id === id) lvl = Math.max(0, m.lastJob.lvl - 1);
+          olStartJob(s, id, lvl);
+          s.lst = null;
+          const t = [`I got the job as ${olLow(olJobT(id, lvl, m.g, 0))}!`, `J’ai décroché le poste : ${olLow(olJobT(id, lvl, m.g, 1))} !`];
+          olSay(s, t, 'g'); olGain(s, 'h', 5); sfx('win');
+          tq.unshift(result(t, { h: 5 }, 'g', 'job'));
+        } else {
+          const t = [`I didn’t get the job as ${olLow(olJobT(id, 0, m.g, 0))}.`, `Je n’ai pas obtenu le poste : ${olLow(olJobT(id, 0, m.g, 1))}.`];
+          olSay(s, t, 'b'); olGain(s, 'h', -2); sfx('bad');
+          s.lst.ids = s.lst.ids.filter(x => x !== id);
+          tq.unshift(result(t, { h: -2 }, 'b', 'job'));
+        }
+        nextPop();
+      } })) });
+      nextPop();
+    }
+
+    function buy(kind, id, pr) {
+      const m = me();
+      pr = +pr;
+      if (m.age < 18 && id !== 'bike') return;
+      if (kind === 'h') {
+        const d = OL_HOUSEM[id];
+        if (!d || !s.shop || !s.shop.h.some(x => x[0] === id && x[1] === pr)) return;
+        const cash = m.m >= pr;
+        const go = mort => {
+          if (mort) { const lo = Math.round(pr * 0.8); m.m -= pr - lo; m.as.push({ t: 'house', id, v: pr, lo, pm: Math.round(lo * 0.075), y: 0 }); }
+          else { m.m -= pr; m.as.push({ t: 'house', id, v: pr, lo: 0, pm: 0, y: 0 }); }
+          m.mv = 1;
+          s.shop.h = s.shop.h.filter(x => x[0] !== id);
+          const t = [`I bought ${olArt(d[1][0])} for ${olMoney(pr, 0)}.`, `J’ai acheté ${olFrA(d[1][1])[0]}${olLow(d[1][1])} pour ${olMoney(pr, 1)}.`];
+          olSay(s, t, 'g'); olGain(s, 'h', 8); sfx('win'); tq.unshift(result(t, { h: 8, m: -(mort ? pr * 0.2 : pr) }, 'g', d[3])); nextPop();
+        };
+        tq.unshift({ ic: d[3], title: X(d[1]), text: olEsc(olMoney(pr)), ch: [cash ? { t: L('Buy outright'), cls: 'go', kb: false, fn: () => go(0) } : null, !olHouse(s) && m.m >= pr * 0.2 ? { t: L('Take a mortgage'), s: L('Deposit {a}, then about {b} a year', { a: olMoney(pr * 0.2), b: olMoney(pr * 0.8 * 0.075) }), kb: false, fn: () => go(1) } : null, { t: L('Cancel'), cls: 'alt', kb: false, fn: () => nextPop() }].filter(Boolean) });
+        return nextPop();
+      }
+      const d = OL_CARM[id];
+      if (!d || m.m < pr || (d[4] && !m.lic)) return;
+      if (id !== 'bike' && !(s.shop && s.shop.c.some(x => x[0] === id && x[1] === pr))) return;
+      m.m -= pr;
+      m.as.push({ t: 'car', id, v: pr, lo: 0, pm: 0, y: 0 });
+      if (s.shop) s.shop.c = s.shop.c.filter(x => x[0] !== id);
+      const t = [`I bought ${olArt(d[1][0])}.`, `Je me suis offert ${olFrA(d[1][1])[0]}${olLow(d[1][1])}.`];
+      olSay(s, t, 'g'); olGain(s, 'h', 5); sfx('good');
+      tq.unshift(result(t, { h: 5, m: -pr }, 'g', d[3]));
+      nextPop();
+    }
+    function olFrA(t) { return /^(Voiture|Petite|Citadine|Berline|Maison|Villa)/.test(t) ? ['une ', 'ma '] : ['un ', 'mon ']; }
+    function sell(i) {
+      const m = me(), a = m.as[+i];
+      if (!a) return;
+      const d = a.t === 'house' ? OL_HOUSEM[a.id] : OL_CARM[a.id], net = a.v - (a.lo || 0);
+      tq.unshift({ ic: d[3], title: L('Sell this?'), text: olEsc(X(d[1])) + '<br>' + L('You would receive {m}.', { m: olMoney(net) }), ch: [{ t: L('Sell'), cls: 'warn', kb: false, fn: () => {
+        m.as.splice(+i, 1); m.m += net;
+        olSay(s, [`I sold my ${olLow(d[1][0])} for ${olMoney(a.v, 0)}.`, `J’ai vendu ${olFrA(d[1][1])[1]}${olLow(d[1][1])} pour ${olMoney(a.v, 1)}.`], '');
+        sfx('tap'); refresh(); nextPop();
+      } }, { t: L('Keep it'), cls: 'alt', kb: false, fn: () => nextPop() }] });
+      nextPop();
+    }
+
+    function meet(k) {
+      const m = me();
+      if (k === 'friend') {
+        if (m.age < 4 || m.dn.includes('friend')) return;
+        const cs = [0, 1, 2].map(() => { const t = olTemp(s, m.age + olI(-2, 2)); t.age = Math.max(4, t.age); t.tr = olP(OL_TRAIT); return t; });
+        tq.unshift({ ic: 'smile', title: L('Make a new friend'), text: L('Who would you like to get to know?'), ch: cs.map(t => ({ t: t.n, s: L('Age {n}', { n: t.age }) + ' · ' + olTrait(t.tr, t.g, olFr() ? 1 : 0), kb: false, fn: () => {
+          m.dn.push('friend');
+          const ok = olR() < 0.55 + m.st.h / 400 + m.k / 400;
+          const c = { p: t };
+          if (ok) { olMoveTemp(s, c, 'friend'); c.p.b = olI(55, 75); const tx = olFP(['{p} and I became friends.', '{p} et moi sommes devenus amis.'], c, s); olSay(s, tx, 'g'); olGain(s, 'h', 4); sfx('good'); tq.unshift(result(tx, { h: 4 }, 'g', null, olAv(c.p))); }
+          else { const tx = olFP(['I tried to make friends with {p}, but we didn’t click.', 'J’ai essayé de sympathiser avec {p}, mais le courant n’est pas passé.'], c, s); olSay(s, tx, 'b'); sfx('bad'); tq.unshift(result(tx, {}, 'b', null, olAv(t))); }
+          nextPop();
+        } })).concat([{ t: L('Cancel'), cls: 'alt', kb: false, fn: () => nextPop() }]) });
+        return nextPop();
+      }
+      if (k === 'love') {
+        if (m.age < 16 || m.dn.includes('love') || olLove(s)) return;
+        const prefOf = () => G.pref || (m.g === 'f' ? 'm' : 'f');
+        const mkC = pref => [0, 1, 2].map(() => { const g = pref === 'a' ? olP(['m', 'f']) : pref; const t = olTemp(s, 0); t.g = g; t.n = olName(g); t.lk = olLook(g); t.age = m.age < 18 ? olI(16, 17) : olC(m.age + olI(-4, 4), 18, 110); t.l = olI(20, 95); t.tr = olP(OL_TRAIT); if (t.age >= 18) { const jid = olP(['teach', 'nurse', 'dev', 'engin', 'cook', 'retail', 'police', 'design', 'acct', 'mech', 'lab', 'journ', 'barista', 'farm', 'doctor', 'lawyer']); t.job = olJobPair(jid, Math.min(OL_JOBM[jid][6].length - 1, olI(0, 2)), g); } return t; });
+        const build = () => {
+          const pref = prefOf(), cs = mkC(pref);
+          return { ic: 'heart', title: L('Find love'), html: `<div class="seg">${[['f', L('Girls')], ['m', L('Boys')], ['a', L('Everyone')]].map(([v, t]) => `<button type="button" data-pref="${v}" aria-pressed="${pref === v}">${t}</button>`).join('')}</div>`, ch: cs.map(t => ({ t: t.n + ', ' + t.age, s: L('Looks {n}%', { n: t.l }) + ' · ' + olTrait(t.tr, t.g, olFr() ? 1 : 0) + (t.job ? ' · ' + olEsc(X(t.job)) : ''), kb: false, fn: () => {
+            m.dn.push('love');
+            const ok = olR() * 100 < 42 + (m.st.l - t.l) / 2 + m.st.h / 10;
+            const c = { p: t };
+            if (ok) { olMoveTemp(s, c, 'love', { st: 'date', yrs: 0, job: t.job || null }); c.p.b = olI(60, 80); const tx = olFP(['I asked {p} out and {he} said yes!', 'J’ai proposé à {p} de sortir avec moi et {il} a dit oui !'], c, s); olSay(s, tx, 'g'); olGain(s, 'h', 8); sfx('win'); tq.unshift(result(tx, { h: 8 }, 'g', null, olAv(c.p))); }
+            else { const tx = olFP(['I asked {p} out, but {he} said no.', 'J’ai proposé à {p} de sortir avec moi, mais {il} a refusé.'], c, s); olSay(s, tx, 'b'); olGain(s, 'h', -3); sfx('bad'); tq.unshift(result(tx, { h: -3 }, 'b', null, olAv(t))); }
+            nextPop();
+          } })).concat([{ t: L('Cancel'), cls: 'alt', kb: false, fn: () => nextPop() }]) };
+        };
+        newF = build;
+        tq.unshift(build());
+        return nextPop();
+      }
+      if (k === 'adopt') {
+        if (m.dn.includes('adopt') || m.m < 4000 || m.age < 25) return;
+        tq.unshift({ ic: 'baby', title: L('Adopt a child'), text: L('Adoption costs {m}. Give a child a loving home?', { m: olMoney(4000) }), ch: [{ t: L('Adopt'), cls: 'go', kb: false, fn: () => {
+          m.dn.push('adopt'); m.m -= 4000;
+          const g = olP(['m', 'f']), k2 = olPerson(s, 'kid', g, olI(0, 7), { ln: m.ln }); k2.b = olI(70, 90); m.kids++;
+          const tx = [`I adopted a ${g === 'f' ? 'girl' : 'boy'} named ${k2.n}, aged ${k2.age}.`, `J’ai adopté ${g === 'f' ? 'une petite fille' : 'un petit garçon'} prénommé${g === 'f' ? 'e' : ''} ${k2.n}, âgé${g === 'f' ? 'e' : ''} de ${k2.age} ans.`];
+          olSay(s, tx, 'g'); olGain(s, 'h', 9); sfx('win'); tq.unshift(result(tx, { h: 9, m: -4000 }, 'g', null, olAv(k2))); nextPop();
+        } }, { t: L('Cancel'), cls: 'alt', kb: false, fn: () => nextPop() }] });
+        return nextPop();
+      }
+    }
+
+    function pAct(k) {
+      const m = me(), p = sel;
+      if (!p || !p.al || p.d.includes(k) || !m.al) return;
+      const c = { p, topic: olP(OL_TOPIC) }, out = {};
+      const fin = (pair, eff, tone, ic) => { p.d.push(k); olApply(s, eff, c, out); const t = olFP(pair, c, s); olSay(s, t, tone || 'g'); sfx(tone === 'b' ? 'bad' : 'good'); tq.unshift(result(t, out, tone, ic, olAv(p))); nextPop(); };
+      const b = (x, y) => olI(x, y);
+      switch (k) {
+        case 'time': return fin(p.r === 'kid' && p.age < 13 ? ['I took {myrel} {p} to the park.', 'J’ai emmené {myrel} {p} au parc.'] : ['I spent the afternoon with {myrel} {p}.', 'J’ai passé l’après-midi avec {myrel} {p}.'], `b+${b(5, 10)} h+2`);
+        case 'talk': if (olR() < 0.15) return fin(['I talked with {p} about {topic}, and we ended up arguing.', 'J’ai discuté de {topic} avec {p}, et on a fini par se disputer.'], 'b-4 h-1', 'b');
+          return fin(['I had a long conversation with {p} about {topic}.', 'J’ai eu une longue discussion avec {p} sur {topic}.'], `b+${b(3, 7)} h+1`);
+        case 'compl': return fin(olP([['I told {p} how much {he} means to me.', 'J’ai dit à {p} à quel point {il} compte pour moi.'], ['I complimented {p} on {his} amazing sense of humour.', 'J’ai complimenté {p} sur son sens de l’humour.']]), `b+${b(3, 6)}`);
+        case 'gift': { const cost = m.age < 18 ? 10 : 80; if (m.m < cost) { api.toast(L('Not enough money')); return; } m.m -= cost; out.m = -cost; return fin(['I gave {p} a thoughtful gift.', 'J’ai offert à {p} un cadeau attentionné.'], `b+${b(6, 11)}`); }
+        case 'money': {
+          const w = p.w !== undefined ? p.w : s.pw, ok = olR() * 100 < 25 + w * 18 + p.b / 4;
+          if (!ok) return fin(['I asked {p} for money. {He} said no.', 'J’ai demandé de l’argent à {p}. {Il} a refusé.'], 'b-2', 'b');
+          const v = Math.round((m.age < 18 ? olI(5, 20) * (w + 1) : olI(50, 300) * (w * w + 1)) / 5) * 5;
+          c.amt = v; m.m += v; out.m = v;
+          return fin(['{p} gave me {amt}.', '{p} m’a donné {amt}.'], 'b-1');
+        }
+        case 'pocket': if (m.m < 100) { api.toast(L('Not enough money')); return; } m.m -= 100; out.m = -100; return fin(['I gave {p} some pocket money.', 'J’ai donné de l’argent de poche à {p}.'], 'b+6');
+        case 'date': { const cost = m.age < 18 ? 15 : 60; if (m.m < cost) { api.toast(L('Not enough money')); return; } m.m -= cost; out.m = -cost; return fin(olP([['I took {p} out for dinner and a film.', 'J’ai emmené {p} au restaurant puis au cinéma.'], ['{p} and I had a picnic by the lake.', '{p} et moi avons pique-niqué au bord du lac.'], ['{p} and I went ice skating.', '{p} et moi sommes allés faire du patin à glace.']]), `b+${b(6, 10)} h+3`); }
+        case 'propose': {
+          const ok = (p.yrs || 0) >= 1 && olR() * 100 < p.b - 10;
+          if (ok) { p.st = 'eng'; return fin(['I proposed to {p} and {he} said yes! We’re engaged!', 'J’ai demandé {p} en mariage et {il} a dit oui ! Nous sommes fiancés !'], 'b+10 h+10', 'g', 'ring'); }
+          return fin(['I proposed to {p}, but {he} said {he} isn’t ready yet.', 'J’ai demandé {p} en mariage, mais {il} n’est pas encore prêt{pe}.'], 'b-8 h-5', 'b', 'ring');
+        }
+        case 'wed': {
+          tq.unshift({ ic: 'ring', title: L('Plan the wedding'), ch: [[L('A small ceremony with close family'), 1500], [L('A big party with everyone'), 14000], [L('Run away and marry on a beach'), 400]].map(([t, cst], i) => ({ t, s: olMoney(cst), dis: m.m < cst, kb: false, fn: () => {
+            p.d.push('wed'); m.m -= cst; p.st = 'mar';
+            if (!p.inc) p.inc = olI(20, 55) * 1000;
+            const t = olFP([['{p} and I got married in a small ceremony. It was perfect.', '{p} et moi nous sommes mariés lors d’une petite cérémonie. C’était parfait.'], ['{p} and I got married at a huge party. We danced until sunrise.', '{p} et moi nous sommes mariés lors d’une grande fête. Nous avons dansé jusqu’à l’aube.'], ['{p} and I ran away and got married on a beach at sunset.', '{p} et moi nous sommes enfuis pour nous marier sur une plage au coucher du soleil.']][i], c, s);
+            olApply(s, `b+12 h+${i === 1 ? 12 : 9}`, c, out); out.m = -cst;
+            olSay(s, t, 'g'); sfx('win'); tq.unshift(result(t, out, 'g', 'ring', olAv(p))); nextPop();
+          } })).concat([{ t: L('Cancel'), cls: 'alt', kb: false, fn: () => nextPop() }]) });
+          return nextPop();
+        }
+        case 'baby': {
+          if (s.preg) { api.toast(L('A baby is already on the way!')); return; }
+          const fert = Math.max(0.08, 0.6 - Math.max(0, Math.max(m.g === 'f' ? m.age : p.age, 30) - 30) * 0.03);
+          if (olR() < fert) { s.preg = 1; return fin(['{p} and I are expecting a baby!', '{p} et moi attendons un bébé !'], 'b+6 h+8', 'g', 'baby'); }
+          return fin(['{p} and I are trying for a baby. No news yet.', '{p} et moi essayons d’avoir un bébé. Pas encore de nouvelles.'], 'b+3', '', 'baby');
+        }
+        case 'split': {
+          tq.unshift({ ic: 'broken', title: p.st === 'mar' ? L('Ask for a divorce?') : L('Break up?'), text: olEsc(p.n), ch: [{ t: L('Yes'), cls: 'warn', kb: false, fn: () => {
+            if (p.st === 'mar') olDivorce(s, p, 0);
+            else { p.al = 0; p.gone = 1; olSayC(s, ['I broke up with {p}.', 'J’ai rompu avec {p}.'], c, 'b'); olGain(s, 'h', -5); }
+            sel = null; sfx('bad'); refresh(); nextPop();
+          } }, { t: L('No'), cls: 'alt', kb: false, fn: () => nextPop() }] });
+          return nextPop();
+        }
+        case 'end': p.al = 0; p.gone = 1; sel = null; olSayC(s, ['I ended my friendship with {p}.', 'J’ai mis fin à mon amitié avec {p}.'], c, 'b'); sfx('bad'); refresh(); return;
+        case 'play': return fin(['I played with {myrel} {p} in the garden.', 'J’ai joué avec {myrel} {p} dans le jardin.'], `b+${b(5, 9)} h+3`);
+        case 'walk': return fin(['I took {p} for a long walk.', 'J’ai emmené {p} faire une longue promenade.'], `b+${b(4, 8)} H+2 a+1`);
+        case 'treat': return fin(['I gave {p} a special treat.', 'J’ai donné une friandise à {p}.'], `b+${b(4, 7)}`);
+        case 'vet': if (m.m < 80 && m.age >= 18) { api.toast(L('Not enough money')); return; } if (m.age >= 18) { m.m -= 80; out.m = -80; } p.ly = Math.min(p.ly + (olR() < 0.3 ? 1 : 0), 120); return fin(['I took {p} to the vet for a check-up. All good!', 'J’ai emmené {p} chez le vétérinaire pour un bilan. Tout va bien !'], 'b+3');
+      }
+    }
+
+    function recordDeath() {
+      const m = me();
+      G.lives++;
+      G.best = Math.max(G.best, m.age);
+      (m.aw || []).forEach(a => { G.aw[a] = (G.aw[a] || 0) + 1; });
+      G.tree.push({ n: m.fn + ' ' + m.ln, g: m.g, b: m.born, d: m.yr, a: m.age, aw: (m.aw || ['ordinary'])[0], j: m.job ? olJobPair(m.job.id, m.job.lvl, m.g) : m.lastJob ? olJobPair(m.lastJob.id, m.lastJob.lvl, m.g) : null, w: m.worth || 0, k: s.pp.filter(p => p.r === 'kid').length, ln: s.line, gen: s.gen, lk: Object.assign({}, m.lk) });
+      if (G.tree.length > 60) G.tree.splice(0, G.tree.length - 60);
+      api.submit(m.age);
+    }
+    function showEnd() {
+      if (!s || me().al) return;
+      closeCard();
+      const m = me(), kids = s.pp.filter(p => p.al && p.r === 'kid');
+      const aw = m.aw || ['ordinary'], a0 = OL_AWM[aw[0]];
+      const first = G.aw[aw[0]] === 1;
+      const edu = m.edu.grad ? X(OL_GRADM[m.edu.grad].slice(1, 3)) : m.edu.deg ? L('Degree in {x}', { x: X(OL_MAJM[m.edu.deg].slice(1, 3)) }) : m.edu.hs ? L('High school diploma') : L('No diploma');
+      const job = m.job ? olJobT(m.job.id, m.job.lvl, m.g) : m.lastJob ? olJobT(m.lastJob.id, m.lastJob.lvl, m.g) : '—';
+      const cause = X(m.cause);
+      const ct = olFr() ? `${m.fn} est mort${m.g === 'f' ? 'e' : ''} ${cause} à ${m.age} ans.` : `${m.fn} died ${cause === 'peacefully in my sleep' ? 'peacefully in their sleep' : cause === 'an accident' ? 'in an accident' : 'of ' + cause} at the age of ${m.age}.`;
+      let h = `<div class="scr end"><div class="pk"><div class="big"><div class="pa">${olMeAv(m)}</div><h3>${olEsc(m.fn + ' ' + m.ln)}</h3><div class="yrs">${m.born} – ${m.yr}</div></div><p class="pt">${olEsc(ct)}</p>`;
+      h += `<div class="awd">${olBadge(aw[0], 56)}<div><b>${olEsc(X(a0[1]))}${first ? `<em>${L('New')}</em>` : ''}</b><small>${olEsc(X(a0[2]))}</small>${aw.length > 1 ? `<small>${L('Also earned: {x}', { x: aw.slice(1).map(x => X(OL_AWM[x][1])).join(', ') })}</small>` : ''}</div></div>`;
+      h += `<div class="kv"><span>${L('Education')}</span><b>${olEsc(edu)}</b><span>${L('Career')}</span><b>${olEsc(job)}</b><span>${L('Net worth')}</span><b>${olMoney(m.worth || 0)}</b><span>${L('Children')}</span><b>${s.pp.filter(p => p.r === 'kid').length}</b><span>${L('Generation')}</span><b>${s.gen}</b></div>`;
+      h += kids.length ? `<p class="lbl">${L('Continue as one of your children')}</p>` + kids.slice(0, 6).map(k => `<button type="button" class="ch go" data-a="heir:${k.i}">${olEsc(k.n)}<small>${L('Age {n}', { n: k.age })} · ${olMoney(Math.max(0, Math.round((m.worth || 0) * 0.9 / kids.length)))}</small></button>`).join('') : `<p class="hint" style="text-align:center">${L('No children to carry on the family. The family line ends here.')}</p>`;
+      h += `<button type="button" class="ch alt" data-a="newlife">${L('Start a new life')}</button><div class="mini"><span>${L('Lives lived: {n}', { n: G.lives })}</span><span>${L('Oldest age: {n}', { n: G.best })}</span><span>${L('Awards: {n}', { n: Object.keys(G.aw).length + ' / ' + OL_AW.length })}</span></div></div></div>`;
+      scr.innerHTML = h;
+      scr.hidden = false;
+      scr.scrollTop = 0;
+    }
+
+    let nf = null;
+    function showNew() {
+      closeCard();
+      if (!nf) { const g = olP(['m', 'f']); nf = { g, fn: olName(g), ln: olP(OL_NM.l), lk: olLook(g), city: olI(0, OL_CITY.length - 1) }; }
+      nf.lk.bd = 0;
+      const ci = OL_CITY[nf.city];
+      scr.innerHTML = `<div class="scr"><div class="logo"><b>One <em>Life</em></b><span>${L('Live a whole life, one year at a time.')}</span></div><div class="pk"><div class="nw"><div class="pa">${olFace(nf.lk, nf.g, 22, 75, 1)}</div><div class="f"><label class="lbl">${L('First name')}</label><input type="text" data-f="fn" maxlength="20" value="${olEsc(nf.fn)}"><label class="lbl">${L('Last name')}</label><input type="text" data-f="ln" maxlength="20" value="${olEsc(nf.ln)}"></div></div><div class="seg"><button type="button" data-a="ng:f" aria-pressed="${nf.g === 'f'}">${L('Girl')}</button><button type="button" data-a="ng:m" aria-pressed="${nf.g === 'm'}">${L('Boy')}</button><button type="button" data-a="nr" aria-label="${L('Random')}">${L('Random')}</button></div><p class="hint" style="text-align:center">${L('Born in {c}', { c: olFr() ? ci[1] : ci[0] })}</p><button type="button" class="ch go" data-a="nstart">${L('Start life')}</button>${G.cur && G.cur.me && G.cur.me.al ? `<button type="button" class="ch alt" data-a="ncancel">${L('Back to my life')}</button>` : ''}<div class="mini"><span>${L('Lives lived: {n}', { n: G.lives })}</span><span>${L('Oldest age: {n}', { n: G.best })}</span><span>${L('Awards: {n}', { n: Object.keys(G.aw).length + ' / ' + OL_AW.length })}</span></div></div></div>`;
+      scr.hidden = false;
+    }
+    function readNew() { scr.querySelectorAll('input[data-f]').forEach(i => { const v = i.value.replace(/[<>]/g, '').trim().slice(0, 20); if (v) nf[i.dataset.f] = v; }); }
+    function startLife(n) {
+      s = n; G.cur = s; sel = null; sub = null; tab = 'occ'; tq = []; nf = null;
+      scr.hidden = true; scr.innerHTML = '';
+      fed = { n: -1, l: 0 };
+      renderAll(); snap();
+      sfx('win');
+      if (s.q.length) nextPop();
+    }
+
+    api.on(root, 'click', e => {
+      if (!api.alive) return;
+      const pb = e.target.closest('.ol-pop [data-pc]');
+      if (pb) { if (pb.disabled || !pop) return; const c = pop.ch[+pb.dataset.pc]; if (c && c.fn && !c.dis) { const f = c.fn; pop.ch = []; f(); } return; }
+      const pr = e.target.closest('.ol-pop [data-pref]');
+      if (pr) { G.pref = pr.dataset.pref; if (newF) { const c = newF(); showCard(c); } return; }
+      const b = e.target.closest('[data-a]');
+      if (!b || b.disabled) return;
+      const a = b.dataset.a, [k, x, y, z] = a.split(':');
+      if (k === 'nstart') { readNew(); const n = olNewLife({ g: nf.g, fn: nf.fn, ln: nf.ln, lk: nf.lk, city: nf.city }); startLife(n); return; }
+      if (k === 'ncancel') { scr.hidden = true; nf = null; return; }
+      if (k === 'ng') { readNew(); if (nf.g !== x) { nf.g = x; nf.fn = olName(x); nf.lk = olLook(x); } sfx('tap'); showNew(); return; }
+      if (k === 'nr') { const g = olP(['m', 'f']); nf = { g, fn: olName(g), ln: olP(OL_NM.l), lk: olLook(g), city: olI(0, OL_CITY.length - 1) }; sfx('tap'); showNew(); return; }
+      if (k === 'heir') { const kid = s.pp.find(p => p.i === +x && p.al && p.r === 'kid'); if (kid) startLife(olHeir(s, kid)); return; }
+      if (k === 'newlife') { G.cur = null; s = null; nf = null; showNew(); snap(); return; }
+      if (!s) return;
+      if (pop) return;
+      if (k === 'age') return ageUp();
+      sfx('tap');
+      if (k === 'tab') { if (narrow() && tab === x && side.classList.contains('open') && !sel && !sub) closeSide(); else openTab(x); return; }
+      if (k === 'close') return closeSide();
+      if (k === 'back') { if (sel) sel = null; else sub = null; renderSide(); return; }
+      if (k === 'me') { sub = 'me'; sel = null; if (narrow()) side.classList.add('open'); renderSide(); renderNav(); return; }
+      if (k === 'sub') { sub = x; sel = null; if (narrow()) side.classList.add('open'); renderSide(); return; }
+      if (k === 'restart') { tq.unshift({ ic: 'dice', title: L('Start a new life?'), text: L('Your current life will end and its progress will be lost.'), ch: [{ t: L('Start a new life'), cls: 'warn', kb: false, fn: () => { closeCard(); G.cur = null; s = null; nf = null; showNew(); snap(); } }, { t: L('Cancel'), cls: 'alt', kb: false, fn: () => nextPop() }] }); return nextPop(); }
+      if (k === 'pp') { sel = s.pp.find(p => p.i === +x) || null; renderSide(); return; }
+      if (k === 'pa') return pAct(x);
+      if (k === 'act') return act(x);
+      if (k === 'sch') return schAct(x);
+      if (k === 'job') return jobAct(x);
+      if (k === 'apply') return apply(x);
+      if (k === 'edu') { const m = me(); if (x === 'adult') { olSchoolStart(s, 'high', 1, { sum: 55 }); olSay(s, ['I went back to school to finish my diploma.', 'J’ai repris mes études pour obtenir mon diplôme.'], 'm'); m.edu.left = 0; if (m.job && m.job.t === 'f') olQuitJob(s, 'quit'); s.lst = null; refresh(); return; } if (x === 'uni') return uniPick(); if (x === 'grad') { s.q.unshift({ k: 'grad', m: 1 }); return nextPop(); } return; }
+      if (k === 'buy') return buy(x, y, z);
+      if (k === 'sell') return sell(x);
+      if (k === 'meet') return meet(x);
+    });
+    api.on(root, 'keydown', e => {
+      if (e.key === 'Enter' && e.target.matches && e.target.matches('.ol-pop input[type=text]')) { e.preventDefault(); const g = popEl.querySelector('.ch.go'); if (g) g.click(); }
+    });
+    api.on(window, 'keydown', e => {
+      if (!api.alive || api.paused || e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (!root.isConnected || !scr.hidden) return;
+      if (pop) {
+        const n = parseInt(e.key, 10);
+        if (n >= 1 && n <= 9 && !e.repeat) { const btn = popEl.querySelectorAll('.ch')[n - 1]; if (btn && !btn.disabled) { e.preventDefault(); btn.click(); } }
+        return;
+      }
+      if (!s) return;
+      if ((e.code === 'Space' || e.key === 'Enter') && !e.repeat && !(t && t.tagName === 'BUTTON' && root.contains(t))) { e.preventDefault(); ageUp(); }
+      if (e.key === 'Escape' && narrow() && side.classList.contains('open')) closeSide();
+    });
+
+    function layout() {
+      const w = root.clientWidth;
+      root.classList.toggle('narrow', w > 0 && w < 760);
+      root.classList.toggle('tiny', w > 0 && w < 420);
+      if (s) { renderNav(); }
+    }
+    if (typeof ResizeObserver === 'function') {
+      const ro = new ResizeObserver(() => { if (!api.alive) return ro.disconnect(); layout(); });
+      ro.observe(root);
+    }
+    layout();
+    api.interval(() => { const l = olLang(); if (l !== lastLang) { lastLang = l; if (s) renderAll(); if (!scr.hidden) { if (s && !me().al) showEnd(); else if (!s || !G.cur) showNew(); } if (pop && s && s.q.length && !tq.length) { closeCard(); nextPop(); } } }, 800);
+
+    if (s) {
+      renderAll();
+      if (!s.me.al) showEnd();
+      else if (s.q.length) api.timeout(() => nextPop(), 300);
+    } else showNew();
+  }
+
+  Ameplay.register({
+    id: 'one-life',
+    title: 'One Life',
+    category: 'Strategy',
+    better: 'high',
+    width: 1060,
+    blurb: 'Live a whole life one year at a time: school, exams, careers, friends, love, family, money and a family line that carries on.',
+    help: 'Press <kbd>Space</kbd> or the green button to age one year · answer event cards with the buttons or <kbd>1</kbd>–<kbd>4</kbd> · use Job, Assets, People and Activities between years',
+    icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="24"/><path d="M32 18v28M18 32h28"/></svg>',
+    css: OL_CSS,
+    mount: mountOneLife
   });
 })();
