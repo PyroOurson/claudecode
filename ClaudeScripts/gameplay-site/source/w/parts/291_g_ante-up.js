@@ -2738,7 +2738,7 @@
       const mp = mostPlayed();
       return [
         ['Best hand', fmtN(R.stats.bestHand)], ['Ante', R.ante], ['Rounds', R.round], ['Hands played', R.stats.hands],
-        ['Most played', R.hl[mp].played ? HAND[mp].n + ' (' + R.hl[mp].played + ')' : '-'], ['Rerolls', R.stats.rerolls], ['Items bought', R.stats.bought],
+        ['Most played', R.hl[mp].played ? TR(HAND[mp].n) + ' (' + R.hl[mp].played + ')' : '-'], ['Rerolls', R.stats.rerolls], ['Items bought', R.stats.bought],
         ['Cards used', R.stats.tarots + R.stats.planets + R.stats.spectrals], ['Deck', DECKS[R.dk][0]], ['Stake', STAKES[R.st - 1][0]], ['Seed', R.seed]
       ];
     }
