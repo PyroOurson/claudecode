@@ -183,5 +183,7 @@
  ["script", "g_bloons-td"],
  ["script", "g_build-brawl"],
  ["gap", "gap_316"],
+ ["script", "g_bed-raiders"],
+ ["gap", "gap_318"],
  ["gap", "gap_142"]
 ]

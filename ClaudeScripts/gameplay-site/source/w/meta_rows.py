@@ -188,7 +188,7 @@ ROWS = [
  ('shell-shockers',"Shell Shockers",'Action','so8',10,'shell shockers egg fps shooter','rn'),
  ('build-brawl',"Build Brawl",'Action','so4',10,'1v1 lol build fight box fight fortnite ramps walls floors cones edit shooter shotgun sniper duel 3d','rn'),
  ('smash-karts',"Smash Karts",'Racing,Action','so8',8,'smash karts kart battle arena weapons','rn'),
- ('bedwars',"Bedwars",'Action,Strategy','so8',15,'bedwars bed wars minecraft blocks shop bridge','rn'),
+ ('bed-raiders',"Bed Raiders",'Action,Strategy','so8',15,'bedwars bed wars minecraft blocks bridge bridging shop generators diamonds emeralds teams islands void pvp','rn'),
  ('tower-of-hell',"Tower of Hell",'Skill','so8',10,'tower of hell obby roblox parkour climb','rn'),
  ('only-up',"Only Up",'Skill','so8',30,'only up climbing parkour 3d','rn'),
  ('murder-mystery',"Murder Mystery 2",'Action','o12',8,'murder mystery 2 mm2 roblox murderer sheriff innocent','rn'),
