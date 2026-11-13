@@ -321,7 +321,8 @@
     };
     K.pop = (text, x, y, o) => {
       o = o || {};
-      pops.push({ text, x, y, col: o.color || '#fff', size: o.size || 26, t0: K.t, life: o.life || 1.1, rise: o.rise == null ? 46 : o.rise, stroke: o.stroke || '#121214' });
+      if (o.key) for (let i = pops.length - 1; i >= 0; i--) if (pops[i].key === o.key) pops.splice(i, 1);
+      pops.push({ key: o.key, text, x, y, col: o.color || '#fff', size: o.size || 26, t0: K.t, life: o.life || 1.1, rise: o.rise == null ? 46 : o.rise, stroke: o.stroke || '#121214' });
     };
     K.banner = (text, sub, o) => {
       o = o || {};
@@ -1640,8 +1641,8 @@ ${done ? (M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a=
               const ws = sideOf(e.w);
               D.lane[ws].glow = 1; D.lane[1 - ws].dim = 1;
               K.sfx('ding');
-              const up = upPos(ws, D.lane[ws].upX > L.upX0 + 1), wt = ws === 0 ? tr('You win!') : tr('{name} wins', { name: nm(1) }), off = K.cw * .5 + (L.P ? 12 : 18) + wt.length * (L.P ? 18 : 24) * .29;
-              K.pop(wt, up.x + off + wt.length * (L.P ? 18 : 24) * .29 < K.W - 4 ? up.x + off : up.x - off, up.y + 6, { size: L.P ? 18 : 24, color: ws === 0 ? '#9dffb0' : '#ffb0a0', life: .9 });
+              const wm = D.lane[ws].upX > L.upX0 + 1, up = upPos(ws, wm), wt = ws === 0 ? tr('You win!') : tr('{name} wins', { name: nm(1) }), off = K.cw * .5 + (L.P ? 12 : 18) + wt.length * (L.P ? 18 : 24) * .29;
+              K.pop(wt, wm ? K.W / 2 : up.x + off + wt.length * (L.P ? 18 : 24) * .29 < K.W - 4 ? up.x + off : up.x - off, wm ? K.H / 2 + (ws === 0 ? 26 : -26) : up.y + 6, { size: L.P ? 18 : 24, color: ws === 0 ? '#9dffb0' : '#ffb0a0', life: .9, key: 'cmp' });
               return .55 * sp;
             }
             K.sfx('slap'); K.shake = 10; D.flash = .5;
@@ -1687,9 +1688,9 @@ ${done ? (M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a=
             K.sfx('whoosh');
             const big = e.n >= 10;
             if (big) { K.burst(dp.x, dp.y, 40, { up: side === 0, spread: 1.4, min: 150, max: 460 }); K.shake = 8; }
-            K.after(last, () => { D.counts = e.counts.map((c, p) => c).slice(); D.counts = [e.counts[plOf(0)], e.counts[plOf(1)]]; api.score(D.counts[0]); K.sfx('card'); K.pop('+' + e.n, dp.x + (L.P ? 54 : 84), dp.y - 24, { size: big ? 34 : 24, color: side === 0 ? '#9dffb0' : '#ffb0a0' }); M.deckBump = [side, now()]; });
+            K.after(last, () => { D.counts = e.counts.map((c, p) => c).slice(); D.counts = [e.counts[plOf(0)], e.counts[plOf(1)]]; api.score(D.counts[0]); K.sfx('card'); K.pop('+' + e.n, dp.x + (L.P ? 54 : 84), dp.y + (side === 1 && L.P ? 30 : -24), { size: big ? 34 : 24, color: side === 0 ? '#9dffb0' : '#ffb0a0', key: 'gain' + side }); M.deckBump = [side, now()]; });
             D.rounds++;
-            if (e.streak >= 3) K.after(last * .6, () => K.pop(tr('{n} in a row!', { n: e.streak }), K.W / 2, L.lane[side] + (side === 0 ? 70 : -70), { size: 26, color: '#ffe27a' }));
+            if (e.streak >= 3) K.after(last * .6, () => K.pop(tr('{n} in a row!', { n: e.streak }), K.W / 2, L.lane[side] + (side === 0 ? 70 : -70), { size: 26, color: '#ffe27a', key: 'streak' }));
             M.cool = (SP()[1] || 0);
             return last + .12 * sp;
           }
