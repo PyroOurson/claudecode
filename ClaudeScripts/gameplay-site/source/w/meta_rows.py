@@ -180,8 +180,8 @@ ROWS = [
  ('osu',"osu!",'Skill','s',10,'osu rhythm circles sliders spinners beatmap','rn'),
  ('clash-royale',"Clash Royale",'Strategy,Action','so',6,'clash royale cards elixir towers arena troops','rn'),
  ('balatro',"Balatro",'Strategy,Board','s',30,'balatro poker roguelike jokers deck builder','rn'),
- ('little-alchemy',"Little Alchemy 2",'Puzzle,Brain','s',20,'little alchemy combine elements discover','rn'),
- ('bitlife',"BitLife",'Strategy','s',20,'bitlife life simulator choices age career','rn'),
+ ('element-lab',"Element Lab",'Puzzle,Brain','s',20,'element lab alchemy combine combining elements mix craft discover recipes little alchemy infinite craft','rn'),
+ ('one-life',"One Life",'Strategy','s',20,'one life simulator simulation choices age career school family job money bitlife','rn'),
  ('counter-strike',"Counter-Strike 2",'Action','so10',20,'counter strike cs2 csgo fps shooter dust 2 bomb defuse terrorists','rn'),
  ('polytrack',"PolyTrack",'Racing','so8',10,'polytrack time trial low poly track editor racing ghosts','rn'),
  ('krunker',"Krunker",'Action','so8',10,'krunker fps shooter low poly slide hop classes','rn'),
@@ -202,7 +202,7 @@ ROWS = [
 ]
 DELETED = ['demon-halls', 'night-survivors', 'fire-water', 'bomb-blast', 'marble-chain', 'clicker', 'glide', 'jetpack', 'sky-jump', 'lights-out', 'deep-miner', 'fling-birds', 'candy-rope', 'racer', 'shooter', 'hill-climb', 'golf', 'asteroids', 'bowling-3d', 'kart-circuit', 'tower-defense', 'stick-bridge']
 
-STAT = {"block-roll": "Stages", "tunnel-run": "Distance", "reaction": "Last", "minesweeper": "Time", "sudoku": "Time", "solitaire": "Time", "marble-3d": "Time", "maze-3d": "Time", "slide": "Moves", "cube-3d": "Moves", "pairs": "Moves", "chess": "Wins", "checkers": "Wins", "reversi": "Wins", "connect-four": "Wins", "tictactoe": "Wins", "pool": "Wins", "word-guess": "Streak", "hangman": "Streak", "true-false": "Score", "moto-stunts": "Stars", "garden-defense": "Stage", "paper-land": "Territory", "slither": "Length", "cell-feast": "Mass", "highway-3d": "Distance", "dash-cube": "Progress", "sea-battle": "Shots", "chimp-test": "Level", "piano-tiles": "Tiles"}
+STAT = {"block-roll": "Stages", "tunnel-run": "Distance", "reaction": "Last", "minesweeper": "Time", "sudoku": "Time", "solitaire": "Time", "marble-3d": "Time", "maze-3d": "Time", "slide": "Moves", "cube-3d": "Moves", "pairs": "Moves", "chess": "Wins", "checkers": "Wins", "reversi": "Wins", "connect-four": "Wins", "tictactoe": "Wins", "pool": "Wins", "word-guess": "Streak", "hangman": "Streak", "true-false": "Score", "moto-stunts": "Stars", "garden-defense": "Stage", "paper-land": "Territory", "slither": "Length", "cell-feast": "Mass", "highway-3d": "Distance", "dash-cube": "Progress", "sea-battle": "Shots", "chimp-test": "Level", "piano-tiles": "Tiles", "element-lab": "Elements", "one-life": "Age"}
 ORIG_ORDER = ["reaction", "aim", "whack", "perfect-stop", "stack", "rhythm", "snake", "breakout", "pong", "racer", "shooter", "glide", "2048", "minesweeper", "slide", "tictactoe", "connect-four", "lights-out", "pairs", "sequence", "number-memory", "trivia", "math-sprint", "word-guess", "clicker", "typing", "golf", "dino-run", "dash-cube", "jetpack", "sky-jump", "stick-bridge", "knife-throw", "asteroids", "invaders", "maze-muncher", "pinball", "air-hockey", "archery", "pool", "piano-tiles", "cps-test", "tower-defense", "fruit-slice", "deep-miner", "hill-climb", "kart-circuit", "chimp-test", "tetra", "bubble-pop", "gem-swap", "box-pusher", "pipe-connect", "sudoku", "chess", "checkers", "reversi", "solitaire", "hangman", "true-false", "sky-runner", "road-hopper", "helix-3d", "marble-3d", "highway-3d", "sky-pilot", "hoops-3d", "bowling-3d", "penalty-3d", "target-range-3d", "maze-3d", "tanks-3d", "cube-3d", "asteroids-3d", "blockcraft-3d"]
 
 
