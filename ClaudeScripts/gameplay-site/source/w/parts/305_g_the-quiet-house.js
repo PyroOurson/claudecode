@@ -68,11 +68,11 @@
     [2, 'h', 11, 14, 'win'], [2, 'v', 6, 2, 'win'], [2, 'v', 6, 11, 'win'], [2, 'v', 6, 7, 'win']
   ];
   const DIFFS = [
-    { n: 'Practice', d: 'No Keeper. Walk the house and learn where everything is.', keeper: 0, pat: 1.3, ch: 3, hear: 1, stun: 30, traps: 0, creak: 3, wires: 0, dark: 1.75, code: 1, chain: 0, plug: 1, free: 1 },
-    { n: 'Easy', d: 'He is slower and hard of hearing. Fewer locks and traps.', keeper: 1, pat: 1.2, ch: 2.5, hear: 0.7, stun: 30, traps: 0.5, creak: 3, wires: 0, dark: 1.7, code: 0, chain: 0, plug: 0, free: 1 },
-    { n: 'Normal', d: 'The whole house. A code lock on the front door.', keeper: 1, pat: 1.4, ch: 3.1, hear: 1, stun: 20, traps: 1, creak: 5, wires: 1, dark: 1.55, code: 1, chain: 0, plug: 1, free: 1.4 },
-    { n: 'Hard', d: 'He moves faster and hears more. A chain on the door and more traps.', keeper: 1, pat: 1.55, ch: 3.5, hear: 1.25, stun: 15, traps: 1.5, creak: 7, wires: 2, dark: 1.4, code: 1, chain: 1, plug: 1, free: 1.7 },
-    { n: 'Hardest', d: 'He is faster than you can run. Darker, more creaking boards, short stuns.', keeper: 1, pat: 1.8, ch: 4.25, hear: 1.5, stun: 10, traps: 2, creak: 9, wires: 3, dark: 1.2, code: 1, chain: 1, plug: 1, free: 2 }
+    { n: 'Practice', d: 'No Keeper. Walk the house and learn where everything is.', keeper: 0, pat: 1.3, ch: 3, hear: 1, stun: 30, traps: 0, creak: 3, wires: 0, dark: 1.75, code: 1, chain: 0, plug: 1, free: 1, infer: 0.2, checkP: 0, checkFrom: 9, predict: 0.3 },
+    { n: 'Easy', d: 'He is slower and hard of hearing. Fewer locks and traps.', keeper: 1, pat: 1.2, ch: 2.5, hear: 0.7, stun: 30, traps: 0.5, creak: 3, wires: 0, dark: 1.7, code: 0, chain: 0, plug: 0, free: 1, infer: 0.2, checkP: 0.15, checkFrom: 4, predict: 0.3 },
+    { n: 'Normal', d: 'The whole house. A code lock on the front door.', keeper: 1, pat: 1.4, ch: 3.1, hear: 1, stun: 20, traps: 1, creak: 5, wires: 1, dark: 1.55, code: 1, chain: 0, plug: 1, free: 1.4, infer: 0.4, checkP: 0.3, checkFrom: 3, predict: 0.6 },
+    { n: 'Hard', d: 'He moves faster and hears more. A chain on the door and more traps.', keeper: 1, pat: 1.55, ch: 3.5, hear: 1.25, stun: 15, traps: 1.5, creak: 7, wires: 2, dark: 1.4, code: 1, chain: 1, plug: 1, free: 1.7, infer: 0.6, checkP: 0.45, checkFrom: 2, predict: 0.8 },
+    { n: 'Hardest', d: 'He is faster than you can run. Darker, more creaking boards, short stuns.', keeper: 1, pat: 1.8, ch: 4.25, hear: 1.5, stun: 10, traps: 2, creak: 9, wires: 3, dark: 1.2, code: 1, chain: 1, plug: 1, free: 2, infer: 1.0, checkP: 0.7, checkFrom: 1, predict: 1.2 }
   ];
 
   function grain(g, w, h, a, n, lo, hi) {
@@ -832,7 +832,7 @@
       }
       return null;
     }
-    const nodeAt = (lv, x, z) => { const i = Math.floor(x), j = Math.floor(z); if (i < 0 || j < 0 || i >= W || j >= D) return -1; let id = lv * W * D + j * W + i; if (walk[id]) return id; if (stairOf(lv, i, j) && lv > 0 && cellAt(lv, i, j) === 'O') { id = (lv - 1) * W * D + j * W + i; if (walk[id]) return id; } let best = -1, bd = 9; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= D) continue; const k = lv * W * D + jj * W + ii; if (!walk[k]) continue; const dd = Math.hypot(ii + 0.5 - x, jj + 0.5 - z); if (dd < bd) { bd = dd; best = k; } } return best; };
+    const nodeAt = (lv, x, z) => { const i = Math.floor(x), j = Math.floor(z); if (i < 0 || j < 0 || i >= W || j >= D) return -1; let id = lv * W * D + j * W + i; if (walk[id]) return id; if (stairOf(lv, i, j) && lv > 0 && cellAt(lv, i, j) === 'O') { id = (lv - 1) * W * D + j * W + i; if (walk[id]) return id; } const rk = roomKey(lv, i, j); let best = -1, bd = 9; for (let r = 1; r <= 2 && best < 0; r++) for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= D) continue; const k = lv * W * D + jj * W + ii; if (!walk[k] || roomKey(lv, ii, jj) !== rk) continue; const dd = Math.hypot(ii + 0.5 - x, jj + 0.5 - z); if (dd < bd) { bd = dd; best = k; } } return best; };
     const pos = id => { const lv = (id / (W * D)) | 0, j = ((id % (W * D)) / W) | 0, i = id % W; return { lv, x: i + 0.5, z: j + 0.5 }; };
     return { walk, find, nodeAt, pos, links };
   }
@@ -1408,18 +1408,18 @@
     function arrive() {
       K.path = null;
       if (K.st === 'patrol') { K.st = R.day >= 5 && R.rng() < 0.35 ? 'listen' : 'look'; K.t = K.st === 'listen' ? 4 + R.rng() * 3 : 1.5 + R.rng() * 2.5; }
-      else if (K.st === 'goto') { K.st = 'look'; K.t = 2.5 + R.rng() * 2.5; if (R.day >= 3 && K.goal) planChecks(K.goal.x, K.goal.z, K.goal.lv); }
-      else if (K.st === 'search') { K.st = 'look'; K.t = 2.5 + R.rng() * 2; if (R.day >= 3 && K.last) planChecks(K.last.x, K.last.z, K.last.lv); }
+      else if (K.st === 'goto') { K.st = 'look'; K.t = 2.5 + R.rng() * 2.5; if (R.day >= R.D.checkFrom && K.goal) planChecks(K.goal.x, K.goal.z, K.goal.lv); }
+      else if (K.st === 'search') { K.st = 'look'; K.t = 2 + R.rng() * 2; if (R.day >= R.D.checkFrom && K.last) planChecks(K.last.x, K.last.z, K.last.lv); }
       else if (K.st === 'check') { K.t = 1.4; }
       else if (K.st === 'chase') { if (!K.sawHide) startSearch(); }
     }
     function planChecks(x, z, lv) {
-      const n = R.day >= 4 ? 2 : 1, p = [0, 0.3, 0.38, 0.48, 0.6][R.diff] * (R.day >= 5 ? 1.25 : 1);
+      const n = R.day >= 4 || R.diff >= 4 ? 2 : 1, p = Math.min(0.9, R.D.checkP * (1 + 0.08 * (R.day - 1)));
       const near = H.HIDES.filter(hs => hs.lv === lv && Math.hypot(hs.x - x, hs.z - z) < 5.5).sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z)).slice(0, n);
       K.checks = near.filter(() => R.rng() < p);
     }
     function nextCheck() { const hs = K.checks[0]; if (!hs) { K.st = 'patrol'; K.path = null; return; } const id = NAV.nodeAt(hs.lv, hs.out.x, hs.out.z); if (!goTo(id, 'check', kSpd(1.2))) { K.checks.shift(); K.st = 'patrol'; K.path = null; } K.t = 1.6; }
-    function startSearch() { K.sawHide = null; const L = K.last || { x: P.x, z: P.z, lv: P.lv }; let tx = L.x + (L.vx || 0) * 0.6, tz = L.z + (L.vz || 0) * 0.6; const id = NAV.nodeAt(L.lv, tx, tz); if (!goTo(id >= 0 ? id : NAV.nodeAt(L.lv, L.x, L.z), 'search', kSpd(1.6))) { K.st = 'look'; K.t = 3; } sfxAt('shh', K.lv, K.x, K.y + 1.9, K.z, 1); }
+    function startSearch() { K.sawHide = null; const L = K.last || { x: P.x, z: P.z, lv: P.lv }; let tx = L.x + (L.vx || 0) * R.D.predict, tz = L.z + (L.vz || 0) * R.D.predict; const id = NAV.nodeAt(L.lv, tx, tz); if (!goTo(id >= 0 ? id : NAV.nodeAt(L.lv, L.x, L.z), 'search', kSpd(1.6))) { K.st = 'look'; K.t = 3; } sfxAt('shh', K.lv, K.x, K.y + 1.9, K.z, 1); }
     function spot() {
       K.notice = 1; K.st = 'chase'; K.path = null; K.repath = 0.25; K.lostT = 0; K.last = { x: P.x, z: P.z, lv: P.lv, t: R.t };
       audio.play('sting'); sfxAt('gasp', K.lv, K.x, K.y + 1.9, K.z);
@@ -1507,7 +1507,7 @@
       P.hide = hs; P.look = 0; P.lookP = 0; P.vx = P.vz = 0; hs.open = 1;
       if (hs.kind === 'ward') audio.at('door', hs.x, LY[hs.lv] + 1, hs.z, 14000, 0.4); else audio.at('rustle', hs.x, LY[hs.lv] + 0.3, hs.z, 14000);
       noise(hs.x, LY[hs.lv] + 0.5, hs.z, hs.lv, 2.5, true);
-      if (K.on && K.st !== 'stun' && (K.sees || (K.st === 'chase' && K.lostT < 0.4 && Math.hypot(K.x - P.x, K.z - P.z) < 10))) { K.sawHide = hs; K.st = 'chase'; K.repath = 0; }
+      if (K.on && K.st !== 'stun' && (K.sees || (K.st === 'chase' && K.lostT < R.D.infer && Math.hypot(K.x - P.x, K.z - P.z) < 10 + R.D.infer * 2))) { K.sawHide = hs; K.st = 'chase'; K.repath = 0; }
       if (!R.noted.hide) { R.noted.hide = 1; say(T('Stay still. He cannot find you unless he saw you hide.'), 3.6); }
     }
     function exitHide() { const hs = P.hide; if (!hs) return; P.hide = null; hs.open = 1; P.x = hs.out.x; P.z = hs.out.z; P.lv = hs.lv; P.y = groundY(P.lv, P.x, P.z); P.ox = P.x; P.oz = P.z; P.oy = P.y; P.yaw = Math.atan2(-(hs.out.x - hs.x), -(hs.out.z - hs.z)); P.pitch = 0; audio.at(hs.kind === 'ward' ? 'door' : 'rustle', hs.x, LY[hs.lv] + 1, hs.z, 14000, 0.4); noise(hs.x, LY[hs.lv] + 0.5, hs.z, hs.lv, 2.5, true); }
@@ -1795,16 +1795,18 @@
       if (P.trap) { setLab(touchOn ? T('Hold Use to free your foot') : T('Hold E to free your foot'), 1); return; }
       if (P.hide) { setLab(T('Get out'), 1); return; }
       cam.getWorldDirection(ray); rayO.copy(cam.position);
-      let best = 2.1;
+      let best = 2.1, itemT = 9, itemF = null;
       for (const t of TG) {
         if (t.lv() !== P.lv || !t.en()) continue;
         const b = t.box(); let t0 = 0, t1 = best;
         for (let a = 0; a < 3; a++) { const o = a === 0 ? rayO.x : a === 1 ? rayO.y : rayO.z, d = a === 0 ? ray.x : a === 1 ? ray.y : ray.z, lo = b[a] - b[a + 3], hi = b[a] + b[a + 3]; if (Math.abs(d) < 1e-6) { if (o < lo || o > hi) { t0 = 1e9; break; } continue; } let ta = (lo - o) / d, tb = (hi - o) / d; if (ta > tb) { const q = ta; ta = tb; tb = q; } if (ta > t0) t0 = ta; if (tb < t1) t1 = tb; if (t0 > t1) break; }
-        if (t0 > t1 || t0 >= best) continue;
+        if (t0 > t1 || t0 >= (t.kind === 'item' ? best + 0.45 : best)) continue;
         const hx = rayO.x + ray.x * t0, hz = rayO.z + ray.z * t0, bl = rayBlock(P.lv, rayO.x, rayO.z, hx, hz);
         if (bl < 1 && bl * t0 < t0 - 0.16) continue;
-        best = t0; focus = t;
+        if (t.kind === 'item' && t0 < itemT) { itemT = t0; itemF = t; }
+        if (t0 < best) { best = t0; focus = t; }
       }
+      if (itemF && focus !== itemF && (focus.kind === 'drawer' || focus.kind === 'hide') && itemT < best + 0.45 && itemT < 2.1) focus = itemF;
       if (focus) { const [s, ok, verb] = focus.label(); setLab(s, ok, verb); } else setLab('');
     }
     const DBG = { cam: null };
@@ -1905,7 +1907,7 @@
       hudFrame(dt);
     });
     api.on(window, 'resize', () => { journal(journalOpen); });
-    root.__qh = { DBG, scene, cam, THREE, audio, enterHide, exitHide, spot, tryLoad(str) { try { localStorage.setItem('gameplay:save:' + ID, str); } catch (e) {} SV = loadSave(); showTitle(); return { opt: SV.opt, st: SV.st, run: !!SV.run }; }, sim(n) { for (let i = 0; i < n; i++) step(STEP); }, pick(nx, ny) { const rc = new THREE.Raycaster(); rc.setFromCamera({ x: nx || 0, y: ny || 0 }, cam); const hits = rc.intersectObjects(scene.children, true).filter(h => h.object.visible && h.object.parent && h.object.parent.visible !== false); return hits.slice(0, 4).map(h => { const m = h.object.material; let key = null; for (const k in H.M) if (H.M[k] === m) key = k; return [key || (m.type), +h.distance.toFixed(2), h.point.x.toFixed(2), h.point.y.toFixed(2), h.point.z.toFixed(2), h.face ? [h.face.normal.x, h.face.normal.y, h.face.normal.z].map(v => v.toFixed(2)).join(',') : '']; }); }, aim(x, y, z) { const ey = P.y + lerp(EYE, CREYE, P.cr), dx = x - P.x, dz = z - P.z; P.yaw = Math.atan2(-dx, -dz); P.pitch = Math.atan2(y - ey, Math.hypot(dx, dz)); }, get R() { return R; }, P, K, get mode() { return mode; }, get focus() { return focus && focus.kind; }, NAV, H, DOORS, ITEMLIST, start: (d, from) => start(d, from || null), tp(x, z, lv) { P.x = P.ox = x; P.z = P.oz = z; P.lv = lv; P.y = P.oy = groundY(lv, x, z); }, give(k) { const it = ITEMLIST.find(i => i.k === k && i.st !== 'h'); if (!it) return false; freeItem(it); if (P.held) releaseHeld(true); it.st = 'h'; P.held = it; syncItem(it); return true; }, use, drop: dropHeld, throwIt: throwHeld, noise: (l) => noise(P.x, P.y, P.z, P.lv, l, true), snapshot, staticTris: () => staticTris, keeperTo(x, z, lv) { K.x = K.ox = x; K.z = K.oz = z; K.lv = lv; K.y = K.oy = groundY(lv, x, z); K.path = null; K.st = 'patrol'; }, pause: openPause, resume, escape, setDay(n) { R.day = n; }, quality: () => PRQ.lvl };
+    root.__qh = { TG, DBG, scene, cam, THREE, audio, enterHide, exitHide, spot, useDoor, edgeDoor(a, b) { const p = NAV.pos(a), q2 = NAV.pos(b); if (p.lv !== q2.lv) { const L = NAV.links.get(a); return L ? doorAtEdge(L.lv, L.ax, L.x, L.z) : null; } if (Math.abs(p.x - q2.x) + Math.abs(p.z - q2.z) !== 1) return null; const ax = p.x !== q2.x ? 'v' : 'h'; return ax === 'v' ? doorAtEdge(p.lv, 'v', Math.max(p.x, q2.x) - 0.5, Math.floor(p.z)) : doorAtEdge(p.lv, 'h', Math.floor(p.x), Math.max(p.z, q2.z) - 0.5); }, tryLoad(str) { try { localStorage.setItem('gameplay:save:' + ID, str); } catch (e) {} SV = loadSave(); showTitle(); return { opt: SV.opt, st: SV.st, run: !!SV.run }; }, sim(n) { for (let i = 0; i < n; i++) step(STEP); }, pick(nx, ny) { const rc = new THREE.Raycaster(); rc.setFromCamera({ x: nx || 0, y: ny || 0 }, cam); const hits = rc.intersectObjects(scene.children, true).filter(h => h.object.visible && h.object.parent && h.object.parent.visible !== false); return hits.slice(0, 4).map(h => { const m = h.object.material; let key = null; for (const k in H.M) if (H.M[k] === m) key = k; return [key || (m.type), +h.distance.toFixed(2), h.point.x.toFixed(2), h.point.y.toFixed(2), h.point.z.toFixed(2), h.face ? [h.face.normal.x, h.face.normal.y, h.face.normal.z].map(v => v.toFixed(2)).join(',') : '']; }); }, aim(x, y, z) { const ey = P.y + lerp(EYE, CREYE, P.cr), dx = x - P.x, dz = z - P.z; P.yaw = Math.atan2(-dx, -dz); P.pitch = Math.atan2(y - ey, Math.hypot(dx, dz)); }, get R() { return R; }, P, K, get mode() { return mode; }, get focus() { return focus && focus.kind; }, NAV, H, DOORS, ITEMLIST, start: (d, from) => start(d, from || null), tp(x, z, lv) { P.x = P.ox = x; P.z = P.oz = z; P.lv = lv; P.y = P.oy = groundY(lv, x, z); }, give(k) { const it = ITEMLIST.find(i => i.k === k && i.st !== 'h'); if (!it) return false; freeItem(it); if (P.held) releaseHeld(true); it.st = 'h'; P.held = it; syncItem(it); return true; }, use, drop: dropHeld, throwIt: throwHeld, noise: (l) => noise(P.x, P.y, P.z, P.lv, l, true), snapshot, staticTris: () => staticTris, keeperTo(x, z, lv) { K.x = K.ox = x; K.z = K.oz = z; K.lv = lv; K.y = K.oy = groundY(lv, x, z); K.path = null; K.st = 'patrol'; }, pause: openPause, resume, escape, setDay(n) { R.day = n; }, quality: () => PRQ.lvl };
     showTitle();
     return () => { persist(); unlockPtr(); audio.close(); for (const o of bin) { try { o.dispose(); } catch (e) {} } bin.length = 0; delete root.__qh; };
   }
