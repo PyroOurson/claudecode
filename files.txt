@@ -91,11 +91,16 @@ ClaudeScripts/gameplay-site/source/games/subway-surfers/build.py
 ClaudeScripts/gameplay-site/source/games/subway-surfers/src/subway-surfers.js
 ClaudeScripts/gameplay-site/source/notes/admin-rating.md
 ClaudeScripts/gameplay-site/source/notes/analytics_audit_round19.md
+ClaudeScripts/gameplay-site/source/notes/caption-this.md
 ClaudeScripts/gameplay-site/source/notes/design/gameplay-home.html
 ClaudeScripts/gameplay-site/source/notes/design/lobby.webp
 ClaudeScripts/gameplay-site/source/notes/design/party-lobby.html
 ClaudeScripts/gameplay-site/source/notes/fps_report.md
+ClaudeScripts/gameplay-site/source/notes/order-up.md
+ClaudeScripts/gameplay-site/source/notes/quack-cup.md
+ClaudeScripts/gameplay-site/source/notes/reel-deep.md
 ClaudeScripts/gameplay-site/source/notes/stats_audit.md
+ClaudeScripts/gameplay-site/source/notes/touchdown-dynasty.md
 ClaudeScripts/gameplay-site/source/t/lib.js
 ClaudeScripts/gameplay-site/source/t/pbuild.py
 ClaudeScripts/gameplay-site/source/t/sheet.py
@@ -115,6 +120,7 @@ ClaudeScripts/gameplay-site/source/t/tests/peak.js
 ClaudeScripts/gameplay-site/source/t/tests/rt_security.js
 ClaudeScripts/gameplay-site/source/t/tests/signin.js
 ClaudeScripts/gameplay-site/source/t/tests/smoke_all.js
+ClaudeScripts/gameplay-site/source/t/tests/stats_data.js
 ClaudeScripts/gameplay-site/source/w/agents_net/API.md
 ClaudeScripts/gameplay-site/source/w/assemble.py
 ClaudeScripts/gameplay-site/source/w/build2.py
@@ -145,6 +151,7 @@ ClaudeScripts/gameplay-site/source/w/covers/bonk-io.webp
 ClaudeScripts/gameplay-site/source/w/covers/brawl-stars.webp
 ClaudeScripts/gameplay-site/source/w/covers/breakout.webp
 ClaudeScripts/gameplay-site/source/w/covers/bubble-shooter.webp
+ClaudeScripts/gameplay-site/source/w/covers/caption-this.webp
 ClaudeScripts/gameplay-site/source/w/covers/catan.webp
 ClaudeScripts/gameplay-site/source/w/covers/cheat.webp
 ClaudeScripts/gameplay-site/source/w/covers/checkers.webp
@@ -208,6 +215,7 @@ ClaudeScripts/gameplay-site/source/w/covers/nine-mens-morris.webp
 ClaudeScripts/gameplay-site/source/w/covers/nonogram.webp
 ClaudeScripts/gameplay-site/source/w/covers/number-memory.webp
 ClaudeScripts/gameplay-site/source/w/covers/old-maid.webp
+ClaudeScripts/gameplay-site/source/w/covers/order-up.webp
 ClaudeScripts/gameplay-site/source/w/covers/pac-man.webp
 ClaudeScripts/gameplay-site/source/w/covers/pairs.webp
 ClaudeScripts/gameplay-site/source/w/covers/paper-io.webp
@@ -223,9 +231,11 @@ ClaudeScripts/gameplay-site/source/w/covers/pong.webp
 ClaudeScripts/gameplay-site/source/w/covers/president.webp
 ClaudeScripts/gameplay-site/source/w/covers/pulse.webp
 ClaudeScripts/gameplay-site/source/w/covers/pyramid-solitaire.webp
+ClaudeScripts/gameplay-site/source/w/covers/quack-cup.webp
 ClaudeScripts/gameplay-site/source/w/covers/quiplash.webp
 ClaudeScripts/gameplay-site/source/w/covers/quoridor.webp
 ClaudeScripts/gameplay-site/source/w/covers/reaction.webp
+ClaudeScripts/gameplay-site/source/w/covers/reel-deep.webp
 ClaudeScripts/gameplay-site/source/w/covers/reversi.webp
 ClaudeScripts/gameplay-site/source/w/covers/riichi-mahjong.webp
 ClaudeScripts/gameplay-site/source/w/covers/risk.webp
@@ -289,6 +299,7 @@ ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_boggle.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_bonk.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_brawl-stars.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_brick-bros.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_caption-this.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_catan.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_cheat.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_chinese-checkers.js
@@ -335,6 +346,7 @@ ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_monopoly.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_nine-mens-morris.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_nonogram.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_old-maid.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_order-up.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_paper-land.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_petit-bac.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_phase-10.js
@@ -342,8 +354,10 @@ ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_poker.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_pool.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_president.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_pyramid-solitaire.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_quack-cup.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_quiplash.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_quoridor.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_reel-deep.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_risk.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_road-hopper.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_rummikub.js
@@ -368,6 +382,7 @@ ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_stratego.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_surviv.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_terraria.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_tomb-of-the-mask.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_touchdown-dynasty.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_trivia-crack.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_typeracer.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_unblock-me.js
@@ -384,6 +399,7 @@ ClaudeScripts/gameplay-site/source/w/covers/tools/enc.py
 ClaudeScripts/gameplay-site/source/w/covers/tools/games.json
 ClaudeScripts/gameplay-site/source/w/covers/tools/kit.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/render.js
+ClaudeScripts/gameplay-site/source/w/covers/touchdown-dynasty.webp
 ClaudeScripts/gameplay-site/source/w/covers/traffic-racer.webp
 ClaudeScripts/gameplay-site/source/w/covers/trivia-crack.webp
 ClaudeScripts/gameplay-site/source/w/covers/trivia.webp
@@ -425,8 +441,11 @@ ClaudeScripts/gameplay-site/source/w/new/gcss.css
 ClaudeScripts/gameplay-site/source/w/new/i18n.js
 ClaudeScripts/gameplay-site/source/w/new/i18n_add.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_admin.json
+ClaudeScripts/gameplay-site/source/w/new/i18n_b2.json
+ClaudeScripts/gameplay-site/source/w/new/i18n_b7.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_consent.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_ideas.json
+ClaudeScripts/gameplay-site/source/w/new/i18n_p2.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_settings.json
 ClaudeScripts/gameplay-site/source/w/new/ideas.css
 ClaudeScripts/gameplay-site/source/w/new/ideas.js
@@ -438,6 +457,8 @@ ClaudeScripts/gameplay-site/source/w/new/site.css
 ClaudeScripts/gameplay-site/source/w/new/site.js
 ClaudeScripts/gameplay-site/source/w/new/social.css
 ClaudeScripts/gameplay-site/source/w/new/social.js
+ClaudeScripts/gameplay-site/source/w/new/stats_data.css
+ClaudeScripts/gameplay-site/source/w/new/stats_data.js
 ClaudeScripts/gameplay-site/source/w/new/tail.js
 ClaudeScripts/gameplay-site/source/w/new/toast.css
 ClaudeScripts/gameplay-site/source/w/new/track.js
@@ -534,13 +555,14 @@ ClaudeScripts/gameplay-site/source/w/parts/275_g_ragdoll-archers+stickman-hook+v
 ClaudeScripts/gameplay-site/source/w/parts/277_g_happy-wheels+getting-over-it.js
 ClaudeScripts/gameplay-site/source/w/parts/279_g_tomb-of-the-mask+color-switch+eggy-car+drift-boss.js
 ClaudeScripts/gameplay-site/source/w/parts/281_g_bloons-td.js
-ClaudeScripts/gameplay-site/source/w/parts/283_g_papas-pizzeria+tiny-fishing+duck-life.js
-ClaudeScripts/gameplay-site/source/w/parts/285_g_retro-bowl.js
+ClaudeScripts/gameplay-site/source/w/parts/283_g_order-up+reel-deep+quack-cup.js
+ClaudeScripts/gameplay-site/source/w/parts/285_g_touchdown-dynasty.js
 ClaudeScripts/gameplay-site/source/w/parts/287_g_friday-night-funkin+osu.js
 ClaudeScripts/gameplay-site/source/w/parts/289_g_clash-royale.js
 ClaudeScripts/gameplay-site/source/w/parts/291_g_balatro.js
 ClaudeScripts/gameplay-site/source/w/parts/293_g_little-alchemy-2+bitlife.js
 ClaudeScripts/gameplay-site/source/w/parts/297_g_polytrack.js
+ClaudeScripts/gameplay-site/source/w/parts/309_g_caption-this.js
 ClaudeScripts/gameplay-site/source/w/parts/_order.json
 ClaudeScripts/gameplay-site/source/w/parts_orig/000_pre_000.html
 ClaudeScripts/gameplay-site/source/w/parts_orig/001_portal.js

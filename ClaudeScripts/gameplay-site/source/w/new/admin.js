@@ -952,7 +952,7 @@ async function sfaSave(b) {
 }
 
 const ST = { d: null, at: 0, busy: false, days: 30, game: null, ci: -1, anim: 2, ps: 0, ch: {}, lv: new Set() };
-const ST_SUB = [['ov', 'Overview'], ['act', 'Players'], ['use', 'Games'], ['perf', 'Performance'], ['err', 'Errors'], ['par', 'Parties'], ['hl', 'Health'], ['ins', 'Player data']];
+const ST_SUB = [['ov', 'Overview'], ['act', 'Players'], ['use', 'Games'], ['perf', 'Performance'], ['err', 'Errors'], ['par', 'Parties'], ['hl', 'Health'], ['ins', 'Player data'], ['data', 'Data']];
 const stN = v => (+v || 0).toLocaleString(adLang());
 const stH = v => { const n = +v || 0; return (n < 10 ? n.toFixed(1) : stN(Math.round(n))) + ' h'; };
 const stDay = (t, o) => { const d = Date.parse(String(t).slice(0, 10) + 'T12:00:00'); try { return new Date(d).toLocaleDateString(adLang(), o || { day: 'numeric', month: 'short' }); } catch (e) { return String(t).slice(0, 10); } };
@@ -963,13 +963,14 @@ function stShell() {
   if (!ST_SUB.some(x => x[0] === INS.sub)) INS.sub = 'ov';
   if (!$('#stov')) box.innerHTML = `<div class="adm-tabs ins-sub" role="tablist" aria-label="${esc(auT('Stats sections'))}">${ST_SUB.map(([k, l]) => `<button type="button" role="tab" data-stsub="${k}">${esc(auT(l))}</button>`).join('')}<i></i></div>
    <div class="mx-bar"><div class="sx-rng" role="group" aria-label="${esc(auT('Time range'))}">${[7, 30, 90].map(d => `<button type="button" data-strng="${d}" aria-pressed="${d === ST.days}">${esc(auT('{n} days').replace('{n}', d))}</button>`).join('')}</div><label class="mx-sw" title="${esc(auT('Admins and owners are left out of every number unless this is on. Test accounts are always left out.'))}"><button class="sw${LV.staff ? ' on' : ''}" type="button" role="switch" id="ststaff" aria-checked="${LV.staff}" aria-label="${esc(auT('Count staff activity'))}"></button><span>${esc(auT('Count staff activity'))}</span></label><span class="mx-upd" id="stupd" role="status"><i></i><span data-ago=""></span></span></div>
-   <div id="stov"></div><div id="stmx"></div><div id="insv"></div>`;
+   <div id="stov"></div><div id="stmx"></div><div id="insv"></div><div id="sdv" hidden></div>`;
   const tabs = box.querySelector('.ins-sub');
   box.querySelectorAll('[data-stsub]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.stsub === INS.sub)));
   adTabBar(tabs);
   if (tabs.scrollWidth > tabs.clientWidth + 2) { const b = tabs.querySelector('[aria-selected="true"]'); if (b) tabs.scrollTo({ left: Math.max(0, b.offsetLeft - (tabs.clientWidth - b.offsetWidth) / 2), behavior: motionOK() ? 'smooth' : 'auto' }); }
   box.querySelectorAll('[data-strng]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.strng === ST.days)));
   $('#stov').hidden = INS.sub !== 'ov'; $('#insv').hidden = INS.sub !== 'ins'; $('#stmx').hidden = !MX_T[INS.sub];
+  const sd = $('#sdv'); if (sd) { sd.hidden = INS.sub !== 'data'; const bar = box.querySelector('.mx-bar'); if (bar) bar.hidden = INS.sub === 'data'; if (INS.sub === 'data' && Ameplay.statsData && !sd.dataset.on) { sd.dataset.on = '1'; try { Ameplay.statsData.render(sd); } catch (e) { console.error(e); } } }
   stStamp();
   return $('#stov');
 }

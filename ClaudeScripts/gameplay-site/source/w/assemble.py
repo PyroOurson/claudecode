@@ -77,7 +77,7 @@ old = rep(old, "    get net() { return net || (net = makeNet(g, add)); },", "   
 old = rep(old, "      add(() => { try { renderer.dispose(); renderer.forceContextLoss(); } catch (e) {} c.remove(); });", "      add(() => { try { renderer.dispose(); } catch (e) {} c.remove(); });")
 ca = old.index("const coverCache = new Map();")
 open('parts/002_legal.js', 'w', encoding='utf-8', newline='').write('(function () {\n' + open('new/legal.js', encoding='utf-8').read() + '\nAmeplay.legalSet(LEGAL);\n})();\n')
-old = old[:ca] + 'const LEGAL = {};\n' + open('new/tail.js', encoding='utf-8').read() + open('new/auth.js', encoding='utf-8').read().replace(chr(10) + 'Ameplay.debug = ', chr(10) + open('new/admin.js', encoding='utf-8').read() + chr(10) + open('new/social.js', encoding='utf-8').read() + chr(10) + open('new/input.js', encoding='utf-8').read() + chr(10) + open('new/track.js', encoding='utf-8').read() + chr(10) + open('new/changelog.js', encoding='utf-8').read() + chr(10) + open('new/site.js', encoding='utf-8').read() + chr(10) + open('new/ideas.js', encoding='utf-8').read() + chr(10) + open('new/diagui.js', encoding='utf-8').read() + chr(10) + 'Ameplay.debug = ', 1) + chr(10) + i18n_js()
+old = old[:ca] + 'const LEGAL = {};\n' + open('new/tail.js', encoding='utf-8').read() + open('new/auth.js', encoding='utf-8').read().replace(chr(10) + 'Ameplay.debug = ', chr(10) + open('new/admin.js', encoding='utf-8').read() + chr(10) + open('new/stats_data.js', encoding='utf-8').read() + chr(10) + open('new/social.js', encoding='utf-8').read() + chr(10) + open('new/input.js', encoding='utf-8').read() + chr(10) + open('new/track.js', encoding='utf-8').read() + chr(10) + open('new/changelog.js', encoding='utf-8').read() + chr(10) + open('new/site.js', encoding='utf-8').read() + chr(10) + open('new/ideas.js', encoding='utf-8').read() + chr(10) + open('new/diagui.js', encoding='utf-8').read() + chr(10) + 'Ameplay.debug = ', 1) + chr(10) + i18n_js()
 open('parts/001_portal.js', 'w', encoding='utf-8', newline='').write(old)
 
 SC = ':where(:not(.g-root *))'
@@ -123,7 +123,7 @@ am = scope(open('new/am.css', encoding='utf-8').read())
 gcss = open('new/gcss.css', encoding='utf-8').read()
 toast = open('new/toast.css', encoding='utf-8').read()
 media = scope(open('new/media.css', encoding='utf-8').read())
-media += chr(10) + open('new/auth.css', encoding='utf-8').read() + chr(10) + open('new/admin.css', encoding='utf-8').read() + chr(10) + scope(open('new/social.css', encoding='utf-8').read()) + chr(10) + scope(open('new/site.css', encoding='utf-8').read()) + chr(10) + scope(open('new/ideas.css', encoding='utf-8').read()) + chr(10) + open('new/diag.css', encoding='utf-8').read()
+media += chr(10) + open('new/auth.css', encoding='utf-8').read() + chr(10) + open('new/admin.css', encoding='utf-8').read() + chr(10) + open('new/stats_data.css', encoding='utf-8').read() + chr(10) + scope(open('new/social.css', encoding='utf-8').read()) + chr(10) + scope(open('new/site.css', encoding='utf-8').read()) + chr(10) + scope(open('new/ideas.css', encoding='utf-8').read()) + chr(10) + open('new/diag.css', encoding='utf-8').read()
 _ord = json.load(open('parts/_order.json'))
 _have = os.listdir('parts')
 _built = set(i for k, n in _ord if k == 'script' and n.startswith('g_') and any(re.fullmatch(r'\d{3}_' + re.escape(n) + r'\.js', f) for f in _have) for i in ids_of(n))
