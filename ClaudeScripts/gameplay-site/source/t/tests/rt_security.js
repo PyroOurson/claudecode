@@ -38,10 +38,13 @@ const joinCode = async (g, code) => { await g.toParty(GAME); await g.click('gojo
     await sleep(3000);
     const real = sql("select door_key from private.parties where game = '" + GAME + "' and code = '" + code + "'");
     must(!!real, 'the host registered its door key');
-    sql("update private.parties set door_key = 'Zm9yZ2VkLWtleS1mb3ItdGhlLXRlc3Q' where game = '" + GAME + "' and code = '" + code + "'");
+    const forge = () => sql("update private.parties set door_key = 'Zm9yZ2VkLWtleS1mb3ItdGhlLXRlc3Q' where game = '" + GAME + "' and code = '" + code + "'");
+    forge();
     const g = await lib.player(b, 'test2', { setup: noPeerJs });
+    const fk = setInterval(forge, 400);
     await joinCode(g, code);
     await sleep(14000);
+    clearInterval(fk);
     const ev = (await g.net()).map(e => e.a);
     const joined = await g.page.evaluate(() => { const l = document.querySelector('.g-lobby .gl-lob'); return !!l && l.querySelectorAll('.gl-players .gl-pl:not(.gl-seat)').length >= 2; });
     must(!joined && ev.indexOf('rt-key-mismatch') >= 0, 'a guest refuses a party whose door key does not match the registry (joined: ' + joined + ', mismatch seen: ' + (ev.indexOf('rt-key-mismatch') >= 0) + ')');
