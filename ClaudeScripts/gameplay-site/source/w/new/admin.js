@@ -489,6 +489,7 @@ function adPanel(u, keep) {
   ['#adun', '#adrst', '#adso', '#adlock', '#addelb'].forEach(q => { $(q).closest('.apc-card').hidden = !can; });
   rc.hidden = !own;
   rc.closest('.apc-col').hidden = !can && !own;
+  if (!keep) p.querySelectorAll('.is-busy').forEach(x => x.classList.remove('is-busy'));
   p.querySelectorAll('[data-adrole]').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.adrole === u.role)); b.disabled = false; adUnconfirm(b); });
   const lb = $('#adlock');
   adUnconfirm(lb);
@@ -643,6 +644,7 @@ async function adAct(k, b) {
     b.disabled = true; b.classList.add('is-busy'); auMsg('addeln', '');
     try {
       await adRpc('admin_delete_user', { p_uid: u.id });
+      b.disabled = false; b.classList.remove('is-busy'); adUnconfirm(b);
       track('admin', { act: 'delete' });
       rtSend(u.id, { t: 'deleted' });
       AD.users = (AD.users || []).filter(x => x.id !== u.id);

@@ -9809,6 +9809,35 @@ notify pgrst, 'reload schema';
 -- ============================================================================
 -- 2026-11-13 Read marks only by the recipient (Part 17.1.2)
 -- ============================================================================
+create or replace function public.dm_read(p_with uuid)
+returns integer
+language sql
+volatile
+security definer
+set search_path = ''
+as $$
+  select 0;
+$$;
+
+drop function if exists public.dm_read(uuid, bigint);
+create or replace function public.dm_read(p_with uuid, p_ids bigint[])
+returns integer
+language sql
+volatile
+security definer
+set search_path = ''
+as $$
+  with u as (
+    update public.dms d set read_at = now()
+    where auth.uid() is not null and d.to_id = auth.uid() and d.from_id = p_with and d.read_at is null and d.id = any (coalesce(p_ids[1:200], '{}'::bigint[]))
+    returning 1
+  )
+  select count(*)::integer from u;
+$$;
+revoke all on function public.dm_read(uuid) from public, anon, authenticated;
+revoke all on function public.dm_read(uuid, bigint[]) from public, anon, authenticated;
+grant execute on function public.dm_read(uuid) to authenticated;
+grant execute on function public.dm_read(uuid, bigint[]) to authenticated;
 
 -- ============================================================================
 -- 2026-11-13 Data collection: 50 measures (Part 17.5)
