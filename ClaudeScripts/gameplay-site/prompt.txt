@@ -304,6 +304,21 @@ Every game with computer opponents has a top level labelled exactly `Hardest`, a
 
 ---
 
+## Part 6b. Study the real game before recreating it
+
+For every game that recreates a known game, before writing code, study how the real game plays, as a player and an analyst would. Use web searches, official descriptions, wikis, guides, reviews and gameplay videos or footage you can reach, and write the findings in a short note in the game's agent report, so decisions have reasons. Capture:
+
+- the loop of a session from the first second to the end screen, and the pacing (how long each phase lasts, when the difficulty rises);
+- the maps and levels: how many there are, their size relative to the character, their zones and lanes, choke points, sightlines, spawn and objective positions, cover and verticality, where players usually fight and why;
+- the controls, speeds, jump heights, gravity, ranges, cooldowns, damage, health and costs, as numbers relative to each other;
+- the interface: what is on the screen, where, and when it appears; the menus and the order of screens;
+- the feel: camera, recoil, hit feedback, sound cues (what each sound tells the player), animation timing;
+- the common player strategies and the mistakes beginners make.
+
+Then build the game from those findings. **The study is for understanding structure, scale, pacing and feel. Every map, level layout, texture, model, sound and piece of music is drawn and composed by you, from scratch.** **Never trace, copy or reproduce a real map, screenshot or video frame, and never embed files from the original.** A map made to play like a famous one has the same kind of zones, lanes, distances and sightlines, laid out as your own design, so a player who knows the real game feels at home. Put the study's main points in the game's own notes under `source/notes/`, short.
+
+---
+
 ## Part 7. Clean up old and unwanted files
 
 1. List every tracked file under `ClaudeScripts/gameplay-site/` with its size and last commit.
@@ -317,7 +332,8 @@ Every game with computer opponents has a top level labelled exactly `Hardest`, a
    - unused vendor files, covers of games that no longer exist, and dead code of removed games inside live part files (`lights-out`, `clicker`, `golf`, `stick-bridge`, `kart-circuit`);
    - leftover worktrees and branches from finished agent work (`git worktree prune`, and delete merged `work-*` branches).
 4. Generated folders never belong in git: `w/site/`, `w/site_plain/`, `w/site_stage*/`, `w/parts_stage*/`, `w/parts/000_pre_000.html`, `w/parts/001_portal.js`, `w/parts/002_legal.js`, `rl/build/`. Check `source/.gitignore` covers them.
-5. Make all deletions in one commit named "remove obsolete files", with the list in the commit message. Regenerate `files.txt`. Run the build and the whole test suite to prove nothing needed was removed.
+5. Rename every game's files and folders to match the title shown on the website. Each game's title is in the catalogue (the portal's games list). Make the file name the title in lowercase, words joined by hyphens, with no spaces and no shell symbols (for example the part file `057_g_blockcraft-3d.js` becomes `057_g_<title-slug>.js`, and its source folder, cover file and test names follow). Keep the numeric prefix and `_order.json` in step. Do not change a game's visible title in this step. Keep the game's internal `id` working: if the id changes, add an alias table so saves, favourites, recently played lists, party invites, shared links and statistics made under the old id still resolve, and migrate stored data on load. Update every reference (build scripts, `_order.json`, covers, tests, the dashboard's game list, `files.txt`) in the same commit, then build and run the whole test suite and the smoke test over every game to prove nothing broke. Do this early, before the agents start, so everyone works with the new names.
+6. Make all deletions in one commit named "remove obsolete files", with the list in the commit message. Regenerate `files.txt`. Run the build and the whole test suite to prove nothing needed was removed.
 
 ---
 
@@ -678,6 +694,7 @@ Keep this section at every handoff (Part 14) and add new requests below it.
 - Every game improved: graphics, gameplay, variety, animations, sound, frame rate; the popular games playing like the famous originals, **with original assets**; `Hardest` levels almost unbeatable without unfair advantages.
 - Consistent game covers (same icon style and darkened background); the existing covers stay as they are.
 - At least 200 games, including a 3D voxel game, a 3D 5v5 tactical shooter, a real-time card tower duel, a low-poly track racer, a horror escape, a fast arena shooter, cooking games, a life simulation, a ragdoll physics game, a rope-swing game, a meme-caption party game and a rarity-scored daily trivia game like "Krillion".
+- Every game's files and folders renamed to the title shown on the website (Part 7.5); before a recreation is built, the real game's maps, pacing and feel are studied from real gameplay, then rebuilt as own layouts and assets (Part 6b).
 - Every game playtested from start to end, in parallel, capturing everything a real player would notice.
 - One merged SQL file; old and unwanted files deleted; the relay and TURN service deployed; the security work finished; real test data gathered.
 - Everything related to Gameplay Games on GitHub; the owner's local copy updated and old copies deleted; this master prompt on GitHub; a handoff with an overview and a follow-up prompt at the end of every session.
