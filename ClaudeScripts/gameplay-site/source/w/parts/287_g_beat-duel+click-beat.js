@@ -15,6 +15,7 @@
     };
   };
   const hashStr = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+  const TR = s => window.gpI18n ? gpI18n.t(s) : s;
   const pad2 = n => String(n).padStart(2, '0');
   const fmtTime = s => { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ':' + pad2(s % 60); };
   const fmtNum = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -1044,6 +1045,16 @@
       });
       ply.sort((a, b) => a.t - b.t);
     }
+    [opp, ply].forEach(list => list.forEach((n, i) => {
+      if (!n.len) return;
+      for (let j = i + 1; j < list.length; j++) {
+        const q = list[j];
+        if (q.lane !== n.lane) continue;
+        const room = q.t - n.t - 1.4 * st;
+        if (n.len > room) n.len = room >= 2 * st ? room : 0;
+        break;
+      }
+    }));
     ply.forEach((n, i) => { n.i = i; });
     return { opp, ply };
   }
@@ -1526,11 +1537,12 @@
 
 
   const JUDGE = [
-    { n: 'SICK', ms: 45, sc: 350, hp: 2.3, w: 1, col: '#47f0ff' },
-    { n: 'GOOD', ms: 90, sc: 200, hp: 1.4, w: .75, col: '#7dff9e' },
-    { n: 'BAD', ms: 135, sc: 100, hp: .5, w: .5, col: '#ffb347' },
-    { n: 'SHIT', ms: 160, sc: 50, hp: -1, w: .25, col: '#ff6a5c' }
+    { n: 'PERFECT', ms: 42, sc: 400, hp: 2.2, w: 1, col: '#47f0ff' },
+    { n: 'GREAT', ms: 84, sc: 240, hp: 1.5, w: .8, col: '#7dff9e' },
+    { n: 'GOOD', ms: 125, sc: 110, hp: .4, w: .45, col: '#ffb347' },
+    { n: 'SLOPPY', ms: 155, sc: 30, hp: -1.2, w: .15, col: '#ff6a5c' }
   ];
+  const HITW = JUDGE[3].ms / 1000;
   const FNF_RANKS = [[100, 'S+'], [95, 'S'], [90, 'A'], [80, 'B'], [70, 'C'], [60, 'D'], [0, 'F']];
   const rankOf = acc => { for (const r of FNF_RANKS) if (acc >= r[0]) return r[1]; return 'F'; };
   const rankCol = r => ({ 'S+': '#ffe14a', S: '#ffd23f', A: '#7dff9e', B: '#47f0ff', C: '#ffb347', D: '#ff8a5c', F: '#ff4d5e' }[r] || '#fff');
@@ -1721,6 +1733,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     const W = por ? 540 : 1280, H = por ? 960 : 720;
     const wrap = document.createElement('div');
     wrap.className = 'fo-wrap ' + (por ? 'por' : 'lan');
+    wrap.setAttribute('data-i18n', '');
     wrap.style.width = `min(100%,${W}px,calc((100dvh - var(--goff,250px))*${(W / H).toFixed(4)}))`;
     wrap.style.aspectRatio = W + ' / ' + H;
     root.append(wrap);
@@ -1777,8 +1790,8 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     const onoff = v => v ? 'On' : 'Off';
 
     const R = {
-      title: () => `<h1 class="fo-logo">FRIDAY NIGHT<b>FUNKIN'</b></h1><div class="fo-press">${por ? 'TAP TO START' : 'PRESS ENTER OR CLICK'}</div><div class="fo-sub">Original songs, original characters. Hit the arrows in time.</div>`,
-      menu: () => `<h1 class="fo-logo" style="font-size:calc(var(--u)*${por ? 4 : 4.4});margin-bottom:calc(var(--u)*1)">FRIDAY NIGHT<b>FUNKIN'</b></h1><div class="fo-col" style="min-width:calc(var(--u)*${por ? 28 : 24})"><button class="fo-b pri" data-a="story">Story Mode</button><button class="fo-b" data-a="free">Freeplay</button><button class="fo-b" data-a="online">Online Battle</button><button class="fo-b" data-a="opts">Options</button></div><div class="fo-hint">${por ? 'Tap the four lanes to hit notes' : 'Arrows or D F J K to play, Esc to pause'}</div>`,
+      title: () => `<h1 class="fo-logo" translate="no">BEAT<b>DUEL</b></h1><div class="fo-press">${por ? 'TAP TO START' : 'PRESS ENTER OR CLICK'}</div><div class="fo-sub">Original songs, original characters. Hit the arrows in time.</div>`,
+      menu: () => `<h1 class="fo-logo" style="font-size:calc(var(--u)*${por ? 4 : 4.4});margin-bottom:calc(var(--u)*1)" translate="no">BEAT<b>DUEL</b></h1><div class="fo-col" style="min-width:calc(var(--u)*${por ? 28 : 24})"><button class="fo-b pri" data-a="story">Story Mode</button><button class="fo-b" data-a="free">Freeplay</button><button class="fo-b" data-a="online">Online Battle</button><button class="fo-b" data-a="opts">Options</button></div><div class="fo-hint">${por ? 'Tap the four lanes to hit notes' : 'Arrows or D F J K to play, Esc to pause'}</div>`,
       story: () => `<div class="fo-head">Story Mode</div><div class="fo-weeks">${WEEKS.map((w, i) => `<div class="fo-wk ${i > sv.wk ? 'lock' : ''} ${i === S.wsel ? 'on' : ''}" style="--c:${w.col}" data-a="wk:${i}" data-f="wk:${i}"><canvas data-ic="${w.opp}" width="160" height="160"></canvas><div><h3>Week ${i + 1}: ${esc(w.name)}</h3><p>${i > sv.wk ? 'Locked. Clear the previous week.' : esc(w.tag)}</p><ol>${w.songs.map(s => `<li>${esc(SONGS[s].name)}</li>`).join('')}</ol></div></div>`).join('')}</div>${diffChips()}<div class="fo-foot"><button class="fo-b ghost" data-a="back">Back</button><button class="fo-b pri" data-a="storygo">Start week</button></div>`,
       free: () => {
         let h = '<div class="fo-head">Freeplay</div><div class="fo-free"><div class="fo-list">';
@@ -1796,7 +1809,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       resume: d => `<div class="fo-cnt">${d.n}</div>`,
       res: d => {
         const g = d.g, acc = accOf(g), rk = rankOf(acc), b = bestOf(g.id, g.diff);
-        return `<div class="fo-res"><h2>${esc(g.song.name)} <small style="opacity:.6;font-size:.55em">${DIFFS[g.diff]}</small></h2><div class="fo-rank" style="color:${rankCol(rk)}">${rk}</div><div class="fo-grid"><span>Score</span><b>${fmtNum(g.score)}</b><span>Accuracy</span><b>${acc.toFixed(2)}%</b><span>Sick / Good</span><b>${g.cnt[0]} / ${g.cnt[1]}</b><span>Bad / Shit</span><b>${g.cnt[2]} / ${g.cnt[3]}</b><span>Misses</span><b>${g.miss}</b><span>Max combo</span><b>${g.maxCombo}</b>${d.rec ? '<span>Record</span><b style="color:#ffd23f">NEW BEST</b>' : b ? `<span>Best</span><b>${fmtNum(b.score)}</b>` : ''}</div>${d.story ? `<div class="fo-hint">Week total ${fmtNum(d.story.score)}</div>` : ''}<div class="fo-btns">${d.next ? `<button class="fo-b pri" data-a="next">${d.last ? 'Finish week' : 'Next song'}</button>` : '<button class="fo-b pri" data-a="again">Play again</button>'}<button class="fo-b ghost" data-a="quit">${d.next ? 'Quit week' : 'Menu'}</button></div></div>`;
+        return `<div class="fo-res"><h2>${esc(g.song.name)} <small style="opacity:.6;font-size:.55em">${DIFFS[g.diff]}</small></h2><div class="fo-rank" style="color:${rankCol(rk)}">${rk}</div><div class="fo-grid"><span>Score</span><b>${fmtNum(g.score)}</b><span>Accuracy</span><b>${acc.toFixed(2)}%</b><span>Perfect / Great</span><b>${g.cnt[0]} / ${g.cnt[1]}</b><span>Good / Sloppy</span><b>${g.cnt[2]} / ${g.cnt[3]}</b><span>Misses</span><b>${g.miss}</b><span>Max combo</span><b>${g.maxCombo}</b>${d.rec ? '<span>Record</span><b style="color:#ffd23f">NEW BEST</b>' : b ? `<span>Best</span><b>${fmtNum(b.score)}</b>` : ''}</div>${d.story ? `<div class="fo-hint">Week total ${fmtNum(d.story.score)}</div>` : ''}<div class="fo-btns">${d.next ? `<button class="fo-b pri" data-a="next">${d.last ? 'Finish week' : 'Next song'}</button>` : '<button class="fo-b pri" data-a="again">Play again</button>'}<button class="fo-b ghost" data-a="quit">${d.next ? 'Quit week' : 'Menu'}</button></div></div>`;
       },
       wkend: d => `<div class="fo-res"><h2>Week ${d.wk + 1} cleared</h2><div class="fo-rank" style="color:${WEEKS[d.wk].col};font-size:calc(var(--u)*6)">${esc(WEEKS[d.wk].name)}</div><div class="fo-grid"><span>Total score</span><b>${fmtNum(d.score)}</b><span>Misses</span><b>${d.miss}</b><span>Difficulty</span><b>${DIFFS[d.diff]}</b></div>${d.wk < 2 && sv.wk > d.wk ? `<div class="fo-hint">Week ${d.wk + 2} unlocked</div>` : ''}<div class="fo-btns"><button class="fo-b pri" data-a="story">Weeks</button><button class="fo-b ghost" data-a="menu">Menu</button></div></div>`,
       over: d => `<div class="fo-res"><h2>You fainted</h2><div class="fo-sub">${esc(d.g.song.name)} on ${DIFFS[d.g.diff]}. The crowd wants an encore.</div><div class="fo-btns"><button class="fo-b pri" data-a="retry">Retry</button><button class="fo-b ghost" data-a="quit">Quit</button></div></div>`,
@@ -1974,7 +1987,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     }
     function missNote(g, n, lane) {
       n.st = 2;
-      g.miss++; g.combo = 0; g.score -= 10; g.hp = clamp(g.hp - 5, 0, 100);
+      g.miss++; g.combo = 0; g.score -= 20; g.hp = clamp(g.hp - 5, 0, 100);
       g.pops.push({ t: performance.now(), j: 4, c: 0 });
       audio.sfx('miss');
       audio.voiceMute('p', true); g.muted = 1;
@@ -1989,8 +2002,8 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       let hit = null;
       for (let i = g.pn; i < g.ply.length; i++) {
         const n = g.ply[i];
-        if (n.t > h + .16) break;
-        if (n.lane === lane && !n.st && Math.abs(n.t - h) <= .16) { hit = n; break; }
+        if (n.t > h + HITW) break;
+        if (n.lane === lane && !n.st && Math.abs(n.t - h) <= HITW) { hit = n; break; }
       }
       if (hit) judgeHit(g, hit, (h - hit.t) * 1000, lane);
       else {
@@ -2026,7 +2039,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       for (let i = g.pn; i < g.ply.length; i++) {
         const n = g.ply[i];
         if (n.t > T) break;
-        if (!n.st && T - n.t > .16) missNote(g, n, n.lane);
+        if (!n.st && T - n.t > HITW) missNote(g, n, n.lane);
       }
       while (g.pn < g.ply.length && (g.ply[g.pn].st === 2 || (g.ply[g.pn].st === 1 && !g.ply[g.pn].held))) g.pn++;
       for (let i = g.pn; i < g.ply.length; i++) {
@@ -2132,7 +2145,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       onl = onl || {};
       const wasG = G; G = null; void wasG;
       let r;
-      try { r = await api.net.room({ title: "Friday Night Funkin'", sizes: [2], defaultSize: 2, min: 2, max: 2 }); } catch (e) { r = null; }
+      try { r = await api.net.room({ title: 'Beat Duel', sizes: [2], defaultSize: 2, min: 2, max: 2 }); } catch (e) { r = null; }
       if (!r) { onl = null; show('menu'); menuMusic(); return; }
       onl = { role: r.role, me: r.id, rvName: 'Rival', phase: 'pick' };
       wireNet();
@@ -2270,15 +2283,15 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       drawIcon(c, oppId, px - sz * .38, hbY - 8, sz * (1 + ib), hp > .78 ? 1 : 0, false);
       drawIcon(c, 'zig', px + sz * .38, hbY - 8, sz * (1 + ib), hp < .22 ? 1 : hp > .78 ? 2 : 0, true);
       const acc = accOf(g);
-      txt(c, `Score ${fmtNum(g.score)}   Misses ${g.miss}   Accuracy ${acc.toFixed(1)}% (${rankOf(acc)})`, W / 2, hbY + (por ? 38 : 36), por ? 17 : 20, '#fff', 'center', 5);
+      txt(c, `${TR('Score')} ${fmtNum(g.score)}   ${TR('Misses')} ${g.miss}   ${TR('Accuracy')} ${acc.toFixed(1)}% (${rankOf(acc)})`, W / 2, hbY + (por ? 38 : 36), por ? 17 : 20, '#fff', 'center', 5);
       if (g.online) {
         const rv = g.rv;
         c.fillStyle = 'rgba(8,4,20,.62)'; c.beginPath(); c.roundRect(por ? 10 : W / 2 - 150, por ? 8 : (O.down ? H - 150 : 76), por ? 190 : 300, por ? 66 : 74, 12); c.fill();
         const rx = por ? 20 : W / 2 - 138, ry = por ? 22 : (O.down ? H - 136 : 90);
-        txt(c, onl ? onl.rvName : 'Rival', rx, ry, 17, '#ffb347', 'left', 4);
+        txt(c, onl ? onl.rvName : TR('Rival'), rx, ry, 17, '#ffb347', 'left', 4);
         txt(c, fmtNum(rv.s), rx + (por ? 168 : 276), ry, 22, '#fff', 'right', 5);
         c.fillStyle = OUT; c.fillRect(rx, ry + 14, por ? 168 : 276, 11); c.fillStyle = '#ffb347'; c.fillRect(rx + 2, ry + 16, (por ? 164 : 272) * clamp(rv.h, 0, 100) / 100, 7);
-        txt(c, 'You ' + fmtNum(g.score) + ' ' + (g.score >= rv.s ? '▲' : '▼'), rx, ry + 40, 16, g.score >= rv.s ? '#7dff9e' : '#ff8a8a', 'left', 4);
+        txt(c, TR('You') + ' ' + fmtNum(g.score) + ' ' + (g.score >= rv.s ? '▲' : '▼'), rx, ry + 40, 16, g.score >= rv.s ? '#7dff9e' : '#ff8a8a', 'left', 4);
       }
       const prog = clamp(T / (g.lastT || 1), 0, 1);
       c.fillStyle = 'rgba(0,0,0,.45)'; c.fillRect(W * .3, por ? LAY.stageH - 12 : H - 8, W * .4, 5);
@@ -2292,13 +2305,13 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
         c.save(); c.globalAlpha = al;
         const cx = por ? W / 2 : LAY.pX + LAY.lw * 2, cy = por ? LAY.stageH + 100 : H * .4 - age * 22;
         c.translate(cx, cy); c.scale(sc, sc);
-        txt(c, pj.n + (last.j === 0 ? '!' : ''), 0, 0, por ? 40 : 52, pj.col, 'center', 12);
-        if (last.c >= 5) txt(c, last.c + ' combo', 0, por ? 40 : 52, por ? 26 : 32, '#fff', 'center', 8);
+        txt(c, TR(pj.n) + (last.j === 0 ? '!' : ''), 0, 0, por ? 40 : 52, pj.col, 'center', 12);
+        if (last.c >= 5) txt(c, last.c + ' ' + TR('combo'), 0, por ? 40 : 52, por ? 26 : 32, '#fff', 'center', 8);
         c.restore();
       }
       if (g.state === 'count') {
         const k = Math.floor(-T / g.bs), labels = ['GO!', '1', '2', '3'], ph = ((-T / g.bs) % 1 + 1) % 1, num = k >= 0 && k < 4 ? labels[Math.min(3, k)] : '';
-        if (num) { c.save(); c.globalAlpha = clamp(1 - ph * .6, 0, 1); c.translate(W / 2, H * .38); const s2 = 1 + (1 - ph) * .25; c.scale(s2, s2); txt(c, num, 0, 0, por ? 120 : 150, num === 'GO!' ? '#7dff9e' : '#ffd23f', 'center', 20); c.restore(); }
+        if (num) { c.save(); c.globalAlpha = clamp(1 - ph * .6, 0, 1); c.translate(W / 2, H * .38); const s2 = 1 + (1 - ph) * .25; c.scale(s2, s2); txt(c, num === 'GO!' ? TR(num) : num, 0, 0, por ? 120 : 150, num === 'GO!' ? '#7dff9e' : '#ffd23f', 'center', 20); c.restore(); }
       }
     }
     function drawMenuBG(T) {
@@ -2390,11 +2403,11 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     const up = e => { if (!G) return; const l = G.pids[e.pointerId]; if (l != null) { delete G.pids[e.pointerId]; if (!Object.values(G.pids).includes(l)) release(l); } };
     api.on(canvas, 'pointerup', up);
     api.on(canvas, 'pointercancel', up);
-    const autoPause = () => { if (S.scr === 'play' && G && !onl && G.state !== 'dead' && G.state !== 'end') pauseGame(); };
+    const autoPause = () => { if (G) { G.down.fill(0); G.pids = {}; } if (S.scr === 'play' && G && !onl && G.state !== 'dead' && G.state !== 'end') pauseGame(); };
     api.on(window, 'blur', autoPause);
     api.on(document, 'visibilitychange', () => { if (document.hidden) autoPause(); });
 
-    (window.__gpdbg = window.__gpdbg || {}).fnf = { S: () => S, G: () => G, audio, sv, O, act, press, release, show };
+    (window.__gpdbg = window.__gpdbg || {}).bd = { S: () => S, G: () => G, audio, sv, O, act, press, release, show };
     if (api.net.invite) goOnline(); else show('title');
     return {
       destroy() {
@@ -2431,7 +2444,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     { n: 'Easy', cs: 3.6, ar: 3.5, od: 2, sk: 4, sl: 8, hp: 3, sm: 1.1, grid: 4, gap: 4, fill: 14, fgap: 8, slMin: 6, spMin: 18, ds: 62, mg: .5, dm: 2.3, col: '#8be34f' },
     { n: 'Normal', cs: 4, ar: 5, od: 4, sk: 4, sl: 6, hp: 4, sm: 1.3, grid: 2, gap: 2, fill: 9, fgap: 4, slMin: 6, spMin: 16, ds: 84, mg: .3, dm: 2, col: '#4fc3f7' },
     { n: 'Hard', cs: 4, ar: 7.5, od: 6.5, sk: 5, sl: 5, hp: 5, sm: 1.5, grid: 1, gap: 2, fill: 6, fgap: 3, slMin: 5, spMin: 14, ds: 108, mg: .19, dm: 1.7, col: '#ffb340' },
-    { n: 'Insane', cs: 4.2, ar: 9, od: 8, sk: 7, sl: 4, hp: 6, sm: 1.7, grid: 1, gap: 1, fill: 4, fgap: 2, slMin: 4, spMin: 14, ds: 128, mg: .11, dm: 1.3, col: '#ff5f8f' }
+    { n: 'Master', cs: 4.2, ar: 9, od: 8, sk: 7, sl: 4, hp: 6, sm: 1.7, grid: 1, gap: 1, fill: 4, fgap: 2, slMin: 4, spMin: 14, ds: 128, mg: .11, dm: 1.3, col: '#ff5f8f' }
   ];
   const OSU_PAL = {
     'paper-planes': 190, 'cherry-soda': 345, 'pixel-pursuit': 130, 'midnight-metro': 250, 'glass-garden': 165, 'turbo-tangerine': 25, 'lanterns-lake': 45, 'zero-gravity': 285
@@ -2596,27 +2609,27 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
 
 
   const OSU_MODS = [
-    { k: 'EZ', n: 'Easy', m: .5, d: 'Bigger circles, slower approach, gentler timing and health.' },
-    { k: 'HR', n: 'Hard Rock', m: 1.06, d: 'Flipped map, smaller circles, faster approach, strict timing.' },
-    { k: 'DT', n: 'Double Time', m: 1.12, d: 'Song and notes play at 1.5x speed.' },
-    { k: 'HD', n: 'Hidden', m: 1.06, d: 'Circles fade out before you hit them.' },
-    { k: 'NF', n: 'No Fail', m: .5, d: 'Health cannot run out.' },
-    { k: 'AT', n: 'Auto', m: 0, d: 'The computer plays. Scores are not saved.' }
+    { k: 'EZ', n: 'Relaxed', m: .6, d: 'Bigger circles, slower approach, gentler timing and health.' },
+    { k: 'HR', n: 'Strict', m: 1.1, d: 'Mirrored map, smaller circles, faster approach, strict timing.' },
+    { k: 'DT', n: 'Speed Up', m: 1.2, d: 'Song and notes play at 1.5x speed.' },
+    { k: 'HD', n: 'Fade Out', m: 1.08, d: 'Circles fade out before you hit them.' },
+    { k: 'NF', n: 'Safety Net', m: .6, d: 'Health cannot run out.' },
+    { k: 'AT', n: 'Autoplay', m: 0, d: 'The computer plays. Scores are not saved.' }
   ];
   const osuGradeCol = g => ({ SS: '#ffd23f', S: '#ffe58a', A: '#7dff9e', B: '#47c8ff', C: '#c58bff', D: '#ff6a5c' }[g] || '#fff');
-  const osuAccOf = n => { const t = n[0] + n[1] + n[2] + n[3]; return t ? 100 * (n[0] * 300 + n[1] * 100 + n[2] * 50) / (t * 300) : 100; };
+  const osuAccOf = n => { const t = n[0] + n[1] + n[2] + n[3]; return t ? 100 * (n[0] + n[1] * .45 + n[2] * .15) / t : 100; };
   function osuGrade(n) {
     const t = n[0] + n[1] + n[2] + n[3];
     if (!t) return 'D';
-    const p3 = n[0] / t, p5 = n[2] / t, nm = n[3];
+    const a = osuAccOf(n), nm = n[3];
     if (n[1] + n[2] + nm === 0) return 'SS';
-    if (p3 > .9 && p5 <= .01 && !nm) return 'S';
-    if ((p3 > .8 && !nm) || p3 > .9) return 'A';
-    if ((p3 > .7 && !nm) || p3 > .8) return 'B';
-    return p3 > .6 ? 'C' : 'D';
+    if (a >= 94 && !nm) return 'S';
+    if (a >= 88 || (a >= 84 && !nm)) return 'A';
+    if (a >= 78) return 'B';
+    return a >= 66 ? 'C' : 'D';
   }
   const osuModMult = m => OSU_MODS.reduce((a, o) => m[o.k] ? a * o.m : a, 1) || 1;
-  const osuModStr = m => OSU_MODS.filter(o => m[o.k]).map(o => o.k).join('') || 'None';
+  const osuModStr = m => OSU_MODS.filter(o => m[o.k]).map(o => o.n).join(', ') || 'None';
   const osuStarsAdj = (s, m) => s * (m.DT ? 1.4 : 1) * (m.HR ? 1.12 : 1) * (m.EZ ? .85 : 1) * (m.HD ? 1.05 : 1);
 
   function osuEff(map, mods) {
@@ -2710,7 +2723,8 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     x.lineWidth = R * .13; x.strokeStyle = '#fff'; x.beginPath(); x.arc(0, 0, R * .9, 0, 7); x.stroke();
     return circCache[key] = cv;
   }
-  const OSU_JV = [300, 100, 50];
+  const OSU_JV = [100, 40, 15];
+  const OSU_JN = ['Perfect', 'Good', 'Okay'];
   const OSU_JC = ['#6fd8ff', '#7dff9e', '#ffb347', '#ff4d5e'];
 
   function mountOsu(root, api) {
@@ -2718,6 +2732,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     const W = por ? 720 : 960, H = por ? 1040 : 720, SC = por ? 1.36 : 1.5, FX = (W - 512 * SC) / 2, FY = por ? 270 : 72;
     const wrap = document.createElement('div');
     wrap.className = 'fo-wrap ' + (por ? 'por' : 'lan');
+    wrap.setAttribute('data-i18n', '');
     wrap.style.width = `min(100%,${W}px,calc((100dvh - var(--goff,250px))*${(W / H).toFixed(4)}))`;
     wrap.style.aspectRatio = W + ' / ' + H;
     root.append(wrap);
@@ -2768,10 +2783,10 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     const rowSt = (label, key, val) => `<div class="fo-b row" data-a="o:${key}:1" data-l="o:${key}:-1" data-r="o:${key}:1"><span>${label}</span><span class="v"><i data-a="o:${key}:-1">&#9664;</i><b>${val}</b><i data-a="o:${key}:1">&#9654;</i></span></div>`;
     const onoff = v => v ? 'On' : 'Off';
     const bestKey = (id, d) => id + ':' + d;
-    const modChips = () => `<div class="os-mods">${OSU_MODS.map(m => `<button class="fo-b sm ${sv.mods[m.k] ? 'act' : ''}" data-a="mod:${m.k}" title="${esc(m.d)}">${m.k}</button>`).join('')}</div>`;
+    const modChips = () => `<div class="os-mods">${OSU_MODS.map(m => `<button class="fo-b sm ${sv.mods[m.k] ? 'act' : ''}" data-a="mod:${m.k}" title="${esc(m.d)}">${m.n}</button>`).join('')}</div>`;
 
     const R = {
-      menu: () => `<h1 class="fo-logo"><b>osu!</b></h1><div class="fo-sub">Click the circles to the beat.<br>Original songs and beatmaps.</div><div class="fo-col" style="min-width:calc(var(--u)*${por ? 28 : 24})"><button class="fo-b pri" data-a="play">Play</button><button class="fo-b" data-a="opts">Options</button></div><div class="fo-hint">${por ? 'Tap the circles. Drag along sliders. Spin on spinners.' : 'Move the mouse, click or press Z / X. Esc pauses.'}</div>`,
+      menu: () => `<h1 class="fo-logo" translate="no">CLICK<b>BEAT</b></h1><div class="fo-sub">Click the circles to the beat.<br>Original songs and maps.</div><div class="fo-col" style="min-width:calc(var(--u)*${por ? 28 : 24})"><button class="fo-b pri" data-a="play">Play</button><button class="fo-b" data-a="opts">Options</button></div><div class="fo-hint">${por ? 'Tap the circles. Drag along sliders. Spin on spinners.' : 'Move the mouse, click or press Z / X. Esc pauses.'}</div>`,
       sel: () => {
         let h = '<div class="fo-head">Song select</div><div class="fo-free"><div class="fo-list">';
         OSU_SONGS.forEach(id => { const s = SONGS[id], a = osuMap(id, 0).stars, b = osuMap(id, 3).stars, bs = [3, 2, 1, 0].map(d => sv.best[bestKey(id, d)]).find(Boolean); h += `<button class="fo-b ${id === curId() ? 'sel' : ''}" data-a="sp:${id}" data-f="ss:${id}" data-l="dd:-1" data-r="dd:1"><span>${esc(s.name)}</span><small>${a.toFixed(1)}-${b.toFixed(1)} &#9733;${bs ? ' ' + bs.grade : ''}</small></button>`; });
@@ -2782,7 +2797,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       play: () => '<button class="fo-b ghost fo-pause" data-a="pause">II</button><button class="fo-b pri os-skip" data-a="skip" hidden>Skip</button>',
       pause: () => `<div class="fo-res"><h2>Paused</h2><div class="fo-col"><button class="fo-b pri" data-a="resume">Resume</button><button class="fo-b" data-a="retry">Retry</button><button class="fo-b ghost" data-a="quit">Quit to songs</button></div><div class="fo-hint">Offset ${SHARED.cal > 0 ? '+' : ''}${SHARED.cal} ms (change it in Options)</div></div>`,
       resume: d => `<div class="fo-cnt">${d.n}</div>`,
-      fail: d => `<div class="fo-res"><h2 style="color:#ff6a5c">You failed</h2><div class="fo-sub">${esc(d.g.song.name)} (${OSU_DIFFS[d.g.di].n}) at ${Math.round(d.pct)}%. Try No Fail or an easier difficulty.</div><div class="fo-btns"><button class="fo-b pri" data-a="retry">Retry</button><button class="fo-b ghost" data-a="quit">Songs</button></div></div>`,
+      fail: d => `<div class="fo-res"><h2 style="color:#ff6a5c">You failed</h2><div class="fo-sub">${esc(d.g.song.name)} (${OSU_DIFFS[d.g.di].n}) at ${Math.round(d.pct)}%. Try Safety Net or an easier difficulty.</div><div class="fo-btns"><button class="fo-b pri" data-a="retry">Retry</button><button class="fo-b ghost" data-a="quit">Songs</button></div></div>`,
       res: d => {
         const g = d.g, n = g.n, acc = osuAccOf(n), gr = d.grade, b = sv.best[bestKey(g.id, g.di)];
         const E = g.E, bk = 21, hist = new Array(bk).fill(0);
@@ -2790,7 +2805,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
         const mx = Math.max(1, ...hist);
         const avg = g.errs.length ? g.errs.reduce((a, v) => a + v, 0) / g.errs.length : 0;
         const ur = g.errs.length ? Math.sqrt(g.errs.reduce((a, v) => a + (v - avg) * (v - avg), 0) / g.errs.length) * 10 : 0;
-        return `<div class="fo-res"><h2>${esc(g.song.name)} <small style="opacity:.6;font-size:.55em">${OSU_DIFFS[g.di].n}${osuModStr(g.mods) !== 'None' ? ' +' + osuModStr(g.mods) : ''}</small></h2><div class="fo-rank" style="color:${osuGradeCol(gr)}">${gr}</div><div class="fo-grid"><span>Score</span><b>${fmtNum(g.score)}</b><span>Accuracy</span><b>${acc.toFixed(2)}%</b><span>300 / 100</span><b><i style="color:#6fd8ff;font-style:normal">${n[0]}</i> / <i style="color:#7dff9e;font-style:normal">${n[1]}</i></b><span>50 / Miss</span><b><i style="color:#ffb347;font-style:normal">${n[2]}</i> / <i style="color:#ff4d5e;font-style:normal">${n[3]}</i></b><span>Max combo</span><b>${g.maxCombo}x / ${g.totCombo}x</b><span>Avg error / UR</span><b>${avg >= 0 ? '+' : ''}${avg.toFixed(1)} ms / ${ur.toFixed(0)}</b>${d.rec ? '<span>Record</span><b style="color:#ffd23f">NEW BEST</b>' : b ? `<span>Best</span><b>${fmtNum(b.score)} ${b.grade}</b>` : ''}</div><div class="os-hist">${hist.map((v, i) => `<i class="${Math.abs(i - 10) * E.w5 * 100 > E.w1 * 1000 ? 's' : Math.abs(i - 10) * E.w5 * 100 > E.w3 * 1000 ? 'm' : ''}" style="height:${Math.round(100 * v / mx)}%"></i>`).join('')}</div><div class="fo-hint">Hit errors: early on the left, late on the right</div><div class="fo-btns"><button class="fo-b pri" data-a="retry">Retry</button><button class="fo-b ghost" data-a="quit">Songs</button></div></div>`;
+        return `<div class="fo-res"><h2>${esc(g.song.name)} <small style="opacity:.6;font-size:.55em">${OSU_DIFFS[g.di].n}${osuModStr(g.mods) !== 'None' ? ' + ' + osuModStr(g.mods) : ''}</small></h2><div class="fo-rank" style="color:${osuGradeCol(gr)}">${gr}</div><div class="fo-grid"><span>Score</span><b>${fmtNum(g.score)}</b><span>Accuracy</span><b>${acc.toFixed(2)}%</b><span>Perfect / Good</span><b><i style="color:#6fd8ff;font-style:normal">${n[0]}</i> / <i style="color:#7dff9e;font-style:normal">${n[1]}</i></b><span>Okay / Miss</span><b><i style="color:#ffb347;font-style:normal">${n[2]}</i> / <i style="color:#ff4d5e;font-style:normal">${n[3]}</i></b><span>Max combo</span><b>${g.maxCombo}x / ${g.totCombo}x</b><span>Average error / spread</span><b>${avg >= 0 ? '+' : ''}${avg.toFixed(1)} ms / ${ur.toFixed(0)}</b>${d.rec ? '<span>Record</span><b style="color:#ffd23f">NEW BEST</b>' : b ? `<span>Best</span><b>${fmtNum(b.score)} ${b.grade}</b>` : ''}</div><div class="os-hist">${hist.map((v, i) => `<i class="${Math.abs(i - 10) * E.w5 * 100 > E.w1 * 1000 ? 's' : Math.abs(i - 10) * E.w5 * 100 > E.w3 * 1000 ? 'm' : ''}" style="height:${Math.round(100 * v / mx)}%"></i>`).join('')}</div><div class="fo-hint">Hit errors: early on the left, late on the right</div><div class="fo-btns"><button class="fo-b pri" data-a="retry">Retry</button><button class="fo-b ghost" data-a="quit">Songs</button></div></div>`;
       }
     };
 
@@ -2828,7 +2843,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       const st = osuStarsAdj(m.stars, sv.mods), sl = m.objs.filter(o => o.type === 's').length, sp = m.objs.filter(o => o.type === 'p').length;
       const pr = E.pre / E.rate, arD = pr > 1.2 ? (1.8 - pr) / .12 : 5 + (1.2 - pr) / .15, odD = (80 - E.w3 * 1000 / E.rate) / 6;
       el.style.setProperty('--c', OSU_DIFFS[sv.di].col);
-      el.innerHTML = `<h3 style="color:${OSU_DIFFS[sv.di].col}">${esc(s.name)}</h3><p>${Math.round(s.bpm * E.rate)} BPM - ${fmtTime((s.dur) / E.rate)} - ${m.nObj} objects</p>${diffChips()}<div class="os-st"><div><b>${E.cs.toFixed(1)}</b>CS</div><div><b>${arD.toFixed(1)}</b>AR</div><div><b>${odD.toFixed(1)}</b>OD</div><div><b>${E.hp.toFixed(1)}</b>HP</div><div><b>${st.toFixed(2)}</b>Stars</div><div><b>${m.nObj - sl - sp}</b>Circles</div><div><b>${sl}</b>Sliders</div><div><b>${sp}</b>Spinners</div></div>${modChips()}<div class="fo-hint">${b ? `Best ${fmtNum(b.score)} - ${b.grade} - ${b.acc.toFixed(2)}%` : 'No record yet'} - score x${osuModMult(sv.mods).toFixed(2)}</div>`;
+      el.innerHTML = `<h3 style="color:${OSU_DIFFS[sv.di].col}">${esc(s.name)}</h3><p>${Math.round(s.bpm * E.rate)} BPM - ${fmtTime((s.dur) / E.rate)} - ${m.nObj} objects</p>${diffChips()}<div class="os-st"><div><b>${E.cs.toFixed(1)}</b>Size</div><div><b>${arD.toFixed(1)}</b>Approach</div><div><b>${odD.toFixed(1)}</b>Timing</div><div><b>${E.hp.toFixed(1)}</b>Drain</div><div><b>${st.toFixed(2)}</b>Stars</div><div><b>${m.nObj - sl - sp}</b>Circles</div><div><b>${sl}</b>Sliders</div><div><b>${sp}</b>Spinners</div></div>${modChips()}<div class="fo-hint">${b ? `Best ${fmtNum(b.score)} - ${b.grade} - ${b.acc.toFixed(2)}%` : 'No record yet'} - score x${osuModMult(sv.mods).toFixed(2)}</div>`;
       el.querySelectorAll('.fo-diffs .fo-b').forEach(e => e.style.setProperty('--c', OSU_DIFFS[+e.dataset.a.split(':')[1]].col));
     }
     const refreshList = () => { if (S.scr !== 'sel') return; ui.querySelectorAll('.fo-list .fo-b').forEach(e => e.classList.toggle('sel', e.dataset.a === 'sp:' + curId())); };
@@ -2875,7 +2890,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     function begin(id, di) {
       const map = osuMap(id, di), mods = Object.assign({}, sv.mods), E = osuEff(map, mods), pr = osuPrep(map, E);
       calS = SHARED.cal / 1000;
-      const dm = Math.max(1, Math.round((map.hp + map.od + map.cs + clamp(map.nObj / Math.max(10, map.play) * 8, 0, 16)) / 38 * 5));
+      const dm = 1 + di * .15;
       let tc = 0;
       pr.objs.forEach(o => { tc += o.type === 's' ? 1 + o.ev.length + 1 : o.type === 'p' ? 0 : 1; });
       G = {
@@ -2926,7 +2941,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     const comboUp = g => { g.combo++; if (g.combo > g.maxCombo) g.maxCombo = g.combo; g.cpop = performance.now(); };
     const comboBreak = g => { if (g.combo >= 20) audio.sfx('sbreak'); g.combo = 0; };
     const popAt = (g, x, y, j) => g.pops.push({ x, y, j, t: performance.now() });
-    const addJ = (g, base) => { g.score += base + Math.round(base * Math.max(0, g.combo - 1) * g.dm * g.mm / 25); };
+    const addJ = (g, base) => { g.score += Math.round(base * (1 + Math.min(g.combo, 300) / 40) * g.dm * g.mm); };
     function judge(g, o, j, x, y) {
       g.n[j]++;
       if (j < 3) { addJ(g, OSU_JV[j]); gainHp(g, [.045, .022, .006][j]); } else gainHp(g, -(.06 + .012 * g.E.hp));
@@ -2940,7 +2955,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       g.bursts.push({ x: o.x, y: o.y, ci: o.ci, t: performance.now(), k: 0 });
       comboUp(g);
       if (o.type === 'c') judge(g, o, j, o.x, o.y);
-      else { o.got++; g.score += 30; gainHp(g, .012); }
+      else { o.got++; g.score += 12; gainHp(g, .012); }
     }
     function missHead(g, o) {
       o.hd = 1;
@@ -2996,8 +3011,8 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
               e.d = 1;
               if (o.trk) {
                 e.h = 1; o.got++; comboUp(g);
-                if (e.k === 't') { g.score += 10; gainHp(g, .01); if (O.hs) audio.sfx('tickS'); }
-                else { g.score += 30; gainHp(g, .015); if (e.k === 'r' && O.hs) audio.sfx('rev'); }
+                if (e.k === 't') { g.score += 4; gainHp(g, .01); if (O.hs) audio.sfx('tickS'); }
+                else { g.score += 12; gainHp(g, .015); if (e.k === 'r' && O.hs) audio.sfx('rev'); }
               } else { comboBreak(g); gainHp(g, -.02); if (e.k !== 'e') g.bursts.push({ x: e.x, y: e.y, ci: o.ci, t: performance.now(), k: 2 }); }
             }
             if (T >= o.et) {
@@ -3013,7 +3028,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
               if (o.la != null) { let d = a - o.la; if (d > Math.PI) d -= 6.2832; else if (d < -Math.PI) d += 6.2832; o.rot += Math.min(.4, Math.abs(d) / 6.2832); }
               o.la = a;
             }
-            while (o.rot >= o.fl + 1) { o.fl++; g.score += o.fl <= o.need ? 100 : 1000; gainHp(g, .008); audio.sfx('spin', o.fl % 8); }
+            while (o.rot >= o.fl + 1) { o.fl++; g.score += o.fl <= o.need ? 40 : 250; gainHp(g, .008); audio.sfx('spin', o.fl % 8); }
             if (!o.clr && o.rot >= o.need) { o.clr = 1; audio.sfx('spinOk'); }
           } else {
             const fr = o.rot / o.need, j = fr >= 1 ? 0 : fr >= .9 ? 1 : fr >= .75 ? 2 : 3;
@@ -3130,7 +3145,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       c.restore();
       if (live) {
         const rps = o.fl / Math.max(.4, (T - o.t) / g.E.rate);
-        txt(c, o.clr ? 'CLEAR!' : 'SPIN!', cx, cy + base * 1.18, por ? 40 : 46, o.clr ? '#7dff9e' : '#fff', 'center', 8);
+        txt(c, TR(o.clr ? 'CLEAR!' : 'SPIN!'), cx, cy + base * 1.18, por ? 40 : 46, o.clr ? '#7dff9e' : '#fff', 'center', 8);
         txt(c, Math.round(clamp(p, 0, 9.99) * 100) + '%   ' + (rps * 60 | 0) + ' rpm', cx, cy + base * 1.18 + (por ? 40 : 44), por ? 24 : 28, '#e7e0ff', 'center', 6);
       }
     }
@@ -3220,13 +3235,13 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       g.pops.forEach(p => {
         const age = (nowP - p.t) / 650, x = px(p.x), y = py(p.y) - R * 1.1 - age * 18;
         c.save(); c.globalAlpha = clamp(1.7 - age * 1.7, 0, 1) * (p.j === 0 ? .8 : 1);
-        txt(c, p.j === 3 ? 'X' : String(OSU_JV[p.j]), x, y, (por ? 28 : 30) * (p.j === 0 ? .8 : 1.1) * (1 + Math.max(0, .3 - age * 2)), OSU_JC[p.j], 'center', 7);
+        txt(c, p.j === 3 ? 'X' : TR(OSU_JN[p.j]), x, y, (por ? 28 : 30) * (p.j === 0 ? .8 : 1.1) * (1 + Math.max(0, .3 - age * 2)), OSU_JC[p.j], 'center', 7);
         c.restore();
       });
       c.restore();
       if (g.inBreak && T > 0) {
         const b = g.breaks.find(r => T >= r[0] && T <= r[1]);
-        if (b) { c.save(); c.globalAlpha = .9; txt(c, 'Break', W / 2, FY + 384 * SC * .45, por ? 60 : 70, '#fff', 'center', 12); txt(c, Math.ceil(b[1] - T + 1.2) + 's', W / 2, FY + 384 * SC * .45 + (por ? 54 : 62), por ? 30 : 34, '#e7e0ff', 'center', 8); c.restore(); }
+        if (b) { c.save(); c.globalAlpha = .9; txt(c, TR('Break'), W / 2, FY + 384 * SC * .45, por ? 60 : 70, '#fff', 'center', 12); txt(c, Math.ceil(b[1] - T + 1.2) + 's', W / 2, FY + 384 * SC * .45 + (por ? 54 : 62), por ? 30 : 34, '#e7e0ff', 'center', 8); c.restore(); }
       }
       cursor(g);
       hud(g, T);
@@ -3265,9 +3280,9 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       txt(c, String(Math.round(g.score)).padStart(8, '0'), W - 28, por ? 106 : 38, por ? 70 : 52, '#fff', 'right', 8);
       txt(c, acc.toFixed(2) + '%', W - 28, por ? 164 : 90, por ? 36 : 30, '#e7e0ff', 'right', 6);
       txt(c, gr, W - 28 - (por ? 200 : 150), por ? 164 : 90, por ? 36 : 30, osuGradeCol(gr), 'right', 6);
-      const ms = OSU_MODS.filter(m => g.mods[m.k]).map(m => m.k).join(' ');
+      const ms = OSU_MODS.filter(m => g.mods[m.k]).map(m => TR(m.n)).join(' · ');
       if (ms) txt(c, ms, W - 28, por ? 210 : 128, por ? 26 : 22, '#ffd23f', 'right', 5);
-      if (g.auto) txt(c, 'AUTOPLAY', W / 2, por ? 70 : 24, 24, '#6fd8ff', 'center', 6);
+      if (g.auto) txt(c, TR('AUTOPLAY'), W / 2, por ? 70 : 24, 24, '#6fd8ff', 'center', 6);
       const cp = Math.max(0, 1 - (performance.now() - g.cpop) / 160);
       if (g.combo > 0) txt(c, g.combo + 'x', 30, H - (por ? 44 : 40), (por ? 64 : 60) * (1 + cp * .22), '#fff', 'left', 9);
       const ew = por ? 300 : 340, ex = W / 2, ey = H - (por ? 54 : 36), sc2 = ew / 2 / E.w5;
@@ -3352,7 +3367,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     api.on(window, 'blur', autoPause);
     api.on(document, 'visibilitychange', () => { if (document.hidden) autoPause(); });
 
-    (window.__gpdbg = window.__gpdbg || {}).osu = { S: () => S, G: () => G, audio, sv, O, act, inp, click, show, W, H, SC, FX, FY, songT };
+    (window.__gpdbg = window.__gpdbg || {}).cb = { S: () => S, G: () => G, audio, sv, O, act, inp, click, show, W, H, SC, FX, FY, songT };
     show('menu');
     return {
       destroy() {
@@ -3372,8 +3387,8 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     title: 'Click Beat',
     category: 'Skill',
     tint: '#ff66ab',
-    blurb: 'Click the circles to the beat: sliders, spinners, eight original beatmaps in four difficulties, mods and a hit-error meter.',
-    help: 'Move the mouse and click the circles with <kbd>Z</kbd> <kbd>X</kbd> or the mouse buttons · hold and follow sliders · spin the spinners · tap and drag on a phone · <kbd>Space</kbd> skip · <kbd>Esc</kbd> pause · mods EZ HR DT HD NF Auto on song select · calibrate the audio offset in Options',
+    blurb: 'Click the circles to the beat: sliders, spinners, eight original songs with maps in four difficulties, modifiers and a timing meter.',
+    help: 'Move the mouse and click the circles with <kbd>Z</kbd> <kbd>X</kbd> or the mouse buttons · hold and follow sliders · spin the spinners · tap and drag on a phone · <kbd>Space</kbd> skip · <kbd>Esc</kbd> pause · modifiers on song select (keys 1 to 6) · calibrate the audio offset in Options',
     better: 'high',
     width: 980,
     ownPause: true,
