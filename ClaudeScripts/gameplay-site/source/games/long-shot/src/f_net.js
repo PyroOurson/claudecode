@@ -73,7 +73,7 @@ function lsHostTick(G) {
   if (H.phase === 'start') { if (now >= H.at) lsHostQ(G); return; }
   if (H.phase === 'q') {
     const el = now - H.qAt;
-    H.pl.forEach(p => { if (p.bot && !p.lk && p.row !== undefined && el >= p.botAt) { if (p.row) lsHostLock(G, p, p.row, Math.round(p.botAt - 800)); else p.lk = true; } });
+    H.pl.forEach(p => { if (p.bot && !p.lk && p.row !== undefined && el >= p.botAt) { if (p.row) lsHostLock(G, p, p.row, Math.round(p.botAt)); else p.lk = true; } });
     if (now >= H.dl + 700 || H.pl.every(p => p.gone || p.lk)) lsHostReveal(G);
     return;
   }
@@ -105,7 +105,9 @@ function lsHostAnswer(G, from, m) {
   if (now > H.dl + 700) return;
   const r = lsMatch(H.P, String(m.s || '').slice(0, 48));
   if (!r.ok) { lsSendTo(G, from, { t: 'no', i: H.i, why: r.why }); return; }
-  lsHostLock(G, p, r.row, now - H.qAt - 800);
+  let lat = 0;
+  try { const pp = (G.api.net.players || []).find(x => x.id === from); if (pp && pp.ping > 0) lat = Math.min(1500, pp.ping / 2); } catch (e) {}
+  lsHostLock(G, p, r.row, Math.round(now - H.qAt - lat));
 }
 function lsHostReveal(G) {
   const H = G.H;

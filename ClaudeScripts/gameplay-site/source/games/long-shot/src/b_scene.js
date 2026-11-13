@@ -144,14 +144,18 @@ function lsScene(cv) {
   function sprites() {
     const k = S.k;
     S.spr = { planets: LS_VIS.map(v => ({ v, c: lsPlanetSprite(v, k) })), probe: lsProbeSprite(k), flame: lsFlameSprite(k), sun: lsGlowSprite(k, 'rgba(255,220,140,.9)', 160), flash: lsGlowSprite(k, 'rgba(255,255,255,.95)', 90), rock: lsGlowSprite(k, 'rgba(200,190,170,1)', 4), ice: lsGlowSprite(k, 'rgba(190,230,255,1)', 4) };
-    S.neb = lsNebula(Math.round(S.W * k), Math.round(S.H * k), 7);
+    const nk = Math.min(k, 1.25);
+    S.neb = lsNebula(Math.round(S.W * nk), Math.round(S.H * nk), 7);
+    S.sprK = k;
   }
   S.resize = (W, H, k, port) => {
-    const ch = W !== S.W || H !== S.H || Math.abs(k - S.k) > .01 || !S.spr;
+    const first = !S.spr, sized = W !== S.W || H !== S.H;
     S.W = W; S.H = H; S.k = k; S.port = port;
     cv.width = Math.round(W * k); cv.height = Math.round(H * k);
     cv.style.width = W + 'px'; cv.style.height = H + 'px';
-    if (ch) sprites();
+    clearTimeout(S.rt);
+    if (first || sized) sprites();
+    else if (Math.abs(k - S.sprK) > .2) S.rt = setTimeout(sprites, 300);
     S.dirty = true;
   };
   S.px = () => S.W * (S.port ? .36 : .3);
@@ -192,7 +196,7 @@ function lsScene(cv) {
   S.draw = () => {
     const g = S.ctx, W = S.W, H = S.H, k = S.k, px = S.px(), py = S.py();
     g.setTransform(1, 0, 0, 1, 0, 0);
-    g.drawImage(S.neb, 0, 0);
+    g.drawImage(S.neb, 0, 0, cv.width, cv.height);
     g.setTransform(k, 0, 0, k, 0, 0);
     const sh = S.shake > 0 ? S.shake * 3 : 0, ox = sh ? Math.sin(S.t * 71) * sh : 0, oy = sh ? Math.cos(S.t * 53) * sh : 0;
     g.translate(ox, oy);
@@ -302,7 +306,7 @@ function lsCardCanvas(o) {
   o.tiers.forEach((t, i) => {
     const x = x0 + i * gap, y = 1050, tt = t >= 0 ? LS_TIERS[t] : LS_MISS;
     g.fillStyle = tt.c; g.globalAlpha = t >= 0 ? 1 : .55; g.beginPath(); g.arc(x, y, 46, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
-    g.fillStyle = '#0b1130'; g.font = '900 34px ' + F; g.fillText(t >= 0 ? String(tt.p) : '0', x, y + 12);
+    g.fillStyle = t >= 0 ? '#0b1130' : '#ffffff'; g.font = '900 34px ' + F; g.fillText(t >= 0 ? String(tt.p) : '0', x, y + 12);
   });
   g.fillStyle = '#ffffff'; g.font = '900 64px ' + F; g.fillText(o.score, W / 2, 1185);
   g.fillStyle = 'rgba(220,228,255,.7)'; g.font = '700 32px ' + F; g.fillText('gameplaygames.web.app', W / 2, 1290);
