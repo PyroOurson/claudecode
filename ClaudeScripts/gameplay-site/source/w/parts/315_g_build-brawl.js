@@ -2734,7 +2734,7 @@ ${G} .pan h2{font-size:1.6em}
     id: ID, title: 'Build Brawl', category: '3D', tint: '#3fa7ff',
     blurb: 'Build walls, ramps, floors and cones in an instant and outplay your rival in build fights and box fights.',
     help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · <kbd>Space</kbd> jump · mouse aim and fire · <kbd>1</kbd>-<kbd>4</kbd> weapons · <kbd>Z</kbd><kbd>X</kbd><kbd>C</kbd><kbd>V</kbd> wall, floor, ramp, cone · <kbd>G</kbd> edit · <kbd>R</kbd> reload · <kbd>Esc</kbd> pause',
-    better: 'high', width: 960,
+    better: 'high', width: 960, ownPause: true,
     format: v => v + (v === 1 ? ' win' : ' wins'),
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><path d="M8 54h48M12 54V30h20v24M32 54 54 30M12 30l10-12 10 12"/></svg>',
     css: CSS,

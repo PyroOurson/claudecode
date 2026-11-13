@@ -338,7 +338,7 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
         i, name: o.name, team: o.team, hero: o.hero | 0, bot: o.bot == null ? -1 : o.bot, human: !!o.human, pid: o.pid || null, local: !!o.local, remote: false,
         x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, onG: false, sneak: false, sprint: false, hurtT: 0, invT: 0, kbT: 0,
         hp: 20, abs: 0, regenT: 0, alive: false, respT: 0, final: false, kills: 0, finals: 0, beds: 0, deaths: 0, lastAtk: -1, lastAtkT: -99,
-        res: [0, 0, 0, 0], armor: 0, sword: 0, pick: 0, axe: 0, shears: false, hot: [], sel: 0,
+        res: [0, 0, 0, 0], armor: 0, sword: 0, pick: 0, axe: 0, shears: false, hot: [null, null, null, null, null, null, null, null, null], sel: 0,
         mine: { x: -1, y: -1, z: -1, p: 0 }, eatT: 0, bowT: 0, useCD: 0, atkCD: 0, swingT: 0, slowT: 0, glowT: 0, fallY: 0, jumpCD: 0, spN: 0,
         inp: { mx: 0, mz: 0, jump: false, sneak: false, sprint: false, atk: false, use: false }, atkPrev: false, usePrev: false, ai: null
       };
@@ -348,28 +348,31 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
     function addItem(p, k, n) {
       const max = typeof k === 'number' || k === 'arrow' ? 64 : k === 'fire' || k === 'tnt' || k === 'gapple' || k === 'pearl' || k === 'egg' ? 16 : 1;
       let left = n;
-      for (const s of p.hot) if (s.k === k && s.n < max) { const a = Math.min(max - s.n, left); s.n += a; left -= a; if (!left) return true; }
-      while (left > 0) { if (p.hot.length >= 9) return left < n; const a = Math.min(max, left); p.hot.push({ k, n: a }); left -= a; }
+      for (const s of p.hot) if (s && s.k === k && s.n < max) { const a = Math.min(max - s.n, left); s.n += a; left -= a; if (!left) return true; }
+      while (left > 0) { const i = p.hot.indexOf(null); if (i < 0) return left < n; const a = Math.min(max, left); p.hot[i] = { k, n: a }; left -= a; }
       return true;
     }
     S.addItem = addItem;
-    const hasRoom = (p, k) => p.hot.length < 9 || p.hot.some(s => s.k === k && s.n < (typeof k === 'number' || k === 'arrow' ? 64 : 16));
+    const hasRoom = (p, k) => p.hot.indexOf(null) >= 0 || p.hot.some(s => s && s.k === k && s.n < (typeof k === 'number' || k === 'arrow' ? 64 : 16));
+    S.hasRoom = hasRoom;
+    const putTool = (p, k) => { if (p.hot.some(s => s && s.k === k)) return true; const i = p.hot.indexOf(null); if (i < 0) return false; p.hot[i] = { k, n: 1 }; return true; };
     function takeItem(p, k, n) {
-      for (let i = 0; i < p.hot.length && n > 0; i++) { const s = p.hot[i]; if (s.k !== k) continue; const a = Math.min(s.n, n); s.n -= a; n -= a; if (s.n <= 0) { p.hot.splice(i, 1); if (p.sel > i) p.sel--; i--; } }
-      if (p.sel >= p.hot.length) p.sel = Math.max(0, p.hot.length - 1);
+      const sel = p.hot[p.sel];
+      if (sel && sel.k === k) { const a = Math.min(sel.n, n); sel.n -= a; n -= a; if (sel.n <= 0) p.hot[p.sel] = null; }
+      for (let i = 0; i < 9 && n > 0; i++) { const s = p.hot[i]; if (!s || s.k !== k) continue; const a = Math.min(s.n, n); s.n -= a; n -= a; if (s.n <= 0) p.hot[i] = null; }
     }
     S.takeItem = takeItem;
-    const count = (p, k) => { let n = 0; for (const s of p.hot) if (s.k === k) n += s.n; return n; };
+    const count = (p, k) => { let n = 0; for (const s of p.hot) if (s && s.k === k) n += s.n; return n; };
     S.count = count;
     function loadout(p, fresh) {
-      const keep = p.hot.filter(s => s.k === 'pick' || s.k === 'axe' || s.k === 'shears');
-      p.hot = [{ k: 'sword', n: 1 }];
+      const old = p.hot;
+      p.hot = [null, null, null, null, null, null, null, null, null];
+      const at = k => { const i = old.findIndex(s => s && s.k === k); return i > 0 ? i : -1; };
+      p.hot[0] = { k: 'sword', n: 1 };
       if (fresh) { p.pick = 0; p.axe = 0; p.shears = false; p.armor = 0; }
       else { if (p.pick > 1) p.pick--; if (p.axe > 1) p.axe--; }
       p.sword = 0;
-      if (p.pick) p.hot.push({ k: 'pick', n: 1 });
-      if (p.axe) p.hot.push({ k: 'axe', n: 1 });
-      if (p.shears) p.hot.push({ k: 'shears', n: 1 });
+      for (const k of ['pick', 'axe', 'shears']) { if (!(k === 'shears' ? p.shears : p[k])) continue; const i = at(k); if (i > 0 && !p.hot[i]) p.hot[i] = { k, n: 1 }; else putTool(p, k); }
       p.sel = 0;
     }
     function spawn(p, fresh) {
@@ -736,11 +739,11 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
       if (p.res[ci] < cn) return 'poor';
       if (/^sw[123]$/.test(id)) { const tier = +id[2]; if (p.sword >= tier) return 'own'; give = () => { p.sword = tier; }; }
       else if (/^ar[123]$/.test(id)) { const tier = +id[2]; if (p.armor >= tier) return 'own'; give = () => { p.armor = tier; }; }
-      else if (id === 'pick') { give = () => { p.pick++; if (!p.hot.some(s => s.k === 'pick')) { if (p.hot.length >= 9) return false; p.hot.push({ k: 'pick', n: 1 }); } }; }
-      else if (id === 'axe') { give = () => { p.axe++; if (!p.hot.some(s => s.k === 'axe')) { if (p.hot.length >= 9) return false; p.hot.push({ k: 'axe', n: 1 }); } }; }
-      else if (id === 'shears') { if (p.shears) return 'own'; give = () => { if (p.hot.length >= 9) return false; p.shears = true; p.hot.push({ k: 'shears', n: 1 }); }; }
-      else if (id === 'bow' || id === 'bow2') { const tier = id === 'bow' ? 1 : 2; if (p.bow >= tier) return 'own'; give = () => { if (!p.hot.some(s => s.k === 'bow')) { if (p.hot.length >= 9) return false; p.hot.push({ k: 'bow', n: 1 }); } p.bow = tier; }; }
-      else if (id === 'kb') { if (p.hot.some(s => s.k === 'kb')) return 'own'; give = () => addItem(p, 'kb', 1); }
+      else if (id === 'pick') { give = () => { if (!putTool(p, 'pick')) return false; p.pick++; }; }
+      else if (id === 'axe') { give = () => { if (!putTool(p, 'axe')) return false; p.axe++; }; }
+      else if (id === 'shears') { if (p.shears) return 'own'; give = () => { if (!putTool(p, 'shears')) return false; p.shears = true; }; }
+      else if (id === 'bow' || id === 'bow2') { const tier = id === 'bow' ? 1 : 2; if (p.bow >= tier) return 'own'; give = () => { if (!putTool(p, 'bow')) return false; p.bow = tier; }; }
+      else if (id === 'kb') { if (p.hot.some(s => s && s.k === 'kb')) return 'own'; give = () => putTool(p, 'kb'); }
       else if (it.b) { const bid = it.b === 11 ? wool(p.team) : it.b === 16 ? clayOf(p.team) : it.b; if (!hasRoom(p, bid)) return 'full'; give = () => addItem(p, bid, it.q); }
       else { const k = id; if (!hasRoom(p, k)) return 'full'; give = () => addItem(p, k, it.q || 1); }
       if (give() === false) return 'full';
@@ -873,13 +876,13 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
       wantMine: null, eat: false, goal: null, gx: 0, gy: 0, gz: 0, edge: 0, critT: 0, layer: 0, defT: 0, fireT: 0, path: 0, lastSeenX: 0, lastSeenZ: 0, lastHp: 20
     };
   }
-  const blocksOf = (S, p) => { let n = 0; for (const s of p.hot) if (typeof s.k === 'number') n += s.n; return n; };
+  const blocksOf = (S, p) => { let n = 0; for (const s of p.hot) if (s && typeof s.k === 'number') n += s.n; return n; };
   function pickBlock(S, p, prefer) {
     let best = -1;
-    for (let i = 0; i < p.hot.length; i++) { const k = p.hot[i].k; if (typeof k !== 'number') continue; if (prefer && prefer(k)) return i; if (best < 0 || isWool(k)) best = best < 0 || !isWool(p.hot[best].k) ? i : best; }
+    for (let i = 0; i < p.hot.length; i++) { if (!p.hot[i]) continue; const k = p.hot[i].k; if (typeof k !== 'number') continue; if (prefer && prefer(k)) return i; if (best < 0 || isWool(k)) best = best < 0 || !isWool(p.hot[best].k) ? i : best; }
     return best;
   }
-  function slotOf(p, k) { return p.hot.findIndex(s => s.k === k); }
+  function slotOf(p, k) { return p.hot.findIndex(s => s && s.k === k); }
   function bedCells(S, tm, layer) {
     const bed = [tm.bedF, tm.bedH], set = new Set(bed.map(c => c.join(','))), l1 = [], l2 = [];
     const N = [[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1], [0, 1, 0]];
@@ -947,9 +950,14 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
       const nearBed = q && tm.bed && Math.hypot(q.x - tm.bedF[0], q.z - tm.bedF[2]) < 12;
       const home = Math.hypot(p.x - tm.center[0], p.z - tm.center[1]) < 9;
       let plan = A.plan;
-      const raid = L.layers >= 3 && tm.bed && S.pl.some(x => x.alive && x.team !== p.team && Math.hypot(x.x - tm.bedF[0], x.z - tm.bedF[2]) < 10 && Math.abs(x.y - tm.bedF[1]) < 6) && Math.hypot(p.x - tm.bedF[0], p.z - tm.bedF[2]) < 34;
+      const raid = L.layers >= 3 && tm.bed && (A.role === 'def' || !S.pl.some(x => x !== p && x.team === p.team && x.alive)) && S.pl.some(x => x.alive && x.team !== p.team && Math.hypot(x.x - tm.bedF[0], x.z - tm.bedF[2]) < (A.role === 'def' ? 18 : 10) && Math.abs(x.y - tm.bedF[1]) < 6) && Math.hypot(p.x - tm.bedF[0], p.z - tm.bedF[2]) < 34;
       if (q && vis && (dq < 9 + L.strafe * 4 || nearBed && dq < 30)) plan = 'fight';
       else if (raid) plan = 'guard';
+      else if (L.layers >= 3 && A.role === 'def' && tm.bed) {
+        let iv = null, bd = 30;
+        for (const x of S.pl) { if (!x.alive || x.team === p.team) continue; const d = Math.hypot(x.x - tm.center[0], x.z - tm.center[1]); if (d > 7 && d < bd) { bd = d; iv = x; } }
+        if (iv) { const dx = iv.x - tm.center[0], dz = iv.z - tm.center[1], dl = Math.hypot(dx, dz) || 1; A.ivX = tm.center[0] + dx / dl * 5.5; A.ivZ = tm.center[1] + dz / dl * 5.5; plan = 'intercept'; }
+      }
       else {
         const w = wants(S, p);
         if (home && w.length && S.t > A.buyT) { plan = 'shop'; A.shopKind = w[0][0]; }
@@ -957,7 +965,7 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
         else if (A.role === 'rush' && blocksOf(S, p) >= L.rushB && S.gt > L.early && (L.buy < 1 || p.shears || p.res[0] < 20)) {
           if (A.target < 0 || !S.teams[A.target].bed && !S.pl.some(x => x.team === A.target && x.alive)) A.target = pickTarget(S, p);
           plan = A.target >= 0 ? 'rush' : 'farm';
-        } else if (A.role === 'def' && L.dia > 0.5 && p.res[2] < 4 && S.gt > 90 && blocksOf(S, p) >= 16 && !S.pl.some(x => x.alive && x.team !== p.team && Math.hypot(x.x - tm.center[0], x.z - tm.center[1]) < 22)) plan = 'dia';
+        } else if (A.role === 'def' && L.dia > 0.5 && L.layers < 3 && p.res[2] < 4 && S.gt > 90 && blocksOf(S, p) >= 16 && !S.pl.some(x => x.alive && x.team !== p.team && Math.hypot(x.x - tm.center[0], x.z - tm.center[1]) < 22)) plan = 'dia';
         else plan = 'farm';
         if (A.plan === 'rush' && plan !== 'rush' && blocksOf(S, p) >= 2 && !home && A.target >= 0) plan = 'rush';
         if (A.plan === 'rush' && blocksOf(S, p) < 2 && !home) plan = 'home';
@@ -1158,6 +1166,7 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
       route(S, p, g.x, g.y, g.z);
       return;
     }
+    if (A.plan === 'intercept') { route(S, p, A.ivX, BASE + 1, A.ivZ); return; }
     if (A.plan === 'guard') { if (Math.hypot(tm.bedF[0] + 0.5 - p.x, tm.bedF[2] + 0.5 - p.z) < 3) { A.plan = 'farm'; return; } route(S, p, tm.bedF[0] + 0.5 - tm.f[0] * 2, BASE + 1, tm.bedF[2] + 0.5 - tm.f[1] * 2); return; }
     if (A.plan === 'home') { const [hx, hz] = tm.center; if (Math.hypot(hx - p.x, hz - p.z) < 3) { A.plan = 'farm'; return; } route(S, p, hx, BASE + 1, hz); return; }
     const [gx, gz] = tm.gen;
@@ -1843,12 +1852,12 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
     api.on(window, 'mouseup', e => { if (e.button === 0) mouse0 = false; else if (e.button === 2) mouse2 = false; });
     api.on(document, 'pointerlockchange', () => { const was = locked; locked = document.pointerLockElement === canvas; if (was && !locked) { mouse0 = mouse2 = false; if (phase === 'play' && !paused && !shopOpen) setPause(true); } });
     api.on(document, 'mousemove', e => { if (locked && playing()) lookMove(e.movementX || 0, e.movementY || 0, 0.0024); });
-    api.on(wrap, 'wheel', e => { if (!playing()) return; e.preventDefault(); const n = Math.max(1, me.hot.length); selSlot(((me.sel + (e.deltaY > 0 ? 1 : -1)) % 9 + 9) % 9 % Math.max(n, 1)); }, { passive: false });
+    api.on(wrap, 'wheel', e => { if (!playing()) return; e.preventDefault(); selSlot((me.sel + (e.deltaY > 0 ? 1 : -1) + 9) % 9); }, { passive: false });
     api.on(window, 'blur', () => { keys.clear(); mouse0 = mouse2 = false; tA = tU = false; });
     const th = (b, on, off) => { api.on(b, 'pointerdown', e => { e.preventDefault(); e.stopPropagation(); audio.wake(); b.classList.add('on'); on(); try { b.setPointerCapture(e.pointerId); } catch (x) {} }); for (const t of ['pointerup', 'pointercancel']) api.on(b, t, () => { b.classList.remove('on'); if (off) off(); }); };
     th(tAtk, () => { tA = true; }, () => { tA = false; }); th(tUse, () => { const n = lookNpc(); if (n) openShop(n.kind); else tU = true; }, () => { tU = false; });
     th(tJump, () => keys.add('Space'), () => keys.delete('Space')); th(tSneak, () => { tSn = !tSn; tSneak.classList.toggle('on', tSn); }); th(tView, () => { view3 = !view3; });
-    function selSlot(i) { if (!me) return; if (i >= 0 && i < 9) { me.sel = Math.min(i, Math.max(0, me.hot.length - 1)); if (i < me.hot.length) showAct(itemName(me.hot[me.sel])); } }
+    function selSlot(i) { if (!me) return; if (i >= 0 && i < 9) { me.sel = i; if (me.hot[i]) showAct(itemName(me.hot[i])); else { act.classList.remove('on'); actT = 0; } } }
     let actT = 0;
     function showAct(t, s = 1.6) { act.textContent = t; act.classList.add('on'); actT = s; }
     function itemName(s) {
@@ -2265,7 +2274,7 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
       const full = fullState();
       S.pl.forEach((p, i) => { if (p.remote && p.pid) nsendTo(p.pid, { t: 'start', cfg, me: i, full }); });
     }
-    const hotStr = p => p.hot.map(s => (typeof s.k === 'number' ? 'b' + s.k : s.k) + '*' + s.n).join(',');
+    const hotStr = p => p.hot.map(s => s ? (typeof s.k === 'number' ? 'b' + s.k : s.k) + '*' + s.n : '-').join(',');
     function plRow(p) {
       const f = (p.alive ? 1 : 0) | (p.sneak ? 2 : 0) | (p.onG ? 4 : 0) | (p.sprint ? 8 : 0) | (p.final ? 16 : 0) | (p.swingT > 0 ? 32 : 0) | (p.eatT > 0 ? 64 : 0) | (p.bowT > 0 ? 128 : 0) | (p.hurtT > 0 ? 256 : 0) | (p.glowT > 0 ? 512 : 0);
       return [r2(p.x), r2(p.y), r2(p.z), r2(p.yaw), r2(p.pitch), f, r2(p.hp), r2(p.abs), p.armor, p.sword, p.pick, p.axe, p.shears ? 1 : 0, p.bow | 0, p.sel, p.res.join(','), p.kills, p.finals, p.beds, p.deaths, r2(p.respT), p.spN, hotStr(p), p.hero, r2(p.vx), r2(p.vz)];
@@ -2353,7 +2362,7 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
         const k = m.k;
         if (k === 'gapple') { if (S.count(p, 'gapple') > 0) { S.takeItem(p, 'gapple', 1); p.regen = 5; p.abs = 4; const e = S.emit('ate'); e.a = p.i; } }
         else if (k === 'arrow') { if (p.bow) S.shootArrow(p, clamp(+m.c || 0, 0, 1)); }
-        else if (k === 'fire' || k === 'pearl' || k === 'egg') { const s = p.hot.find(x => x.k === k); if (s) { p.useCD = 0; S.useItem(p, s); } }
+        else if (k === 'fire' || k === 'pearl' || k === 'egg') { const s = p.hot.find(x => x && x.k === k); if (s) { p.useCD = 0; S.useItem(p, s); } }
       } else if (m.t === 'buy') { const r = S.buy(p, String(m.id)); nsendTo(from, { t: 'br', r }); }
     }
     function pushBuf(p, x, y, z, yaw, pitch) { let b = online.buf.get(p.i); if (!b) online.buf.set(p.i, b = []); b.push({ t: performance.now(), x, y, z, yaw, pitch }); if (b.length > 12) b.shift(); }
@@ -2389,7 +2398,7 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
       S.evc = 0;
     }
     function applyTeams(tl) { if (!Array.isArray(tl)) return; tl.forEach((t, i) => { const tm = S.teams[i]; if (!tm) return; tm.bed = !!t[0]; tm.up.sharp = t[1]; tm.up.prot = t[2]; tm.up.haste = t[3]; tm.up.forge = t[4]; tm.up.heal = t[5]; tm.up.trap = t[6]; tm.elim = !!t[7]; }); }
-    function parseHot(s) { if (!s) return []; return s.split(',').map(x => { const [k, n] = x.split('*'); return { k: k[0] === 'b' && /^b\d+$/.test(k) ? +k.slice(1) : k, n: +n || 1 }; }); }
+    function parseHot(s) { const out = [null, null, null, null, null, null, null, null, null]; if (!s) return out; s.split(',').slice(0, 9).forEach((x, i) => { if (x === '-' || !x) return; const [k, n] = x.split('*'); out[i] = { k: /^b[0-9]+$/.test(k) ? +k.slice(1) : k, n: +n || 1 }; }); return out; }
     function applyRow(p, row, force) {
       if (!p || !Array.isArray(row)) return;
       const f = row[5], was = p.alive;
@@ -2472,7 +2481,7 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
     id: ID, title: 'Bed Raiders', category: '3D', tint: '#e8453c',
     blurb: 'Guard your bed, bridge across the void and break the other teams’ beds. Last team standing wins.',
     help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · <kbd>Space</kbd> jump · <kbd>Shift</kbd> sneak · left click hit or break · right click place, use or shop · <kbd>1</kbd>-<kbd>9</kbd> hotbar · <kbd>Esc</kbd> pause',
-    better: 'high', width: 960,
+    better: 'high', width: 960, ownPause: true,
     format: v => v + (v === 1 ? ' win' : ' wins'),
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><path d="M8 44V22M8 36h48v8M8 30h14v6M22 30h34v6"/></svg>',
     css: CSS,
