@@ -1414,7 +1414,7 @@ ${q} .gx-pb.gold{background:#c78a07}
       const showMenu = () => {
         const best = api.best;
         st.showMenu(`
-<div class="gx-top"><h2 class="gx-logo">Quiver <b>Clash</b></h2><div class="gx-row"><span class="gx-chip on" style="pointer-events:none">Best wave ${best || 0}</span><span class="gx-chip" style="pointer-events:none">${life.kills} kills · ${life.heads} headshots</span></div></div>
+<div class="gx-top"><h2 class="gx-logo" translate="no">Quiver <b>Clash</b></h2><div class="gx-row"><span class="gx-chip on" style="pointer-events:none"><span>Best wave</span> ${best || 0}</span><span class="gx-chip" style="pointer-events:none">${life.kills} <span>kills</span> · ${life.heads} <span>headshots</span></span></div></div>
 <p class="gx-tag">Pull back, aim and let go. Headshots hit twice as hard. Don&#39;t fall off the cliff.</p>
 <div class="gx-modes">
   <button type="button" class="gx-mode" data-a="waves"><b>Endless Waves</b><span>Fight wave after wave of AI archers. Earn coins, upgrade your bow, buy special arrows. Boss every 5th wave.</span></button>
@@ -1512,19 +1512,19 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
         const cur = meta.hp == null ? hpMax : meta.hp;
         const cards = UPG.map(u => {
           const lv = U[u.k], max = lv >= u.max, c = upCost(u.k, lv);
-          return `<div class="ra-card"><h4>${u.n}</h4><p>${u.d}</p><div class="ra-pips">${Array.from({ length: u.max }, (_, i) => `<i${i < lv ? ' class="on"' : ''}></i>`).join('')}</div><button type="button" class="ra-buy" data-a="buy" data-k="${u.k}" ${max || meta.coins < c ? 'disabled' : ''}>${max ? 'Maxed' : 'Buy &middot; ' + c}</button></div>`;
+          return `<div class="ra-card"><h4>${u.n}</h4><p>${u.d}</p><div class="ra-pips">${Array.from({ length: u.max }, (_, i) => `<i${i < lv ? ' class="on"' : ''}></i>`).join('')}</div><button type="button" class="ra-buy" data-a="buy" data-k="${u.k}" ${max || meta.coins < c ? 'disabled' : ''}>${max ? 'Maxed' : '<span>Buy</span> &middot; ' + c}</button></div>`;
         }).join('');
         const ammo = ['fire', 'ice', 'bomb', 'triple', 'lightning'].map(t => {
           const c = AMMO_COST[t];
           const d = { fire: 'Sets archers ablaze', ice: 'Freezes, then shatters', bomb: 'Explodes, knocks back', triple: 'Three arrows at once', lightning: 'Stuns and chains' }[t];
-          return `<div class="ra-card"><h4>${TYSVG(t)} ${TNAME[t]} arrows</h4><p>${d}. In quiver: <b>${meta.ammo[t] | 0}</b></p><div class="ra-bar"><button type="button" class="ra-buy" data-a="ammo" data-k="${t}" data-n="1" ${meta.coins < c ? 'disabled' : ''}>+1 &middot; ${c}</button><button type="button" class="ra-buy alt" data-a="ammo" data-k="${t}" data-n="3" ${meta.coins < c * 3 ? 'disabled' : ''}>+3 &middot; ${c * 3}</button></div></div>`;
+          return `<div class="ra-card"><h4>${TYSVG(t)} <span>${TNAME[t]} arrows</span></h4><p><span>${d}.</span> <span>In quiver:</span> <b>${meta.ammo[t] | 0}</b></p><div class="ra-bar"><button type="button" class="ra-buy" data-a="ammo" data-k="${t}" data-n="1" ${meta.coins < c ? 'disabled' : ''}>+1 &middot; ${c}</button><button type="button" class="ra-buy alt" data-a="ammo" data-k="${t}" data-n="3" ${meta.coins < c * 3 ? 'disabled' : ''}>+3 &middot; ${c * 3}</button></div></div>`;
         }).join('');
         st.menuEl.innerHTML = `
-<div class="gx-top"><h2 class="gx-logo">Wave ${S.wave} <b>cleared</b></h2><span class="ra-coins">&#9679; ${meta.coins}</span></div>
-<p class="gx-tag">Health ${Math.ceil(cur)}/${hpMax}. Spend your coins, then fight on. Wave ${S.wave + 1}${(S.wave + 1) % 5 === 0 ? ' is a boss wave' : ''} is next.</p>
+<div class="gx-top"><h2 class="gx-logo"><span>Wave</span> ${S.wave} <b>cleared</b></h2><span class="ra-coins">&#9679; ${meta.coins}</span></div>
+<p class="gx-tag"><span>Health</span> ${Math.ceil(cur)}/${hpMax} · <span>Spend your coins, then fight on.</span> <span>Next wave:</span> ${S.wave + 1}${(S.wave + 1) % 5 === 0 ? ' · <span>boss wave</span>' : ''}</p>
 <div class="gx-sec">Bow upgrades</div><div class="ra-grid">${cards}</div>
 <div class="gx-sec">Special arrows</div><div class="ra-grid">${ammo}</div>
-<div class="gx-row" style="margin-top:14px">${cur < hpMax ? `<button type="button" class="ra-buy" data-a="heal" ${meta.coins < healCost ? 'disabled' : ''}>Heal to full &middot; ${healCost}</button>` : ''}${st.btn('next', 'Next wave &#9654;')}${st.btn('menu', 'Quit run', 'alt sm')}</div>`;
+<div class="gx-row" style="margin-top:14px">${cur < hpMax ? `<button type="button" class="ra-buy" data-a="heal" ${meta.coins < healCost ? 'disabled' : ''}><span>Heal to full</span> &middot; ${healCost}</button>` : ''}${st.btn('next', '<span>Next wave</span> &#9654;')}${st.btn('menu', 'Quit run', 'alt sm')}</div>`;
       }
       function buy(k) {
         const lv = meta.upg[k], u = UPG.find(x => x.k === k);
@@ -1568,7 +1568,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
             api.submit(S.wave - 1);
             A.play('lose');
             scr = 'over';
-            st.card('Game over', `You were taken down on wave ${S.wave}.`, st.btn('again', 'Play again') + st.btn('menu', 'Menu', 'alt'), st.stats([['Waves cleared', S.wave - 1], ['Kills', S.kills[0]], ['Headshots', S.heads[0]], ['Coins earned', S.earned + (meta.coins || 0) * 0]]));
+            st.card('Game over', `<span>Taken down on wave</span> ${S.wave}`, st.btn('again', 'Play again') + st.btn('menu', 'Menu', 'alt'), st.stats([['Waves cleared', S.wave - 1], ['Kills', S.kills[0]], ['Headshots', S.heads[0]], ['Coins earned', S.earned + (meta.coins || 0) * 0]]));
           }
           return;
         }
@@ -1880,7 +1880,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
         const startNew = () => { role = 'host'; beginRound(cfg); bindGuest(guest); };
         if (!sv) return startNew();
         scr = 'wait'; st.showPlay(); st.canvas.getContext('2d').clearRect(0, 0, RW, RH);
-        st.card('Game in progress', `Round ${sv.S.rnd}, score ${sv.S.score[0]} - ${sv.S.score[1]}.`, st.btn('resume', 'Resume game') + st.btn('newgame', 'New game', 'alt') + st.btn('menu', 'Leave', 'alt'));
+        st.card('Game in progress', `<span>Round</span> ${sv.S.rnd} · ${sv.S.score[0]} - ${sv.S.score[1]}`, st.btn('resume', 'Resume game') + st.btn('newgame', 'New game', 'alt') + st.btn('menu', 'Leave', 'alt'));
         pendingResume = { sv, cfg, guest, startNew };
       }
       let pendingResume = null;
@@ -1941,7 +1941,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       category: 'Action',
       tint: '#3b82f6',
       blurb: 'Pull back, aim and knock wobbly stickman archers off their cliffs. Headshots, fire, ice, bomb, triple and storm arrows. Endless waves, duels against the computer and online 1v1.',
-      help: 'Drag to aim (pull back), release to shoot · <kbd>Space</kbd> hold and release · <kbd>&uarr;</kbd><kbd>&darr;</kbd> angle · <kbd>1</kbd>-<kbd>6</kbd> arrow type · <kbd>Esc</kbd> pause',
+      help: '<kbd>&#128433;</kbd> <span>drag to aim, release to shoot</span> · <kbd>Space</kbd> <span>hold to draw, release to fire</span> · <kbd>&uarr;</kbd><kbd>&darr;</kbd> <span>angle</span> · <kbd>1</kbd>-<kbd>6</kbd> <span>arrow type</span> · <kbd>Esc</kbd> <span>pause</span>',
       width: 960,
       better: 'high',
       format: v => 'Wave ' + v,
@@ -1985,7 +1985,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       L('First Swing', 7, hk(330, 320, [170, 170, 170, 170, 170, 170, 170, 170]), [['g', 970, 420], ['g', 1610, 420], ['g', 2250, 420]]),
       L('Ups and Downs', 8, hk(330, 320, [170, 110, 210, 100, 200, 90, 190, 120, 170]), [['g', 970, 380], ['g', 1610, 380], ['g', 2250, 380], ['g', 2730, 380]]),
       L('Long Gaps', 8, [['h', 330, 170], ['h', 700, 160], ['h', 1100, 170], ['h', 1480, 150], ['h', 1880, 170], ['h', 2260, 160], ['h', 2660, 180], ['h', 3040, 170]], [['g', 900, 270], ['g', 1680, 260], ['g', 2460, 270]]),
-      L('Boing', 8, hk(330, 320, [170, 160]), [['p', 1000, 600, 200, 0]], hk(1350, 320, [120, 150, 170]), [['p', 2350, 600, 200, 10]], hk(2700, 320, [110, 150, 170]), [['g', 1000, 360], ['g', 980, 268], ['g', 2350, 330], ['g', 3180, 390]]),
+      L('Boing', 8, hk(330, 320, [170, 160]), [['p', 1000, 600, 200, 0]], hk(1350, 320, [120, 150, 170]), [['p', 2350, 600, 200, 10]], hk(2700, 320, [110, 150, 170]), [['g', 1000, 360], ['g', 1000, 300], ['g', 2350, 330], ['g', 3180, 390]]),
       L('Climb', 10, hk(330, 300, [200, 150, 100, 50, 0, -50, -100]), hk(2450, 320, [-60, 0, 60, 120, 170]), [['g', 1670, 143], ['g', 2284, 65], ['g', 2930, 280], ['g', 3570, 380]]),
       L('Up and Over', 11, hk(330, 320, [170, 140]), [['w', 920, 330, 100, 320]], hk(1030, 320, [40, 110]), [['w', 1560, 300, 100, 350]], hk(1700, 320, [20, 100, 160]), [['w', 2560, 360, 120, 290]], hk(2700, 320, [60, 140, 170]), [['g', 970, 260], ['g', 1610, 230], ['g', 2620, 290], ['g', 1860, 150]]),
       L('Bumpers', 10, [['h', 330, 170], ['b', 650, 470, 55], ['h', 900, 150], ['b', 1180, 450, 55], ['h', 1440, 130], ['h', 1760, 160], ['b', 2060, 470, 55], ['h', 2320, 150], ['b', 2600, 440, 55], ['h', 2860, 140], ['h', 3180, 170]], [['g', 650, 300], ['g', 1180, 290], ['g', 2060, 300], ['g', 2600, 280]]),
@@ -2326,6 +2326,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
 .gm-swing-line .sl-big{display:flex;gap:4px;justify-content:center;margin:0 0 2cqw}
 .gm-swing-line .sl-big svg{width:clamp(30px,8cqw,64px);height:clamp(30px,8cqw,64px)}
 .gm-swing-line .sl-pill{display:inline-flex;align-items:center;gap:5px}
+.gm-swing-line .gx-mode span span{display:inline;font-size:inherit;opacity:1}
 `;
 
     function mountSwing(root, api) {
@@ -2427,13 +2428,13 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
 
       const levelsHtml = () => {
         const w = world;
-        const tabs = SL_WORLDS.map((x, i) => `<button type="button" class="gx-chip${i === w ? ' on' : ''}" data-a="world" data-w="${i}"${unlocked(i, 0) ? '' : ' disabled'}>${i + 1}. ${x.n}</button>`).join('');
+        const tabs = SL_WORLDS.map((x, i) => `<button type="button" class="gx-chip${i === w ? ' on' : ''}" data-a="world" data-w="${i}"${unlocked(i, 0) ? '' : ' disabled'}>${i + 1}. <span>${x.n}</span></button>`).join('');
         const nl = nextLevel();
         const cards = SL_LEVELS[w].map((d, l) => {
           const r = P.lv[key(w, l)], s = starsOf(w, l), ok = unlocked(w, l);
           return `<button type="button" class="sl-lv${nl[0] === w && nl[1] === l && !r ? ' next' : ''}" data-a="lv" data-w="${w}" data-l="${l}"${ok ? '' : ' disabled'}><b>${w + 1}-${l + 1}</b><span>${d.n}</span><i>${SL_STAR_SVG(s > 0)}${SL_STAR_SVG(s > 1)}${SL_STAR_SVG(s > 2)}</i>${r && r.t ? `<small>${r.t.toFixed(2)} s</small>` : ''}</button>`;
         }).join('');
-        return `<div class="gx-top"><h2 class="gx-logo">Swing <b>Line</b></h2><div class="gx-row"><span class="gx-chip on sl-pill" style="pointer-events:none">${SL_STAR_SVG(1)}<span>${totalStars()} / ${maxStars()}</span></span><span class="gx-chip sl-pill" style="pointer-events:none">${SL_GEM_SVG}<span>${P.gems}</span></span></div></div>
+        return `<div class="gx-top"><h2 class="gx-logo" translate="no">Swing <b>Line</b></h2><div class="gx-row"><span class="gx-chip on sl-pill" style="pointer-events:none">${SL_STAR_SVG(1)}<span>${totalStars()} / ${maxStars()}</span></span><span class="gx-chip sl-pill" style="pointer-events:none">${SL_GEM_SVG}<span>${P.gems}</span></span></div></div>
 <div class="sl-wtabs">${tabs}</div><div class="sl-grid">${cards}</div>
 <div class="gx-row" style="margin-top:12px">${st.btn('menu', 'Back', 'alt sm')}</div>`;
       };
@@ -2447,13 +2448,13 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       };
       const skinsHtml = () => {
         const ts = totalStars();
-        return `<div class="gx-top"><h2 class="gx-logo">Swing <b>Line</b></h2><div class="gx-row"><span class="gx-chip on sl-pill" style="pointer-events:none">${SL_GEM_SVG}<span>${P.gems}</span></span></div></div>
+        return `<div class="gx-top"><h2 class="gx-logo" translate="no">Swing <b>Line</b></h2><div class="gx-row"><span class="gx-chip on sl-pill" style="pointer-events:none">${SL_GEM_SVG}<span>${P.gems}</span></span></div></div>
 <p class="gx-tag">Collect gems in levels and in Endless to buy outfits. Two outfits are earned with stars.</p>
 <div class="sl-skins">${SL_SKINS.map(k => {
           const own = P.own.includes(k.id), on = P.skin === k.id;
           const lock = !own && (k.stars ? ts < k.stars : P.gems < k.cost);
           const price = own ? (on ? 'Selected' : 'Owned') : k.stars ? `${SL_STAR_SVG(1)}<span>${k.stars}</span>` : `${SL_GEM_SVG}<span>${k.cost}</span>`;
-          return `<button type="button" class="sl-sk${on ? ' on' : ''}${lock ? ' lock' : ''}" data-a="skin" data-k="${k.id}"><canvas data-sk="${k.id}" width="72" height="72"></canvas><b>${k.n}</b><span>${price}</span></button>`;
+          return `<button type="button" class="sl-sk${on ? ' on' : ''}${lock ? ' lock' : ''}" data-a="skin" data-k="${k.id}"><canvas data-sk="${k.id}" width="72" height="72"></canvas><b>${k.n}</b><span>${own ? `<span>${price}</span>` : price}</span></button>`;
         }).join('')}</div>
 <div class="gx-row" style="margin-top:12px">${st.btn('menu', 'Back', 'alt sm')}</div>`;
       };
@@ -2461,7 +2462,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
         scr = 'menu'; S = null; api.score('—');
         const nl = nextLevel(), done = !!P.lv[key(nl[0], nl[1])];
         st.showMenu(`
-<div class="gx-top"><h2 class="gx-logo">Swing <b>Line</b></h2><div class="gx-row"><span class="gx-chip on sl-pill" style="pointer-events:none">${SL_STAR_SVG(1)}<span>${totalStars()} / ${maxStars()}</span></span><span class="gx-chip sl-pill" style="pointer-events:none">${SL_GEM_SVG}<span>${P.gems}</span></span></div></div>
+<div class="gx-top"><h2 class="gx-logo" translate="no">Swing <b>Line</b></h2><div class="gx-row"><span class="gx-chip on sl-pill" style="pointer-events:none">${SL_STAR_SVG(1)}<span>${totalStars()} / ${maxStars()}</span></span><span class="gx-chip sl-pill" style="pointer-events:none">${SL_GEM_SVG}<span>${P.gems}</span></span></div></div>
 <p class="gx-tag">Hold to grab the nearest hook, let go to fly. Keep your speed, dodge the saws, reach the finish.</p>
 <div class="gx-modes">
   <button type="button" class="gx-mode" data-a="play"><b>${done ? 'Play' : totalStars() ? 'Continue' : 'Play'}</b><span>${done ? 'Every level is open. Go back for missing stars.' : `<span>Level</span> ${nl[0] + 1}-${nl[1] + 1} · ${levelDef(nl[0], nl[1]).n}`}</span></button>
@@ -2526,6 +2527,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       });
 
       const setHold = () => { hold = keyHold || ptrs.size > 0; };
+      root.gpState = () => S && { scr, mode, w: lvW, l: lvL, ph: S.ph, run: S.run, gems: S.gems, gemsTot: S.gemsTot, tries: tryN, px: S.px, py: S.py, best: Math.floor(S.best / 40), stars: totalStars() };
       st.canvas.addEventListener('pointerdown', e => {
         if (scr !== 'play') return;
         if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -2573,7 +2575,8 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
         ftime += dt;
         acc += dt;
         let n = 0;
-        while (acc >= SL_STEP && n < 12) { acc -= SL_STEP; n++; slStep(S, hold && scr === 'play'); }
+        const drv = root.gpDrive;
+        while (acc >= SL_STEP && n < 12) { acc -= SL_STEP; n++; slStep(S, (drv ? !!drv(S) : hold) && scr === 'play'); }
         if (n >= 12) acc = 0;
         handleEvents();
         if (scr === 'play') {
@@ -2796,7 +2799,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       category: 'Skill',
       tint: '#ff4f8a',
       blurb: 'Hold to grab the nearest hook, let go to fly. Keep your momentum through 30 handmade levels of bounce pads, saws, boost rings and crumbling hooks, then see how far you get in Endless.',
-      help: 'Hold <kbd>Mouse</kbd>, <kbd>Touch</kbd> or <kbd>Space</kbd> to grab the nearest hook, release to let go · <kbd>R</kbd> restart level · <kbd>Esc</kbd> pause',
+      help: '<kbd>&#128433;</kbd> <kbd>Space</kbd> <span>hold to grab the nearest hook, release to let go</span> · <kbd>R</kbd> <span>restart level</span> · <kbd>Esc</kbd> <span>pause</span>',
       width: 960,
       better: 'high',
       format: v => v + ' ★',
@@ -2829,7 +2832,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       }
       return { map: rows, gold, silver };
     };
-    SR_ACTS.push(srAct(50, 75, [
+    SR_ACTS.push(srAct(45, 75, [
       '                                       ',
       '                         *             ',
       '                       =====           ',
@@ -2892,7 +2895,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       '####################################',
       '####################################'
     ]));
-    SR_ACTS.push(srAct(70, 105, [
+    SR_ACTS.push(srAct(50, 80, [
       '                                     ',
       '                                     ',
       '  S                                  ',
@@ -2953,7 +2956,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       '#########################################',
       '#########################################'
     ]));
-    SR_ACTS.push(srAct(80, 120, [
+    SR_ACTS.push(srAct(45, 72, [
       '                                ',
       '                                ',
       '  S                             ',
@@ -3019,7 +3022,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       '#######################################',
       '#######################################'
     ]));
-    SR_ACTS.push(srAct(95, 140, [
+    SR_ACTS.push(srAct(42, 68, [
       '                                          ',
       '                                          ',
       '                                          ',
@@ -3071,7 +3074,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       '#########################################',
       '#########################################'
     ]));
-    SR_ACTS.push(srAct(110, 165, [
+    SR_ACTS.push(srAct(45, 72, [
       '                                          ',
       '                                          ',
       '                                          ',
@@ -3111,11 +3114,11 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       '###########################################'
     ], [
       '                                                  ',
+      '            l           l           l             ',
       '                                                  ',
-      '        xx    xx    xx    xx    xx    xx          ',
       '                                                  ',
-      '                                                  ',
-      '  C       l          l          l           *     ',
+      '        ===   xx    ===   xx    ===   xx   *      ',
+      '  C                                        ###    ',
       '####                                       ####   ',
       '####^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^####   ',
       '##################################################'
@@ -3369,6 +3372,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
 .gm-spike-run .sr-act i.s{background:radial-gradient(circle at 35% 35%,#ffffff,#b8c0d0 60%,#6a7488)}
 .gm-spike-run .sr-act i.b{background:radial-gradient(circle at 35% 35%,#ffd9b0,#c07a3a 60%,#7a4418)}
 .gm-spike-run .sr-act.next{border-color:var(--ac)}
+.gm-spike-run .sr-act span span,.gm-spike-run .sr-act em span{display:inline;font:inherit;opacity:1;margin:0}
 `;
 
     function mountSpike(root, api) {
@@ -3417,7 +3421,8 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       let scr = 'menu', S = null, actI = 0, acc = 0, ftime = 0, shake = 0, msg = '', msgT = 0, cam = { x: 0, y: 0 };
       const keys = new Set();
       const KM = { ArrowLeft: 'l', KeyA: 'l', KeyQ: 'l', ArrowRight: 'r', KeyD: 'r', ArrowDown: 'd', KeyS: 'd', ArrowUp: 'j', KeyW: 'j', KeyZ: 'j', Space: 'j' };
-      const inp = { l: false, r: false, d: false, j: false };
+      const inp = { l: false, r: false, d: false, j: false }, NOIN = { l: false, r: false, d: false, j: false };
+      root.gpState = () => S && { scr, act: actI, run: S.run, deaths: S.deaths, got: S.got, stars: S.stars.length, cp: S.cp, won: S.won > 0, x: S.x, y: S.y };
       const readInp = () => {
         const m = st.mask;
         inp.l = (m & 1) > 0; inp.r = (m & 2) > 0; inp.d = (m & 4) > 0; inp.j = (m & 8) > 0;
@@ -3440,7 +3445,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
         scr = 'menu'; S = null; api.score('—');
         const n = doneN();
         st.showMenu(`
-<div class="gx-top"><h2 class="gx-logo">Spike <b>Run</b></h2><div class="gx-row"><span class="gx-chip on" style="pointer-events:none"><span>Acts</span> ${n} / ${SR_ACTS.length}</span><span class="gx-chip" style="pointer-events:none"><span>Stars</span> ${starTot()} / ${SR_ACTS.length * 3}</span><span class="gx-chip" style="pointer-events:none"><span>Deaths</span> ${P.deaths}</span></div></div>
+<div class="gx-top"><h2 class="gx-logo" translate="no">Spike <b>Run</b></h2><div class="gx-row"><span class="gx-chip on" style="pointer-events:none"><span>Acts</span> ${n} / ${SR_ACTS.length}</span><span class="gx-chip" style="pointer-events:none"><span>Stars</span> ${starTot()} / ${SR_ACTS.length * 3}</span><span class="gx-chip" style="pointer-events:none"><span>Deaths</span> ${P.deaths}</span></div></div>
 <p class="gx-tag">Run, jump, slide and wall-jump through five acts of spikes, saws and lasers. Flags save your progress.</p>
 <div class="sr-acts">${SR_ACTS.map((a, i) => {
           const r = P.acts[i], ok = i === 0 || !!P.acts[i - 1];
@@ -3449,7 +3454,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
 <p class="gx-help"><kbd>&larr;</kbd><kbd>&rarr;</kbd> <kbd>A</kbd><kbd>D</kbd> <span>run</span> · <kbd>&uarr;</kbd> <kbd>W</kbd> <kbd>Space</kbd> <span>jump (hold for higher)</span> · <kbd>&darr;</kbd> <kbd>S</kbd> <span>crouch, slide while running</span> · <kbd>R</kbd> <span>back to the last flag</span> · <kbd>Esc</kbd> <span>pause</span><br><span>Jump while sliding down a wall to kick off it.</span> <span>Grab zip lines by jumping into them.</span> <span>Medals for fast times, three hidden stars per act.</span></p>`);
       }
       function startAct(i) {
-        actI = i; S = srCompile(SR_ACTS[i]); acc = 0; msg = SR_TH[i].n; msgT = 2.2;
+        actI = i; S = srCompile(SR_ACTS[i]); acc = 0; msg = T(SR_TH[i].n); msgT = 2.2;
         cam.x = S.x; cam.y = S.y - 120;
         scr = 'play'; st.showPlay(); st.hideOv(); st.syncPad && st.syncPad();
         api.score('0:00.00');
@@ -3503,7 +3508,8 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
         ftime += dt; acc += dt;
         readInp();
         let n = 0;
-        while (acc >= SR_STEP && n < 12) { acc -= SR_STEP; n++; srStep(S, scr === 'play' ? inp : { l: false, r: false, d: false, j: false }); }
+        const drv = root.gpDrive;
+        while (acc >= SR_STEP && n < 12) { acc -= SR_STEP; n++; srStep(S, scr === 'play' ? (drv ? drv(S) || NOIN : inp) : NOIN); }
         if (n >= 12) acc = 0;
         events();
         if (scr === 'play' && S.won > .8) finishAct();
@@ -3661,7 +3667,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       category: 'Skill',
       tint: '#ffb23a',
       blurb: 'A stickman parkour run through five handmade acts. Run, jump, slide under saws, kick off walls, ride zip lines and dodge lasers. Flags save your progress, medals reward fast runs.',
-      help: '<kbd>&larr;</kbd><kbd>&rarr;</kbd> run · <kbd>&uarr;</kbd> or <kbd>Space</kbd> jump · <kbd>&darr;</kbd> crouch and slide · <kbd>R</kbd> last flag · <kbd>Esc</kbd> pause',
+      help: '<kbd>&larr;</kbd><kbd>&rarr;</kbd> <span>run</span> · <kbd>&uarr;</kbd> <kbd>Space</kbd> <span>jump</span> · <kbd>&darr;</kbd> <span>crouch and slide</span> · <kbd>R</kbd> <span>back to the last flag</span> · <kbd>Esc</kbd> <span>pause</span>',
       width: 960,
       better: 'high',
       format: v => v + ' ★',
