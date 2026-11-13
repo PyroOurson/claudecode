@@ -1106,7 +1106,8 @@ ${G} .pan h2{font-size:1.6em}
       S.rayWorld(p.x, ey, p.z, ddx / dl, ddy / dl, ddz / dl, dl, false);
       const pc = S.R.kind === 2 ? S.R.pc : null;
       if (pc && pc.mat !== 3) {
-        if (pc.type === 0 && (pc.team === p.team || pc.team < 0) && L.edit > 0 && S.R.t < 6.5 && S.t - A.editT > 1 && Math.random() < L.edit * 0.6) {
+        const wpe = p.wep[p.slot], ready = wpe && W[wpe.w].mag && wpe.ammo > 0 && p.fireCD < 0.15 && p.reloadT <= 0;
+        if (pc.type === 0 && (pc.team === p.team || pc.team < 0) && L.edit > 0 && ready && dh < 10 && S.t - A.seenT < 0.9 && S.R.t < 6.5 && S.t - A.editT > 1.4 && Math.random() < L.edit * 0.6) {
           A.edit = { pc, ph: 0, t: S.t + 0.1 + (1 - L.edit) * 0.3 + Math.random() * 0.08, mask: dh < 9 ? (1 << 1) | (1 << 4) : (1 << 4) };
           A.editT = S.t;
           return;
@@ -1124,11 +1125,12 @@ ${G} .pan h2{font-size:1.6em}
     if (!E.pc || S.pieces.get(E.pc.key) !== E.pc) { A.edit = null; return; }
     if (S.t < E.t) return;
     if (E.ph === 0) {
-      if (S.applyEdit(p, E.pc, E.mask, null)) { E.ph = 1; E.t = S.t + 0.55 + Math.random() * 0.5; A.reactT = Math.min(A.reactT, S.t + L.react * 0.6); }
+      if (S.applyEdit(p, E.pc, E.mask, null)) { E.ph = 1; E.t0 = S.t; E.t = S.t + 0.35 + Math.random() * 0.2; A.reactT = Math.min(A.reactT, S.t + L.react * 0.6); }
       else A.edit = null;
     } else {
       const dvis = A.vis && S.t - A.seenT < 0.15;
-      if (dvis && S.t < E.t + 0.6 && p.fireCD > 0.2) return;
+      if (dvis && S.t < E.t + 0.4 && p.fireCD > 0.2) return;
+      if (dvis && S.t < E.t) return;
       S.applyEdit(p, E.pc, 0, null);
       A.edit = null; A.editT = S.t;
     }
