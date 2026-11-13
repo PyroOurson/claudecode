@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const ID = 'retro-bowl';
+  const ID = 'touchdown-dynasty';
   const BW = 480, BH = 270, SX = 7, SY = 3.5, FY0 = 54, FW = 53.3, FL = 120, CY = FW / 2;
   const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -222,7 +222,7 @@
     ['def', 'Defensive Coach', 'Boosts your defense against opposing drives']
   ];
   const facCost = lvl => [0, 10, 20, 32, 48][lvl] || 0;
-  const ROUND_NAMES = ['Wild Card', 'Divisional', 'Conference Final', 'Retro Bowl'];
+  const ROUND_NAMES = ['Wild Card', 'Divisional', 'Conference Final', 'Golden Bowl'];
 
   function mkTeam(i) {
     const d = TEAMS[i];
@@ -503,8 +503,8 @@
     F.fan = clamp(F.fan + (champ ? 10 : made ? 2 : -4) + (F.fac.stad - 1), 3, 100);
     const rec = me.w + '-' + me.l + (me.t ? '-' + me.t : '');
     let res = made ? 'Made the playoffs' : 'Missed the playoffs';
-    if (champ) res = 'RETRO BOWL CHAMPIONS';
-    else if (po && po.runner === F.tid) res = 'Lost the Retro Bowl';
+    if (champ) res = 'GOLDEN BOWL CHAMPIONS';
+    else if (po && po.runner === F.tid) res = 'Lost the Golden Bowl';
     else if (made) res = 'Eliminated in the ' + ROUND_NAMES[po.elim == null ? 0 : po.elim];
     F.hist.unshift({ year: F.year, rec, res, champ: po ? tname(F.teams[po.champ]) : '-', pts: me.pf, owner: Math.round(F.owner) });
     if (F.hist.length > 20) F.hist.length = 20;
@@ -2304,96 +2304,96 @@
   }
 
   const CSS = `
-.gm-retro-bowl{--n0:#080d22;--n1:#0d1530;--n2:#1a2550;--n3:#243374;--ln:#3a4a8a;--gd:#ffe14d;--rd:#ff5a4d;--gr:#5fe36b;--dm:#9fb0e8;--bl:#4db8ff;width:100%;gap:10px;color:#fff;font-family:ui-monospace,'Cascadia Mono','SFMono-Regular',Consolas,Menlo,monospace;font-weight:700;text-transform:uppercase;letter-spacing:.02em;justify-content:flex-start;min-height:0}
-.gm-retro-bowl *{box-sizing:border-box}
-.gm-retro-bowl [hidden]{display:none!important}
-.gm-retro-bowl .rb-stage{position:relative;width:min(100%,960px,calc((100dvh - var(--goff,250px))*1.7778));aspect-ratio:16/9;background:#000;border:3px solid var(--ln);border-radius:6px;overflow:hidden;flex:none}
-.gm-retro-bowl .rb-stage .g-canvas{position:absolute;inset:0;width:100%!important;height:100%!important;border-radius:0;background:#000;image-rendering:pixelated;touch-action:none;display:block}
-.gm-retro-bowl .rb-ui{width:min(100%,960px);display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:stretch;min-height:44px;background:var(--n1);border:2px solid var(--ln);border-radius:6px;padding:8px}
-.gm-retro-bowl .rb-b{font:inherit;text-transform:uppercase;color:#fff;background:var(--n3);border:2px solid #5a6fd0;border-bottom-width:4px;border-radius:5px;padding:9px 14px;cursor:pointer;font-size:13px;line-height:1.1;min-height:40px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .08s,filter .12s}
-.gm-retro-bowl .rb-b:hover{filter:brightness(1.18)}
-.gm-retro-bowl .rb-b:active{transform:translateY(2px);border-bottom-width:2px}
-.gm-retro-bowl .rb-b.pri{background:#e8a317;color:#1b1300;border-color:#ffd25a}
-.gm-retro-bowl .rb-b.grn{background:#1f9d3f;border-color:#6bf08a}
-.gm-retro-bowl .rb-b.red{background:#b3342b;border-color:#ff8a7e}
-.gm-retro-bowl .rb-b.sm{padding:5px 9px;font-size:11px;min-height:28px;border-bottom-width:3px}
-.gm-retro-bowl .rb-b[disabled]{opacity:.38;pointer-events:none}
-.gm-retro-bowl .rb-b.on{background:#e8a317;color:#1b1300;border-color:#ffd25a}
-.gm-retro-bowl .rb-b.big{font-size:17px;padding:13px 22px;min-width:220px}
-.gm-retro-bowl .rb-calls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%}
-.gm-retro-bowl .rb-call{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:7px 10px;min-height:46px}
-.gm-retro-bowl .rb-call i{font-style:normal;background:#0d1530;color:var(--gd);border-radius:3px;padding:1px 5px;font-size:11px;margin-right:6px}
-.gm-retro-bowl .rb-call b{font-size:12px}
-.gm-retro-bowl .rb-call small{font-size:10px;color:var(--dm);font-weight:700}
-.gm-retro-bowl .rb-call.run{border-color:#6bd28a;background:#1b4a3a}
-.gm-retro-bowl .rb-call.sp{border-color:#ffd25a;background:#4a3a14}
-.gm-retro-bowl .rb-info{width:100%;text-align:center;font-size:12px;color:var(--dm)}
-.gm-retro-bowl .rb-info b{color:#fff}
-.gm-retro-bowl .rb-pop{position:absolute;inset:3% 4%;background:rgba(8,13,34,.95);border:3px solid var(--ln);border-radius:6px;padding:12px;overflow:auto;display:flex;flex-direction:column;gap:8px;z-index:5}
-.gm-retro-bowl .rb-pop h3{margin:0;font-size:clamp(14px,2.4vw,20px);color:var(--gd)}
-.gm-retro-bowl .rb-pop p{margin:0;font-size:12px;color:var(--dm)}
-.gm-retro-bowl .rb-pl{display:flex;flex-direction:column;gap:3px;font-size:12px;overflow:auto;flex:1;min-height:60px}
-.gm-retro-bowl .rb-pl div{padding:3px 6px;background:#101a42;border-left:3px solid #3a4a8a;line-height:1.25}
-.gm-retro-bowl .rb-pl div.f{border-color:var(--gd)}
-.gm-retro-bowl .rb-pl div.s{border-color:var(--gr);background:#12332a}
-.gm-retro-bowl .rb-pl div.x{border-color:var(--rd);background:#3a1620}
-.gm-retro-bowl .rb-pl em{font-style:normal;color:var(--dm);margin-right:6px}
-.gm-retro-bowl .rb-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.gm-retro-bowl .rb-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;font-size:11px}
-.gm-retro-bowl .rb-stats div{background:#101a42;border-radius:4px;padding:6px 8px}
-.gm-retro-bowl .rb-stats span{display:block;color:var(--dm);font-size:10px}
-.gm-retro-bowl .rb-stats b{font-size:15px}
-.gm-retro-bowl .rb-menu{width:min(100%,960px);background:var(--n1);border:3px solid var(--ln);border-radius:6px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:12px}
-.gm-retro-bowl .rb-nav{display:flex;flex-wrap:wrap;gap:6px}
-.gm-retro-bowl .rb-hd{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-.gm-retro-bowl .rb-ti{flex:1;min-width:180px}
-.gm-retro-bowl .rb-ti h2{margin:0;font-size:clamp(18px,3.4vw,28px);color:var(--gd)}
-.gm-retro-bowl .rb-ti p{margin:3px 0 0;font-size:12px;color:var(--dm)}
-.gm-retro-bowl .bd{font-style:normal;display:inline-flex;align-items:center;justify-content:center;min-width:46px;height:34px;padding:0 6px;border-radius:5px;border:2px solid rgba(255,255,255,.55);font-size:14px;font-weight:900}
-.gm-retro-bowl .rb-ms{min-width:200px;display:flex;flex-direction:column;gap:5px;font-size:11px}
-.gm-retro-bowl .rb-ms p{margin:0;color:var(--dm)}
-.gm-retro-bowl .rb-ms p b{color:#fff}
-.gm-retro-bowl .mt{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--dm)}
-.gm-retro-bowl .mt span{width:46px}
-.gm-retro-bowl .mt div{flex:1;height:9px;background:#080d22;border:1px solid var(--ln);border-radius:2px;overflow:hidden}
-.gm-retro-bowl .mt i{display:block;height:100%}
-.gm-retro-bowl .mt b{width:26px;text-align:right;color:#fff}
-.gm-retro-bowl .rb-card{background:var(--n2);border:2px solid var(--ln);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px}
-.gm-retro-bowl .rb-card h3{margin:0;font-size:15px;color:var(--gd)}
-.gm-retro-bowl .rb-card p{margin:0;font-size:12px;color:var(--dm);line-height:1.4;text-transform:none;font-weight:600}
-.gm-retro-bowl .rb-vs{display:flex;align-items:center;justify-content:space-around;gap:10px;flex-wrap:wrap}
-.gm-retro-bowl .rb-vs div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;text-align:center}
-.gm-retro-bowl .rb-vs .at{font-size:20px;color:var(--gd)}
-.gm-retro-bowl .rb-note{background:#14301f;border:2px solid #3a8a55;border-radius:5px;padding:8px 10px;font-size:12px;color:#c9f5d6}
-.gm-retro-bowl .rb-warn{background:#3a1620;border:2px solid #a8404f;border-radius:5px;padding:8px 10px;font-size:12px;color:#ffc4cb}
-.gm-retro-bowl .rb-scroll{overflow-x:auto;max-width:100%}
-.gm-retro-bowl .rb-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:480px}
-.gm-retro-bowl .rb-tbl th{text-align:left;color:var(--dm);font-size:10px;padding:5px 6px;border-bottom:2px solid var(--ln);white-space:nowrap}
-.gm-retro-bowl .rb-tbl td{padding:5px 6px;border-bottom:1px solid #1d2a5c;white-space:nowrap}
-.gm-retro-bowl .rb-tbl tr.me td{background:#223a7a}
-.gm-retro-bowl .rb-tbl tr.in td:first-child{border-left:3px solid var(--gr)}
-.gm-retro-bowl .rb-tbl tr.inj td{color:#ff9a8e}
-.gm-retro-bowl .rb-tbl td.n{font-variant-numeric:tabular-nums;text-align:right}
-.gm-retro-bowl .st{color:var(--gd);letter-spacing:0;font-size:11px;white-space:nowrap}
-.gm-retro-bowl .st u{text-decoration:none}
-.gm-retro-bowl .st .se{color:#3a4a8a}
-.gm-retro-bowl .st .sh{background:linear-gradient(90deg,var(--gd) 50%,#3a4a8a 50%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.gm-retro-bowl .rb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
-.gm-retro-bowl .rb-teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px}
-.gm-retro-bowl .rb-team{display:flex;gap:8px;align-items:center;text-align:left;padding:7px 8px;min-height:50px}
-.gm-retro-bowl .rb-team.on{outline:3px solid var(--gd);background:#3a4fa8}
-.gm-retro-bowl .rb-team small{display:block;font-size:10px;color:var(--dm);margin-top:2px}
-.gm-retro-bowl .rb-fac{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}
-.gm-retro-bowl .pips{display:flex;gap:4px}
-.gm-retro-bowl .pips i{width:20px;height:9px;background:#080d22;border:1px solid var(--ln)}
-.gm-retro-bowl .pips i.on{background:var(--gd);border-color:#fff}
-.gm-retro-bowl .rb-h{margin:0;font-size:15px;color:var(--gd)}
-.gm-retro-bowl .rb-sub{font-size:11px;color:var(--dm);margin:0}
-.gm-retro-bowl .rb-opt{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.gm-retro-bowl .rb-opt>span{min-width:120px;font-size:12px;color:var(--dm)}
-.gm-retro-bowl .rb-menu .rb-title{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px}
-@media (min-width:901px){.gm-retro-bowl .rb-ui{min-height:140px;align-content:flex-start}.gm-retro-bowl .rb-menu{height:696px;overflow-y:auto}.gm-retro-bowl .rb-calls.pl{grid-template-columns:repeat(6,minmax(0,1fr))}.gm-retro-bowl .rb-calls.spr{display:flex}.gm-retro-bowl .rb-calls.spr .rb-call{flex:1;min-height:36px;flex-direction:row;align-items:center;gap:8px}}
-@media (max-width:560px){.gm-retro-bowl .rb-calls{grid-template-columns:repeat(2,minmax(0,1fr))}.gm-retro-bowl .rb-b.big{min-width:0;width:100%}.gm-retro-bowl .rb-menu{padding:10px}.gm-retro-bowl .rb-pop{inset:2%;padding:8px}}
+.gm-touchdown-dynasty{--n0:#080d22;--n1:#0d1530;--n2:#1a2550;--n3:#243374;--ln:#3a4a8a;--gd:#ffe14d;--rd:#ff5a4d;--gr:#5fe36b;--dm:#9fb0e8;--bl:#4db8ff;width:100%;gap:10px;color:#fff;font-family:ui-monospace,'Cascadia Mono','SFMono-Regular',Consolas,Menlo,monospace;font-weight:700;text-transform:uppercase;letter-spacing:.02em;justify-content:flex-start;min-height:0}
+.gm-touchdown-dynasty *{box-sizing:border-box}
+.gm-touchdown-dynasty [hidden]{display:none!important}
+.gm-touchdown-dynasty .rb-stage{position:relative;width:min(100%,960px,calc((100dvh - var(--goff,250px))*1.7778));aspect-ratio:16/9;background:#000;border:3px solid var(--ln);border-radius:6px;overflow:hidden;flex:none}
+.gm-touchdown-dynasty .rb-stage .g-canvas{position:absolute;inset:0;width:100%!important;height:100%!important;border-radius:0;background:#000;image-rendering:pixelated;touch-action:none;display:block}
+.gm-touchdown-dynasty .rb-ui{width:min(100%,960px);display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:stretch;min-height:44px;background:var(--n1);border:2px solid var(--ln);border-radius:6px;padding:8px}
+.gm-touchdown-dynasty .rb-b{font:inherit;text-transform:uppercase;color:#fff;background:var(--n3);border:2px solid #5a6fd0;border-bottom-width:4px;border-radius:5px;padding:9px 14px;cursor:pointer;font-size:13px;line-height:1.1;min-height:40px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .08s,filter .12s}
+.gm-touchdown-dynasty .rb-b:hover{filter:brightness(1.18)}
+.gm-touchdown-dynasty .rb-b:active{transform:translateY(2px);border-bottom-width:2px}
+.gm-touchdown-dynasty .rb-b.pri{background:#e8a317;color:#1b1300;border-color:#ffd25a}
+.gm-touchdown-dynasty .rb-b.grn{background:#1f9d3f;border-color:#6bf08a}
+.gm-touchdown-dynasty .rb-b.red{background:#b3342b;border-color:#ff8a7e}
+.gm-touchdown-dynasty .rb-b.sm{padding:5px 9px;font-size:11px;min-height:28px;border-bottom-width:3px}
+.gm-touchdown-dynasty .rb-b[disabled]{opacity:.38;pointer-events:none}
+.gm-touchdown-dynasty .rb-b.on{background:#e8a317;color:#1b1300;border-color:#ffd25a}
+.gm-touchdown-dynasty .rb-b.big{font-size:17px;padding:13px 22px;min-width:220px}
+.gm-touchdown-dynasty .rb-calls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%}
+.gm-touchdown-dynasty .rb-call{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:7px 10px;min-height:46px}
+.gm-touchdown-dynasty .rb-call i{font-style:normal;background:#0d1530;color:var(--gd);border-radius:3px;padding:1px 5px;font-size:11px;margin-right:6px}
+.gm-touchdown-dynasty .rb-call b{font-size:12px}
+.gm-touchdown-dynasty .rb-call small{font-size:10px;color:var(--dm);font-weight:700}
+.gm-touchdown-dynasty .rb-call.run{border-color:#6bd28a;background:#1b4a3a}
+.gm-touchdown-dynasty .rb-call.sp{border-color:#ffd25a;background:#4a3a14}
+.gm-touchdown-dynasty .rb-info{width:100%;text-align:center;font-size:12px;color:var(--dm)}
+.gm-touchdown-dynasty .rb-info b{color:#fff}
+.gm-touchdown-dynasty .rb-pop{position:absolute;inset:3% 4%;background:rgba(8,13,34,.95);border:3px solid var(--ln);border-radius:6px;padding:12px;overflow:auto;display:flex;flex-direction:column;gap:8px;z-index:5}
+.gm-touchdown-dynasty .rb-pop h3{margin:0;font-size:clamp(14px,2.4vw,20px);color:var(--gd)}
+.gm-touchdown-dynasty .rb-pop p{margin:0;font-size:12px;color:var(--dm)}
+.gm-touchdown-dynasty .rb-pl{display:flex;flex-direction:column;gap:3px;font-size:12px;overflow:auto;flex:1;min-height:60px}
+.gm-touchdown-dynasty .rb-pl div{padding:3px 6px;background:#101a42;border-left:3px solid #3a4a8a;line-height:1.25}
+.gm-touchdown-dynasty .rb-pl div.f{border-color:var(--gd)}
+.gm-touchdown-dynasty .rb-pl div.s{border-color:var(--gr);background:#12332a}
+.gm-touchdown-dynasty .rb-pl div.x{border-color:var(--rd);background:#3a1620}
+.gm-touchdown-dynasty .rb-pl em{font-style:normal;color:var(--dm);margin-right:6px}
+.gm-touchdown-dynasty .rb-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.gm-touchdown-dynasty .rb-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;font-size:11px}
+.gm-touchdown-dynasty .rb-stats div{background:#101a42;border-radius:4px;padding:6px 8px}
+.gm-touchdown-dynasty .rb-stats span{display:block;color:var(--dm);font-size:10px}
+.gm-touchdown-dynasty .rb-stats b{font-size:15px}
+.gm-touchdown-dynasty .rb-menu{width:min(100%,960px);background:var(--n1);border:3px solid var(--ln);border-radius:6px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:12px}
+.gm-touchdown-dynasty .rb-nav{display:flex;flex-wrap:wrap;gap:6px}
+.gm-touchdown-dynasty .rb-hd{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.gm-touchdown-dynasty .rb-ti{flex:1;min-width:180px}
+.gm-touchdown-dynasty .rb-ti h2{margin:0;font-size:clamp(18px,3.4vw,28px);color:var(--gd)}
+.gm-touchdown-dynasty .rb-ti p{margin:3px 0 0;font-size:12px;color:var(--dm)}
+.gm-touchdown-dynasty .bd{font-style:normal;display:inline-flex;align-items:center;justify-content:center;min-width:46px;height:34px;padding:0 6px;border-radius:5px;border:2px solid rgba(255,255,255,.55);font-size:14px;font-weight:900}
+.gm-touchdown-dynasty .rb-ms{min-width:200px;display:flex;flex-direction:column;gap:5px;font-size:11px}
+.gm-touchdown-dynasty .rb-ms p{margin:0;color:var(--dm)}
+.gm-touchdown-dynasty .rb-ms p b{color:#fff}
+.gm-touchdown-dynasty .mt{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--dm)}
+.gm-touchdown-dynasty .mt span{width:46px}
+.gm-touchdown-dynasty .mt div{flex:1;height:9px;background:#080d22;border:1px solid var(--ln);border-radius:2px;overflow:hidden}
+.gm-touchdown-dynasty .mt i{display:block;height:100%}
+.gm-touchdown-dynasty .mt b{width:26px;text-align:right;color:#fff}
+.gm-touchdown-dynasty .rb-card{background:var(--n2);border:2px solid var(--ln);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.gm-touchdown-dynasty .rb-card h3{margin:0;font-size:15px;color:var(--gd)}
+.gm-touchdown-dynasty .rb-card p{margin:0;font-size:12px;color:var(--dm);line-height:1.4;text-transform:none;font-weight:600}
+.gm-touchdown-dynasty .rb-vs{display:flex;align-items:center;justify-content:space-around;gap:10px;flex-wrap:wrap}
+.gm-touchdown-dynasty .rb-vs div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;text-align:center}
+.gm-touchdown-dynasty .rb-vs .at{font-size:20px;color:var(--gd)}
+.gm-touchdown-dynasty .rb-note{background:#14301f;border:2px solid #3a8a55;border-radius:5px;padding:8px 10px;font-size:12px;color:#c9f5d6}
+.gm-touchdown-dynasty .rb-warn{background:#3a1620;border:2px solid #a8404f;border-radius:5px;padding:8px 10px;font-size:12px;color:#ffc4cb}
+.gm-touchdown-dynasty .rb-scroll{overflow-x:auto;max-width:100%}
+.gm-touchdown-dynasty .rb-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:480px}
+.gm-touchdown-dynasty .rb-tbl th{text-align:left;color:var(--dm);font-size:10px;padding:5px 6px;border-bottom:2px solid var(--ln);white-space:nowrap}
+.gm-touchdown-dynasty .rb-tbl td{padding:5px 6px;border-bottom:1px solid #1d2a5c;white-space:nowrap}
+.gm-touchdown-dynasty .rb-tbl tr.me td{background:#223a7a}
+.gm-touchdown-dynasty .rb-tbl tr.in td:first-child{border-left:3px solid var(--gr)}
+.gm-touchdown-dynasty .rb-tbl tr.inj td{color:#ff9a8e}
+.gm-touchdown-dynasty .rb-tbl td.n{font-variant-numeric:tabular-nums;text-align:right}
+.gm-touchdown-dynasty .st{color:var(--gd);letter-spacing:0;font-size:11px;white-space:nowrap}
+.gm-touchdown-dynasty .st u{text-decoration:none}
+.gm-touchdown-dynasty .st .se{color:#3a4a8a}
+.gm-touchdown-dynasty .st .sh{background:linear-gradient(90deg,var(--gd) 50%,#3a4a8a 50%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gm-touchdown-dynasty .rb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.gm-touchdown-dynasty .rb-teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px}
+.gm-touchdown-dynasty .rb-team{display:flex;gap:8px;align-items:center;text-align:left;padding:7px 8px;min-height:50px}
+.gm-touchdown-dynasty .rb-team.on{outline:3px solid var(--gd);background:#3a4fa8}
+.gm-touchdown-dynasty .rb-team small{display:block;font-size:10px;color:var(--dm);margin-top:2px}
+.gm-touchdown-dynasty .rb-fac{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}
+.gm-touchdown-dynasty .pips{display:flex;gap:4px}
+.gm-touchdown-dynasty .pips i{width:20px;height:9px;background:#080d22;border:1px solid var(--ln)}
+.gm-touchdown-dynasty .pips i.on{background:var(--gd);border-color:#fff}
+.gm-touchdown-dynasty .rb-h{margin:0;font-size:15px;color:var(--gd)}
+.gm-touchdown-dynasty .rb-sub{font-size:11px;color:var(--dm);margin:0}
+.gm-touchdown-dynasty .rb-opt{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.gm-touchdown-dynasty .rb-opt>span{min-width:120px;font-size:12px;color:var(--dm)}
+.gm-touchdown-dynasty .rb-menu .rb-title{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px}
+@media (min-width:901px){.gm-touchdown-dynasty .rb-ui{min-height:140px;align-content:flex-start}.gm-touchdown-dynasty .rb-menu{height:696px;overflow-y:auto}.gm-touchdown-dynasty .rb-calls.pl{grid-template-columns:repeat(6,minmax(0,1fr))}.gm-touchdown-dynasty .rb-calls.spr{display:flex}.gm-touchdown-dynasty .rb-calls.spr .rb-call{flex:1;min-height:36px;flex-direction:row;align-items:center;gap:8px}}
+@media (max-width:560px){.gm-touchdown-dynasty .rb-calls{grid-template-columns:repeat(2,minmax(0,1fr))}.gm-touchdown-dynasty .rb-b.big{min-width:0;width:100%}.gm-touchdown-dynasty .rb-menu{padding:10px}.gm-touchdown-dynasty .rb-pop{inset:2%;padding:8px}}
 `;
 
   let view = null, root = null, stageEl = null, uiEl = null, menuEl = null, popEl = null, apiRef = null;
@@ -2450,7 +2450,7 @@
     const ng = userNextGame(F), me = T(F.tid);
     if (F.phase === 'end') {
       const po = F.po, h = F.hist[0];
-      return `<div class="rb-card"><h3>${F.year} SEASON COMPLETE</h3><p>${h ? esc(h.rec + ' · ' + h.res) : ''}</p>${po && po.champ != null ? `<p>Retro Bowl champions: <b style="color:#fff">${esc(tname(T(po.champ)))}</b></p>` : ''}${F.fired ? `<div class="rb-warn">The owner is not happy with your results. You have been fired.</div>` : ''}<div class="rb-row">${F.fired ? bt('fired', 'START OVER', 'pri big') : bt('offseason', 'CONTINUE TO OFFSEASON', 'pri big')}</div></div>`;
+      return `<div class="rb-card"><h3>${F.year} SEASON COMPLETE</h3><p>${h ? esc(h.rec + ' · ' + h.res) : ''}</p>${po && po.champ != null ? `<p>Golden Bowl champions: <b style="color:#fff">${esc(tname(T(po.champ)))}</b></p>` : ''}${F.fired ? `<div class="rb-warn">The owner is not happy with your results. You have been fired.</div>` : ''}<div class="rb-row">${F.fired ? bt('fired', 'START OVER', 'pri big') : bt('offseason', 'CONTINUE TO OFFSEASON', 'pri big')}</div></div>`;
     }
     if (!ng) {
       const bye = F.phase === 'po' && !F.po.userOut;
@@ -3217,10 +3217,10 @@
 
   Ameplay.register({
     id: ID,
-    title: 'Retro Bowl',
+    title: 'Touchdown Dynasty',
     category: 'Sports',
     tint: '#e8a317',
-    blurb: 'Pixel football and franchise management. Call plays, throw the ball, win the Retro Bowl.',
+    blurb: 'Pixel football and franchise management. Call plays, throw the ball, win the Golden Bowl.',
     help: 'Pick a play · <kbd>Space</kbd> or tap to snap · tap a receiver or <kbd>1</kbd>-<kbd>5</kbd> to throw, drag to aim · arrows steer, <kbd>J</kbd> or swipe to juke, <kbd>Space</kbd> or tap to dive · drag up to kick',
     better: 'high',
     width: 960,
