@@ -232,7 +232,7 @@
 ["Round score", "Score de la manche", "Puntuación de la ronda", "Rundenpunkte", "Punteggio del round", "Pontuação da ronda"],
 ["Round won", "Manche gagnée", "Ronda ganada", "Runde gewonnen", "Round vinto", "Ronda ganha"],
 ["Run Info", "Infos de la partie", "Información", "Partie-Infos", "Info partita", "Informação"],
-["Runs {a}  |  Wins {b}  |  Best ante {c}  |  Best hand {d}", "Parties {a}  |  Victoires {b}  |  Meilleure ante {c}  |  Meilleure main {d}", "Partidas {a}  |  Victorias {b}  |  Mejor ante {c}  |  Mejor mano {d}", "Partien {a}  |  Siege {b}  |  Bestes Ante {c}  |  Beste Hand {d}", "Partite {a}  |  Vittorie {b}  |  Miglior ante {c}  |  Miglior mano {d}", "Partidas {a}  |  Vitórias {b}  |  Melhor ante {c}  |  Melhor mão {d}"],
+["Runs {a} | Wins {b} | Best ante {c} | Best hand {d}", "Parties {a} | Victoires {b} | Meilleure ante {c} | Meilleure main {d}", "Partidas {a} | Victorias {b} | Mejor ante {c} | Mejor mano {d}", "Partien {a} | Siege {b} | Bestes Ante {c} | Beste Hand {d}", "Partite {a} | Vittorie {b} | Miglior ante {c} | Miglior mano {d}", "Partidas {a} | Vitórias {b} | Melhor ante {c} | Melhor mão {d}"],
 ["Saved by Second Chance!", "Sauvé par Seconde chance !", "¡Te salvó Segunda oportunidad!", "Gerettet durch Zweite Chance!", "Salvato da Seconda occasione!", "Salvo pela Segunda oportunidade!"],
 ["Second Chance kept you alive", "Seconde chance t’a sauvé", "Segunda oportunidad te mantuvo en pie", "Zweite Chance hat dich gerettet", "Seconda occasione ti ha tenuto in gioco", "A Segunda oportunidade salvou-te"],
 ["Saved!", "Sauvé !", "¡Salvado!", "Gerettet!", "Salvo!", "Salvo!"],

@@ -1704,7 +1704,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
 .gm-beat-duel .fo-info{flex:.9;display:flex;flex-direction:column;gap:calc(var(--u)*1.1);align-items:center;justify-content:center;background:rgba(10,6,24,.6);border-radius:calc(var(--u)*1.6);padding:calc(var(--u)*1.6);border:calc(var(--u)*.25) solid #0f0720}
 .gm-beat-duel .fo-info h3{margin:0;font:900 calc(var(--u)*3)/1 "Trebuchet MS",system-ui,sans-serif;text-align:center}
 .gm-beat-duel .fo-info p{margin:0;font:700 calc(var(--u)*1.5)/1.4 system-ui,sans-serif;text-align:center;color:#d9d3f5}
-.gm-beat-duel .fo-rows{display:flex;flex-direction:column;gap:calc(var(--u)*.8);width:min(calc(var(--u)*56),92%);max-height:78%;overflow-y:auto;margin-top:calc(var(--u)*3);padding:calc(var(--u)*.5);scrollbar-width:thin}
+.gm-beat-duel .fo-rows{display:flex;flex-direction:column;gap:calc(var(--u)*.8);width:min(calc(var(--u)*56),92%);max-height:calc(100% - var(--u)*15);overflow-y:auto;margin-top:calc(var(--u)*1.5);margin-bottom:calc(var(--u)*4);padding:calc(var(--u)*.5);scrollbar-width:thin}
 .gm-beat-duel .fo-b.row{display:flex;justify-content:space-between;align-items:center;gap:calc(var(--u)*1.4);padding:calc(var(--u)*.8) calc(var(--u)*1.6);font-size:calc(var(--u)*1.9);text-align:left}
 .gm-beat-duel .fo-b.row .v{display:flex;align-items:center;gap:calc(var(--u)*1);min-width:calc(var(--u)*15);justify-content:flex-end}
 .gm-beat-duel .fo-b.row .v i{font-style:normal;padding:0 calc(var(--u)*.7);opacity:.7;cursor:pointer}
@@ -1725,7 +1725,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
 .gm-beat-duel .fo-vs .s{font:900 calc(var(--u)*4)/1 "Trebuchet MS",system-ui,sans-serif;color:#ffd23f}
 .gm-beat-duel .fo-vs .w{color:#7dff9e!important}
 .gm-beat-duel .fo-key{min-width:calc(var(--u)*9)!important}
-.gm-beat-duel .fo-hint{font:600 calc(var(--u)*1.3)/1.3 system-ui,sans-serif;color:#b9b0dd;text-align:center}
+.gm-beat-duel .fo-hint{font:600 calc(var(--u)*1.3)/1.3 system-ui,sans-serif;color:#b9b0dd;text-align:center;text-shadow:0 1px 3px #000,0 0 6px rgba(0,0,0,.8)}
 ` + SHARED_CSS('.gm-beat-duel', '#ff5fa8');
 
 

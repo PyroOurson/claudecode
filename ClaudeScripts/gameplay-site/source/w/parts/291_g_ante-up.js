@@ -3103,7 +3103,7 @@
       ovl.innerHTML = '<div class="m-menu"><div class="m-deco"></div><div class="m-logo"><span translate="no">ANTE UP</span><small>a poker roguelike</small></div><div class="m-btns">' +
         (has ? '<button class="mb big" data-m="cont"><b>Continue</b><small>' + sum + '</small></button>' : '') +
         '<button class="mb' + (has ? '' : ' big') + '" data-m="new"><b>New Run</b></button><button class="mb" data-m="col"><b>Collection</b></button><button class="mb" data-m="opt"><b>Options</b></button><button class="mb" data-m="help"><b>How to Play</b></button></div>' +
-        '<div class="m-st">' + esc(TF('Runs {a}  |  Wins {b}  |  Best ante {c}  |  Best hand {d}', { a: ST.runs, b: ST.wins, c: ST.bestAnte, d: fmtN(ST.bestHand) })) + '</div></div>';
+        '<div class="m-st">' + esc(TF('Runs {a} | Wins {b} | Best ante {c} | Best hand {d}', { a: ST.runs, b: ST.wins, c: ST.bestAnte, d: fmtN(ST.bestHand) })) + '</div></div>';
       const dc = ovl.querySelector('.m-deco');
       ['grin', 'understudy', 'kingpin', 'showboat', 'gambler'].forEach((k, i) => { const w = hnode('div', 'md-j'); w.style.setProperty('--i', i); w.append(blit(jokerArt(JK[k]))); dc.append(w); });
       layout(); hudUpdate();
