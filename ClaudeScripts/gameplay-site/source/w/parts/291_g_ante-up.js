@@ -8,7 +8,7 @@
   const RNAME = ['Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King', 'Ace'];
   const rlab = r => RL[r - 2];
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const cn = c => c.e === 'stone' ? 'Brick Card' : RNAME[c.r - 2] + ' of ' + SN[c.s];
+  const cn = c => c.e === 'stone' ? TR('Brick Card') : TF('{r} of {s}', { r: TR(RNAME[c.r - 2]), s: TR(SN[c.s]) });
   const chipVal = c => c.e === 'stone' ? 0 : c.r === 14 ? 11 : c.r >= 11 ? 10 : c.r;
 
   let RS = 1;
@@ -942,26 +942,26 @@
     const L = [], b = R.cur;
     R.ph = 'cash';
     const sv = R.score;
-    L.push({ l: b.n, v: b.rew, k: 'blind' });
-    if (R.hands > 0) L.push({ l: R.hands === 1 ? '1 hand left' : R.hands + ' hands left', v: R.hands });
+    L.push({ l: TR(b.n), v: b.rew, k: 'blind' });
+    if (R.hands > 0) L.push({ l: R.hands === 1 ? TR('1 hand left') : TF('{n} hands left', { n: R.hands }), v: R.hands });
     const i = Math.min(Math.floor(Math.max(R.money, 0) / 4), icapN());
-    if (i > 0) L.push({ l: 'Interest ($1 per $4)', v: i });
-    if (vo('tip')) L.push({ l: VK.tip.n, v: 1 });
+    if (i > 0) L.push({ l: TR('Interest ($1 per $4)'), v: i });
+    if (vo('tip')) L.push({ l: TR(VK.tip.n), v: 1 });
     const gold = R.hand.filter(c => c.e === 'gold' && !deb(c)).length;
-    if (gold) L.push({ l: gold === 1 ? '1 Gilded card held' : gold + ' Gilded cards held', v: gold * 2 });
+    if (gold) L.push({ l: gold === 1 ? TR('1 Gilded card held') : TF('{n} Gilded cards held', { n: gold }), v: gold * 2 });
     const mp = mostPlayed();
     R.hand.filter(c => c.z === 'blue').forEach(c => { if (R.hl[mp].played > 0 && luck(1, 2)) { const t = addCons('planet', 'pl_' + mp); if (t) R.q.push({ id: c.id, t: 'msg', text: 'Gem!' }); } });
     const ctx = { boss: b.boss, L };
     R.jokers.slice().forEach(j => {
       if (jOff(j)) return;
       const e = call(j, 'rend', ctx);
-      if (e && e.$) L.push({ l: JK[j.k].n, v: e.$, id: j.id });
+      if (e && e.$) L.push({ l: TR(JK[j.k].n), v: e.$, id: j.id });
       if (e && e.msg) note(j.id, e.msg);
     });
-    R.jokers.filter(j => j.rn).forEach(j => L.push({ l: 'Rented: ' + JK[j.k].n, v: -2, id: j.id }));
+    R.jokers.filter(j => j.rn).forEach(j => L.push({ l: TF('Rented: {j}', { j: TR(JK[j.k].n) }), v: -2, id: j.id }));
     if (b.boss) {
       R.bossBeat++;
-      R.tags.filter(t => t === 'bond').forEach(() => L.push({ l: TGK.bond.n, v: 20 }));
+      R.tags.filter(t => t === 'bond').forEach(() => L.push({ l: TR(TGK.bond.n), v: 20 }));
       R.tags = R.tags.filter(t => t !== 'bond');
       if (DE('scholar') && R.hl[mp].played > 0) { levelHand(mp, 1); R.q.push({ t: 'lvl', hid: mp }); }
     }
@@ -1394,7 +1394,7 @@
     const h = HAND[id];
     PLK['pl_' + id] = {
       k: 'pl_' + id, n: h.pl, type: 'planet', $: 3, hid: id,
-      d: () => 'Level up ' + h.n + ': +' + h.lc + ' Chips and +' + h.lm + ' Mult',
+      d: () => ['Level up {h}: +{c} Chips and +{m} Mult', { h: TR(h.n), c: h.lc, m: h.lm }],
       use: () => { levelHand(id, 1); R.q.push({ t: 'lvl', hid: id }); }
     };
   });
@@ -1583,17 +1583,17 @@
   J('wilddice', 'Wild Dice', 1, 4, 'Rolls two dice and adds their total to Mult', { main: () => ({ m: 2 + rint(6) + rint(6) }) }, 'dice');
   J('pokerface', 'Poker Face', 1, 5, 'Each face card held in hand gives +3 Mult', { held: c => isFace(c.card) && { m: 3 } }, 'skull');
   J('credit', 'Credit Line', 1, 2, 'You can go up to $15 into debt', { p: { debt: 15 } }, 'coin');
-  J('bread', 'Fresh Bread', 1, 5, j => '+' + j.m + ' Mult, loses 2 Mult after every hand played', { init: () => ({ m: 16 }), nb: 1, main: (c, j) => j.m > 0 && { m: j.m }, after: (c, j) => { j.m -= 2; if (j.m <= 0) { killJoker(j, 'melt'); return { msg: 'Eaten!' }; } } }, 'plus');
-  J('ice', 'Ice Sculpture', 1, 5, j => '+' + j.c + ' Chips, melts by 15 Chips at the end of every round', { init: () => ({ c: 150 }), nb: 1, main: (c, j) => j.c > 0 && { c: j.c }, rend: (c, j) => { j.c -= 15; if (j.c <= 0) { killJoker(j, 'melt'); return { msg: 'Melted!' }; } return { msg: '-15' }; } }, 'gem');
+  J('bread', 'Fresh Bread', 1, 5, j => ['+{v} Mult, loses 2 Mult after every hand played', { v: j.m }], { init: () => ({ m: 16 }), nb: 1, main: (c, j) => j.m > 0 && { m: j.m }, after: (c, j) => { j.m -= 2; if (j.m <= 0) { killJoker(j, 'melt'); return { msg: 'Eaten!' }; } } }, 'plus');
+  J('ice', 'Ice Sculpture', 1, 5, j => ['+{v} Chips, melts by 15 Chips at the end of every round', { v: j.c }], { init: () => ({ c: 150 }), nb: 1, main: (c, j) => j.c > 0 && { c: j.c }, rend: (c, j) => { j.c -= 15; if (j.c <= 0) { killJoker(j, 'melt'); return { msg: 'Melted!' }; } return { msg: '-15' }; } }, 'gem');
   J('counter', 'Card Counter', 1, 5, '+3 Chips for every card left in your draw pile', { main: () => R.draw.length > 0 && { c: 3 * R.draw.length } }, 'gem');
   J('purse', 'Coin Purse', 1, 5, '+1 Mult for every $4 you have', { main: () => R.money >= 4 && { m: Math.floor(R.money / 4) } }, 'coin');
   J('rainy', 'Rainy Day', 1, 4, '+50 Chips while you have $10 or less', { main: () => R.money <= 10 && { c: 50 } }, 'coin');
   J('royalpay', 'Royal Pay', 1, 5, 'Played Kings earn $1 when scored', { card: c => rk(c.card, [13]) && { $: 1 } }, 'coin');
   J('oddball', 'Oddball', 1, 4, 'Played Aces, 9s, 7s, 5s and 3s give +3 Mult when scored', { card: c => isOdd(c.card) && { m: 3 } }, 'plus');
   J('evenhand', 'Evenhanded', 1, 4, 'Played 10s, 8s, 6s, 4s and 2s give +20 Chips when scored', { card: c => isEven(c.card) && { c: 20 } }, 'coin');
-  J('sapling', 'Sapling', 1, 5, j => 'Gains +2 Mult at the end of every round (now +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, main: (c, j) => j.m > 0 && { m: j.m }, rend: (c, j) => { j.m += 2; return { msg: '+2 Mult' }; } }, 'plus');
-  J('hotstreak', 'Hot Streak', 1, 5, j => 'Gains +2 Mult for each hand in a row that contains a Pair, resets otherwise (now +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, before: (c, j) => { if (c.has.pair) j.m += 2; else if (j.m) { j.m = 0; return { msg: 'Reset' }; } }, main: (c, j) => j.m > 0 && { m: j.m } }, 'plus');
-  J('shredder', 'Paper Shredder', 1, 5, j => 'Gains +2 Chips for every card you discard (now +' + j.c + ')', { init: () => ({ c: 0 }), nb: 1, disc: (c, j) => { j.c += 2 * c.cards.length; return { msg: '+' + 2 * c.cards.length + ' Chips' }; }, main: (c, j) => j.c > 0 && { c: j.c } }, 'coin');
+  J('sapling', 'Sapling', 1, 5, j => ['Gains +2 Mult at the end of every round (now +{v})', { v: j.m }], { init: () => ({ m: 0 }), nb: 1, main: (c, j) => j.m > 0 && { m: j.m }, rend: (c, j) => { j.m += 2; return { msg: '+2 Mult' }; } }, 'plus');
+  J('hotstreak', 'Hot Streak', 1, 5, j => ['Gains +2 Mult for each hand in a row that contains a Pair, resets otherwise (now +{v})', { v: j.m }], { init: () => ({ m: 0 }), nb: 1, before: (c, j) => { if (c.has.pair) j.m += 2; else if (j.m) { j.m = 0; return { msg: 'Reset' }; } }, main: (c, j) => j.m > 0 && { m: j.m } }, 'plus');
+  J('shredder', 'Paper Shredder', 1, 5, j => ['Gains +2 Chips for every card you discard (now +{v})', { v: j.c }], { init: () => ({ c: 0 }), nb: 1, disc: (c, j) => { j.c += 2 * c.cards.length; return { msg: '+' + 2 * c.cards.length + ' Chips' }; }, main: (c, j) => j.c > 0 && { c: j.c } }, 'coin');
   J('tourist', 'Tourist', 1, 4, 'Earn $3 whenever you skip a blind', { skipb: () => ({ $: 3 }) }, 'coin');
   J('stamps', 'Stamp Collector', 1, 5, 'Played cards with a stamp give +6 Mult when scored', { card: c => c.card.z && { m: 6 } }, 'star');
   J('map', 'Treasure Map', 1, 4, 'Its sell value goes up by $5 every time you beat a Boss Blind', { nb: 1, rend: (c, j) => { if (c.boss) { j.a += 5; return { msg: '+$5 value' }; } } }, 'coin');
@@ -1616,26 +1616,26 @@
   J('rally', 'Rally Race', 2, 7, 'X2 Mult if the hand is a Straight', { main: c => c.h.id === 'straight' && { x: 2 } }, 'ex');
   J('hattrick', 'Hat Trick', 2, 7, 'X2.5 Mult if the hand is Three of a Kind', { main: c => c.h.id === 'three' && { x: 2.5 } }, 'ex');
   J('pockets', 'Empty Pockets', 2, 6, 'X1.5 Mult while you hold no consumables', { main: () => !R.cons.length && { x: 1.5 } }, 'ex');
-  J('ironworks', 'Ironworks', 2, 7, j => 'X0.15 Mult for every Iron card in your full deck (now X' + (1 + .15 * cnt('', k => k.e === 'steel')).toFixed(2) + ')', { main: () => { const n = cnt('', k => k.e === 'steel'); return n > 0 && { x: 1 + .15 * n }; } }, 'ex');
-  J('quarry', 'Quarry', 2, 6, j => '+30 Chips for every Brick card in your full deck (now +' + 30 * cnt('', k => k.e === 'stone') + ')', { main: () => { const n = cnt('', k => k.e === 'stone'); return n > 0 && { c: 30 * n }; } }, 'coin');
-  J('blower', 'Glassblower', 2, 6, j => 'Gains X0.4 Mult every time a Crystal card shatters (now X' + j.x.toFixed(1) + ')', { init: () => ({ x: 1 }), nb: 1, destroyed: (c, j) => { const n = c.cards.filter(k => k.e === 'glass').length; if (n) { j.x += .4 * n; return { msg: 'Stronger!' }; } }, main: (c, j) => j.x > 1 && { x: j.x } }, 'gem');
+  J('ironworks', 'Ironworks', 2, 7, j => ['X0.15 Mult for every Iron card in your full deck (now X{v})', { v: (1 + .15 * cnt('', k => k.e === 'steel')).toFixed(2) }], { main: () => { const n = cnt('', k => k.e === 'steel'); return n > 0 && { x: 1 + .15 * n }; } }, 'ex');
+  J('quarry', 'Quarry', 2, 6, j => ['+30 Chips for every Brick card in your full deck (now +{v})', { v: 30 * cnt('', k => k.e === 'stone') }], { main: () => { const n = cnt('', k => k.e === 'stone'); return n > 0 && { c: 30 * n }; } }, 'coin');
+  J('blower', 'Glassblower', 2, 6, j => ['Gains X0.4 Mult every time a Crystal card shatters (now X{v})', { v: j.x.toFixed(1) }], { init: () => ({ x: 1 }), nb: 1, destroyed: (c, j) => { const n = c.cards.filter(k => k.e === 'glass').length; if (n) { j.x += .4 * n; return { msg: 'Stronger!' }; } }, main: (c, j) => j.x > 1 && { x: j.x } }, 'gem');
   J('goldsmith', 'Goldsmith', 2, 6, 'Played Gilded cards earn $2 when scored', { card: c => c.card.e === 'gold' && { $: 2 } }, 'coin');
-  J('fourleaf', 'Four-Leaf', 2, 6, j => 'Gains +3 Mult every time a Clover card triggers (now +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, lucky: (c, j) => { j.m += 3; }, main: (c, j) => j.m > 0 && { m: j.m } }, 'dice');
+  J('fourleaf', 'Four-Leaf', 2, 6, j => ['Gains +3 Mult every time a Clover card triggers (now +{v})', { v: j.m }], { init: () => ({ m: 0 }), nb: 1, lucky: (c, j) => { j.m += 3; }, main: (c, j) => j.m > 0 && { m: j.m } }, 'dice');
   J('spirit', 'Free Spirit', 2, 6, 'Played Wild cards give +8 Mult when scored', { card: c => c.card.e === 'wild' && { m: 8 } }, 'star');
   J('heirloom', 'Heirloom', 2, 6, 'Played cards with an enhancement give +10 Chips and +2 Mult when scored', { card: c => c.card.e && c.card.e !== 'stone' && { c: 10, m: 2 } }, 'gem');
-  J('curator', 'Curator', 2, 7, j => 'Gains X0.1 Mult for every playing card added to your deck (now X' + j.x.toFixed(1) + ')', { init: () => ({ x: 1 }), nb: 1, add: (c, j) => { j.x += .1; }, main: (c, j) => j.x > 1 && { x: j.x } }, 'gem');
-  J('gazer', 'Stargazer', 2, 6, j => 'Gains +2 Mult every time you use a Gem card (now +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, use: (c, j) => { if (c.cons.type === 'planet') { j.m += 2; return { msg: '+2 Mult' }; } }, main: (c, j) => j.m > 0 && { m: j.m } }, 'gem');
-  J('apprentice', 'Apprentice', 2, 6, j => 'Gains X0.1 Mult every time you use a Trick card (now X' + j.x.toFixed(1) + ')', { init: () => ({ x: 1 }), nb: 1, use: (c, j) => { if (c.cons.type === 'tarot') { j.x += .1; return { msg: 'Stronger!' }; } }, main: (c, j) => j.x > 1 && { x: j.x } }, 'star');
-  J('pawnbroker', 'Pawnbroker', 2, 6, j => 'Gains X0.15 Mult for every Joker you sell (now X' + j.x.toFixed(2) + ')', { init: () => ({ x: 1 }), nb: 1, sold: (c, j) => { if (!c.item.type && c.item !== j) { j.x += .15; return { msg: 'Stronger!' }; } }, main: (c, j) => j.x > 1 && { x: j.x } }, 'coin');
+  J('curator', 'Curator', 2, 7, j => ['Gains X0.1 Mult for every playing card added to your deck (now X{v})', { v: j.x.toFixed(1) }], { init: () => ({ x: 1 }), nb: 1, add: (c, j) => { j.x += .1; }, main: (c, j) => j.x > 1 && { x: j.x } }, 'gem');
+  J('gazer', 'Stargazer', 2, 6, j => ['Gains +2 Mult every time you use a Gem card (now +{v})', { v: j.m }], { init: () => ({ m: 0 }), nb: 1, use: (c, j) => { if (c.cons.type === 'planet') { j.m += 2; return { msg: '+2 Mult' }; } }, main: (c, j) => j.m > 0 && { m: j.m } }, 'gem');
+  J('apprentice', 'Apprentice', 2, 6, j => ['Gains X0.1 Mult every time you use a Trick card (now X{v})', { v: j.x.toFixed(1) }], { init: () => ({ x: 1 }), nb: 1, use: (c, j) => { if (c.cons.type === 'tarot') { j.x += .1; return { msg: 'Stronger!' }; } }, main: (c, j) => j.x > 1 && { x: j.x } }, 'star');
+  J('pawnbroker', 'Pawnbroker', 2, 6, j => ['Gains X0.15 Mult for every Joker you sell (now X{v})', { v: j.x.toFixed(2) }], { init: () => ({ x: 1 }), nb: 1, sold: (c, j) => { if (!c.item.type && c.item !== j) { j.x += .15; return { msg: 'Stronger!' }; } }, main: (c, j) => j.x > 1 && { x: j.x } }, 'coin');
   J('mono', 'Monotone', 2, 6, 'X2 Mult if every card held in hand is the same colour', { main: c => c.held.length > 0 && (c.held.every(k => isRed(k)) || c.held.every(k => isBlack(k))) && { x: 2 } }, 'ex');
   J('habits', 'Old Habits', 2, 6, 'X1.5 Mult if your last hand was the same type', { main: c => R.last === c.h.id && { x: 1.5 } }, 'clock');
   J('variety', 'Variety Show', 2, 6, 'X1.5 Mult if this hand type has not been played this round', { main: c => R.hl[c.h.id].pr <= 1 && { x: 1.5 } }, 'star');
-  J('fourth', 'Every Fourth', 2, 5, j => 'X2.5 Mult on every fourth hand played (' + (j.n % 4) + '/4)', { init: () => ({ n: 0 }), nb: 1, before: (c, j) => { j.n++; }, main: (c, j) => j.n % 4 === 0 && { x: 2.5 } }, 'clock');
+  J('fourth', 'Every Fourth', 2, 5, j => ['X2.5 Mult on every fourth hand played ({v}/4)', { v: (j.n % 4) }], { init: () => ({ n: 0 }), nb: 1, before: (c, j) => { j.n++; }, main: (c, j) => j.n % 4 === 0 && { x: 2.5 } }, 'clock');
   J('gambler', 'Gambler', 2, 5, '1 in 3 chance for X3 Mult', { main: () => luck(1, 3) && { x: 3 } }, 'dice');
   J('magnet', 'Coin Magnet', 2, 5, 'Earn $2 whenever 5 cards score', { main: c => c.sc.length >= 5 && { $: 2 } }, 'coin');
   J('banker', 'Banker', 2, 6, 'Interest can reach $2 more per round', { p: { icap: 2 } }, 'coin');
-  J('window', 'Window Shopper', 2, 5, j => 'Gains +3 Mult for every reroll in the shop (now +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, reroll: (c, j) => { j.m += 3; return { msg: '+3 Mult' }; }, main: (c, j) => j.m > 0 && { m: j.m } }, 'dice');
-  J('skipper', 'Skipper', 2, 6, () => 'X0.3 Mult for every blind skipped this run (now X' + (1 + .3 * (R ? R.skips : 0)).toFixed(1) + ')', { main: () => R.skips > 0 && { x: 1 + .3 * R.skips } }, 'clock');
+  J('window', 'Window Shopper', 2, 5, j => ['Gains +3 Mult for every reroll in the shop (now +{v})', { v: j.m }], { init: () => ({ m: 0 }), nb: 1, reroll: (c, j) => { j.m += 3; return { msg: '+3 Mult' }; }, main: (c, j) => j.m > 0 && { m: j.m } }, 'dice');
+  J('skipper', 'Skipper', 2, 6, () => ['X0.3 Mult for every blind skipped this run (now X{v})', { v: (1 + .3 * (R ? R.skips : 0)).toFixed(1) }], { main: () => R.skips > 0 && { x: 1 + .3 * R.skips } }, 'clock');
   J('sellout', 'Sellout', 2, 5, 'Sell this Joker during a Boss Blind to cancel its rule', { sell: () => { if (R.cur && R.cur.boss) R.bossOff = true; } }, 'skull');
   J('hopscotch', 'Hopscotch', 2, 6, 'Straights can skip one rank, like 3 5 6 7 9', { f: 'short' }, 'ex');
   J('corners', 'Four Corners', 2, 7, 'Flushes and Straights can be made with 4 cards', { f: 'four' }, 'star');
@@ -1646,21 +1646,21 @@
 
   J('understudy', 'Understudy', 3, 10, 'Copies the ability of the Joker to its right', { copy: 'right' }, 'star');
   J('mimic', 'Mimic', 3, 9, 'Copies the ability of your rightmost Joker', { copy: 'last' }, 'star');
-  J('phoenix', 'Phoenix', 3, 8, j => 'Gains X0.2 Mult for every playing card destroyed (now X' + j.x.toFixed(1) + ')', { init: () => ({ x: 1 }), nb: 1, destroyed: (c, j) => { j.x += .2 * c.cards.length; return { msg: 'Stronger!' }; }, main: (c, j) => j.x > 1 && { x: j.x } }, 'star');
-  J('tycoon', 'Tycoon', 3, 8, () => 'X0.1 Mult for every $5 you have (now X' + (1 + .1 * Math.floor(Math.max(0, R ? R.money : 0) / 5)).toFixed(1) + ')', { main: () => R.money >= 5 && { x: 1 + .1 * Math.floor(R.money / 5) } }, 'coin');
+  J('phoenix', 'Phoenix', 3, 8, j => ['Gains X0.2 Mult for every playing card destroyed (now X{v})', { v: j.x.toFixed(1) }], { init: () => ({ x: 1 }), nb: 1, destroyed: (c, j) => { j.x += .2 * c.cards.length; return { msg: 'Stronger!' }; }, main: (c, j) => j.x > 1 && { x: j.x } }, 'star');
+  J('tycoon', 'Tycoon', 3, 8, () => ['X0.1 Mult for every $5 you have (now X{v})', { v: (1 + .1 * Math.floor(Math.max(0, R ? R.money : 0) / 5)).toFixed(1) }], { main: () => R.money >= 5 && { x: 1 + .1 * Math.floor(R.money / 5) } }, 'coin');
   J('court', 'Royal Court', 3, 8, 'Played Kings and Queens give X1.4 Mult when scored', { card: c => rk(c.card, [12, 13]) && { x: 1.4 } }, 'star');
   J('throne', 'Throne Room', 3, 8, 'Each King held in hand gives X1.3 Mult', { held: c => rk(c.card, [13]) && { x: 1.3 } }, 'star');
-  J('snowball', 'Snowball', 3, 8, j => 'Gains X0.1 Mult for every hand played, resets when you discard (now X' + j.x.toFixed(1) + ')', { init: () => ({ x: 1 }), nb: 1, before: (c, j) => { j.x += .1; }, disc: (c, j) => { if (j.x > 1) { j.x = 1; return { msg: 'Reset' }; } }, main: (c, j) => j.x > 1 && { x: j.x } }, 'gem');
+  J('snowball', 'Snowball', 3, 8, j => ['Gains X0.1 Mult for every hand played, resets when you discard (now X{v})', { v: j.x.toFixed(1) }], { init: () => ({ x: 1 }), nb: 1, before: (c, j) => { j.x += .1; }, disc: (c, j) => { if (j.x > 1) { j.x = 1; return { msg: 'Reset' }; } }, main: (c, j) => j.x > 1 && { x: j.x } }, 'gem');
   J('squadron', 'Ace Squadron', 3, 8, 'Retrigger every scored Ace twice', { rep: c => c.zone === 'play' && rk(c.card, [14]) ? 2 : 0 }, 'star');
   J('dynamo', 'Dynamo', 3, 9, 'X3 Mult if 5 cards score', { main: c => c.sc.length >= 5 && { x: 3 } }, 'ex');
   J('alchemist', 'Alchemist', 3, 7, 'Played 7s become Gilded when scored', { before: c => { let n = 0; c.sc.forEach(k => { if (rk(k, [7]) && k.e !== 'gold' && !deb(k)) { k.e = 'gold'; jq(k.id); n++; } }); return n ? { msg: 'Gilded!' } : null; } }, 'coin');
   J('architect', 'Architect', 3, 8, 'On the first hand of the round, every scored card permanently gains +10 Chips', { before: c => { if (R.hpr !== 1 || c.copy) return; c.sc.forEach(k => { if (!deb(k)) { k.x = (k.x || 0) + 10; jq(k.id); } }); return { msg: '+10 Chips' }; } }, 'plus');
-  J('professor', 'Professor', 3, 7, j => 'Levels up the played hand on every fifth hand played (' + (j.n % 5) + '/5)', { init: () => ({ n: 0 }), nb: 1, before: (c, j) => { j.n++; if (j.n % 5 === 0) { levelHand(c.h.id, 1); R.q.push({ t: 'lvl', hid: c.h.id }); return { msg: 'Level up!' }; } } }, 'star');
+  J('professor', 'Professor', 3, 7, j => ['Levels up the played hand on every fifth hand played ({v}/5)', { v: (j.n % 5) }], { init: () => ({ n: 0 }), nb: 1, before: (c, j) => { j.n++; if (j.n % 5 === 0) { levelHand(c.h.id, 1); R.q.push({ t: 'lvl', hid: c.h.id }); return { msg: 'Level up!' }; } } }, 'star');
   J('fusion', 'Fusion', 3, 8, 'X0.5 Mult for each different suit among scored cards after the first', { main: c => { const st = new Set(); c.sc.forEach(k => { if (k.e !== 'stone' && !deb(k)) st.add(k.e === 'wild' ? 'w' + k.id : k.s); }); const n = Math.min(4, st.size); return n > 1 && { x: 1 + .5 * (n - 1) }; } }, 's3');
 
   J('kingpin', 'Kingpin', 4, 15, 'Played face cards give X1.5 Mult when scored', { card: c => isFace(c.card) && { x: 1.5 } }, 'star');
   J('grandmaster', 'Grandmaster', 4, 15, 'X0.4 Mult for every Joker you own', { main: () => ({ x: 1 + .4 * R.jokers.length }) }, 'star');
-  J('evergreen', 'Evergreen', 4, 15, j => 'Gains X0.25 Mult at the end of every round (now X' + j.x.toFixed(2) + ')', { init: () => ({ x: 1 }), nb: 1, rend: (c, j) => { j.x += .25; return { msg: 'Stronger!' }; }, main: (c, j) => j.x > 1 && { x: j.x } }, 'gem');
+  J('evergreen', 'Evergreen', 4, 15, j => ['Gains X0.25 Mult at the end of every round (now X{v})', { v: j.x.toFixed(2) }], { init: () => ({ x: 1 }), nb: 1, rend: (c, j) => { j.x += .25; return { msg: 'Stronger!' }; }, main: (c, j) => j.x > 1 && { x: j.x } }, 'gem');
   J('dragon', 'Dragon', 4, 15, 'Retrigger every scored card', { rep: c => c.zone === 'play' ? 1 : 0 }, 'clock');
   J('wishmaker', 'Wishmaker', 4, 15, 'Creates a Shadow Omen card (it needs no slot) every time you beat a Boss Blind', { nb: 1, rend: c => { if (c.boss) { addCons('spectral', rollCons('spectral', ['genie']).k, 'neg'); return { msg: 'Omen!' }; } } }, 'skull');
 
@@ -1682,18 +1682,23 @@
   const PKN = { arcana: 'Trick', cosmos: 'Gem', standard: 'Card', jester: 'Joker', specter: 'Omen' };
   const PKS = { normal: '', jumbo: 'Big ', mega: 'Giant ' };
   const PKD = {
-    arcana: n => 'Choose %p of ' + n + ' Trick cards to use right away',
-    cosmos: n => 'Choose %p of ' + n + ' Gem cards to use right away',
-    standard: n => 'Choose %p of ' + n + ' playing cards to add to your deck',
-    jester: n => 'Choose %p of ' + n + ' Jokers',
-    specter: n => 'Choose %p of ' + n + ' Omen cards to use right away'
+    arcana: 'Choose {p} of {n} Trick cards to use right away',
+    cosmos: 'Choose {p} of {n} Gem cards to use right away',
+    standard: 'Choose {p} of {n} playing cards to add to your deck',
+    jester: 'Choose {p} of {n} Jokers',
+    specter: 'Choose {p} of {n} Omen cards to use right away'
   };
+  const selMsg = d => !d.t ? 'Cannot use now' : d.t[0] === d.t[1] ? (d.t[0] === 1 ? 'Select 1 card first' : TF('Select {n} cards first', { n: d.t[0] })) : TF('Select {a} to {b} cards first', { a: d.t[0], b: d.t[1] });
+  const pkName = p => PKS[p.size] + PKN[p.kind] + ' Pack';
+  const pkDesc = p => TF(PKD[p.kind], { p: p.pick, n: p.n });
   const PKC = { arcana: ['#7a3fc8', '#2a1a5e', 'hat'], cosmos: ['#2a9ab8', '#0e2a4e', 'gem'], standard: ['#c8402a', '#5e1a1a', 'cards'], jester: ['#e8a03a', '#5e3a1a', 'crown'], specter: ['#4a6a8a', '#101a2e', 'eye'] };
   const EMBS = { marked: 'cards', inkwell: 'quill', shape: 'mask', glassact: 'gem', grip: 'hand', mason: 'brick', gilding: 'coin', leaves: 'leaf', velvet: 'heart', sparkle: 'star', midnight: 'moon', greenhouse: 'leaf', promo: 'up', demo: 'down', vanish: 'hat', mirror: 'mirror', lift: 'cards', tophat: 'hat', spot: 'sun', varnish: 'brush', saw: 'saw', levitate: 'up', passhat: 'hat' };
   const SPEM = { comet: 'comet', genie: 'lamp', eclipse: 'moon', crow: 'crow', broken: 'mirror', ladder: 'ladder', horseshoe: 'shoe', wishbone: 'bone', falling: 'comet', quill: 'quill', fullmoon: 'moon', storm: 'bolt', fog: 'cloud', lowtide: 'wave', dust: 'skull' };
   const SPS = ['skull', 'eye', 'flame', 'moon', 'star'];
   const VSYM = ['cart', 'cup', 'gem', 'star', 'scales', 'leaf', 'coin', 'crown', 'wheel', 'pillars'];
   const TPAL = [['#6a2d9c', '#e070b0'], ['#1f4a8c', '#58c0e8'], ['#8c2d2d', '#f0a050'], ['#1f6b4a', '#7ae0a0'], ['#5a2d6e', '#a080f0'], ['#8c5a1f', '#f0d060']];
+  const TR = s => window.gpI18n && typeof s === 'string' ? gpI18n.t(s) : s;
+  const TF = (s, o) => window.gpI18n ? gpI18n.t(s, o) : String(s).replace(/\{(\w+)\}/g, (m, k) => k in o ? o[k] : m);
   const blit = src => { const c = document.createElement('canvas'); c.width = src.width; c.height = src.height; c.getContext('2d').drawImage(src, 0, 0); return c; };
   const esc = s => String(s).replace(/[&<>]/g, c => c === '&' ? '&amp;' : c === '<' ? '&lt;' : '&gt;');
   const fmtN = n => {
@@ -1706,7 +1711,7 @@
   const fmtS = n => n >= 1e6 ? (n >= 1e11 ? fmtN(n) : n.toLocaleString('en-US')) : n.toLocaleString('en-US');
   const fmtM = x => { if (!isFinite(x)) return '\u221e'; return x >= 1e6 ? fmtN(x) : (Math.abs(x - Math.round(x)) < 1e-6 ? String(Math.round(x)) : x.toFixed(2).replace(/0+$/, '').replace(/\.$/, '')); };
   const hnode = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
-  const jdesc = (j, def) => { const d = def.d; return typeof d === 'function' ? d(j) : d; };
+  const jdesc = (j, def) => { const d = def.d; if (typeof d !== 'function') return TR(d); const r = d(j); return TF(r[0], r[1]); };
 
   function consArt(c) {
     const d = CONSDEF(c);
@@ -1727,14 +1732,16 @@
 
   function consDesc(c) {
     const d = CONSDEF(c);
-    return typeof d.d === 'function' ? d.d() : d.d;
+    if (typeof d.d !== 'function') return TR(d.d);
+    const r = d.d();
+    return TF(r[0], r[1]);
   }
   function cardTipHtml(c) {
     if (c.fd) return '<b>Face-down card</b><i>Its identity is hidden until played</i>';
     const nm = cn(c);
     let s = '<b>' + nm + '</b>';
-    if (c.e !== 'stone') s += '<i>+' + chipVal(c) + ' chips' + (c.x ? ' (+' + c.x + ' permanent)' : '') + '</i>';
-    else if (c.x) s += '<i>+' + c.x + ' permanent chips</i>';
+    if (c.e !== 'stone') s += '<i>' + TF('+{n} Chips', { n: chipVal(c) }) + (c.x ? ' ' + TF('(+{n} permanent)', { n: c.x }) : '') + '</i>';
+    else if (c.x) s += '<i>' + TF('+{n} permanent Chips', { n: c.x }) + '</i>';
     if (c.e) { const d = ENH_D[c.e]; s += '<u>' + d[0] + '</u><i>' + d[1] + '</i>'; }
     if (c.ed) s += '<u class="ed-' + c.ed + '">' + TAGS_ED[c.ed] + '</u><i>' + ED_D[c.ed] + '</i>';
     if (c.z) { const d = SEAL_D[c.z]; s += '<u class="sl-' + c.z + '">' + d[0] + '</u><i>' + d[1] + '</i>'; }
@@ -1744,28 +1751,28 @@
   function jokerTipHtml(j, shopMode) {
     const d = JK[j.k];
     let s = '<b>' + d.n + '</b><em class="rar r' + d.r + '">' + RAR_N[d.r] + '</em><i>' + esc(jdesc(j, d)) + '</i>';
-    if (d.copy && !shopMode && R) { const t = copyTarget(j); s += '<u>' + (t ? 'Copying ' + JK[t.k].n : 'Incompatible') + '</u>'; }
+    if (d.copy && !shopMode && R) { const t = copyTarget(j); s += '<u>' + (t ? esc(TF('Copying {j}', { j: TR(JK[t.k].n) })) : TR('Incompatible')) + '</u>'; }
     if (j.ed) s += '<u class="ed-' + j.ed + '">' + TAGS_ED[j.ed] + '</u><i>' + ED_D[j.ed] + '</i>';
     if (j.et) s += '<u class="stk-e">Glued</u><i>Cannot be sold or destroyed</i>';
     if (j.rn) s += '<u class="stk-r">Rented</u><i>Costs $2 at the end of every round</i>';
     if (R && R.jokers.indexOf(j) >= 0 && jOff(j)) s += '<u class="dbf">Disabled</u>';
-    if (!shopMode) s += '<s>Sell value $' + sellVal(j) + '</s>';
+    if (!shopMode) s += '<s>' + esc(TF('Sell value ${n}', { n: sellVal(j) })) + '</s>';
     return s;
   }
   function consTipHtml(c, shopMode) {
     const d = CONSDEF(c), tn = TYPN[c.type];
     let s = '<b>' + d.n + '</b><em class="rar t-' + c.type + '">' + tn + '</em><i>' + esc(consDesc(c)) + '</i>';
-    if (c.type === 'planet' && R) { const h = HAND[d.hid], l = R.hl[d.hid]; s += '<u>' + h.n + ' level ' + l.lvl + '</u><i>Now ' + hv(d.hid).c + ' Chips x ' + hv(d.hid).m + ' Mult</i>'; }
+    if (c.type === 'planet' && R) { const h = HAND[d.hid], l = R.hl[d.hid]; s += '<u>' + TF('{h} level {n}', { h: TR(h.n), n: l.lvl }) + '</u><i>' + TF('Now {c} Chips x {m} Mult', { c: hv(d.hid).c, m: hv(d.hid).m }) + '</i>'; }
     if (c.ed) s += '<u class="ed-' + c.ed + '">' + TAGS_ED[c.ed] + '</u><i>' + ED_D[c.ed] + '</i>';
-    if (!shopMode && R) s += '<s>Sell value $' + sellVal(c) + '</s>';
+    if (!shopMode && R) s += '<s>' + esc(TF('Sell value ${n}', { n: sellVal(c) })) + '</s>';
     return s;
   }
   function voucherTipHtml(k) {
     const v = VK[k];
-    return '<b>' + v.n + '</b><em class="rar vch">Upgrade</em><i>' + esc(v.d) + '</i>' + (v.req ? '<u>Needs ' + VK[v.req].n + '</u>' : '');
+    return '<b>' + v.n + '</b><em class="rar vch">Upgrade</em><i>' + esc(v.d) + '</i>' + (v.req ? '<u>' + esc(TF('Needs {u}', { u: TR(VK[v.req].n) })) + '</u>' : '');
   }
   function packTipHtml(p) {
-    return '<b>' + PKS[p.size] + PKN[p.kind] + ' Pack</b><em class="rar pk">Booster Pack</em><i>' + PKD[p.kind](p.n).replace('%p', p.pick) + '</i>';
+    return '<b>' + TR(pkName(p)) + '</b><em class="rar pk">' + TR('Booster Pack') + '</em><i>' + pkDesc(p) + '</i>';
   }
   function tagTipHtml(k) { const t = TGK[k]; return '<b>' + t.n + '</b><em class="rar tg">Tag</em><i>' + esc(t.d) + '</i>'; }
   function bossTipHtml(k) { const b = BK[k]; return '<b>' + b.n + '</b><em class="rar bs">' + (b.fin ? 'Final Boss' : 'Boss Blind') + '</em><i>' + esc(b.d) + '</i>'; }
@@ -1824,6 +1831,7 @@
     };
 
     const wrap = hnode('div', 'bl-wrap');
+    wrap.setAttribute('data-i18n', '');
     const shk = hnode('div', 'bl-shk');
     const stage = hnode('div', 'bl-stage');
     wrap.append(shk); shk.append(stage);
@@ -2274,17 +2282,17 @@
       let x = G.main.x + G.main.w / 2, y = G.main.y + 40;
       if (en) { x = en.x; y = en.y - 47.5 * en.s - 6 + (off || 0); if (en.zone === 'jok' || en.zone === 'cons') y = en.y + 47.5 * en.s + 14 + (off || 0); }
       else if (key === 'money') { const r = G.hud.money; x = r[0] + r[2] / 2; y = r[1] + r[3] + 4; }
-      const e = hnode('div', 'bl-pop ' + (cls || ''), esc(text));
+      const e = hnode('div', 'bl-pop ' + (cls || ''), esc(TR(text)));
       e.style.left = x + 'px'; e.style.top = y + 'px';
       pops.append(e);
       setTimeout(() => e.remove(), 1100 / spd() + 200);
     }
     function say(t, ms) {
-      note.textContent = t; note.classList.add('on');
+      note.textContent = TR(t); note.classList.add('on');
       clearTimeout(say.t); say.t = setTimeout(() => note.classList.remove('on'), ms || 2200);
     }
     function banner(title, sub, col) {
-      const b = hnode('div', 'bl-bnr', '<b>' + esc(title) + '</b>' + (sub ? '<i>' + esc(sub) + '</i>' : ''));
+      const b = hnode('div', 'bl-bnr', '<b>' + esc(TR(title)) + '</b>' + (sub ? '<i>' + esc(TR(sub)) + '</i>' : ''));
       if (col) b.style.setProperty('--bc', col);
       stage.append(b);
       setTimeout(() => b.classList.add('out'), 1400 / spd());
@@ -2309,7 +2317,7 @@
         if (ev.t === 'juice') bumpEn(ev.id);
         else if (ev.t === 'msg') { if (ev.id) bumpEn(ev.id); pop(ev.id || 0, ev.text, 'msg'); }
         else if (ev.t === '$') { if (ev.id) bumpEn(ev.id); pop(ev.id || 'money', '$' + ev.v, 'cash'); snd('coin'); }
-        else if (ev.t === 'lvl') { snd('level'); if (ev.hid) say(HAND[ev.hid].n + ' leveled up to lvl.' + R.hl[ev.hid].lvl, 1600); }
+        else if (ev.t === 'lvl') { snd('level'); if (ev.hid) say(TF('{h} is now level {n}', { h: TR(HAND[ev.hid].n), n: R.hl[ev.hid].lvl }), 1600); }
         else if (ev.t === 'voucher') { snd('voucher'); banner('Upgrade bought', VK[ev.k].n, '#e8c040'); }
         else if (ev.t === 'shuf') say('Jokers shuffled!', 1500);
         else if (ev.t === 'saved') { say('Saved by Second Chance!', 2200); banner('Saved!', 'Second Chance kept you alive', '#6fcf86'); }
@@ -2351,7 +2359,7 @@
       const pv = previewHand();
       const nameEl = hel.mult.querySelector('.hm-name'), ce = hel.mult.querySelector('.hm-c b'), me = hel.mult.querySelector('.hm-m b');
       if (disp.hname != null) { nameEl.textContent = disp.hname; ce.textContent = fmtM(disp.chips); me.textContent = fmtM(disp.mult); }
-      else if (pv) { nameEl.innerHTML = pv.n + ' <small>lvl.' + pv.l + '</small>'; ce.textContent = pv.c; me.textContent = pv.m; }
+      else if (pv) { nameEl.innerHTML = esc(TR(pv.n)) + ' <small>' + esc(TF('level {n}', { n: pv.l })) + '</small>'; ce.textContent = pv.c; me.textContent = pv.m; }
       else { nameEl.textContent = ''; ce.textContent = '0'; me.textContent = '0'; }
       const rnd_ = R.ph === 'round';
       hel.hands.querySelector('b').textContent = rnd_ ? R.hands : hmax();
@@ -2471,7 +2479,7 @@
 
     async function scoreSeq(S) {
       const cnt = {};
-      disp.hname = HAND[S.hid].n + ' <small>lvl.' + R.hl[S.hid].lvl + '</small>'; disp.chips = 0; disp.mult = 0;
+      disp.hname = esc(TR(HAND[S.hid].n)) + ' <small>' + esc(TF('level {n}', { n: R.hl[S.hid].lvl })) + '</small>'; disp.chips = 0; disp.mult = 0;
       let ci = 0;
       hudUpdate();
       hel.mult.querySelector('.hm-name').innerHTML = disp.hname;
@@ -2482,7 +2490,7 @@
         const off = (cnt[ev.id] = (cnt[ev.id] || 0) + 1) - 1;
         const stack = -off * 24;
         if (ev.t === 'c') { bumpEn(ev.id); pop(ev.id, '+' + fmtM(ev.v), 'chip', stack); disp.chips = ev.ch; disp.mult = ev.mu; snd('chip', ci++); bumpHud('.hm-c'); }
-        else if (ev.t === 'm') { bumpEn(ev.id); pop(ev.id, '+' + fmtM(ev.v) + ' Mult', 'mult', stack); disp.chips = ev.ch; disp.mult = ev.mu; snd('mult', ci++); bumpHud('.hm-m'); }
+        else if (ev.t === 'm') { bumpEn(ev.id); pop(ev.id, TF('+{n} Mult', { n: fmtM(ev.v) }), 'mult', stack); disp.chips = ev.ch; disp.mult = ev.mu; snd('mult', ci++); bumpHud('.hm-m'); }
         else if (ev.t === 'x') { bumpEn(ev.id, true); pop(ev.id, 'X' + fmtM(ev.v), 'xmult', stack); disp.chips = ev.ch; disp.mult = ev.mu; snd('xmult', ci++); bumpHud('.hm-m'); shake(5); flash('#ff4a3a', .12); }
         else if (ev.t === '$') { bumpEn(ev.id); pop(ev.id, '$' + ev.v, 'cash', stack); disp.money = (disp.money || 0) + ev.v; snd('coin'); }
         else if (ev.t === 'msg') { bumpEn(ev.id); pop(ev.id, ev.text, 'msg', stack); snd('cardhit', ci++); }
@@ -2529,7 +2537,7 @@
       ensureForced();
       renderBlinds();
       if (R.cur.boss) { snd('boss'); shake(12); banner(R.cur.n, BK[R.cur.k].d, BK[R.cur.k].col); }
-      else { snd('skip'); banner(R.cur.n, 'Score at least ' + fmtS(R.cur.target), blindCol(R.cur)); }
+      else { snd('skip'); banner(R.cur.n, TF('Score at least {n}', { n: fmtS(R.cur.target) }), blindCol(R.cur)); }
       flush();
       await sleep(700);
       busy = false; hudUpdate(); layout(); persist();
@@ -2538,7 +2546,7 @@
       if (busy || !R || R.ph !== 'blinds') return;
       const t = setBlindAction(bi, 'skip');
       if (!t) { snd('bad'); return; }
-      snd('skip'); banner('Blind skipped', 'Tag: ' + TGK[t].n, TGK[t].col);
+      snd('skip'); banner('Blind skipped', TF('Tag: {t}', { t: TR(TGK[t].n) }), TGK[t].col);
       flush(); renderBlinds(); hudUpdate(); persist();
     }
     function rerollBossUI() {
@@ -2559,7 +2567,7 @@
       const sm = S.ev.reduce((a, e) => a + (e.t === '$' ? e.v : 0), 0);
       disp.money = R.money - sm;
       disp.score = R.score;
-      if (S.hooked && S.hooked.length) say('Pickpocket discards 2 cards', 1600);
+      if (S.hooked && S.hooked.length) say('Sticky Fingers took a card from your hand', 1600);
       flush();
       await sleep(520);
       await scoreSeq(S);
@@ -2656,7 +2664,7 @@
     function doUse(en) {
       if (busy || !R) return;
       const o = en.obj;
-      if (!usableNow(o)) { snd('bad'); const d = CONSDEF(o); say(d.t ? 'Select ' + (d.t[0] === d.t[1] ? d.t[0] : d.t[0] + '-' + d.t[1]) + ' card' + (d.t[1] > 1 ? 's' : '') + ' first' : 'Cannot use now', 1600); return; }
+      if (!usableNow(o)) { snd('bad'); const d = CONSDEF(o); say(selMsg(d), 1600); return; }
       const sc = selCards();
       clearSel(); hideTip();
       useConsumable(o, sc, false);
@@ -2684,7 +2692,7 @@
       const pk = buyPack(idx);
       if (!pk) { snd('bad'); return; }
       snd('pack'); clearSel(); hideTip(); SEL.clear();
-      banner(PKS[pk.p.size] + PKN[pk.kind] + ' Pack', PKD[pk.kind](pk.p.n).replace('%p', pk.p.pick), PKC[pk.kind][0]);
+      banner(pkName(pk.p), pkDesc(pk.p), PKC[pk.kind][0]);
       flush(); hudUpdate(); layout(); persist();
     }
     function doTake(en) {
@@ -2693,7 +2701,7 @@
       if (idx < 0) return;
       const sc = selCards();
       const r = packPick(idx, sc);
-      if (!r) { snd('bad'); const o = en.obj; if (en.kind === 'joker') say('No room for another Joker', 1500); else if (en.kind === 'cons') { const d = CONSDEF(o); say(d.t ? 'Select ' + (d.t[0] === d.t[1] ? d.t[0] : d.t[0] + '-' + d.t[1]) + ' card' + (d.t[1] > 1 ? 's' : '') + ' first' : 'Cannot use now', 1600); } return; }
+      if (!r) { snd('bad'); const o = en.obj; if (en.kind === 'joker') say('No room for another Joker', 1500); else if (en.kind === 'cons') { const d = CONSDEF(o); say(selMsg(d), 1600); } return; }
       snd('use'); clearSel(); hideTip(); SEL.clear();
       flush(); hudUpdate();
       if (r === 'done') closePackUI(); else layout();
@@ -2751,7 +2759,7 @@
       ST.wins++; finishStats(); persist();
       uiPhase = 'win';
       ovl.className = 'bl-ov show overov';
-      ovl.innerHTML = '<div class="ov-card win"><h2>You Win!</h2><p>You cleared Ante 8 on ' + esc(STAKES[R.st - 1][0]) + '.<br><small>Keep going in Endless Mode for a bigger score.</small></p>' + statsHtml(statRows()) + '<div class="ov-b"><button class="bbtn next" data-m="endless"><b>Endless Mode</b></button><button class="bbtn rr" data-m="new"><b>New Run</b></button><button class="bbtn disc" data-m="menu"><b>Main Menu</b></button></div></div>';
+      ovl.innerHTML = '<div class="ov-card win"><h2>You Win!</h2><p>' + esc(TF('You cleared Ante 8 at the {s}.', { s: TR(STAKES[R.st - 1][0]) })) + '<br><small>Keep going in Endless Mode for a bigger score.</small></p>' + statsHtml(statRows()) + '<div class="ov-b"><button class="bbtn next" data-m="endless"><b>Endless Mode</b></button><button class="bbtn rr" data-m="new"><b>New Run</b></button><button class="bbtn disc" data-m="menu"><b>Main Menu</b></button></div></div>';
     }
 
     function renderBlinds() {
@@ -3003,11 +3011,11 @@
           t.innerHTML = '<tr><th>Hand</th><th>Lvl</th><th>Chips</th><th></th><th>Mult</th><th>Played</th></tr>' + HORD.filter(knownHand).map(k => { const v = hv(k), l = R.hl[k]; return '<tr><td>' + HAND[k].n + '</td><td>' + l.lvl + '</td><td class="c">' + v.c + '</td><td>X</td><td class="m">' + v.m + '</td><td>' + l.played + '</td></tr>'; }).join('');
           pn.append(t);
         } else if (tab === 1) {
-          R.bl.forEach(b => { const boss = b.k === 'boss', nm = boss ? BK[b.boss].n : b.k === 'big' ? 'Big Blind' : 'Small Blind'; const r = hnode('div', 'md-r', '<b>' + esc(nm) + '</b><span>' + fmtS(blindTarget(b)) + '</span><i>' + (boss ? esc(BK[b.boss].d) : 'Skip tag: ' + esc(TGK[b.tag].n)) + '</i><em>' + (b.s === 'done' ? 'Defeated' : b.s === 'skip' ? 'Skipped' : b.s === 'cur' ? 'Current' : b.s === 'sel' ? 'Next' : 'Upcoming') + '</em>'); pn.append(r); });
-          pn.append(hnode('p', 'md-note', 'Ante ' + R.ante + ' base score ' + fmtS(anteBase(R.ante)) + (R.endless ? ' (endless)' : '') + '. Stake: ' + STAKES[R.st - 1][0] + '. Seed: ' + esc(R.seed)));
+          R.bl.forEach(b => { const boss = b.k === 'boss', nm = boss ? BK[b.boss].n : b.k === 'big' ? 'Big Blind' : 'Small Blind'; const r = hnode('div', 'md-r', '<b>' + esc(nm) + '</b><span>' + fmtS(blindTarget(b)) + '</span><i>' + (boss ? esc(BK[b.boss].d) : esc(TF('Skip tag: {t}', { t: TR(TGK[b.tag].n) }))) + '</i><em>' + (b.s === 'done' ? 'Defeated' : b.s === 'skip' ? 'Skipped' : b.s === 'cur' ? 'Current' : b.s === 'sel' ? 'Next' : 'Upcoming') + '</em>'); pn.append(r); });
+          pn.append(hnode('p', 'md-note', esc(TF('Ante {a} base score {s}.', { a: R.ante, s: fmtS(anteBase(R.ante)) })) + (R.endless ? ' ' + esc(TR('Endless mode.')) : '') + ' ' + esc(TF('Stake: {s}.', { s: TR(STAKES[R.st - 1][0]) })) + ' ' + esc(TF('Seed: {s}', { s: R.seed }))));
         } else if (tab === 2) {
           const ks = Object.keys(R.vo);
-          if (!ks.length) pn.append(hnode('p', 'md-note', 'No vouchers redeemed yet.'));
+          if (!ks.length) pn.append(hnode('p', 'md-note', 'No upgrades bought yet.'));
           ks.forEach(k => { const r = hnode('div', 'md-r', '<b>' + esc(VK[k].n) + '</b><i>' + esc(VK[k].d) + '</i>'); pn.append(r); });
         } else {
           if (!R.tags.length) pn.append(hnode('p', 'md-note', 'No tags held. Skip a Small or Big Blind to get one.'));
@@ -3021,7 +3029,7 @@
       if (!R || !R.cards.length) return;
       const inDraw = new Set(R.draw.map(c => c.id));
       const inRound = R.ph === 'round' || R.ph === 'cash';
-      const m = openModal('Deck: ' + esc(DECKS[R.dk][0]) + ' <small>(' + R.cards.length + ' cards)</small>', '<div class="md-dk"></div>', {});
+      const m = openModal(esc(TR(DECKS[R.dk][0])) + ' <small>' + esc(TF('({n} cards)', { n: R.cards.length })) + '</small>', '<div class="md-dk"></div>', {});
       const g = m.querySelector('.md-dk');
       const cs = R.cards.slice().sort((a, b) => a.s - b.s || (b.e === 'stone' ? 0 : b.r) - (a.e === 'stone' ? 0 : a.r));
       cs.forEach(c => { const w = hnode('div', 'dk-c' + (inRound && !inDraw.has(c.id) ? ' used' : '')); w.append(mkCanvasIn(playArt(c))); tipOn(w, () => cardTipHtml(c)); g.append(w); });
@@ -3091,11 +3099,11 @@
       uiPhase = 'menu'; stage.classList.add('in-menu'); hideTip(); hideAct(); clearSel(); bslot.style.display = 'none';
       const has = SV.run && SV.run.ante && SV.run.cards;
       ovl.className = 'bl-ov show menuov';
-      const sum = has ? 'Ante ' + SV.run.ante + ' - Round ' + SV.run.round + ' - $' + SV.run.money + ' - ' + esc(DECKS[SV.run.dk] ? DECKS[SV.run.dk][0] : '') : '';
+      const sum = has ? esc(TF('Ante {a} - Round {r} - ${m}', { a: SV.run.ante, r: SV.run.round, m: SV.run.money })) + ' - ' + esc(DECKS[SV.run.dk] ? TR(DECKS[SV.run.dk][0]) : '') : '';
       ovl.innerHTML = '<div class="m-menu"><div class="m-deco"></div><div class="m-logo"><span translate="no">ANTE UP</span><small>a poker roguelike</small></div><div class="m-btns">' +
         (has ? '<button class="mb big" data-m="cont"><b>Continue</b><small>' + sum + '</small></button>' : '') +
         '<button class="mb' + (has ? '' : ' big') + '" data-m="new"><b>New Run</b></button><button class="mb" data-m="col"><b>Collection</b></button><button class="mb" data-m="opt"><b>Options</b></button><button class="mb" data-m="help"><b>How to Play</b></button></div>' +
-        '<div class="m-st">Runs ' + ST.runs + '  |  Wins ' + ST.wins + '  |  Best ante ' + ST.bestAnte + '  |  Best hand ' + fmtN(ST.bestHand) + '</div></div>';
+        '<div class="m-st">' + esc(TF('Runs {a}  |  Wins {b}  |  Best ante {c}  |  Best hand {d}', { a: ST.runs, b: ST.wins, c: ST.bestAnte, d: fmtN(ST.bestHand) })) + '</div></div>';
       const dc = ovl.querySelector('.m-deco');
       ['grin', 'understudy', 'kingpin', 'showboat', 'gambler'].forEach((k, i) => { const w = hnode('div', 'md-j'); w.style.setProperty('--i', i); w.append(blit(jokerArt(JK[k]))); dc.append(w); });
       layout(); hudUpdate();
@@ -3127,7 +3135,7 @@
       SV.run = null;
       api.label('Best hand'); api.score(0);
       renderBlinds(); fit(true); layout(true); hudUpdate(); persist();
-      say(DECKS[deck][0] + ' - ' + STAKES[stake - 1][0], 2000);
+      say(TR(DECKS[deck][0]) + ' - ' + TR(STAKES[stake - 1][0]), 2000);
       if (deck === 'magic' || deck === 'nebula' || deck === 'zodiac') flush();
     }
     function resumeRun() {
