@@ -475,7 +475,7 @@ ${R} .fp-ch i{box-shadow:0 0 0 1.5px rgba(42,35,64,.8)}
         const shell = look.color, ink = '#2a2340';
         const cls = CLS[look.cls] || CLS[0];
         const eggM = new THREE.Mesh(egg(kit), kit.own(new THREE.MeshPhongMaterial({ color: kit.lin(shell), shininess: 45, specular: 0x333333 })));
-        eggM.castShadow = true; body.add(eggM);
+        body.add(eggM);
         const face = [['sph', '#ffffff', [-0.13, 0.98, -0.34], [0.17, 0.2, 0.08]], ['sph', '#ffffff', [0.13, 0.98, -0.34], [0.17, 0.2, 0.08]], ['sph', ink, [-0.12, 0.97, -0.385], [0.08, 0.1, 0.03]], ['sph', ink, [0.12, 0.97, -0.385], [0.08, 0.1, 0.03]], ['box', ink, [-0.14, 1.12, -0.34], [0.13, 0.025, 0.02], [0, 0, 0.18]], ['box', ink, [0.14, 1.12, -0.34], [0.13, 0.025, 0.02], [0, 0, -0.18]], ['box', ink, [0, 0.8, -0.38], [0.1, 0.02, 0.02]], ['sph', '#ffb8b0', [-0.25, 0.85, -0.3], [0.08, 0.05, 0.03]], ['sph', '#ffb8b0', [0.25, 0.85, -0.3], [0.08, 0.05, 0.03]]];
         const team = look.team >= 0 ? TEAMC[look.team] : null, hc = team || '#ff7a3a';
         const hat = [];

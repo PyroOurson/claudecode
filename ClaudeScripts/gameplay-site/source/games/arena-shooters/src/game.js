@@ -832,12 +832,16 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
         const show = p.inGame && (p !== me || thirdPerson);
         const c = view.charFor(p.slot, { team: W.teams ? p.team : -1, cls: p.cls, color: G.colorFor(p, W.teams) });
         const r = rs[p.slot];
-        if (!show || !r) { c.root.visible = false; continue; }
+        if (!show || !r) { c.root.visible = false; c.blob.visible = false; continue; }
         if (!p.alive) { if (c.deadT < 0 || c.deadT == null) c.deadT = 0; c.deadT += dt; }
         else c.deadT = -1;
         c.root.visible = p.alive || c.deadT < (G.corpseT || 1.6);
+        c.blob.visible = c.root.visible && p.alive;
         if (!c.root.visible) continue;
         c.root.position.set(r.x, r.y, r.z);
+        if (p.onGround || c.gy == null) c.gy = r.y;
+        c.blob.position.set(r.x, Math.min(c.gy, r.y) + 0.03, r.z);
+        const bs = (G.blobS || 1.1) * clamp(1 - (r.y - c.gy) * 0.15, 0.4, 1); c.blob.scale.set(bs, 1, bs);
         c.root.rotation.y = r.yaw;
         const sp = Math.hypot(p.vx, p.vz);
         c.fireT = (c.fireT == null ? 9 : c.fireT) + dt; c.relT = (c.relT == null ? 9 : c.relT) + dt; c.melT = (c.melT == null ? 9 : c.melT) + dt;

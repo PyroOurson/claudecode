@@ -1139,7 +1139,6 @@
       const d = Math.min(2, window.devicePixelRatio || 1), B = Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * d * d * 1.05);
       const lw = r.getSize(sz).x || v.w, pr = Math.max(0.45, Math.min(4, d * cw / lw, Math.sqrt(B / (lw * (sz.y || v.h))))) * Q[lvl];
       if (Math.abs(r.getPixelRatio() - pr) > 0.01) r.setPixelRatio(pr);
-      r.shadowMap.autoUpdate = lvl < 2;
     };
     const size = () => { const w = c.getBoundingClientRect().width; if (w && Math.abs(w - cw) > Math.max(2, cw * 0.02)) { cw = w; apply(); } };
     const set = n => { lvl = n; t = 0; apply(); if (hook) hook(lvl); };
@@ -1150,7 +1149,6 @@
       const f = r.info.render.frame;
       if (f === lf || !(dt > 0)) return;
       lf = f;
-      if (lvl > 1 && (sf ^= 1)) r.shadowMap.needsUpdate = true;
       avg += (dt - avg) * Math.min(1, dt * 1.5); t += dt;
       if (performance.now() - chk > 500) { chk = performance.now(); size(); }
       if (F.force >= 0) { if (lvl !== F.force) set(F.force); return; }
@@ -1201,7 +1199,7 @@
     }
     function mesh(list, o) {
       const m = new THREE.Mesh(geo(list), o && o.shiny ? matVS : matV);
-      m.castShadow = !(o && o.noShadow); m.receiveShadow = !!(o && o.recv);
+      m.castShadow = !!(o && o.cast); m.receiveShadow = !!(o && o.recv);
       return m;
     }
     const limb = (col, a, b, t, shape) => { const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], L = Math.hypot(dx, dy, dz); return [shape || 'box', col, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2], [t, t, L], [-Math.atan2(dy, Math.hypot(dx, dz)), Math.atan2(dx, dz), 0], 0, 'YXZ']; };
@@ -1370,6 +1368,10 @@
     const vFlash = new THREE.PointLight(0xffc860, 0, 2.2); vScene.add(vFlash);
     const hemi = new THREE.HemisphereLight(0xffffff, 0x777777, 0.6); scene.add(hemi);
     const sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.castShadow = true; scene.add(sun, sun.target);
+    renderer.shadowMap.autoUpdate = false;
+    const blobTex = canvasTex(THREE, own, 64, (g, S) => { const r = g.createRadialGradient(S / 2, S / 2, 2, S / 2, S / 2, S / 2); r.addColorStop(0, 'rgba(0,0,0,.42)'); r.addColorStop(0.6, 'rgba(0,0,0,.22)'); r.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = r; g.fillRect(0, 0, S, S); });
+    const blobMat = own(new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+    const blobGeo = own(new THREE.PlaneGeometry(1, 1)); blobGeo.rotateX(-Math.PI / 2);
     const flash = new THREE.PointLight(0xffc070, 0, 9); scene.add(flash);
     const boomL = new THREE.PointLight(0xff9a40, 0, 16); scene.add(boomL);
     G.mats.default = G.mats.default || { color: '#aaaaaa' };
@@ -1413,16 +1415,17 @@
       let c = chars[slot];
       const key = look.team + '|' + look.cls + '|' + look.color;
       if (c && c.key === key) return c;
-      if (c) { scene.remove(c.root); c.dispose && c.dispose(); }
+      if (c) { scene.remove(c.root); scene.remove(c.blob); c.dispose && c.dispose(); }
       c = G.makeChar(kit, look);
       c.key = key; c.slot = slot;
+      c.blob = new THREE.Mesh(blobGeo, blobMat); c.blob.scale.setScalar(G.blobS || 1.1); c.blob.renderOrder = 1; scene.add(c.blob);
       c.tag = mkTag();
       c.root.add(c.tag.spr);
       scene.add(c.root);
       chars[slot] = c;
       return c;
     }
-    function dropChar(slot) { const c = chars[slot]; if (c) { scene.remove(c.root); c.dispose && c.dispose(); chars[slot] = null; } }
+    function dropChar(slot) { const c = chars[slot]; if (c) { scene.remove(c.root); scene.remove(c.blob); c.dispose && c.dispose(); chars[slot] = null; } }
     function mkTag() {
       const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64;
       const tex = own(new THREE.CanvasTexture(cv)); tex.encoding = THREE.sRGBEncoding;
@@ -2561,12 +2564,16 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
         const show = p.inGame && (p !== me || thirdPerson);
         const c = view.charFor(p.slot, { team: W.teams ? p.team : -1, cls: p.cls, color: G.colorFor(p, W.teams) });
         const r = rs[p.slot];
-        if (!show || !r) { c.root.visible = false; continue; }
+        if (!show || !r) { c.root.visible = false; c.blob.visible = false; continue; }
         if (!p.alive) { if (c.deadT < 0 || c.deadT == null) c.deadT = 0; c.deadT += dt; }
         else c.deadT = -1;
         c.root.visible = p.alive || c.deadT < (G.corpseT || 1.6);
+        c.blob.visible = c.root.visible && p.alive;
         if (!c.root.visible) continue;
         c.root.position.set(r.x, r.y, r.z);
+        if (p.onGround || c.gy == null) c.gy = r.y;
+        c.blob.position.set(r.x, Math.min(c.gy, r.y) + 0.03, r.z);
+        const bs = (G.blobS || 1.1) * clamp(1 - (r.y - c.gy) * 0.15, 0.4, 1); c.blob.scale.set(bs, 1, bs);
         c.root.rotation.y = r.yaw;
         const sp = Math.hypot(p.vx, p.vz);
         c.fireT = (c.fireT == null ? 9 : c.fireT) + dt; c.relT = (c.relT == null ? 9 : c.relT) + dt; c.melT = (c.melT == null ? 9 : c.melT) + dt;
@@ -3552,7 +3559,7 @@ ${R} .fp-ch i{box-shadow:0 0 0 1.5px rgba(42,35,64,.8)}
         const shell = look.color, ink = '#2a2340';
         const cls = CLS[look.cls] || CLS[0];
         const eggM = new THREE.Mesh(egg(kit), kit.own(new THREE.MeshPhongMaterial({ color: kit.lin(shell), shininess: 45, specular: 0x333333 })));
-        eggM.castShadow = true; body.add(eggM);
+        body.add(eggM);
         const face = [['sph', '#ffffff', [-0.13, 0.98, -0.34], [0.17, 0.2, 0.08]], ['sph', '#ffffff', [0.13, 0.98, -0.34], [0.17, 0.2, 0.08]], ['sph', ink, [-0.12, 0.97, -0.385], [0.08, 0.1, 0.03]], ['sph', ink, [0.12, 0.97, -0.385], [0.08, 0.1, 0.03]], ['box', ink, [-0.14, 1.12, -0.34], [0.13, 0.025, 0.02], [0, 0, 0.18]], ['box', ink, [0.14, 1.12, -0.34], [0.13, 0.025, 0.02], [0, 0, -0.18]], ['box', ink, [0, 0.8, -0.38], [0.1, 0.02, 0.02]], ['sph', '#ffb8b0', [-0.25, 0.85, -0.3], [0.08, 0.05, 0.03]], ['sph', '#ffb8b0', [0.25, 0.85, -0.3], [0.08, 0.05, 0.03]]];
         const team = look.team >= 0 ? TEAMC[look.team] : null, hc = team || '#ff7a3a';
         const hat = [];
