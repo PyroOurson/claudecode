@@ -2014,12 +2014,13 @@
     };
     let bgCur = BGP.menu.map(hex2), bgTgt = bgCur, bgAcc = 0, bgT = 0;
     const bgx = bg.getContext('2d'), bgI = bgx.createImageData(160, 100);
-    const bgL = new Float32Array(16000), bgW = new Float32Array(16000);
+    const bgL = new Float32Array(16000), bgW = new Float32Array(16000), bgSa = new Float32Array(16000), bgCa = new Float32Array(16000);
     for (let y = 0; y < 100; y++) for (let x = 0; x < 160; x++) {
       const i = y * 160 + x, dx = (x - 80) / 92, dy = (y - 16) / 78, d = Math.sqrt(dx * dx + dy * dy);
       bgL[i] = clamp(1.08 - d, 0, 1);
       const wv = ((x + y) % 9 === 0 || (x - y + 900) % 9 === 0) ? .05 : 0, gr = (((x * 73) ^ (y * 151) ^ (x * y)) & 15) / 15 * .05;
       bgW[i] = wv + gr;
+      bgSa[i] = Math.sin(x * .035 + y * .02) * .025; bgCa[i] = Math.cos(x * .035 + y * .02) * .025;
     }
     function bgKey() {
       if (!R || uiPhase === 'menu') return 'menu';
@@ -2034,18 +2035,16 @@
     function drawBg(dt) {
       bgT += dt; bgAcc += dt;
       for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) bgCur[i][j] += (bgTgt[i][j] - bgCur[i][j]) * Math.min(1, dt * 2.2);
-      if (bgAcc < .06) return;
+      if (bgAcc < .1) return;
       bgAcc = 0;
-      const d = bgI.data, t = bgT, fl = .94 + .04 * Math.sin(t * 1.7) + .02 * Math.sin(t * 4.3), c0 = bgCur[0], c1 = bgCur[1], c2 = bgCur[2];
-      for (let y = 0; y < 100; y++) for (let x = 0; x < 160; x++) {
-        const i = y * 160 + x, l = bgL[i] * fl, k = Math.min(1, .3 + l * 1.25), q = l * l * .5;
-        const sh = Math.sin(x * .035 + y * .02 - t * .25) * .025 + bgW[i];
-        const o = i * 4;
-        for (let ch = 0; ch < 3; ch++) {
-          const base = c2[ch] + (c0[ch] - c2[ch]) * k;
-          d[o + ch] = base + (c1[ch] - base) * q + 255 * sh * (.4 + l);
-        }
-        d[o + 3] = 255;
+      const d = bgI.data, t = bgT, fl = .94 + .04 * Math.sin(t * 1.7) + .02 * Math.sin(t * 4.3), cb = Math.cos(t * .25), sb = Math.sin(t * .25);
+      const c0 = bgCur[0], c1 = bgCur[1], c2 = bgCur[2];
+      const r0 = c0[0], g0 = c0[1], b0 = c0[2], r1 = c1[0], g1 = c1[1], b1 = c1[2], r2 = c2[0], g2 = c2[1], b2 = c2[2];
+      for (let i = 0, o = 0; i < 16000; i++, o += 4) {
+        const l = bgL[i] * fl, k = l * 1.25 + .3 < 1 ? l * 1.25 + .3 : 1, q = l * l * .5;
+        const sh = (bgSa[i] * cb - bgCa[i] * sb + bgW[i]) * 255 * (.4 + l);
+        const rb = r2 + (r0 - r2) * k, gb = g2 + (g0 - g2) * k, bb = b2 + (b0 - b2) * k;
+        d[o] = rb + (r1 - rb) * q + sh; d[o + 1] = gb + (g1 - gb) * q + sh; d[o + 2] = bb + (b1 - bb) * q + sh; d[o + 3] = 255;
       }
       bgx.putImageData(bgI, 0, 0);
     }
@@ -3097,7 +3096,7 @@
     let nr = { deck: Math.max(0, DK.indexOf(OPT.deckSel || 'red')), stake: Math.max(1, Math.min(8, OPT.stakeSel || 1)), seed: '' };
     function showMenu() {
       uiPhase = 'menu'; stage.classList.add('in-menu'); hideTip(); hideAct(); clearSel(); bslot.style.display = 'none';
-      const has = SV.run && SV.run.ante && SV.run.cards;
+      const has = validRun(SV.run);
       ovl.className = 'bl-ov show menuov';
       const sum = has ? esc(TF('Ante {a} - Round {r} - ${m}', { a: SV.run.ante, r: SV.run.round, m: SV.run.money })) + ' - ' + esc(DECKS[SV.run.dk] ? TR(DECKS[SV.run.dk][0]) : '') : '';
       ovl.innerHTML = '<div class="m-menu"><div class="m-deco"></div><div class="m-logo"><span translate="no">ANTE UP</span><small>a poker roguelike</small></div><div class="m-btns">' +

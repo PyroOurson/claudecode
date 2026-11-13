@@ -3248,15 +3248,20 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       hud(g, T);
       if (g.state === 'dead') { c.fillStyle = `rgba(255,40,70,${.28 * Math.max(0, 1 - (performance.now() - g.deadAt) / 1400)})`; c.fillRect(0, 0, W, H); }
     }
+    const TRL = Array.from({ length: 40 }, () => ({ x: 0, y: 0, t: -1e9 }));
+    let trH = 0;
     function cursor(g) {
       const now = performance.now();
       if (inp.touch && !inp.np && now - inp.seen > 350) return;
       const x = px(inp.x), y = py(inp.y), r = 15 * O.cur * (W / 960) * (down() ? 1.12 : 1);
       if (O.trail) {
-        g.trail.push({ x, y, t: now });
-        while (g.trail.length && now - g.trail[0].t > 190) g.trail.shift();
-        c.save(); c.lineCap = 'round';
-        for (let i = 1; i < g.trail.length; i++) { const a = g.trail[i], b = g.trail[i - 1], f = 1 - (now - a.t) / 190; c.globalAlpha = f * .55; c.strokeStyle = '#ff9fd0'; c.lineWidth = r * 1.5 * f; c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(a.x, a.y); c.stroke(); }
+        const q = TRL[trH]; q.x = x; q.y = y; q.t = now; trH = (trH + 1) % TRL.length;
+        c.save(); c.lineCap = 'round'; c.strokeStyle = '#ff9fd0';
+        for (let k = 1; k < TRL.length; k++) {
+          const b = TRL[(trH + k - 1) % TRL.length], a = TRL[(trH + k) % TRL.length];
+          if (now - b.t > 190) continue;
+          const f = 1 - (now - a.t) / 190; c.globalAlpha = f * .55; c.lineWidth = r * 1.5 * f; c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(a.x, a.y); c.stroke();
+        }
         c.restore();
       }
       c.save();
