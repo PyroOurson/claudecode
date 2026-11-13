@@ -51,7 +51,8 @@
 ["@bed-raiders|Pause", "Pause", "Pausa", "Pause", "Pausa", "Pausa"],
 ["Touch", "Tactile", "Táctil", "Touch", "Touch", "Toque"],
 ["Left stick moves, drag to look, buttons fire, jump, crouch, build, edit and reload", "Joystick gauche pour bouger, glisse pour regarder, boutons pour tirer, sauter, s’accroupir, construire, modifier et recharger", "El joystick izquierdo mueve, arrastra para mirar, botones para disparar, saltar, agacharse, construir, editar y recargar", "Linker Stick bewegt, ziehen zum Umsehen, Tasten zum Schießen, Springen, Ducken, Bauen, Bearbeiten und Nachladen", "La levetta sinistra muove, trascina per guardare, pulsanti per sparare, saltare, accovacciarsi, costruire, modificare e ricaricare", "O joystick esquerdo move, arrasta para olhar, botões para disparar, saltar, agachar, construir, editar e recarregar"],
-["Back", "Retour", "Volver", "Zurück", "Indietro", "Voltar"],
+["@build-brawl|Back", "Retour", "Volver", "Zurück", "Indietro", "Voltar"],
+["@bed-raiders|Back", "Retour", "Volver", "Zurück", "Indietro", "Voltar"],
 ["Look sensitivity", "Sensibilité de la vue", "Sensibilidad de la vista", "Blickempfindlichkeit", "Sensibilità visuale", "Sensibilidade da vista"],
 ["Aim sensitivity", "Sensibilité en visée", "Sensibilidad al apuntar", "Zielempfindlichkeit", "Sensibilità in mira", "Sensibilidade a apontar"],
 ["Field of view", "Champ de vision", "Campo de visión", "Sichtfeld", "Campo visivo", "Campo de visão"],
@@ -297,9 +298,9 @@
 ["Jump", "Sauter", "Saltar", "Springen", "Salta", "Saltar"],
 ["Back to lobby", "Retour au salon", "Volver a la sala", "Zurück zur Lobby", "Torna alla lobby", "Voltar à sala"],
 ["Target", "Cible", "Objetivo", "Ziel", "Bersaglio", "Alvo"],
-["Owned", "Possédé", "En posesión", "Im Besitz", "Posseduto", "Na posse"],
 ["Time is up!", "Le temps est écoulé !", "¡Se acabó el tiempo!", "Die Zeit ist um!", "Tempo scaduto!", "O tempo acabou!"],
 ["Shop", "Boutique", "Tienda", "Laden", "Negozio", "Loja"],
 ["Eliminated", "Éliminé", "Eliminado", "Eliminiert", "Eliminato", "Eliminado"],
-["Invert mouse", "Inverser la souris", "Invertir el ratón", "Maus umkehren", "Inverti il mouse", "Inverter o rato"]
+["Invert mouse", "Inverser la souris", "Invertir el ratón", "Maus umkehren", "Inverti il mouse", "Inverter o rato"],
+["Owned", "Possédé", "En posesión", "Im Besitz", "Posseduto", "Na posse"]
 ]
