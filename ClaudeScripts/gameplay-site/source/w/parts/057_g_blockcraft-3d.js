@@ -3823,7 +3823,7 @@
     MDL.zombie.parts[2].b = [[-3, -2, -2, 4, 12, 4, 40, 16]]; MDL.zombie.parts[3].b = [[-1, -2, -2, 4, 12, 4, 32, 48]];
     MDL.zombie.parts[4].b = [[-2, 0, -2, 4, 12, 4, 0, 16]]; MDL.zombie.parts[5].b = [[-2, 0, -2, 4, 12, 4, 16, 48]];
     MDL.zombie.parts[0].b = [[-4, 0, -2, 8, 12, 4, 16, 16]];
-    for (const k of ['steve', 'alex']) { const sl = k === 'alex', aw = sl ? 3 : 4; MDL[k].parts[2].b = [[-aw + 1, -2, -2, aw, 12, 4, 40, 16], [-aw + 1, -2, -2, aw, 12, 4, 40, 32, .25]]; MDL[k].parts[3].b = [[-1, -2, -2, aw, 12, 4, 32, 48], [-1, -2, -2, aw, 12, 4, 48, 48, .25]]; MDL[k].parts[2].pv = [-5, sl ? 2.5 : 2, 0]; MDL[k].parts[3].pv = [5, sl ? 2.5 : 2, 0]; }
+    for (const k of ['steve', 'alex']) { const sl = k === 'alex', aw = sl ? 3 : 4; MDL[k].parts[2].b = [[-aw + 1, -2, -2, aw, 12, 4, 40, 16], [-aw + 1, -2, -2, aw, 12, 4, 40, 32, .25]]; MDL[k].parts[3].b = [[-1, -2, -2, aw, 12, 4, 32, 48], [-1, -2, -2, aw, 12, 4, 48, 48, .25]]; MDL[k].parts[5].b = [[-2, 0, -2, 4, 12, 4, 16, 48], [-2, 0, -2, 4, 12, 4, 0, 48, .25]]; MDL[k].parts[2].pv = [-5, sl ? 2.5 : 2, 0]; MDL[k].parts[3].pv = [5, sl ? 2.5 : 2, 0]; }
     function boxGeo(B, tw, th, PZ) {
       const [x0, y0, z0, w, h, d, u, v, inf, mir] = B, I2 = inf || 0;
       const X0 = -(x0 - I2), X1 = -(x0 + w + I2), Y0 = -(y0 - I2), Y1 = -(y0 + h + I2), Z0 = z0 - I2, Z1 = z0 + d + I2;
@@ -6558,11 +6558,12 @@
       slotClick(sl, btn, shift);
       return true;
     }
+    function sameSlot(a, b) { return !!a && !!b && a.arr === b.arr && a.i === b.i; }
     function invMove() {
       if (!drag) return;
       if (drag.scroll) { const [, oy] = pRect, rowsN = Math.ceil(tabList(cTab).length / 9); cScroll = Math.round(clamp((my - oy - 18) / 110, 0, 1) * Math.max(0, rowsN - 5)); return; }
       const sl = slotAt(mx, my);
-      if (!sl || drag.list.includes(sl) || !cursor) return;
+      if (!sl || drag.list.some(q => sameSlot(q, sl)) || !cursor) return;
       if (!(sl.g === 'main' || sl.g === 'hot' || sl.g === 'cont' || sl.g === 'craft' || sl.g === 'fin' || sl.g === 'ffuel')) return;
       const st = sl.get();
       if (st && !sameSt(st, cursor)) return;
@@ -6679,10 +6680,12 @@
         if (sl.g === 'out' && gui === 'inv') drawSlotBg(sl);
         else if (sl.g === 'out' || sl.g === 'scout' || sl.g === 'fout') { g.fillStyle = '#373737'; g.fillRect(sl.x - 5, sl.y - 5, 26, 26); g.fillStyle = '#fff'; g.fillRect(sl.x - 4, sl.y - 4, 25, 25); g.fillStyle = '#8b8b8b'; g.fillRect(sl.x - 4, sl.y - 4, 24, 24); }
         else drawSlotBg(sl);
-        const st = sl.get();
-        if (!st && (sl.g === 'armor' || sl.g === 'off')) g.drawImage(EMPTYI[sl.g === 'off' ? 4 : sl.i & 3], sl.x, sl.y);
-        drawItem(st, sl.x, sl.y);
-        if (drag && drag.list && drag.list.includes(sl)) { g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(sl.x, sl.y, 16, 16); }
+        if (!sl.get() && (sl.g === 'armor' || sl.g === 'off')) g.drawImage(EMPTYI[sl.g === 'off' ? 4 : sl.i & 3], sl.x, sl.y);
+      }
+      for (const sl of slots) {
+        if (sl.g === 'trash') continue;
+        drawItem(sl.get(), sl.x, sl.y);
+        if (drag && drag.list && drag.list.some(q => sameSlot(q, sl))) { g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(sl.x, sl.y, 16, 16); }
       }
       if (gui === 'creative') drawCreativeTabs(true);
       hovSlot = slotAt(mx, my);
