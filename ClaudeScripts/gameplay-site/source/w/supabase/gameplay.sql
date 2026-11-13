@@ -9814,6 +9814,870 @@ notify pgrst, 'reload schema';
 -- 2026-11-13 Data collection: 50 measures (Part 17.5)
 -- ============================================================================
 
+insert into private.an_events (event)
+select unnest(array['record', 'milestone', 'party_fail', 'party_end', 'mem10', 'su_step'])
+on conflict (event) do nothing;
+
+create table if not exists private.sd_salt (
+  id integer primary key check (id = 1),
+  salt text not null default encode(extensions.gen_random_bytes(32), 'hex'),
+  at timestamptz not null default now()
+);
+alter table private.sd_salt enable row level security;
+revoke all on table private.sd_salt from public, anon, authenticated;
+insert into private.sd_salt (id) values (1) on conflict (id) do nothing;
+
+create or replace function private.sd_hash(p text)
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select case when coalesce(p, '') = '' then null
+    else left(encode(extensions.hmac(p, (select s.salt from private.sd_salt s where s.id = 1), 'sha256'), 'hex'), 32) end;
+$$;
+revoke all on function private.sd_hash(text) from public, anon, authenticated;
+
+create or replace function private.sd_geo()
+returns text[]
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_h json;
+  v_cc text := '';
+  v_rg text := '';
+begin
+  begin
+    v_h := nullif(current_setting('request.headers', true), '')::json;
+  exception when others then
+    return array['', ''];
+  end;
+  if v_h is null then
+    return array['', ''];
+  end if;
+  if coalesce(v_h ->> 'cf-connecting-ip', '') like '2a06:98c0:3600:%' then
+    v_cc := upper(btrim(coalesce(v_h ->> 'x-gp-cc', '')));
+    v_rg := btrim(coalesce(v_h ->> 'x-gp-region', ''));
+  end if;
+  if v_cc = '' then
+    v_cc := upper(btrim(coalesce(v_h ->> 'cf-ipcountry', '')));
+  end if;
+  if v_rg = '' then
+    v_rg := btrim(coalesce(v_h ->> 'cf-region-code', v_h ->> 'cf-region', ''));
+  end if;
+  if v_cc !~ '^[A-Z][A-Z0-9]$' or v_cc = 'XX' then
+    v_cc := '';
+  end if;
+  v_rg := left(regexp_replace(v_rg, '[^A-Za-z0-9 .''-]', '', 'g'), 40);
+  return array[v_cc, case when v_cc = '' then '' else v_rg end];
+end;
+$$;
+revoke all on function private.sd_geo() from public, anon, authenticated;
+
+create or replace function private.sd_acct(p_uid uuid)
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select case private.an_level(p_uid) when 2 then 'test' when 1 then 'staff' else case when p_uid is null then 'anon' else 'user' end end;
+$$;
+revoke all on function private.sd_acct(uuid) from public, anon, authenticated;
+
+create or replace function private.sd_bk(p numeric, p_edges numeric[])
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select case when p is null then null
+    else coalesce((select '<' || e::text from unnest(p_edges) e where p < e order by e limit 1), '>=' || p_edges[array_length(p_edges, 1)]::text) end;
+$$;
+revoke all on function private.sd_bk(numeric, numeric[]) from public, anon, authenticated;
+
+create or replace function private.sd_gpu(p text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select case
+    when coalesce(btrim(p), '') = '' then 'Unknown|unknown'
+    when p ~* 'swiftshader|llvmpipe|softpipe|software|basic render' then 'Software|software'
+    when p ~* 'nvidia|geforce|quadro|tesla|rtx|gtx' then 'NVIDIA|discrete'
+    when p ~* 'radeon|amd|ati ' then 'AMD|' || case when p ~* '\m(rx|r9|r7|hd [0-9]{4}|pro w|firepro|vii)\M' then 'discrete' else 'integrated' end
+    when p ~* 'intel' then 'Intel|' || case when p ~* '\marc\M' then 'discrete' else 'integrated' end
+    when p ~* 'apple|\mm[1-9]\M' then 'Apple|integrated'
+    when p ~* 'adreno|qualcomm' then 'Qualcomm|mobile'
+    when p ~* 'mali|\marm\M' then 'ARM|mobile'
+    when p ~* 'powervr|imagination' then 'Imagination|mobile'
+    when p ~* 'xclipse|samsung' then 'Samsung|mobile'
+    when p ~* 'videocore|broadcom|v3d' then 'Broadcom|mobile'
+    else 'Other|unknown' end;
+$$;
+revoke all on function private.sd_gpu(text) from public, anon, authenticated;
+
+create or replace function private.sd_sig(p jsonb)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select left(regexp_replace(coalesce(nullif(p ->> 'where', ''), '?') || ': ' || left(btrim(coalesce(p ->> 'msg', '')), 100), '[0-9]+', '#', 'g'), 110);
+$$;
+revoke all on function private.sd_sig(jsonb) from public, anon, authenticated;
+
+create or replace function private.sd_ban_kind(p_action text, p_detail jsonb)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select case
+    when p_action ~ '^(ip_ban|ban_ip|ipban|ip_block)$' then 'ip'
+    when p_action ~ '^(device_ban|ban_device|ban_devices|device_block)$' then 'device'
+    when p_action in ('lock', 'ban', 'ban_account') then case when coalesce(p_detail ->> 'devices', '') ~ '^[1-9]' then 'device' else 'account' end
+    when p_action ~ '^(ip_unban|unban_ip|ip_unblock)$' then 'un:ip'
+    when p_action ~ '^(device_unban|unban_device|device_unblock)$' then 'un:device'
+    when p_action in ('unlock', 'unban', 'unban_account') then 'un:account'
+    else null end;
+$$;
+revoke all on function private.sd_ban_kind(text, jsonb) from public, anon, authenticated;
+
+create table if not exists private.sd_sess (
+  session_id text primary key,
+  first_at timestamptz not null default now(),
+  last_at timestamptz not null default now(),
+  cc text not null default '',
+  region text not null default '',
+  ip_h text
+);
+create index if not exists sd_sess_first_idx on private.sd_sess (first_at);
+alter table private.sd_sess enable row level security;
+revoke all on table private.sd_sess from public, anon, authenticated;
+
+create or replace function private.sd_sess_note()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_g text[];
+  v_ip text;
+begin
+  v_g := private.sd_geo();
+  v_ip := private.sd_hash(nullif(private.client_ip(), ''));
+  insert into private.sd_sess as s (session_id, cc, region, ip_h)
+    select distinct n.session_id, v_g[1], v_g[2], v_ip from new_rows n
+    on conflict (session_id) do update set last_at = now(),
+      cc = case when s.cc = '' then excluded.cc else s.cc end,
+      region = case when s.region = '' then excluded.region else s.region end,
+      ip_h = coalesce(s.ip_h, excluded.ip_h);
+  return null;
+exception when others then
+  return null;
+end;
+$$;
+revoke all on function private.sd_sess_note() from public, anon, authenticated;
+drop trigger if exists analytics_sd_sess on public.analytics_events;
+create trigger analytics_sd_sess after insert on public.analytics_events
+  referencing new table as new_rows
+  for each statement execute function private.sd_sess_note();
+
+create table if not exists private.sd_sec (
+  id bigint generated always as identity primary key,
+  at timestamptz not null default now(),
+  kind text not null,
+  method text not null default '',
+  ok boolean not null,
+  code text not null default '',
+  uid uuid,
+  ip_h text,
+  cc text not null default ''
+);
+create index if not exists sd_sec_at_idx on private.sd_sec (at);
+alter table private.sd_sec enable row level security;
+revoke all on table private.sd_sec from public, anon, authenticated;
+
+create or replace function public.sec_note(p_kind text, p_method text, p_ok boolean, p_code text default null)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_ip text := nullif(private.client_ip(), '');
+  v_k text := lower(coalesce(p_kind, ''));
+  v_m text := lower(coalesce(p_method, ''));
+  v_g text[];
+begin
+  if v_k not in ('login', 'signup', 'verify') or v_m not in ('email', 'username', 'google', 'google_relay', '') or p_ok is null then
+    return false;
+  end if;
+  if private.over('sec:' || coalesce(md5(v_ip), auth.uid()::text, 'none'), date_trunc('hour', now()), 120) then
+    return false;
+  end if;
+  v_g := private.sd_geo();
+  insert into private.sd_sec (kind, method, ok, code, uid, ip_h, cc)
+  values (v_k, v_m, p_ok, left(regexp_replace(lower(coalesce(p_code, '')), '[^a-z0-9_]', '', 'g'), 40), auth.uid(), private.sd_hash(v_ip), v_g[1]);
+  return true;
+end;
+$$;
+revoke all on function public.sec_note(text, text, boolean, text) from public, anon, authenticated;
+grant execute on function public.sec_note(text, text, boolean, text) to anon, authenticated;
+
+create table if not exists private.sd_gone (
+  id bigint generated always as identity primary key,
+  at timestamptz not null default now(),
+  kind text not null,
+  reason text not null default '',
+  age_days integer,
+  acct text not null default 'user'
+);
+create index if not exists sd_gone_at_idx on private.sd_gone (at);
+alter table private.sd_gone enable row level security;
+revoke all on table private.sd_gone from public, anon, authenticated;
+
+create or replace function private.sd_gone_note()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into private.sd_gone (kind, reason, age_days, acct)
+  values (case when auth.uid() is null then 'system' when auth.uid() = old.id then 'self' else 'staff' end,
+    coalesce(nullif(current_setting('gp.del_reason', true), ''), ''),
+    greatest(0, (now() at time zone 'Europe/Paris')::date - (old.created_at at time zone 'Europe/Paris')::date),
+    case when exists (select 1 from public.test_accounts t where t.user_id = old.id) then 'test' when old.role in ('admin', 'owner') then 'staff' else 'user' end);
+  return old;
+exception when others then
+  return old;
+end;
+$$;
+revoke all on function private.sd_gone_note() from public, anon, authenticated;
+drop trigger if exists profiles_sd_gone on public.profiles;
+create trigger profiles_sd_gone before delete on public.profiles
+  for each row execute function private.sd_gone_note();
+
+create or replace function public.delete_my_account_why(p_reason text default null)
+returns text
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_r text := lower(btrim(coalesce(p_reason, '')));
+  v_out text;
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if v_r not in ('', 'not_playing', 'privacy', 'new_account', 'too_many_messages', 'problems', 'other') then
+    v_r := 'other';
+  end if;
+  perform set_config('gp.del_reason', v_r, true);
+  v_out := public.delete_my_account();
+  if v_out = 'requested' then
+    insert into private.sd_gone (kind, reason, age_days, acct)
+    select 'request', v_r, greatest(0, (now() at time zone 'Europe/Paris')::date - (p.created_at at time zone 'Europe/Paris')::date), private.sd_acct(v_uid)
+    from public.profiles p where p.id = v_uid;
+  end if;
+  return v_out;
+end;
+$$;
+revoke all on function public.delete_my_account_why(text) from public, anon, authenticated;
+grant execute on function public.delete_my_account_why(text) to authenticated;
+
+create table if not exists private.sd_ticket (
+  ticket_id bigint primary key,
+  opened_at timestamptz not null,
+  first_staff_at timestamptz,
+  closed_at timestamptz,
+  acct text not null default 'user'
+);
+create index if not exists sd_ticket_opened_idx on private.sd_ticket (opened_at);
+alter table private.sd_ticket enable row level security;
+revoke all on table private.sd_ticket from public, anon, authenticated;
+
+create or replace function private.sd_ticket_note()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if tg_table_name = 'tickets' then
+    if tg_op = 'INSERT' then
+      insert into private.sd_ticket (ticket_id, opened_at, acct) values (new.id, new.created_at, private.sd_acct(new.user_id)) on conflict (ticket_id) do nothing;
+    elsif new.status is distinct from old.status then
+      insert into private.sd_ticket as t (ticket_id, opened_at, acct, closed_at)
+      values (new.id, new.created_at, private.sd_acct(new.user_id), case when new.status = 'closed' then now() end)
+      on conflict (ticket_id) do update set closed_at = case when new.status = 'closed' then coalesce(t.closed_at, now()) else null end;
+    end if;
+  elsif new.is_admin then
+    update private.sd_ticket t set first_staff_at = new.created_at
+    where t.ticket_id = new.ticket_id and t.first_staff_at is null
+      and not exists (select 1 from public.tickets k where k.id = new.ticket_id and k.user_id = new.author_id);
+  end if;
+  return null;
+exception when others then
+  return null;
+end;
+$$;
+revoke all on function private.sd_ticket_note() from public, anon, authenticated;
+drop trigger if exists tickets_sd_note on public.tickets;
+create trigger tickets_sd_note after insert or update of status on public.tickets
+  for each row execute function private.sd_ticket_note();
+drop trigger if exists ticket_messages_sd_note on public.ticket_messages;
+create trigger ticket_messages_sd_note after insert on public.ticket_messages
+  for each row execute function private.sd_ticket_note();
+
+insert into private.sd_ticket (ticket_id, opened_at, first_staff_at, closed_at, acct)
+select k.id, k.created_at,
+  (select min(m.created_at) from public.ticket_messages m where m.ticket_id = k.id and m.is_admin and m.author_id is distinct from k.user_id),
+  case when k.status = 'closed' then k.updated_at end,
+  private.sd_acct(k.user_id)
+from public.tickets k
+on conflict (ticket_id) do nothing;
+
+create table if not exists private.sd_roll (
+  day date not null,
+  k text not null,
+  game text not null default '',
+  cc text not null default '',
+  dev text not null default '',
+  acct text not null default '',
+  n bigint not null default 0,
+  s double precision not null default 0,
+  primary key (day, k, game, cc, dev, acct)
+);
+create index if not exists sd_roll_k_idx on private.sd_roll (k, day);
+alter table private.sd_roll enable row level security;
+revoke all on table private.sd_roll from public, anon, authenticated;
+
+create table if not exists private.sd_act (
+  day date not null,
+  who text not null,
+  game text not null default '',
+  acct text not null default '',
+  cc text not null default '',
+  dev text not null default '',
+  born date,
+  hrs integer not null default 0,
+  primary key (day, who, game)
+);
+create index if not exists sd_act_who_idx on private.sd_act (who, day);
+create index if not exists sd_act_born_idx on private.sd_act (born) where game = '';
+alter table private.sd_act enable row level security;
+revoke all on table private.sd_act from public, anon, authenticated;
+
+create table if not exists private.sd_mark (
+  day date primary key,
+  at timestamptz not null default now(),
+  ms integer,
+  final boolean not null default false
+);
+alter table private.sd_mark enable row level security;
+revoke all on table private.sd_mark from public, anon, authenticated;
+
+create or replace function private.sd_roll_day(p_day date)
+returns integer
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_t0 timestamptz := (p_day::timestamp at time zone 'Europe/Paris');
+  v_t1 timestamptz := ((p_day + 1)::timestamp at time zone 'Europe/Paris');
+  v_c0 timestamptz := clock_timestamp();
+  v_n integer;
+begin
+  perform pg_advisory_xact_lock(hashtextextended('gameplay:sd_roll', 0));
+  delete from private.sd_roll where day = p_day;
+  delete from private.sd_act where day = p_day;
+  if to_regclass('pg_temp.sd_x') is not null then drop table pg_temp.sd_x; end if;
+  if to_regclass('pg_temp.sd_s') is not null then drop table pg_temp.sd_s; end if;
+  if to_regclass('pg_temp.sd_e') is not null then drop table pg_temp.sd_e; end if;
+  create temporary table sd_x on commit drop as
+  select e.id, e.created_at, coalesce(e.client_at, e.created_at) as at, e.session_id, e.event,
+    case when e.game_id is not null then e.game_id when e.props ->> 'game' ~ '^[a-z0-9][a-z0-9-]{0,39}$' then e.props ->> 'game' else '' end as game,
+    e.props as p, e.device, coalesce(e.user_id, l.user_id) as uid, e.visitor_id, e.skip
+  from public.analytics_events e
+  left join private.an_link l on e.user_id is null and l.k = 's:' || e.session_id
+  where e.created_at >= v_t0 and e.created_at < v_t1;
+  create temporary table sd_s on commit drop as
+  select x.session_id,
+    coalesce(nullif(max(s.cc), ''), max(upper(coalesce(nullif(x.p ->> 'scc', ''), x.p ->> 'cc'))) filter (where x.event = 'env_geo' and coalesce(nullif(x.p ->> 'scc', ''), x.p ->> 'cc', '') ~ '^[A-Za-z][A-Za-z0-9]$'), '') as cc,
+    coalesce(nullif(max(s.region), ''), left(max(x.p ->> 'region') filter (where x.event = 'env_geo'), 40), '') as region,
+    coalesce(max(x.device), '') as dev,
+    case max(x.skip) when 2 then 'test' when 1 then 'staff' else case when bool_or(x.uid is not null) then 'user' else 'anon' end end as acct,
+    private.sd_hash(coalesce(max(x.uid::text), 'v:' || max(x.visitor_id), 's:' || x.session_id)) as who,
+    max(x.uid::text)::uuid as uid,
+    min(x.at) as t0, max(x.at) as t1,
+    greatest(extract(epoch from max(x.at) - min(x.at)), coalesce(max(private.jnum(x.p, 'dur')) filter (where x.event = 'sess_sum'), 0)) as dur,
+    min(x.at) filter (where x.event = 'game_launch') as fl,
+    count(*) filter (where x.event = 'view') as views,
+    (array_agg(x.p ->> 'v' order by x.at, x.id) filter (where x.event = 'view'))[1] as ent,
+    coalesce((array_agg(x.p ->> 'v' order by x.at desc, x.id desc) filter (where x.event = 'page_time' and private.jbool(x.p, 'exit'))) [1],
+      (array_agg(x.p ->> 'v' order by x.at desc, x.id desc) filter (where x.event = 'view'))[1]) as ext,
+    coalesce((array_agg(x.p ->> 'ref' order by x.at, x.id) filter (where x.event = 'env_caps'))[1], (array_agg(coalesce(nullif(x.p ->> 'ref', ''), 'direct') order by x.at, x.id) filter (where x.event = 'session'))[1]) as ref,
+    (array_agg(x.p order by x.at, x.id) filter (where x.event = 'env_dev'))[1] as dv,
+    (array_agg(x.p order by x.at, x.id) filter (where x.event = 'env_scr'))[1] as sc,
+    (array_agg(x.p order by x.at, x.id) filter (where x.event = 'env_geo'))[1] as geo,
+    (array_agg(x.p order by x.at desc, x.id desc) filter (where x.event = 'sess_sum'))[1] as sm
+  from pg_temp.sd_x x
+  left join private.sd_sess s on s.session_id = x.session_id
+  group by x.session_id;
+  create temporary table sd_e on commit drop as
+  select x.*, s.cc, s.dev as sdev, s.acct, s.who
+  from pg_temp.sd_x x join pg_temp.sd_s s on s.session_id = x.session_id;
+
+  insert into private.sd_roll (day, k, game, cc, dev, acct, n, s)
+  select p_day, u.k, u.game, u.cc, u.dev, u.acct, sum(u.n), sum(u.s)
+  from (
+    select 'm3.n' as k, '' as game, s.cc, s.dev, s.acct, 1::bigint as n, s.dur::float8 as s from pg_temp.sd_s s
+    union all select 'm3.b:' || private.sd_bk(s.dur::numeric, array[60, 300, 900, 1800, 3600]), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s
+    union all select 'm3.h0:' || extract(hour from s.t0 at time zone 'Europe/Paris')::int, '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s
+    union all select 'm3.h1:' || extract(hour from s.t1 at time zone 'Europe/Paris')::int, '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s
+    union all select 'm4.scr', '', s.cc, s.dev, s.acct, 1, s.views from pg_temp.sd_s s
+    union all select 'm4.ent:' || left(coalesce(s.ent, '?'), 24), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s
+    union all select 'm4.ext:' || left(coalesce(s.ext, '?'), 24), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s
+    union all select 'm7:' || left(coalesce(nullif(s.ref, ''), 'direct'), 60), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s where s.ref is not null
+    union all select 'm8.t', '', s.cc, s.dev, s.acct, 1, greatest(0, extract(epoch from s.fl - s.t0)) from pg_temp.sd_s s where s.fl is not null
+    union all select 'm8.b:' || private.sd_bk(greatest(0, extract(epoch from s.fl - s.t0))::numeric, array[5, 15, 30, 60, 120, 300]), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s where s.fl is not null
+    union all select 'm8.none', '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s where s.fl is null
+    union all select 'm23:' || left(coalesce(nullif(s.dv ->> 'brv', ''), 'Unknown'), 30), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s where s.dv is not null
+    union all select 'm24:' || left(coalesce(nullif(s.dv ->> 'osv', ''), 'Unknown'), 30), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s where s.dv is not null
+    union all select 'm25.t:' || coalesce(nullif(s.dev, ''), 'unknown'), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s
+    union all select 'm25.res:' || left(s.sc ->> 'res', 12), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s where s.sc ->> 'res' ~ '^[0-9]{2,5}x[0-9]{2,5}$'
+    union all select 'm25.dpr:' || round(private.jnum(s.sc, 'dpr'), 2)::text, '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s where private.jnum(s.sc, 'dpr') between 0.25 and 8
+    union all select 'm26:' || private.sd_gpu(s.dv ->> 'gpu'), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s where s.dv is not null
+    union all select 'm27.c:' || coalesce(private.sd_bk(private.jnum(s.dv, 'cores'), array[3, 5, 9, 17]), '?'), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s where s.dv is not null
+    union all select 'm27.m:' || coalesce(private.jnum(s.dv, 'mem')::text, '?'), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s where s.dv is not null
+    union all select 'm31.net:' || left(coalesce(nullif(s.geo ->> 'net', ''), '?'), 12), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s where s.geo is not null
+    union all select 'm31.ct:' || left(coalesce(nullif(s.geo ->> 'ctype', ''), '?'), 12), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s where s.geo is not null
+    union all select 'm31.dl:' || coalesce(private.sd_bk(private.jnum(s.geo, 'dl'), array[0.5, 1, 2, 5, 10, 25, 50, 100]), '?'), '', s.cc, s.dev, s.acct, 1, coalesce(private.jnum(s.geo, 'dl'), 0) from pg_temp.sd_s s where s.geo is not null
+    union all select 'm31.rtt:' || coalesce(private.sd_bk(private.jnum(s.geo, 'rtt'), array[50, 100, 200, 400, 800]), '?'), '', s.cc, s.dev, s.acct, 1, coalesce(private.jnum(s.geo, 'rtt'), 0) from pg_temp.sd_s s where s.geo is not null
+    union all select 'm48:' || coalesce(nullif(upper(s.cc), ''), '??'), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s
+    union all select 'm48.r:' || upper(s.cc) || '/' || s.region, '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s where s.cc <> '' and s.region <> ''
+    union all select 'm49.lang:' || left(s.sm ->> 'lang', 8), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s where coalesce(s.sm ->> 'lang', '') <> ''
+    union all select 'm49.theme:' || left(s.sm ->> 'theme', 12), '', s.cc, s.dev, s.acct, 1, 0 from pg_temp.sd_s s where coalesce(s.sm ->> 'theme', '') <> ''
+
+    union all select 'm9.open', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'game_open'
+    union all select 'm9.launch', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'game_launch'
+    union all select 'm9.play', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'game_play'
+    union all select 'm9.fail', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'error' and e.p ->> 'where' in ('load', 'mount')
+    union all select 'm10.t', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, coalesce(private.jnum(e.p, 'lt'), private.jnum(e.p, 'ms')) from pg_temp.sd_e e where e.event = 'game_launch' and coalesce(private.jnum(e.p, 'lt'), private.jnum(e.p, 'ms')) between 0 and 600000
+    union all select 'm10.b:' || private.sd_bk(coalesce(private.jnum(e.p, 'lt'), private.jnum(e.p, 'ms')), array[250, 500, 1000, 2000, 4000, 8000]), coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'game_launch' and coalesce(private.jnum(e.p, 'lt'), private.jnum(e.p, 'ms')) between 0 and 600000
+    union all select 'm11.t', g.game, g.cc, g.sdev, g.acct, 1, g.sec from (select e.session_id, coalesce(nullif(e.game, ''), '-') as game, e.cc, e.sdev, e.acct, sum(coalesce(private.jnum(e.p, 'sec'), 0)) as sec from pg_temp.sd_e e where e.event = 'game_time' group by 1, 2, 3, 4, 5) g
+    union all select 'm11.b:' || private.sd_bk(g.sec, array[60, 300, 900, 1800, 3600]), g.game, g.cc, g.sdev, g.acct, 1, 0 from (select e.session_id, coalesce(nullif(e.game, ''), '-') as game, e.cc, e.sdev, e.acct, sum(coalesce(private.jnum(e.p, 'sec'), 0)) as sec from pg_temp.sd_e e where e.event = 'game_time' group by 1, 2, 3, 4, 5) g
+    union all select 'm12.fin', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, coalesce(private.jnum(e.p, 'rounds'), 0) from pg_temp.sd_e e where e.event = 'game_quit'
+    union all select 'm12.start', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, coalesce(private.jnum(e.p, 'rs'), private.jnum(e.p, 'rounds'), 0) from pg_temp.sd_e e where e.event = 'game_quit'
+    union all select 'm12.ab', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, coalesce(private.jnum(e.p, 'ab'), 0) from pg_temp.sd_e e where e.event = 'game_quit'
+    union all select 'm13.lv:' || case when private.jnum(e.p, 'lv') is null then 'none' when private.jnum(e.p, 'lv') >= 50 then '50+' else greatest(0, floor(private.jnum(e.p, 'lv')))::int::text end, coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'game_quit'
+    union all select 'm13.why:' || left(coalesce(e.p ->> 'why', '?'), 12), coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'game_quit'
+    union all select 'm13.last', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, private.jnum(e.p, 'last') from pg_temp.sd_e e where e.event = 'game_quit' and private.jnum(e.p, 'last') is not null
+    union all select 'm14.n:' || left(coalesce(nullif(e.p ->> 'dif', ''), '-'), 24), coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, coalesce(private.jnum(e.p, 'w'), 0) from pg_temp.sd_e e where e.event = 'game_quit' and (coalesce(e.p ->> 'dif', '') <> '' or coalesce(private.jnum(e.p, 'w'), 0) + coalesce(private.jnum(e.p, 'l'), 0) > 0)
+    union all select 'm14.l:' || left(coalesce(nullif(e.p ->> 'dif', ''), '-'), 24), coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, coalesce(private.jnum(e.p, 'l'), 0) from pg_temp.sd_e e where e.event = 'game_quit' and (coalesce(e.p ->> 'dif', '') <> '' or coalesce(private.jnum(e.p, 'w'), 0) + coalesce(private.jnum(e.p, 'l'), 0) > 0)
+    union all select 'm15.b:' || to_char(floor(log(10, v.v::numeric) * 4) / 4, 'FM990.00'), v.game, v.cc, v.sdev, v.acct, 1, v.v
+      from (select coalesce(nullif(e.game, ''), '-') as game, e.cc, e.sdev, e.acct, x.value::float8 as v
+        from pg_temp.sd_e e, jsonb_array_elements_text(case when jsonb_typeof(e.p -> 'sc') = 'array' and jsonb_array_length(e.p -> 'sc') > 0 then e.p -> 'sc' when jsonb_typeof(e.p -> 'last') = 'number' then jsonb_build_array(e.p -> 'last') else '[]'::jsonb end) x
+        where e.event = 'game_quit' and x.value ~ '^[0-9.eE+-]+$') v
+      where v.v > 0 and v.v < 1e15
+    union all select 'm16:' || left(coalesce(nullif(e.p ->> 'mo', ''), 'unknown'), 12), coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'game_quit'
+    union all select 'm17', g.game, g.cc, g.sdev, g.acct, 1, g.n from (select e.session_id, coalesce(nullif(e.game, ''), '-') as game, e.cc, e.sdev, e.acct, count(*) as n from pg_temp.sd_e e where e.event = 'restart' group by 1, 2, 3, 4, 5) g
+    union all select 'm18.show:' || left(coalesce(nullif(split_part(i.v, '|', 2), ''), '?'), 12), split_part(i.v, '|', 1), e.cc, e.sdev, e.acct, 1, 0
+      from pg_temp.sd_e e, jsonb_array_elements_text(case when jsonb_typeof(e.p -> 'l') = 'array' then e.p -> 'l' else '[]'::jsonb end) i(v)
+      where e.event = 'impr' and split_part(i.v, '|', 1) ~ '^[a-z0-9][a-z0-9-]{0,39}$'
+    union all select 'm18.click:' || left(coalesce(nullif(e.p ->> 'src', ''), '?'), 12), coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'tile_click'
+    union all select 'm19.fav:' || case when private.jbool(e.p, 'on') then 'on' else 'off' end, coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'favourite'
+    union all select 'm19.search', '', e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'search'
+    union all select 'm19.search_go', '', e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'search_go'
+    union all select 'm19.cat:' || left(coalesce(e.p ->> 'k', '?') || '=' || coalesce(e.p ->> 'v', '?'), 40), '', e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'filter' and private.jbool(e.p, 'on') is not false
+    union all select 'm19.sort:' || left(coalesce(e.p ->> 'v', '?'), 20), '', e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'sort'
+    union all select 'm20:' || left(lower(btrim(e.p ->> 'q')), 40), '', e.cc, e.sdev, e.acct, 1, case when private.jnum(e.p, 'n') = 0 then 1 else 0 end from pg_temp.sd_e e where e.event = 'search' and coalesce(btrim(e.p ->> 'q'), '') <> ''
+    union all select 'm21.fs', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'fullscreen'
+    union all select 'm21.th:' || case when e.p ->> 'v' in ('true', 'false') then case when (e.p ->> 'v')::boolean then 'on' else 'off' end else '?' end, '', e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'setting' and e.p ->> 'k' = 'theater'
+    union all select 'm22.best', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'record'
+    union all select 'm22.' || case when e.p ->> 'k' in ('ach', 'level') then e.p ->> 'k' else 'ach' end, coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'milestone'
+    union all select 'm28.fr', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, private.jnum(e.p, 'fr') from pg_temp.sd_e e where e.event = 'game_time' and private.jnum(e.p, 'fr') >= 60 and private.jnum(e.p, 'fps') > 0
+    union all select 'm28.ft', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, private.jnum(e.p, 'fr') / private.jnum(e.p, 'fps') from pg_temp.sd_e e where e.event = 'game_time' and private.jnum(e.p, 'fr') >= 60 and private.jnum(e.p, 'fps') > 0
+    union all select 'm28.sl', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, coalesce(private.jnum(e.p, 'sl'), 0) from pg_temp.sd_e e where e.event = 'game_time' and private.jnum(e.p, 'fr') >= 60 and private.jnum(e.p, 'fps') > 0
+    union all select 'm28.lf', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, coalesce(private.jnum(e.p, 'lf'), 0) from pg_temp.sd_e e where e.event = 'game_time' and private.jnum(e.p, 'fr') >= 60 and private.jnum(e.p, 'fps') > 0
+    union all select 'm28.b:' || private.sd_bk(private.jnum(e.p, 'fps'), array[20, 30, 45, 55]), coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'game_time' and private.jnum(e.p, 'fr') >= 60 and private.jnum(e.p, 'fps') > 0
+    union all select 'm29.t', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, private.jnum(e.p, 'mb') from pg_temp.sd_e e where e.event = 'mem10' and private.jnum(e.p, 'mb') > 0
+    union all select 'm29.b:' || private.sd_bk(private.jnum(e.p, 'mb'), array[50, 100, 200, 400, 800, 1600]), coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'mem10' and private.jnum(e.p, 'mb') > 0
+    union all select 'm30.' || m.k || ':' || private.sd_bk(private.jnum(e.p, m.k), array[100, 200, 500, 800, 1000, 1500, 2000, 2500, 3000, 4000, 6000, 10000]), '', e.cc, e.sdev, e.acct, 1, private.jnum(e.p, m.k)
+      from pg_temp.sd_e e, unnest(array['ttfb', 'fp', 'fcp', 'lcp']) m(k)
+      where e.event = 'vitals' and private.jnum(e.p, m.k) between 0 and 600000
+    union all select 'm32:' || private.sd_sig(e.p), coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'error'
+    union all select 'm32.br:' || left(coalesce(nullif(s.dv ->> 'brv', ''), 'Unknown'), 30), coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e join pg_temp.sd_s s on s.session_id = e.session_id where e.event = 'error'
+    union all select 'm33.create:' || case when private.jnum(e.p, 'rt') = 1 and private.jnum(e.p, 'peer') = 1 then 'both' when private.jnum(e.p, 'rt') = 1 then 'site' when private.jnum(e.p, 'peer') = 1 then 'peerjs' else '?' end, coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'party_create'
+    union all select 'm33.join:' || left(coalesce(nullif(e.p ->> 'via', ''), '?'), 16), coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'party_join'
+    union all select 'm33.fail:' || left(coalesce(nullif(e.p ->> 'why', ''), '?'), 24), coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'party_fail'
+    union all select 'm33.retry', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'party_retry'
+    union all select 'm34.t', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, private.jnum(e.p, 'ms') from pg_temp.sd_e e where e.event = 'party_join' and private.jnum(e.p, 'ms') between 0 and 600000
+    union all select 'm34.b:' || private.sd_bk(private.jnum(e.p, 'ms') / 1000, array[2, 5, 10, 20, 40]), coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'party_join' and private.jnum(e.p, 'ms') between 0 and 600000
+    union all select 'm35:' || left(coalesce(nullif(e.p ->> 'via', ''), '?'), 16) || case when private.jnum(e.p, 'turn') = 1 or private.jbool(e.p, 'turn') then '+turn' else '' end, coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'party_join'
+    union all select 'm36.drop', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, coalesce(private.jnum(e.p, 'drops'), 0) from pg_temp.sd_e e where e.event = 'party_end'
+    union all select 'm36.back', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, coalesce(private.jnum(e.p, 'backs'), 0) from pg_temp.sd_e e where e.event = 'party_end'
+    union all select 'm37.size:' || least(greatest(coalesce(private.jnum(e.p, 'players'), 0), 0), 99)::int, coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'party_play'
+    union all select 'm37.dur', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, private.jnum(e.p, 'sec') from pg_temp.sd_e e where e.event = 'party_end' and private.jnum(e.p, 'sec') >= 0
+    union all select 'm37.b:' || private.sd_bk(private.jnum(e.p, 'sec'), array[60, 300, 900, 1800, 3600]), coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'party_end' and private.jnum(e.p, 'sec') >= 0
+    union all select 'm38.' || case when private.jnum(e.p, 'pub') = 1 then 'pub' else 'priv' end, coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'party_create'
+    union all select 'm38.acc', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'party_join' and private.jnum(e.p, 'inv') = 1
+    union all select 'm44.' || left(coalesce(nullif(g.m, ''), '?'), 12) || ':' || left(coalesce(nullif(g.st, ''), '?'), 12), '', g.cc, g.sdev, g.acct, 1, 0 from (select distinct e.session_id, e.p ->> 'm' as m, e.p ->> 's' as st, e.cc, e.sdev, e.acct from pg_temp.sd_e e where e.event = 'su_step') g
+    union all select 'm49:' || left(coalesce(e.p ->> 'k', '?'), 20) || ':' || left(coalesce(e.p ->> 'old', '?'), 20) || '>' || left(coalesce(e.p ->> 'v', '?'), 20), '', e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'setting'
+
+    union all select 'm38.inv', '', '*', '*', private.sd_acct(d.from_id), 1, 0 from public.dms d where d.kind = 'invite' and d.created_at >= v_t0 and d.created_at < v_t1
+    union all select 'm40:' || left(coalesce(d.kind, '?'), 12), '', '*', '*', private.sd_acct(d.from_id), 1, 0 from public.dms d where d.created_at >= v_t0 and d.created_at < v_t1
+    union all select 'm39.sent', '', '*', '*', private.sd_acct(f.from_id), 1, 0 from public.friend_requests f where f.created_at >= v_t0 and f.created_at < v_t1
+    union all select 'm39.' || left(f.status, 12), '', '*', '*', private.sd_acct(f.to_id), 1, extract(epoch from f.updated_at - f.created_at) from public.friend_requests f where f.status <> 'pending' and f.updated_at >= v_t0 and f.updated_at < v_t1
+    union all select 'm41.block', '', '*', '*', private.sd_acct(b.blocker), 1, 0 from public.user_blocks b where b.created_at >= v_t0 and b.created_at < v_t1
+    union all select 'm41.rep:' || left(coalesce(r.reason, '?'), 24), '', '*', '*', private.sd_acct(r.reporter), 1, 0 from public.user_reports r where r.created_at >= v_t0 and r.created_at < v_t1
+    union all select 'm42.open', '', '*', '*', t.acct, 1, 0 from private.sd_ticket t where t.opened_at >= v_t0 and t.opened_at < v_t1
+    union all select 'm42.reply', '', '*', '*', t.acct, 1, extract(epoch from t.first_staff_at - t.opened_at) from private.sd_ticket t where t.first_staff_at >= v_t0 and t.first_staff_at < v_t1
+    union all select 'm42.res', '', '*', '*', t.acct, 1, extract(epoch from t.closed_at - t.opened_at) from private.sd_ticket t where t.closed_at >= v_t0 and t.closed_at < v_t1
+    union all select 'm43.idea:' || left(coalesce(i.kind, '?'), 16), '', '*', '*', private.sd_acct(i.user_id), 1, 0 from public.ideas i where i.created_at >= v_t0 and i.created_at < v_t1
+    union all select 'm43.vote:' || case when v.vote > 0 then 'up' else 'down' end, v.game_id, '*', '*', private.sd_acct(v.user_id), 1, 0 from public.game_votes v where v.created_at >= v_t0 and v.created_at < v_t1
+    union all select 'm44.acct:' || left(coalesce(u.raw_app_meta_data ->> 'provider', 'email'), 12), '', '*', '*', private.sd_acct(u.id), 1, 0 from auth.users u where u.created_at >= v_t0 and u.created_at < v_t1
+    union all select 'm45.' || q.method || ':' || case when q.ok then 'ok' else 'fail' end, '', q.cc, '*', private.sd_acct(q.uid), 1, 0 from private.sd_sec q where q.kind = 'login' and q.at >= v_t0 and q.at < v_t1
+    union all select 'm45.code:' || coalesce(nullif(q.code, ''), '?'), '', q.cc, '*', private.sd_acct(q.uid), 1, 0 from private.sd_sec q where q.kind = 'login' and not q.ok and q.at >= v_t0 and q.at < v_t1
+    union all select 'm44.srv:' || q.method || ':' || case when q.ok then 'ok' else 'fail' end, '', q.cc, '*', private.sd_acct(q.uid), 1, 0 from private.sd_sec q where q.kind in ('signup', 'verify') and q.at >= v_t0 and q.at < v_t1
+    union all select 'm46.' || g.kind || ':' || coalesce(nullif(g.reason, ''), 'none'), '', '*', '*', g.acct, 1, coalesce(g.age_days, 0) from private.sd_gone g where g.at >= v_t0 and g.at < v_t1
+    union all select 'm47:' || left(h.action, 30), '', '*', '*', private.sd_acct(h.uid), 1, case when h.full_hit then 1 else 0 end from private.rate_hits h where h.at >= v_t0 and h.at < v_t1
+    union all select 'm50:' || private.sd_ban_kind(l.action, l.detail), '', '*', '*', private.sd_acct(l.target_user), 1, 0 from public.admin_log l where l.at >= v_t0 and l.at < v_t1 and private.sd_ban_kind(l.action, l.detail) is not null
+    union all select 'm50.rep:' || private.sd_ban_kind(l.action, l.detail), '', '*', '*', private.sd_acct(l.target_user), 1, 0 from public.admin_log l
+      where l.at >= v_t0 and l.at < v_t1 and private.sd_ban_kind(l.action, l.detail) in ('account', 'device', 'ip')
+        and exists (select 1 from public.admin_log o where o.at < l.at and private.sd_ban_kind(o.action, o.detail) in ('account', 'device', 'ip')
+          and ((l.target_user is not null and o.target_user = l.target_user) or (l.target_user is null and coalesce(l.detail ->> 'cidr', l.detail ->> 'ip', '') <> '' and coalesce(o.detail ->> 'cidr', o.detail ->> 'ip', '') = coalesce(l.detail ->> 'cidr', l.detail ->> 'ip'))))
+  ) u
+  where u.k is not null and u.s is not null
+  group by u.k, u.game, u.cc, u.dev, u.acct;
+  get diagnostics v_n = row_count;
+
+  insert into private.sd_act (day, who, game, acct, cc, dev, born, hrs)
+  select p_day, a.who, a.game,
+    (array['anon', 'user', 'staff', 'test'])[a.lv + 1], a.cc, a.dev,
+    coalesce((select (p.created_at at time zone 'Europe/Paris')::date from public.profiles p where p.id = a.uid),
+      (select min(o.day) from private.sd_act o where o.who = a.who and o.day < p_day), p_day),
+    a.hrs
+  from (
+    select e.who, g.game, max(case e.acct when 'test' then 3 when 'staff' then 2 when 'user' then 1 else 0 end) as lv,
+      max(e.cc) as cc, max(e.sdev) as dev, max(e.uid::text)::uuid as uid,
+      bit_or(1 << extract(hour from e.created_at at time zone 'Europe/Paris')::int) as hrs
+    from pg_temp.sd_e e
+    cross join lateral (select '' as game union all select e.game where e.game <> '' and e.event in ('game_launch', 'game_play', 'game_time', 'game_quit', 'game_active')) g
+    where e.who is not null
+    group by e.who, g.game
+  ) a;
+
+  insert into private.sd_mark as m (day, at, ms, final)
+  values (p_day, now(), (extract(epoch from clock_timestamp() - v_c0) * 1000)::integer, now() > v_t1 + interval '3 hours')
+  on conflict (day) do update set at = excluded.at, ms = excluded.ms, final = excluded.final;
+  if to_regclass('pg_temp.sd_x') is not null then drop table pg_temp.sd_x; end if;
+  if to_regclass('pg_temp.sd_s') is not null then drop table pg_temp.sd_s; end if;
+  if to_regclass('pg_temp.sd_e') is not null then drop table pg_temp.sd_e; end if;
+  return v_n;
+end;
+$$;
+revoke all on function private.sd_roll_day(date) from public, anon, authenticated;
+
+create or replace function private.sd_sweep()
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+begin
+  delete from private.sd_sess where first_at < now() - interval '400 days';
+  update private.sd_sess set ip_h = null where ip_h is not null and first_at < now() - interval '30 days';
+  delete from private.sd_sec where at < now() - interval '90 days';
+  delete from private.sd_act where day < (now() at time zone 'Europe/Paris')::date - 730;
+  delete from private.sd_roll where day < (now() at time zone 'Europe/Paris')::date - 1096;
+  delete from private.sd_roll where k like 'm20:%' and day < (now() at time zone 'Europe/Paris')::date - 400;
+  delete from private.sd_gone where at < now() - interval '1096 days';
+  delete from private.sd_ticket where opened_at < now() - interval '1096 days';
+  delete from private.sd_mark where day < (now() at time zone 'Europe/Paris')::date - 1096;
+end;
+$$;
+revoke all on function private.sd_sweep() from public, anon, authenticated;
+
+create or replace function private.sd_roll_due(p_from date default null, p_to date default null, p_max integer default 7)
+returns integer
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_today date := (now() at time zone 'Europe/Paris')::date;
+  v_to date := least(coalesce(p_to, v_today), v_today);
+  v_from date := greatest(coalesce(p_from, v_today - 7), v_today - 400);
+  v_d date;
+  v_n integer := 0;
+begin
+  if not pg_try_advisory_xact_lock(hashtextextended('gameplay:sd_due', 0)) then
+    return -1;
+  end if;
+  for v_d in
+    select g.d::date from generate_series(v_to, v_from, interval '-1 day') g(d)
+    left join private.sd_mark m on m.day = g.d::date
+    where m.day is null or (not m.final and m.at < now() - case when g.d::date = v_today then interval '5 minutes' else interval '30 minutes' end)
+    order by (m.day is not null), g.d desc
+  loop
+    exit when v_n >= greatest(1, coalesce(p_max, 7));
+    perform private.sd_roll_day(v_d);
+    v_n := v_n + 1;
+  end loop;
+  if random() < 0.05 or not exists (select 1 from private.sd_mark m where m.day = v_today - 1) then
+    perform private.sd_sweep();
+  end if;
+  return v_n;
+end;
+$$;
+revoke all on function private.sd_roll_due(date, date, integer) from public, anon, authenticated;
+
+create or replace function private.sd_tick()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if auth.uid() is null or exists (select 1 from pg_catalog.pg_extension x where x.extname = 'pg_cron') then
+    return null;
+  end if;
+  if coalesce((select m.at from private.sd_mark m where m.day = (now() at time zone 'Europe/Paris')::date), 'epoch') < now() - interval '20 minutes' then
+    perform private.sd_roll_due(null, null, 2);
+  end if;
+  return null;
+exception when others then
+  return null;
+end;
+$$;
+revoke all on function private.sd_tick() from public, anon, authenticated;
+drop trigger if exists analytics_sd_tick on public.analytics_events;
+create trigger analytics_sd_tick after insert on public.analytics_events
+  for each statement execute function private.sd_tick();
+
+do $$
+begin
+  if exists (select 1 from pg_catalog.pg_extension where extname = 'pg_cron') then
+    perform cron.unschedule(j.jobid) from cron.job j where j.jobname = 'gameplay-sd-roll';
+    perform cron.schedule('gameplay-sd-roll', '*/10 * * * *', 'select private.sd_roll_due(null, null, 4)');
+  end if;
+exception when others then
+  raise notice 'pg_cron job not created: %', sqlerrm;
+end;
+$$;
+
+create or replace function private.sd_m6(p_from date, p_to date, p_game text default null)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  r jsonb;
+begin
+  with t as (
+    select pt.at, count(distinct pt.user_id) as n
+    from private.presence_ticks pt
+    where private.an_level(pt.user_id) = 0
+    group by pt.at
+  )
+  select jsonb_build_object(
+    'src', 'ticks5',
+    'now', (select count(*) from private.presence_now n where n.at > now() - interval '100 seconds' and (p_game is null or n.game = p_game) and private.an_level(n.user_id) = 0),
+    'best', (select jsonb_build_object('n', t.n, 'at', t.at) from t order by t.n desc, t.at limit 1),
+    'days', coalesce((
+      select jsonb_agg(jsonb_build_object('d', d.day, 'n', d.n, 'at', d.at) order by d.day)
+      from (
+        select distinct on ((t.at at time zone 'Europe/Paris')::date) (t.at at time zone 'Europe/Paris')::date as day, t.n, t.at
+        from t
+        where t.at >= (p_from::timestamp at time zone 'Europe/Paris') and t.at < ((p_to + 1)::timestamp at time zone 'Europe/Paris')
+        order by (t.at at time zone 'Europe/Paris')::date, t.n desc, t.at
+      ) d
+    ), '[]'::jsonb),
+    'games', coalesce((
+      select jsonb_agg(jsonb_build_object('g', g.game, 'n', g.n) order by g.n desc)
+      from (select n.game, count(*) as n from private.presence_now n where n.at > now() - interval '100 seconds' and n.game is not null and private.an_level(n.user_id) = 0 group by n.game) g
+    ), '[]'::jsonb)
+  ) into r;
+  return r;
+end;
+$$;
+revoke all on function private.sd_m6(date, date, text) from public, anon, authenticated;
+
+create or replace function public.admin_measures(p_from date default null, p_to date default null, p_game text default null, p_cc text default null, p_dev text default null, p_acct text default 'players')
+returns jsonb
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_today date := (now() at time zone 'Europe/Paris')::date;
+  v_to date := least(coalesce(p_to, (now() at time zone 'Europe/Paris')::date), (now() at time zone 'Europe/Paris')::date);
+  v_from date;
+  v_acct text[];
+  v_game text := nullif(btrim(coalesce(p_game, '')), '');
+  v_cc text := nullif(upper(btrim(coalesce(p_cc, ''))), '');
+  v_dev text := nullif(btrim(coalesce(p_dev, '')), '');
+  v_gm integer[] := array[9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 22, 28, 29, 32, 33, 34, 35, 36, 37, 38, 43];
+  v_step integer;
+  v_pend integer;
+  r jsonb;
+begin
+  v_from := greatest(least(coalesce(p_from, v_to - 29), v_to), v_to - 1095);
+  v_acct := case coalesce(p_acct, 'players')
+    when 'all' then array['anon', 'user', 'staff', 'test']
+    when 'user' then array['user']
+    when 'anon' then array['anon']
+    when 'staff' then array['staff']
+    when 'test' then array['test']
+    else array['anon', 'user'] end;
+  perform private.sd_roll_due(greatest(v_from - 30, v_today - 400), v_to, 45);
+  select count(*) into v_pend
+  from generate_series(greatest(v_from - 30, v_today - 400), v_to, interval '1 day') g(d)
+  left join private.sd_mark m on m.day = g.d::date
+  where m.day is null;
+  v_step := case when v_to - v_from > 120 then 7 else 1 end;
+  with r0 as materialized (
+    select x.day, x.k, x.game, x.n, x.s
+    from private.sd_roll x
+    where x.day between v_from and v_to
+      and x.acct = any (v_acct)
+      and (v_cc is null or x.cc in (v_cc, '*'))
+      and (v_dev is null or x.dev in (v_dev, '*'))
+      and (v_game is null or x.game = v_game or (x.game = '' and coalesce(substring(x.k from '^m([0-9]+)')::int, 0) <> all (v_gm)))
+  ), a0 as materialized (
+    select a.day, a.who, a.born, a.hrs
+    from private.sd_act a
+    where a.day between v_from - 29 and v_to
+      and a.game = coalesce(v_game, '')
+      and a.acct = any (v_acct)
+      and (v_cc is null or a.cc = v_cc)
+      and (v_dev is null or a.dev = v_dev)
+  ), c0 as (
+    select distinct on (a.who) a.who, a.born
+    from private.sd_act a
+    where a.game = '' and a.born between v_from and v_to and a.acct = any (v_acct)
+      and (v_cc is null or a.cc = v_cc) and (v_dev is null or a.dev = v_dev)
+    order by a.who, a.day
+  )
+  select jsonb_build_object(
+    'from', v_from, 'to', v_to, 'today', v_today, 'at', now(), 'pending', v_pend,
+    'filters', jsonb_build_object('game', v_game, 'cc', v_cc, 'dev', v_dev, 'acct', coalesce(p_acct, 'players')),
+    'rows', coalesce((
+      select jsonb_agg(jsonb_build_array(q.k, q.game, q.n, round(q.s::numeric, 2)))
+      from (
+        select r0.k, r0.game, sum(r0.n) as n, sum(r0.s) as s from r0
+        where r0.k not like 'm20:%' and r0.k not like 'm32:%'
+        group by r0.k, r0.game
+        union all
+        select * from (select r0.k, '' as game, sum(r0.n) as n, sum(r0.s) as s from r0 where r0.k like 'm20:%' group by r0.k order by 3 desc, 1 limit 300) t20
+        union all
+        select * from (select r0.k, r0.game, sum(r0.n) as n, sum(r0.s) as s from r0 where r0.k like 'm32:%' group by r0.k, r0.game order by 3 desc, 1 limit 300) t32
+      ) q
+    ), '[]'::jsonb),
+    'daily', coalesce((
+      select jsonb_agg(jsonb_build_array(q.day - v_from, q.f, q.n, round(q.s::numeric, 2)) order by q.day, q.f)
+      from (
+        select v_from + ((r0.day - v_from) / v_step) * v_step as day, split_part(r0.k, ':', 1) as f, sum(r0.n) as n, sum(r0.s) as s
+        from r0
+        group by 1, 2
+      ) q
+    ), '[]'::jsonb),
+    'act', coalesce((
+      select jsonb_agg(jsonb_build_object('d', q.d, 'dau', q.dau, 'wau', q.wau, 'mau', q.mau) order by q.d)
+      from (
+        select d.d::date as d,
+          count(distinct a0.who) filter (where a0.day = d.d::date) as dau,
+          count(distinct a0.who) filter (where a0.day > d.d::date - 7) as wau,
+          count(distinct a0.who) as mau
+        from generate_series(v_from, v_to, make_interval(days => v_step)) d(d)
+        join a0 on a0.day > d.d::date - 30 and a0.day <= d.d::date
+        group by 1
+      ) q
+    ), '[]'::jsonb),
+    'ret', coalesce((
+      select jsonb_agg(jsonb_build_object('wk', q.wk, 'n', q.n, 'e1', q.e1, 'r1', q.r1, 'e7', q.e7, 'r7', q.r7, 'e30', q.e30, 'r30', q.r30) order by q.wk)
+      from (
+        select date_trunc('week', c0.born)::date as wk, count(*) as n,
+          count(*) filter (where c0.born + 1 <= v_today) as e1,
+          count(*) filter (where c0.born + 1 <= v_today and exists (select 1 from private.sd_act b where b.who = c0.who and b.game = '' and b.day = c0.born + 1)) as r1,
+          count(*) filter (where c0.born + 7 <= v_today) as e7,
+          count(*) filter (where c0.born + 7 <= v_today and exists (select 1 from private.sd_act b where b.who = c0.who and b.game = '' and b.day = c0.born + 7)) as r7,
+          count(*) filter (where c0.born + 30 <= v_today) as e30,
+          count(*) filter (where c0.born + 30 <= v_today and exists (select 1 from private.sd_act b where b.who = c0.who and b.game = '' and b.day = c0.born + 30)) as r30
+        from c0
+        group by 1
+      ) q
+    ), '[]'::jsonb),
+    'heat', coalesce((
+      select jsonb_agg(jsonb_build_array(w.dw, h.h, round(coalesce(c.n, 0)::numeric / greatest(w.days, 1), 2)) order by w.dw, h.h)
+      from (select g.dw, (select count(*) from generate_series(v_from, v_to, interval '1 day') z(d) where extract(isodow from z.d)::int - 1 = g.dw) as days from generate_series(0, 6) g(dw)) w
+      cross join generate_series(0, 23) h(h)
+      left join (
+        select extract(isodow from a0.day)::int - 1 as dw, hh.h, count(*) as n
+        from a0 cross join generate_series(0, 23) hh(h)
+        where a0.day >= v_from and (a0.hrs >> hh.h) & 1 = 1
+        group by 1, 2
+      ) c on c.dw = w.dw and c.h = h.h
+    ), '[]'::jsonb),
+    'm6', private.sd_m6(v_from, v_to, v_game),
+    'errs', coalesce((
+      select jsonb_agg(to_jsonb(q) order by q.n desc)
+      from (
+        select distinct on (t.k, t.game) t.k, t.game, t.n, e.created_at as at, left(e.props ->> 'msg', 200) as msg, left(e.props ->> 'stk', 600) as stk, e.props ->> 'src' as src, private.jnum(e.props, 'line') as line, e.device
+        from (select r0.k, r0.game, sum(r0.n) as n from r0 where r0.k like 'm32:%' group by 1, 2 order by 3 desc limit 40) t
+        left join public.analytics_events e on e.event = 'error' and e.created_at >= (v_from::timestamp at time zone 'Europe/Paris') and coalesce(e.game_id, '-') = t.game and 'm32:' || private.sd_sig(e.props) = t.k
+        order by t.k, t.game, e.created_at desc nulls last
+      ) q
+    ), '[]'::jsonb)
+  ) into r;
+  return r;
+end;
+$$;
+revoke all on function public.admin_measures(date, date, text, text, text, text) from public, anon, authenticated;
+grant execute on function public.admin_measures(date, date, text, text, text, text) to authenticated;
+
+create or replace function public.admin_measures_dims()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+begin
+  return jsonb_build_object(
+    'cc', coalesce((select jsonb_agg(q.cc order by q.n desc) from (select x.cc, sum(x.n) as n from private.sd_roll x where x.k = 'm3.n' and x.cc not in ('', '*') group by x.cc) q), '[]'::jsonb),
+    'dev', coalesce((select jsonb_agg(distinct x.dev) from private.sd_roll x where x.k = 'm3.n' and x.dev not in ('', '*')), '[]'::jsonb),
+    'first', (select min(m.day) from private.sd_mark m)
+  );
+end;
+$$;
+revoke all on function public.admin_measures_dims() from public, anon, authenticated;
+grant execute on function public.admin_measures_dims() to authenticated;
+
 -- ============================================================================
 -- 2026-11-13 Game services
 -- ============================================================================
