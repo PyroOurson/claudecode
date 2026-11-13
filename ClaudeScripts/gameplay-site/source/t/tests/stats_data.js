@@ -12,6 +12,7 @@ const num = q => +(sql(q).split('\n').pop() || 0);
 const results = [];
 const check = (n, what, got, want) => { const ok = Math.abs((+got || 0) - (+want || 0)) < 0.011 * Math.max(1, Math.abs(+want || 0)) || ((+got || 0) === (+want || 0)); results.push([n, what, got, want, ok]); return ok; };
 const must = (c, m) => { results.push(['·', m, c ? 'yes' : 'no', 'yes', !!c]); return !!c; };
+const rpcR = async (f, b, t) => { for (let i = 0; ; i++) { try { return await api.rpc(f, b, t); } catch (e) { if (i >= 3 || !/fetch failed|ECONN|socket/i.test(String(e && e.message) + String(e && e.cause && e.cause.code))) throw e; await sleep(1500); } } };
 const acct = async who => { const s = await api.login(USERS[who][0], USERS[who][1]); return { uid: s.user.id, token: s.access_token }; };
 const T0 = "((now() at time zone 'Europe/Paris')::date::timestamp at time zone 'Europe/Paris')";
 const EV = `with e as (select a.*, coalesce(a.client_at, a.created_at) as at from public.analytics_events a where a.created_at >= ${T0})`;
@@ -122,6 +123,7 @@ const hide = p => p.evaluate(() => { Object.defineProperty(document, 'visibility
 
     const t1 = await acct('test'), t2 = await acct('test2'), dan = await acct('dan');
     const un2 = sql(`select username from public.profiles where id = '${t2.uid}'`);
+    sql(`delete from private.rate_hits where uid in ('${t1.uid}', '${t2.uid}', '${dan.uid}')`);
     sql(`delete from public.friends where (user_id = '${t1.uid}' and friend_id = '${t2.uid}') or (user_id = '${t2.uid}' and friend_id = '${t1.uid}'); delete from public.friend_requests where (from_id = '${t1.uid}' and to_id = '${t2.uid}') or (from_id = '${t2.uid}' and to_id = '${t1.uid}'); delete from public.user_blocks where blocker in ('${t1.uid}', '${t2.uid}') and blocked in ('${t1.uid}', '${t2.uid}');`);
     await api.rpc('send_friend_request', { p_username: un2 }, t1.token);
     const fr = num(`select id from public.friend_requests where from_id = '${t1.uid}' and to_id = '${t2.uid}' and status = 'pending' order by id desc limit 1`);
@@ -154,7 +156,7 @@ const hide = p => p.evaluate(() => { Object.defineProperty(document, 'visibility
     log.push('C: social, support, limits and bans through the API');
 
     const day = sql(`select (now() at time zone 'Europe/Paris')::date`);
-    const D = await api.rpc('admin_measures', { p_from: day, p_to: day, p_acct: 'all', p_fresh: true }, dan.token);
+    const D = await rpcR('admin_measures', { p_from: day, p_to: day, p_acct: 'all', p_fresh: true }, dan.token);
     const rows = D.rows.map(([k, g, n, s]) => ({ k, g, n: +n, s: +s }));
     const K = (k, f) => rows.filter(r => (f ? r.k.startsWith(k) : r.k === k)).reduce((a, r) => ({ n: a.n + r.n, s: a.s + r.s }), { n: 0, s: 0 });
     const today = D.to;
@@ -265,10 +267,10 @@ const hide = p => p.evaluate(() => { Object.defineProperty(document, 'visibility
     check(50, 'device bans', K('m50:device').n, num(`select count(*) from public.admin_log where action = 'device_ban' and at >= ${T0}`));
     check(50, 'address bans', K('m50:ip').n, num(`select count(*) from public.admin_log where action = 'ip_ban' and at >= ${T0}`));
 
-    const T = await api.rpc('admin_measures', { p_from: today, p_to: today, p_acct: 'test' }, dan.token);
+    const T = await rpcR('admin_measures', { p_from: today, p_to: today, p_acct: 'test' }, dan.token);
     const tk3 = T.rows.filter(r => r[0] === 'm3.n').reduce((a, r) => a + +r[2], 0);
     check(3, 'sessions of test accounts only', tk3, num(`${EV}, s as (select session_id, max(skip) as k from e group by 1) select count(*) from s where k = 2`));
-    const F = await api.rpc('admin_measures', { p_from: today, p_to: today, p_acct: 'all', p_cc: 'FR' }, dan.token);
+    const F = await rpcR('admin_measures', { p_from: today, p_to: today, p_acct: 'all', p_cc: 'FR' }, dan.token);
     check(48, 'country filter keeps only French sessions', F.rows.filter(r => r[0] === 'm3.n').reduce((a, r) => a + +r[2], 0), num(`${EV}, x as (select e.session_id, coalesce(nullif(max(s.cc), ''), max(upper(coalesce(nullif(e.props ->> 'scc', ''), e.props ->> 'cc'))) filter (where e.event = 'env_geo' and coalesce(nullif(e.props ->> 'scc', ''), e.props ->> 'cc', '') ~ '^[A-Za-z][A-Za-z0-9]$'), '') as cc from e left join private.sd_sess s on s.session_id = e.session_id group by 1) select count(*) from x where cc = 'FR'`));
     let denied = false;
     try { await api.rpc('admin_measures', {}, t1.token); } catch (e) { denied = /admins only/i.test(e.message); }

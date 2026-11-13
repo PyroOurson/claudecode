@@ -10814,6 +10814,7 @@ begin
     coalesce(nullif(current_setting('gp.del_reason', true), ''), ''),
     greatest(0, (now() at time zone 'Europe/Paris')::date - (old.created_at at time zone 'Europe/Paris')::date),
     case when exists (select 1 from public.test_accounts t where t.user_id = old.id) then 'test' when old.role in ('admin', 'owner') then 'staff' else 'user' end);
+  delete from private.sd_act a where a.who = private.sd_hash(old.id::text);
   return old;
 exception when others then
   return old;
@@ -11410,10 +11411,16 @@ begin
     'errs', coalesce((
       select jsonb_agg(to_jsonb(q) order by q.n desc)
       from (
-        select distinct on (t.k, t.game) t.k, t.game, t.n, e.created_at as at, left(e.props ->> 'msg', 200) as msg, left(e.props ->> 'stk', 600) as stk, e.props ->> 'src' as src, private.jnum(e.props, 'line') as line, e.device
+        select t.k, t.game, t.n, e.created_at as at, left(e.props ->> 'msg', 200) as msg, left(e.props ->> 'stk', 600) as stk, e.props ->> 'src' as src, private.jnum(e.props, 'line') as line, e.device
         from (select r0.k, r0.game, sum(r0.n) as n from r0 where r0.k like 'm32:%' group by 1, 2 order by 3 desc limit 40) t
-        left join public.analytics_events e on e.event = 'error' and e.created_at >= (v_from::timestamp at time zone 'Europe/Paris') and coalesce(e.game_id, '-') = t.game and 'm32:' || private.sd_sig(e.props) = t.k
-        order by t.k, t.game, e.created_at desc nulls last
+        left join lateral (
+          select x.created_at, x.props, x.device
+          from public.analytics_events x
+          where x.event = 'error' and x.created_at >= (v_from::timestamp at time zone 'Europe/Paris') and x.created_at < ((v_to + 1)::timestamp at time zone 'Europe/Paris')
+            and (case when t.game = '-' then x.game_id is null else x.game_id = t.game end) and 'm32:' || private.sd_sig(x.props) = t.k
+          order by x.created_at desc
+          limit 1
+        ) e on true
       ) q
     ), '[]'::jsonb)
   ) into r;

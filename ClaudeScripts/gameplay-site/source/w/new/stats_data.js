@@ -329,7 +329,7 @@ def(41, 'social', 'Blocks and reports', 'Players blocked, and reports with the r
 });
 def(42, 'social', 'Support tickets', 'Opened, time to the first staff reply and time to resolution (until the ticket was closed).', ['game', 'cc', 'dev'], I => {
   const o = I.tot('m42.open').n, r = I.tot('m42.reply'), z = I.tot('m42.res');
-  return { html: sdKpis([[sdT('Opened'), sdNum(o)], [sdT('First staff replies'), sdNum(r.n)], [sdT('Average time to first reply'), sdDur(sdAvg(r.s, r.n))], [sdT('Resolved'), sdNum(z.n)], [sdT('Average time to resolution'), sdDur(sdAvg(z.s, z.n))]]) + sdLine([{ t: sdT('Opened'), v: I.day('m42.open').map(x => x.n) }, { t: sdT('Resolved'), v: I.day('m42.res').map(x => x.n) }], dayLab(I)), tables: [] };
+  return { html: sdKpis([[sdT('Opened'), sdNum(o)], [sdT('First staff replies'), sdNum(r.n)], [sdT('Average time to first reply'), sdDur(sdAvg(r.s, r.n))], [sdT('Resolved'), sdNum(z.n)], [sdT('Average time to resolution'), sdDur(sdAvg(z.s, z.n))]]) + sdLine([{ t: sdT('Opened'), v: I.day('m42.open').map(x => x.n) }, { t: sdT('Resolved'), v: I.day('m42.res').map(x => x.n) }], dayLab(I)), tables: [{ cols: [cS('v', 'Measure'), cN('n', 'Tickets'), cN('a', 'Average time', sdDur)], sort: 'o', dir: 1, rows: [{ o: 0, v: sdT('Opened'), n: o, a: null }, { o: 1, v: sdT('First staff replies'), n: r.n, a: sdAvg(r.s, r.n) }, { o: 2, v: sdT('Resolved'), n: z.n, a: sdAvg(z.s, z.n) }] }] };
 });
 def(43, 'social', 'Ideas submitted and votes', 'Ideas sent to the idea box by type, and thumbs up or down given to games.', ['cc', 'dev'], I => {
   const up = I.byG('m43.vote').size ? I.fam('m43.vote') : [];
