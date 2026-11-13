@@ -681,7 +681,7 @@
       return { n: Math.max(1, Math.round(est)) };
     }
     const sims = lvl === 'Hardest' ? 240 : lvl === 'Hard' ? 70 : 28;
-    const ms = TOP(lvl) ? 160 : 70;
+    const ms = TOP(lvl) ? 40 : 30;
     const rot = hand.slice();
     const sim = sTricksSim(rot, 'win', dealer + (4 - p), sims, ms);
     let n = Math.round(sim.mean + BID_OFF);
@@ -1113,7 +1113,7 @@
     const h = S.hands[p];
     const me = p & 1;
     const lead = S.o.alone;
-    const cfg = lvl === 'Hardest' ? { n: 200, ms: 110 } : lvl === 'Hard' ? { n: 60, ms: 140 } : { n: 24, ms: 60 };
+    const cfg = lvl === 'Hardest' ? { n: 200, ms: 25 } : lvl === 'Hard' ? { n: 60, ms: 25 } : { n: 24, ms: 20 };
     const press = (S.score[1 - me] >= S.o.target - 1 ? -0.25 : 0) + (S.score[me] >= S.o.target - 1 ? 0.08 : 0);
     if (S.phase === 'bid1') {
       const s = cs(up);

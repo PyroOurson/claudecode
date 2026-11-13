@@ -804,8 +804,9 @@
     const cls = S.cls, tr = suit, res = { n: 0, pts: [], succ: 0, avg: 0, cap: 0 };
     const need = [0, 0, 0, 0], plaus = cls ? null : bPlaus(S);
     for (let q = 0; q < 4; q++) if (q !== seat) need[q] = cls ? 8 : 8;
-    const me = seat & 1;
+    const me = seat & 1, t0 = performance.now();
     for (let n = 0; n < N; n++) {
+      if (n >= 24 && performance.now() - t0 > 12) break;
       let pool = unk;
       if (cls) pool = unk.filter(i => i !== S.turned);
       const known = [[], [], [], []];
@@ -871,7 +872,9 @@
         for (let q = 0; q < 4; q++) if (q !== seat) need[q] = 8;
         const plaus = bPlaus(S);
         let fail = 0, n = 0;
+        const t0 = performance.now();
         for (let i = 0; i < Math.floor(N * .8); i++) {
+          if (i >= 24 && performance.now() - t0 > 12) break;
           const hs = bSample(need, unk, null, [[], [], [], []], plaus);
           hs[seat] = S.hands[seat].slice();
           const base = bNewRS(hs, S.hi.suit, false, S.hi.s & 1, nx4(S.dealer));
@@ -1280,8 +1283,9 @@
     const need = new Array(n).fill(cfg.hs);
     need[seat] = 0;
     let sum = 0, made = 0, chel = 0, cnt = 0;
-    const known = new Array(n).fill(0).map(() => []);
+    const known = new Array(n).fill(0).map(() => []), t0 = performance.now();
     for (let k = 0; k < N; k++) {
+      if (k >= 10 && performance.now() - t0 > 12) break;
       const hs = tSample(need, unk, null, known, null);
       const chien = hs.rest.slice(0, cfg.cs);
       let H = hand.slice(), xT = [];

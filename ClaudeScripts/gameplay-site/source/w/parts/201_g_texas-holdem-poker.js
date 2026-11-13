@@ -59,6 +59,18 @@
     if (c === 1) return 'Pair of ' + rp(a) + k(b);
     return 'High Card, ' + rn(sc >> 16 & 15 || sc >> 16) + (kick && b ? ', ' + rn(b) + ' kicker' : '');
   }
+  function describeT(sc) {
+    const c = sc >> 20, a = sc >> 16 & 15, b = sc >> 12 & 15, n = r => tr(rn(r)), p = r => tr(rp(r));
+    if (c === 8) return a === 14 ? tr('Royal Flush') : tr('Straight Flush, {r} high', { r: n(a) });
+    if (c === 7) return tr('Four of a Kind, {r}', { r: p(a) });
+    if (c === 6) return tr('Full House, {r} full of {s}', { r: p(a), s: p(b) });
+    if (c === 5) return tr('Flush, {r} high', { r: n(a) });
+    if (c === 4) return tr('Straight, {r} high', { r: n(a) });
+    if (c === 3) return tr('Three of a Kind, {r}', { r: p(a) });
+    if (c === 2) return tr('Two Pair, {r} and {s}', { r: p(a), s: p(b) });
+    if (c === 1) return tr('Pair of {r}', { r: p(a) });
+    return tr('High Card, {r}', { r: n(sc >> 16 & 15 || sc >> 16) });
+  }
   const shortName = sc => {
     const c = sc >> 20;
     return c === 8 && (sc >> 16 & 15) === 14 ? 'Royal Flush' : HN[c];
@@ -791,8 +803,8 @@
   }
 
   const BOTS = [
-    ['Ace Mallory', .75, .35, .12], ['Big Tony', .25, .8, .5], ['Luna Vega', .55, .55, .3], ['Doc Holliday', .85, .25, .05],
-    ['Mad Max', .12, .9, .7], ['Sofia R.', .6, .65, .25], ['Cowboy Jim', .4, .45, .2], ['Kenji', .7, .5, .35],
+    ['Ace Mallory', .75, .35, .12], ['Big Tony', .25, .8, .5], ['Luna Vega', .55, .55, .3], ['Doc Hartley', .85, .25, .05],
+    ['Wild Max', .12, .9, .7], ['Sofia R.', .6, .65, .25], ['Cowboy Jim', .4, .45, .2], ['Kenji', .7, .5, .35],
     ['Lady Luck', .3, .35, .15], ['Vinnie', .5, .85, .55], ['Professor P', .8, .6, .3], ['Rosa', .45, .4, .22]
   ];
   const SKILLN = ['Easy', 'Normal', 'Hard', 'Hardest'];
@@ -1259,8 +1271,8 @@
       const S = D.seats[viewer];
       if (!S || !S.in || S.fold || S.cards[0] < 0 || S.cards[1] < 0 || S.land < 2) return;
       const all = S.cards.concat(D.board.map(b => b.id));
-      if (all.length >= 5) D.hint = describe(score(all), false);
-      else { const a = rk(S.cards[0]), b = rk(S.cards[1]); D.hint = a === b ? 'Pair of ' + rp(a) : rn(Math.max(a, b)) + '-' + rn(Math.min(a, b)) + (su(S.cards[0]) === su(S.cards[1]) ? ' suited' : ''); }
+      if (all.length >= 5) D.hint = describeT(score(all));
+      else { const a = rk(S.cards[0]), b = rk(S.cards[1]); D.hint = a === b ? tr('Pair of {r}', { r: tr(rp(a)) }) : tr(su(S.cards[0]) === su(S.cards[1]) ? '{r}-{s} suited' : '{r}-{s}', { r: tr(rn(Math.max(a, b))), s: tr(rn(Math.min(a, b))) }); }
     }
 
     function handle(e) {
