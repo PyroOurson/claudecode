@@ -2897,7 +2897,7 @@ ${host ? `<button class="cg-big blue" data-a="restart">${online ? 'Restart for e
       let btns;
       if (online) btns = host ? `<button class="cg-big green" data-a="again" data-def>Rematch</button><button class="cg-big blue" data-a="lobby">Back to lobby</button>` : '<p>Waiting for the host to start a rematch…</p>';
       else btns = `<button class="cg-big green" data-a="again" data-def>Play again</button>`;
-      showPane('over', `<div class="cg-box"><div class="cg-who" style="background-image:url(${avatarUrl(M.av[wseat])})"></div><p class="cg-kick">Game over</p><h3>${head}</h3>${rows}${btns}<div class="cg-row"><button class="cg-sm" data-a="sheet">Score sheet</button><button class="cg-sm" data-a="quit">${online ? 'Leave table' : 'Menu'}</button></div><p class="cg-tag">${opt.wins} win${opt.wins === 1 ? '' : 's'} in ${opt.games} games</p></div>`, '', a => {
+      showPane('over', `<div class="cg-box"><div class="cg-who" style="background-image:url(${avatarUrl(M.av[wseat])})"></div><p class="cg-kick">Game over</p><h3>${head}</h3>${rows}${btns}<div class="cg-row"><button class="cg-sm" data-a="sheet">Score sheet</button><button class="cg-sm" data-a="quit">${online ? 'Leave table' : 'Menu'}</button></div><p class="cg-tag">${opt.wins} win${opt.wins === 1 ? '' : 's'} in ${opt.games} game${opt.games === 1 ? '' : 's'}</p></div>`, '', a => {
         if (a === 'again') newMatch();
         else if (a === 'lobby') startOnline();
         else if (a === 'sheet') sheetPane('over');
