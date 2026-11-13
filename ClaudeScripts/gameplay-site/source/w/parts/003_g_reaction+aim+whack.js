@@ -753,7 +753,7 @@
         const q = quota(), f = clamp(lvlPts / q, 0, 1), bx = 16, bw = W - 32;
         ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.roundRect(bx, 13, bw, 20, 10); ctx.fill();
         if (f > 0) { ctx.fillStyle = f >= 1 ? '#22c76f' : '#ffd166'; ctx.beginPath(); ctx.roundRect(bx, 13, Math.max(20, bw * f), 20, 10); ctx.fill(); }
-        txt(ctx, mode === 'ready' ? 'Hit the goal before time runs out' : f >= 1 ? `Goal reached · ${lvlPts}/${q}` : `Level ${level} goal · ${lvlPts}/${q}`, W / 2, 24, 13, '#1d3b12');
+        txt(ctx, mode === 'ready' ? 'Hit the goal before time runs out' : f >= 1 ? `Goal reached · ${lvlPts}/${q}` : `Level ${level} goal · ${lvlPts}/${q}`, W / 2, 24, 13 * Math.min(uiScale(canvas, W), 1.3), '#1d3b12');
         for (const h of holes) {
           if (h.rise <= 0.001) continue;
           ctx.save();

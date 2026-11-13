@@ -17,7 +17,7 @@
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, t) => a + (b - a) * t;
   const mk = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
-  const LEVELS = ['Easy', 'Normal', 'Hard', 'Expert'];
+  const LEVELS = ['Easy', 'Normal', 'Hard', 'Hardest'];
   const BOT_NAMES = ['Rosa', 'Theo', 'Kai', 'Mila', 'Otto', 'Jade', 'Leo', 'Nora', 'Ivy', 'Hugo', 'Zoe', 'Finn'];
 
   function mulberry(a) {
@@ -420,13 +420,14 @@
   }
 
 
-  const THINK = { Easy: [900, 1700], Normal: [700, 1350], Hard: [560, 1100], Expert: [450, 900] };
+  const THINK = { Easy: [900, 1700], Normal: [700, 1350], Hard: [560, 1100], Hardest: [450, 900] };
 
   function boot(mod, root, api) {
     MUTE = () => api.muted;
     const R = Math.random;
     const opt = Object.assign({ n: mod.n0, diff: 'Normal', felt: 'green', back: 'blue', timer: 0, v: 1 }, api.load() || {});
     opt.rules = Object.assign({}, mod.rules0, opt.rules || {});
+    if (opt.diff === 'Expert') opt.diff = 'Hardest';
     if (!LEVELS.includes(opt.diff)) opt.diff = 'Normal';
     opt.n = clamp(+opt.n || mod.n0, mod.min, mod.max);
     const save = () => api.save(opt);
@@ -1023,7 +1024,7 @@
     if (window.ResizeObserver) new ResizeObserver(() => fit()).observe(root);
     api.on(window, 'resize', () => fit());
     api.interval(() => fit(), 500);
-    root._cg = { M, sh, opt, ui, Q, Z, get busy() { return busy; }, set speed(v) { M.speed = v; }, flush, settle };
+    root._cg = { M, sh, opt, ui, Q, Z, get busy() { return busy; }, set speed(v) { M.speed = v; }, flush, settle, act, mod };
     calcL();
     if (api.net.invite) startOnline(); else showTitle();
   }
@@ -1197,12 +1198,14 @@
   }
 
   function gfMem(n, p, V) {
-    const m = { n, p, t: 0, has: Array.from({ length: n }, () => ({})), none: Array.from({ length: n }, () => ({})), booked: new Set() };
+    const m = { n, p, t: 0, has: Array.from({ length: n }, () => ({})), none: Array.from({ length: n }, () => ({})), booked: new Set(), dr: Array(n).fill(0) };
     if (V) V.books.forEach(b => b.forEach(r => m.booked.add(r)));
     return m;
   }
   function gfObserve(m, e) {
-    if (e.k === 'deal') { m.t = 0; m.booked.clear(); m.has.forEach(o => { for (const k in o) delete o[k]; }); m.none.forEach(o => { for (const k in o) delete o[k]; }); }
+    if (e.k === 'draw') m.dr[e.p]++;
+    else if (e.k === 'refill') m.dr[e.p] += e.ids.length;
+    if (e.k === 'deal') { m.t = 0; m.dr.fill(0); m.booked.clear(); m.has.forEach(o => { for (const k in o) delete o[k]; }); m.none.forEach(o => { for (const k in o) delete o[k]; }); }
     else if (e.k === 'ask') {
       m.t++;
       const o = m.has[e.p][e.r];
@@ -1212,10 +1215,10 @@
       const o = m.has[e.p][e.r];
       m.has[e.p][e.r] = { c: (o ? o.c : 1) + e.ids.length, t: m.t };
       delete m.has[e.q][e.r];
-      m.none[e.q][e.r] = { t: m.t };
+      m.none[e.q][e.r] = { t: m.t, d: m.dr[e.q] };
     } else if (e.k === 'fish') {
       delete m.has[e.q][e.r];
-      m.none[e.q][e.r] = { t: m.t };
+      m.none[e.q][e.r] = { t: m.t, d: m.dr[e.q] };
     } else if (e.k === 'draw' && e.lucky) {
       const r = rk(e.id), o = m.has[e.p][r];
       m.has[e.p][r] = { c: (o ? o.c : 0) + 1, t: m.t };
@@ -1230,12 +1233,38 @@
     V.hand.forEach(id => { mine[rk(id)] = (mine[rk(id)] || 0) + 1; });
     const ranks = Object.keys(mine).map(Number);
     const tg = []; for (let q = 0; q < n; q++) if (q !== p && V.counts[q]) tg.push(q);
-    const win = { Easy: n, Normal: 3 * n, Hard: 9 * n, Expert: 1e9 }[level] || 3 * n;
-    const noise = { Easy: 1.2, Normal: .35, Hard: .1, Expert: 0 }[level] || .3;
+    const win = { Easy: n, Normal: 3 * n, Hard: 9 * n, Hardest: 1e9 }[level] || 3 * n;
+    const noise = level === 'Hardest' ? 0 : { Easy: 1.2, Normal: .35, Hard: .1 }[level] || .3;
     const kn = (q, r) => { const o = m && m.has[q][r]; return o && m.t - o.t <= win ? o.c : 0; };
     const knTot = q => { let t = 0; if (m) for (const r in m.has[q]) t += kn(q, +r); return t; };
     let pool = V.stock;
     for (const q of tg) pool += Math.max(0, V.counts[q] - knTot(q));
+    if (level === 'Hardest' && m && m.dr) {
+      let best = null, bv = -1e9;
+      for (const r of ranks) {
+        let K = 0;
+        for (const q of tg) K += kn(q, r);
+        const cu = Math.max(0, 4 - mine[r] - K), shown = !!m.has[p][r];
+        for (const q of tg) {
+          const k = kn(q, r), hq = Math.max(0, V.counts[q] - knTot(q)), z = m.none[q][r];
+          let pr = 1, got = k;
+          if (!k) {
+            const per = pool > 0 ? Math.min(1, cu / pool) : 0;
+            pr = z ? 1 - Math.pow(1 - per, Math.max(0, m.dr[q] - z.d)) : 1 - Math.pow(1 - per, hq);
+            got = 1 + Math.max(0, cu - 1) * (pool > 1 ? Math.min(1, (hq - 1) / (pool - 1)) : 0);
+          }
+          const tot = mine[r] + got, book = tot >= 4 ? 1 : 0;
+          let rest = 0;
+          for (const o of tg) if (o !== q) rest += kn(o, r) > 0 ? 1 : cu > 0 && pool > 0 ? Math.min(1, (cu - (k ? 0 : 1)) * Math.max(0, V.counts[o] - knTot(o)) / pool) : 0;
+          const risk = Math.min(1, rest);
+          const win = got + book * 3 + .8 - (book ? 0 : risk * tot * .55);
+          const lose = shown ? 0 : Math.min(1, risk + (cu > 0 && pool > 0 ? hq / pool : 0)) * mine[r] * .55;
+          const v = pr * win - (1 - pr) * lose + R() * .01;
+          if (v > bv) { bv = v; best = { t: 'ask', q, r }; }
+        }
+      }
+      if (best) return best;
+    }
     const opts = [];
     for (const r of ranks) {
       let K = 0; for (const q of tg) K += kn(q, r);
@@ -1565,7 +1594,7 @@
     const s = { n, hands: Array.from({ length: n }, () => []), pairs: Array.from({ length: n }, () => []), out: [], turn: 0, target: 0, tid: 0, phase: 'play', ev: [], rid: 1, loser: -1 };
     const emit = e => { s.ev.push(e); };
     const dir = rules.dir === 'right' ? -1 : 1;
-    const leak = { Easy: .55, Normal: .3, Hard: .12, Expert: .03 }[level] || .3;
+    const leak = level === 'Hardest' ? 0 : { Easy: .55, Normal: .3, Hard: .12 }[level] || .3;
     const alive = p => s.hands[p].length > 0;
     const step = (p, d) => { for (let k = 1; k < n; k++) { const q = ((p + d * k) % n + n) % n; if (alive(q)) return q; } return -1; };
     const same = (a, b) => a !== OM && b !== OM && rk(a) === rk(b) && (rules.pair !== 'color' || isRed(a) === isRed(b));
@@ -1658,8 +1687,36 @@
     if (e.k === 'shuf' && e.p !== q) return { k: 'shuf', p: e.p };
     return e;
   }
-  function omMem(n) { return { n, pick: Array.from({ length: n }, () => [3, 6, 10, 6, 3]) }; }
+  function omMem(n, p) { return { n, p, pick: Array.from({ length: n }, () => [3, 6, 10, 6, 3]), hn: Array(n).fill(0), om: null }; }
+  function omTrack(m, e) {
+    const o = m.om, unit = (n, i) => { const a = Array(Math.max(1, n)).fill(0); a[Math.min(a.length - 1, i)] = 1; return a; };
+    if (e.k === 'deal') { m.om = null; for (let q = 0; q < m.n; q++) m.hn[q] = e.counts[q]; }
+    else if (e.k === 'pairs') e.lists.forEach((l, q) => { m.hn[q] -= 2 * l.length; });
+    else if (e.k === 'shuf') { if (o && e.p === o.q) o.pr.fill(1 / o.pr.length); }
+    else if (e.k === 'pair') {
+      m.hn[e.p] -= 2;
+      if (o && o.q === e.p && o.ins >= 0 && o.pr.length > 2) {
+        const pr = o.pr, nw = Array(pr.length - 2).fill(0);
+        pr.splice(o.ins, 1);
+        for (let j = 0; j < pr.length; j++) { const d = j / (pr.length - 1); if (j > 0) nw[j - 1] += pr[j] * d; if (j < nw.length) nw[j] += pr[j] * (1 - d); }
+        o.pr = nw; o.ins = -1;
+      } else if (o && o.q === e.p) m.om = null;
+    } else if (e.k === 'draw') {
+      m.hn[e.t]--; m.hn[e.p]++;
+      if (e.id === OM) m.om = e.t === m.p ? { q: e.p, pr: unit(m.hn[e.p], e.pos), ins: -1 } : null;
+      else if (o && e.t === o.q) {
+        const x = o.pr[e.i] || 0;
+        if (e.id < 0 && x > .5) m.om = { q: e.p, pr: unit(m.hn[e.p], e.pos), ins: -1 };
+        else {
+          o.pr.splice(e.i, 1);
+          const t = o.pr.reduce((a, b) => a + b, 0);
+          if (t > 0) o.pr = o.pr.map(v => v / t); else m.om = null;
+        }
+      } else if (o && e.p === o.q) { o.pr.splice(Math.min(o.pr.length, e.pos), 0, 0); o.ins = Math.min(o.pr.length - 1, e.pos); }
+    }
+  }
   function omObserve(m, e) {
+    if (m.hn) omTrack(m, e);
     if (e.k !== 'draw') return;
     const a = m.pick[e.p], b = Math.round(e.i / Math.max(1, e.n - 1) * 4);
     a[b] += 3;
@@ -1669,13 +1726,25 @@
   function omBot(V, p, level, m, R) {
     const f = level === 'Easy' ? (R() + R() + R()) / 3 : level === 'Normal' ? (R() + R()) / 2 : R();
     const a = { t: 'draw', i: Math.min(V.counts[V.target] - 1, Math.floor(f * V.counts[V.target])) };
-    if ((level === 'Hard' || level === 'Expert') && m) {
+    if ((level === 'Hard' || level === 'Hardest') && m) {
       let d = -1;
       for (let k = 1; k < V.n && d < 0; k++) { const q = ((p - V.dir * k) % V.n + V.n) % V.n; if (V.counts[q] > 0) d = q; }
       if (d >= 0) {
-        const h = m.pick[d].map((c, b) => ({ b, c: c + R() * 1.5 })).sort((x, y) => x.c - y.c);
-        a.arr = level === 'Expert' && R() < .2 ? R() : h[0].b / 4;
+        const h = m.pick[d].map((c, b) => ({ b, c: c + R() * 1.5 })).sort((x, y) => y.c - x.c);
+        a.arr = level === 'Hardest' && R() < .2 ? R() : h[0].b / 4;
+        if (level === 'Hardest') {
+          let t = 0, u;
+          for (const x of h) t += x.c * x.c;
+          u = R() * t;
+          for (const x of h) { u -= x.c * x.c; if (u <= 0) { a.arr = clamp((x.b + R() - .5) / 4, 0, 1); break; } }
+        }
       }
+    }
+    const o = level === 'Hardest' && m ? m.om : null;
+    if (o && o.q === V.target && o.pr.length === V.counts[V.target]) {
+      const lo = Math.min(...o.pr), ix = [];
+      o.pr.forEach((v, i) => { if (v <= lo + 1e-9) ix.push(i); });
+      a.i = ix[Math.floor(R() * ix.length)];
     }
     return a;
   }
@@ -2072,8 +2141,37 @@
     return e;
   }
 
-  function chMem(n) { return { n, D: 1, kh: Array.from({ length: n }, () => new Set()), lr: Array.from({ length: n }, () => [1, 6]) }; }
-  function chObserve(m, e) {
+  function chMem(n) { return { n, D: 1, kh: Array.from({ length: n }, () => new Set()), lr: Array.from({ length: n }, () => [1, 6]), k2: Array.from({ length: n }, () => new Set()), vs: Array.from({ length: n }, () => [0, 0, 0, 0, 0, 0]), seq: [], pm: [] }; }
+  function chObserve(m, e, q) {
+    if (e.k === 'deal') { m.k2.forEach(x => x.clear()); m.vs.forEach(x => x.fill(0)); m.seq = []; m.pm = []; }
+    else if (e.k === 'play') {
+      const k2 = m.k2[e.p], c = e.ids ? e.ids.length : e.n;
+      let kq = 0, d = c;
+      k2.forEach(id => { if (rk(id) === e.r) kq++; });
+      for (const id of Array.from(k2)) if (d > 0 && rk(id) === e.r) { k2.delete(id); d--; }
+      if (d > 0) k2.clear();
+      m.seq.push({ p: e.p, n: c, r: e.r, kq, done: false });
+      if (e.ids) m.pm.push(...e.ids);
+    } else if (e.k === 'call') {
+      const l = m.seq[m.seq.length - 1], v = m.vs[e.q], k = Math.min(3, e.ids.length) * 2;
+      if (l) l.done = true;
+      v[k - 1]++;
+      if (!e.truth) v[k - 2]++;
+      m.k2.forEach(x => e.ids.forEach(id => x.delete(id)));
+      if (e.loser !== q) { e.ids.forEach(id => m.k2[e.loser].add(id)); m.pm.forEach(id => m.k2[e.loser].add(id)); }
+      m.pm = [];
+    } else if (e.k === 'take') {
+      if (e.ids) {
+        let o = 0;
+        for (const s of m.seq) {
+          const ids = e.ids.slice(o, o + s.n), v = m.vs[s.p], k = Math.min(3, s.n) * 2;
+          o += s.n;
+          if (s.p !== q && !s.done) { v[k - 1]++; if (ids.some(id => rk(id) !== s.r)) v[k - 2]++; }
+        }
+        m.k2.forEach(x => e.ids.forEach(id => x.delete(id)));
+      }
+      m.seq = [];
+    }
     if (e.k === 'deal') { m.D = e.D; m.kh.forEach(x => x.clear()); m.lr.forEach(x => { x[0] = 1; x[1] = 6; }); }
     else if (e.k === 'play') {
       m.lr[e.p][1]++;
@@ -2108,7 +2206,7 @@
     const N = Math.max(1, 52 * V.D - V.hand.length - knownCards);
     const K = clamp(D4 - mine - known, 0, N);
     const nn = clamp(V.counts[l.p] + n - (m ? m.kh[l.p].size : 0), 0, N);
-    const br = level === 'Expert' ? .22 : level === 'Hard' ? .18 : .12;
+    const br = level === 'Hardest' ? .22 : level === 'Hard' ? .18 : .12;
     let h = 0, lie = 0;
     for (let x = 0; x <= Math.min(K, nn); x++) {
       const pr = hypPmf(N, K, nn, x);
@@ -2119,22 +2217,43 @@
       else if (t === 0) lie += pr * (LIE_N[Math.min(n, 4)] || 0);
       else lie += pr * br * (n === t + 1 ? 1 : .3);
     }
-    if (level === 'Expert' && m) {
+    if (level === 'Hardest' && m) {
       const rate = clamp(m.lr[l.p][0] / m.lr[l.p][1] * 2, .4, 2.2);
       lie *= rate;
     }
     return h + lie > 0 ? lie / (h + lie) : 1;
   }
 
+  function chLieProbH(V, p, m) {
+    const l = V.last, n = l.n, s = m.seq[m.seq.length - 1];
+    if (!s || s.p !== l.p || s.n !== n) return chLieProb(V, p, m, 'Hardest');
+    let u = 4 * V.D;
+    for (const id of V.hand) if (rk(id) === l.r) u--;
+    for (const id of m.pm) if (rk(id) === l.r) u--;
+    for (let o = 0; o < V.n; o++) if (o !== p && o !== l.p) m.k2[o].forEach(id => { if (rk(id) === l.r) u--; });
+    if (n > u) return 1;
+    if (s.kq >= n) return .02;
+    const v = m.vs[l.p], k = Math.min(3, n) * 2, hb = V.counts[l.p] + n;
+    const base = n === 1 ? (hb <= 4 ? .58 : u === 1 ? .34 : .43) : n === 2 ? .21 : n === 3 ? .1 : .02;
+    return (v[k - 2] + 5 * base) / (v[k - 1] + 5);
+  }
   function chCall(V, p, level, m, R) {
     const l = V.last, cq = V.counts[l.p];
+    if (level === 'Hardest' && m && m.seq) {
+      const ph = chLieProbH(V, p, m), v = m.vs[l.p];
+      if (cq === 0) return ph > .02 ? { t: 'call' } : { t: 'pass' };
+      if (ph >= 1) return { t: 'call' };
+      if (l.n >= 3 && v[5] < 2 && V.pile <= 7 && V.hand.length > 3 && R() < .3) return { t: 'call' };
+      const thr = 1 - 1 / V.n - (cq <= 2 ? .2 : cq <= 4 ? .07 : 0) + (V.hand.length <= 3 ? .15 : 0);
+      return ph > thr ? { t: 'call' } : { t: 'pass' };
+    }
     const pl = chLieProb(V, p, m, level);
     const CALL = { t: 'call' }, PASS = { t: 'pass' };
     if (level === 'Easy') return R() < (pl >= 1 ? .7 : cq === 0 ? .5 : .15) ? CALL : PASS;
-    if (cq === 0) return pl > 0 || level !== 'Expert' ? CALL : PASS;
+    if (cq === 0) return pl > 0 || level !== 'Hardest' ? CALL : PASS;
     if (pl >= 1) return CALL;
-    const noise = { Normal: .18, Hard: .08, Expert: .03 }[level] || .1;
-    let thr = { Normal: .8, Hard: .78, Expert: .76 }[level] || .7;
+    const noise = { Normal: .18, Hard: .08, Hardest: .03 }[level] || .1;
+    let thr = { Normal: .8, Hard: .78, Hardest: .76 }[level] || .7;
     if (cq <= 2) thr -= .2;
     if (V.hand.length <= 3) thr += .15;
     if (V.pile > 22) thr += .05;
@@ -2166,7 +2285,7 @@
     let ids = [];
     if (own.length) {
       ids = own.slice(0, max);
-      const bluff = { Easy: 0, Normal: .06, Hard: .09, Expert: .13 }[level] || 0;
+      const bluff = { Easy: 0, Normal: .06, Hard: .09, Hardest: .13 }[level] || 0;
       if (!forceHonest && ids.length < max && ids.length <= 2 && rest.length > 2 && R() < bluff) ids.push(far(rest)[0]);
     } else {
       const cnt = level !== 'Easy' && level !== 'Normal' && rest.length > 8 && max >= 2 && R() < .18 ? 2 : (level === 'Easy' && R() < .25 ? 2 : 1);
@@ -2635,11 +2754,11 @@
     return e;
   }
 
-  function prMem(n) { return { n, seen: new Set(), rev: false }; }
+  function prMem(n) { return { n, seen: new Set(), rev: false, kn: Array.from({ length: n }, () => new Set()) }; }
   function prObserve(m, e, q) {
-    if (e.k === 'deal') { m.seen.clear(); m.rev = false; e.mine.forEach(id => m.seen.add(id)); }
-    else if (e.k === 'play') e.ids.forEach(id => m.seen.add(id));
-    else if (e.k === 'swap' && e.ids && (e.from === q || e.to === q)) e.ids.forEach(id => m.seen.add(id));
+    if (e.k === 'deal') { m.seen.clear(); m.rev = false; m.kn.forEach(x => x.clear()); e.mine.forEach(id => m.seen.add(id)); }
+    else if (e.k === 'play') e.ids.forEach(id => { m.seen.add(id); m.kn[e.p].delete(id); });
+    else if (e.k === 'swap' && e.ids && (e.from === q || e.to === q)) e.ids.forEach(id => { m.seen.add(id); if (e.from === q) m.kn[e.to].add(id); });
     else if (e.k === 'rev') m.rev = e.on;
   }
 
@@ -2691,7 +2810,94 @@
     return true;
   }
 
+  function prRoll(n, H, T, pas, cn, ck, lead, turn, rev, revOn, outN, me, R, fk, fc) {
+    let left = 0;
+    for (let q = 0; q < n; q++) if (T[q] > 0) left++;
+    for (let g = 0; g < 900; g++) {
+      const p = turn, o = p * 13;
+      let k = -1, c = 0;
+      if (g === 0) { k = fk; c = fc; }
+      else if (!cn) {
+        let be = 99;
+        for (let x = 0; x < 13; x++) {
+          const h = H[o + x];
+          if (!h) continue;
+          if (h === T[p]) { k = x; c = h; break; }
+          const e = rev ? 12 - x : x;
+          if (e < be) { be = e; k = x; c = h; }
+        }
+      } else {
+        const ce = rev ? 12 - ck : ck;
+        let bs = 99;
+        for (let x = 0; x < 13; x++) {
+          const h = H[o + x];
+          if (h < cn) continue;
+          const e = rev ? 12 - x : x;
+          if (e <= ce) continue;
+          const s = e + (h - cn) * 2.2;
+          if (s < bs) { bs = s; k = x; c = cn; }
+        }
+        if (k >= 0 && T[p] > c + 3 && (rev ? 12 - k : k) >= 11 && R() < .45) k = -1;
+      }
+      if (k < 0) pas[p] = 1;
+      else {
+        H[o + k] -= c; T[p] -= c; cn = c; ck = k; lead = p;
+        if (revOn && c >= 4) rev = !rev;
+        if (!T[p]) {
+          if (p === me) return n - 1 - outN;
+          outN++; left--;
+          if (left <= 1) return 0;
+        }
+      }
+      let q = -1;
+      if (k < 0 || (rev ? 12 - k : k) !== 12) for (let x = 1; x <= n; x++) { const y = (p + x) % n; if (T[y] > 0 && !pas[y]) { q = y; break; } }
+      if (q < 0 || q === lead) {
+        q = lead;
+        for (let x = 1; T[q] <= 0 && x <= n; x++) q = (lead + x) % n;
+        cn = 0; pas.fill(0); lead = q;
+      }
+      turn = q;
+    }
+    return (n - 1) / 2;
+  }
+  function prSim(V, p, m, R, base) {
+    const n = V.n, mv = prMoves(V), cands = mv.map(x => ({ a: { t: 'play', ids: x.ids }, k: prBase(x.r) - 3, c: x.n }));
+    if (V.cur) cands.push({ a: { t: 'pass' }, k: -1, c: 0 });
+    if (cands.length < 2) return base;
+    const seen = new Set(m.seen), pool = [], my = new Int8Array(13), tot = new Float64Array(cands.length);
+    V.hand.forEach(id => { seen.add(id); my[prBase(rk(id)) - 3]++; });
+    for (const id of deck(V.D)) if (!seen.has(id)) pool.push(prBase(rk(id)) - 3);
+    const H0 = new Int8Array(n * 13), T0 = new Int16Array(n), H = new Int8Array(n * 13), T = new Int16Array(n), pas = new Uint8Array(n);
+    const ck = V.cur ? prBase(V.cur.r) - 3 : 0, cn = V.cur ? V.cur.n : 0, lead = V.cur ? V.cur.p : p, t0 = performance.now();
+    let it = 0;
+    for (; it < 500; it++) {
+      if (it >= 20 && it % 10 === 0 && performance.now() - t0 > 90) break;
+      H0.fill(0);
+      for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+      let u = 0;
+      for (let q = 0; q < n; q++) {
+        T0[q] = V.counts[q];
+        if (q === p) { H0.set(my, q * 13); continue; }
+        let need = V.counts[q];
+        m.kn[q].forEach(id => { if (need > 0) { H0[q * 13 + prBase(rk(id)) - 3]++; need--; } });
+        for (; need > 0; need--) H0[q * 13 + (u < pool.length ? pool[u++] : Math.floor(R() * 13))]++;
+      }
+      for (let i = 0; i < cands.length; i++) {
+        H.set(H0); T.set(T0); pas.fill(0);
+        for (const q of V.passed) pas[q] = 1;
+        tot[i] += prRoll(n, H, T, pas, cn, ck, lead, p, V.rev, V.revOn, V.order.length, p, R, cands[i].k, cands[i].c);
+      }
+    }
+    const bk = base && base.t === 'play' ? prBase(rk(base.ids[0])) - 3 : -1, bc = base && base.t === 'play' ? base.ids.length : 0;
+    let bi = 0, bv = -1e9;
+    for (let i = 0; i < cands.length; i++) { const v = tot[i] / it + (cands[i].k === bk && cands[i].c === bc ? .04 : 0); if (v > bv) { bv = v; bi = i; } }
+    return cands[bi].a;
+  }
   function prBot(V, p, level, m, R) {
+    const a = prHeur(V, p, level, m, R);
+    return level === 'Hardest' && m && a && V.phase === 'play' && V.turn === p ? prSim(V, p, m, R, a) : a;
+  }
+  function prHeur(V, p, level, m, R) {
     if (V.phase === 'swap') return V.pend && V.pend.p === p ? { t: 'swap', ids: prGive(V.hand, V.pend.k, level, R) } : null;
     if (V.phase !== 'play' || V.turn !== p) return null;
     const mv = prMoves(V), pw = x => prPw(x.r, V.rev), hl = V.hand.length;
@@ -2708,7 +2914,7 @@
       const best = c[0], top = pw(best) >= 14 && V.cur.r !== 2;
       if (danger) {
         const safe = c.find(x => prSafe(V, m, x.r, x.n));
-        return play(level === 'Expert' && safe ? safe : c[c.length - 1]);
+        return play(level === 'Hardest' && safe ? safe : c[c.length - 1]);
       }
       if (top && hl > 4 && R() < (level === 'Normal' ? .35 : level === 'Hard' ? .6 : .8)) return { t: 'pass' };
       if (level !== 'Normal' && best.g > best.n && pw(best) >= 11 && hl > 6 && pw({ r: V.cur.r }) <= 8) return { t: 'pass' };
@@ -2725,7 +2931,7 @@
     if (level === 'Easy') return play(c[Math.floor(R() * c.length)]);
     const full = c.filter(x => x.n === x.g);
     const pool = full.length ? full : c;
-    const score = x => pw(x) - (level === 'Normal' ? 0 : .7 * x.n) + (level === 'Expert' && prSafe(V, m, x.r, x.n) && hl > x.n + 1 ? 6 : 0);
+    const score = x => pw(x) - (level === 'Normal' ? 0 : .7 * x.n) + (level === 'Hardest' && prSafe(V, m, x.r, x.n) && hl > x.n + 1 ? 6 : 0);
     pool.sort((a, b) => score(a) - score(b));
     return play(pool[0]);
   }

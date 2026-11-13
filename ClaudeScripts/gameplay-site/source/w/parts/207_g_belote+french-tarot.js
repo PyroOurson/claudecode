@@ -410,6 +410,7 @@
       ready: [false, false, false, false], seq: 0, ev: [], ex: {}, hints: [null, null, null, null], surQ: [], over: false
     };
     if (opt.state) { Object.assign(S, opt.state); S.played = Uint8Array.from(opt.state.played); S.humans = (opt.humans || S.humans).slice(); }
+    if (!S.inf) S.inf = { vt: [0, 0, 0, 0], cap: [9, 9, 9, 9] };
     const E = (k, o) => { S.seq++; S.ev.push(Object.assign({ k, n: S.seq }, o || {})); if (S.ev.length > 16) S.ev.shift(); };
     const nx = s => (s + 1) & 3;
     function deal() {
@@ -419,6 +420,7 @@
       S.bids = [null, null, null, null]; S.trick = []; S.trickWin = -1; S.last = null; S.nt = 0; S.won = [0, 0]; S.tp = [0, 0];
       S.belSeat = -1; S.belN = 0; S.played = new Uint8Array(32); S.voids = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
       S.result = null; S.ex = {}; S.hints = [null, null, null, null]; S.surQ = []; S.ready = [false, false, false, false]; S.turned = -1; S.rest = [];
+      S.inf = { vt: [0, 0, 0, 0], cap: [9, 9, 9, 9] };
       const first = nx(S.dealer);
       if (cls) {
         let p = 0;
@@ -517,8 +519,12 @@
       h.splice(h.indexOf(id), 1);
       S.played[id] = 1;
       if (S.trick.length) {
-        const led = S.trick[0].id >> 3, su = id >> 3;
+        const led = S.trick[0].id >> 3, su = id >> 3, tr = S.trump, opp = ((S.trick[bWin(tr, S.trick)].s - seat) & 1) === 1;
+        let topT = -1;
+        for (const c of S.trick) if ((c.id >> 3) === tr) topT = Math.max(topT, B_TPW[c.id & 7]);
         if (su !== led) { S.voids[seat][led] = 1; if (led === S.trump) S.voids[seat][S.trump] = 1; }
+        if (su !== led && su !== tr && opp) { if (topT < 0 || cls) S.inf.vt[seat] = 1; else S.inf.cap[seat] = Math.min(S.inf.cap[seat], topT); }
+        if (su === tr && topT >= 0 && B_TPW[id & 7] < topT && (led === tr || opp)) S.inf.cap[seat] = Math.min(S.inf.cap[seat], topT);
       }
       S.trick.push({ s: seat, id });
       E('card', { s: seat, id });
@@ -666,6 +672,79 @@
     for (let i = 1; i < L.length; i++) if (sums[i] > sums[bi]) bi = i;
     return L[bi];
   }
+  function bSampleH(need, unk, voids, cap, known, plaus, tr) {
+    const seats = [0, 1, 2, 3].filter(q => need[q] > 0);
+    let out = null;
+    for (let att = 0; att < 14; att++) {
+      const rem = need.slice(), pool = [], kn = new Set();
+      out = [[], [], [], []];
+      for (const q of seats) for (const k of known[q] || []) if (rem[q] > 0) { out[q].push(k); rem[q]--; kn.add(k); }
+      for (const id of unk) if (!kn.has(id)) pool.push(id);
+      shuffle(pool);
+      const ok = (q, id) => rem[q] > 0 && !voids[q][id >> 3] && !((id >> 3) === tr && B_TPW[id & 7] > cap[q]);
+      const free = id => { let c = 0; for (const q of seats) if (ok(q, id)) c++; return c; };
+      const fr = new Map();
+      for (const id of pool) fr.set(id, free(id));
+      pool.sort((a, b) => fr.get(a) - fr.get(b));
+      let bad = false;
+      for (const id of pool) {
+        let tot = 0, pick = -1;
+        for (const q of seats) if (ok(q, id)) tot += rem[q];
+        if (tot > 0) { let r = Math.random() * tot; for (const q of seats) if (ok(q, id)) { r -= rem[q]; if (r < 0) { pick = q; break; } } }
+        if (pick < 0) { bad = true; for (const q of seats) if (rem[q] > 0) { pick = q; break; } }
+        if (pick < 0) break;
+        out[pick].push(id); rem[pick]--;
+      }
+      out.rest = [];
+      if (bad && att < 10) continue;
+      if (plaus && att < 6 && seats.some(q => !plaus(q, out[q]))) continue;
+      break;
+    }
+    return out;
+  }
+  function bDD(RS, S, me, a, b) {
+    if (RS.done) { const r = bScoreHand(S.cls, S.contract, RS.tp, RS.won, S.belSeat); return r.score[me] - r.score[1 - me]; }
+    const s = RS.turn, L = bLegal(RS.h[s], RS.trick, RS.tr, RS.cls, s), mx = (s & 1) === me;
+    let best = mx ? -1e9 : 1e9;
+    for (const id of L) {
+      const X = bCloneRS(RS);
+      bApply(X, s, id);
+      const v = bDD(X, S, me, a, b);
+      if (mx) { if (v > best) best = v; if (best > a) a = best; } else { if (v < best) best = v; if (best < b) b = best; }
+      if (a >= b) break;
+    }
+    return best;
+  }
+  function bTopMove(g, seat, L) {
+    const S = g.S, tr = S.trump, unk = bUnknown(S, seat), need = [0, 0, 0, 0], me = seat & 1, inf = S.inf, t0 = performance.now();
+    for (let q = 0; q < 4; q++) if (q !== seat) need[q] = S.hands[q].length;
+    const known = bKnown(S, seat), plaus = bPlaus(S), vo = S.voids.map((v, q) => inf.vt[q] ? v.map((x, i) => i === tr ? 1 : x) : v);
+    const dd = 8 - S.nt <= 3, N = dd ? 140 : 360, sums = new Float64Array(L.length);
+    let n = 0;
+    for (; n < N; n++) {
+      if (n >= 16 && n % 8 === 0 && performance.now() - t0 > 110) break;
+      const hs = bSampleH(need, unk, vo, inf.cap, known, plaus, tr);
+      hs[seat] = S.hands[seat].slice();
+      const base = bNewRS(hs, tr, S.cls, bAtk(S), S.turn);
+      base.tp = S.tp.slice(); base.won = S.won.slice(); base.nt = S.nt; base.P = S.played.slice(); base.v = S.voids;
+      base.trick = S.trick.slice();
+      for (let i = 0; i < L.length; i++) {
+        const RS = bCloneRS(base);
+        bApply(RS, seat, L[i]);
+        if (dd) { sums[i] += bDD(RS, S, me, -1e9, 1e9); continue; }
+        bRoll(RS, 0);
+        const r = bScoreHand(S.cls, S.contract, RS.tp, RS.won, S.belSeat);
+        sums[i] += r.score[me] - r.score[1 - me];
+      }
+    }
+    const RS = bNewRS(S.hands, tr, S.cls, bAtk(S), S.turn);
+    RS.P = S.played; RS.trick = S.trick.slice(); RS.v = S.voids;
+    const pol = bPolicy(RS, seat, 0);
+    let bi = 0;
+    for (let i = 1; i < L.length; i++) if (sums[i] > sums[bi]) bi = i;
+    const pi = L.indexOf(pol);
+    return pi >= 0 && sums[pi] >= sums[bi] - n * .5 ? pol : L[bi];
+  }
   function bBidEval(S, seat, suit, N, opts) {
     const unk = [];
     const mine = S.hands[seat];
@@ -702,6 +781,7 @@
   function bPlayCard(g, seat, lvl) {
     const S = g.S, L = bLegal(S.hands[seat], S.trick, S.trump, S.cls, seat);
     if (L.length === 1) return L[0];
+    if (lvl === 'Hardest' && S.nt < 8) return bTopMove(g, seat, L);
     if (lvl === 'Hard' && S.nt < 8) return bHardMove(g, seat, L, S.nt >= 5 ? 90 : 60);
     const RS = bNewRS(S.hands, S.trump, S.cls, bAtk(S), S.turn);
     RS.P = S.played; RS.trick = S.trick.slice(); RS.v = S.voids;
@@ -710,7 +790,7 @@
   function bBot(g, seat, lvl) {
     const S = g.S;
     if (S.phase === 'play') return { k: 'play', id: bPlayCard(g, seat, lvl) };
-    const N = lvl === 'Hard' ? 160 : lvl === 'Normal' ? 80 : 40;
+    const N = lvl === 'Hardest' ? 300 : lvl === 'Hard' ? 160 : lvl === 'Normal' ? 80 : 40;
     const noisy = lvl === 'Easy' ? .15 : 0;
     if (S.phase === 'bid1' || S.phase === 'bid2') {
       const sus = S.phase === 'bid1' ? [S.turned >> 3] : [0, 1, 2, 3].filter(x => x !== S.turned >> 3);
@@ -742,7 +822,7 @@
           if (!ok) fail++;
           n++;
         }
-        if (fail / n >= (lvl === 'Hard' ? .72 : .8) && S.hi.pts >= 90) return { k: 'coinche' };
+        if (fail / n >= (lvl === 'Hard' || lvl === 'Hardest' ? .72 : .8) && S.hi.pts >= 90) return { k: 'coinche' };
       }
       let bestSu = -1, bestLvl = 0, bestP = 0;
       for (let su = 0; su < 4; su++) {
@@ -1125,10 +1205,8 @@
     const c = new Array(n).fill(-1);
     c[taker] = 0;
     if (n < 5) { for (let q = 0; q < n; q++) c[q] = q === taker ? 0 : 1; return c; }
-    if (seat === taker) { for (let q = 0; q < n; q++) c[q] = q === taker || q === partner ? 0 : 1; return c; }
-    if (seat === partner) { for (let q = 0; q < n; q++) c[q] = q === taker || q === partner ? 0 : 1; return c; }
-    c[seat] = 1;
-    if (shown) { for (let q = 0; q < n; q++) c[q] = q === taker || q === partner ? 0 : 1; }
+    if (shown || seat === partner) { for (let q = 0; q < n; q++) c[q] = q === taker || q === partner ? 0 : 1; return c; }
+    if (seat !== taker) c[seat] = 1;
     return c;
   }
   const tCoef = c => c;
@@ -1179,7 +1257,7 @@
   }
   function tBotBid(S, seat, lvl) {
     const cfg = T_CFG[S.n], hand = S.hands[seat];
-    const N = lvl === 'Hard' ? 36 : lvl === 'Normal' ? 20 : 8;
+    const N = lvl === 'Hardest' ? 80 : lvl === 'Hard' ? 36 : lvl === 'Normal' ? 20 : 8;
     let best = 0, bev = 0;
     const opts = T_BIDS.filter(v => v > S.hi);
     if (!opts.length) return 0;
@@ -1194,10 +1272,11 @@
     }
     return best;
   }
+  const tAlone = (S, seat) => seat === S.taker && S.partner < 0 && (S.bid <= 2 || S.hands[seat].indexOf(S.called) >= 0);
   function tRSfromS(S, seat) {
     const n = S.n, cfg = T_CFG[n];
     const voids = S.voids.map(x => x.slice());
-    const camp = tMakeCamp(n, S.taker, S.partner, seat, S.partnerShown);
+    const camp = tMakeCamp(n, S.taker, S.partner, seat, S.partnerShown || tAlone(S, seat));
     const hands = new Array(n).fill(0).map(() => []);
     hands[seat] = S.hands[seat].slice();
     const R = tNewR(n, hands, S.trick.slice(), S.turn, S.nt, S.nT, S.taker, camp, S.played.slice(), voids, 0, 0);
@@ -1228,7 +1307,7 @@
       base.h = hs;
       let partner = S.partner;
       const camp = base.camp.slice();
-      if (n === 5 && !S.partnerShown && seat !== S.taker && seat !== S.partner && S.called >= 0) {
+      if (n === 5 && !S.partnerShown && seat !== S.partner && S.called >= 0 && !tAlone(S, seat)) {
         partner = -1;
         for (let q = 0; q < n; q++) if (q !== S.taker && q !== seat && hs[q].indexOf(S.called) >= 0) partner = q;
         for (let q = 0; q < n; q++) camp[q] = q === S.taker || q === partner ? 0 : 1;
@@ -1247,11 +1326,54 @@
     for (let i = 1; i < L.length; i++) if (sums[i] > sums[bi]) bi = i;
     return L[bi];
   }
+  function tTopMove(g, seat, L) {
+    const S = g.S, n = S.n, unk = [], need = new Array(n).fill(0), known = new Array(n).fill(0).map(() => []), fix = new Set(), t0 = performance.now();
+    const mine = S.hands[seat], own = seat === S.taker && S.bid <= 2 ? S.pileT : S.ecartTr;
+    for (let q = 0; q < n; q++) if (q !== seat) need[q] = S.hands[q].length;
+    if (seat !== S.taker && S.chienSeen) for (const id of S.chienSeen) if (!S.played[id] && S.ecartTr.indexOf(id) < 0 && (id >= 56 || id % 14 === 13)) { known[S.taker].push(id); fix.add(id); }
+    for (const p of S.pg) if (p.s !== seat) for (const id of p.ids) if (!S.played[id] && !fix.has(id)) { known[p.s].push(id); fix.add(id); }
+    for (let i = 0; i < 78; i++) if (!S.played[i] && mine.indexOf(i) < 0 && own.indexOf(i) < 0) unk.push(i);
+    let tot = 0;
+    for (let q = 0; q < n; q++) tot += need[q];
+    const ne = seat !== S.taker && S.bid <= 2 ? Math.max(0, unk.length - tot) : 0, atk = seat === S.taker || seat === S.partner, sums = new Float64Array(L.length);
+    let k = 0;
+    for (; k < 120; k++) {
+      if (k >= 6 && k % 2 === 0 && performance.now() - t0 > 150) break;
+      let pool = unk;
+      if (ne) {
+        const el = shuffle(unk.filter(i => i < 56 && i % 14 !== 13 && !fix.has(i))).slice(0, ne);
+        pool = unk.filter(i => el.indexOf(i) < 0);
+      }
+      const hs = tSample(need, pool, S.voids, known, null);
+      hs[seat] = mine.slice();
+      const base = tSyncPoints(S, tRSfromS(S, seat));
+      base.h = hs;
+      const camp = base.camp.slice();
+      if (n === 5 && !S.partnerShown && seat !== S.partner && S.called >= 0 && !tAlone(S, seat)) {
+        let partner = -1;
+        for (let q = 0; q < n; q++) if (q !== S.taker && q !== seat && hs[q].indexOf(S.called) >= 0) partner = q;
+        for (let q = 0; q < n; q++) camp[q] = q === S.taker || q === partner ? 0 : 1;
+      }
+      base.camp = camp;
+      for (let i = 0; i < L.length; i++) {
+        const R = tCloneR(base);
+        R.h[seat] = mine.slice();
+        tApplyR(R, seat, L[i]);
+        tRoll(R, 0);
+        const d = R.tp - T_NEED[Math.min(3, R.to)], v = d / 2 + (d >= 0 ? 25 : -25);
+        sums[i] += atk ? v : -v;
+      }
+    }
+    let bi = 0;
+    for (let i = 1; i < L.length; i++) if (sums[i] > sums[bi]) bi = i;
+    return L[bi];
+  }
   function tPlayCard(g, seat, lvl) {
     const S = g.S;
     const fr = S.called >= 0 && S.nt === 0 && seat === S.taker ? { suit: TS[S.called], id: S.called } : null;
     const L = tLegal(S.hands[seat], S.trick, fr);
     if (L.length === 1) return L[0];
+    if (lvl === 'Hardest' && S.nt < S.nT - 1) return tTopMove(g, seat, L);
     if (lvl === 'Hard' && S.nt < S.nT - 1) return tHardMove(g, seat, L, S.nt >= 8 ? 14 : 22);
     const R = tSyncPoints(S, tRSfromS(S, seat));
     return tPolicy(R, seat, lvl === 'Easy' ? .3 : 0);
@@ -1264,8 +1386,8 @@
       case 'ecart': return { k: 'ecart', ids: tBotEcart(S.hands[seat], T_CFG[S.n].nd) };
       case 'chelem': {
         if (lvl === 'Easy') return { k: 'chelem', v: false };
-        const r = tEvalContract(T_CFG[S.n], S.n, seat, S.hands[seat], S.dealer, S.bid <= 2 ? 3 : S.bid, lvl === 'Hard' ? 40 : 24, S.called >= 0 ? S.called : null);
-        return { k: 'chelem', v: r.chel >= (lvl === 'Hard' ? .8 : .88) };
+        const r = tEvalContract(T_CFG[S.n], S.n, seat, S.hands[seat], S.dealer, S.bid <= 2 ? 3 : S.bid, lvl === 'Hardest' ? 80 : lvl === 'Hard' ? 40 : 24, S.called >= 0 ? S.called : null);
+        return { k: 'chelem', v: r.chel >= (lvl === 'Hard' || lvl === 'Hardest' ? .8 : .88) };
       }
       case 'play': {
         const h = S.hands[seat];
@@ -1484,7 +1606,7 @@
       legal(seat) { return S.phase === 'play' && S.turn === seat ? tLegal(S.hands[seat], S.trick, frOf(seat)) : []; },
       why(seat) { return tWhy(S.hands[seat], S.trick, seat); },
       view(seat) {
-        const shownP = S.partnerShown || seat === S.taker || seat === S.partner;
+        const shownP = S.partnerShown || seat === S.partner || tAlone(S, seat);
         const V = {
           g: 'tarot', n, me: seat, cfg, phase: S.phase, turn: S.turn, dealer: S.dealer, dealNo: S.dealNo, handNo: S.handNo,
           hand: tSortHand(S.hands[seat]), counts: S.hands.map(x => x.length), trick: S.trick.slice(), trickWin: S.trickWin, legal: api.legal(seat),
@@ -1593,7 +1715,7 @@
 @@ .box .big{display:block;width:100%;min-height:3.3em;margin:.55em 0;font-size:1.15em}
 @@ .opt{display:flex;align-items:center;gap:.7em;margin:.55em 0;text-align:left}
 @@ .opt>span{flex:0 0 32%;font:800 .9em/1.2 var(--sans);color:rgba(255,255,255,.85)}
-@@ .seg{flex:1;display:flex;gap:.35em}
+@@ .seg{flex:1;display:flex;gap:.35em;flex-wrap:wrap}
 @@ .seg button{flex:1;min-height:2.6em;border-radius:.8em;border:.14em solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font:900 .9em var(--sans);padding:0 .2em;cursor:pointer}
 @@ .seg button.on{background:var(--acc);border-color:#fff;color:#241a00}
 @@ .row{display:flex;justify-content:center;flex-wrap:wrap;gap:.4em;margin-top:.3em}
@@ -2405,7 +2527,7 @@
       if (api.net.invite) startOnline(); else showTitle();
     }
     boot();
-    return {
+    return root._tb = {
       destroy() { M.mounted = false; M.tok++; clearTimeout(M.endT); clearTimeout(M.hintT); },
       M, G, SP, opt, act, render, startSolo, startOnline, showTitle, A, tbl,
       state() { return { phase: M.V && M.V.phase, seat: M.seat, n: M.n, pane: M.pane, handNo: M.handNo }; }
@@ -2586,7 +2708,7 @@
       return paneHtml(`<div class="cards">${[11, 22, 7, 20, 29].map((id, i) => `<i style="background-image:${faceUrl('b', id)};--r:${(i - 2) * 9}deg;--y:${Math.abs(i - 2) * .3}em"></i>`).join('')}</div><div class="logo">Belote<small>${T('The French trick-taking classic', 'Le classique français')}</small></div>` +
         `<div class="opt"><span>${T('Game', 'Jeu')}</span>${seg('variant', ['classic', 'coinche'], [T('Classic', 'Classique'), T('Contrée (Coinche)', 'Contrée (Coinche)')])}</div>` +
         `<div class="opt"><span>${T('Match to', 'Partie en')}</span>${seg('target', [1000, 1500, 2000])}</div>` +
-        `<div class="opt"><span>${T('CPU level', 'Niveau CPU')}</span>${seg('diff', ['Easy', 'Normal', 'Hard'], [T('Easy', 'Facile'), T('Normal', 'Normal'), T('Hard', 'Difficile')])}</div>` +
+        `<div class="opt"><span>${T('CPU level', 'Niveau CPU')}</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Hardest'], [T('Easy', 'Facile'), T('Normal', 'Normal'), T('Hard', 'Difficile'), 'Hardest'])}</div>` +
         `<div class="opt"><span>${T('Language', 'Langue')}</span><div class="seg"><button class="${LANG === 'en' ? 'on' : ''}" ${LANG === 'en' ? '' : 'data-a="lang"'}>English</button><button class="${LANG === 'fr' ? 'on' : ''}" ${LANG === 'fr' ? '' : 'data-a="lang"'}>Français</button></div></div>` +
         `<button class="bt go big" data-a="solo">${T('Play with a CPU partner', 'Jouer (partenaire CPU)')}</button><button class="bt blue big" data-a="online">${T('Play online', 'Jouer en ligne')}</button><div class="row"><button class="bt" data-a="rules">${T('Rules', 'Règles')}</button></div>`);
     },
@@ -2720,7 +2842,7 @@
       let tags = '';
       if (V.dealer === s) tags += '<span class="dl">D</span>';
       if (V.taker === s && V.phase !== 'bid' && V.phase !== 'redeal') tags += `<span class="tg k">${bidTxt(V.bid)}</span>`;
-      if (V.n === 5 && V.partner === s && (V.partnerShown || me === V.taker || me === s)) tags += `<span class="tg">${T('Partner', 'Partenaire')}</span>`;
+      if (V.n === 5 && V.partner === s && (V.partnerShown || me === s)) tags += `<span class="tg">${T('Partner', 'Partenaire')}</span>`;
       out.tags = tags;
       const sc = V.scores[s] || 0;
       out.sub = `${sc > 0 ? '+' : ''}${sc}`;
@@ -2852,7 +2974,7 @@
       return paneHtml(`<div class="cards">${[76, 13, 77, 26, 56].map((id, i) => `<i style="background-image:${faceUrl('t', id)};--r:${(i - 2) * 9}deg;--y:${Math.abs(i - 2) * .3}em"></i>`).join('')}</div><div class="logo">French Tarot<small>${T('Le Tarot, played with 78 cards', 'Le Tarot français, 78 cartes')}</small></div>` +
         `<div class="opt"><span>${T('Players', 'Joueurs')}</span>${seg('n', [3, 4, 5], ['3', '4', '5'])}</div>` +
         `<div class="opt"><span>${T('Match length', 'Durée')}</span>${seg('target', [5, 10, 15, 20, 0], ['5', '10', '15', '20', T('Free', 'Libre')])}</div>` +
-        `<div class="opt"><span>${T('CPU level', 'Niveau CPU')}</span>${seg('diff', ['Easy', 'Normal', 'Hard'], [T('Easy', 'Facile'), T('Normal', 'Normal'), T('Hard', 'Difficile')])}</div>` +
+        `<div class="opt"><span>${T('CPU level', 'Niveau CPU')}</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Hardest'], [T('Easy', 'Facile'), T('Normal', 'Normal'), T('Hard', 'Difficile'), 'Hardest'])}</div>` +
         `<div class="opt"><span>${T('Language', 'Langue')}</span><div class="seg"><button class="${LANG === 'en' ? 'on' : ''}" ${LANG === 'en' ? '' : 'data-a="lang"'}>English</button><button class="${LANG === 'fr' ? 'on' : ''}" ${LANG === 'fr' ? '' : 'data-a="lang"'}>Français</button></div></div>` +
         `<button class="bt go big" data-a="solo">${T('Play against CPUs', 'Jouer contre le CPU')}</button><button class="bt blue big" data-a="online">${T('Play online', 'Jouer en ligne')}</button><div class="row"><button class="bt" data-a="rules">${T('Rules', 'Règles')}</button></div>`);
     },

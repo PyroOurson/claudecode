@@ -47,7 +47,8 @@
   const DIFF = [
     { n: 'Easy', a0: 0, a1: 0.35, k0: 0.15, k1: 0.45, pb: -0.6, b0: 16, b1: 22, big: 120, ring: 0.3 },
     { n: 'Normal', a0: 0, a1: 1, k0: 0.45, k1: 1, pb: 0.3, b0: 25, b1: 35, big: 300, ring: 0.3 },
-    { n: 'Hard', a0: 0.45, a1: 1, k0: 0.85, k1: 1, pb: 0.8, b0: 30, b1: 40, big: 380, ring: 0.55 }
+    { n: 'Hard', a0: 0.45, a1: 1, k0: 0.85, k1: 1, pb: 0.8, b0: 30, b1: 40, big: 380, ring: 0.55 },
+    { n: 'Hardest', a0: 0.6, a1: 1, k0: 1, k1: 1, pb: 0.8, b0: 30, b1: 40, big: 380, ring: 0.7 }
   ];
   const MODES = [{ n: 'Classic', t: 0 }, { n: 'Rush 3:00', t: 180 }];
   const MILES = [100, 250, 500, 1000, 2000, 3000, 5000, 8000, 12000, 20000];
@@ -222,7 +223,7 @@
       wrap.querySelector('.sl-h2').textContent = coarse ? 'Hold the boost button or a second finger. Boosting burns length and leaves orbs behind.' : 'Hold the mouse button or Space. Boosting burns length and leaves orbs behind.';
       const bests = saved.bests && typeof saved.bests === 'object' ? saved.bests : {};
       const stats = Object.assign({ games: 0, kills: 0, time: 0 }, saved.stats && typeof saved.stats === 'object' ? saved.stats : {});
-      let modeIdx = saved.mode === 1 ? 1 : 0, diffIdx = [0, 1, 2].includes(saved.diff) ? saved.diff : 1, htpSeen = !!saved.htp, goalI = Number.isInteger(saved.goal) ? Math.max(0, Math.min(GOALS.length, saved.goal)) : 0, goalsRun = 0;
+      let modeIdx = saved.mode === 1 ? 1 : 0, diffIdx = [0, 1, 2, 3].includes(saved.diff) ? saved.diff : 1, htpSeen = !!saved.htp, goalI = Number.isInteger(saved.goal) ? Math.max(0, Math.min(GOALS.length, saved.goal)) : 0, goalsRun = 0;
       const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
       const bestAll = () => Math.max(0, ...Object.values(bests).map(v => +v || 0), api.best || 0);
       const unlocked = i => !SKINS[i].lock || bestAll() >= SKINS[i].lock;
@@ -485,7 +486,7 @@
           if (dx * dx + dy * dy > D2) continue;
           gx[gN] = x; gy[gN] = y; gr[gN] = o.r;
           if (++gN >= 4094) return;
-          if (k === 0) for (let q = 1; q <= 2; q++) { gx[gN] = x + Math.cos(o.ang) * o.sp * 0.22 * q; gy[gN] = y + Math.sin(o.ang) * o.sp * 0.22 * q; gr[gN] = o.r; gN++; }
+          if (k === 0) for (let q = 1; q <= (s.lvl === 3 ? 4 : 2); q++) { gx[gN] = x + Math.cos(o.ang) * o.sp * 0.22 * q; gy[gN] = y + Math.sin(o.ang) * o.sp * 0.22 * q; gr[gN] = o.r; gN++; }
         }
       }
       function clearance(s, a, D) {
@@ -501,6 +502,21 @@
         }
         return best;
       }
+      const ARC = [0, 0, 0.45, -0.45, 0.95, -0.95, 1.6, -1.6, 2.4, -2.4, 3.1], ARCT = 0.8;
+      function arcFree(s, wa, mt, sp) {
+        const N = 10, h = ARCT / N, pad = s.r + 7, wl = (R - 50) * (R - 50);
+        let x = s.hx, y = s.hy, ang = s.ang;
+        for (let i = 1; i <= N; i++) {
+          let d = wa - ang;
+          d -= TAU * Math.round(d / TAU);
+          const m = mt * h;
+          ang += d > m ? m : d < -m ? -m : d;
+          x += Math.cos(ang) * sp * h; y += Math.sin(ang) * sp * h;
+          if (x * x + y * y > wl) return (i - 1) * h;
+          for (let j = 0; j < gN; j++) { const dx = gx[j] - x, dy = gy[j] - y, rr = gr[j] + pad; if (dx * dx + dy * dy < rr * rr) return (i - 1) * h; }
+        }
+        return ARCT;
+      }
       const coilR = (s, o) => Math.max(o.r * 2.5 + s.r * 2.5 + 30, 90);
       const bodyLen = s => CFG.baseLen + CFG.partLen * s.m;
       function pickMode(s) {
@@ -513,7 +529,7 @@
           const o = sn[i];
           if (!o || o === s || !o.used || !o.alive) continue;
           const dx = o.hx - s.hx, dy = o.hy - s.hy, d2 = dx * dx + dy * dy;
-          if (d2 > (s.lvl === 2 && o.player ? 620 : 460) ** 2 || roll > s.aggr + (o.player ? DIFF[s.lvl || 0].pb : 0)) continue;
+          if (d2 > (s.lvl >= 2 && o.player ? 620 : 460) ** 2 || roll > s.aggr + (o.player ? DIFF[s.lvl || 0].pb : 0)) continue;
           if (s.m > 30 && o.m < s.m * DIFF[s.lvl || 0].ring && d2 < 380 * 380 && bodyLen(s) > TAU * coilR(s, o) * 1.3) {
             if (kind < 2 || d2 < bd) { best = o; bd = d2; kind = 2; }
           } else if (kind < 2 && s.m > 5 && d2 < bd) {
@@ -545,7 +561,19 @@
           const o = s.tgt, dx = o.hx - s.hx, dy = o.hy - s.hy, d = Math.hypot(dx, dy), lead = Math.max(80, Math.min(400, d * 1.1)) + o.r * 3;
           const oc = Math.cos(o.ang), os = Math.sin(o.ang), sideSign = (oc * -dy - os * -dx) > 0 ? 1 : -1, lat = (o.r + s.r) * 1.5 * sideSign;
           a = Math.atan2(o.hy + os * lead + oc * lat - s.hy, o.hx + oc * lead - os * lat - s.hx);
-          boost = canBoost && d < (s.lvl === 2 ? 650 : 500) && angAbs(a - s.ang) < (s.lvl === 0 ? 0.25 : 0.5) && Math.random() < s.aggr + (s.lvl === 0 ? -0.1 : 0.2);
+          boost = canBoost && d < (s.lvl >= 2 ? 650 : 500) && angAbs(a - s.ang) < (s.lvl === 0 ? 0.25 : 0.5) && Math.random() < s.aggr + (s.lvl === 0 ? -0.1 : 0.2);
+          if (s.lvl === 3) {
+            const fast = CFG.nsp3 * CFG.spdUnit, gap = (o.r + s.r) * 1.6;
+            let ok = 0;
+            boost = false;
+            for (let L = 60 + o.r * 2; L <= 520 && !ok; L += 40) {
+              const qx = o.hx + oc * L - os * lat, qy = o.hy + os * L + oc * lat, mine = Math.hypot(qx - s.hx, qy - s.hy), his = (L - gap) / Math.max(1, o.sp);
+              if (mine / Math.max(1, s.sp) < his) ok = 1; else if (canBoost && s.m > 12 && mine / fast < his * 0.9) ok = 2;
+              if (ok) a = Math.atan2(qy - s.hy, qx - s.hx);
+            }
+            boost = ok === 2 && angAbs(a - s.ang) < 0.6;
+            if (!ok) s.modeT = 0;
+          }
           if (d > 700 || -(dx * oc + dy * os) / (d + 1) < -0.5) s.modeT = 0;
         } else {
           const cx = cellX(s.hx), cy = cellX(s.hy), lim = (R - 220) * (R - 220);
@@ -574,7 +602,18 @@
           }
         }
         const need = s.r * 2.4 + 40 + s.sp * 0.45 * s.skill;
-        if (clearance(s, a, D) < need && Math.random() < (s.lvl === 0 ? 0.55 : 0.82) + s.skill * 0.18) {
+        if (s.lvl === 3) {
+          const mt = CFG.mamu * (0.13 + 0.87 * ((7 - s.sc) / 6) ** 2), fast = CFG.nsp3 * CFG.spdUnit;
+          let best = a, bs = -1e9, bt = 0, bb = boost;
+          for (let c = 0; c < ARC.length * (canBoost ? 2 : 1); c++) {
+            const k = c % ARC.length, bo = c >= ARC.length, wa = k ? s.ang + ARC[k] : a, t = arcFree(s, wa, mt, bo ? fast : boost ? fast : s.sp);
+            if (bo && bt >= ARCT) break;
+            const sc = t * 1000 - angAbs(wa - a) * 70 - (bo ? 150 : 0);
+            if (sc > bs) { bs = sc; best = wa; bt = t; bb = bo ? true : boost; }
+          }
+          if (bt < ARCT * 0.5 && !bb) boost = false; else boost = bb;
+          a = best;
+        } else if (clearance(s, a, D) < need && Math.random() < (s.lvl === 0 ? 0.55 : 0.82) + s.skill * 0.18) {
           let best = a, bs = -1e9, bcl = 0;
           for (let i = 0; i < 16; i++) {
             const ai = s.ang + (i - 8) * (TAU / 16), ci = clearance(s, ai, D);
@@ -608,9 +647,9 @@
         initSnake(s, x, y, Math.random() * TAU, initial ? 2 + DIFF[diffIdx].big * u ** 4 : 2 + 40 * u ** 3, (Math.random() * SKINS.length) | 0, pickName(), false);
         traits(s);
       }
-      function traits(s) {
-        const D = DIFF[diffIdx];
-        s.aggr = D.a0 + (D.a1 - D.a0) * Math.random() ** 1.4; s.skill = D.k0 + (D.k1 - D.k0) * Math.random(); s.greed = 0.3 + Math.random() * 0.7; s.lvl = diffIdx;
+      function traits(s, lvl = diffIdx) {
+        const D = DIFF[lvl];
+        s.aggr = D.a0 + (D.a1 - D.a0) * Math.random() ** 1.4; s.skill = D.k0 + (D.k1 - D.k0) * Math.random(); s.greed = 0.3 + Math.random() * 0.7; s.lvl = lvl;
       }
       function tuneBots() {
         const D = DIFF[diffIdx];
@@ -1133,7 +1172,7 @@
           if (!s.alive) { s.dying -= dt; if (s.dying <= 0 && s !== player) s.used = false; else if (s.dying <= -2) s.used = false; continue; }
           if (s.player) continue;
           s.think -= dt;
-          if (s.think <= 0) { const it = 0.2 - 0.12 * s.skill; think(s, it); s.think = it * (0.8 + Math.random() * 0.4); }
+          if (s.think <= 0) { const it = s.lvl === 3 ? 0.19 : 0.2 - 0.12 * s.skill; think(s, it); s.think = it * (0.8 + Math.random() * 0.4); }
         }
         for (let k = CFG.foodBatch; k > 0 && natCount < natGoal; k--) spawnNat(gt);
         let bots = 0;

@@ -1938,9 +1938,15 @@ ${optRow('n', 'Players', '', nn, opt.n)}${G.diffs ? optRow('diff', 'Bots', '', G
     sNeedKey = key; sNeedVal = { p: s.turn, kind: s.phase === 'split' ? 'split' : 'move', moves, auto: !!s.rules.auto && moves.length === 1 };
     return sNeedVal;
   }
-  function sorryEval(s, p, hard) {
+  function sorryLeft(s) {
+    const fr = Object.assign({}, S_FREQ);
+    let n = 45;
+    for (const c of s.disc || []) if (fr[c] > 0) { fr[c]--; n--; }
+    return n > 0 ? { fr, n } : { fr: S_FREQ, n: 45 };
+  }
+  function sorryEval(s, p, hard, left) {
     let v = 0;
-    const cnt = x => Object.keys(S_FREQ).reduce((a, k) => a + (+k === x ? S_FREQ[k] : 0), 0);
+    const N = left ? (left.n + 45) / 2 : 45, cnt = x => left ? ((left.fr[x] || 0) + (S_FREQ[x] || 0)) / 2 : S_FREQ[x] || 0;
     for (let q = 0; q < s.n; q++) {
       const w = q === p ? 1 : -.78 / Math.max(1, s.n - 1) * (s.n > 2 ? 1.6 : 1);
       for (const pos of s.pos[q]) {
@@ -1954,12 +1960,12 @@ ${optRow('n', 'Players', '', nn, opt.n)}${G.diffs ? optRow('diff', 'Bots', '', G
             for (const y of s.pos[o]) {
               if (y < 0 || y >= 60) continue;
               const d = (pos - y + 60) % 60;
-              if (d > 0 && d <= 12) risk += cnt(d) / 45;
+              if (d > 0 && d <= 12) risk += cnt(d) / N;
               const e = (y - pos + 60) % 60;
-              if (e === 4) risk += 4 / 45; if (e === 1) risk += 4 / 45 * .5;
-              risk += 4 / 45 * .35;
+              if (e === 4) risk += cnt(4) / N; if (e === 1) risk += cnt(10) / N * .5;
+              risk += cnt(11) / N * .35;
             }
-            if (s.pos[o].includes(-1)) risk += 4 / 45;
+            if (s.pos[o].includes(-1)) risk += cnt(0) / N;
           }
           v -= Math.min(1, risk) * (g + 8) * .6;
         }
@@ -1973,10 +1979,11 @@ ${optRow('n', 'Players', '', nn, opt.n)}${G.diffs ? optRow('diff', 'Bots', '', G
     if (mv.length === 1) return mv[0];
     if (diff === 'Easy' && R() < .55) return mv[rint(R, mv.length)];
     let best = null, bs = -1e9;
+    const top = diff === 'Hardest', left = top ? sorryLeft(s) : null;
     for (const m of mv) {
       const c = clone(s), ev = [];
       sApply(c, p, m, e => ev.push(e));
-      let sc = sorryEval(c, p, diff === 'Hard');
+      let sc = sorryEval(c, p, top || diff === 'Hard', left);
       if (m.t === 'pass') sc -= .1;
       if (s.card === 7 && m.n < 7) sc += .2;
       if (diff === 'Normal') sc += R() * 3;
@@ -2500,7 +2507,7 @@ ${optRow('n', 'Players', '', nn, opt.n)}${G.diffs ? optRow('diff', 'Bots', '', G
 <p><b>Controls:</b> tap the deck to draw, tap a glowing pawn and then a ringed square. <kbd>Space</kbd> draw or play, <kbd>Tab</kbd> or arrows cycle the moves, <kbd>P</kbd> pass.</p>`;
   const G_SORRY = {
     id: 'sorry', title: 'Sorry!', tag: 'Draw a card, race your pawns home and bump everyone else back to Start.',
-    minN: 2, maxN: 4, defN: 4, sizes: [2, 3, 4], diffs: ['Easy', 'Normal', 'Hard'], rotates: true,
+    minN: 2, maxN: 4, defN: 4, sizes: [2, 3, 4], diffs: ['Easy', 'Normal', 'Hard', 'Hardest'], rotates: true,
     colors: SORRY_COLS, rulesDef: SORRY_RULES, help: SORRY_HELP,
     optSchema: [
       { k: 'extra2', label: 'Draw again on 2', hint: '', vals: [[false, 'Off'], [true, 'On']] },

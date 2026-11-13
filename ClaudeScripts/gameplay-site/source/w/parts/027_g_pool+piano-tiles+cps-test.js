@@ -252,7 +252,8 @@
   const AIL = [
     { k: 3, aims: 1, powers: [0.55], spins: [0], noise: 0.03, pn: 0.12 },
     { k: 6, aims: 2, powers: [0.42, 0.68], spins: [0], noise: 0.011, pn: 0.05 },
-    { k: 10, aims: 3, powers: [0.38, 0.6, 0.85], spins: [0, 0.6, -0.6], noise: 0.0035, pn: 0.03 }
+    { k: 10, aims: 3, powers: [0.38, 0.6, 0.85], spins: [0, 0.6, -0.6], noise: 0.0035, pn: 0.03 },
+    { k: 14, aims: 3, powers: [0.3, 0.45, 0.62, 0.8, 0.98], spins: [0, 0.6, -0.6], noise: 0.0025, pn: 0.025, deep: 8, go: 620 }
   ];
   function aiShots(B, st, lv) {
     const c = B[0], g = st.groups[st.turn], out = [];
@@ -270,6 +271,26 @@
     const ez = gg => (st.nine ? easyShots(S, 0, false, true) : easyShots(S, gg, !!gg && left(S, gg) === 0));
     if (r.cont) return 1000 + 40 * ev.pocketed.length + 60 * Math.min(4, ez(r.assign || st.groups[st.turn]));
     return -50 * Math.min(4, ez(r.assign ? 3 - r.assign : st.groups[1 - st.turn]));
+  }
+  function aiDeep(B, st, shot) {
+    const one = sh => {
+      const { S, ev } = simulate(B, sh), r = rule(st, S, ev);
+      if (r.lose) return -3e4;
+      if (r.win) return 3e4;
+      if (r.foul) return -2000;
+      const gm = r.assign || st.groups[st.turn];
+      if (r.cont) {
+        const ls = potLines(S, S[0].x, S[0].y, st.nine ? 0 : gm, !st.nine && !!gm && left(S, gm) === 0, 1, st.nine).filter(l => l.clear);
+        let q = 0;
+        for (const l of ls) q = Math.max(q, l.cos * 2 - (l.dc + l.dp) / 700);
+        return 1000 + 40 * ev.pocketed.length + 50 * Math.min(4, ls.filter(l => l.cos > 0.5).length) + 160 * clamp(q, 0, 1.6);
+      }
+      const og = st.nine ? 0 : r.assign ? 3 - r.assign : st.groups[1 - st.turn];
+      return -50 * Math.min(4, st.nine ? easyShots(S, 0, false, true) : easyShots(S, og, !!og && left(S, og) === 0));
+    };
+    let v = one(shot);
+    for (const [da, dp] of [[0.003, 1.02], [-0.003, 0.98], [0.0015, 0.97], [-0.0015, 1.03]]) v += one({ a: shot.a + da, p: clamp(shot.p * dp, 0.1, 1), sF: shot.sF, sS: shot.sS });
+    return v / 5;
   }
   function safeShots(B, st) {
     const c = B[0], out = [];
@@ -582,7 +603,7 @@
       const net = api.net, invited = !!net.invite;
       const MODES = [['ai', 'vs CPU'], ['net', 'Online'], ['practice', 'Practice']];
       const data = api.load() || {};
-      let diff = [0, 1, 2].includes(data.diff) ? data.diff : 1, streak = data.streak | 0, inGame = false, pick9 = !!data.r9, nine = false, tut = data.tut | 0;
+      let diff = [0, 1, 2, 3].includes(data.diff) ? data.diff : 1, streak = data.streak | 0, inGame = false, pick9 = !!data.r9, nine = false, tut = data.tut | 0;
       let pick = invited ? 'net' : MODES.some(m => m[0] === data.mode) ? data.mode : 'ai', timerOn = data.tm !== false;
       if (data.inGame) streak = 0;
       const persist = () => api.save({ diff, streak, inGame, mode: pick, tm: timerOn, r9: pick9, tut });
@@ -745,7 +766,7 @@
       const hq = [], TLIM = 30, DELAY = 120;
       const spin = { x: 0, y: 0 };
       const keys = api.keys;
-      const DIFFS = ['Easy', 'Normal', 'Hard'];
+      const DIFFS = ['Easy', 'Normal', 'Hard', 'Hardest'];
 
       const say = t => { if (msgEl.textContent !== t) msgEl.textContent = t; };
       const banner = (t1, t2, col) => { bn = { t1, t2, col: col || C.accent, t: 0 }; };
@@ -1182,12 +1203,18 @@
         if (ai.phase === 'think') {
           const t0 = performance.now();
           while (ai.i < ai.q.length && performance.now() - t0 < 7) {
-            const s = ai.q[ai.i++], v = (ai.safe ? safeValue : aiValue)(balls, ai.st, s) + Math.random() * (diff ? 1 : 500);
+            const s = ai.q[ai.i++], v = (ai.safe ? safeValue : ai.deep ? aiDeep : aiValue)(balls, ai.st, s) + Math.random() * (diff ? 1 : 500);
+            s.v = v;
             if (v > ai.bs) { ai.bs = v; ai.best = s; ai.look = s.a; }
+          }
+          if (ai.i >= ai.q.length && AIL[diff].deep && !ai.deep && !ai.safe && ai.st) {
+            const top = ai.q.filter(s => s.v > 0).sort((a, b) => b.v - a.v).slice(0, AIL[diff].deep);
+            ai.deep = true;
+            if (top.length) { ai.q = top; ai.i = 0; ai.bs = -Infinity; ai.best = null; return; }
           }
           if (ai.look != null && !brk) { let d = ai.look - aimA; d = Math.atan2(Math.sin(d), Math.cos(d)); aimA += d * Math.min(1, dt * 3.5); }
           if (ai.i >= ai.q.length && ai.t > 0.7) {
-            if (diff === 2 && !brk && !ai.safe && ai.st && ai.best && (ai.bs < 900 || potOdds(balls, ai.st, ai.best) <= 0.25)) {
+            if (diff >= 2 && !brk && !ai.safe && ai.st && ai.best && (AIL[diff].go ? ai.bs < AIL[diff].go : ai.bs < 900 || potOdds(balls, ai.st, ai.best) <= 0.25)) {
               ai.safe = true; ai.pot = ai.best; ai.potV = ai.bs; ai.q = safeShots(balls, ai.st); ai.i = 0; ai.bs = -Infinity; ai.best = null;
               say('CPU is weighing a safety…');
               return;

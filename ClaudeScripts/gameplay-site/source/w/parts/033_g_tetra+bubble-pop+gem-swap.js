@@ -442,7 +442,7 @@
         if (dropT > 0) dropT = Math.max(0, dropT - dt);
         for (let i = flash.length - 1; i >= 0; i--) if ((flash[i].t += dt) > .18) flash.splice(i, 1);
         for (let i = trails.length - 1; i >= 0; i--) if ((trails[i].t += dt) > .28) trails.splice(i, 1);
-        const rn = performance.now(), rd = Math.min(1, (rn - (update.ln || rn)) / 1000); update.ln = rn;
+        const rn = performance.now(), rg = (rn - (update.ln || rn)) / 1000, rd = rg > .4 ? dt : rg; update.ln = rn;
         if (state === 'play' || state === 'clear') { runT += rd; if (mode === 'ultra' && runT >= 120) { endMode(); return; } }
         if (state === 'clear' && (clearT += dt) >= CLEAR_T) finishClear();
         if (state === 'over') overT += dt;

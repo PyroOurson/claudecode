@@ -1,12 +1,11 @@
   let REGOK = false;
-  function initRegistry() {
+  function* initRegistry() {
     if (REGOK) return;
-    finalizeBlocks();
-    for (const t of TT) if (t.cmodel) for (let k = 0; k < t.n; k++) cmodelTids(t.cmodel(t.base + k, 0));
+    yield* finalizeBlocks();
+    for (const t of TT) if (t.cmodel) { for (let k = 0; k < t.n; k++) cmodelTids(t.cmodel(t.base + k, 0)); yield; }
     REGOK = true;
   }
-  function run(root, api, keys, glc) {
-    initRegistry();
+  async function run(root, api, keys, glc) {
     const { THREE, renderer } = glc, canvas = glc.canvas;
     const wrap = document.createElement('div');
     wrap.className = 'bc-wrap';
@@ -16,14 +15,31 @@
     inp.className = 'bc-in'; inp.maxLength = 256; inp.setAttribute('autocomplete', 'off'); inp.setAttribute('autocapitalize', 'off'); inp.spellcheck = false; inp.hidden = true;
     wrap.append(canvas, hud, inp); root.append(wrap);
     const g = hud.getContext('2d');
+    const bootMsg = p => { hud.width = 480; hud.height = 300; g.fillStyle = '#16181c'; g.fillRect(0, 0, 480, 300); g.fillStyle = '#2c313a'; g.fillRect(140, 158, 200, 6); g.fillStyle = '#6fbf4a'; g.fillRect(140, 158, 200 * p, 6); g.fillStyle = '#e8e8e8'; g.font = '14px sans-serif'; g.textAlign = 'center'; g.fillText('Preparing blocks...', 240, 146); };
+    const slice = async (it, p0, p1, total) => {
+      let t0 = performance.now(), n = 0;
+      for (;;) {
+        if (it.next().done) return true;
+        n++;
+        if (performance.now() - t0 > 7) { bootMsg(p0 + (p1 - p0) * Math.min(1, n / total)); await new Promise(res => setTimeout(res, 0)); if (!api.alive) return false; t0 = performance.now(); }
+      }
+    };
+    bootMsg(0);
+    if (!(await slice(initRegistry(), 0, .3, TT.length))) return null;
     let touch = false;
     try { touch = matchMedia('(pointer: coarse)').matches; } catch (e) { }
-    renderer.outputEncoding = THREE.LinearEncoding; renderer.toneMapping = THREE.NoToneMapping; renderer.shadowMap.enabled = false; renderer.autoClear = false;
-    if (touch) renderer.setPixelRatio(Math.min(renderer.getPixelRatio(), 1.5));
-    let SV = api.load(); if (!SV || typeof SV !== 'object') SV = {};
-    const s0 = SV.set || {};
-    const SET = { rd: clamp(s0.rd | 0 || (touch ? CFG.RD_TOUCH : CFG.RD), 2, 12), fancy: s0.fancy != null ? !!s0.fancy : !touch, fov: clamp(+s0.fov || CFG.FOV, 30, 110), sens: clamp(+s0.sens || 1, .1, 3), music: s0.music !== false, sound: s0.sound !== false, gam: s0.gam != null ? clamp(+s0.gam, 0, 1) : .5, clouds: s0.clouds != null ? s0.clouds !== false : !touch, bob: s0.bob !== false, gui: s0.gui | 0, smooth: s0.smooth !== false, particles: s0.particles != null ? s0.particles | 0 : 2 };
+    renderer.outputEncoding = THREE.LinearEncoding; renderer.toneMapping = THREE.NoToneMapping; renderer.shadowMap.enabled = false; renderer.autoClear = false; renderer.info.autoReset = false;
+    let SV = api.load(); if (!SV || typeof SV !== 'object' || Array.isArray(SV)) SV = {};
+    const s0 = SV.set && typeof SV.set === 'object' ? SV.set : {};
+    const PRMAX = Math.max(.75, Math.min(window.devicePixelRatio || 1, touch ? 1.5 : 2)), PRMIN = Math.min(PRMAX, .75);
+    let PRQ = clamp(+s0.pra || PRMAX, PRMIN, PRMAX);
+    renderer.setPixelRatio(PRQ);
+    const setPR = v => { v = clamp(Math.round(v * 4) / 4, PRMIN, PRMAX); if (v === PRQ) return false; PRQ = v; renderer.setPixelRatio(v); SET.pra = v; return true; };
+    const SET = { rd: s0.rd ? clamp(s0.rd | 0, 2, 12) : 0, rda: s0.rda | 0, pra: PRQ, fancy: s0.fancy != null ? !!s0.fancy : !touch, fov: clamp(+s0.fov || CFG.FOV, 30, 110), sens: clamp(+s0.sens || 1, .1, 3), music: s0.music !== false, sound: s0.sound !== false, gam: s0.gam != null ? clamp(+s0.gam, 0, 1) : .5, clouds: s0.clouds != null ? s0.clouds !== false : !touch, bob: s0.bob !== false, gui: s0.gui | 0, smooth: s0.smooth !== false, particles: s0.particles != null ? s0.particles | 0 : 2 };
     const persistSet = () => { SV.set = SET; api.save(SV); };
+    const AR = { min: touch ? 2 : 3, max: touch ? 6 : 8, lo: 0, hi: 0, cap: 99, capT: 0, f0: 0, r0: 0, noDown: false, js: 0, jn: 0, gap: false, pcap: 99, pcapT: 0 };
+    let RD = SET.rd || clamp(SET.rda || (touch ? CFG.RD_TOUCH : CFG.RD), AR.min, AR.max), fogRD = RD;
+    SMOOTH = SET.smooth;
     const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(CFG.FOV, 1.6, .05, 1200);
     cam.rotation.order = 'YXZ';
     const hScene = new THREE.Scene(), hCam = new THREE.PerspectiveCamera(70, 1.6, .01, 10);
@@ -32,8 +48,11 @@
     const atlasC = cv(ATL, ATL), atlasG = atlasC.getContext('2d');
     const atlasImg = atlasG.createImageData(ATL, ATL);
     function putTile(t, d) { const tx = (t & 63) * 16, ty = (t >> 6) * 16; for (let y = 0; y < 16; y++) atlasImg.data.set(d.subarray(y * 64, y * 64 + 64), ((ty + y) * ATL + tx) * 4); }
-    for (let i = 0; i < TEXN.length; i++) putTile(i, get(TEXN[i]));
-    for (let k = 0; k < ANIMS.length; k++) { const n = ANIMS[k], base = (ANIM_ROW0 + (k >> 2)) * 64 + (k & 3) * 16, fn = ANIMP[n]; for (let f = 0; f < 16; f++) putTile(base + f, fn ? fn(f) : get(n)); }
+    const bail = () => { for (const o of trash) { try { o.dispose(); } catch (e) { } } return null; };
+    if (!(await slice((function* () {
+      for (let i = 0; i < TEXN.length; i++) { putTile(i, get(TEXN[i])); yield; }
+      for (let k = 0; k < ANIMS.length; k++) { const n = ANIMS[k], base = (ANIM_ROW0 + (k >> 2)) * 64 + (k & 3) * 16, fn = ANIMP[n]; for (let f = 0; f < 16; f++) putTile(base + f, fn ? fn(f) : get(n)); yield; }
+    })(), .3, .65, TEXN.length + ANIMS.length))) return bail();
     atlasG.putImageData(atlasImg, 0, 0);
     const AVG = new Map();
     const tileAvg = t => { let a = AVG.get(t); if (a) return a; let r = 0, gg = 0, b = 0, n = 0; const tx = (t & 63) * 16, ty = (t >> 6) * 16; for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { const o = ((ty + y) * ATL + tx + x) * 4; if (atlasImg.data[o + 3] > 100) { r += atlasImg.data[o]; gg += atlasImg.data[o + 1]; b += atlasImg.data[o + 2]; n++; } } a = n ? [r / n, gg / n, b / n] : [128, 128, 128]; AVG.set(t, a); return a; };
@@ -79,12 +98,12 @@
         const gq = buildGeo(M);
         gq.boundingSphere = new THREE.Sphere(new THREE.Vector3(8, sy * 16 + 8, 8), 14);
         const m = new THREE.Mesh(gq, mat);
-        m.position.set(c.cx * 16, 0, c.cz * 16); m.matrixAutoUpdate = false; m.updateMatrix(); m.renderOrder = ro;
+        m.position.set(c.cx * 16, 0, c.cz * 16); m.matrixAutoUpdate = false; m.updateMatrix(); m.renderOrder = ro; m.visible = !!c.vs[sy];
         scene.add(m); r[k] = m;
       }
       c.m[sy] = r;
     }
-    function unloadCol(c, k) { for (let s = 0; s < NSEC; s++) { const r = c.m[s]; if (r) for (const kk of ['o', 't']) if (r[kk]) { scene.remove(r[kk]); r[kk].geometry.dispose(); } } W.cols.delete(k); W.dirty.delete(c); W.lastK = -1; }
+    function unloadCol(c, k) { for (let s = 0; s < NSEC; s++) { const r = c.m[s]; if (r) for (const kk of ['o', 't']) if (r[kk]) { scene.remove(r[kk]); r[kk].geometry.dispose(); } } W.cols.delete(k); W.dirty.delete(c); W.cdq.delete(c); W.lastK = -1; if (c.meshed && W.visd < 1) W.visd = 1; }
     const skyU = { top: { value: new THREE.Color() }, fog: { value: new THREE.Color() }, glow: { value: new THREE.Color(1, .5, .2) }, glowA: { value: 0 }, sun: { value: new THREE.Vector3(1, 0, 0) }, day: { value: 1 }, rain: { value: 0 } };
     const sky = new THREE.Mesh(keep(new THREE.SphereGeometry(500, 24, 12)), keep(new THREE.ShaderMaterial({
       uniforms: skyU, side: THREE.BackSide, depthWrite: false, fog: false,
@@ -170,10 +189,10 @@
       pm.instanceMatrix.needsUpdate = true;
     }
     const geoCache = new Map();
-    function blockGeom(s, size) {
+    function blockGeom(s, size, tmp) {
       const key = s * 100 + Math.round(size * 50);
       if (geoCache.has(key)) return geoCache.get(key);
-      PB.fill(0); PL.fill(0xF0); TGc.fill(0); TFc.fill(0); TWc.fill(0);
+      PB.fill(0); PL.fill(0xF0); TGc.fill(0); TFc.fill(0); TWc.fill(0); TPCOL = null;
       biomeColors(); for (let i = 0; i < PSS; i++) { const b = BIOC[0]; TGc.set(b.g, i * 3); TFc.set(b.f, i * 3); TWc.set(b.w, i * 3); }
       const p = pof(0, 0, 0);
       PB[p] = s;
@@ -194,7 +213,7 @@
       gq.setAttribute('color', new THREE.BufferAttribute(col, 3));
       gq.setIndex(new THREE.BufferAttribute(SRC.i.slice(0, SRC.ni), 1));
       gq.computeBoundingSphere();
-      geoCache.set(key, keep(gq));
+      if (!tmp) geoCache.set(key, keep(gq));
       return gq;
     }
     const ITA = cv(1024, 1024), itaG = ITA.getContext('2d'), itaImg = itaG.createImageData(1024, 1024), ITIDX = new Map();
@@ -218,15 +237,19 @@
     }
     let itaN = 0;
     const flatIt = new Uint8Array(IT.length);
-    for (const it of IT) {
-      const d = itemSpriteData(it);
-      if (!d) continue;
-      flatIt[it.idx] = 1;
-      const k = itaN++, ox = (k & 63) * 16, oy = (k >> 6) * 16;
-      for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { const o = (y * 16 + x) * 4, q = ((oy + y) * 1024 + ox + x) * 4; itaImg.data[q] = d[o]; itaImg.data[q + 1] = d[o + 1]; itaImg.data[q + 2] = d[o + 2]; itaImg.data[q + 3] = d[o + 3] > 127 ? 255 : 0; }
-      ITIDX.set(it.idx, k);
-    }
+    if (!(await slice((function* () {
+      for (const it of IT) {
+        yield;
+        const d = itemSpriteData(it);
+        if (!d) continue;
+        flatIt[it.idx] = 1;
+        const k = itaN++, ox = (k & 63) * 16, oy = (k >> 6) * 16;
+        for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { const o = (y * 16 + x) * 4, q = ((oy + y) * 1024 + ox + x) * 4; itaImg.data[q] = d[o]; itaImg.data[q + 1] = d[o + 1]; itaImg.data[q + 2] = d[o + 2]; itaImg.data[q + 3] = d[o + 3] > 127 ? 255 : 0; }
+        ITIDX.set(it.idx, k);
+      }
+    })(), .65, 1, IT.length))) return bail();
     itaG.putImageData(itaImg, 0, 0);
+    g.textAlign = 'start';
     const itemTex = tex(ITA, false, false);
     function itemGeom(id, s) {
       const key = -(id * 100 + Math.round(s * 50) + 1);
@@ -262,27 +285,46 @@
     }
     const ICS = 32, ICN = 48, ICON = cv(ICS * ICN, ICS * Math.ceil(IT.length / ICN)), icG = ICON.getContext('2d');
     icG.imageSmoothingEnabled = false;
-    function buildIcons() {
-      const rt = new THREE.WebGLRenderTarget(64, 64), oc = new THREE.OrthographicCamera(-.82, .82, .82, -.82, .1, 10), sc3 = new THREE.Scene(), buf = new Uint8Array(64 * 64 * 4);
-      oc.position.set(2.2, 1.8, 2.2); oc.lookAt(0, 0, 0);
-      const tmpC = cv(64, 64), tg = tmpC.getContext('2d'), tim = tg.createImageData(64, 64);
-      const mat = new THREE.MeshBasicMaterial({ map: atlasTex, vertexColors: true, alphaTest: .5, toneMapped: false, side: THREE.DoubleSide });
-      const prevRT = renderer.getRenderTarget(), prevPR = renderer.getPixelRatio();
-      for (const it of IT) {
-        const ox = (it.idx % ICN) * ICS, oy = (it.idx / ICN | 0) * ICS;
-        const k = ITIDX.get(it.idx);
-        if (k !== undefined) { icG.drawImage(ITA, (k & 63) * 16, (k >> 6) * 16, 16, 16, ox, oy, ICS, ICS); continue; }
-        if (!it.block) continue;
-        const t = TN[it.block], s = iconS(t);
-        const gq = blockGeom(s, 1);
-        const m = new THREE.Mesh(gq, mat);
-        sc3.add(m);
-        renderer.setRenderTarget(rt); renderer.setClearColor(0, 0); renderer.clear(); renderer.render(sc3, oc);
-        renderer.readRenderTargetPixels(rt, 0, 0, 64, 64, buf);
-        sc3.remove(m);
-        for (let y = 0; y < 64; y++) tim.data.set(buf.subarray((63 - y) * 256, (63 - y) * 256 + 256), y * 256);
-        tg.putImageData(tim, 0, 0);
-        icG.drawImage(tmpC, ox, oy, ICS, ICS);
+    let icI = 0;
+    const icT = cv(16, 16), icTg = icT.getContext('2d'), icQ = [], icS = ICS / 1.64, icO = { x: 0, y: 0 };
+    icTg.imageSmoothingEnabled = false;
+    const icP = (P, i) => { const x = P[i], y = P[i + 1], z = P[i + 2]; icO.x = ((x - z) * .7071 / .82 * .5 + .5) * ICS; icO.y = (.5 - (-.3541 * x + .8656 * y - .3541 * z) / .82 * .5) * ICS; };
+    function iconDraw(gq, ox, oy) {
+      const P = gq.attributes.position.array, U = gq.attributes.uv.array, C = gq.attributes.color.array, nq = P.length / 12 | 0;
+      icQ.length = 0;
+      for (let q = 0; q < nq; q++) { let d = 0; for (let k = 0; k < 4; k++) { const i = (q * 4 + k) * 3; d += P[i] * .6121 + P[i + 1] * .5008 + P[i + 2] * .6121; } icQ.push([d, q]); }
+      icQ.sort((a, b) => a[0] - b[0]);
+      icG.save();
+      icG.beginPath(); icG.rect(ox, oy, ICS, ICS); icG.clip();
+      for (let n = 0; n < icQ.length; n++) {
+        const q = icQ[n][1], v = q * 4, u0 = U[v * 2] * ATL, w0 = U[v * 2 + 1] * ATL, e1x = U[v * 2 + 2] * ATL - u0, e1y = U[v * 2 + 3] * ATL - w0, e2x = U[v * 2 + 6] * ATL - u0, e2y = U[v * 2 + 7] * ATL - w0, det = e1x * e2y - e2x * e1y;
+        if (Math.abs(det) < 1e-6) continue;
+        icP(P, v * 3); const p0x = icO.x, p0y = icO.y;
+        icP(P, v * 3 + 3); const d1x = icO.x - p0x, d1y = icO.y - p0y;
+        icP(P, v * 3 + 9); const d2x = icO.x - p0x, d2y = icO.y - p0y;
+        if (Math.abs(d1x * d2y - d2x * d1y) < .01) continue;
+        const a = (d1x * e2y - d2x * e1y) / det, c = (d2x * e1x - d1x * e2x) / det, b = (d1y * e2y - d2y * e1y) / det, d = (d2y * e1x - d1y * e2x) / det;
+        let sx = Math.min(u0, u0 + e1x, u0 + e2x, u0 + e1x + e2x), sy = Math.min(w0, w0 + e1y, w0 + e2y, w0 + e1y + e2y), sw = Math.max(u0, u0 + e1x, u0 + e2x, u0 + e1x + e2x) - sx, sh = Math.max(w0, w0 + e1y, w0 + e2y, w0 + e1y + e2y) - sy;
+        if (sw < .01 || sh < .01 || sw > 16.01 || sh > 16.01) continue;
+        const cr = Math.min(255, C[v * 3] * 255) | 0, cg2 = Math.min(255, C[v * 3 + 1] * 255) | 0, cb = Math.min(255, C[v * 3 + 2] * 255) | 0;
+        icTg.globalCompositeOperation = 'copy'; icTg.drawImage(atlasC, sx, sy, sw, sh, 0, 0, sw, sh);
+        if (cr < 252 || cg2 < 252 || cb < 252) {
+          icTg.globalCompositeOperation = 'multiply'; icTg.fillStyle = 'rgb(' + cr + ',' + cg2 + ',' + cb + ')'; icTg.fillRect(0, 0, sw, sh);
+          icTg.globalCompositeOperation = 'destination-in'; icTg.drawImage(atlasC, sx, sy, sw, sh, 0, 0, sw, sh);
+        }
+        icG.setTransform(a, b, c, d, ox + p0x - (a * u0 + c * w0), oy + p0y - (b * u0 + d * w0));
+        icG.drawImage(icT, 0, 0, sw, sh, sx, sy, sw, sh);
       }
-      renderer.setRenderTarget(prevRT); renderer.setPixelRatio(prevPR); mat.dispose(); rt.dispose();
+      icG.restore();
+      icG.setTransform(1, 0, 0, 1, 0, 0);
+    }
+    function iconStep(ms) {
+      const t0 = performance.now();
+      let n = 0;
+      while (icI < IT.length && (n < 1 || performance.now() - t0 < ms)) {
+        const it = IT[icI], col = icI % ICN, row = icI / ICN | 0, k = ITIDX.get(it.idx);
+        if (k !== undefined) icG.drawImage(ITA, (k & 63) * 16, (k >> 6) * 16, 16, 16, col * ICS, row * ICS, ICS, ICS);
+        else if (it.block) { const s = iconS(TN[it.block]), own = !geoCache.has(s * 100 + 50), gq = blockGeom(s, 1, true); iconDraw(gq, col * ICS, row * ICS); if (own) gq.dispose(); }
+        icI++; n++;
+      }
     }

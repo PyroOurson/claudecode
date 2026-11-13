@@ -476,7 +476,15 @@ ${p} [hidden]{display:none!important}
         playouts++;
       };
       const rv = { s: 0, m: new Int32Array(P.S) };
-      const finished = () => playouts >= o.maxPlayouts || clock() - t0 >= o.maxMs;
+      const settled = () => {
+        const ch = R.ch;
+        if (!o.early || !ch || playouts < 1500) return false;
+        let a = 0, b = 0;
+        for (let i = 0; i < ch.length; i++) { const v = ch[i].n; if (v > a) { b = a; a = v; } else if (v > b) b = v; }
+        const el = clock() - t0;
+        return a - b > Math.min(o.maxPlayouts - playouts, playouts / Math.max(1, el) * (o.maxMs - el));
+      };
+      const finished = () => playouts >= o.maxPlayouts || clock() - t0 >= o.maxMs || settled();
       const api = {
         step(ms) {
           if (done) return true;
@@ -698,7 +706,7 @@ ${p} [hidden]{display:none!important}
       { name: 'Easy', rank: '18 kyu', playouts: 220, ms: 1200 },
       { name: 'Medium', rank: '12 kyu', playouts: 3000, ms: 3000 },
       { name: 'Hard', rank: '7 kyu', playouts: 14000, ms: 6000 },
-      { name: 'Expert', rank: '3 kyu', playouts: 60000, ms: 12000 }
+      { name: 'Hardest', rank: '3 kyu', playouts: 60000, ms: 12000, early: true }
     ];
 
     return { Pos, Game, Search, Estimate, quickMove, bookMove, handiPts, maxHandi, starPts, params, rnd };
@@ -1259,7 +1267,7 @@ ${p} [hidden]{display:none!important}
         if (bk >= 0 && g.legal(bk)) done({ k: 'p', p: bk });
         else {
           const sc = n === 9 ? 1 : n === 13 ? 1.5 : 2.2;
-          s = E.Search(root0, { komi: g.cfg.komi, maxPlayouts: Math.round(pr.playouts * (n === 9 ? 1 : n === 13 ? .8 : .5)), maxMs: pr.ms * sc, passOk: g.moves.length >= n, oppPassed: lastPass(g), japanese: g.cfg.rules === 'J', canResign: lv >= 2 && g.moves.length > n * 2 });
+          s = E.Search(root0, { komi: g.cfg.komi, maxPlayouts: Math.round(pr.playouts * (n === 9 ? 1 : n === 13 ? .8 : .5)), maxMs: pr.ms * sc, passOk: g.moves.length >= n, oppPassed: lastPass(g), japanese: g.cfg.rules === 'J', canResign: lv >= 2 && g.moves.length > n * 2, early: !!pr.early });
           const tick = () => {
             if (dead) return;
             const fin = s.step(7);
@@ -2098,7 +2106,7 @@ ${p} [hidden]{display:none!important}
     { name: 'Easy', ms: 120 },
     { name: 'Medium', ms: 600 },
     { name: 'Hard', ms: 2200 },
-    { name: 'Expert', ms: 4500 }
+    { name: 'Hardest', ms: 4500 }
   ];
   const gmCoord = p => GM_LETTERS[p % 15] + (15 - ((p / 15) | 0));
 
@@ -2689,7 +2697,7 @@ ${p} [hidden]{display:none!important}
     { n: 'Orange', c: '#d67f12', d: '#9a5a08', w: 'rgba(214,127,18,.18)' }];
   const DB_CHIP = [null, 'radial-gradient(circle at 35% 30%,#7aa2ea,#2b59b0 60%,#1b3d80)', 'radial-gradient(circle at 35% 30%,#f08a7e,#c23a2d 60%,#8f2519)', 'radial-gradient(circle at 35% 30%,#7fd29d,#2b8749 60%,#1c5e32)', 'radial-gradient(circle at 35% 30%,#f7c27a,#d67f12 60%,#9a5a08)'];
   const DB_THEME = { bg: '#26334a', pn: '#33425e', pn2: '#425477', ink: '#f2f5fb', mut: '#aab8d2', acc: '#f2c14e', acc2: '#b8892a', accInk: '#2b1f05', ln: '#4a5d82', cv: '#1b2437' };
-  const DB_LEVELS = [{ name: 'Beginner', ms: 40 }, { name: 'Easy', ms: 80 }, { name: 'Medium', ms: 400 }, { name: 'Hard', ms: 1200 }, { name: 'Expert', ms: 2500 }];
+  const DB_LEVELS = [{ name: 'Beginner', ms: 40 }, { name: 'Easy', ms: 80 }, { name: 'Medium', ms: 400 }, { name: 'Hard', ms: 1200 }, { name: 'Hardest', ms: 2500 }];
   const DB_HELP = 'Click or tap a line between two dots · complete a box to claim it and go again · arrows move the pencil, <kbd>R</kbd> turns it, <kbd>Enter</kbd> draws · <kbd>U</kbd> undo · <kbd>N</kbd> new game';
   const dotsCss = kitCss('.gm-dots-boxes', DB_THEME) + `
 .gm-dots-boxes .pcs.q{display:grid;grid-template-columns:1fr 1fr}

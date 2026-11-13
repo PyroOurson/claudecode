@@ -1,6 +1,6 @@
 
   function mkAudio(api) {
-    let ctx = null, master = null, sfx = null, mus = null, nb = null, jetN = null, musOn = false, nextT = 0, step16 = 0;
+    let ctx = null, master = null, sfx = null, mus = null, nb = null, jetN = null, musOn = false, nextT = 0, step16 = 0, musVol = 1, sfxVol = 1, bpm = 96;
     const AC = window.AudioContext || window.webkitAudioContext;
     function ensure() {
       if (!AC) return false;
@@ -8,7 +8,7 @@
         try {
           ctx = new AC();
           master = ctx.createGain(); master.gain.value = 0.8; master.connect(ctx.destination);
-          sfx = ctx.createGain(); sfx.gain.value = 0.9; sfx.connect(master);
+          sfx = ctx.createGain(); sfx.gain.value = 0.9 * sfxVol; sfx.connect(master);
           mus = ctx.createGain(); mus.gain.value = 0; mus.connect(master);
           const n = ctx.sampleRate; nb = ctx.createBuffer(1, n, n); const d = nb.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
         } catch (e) { ctx = null; return false; }
@@ -55,29 +55,45 @@
       jet_end: t => { tone('sine', 700, 200, t, 0.4, 0.1); },
       mission: t => { [784, 988, 1175, 1568].forEach((f, i) => tone('triangle', f, f, t + i * 0.09, 0.25, 0.14)); },
       ui: t => tone('sine', 880, 1200, t, 0.06, 0.1),
+      edge: t => { tone('sine', 150, 80, t, 0.09, 0.16); noise(t, 0.05, 0.07, 'lowpass', 700, 250); },
+      near: t => { noise(t, 0.22, 0.12, 'bandpass', 500, 3200, 1.4); tone('triangle', 988, 1480, t + 0.02, 0.14, 0.1); },
+      tick: t => tone('square', 660, 660, t, 0.07, 0.07),
+      go: t => { tone('square', 990, 990, t, 0.16, 0.08); tone('triangle', 1320, 1320, t, 0.22, 0.1); },
       buy: t => { tone('sine', 1046, 1046, t, 0.08, 0.12); tone('sine', 1568, 1568, t + 0.07, 0.18, 0.12); }
     };
     const BASS = [43, 0, 0, 43, 0, 0, 46, 0, 41, 0, 0, 41, 0, 38, 0, 0];
+    const LEAD = [
+      [67, 0, 70, 0, 72, 0, 70, 67, 0, 65, 0, 67, 0, 0, 62, 0],
+      [67, 0, 70, 0, 72, 0, 74, 0, 77, 0, 74, 72, 0, 70, 0, 0],
+      [65, 0, 69, 0, 72, 0, 69, 65, 0, 62, 0, 65, 0, 0, 60, 0],
+      [62, 0, 65, 0, 69, 0, 72, 0, 74, 0, 72, 69, 0, 67, 0, 0]
+    ];
+    const FORM = [-1, -1, -1, -1, 0, 1, 0, 3, 2, 3, 0, 1, -1, -1, 2, 3];
     const midi = n => 440 * Math.pow(2, (n - 69) / 12);
     function schedule() {
-      const spb = 60 / 96 / 4;
+      const spb = 60 / bpm / 4;
       while (nextT < ctx.currentTime + 0.15) {
-        const t = nextT, k = step16 % 16, bar = (step16 >> 4) % 4;
+        const t = nextT, k = step16 % 16, bar = (step16 >> 4) % 4, tr = bar === 3 ? 2 : 0, ld = FORM[(step16 >> 4) % 16];
         if (k === 0 || k === 7 || k === 10) { tone('sine', 140, 45, t, 0.22, 0.42, mus); }
         if (k === 4 || k === 12) { noise(t, 0.16, 0.32, 'bandpass', 1800, 900, 0.7, mus); tone('triangle', 220, 140, t, 0.08, 0.12, mus); }
         if (k % 2 === 0) noise(t, 0.04, k % 4 === 2 ? 0.12 : 0.06, 'highpass', 7000, 0, 1, mus);
-        const bn = BASS[k]; if (bn) tone('square', midi(bn + (bar === 3 ? 2 : 0)), midi(bn + (bar === 3 ? 2 : 0)), t, spb * 1.8, 0.07, mus, 0.01);
+        if (ld < 0 && k % 2 === 1 && (step16 >> 4) % 16 > 11) noise(t, 0.03, 0.04, 'highpass', 9000, 0, 1, mus);
+        const bn = BASS[k]; if (bn) tone('square', midi(bn + tr), midi(bn + tr), t, spb * 1.8, 0.07, mus, 0.01);
         if (k === 0 && bar % 2 === 0) [67, 70, 74].forEach(n => tone('triangle', midi(n), midi(n), t, spb * 6, 0.02, mus, 0.02));
+        const ln = ld < 0 ? 0 : LEAD[ld][k];
+        if (ln) { tone('square', midi(ln + tr), midi(ln + tr), t, spb * 1.7, 0.026, mus, 0.008); tone('triangle', midi(ln + tr + 12), midi(ln + tr + 12), t, spb * 1.2, 0.022, mus, 0.008); }
         nextT += spb; step16++;
       }
     }
     return {
       unlock() { if (!api.muted) ensure(); },
-      play(name) { if (api.muted || !S[name] || !ensure() || ctx.state === 'closed') return; try { S[name](ctx.currentTime + 0.005); } catch (e) {} },
+      play(name) { if (api.muted || sfxVol <= 0 || !S[name] || !ensure() || ctx.state !== 'running') return; try { S[name](ctx.currentTime + 0.005); } catch (e) {} },
       music(on) { musOn = on; },
+      tempo(k) { bpm = 96 + 24 * k; },
+      setVol(m, f) { musVol = m; sfxVol = f; if (sfx) sfx.gain.value = 0.9 * f; if (f <= 0 && jetN) this.jet(false); },
       jet(on) {
         if (!ctx) return;
-        if (on && !jetN && !api.muted) {
+        if (on && !jetN && !api.muted && sfxVol > 0 && ctx.state === 'running') {
           const s = ctx.createBufferSource(); s.buffer = nb; s.loop = true; const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 700; const g = ctx.createGain(); g.gain.value = 0.12;
           s.connect(f); f.connect(g); g.connect(sfx); s.start(); jetN = { s, g };
         } else if (!on && jetN) { try { jetN.g.gain.setTargetAtTime(0, ctx.currentTime, 0.08); jetN.s.stop(ctx.currentTime + 0.3); } catch (e) {} jetN = null; }
@@ -85,10 +101,13 @@
       tick() {
         if (!ctx || ctx.state !== 'running') return;
         if (api.muted) { if (jetN) this.jet(false); mus.gain.value = 0; return; }
-        const target = musOn ? 0.55 : 0;
+        const target = musOn ? 0.55 * musVol : 0;
         mus.gain.value += (target - mus.gain.value) * 0.05;
         if (mus.gain.value > 0.01) { if (nextT < ctx.currentTime) nextT = ctx.currentTime + 0.05; schedule(); }
       },
-      close() { try { if (jetN) jetN.s.stop(); } catch (e) {} try { ctx && ctx.close(); } catch (e) {} ctx = null; }
+      get state() { return ctx ? ctx.state : 'none'; },
+      get jetOn() { return !!jetN; },
+      get vol() { return mus ? mus.gain.value : 0; },
+      close() { try { if (jetN) jetN.s.stop(); } catch (e) {} jetN = null; try { ctx && ctx.close(); } catch (e) {} ctx = null; }
     };
   }

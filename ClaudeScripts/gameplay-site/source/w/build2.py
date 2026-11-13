@@ -129,12 +129,16 @@ def main():
     for i in cv:
         meta['covers'].pop(i, None)
         meta['shots'].pop(i, None)
+    bare = [g['id'] for g in meta['games'] if g['id'] not in cv]
+    if bare:
+        print('build2: no cover image in covers2 for %s (the site draws a plain tile instead)' % ', '.join(bare))
     part_file, part_size = {}, {}
     for idx, (k, n) in enumerate(names):
         if k == 'script' and n.startswith('g_'):
             src = read(os.path.join(PARTS, files[idx]))
             part_file[n] = emit(src, '.js')
             part_size[n] = len(gzip.compress(src.encode('utf-8'), 9))
+    legal_file = emit(read(os.path.join(PARTS, '002_legal.js')), '.js') if os.path.exists(os.path.join(PARTS, '002_legal.js')) else None
     covers, shots = meta['covers'], meta['shots']
     have = [i for i in order if i in covers or i in shots]
     first = set(have[:INLINE]) | {i for i in popular if i in covers or i in shots}
@@ -165,7 +169,7 @@ def main():
     cat = 'Object.assign(Ameplay.covers, ' + js(inline_c) + ');\n'
     if inline_s:
         cat += 'Object.assign(Ameplay.shots, ' + js(inline_s) + ');\n'
-    cat += 'Ameplay.lazy({k:"%%GPKEY%%",dir:' + js(DIR) + ',packs:' + js(packs) + ',games:[\n' + ',\n'.join(games) + '\n]});\n'
+    cat += 'Ameplay.lazy({k:"%%GPKEY%%",dir:' + js(DIR) + (',legal:' + js(legal_file) if legal_file else '') + ',packs:' + js(packs) + ',games:[\n' + ',\n'.join(games) + '\n]});\n'
     page = pre + '<script>\n' + portal + '</script>\n<script>\n' + cat + last
     with open(os.path.join(PLAIN, 'index.html'), 'w', encoding='utf-8', newline='') as f:
         f.write(page)

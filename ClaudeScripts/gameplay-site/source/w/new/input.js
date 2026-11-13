@@ -55,6 +55,7 @@ function inUsed(id) {
 }
 function inKey(e) {
   if (e.gpSyn || !cur || AD.locked) return;
+  if (IN.cap && openK !== 'mctl') IN.cap = null;
   if (IN.cap) { e.preventDefault(); e.stopImmediatePropagation(); if (e.type === 'keydown') inCaptured(e.code); return; }
   if (inTyping(e.target) || openK) return;
   const m = inKeyMap(cur.g.id);

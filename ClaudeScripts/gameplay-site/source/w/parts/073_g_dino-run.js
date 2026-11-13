@@ -256,10 +256,11 @@
       root.append(hint);
 
       let N = 0;
+      let stale = true;
       function fit() {
         const r = canvas.getBoundingClientRect();
         const n = Math.max(1, Math.min(8, Math.ceil((r.width || WL) * (window.devicePixelRatio || 1) / WL)));
-        if (n !== N) { N = n; canvas.width = WL * n; canvas.height = HL * n; }
+        if (n !== N) { N = n; canvas.width = WL * n; canvas.height = HL * n; stale = true; }
       }
       fit();
       function shape() {
@@ -690,8 +691,10 @@
       api.loop(dt => {
         if (!N || ++fitTick > 30) { fitTick = 0; fit(); }
         acc = Math.min(acc + dt * 1000, 250);
-        while (acc >= STEP - 1) { step(STEP); acc -= STEP; }
-        draw();
+        let fresh = stale;
+        while (acc >= STEP - 1) { step(STEP); acc -= STEP; fresh = true; }
+        stale = false;
+        if (fresh) draw();
       });
 
       root.__dino = {

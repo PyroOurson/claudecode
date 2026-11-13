@@ -21,6 +21,7 @@ function fvRail() {
 function fvToggle(id) {
   if (!byId.get(id)) return;
   const on = !fvHas(id), uid = FV.uid;
+  FV.v = (FV.v || 0) + 1;
   FV.ids = on ? [id, ...FV.ids.filter(x => x !== id)] : FV.ids.filter(x => x !== id);
   fvStore(); fvPaint();
   toast(auT(on ? 'Added to favourites' : 'Removed from favourites'));
@@ -49,8 +50,10 @@ async function fvSync() {
   try {
     if (guest.length) { await sbRest('favourites', { method: 'POST', body: guest.map(g => ({ user_id: uid, game_id: g })), prefer: 'resolution=ignore-duplicates,return=minimal' }); try { localStorage.removeItem(FV_KEY); } catch (e) {} }
     await FV.q;
+    const v = FV.v || 0;
     const r = await sbRest('favourites?select=game_id&order=created_at.desc&limit=300');
     if (!SB.user || SB.user.id !== uid || !Array.isArray(r)) return;
+    if ((FV.v || 0) !== v) return fvSync();
     FV.ids = r.map(x => x.game_id).filter(x => FV_RE.test(x));
     fvStore(); fvPaint();
   } catch (e) {}
@@ -58,7 +61,7 @@ async function fvSync() {
 function fvBar(g) { const b = $('#pFav'); b.dataset.fav = g.id; fvPaint(); }
 
 const SF = { d: null, at: 0, ch: null, peek: false, shown: false, off: new Set(), gk: null, og: null };
-const SF_KEY = 'gameplay:site', SF_HIDE = 'gameplay:sitehide';
+const SF_KEY = 'gameplay:site', SF_HIDE = 'gameplay:sitehide', SF_SAW = 'gameplay:sitesaw';
 try { const o = JSON.parse(localStorage.getItem(SF_KEY) || 'null'); if (o && typeof o === 'object') { SF.d = o; SF.off = new Set(Array.isArray(o.disabled_games) ? o.disabled_games : []); } } catch (e) {}
 const sfOff = id => SF.off.has(id);
 const sfBlocked = g => !!g && sfOff(g.id) && !adIsAdmin();
@@ -82,7 +85,7 @@ async function sfLoad(force) {
 }
 function sfRt() {
   if (SF.ch || !SB.c) return;
-  try { SF.ch = SB.c.channel('site').on('broadcast', { event: 'n' }, () => sfLoad(true)).subscribe(); } catch (e) {}
+  try { SF.ch = SB.c.channel('site').on('broadcast', { event: 'n' }, () => { if (SF.nt) return; SF.nt = setTimeout(() => { SF.nt = 0; sfLoad(Date.now() - SF.at > 15000); }, Math.max(0, SF.at + 15000 - Date.now()) + 500 + Math.random() * 2500); }).subscribe(); } catch (e) {}
 }
 function sfNudge() {
   sfRt();
@@ -135,9 +138,17 @@ function sfPaint() {
   const until = Date.parse(d.banner_until || '') || 0, txt = d.banner && (!until || until > now) ? String(d.banner) : '';
   let hid = '';
   try { hid = localStorage.getItem(SF_HIDE) || ''; } catch (e) {}
-  const lv = d.banner_level === 'warning' ? 'warning' : 'info', showB = !!txt && hid !== syHash(txt), showM = !!d.maintenance && adm;
+  const lv = d.banner_level === 'warning' ? 'warning' : 'info', showB = !!txt && hid !== syHash(txt) && !auLocked() && openK !== 'mauth', showM = !!d.maintenance && adm;
   const top = showB && lv === 'info', mid = showB && lv === 'warning';
-  bar.innerHTML = (showM ? `<div class="sfb sfb-adm">${SF_ICO.tool}<span>${esc(auT('Maintenance mode is on.'))}</span><button class="btn2" type="button" data-adgo="site">${esc(auT('Site switches'))}</button></div>` : '') + (top ? `<div class="sfb sfb-info" role="status">${SF_ICO.info}<span translate="no">${esc(txt)}</span><button class="x" type="button" data-sfhide aria-label="${esc(auT('Hide announcement'))}">${SF_ICO.x}</button></div>` : '');
+  const bh = (showM ? `<div class="sfb sfb-adm">${SF_ICO.tool}<span>${esc(auT('Maintenance mode is on.'))}</span><button class="btn2" type="button" data-adgo="site">${esc(auT('Site switches'))}</button></div>` : '') + (top ? `<div class="sfb sfb-info" role="status">${SF_ICO.info}<span translate="no">${esc(txt)}</span><button class="x" type="button" data-sfhide aria-label="${esc(auT('Hide announcement'))}">${SF_ICO.x}</button></div>` : '');
+  if (SF.bh !== bh) {
+    let saw = '';
+    try { saw = localStorage.getItem(SF_SAW) || ''; } catch (e) {}
+    const hh = showB ? syHash(txt) : '';
+    bar.classList.toggle('sf-still', !hh || saw === hh || SF.bx === hh);
+    SF.bh = bh; bar.innerHTML = bh;
+    if (hh) { SF.bx = hh; if (saw !== hh) { try { localStorage.setItem(SF_SAW, hh); } catch (e) {} } }
+  }
   bar.hidden = !top && !showM;
   let al = $('#sfalert');
   if (mid) {
@@ -146,7 +157,7 @@ function sfPaint() {
     al.querySelector('h2').textContent = auT('Alert');
     al.querySelector('.sfal-t').textContent = txt;
     al.querySelector('.sfal-ok').textContent = auT('OK');
-    if (al.hidden !== false || !al.classList.contains('on')) { SF.af = document.activeElement; al.hidden = false; void al.offsetWidth; al.classList.add('on'); const ok = al.querySelector('.sfal-ok'); requestAnimationFrame(() => ok.focus({ preventScroll: true })); }
+    if (al.hidden !== false || !al.classList.contains('on')) { SF.af = document.activeElement; al.hidden = false; al.classList.toggle('sf-still', SF.bx === syHash(txt)); SF.bx = syHash(txt); void al.offsetWidth; al.classList.add('on'); const ok = al.querySelector('.sfal-ok'); requestAnimationFrame(() => ok.focus({ preventScroll: true })); }
   } else if (al && !al.hidden) { al.classList.remove('on'); al.hidden = true; const f = SF.af; SF.af = null; if (f && f.isConnected && f !== document.body) f.focus({ preventScroll: true }); }
   clearTimeout(SF.bt);
   if (showB && until) SF.bt = setTimeout(sfPaint, Math.min(until - now + 500, 3600000));
@@ -212,6 +223,7 @@ function clAuto(seenRemote) {
   if (clSeen() >= top) { CL.done = true; if (seenRemote !== undefined && (+seenRemote || 0) < top) clMark(true); return; }
   if (seenRemote != null && +seenRemote >= top) { CL.done = true; clMark(false); return; }
   if (CL_NEW && !clSeen()) { CL.done = true; clMark(false); return; }
+  if (cur || pend || openK || auLocked() || document.visibilityState !== 'visible') { clearTimeout(CL.t); CL.t = setTimeout(() => clAuto(seenRemote), 5000); return; }
   clOpen();
 }
 

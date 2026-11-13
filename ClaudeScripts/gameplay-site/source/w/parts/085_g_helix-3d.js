@@ -152,6 +152,32 @@
   const ICON = '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M28.5 4v56M35.5 4v56"/><path d="M12 22c0 3 9 5.5 20 5.5s20-2.5 20-5.5"/><path d="M12 38c0 3 9 5.5 20 5.5 7 0 13-1 16.5-2.5"/><path d="M12 54c0 3 9 5.5 20 5.5s20-2.5 20-5.5"/><circle cx="44" cy="12" r="5"/></svg>';
   const HAND = '<svg class="hand" viewBox="0 0 64 64"><path d="M26 30V12a4 4 0 0 1 8 0v14l14 3c4 1 6 4 5 8l-3 13c-1 4-4 6-8 6H30c-3 0-5-1-7-4l-9-12c-2-3 2-7 6-4l6 5z" fill="#fff" stroke="rgba(31,29,43,.3)" stroke-width="2"/></svg>';
 
+  function fitPR(api, v, hook) {
+    const r = v.renderer, c = v.canvas, Q = [1, 0.75, 0.55], sz = new v.THREE.Vector2();
+    let lvl = 0, cw = 0, avg = 0.016, t = -2, wait = 8, chk = 0, lf = -1, sf = 0, up = 0;
+    const apply = () => {
+      const d = Math.min(2, window.devicePixelRatio || 1), B = Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * d * d * 1.05);
+      const lw = r.getSize(sz).x || v.w, pr = Math.max(0.5, Math.min(4, d * cw / lw, Math.sqrt(B / (lw * (sz.y || v.h))))) * Q[lvl];
+      if (Math.abs(r.getPixelRatio() - pr) > 0.01) r.setPixelRatio(pr);
+      r.shadowMap.autoUpdate = lvl < 2;
+    };
+    const size = () => { const w = c.getBoundingClientRect().width; if (w && Math.abs(w - cw) > Math.max(2, cw * 0.02)) { cw = w; apply(); } };
+    const set = n => { lvl = n; t = 0; apply(); if (hook) hook(lvl); };
+    r.forceContextLoss = () => {};
+    size(); api.on(window, 'resize', size);
+    api.loop(dt => {
+      const f = r.info.render.frame;
+      if (f === lf || !(dt > 0)) return;
+      lf = f;
+      if (lvl > 1 && (sf ^= 1)) r.shadowMap.needsUpdate = true;
+      avg += (dt - avg) * Math.min(1, dt * 1.5); t += dt;
+      if (performance.now() - chk > 500) { chk = performance.now(); size(); }
+      if (t < 1.5) return;
+      if (avg > 0.021 && lvl < Q.length - 1) { if (up && t < 6) wait = Math.min(64, wait * 2); up = 0; set(lvl + 1); }
+      else if (avg < 0.0175 && lvl && t > wait) { up = 1; set(lvl - 1); }
+    });
+  }
+
   Ameplay.register({
     id: ID,
     title: 'Helix Drop',
@@ -182,6 +208,7 @@
         Object.defineProperty(cvs, k, { get: () => val, set: x => { val = x; st.style[k] = x; } });
       }
       root.append(st); st.append(canvas);
+      fitPR(api, v);
       st.insertAdjacentHTML('beforeend', `
 <div class="hud" hidden><div class="lv"><b class="a">1</b><span class="bar"><i></i></span><b class="b">2</b></div><div class="sc">0</div></div>
 <div class="flash"></div>

@@ -1,6 +1,7 @@
-const TRS = { t0: Date.now(), vis: 0, vt: performance.now(), von: document.visibilityState === 'visible', foc: 0, blur: 0, keys: 0, clicks: 0, taps: 0, md: 0, mx: null, my: null, wheel: 0, scr: 0, sy: 0, games: 0, gset: new Set(), fs: 0, off: 0, errs: 0, idle: 0, la: performance.now(), copy: 0, rsz: 0, seq: 0 };
+const TRS = { t0: Date.now(), vis: 0, vt: performance.now(), von: document.visibilityState === 'visible', foc: 0, blur: 0, keys: 0, clicks: 0, taps: 0, games: 0, gset: new Set(), fs: 0, off: 0, errs: 0, idle: 0, la: performance.now(), seq: 0 };
+const RQ = { n: 0, f: 0, s5: 0, s4: 0, l: 0, t: 0 };
 const TR_IDLE = 60000;
-const TR = { li: performance.now(), idle: false, vis: null, g: null, v0: 0, sy: 0, impQ: [], io: null, clicks: [], dw: 0, vit: { cls: 0, inp: 0, lcp: null }, vsent: false, pads: new Set(), kb: '', env: 0, asked: new Set(), hz: (() => { try { return +sessionStorage.getItem('gameplay:hz') || null; } catch (e) { return null; } })() };
+const TR = { li: performance.now(), idle: false, vis: null, g: null, v0: 0, sy: 0, impQ: [], io: null, clicks: [], dw: 0, vit: { cls: 0, inp: 0, lcp: null }, vsent: false, pads: new Set(), kb: '', env: 0, asked: new Set(), pf: null, pj: 0, rdy: null, hz: (() => { try { return +sessionStorage.getItem('gameplay:hz') || null; } catch (e) { return null; } })() };
 const TR_DC = /amazon|aws|google cloud|google llc|microsoft|azure|digitalocean|ovh|hetzner|linode|akamai|vultr|choopa|oracle|contabo|leaseweb|m247|datacamp|cdn77|scaleway|alibaba|tencent|hostinger|ionos|psychz|zenlayer|packethub|tzulo|quadranet|nordvpn|expressvpn|proton|mullvad|surfshark|private internet|cyberghost|ipvanish|hide\.me|windscribe|cloudflare|fastly|gcore|constant company|hostwinds|kamatera|clouvider|serverius|worldstream|hivelocity|colocrossing/i;
 const trPadKind = id => /054c|sony|playstation|dualsense|dualshock/i.test(id) ? 'PlayStation' : /045e|xbox|xinput/i.test(id) ? 'Xbox' : /057e|nintendo|switch|joy-con/i.test(id) ? 'Switch' : /8bitdo/i.test(id) ? '8BitDo' : /046d|logitech/i.test(id) ? 'Logitech' : 'Other';
 const trSel = el => { const a = el.closest('[id],[data-id],a,button,[role="button"]') || el, t = a.tagName.toLowerCase(); return (t + (a.id ? '#' + a.id : a.dataset && a.dataset.id ? '[' + a.dataset.id + ']' : typeof a.className === 'string' && a.className.trim() ? '.' + a.className.trim().split(/\s+/)[0] : '') + (a !== el ? ' ' + el.tagName.toLowerCase() : '')).slice(0, 80); };
@@ -10,6 +11,51 @@ const trKbOf = (q, y, w) => q === 'a' ? 'azerty' : y === 'z' ? 'qwertz' : q === 
 const trVis = () => { const t = performance.now(); if (TRS.von) TRS.vis += t - TRS.vt; TRS.vt = t; TRS.von = document.visibilityState === 'visible'; };
 const trZoom = () => { if (!trMq('(pointer: fine)') || window.top !== window || !outerWidth || !innerWidth) return null; const z = outerWidth / innerWidth, s = [.25, .33, .5, .67, .75, .8, .9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5].reduce((a, b) => Math.abs(b - z) < Math.abs(a - z) ? b : a); return Math.abs(s - z) / s < .03 ? s : null; };
 const trVotes = () => { try { return JSON.parse(localStorage.getItem('gameplay:votes')) || {}; } catch (e) { return {}; } };
+const TR_TAG = { game_launch: 1, game_play: 1, game_time: 1, game_quit: 1, error: 1, restart: 1, pause: 1, fullscreen: 1 };
+function trTag(e, p) {
+  try {
+    if (TR_TAG[e] && TR.vis && p.game === TR.vis.game && p.v == null) p.v = TR.vis.id;
+    if (e === 'party_join' && TR.pj && performance.now() - TR.pj < 120000) { p.ms = Math.round(performance.now() - TR.pj); TR.pj = 0; }
+  } catch (x) {}
+}
+function trTake(G) {
+  const b = S.best[G.g.id], o = { fr: G.pf, ft: G.pt, sl: G.ps, lf: G.pl, rn: G.rounds - G.r0, rec: b != null && b !== G.b0 ? 1 : 0 };
+  G.pf = G.pt = G.ps = G.pl = 0; G.r0 = G.rounds; G.b0 = b;
+  return o;
+}
+function trPerf(id) {
+  try {
+    const a = TR.g && TR.g.g.id === id ? trTake(TR.g) : null, b = TR.pf && TR.pf.game === id ? TR.pf.o : null;
+    TR.pf = null;
+    if (!a && !b) return {};
+    const o = { fr: 0, ft: 0, sl: 0, lf: 0, rn: 0, rec: 0 };
+    [a, b].forEach(x => { if (x) for (const k in o) o[k] += x[k] || 0; });
+    const out = { rn: o.rn, rec: o.rec ? 1 : 0 };
+    if (o.fr >= 60 && o.ft > 0) { out.fps = o.fr * 1000 / o.ft; out.fr = o.fr; out.sl = o.sl; out.lf = o.lf; out.hz = TR.hz; }
+    return out;
+  } catch (e) { return {}; }
+}
+function trNet() {
+  const F = window.fetch;
+  if (typeof F !== 'function' || !SB.on) return;
+  const hosts = SBN.all();
+  window.fetch = function (input) {
+    const p = F.apply(this, arguments);
+    try {
+      const u = typeof input === 'string' ? input : input instanceof URL ? input.href : input && input.url || '';
+      if (hosts.some(b => u.indexOf(b + '/') === 0)) {
+        const t = performance.now();
+        p.then(r => { RQ.n++; RQ.t += performance.now() - t; if (r.status === 429) RQ.l++; else if (r.status >= 500) RQ.s5++; else if (r.status >= 400) RQ.s4++; }, e => { if (!(e && e.name === 'AbortError')) { RQ.n++; RQ.f++; } });
+      }
+    } catch (e) {}
+    return p;
+  };
+}
+function trRq() {
+  const o = { rq: RQ.n, rqf: RQ.f, rq5: RQ.s5, rq4: RQ.s4, rql: RQ.l, rqt: Math.round(RQ.t) };
+  RQ.n = RQ.f = RQ.s5 = RQ.s4 = RQ.l = RQ.t = 0;
+  return o;
+}
 
 function trIdle() { return !!TR.g && performance.now() - TR.li > TR_IDLE; }
 function trTick(G, t) {
@@ -43,7 +89,7 @@ function trBeat() {
 }
 function trStart(g, ctl) {
   TRS.games++; TRS.gset.add(g.id);
-  const t0 = performance.now(), A = ctl.api, G = { g, t0, why: 'exit', rounds: 0, sc: [], last: null, lv: null, fr: 0, ft: 0, fs: [], fh: new Uint32Array(4000), inp: { k: 0, m: 0, t: 0, p: 0 }, on: {} };
+  const t0 = performance.now(), A = ctl.api, G = { g, t0, why: 'exit', rounds: 0, sc: [], last: null, lv: null, fr: 0, ft: 0, fs: [], fh: new Uint32Array(4000), inp: { k: 0, m: 0, t: 0, p: 0 }, on: {}, pf: 0, pt: 0, ps: 0, pl: 0, r0: 0, b0: S.best[g.id] };
   if (TR.g) trEnd1(TR.g);
   if (!TR.vis || TR.vis.game !== g.id || TR.vis.done) TR.vis = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8), game: g.id, ms: 0, t: t0, on: false, sent: 0, st: t0, done: false };
   G.vis = TR.vis; G.a0 = TR.vis.ms;
@@ -62,7 +108,9 @@ function trStart(g, ctl) {
     requestAnimationFrame(step);
     if (PAUSE.on || document.visibilityState !== 'visible') { last = 0; return; }
     if (!last || t - last > 1000) { last = s0 = t; n = 0; return; }
-    G.fr++; G.ft += t - last; G.fh[Math.min(3999, (t - last) * 4 | 0)]++; last = t; n++;
+    const dt = t - last;
+    G.fr++; G.ft += dt; G.fh[Math.min(3999, dt * 4 | 0)]++; last = t; n++;
+    G.pf++; G.pt += dt; if (dt > 34) { G.ps++; if (dt > 100) G.pl++; }
     if (++k % 10 === 0 && navigator.getGamepads) { for (const p of navigator.getGamepads()) if (p && (p.buttons.some(b => b.pressed) || p.axes.some(a => Math.abs(a) > .5))) { G.on.p = 1; trInput(); break; } }
     if (t - s0 >= 1000) {
       if (t - G.t0 > 3000 && G.fs.length < 7200) G.fs.push(n * 1000 / (t - s0));
@@ -119,10 +167,13 @@ function trEnd1(G) {
   trTick(G, now);
   TR.g = null;
   G.vis.on = false;
+  const tk = trTake(G), was = TR.pf && TR.pf.game === G.g.id ? TR.pf.o : null;
+  if (was) for (const k in tk) tk[k] += was[k] || 0;
+  TR.pf = { game: G.g.id, o: tk };
   if (G.why !== 'restart') { G.vis.done = true; trEmit(G.vis); }
   if (TR.idle) { TR.idle = false; trWake(); }
   const fs = G.fs.slice().sort((a, b) => a - b), I = G.inp;
-  track('game_quit', { game: G.g.id, sec: Math.round((now - G.t0) / 1000), act: Math.round((G.vis.ms - G.a0) / 1000), why: G.why, rounds: G.rounds, sc: G.sc, last: G.last, lv: G.lv, fps: G.ft ? G.fr * 1000 / G.ft : null, fpsmin: fs.length ? fs[0] : null, fps5: fs.length ? fs[Math.floor(fs.length * .05)] : null, fps10: trLow(G.fh, G.fr), fpshi: fs.length ? fs[fs.length - 1] : null, hz: TR.hz, ik: I.k, im: I.m, it: I.t, ip: I.p });
+  track('game_quit', { game: G.g.id, sec: Math.round((now - G.t0) / 1000), act: Math.round((G.vis.ms - G.a0) / 1000), why: G.why, rounds: G.rounds, sc: G.sc, last: G.last, lv: G.lv, fps: G.ft ? G.fr * 1000 / G.ft : null, fpsmin: fs.length ? fs[0] : null, fps5: fs.length ? fs[Math.floor(fs.length * .05)] : null, fps10: trLow(G.fh, G.fr), hz: TR.hz, ik: I.k, im: I.m, it: I.t, ip: I.p });
 }
 function trView(from) {
   const now = performance.now();
@@ -156,7 +207,7 @@ function trVitalsSend() {
   if (TR.vsent) return;
   TR.vsent = true;
   const n = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null, f = performance.getEntriesByName ? performance.getEntriesByName('first-contentful-paint')[0] : null;
-  track('vitals', { lcp: TR.vit.lcp, cls: Math.round(TR.vit.cls * 1000) / 1000, inp: TR.vit.inp || null, fcp: f ? f.startTime : null, ttfb: n ? n.responseStart : null, load: n && n.loadEventEnd ? n.loadEventEnd : null, v: view });
+  track('vitals', { lcp: TR.vit.lcp, cls: Math.round(TR.vit.cls * 1000) / 1000, inp: TR.vit.inp || null, fcp: f ? f.startTime : null, ttfb: n ? n.responseStart : null, load: n && n.loadEventEnd ? n.loadEventEnd : null, rdy: TR.rdy, v: view });
 }
 function trHz() {
   return new Promise(r => {
@@ -176,20 +227,54 @@ async function trGeo() {
   try {
     const j = await (await fetch('https://get.geojs.io/v1/ip/geo.json', { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer' })).json();
     const org = String(j.organization_name || j.organization || '').replace(/^AS\d+\s*/, '');
-    const o = { cc: String(j.country_code || '').slice(0, 2).toUpperCase(), country: j.country || '', region: j.region || '', city: j.city || '', isp: org, asn: +j.asn || +(String(j.organization || '').match(/^AS(\d+)/) || [])[1] || null, gtz: j.timezone || '' };
+    const o = { cc: String(j.country_code || '').slice(0, 2).toUpperCase(), country: j.country || '', region: j.region || '', dc: TR_DC.test(org), gtz: j.timezone || '' };
     try { sessionStorage.setItem('gameplay:geo', JSON.stringify(o)); } catch (e) {}
     return o;
   } catch (e) { return null; }
 }
-function trGpu() {
+const TR_GLW = 'onmessage=function(e){var o={r:"",mtex:null,glx:null,ok:false};try{var c=new OffscreenCanvas(1,1),gl=c.getContext("webgl");if(gl){var x=e.data?null:gl.getExtension("WEBGL_debug_renderer_info");o.r=String(gl.getParameter(x?x.UNMASKED_RENDERER_WEBGL:gl.RENDERER)||"");o.mtex=gl.getParameter(gl.MAX_TEXTURE_SIZE);o.glx=(gl.getSupportedExtensions()||[]).length;o.ok=true}}catch(_){}postMessage(o)}';
+let TR_GLP = null, TR_GLK = null;
+function trGlName(r) { return String(r || '').replace(/^ANGLE \((.*)\)$/, '$1').replace(/,? ?(Direct3D|D3D|OpenGL|Vulkan|Metal).*$/i, '').replace(/ \(0x[0-9a-f]+\)/gi, '').replace(/^[^,]{2,24}, (?=.*\S)/, '').trim().slice(0, 100); }
+function trGlMain(ff) {
+  const o = { r: '', mtex: null, glx: null, ok: false };
   try {
-    const c = document.createElement('canvas'), gl = c.getContext('webgl') || c.getContext('experimental-webgl');
-    if (!gl) return '';
-    const x = /Firefox\//.test(navigator.userAgent) ? null : gl.getExtension('WEBGL_debug_renderer_info');
-    const r = String(gl.getParameter(x ? x.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || '');
-    const lc = gl.getExtension('WEBGL_lose_context'); if (lc) lc.loseContext();
-    return r.replace(/^ANGLE \((.*)\)$/, '$1').replace(/,? ?(Direct3D|D3D|OpenGL|Vulkan|Metal).*$/i, '').replace(/ \(0x[0-9a-f]+\)/gi, '').replace(/^[^,]{2,24}, (?=.*\S)/, '').trim().slice(0, 100);
-  } catch (e) { return ''; }
+    const c = document.createElement('canvas'); c.width = c.height = 1;
+    const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+    if (!gl) return o;
+    TR_GLK = gl;
+    const x = ff ? null : gl.getExtension('WEBGL_debug_renderer_info');
+    o.r = String(gl.getParameter(x ? x.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || '');
+    o.mtex = gl.getParameter(gl.MAX_TEXTURE_SIZE); o.glx = (gl.getSupportedExtensions() || []).length; o.ok = true;
+  } catch (e) {}
+  return o;
+}
+function trGlWorker(ff) {
+  return new Promise(res => {
+    let w = null, u = null, t = 0, fin = false;
+    const end = o => { if (fin) return; fin = true; clearTimeout(t); try { if (w) w.terminate(); } catch (e) {} try { if (u) URL.revokeObjectURL(u); } catch (e) {} res(o); };
+    try {
+      if (!window.OffscreenCanvas || !window.Worker || !window.Blob) return end(null);
+      u = URL.createObjectURL(new Blob([TR_GLW], { type: 'text/javascript' }));
+      w = new Worker(u);
+      w.onmessage = e => end(e.data && e.data.ok ? e.data : null);
+      w.onerror = () => end(null);
+      t = setTimeout(() => end(undefined), 60000);
+      w.postMessage(ff);
+    } catch (e) { end(null); }
+  });
+}
+function trGl() {
+  if (TR_GLP) return TR_GLP;
+  return TR_GLP = (async () => {
+    try { const k = JSON.parse(localStorage.getItem('gameplay:gpu') || 'null'); if (k && typeof k === 'object' && typeof k.r === 'string') return k; } catch (e) {}
+    const ff = /Firefox\//.test(navigator.userAgent);
+    let o = await trGlWorker(ff);
+    if (o === undefined) return { r: '', mtex: null, glx: null };
+    if (!o) o = trGlMain(ff);
+    const v = { r: trGlName(o.r), mtex: o.mtex == null ? null : +o.mtex || null, glx: o.glx == null ? null : +o.glx || 0 };
+    try { if (consent && consent.level !== 'session') localStorage.setItem('gameplay:gpu', JSON.stringify(v)); } catch (e) {}
+    return v;
+  })();
 }
 function trOs(hi) {
   const ua = navigator.userAgent, d = device().os, pv = hi && hi.platformVersion ? String(hi.platformVersion) : '';
@@ -208,78 +293,38 @@ function trBr(hi) {
   const m = ua.match(b === 'Firefox' ? /Firefox\/(\d+)/ : b === 'Safari' ? /Version\/(\d+(?:\.\d+)?)/ : b === 'Samsung' ? /SamsungBrowser\/(\d+)/ : b === 'Edge' ? /Edg\/(\d+)/ : b === 'Opera' ? /OPR\/(\d+)/ : /Chrome\/(\d+)/);
   return b + (m ? ' ' + m[1] : '');
 }
-function trAdb() {
-  return new Promise(r => {
-    const b = document.createElement('div');
-    b.className = 'adsbox ad-banner ad-unit pub_300x250 text-ad';
-    b.style.cssText = 'position:absolute;left:-999px;top:0;width:10px;height:10px';
-    b.innerHTML = '&nbsp;';
-    document.body.append(b);
-    setTimeout(() => { const s = getComputedStyle(b); r(!b.offsetHeight || s.display === 'none' || s.visibility === 'hidden'); b.remove(); }, 400);
-  });
-}
 async function trEnv() {
   if (!anOk() || TR.env) return;
   TR.env = 1;
   try { if (sessionStorage.getItem('gameplay:env') === SID) return; sessionStorage.setItem('gameplay:env', SID); } catch (e) {}
   const ud = navigator.userAgentData, c = navigator.connection || {}, now = new Date(), tz = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { return ''; } })();
-  const [hi, kbm, geo, hz, adb] = await Promise.all([
+  const [hi, kbm, geo, hz, glI] = await Promise.all([
     trTo(ud && ud.getHighEntropyValues ? ud.getHighEntropyValues(['platformVersion', 'model', 'architecture', 'bitness', 'fullVersionList']).catch(() => null) : Promise.resolve(null), 2000),
     trTo(navigator.keyboard && navigator.keyboard.getLayoutMap ? navigator.keyboard.getLayoutMap().catch(() => null) : Promise.resolve(null), 2000),
-    trTo(trGeo(), 6000), trTo(trHz(), 4000), trTo(trAdb(), 2000)
+    trTo(trGeo(), 6000), trTo(trHz(), 4000), trTo(trGl(), 5000)
   ]);
   if (hz) { TR.hz = hz; try { sessionStorage.setItem('gameplay:hz', hz); } catch (e) {} }
   if (kbm && !TR.kb) TR.kb = trKbOf(kbm.get('KeyQ'), kbm.get('KeyY'), kbm.get('KeyW'));
   const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean).map(p => trPadKind(p.id)) : [];
-  track('env_dev', { osv: trOs(hi), brv: trBr(hi), model: hi && hi.model ? hi.model : device().type === 'desktop' ? null : /iPhone/.test(navigator.userAgent) ? 'iPhone' : /iPad|Macintosh/.test(navigator.userAgent) ? 'iPad' : 'Unknown model', arch: hi && hi.architecture ? hi.architecture + (hi.bitness ? '-' + hi.bitness : '') : null, cores: navigator.hardwareConcurrency || null, mem: navigator.deviceMemory || null, gpu: trGpu() || null, gl2: 'WebGL2RenderingContext' in window, wgpu: 'gpu' in navigator, hz, kb: TR.kb || null, pads, adb, langs: (navigator.languages || []).slice(0, 6) });
-  const g = geo || {}, dc = TR_DC.test(g.isp || ''), tzm = !!(g.gtz && tz && g.gtz !== tz && trOff(g.gtz) !== trOff(tz));
+  track('env_dev', { osv: trOs(hi), brv: trBr(hi), model: hi && hi.model ? hi.model : device().type === 'desktop' ? null : /iPhone/.test(navigator.userAgent) ? 'iPhone' : /iPad|Macintosh/.test(navigator.userAgent) ? 'iPad' : 'Unknown model', arch: hi && hi.architecture ? hi.architecture + (hi.bitness ? '-' + hi.bitness : '') : null, cores: navigator.hardwareConcurrency || null, mem: navigator.deviceMemory || null, gpu: glI && glI.r ? glI.r : null, gl2: 'WebGL2RenderingContext' in window, wgpu: 'gpu' in navigator, hz, kb: TR.kb || null, pads, langs: (navigator.languages || []).slice(0, 1) });
+  const g = geo || {}, dc = !!g.dc, tzm = !!(g.gtz && tz && g.gtz !== tz && trOff(g.gtz) !== trOff(tz));
   setTimeout(() => trMore().catch(() => {}), 2500);
-  track('env_geo', { tz, off: -now.getTimezoneOffset(), lh: now.getHours(), wd: now.getDay(), net: c.effectiveType || null, ctype: c.type || 'unknown', dl: c.downlink != null ? c.downlink : null, rtt: c.rtt != null ? c.rtt : null, save: c.saveData != null ? !!c.saveData : null, cc: g.cc || null, country: g.country || null, region: g.region || null, city: g.city || null, isp: g.isp || null, asn: g.asn || null, dc, tzm, vpn: dc || tzm });
+  track('env_geo', { tz, off: -now.getTimezoneOffset(), net: c.effectiveType || null, ctype: c.type || 'unknown', dl: c.downlink != null ? c.downlink : null, rtt: c.rtt != null ? c.rtt : null, save: c.saveData != null ? !!c.saveData : null, cc: g.cc || null, country: g.country || null, region: g.region || null, dc, tzm, vpn: dc || tzm });
 }
 const trMq = q => { try { return matchMedia(q).matches; } catch (e) { return false; } };
-const trB = (v, cuts, unit) => { if (v == null || !isFinite(v)) return null; for (const c of cuts) if (v < c) return '<' + c + unit; return cuts[cuts.length - 1] + unit + '+'; };
 const trHost = u => { try { return u ? new URL(u).hostname.replace(/^www\./, '').slice(0, 60) : ''; } catch (e) { return ''; } };
-function trBench() {
-  const t = performance.now();
-  let x = 0;
-  for (let i = 0; i < 3e6; i++) x += Math.sqrt(i) * Math.sin(i);
-  return x && Math.round((performance.now() - t) * 10) / 10;
-}
 async function trMore() {
-  const sc = screen || {}, o = sc.orientation || {}, dpr = window.devicePixelRatio || 1;
-  track('env_scr', { sw: sc.width || null, sh: sc.height || null, aw: sc.availWidth || null, ah: sc.availHeight || null, cd: sc.colorDepth || null, dpr: Math.round(dpr * 100) / 100, ori: o.type || null, vw: innerWidth, vh: innerHeight, tp: navigator.maxTouchPoints || 0, ptr: trMq('(pointer: fine)') ? 'fine' : trMq('(pointer: coarse)') ? 'coarse' : 'none', hov: trMq('(hover: hover)'), dark: trMq('(prefers-color-scheme: dark)'), rmo: trMq('(prefers-reduced-motion: reduce)'), con: trMq('(prefers-contrast: more)'), fcol: trMq('(forced-colors: active)'), rtr: trMq('(prefers-reduced-transparency: reduce)'), hdr: trMq('(dynamic-range: high)'), gam: trMq('(color-gamut: rec2020)') ? 'rec2020' : trMq('(color-gamut: p3)') ? 'p3' : 'srgb', dm: ['fullscreen', 'standalone', 'minimal-ui'].find(m => trMq('(display-mode: ' + m + ')')) || 'browser', ext: sc.isExtended != null ? !!sc.isExtended : null, zoom: trZoom(), res: (sc.width || 0) + 'x' + (sc.height || 0) });
-  const n = navigator, A = window.AudioContext || window.webkitAudioContext;
-  let sr = null, ach = null, mtex = null, glx = null, voices = null, devs = null, bat = null, est = null, gpuv = null, pers = null;
-  try { if (A) { const ac = new A(); sr = ac.sampleRate; ach = ac.destination ? ac.destination.maxChannelCount : null; ac.close(); } } catch (e) {}
-  try { const gl = document.createElement('canvas').getContext('webgl'); if (gl) { mtex = gl.getParameter(gl.MAX_TEXTURE_SIZE); glx = (gl.getSupportedExtensions() || []).length; const lc = gl.getExtension('WEBGL_lose_context'); if (lc) lc.loseContext(); } } catch (e) {}
-  try { voices = window.speechSynthesis ? speechSynthesis.getVoices().length : null; } catch (e) {}
-  const v = document.createElement('video'), cp = t => { try { return window.MediaSource && MediaSource.isTypeSupported ? MediaSource.isTypeSupported(t) : !!v.canPlayType(t); } catch (e) { return false; } };
-  const [dl, b, q, gp, ps] = await Promise.all([
-    trTo(n.mediaDevices && n.mediaDevices.enumerateDevices ? n.mediaDevices.enumerateDevices().catch(() => null) : Promise.resolve(null), 2000),
-    trTo(n.getBattery ? n.getBattery().catch(() => null) : Promise.resolve(null), 2000),
-    trTo(n.storage && n.storage.estimate ? n.storage.estimate().catch(() => null) : Promise.resolve(null), 2000),
-    trTo(n.gpu && n.gpu.requestAdapter ? n.gpu.requestAdapter().catch(() => null) : Promise.resolve(null), 3000),
-    trTo(n.storage && n.storage.persisted ? n.storage.persisted().catch(() => null) : Promise.resolve(null), 2000)
-  ]);
-  if (dl) devs = { mic: dl.filter(d => d.kind === 'audioinput').length, cam: dl.filter(d => d.kind === 'videoinput').length, spk: dl.filter(d => d.kind === 'audiooutput').length };
-  if (b) bat = { lvl: Math.round(b.level * 100), chg: !!b.charging };
-  if (q) est = { quota: Math.round((q.quota || 0) / 1048576), used: Math.round((q.usage || 0) / 1048576) };
-  if (gp) { try { const i = gp.info || (gp.requestAdapterInfo ? await trTo(gp.requestAdapterInfo(), 1500) : null); if (i) gpuv = [i.vendor, i.architecture].filter(Boolean).join(' ').slice(0, 60) || null; } catch (e) {} }
-  if (ps != null) pers = !!ps;
-  const ro = (() => { try { return Intl.DateTimeFormat().resolvedOptions(); } catch (e) { return {}; } })();
-  let hc = null, fdw = null;
-  try { hc = new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hourCycle || null; } catch (e) {}
-  try { const L = new Intl.Locale(ro.locale || n.language); const w = L.getWeekInfo ? L.getWeekInfo() : L.weekInfo; fdw = w ? w.firstDay : null; } catch (e) {}
-  const nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null, mem = performance.memory;
-  const bench = await new Promise(r => (window.requestIdleCallback || setTimeout)(() => { try { r(trBench()); } catch (e) { r(null); } }, { timeout: 3000 }));
-  track('env_caps', { ck: n.cookieEnabled, dnt: n.doNotTrack === '1' || window.doNotTrack === '1', gpc: !!n.globalPrivacyControl, pdf: n.pdfViewerEnabled != null ? !!n.pdfViewerEnabled : null, bot: !!n.webdriver, wasm: typeof WebAssembly === 'object', sab: typeof SharedArrayBuffer === 'function', coi: !!window.crossOriginIsolated, swk: 'serviceWorker' in n, notif: window.Notification ? Notification.permission : null, vib: 'vibrate' in n, bt: 'bluetooth' in n, usb: 'usb' in n, ser: 'serial' in n, hid: 'hid' in n, xr: 'xr' in n, midi: 'requestMIDIAccess' in n, share: 'share' in n, wl: 'wakeLock' in n, voices, mic: devs ? devs.mic : null, cam: devs ? devs.cam : null, spk: devs ? devs.spk : null, sr, ach, h264: cp('video/mp4; codecs="avc1.42E01E"'), vp9: cp('video/webm; codecs="vp9"'), av1: cp('video/mp4; codecs="av01.0.05M.08"'), hevc: cp('video/mp4; codecs="hvc1.1.6.L93.B0"'), mtex, glx, gpuv, quota: est ? est.quota : null, used: est ? est.used : null, qb: est ? trB(est.quota, [200, 1000, 10000, 100000], ' MB') : null, pers, heap: mem ? Math.round(mem.jsHeapSizeLimit / 1048576) : null, bat: bat ? bat.lvl : null, batb: bat ? trB(bat.lvl, [20, 50, 80], '%') : null, chg: bat ? bat.chg : null, bench, benchb: trB(bench, [15, 30, 60, 120], ' ms'), loc: ro.locale || null, cal: ro.calendar || null, num: ro.numberingSystem || null, hc, fdw, ref: trHost(document.referrer) || 'direct', land: (location.pathname + location.hash).slice(0, 60), navt: nav ? nav.type : null, hist: history.length, plat: n.platform || null, vend: n.vendor || null, ua: n.userAgent.slice(0, 300), route: SB.on ? (SBN.best() === SUPABASE_DIRECT ? 'direct' : 'relay') : 'none', down: !!window.__gpSbDown });
+  const sc = screen || {}, o = sc.orientation || {}, dpr = window.devicePixelRatio || 1, n = navigator;
+  track('env_scr', { cd: sc.colorDepth || null, dpr: Math.round(dpr * 100) / 100, ori: o.type || null, vw: innerWidth, vh: innerHeight, tp: n.maxTouchPoints || 0, ptr: trMq('(pointer: fine)') ? 'fine' : trMq('(pointer: coarse)') ? 'coarse' : 'none', hov: trMq('(hover: hover)'), dark: trMq('(prefers-color-scheme: dark)'), rmo: trMq('(prefers-reduced-motion: reduce)'), con: trMq('(prefers-contrast: more)'), fcol: trMq('(forced-colors: active)'), rtr: trMq('(prefers-reduced-transparency: reduce)'), hdr: trMq('(dynamic-range: high)'), gam: trMq('(color-gamut: rec2020)') ? 'rec2020' : trMq('(color-gamut: p3)') ? 'p3' : 'srgb', dm: ['fullscreen', 'standalone', 'minimal-ui'].find(m => trMq('(display-mode: ' + m + ')')) || 'browser', ext: sc.isExtended != null ? !!sc.isExtended : null, zoom: trZoom(), res: (sc.width || 0) + 'x' + (sc.height || 0) });
+  const nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
+  track('env_caps', { bot: !!n.webdriver, wasm: typeof WebAssembly === 'object', ref: trHost(document.referrer) || 'direct', land: (location.pathname + location.hash).slice(0, 60), navt: nav ? nav.type : null, route: SB.on ? (SBN.best() === SUPABASE_DIRECT ? 'direct' : 'relay') : 'none', down: !!window.__gpSbDown });
 }
 function trSess(final) {
   if (!anOk()) return;
   const t = performance.now();
   trVis();
   TRS.idle = Math.max(TRS.idle, t - TRS.la);
-  track('sess_sum', { seq: ++TRS.seq, final: !!final, dur: Math.round((Date.now() - TRS.t0) / 1000), vis: Math.round(TRS.vis / 1000), foc: TRS.foc, blur: TRS.blur, keys: TRS.keys, clicks: TRS.clicks, taps: TRS.taps, mdist: Math.round(TRS.md), wheel: TRS.wheel, scr: Math.round(TRS.scr), games: TRS.games, gset: TRS.gset.size, gl: [...TRS.gset].slice(0, 30), fs: TRS.fs, off: TRS.off, errs: TRS.errs, idle: Math.round(TRS.idle / 1000), copy: TRS.copy, rsz: TRS.rsz, route: SB.on ? (SBN.best() === SUPABASE_DIRECT ? 'direct' : 'relay') : 'none', acct: SB.user ? 'user' : SB.guest ? 'guest' : 'none', lang: document.documentElement.lang || null, theme: document.documentElement.getAttribute('data-theme') || 'system' });
+  track('sess_sum', Object.assign({ seq: ++TRS.seq, final: !!final, dur: Math.round((Date.now() - TRS.t0) / 1000), vis: Math.round(TRS.vis / 1000), foc: TRS.foc, blur: TRS.blur, keys: TRS.keys, clicks: TRS.clicks, taps: TRS.taps, games: TRS.games, gset: TRS.gset.size, gl: [...TRS.gset].slice(0, 30), fs: TRS.fs, off: TRS.off, errs: TRS.errs, idle: Math.round(TRS.idle / 1000), route: SB.on ? (SBN.best() === SUPABASE_DIRECT ? 'direct' : 'relay') : 'none', acct: SB.user ? 'user' : SB.guest ? 'guest' : 'none', lang: document.documentElement.lang || null, theme: document.documentElement.getAttribute('data-theme') || 'system' }, trRq()));
 }
 function trHidden() { if (TR.g) { trTick(TR.g, performance.now()); trEmit(TR.g.vis); } trImpFlush(); trVitalsSend(); trSess(false); }
 function trEnd() {
@@ -290,6 +335,8 @@ function trEnd() {
 }
 function trBoot() {
   TR.v0 = performance.now();
+  TR.rdy = Math.round(TR.v0);
+  trNet();
   const ob = (type, fn, o) => { try { new PerformanceObserver(l => l.getEntries().forEach(fn)).observe(Object.assign({ type, buffered: true }, o)); } catch (e) {} };
   ob('layout-shift', e => { if (!e.hadRecentInput) TR.vit.cls += e.value; });
   ob('largest-contentful-paint', e => { TR.vit.lcp = e.startTime; });
@@ -323,16 +370,15 @@ function trBoot() {
   if (anOk()) setTimeout(trEnv, 1500);
   const act = () => { const t = performance.now(); TRS.idle = Math.max(TRS.idle, t - TRS.la); TRS.la = t; trInput(); };
   addEventListener('keydown', () => { TRS.keys++; act(); }, { capture: true, passive: true });
-  addEventListener('pointerdown', e => { if (e.pointerType === 'touch') TRS.taps++; else TRS.clicks++; act(); }, { capture: true, passive: true });
-  addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') { trInput(); return; } if (TRS.mx != null) TRS.md += Math.min(400, Math.hypot(e.clientX - TRS.mx, e.clientY - TRS.my)); TRS.mx = e.clientX; TRS.my = e.clientY; act(); }, { capture: true, passive: true });
-  addEventListener('wheel', () => { TRS.wheel++; act(); }, { capture: true, passive: true });
-  addEventListener('scroll', () => { TRS.scr += Math.abs(scrollY - TRS.sy); TRS.sy = scrollY; }, { passive: true });
+  const lob = e => { const t = e.target; if (t && t.closest && t.closest('.g-lobby') && (e.type !== 'keydown' || e.key === 'Enter')) TR.pj = performance.now(); };
+  addEventListener('keydown', lob, { capture: true, passive: true });
+  addEventListener('pointerdown', e => { if (e.pointerType === 'touch') TRS.taps++; else TRS.clicks++; act(); lob(e); }, { capture: true, passive: true });
+  addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') trInput(); else act(); }, { capture: true, passive: true });
+  addEventListener('wheel', act, { capture: true, passive: true });
   addEventListener('focus', () => TRS.foc++);
   addEventListener('blur', () => TRS.blur++);
   addEventListener('offline', () => TRS.off++);
   addEventListener('error', () => TRS.errs++);
-  addEventListener('copy', () => TRS.copy++);
-  addEventListener('resize', () => TRS.rsz++, { passive: true });
   document.addEventListener('fullscreenchange', () => { if (document.fullscreenElement) TRS.fs++; });
   addEventListener('touchmove', trInput, { capture: true, passive: true });
   document.addEventListener('visibilitychange', () => { trVis(); if (TR.g) trTick(TR.g, performance.now()); });

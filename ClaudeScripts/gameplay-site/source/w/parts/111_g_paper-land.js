@@ -31,10 +31,11 @@
     levels: {
       easy: { name: 'Easy', aggro: [0, 0.3], caution: [1.3, 1.8], greed: [0.55, 1], grace: 14, hunt: 0, think: [0.18, 0.28], slip: 0.3, cut: false },
       normal: { name: 'Normal', aggro: [0.1, 0.9], caution: [0.7, 1.4], greed: [0.7, 1.5], grace: 8, hunt: 1, think: [0.08, 0.16], slip: 0, cut: false },
-      hard: { name: 'Hard', aggro: [0.7, 1.2], caution: [1.1, 1.6], greed: [1, 1.9], grace: 5, hunt: 1.6, think: [0.05, 0.09], slip: 0, cut: true }
+      hard: { name: 'Hard', aggro: [0.7, 1.2], caution: [1.1, 1.6], greed: [1, 1.9], grace: 5, hunt: 1.6, think: [0.05, 0.09], slip: 0, cut: true },
+      hardest: { name: 'Hardest', aggro: [0.8, 1.2], caution: [1, 1.2], greed: [1.4, 2.2], grace: 5, hunt: 1.6, think: [0.15, 0.25], slip: 0, cut: true, pro: true }
     }
   };
-  const MODE_KEYS = ['classic', 'small', 'fast', 'timed'], LEVEL_KEYS = ['easy', 'normal', 'hard'];
+  const MODE_KEYS = ['classic', 'small', 'fast', 'timed'], LEVEL_KEYS = ['easy', 'normal', 'hard', 'hardest'];
   const FREE = 6, UNLOCK = [0.5, 1, 1.5, 2, 3, 4, 5, 7, 10, 15];
   const OUT = 255;
 
@@ -153,7 +154,7 @@
         if (players.some(p => p.name === n) && nameBag.length) n = nameBag.pop();
         return n;
       };
-      const newAI = () => ({ mode: 'home', tt: rand(0, 0.15), want: 0, theta: 0, side: 1, d1: 0, d2: 0, travel: 0, homeT: 0, greed: rand(lv.greed[0], lv.greed[1]), aggro: rand(lv.aggro[0], lv.aggro[1]), caution: rand(lv.caution[0], lv.caution[1]), sloppy: Math.random() < lv.slip, maxTrail: 0, target: null, chaseT: 0, hx: 0, hy: 0, hd: 0 });
+      const newAI = () => ({ pro: !!lv.pro, th: lv.think, mode: 'home', tt: rand(0, 0.15), want: 0, theta: 0, side: 1, d1: 0, d2: 0, travel: 0, homeT: 0, greed: rand(lv.greed[0], lv.greed[1]), aggro: rand(lv.aggro[0], lv.aggro[1]), caution: rand(lv.caution[0], lv.caution[1]), sloppy: Math.random() < lv.slip, maxTrail: 0, target: null, chaseT: 0, hx: 0, hy: 0, hd: 0 });
       const makePlayer = (id, name, col, bot) => ({ id, name, col, bot, alive: false, x: 0, y: 0, a: 0, want: 0, odo: 0, trail: [], tcells: [], tbb: [0, 0, 0, 0], bb: [0, 0, 0, 0], count: 0, path: null, dirty: false, kills: 0, cx: 0, cy: 0, wall: false, respawnT: 0, born: -9, trailStart: 0, ai: bot ? newAI() : null });
 
       function newWorld(m, withHuman) {
@@ -205,7 +206,7 @@
         const U = CFG.unit, sr = CFG.startR * U;
         p.alive = true; p.x = at[0]; p.y = at[1]; p.a = p.want = rand(-PI, PI); p.odo = 0; p.trail.length = 0; p.tcells.length = 0;
         p.wall = false; p.born = clock; p.count = 0;
-        if (p.ai) { p.ai = Object.assign(newAI(), { greed: p.ai.greed, aggro: p.ai.aggro, caution: p.ai.caution }); }
+        if (p.ai) { p.ai = Object.assign(newAI(), { greed: p.ai.greed, aggro: p.ai.aggro, caution: p.ai.caution, pro: p.ai.pro, th: p.ai.th }); }
         const i0 = Math.floor(p.x - sr), i1 = Math.floor(p.x + sr), j0 = Math.floor(p.y - sr), j1 = Math.floor(p.y + sr);
         stolen.fill(0);
         for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
@@ -492,6 +493,30 @@
         }
         return Math.sqrt(m);
       }
+      function exposed(b) {
+        const ai = b.ai, t = b.trail, n = t.length;
+        let m = 1e12;
+        for (const e of players) {
+          if (e === b || !e.alive) continue;
+          let dx = e.x - b.x, dy = e.y - b.y, d = dx * dx + dy * dy;
+          for (let k = 0; k < n; k += 6) { dx = e.x - t[k]; dy = e.y - t[k + 1]; const q = dx * dx + dy * dy; if (q < d) d = q; }
+          for (let f = 0.25; f < 1.01; f += 0.25) { dx = e.x - (b.x + (ai.hx - b.x) * f); dy = e.y - (b.y + (ai.hy - b.y) * f); const q = dx * dx + dy * dy; if (q < d) d = q; }
+          if (d < m) m = d;
+        }
+        return Math.sqrt(m);
+      }
+      function homeDist(e) {
+        let best = 240;
+        for (let k = 0; k < 16; k++) {
+          const a = k / 16 * TAU, ca = Math.cos(a), sa = Math.sin(a);
+          for (let r = 1.5; r < best; r += 1.5) {
+            const o = owner[((e.y + sa * r) | 0) * G + ((e.x + ca * r) | 0)];
+            if (o === OUT) break;
+            if (o === e.id) { best = r; break; }
+          }
+        }
+        return best;
+      }
       function nearestTrail(b, radius, only) {
         let bd = radius * radius, res = null;
         for (const e of players) {
@@ -532,6 +557,10 @@
             }
           }
         }
+        if (ai.pro && ai.mode !== 'chase' && ai.mode !== 'back' && len < 8 * U && clock - b.born > 2) {
+          const t = nearestTrail(b, 16 * U, null);
+          if (t && Math.hypot(t.x - b.x, t.y - b.y) + 1.5 * U < homeDist(t.p)) { ai.mode = 'chase'; ai.target = t.p; ai.chaseT = 0; }
+        }
         if (ai.mode !== 'chase' && ai.mode !== 'back' && len < 6 * U && clock - b.born > 2.5 && Math.random() < ai.aggro * 0.12) {
           const t = nearestTrail(b, (6 + 8 * ai.aggro) * U, null), e = t && t.p;
           if (e && e.odo - e.trailStart > 3 * U && Math.hypot(t.x - b.x, t.y - b.y) < Math.hypot(e.x - e.trail[0], e.y - e.trail[1]) * 1.3 + 2 * U) { ai.mode = 'chase'; ai.target = e; ai.chaseT = 0; }
@@ -539,7 +568,8 @@
         if (ai.mode === 'chase') {
           ai.chaseT += dt;
           const t = ai.target && ai.target.alive && ai.target.trail.length ? nearestTrail(b, 40 * U, ai.target) : null;
-          if (!t || ai.chaseT > 5 || len > 16 * U || (out && dangerDist(b) < 2.5 * U)) {
+          if (ai.pro && out) findHome(b);
+          if (!t || ai.chaseT > 5 || len > 16 * U || (out && (ai.pro ? exposed(b) < ai.hd + 3 * U + speed * 0.35 : dangerDist(b) < 2.5 * U)) || (ai.pro && Math.hypot(t.x - b.x, t.y - b.y) > homeDist(ai.target) + 5 * U)) {
             ai.target = null;
             if (out) ai.mode = 'back'; else plan(b);
           } else if (lv.cut && !out && owner[(ai.target.y | 0) * G + (ai.target.x | 0)] === b.id) {
@@ -550,12 +580,12 @@
         if (out && ai.mode !== 'chase') {
           if (ai.mode === 'home') { ai.mode = 'out'; ai.travel = 0; }
           findHome(b);
-          if (ai.mode !== 'back' && (dangerDist(b) < ai.hd * ai.caution + 1.5 * U || len > ai.maxTrail)) ai.mode = 'back';
+          if (ai.mode !== 'back' && ((ai.pro ? exposed(b) < ai.hd * ai.caution + 3 * U + speed * 0.35 + Math.abs(angDiff(Math.atan2(ai.hy - b.y, ai.hx - b.x), b.a)) * 1.2 * U : dangerDist(b) < ai.hd * ai.caution + 1.5 * U) || len > ai.maxTrail)) ai.mode = 'back';
           if (ai.mode === 'out' && ai.travel >= ai.d1) { ai.mode = 'side'; ai.travel = 0; }
           if (ai.mode === 'side' && ai.travel >= ai.d2) ai.mode = 'back';
           want = ai.mode === 'out' ? ai.theta : ai.mode === 'side' ? ai.theta + ai.side * PI / 2 : Math.atan2(ai.hy - b.y, ai.hx - b.x);
         } else if (!out && ai.mode === 'home') want = ai.theta;
-        const look = 4 * U, px = b.x + Math.cos(want) * look - C, py = b.y + Math.sin(want) * look - C;
+        const look = 4 * U + (ai.pro ? speed * 0.3 : 0), px = b.x + Math.cos(want) * look - C, py = b.y + Math.sin(want) * look - C;
         if (px * px + py * py > (RC - U) * (RC - U)) {
           const ra = Math.atan2(b.y - C, b.x - C), t1 = ra + PI / 2 + 0.35, t2 = ra - PI / 2 - 0.35;
           want = Math.abs(angDiff(t1, want)) < Math.abs(angDiff(t2, want)) ? t1 : t2;
@@ -616,7 +646,7 @@
             continue;
           }
           if (p.bot) {
-            if ((p.ai.tt -= dt) <= 0) { const iv = rand(lv.think[0], lv.think[1]); think(p, iv); p.ai.tt = iv; }
+            if ((p.ai.tt -= dt) <= 0) { const iv = rand(p.ai.th[0], p.ai.th[1]); think(p, iv); p.ai.tt = iv; }
             p.want = p.ai.want;
           } else steerHuman(p);
           move(p, dt);
@@ -1154,8 +1184,8 @@
         else text('SKIN ' + (skin + 1) + '/' + SKINS.length + '  ·  ' + owned + ' UNLOCKED', W / 2, by + (ph ? 48 : 54), 11, '#8a8ea8');
         const mw = ph ? 84 : 104, mh = 38, mg = 8, mx = W / 2 - (mw * 4 + mg * 3) / 2, my = H * (ph ? 0.5 : 0.535);
         MODE_KEYS.forEach((k, i) => pill(mx + i * (mw + mg), my, mw, mh, CFG.modes[k].name, mode === k, () => { if (mode !== k) { mode = k; store(); toTitle(); } }));
-        const LC = { easy: '#2fae5f', normal: '#3f77e0', hard: '#e8344a' };
-        const lw = ph ? 96 : 104, lh = 32, lx = W / 2 - (lw * 3 + mg * 2) / 2, ly = my + mh + 10;
+        const LC = { easy: '#2fae5f', normal: '#3f77e0', hard: '#e8344a', hardest: '#8e3fd6' };
+        const lw = ph ? 84 : 104, lh = 32, lx = W / 2 - (lw * 4 + mg * 3) / 2, ly = my + mh + 10;
         LEVEL_KEYS.forEach((k, i) => pill(lx + i * (lw + mg), ly, lw, lh, CFG.levels[k].name, level === k, () => { level = k; lv = CFG.levels[k]; store(); }, LC[k]));
         const pw = ph ? 210 : 240, phh = ph ? 60 : 64;
         button(W / 2 - pw / 2, H * (ph ? 0.69 : 0.725), pw, phh, lk ? 'LOCKED' : 'PLAY', lk ? '#9a9db4' : '#3ccf6e', startGame, ph ? 27 : 30);

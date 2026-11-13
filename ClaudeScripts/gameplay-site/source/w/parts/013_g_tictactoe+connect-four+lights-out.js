@@ -27,7 +27,7 @@ ${p} .opts [hidden]{display:none}
     });
   }
 
-  const DIFFS = ['Easy', 'Normal', 'Hard'];
+  const DIFFS = ['Easy', 'Normal', 'Hard', 'Hardest'];
   const duelCss = p => segCss(p) + `
 ${p}{gap:16px}
 ${p} .dhead{display:flex;flex-direction:column;align-items:center;gap:14px;max-width:100%}
@@ -49,7 +49,7 @@ ${p} .cn{display:flex;align-items:center;gap:6px;margin-top:-6px;font-size:12px;
 ${p} .cn[hidden]{display:none}
 ${p} .cn i{width:8px;height:8px;border-radius:50%;background:var(--bad)}
 ${p} .cn.on i{background:var(--good);box-shadow:0 0 0 3px rgba(34,176,125,.2)}
-@media (max-width:520px){${p} .seg button{padding:8px 10px}${p} .sb{gap:6px 18px}}
+@media (max-width:520px){${p} .seg button{padding:8px 9px;font-size:12px}${p} .sb{gap:6px 18px}}
 `;
 
   function duel(root, api, o) {
@@ -228,11 +228,21 @@ ${p} .cn.on i{background:var(--good);box-shadow:0 0 0 3px rgba(34,176,125,.2)}
   function ttAi(b, diff, p = -1) {
     const empt = [];
     b.forEach((v, i) => { if (!v) empt.push(i); });
+    if (empt.length === 9 && diff === 'Hardest') return rnd([0, 2, 6, 8]);
     if (empt.length === 9 || (diff === 'Easy' && Math.random() < .7)) return rnd(empt);
     const sc = empt.map(i => { b[i] = p; const s = -ttNm(b, -p, 1); b[i] = 0; return s; });
     const max = Math.max(...sc), worse = empt.filter((_, k) => sc[k] < max);
     if (diff === 'Normal' && worse.length && Math.random() < .25) return rnd(worse);
-    return rnd(empt.filter((_, k) => sc[k] === max));
+    const top = empt.filter((_, k) => sc[k] === max);
+    if (diff !== 'Hardest' || max || top.length < 2) return rnd(top);
+    const traps = top.map(i => {
+      b[i] = p;
+      let n = 0;
+      for (let j = 0; j < 9; j++) if (!b[j]) { b[j] = -p; if (ttNm(b, p, 0) > 0) n++; b[j] = 0; }
+      b[i] = 0;
+      return n;
+    }), most = Math.max(...traps);
+    return rnd(top.filter((_, k) => traps[k] === most));
   }
 
   const T4W = [0, 1, 6, 40, 0];
@@ -269,7 +279,7 @@ ${p} .cn.on i{background:var(--good);box-shadow:0 0 0 3px rgba(34,176,125,.2)}
     b.forEach((v, i) => { if (!v) empt.push(i); });
     if (empt.length >= 15) return rnd(empt.filter(i => [5, 6, 9, 10].includes(i)));
     if (diff === 'Easy' && Math.random() < .55) return rnd(empt);
-    const sc = t4Scores(b, diff === 'Hard' ? 5 : diff === 'Normal' ? 3 : 1, p), max = Math.max(...sc.map(x => x[1]));
+    const sc = t4Scores(b, diff === 'Hardest' ? (empt.length > 12 ? 7 : empt.length > 10 ? 9 : 11) : diff === 'Hard' ? 5 : diff === 'Normal' ? 3 : 1, p), max = Math.max(...sc.map(x => x[1]));
     const worse = sc.filter(x => x[1] < max && x[1] > -900);
     if (diff === 'Normal' && worse.length && Math.random() < .2) return rnd(worse)[0];
     return rnd(sc.filter(x => x[1] === max))[0];
@@ -484,6 +494,151 @@ ${p} .cn.on i{background:var(--good);box-shadow:0 0 0 3px rgba(34,176,125,.2)}
     for (const w of C4BY[i]) if (w.every(k => b[k] === p)) w.forEach(k => s.add(k));
     return s.size ? [...s] : null;
   };
+  function c4Core() {
+    const W = [], BY = [], MATE = 10000, ORD = [3, 2, 4, 1, 5, 0, 6], SC = [0, 1, 4, 14];
+    for (let i = 0; i < 42; i++) BY.push([]);
+    for (let r = 0; r < 6; r++) for (let c = 0; c < 7; c++) for (const [dr, dc] of [[0, 1], [1, 0], [1, 1], [1, -1]]) {
+      const r3 = r + 3 * dr, c3 = c + 3 * dc;
+      if (r3 > 5 || c3 < 0 || c3 > 6) continue;
+      const id = W.length >> 2;
+      for (let k = 0; k < 4; k++) { const i = (r + k * dr) * 7 + c + k * dc; W.push(i); BY[i].push(id); }
+    }
+    const NW = W.length >> 2, b = new Int8Array(42), ht = new Int8Array(7), cA = new Int8Array(NW), cB = new Int8Array(NW);
+    let sd = 2463534242;
+    const r32 = () => { sd ^= sd << 13; sd ^= sd >>> 17; sd ^= sd << 5; return sd | 0; };
+    const ZA = new Int32Array(84), ZB = new Int32Array(84);
+    for (let i = 0; i < 84; i++) { ZA[i] = r32(); ZB[i] = r32(); }
+    const TS = 1 << 21, TM = TS - 1, TK = new Int32Array(TS), TV = new Int16Array(TS), TD = new Int8Array(TS), TF = new Int8Array(TS), TC = new Int8Array(TS), hist = new Int32Array(84);
+    const ML = [], MS = [];
+    for (let i = 0; i < 48; i++) { ML.push(new Int8Array(7)); MS.push(new Int32Array(7)); }
+    let n = 0, hA = 0, hB = 0, nodes = 0, t0 = 0, tl = 0, cap = 0, stop = false;
+    const now = () => performance.now();
+    function put(c, p) { const i = ht[c] * 7 + c, ws = BY[i], cn = p > 0 ? cA : cB, z = p > 0 ? i : i + 42; b[i] = p; ht[c]++; n++; hA ^= ZA[z]; hB ^= ZB[z]; for (let k = 0; k < ws.length; k++) cn[ws[k]]++; }
+    function take(c, p) { ht[c]--; n--; const i = ht[c] * 7 + c, ws = BY[i], cn = p > 0 ? cA : cB, z = p > 0 ? i : i + 42; b[i] = 0; hA ^= ZA[z]; hB ^= ZB[z]; for (let k = 0; k < ws.length; k++) cn[ws[k]]--; }
+    function wins(i, p) { const ws = BY[i], cn = p > 0 ? cA : cB; for (let k = 0; k < ws.length; k++) if (cn[ws[k]] === 3) return true; return false; }
+    const tA = new Int8Array(7), tB = new Int8Array(7);
+    function hole(w) {
+      let e = W[w * 4];
+      if (b[e]) { e = W[w * 4 + 1]; if (b[e]) { e = W[w * 4 + 2]; if (b[e]) e = W[w * 4 + 3]; } }
+      return e;
+    }
+    function evalFor(p) {
+      const first = n & 1 ? -p : p, fT = first > 0 ? tA : tB, sT = first > 0 ? tB : tA;
+      let v = 0, odd = 0, even = 0, off = 0, stack = 0;
+      tA.fill(0); tB.fill(0);
+      for (let w = 0; w < NW; w++) {
+        const a = cA[w], o = cB[w];
+        if (a) { if (o) continue; v += SC[a]; if (a === 3) { const e = hole(w); tA[e % 7] |= 1 << (e / 7 | 0); } }
+        else if (o) { v -= SC[o]; if (o === 3) { const e = hole(w); tB[e % 7] |= 1 << (e / 7 | 0); } }
+      }
+      for (let c = 0; c < 7; c++) {
+        const all = (tA[c] | tB[c]) >> ht[c] << ht[c];
+        if (!all) continue;
+        const bit = all & -all, hi = (bit & 21) !== 0, f = fT[c] & bit, s2 = sT[c] & bit;
+        if (f && s2) { if (hi) odd++; else even++; }
+        else if (f) { if (hi) odd++; else off++; if (fT[c] & bit << 1) stack++; }
+        else { if (hi) off--; else even++; if (sT[c] & bit << 1) stack--; }
+      }
+      let z = 14 * off + 600 * stack;
+      if (odd && !even) z += 260 + 40 * odd; else if (even && !odd) z -= 260 + 40 * even; else z += 50 * (odd - even);
+      return (first > 0 ? v + z : v - z) * p;
+    }
+    function ab(d, al, be, p, ply) {
+      if ((++nodes & 2047) === 0 && (now() - t0 > tl || nodes > cap)) stop = true;
+      if (stop) return 0;
+      let forced = -1, nf = 0;
+      for (let c = 0; c < 7; c++) {
+        if (ht[c] > 5) continue;
+        const i = ht[c] * 7 + c;
+        if (wins(i, p)) return MATE - ply - 1;
+        if (wins(i, -p)) { forced = c; nf++; }
+      }
+      if (n >= 41) return 0;
+      if (nf > 1) return -(MATE - ply - 2);
+      if (nf) {
+        if (ht[forced] < 5 && wins((ht[forced] + 1) * 7 + forced, -p)) return -(MATE - ply - 2);
+        put(forced, p);
+        const v = -ab(d, -be, -al, -p, ply + 1);
+        take(forced, p);
+        return v;
+      }
+      if (d <= 0) return evalFor(p);
+      const ti = hA & TM;
+      let tc = -1;
+      if (TK[ti] === hB) {
+        tc = TC[ti];
+        if (TD[ti] >= d) {
+          let v = TV[ti];
+          if (v > MATE - 100) v -= ply; else if (v < -MATE + 100) v += ply;
+          const f = TF[ti];
+          if (f === 0 || (f === 1 && v >= be) || (f === 2 && v <= al)) return v;
+        }
+      }
+      const ml = ML[ply], ms = MS[ply], ho = p > 0 ? 0 : 42, a0 = al, mine = p > 0 ? cA : cB, theirs = p > 0 ? cB : cA;
+      let m = 0;
+      for (let k = 0; k < 7; k++) {
+        const c = ORD[k];
+        if (ht[c] > 5 || (ht[c] < 5 && wins((ht[c] + 1) * 7 + c, -p))) continue;
+        const i = ht[c] * 7 + c, ws = BY[i];
+        let th = 0;
+        for (let q = 0; q < ws.length; q++) if (mine[ws[q]] === 2 && !theirs[ws[q]]) th++;
+        ml[m] = c; ms[m++] = c === tc ? 1 << 30 : th * (1 << 24) + hist[ho + i] * 8 + 7 - k;
+      }
+      if (!m) return -(MATE - ply - 2);
+      let best = -32000, bc = ml[0];
+      for (let x = 0; x < m; x++) {
+        let bi = x;
+        for (let y = x + 1; y < m; y++) if (ms[y] > ms[bi]) bi = y;
+        const c = ml[bi];
+        ml[bi] = ml[x]; ms[bi] = ms[x]; ml[x] = c;
+        put(c, p);
+        const v = -ab(d - 1, -be, -al, -p, ply + 1);
+        take(c, p);
+        if (stop) return 0;
+        if (v > best) {
+          best = v; bc = c;
+          if (v > al) {
+            al = v;
+            if (v >= be) { const hi = ho + ht[c] * 7 + c; if ((hist[hi] += d * d) > 2e6) for (let q = 0; q < 84; q++) hist[q] >>= 1; break; }
+          }
+        }
+      }
+      const f = best >= be ? 1 : best > a0 ? 0 : 2, sure = (best > MATE - 100 && f !== 2) || (best < -MATE + 100 && f !== 1);
+      if (TK[ti] !== hB || TD[ti] <= d || sure) {
+        TK[ti] = hB; TD[ti] = sure ? 127 : d; TC[ti] = bc; TF[ti] = f;
+        TV[ti] = best > MATE - 100 ? best + ply : best < -MATE + 100 ? best - ply : best;
+      }
+      return best;
+    }
+    function best(cells, me, ms, maxNodes) {
+      b.fill(0); ht.fill(0); cA.fill(0); cB.fill(0); hist.fill(0); n = 0; hA = 0; hB = 0;
+      for (let r = 0; r < 6; r++) for (let c = 0; c < 7; c++) { const v = cells[r * 7 + c]; if (v) put(c, v); }
+      if (!n) return { c: 3, d: 0, v: 0, nodes: 0 };
+      t0 = now(); tl = ms; cap = maxNodes || 1e9; stop = false; nodes = 0;
+      const cols = ORD.filter(c => ht[c] < 6);
+      for (const c of cols) if (wins(ht[c] * 7 + c, me)) return { c, d: 1, v: MATE - 1, nodes: 0 };
+      let bc = cols[0], bv = 0, depth = 0;
+      const max = 42 - n;
+      for (let d = 1; d <= max; d++) {
+        let al = -32000, cur = -1, curV = -32000;
+        for (let k = 0; k < cols.length; k++) {
+          const c = cols[k];
+          put(c, me);
+          const v = -ab(d - 1, -32000, -al, -me, 1);
+          take(c, me);
+          if (stop) break;
+          if (v > curV) { curV = v; cur = c; if (v > al) al = v; }
+        }
+        if (cur >= 0) { bc = cur; bv = curV; }
+        if (stop) break;
+        depth = d;
+        cols.splice(cols.indexOf(cur), 1); cols.unshift(cur);
+        if (curV > MATE - 100 || curV < -MATE + 100) break;
+      }
+      return { c: bc, d: depth, v: bv, nodes };
+    }
+    return { best, MATE };
+  }
   const C4DEPTH = { Easy: 2, Normal: 4, Hard: 7 };
   const C4FACE = (() => {
     let holes = '', rims = '';
@@ -505,7 +660,7 @@ ${p} .cn.on i{background:var(--good);box-shadow:0 0 0 3px rgba(34,176,125,.2)}
     better: 'high',
     format: v => v + (v === 1 ? ' win' : ' wins'),
     width: 660,
-    engine: { c4Best, c4Line },
+    engine: { c4Best, c4Line, c4Core },
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="19" width="48" height="36" rx="6"/><circle cx="38" cy="9.5" r="3.5" fill="currentColor"/><circle cx="14" cy="25" r="3.5"/><circle cx="26" cy="25" r="3.5"/><circle cx="38" cy="25" r="3.5"/><circle cx="50" cy="25" r="3.5"/><circle cx="14" cy="37" r="3.5"/><circle cx="26" cy="37" r="3.5" fill="currentColor"/><circle cx="38" cy="37" r="3.5" fill="currentColor" opacity=".3"/><circle cx="50" cy="37" r="3.5"/><circle cx="14" cy="49" r="3.5" fill="currentColor"/><circle cx="26" cy="49" r="3.5" fill="currentColor" opacity=".3"/><circle cx="38" cy="49" r="3.5" fill="currentColor"/><circle cx="50" cy="49" r="3.5" fill="currentColor" opacity=".3"/></svg>',
     css: duelCss('.gm-connect-four') + `
 .am-gamebox.fs .gm-connect-four.g-root{background:var(--sunk)}
@@ -538,7 +693,25 @@ ${p} .cn.on i{background:var(--good);box-shadow:0 0 0 3px rgba(34,176,125,.2)}
 `,
     mount(root, api) {
       const b = new Int8Array(42), ht = new Int8Array(7), els = new Array(42).fill(null);
-      let n = 0, turn = null, rg = 0, col = 3, aim = false, mv = [];
+      let n = 0, turn = null, rg = 0, col = 3, aim = false, mv = [], worker = null, wurl = '', core = null, job = 0;
+      const pend = new Map();
+      const getWorker = () => {
+        if (worker !== null) return worker;
+        try {
+          wurl = URL.createObjectURL(new Blob(['const E=(' + c4Core.toString() + ')();let P=null,N=0;const pond=()=>{if(!P||N++>60)return;E.best(P.b,P.me,60);setTimeout(pond,0);};onmessage=e=>{const d=e.data;if(d.ponder){P=d;N=0;setTimeout(pond,0);return;}P=null;postMessage({id:d.id,c:E.best(d.b,d.me,d.ms).c});};'], { type: 'text/javascript' }));
+          worker = new Worker(wurl);
+          worker.onmessage = e => { const f = pend.get(e.data.id); pend.delete(e.data.id); if (f) f(e.data.c); };
+          worker.onerror = () => { const w = worker; worker = false; try { w.terminate(); } catch (er) {} const list = [...pend.values()]; pend.clear(); list.forEach(f => f(-1)); };
+        } catch (e) { worker = false; }
+        return worker;
+      };
+      const solve = fn => {
+        const w = getWorker(), cells = Array.from(b);
+        const local = () => { core = core || c4Core(); fn(core.best(cells, 1, 350).c); };
+        if (!w) return local();
+        pend.set(++job, c => { if (c < 0) local(); else fn(c); });
+        w.postMessage({ id: job, b: cells, me: 1, ms: 1300 });
+      };
       const d = duel(root, api, { title: 'Connect Four', glyph: [DOT(''), DOT('y')], round: newRound, remote, list: () => mv.slice(), load: l => { for (const c of l) if (!remote(mv.length, c, true)) break; } });
       const sideOf = p => p === -1 ? 'L' : 'R';
       const wrap = h('div', 'c4wrap', `<div class="c4aim"><div class="c4ghost off"></div></div><div class="board"><div class="discs"></div>${C4FACE}</div>`);
@@ -569,12 +742,16 @@ ${p} .cn.on i{background:var(--good);box-shadow:0 0 0 3px rgba(34,176,125,.2)}
         if (d.ai && p === 1) {
           d.turn('R', 'Thinking…');
           const g = rg, t0 = performance.now();
+          const put = c => api.timeout(() => { if (g === rg) drop(c, 1); }, Math.max(0, 420 + Math.random() * 200 - (performance.now() - t0)));
           api.timeout(() => {
             if (g !== rg) return;
-            const c = c4Best(b, C4DEPTH[d.cfg.diff]);
-            api.timeout(() => { if (g === rg) drop(c, 1); }, Math.max(0, 420 + Math.random() * 200 - (performance.now() - t0)));
+            if (d.cfg.diff === 'Hardest') solve(c => { if (g === rg) put(c); });
+            else put(c4Best(b, C4DEPTH[d.cfg.diff]));
           }, 30);
-        } else d.turn(sideOf(p));
+        } else {
+          d.turn(sideOf(p));
+          if (d.ai && d.cfg.diff === 'Hardest' && worker && n) worker.postMessage({ ponder: 1, b: Array.from(b), me: p });
+        }
       }
       function drop(c, p, rem) {
         if (turn !== p || ht[c] === 6) return;
@@ -633,6 +810,7 @@ ${p} .cn.on i{background:var(--good);box-shadow:0 0 0 3px rgba(34,176,125,.2)}
         e.preventDefault();
       });
       d.start();
+      return { destroy() { rg++; pend.clear(); if (worker) { try { worker.terminate(); } catch (e) {} } if (wurl) URL.revokeObjectURL(wurl); } };
     }
   });
 

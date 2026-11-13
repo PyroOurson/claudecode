@@ -17,7 +17,7 @@ function gpNetWrap(g, net) {
 
 ['load', 'error'].forEach(t => document.addEventListener(t, e => { const m = e.target; if (m && m.tagName === 'IMG') m.classList.add('ld'); }, true));
 const SB_STORE = 'sb-gameplay-auth', SYK = 'gameplay:sync', VIDK = 'gameplay:vid', SAVE_P = 'gameplay:save:';
-const UN_RE = /^[a-z0-9_.]{3,20}$/, GID_RE = /^[a-z0-9][a-z0-9-]{0,39}$/, EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const UN_RE = /^[a-z0-9_.]{3,20}$/, UN_NEW = /^[a-z0-9_.]{4,20}$/, GID_RE = /^[a-z0-9][a-z0-9-]{0,39}$/, EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const sbBase = () => PATH_MODE ? location.origin + '/' : location.origin + location.pathname;
 const sbRedirect = kind => sbBase() + '?gpauth=' + kind;
 const SB_RET = (() => {
@@ -75,7 +75,7 @@ function sbClient() {
   if (SB.p) return SB.p;
   const p = SB.p = sbLib().then(lib => {
     if (!SB.c) {
-      SB.c = lib.createClient(SBN.best(), SUPABASE_ANON_KEY, { global: { fetch: SBN.fetch }, realtime: SBN.WS ? { transport: SBN.WS } : {}, auth: { flowType: 'pkce', detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storageKey: SB_STORE } });
+      SB.c = lib.createClient(SBN.best(), SUPABASE_ANON_KEY, { global: { fetch: SBN.fetch }, realtime: Object.assign({ worker: true, logger: (k, m, d) => { if (DIAG.on && k !== 'push' && k !== 'receive') DIAG.ev('rt', { k: String(k), m: String(m).slice(0, 200), d: d == null ? undefined : String(typeof d === 'object' ? (d.message || d.reason || d.code || d.type || '') : d).slice(0, 160) }); } }, SBN.WS ? { transport: SBN.WS } : {}), auth: { flowType: 'pkce', detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storageKey: SB_STORE } });
       SB.c.auth.onAuthStateChange((ev, s) => setTimeout(() => auSession(ev, s), 0));
     }
     return SB.c;
@@ -85,6 +85,7 @@ function sbClient() {
 }
 async function sbRest(path, o = {}) {
   let tok = null;
+  if (o.auth !== false && !SB.c && SB.opt && !o.keep) { try { await sbClient(); } catch (e) {} }
   if (o.auth !== false && SB.c) {
     if (o.keep) tok = sbTok();
     else { try { const r = await SB.c.auth.getSession(); tok = r && r.data && r.data.session ? r.data.session.access_token : null; } catch (e) { tok = sbTok(); } }
@@ -204,9 +205,37 @@ function syUpBody(uid, ids, loc) {
   });
   return body;
 }
+function syWipe() {
+  try { const ks = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && (k.startsWith(SAVE_P) || k === 'gameplay:profile' || k === 'gameplay:netname')) ks.push(k); } ks.forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  S.best = {}; S.plays = {}; S.time = {}; S.last = {}; S.daily = {}; S.recent = []; S.since = Date.now();
+  save();
+  SY = syNew(); sySave();
+}
+const SYP = {};
+const syPullDue = id => !!(SB.on && SB.user && GID_RE.test(id) && navigator.onLine !== false && (!SY.uid || SY.uid === SB.user.id) && Date.now() - syNum(SYP[id]) > 60000 && Date.now() - syNum(SY.at) > 60000);
+function syPull(id) {
+  if (!syPullDue(id)) return Promise.resolve();
+  const uid = SB.user.id;
+  let live = true;
+  const job = (async () => {
+    const rows = await sbRest('game_saves?select=game_id,data,updated_at&game_id=eq.' + id);
+    if (!live || !SB.user || SB.user.id !== uid || (SY.uid && SY.uid !== uid)) return;
+    SYP[id] = Date.now();
+    const r = rows && rows[0], t = r ? Date.parse(r.updated_at) || 0 : 0, M = SY.saves, m = M[id];
+    if (!t || (m && t <= syNum(m.at) + 1)) return;
+    let loc = null;
+    try { loc = localStorage.getItem(SAVE_P + id); } catch (e) {}
+    if (loc != null && (!m || m.h !== syHash(loc)) && ((m && m.d) || syNum(S.last[id])) >= t && !(m && m.hold)) return;
+    const d = JSON.stringify(r.data);
+    try { localStorage.setItem(SAVE_P + id, d); } catch (e) { return; }
+    M[id] = { h: syHash(d), at: t, d: 0 }; sySave();
+  })().catch(() => {});
+  return Promise.race([job, new Promise(r => setTimeout(() => { live = false; r(); }, 2500))]);
+}
 function sySavesKeep(uid) {
+  if (!SY.at) return;
   const loc = syLocalSaves(), M = SY.saves;
-  const ids = Object.keys(loc).filter(id => { const h = syHash(loc[id]), m = M[id]; return !(m && (m.h === h || m.big === h)); });
+  const ids = Object.keys(loc).filter(id => { const h = syHash(loc[id]), m = M[id]; return !(m && (m.h === h || m.big === h || m.hold)); });
   const body = syUpBody(uid, ids, loc);
   if (!body.length || JSON.stringify(body).length > 50000) return;
   sbRest('game_saves?on_conflict=user_id,game_id', { method: 'POST', body, prefer: 'resolution=merge-duplicates,return=minimal', keep: true }).catch(() => {});
@@ -228,13 +257,14 @@ async function sySaves(uid) {
     const m = M[id], has = id in loc, h = has ? syHash(loc[id]) : '', r = R[id];
     if (has && m && m.big === h) return;
     const dirty = has && (!m || m.h !== h), rnew = !!r && (!m || r > syNum(m.at) + 1);
-    if (dirty && rnew) { const lt = (m && m.d) || syNum(S.last[id]); (lt >= r ? up : down).push(id); }
+    if (dirty && rnew) { const lt = (m && m.d) || syNum(S.last[id]); (m && m.hold ? down : lt >= r ? up : down).push(id); }
     else if (dirty) up.push(id);
     else if (rnew) down.push(id);
     else if (!r && m && m.at && has && !dirty && !(cur && cur.g.id === id)) { try { localStorage.removeItem(SAVE_P + id); } catch (e) {} delete M[id]; }
     else if (!r && !has && m) delete M[id];
   });
   const dl = down.filter(id => !(cur && cur.g.id === id));
+  if (cur && down.indexOf(cur.g.id) >= 0) (M[cur.g.id] || (M[cur.g.id] = { h: '', at: 0, d: 0 })).hold = R[cur.g.id];
   if (dl.length) {
     const rows = await sbRest('game_saves?select=game_id,data,updated_at&game_id=in.(' + dl.join(',') + ')');
     (rows || []).forEach(r => {
@@ -257,6 +287,26 @@ function syRefresh(before) {
   if (openK === 'mstats') renderStats();
   if (openK === 'mprofile') { $('#pcg').textContent = Object.keys(S.plays).filter(id => byId.has(id)).length; $('#pcr').textContent = Object.keys(S.best).filter(id => byId.has(id)).length; }
 }
+function syAdopt() {
+  if (!SB.on || SY.pend || !SY.uid) return false;
+  let o = null;
+  try { o = JSON.parse(localStorage.getItem(SYK) || 'null'); } catch (e) {}
+  if (!o || typeof o !== 'object' || !o.base || typeof o.base !== 'object' || o.uid !== SY.uid || !(syNum(o.at) > syNum(SY.at))) return false;
+  const B = SY.base, nb = {};
+  ['p', 't', 'b'].forEach(k => { nb[k] = o.base[k] && typeof o.base[k] === 'object' ? o.base[k] : {}; });
+  [['p', S.plays], ['t', S.time]].forEach(([k, m]) => {
+    new Set([...Object.keys(m), ...Object.keys(B[k]), ...Object.keys(nb[k])]).forEach(id => {
+      const v = syNum(nb[k][id]) + Math.max(0, syNum(m[id]) - syNum(B[k][id]));
+      if (v > 0) m[id] = v; else delete m[id];
+    });
+  });
+  Object.keys(nb.b).forEach(id => { if (S.best[id] == null || S.best[id] === B.b[id]) S.best[id] = nb.b[id]; });
+  const held = {};
+  Object.keys(SY.saves).forEach(id => { if (SY.saves[id] && SY.saves[id].hold) held[id] = SY.saves[id]; });
+  SY.base = nb; SY.at = syNum(o.at);
+  if (o.saves && typeof o.saves === 'object') SY.saves = Object.assign({}, o.saves, held);
+  return true;
+}
 function syNudge(ms = 4000) { if (!SB.user) return; clearTimeout(SB.t); SB.t = setTimeout(() => sySync(), ms); }
 async function sySync(o = {}) {
   if (!SB.user || !SB.c) return;
@@ -267,7 +317,8 @@ async function sySync(o = {}) {
   const before = JSON.stringify(S.recent);
   try {
     if (cur && !o.keep) ttCommit(false);
-    if (SY.uid !== uid) { if (SY.pend && SY.pend.uid !== uid) syAck(SY.pend); SY.pend = null; SY.uid = uid; SY.saves = {}; SY.at = 0; }
+    syAdopt();
+    if (SY.uid !== uid) { if (SY.uid) syWipe(); const keepM = SY.saves; SY.pend = null; SY.uid = uid; SY.saves = SY.at ? {} : keepM; SY.at = 0; }
     if (!SY.pend) { const rows = syRows(); if (rows.length) SY.pend = { id: syUuid(), uid, rows }; }
     sySave();
     if (o.keep) {
@@ -376,7 +427,7 @@ function auView(v) {
   document.querySelectorAll('#aumodal .au-eye[aria-pressed="true"]').forEach(b => auEye(b, true));
   if (from !== to) {
     if (c.classList.contains('au-morph') || c.querySelector('.au-out')) auSettle();
-    const anim = !!from && motionOK() && openK === 'mauth' && !$('#aumodal').hidden;
+    const anim = !!from && !SB.still && motionOK() && openK === 'mauth' && !$('#aumodal').hidden;
     const h0 = anim ? c.offsetHeight : 0, top = anim ? from.offsetTop : 0;
     c.querySelectorAll('.au-v').forEach(el => { el.hidden = el !== to; });
     if (anim) {
@@ -426,12 +477,15 @@ function auGuest() {
   auDown();
 }
 function auShow() {
+  if (SB.first) SB.first = false; else $('#aumodal').classList.remove('au-first');
   $('#auoff').hidden = SB.on;
   auDown();
   if (SB.on) { sbClient().catch(() => {}); auSettings(); if (gisWanted()) requestAnimationFrame(() => gisPaint()); }
   ['aunote', 'auupnote', 'arnote', 'annote', 'acnote'].forEach(id => auMsg(id, ''));
   document.querySelectorAll('#aumodal .au-err').forEach(e => auFieldErr(e.closest('.fld').querySelector('input'), ''));
+  SB.still = true;
   auView(['newpass', 'reset', 'check', 'wait'].includes(SB.view) ? SB.view : 'main');
+  SB.still = false;
   auBusy(false);
   setTimeout(auFocus, 80);
 }
@@ -567,18 +621,54 @@ function auReqs(inp) {
   box.classList.toggle('idle', !inp.value && !box.classList.contains('tried'));
   [...box.children].forEach((el, i) => { const ok = AU_REQ[i][1](inp.value), was = el.classList.contains('ok'); el.classList.toggle('ok', ok); el.classList.toggle('pop', ok && !was); });
 }
-function auUserCheck() {
-  clearTimeout(SB.ut);
-  const inp = $('#auuser'), un = inp.value.trim();
-  if (!SB.on || !un || !UN_RE.test(un) || /^\.|\.$|\.\./.test(un)) return;
-  SB.ut = setTimeout(async () => {
+const UN_A = ['swift', 'lucky', 'pixel', 'turbo', 'cosmic', 'sneaky', 'mighty', 'frosty', 'sunny', 'rapid', 'clever', 'neon'], UN_B = ['fox', 'otter', 'panda', 'falcon', 'tiger', 'comet', 'ninja', 'wizard', 'rocket', 'koala', 'lynx', 'gamer'];
+const unHue = v => { let h = 7; for (let i = 0; i < v.length; i++) h = (h * 31 + v.charCodeAt(i)) % 360; return h; };
+function unIdeas(seed) {
+  const base = String(seed || '').toLowerCase().split('@')[0].replace(/[^a-z0-9_.]/g, '').replace(/^\.+|\.+$/g, '').replace(/\.\.+/g, '.').slice(0, 12);
+  const r = a => a[Math.floor(Math.random() * a.length)], n = () => String(10 + Math.floor(Math.random() * 90)), out = [];
+  if (base.length >= 3) { out.push(base + n()); out.push((base + '_' + r(UN_B)).slice(0, 20)); }
+  for (let k = 0; out.length < 4 && k < 30; k++) { const v = r(UN_A) + '_' + r(UN_B) + (Math.random() < .5 ? n() : ''); if (out.indexOf(v) < 0 && v.length <= 20) out.push(v); }
+  return out.slice(0, 4);
+}
+function unChips(o, show) {
+  if (!o.sug) return;
+  o.sug.innerHTML = show ? '<span>' + esc(auT('Try')) + '</span>' + unIdeas(o.seed ? o.seed() : o.inp.value).map(x => '<button type="button" class="au-unc" data-un="' + esc(x) + '" translate="no">' + esc(x) + '</button>').join('') : '';
+}
+function unLive(o) {
+  const v = o.inp.value.trim().toLowerCase();
+  if (o.av) { o.av.textContent = (v.replace(/[^a-z0-9]/g, '').charAt(0) || '?').toUpperCase(); o.av.style.setProperty('--h', String(unHue(v))); }
+  if (o.pv) o.pv.textContent = '@' + (v || 'username');
+  if (o.cnt) o.cnt.textContent = v.length + '/20';
+  const set = (k, t) => { o.st.className = 'au-unst' + (k ? ' ' + k : ''); o.st.textContent = t ? auT(t) : ''; o.state = k; };
+  clearTimeout(o.t); o.seq = (o.seq || 0) + 1;
+  if (!v) { set('', ''); unChips(o, !!o.idle); return; }
+  if (v.length < 4) { set('warn', 'At least 4 characters'); return; }
+  if (!UN_NEW.test(v) || /^\.|\.$|\.\./.test(v)) { set('bad', 'Letters, numbers, dots and underscores only'); return; }
+  if (o.cur && o.cur() === v) { set('', ''); return; }
+  if (!SB.on) { set('', ''); return; }
+  set('wait', 'Checking…');
+  const my = o.seq;
+  o.t = setTimeout(async () => {
     try {
-      const free = await sbRest('rpc/username_available', { method: 'POST', body: { p_name: un }, auth: false });
-      if (inp.value.trim() !== un) return;
-      auFieldErr(inp, free ? '' : 'That username is taken or not allowed. Try another one.');
-    } catch (e) {}
+      const free = await sbRest('rpc/username_available', { method: 'POST', body: { p_name: v }, auth: o.auth });
+      if (my !== o.seq || o.inp.value.trim().toLowerCase() !== v) return;
+      set(free ? 'ok' : 'bad', free ? 'Available' : 'Already taken');
+      unChips(o, !free);
+    } catch (e) { if (my === o.seq) set('', ''); }
   }, 350);
 }
+const UN_UP = {}, UN_MO = {};
+function unWire() {
+  Object.assign(UN_UP, { inp: $('#auuser'), st: $('#auunst'), av: $('#auunav'), sug: $('#auuns'), auth: false, seed: () => $('#auupemail').value || $('#auuser').value });
+  Object.assign(UN_MO, { inp: $('#unew'), st: $('#unst'), av: $('#unav'), sug: $('#unsug'), pv: $('#unpv'), cnt: $('#unn0'), idle: true, cur: () => SB.prof && SB.prof.username || '', seed: () => $('#unew').value || (SB.prof && SB.prof.display_name) || (SB.user && SB.user.email) || getProfile().username || '' });
+  [UN_UP, UN_MO].forEach(o => {
+    if (!o.inp || !o.sug) return;
+    o.sug.addEventListener('click', e => { const b = e.target.closest('[data-un]'); if (!b) return; e.preventDefault(); e.stopPropagation(); o.inp.value = b.dataset.un; o.inp.dispatchEvent(new Event('input', { bubbles: true })); if (!auCoarse()) o.inp.focus(); });
+  });
+  UN_MO.inp.addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; auMsg('unerr', ''); unLive(UN_MO); });
+  if (window.MutationObserver) new MutationObserver(() => { if (!$('#unmodal').hidden) unLive(UN_MO); }).observe($('#unmodal'), { attributes: true, attributeFilter: ['hidden'] });
+}
+function auUserCheck() { unLive(UN_UP); }
 async function auLogin() {
   if (!SB.on) return;
   const id = $('#auemail').value.trim(), pw = $('#aupass').value;
@@ -615,7 +705,7 @@ async function auSignup() {
   auMsg('auupnote', '');
   if (!EMAIL_RE.test(id)) return auBad('auupemail', 'Enter a valid email address.');
   if (id.toLowerCase() !== id2.toLowerCase()) return auBad('auupemail2', 'The two email addresses do not match.');
-  if (!UN_RE.test(un) || /^\.|\.$|\.\./.test(un)) return auBad('auuser', 'Choose a username: 3 to 20 lowercase letters, numbers, dots or underscores.');
+  if (!UN_NEW.test(un) || /^\.|\.$|\.\./.test(un)) return auBad('auuser', 'Choose a username: 4 to 20 lowercase letters, numbers, dots or underscores.');
   if (!auPwOk(pw)) { const rb = document.querySelector('.au-reqs[data-for="auuppass"]'); if (rb) { rb.classList.add('tried'); rb.classList.remove('idle'); } return auBad('auuppass', 'Use at least 8 characters with 1 letter and 1 number.'); }
   auBusy(true);
   try {
@@ -764,7 +854,7 @@ async function auDeleteAccount() {
   const b = $('#adelbtn'); b.disabled = true; b.classList.add('is-busy'); auMsg('adelnote', 'Deleting your account…');
   try {
     const r = await sbRest('rpc/delete_my_account', { method: 'POST', body: {} });
-    SY = syNew(); sySave();
+    syWipe();
     try { await SB.c.auth.signOut({ scope: 'local' }); } catch (e) {}
     $('#adelc').value = ''; b.classList.remove('is-busy');
     auMsg('adelnote', '');
@@ -815,15 +905,16 @@ function auChoose() {
   $('#unt').textContent = 'Choose a username'; $('#uncont').textContent = 'Save';
   $('#unmodal').classList.add('un-must');
   const sug = String(getProfile().username || '').toLowerCase().replace(/[^a-z0-9_.]/g, '').slice(0, 20);
-  $('#unew').value = UN_RE.test(sug) ? sug : '';
+  $('#unew').value = UN_NEW.test(sug) ? sug : '';
   $('label[for="unew"]').textContent = 'Username';
-  auMsg('unerr', 'Friends find you by your username: 3 to 20 lowercase letters, numbers, dots or underscores.');
+  auMsg('unerr', 'Friends find you by your username: 4 to 20 lowercase letters, numbers, dots or underscores.');
   $('#unmodal').hidden = false;
   if (!auCoarse()) $('#unew').focus();
 }
 async function auUsername() {
   const raw = unStep === 2 ? unPending : $('#unew').value.trim().toLowerCase();
-  if (!UN_RE.test(raw) || /^\.|\.$|\.\./.test(raw)) { auMsg('unerr', 'Use 3 to 20 lowercase letters, numbers, dots or underscores.', 'bad'); return; }
+  if (!UN_NEW.test(raw) || /^\.|\.$|\.\./.test(raw)) { auMsg('unerr', 'Use 4 to 20 lowercase letters, numbers, dots or underscores.', 'bad'); return; }
+  if (!SB.prof) { auMsg('unerr', 'Your profile is still loading. Try again in a moment.', 'bad'); auProfLater(0); return; }
   const old = SB.prof && SB.prof.username;
   if (raw === old) { auMsg('unerr', 'That is already your username.', 'bad'); return; }
   if (unStep === 1 && old) {
@@ -858,6 +949,17 @@ async function auDisplayName(v) {
   } catch (e) { say('dnnote', 'Could not save. Check your connection and try again.'); }
   finally { b.disabled = false; b.classList.remove('is-busy'); }
 }
+function auProfLater(n) {
+  clearTimeout(SB.pt);
+  if (!SB.user || SB.prof) return;
+  SB.pt = setTimeout(async () => {
+    if (!SB.user || SB.prof) return;
+    const uid = SB.user.id;
+    try { await auLoadProfile(); } catch (e) {}
+    if (!SB.user || SB.user.id !== uid) return;
+    if (SB.prof) { auRender(); if (!SB.prof.username) auChoose(); } else auProfLater(Math.min(n + 1, 5));
+  }, Math.min(60000, 2000 * Math.pow(2, n)));
+}
 async function auSignedIn(ev) {
   try { localStorage.setItem('gameplay:acct', '1'); } catch (e) {}
   const uid = SB.user.id, loud = SB.loud;
@@ -867,12 +969,15 @@ async function auSignedIn(ev) {
   FR.pp = FR.ppRes = null; FR.ppAt = 0; FR.ppErr = ''; FR.ppAll = false;
   auRender();
   if (openK === 'mauth' && SB.view !== 'newpass' && !SB.rec) closeAll();
+  if (SY.uid && SY.uid !== uid) syWipe();
   if (SB.blk && openK !== 'mauth') { SB.blk = 0; route(); }
   try { await auLoadProfile(); } catch (e) {}
+  auProfLater(0);
   auWait(false);
   if (!SB.user || SB.user.id !== uid) return;
   auRender();
   adCheck();
+  diagCheck();
   soStart();
   siteSignedIn();
   if (loud) toast(auT('Logged in as {name}').replace('{name}', SB.prof && SB.prof.username ? '@' + SB.prof.username : SB.user.email || 'you'));
@@ -880,7 +985,8 @@ async function auSignedIn(ev) {
   if (SB.prof && !SB.prof.username) setTimeout(auChoose, loud ? 400 : 0);
 }
 function auSignedOut() {
-  SB.prof = null; SB.fail = 0;
+  SB.prof = null; SB.fail = 0; clearTimeout(SB.pt);
+  try { if (DIAG.on) DIAG.disarm(); } catch (e) {}
   FR.list = FR.req = FR.res = null; FR.rq = '';
   clearTimeout(SB.t);
   if (SB.choosing && !$('#unmodal').hidden) unClose();
@@ -895,13 +1001,16 @@ function auSignedOut() {
 }
 function auSession(ev, s) {
   SB.session = s || null;
-  const u = s && s.user || null, was = SB.user;
-  if (u && was && u.id === was.id) { SB.user = u; if (ev === 'USER_UPDATED') auRender(); return; }
+  const u = s && s.user || null, was = SB.user, opt = !!SB.opt;
+  SB.opt = false;
+  if (u && was && u.id === was.id && !opt) { SB.user = u; if (ev === 'USER_UPDATED') auRender(); return; }
   SB.chk = true;
   if (!u) { auWait(false); if (openK === 'mauth' && SB.view === 'wait' && !SB.rt) auView('main'); }
   if (!u && !was) { auRender(); return; }
   SB.user = u;
-  if (u) auSignedIn(ev); else auSignedOut();
+  if (u) auSignedIn(ev);
+  else { auSignedOut(); if (opt && !window.__gpSbDown && navigator.onLine !== false) toast(auT('Your session ended. Log in again to keep playing.')); }
+  auBootDone();
 }
 async function auReturn() {
   const r = SB_RET;
@@ -931,7 +1040,16 @@ function auEye(b, off) {
 }
 function lgOpen(k) {
   const d = LEGAL[k];
-  if (!d) return;
+  if (!d) {
+    if (!LEGAL_T[k]) return;
+    const s0 = $('#lgsheet');
+    $('#lgt').textContent = LEGAL_T[k];
+    $('#lgdoc').innerHTML = `<h1>${esc(LEGAL_T[k])}</h1><p class="upd">${esc(auT('Loading…'))}</p>` + '<i class="sk sk-blk"></i><i class="sk sk-blk2"></i>';
+    s0.hidden = false; s0.scrollTop = 0; s0.dataset.k = k;
+    $('#lgback').focus({ preventScroll: true });
+    legalNeed(k).then(() => { if (!s0.hidden && s0.dataset.k === k) lgOpen(k); }, () => { if (!s0.hidden && s0.dataset.k === k) $('#lgdoc').innerHTML = `<h1>${esc(LEGAL_T[k])}</h1><p class="upd">${esc(auT('Could not load this page. Check your connection and try again.'))}</p>`; });
+    return;
+  }
   $('#lgt').textContent = d[0];
   $('#lgdoc').innerHTML = `<h1>${d[0]}</h1>${d[1]}`;
   const s = $('#lgsheet');
@@ -1220,7 +1338,7 @@ function auBoot() {
   $('#accode').addEventListener('input', e => { const v = e.target.value, n = v.replace(/\D/g, '').slice(0, 6); if (n !== v) e.target.value = n; if (n.length === 6 && !$('#aumodal').classList.contains('au-busy')) auVerify(); });
   $('#auforgot').addEventListener('click', () => { const v = $('#auemail').value.trim(); if (v.includes('@')) $('#aremail').value = v; auMsg('arnote', ''); auView('reset'); setTimeout(auFocus, 120); });
   $('#auuser').addEventListener('input', e => { const v = e.target.value, n = v.toLowerCase().replace(/[^a-z0-9_.]/g, ''); if (n !== v) e.target.value = n; auUserCheck(); });
-  $('#auuser').addEventListener('blur', e => { const v = e.target.value.trim(); if (v && (!UN_RE.test(v) || /^\.|\.$|\.\./.test(v))) auFieldErr(e.target, 'Use 3 to 20 lowercase letters, numbers, dots or underscores.'); });
+  $('#auuser').addEventListener('blur', e => { const v = e.target.value.trim(); if (v && (!UN_NEW.test(v) || /^\.|\.$|\.\./.test(v))) auFieldErr(e.target, 'Use 4 to 20 lowercase letters, numbers, dots or underscores.'); });
   $('#auupemail2').addEventListener('blur', e => { const a = $('#auupemail').value.trim(), b = e.target.value.trim(); if (a && b && a.toLowerCase() !== b.toLowerCase()) auFieldErr(e.target, 'The two email addresses do not match.'); });
   am.querySelectorAll('input').forEach(i => i.addEventListener('input', () => { const f = i.closest('.fld'); if (f) { f.classList.remove('au-shake'); if (i.id !== 'auuser') auFieldErr(i, ''); else if (f.querySelector('.au-err')) auFieldErr(i, ''); } if (i.closest('.au-pw')) auReqs(i); }));
   fm.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'fname') { e.preventDefault(); e.stopPropagation(); clearTimeout(FR.t); frSearch(); } }, true);
@@ -1234,6 +1352,7 @@ function auBoot() {
     if (v) { if (v.dataset.auv === 'main') SB.mode = 'in'; auView(v.dataset.auv); auMsg(auNote(), ''); setTimeout(auFocus, 120); return; }
   });
   auGoogleUi();
+  unWire();
   if (SB.on) {
     Ameplay.analytics.sink = sbSink;
     [[$('#delc').closest('.scard').querySelector('p'), ' You will also be signed out on this device.', 'Type DELETE'], [$('#dl').closest('.srw').querySelector('small'), ' Includes your account data.'], [$('#rr').closest('.srw').querySelector('small'), ' Your account records are cleared too.']].forEach(([el, t, before]) => { if (!el) return; const sp = document.createElement('span'); sp.dataset.au = 'in'; sp.hidden = true; sp.textContent = t; const n = before && [...el.childNodes].find(x => x.nodeType === 3 && x.nodeValue.includes(before)); if (n) { const i = n.nodeValue.indexOf(before); const rest = n.splitText(i); el.insertBefore(sp, rest); sp.textContent = t.trim() + ' '; } else el.append(sp); });
@@ -1250,16 +1369,34 @@ function auBoot() {
     addEventListener('online', () => { if (SB.user) sySync(); });
     document.addEventListener('visibilitychange', () => { if (!SB.user) return; if (document.visibilityState === 'hidden') sySync({ keep: true }); else if (Date.now() - syNum(SY.at) > 180000) sySync(); });
     addEventListener('pagehide', () => { if (SB.user) sySync({ keep: true }); });
+    addEventListener('storage', e => {
+      if (e.key === SYK && SB.user && !SB.syncing) { const before = JSON.stringify(S.recent); if (syAdopt()) syRefresh(before); }
+      if (e.key === KEY && e.newValue && e.oldValue) {
+        let n = null, old = null;
+        try { n = JSON.parse(e.newValue); old = JSON.parse(e.oldValue); } catch (x) { return; }
+        if (!n || !old || typeof n !== 'object' || typeof old !== 'object') return;
+        if (n.prefs && typeof n.prefs === 'object' && JSON.stringify(n.prefs) !== JSON.stringify(old.prefs || {})) { S.prefs = n.prefs; try { applyTheme(); } catch (x) {} }
+        if (typeof n.muted === 'boolean' && n.muted !== !!old.muted && n.muted !== !!S.muted) { try { setMuted(n.muted); } catch (x) {} }
+      }
+    });
     setInterval(() => { if (SB.user && cur && document.visibilityState !== 'hidden') sySync(); }, 120000);
     if (SB_RET && SB_RET.code) SB.rt = true;
     if (!sbHasSession() && !SB.rt) SB.chk = true;
     if (!sbHasSession() && !SB_RET) { let had = false; try { had = localStorage.getItem('gameplay:acct') === '1'; } catch (e) {} if (!had) SB.mode = 'up'; }
-    if (SB_RET || sbHasSession()) sbClient().then(() => auReturn()).catch(() => { auWait(false); SB.rt = false; SB.chk = true; if (openK === 'mauth') auOpen('main', 'Sign-in could not load. Check your connection and reload the page.', 'bad', 'in'); else toast('Sign-in could not load. Check your connection and reload the page.'); });
+    if (SB_RET || sbHasSession()) sbClient().then(() => auReturn()).catch(() => { auWait(false); SB.rt = false; SB.chk = true; if (SB.opt) { SB.opt = false; SB.user = null; SB.session = null; auRender(); auGate(); } auBootDone(); if (openK === 'mauth') auOpen('main', 'Sign-in could not load. Check your connection and reload the page.', 'bad', 'in'); else toast('Sign-in could not load. Check your connection and reload the page.'); });
     auSettings();
   }
   try { localStorage.removeItem('gameplay:guest'); sessionStorage.removeItem('gameplay:guest'); } catch (e) {}
   auRender();
+  const pre = document.documentElement.getAttribute('data-boot');
+  if (pre === 'up' || pre === 'login') { SB.first = true; am.classList.add('au-first'); }
   auGate();
+  if (pre === 'check' && SB.opt) { am.classList.add('au-first'); SB.first = true; SB.bt = setTimeout(auBootDone, 8000); }
+  else document.documentElement.removeAttribute('data-boot');
+}
+function auBootDone() {
+  clearTimeout(SB.bt);
+  if (document.documentElement.getAttribute('data-boot')) document.documentElement.removeAttribute('data-boot');
 }
 Ameplay.account = {
   get enabled() { return SB.on; },

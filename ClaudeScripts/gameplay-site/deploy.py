@@ -36,7 +36,7 @@ CONFIG = {
                     {"key": "Referrer-Policy", "value": "strict-origin-when-cross-origin"},
                     {"key": "X-Frame-Options", "value": "SAMEORIGIN"},
                     {"key": "Content-Security-Policy", "value": "frame-ancestors 'self'; base-uri 'self'; object-src 'none'"},
-                    {"key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), bluetooth=()"},
+                    {"key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=()"},
                 ],
             },
             {
@@ -164,7 +164,9 @@ def run(args):
 
 
 def main():
-    ref = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_REF
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    preview = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--preview=")), "preview" if "--preview" in sys.argv[1:] else None)
+    ref = args[0] if args else DEFAULT_REF
     sha = resolve(ref)
     rev = sha or ref
     bust = sha is None
@@ -205,8 +207,11 @@ def main():
     made = run(["firebase", "hosting:sites:create", SITE, "--project", PROJECT])
     if made.returncode != 0 and "already exists" not in made.stdout.lower():
         print(made.stdout.strip().splitlines()[-1] if made.stdout.strip() else "Could not create the site")
+    command = ["firebase", "hosting:channel:deploy", preview, "--expires", "7d", "--project", PROJECT] if preview else ["firebase", "deploy", "--only", "hosting", "--project", PROJECT]
+    if preview:
+        print("Preview deploy: this does not change the live site. The preview address is printed below and expires after 7 days.")
     for attempt in range(1, 5):
-        deployed = run(["firebase", "deploy", "--only", "hosting", "--project", PROJECT])
+        deployed = run(command)
         print(deployed.stdout)
         if deployed.returncode == 0 or "login" in deployed.stdout.lower() or attempt == 4:
             break
@@ -215,7 +220,10 @@ def main():
     if deployed.returncode != 0:
         print("Deploy failed. If it asked you to log in, run: firebase login --no-localhost  and then run this command again.")
         sys.exit(deployed.returncode)
-    print("Live at https://%s.web.app" % SITE)
+    if preview:
+        print("Preview ready (see the address above). The live site was not changed.")
+    else:
+        print("Live at https://%s.web.app" % SITE)
 
 
 if __name__ == "__main__":

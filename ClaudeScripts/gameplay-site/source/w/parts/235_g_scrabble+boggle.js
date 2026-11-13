@@ -517,9 +517,16 @@ function scBestKeep(rack) {
   return { v: best, out };
 }
 
-const SC_LEVELS = ['Easy', 'Medium', 'Hard', 'Expert'];
+const SC_LEVELS = ['Easy', 'Medium', 'Hard', 'Hardest'];
 
 function scAi(s, p, level, R) {
+  const g = scAiGen(s, p, level, R);
+  let r;
+  do { r = g.next(); } while (!r.done);
+  return r.value;
+}
+
+function* scAiGen(s, p, level, R) {
   R = R || Math.random;
   const E = loadDict(), rack = s.racks[p];
   const t0 = performance.now();
@@ -558,26 +565,27 @@ function scAi(s, p, level, R) {
   if (!cands.includes(topScore)) cands.push(topScore);
   const opp = scUnseen(s, p);
   const samples = opp.length <= 7 ? 1 : moves.length > 600 ? 4 : 6;
-  let bestEq = -1e9;
-  for (const m of cands) {
-    let opb = 0;
-    if (opp.length && performance.now() - t0 < 2500) {
-      const bd2 = s.bd.slice(), bl2 = s.bl.slice();
-      for (const t of m.tiles) { bd2[t.r * 15 + t.c] = t.l; bl2[t.r * 15 + t.c] = t.b; }
-      for (let k = 0; k < samples; k++) {
-        const pool = opp.slice(), rk = [];
-        for (let j = 0; j < 7 && pool.length; j++) rk.push(pool.splice(Math.floor(R() * pool.length), 1)[0]);
-        if (opp.length <= 7 && s.bag.length === 0) { rk.length = 0; rk.push(...opp); }
-        const rep = scGen(E, bd2, bl2, rk);
-        let mx = 0;
-        for (const x of rep) if (x.score > mx) mx = x.score;
-        opb += mx;
-      }
-      opb /= samples;
-    }
-    const eq = m.eq - opb * .75;
-    if (eq > bestEq) { bestEq = eq; best = m; }
+  const racks = [], tot = cands.map(() => 0);
+  for (let k = 0; k < samples; k++) {
+    const pool = opp.slice(), rk = [];
+    for (let j = 0; j < 7 && pool.length; j++) rk.push(pool.splice(Math.floor(R() * pool.length), 1)[0]);
+    racks.push(opp.length <= 7 && s.bag.length === 0 ? opp.slice() : rk);
   }
+  let done = 0;
+  if (opp.length) for (let k = 0; k < samples && (!k || performance.now() - t0 < 1200); k++) {
+    for (let i = 0; i < cands.length; i++) {
+      const bd2 = s.bd.slice(), bl2 = s.bl.slice();
+      for (const t of cands[i].tiles) { bd2[t.r * 15 + t.c] = t.l; bl2[t.r * 15 + t.c] = t.b; }
+      const rep = scGen(E, bd2, bl2, racks[k]);
+      let mx = 0;
+      for (const x of rep) if (x.score > mx) mx = x.score;
+      tot[i] += mx;
+      yield;
+    }
+    done++;
+  }
+  let bestEq = -1e9;
+  cands.forEach((m, i) => { const eq = m.eq - (done ? tot[i] / done : 0) * .4; if (eq > bestEq) { bestEq = eq; best = m; } });
   return toAct(best);
 }
 
@@ -965,9 +973,22 @@ function scMount(root, api) {
       M.think = p; drawStatus();
       later(650 + Math.random() * 700, () => {
         if (e.s.turn !== p || e.s.over || e.s.fin || (e.s.moves + '/' + e.s.log.length) !== mv) return;
-        const a = scAi(e.s, p, M.lv[p]);
-        M.think = -1;
-        exec(p, a.type === 'play' ? { k: 'play', tiles: a.tiles } : a.type === 'exch' ? { k: 'exch', letters: a.letters } : { k: 'pass' });
+        const job = scAiGen(e.s, p, M.lv[p]), tk = M.tok;
+        const fresh = () => tk === M.tok && e.s.turn === p && !e.s.over && !e.s.fin && (e.s.moves + '/' + e.s.log.length) === mv;
+        const step = () => {
+          if (!fresh()) return;
+          const t1 = performance.now();
+          let r;
+          do { r = job.next(); } while (!r.done && performance.now() - t1 < 14);
+          if (!r.done) return api.timeout(step, 0);
+          const a = r.value;
+          later(0, () => {
+            if (!fresh()) return;
+            M.think = -1;
+            exec(p, a.type === 'play' ? { k: 'play', tiles: a.tiles } : a.type === 'exch' ? { k: 'exch', letters: a.letters } : { k: 'pass' });
+          });
+        };
+        step();
       });
     }
   }
@@ -2531,7 +2552,7 @@ function bgCover() {
 }
 
 Ameplay.register({
-  id: 'scrabble',
+  id: 'scrabble', engine: { scGame, scAi },
   title: 'Scrabble',
   category: 'Board',
   tint: '#1b5c4b',

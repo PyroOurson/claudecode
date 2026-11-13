@@ -43,10 +43,30 @@
   }
 
   const COARSE = matchMedia('(pointer: coarse)').matches;
-  function fitPR(api, v) {
-    if (!COARSE) return;
-    const fit = () => { const cw = v.canvas.clientWidth; if (cw && !document.fullscreenElement) v.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1) * cw / v.w); };
-    fit(); api.on(window, 'resize', fit);
+  function fitPR(api, v, hook) {
+    const r = v.renderer, c = v.canvas, Q = [1, 0.75, 0.55], sz = new v.THREE.Vector2();
+    let lvl = 0, cw = 0, avg = 0.016, t = -2, wait = 8, chk = 0, lf = -1, sf = 0, up = 0;
+    const apply = () => {
+      const d = Math.min(2, window.devicePixelRatio || 1), B = Math.max(2.4e6, (screen.width || 1920) * (screen.height || 1080) * d * d * 1.05);
+      const lw = r.getSize(sz).x || v.w, pr = Math.max(0.5, Math.min(4, d * cw / lw, Math.sqrt(B / (lw * (sz.y || v.h))))) * Q[lvl];
+      if (Math.abs(r.getPixelRatio() - pr) > 0.01) r.setPixelRatio(pr);
+      r.shadowMap.autoUpdate = lvl < 2;
+    };
+    const size = () => { const w = c.getBoundingClientRect().width; if (w && Math.abs(w - cw) > Math.max(2, cw * 0.02)) { cw = w; apply(); } };
+    const set = n => { lvl = n; t = 0; apply(); if (hook) hook(lvl); };
+    r.forceContextLoss = () => {};
+    size(); api.on(window, 'resize', size);
+    api.loop(dt => {
+      const f = r.info.render.frame;
+      if (f === lf || !(dt > 0)) return;
+      lf = f;
+      if (lvl > 1 && (sf ^= 1)) r.shadowMap.needsUpdate = true;
+      avg += (dt - avg) * Math.min(1, dt * 1.5); t += dt;
+      if (performance.now() - chk > 500) { chk = performance.now(); size(); }
+      if (t < 1.5) return;
+      if (avg > 0.021 && lvl < Q.length - 1) { if (up && t < 6) wait = Math.min(64, wait * 2); up = 0; set(lvl + 1); }
+      else if (avg < 0.0175 && lvl && t > wait) { up = 1; set(lvl - 1); }
+    });
   }
 
   const STAGE_CSS = id => `
@@ -962,7 +982,8 @@
     const bests = saved && Array.isArray(saved.lv) ? saved.lv.slice(0, 6) : [];
     const b = { p: [0, 0, 0], v: [0, 0, 0], ground: null, air: 1, land: 0, bump: 0 };
     let state = 'idle', lvl = 0, course = null, cGroup = null, cpMarks = [], cpIdx = -1, goalGrp = null, flag = null;
-    let ct = 0, T = 0, lvTime = 0, total = 0, falls = 0, started = false, clockTxt = '', jumpBuf = 0, bumpCd = 0;
+    let ct = 0, T = 0, lvTime = 0, total = 0, falls = 0, started = false, clockTxt = '', jumpBuf = 0, bumpCd = 0, acc = 0;
+    const HSTEP = 1 / 120, pp = [0, 0, 0], rp = [0, 0, 0];
     let camYaw = 0, yawT = 0, lastGroundY = 0, snap = true, stickId = null, sx0 = 0, sy0 = 0, stX = 0, stY = 0;
     const camPos = new THREE.Vector3(), look = new THREE.Vector3(), q = new THREE.Quaternion(), axis = new THREE.Vector3();
 
@@ -1179,12 +1200,9 @@
 
     api.loop(dt => {
       T += dt;
-      ct += dt; MP.update(course, ct);
-      for (const o of course.cols) {
-        if (o.kind === 'mover') o.mesh.position.set(o.c[0], o.c[1], o.c[2]);
-        else if (o.kind === 'bar') { o.mesh.position.set(o.c[0], o.c[1], o.c[2]); o.mesh.rotation.y = o.yaw; }
-      }
-      if (state === 'play' || state === 'done') {
+      const sim = state === 'play' || state === 'done';
+      if (!sim) { ct += dt; MP.update(course, ct); acc = 0; }
+      if (sim) {
         let ix = 0, iy = 0;
         if (state === 'play') {
           ix = (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0);
@@ -1196,8 +1214,20 @@
           if (jumpBuf > 0) { jumpBuf -= dt; if (b.air < .12) doJump(); }
         } else { const f = Math.exp(-6 * dt); b.v[0] *= f; b.v[2] *= f; }
         const sy = Math.sin(camYaw), cy = Math.cos(camYaw);
-        const ox = b.p[0], oz = b.p[2], g0 = b.ground, carryX = g0 && g0.kind === 'mover' ? g0.dp[0] : 0, carryZ = g0 && g0.kind === 'mover' ? g0.dp[2] : 0;
-        MP.step(b, course.cols, cy * ix - sy * iy, -sy * ix - cy * iy, dt);
+        const ox = b.p[0], oz = b.p[2], ax = cy * ix - sy * iy, az = -sy * ix - cy * iy;
+        let carryX = 0, carryZ = 0, land = 0, bump = 0;
+        if (Math.abs(b.p[0] - pp[0]) + Math.abs(b.p[1] - pp[1]) + Math.abs(b.p[2] - pp[2]) > 3) { pp[0] = b.p[0]; pp[1] = b.p[1]; pp[2] = b.p[2]; }
+        acc = Math.min(acc + dt, HSTEP * 8);
+        while (acc >= HSTEP) {
+          acc -= HSTEP; ct += HSTEP; MP.update(course, ct);
+          const g0 = b.ground;
+          if (g0 && g0.kind === 'mover') { carryX += g0.dp[0]; carryZ += g0.dp[2]; }
+          pp[0] = b.p[0]; pp[1] = b.p[1]; pp[2] = b.p[2];
+          MP.step(b, course.cols, ax, az, HSTEP);
+          if (b.land > land) land = b.land;
+          if (b.bump > bump) bump = b.bump;
+        }
+        b.land = land; b.bump = bump;
         const dx = b.p[0] - ox - carryX, dz = b.p[2] - oz - carryZ, d = Math.hypot(dx, dz);
         if (d > 1e-5) { axis.set(dz / d, 0, -dx / d); q.setFromAxisAngle(axis, d / MP.R); ball.quaternion.premultiply(q); }
         if (b.land > 6.5) { puff(9, 2); api.sfx('hit'); }
@@ -1221,18 +1251,23 @@
           else if (b.p[1] < course.minY - 9) respawn();
         }
       }
+      for (const o of course.cols) {
+        if (o.kind === 'mover') o.mesh.position.set(o.c[0], o.c[1], o.c[2]);
+        else if (o.kind === 'bar') { o.mesh.position.set(o.c[0], o.c[1], o.c[2]); o.mesh.rotation.y = o.yaw; }
+      }
+      { const a = sim ? acc / HSTEP : 1; for (let k = 0; k < 3; k++) rp[k] = sim ? pp[k] + (b.p[k] - pp[k]) * a : b.p[k]; }
       if (state === 'idle') yawT = course.start.cam + Math.sin(T * .3) * .7;
       camYaw += angDiff(yawT, camYaw) * (1 - Math.exp(-(state === 'idle' ? 6 : 3.2) * dt));
-      const fxw = -Math.sin(camYaw), fzw = -Math.cos(camYaw), py = Math.max(b.p[1], lastGroundY - 2.5);
-      const tx = b.p[0] - fxw * 7.4, ty = py + 3.8, tz = b.p[2] - fzw * 7.4;
-      if (snap) { camPos.set(tx, ty, tz); look.set(b.p[0] + fxw * 2.4, py + .4, b.p[2] + fzw * 2.4); snap = false; }
+      const fxw = -Math.sin(camYaw), fzw = -Math.cos(camYaw), py = Math.max(rp[1], lastGroundY - 2.5);
+      const tx = rp[0] - fxw * 7.4, ty = py + 3.8, tz = rp[2] - fzw * 7.4;
+      if (snap) { camPos.set(tx, ty, tz); look.set(rp[0] + fxw * 2.4, py + .4, rp[2] + fzw * 2.4); snap = false; }
       camPos.x = damp(camPos.x, tx, 7, dt); camPos.y = damp(camPos.y, ty, 4.5, dt); camPos.z = damp(camPos.z, tz, 7, dt);
-      look.x = damp(look.x, b.p[0] + fxw * 2.4, 10, dt); look.y = damp(look.y, py + .4, 8, dt); look.z = damp(look.z, b.p[2] + fzw * 2.4, 10, dt);
+      look.x = damp(look.x, rp[0] + fxw * 2.4, 10, dt); look.y = damp(look.y, py + .4, 8, dt); look.z = damp(look.z, rp[2] + fzw * 2.4, 10, dt);
       cam.position.copy(camPos); cam.lookAt(look);
       sky.mesh.position.copy(camPos);
-      ball.position.set(b.p[0], b.p[1], b.p[2]);
-      sun.position.set(b.p[0] - 7, b.p[1] + 15, b.p[2] + 6);
-      sun.target.position.set(b.p[0], b.p[1], b.p[2]);
+      ball.position.set(rp[0], rp[1], rp[2]);
+      sun.position.set(rp[0] - 7, rp[1] + 15, rp[2] + 6);
+      sun.target.position.set(rp[0], rp[1], rp[2]);
 
       const pos = flagGeo.attributes.position;
       for (let i = 0; i < pos.count; i++) { const x = flagBase[i * 3]; pos.setZ(i, Math.sin(x * 4 - T * 7) * .13 * x); }

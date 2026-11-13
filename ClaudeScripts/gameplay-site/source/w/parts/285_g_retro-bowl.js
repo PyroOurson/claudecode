@@ -210,8 +210,8 @@
   }
 
   const DEF_SET = { ql: 150, snd: true, diff: 1, ring: true, vol: 5 };
-  const DIFF_NAMES = ['Rookie', 'Pro', 'All-Pro'];
-  const DIFF_ADJ = [-5, 0, 5];
+  const DIFF_NAMES = ['Rookie', 'Pro', 'All-Pro', 'Hardest'];
+  const DIFF_ADJ = [-5, 0, 5, 0];
   const QLENS = [[90, '1:30'], [150, '2:30'], [240, '4:00']];
   const FAC = [
     ['train', 'Training Complex', 'Players progress faster in the offseason'],
@@ -694,7 +694,7 @@
     return e;
   }
 
-  const THROW_ERR = [0.78, 1, 1.25];
+  const THROW_ERR = [0.78, 1, 1.25, 1];
 
   function setupPlay(call) {
     const los = 10 + M.yl, boost = (F ? (F.fac.off - 1) * 1.6 : 0), dr = M.opp.def + (DIFF_ADJ[SET.diff] || 0) * 0.8, dd = (M.oppDefStr != null ? M.oppDefStr : dr);
@@ -758,7 +758,14 @@
     return P;
   }
 
+  const HX_K = ['man', 'zone', 'blitz'];
   function pickScheme() {
+    if (SET.diff === 3) {
+      const h = M.hx || (M.hx = { man: [0, 0], zone: [0, 0], blitz: [0, 0] });
+      const w = HX_K.map(k => Math.exp(-((h[k][0] + 14) / (h[k][1] + 2)) / 3));
+      if (M.togo >= 8) { w[1] *= 1.35; w[2] *= 0.85; } else if (M.togo <= 3) { w[0] *= 1.25; w[2] *= 1.25; }
+      return wsel(HX_K, w);
+    }
     const bl = 0.2 + SET.diff * 0.05;
     return wsel(['man', 'zone', 'blitz'], [0.4, 0.4 - SET.diff * 0.02, bl]);
   }
@@ -995,7 +1002,7 @@
     offs.sort((p, q) => p.k - q.k); defs.sort((p, q) => p.k - q.k);
     const oc = offs[0], dc = defs[0];
     let outcome = 'inc';
-    const dm = [0.9, 1, 1.12][SET.diff];
+    const dm = [0.9, 1, 1.12, 1][SET.diff];
     const deepPen = 1 - clamp((Math.hypot(a.tx - a.sx, a.ty - a.sy) - 20) / 55, 0, 0.5);
     if (oc && !dc) {
       const hp = 0.5 + oc.e.hnd / 100 * 0.47;
@@ -1039,6 +1046,7 @@
   function endPlay(res) {
     if (P.phase === 'over') return;
     P.phase = 'over'; P.res = res; P.deadT = 0;
+    if (M && M.hx && M.hx[P.scheme] && (P.type === 'pass' || P.type === 'run' || P.type === 'qbrun')) { const h = M.hx[P.scheme]; h[0] += res.tov || res.kind === 'int' ? -6 : res.td ? 14 : clamp(res.yds || 0, -6, 30); h[1]++; }
     P.carrier = P.carrier;
     if (res.td) { fx.flash = 1; snd('td'); confetti(); }
   }
@@ -1114,7 +1122,7 @@
   function liveTick(dt) {
     const R = P.R, q = P.qb;
     const ph = P.phase;
-    if (ph === 'over') { P.deadT += dt; if (P.res && P.res.kind === 'inc') { P.ball.x += P.ball.vx * dt; P.ball.y += P.ball.vy * dt; P.ball.vx *= 0.9; P.ball.vy *= 0.9; } P.es.forEach(e => { if (!e.down) { accelTo(e, 0, 0, dt, 5); integrate(e, dt); } }); return; }
+    if (ph === 'over') { P.deadT += dt; if (P.res && P.res.kind === 'inc') { P.ball.x += P.ball.vx * dt; P.ball.y += P.ball.vy * dt; const k = Math.pow(0.9, dt * 60); P.ball.vx *= k; P.ball.vy *= k; } P.es.forEach(e => { if (!e.down) { accelTo(e, 0, 0, dt, 5); integrate(e, dt); } }); return; }
     const pass = P.type === 'pass' || P.type === 'two';
     if (P.ballT > 0 && P.phase === 'snap') {
       P.ballT -= dt;
@@ -1172,7 +1180,7 @@
     if (P.phase === 'hold') holdCheck(dt);
     if (P.phase === 'run') runCheck(dt);
     if (P.phase === 'ret') retCheck(dt);
-    if (P.phase === 'dead') { P.ball.x += P.ball.vx * dt; P.ball.y += P.ball.vy * dt; P.ball.vx *= 0.92; P.ball.vy *= 0.92; P.deadT += dt; }
+    if (P.phase === 'dead') { P.ball.x += P.ball.vx * dt; P.ball.y += P.ball.vy * dt; const k = Math.pow(0.92, dt * 60); P.ball.vx *= k; P.ball.vy *= k; P.deadT += dt; }
     P.es.forEach(e => { e.y = clamp(e.y, -3, FW + 3); e.x = clamp(e.x, 0.5, FL - 0.5); });
   }
 
@@ -1237,11 +1245,11 @@
     if (c.jk > 0) c.jk -= dt;
     let spdMul = c.slow > 0 ? 0.55 : 1;
     if (c.diving) {
-      c.dv -= dt; c.vy *= 0.94; c.vx *= 0.975;
+      c.dv -= dt; c.vy *= Math.pow(0.94, dt * 60); c.vx *= Math.pow(0.975, dt * 60);
       if (c.dv <= 0) { c.diving = false; c.st = 'down'; c.down = true; endTackle(c, 'dive'); }
       return;
     }
-    if (c.jk > 0) { c.vx = lerp(c.vx, c.jx * c.spd * 1.1 + c.spd * 0.35, 0.08); c.vy = lerp(c.vy, c.jy * c.spd * 1.1, 0.08); return; }
+    if (c.jk > 0) { const k = 1 - Math.pow(0.92, dt * 60); c.vx = lerp(c.vx, c.jx * c.spd * 1.1 + c.spd * 0.35, k); c.vy = lerp(c.vy, c.jy * c.spd * 1.1, k); return; }
     const inpT = carrierInput(c, dt);
     let tx, ty, mul = 0.97;
     if (inpT) { tx = inpT.x; ty = inpT.y; mul = 1; c.auto = null; }
@@ -1288,6 +1296,13 @@
       if (e.st === 'man' && e.cover) {
         const r = e.cover;
         const h = histAt(r, P.t - e.lag);
+        if (SET.diff === 3) {
+          const g = histAt(r, P.t - e.lag - 0.12), vxr = (h.x - g.x) / 0.12, vyr = (h.y - g.y) / 0.12, px = h.x + vxr * e.lag, py = h.y + vyr * e.lag;
+          let tx = px + (vxr > 3 && Math.abs(vyr) < vxr * 0.45 ? 2.4 : 0.8);
+          if (vxr > 1 && tx < e.x - 0.3) tx = e.x;
+          steer(e, tx, py + (P.qb.y > py ? 0.45 : -0.45), 1, dt, 9);
+          return;
+        }
         let tx = h.x + 0.4, ty = h.y;
         const dxr = r.x - e.x;
         if (r.x - P.los < 5 && Math.abs(r.y - e.y) > 3) tx = h.x + 1.2;
@@ -1303,7 +1318,8 @@
         }
         const deep = e.role[0] === 'S';
         if (tr) {
-          const h = histAt(tr, P.t - 0.3);
+          const h0 = histAt(tr, P.t - 0.3), h = { x: h0.x, y: h0.y };
+          if (SET.diff === 3) { const g = histAt(tr, P.t - 0.42); h.x += (h0.x - g.x) / 0.12 * 0.3; h.y += (h0.y - g.y) / 0.12 * 0.3; }
           let tx = h.x + (deep ? 3 : 1), ty = h.y;
           if (!deep && tr.x < e.x - 1) tx = tr.x + 0.2;
           steer(e, tx, ty, 0.95, dt, 7);
@@ -1472,6 +1488,7 @@
     if (P.phase === 'over') P.deadT += dt;
   }
   function kickRelease() {
+    if (!P || !P.kk) return;
     const k = P.kk;
     if (!P.snapped || k.state !== 'charge') return;
     if (k.ph < 0.55) { k.early = true; return; }
@@ -2401,8 +2418,10 @@
   function loadSave() {
     const d = apiRef.load();
     if (!d || !d.F || !d.F.teams || !d.F.roster) return false;
+    if (!Array.isArray(d.F.teams) || !Array.isArray(d.F.roster) || !Array.isArray(d.F.fa) || !d.F.teams[d.F.tid] || !d.F.fac || typeof d.F.fac !== 'object') return false;
     F = d.F;
-    if (d.SET) Object.assign(SET, d.SET);
+    if (d.SET && typeof d.SET === 'object') Object.assign(SET, d.SET);
+    fixSet();
     let mx = 0;
     const scan = p => { if (p && p.id > mx) mx = p.id; };
     F.roster.forEach(scan); F.fa.forEach(scan);
@@ -2858,7 +2877,9 @@
     else if (dr.res === 'int' || dr.res === 'fum' || dr.res === 'downs' || dr.res === 'pick6' || dr.res === 'safety' || dr.res === 'miss') snd('cheer');
   }
   function afterDrive() {
+    if (!G || !G.dr) return;
     const dr = G.dr;
+    G.dr = null;
     popEl.hidden = true; popEl.innerHTML = '';
     if (M.ot && M.sc[0] !== M.sc[1]) M.over = true;
     if (M.over) { finishGame(); return; }
@@ -3152,6 +3173,13 @@
     else if (p.kick && P.kk && P.kk.state === 'charge') kickRelease();
   }
 
+  const TICK = 1 / 120;
+  function fixSet() {
+    if (!QLENS.some(q => q[0] === SET.ql)) SET.ql = DEF_SET.ql;
+    if (!Number.isInteger(SET.diff) || !DIFF_NAMES[SET.diff]) SET.diff = DEF_SET.diff;
+    SET.snd = !!SET.snd; SET.ring = !!SET.ring;
+    SET.vol = typeof SET.vol === 'number' && isFinite(SET.vol) ? clamp(SET.vol, 0, 10) : DEF_SET.vol;
+  }
   function updateGame(dt) {
     if (G.banner) {
       G.banner.t -= dt;
@@ -3160,8 +3188,8 @@
     if (!G) return;
     if (G.s === 'live' && P) {
       if (inp.ptr) inp.ptr.steer = P.phase === 'run';
-      const n = dt > 0.028 ? 2 : 1;
-      for (let i = 0; i < n; i++) tickPlay(dt / n);
+      G.acc = Math.min((G.acc || 0) + dt, 0.06);
+      while (G.acc >= TICK && P) { G.acc -= TICK; tickPlay(TICK); }
       if (P.phase === 'over' && !G.resolving) {
         const r = P.res, wait = r.td ? 2 : r.kind === 'fg' || r.kind === 'xp' ? 1.3 : r.kind === 'punt' ? 1 : 0.85;
         if (P.deadT > wait) { G.resolving = true; resolveLive(); }
@@ -3202,7 +3230,8 @@
       apiRef = api; root = rootEl;
       F = null; M = null; P = null; G = null; scene = 'title'; realF = null; PV = null;
       setupDom(api, rootEl);
-      try { const d = api.load(); if (d && d.SET) Object.assign(SET, d.SET); } catch (e) {}
+      try { const d = api.load(); if (d && d.SET && typeof d.SET === 'object') Object.assign(SET, d.SET); } catch (e) {}
+      fixSet();
       mutedFn = () => api.muted || !SET.snd;
       api.on(rootEl, 'click', e => {
         const el = e.target.closest('[data-a]');

@@ -8,7 +8,14 @@
     const creative = () => W && W.mode === 'creative';
     const canBuild = () => W && (W.mode === 'survival' || W.mode === 'creative');
     const held = () => inv[sel];
-    const playersList = () => { const l = W && W.dead !== true && !P.dead ? [P] : []; for (const e of ENTS) if (e.kind === 'player' && e.y > -500) l.push(e); return l; };
+    let plTick = -1, plWorld = null, plDead = false, plList = [];
+    const playersList = () => {
+      if (plTick === tickN && plWorld === W && plDead === P.dead && W) return plList;
+      const l = W && W.dead !== true && !P.dead ? [P] : [];
+      for (const e of ENTS) if (e.kind === 'player' && e.y > -500) l.push(e);
+      plTick = tickN; plWorld = W; plDead = P.dead; plList = l;
+      return l;
+    };
     const ST = (id, n, d) => ({ id, n: n || 1, d: d || 0 });
     const sameSt = (a, b) => a && b && a.id === b.id && (a.d || 0) === (b.d || 0) && JSON.stringify(a.x || null) === JSON.stringify(b.x || null);
     function giveItem(s, silent) {
@@ -78,7 +85,7 @@
       chatSys(msg); netSend({ t: 'chat', s: 1, m: msg });
       P.deathMsg = msg; P.scoreAtDeath = P.score; P.lifeAtDeath = P.st.sinceDeath || 0; stat('deaths'); P.st.sinceDeath = 0;
       if (W.rules.keepInventory !== true && mode() !== 'creative') {
-        for (const arr of [inv, armor, craft2, craft3]) for (let i = 0; i < arr.length; i++) if (arr[i]) { const s = arr[i]; arr[i] = null; spawnItem(s, P.x, P.y + 1, P.z, (RNG() - .5) * .5, .2 + RNG() * .2, (RNG() - .5) * .5, 40); }
+        for (const arr of [inv, armor, craft2, craft3, scIn]) for (let i = 0; i < arr.length; i++) if (arr[i]) { const s = arr[i]; arr[i] = null; spawnItem(s, P.x, P.y + 1, P.z, (RNG() - .5) * .5, .2 + RNG() * .2, (RNG() - .5) * .5, 40); }
         if (offhand) { spawnItem(offhand, P.x, P.y + 1, P.z); offhand = null; }
         if (cursor) { spawnItem(cursor, P.x, P.y + 1, P.z); cursor = null; }
         const xp = Math.min(100, P.lvl * 7); if (xp) spawnXp(xp, P.x, P.y + .5, P.z);

@@ -160,7 +160,10 @@
       return fin(b);
     }
     out.car = { front: [], lit: [], mid: [] };
-    for (let i = 0; i < trainsOf(city).length; i++) { out.car.front.push(car(i, 'front')); out.car.lit.push(car(i, 'lit')); out.car.mid.push(car(i, 'mid')); }
+    for (let i = 0; i < trainsOf(city).length; i++) {
+      const f = car(i, 'front'), same = !!trainsOf(city)[i][3];
+      out.car.front.push(f); out.car.lit.push(same ? f : car(i, 'lit')); out.car.mid.push(same ? f : car(i, 'mid'));
+    }
 
     {
       const b = GB(), L = C.RAMP, w = 2.2, top = C.ROOF + 0.02, r = uv(R.ramp), sd = uv(R.rampSide);

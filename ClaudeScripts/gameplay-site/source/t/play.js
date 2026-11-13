@@ -1,4 +1,6 @@
-const { chromium } = require('C:/tmp/pw/node_modules/playwright');
+const { chromium } = (() => { for (const m of ['playwright', 'C:/tmp/pw/node_modules/playwright', '/opt/node22/lib/node_modules/playwright']) { try { return require(m); } catch (e) {} } throw new Error('playwright not found'); })();
+const WIN = process.platform === 'win32';
+const LAUNCH = WIN ? { channel: 'chrome', args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] } : { args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] };
 const http = require('http'), fs = require('fs'), path = require('path');
 const VENDOR = path.join(__dirname, '..', 'w', 'vendor');
 const MT = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png', '.json': 'application/json', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav' };
@@ -21,7 +23,7 @@ async function open(html, id, o = {}) {
   }).listen(0, '127.0.0.1');
   await new Promise(r => srv.once('listening', r));
   const base = 'http://127.0.0.1:' + srv.address().port + '/' + main;
-  const b = await chromium.launch({ channel: 'chrome', headless: o.headless !== false, args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
+  const b = await chromium.launch(Object.assign({ headless: o.headless !== false }, LAUNCH));
   const vp = o.viewport || { width: 1280, height: 800 };
   const ctx = await b.newContext({ viewport: vp, deviceScaleFactor: o.dpr || 1, isMobile: !!o.mobile, hasTouch: !!o.mobile });
   await ctx.addInitScript(([s, muted, name]) => {
@@ -47,6 +49,8 @@ async function open(html, id, o = {}) {
     if (p === '/auth/v1/token') return j(200, session());
     if (p === '/rest/v1/rpc/touch_presence' || p === '/rest/v1/rpc/my_status') return j(200, [{ role: 'user', locked: false, locked_reason: null }]);
     if (p.startsWith('/rest/v1/profiles')) return j(200, [{ id: UID, username: 'tester', display_name: 'Tester', avatar_url: null, created_at: new Date().toISOString() }]);
+    if (p === '/rest/v1/rpc/diag_enabled') return j(200, o.diag !== false);
+    if (p === '/rest/v1/rpc/diag_push') return j(200, 0);
     if (p.startsWith('/rest/v1/rpc/')) return j(200, null);
     return j(200, []);
   });
@@ -63,7 +67,18 @@ async function open(html, id, o = {}) {
   let n = 0;
   const shot = async (dir, name, full) => { fs.mkdirSync(dir, { recursive: true }); const f = path.join(dir, (name || String(++n).padStart(3, '0')) + '.png'); if (full) await page.screenshot({ path: f }); else { const r = await frame(); await page.screenshot({ path: f, clip: { x: Math.max(0, r.x), y: Math.max(0, r.y), width: Math.max(1, r.w), height: Math.max(1, r.h) } }); } return f; };
   const close = async () => { await b.close(); srv.close(); };
-  return { page, ctx, browser: b, errs, frame, start, shot, close, base };
+  const diag = kinds => page.evaluate(k => { const d = window.Ameplay && Ameplay.diag ? Ameplay.diag.dump().events : []; return k ? d.filter(e => k.includes(e.k)) : d; }, kinds || null);
+  const fps = async () => { const f = (await diag(['fps'])).map(e => e.d); return f.length ? { samples: f.length, avg: Math.round(f.reduce((a, x) => a + x.fps, 0) / f.length * 10) / 10, min: Math.min(...f.map(x => x.fps)), worstFrameMs: Math.max(...f.map(x => x.worst)), slowFrames: f.reduce((a, x) => a + x.slow, 0) } : null; };
+  const cost = async (ms = 5000) => {
+    await page.evaluate(() => {
+      if (window.__gpCost) { window.__gpCost.f = []; return; }
+      const C = window.__gpCost = { f: [], cur: 0, on: false }, R = window.requestAnimationFrame.bind(window);
+      window.requestAnimationFrame = cb => R(t => { const a = performance.now(); try { cb(t); } finally { C.cur += performance.now() - a; if (!C.on) { C.on = true; Promise.resolve().then(() => { C.on = false; C.f.push(C.cur); C.cur = 0; }); } } });
+    });
+    await page.waitForTimeout(ms);
+    return page.evaluate(() => { const f = window.__gpCost.f.slice().sort((a, b) => a - b), n = f.length; if (!n) return null; const r = x => Math.round(x * 100) / 100; return { frames: n, avgMs: r(f.reduce((a, x) => a + x, 0) / n), p50Ms: r(f[Math.floor(n * .5)]), p95Ms: r(f[Math.floor(n * .95)]), maxMs: r(f[n - 1]) }; });
+  };
+  return { page, ctx, browser: b, errs, frame, start, shot, close, base, diag, fps, cost };
 }
 module.exports = { open };
 

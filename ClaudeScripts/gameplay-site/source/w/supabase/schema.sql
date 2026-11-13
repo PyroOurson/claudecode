@@ -991,6 +991,7 @@ as $$
   select exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin' and not p.locked);
 $$;
 
+drop function if exists public.my_status();
 create or replace function public.my_status()
 returns table (role text, locked boolean, locked_reason text)
 language sql
@@ -1001,6 +1002,7 @@ as $$
   select p.role, p.locked, p.locked_reason from public.profiles p where p.id = auth.uid();
 $$;
 
+drop function if exists public.touch_presence(text,text);
 create or replace function public.touch_presence(p_lang text default null, p_game text default null)
 returns table (role text, locked boolean, locked_reason text)
 language plpgsql
@@ -1030,6 +1032,7 @@ begin
 end;
 $$;
 
+drop function if exists public.admin_list_users();
 create or replace function public.admin_list_users()
 returns table (id uuid, created_at timestamptz, last_sign_in_at timestamptz, last_seen timestamptz, providers text[], email_confirmed boolean, email_confirmed_at timestamptz, last_lang text, last_game text, role text, email text, username text, display_name text, friends integer, fav_game text, locked boolean, locked_reason text)
 language plpgsql
@@ -1383,6 +1386,7 @@ begin
 end;
 $$;
 
+drop function if exists public.ticket_thread(bigint);
 create or replace function public.ticket_thread(p_ticket bigint)
 returns table (id bigint, body text, is_admin boolean, mine boolean, author text, created_at timestamptz)
 language plpgsql
@@ -5769,3 +5773,4007 @@ $$;
 drop trigger if exists site_gate_slot_guard on public.site_gate;
 create trigger site_gate_slot_guard before update on public.site_gate
   for each row execute function private.gate_slot_guard();
+
+create table if not exists public.chat_log (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  kind text not null check (kind in ('party', 'game')),
+  game text check (game is null or char_length(game) <= 40),
+  room text check (room is null or char_length(room) <= 16),
+  body text not null check (char_length(body) <= 500),
+  created_at timestamptz not null default now()
+);
+create index if not exists chat_log_user_idx on public.chat_log (user_id, kind, id desc);
+create index if not exists chat_log_room_idx on public.chat_log (room, created_at) where room is not null;
+create index if not exists chat_log_time_idx on public.chat_log (created_at);
+alter table public.chat_log enable row level security;
+revoke all on public.chat_log from anon, authenticated;
+grant all on public.chat_log to service_role;
+
+create index if not exists dms_from_idx on public.dms (from_id, id desc);
+create index if not exists dms_to_idx on public.dms (to_id, id desc);
+
+create or replace function public.log_chat(p_kind text, p_game text, p_room text, p_body text)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_body text;
+begin
+  if v_uid is null or p_kind is null or p_kind not in ('party', 'game') then
+    return;
+  end if;
+  v_body := nullif(btrim(regexp_replace(left(coalesce(p_body, ''), 500), E'[\\x01-\\x1f\\x7f]', ' ', 'g')), '');
+  if v_body is null then
+    return;
+  end if;
+  if not private.rate_ok('log_chat', 90, interval '1 minute') then
+    return;
+  end if;
+  insert into public.chat_log (user_id, kind, game, room, body)
+  values (v_uid, p_kind, left(nullif(btrim(coalesce(p_game, '')), ''), 40), upper(left(nullif(regexp_replace(coalesce(p_room, ''), '[^A-Za-z0-9]', '', 'g'), ''), 16)), v_body);
+  if random() < 0.01 then
+    delete from public.chat_log where created_at < now() - interval '365 days';
+  end if;
+end;
+$$;
+
+create or replace function public.admin_user_chat(p_uid uuid, p_kind text default 'dm', p_before bigint default null, p_limit integer default 60)
+returns table (id bigint, created_at timestamptz, kind text, game text, room text, body text, outgoing boolean, other uuid, other_username text, other_display text)
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_lim integer := greatest(1, least(coalesce(p_limit, 60), 200));
+begin
+  if p_kind is null or p_kind not in ('dm', 'party', 'game') then
+    raise exception 'Unknown kind' using errcode = '22023';
+  end if;
+  if p_before is null and not exists (select 1 from public.admin_log l where l.admin_id = v_me and l.action = 'view_chat' and l.target_user = p_uid and l.detail ->> 'kind' = p_kind and l.at > now() - interval '30 minutes') then
+    perform private.admin_log('view_chat', p_uid, jsonb_build_object('kind', p_kind));
+  end if;
+  if p_kind = 'dm' then
+    return query
+      select d.id, d.created_at, d.kind, d.meta ->> 'game', d.meta ->> 'code', d.body, d.from_id = p_uid,
+        case when d.from_id = p_uid then d.to_id else d.from_id end, op.username, op.display_name
+      from public.dms d
+      left join public.profiles op on op.id = case when d.from_id = p_uid then d.to_id else d.from_id end
+      where (d.from_id = p_uid or d.to_id = p_uid) and (p_before is null or d.id < p_before)
+      order by d.id desc
+      limit v_lim;
+  else
+    return query
+      select c.id, c.created_at, c.kind, c.game, c.room, c.body, true, null::uuid, null::text, null::text
+      from public.chat_log c
+      where c.user_id = p_uid and c.kind = p_kind and (p_before is null or c.id < p_before)
+      order by c.id desc
+      limit v_lim;
+  end if;
+end;
+$$;
+
+create or replace function public.admin_room_chat(p_room text, p_at timestamptz)
+returns table (id bigint, created_at timestamptz, kind text, game text, user_id uuid, username text, display_name text, body text)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  perform private.need_admin();
+  return query
+    select c.id, c.created_at, c.kind, c.game, c.user_id, p.username, p.display_name, c.body
+    from public.chat_log c
+    left join public.profiles p on p.id = c.user_id
+    where c.room = upper(p_room) and c.created_at between p_at - interval '3 hours' and p_at + interval '3 hours'
+    order by c.created_at, c.id
+    limit 400;
+end;
+$$;
+
+create or replace function public.admin_chat_search(p_q text, p_limit integer default 100)
+returns table (id bigint, created_at timestamptz, kind text, game text, room text, user_id uuid, username text, display_name text, other_username text, body text)
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_q text := btrim(coalesce(p_q, ''));
+  v_lim integer := greatest(1, least(coalesce(p_limit, 100), 300));
+begin
+  if char_length(v_q) < 2 then
+    return;
+  end if;
+  perform private.admin_log('search_chat', null, jsonb_build_object('q', left(v_q, 80)));
+  return query
+    select * from (
+      select c.id, c.created_at, c.kind, c.game, c.room, c.user_id, p.username, p.display_name, null::text, c.body
+      from public.chat_log c left join public.profiles p on p.id = c.user_id
+      where c.body ilike '%' || replace(replace(v_q, '%', '\%'), '_', '\_') || '%'
+      union all
+      select d.id, d.created_at, 'dm'::text, d.meta ->> 'game', null::text, d.from_id, p.username, p.display_name, t.username, d.body
+      from public.dms d left join public.profiles p on p.id = d.from_id left join public.profiles t on t.id = d.to_id
+      where d.kind = 'text' and d.body ilike '%' || replace(replace(v_q, '%', '\%'), '_', '\_') || '%'
+    ) x
+    order by x.created_at desc
+    limit v_lim;
+end;
+$$;
+
+revoke all on function public.log_chat(text, text, text, text) from public, anon, authenticated;
+revoke all on function public.admin_user_chat(uuid, text, bigint, integer) from public, anon, authenticated;
+revoke all on function public.admin_room_chat(text, timestamptz) from public, anon, authenticated;
+revoke all on function public.admin_chat_search(text, integer) from public, anon, authenticated;
+grant execute on function public.log_chat(text, text, text, text) to authenticated;
+grant execute on function public.admin_user_chat(uuid, text, bigint, integer) to authenticated;
+grant execute on function public.admin_room_chat(text, timestamptz) to authenticated;
+grant execute on function public.admin_chat_search(text, integer) to authenticated;
+
+create or replace function private.is_test(p_uid uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select p_uid is not null and exists (select 1 from public.test_accounts t where t.user_id = p_uid);
+$$;
+revoke all on function private.is_test(uuid) from public, anon, authenticated;
+
+create table if not exists public.diag_events (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  sid text not null,
+  seq integer not null,
+  at timestamptz not null,
+  kind text not null,
+  data jsonb,
+  created_at timestamptz not null default now()
+);
+create unique index if not exists diag_events_sid_seq_idx on public.diag_events (user_id, sid, seq);
+create index if not exists diag_events_created_idx on public.diag_events (created_at);
+create index if not exists diag_events_kind_idx on public.diag_events (user_id, kind, at desc);
+alter table public.diag_events enable row level security;
+revoke all on table public.diag_events from public, anon, authenticated;
+
+create or replace function public.diag_enabled()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select private.is_test(auth.uid());
+$$;
+
+create or replace function public.diag_push(p_sid text, p_events jsonb)
+returns integer
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_n integer := 0;
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if not private.is_test(v_uid) then
+    raise exception 'Not a test account' using errcode = '42501';
+  end if;
+  if p_sid is null or p_sid !~ '^[a-z0-9]{6,24}$' then
+    raise exception 'Bad session id' using errcode = '22023';
+  end if;
+  if p_events is null or jsonb_typeof(p_events) <> 'array' or jsonb_array_length(p_events) > 500 or octet_length(p_events::text) > 2000000 then
+    raise exception 'Bad batch' using errcode = '22023';
+  end if;
+  insert into public.diag_events (user_id, sid, seq, at, kind, data)
+  select v_uid, p_sid, (e->>'q')::integer, to_timestamp(least(greatest((e->>'t')::double precision, 0), 4102444800000) / 1000.0), left(coalesce(e->>'k', '?'), 24), e->'d'
+  from jsonb_array_elements(p_events) e
+  where jsonb_typeof(e) = 'object' and (e->>'q') ~ '^[0-9]{1,9}$' and (e->>'t') ~ '^[0-9]{1,15}(\.[0-9]+)?$'
+  on conflict (user_id, sid, seq) do nothing;
+  get diagnostics v_n = row_count;
+  if random() < 0.02 then
+    delete from public.diag_events where created_at < now() - interval '30 days';
+  end if;
+  return v_n;
+end;
+$$;
+
+create or replace function public.admin_diag_sessions(p_uid uuid default null, p_limit integer default 100)
+returns table (user_id uuid, username text, sid text, first_at timestamptz, last_at timestamptz, events bigint, errors bigint, failed_requests bigint, games text[], page text, agent text)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+begin
+  return query
+  select d.user_id, p.username, d.sid, min(d.at), max(d.at), count(*),
+    count(*) filter (where d.kind = 'err' or (d.kind = 'log' and d.data->>'l' = 'error')),
+    count(*) filter (where d.kind = 'res' and (d.data ? 'e' or coalesce((d.data->>'s')::integer, 0) >= 400)),
+    array_remove(array_agg(distinct case when d.kind = 'game' then d.data->>'id' end), null),
+    max(case when d.kind = 'boot' then d.data->>'u' end),
+    max(case when d.kind = 'boot' then d.data->>'ua' end)
+  from public.diag_events d
+  left join public.profiles p on p.id = d.user_id
+  where p_uid is null or d.user_id = p_uid
+  group by d.user_id, p.username, d.sid
+  order by max(d.at) desc
+  limit least(greatest(coalesce(p_limit, 100), 1), 500);
+end;
+$$;
+
+create or replace function public.admin_diag_events(p_sid text, p_after integer default 0, p_limit integer default 500, p_kinds text[] default null)
+returns table (seq integer, at timestamptz, kind text, data jsonb)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+begin
+  return query
+  select d.seq, d.at, d.kind, d.data
+  from public.diag_events d
+  where d.sid = p_sid and d.seq > coalesce(p_after, 0) and (p_kinds is null or d.kind = any (p_kinds))
+  order by d.seq
+  limit least(greatest(coalesce(p_limit, 500), 1), 2000);
+end;
+$$;
+
+create or replace function public.admin_diag_clear(p_sid text default null)
+returns integer
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_n integer;
+begin
+  delete from public.diag_events d where p_sid is null or d.sid = p_sid;
+  get diagnostics v_n = row_count;
+  perform private.admin_log('diag_clear', null, jsonb_build_object('sid', p_sid, 'rows', v_n));
+  return v_n;
+end;
+$$;
+
+revoke all on function public.diag_enabled() from public, anon, authenticated;
+revoke all on function public.diag_push(text, jsonb) from public, anon, authenticated;
+revoke all on function public.admin_diag_sessions(uuid, integer) from public, anon, authenticated;
+revoke all on function public.admin_diag_events(text, integer, integer, text[]) from public, anon, authenticated;
+revoke all on function public.admin_diag_clear(text) from public, anon, authenticated;
+grant execute on function public.diag_enabled() to authenticated;
+grant execute on function public.diag_push(text, jsonb) to authenticated;
+grant execute on function public.admin_diag_sessions(uuid, integer) to authenticated;
+grant execute on function public.admin_diag_events(text, integer, integer, text[]) to authenticated;
+grant execute on function public.admin_diag_clear(text) to authenticated;
+notify pgrst, 'reload schema';
+
+create or replace function private.rate_sensitive(p_action text)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select p_action in ('delete_account', 'export', 'username_change', 'username_check', 'username_check_h', 'friend_pair', 'report', 'report_d', 'login', 'login_ip', 'idea_create', 'idea_create_d');
+$$;
+
+create or replace function private.rate_scale(p_action text, p_max integer)
+returns integer
+language sql
+immutable
+set search_path = ''
+as $$
+  select case when private.rate_sensitive(p_action) then p_max else p_max * 3 end;
+$$;
+
+create or replace function private.rate_ok(p_action text, p_max integer, p_window interval, p_key text default null)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_k text := coalesce(p_key, private.rate_key(p_action));
+  v_max integer := private.rate_scale(p_action, p_max);
+  v_n integer;
+  v_ip text := nullif(private.client_ip(), '');
+begin
+  if auth.uid() is not null and not private.rate_sensitive(p_action) and private.is_staff(auth.uid()) then
+    return true;
+  end if;
+  perform pg_advisory_xact_lock(hashtextextended(v_k, 0));
+  select count(*) into v_n from private.rate_hits h where h.k = v_k and h.at > now() - p_window;
+  if v_n >= v_max then
+    return false;
+  end if;
+  insert into private.rate_hits (k, action, uid, ip, full_hit) values (v_k, p_action, auth.uid(), case when v_ip is null then null else md5(v_ip) end, v_max > 1 and v_n + 1 >= v_max);
+  if random() < 0.005 then
+    delete from private.rate_hits where at < now() - interval '8 days';
+  end if;
+  return true;
+end;
+$$;
+
+create or replace function private.rate_check(p_action text, p_max integer, p_window interval, p_key text default null)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_k text := coalesce(p_key, private.rate_key(p_action));
+begin
+  if not private.rate_ok(p_action, p_max, p_window, v_k) then
+    raise exception 'rate_limited' using errcode = 'PT429', detail = p_action, hint = 'retry_after=' || coalesce(private.rate_wait(v_k, private.rate_scale(p_action, p_max), p_window), 60);
+  end if;
+end;
+$$;
+revoke all on function private.rate_sensitive(text) from public, anon, authenticated;
+revoke all on function private.rate_scale(text, integer) from public, anon, authenticated;
+revoke all on function private.rate_ok(text, integer, interval, text) from public, anon, authenticated;
+revoke all on function private.rate_check(text, integer, interval, text) from public, anon, authenticated;
+
+create or replace function public.my_limits()
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object('staff', private.is_staff(auth.uid()), 'scale', 3);
+$$;
+revoke all on function public.my_limits() from public, anon, authenticated;
+grant execute on function public.my_limits() to authenticated;
+
+create table if not exists private.presence_now (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  at timestamptz not null default now(),
+  game text,
+  hidden boolean not null default false,
+  away boolean not null default false,
+  party boolean not null default false
+);
+create index if not exists presence_now_at_idx on private.presence_now (at);
+alter table private.presence_now enable row level security;
+revoke all on table private.presence_now from public, anon, authenticated;
+
+drop function if exists public.presence_beat(text, boolean, boolean, boolean);
+create or replace function public.presence_beat(p_game text default null, p_hidden boolean default false, p_away boolean default false, p_party boolean default false, p_quiet boolean default false)
+returns jsonb
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_game text := lower(btrim(coalesce(p_game, '')));
+  v_staff boolean;
+  v_on jsonb;
+  v_n integer;
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if v_game !~ '^[a-z0-9][a-z0-9-]{0,39}$' then
+    v_game := null;
+  end if;
+  if not private.over('pb:' || v_uid::text, date_trunc('minute', now()), 20) then
+    insert into private.presence_now as n (user_id, at, game, hidden, away, party)
+    values (v_uid, now(), v_game, coalesce(p_hidden, false), coalesce(p_away, false), coalesce(p_party, false))
+    on conflict (user_id) do update set at = excluded.at, game = excluded.game, hidden = excluded.hidden, away = excluded.away, party = excluded.party;
+    update public.profiles p set last_seen = now(), last_game = coalesce(v_game, p.last_game) where p.id = v_uid and (p.last_seen is null or p.last_seen < now() - interval '60 seconds');
+    if random() < 0.02 then
+      delete from private.presence_now where at < now() - interval '10 minutes';
+    end if;
+  end if;
+  v_staff := private.is_staff(v_uid);
+  select count(*) into v_n from private.presence_now n where n.at > now() - interval '100 seconds' and not n.hidden;
+  select coalesce(jsonb_agg(jsonb_build_object('id', n.user_id, 'g', n.game, 'a', case when n.away then 1 else 0 end, 'p', case when n.party then 1 else 0 end, 'h', case when n.hidden then 1 else 0 end)), '[]'::jsonb) into v_on
+  from private.presence_now n
+  where n.at > now() - interval '100 seconds' and n.user_id <> v_uid
+    and ((v_staff) or (not n.hidden and exists (select 1 from public.friends f where f.user_id = v_uid and f.friend_id = n.user_id)));
+  return jsonb_build_object('n', v_n, 'on', v_on, 'staff', v_staff);
+end;
+$$;
+
+create or replace function public.presence_bye()
+returns void
+language sql
+volatile
+security definer
+set search_path = ''
+as $$
+  delete from private.presence_now where user_id = auth.uid();
+$$;
+revoke all on function public.presence_beat(text, boolean, boolean, boolean, boolean) from public, anon, authenticated;
+revoke all on function public.presence_bye() from public, anon, authenticated;
+grant execute on function public.presence_beat(text, boolean, boolean, boolean, boolean) to authenticated;
+grant execute on function public.presence_bye() to authenticated;
+notify pgrst, 'reload schema';
+
+create or replace function private.username_ok(p_name text)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select p_name is not null
+    and p_name ~ '^[a-z0-9_.]{4,20}$'
+    and p_name !~ '^\.|\.$|\.\.'
+    and p_name not in ('admin', 'administrator', 'gameplay', 'support', 'help', 'root', 'system', 'moderator', 'mod', 'staff', 'official', 'owner', 'null', 'undefined', 'guest', 'anonymous', 'everyone', 'nobody', 'me', 'you');
+$$;
+
+alter table public.test_accounts add column if not exists diag boolean not null default false;
+
+create or replace function private.is_test(p_uid uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select p_uid is not null and exists (
+    select 1 from public.test_accounts t join public.profiles p on p.id = t.user_id
+    where t.user_id = p_uid and t.diag and p.role = 'user'
+  );
+$$;
+
+create or replace function public.admin_set_diag(p_uid uuid, p_on boolean)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+begin
+  if not exists (select 1 from public.test_accounts t join public.profiles p on p.id = t.user_id where t.user_id = p_uid and p.role = 'user') then
+    raise exception 'Diagnostics can only be switched on for an ordinary account created in the dashboard' using errcode = '22023';
+  end if;
+  update public.test_accounts t set diag = coalesce(p_on, false) where t.user_id = p_uid;
+  perform private.admin_log('diag', p_uid, jsonb_build_object('on', coalesce(p_on, false)));
+  return coalesce(p_on, false);
+end;
+$$;
+
+create or replace function public.admin_diag_accounts()
+returns table (user_id uuid, username text, email text, diag boolean, note text, created_at timestamptz, last_event timestamptz)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+begin
+  return query
+  select t.user_id, p.username, t.email, t.diag, t.note, t.created_at, (select max(d.at) from public.diag_events d where d.user_id = t.user_id)
+  from public.test_accounts t
+  join public.profiles p on p.id = t.user_id
+  where p.role = 'user'
+  order by t.diag desc, t.created_at desc;
+end;
+$$;
+revoke all on function public.admin_set_diag(uuid, boolean) from public, anon, authenticated;
+revoke all on function public.admin_diag_accounts() from public, anon, authenticated;
+grant execute on function public.admin_set_diag(uuid, boolean) to authenticated;
+grant execute on function public.admin_diag_accounts() to authenticated;
+
+create or replace function public.admin_create_user(p_email text, p_username text, p_display text, p_password text, p_role text default 'user', p_note text default null)
+returns jsonb
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_role text := coalesce(nullif(lower(btrim(coalesce(p_role, ''))), ''), 'user');
+  v_out jsonb;
+  v_id uuid;
+  v_name text := private.clean_text(p_display, 32);
+begin
+  if v_role not in ('user', 'admin', 'owner') then
+    raise exception 'Role must be user, admin or owner' using errcode = '22023';
+  end if;
+  if v_role <> 'user' then
+    perform private.need_owner();
+  end if;
+  v_out := public.admin_create_test_account(p_username, p_password, p_email, p_note);
+  v_id := (v_out ->> 'id')::uuid;
+  update public.profiles p set display_name = coalesce(v_name, p.display_name), role = v_role where p.id = v_id;
+  if v_role <> 'user' then
+    delete from public.test_accounts t where t.user_id = v_id;
+  end if;
+  perform private.admin_log('create_user', v_id, jsonb_build_object('email', v_out ->> 'email', 'role', v_role));
+  return v_out || jsonb_build_object('display_name', coalesce(v_name, v_out ->> 'username'), 'role', v_role);
+end;
+$$;
+
+create or replace function private.rate_sensitive(p_action text)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select p_action in ('delete_account', 'export', 'username_change', 'username_check', 'username_check_h', 'friend_pair', 'report', 'report_d', 'login', 'login_ip', 'idea_create', 'idea_create_d', 'log_chat', 'log_chat_h');
+$$;
+
+create or replace function public.log_chat(p_kind text, p_game text, p_room text, p_body text)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_body text;
+begin
+  if v_uid is null or p_kind is null or p_kind not in ('party', 'game') then
+    return;
+  end if;
+  v_body := nullif(btrim(regexp_replace(left(coalesce(p_body, ''), 500), E'[\\x01-\\x1f\\x7f]', ' ', 'g')), '');
+  if v_body is null then
+    return;
+  end if;
+  if not private.rate_ok('log_chat', 60, interval '1 minute') or not private.rate_ok('log_chat_h', 900, interval '1 hour') then
+    return;
+  end if;
+  insert into public.chat_log (user_id, kind, game, room, body)
+  values (v_uid, p_kind, left(nullif(btrim(coalesce(p_game, '')), ''), 40), upper(left(nullif(regexp_replace(coalesce(p_room, ''), '[^A-Za-z0-9]', '', 'g'), ''), 16)), v_body);
+  if random() < 0.01 then
+    delete from public.chat_log where created_at < now() - interval '365 days';
+  end if;
+end;
+$$;
+
+create or replace function public.presence_beat(p_game text default null, p_hidden boolean default false, p_away boolean default false, p_party boolean default false, p_quiet boolean default false)
+returns jsonb
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_game text := lower(btrim(coalesce(p_game, '')));
+  v_staff boolean;
+  v_on jsonb;
+  v_games jsonb;
+  v_n integer;
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if private.over('pb:' || v_uid::text, date_trunc('minute', now()), 20) then
+    return '{}'::jsonb;
+  end if;
+  if v_game !~ '^[a-z0-9][a-z0-9-]{0,39}$' then
+    v_game := null;
+  end if;
+  if coalesce(p_quiet, false) and exists (select 1 from private.presence_now n where n.user_id = v_uid and n.at > now() - interval '70 seconds') then
+    null;
+  else
+    insert into private.presence_now as n (user_id, at, game, hidden, away, party)
+    values (v_uid, now(), v_game, coalesce(p_hidden, false), coalesce(p_away, false), coalesce(p_party, false))
+    on conflict (user_id) do update set at = excluded.at, game = excluded.game, hidden = excluded.hidden, away = excluded.away, party = excluded.party;
+    update public.profiles p set last_seen = now(), last_game = coalesce(v_game, p.last_game) where p.id = v_uid and (p.last_seen is null or p.last_seen < now() - interval '60 seconds');
+  end if;
+  if random() < 0.02 then
+    delete from private.presence_now where at < now() - interval '10 minutes';
+  end if;
+  v_staff := private.is_staff(v_uid);
+  select count(*) into v_n from private.presence_now n where n.at > now() - interval '100 seconds' and not n.hidden;
+  select coalesce(jsonb_object_agg(x.game, x.c), '{}'::jsonb) into v_games
+  from (select n.game, count(*) as c from private.presence_now n where n.at > now() - interval '100 seconds' and not n.hidden and n.game is not null group by n.game) x;
+  select coalesce(jsonb_agg(jsonb_build_object('id', n.user_id, 'g', n.game, 'a', case when n.away then 1 else 0 end, 'p', case when n.party then 1 else 0 end, 'h', case when n.hidden then 1 else 0 end)), '[]'::jsonb) into v_on
+  from private.presence_now n
+  where n.at > now() - interval '100 seconds' and n.user_id <> v_uid
+    and ((v_staff) or (not n.hidden and exists (select 1 from public.friends f where f.user_id = v_uid and f.friend_id = n.user_id)));
+  return jsonb_build_object('n', v_n, 'on', v_on, 'games', v_games, 'staff', v_staff);
+end;
+$$;
+notify pgrst, 'reload schema';
+
+create or replace function private.file_class(p_ext text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select case
+    when p_ext in ('png', 'jpg', 'webp', 'gif') then 'image'
+    when p_ext in ('pdf', 'txt', 'md', 'csv', 'json', 'log', 'zip') then 'file'
+  end;
+$$;
+
+create or replace function private.file_mime(p_ext text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select case p_ext
+    when 'png' then 'image/png'
+    when 'jpg' then 'image/jpeg'
+    when 'webp' then 'image/webp'
+    when 'gif' then 'image/gif'
+    when 'pdf' then 'application/pdf'
+    when 'txt' then 'text/plain'
+    when 'log' then 'text/plain'
+    when 'md' then 'text/markdown'
+    when 'csv' then 'text/csv'
+    when 'json' then 'application/json'
+    when 'zip' then 'application/zip'
+  end;
+$$;
+
+create or replace function private.files_clean(p_bucket text, p_prefix text, p_files jsonb, p_max integer default 4)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := auth.uid();
+  v_out jsonb := '[]'::jsonb;
+  v_it jsonb;
+  v_one jsonb;
+  v_path text;
+  v_ext text;
+  v_class text;
+  v_name text;
+  v_owner text;
+  v_meta jsonb;
+  v_size bigint;
+  v_max bigint;
+  v_tail text;
+  v_w integer;
+  v_h integer;
+begin
+  if p_files is null or jsonb_typeof(p_files) = 'null' then
+    return v_out;
+  end if;
+  if v_me is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if jsonb_typeof(p_files) <> 'array' then
+    raise exception 'Bad attachment' using errcode = '22023';
+  end if;
+  if jsonb_array_length(p_files) > greatest(coalesce(p_max, 4), 0) then
+    raise exception 'Too many attachments' using errcode = '22023';
+  end if;
+  for v_it in select e from jsonb_array_elements(p_files) e loop
+    v_path := case when jsonb_typeof(v_it) = 'object' then v_it ->> 'path' end;
+    if v_path is null or v_path !~ ('^' || p_prefix || '/[a-z0-9-]{8,64}\.(png|jpg|webp|gif|pdf|txt|md|csv|json|log|zip)$') then
+      raise exception 'Bad attachment' using errcode = '22023';
+    end if;
+    if v_out @> jsonb_build_array(jsonb_build_object('path', v_path)) then
+      raise exception 'Bad attachment' using errcode = '22023';
+    end if;
+    v_ext := substring(v_path from '\.([a-z0-9]+)$');
+    v_class := private.file_class(v_ext);
+    v_owner := null;
+    v_meta := null;
+    select o.owner_id, o.metadata into v_owner, v_meta
+      from storage.objects o
+      where o.bucket_id = p_bucket and o.name = v_path
+      order by o.created_at desc
+      limit 1;
+    if v_owner is null or v_owner <> v_me::text or v_meta is null then
+      raise exception 'Attachment not found' using errcode = '22023';
+    end if;
+    v_size := case when (v_meta ->> 'size') ~ '^[0-9]{1,12}$' then (v_meta ->> 'size')::bigint else 0 end;
+    v_max := case when v_class = 'image' then 5242880 else 8388608 end;
+    if v_size <= 0 or v_size > v_max then
+      raise exception 'Attachment too large' using errcode = '22023';
+    end if;
+    if lower(btrim(split_part(coalesce(v_meta ->> 'mimetype', ''), ';', 1))) <> private.file_mime(v_ext) then
+      raise exception 'Bad attachment type' using errcode = '22023';
+    end if;
+    v_name := coalesce(private.clean_text(regexp_replace(coalesce(v_it ->> 'name', ''), '[\u202A-\u202E\u2066-\u2069\u200B-\u200F/\\]', '', 'g'), 120), 'file');
+    v_tail := '\.' || replace(v_ext, 'jpg', '(jpg|jpeg)') || '$';
+    if lower(v_name) !~ v_tail then
+      v_name := left(v_name, 110) || '.' || v_ext;
+    end if;
+    v_one := jsonb_build_object('path', v_path, 'name', v_name, 'size', v_size, 'type', private.file_mime(v_ext), 'kind', v_class);
+    if v_class = 'image' then
+      v_w := case when (v_it ->> 'w') ~ '^[0-9]{1,5}$' then (v_it ->> 'w')::integer else 0 end;
+      v_h := case when (v_it ->> 'h') ~ '^[0-9]{1,5}$' then (v_it ->> 'h')::integer else 0 end;
+      if v_w between 1 and 20000 and v_h between 1 and 20000 then
+        v_one := v_one || jsonb_build_object('w', v_w, 'h', v_h);
+      end if;
+    end if;
+    v_out := v_out || jsonb_build_array(v_one);
+  end loop;
+  return v_out;
+end;
+$$;
+
+create or replace function private.long_text(p_text text, p_max integer)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select nullif(left(btrim(regexp_replace(regexp_replace(replace(left(coalesce(p_text, ''), p_max * 2), E'\r', ''), E'[\\x01-\\x09\\x0b-\\x1f\\x7f]', '', 'g'), E'\n{3,}', E'\n\n', 'g')), p_max), '');
+$$;
+
+create or replace function private.need_user()
+returns uuid
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if exists (select 1 from public.profiles p where p.id = v_uid and p.locked) then
+    raise exception 'Account locked' using errcode = '42501';
+  end if;
+  return v_uid;
+end;
+$$;
+
+create or replace function private.file_used(p_bucket text, p_name text)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if p_bucket = 'ideas' then
+    return exists (select 1 from public.ideas i where i.attachments @> jsonb_build_array(jsonb_build_object('path', p_name)));
+  elsif p_bucket = 'tickets' then
+    return exists (select 1 from public.ticket_messages m where m.attachments @> jsonb_build_array(jsonb_build_object('path', p_name)));
+  elsif p_bucket = 'dm' then
+    return exists (select 1 from public.dms d where d.kind in ('image', 'file') and d.meta ->> 'path' = p_name);
+  end if;
+  return true;
+end;
+$$;
+
+create or replace function private.files_rm(p_bucket text, p_paths text[])
+returns integer
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_n integer := 0;
+begin
+  if p_bucket is null or p_bucket not in ('ideas', 'tickets', 'dm') or p_paths is null or cardinality(p_paths) = 0 then
+    return 0;
+  end if;
+  perform set_config('storage.allow_delete_query', 'true', true);
+  delete from storage.objects o where o.bucket_id = p_bucket and o.name = any (p_paths);
+  get diagnostics v_n = row_count;
+  perform set_config('storage.allow_delete_query', 'false', true);
+  return v_n;
+end;
+$$;
+
+create or replace function private.files_sweep(p_uid uuid default null)
+returns integer
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_n integer := 0;
+begin
+  perform set_config('storage.allow_delete_query', 'true', true);
+  delete from storage.objects o
+    where o.bucket_id in ('ideas', 'tickets', 'dm')
+      and (p_uid is null or o.name like p_uid::text || '/%')
+      and not private.file_used(o.bucket_id, o.name)
+      and (o.created_at < now() - interval '1 hour' or not exists (select 1 from public.profiles p where p.id::text = split_part(o.name, '/', 1)));
+  get diagnostics v_n = row_count;
+  perform set_config('storage.allow_delete_query', 'false', true);
+  return v_n;
+end;
+$$;
+
+create or replace function private.files_drop_user(p_uid uuid)
+returns integer
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_n integer := 0;
+  v_paths text[];
+begin
+  if p_uid is null then
+    return 0;
+  end if;
+  select array_agg(a ->> 'path') into v_paths
+    from public.tickets t
+    join public.ticket_messages m on m.ticket_id = t.id
+    cross join lateral jsonb_array_elements(m.attachments) a
+    where t.user_id = p_uid;
+  perform set_config('storage.allow_delete_query', 'true', true);
+  delete from storage.objects o
+    where (o.bucket_id in ('ideas', 'tickets', 'dm') and o.name like p_uid::text || '/%')
+      or (o.bucket_id = 'dm' and o.name like '%/' || p_uid::text || '/%')
+      or (o.bucket_id = 'tickets' and v_paths is not null and o.name = any (v_paths));
+  get diagnostics v_n = row_count;
+  perform set_config('storage.allow_delete_query', 'false', true);
+  return v_n;
+end;
+$$;
+
+revoke all on function private.file_class(text) from public, anon, authenticated;
+revoke all on function private.file_mime(text) from public, anon, authenticated;
+revoke all on function private.files_clean(text, text, jsonb, integer) from public, anon, authenticated;
+revoke all on function private.long_text(text, integer) from public, anon, authenticated;
+revoke all on function private.need_user() from public, anon, authenticated;
+revoke all on function private.file_used(text, text) from public, anon, authenticated;
+revoke all on function private.files_rm(text, text[]) from public, anon, authenticated;
+revoke all on function private.files_sweep(uuid) from public, anon, authenticated;
+revoke all on function private.files_drop_user(uuid) from public, anon, authenticated;
+
+create table if not exists public.ideas (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  kind text not null,
+  title text not null,
+  body text not null,
+  game text,
+  ctx jsonb not null default '{}'::jsonb,
+  attachments jsonb not null default '[]'::jsonb,
+  status text not null default 'new',
+  reply text,
+  reply_at timestamptz,
+  reply_by uuid references auth.users (id) on delete set null,
+  fresh boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table public.ideas drop constraint if exists ideas_kind_check;
+alter table public.ideas add constraint ideas_kind_check check (kind in ('game', 'improvement', 'bug', 'patch', 'other'));
+alter table public.ideas drop constraint if exists ideas_status_check;
+alter table public.ideas add constraint ideas_status_check check (status in ('new', 'seen', 'planned', 'done', 'declined'));
+alter table public.ideas drop constraint if exists ideas_title_check;
+alter table public.ideas add constraint ideas_title_check check (char_length(title) between 3 and 100 and title !~ '[[:cntrl:]]');
+alter table public.ideas drop constraint if exists ideas_body_check;
+alter table public.ideas add constraint ideas_body_check check (char_length(body) between 10 and 4000);
+alter table public.ideas drop constraint if exists ideas_game_check;
+alter table public.ideas add constraint ideas_game_check check (game is null or game ~ '^[a-z0-9][a-z0-9-]{0,39}$');
+alter table public.ideas drop constraint if exists ideas_reply_check;
+alter table public.ideas add constraint ideas_reply_check check (reply is null or char_length(reply) between 1 and 2000);
+alter table public.ideas drop constraint if exists ideas_attachments_check;
+alter table public.ideas add constraint ideas_attachments_check check (jsonb_typeof(attachments) = 'array' and pg_column_size(attachments) <= 8192);
+alter table public.ideas drop constraint if exists ideas_ctx_check;
+alter table public.ideas add constraint ideas_ctx_check check (jsonb_typeof(ctx) = 'object' and pg_column_size(ctx) <= 2048);
+create index if not exists ideas_user_idx on public.ideas (user_id, id desc);
+create index if not exists ideas_status_idx on public.ideas (status, id desc);
+create index if not exists ideas_attachments_idx on public.ideas using gin (attachments jsonb_path_ops);
+alter table public.ideas enable row level security;
+revoke all on public.ideas from public, anon, authenticated;
+grant all on public.ideas to service_role;
+
+create or replace function public.idea_create(p_kind text, p_title text, p_body text, p_files jsonb default '[]'::jsonb, p_game text default null, p_ctx jsonb default null)
+returns bigint
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := private.need_user();
+  v_kind text := lower(btrim(coalesce(p_kind, '')));
+  v_title text := private.clean_text(p_title, 100);
+  v_body text := private.long_text(p_body, 4000);
+  v_game text := lower(btrim(coalesce(p_game, '')));
+  v_ctx jsonb := '{}'::jsonb;
+  v_files jsonb;
+  v_id bigint;
+begin
+  if v_kind not in ('game', 'improvement', 'bug', 'patch', 'other') then
+    raise exception 'Bad type' using errcode = '22023';
+  end if;
+  if v_title is null or char_length(v_title) < 3 then
+    raise exception 'Write a title' using errcode = '22023';
+  end if;
+  if v_body is null or char_length(v_body) < 10 then
+    raise exception 'Write a description' using errcode = '22023';
+  end if;
+  if v_game !~ '^[a-z0-9][a-z0-9-]{0,39}$' then
+    v_game := null;
+  end if;
+  if v_kind = 'bug' and p_ctx is not null and jsonb_typeof(p_ctx) = 'object' then
+    v_ctx := jsonb_strip_nulls(jsonb_build_object(
+      'ua', private.clean_text(p_ctx ->> 'ua', 240),
+      'w', case when (p_ctx ->> 'w') ~ '^[0-9]{1,5}$' then (p_ctx ->> 'w')::integer end,
+      'h', case when (p_ctx ->> 'h') ~ '^[0-9]{1,5}$' then (p_ctx ->> 'h')::integer end,
+      'lang', case when (p_ctx ->> 'lang') ~ '^[a-z]{2}$' then p_ctx ->> 'lang' end
+    ));
+  end if;
+  select i.id into v_id from public.ideas i
+    where i.user_id = v_uid and i.kind = v_kind and i.title = v_title and i.body = v_body and i.created_at > now() - interval '2 minutes'
+    order by i.id desc limit 1;
+  if v_id is not null then
+    return v_id;
+  end if;
+  v_files := private.files_clean('ideas', v_uid::text, p_files, 4);
+  perform private.rate_check('idea_create', 5, interval '1 hour');
+  perform private.rate_check('idea_create_d', 20, interval '1 day');
+  insert into public.ideas (user_id, kind, title, body, game, ctx, attachments)
+    values (v_uid, v_kind, v_title, v_body, v_game, v_ctx, v_files)
+    returning id into v_id;
+  perform private.files_sweep(v_uid);
+  return v_id;
+end;
+$$;
+
+create or replace function public.my_ideas()
+returns table (id bigint, kind text, title text, body text, game text, attachments jsonb, status text, reply text, reply_at timestamptz, created_at timestamptz, fresh boolean)
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := private.need_user();
+begin
+  return query
+    select i.id, i.kind, i.title, i.body, i.game, i.attachments, i.status, i.reply, i.reply_at, i.created_at, i.fresh
+    from public.ideas i
+    where i.user_id = v_uid
+    order by i.id desc
+    limit 100;
+  update public.ideas i set fresh = false where i.user_id = v_uid and i.fresh;
+end;
+$$;
+
+create or replace function public.my_idea_news()
+returns integer
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select count(*)::integer from public.ideas i where i.user_id = auth.uid() and i.fresh
+    and not exists (select 1 from public.profiles p where p.id = auth.uid() and p.locked);
+$$;
+
+create or replace function public.idea_delete(p_id bigint)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := private.need_user();
+  v_att jsonb;
+begin
+  delete from public.ideas i where i.id = p_id and i.user_id = v_uid returning i.attachments into v_att;
+  if not found then
+    raise exception 'Idea not found' using errcode = 'P0002';
+  end if;
+  perform private.files_rm('ideas', array(select a ->> 'path' from jsonb_array_elements(v_att) a));
+  return true;
+end;
+$$;
+
+create or replace function public.my_file_delete(p_bucket text, p_path text)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := private.need_user();
+  v_one jsonb := jsonb_build_array(jsonb_build_object('path', p_path));
+begin
+  if p_bucket is null or p_bucket not in ('ideas', 'tickets', 'dm') or p_path is null or left(p_path, 37) <> v_uid::text || '/' then
+    raise exception 'File not found' using errcode = 'P0002';
+  end if;
+  if not exists (select 1 from storage.objects o where o.bucket_id = p_bucket and o.name = p_path and o.owner_id = v_uid::text) then
+    raise exception 'File not found' using errcode = 'P0002';
+  end if;
+  if p_bucket = 'ideas' then
+    update public.ideas i set attachments = coalesce((select jsonb_agg(a) from jsonb_array_elements(i.attachments) a where a ->> 'path' <> p_path), '[]'::jsonb)
+      where i.user_id = v_uid and i.attachments @> v_one;
+  elsif p_bucket = 'tickets' then
+    update public.ticket_messages m set attachments = coalesce((select jsonb_agg(a) from jsonb_array_elements(m.attachments) a where a ->> 'path' <> p_path), '[]'::jsonb)
+      where m.author_id = v_uid and m.attachments @> v_one;
+  else
+    delete from public.dms d where d.from_id = v_uid and d.kind in ('image', 'file') and d.meta ->> 'path' = p_path;
+  end if;
+  perform private.files_rm(p_bucket, array[p_path]);
+  return true;
+end;
+$$;
+
+create or replace function public.my_file_usage()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := private.need_user();
+begin
+  return (
+    select jsonb_build_object('bytes', coalesce(sum(case when (o.metadata ->> 'size') ~ '^[0-9]{1,12}$' then (o.metadata ->> 'size')::bigint else 0 end), 0), 'files', count(*), 'cap', 209715200)
+    from storage.objects o
+    where o.bucket_id in ('ideas', 'tickets', 'dm') and o.name like v_uid::text || '/%'
+  );
+end;
+$$;
+
+create or replace function public.admin_ideas(p_kind text default null, p_status text default null, p_q text default null, p_before bigint default null, p_limit integer default 100)
+returns table (id bigint, user_id uuid, username text, display_name text, kind text, title text, body text, game text, ctx jsonb, attachments jsonb, status text, reply text, reply_at timestamptz, reply_by text, created_at timestamptz, updated_at timestamptz)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_q text := btrim(coalesce(p_q, ''));
+  v_pat text := '%' || replace(replace(replace(v_q, '\', '\\'), '%', '\%'), '_', '\_') || '%';
+begin
+  return query
+    select i.id, i.user_id, p.username, p.display_name, i.kind, i.title, i.body, i.game, i.ctx, i.attachments, i.status, i.reply, i.reply_at,
+      coalesce(r.username, r.display_name), i.created_at, i.updated_at
+    from public.ideas i
+    left join public.profiles p on p.id = i.user_id
+    left join public.profiles r on r.id = i.reply_by
+    where (p_kind is null or p_kind = '' or i.kind = p_kind)
+      and (p_status is null or p_status = '' or i.status = p_status)
+      and (p_before is null or i.id < p_before)
+      and (char_length(v_q) < 2 or i.title ilike v_pat or i.body ilike v_pat or p.username ilike v_pat or p.display_name ilike v_pat)
+    order by i.id desc
+    limit least(greatest(coalesce(p_limit, 100), 1), 200);
+end;
+$$;
+
+create or replace function public.admin_idea_count()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+begin
+  return (select jsonb_build_object('new', count(*) filter (where i.status = 'new'), 'total', count(*)) from public.ideas i);
+end;
+$$;
+
+create or replace function public.admin_idea_update(p_id bigint, p_status text default null, p_reply text default null)
+returns jsonb
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_reply text := private.long_text(p_reply, 2000);
+  v_old public.ideas%rowtype;
+  v_new public.ideas%rowtype;
+begin
+  if p_status is not null and p_status not in ('new', 'seen', 'planned', 'done', 'declined') then
+    raise exception 'Bad status' using errcode = '22023';
+  end if;
+  select * into v_old from public.ideas i where i.id = p_id for update;
+  if not found then
+    raise exception 'Idea not found' using errcode = 'P0002';
+  end if;
+  update public.ideas i set
+      status = coalesce(p_status, i.status),
+      reply = case when p_reply is null then i.reply else v_reply end,
+      reply_at = case when p_reply is null or v_reply is not distinct from i.reply then i.reply_at when v_reply is null then null else now() end,
+      reply_by = case when p_reply is null or v_reply is not distinct from i.reply then i.reply_by when v_reply is null then null else v_me end,
+      fresh = i.fresh
+        or (p_reply is not null and v_reply is not null and v_reply is distinct from i.reply)
+        or (p_status is not null and p_status <> i.status and p_status in ('planned', 'done', 'declined')),
+      updated_at = now()
+    where i.id = p_id
+    returning * into v_new;
+  if not (p_reply is null and p_status = 'seen' and v_old.status = 'new') then
+    perform private.admin_log('idea_update', v_new.user_id, jsonb_build_object('idea', v_new.id, 'title', left(v_new.title, 80), 'status', case when v_new.status <> v_old.status then v_new.status end, 'reply', case when v_new.reply is distinct from v_old.reply then true end));
+  end if;
+  return jsonb_build_object('id', v_new.id, 'status', v_new.status, 'reply', v_new.reply, 'reply_at', v_new.reply_at, 'updated_at', v_new.updated_at,
+    'reply_by', (select coalesce(p.username, p.display_name) from public.profiles p where p.id = v_new.reply_by));
+end;
+$$;
+
+create or replace function public.admin_idea_delete(p_id bigint)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_old public.ideas%rowtype;
+begin
+  delete from public.ideas i where i.id = p_id returning * into v_old;
+  if not found then
+    raise exception 'Idea not found' using errcode = 'P0002';
+  end if;
+  perform private.files_rm('ideas', array(select a ->> 'path' from jsonb_array_elements(v_old.attachments) a));
+  perform private.admin_log('idea_delete', v_old.user_id, jsonb_build_object('idea', v_old.id, 'title', left(v_old.title, 80)));
+  return true;
+end;
+$$;
+
+revoke all on function public.idea_create(text, text, text, jsonb, text, jsonb) from public, anon, authenticated;
+revoke all on function public.my_ideas() from public, anon, authenticated;
+revoke all on function public.my_idea_news() from public, anon, authenticated;
+revoke all on function public.admin_ideas(text, text, text, bigint, integer) from public, anon, authenticated;
+revoke all on function public.admin_idea_count() from public, anon, authenticated;
+revoke all on function public.admin_idea_update(bigint, text, text) from public, anon, authenticated;
+revoke all on function public.admin_idea_delete(bigint) from public, anon, authenticated;
+revoke all on function public.idea_delete(bigint) from public, anon, authenticated;
+revoke all on function public.my_file_delete(text, text) from public, anon, authenticated;
+revoke all on function public.my_file_usage() from public, anon, authenticated;
+grant execute on function public.idea_create(text, text, text, jsonb, text, jsonb) to authenticated;
+grant execute on function public.my_ideas() to authenticated;
+grant execute on function public.my_idea_news() to authenticated;
+grant execute on function public.admin_ideas(text, text, text, bigint, integer) to authenticated;
+grant execute on function public.admin_idea_count() to authenticated;
+grant execute on function public.admin_idea_update(bigint, text, text) to authenticated;
+grant execute on function public.admin_idea_delete(bigint) to authenticated;
+grant execute on function public.idea_delete(bigint) to authenticated;
+grant execute on function public.my_file_delete(text, text) to authenticated;
+grant execute on function public.my_file_usage() to authenticated;
+
+alter table public.dms drop constraint if exists dms_kind_check;
+alter table public.dms add constraint dms_kind_check check (kind in ('text', 'image', 'invite', 'join', 'file'));
+create index if not exists dms_path_idx on public.dms ((meta ->> 'path')) where kind in ('image', 'file');
+
+create or replace function public.dm_send(p_to uuid, p_kind text, p_body text default null, p_meta jsonb default '{}'::jsonb)
+returns bigint
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := auth.uid();
+  v_kind text := coalesce(p_kind, 'text');
+  v_body text;
+  v_meta jsonb := '{}'::jsonb;
+  v_file jsonb;
+  v_id bigint;
+begin
+  if v_me is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if exists (select 1 from public.profiles p where p.id = v_me and p.locked) then
+    raise exception 'Account locked' using errcode = '42501';
+  end if;
+  if private.blocked_between(v_me, p_to) or not exists (select 1 from public.friends f where f.user_id = v_me and f.friend_id = p_to) then
+    raise exception 'Not friends' using errcode = '42501';
+  end if;
+  if private.over('dm:' || v_me::text, date_trunc('minute', now()), 40) then
+    raise exception 'Too many messages' using errcode = '54000';
+  end if;
+  if v_kind = 'text' then
+    v_body := left(btrim(regexp_replace(coalesce(p_body, ''), '[\x01-\x08\x0B\x0C\x0E-\x1F\x7F]', '', 'g')), 2000);
+    if v_body = '' then
+      raise exception 'Write a message' using errcode = '22023';
+    end if;
+    perform private.rate_check('dm_text', 30, interval '1 minute');
+    perform private.rate_check('dm_text_h', 600, interval '1 hour');
+  elsif v_kind = 'image' then
+    if coalesce(p_meta ->> 'path', '') !~ ('^' || v_me::text || '/' || p_to::text || '/[a-z0-9-]{8,64}\.(webp|jpg|png|gif)$') then
+      raise exception 'Bad image' using errcode = '22023';
+    end if;
+    v_file := private.files_clean('dm', v_me::text || '/' || p_to::text, jsonb_build_array(jsonb_build_object('path', p_meta ->> 'path')), 1) -> 0;
+    perform private.rate_check('dm_image', 10, interval '1 minute');
+    perform private.rate_check('dm_image_d', 150, interval '1 day');
+    v_meta := jsonb_build_object('path', p_meta ->> 'path', 'w', least(greatest(coalesce((p_meta ->> 'w')::int, 0), 0), 8000), 'h', least(greatest(coalesce((p_meta ->> 'h')::int, 0), 0), 8000));
+  elsif v_kind = 'file' then
+    if coalesce(p_meta ->> 'path', '') !~ ('^' || v_me::text || '/' || p_to::text || '/[a-z0-9-]{8,64}\.(pdf|txt|md|csv|json|log|zip)$') then
+      raise exception 'Bad file' using errcode = '22023';
+    end if;
+    v_file := private.files_clean('dm', v_me::text || '/' || p_to::text, jsonb_build_array(jsonb_build_object('path', p_meta ->> 'path', 'name', p_meta ->> 'name')), 1) -> 0;
+    perform private.rate_check('dm_file', 5, interval '1 minute');
+    perform private.rate_check('dm_file_d', 40, interval '1 day');
+    v_meta := v_file - 'kind';
+    v_body := v_file ->> 'name';
+  elsif v_kind in ('invite', 'join') then
+    if coalesce(p_meta ->> 'game', '') !~ '^[a-z0-9][a-z0-9-]{0,39}$' then
+      raise exception 'Bad game' using errcode = '22023';
+    end if;
+    if v_kind = 'invite' and coalesce(p_meta ->> 'code', '') !~ '^[A-Z0-9]{3,8}$' then
+      raise exception 'Bad code' using errcode = '22023';
+    end if;
+    v_meta := jsonb_build_object('game', p_meta ->> 'game') || case when v_kind = 'invite' then jsonb_build_object('code', p_meta ->> 'code') else '{}'::jsonb end;
+    if exists (select 1 from public.dms d where d.from_id = v_me and d.to_id = p_to and d.kind = v_kind and d.meta = v_meta and d.read_at is null and d.created_at > now() - interval '30 seconds') then
+      select d.id into v_id from public.dms d where d.from_id = v_me and d.to_id = p_to and d.kind = v_kind and d.meta = v_meta and d.read_at is null order by d.id desc limit 1;
+      return v_id;
+    end if;
+    perform private.rate_check('party', 1, interval '3 seconds');
+    perform private.rate_check('party_h', 300, interval '1 hour');
+    delete from public.dms d where d.from_id = v_me and d.to_id = p_to and d.kind = v_kind and d.read_at is null and d.meta ->> 'game' = v_meta ->> 'game';
+  else
+    raise exception 'Bad kind' using errcode = '22023';
+  end if;
+  insert into public.dms (from_id, to_id, kind, body, meta) values (v_me, p_to, v_kind, v_body, v_meta) returning id into v_id;
+  if v_kind in ('image', 'file') then
+    perform private.files_sweep(v_me);
+  end if;
+  return v_id;
+end;
+$$;
+revoke all on function public.dm_send(uuid, text, text, jsonb) from public, anon, authenticated;
+grant execute on function public.dm_send(uuid, text, text, jsonb) to authenticated;
+
+alter table public.ticket_messages add column if not exists attachments jsonb not null default '[]'::jsonb;
+alter table public.ticket_messages drop constraint if exists ticket_messages_attachments_check;
+alter table public.ticket_messages add constraint ticket_messages_attachments_check check (jsonb_typeof(attachments) = 'array' and pg_column_size(attachments) <= 8192);
+create index if not exists ticket_messages_attachments_idx on public.ticket_messages using gin (attachments jsonb_path_ops);
+
+drop function if exists public.ticket_create(text, text);
+create or replace function public.ticket_create(p_subject text, p_body text, p_files jsonb default '[]'::jsonb)
+returns bigint
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_files jsonb := '[]'::jsonb;
+  v_id bigint;
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if p_files is not null and jsonb_typeof(p_files) = 'array' and jsonb_array_length(p_files) > 0 then
+    perform private.need_user();
+    v_files := private.files_clean('tickets', v_uid::text, p_files, 4);
+  end if;
+  if not private.is_staff(v_uid) then
+    perform private.rate_check('ticket_create', 3, interval '10 minutes');
+    perform private.rate_check('ticket_create_d', 12, interval '1 day');
+    if (select count(*) from public.tickets t where t.user_id = v_uid and t.status = 'open') >= 10 then
+      raise exception 'Too many open tickets' using errcode = '54000';
+    end if;
+  end if;
+  insert into public.tickets (user_id, subject) values (v_uid, p_subject) returning id into v_id;
+  insert into public.ticket_messages (ticket_id, body, attachments) values (v_id, p_body, v_files);
+  if v_files <> '[]'::jsonb then
+    perform private.files_sweep(v_uid);
+  end if;
+  return v_id;
+end;
+$$;
+
+drop function if exists public.ticket_send(bigint, text);
+create or replace function public.ticket_send(p_ticket bigint, p_body text, p_files jsonb default '[]'::jsonb)
+returns bigint
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_files jsonb := '[]'::jsonb;
+  v_id bigint;
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if p_files is not null and jsonb_typeof(p_files) = 'array' and jsonb_array_length(p_files) > 0 then
+    perform private.need_user();
+    v_files := private.files_clean('tickets', v_uid::text, p_files, 4);
+  end if;
+  if not private.is_staff(v_uid) then
+    perform private.rate_check('ticket_send', 10, interval '1 minute');
+    perform private.rate_check('ticket_send_d', 200, interval '1 day');
+  end if;
+  insert into public.ticket_messages (ticket_id, body, attachments) values (p_ticket, p_body, v_files) returning id into v_id;
+  if v_files <> '[]'::jsonb then
+    perform private.files_sweep(v_uid);
+  end if;
+  return v_id;
+end;
+$$;
+
+drop function if exists public.ticket_thread(bigint);
+create or replace function public.ticket_thread(p_ticket bigint)
+returns table (id bigint, body text, is_admin boolean, mine boolean, author text, created_at timestamptz, attachments jsonb)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_admin boolean := public.is_admin();
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if not exists (select 1 from public.tickets t where t.id = p_ticket and (t.user_id = v_uid or v_admin)) then
+    raise exception 'Ticket not found' using errcode = 'P0002';
+  end if;
+  return query
+    select m.id, m.body, m.is_admin, m.author_id = v_uid,
+      case when v_admin then coalesce(p.username, p.display_name) end,
+      m.created_at, m.attachments
+    from public.ticket_messages m
+    left join public.profiles p on p.id = m.author_id
+    where m.ticket_id = p_ticket
+    order by m.id
+    limit 500;
+end;
+$$;
+
+revoke all on function public.ticket_create(text, text, jsonb) from public, anon, authenticated;
+revoke all on function public.ticket_send(bigint, text, jsonb) from public, anon, authenticated;
+revoke all on function public.ticket_thread(bigint) from public, anon, authenticated;
+grant execute on function public.ticket_create(text, text, jsonb) to authenticated;
+grant execute on function public.ticket_send(bigint, text, jsonb) to authenticated;
+grant execute on function public.ticket_thread(bigint) to authenticated;
+
+create or replace function public.file_upload_ok(p_bucket text)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := auth.uid();
+  v_recent bigint;
+  v_day bigint;
+  v_all bigint;
+begin
+  if v_me is null or p_bucket is null or p_bucket not in ('ideas', 'tickets', 'dm') then
+    return false;
+  end if;
+  if exists (select 1 from public.profiles p where p.id = v_me and p.locked) then
+    return false;
+  end if;
+  if private.is_staff(v_me) then
+    return true;
+  end if;
+  select count(*) filter (where o.bucket_id = p_bucket and o.created_at > now() - interval '10 minutes'),
+      count(*) filter (where o.bucket_id = p_bucket and o.created_at > now() - interval '1 day'),
+      coalesce(sum(case when (o.metadata ->> 'size') ~ '^[0-9]{1,12}$' then (o.metadata ->> 'size')::bigint else 0 end), 0)
+    into v_recent, v_day, v_all
+    from storage.objects o
+    where o.bucket_id in ('ideas', 'tickets', 'dm') and o.name like v_me::text || '/%';
+  if v_all >= 209715200 then
+    return false;
+  end if;
+  if p_bucket = 'dm' then
+    return v_recent < 60 and v_day < 300;
+  end if;
+  return v_recent < 30 and v_day < 100;
+end;
+$$;
+
+create or replace function public.file_mine(p_bucket text, p_name text)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := auth.uid();
+  v_one jsonb := jsonb_build_array(jsonb_build_object('path', p_name));
+begin
+  if v_me is null or exists (select 1 from public.profiles p where p.id = v_me and p.locked) then
+    return false;
+  end if;
+  if p_bucket = 'ideas' then
+    return exists (select 1 from public.ideas i where i.user_id = v_me and i.attachments @> v_one);
+  elsif p_bucket = 'tickets' then
+    return exists (select 1 from public.ticket_messages m join public.tickets t on t.id = m.ticket_id where t.user_id = v_me and m.attachments @> v_one);
+  elsif p_bucket = 'dm' then
+    return exists (select 1 from public.dms d where d.kind in ('image', 'file') and d.meta ->> 'path' = p_name and v_me in (d.from_id, d.to_id));
+  end if;
+  return false;
+end;
+$$;
+
+create table if not exists private.file_opens (
+  admin_id uuid not null references auth.users (id) on delete cascade,
+  bucket text not null,
+  path text not null,
+  at timestamptz not null default now(),
+  primary key (admin_id, bucket, path)
+);
+create index if not exists file_opens_at_idx on private.file_opens (at);
+alter table private.file_opens enable row level security;
+revoke all on private.file_opens from public, anon, authenticated;
+
+create or replace function public.admin_files_open(p_bucket text, p_paths text[])
+returns integer
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_path text;
+  v_one jsonb;
+  v_ref bigint;
+  v_owner uuid;
+  v_n integer := 0;
+begin
+  if p_bucket is null or p_bucket not in ('ideas', 'tickets') or p_paths is null or cardinality(p_paths) > 40 then
+    raise exception 'Bad request' using errcode = '22023';
+  end if;
+  foreach v_path in array p_paths loop
+    v_one := jsonb_build_array(jsonb_build_object('path', v_path));
+    v_ref := null;
+    v_owner := null;
+    if p_bucket = 'ideas' then
+      select i.id, i.user_id into v_ref, v_owner from public.ideas i where i.attachments @> v_one limit 1;
+    else
+      select t.id, t.user_id into v_ref, v_owner from public.ticket_messages m join public.tickets t on t.id = m.ticket_id where m.attachments @> v_one limit 1;
+    end if;
+    if v_ref is null then
+      continue;
+    end if;
+    insert into private.file_opens as f (admin_id, bucket, path, at) values (v_me, p_bucket, v_path, now())
+      on conflict (admin_id, bucket, path) do update set at = excluded.at;
+    v_n := v_n + 1;
+    if not exists (select 1 from public.admin_log l where l.admin_id = v_me and l.action = case when p_bucket = 'ideas' then 'idea_files' else 'ticket_files' end and (l.detail ->> 'ref')::bigint = v_ref and l.at > now() - interval '30 minutes') then
+      perform private.admin_log(case when p_bucket = 'ideas' then 'idea_files' else 'ticket_files' end, v_owner, jsonb_build_object('ref', v_ref));
+    end if;
+  end loop;
+  if random() < 0.05 then
+    delete from private.file_opens where at < now() - interval '1 day';
+  end if;
+  return v_n;
+end;
+$$;
+
+create or replace function public.file_staff_ok(p_bucket text, p_name text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select private.is_staff(auth.uid())
+    and exists (select 1 from private.file_opens f where f.admin_id = auth.uid() and f.bucket = p_bucket and f.path = p_name and f.at > now() - interval '1 hour');
+$$;
+
+create or replace function public.admin_files_cleanup()
+returns integer
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_n integer;
+begin
+  v_n := private.files_sweep(null);
+  if v_n > 0 then
+    perform private.admin_log('files_cleanup', null, jsonb_build_object('files', v_n));
+  end if;
+  return v_n;
+end;
+$$;
+
+revoke all on function public.file_upload_ok(text) from public, anon, authenticated;
+revoke all on function public.file_mine(text, text) from public, anon, authenticated;
+revoke all on function public.file_staff_ok(text, text) from public, anon, authenticated;
+revoke all on function public.admin_files_open(text, text[]) from public, anon, authenticated;
+revoke all on function public.admin_files_cleanup() from public, anon, authenticated;
+grant execute on function public.file_upload_ok(text) to authenticated;
+grant execute on function public.file_mine(text, text) to authenticated;
+grant execute on function public.file_staff_ok(text, text) to authenticated;
+grant execute on function public.admin_files_open(text, text[]) to authenticated;
+grant execute on function public.admin_files_cleanup() to authenticated;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values
+  ('ideas', 'ideas', false, 8388608, array['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf', 'text/plain', 'text/markdown', 'text/csv', 'application/json', 'application/zip']),
+  ('tickets', 'tickets', false, 8388608, array['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf', 'text/plain', 'text/markdown', 'text/csv', 'application/json', 'application/zip']),
+  ('dm', 'dm', false, 8388608, array['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf', 'text/plain', 'text/markdown', 'text/csv', 'application/json', 'application/zip'])
+on conflict (id) do update set public = false, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "ideas: upload own" on storage.objects;
+create policy "ideas: upload own" on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'ideas'
+    and name ~ ('^' || (select auth.uid())::text || '/[a-z0-9-]{8,64}\.(png|jpg|webp|gif|pdf|txt|md|csv|json|log|zip)$')
+    and public.file_upload_ok('ideas')
+  );
+drop policy if exists "ideas: read own or staff" on storage.objects;
+create policy "ideas: read own or staff" on storage.objects for select to authenticated
+  using (bucket_id = 'ideas' and (public.file_mine('ideas', name) or public.file_staff_ok('ideas', name)));
+
+drop policy if exists "tickets: upload own" on storage.objects;
+create policy "tickets: upload own" on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'tickets'
+    and name ~ ('^' || (select auth.uid())::text || '/[a-z0-9-]{8,64}\.(png|jpg|webp|gif|pdf|txt|md|csv|json|log|zip)$')
+    and public.file_upload_ok('tickets')
+  );
+drop policy if exists "tickets: read own ticket or staff" on storage.objects;
+create policy "tickets: read own ticket or staff" on storage.objects for select to authenticated
+  using (bucket_id = 'tickets' and (public.file_mine('tickets', name) or public.file_staff_ok('tickets', name)));
+
+drop policy if exists "dm: upload to friend" on storage.objects;
+create policy "dm: upload to friend" on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'dm'
+    and name ~ ('^' || (select auth.uid())::text || '/[0-9a-f-]{36}/[a-z0-9-]{8,64}\.(png|jpg|webp|gif|pdf|txt|md|csv|json|log|zip)$')
+    and exists (select 1 from public.friends f where f.user_id = (select auth.uid()) and f.friend_id::text = (storage.foldername(name))[2])
+    and public.file_upload_ok('dm')
+    and public.dm_upload_ok((storage.foldername(name))[2])
+  );
+drop policy if exists "dm: read own conversations" on storage.objects;
+create policy "dm: read own conversations" on storage.objects for select to authenticated
+  using (bucket_id = 'dm' and (select auth.uid())::text in ((storage.foldername(name))[1], (storage.foldername(name))[2]) and public.file_mine('dm', name));
+
+create or replace function public.export_my_data()
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if auth.uid() is null then
+    return null;
+  end if;
+  perform private.rate_check('export', 5, interval '1 hour');
+  return jsonb_build_object(
+    'exported_at', now(),
+    'account', (select jsonb_build_object('id', u.id, 'email', u.email, 'created_at', u.created_at, 'last_sign_in_at', u.last_sign_in_at, 'providers', u.raw_app_meta_data -> 'providers') from auth.users u where u.id = auth.uid()),
+    'profile', (select to_jsonb(p) from public.profiles p where p.id = auth.uid()),
+    'game_stats', coalesce((select jsonb_agg(to_jsonb(s) order by s.game_id) from public.game_stats s where s.user_id = auth.uid()), '[]'::jsonb),
+    'game_saves', coalesce((select jsonb_agg(to_jsonb(s) order by s.game_id) from public.game_saves s where s.user_id = auth.uid()), '[]'::jsonb),
+    'friends', coalesce((select jsonb_agg(to_jsonb(f)) from public.my_friends() f), '[]'::jsonb),
+    'friend_requests', coalesce((select jsonb_agg(to_jsonb(r)) from public.my_friend_requests() r), '[]'::jsonb),
+    'blocks', coalesce((select jsonb_agg(jsonb_build_object('blocked', b.blocked, 'created_at', b.created_at)) from public.user_blocks b where b.blocker = auth.uid()), '[]'::jsonb),
+    'analytics_events', coalesce((select jsonb_agg(to_jsonb(e) order by e.created_at) from (select created_at, session_id, event, game_id, props, device from public.analytics_events where user_id = auth.uid() order by created_at desc limit 20000) e), '[]'::jsonb),
+    'ideas', coalesce((select jsonb_agg(jsonb_build_object('id', i.id, 'kind', i.kind, 'title', i.title, 'body', i.body, 'game', i.game, 'context', i.ctx, 'attachments', i.attachments, 'status', i.status, 'reply', i.reply, 'reply_at', i.reply_at, 'created_at', i.created_at) order by i.id) from public.ideas i where i.user_id = auth.uid()), '[]'::jsonb),
+    'tickets', coalesce((select jsonb_agg(jsonb_build_object('id', t.id, 'subject', t.subject, 'status', t.status, 'created_at', t.created_at,
+      'messages', coalesce((select jsonb_agg(jsonb_build_object('from_staff', m.is_admin, 'body', m.body, 'attachments', m.attachments, 'created_at', m.created_at) order by m.id) from public.ticket_messages m where m.ticket_id = t.id), '[]'::jsonb)) order by t.id) from public.tickets t where t.user_id = auth.uid()), '[]'::jsonb),
+    'files', coalesce((select jsonb_agg(jsonb_build_object('bucket', o.bucket_id, 'path', o.name, 'size', o.metadata -> 'size', 'type', o.metadata -> 'mimetype', 'created_at', o.created_at) order by o.created_at) from storage.objects o where o.bucket_id in ('ideas', 'tickets', 'dm') and o.name like auth.uid()::text || '/%'), '[]'::jsonb)
+  );
+end;
+$$;
+
+create or replace function public.delete_my_account()
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  perform private.rate_check('delete_account', 3, interval '1 hour');
+  perform private.files_drop_user(v_uid);
+  delete from public.ideas where user_id = v_uid;
+  delete from public.game_saves where user_id = v_uid;
+  delete from public.game_stats where user_id = v_uid;
+  delete from public.friends where user_id = v_uid or friend_id = v_uid;
+  delete from public.friend_requests where from_id = v_uid or to_id = v_uid;
+  delete from public.dms where from_id = v_uid or to_id = v_uid;
+  delete from public.user_blocks where blocker = v_uid or blocked = v_uid;
+  update public.analytics_events set user_id = null where user_id = v_uid;
+  begin
+    delete from auth.users where id = v_uid;
+    return 'deleted';
+  exception when insufficient_privilege then
+    update public.profiles set username = null, display_name = null, avatar_url = null where id = v_uid;
+    insert into public.account_deletion_requests (user_id) values (v_uid) on conflict (user_id) do nothing;
+    return 'requested';
+  end;
+end;
+$$;
+revoke all on function public.export_my_data() from public, anon, authenticated;
+revoke all on function public.delete_my_account() from public, anon, authenticated;
+grant execute on function public.export_my_data() to authenticated;
+grant execute on function public.delete_my_account() to authenticated;
+
+create or replace function private.profile_files_gone()
+returns trigger
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+begin
+  begin
+    perform private.files_drop_user(old.id);
+  exception when others then
+    null;
+  end;
+  return old;
+end;
+$$;
+revoke all on function private.profile_files_gone() from public, anon, authenticated;
+drop trigger if exists profiles_files_gone on public.profiles;
+create trigger profiles_files_gone before delete on public.profiles
+  for each row execute function private.profile_files_gone();
+
+notify pgrst, 'reload schema';
+
+alter table public.analytics_events add column if not exists skip smallint not null default 0;
+alter table public.analytics_events add column if not exists pre boolean not null default false;
+create index if not exists analytics_visitor_idx on public.analytics_events (visitor_id) where visitor_id is not null;
+
+create table if not exists private.an_link (
+  k text primary key,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  at timestamptz not null default now()
+);
+create index if not exists an_link_user_idx on private.an_link (user_id);
+create index if not exists an_link_at_idx on private.an_link (at);
+alter table private.an_link enable row level security;
+revoke all on table private.an_link from public, anon, authenticated;
+
+create table if not exists private.an_events (
+  event text primary key check (event ~ '^[a-z0-9_]{1,40}$')
+);
+alter table private.an_events enable row level security;
+revoke all on table private.an_events from public, anon, authenticated;
+insert into private.an_events (event)
+select unnest(array['session', 'session_end', 'sess_sum', 'view', 'page_time', 'scroll', 'impr', 'tile_click', 'search', 'search_go', 'filter', 'filter_clear', 'sort', 'ui', 'soon', 'setting', 'profile',
+  'consent', 'auth', 'friend', 'dm', 'ticket', 'admin', 'favourite', 'idea', 'file', 'data_download', 'records_reset', 'update_ready', 'rage', 'dead', 'vitals', 'error', 'kb', 'pad', 'rebind',
+  'env_dev', 'env_geo', 'env_scr', 'env_caps', 'game_open', 'game_launch', 'game_play', 'game_time', 'game_active', 'game_quit', 'restart', 'pause', 'fullscreen',
+  'online_party', 'party_create', 'party_join', 'party_retry', 'party_play', 'rl_match', 'rl_left', 'subway_start', 'subway_over', 'ad_impression', 'ad_click', 'ad_revenue'])
+on conflict (event) do nothing;
+
+create or replace function private.an_level(p_uid uuid)
+returns smallint
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select (case
+    when p_uid is null then 0
+    when exists (select 1 from public.test_accounts t where t.user_id = p_uid) then 2
+    when exists (select 1 from public.profiles p where p.id = p_uid and p.role in ('admin', 'owner')) then 1
+    else 0 end)::smallint;
+$$;
+
+create or replace function private.an_lvl()
+returns smallint
+language sql
+stable
+set search_path = ''
+as $$
+  select (case current_setting('gp.an_lvl', true) when '0' then 0 when '2' then 2 else 1 end)::smallint;
+$$;
+
+create or replace function private.an_user_ok(p_uid uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select private.an_level(p_uid) <= private.an_lvl();
+$$;
+
+create or replace function private.analytics_ident()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_sk text := 's:' || new.session_id;
+  v_vk text := case when new.visitor_id is null then null else 'v:' || new.visitor_id end;
+  v_uid uuid;
+  v_lvl smallint := 0;
+  v_l smallint;
+  v_ip text;
+begin
+  if not exists (select 1 from private.an_events a where a.event = new.event) then
+    return null;
+  end if;
+  if new.user_id is not null and auth.uid() is not null and new.user_id <> auth.uid() then
+    return new;
+  end if;
+  if new.user_id is null then
+    if octet_length(new.props::text) > 1500 then
+      return null;
+    end if;
+    v_ip := private.client_ip();
+    if v_ip <> '' and private.over('ai:' || md5(v_ip), date_trunc('hour', now()), 5000) then
+      return null;
+    end if;
+  end if;
+  if exists (select 1 from public.analytics_events x where x.session_id = new.session_id and x.event = new.event and x.client_at = new.client_at and x.props = new.props) then
+    return null;
+  end if;
+  new.pre := false;
+  if new.user_id is not null then
+    v_lvl := private.an_level(new.user_id);
+    if not exists (select 1 from private.an_link l where l.k = v_sk) then
+      insert into private.an_link (k, user_id) values (v_sk, new.user_id) on conflict (k) do nothing;
+      update public.analytics_events e set pre = true, skip = greatest(e.skip, v_lvl)
+        where e.session_id = new.session_id and e.user_id is null and (not e.pre or e.skip < v_lvl);
+    end if;
+    if v_lvl > 0 and v_vk is not null and not exists (select 1 from private.an_link l where l.k = v_vk and private.an_level(l.user_id) >= v_lvl) then
+      insert into private.an_link (k, user_id) values (v_vk, new.user_id)
+        on conflict (k) do update set user_id = excluded.user_id, at = now();
+      update public.analytics_events e set skip = v_lvl
+        where e.visitor_id = new.visitor_id and e.user_id is null and e.skip < v_lvl;
+    end if;
+  else
+    select l.user_id into v_uid from private.an_link l where l.k = v_sk;
+    if v_uid is not null then
+      new.pre := true;
+      v_lvl := private.an_level(v_uid);
+    end if;
+    if v_lvl < 2 and v_vk is not null then
+      select private.an_level(l.user_id) into v_l from private.an_link l where l.k = v_vk;
+      v_lvl := greatest(v_lvl, coalesce(v_l, 0));
+    end if;
+  end if;
+  new.skip := v_lvl;
+  return new;
+end;
+$$;
+
+drop trigger if exists analytics_ident on public.analytics_events;
+create trigger analytics_ident before insert on public.analytics_events
+  for each row execute function private.analytics_ident();
+
+create or replace function private.an_reflag(p_uid uuid)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_lvl smallint := private.an_level(p_uid);
+  v_vids text[];
+  v_vid text;
+  v_l smallint;
+begin
+  if p_uid is null then
+    return;
+  end if;
+  update public.analytics_events e set skip = v_lvl where e.user_id = p_uid and e.skip <> v_lvl;
+  update public.analytics_events e set skip = v_lvl
+    from private.an_link l
+    where l.user_id = p_uid and l.k like 's:%' and e.session_id = substr(l.k, 3) and e.user_id is null and e.skip <> v_lvl;
+  select array_agg(distinct e.visitor_id) into v_vids from public.analytics_events e where e.user_id = p_uid and e.visitor_id is not null;
+  if v_lvl > 0 then
+    insert into private.an_link as l (k, user_id)
+      select 'v:' || x.v, p_uid from unnest(coalesce(v_vids, array[]::text[])) x(v)
+      on conflict (k) do update set user_id = excluded.user_id, at = now() where private.an_level(l.user_id) < v_lvl;
+  else
+    delete from private.an_link l where l.user_id = p_uid and l.k like 'v:%';
+  end if;
+  foreach v_vid in array coalesce(v_vids, array[]::text[]) loop
+    select coalesce(max(private.an_level(l.user_id)), 0) into v_l from private.an_link l where l.k = 'v:' || v_vid;
+    update public.analytics_events e set skip = v_l where e.visitor_id = v_vid and e.user_id is null and not e.pre and e.skip <> v_l;
+  end loop;
+end;
+$$;
+
+create or replace function private.an_role_sync()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if tg_table_name = 'profiles' then
+    perform private.an_reflag(new.id);
+  else
+    perform private.an_reflag(new.user_id);
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists profiles_an_role on public.profiles;
+create trigger profiles_an_role after update of role on public.profiles
+  for each row when (old.role is distinct from new.role) execute function private.an_role_sync();
+drop trigger if exists test_accounts_an on public.test_accounts;
+create trigger test_accounts_an after insert on public.test_accounts
+  for each row execute function private.an_role_sync();
+
+do $$
+declare
+  r record;
+begin
+  perform set_config('statement_timeout', '0', true);
+  insert into private.an_link (k, user_id)
+    select 's:' || x.session_id, x.user_id
+    from (select distinct on (e.session_id) e.session_id, e.user_id from public.analytics_events e where e.user_id is not null order by e.session_id, e.id) x
+    on conflict (k) do nothing;
+  update public.analytics_events e set pre = true
+    from private.an_link l
+    where l.k = 's:' || e.session_id and e.user_id is null and not e.pre;
+  for r in select t.user_id as id from public.test_accounts t union select p.id from public.profiles p where p.role in ('admin', 'owner') loop
+    perform private.an_reflag(r.id);
+  end loop;
+end;
+$$;
+
+create or replace view private.an_ev as
+select e.id, e.created_at, e.client_at, e.session_id, e.visitor_id, e.user_id, e.event, e.game_id, e.props, e.device, e.pre,
+  case when e.user_id is not null then e.user_id::text when e.pre then null else coalesce(e.visitor_id, e.session_id) end as who
+from public.analytics_events e
+where e.skip <= (select private.an_lvl());
+revoke all on table private.an_ev from public, anon, authenticated;
+
+do $$
+begin
+  execute $v$create or replace view admin.events_who with (security_invoker = true) as
+select e.id, e.created_at, e.client_at, e.session_id, e.visitor_id, e.user_id, e.event, e.game_id, e.props, e.device,
+  e.who,
+  (e.created_at at time zone 'Europe/Paris')::date as day
+from private.an_ev e$v$;
+exception when invalid_table_definition then
+  null;
+end;
+$$;
+
+create or replace view admin.daily_active_users with (security_invoker = true) as
+select day,
+  count(distinct who) as active_players,
+  count(distinct user_id) as signed_in_players,
+  count(distinct session_id) as sessions,
+  count(*) filter (where event = 'game_launch') as game_launches,
+  round(coalesce(sum(case when event = 'game_time' and jsonb_typeof(props -> 'sec') = 'number' then (props ->> 'sec')::numeric end), 0) / 3600, 2) as hours_played,
+  count(*) as events
+from admin.events_who
+group by day
+order by day desc;
+
+create or replace view admin.retention with (security_invoker = true) as
+with active as (
+  select who, day
+  from admin.events_who
+  where who is not null and created_at >= now() - interval '120 days'
+  group by 1, 2
+), firsts as (
+  select who, min(day) as first_day from active group by who
+)
+select f.first_day as cohort_day,
+  count(*) as new_players,
+  round(100.0 * count(*) filter (where exists (select 1 from active a where a.who = f.who and a.day = f.first_day + 1)) / count(*), 1) as day1_pct,
+  round(100.0 * count(*) filter (where exists (select 1 from active a where a.who = f.who and a.day = f.first_day + 7)) / count(*), 1) as day7_pct,
+  round(100.0 * count(*) filter (where exists (select 1 from active a where a.who = f.who and a.day = f.first_day + 30)) / count(*), 1) as day30_pct,
+  round(100.0 * count(*) filter (where exists (select 1 from active a where a.who = f.who and a.day > f.first_day and a.day <= f.first_day + 7)) / count(*), 1) as back_within_7d_pct
+from firsts f
+group by f.first_day
+order by cohort_day desc;
+
+create or replace view admin.signups_daily with (security_invoker = true) as
+select (u.created_at at time zone 'Europe/Paris')::date as day,
+  count(*) as signups,
+  count(*) filter (where u.raw_app_meta_data ->> 'provider' = 'google') as with_google,
+  count(*) filter (where u.raw_app_meta_data ->> 'provider' = 'email') as with_email,
+  count(*) filter (where u.email_confirmed_at is not null) as confirmed
+from auth.users u
+where private.an_user_ok(u.id)
+group by 1
+order by 1 desc;
+
+create or replace view admin.account_game_totals with (security_invoker = true) as
+select game_id,
+  count(*) as accounts,
+  sum(plays) as plays,
+  round((sum(seconds_played) / 3600)::numeric, 2) as hours,
+  max(last_played) as last_played
+from public.game_stats
+where private.an_user_ok(user_id)
+group by game_id
+order by plays desc;
+
+create or replace view admin.top_searches with (security_invoker = true) as
+select props ->> 'q' as query,
+  count(*) as searches,
+  count(*) filter (where jsonb_typeof(props -> 'n') = 'number' and (props ->> 'n')::numeric = 0) as with_no_results,
+  max(created_at) as last_searched
+from private.an_ev
+where event = 'search' and props ? 'q'
+group by 1
+order by searches desc;
+
+create or replace view admin.recent_errors with (security_invoker = true) as
+select created_at, game_id, props ->> 'where' as place, props ->> 'msg' as message, device, session_id
+from private.an_ev
+where event = 'error'
+order by created_at desc
+limit 500;
+
+create or replace view admin.devices with (security_invoker = true) as
+select coalesce(device, 'unknown') as device,
+  props ->> 'os' as os,
+  props ->> 'browser' as browser,
+  count(distinct session_id) as sessions
+from private.an_ev
+where event = 'session'
+group by 1, 2, 3
+order by sessions desc;
+
+create or replace view admin.overview with (security_invoker = true) as
+select
+  (select count(*) from auth.users u where private.an_user_ok(u.id)) as accounts,
+  (select count(*) from auth.users u where u.created_at > now() - interval '7 days' and private.an_user_ok(u.id)) as new_accounts_7d,
+  (select count(*) from public.profiles p where p.username is not null and private.an_user_ok(p.id)) as accounts_with_username,
+  (select count(*) from private.an_ev e where e.created_at > now() - interval '30 days') as events,
+  (select count(distinct who) from admin.events_who where created_at >= ((now() at time zone 'Europe/Paris')::date::timestamp at time zone 'Europe/Paris')) as active_today,
+  (select count(distinct who) from admin.events_who where created_at > now() - interval '7 days') as active_7d,
+  (select count(distinct who) from admin.events_who where created_at > now() - interval '30 days') as active_30d,
+  (select count(*) from private.an_ev where event = 'game_launch' and created_at > now() - interval '7 days') as launches_7d,
+  (select round(coalesce(sum(x.sec), 0) / 3600, 1) from private.play_rows(now() - interval '7 days') x) as hours_played_7d;
+
+create or replace function admin.top_games(p_days integer default 7)
+returns table (game_id text, launches bigint, players bigint, hours numeric)
+language sql
+stable
+set search_path = ''
+as $$
+  select e.game_id,
+    count(*) filter (where e.event = 'game_launch'),
+    count(distinct e.who),
+    round(coalesce(sum(case when e.event = 'game_time' and jsonb_typeof(e.props -> 'sec') = 'number' then (e.props ->> 'sec')::numeric end), 0) / 3600, 2)
+  from private.an_ev e
+  where e.game_id is not null and e.created_at > now() - make_interval(days => greatest(1, p_days))
+  group by e.game_id
+  order by 2 desc, 4 desc;
+$$;
+
+revoke all on all tables in schema admin from public, anon, authenticated;
+revoke all on all functions in schema admin from public, anon, authenticated;
+
+create or replace function private.ins_top(p_event text, p_key text, p_since timestamptz, p_n integer default 15)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc, t.k), '[]'::jsonb)
+  from (
+    select e.props ->> p_key as k, count(distinct e.session_id) as n
+    from private.an_ev e
+    where e.event = p_event and e.created_at >= p_since and coalesce(e.props ->> p_key, '') <> ''
+    group by 1
+    order by 2 desc, 1
+    limit p_n
+  ) t
+$$;
+
+create or replace function private.ins_share(p_event text, p_key text, p_since timestamptz)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object('n', count(*), 'yes', count(*) filter (where private.jbool(e.props, p_key)))
+  from private.an_ev e
+  where e.event = p_event and e.created_at >= p_since and private.jbool(e.props, p_key) is not null
+$$;
+
+create or replace function private.ins_pair(p_event text, p_a text, p_b text, p_sep text, p_since timestamptz, p_n integer default 15)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc, t.k), '[]'::jsonb)
+  from (
+    select (e.props ->> p_a) || p_sep || (e.props ->> p_b) as k, count(distinct e.session_id) as n
+    from private.an_ev e
+    where e.event = p_event and e.created_at >= p_since and coalesce(e.props ->> p_a, '') <> '' and coalesce(e.props ->> p_b, '') <> ''
+    group by 1
+    order by 2 desc, 1
+    limit p_n
+  ) t
+$$;
+
+create or replace function private.play_rows(p_since timestamptz)
+returns table (session_id text, who text, user_id uuid, game_id text, visit text, at timestamptz, sec numeric)
+language sql
+stable
+set search_path = ''
+as $$
+  with beats as (
+    select e.session_id, e.who, e.user_id, e.game_id,
+      left(e.props ->> 'v', 40) as visit, e.created_at,
+      least(private.jnum(e.props, 'sec'), 43200) as cum
+    from private.an_ev e
+    where e.event = 'game_active' and e.game_id is not null and e.created_at >= p_since - interval '2 days'
+      and private.jnum(e.props, 'sec') > 0 and coalesce(e.props ->> 'v', '') <> ''
+  ), steps as (
+    select b.session_id, b.who, b.user_id, b.game_id, b.visit, b.created_at,
+      b.cum - coalesce(max(b.cum) over (partition by b.session_id, b.visit order by b.cum, b.created_at rows between unbounded preceding and 1 preceding), 0) as inc
+    from beats b
+  ), modern as (
+    select distinct e.session_id
+    from private.an_ev e
+    where e.event = 'game_active' and e.created_at >= p_since - interval '2 days'
+  )
+  select s.session_id, s.who, s.user_id, s.game_id, s.visit, s.created_at, s.inc
+  from steps s
+  where s.created_at >= p_since and s.inc > 0
+  union all
+  select e.session_id, e.who, e.user_id, e.game_id, null::text, e.created_at, least(private.jnum(e.props, 'sec'), 43200)
+  from private.an_ev e
+  left join modern m on m.session_id = e.session_id
+  where e.event = 'game_time' and e.game_id is not null and e.created_at >= p_since
+    and private.jnum(e.props, 'sec') > 0 and m.session_id is null
+$$;
+
+create or replace function public.admin_stats()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  perform private.need_admin();
+  return jsonb_build_object(
+    'overview', (select to_jsonb(o) from admin.overview o),
+    'daily', coalesce((select jsonb_agg(to_jsonb(d) order by d.day) from (select * from admin.daily_active_users order by day desc limit 30) d), '[]'::jsonb),
+    'signups', coalesce((select jsonb_agg(to_jsonb(s) order by s.day) from (select * from admin.signups_daily order by day desc limit 30) s), '[]'::jsonb),
+    'games', coalesce((select jsonb_agg(to_jsonb(g)) from (
+      select coalesce(m.game_id, t.game_id, e.game_id, a.game_id) as game_id,
+        coalesce(m.launches, 0) as launches, coalesce(m.plays, 0) as plays, coalesce(m.players, 0) as players,
+        coalesce(m.launches_7d, 0) as launches_7d, coalesce(t.hours, 0) as hours, coalesce(t.hours_7d, 0) as hours_7d,
+        coalesce(t.avg_minutes_per_visit, 0) as avg_min, coalesce(e.errors, 0) as errors, coalesce(e.errors_7d, 0) as errors_7d,
+        e.last_error, e.last_error_at, coalesce(a.accounts, 0) as accounts, m.last_launch
+      from admin.most_played_games m
+      full join admin.most_time_played t on t.game_id = m.game_id
+      full join (
+        select x.game_id, count(*) as errors, count(*) filter (where x.created_at > now() - interval '7 days') as errors_7d,
+          (array_agg(x.props ->> 'msg' order by x.created_at desc))[1] as last_error, max(x.created_at) as last_error_at
+        from private.an_ev x where x.event = 'error' and x.game_id is not null group by x.game_id
+      ) e on e.game_id = coalesce(m.game_id, t.game_id)
+      full join admin.account_game_totals a on a.game_id = coalesce(m.game_id, t.game_id, e.game_id)
+    ) g), '[]'::jsonb),
+    'players', coalesce((select jsonb_agg(to_jsonb(p)) from (
+      select s.user_id, pr.username, pr.display_name, s.game_id, s.plays, s.seconds_played, s.best_score, s.last_played
+      from public.game_stats s left join public.profiles pr on pr.id = s.user_id
+      where private.an_user_ok(s.user_id)
+      order by s.seconds_played desc limit 300
+    ) p), '[]'::jsonb),
+    'errors', coalesce((select jsonb_agg(to_jsonb(r)) from (select * from admin.recent_errors limit 60) r), '[]'::jsonb),
+    'devices', coalesce((select jsonb_agg(to_jsonb(d)) from (select * from admin.devices limit 20) d), '[]'::jsonb),
+    'searches', coalesce((select jsonb_agg(to_jsonb(q)) from (select * from admin.top_searches limit 25) q), '[]'::jsonb),
+    'retention', coalesce((select jsonb_agg(to_jsonb(r)) from (select * from admin.retention limit 14) r), '[]'::jsonb),
+    'at', now()
+  );
+end;
+$$;
+
+create or replace function public.admin_insights(p_days integer default 30)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_days integer := greatest(1, least(coalesce(p_days, 30), 366));
+  v_since timestamptz := now() - make_interval(days => v_days);
+  v_today date := (now() at time zone 'Europe/Paris')::date;
+  v_from date := v_today - (v_days - 1);
+  r jsonb;
+begin
+  perform private.need_admin();
+
+  r := jsonb_build_object('days', v_days, 'at', now());
+
+  r := r || jsonb_build_object('coverage', jsonb_build_object(
+    'sessions', (select count(distinct session_id) from private.an_ev where created_at >= v_since),
+    'geo', (select count(distinct session_id) from private.an_ev where event = 'env_geo' and created_at >= v_since),
+    'dev', (select count(distinct session_id) from private.an_ev where event = 'env_dev' and created_at >= v_since)
+  ));
+
+  r := r || jsonb_build_object('geo', jsonb_build_object(
+    'countries', coalesce((
+      select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc, t.k)
+      from (
+        select coalesce(nullif(e.props ->> 'cc', ''), e.props ->> 'scc') as k, count(distinct e.session_id) as n
+        from private.an_ev e
+        where e.event = 'env_geo' and e.created_at >= v_since and coalesce(nullif(e.props ->> 'cc', ''), e.props ->> 'scc', '') <> ''
+        group by 1 order by 2 desc, 1 limit 30
+      ) t), '[]'::jsonb),
+    'regions', coalesce((
+      select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc, t.k)
+      from (
+        select concat_ws(', ', e.props ->> 'region', e.props ->> 'cc') as k, count(distinct e.session_id) as n
+        from private.an_ev e
+        where e.event = 'env_geo' and e.created_at >= v_since and coalesce(e.props ->> 'region', '') <> ''
+        group by 1 order by 2 desc, 1 limit 20
+      ) t), '[]'::jsonb),
+    'cities', coalesce((
+      select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc, t.k)
+      from (
+        select concat_ws(', ', e.props ->> 'city', e.props ->> 'cc') as k, count(distinct e.session_id) as n
+        from private.an_ev e
+        where e.event = 'env_geo' and e.created_at >= v_since and coalesce(e.props ->> 'city', '') <> ''
+        group by 1 order by 2 desc, 1 limit 20
+      ) t), '[]'::jsonb),
+    'isps', private.ins_top('env_geo', 'isp', v_since, 20),
+    'tz', private.ins_top('env_geo', 'tz', v_since, 12),
+    'net', private.ins_top('env_geo', 'net', v_since, 6),
+    'ctype', private.ins_top('env_geo', 'ctype', v_since, 8),
+    'vpn', private.ins_share('env_geo', 'vpn', v_since),
+    'dc', private.ins_share('env_geo', 'dc', v_since),
+    'save', private.ins_share('env_geo', 'save', v_since),
+    'speed', (
+      select jsonb_build_object(
+        'dl', round(percentile_cont(0.5) within group (order by private.jnum(e.props, 'dl'))::numeric, 1),
+        'rtt', round(percentile_cont(0.5) within group (order by private.jnum(e.props, 'rtt'))::numeric))
+      from private.an_ev e
+      where e.event = 'env_geo' and e.created_at >= v_since and private.jnum(e.props, 'dl') is not null),
+    'hours', coalesce((
+      select jsonb_agg(jsonb_build_object('d', t.d, 'h', t.h, 'v', t.v))
+      from (
+        select extract(isodow from x.t)::int - 1 as d, extract(hour from x.t)::int as h, round(sum(x.sec) / 3600, 2) as v
+        from (
+          select case when private.jnum(g.props, 'off') between -900 and 900
+              then (e.created_at at time zone 'UTC') + make_interval(mins => private.jnum(g.props, 'off')::int)
+              else e.created_at at time zone 'Europe/Paris' end as t,
+            private.jnum(e.props, 'sec') as sec
+          from private.an_ev e
+          left join lateral (
+            select g0.props from private.an_ev g0
+            where g0.session_id = e.session_id and g0.event = 'env_geo' limit 1
+          ) g on true
+          where e.event = 'game_time' and e.created_at >= v_since and private.jnum(e.props, 'sec') > 0
+        ) x
+        group by 1, 2
+      ) t), '[]'::jsonb)
+  ));
+
+  r := r || jsonb_build_object('dev', jsonb_build_object(
+    'os', private.ins_top('env_dev', 'osv', v_since, 15),
+    'browsers', private.ins_top('env_dev', 'brv', v_since, 15),
+    'models', private.ins_top('env_dev', 'model', v_since, 15),
+    'gpus', private.ins_top('env_dev', 'gpu', v_since, 15),
+    'cores', private.ins_top('env_dev', 'cores', v_since, 10),
+    'mem', private.ins_top('env_dev', 'mem', v_since, 8),
+    'hz', private.ins_top('env_dev', 'hz', v_since, 10),
+    'kb', private.ins_top('env_dev', 'kb', v_since, 6),
+    'arch', private.ins_top('env_dev', 'arch', v_since, 6),
+    'gl2', private.ins_share('env_dev', 'gl2', v_since),
+    'wgpu', private.ins_share('env_dev', 'wgpu', v_since),
+    'langs', coalesce((
+      select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc, t.k)
+      from (
+        select e.props -> 'langs' ->> 0 as k, count(distinct e.session_id) as n
+        from private.an_ev e
+        where e.event = 'env_dev' and e.created_at >= v_since and jsonb_typeof(e.props -> 'langs') = 'array' and coalesce(e.props -> 'langs' ->> 0, '') <> ''
+        group by 1 order by 2 desc, 1 limit 10
+      ) t), '[]'::jsonb),
+    'pads', private.ins_top('pad', 'kind', v_since, 8),
+    'pad_ids', private.ins_top('pad', 'id', v_since, 10)
+  ));
+
+  r := r || jsonb_build_object('vitals', coalesce((
+    select jsonb_agg(jsonb_build_object('device', t.device, 'n', t.n, 'lcp', t.lcp, 'inp', t.inp, 'cls', t.cls, 'fcp', t.fcp, 'ttfb', t.ttfb) order by t.n desc)
+    from (
+      select coalesce(e.device, 'unknown') as device, count(*) as n,
+        round(percentile_cont(0.75) within group (order by private.jnum(e.props, 'lcp'))::numeric) as lcp,
+        round(percentile_cont(0.75) within group (order by private.jnum(e.props, 'inp'))::numeric) as inp,
+        round(percentile_cont(0.75) within group (order by private.jnum(e.props, 'cls'))::numeric, 3) as cls,
+        round(percentile_cont(0.75) within group (order by private.jnum(e.props, 'fcp'))::numeric) as fcp,
+        round(percentile_cont(0.75) within group (order by private.jnum(e.props, 'ttfb'))::numeric) as ttfb
+      from private.an_ev e
+      where e.event = 'vitals' and e.created_at >= v_since
+      group by 1
+    ) t), '[]'::jsonb));
+
+  r := r || jsonb_build_object('games', coalesce((
+    select jsonb_agg(to_jsonb(t) order by t.n desc, t.id)
+    from (
+      select q.game_id as id,
+        count(*) as n,
+        count(*) filter (where private.jnum(q.props, 'sec') < 30) as early,
+        round(avg(private.jnum(q.props, 'sec'))) as sec,
+        round(avg(private.jnum(q.props, 'rounds')), 1) as rounds,
+        round(avg(private.jnum(q.props, 'fps')), 1) as fps,
+        round(percentile_cont(0.1) within group (order by private.jnum(q.props, 'fpsmin'))::numeric, 1) as fps_low,
+        round(avg(private.jnum(q.props, 'fps5')), 1) as fps5,
+        coalesce(sum(private.jnum(q.props, 'ik')), 0) as ik,
+        coalesce(sum(private.jnum(q.props, 'im')), 0) as im,
+        coalesce(sum(private.jnum(q.props, 'it')), 0) as it,
+        coalesce(sum(private.jnum(q.props, 'ip')), 0) as ip,
+        round(avg(private.jnum(q.props, 'lv')), 1) as lv_avg,
+        max(private.jnum(q.props, 'lv')) as lv_max,
+        count(*) filter (where private.jnum(q.props, 'lv') is not null) as lv_n,
+        (select jsonb_agg(jsonb_build_object('lv', z.lv, 'n', z.n) order by z.n desc, z.lv)
+          from (select private.jnum(q2.props, 'lv') as lv, count(*) as n from private.an_ev q2
+            where q2.event = 'game_quit' and q2.game_id = q.game_id and q2.created_at >= v_since and private.jnum(q2.props, 'lv') is not null
+            group by 1 order by 2 desc, 1 limit 5) z) as quit_lv,
+        (select jsonb_build_object('n', count(*),
+            'p10', percentile_cont(0.1) within group (order by s.v), 'p25', percentile_cont(0.25) within group (order by s.v),
+            'p50', percentile_cont(0.5) within group (order by s.v), 'p75', percentile_cont(0.75) within group (order by s.v),
+            'p90', percentile_cont(0.9) within group (order by s.v), 'max', max(s.v))
+          from (select x.value::numeric as v from private.an_ev q3, jsonb_array_elements_text(q3.props -> 'sc') x
+            where q3.event = 'game_quit' and q3.game_id = q.game_id and q3.created_at >= v_since and jsonb_typeof(q3.props -> 'sc') = 'array'
+              and x.value ~ '^-?[0-9]+(\.[0-9]+)?$') s) as scores,
+        (select jsonb_build_object('n', count(*),
+            'p50', round(percentile_cont(0.5) within group (order by private.jnum(l.props, 'ms'))::numeric),
+            'p90', round(percentile_cont(0.9) within group (order by private.jnum(l.props, 'ms'))::numeric))
+          from private.an_ev l
+          where l.event = 'game_launch' and l.game_id = q.game_id and l.created_at >= v_since and private.jbool(l.props, 'lazy') and private.jnum(l.props, 'ms') > 0) as load,
+        (select jsonb_build_object('up', count(*) filter (where v.vote = 1), 'down', count(*) filter (where v.vote = -1))
+          from public.game_votes v where v.game_id = q.game_id and (v.user_id is null or private.an_user_ok(v.user_id))) as votes
+      from private.an_ev q
+      where q.event = 'game_quit' and q.game_id is not null and q.created_at >= v_since
+      group by q.game_id
+    ) t), '[]'::jsonb));
+
+  r := r || jsonb_build_object('votes', coalesce((
+    select jsonb_agg(jsonb_build_object('id', t.game_id, 'up', t.up, 'down', t.down) order by t.up + t.down desc, t.game_id)
+    from (select game_id, count(*) filter (where vote = 1) as up, count(*) filter (where vote = -1) as down from public.game_votes gv where gv.user_id is null or private.an_user_ok(gv.user_id) group by game_id) t), '[]'::jsonb));
+
+  r := r || jsonb_build_object('behaviour', jsonb_build_object(
+    'slots', coalesce((
+      select jsonb_agg(jsonb_build_object('src', s.src, 'pos', s.pos, 'imp', s.imp, 'clk', coalesce(c.clk, 0)) order by s.src, s.pos)
+      from (
+        select split_part(x.value, '|', 2) as src, split_part(x.value, '|', 3)::int as pos, count(*) as imp
+        from private.an_ev e, jsonb_array_elements_text(e.props -> 'l') x
+        where e.event = 'impr' and e.created_at >= v_since and jsonb_typeof(e.props -> 'l') = 'array' and x.value ~ '^[a-z0-9-]+\|[a-z]+\|[0-9]{1,4}$'
+          and split_part(x.value, '|', 3)::int < 24
+        group by 1, 2
+      ) s
+      left join (
+        select e.props ->> 'src' as src, private.jnum(e.props, 'pos')::int as pos, count(*) as clk
+        from private.an_ev e
+        where e.event = 'tile_click' and e.created_at >= v_since and private.jnum(e.props, 'pos') between 0 and 23
+        group by 1, 2
+      ) c on c.src = s.src and c.pos = s.pos), '[]'::jsonb),
+    'ctr', coalesce((
+      select jsonb_agg(jsonb_build_object('id', s.id, 'imp', s.imp, 'clk', coalesce(c.clk, 0)) order by s.imp desc, s.id)
+      from (
+        select split_part(x.value, '|', 1) as id, count(*) as imp
+        from private.an_ev e, jsonb_array_elements_text(e.props -> 'l') x
+        where e.event = 'impr' and e.created_at >= v_since and jsonb_typeof(e.props -> 'l') = 'array' and x.value ~ '^[a-z0-9-]+\|[a-z]+\|[0-9]{1,4}$' and split_part(x.value, '|', 2) <> 'side'
+        group by 1 order by 2 desc limit 40
+      ) s
+      left join (
+        select e.game_id as id, count(*) as clk from private.an_ev e
+        where e.event = 'tile_click' and e.created_at >= v_since and coalesce(e.props ->> 'src', '') <> 'side' and e.game_id is not null
+        group by 1
+      ) c on c.id = s.id), '[]'::jsonb),
+    'scroll', (
+      select jsonb_build_object('n', count(*), 'avg', round(avg(p)),
+        'b25', count(*) filter (where p < 25), 'b50', count(*) filter (where p >= 25 and p < 50), 'b75', count(*) filter (where p >= 50 and p < 75),
+        'b90', count(*) filter (where p >= 75 and p < 90), 'b100', count(*) filter (where p >= 90))
+      from (select private.jnum(e.props, 'pct') as p from private.an_ev e where e.event = 'scroll' and e.created_at >= v_since and private.jnum(e.props, 'pct') is not null) s),
+    'rage', private.ins_top('rage', 't', v_since, 15),
+    'dead', private.ins_top('dead', 't', v_since, 15),
+    'pages', coalesce((
+      select jsonb_agg(jsonb_build_object('v', t.v, 'n', t.n, 'sec', t.sec, 'exits', t.exits) order by t.n desc)
+      from (
+        select e.props ->> 'v' as v, count(*) as n, round(avg(least(private.jnum(e.props, 'sec'), 7200))) as sec, count(*) filter (where private.jbool(e.props, 'exit')) as exits
+        from private.an_ev e
+        where e.event = 'page_time' and e.created_at >= v_since and coalesce(e.props ->> 'v', '') <> ''
+        group by 1
+      ) t), '[]'::jsonb)
+  ));
+
+  r := r || jsonb_build_object('rebinds', coalesce((
+    select jsonb_agg(jsonb_build_object('game', t.g, 'dev', t.dev, 'act', t.act, 'to', t.to_, 'n', t.n) order by t.n desc)
+    from (
+      select e.game_id as g, e.props ->> 'dev' as dev, e.props ->> 'act' as act, coalesce(e.props ->> 'to', '') as to_, count(*) as n
+      from private.an_ev e
+      where e.event = 'rebind' and e.created_at >= v_since
+      group by 1, 2, 3, 4 order by 5 desc limit 25
+    ) t), '[]'::jsonb));
+
+  r := r || jsonb_build_object('rl', jsonb_build_object(
+    'all', (
+      select jsonb_build_object('n', count(*), 'wins', count(*) filter (where private.jbool(e.props, 'win')),
+        'goals', round(avg(private.jnum(e.props, 'goals')), 2), 'assists', round(avg(private.jnum(e.props, 'assists')), 2),
+        'saves', round(avg(private.jnum(e.props, 'saves')), 2), 'shots', round(avg(private.jnum(e.props, 'shots')), 2),
+        'demos', round(avg(private.jnum(e.props, 'demos')), 2), 'boost', round(avg(private.jnum(e.props, 'boost'))),
+        'score', round(avg(private.jnum(e.props, 'score'))), 'ot', count(*) filter (where private.jbool(e.props, 'ot')),
+        'mvp', count(*) filter (where private.jbool(e.props, 'mvp')))
+      from private.an_ev e where e.event = 'rl_match' and e.created_at >= v_since),
+    'by_diff', coalesce((
+      select jsonb_agg(to_jsonb(t) order by t.n desc)
+      from (
+        select coalesce(nullif(e.props ->> 'diff', ''), case when private.jbool(e.props, 'online') then 'online' else 'none' end) as diff,
+          count(*) as n, count(*) filter (where private.jbool(e.props, 'win')) as wins,
+          round(avg(private.jnum(e.props, 'us') - private.jnum(e.props, 'them')), 2) as margin,
+          round(avg(private.jnum(e.props, 'goals')), 2) as goals
+        from private.an_ev e where e.event = 'rl_match' and e.created_at >= v_since
+        group by 1
+      ) t), '[]'::jsonb),
+    'by_size', private.ins_top('rl_match', 'size', v_since, 5)
+  ));
+
+  r := r || jsonb_build_object('ads', jsonb_build_object(
+    'adblock', private.ins_share('env_dev', 'adb', v_since),
+    'slots', coalesce((
+      select jsonb_agg(to_jsonb(t) order by t.imp desc)
+      from (
+        select coalesce(nullif(e.props ->> 'slot', ''), '?') as slot,
+          count(*) filter (where e.event = 'ad_impression') as imp,
+          count(*) filter (where e.event = 'ad_click') as clk,
+          round(coalesce(sum(private.jnum(e.props, 'usd')) filter (where e.event = 'ad_revenue'), 0), 4) as usd
+        from private.an_ev e
+        where e.event in ('ad_impression', 'ad_click', 'ad_revenue') and e.created_at >= v_since
+        group by 1
+      ) t), '[]'::jsonb)
+  ));
+
+  r := r || jsonb_build_object('retention', (
+    with w as (
+      select who, day, max(user_id::text) as uid from admin.events_who where created_at >= now() - interval '400 days' and who is not null group by who, day
+    ), f as (
+      select who, min(day) as first, max(uid) as uid from w group by who
+    ), st as (
+      select who, day, day - (row_number() over (partition by who order by day))::int as grp from w where day >= v_today - 120
+    ), runs as (
+      select who, count(*) as len, max(day) as last from st group by who, grp
+    ), best as (
+      select who, max(len) as longest, max(len) filter (where last >= v_today - 1) as cur from runs group by who
+    )
+    select jsonb_build_object(
+      'mau', (select count(distinct who) from w where day >= v_today - 29),
+      'dau', (select round(avg(n), 1) from (select day, count(distinct who) as n from w where day between v_from and v_today group by day) d),
+      'cohort', (
+        select jsonb_agg(jsonb_build_object('d', k.d, 'eligible', k.eligible, 'back', k.back) order by k.d)
+        from (
+          select n.d,
+            count(*) filter (where f.first <= v_today - n.d) as eligible,
+            count(*) filter (where f.first <= v_today - n.d and exists (select 1 from w w2 where w2.who = f.who and w2.day = f.first + n.d)) as back
+          from (values (1), (7), (30)) n(d)
+          cross join f
+          where f.first >= v_from - 30
+          group by n.d
+        ) k),
+      'funnel', (
+        select jsonb_build_object(
+          'visited', count(*),
+          'launched', count(*) filter (where exists (select 1 from admin.events_who e where e.who = f.who and e.event = 'game_launch' and e.created_at >= v_since)),
+          'played', count(*) filter (where (select coalesce(sum(private.jnum(e.props, 'sec')), 0) from admin.events_who e where e.who = f.who and e.event = 'game_time' and e.created_at >= v_since) >= 60),
+          'account', count(*) filter (where f.uid is not null and exists (select 1 from auth.users u where u.id::text = f.uid and u.created_at >= (f.first::timestamp at time zone 'Europe/Paris') - interval '1 day')),
+          'returned', count(*) filter (where exists (select 1 from w w2 where w2.who = f.who and w2.day > f.first)))
+        from f where f.first >= v_from),
+      'streaks', (
+        select jsonb_build_object(
+          'b1', count(*) filter (where longest = 1), 'b3', count(*) filter (where longest between 2 and 3),
+          'b7', count(*) filter (where longest between 4 and 7), 'b14', count(*) filter (where longest between 8 and 14),
+          'b15', count(*) filter (where longest >= 15), 'active', count(*) filter (where cur >= 2), 'avg_cur', round(avg(cur) filter (where cur >= 2), 1))
+        from best),
+      'top_streaks', coalesce((
+        select jsonb_agg(jsonb_build_object('id', p.id, 'username', p.username, 'name', p.display_name, 'cur', b.cur, 'longest', b.longest) order by b.cur desc, b.longest desc)
+        from (select b0.who, b0.cur, b0.longest, (select max(f0.uid) from f f0 where f0.who = b0.who) as uid from best b0 where b0.cur >= 2 order by b0.cur desc limit 200) b
+        join public.profiles p on p.id::text = b.uid
+        limit 10), '[]'::jsonb),
+      'churn', coalesce((
+        select jsonb_agg(jsonb_build_object('id', p.id, 'username', p.username, 'name', p.display_name, 'days', c.days, 'last', c.last, 'hours', c.hours) order by c.days desc, c.last desc)
+        from (
+          select e.user_id, count(distinct (e.created_at at time zone 'Europe/Paris')::date) as days, max(e.created_at) as last,
+            round(coalesce(sum(private.jnum(e.props, 'sec')) filter (where e.event = 'game_time'), 0) / 3600, 1) as hours
+          from private.an_ev e
+          where e.user_id is not null and e.created_at >= now() - interval '60 days'
+          group by e.user_id
+          having count(distinct (e.created_at at time zone 'Europe/Paris')::date) >= 3 and max(e.created_at) < now() - interval '14 days'
+          order by 2 desc limit 50
+        ) c join public.profiles p on p.id = c.user_id), '[]'::jsonb),
+      'churn_all', (
+        select count(*) from (
+          select who from w where day >= v_today - 59 group by who
+          having count(*) >= 3 and max(day) < v_today - 13
+        ) z)
+    )
+  ));
+
+  return r;
+end;
+$$;
+
+create or replace function public.admin_insights_more(p_days integer default 30)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_since timestamptz := now() - make_interval(days => greatest(1, least(coalesce(p_days, 30), 365)));
+  v_sess jsonb;
+begin
+  perform private.need_admin();
+  with s as (
+    select e.session_id,
+      extract(epoch from max(e.created_at) - min(e.created_at)) as span,
+      count(*) filter (where e.event = 'game_launch') as launches,
+      count(distinct e.game_id) filter (where e.event = 'game_launch') as gs
+    from private.an_ev e
+    where e.created_at >= v_since
+    group by e.session_id
+  ), m as (
+    select e.session_id,
+      max(private.jnum(e.props, 'dur')) as dur, max(private.jnum(e.props, 'vis')) as vis,
+      max(private.jnum(e.props, 'keys')) as keys, max(private.jnum(e.props, 'clicks')) as clicks, max(private.jnum(e.props, 'taps')) as taps,
+      max(private.jnum(e.props, 'mdist')) as mdist, max(private.jnum(e.props, 'games')) as games, max(private.jnum(e.props, 'gset')) as gset,
+      max(private.jnum(e.props, 'errs')) as errs, max(private.jnum(e.props, 'idle')) as idle, max(private.jnum(e.props, 'fs')) as fs,
+      max(private.jnum(e.props, 'foc')) as foc, max(private.jnum(e.props, 'blur')) as blur, max(private.jnum(e.props, 'wheel')) as wheel,
+      max(private.jnum(e.props, 'scr')) as scr, max(private.jnum(e.props, 'copy')) as copy, max(private.jnum(e.props, 'rsz')) as rsz,
+      max(private.jnum(e.props, 'off')) as off
+    from private.an_ev e
+    where e.event = 'sess_sum' and e.created_at >= v_since
+    group by e.session_id
+  ), j as (
+    select s.session_id, greatest(s.span, coalesce(m.dur, 0)) as dur, greatest(s.launches, coalesce(m.games, 0)) as games,
+      greatest(s.gs, coalesce(m.gset, 0)) as gset, m.session_id as ms, m.vis, m.keys, m.clicks, m.taps, m.mdist, m.errs, m.idle, m.fs,
+      m.foc, m.blur, m.wheel, m.scr, m.copy, m.rsz, m.off
+    from s left join m on m.session_id = s.session_id
+  )
+  select jsonb_build_object(
+    'n', count(*),
+    'nm', count(j.ms),
+    'dur', percentile_cont(0.5) within group (order by j.dur),
+    'dur90', percentile_cont(0.9) within group (order by j.dur),
+    'vis', percentile_cont(0.5) within group (order by nullif(j.vis, 0)),
+    'keys', round(avg(j.keys)),
+    'clicks', round(avg(j.clicks)),
+    'taps', round(avg(j.taps)),
+    'mdist', round(avg(j.mdist)),
+    'wheel', round(avg(j.wheel)),
+    'scr', round(avg(j.scr)),
+    'foc', round(avg(j.foc), 1),
+    'blur', round(avg(j.blur), 1),
+    'copy', round(avg(j.copy), 2),
+    'rsz', round(avg(j.rsz), 1),
+    'off', round(100.0 * count(*) filter (where j.off > 0) / greatest(count(j.ms), 1)),
+    'games', round(avg(j.games), 1),
+    'gset', round(avg(j.gset), 1),
+    'played', round(100.0 * count(*) filter (where j.games > 0) / greatest(count(*), 1)),
+    'errs', round(avg(j.errs), 2),
+    'idle', percentile_cont(0.5) within group (order by j.idle),
+    'fs', round(100.0 * count(*) filter (where j.fs > 0) / greatest(count(j.ms), 1)),
+    'b', jsonb_build_array(
+      jsonb_build_object('k', 'Under 1 min', 'n', count(*) filter (where j.dur < 60)),
+      jsonb_build_object('k', '1–5 min', 'n', count(*) filter (where j.dur >= 60 and j.dur < 300)),
+      jsonb_build_object('k', '5–15 min', 'n', count(*) filter (where j.dur >= 300 and j.dur < 900)),
+      jsonb_build_object('k', '15–30 min', 'n', count(*) filter (where j.dur >= 900 and j.dur < 1800)),
+      jsonb_build_object('k', '30–60 min', 'n', count(*) filter (where j.dur >= 1800 and j.dur < 3600)),
+      jsonb_build_object('k', 'Over 1 hour', 'n', count(*) filter (where j.dur >= 3600))
+    )
+  ) into v_sess
+  from j;
+  return jsonb_build_object(
+    'sessions', v_sess,
+    'screens', private.ins_top('env_scr', 'res', v_since, 15),
+    'viewports', private.ins_pair('env_scr', 'vw', 'vh', '×', v_since, 15),
+    'dpr', private.ins_top('env_scr', 'dpr', v_since, 10),
+    'pointer', private.ins_top('env_scr', 'ptr', v_since, 4),
+    'touch', private.ins_top('env_scr', 'tp', v_since, 8),
+    'orient', private.ins_top('env_scr', 'ori', v_since, 6),
+    'gamut', private.ins_top('env_scr', 'gam', v_since, 4),
+    'mode', private.ins_top('env_scr', 'dm', v_since, 5),
+    'zoom', coalesce((
+      select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc, t.k)
+      from (
+        select z.s::text as k, count(distinct z.session_id) as n
+        from (
+          select e.session_id, private.jnum(e.props, 'zoom') as v,
+            (select a.x from unnest(array[0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5]::numeric[]) a(x) order by abs(a.x - private.jnum(e.props, 'zoom')) limit 1) as s
+          from private.an_ev e
+          where e.event = 'env_scr' and e.created_at >= v_since and e.props ->> 'ptr' = 'fine' and private.jnum(e.props, 'zoom') between 0.25 and 5
+        ) z
+        where abs(z.s - z.v) / z.s < 0.03
+        group by 1 order by 2 desc, 1 limit 10
+      ) t), '[]'::jsonb),
+    'depth', private.ins_top('env_scr', 'cd', v_since, 5),
+    'dark', private.ins_share('env_scr', 'dark', v_since),
+    'rmo', private.ins_share('env_scr', 'rmo', v_since),
+    'hdr', private.ins_share('env_scr', 'hdr', v_since),
+    'hov', private.ins_share('env_scr', 'hov', v_since),
+    'ext', private.ins_share('env_scr', 'ext', v_since),
+    'bench', private.ins_top('env_caps', 'benchb', v_since, 6),
+    'quota', private.ins_top('env_caps', 'qb', v_since, 6),
+    'heap', private.ins_top('env_caps', 'heap', v_since, 8),
+    'battery', private.ins_top('env_caps', 'batb', v_since, 5),
+    'charging', private.ins_share('env_caps', 'chg', v_since),
+    'gpuv', private.ins_top('env_caps', 'gpuv', v_since, 12),
+    'mtex', private.ins_top('env_caps', 'mtex', v_since, 6),
+    'locale', private.ins_top('env_caps', 'loc', v_since, 15),
+    'hour', private.ins_top('env_caps', 'hc', v_since, 4)
+  ) || jsonb_build_object(
+    'refs', coalesce((
+      select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc, t.k)
+      from (
+        select coalesce(nullif(e.props ->> 'ref', ''), 'direct') as k, count(distinct e.session_id) as n
+        from private.an_ev e
+        where e.event = 'env_caps' and e.created_at >= v_since
+        group by 1 order by 2 desc, 1 limit 15
+      ) t), '[]'::jsonb),
+    'land', private.ins_top('env_caps', 'land', v_since, 15),
+    'navt', private.ins_top('env_caps', 'navt', v_since, 5),
+    'plat', private.ins_top('env_caps', 'plat', v_since, 10),
+    'notif', private.ins_top('env_caps', 'notif', v_since, 4),
+    'mic', private.ins_top('env_caps', 'mic', v_since, 5),
+    'cam', private.ins_top('env_caps', 'cam', v_since, 5),
+    'voices', private.ins_top('env_caps', 'voices', v_since, 8),
+    'srate', private.ins_top('env_caps', 'sr', v_since, 5),
+    'route', private.ins_top('sess_sum', 'route', v_since, 4),
+    'acct', private.ins_top('sess_sum', 'acct', v_since, 4),
+    'theme', private.ins_top('sess_sum', 'theme', v_since, 4),
+    'slang', private.ins_top('sess_sum', 'lang', v_since, 8),
+    'retries', private.ins_top('party_retry', 'why', v_since, 8),
+    'ctype', coalesce((
+      select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc, t.k)
+      from (
+        select coalesce(nullif(e.props ->> 'ctype', ''), 'unknown') as k, count(distinct e.session_id) as n
+        from private.an_ev e
+        where e.event = 'env_geo' and e.created_at >= v_since
+        group by 1 order by 2 desc, 1 limit 8
+      ) t), '[]'::jsonb),
+    'models', coalesce((
+      select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc, t.k)
+      from (
+        select coalesce(nullif(e.props ->> 'model', ''),
+            case when e.props ->> 'osv' like 'iOS%' then 'iPhone' when e.props ->> 'osv' like 'iPadOS%' then 'iPad' else 'Unknown model' end) as k,
+          count(distinct e.session_id) as n
+        from private.an_ev e
+        where e.event = 'env_dev' and e.created_at >= v_since and (e.device in ('phone', 'tablet') or coalesce(e.props ->> 'model', '') <> '')
+        group by 1 order by 2 desc, 1 limit 15
+      ) t), '[]'::jsonb),
+    'scores', coalesce((
+      select jsonb_object_agg(t.g, t.o)
+      from (
+        select x.g, jsonb_build_object('n', count(*), 'min', min(x.v), 'p25', percentile_cont(0.25) within group (order by x.v),
+          'p50', percentile_cont(0.5) within group (order by x.v), 'p75', percentile_cont(0.75) within group (order by x.v), 'max', max(x.v)) as o
+        from (
+          select q.game_id as g, a.value::numeric as v
+          from private.an_ev q
+          cross join lateral jsonb_array_elements_text(case
+            when jsonb_typeof(q.props -> 'sc') = 'array' and jsonb_array_length(q.props -> 'sc') > 0 then q.props -> 'sc'
+            when jsonb_typeof(q.props -> 'last') = 'number' then jsonb_build_array(q.props -> 'last')
+            else '[]'::jsonb end) a
+          where q.event = 'game_quit' and q.game_id is not null and q.created_at >= v_since and a.value ~ '^-?[0-9]{1,15}(\.[0-9]+)?$'
+        ) x
+        group by x.g
+      ) t), '{}'::jsonb),
+    'rl_left', (
+      select jsonb_build_object('n', count(*), 'played', round(avg(private.jnum(e.props, 'played'))),
+        'goals', round(avg(private.jnum(e.props, 'goals')), 2), 'saves', round(avg(private.jnum(e.props, 'saves')), 2),
+        'ahead', count(*) filter (where private.jnum(e.props, 'us') > private.jnum(e.props, 'them')),
+        'behind', count(*) filter (where private.jnum(e.props, 'us') < private.jnum(e.props, 'them')))
+      from private.an_ev e where e.event = 'rl_left' and e.created_at >= v_since),
+    'flags', (
+      select jsonb_object_agg(f.k, private.ins_share(f.ev, f.k, v_since))
+      from (values ('env_caps', 'wasm'), ('env_caps', 'sab'), ('env_caps', 'swk'), ('env_caps', 'vib'), ('env_caps', 'bt'), ('env_caps', 'usb'),
+        ('env_caps', 'ser'), ('env_caps', 'hid'), ('env_caps', 'midi'), ('env_caps', 'share'), ('env_caps', 'wl'), ('env_caps', 'pdf'),
+        ('env_caps', 'h264'), ('env_caps', 'vp9'), ('env_caps', 'pers'), ('env_caps', 'ck'), ('env_caps', 'down'), ('env_scr', 'con'),
+        ('env_scr', 'fcol'), ('env_scr', 'rtr'), ('env_geo', 'tzm')) f(ev, k)),
+    'extra', (
+      select jsonb_object_agg(f.k, private.ins_top(f.ev, f.k, v_since, 6))
+      from (values ('env_caps', 'spk'), ('env_caps', 'ach'), ('env_caps', 'glx'), ('env_caps', 'cal'), ('env_caps', 'num'), ('env_caps', 'fdw'),
+        ('env_caps', 'vend'), ('env_caps', 'hist')) f(ev, k)),
+    'bot', private.ins_share('env_caps', 'bot', v_since),
+    'dnt', private.ins_share('env_caps', 'dnt', v_since),
+    'gpc', private.ins_share('env_caps', 'gpc', v_since),
+    'av1', private.ins_share('env_caps', 'av1', v_since),
+    'hevc', private.ins_share('env_caps', 'hevc', v_since),
+    'coi', private.ins_share('env_caps', 'coi', v_since),
+    'xr', private.ins_share('env_caps', 'xr', v_since),
+    'at', now()
+  );
+end;
+$$;
+
+create or replace function public.admin_play_insights(p_days integer default 30)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_days integer := greatest(1, least(coalesce(p_days, 30), 366));
+  v_since timestamptz := now() - make_interval(days => v_days);
+  v_today date := (now() at time zone 'Europe/Paris')::date;
+  v_from date := v_today - (v_days - 1);
+  r jsonb;
+begin
+  perform private.need_admin();
+  with p as materialized (
+    select x.session_id, x.who, x.user_id, x.game_id, x.visit, x.at, x.sec from private.play_rows(least(v_since, now() - interval '60 days')) x
+  ), geo as (
+    select distinct on (e.session_id) e.session_id, private.jnum(e.props, 'off') as off
+    from private.an_ev e
+    where e.event = 'env_geo' and e.created_at >= v_since - interval '1 day'
+    order by e.session_id, e.created_at
+  ), lg as (
+    select a.game_id, count(*) as n
+    from private.an_ev a
+    where a.event = 'game_launch' and a.game_id is not null and a.created_at >= v_since
+    group by a.game_id
+  ), pg as (
+    select p.game_id, sum(p.sec) as sec, count(distinct p.visit) as visits
+    from p
+    where p.at >= v_since
+    group by p.game_id
+  ), firsts as (
+    select w.who from admin.events_who w where w.created_at >= now() - interval '400 days' and w.who is not null group by w.who having min(w.day) >= v_from
+  )
+  select jsonb_build_object(
+    'days', v_days,
+    'hours', coalesce((
+      select jsonb_agg(jsonb_build_object('d', t.d, 'h', t.h, 'v', t.v))
+      from (
+        select extract(isodow from x.t)::int - 1 as d, extract(hour from x.t)::int as h, round(sum(x.sec) / 3600, 2) as v
+        from (
+          select case when g.off between -900 and 900
+              then (p.at at time zone 'UTC') + make_interval(mins => g.off::int)
+              else p.at at time zone 'Europe/Paris' end as t,
+            p.sec
+          from p
+          left join geo g on g.session_id = p.session_id
+          where p.at >= v_since
+        ) x
+        group by 1, 2
+      ) t
+    ), '[]'::jsonb),
+    'games', coalesce((
+      select jsonb_agg(jsonb_build_object('id', pg.game_id, 'sec', round(pg.sec / greatest(coalesce(lg.n, 0), pg.visits, 1)), 'visits', greatest(coalesce(lg.n, 0), pg.visits), 'hours', round(pg.sec / 3600, 2)))
+      from pg
+      left join lg on lg.game_id = pg.game_id
+    ), '[]'::jsonb),
+    'played', (
+      select count(*) from (
+        select f.who from firsts f join p on p.who = f.who and p.at >= v_since group by f.who having sum(p.sec) >= 60
+      ) q
+    ),
+    'user_hours', coalesce((
+      select jsonb_object_agg(u.user_id, u.hours)
+      from (
+        select p.user_id, round(sum(p.sec) / 3600, 1) as hours
+        from p
+        where p.user_id is not null and p.at >= now() - interval '60 days'
+        group by p.user_id
+      ) u
+    ), '{}'::jsonb),
+    'at', now()
+  ) into r;
+  return r;
+end;
+$$;
+
+create or replace function public.admin_stats_v2(p_days integer default 30)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_days integer := greatest(1, least(coalesce(p_days, 30), 366));
+  v_to date := (now() at time zone 'Europe/Paris')::date;
+  v_from date := v_to - (v_days - 1);
+  v_since timestamptz := (v_from::timestamp at time zone 'Europe/Paris');
+  v_today timestamptz := (v_to::timestamp at time zone 'Europe/Paris');
+  v_wk timestamptz := now() - interval '7 days';
+  v_lo timestamptz;
+  r jsonb;
+begin
+  perform private.need_admin();
+  v_lo := least(v_since, v_wk);
+  with p as materialized (
+    select x.who, x.game_id, x.visit, x.at, x.sec, (x.at at time zone 'Europe/Paris')::date as day
+    from private.play_rows(v_lo) x
+  ), ev as materialized (
+    select a.game_id, a.event, a.created_at, a.who
+    from private.an_ev a
+    where a.created_at >= v_lo and a.game_id is not null and a.event in ('game_launch', 'game_play')
+  ), pg as (
+    select p.game_id,
+      coalesce(sum(p.sec) filter (where p.at >= v_since), 0) as sec,
+      coalesce(sum(p.sec) filter (where p.at >= v_wk), 0) as sec_7d,
+      count(distinct p.visit) filter (where p.at >= v_since) as visits
+    from p
+    group by p.game_id
+  ), eg as (
+    select e.game_id,
+      count(*) filter (where e.event = 'game_launch' and e.created_at >= v_since) as launches,
+      count(*) filter (where e.event = 'game_launch' and e.created_at >= v_wk) as launches_7d,
+      count(*) filter (where e.event = 'game_play' and e.created_at >= v_since) as plays
+    from ev e
+    group by e.game_id
+  ), pl as (
+    select z.game_id, count(distinct z.who) as players
+    from (
+      select e.game_id, e.who from ev e where e.created_at >= v_since
+      union
+      select p.game_id, p.who from p where p.at >= v_since
+    ) z
+    group by z.game_id
+  ), ag as (
+    select a.game_id,
+      count(*) filter (where a.event = 'game_launch') as launches_all,
+      max(a.created_at) filter (where a.event = 'game_launch') as last_launch,
+      count(*) filter (where a.event = 'error' and a.created_at >= v_since) as errors,
+      count(*) filter (where a.event = 'error' and a.created_at > v_wk) as errors_7d,
+      (array_agg(a.props ->> 'msg' order by a.created_at desc) filter (where a.event = 'error'))[1] as last_error,
+      max(a.created_at) filter (where a.event = 'error') as last_error_at
+    from private.an_ev a
+    where a.game_id is not null and a.event in ('game_launch', 'error')
+    group by a.game_id
+  ), sg as (
+    select s.game_id, count(*) as accounts, round((sum(s.seconds_played) / 3600)::numeric, 1) as acct_hours
+    from public.game_stats s
+    where private.an_user_ok(s.user_id)
+    group by s.game_id
+  ), k as (
+    select pg.game_id from pg where pg.sec > 0
+    union select eg.game_id from eg
+    union select ag.game_id from ag
+    union select sg.game_id from sg
+  ), g as (
+    select k.game_id,
+      coalesce(eg.launches, 0) as launches, coalesce(eg.launches_7d, 0) as launches_7d, coalesce(ag.launches_all, 0) as launches_all,
+      coalesce(eg.plays, 0) as plays, coalesce(pl.players, 0) as players,
+      coalesce(pg.sec, 0) as sec, coalesce(pg.sec_7d, 0) as sec_7d,
+      greatest(coalesce(eg.launches, 0), coalesce(pg.visits, 0)) as visits,
+      coalesce(ag.errors, 0) as errors, coalesce(ag.errors_7d, 0) as errors_7d, ag.last_error, ag.last_error_at,
+      coalesce(sg.accounts, 0) as accounts, coalesce(sg.acct_hours, 0) as acct_hours, ag.last_launch
+    from k
+    left join pg on pg.game_id = k.game_id
+    left join eg on eg.game_id = k.game_id
+    left join pl on pl.game_id = k.game_id
+    left join ag on ag.game_id = k.game_id
+    left join sg on sg.game_id = k.game_id
+  )
+  select jsonb_build_object(
+    'days', v_days,
+    'measure', 3,
+    'today', v_to,
+    'staff', private.an_lvl() >= 1,
+    'series', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'day', d.day,
+        'active', coalesce(e.active, 0),
+        'signed_in', coalesce(e.signed_in, 0),
+        'sessions', coalesce(e.sessions, 0),
+        'launches', coalesce(e.launches, 0),
+        'hours', round(coalesce(h.sec, 0) / 3600, 2),
+        'signups', coalesce(s.signups, 0),
+        'peak', case when tk.peak is null and pk.peak is null then null else coalesce(tk.peak, pk.peak) end
+      ) order by d.day)
+      from (select generate_series(v_from, v_to, interval '1 day')::date as day) d
+      left join (
+        select w.day,
+          count(distinct w.who) as active,
+          count(distinct w.user_id) as signed_in,
+          count(distinct w.session_id) as sessions,
+          count(*) filter (where w.event = 'game_launch') as launches
+        from admin.events_who w
+        where w.created_at >= v_since
+        group by w.day
+      ) e on e.day = d.day
+      left join (select p.day, sum(p.sec) as sec from p where p.at >= v_since group by p.day) h on h.day = d.day
+      left join (
+        select (u.created_at at time zone 'Europe/Paris')::date as day, count(*) as signups
+        from auth.users u
+        where u.created_at >= v_since and private.an_user_ok(u.id)
+        group by 1
+      ) s on s.day = d.day
+      left join (
+        select (x.at at time zone 'Europe/Paris')::date as day, max(x.online) as peak
+        from public.presence_samples x
+        where x.at >= v_since
+        group by 1
+      ) pk on pk.day = d.day
+      left join (
+        select (t.at at time zone 'Europe/Paris')::date as day, max(t.n) as peak
+        from (select pt.at, count(*) as n from private.presence_ticks pt where pt.at >= v_since and private.an_user_ok(pt.user_id) group by pt.at) t
+        group by 1
+      ) tk on tk.day = d.day
+    ), '[]'::jsonb),
+    'game_days', coalesce((
+      select jsonb_object_agg(gd.game_id, gd.days)
+      from (
+        select kk.game_id, jsonb_agg(coalesce(c.n, 0) order by d.day) as days
+        from (select distinct e.game_id from ev e where e.event = 'game_launch' and e.created_at >= v_since) kk
+        cross join (select generate_series(v_from, v_to, interval '1 day')::date as day) d
+        left join (
+          select e.game_id, (e.created_at at time zone 'Europe/Paris')::date as day, count(*) as n
+          from ev e
+          where e.event = 'game_launch' and e.created_at >= v_since
+          group by 1, 2
+        ) c on c.game_id = kk.game_id and c.day = d.day
+        group by kk.game_id
+      ) gd
+    ), '{}'::jsonb),
+    'game_hours', coalesce((select jsonb_object_agg(g.game_id, round(g.sec / 3600, 2)) from g where g.sec > 0), '{}'::jsonb),
+    'games', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'game_id', g.game_id,
+        'launches', g.launches, 'launches_7d', g.launches_7d, 'launches_all', g.launches_all,
+        'plays', g.plays, 'players', g.players,
+        'hours', round(g.sec / 3600, 2), 'hours_7d', round(g.sec_7d / 3600, 2),
+        'visits', g.visits,
+        'avg_min', case when g.visits > 0 then round(g.sec / 60 / g.visits, 1) else 0 end,
+        'errors', g.errors, 'errors_7d', g.errors_7d, 'last_error', g.last_error, 'last_error_at', g.last_error_at,
+        'accounts', g.accounts, 'acct_hours', g.acct_hours, 'last_launch', g.last_launch
+      ) order by g.launches desc, g.sec desc, g.game_id)
+      from g
+    ), '[]'::jsonb),
+    'play', (
+      select jsonb_build_object(
+        'hours', round(coalesce(sum(p.sec), 0) / 3600, 2),
+        'legacy_hours', round(coalesce(sum(p.sec) filter (where p.visit is null), 0) / 3600, 2),
+        'players', count(distinct p.who),
+        'visits', (select count(*) from ev e where e.event = 'game_launch' and e.created_at >= v_since),
+        'since', v_since
+      )
+      from p
+      where p.at >= v_since
+    ),
+    'device_split', coalesce((
+      select jsonb_agg(jsonb_build_object('device', z.device, 'sessions', z.n) order by z.n desc)
+      from (
+        select coalesce(a.device, 'unknown') as device, count(distinct a.session_id) as n
+        from private.an_ev a
+        where a.event = 'session' and a.created_at >= v_since
+        group by 1
+      ) z
+    ), '[]'::jsonb),
+    'devices', coalesce((
+      select jsonb_agg(to_jsonb(z) order by z.sessions desc)
+      from (
+        select coalesce(a.device, 'unknown') as device, a.props ->> 'os' as os, a.props ->> 'browser' as browser, count(distinct a.session_id) as sessions
+        from private.an_ev a
+        where a.event = 'session' and a.created_at >= v_since
+        group by 1, 2, 3
+        order by 4 desc
+        limit 20
+      ) z
+    ), '[]'::jsonb),
+    'overview', (
+      select jsonb_build_object(
+        'accounts', (select count(*) from auth.users u where u.deleted_at is null and private.an_user_ok(u.id)),
+        'active_today', count(distinct w.who) filter (where w.created_at >= v_today),
+        'signed_in_today', count(distinct w.user_id) filter (where w.created_at >= v_today),
+        'sessions_today', count(distinct w.session_id) filter (where w.created_at >= v_today),
+        'active_7d', count(distinct w.who) filter (where w.created_at > v_wk),
+        'signed_in_7d', count(distinct w.user_id) filter (where w.created_at > v_wk),
+        'active_30d', count(distinct w.who),
+        'signed_in_30d', count(distinct w.user_id)
+      )
+      from admin.events_who w
+      where w.created_at > now() - interval '30 days'
+    ),
+    'players', coalesce((
+      select jsonb_agg(to_jsonb(t))
+      from (
+        select s.user_id, pr.username, pr.display_name, s.game_id, s.plays, s.seconds_played, s.best_score, s.last_played
+        from public.game_stats s
+        left join public.profiles pr on pr.id = s.user_id
+        where private.an_user_ok(s.user_id)
+        order by s.seconds_played desc
+        limit 300
+      ) t
+    ), '[]'::jsonb),
+    'errors', coalesce((
+      select jsonb_agg(to_jsonb(t))
+      from (
+        select a.created_at, a.game_id, a.props ->> 'where' as place, a.props ->> 'msg' as message, a.device, a.session_id
+        from private.an_ev a
+        where a.event = 'error' and a.created_at >= v_since
+        order by a.created_at desc
+        limit 60
+      ) t
+    ), '[]'::jsonb),
+    'searches', coalesce((
+      select jsonb_agg(to_jsonb(t))
+      from (
+        select a.props ->> 'q' as query, count(distinct a.session_id) as searches,
+          count(distinct a.session_id) filter (where private.jnum(a.props, 'n') = 0) as with_no_results,
+          max(a.created_at) as last_searched
+        from private.an_ev a
+        where a.event = 'search' and a.created_at >= v_since and coalesce(a.props ->> 'q', '') <> ''
+        group by 1
+        order by 2 desc, 1
+        limit 25
+      ) t
+    ), '[]'::jsonb),
+    'retention', coalesce((select jsonb_agg(to_jsonb(t)) from (select * from admin.retention limit 14) t), '[]'::jsonb),
+    'peak_samples', (select count(*) from public.presence_samples x where x.at >= v_since) + (select count(distinct pt.at) from private.presence_ticks pt where pt.at >= v_since),
+    'at', now()
+  ) into r;
+  return r;
+end;
+$$;
+
+create table if not exists private.live_marks (
+  k text primary key,
+  n bigint not null default 0,
+  at timestamptz not null default now()
+);
+alter table private.live_marks enable row level security;
+revoke all on table private.live_marks from public, anon, authenticated;
+insert into private.live_marks (k) values ('users'), ('tickets'), ('log') on conflict (k) do nothing;
+
+create or replace function private.live_mark()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  update private.live_marks set n = n + 1, at = now() where k = tg_argv[0];
+  return null;
+end;
+$$;
+
+drop trigger if exists profiles_live_mark on public.profiles;
+create trigger profiles_live_mark after insert or delete or update of role, locked, locked_until, locked_reason, username, display_name on public.profiles
+  for each statement execute function private.live_mark('users');
+drop trigger if exists tickets_live_mark on public.tickets;
+create trigger tickets_live_mark after insert or update or delete on public.tickets
+  for each statement execute function private.live_mark('tickets');
+drop trigger if exists ticket_messages_live_mark on public.ticket_messages;
+create trigger ticket_messages_live_mark after insert on public.ticket_messages
+  for each statement execute function private.live_mark('tickets');
+drop trigger if exists admin_log_live_mark on public.admin_log;
+create trigger admin_log_live_mark after insert on public.admin_log
+  for each statement execute function private.live_mark('log');
+drop trigger if exists user_reports_live_mark on public.user_reports;
+create trigger user_reports_live_mark after insert or update on public.user_reports
+  for each statement execute function private.live_mark('log');
+
+create table if not exists private.housekeep (
+  id integer primary key check (id = 1),
+  at timestamptz not null default 'epoch',
+  took_ms integer,
+  detail jsonb
+);
+alter table private.housekeep enable row level security;
+revoke all on table private.housekeep from public, anon, authenticated;
+insert into private.housekeep (id) values (1) on conflict (id) do nothing;
+alter table private.housekeep add column if not exists retention boolean not null default false;
+
+create or replace function private.retention_sweep()
+returns jsonb
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_t0 timestamptz := clock_timestamp();
+  v_n bigint;
+  r jsonb := '{}'::jsonb;
+begin
+  if not pg_try_advisory_xact_lock(hashtextextended('gameplay:retention', 0)) then
+    return null;
+  end if;
+  update private.housekeep set at = now() where id = 1;
+  r := r || jsonb_build_object('retention', coalesce((select h.retention from private.housekeep h where h.id = 1), false));
+  if (r ->> 'retention')::boolean then
+    delete from public.analytics_events where created_at < now() - interval '400 days';
+    get diagnostics v_n = row_count; r := r || jsonb_build_object('analytics_events', v_n);
+    delete from private.an_link where k like 's:%' and at < now() - interval '400 days';
+    get diagnostics v_n = row_count; r := r || jsonb_build_object('an_link', v_n);
+    delete from public.chat_log where created_at < now() - interval '365 days';
+    get diagnostics v_n = row_count; r := r || jsonb_build_object('chat_log', v_n);
+    delete from private.presence_ticks where at < now() - interval '400 days';
+    get diagnostics v_n = row_count; r := r || jsonb_build_object('presence_ticks', v_n);
+    delete from public.presence_samples where at < now() - interval '2 years';
+    get diagnostics v_n = row_count; r := r || jsonb_build_object('presence_samples', v_n);
+  end if;
+  delete from private.presence_now where at < now() - interval '10 minutes';
+  get diagnostics v_n = row_count; r := r || jsonb_build_object('presence_now', v_n);
+  delete from private.rate_hits where at < now() - interval '8 days';
+  get diagnostics v_n = row_count; r := r || jsonb_build_object('rate_hits', v_n);
+  delete from private.analytics_rate where w < now() - interval '3 hours';
+  get diagnostics v_n = row_count; r := r || jsonb_build_object('analytics_rate', v_n);
+  if (r ->> 'retention')::boolean then
+    delete from public.diag_events where created_at < now() - interval '30 days';
+    get diagnostics v_n = row_count; r := r || jsonb_build_object('diag_events', v_n);
+  end if;
+  delete from private.sync_batches where created_at < now() - interval '60 days';
+  get diagnostics v_n = row_count; r := r || jsonb_build_object('sync_batches', v_n);
+  delete from private.friend_declines where at < now() - interval '7 days';
+  get diagnostics v_n = row_count; r := r || jsonb_build_object('friend_declines', v_n);
+  update private.housekeep set took_ms = (extract(epoch from clock_timestamp() - v_t0) * 1000)::integer, detail = r where id = 1;
+  return r;
+end;
+$$;
+revoke all on function private.retention_sweep() from public, anon, authenticated;
+
+create or replace function private.retention_tick()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if (select h.at from private.housekeep h where h.id = 1) < now() - interval '1 day' then
+    perform private.retention_sweep();
+  end if;
+  return null;
+end;
+$$;
+
+create or replace function private.analytics_ceiling()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_all integer;
+  v_anon integer;
+  v_n integer;
+begin
+  select count(*), count(*) filter (where n.user_id is null) into v_all, v_anon from new_rows n;
+  if v_all = 0 then
+    return null;
+  end if;
+  insert into private.analytics_rate as r (k, w, n) values ('all', date_trunc('hour', now()), v_all)
+    on conflict (k, w) do update set n = r.n + excluded.n
+    returning r.n into v_n;
+  if v_n > 500000 then
+    delete from public.analytics_events e using new_rows n where e.id = n.id;
+    return null;
+  end if;
+  if v_anon > 0 then
+    insert into private.analytics_rate as r (k, w, n) values ('all:anon', date_trunc('hour', now()), v_anon)
+      on conflict (k, w) do update set n = r.n + excluded.n
+      returning r.n into v_n;
+    if v_n > 50000 then
+      delete from public.analytics_events e using new_rows n where e.id = n.id and n.user_id is null;
+    end if;
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists analytics_ceiling on public.analytics_events;
+create trigger analytics_ceiling after insert on public.analytics_events
+  referencing new table as new_rows
+  for each statement execute function private.analytics_ceiling();
+
+drop trigger if exists analytics_retention on public.analytics_events;
+create trigger analytics_retention after insert on public.analytics_events
+  for each statement execute function private.retention_tick();
+drop trigger if exists presence_ticks_retention on private.presence_ticks;
+create trigger presence_ticks_retention after insert on private.presence_ticks
+  for each statement execute function private.retention_tick();
+
+create or replace function public.admin_housekeep(p_force boolean default false)
+returns jsonb
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_at timestamptz;
+  r jsonb;
+begin
+  select h.at into v_at from private.housekeep h where h.id = 1;
+  if coalesce(p_force, false) or v_at is null or v_at < now() - interval '1 day' then
+    r := private.retention_sweep();
+  end if;
+  return (select jsonb_build_object('ran', r is not null, 'at', h.at, 'took_ms', h.took_ms, 'deleted', coalesce(r, h.detail),
+    'cron', exists (select 1 from pg_catalog.pg_extension x where x.extname = 'pg_cron')) from private.housekeep h where h.id = 1);
+end;
+$$;
+revoke all on function public.admin_housekeep(boolean) from public, anon, authenticated;
+grant execute on function public.admin_housekeep(boolean) to authenticated;
+
+do $$
+begin
+  if exists (select 1 from pg_catalog.pg_extension where extname = 'pg_cron') then
+    perform cron.unschedule(j.jobid) from cron.job j where j.jobname = 'gameplay-retention';
+    perform cron.schedule('gameplay-retention', '17 3 * * *', 'select private.retention_sweep()');
+  end if;
+exception when others then
+  raise notice 'pg_cron job not created: %', sqlerrm;
+end;
+$$;
+
+create or replace function public.admin_live(p_uid uuid default null, p_staff boolean default false)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_now timestamptz := now();
+  v_lvl smallint := case when coalesce(p_staff, false) then 1 else 0 end;
+  v_m5 timestamptz := v_now - interval '5 minutes';
+  r jsonb;
+begin
+  select jsonb_build_object(
+    't', round(extract(epoch from v_now) * 1000),
+    'today', (v_now at time zone 'Europe/Paris')::date,
+    'n', (
+      select jsonb_build_object('all', count(*), 'shown', count(*) filter (where not n.hidden), 'play', count(*) filter (where n.game is not null), 'party', count(*) filter (where n.party), 'away', count(*) filter (where n.away))
+      from private.presence_now n
+      where n.at > v_now - interval '100 seconds'
+    ),
+    'on', coalesce((
+      select jsonb_agg(jsonb_build_object('id', x.user_id, 'g', x.game, 'a', x.away::int, 'p', x.party::int, 'h', x.hidden::int, 's', greatest(0, extract(epoch from v_now - x.at))::int, 'l', private.an_level(x.user_id)))
+      from (
+        select n.user_id, n.game, n.away, n.party, n.hidden, n.at
+        from private.presence_now n
+        where n.at > v_now - interval '100 seconds'
+        order by (n.game is null), n.at desc
+        limit 400
+      ) x
+    ), '[]'::jsonb),
+    'ev', jsonb_build_object(
+      'm1', (select count(*) from public.analytics_events e where e.created_at > v_now - interval '1 minute' and e.skip <= v_lvl),
+      'ses', (select count(distinct e.session_id) from public.analytics_events e where e.created_at > v_now - interval '1 minute' and e.skip <= v_lvl),
+      'lau', (select count(*) from public.analytics_events e where e.event = 'game_launch' and e.created_at > v_m5 and e.skip <= v_lvl),
+      'err', (select count(*) from public.analytics_events e where e.event = 'error' and e.created_at > v_m5 and e.skip <= v_lvl),
+      'rl', (select count(*) from private.rate_hits h where h.at > v_m5 and h.full_hit)
+    ),
+    'errs', coalesce((
+      select jsonb_agg(to_jsonb(x))
+      from (
+        select e.id, e.created_at as at, e.game_id as g, e.props ->> 'where' as w, left(e.props ->> 'msg', 200) as m, e.device as d, e.user_id as u
+        from public.analytics_events e
+        where e.event = 'error' and e.created_at > v_now - interval '1 hour' and e.skip <= v_lvl
+        order by e.created_at desc
+        limit 8
+      ) x
+    ), '[]'::jsonb),
+    'party', coalesce((
+      select jsonb_agg(to_jsonb(x))
+      from (
+        select e.id, e.created_at as at, substr(e.event, 7) as k, e.game_id as g, e.props ->> 'via' as via, e.props ->> 'why' as why, e.user_id as u,
+          private.jnum(e.props, 'ms') as ms, private.jnum(e.props, 'players') as pl
+        from public.analytics_events e
+        where e.event in ('party_create', 'party_join', 'party_retry', 'party_play') and e.created_at > v_now - interval '30 minutes' and e.skip <= v_lvl
+        order by e.created_at desc
+        limit 10
+      ) x
+    ), '[]'::jsonb),
+    'marks', (select jsonb_object_agg(m.k, m.n) from private.live_marks m),
+    'hk', (select h.at < v_now - interval '1 day' from private.housekeep h where h.id = 1),
+    'sel', case when p_uid is null then null else (
+      select jsonb_build_object('id', p.id, 'seen', p.last_seen, 'game', p.last_game, 'lang', p.last_lang, 'role', p.role,
+        'locked', coalesce(p.locked, false) and (p.locked_until is null or p.locked_until > v_now))
+      from public.profiles p
+      where p.id = p_uid
+    ) end
+  ) into r;
+  return r;
+end;
+$$;
+revoke all on function public.admin_live(uuid, boolean) from public, anon, authenticated;
+grant execute on function public.admin_live(uuid, boolean) to authenticated;
+
+create or replace function private.m_activity(p_days integer)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_to date := (now() at time zone 'Europe/Paris')::date;
+  v_from date := v_to - (p_days - 1);
+  v_since timestamptz := (v_from::timestamp at time zone 'Europe/Paris');
+  r jsonb;
+begin
+  with w as materialized (
+    select e.who, e.day, bool_or(e.user_id is not null) as acct
+    from admin.events_who e
+    where e.created_at >= now() - interval '400 days' and e.who is not null
+    group by e.who, e.day
+  ), f as materialized (
+    select w.who, min(w.day) as first from w group by w.who
+  ), ss as materialized (
+    select e.session_id, min(e.who) as who,
+      greatest(extract(epoch from max(coalesce(e.client_at, e.created_at)) - min(coalesce(e.client_at, e.created_at))), coalesce(max(private.jnum(e.props, 'dur')) filter (where e.event = 'sess_sum'), 0)) as dur,
+      count(*) filter (where e.event = 'game_launch') as launches,
+      count(*) filter (where e.event = 'view') as views
+    from private.an_ev e
+    where e.created_at >= v_since
+    group by e.session_id
+  ), hh as materialized (
+    select e.who, (e.created_at at time zone 'Europe/Paris')::date as day, extract(hour from e.created_at at time zone 'Europe/Paris')::int as h
+    from private.an_ev e
+    where e.created_at >= v_since and e.who is not null
+    group by 1, 2, 3
+  ), wk as (
+    select w.who, date_trunc('week', w.day)::date as wk from w group by 1, 2
+  ), fw as (
+    select wk.who, min(wk.wk) as first from wk group by wk.who
+  )
+  select jsonb_build_object(
+    'days', p_days, 'today', v_to, 'at', now(),
+    'now', jsonb_build_object(
+      'today', (select jsonb_build_object('players', count(*), 'accounts', count(*) filter (where w.acct)) from w where w.day = v_to),
+      'yesterday', (select jsonb_build_object('players', count(*), 'accounts', count(*) filter (where w.acct)) from w where w.day = v_to - 1),
+      'd7', (select jsonb_build_object('players', count(distinct w.who), 'accounts', count(distinct w.who) filter (where w.acct)) from w where w.day > v_to - 7),
+      'p7', (select jsonb_build_object('players', count(distinct w.who)) from w where w.day > v_to - 14 and w.day <= v_to - 7),
+      'd30', (select jsonb_build_object('players', count(distinct w.who), 'accounts', count(distinct w.who) filter (where w.acct)) from w where w.day > v_to - 30),
+      'p30', (select jsonb_build_object('players', count(distinct w.who)) from w where w.day > v_to - 60 and w.day <= v_to - 30)
+    ),
+    'series', coalesce((
+      select jsonb_agg(jsonb_build_object('day', d.day, 'active', coalesce(a.n, 0), 'new', coalesce(n.n, 0), 'back', greatest(coalesce(a.n, 0) - coalesce(n.n, 0), 0)) order by d.day)
+      from (select generate_series(v_from, v_to, interval '1 day')::date as day) d
+      left join (select w.day, count(*) as n from w where w.day >= v_from group by w.day) a on a.day = d.day
+      left join (select f.first as day, count(*) as n from f where f.first >= v_from group by f.first) n on n.day = d.day
+    ), '[]'::jsonb),
+    'split', (
+      select jsonb_build_object('players', count(*), 'new', count(*) filter (where f.first >= v_from), 'back', count(*) filter (where f.first < v_from))
+      from f
+      where exists (select 1 from w where w.who = f.who and w.day >= v_from)
+    ),
+    'sess', (
+      select jsonb_build_object(
+        'n', count(*),
+        'players', count(distinct ss.who),
+        'med', round(percentile_cont(0.5) within group (order by ss.dur)::numeric),
+        'p90', round(percentile_cont(0.9) within group (order by ss.dur)::numeric),
+        'avg', round(avg(ss.dur)::numeric),
+        'played', count(*) filter (where ss.launches > 0),
+        'short', count(*) filter (where ss.dur < 10 and ss.launches = 0),
+        'b', jsonb_build_array(
+          jsonb_build_object('k', 'Under 1 min', 'n', count(*) filter (where ss.dur < 60)),
+          jsonb_build_object('k', '1–5 min', 'n', count(*) filter (where ss.dur >= 60 and ss.dur < 300)),
+          jsonb_build_object('k', '5–15 min', 'n', count(*) filter (where ss.dur >= 300 and ss.dur < 900)),
+          jsonb_build_object('k', '15–30 min', 'n', count(*) filter (where ss.dur >= 900 and ss.dur < 1800)),
+          jsonb_build_object('k', '30–60 min', 'n', count(*) filter (where ss.dur >= 1800 and ss.dur < 3600)),
+          jsonb_build_object('k', 'Over 1 hour', 'n', count(*) filter (where ss.dur >= 3600))
+        )
+      )
+      from ss
+    ),
+    'hod', coalesce((
+      select jsonb_agg(round(coalesce(t.n, 0)::numeric / p_days, 2) order by g.h)
+      from generate_series(0, 23) g(h)
+      left join (select hh.h, count(*) as n from hh group by hh.h) t on t.h = g.h
+    ), '[]'::jsonb),
+    'hours', coalesce((
+      select jsonb_agg(jsonb_build_object('d', t.d, 'h', t.h, 'v', t.v))
+      from (
+        select extract(isodow from hh.day)::int - 1 as d, hh.h, round(count(*)::numeric / greatest(count(distinct hh.day), 1), 2) as v
+        from hh
+        group by 1, 2
+      ) t
+    ), '[]'::jsonb),
+    'cohorts', coalesce((
+      select jsonb_agg(jsonb_build_object('wk', c.wk, 'n', c.n, 'r', c.r) order by c.wk desc)
+      from (
+        select fw.first as wk, count(*) as n,
+          jsonb_build_array(
+            case when fw.first + 7 <= v_to then count(*) filter (where exists (select 1 from wk x where x.who = fw.who and x.wk = fw.first + 7)) end,
+            case when fw.first + 14 <= v_to then count(*) filter (where exists (select 1 from wk x where x.who = fw.who and x.wk = fw.first + 14)) end,
+            case when fw.first + 21 <= v_to then count(*) filter (where exists (select 1 from wk x where x.who = fw.who and x.wk = fw.first + 21)) end,
+            case when fw.first + 28 <= v_to then count(*) filter (where exists (select 1 from wk x where x.who = fw.who and x.wk = fw.first + 28)) end
+          ) as r
+        from fw
+        where fw.first >= date_trunc('week', v_to)::date - 56
+        group by fw.first
+      ) c
+    ), '[]'::jsonb)
+  ) into r;
+  return r;
+end;
+$$;
+
+create or replace function private.m_usage(p_days integer)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_to date := (now() at time zone 'Europe/Paris')::date;
+  v_from date := v_to - (p_days - 1);
+  v_since timestamptz := (v_from::timestamp at time zone 'Europe/Paris');
+  v_prev timestamptz := v_since - make_interval(days => p_days);
+  r jsonb;
+begin
+  with ev as materialized (
+    select e.game_id, e.event, e.who, e.session_id, e.props, e.created_at
+    from private.an_ev e
+    where e.created_at >= v_prev and e.game_id is not null
+      and e.event in ('game_open', 'game_launch', 'game_play', 'game_quit', 'game_time', 'game_active', 'favourite', 'tile_click')
+  ), c as (
+    select ev.game_id,
+      count(*) filter (where ev.event = 'tile_click' and ev.created_at >= v_since) as clicks,
+      count(*) filter (where ev.event = 'game_open' and ev.created_at >= v_since) as opens,
+      count(*) filter (where ev.event = 'game_launch' and ev.created_at >= v_since) as launches,
+      count(*) filter (where ev.event = 'game_launch' and ev.created_at < v_since) as launches_prev,
+      count(*) filter (where ev.event = 'game_play' and ev.created_at >= v_since) as plays,
+      count(distinct ev.who) filter (where ev.event in ('game_launch', 'game_play') and ev.created_at >= v_since) as players,
+      count(distinct ev.who) filter (where ev.event = 'game_play' and ev.created_at >= v_since) as real_players,
+      coalesce(sum(private.jnum(ev.props, 'rn')) filter (where ev.event = 'game_time' and ev.created_at >= v_since), 0)
+        + coalesce(sum(private.jnum(ev.props, 'rounds')) filter (where ev.event = 'game_quit' and ev.created_at >= v_since and not ev.props ? 'v'), 0) as rounds,
+      coalesce(sum(private.jnum(ev.props, 'rec')) filter (where ev.event = 'game_time' and ev.created_at >= v_since), 0) as recs,
+      count(*) filter (where ev.event = 'favourite' and ev.created_at >= v_since and private.jbool(ev.props, 'on')) as fav_add,
+      count(*) filter (where ev.event = 'favourite' and ev.created_at >= v_since and private.jbool(ev.props, 'on') is false) as fav_del
+    from ev
+    group by ev.game_id
+  ), t as (
+    select x.game_id, sum(x.sec) as sec
+    from private.play_rows(v_since) x
+    group by x.game_id
+  ), tp as (
+    select x.game_id, sum(x.sec) as sec
+    from private.play_rows(v_prev) x
+    where x.at < v_since
+    group by x.game_id
+  ), la as (
+    select ev.game_id, ev.session_id, ev.props ->> 'v' as v
+    from ev
+    where ev.event = 'game_launch' and ev.created_at >= v_since and ev.created_at < now() - interval '3 minutes' and coalesce(ev.props ->> 'v', '') <> ''
+  ), av as (
+    select ev.session_id, ev.props ->> 'v' as v, max(private.jnum(ev.props, 'sec')) as sec
+    from ev
+    where ev.event = 'game_active' and ev.created_at >= v_since
+    group by 1, 2
+  ), pv as (
+    select distinct ev.session_id, ev.props ->> 'v' as v
+    from ev
+    where ev.event = 'game_play' and ev.created_at >= v_since and coalesce(ev.props ->> 'v', '') <> ''
+  ), b as (
+    select la.game_id, count(*) as n,
+      count(*) filter (where coalesce(av.sec, 0) < 10 and pv.v is null) as bounced
+    from la
+    left join av on av.session_id = la.session_id and av.v = la.v
+    left join pv on pv.session_id = la.session_id and pv.v = la.v
+    group by la.game_id
+  ), fv as (
+    select f.game_id, count(*) as n
+    from public.favourites f
+    where private.an_user_ok(f.user_id)
+    group by f.game_id
+  ), dd as (
+    select kk.game_id, jsonb_agg(coalesce(q.n, 0) order by d.day) as days
+    from (select c.game_id from c where c.launches > 0) kk
+    cross join (select generate_series(v_from, v_to, interval '1 day')::date as day) d
+    left join (
+      select ev.game_id, (ev.created_at at time zone 'Europe/Paris')::date as day, count(*) as n
+      from ev
+      where ev.event = 'game_launch' and ev.created_at >= v_since
+      group by 1, 2
+    ) q on q.game_id = kk.game_id and q.day = d.day
+    group by kk.game_id
+  ), k as (
+    select c.game_id from c
+    union select t.game_id from t
+    union select fv.game_id from fv
+  )
+  select jsonb_build_object(
+    'days', p_days, 'today', v_to, 'at', now(),
+    'games', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id', k.game_id,
+        'clicks', coalesce(c.clicks, 0), 'opens', coalesce(c.opens, 0),
+        'launches', coalesce(c.launches, 0), 'prev', coalesce(c.launches_prev, 0),
+        'plays', coalesce(c.plays, 0), 'players', coalesce(c.players, 0), 'real_players', coalesce(c.real_players, 0),
+        'sec', round(coalesce(t.sec, 0)), 'sec_prev', round(coalesce(tp.sec, 0)),
+        'bn', coalesce(b.n, 0), 'bounced', coalesce(b.bounced, 0),
+        'rounds', coalesce(c.rounds, 0), 'recs', coalesce(c.recs, 0),
+        'favs', coalesce(fv.n, 0), 'fav_add', coalesce(c.fav_add, 0), 'fav_del', coalesce(c.fav_del, 0),
+        'days', dd.days
+      ) order by coalesce(c.launches, 0) desc, coalesce(t.sec, 0) desc, k.game_id)
+      from k
+      left join c on c.game_id = k.game_id
+      left join t on t.game_id = k.game_id
+      left join tp on tp.game_id = k.game_id
+      left join b on b.game_id = k.game_id
+      left join fv on fv.game_id = k.game_id
+      left join dd on dd.game_id = k.game_id
+    ), '[]'::jsonb),
+    'total', (
+      select jsonb_build_object(
+        'opens', coalesce(sum(c.opens), 0), 'launches', coalesce(sum(c.launches), 0), 'prev', coalesce(sum(c.launches_prev), 0),
+        'plays', coalesce(sum(c.plays), 0), 'rounds', coalesce(sum(c.rounds), 0), 'recs', coalesce(sum(c.recs), 0),
+        'games', count(*) filter (where c.launches > 0),
+        'sec', (select round(coalesce(sum(t.sec), 0)) from t), 'sec_prev', (select round(coalesce(sum(tp.sec), 0)) from tp),
+        'bn', (select coalesce(sum(b.n), 0) from b), 'bounced', (select coalesce(sum(b.bounced), 0) from b),
+        'favs', (select coalesce(sum(fv.n), 0) from fv)
+      )
+      from c
+    )
+  ) into r;
+  return r;
+end;
+$$;
+
+create or replace function private.m_perf(p_days integer)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_to date := (now() at time zone 'Europe/Paris')::date;
+  v_from date := v_to - (p_days - 1);
+  v_since timestamptz := (v_from::timestamp at time zone 'Europe/Paris');
+  r jsonb;
+begin
+  with vt as materialized (
+    select coalesce(e.device, 'unknown') as device, (e.created_at at time zone 'Europe/Paris')::date as day,
+      private.jnum(e.props, 'ttfb') as ttfb, private.jnum(e.props, 'fcp') as fcp, private.jnum(e.props, 'lcp') as lcp,
+      private.jnum(e.props, 'load') as load, private.jnum(e.props, 'rdy') as rdy, private.jnum(e.props, 'inp') as inp, private.jnum(e.props, 'cls') as cls
+    from private.an_ev e
+    where e.event = 'vitals' and e.created_at >= v_since
+  ), gs as materialized (
+    select e.game_id, e.session_id, e.event,
+      private.jnum(e.props, 'fps') as fps, private.jnum(e.props, 'fr') as fr, private.jnum(e.props, 'sl') as sl, private.jnum(e.props, 'lf') as lf,
+      private.jnum(e.props, 'sec') as sec, e.props ? 'v' as modern
+    from private.an_ev e
+    where e.created_at >= v_since and e.game_id is not null and e.event in ('game_time', 'game_quit') and private.jnum(e.props, 'fps') > 0
+  ), sm as materialized (
+    select gs.game_id, gs.session_id,
+      sum(gs.fr) as fr, sum(gs.sl) as sl, sum(gs.lf) as lf, sum(gs.fr / gs.fps) as secs
+    from gs
+    where gs.event = 'game_time' and gs.fr >= 120
+    group by gs.game_id, gs.session_id
+  ), sq as materialized (
+    select gs.game_id, gs.session_id, avg(gs.fps) as fps
+    from gs
+    where gs.event = 'game_quit' and not gs.modern and gs.sec >= 3
+    group by gs.game_id, gs.session_id
+  ), su as materialized (
+    select sm.game_id, sm.session_id, sm.fr / nullif(sm.secs, 0) as fps, sm.sl / nullif(sm.fr, 0) as slow, sm.fr, sm.sl, sm.lf, sm.secs, true as modern from sm
+    union all
+    select sq.game_id, sq.session_id, sq.fps, null::numeric, null::numeric, null::numeric, null::numeric, null::numeric, false from sq
+  ), sx as materialized (
+    select su.*, (su.fps < 30 or coalesce(su.slow, 0) >= 0.2) as bad,
+      i.device, i.os, i.browser, dv.gpu
+    from su
+    left join lateral (
+      select s.device, s.props ->> 'os' as os, s.props ->> 'browser' as browser
+      from private.an_ev s
+      where s.session_id = su.session_id and s.event = 'session'
+      limit 1
+    ) i on true
+    left join lateral (
+      select s.props ->> 'gpu' as gpu
+      from private.an_ev s
+      where s.session_id = su.session_id and s.event = 'env_dev'
+      limit 1
+    ) dv on true
+  ), ld as (
+    select e.game_id, count(*) as n,
+      round(percentile_cont(0.5) within group (order by private.jnum(e.props, 'ms'))::numeric) as p50,
+      round(percentile_cont(0.9) within group (order by private.jnum(e.props, 'ms'))::numeric) as p90
+    from private.an_ev e
+    where e.event = 'game_launch' and e.created_at >= v_since and e.game_id is not null and private.jbool(e.props, 'lazy') and private.jnum(e.props, 'ms') > 0
+    group by e.game_id
+  ), gp as (
+    select sx.game_id, count(*) as n, count(*) filter (where sx.modern) as nm,
+      round((sum(sx.fr) / nullif(sum(sx.secs), 0))::numeric, 1) as fps_m,
+      round(avg(sx.fps)::numeric, 1) as fps_a,
+      round((100 * sum(sx.sl) / nullif(sum(sx.fr), 0))::numeric, 1) as slow,
+      round((60 * sum(sx.lf) / nullif(sum(sx.secs), 0))::numeric, 2) as freezes,
+      count(*) filter (where sx.bad) as bad,
+      round(percentile_cont(0.1) within group (order by sx.fps)::numeric, 1) as fps_p10
+    from sx
+    group by sx.game_id
+  )
+  select jsonb_build_object(
+    'days', p_days, 'today', v_to, 'at', now(),
+    'page', coalesce((
+      select jsonb_agg(to_jsonb(t) order by t.ord, t.n desc)
+      from (
+        select case when grouping(vt.device) = 1 then 'all' else vt.device end as device, grouping(vt.device) as ord, count(*) as n,
+          round(percentile_cont(0.5) within group (order by vt.ttfb)::numeric) as ttfb50, round(percentile_cont(0.75) within group (order by vt.ttfb)::numeric) as ttfb75,
+          round(percentile_cont(0.5) within group (order by vt.fcp)::numeric) as fcp50, round(percentile_cont(0.75) within group (order by vt.fcp)::numeric) as fcp75,
+          round(percentile_cont(0.5) within group (order by vt.lcp)::numeric) as lcp50, round(percentile_cont(0.75) within group (order by vt.lcp)::numeric) as lcp75,
+          round(percentile_cont(0.5) within group (order by vt.load)::numeric) as load50, round(percentile_cont(0.75) within group (order by vt.load)::numeric) as load75,
+          round(percentile_cont(0.95) within group (order by vt.load)::numeric) as load95,
+          round(percentile_cont(0.5) within group (order by vt.rdy)::numeric) as rdy50, round(percentile_cont(0.75) within group (order by vt.rdy)::numeric) as rdy75,
+          round(percentile_cont(0.95) within group (order by vt.rdy)::numeric) as rdy95,
+          round(percentile_cont(0.75) within group (order by vt.inp)::numeric) as inp75,
+          round(percentile_cont(0.75) within group (order by vt.cls)::numeric, 3) as cls75
+        from vt
+        group by grouping sets ((vt.device), ())
+      ) t
+      where t.n > 0
+    ), '[]'::jsonb),
+    'page_days', coalesce((
+      select jsonb_agg(jsonb_build_object('day', d.day, 'n', coalesce(t.n, 0), 'load', t.load, 'lcp', t.lcp, 'rdy', t.rdy) order by d.day)
+      from (select generate_series(v_from, v_to, interval '1 day')::date as day) d
+      left join (
+        select vt.day, count(*) as n,
+          round(percentile_cont(0.75) within group (order by vt.load)::numeric) as load,
+          round(percentile_cont(0.75) within group (order by vt.lcp)::numeric) as lcp,
+          round(percentile_cont(0.75) within group (order by vt.rdy)::numeric) as rdy
+        from vt
+        group by vt.day
+      ) t on t.day = d.day
+    ), '[]'::jsonb),
+    'games', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id', coalesce(gp.game_id, ld.game_id),
+        'n', coalesce(gp.n, 0), 'nm', coalesce(gp.nm, 0),
+        'fps', coalesce(gp.fps_m, gp.fps_a), 'fps_p10', gp.fps_p10, 'slow', gp.slow, 'freezes', gp.freezes, 'bad', coalesce(gp.bad, 0),
+        'ln', coalesce(ld.n, 0), 'l50', ld.p50, 'l90', ld.p90
+      ) order by coalesce(gp.n, 0) desc, coalesce(ld.n, 0) desc)
+      from gp
+      full join ld on ld.game_id = gp.game_id
+    ), '[]'::jsonb),
+    'total', (
+      select jsonb_build_object('n', count(*), 'nm', count(*) filter (where sx.modern), 'bad', count(*) filter (where sx.bad),
+        'fps', round((sum(sx.fr) / nullif(sum(sx.secs), 0))::numeric, 1),
+        'fps_all', round(avg(sx.fps)::numeric, 1),
+        'slow', round((100 * sum(sx.sl) / nullif(sum(sx.fr), 0))::numeric, 1))
+      from sx
+    ),
+    'by_device', coalesce((select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n, 'bad', t.bad, 'fps', t.fps) order by t.n desc) from (select coalesce(sx.device, 'unknown') as k, count(*) as n, count(*) filter (where sx.bad) as bad, round(avg(sx.fps)::numeric, 1) as fps from sx group by 1) t), '[]'::jsonb),
+    'by_os', coalesce((select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n, 'bad', t.bad, 'fps', t.fps) order by t.n desc) from (select coalesce(sx.os, 'unknown') as k, count(*) as n, count(*) filter (where sx.bad) as bad, round(avg(sx.fps)::numeric, 1) as fps from sx group by 1 order by 2 desc limit 10) t), '[]'::jsonb),
+    'by_browser', coalesce((select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n, 'bad', t.bad, 'fps', t.fps) order by t.n desc) from (select coalesce(sx.browser, 'unknown') as k, count(*) as n, count(*) filter (where sx.bad) as bad, round(avg(sx.fps)::numeric, 1) as fps from sx group by 1 order by 2 desc limit 10) t), '[]'::jsonb),
+    'by_gpu', coalesce((select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n, 'bad', t.bad, 'fps', t.fps) order by t.bad desc, t.n desc) from (select sx.gpu as k, count(*) as n, count(*) filter (where sx.bad) as bad, round(avg(sx.fps)::numeric, 1) as fps from sx where coalesce(sx.gpu, '') <> '' group by 1 order by 3 desc, 2 desc limit 10) t), '[]'::jsonb)
+  ) into r;
+  return r;
+end;
+$$;
+
+create or replace function private.err_sig(p_game text, p_props jsonb)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select md5(coalesce(p_game, '') || '|' || coalesce(p_props ->> 'where', '') || '|' || regexp_replace(left(coalesce(p_props ->> 'msg', ''), 160), '[0-9]+', '#', 'g'));
+$$;
+
+create or replace function private.m_errors(p_days integer)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_to date := (now() at time zone 'Europe/Paris')::date;
+  v_from date := v_to - (p_days - 1);
+  v_since timestamptz := (v_from::timestamp at time zone 'Europe/Paris');
+  r jsonb;
+begin
+  with e as materialized (
+    select a.id, a.created_at, a.game_id, a.who, a.session_id, a.device, a.props, private.err_sig(a.game_id, a.props) as sig
+    from private.an_ev a
+    where a.event = 'error' and a.created_at >= v_since
+  ), g as (
+    select e.sig, max(e.game_id) as game, max(e.props ->> 'where') as place,
+      (array_agg(e.props ->> 'msg' order by e.created_at desc))[1] as msg,
+      (array_agg(e.props ->> 'src' order by e.created_at desc) filter (where coalesce(e.props ->> 'src', '') <> ''))[1] as src,
+      (array_agg(private.jnum(e.props, 'line') order by e.created_at desc) filter (where private.jnum(e.props, 'line') > 0))[1] as line,
+      count(*) as n, count(distinct e.who) as users, count(distinct e.session_id) as sessions,
+      min(e.created_at) as first, max(e.created_at) as last,
+      count(*) filter (where e.created_at > now() - interval '24 hours') as n24,
+      count(*) filter (where e.device = 'desktop') as desktop, count(*) filter (where e.device = 'phone') as phone, count(*) filter (where e.device = 'tablet') as tablet
+    from e
+    group by e.sig
+  )
+  select jsonb_build_object(
+    'days', p_days, 'today', v_to, 'at', now(),
+    'n', (select count(*) from e),
+    'kinds', (select count(*) from g),
+    'users', (select count(distinct e.who) from e),
+    'sessions', (select count(distinct e.session_id) from e),
+    'sess_all', (select count(distinct a.session_id) from private.an_ev a where a.created_at >= v_since),
+    'by_day', coalesce((
+      select jsonb_agg(jsonb_build_object('day', d.day, 'n', coalesce(t.n, 0), 's', coalesce(t.s, 0)) order by d.day)
+      from (select generate_series(v_from, v_to, interval '1 day')::date as day) d
+      left join (select (e.created_at at time zone 'Europe/Paris')::date as day, count(*) as n, count(distinct e.session_id) as s from e group by 1) t on t.day = d.day
+    ), '[]'::jsonb),
+    'by_where', coalesce((select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc) from (select coalesce(nullif(e.props ->> 'where', ''), 'other') as k, count(*) as n from e group by 1) t), '[]'::jsonb),
+    'by_game', coalesce((select jsonb_agg(jsonb_build_object('id', t.k, 'n', t.n, 'users', t.u) order by t.n desc) from (select e.game_id as k, count(*) as n, count(distinct e.who) as u from e where e.game_id is not null group by 1 order by 2 desc limit 30) t), '[]'::jsonb),
+    'groups', coalesce((
+      select jsonb_agg(to_jsonb(t))
+      from (select g.* from g order by g.last desc limit 200) t
+    ), '[]'::jsonb)
+  ) into r;
+  return r;
+end;
+$$;
+
+create or replace function private.m_error(p_days integer, p_sig text)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_since timestamptz := now() - make_interval(days => p_days + 1);
+  r jsonb;
+begin
+  with e as materialized (
+    select a.id, a.created_at, a.client_at, a.game_id, a.who, a.user_id, a.session_id, a.device, a.props
+    from private.an_ev a
+    where a.event = 'error' and a.created_at >= v_since and private.err_sig(a.game_id, a.props) = p_sig
+  ), x as materialized (
+    select e.*, s.props ->> 'os' as os, s.props ->> 'browser' as browser, d.props ->> 'osv' as osv, d.props ->> 'brv' as brv, d.props ->> 'gpu' as gpu
+    from (select * from e order by e.created_at desc limit 300) e
+    left join lateral (select s.props from private.an_ev s where s.session_id = e.session_id and s.event = 'session' limit 1) s on true
+    left join lateral (select d.props from private.an_ev d where d.session_id = e.session_id and d.event = 'env_dev' limit 1) d on true
+  )
+  select jsonb_build_object(
+    'sig', p_sig,
+    'n', (select count(*) from e),
+    'rows', coalesce((
+      select jsonb_agg(jsonb_build_object('id', x.id, 'at', x.created_at, 'game', x.game_id, 'where', x.props ->> 'where', 'msg', x.props ->> 'msg',
+        'src', x.props ->> 'src', 'line', private.jnum(x.props, 'line'), 'device', x.device, 'os', coalesce(x.osv, x.os), 'browser', coalesce(x.brv, x.browser), 'gpu', x.gpu,
+        'session', x.session_id, 'user', x.user_id, 'username', p.username, 'name', p.display_name) order by x.created_at desc)
+      from (select * from x order by x.created_at desc limit 40) x
+      left join public.profiles p on p.id = x.user_id
+    ), '[]'::jsonb),
+    'browsers', coalesce((select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc) from (select coalesce(x.brv, x.browser, 'unknown') as k, count(*) as n from x group by 1 order by 2 desc limit 8) t), '[]'::jsonb),
+    'os', coalesce((select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc) from (select coalesce(x.osv, x.os, 'unknown') as k, count(*) as n from x group by 1 order by 2 desc limit 8) t), '[]'::jsonb),
+    'devices', coalesce((select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc) from (select coalesce(x.device, 'unknown') as k, count(*) as n from x group by 1) t), '[]'::jsonb)
+  ) into r;
+  return r;
+end;
+$$;
+
+create or replace function private.m_parties(p_days integer)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_to date := (now() at time zone 'Europe/Paris')::date;
+  v_from date := v_to - (p_days - 1);
+  v_since timestamptz := (v_from::timestamp at time zone 'Europe/Paris');
+  r jsonb;
+begin
+  with e as materialized (
+    select a.id, a.session_id, a.game_id, a.event, coalesce(a.client_at, a.created_at) as t, a.created_at, a.props, a.who,
+      (a.created_at at time zone 'Europe/Paris')::date as day
+    from private.an_ev a
+    where a.created_at >= v_since and a.event in ('party_create', 'party_join', 'party_retry', 'party_play')
+  ), x as (
+    select e.*, lag(e.event) over w as pe, lag(e.t) over w as pt
+    from e
+    where e.event in ('party_join', 'party_retry')
+    window w as (partition by e.session_id, e.game_id order by e.t, e.id)
+  ), y as (
+    select x.*, sum(case when x.pe is null or x.pe = 'party_join' or x.t - x.pt > interval '90 seconds' then 1 else 0 end) over (partition by x.session_id, x.game_id order by x.t, x.id) as grp
+    from x
+  ), a as materialized (
+    select y.session_id, y.game_id, y.grp, min(y.day) as day, max(y.created_at) as last_at, min(y.who) as who,
+      count(*) filter (where y.event = 'party_retry') as retries,
+      bool_or(y.event = 'party_join') as ok,
+      max(y.props ->> 'via') filter (where y.event = 'party_join') as via,
+      max(private.jnum(y.props, 'ms')) filter (where y.event = 'party_join') as ms,
+      extract(epoch from max(y.t) - min(y.t)) as waited,
+      (array_agg(y.props ->> 'why' order by y.t desc) filter (where y.event = 'party_retry'))[1] as why
+    from y
+    group by y.session_id, y.game_id, y.grp
+  ), d as materialized (
+    select a.*, (not a.ok and a.last_at < now() - interval '2 minutes') as failed
+    from a
+    where a.ok or a.last_at < now() - interval '2 minutes'
+  )
+  select jsonb_build_object(
+    'days', p_days, 'today', v_to, 'at', now(),
+    'creates', (select count(*) from e where e.event = 'party_create'),
+    'hosts', (select count(distinct e.who) from e where e.event = 'party_create'),
+    'plays', (select count(*) from e where e.event = 'party_play'),
+    'play_players', (select round(avg(private.jnum(e.props, 'players')), 1) from e where e.event = 'party_play'),
+    'retries', (select count(*) from e where e.event = 'party_retry'),
+    'attempts', (select count(*) from d),
+    'joined', (select count(*) from d where d.ok),
+    'failed', (select count(*) from d where d.failed),
+    'first_try', (select count(*) from d where d.ok and d.retries = 0),
+    'guests', (select count(distinct d.who) from d where d.ok),
+    'routes', coalesce((select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc) from (select coalesce(nullif(d.via, ''), 'unknown') as k, count(*) as n from d where d.ok group by 1) t), '[]'::jsonb),
+    'why', coalesce((select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc) from (select coalesce(nullif(e.props ->> 'why', ''), 'unknown') as k, count(*) as n from e where e.event = 'party_retry' group by 1) t), '[]'::jsonb),
+    'fail_why', coalesce((select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc) from (select coalesce(nullif(d.why, ''), 'unknown') as k, count(*) as n from d where d.failed group by 1) t), '[]'::jsonb),
+    'ms', (select jsonb_build_object('n', count(*), 'p50', round(percentile_cont(0.5) within group (order by d.ms)::numeric), 'p90', round(percentile_cont(0.9) within group (order by d.ms)::numeric)) from d where d.ok and d.ms > 0),
+    'ms_route', coalesce((select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n, 'p50', t.p50) order by t.n desc) from (select coalesce(nullif(d.via, ''), 'unknown') as k, count(*) as n, round(percentile_cont(0.5) within group (order by d.ms)::numeric) as p50 from d where d.ok and d.ms > 0 group by 1) t), '[]'::jsonb),
+    'waited', (select jsonb_build_object('n', count(*), 'p50', round(percentile_cont(0.5) within group (order by d.waited)::numeric, 1)) from d where d.ok and d.retries > 0),
+    'by_day', coalesce((
+      select jsonb_agg(jsonb_build_object('day', g.day, 'creates', coalesce(c.creates, 0), 'plays', coalesce(c.plays, 0), 'attempts', coalesce(j.attempts, 0), 'joined', coalesce(j.joined, 0), 'failed', coalesce(j.failed, 0), 'relay', coalesce(j.relay, 0),
+        'rate', case when coalesce(j.attempts, 0) > 0 then round(100.0 * j.joined / j.attempts, 1) end) order by g.day)
+      from (select generate_series(v_from, v_to, interval '1 day')::date as day) g
+      left join (select e.day, count(*) filter (where e.event = 'party_create') as creates, count(*) filter (where e.event = 'party_play') as plays from e group by e.day) c on c.day = g.day
+      left join (select d.day, count(*) as attempts, count(*) filter (where d.ok) as joined, count(*) filter (where d.failed) as failed, count(*) filter (where d.ok and d.via = 'rt-relay') as relay from d group by d.day) j on j.day = g.day
+    ), '[]'::jsonb),
+    'by_game', coalesce((
+      select jsonb_agg(to_jsonb(t) order by t.creates + t.attempts desc, t.id)
+      from (
+        select k.game_id as id, coalesce(c.creates, 0) as creates, coalesce(c.plays, 0) as plays, coalesce(j.attempts, 0) as attempts, coalesce(j.joined, 0) as joined,
+          coalesce(j.failed, 0) as failed, coalesce(j.retried, 0) as retried, coalesce(j.relay, 0) as relay, coalesce(j.p2p, 0) as p2p, coalesce(j.peerjs, 0) as peerjs, j.ms50
+        from (select distinct e.game_id from e where e.game_id is not null) k
+        left join (select e.game_id, count(*) filter (where e.event = 'party_create') as creates, count(*) filter (where e.event = 'party_play') as plays from e group by e.game_id) c on c.game_id = k.game_id
+        left join (
+          select d.game_id, count(*) as attempts, count(*) filter (where d.ok) as joined, count(*) filter (where d.failed) as failed, count(*) filter (where d.ok and d.retries > 0) as retried,
+            count(*) filter (where d.ok and d.via = 'rt-relay') as relay, count(*) filter (where d.ok and d.via = 'rt-p2p') as p2p, count(*) filter (where d.ok and d.via = 'peerjs') as peerjs,
+            round((percentile_cont(0.5) within group (order by d.ms) filter (where d.ok and d.ms > 0))::numeric) as ms50
+          from d
+          group by d.game_id
+        ) j on j.game_id = k.game_id
+      ) t
+    ), '[]'::jsonb)
+  ) into r;
+  return r;
+end;
+$$;
+
+create or replace function private.m_health(p_days integer)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_to date := (now() at time zone 'Europe/Paris')::date;
+  v_from date := v_to - (p_days - 1);
+  v_since timestamptz := (v_from::timestamp at time zone 'Europe/Paris');
+  r jsonb;
+begin
+  with s as materialized (
+    select e.session_id, (min(e.created_at) at time zone 'Europe/Paris')::date as day,
+      (array_agg(e.props ->> 'route' order by e.created_at desc) filter (where coalesce(e.props ->> 'route', '') <> ''))[1] as route,
+      bool_or(e.props ->> 'route' = 'relay') as relayed,
+      coalesce(sum(private.jnum(e.props, 'rq')), 0) as rq, coalesce(sum(private.jnum(e.props, 'rqf')), 0) as rqf,
+      coalesce(sum(private.jnum(e.props, 'rq5')), 0) as rq5, coalesce(sum(private.jnum(e.props, 'rq4')), 0) as rq4,
+      coalesce(sum(private.jnum(e.props, 'rql')), 0) as rql, coalesce(sum(private.jnum(e.props, 'rqt')), 0) as rqt,
+      coalesce(max(private.jnum(e.props, 'off')), 0) as off,
+      bool_or(e.props ? 'rq') as measured
+    from private.an_ev e
+    where e.event = 'sess_sum' and e.created_at >= v_since
+    group by e.session_id
+  ), h as materialized (
+    select x.action, x.uid, x.ip, x.full_hit, (x.at at time zone 'Europe/Paris')::date as day
+    from private.rate_hits x
+    where x.at >= greatest(v_since, now() - interval '8 days')
+  )
+  select jsonb_build_object(
+    'days', p_days, 'today', v_to, 'at', now(),
+    'routes', coalesce((select jsonb_agg(jsonb_build_object('k', t.k, 'n', t.n) order by t.n desc) from (select coalesce(s.route, 'unknown') as k, count(*) as n from s where s.route is not null group by 1) t), '[]'::jsonb),
+    'req', (
+      select jsonb_build_object('sessions', count(*) filter (where s.measured), 'n', sum(s.rq), 'failed', sum(s.rqf), 's5', sum(s.rq5), 's4', sum(s.rq4), 'limited', sum(s.rql),
+        'ms', case when sum(s.rq) > 0 then round(sum(s.rqt) / sum(s.rq)) end,
+        'hit', count(*) filter (where s.rqf + s.rq5 > 0),
+        'offline', count(*) filter (where s.off > 0), 'all', count(*))
+      from s
+    ),
+    'by_day', coalesce((
+      select jsonb_agg(jsonb_build_object('day', d.day, 'direct', coalesce(t.direct, 0), 'relay', coalesce(t.relay, 0), 'none', coalesce(t.none, 0),
+        'rq', coalesce(t.rq, 0), 'bad', coalesce(t.bad, 0), 'rate', case when coalesce(t.rq, 0) > 0 then round(100.0 * t.bad / t.rq, 2) end,
+        'hits', coalesce(l.hits, 0), 'limited', coalesce(l.full_hits, 0), 'game_fail', coalesce(g.n, 0)) order by d.day)
+      from (select generate_series(v_from, v_to, interval '1 day')::date as day) d
+      left join (
+        select s.day, count(*) filter (where s.route = 'direct') as direct, count(*) filter (where s.route = 'relay') as relay, count(*) filter (where s.route = 'none') as none,
+          sum(s.rq) as rq, sum(s.rqf + s.rq5) as bad
+        from s
+        group by s.day
+      ) t on t.day = d.day
+      left join (select h.day, count(*) as hits, count(*) filter (where h.full_hit) as full_hits from h group by h.day) l on l.day = d.day
+      left join (
+        select (e.created_at at time zone 'Europe/Paris')::date as day, count(*) as n
+        from private.an_ev e
+        where e.event = 'error' and e.created_at >= v_since and e.props ->> 'where' = 'load'
+        group by 1
+      ) g on g.day = d.day
+    ), '[]'::jsonb),
+    'limits', coalesce((
+      select jsonb_agg(jsonb_build_object('k', t.action, 'n', t.n, 'full', t.full_hits, 'who', t.who) order by t.full_hits desc, t.n desc)
+      from (
+        select h.action, count(*) as n, count(*) filter (where h.full_hit) as full_hits, count(distinct coalesce(h.uid::text, h.ip)) filter (where h.full_hit) as who
+        from h
+        group by h.action
+        order by 3 desc, 2 desc
+        limit 15
+      ) t
+    ), '[]'::jsonb),
+    'limit_total', (select jsonb_build_object('n', count(*), 'full', count(*) filter (where h.full_hit), 'who', count(distinct coalesce(h.uid::text, h.ip)) filter (where h.full_hit), 'days', least(p_days, 8)) from h),
+    'down', private.ins_share('env_caps', 'down', v_since),
+    'game_fail', (select count(*) from private.an_ev e where e.event = 'error' and e.created_at >= v_since and e.props ->> 'where' = 'load'),
+    'events', (select jsonb_build_object('n', count(*), 'sessions', count(distinct e.session_id)) from private.an_ev e where e.created_at >= v_since),
+    'sweep', (select jsonb_build_object('at', k.at, 'took_ms', k.took_ms, 'deleted', k.detail, 'cron', exists (select 1 from pg_catalog.pg_extension x where x.extname = 'pg_cron')) from private.housekeep k where k.id = 1),
+    'excluded', (select jsonb_build_object('test', count(*) filter (where a.skip = 2), 'staff', count(*) filter (where a.skip = 1), 'all', count(*)) from public.analytics_events a where a.created_at >= v_since)
+  ) into r;
+  return r;
+end;
+$$;
+
+create or replace function public.admin_data(p_what text, p_days integer default 30, p_staff boolean default false, p_arg text default null)
+returns jsonb
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_days integer := greatest(1, least(coalesce(p_days, 30), 366));
+begin
+  perform set_config('gp.an_lvl', case when coalesce(p_staff, false) then '1' else '0' end, true);
+  return case p_what
+    when 'stats' then public.admin_stats_v2(v_days)
+    when 'insights' then jsonb_build_object('d', public.admin_insights(v_days), 'm', public.admin_insights_more(v_days), 'p', public.admin_play_insights(v_days))
+    when 'activity' then private.m_activity(v_days)
+    when 'usage' then private.m_usage(v_days)
+    when 'perf' then private.m_perf(v_days)
+    when 'errors' then private.m_errors(v_days)
+    when 'error' then private.m_error(v_days, p_arg)
+    when 'parties' then private.m_parties(v_days)
+    when 'health' then private.m_health(v_days)
+    else null
+  end;
+end;
+$$;
+
+revoke all on function private.m_activity(integer) from public, anon, authenticated;
+revoke all on function private.m_usage(integer) from public, anon, authenticated;
+revoke all on function private.m_perf(integer) from public, anon, authenticated;
+revoke all on function private.m_errors(integer) from public, anon, authenticated;
+revoke all on function private.m_error(integer, text) from public, anon, authenticated;
+revoke all on function private.m_parties(integer) from public, anon, authenticated;
+revoke all on function private.m_health(integer) from public, anon, authenticated;
+revoke all on function private.err_sig(text, jsonb) from public, anon, authenticated;
+revoke all on function public.admin_data(text, integer, boolean, text) from public, anon, authenticated;
+grant execute on function public.admin_data(text, integer, boolean, text) to authenticated;
+
+create or replace function public.admin_diag_info(p_uid uuid, p_sid text)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+begin
+  return (
+    select jsonb_build_object(
+      'n', coalesce(sum(t.n), 0), 'first', min(t.first), 'last', max(t.last), 'max_seq', max(t.mx),
+      'kinds', coalesce(jsonb_object_agg(t.kind, t.n) filter (where t.kind is not null), '{}'::jsonb),
+      'bad', (select count(*) from public.diag_events d where d.user_id = p_uid and d.sid = p_sid and private.diag_bad(d.kind, d.data)),
+      'boot', (select d.data from public.diag_events d where d.user_id = p_uid and d.sid = p_sid and d.kind = 'boot' order by d.seq limit 1)
+    )
+    from (
+      select d.kind, count(*) as n, min(d.at) as first, max(d.at) as last, max(d.seq) as mx
+      from public.diag_events d
+      where d.user_id = p_uid and d.sid = p_sid
+      group by d.kind
+    ) t
+  );
+end;
+$$;
+
+create or replace function private.diag_bad(p_kind text, p_data jsonb)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select case p_kind
+    when 'err' then true
+    when 'log' then p_data ->> 'l' in ('error', 'warn')
+    when 'res' then p_data ? 'e' or (case when (p_data ->> 's') ~ '^[0-9]{1,3}$' then (p_data ->> 's')::integer else 0 end) >= 400
+    when 'ws' then p_data ->> 'a' = 'error' or (p_data ->> 'a' = 'close' and p_data ->> 'clean' = 'false')
+    when 'pc' then p_data ->> 's' in ('failed', 'disconnected') or p_data ->> 'a' = 'canderr'
+    when 'dc' then p_data ->> 'a' = 'error'
+    when 'life' then p_data ->> 'a' = 'offline'
+    when 'net' then p_data ->> 'a' ~ '(fail|lost|error|timeout)'
+    else false
+  end;
+$$;
+
+create or replace function public.admin_diag_page(p_uid uuid, p_sid text, p_after integer default 0, p_before integer default null, p_limit integer default 200, p_kinds text[] default null, p_q text default null, p_bad boolean default false)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_n integer := least(greatest(coalesce(p_limit, 200), 1), 2000);
+  v_q text := nullif(btrim(coalesce(p_q, '')), '');
+  v_like text;
+  r jsonb;
+begin
+  if v_q is not null then
+    v_like := '%' || replace(replace(replace(left(v_q, 80), '\', '\\'), '%', '\%'), '_', '\_') || '%';
+  end if;
+  with m as materialized (
+    select d.seq, d.at, d.kind, d.data
+    from public.diag_events d
+    where d.user_id = p_uid and d.sid = p_sid
+      and (p_kinds is null or d.kind = any (p_kinds))
+      and (not coalesce(p_bad, false) or private.diag_bad(d.kind, d.data))
+      and (v_like is null or d.kind ilike v_like or d.data::text ilike v_like)
+  ), pg as (
+    select * from (
+      select m.* from m where p_before is not null and m.seq < p_before order by m.seq desc limit v_n
+    ) a
+    union all
+    select * from (
+      select m.* from m where p_before is null and m.seq > coalesce(p_after, 0) order by m.seq limit v_n
+    ) b
+  )
+  select jsonb_build_object(
+    'total', (select count(*) from m),
+    'rows', coalesce((select jsonb_agg(jsonb_build_array(pg.seq, round(extract(epoch from pg.at) * 1000), pg.kind, pg.data) order by pg.seq) from pg), '[]'::jsonb),
+    'lo', (select min(pg.seq) from pg),
+    'hi', (select max(pg.seq) from pg),
+    'before', (select count(*) from m where m.seq < (select min(pg.seq) from pg)),
+    'after', (select count(*) from m where m.seq > (select max(pg.seq) from pg))
+  ) into r;
+  return r;
+end;
+$$;
+
+revoke all on function private.diag_bad(text, jsonb) from public, anon, authenticated;
+revoke all on function public.admin_diag_info(uuid, text) from public, anon, authenticated;
+revoke all on function public.admin_diag_page(uuid, text, integer, integer, integer, text[], text, boolean) from public, anon, authenticated;
+grant execute on function public.admin_diag_info(uuid, text) to authenticated;
+grant execute on function public.admin_diag_page(uuid, text, integer, integer, integer, text[], text, boolean) to authenticated;
+revoke all on all functions in schema private from public, anon, authenticated;
+notify pgrst, 'reload schema';

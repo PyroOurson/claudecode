@@ -8,6 +8,16 @@
   const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = ri(i + 1); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
   const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
   const clean = (s, n) => String(s == null ? '' : s).replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, n);
+  const RUDE = /(^|[^a-z])(f+u+c*k+|sh+i+t+|b+i+t+c+h+|c+u+n+t+|n+i+gg+(?:e+r+|a+)|f+a+g+(?:g*o+t+)?|r+e+t+a+r+d+(?:e+d+|s+)|wh+o+r+e+|s+l+u+t+|d+i+c+k+h+e+a+d+|p+u+s+s+y+|c+o+c+k+s+u+c+k+|a+s+s+h+o+l+e+|b+a+s+t+a+r+d+|w+a+n+k+|t+w+a+t+|p+o+r+n+o*|r+a+p+e+|k+y+s+|p+e+d+o+|put(?:e|ain)|salop(?:e|ard)|conn(?:ard|asse)|encul[eé]|merde|niqu(?:e|er))(?:s|e[dr]|ing|y)?(?![a-z])/g;
+  const LEET = { 0: 'o', 1: 'i', 3: 'e', 4: 'a', 5: 's', 7: 't', '@': 'a', $: 's' };
+  const tame = s => {
+    s = String(s == null ? '' : s);
+    const n = s.replace(/[A-Z013457@$]/g, c => LEET[c] || c.toLowerCase());
+    let o = '', at = 0, m;
+    RUDE.lastIndex = 0;
+    while ((m = RUDE.exec(n))) { const i = m.index + m[1].length, j = m.index + m[0].length; o += s.slice(at, i) + s[i] + '*'.repeat(j - i - 1); at = j; }
+    return o + s.slice(at);
+  };
   const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
   const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const fmtT = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
@@ -166,10 +176,17 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
     api.on(window, 'pagehide', () => persist(true));
     api.on(document, 'visibilitychange', () => { if (document.hidden) persist(true); });
     X.push = () => {
+      X.dz = 0;
       if (!X.H || !api.alive) return;
       const now = X.now();
       X.view = mine(X.H.view(X.seat, now), X.seat);
       sp.onView(X.view);
+      if (X.view.ph !== 'over') X.told = 0;
+      else if (!X.told && X.mode === 'online' && X.role === 'host') {
+        X.told = 1;
+        const nw = (api.net.players || []).filter(p => !p.host && p.inGame === false).length;
+        if (nw) api.toast(nw + (nw > 1 ? ' players are' : ' player is') + ' waiting. Go back to the lobby to let them in.');
+      }
       if (X.role === 'host') X.H.S.P.forEach((p, i) => {
         const id = X.pids[i];
         if (id && i !== X.seat && !p.bot) api.net.sendTo(id, { t: 'v', s: i, v: mine(X.H.view(i, now), i) });
@@ -229,18 +246,29 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
       if (!api.alive || tok !== X.tok) return;
       if (!r) { X.mode = 'menu'; X.role = 'local'; return sp.onMenu(); }
       X.role = r.role; X.code = api.net.code;
-      if (r.role === 'host') hostStart(r); else sp.onWait(r);
+      if (r.role === 'host') return hostStart(r);
+      if (!X.view) sp.onWait(r);
+      const ask = n => api.timeout(() => {
+        if (tok !== X.tok || X.role !== 'guest' || X.view) return;
+        api.net.send({ t: 'sync' });
+        if (n < 20) ask(n + 1);
+      }, n ? 3000 : 1200);
+      ask(0);
     };
     X.toLobby = () => { if (X.role === 'host') X.online(); else X.leave(); };
+    const flood = {};
+    const rateOk = id => { const now = performance.now(), b = flood[id] || (flood[id] = { t: now, n: 0 }); if (now - b.t > 1000) { b.t = now; b.n = 0; } return ++b.n <= 15; };
     function onData(m, from) {
       if (!m || !api.alive || X.mode !== 'online') return;
       if (X.role === 'host') {
-        if (m.t !== 'a' || !X.H) return;
+        if (!X.H) return;
         const s = X.pids.indexOf(from);
-        if (s < 0 || X.H.S.P[s].bot) return;
+        if (s < 0 || X.H.S.P[s].bot || !rateOk(from)) return;
+        if (m.t === 'sync') { api.net.sendTo(from, { t: 'v', s, v: mine(X.H.view(s, X.now()), s) }); return; }
+        if (m.t !== 'a') return;
         let ch = false;
         try { ch = X.H.act(s, m.m, X.now(), s === leaderSeat()); } catch (e) { console.error(e); }
-        if (ch === 2) persist(false); else if (ch) X.push(); else api.net.sendTo(from, { t: 'v', s, v: mine(X.H.view(s, X.now()), s) });
+        if (ch === 2) persist(false); else if (ch && m.m && m.m.t === 'dial') X.dz = 1; else if (ch) X.push(); else api.net.sendTo(from, { t: 'v', s, v: mine(X.H.view(s, X.now()), s) });
       } else if (m.t === 'v' && m.v) {
         X.seat = m.s | 0; X.view = m.v; sp.onView(m.v);
       } else if (m.t === 'w') sp.onWait(null, m.msg);
@@ -278,7 +306,7 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
       if (p) return;
       let ch = false;
       try { ch = X.H.tick(now); } catch (e) { console.error(e); }
-      if (ch) X.push();
+      if (ch || X.dz) X.push();
     }, 100);
     return X;
   }
@@ -508,6 +536,7 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
   const WL_TN = ['Blue', 'Orange'];
   const WL_TIMES = [null, { clue: 120, dial: 90, guess: 40 }, { clue: 60, dial: 45, guess: 20 }];
   const WL_DEF = { target: 10, timer: 0, wedge: 1, bot: 'normal' };
+  const WL_IDLE = 150000;
   const WL_SIG = { easy: 14, normal: 9, hard: 5 };
   const wlWedge = (d, w) => d <= 1.67 * w ? 4 : d <= 5 * w ? 3 : d <= 8.33 * w ? 2 : 0;
   const specCols = i => { const a = (i * 47 + 200) % 360, b = (a + 130 + (i * 29) % 90) % 360; return [`hsl(${a} 78% 54%)`, `hsl(${b} 78% 54%)`]; };
@@ -630,6 +659,11 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
     }
 
     E.act = (seat, m, now, ld) => {
+      const r = doAct(seat, m, now, ld);
+      if (r) S.ia = now;
+      return r;
+    };
+    const doAct = (seat, m, now, ld) => {
       const me = S.P[seat];
       if (!me || !m || typeof m !== 'object') return false;
       const act = me.t === S.at;
@@ -654,7 +688,7 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
           startGame(now); return true;
         case 'clue': {
           if (S.ph !== 'clue' || seat !== S.ps || (m.k !== 0 && m.k !== 1)) return false;
-          const txt = clean(m.x, 80);
+          const txt = tame(clean(m.x, 80));
           if (clueBad(txt, SPEC[S.cards[m.k].c])) return false;
           S.pick = m.k; S.clue = txt; enterDial(now); return true;
         }
@@ -675,8 +709,9 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
           if (S.P.every((p, i) => p.bot || S.nx[i])) advance(now);
           return true;
         case 'say': {
-          const x = clean(m.x, 140);
-          if (!x || (S.ph === 'dial' && seat === S.ps)) return false;
+          const x = tame(clean(m.x, 140));
+          if (!x || (S.ph === 'dial' && seat === S.ps) || now - (me.ct || -1e9) < 700) return false;
+          me.ct = now;
           S.chat.push({ s: seat, t: me.t, x });
           if (S.chat.length > 60) S.chat.shift();
           return true;
@@ -693,9 +728,11 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
 
     E.tick = now => {
       let ch = false;
+      if (S.ph !== S.ip) { S.ip = S.ph; S.ia = now; }
+      const idle = !S.dl && now - (S.ia || now) > WL_IDLE;
       if (S.ph === 'clue') {
         if (S.P[S.ps].bot && now >= S.ba) { botClue(now); ch = true; }
-        else if (S.dl && now >= S.dl) {
+        else if ((S.dl && now >= S.dl) || idle) {
           S.res = { skip: 1 }; S.pick = -1; S.ph = 'reveal'; S.dl = now + 6000; S.nx = {}; ch = true;
         }
       } else if (S.ph === 'dial') {
@@ -704,11 +741,11 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
           if (v !== S.dial) { S.dial = v; ch = true; }
           if (now >= S.ba) { lock(now); ch = true; }
         } else if (botDial(now)) ch = true;
-        else if (S.dl && now >= S.dl) { lock(now); ch = true; }
+        else if ((S.dl && now >= S.dl) || idle) { lock(now); ch = true; }
       } else if (S.ph === 'guess') {
         for (const i of voters()) if (S.P[i].bot && !S.votes[i] && now >= S.bv[i]) { castBot(i); ch = true; }
         if (S.ph === 'guess') {
-          if (voters().every(i => S.votes[i]) || (S.dl && now >= S.dl)) { reveal(now); ch = true; }
+          if (voters().every(i => S.votes[i]) || (S.dl && now >= S.dl) || idle) { reveal(now); ch = true; }
         }
       } else if (S.ph === 'reveal') {
         if (now >= S.dl) { advance(now); ch = true; }
@@ -1064,7 +1101,7 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
 
     function sendDial(force) {
       const now = performance.now();
-      if (!force && now - L.sentAt < 70) { clearTimeout(L.st); L.st = setTimeout(() => sendDial(true), 80); return; }
+      if (!force && now - L.sentAt < 125) { clearTimeout(L.st); L.st = setTimeout(() => sendDial(true), 130); return; }
       clearTimeout(L.st); L.sentAt = now;
       X.act({ t: 'dial', v: L.local });
     }
@@ -1414,8 +1451,8 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
 
   const PB_LET = 'ABCDEFGHIJLMNOPRSTV'.split('');
   const PB_DEF = { lang: typeof navigator !== 'undefined' && typeof navigator.language === 'string' && /^fr/i.test(navigator.language) ? 'fr' : 'en', rounds: 5, cats: 8, time: 90, src: 'classic', check: 'dict', bot: 'normal' };
-  const PB_BOTP = { casual: .42, normal: .68, expert: .9 };
-  const PB_BOTV = { casual: 1.3, normal: 1, expert: .8 };
+  const PB_BOTP = { casual: .42, normal: .68, expert: .9, hardest: .98 };
+  const PB_BOTV = { casual: 1.3, normal: 1, expert: .8, hardest: .62 };
   const pbCfg = o => {
     const c = Object.assign({}, PB_DEF, o || {});
     c.lang = c.lang === 'fr' ? 'fr' : 'en';
@@ -1523,7 +1560,7 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
           const x = pbBotWord(S.cats[ci], S.letter, S.o.lang, pw);
           if (x) q.push({ at: t, k: 'a', p: i, i: ci, x }); else all = false;
         });
-        if (all && Math.random() < .5) q.push({ at: t + 1200 + Math.random() * 2500, k: 's', p: i });
+        if (all && (S.o.bot === 'hardest' || Math.random() < .5)) q.push({ at: t + 1200 + Math.random() * 2500, k: 's', p: i });
       });
       S.bq = q.sort((a, b) => a.at - b.at);
     }
@@ -1587,7 +1624,7 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
         }
         case 'cust':
           if (!(S.ph === 'setup' || S.ph === 'over') || !ld) return false;
-          S.cust = String(m.x || '').split('\n').map(x => clean(x, 32)).filter(Boolean).slice(0, 14); return true;
+          S.cust = String(m.x || '').split('\n').map(x => tame(clean(x, 32))).filter(Boolean).slice(0, 14); return true;
         case 'start':
           if (S.ph !== 'setup' || !ld) return false;
           newGame(now); return true;
@@ -1595,7 +1632,7 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
           if (S.ph !== 'write' && S.ph !== 'stop') return false;
           const i = m.i | 0;
           if (i < 0 || i >= S.cats.length) return false;
-          const was = !blank(S.ans[seat][i]), x = clean(m.x, 40);
+          const was = !blank(S.ans[seat][i]), x = tame(clean(m.x, 40));
           S.ans[seat][i] = x;
           return was !== !blank(x) ? true : 2;
         }
@@ -1779,7 +1816,7 @@ ${p} kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:6px;b
 <div class="opt"><span>${t('Time per round', 'Temps par manche')}</span>${seg('time', [[60, '1:00'], [90, '1:30'], [120, '2:00'], [180, '3:00']], o.time)}</div>
 <div class="opt"><span>${t('Categories', 'Catégories')}<small>${t('Custom ones are checked by vote or dictionary', 'Les perso sont vérifiées par vote ou dico')}</small></span>${seg('src', [['classic', t('Classic', 'Classiques')], ['all', t('Everything', 'Toutes')], ['custom', t('Custom', 'Perso')], ['mixed', t('Mixed', 'Mixte')]], o.src)}</div>
 <div class="opt"><span>${t('Answer check', 'Vérification')}</span>${seg('check', [['dict', t('Dictionary + votes', 'Dico + votes')], ['votes', t('Votes only', 'Votes seuls')]], o.check)}</div>
-<div class="opt"><span>${t('Bot level', 'Niveau des bots')}</span>${seg('bot', [['casual', t('Casual', 'Détendu')], ['normal', 'Normal'], ['expert', 'Expert']], o.bot)}</div></div>`;
+<div class="opt"><span>${t('Bot level', 'Niveau des bots')}</span>${seg('bot', [['casual', t('Casual', 'Détendu')], ['normal', 'Normal'], ['expert', 'Expert'], ['hardest', 'Hardest']], o.bot)}</div></div>`;
     };
 
     const BUILD = {
@@ -2146,7 +2183,7 @@ ${v.ld ? `<div class="pb-row"><button type="button" class="g-btn" data-a="again"
 
   const BG_DEF = { mode: '75', pat: 'line', cards: 2, speed: 'normal', bot: 'normal' };
   const BG_SPEED = { slow: 5500, normal: 4000, fast: 2600 };
-  const BG_BOT = { slow: [2600, 6800], normal: [900, 3400], fast: [300, 1500] };
+  const BG_BOT = { slow: [2600, 6800], normal: [900, 3400], fast: [300, 1500], hardest: [100, 600] };
   const BG_PTS = { line: 10, two: 15, corners: 10, blackout: 20 };
   const BG_ALLOW = { 75: [1, 2, 4, 6], 90: [1, 2, 3, 6] };
   const bgCfg = o => {
@@ -2488,7 +2525,7 @@ ${ld ? `<div class="bg-opts"><div class="opt"><span>Variant</span>${seg('mode', 
 <div class="opt"><span>Pattern<small>${esc(stages)}</small></span>${seg('pat', [['line', o.mode === '90' ? 'One line' : 'Line'], ['corners', 'Corners'], ['blackout', o.mode === '90' ? 'Full house' : 'Blackout'], ['classic', 'Classic']], o.pat)}</div>
 <div class="opt"><span>${o.mode === '90' ? 'Tickets' : 'Cards'} per player</span>${seg('cards', cl, o.cards)}</div>
 <div class="opt"><span>Call speed</span>${seg('speed', [['slow', 'Relaxed'], ['normal', 'Normal'], ['fast', 'Fast']], o.speed)}</div>
-<div class="opt"><span>Bot reaction</span>${seg('bot', [['slow', 'Slow'], ['normal', 'Normal'], ['fast', 'Sharp']], o.bot)}</div></div>`
+<div class="opt"><span>Bot reaction</span>${seg('bot', [['slow', 'Slow'], ['normal', 'Normal'], ['fast', 'Sharp'], ['hardest', 'Hardest']], o.bot)}</div></div>`
     : `<p class="note">Set by the host: ${o.mode}-ball - ${esc(stages)} - ${o.cards} ${o.mode === '90' ? 'tickets' : 'cards'} - ${o.speed} calls</p>`}
 <div class="bg-row">${ld ? '<button type="button" class="g-btn" data-a="start">Start game</button>' : '<span class="chip">Waiting for the host to start</span>'}<button type="button" class="g-btn ghost sm" data-a="leave">Leave</button></div></div>`;
     };

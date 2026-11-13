@@ -221,7 +221,7 @@ ${q} .gx-pb.gold{background:#c78a07}
       boss: { hp: 200, hw: 28, sc: 1.28, col: '#2c1a1a', band: '#ffc83d', hat: 'crown', err: .55, cd: 1.6, head: .6, name: 'Warlord', sp: ['triple', 'bomb', 'lightning', 'fire'], spc: .55, helm: 1 },
       duel: { hp: 100, sc: 1, col: '#2b1e22', band: '#e2453c', hat: 'band', err: 1, cd: .35 }
     };
-    const DIFF = [{ n: 'Easy', hp: .8, dmg: .72, err: 1.45, cd: 1.3, learn: .45 }, { n: 'Normal', hp: 1, dmg: 1, err: 1, cd: 1, learn: .7 }, { n: 'Hard', hp: 1.25, dmg: 1.2, err: .7, cd: .8, learn: .9 }];
+    const DIFF = [{ n: 'Easy', hp: .8, dmg: .72, err: 1.45, cd: 1.3, learn: .45 }, { n: 'Normal', hp: 1, dmg: 1, err: 1, cd: 1, learn: .7 }, { n: 'Hard', hp: 1.25, dmg: 1.2, err: .7, cd: .8, learn: .9 }, { n: 'Hardest', hp: 1.25, dmg: 1.2, err: .34, werr: .58, cd: .8, learn: 1, hx: 1 }];
 
     const dist2 = (ax, ay, bx, by) => (ax - bx) * (ax - bx) + (ay - by) * (ay - by);
     function segDist(px, py, ax, ay, bx, by) {
@@ -245,7 +245,7 @@ ${q} .gx-pb.gold{background:#c78a07}
         ammo: Object.assign({ normal: 99 }, o.ammo || {}), sel: 'normal',
         dmgMul: o.dmgMul == null ? 1 : o.dmgMul, critMul: o.critMul == null ? 1 : o.critMul, armor: o.armor || 0,
         ctl: o.ctl || 'ai', lvl: o.lvl == null ? 1 : o.lvl, err: k.err * (o.errMul == null ? 1 : o.errMul), head: k.head || .4, sp: k.sp || null, spc: k.spc || 0,
-        stk: [], cmd: { ang: team ? Math.PI - .6 : -.6, p: 0, draw: false, shot: null }, ai: { t: 1 + Math.random(), bias: [0, 0], last: null, plan: null }, burnT: 0, dieT: 0, hot: 0
+        stk: [], cmd: { ang: team ? Math.PI - .6 : -.6, p: 0, draw: false, shot: null }, ai: { t: 1 + Math.random(), bias: [0, 0], last: null, plan: null, hx: o.hx || 0, learn: o.learn || 0 }, burnT: 0, dieT: 0, hot: 0
       };
       arPoseSnap(a);
       return a;
@@ -583,7 +583,7 @@ ${q} .gx-pb.gold{background:#c78a07}
         cfg, mode: cfg.mode, arena: cfg.arena % ARENAS.length, solids: ar.solids, pit: ar.pit, phase: 'intro', pt: 0, t: 0, ar: [], arrows: [], terr: [], nid: 0,
         wave: cfg.wave || 1, rnd: cfg.rnd || 1, score: cfg.score ? cfg.score.slice() : [0, 0], kills: [0, 0], heads: [0, 0], earned: 0, meta, over: false, win: -1, roundWin: -1, slow: 0, shots: 0, hits: 0
       };
-      const dif = DIFF[cfg.diff == null ? 1 : cfg.diff];
+      const dif = DIFF[cfg.diff == null ? 1 : cfg.diff] || DIFF[1];
       if (cfg.mode === 'waves') {
         const U = meta.upg;
         const p = newArcher(S, 0, 0, 'player', ar.pl, {
@@ -598,16 +598,17 @@ ${q} .gx-pb.gold{background:#c78a07}
           const w = S.wave;
           const hp = Math.round((K.hp + (K.hw || 0) * w) * dif.hp);
           const en = newArcher(S, S.ar.length, 1, e.kind, sl, {
-            hp, dmgMul: (.6 + w * .042) * dif.dmg, critMul: 1.2, cd: Math.max(.9, (K.cd * (1 - Math.min(.35, w * .014))) * dif.cd), errMul: dif.err * Math.max(.45, 1 - w * .028), lvl: Math.min(5, 1 + w / 4), st: 100, regen: 28, ctl: 'ai',
+            hp, dmgMul: (.6 + w * .042) * dif.dmg, critMul: 1.2, cd: Math.max(.9, (K.cd * (1 - Math.min(.35, w * .014))) * dif.cd), errMul: (dif.werr || dif.err) * Math.max(.45, 1 - w * .028), lvl: Math.min(5, 1 + w / 4), st: 100, regen: 28, ctl: 'ai',
             ammo: { fire: 99, ice: 99, bomb: 99, triple: 99, lightning: 99 }
           });
           S.ar.push(en);
         });
       } else {
         const ds = cfg.duel;
+        const dl = i => (ds.lv && DIFF[ds.lv[i]]) || dif;
         const mk = (i, team, ctl, name) => newArcher(S, i, team, 'duel', team ? [RW - ar.pl[0], ar.pl[1]] : ar.pl.slice(), {
           hp: 100, st: 100, regen: 28, dmgMul: 1, critMul: 1, armor: 0, cd: .4, ctl, name, band: team ? '#e2453c' : '#3b82f6', ammo: { fire: 2, ice: 2, bomb: 1, triple: 2, lightning: 1 },
-          errMul: ctl === 'ai' ? dif.err : 1, lvl: cfg.diff
+          errMul: ctl === 'ai' ? dl(i).err : 1, lvl: cfg.diff, hx: ctl === 'ai' && dl(i).hx ? 1 : 0, learn: dl(i).learn
         });
         S.ar.push(mk(0, 0, ds.ctl[0], cfg.names[0]));
         S.ar.push(mk(1, 1, ds.ctl[1], cfg.names[1]));
@@ -647,7 +648,18 @@ ${q} .gx-pb.gold{background:#c78a07}
     const gaussR = () => (Math.random() + Math.random() + Math.random() - 1.5) * 1.6;
     function aiPlan(S, a, T) {
       const ai = a.ai;
-      const head = Math.random() < a.head;
+      const hx = ai.hx;
+      let hty = 'normal';
+      if (hx) {
+        if (T.frozen > .55) hty = 'normal';
+        else if (a.ammo.ice > 0) hty = 'ice';
+        else if (a.ammo.bomb > 0 && T.hp <= 36) hty = 'bomb';
+        else if (a.ammo.fire > 0 && !(T.burn > 0)) hty = 'fire';
+        else if (a.ammo.lightning > 0) hty = 'lightning';
+        else if (a.ammo.bomb > 0) hty = 'bomb';
+        else if (a.ammo.triple > 0 && T.stag > 0) hty = 'triple';
+      }
+      const head = hx ? hty === 'normal' && (T.frozen > .55 || Math.random() < .9) : Math.random() < a.head;
       const tpx = (head ? T.x[IH] : T.x[IN]) + ai.bias[0], tpy = (head ? T.y[IH] : (T.y[IN] + T.y[IP]) / 2) + ai.bias[1];
       let ty = 'normal';
       const avail = [];
@@ -656,6 +668,7 @@ ${q} .gx-pb.gold{background:#c78a07}
       const chance = S.mode === 'duel' ? .28 : a.spc;
       if (avail.length && Math.random() < chance) ty = pick(avail);
       if (T.frozen > .7 && a.ammo.bomb > 0 && S.mode === 'duel') ty = 'bomb';
+      if (hx) ty = hty;
       const ox = a.x[IN], oy = a.y[IN];
       let best = null;
       for (const pw of [1, .88, .76, .64, .52]) {
@@ -677,7 +690,7 @@ ${q} .gx-pb.gold{background:#c78a07}
       const sig = .03 * a.err * (.6 + dist / 800);
       const ang = best.ang + gaussR() * sig;
       const pw = clamp(best.pw * (1 + gaussR() * .018 * a.err), .2, 1);
-      return { ang, pw, ty, t: 0, dur: (.5 + pw * .5) * (a.err > 1.1 ? 1.2 : a.err < .7 ? .85 : 1), tx: tpx, tyy: tpy, tgt: T.idx };
+      return { ang, pw, ty, t: 0, dur: (.5 + pw * .5) * (hx ? .78 : a.err > 1.1 ? 1.2 : a.err < .7 ? .85 : 1), tx: tpx, tyy: tpy, tgt: T.idx };
     }
     function aiThink(S, a, dt, emit) {
       const ai = a.ai, c = a.cmd;
@@ -688,7 +701,7 @@ ${q} .gx-pb.gold{background:#c78a07}
         if (p.t >= p.dur) {
           c.shot = { ang: p.ang, p: p.pw, ty: p.ty }; c.draw = false;
           ai.last = { id: S.nid + 1, tx: p.tx, ty: p.tyy, ty2: p.ty };
-          ai.plan = null; ai.t = a.cdMax * (.85 + Math.random() * .5);
+          ai.plan = null; ai.t = a.cdMax * (ai.hx ? .6 + Math.random() * .3 : .85 + Math.random() * .5);
         }
         return;
       }
@@ -705,7 +718,7 @@ ${q} .gx-pb.gold{background:#c78a07}
       const o = S.ar[A.own];
       if (!o || o.ctl !== 'ai' || !o.ai.last || o.ai.last.id !== A.id) return;
       const l = o.ai.last; o.ai.last = null;
-      const g = (DIFF[S.cfg.diff == null ? 1 : S.cfg.diff].learn || .7) * .75;
+      const g = (o.ai.learn || (DIFF[S.cfg.diff == null ? 1 : S.cfg.diff] || DIFF[1]).learn || .7) * .75;
       if (A.hitBody) { o.ai.bias[0] *= .5; o.ai.bias[1] *= .5; return; }
       o.ai.bias[0] = clamp(o.ai.bias[0] - (A.x - l.tx) * g, -140, 140);
       o.ai.bias[1] = clamp(o.ai.bias[1] - (A.y - l.ty) * g, -140, 140);
@@ -1345,8 +1358,12 @@ ${q} .gx-pb.gold{background:#c78a07}
       const net = api.net;
       const invited = !!net.invite;
       const saved = api.load() || {};
-      const opt = Object.assign({ diff: 1, aim: 'pull', prev: 1 }, saved.opt || {});
-      const life = Object.assign({ kills: 0, heads: 0, bestWave: 0, duels: 0 }, saved.life || {});
+      const opt = Object.assign({ diff: 1, aim: 'pull', prev: 1 }, saved.opt && typeof saved.opt === 'object' ? saved.opt : {});
+      if (!DIFF[opt.diff]) opt.diff = 1;
+      if (opt.aim !== 'push') opt.aim = 'pull';
+      if (opt.prev !== 0 && opt.prev !== 2) opt.prev = 1;
+      const life = Object.assign({ kills: 0, heads: 0, bestWave: 0, duels: 0 }, saved.life && typeof saved.life === 'object' ? saved.life : {});
+      for (const k of ['kills', 'heads', 'bestWave', 'duels']) life[k] = Math.max(0, Math.floor(+life[k]) || 0);
       const persist = () => api.save({ opt, life });
       const typesEl = document.createElement('div');
       typesEl.className = 'ra-types';
@@ -1920,6 +1937,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       format: v => 'Wave ' + v,
       icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="20" cy="16" r="5"/><path d="M20 21v15M20 26l9-3M20 36l-6 12M20 36l7 12"/><path d="M36 10c10 6 10 36 0 42"/><path d="M36 10v42" stroke-width="1.5"/><path d="M26 31h30M50 26l6 5-6 5"/></svg>',
       css: sxCss('ragdoll-archers', '#3b82f6') + RA_CSS,
+      engine: { DIFF, ARENAS, newState, simStep },
       mount: mountArchers
     });
 

@@ -1,6 +1,9 @@
 import json, re, subprocess, sys, os
+HERE = os.path.dirname(os.path.abspath(__file__))
+os.chdir(HERE)
+sys.path.insert(0, HERE)
 from meta_rows import ROWS, DELETED
-orig = open('/tmp/gameplay-build/w/orig_order.txt').read().split()
+orig = open(os.path.join(HERE, 'orig_order.txt')).read().split()
 new25 = ['slope-3d','tunnel-run','rocket-soccer','hole-city','demon-halls','bean-royale','block-roll','flap-bird','slither','cell-feast','paper-land','fling-birds','candy-rope','brick-bros','garden-defense','night-survivors','bomb-blast','last-card','fire-water','maze-tanks','hoop-flop','sea-battle','marble-chain','moto-stunts','cookie-baker']
 ids = [r[0] for r in ROWS]
 assert not set(ids) & set(DELETED), set(ids) & set(DELETED)
@@ -12,11 +15,30 @@ def rep(s, old, new, count=1):
     assert s.count(old) == count, (old[:60], s.count(old))
     return s.replace(old, new)
 
+def i18n_js():
+    s = open('new/i18n.js', encoding='utf-8').read()
+    extra = []
+    for fn in sorted(f for f in os.listdir('new') if re.fullmatch(r'i18n_[a-z0-9]+\.json', f)):
+        extra += json.load(open(os.path.join('new', fn), encoding='utf-8'))
+    head = 'const R = [\n'
+    assert s.count(head) == 1
+    seen = set()
+    rows = []
+    for r in extra:
+        assert len(r) == 6, r[0]
+        if r[0] in seen:
+            continue
+        seen.add(r[0])
+        if ('\n' + json.dumps(r[0], ensure_ascii=False) + ',') in s.replace('\n[', '\n'):
+            continue
+        rows.append(json.dumps(r, ensure_ascii=False) + ',\n')
+    return s.replace(head, head + ''.join(rows))
+
 old = open('parts_orig/001_portal.js', encoding='utf-8', newline='').read()
 if os.path.exists('new/net.js'):
     _a = old.index('function makeNet(g, add) {'); _b = old.index('function makeApi(g, root) {')
     old = old[:_a] + open('new/net.js', encoding='utf-8', newline='').read() + old[_b:]
-consts = open('new/consts.js', encoding='utf-8').read()
+consts = open('new/diag.js', encoding='utf-8').read() + open('new/consts.js', encoding='utf-8').read()
 rows_js = '[\n' + ',\n'.join('  ' + json.dumps(list(r), ensure_ascii=False) for r in ROWS) + '\n]'
 consts += 'const ROWS = ' + rows_js + ';\nconst NEWEST = ' + json.dumps(newest) + ';\nconst STAT = ' + json.dumps({k: v for k, v in STAT.items() if k in ids}) + ';\nconst DELETED = new Set(' + json.dumps(DELETED) + ');\n'
 
@@ -27,6 +49,7 @@ c = old.index("const CAT_TINT = { '3D'")
 d = old.index('\n', c)
 old = old[:c] + old[d + 1:]
 old = rep(old, "  covers: {},\n", "  covers: {},\n  shots: {},\n")
+old = rep(old, "function toast(msg) {\n", "function toast(msg) {\n  DIAG.ev('toast', String(msg).slice(0, 240));\n")
 reg_a = old.index("  register(g) {")
 reg_b = old.index("\n  }\n};", reg_a)
 new_reg = """  register(g) {
@@ -52,8 +75,10 @@ old = rep(old, "        if (!on || !alive) return;\n        const dt = Math.min(
 old = rep(old, "    get alive() { return alive; },", "    get alive() { return alive; },\n    get paused() { return PAUSE.on; },\n    get online() { return !!(net && (net.connected || net.role)); },")
 old = rep(old, "S.best[g.id] = v; save(); setBest(g, true); toast('New best · ' + fmt(g, v));", "S.best[g.id] = v; save(); setBest(g, true); toast('New best · ' + fmt(g, v)); track('record', { game: g.id });")
 old = rep(old, "    get net() { return net || (net = makeNet(g, add)); },", "    get net() { return net || (net = gpNetWrap(g, makeNet(g, add))); },")
+old = rep(old, "      add(() => { try { renderer.dispose(); renderer.forceContextLoss(); } catch (e) {} c.remove(); });", "      add(() => { try { renderer.dispose(); } catch (e) {} c.remove(); });")
 ca = old.index("const coverCache = new Map();")
-old = old[:ca] + open('new/legal.js', encoding='utf-8').read() + open('new/tail.js', encoding='utf-8').read() + open('new/auth.js', encoding='utf-8').read().replace(chr(10) + 'Ameplay.debug = ', chr(10) + open('new/admin.js', encoding='utf-8').read() + chr(10) + open('new/social.js', encoding='utf-8').read() + chr(10) + open('new/input.js', encoding='utf-8').read() + chr(10) + open('new/track.js', encoding='utf-8').read() + chr(10) + open('new/changelog.js', encoding='utf-8').read() + chr(10) + open('new/site.js', encoding='utf-8').read() + chr(10) + 'Ameplay.debug = ', 1) + chr(10) + open('new/i18n.js', encoding='utf-8').read()
+open('parts/002_legal.js', 'w', encoding='utf-8', newline='').write('(function () {\n' + open('new/legal.js', encoding='utf-8').read() + '\nAmeplay.legalSet(LEGAL);\n})();\n')
+old = old[:ca] + 'const LEGAL = {};\n' + open('new/tail.js', encoding='utf-8').read() + open('new/auth.js', encoding='utf-8').read().replace(chr(10) + 'Ameplay.debug = ', chr(10) + open('new/admin.js', encoding='utf-8').read() + chr(10) + open('new/social.js', encoding='utf-8').read() + chr(10) + open('new/input.js', encoding='utf-8').read() + chr(10) + open('new/track.js', encoding='utf-8').read() + chr(10) + open('new/changelog.js', encoding='utf-8').read() + chr(10) + open('new/site.js', encoding='utf-8').read() + chr(10) + open('new/ideas.js', encoding='utf-8').read() + chr(10) + open('new/diagui.js', encoding='utf-8').read() + chr(10) + 'Ameplay.debug = ', 1) + chr(10) + i18n_js()
 open('parts/001_portal.js', 'w', encoding='utf-8', newline='').write(old)
 
 SC = ':where(:not(.g-root *))'
@@ -99,7 +124,7 @@ am = scope(open('new/am.css', encoding='utf-8').read())
 gcss = open('new/gcss.css', encoding='utf-8').read()
 toast = open('new/toast.css', encoding='utf-8').read()
 media = scope(open('new/media.css', encoding='utf-8').read())
-media += chr(10) + open('new/auth.css', encoding='utf-8').read() + chr(10) + open('new/admin.css', encoding='utf-8').read() + chr(10) + scope(open('new/social.css', encoding='utf-8').read()) + chr(10) + scope(open('new/site.css', encoding='utf-8').read())
+media += chr(10) + open('new/auth.css', encoding='utf-8').read() + chr(10) + open('new/admin.css', encoding='utf-8').read() + chr(10) + scope(open('new/social.css', encoding='utf-8').read()) + chr(10) + scope(open('new/site.css', encoding='utf-8').read()) + chr(10) + scope(open('new/ideas.css', encoding='utf-8').read()) + chr(10) + open('new/diag.css', encoding='utf-8').read()
 _ord = json.load(open('parts/_order.json'))
 _have = os.listdir('parts')
 _built = set(i for k, n in _ord if k == 'script' and n.startswith('g_') and any(re.fullmatch(r'\d{3}_' + re.escape(n) + r'\.js', f) for f in _have) for i in n[2:].split('+'))
@@ -128,7 +153,7 @@ head = f'''<!doctype html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-<script>document.documentElement.setAttribute('data-theme','light');try{{var t=(JSON.parse(localStorage.getItem('gameplay:v1')||'{{}}')||{{}}).prefs||{{}};if(t.theme==='dark')document.documentElement.setAttribute('data-theme','dark');if(t.theme==='system')document.documentElement.removeAttribute('data-theme');if(t.motion)document.documentElement.classList.add('rm');if(t.thumbs===false)document.documentElement.classList.add('nothumb')}}catch(e){{}}</script>
+<script>document.documentElement.setAttribute('data-theme','light');try{{var t=(JSON.parse(localStorage.getItem('gameplay:v1')||'{{}}')||{{}}).prefs||{{}};if(t.theme==='dark')document.documentElement.setAttribute('data-theme','dark');if(t.theme==='system')document.documentElement.removeAttribute('data-theme');if(t.motion)document.documentElement.classList.add('rm');if(t.thumbs===false)document.documentElement.classList.add('nothumb')}}catch(e){{}}try{{var b='up';if(/[?&]gpauth=/.test(location.search))b='';else if(localStorage.getItem('sb-gameplay-auth')){{var j=JSON.parse(localStorage.getItem('sb-gameplay-auth'));b=j&&j.user&&j.refresh_token?(j.expires_at*1000>Date.now()+5000?'in':'check'):'login'}}else if(localStorage.getItem('gameplay:acct')==='1')b='login';if(b)document.documentElement.setAttribute('data-boot',b)}}catch(e){{}}</script>
 <style>
 '''
 body = open('new/body.html', encoding='utf-8').read().replace('{{NOSCRIPT}}', nos)

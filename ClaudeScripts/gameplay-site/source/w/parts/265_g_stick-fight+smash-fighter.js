@@ -13,6 +13,27 @@
   const angLerp = (a, b, t) => { let d = ((b - a + Math.PI) % TAU + TAU) % TAU - Math.PI; return a + d * t; };
   const isTouchDev = () => (window.matchMedia && matchMedia('(pointer: coarse)').matches) || 'ontouchstart' in window;
 
+  function bgHost(api, root, want, fn) {
+    let w = null, iv = 0, last = 0, raf = 0, dead = false;
+    const stop = () => { if (w) { try { w.terminate(); } catch (e) {} w = null; } if (iv) { clearInterval(iv); iv = 0; } };
+    const tick = () => {
+      if (dead) return;
+      if (!root.isConnected) { dead = true; stop(); return; }
+      const now = performance.now();
+      if (!document.hidden || now - raf < 250 || !want()) { last = now; return; }
+      let dt = Math.min(1, (now - last) / 1000);
+      last = now;
+      while (dt > 1e-6) { const d = Math.min(.05, dt); dt -= d; fn(d, now); }
+    };
+    const start = () => {
+      stop(); last = performance.now();
+      try { const u = URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},33)'], { type: 'text/javascript' })); w = new Worker(u); URL.revokeObjectURL(u); w.onmessage = tick; w.onerror = () => { w = null; if (!iv && !dead) iv = setInterval(tick, 250); }; }
+      catch (e) { w = null; iv = setInterval(tick, 250); }
+    };
+    api.loop(() => { raf = performance.now(); });
+    api.on(document, 'visibilitychange', () => { if (dead) return; if (document.hidden && want()) start(); else stop(); });
+    return () => { dead = true; stop(); };
+  }
   function makeAudio(api) {
     let AC = null, master = null, nb = null;
     const last = {};
@@ -133,12 +154,12 @@
   const SF_HW = 6, SF_HH = 48;
   const SF_WP = {
     pistol: { n: 'Pistol', ammo: 14, cd: .3, dmg: 13, kb: 230, spd: 980, spr: .02, rec: 80, auto: 0, len: 15, w: 20 },
-    uzi: { n: 'Uzi', ammo: 44, cd: .075, dmg: 5, kb: 70, spd: 980, spr: .09, rec: 26, auto: 1, len: 16, w: 12 },
+    uzi: { n: 'Burst SMG', ammo: 44, cd: .075, dmg: 5, kb: 70, spd: 980, spr: .09, rec: 26, auto: 1, len: 16, w: 12 },
     shotgun: { n: 'Shotgun', ammo: 6, cd: .78, dmg: 9, kb: 125, spd: 860, spr: .2, pel: 7, rec: 330, auto: 0, len: 25, two: 1, w: 14 },
     sniper: { n: 'Sniper', ammo: 5, cd: 1.15, dmg: 60, kb: 640, spd: 2800, spr: 0, rec: 430, auto: 0, len: 36, two: 1, w: 8 },
     minigun: { n: 'Minigun', ammo: 180, cd: .052, dmg: 4.5, kb: 60, spd: 1050, spr: .1, rec: 24, auto: 1, spin: .55, len: 30, two: 1, w: 6 },
     sword: { n: 'Sword', ammo: 0, melee: 1, cd: .46, dmg: 30, kb: 440, len: 40, w: 12 },
-    snake: { n: 'Snake Gun', ammo: 7, cd: .7, rec: 100, auto: 0, len: 22, two: 0, w: 8 },
+    snake: { n: 'Viper Launcher', ammo: 7, cd: .7, rec: 100, auto: 0, len: 22, two: 0, w: 8 },
     rocket: { n: 'Rocket Launcher', ammo: 3, cd: 1.5, dmg: 62, kb: 720, rec: 380, auto: 0, len: 32, two: 1, w: 6 }
   };
   const SF_WK = Object.keys(SF_WP);
@@ -147,7 +168,7 @@
     { n: 'Easy', rt: .38, err: .25, blk: .25, aggr: .6, haz: .65, jmp: .7, wall: 0, wpn: .55 },
     { n: 'Normal', rt: .24, err: .15, blk: .55, aggr: .75, haz: .85, jmp: .85, wall: .35, wpn: .75 },
     { n: 'Hard', rt: .14, err: .07, blk: .8, aggr: .9, haz: .95, jmp: .95, wall: .75, wpn: .9 },
-    { n: 'Insane', rt: .07, err: .025, blk: .95, aggr: 1, haz: 1, jmp: 1, wall: 1, wpn: 1 }
+    { n: 'Hardest', rt: .08, err: .008, blk: 1, aggr: 1, haz: 1, jmp: 1, wall: 1, wpn: 1, hard: 1, lag: .15, pw: 26, mb: 0, safe: 1 }
   ];
   const SB = (x, y, w, h, o) => Object.assign({ x, y, w, h }, o || {});
   const SF_MAPS = [
@@ -939,9 +960,26 @@
     return 0;
   }
 
+  function sfSafePath(w, f, mx, jump) {
+    let x = f.x, y = f.y, vx = mx ? mx * 205 : f.gnd ? 0 : f.vx * .6, vy = jump && f.gnd ? -565 : f.gnd ? 0 : f.vy, gnd = f.gnd && !jump;
+    for (let k = 0; k < 30; k++) {
+      if (gnd) {
+        x += vx * .025;
+        const g = sfGround(w, x, y - 36, 48);
+        if (g) y = g.y; else { gnd = false; vy = 0; }
+      } else {
+        const py = y;
+        vy += 37.5; x += vx * .025; y += vy * .025;
+        if (vy > 0) { const g = sfGround(w, x, py - 2, y - py + 6); if (g && y >= g.y) { y = g.y; gnd = true; } }
+      }
+      if (y > 600 || x < -60 || x > SF_W + 60 || sfHazardAt(w, x, y - 3) || sfHazardAt(w, x, y - 26) || sfHazardAt(w, x, y - 48)) return false;
+      if (gnd && k > 9) return true;
+    }
+    return gnd || !!sfColumn(w, x, y);
+  }
   function sfBotThink(w, f) {
     const b = f.bot, L = SF_BOT[clamp((f.lvl || 3) - 1, 0, 4)];
-    b.err = rr(-L.err, L.err);
+    b.err = rr(-L.err, L.err); b.ot = w.t; b.bf = 0;
     b.reflex = Math.random() < 1 - (1 - L.haz) * .3;
     const foes = w.fighters.filter(o => o !== f && o.alive);
     const x = f.x, y = f.y, hy = f.p[5];
@@ -1031,8 +1069,8 @@
     b.mx = mx;
     if (want === 'melee' && S && S.melee || want === 'melee') {
       const reach = S && S.melee ? 62 : 30;
-      if (Math.abs(dx) * 1 < reach + 4 && Math.abs(dy) < 44 && foes.length) { b.fire = 1; f.face = sgn(dx) || f.face; }
-      if (dist < 70 && tgt.atkT > 0 && Math.random() < L.blk) { b.blk = 1; b.mx = 0; }
+      if (Math.abs(dx) * 1 < reach + 4 + (L.pw || 0) && Math.abs(dy) < 44 + (L.pw || 0) * .4 && foes.length) { b.fire = 1; f.face = sgn(dx) || f.face; }
+      if (dist < 70 && tgt.atkT > 0 && Math.random() < (L.hard ? L.mb : L.blk)) { b.blk = 1; b.mx = 0; }
       if (dist < 50 && Math.random() < .25 * L.aggr) b.fire = 1;
     } else if (want === 'range') {
       const los = sfLos(w, f.p[4], f.p[3], tx, ty);
@@ -1043,6 +1081,16 @@
     }
     if (tgt.wpn && SF_WP[tgt.wpn.k] && !SF_WP[tgt.wpn.k].melee && L.blk > .5 && dist < 260 && Math.random() < L.blk * .25 && want !== 'range') { b.blk = 1; }
     if (b.fire && Math.random() > (.5 + L.aggr * .5) && want === 'melee') b.fire = 0;
+    if (L.hard && f.bm > .25) {
+      for (const q of w.bullets) {
+        if (q.o === f.slot) continue;
+        const rx = x - q.x, ry = y - 26 - q.y, s2 = q.vx * q.vx + q.vy * q.vy;
+        if (s2 < 1) continue;
+        const tt = (rx * q.vx + ry * q.vy) / s2;
+        if (tt < 0 || tt > .5) continue;
+        if (Math.abs(rx - q.vx * tt) < 18 && Math.abs(ry - q.vy * tt) < 36) { b.blk = 1; b.bf = -sgn(q.vx) || 1; b.fire = 0; b.mx = 0; break; }
+      }
+    }
     b.tx = tx; b.ty = ty; b.tvx = tgt.mode === 'ctl' ? tgt.vx : (tgt.v[4] || 0); b.tvy = tgt.mode === 'ctl' ? tgt.vy : (tgt.v[5] || 0);
     b.dist = dist;
   }
@@ -1052,7 +1100,27 @@
     const b = f.bot, i = f.in, L = SF_BOT[clamp((f.lvl || 3) - 1, 0, 4)];
     if (!f.alive || f.mode !== 'ctl') { i.l = i.r = i.j = i.a = i.b = i.u = i.d = 0; i.ang = null; return; }
     b.t -= dt;
-    if (b.t <= 0) { b.t = L.rt * rr(.6, 1.3); sfBotThink(w, f); if (b.jmp && b.jh <= 0) { b.jh = .32; b.jgap = 0; } }
+    if (L.hard) {
+      if (b.t <= 0) {
+        b.t = L.rt * rr(.7, 1.2);
+        const H = b.h || (b.h = []);
+        H.push({
+          t: w.t,
+          F: w.fighters.map(o => o === f ? null : { slot: o.slot, alive: o.alive, hp: o.hp, x: o.p[4], y: o.p[5], vx: o.mode === 'ctl' ? o.vx : (o.v[4] || 0), vy: o.mode === 'ctl' ? o.vy : (o.v[5] || 0), atkT: o.atkT, wpn: o.wpn ? { k: o.wpn.k, ammo: o.wpn.ammo } : null }),
+          B: w.bullets.map(q => ({ o: q.o, x: q.x, y: q.y, vx: q.vx, vy: q.vy }))
+        });
+        while (H.length > 1 && H[1].t <= w.t - L.lag) H.shift();
+        const O = H[0], age = w.t - O.t, rf = w.fighters, rb = w.bullets;
+        w.fighters = rf.map((o, k) => {
+          const g = O.F[k];
+          return o === f || !g ? f : { slot: g.slot, alive: g.alive, hp: g.hp, p: [0, 0, 0, 0, g.x + g.vx * age, g.y + g.vy * age * .5], mode: 'ctl', vx: g.vx, vy: g.vy, v: [], atkT: Math.max(0, g.atkT - age), wpn: g.wpn };
+        });
+        w.bullets = O.B.map(q => ({ o: q.o, x: q.x + q.vx * age, y: q.y + q.vy * age, vx: q.vx, vy: q.vy }));
+        sfBotThink(w, f);
+        w.fighters = rf; w.bullets = rb;
+        if (b.jmp && b.jh <= 0) { b.jh = .32; b.jgap = 0; }
+      }
+    } else if (b.t <= 0) { b.t = L.rt * rr(.6, 1.3); sfBotThink(w, f); if (b.jmp && b.jh <= 0) { b.jh = .32; b.jgap = 0; } }
     if (b.jh > 0) { b.jh -= dt; }
     if (f.gnd && b.mx && b.reflex && b.jh <= 0) {
       if (!sfColumn(w, f.x + b.mx * 15, f.y)) {
@@ -1083,13 +1151,21 @@
     if (b.stuck > .7) { b.stuck = 0; if (sfColumn(w, f.x + b.mx * 30, f.y) || sfBotJumpable(w, f, b.mx)) b.jh = .3; b.t = 0; }
     i.l = b.mx < 0 ? 1 : 0; i.r = b.mx > 0 ? 1 : 0;
     i.j = b.jh > .08 ? 1 : 0;
+    if (L.hard && L.safe) {
+      const j0 = i.j && f.gnd ? 1 : 0, m0 = b.mx;
+      if (!sfSafePath(w, f, m0, j0)) {
+        const alt = f.gnd ? [[m0, 1 - j0], [0, 0], [-m0 || 1, 0], [-m0 || -1, 0], [-m0 || 1, 1], [0, 1]] : [[0, 0], [-m0 || 1, 0], [-m0 || -1, 0]];
+        for (const c of alt) if (sfSafePath(w, f, c[0], c[1])) { i.l = c[0] < 0 ? 1 : 0; i.r = c[0] > 0 ? 1 : 0; if (f.gnd) i.j = c[1]; break; }
+      }
+    }
     i.b = b.blk ? 1 : 0;
     const S = f.wpn && SF_WP[f.wpn.k];
     if (S && !S.melee) {
       const tx = b.tx, ty = b.ty;
       if (tx != null) {
         const spd = S.spd || 600, t = clamp(b.dist / spd, 0, .8);
-        const px = tx + (b.tvx || 0) * t * .6, py = ty - 8 + (b.tvy || 0) * t * .5 + (f.wpn.k === 'rocket' || f.wpn.k === 'snake' ? -b.dist * .05 : 0);
+        const age = L.hard ? clamp(w.t - (b.ot || w.t), 0, .4) : 0;
+        const px = tx + (b.tvx || 0) * (L.hard ? age + t : t * .6), py = ty - 8 + (b.tvy || 0) * (L.hard ? (age + t) * .6 : t * .5) + (f.wpn.k === 'rocket' || f.wpn.k === 'snake' ? -b.dist * .05 : 0);
         const want = Math.atan2(py - f.p[3], px - f.p[2]) + b.err;
         b.aimA = angLerp(b.aimA, want, 1 - Math.exp(-dt * (4 + L.haz * 12)));
         i.ang = b.aimA;
@@ -1098,7 +1174,7 @@
         if (f.wpn.k === 'minigun' && b.fire) i.a = diff < .5 ? 1 : 0;
       } else { i.ang = null; i.a = 0; }
     } else {
-      i.ang = null;
+      i.ang = L.hard && b.blk && b.bf ? (b.bf > 0 ? 0 : Math.PI) : null;
       i.a = b.fire ? 1 : 0;
       if (S && S.melee && b.fire && b.dist < 80) i.a = 1;
     }
@@ -2214,9 +2290,10 @@
       render(dt);
     });
 
+    const bgEnd = bgHost(api, root, () => G.role === 'host' && !!G.w, (d, now) => { hostFrame(d); hostSend(now); });
     root.__sf = { G, saved, snapshot, fxEvent };
     if (api.net.invite) { showMenu(); hideUi(); goOnline(); } else showMenu();
-    return { destroy() { aud.close(); } };
+    return { destroy() { bgEnd(); aud.close(); } };
   }
 
   Ameplay.register({
@@ -5957,9 +6034,10 @@ ${TOUCH_CSS('stick-fight')}`,
       pvDraw();
     });
 
+    const bgEnd = bgHost(api, root, () => G.role === 'host' && !!G.W, (d, now) => { hostFrame(d); hostSend(now); });
     root.__sm = { G, saved, snapshot, fxEvent };
     if (api.net.invite) { showMenu(); hideUi(); goOnline(); } else showMenu();
-    return { destroy() { aud.close(); } };
+    return { destroy() { bgEnd(); aud.close(); } };
   }
 
   Ameplay.register({

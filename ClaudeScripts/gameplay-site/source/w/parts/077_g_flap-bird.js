@@ -675,12 +675,13 @@
         if (fade.value > 0) { c.globalAlpha = fade.value; c.fillStyle = '#000'; c.fillRect(0, 0, W, H); c.globalAlpha = 1; }
         if (flash.value > 0) { c.globalAlpha = flash.value; c.fillStyle = '#fff'; c.fillRect(0, 0, W, H); c.globalAlpha = 1; }
       }
-      function present() {
+      function present(fresh) {
         const r = canvas.getBoundingClientRect();
         if (!r.width) return;
         const dpr = Math.min(window.devicePixelRatio || 1, 3);
         const tw = Math.max(1, Math.round(r.width * dpr)), th = Math.max(1, Math.round(r.height * dpr));
         if (canvas.width !== tw || canvas.height !== th) { canvas.width = tw; canvas.height = th; }
+        else if (!fresh) return;
         vctx.setTransform(1, 0, 0, 1, 0, 0);
         const k = Math.ceil(tw / W);
         if (tw % W === 0 || tw >= W * 3) {
@@ -731,11 +732,16 @@
       menuReset();
       transition(false, 0, .5);
       api.score(0);
+      let stale = true;
+      const touch = () => { stale = true; };
+      ['pointerdown', 'pointerup', 'pointercancel', 'keydown', 'keyup', 'resize'].forEach(k => api.on(window, k, touch, true));
       api.loop(dt => {
         if (!paused) acc += dt;
-        while (acc >= STEP - .001) { tick(); acc -= STEP; }
-        draw();
-        present();
+        let fresh = stale;
+        while (acc >= STEP - .001) { tick(); acc -= STEP; fresh = true; }
+        stale = false;
+        if (fresh) draw();
+        present(fresh);
       });
 
       root.__fb = {

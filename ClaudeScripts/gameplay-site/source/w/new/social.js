@@ -1,4 +1,5 @@
-const RT = { me: null, ch: null, on: null, pres: {}, seen: false, tt: 0 };
+const RT = { me: null, ch: null, on: null, pres: {}, seen: false, tt: 0, pr: {}, rj: 0, rn: 0 };
+const PB = { t: 0, db: {}, n: 0, at: 0, miss: false, busy: false, sent: 0, games: {} };
 const SO_ICO = {
   bell: '<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></svg>',
   chat: '<svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg>',
@@ -21,9 +22,9 @@ const soParty = () => { try { if (cur && cur.api && cur.api.online) { const n = 
 const soGameName = id => id ? (byId.get(id) ? byId.get(id).title : id) : '';
 const soCan = id => { const g = id && byId.get(id); return !!(g && g.info && onlineMax(g.info.pl) > 0); };
 const SO = { pend: null, want: null, act: Date.now(), away: false, party: false, ty: {}, tyAt: 0, tyT: 0, v: 'list', last: null, q: '', pt: 0, key: '', gk: '', more: false, rep: null, bc: null, bat: 0, pAt: 0, pq: Promise.resolve(), cdT: 0 };
-const SO_CD = {}, RT_Q = {}, SO_PCD = 3000;
+const SO_CD = {}, RT_Q = {}, SO_PCD = 1000;
 const soCool = (k, ms) => { const t = SO_CD[k] || 0, now = Date.now(); if (now - t < ms) return Math.ceil((ms - (now - t)) / 1000); SO_CD[k] = now; return 0; };
-const soPWait = () => Math.max(0, SO.pAt + SO_PCD - Date.now());
+const soPWait = () => adIsAdmin() ? 0 : Math.max(0, SO.pAt + SO_PCD - Date.now());
 const soSleep = ms => new Promise(r => setTimeout(r, ms));
 const soSecs = s => s >= 60 ? auT('{n} min').replace('{n}', Math.ceil(s / 60)) : auT('{n} s').replace('{n}', s);
 function soCdApply() {
@@ -80,9 +81,9 @@ function soRepHtml(id, at) {
 }
 function soErr(e, fb) {
   const m = String(e && e.message || '');
-  if (e && e.local) return e.local > 3 ? auT('Slow down a little: {what}. Try again in {t}.').replace('{what}', auT('too many invites')).replace('{t}', soSecs(e.local)) : auT('You can send one party invite every 3 seconds. Try again in {t}.').replace('{t}', soSecs(e.local));
-  if (sbLimit(e) && e.details === 'party') return auT('You can send one party invite every 3 seconds. Try again in {t}.').replace('{t}', soSecs(sbWait(e) || 3));
-  if (sbLimit(e)) return sbLimitText(e, /dm_text|dm_image/.test(e.details || '') ? 'too many messages' : 'too many invites');
+  if (e && e.local) return e.local > 3 ? auT('Slow down a little: {what}. Try again in {t}.').replace('{what}', auT('too many invites')).replace('{t}', soSecs(e.local)) : auT('You are sending party invites too fast. Try again in {t}.').replace('{t}', soSecs(e.local));
+  if (sbLimit(e) && e.details === 'party') return auT('You are sending party invites too fast. Try again in {t}.').replace('{t}', soSecs(sbWait(e) || 1));
+  if (sbLimit(e)) return sbLimitText(e, /dm_text|dm_image|dm_file/.test(e.details || '') ? 'too many messages' : 'too many invites');
   if (/not friends/i.test(m)) return auT('You are no longer friends.');
   if (/locked/i.test(m)) return auT('Your account is locked.');
   if (/too many/i.test(m)) return auT('Too many messages. Wait a minute and try again.');
@@ -115,33 +116,87 @@ function rtLater(k, fn, ms) {
 const soIdle = () => Date.now() - SO.act > 300000 || document.visibilityState === 'hidden' && Date.now() - SO.act > 60000;
 const soDot = on => on ? on.a ? ' away' : ' on' : '';
 
+const PT = { bc: null, tabs: {}, s: -1 };
+const ptScore = () => (cur ? 2 : 0) + (document.visibilityState === 'visible' ? 1 : 0);
+function ptSay(bye, ask) { PT.s = bye ? -1 : ptScore(); try { if (PT.bc) PT.bc.postMessage({ id: NET_TAB, s: PT.s, ask: ask ? 1 : 0 }); } catch (e) {} }
+function ptTop() { const t = Date.now(); let top = -1; for (const k in PT.tabs) { if (t - PT.tabs[k].t > 70000) delete PT.tabs[k]; else if (PT.tabs[k].s > top) top = PT.tabs[k].s; } return top; }
+function ptStart() {
+  if (PT.bc || !window.BroadcastChannel) return;
+  try {
+    PT.bc = new BroadcastChannel('gameplay-presence');
+    PT.bc.onmessage = e => {
+      const d = e.data;
+      if (!d || typeof d.id !== 'string' || d.id === NET_TAB || !SB.user) return;
+      if (d.s < 0) { delete PT.tabs[d.id]; if (PB.t) rtLater('pt', pbBeat, 1200); return; }
+      PT.tabs[d.id] = { s: +d.s || 0, t: Date.now() };
+      if (d.ask) ptSay();
+    };
+    ptSay(false, true);
+  } catch (e) { PT.bc = null; }
+}
+async function pbBeat() {
+  if (!SB.user || PB.miss || PB.busy) return;
+  ptSay();
+  const quiet = ptTop() > PT.s;
+  const uid = SB.user.id, P = S.prefs, g = P.p_game === false || !cur ? null : cur.g.id, pa = soParty();
+  PB.busy = true; PB.sent = Date.now();
+  SO.away = soIdle(); SO.party = !!(g && pa && pa.game === g);
+  try {
+    const r = await sbRest('rpc/presence_beat', { method: 'POST', body: { p_game: g, p_hidden: P.p_status === 'Nobody', p_away: SO.away, p_party: SO.party, p_quiet: quiet } });
+    if (SB.user && SB.user.id === uid && r && typeof r === 'object' && Array.isArray(r.on)) {
+      const m = {}, gm = {};
+      r.on.forEach(x => { if (x && typeof x.id === 'string') m[x.id] = x.h ? { h: 1 } : { g: typeof x.g === 'string' ? x.g : null, a: x.a ? 1 : 0, p: x.p ? 1 : 0, t: Date.now() }; });
+      if (r.games && typeof r.games === 'object') for (const k in r.games) { const n = Math.round(+r.games[k]); if (n > 0 && /^[a-z0-9][a-z0-9-]{0,39}$/.test(k)) gm[k] = Math.min(n, 99999); }
+      PB.db = m; PB.games = gm; PB.n = Math.max(0, +r.n || 0); PB.at = Date.now();
+      rtSync();
+    }
+  } catch (e) { if (sbMissing(e)) PB.miss = true; }
+  PB.busy = false;
+}
+function pbStart() { ptStart(); clearInterval(PB.t); PB.t = setInterval(pbBeat, 30000); pbBeat(); }
+function pbStop(bye) {
+  clearInterval(PB.t); PB.t = 0; PB.db = {}; PB.games = {}; PB.n = 0; PB.at = 0;
+  const others = ptTop() >= 0;
+  ptSay(true);
+  if (bye && !others && !PB.miss && sbTok()) sbRest('rpc/presence_bye', { method: 'POST', body: {}, keep: true }).catch(() => {});
+}
+const PR_GAP = 8000;
+function prSend(o, ch, payload, fresh) {
+  if (fresh) { o.last = null; }
+  o.want = payload || null; o.ch = ch;
+  if (o.t) return;
+  const run = () => {
+    o.t = 0;
+    const c = o.ch, w = o.want, j = w ? JSON.stringify(w) : '';
+    if (!c || c.state !== 'joined' || j === o.last || (!w && o.last == null)) return;
+    o.last = j; o.at = Date.now();
+    try { const r = w ? c.track(w) : c.untrack(); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  };
+  o.t = setTimeout(run, Math.max(fresh ? 0 : 250, (o.at || 0) + (payload ? PR_GAP : 2000) - Date.now()));
+}
+function prDrop(o) { clearTimeout(o.t); o.t = 0; o.last = null; o.want = null; o.ch = null; }
 function rtStart() {
   if (!SB.c || !SB.user || RT.me === SB.user.id) return;
   rtStop();
   const me = RT.me = SB.user.id;
-  try {
-    RT.ch = SB.c.channel('u:' + me).on('broadcast', { event: 'n' }, m => rtNudge(m && m.payload || {})).subscribe();
-    RT.on = SB.c.channel('online', { config: { presence: { key: me } } }).on('presence', { event: 'sync' }, rtSync).subscribe(s => { if (s === 'SUBSCRIBED') rtTrack(true); });
-  } catch (e) {}
+  try { RT.ch = SB.c.channel('u:' + me).on('broadcast', { event: 'n' }, m => rtNudge(m && m.payload || {})).subscribe(); } catch (e) {}
 }
 function rtStop() {
-  try { if (RT.ch) SB.c.removeChannel(RT.ch); if (RT.on) SB.c.removeChannel(RT.on); } catch (e) {}
+  clearTimeout(RT.tt);
+  try { if (RT.ch) SB.c.removeChannel(RT.ch); } catch (e) {}
   RT.ch = RT.on = RT.me = null; RT.seen = false; RT.pres = {};
   soLive();
 }
 function rtTrack(now) {
+  if (!SB.user) return;
+  SO.away = soIdle();
   clearTimeout(RT.tt);
-  if (!RT.on) return;
-  RT.tt = setTimeout(() => {
-    if (!RT.on || !SB.user) return;
-    const P = S.prefs, hide = P.p_status === 'Nobody', g = P.p_game === false || !cur ? null : cur.g.id, pa = soParty();
-    SO.away = soIdle(); SO.party = !!(g && pa && pa.game === g);
-    RT.on.track(hide ? { h: 1 } : { g, t: Date.now(), a: SO.away ? 1 : 0, p: SO.party ? 1 : 0 }).catch(() => {});
-  }, now ? 0 : 400);
+  RT.tt = setTimeout(pbBeat, Math.max(now === true ? 300 : 1200, PB.sent + 5000 - Date.now()));
 }
 function rtSync() {
-  const s = RT.on ? RT.on.presenceState() : {}, prev = RT.pres, P = {};
-  for (const k in s) { const a = s[k]; if (a && a.length) P[k] = a[a.length - 1]; }
+  const prev = RT.pres, P = {};
+  if (Date.now() - PB.at < 110000) for (const k in PB.db) P[k] = PB.db[k];
+  if (SB.user && PB.at) P[SB.user.id] = S.prefs.p_status === 'Nobody' ? { h: 1 } : { g: S.prefs.p_game === false || !cur ? null : cur.g.id, t: Date.now(), a: SO.away ? 1 : 0, p: SO.party ? 1 : 0 };
   RT.pres = P;
   const now = Date.now();
   if (RT.seen && S.prefs.n_on) (FR.list || []).forEach(f => { const id = f.friend_id; if (!blHas(id) && P[id] && !P[id].h && !(prev[id] && !prev[id].h) && now - (NT.on[id] || 0) > 600000) { NT.on[id] = now; ntPush({ k: 'online', from: id, t: auT('{u} is online').replace('{u}', soName(id)), b: P[id].g ? auT('Playing {g}').replace('{g}', soGameName(P[id].g)) : '', a: { type: 'chat', uid: id } }); } });
@@ -149,12 +204,20 @@ function rtSync() {
   RT.seen = true;
   rtLater('live', soLive, 400);
 }
+const RTS = {};
 function rtSend(uid, p) {
+  if (!SB.c || !uid) return Promise.resolve();
+  if (uid === RT.me && RT.ch) { try { const r = RT.ch.send({ type: 'broadcast', event: 'n', payload: p }); return Promise.resolve(r).then(() => {}, () => {}); } catch (e) { return Promise.resolve(); } }
+  const run = () => rtSend1(uid, p), q = RTS[uid] = (RTS[uid] || Promise.resolve()).then(run, run);
+  q.then(() => { if (RTS[uid] === q) delete RTS[uid]; });
+  return q;
+}
+function rtSend1(uid, p) {
   if (!SB.c || !uid) return Promise.resolve();
   return new Promise(res => {
     let done = false;
     const ch = SB.c.channel('u:' + uid);
-    const fin = () => { if (done) return; done = true; try { SB.c.removeChannel(ch); } catch (e) {} res(); };
+    const fin = () => { if (done) return; done = true; let r = null; try { r = SB.c.removeChannel(ch); } catch (e) {} Promise.resolve(r).then(res, res); };
     try { ch.subscribe(s => { if (s === 'SUBSCRIBED') ch.send({ type: 'broadcast', event: 'n', payload: p }).then(fin, fin); else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT') fin(); }); } catch (e) { fin(); }
     setTimeout(fin, 6000);
   });
@@ -185,7 +248,7 @@ function soStatus(id) {
   return on.a ? auT('Away') : auT('Online');
 }
 function soLive() {
-  const n = Object.keys(RT.pres).filter(k => !RT.pres[k].h).length, pill = $('#onl');
+  const n = Date.now() - PB.at < 110000 ? Math.max(PB.n, 1) : 0, pill = $('#onl');
   if (pill) { pill.hidden = !SB.user || !n; pill.querySelector('b').textContent = n; pill.title = auT(n === 1 ? '1 player online' : '{n} players online').replace('{n}', n); }
   cardPills();
   if (openK === 'friends' && FR.list) frDraw();
@@ -199,7 +262,7 @@ function soLive() {
 }
 
 const NT = { list: [], key: '', on: {}, snd: 0, hold: 0, t: 0, sw: null, hov: false };
-const ntKey = n => (n.k === 'image' ? 'dm' : n.k) + '|' + (n.from || '') + '|' + (n.a && n.a.game || '');
+const ntKey = n => (n.k === 'image' || n.k === 'file' ? 'dm' : n.k) + '|' + (n.from || '') + '|' + (n.a && n.a.game || '');
 const ntLife = k => k === 'invite' || k === 'join' ? 9000 : k === 'online' ? 4000 : 5500;
 const NT_MAX = 3;
 function ntLoad() {
@@ -231,7 +294,7 @@ function ntPush(n) {
   if (openK === 'notifs') { ntDraw(); return; }
   ntToast(n);
 }
-function ntIcon(k) { return k === 'dm' ? SO_ICO.chat : k === 'image' ? SO_ICO.img : k === 'invite' || k === 'join' ? SO_ICO.pad : k === 'game' ? SO_ICO.star : SO_ICO.user; }
+function ntIcon(k) { return k === 'dm' ? SO_ICO.chat : k === 'image' ? SO_ICO.img : k === 'file' ? FX_ICO.clip : k === 'invite' || k === 'join' ? SO_ICO.pad : k === 'game' ? SO_ICO.star : SO_ICO.user; }
 function ntActLabel(n) { const a = n.a || {}; return a.type === 'join' ? 'Join' : a.type === 'invite' ? 'Invite' : a.type === 'chat' ? (n.k === 'online' ? 'Say hi' : 'Reply') : a.type === 'game' ? 'Play' : a.type === 'friends' ? 'Open' : ''; }
 const ntCount = c => +c > 1 ? `<em class="nt-c" aria-label="${esc(auT('{n} times').replace('{n}', +c))}">×${+c}</em>` : '';
 function ntBox() {
@@ -403,7 +466,7 @@ function dmNotify(c) {
   const name = soName(c.other_id), m = c.last_meta || {}, P = S.prefs;
   if (c.last_kind === 'invite') { if (P.n_inv === false || P.p_inv === 'Nobody') return; ntPush({ k: 'invite', from: c.other_id, t: auT('{u} invited you to play').replace('{u}', name), b: soGameName(m.game), a: { type: 'join', game: m.game, code: m.code, uid: c.other_id } }); }
   else if (c.last_kind === 'join') { if (P.n_inv === false || P.p_inv === 'Nobody') return; ntPush({ k: 'join', from: c.other_id, t: auT('{u} wants to join your party').replace('{u}', name), b: soGameName(m.game), a: { type: 'invite', game: m.game, uid: c.other_id } }); }
-  else { if (P.n_msg === false) return; ntPush({ k: c.last_kind === 'image' ? 'image' : 'dm', from: c.other_id, t: name, b: c.last_kind === 'image' ? auT('Sent a picture') : String(c.last_body || '').slice(0, 140), a: { type: 'chat', uid: c.other_id } }); }
+  else { if (P.n_msg === false) return; ntPush({ k: c.last_kind === 'image' ? 'image' : c.last_kind === 'file' ? 'file' : 'dm', from: c.other_id, t: name, b: c.last_kind === 'image' ? auT('Sent a picture') : c.last_kind === 'file' ? auT('Sent a file') : String(c.last_body || '').slice(0, 140), a: { type: 'chat', uid: c.other_id } }); }
 }
 async function dmSend(uid, kind, body, meta) {
   const id = await adRpc('dm_send', { p_to: uid, p_kind: kind, p_body: body || null, p_meta: meta || {} });
@@ -465,15 +528,15 @@ function soChatEl() {
   el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', auT('Chats'));
   const xb = `<button class="x" type="button" data-ch="close" aria-label="${esc(auT('Minimize chat'))}" title="${esc(auT('Minimize chat'))}">${SO_ICO.min}</button>`;
   el.innerHTML = `<div class="so-lv"><div class="ch-h so-lh"><span class="so-li">${SO_ICO.chat}</span><div class="ch-n"><b>${esc(auT('Chats'))}</b><span class="ch-s so-lc"></span></div><button class="x" type="button" data-ch="find" aria-label="${esc(auT('Add friends'))}" title="${esc(auT('Add friends'))}">${SO_ICO.add}</button>${xb}</div><label class="so-sr">${SO_ICO.find}<input type="search" placeholder="${esc(auT('Search friends'))}" aria-label="${esc(auT('Search friends'))}" autocomplete="off" spellcheck="false" maxlength="40"></label><div class="so-fl"></div></div>` +
-    `<div class="so-cv"><div class="ch-h"><button class="x so-bk" type="button" data-ch="back" aria-label="${esc(auT('Back to chats'))}" title="${esc(auT('Back to chats'))}">${SO_ICO.back}<em hidden></em></button><span class="pic"></span><div class="ch-n"><b translate="no"></b><span class="ch-s"></span></div>${xb}</div><div class="ch-acts"></div><div class="ch-m" translate="no" aria-live="polite"></div><div class="so-ty" aria-live="polite" hidden></div><div class="note ch-note" role="status"></div><form class="ch-f" novalidate><button class="ch-ib" type="button" data-ch="img" aria-label="${esc(auT('Send a picture'))}" title="${esc(auT('Send a picture'))}">${SO_ICO.img}</button><input type="file" accept="image/*" hidden><textarea rows="1" maxlength="2000" aria-label="${esc(auT('Message'))}"></textarea><button class="ch-sb" type="submit" aria-label="${esc(auT('Send'))}">${SO_ICO.send}</button></form>` +
-    `<div class="so-pk" hidden><div class="ch-h"><button class="x" type="button" data-ch="pkx" aria-label="${esc(auT('Back'))}">${SO_ICO.back}</button><div class="ch-n"><b class="so-pt"></b><span class="ch-s">${esc(auT('A party starts and your invite goes out with the code.'))}</span></div></div><div class="so-pl"></div></div></div>`;
+    `<div class="so-cv"><div class="ch-h"><button class="x so-bk" type="button" data-ch="back" aria-label="${esc(auT('Back to chats'))}" title="${esc(auT('Back to chats'))}">${SO_ICO.back}<em hidden></em></button><span class="pic"></span><div class="ch-n"><b translate="no"></b><span class="ch-s"></span></div>${xb}</div><div class="ch-acts"></div><div class="ch-m" translate="no" aria-live="polite"></div><div class="so-ty" aria-live="polite" hidden></div><div class="note ch-note" role="status"></div><form class="ch-f" novalidate><button class="ch-ib" type="button" data-ch="img" aria-label="${esc(auT('Send a picture'))}" title="${esc(auT('Send a picture'))}">${SO_ICO.img}</button><button class="ch-ib" type="button" data-ch="file" aria-expanded="false" aria-controls="chfh" aria-label="${esc(auT('Send a file'))}" title="${esc(auT('Send a file'))}">${FX_ICO.clip}</button><input type="file" accept="image/*" hidden><input type="file" class="ch-fi" accept="${FX_ACCEPT}" hidden><div class="ch-fh" id="chfh" hidden><b>${esc(auT('Send a file'))}</b><p>${esc(auT(FX_LIMITS))}</p><p>${esc(auT('Only you and your friend can open it. Pictures are made smaller before they are sent.'))}</p><button class="btn2 pri" type="button" data-ch="pickf">${FX_ICO.clip}<span>${esc(auT('Choose a file'))}</span></button></div><textarea rows="1" maxlength="2000" aria-label="${esc(auT('Message'))}"></textarea><button class="ch-sb" type="submit" aria-label="${esc(auT('Send'))}">${SO_ICO.send}</button></form>` +
+    `<div class="so-pk" hidden><div class="ch-h"><button class="x" type="button" data-ch="pkx" aria-label="${esc(auT('Back'))}">${SO_ICO.back}</button><div class="ch-n"><b class="so-pt"></b><span class="ch-s">${esc(auT('A party starts and your invite goes out with the code.'))}</span></div></div><div class="so-pl"></div></div></div><div class="so-dropn" aria-hidden="true"><span>${esc(auT('Drop a picture or a file to send it'))}<small>${esc(auT(FX_LIMITS))}</small></span></div>`;
   document.body.append(el);
-  const ta = el.querySelector('textarea'), fi = el.querySelector('input[type=file]'), sr = el.querySelector('.so-sr input');
-  el.addEventListener('click', e => { const b = e.target.closest('[data-ch]'); if (b) { e.stopPropagation(); dmAct(b.dataset.ch, b); } const im = e.target.closest('.ch-pic img'); if (im && im.src) soLight(im.src); });
+  const ta = el.querySelector('textarea'), fi = el.querySelector('input[type=file]'), ff = el.querySelector('.ch-fi'), sr = el.querySelector('.so-sr input');
+  el.addEventListener('click', e => { const b = e.target.closest('[data-ch]'); if (!(b && b.dataset.ch === 'file') && !e.target.closest('.ch-fh')) dmFileTip(false); if (b) { e.stopPropagation(); dmAct(b.dataset.ch, b); } const im = e.target.closest('.ch-pic img'); if (im && im.src) soLight(im.src); });
   el.addEventListener('submit', e => { e.preventDefault(); dmSendText(); });
   el.addEventListener('keydown', e => {
     e.stopPropagation();
-    if (e.key === 'Escape') { e.preventDefault(); if (!el.querySelector('.so-pk').hidden) soPick(false); else { dmClose(); const b = $('#sodl'); if (b && !b.hidden) b.focus({ preventScroll: true }); } return; }
+    if (e.key === 'Escape') { e.preventDefault(); if (!el.querySelector('.ch-fh').hidden) { dmFileTip(false); el.querySelector('[data-ch="file"]').focus({ preventScroll: true }); } else if (!el.querySelector('.so-pk').hidden) soPick(false); else { dmClose(); const b = $('#sodl'); if (b && !b.hidden) b.focus({ preventScroll: true }); } return; }
     if (e.key === 'Enter' && !e.shiftKey && e.target === ta) { e.preventDefault(); dmSendText(); }
     if (e.key === 'ArrowDown' && e.target === sr) { e.preventDefault(); const f = el.querySelector('.so-fl [data-ch="so"]'); if (f) f.focus(); }
   });
@@ -482,17 +545,18 @@ function soChatEl() {
     ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px';
     if (ta.value.trim() && DM.open && SB.user && Date.now() - SO.tyAt > 3000) { SO.tyAt = Date.now(); rtSend(DM.open, { t: 'ty', f: SB.user.id }); }
   });
-  ta.addEventListener('paste', e => { const f = [...(e.clipboardData && e.clipboardData.files || [])].find(x => /^image\//.test(x.type)); if (f) { e.preventDefault(); dmImage(f); } });
+  ta.addEventListener('paste', e => { const L = [...(e.clipboardData && e.clipboardData.files || [])]; if (L.length) { e.preventDefault(); dmAttach(L); } });
   sr.addEventListener('input', () => { SO.q = sr.value.trim().toLowerCase().replace(/^@/, ''); soList(); });
   fi.addEventListener('change', () => { const f = fi.files && fi.files[0]; fi.value = ''; if (f) dmImage(f); });
-  el.addEventListener('dragover', e => { if (DM.open) { e.preventDefault(); el.classList.add('so-drop'); } });
+  ff.addEventListener('change', () => { const L = [...(ff.files || [])]; ff.value = ''; dmAttach(L); });
+  el.addEventListener('dragover', e => { if (DM.open && e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files')) { e.preventDefault(); el.classList.add('so-drop'); } });
   el.addEventListener('dragleave', e => { if (!el.contains(e.relatedTarget)) el.classList.remove('so-drop'); });
-  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('so-drop'); const f = [...(e.dataTransfer && e.dataTransfer.files || [])].find(x => /^image\//.test(x.type)); if (f && DM.open) dmImage(f); });
+  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('so-drop'); if (DM.open) dmAttach([...(e.dataTransfer && e.dataTransfer.files || [])]); });
   return el;
 }
 function soPreview(c) {
   const m = c.last_meta || {}, k = c.last_kind;
-  const s = k === 'image' ? auT('Picture') : k === 'invite' ? auT('Party invite · {g}').replace('{g}', soGameName(m.game)) : k === 'join' ? auT('Asked to join · {g}').replace('{g}', soGameName(m.game)) : String(c.last_body || '').split('\n')[0];
+  const s = k === 'image' ? auT('Picture') : k === 'file' ? auT('File · {n}').replace('{n}', m.name || c.last_body || '') : k === 'invite' ? auT('Party invite · {g}').replace('{g}', soGameName(m.game)) : k === 'join' ? auT('Asked to join · {g}').replace('{g}', soGameName(m.game)) : String(c.last_body || '').split('\n')[0];
   return c.last_mine ? auT('You: {m}').replace('{m}', s) : s;
 }
 function soWhen(t) {
@@ -685,16 +749,17 @@ async function dmSeenSync() {
 }
 async function dmThread() {
   const uid = DM.open;
-  if (!uid || DM.busy) return;
+  if (!uid) return;
+  if (DM.busy) { DM.again = true; return; }
   DM.busy = true;
   try {
     const after = DM.msgs.length ? DM.msgs[DM.msgs.length - 1].id : 0;
     const r = await adRpc('dm_thread', { p_with: uid, p_after: after });
-    if (DM.open !== uid) return;
+    if (DM.open !== uid || after !== (DM.msgs.length ? DM.msgs[DM.msgs.length - 1].id : 0)) { DM.again = !!DM.open; return; }
     const add = Array.isArray(r) ? r : [];
     const box = $('#chat .ch-m'), first = !after;
     if (first) { box.innerHTML = ''; DM.prev = null; }
-    if (!add.length) { if (first) box.innerHTML = `<div class="ch-empty">${SO_ICO.chat}<span>${esc(auT('Say hi! Messages are only seen by the two of you.'))}</span></div>`; return; }
+    if (!add.length) { if (first) box.innerHTML = `<div class="ch-empty">${SO_ICO.chat}<span>${esc(auT('Say hi! This chat is between you two. Staff can review messages to keep the site safe.'))}</span></div>`; return; }
     const near = first || box.scrollHeight - box.scrollTop - box.clientHeight < 120;
     const em = box.querySelector('.ch-empty'); if (em) em.remove();
     const un = first ? add.findIndex(m => !m.mine && !m.read_at) : -1;
@@ -715,19 +780,23 @@ async function dmThread() {
     if (nw) box.scrollTop = Math.max(0, nw.offsetTop - 12);
     else if (near || add.some(m => m.mine)) box.scrollTop = box.scrollHeight;
     if (!first && add.some(m => !m.mine)) { delete SO.ty[uid]; soTyDraw(); sfx('pop'); }
-    if (add.some(m => !m.mine && !m.read_at)) {
-      await adRpc('dm_read', { p_with: uid }).catch(() => {});
-      rtLater('r:' + uid, () => { if (SB.user) rtSend(uid, { t: 'rd', f: SB.user.id }); }, 2000);
-      const c = DM.inbox.find(x => x.other_id === uid); if (c) c.unread = 0;
-      DM.unread = DM.inbox.reduce((n, c) => n + (c.other_id === DM.open ? 0 : +c.unread || 0), 0); ntBadge();
-    }
+    if (add.some(m => !m.mine && !m.read_at)) { if (dmSeeing()) await dmRead(uid); else DM.unseen = uid; }
   } catch (e) { auMsg2('Could not load the messages. Check your connection and try again.', 'bad'); }
-  finally { DM.busy = false; }
+  finally { DM.busy = false; if (DM.again) { DM.again = false; if (DM.open) dmThread(); } }
+}
+const dmSeeing = () => document.visibilityState === 'visible' && !!$('#chat') && !$('#chat').hidden;
+async function dmRead(uid) {
+  DM.unseen = null;
+  await adRpc('dm_read', { p_with: uid }).catch(() => {});
+  rtLater('r:' + uid, () => { if (SB.user) rtSend(uid, { t: 'rd', f: SB.user.id }); }, 2000);
+  const c = DM.inbox.find(x => x.other_id === uid); if (c) c.unread = 0;
+  DM.unread = DM.inbox.reduce((n, c) => n + (c.other_id === DM.open ? 0 : +c.unread || 0), 0); ntBadge();
 }
 function dmRow(m, anim, grp) {
   const d = new Date(m.created_at), hm = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const cls = 'ch-r' + (m.mine ? ' me' : '') + (anim ? ' new' : '') + (grp ? ' so-g' : ''), t = grp ? '' : `<small>${esc(hm)}</small>`, g = m.meta || {}, name = soName(DM.open), tt = ` title="${esc(d.toLocaleString())}"`;
-  if (m.kind === 'image') return `<div class="${cls}"${tt}><div class="ch-pic"><img data-path="${esc(g.path || '')}" alt="${esc(auT('Picture'))}" width="${+g.w || 320}" height="${+g.h || 240}" loading="lazy"></div>${t}</div>`;
+  if (m.kind === 'image') return `<div class="${cls}"${tt}><div class="ch-pic" data-fxb="dm"><img data-path="${esc(g.path || '')}" alt="${esc(auT('Picture'))}" width="${+g.w || 320}" height="${+g.h || 240}" loading="lazy">${m.mine && g.path ? fxDelBtn(g.path) : ''}</div>${t}</div>`;
+  if (m.kind === 'file') return `<div class="${cls}"${tt}><div class="ch-file fx-v" data-fxb="dm">${fxCard({ path: g.path || '', name: g.name || m.body || '', size: g.size }, m.mine && !!g.path)}</div>${t}</div>`;
   if (m.kind === 'invite') return `<div class="${cls}"${tt}><div class="ch-card">${SO_ICO.pad}<div><b>${esc(m.mine ? auT('You invited {u} to your party').replace('{u}', name) : auT('{u} invited you to their party').replace('{u}', name))}</b><span>${esc(soGameName(g.game))} · ${esc(auT('Code {c}').replace('{c}', g.code || ''))}</span></div>${m.mine ? '' : `<button class="btn2 pri" type="button" data-ch="go" data-g="${esc(g.game || '')}" data-c="${esc(g.code || '')}">${esc(auT('Join'))}</button>`}</div>${t}</div>`;
   if (m.kind === 'join') return `<div class="${cls}"${tt}><div class="ch-card">${SO_ICO.pad}<div><b>${esc(m.mine ? auT('You asked to join {u}').replace('{u}', name) : auT('{u} wants to join your party').replace('{u}', name))}</b><span>${esc(soGameName(g.game))}</span></div>${m.mine ? '' : `<button class="btn2 pri" type="button" data-ch="invite" data-g="${esc(g.game || '')}">${esc(auT('Invite'))}</button>`}</div>${t}</div>`;
   return `<div class="${cls}"${tt}><div class="ch-b">${esc(m.body || '')}</div>${t}</div>`;
@@ -735,13 +804,17 @@ function dmRow(m, anim, grp) {
 async function dmImg(img) {
   const p = img.dataset.path;
   if (!p) return;
-  if (DM.urls.has(p)) { img.src = DM.urls.get(p); return; }
+  const k = DM.urls.get(p);
+  if (!img.dataset.rt) { img.dataset.rt = '1'; img.addEventListener('error', () => { if (img.dataset.rt === '1' && img.getAttribute('src')) { img.dataset.rt = '2'; DM.urls.delete(p); dmImg(img); } }); }
+  if (k && k.u && Date.now() - k.at < 3000000) { img.src = k.u; return; }
   try {
     const c = await sbClient();
     const { data, error } = await c.storage.from('dm').createSignedUrl(p, 3600);
     if (error || !data) throw error;
-    DM.urls.set(p, data.signedUrl);
-    img.src = data.signedUrl;
+    let u = data.signedUrl;
+    try { const x = new URL(u); u = SBN.url(x.pathname + x.search); } catch (e) {}
+    DM.urls.set(p, { u, at: Date.now() });
+    img.src = u;
   } catch (e) { img.alt = auT('Picture not available'); img.classList.add('bad'); }
 }
 async function dmSendText() {
@@ -762,7 +835,7 @@ async function dmImage(file) {
     let blob = file, ext = 'gif', w = 0, h = 0;
     const bm = await createImageBitmap(file);
     w = bm.width; h = bm.height;
-    if (file.type !== 'image/gif' || file.size > 3e6) {
+    if (file.type !== 'image/gif' || file.size > FX.IMG) {
       const k = Math.min(1, 1600 / Math.max(w, h)), cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(h * k));
       const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
       cv.getContext('2d').drawImage(bm, 0, 0, cw, ch);
@@ -779,6 +852,39 @@ async function dmImage(file) {
     auMsg2('');
   } catch (e) { auMsg2(sbLimit(e) ? soErr(e) : 'Could not send the picture. Try another one.', 'bad'); }
 }
+function dmFileTip(on) {
+  const el = $('#chat'), tip = el && el.querySelector('.ch-fh'), b = el && el.querySelector('[data-ch="file"]');
+  if (!tip || tip.hidden === !on) return;
+  tip.hidden = !on; b.setAttribute('aria-expanded', String(on));
+  if (on) tip.querySelector('button').focus({ preventScroll: true });
+}
+function dmAttach(L) {
+  const f = L && L[0];
+  if (!f || !DM.open) return;
+  dmFileTip(false);
+  if (/^image\//.test(f.type) && !/svg/.test(f.type)) dmImage(f); else dmFile(f);
+  if (L.length > 1) toast(auT('Files are sent one at a time. Only the first one was sent.'));
+}
+async function dmFile(file) {
+  const uid = DM.open;
+  if (!uid || !SB.user) return;
+  if (DM.up) { auMsg2('Wait until the file you are sending is done.', 'bad'); return; }
+  const r = await fxPrep(file);
+  if (r.err) { auMsg2(r.err, 'bad'); return; }
+  const it = r.it;
+  if (it.img) { dmImage(file); return; }
+  const w = soCool('file', 4000);
+  if (w) { auMsg2(auT('You just sent one. Wait {s} s before sending another.').replace('{s}', w), 'bad'); return; }
+  const say = p => { if (DM.open === uid) auMsg2(auT('Sending “{n}”… {p}%').replace('{n}', it.name).replace('{p}', Math.round(p * 100))); };
+  DM.up = true; say(0);
+  try {
+    const path = SB.user.id + '/' + uid + '/' + fxId() + '.' + it.ext;
+    await fxPut('dm', path, it.blob, it.mime, say);
+    await dmSend(uid, 'file', null, { path, name: it.name });
+    if (DM.open === uid) auMsg2('');
+  } catch (e) { soSaid(uid, sbLimit(e) || /not friends|locked/i.test(e && e.message || '') ? soErr(e) : e && e.status !== undefined && !e.code ? await fxWhy(e) : 'Could not send the file. Try again.', 'bad'); }
+  finally { DM.up = false; }
+}
 async function dmAct(k, b) {
   const uid = DM.open;
   if (k === 'close') { dmClose(); const l = $('#sodl'); if (l && !l.hidden) l.focus({ preventScroll: true }); return; }
@@ -786,6 +892,8 @@ async function dmAct(k, b) {
   if (k === 'so') { dmOpen(b.dataset.id); return; }
   if (k === 'find') { dmClose(); setOpen('friends'); return; }
   if (k === 'img') { $('#chat input[type=file]').click(); return; }
+  if (k === 'file') { dmFileTip($('#chat .ch-fh').hidden); return; }
+  if (k === 'pickf') { dmFileTip(false); $('#chat .ch-fi').click(); return; }
   if (k === 'pkx') { soPick(false); return; }
   if (k === 'go') { dmClose(); closeAll(); go(href(b.dataset.g, b.dataset.c), false); toast(auT('Joining the party…')); return; }
   if (!uid) return;
@@ -807,7 +915,7 @@ async function dmAct(k, b) {
 }
 function soLight(src) {
   let lb = $('#soLight');
-  if (!lb) { lb = document.createElement('div'); lb.id = 'soLight'; lb.className = 'solight'; lb.innerHTML = '<img alt="">'; lb.addEventListener('click', () => vis(lb, false)); document.body.append(lb); }
+  if (!lb) { lb = document.createElement('div'); lb.id = 'soLight'; lb.className = 'solight'; lb.innerHTML = '<img alt="">'; lb.addEventListener('click', e => { e.stopPropagation(); vis(lb, false); }); document.body.append(lb); }
   soPlace();
   lb.querySelector('img').src = src; vis(lb, true);
 }
@@ -851,6 +959,7 @@ function soStart() {
   if (!SB.user) return;
   blLoad(); blSync();
   rtStart();
+  pbStart();
   DM.first = true; DM.last = {};
   SO.key = 'gameplay:dock:' + SB.user.id;
   let st = null;
@@ -859,11 +968,12 @@ function soStart() {
   soDockSync();
   frLoad().then(() => {
     ntBadge(); rtSync();
-    if (st && st.o && !auCoarse() && matchMedia('(min-width:761px)').matches && $('#chat') && $('#chat').hidden) { if (SO.v === 'conv' && soFriend(SO.last)) dmOpen(SO.last); else { soView('list'); soShow(true); soList(); } }
+    if (st && st.o && !auCoarse() && matchMedia('(min-width:761px)').matches && (!$('#chat') || $('#chat').hidden)) { if (SO.v === 'conv' && soFriend(SO.last)) dmOpen(SO.last); else { soView('list'); soShow(true); soList(); } }
   });
   dmPoll();
 }
 function soStop() {
+  pbStop(false);
   rtStop(); dmClose();
   DM.inbox = []; DM.unread = 0; DM.msgs = []; DM.last = {}; DM.urls.clear();
   SO.pend = SO.want = null; SO.last = null; SO.v = 'list'; SO.key = ''; SO.ty = {}; SO.rep = SO.bc = null; SO.more = false; clearInterval(SO.pt);
@@ -896,11 +1006,13 @@ function soBoot() {
     if (!SB.user) return;
     const pa = soParty(), k = (cur ? cur.g.id : '') + '|' + (pa ? pa.code : '');
     if (k !== SO.gk) { SO.gk = k; if (DM.open) dmHead(); if (openK === 'friends' && FR.list) frDraw(); rtTrack(true); }
-    else if (RT.on && soIdle() !== SO.away) rtTrack(true);
+    else if (soIdle() !== SO.away) rtTrack(true);
   }, 1000);
-  const act = () => { SO.act = Date.now(); if (SO.away && RT.on) { SO.away = false; rtTrack(true); } };
+  const act = () => { SO.act = Date.now(); if (SO.away) { SO.away = false; rtTrack(true); } };
   ['pointerdown', 'keydown', 'wheel', 'touchstart', 'pointermove'].forEach(t => addEventListener(t, act, { capture: true, passive: true }));
-  document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible') { act(); dmPoll(); rtTrack(); } });
+  document.addEventListener('visibilitychange', () => { if (SB.user && document.visibilityState === 'visible') { act(); dmPoll(); rtTrack(true); if (DM.unseen && DM.unseen === DM.open && dmSeeing()) dmRead(DM.unseen); } else if (SB.user) rtTrack(true); });
+  addEventListener('pagehide', () => { if (SB.user && PB.t) pbStop(true); });
+  addEventListener('pageshow', e => { if (e.persisted && SB.user && !PB.t) pbStart(); });
   ['fullscreenchange', 'webkitfullscreenchange'].forEach(t => document.addEventListener(t, () => setTimeout(soPlace, 0)));
   new MutationObserver(() => { const c = $('#chat'); if (document.body.classList.contains('modal-open') && c && !c.hidden && !c.classList.contains('out')) dmClose(); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   ntLoad();
@@ -920,6 +1032,7 @@ function clGame(v) {
   if (!cur) return;
   let room = null;
   try { const n = cur.api && cur.api.online && cur.api.net; room = n && n.code ? String(n.code) : null; } catch (e) {}
+  if (!room) return;
   gpChatLog('game', cur.g.id, room, v);
 }
 (() => {
@@ -946,13 +1059,25 @@ window.gpParty = {
   err: e => soErr(e),
   signIn: () => { closeAll(); auOpen('main', '', '', 'in'); }
 };
-const PUB = { ch: null, me: 'p' + Math.random().toString(36).slice(2, 12), list: {}, mine: null, tt: 0, st: false, mo: null, q: 0 };
+const PUB = { ch: null, me: 'p' + Math.random().toString(36).slice(2, 12), list: {}, mine: null, tt: 0, st: false, mo: null, q: 0, pr: {}, rj: 0, rn: 0 };
 function pubStart() {
   if (PUB.st) return;
   PUB.st = true;
   sbClient().then(c => {
     if (PUB.ch) return;
-    PUB.ch = c.channel('parties', { config: { presence: { key: PUB.me } } }).on('presence', { event: 'sync' }, pubSync).subscribe(s => { if (s === 'SUBSCRIBED') pubTrack(); });
+    prDrop(PUB.pr);
+    const ch = PUB.ch = c.channel('parties', { config: { presence: { key: PUB.me } } });
+    ch.on('presence', { event: 'sync' }, pubSync).subscribe(s => {
+      if (PUB.ch !== ch) return;
+      if (s === 'SUBSCRIBED') { PUB.rn = 0; PUB.pr.last = null; pubTrack(true); }
+      else if (s === 'CLOSED') {
+        DIAG.ev('net', { a: 'presence-closed', ch: 'parties' });
+        if (PUB.dead === ch) return;
+        PUB.dead = ch;
+        clearTimeout(PUB.rj);
+        PUB.rj = setTimeout(() => { if (PUB.ch !== ch) return; PUB.ch = null; PUB.st = false; try { c.removeChannel(ch); } catch (e) {} pubStart(); }, Math.min(60000, 9000 * Math.pow(2, PUB.rn = (PUB.rn || 0) + 1)));
+      }
+    });
   }).catch(() => { PUB.st = false; });
 }
 function pubSync() {
@@ -971,20 +1096,19 @@ function pubSync() {
   pubStrip();
   document.dispatchEvent(new CustomEvent('gp:pub'));
 }
-function pubTrack() {
+function pubTrack(fresh) {
   if (!PUB.ch) return;
-  if (PUB.mine) PUB.ch.track(PUB.mine).catch(() => {}); else PUB.ch.untrack().catch(() => {});
+  prSend(PUB.pr, PUB.ch, PUB.mine, fresh === true);
 }
 window.gpPubSet = (gid, o) => {
   if (!o && (!PUB.mine || PUB.mine.g !== gid)) return;
   PUB.mine = o || null;
   if (o) pubStart();
-  clearTimeout(PUB.tt); PUB.tt = setTimeout(pubTrack, 250);
+  pubTrack();
 };
 window.gpPubList = gid => (PUB.list[gid] || []).slice();
 function cardPills() {
-  const by = {};
-  Object.values(RT.pres).forEach(p => { if (p.g && !p.h) by[p.g] = (by[p.g] || 0) + 1; });
+  const by = Date.now() - PB.at < 110000 ? PB.games : {};
   document.querySelectorAll('.card[data-id]').forEach(el => {
     const id = el.dataset.id, art = el.querySelector('.art') || el, c = by[id] || 0, P = PUB.list[id];
     let b = el.querySelector('.livepill');

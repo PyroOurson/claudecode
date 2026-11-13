@@ -688,12 +688,13 @@
       const DIFF = [
         { name: 'Easy', speed: 520, acc: 3000, err: 70, aim: 80, react: .2, mul: 1 },
         { name: 'Normal', speed: 860, acc: 5600, err: 34, aim: 34, react: .1, mul: 2 },
-        { name: 'Hard', speed: 1250, acc: 9500, err: 12, aim: 20, react: .045, mul: 3 }
+        { name: 'Hard', speed: 1250, acc: 9500, err: 12, aim: 20, react: .045, mul: 3 },
+        { name: 'Hardest', speed: 2000, acc: 17000, err: 0, aim: 0, react: .14, mul: 4, pro: true, slow: 250, lead: .4, bankPen: 30, reach: 12, swing: .26, home: 150 }
       ];
       const MODES = [['cpu', 'vs CPU'], ['net', 'Online']], CRZ = 88, CRL = 110;
       const net = api.net, invited = !!net.invite, coarse = matchMedia('(pointer: coarse)').matches;
       const saved = api.load() || {};
-      let diff = clamp(saved.diff ?? 1, 0, 2) | 0, mode = invited ? 'net' : MODES.some(m => m[0] === saved.mode) ? saved.mode : 'cpu';
+      let diff = clamp(saved.diff ?? 1, 0, DIFF.length - 1) | 0, mode = invited ? 'net' : MODES.some(m => m[0] === saved.mode) ? saved.mode : 'cpu';
       root.innerHTML = `<div class="bar"><div class="seg" role="group" aria-label="Mode">${MODES.map(([k, t]) => `<button data-m="${k}" aria-pressed="${k === mode}">${t}</button>`).join('')}</div><div class="seg" role="group" aria-label="Difficulty">${DIFF.map((d, i) => `<button data-d="${i}" aria-pressed="${i === diff}">${d.name}</button>`).join('')}</div></div>`;
       const segBtns = [...root.querySelectorAll('[data-d]')], modeBtns = [...root.querySelectorAll('[data-m]')], barEl = root.firstChild, diffSeg = segBtns[0].parentNode;
 
@@ -713,7 +714,7 @@
 
       const puck = { x: MID - 150, y: CY, vx: 0, vy: 0 };
       const me = { x: L + 90, y: CY, vx: 0, vy: 0, tx: L + 90, ty: CY };
-      const ai = { x: RR - 90, y: CY, vx: 0, vy: 0, tx: RR - 90, ty: CY, ux: -1, uy: 0, sx: 0, sy: 0, svx: 0, svy: 0, seen: 0, age: 0, err: 0, aimOff: 0, bank: 0, strike: 0, stuck: 0, side: 0 };
+      const ai = { x: RR - 90, y: CY, vx: 0, vy: 0, tx: RR - 90, ty: CY, ux: -1, uy: 0, sx: 0, sy: 0, svx: 0, svy: 0, seen: 0, age: 0, err: 0, aimOff: 0, bank: 0, strike: 0, stuck: 0, side: 0, mx: 0, my: 0, opt: -1, gy: 0 };
       let idleT = 0, state = 'ready', sMe = 0, sAi = 0, glow = 0, glowSide = 0, msg = null, gen = 0, hitCd = 0, wallCd = 0, shake = 0, cd = 0, cdN = 0, clock = 0, overAt = 0;
       let online = null, wired = false, lobbying = false, acc = 0, simT = 0, stepN = 0, epoch = 0, off = 0, meRe = false, peerRe = false, sentX = -1, sentY = -1;
       const trail = new Float32Array(16); let trailI = 0;
@@ -773,8 +774,9 @@
       const aiThink = dt => {
         const P = DIFF[diff];
         ai.seen += dt; ai.age += dt;
-        if (ai.seen >= P.react) { ai.seen = 0; ai.age = 0; ai.sx = puck.x; ai.sy = puck.y; ai.svx = puck.vx; ai.svy = puck.vy; }
-        const px = ai.sx + ai.svx * ai.age, py = ai.sy + ai.svy * ai.age, pvx = ai.svx, pvy = ai.svy;
+        if (ai.seen >= P.react) { ai.seen = 0; ai.age = 0; ai.sx = puck.x; ai.sy = puck.y; ai.svx = puck.vx; ai.svy = puck.vy; ai.mx = me.x; ai.my = me.y; }
+        const pro = !!P.pro, ry = ai.sy + ai.svy * ai.age, pvx = ai.svx, pvy = ai.svy;
+        let px = ai.sx + ai.svx * ai.age, py = pro ? fold(ry, T + PR, B - PR) : ry;
         const side = px > MID ? 1 : 0;
         if (side !== ai.side) {
           ai.side = side; ai.strike = 0; ai.stuck = 0;
@@ -783,17 +785,34 @@
         let tx, ty, fast = false;
         if (state !== 'play') {
           tx = RR - 80; ty = CY;
-        } else if (pvx > 150 && px < ai.x - 8) {
-          const lineX = Math.min(ai.x, RR - CRL - 4), tt = (lineX - px) / pvx, yy = fold(py + pvy * tt, T + PR, B - PR);
-          tx = lineX; ty = lerp(CY, yy, .85) + ai.err;
-          if (diff === 2 && tt < .35) { tx = lineX - 30; fast = true; }
+        } else if (pvx > 150 && px < ai.x - 8 && !(pro && side && pvx < P.slow)) {
+          const lineX = pro ? RR - CRL - 6 : Math.min(ai.x, RR - CRL - 4), tt = (lineX - px) / pvx, yy = fold(ry + pvy * tt, T + PR, B - PR);
+          tx = lineX; ty = pro ? clamp(yy, GT - 6, GB + 6) : lerp(CY, yy, .85) + ai.err;
+          if (diff >= 2 && tt < .35) { tx = lineX - 30; fast = true; }
         } else if (!side) {
-          tx = RR - (diff ? 175 : 125); ty = CY + (py - CY) * .5;
+          tx = RR - (pro ? P.home : diff ? 175 : 125); ty = CY + (pro ? clamp((py - CY) * .5, -64, 64) : (py - CY) * .5); fast = pro;
         } else {
           const sp = Math.hypot(puck.vx, puck.vy);
           ai.stuck = sp < 60 ? ai.stuck + dt : 0;
           let gy = (diff ? CY + (me.y < CY ? 58 : -58) : CY) + ai.aimOff;
-          if (ai.bank) gy = ai.bank < 0 ? 2 * (T + PR) - gy : 2 * (B - PR) - gy;
+          if (pro) {
+            const eta = Math.min(.25, Math.hypot(ai.x - px, ai.y - py) / P.speed) * (ai.strike > 0 ? 0 : P.lead);
+            px = clamp(px + pvx * eta, MID, RR - PR); py = fold(ry + pvy * eta, T + PR, B - PR);
+            if (ai.strike <= 0) {
+              let bs = -1e9, bk = 0;
+              for (let k = 0; k < 6; k++) {
+                const g0 = CY + (k % 2 ? 54 : -54), bank = k < 2 ? 0 : k < 4 ? -1 : 1, wy = bank < 0 ? T + PR : B - PR, g1 = bank ? wy + (wy - g0) / .9 : g0;
+                let ux = L - px, uy = g1 - py;
+                const ul = Math.hypot(ux, uy) || 1; ux /= ul; uy /= ul;
+                const dist = (x, y) => { const t = (x - px) * ux + (y - py) * uy; return t < 0 ? 1e3 : Math.abs((x - px) * uy - (y - py) * ux); };
+                let sc = Math.min(dist(ai.mx, ai.my), bank ? dist(ai.mx, 2 * wy - ai.my) : 1e3, 170) - (bank ? P.bankPen : 0) + (k === ai.opt ? 14 : 0);
+                const qx = px - ux * (PR + MR + 34), qy = py - uy * (PR + MR + 34);
+                if (qx > RR - MR - 2 || qy < T + MR + 2 || qy > B - MR - 2 || Math.hypot(qx - RR, qy - CY) < CRL + 2) sc -= 90;
+                if (sc > bs) { bs = sc; bk = k; gy = g1; }
+              }
+              ai.opt = bk; ai.gy = gy;
+            } else gy = ai.gy;
+          } else if (ai.bank) gy = ai.bank < 0 ? 2 * (T + PR) - gy : 2 * (B - PR) - gy;
           let dx = px - (L - 10), dy = py - gy;
           const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
           const bx = px + dx * (PR + MR + 34), by = py + dy * (PR + MR + 34);
@@ -801,10 +820,10 @@
             let ux = px - ai.x, uy = py - ai.y; const ul = Math.hypot(ux, uy) || 1; ux /= ul; uy /= ul;
             tx = px + ux * 70; ty = py + uy * 70; fast = true;
             if (ai.stuck > 1.8) ai.stuck = 0;
-          } else if (ai.strike > 0 || Math.hypot(ai.x - bx, ai.y - by) < 8) {
-            if (ai.strike <= 0) { ai.strike = .4; const ul = Math.hypot(px - ai.x, py - ai.y) || 1; ai.ux = (px - ai.x) / ul; ai.uy = (py - ai.y) / ul; }
+          } else if (ai.strike > 0 || Math.hypot(ai.x - bx, ai.y - by) < (pro ? P.reach : 8)) {
+            if (ai.strike <= 0) { ai.strike = pro ? P.swing : .4; const ul = Math.hypot(px - ai.x, py - ai.y) || 1; ai.ux = (px - ai.x) / ul; ai.uy = (py - ai.y) / ul; }
             ai.strike -= dt;
-            if (Math.hypot(puck.x - ai.x, puck.y - ai.y) > PR + MR + 60 && ai.strike < .3) ai.strike = 0;
+            if (Math.hypot(puck.x - ai.x, puck.y - ai.y) > PR + MR + 60 && ai.strike < (pro ? P.swing - .1 : .3)) ai.strike = 0;
             tx = px + ai.ux * 80; ty = py + ai.uy * 80; fast = true;
           } else if (ai.x < px + 6 && Math.abs(ai.y - py) < PR + MR + 8) {
             tx = px + 46; ty = py + (py < CY ? 1 : -1) * (PR + MR + 20);
@@ -904,7 +923,7 @@
         api.overlay({
           kicker: 'Sports', title: 'Air Hockey',
           text: mode === 'net' ? `Play a friend on another device: create a room and send the code or invite link, or join with their code. First to ${GOALS} goals wins.`
-            : `First to ${GOALS} goals wins. Your red mallet follows the mouse or your finger and must stay on your half and out of the shaded goal crease; hit the puck while moving to put pace on it. <b>Points:</b> 100 per goal you score, +500 for winning, multiplied ×1 / ×2 / ×3 on Easy / Normal / Hard. Now playing: <b>${DIFF[diff].name}</b>.`,
+            : `First to ${GOALS} goals wins. Your red mallet follows the mouse or your finger and must stay on your half and out of the shaded goal crease; hit the puck while moving to put pace on it. <b>Points:</b> 100 per goal you score, +500 for winning, multiplied ×1 / ×2 / ×3 / ×4 on Easy / Normal / Hard / Hardest. Now playing: <b>${DIFF[diff].name}</b>.`,
           button: 'Play', onAction: begin, secondary: 'Change mode', onSecondary: ready
         });
       };

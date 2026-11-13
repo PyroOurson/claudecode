@@ -90,3 +90,6 @@
 .sfal-ok{min-width:160px;height:48px;font-size:16px}
 @media (prefers-reduced-motion:reduce){.sfal,.sfal-c{transition:none}}
 
+
+.sf-still .sfb{animation:none}
+.sfal.sf-still{transition:none}

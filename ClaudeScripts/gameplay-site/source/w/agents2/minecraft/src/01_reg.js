@@ -100,7 +100,7 @@
     return l.map(c => { let [x0, y0, z0, x1, y1, z1] = c; for (let k = 0; k < q; k++) { const nx0 = 1 - z1, nx1 = 1 - z0, nz0 = x0, nz1 = x1; x0 = nx0; x1 = nx1; z0 = nz0; z1 = nz1; } return [x0, y0, z0, x1, y1, z1]; });
   }
   const FULLCB = [[0, 0, 0, 1, 1, 1]];
-  let STT, SHP, OPQ, SOL, LAT, LEM, TIL, TRT, TNT, CSM, FLU, REP, MOD, COLL, SELB, FULLT, ANIMF, LEAF;
+  let STT, SHP, OPQ, SOL, LAT, LEM, TIL, TRT, TNT, CSM, FLU, REP, MOD, COLL, SELB, FULLT, ANIMF, LEAF, RTK;
   const IT = [], IN = Object.create(null);
   let TILF = [];
   function itm(id, o) {
@@ -111,10 +111,10 @@
     IT.push(it); IN[id] = it;
     return it;
   }
-  function finalizeBlocks() {
+  function* finalizeBlocks() {
     const N = NSTATE;
     STT = new Uint16Array(N); SHP = new Uint8Array(N); OPQ = new Uint8Array(N); SOL = new Uint8Array(N); LAT = new Uint8Array(N); LEM = new Uint8Array(N);
-    TIL = new Int16Array(N * 6).fill(-1); TRT = new Uint8Array(N * 6); TNT = new Uint8Array(N); CSM = new Uint16Array(N); FLU = new Uint8Array(N); REP = new Uint8Array(N); FULLT = new Uint8Array(N); ANIMF = new Uint8Array(N); LEAF = new Uint8Array(N);
+    TIL = new Int16Array(N * 6).fill(-1); TRT = new Uint8Array(N * 6); TNT = new Uint8Array(N); CSM = new Uint16Array(N); FLU = new Uint8Array(N); REP = new Uint8Array(N); FULLT = new Uint8Array(N); ANIMF = new Uint8Array(N); LEAF = new Uint8Array(N); RTK = new Uint8Array(N);
     MOD = new Array(N).fill(null); COLL = new Array(N).fill(null); SELB = new Array(N).fill(null);
     const SHC = { none: 0, cube: 1, cross: 2, crop: 3, liquid: 4, model: 5, cmodel: 6 };
     for (const t of TT) {
@@ -131,6 +131,7 @@
         FLU[s] = t.fluid || 0;
         REP[s] = typeof t.repl === 'function' ? (t.repl(s) ? 1 : 0) : t.repl ? 1 : 0;
         LEAF[s] = t.tags.has('leaves') ? 1 : 0;
+        RTK[s] = t.tick || t.crop || t.sapling || LEAF[s] || t.fire || t.ox !== undefined || t.id === 'grass_block' || t.id === 'mycelium' || t.id === 'farmland' || t.id === 'ice' || t.id === 'snow' || t.id === 'kelp' || t.id === 'bamboo' || t.id === 'cocoa' ? 1 : 0;
         if (LEAF[s] && t.leafTex) TILF[s] = tid(t.leafTex + '_fast');
         const solid = typeof t.solid === 'function' ? t.solid(s) : t.solid;
         if (shp === 'cube' || shp === 'model' || shp === 'cmodel' || shp === 'cross' || shp === 'crop') {
@@ -158,6 +159,7 @@
         if (t.sel) SELB[s] = t.sel(s);
         FULLT[s] = SOL[s] === 1 && t.opq ? 1 : 0;
       }
+      yield;
     }
   }
   function texFace(tex, f) {

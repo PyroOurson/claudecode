@@ -4,19 +4,30 @@ Everything needed to rebuild `index.html` and `gameplay/` at the repo root lives
 
 ## Setup (once per computer)
 
-1. Copy this folder to `/tmp/gameplay-build` (the scripts use that path):
-   `rm -rf /tmp/gameplay-build && cp -r ClaudeScripts/gameplay-site/source /tmp/gameplay-build`
-   (On Windows use WSL, or replace `/tmp/gameplay-build` in the scripts with your own folder.)
-2. Install Python 3.9+ and Node.js 18+. For browser tests: `npm i -g playwright && npx playwright install chromium`.
+1. Install Python 3.9+ and Node.js 18+. For browser tests: `npm i -g playwright && npx playwright install chromium`.
+2. The scripts work from wherever this folder is (they no longer need `/tmp/gameplay-build`). Run them inside `ClaudeScripts/gameplay-site/source/`.
 
 ## Build
 
 1. Rocket League (joined from `rl/seg/*` and `rl/models/*`):
-   `cd /tmp/gameplay-build/rl && python3 -I tools/join.py lead all && cp build/lead_all.js ../w/parts/115_g_rocket-soccer.js`
-2. Portal (from `w/parts_orig` + `w/new/*`): `cd /tmp/gameplay-build/w && python3 assemble.py`
-3. Encrypted site: `GATE_PASS="$(cat ~/.gameplay/gate_secret.txt)" python3 build2.py parts site` (see "Site password" below)
-4. Copy `site/index.html` to the repo root and replace the repo's `gameplay/` folder with `site/gameplay/`, then `git ls-files > files.txt`.
-5. Copy changed sources back into `ClaudeScripts/gameplay-site/source/` so the repo stays the source of truth.
+   `cd rl && python3 -I tools/join.py lead all && tr -d '\r' < build/lead_all.js > ../w/parts/115_g_rocket-soccer.js`
+2. Portal (from `w/parts_orig` + `w/new/*`): `python3 w/assemble.py`. It writes `w/parts/000_pre_000.html` and `w/parts/001_portal.js`. These two files are generated and are not kept in git, so run this step after every checkout.
+3. Encrypted site: `cd w && GATE_PASS="$(cat ~/.gameplay/gate_secret.txt)" python3 build2.py parts site` (see "Site password" below)
+4. Copy `w/site/index.html` to the repo root and replace the repo's `gameplay/` folder with `w/site/gameplay/`, then `git ls-files > files.txt`.
+
+## Staging: test everything without touching the live site
+
+A private copy of the whole platform runs on one computer: a local Supabase stack (database, accounts, live updates, storage) plus a build of the site that talks to it.
+
+1. Install Docker, then in an empty folder: `npm i supabase`, `npx supabase init`, set `minimum_password_length = 8` in `supabase/config.toml`, and `npx supabase start -x studio,logflare,vector,imgproxy,edge-runtime,postgres-meta,supavisor`. Save its settings: `npx supabase status -o json > staging.json`.
+2. Load the schema: `psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -f w/supabase/schema.sql`. The file contains every round up to `round19_analytics.sql` and can be run again on an up-to-date database. Rounds written after it are applied on top, in order.
+3. Build and serve: `STAGE_JSON=/path/staging.json python3 t/stage.py open` (or `locked` to test the password screen; the staging site password is `stagepass1`), then `node t/serve.js w/site_stage 8080` and open http://127.0.0.1:8080/.
+4. The first account you create can be made owner with `update public.profiles set role = 'owner' where username = '...'`. Test accounts are created from the admin dashboard (or `admin_create_test_account`); they are the only accounts whose sessions are recorded by the diagnostics recorder (`w/new/diag.js`).
+5. Browser tests, one at a time (two at once starve each other): `node t/tests/load_sequence.js`, `node t/tests/gate_locked.js`, `node t/tests/party.js` (12 two-browser party scenarios; `ONLY=A,B` runs a subset), `node t/tests/fixes.js` (save sync between devices, account switch on one browser, party host id, key rebinding, presence across tabs, delete my data, friend presence), `node t/tests/announce.js`. Set `STATE_DIR` to a folder where the test sessions are kept and `STAGE_JSON` to the staging settings file. `t/site.js` and `t/party_lib.js` are the helpers; `t/stage_api.js` calls the staging API from Node. The helpers start Chromium with software compositing (`--disable-gpu`): with an emulated graphics card and no real one, pages stall for minutes under load; set `SITE_GL=swiftshader` to get the old behaviour. They also pre-fill the cached graphics probe (`localStorage['gameplay:gpu']`) so the one-time probe does not run in tests. On staging, links to games use the hash form (`/#/snake`), because path links are only switched on for the Firebase hosts. `STAGE_OUT` and `STAGE_PARTS` let `t/stage.py` build a second copy next to the first.
+
+## Preview deploys
+
+`python3 deploy.py <branch> --preview` uploads that branch to a Firebase preview channel (a temporary address, 7 days) and leaves the live site untouched. Without `--preview` it deploys to the live site as before.
 
 Keeping the same build secret and the fixed salt in `w/gate2.js` means browsers that already unlocked the site stay unlocked after updates.
 
@@ -67,5 +78,7 @@ Reseed after every change of `GATE_PASS`: the old slot unwraps a key that no lon
 - `w/agents2/subway/src` + `build.py`, `w/agents2/minecraft/src` + `mk.py`: sources for Subway Surfers and Minecraft (they generate their part files).
 - `rl/seg/`: Rocket League code segments, `rl/models/`: 3D models, `rl/notes/`: design notes.
 - `w/MASTER.md`, `w/NETBRIEF.md`, `w/agents_net/API.md`, `rl/RLBRIEF.md`: rules, multiplayer API and Rocket League architecture.
-- `t/`: browser test tools (`look.js` screenshots a game, `sweep.js` opens games and reports errors).
+- `t/`: browser test tools (`play.js` opens one game with the backend mocked and reads errors, frame cost and diagnostics; `look.js` screenshots a game; `sweep.js` opens games and reports errors; `site.js`, `party_lib.js`, `stage_api.js` and `tests/` drive the real site on staging), `t/GAMEPASS.md` and `t/PORTALPASS.md` (shared briefs for game and portal work).
+- `w/new/diag.js`, `w/new/diagui.js`: the diagnostics recorder for test accounts. `w/new/i18n_*.json`: extra translation rows merged by `assemble.py`.
+- `../LEDGER.md`: what was changed in the last overhaul and how each item was verified.
 - `design/`: the owner's home page and party lobby designs.

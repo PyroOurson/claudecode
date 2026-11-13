@@ -973,7 +973,7 @@ ${online ? `<button class="bx-btn" data-a="${M.left ? 'cpu' : 'rematch'}">${M.le
       function menuHtml() {
         const imgs = [[0, 10], [1, -1], [0, 11], [1, 9], [0, 0]].map(([o, r]) => `<img src="${stChipUrl(o, r)}" alt="">`).join('');
         return `<div class="bx-box"><div class="st-logo">${imgs}</div><p class="bx-kick">Strategy</p><h3>Stratego</h3><p>Hide your army, bluff, and capture the enemy flag.</p>
-<div class="bx-lbl">Computer level</div><div class="bx-seg" data-seg="diff">${['easy', 'normal', 'hard'].map(d => `<button data-a="d:${d}" class="${opt.diff === d ? 'on' : ''}">${d[0].toUpperCase() + d.slice(1)}</button>`).join('')}</div>
+<div class="bx-lbl">Computer level</div><div class="bx-seg" data-seg="diff">${['easy', 'normal', 'hard'].map(d => `<button data-a="d:${d}" class="${opt.diff === d ? 'on' : ''}">${d === 'hard' ? 'Hardest' : d[0].toUpperCase() + d.slice(1)}</button>`).join('')}</div>
 <button class="bx-btn" data-a="cpu">Play vs computer<small>You are Red and move first</small></button>
 <button class="bx-btn" data-a="online">Play online<small>1 vs 1 with a friend</small></button>
 <div class="bx-row"><button class="bx-btn alt sm" data-a="help">How to play</button><button class="bx-btn alt sm" data-a="fast">Battle speed: ${opt.fast ? 'Fast' : 'Normal'}</button></div></div>`;
@@ -1721,6 +1721,18 @@ ${online ? `<button class="bx-btn" data-a="${M.left ? 'cpu' : 'rematch'}">${M.le
     return c;
   }
 
+  const GW_W = (() => {
+    const N = GW_CAST.length + 1, W = Array.from({ length: N }, () => new Float64Array(N));
+    for (let t = 2; t < 2 * N; t++) for (let n = 1; n < N; n++) {
+      const m = t - n;
+      if (m < 1 || m >= N) continue;
+      let best = 1 / n;
+      for (let k = 1; k * 2 <= n; k++) { const v = (k / n) * (1 - W[m][k]) + ((n - k) / n) * (1 - W[m][n - k]); if (v > best) best = v; }
+      W[n][m] = best;
+    }
+    return W;
+  })();
+
   function gwAI(hist, me, level, memo) {
     const cands = gwCands(hist, me), n = cands.length;
     const asked = new Set(hist.filter(h => h.by === me && h.q).map(h => h.q));
@@ -1729,8 +1741,19 @@ ${online ? `<button class="bx-btn" data-a="${M.left ? 'cpu' : 'rematch'}">${M.le
     if (n <= 1) return { guess: cands[0] ?? rnd(24) };
     if (level === 'easy' && n <= L.guess && Math.random() < .6) return { guess: pick(cands) };
     if (level === 'normal' && n === 2 && (nh <= 2 || Math.random() < .2)) return { guess: pick(cands) };
-    if (level === 'hard' && n === 2 && nh <= 1) return { guess: pick(cands) };
-    if (level === 'hard' && nh <= 1 && n > 1) return { guess: pick(cands) };
+    if (level === 'hard') {
+      const m = Math.max(1, Math.min(GW_CAST.length, nh));
+      let top = [], bv = 1 / n;
+      GW_Q.forEach(q => {
+        if (asked.has(q.id)) return;
+        let y = 0;
+        cands.forEach(i => { if (q.test(GW_CAST[i])) y++; });
+        if (y === 0 || y === n) return;
+        const v = (y / n) * (1 - GW_W[m][y]) + ((n - y) / n) * (1 - GW_W[m][n - y]);
+        if (v > bv + 1e-9) { bv = v; top = [q.id]; } else if (top.length && v > bv - 1e-9) top.push(q.id);
+      });
+      return top.length ? { q: pick(top) } : { guess: pick(cands) };
+    }
     const opts = [];
     GW_Q.forEach(q => {
       if (asked.has(q.id)) return;
@@ -1826,7 +1849,7 @@ ${online ? `<button class="bx-btn" data-a="${M.left ? 'cpu' : 'rematch'}">${M.le
   const GW_ICON = '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="8" width="44" height="48" rx="6"/><circle cx="32" cy="27" r="9"/><path d="M26 25h-3M41 25h-3M28 31q4 3 8 0M16 52q4-12 16-12t16 12"/></svg>';
 
   Ameplay.register({
-    id: 'guess-who',
+    id: 'guess-who', engine: { gwAI, gwQ, gwCands, GW_CAST, GW_Q, GW_W },
     title: 'Guess Who',
     category: 'Board',
     tint: '#1c58b8',
@@ -1998,7 +2021,7 @@ ${online ? `<button class="bx-btn" data-a="${M.left ? 'cpu' : 'rematch'}">${M.le
 
       function menuHtml() {
         return `<div class="bx-box"><p class="bx-kick">Mystery</p><h3>Guess Who?</h3><p>Pick a secret person, ask yes/no questions, flip down the faces that don't fit and be the first to name your rival's person.</p>
-<div class="bx-lbl">Computer level</div><div class="bx-seg">${['easy', 'normal', 'hard'].map(d => `<button data-a="d:${d}" class="${opt.diff === d ? 'on' : ''}">${d[0].toUpperCase() + d.slice(1)}</button>`).join('')}</div>
+<div class="bx-lbl">Computer level</div><div class="bx-seg">${['easy', 'normal', 'hard'].map(d => `<button data-a="d:${d}" class="${opt.diff === d ? 'on' : ''}">${d === 'hard' ? 'Hardest' : d[0].toUpperCase() + d.slice(1)}</button>`).join('')}</div>
 <button class="bx-btn" data-a="cpu">Play vs computer</button>
 <button class="bx-btn" data-a="online">Play online<small>1 vs 1 with a friend</small></button>
 <div class="bx-row"><button class="bx-btn alt sm" data-a="help">How to play</button><button class="bx-btn alt sm" data-a="auto">Auto-flip: ${opt.auto ? 'On' : 'Off'}</button></div></div>`;
@@ -3316,7 +3339,7 @@ ${online ? `<button class="bx-btn" data-a="rematch">${M.rm.has(api.net.id) ? 'Wa
         return `<div class="bx-box"><p class="bx-kick">Mystery</p><h3>Clue</h3><p>Someone did it, somewhere, with something. Question the other detectives, fill in your notebook and name the culprit first.</p>
 <div class="bx-lbl">Your suspect</div><div class="cl-seg">${CL_SUS.map((s, i) => `<button data-a="c:${i}" class="${opt.ch === i ? 'on' : ''}"><i style="background:${s.c}"></i>${s.s}</button>`).join('')}</div>
 <div class="bx-lbl">Opponents</div><div class="bx-seg">${[2, 3, 4, 5].map(n => `<button data-a="o:${n}" class="${opt.opp === n ? 'on' : ''}">${n}</button>`).join('')}</div>
-<div class="bx-lbl">Computer level</div><div class="bx-seg">${['easy', 'normal', 'hard'].map(d => `<button data-a="d:${d}" class="${opt.diff === d ? 'on' : ''}">${d[0].toUpperCase() + d.slice(1)}</button>`).join('')}</div>
+<div class="bx-lbl">Computer level</div><div class="bx-seg">${['easy', 'normal', 'hard'].map(d => `<button data-a="d:${d}" class="${opt.diff === d ? 'on' : ''}">${d === 'hard' ? 'Hardest' : d[0].toUpperCase() + d.slice(1)}</button>`).join('')}</div>
 <button class="bx-btn" data-a="cpu">Play vs computer</button>
 <button class="bx-btn" data-a="online">Play online<small>3 to 6 detectives, bots fill empty seats</small></button>
 <div class="bx-row"><button class="bx-btn alt sm" data-a="help">How to play</button><button class="bx-btn alt sm" data-a="fast">Bot speed: ${opt.fast ? 'Fast' : 'Normal'}</button></div></div>`;

@@ -1,9 +1,12 @@
     let blurOn = false, panoReady = false, panoA = 0, acc = 0, fpsN = 0, fpsT = 0, loadT0 = 0, selfE = null, handG = null, handArm = null, handItem = null, handId = -2, lightF = 0, rainP = null, flash = 0;
     const V3 = new THREE.Vector3(), V3b = new THREE.Vector3();
+    const PF = { n: 0, fr: 0, mx: 0, st: 0, tk: 0, tn: 0, tmx: 0, ic: 0, icx: 0, rdx: 0, stx: 0, rd: 0, ui: 0, ln: 0, lc: 0, lmx: 0, mn: 0, mc: 0, mmx: 0, vn: 0, vc: 0, vmx: 0 };
+    const VIS = { cx: 1e9, sy: 0, cz: 0, cell: -1, mask: 63, f: 0, n: 0, tot: 0, burst: 0, on: true }, VQC = [], VQS = [], VQF = [], MQ = [];
     const stopMusic = () => { };
     function burstAt(x, y, z, rgb, n) { for (let i = 0; i < n * 3; i++) particle(x, y + .2, z, (RNG() - .5) * 2, RNG() * 2, (RNG() - .5) * 2, rgb, .6, .08, 6); }
     P.name = myName();
     function remeshAll() { if (!W) return; FANCY = SET.fancy; W.cols.forEach(c => { if (c.meshed) for (let s = 0; s < NSEC; s++) if (c.s[s] || c.m[s]) { c.md[s] = 1; W.dirty.add(c); } }); }
+    const pendVis = c => { if (!c.vt) return true; for (let s = 0; s <= c.top; s++) if (c.md[s] && c.vs[s]) return true; return false; };
     function resetPlayer() {
       Object.assign(P, { st: {}, adv: {}, goal: 0, x: .5, y: 100, z: .5, px: .5, py: 100, pz: .5, vx: 0, vy: 0, vz: 0, hp: 20, food: 20, sat: 5, exh: 0, air: 300, fall: 0, fly: false, xp: 0, lvl: 0, score: 0, dead: false, sleeping: 0, effects: {}, fire: 0, absorb: 0, spawn: null, hurtT: 0, place: true, yaw: 0, pitch: 0 });
       inv = new Array(36).fill(null); armor = [null, null, null, null]; offhand = null; craft2.fill(null); craft3.fill(null); cursor = null; sel = 0; ender = new Array(27).fill(null);
@@ -21,7 +24,7 @@
     function openWorldObj(o) {
       closeWorld();
       W = makeWorld({ seed: o.seed, type: o.type });
-      Object.assign(W, { id: o.id || null, name: o.name || 'World', folder: o.folder || o.name, mode: o.mode || 'survival', defMode: o.defMode || o.mode || 'survival', diff: o.diff ?? 2, hardcore: !!o.hardcore, cheats: !!o.cheats, rules: Object.assign(defRules(), o.rules || {}), time: o.time ?? 0, raining: !!o.raining, thunder: !!o.thunder, weatherT: o.weatherT || 12000 + ri(100000), dim: 'overworld', players: {}, remote: !!o.remote, pano: !!o.pano, created: o.created || Date.now(), visited: new Set(), bonus: !!o.bonus });
+      Object.assign(W, { id: o.id || null, name: o.name || 'World', folder: o.folder || o.name, mode: o.mode || 'survival', defMode: o.defMode || o.mode || 'survival', diff: fin(o.diff) ? clamp(o.diff | 0, 0, 4) : 2, hardcore: !!o.hardcore, cheats: !!o.cheats, rules: Object.assign(defRules(), o.rules || {}), time: fin(o.time) ? o.time : 0, raining: !!o.raining, thunder: !!o.thunder, weatherT: fin(o.weatherT) ? o.weatherT : 12000 + ri(100000), dim: 'overworld', players: {}, remote: !!o.remote, pano: !!o.pano, created: o.created || Date.now(), visited: new Set(), bonus: !!o.bonus });
       W.spawn = Array.isArray(o.spawn) ? o.spawn : W.gen.spawn();
       hooks.onSet = onSetHook;
       hooks.colLoaded = colLoaded;
@@ -29,7 +32,7 @@
       P.x = P.px = W.spawn[0]; P.y = P.py = W.spawn[1]; P.z = P.pz = W.spawn[2];
       P.name = NET.role ? P.name : myName();
       startWorkers();
-      tickN = 0; simT = 0; acc = 0; loadT0 = performance.now(); NET.ready = !o.remote; FANCY = SET.fancy;
+      tickN = 0; simT = 0; acc = 0; simLast = 0; loadT0 = performance.now(); NET.ready = !o.remote; FANCY = SET.fancy; VIS.cx = 1e9; VIS.cell = -1; VIS.mask = 63;
       if (!o.pano) { grab(); scr = 'loading'; loadMsg = 'Loading terrain...'; loadP = 0; }
       return W;
     }
@@ -40,17 +43,20 @@
     }
     function openWorld(id, host) {
       scr = 'loading'; loadMsg = 'Loading world...'; loadP = 0;
-      Promise.all([kv('meta', 'get', id), kv('data', 'get', id)]).then(([m, d]) => {
-        if (!m) { goWorlds(); return; }
-        openWorldObj(Object.assign({}, m, { time: d ? d.time : 0, spawn: d && d.spawn }));
-        restoreData(d);
+      Promise.all([kv('meta', 'get', id), kv('data', 'get', id)]).then(([m0, d]) => {
+        if (!okMeta(m0)) { goWorlds(); return; }
+        const m = cleanMeta(m0);
+        openWorldObj(Object.assign({}, m, { time: 0, spawn: null }));
+        let good = false;
+        try { good = restoreData(d); } catch (e) { good = false; }
+        if (!good && d != null) { try { kv('data', 'get', id + '~bak').then(b => { if (!b) kv('data', 'put', typeof d === 'object' && !Array.isArray(d) ? Object.assign({}, d, { id: id + '~bak' }) : { id: id + '~bak', raw: d }); }); } catch (e) { } chatSys('Part of this world save could not be read. A backup copy of the old data was kept.', '#ffaa00'); }
         W.created = m.created;
         afterOpen(host);
-      });
+      }).catch(() => { try { closeWorld(); } catch (e) { } goWorlds(); });
     }
     function createWorld(cfg, host) {
       const id = 'w' + Date.now().toString(36) + ri(1e6).toString(36), hc = cfg.mode === 'hardcore';
-      openWorldObj({ id, name: cfg.name, seed: parseSeed(cfg.seed), type: cfg.type, mode: hc ? 'survival' : cfg.mode, defMode: hc ? 'survival' : cfg.mode, diff: hc ? 3 : cfg.diff, hardcore: hc, cheats: !hc && cfg.cheats, rules: cfg.rules, time: 0, bonus: cfg.bonus });
+      openWorldObj({ id, name: cfg.name, seed: parseSeed(cfg.seed), type: cfg.type, mode: hc ? 'survival' : cfg.mode, defMode: hc ? 'survival' : cfg.mode, diff: hc ? 4 : cfg.diff, hardcore: hc, cheats: !hc && cfg.cheats, rules: cfg.rules, time: 0, bonus: cfg.bonus });
       loadMsg = 'Generating world...';
       saveNow();
       afterOpen(host);
@@ -62,7 +68,7 @@
     function quitToTitle() {
       gui = null;
       const fin2 = () => { if (NET.role) leaveMP(); closeWorld(); scr = 'title'; startPano(); };
-      if (W && !W.remote) { scr = 'loading'; loadMsg = 'Saving world'; saveNow().then(fin2, fin2); } else fin2();
+      if (W && !W.remote) { scr = 'loading'; loadMsg = 'Saving world'; let once = false; const f3 = () => { if (!once) { once = true; fin2(); } }; saveNow().then(f3, f3); setTimeout(f3, 6000); } else fin2();
     }
     function colLoaded(c) {
       if (!W || W.pano || W.remote) return;
@@ -86,7 +92,7 @@
       for (const [ty, x, y, z] of L) { const b = getS(Math.floor(x), Math.floor(y) - 1, Math.floor(z)); if (SOL[b] === 1 && getS(Math.floor(x), Math.floor(y), Math.floor(z)) === 0 || REP[getS(Math.floor(x), Math.floor(y), Math.floor(z))]) spawnMob(ty, x, y, z, { persist: true }); }
     }
     function streamChunks(budget) {
-      const t0 = performance.now(), cx0 = Math.floor(P.x) >> 4, cz0 = Math.floor(P.z) >> 4, rd = W.pano ? Math.min(SET.rd, 5) : SET.rd, R = rd + 1;
+      const t0 = performance.now(), cx0 = Math.floor(P.x) >> 4, cz0 = Math.floor(P.z) >> 4, rd = W.pano ? Math.min(RD, 5) : RD, R = rd + 1;
       let req = 0;
       for (let r = 0; r <= R && req < 6 && W.wbusy < 8; r++) for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) {
         if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
@@ -98,31 +104,98 @@
       W.cols.forEach((c, k) => {
         const dx = c.cx - cx0, dz = c.cz - cz0, d = dx * dx + dz * dz;
         if (d > (rd + 3.5) * (rd + 3.5)) { unloadCol(c, k); return; }
-        if (c.st === 1 || (c.st === 2 && !c.meshed && d <= (rd + .5) * (rd + .5))) cand.push([d, c]);
+        if (c.st === 1 || (c.st === 2 && !c.meshed && d <= (rd + .5) * (rd + .5))) { c.dq = d; cand.push(c); }
       });
-      cand.sort((a, b) => a[0] - b[0]);
-      for (const [, c] of cand) {
-        if (performance.now() - t0 > budget) break;
-        if (c.st === 1) { lightColumn(c); continue; }
-        let ok = true;
-        for (let dz = -1; dz <= 1 && ok; dz++) for (let dx = -1; dx <= 1 && ok; dx++) { const n = colAt(c.cx + dx, c.cz + dz); if (!n || n.st < 2) ok = false; }
-        if (!ok) continue;
-        for (let s = 0; s < NSEC; s++) { if (c.s[s]) { meshSection(c, s); setSecMesh(c, s); } }
-        c.meshed = true; c.md.fill(0);
-      }
-      if (W.dirty.size) {
-        const L = [...W.dirty].map(c => [(c.cx - cx0) ** 2 + (c.cz - cz0) ** 2, c]).sort((a, b) => a[0] - b[0]);
-        for (const [, c] of L) {
-          if (performance.now() - t0 > budget + 4) break;
-          if (!W.cols.has(ck(c.cx, c.cz))) { W.dirty.delete(c); continue; }
-          for (let s = 0; s < NSEC; s++) if (c.md[s]) { c.md[s] = 0; meshSection(c, s); setSecMesh(c, s); }
-          W.dirty.delete(c);
+      if (cand.length) {
+        cand.sort((a, b) => a.dq - b.dq);
+        for (const c of cand) {
+          if (performance.now() - t0 > budget) break;
+          if (c.st === 1) { const a = performance.now(); stitchLight(c); const d = performance.now() - a; PF.ln++; PF.lc += d; if (d > PF.lmx) PF.lmx = d; continue; }
+          let ok = true;
+          for (let dz = -1; dz <= 1 && ok; dz++) for (let dx = -1; dx <= 1 && ok; dx++) { const n = colAt(c.cx + dx, c.cz + dz); if (!n || n.st < 2) ok = false; }
+          if (!ok) continue;
+          c.meshed = true; c.md.fill(0);
+          for (let s = 0; s <= c.top; s++) if (c.s[s]) c.md[s] = 1;
+          W.dirty.add(c);
+          if (W.visd < 1) W.visd = 1;
         }
       }
+      updVis();
+      if (W.dirty.size) {
+        const vcx = VIS.cx, vcz = VIS.cz, vsy = VIS.sy;
+        MQ.length = 0;
+        for (const c of W.dirty) {
+          const near = Math.abs(c.cx - vcx) <= 1 && Math.abs(c.cz - vcz) <= 1;
+          let pend = false, any = false;
+          for (let s = 0; s < NSEC; s++) if (c.md[s]) { pend = true; if (c.vs[s] || near && Math.abs(s - vsy) <= 1) { any = true; break; } }
+          if (!pend) { W.dirty.delete(c); continue; }
+          if (any) { c.dq = (c.cx - vcx) ** 2 + (c.cz - vcz) ** 2; MQ.push(c); }
+        }
+        if (MQ.length) {
+          MQ.sort((a, b) => a.dq - b.dq);
+          const lim = budget + (budget < 20 && VIS.burst > 0 ? 3 : 0);
+          let over = false;
+          for (let qi = 0; qi < MQ.length && !over; qi++) {
+            const c = MQ[qi], near = Math.abs(c.cx - vcx) <= 1 && Math.abs(c.cz - vcz) <= 1;
+            for (let k = 0; k < NSEC * 2 && !over; k++) {
+              const s = vsy + ((k & 1) ? -((k + 1) >> 1) : (k >> 1));
+              if (s < 0 || s >= NSEC || !c.md[s] || !(c.vs[s] || near && Math.abs(s - vsy) <= 1)) continue;
+              const a = performance.now();
+              c.md[s] = 0; meshSection(c, s); setSecMesh(c, s);
+              const b = performance.now(), d = b - a; PF.mn++; PF.mc += d; if (d > PF.mmx) PF.mmx = d;
+              if (b - t0 > lim) over = true;
+            }
+          }
+          MQ.length = 0;
+        }
+      }
+      if (VIS.burst > 0) VIS.burst--;
+    }
+    function updVis() {
+      const px = persp ? cam.position.x : P.x, py = persp ? cam.position.y : P.y + P.eye, pz = persp ? cam.position.z : P.z;
+      const bx = Math.floor(px), by = clamp(Math.floor(py), 0, H - 1), bz = Math.floor(pz), cx = bx >> 4, cz = bz >> 4, sy = by >> 4, cell = (bx & 15) | (bz & 15) << 4 | (by & 15) << 8;
+      const c0 = colAt(cx, cz);
+      if (!c0 || !c0.meshed) return;
+      const tn = performance.now();
+      let run = W.visd === 2 || cx !== VIS.cx || cz !== VIS.cz || sy !== VIS.sy || W.visd === 1 && tn - VIS.f >= 80, mask = VIS.mask;
+      if (W.cdq.size) { for (const c of W.cdq) { for (let s = 0; s < NSEC; s++) if (c.cd >> s & 1) c.cn[s] = W.conn.all(c.s[s]); c.cd = 0; } W.cdq.clear(); }
+      if (run || cell !== VIS.cell) { const sec = c0.s[sy]; mask = Math.floor(py) !== by ? 63 : sec && OPQ[sec[cell]] ? 0 : W.conn.from(sec, cell); if (mask !== VIS.mask) run = true; }
+      VIS.cell = cell;
+      if (!run) return;
+      const a = performance.now(), urgent = W.visd === 2 || cx !== VIS.cx || cz !== VIS.cz || sy !== VIS.sy;
+      VIS.cx = cx; VIS.cz = cz; VIS.sy = sy; VIS.mask = mask; VIS.f = tn; W.visd = 0;
+      const pair = W.conn.pair, on = VIS.on && mask !== 0;
+      W.cols.forEach(c => { if (c.meshed) { c.vs.fill(on ? 0 : 64); c.vt = 1; } });
+      if (on) {
+        let qh = 0, qt = 0;
+        VQC[qt] = c0; VQS[qt] = sy; VQF[qt++] = -1; c0.vs[sy] = 64;
+        while (qh < qt) {
+          const c = VQC[qh], s = VQS[qh], ef = VQF[qh++], cn = c.cn[s], ddx = c.cx - cx, ddz = c.cz - cz, ddy = s - sy;
+          for (let f = 0; f < 6; f++) {
+            const D = DIR6[f];
+            if (D[0] * ddx < 0 || D[1] * ddy < 0 || D[2] * ddz < 0) continue;
+            if (ef < 0) { if (!(mask >> f & 1)) continue; } else if (f === ef || !(cn >> pair[ef * 6 + f] & 1)) continue;
+            const ns = s + D[1];
+            if (ns < 0 || ns >= NSEC) continue;
+            const nc = D[1] ? c : colAt(c.cx + D[0], c.cz + D[2]);
+            if (!nc || !nc.meshed) continue;
+            const nf = OPP6[f], bit = 1 << nf;
+            if (nc.vs[ns] & bit) continue;
+            nc.vs[ns] |= bit | 64;
+            VQC[qt] = nc; VQS[qt] = ns; VQF[qt++] = nf;
+          }
+        }
+        for (let i = 0; i < qt; i++) VQC[i] = null;
+      }
+      let n = 0, tot = 0;
+      W.cols.forEach(c => { if (!c.meshed) return; for (let s = 0; s <= c.top; s++) { const r = c.m[s], v = c.vs[s] !== 0; if (c.s[s]) { tot++; if (v) n++; } if (r) { if (r.o) r.o.visible = v; if (r.t) r.t.visible = v; } } });
+      VIS.n = n; VIS.tot = tot;
+      if (urgent) VIS.burst = 3;
+      const d = performance.now() - a; PF.vn++; PF.vc += d; if (d > PF.vmx) PF.vmx = d;
     }
     function nearMeshed(r) {
       const cx0 = Math.floor(P.x) >> 4, cz0 = Math.floor(P.z) >> 4; let n = 0, t = 0;
-      for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) { t++; const c = colAt(cx0 + dx, cz0 + dz); if (c && c.meshed) n++; }
+      for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) { t++; const c = colAt(cx0 + dx, cz0 + dz); if (c && c.meshed && !pendVis(c)) n++; }
       return n / t;
     }
     function placeBonusChest() {
@@ -179,7 +252,7 @@
     }
     function tickEnts() {
       for (const e of ENTS.slice()) {
-        if (e.mirror || e.dead === 2) continue;
+        if (e.mirror || e.gone) continue;
         const k = e.kind;
         if (k === 'mob') tickMob(e); else if (k === 'item') tickItem(e); else if (k === 'xp') tickXp(e); else if (k === 'fall') tickFall(e); else if (k === 'arrow') tickArrow(e); else if (k === 'thrown') tickThrown(e); else if (k === 'tnt') tickTNT(e);
       }
@@ -201,6 +274,7 @@
       advTick();
       goalTick();
       tickInteract();
+      if (guiPos && guiBE && gui !== 'sign' && W.be.get(bk(guiPos[0], guiPos[1], guiPos[2])) !== guiBE) closeGui();
       if (host) { tickEnts(); tickSched(); randomTicks(); tickFurnaces(); if (tickN % 2 === 0) checkPlates(); spawnTick(); if (W.pendSpawn) flushPendSpawn(); if (W.pendEnts && nearMeshed(1) >= 1) spawnSaved(); }
       tickMirrors();
       if (swingT >= 0 && ++swingT >= CFG.SWING_TICKS) swingT = -1;
@@ -228,26 +302,29 @@
       let b = clamp(Math.cos(ang * Math.PI * 2) * 2 + .5, 0, 1);
       const rain = W.raining ? 1 : 0;
       b *= 1 - rain * .3; if (W.thunder) b *= .7;
-      return { ang, b };
+      SKYS.ang = ang; SKYS.b = b;
+      return SKYS;
     }
-    const C1 = new THREE.Color(), C2 = new THREE.Color();
+    const SKYS = { ang: 0, b: 1 };
+    const C1 = new THREE.Color(), C2 = new THREE.Color(), CTOP = new THREE.Color(), CFOG = new THREE.Color(), CGLOW = new THREE.Color(1, .55, .25);
     function render(now, alpha) {
       const st = skyState(); sunB = st.b;
       lightF = alpha;
       U.sky.value = .27 + .73 * st.b; if (flash > 0) U.sky.value = 1;
-      U.frame.value = Math.floor(now / 100) % 16;
+      U.frame.value = VIS.frz ? 0 : Math.floor(now / 100) % 16;
       U.gam.value = SET.gam;
       const B = W.gen.BIO[bio(Math.floor(P.x), Math.floor(P.z))] || {};
       const tmp = clamp((B.t ?? .8) / 3, -1, 1), skyHue = .6222 - tmp * .05, skySat = .5 + tmp * .1;
       C1.setHSL(skyHue, skySat, .5 + .2 * 0).multiplyScalar(1);
-      const top = new THREE.Color().setRGB(.47, .65, 1).lerp(C1.setHSL(skyHue, skySat, .62), .5).multiplyScalar(st.b);
-      const fogc = new THREE.Color(.75, .85, 1).multiplyScalar(st.b * .94 + .06);
-      if (W.raining) { const gy = top.r * .3 + top.g * .59 + top.b * .11; top.lerp(new THREE.Color(gy, gy, gy), .6); const fy = fogc.r * .3 + fogc.g * .59 + fogc.b * .11; fogc.lerp(new THREE.Color(fy, fy, fy), .5); }
+      const top = CTOP.setRGB(.47, .65, 1).lerp(C1.setHSL(skyHue, skySat, .62), .5).multiplyScalar(st.b);
+      const fogc = CFOG.setRGB(.75, .85, 1).multiplyScalar(st.b * .94 + .06);
+      if (W.raining) { const gy = top.r * .3 + top.g * .59 + top.b * .11; top.lerp(C2.setRGB(gy, gy, gy), .6); const fy = fogc.r * .3 + fogc.g * .59 + fogc.b * .11; fogc.lerp(C2.setRGB(fy, fy, fy), .5); }
       const cs = Math.cos(st.ang * Math.PI * 2), glow = cs > -.4 && cs < .4 ? (1 - Math.abs(cs) / .4) : 0;
       const sx = -Math.sin(st.ang * Math.PI * 2);
       skyU.sun.value.set(sx, Math.cos(st.ang * Math.PI * 2), 0); skyU.glowA.value = glow * .9; skyU.rain.value = W.raining ? 1 : 0;
-      fogc.lerp(new THREE.Color(1, .55, .25), glow * .25 * (1 - (W.raining ? 1 : 0)));
-      let fogN = SET.rd * 16 * .7, fogF = SET.rd * 16;
+      fogc.lerp(CGLOW, glow * .25 * (1 - (W.raining ? 1 : 0)));
+      fogRD += (RD - fogRD) * .04;
+      let fogN = fogRD * 16 * .7, fogF = fogRD * 16;
       const ex = lerp(P.px, P.x, alpha), ey = lerp(P.py, P.y, alpha) + lerp(P.eyeP, P.eye, alpha), ez = lerp(P.pz, P.z, alpha);
       const eb = getS(Math.floor(ex), Math.floor(ey), Math.floor(ez));
       P.eyeW = FLU[eb] === 1 && !W.pano; P.eyeL = FLU[eb] === 2 && !W.pano;
@@ -262,7 +339,7 @@
       sky.position.set(ex, ey, ez);
       cloudG.visible = SET.clouds && !P.eyeW;
       cloudG.position.set(Math.round(ex), CFG.CLOUD_Y, Math.round(ez));
-      cloudU.off.value.set((W.time + alpha) * .03 - Math.round(ex) * 0 + 0, 0); cloudU.col.value.setScalar(.25 + st.b * .75); cloudU.far.value = Math.max(120, SET.rd * 24);
+      cloudU.off.value.set((W.time + alpha) * .03 - Math.round(ex) * 0 + 0, 0); cloudU.col.value.setScalar(.25 + st.b * .75); cloudU.far.value = Math.max(120, fogRD * 24);
       clouds.position.set(0, 0, 0);
       let yaw = P.yaw, pitch = P.pitch;
       if (W.pano) { panoA = now * 3e-5; yaw = panoA; pitch = -.12; }
@@ -291,7 +368,7 @@
       } else outline.visible = false;
       if (mine && mine.p > 0 && !gui) { crack.visible = true; crack.position.set(mine.x + .5, mine.y + .5, mine.z + .5); crackTex.offset.x = Math.min(9, Math.floor(mine.p * 10)) / 10; } else crack.visible = false;
       renderer.setRenderTarget(null);
-      renderer.setClearColor(fogc, 1); renderer.clear();
+      renderer.setClearColor(fogc, 1); renderer.clear(); renderer.info.reset();
       renderer.render(scene, cam);
       if (persp === 0 && !hideHud && scr === 'game' && mode() !== 'spectator' && !W.pano) { renderer.clearDepth(); updHand(alpha, ex, ey, ez); renderer.render(hScene, hCam); }
       updParticles(Math.min(.05, 1 / 60));
@@ -368,24 +445,69 @@
       rainP.geometry.attributes.position.needsUpdate = true;
       if (!snow && !dry && tickN % 8 === 0 && RNG() < .3 && SET.sound) snd('rain', P);
     }
-    let lastNow = 0;
+    let lastNow = 0, restT = 4, pauseF = 0, pauseW = 0;
+    function autoRD(now, ft) {
+      const js = AR.jn ? AR.js / AR.jn : 0, gap = AR.gap;
+      AR.js = AR.jn = 0; AR.gap = false;
+      if (scr !== 'game' || !W || W.pano || gui || gap || tickN < 100 || document.hidden) { AR.lo = AR.hi = 0; return; }
+      const rdAuto = !SET.rd;
+      if (ft > 20) {
+        AR.hi = 0;
+        if (++AR.lo < 3) return;
+        AR.lo = 0;
+        if (PRQ > 1.26 || PRQ > PRMIN && (!rdAuto || RD <= AR.min || AR.noDown)) { AR.pcap = PRQ; AR.pcapT = now + 240000; if (!setPR(PRQ - .25)) return; }
+        else if (rdAuto && RD > AR.min && !AR.noDown) {
+          if (!AR.r0) { AR.r0 = RD; AR.f0 = ft; }
+          else if (RD <= AR.r0 - 2) { if (ft > AR.f0 * .87) { RD = AR.r0; AR.noDown = true; SET.rda = RD; persistSet(); return; } AR.r0 = RD; AR.f0 = ft; }
+          RD--; AR.cap = RD + 1; AR.capT = now + 240000; SET.rda = RD;
+        } else return;
+      } else if (ft < 17.5 && js < 7) {
+        AR.lo = 0;
+        if (++AR.hi < 12) return;
+        AR.hi = 0;
+        if (rdAuto && RD < AR.max && !(RD + 1 >= AR.cap && now < AR.capT)) { RD++; SET.rda = RD; }
+        else if (PRQ < PRMAX && !(PRQ + .25 >= AR.pcap && now < AR.pcapT)) { if (!setPR(PRQ + .25)) return; }
+        else return;
+      } else { AR.lo = AR.hi = 0; return; }
+      persistSet();
+    }
+    let simLast = 0, frameWall = 0;
+    function simStep(tw, maxDt, maxTicks) {
+      const dt = simLast ? clamp((tw - simLast) / 1000, 0, maxDt) : 0;
+      simLast = tw; acc += dt;
+      let n = 0;
+      while (acc >= .05 && n < maxTicks) { const t0 = performance.now(); tick(); const td = performance.now() - t0; fT += (td - fT) * .1; PF.tk += td; PF.tn++; if (td > PF.tmx) PF.tmx = td; acc -= .05; n++; }
+      if (n >= maxTicks) acc = 0;
+      return n;
+    }
+    function bgStep() {
+      if (!W || scr !== 'game' || NET.role !== 'host') return;
+      const tw = performance.now();
+      if (tw - frameWall < 300) return;
+      try { simStep(tw, 3, 60); } catch (e) { if (!frameLoop.err) { frameLoop.err = 1; if (window.console) console.error(e); } }
+    }
     function frameLoop(dt0, now) {
       const dt = lastNow ? clamp((now - lastNow) / 1000, 0, .25) : dt0; lastNow = now;
+      const pf0 = performance.now(); let pf1 = pf0, pfS = 0;
       frameN++;
       if (frameN % 15 === 1) resize();
       if (frameN % 20 === 3) updSigns();
-      fpsN++; fpsT += dt; if (fpsT >= 1) { fps = fpsN; fpsN = 0; fpsT = 0; }
+      if (dt > .2) AR.gap = true;
+      fpsN++; fpsT += dt; if (fpsT >= 1) { const ft = fpsT * 1000 / fpsN; fps = fpsN; fpsN = 0; fpsT = 0; autoRD(now, ft); }
+      frameWall = pf0;
       if (!W && (scr === 'title')) startPano();
+      if (W && icI < IT.length) { const a = performance.now(); iconStep(scr === 'game' && !gui ? 2 : 6); const d = performance.now() - a; PF.ic += d; if (d > PF.icx) PF.icx = d; }
       touchTick();
       let alpha = 1;
       if (W) {
         const loading = scr === 'loading' || scr === 'waiting';
-        streamChunks(loading ? 24 : 7);
-        if (W.pano) { if (!panoReady && nearMeshed(2) >= 1) { panoReady = true; const t = topY(Math.floor(P.x), Math.floor(P.z)); let m = t; for (let dz = -6; dz <= 6; dz += 3) for (let dx = -6; dx <= 6; dx += 3) m = Math.max(m, topY(Math.floor(P.x) + dx, Math.floor(P.z) + dz)); P.y = P.py = m + 3 - P.eye; } }
+        streamChunks(loading ? 24 : clamp(9 - restT, 2, 4));
+        pfS = performance.now() - pf0; PF.st += pfS; if (pfS > PF.stx) PF.stx = pfS;
+        if (W.pano) { if (!panoReady && nearMeshed(RD < 3 ? 1 : 2) >= 1) { panoReady = true; const t = topY(Math.floor(P.x), Math.floor(P.z)); let m = t; for (let dz = -6; dz <= 6; dz += 3) for (let dx = -6; dx <= 6; dx += 3) m = Math.max(m, topY(Math.floor(P.x) + dx, Math.floor(P.z) + dz)); P.y = P.py = m + 3 - P.eye; } }
         else if (scr === 'loading') {
           if (NET.role === 'guest' && !NET.ready) loadP = Math.max(loadP, .1);
           else {
-            const p = nearMeshed(2); loadP = .5 + p * .5; loadMsg = W.remote ? 'Loading terrain...' : loadMsg;
+            const p = nearMeshed(RD < 3 ? 1 : 2); loadP = .5 + p * .5; loadMsg = W.remote ? 'Loading terrain...' : loadMsg;
             if (p >= 1 || performance.now() - loadT0 > 20000) {
               scr = 'game'; panoReady = false; P.name = NET.role ? P.name : myName();
               if (NET.pendOpen || NET.role === 'host') { NET.pendOpen = false; hostAfterOpen(); }
@@ -394,21 +516,24 @@
             }
           }
         }
+        if (scr !== 'game') simLast = pf0;
         if (scr === 'game') {
           const paused = !NET.role && (gui === 'pause' || gui === 'options' || gui === 'controls' || gui === 'stats' || gui === 'adv' || gui === 'help');
-          if (!paused) { acc += Math.min(dt, .25); let n = 0; while (acc >= .05 && n < 5) { const t0 = performance.now(); tick(); fT += (performance.now() - t0 - fT) * .1; acc -= .05; n++; } if (n >= 5) acc = 0; }
+          if (!paused) simStep(pf0, .25, 5); else simLast = pf0;
           alpha = paused ? 1 : clamp(acc / .05, 0, 1);
           lightF = alpha;
           if (!gui && !chatOpen) updTarget(); else { HIT.b = false; HIT.ent = null; }
         }
-        const show3d = scr === 'game' || W.pano;
-        if (show3d) render(now, alpha);
+        const show3d = scr === 'game' || W.pano, held3 = scr === 'game' && !NET.role && (gui === 'pause' || gui === 'stats' || gui === 'adv' || gui === 'help' || gui === 'controls') && cssW * 8192 + cssH === pauseW;
+        pauseF = held3 ? pauseF + 1 : 0; pauseW = cssW * 8192 + cssH;
+        if (show3d && (pauseF < 3 || pauseF % 30 === 0)) { const a = performance.now(); render(now, alpha); const d = performance.now() - a; PF.rd += d; if (d > PF.rdx) PF.rdx = d; }
       }
+      pf1 = performance.now();
       g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, hud.width, hud.height);
       g.imageSmoothingEnabled = false;
       g.setTransform(GK, 0, 0, GK, 0, 0);
       btns = []; fields = []; sliders = [];
-      if (!W || !(scr === 'game' || W.pano)) { renderer.setClearColor(0, 1); renderer.clear(); }
+      if (!W || !(scr === 'game' || W.pano)) { if (!frameLoop.blk) { frameLoop.blk = 1; renderer.setRenderTarget(null); renderer.setClearColor(0, 1); renderer.clear(); } } else frameLoop.blk = 0;
       const wb = scr === 'game' ? gui === 'pause' || gui === 'options' || gui === 'controls' || gui === 'plist' || gui === 'stats' || gui === 'adv' || gui === 'help' : scr !== 'title' && !!W && !!W.pano && panoReady;
       if (wb !== blurOn) { blurOn = wb; canvas.style.filter = wb ? 'blur(' + Math.max(3, Math.round(GK * 2.5 / (window.devicePixelRatio || 1))) + 'px)' : ''; }
       if (scr === 'game' && W) {
@@ -422,13 +547,18 @@
       if (focusKey && !fields.some(f => f.key === focusKey) && focusKey !== 'sign') blurField();
       else if (focusKey) { const f = fields.find(q => q.key === focusKey); if (f) { const k = cssW / hud.width * GK; inp.style.left = f.x * k + 'px'; inp.style.top = f.y * k + 'px'; inp.style.width = f.w * k + 'px'; inp.style.height = f.h * k + 'px'; } }
       if (focusKey === 'chat') FIELDV.chat = inp.value;
+      const pf2 = performance.now(); PF.ui += pf2 - pf1; PF.fr += pf2 - pf0; PF.n++; if (pf2 - pf0 > PF.mx) PF.mx = pf2 - pf0;
+      restT += (Math.min(30, pf2 - pf0 - pfS) - restT) * .1; AR.js += pf2 - pf0; AR.jn++;
     }
-    wrap.__mc = () => ({ signs: signG.children.map(m => [+m.position.x.toFixed(3), +(m.position.y - CFG.YOFF).toFixed(3), +m.position.z.toFixed(3), +m.rotation.y.toFixed(2)]), scr, gui, GK, GW, GH, pRect, chatOpen, btns: btns.map(b => [b.l, b.x, b.y, b.w, b.h, b.en]), P: { x: P.x, y: P.y, z: P.z, hp: P.hp, food: P.food, yaw: P.yaw, pitch: P.pitch }, ents: (() => { const o = {}; for (const e of ENTS) { const k = e.kind + ':' + (e.type || (e.st ? IT[e.st.id].id : '')); o[k] = (o[k] || 0) + 1; } return o; })(), keysDown: [...keys], focus: focusKey, mobs: ENTS.filter(e => e.kind === 'mob').map(e => [e.type, +e.x.toFixed(1), +(e.y - CFG.YOFF).toFixed(1), +e.z.toFixed(1), e.root.visible, e.hp, !!e.dead, e.root.parent ? 1 : 0]), fps, cols: W ? W.cols.size : 0, mode: W && W.mode, role: NET.role, time: W && W.time, chat: chatLog.slice(-8).map(c => c.m), hit: HIT.b ? [HIT.x, HIT.y, HIT.z] : null, sel, inv: inv.map(s => s && IT[s.id].id + 'x' + s.n), slots: slots.map(q => { const v = q.get(); return [q.g, q.i, q.x, q.y, v ? IT[v.id].id + 'x' + v.n : null]; }), cursor: cursor && IT[cursor.id].id + 'x' + cursor.n });
+    wrap.__mc = r => ({ pf: (() => { const o = Object.assign({}, PF); if (r) for (const k in PF) PF[k] = 0; return o; })(), fields: fields.map(f => [f.key, f.x, f.y, f.w, f.h]), dirty: W ? W.dirty.size : 0, ic: [icI, IT.length], pr: PRQ, tl: touch ? touchLayout() : null, frame: frameN, tick: tickN, rd: RD, diff: W ? W.diff : -1, st: P.st, setRd: SET.rd, locked: locked(), sleeping: P.sleeping, pend: (() => { let n = 0; if (W) for (const c of W.dirty) for (let s = 0; s < NSEC; s++) if (c.md[s] && c.vs[s]) n++; return n; })(), vis: [VIS.n, VIS.tot], draw: [renderer.info.render.calls, renderer.info.render.triangles, renderer.info.memory.geometries], onGround: P.onGround, fly: P.fly, dead: P.dead, lvl: P.lvl, spawn: P.spawn, heap: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : 0, nEnt: ENTS.length, signs: signG.children.map(m => [+m.position.x.toFixed(3), +(m.position.y - CFG.YOFF).toFixed(3), +m.position.z.toFixed(3), +m.rotation.y.toFixed(2)]), scr, gui, GK, GW, GH, pRect, chatOpen, btns: btns.map(b => [b.l, b.x, b.y, b.w, b.h, b.en]), P: { x: P.x, y: P.y, z: P.z, hp: P.hp, food: P.food, yaw: P.yaw, pitch: P.pitch }, ents: (() => { const o = {}; for (const e of ENTS) { const k = e.kind + ':' + (e.type || (e.st ? IT[e.st.id].id : '')); o[k] = (o[k] || 0) + 1; } return o; })(), keysDown: [...keys], focus: focusKey, mobs: ENTS.filter(e => e.kind === 'mob').map(e => [e.type, +e.x.toFixed(1), +(e.y - CFG.YOFF).toFixed(1), +e.z.toFixed(1), e.root.visible, e.hp, !!e.dead, e.root.parent ? 1 : 0]), fps, cols: W ? W.cols.size : 0, mode: W && W.mode, role: NET.role, time: W && W.time, chat: chatLog.slice(-8).map(c => c.m), hit: HIT.b ? [HIT.x, HIT.y, HIT.z] : null, sel, inv: inv.map(s => s && IT[s.id].id + 'x' + s.n), slots: slots.map(q => { const v = q.get(); return [q.g, q.i, q.x, q.y, v ? IT[v.id].id + 'x' + v.n : null]; }), cursor: cursor && IT[cursor.id].id + 'x' + cursor.n });
+    wrap.__mcDbg = o => { Object.assign(VIS, o); if (W) W.visd = 2; };
+    wrap.__mcBench = all => { const T = []; let q = 0; W.cols.forEach(c => { if (c.meshed) for (let s = 0; s <= c.top; s++) if ((all || c.vs[s]) && c.s[s]) { const a = performance.now(); meshSection(c, s); T.push(performance.now() - a); q += (MO.ni + MESHT.ni) / 6; } }); return [T, q]; };
     resize();
     api.loop((dt, now) => { try { frameLoop(dt, now); } catch (e) { if (!frameLoop.err) { frameLoop.err = 1; if (window.console) console.error(e); } } });
     const sizeObs = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => resize()) : null;
     if (sizeObs) sizeObs.observe(wrap);
-    setTimeout(() => { try { buildIcons(); } catch (e) { if (window.console) console.error(e); } }, 0);
+    api.interval(bgStep, 100);
+    try { if (api.net && api.net.invite) joinParty(); } catch (e) { }
     return () => {
       try { saveNow(); } catch (e) { }
       if (sizeObs) sizeObs.disconnect();

@@ -21,7 +21,7 @@
       if (y < 0 || y >= H) return;
       const k = ck(x >> 4, z >> 4), li = (x & 15) | (z & 15) << 4 | (y & 15) << 8 | (y >> 4) << 12;
       let ed = W.edits.get(k); if (!ed) W.edits.set(k, ed = new Map());
-      ed.set(li, s);
+      ed.set(li, s); ed.b = null;
     }
     function applyChange(x, y, z, s, flags) {
       if (!fin(x) || !fin(y) || !fin(z) || !(s >= 0 && s < NSTATE)) return;
@@ -33,8 +33,8 @@
       if (!d) return false;
       if ([d.x, d.y, d.z].every(fin)) { P.x = d.x; P.y = d.y; P.z = d.z; P.px = P.x; P.py = P.y; P.pz = P.z; P.place = false; }
       for (const k of ['yaw', 'pitch', 'hp', 'food', 'sat', 'xp', 'lvl', 'score', 'air']) if (fin(d[k])) P[k] = d[k];
-      if (d.st && typeof d.st === 'object') P.st = d.st;
-      if (d.adv && typeof d.adv === 'object') P.adv = d.adv;
+      if (d.st && typeof d.st === 'object' && !Array.isArray(d.st)) { const st = {}; for (const k in d.st) if (fin(d.st[k])) st[k] = d.st[k]; P.st = st; }
+      if (d.adv && typeof d.adv === 'object' && !Array.isArray(d.adv)) P.adv = d.adv;
       if (fin(d.goal)) P.goal = d.goal;
       if (Array.isArray(d.inv)) inv = d.inv.slice(0, 36).map(decS).concat(new Array(36).fill(null)).slice(0, 36);
       if (Array.isArray(d.armor)) armor = d.armor.slice(0, 4).map(decS).concat([null, null, null, null]).slice(0, 4);
@@ -42,10 +42,11 @@
       if (Array.isArray(d.ender)) ender = d.ender.slice(0, 27).map(decS).concat(new Array(27).fill(null)).slice(0, 27);
       if (d.mode && GMN[d.mode]) W.mode = d.mode;
       P.spawn = Array.isArray(d.spawn) && d.spawn.every(fin) ? d.spawn : null;
-      P.effects = d.effects && typeof d.effects === 'object' ? d.effects : {};
+      P.effects = {}; if (d.effects && typeof d.effects === 'object' && !Array.isArray(d.effects)) for (const k in d.effects) if (fin(d.effects[k]) || d.effects[k] && typeof d.effects[k] === 'object') P.effects[k] = d.effects[k];
       P.fly = !!d.fly && (W.mode === 'creative' || W.mode === 'spectator');
       if (fin(d.sel)) sel = clamp(d.sel | 0, 0, 8);
-      if (P.hp <= 0) { P.hp = 20; P.food = 20; }
+      if (!(P.hp > 0) || P.hp > 1000) { P.hp = 20; P.food = 20; }
+      P.food = clamp(P.food, 0, 20); P.sat = clamp(P.sat, 0, 20); P.pitch = clamp(P.pitch, -1.5707, 1.5707); P.lvl = clamp(P.lvl | 0, 0, 100000); P.xp = clamp(P.xp, 0, 1e7); P.score = clamp(P.score, 0, 1e9);
       return true;
     }
     function rpFor(pid, name) {
@@ -73,6 +74,7 @@
         const k = a[i], n = a[i + 1]; i += 2;
         const cx = Math.floor(k / 65536) - 32768, cz = (k % 65536) - 32768;
         let ed = W.edits.get(k); if (!ed) W.edits.set(k, ed = new Map());
+        ed.b = null;
         const c = colAt(cx, cz);
         for (let j = 0; j < n && i < a.length; j++, i++) {
           const v = a[i], li = Math.floor(v / 16384), s = v % 16384;
@@ -98,10 +100,11 @@
     }
     function hostSnapshots() {
       for (const [pid, rp] of RP) {
-        if (!NET.synced.has(pid)) continue;
+        if (!NET.synced.has(pid) || tickN % (rp.snI || 2)) continue;
         const L = [];
-        for (const e of ENTS) { if (KC[e.kind] === undefined || e.dead === 2) continue; const d = (e.x - rp.x) ** 2 + (e.z - rp.z) ** 2; if (d < 96 * 96) L.push([d, e]); }
+        for (const e of ENTS) { if (KC[e.kind] === undefined || e.gone) continue; const d = (e.x - rp.x) ** 2 + (e.z - rp.z) ** 2; if (d < 96 * 96) L.push([d, e]); }
         L.sort((a, b) => a[0] - b[0]);
+        rp.snI = L.length > 60 ? 4 : L.length > 30 ? 3 : 2;
         netSendTo(pid, { t: 'es', e: L.slice(0, 90).map(q => entSnap(q[1])), tm: W.time, rn: W.raining ? 1 : 0, th: W.thunder ? 1 : 0, df: W.diff }, true);
       }
     }
@@ -192,7 +195,7 @@
       if (NET.role === 'host') ps.pid = NET.me;
       netSend(ps, true);
       if (NET.role === 'host') {
-        if (tickN % 2 === 0) hostSnapshots();
+        hostSnapshots();
         if (tickN % 10 === 0) beSync();
         const all = [P].concat([...RP.values()].filter(e => !e.pdead && e.mode !== 'spectator'));
         if (all.length > 1 && all.every(p => p === P ? P.sleeping > 0 : p.sleeping)) { if (++NET.sleepT >= 100) { W.time = Math.ceil(W.time / 24000) * 24000; W.raining = W.thunder = false; NET.sleepT = 0; wake(); netSend({ t: 'wake' }); } } else NET.sleepT = 0;
@@ -295,6 +298,13 @@
         try { if (NET.role === 'host') hostData(m, from); else if (NET.role === 'guest') guestData(m, from); } catch (e) { if (window.console) console.warn(e); }
       });
       api.net.on('join', p => { if (NET.role === 'host' && p && p.name) NET.names.set(p.id, p.name); });
+      api.net.on('rejoin', p => {
+        if (NET.role !== 'host' || !p || !W || W.remote || scr !== 'game') return;
+        const e = RP.get(p.id);
+        if (!e) return;
+        NET.beSent.clear();
+        sendInit(p.id, e.name);
+      });
       api.net.on('leave', p => {
         if (!NET.role || !p) return;
         const e = RP.get(p.id);

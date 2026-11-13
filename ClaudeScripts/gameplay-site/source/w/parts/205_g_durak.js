@@ -295,7 +295,7 @@
     Easy: { err: .4, cc: false, multi: 0, cheap: 3, thr: .3, tk: 9, tx: 0, txd: 6, mc: false, think: [900, 1700] },
     Normal: { err: .06, cc: false, multi: .5, cheap: 4, thr: .6, tk: 30, tx: 0, txd: 6, mc: false, think: [750, 1400] },
     Hard: { err: 0, cc: true, multi: .85, cheap: 5, thr: .85, tk: 30, tx: 0, txd: 6, mc: true, chunk: 4, think: [600, 1150] },
-    Expert: { err: 0, cc: true, multi: .85, cheap: 5, thr: .85, tk: 30, tx: 0, txd: 6, mc: true, chunk: 8, think: [700, 1250] }
+    Hardest: { err: 0, cc: true, multi: .85, cheap: 5, thr: .85, tk: 30, tx: 0, txd: 6, mc: true, chunk: 8, think: [700, 1250], top: true }
   };
 
   function aiDefend(V, mem, P, R) {
@@ -509,20 +509,85 @@
     }
     return out;
   }
+  function dkClone(g, R) {
+    const s = g.s, r = g.rules, c = Game({ n: s.n, deck: r.deck, perevod: r.perevod, teams: r.teams, neigh: r.neigh, first5: r.first5, rnd: R });
+    Object.assign(c.s, { hands: s.hands.map(h => h.slice()), deck: s.deck.slice(), trump: s.trump, tcard: s.tcard, table: s.table.map(x => ({ a: x.a, d: x.d, by: x.by })), att: s.att, def: s.def, phase: s.phase, passed: s.passed.slice(), cap: s.cap, defStart: s.defStart, outs: s.outs.slice(), disc: s.disc, tid: s.tid, bouts: s.bouts, durak: -1, loser: -1 });
+    return c;
+  }
+  function dkMoves(g, p) {
+    const s = g.s, T = s.trump, h = s.hands[p].slice().sort((a, b) => wv(a, T) - wv(b, T)), out = [];
+    if (s.phase === 'lead') { for (const id of h) out.push({ t: 'atk', id }); return out; }
+    if (s.phase === 'defend') {
+      const slot = s.table.findIndex(c => c.d < 0);
+      for (const id of h) if (beats(s.table[slot].a, id, T)) out.push({ t: 'def', id, slot });
+      for (const id of h) if (g.canTransfer(p, id)) out.push({ t: 'tr', id });
+      out.push({ t: 'take' });
+      return out;
+    }
+    for (const id of h) if (g.canThrow(p, id)) out.push({ t: 'atk', id });
+    out.push({ t: 'pass' });
+    return out;
+  }
+  const dkKey = s => s.att + ':' + s.def + s.phase[0] + s.cap + ':' + s.defStart + '|' + s.hands.map(h => h.slice().sort((a, b) => a - b).join('.')).join('/') + '|' + s.table.map(c => c.a + '>' + c.d).join(',') + '|' + s.passed.join('');
+  function dkSolve(g, me, st) {
+    const s = g.s;
+    if (s.phase === 'over') return result(g, me);
+    const p = g.need().ps[0];
+    if (p == null) return .5;
+    const key = dkKey(s), hit = st.tt.get(key);
+    if (hit !== undefined) return hit;
+    if (++st.n > st.max) { st.cut = true; return .5; }
+    const mx = g.rules.teams ? p % 2 === me % 2 : p === me;
+    let best = mx ? -1 : 2;
+    for (const m of dkMoves(g, p)) {
+      const c = dkClone(g, Math.random);
+      if (!c.act(p, m)) continue;
+      c.take();
+      const v = dkSolve(c, me, st);
+      if (mx ? v > best : v < best) best = v;
+      if (st.cut || (mx ? best >= 1 : best <= 0)) break;
+    }
+    if (best < 0 || best > 1) best = .5;
+    if (!st.cut) st.tt.set(key, best);
+    return best;
+  }
+  function dkExact(V, mem, R, base) {
+    let alive = 0, cards = V.hand.length + V.table.length * 2;
+    for (let q = 0; q < V.n; q++) if (q !== V.me && V.counts[q] > 0) { alive++; cards += V.counts[q]; }
+    if (V.deck > 0 || alive !== 1 || cards > 15) return null;
+    const g = determinize(V, mem, R);
+    if (!g || g.need().ps[0] !== V.me) return null;
+    const st = { tt: new Map(), n: 0, max: 9000, cut: false }, bk = akey(base);
+    let best = null, bv = -1;
+    for (const m of dkMoves(g, V.me)) {
+      const c = dkClone(g, Math.random);
+      if (!c.act(V.me, m)) continue;
+      c.take();
+      const v = dkSolve(c, V.me, st) + (akey(m) === bk ? .001 : 0);
+      if (st.cut) return null;
+      if (v > bv) { bv = v; best = m; }
+    }
+    return best;
+  }
   function mcSearch(V, mem, P, R) {
     const base = aiAct(V, mem, P, R);
     if (!base || V.phase === 'defend' && V.me !== V.def) return { base, step() {}, best: () => base };
+    if (P.top) {
+      const x = dkExact(V, mem, R, base);
+      if (x) { mem.plan = null; return { base, step() {}, best: () => x }; }
+    }
     const cands = mcCands(V, mem, P, R, base);
     if (cands.length < 2) return { base, step() {}, best: () => base };
     const tot = cands.map(() => 0), cnt = cands.map(() => 0);
-    let i = 0, bad = 0;
+    let i = 0, bad = 0, W = null;
     return {
       base,
-      step(ms) {
+      step(ms, cap) {
         const t0 = performance.now();
-        while (performance.now() - t0 < ms && i < 6000 && bad < 30) {
+        while (performance.now() - t0 < ms && i < (cap || 6000) && bad < 30) {
           const ci = i % cands.length; i++;
-          const g2 = determinize(V, mem, R);
+          if (P.top && !ci) W = determinize(V, mem, R);
+          const g2 = P.top ? W && dkClone(W, R) : determinize(V, mem, R);
           if (!g2) { bad++; continue; }
           if (!g2.act(V.me, cands[ci])) { tot[ci] -= 1; cnt[ci]++; continue; }
           g2.take();
@@ -702,7 +767,7 @@
 
   const ICON_MENU = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>';
   const CPU_NAMES = ['Ivan', 'Katya', 'Boris', 'Natasha', 'Dmitri', 'Olga', 'Sasha', 'Misha', 'Vera'];
-  const DIFF_TXT = { Easy: 'Easy bots play loose: they take often and throw in carelessly.', Normal: 'Normal bots play solid basic strategy and save their trumps.', Hard: 'Hard bots count cards and simulate the rest of the game before every move.', Expert: 'Expert bots search more than twice as deep as Hard. Good luck.' };
+  const DIFF_TXT = { Easy: 'Easy bots play loose: they take often and throw in carelessly.', Normal: 'Normal bots play solid basic strategy and save their trumps.', Hard: 'Hard bots count cards and simulate the rest of the game before every move.', Hardest: 'Hardest bots run twice the simulations of Hard on shared deals and solve the endgame exactly once the deck is gone.' };
   const SC = (s, v) => s * 16 + v;
   const HOWTO = [
     { h: 'Attack', ill: [{ id: -1, x: 28, y: 18 }, { id: SC(2, 13), x: 52, y: 18, r: 90 }, { c: 'Trump ♥', k: 'yellow', x: 20, y: 96 }, { c: '→', k: 'ar', x: 128, y: 44 }, { id: SC(0, 7), x: 176, y: 14, r: -4 }, { c: '⚔ Attack', k: 'red', x: 168, y: 96 }], t: 'Everyone gets 6 cards. The card under the deck sets the <b>trump</b> suit. The attacker leads any card.' },
@@ -744,7 +809,7 @@
     better: 'high',
     format: v => v + (v === 1 ? ' win' : ' wins'),
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="14" width="26" height="38" rx="4" transform="rotate(-14 21 33)"/><rect x="30" y="12" width="26" height="38" rx="4" transform="rotate(12 43 31)"/><path d="M43 26c-3-4-8-1-6 3 1 3 6 6 6 6s5-3 6-6c2-4-3-7-6-3z" fill="currentColor"/></svg>',
-    _t: { Game, aiAct, mcSearch, newMem, track, AIP, filt, canThrowV, canTransferV, beatSlots, mkDeck, determinize, qStep, rollout, CS, CV, beats, maxPl, cardFace, cardBack },
+    _t: { Game, aiAct, mcSearch, dkExact, newMem, track, AIP, filt, canThrowV, canTransferV, beatSlots, mkDeck, determinize, qStep, rollout, CS, CV, beats, maxPl, cardFace, cardBack },
     css: `
 .gm-durak{gap:0}
 .gm-durak [hidden]{display:none!important}
@@ -831,6 +896,7 @@
     mount(root, api) {
       const opt = Object.assign({ mode: 'cpu', bots: 3, diff: 'Normal', deck: 36, variant: 'throw', teams: false, neigh: false, first5: true, timer: 0, felt: 'green', back: 'blue', match: 0, seen: false, stats: { w: 0, g: 0, f: 0 } }, api.load() || {});
       if (opt.mode !== 'cpu' && opt.mode !== 'online') opt.mode = 'cpu';
+      if (opt.diff === 'Expert') opt.diff = 'Hardest';
       if (!AIP[opt.diff]) opt.diff = 'Normal';
       if (!LOW[opt.deck]) opt.deck = 36;
       if (!FELTS[opt.felt]) opt.felt = 'green';
@@ -1441,8 +1507,8 @@
       function setup() {
         const m = opt.mode, mp = maxPl(opt.deck);
         const body = m === 'cpu'
-          ? `<h3>vs Bots</h3><div class="dk-opt"><span>Opponents</span>${seg('bots', [1, 2, 3, 4, 5], null, v => v > mp - 1)}</div><div class="dk-opt"><span>Bot skill</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Expert'])}</div><p class="dk-hint">${DIFF_TXT[opt.diff]}</p><div class="dk-opt"><span>Match<small>Lose by being the durak N times</small></span>${seg('match', [0, 3, 5], ['One game', 'To 3', 'To 5'])}</div>`
-          : `<h3>Online party</h3><div class="dk-opt"><span>Bot skill</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Expert'])}</div><p>Party of 2-${mp} players. Pick the party size and turn on bots for empty seats in the party screen. The host’s rules are used.</p>`;
+          ? `<h3>vs Bots</h3><div class="dk-opt"><span>Opponents</span>${seg('bots', [1, 2, 3, 4, 5], null, v => v > mp - 1)}</div><div class="dk-opt"><span>Bot skill</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Hardest'])}</div><p class="dk-hint">${DIFF_TXT[opt.diff]}</p><div class="dk-opt"><span>Match<small>Lose by being the durak N times</small></span>${seg('match', [0, 3, 5], ['One game', 'To 3', 'To 5'])}</div>`
+          : `<h3>Online party</h3><div class="dk-opt"><span>Bot skill</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Hardest'])}</div><p>Party of 2-${mp} players. Pick the party size and turn on bots for empty seats in the party screen. The host’s rules are used.</p>`;
         showPane('setup', `<div class="dk-box">${body}
 <div class="dk-opt"><span>Variant</span>${seg('variant', ['throw', 'transfer'], ['Throw-in', 'Transfer'])}</div>
 <div class="dk-opt"><span>Deck</span>${seg('deck', [24, 36, 52], ['24', '36', '52'])}</div>

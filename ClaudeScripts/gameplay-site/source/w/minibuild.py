@@ -1,5 +1,5 @@
 import json, os, re, sys
-P = os.environ.get('GP_PARTS', '/tmp/gameplay-build/w/parts')
+P = os.environ.get('GP_PARTS', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'parts'))
 out, want = sys.argv[1], sys.argv[2:]
 names = json.load(open(os.path.join(P, '_order.json')))
 have = os.listdir(P)
@@ -19,6 +19,8 @@ for idx, (k, n) in enumerate(names):
         continue
     skip = False
     b = open(fname(k, n), encoding='utf-8', newline='').read()
+    if k == 'script' and n == 'portal' and os.path.exists(os.path.join(P, '002_legal.js')):
+        b += '\n' + open(os.path.join(P, '002_legal.js'), encoding='utf-8', newline='').read()
     res.append('<script>\n' + b if k == 'script' else b)
 open(out, 'w', encoding='utf-8', newline='').write(''.join(res))
 print('built', out)

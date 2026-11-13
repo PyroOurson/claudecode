@@ -41,22 +41,26 @@ const SBN = (() => {
   const K = 'gameplay:sb';
   const all = (window.__gpSbOnly ? [SUPABASE_URL] : [SUPABASE_URL, SUPABASE_DIRECT].concat(SUPABASE_RELAYS)).filter((x, i, a) => x && a.indexOf(x) === i);
   let best = SUPABASE_URL, wsB = null;
+  let pre = window.__gpReach && typeof window.__gpReach.then === 'function' ? Promise.race([window.__gpReach, new Promise(r => setTimeout(r, 2500))]).then(() => { const u = window.__gpSbUrl; if (typeof u === 'string' && all.indexOf(u) >= 0) best = u; pre = null; }, () => { pre = null; }) : null;
   const bad = {}, wsBad = {}, fresh = (m, b, ms) => (m[b] || 0) > Date.now() - ms;
   const strip = u => { u = String(u).replace(/^ws(s?):/, 'http$1:'); for (const b of all) if (u === b || u.indexOf(b + '/') === 0 || u.indexOf(b + '?') === 0) return u.slice(b.length); return null; };
   const order = () => [best].concat(all.filter(b => b !== best).sort((a, c) => (bad[a] || 0) - (bad[c] || 0)));
-  const good = b => { delete bad[b]; window.__gpSbDown = false; if (best === b) return; best = b; try { sessionStorage.setItem(K, b); } catch (e) {} };
+  const okAt = {}, bodySize = b => b == null ? 0 : typeof b === 'string' ? b.length : typeof b.size === 'number' ? b.size : typeof b.byteLength === 'number' ? b.byteLength : 2e6;
+  const good = b => { delete bad[b]; okAt[b] = Date.now(); window.__gpSbDown = false; if (best === b) return; best = b; try { sessionStorage.setItem(K, b); } catch (e) {} };
   const page = r => /text\/html/i.test(r.headers.get('content-type') || '');
   async function viaFetch(input, init) {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : null;
     const path = url == null ? null : strip(url);
     if (path == null) return fetch(input, init);
+    if (pre) await pre;
     const o = Object.assign({}, init || {}), outer = o.signal;
+    const mth = String(o.method || 'GET').toUpperCase(), safe = mth === 'GET' || mth === 'HEAD' || mth === 'OPTIONS', extra = Math.min(285000, Math.round(bodySize(o.body) / 20));
     let last = null;
     for (const b of order()) {
       if (outer && outer.aborted) throw outer.reason || new DOMException('Aborted', 'AbortError');
       const ctl = new AbortController(), stop = () => ctl.abort(outer.reason);
       if (outer) outer.addEventListener('abort', stop, { once: true });
-      const tm = setTimeout(() => ctl.abort(new DOMException('Timed out', 'TimeoutError')), b === best ? 15000 : 12000);
+      const tm = setTimeout(() => ctl.abort(new DOMException('Timed out', 'TimeoutError')), (b === best ? 15000 : 12000) + extra);
       try {
         const r = await fetch(b + path, Object.assign({}, o, { signal: ctl.signal }));
         if (page(r)) { bad[b] = Date.now(); last = new TypeError('The network answered with a web page'); continue; }
@@ -65,6 +69,7 @@ const SBN = (() => {
       } catch (e) {
         if (outer && outer.aborted) throw e;
         bad[b] = Date.now(); last = e;
+        if (!safe && okAt[b] && e && e.name === 'TimeoutError') throw e;
       } finally { clearTimeout(tm); if (outer) outer.removeEventListener('abort', stop); }
     }
     throw last || new TypeError('Failed to fetch');
@@ -82,6 +87,7 @@ const SBN = (() => {
   } : undefined;
   return { fetch: viaFetch, WS, best: () => best, ws: () => wsB, all: () => all.slice(), url: p => best + p };
 })();
+const NET_ICE_URLS = SUPABASE_RELAYS.map(u => u + '/turn');
 const GOOGLE_CLIENT_ID = '114405851703-b6u2jan6mapjucijipcecr6g8nbgf73s.apps.googleusercontent.com';
 const SUPABASE_ANON_KEY = 'sb_publishable_Lry5e9J350lXelAUPHU1rg_3YYvTuAf';
 const SUPABASE_JS_FILE = 'supabase-js-2.117.2.js';
