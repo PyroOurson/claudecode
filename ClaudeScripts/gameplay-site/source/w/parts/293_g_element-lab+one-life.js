@@ -2044,7 +2044,7 @@ Kite: Paper+Wind, Bird+Paper
   ];
 
   const OL_ILL = [
-    ['cold', ['a cold', 'un rhume'], 0, 200, 0.1, 2, 0, 1, 1, 0],
+    ['cold', ['a cold', 'un rhume'], 0, 200, 0.06, 2, 0, 1, 1, 0],
     ['flu', ['the flu', 'la grippe'], 0, 200, 0.05, 5, 2, 0.85, 0.95, 0],
     ['pox', ['chickenpox', 'la varicelle'], 2, 10, 0.06, 3, 2, 1, 1, 0],
     ['ear', ['an ear infection', 'une otite'], 0, 9, 0.05, 2, 1, 0.7, 0.98, 0],
@@ -2741,6 +2741,95 @@ Kite: Paper+Wind, Bird+Paper
 
   const OL_FEM = { Infirmier: 'Infirmière', Pompier: 'Pompière', Facteur: 'Factrice', Vendeur: 'Vendeuse', Directeur: 'Directrice', Chercheur: 'Chercheuse', Développeur: 'Développeuse', Coiffeur: 'Coiffeuse', Agriculteur: 'Agricultrice', Conducteur: 'Conductrice', Traducteur: 'Traductrice', Mécanicien: 'Mécanicienne', Électricien: 'Électricienne', Technicien: 'Technicienne', Musicien: 'Musicienne', Plongeur: 'Plongeuse', Avocat: 'Avocate', Associé: 'Associée', associé: 'associée', Candidat: 'Candidate', Auteur: 'Autrice', Créateur: 'Créatrice', Entraîneur: 'Entraîneuse', Inspecteur: 'Inspectrice', Rédacteur: 'Rédactrice', Chirurgien: 'Chirurgienne', Professeur: 'Professeure', Banquier: 'Banquière', Commandant: 'Commandante', Préparateur: 'Préparatrice', Ouvrier: 'Ouvrière', Exploitant: 'Exploitante', Brigadier: 'Brigadière', Apprenti: 'Apprentie', 'Aide-soignant': 'Aide-soignante', Téléconseiller: 'Téléconseillère', Superviseur: 'Superviseuse', Gérant: 'Gérante', Promeneur: 'Promeneuse', Livreur: 'Livreuse', 'Chauffeur-livreur': 'Chauffeuse-livreuse', Caissier: 'Caissière', Serveur: 'Serveuse', Figurant: 'Figurante', Comédien: 'Comédienne', Acteur: 'Actrice', Assistant: 'Assistante', assistant: 'assistante', Ingénieur: 'Ingénieure', Analyste: 'Analyste', Agent: 'Agente', Élève: 'Élève', Fonctionnaire: 'Fonctionnaire', 'Haut': 'Haute', junior: 'junior', principal: 'principale', adjoint: 'adjointe', débutant: 'débutante', signé: 'signée', exposé: 'exposée', indépendant: 'indépendante', publié: 'publiée', 'semi-professionnel': 'semi-professionnelle', professionnel: 'professionnelle', mécanicien: 'mécanicienne', électricien: 'électricienne', Maître: 'Maîtresse', Athlète: 'Athlète', Interprète: 'Interprète', Copilote: 'Copilote', Peintre: 'Peintre', Chef: 'Cheffe', Commissaire: 'Commissaire', particulier: 'particulière', financier: 'financière', régional: 'régionale', Second: 'Seconde', coiffeur: 'coiffeuse' };
 
+  OL_EV.push(
+    ['bookclub', 25, 90, 4, null, null, ['Your neighbours have started a book club.', 'Tes voisins ont lancé un club de lecture.'], [
+      [['Join and read every book', 'S’inscrire et tout lire'], [[1, 's+3 h+3 F', ['I joined the neighbourhood book club. We argue about endings every month.', 'J’ai rejoint le club de lecture du quartier. On se dispute sur les fins chaque mois.']]]],
+      [['Join for the snacks', 'S’inscrire pour le goûter'], [[1, 'h+3', ['I joined the book club mostly for the cake. I read the first chapters.', 'J’ai rejoint le club de lecture surtout pour les gâteaux. J’ai lu les premiers chapitres.']]]],
+      [['Not my thing', 'Pas pour moi'], [[1, '', ['I passed on the book club.', 'J’ai décliné le club de lecture.']]]]
+    ]],
+    ['moving', 24, 70, 4, null, s => s.me.mv && !olHouse(s), ['Your landlord is selling the flat and you have to move.', 'Ton propriétaire vend l’appartement et tu dois déménager.'], [
+      [['Find a bigger place', 'Trouver plus grand'], [[1, 'h+3 m-1500', ['I moved into a bigger flat with a balcony.', 'J’ai emménagé dans un appartement plus grand avec un balcon.']]]],
+      [['Find something cheaper', 'Trouver moins cher'], [[1, 'h-1 m+800', ['I moved somewhere smaller and saved money.', 'J’ai déménagé dans plus petit et j’ai économisé.']]]],
+      [['Ask friends to help you move', 'Demander de l’aide à des amis'], [[1, 'h+2 k+1', ['My friends helped me move. We ate pizza on the boxes.', 'Mes amis m’ont aidé{e} à déménager. On a mangé des pizzas assis sur les cartons.']]]]
+    ]],
+    ['garden2', 30, 95, 4, null, s => !!olHouse(s), ['Your garden is a jungle. What will you do with it?', 'Ton jardin est une vraie jungle. Qu’en fais-tu ?'], [
+      [['Grow vegetables', 'Faire un potager'], [[1, 'H+2 h+3 xcoo+2', ['I planted a vegetable patch. The courgettes took over everything.', 'J’ai planté un potager. Les courgettes ont tout envahi.']]]],
+      [['Plant flowers for the bees', 'Planter des fleurs pour les abeilles'], [[1, 'h+4 k+2', ['I planted wild flowers. The garden hums with bees all summer.', 'J’ai planté des fleurs sauvages. Le jardin bourdonne d’abeilles tout l’été.']]]],
+      [['Pay someone to tidy it', 'Payer quelqu’un pour l’entretenir'], [[1, 'm-400 h+1', ['I paid a gardener to tidy up. It looks like a magazine now.', 'J’ai payé un jardinier. On dirait une photo de magazine.']]]]
+    ], { r: 10 }],
+    ['course', 25, 70, 4, null, s => !!s.me.job, ['Your company offers to pay for an evening course.', 'Ton entreprise propose de payer une formation du soir.'], [
+      [['Leadership course', 'Formation au management'], [[1, 'p+6 s+2', ['I took a leadership course. I now say “let’s circle back” a lot.', 'J’ai suivi une formation au management. Je dis maintenant « on se recale » très souvent.']]]],
+      [['Learn a new software', 'Apprendre un nouveau logiciel'], [[1, 'p+5 xcod+4', ['I learned a new software at evening classes and became the office expert.', 'J’ai appris un nouveau logiciel en cours du soir et je suis devenu{e} l’expert{e} du bureau.']]]],
+      [['Too tired, maybe next year', 'Trop fatigué{e}, peut-être l’an prochain'], [[1, 'h+1', ['I was too tired for an evening course this year.', 'J’étais trop fatigué{e} pour une formation du soir cette année.']]]]
+    ], { r: 6 }],
+    ['burnout', 28, 64, 4, null, s => !!s.me.job && s.me.st.h < 55, ['You have been feeling exhausted at work for months.', 'Tu te sens épuisé{e} au travail depuis des mois.'], [
+      [['Take a long holiday', 'Prendre de longues vacances'], [[1, 'h+8 H+3 p-3', ['I took three weeks off and came back feeling human again.', 'J’ai pris trois semaines de congé et je suis revenu{e} en pleine forme.']]]],
+      [['Talk to a counsellor', 'Parler à un psychologue'], [[1, 'h+7 s+1', ['I talked to a counsellor about the stress. It helped more than I expected.', 'J’ai parlé de mon stress à une psychologue. Ça m’a aidé{e} plus que prévu.']]]],
+      [['Push through', 'Tenir bon'], [[1, 'h-4 H-3 p+3', ['I pushed through the exhaustion. My body was not pleased.', 'J’ai tenu bon malgré l’épuisement. Mon corps n’a pas apprécié.']]]]
+    ], { r: 8 }],
+    ['newboss', 22, 65, 4, null, s => s.me.job && s.me.job.t === 'f', ['A new manager joins your team and wants to change everything.', 'Un nouveau responsable arrive dans ton équipe et veut tout changer.'], [
+      [['Give the new ideas a chance', 'Laisser une chance aux nouvelles idées'], [[2, 'p+4 h+1', ['I gave the new manager’s ideas a chance. Some of them were great.', 'J’ai laissé une chance aux idées du nouveau responsable. Certaines étaient excellentes.']], [1, 'p+1 h-2', ['I tried the new manager’s ideas. Most of them were not great.', 'J’ai essayé les idées du nouveau responsable. La plupart n’étaient pas terribles.']]]],
+      [['Explain how things work here', 'Expliquer comment ça marche ici'], [[1, 'p+3 s+1', ['I showed the new manager how the team works. We get along well.', 'J’ai montré au nouveau responsable comment l’équipe fonctionne. On s’entend bien.']]]],
+      [['Complain to your colleagues', 'Se plaindre aux collègues'], [[1, 'p-4 h+1', ['I complained about the new manager at lunch. Word got back to them.', 'Je me suis plaint{e} du nouveau responsable au déjeuner. Ça lui est revenu aux oreilles.']]]]
+    ], { r: 8 }],
+    ['volunteerabroad', 20, 70, 3, null, s => s.me.m > 1500, ['A charity is looking for volunteers to build a school abroad.', 'Une association cherche des bénévoles pour construire une école à l’étranger.'], [
+      [['Volunteer for a month', 'Partir un mois'], [[1, 'k+8 h+7 xlan+4 m-1200', ['I spent a month helping build a school. The children taught me their games.', 'J’ai passé un mois à aider à construire une école. Les enfants m’ont appris leurs jeux.']]]],
+      [['Donate instead', 'Faire un don à la place'], [[1, 'k+3 m-300', ['I donated to the school-building project.', 'J’ai fait un don pour le projet d’école.']]]],
+      [['Not this year', 'Pas cette année'], [[1, '', ['I did not volunteer abroad this year.', 'Je ne suis pas parti{e} faire du bénévolat cette année.']]]]
+    ]],
+    ['grandparenting', 55, 95, 5, 'kidadult', s => s.pp.some(p => p.al && p.r === 'gkid' && p.age < 10), ['{p} asks if you can look after the grandchildren this summer.', '{p} te demande de garder les petits-enfants cet été.'], [
+      [['Of course!', 'Bien sûr !'], [[1, 'b+6 h+5 H-1', ['I looked after the grandchildren all summer. Exhausting and wonderful.', 'J’ai gardé les petits-enfants tout l’été. Épuisant et merveilleux.']]]],
+      [['Just for a week', 'Juste une semaine'], [[1, 'b+3 h+3', ['I looked after the grandchildren for a week. We went to the beach every day.', 'J’ai gardé les petits-enfants une semaine. On est allés à la plage tous les jours.']]]],
+      [['I have plans', 'J’ai d’autres projets'], [[1, 'b-4', ['I told {p} I already had plans for the summer.', 'J’ai dit à {p} que j’avais déjà des projets pour l’été.']]]]
+    ], { r: 3 }],
+    ['senior-class', 62, 100, 4, null, null, ['The community centre offers classes for seniors.', 'Le centre social propose des cours pour les seniors.'], [
+      [['Salsa dancing', 'Salsa'], [[1, 'h+5 H+2 a+2', ['I took salsa classes. I am the fastest spinner in the group.', 'J’ai pris des cours de salsa. Personne ne tourne plus vite que moi dans le groupe.']]]],
+      [['Computer skills', 'Informatique'], [[1, 's+3 xcod+3 h+2', ['I took a computer class and now help my friends with their phones.', 'J’ai suivi un cours d’informatique et j’aide maintenant mes amis avec leur téléphone.']]]],
+      [['Watercolour painting', 'Aquarelle'], [[1, 'xart+5 h+4', ['I took watercolour classes. My sunsets are getting quite good.', 'J’ai pris des cours d’aquarelle. Mes couchers de soleil sont plutôt réussis.']]]]
+    ], { r: 6 }],
+    ['old-photos', 55, 100, 4, null, null, ['You find a box of old photos in the attic.', 'Tu trouves une boîte de vieilles photos au grenier.'], [
+      [['Make an album for the family', 'Faire un album pour la famille'], [[1, 'B+4 h+4', ['I made an album of old family photos and sent copies to everyone.', 'J’ai fait un album de vieilles photos de famille et j’en ai envoyé une copie à tout le monde.']]]],
+      [['Spend the evening remembering', 'Passer la soirée à se souvenir'], [[1, 'h+3', ['I spent the evening looking at old photos and laughing at my haircuts.', 'J’ai passé la soirée à regarder de vieilles photos en riant de mes coupes de cheveux.']]]],
+      [['Put the box back', 'Remettre la boîte en place'], [[1, '', ['I put the box of photos back in the attic for another day.', 'J’ai remis la boîte de photos au grenier pour un autre jour.']]]]
+    ], { r: 12 }],
+    ['scooter', 70, 105, 3, null, null, ['Your family suggests you get a mobility scooter.', 'Ta famille te conseille d’acheter un scooter pour seniors.'], [
+      [['Get a red one', 'En prendre un rouge'], [[1, 'h+4 m-1200', ['I got a red mobility scooter. I am the terror of the pavement.', 'J’ai acheté un scooter rouge. Je suis la terreur du trottoir.']]]],
+      [['Keep walking, thanks', 'Continuer à marcher, merci'], [[1, 'H+2 h+1', ['I decided to keep walking everywhere. My legs still work.', 'J’ai décidé de continuer à tout faire à pied. Mes jambes marchent encore.']]]]
+    ]],
+    ['reunion-sib', 40, 95, 4, 'sib', null, ['{Yrel} {p} suggests a trip together, just the two of you.', '{Yrel} {p} te propose un voyage rien que tous les deux.'], [
+      [['Go to the seaside', 'Aller à la mer'], [[1, 'b+9 h+5 m-500', ['{Myrel} {p} and I spent a week at the seaside, like when we were kids.', '{Myrel} {p} et moi avons passé une semaine à la mer, comme quand on était petits.']]]],
+      [['Visit the town where you grew up', 'Retourner dans la ville de votre enfance'], [[1, 'b+8 h+4', ['{Myrel} {p} and I visited our old school. It looked so small.', '{Myrel} {p} et moi avons revu notre ancienne école. Elle avait l’air si petite.']]]],
+      [['Too busy', 'Trop occupé{e}'], [[1, 'b-5', ['I told {myrel} {p} I was too busy for a trip.', 'J’ai dit à {myrel} {p} que j’étais trop occupé{e} pour partir.']]]]
+    ], { r: 8 }]
+  );
+  OL_PE.push(
+    [25, 70, 2, null, 'h+2', ['I finally got around to fixing the wobbly table.', 'J’ai enfin réparé la table bancale.']],
+    [25, 80, 2, null, 'h+2', ['I became a regular at the bakery around the corner.', 'À la boulangerie du coin, on me connaît maintenant par mon prénom.']],
+    [25, 80, 2, null, 'h-2', ['My phone fell in a puddle. It never recovered.', 'Mon téléphone est tombé dans une flaque. Il ne s’en est jamais remis.']],
+    [25, 70, 2, null, 's+1', ['I learned to make a spreadsheet that does my budget for me.', 'J’ai créé un tableur qui fait mon budget à ma place.']],
+    [28, 80, 2, null, 'h+2', ['I started a tradition of pancakes every Sunday.', 'J’ai lancé une tradition de crêpes tous les dimanches.']],
+    [30, 75, 2, null, 'H+1 h+1', ['I started cycling to work.', 'J’ai commencé à aller au travail à vélo.']],
+    [30, 80, 2, null, 'h-1', ['I spent a whole weekend fixing the internet connection.', 'J’ai passé tout un week-end à réparer ma connexion internet.']],
+    [30, 90, 2, null, 'h+3', ['An old friend sent me a letter out of nowhere. It made my week.', 'Un vieil ami m’a envoyé une lettre sans prévenir. Ça a illuminé ma semaine.']],
+    [32, 85, 2, null, 'h+2', ['I won a pie-baking contest at the village fair.', 'J’ai gagné le concours de tartes de la fête du village.']],
+    [35, 80, 2, null, 'h-2', ['I realised I sound exactly like my parents.', 'Je me suis rendu compte que je parle exactement comme mes parents.']],
+    [35, 90, 2, null, 'h+2', ['I finally visited the museum in my own city.', 'J’ai enfin visité le musée de ma propre ville.']],
+    [40, 90, 2, null, 'h+2', ['I took a long walk by the sea and decided life is good.', 'J’ai fait une longue promenade au bord de la mer et j’ai décidé que la vie était belle.']],
+    [40, 90, 2, null, 'H-1', ['I pulled a muscle getting out of bed.', 'Je me suis froissé un muscle en sortant du lit.']],
+    [45, 95, 2, null, 'h+2', ['I learned the names of all the birds in my garden.', 'J’ai appris le nom de tous les oiseaux de mon jardin.']],
+    [50, 95, 2, null, 'h+1', ['I bought a pair of very comfortable shoes and never looked back.', 'J’ai acheté une paire de chaussures très confortables et je ne l’ai jamais regretté.']],
+    [55, 100, 2, null, 'h+2', ['I started writing letters to my younger relatives.', 'J’ai commencé à écrire des lettres aux plus jeunes de la famille.']],
+    [60, 100, 2, null, 'h+3', ['I celebrated my birthday with a big family lunch.', 'J’ai fêté mon anniversaire avec un grand déjeuner de famille.']],
+    [62, 100, 2, null, 's+1', ['I joined a quiz team at the local café. We came second.', 'J’ai rejoint une équipe de quiz au café du coin. On est arrivés deuxièmes.']],
+    [65, 105, 2, null, 'h+2', ['I taught a neighbour’s child to play chess.', 'J’ai appris les échecs à l’enfant d’un voisin.']],
+    [68, 110, 2, null, 'H-1', ['I needed a walking stick for the first time.', 'J’ai eu besoin d’une canne pour la première fois.']],
+    [70, 110, 2, null, 'h+2', ['I watched my favourite old films again. They are still brilliant.', 'J’ai revu mes vieux films préférés. Ils sont toujours géniaux.']],
+    [72, 110, 2, null, 'h+1', ['I started feeding the pigeons in the park every morning.', 'J’ai commencé à nourrir les pigeons du parc chaque matin.']],
+    [75, 115, 2, null, 'h+2', ['The whole family came over for my birthday. The house was full of noise.', 'Toute la famille est venue pour mon anniversaire. La maison était pleine de bruit.']],
+    [80, 120, 2, null, 'h+1', ['I told my grandchildren what the world was like before smartphones.', 'J’ai raconté à mes petits-enfants à quoi ressemblait le monde avant les smartphones.']]
+  );
+  const OL_JPG = [['My team finished a big project on time.', 'Mon équipe a fini un gros projet à temps.'], ['A colleague brought cake for my birthday.', 'Un collègue a apporté un gâteau pour mon anniversaire.'], ['I was named employee of the month.', 'J’ai été nommé{e} employé{e} du mois.'], ['I trained a new colleague who is now a friend.', 'J’ai formé un nouveau collègue qui est devenu un ami.'], ['The office coffee machine broke and morale fell.', 'La machine à café du bureau est tombée en panne et le moral avec.'], ['I solved a problem that had stumped my boss.', 'J’ai résolu un problème qui bloquait ma patronne.']];
+
   const OL_V = 1;
   const OL_SK = ['mus', 'art', 'cod', 'act', 'lan', 'coo', 'wri'];
   const OL_SKN = { mus: 'Music', art: 'Art', cod: 'Coding', act: 'Acting', lan: 'Languages', coo: 'Cooking', wri: 'Writing' };
@@ -2902,7 +2991,8 @@ Kite: Paper+Wind, Bird+Paper
     olSay(s, [`I was born a ${g === 'f' ? 'girl' : 'boy'} in ${ci[0]}, ${ci[2]}.`, `Je suis ${g === 'f' ? 'une fille, née' : 'un garçon, né'} à ${ci[1]}, ${ci[3]}.`], 'm');
     olSay(s, [`My mother is ${mom.n} ${ln}, ${olArt(mom.job[0])}. My father is ${dad.n} ${ln}, ${olArt(dad.job[0])}.`, `Ma mère s’appelle ${mom.n} ${ln}, elle est ${olLow(mom.job[1])}. Mon père s’appelle ${dad.n} ${ln}, il est ${olLow(dad.job[1])}.`]);
     const sibs = olAlive(s, 'sib');
-    if (sibs.length) olSay(s, [`I have ${sibs.length === 1 ? 'one older sibling' : sibs.length + ' older siblings'}: ${sibs.map(x => x.n).join(' and ')}.`, `J’ai ${sibs.length === 1 ? 'un aîné' : sibs.length + ' aînés'} : ${sibs.map(x => x.n).join(' et ')}.`]);
+    if (sibs.length === 1) { const b = sibs[0], f = b.g === 'f'; olSay(s, [`I have an older ${f ? 'sister' : 'brother'}, ${b.n}.`, `J’ai ${f ? 'une grande sœur' : 'un grand frère'}, ${b.n}.`]); }
+    else if (sibs.length) olSay(s, [`I have ${sibs.length} older siblings: ${sibs.map(x => x.n).join(' and ')}.`, `J’ai ${sibs.length} aînés : ${sibs.map(x => x.n).join(' et ')}.`]);
     return s;
   }
 
@@ -3076,7 +3166,7 @@ Kite: Paper+Wind, Bird+Paper
     olSay(s, txt, '');
     const idx = before;
     olApply(s, o[1], c, out);
-    const good = (out.h || 0) + (out.H || 0) + (out.s || 0) + (out.l || 0) + (out.k || 0) / 2 + Math.sign(out.m || 0) * 3;
+    const good = (out.h || 0) + (out.H || 0) + (out.s || 0) + (out.l || 0) + (out.k || 0) / 2 + Math.sign(out.m || 0);
     const b = s.log[s.log.length - 1];
     if (b.l[idx]) b.l[idx][2] = good > 1 ? 'g' : good < -1 ? 'b' : '';
     return { txt, out, good };
@@ -3334,7 +3424,11 @@ Kite: Paper+Wind, Bird+Paper
       if (olR() < ch && !(j.id === 'lawyer' && j.lvl === 2 && me.age < 45)) olPromote(s);
     }
     if (j.perf < 18 && olR() < 0.55) { olQuitJob(s, 'fired'); olGain(s, 'h', -8); return; }
-    if (olR() < 0.14 && OL_JP[j.id]) { olSay(s, olFP(olP(OL_JP[j.id]), olNoC, s), 'g'); olGain(s, 'h', 3); j.perf = olC(j.perf + 3); }
+    if (olR() < 0.16) {
+      const key = x => 'j:' + x[0].slice(0, 28);
+      const pool = (OL_JP[j.id] || []).concat(OL_JPG).filter(x => me.ev[key(x)] === undefined || me.age - me.ev[key(x)] > 9);
+      if (pool.length) { const x = olP(pool); me.ev[key(x)] = me.age; const bad = x === OL_JPG[4]; olSay(s, olFP(x, olNoC, s), bad ? 'b' : 'g'); olGain(s, 'h', bad ? -1 : 3); if (!bad) j.perf = olC(j.perf + 3); }
+    }
   }
   function olTax(v) { let t = 0; if (v > 11000) t += (Math.min(v, 50000) - 11000) * 0.22; if (v > 50000) t += (Math.min(v, 150000) - 50000) * 0.35; if (v > 150000) t += (v - 150000) * 0.45; return t; }
   function olMoneyYear(s) {
@@ -3400,7 +3494,7 @@ Kite: Paper+Wind, Bird+Paper
       if (olR() < d[4] * (1.7 - me.st.H / 100)) {
         olAddIll(s, d[0]); nw++;
         if (d[0] === 'pox') me.fl.pox = 1;
-        olSay(s, [`I came down with ${d[1][0]}.`, `J’ai attrapé ${d[1][1]}.`].map((x, i) => (d[9] && i === 0 ? `I was diagnosed with ${d[1][0]}.` : d[9] && i === 1 ? `On m’a diagnostiqué ${d[1][1]}.` : x)), 'b');
+        olSay(s, [`I got ${d[1][0]}.`, `J’ai eu ${d[1][1]}.`].map((x, i) => (d[9] && i === 0 ? `I was diagnosed with ${d[1][0]}.` : d[9] && i === 1 ? `On m’a diagnostiqué ${d[1][1]}.` : x)), 'b');
       }
     }
     if (me.age >= 72 && olR() < 0.03 && !me.ill.some(x => x[0] === 'hip')) { olAddIll(s, 'hip'); olSay(s, ['I slipped on the stairs and broke my hip.', 'J’ai glissé dans l’escalier et je me suis cassé la hanche.'], 'b'); }
