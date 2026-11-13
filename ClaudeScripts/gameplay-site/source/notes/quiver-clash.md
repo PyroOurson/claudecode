@@ -17,5 +17,6 @@ Study of the best-known ragdoll archery duel (Ericetto's two-archer game; portal
 
 ## Our design
 - Kept from the previous version and audited: original arenas, archers, arrow types (fire, ice, bomb, triple, storm), upgrades, online 1v1 through the party system.
-- `Hardest`: aims like a strong player (solves the arc, leads a moving target, adjusts after each miss), reacts after 150 to 250 ms, same draw speed, stamina and arrows as the player, sees only what the player sees.
+- `Hardest`: aims like a strong player with the trajectory preview on (solves the arc from the real bow hand, corrects after each miss, ignores shots blocked by terrain), takes 0.4 to 0.8 s to draw, waits for its reload, and has the same stamina and arrows as the player; it reads only positions both players can see.
+- Phones held upright get a tall view at full height: the camera stays on your archer while you aim, follows arrows in flight, and an arrow at the screen edge points to the opponent, like the portrait archery duels on phones.
 - Common beginner mistakes: shooting at full power every time (stamina runs out), aiming at the body instead of the head, standing still under fire.

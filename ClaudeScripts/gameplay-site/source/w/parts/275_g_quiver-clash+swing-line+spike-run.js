@@ -1161,10 +1161,10 @@ ${q} .gx-pb.gold{background:#c78a07}
         const k = p.life / p.max;
         ctx.globalAlpha = Math.min(1, k * 1.6);
         ctx.fillStyle = p.col;
-        if (p.kind === 'flame') { ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (.4 + k), 0, TAU); ctx.fill(); }
+        if (p.kind === 'flame') { const z = p.size * (.4 + k); ctx.fillRect(p.x - z, p.y - z, z * 2, z * 2); }
         else if (p.kind === 'smoke') { ctx.globalAlpha = k * .35; ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (2 - k), 0, TAU); ctx.fill(); }
         else if (p.kind === 'ice') { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot + p.life * 3); ctx.fillRect(-p.size, -p.size * .4, p.size * 2, p.size * .8); ctx.restore(); }
-        else { ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(.5, p.size * k), 0, TAU); ctx.fill(); }
+        else { const z = Math.max(.5, p.size * k); ctx.fillRect(p.x - z, p.y - z, z * 2, z * 2); }
       }
       ctx.globalAlpha = 1;
       V.parts = V.parts.filter(p => p.life > 0);
@@ -1218,10 +1218,45 @@ ${q} .gx-pb.gold{background:#c78a07}
       return clamp((a.st - 8 - xc) / 26, 0, p);
     }
 
-    function drawHud(ctx, S, V, sh) {
-      const RW = sh.port ? sh.port.cw : 960;
+    function drawHud(ctx0, S, V, sh) {
+      const RW = sh.port ? sh.port.cw : 960, RH0 = sh.port ? sh.port.ch : RH;
       const me = S.ar[sh.me] || S.ar[0];
-      const pad = 14;
+      const pad = 14, duel0 = S.mode === 'duel';
+      let hk = S.mode + '|' + sh.me + '|' + S.wave + '|' + S.rnd + '|' + S.score[0] + '|' + S.score[1] + '|' + (S.meta ? S.meta.coins : 0) + '|' + TXD + '|' + RW;
+      for (const q of S.ar) hk += '|' + q.name + ':' + Math.ceil(q.hp) + ':' + q.mhp + ':' + (q.alive ? 1 : 0);
+      const d = TXD;
+      if (!V.hudC || V.hudK !== hk) {
+        if (!V.hudC) V.hudC = document.createElement('canvas');
+        const hc = V.hudC, hh = 80;
+        if (hc.width !== Math.ceil(RW * d) || hc.height !== Math.ceil(hh * d)) { hc.width = Math.ceil(RW * d); hc.height = Math.ceil(hh * d); }
+        const x = hc.getContext('2d');
+        x.setTransform(d, 0, 0, d, 0, 0); x.clearRect(0, 0, RW, hh);
+        V.hudK = hk;
+        hudStatic(x, S, V, sh, RW, me, pad);
+      }
+      ctx0.drawImage(V.hudC, 0, 0, RW, 80);
+      const ctx = ctx0;
+      const meRight0 = duel0 && sh.me === 1, sx0 = meRight0 ? RW - pad - 150 : pad;
+      ctx.fillStyle = 'rgba(8,12,28,.62)'; rrect(ctx, sx0 - 3, 43, 156, 14, 7); ctx.fill();
+      ctx.fillStyle = '#2b3350'; rrect(ctx, sx0, 46, 150, 8, 4); ctx.fill();
+      const sf = clamp(me.st / me.mst, 0, 1);
+      if (sf > .001) { ctx.fillStyle = '#f2b72e'; rrect(ctx, sx0, 46, Math.max(8, 150 * sf), 8, 4); ctx.fill(); }
+      const inp = sh.inp;
+      if (inp.aiming && me.alive) {
+        const cost = (8 + 26 * inp.p + (TXC[inp.ty] || 0)) / me.mst;
+        ctx.fillStyle = me.st >= cost * me.mst ? 'rgba(255,255,255,.55)' : 'rgba(255,70,60,.8)';
+        ctx.fillRect(sx0 + 150 * clamp(me.st / me.mst - 0, 0, 1) - 1, 43, 2, 14);
+        ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(sx0 + 150 * clamp(cost, 0, 1) - 1, 43, 2, 14);
+      }
+      if (V.bannerT > 0) {
+        const k = V.bannerT;
+        ctx.globalAlpha = Math.min(1, k * 2);
+        txtC(ctx, V.banner, RW / 2, 150, 54, '#fff', 'center', 900, 'rgba(0,0,0,.7)', TXD, 1 + (1 - k) * 12 / 54);
+        if (V.sub) txtC(ctx, V.sub, RW / 2, 196, 18, '#fff', 'center', 800, 'rgba(0,0,0,.6)', TXD);
+        ctx.globalAlpha = 1;
+      }
+    }
+    function hudStatic(ctx, S, V, sh, RW, me, pad) {
       const bar = (x, y, w, h, fr, c1, c2, label) => {
         ctx.fillStyle = 'rgba(8,12,28,.62)'; rrect(ctx, x - 3, y - 3, w + 6, h + 6, h / 2 + 3); ctx.fill();
         ctx.fillStyle = c2; rrect(ctx, x, y, w, h, h / 2); ctx.fill();
@@ -1234,14 +1269,6 @@ ${q} .gx-pb.gold{background:#c78a07}
       const mx = meRight ? RW - pad - 150 : pad;
       txtC(ctx, T(L.name), pad, 14, 13, duel && L === me ? '#ffe28a' : '#fff', 'left', 900, 'rgba(0,0,0,.6)', TXD);
       bar(pad, 24, 190, 14, clamp(L.hp / L.mhp, 0, 1), ['#58e07a', '#2aa84d'], '#2b3350', Math.ceil(L.hp) + '/' + L.mhp);
-      if (!meRight) bar(pad, 46, 150, 8, me.st / me.mst, ['#ffd447', '#e8a21a'], '#2b3350');
-      const inp = sh.inp;
-      if (inp.aiming && me.alive) {
-        const cost = (8 + 26 * inp.p + (TXC[inp.ty] || 0)) / me.mst;
-        ctx.fillStyle = me.st >= cost * me.mst ? 'rgba(255,255,255,.55)' : 'rgba(255,70,60,.8)';
-        ctx.fillRect(mx + 150 * clamp(me.st / me.mst - 0, 0, 1) - 1, 43, 2, 14);
-        ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(mx + 150 * clamp(cost, 0, 1) - 1, 43, 2, 14);
-      }
       const en = duel ? [S.ar[1]] : S.ar.filter(q => q !== me && q.team !== me.team);
       en.slice(0, 3).forEach((q, i) => {
         const x = RW - pad - 190, y = 24 + i * 24;
@@ -1249,7 +1276,6 @@ ${q} .gx-pb.gold{background:#c78a07}
         bar(x, y, 190, i ? 10 : 14, clamp(q.hp / q.mhp, 0, 1), ['#ff7a6a', '#d9392b'], '#2b3350', i ? null : Math.ceil(q.hp) + '/' + q.mhp);
         if (i && q.alive === false) { ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x, y, 190, 10); }
       });
-      if (meRight) bar(RW - pad - 150, 46, 150, 8, me.st / me.mst, ['#ffd447', '#e8a21a'], '#2b3350');
       if (S.mode === 'waves') {
         txtC(ctx, T('WAVE {n}', { n: S.wave }), RW / 2, 16, 20, '#fff', 'center', 900, 'rgba(0,0,0,.65)', TXD);
         ctx.fillStyle = '#ffd447'; ctx.beginPath(); ctx.arc(RW / 2 - 28, 40, 7, 0, TAU); ctx.fill(); ctx.strokeStyle = '#b8860b'; ctx.lineWidth = 2; ctx.stroke();
@@ -1257,13 +1283,6 @@ ${q} .gx-pb.gold{background:#c78a07}
       } else {
         txtC(ctx, S.score[0] + '  -  ' + S.score[1], RW / 2, 18, 26, '#fff', 'center', 900, 'rgba(0,0,0,.65)', TXD);
         txtC(ctx, T('ROUND {n}', { n: S.rnd }) + (S.cfg.need ? '  ·  ' + T('first to {n}', { n: S.cfg.need }) : ''), RW / 2, 40, 11, 'rgba(255,255,255,.85)', 'center', 800, 'rgba(0,0,0,.5)', TXD);
-      }
-      if (V.bannerT > 0) {
-        const k = V.bannerT;
-        ctx.globalAlpha = Math.min(1, k * 2);
-        txtC(ctx, V.banner, RW / 2, 150, 54, '#fff', 'center', 900, 'rgba(0,0,0,.7)', TXD, 1 + (1 - k) * 12 / 54);
-        if (V.sub) txtC(ctx, V.sub, RW / 2, 196, 18, '#fff', 'center', 800, 'rgba(0,0,0,.6)', TXD);
-        ctx.globalAlpha = 1;
       }
     }
     function drawAimUi(ctx, S, V, sh, part) {
