@@ -154,6 +154,9 @@ const hide = p => p.evaluate(() => { Object.defineProperty(document, 'visibility
     const ibid = ib && typeof ib === 'object' ? ib.id : ib;
     if (ibid) await api.rpc('admin_ip_unban', { p_id: ibid }, dan.token).catch(e => log.push('ip unban ' + e.message));
     log.push('C: social, support, limits and bans through the API');
+    await A.close().catch(() => {});
+    await B.close().catch(() => {});
+    await sleep(4000);
 
     const day = sql(`select (now() at time zone 'Europe/Paris')::date`);
     const D = await rpcR('admin_measures', { p_from: day, p_to: day, p_acct: 'all', p_fresh: true }, dan.token);
