@@ -656,6 +656,7 @@
     F.pendant(pc(1, 11.0, 10.5, 0), 2.32, 0.9, '#5a3a2a'); F.sconce(pc(1, 12.4, 13.93, 2), 1.85, 0.45);
     F.rug(pc(1, 11.0, 10.3, 0), 1.1, 5.0, 'rugB');
     F.portrait(pc(1, 12.93, 10.6, 3), 1.6, 3);
+    F.sconce(pc(1, 13.93, 10.6, 3), 2.55, 0.6);
     F.bed(pc(2, 7.12, 4.5, 1), 0.95, WD, '#4a5a7a', 'myBed');
     F.wardrobe(pc(2, 10.63, 2.5, 3), 1.1, DW, 'myWard');
     F.desk(pc(2, 9.6, 0.4, 0), 1.0); F.chair(pc(2, 9.6, 1.05, 2)); pc(2, 9.75, 0.4, 0).spot('rDesk', 0, 0.76, 0);
@@ -696,6 +697,7 @@
     F.crate(pc(0, 12.4, 13.4, 0), 0.6); F.crate(pc(0, 7.5, 13.4, 0), 0.6); F.crate(pc(0, 6.5, 13.45, 0), 0.6); F.barrel(pc(0, 10.2, 13.5, 0)); F.barrel(pc(0, 9.5, 13.55, 0), '#4a3a2a');
     { const p = pc(0, 9.5, 8.8, 0); p.box(0, 1.4, 0, 0.3, 2.8, 0.3, 'p', '#5a5650'); p.col(0, 0, 0.3, 0.3); }
     pc(0, 12.2, 7.8, 0).spot('cFloor', 0, 0, 0);
+    F.sconce(pc(0, 6.93, 11.0, 3), 2.35, 0.55);
     F.bulb(pc(0, 9.5, 3.5, 0), 2.36, 0.65); F.bulb(pc(0, 9.5, 10.8, 0), 2.36, 0.5);
     F.boiler(pc(0, 18.6, 1.3, 0)); { const p = pc(0, 16.0, 0.8, 0); p.sph(0, 0.1, 0, 0.7, 0.32, 0.5, 'p', '#161412'); p.col(0, 0, 1.2, 0.9); }
     F.rack(pc(0, 19.68, 5.0, 3), 1.4, 1.9, 0.45); pc(0, 19.68, 5.2, 3).spot('oShelf', 0, 0.72, 0);
@@ -1121,7 +1123,7 @@
     const tvTex = (() => { const c = document.createElement('canvas'); c.width = 64; c.height = 48; const t = own(new THREE.CanvasTexture(c)); return { c, g: c.getContext('2d'), t }; })();
     const tvScreen = new THREE.Mesh(own(new THREE.PlaneGeometry(0.5, 0.4)), own(new THREE.MeshBasicMaterial({ map: tvTex.t, color: 0x8090a0 }))); tvScreen.position.set(19.35, 0.8, 13.62 - 0.258); tvScreen.rotation.y = Math.PI; LG[1].add(tvScreen);
     const roofM = own(new THREE.MeshBasicMaterial({ color: 0x07080a }));
-    { const r1 = new THREE.Mesh(own(new THREE.PlaneGeometry(6, 9)), roofM); r1.rotation.x = -Math.PI / 2; r1.position.set(3, 3.0, 9.5); scene.add(r1); const r2 = new THREE.Mesh(own(new THREE.PlaneGeometry(14.4, 14.4)), roofM); r2.rotation.x = -Math.PI / 2; r2.position.set(13, 6.0, 7); scene.add(r2); const gr = new THREE.Mesh(own(new THREE.PlaneGeometry(60, 30)), PM({ color: 0x101810 })); gr.rotation.x = -Math.PI / 2; gr.position.set(10, -0.02, 29); gr.material.userData.probe.value.setRGB(0.04, 0.05, 0.08); scene.add(gr); const trunk = own(new THREE.CylinderGeometry(0.18, 0.25, 6, 7)), crown = own(new THREE.ConeGeometry(1.6, 5, 8)), tm = PM({ color: 0x0c0e0c }); tm.userData.probe.value.setRGB(0.03, 0.035, 0.06); const R0 = mkRng(7); for (let i = 0; i < 26; i++) { const x = -6 + R0() * 32, z = 17.5 + R0() * 14; if (Math.abs(x - 3) < 2.2 && z < 24) continue; const t = new THREE.Mesh(trunk, tm); t.position.set(x, 3, z); scene.add(t); const c = new THREE.Mesh(crown, tm); c.position.set(x, 6 + R0(), z); scene.add(c); } }
+    { const r1 = new THREE.Mesh(own(new THREE.PlaneGeometry(6, 9)), roofM); r1.rotation.x = -Math.PI / 2; r1.position.set(3, 3.0, 9.5); scene.add(r1); const r2 = new THREE.Mesh(own(new THREE.PlaneGeometry(14.4, 14.4)), roofM); r2.rotation.x = -Math.PI / 2; r2.position.set(13, 6.0, 7); scene.add(r2); const gr = new THREE.Mesh(own(new THREE.PlaneGeometry(60, 30)), PM({ color: 0x101810 })); gr.rotation.x = -Math.PI / 2; gr.position.set(10, -0.02, 29); gr.material.userData.probe.value.setRGB(0.04, 0.05, 0.08); scene.add(gr); const trunk = own(new THREE.CylinderGeometry(0.18, 0.25, 6, 7)), crown = own(new THREE.ConeGeometry(1.6, 5, 8)), tm = PM({ color: 0x0c0e0c }); tm.userData.probe.value.setRGB(0.03, 0.035, 0.06); const R0 = mkRng(7); for (let i = 0; i < 26; i++) { const x = -6 + R0() * 32, z = 17.5 + R0() * 14; if ((Math.abs(x - 3) < 2.4 || Math.abs(x - 6.3) < 2 || Math.abs(x - 11.5) < 2.2) && z < 25) continue; const t = new THREE.Mesh(trunk, tm); t.position.set(x, 3, z); scene.add(t); const c = new THREE.Mesh(crown, tm); c.position.set(x, 6 + R0(), z); scene.add(c); } }
 
     const CG = collGrid(H.COLL), NAV = makeNav(H.COLL, doorAtEdge);
     const stampA = H.COLL.map(l => new Int32Array(l.length)); let stampN = 0;
@@ -1843,7 +1845,7 @@
       if (cut && cut.k === 'wake') { const k = sstep(0.6, cut.d, cut.t); cam.position.set(lerp(6.75, P.x, k), lerp(3.62, P.y + EYE, k), lerp(4.5, P.z, k)); cam.rotation.set(lerp(1.25, P.pitch, k), P.yaw, lerp(0.5, 0, k)); return 2; }
       if (cut && cut.k === 'catch') { const ex = lerp(P.ox, P.x, a), ez = lerp(P.oz, P.z, a), ey = P.y + lerp(EYE, CREYE, P.cr); KM.head.getWorldPosition(kp); kp.y += 0.1; const dx = kp.x - ex, dz = kp.z - ez, dy = kp.y - ey, k = Math.min(1, cut.t / 0.45); const ty = Math.atan2(-dx, -dz), tp = Math.atan2(dy, Math.hypot(dx, dz)); cam.position.set(ex, ey - Math.min(0.5, cut.t * 0.3), ez); cam.rotation.set(lerp(P.pitch, tp, k), P.yaw + angDiff(P.yaw, ty) * k, Math.sin(cut.t * 9) * 0.02 * (1 - k * 0.5)); return P.lv; }
       if (cut && cut.k === 'door') { const k = sstep(0.4, 3.0, cut.t); cam.position.set(lerp(cut.x, 11.5, k), 1.6 + Math.sin(cut.t * 9) * 0.03 * k, lerp(cut.z, 17.5, k)); cam.rotation.set(lerp(cut.pitch, 0.05, Math.min(1, cut.t)), cut.yaw + angDiff(cut.yaw, Math.PI) * Math.min(1, cut.t * 1.2), 0); return 1; }
-      if (cut && cut.k === 'car') { CAR.updateMatrixWorld(true); kp.set(-0.4, 1.12, 0.3).applyMatrix4(CAR.matrixWorld); cam.position.copy(kp); cam.position.x += Math.sin(cut.t * 30) * 0.004 * (cut.t > 1.3 ? 1 : 0); cam.rotation.set(-0.04, 0, 0); return 1; }
+      if (cut && cut.k === 'car') { const k = sstep(0, 5, cut.t); cam.position.set(6.6 - k * 0.6, 1.55, 21.5 - k * 1.5); const dx = 2.6 - cam.position.x, dz = (CAR.position.z + 1.5) - cam.position.z; cam.rotation.set(-0.06, Math.atan2(-dx, -dz), 0); return 1; }
       if (cut && cut.k === 'bad') return P.lv;
       if (P.hide) { const hs = P.hide; const dx = hs.look.x - hs.cam.x, dz = hs.look.z - hs.cam.z, by = Math.atan2(-dx, -dz); cam.position.copy(hs.cam); cam.rotation.set(P.lookP, by + P.look, 0); return hs.lv; }
       const x = lerp(P.ox, P.x, a), z = lerp(P.oz, P.z, a), y = lerp(P.oy, P.y, a);
@@ -1852,7 +1854,8 @@
       cam.position.set(x, y + lerp(EYE, CREYE, P.cr) + bob - (P.trap ? 0.25 : 0), z); cam.rotation.set(P.pitch + tr, P.yaw, P.moving ? Math.sin(P.bob) * 0.006 * amp : 0);
       return P.lv;
     }
-    const vOff = { hammer: [0.2, -0.2, -0.42, 0.9, 1.75, 0.35], cutters: [0.2, -0.22, -0.48, 0.7, 1.7, 0.3], battery: [0.18, -0.3, -0.48, 0.15, 0.35, 0], fuel: [0.2, -0.36, -0.5, 0.1, 0.5, 0], camera: [0.17, -0.19, -0.36, 0.05, 0.12, 0], bottle: [0.17, -0.28, -0.38, 0.1, 0, 0.12], plug: [0.15, -0.15, -0.3, 0.6, 1.6, 0.2], fuse: [0.15, -0.15, -0.3, 0.6, 1.6, 0.2], bulb: [0.15, -0.16, -0.3, 0.2, 0, 0], carKey: [0.15, -0.15, -0.3, 0.9, 1.9, 0.3] };
+    const vScale = { padKey: 0.7, studyKey: 0.7, garageKey: 0.7, doorKey: 0.7, carKey: 0.7, fuse: 0.55, plug: 0.6, bulb: 0.7, camera: 0.75, battery: 0.8, fuel: 0.7 };
+    const vOff = { hammer: [0.2, -0.2, -0.42, 0.9, 1.75, 0.35], cutters: [0.2, -0.22, -0.48, 0.7, 1.7, 0.3], battery: [0.18, -0.3, -0.48, 0.15, 0.35, 0], fuel: [0.2, -0.34, -0.55, 0.1, 0.5, 0], camera: [0.17, -0.19, -0.36, 0.05, 0.12, 0], bottle: [0.17, -0.28, -0.38, 0.1, 0, 0.12], plug: [0.15, -0.15, -0.3, 0.6, 1.6, 0.2], fuse: [0.15, -0.15, -0.3, 0.6, 1.6, 0.2], bulb: [0.15, -0.16, -0.3, 0.2, 0, 0], carKey: [0.15, -0.15, -0.3, 0.9, 1.9, 0.3] };
     function render(dt, a) {
       const clv = cameraFrame(a, dt);
       for (let lv = 0; lv < 3; lv++) LG[lv].visible = Math.abs(lv - clv) <= 1;
@@ -1863,7 +1866,7 @@
         for (const k in vItems) vItems[k].visible = k === it.k;
         const m = vItems[it.k], o = vOff[it.k] || [0.15, -0.15, -0.3, 0.9, 1.9, 0.3], sw = P.moving ? Math.sin(P.bob) * 0.012 : 0;
         vg.position.copy(cam.position); vg.quaternion.copy(cam.quaternion);
-        m.position.set(o[0] + sw, o[1] + Math.abs(sw) * 0.6, o[2]); m.rotation.set(o[3], o[4], o[5]);
+        m.position.set(o[0] + sw, o[1] + Math.abs(sw) * 0.6, o[2]); m.rotation.set(o[3], o[4], o[5]); m.scale.setScalar(vScale[it.k] || 1);
         sample(P.lv, P.x, P.y + 1.2, P.z, tmp3); const kd = K.on ? Math.max(0, 1 - Math.hypot(K.x - P.x, K.z - P.z) / 6) * (K.lv === P.lv ? 1 : 0) : 0;
         m.material.userData.probe.value.setRGB(tmp3[0] * 1.2 + 0.05 + kd * 0.5, tmp3[1] * 1.2 + 0.05 + kd * 0.35, tmp3[2] * 1.2 + 0.06 + kd * 0.2);
         renderer.clearDepth(); renderer.render(vscene, cam);
