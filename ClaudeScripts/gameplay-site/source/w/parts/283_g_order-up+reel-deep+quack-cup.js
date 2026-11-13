@@ -83,7 +83,8 @@
       g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d);
       s.connect(fl).connect(g).connect(master); s.start(t); s.stop(t + d + .05);
     };
-    return { tone, noise, get };
+    const close = () => { if (ac) { try { ac.close(); } catch (e) {} ac = null; } };
+    return { tone, noise, get, close };
   };
 
   const makeMusic = (au, o) => {
@@ -983,7 +984,7 @@
     root.__dbg = { sv, get s() { return { state, hx: hook.x, hy: hook.y, camY, hooked: hooked.length, cap: capN(), modal: modal && modal.k, fishes: fishes.filter(f => !f.hooked).map(f => ({ x: f.x, y: f.y, w: f.sp.len * f.size, dir: f.dir, v: f.v, val: f.val })), coins: sv.coins, hold: sv.hold.length }; }, cost: k => upCost(k) };
     api.interval(persist, 15000);
     api.on(window, 'beforeunload', persist);
-    return { destroy() { persist(); } };
+    return { destroy() { persist(); au.close(); } };
   };
 
   Ameplay.register({
@@ -2756,7 +2757,7 @@
     });
     api.on(window, 'beforeunload', persist);
     api.on(document, 'visibilitychange', () => { if (document.visibilityState === 'hidden') persist(); });
-    return { destroy() { persist(); } };
+    return { destroy() { persist(); au.close(); } };
   };
 
   Ameplay.register({
@@ -4230,7 +4231,7 @@
     });
     api.on(window, 'beforeunload', persist);
     root.__dbg = { S, sv, CUPS, segAt: x => segAt(x).k, Lat: x => Lat(segAt(x), x), fdAt, startTrain, beginPlay, startRace, beginRace, cupOpen, eat, get scene() { return scene; }, set scene(v) { scene = v; }, get tr() { return tr; }, get rc() { return rc; }, get cupFinal() { return cupFinal; }, set cupSel(v) { cupSel = v; }, get modal() { return modal; }, finishRace: () => finishRace(rc), fastForward: () => { rc.P.x = rc.fin - 20; } };
-    return { destroy() { persist(); } };
+    return { destroy() { persist(); au.close(); } };
   };
 
   Ameplay.register({
