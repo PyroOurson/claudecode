@@ -305,7 +305,7 @@ const hide = p => p.evaluate(() => { Object.defineProperty(document, 'visibility
   }
   await b.close().catch(() => {});
   const bad = results.filter(r => !r[4]);
-  const measures = new Set(results.filter(r => r[0] !== '-').map(r => r[0]));
+  const measures = new Set(results.filter(r => typeof r[0] === 'number').map(r => r[0]));
   for (const r of results) console.log((r[4] ? 'PASS ' : 'FAIL ') + String(r[0]).padStart(2) + ' ' + r[1] + ': got ' + r[2] + ', SQL says ' + r[3]);
   log.forEach(l => console.log('     ' + l));
   console.log((bad.length ? 'FAIL' : 'PASS') + ' stats_data: ' + (results.length - bad.length) + ' of ' + results.length + ' checks, measures covered ' + measures.size + ' of 50');
