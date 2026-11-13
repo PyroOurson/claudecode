@@ -44,3 +44,15 @@ Sources: public guides and game portals describing 1v1.LOL (controls, modes, wea
 - Wall when shot at, ramp to take height, shotgun at close range, rifle at range.
 - Beginners fight on the ground, forget to reload, and run out of materials in long fights.
 - Strong players edit through their own walls, take the high ground and replace walls that were shot.
+
+## What the game uses (decisions)
+- Grid tile 4.8 m, wall 3.6 m, cone 1.25 m; run 5.5 m/s, jump 1.25 m, gravity 24 m/s²; health 100 plus shield 100 (50 in box fights).
+- Pieces cost 10 materials, appear at once with low health and grow (wood 90 to 150 in 1.2 s, stone 75 to 300 in 2.6 s, metal 60 to 500 in 4.5 s), so wood is best for instant cover and metal for tunnels.
+- Walls edit in a 3x3 grid, floors and cones in 2x2, ramps by dragging a new direction. Only your own (or neutral box fight) pieces can be edited. Unsupported pieces collapse.
+- Rarity adds 6 percent damage and 5 percent faster reloads per step; both players get the same rolled loadout each round.
+- Bots see only what is in line of sight, hear shots and builds nearby, react in 0.19 s (Hardest) to 0.55 s (Easy) and aim with turn-rate limits and random error.
+
+## Bot results (headless series, sides swapped every match)
+- Build fight, first to 3: Hardest beat Hard 169 of 200; Hard beat Normal 87 of 100; Normal beat Easy 95 of 100.
+- Box fight, first to 3: Hardest beat Hard 238 of 300.
+- One-against-one free-for-all, first to 7: Hardest beat Hard 91 of 100.

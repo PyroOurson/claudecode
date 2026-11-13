@@ -34,3 +34,15 @@ Sources: Hypixel forum guides (generator timings, shop prices, team upgrades), g
 ## Strategy and beginner mistakes
 - Defend the bed early, then rush. Sprint-hit for knockback. Bridge while sneaking.
 - Beginners leave the bed open, fall into the void while bridging, fight on bridges without blocks, and forget to buy armour.
+
+## What the game uses (decisions)
+- Map: up to four team islands 32 blocks from the middle, four diamond islands on the diagonals, a raised middle island with two or four emerald generators; void below.
+- Timeline (compressed for school sessions): Diamond II 5:00, Emerald II 8:00, Diamond III 11:00, Emerald III 14:00, all beds destroyed 17:00, sudden death 21:00 (no regeneration, slow damage), end 25:00.
+- Combat: 1.8-style clicking with 0.5 s invulnerability after a hit, knockback 6.2 blocks/s (plus 3.6 when sprinting), critical hits while falling (x1.5), armour 4 percent per point, protection upgrades on top.
+- Mining is five times slower in the air; only placed blocks and enemy beds can be broken.
+- Hotbar slots are fixed (stacks never move); the sword, tools and shears return after death, tools one tier lower.
+
+## Bot results (headless series, sides swapped every match)
+- Two teams, one player each: Hardest beat Hard 69 of 100.
+- Four teams, one player each (two Hardest and two Hard teams): a Hardest team won 17 of 20.
+- Two teams of two: even, 19 of 40 for Hardest (bed rushes and bridge knock-offs decide these games).
