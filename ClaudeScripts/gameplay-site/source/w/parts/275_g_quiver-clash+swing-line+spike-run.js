@@ -23,6 +23,15 @@
   };
   const T = (s, o) => window.gpI18n ? window.gpI18n.t(s, o) : o ? s.replace(/\{(\w+)\}/g, (m, k) => k in o ? o[k] : m) : s;
   const rrect = (c, x, y, w, h, r) => { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); };
+  const gpRng = seed => { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; };
+  function gpStar(c, x, y, r, on, glow) {
+    c.beginPath();
+    for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * .45 : r; c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+    c.closePath();
+    c.fillStyle = on ? '#ffd23a' : 'rgba(255,255,255,.18)'; c.fill();
+    c.lineWidth = Math.max(1.5, r * .14); c.strokeStyle = on ? '#b07a00' : 'rgba(0,0,0,.25)'; c.stroke();
+    if (on && glow) { c.fillStyle = 'rgba(255,255,255,.5)'; c.beginPath(); c.arc(x - r * .2, y - r * .25, r * .18, 0, TAU); c.fill(); }
+  }
 
   const sxCss = (id, ac) => {
     const q = '.gm-' + id;
@@ -802,7 +811,7 @@ ${q} .gx-pb.gold{background:#c78a07}
         const [, idx, zone, dmg, x, y, ow, frac] = ev;
         if (zone === 'burn') { pop(V, x + rnd(-8, 8), y, '' + dmg, '#ffa040', 12, .8); return; }
         const head = zone === 'head';
-        pop(V, x, y - 12, (head ? 'HEADSHOT ' : '') + dmg, head ? '#ffdf4d' : idx === 0 && S.mode === 'waves' ? '#ff7a6a' : '#ffffff', head ? 21 : zone === 'body' ? 16 : 13, head ? 1.4 : 1);
+        pop(V, x, y - 12, (head ? T('HEADSHOT') + ' ' : '') + dmg, head ? '#ffdf4d' : idx === 0 && S.mode === 'waves' ? '#ff7a6a' : '#ffffff', head ? 21 : zone === 'body' ? 16 : 13, head ? 1.4 : 1);
         burst(V, x, y, head ? 12 : 6, head ? '#ffe36a' : '#ffffff', head ? 260 : 170, .35, head ? 3.2 : 2.4);
         A.play(head ? 'crit' : 'hit', 30);
         V.shake = Math.max(V.shake, head ? 6 : 2.5);
@@ -818,7 +827,7 @@ ${q} .gx-pb.gold{background:#c78a07}
         if (a && guest) { a.alive = false; }
         if (!guest && S.mode === 'waves' && S.ar.filter(q => q.team === 1 && q.alive).length === 0 && a && a.team === 1) { S.slowEnd = 1; V.slow = 1.1; V.zx = x; V.zy = y; }
         else if (!guest && head && S.ar.filter(q => q.alive).length <= 1 && sh.local) { S.slowEnd = 1; V.slow = 1.1; V.zx = x; V.zy = y; }
-        if (head) pop(V, x, y - 44, 'HEADSHOT!', '#ff5a4a', 26, 1.6);
+        if (head) pop(V, x, y - 44, T('HEADSHOT!'), '#ff5a4a', 26, 1.6);
       } else if (k === 'stk') {
         if (guest) { const a = S.ar[ev[1]]; if (a) { a.stk.push(ev[2]); if (a.stk.length > 16) a.stk.shift(); } }
       } else if (k === 'terr') {
@@ -847,10 +856,10 @@ ${q} .gx-pb.gold{background:#c78a07}
         burst(V, ev[2], ev[3], 16, '#bff1ff', 240, .6, 3, 200);
       } else if (k === 'shatter') { A.play('shatter'); burst(V, ev[2], ev[3], 26, '#d4f6ff', 380, .8, 4, 500); }
       else if (k === 'thaw') { A.play('thaw'); } else if (k === 'frost') { burst(V, ev[1], ev[2], 6, '#bff1ff', 120, .5, 2.4, 100); A.play('thunk', 20); }
-      else if (k === 'thud') { A.play('thud', 40); } else if (k === 'tired') { if (S.ar[ev[1]] && S.ar[ev[1]].ctl === 'human' || sh.me === ev[1]) { A.play('tired', 200); pop(V, S.ar[ev[1]].x[IN], S.ar[ev[1]].y[IN] - 70, 'Out of stamina', '#ffd447', 14, .9); } }
+      else if (k === 'thud') { A.play('thud', 40); } else if (k === 'tired') { if (S.ar[ev[1]] && S.ar[ev[1]].ctl === 'human' || sh.me === ev[1]) { A.play('tired', 200); pop(V, S.ar[ev[1]].x[IN], S.ar[ev[1]].y[IN] - 70, T('Out of stamina'), '#ffd447', 14, .9); } }
       else if (k === 'coin') { pop(V, ev[3], ev[4], '+' + ev[2], '#ffd447', 17, 1.3); A.play('coin', 50); }
-      else if (k === 'ammo') { pop(V, ev[2], ev[3], '+1 ' + TNAME[ev[1]], TCOL[ev[1]], 14, 1.5); }
-      else if (k === 'go') { A.play('go'); V.banner = 'FIGHT!'; V.sub = ''; V.bannerT = .55; }
+      else if (k === 'ammo') { pop(V, ev[2], ev[3], '+1 ' + T(TNAME[ev[1]]), TCOL[ev[1]], 14, 1.5); }
+      else if (k === 'go') { A.play('go'); V.banner = T('FIGHT!'); V.sub = ''; V.bannerT = .55; }
       else if (k === 'end') { }
     }
 
@@ -1092,7 +1101,7 @@ ${q} .gx-pb.gold{background:#c78a07}
       ctx.fillStyle = 'rgba(0,0,0,.55)'; rrect(ctx, x - 1.5, y - 1.5, w + 3, 8, 4); ctx.fill();
       ctx.fillStyle = fr > .5 ? '#46d36a' : fr > .25 ? '#f1c232' : '#ef4a3c';
       if (fr > 0) { rrect(ctx, x, y, Math.max(3, w * fr), 5, 2.5); ctx.fill(); }
-      if (a.team === 1 && a.name && S0.mode === 'waves') txt(ctx, a.name, a.x[IH], y - 8, 10, '#fff', 'center', 800, 'rgba(0,0,0,.6)');
+      if (a.team === 1 && a.name && S0.mode === 'waves') txt(ctx, T(a.name), a.x[IH], y - 8, 10, '#fff', 'center', 800, 'rgba(0,0,0,.6)');
       ctx.globalAlpha = 1;
     }
     let S0 = { mode: 'waves' };
@@ -1200,7 +1209,7 @@ ${q} .gx-pb.gold{background:#c78a07}
       const L = duel ? S.ar[0] : me;
       const meRight = duel && sh.me === 1;
       const mx = meRight ? RW - pad - 150 : pad;
-      txt(ctx, L.name, pad, 14, 13, duel && L === me ? '#ffe28a' : '#fff', 'left', 900, 'rgba(0,0,0,.6)');
+      txt(ctx, T(L.name), pad, 14, 13, duel && L === me ? '#ffe28a' : '#fff', 'left', 900, 'rgba(0,0,0,.6)');
       bar(pad, 24, 190, 14, clamp(L.hp / L.mhp, 0, 1), ['#58e07a', '#2aa84d'], '#2b3350', Math.ceil(L.hp) + '/' + L.mhp);
       if (!meRight) bar(pad, 46, 150, 8, me.st / me.mst, ['#ffd447', '#e8a21a'], '#2b3350');
       const inp = sh.inp;
@@ -1213,18 +1222,18 @@ ${q} .gx-pb.gold{background:#c78a07}
       const en = duel ? [S.ar[1]] : S.ar.filter(q => q !== me && q.team !== me.team);
       en.slice(0, 3).forEach((q, i) => {
         const x = RW - pad - 190, y = 24 + i * 24;
-        if (i === 0) txt(ctx, S.mode === 'waves' ? 'Enemy' : q.name, RW - pad, 14, 13, meRight ? '#ffe28a' : '#fff', 'right', 900, 'rgba(0,0,0,.6)');
+        if (i === 0) txt(ctx, S.mode === 'waves' ? T('Enemy') : T(q.name), RW - pad, 14, 13, meRight ? '#ffe28a' : '#fff', 'right', 900, 'rgba(0,0,0,.6)');
         bar(x, y, 190, i ? 10 : 14, clamp(q.hp / q.mhp, 0, 1), ['#ff7a6a', '#d9392b'], '#2b3350', i ? null : Math.ceil(q.hp) + '/' + q.mhp);
         if (i && q.alive === false) { ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x, y, 190, 10); }
       });
       if (meRight) bar(RW - pad - 150, 46, 150, 8, me.st / me.mst, ['#ffd447', '#e8a21a'], '#2b3350');
       if (S.mode === 'waves') {
-        txt(ctx, 'WAVE ' + S.wave, RW / 2, 16, 20, '#fff', 'center', 900, 'rgba(0,0,0,.65)');
+        txt(ctx, T('WAVE {n}', { n: S.wave }), RW / 2, 16, 20, '#fff', 'center', 900, 'rgba(0,0,0,.65)');
         ctx.fillStyle = '#ffd447'; ctx.beginPath(); ctx.arc(RW / 2 - 28, 40, 7, 0, TAU); ctx.fill(); ctx.strokeStyle = '#b8860b'; ctx.lineWidth = 2; ctx.stroke();
         txt(ctx, '' + S.meta.coins, RW / 2 - 16, 41, 15, '#fff', 'left', 900, 'rgba(0,0,0,.6)');
       } else {
         txt(ctx, S.score[0] + '  -  ' + S.score[1], RW / 2, 18, 26, '#fff', 'center', 900, 'rgba(0,0,0,.65)');
-        txt(ctx, 'ROUND ' + S.rnd + (S.cfg.need ? '  ·  first to ' + S.cfg.need : ''), RW / 2, 40, 11, 'rgba(255,255,255,.85)', 'center', 800, 'rgba(0,0,0,.5)');
+        txt(ctx, T('ROUND {n}', { n: S.rnd }) + (S.cfg.need ? '  ·  ' + T('first to {n}', { n: S.cfg.need }) : ''), RW / 2, 40, 11, 'rgba(255,255,255,.85)', 'center', 800, 'rgba(0,0,0,.5)');
       }
       if (V.bannerT > 0) {
         const k = V.bannerT;
@@ -1415,7 +1424,7 @@ ${q} .gx-pb.gold{background:#c78a07}
 ${st.orow('Difficulty', st.chips('diff', DIFF.map((d, i) => [i, d.n]), opt.diff))}
 ${st.orow('Trajectory', st.chips('prev', [[1, 'Full'], [2, 'Short'], [0, 'Off']], opt.prev))}
 ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to aim']], opt.aim))}
-<p class="gx-help"><kbd>Mouse / touch</kbd> drag to aim, release to shoot (drag back = weaker) · <kbd>Space</kbd> hold to draw, release to fire · <kbd>&uarr;</kbd><kbd>&darr;</kbd> angle · <kbd>&larr;</kbd><kbd>&rarr;</kbd> turn · <kbd>1</kbd>-<kbd>6</kbd> or <kbd>Q</kbd><kbd>E</kbd> arrow type · <kbd>Esc</kbd> pause.<br>Fire burns, ice freezes (hit frozen archers for extra damage), bombs knock archers off ledges, triple fires three, storm arrows stun and chain. Every shot costs stamina: stronger draws cost more.</p>`);
+<p class="gx-help"><kbd>&#128433;</kbd> <span>drag to aim, release to shoot</span> · <kbd>Space</kbd> <span>hold to draw, release to fire</span> · <kbd>&uarr;</kbd><kbd>&darr;</kbd> <span>angle</span> · <kbd>&larr;</kbd><kbd>&rarr;</kbd> <span>turn</span> · <kbd>1</kbd>-<kbd>6</kbd> <kbd>Q</kbd><kbd>E</kbd> <span>arrow type</span> · <kbd>Esc</kbd> <span>pause</span><br><span>Fire burns, ice freezes (hit frozen archers for extra damage), bombs knock archers off ledges, triple fires three, storm arrows stun and chain.</span> <span>Every shot costs stamina: stronger draws cost more.</span></p>`);
         scr = 'menu'; api.score('—');
       };
       st.onOpt = (k, v) => { opt[k] = v; persist(); A.play('click'); showMenu(); };
@@ -1459,9 +1468,9 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
         const me = S.ar[sh.me]; me.aim = inp.face > 0 ? -.6 : Math.PI + .6; inp.ang = me.aim;
         acc = 0; evq = []; snapT = 0; lastScore = ''; typesKey = '';
         if (S.mode === 'waves') {
-          V.banner = S.wave % 5 === 0 ? 'BOSS WAVE ' + S.wave : 'WAVE ' + S.wave;
-          V.sub = S.ar.filter(q => q.team === 1).map(q => q.name).join(' · ');
-        } else { V.banner = 'ROUND ' + S.rnd; V.sub = S.ar[0].name + ' vs ' + S.ar[1].name; }
+          V.banner = S.wave % 5 === 0 ? T('BOSS WAVE {n}', { n: S.wave }) : T('WAVE {n}', { n: S.wave });
+          V.sub = S.ar.filter(q => q.team === 1).map(q => T(q.name)).join(' · ');
+        } else { V.banner = T('ROUND {n}', { n: S.rnd }); V.sub = T('{a} vs {b}', { a: T(S.ar[0].name), b: T(S.ar[1].name) }); }
         V.bannerT = 1;
         rk++;
         scr = 'play'; st.showPlay(); st.hideOv();
@@ -1777,11 +1786,11 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
         if (S.mode === 'duel' && S.phase === 'end' && !V.endShown) {
           V.endShown = 1;
           const k = S.endKind, mine = sh.me ? 'win1' : 'win0';
-          V.banner = k === 'draw' ? 'DRAW' : k === mine ? (S.over ? 'MATCH WON' : 'ROUND WON') : (S.over ? 'MATCH LOST' : 'ROUND LOST');
+          V.banner = T(k === 'draw' ? 'DRAW' : k === mine ? (S.over ? 'MATCH WON' : 'ROUND WON') : (S.over ? 'MATCH LOST' : 'ROUND LOST'));
           V.sub = S.score[0] + ' - ' + S.score[1]; V.bannerT = 1;
         } else if (S.mode === 'waves' && S.phase === 'end' && !V.endShown) {
           V.endShown = 1;
-          V.banner = S.endKind === 'clear' ? 'WAVE CLEARED' : 'YOU DIED'; V.sub = ''; V.bannerT = 1;
+          V.banner = T(S.endKind === 'clear' ? 'WAVE CLEARED' : 'YOU DIED'); V.sub = ''; V.bannerT = 1;
           if (S.endKind === 'clear') A.play('win');
         }
       }
@@ -1854,7 +1863,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
         gK = m.k; snaps.length = 0; off = 0; lastC = '';
         S = newState(m.cfg, freshMeta());
         S.cfg = m.cfg; S.score = m.rs ? m.rs.slice() : [0, 0]; S.rnd = m.cfg.rnd;
-        V = mkVis(S, sh); V.banner = 'ROUND ' + S.rnd; V.sub = m.cfg.names[0] + ' vs ' + m.cfg.names[1]; V.bannerT = 1;
+        V = mkVis(S, sh); V.banner = T('ROUND {n}', { n: S.rnd }); V.sub = T('{a} vs {b}', { a: m.cfg.names[0], b: m.cfg.names[1] }); V.bannerT = 1;
         inp.aiming = false; inp.ptr = null; inp.ty = 'normal'; inp.face = -1; inp.elev = .6; inp.ang = Math.PI + .6;
         typesKey = ''; lastScore = '';
         scr = 'play'; st.showPlay(); st.hideOv();
@@ -1931,7 +1940,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       title: 'Quiver Clash',
       category: 'Action',
       tint: '#3b82f6',
-      blurb: 'Pull back, aim and shoot ragdoll archers off their cliffs. Headshots, fire, ice, bomb, triple and storm arrows. Endless waves, CPU duels and online 1v1.',
+      blurb: 'Pull back, aim and knock wobbly stickman archers off their cliffs. Headshots, fire, ice, bomb, triple and storm arrows. Endless waves, duels against the computer and online 1v1.',
       help: 'Drag to aim (pull back), release to shoot · <kbd>Space</kbd> hold and release · <kbd>&uarr;</kbd><kbd>&darr;</kbd> angle · <kbd>1</kbd>-<kbd>6</kbd> arrow type · <kbd>Esc</kbd> pause',
       width: 960,
       better: 'high',
@@ -1973,48 +1982,47 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       return { n, par, f: mx + 420, o };
     };
     SL_LEVELS.push([
-      L('First Swing', 9, hk(330, 320, [170, 170, 170, 170, 170, 170, 170, 170]), [['g', 970, 420], ['g', 1610, 420], ['g', 2250, 420]]),
-      L('Ups and Downs', 10, hk(330, 320, [170, 110, 210, 100, 200, 90, 190, 120, 170]), [['g', 970, 380], ['g', 1610, 380], ['g', 2250, 380], ['g', 2730, 380]]),
-      L('Long Gaps', 10, [['h', 330, 170], ['h', 700, 160], ['h', 1100, 170], ['h', 1480, 150], ['h', 1880, 170], ['h', 2260, 160], ['h', 2660, 180], ['h', 3040, 170]], [['g', 900, 270], ['g', 1680, 260], ['g', 2460, 270]]),
-      L('Boing', 11, hk(330, 320, [170, 160]), [['p', 1000, 600, 200, 0]], hk(1350, 320, [120, 150, 170]), [['p', 2350, 600, 200, 10]], hk(2700, 320, [110, 150, 170]), [['g', 1000, 360], ['g', 1000, 250], ['g', 2350, 330], ['g', 3180, 390]]),
-      L('Climb', 12, hk(330, 300, [200, 150, 100, 50, 0, -50, -100]), hk(2450, 320, [-60, 0, 60, 120, 170]), [['g', 1680, 120], ['g', 2280, 40], ['g', 2930, 280], ['g', 3570, 380]]),
-      L('Up and Over', 13, hk(330, 320, [170, 140]), [['w', 920, 330, 100, 320]], hk(1030, 320, [40, 110]), [['w', 1560, 300, 100, 350]], hk(1700, 320, [20, 100, 160]), [['w', 2560, 360, 120, 290]], hk(2700, 320, [60, 140, 170]), [['g', 970, 260], ['g', 1610, 230], ['g', 2620, 290], ['g', 1860, 150]]),
-      L('Bumpers', 13, [['h', 330, 170], ['b', 650, 470, 55], ['h', 900, 150], ['b', 1180, 450, 55], ['h', 1440, 130], ['h', 1760, 160], ['b', 2060, 470, 55], ['h', 2320, 150], ['b', 2600, 440, 55], ['h', 2860, 140], ['h', 3180, 170]], [['g', 650, 300], ['g', 1180, 290], ['g', 2060, 300], ['g', 2600, 280]]),
-      L('Rollercoaster', 14, hk(330, 300, [200, 150, 90, 30, -30]), [['p', 1950, 600, 220, 15]], hk(2350, 310, [60, 120, 180, 120, 60, 120, 170]), [['g', 1700, 60], ['g', 1950, 340], ['g', 2660, 400], ['g', 3280, 400], ['g', 3900, 380]]),
-      L('Pad Hopper', 14, [['h', 330, 170], ['p', 720, 600, 170, 14], ['p', 1140, 600, 170, 14], ['p', 1560, 600, 170, 14], ['h', 1920, 140], ['h', 2240, 160], ['p', 2620, 600, 170, 14], ['p', 3040, 600, 170, 14], ['h', 3400, 130], ['h', 3720, 170]], [['g', 930, 300], ['g', 1350, 280], ['g', 2830, 300], ['g', 3560, 400]]),
-      L('Hilltop', 17, hk(330, 320, [170, 120]), [['b', 900, 470, 50]], hk(1150, 320, [90]), [['w', 1360, 300, 100, 350]], hk(1500, 330, [0, 100]), [['p', 2120, 600, 180, 8]], hk(2450, 320, [80, 160]), [['w', 3000, 330, 100, 320]], hk(3150, 320, [40, 120, 170]), [['g', 900, 300], ['g', 1410, 220], ['g', 1660, 60], ['g', 2120, 340], ['g', 3310, 120]])
+      L('First Swing', 7, hk(330, 320, [170, 170, 170, 170, 170, 170, 170, 170]), [['g', 970, 420], ['g', 1610, 420], ['g', 2250, 420]]),
+      L('Ups and Downs', 8, hk(330, 320, [170, 110, 210, 100, 200, 90, 190, 120, 170]), [['g', 970, 380], ['g', 1610, 380], ['g', 2250, 380], ['g', 2730, 380]]),
+      L('Long Gaps', 8, [['h', 330, 170], ['h', 700, 160], ['h', 1100, 170], ['h', 1480, 150], ['h', 1880, 170], ['h', 2260, 160], ['h', 2660, 180], ['h', 3040, 170]], [['g', 900, 270], ['g', 1680, 260], ['g', 2460, 270]]),
+      L('Boing', 8, hk(330, 320, [170, 160]), [['p', 1000, 600, 200, 0]], hk(1350, 320, [120, 150, 170]), [['p', 2350, 600, 200, 10]], hk(2700, 320, [110, 150, 170]), [['g', 1000, 360], ['g', 980, 268], ['g', 2350, 330], ['g', 3180, 390]]),
+      L('Climb', 10, hk(330, 300, [200, 150, 100, 50, 0, -50, -100]), hk(2450, 320, [-60, 0, 60, 120, 170]), [['g', 1670, 143], ['g', 2284, 65], ['g', 2930, 280], ['g', 3570, 380]]),
+      L('Up and Over', 11, hk(330, 320, [170, 140]), [['w', 920, 330, 100, 320]], hk(1030, 320, [40, 110]), [['w', 1560, 300, 100, 350]], hk(1700, 320, [20, 100, 160]), [['w', 2560, 360, 120, 290]], hk(2700, 320, [60, 140, 170]), [['g', 970, 260], ['g', 1610, 230], ['g', 2620, 290], ['g', 1860, 150]]),
+      L('Bumpers', 10, [['h', 330, 170], ['b', 650, 470, 55], ['h', 900, 150], ['b', 1180, 450, 55], ['h', 1440, 130], ['h', 1760, 160], ['b', 2060, 470, 55], ['h', 2320, 150], ['b', 2600, 440, 55], ['h', 2860, 140], ['h', 3180, 170]], [['g', 650, 300], ['g', 1180, 290], ['g', 2060, 300], ['g', 2600, 280]]),
+      L('Rollercoaster', 10, hk(330, 300, [200, 150, 90, 30, -30]), [['p', 1950, 600, 220, 15]], hk(2350, 310, [60, 120, 180, 120, 60, 120, 170]), [['g', 1694, 88], ['g', 1950, 340], ['g', 2660, 400], ['g', 3280, 400], ['g', 3900, 380]]),
+      L('Pad Hopper', 9, [['h', 330, 170], ['p', 720, 600, 170, 14], ['p', 1140, 600, 170, 14], ['p', 1560, 600, 170, 14], ['h', 1920, 140], ['h', 2240, 160], ['p', 2620, 600, 170, 14], ['p', 3040, 600, 170, 14], ['h', 3400, 130], ['h', 3720, 170]], [['g', 936, 325], ['g', 1350, 280], ['g', 2830, 300], ['g', 3560, 400]]),
+      L('Hilltop', 10, hk(330, 320, [170, 120]), [['b', 900, 470, 50]], hk(1150, 320, [90]), [['w', 1360, 300, 100, 350]], hk(1500, 330, [0, 100]), [['p', 2120, 600, 180, 8]], hk(2450, 320, [80, 160]), [['w', 3000, 330, 100, 320]], hk(3150, 320, [40, 120, 170]), [['g', 900, 300], ['g', 1410, 220], ['g', 1660, 60], ['g', 2120, 340], ['g', 3310, 120]])
     ]);
     SL_LEVELS.push([
-      L('Sawmill', 11, hk(330, 320, [170, 150, 150, 140, 150, 160, 170]), [['s', 490, 570, 46], ['s', 810, 560, 46], ['s', 1130, 570, 46], ['s', 1450, 560, 46], ['s', 1770, 570, 46], ['s', 2090, 560, 46]], [['g', 970, 400], ['g', 1610, 400], ['g', 2250, 410]]),
-      L('Drifting Hooks', 12, [['h', 330, 170], ['hm', 650, 160, 0, 70, 2.2, 0], ['hm', 970, 150, 90, 0, 2.6, 0], ['hm', 1290, 140, 0, 80, 2, 1.5], ['h', 1610, 150], ['hm', 1930, 150, 0, 90, 1.8, 0], ['hm', 2250, 150, 100, 0, 2.4, 2], ['h', 2570, 170]], [['g', 810, 380], ['g', 1450, 380], ['g', 2090, 380], ['g', 2410, 380]]),
-      L('Ring Road', 11, hk(330, 320, [170, 160]), [['r', 860, 260, -15]], hk(1330, 320, [140]), [['r', 1560, 250, -20]], hk(2050, 320, [150, 160]), [['r', 2600, 250, -10]], hk(3050, 320, [150, 170]), [['g', 1060, 227], ['g', 1160, 226], ['g', 1790, 195], ['g', 2840, 236]]),
-      L('Saw Gate', 13, hk(330, 330, [170, 160]), [['s', 820, 215, 38], ['s', 820, 480, 38]], hk(990, 330, [150]), [['s', 1160, 230, 38], ['s', 1160, 500, 38]], hk(1320, 330, [160]), [['s', 1490, 220, 38], ['s', 1490, 490, 38]], hk(1650, 330, [160, 150, 170]), [['g', 820, 350], ['g', 1160, 365], ['g', 1490, 355], ['g', 2150, 420]]),
-      L('Swinging Saws', 13, hk(330, 320, [170, 150, 150, 150, 140, 160, 170]), [['s', 810, 390, 40, 0, 150, 2.4], ['s', 1130, 390, 40, 0, 150, 2.4, 1.2], ['s', 1450, 390, 40, 0, 150, 2], ['s', 1770, 390, 40, 0, 150, 2.2, 2]], [['g', 810, 290], ['g', 1450, 290], ['g', 2250, 400]]),
-      L('Spinners', 14, hk(330, 320, [170, 150]), [['sr', 880, 360, 120, 30, 1.6, 2]], hk(1110, 330, [140]), [['sr', 1380, 350, 130, 30, -1.4, 3]], hk(1640, 330, [140, 150]), [['sr', 2140, 380, 120, 30, 1.8, 2]], hk(2380, 320, [150, 170]), [['g', 880, 360], ['g', 1380, 350], ['g', 2140, 380], ['g', 2860, 400]]),
-      L('Low Ceiling', 14, hk(330, 320, [170, 150, 150, 150, 150, 150, 150, 170]), [['k', 560, 40, 1700, 30, 1], ['k', 1050, 570, 280, 30, 0], ['k', 1690, 570, 280, 30, 0]], [['g', 800, 360], ['g', 1130, 330], ['g', 1450, 330], ['g', 1770, 330], ['g', 2090, 330]]),
-      L('Ring Rush', 12, [['h', 330, 170], ['r', 560, 300, -25], ['r', 1000, 160, 0], ['h', 1350, 150], ['r', 1600, 290, -30], ['r', 2050, 140, 5], ['h', 2400, 140], ['h', 2720, 160], ['r', 2960, 290, -25], ['r', 3400, 150, 0], ['h', 3760, 160], ['h', 4080, 170]], [['g', 780, 200], ['g', 1200, 179], ['g', 1830, 190], ['g', 3180, 200]]),
-      L('Shift Work', 15, [['h', 330, 170], ['hm', 660, 150, 0, 90, 2, 0], ['s', 810, 530, 44, 120, 0, 2.2], ['hm', 990, 140, 0, 90, 2, 1], ['s', 1150, 530, 44, 120, 0, 2.2, 1.1], ['hm', 1320, 150, 100, 0, 2.4, 0], ['sr', 1560, 330, 110, 28, 1.8, 2], ['h', 1800, 130], ['h', 2140, 150], ['s', 2310, 520, 44, 0, 0, 1], ['hm', 2470, 150, 0, 80, 2, .5], ['h', 2800, 170]], [['g', 1150, 360], ['g', 1560, 330], ['g', 2310, 360], ['g', 2640, 400]]),
-      L('The Works', 19, [['h', 330, 170], ['s', 500, 570, 46], ['hm', 650, 150, 0, 70, 2.2, 0], ['r', 860, 280, -20], ['h', 1300, 120], ['sr', 1540, 340, 120, 30, -1.6, 2], ['h', 1770, 130], ['k', 1860, 570, 420, 30, 0], ['p', 2070, 555, 160, 10], ['h', 2450, 90], ['s', 2620, 240, 40, 0, 120, 2], ['h', 2800, 140], ['hm', 3130, 150, 0, 80, 2, 0], ['k', 3200, 40, 400, 30, 1], ['h', 3460, 160], ['h', 3780, 170]], [['g', 1080, 210], ['g', 1540, 340], ['g', 2070, 320], ['g', 2975, 300], ['g', 3620, 420]])
+      L('Sawmill', 7, hk(330, 320, [170, 150, 150, 140, 150, 160, 170]), [['s', 490, 570, 46], ['s', 810, 560, 46], ['s', 1130, 570, 46], ['s', 1450, 560, 46], ['s', 1770, 570, 46], ['s', 2090, 560, 46]], [['g', 970, 400], ['g', 1610, 400], ['g', 2250, 410]]),
+      L('Drifting Hooks', 7, [['h', 330, 170], ['hm', 650, 160, 0, 70, 2.2, 0], ['hm', 970, 150, 90, 0, 2.6, 0], ['hm', 1290, 140, 0, 80, 2, 1.5], ['h', 1610, 150], ['hm', 1930, 150, 0, 90, 1.8, 0], ['hm', 2250, 150, 100, 0, 2.4, 2], ['h', 2570, 170]], [['g', 810, 380], ['g', 1450, 380], ['g', 2090, 380], ['g', 2410, 380]]),
+      L('Ring Road', 8, hk(330, 320, [170, 160]), [['r', 860, 260, -15]], hk(1330, 320, [140]), [['r', 1560, 250, -20]], hk(2050, 320, [150, 160]), [['r', 2600, 250, -10]], hk(3050, 320, [150, 170]), [['g', 1060, 227], ['g', 1160, 226], ['g', 1790, 195], ['g', 2840, 236]]),
+      L('Saw Gate', 7, hk(330, 330, [170, 160]), [['s', 820, 215, 38], ['s', 820, 480, 38]], hk(990, 330, [150]), [['s', 1160, 230, 38], ['s', 1160, 500, 38]], hk(1320, 330, [160]), [['s', 1490, 220, 38], ['s', 1490, 490, 38]], hk(1650, 330, [160, 150, 170]), [['g', 820, 350], ['g', 1160, 365], ['g', 1490, 355], ['g', 2150, 420]]),
+      L('Swinging Saws', 7, hk(330, 320, [170, 150, 150, 150, 140, 160, 170]), [['s', 810, 390, 40, 0, 150, 2.4], ['s', 1130, 390, 40, 0, 150, 2.4, 1.2], ['s', 1450, 390, 40, 0, 150, 2], ['s', 1770, 390, 40, 0, 150, 2.2, 2]], [['g', 815, 311], ['g', 1450, 290], ['g', 2250, 400]]),
+      L('Spinners', 8, hk(330, 320, [170, 150]), [['sr', 880, 360, 120, 30, 1.6, 2]], hk(1110, 330, [140]), [['sr', 1380, 350, 130, 30, -1.4, 3]], hk(1640, 330, [140, 150]), [['sr', 2140, 380, 120, 30, 1.8, 2]], hk(2380, 320, [150, 170]), [['g', 880, 360], ['g', 1380, 350], ['g', 2140, 380], ['g', 2860, 400]]),
+      L('Low Ceiling', 7, hk(330, 320, [170, 150, 150, 150, 150, 150, 150, 170]), [['k', 560, 40, 1700, 30, 1], ['k', 1050, 570, 280, 30, 0], ['k', 1690, 570, 280, 30, 0]], [['g', 800, 360], ['g', 1130, 330], ['g', 1450, 330], ['g', 1770, 330], ['g', 2090, 330]]),
+      L('Ring Rush', 8, [['h', 330, 170], ['r', 560, 300, -25], ['r', 1000, 160, 0], ['h', 1350, 150], ['r', 1600, 290, -30], ['r', 2050, 140, 5], ['h', 2400, 140], ['h', 2720, 160], ['r', 2960, 290, -25], ['r', 3400, 150, 0], ['h', 3760, 160], ['h', 4080, 170]], [['g', 780, 200], ['g', 1200, 179], ['g', 1830, 190], ['g', 3180, 200]]),
+      L('Shift Work', 7, [['h', 330, 170], ['hm', 660, 150, 0, 90, 2, 0], ['s', 810, 530, 44, 120, 0, 2.2], ['hm', 990, 140, 0, 90, 2, 1], ['s', 1150, 530, 44, 120, 0, 2.2, 1.1], ['hm', 1320, 150, 100, 0, 2.4, 0], ['sr', 1560, 330, 110, 28, 1.8, 2], ['h', 1800, 130], ['h', 2140, 150], ['s', 2310, 520, 44, 0, 0, 1], ['hm', 2470, 150, 0, 80, 2, .5], ['h', 2800, 170]], [['g', 1150, 360], ['g', 1560, 330], ['g', 2310, 360], ['g', 2640, 400]]),
+      L('The Works', 8, [['h', 330, 170], ['s', 500, 570, 46], ['hm', 650, 150, 0, 70, 2.2, 0], ['r', 860, 280, -20], ['h', 1300, 120], ['sr', 1540, 340, 120, 30, -1.6, 2], ['h', 1770, 130], ['k', 1860, 570, 420, 30, 0], ['p', 2070, 555, 160, 10], ['h', 2450, 90], ['s', 2620, 240, 40, 0, 120, 2], ['h', 2800, 140], ['hm', 3130, 150, 0, 80, 2, 0], ['k', 3200, 40, 400, 30, 1], ['h', 3460, 160], ['h', 3780, 170]], [['g', 1080, 210], ['g', 1540, 340], ['g', 2070, 320], ['g', 2975, 300], ['g', 3620, 420]])
     ]);
     SL_LEVELS.push([
-      L('Crumble', 11, [['h', 330, 170]], hk(650, 320, [160, 150, 150, 150, 160], 'hc'), hk(2250, 320, [150, 170]), [['g', 810, 380], ['g', 1130, 380], ['g', 1450, 380], ['g', 1770, 380]]),
-      L('Tailwind', 11, hk(330, 320, [170, 160]), [['wd', 800, -300, 1000, 940, 520, 0]], hk(1100, 380, [160, 150, 150]), hk(2200, 320, [160, 150, 170]), [['g', 1290, 220], ['g', 1670, 220], ['g', 2520, 400], ['g', 3000, 400]]),
-      L('Updraft', 13, hk(330, 320, [170, 160]), [['wd', 830, -300, 260, 940, 0, -1900]], hk(1050, 320, [-80, -40]), [['wd', 1530, -300, 240, 940, 0, -1900]], hk(1750, 320, [60, 150]), [['wd', 2240, -300, 240, 940, 0, -1900]], hk(2460, 320, [-40, 60, 170]), [['g', 960, 100], ['g', 1650, 120], ['g', 2360, 120], ['g', 3100, 380]]),
-      L('Star Steps', 14, [['h', 330, 170], ['hc', 620, 130], ['h', 910, 90], ['hc', 1200, 50], ['h', 1490, 10], ['b', 1720, 420, 55], ['hc', 1960, 120], ['h', 2280, 150], ['hc', 2580, 120], ['h', 2880, 150], ['h', 3200, 170]], [['g', 1050, -40], ['g', 1490, -100], ['g', 1720, 260], ['g', 2730, 380]]),
-      L('Pinball', 14, [['h', 330, 170], ['b', 600, 450, 50], ['b', 790, 330, 40], ['h', 1000, 130], ['s', 1180, 570, 50], ['b', 1300, 420, 50], ['b', 1480, 300, 40], ['h', 1700, 130], ['b', 1980, 450, 50], ['h', 2220, 140], ['b', 2500, 430, 50], ['b', 2690, 310, 40], ['h', 2900, 140], ['h', 3220, 170]], [['g', 790, 210], ['g', 1480, 180], ['g', 1980, 300], ['g', 2690, 190]]),
-      L('Breakaway', 15, [['h', 330, 170], ['hc', 650, 150], ['hm', 960, 140, 0, 80, 2.2, 0], ['hc', 1280, 130], ['s', 1440, 530, 44], ['hm', 1600, 140, 100, 0, 2.4, 0], ['hc', 1920, 140], ['h', 2240, 150], ['hc', 2560, 150], ['s', 2720, 530, 44], ['hm', 2880, 150, 0, 80, 2, 1], ['h', 3200, 170]], [['g', 810, 380], ['g', 1440, 360], ['g', 2080, 380], ['g', 2720, 360]]),
-      L('Gauntlet', 16, [['h', 330, 170], ['h', 650, 150], ['k', 750, 570, 1500, 30, 0], ['sr', 900, 330, 110, 28, 1.6, 2], ['hc', 1150, 140], ['s', 1320, 260, 40, 0, 120, 2], ['h', 1480, 140], ['wd', 1600, -300, 520, 940, 420, 0], ['hm', 1880, 140, 0, 80, 2, 0], ['h', 2220, 140], ['sr', 2470, 330, 110, 28, -1.7, 2], ['h', 2720, 150], ['h', 3040, 170]], [['g', 900, 330], ['g', 1320, 420], ['g', 2050, 300], ['g', 2470, 330]]),
-      L('Storm', 16, [['h', 330, 170], ['wd', 500, -300, 700, 940, -260, 0], ['h', 650, 150], ['h', 960, 150], ['wd', 1200, -300, 240, 940, 0, -1800], ['hc', 1450, -40], ['s', 1600, 300, 44, 0, 160, 2.2], ['h', 1760, 60], ['b', 2000, 470, 55], ['hm', 2260, 120, 90, 0, 2.2, 0], ['h', 2600, 150], ['wd', 2760, -300, 600, 940, 380, 0], ['h', 3050, 150], ['h', 3400, 170]], [['g', 800, 400], ['g', 1320, 120], ['g', 2000, 300], ['g', 2430, 400], ['g', 3220, 400]]),
-      L('Long Night', 20, [['h', 330, 170], ['h', 650, 150], ['r', 860, 280, -20], ['hc', 1300, 120], ['s', 1460, 540, 44, 140, 0, 2.4], ['hm', 1620, 130, 0, 90, 2, 0], ['p', 1930, 600, 170, 10], ['h', 2280, 70], ['sr', 2520, 300, 120, 28, -1.7, 3], ['hc', 2760, 120], ['h', 3080, 140], ['wd', 3200, -300, 240, 940, 0, -1800], ['h', 3440, -40], ['hc', 3760, 60], ['h', 4080, 150], ['h', 4400, 170]], [['g', 1080, 210], ['g', 1930, 360], ['g', 2520, 300], ['g', 3320, 100], ['g', 4240, 400]]),
-      L('Last Line', 22, [['h', 330, 170], ['s', 490, 570, 46], ['hm', 650, 150, 0, 80, 2, 0], ['hc', 970, 140], ['wd', 1080, -300, 220, 940, 0, -1900], ['h', 1300, -60], ['r', 1560, 60, 10], ['hc', 2000, 110], ['sr', 2240, 330, 120, 28, 1.8, 2], ['hm', 2480, 130, 100, 0, 2.4, 0], ['k', 2550, 570, 700, 30, 0], ['b', 2800, 430, 50], ['hc', 3080, 120], ['s', 3240, 250, 40, 0, 130, 2], ['h', 3400, 140], ['hm', 3720, 140, 0, 90, 2, 0], ['h', 4040, 170]], [['g', 1190, 120], ['g', 1780, 80], ['g', 2240, 330], ['g', 2800, 280], ['g', 3880, 400]])
+      L('Crumble', 7, [['h', 330, 170]], hk(650, 320, [160, 150, 150, 150, 160], 'hc'), hk(2250, 320, [150, 170]), [['g', 810, 380], ['g', 1130, 380], ['g', 1450, 380], ['g', 1770, 380]]),
+      L('Tailwind', 7, hk(330, 320, [170, 160]), [['wd', 800, -300, 1000, 940, 520, 0]], hk(1100, 380, [160, 150, 150]), hk(2200, 320, [160, 150, 170]), [['g', 1290, 220], ['g', 1670, 220], ['g', 2520, 400], ['g', 3000, 400]]),
+      L('Updraft', 8, hk(330, 320, [170, 160]), [['wd', 830, -300, 260, 940, 0, -1900]], hk(1050, 320, [-80, -40]), [['wd', 1530, -300, 240, 940, 0, -1900]], hk(1750, 320, [60, 150]), [['wd', 2240, -300, 240, 940, 0, -1900]], hk(2460, 320, [-40, 60, 170]), [['g', 960, 100], ['g', 1650, 120], ['g', 2360, 120], ['g', 3100, 380]]),
+      L('Star Steps', 9, [['h', 330, 170], ['hc', 620, 130], ['h', 910, 90], ['hc', 1200, 50], ['h', 1490, 10], ['b', 1720, 420, 55], ['hc', 1960, 120], ['h', 2280, 150], ['hc', 2580, 120], ['h', 2880, 150], ['h', 3200, 170]], [['g', 1010, 45], ['g', 1465, -2], ['g', 1720, 260], ['g', 2730, 380]]),
+      L('Pinball', 9, [['h', 330, 170], ['b', 600, 450, 50], ['b', 790, 330, 40], ['h', 1000, 130], ['s', 1180, 570, 50], ['b', 1300, 420, 50], ['b', 1480, 300, 40], ['h', 1700, 130], ['b', 1980, 450, 50], ['h', 2220, 140], ['b', 2500, 430, 50], ['b', 2690, 310, 40], ['h', 2900, 140], ['h', 3220, 170]], [['g', 790, 210], ['g', 1480, 180], ['g', 1980, 300], ['g', 2690, 190]]),
+      L('Breakaway', 8, [['h', 330, 170], ['hc', 650, 150], ['hm', 960, 140, 0, 80, 2.2, 0], ['hc', 1280, 130], ['s', 1440, 530, 44], ['hm', 1600, 140, 100, 0, 2.4, 0], ['hc', 1920, 140], ['h', 2240, 150], ['hc', 2560, 150], ['s', 2720, 530, 44], ['hm', 2880, 150, 0, 80, 2, 1], ['h', 3200, 170]], [['g', 810, 380], ['g', 1440, 360], ['g', 2080, 380], ['g', 2720, 360]]),
+      L('Gauntlet', 8, [['h', 330, 170], ['h', 650, 150], ['k', 750, 570, 1500, 30, 0], ['sr', 900, 330, 110, 28, 1.6, 2], ['hc', 1150, 140], ['s', 1320, 260, 40, 0, 120, 2], ['h', 1480, 140], ['wd', 1600, -300, 520, 940, 420, 0], ['hm', 1880, 140, 0, 80, 2, 0], ['h', 2220, 140], ['sr', 2470, 330, 110, 28, -1.7, 2], ['h', 2720, 150], ['h', 3040, 170]], [['g', 900, 330], ['g', 1320, 420], ['g', 2050, 300], ['g', 2470, 330]]),
+      L('Storm', 9, [['h', 330, 170], ['wd', 500, -300, 700, 940, -260, 0], ['h', 650, 150], ['h', 960, 150], ['wd', 1200, -300, 240, 940, 0, -1800], ['hc', 1450, -40], ['s', 1600, 300, 44, 0, 160, 2.2], ['h', 1760, 60], ['b', 2000, 470, 55], ['hm', 2260, 120, 90, 0, 2.2, 0], ['h', 2600, 150], ['wd', 2760, -300, 600, 940, 380, 0], ['h', 3050, 150], ['h', 3400, 170]], [['g', 800, 400], ['g', 1320, 120], ['g', 2000, 300], ['g', 2430, 400], ['g', 3220, 400]]),
+      L('Long Night', 10, [['h', 330, 170], ['h', 650, 150], ['r', 860, 280, -20], ['hc', 1300, 120], ['s', 1460, 540, 44, 140, 0, 2.4], ['hm', 1620, 130, 0, 90, 2, 0], ['p', 1930, 600, 170, 10], ['h', 2280, 70], ['sr', 2520, 300, 120, 28, -1.7, 3], ['hc', 2760, 120], ['h', 3080, 140], ['wd', 3200, -300, 240, 940, 0, -1800], ['h', 3440, -40], ['hc', 3760, 60], ['h', 4080, 150], ['h', 4400, 170]], [['g', 1080, 210], ['g', 1930, 360], ['g', 2520, 300], ['g', 3320, 100], ['g', 4240, 400]]),
+      L('Last Line', 9, [['h', 330, 170], ['s', 490, 570, 46], ['hm', 650, 150, 0, 80, 2, 0], ['hc', 970, 140], ['wd', 1080, -300, 220, 940, 0, -1900], ['h', 1300, -60], ['r', 1560, 60, 10], ['hc', 2000, 110], ['sr', 2240, 330, 120, 28, 1.8, 2], ['hm', 2480, 130, 100, 0, 2.4, 0], ['k', 2550, 570, 700, 30, 0], ['b', 2800, 430, 50], ['hc', 3080, 120], ['s', 3240, 250, 40, 0, 130, 2], ['h', 3400, 140], ['hm', 3720, 140, 0, 90, 2, 0], ['h', 4040, 170]], [['g', 1190, 120], ['g', 1780, 80], ['g', 2240, 330], ['g', 2800, 280], ['g', 3880, 400]])
     ]);
 
-    const slRng = seed => { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; };
 
     function slCompile(def) {
       const S = { def, t: 0, run: 0, ph: 'ready', pt: 0, px: 100, py: 380 - SL_R, vx: 0, vy: 0, att: -1, L: 0, Lmin: 0, hold: false, prev: false, spin: 0, rot: 0, ground: true, gems: 0, gemsTot: 0, best: 0, ev: [], hooks: [], walls: [], pads: [], bumps: [], saws: [], spikes: [], gemL: [], rings: [], winds: [], fin: def.f, endless: !!def.endless, gen: 0, rng: null, die: '', tid: -1, attT: 0, lastHit: 0 };
       S.walls.push({ x: -500, y: 380, w: 640, h: 400 });
-      if (def.endless) { S.rng = slRng(def.seed || 1); S.fin = 1e9; S.gen = 0; }
+      if (def.endless) { S.rng = gpRng(def.seed || 1); S.fin = 1e9; S.gen = 0; }
       for (const o of def.o || []) slAdd(S, o);
       if (def.endless) slGen(S, 2400);
       S.gemsTot = S.gemL.length;
@@ -2238,7 +2246,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
 
     function slBg(th, w, h, far) {
       const c = document.createElement('canvas'); c.width = w; c.height = h;
-      const x = c.getContext('2d'), R = slRng(far ? 7 : 13), T0 = SL_TH[th];
+      const x = c.getContext('2d'), R = gpRng(far ? 7 : 13), T0 = SL_TH[th];
       x.fillStyle = far ? T0.far : T0.near;
       if (th === 'hills') {
         x.beginPath(); x.moveTo(0, h);
@@ -2289,14 +2297,6 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       else if (sk.hat === 'crown') { c.fillStyle = hc; c.beginPath(); c.moveTo(-7, -27); c.lineTo(-8, -35); c.lineTo(-3.5, -31); c.lineTo(0, -37); c.lineTo(3.5, -31); c.lineTo(8, -35); c.lineTo(7, -27); c.closePath(); c.fill(); }
       else if (sk.hat === 'halo') { c.strokeStyle = hc; c.lineWidth = 2.4; c.beginPath(); c.ellipse(0, -34, 8, 2.6, 0, 0, TAU); c.stroke(); }
       c.restore();
-    }
-    function slStar(c, x, y, r, on, glow) {
-      c.beginPath();
-      for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * .45 : r; c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
-      c.closePath();
-      c.fillStyle = on ? '#ffd23a' : 'rgba(255,255,255,.18)'; c.fill();
-      c.lineWidth = Math.max(1.5, r * .14); c.strokeStyle = on ? '#b07a00' : 'rgba(0,0,0,.25)'; c.stroke();
-      if (on && glow) { c.fillStyle = 'rgba(255,255,255,.5)'; c.beginPath(); c.arc(x - r * .2, y - r * .25, r * .18, 0, TAU); c.fill(); }
     }
     const SL_STAR_SVG = on => `<svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.2l7.1-.6z" fill="${on ? '#ffd23a' : 'rgba(255,255,255,.18)'}" stroke="${on ? '#b07a00' : 'rgba(0,0,0,.3)'}" stroke-width="1.4" stroke-linejoin="round"/></svg>`;
     const SL_GEM_SVG = '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 3h12l4 6-10 12L2 9z" fill="#3fe0d0" stroke="#0e8a80" stroke-width="1.5" stroke-linejoin="round"/><path d="M2 9h20M9 3l3 18 3-18" fill="none" stroke="#0e8a80" stroke-width="1"/></svg>';
@@ -2469,7 +2469,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
   <button type="button" class="gx-mode" data-a="endless"><b>Endless</b><span>Hooks forever. How far can you swing? <span>Best</span> ${P.endless} m</span></button>
   <button type="button" class="gx-mode" data-a="skins"><b>Outfits</b><span>Spend gems on new looks for your stickman.</span></button>
 </div>
-<p class="gx-help"><kbd>Mouse</kbd> <kbd>Touch</kbd> <kbd>Space</kbd> hold to grab, release to let go · <kbd>R</kbd> restart level · <kbd>Esc</kbd> pause.<br>Let go on the way up to fly far. Bounce pads launch you, rings boost you, cracked hooks break a moment after you grab them.</p>`);
+<p class="gx-help"><kbd>&#128433;</kbd> <kbd>&#9757;</kbd> <kbd>Space</kbd> <span>hold to grab, release to let go</span> · <kbd>R</kbd> <span>restart level</span> · <kbd>Esc</kbd> <span>pause</span><br><span>Let go on the way up to fly far.</span> <span>Bounce pads launch you, rings boost you, cracked hooks break a moment after you grab them.</span></p>`);
       }
       function showLevels() { scr = 'levels'; S = null; st.showMenu(levelsHtml()); }
       function showSkins() { scr = 'skins'; st.showMenu(skinsHtml()); skinCanvases(); }
@@ -2804,6 +2804,871 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       css: sxCss('swing-line', '#ff4f8a') + SL_CSS,
       engine: { SL_LEVELS, slCompile, slStep, slTarget, SL_STEP },
       mount: mountSwing
+    });
+
+  }
+
+  {
+
+    const SR_T = 32, SR_STEP = 1 / 120, SR_G = 2300, SR_RUN = 290, SR_JV = 720, SR_WJV = 700, SR_WJX = 310, SR_FALL = 980, SR_PW = 18, SR_PH = 42, SR_PC = 22;
+    const SR_ACTS = [];
+    const SR_TH = [
+      { n: 'Rooftops', sky: ['#1b2a4e', '#5a7fb8'], far: '#22355f', near: '#18264a', blk: ['#2d3550', '#3d4768', '#58648c'], acc: '#ffb23a' },
+      { n: 'Foundry', sky: ['#3a1f1a', '#c2603a'], far: '#5a2f24', near: '#3e1f18', blk: ['#3b3433', '#514746', '#76675f'], acc: '#ff6a2a' },
+      { n: 'Deep Caves', sky: ['#0c2a2e', '#2f7a78'], far: '#134044', near: '#0d3033', blk: ['#24403f', '#335a57', '#4f8580'], acc: '#4ff0c8' },
+      { n: 'The Lab', sky: ['#1a1238', '#5b3fa8'], far: '#2a1d58', near: '#1d1442', blk: ['#2e2a4a', '#403b66', '#6a62a8'], acc: '#ff4fd8' },
+      { n: 'Summit', sky: ['#4a1830', '#ff9a6a'], far: '#6a2a44', near: '#451b30', blk: ['#3a2e3c', '#524254', '#7a6480'], acc: '#ffd23a' }
+    ];
+
+    const srAct = (gold, silver, ...secs) => {
+      const H = 22, rows = [];
+      for (let y = 0; y < H; y++) rows.push('');
+      for (const s of secs) {
+        const w = Math.max(...s.map(r => r.length));
+        for (let y = 0; y < H; y++) { const r = s[y - (H - s.length)]; rows[y] += (r || '').padEnd(w, ' '); }
+      }
+      return { map: rows, gold, silver };
+    };
+    SR_ACTS.push(srAct(50, 75, [
+      '                                       ',
+      '                         *             ',
+      '                       =====           ',
+      '                                       ',
+      '   S                 ######            ',
+      '################    #######    ########',
+      '################    #######    ########',
+      '################    #######    ########'
+    ], [
+      '                                          ',
+      '                                          ',
+      '                                  ##      ',
+      '   C        ^^         ^^^        ##      ',
+      '###########################   ####### ####',
+      '###########################   ####### ####',
+      '###########################   ####### ####'
+    ], [
+      '                    *                         ',
+      '                  ====                        ',
+      '                                              ',
+      '             ====        ====                 ',
+      '                                              ',
+      '        ====                  ====            ',
+      '                                              ',
+      '  C                                           ',
+      '######^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^#########',
+      '###############################################',
+      '###############################################'
+    ], [
+      '                                               ',
+      '                                               ',
+      '              ##############                   ',
+      '              ##############          *        ',
+      '              ##############       ######      ',
+      '  C                                ######      ',
+      '###############################^^^^##########  ',
+      '###############################################',
+      '###############################################'
+    ], [
+      '                                        ',
+      '              #                         ',
+      '              #           *             ',
+      '              #        ======           ',
+      '              #                         ',
+      '              #    ######               ',
+      '              #    #                    ',
+      '              #    #                    ',
+      '              #    #                    ',
+      '              #    #                    ',
+      '                   #                    ',
+      '  C                #                    ',
+      '#############################   ########',
+      '#############################   ########'
+    ], [
+      '                                    ',
+      '                                    ',
+      '                                    ',
+      '   C          o             E       ',
+      '####################################',
+      '####################################',
+      '####################################'
+    ]));
+    SR_ACTS.push(srAct(70, 105, [
+      '                                     ',
+      '                                     ',
+      '  S                                  ',
+      '#########    #####  o  #####    #####',
+      '#########    ####       ####    #####',
+      '#########    ####       ####    #####'
+    ], [
+      '                                              ',
+      '                         *                    ',
+      '                       #####                  ',
+      '                 h                            ',
+      '                                              ',
+      '  C                                h          ',
+      '##############################################',
+      '##############################################',
+      '##############################################'
+    ], [
+      '                                                ',
+      '                                                ',
+      '      ##########################                ',
+      '      ##########################                ',
+      '      ##########################    ####        ',
+      '  C                                 ####        ',
+      '##################################^^####   #####',
+      '#######################################   #####',
+      '#######################################   #####'
+    ], [
+      '                 #                             ',
+      '                 #                             ',
+      '                 #  *                          ',
+      '                 #                             ',
+      '                 #    ######                   ',
+      '                 #    #                        ',
+      '                 #    #            j           ',
+      '                 #    #                        ',
+      '                 #    #                        ',
+      '                 #    #                        ',
+      '  C                   #                        ',
+      '#############################     #########    ',
+      '#############################^^^^^#########    ',
+      '###############################################'
+    ], [
+      '                                                ',
+      '                                                ',
+      '                     xxx   xxx   xxx            ',
+      '               xxx                              ',
+      '          xxx                              *    ',
+      '  C                                      xxxx   ',
+      '#########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^####',
+      '################################################',
+      '################################################'
+    ], [
+      '                                         ',
+      '                                         ',
+      '                                         ',
+      '   C       r            o        E       ',
+      '#########################################',
+      '#########################################',
+      '#########################################'
+    ]));
+    SR_ACTS.push(srAct(80, 120, [
+      '                                ',
+      '                                ',
+      '  S                             ',
+      '########     T      ####    ####',
+      '########     #      ####    ####',
+      '########^^^^^#^^^^^^####^^^^####',
+      '################################'
+    ], [
+      '                       *                ',
+      '                                        ',
+      '                    #######             ',
+      '                    #######             ',
+      '                                        ',
+      '                                        ',
+      '  C           T                  T      ',
+      '###########^^^#^^^^^^^^^^^^^^^^^^#######',
+      '########################################',
+      '########################################'
+    ], [
+      '                                             ',
+      '     z                                       ',
+      '                                             ',
+      '                                             ',
+      '                    *                        ',
+      '                                 Z           ',
+      '                               ####          ',
+      '                               ####          ',
+      '                               ####          ',
+      '  C  T                         ####          ',
+      '######                         ############  ',
+      '######^^^^^^^^^^^^^^^^^^^^^^^^^############  ',
+      '#############################################'
+    ], [
+      '                                                ',
+      '                                                ',
+      '                                 *              ',
+      '                                                ',
+      '                                                ',
+      '              m          m         m            ',
+      '  C                                        #####',
+      '########                                   #####',
+      '########^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^#####',
+      '################################################'
+    ], [
+      '                                      ',
+      '                                      ',
+      '                                      ',
+      '              #   =====               ',
+      '              #                       ',
+      '              #         ====          ',
+      '              #   k             *     ',
+      '          ==  #      ====    ######   ',
+      '              #                       ',
+      '  C       T   #                       ',
+      '###########^^^#^^^^^^^^^^^^^^^^^^^^^^^',
+      '######################################'
+    ], [
+      '                                       ',
+      '                                       ',
+      '                                       ',
+      '   C       o       o       E           ',
+      '#######################################',
+      '#######################################',
+      '#######################################'
+    ]));
+    SR_ACTS.push(srAct(95, 140, [
+      '                                          ',
+      '                                          ',
+      '                                          ',
+      '         l     l     l                    ',
+      '  S                                       ',
+      '##########################################',
+      '##########################################',
+      '##########################################'
+    ], [
+      '      ########################################        ',
+      '      ########################################        ',
+      '      #                                      #        ',
+      '      #   l    l    l    l    l    l   *     #        ',
+      '      #                                      #        ',
+      '  C                                                   ',
+      '######################################################',
+      '######################################################'
+    ], [
+      '                     #                           ',
+      '                     #                           ',
+      '                     #                           ',
+      '                     #>                          ',
+      '                     #    ######                 ',
+      '                     #    #                      ',
+      '                     #   <#                      ',
+      '                     #    #                      ',
+      '                     #>   #           *          ',
+      '                     #    #        ######        ',
+      '                          #                      ',
+      '  C          h            #                      ',
+      '###########################     ##  r    ########',
+      '###########################^^^^^##^^^^^^^########',
+      '#################################################'
+    ], [
+      '                                              ',
+      '                                              ',
+      '                                    *         ',
+      '                                              ',
+      '        xx   xx    xx    xx    xx   xx        ',
+      '  C        o          o          o        ### ',
+      '######^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^#####',
+      '##############################################'
+    ], [
+      '                                         ',
+      '                                         ',
+      '                                         ',
+      '   C    l    h      l      o      E      ',
+      '#########################################',
+      '#########################################',
+      '#########################################'
+    ]));
+    SR_ACTS.push(srAct(110, 165, [
+      '                                          ',
+      '                                          ',
+      '                                          ',
+      '                         o                ',
+      '  S          o                            ',
+      '#######    #####     #########    ####    ',
+      '#######^^^^#####^^^^^#########^^^^####    ',
+      '##########################################'
+    ], [
+      '                   #                                ',
+      '                   #                                ',
+      '                   #>                               ',
+      '                   #                                ',
+      '                   #    ######                      ',
+      '                   #   <#                           ',
+      '                   #    #                           ',
+      '                   #>   #          *                ',
+      '                   #    #        =====              ',
+      '                   #    #                           ',
+      '                        #                           ',
+      '  C                     #      T         T          ',
+      '#########################      #^^^^^^^^^####       ',
+      '#########################^^^^^^#####################'
+    ], [
+      '                                           ',
+      '     z                                     ',
+      '                                           ',
+      '               o                           ',
+      '                                           ',
+      '                                 Z         ',
+      '                               ####        ',
+      '             *                 ####        ',
+      '                               ####        ',
+      '  C  T                         #########   ',
+      '######        m                #########   ',
+      '######^^^^^^^^^^^^^^^^^^^^^^^^^#########   ',
+      '###########################################'
+    ], [
+      '                                                  ',
+      '                                                  ',
+      '        xx    xx    xx    xx    xx    xx          ',
+      '                                                  ',
+      '                                                  ',
+      '  C       l          l          l           *     ',
+      '####                                       ####   ',
+      '####^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^####   ',
+      '##################################################'
+    ], [
+      '                                                ',
+      '                                                ',
+      '                                                ',
+      '                      r             r           ',
+      '              j                                 ',
+      '  C                                       E     ',
+      '################################################',
+      '################################################',
+      '################################################'
+    ]));
+
+    function srCompile(act) {
+      const rows = act.map, H = rows.length, W = Math.max(...rows.map(r => r.length));
+      const g = new Uint8Array(W * H), cr = new Float32Array(W * H);
+      const S = { W, H, g, cr, ents: [], saws: [], plats: [], lasers: [], zips: [], stars: [], cps: [], sx: 64, sy: 64, ex: 0, ey: 0, t: 0, run: 0, x: 0, y: 0, vx: 0, vy: 0, onG: false, coy: 0, buf: 0, jh: false, wall: 0, wallT: 0, wdir: 0, wj: 0, crouch: false, slide: 0, face: 1, dead: 0, cp: -1, cpx: 0, cpy: 0, deaths: 0, got: 0, won: 0, zip: -1, zipCd: 0, plat: -1, ph: 0, ev: [], spring: 0, prevJ: false, act };
+      const code = { '#': 1, '^': 2, 'v': 3, '<': 4, '>': 5, '=': 6, 'x': 7, 'T': 8 };
+      const zs = [], Zs = [], crx = [];
+      for (let y = 0; y < H; y++) {
+        const r = rows[y];
+        for (let x = 0; x < W; x++) {
+          const ch = r[x] || ' ', i = y * W + x, cx = x * SR_T + SR_T / 2, cy = y * SR_T + SR_T / 2;
+          if (code[ch]) { g[i] = code[ch]; if (ch === 'x') crx.push(i); }
+          else if (ch === 'S') { S.sx = cx; S.sy = (y + 1) * SR_T; }
+          else if (ch === 'E') { S.ex = cx; S.ey = (y + 1) * SR_T; }
+          else if (ch === 'C') S.cps.push({ x: cx, y: (y + 1) * SR_T, on: 0, f: 0 });
+          else if (ch === '*') S.stars.push({ x: cx, y: cy, got: 0 });
+          else if (ch === 'o') S.saws.push({ k: 0, x: cx, y: cy, x0: cx, y0: cy, r: 19, a: 0, b: 0, p: 1, ph: 0 });
+          else if (ch === 'O') S.saws.push({ k: 0, x: cx, y: cy, x0: cx, y0: cy, r: 38, a: 0, b: 0, p: 1, ph: 0 });
+          else if (ch === 'h') S.saws.push({ k: 1, x: cx, y: cy, x0: cx, y0: cy, r: 19, a: 3 * SR_T, b: 0, p: 2.6, ph: x * .7 });
+          else if (ch === 'j') S.saws.push({ k: 1, x: cx, y: cy, x0: cx, y0: cy, r: 19, a: 0, b: 2.5 * SR_T, p: 2.2, ph: x * .9 });
+          else if (ch === 'r') S.saws.push({ k: 2, x: cx, y: cy, x0: cx, y0: cy, r: 19, a: 3 * SR_T, b: 0, p: 1.7 * (x % 2 ? 1 : -1), ph: x * .5 });
+          else if (ch === 'm') S.plats.push({ x0: x * SR_T, y0: y * SR_T, x: x * SR_T, y: y * SR_T, w: 3 * SR_T, a: 4 * SR_T, b: 0, p: 4, ph: 0, dx: 0, dy: 0 });
+          else if (ch === 'k') S.plats.push({ x0: x * SR_T, y0: y * SR_T, x: x * SR_T, y: y * SR_T, w: 3 * SR_T, a: 0, b: 3 * SR_T, p: 3.6, ph: 0, dx: 0, dy: 0 });
+          else if (ch === 'l') S.lasers.push({ x: cx, y0: y * SR_T, y1: y * SR_T, on: 0, ph: (x * .37) % 2.8, warn: 0 });
+          else if (ch === 'z') zs.push([cx, y * SR_T + 6]);
+          else if (ch === 'Z') Zs.push([cx, y * SR_T + 6]);
+        }
+      }
+      for (const L of S.lasers) { let ty = Math.floor(L.y0 / SR_T) + 1; while (ty < H && !g[ty * W + Math.floor(L.x / SR_T)]) ty++; L.y1 = ty * SR_T; }
+      for (const z of zs) { let bi = -1, bd = 1e9; Zs.forEach((Z, i) => { const d = Z[0] - z[0]; if (d > 0 && d < bd) { bd = d; bi = i; } }); if (bi >= 0) S.zips.push({ x1: z[0], y1: z[1], x2: Zs[bi][0], y2: Zs[bi][1] }); }
+      S.crx = Int32Array.from(crx);
+      S.cps.sort((a, b) => a.x - b.x);
+      srSpawn(S, S.sx, S.sy);
+      return S;
+    }
+    function srSpawn(S, x, y) {
+      S.x = x; S.y = y - .01; S.vx = 0; S.vy = 0; S.onG = false; S.coy = 0; S.buf = 0; S.wall = 0; S.wallT = 0; S.wj = 0; S.crouch = false; S.slide = 0; S.zip = -1; S.zipCd = 0; S.plat = -1; S.dead = 0; S.face = 1; S.spring = 0;
+    }
+    const srTile = (S, tx, ty) => tx < 0 || tx >= S.W ? 1 : ty < 0 || ty >= S.H ? 0 : S.g[ty * S.W + tx];
+    const srSolid = (S, tx, ty) => { const v = srTile(S, tx, ty); return v === 1 || v === 8 || (v === 7 && S.cr[ty * S.W + tx] >= 0); };
+    function srEv(S, k, a, b) { S.ev.push(k, a || 0, b || 0); }
+    function srKill(S, why) { if (S.dead || S.won) return; S.dead = .001; S.deaths++; srEv(S, 1, S.x, S.y - 20); S.zip = -1; }
+    function srMove(S, dt) {
+      const t = S.t;
+      for (const s of S.saws) {
+        if (s.k === 1) { const v = Math.sin(t * TAU / s.p + s.ph); s.x = s.x0 + s.a * v; s.y = s.y0 + s.b * v; }
+        else if (s.k === 2) { const a = t * s.p + s.ph; s.x = s.x0 + Math.cos(a) * s.a; s.y = s.y0 + Math.sin(a) * s.a; }
+      }
+      for (const p of S.plats) {
+        const v = Math.sin(t * TAU / p.p + p.ph), nx = p.x0 + p.a * v, ny = p.y0 + p.b * v;
+        p.dx = nx - p.x; p.dy = ny - p.y; p.x = nx; p.y = ny;
+      }
+      for (const L of S.lasers) { const c = (t + L.ph) % 2.8; L.on = c < 1.3 ? 1 : 0; L.warn = !L.on && c > 2.4 ? 1 : 0; }
+      for (let q = 0; q < S.crx.length; q++) {
+        const i = S.crx[q], c = S.cr[i];
+        if (c > 0) { S.cr[i] = c + dt; if (S.cr[i] > .5) { S.cr[i] = -3; srEv(S, 6, (i % S.W) * SR_T + 16, Math.floor(i / S.W) * SR_T + 16); } }
+        else if (c < 0) { S.cr[i] = Math.min(0, c + dt); if (S.cr[i] === 0) { const tx = i % S.W, ty = Math.floor(i / S.W), x0 = tx * SR_T, y0 = ty * SR_T; if (S.x + SR_PW / 2 > x0 && S.x - SR_PW / 2 < x0 + SR_T && S.y > y0 && S.y - SR_PH < y0 + SR_T) S.cr[i] = -.2; } }
+      }
+    }
+    function srHit(S, x0, y0, x1, y1) {
+      const tx0 = Math.floor(x0 / SR_T), tx1 = Math.floor((x1 - .001) / SR_T), ty0 = Math.floor(y0 / SR_T), ty1 = Math.floor((y1 - .001) / SR_T);
+      for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) if (srSolid(S, tx, ty)) return true;
+      return false;
+    }
+    function srStep(S, inp) {
+      const dt = SR_STEP;
+      if (S.won) { S.won += dt; S.t += dt; srMove(S, dt); return; }
+      if (S.dead) {
+        S.dead += dt; S.t += dt; srMove(S, dt);
+        if (S.dead > .5) { const c = S.cp >= 0 ? S.cps[S.cp] : null; srSpawn(S, c ? c.x : S.sx, c ? c.y : S.sy); srEv(S, 7, S.x, S.y); }
+        return;
+      }
+      S.t += dt; S.run += dt;
+      srMove(S, dt);
+      const jEdge = inp.j && !S.prevJ; S.prevJ = inp.j;
+      if (jEdge) S.buf = .13;
+      else if (S.buf > 0) S.buf -= dt;
+      if (S.zipCd > 0) S.zipCd -= dt;
+      const ph = S.crouch ? SR_PC : SR_PH;
+      if (S.zip >= 0) {
+        const z = S.zips[S.zip], dx = z.x2 - z.x1, dy = z.y2 - z.y1, len = Math.hypot(dx, dy);
+        S.vx = dx / len * 420; S.vy = dy / len * 420;
+        S.x += S.vx * dt; S.y += S.vy * dt; S.face = dx > 0 ? 1 : -1;
+        if (S.buf > 0 || S.x >= z.x2 - 4) { S.zip = -1; S.zipCd = .35; S.buf = 0; S.vy = S.x >= z.x2 - 4 ? -260 : -560; S.vx = S.face * 300; srEv(S, 2, 0, 0); }
+        else if (srHit(S, S.x - SR_PW / 2, S.y - SR_PH, S.x + SR_PW / 2, S.y)) { S.zip = -1; S.zipCd = .35; }
+      } else {
+        let dir = (inp.r ? 1 : 0) - (inp.l ? 1 : 0);
+        if (S.wj > 0) { S.wj -= dt; if (dir === S.wdir) dir = 0; }
+        const wantC = inp.d && S.onG;
+        if (wantC && !S.crouch) { S.crouch = true; if (Math.abs(S.vx) > 180) { S.slide = .55; S.vx = Math.sign(S.vx) * Math.max(Math.abs(S.vx), 340); srEv(S, 8, 0, 0); } }
+        if (S.crouch && !inp.d && !srHit(S, S.x - SR_PW / 2 + 1, S.y - SR_PH, S.x + SR_PW / 2 - 1, S.y - SR_PC)) { S.crouch = false; S.slide = 0; }
+        if (S.crouch && !S.onG && !srHit(S, S.x - SR_PW / 2 + 1, S.y - SR_PH, S.x + SR_PW / 2 - 1, S.y - SR_PC)) { S.crouch = false; S.slide = 0; }
+        if (S.slide > 0) { S.slide -= dt; S.vx -= Math.sign(S.vx) * Math.min(Math.abs(S.vx), 260 * dt); if (Math.abs(S.vx) < 90) S.slide = 0; }
+        else {
+          const max = S.crouch ? SR_RUN * .38 : SR_RUN, acc = S.onG ? (dir ? 2600 : 3000) : (dir ? 1700 : 500);
+          const tgt = dir * max;
+          if (S.vx < tgt) S.vx = Math.min(tgt, S.vx + acc * dt); else if (S.vx > tgt) S.vx = Math.max(tgt, S.vx - acc * dt);
+          if (dir) S.face = dir;
+        }
+        S.vy += SR_G * dt;
+        if (!inp.j && S.vy < 0 && !S.spring) S.vy += SR_G * 1.25 * dt;
+        if (S.vy > 0) S.spring = 0;
+        const sliding = !S.onG && S.wall && dir === S.wall && S.vy > 0;
+        if (sliding) S.vy = Math.min(S.vy, 150);
+        if (S.vy > SR_FALL) S.vy = SR_FALL;
+        if (S.onG) S.coy = .09; else if (S.coy > 0) S.coy -= dt;
+        if (S.wall) S.wallT = .1, S.wdir = S.wall; else if (S.wallT > 0) S.wallT -= dt;
+        if (S.buf > 0 && !(S.crouch && srHit(S, S.x - SR_PW / 2 + 1, S.y - SR_PH, S.x + SR_PW / 2 - 1, S.y - SR_PC))) {
+          if (S.onG || S.coy > 0) { S.vy = -SR_JV; S.onG = false; S.coy = 0; S.buf = 0; S.crouch = false; S.slide = 0; S.plat = -1; srEv(S, 2, 0, 0); }
+          else if (S.wallT > 0) { S.vy = -SR_WJV; S.vx = -S.wdir * SR_WJX; S.wj = .17; S.wallT = 0; S.buf = 0; S.face = -S.wdir; srEv(S, 3, S.x + S.wdir * 10, S.y - 20); }
+        }
+        if (S.plat >= 0) { const p = S.plats[S.plat]; S.x += p.dx; S.y = p.y; }
+        const h2 = S.crouch ? SR_PC : SR_PH;
+        S.x += S.vx * dt;
+        if (srHit(S, S.x - SR_PW / 2, S.y - h2, S.x + SR_PW / 2, S.y - .5)) {
+          if (S.vx > 0) S.x = Math.floor((S.x + SR_PW / 2) / SR_T) * SR_T - SR_PW / 2 - .01;
+          else if (S.vx < 0) S.x = Math.ceil((S.x - SR_PW / 2) / SR_T) * SR_T + SR_PW / 2 + .01;
+          else { const l = srHit(S, S.x - SR_PW / 2, S.y - h2, S.x, S.y - .5); S.x += l ? 1 : -1; }
+          S.vx = 0; S.slide = 0;
+        }
+        const oy = S.y;
+        S.y += S.vy * dt;
+        const wasG = S.onG;
+        S.onG = false;
+        if (S.vy >= 0) {
+          if (srHit(S, S.x - SR_PW / 2, S.y - 1, S.x + SR_PW / 2, S.y)) {
+            S.y = Math.floor(S.y / SR_T) * SR_T; S.onG = true;
+            const ty = Math.floor(S.y / SR_T), t0 = Math.floor((S.x - SR_PW / 2) / SR_T), t1 = Math.floor((S.x + SR_PW / 2 - .01) / SR_T);
+            let spring = false;
+            for (let tx = t0; tx <= t1; tx++) { const v = srTile(S, tx, ty); if (v === 8) spring = true; if (v === 7 && S.cr[ty * S.W + tx] === 0) S.cr[ty * S.W + tx] = .001; }
+            if (spring) { S.vy = -1080; S.onG = false; S.spring = 1; S.crouch = false; S.slide = 0; srEv(S, 4, S.x, S.y); }
+            else { if (!wasG && S.vy > 500) srEv(S, 5, S.vy, 0); S.vy = 0; }
+          } else {
+            const ty = Math.floor(S.y / SR_T);
+            if (Math.floor(oy / SR_T) < ty || oy === ty * SR_T) {
+              const t0 = Math.floor((S.x - SR_PW / 2) / SR_T), t1 = Math.floor((S.x + SR_PW / 2 - .01) / SR_T);
+              for (let tx = t0; tx <= t1; tx++) if (srTile(S, tx, ty) === 6 && !inp.d && oy <= ty * SR_T + .5) { S.y = ty * SR_T; S.vy = 0; S.onG = true; break; }
+            }
+            let landed = -1;
+            for (let i = 0; i < S.plats.length; i++) {
+              const p = S.plats[i];
+              if (S.x + SR_PW / 2 > p.x && S.x - SR_PW / 2 < p.x + p.w && oy <= p.y - p.dy + 1 && S.y >= p.y - .5) { landed = i; break; }
+            }
+            if (landed >= 0 && !inp.d) { S.y = S.plats[landed].y; S.vy = 0; S.onG = true; }
+            S.plat = S.onG ? landed : -1;
+          }
+        } else {
+          S.plat = -1;
+          if (srHit(S, S.x - SR_PW / 2, S.y - h2, S.x + SR_PW / 2, S.y - h2 + 1)) { S.y = Math.ceil((S.y - h2) / SR_T) * SR_T + h2; S.vy = 0; S.spring = 0; }
+        }
+        if (S.plat >= 0 && !S.onG) S.plat = -1;
+        const hh = S.crouch ? SR_PC : SR_PH;
+        S.wall = 0;
+        if (!S.onG) {
+          if (srHit(S, S.x + SR_PW / 2, S.y - hh + 4, S.x + SR_PW / 2 + 2, S.y - 8)) S.wall = 1;
+          else if (srHit(S, S.x - SR_PW / 2 - 2, S.y - hh + 4, S.x - SR_PW / 2, S.y - 8)) S.wall = -1;
+        }
+        if (S.zipCd <= 0 && !S.onG) {
+          const hx = S.x, hy = S.y - SR_PH - 4;
+          for (let i = 0; i < S.zips.length; i++) {
+            const z = S.zips[i];
+            if (hx < z.x1 - 4 || hx > z.x2) continue;
+            const u = (hx - z.x1) / (z.x2 - z.x1), ly = z.y1 + (z.y2 - z.y1) * u;
+            if (Math.abs(hy - ly) < 14) { S.zip = i; S.y = ly + SR_PH + 4; S.crouch = false; S.slide = 0; srEv(S, 9, hx, ly); break; }
+          }
+        }
+      }
+      const h3 = S.crouch ? SR_PC : SR_PH, x0 = S.x - SR_PW / 2 + 3, x1 = S.x + SR_PW / 2 - 3, y0 = S.y - h3 + 3, y1 = S.y - 2;
+      const tx0 = Math.floor(x0 / SR_T), tx1 = Math.floor(x1 / SR_T), ty0 = Math.floor(y0 / SR_T), ty1 = Math.floor(y1 / SR_T);
+      for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) {
+        const v = srTile(S, tx, ty);
+        if (v < 2 || v > 5) continue;
+        const bx = tx * SR_T, by = ty * SR_T;
+        let a0 = bx + 3, a1 = bx + 29, b0 = by + 3, b1 = by + 29;
+        if (v === 2) b0 = by + 14; else if (v === 3) b1 = by + 18; else if (v === 4) a0 = bx + 14; else a1 = bx + 18;
+        if (x1 > a0 && x0 < a1 && y1 > b0 && y0 < b1) { srKill(S, 'spike'); return; }
+      }
+      for (const s of S.saws) {
+        const cx = clamp(s.x, x0, x1), cy = clamp(s.y, y0, y1), dx = s.x - cx, dy = s.y - cy;
+        if (dx * dx + dy * dy < (s.r - 2) * (s.r - 2)) { srKill(S, 'saw'); return; }
+      }
+      for (const L of S.lasers) if (L.on && L.x > x0 - 3 && L.x < x1 + 3 && y1 > L.y0 && y0 < L.y1) { srKill(S, 'laser'); return; }
+      if (S.y - h3 > S.H * SR_T + 40) { srKill(S, 'fall'); return; }
+      for (let i = 0; i < S.cps.length; i++) {
+        const c = S.cps[i];
+        if (i > S.cp && Math.abs(S.x - c.x) < 22 && S.y > c.y - 80 && S.y - h3 < c.y + 4) { S.cp = i; for (let k = 0; k <= i; k++) S.cps[k].on = 1; c.f = 1; srEv(S, 10, c.x, c.y); }
+      }
+      for (const s of S.stars) if (!s.got && Math.abs(S.x - s.x) < 24 && s.y > S.y - h3 - 14 && s.y < S.y + 14) { s.got = 1; S.got++; srEv(S, 11, s.x, s.y); }
+      if (S.ex && Math.abs(S.x - S.ex) < 22 && S.y > S.ey - 70 && S.y - h3 < S.ey) { S.won = .001; srEv(S, 12, S.ex, S.ey); }
+    }
+
+    function srDrawMan(c, S, ftime, sc) {
+      const x = S.x, y = S.y, f = S.face;
+      const sp = Math.abs(S.vx);
+      let pose = 'idle';
+      if (S.zip >= 0) pose = 'zip';
+      else if (S.slide > 0) pose = 'slide';
+      else if (S.crouch) pose = 'crouch';
+      else if (!S.onG && S.wall && S.vy > 0) pose = 'wall';
+      else if (!S.onG) pose = S.vy < 0 ? 'jump' : 'fall';
+      else if (sp > 20) pose = 'run';
+      const ph = S.t * (sp / 22 + 2);
+      let hip = [0, -18], neck = [0, -34], head = [0, -42], hd = 7.5, A = [], Lg = [];
+      if (pose === 'idle') { const b = Math.sin(ftime * 2.5) * .8; neck = [0, -34 + b]; head = [0, -42 + b]; A = [[-4, -24, -6, -15], [4, -24, 6, -15]]; Lg = [[-4, -9, -5, 0], [4, -9, 5, 0]]; }
+      else if (pose === 'run') { const s = Math.sin(ph), c2 = Math.cos(ph); hip = [0, -18 + Math.abs(c2) * -1.5]; neck = [3, -33]; head = [5, -41]; A = [[3 + s * -8, -24, 3 + s * -12, -17 + Math.abs(s) * -3], [3 + s * 8, -24, 3 + s * 12, -17 - Math.abs(s) * 3]]; Lg = [[s * 9, -9 + Math.max(0, -c2) * -4, s * 14, Math.max(0, c2) * -8], [-s * 9, -9 + Math.max(0, c2) * -4, -s * 14, Math.max(0, -c2) * -8]]; }
+      else if (pose === 'jump') { hip = [0, -20]; neck = [1, -35]; head = [2, -43]; A = [[-7, -32, -10, -40], [7, -30, 11, -37]]; Lg = [[5, -12, 1, -4], [-4, -10, -8, -2]]; }
+      else if (pose === 'fall') { A = [[-9, -28, -15, -33], [9, -28, 15, -33]]; Lg = [[6, -9, 9, 0], [-6, -9, -9, -1]]; }
+      else if (pose === 'wall') { neck = [-2, -34]; head = [-4, -42]; A = [[5, -30, 9, -36], [4, -24, 9, -22]]; Lg = [[4, -10, 8, -4], [-3, -8, -2, 0]]; }
+      else if (pose === 'slide') { hip = [-2, -8]; neck = [-12, -16]; head = [-19, -20]; A = [[-12, -10, -16, -3], [-6, -14, -2, -6]]; Lg = [[6, -6, 16, -2], [4, -4, 13, 0]]; }
+      else if (pose === 'crouch') { hip = [-1, -10]; neck = [2, -21]; head = [3, -29]; A = [[4, -15, 8, -10], [-2, -15, 2, -9]]; Lg = [[6, -7, 5, 0], [-5, -6, -6, 0]]; }
+      else if (pose === 'zip') { hip = [0, -18]; neck = [0, -34]; head = [-3, -40]; A = [[-3, -40, 0, -48], [4, -40, 3, -48]]; Lg = [[4, -8, 6, 0], [-3, -8, -6, -1]]; }
+      c.save(); c.translate(x, y); c.scale(f * sc, sc);
+      c.lineCap = 'round'; c.lineJoin = 'round';
+      const stroke = (w, col) => {
+        c.strokeStyle = col; c.lineWidth = w; c.beginPath();
+        c.moveTo(hip[0], hip[1]); c.lineTo(neck[0], neck[1]);
+        for (const a of A) { c.moveTo(neck[0], neck[1] + 3); c.lineTo(a[0], a[1]); c.lineTo(a[2], a[3]); }
+        for (const l of Lg) { c.moveTo(hip[0], hip[1]); c.lineTo(l[0], l[1]); c.lineTo(l[2], l[3]); }
+        c.stroke();
+      };
+      stroke(6.5, 'rgba(255,255,255,.85)'); stroke(4, '#0b0e18');
+      c.fillStyle = 'rgba(255,255,255,.85)'; c.beginPath(); c.arc(head[0], head[1], hd + 1.6, 0, TAU); c.fill();
+      c.fillStyle = '#0b0e18'; c.beginPath(); c.arc(head[0], head[1], hd, 0, TAU); c.fill();
+      c.restore();
+    }
+
+    const SR_CSS = `
+.gm-spike-run .sr-acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,170px),1fr));gap:8px}
+.gm-spike-run .sr-act{appearance:none;text-align:left;border:2px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#eaf0ff;border-radius:12px;padding:10px 12px;cursor:pointer;font-family:${FONT};min-height:96px;position:relative}
+.gm-spike-run .sr-act:hover{border-color:var(--ac);background:rgba(255,255,255,.12)}
+.gm-spike-run .sr-act:disabled{opacity:.38;pointer-events:none}
+.gm-spike-run .sr-act b{display:block;font:900 17px/1.1 ${FONT}}
+.gm-spike-run .sr-act em{display:block;font:800 11px/1 ${FONT};font-style:normal;letter-spacing:.12em;text-transform:uppercase;opacity:.6;margin-bottom:4px}
+.gm-spike-run .sr-act span{display:block;font:700 12px/1.4 ${FONT};opacity:.85;margin-top:5px}
+.gm-spike-run .sr-act i{position:absolute;right:10px;top:10px;width:22px;height:22px;border-radius:50%;font-style:normal}
+.gm-spike-run .sr-act i.g{background:radial-gradient(circle at 35% 35%,#fff4b0,#e0a91a 60%,#9a6a00)}
+.gm-spike-run .sr-act i.s{background:radial-gradient(circle at 35% 35%,#ffffff,#b8c0d0 60%,#6a7488)}
+.gm-spike-run .sr-act i.b{background:radial-gradient(circle at 35% 35%,#ffd9b0,#c07a3a 60%,#7a4418)}
+.gm-spike-run .sr-act.next{border-color:var(--ac)}
+`;
+
+    function mountSpike(root, api) {
+      const ID = 'spike-run', W = 960, H = 540;
+      const A = makeAudio(api);
+      const pad = [{ s: 'l', b: 1, t: '&#9664;', c: 'mv' }, { s: 'l', b: 2, t: '&#9654;', c: 'mv' }, { s: 'r', b: 4, t: '&#9660;' }, { s: 'r', b: 8, t: 'JUMP', c: 'big' }];
+      const st = makeStage(root, api, ID, W, H, pad);
+      st.audio = A;
+      const ctx = st.ctx;
+      const fresh = () => ({ v: 1, acts: {}, deaths: 0 });
+      const P = (() => {
+        const s = api.load(), f = fresh();
+        if (!s || typeof s !== 'object' || Array.isArray(s)) return f;
+        if (s.acts && typeof s.acts === 'object' && !Array.isArray(s.acts)) {
+          for (const k of Object.keys(s.acts).slice(0, 50)) {
+            const i = +k, r = s.acts[k];
+            if (!(i >= 0 && i < SR_ACTS.length) || String(i) !== k || !r || typeof r !== 'object') continue;
+            const t = +r.t, d = Math.floor(+r.d), st0 = Math.floor(+r.s);
+            if (!(isFinite(t) && t > 0 && t < 36000)) continue;
+            f.acts[k] = { t, d: isFinite(d) && d >= 0 && d < 1e6 ? d : 0, s: isFinite(st0) && st0 >= 0 && st0 <= 3 ? st0 : 0 };
+          }
+        }
+        const dd = Math.floor(+s.deaths); if (isFinite(dd) && dd >= 0 && dd < 1e9) f.deaths = dd;
+        return f;
+      })();
+      const persist = () => api.save(P);
+      const doneN = () => Object.keys(P.acts).length;
+      const medal = (i, t) => { const a = SR_ACTS[i]; return t <= a.gold ? 'g' : t <= a.silver ? 's' : 'b'; };
+      const starTot = () => Object.values(P.acts).reduce((a, r) => a + r.s, 0);
+      A.bank = {
+        click() { A.tone('sine', 660, 900, .05, .1); },
+        jump() { A.tone('square', 300, 520, .08, .045); },
+        wall() { A.tone('square', 380, 640, .07, .05); A.noise('highpass', 2000, 2000, 1, .04, .05); },
+        spring() { A.tone('sine', 200, 900, .25, .14); },
+        land() { A.noise('lowpass', 500, 120, .8, .07, .08); },
+        die() { A.noise('bandpass', 1800, 300, 1.2, .25, .2, 0, .002); A.tone('sawtooth', 420, 80, .3, .08); },
+        crack() { A.noise('highpass', 1500, 700, 1, .1, .1, 0, .002); },
+        slide() { A.noise('bandpass', 1200, 500, 1, .25, .05, 0, .02); },
+        zip() { A.noise('bandpass', 3000, 2000, 2, .35, .05, 0, .01); },
+        flag() { [784, 988, 1319].forEach((f, i) => A.tone('triangle', f, f, .14, .07, i * .07)); },
+        star() { [1319, 1760, 2093].forEach((f, i) => A.tone('sine', f, f, .12, .08, i * .05)); },
+        win() { [523, 659, 784, 1047, 1319].forEach((f, i) => { A.tone('square', f, f, .16, .045, i * .09); A.tone('triangle', f / 2, f / 2, .22, .08, i * .09); }); },
+        spawn() { A.tone('sine', 300, 700, .14, .06); }
+      };
+
+      let scr = 'menu', S = null, actI = 0, acc = 0, ftime = 0, shake = 0, msg = '', msgT = 0, cam = { x: 0, y: 0 };
+      const keys = new Set();
+      const KM = { ArrowLeft: 'l', KeyA: 'l', KeyQ: 'l', ArrowRight: 'r', KeyD: 'r', ArrowDown: 'd', KeyS: 'd', ArrowUp: 'j', KeyW: 'j', KeyZ: 'j', Space: 'j' };
+      const inp = { l: false, r: false, d: false, j: false };
+      const readInp = () => {
+        const m = st.mask;
+        inp.l = (m & 1) > 0; inp.r = (m & 2) > 0; inp.d = (m & 4) > 0; inp.j = (m & 8) > 0;
+        for (const k of keys) { const v = KM[k]; if (v) inp[v] = true; }
+      };
+      api.on(window, 'keydown', e => {
+        if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+        if (scr === 'result' && (e.code === 'Enter' || e.code === 'Space') && !e.repeat) { e.preventDefault(); const b = st.ovEl.querySelector('[data-a="next"],[data-a="again"]'); if (b) b.click(); return; }
+        if (scr !== 'play') return;
+        if (KM[e.code] || e.code === 'KeyR') e.preventDefault();
+        if (e.code === 'KeyR' && !e.repeat) { if (S && !S.dead && !S.won) srKill(S, 'reset'); return; }
+        if (KM[e.code]) { keys.add(e.code); A.ctx(); }
+      });
+      api.on(window, 'keyup', e => keys.delete(e.code));
+      api.on(window, 'blur', () => keys.clear());
+      st.onPad = () => A.ctx();
+
+      const fmtT = t => { const m = Math.floor(t / 60), s = t - m * 60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(2); };
+      function showMenu() {
+        scr = 'menu'; S = null; api.score('—');
+        const n = doneN();
+        st.showMenu(`
+<div class="gx-top"><h2 class="gx-logo">Spike <b>Run</b></h2><div class="gx-row"><span class="gx-chip on" style="pointer-events:none"><span>Acts</span> ${n} / ${SR_ACTS.length}</span><span class="gx-chip" style="pointer-events:none"><span>Stars</span> ${starTot()} / ${SR_ACTS.length * 3}</span><span class="gx-chip" style="pointer-events:none"><span>Deaths</span> ${P.deaths}</span></div></div>
+<p class="gx-tag">Run, jump, slide and wall-jump through five acts of spikes, saws and lasers. Flags save your progress.</p>
+<div class="sr-acts">${SR_ACTS.map((a, i) => {
+          const r = P.acts[i], ok = i === 0 || !!P.acts[i - 1];
+          return `<button type="button" class="sr-act${!r && ok ? ' next' : ''}" data-a="act" data-i="${i}"${ok ? '' : ' disabled'}><em><span>Act</span> ${i + 1}</em><b>${SR_TH[i].n}</b>${r ? `<span>${fmtT(r.t)} · ${r.d} <span>deaths</span> · ${r.s}/3 ★</span><i class="${medal(i, r.t)}"></i>` : `<span>${ok ? 'Not finished yet' : 'Finish the act before'}</span>`}</button>`;
+        }).join('')}</div>
+<p class="gx-help"><kbd>&larr;</kbd><kbd>&rarr;</kbd> <kbd>A</kbd><kbd>D</kbd> <span>run</span> · <kbd>&uarr;</kbd> <kbd>W</kbd> <kbd>Space</kbd> <span>jump (hold for higher)</span> · <kbd>&darr;</kbd> <kbd>S</kbd> <span>crouch, slide while running</span> · <kbd>R</kbd> <span>back to the last flag</span> · <kbd>Esc</kbd> <span>pause</span><br><span>Jump while sliding down a wall to kick off it.</span> <span>Grab zip lines by jumping into them.</span> <span>Medals for fast times, three hidden stars per act.</span></p>`);
+      }
+      function startAct(i) {
+        actI = i; S = srCompile(SR_ACTS[i]); acc = 0; msg = SR_TH[i].n; msgT = 2.2;
+        cam.x = S.x; cam.y = S.y - 120;
+        scr = 'play'; st.showPlay(); st.hideOv(); st.syncPad && st.syncPad();
+        api.score('0:00.00');
+      }
+      function finishAct() {
+        const i = actI, k = String(i), old = P.acts[k], t = Math.round(S.run * 100) / 100;
+        const nb = !old || t < old.t;
+        P.acts[k] = { t: nb ? t : old.t, d: nb ? S.deaths : old.d, s: Math.max(old ? old.s : 0, S.got) };
+        P.deaths += S.deaths; persist();
+        if (starTot() > 0) api.submit(starTot());
+        scr = 'result';
+        const a = SR_ACTS[i], m = medal(i, t);
+        st.card('Act complete!', `<span>Act</span> ${i + 1} · ${SR_TH[i].n}`, (i < SR_ACTS.length - 1 ? st.btn('next', 'Next act') : '') + st.btn('again', 'Play again', 'alt') + st.btn('menu', 'Acts', 'alt'),
+          st.stats([['Time', fmtT(t)], ['Deaths', S.deaths], ['Stars', S.got + ' / ' + S.stars.length], ['Medal', m === 'g' ? 'Gold' : m === 's' ? 'Silver' : 'Bronze']]) +
+          `<p class="gx-op"><span>Gold</span> ${fmtT(a.gold)} · <span>Silver</span> ${fmtT(a.silver)}${nb && old ? ' · <span>New best time!</span>' : ''}</p>`);
+      }
+      st.onAct = (a, ds) => {
+        A.ctx();
+        if (a === 'act') startAct(+ds.i);
+        else if (a === 'next') startAct(Math.min(SR_ACTS.length - 1, actI + 1));
+        else if (a === 'again') startAct(actI);
+        else if (a === 'menu') showMenu();
+      };
+      st.ovEl.addEventListener('pointerdown', e => e.stopPropagation());
+
+      const PN = 200, PX = new Float32Array(PN), PY = new Float32Array(PN), PVX = new Float32Array(PN), PVY = new Float32Array(PN), PL = new Float32Array(PN), PM = new Float32Array(PN), PS = new Float32Array(PN), PR = new Float32Array(PN), PC = new Array(PN).fill('#fff');
+      let pi = 0;
+      const burst = (x, y, n, col, sp, life, size, sticks) => { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (.3 + Math.random() * .7); PX[pi] = x; PY[pi] = y; PVX[pi] = Math.cos(a) * v; PVY[pi] = Math.sin(a) * v - sp * .3; PL[pi] = PM[pi] = life * (.6 + Math.random() * .4); PS[pi] = size * (.6 + Math.random() * .6); PR[pi] = sticks ? Math.random() * TAU : -1; PC[pi] = col; pi = (pi + 1) % PN; } };
+      function events() {
+        const ev = S.ev;
+        for (let i = 0; i < ev.length; i += 3) {
+          const k = ev[i], a = ev[i + 1], b = ev[i + 2];
+          if (k === 1) { A.play('die'); shake = 9; burst(a, b, 8, '#0b0e18', 380, .9, 12, 1); burst(a, b, 18, SR_TH[actI].acc, 320, .6, 4); }
+          else if (k === 2) A.play('jump', 40);
+          else if (k === 3) { A.play('wall', 40); burst(a, b, 5, '#ffffff', 120, .25, 3); }
+          else if (k === 4) { A.play('spring', 60); burst(a, b, 8, '#7af0ff', 200, .4, 3); }
+          else if (k === 5) { A.play('land', 80); burst(S.x, S.y, 4, 'rgba(255,255,255,.7)', 90, .25, 3); }
+          else if (k === 6) { A.play('crack', 50); burst(a, b, 8, SR_TH[actI].blk[2], 160, .5, 5); }
+          else if (k === 7) A.play('spawn');
+          else if (k === 8) A.play('slide', 100);
+          else if (k === 9) A.play('zip', 100);
+          else if (k === 10) { A.play('flag'); msg = T('Checkpoint'); msgT = 1.3; burst(a, b - 50, 12, '#5aff8a', 200, .6, 4); }
+          else if (k === 11) { A.play('star'); burst(a, b, 14, '#ffd23a', 220, .6, 4); }
+          else if (k === 12) { A.play('win'); for (let j = 0; j < 3; j++) burst(a, b - 30, 16, ['#ffd23a', '#5ad1ff', '#ff5a9a'][j], 380, 1.2, 5); }
+        }
+        ev.length = 0;
+      }
+      let lastSc = '';
+      function frame(dt) {
+        if (!S || (scr !== 'play' && scr !== 'result')) return;
+        ftime += dt; acc += dt;
+        readInp();
+        let n = 0;
+        while (acc >= SR_STEP && n < 12) { acc -= SR_STEP; n++; srStep(S, scr === 'play' ? inp : { l: false, r: false, d: false, j: false }); }
+        if (n >= 12) acc = 0;
+        events();
+        if (scr === 'play' && S.won > .8) finishAct();
+        if (scr === 'play') { const sc = fmtT(S.run); if (sc.slice(0, -1) !== lastSc) { lastSc = sc.slice(0, -1); api.score(sc); } }
+        const tx = S.x + S.face * 60 + S.vx * .25, ty = S.y - 90;
+        cam.x += (tx - cam.x) * (1 - Math.pow(.01, dt)); cam.y += (ty - cam.y) * (1 - Math.pow(.02, dt));
+        cam.x = clamp(cam.x, W / 2, Math.max(W / 2, S.W * SR_T - W / 2)); cam.y = clamp(cam.y, H / 2 - 64, Math.max(H / 2, S.H * SR_T - H / 2));
+        shake *= Math.pow(.002, dt);
+        if (msgT > 0) msgT -= dt;
+        draw(dt);
+      }
+      api.loop(frame);
+      const bgc = {};
+      function bgFor(i) {
+        if (bgc[i]) return bgc[i];
+        const th = SR_TH[i], mk = (w, h, far) => {
+          const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'), R = gpRng(i * 31 + (far ? 3 : 9));
+          x.fillStyle = far ? th.far : th.near;
+          for (let px = 0; px < w;) {
+            const bw = 40 + R() * (far ? 90 : 60), bh = h * (far ? .35 + R() * .45 : .25 + R() * .35);
+            if (i === 2) { x.beginPath(); x.moveTo(px, h); x.lineTo(px + bw / 2, h - bh); x.lineTo(px + bw, h); x.fill(); x.beginPath(); x.moveTo(px + bw * .2, 0); x.lineTo(px + bw * .5, bh * .5); x.lineTo(px + bw * .8, 0); x.fill(); }
+            else if (i === 4) { x.beginPath(); x.moveTo(px - bw * .3, h); x.lineTo(px + bw / 2, h - bh * 1.1); x.lineTo(px + bw * 1.3, h); x.fill(); }
+            else { x.fillRect(px, h - bh, bw, bh); if (!far) { x.fillStyle = hex(th.acc, -.35); for (let k = 0; k < 5; k++) x.fillRect(px + 6 + R() * (bw - 14), h - bh + 10 + R() * (bh - 20), 4, 6); x.fillStyle = th.near; } }
+            px += bw + (far ? 2 : 10 + R() * 24);
+          }
+          return c;
+        };
+        const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, th.sky[0]); g.addColorStop(1, th.sky[1]);
+        return (bgc[i] = { sky: g, far: mk(1200, 380, 1), near: mk(1500, 300, 0) });
+      }
+      function draw(dt) {
+        const c = ctx, th = SR_TH[actI], bg = bgFor(actI);
+        c.fillStyle = bg.sky; c.fillRect(0, 0, W, H);
+        const par = (img, f, yb) => { const iw = img.width, ox = ((-cam.x * f) % iw + iw) % iw - iw, y = yb - (cam.y - S.H * SR_T / 2) * f * .5; for (let x = ox; x < W; x += iw) c.drawImage(img, x, y); };
+        par(bg.far, .15, H - bg.far.height + 40); par(bg.near, .35, H - bg.near.height + 70);
+        const ox = Math.round(W / 2 - cam.x + (shake ? (Math.random() - .5) * shake : 0)), oy = Math.round(H / 2 - cam.y + (shake ? (Math.random() - .5) * shake : 0));
+        c.save(); c.translate(ox, oy);
+        const tx0 = Math.max(0, Math.floor((cam.x - W / 2) / SR_T) - 1), tx1 = Math.min(S.W - 1, Math.ceil((cam.x + W / 2) / SR_T) + 1), ty0 = Math.max(0, Math.floor((cam.y - H / 2) / SR_T) - 1), ty1 = Math.min(S.H - 1, Math.ceil((cam.y + H / 2) / SR_T) + 1);
+        c.fillStyle = th.blk[0]; c.beginPath();
+        for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) { const v = S.g[ty * S.W + tx]; if (v === 1 || v === 8) c.rect(tx * SR_T, ty * SR_T, SR_T, SR_T); }
+        c.fill();
+        c.fillStyle = th.blk[1]; c.beginPath();
+        for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) { const v = S.g[ty * S.W + tx]; if ((v === 1 || v === 8) && !srSolid(S, tx, ty - 1)) c.rect(tx * SR_T, ty * SR_T, SR_T, 5); }
+        c.fill();
+        c.fillStyle = th.blk[2]; c.beginPath();
+        for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) { const v = S.g[ty * S.W + tx]; if ((v === 1 || v === 8) && !srSolid(S, tx, ty - 1)) c.rect(tx * SR_T, ty * SR_T, SR_T, 2); }
+        c.fill();
+        c.strokeStyle = 'rgba(0,0,0,.18)'; c.lineWidth = 1; c.beginPath();
+        for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) { const v = S.g[ty * S.W + tx]; if (v === 1 && ((tx * 7 + ty * 3) % 5 === 0)) { c.moveTo(tx * SR_T + 6, ty * SR_T + 14); c.lineTo(tx * SR_T + 18, ty * SR_T + 14); c.moveTo(tx * SR_T + 12, ty * SR_T + 22); c.lineTo(tx * SR_T + 26, ty * SR_T + 22); } }
+        c.stroke();
+        c.fillStyle = 'rgba(0,0,0,.28)'; c.beginPath();
+        for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) { const v = S.g[ty * S.W + tx]; if (v !== 1 && v !== 8) continue; if (!srSolid(S, tx - 1, ty) && tx > 0) c.rect(tx * SR_T, ty * SR_T, 3, SR_T); if (!srSolid(S, tx + 1, ty) && tx < S.W - 1) c.rect(tx * SR_T + SR_T - 3, ty * SR_T, 3, SR_T); if (ty < S.H - 1 && !srSolid(S, tx, ty + 1)) c.rect(tx * SR_T, ty * SR_T + SR_T - 4, SR_T, 4); }
+        c.fill();
+        for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) {
+          const v = S.g[ty * S.W + tx], bx = tx * SR_T, by = ty * SR_T;
+          if (v >= 2 && v <= 5) {
+            c.fillStyle = '#e6e9f2'; c.strokeStyle = '#7a8098'; c.lineWidth = 1.5; c.beginPath();
+            for (let k = 0; k < 3; k++) {
+              const a = k * 10 + 1;
+              if (v === 2) { c.moveTo(bx + a, by + 32); c.lineTo(bx + a + 5, by + 12); c.lineTo(bx + a + 10, by + 32); }
+              else if (v === 3) { c.moveTo(bx + a, by); c.lineTo(bx + a + 5, by + 20); c.lineTo(bx + a + 10, by); }
+              else if (v === 4) { c.moveTo(bx + 32, by + a); c.lineTo(bx + 12, by + a + 5); c.lineTo(bx + 32, by + a + 10); }
+              else { c.moveTo(bx, by + a); c.lineTo(bx + 20, by + a + 5); c.lineTo(bx, by + a + 10); }
+            }
+            c.fill(); c.stroke();
+            c.fillStyle = '#c23a48'; c.beginPath();
+            for (let k = 0; k < 3; k++) { const a = k * 10 + 1; if (v === 2) c.rect(bx + a + 4, by + 12, 2, 4); else if (v === 3) c.rect(bx + a + 4, by + 16, 2, 4); else if (v === 4) c.rect(bx + 12, by + a + 4, 4, 2); else c.rect(bx + 16, by + a + 4, 4, 2); }
+            c.fill();
+          } else if (v === 6) { c.fillStyle = th.blk[2]; c.fillRect(bx, by, SR_T, 7); c.fillStyle = 'rgba(0,0,0,.3)'; c.fillRect(bx, by + 7, SR_T, 2); c.fillStyle = th.blk[1]; c.fillRect(bx + 4, by + 9, 3, 8); c.fillRect(bx + 25, by + 9, 3, 8); }
+          else if (v === 7) {
+            const cr = S.cr[ty * S.W + tx];
+            if (cr < 0) { c.strokeStyle = 'rgba(255,255,255,.18)'; c.setLineDash([4, 4]); c.strokeRect(bx + 2, by + 2, SR_T - 4, SR_T - 4); c.setLineDash([]); continue; }
+            const j = cr > 0 ? (Math.random() - .5) * 3 : 0;
+            c.fillStyle = '#8a6a48'; c.fillRect(bx + j, by, SR_T, SR_T); c.fillStyle = '#a8865e'; c.fillRect(bx + j, by, SR_T, 5);
+            c.strokeStyle = '#4a3420'; c.lineWidth = 2; c.beginPath(); c.moveTo(bx + 6 + j, by + 8); c.lineTo(bx + 14 + j, by + 18); c.lineTo(bx + 10 + j, by + 28); c.moveTo(bx + 24 + j, by + 6); c.lineTo(bx + 18 + j, by + 16); c.stroke();
+          } else if (v === 8) {
+            const sq = S.spring && S.vy < 0 && Math.abs(S.x - bx - 16) < 30 ? 6 : 0;
+            c.fillStyle = '#c8ccd8'; c.fillRect(bx + 8, by - 6 - sq, 3, 8 + sq); c.fillRect(bx + 21, by - 6 - sq, 3, 8 + sq);
+            c.fillStyle = '#2fd0ff'; rrect(c, bx + 2, by - 10 - sq, SR_T - 4, 7, 3); c.fill();
+          }
+        }
+        const L0 = cam.x - W / 2 - 60, R0 = cam.x + W / 2 + 60;
+        for (const L of S.lasers) {
+          if (L.x < L0 || L.x > R0) continue;
+          c.fillStyle = '#4a4f66'; c.fillRect(L.x - 8, L.y0, 16, 8); c.fillRect(L.x - 8, L.y1 - 6, 16, 6);
+          if (L.on) { c.fillStyle = 'rgba(255,60,90,.35)'; c.fillRect(L.x - 6, L.y0 + 8, 12, L.y1 - L.y0 - 14); c.fillStyle = '#ffd0dc'; c.fillRect(L.x - 2, L.y0 + 8, 4, L.y1 - L.y0 - 14); }
+          else if (L.warn) { c.fillStyle = (ftime * 20 | 0) % 2 ? 'rgba(255,60,90,.5)' : 'rgba(255,60,90,.15)'; c.fillRect(L.x - 1, L.y0 + 8, 2, L.y1 - L.y0 - 14); }
+          c.fillStyle = L.on ? '#ff3c5a' : L.warn ? '#ffa03c' : '#3a3f52'; c.fillRect(L.x - 4, L.y0 + 2, 8, 4);
+        }
+        for (const z of S.zips) {
+          if (z.x2 < L0 || z.x1 > R0) continue;
+          c.strokeStyle = '#1a1e2c'; c.lineWidth = 4; c.beginPath(); c.moveTo(z.x1, z.y1); c.lineTo(z.x2, z.y2); c.stroke();
+          c.strokeStyle = '#c8ccd8'; c.lineWidth = 2; c.beginPath(); c.moveTo(z.x1, z.y1); c.lineTo(z.x2, z.y2); c.stroke();
+          c.fillStyle = '#4a4f66'; c.fillRect(z.x1 - 5, z.y1 - 8, 10, 14); c.fillRect(z.x2 - 5, z.y2 - 8, 10, 14);
+        }
+        for (const p of S.plats) {
+          if (p.x > R0 || p.x + p.w < L0) continue;
+          c.fillStyle = 'rgba(255,255,255,.12)'; c.fillRect(p.x0 - p.a + p.w / 2 - 1, p.y0 - p.b + 6, p.a * 2 + 2, p.b * 2 + 2);
+          c.fillStyle = th.blk[2]; rrect(c, p.x, p.y, p.w, 12, 4); c.fill();
+          c.fillStyle = th.acc; c.fillRect(p.x + 6, p.y + 4, p.w - 12, 3);
+        }
+        for (const s of S.saws) {
+          if (s.x + s.r < L0 || s.x - s.r > R0) continue;
+          if (s.k === 2) { c.strokeStyle = '#3a3f52'; c.lineWidth = 6; c.beginPath(); c.moveTo(s.x0, s.y0); c.lineTo(s.x, s.y); c.stroke(); c.fillStyle = '#5a6074'; c.beginPath(); c.arc(s.x0, s.y0, 8, 0, TAU); c.fill(); }
+          else if (s.k === 1) { c.strokeStyle = 'rgba(0,0,0,.3)'; c.lineWidth = 4; c.beginPath(); c.moveTo(s.x0 - s.a, s.y0 - s.b); c.lineTo(s.x0 + s.a, s.y0 + s.b); c.stroke(); }
+          c.save(); c.translate(s.x, s.y); c.rotate(S.t * 14);
+          c.fillStyle = '#d7dbe6'; c.beginPath();
+          const n = s.r > 30 ? 18 : 12;
+          for (let i = 0; i < n * 2; i++) { const a = i * Math.PI / n, rr = i % 2 ? s.r * .78 : s.r; c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+          c.closePath(); c.fill();
+          c.fillStyle = '#9aa0b4'; c.beginPath(); c.arc(0, 0, s.r * .62, 0, TAU); c.fill();
+          c.fillStyle = '#e2453c'; c.beginPath(); c.arc(0, 0, s.r * .24, 0, TAU); c.fill();
+          c.restore();
+        }
+        for (const cp of S.cps) {
+          if (cp.x < L0 || cp.x > R0) continue;
+          c.fillStyle = '#c8ccd8'; c.fillRect(cp.x - 2, cp.y - 64, 4, 64);
+          const wv = Math.sin(ftime * 6 + cp.x) * 3;
+          c.fillStyle = cp.on ? '#3ad36a' : '#e2453c'; c.beginPath(); c.moveTo(cp.x + 2, cp.y - 64); c.quadraticCurveTo(cp.x + 16, cp.y - 60 + wv, cp.x + 30, cp.y - 56); c.lineTo(cp.x + 2, cp.y - 44); c.closePath(); c.fill();
+        }
+        for (const s of S.stars) {
+          if (s.got || s.x < L0 || s.x > R0) continue;
+          gpStar(c, s.x, s.y + Math.sin(ftime * 3 + s.x) * 3, 12, true, true);
+        }
+        if (S.ex) {
+          const ex = S.ex, ey = S.ey - 36;
+          c.save(); c.translate(ex, ey);
+          for (let i = 0; i < 4; i++) { c.strokeStyle = `rgba(120,255,170,${.7 - i * .15})`; c.lineWidth = 4; c.beginPath(); c.ellipse(0, 0, 16 + i * 4 + Math.sin(ftime * 4 + i) * 2, 34 + i * 4, 0, 0, TAU); c.stroke(); }
+          c.fillStyle = 'rgba(120,255,170,.25)'; c.beginPath(); c.ellipse(0, 0, 16, 34, 0, 0, TAU); c.fill();
+          c.restore();
+        }
+        if (!S.dead && !(S.won > .3)) srDrawMan(c, S, ftime, 1);
+        for (let i = 0; i < PN; i++) {
+          if (PL[i] <= 0) continue;
+          PL[i] -= dt; PVY[i] += 1300 * dt; PX[i] += PVX[i] * dt; PY[i] += PVY[i] * dt;
+          c.globalAlpha = Math.max(0, PL[i] / PM[i]);
+          if (PR[i] >= 0) { PR[i] += dt * 9; c.strokeStyle = PC[i]; c.lineWidth = 4; c.lineCap = 'round'; c.beginPath(); c.moveTo(PX[i] - Math.cos(PR[i]) * PS[i] / 2, PY[i] - Math.sin(PR[i]) * PS[i] / 2); c.lineTo(PX[i] + Math.cos(PR[i]) * PS[i] / 2, PY[i] + Math.sin(PR[i]) * PS[i] / 2); c.stroke(); }
+          else { c.fillStyle = PC[i]; c.fillRect(PX[i] - PS[i] / 2, PY[i] - PS[i] / 2, PS[i], PS[i]); }
+        }
+        c.globalAlpha = 1;
+        c.restore();
+        c.fillStyle = 'rgba(0,0,0,.35)'; rrect(c, 10, 10, 236, 38, 10); c.fill();
+        txt(c, fmtT(S.run), 22, 30, 18, '#fff', 'left', 900);
+        txt(c, '✖ ' + S.deaths, 130, 30, 16, '#ff9aa8', 'left', 900);
+        gpStar(c, 196, 29, 9, true, false); txt(c, S.got + '/' + S.stars.length, 210, 30, 15, '#fff', 'left', 900);
+        if (msgT > 0) { c.globalAlpha = Math.min(1, msgT * 2); txt(c, msg, W / 2, 70, 30, '#fff', 'center', 900, 'rgba(0,0,0,.5)'); c.globalAlpha = 1; }
+      }
+      showMenu();
+      return { destroy() { A.destroy(); } };
+    }
+
+    Ameplay.register({
+      id: 'spike-run',
+      title: 'Spike Run',
+      category: 'Skill',
+      tint: '#ffb23a',
+      blurb: 'A stickman parkour run through five handmade acts. Run, jump, slide under saws, kick off walls, ride zip lines and dodge lasers. Flags save your progress, medals reward fast runs.',
+      help: '<kbd>&larr;</kbd><kbd>&rarr;</kbd> run · <kbd>&uarr;</kbd> or <kbd>Space</kbd> jump · <kbd>&darr;</kbd> crouch and slide · <kbd>R</kbd> last flag · <kbd>Esc</kbd> pause',
+      width: 960,
+      better: 'high',
+      format: v => v + ' ★',
+      icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="34" cy="12" r="5"/><path d="M32 18l-4 16M30 24l10 4M30 24l-10 2M28 34l8 10M28 34l-8 8"/><path d="M8 58l6-10 6 10 6-10 6 10"/></svg>',
+      css: sxCss('spike-run', '#ffb23a') + SR_CSS,
+      engine: { SR_ACTS, srCompile, srStep, SR_STEP },
+      mount: mountSpike
     });
 
   }
