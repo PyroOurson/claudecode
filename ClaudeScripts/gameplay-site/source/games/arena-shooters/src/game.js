@@ -626,7 +626,7 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
       else { win = L[0] === me; title = win ? T('Victory') : T('{name} wins', { name: L[0] ? L[0].name : '' }); }
       const place = L.indexOf(me) + 1;
       const acc = me.shots ? Math.round(me.hits / me.shots * 100) : 0;
-      const xp = Math.round(me.score + (win ? 300 : 100));
+      const xp = Math.round(me.score * 0.3 + (win ? 200 : 60));
       const st = SV.st, before = lvlOf(st.xp).n;
       let nb = false;
       if (!over || !over.saved) {

@@ -215,7 +215,7 @@
       for (const q of W.players) if (q && q !== p && q.alive && (!W.teams || q.team !== p.team)) md = Math.min(md, Math.hypot(q.x - s.x, q.z - s.z) + Math.abs(q.y - s.y) * 0.5);
       let mate = 0;
       if (W.teams) for (const q of W.players) if (q && q !== p && q.alive && q.team === p.team) mate += Math.max(0, 25 - Math.hypot(q.x - s.x, q.z - s.z)) * 0.08;
-      const sc = Math.min(md, 60) + mate + W.rng() * 6 - (s.used && W.t - s.used < 3 ? 30 : 0);
+      const u = W.spawnUsed.get(s); const sc = Math.min(md, 60) + mate + W.rng() * 6 - (u != null && W.t - u < 3 ? 30 : 0);
       if (sc > bs) { bs = sc; best = s; }
     }
     return best || { x: 0, y: 1, z: 0, yaw: 0 };
@@ -226,7 +226,7 @@
     if (p.nextCls != null) p.cls = p.nextCls;
     giveLoadout(W, p);
     const s = at || pickSpawn(W, p);
-    s.used = W.t;
+    if (W.spawnUsed) W.spawnUsed.set(s, W.t);
     p.x = p.px = s.x; p.y = p.py = s.y; p.z = p.pz = s.z; p.vx = p.vy = p.vz = 0;
     let yaw = s.yaw;
     if (yaw == null) { const cx = (W.M.x0 + W.M.x1) / 2, cz = (W.M.z0 + W.M.z1) / 2; yaw = Math.atan2(-(cx - s.x), -(cz - s.z)); }
@@ -657,7 +657,7 @@
     const mode = G.modes.find(m => m.key === o.mode) || G.modes[0];
     const W = {
       G, M, mode, teams: !!mode.teams, t: 0, tick: 0, players: [], projs: [], pid: 0, ev: [], rng: mkRng(o.seed || 1), auth: o.auth !== false, time: mode.time, over: false, overT: 0,
-      teamScore: [0, 0], zone: { i: 0, t: mode.zoneTime || 60, own: -1, acc: 0 }, onClaim: null, onProj: null, pickups: M.pickups.map((q, i) => ({ i, k: q.k, x: q.x, y: q.y, z: q.z, up: true, t: 0 }))
+      teamScore: [0, 0], spawnUsed: new Map(), zone: { i: 0, t: mode.zoneTime || 60, own: -1, acc: 0 }, onClaim: null, onProj: null, pickups: M.pickups.map((q, i) => ({ i, k: q.k, x: q.x, y: q.y, z: q.z, up: true, t: 0 }))
     };
     if (mode.zone && M.zones.length) W.zone.i = Math.floor(W.rng() * M.zones.length);
     if (!M.nav) M.nav = buildNav(W);
@@ -2357,7 +2357,7 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
       else { win = L[0] === me; title = win ? T('Victory') : T('{name} wins', { name: L[0] ? L[0].name : '' }); }
       const place = L.indexOf(me) + 1;
       const acc = me.shots ? Math.round(me.hits / me.shots * 100) : 0;
-      const xp = Math.round(me.score + (win ? 300 : 100));
+      const xp = Math.round(me.score * 0.3 + (win ? 200 : 60));
       const st = SV.st, before = lvlOf(st.xp).n;
       let nb = false;
       if (!over || !over.saved) {
