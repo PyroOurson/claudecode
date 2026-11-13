@@ -13,6 +13,7 @@
   const circ = (cx, cy, r) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0Z`;
   const ell = (cx, cy, rx, ry) => `M${cx - rx} ${cy}a${rx} ${ry} 0 1 0 ${2 * rx} 0a${rx} ${ry} 0 1 0 ${-2 * rx} 0Z`;
   const winsFmt = v => v + (v === 1 ? ' win' : ' wins');
+  const tr = (s, o) => window.gpI18n ? gpI18n.t(s, o) : o ? s.replace(/\{(\w+)\}/g, (m, k) => k in o ? o[k] : m) : s;
   const HELP = 'Tap or drag pieces · arrows + <kbd>Enter</kbd> · <kbd>U</kbd> undo · <kbd>N</kbd> new game';
 
   function deepen(T, ms, o, make, unmake, ab) {
@@ -1333,7 +1334,7 @@ ${p} .main{display:flex;gap:16px;justify-content:center;align-items:stretch;widt
 ${p} .main>canvas{flex:none;align-self:flex-start;width:min(560px,calc(100% - 200px),calc(100dvh - 250px));min-width:240px;border-radius:14px;background:#3a2213;box-shadow:0 22px 44px -24px rgba(31,29,43,.7),0 4px 10px -4px rgba(31,29,43,.3);cursor:pointer}
 ${p} .side{flex:1;max-width:184px;min-width:0;display:flex;flex-direction:column;gap:8px}
 ${p} .seg{display:flex;padding:3px;border-radius:999px;background:var(--sunk)}
-${p} .seg button{flex:1;min-width:0;border:0;background:none;padding:8px 4px;border-radius:999px;font:800 12.5px/1 var(--sans);color:var(--muted);cursor:pointer;white-space:nowrap;transition:background .2s,color .2s,box-shadow .2s}
+${p} .seg button{flex:1;min-width:0;border:0;background:none;padding:8px 4px;border-radius:999px;font:800 12.5px/1.1 var(--sans);color:var(--muted);cursor:pointer;overflow-wrap:anywhere;hyphens:auto;transition:background .2s,color .2s,box-shadow .2s}
 ${p} .seg button:hover{color:var(--ink)}
 ${p} .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(31,29,43,.08),0 4px 10px -4px rgba(31,29,43,.3)}
 ${p} .seg[data-k="diff"] button{padding:8px 1px;font-size:11.5px;letter-spacing:-.2px}
@@ -1363,7 +1364,7 @@ ${p} .hist span{flex:1;min-width:0;white-space:nowrap}
 ${p} .hist .cur{color:var(--accent)}
 ${p} .hist .none{color:var(--soft);font-family:var(--sans)}
 ${p} .btns{display:flex;flex-wrap:wrap;gap:6px}
-${p} .btns .g-btn{flex:1 1 40%;min-width:0;padding:0 8px}
+${p} .btns .g-btn{flex:1 1 40%;min-width:0;padding:4px 8px;height:auto;min-height:36px;line-height:1.1;white-space:normal}
 ${p} [hidden]{display:none!important}
 ${p} .seg button.tb{display:none}
 ${p}.touch .seg button.tb{display:block}
@@ -1372,7 +1373,8 @@ ${p} .elo-h{display:flex;justify-content:space-between;align-items:baseline;gap:
 ${p} .elo-h span{white-space:nowrap}
 ${p} .elo-h b{font-size:12.5px;font-weight:900;color:var(--ink);white-space:nowrap}
 ${p} .elo input{width:100%;accent-color:var(--accent);margin:2px 0;cursor:pointer}
-${p} .elo-s{display:flex;justify-content:space-between;font-size:9.5px;font-weight:800;color:var(--soft)}
+${p} .elo-s{display:flex;flex-wrap:wrap;justify-content:space-between;column-gap:6px;font-size:9.5px;font-weight:800;color:var(--soft)}
+${p} .elo-s i{white-space:nowrap}
 ${p} .elo-s i{font-style:normal}
 ${p} .cn{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:800;color:var(--muted)}
 ${p} .cn i{width:8px;height:8px;border-radius:50%;background:var(--bad)}
@@ -1413,6 +1415,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     opt.view = 'Fixed';
     if (o.elo) opt.elo = Number.isFinite(saved.elo) ? Math.max(400, Math.min(2400, Math.round(saved.elo / 50) * 50)) : 1200;
     const main = el('div', 'main'), p2 = el('div', 'p2bar', '<i class="chip"></i><b></b>');
+    p2.dataset.i18n = main.dataset.i18n = '';
     root.append(p2, main);
     const cv = api.canvas(SZ, SZ, main), cvs = cv.canvas;
     cvs.style.width = '';
@@ -1502,7 +1505,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
         api.overlay({
           kicker: best ? 'New best!' : res === 'win' ? 'Victory' : res === 'loss' ? 'Defeat' : res === 'two' ? '2 Players' : 'Draw',
           title: res === 'win' ? 'You win!' : res === 'loss' ? (md === 'CPU' ? 'AI wins' : 'Your friend wins') : res === 'two' ? who + ' wins!' : 'Draw game',
-          text: why + '.' + (md !== 'CPU' ? '' : res === 'win' ? ` Win streak: ${winsFmt(streak)}.` : res === 'loss' ? ' Your win streak resets.' : ' Your win streak is safe.'),
+          text: why.split(' · ').map(s => tr(s)).join(' · ') + '.' + (md !== 'CPU' ? '' : ' ' + (res === 'win' ? tr('Win streak: {n}.', { n: tr(winsFmt(streak)) }) : res === 'loss' ? tr('Your win streak resets.') : tr('Your win streak is safe.'))),
           stats: md === 'CPU' ? [...stats, ['Streak', streak]] : stats,
           button: md === 'Online' ? 'Rematch' : 'Play again', onAction: () => { ovUp = false; if (online()) rematch(); else newGame(); },
           secondary: 'View board', onSecondary: () => { ovUp = false; }
@@ -1915,11 +1918,11 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       busy: () => anims.length > 0, started: () => hist.some(h => h.by === k.me),
       stats: () => [['Moves', Math.ceil(hist.length / 2)]],
       ended: (w, why) => { resTag = w === 1 ? '1-0' : w === -1 ? '0-1' : '1/2-1/2'; endWhy = why; view = -1; clkShow(); },
-      extra: () => ({ tc: tcCur, c: [Math.round(clk[1]), Math.round(clk[-1])] }),
+      extra: () => k.over ? { tc: k.opt.tc in TCS ? k.opt.tc : tcCur } : { tc: tcCur, c: [Math.round(clk[1]), Math.round(clk[-1])] },
       sync: (x, phase) => {
         if (!x || !TCS[x.tc]) return;
         if (!phase) { tcCur = k.opt.tc = x.tc; return; }
-        if (Array.isArray(x.c) && x.c.every(Number.isFinite)) { clk[1] = x.c[0]; clk[-1] = x.c[1]; clkT = now(); }
+        if (hist.length && Array.isArray(x.c) && x.c.length === 2 && x.c.every(Number.isFinite)) { clk[1] = x.c[0]; clk[-1] = x.c[1]; clkT = now(); }
         clkShow();
       },
       data: (dd, host) => {

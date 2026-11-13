@@ -343,6 +343,7 @@ ${p} .cn.on i{background:var(--good);box-shadow:0 0 0 3px rgba(34,176,125,.2)}
         remote, list: () => mv.slice(), load: l => { for (const i of l) if (!remote(mv.length, i, true)) break; }
       });
       const board = h('div', 'board');
+      d.head.dataset.i18n = board.dataset.i18n = d.foot.dataset.i18n = '';
       root.append(d.head, board, d.foot);
       const sideOf = p => p === 1 ? 'L' : 'R';
       const fade = el => { el.classList.add('out'); api.timeout(() => el.remove(), 360); };
@@ -715,6 +716,7 @@ ${p} .cn.on i{background:var(--good);box-shadow:0 0 0 3px rgba(34,176,125,.2)}
       const d = duel(root, api, { title: 'Connect Four', glyph: [DOT(''), DOT('y')], round: newRound, remote, list: () => mv.slice(), load: l => { for (const c of l) if (!remote(mv.length, c, true)) break; } });
       const sideOf = p => p === -1 ? 'L' : 'R';
       const wrap = h('div', 'c4wrap', `<div class="c4aim"><div class="c4ghost off"></div></div><div class="board"><div class="discs"></div>${C4FACE}</div>`);
+      d.head.dataset.i18n = wrap.dataset.i18n = d.foot.dataset.i18n = '';
       root.append(d.head, wrap, d.foot);
       const ghost = wrap.querySelector('.c4ghost'), board = wrap.querySelector('.board'), discs = wrap.querySelector('.discs');
       const canPlay = () => turn !== null && d.local(sideOf(turn));

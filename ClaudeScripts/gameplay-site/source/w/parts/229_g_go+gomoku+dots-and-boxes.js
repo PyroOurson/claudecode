@@ -777,7 +777,7 @@ ${p} [hidden]{display:none!important}
       { name: 'Easy', rank: '18 kyu', playouts: 220, ms: 1200 },
       { name: 'Medium', rank: '12 kyu', playouts: 3000, ms: 3000 },
       { name: 'Hard', rank: '7 kyu', playouts: 14000, ms: 6000 },
-      { name: 'Hardest', rank: '3 kyu', playouts: 60000, ms: 12000, early: true }
+      { name: 'Hardest', rank: '3 kyu', playouts: 60000, ms: 7000, early: true }
     ];
 
     return { Pos, Game, Search, Estimate, quickMove, bookMove, handiPts, maxHandi, starPts, params, rnd };
@@ -791,6 +791,7 @@ ${p} [hidden]{display:none!important}
     if (coarse()) root.classList.add('touch');
     const touch = () => root.classList.contains('touch');
     const main = el('div', 'main');
+    main.dataset.i18n = '';
     root.append(main);
     const cv = api.canvas(S.SZ, S.SZ, main), cvs = cv.canvas;
     cvs.style.width = '';
@@ -1395,7 +1396,7 @@ ${p} [hidden]{display:none!important}
     const SP = {
       title: 'Go', SZ: BSZ, audio: au,
       fields: [
-        { key: 'size', label: 'Board', def: 9, opts: () => [[9, '9×9'], [13, '13×13'], [19, '19×19']], onChange: o => { const mx = E.maxHandi(+o.size); if (o.handi > mx) o.handi = mx; } },
+        { key: 'size', label: 'Board size', def: 9, opts: () => [[9, '9×9'], [13, '13×13'], [19, '19×19']], onChange: o => { const mx = E.maxHandi(+o.size); if (o.handi > mx) o.handi = mx; } },
         { key: 'rules', label: 'Scoring', def: 'J', opts: () => [['J', 'Japanese'], ['C', 'Chinese']], onChange: o => { o.komi = o.rules === 'C' ? 7.5 : 6.5; } },
         { key: 'komi', label: 'Komi', def: 6.5, opts: () => [[0.5, '0.5'], [5.5, '5.5'], [6.5, '6.5'], [7.5, '7.5']], when: o => !(o.handi > 1) },
         { key: 'handi', label: 'Handicap', def: 0, opts: o => { const l = [[0, 'None']]; for (let k = 2; k <= E.maxHandi(+o.size); k++) l.push([k, String(k)]); return l; } },
@@ -1813,8 +1814,9 @@ ${p} [hidden]{display:none!important}
     for (let i = 0; i < 3 * NN; i++) { zs ^= zs << 13; zs >>>= 0; zs ^= zs >>> 17; zs ^= zs << 5; zs >>>= 0; Z1[i] = zs | 0; zs ^= zs << 13; zs >>>= 0; zs ^= zs >>> 17; zs ^= zs << 5; zs >>>= 0; Z2[i] = zs | 0; }
     let turn = 1, ev = 0, h1 = 0, h2 = 0, sp = 0, rule = 'free', nodes = 0, endT = 0, aborted = false, tt = new Map(), vcfD = 0, rnd = Math.random;
     let gF5 = 0, gO4 = 0, gF4 = 0, gO3 = 0, gT3 = 0, gOV = 0;
-    const GM = [], GS = [];
-    for (let i = 0; i < 64; i++) { GM.push(new Int16Array(NN)); GS.push(new Float64Array(NN)); }
+    const GM = [], GS = [], GF = [];
+    let tight = false;
+    for (let i = 0; i < 64; i++) { GM.push(new Int16Array(NN)); GS.push(new Float64Array(NN)); GF.push(new Uint8Array(NN)); }
     const reset = rl => {
       B.fill(0); near.fill(0); wb.fill(0); ww.fill(0);
       turn = 1; ev = 0; h1 = 0; h2 = 0; sp = 0; rule = rl; tt = new Map();
@@ -2030,17 +2032,24 @@ ${p} [hidden]{display:none!important}
     };
 
     const gen = (me, ply, K, root) => {
-      const op = 3 - me, M = GM[ply], S = GS[ply];
-      let n = 0, strongP = -1, blocks = [];
+      const op = 3 - me, M = GM[ply], S = GS[ply], F = GF[ply];
+      let n = 0, strongP = -1, blocks = [], thr = false;
       for (let p = 0; p < NN; p++) {
         if (B[p] !== 0 || !near[p]) continue;
-        const a = mval(p, me), f5a = gF5, strongA = a >= 1e5, ban = banned(p);
+        const a = mval(p, me), f5a = gF5, strongA = a >= 1e5, ban = banned(p), mf = gF4 || gO4;
         if (f5a) return { win: true, p };
         const dv = mval(p, op), f5d = gF5;
         if (f5d) { blocks.push(p); continue; }
         if (ban) continue;
         if (strongA && strongP < 0) strongP = p;
+        if (gO4) thr = true;
+        F[n] = (mf ? 1 : 0) | (gF4 || gO4 ? 2 : 0);
         M[n] = p; S[n++] = a + dv * .95;
+      }
+      if (tight && thr && !blocks.length && strongP < 0) {
+        let k = 0;
+        for (let i = 0; i < n; i++) if (F[i]) { M[k] = M[i]; S[k] = S[i]; F[k++] = F[i]; }
+        if (k) n = k;
       }
       if (blocks.length >= 2) return { lose: true };
       if (blocks.length === 0 && strongP >= 0 && !root) return { win: true, p: strongP, quick: true };
@@ -2104,13 +2113,14 @@ ${p} [hidden]{display:none!important}
       endT = t0 + (cfg.ms || 500); aborted = false; nodes = 0; vcfD = 0;
       if (state.moves.length === 0) return { move: rule === 'renju' ? 112 : 112 };
       const info = { depth: 0, nodes: 0, how: '' };
+      tight = lvl >= 4;
       const rcand = () => {
         const out = [];
         for (let p = 0; p < NN; p++) {
           if (B[p] !== 0 || !near[p]) continue;
-          const a = mval(p, me), f5 = gF5, ban = banned(p);
+          const a = mval(p, me), f5 = gF5, ban = banned(p), mf = gF4 || gO4;
           const dv = mval(p, op);
-          out.push({ p, a, d: dv, f5, ban, s: a + dv * .95 });
+          out.push({ p, a, d: dv, f5, ban, s: a + dv * .95, df: mf || gF4 || gO4, o3: gO4 });
         }
         return out;
       };
@@ -2155,8 +2165,8 @@ ${p} [hidden]{display:none!important}
         aborted = false;
       }
       vcfD = lvl >= 3 ? vd : lvl === 2 ? 6 : 0;
-      const rootK = lvl === 2 ? 14 : 18;
-      const list = cs.slice(0, rootK).map(x => x.p);
+      const rootK = lvl === 2 ? 14 : 18, tc = tight && cs.some(x => x.o3) ? cs.filter(x => x.df) : [];
+      const list = (tc.length ? tc : cs).slice(0, rootK).map(x => x.p);
       let best = list[0], bestS = -Infinity;
       const scores = new Map();
       for (let d = 1; d <= maxD; d++) {
@@ -2820,6 +2830,7 @@ ${p} [hidden]{display:none!important}
     for (const f of F) { const l = f.opts(opt), v = l.find(x => String(x[0]) === String(saved[f.key])); opt[f.key] = v ? v[0] : f.def; }
     if (coarse()) root.classList.add('touch');
     const main = el('div', 'main');
+    main.dataset.i18n = '';
     root.append(main);
     const SZ = 640, cv = api.canvas(SZ, SZ, main), cvs = cv.canvas;
     cvs.style.width = '';
