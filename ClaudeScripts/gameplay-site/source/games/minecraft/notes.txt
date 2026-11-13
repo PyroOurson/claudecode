@@ -1,0 +1,26 @@
+Blockcraft (blockcraft-3d) source notes, round 3
+- Build: python mk.py  -> writes ../../parts/057_g_minecraft.js (concatenates src/*.js in name order). node --check the part after.
+- Tests (Playwright, real Chrome): ../../agents3/minecraft/tools/*.js (drive.js helper: open, btn(label), cmd('/...'), newWorld, shot). wrap.__mc() returns screen state, buttons, player, chat, signs.
+- Pointer lock: grab() (21_input) is called from Create/Play world clicks and openWorldObj, lock is kept through the loading screen (wantLock window 4 s). No "Click to play" bar; an unlocked game grabs the mouse on the first click. Esc / lock loss opens the Game Menu.
+- New file 20b_adv.js: advancements (inventory checks every 20 ticks, toasts, Advancements screen), statistics (P.st, saved in playerData), sign text meshes in the world (updSigns every 20 frames).
+- GUI scale is always an integer (also on touch) so the bitmap font stays crisp.
+- Menus over the panorama use a CSS blur on the GL canvas (blurOn in 24_main); pause/options/stats/adv in game blur the world too.
+Round 4 (game quality pass)
+- World gen workers (09_world: LIGHTF, CONNF, GENPOST) now also apply saved edits, light the column in isolation and compute a 15 bit face connectivity mask per section. Main thread: stitchLight(c) only fixes the 4 borders. No worker: same functions run in genSync.
+- Visibility (24_main updVis): flood from the camera section through connected section faces, never stepping back toward the camera. c.vs[s] != 0 means visible. Only visible sections (plus the 3x3x3 around the camera) are meshed; c.md[s] stays 1 for hidden ones. Camera inside an opaque block turns culling off. setBlock flags c.cd / W.visd when opacity changes.
+- c.meshed now means "column data ready" (all 8 neighbours lit). Loading waits for pendVis(c) to be false in the 5x5 around the player.
+- Render distance 0 = Auto (RD is the live value, AR the controller in 10_render / autoRD in 24_main). Paused single player redraws the 3D view every 30th frame.
+- Difficulty 4 = Hardest: same numbers as Hard (DFL()), different brain (smartSense, perceive, lead shots in shootAt, flank / intercept in tickMob). Hardcore worlds are created with 4.
+- Debug hooks: wrap.__mc(reset) has pf (frame phase timers), vis, pend, draw; wrap.__mcDbg({ on: false }) turns culling off, { frz: 1 } freezes texture animation; wrap.__mcBench(all) times the mesher.
+- Test gotcha: the portal wipes gameplay:* keys and the gameplay-minecraft database once unless localStorage gameplay:reset is '4'. Set it in an init script before seeding saves.
+Round 5 (performance, online, saves)
+- run() is async: registry, atlas and item sprites are built in slices of about 7 ms with a progress bar on the HUD canvas (bootMsg). mount keeps destroy safe while it runs.
+- Item icons are drawn on the CPU (iconDraw in 10_render: quads of blockGeom projected with the old icon camera, painter order). No render target, no readPixels anywhere. iconStep runs from frameLoop with a time budget.
+- Mesh budget per frame: streamChunks(clamp(9 - restT, 2, 4)) plus 3 ms when the camera changed section. Loading screens use 24 ms.
+- Quality controller (autoRD): average frame interval above 20 ms for 3 s steps the pixel ratio down (to 1.25), then render distance, then pixel ratio to 0.75; below 17.5 ms with script under 7 ms for 12 s steps back up. Pixel ratio is capped at 2 (1.5 on touch), saved as SET.pra.
+- Simulation clock: simStep(wallTime, maxDt, maxTicks) is the only place that calls tick(). Frames call it with 0.25 s / 5 ticks; bgStep (100 ms interval, host only, only when no frame ran for 300 ms) calls it with 3 s / 60 ticks, so a hidden host keeps the world running for guests.
+- Net: on('rejoin') resends init + edits; api.net.invite at start calls joinParty(); entity snapshots go every 2, 3 or 4 ticks depending on how many entities the guest is near.
+- Deleted entities are marked e.gone (e.dead === 2 used to collide with the death countdown and left killed mobs standing forever).
+- Saves: cleanMeta / restoreData validate every field; a record that could not be read fully is copied to data id + '~bak' before the first save overwrites it; kv resolves on transaction complete or abort; quit never waits more than 6 s for a save.
+- Hardest: packRank / flankGoal (pack slots around the player), blinkBehind for the tall teleporting mob when angry, creeper weave. findPath uses typed arrays (no garbage).
+- Headless harness used for the numbers (jsdom + real three.js + counting renderer + fake workers) is not in the repo: see the pass report.

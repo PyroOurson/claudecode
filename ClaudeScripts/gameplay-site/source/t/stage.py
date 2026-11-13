@@ -26,7 +26,8 @@ def conf():
 
 
 def psql(db, sql):
-    r = subprocess.run(['psql', db, '-v', 'ON_ERROR_STOP=1', '-Atqc', sql], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    cmd = ['psql', db] if shutil.which('psql') else ['docker', 'exec', '-i', os.environ.get('STAGE_DB', 'supabase_db_staging'), 'psql', '-U', 'postgres', '-d', 'postgres']
+    r = subprocess.run(cmd + ['-v', 'ON_ERROR_STOP=1', '-Atqc', sql], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     if r.returncode != 0:
         sys.exit('stage: psql failed: ' + r.stderr.strip()[:400])
     return r.stdout.strip()
@@ -56,7 +57,10 @@ def parts(url, key):
     os.makedirs(STAGE)
     for f in os.listdir(PARTS):
         if f != '001_portal.js':
-            os.symlink(os.path.join(PARTS, f), os.path.join(STAGE, f))
+            try:
+                os.symlink(os.path.join(PARTS, f), os.path.join(STAGE, f))
+            except OSError:
+                shutil.copyfile(os.path.join(PARTS, f), os.path.join(STAGE, f))
     s = open(os.path.join(PARTS, '001_portal.js'), encoding='utf-8', newline='').read()
     for pat, rep in [(r"const SUPABASE_DIRECT = '[^']*';", "const SUPABASE_DIRECT = '%s';" % url), (r"const SUPABASE_RELAYS = \[[^\]]*\];", 'const SUPABASE_RELAYS = %s;' % os.environ.get('STAGE_RELAYS', '[]')), (r"const SUPABASE_ANON_KEY = '[^']*';", "const SUPABASE_ANON_KEY = '%s';" % key)]:
         s, n = re.subn(pat, lambda m: rep, s, count=1)

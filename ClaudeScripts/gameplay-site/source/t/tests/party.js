@@ -1,4 +1,4 @@
-const lib = require('../party_lib.js');
+const lib = require('../lib.js');
 const { launch } = lib;
 let PL = [];
 const player = async (b, who, o) => { const v = await lib.player(b, who, o); PL.push(v); return v; };

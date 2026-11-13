@@ -1,5 +1,5 @@
-const lib = require('../party_lib.js');
-const api = require('../stage_api.js');
+const lib = require('../lib.js');
+const { api } = lib;
 const { launch, USERS } = lib;
 const { execSync } = require('child_process');
 const only = (process.env.ONLY || '').split(',').filter(Boolean);

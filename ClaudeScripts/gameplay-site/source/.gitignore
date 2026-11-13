@@ -5,7 +5,7 @@ w/site_stage_plain/
 w/parts_stage*/
 w/parts/000_pre_000.html
 w/parts/001_portal.js
-rl/build/
+games/rocket-league/build/
 w/out*.html
 __pycache__/
 node_modules/

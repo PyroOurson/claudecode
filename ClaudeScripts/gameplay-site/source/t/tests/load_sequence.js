@@ -1,4 +1,4 @@
-const { launch, visitor, BASE } = require('../site.js');
+const { launch, visitor, BASE } = require('../lib.js');
 const SB = process.env.STAGE_SB_URL || 'http://127.0.0.1:54321';
 const EMAIL = process.env.TEST_EMAIL || 'gp_tester@test.example.com', PASS = process.env.TEST_PASS || 'TestAcc0unt!';
 const probe = () => {

@@ -14,10 +14,10 @@ KEYTAG = hashlib.sha256(('gameplay-names|' + (os.environ.get('GATE_PASS', '').st
 PLAIN = OUT.rstrip('/') + '_plain'
 DIR = 'gameplay/'
 INLINE = int(os.environ.get('INLINE_COVERS', '8'))
-COVERS2 = os.environ.get('COVERS2', os.path.join(HERE, 'covers2'))
+COVERS2 = os.environ.get('COVERS2', os.path.join(HERE, 'covers'))
 MIME = {'.webp': 'image/webp', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.avif': 'image/avif'}
 sys.path.insert(0, HERE)
-from meta_rows import DELETED
+from meta_rows import DELETED, SLUG
 PACK = int(os.environ.get('PACK_COVERS', '25'))
 
 
@@ -32,9 +32,10 @@ def name_of(data):
 
 def find_cover(gid):
     for ext in ('.webp', '.jpg', '.jpeg', '.avif', '.png'):
-        p = os.path.join(COVERS2, gid + ext)
-        if os.path.isfile(p) and os.path.getsize(p) > 0:
-            return p, ext
+        for b in (SLUG.get(gid, gid), gid):
+            p = os.path.join(COVERS2, b + ext)
+            if os.path.isfile(p) and os.path.getsize(p) > 0:
+                return p, ext
     return None, None
 
 
@@ -131,7 +132,7 @@ def main():
         meta['shots'].pop(i, None)
     bare = [g['id'] for g in meta['games'] if g['id'] not in cv]
     if bare:
-        print('build2: no cover image in covers2 for %s (the site draws a plain tile instead)' % ', '.join(bare))
+        print('build2: no cover image in covers for %s (the site draws a plain tile instead)' % ', '.join(bare))
     part_file, part_size = {}, {}
     for idx, (k, n) in enumerate(names):
         if k == 'script' and n.startswith('g_'):

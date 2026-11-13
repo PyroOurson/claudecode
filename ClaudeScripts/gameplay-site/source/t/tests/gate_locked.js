@@ -1,9 +1,10 @@
-const { launch, visitor, BASE } = require('../site.js');
+const { launch, visitor, BASE } = require('../lib.js');
 const { execFileSync } = require('child_process');
 const DB = process.env.STAGE_DB_URL || 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
 const SB = process.env.STAGE_SB_URL || 'http://127.0.0.1:54321';
 const PASS = process.env.STAGE_SITE_PASS || 'stagepass1';
-const sql = q => execFileSync('psql', [DB, '-Atqc', q]).toString().trim();
+const PSQL = (() => { try { execFileSync('psql', ['--version']); return ['psql', [DB]]; } catch (e) { return ['docker', ['exec', '-i', process.env.STAGE_DB || 'supabase_db_staging', 'psql', '-U', 'postgres', '-d', 'postgres']]; } })();
+const sql = q => execFileSync(PSQL[0], PSQL[1].concat(['-Atqc', q])).toString().trim();
 const state = () => { const v = s => { const e = document.querySelector(s); if (!e) return false; const r = e.getBoundingClientRect(), c = getComputedStyle(e); return r.width > 0 && c.visibility !== 'hidden' && c.display !== 'none'; }; return v('#f') ? 'password' : v('#sp') || v('#sps') ? 'skeleton' : document.querySelector('#top') ? 'site' : 'blank'; };
 (async () => {
   const key = sql('select open_key from public.site_gate where id = 1');

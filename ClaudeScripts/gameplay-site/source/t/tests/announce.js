@@ -1,5 +1,5 @@
-const lib = require('../party_lib.js');
-const { launch, visitor } = require('../site.js');
+const lib = require('../lib.js');
+const { launch, visitor } = lib;
 const { execSync } = require('child_process');
 const DBC = process.env.STAGE_DB || 'supabase_db_staging';
 const sql = q => execSync('docker exec -i ' + DBC + ' psql -U postgres -d postgres -At -c ' + JSON.stringify(q), { encoding: 'utf8' }).trim();

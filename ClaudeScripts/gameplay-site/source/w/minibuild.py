@@ -1,6 +1,9 @@
 import json, os, re, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from meta_rows import ids_of, SLUG
 P = os.environ.get('GP_PARTS', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'parts'))
 out, want = sys.argv[1], sys.argv[2:]
+want = set(want) | set(SLUG.get(w, w) for w in want)
 names = json.load(open(os.path.join(P, '_order.json')))
 have = os.listdir(P)
 def fname(k, n):
@@ -11,7 +14,7 @@ def fname(k, n):
     return os.path.join(P, c[0])
 res, skip = [], False
 for idx, (k, n) in enumerate(names):
-    if k == 'script' and n.startswith('g_') and not any(w in n[2:].split('+') for w in want):
+    if k == 'script' and n.startswith('g_') and not any(w in n[2:].split('+') or w in ids_of(n) for w in want):
         skip = True
         continue
     if k == 'gap' and skip and idx != len(names) - 1:

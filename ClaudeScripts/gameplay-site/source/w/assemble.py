@@ -2,7 +2,7 @@ import json, re, subprocess, sys, os
 HERE = os.path.dirname(os.path.abspath(__file__))
 os.chdir(HERE)
 sys.path.insert(0, HERE)
-from meta_rows import ROWS, DELETED
+from meta_rows import ROWS, DELETED, ids_of
 orig = open(os.path.join(HERE, 'orig_order.txt')).read().split()
 new25 = ['slope-3d','tunnel-run','rocket-soccer','hole-city','demon-halls','bean-royale','block-roll','flap-bird','slither','cell-feast','paper-land','fling-birds','candy-rope','brick-bros','garden-defense','night-survivors','bomb-blast','last-card','fire-water','maze-tanks','hoop-flop','sea-battle','marble-chain','moto-stunts','cookie-baker']
 ids = [r[0] for r in ROWS]
@@ -127,7 +127,7 @@ media = scope(open('new/media.css', encoding='utf-8').read())
 media += chr(10) + open('new/auth.css', encoding='utf-8').read() + chr(10) + open('new/admin.css', encoding='utf-8').read() + chr(10) + scope(open('new/social.css', encoding='utf-8').read()) + chr(10) + scope(open('new/site.css', encoding='utf-8').read()) + chr(10) + scope(open('new/ideas.css', encoding='utf-8').read()) + chr(10) + open('new/diag.css', encoding='utf-8').read()
 _ord = json.load(open('parts/_order.json'))
 _have = os.listdir('parts')
-_built = set(i for k, n in _ord if k == 'script' and n.startswith('g_') and any(re.fullmatch(r'\d{3}_' + re.escape(n) + r'\.js', f) for f in _have) for i in n[2:].split('+'))
+_built = set(i for k, n in _ord if k == 'script' and n.startswith('g_') and any(re.fullmatch(r'\d{3}_' + re.escape(n) + r'\.js', f) for f in _have) for i in ids_of(n))
 count = len([r for r in ROWS if r[0] in _built])
 desc = f'gameplay: {count} free browser games. Famous remakes, 3D, arcade, racing, puzzles, sports and online multiplayer games. No downloads, just click and play.'
 nos = '<noscript><div style="max-width:900px;margin:0 auto;padding:24px;font-family:system-ui,sans-serif"><h1>gameplay: ' + str(count) + ' free browser games</h1><p>gameplay needs JavaScript to run the games. Turn it on and reload this page.</p><ul>' + ''.join('<li><a href="/%s">%s</a></li>' % (r[0], r[1].replace('&', '&amp;')) for r in ROWS) + '</ul></div></noscript>\n'

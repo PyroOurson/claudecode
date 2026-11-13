@@ -200,3 +200,17 @@ ROWS = [
  ('bowling',"Bowling",'Sports','so6',8,'bowling ten pin strike spare lane','rn'),
 ]
 DELETED = ['demon-halls', 'night-survivors', 'fire-water', 'bomb-blast', 'marble-chain', 'clicker', 'glide', 'jetpack', 'sky-jump', 'lights-out', 'deep-miner', 'fling-birds', 'candy-rope', 'racer', 'shooter', 'hill-climb', 'golf', 'asteroids', 'bowling-3d', 'kart-circuit', 'tower-defense', 'stick-bridge']
+
+
+def slug(title):
+    import re
+    s = title.lower().replace('&', ' and ').replace("'", '').replace('.', ' ')
+    return re.sub(r'[^a-z0-9]+', '-', s).strip('-')
+
+
+SLUG = {r[0]: slug(r[1]) for r in ROWS}
+ID_OF = {v: k for k, v in SLUG.items()}
+
+
+def ids_of(part):
+    return [ID_OF.get(x, x) for x in part[2:].split('+')]
