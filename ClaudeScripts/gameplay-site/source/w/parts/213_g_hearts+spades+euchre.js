@@ -50,14 +50,17 @@
     return out;
   }
 
+  let PACC = null;
   function pimc(G, S, me, o) {
     const cands = G.legal(S, me);
     if (cands.length <= 1) return { best: cands[0], close: cands, cands, vals: [0] };
-    const t0 = now();
-    const tot = new Float64Array(cands.length);
-    let cnt = 0;
-    for (let it = 0; it < o.n; it++) {
-      if (it >= 3 && now() - t0 > o.ms) break;
+    const A = PACC && PACC.p === me ? PACC : null;
+    if (A && (!A.tot || A.tot.length !== cands.length)) { A.tot = new Float64Array(cands.length); A.cnt = 0; }
+    const t0 = now(), ms = A ? A.ms : o.ms, min = A ? Math.max(0, A.min - A.cnt) : 3;
+    const tot = A ? A.tot : new Float64Array(cands.length);
+    let cnt = A ? A.cnt : 0;
+    for (let it = cnt, k = 0; it < o.n; it++, k++) {
+      if (k >= min && now() - t0 > ms) break;
       const W = G.sample(S, me);
       for (let i = 0; i < cands.length; i++) {
         const T = G.clone(W);
@@ -84,6 +87,7 @@
       }
       cnt++;
     }
+    if (A) A.cnt = cnt;
     let bi = 0;
     for (let i = 1; i < cands.length; i++) if (tot[i] > tot[bi] + 1e-9) bi = i;
     const best = tot[bi] / Math.max(1, cnt);
@@ -833,7 +837,7 @@
   }
 
 
-  const EUCHRE_DEF = { target: 5, stick: true, alone: true, noPartner: false };
+  const EUCHRE_DEF = { target: 10, stick: true, alone: true, noPartner: false };
   const EDECK = [];
   for (let s = 0; s < 4; s++) for (let r = 9; r <= 14; r++) EDECK.push(mkc(s, r));
   const mate = s => (s + 2) % 4;
@@ -1810,7 +1814,7 @@
         ['Bowers', 'The Jack of the trump suit is the right bower, the highest card. The Jack of the same colour is the left bower, second highest, and it counts as a trump. After that: A, K, Q, 10, 9 of trump.'],
         ['Trump', 'The dealer turns up a card. In the first round each player in turn may pass or order it up; the dealer then picks it up and discards a card. If all pass, the card is turned down and, in the second round, players may name any other suit as trump. With stick the dealer on, the dealer must name trump.'],
         ['Going alone', 'The player who names trump may play alone: their partner sits out. Taking all five tricks alone scores 4.'],
-        ['Scoring', 'The team that named trump scores 1 for three or four tricks and 2 for all five (a march). If they fail (euchred), the other team scores 2. First to the target (5 here, 10 in the traditional game) wins.']
+        ['Scoring', 'The team that named trump scores 1 for three or four tricks and 2 for all five (a march). If they fail (euchred), the other team scores 2. The first team to reach the target (10 points by default) wins.']
       ]
     }
   };
@@ -1851,7 +1855,10 @@
     const C = CFG[gid], isH = gid === 'hearts', isS = gid === 'spades', isE = gid === 'euchre';
     const saved = api.load() || {};
     const opt = Object.assign({ diff: 'Normal', felt: 0, back: 'blue', speed: 1, hints: true, wins: 0, games: 0 }, saved);
-    opt.rules = Object.assign({}, C.defs, saved.rules || {});
+    opt.rules = Object.assign({}, C.defs, saved.rules && typeof saved.rules === 'object' ? saved.rules : {});
+    for (const o of C.opts) if (!o.vals.includes(opt.rules[o.k])) opt.rules[o.k] = C.defs[o.k];
+    if (!(opt.wins >= 0 && opt.wins < 1e9)) opt.wins = 0;
+    if (!(opt.games >= opt.wins && opt.games < 1e9)) opt.games = opt.wins;
     if (!['Easy', 'Normal', 'Hard', 'Hardest'].includes(opt.diff)) opt.diff = 'Normal';
     if (!(opt.felt >= 0 && opt.felt < 3)) opt.felt = 0;
     if (opt.back !== 'red') opt.back = 'blue';
@@ -2912,7 +2919,7 @@ ${host ? `<button class="cg-big blue" data-a="restart">${online ? 'Restart for e
       D.scores = [0, 0, 0, 0]; D.score = [0, 0]; D.bags = [0, 0]; D.hno = 0; D.over = null; D.summary = false; D.sumE = null; D.redeal = false;
       D.dealer = -1; D.trump = -1; D.maker = -1; D.out = -1; D.alone = false; D.alone1 = false; D.tw = [0, 0, 0, 0]; D.pts = [0, 0, 0, 0];
       D.bid = [null, null, null, null]; D.blind = [false, false, false, false]; D.picked = [false, false, false, false]; D.phase = ''; D.broken = false; D.bidFocus = -1;
-      M.V = null; M.vv = -1; M.ver = 0; M.botVer = -1; M.pending = false; M.counted = false; M.dl = null; M.nextAt = 0;
+      M.V = null; M.vv = -1; M.ver = 0; M.botVer = -1; M.acc = null; M.pending = false; M.counted = false; M.dl = null; M.nextAt = 0;
       scene = 'game'; hidePane(); fit(true); applyFelt(); setupAvatars(); placeHud();
       bidsEl.hidden = true; actEl.innerHTML = ''; trumpEl.hidden = true; setPrompt('', false);
       netEl.hidden = !isOnline();
@@ -3088,8 +3095,20 @@ ${host ? `<button class="cg-big blue" data-a="restart">${online ? 'Restart for e
       }
       const cp = nd.filter(x => M.cpu[x.p]);
       if (cp.length && T >= M.botAt) {
-        for (const x of cp) { const ev = actFor(x.p, x.k, M.diff); if (ev) feed(ev); }
+        for (const x of cp) {
+          PACC = M.acc && M.acc.ver === M.ver && M.acc.p === x.p ? Object.assign(M.acc, { ms: 0, min: 3 }) : null;
+          const ev = actFor(x.p, x.k, M.diff);
+          PACC = null;
+          if (ev) feed(ev);
+        }
+        M.acc = null;
         return;
+      }
+      if (cp.length === 1 && cp[0].k === 'play' && M.diff !== 'Easy') {
+        if (!M.acc || M.acc.ver !== M.ver) M.acc = { p: cp[0].p, ver: M.ver, tot: null, cnt: 0 };
+        PACC = Object.assign(M.acc, { ms: 4, min: 0 });
+        try { M.eng.bot(cp[0].p, M.diff); } catch (e) {}
+        PACC = null;
       }
       if (M.dl && T >= M.dl.at) {
         M.dl = null;

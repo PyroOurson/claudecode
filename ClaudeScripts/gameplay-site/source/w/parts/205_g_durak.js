@@ -776,6 +776,7 @@
     { h: 'Take or Bito', ill: [{ id: SC(1, 9), x: 14, y: 8, r: -8 }, { id: -1, x: 38, y: 16, r: 4 }, { id: -1, x: 62, y: 24, r: 14 }, { c: 'Take', k: 'red', x: 30, y: 98 }, { id: -1, x: 182, y: 14, r: -12 }, { id: -1, x: 188, y: 18, r: 6 }, { id: -1, x: 194, y: 12, r: 20 }, { c: 'Bito', k: 'green', x: 196, y: 98 }], t: 'Can’t beat it? <b>Take</b> the whole table and lose your turn. All beaten? <b>Bito</b>: the cards are discarded and the defender attacks next.' },
     { h: 'Transfer and the Durak', ill: [{ id: SC(1, 8), x: 34, y: 12, r: -6 }, { id: SC(2, 8), x: 86, y: 12, r: 6 }, { c: 'Transfer →', k: 'blue', x: 34, y: 98 }, { id: SC(3, 14), x: 190, y: 8, r: -8 }, { c: 'Last one = Durak', k: 'red', x: 154, y: 98 }], t: 'In <b>Transfer</b> games, before beating anything you can add a card of the same rank to pass the whole attack on. Empty your hand to win: the last player holding cards is the <b>durak</b>.' }
   ];
+  const tr = (s, o) => { const g = typeof window !== 'undefined' && window.gpI18n; return g ? g.t(s, o) : o ? s.replace(/\{(\w+)\}/g, (m, k) => k in o ? o[k] : m) : s; };
   const SAY = {
     take: ['Fine, I’ll take them.', 'Ugh…', 'Next time!', 'Saving those for later.', 'Hmm, okay.'],
     big: ['That’s a lot of cards!', 'Oof…', 'You’ll pay for that!', 'My poor hand…'],
@@ -1061,7 +1062,7 @@
       const rel = p => ((p - viewer) % D.n + D.n) % D.n;
       const seatXY = p => L.seat[rel(p)] || L.seat[0];
       const isCpu = p => !!M.cpu[p];
-      const nm = p => p < 0 ? '' : p === viewer ? 'You' : M.names[p] || 'Player';
+      const nm = p => p < 0 ? '' : p === viewer ? tr('You') : M.names[p] || tr('Player');
       const poss = p => p === viewer ? 'Your' : nm(p) + '’s';
       const tm = p => D.teams ? p % 2 : -1;
       const view = () => M.role === 'guest' ? M.lastV : M.eng ? M.eng.view(viewer) : null;
@@ -1120,8 +1121,8 @@
       const anchor = (p, dy = 0) => rel(p) ? { x: seatXY(p).x, y: seatXY(p).y + L.av + 30 + dy } : { x: W / 2, y: (PORT ? L.row - 40 : H - 175) + dy };
       const jit = () => ({ jr: rnd(-.05, .05) });
 
-      const pop = (txt, x, y, col, big) => fx.push({ k: 'pop', txt, x, y, col: col || '#fff', t0: now(), dur: 1100, big });
-      const bubble = (p, txt) => fx.push({ k: 'bub', p, txt, t0: now(), dur: 1500 });
+      const pop = (txt, x, y, col, big) => fx.push({ k: 'pop', txt: tr(txt), x, y, col: col || '#fff', t0: now(), dur: 1100, big });
+      const bubble = (p, txt) => fx.push({ k: 'bub', p, txt: tr(txt), t0: now(), dur: 1500 });
       const sayT = {};
       function say(p, kind, pr) {
         if (p < 0 || p === viewer || !isCpu(p) || (pr != null && Math.random() > pr)) return;
@@ -1130,7 +1131,7 @@
         const ls = SAY[kind]; if (!ls) return;
         sayT[p] = t;
         for (let i = fx.length - 1; i >= 0; i--) if (fx[i].k === 'say' && fx[i].p === p) fx.splice(i, 1);
-        fx.push({ k: 'say', p, txt: ls[Math.floor(Math.random() * ls.length)], t0: t + 120, dur: 2300 });
+        fx.push({ k: 'say', p, txt: tr(ls[Math.floor(Math.random() * ls.length)]), t0: t + 120, dur: 2300 });
       }
       const RS = () => M.run || (M.run = { beat: 0, held: 0, takes: 0, took: 0, tr: 0, thrown: 0, trumps: 0, t0: now(), t1: 0 });
       function burst(x, y, cols, k = 36, sp = 260) {
@@ -1190,7 +1191,7 @@
           }
           case 'first': {
             const an = anchor(f.p, -6);
-            pop(f.why === 'loser' ? nm(f.p) + (f.p === viewer ? ' attack first' : ' attacks first') : f.why === 'trump' ? nm(f.p) + (f.p === viewer ? ' have the lowest trump' : ' has the lowest trump') : nm(f.p) + (f.p === viewer ? ' start' : ' starts'), W / 2, L.status.y - 40, '#f3c64a');
+            pop(f.p === viewer ? (f.why === 'loser' ? 'You attack first' : f.why === 'trump' ? 'You have the lowest trump' : 'You start') : tr(f.why === 'loser' ? '{name} attacks first' : f.why === 'trump' ? '{name} has the lowest trump' : '{name} starts', { name: nm(f.p) }), W / 2, L.status.y - 40, '#f3c64a');
             return 700 * sp;
           }
           case 'turn': {
@@ -1267,7 +1268,7 @@
           case 'out': {
             sfx('out');
             const an = anchor(f.p, -6);
-            pop(f.p === viewer ? 'You are out!' : nm(f.p) + ' is out!', an.x, an.y, '#f3c64a', true);
+            pop(f.p === viewer ? 'You are out!' : tr('{name} is out!', { name: nm(f.p) }), an.x, an.y, '#f3c64a', true);
             burst(an.x, an.y, ['#f3c64a', '#fff', '#7fe08e'], 22, 200); say(f.p, 'out', .7);
             D.outs = D.outs.concat([f.p]);
             return 650 * sp;
@@ -2008,31 +2009,34 @@
         }
         if (!PORT) label(nm(viewer), s.x, s.y + av + 13, 14, '#fff', 'center', 'rgba(0,0,0,.45)');
         pips(viewer, s.x, PORT ? s.y - av - 9 : s.y + av + 27);
-        if (out) label('Out', s.x, s.y + av + (PORT ? 10 : 29), 12, '#7fe08e');
+        if (out) label(tr('Out'), s.x, s.y + av + (PORT ? 10 : 29), 12, '#7fe08e');
       }
       function drawStatus(t, V, act, mineAct) {
         if (!V || scene !== 'game' || !isIdle() || V.phase === 'over' || V.phase === 'idle') return;
         let tx = '', col = '#fff';
         const me = V.me;
-        if (D.outs.includes(me)) tx = 'You are out - watching';
-        else if (V.phase === 'lead') { tx = V.att === me ? 'Your attack - lead a card' : nm(V.att) + ' attacks'; if (V.att === me) col = '#fff36b'; }
+        if (D.outs.includes(me)) tx = tr('You are out - watching');
+        else if (V.phase === 'lead') { tx = V.att === me ? tr('Your attack - lead a card') : tr('{name} attacks', { name: nm(V.att) }); if (V.att === me) col = '#fff36b'; }
         else if (V.phase === 'defend') {
-          if (V.def === me) { col = '#fff36b'; tx = sel != null ? 'Tap a glowing card to beat it' : playable(V).length ? (V.rules.perevod && V.hand.some(x => canTransferV(V, x)) ? 'Beat, transfer or take' : 'Beat the cards or take') : 'Nothing beats it - take'; }
-          else tx = nm(V.def) + ' defends';
+          if (V.def === me) { col = '#fff36b'; tx = tr(sel != null ? 'Tap a glowing card to beat it' : playable(V).length ? (V.rules.perevod && V.hand.some(x => canTransferV(V, x)) ? 'Beat, transfer or take' : 'Beat the cards or take') : 'Nothing beats it - take'); }
+          else tx = tr('{name} defends', { name: nm(V.def) });
         } else if (V.phase === 'throw') {
-          if (V.pend.includes(me)) { col = '#fff36b'; tx = V.att === me ? 'Throw in more or Bito' : 'Throw in or pass'; }
-          else tx = 'Waiting for throw-ins';
+          if (V.pend.includes(me)) { col = '#fff36b'; tx = tr(V.att === me ? 'Throw in more or Bito' : 'Throw in or pass'); }
+          else tx = tr('Waiting for throw-ins');
         } else if (V.phase === 'take') {
-          if (V.def === me) tx = 'You take the cards';
-          else if (V.pend.includes(me)) { col = '#fff36b'; tx = 'Add cards for ' + nm(V.def) + ' or Done'; }
-          else tx = nm(V.def) + ' takes';
+          if (V.def === me) tx = tr('You take the cards');
+          else if (V.pend.includes(me)) { col = '#fff36b'; tx = tr('Add cards for {name} or Done', { name: nm(V.def) }); }
+          else tx = tr('{name} takes', { name: nm(V.def) });
         }
         if (tx && M.dl && M.dlTid === V.tid && act.length) { const left = Math.ceil((M.dl - now()) / 1000); if (left >= 0) tx += ' · ' + left + 's'; }
         if (!tx) return;
         ctx.font = `900 ${PORT ? 13 : 15}px ${FONT}`;
         const w = ctx.measureText(tx).width + 26, h = PORT ? 26 : 30;
-        rrect(L.status.x - w / 2, L.status.y - h / 2, w, h, h / 2, 'rgba(0,0,0,.42)');
-        label(tx, L.status.x, L.status.y + 1, PORT ? 13 : 15, col);
+        let top = 1e9;
+        for (const e of D.hand) if (!e.ghost && e.y < top) top = e.y;
+        const sy = Math.min(L.status.y, top - L.ch / 2 - h / 2 - 8);
+        rrect(L.status.x - w / 2, sy - h / 2, w, h, h / 2, 'rgba(0,0,0,.42)');
+        label(tx, L.status.x, sy + 1, PORT ? 13 : 15, col);
       }
       function drawFly(t) {
         for (const f of fly.slice()) {

@@ -1558,7 +1558,11 @@
       function applySnap(sn, ev) {
         const prev = S;
         S = sn; SAT = now();
-        if (!prev || sn.ph === 'bet' && prev.ph !== 'bet') RS.clear();
+        if (!prev || sn.ph === 'bet' && prev.ph !== 'bet') {
+          RS.clear();
+          const x0 = sn.s[M.me];
+          if (x0 && M.mode === 'solo' && sn.ph === 'bet') SV.peak = Math.max(SV.peak || 0, x0.bk + (x0.bt || 0));
+        }
         retarget();
         for (const e of ev) onEv(e);
         if (sn.ph === 'pay' && (!prev || prev.ph !== 'pay')) {

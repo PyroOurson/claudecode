@@ -11,6 +11,7 @@
   const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   const easeBack = t => { const c = 1.9; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
   const rnd = (a, b) => a + Math.random() * (b - a);
+  const tr = (s, o) => { const g = typeof window !== 'undefined' && window.gpI18n; return g ? g.t(s, o) : o ? s.replace(/\{(\w+)\}/g, (m, k) => k in o ? o[k] : m) : s; };
   const pick = a => a[Math.floor(Math.random() * a.length)];
   const RK = id => id % 13 + 1;
   const ST = id => (id / 13) | 0;
@@ -269,6 +270,7 @@
     };
     K.text = (s, x, y, size, fill, o) => {
       o = o || {};
+      if (typeof s === 'string') s = tr(s);
       ctx.save();
       ctx.font = `${o.weight || 900} ${size}px ${FONT}`;
       ctx.textAlign = o.align || 'center'; ctx.textBaseline = o.base || 'middle';
@@ -697,8 +699,14 @@
   }
 
   function ceSim(g, p, lacks) {
+    const S = ceSearch(g, p, lacks);
+    S.step(80, 12);
+    return S.best();
+  }
+  function ceSearch(g, p, lacks) {
     const s = g.s, n = s.n, h = s.hands[p], HP = CE_AI.Hard, base = ceBot(g, p, HP, lacks), one = s.drew && g.rules.draw === 'one';
-    if (base.t !== 'play' && !one) return base;
+    const done = { step: () => true, best: () => base };
+    if (base.t !== 'play' && !one) return done;
     const cands = [], cnt = [0, 0, 0, 0], seen = new Uint8Array(52), pool = [];
     for (const id of h) { seen[id] = 1; if (RK(id) !== 8) cnt[ST(id)]++; }
     for (const id of s.disc) seen[id] = 1;
@@ -715,11 +723,10 @@
       }
     }
     if (one) cands.push({ t: 'pass' });
-    if (cands.length < 2) return base;
-    const tot = new Float64Array(cands.length), t0 = performance.now();
+    if (cands.length < 2) return done;
+    const tot = new Float64Array(cands.length);
     let it = 0;
-    for (; it < 300; it++) {
-      if (it >= 12 && it % 4 === 0 && performance.now() - t0 > 80) break;
+    const one1 = () => {
       shuffle(pool);
       const hands = [], rest = pool.slice();
       for (let q = 0; q < n; q++) {
@@ -737,10 +744,19 @@
         w.take();
         tot[i] += ws.winner === p ? ws.scores[p] : ws.winner >= 0 ? -ws.scores[ws.winner] / (n - 1) : 0;
       }
-    }
-    let bi = 0, bv = -1e9;
-    for (let i = 0; i < cands.length; i++) { const c = cands[i], v = tot[i] / it + (c.t === base.t && c.id === base.id && c.suit === base.suit ? 1 : 0); if (v > bv) { bv = v; bi = i; } }
-    return cands[bi];
+    };
+    return {
+      step(ms, min) {
+        const t0 = performance.now();
+        while (it < 300 && (it < (min || 0) || performance.now() - t0 < ms)) { one1(); it++; }
+        return it >= 300;
+      },
+      best() {
+        let bi = 0, bv = -1e9;
+        for (let i = 0; i < cands.length; i++) { const c = cands[i], v = tot[i] / Math.max(1, it) + (c.t === base.t && c.id === base.id && c.suit === base.suit ? 1 : 0); if (v > bv) { bv = v; bi = i; } }
+        return cands[bi];
+      }
+    };
   }
 
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -878,7 +894,7 @@
         switch (e.k) {
           case 'deal': {
             K.hide(); M.paneShown = false; M.lastEnd = null; M.botTid = -1;
-            D.hand = []; D.counts = Array(D.n).fill(0); D.pile = []; D.stock = 52; D.sel = -1; D.dir = 1;
+            D.hand = []; D.counts = Array(D.n).fill(0); D.pile = []; D.stock = 52; D.sel = -1; D.dir = 1; D.suit = -1;
             if (e.mine && e.mine.length) addHand(e.mine, true);
             const cnt = e.counts, k = Math.max(...cnt);
             let c = 0;
@@ -1019,7 +1035,7 @@
       }
       function toastHint(V) {
         const top = V.top;
-        K.pop(`Match ${SG[V.suit]} or ${RL[RK(top)]}`, K.W / 2, L.disc.y + L.ch * .8, { size: 22, color: '#fff', life: 1.2 });
+        K.pop(tr('Match {suit} or {rank}', { suit: SG[V.suit], rank: RL[RK(top)] }), K.W / 2, L.disc.y + L.ch * .8, { size: 22, color: '#fff', life: 1.2 });
       }
       function tryDraw() {
         if (!canAct()) return;
@@ -1121,7 +1137,7 @@
         K.avatar(s.x, s.y, r, M.av[p] || 0, { ring: turn ? '#ffd23f' : null, dim: false });
         const lbl = (M.cpu[p] && M.mode !== 'online' ? M.names[p] : M.names[p]) || 'Player';
         K.text(lbl.length > 11 ? lbl.slice(0, 10) + '.' : lbl, s.x, s.y + r + 13, L.P ? 11 : 14, '#fff', { stroke: 'rgba(0,0,0,.75)', weight: 900 });
-        K.text(D.scores[p] + ' pts', s.x, s.y + r + (L.P ? 24 : 29), L.P ? 10 : 12, '#ffe9a0', { stroke: 'rgba(0,0,0,.6)', weight: 800 });
+        K.text(tr('{n} pts', { n: D.scores[p] }), s.x, s.y + r + (L.P ? 24 : 29), L.P ? 10 : 12, '#ffe9a0', { stroke: 'rgba(0,0,0,.6)', weight: 800 });
         const c = D.counts[p], show = Math.min(c, L.P ? 7 : 9), fp = fanPos(p);
         const sp = L.P ? 7 : 11;
         for (let i = 0; i < show; i++) { const o = i - (show - 1) / 2; K.card(-1, fp.x + o * sp, fp.y + Math.abs(o) * 1.2, o * .07, L.fan); }
@@ -1146,7 +1162,7 @@
         }
         K.rr(ds.x - cw / 2 - 5, ds.y - L.ch / 2 - 5, cw + 10, L.ch + 10, cw * .13, null, 'rgba(255,255,255,.12)', 2);
         D.pile.forEach((c, i) => K.card(c.id, ds.x + c.ox, ds.y + c.oy, c.r, 1));
-        if (D.suit >= 0) {
+        if (D.suit >= 0 && D.pile.length) {
           const age = now() - D.chipT, sc = age < .5 ? 1 + Math.sin(clamp(age / .5, 0, 1) * Math.PI) * .35 : 1;
           const cx = ds.x + cw / 2 + (L.P ? 4 : 18), cy = ds.y + L.ch / 2 - 8;
           ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc);
@@ -1185,7 +1201,7 @@
             if (pl.length) msg = 'Your turn'; else msg = V.stock ? 'No playable card. Draw!' : 'Nothing to play. Pass';
             col = '#ffe27a';
             if (V.drew && V.rules.draw === 'one') msg = 'Play it or pass';
-          } else msg = nm(V.turn) + (M.cpu[V.turn] ? ' is thinking\u2026' : '\u2019s turn');
+          } else msg = tr(M.cpu[V.turn] ? '{name} is thinking\u2026' : '{name}\u2019s turn', { name: nm(V.turn) });
         }
         if (msg) K.text(msg, K.W / 2, L.disc.y + L.ch / 2 + (L.P ? 40 : 38), L.P ? 14 : 18, col, { stroke: 'rgba(0,0,0,.7)', weight: 900 });
       }
@@ -1211,7 +1227,7 @@
         const s = L.seat[0], active = D.turn === viewer && view() && view().phase === 'play';
         const r = L.P ? 17 : 22, ax = L.P ? 26 : 50, ay = s.y - L.ch * .3 - (D.hand.length > (L.P ? 7 : 14) ? 28 : 0);
         K.avatar(ax, ay, r, M.av[viewer] || 0, { ring: active ? '#ffd23f' : null });
-        K.text(D.scores[viewer] + ' pts', ax, ay + r + 12, L.P ? 10 : 12, '#ffe9a0', { stroke: 'rgba(0,0,0,.6)', weight: 800 });
+        K.text(tr('{n} pts', { n: D.scores[viewer] }), ax, ay + r + 12, L.P ? 10 : 12, '#ffe9a0', { stroke: 'rgba(0,0,0,.6)', weight: 800 });
       }
 
       function drawTitle(t) {
@@ -1226,9 +1242,11 @@
         if (nd.k !== 'play' || !M.cpu[nd.p] || M.botTid === s.tid) return;
         M.botTid = s.tid;
         const P = CE_AI[M.diff] || CE_AI.Normal, tok = M.tok, tid = s.tid, p = nd.p;
+        const SR = P.mc ? ceSearch(M.eng, p, M.lacks) : null;
+        if (SR) { const chunk = () => { if (tok !== M.tok || !M.eng || M.eng.s.tid !== tid) return; if (!SR.step(5)) K.after(.016, chunk); }; K.after(.02, chunk); }
         K.after(rnd(P.think[0], P.think[1]), () => {
           if (tok !== M.tok || !M.eng || M.eng.s.tid !== tid || M.eng.need().p !== p) return;
-          const a = P.mc ? ceSim(M.eng, p, M.lacks) : ceBot(M.eng, p, P, M.lacks);
+          const a = SR ? (SR.step(0, 12), SR.best()) : ceBot(M.eng, p, P, M.lacks);
           if (!M.eng.act(p, a)) M.eng.act(p, { t: 'draw' }) || M.eng.act(p, { t: 'pass' });
           flush();
         });
@@ -1622,7 +1640,7 @@ ${done ? (M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a=
               D.lane[ws].glow = 1; D.lane[1 - ws].dim = 1;
               K.sfx('ding');
               const up = upPos(ws, D.lane[ws].upX > L.upX0 + 1);
-              K.pop(ws === 0 ? 'You win!' : nm(1) + ' wins', up.x, up.y - K.ch * .62 * (ws === 0 ? 1 : -1) + (ws === 0 ? 0 : 6), { size: L.P ? 18 : 24, color: ws === 0 ? '#9dffb0' : '#ffb0a0', life: .9 });
+              K.pop(ws === 0 ? 'You win!' : tr('{name} wins', { name: nm(1) }), up.x + K.cw * .5 + (L.P ? 54 : 84), up.y + 6, { size: L.P ? 18 : 24, color: ws === 0 ? '#9dffb0' : '#ffb0a0', life: .9 });
               return .55 * sp;
             }
             K.sfx('slap'); K.shake = 10; D.flash = .5;
@@ -1630,9 +1648,9 @@ ${done ? (M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a=
           }
           case 'war': {
             const depth = e.depth, fast = SP()[0] < .3;
-            const txt = depth === 1 ? 'WAR!' : depth === 2 ? 'DOUBLE WAR!' : depth === 3 ? 'TRIPLE WAR!' : 'WAR x' + depth + '!';
+            const txt = depth === 1 ? 'WAR!' : depth === 2 ? 'DOUBLE WAR!' : depth === 3 ? 'TRIPLE WAR!' : tr('WAR x{n}!', { n: depth });
             if (!fast) {
-              K.banner(txt, e.short >= 0 ? (e.short === viewer ? 'You have no cards left!' : nm(1) + ' has no cards left!') : 'Three face down, one face up', { c1: '#fff1a8', c2: '#ff4a1c', band: 'rgba(120,10,10,.72)', size: L.P ? 46 : 74, dur: 1.4 * Math.max(.7, sp), y: K.H / 2 });
+              K.banner(txt, e.short >= 0 ? (e.short === viewer ? 'You have no cards left!' : tr('{name} has no cards left!', { name: nm(1) })) : 'Three face down, one face up', { c1: '#fff1a8', c2: '#ff4a1c', band: 'rgba(120,10,10,.72)', size: L.P ? 46 : 74, dur: 1.4 * Math.max(.7, sp), y: K.H / 2 });
               K.sfx('war'); K.sfx('roll', .15);
             }
             D.flash = 1; K.shake = 14 + Math.min(depth, 4) * 3;
@@ -1670,7 +1688,7 @@ ${done ? (M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a=
             if (big) { K.burst(dp.x, dp.y, 40, { up: side === 0, spread: 1.4, min: 150, max: 460 }); K.shake = 8; }
             K.after(last, () => { D.counts = e.counts.map((c, p) => c).slice(); D.counts = [e.counts[plOf(0)], e.counts[plOf(1)]]; api.score(D.counts[0]); K.sfx('card'); K.pop('+' + e.n, dp.x + (L.P ? 54 : 84), dp.y - 24, { size: big ? 34 : 24, color: side === 0 ? '#9dffb0' : '#ffb0a0' }); M.deckBump = [side, now()]; });
             D.rounds++;
-            if (e.streak >= 3) K.after(last * .6, () => K.pop(e.streak + ' in a row!', K.W / 2, L.lane[side] + (side === 0 ? 70 : -70), { size: 26, color: '#ffe27a' }));
+            if (e.streak >= 3) K.after(last * .6, () => K.pop(tr('{n} in a row!', { n: e.streak }), K.W / 2, L.lane[side] + (side === 0 ? 70 : -70), { size: 26, color: '#ffe27a' }));
             M.cool = (SP()[1] || 0);
             return last + .12 * sp;
           }
@@ -1678,7 +1696,7 @@ ${done ? (M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a=
             M.lastOver = e;
             const win = sideOf(e.w) === 0;
             K.sfx(win ? 'win' : 'lose');
-            K.banner(win ? 'VICTORY!' : 'DEFEAT', win ? 'You won all 52 cards' : nm(1) + ' took every card', { c1: win ? '#fff1a8' : '#ffb0a0', c2: win ? '#ff9a1c' : '#c0392b', size: L.P ? 56 : 90, dur: 2, y: K.H / 2 });
+            K.banner(win ? 'VICTORY!' : 'DEFEAT', win ? 'You won all 52 cards' : tr('{name} took every card', { name: nm(1) }), { c1: win ? '#fff1a8' : '#ffb0a0', c2: win ? '#ff9a1c' : '#c0392b', size: L.P ? 56 : 90, dur: 2, y: K.H / 2 });
             if (win) { K.burst(K.W / 2, K.H / 2, 110, { up: true, spread: 1.3, min: 250, max: 720 }); }
             return 1.6;
           }
@@ -1780,7 +1798,7 @@ ${done ? (M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a=
         ctx.fillStyle = g3; ctx.fillRect(x0 + wa + wp, y - h / 2, wb, h);
         ctx.restore();
         K.text(nm(1) + ' ' + a, x0, y + 20, L.P ? 11 : 12, '#ffb0a0', { align: 'left', stroke: 'rgba(0,0,0,.7)', weight: 800 });
-        K.text('You ' + b, x1, y + 20, L.P ? 11 : 12, '#a9d1ff', { align: 'right', stroke: 'rgba(0,0,0,.7)', weight: 800 });
+        K.text(nm(0) + ' ' + b, x1, y + 20, L.P ? 11 : 12, '#a9d1ff', { align: 'right', stroke: 'rgba(0,0,0,.7)', weight: 800 });
       }
 
       function drawBoard(t, dt) {
@@ -1792,7 +1810,7 @@ ${done ? (M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a=
         if (M.eng || M.role === 'guest') {
           if (M.role === 'guest' || (M.eng && M.eng.s.phase === 'play')) {
             if (!isIdle()) msg = '';
-            else if (M.rd[viewer] && !opt.auto) msg = M.mode === 'online' ? 'Waiting for ' + nm(1) + '\u2026' : '';
+            else if (M.rd[viewer] && !opt.auto) msg = M.mode === 'online' ? tr('Waiting for {name}\u2026', { name: nm(1) }) : '';
             else if (opt.auto) msg = 'Auto-play';
             else msg = 'Tap FLIP';
           }
@@ -2022,7 +2040,7 @@ ${M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a="again">
     return e;
   }
 
-  const SP_AI = { Casual: { react: 1.9, chain: .8, smart: 0 }, Quick: { react: 1.15, chain: .6, smart: 1 }, Lightning: { react: .55, chain: .5, smart: 2 }, Hardest: { react: .42, chain: .6, smart: 3 } };
+  const SP_AI = { Casual: { react: 1.9, chain: .8, smart: 0 }, Quick: { react: 1.15, chain: .6, smart: 1 }, Lightning: { react: .6, chain: .75, smart: 2 }, Hardest: { react: .45, chain: .85, smart: 3 } };
 
   function spMoves(g, p) {
     const h = g.s.hand[p], out = [];
@@ -2233,7 +2251,7 @@ ${M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a="again">
             D.ph = 'over'; M.last = e; M.secs = Math.max(1, Math.round(K.t - M.t0));
             const win = e.w === viewer;
             K.sfx(win ? 'win' : 'lose');
-            K.banner(win ? 'YOU WIN!' : 'YOU LOSE', win ? 'Hand and deck cleared' : nm(e.w) + ' was faster', { c1: win ? '#fff1a8' : '#ffb0a0', c2: win ? '#ff9a1c' : '#c0392b', size: L.P ? 52 : 84, dur: 1.8, y: K.H / 2 });
+            K.banner(win ? 'YOU WIN!' : 'YOU LOSE', win ? 'Hand and deck cleared' : tr('{name} was faster', { name: nm(e.w) }), { c1: win ? '#fff1a8' : '#ffb0a0', c2: win ? '#ff9a1c' : '#c0392b', size: L.P ? 52 : 84, dur: 1.8, y: K.H / 2 });
             if (win) K.burst(K.W / 2, K.H / 2, 100, { up: true, spread: 1.3, min: 250, max: 700 });
             K.after(1.9, showOver);
             return;
@@ -2389,7 +2407,7 @@ ${M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a="again">
         const info = (a, p, left) => {
           K.avatar(a.x, a.y, L.av, M.av[p] || 0, {});
           K.text(nm(p), a.x, a.y + L.av + 13, P ? 11 : 14, '#fff', { stroke: 'rgba(0,0,0,.7)' });
-          K.text(left + ' left', a.x, a.y + L.av + (P ? 25 : 31), P ? 10 : 12, '#9ad9ee', { stroke: 'rgba(0,0,0,.6)', weight: 800 });
+          K.text(tr('{n} left', { n: left }), a.x, a.y + L.av + (P ? 25 : 31), P ? 10 : 12, '#9ad9ee', { stroke: 'rgba(0,0,0,.6)', weight: 800 });
         };
         info(L.oav, 1 - viewer, opLeft()); info(L.mav, viewer, myLeft());
 
