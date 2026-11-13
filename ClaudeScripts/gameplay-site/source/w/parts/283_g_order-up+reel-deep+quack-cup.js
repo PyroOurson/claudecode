@@ -118,7 +118,10 @@
       keys: new Set(), hit: new Set(), hitS: new Set(), pressedS: false, lock: false, mkScr: false, downBtn: false, cursor: 'default', t: 0, fx: [], shake: 0, onKey: null, onWheel: null, wheel: 0, touch: false
     };
     const au = S.au = makeAudio(api);
+    const coarse = window.matchMedia ? matchMedia('(pointer: coarse)') : { matches: false };
+    S.rotOn = () => !S.rotOff && coarse.matches && innerHeight > innerWidth * 1.1;
     api.on(canvas, 'pointerdown', e => {
+      if (S.rotOn()) { S.rotOff = true; e.preventDefault(); return; }
       const p = toLocal(e);
       S.mx = p.x; S.my = p.y; S.downX = p.x; S.downY = p.y; S.down = true; S.pressed = true; S.moved = 0;
       S.touch = e.pointerType === 'touch'; S.downBtn = false; S.pressedS = true;
@@ -159,6 +162,13 @@
     S.ks = c => S.hitS.has(c);
     S.clearSim = () => { S.hitS.clear(); S.pressedS = false; };
     S.endFrame = () => {
+      if (S.rotOn()) {
+        ctx.fillStyle = 'rgba(15,10,30,.86)'; ctx.fillRect(0, 0, W, H);
+        const a = Math.min(1, Math.max(0, Math.sin(S.t * 1.6) * 1.4)) * Math.PI / 2;
+        ctx.save(); ctx.translate(W / 2, H / 2 - 70); ctx.rotate(-a); rrp(ctx, -48, -86, 96, 172, 16); ctx.fillStyle = '#2a2438'; ctx.fill(); ctx.lineWidth = 8; ctx.strokeStyle = '#fff'; ctx.stroke(); ctx.fillStyle = '#4cc9f0'; rrp(ctx, -36, -70, 72, 132, 6); ctx.fill(); ctx.restore();
+        S.text('Turn your phone sideways', W / 2, H / 2 + 76, 44, '#fff', 'center', '#2a2438');
+        S.text('This game is made for landscape. Tap to play anyway.', W / 2, H / 2 + 132, 26, '#ffe9c4', 'center', null, 800);
+      }
       S.pressed = false; S.released = false; S.hit.clear(); S.wheel = 0;
       const c = S.lock ? 'default' : S.cursor;
       if (canvas.style.cursor !== c) canvas.style.cursor = c;
@@ -475,7 +485,9 @@
     const sv = svFix(defSave, api.load());
     for (const k of Object.keys(defSave.lv)) sv.lv[k] = clamp(Math.floor(sv.lv[k]) || 0, 0, TF_UP[k].max);
     sv.hold = sv.hold.filter(h => h && typeof h === 'object' && FBY[h.id] && isFinite(h.v) && isFinite(h.size)).slice(0, 400);
-    for (const k of Object.keys(sv.dex)) { const q = sv.dex[k]; if (!q || typeof q !== 'object' || !FBY[k]) delete sv.dex[k]; }
+    for (const k of Object.keys(sv.dex)) { const q = sv.dex[k]; if (!q || typeof q !== 'object' || Array.isArray(q) || !FBY[k]) delete sv.dex[k]; else sv.dex[k] = { n: clamp(Math.floor(+q.n || 0), 0, 1e9), best: clamp(+q.best || 0, 0, 10), gold: clamp(Math.floor(+q.gold || 0), 0, 1e9) }; }
+    for (const k of ['casts', 'bestHaul', 'deepest', 'tut', 'sold']) sv[k] = clamp(+sv[k] || 0, 0, 1e15);
+    if (typeof sv.mkT !== 'number' || !isFinite(sv.mkT)) sv.mkT = 0;
     for (const k of Object.keys(sv.mk)) if (typeof sv.mk[k] !== 'number' || !isFinite(sv.mk[k]) || sv.mk[k] <= 0) delete sv.mk[k];
     sv.coins = Math.max(0, sv.coins); sv.earned = Math.max(0, sv.earned);
     if (sv.last > Date.now()) sv.last = Date.now();
@@ -2004,7 +2016,7 @@
       hint0: 'Click the customer to take the order. Grill patties (2), then stack the burger (3).',
       help: [['GRILL', 'Put raw patties on the grill. Click a patty to flip it: both sides must reach the doneness on the ticket (rare, medium or well done). Move cooked patties to the warming tray.'], ['BUILD', 'Stack the burger from the bottom bun up, in the order on the ticket. Pick a layer, then click to drop it: the closer to the middle, the better. Press Serve when the top bun is on.']],
       menu: day => ['bunT', 'patty'].concat(avail(day).map(t => t.id)).map(id => (x, y) => bgIcon(c, id, x, y, id === 'patty' ? .75 : .85)),
-      newItems: day => BG.L.filter(t => t.day === day && day > 1).map(t => ({ n: t.n, d: (x, y) => bgIcon(c, t.id, x, y, .8) })).concat(BG.DONE.filter(t => t.day === day && day > 1).map(t => ({ n: t.n, d: (x, y) => { c.beginPath(); c.arc(x, y, 12, 0, TAU); c.fillStyle = pattyCol(t.v); c.fill(); c.strokeStyle = '#2a2438'; c.lineWidth = 2.5; c.stroke(); } }))),
+      newItems: day => BG.L.filter(t => t.day === day && t.id !== 'bunB').map(t => ({ n: t.n, d: (x, y) => bgIcon(c, t.id, x, y, .8) })).concat(BG.DONE.filter(t => t.day === day).map(t => ({ n: t.n, d: (x, y) => { c.beginPath(); c.arc(x, y, 12, 0, TAU); c.fillStyle = pattyCol(t.v); c.fill(); c.strokeStyle = '#2a2438'; c.lineWidth = 2.5; c.stroke(); } }))),
       icon: (x, y, s) => { c.save(); c.translate(x, y); c.scale(s, s); c.fillStyle = 'rgba(0,0,0,.2)'; c.beginPath(); c.ellipse(0, 44, 70, 10, 0, 0, TAU); c.fill(); bgStack(c, ['bunB', 'patty', 'cheese', 'lettuce', 'tomato', 'bunT'], 0, 42, 118); c.restore(); },
       floaty: t => { const ids = ['patty', 'cheese', 'tomato', 'lettuce', 'bunT', 'pickle']; for (let i = 0; i < 12; i++) { c.save(); c.translate((i * 151 + t * 20) % 1020 - 30, ((i * 97) % 520) + 40); c.rotate(Math.sin(t * .5 + i) * .3); bgIcon(c, ids[i % 6], 0, 0, 1.6); c.restore(); } },
       gen, ticket, focus,
@@ -2261,7 +2273,7 @@
       hint0: 'Click the customer to take the order. Build (2), blend (3), then top the shake (4).',
       help: [['BUILD', 'Pick the cup size, add each mix-in on the ticket once, then hold the flavour pump and let go at the dotted line.'], ['BLEND', 'Load the cup into a blender, press Blend, then Stop at the right mark: Chunky, Regular or Smooth. Blenders keep running while you work elsewhere.'], ['TOP', 'Pipe whipped cream up to the line, drizzle the sauce, shake the sprinkles and put each topping on the left, middle or right spot.']],
       menu: day => un(SH.TOP, day).map(t => (x, y) => shTopping(c, t.id, x, y, .9)).concat(un(SH.MIX, day).map(m => (x, y) => shMixIcon(c, m.id, x, y, .8))),
-      newItems: day => day < 2 ? [] : [].concat(SH.SYR.filter(t => t.day === day).map(t => ({ n: t.n, d: (x, y) => { c.fillStyle = t.col; c.beginPath(); c.arc(x, y, 12, 0, TAU); c.fill(); c.strokeStyle = '#2a2438'; c.lineWidth = 2.5; c.stroke(); } })), SH.MIX.filter(t => t.day === day).map(t => ({ n: t.n, d: (x, y) => shMixIcon(c, t.id, x, y, .9) })), SH.TOP.filter(t => t.day === day).map(t => ({ n: t.n, d: (x, y) => shTopping(c, t.id, x, y, .9) })), SH.DRIZ.filter(t => t.day === day).map(t => ({ n: t.n, d: (x, y) => { c.fillStyle = t.col; rrp(c, x - 7, y - 11, 14, 22, 5); c.fill(); c.strokeStyle = '#2a2438'; c.lineWidth = 2; c.stroke(); } })), SH.SPR.filter(t => t.day === day).map(t => ({ n: t.n, d: (x, y) => { for (let j = 0; j < 6; j++) { c.fillStyle = t.cols[j % t.cols.length]; c.fillRect(x - 8 + (j % 3) * 6, y - 5 + Math.floor(j / 3) * 7, 4, 4); } } })), SH.BLEND.filter(t => t.day === day).map(t => ({ n: t.n, d: (x, y) => { c.fillStyle = '#4cc9f0'; rrp(c, x - 5, y - 11, 10, 22, 5); c.fill(); c.strokeStyle = '#2a2438'; c.lineWidth = 2; c.stroke(); } }))),
+      newItems: day => [].concat(SH.SYR.filter(t => t.day === day).map(t => ({ n: t.n, d: (x, y) => { c.fillStyle = t.col; c.beginPath(); c.arc(x, y, 12, 0, TAU); c.fill(); c.strokeStyle = '#2a2438'; c.lineWidth = 2.5; c.stroke(); } })), SH.MIX.filter(t => t.day === day).map(t => ({ n: t.n, d: (x, y) => shMixIcon(c, t.id, x, y, .9) })), SH.TOP.filter(t => t.day === day).map(t => ({ n: t.n, d: (x, y) => shTopping(c, t.id, x, y, .9) })), SH.DRIZ.filter(t => t.day === day && t.id !== 'none').map(t => ({ n: t.n, d: (x, y) => { c.fillStyle = t.col; rrp(c, x - 7, y - 11, 14, 22, 5); c.fill(); c.strokeStyle = '#2a2438'; c.lineWidth = 2; c.stroke(); } })), SH.SPR.filter(t => t.day === day && t.id !== 'none').map(t => ({ n: t.n, d: (x, y) => { for (let j = 0; j < 6; j++) { c.fillStyle = t.cols[j % t.cols.length]; c.fillRect(x - 8 + (j % 3) * 6, y - 5 + Math.floor(j / 3) * 7, 4, 4); } } })), SH.BLEND.filter(t => t.day === day).map(t => ({ n: t.n, d: (x, y) => { c.fillStyle = '#4cc9f0'; rrp(c, x - 5, y - 11, 10, 22, 5); c.fill(); c.strokeStyle = '#2a2438'; c.lineWidth = 2; c.stroke(); } }))),
       icon: (x, y, s) => { c.save(); c.translate(x, y); c.scale(s, s); c.fillStyle = 'rgba(0,0,0,.2)'; c.beginPath(); c.ellipse(0, 46, 46, 8, 0, 0, TAU); c.fill(); const cup = shCup(c, 0, 46, 'm', { k: .62, fill: 1, col: '#f48fb1', mix: ['strawb'], blend: 1, seed: 4 }); shCream(c, 0, cup.top + 3, 52, 1, .62); shTopping(c, 'cherry', 0, cup.top - 34, 1.1); c.strokeStyle = '#e63946'; c.lineWidth = 5; c.beginPath(); c.moveTo(12, cup.top - 4); c.lineTo(26, cup.top - 50); c.stroke(); c.restore(); },
       floaty: t => { const ids = ['cherry', 'wafer', 'cookie', 'gummy', 'straw', 'choc']; for (let i = 0; i < 14; i++) shTopping(c, ids[i % 6], (i * 143 + t * 18) % 1020 - 30, ((i * 91) % 520) + 40, 1.8 + (i % 3) * .4); },
       gen, ticket, focus,
@@ -2516,7 +2528,7 @@
     const drawTop = () => {
       const g = c.createLinearGradient(0, 0, 0, 52); g.addColorStop(0, K.th.bar[0]); g.addColorStop(1, K.th.bar[1]); c.fillStyle = g; c.fillRect(0, 0, W, 52); c.fillStyle = shade(K.th.bar[1], -.4); c.fillRect(0, 50, W, 3);
       const sh2 = shade(K.th.bar[1], -.5);
-      S.text(tr('DAY {n}', { n: RS.day }), 14, 17, 18, '#fff', 'left', sh2);
+      S.text(tr('DAY {n}', { n: D.day }), 14, 17, 18, '#fff', 'left', sh2);
       const prog = clamp(D.t / D.len, 0, 1), mins = Math.floor(prog * 480), hh = 12 + Math.floor(mins / 60), mm = mins % 60;
       S.text(`${hh > 12 ? hh - 12 : hh}:${String(mm).padStart(2, '0')} PM`, 14, 38, 14, '#ffe9c4', 'left', sh2, 800);
       rrp(c, 92, 30, 90, 8, 4); c.fillStyle = 'rgba(0,0,0,.3)'; c.fill(); rrp(c, 92, 30, Math.max(6, 90 * prog), 8, 4); c.fillStyle = '#ffe14d'; c.fill();
@@ -2646,8 +2658,8 @@
       let yy = 172;
       if (items.length) {
         S.text('NEW ON THE MENU', W / 2, yy, 13, '#8a7a9a', 'center', null, 900); yy += 18;
-        const cw = 180, n = items.length, rows = Math.ceil(n / 3);
-        items.forEach((it, i) => { const r = Math.floor(i / 3), cnt = Math.min(3, n - r * 3), x0 = W / 2 - cnt * cw / 2 + (i % 3) * cw; S.panel(x0 + 4, yy + r * 40, cw - 8, 34, { fill: '#fff', r: 12, lw: 2.5, sh: 2 }); it.d(x0 + 24, yy + r * 40 + 17); S.text(it.n, x0 + 44, yy + r * 40 + 17, S.fit(tr(it.n), cw - 58, 14), '#2a2438', 'left'); });
+        const cw = 180, n = Math.min(9, items.length), rows = Math.ceil(n / 3);
+        items.slice(0, 9).forEach((it, i) => { const r = Math.floor(i / 3), cnt = Math.min(3, n - r * 3), x0 = W / 2 - cnt * cw / 2 + (i % 3) * cw; S.panel(x0 + 4, yy + r * 40, cw - 8, 34, { fill: '#fff', r: 12, lw: 2.5, sh: 2 }); it.d(x0 + 24, yy + r * 40 + 17); S.text(it.n, x0 + 44, yy + r * 40 + 17, S.fit(tr(it.n), cw - 58, 14), '#2a2438', 'left'); });
         yy += Math.min(rows, 3) * 40 + 10;
       }
       if (nc.length) {
@@ -2721,7 +2733,7 @@
       if (modal) modal.t = (modal.t || 0) + dt;
       if (scene === 'play' && D) { if (D.result) D.result.t += dt; else if (!modal) updateDay(dt); }
     };
-    root.__dbg = { sv, get D() { return D; }, get K() { return K; }, get scene() { return scene; }, get modal() { return modal; }, startDay, setKit, KITS, QX, BXS, tick, finishServe };
+    root.__dbg = { sv, get D() { return D; }, get K() { return K; }, get scene() { return scene; }, get modal() { return modal; }, startDay, setKit, KITS, QX, BXS, tick, finishServe, data: { PZ, BG, SH } };
     api.score(Math.floor(sv.earned));
     api.loop(dt => {
       acc += dt; let n = 0;
@@ -2998,7 +3010,11 @@
     const sv = svFix(defSave(), api.load());
     for (const sl of DK.SLOTS) if (sv.look[sl] != null && !(DK.IB[sv.look[sl]] && DK.IB[sv.look[sl]].slot === sl)) sv.look[sl] = null;
     if (!DK.CB[sv.look.col]) sv.look.col = 'yellow';
-    for (const k of Object.keys(sv.st)) { const q = sv.st[k]; q.lv = clamp(Math.floor(q.lv) || 1, 1, 40); q.xp = Math.max(0, +q.xp || 0); }
+    { const st0 = {}; for (const d of DK.STATS) { const q = sv.st[d.id] && typeof sv.st[d.id] === 'object' ? sv.st[d.id] : { lv: 1, xp: 0 }; st0[d.id] = { lv: clamp(Math.floor(q.lv) || 1, 1, 40), xp: clamp(+q.xp || 0, 0, 1e6) }; } sv.st = st0; }
+    sv.name = String(sv.name).slice(0, 16) || 'Quackers';
+    for (const k of ['bestM']) for (const d of DK.STATS) sv[k][d.id] = clamp(+sv[k][d.id] || 0, 0, 1e6);
+    for (const k of ['owned', 'cols']) if (!sv[k] || typeof sv[k] !== 'object' || Array.isArray(sv[k])) sv[k] = k === 'cols' ? { yellow: 1 } : {};
+    for (const k of ['nraces', 'wins', 'trains', 'tut']) sv[k] = clamp(Math.floor(+sv[k] || 0), 0, 1e7);
     sv.runs = sv.runs.length === 6 && sv.runs.every(r => Array.isArray(r) && r.every(x => Array.isArray(x) && Array.isArray(x[1]) && x[1].length === 5)) ? sv.runs : defSave().runs;
     sv.trophy = sv.trophy.length === 6 ? sv.trophy.map(t => clamp(Math.floor(t) || 0, 0, 5)) : defSave().trophy;
     sv.energy = clamp(sv.energy, 0, 100); sv.money = Math.max(0, sv.money); sv.seeds = Math.max(0, sv.seeds);
