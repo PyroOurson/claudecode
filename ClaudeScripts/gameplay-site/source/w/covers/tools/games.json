@@ -543,5 +543,20 @@
 "starve",
 "Starve.io",
 "Action,Strategy"
+],
+[
+"beat-duel",
+"Beat Duel",
+"Skill,Arcade"
+],
+[
+"click-beat",
+"Click Beat",
+"Skill"
+],
+[
+"ante-up",
+"Ante Up",
+"Strategy,Board"
 ]
 ]
