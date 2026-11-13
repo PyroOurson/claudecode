@@ -182,5 +182,9 @@
  ["gap", "gap_280"],
  ["script", "g_bloons-td"],
  ["gap", "gap_282"],
+ ["script", "g_beat-duel+click-beat"],
+ ["gap", "gap_288"],
+ ["script", "g_ante-up"],
+ ["gap", "gap_292"],
  ["gap", "gap_142"]
 ]

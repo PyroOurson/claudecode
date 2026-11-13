@@ -1654,66 +1654,66 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
   }
 
   const FNF_CSS = `
-.gm-fnf{touch-action:none;background:#0b0618}
-.gm-fnf .fo-wrap{position:relative;container-type:size;background:#0b0618;border-radius:10px;overflow:hidden;user-select:none;-webkit-user-select:none}
-.gm-fnf .fo-wrap>canvas{display:block;width:100%!important;height:100%!important;aspect-ratio:auto!important}
-.gm-fnf .fo-ui{position:absolute;inset:0;--u:1cqw;font-family:"Trebuchet MS",system-ui,sans-serif;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*1.2);overflow:hidden}
-.gm-fnf .por .fo-ui{--u:2.3cqw}
-.gm-fnf .fo-ui.off{pointer-events:none}
-.gm-fnf .fo-ui.dim{background:rgba(8,4,20,.62);backdrop-filter:blur(3px)}
-.gm-fnf .fo-col{display:flex;flex-direction:column;gap:calc(var(--u)*1.1);align-items:stretch}
-.gm-fnf .fo-logo{margin:0;text-align:center;font:900 calc(var(--u)*6)/.95 "Trebuchet MS",system-ui,sans-serif;color:#ffd23f;text-shadow:0 calc(var(--u)*.45) 0 #b3401a,0 calc(var(--u)*.9) 0 #1c1130,calc(var(--u)*.3) 0 0 #1c1130,calc(var(--u)*-.3) 0 0 #1c1130;letter-spacing:.01em;transform:rotate(-2deg)}
-.gm-fnf .fo-logo b{display:block;color:#ff5fa8;font-size:1.28em;text-shadow:0 calc(var(--u)*.45) 0 #7a1f55,0 calc(var(--u)*.9) 0 #1c1130,calc(var(--u)*.3) 0 0 #1c1130,calc(var(--u)*-.3) 0 0 #1c1130}
-.gm-fnf .fo-sub{font:700 calc(var(--u)*1.7)/1.3 system-ui,sans-serif;color:#e7e0ff;text-align:center;text-shadow:0 2px 0 #000}
-.gm-fnf .fo-press{font:900 calc(var(--u)*2.4)/1 "Trebuchet MS",system-ui,sans-serif;animation:fo-pulse 1.1s infinite alternate;text-shadow:0 calc(var(--u)*.3) 0 #000}
+.gm-beat-duel{touch-action:none;background:#0b0618}
+.gm-beat-duel .fo-wrap{position:relative;container-type:size;background:#0b0618;border-radius:10px;overflow:hidden;user-select:none;-webkit-user-select:none}
+.gm-beat-duel .fo-wrap>canvas{display:block;width:100%!important;height:100%!important;aspect-ratio:auto!important}
+.gm-beat-duel .fo-ui{position:absolute;inset:0;--u:1cqw;font-family:"Trebuchet MS",system-ui,sans-serif;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*1.2);overflow:hidden}
+.gm-beat-duel .por .fo-ui{--u:2.3cqw}
+.gm-beat-duel .fo-ui.off{pointer-events:none}
+.gm-beat-duel .fo-ui.dim{background:rgba(8,4,20,.62);backdrop-filter:blur(3px)}
+.gm-beat-duel .fo-col{display:flex;flex-direction:column;gap:calc(var(--u)*1.1);align-items:stretch}
+.gm-beat-duel .fo-logo{margin:0;text-align:center;font:900 calc(var(--u)*6)/.95 "Trebuchet MS",system-ui,sans-serif;color:#ffd23f;text-shadow:0 calc(var(--u)*.45) 0 #b3401a,0 calc(var(--u)*.9) 0 #1c1130,calc(var(--u)*.3) 0 0 #1c1130,calc(var(--u)*-.3) 0 0 #1c1130;letter-spacing:.01em;transform:rotate(-2deg)}
+.gm-beat-duel .fo-logo b{display:block;color:#ff5fa8;font-size:1.28em;text-shadow:0 calc(var(--u)*.45) 0 #7a1f55,0 calc(var(--u)*.9) 0 #1c1130,calc(var(--u)*.3) 0 0 #1c1130,calc(var(--u)*-.3) 0 0 #1c1130}
+.gm-beat-duel .fo-sub{font:700 calc(var(--u)*1.7)/1.3 system-ui,sans-serif;color:#e7e0ff;text-align:center;text-shadow:0 2px 0 #000}
+.gm-beat-duel .fo-press{font:900 calc(var(--u)*2.4)/1 "Trebuchet MS",system-ui,sans-serif;animation:fo-pulse 1.1s infinite alternate;text-shadow:0 calc(var(--u)*.3) 0 #000}
 @keyframes fo-pulse{from{opacity:.45;transform:scale(.97)}to{opacity:1;transform:scale(1.03)}}
-.gm-fnf .fo-head{position:absolute;top:calc(var(--u)*1.6);left:0;right:0;text-align:center;font:900 calc(var(--u)*3.2)/1 "Trebuchet MS",system-ui,sans-serif;text-shadow:0 calc(var(--u)*.3) 0 #000,0 0 calc(var(--u)*1.5) rgba(255,95,168,.6)}
-.gm-fnf .fo-foot{position:absolute;bottom:calc(var(--u)*1.4);left:0;right:0;display:flex;gap:calc(var(--u)*1);justify-content:center;flex-wrap:wrap}
-.gm-fnf .fo-weeks{display:flex;gap:calc(var(--u)*2);align-items:stretch;justify-content:center;margin-top:calc(var(--u)*3)}
-.gm-fnf .por .fo-weeks{flex-direction:column;gap:calc(var(--u)*1.2);width:90%}
-.gm-fnf .fo-wk{position:relative;display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.8);padding:calc(var(--u)*1.8);width:calc(var(--u)*26);border-radius:calc(var(--u)*1.6);border:calc(var(--u)*.3) solid #0f0720;background:linear-gradient(#2d2150,#1a1233);cursor:pointer;text-align:center;box-shadow:0 calc(var(--u)*.5) 0 #0f0720}
-.gm-fnf .por .fo-wk{width:auto;flex-direction:row;text-align:left;gap:calc(var(--u)*1.6)}
-.gm-fnf .fo-wk.on{outline:calc(var(--u)*.35) solid var(--c);filter:brightness(1.18)}
-.gm-fnf .fo-wk.lock{opacity:.45;filter:grayscale(.7);cursor:not-allowed}
-.gm-fnf .fo-wk canvas{width:calc(var(--u)*11);height:calc(var(--u)*11);flex:none;display:block}
-.gm-fnf .fo-wk h3{margin:0;font:900 calc(var(--u)*2.3)/1.05 "Trebuchet MS",system-ui,sans-serif;color:var(--c)}
-.gm-fnf .fo-wk p{margin:0;font:600 calc(var(--u)*1.35)/1.3 system-ui,sans-serif;color:#d6cfee}
-.gm-fnf .fo-wk ol{margin:0;padding:0 0 0 calc(var(--u)*2);font:700 calc(var(--u)*1.35)/1.5 system-ui,sans-serif;text-align:left}
-.gm-fnf .fo-diffs{display:flex;gap:calc(var(--u)*.9);justify-content:center}
-.gm-fnf .fo-diffs .fo-b{min-width:calc(var(--u)*9);padding:calc(var(--u)*.8) calc(var(--u)*1.4);font-size:calc(var(--u)*1.8)}
-.gm-fnf .fo-diffs .fo-b.sel{background:linear-gradient(var(--c,#ff5fa8),color-mix(in srgb,var(--c,#ff5fa8) 50%,#000));color:#0f0720;text-shadow:none}
-.gm-fnf .fo-free{display:flex;gap:calc(var(--u)*2);width:92%;height:68%;margin-top:calc(var(--u)*3.5);margin-bottom:calc(var(--u)*3)}
-.gm-fnf .por .fo-free{flex-direction:column;gap:calc(var(--u)*1);height:78%}
-.gm-fnf .fo-list{flex:1.1;display:flex;flex-direction:column;gap:calc(var(--u)*.7);overflow-y:auto;padding:calc(var(--u)*.6);scrollbar-width:thin}
-.gm-fnf .fo-list .fo-b{display:flex;justify-content:space-between;align-items:center;text-align:left;padding:calc(var(--u)*.7) calc(var(--u)*1.6);font-size:calc(var(--u)*1.9)}
-.gm-fnf .fo-list .fo-b small{font:700 calc(var(--u)*1.2)/1 system-ui,sans-serif;opacity:.8}
-.gm-fnf .fo-list .sep{font:900 calc(var(--u)*1.3)/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--c);padding:calc(var(--u)*.5) calc(var(--u)*.4) 0}
-.gm-fnf .fo-info{flex:.9;display:flex;flex-direction:column;gap:calc(var(--u)*1.1);align-items:center;justify-content:center;background:rgba(10,6,24,.6);border-radius:calc(var(--u)*1.6);padding:calc(var(--u)*1.6);border:calc(var(--u)*.25) solid #0f0720}
-.gm-fnf .fo-info h3{margin:0;font:900 calc(var(--u)*3)/1 "Trebuchet MS",system-ui,sans-serif;text-align:center}
-.gm-fnf .fo-info p{margin:0;font:700 calc(var(--u)*1.5)/1.4 system-ui,sans-serif;text-align:center;color:#d9d3f5}
-.gm-fnf .fo-rows{display:flex;flex-direction:column;gap:calc(var(--u)*.8);width:min(calc(var(--u)*56),92%);max-height:78%;overflow-y:auto;margin-top:calc(var(--u)*3);padding:calc(var(--u)*.5);scrollbar-width:thin}
-.gm-fnf .fo-b.row{display:flex;justify-content:space-between;align-items:center;gap:calc(var(--u)*1.4);padding:calc(var(--u)*.8) calc(var(--u)*1.6);font-size:calc(var(--u)*1.9);text-align:left}
-.gm-fnf .fo-b.row .v{display:flex;align-items:center;gap:calc(var(--u)*1);min-width:calc(var(--u)*15);justify-content:flex-end}
-.gm-fnf .fo-b.row .v i{font-style:normal;padding:0 calc(var(--u)*.7);opacity:.7;cursor:pointer}
-.gm-fnf .fo-b.row .v i:hover{opacity:1}
-.gm-fnf .fo-b.row .v b{min-width:calc(var(--u)*7);text-align:center;color:#ffd23f}
-.gm-fnf .fo-res{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.9);background:rgba(12,6,28,.82);border:calc(var(--u)*.3) solid #0f0720;border-radius:calc(var(--u)*2);padding:calc(var(--u)*2.2) calc(var(--u)*3.4);box-shadow:0 calc(var(--u)*.8) 0 #0f0720;max-width:92%}
-.gm-fnf .fo-res h2{margin:0;font:900 calc(var(--u)*3.4)/1 "Trebuchet MS",system-ui,sans-serif;text-align:center}
-.gm-fnf .fo-rank{font:900 calc(var(--u)*13)/1 "Trebuchet MS",system-ui,sans-serif;text-shadow:0 calc(var(--u)*.7) 0 #1c1130,0 0 calc(var(--u)*3) currentColor}
-.gm-fnf .fo-grid{display:grid;grid-template-columns:repeat(2,auto);gap:calc(var(--u)*.4) calc(var(--u)*3);font:800 calc(var(--u)*1.8)/1.3 "Trebuchet MS",system-ui,sans-serif}
-.gm-fnf .fo-grid span{opacity:.8;text-align:left}
-.gm-fnf .fo-grid b{text-align:right}
-.gm-fnf .fo-btns{display:flex;gap:calc(var(--u)*1);flex-wrap:wrap;justify-content:center;margin-top:calc(var(--u)*.6)}
-.gm-fnf .fo-pause{position:absolute;top:calc(var(--u)*1);right:calc(var(--u)*1);z-index:3;min-width:0!important;padding:calc(var(--u)*.6) calc(var(--u)*1.3)!important;font-size:calc(var(--u)*1.8)!important;opacity:.7}
-.gm-fnf .fo-cnt{font:900 calc(var(--u)*14)/1 "Trebuchet MS",system-ui,sans-serif;text-shadow:0 calc(var(--u)*.7) 0 #1c1130}
-.gm-fnf .fo-vs{display:flex;gap:calc(var(--u)*3);align-items:center;justify-content:center}
-.gm-fnf .fo-vs>div{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.4);min-width:calc(var(--u)*20)}
-.gm-fnf .fo-vs .n{font:900 calc(var(--u)*2.2)/1 "Trebuchet MS",system-ui,sans-serif}
-.gm-fnf .fo-vs .s{font:900 calc(var(--u)*4)/1 "Trebuchet MS",system-ui,sans-serif;color:#ffd23f}
-.gm-fnf .fo-vs .w{color:#7dff9e!important}
-.gm-fnf .fo-key{min-width:calc(var(--u)*9)!important}
-.gm-fnf .fo-hint{font:600 calc(var(--u)*1.3)/1.3 system-ui,sans-serif;color:#b9b0dd;text-align:center}
-` + SHARED_CSS('.gm-fnf', '#ff5fa8');
+.gm-beat-duel .fo-head{position:absolute;top:calc(var(--u)*1.6);left:0;right:0;text-align:center;font:900 calc(var(--u)*3.2)/1 "Trebuchet MS",system-ui,sans-serif;text-shadow:0 calc(var(--u)*.3) 0 #000,0 0 calc(var(--u)*1.5) rgba(255,95,168,.6)}
+.gm-beat-duel .fo-foot{position:absolute;bottom:calc(var(--u)*1.4);left:0;right:0;display:flex;gap:calc(var(--u)*1);justify-content:center;flex-wrap:wrap}
+.gm-beat-duel .fo-weeks{display:flex;gap:calc(var(--u)*2);align-items:stretch;justify-content:center;margin-top:calc(var(--u)*3)}
+.gm-beat-duel .por .fo-weeks{flex-direction:column;gap:calc(var(--u)*1.2);width:90%}
+.gm-beat-duel .fo-wk{position:relative;display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.8);padding:calc(var(--u)*1.8);width:calc(var(--u)*26);border-radius:calc(var(--u)*1.6);border:calc(var(--u)*.3) solid #0f0720;background:linear-gradient(#2d2150,#1a1233);cursor:pointer;text-align:center;box-shadow:0 calc(var(--u)*.5) 0 #0f0720}
+.gm-beat-duel .por .fo-wk{width:auto;flex-direction:row;text-align:left;gap:calc(var(--u)*1.6)}
+.gm-beat-duel .fo-wk.on{outline:calc(var(--u)*.35) solid var(--c);filter:brightness(1.18)}
+.gm-beat-duel .fo-wk.lock{opacity:.45;filter:grayscale(.7);cursor:not-allowed}
+.gm-beat-duel .fo-wk canvas{width:calc(var(--u)*11);height:calc(var(--u)*11);flex:none;display:block}
+.gm-beat-duel .fo-wk h3{margin:0;font:900 calc(var(--u)*2.3)/1.05 "Trebuchet MS",system-ui,sans-serif;color:var(--c)}
+.gm-beat-duel .fo-wk p{margin:0;font:600 calc(var(--u)*1.35)/1.3 system-ui,sans-serif;color:#d6cfee}
+.gm-beat-duel .fo-wk ol{margin:0;padding:0 0 0 calc(var(--u)*2);font:700 calc(var(--u)*1.35)/1.5 system-ui,sans-serif;text-align:left}
+.gm-beat-duel .fo-diffs{display:flex;gap:calc(var(--u)*.9);justify-content:center}
+.gm-beat-duel .fo-diffs .fo-b{min-width:calc(var(--u)*9);padding:calc(var(--u)*.8) calc(var(--u)*1.4);font-size:calc(var(--u)*1.8)}
+.gm-beat-duel .fo-diffs .fo-b.sel{background:linear-gradient(var(--c,#ff5fa8),color-mix(in srgb,var(--c,#ff5fa8) 50%,#000));color:#0f0720;text-shadow:none}
+.gm-beat-duel .fo-free{display:flex;gap:calc(var(--u)*2);width:92%;height:68%;margin-top:calc(var(--u)*3.5);margin-bottom:calc(var(--u)*3)}
+.gm-beat-duel .por .fo-free{flex-direction:column;gap:calc(var(--u)*1);height:78%}
+.gm-beat-duel .fo-list{flex:1.1;display:flex;flex-direction:column;gap:calc(var(--u)*.7);overflow-y:auto;padding:calc(var(--u)*.6);scrollbar-width:thin}
+.gm-beat-duel .fo-list .fo-b{display:flex;justify-content:space-between;align-items:center;text-align:left;padding:calc(var(--u)*.7) calc(var(--u)*1.6);font-size:calc(var(--u)*1.9)}
+.gm-beat-duel .fo-list .fo-b small{font:700 calc(var(--u)*1.2)/1 system-ui,sans-serif;opacity:.8}
+.gm-beat-duel .fo-list .sep{font:900 calc(var(--u)*1.3)/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--c);padding:calc(var(--u)*.5) calc(var(--u)*.4) 0}
+.gm-beat-duel .fo-info{flex:.9;display:flex;flex-direction:column;gap:calc(var(--u)*1.1);align-items:center;justify-content:center;background:rgba(10,6,24,.6);border-radius:calc(var(--u)*1.6);padding:calc(var(--u)*1.6);border:calc(var(--u)*.25) solid #0f0720}
+.gm-beat-duel .fo-info h3{margin:0;font:900 calc(var(--u)*3)/1 "Trebuchet MS",system-ui,sans-serif;text-align:center}
+.gm-beat-duel .fo-info p{margin:0;font:700 calc(var(--u)*1.5)/1.4 system-ui,sans-serif;text-align:center;color:#d9d3f5}
+.gm-beat-duel .fo-rows{display:flex;flex-direction:column;gap:calc(var(--u)*.8);width:min(calc(var(--u)*56),92%);max-height:78%;overflow-y:auto;margin-top:calc(var(--u)*3);padding:calc(var(--u)*.5);scrollbar-width:thin}
+.gm-beat-duel .fo-b.row{display:flex;justify-content:space-between;align-items:center;gap:calc(var(--u)*1.4);padding:calc(var(--u)*.8) calc(var(--u)*1.6);font-size:calc(var(--u)*1.9);text-align:left}
+.gm-beat-duel .fo-b.row .v{display:flex;align-items:center;gap:calc(var(--u)*1);min-width:calc(var(--u)*15);justify-content:flex-end}
+.gm-beat-duel .fo-b.row .v i{font-style:normal;padding:0 calc(var(--u)*.7);opacity:.7;cursor:pointer}
+.gm-beat-duel .fo-b.row .v i:hover{opacity:1}
+.gm-beat-duel .fo-b.row .v b{min-width:calc(var(--u)*7);text-align:center;color:#ffd23f}
+.gm-beat-duel .fo-res{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.9);background:rgba(12,6,28,.82);border:calc(var(--u)*.3) solid #0f0720;border-radius:calc(var(--u)*2);padding:calc(var(--u)*2.2) calc(var(--u)*3.4);box-shadow:0 calc(var(--u)*.8) 0 #0f0720;max-width:92%}
+.gm-beat-duel .fo-res h2{margin:0;font:900 calc(var(--u)*3.4)/1 "Trebuchet MS",system-ui,sans-serif;text-align:center}
+.gm-beat-duel .fo-rank{font:900 calc(var(--u)*13)/1 "Trebuchet MS",system-ui,sans-serif;text-shadow:0 calc(var(--u)*.7) 0 #1c1130,0 0 calc(var(--u)*3) currentColor}
+.gm-beat-duel .fo-grid{display:grid;grid-template-columns:repeat(2,auto);gap:calc(var(--u)*.4) calc(var(--u)*3);font:800 calc(var(--u)*1.8)/1.3 "Trebuchet MS",system-ui,sans-serif}
+.gm-beat-duel .fo-grid span{opacity:.8;text-align:left}
+.gm-beat-duel .fo-grid b{text-align:right}
+.gm-beat-duel .fo-btns{display:flex;gap:calc(var(--u)*1);flex-wrap:wrap;justify-content:center;margin-top:calc(var(--u)*.6)}
+.gm-beat-duel .fo-pause{position:absolute;top:calc(var(--u)*1);right:calc(var(--u)*1);z-index:3;min-width:0!important;padding:calc(var(--u)*.6) calc(var(--u)*1.3)!important;font-size:calc(var(--u)*1.8)!important;opacity:.7}
+.gm-beat-duel .fo-cnt{font:900 calc(var(--u)*14)/1 "Trebuchet MS",system-ui,sans-serif;text-shadow:0 calc(var(--u)*.7) 0 #1c1130}
+.gm-beat-duel .fo-vs{display:flex;gap:calc(var(--u)*3);align-items:center;justify-content:center}
+.gm-beat-duel .fo-vs>div{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.4);min-width:calc(var(--u)*20)}
+.gm-beat-duel .fo-vs .n{font:900 calc(var(--u)*2.2)/1 "Trebuchet MS",system-ui,sans-serif}
+.gm-beat-duel .fo-vs .s{font:900 calc(var(--u)*4)/1 "Trebuchet MS",system-ui,sans-serif;color:#ffd23f}
+.gm-beat-duel .fo-vs .w{color:#7dff9e!important}
+.gm-beat-duel .fo-key{min-width:calc(var(--u)*9)!important}
+.gm-beat-duel .fo-hint{font:600 calc(var(--u)*1.3)/1.3 system-ui,sans-serif;color:#b9b0dd;text-align:center}
+` + SHARED_CSS('.gm-beat-duel', '#ff5fa8');
 
 
   function mountFnf(root, api) {
@@ -2406,13 +2406,13 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
   }
 
 
-  Ameplay.covers.fnf = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="fo-sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2d2368"/><stop offset=".55" stop-color="#c2477a"/><stop offset="1" stop-color="#ffae5c"/></linearGradient><radialGradient id="fo-sn" cx=".5" cy=".62" r=".5"><stop offset="0" stop-color="#ffe6a0" stop-opacity=".9"/><stop offset="1" stop-color="#ffaa5a" stop-opacity="0"/></radialGradient></defs><rect width="400" height="300" fill="url(#fo-sk)"/><rect width="400" height="300" fill="url(#fo-sn)"/><g fill="#3a2360"><rect x="10" y="150" width="46" height="100"/><rect x="62" y="124" width="38" height="126"/><rect x="304" y="140" width="44" height="110"/><rect x="354" y="116" width="40" height="134"/></g><g fill="#ffd27a"><rect x="18" y="164" width="7" height="9"/><rect x="34" y="188" width="7" height="9"/><rect x="70" y="140" width="7" height="9"/><rect x="82" y="170" width="7" height="9"/><rect x="314" y="156" width="7" height="9"/><rect x="330" y="186" width="7" height="9"/><rect x="364" y="134" width="7" height="9"/><rect x="376" y="170" width="7" height="9"/></g><rect y="236" width="400" height="64" fill="#2a1a4a"/><rect y="236" width="400" height="5" fill="#8156c4"/><g stroke="#1c1130" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(112 236)"><ellipse cx="0" cy="2" rx="36" ry="7" fill="rgba(0,0,0,.3)" stroke="none"/><rect x="-24" y="-90" width="48" height="52" rx="10" fill="#2dc7b8"/><rect x="-26" y="-98" width="52" height="12" fill="#ff5fa8" stroke="none"/><path d="M-14 -38V-12M14 -38V-12" stroke="#ffd23f" stroke-width="12"/><ellipse cx="-14" cy="-8" rx="15" ry="8" fill="#2b2b4a"/><ellipse cx="14" cy="-8" rx="15" ry="8" fill="#2b2b4a"/><rect x="-44" y="-160" width="88" height="68" rx="16" fill="#ff5fa8"/><circle cx="-24" cy="-122" r="17" fill="#2b2140"/><circle cx="-24" cy="-122" r="10" fill="#ffd23f"/><circle cx="24" cy="-122" r="17" fill="#2b2140"/><circle cx="24" cy="-122" r="10" fill="#ffd23f"/><rect x="-18" y="-152" width="36" height="20" rx="5" fill="#2b2140"/><rect x="-12" y="-104" width="24" height="12" rx="5" fill="#14091f"/><path d="M-24 -70L-58 -112" stroke="#2dc7b8" stroke-width="12"/></g><g transform="translate(290 236)"><ellipse cx="0" cy="2" rx="34" ry="7" fill="rgba(0,0,0,.3)" stroke="none"/><rect x="-22" y="-96" width="44" height="58" rx="8" fill="#ff7b3a"/><path d="M-12 -38V-16M12 -38V-16" stroke="#3f4fae" stroke-width="12"/><ellipse cx="-12" cy="-10" rx="16" ry="8" fill="#f6f6fb"/><ellipse cx="12" cy="-10" rx="16" ry="8" fill="#f6f6fb"/><circle cx="0" cy="-130" r="38" fill="#f6caa4"/><path d="M-39 -134Q-34 -176 0 -174Q34 -176 39 -134Q0 -150 -39 -134Z" fill="#1fb6d4"/><circle cx="0" cy="-176" r="9" fill="#ff7b3a"/><ellipse cx="-14" cy="-124" rx="9" ry="12" fill="#fff"/><ellipse cx="14" cy="-124" rx="9" ry="12" fill="#fff"/><circle cx="-12" cy="-122" r="4.5" fill="#1c1130" stroke="none"/><circle cx="16" cy="-122" r="4.5" fill="#1c1130" stroke="none"/><ellipse cx="0" cy="-104" rx="12" ry="9" fill="#4d0f2c"/><path d="M22 -78L52 -138" stroke="#ff7b3a" stroke-width="12"/><circle cx="53" cy="-146" r="11" fill="#c9cfdd"/></g></g><g transform="translate(200 40)" stroke="#1c1130" stroke-width="4" stroke-linejoin="round"><g transform="translate(-72 0) rotate(-90)"><path d="M0 -22L22 2L9 2L9 22L-9 22L-9 2L-22 2Z" fill="#c64cf2"/></g><g transform="translate(-24 0) rotate(180)"><path d="M0 -22L22 2L9 2L9 22L-9 22L-9 2L-22 2Z" fill="#27c4ff"/></g><g transform="translate(24 0)"><path d="M0 -22L22 2L9 2L9 22L-9 22L-9 2L-22 2Z" fill="#3ee64f"/></g><g transform="translate(72 0) rotate(90)"><path d="M0 -22L22 2L9 2L9 22L-9 22L-9 2L-22 2Z" fill="#ff4d5e"/></g></g></svg>`;
+  Ameplay.covers['beat-duel'] = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="fo-sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2d2368"/><stop offset=".55" stop-color="#c2477a"/><stop offset="1" stop-color="#ffae5c"/></linearGradient><radialGradient id="fo-sn" cx=".5" cy=".62" r=".5"><stop offset="0" stop-color="#ffe6a0" stop-opacity=".9"/><stop offset="1" stop-color="#ffaa5a" stop-opacity="0"/></radialGradient></defs><rect width="400" height="300" fill="url(#fo-sk)"/><rect width="400" height="300" fill="url(#fo-sn)"/><g fill="#3a2360"><rect x="10" y="150" width="46" height="100"/><rect x="62" y="124" width="38" height="126"/><rect x="304" y="140" width="44" height="110"/><rect x="354" y="116" width="40" height="134"/></g><g fill="#ffd27a"><rect x="18" y="164" width="7" height="9"/><rect x="34" y="188" width="7" height="9"/><rect x="70" y="140" width="7" height="9"/><rect x="82" y="170" width="7" height="9"/><rect x="314" y="156" width="7" height="9"/><rect x="330" y="186" width="7" height="9"/><rect x="364" y="134" width="7" height="9"/><rect x="376" y="170" width="7" height="9"/></g><rect y="236" width="400" height="64" fill="#2a1a4a"/><rect y="236" width="400" height="5" fill="#8156c4"/><g stroke="#1c1130" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(112 236)"><ellipse cx="0" cy="2" rx="36" ry="7" fill="rgba(0,0,0,.3)" stroke="none"/><rect x="-24" y="-90" width="48" height="52" rx="10" fill="#2dc7b8"/><rect x="-26" y="-98" width="52" height="12" fill="#ff5fa8" stroke="none"/><path d="M-14 -38V-12M14 -38V-12" stroke="#ffd23f" stroke-width="12"/><ellipse cx="-14" cy="-8" rx="15" ry="8" fill="#2b2b4a"/><ellipse cx="14" cy="-8" rx="15" ry="8" fill="#2b2b4a"/><rect x="-44" y="-160" width="88" height="68" rx="16" fill="#ff5fa8"/><circle cx="-24" cy="-122" r="17" fill="#2b2140"/><circle cx="-24" cy="-122" r="10" fill="#ffd23f"/><circle cx="24" cy="-122" r="17" fill="#2b2140"/><circle cx="24" cy="-122" r="10" fill="#ffd23f"/><rect x="-18" y="-152" width="36" height="20" rx="5" fill="#2b2140"/><rect x="-12" y="-104" width="24" height="12" rx="5" fill="#14091f"/><path d="M-24 -70L-58 -112" stroke="#2dc7b8" stroke-width="12"/></g><g transform="translate(290 236)"><ellipse cx="0" cy="2" rx="34" ry="7" fill="rgba(0,0,0,.3)" stroke="none"/><rect x="-22" y="-96" width="44" height="58" rx="8" fill="#ff7b3a"/><path d="M-12 -38V-16M12 -38V-16" stroke="#3f4fae" stroke-width="12"/><ellipse cx="-12" cy="-10" rx="16" ry="8" fill="#f6f6fb"/><ellipse cx="12" cy="-10" rx="16" ry="8" fill="#f6f6fb"/><circle cx="0" cy="-130" r="38" fill="#f6caa4"/><path d="M-39 -134Q-34 -176 0 -174Q34 -176 39 -134Q0 -150 -39 -134Z" fill="#1fb6d4"/><circle cx="0" cy="-176" r="9" fill="#ff7b3a"/><ellipse cx="-14" cy="-124" rx="9" ry="12" fill="#fff"/><ellipse cx="14" cy="-124" rx="9" ry="12" fill="#fff"/><circle cx="-12" cy="-122" r="4.5" fill="#1c1130" stroke="none"/><circle cx="16" cy="-122" r="4.5" fill="#1c1130" stroke="none"/><ellipse cx="0" cy="-104" rx="12" ry="9" fill="#4d0f2c"/><path d="M22 -78L52 -138" stroke="#ff7b3a" stroke-width="12"/><circle cx="53" cy="-146" r="11" fill="#c9cfdd"/></g></g><g transform="translate(200 40)" stroke="#1c1130" stroke-width="4" stroke-linejoin="round"><g transform="translate(-72 0) rotate(-90)"><path d="M0 -22L22 2L9 2L9 22L-9 22L-9 2L-22 2Z" fill="#c64cf2"/></g><g transform="translate(-24 0) rotate(180)"><path d="M0 -22L22 2L9 2L9 22L-9 22L-9 2L-22 2Z" fill="#27c4ff"/></g><g transform="translate(24 0)"><path d="M0 -22L22 2L9 2L9 22L-9 22L-9 2L-22 2Z" fill="#3ee64f"/></g><g transform="translate(72 0) rotate(90)"><path d="M0 -22L22 2L9 2L9 22L-9 22L-9 2L-22 2Z" fill="#ff4d5e"/></g></g></svg>`;
 
   (window.__gpdbg = window.__gpdbg || {}).lib = { makeAudio, SONGS, fnfChart };
 
   Ameplay.register({
-    id: 'fnf',
-    title: "Friday Night Funkin'",
+    id: 'beat-duel',
+    title: 'Beat Duel',
     category: 'Skill',
     tint: '#ff5fa8',
     blurb: 'Hit the arrows in time to win the rap battle: three weeks of original songs, hold notes, a story mode, freeplay and an online 1v1 battle.',
@@ -2650,46 +2650,46 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     return { objs, breaks, kiai };
   }
 
-  const OSU_CSS = FNF_CSS.replaceAll('.gm-fnf', '.gm-osu').replaceAll('#ff5fa8', '#ff66ab').replaceAll('255,95,168', '255,102,171') + `
-.gm-osu .fo-wrap{background:#0a0614}
-.gm-osu .fo-wrap.cur{cursor:none}
-.gm-osu .fo-logo{transform:none;font-size:calc(var(--u)*10);text-shadow:0 calc(var(--u)*.5) 0 #7a1f55,0 calc(var(--u)*1) 0 #1c1130,calc(var(--u)*.3) 0 0 #1c1130,calc(var(--u)*-.3) 0 0 #1c1130}
-.gm-osu .fo-logo b{font-size:1em;color:#fff}
-.gm-osu .fo-free{position:absolute;top:calc(var(--u)*6);bottom:calc(var(--u)*7);left:4%;right:4%;width:auto;height:auto;margin:0}
-.gm-osu .por .fo-ui{--u:2.6cqw}
-.gm-osu .por .fo-rows{max-height:70%;margin-top:calc(var(--u)*2)}
-.gm-osu .por .fo-b.row{font-size:calc(var(--u)*1.55);padding:calc(var(--u)*.6) calc(var(--u)*1.2)}
-.gm-osu .por .fo-free{top:calc(var(--u)*5);bottom:calc(var(--u)*7.5)}
-.gm-osu .por .fo-list{flex:.8}
-.gm-osu .por .fo-info{flex:1.2;padding:calc(var(--u)*1);gap:calc(var(--u)*.7)}
-.gm-osu .por .fo-info h3{font-size:calc(var(--u)*2.3)}
-.gm-osu .por .fo-info p{font-size:calc(var(--u)*1.3)}
-.gm-osu .por .os-st div{font-size:calc(var(--u)*1.2);padding:calc(var(--u)*.3)}
-.gm-osu .por .os-st b{font-size:calc(var(--u)*1.7)}
-.gm-osu .por .fo-diffs .fo-b{min-width:0;padding:calc(var(--u)*.5) calc(var(--u)*1);font-size:calc(var(--u)*1.6)}
-.gm-osu .por .os-mods .fo-b{font-size:calc(var(--u)*1.3);padding:calc(var(--u)*.45) calc(var(--u)*1)}
-.gm-osu .por .fo-list .fo-b{padding:calc(var(--u)*.6) calc(var(--u)*1.2);font-size:calc(var(--u)*1.7)}
-.gm-osu .por .fo-list .fo-b small{font-size:calc(var(--u)*1.1)}
-.gm-osu .fo-info{justify-content:flex-start;overflow-y:auto;gap:calc(var(--u)*.9);scrollbar-width:thin}
-.gm-osu .fo-info>*{flex:none}
-.gm-osu .fo-diffs{flex-wrap:wrap}
-.gm-osu .fo-diffs .fo-b{min-width:calc(var(--u)*8)}
-.gm-osu .fo-diffs .fo-b small{display:block;font:800 .62em/1 system-ui,sans-serif;opacity:.85;margin-top:calc(var(--u)*.25)}
-.gm-osu .os-st{display:grid;grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*.6);width:100%}
-.gm-osu .os-st div{background:rgba(255,255,255,.07);border-radius:calc(var(--u)*.8);padding:calc(var(--u)*.5);text-align:center;font:700 calc(var(--u)*1.05)/1.2 system-ui,sans-serif;color:#cfc8ee}
-.gm-osu .os-st b{display:block;font:900 calc(var(--u)*1.7)/1.15 "Trebuchet MS",system-ui,sans-serif;color:#fff}
-.gm-osu .os-mods{display:flex;flex-wrap:wrap;gap:calc(var(--u)*.6);justify-content:center}
-.gm-osu .os-mods .fo-b{min-width:0;padding:calc(var(--u)*.6) calc(var(--u)*1.2);font-size:calc(var(--u)*1.5)}
-.gm-osu .fo-list .fo-b.sel{box-shadow:0 calc(var(--u)*.4) 0 #0f0720,0 0 0 calc(var(--u)*.25) #ff66ab inset}
-.gm-osu .fo-b.act{background:linear-gradient(#ff66ab,#a8336f);color:#fff}
-.gm-osu .fo-pause{top:auto;bottom:calc(var(--u)*1)}
-.gm-osu .os-skip{position:absolute;right:calc(var(--u)*1.2);bottom:calc(var(--u)*5);z-index:3;min-width:0!important;padding:calc(var(--u)*.7) calc(var(--u)*1.8)!important;font-size:calc(var(--u)*1.8)!important}
-.gm-osu .por .os-skip{bottom:calc(var(--u)*6)}
-.gm-osu .os-hist{display:flex;align-items:flex-end;gap:2px;height:calc(var(--u)*4.5);width:calc(var(--u)*40);max-width:100%;border-bottom:2px solid rgba(255,255,255,.35)}
-.gm-osu .os-hist i{flex:1;background:#47c8ff;border-radius:2px 2px 0 0;min-height:1px}
-.gm-osu .os-hist i.m{background:#7dff9e}
-.gm-osu .os-hist i.s{background:#ffb347}
-.gm-osu .fo-res .fo-rank{font-size:calc(var(--u)*11)}
+  const OSU_CSS = FNF_CSS.replaceAll('.gm-beat-duel', '.gm-click-beat').replaceAll('#ff5fa8', '#ff66ab').replaceAll('255,95,168', '255,102,171') + `
+.gm-click-beat .fo-wrap{background:#0a0614}
+.gm-click-beat .fo-wrap.cur{cursor:none}
+.gm-click-beat .fo-logo{transform:none;font-size:calc(var(--u)*10);text-shadow:0 calc(var(--u)*.5) 0 #7a1f55,0 calc(var(--u)*1) 0 #1c1130,calc(var(--u)*.3) 0 0 #1c1130,calc(var(--u)*-.3) 0 0 #1c1130}
+.gm-click-beat .fo-logo b{font-size:1em;color:#fff}
+.gm-click-beat .fo-free{position:absolute;top:calc(var(--u)*6);bottom:calc(var(--u)*7);left:4%;right:4%;width:auto;height:auto;margin:0}
+.gm-click-beat .por .fo-ui{--u:2.6cqw}
+.gm-click-beat .por .fo-rows{max-height:70%;margin-top:calc(var(--u)*2)}
+.gm-click-beat .por .fo-b.row{font-size:calc(var(--u)*1.55);padding:calc(var(--u)*.6) calc(var(--u)*1.2)}
+.gm-click-beat .por .fo-free{top:calc(var(--u)*5);bottom:calc(var(--u)*7.5)}
+.gm-click-beat .por .fo-list{flex:.8}
+.gm-click-beat .por .fo-info{flex:1.2;padding:calc(var(--u)*1);gap:calc(var(--u)*.7)}
+.gm-click-beat .por .fo-info h3{font-size:calc(var(--u)*2.3)}
+.gm-click-beat .por .fo-info p{font-size:calc(var(--u)*1.3)}
+.gm-click-beat .por .os-st div{font-size:calc(var(--u)*1.2);padding:calc(var(--u)*.3)}
+.gm-click-beat .por .os-st b{font-size:calc(var(--u)*1.7)}
+.gm-click-beat .por .fo-diffs .fo-b{min-width:0;padding:calc(var(--u)*.5) calc(var(--u)*1);font-size:calc(var(--u)*1.6)}
+.gm-click-beat .por .os-mods .fo-b{font-size:calc(var(--u)*1.3);padding:calc(var(--u)*.45) calc(var(--u)*1)}
+.gm-click-beat .por .fo-list .fo-b{padding:calc(var(--u)*.6) calc(var(--u)*1.2);font-size:calc(var(--u)*1.7)}
+.gm-click-beat .por .fo-list .fo-b small{font-size:calc(var(--u)*1.1)}
+.gm-click-beat .fo-info{justify-content:flex-start;overflow-y:auto;gap:calc(var(--u)*.9);scrollbar-width:thin}
+.gm-click-beat .fo-info>*{flex:none}
+.gm-click-beat .fo-diffs{flex-wrap:wrap}
+.gm-click-beat .fo-diffs .fo-b{min-width:calc(var(--u)*8)}
+.gm-click-beat .fo-diffs .fo-b small{display:block;font:800 .62em/1 system-ui,sans-serif;opacity:.85;margin-top:calc(var(--u)*.25)}
+.gm-click-beat .os-st{display:grid;grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*.6);width:100%}
+.gm-click-beat .os-st div{background:rgba(255,255,255,.07);border-radius:calc(var(--u)*.8);padding:calc(var(--u)*.5);text-align:center;font:700 calc(var(--u)*1.05)/1.2 system-ui,sans-serif;color:#cfc8ee}
+.gm-click-beat .os-st b{display:block;font:900 calc(var(--u)*1.7)/1.15 "Trebuchet MS",system-ui,sans-serif;color:#fff}
+.gm-click-beat .os-mods{display:flex;flex-wrap:wrap;gap:calc(var(--u)*.6);justify-content:center}
+.gm-click-beat .os-mods .fo-b{min-width:0;padding:calc(var(--u)*.6) calc(var(--u)*1.2);font-size:calc(var(--u)*1.5)}
+.gm-click-beat .fo-list .fo-b.sel{box-shadow:0 calc(var(--u)*.4) 0 #0f0720,0 0 0 calc(var(--u)*.25) #ff66ab inset}
+.gm-click-beat .fo-b.act{background:linear-gradient(#ff66ab,#a8336f);color:#fff}
+.gm-click-beat .fo-pause{top:auto;bottom:calc(var(--u)*1)}
+.gm-click-beat .os-skip{position:absolute;right:calc(var(--u)*1.2);bottom:calc(var(--u)*5);z-index:3;min-width:0!important;padding:calc(var(--u)*.7) calc(var(--u)*1.8)!important;font-size:calc(var(--u)*1.8)!important}
+.gm-click-beat .por .os-skip{bottom:calc(var(--u)*6)}
+.gm-click-beat .os-hist{display:flex;align-items:flex-end;gap:2px;height:calc(var(--u)*4.5);width:calc(var(--u)*40);max-width:100%;border-bottom:2px solid rgba(255,255,255,.35)}
+.gm-click-beat .os-hist i{flex:1;background:#47c8ff;border-radius:2px 2px 0 0;min-height:1px}
+.gm-click-beat .os-hist i.m{background:#7dff9e}
+.gm-click-beat .os-hist i.s{background:#ffb347}
+.gm-click-beat .fo-res .fo-rank{font-size:calc(var(--u)*11)}
 `;
 
 
@@ -3363,13 +3363,13 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
   }
 
 
-  Ameplay.covers.osu = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="os-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a0f4e"/><stop offset=".6" stop-color="#8a2a82"/><stop offset="1" stop-color="#ff66ab"/></linearGradient><radialGradient id="os-c1" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#ffc2e0"/><stop offset=".6" stop-color="#ff66ab"/><stop offset="1" stop-color="#b3306f"/></radialGradient><radialGradient id="os-c2" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#c8f2ff"/><stop offset=".6" stop-color="#47c8ff"/><stop offset="1" stop-color="#1f7fb0"/></radialGradient><radialGradient id="os-c3" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#d8ffd0"/><stop offset=".6" stop-color="#7dff9e"/><stop offset="1" stop-color="#2f9a52"/></radialGradient></defs><rect width="400" height="300" fill="url(#os-bg)"/><g fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="3"><path d="M30 60l22 40H8z"/><circle cx="350" cy="50" r="26"/><rect x="330" y="200" width="46" height="46" transform="rotate(20 353 223)"/><circle cx="60" cy="240" r="20"/><path d="M200 20l16 28h-32z"/></g><path d="M200 210C250 150 300 250 340 170" fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-opacity=".95"/><path d="M200 210C250 150 300 250 340 170" fill="none" stroke="#1a0b36" stroke-width="40" stroke-linecap="round"/><path d="M200 210C250 150 300 250 340 170" fill="none" stroke="#47c8ff" stroke-opacity=".3" stroke-width="40" stroke-linecap="round"/><circle cx="272" cy="198" r="23" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="3"/><circle cx="272" cy="198" r="19" fill="url(#os-c2)" stroke="#fff" stroke-width="4"/><circle cx="200" cy="210" r="23" fill="url(#os-c2)" stroke="#fff" stroke-width="5"/><text x="200" y="219" text-anchor="middle" font-family="Trebuchet MS,Arial" font-weight="900" font-size="26" fill="#fff" stroke="#1c1130" stroke-width="2" paint-order="stroke">2</text><circle cx="110" cy="130" r="64" fill="none" stroke="#fff" stroke-width="5" stroke-opacity=".75"/><circle cx="110" cy="130" r="40" fill="url(#os-c1)" stroke="#fff" stroke-width="7"/><text x="110" y="145" text-anchor="middle" font-family="Trebuchet MS,Arial" font-weight="900" font-size="46" fill="#fff" stroke="#1c1130" stroke-width="3" paint-order="stroke">1</text><circle cx="318" cy="96" r="30" fill="url(#os-c3)" stroke="#fff" stroke-width="5"/><text x="318" y="108" text-anchor="middle" font-family="Trebuchet MS,Arial" font-weight="900" font-size="32" fill="#fff" stroke="#1c1130" stroke-width="2" paint-order="stroke">3</text><circle cx="318" cy="96" r="48" fill="none" stroke="#7dff9e" stroke-width="4" stroke-opacity=".8"/><g transform="translate(150 178)"><circle r="14" fill="#ff66ab" fill-opacity=".5" stroke="#fff" stroke-width="3"/><circle r="3" fill="#fff"/></g></svg>`;
+  Ameplay.covers['click-beat'] = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="os-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a0f4e"/><stop offset=".6" stop-color="#8a2a82"/><stop offset="1" stop-color="#ff66ab"/></linearGradient><radialGradient id="os-c1" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#ffc2e0"/><stop offset=".6" stop-color="#ff66ab"/><stop offset="1" stop-color="#b3306f"/></radialGradient><radialGradient id="os-c2" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#c8f2ff"/><stop offset=".6" stop-color="#47c8ff"/><stop offset="1" stop-color="#1f7fb0"/></radialGradient><radialGradient id="os-c3" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#d8ffd0"/><stop offset=".6" stop-color="#7dff9e"/><stop offset="1" stop-color="#2f9a52"/></radialGradient></defs><rect width="400" height="300" fill="url(#os-bg)"/><g fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="3"><path d="M30 60l22 40H8z"/><circle cx="350" cy="50" r="26"/><rect x="330" y="200" width="46" height="46" transform="rotate(20 353 223)"/><circle cx="60" cy="240" r="20"/><path d="M200 20l16 28h-32z"/></g><path d="M200 210C250 150 300 250 340 170" fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-opacity=".95"/><path d="M200 210C250 150 300 250 340 170" fill="none" stroke="#1a0b36" stroke-width="40" stroke-linecap="round"/><path d="M200 210C250 150 300 250 340 170" fill="none" stroke="#47c8ff" stroke-opacity=".3" stroke-width="40" stroke-linecap="round"/><circle cx="272" cy="198" r="23" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="3"/><circle cx="272" cy="198" r="19" fill="url(#os-c2)" stroke="#fff" stroke-width="4"/><circle cx="200" cy="210" r="23" fill="url(#os-c2)" stroke="#fff" stroke-width="5"/><text x="200" y="219" text-anchor="middle" font-family="Trebuchet MS,Arial" font-weight="900" font-size="26" fill="#fff" stroke="#1c1130" stroke-width="2" paint-order="stroke">2</text><circle cx="110" cy="130" r="64" fill="none" stroke="#fff" stroke-width="5" stroke-opacity=".75"/><circle cx="110" cy="130" r="40" fill="url(#os-c1)" stroke="#fff" stroke-width="7"/><text x="110" y="145" text-anchor="middle" font-family="Trebuchet MS,Arial" font-weight="900" font-size="46" fill="#fff" stroke="#1c1130" stroke-width="3" paint-order="stroke">1</text><circle cx="318" cy="96" r="30" fill="url(#os-c3)" stroke="#fff" stroke-width="5"/><text x="318" y="108" text-anchor="middle" font-family="Trebuchet MS,Arial" font-weight="900" font-size="32" fill="#fff" stroke="#1c1130" stroke-width="2" paint-order="stroke">3</text><circle cx="318" cy="96" r="48" fill="none" stroke="#7dff9e" stroke-width="4" stroke-opacity=".8"/><g transform="translate(150 178)"><circle r="14" fill="#ff66ab" fill-opacity=".5" stroke="#fff" stroke-width="3"/><circle r="3" fill="#fff"/></g></svg>`;
 
   (window.__gpdbg = window.__gpdbg || {}).olib = { osuMap, osuEff, osuPrep, OSU_SONGS };
 
   Ameplay.register({
-    id: 'osu',
-    title: 'osu!',
+    id: 'click-beat',
+    title: 'Click Beat',
     category: 'Skill',
     tint: '#ff66ab',
     blurb: 'Click the circles to the beat: sliders, spinners, eight original beatmaps in four difficulties, mods and a hit-error meter.',
