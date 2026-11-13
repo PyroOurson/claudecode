@@ -116,6 +116,8 @@ ClaudeScripts/gameplay-site/source/notes/admin-rating.md
 ClaudeScripts/gameplay-site/source/notes/analytics_audit_round19.md
 ClaudeScripts/gameplay-site/source/notes/ante-up.md
 ClaudeScripts/gameplay-site/source/notes/beat-duel.md
+ClaudeScripts/gameplay-site/source/notes/bed-raiders.md
+ClaudeScripts/gameplay-site/source/notes/build-brawl.md
 ClaudeScripts/gameplay-site/source/notes/caption-this.md
 ClaudeScripts/gameplay-site/source/notes/click-beat.md
 ClaudeScripts/gameplay-site/source/notes/design/gameplay-home.html
@@ -179,6 +181,7 @@ ClaudeScripts/gameplay-site/source/w/covers/basket-random.webp
 ClaudeScripts/gameplay-site/source/w/covers/basketball-legends.webp
 ClaudeScripts/gameplay-site/source/w/covers/battleship.webp
 ClaudeScripts/gameplay-site/source/w/covers/beat-duel.webp
+ClaudeScripts/gameplay-site/source/w/covers/bed-raiders.webp
 ClaudeScripts/gameplay-site/source/w/covers/bejeweled.webp
 ClaudeScripts/gameplay-site/source/w/covers/belote.webp
 ClaudeScripts/gameplay-site/source/w/covers/bingo.webp
@@ -191,6 +194,7 @@ ClaudeScripts/gameplay-site/source/w/covers/bonk-io.webp
 ClaudeScripts/gameplay-site/source/w/covers/brawl-stars.webp
 ClaudeScripts/gameplay-site/source/w/covers/breakout.webp
 ClaudeScripts/gameplay-site/source/w/covers/bubble-shooter.webp
+ClaudeScripts/gameplay-site/source/w/covers/build-brawl.webp
 ClaudeScripts/gameplay-site/source/w/covers/caption-this.webp
 ClaudeScripts/gameplay-site/source/w/covers/catan.webp
 ClaudeScripts/gameplay-site/source/w/covers/cheat.webp
@@ -339,6 +343,7 @@ ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_backgammon.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_basketball-legends.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_bean-royale.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_beat-duel.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_bed-raiders.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_belote.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_bingo.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_blackjack.js
@@ -350,6 +355,7 @@ ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_boggle.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_bonk.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_brawl-stars.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_brick-bros.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_build-brawl.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_caption-this.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_catan.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_cheat.js
@@ -504,6 +510,7 @@ ClaudeScripts/gameplay-site/source/w/new/i18n.js
 ClaudeScripts/gameplay-site/source/w/new/i18n_add.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_admin.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b1.json
+ClaudeScripts/gameplay-site/source/w/new/i18n_b10.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b2.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b3.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b4.json
@@ -634,6 +641,8 @@ ClaudeScripts/gameplay-site/source/w/parts/297_g_polytrack.js
 ClaudeScripts/gameplay-site/source/w/parts/305_g_the-quiet-house.js
 ClaudeScripts/gameplay-site/source/w/parts/307_g_long-shot.js
 ClaudeScripts/gameplay-site/source/w/parts/309_g_caption-this.js
+ClaudeScripts/gameplay-site/source/w/parts/315_g_build-brawl.js
+ClaudeScripts/gameplay-site/source/w/parts/317_g_bed-raiders.js
 ClaudeScripts/gameplay-site/source/w/parts/_order.json
 ClaudeScripts/gameplay-site/source/w/parts_orig/000_pre_000.html
 ClaudeScripts/gameplay-site/source/w/parts_orig/001_portal.js
