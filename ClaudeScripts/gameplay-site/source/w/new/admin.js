@@ -952,7 +952,7 @@ async function sfaSave(b) {
 }
 
 const ST = { d: null, at: 0, busy: false, days: 30, game: null, ci: -1, anim: 2, ps: 0, ch: {}, lv: new Set() };
-const ST_SUB = [['ov', 'Overview'], ['act', 'Players'], ['use', 'Games'], ['perf', 'Performance'], ['err', 'Errors'], ['par', 'Parties'], ['hl', 'Health'], ['ins', 'Player data'], ['data', 'Data']];
+const ST_SUB = [['ov', 'Overview'], ['act', 'Players'], ['use', 'Games'], ['perf', 'Performance'], ['err', 'Errors'], ['par', 'Parties'], ['hl', 'Site health'], ['ins', 'Player data'], ['data', 'Data']];
 const stN = v => (+v || 0).toLocaleString(adLang());
 const stH = v => { const n = +v || 0; return (n < 10 ? n.toFixed(1) : stN(Math.round(n))) + ' h'; };
 const stDay = (t, o) => { const d = Date.parse(String(t).slice(0, 10) + 'T12:00:00'); try { return new Date(d).toLocaleDateString(adLang(), o || { day: 'numeric', month: 'short' }); } catch (e) { return String(t).slice(0, 10); } };
