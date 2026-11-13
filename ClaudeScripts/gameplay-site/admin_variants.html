@@ -395,6 +395,7 @@ button.mini-r:hover{background:var(--surface-3)}
 .dlg-b{padding:8px 20px 16px;overflow:auto;display:flex;flex-direction:column;gap:12px}
 #dlg-body{display:flex;flex-direction:column;gap:12px}
 #dlg-body p{margin:0}
+#cipo,#ipv{display:flex;flex-direction:column;gap:10px}
 .dlg-f{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;padding-top:4px}
 .dlg-n{font-size:12.5px;margin:0}
 .dlg-n.bad{color:var(--danger)}
@@ -690,7 +691,7 @@ em.pill{font-style:normal}
 .v3-list{border-right:1px solid var(--line);overflow:auto;background:var(--surface);padding:0 10px 14px;min-height:0;overscroll-behavior:contain}
 .v3-lh{position:sticky;top:0;z-index:3;background:var(--surface);padding:14px 4px 10px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line);margin-bottom:8px}
 .v3-lt{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.v3-lt h1{flex:1;font-size:19px;margin:0;font-weight:800;min-width:0}
+.v3-lt h1{flex:1 1 auto;font-size:19px;margin:0;font-weight:800;min-width:180px}
 .v3-lh .tools{margin:0}
 .v3-lh .tools select{flex:1 1 130px;max-width:none;height:34px}
 .v3-lh .tools .srch{flex-basis:100%}
@@ -823,7 +824,8 @@ const fDY = t => { const d = new Date(t); return MON[d.getMonth()] + ' ' + d.get
 const fT = t => { const d = new Date(t); return p2(d.getHours()) + ':' + p2(d.getMinutes()); };
 const fDT = t => fD(t) + ', ' + fT(t);
 const iso = t => { const d = new Date(t); return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()); };
-const plur = (n, w) => fN(n) + ' ' + w + (Math.round(n) === 1 ? '' : 's');
+const pls = w => /[^aeiou]y$/.test(w) ? w.slice(0, -1) + 'ies' : w + 's';
+const plur = (n, w) => fN(n) + ' ' + (Math.round(n) === 1 ? w : pls(w));
 function ago(t) {
   if (!t) return 'Never';
   const s = (NOW - t) / 1000, a = Math.abs(s), fut = s < 0;
@@ -913,6 +915,7 @@ function gen(seed) {
     db.users.push(u); db.by[u.id] = u;
   }
   const U = db.users, plain = U.slice(8);
+  U[0].on = { st: 'online', game: null, party: null }; U[0].last = NOW; U[0].login = NOW - 2 * HR;
   U.forEach(u => { const n = u.role !== 'user' ? int(2, 6) : int(0, 24); while (u.friends.length < n) { const f = pick(U); if (f !== u && !u.friends.includes(f.id)) { u.friends.push(f.id); if (!f.friends.includes(u.id)) f.friends.push(u.id); } } });
   const bad = []; while (bad.length < 18) { const u = pick(plain); if (!bad.includes(u)) bad.push(u); }
   const admins = ['@mod_kestrel', '@mod_juniper', '@mod_saffron', '@' + ME];
@@ -985,8 +988,8 @@ function gen(seed) {
   Object.entries(byRoom).forEach(([c, L]) => db.parties.push({ code: c, game: L[0].on.game, host: L[0].id, members: L.map(u => u.id).concat(L.length < 2 ? [pick(plain).id] : []), max: Math.max(L.length, /Among|Fall/.test(L[0].on.game) ? 10 : /Monopoly|Ludo|Hearts|Risk|UNO|Durak|Gartic/.test(L[0].on.game) ? 4 : 2), route: wpick(['direct', 'relay', 'turn'], [6, 2.5, 1.5]), at: NOW - int(1, 80) * MIN, pub: ch(.4), ping: int(18, 140) }));
   for (let k = 0; k < 7; k++) { const g = pick([...ONLINE_G]), h = pick(plain); db.parties.push({ code: 'ABCDEFGHJKLMNPQRSTUVWXYZ'[int(0, 23)] + 'K' + int(1, 9) + 'ABCDEFGHJKLMNPQRSTUVWXYZ'[int(0, 23)], game: g, host: h.id, members: [h.id, pick(plain).id].concat(ch(.5) && !/Battleship|Chess|Checkers|Connect|Head/.test(g) ? [pick(plain).id] : []), max: /Battleship|Chess|Checkers|Connect|Head/.test(g) ? 2 : 4, route: wpick(['direct', 'relay', 'turn'], [6, 2.5, 1.5]), at: NOW - int(1, 120) * MIN, pub: ch(.5), ping: int(18, 160), stuck: k === 2 }); }
   db.relay = { up: true, ms: 46, rpm: 1840, err: 0.4, check: NOW - 3 * MIN, turn: true, alloc: 7, region: 'Paris' };
-  LIMITS.forEach(([k, l, max, win, sens]) => db.limits.push({ k, l, max, win, sens: !!sens, hits: int(40, 9000), full: sens ? int(0, 12) : int(0, 60), who: int(0, 30) }));
-  for (let k = 0; k < 46; k++) { const u = pick(plain), L = pick(db.limits); db.hits.push({ id: 'h' + k, uid: u.id, k: L.k, hits: int(5, 400), full: int(0, 14), last: NOW - int(1, 9000) * MIN }); }
+  LIMITS.forEach(([k, l, max, win, sens]) => { const full = sens ? int(0, 12) : int(0, 40); db.limits.push({ k, l, max, win, sens: !!sens, hits: Math.round(max * int(8, 90) * (win === 'minute' ? 3 : 1)), full, who: full ? Math.max(1, Math.round(full * (0.2 + R() * 0.5))) : 0 }); });
+  for (let k = 0; k < 46; k++) { const u = pick(plain), L = pick(db.limits); db.hits.push({ id: 'h' + k, uid: u.id, k: L.k, hits: int(5, 400), full: int(1, 14), last: NOW - int(1, 9000) * MIN }); }
   db.hits.sort((x, y) => y.full - x.full || y.hits - x.hits);
   U.filter(u => u.test).forEach((u, j) => { for (let k = 0; k < 5 - j; k++) db.sess.push({ id: 's' + hex(6), uid: u.id, at: NOW - (k * 19 + j * 7 + 3) * HR, dur: int(30, 2400), n: int(80, 2400), prob: k % 3 === 0 ? int(1, 6) : 0, games: [pick(GAMES)], seed: int(1, 1e9) }); });
   db.sess.sort((x, y) => y.at - x.at);
@@ -1111,7 +1114,7 @@ const MEAS = [
   ['acc', 'Country and region', 'players', (F, R) => mC(F, R, 'Country', COUNTRIES.map(c => [c[1], c[2], { country: c[0] }]), [['pl', 'Players', w => jit(R, F.uniq * w / Math.max(0.01, F.country === 'all' ? 1 : (COUNTRIES.find(c => c[0] === F.country) || [0, 0, 1])[2]))], ['ses', 'Sessions', (w, i, r) => Math.round(r.pl * (3.4 + R()))], ['top', 'Top region', (w, i) => ['Île-de-France', 'California', 'London', 'Monaco', 'Catalonia', 'Bavaria', 'Lombardy', 'Brussels', 'Geneva', 'Ontario', 'Lisbon', 'North Holland'][i], 'text']])],
   ['acc', 'Settings changed, language and theme in use', 'changes', (F, R) => mC(F, R, 'Setting', [['Theme: System → Dark', .24], ['Theme: Light → Dark', .12], ['Theme: Dark → Light', .05], ['Language: English → French', .14], ['Language: English → Spanish', .05], ['Sound: On → Off', .16], ['Reduced motion: Off → On', .03], ['Show me online: On → Off', .08], ['Language in use: French', .0, null], ['Theme in use: Dark', .0, null]].map(x => [x[0], x[1] || 0.0001]), [['n', 'Count', (w, i, r) => /in use/.test(r.k) ? jit(R, F.uniq * (i === 8 ? 0.41 : 0.47)) : jit(R, F.tot * 0.02 * w)]])],
   ['acc', 'Bans by type and repeat offences', 'bans', (F, R) => mC(F, R, 'Ban type', [['Account', .7], ['Device', .18], ['IP address or range', .12]], [['n', 'Bans', w => jit(R, F.days * 0.5 * w * Math.max(0.2, F.sc))], ['rep', 'Repeat offenders', (w, i, r) => Math.round(r.n * (0.12 + R() * 0.2))], ['perm', 'Permanent', () => 15 + R() * 30, 'p']])],
-  ['old', 'Ads: impressions, clicks and revenue per slot', 'impressions', (F, R) => mC(F, R, 'Ad slot', [['Home, top banner', .34], ['Home, between rows', .28], ['Game page, side', .24], ['Game over screen', .14]], [['imp', 'Impressions', w => jit(R, F.tot * 2.4 * w)], ['clk', 'Clicks', (w, i, r) => Math.round(r.imp * (0.003 + R() * 0.006))], ['ctr', 'Click rate', (w, i, r) => 100 * r.clk / Math.max(1, r.imp), 'p'], ['usd', 'Revenue (USD)', (w, i, r) => r.imp / 1000 * (0.4 + R() * 0.6), 'x'], ['rpm', 'Per 1,000 views (USD)', (w, i, r) => 1000 * r.usd / Math.max(1, r.imp), 'x']])],
+  ['old', 'Ads: impressions, clicks and revenue per slot', 'impressions', (F, R) => mC(F, R, 'Ad slot', [['Home, top banner', .34], ['Home, between rows', .28], ['Game page, side', .24], ['Game over screen', .14]], [['imp', 'Impressions', w => jit(R, F.tot * 2.4 * w)], ['clk', 'Clicks', (w, i, r) => Math.round(r.imp * (0.003 + R() * 0.006))], ['ctr', 'Click rate', (w, i, r) => 100 * r.clk / Math.max(1, r.imp), 'p'], ['usd', 'Revenue', (w, i, r) => r.imp / 1000 * (0.4 + R() * 0.6), 'usd'], ['rpm', 'Per 1,000 views', (w, i, r) => 1000 * r.usd / Math.max(1, r.imp), 'usd']])],
   ['old', 'Rocket League matches by bot level', 'matches', (F, R) => mC(F, R, 'Bot level', [['Rookie', .3], ['Pro', .34], ['All-star', .24], ['Hardest', .12]], [['n', 'Matches finished', w => jit(R, F.tot * 0.3 * w)], ['win', 'Player win rate', (w, i) => [81, 58, 37, 14][i] + R() * 5, 'p'], ['gm', 'Goal margin', (w, i) => [2.4, 0.9, -0.6, -2.1][i] + R() * 0.3, 'x'], ['left', 'Left before the end', () => 6 + R() * 14, 'p']])],
   ['old', 'How far people scroll the home page', 'visits', (F, R) => mH(F, R, 'Scrolled down', [['Under 25%', .31], ['25–50%', .27], ['50–75%', .19], ['75–90%', .12], ['90–100%', .11]], F.tot * 1.3, 'Visits')],
   ['old', 'Rage clicks and dead clicks', 'clicks', (F, R) => mC(F, R, 'Where', [['Game cover on the home page', .3], ['Play button', .22], ['Party code box', .16], ['Settings switches', .12], ['Search box', .1], ['Close button of the banner', .1]], [['rage', 'Rage clicks (3 fast clicks)', w => jit(R, F.tot * 0.02 * w)], ['dead', 'Dead clicks (nothing happened)', w => jit(R, F.tot * 0.05 * w)]])],
@@ -1148,6 +1151,7 @@ function fmtV(v, t) {
   if (t === 'mb') return fN(v) + ' MB';
   if (t === 'fps') return fN(v) + ' FPS';
   if (t === 'x') return (+v).toFixed(+v < 10 ? 1 : 0);
+  if (t === 'usd') return '$' + (+v).toFixed(2);
   return fN(v);
 }
 
@@ -1545,7 +1549,7 @@ const COL = {
     det: (r, L) => reportDet(r, L)
   },
   msgs: {
-    title: 'Search all messages', noun: 'message', ph: 'Word or phrase, at least 2 letters', needQ: true, emptyQ: 'Type at least 2 letters. Every search is written to the admin log.', hint: 'Use it to check a report or a safety worry. Searching never marks anything as read.',
+    title: 'Search all messages', all: 'All results', noun: 'message', ph: 'Word or phrase, at least 2 letters', needQ: true, emptyQ: 'Type at least 2 letters. Every search is written to the admin log.', hint: 'Use it to check a report or a safety worry. Searching never marks anything as read.',
     items: () => DB().msgs, q: m => m.body,
     f: [['kind', 'Kind', [['all', 'All messages'], ['dm', 'Direct messages'], ['party', 'Party chat'], ['game', 'In-game chat']], (m, v) => m.kind === v], ['per', 'When', ANY, (m, v) => NOW - m.at < +v * DAY]],
     cols: [['at', 'When', m => m.at, m => tm(m.at), '', 't'], ['from', 'From', m => (U(m.from) || {}).un || '', m => at(U(m.from)), '', 'a'], ['kind', 'Where', m => msgWhere(m), m => esc(msgWhere(m)), '', 'a'], ['body', 'Message', null, m => `<span class="clip">${hlq(m.body, 'msgs')}</span>`]],
@@ -1592,10 +1596,10 @@ const COL = {
   sess: {
     title: 'Recorded sessions', noun: 'recorded session', ph: 'Search account, session id or game',
     items: () => DB().sess, q: s => [(U(s.uid) || {}).un, s.id, s.games.join(' ')].join(' '),
-    f: [['acc', 'Account', () => [['all', 'Every test account']].concat(DB().users.filter(u => u.test).map(u => [u.id, '@' + u.un])), (s, v) => s.uid === v], ['pr', 'Problems', [['all', 'With or without problems'], ['yes', 'With problems'], ['no', 'Without problems']], (s, v) => v === 'yes' ? s.prob > 0 : !s.prob]],
-    cols: [['at', 'Started', s => s.at, s => esc(fDT(s.at)), '', 't'], ['acc', 'Account', s => (U(s.uid) || {}).un || '', s => at(U(s.uid)), '', 'a'], ['dur', 'Length', s => s.dur, s => fDur(s.dur), 'num'], ['n', 'Events', s => s.n, s => fN(s.n), 'num'], ['prob', 'Problems', s => s.prob, s => s.prob ? pill(plur(s.prob, 'problem'), 'bad', 'alert') : '<span class="mut">None</span>'], ['g', 'Games', null, s => esc(s.games.join(', '))]],
+    f: [['acc', 'Account', () => [['all', 'Every test account']].concat(DB().users.filter(u => u.test).map(u => [u.id, '@' + u.un])), (s, v) => s.uid === v], ['pr', 'Errors', [['all', 'With or without errors'], ['yes', 'With errors'], ['no', 'Without errors']], (s, v) => v === 'yes' ? s.prob > 0 : !s.prob]],
+    cols: [['at', 'Started', s => s.at, s => esc(fDT(s.at)), '', 't'], ['acc', 'Account', s => (U(s.uid) || {}).un || '', s => at(U(s.uid)), '', 'a'], ['dur', 'Length', s => s.dur, s => fDur(s.dur), 'num'], ['n', 'Events', s => s.n, s => fN(s.n), 'num'], ['prob', 'Errors', s => s.prob, s => s.prob ? pill(plur(s.prob, 'error'), 'bad', 'alert') : '<span class="mut">None</span>'], ['g', 'Games', null, s => esc(s.games.join(', '))]],
     def: ['at', -1], per: 10,
-    card: s => ({ ic: 'eye', ick: s.prob ? 'bad' : '', t: '@' + ((U(s.uid) || {}).un || '?') + ' · ' + fDT(s.at), s: fDur(s.dur) + ' · ' + plur(s.n, 'event') + ' · ' + s.games.join(', '), p: s.prob ? pill(plur(s.prob, 'problem'), 'bad', 'alert') : '' }),
+    card: s => ({ ic: 'eye', ick: s.prob ? 'bad' : '', t: '@' + ((U(s.uid) || {}).un || '?') + ' · ' + fDT(s.at), s: fDur(s.dur) + ' · ' + plur(s.n, 'event') + ' · ' + s.games.join(', '), p: s.prob ? pill(plur(s.prob, 'error'), 'bad', 'alert') : '' }),
     det: (s, L) => sessDet(s, L)
   },
   dels: {
@@ -1674,7 +1678,7 @@ const COL = {
     f: [['kind', 'Kind', [['all', 'Every limit'], ['sec', 'Security limits'], ['use', 'Everyday limits']], (l, v) => v === 'sec' ? l.sens : !l.sens], ['hit', 'Reached', [['all', 'Reached or not'], ['yes', 'Reached in the last 24 hours']], l => l.full > 0]],
     cols: [['l', 'Limit', l => l.l, l => `<b>${esc(l.l)}</b>${l.sens ? ' ' + pill('Security', 'bad', 'shield') : ''}`, '', 'a'], ['max', 'Allowed', l => l.max, l => esc(fN(l.max) + ' per ' + l.win), 'num'], ['hits', 'Requests, 24 h', l => l.hits, l => fN(l.hits), 'num'], ['full', 'Times at the limit', l => l.full, l => l.full ? pill(fN(l.full), 'warn') : '0', 'num'], ['who', 'Players', l => l.who, l => fN(l.who), 'num']],
     def: ['full', -1],
-    card: l => ({ ic: 'gauge', ick: l.full ? 'warn' : '', t: l.l, s: fN(l.max) + ' per ' + l.win + ' · ' + fN(l.hits) + ' requests in 24 hours', r: l.full ? plur(l.full, 'hit') : '', p: l.sens ? pill('Security', 'bad', 'shield') : '' }),
+    card: l => ({ ic: 'gauge', ick: l.full ? 'warn' : '', t: l.l, s: fN(l.max) + ' per ' + l.win + ' · ' + fN(l.hits) + ' requests in 24 hours', r: l.full ? fN(l.full) + ' at the limit' : '', p: l.sens ? pill('Security', 'bad', 'shield') : '' }),
     det: (l, L) => limitDet(l, L)
   },
   hits: {
@@ -1687,7 +1691,7 @@ const COL = {
     card: h => ({ ic: 'gauge', t: '@' + ((U(h.uid) || {}).un || '?'), s: limName(h.k) + ' · ' + plur(h.full, 'time') + ' at the limit', r: ago(h.last) })
   },
   log: {
-    title: 'Admin log', noun: 'log entry', ph: 'Search staff, player or details', per: 50,
+    title: 'Admin log', all: 'The whole admin log', noun: 'log entry', ph: 'Search staff, player or details', per: 50,
     items: () => DB().log, q: x => logTxt(x),
     f: [['g', 'Action', LOGG, (x, v) => LOGK[x.k] === v], ['by', 'Staff member', () => [['all', 'Every staff member']].concat(DB().users.filter(staff).map(u => ['@' + u.un, '@' + u.un])), (x, v) => x.by === v], ['per', 'When', ANY, (x, v) => NOW - x.at < +v * DAY]],
     cols: [['at', 'When', x => x.at, x => `<span class="nw">${esc(fDT(x.at))}</span>`, '', 't'], ['what', 'What happened', null, logHtml], ['g', 'Kind', x => LOGK[x.k] || '', x => esc((LOGG.find(g => g[0] === LOGK[x.k]) || ['', ''])[1]), '', 'a']],
@@ -1801,10 +1805,10 @@ function sessEv(s) {
 function sessDet(s, L) {
   const u = U(s.uid), E = sessEv(s), S = ST(), q = String(S.ui.evq || '').toLowerCase(), ks = S.ui.evk || [], bad = !!S.ui.evbad;
   const F = E.filter(e => (!bad || e.bad) && (!ks.length || ks.includes(e.k)) && (!q || e.s.toLowerCase().includes(q))), P = 40, pages = Math.max(1, Math.ceil(F.length / P)), p = Math.min(S.ui.evp || 0, pages - 1), rows = F.slice(p * P, p * P + P), cnt = k => E.filter(e => e.k === k).length;
-  return `<article class="dt dt-${L}">${dhead('eye', s.prob ? 'bad' : '', (u ? '@' + esc(u.un) : 'Session') + ' · ' + esc(fDT(s.at)), `<span class="mono">${esc(s.id)}</span> · ${fDur(s.dur)} · ${plur(s.n, 'event')} ${s.prob ? pill(plur(s.prob, 'problem'), 'bad', 'alert') : ''}`)}
+  return `<article class="dt dt-${L}">${dhead('eye', s.prob ? 'bad' : '', (u ? '@' + esc(u.un) : 'Session') + ' · ' + esc(fDT(s.at)), `<span class="mono">${esc(s.id)}</span> · ${fDur(s.dur)} · ${plur(s.n, 'event')} ${s.prob ? pill(plur(s.prob, 'error'), 'bad', 'alert') : ''}`)}
   <div class="dt-act"><button type="button" class="btn" data-act="sessdl" data-id="${s.id}">${ic('dl')}Download JSON</button><button type="button" class="btn ghost danger" data-act="sessdel" data-id="${s.id}">${ic('trash')}Delete session…</button></div>
   <div class="tools"><label class="srch">${ic('search')}<input id="evq" data-ui="evq" value="${esc(S.ui.evq || '')}" placeholder="Search in this session" aria-label="Search in this session" autocomplete="off" spellcheck="false"></label></div>
-  <div class="chips"><button type="button" class="chip bad${bad ? ' on' : ''}" data-act="evbad" aria-pressed="${bad}">Problems only <i>${E.filter(e => e.bad).length}</i></button>${EVK.map(([k, l]) => `<button type="button" class="chip${ks.includes(k) ? ' on' : ''}" data-act="evk" data-v="${k}" aria-pressed="${ks.includes(k)}"${cnt(k) ? '' : ' disabled'}>${l} <i>${cnt(k)}</i></button>`).join('')}</div>
+  <div class="chips"><button type="button" class="chip bad${bad ? ' on' : ''}" data-act="evbad" aria-pressed="${bad}" title="Errors, failed requests and slow frames">Problems only <i>${E.filter(e => e.bad).length}</i></button>${EVK.map(([k, l]) => `<button type="button" class="chip${ks.includes(k) ? ' on' : ''}" data-act="evk" data-v="${k}" aria-pressed="${ks.includes(k)}"${cnt(k) ? '' : ' disabled'}>${l} <i>${cnt(k)}</i></button>`).join('')}</div>
   <div class="evl">${rows.map(e => `<div class="ev${e.bad ? ' bad' : ''}"><button type="button" class="ev-b" data-act="evx" data-v="${e.i}" aria-expanded="${S.ui.evx === e.i}"><time>${e.t.toFixed(1)} s</time><i class="ev-k">${e.k}</i><span>${esc(e.s)}</span></button>${S.ui.evx === e.i ? `<pre class="mono">${esc(JSON.stringify(e.d, null, 1))}</pre>` : ''}</div>`).join('') || '<p class="mut">No events match.</p>'}</div>
   <div class="pager"><span class="pg-n">${F.length ? fN(p * P + 1) + '–' + fN(Math.min(F.length, p * P + P)) + ' of ' + fN(F.length) : 'No events'}</span><span class="pg-b"><button type="button" class="btn sm ghost" data-act="evp" data-v="${p - 1}"${p ? '' : ' disabled'} aria-label="Earlier events">${ic('back')}</button><span class="pg-p">${p + 1} / ${pages}</span><button type="button" class="btn sm ghost" data-act="evp" data-v="${p + 1}"${p < pages - 1 ? '' : ' disabled'} aria-label="Later events">${ic('next')}</button></span></div></article>`;
 }
@@ -1993,7 +1997,7 @@ function block(k, L, solo) {
 function pageBody(L) { const P = PAGES[pkey()]; if (P.custom) return P.custom(L); const solo = P.b.length === 1; return P.b.map(b => b.h ? b.h(L) : block(b.c, L, solo)).join(''); }
 function detBar(o, L) {
   const S = ST(), k = o.k, c = COL[k], L2 = crows(k), i = L2.findIndex(x => String(x.id) === String(o.id)), back = S.hist && S.hist.length;
-  return `<div class="dbar"><button type="button" class="btn ghost sm" data-close>${ic('back')}<span>${back ? 'Back' : 'All ' + esc(c.title.toLowerCase())}</span></button><span class="dbar-t">${i >= 0 ? esc(cap(c.noun)) + ' ' + fN(i + 1) + ' of ' + fN(L2.length) : esc(cap(c.noun))}</span><span class="dbar-s"><button type="button" class="btn ghost sm icon" data-act="step" data-v="-1"${i > 0 ? '' : ' disabled'} aria-label="Previous ${esc(c.noun)}" title="Previous (k)">${ic('up')}</button><button type="button" class="btn ghost sm icon" data-act="step" data-v="1"${i >= 0 && i < L2.length - 1 ? '' : ' disabled'} aria-label="Next ${esc(c.noun)}" title="Next (j)">${ic('down')}</button></span>${L === 'panel' ? `<button type="button" class="xbtn" data-close-all aria-label="Close panel" title="Close (Esc)">${ic('x')}</button>` : ''}</div>`;
+  return `<div class="dbar"><button type="button" class="btn ghost sm" data-close>${ic('back')}<span>${back ? 'Back' : esc(c.all || 'All ' + c.title.toLowerCase())}</span></button><span class="dbar-t">${i >= 0 ? esc(cap(c.noun)) + ' ' + fN(i + 1) + ' of ' + fN(L2.length) : esc(cap(c.noun))}</span><span class="dbar-s"><button type="button" class="btn ghost sm icon" data-act="step" data-v="-1"${i > 0 ? '' : ' disabled'} aria-label="Previous ${esc(c.noun)}" title="Previous (k)">${ic('up')}</button><button type="button" class="btn ghost sm icon" data-act="step" data-v="1"${i >= 0 && i < L2.length - 1 ? '' : ' disabled'} aria-label="Next ${esc(c.noun)}" title="Next (j)">${ic('down')}</button></span>${L === 'panel' ? `<button type="button" class="xbtn" data-close-all aria-label="Close panel" title="Close (Esc)">${ic('x')}</button>` : ''}</div>`;
 }
 
 function overview(L) {
@@ -2094,7 +2098,7 @@ function sumKpis(pk) {
     'users/tickets': () => kpis([['Waiting for a reply', fN(D.tickets.filter(tkWait).length)], ['Open', fN(D.tickets.filter(t => t.status === 'open').length)], ['Closed', fN(D.tickets.filter(t => t.status === 'closed').length)], ['Median first reply', '2.4 h']]),
     'users/reports': () => kpis([['Waiting for a decision', fN(D.reports.filter(r => r.status === 'open').length)], ['Closed this month', fN(D.reports.filter(r => r.status === 'closed' && NOW - r.at < 30 * DAY).length)], ['Players reported more than twice', fN(new Set(D.reports.filter(r => D.reports.filter(x => x.uid === r.uid).length > 2).map(r => r.uid)).size)]]),
     'users/roles': () => kpis([['Owners', fN(D.users.filter(u => u.role === 'owner').length)], ['Admins', fN(D.users.filter(u => u.role === 'admin').length)], ['Staff actions, 30 days', fN(D.log.filter(x => NOW - x.at < 30 * DAY).length)]]),
-    'users/tests': () => kpis([['Test accounts', fN(D.users.filter(u => u.test).length)], ['Recording now', fN(D.users.filter(u => u.diag).length)], ['Recorded sessions', fN(D.sess.length)], ['Sessions with problems', fN(D.sess.filter(s => s.prob).length)]]),
+    'users/tests': () => kpis([['Test accounts', fN(D.users.filter(u => u.test).length)], ['Recording now', fN(D.users.filter(u => u.diag).length)], ['Recorded sessions', fN(D.sess.length)], ['Sessions with errors', fN(D.sess.filter(s => s.prob).length)]]),
     'site/news': () => kpis([['Published', fN(D.news.filter(n => n.pub).length)], ['Drafts', fN(D.news.filter(n => !n.pub).length)], ['Latest', 'v' + Math.max(...D.news.map(n => n.v))]]),
     'site/ideas': () => kpis([['New', fN(D.ideas.filter(i => i.status === 'new').length)], ['Planned', fN(D.ideas.filter(i => i.status === 'planned').length)], ['Done', fN(D.ideas.filter(i => i.status === 'done').length)], ['Votes in total', fN(D.ideas.reduce((s, i) => s + i.votes, 0))]]),
     'site/log': () => kpis([['Actions today', fN(D.log.filter(x => x.at >= day0(NOW)).length)], ['Actions this week', fN(D.log.filter(x => NOW - x.at < 7 * DAY).length)], ['Bans this week', fN(D.log.filter(x => NOW - x.at < 7 * DAY && LOGK[x.k] === 'bans').length)]]),
@@ -2123,7 +2127,7 @@ function shell3() {
   if (P.custom) body = P.custom('v3');
   else {
     const cs = P.b.filter(b => b.c && COL[b.c].det).map(b => b.c), cur = cs.includes(S.v3c[pk]) ? S.v3c[pk] : (o && cs.includes(o.k) ? o.k : cs[0]), pg = cpage(cur), sel = o && o.k === cur ? String(o.id) : null;
-    const left = `<div class="v3-list" data-sc="v3l"><div class="v3-lh"><div class="v3-lt"><h1>${esc(sn)}</h1>${acts(P, true)}</div>${cs.length > 1 ? `<div class="seg sm v3-cs" role="tablist" aria-label="Lists on this page">${cs.map(k => `<button type="button" role="tab" aria-selected="${k === cur}" data-act="v3col" data-v="${k}">${esc(COL[k].title)}<i>${fN(k === 'msgs' && String(cst(k).q || '').trim().length < 2 ? 0 : crows(k).length)}</i></button>`).join('')}</div>` : ''}${ctools(cur, 'v3', { sort: true })}</div><button type="button" class="li sum${o ? '' : ' on'}" data-act="v3sum" aria-current="${!o}">${ic('home')}<span class="li-m"><span class="li-t"><b>Summary</b><em>${fN(pg.total)} ${esc(pg.total === 1 ? COL[cur].noun : COL[cur].noun + 's')}</em></span><span class="li-s">${esc(P.d)}</span></span></button>${clist(cur, pg, sel)}${cpager(cur, pg)}</div>`;
+    const left = `<div class="v3-list" data-sc="v3l"><div class="v3-lh"><div class="v3-lt"><h1>${esc(sn)}</h1>${acts(P, true)}</div>${cs.length > 1 ? `<div class="seg sm v3-cs" role="tablist" aria-label="Lists on this page">${cs.map(k => `<button type="button" role="tab" aria-selected="${k === cur}" data-act="v3col" data-v="${k}">${esc(COL[k].title)}<i>${fN(k === 'msgs' && String(cst(k).q || '').trim().length < 2 ? 0 : crows(k).length)}</i></button>`).join('')}</div>` : ''}${ctools(cur, 'v3', { sort: true })}</div><button type="button" class="li sum${o ? '' : ' on'}" data-act="v3sum" aria-current="${!o}">${ic('home')}<span class="li-m"><span class="li-t"><b>Summary</b><em>${esc(plur(pg.total, COL[cur].noun))}</em></span><span class="li-s">${esc(P.d)}</span></span></button>${clist(cur, pg, sel)}${cpager(cur, pg)}</div>`;
     const rest = P.b.filter(b => b.h || !COL[b.c].det).map(b => b.h ? b.h('v3') : block(b.c, 'v3t')).join('');
     const summary = `<button type="button" class="btn ghost sm v3-back" data-act="v3back">${ic('back')}Back to the list</button><div class="v3-oh"><h1>${esc(sn)}</h1><p class="mut">${esc(P.d || '')}</p></div>${sumKpis(pk)}${rest}${!rest && !sumKpis(pk) ? '<p class="mut">Choose an item in the list.</p>' : ''}`;
     const right = `<div class="v3-det" data-sc="v3d">${o ? `<div class="v3-dt">${detBar(o, 'pane')}</div>${COL[o.k].det(o.item, 'pane')}` : summary}</div>`;
@@ -2209,7 +2213,7 @@ const ACT = {
   mcopy: a => { const u = U(a.dataset.id), S = ST(), k = S.ui.mk || 'dm', L = DB().msgs.filter(m => (m.from === u.id || m.to === u.id) && m.kind === k); const txt = L.map(m => '[' + fDT(m.at) + '] @' + ((U(m.from) || {}).un || 'deleted') + ': ' + m.body).join(String.fromCharCode(10)); try { navigator.clipboard.writeText(txt); } catch (x) {} toast('Copied ' + plur(L.length, 'message') + '.'); },
   setpw: a => { const u = U(a.dataset.id); dlg({ title: 'Set a new password for @' + u.un, ok: 'Set password', body: () => `<label class="fld"><span>New password, at least 8 characters</span><input id="npw" type="password" autocomplete="new-password" maxlength="72"></label><p class="mut sm">They are signed out on their devices and log in with the new password. The dashboard does not keep a readable copy.</p>`, valid: () => !!$('#npw') && $('#npw').value.length >= 8, onOk: () => { u.on = null; addLog('reset', u, 'new password'); toast('New password set for @' + u.un + '. They were signed out.'); } }); },
   csv: a => { const m = MEAS.find(x => x.id === a.dataset.m), F = fctx(ST().data), r = runM(m, F); dlFile('gameplay-' + slug(m.l) + '-' + iso(F.rows[0].d) + '-to-' + iso(F.rows[F.rows.length - 1].d) + '.csv', toCsv(r.cols, r.rows)); toast('Exported ' + plur(r.rows.length, 'row') + ' to CSV.'); },
-  logcsv: () => { const L = crows('log'); dlFile('gameplay-admin-log-' + iso(NOW) + '.csv', toCsv([{ k: 'at', l: 'When' }, { k: 'by', l: 'Staff member' }, { k: 'kind', l: 'Kind' }, { k: 'what', l: 'What happened' }, { k: 'd', l: 'Details' }], L.map(x => ({ at: new Date(x.at).toISOString(), by: x.by, kind: (LOGG.find(g => g[0] === LOGK[x.k]) || ['', ''])[1], what: logTxt(x), d: x.d })))); toast('Exported ' + plur(L.length, 'log entry').replace('entrys', 'entries') + ' to CSV.'); },
+  logcsv: () => { const L = crows('log'); dlFile('gameplay-admin-log-' + iso(NOW) + '.csv', toCsv([{ k: 'at', l: 'When' }, { k: 'by', l: 'Staff member' }, { k: 'kind', l: 'Kind' }, { k: 'what', l: 'What happened' }, { k: 'd', l: 'Details' }], L.map(x => ({ at: new Date(x.at).toISOString(), by: x.by, kind: (LOGG.find(g => g[0] === LOGK[x.k]) || ['', ''])[1], what: logTxt(x), d: x.d })))); toast('Exported ' + plur(L.length, 'log entry') + ' to CSV.'); },
   sessdl: a => { const s = DB().sess.find(x => x.id === a.dataset.id); dlFile('gameplay-diagnostics-' + s.id + '.json', JSON.stringify({ session: s.id, account: (U(s.uid) || {}).un, started: new Date(s.at).toISOString(), seconds: s.dur, events: sessEv(s).map(e => ({ t: e.t, kind: e.k, summary: e.s, data: e.d })) }, null, 1), 'application/json'); toast('Downloaded the session as JSON.'); },
   sessdel: a => { const D = DB(), s = D.sess.find(x => x.id === a.dataset.id), u = U(s.uid); dlg({ title: 'Delete this recorded session?', danger: true, ok: 'Delete session', typed: u ? u.un : s.id, body: () => `<p>${plur(s.n, 'event')} recorded for @${esc(u ? u.un : '?')} on ${esc(fDT(s.at))} are deleted for good. Type the test account's username to confirm.</p>`, onOk: () => { D.sess = D.sess.filter(x => x !== s); addLog('sessdel', u); ST().open = null; ST().hist = []; toast('Session deleted.'); } }); },
   sessfor: a => { const S = ST(); go('users', 'tests'); const c = cst('sess'); c.f.acc = a.dataset.id; c.p = 0; S.v3c['users/tests'] = 'sess'; save(); render(); const b = $('#blk-sess'); if (b) b.scrollIntoView({ block: 'start' }); },
