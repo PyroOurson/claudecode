@@ -1,5 +1,7 @@
 # Going live with the overhaul
 
+Status on 13 November 2026: steps 1, 3 (skipped) and 5 are done by the owner and the site is live. Steps 2 (relay worker) and 4 (test account) are still open.
+
 Nothing in the `claude/platform-overhaul` branch is live until you do the steps below. Do them in this order. Each step says what it changes and how to check it.
 
 ## 1. Database (Supabase SQL editor)

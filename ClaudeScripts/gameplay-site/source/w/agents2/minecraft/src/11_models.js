@@ -27,7 +27,7 @@
     MDL.zombie.parts[2].b = [[-3, -2, -2, 4, 12, 4, 40, 16]]; MDL.zombie.parts[3].b = [[-1, -2, -2, 4, 12, 4, 32, 48]];
     MDL.zombie.parts[4].b = [[-2, 0, -2, 4, 12, 4, 0, 16]]; MDL.zombie.parts[5].b = [[-2, 0, -2, 4, 12, 4, 16, 48]];
     MDL.zombie.parts[0].b = [[-4, 0, -2, 8, 12, 4, 16, 16]];
-    for (const k of ['steve', 'alex']) { const sl = k === 'alex', aw = sl ? 3 : 4; MDL[k].parts[2].b = [[-aw + 1, -2, -2, aw, 12, 4, 40, 16], [-aw + 1, -2, -2, aw, 12, 4, 40, 32, .25]]; MDL[k].parts[3].b = [[-1, -2, -2, aw, 12, 4, 32, 48], [-1, -2, -2, aw, 12, 4, 48, 48, .25]]; MDL[k].parts[2].pv = [-5, sl ? 2.5 : 2, 0]; MDL[k].parts[3].pv = [5, sl ? 2.5 : 2, 0]; }
+    for (const k of ['steve', 'alex']) { const sl = k === 'alex', aw = sl ? 3 : 4; MDL[k].parts[2].b = [[-aw + 1, -2, -2, aw, 12, 4, 40, 16], [-aw + 1, -2, -2, aw, 12, 4, 40, 32, .25]]; MDL[k].parts[3].b = [[-1, -2, -2, aw, 12, 4, 32, 48], [-1, -2, -2, aw, 12, 4, 48, 48, .25]]; MDL[k].parts[5].b = [[-2, 0, -2, 4, 12, 4, 16, 48], [-2, 0, -2, 4, 12, 4, 0, 48, .25]]; MDL[k].parts[2].pv = [-5, sl ? 2.5 : 2, 0]; MDL[k].parts[3].pv = [5, sl ? 2.5 : 2, 0]; }
     function boxGeo(B, tw, th, PZ) {
       const [x0, y0, z0, w, h, d, u, v, inf, mir] = B, I2 = inf || 0;
       const X0 = -(x0 - I2), X1 = -(x0 + w + I2), Y0 = -(y0 - I2), Y1 = -(y0 + h + I2), Z0 = z0 - I2, Z1 = z0 + d + I2;

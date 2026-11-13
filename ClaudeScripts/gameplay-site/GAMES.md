@@ -1,6 +1,6 @@
 # gameplay: game roadmap and tracker
 
-Target: about 1000 games, added in waves of at most 100. Every game is a remake of a popular game (real name kept so it is searchable), and new waves focus on online multiplayer.
+Target: about 1000 games, added in waves of at most 100. Games follow the rules in `prompt.md` (Part 3.3): they play like the famous game of their kind, with original assets. New waves focus on online multiplayer.
 
 | Wave | Games | Status |
 |---|---|---|

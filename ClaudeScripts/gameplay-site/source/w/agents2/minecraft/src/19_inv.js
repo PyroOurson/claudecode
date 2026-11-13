@@ -202,11 +202,12 @@
       slotClick(sl, btn, shift);
       return true;
     }
+    function sameSlot(a, b) { return !!a && !!b && a.arr === b.arr && a.i === b.i; }
     function invMove() {
       if (!drag) return;
       if (drag.scroll) { const [, oy] = pRect, rowsN = Math.ceil(tabList(cTab).length / 9); cScroll = Math.round(clamp((my - oy - 18) / 110, 0, 1) * Math.max(0, rowsN - 5)); return; }
       const sl = slotAt(mx, my);
-      if (!sl || drag.list.includes(sl) || !cursor) return;
+      if (!sl || drag.list.some(q => sameSlot(q, sl)) || !cursor) return;
       if (!(sl.g === 'main' || sl.g === 'hot' || sl.g === 'cont' || sl.g === 'craft' || sl.g === 'fin' || sl.g === 'ffuel')) return;
       const st = sl.get();
       if (st && !sameSt(st, cursor)) return;
@@ -323,10 +324,12 @@
         if (sl.g === 'out' && gui === 'inv') drawSlotBg(sl);
         else if (sl.g === 'out' || sl.g === 'scout' || sl.g === 'fout') { g.fillStyle = '#373737'; g.fillRect(sl.x - 5, sl.y - 5, 26, 26); g.fillStyle = '#fff'; g.fillRect(sl.x - 4, sl.y - 4, 25, 25); g.fillStyle = '#8b8b8b'; g.fillRect(sl.x - 4, sl.y - 4, 24, 24); }
         else drawSlotBg(sl);
-        const st = sl.get();
-        if (!st && (sl.g === 'armor' || sl.g === 'off')) g.drawImage(EMPTYI[sl.g === 'off' ? 4 : sl.i & 3], sl.x, sl.y);
-        drawItem(st, sl.x, sl.y);
-        if (drag && drag.list && drag.list.includes(sl)) { g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(sl.x, sl.y, 16, 16); }
+        if (!sl.get() && (sl.g === 'armor' || sl.g === 'off')) g.drawImage(EMPTYI[sl.g === 'off' ? 4 : sl.i & 3], sl.x, sl.y);
+      }
+      for (const sl of slots) {
+        if (sl.g === 'trash') continue;
+        drawItem(sl.get(), sl.x, sl.y);
+        if (drag && drag.list && drag.list.some(q => sameSlot(q, sl))) { g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(sl.x, sl.y, 16, 16); }
       }
       if (gui === 'creative') drawCreativeTabs(true);
       hovSlot = slotAt(mx, my);
