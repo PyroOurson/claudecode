@@ -1109,6 +1109,7 @@ ${p} [hidden]{display:none!important}
     };
     cvs.addEventListener('pointerup', up);
     cvs.addEventListener('pointercancel', up);
+    cvs.addEventListener('contextmenu', e => e.preventDefault());
     function clickAt(pt) {
       if (!model || over) return;
       if (!mayPlay() && !(model.phase() === 'mark' && !ai && (!online() || N.live))) return;
@@ -3270,6 +3271,7 @@ ${p} [hidden]{display:none!important}
     };
     cvs.addEventListener('pointerup', up);
     cvs.addEventListener('pointercancel', up);
+    cvs.addEventListener('contextmenu', e => e.preventDefault());
     function clickEdge(e) {
       if (!mayPlay()) return;
       if (!g.legal(e)) { au.bad(); return; }

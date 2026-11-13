@@ -1651,6 +1651,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     };
     cvs.addEventListener('pointerup', up);
     cvs.addEventListener('pointercancel', up);
+    cvs.addEventListener('contextmenu', e => e.preventDefault());
     api.on(window, 'keydown', e => {
       if (ovUp || (e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) return;
       const dir = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.code];
