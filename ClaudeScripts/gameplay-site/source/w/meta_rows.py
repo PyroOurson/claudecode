@@ -190,7 +190,7 @@ ROWS = [
  ('smash-karts',"Smash Karts",'Racing,Action','so8',8,'smash karts kart battle arena weapons','rn'),
  ('bedwars',"Bedwars",'Action,Strategy','so8',15,'bedwars bed wars minecraft blocks shop bridge','rn'),
  ('tower-of-peril',"Tower of Peril",'Skill,Action','so8',10,'tower of hell obby obstacle course parkour climb kill bricks timer race 3d roblox','rn'),
- ('only-up',"Only Up",'Skill','so8',30,'only up climbing parkour 3d','rn'),
+ ('way-up',"Way Up",'Skill','s',30,'only up climb climbing parkour 3d jump ledge rope sky balloon no checkpoints ghost','rn'),
  ('murder-mystery',"Murder Mystery 2",'Action','o12',8,'murder mystery 2 mm2 roblox murderer sheriff innocent','rn'),
  ('temple-run',"Temple Run",'Runner','s',5,'temple run endless runner swipe idol monkeys','rn'),
  ('snow-rider',"Snow Rider 3D",'Runner,Racing','s',4,'snow rider 3d sled downhill obstacles','rn'),

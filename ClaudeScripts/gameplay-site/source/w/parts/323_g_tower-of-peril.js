@@ -348,9 +348,10 @@
     { n: 'Laser Gates', d: 3, h: 26, f(B) {
       const P = [[9, 1, 0], [12, 4, -8], [6, 7, -13], [-3, 10, -13], [-11, 13, -10], [-13, 16, -2], [-11, 19, 6], [-4, 22, 9]];
       P.forEach(([x, y, z], i) => B.p(x, y, z, 4, 4, { c: i % 2 }));
-      let px = 0, py = 0, pz = 0;
+      let px = 0, py = 0, pz = 0, ph = 4;
       P.forEach(([x, y, z], i) => {
-        const mx = (px + x) / 2, mz = (pz + z) / 2, yaw = Math.atan2(x - px, z - pz);
+        const L = Math.hypot(x - px, z - pz), ux = (x - px) / L, uz = (z - pz) / L, a = ph / Math.max(Math.abs(ux), Math.abs(uz)), bb = 2 / Math.max(Math.abs(ux), Math.abs(uz)), m = a + (L - a - bb) / 2;
+        const mx = px + ux * m, mz = pz + uz * m, yaw = Math.atan2(x - px, z - pz); ph = 2;
         B.k(mx, py + 4.5, mz, 0.35, 9 + (y - py), 5, { yaw: yaw + Math.PI / 2, laser: 1, mv: { t: 'b', on: 1.4, off: 1.3, ph: (i * 0.37) % 1 } });
         px = x; py = y; pz = z;
       });
@@ -487,6 +488,7 @@
     const out = [];
     for (let i = p0; i < p1; i++) { const p = parts[i]; if (p.ghost) continue; const b = aabb(p); if (b[3] < top - 9) continue; out.push([b[0] - 1.2, b[1] + 1.2, b[2], b[3] + 11.5, b[4] - 1.2, b[5] + 1.2]); }
     for (const k of corridors(wps, w0, wps.length, top)) if (k[3] >= top - 1) out.push(k);
+    out.top = out.reduce((m, k) => Math.max(m, k[3]), top);
     return out;
   }
   function corridors(wps, w0, w1, top) {
@@ -501,7 +503,7 @@
     if (prev) for (const k of corridors(wps, w0, wps.length, 1e9)) { if (k[2] > y + 9) continue; for (const q of prev) if (hit(k, q)) return true; }
     for (let i = p0; i < parts.length; i++) {
       const p = parts[i]; if (p.ghost) continue;
-      const b = aabb(p); if (b[2] > y + 9) continue;
+      const b = aabb(p); if (b[2] > band.top) continue;
       const q = [b[0] - 0.2, b[1] + 0.2, b[2] - 0.2, b[3], b[4] - 0.2, b[5] + 0.2];
       for (const k of band) if (hit(q, k)) return true;
     }
@@ -674,7 +676,7 @@
       if (ws.res === 1) b.mode = 1;
       else {
         const react = sk.react[0] + b.R() * (sk.react[1] - sk.react[0]);
-        const sure = (d, dI) => { let r = simRun(W, c, w, nx, d, dI, true, d + 2.2, b.lm, 0), f = 0; if (r.res === -1 && r.st === 2) { r = simRun(W, c, w, nx, d, dI, true, d + 2.2, b.lm, 1); f = 1; } if (r.res === 1 && simRun(W, c, w, nx, d + 0.025, dI, true, d + 2.2, b.lm, f).res !== 1) r.res = 0; return r; };
+        const sure = (d, dI) => { let r = simRun(W, c, w, nx, d, dI, true, d + 2.2, b.lm, 0), f = 0; if (r.res === -1 && r.st === 2) { r = simRun(W, c, w, nx, d, dI, true, d + 2.2, b.lm, 1); f = 1; } if (r.res === 1 && (simRun(W, c, w, nx, d + 0.025, dI, true, d + 2.2, b.lm, f).res !== 1 || (d > 0.03 && simRun(W, c, w, nx, d - 0.015, dI, true, d + 2.2, b.lm, f).res !== 1))) r.res = 0; return r; };
         const js = sure(react, I);
         if (js.res === 1) { b.plan = { at: t + react + (b.R() * 2 - 1) * sk.jit }; return; }
         if (I.mx || I.mz) {
@@ -1279,9 +1281,9 @@ ${G} .tag{display:inline-block;font-size:.72em;font-weight:800;padding:.1em .45e
       mutsEl.innerHTML = [...mset].map(k => `<span>${esc(tr(MUTS.find(m => m.k === k).n))}</span>`).join('');
       buildBar();
       { const w0 = R.T.wps[0]; camS.yaw = Math.atan2(-(w0.x - R.me.c.x), -(w0.z - R.me.c.z)); camS.pitch = 0.32; camS.cd = camS.dist; camS.tx = R.me.c.x; camS.ty = R.me.c.y + 4.4; camS.tz = R.me.c.z; }
-      window.__toh = R; R.auto = (() => { try { return localStorage.getItem('gameplay:toh:auto') === '1'; } catch (e) { return false; } })() ? makeBot(R.me.c, 3, 77, 'me') : null;
+      R.auto = (() => { try { return localStorage.getItem('gameplay:toh:auto') === '1'; } catch (e) { return false; } })() ? makeBot(R.me.c, 3, 77, 'me') : null;
       phase = 'play'; showHud(true); hideScr();
-      bigEl.innerHTML = ''; audio.song(o.seed & 1); audio.music(true);
+      bigEl.innerHTML = ''; bigEl.classList.remove('on'); rateEl.hidden = true; audio.song(o.seed & 1); audio.music(!o.demo);
       updateGearBar();
       return R;
     }
@@ -1925,13 +1927,13 @@ ${G} .tag{display:inline-block;font-size:.72em;font-weight:800;padding:.1em .45e
     id: ID, title: 'Tower of Peril', category: '3D', tint: '#ff7a2a',
     blurb: 'Race up a tower of random obstacle sections before the clock runs out. No checkpoints, kill bricks, gear, mutators and online races for up to 8.',
     help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · <kbd>Space</kbd> jump (hold to keep jumping) · drag to turn the camera, wheel zoom · <kbd>Shift</kbd> shift lock · <kbd>R</kbd> reset · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> gear · <kbd>Esc</kbd> pause · touch: stick, Jump, drag to look',
-    better: 'high', width: 960,
+    better: 'high', width: 960, ownPause: true,
     format: v => v + (v === 1 ? ' win' : ' wins'),
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 58h24M22 58V8h20v50"/><path d="M22 20h20M22 32h20M22 44h20"/><path d="M27 14h4M33 26h4M27 38h4M33 50h4" stroke-width="3"/></svg>',
     css: CSS,
     lab: { CFG, SECTIONS, MODES, buildTower, makeWorld, setTime, stepChar, newChar, makeBot, botThink, botReset, prepWps, loadSave, simRun, wpPos, SIMC },
     mount(root, api) {
-      const wrap = document.createElement('div'); wrap.className = 'stage'; root.append(wrap);
+      const wrap = document.createElement('div'); wrap.className = 'stage'; wrap.setAttribute('data-i18n', ''); root.append(wrap);
       let cleanup = null;
       const narrow = root.clientWidth && root.clientWidth < 560;
       api.gl(narrow ? 600 : 960, narrow ? 900 : 600).then(v => { if (v && api.alive) cleanup = run(root, wrap, api, v); });

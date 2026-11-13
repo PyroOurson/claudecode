@@ -189,5 +189,7 @@
  ["script", "g_caption-this"],
  ["script", "g_tower-of-peril"],
  ["gap", "gap_324"],
+ ["script", "g_way-up"],
+ ["gap", "gap_326"],
  ["gap", "gap_142"]
 ]
