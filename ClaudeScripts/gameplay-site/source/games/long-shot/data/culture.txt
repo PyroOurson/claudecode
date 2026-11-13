@@ -1,0 +1,856 @@
+@set instruments
+9|Guitar|Guitare|str
+9|Piano|Piano|key
+8|Drums/Drum kit/Drum|Batterie/Tambour|perc
+8|Violin|Violon|str
+7|Flute|Flûte|wind
+7|Trumpet|Trompette|wind
+7|Saxophone/Sax|Saxophone/Saxo|wind
+6|Cello|Violoncelle|str
+6|Harp|Harpe|str
+6|Clarinet|Clarinette|wind
+6|Bass guitar/Bass|Basse/Guitare basse|str
+6|Ukulele|Ukulélé|str
+6|Electric guitar|Guitare électrique|str
+5|Trombone|Trombone|wind
+5|Accordion|Accordéon|key
+5|Harmonica|Harmonica|wind
+5|Xylophone|Xylophone|perc
+5|Tuba|Tuba|wind
+5|Recorder|Flûte à bec|wind
+5|Banjo|Banjo|str
+5|Viola|Alto|str
+5|Double bass/Contrabass|Contrebasse|str
+5|Organ|Orgue|key
+5|Keyboard/Synthesizer/Synth|Clavier/Synthétiseur|key
+5|Tambourine|Tambourin|perc
+5|Triangle|Triangle|perc
+5|French horn/Horn|Cor/Cor d'harmonie|wind
+5|Oboe|Hautbois|wind
+5|Bagpipes|Cornemuse|wind
+4|Bassoon|Basson|wind
+4|Mandolin|Mandoline|str
+4|Harpsichord|Clavecin|key
+4|Cymbals|Cymbales|perc
+4|Maracas|Maracas|perc
+4|Bongo/Bongos|Bongos|perc
+4|Djembe|Djembé|perc
+4|Castanets|Castagnettes|perc
+4|Sitar|Sitar|str
+4|Didgeridoo|Didgeridoo|wind
+4|Glockenspiel|Glockenspiel|perc
+4|Marimba|Marimba|perc
+4|Timpani/Kettle drum|Timbales|perc
+4|Snare drum|Caisse claire|perc
+4|Bass drum|Grosse caisse|perc
+4|Cornet|Cornet|wind
+4|Piccolo|Piccolo|wind
+4|Lute|Luth|str
+4|Lyre|Lyre|str
+4|Pan flute/Panpipes|Flûte de Pan|wind
+4|Ocarina|Ocarina|wind
+4|Kazoo|Kazoo|wind
+4|Steel drum/Steelpan|Steel drum/Steelpan|perc
+4|Cajón/Cajon|Cajón|perc
+4|Gong|Gong|perc
+4|Bell/Bells|Cloche/Cloches|perc
+4|Tubular bells|Cloches tubulaires|perc
+4|Celesta|Célesta|key
+4|Theremin|Thérémine|key
+4|Melodica|Mélodica|key
+3|Koto|Koto|str
+3|Shamisen|Shamisen|str
+3|Erhu|Erhu|str
+3|Guzheng|Guzheng|str
+3|Pipa|Pipa|str
+3|Tabla|Tabla|perc
+3|Sarod|Sarod|str
+3|Veena|Veena|str
+3|Oud|Oud|str
+3|Bouzouki|Bouzouki|str
+3|Balalaika|Balalaïka|str
+3|Zither|Cithare|str
+3|Dulcimer|Dulcimer/Tympanon|str
+3|Hurdy-gurdy|Vielle à roue|str
+3|Kora|Kora|str
+3|Charango|Charango|str
+3|Kalimba/Thumb piano|Kalimba/Sanza|perc
+3|Mbira|Mbira|perc
+3|Talking drum|Tambour d'aisselle|perc
+3|Congas/Conga|Congas|perc
+3|Timbal/Latin timbales|Timbales latines|perc
+3|Güiro/Guiro|Güiro|perc
+3|Cowbell|Cloche à vache|perc
+3|Washboard|Planche à laver|perc
+3|Spoons|Cuillères|perc
+3|Hang/Handpan|Handpan/Hang|perc
+3|Vibraphone|Vibraphone|perc
+3|Euphonium|Euphonium|wind
+3|Flugelhorn||wind
+3|Sousaphone|Sousaphone|wind
+3|Cor anglais/English horn|Cor anglais|wind
+3|Contrabassoon|Contrebasson|wind
+3|Bass clarinet|Clarinette basse|wind
+3|Shakuhachi|Shakuhachi|wind
+3|Tin whistle/Penny whistle|Flageolet/Tin whistle|wind
+3|Bugle|Clairon|wind
+3|Alphorn|Cor des Alpes|wind
+3|Shofar|Shofar|wind
+3|Conch/Conch shell|Conque|wind
+3|Bandoneon|Bandonéon|key
+3|Concertina|Concertina|key
+3|Harmonium|Harmonium|key
+3|Clavichord|Clavicorde|key
+3|Electric piano/Rhodes|Piano électrique|key
+3|Grand piano|Piano à queue|key
+3|Upright piano|Piano droit|key
+3|Acoustic guitar|Guitare acoustique|str
+3|Classical guitar|Guitare classique|str
+3|Twelve-string guitar|Guitare douze cordes|str
+3|Pedal steel guitar/Steel guitar|Guitare steel|str
+3|Fiddle|Violon traditionnel|str
+3|Viola da gamba|Viole de gambe|str
+3|Bodhrán/Bodhran|Bodhrán|perc
+3|Rainstick|Bâton de pluie|perc
+3|Jaw harp/Jew's harp|Guimbarde|wind
+2|Duduk|Doudouk|wind
+2|Zurna|Zurna|wind
+2|Gaida|Gaïda|wind
+2|Uilleann pipes|Uilleann pipes|wind
+2|Biniou|Biniou|wind
+2|Bombarde|Bombarde|wind
+2|Galoubet|Galoubet|wind
+2|Serpent|Serpent|wind
+2|Ophicleide|Ophicléide|wind
+2|Sackbut|Saqueboute|wind
+2|Crumhorn|Cromorne|wind
+2|Glass harmonica|Harmonica de verre|perc
+2|Waterphone|Waterphone|perc
+2|Turntables/Turntable|Platines|no
+0|Voice|Voix|no
+0|Microphone|Micro/Microphone|no
+0|Speaker|Enceinte|no
+
+@set genres
+@drop music musique
+9|Pop|Pop|
+9|Rock|Rock|
+9|Rap/Hip hop/Hip-hop|Rap/Hip-hop|
+8|Jazz|Jazz|
+7|Classical/Classical music|Classique/Musique classique|
+7|Country|Country|
+7|Reggae|Reggae|
+7|Electronic/Electro/EDM|Électro/Électronique/EDM|
+6|Metal/Heavy metal|Métal/Heavy metal|
+6|Blues|Blues|
+6|R&B/Rhythm and blues|R'n'B/RnB|
+6|Techno|Techno|
+6|House|House|
+5|Punk|Punk|
+5|Disco|Disco|
+5|Funk|Funk|
+5|Soul|Soul|
+5|Rock and roll/Rock 'n' roll|Rock'n'roll|
+5|Opera|Opéra|
+5|K-pop|K-pop|
+5|Reggaeton|Reggaeton|
+5|Salsa|Salsa|
+5|Gospel|Gospel|
+5|Folk|Folk|
+5|Indie|Indie/Indé|
+5|Dubstep|Dubstep|
+5|Trap|Trap|
+4|Drill|Drill|
+3|Grime|Grime|
+4|Afrobeat/Afrobeats|Afrobeat|
+3|Ska|Ska|
+3|Grunge|Grunge|
+3|Emo|Emo|
+4|Lo-fi|Lo-fi|
+3|Drum and bass/DnB|Drum and bass|
+3|Trance|Trance|
+2|Ambient|Ambient|
+3|J-pop|J-pop|
+3|Bossa nova|Bossa nova|
+3|Samba|Samba|
+3|Flamenco|Flamenco|
+3|Tango|Tango|
+3|Zouk|Zouk|
+2|Kompa|Kompa|
+3|Raï|Raï|
+3|Chanson/French chanson|Chanson française/Variété française|
+3|Swing|Swing|
+2|Bebop|Bebop|
+3|Bluegrass|Bluegrass|
+3|Motown|Motown|
+3|Synthwave|Synthwave|
+3|Hard rock|Hard rock|
+3|Death metal|Death metal|
+2|Black metal|Black metal|
+2|Thrash metal|Thrash metal|
+3|Pop rock|Pop rock|
+2|Soft rock|Soft rock|
+3|Alternative/Alternative rock|Rock alternatif/Alternatif|
+2|Progressive rock/Prog|Rock progressif|
+2|Psychedelic rock|Rock psychédélique|
+2|New wave|New wave|
+2|Post-punk|Post-punk|
+2|Shoegaze|Shoegaze|
+2|Garage|Garage|
+2|UK garage|UK garage|
+3|Hardstyle|Hardstyle|
+2|Hardcore|Hardcore|
+2|Breakbeat|Breakbeat|
+2|Jungle|Jungle|
+2|Electro swing|Électro swing|
+2|Chiptune|Chiptune|
+3|Phonk|Phonk|
+2|Hyperpop|Hyperpop|
+3|Amapiano|Amapiano|
+3|Dancehall|Dancehall|
+3|Calypso|Calypso|
+2|Soca|Soca|
+2|Cumbia|Cumbia|
+3|Bachata|Bachata|
+2|Merengue|Merengue|
+3|Mariachi|Mariachi|
+2|Fado|Fado|
+2|Klezmer|Klezmer|
+3|Celtic|Celtique|
+3|Baroque|Baroque|
+3|Gregorian chant|Chant grégorien|
+2|Barbershop|Barbershop|
+3|A cappella|A cappella|
+3|Musical theatre/Musicals|Comédie musicale|
+3|Film score/Soundtrack|Musique de film/Bande originale|
+2|Doo-wop|Doo-wop|
+2|Rockabilly|Rockabilly|
+2|Surf rock|Surf rock|
+3|Britpop|Britpop|
+2|Eurodance|Eurodance|
+2|Italo disco|Italo disco|
+2|French touch|French touch|
+2|Trip hop|Trip hop|
+2|Acid jazz|Acid jazz|
+2|Jazz fusion|Jazz fusion|
+2|Smooth jazz|Smooth jazz|
+2|Dub|Dub|
+2|Bhangra|Bhangra|
+2|Qawwali|Qawwalî|
+2|Gamelan|Gamelan|
+2|Enka|Enka|
+2|Mandopop/C-pop|Mandopop|
+2|Afropop|Afropop|
+2|Highlife|Highlife|
+2|Coupé-décalé|Coupé-décalé|
+2|Ndombolo|Ndombolo|
+2|Gnawa|Gnaoua|
+3|Polka|Polka|
+3|Waltz|Valse|
+2|Musette|Musette|
+2|Yodel|Yodel/Tyrolienne|
+2|Grindcore|Grindcore|
+2|Nu metal|Nu metal|
+2|Metalcore|Metalcore|
+2|Emo rap|Emo rap|
+2|Cloud rap|Cloud rap|
+3|Gangsta rap|Gangsta rap|
+2|Boom bap|Boom bap|
+2|Neo soul|Néo-soul|
+2|New jack swing|New jack swing|
+0|Loud|Fort|no
+0|Music|Musique|no
+0|Song||no
+
+@set dances
+@drop dance danse
+8|Ballet|Ballet/Danse classique|
+8|Salsa|Salsa|
+7|Tango|Tango|
+7|Waltz|Valse|
+7|Hip hop/Hip-hop|Hip-hop|
+7|Breakdance/Breaking|Breakdance/Breaking|
+6|Tap dance/Tap|Claquettes|
+6|Flamenco|Flamenco|
+6|Samba|Samba|
+6|Cha-cha/Cha-cha-cha|Cha-cha-cha|
+6|Disco|Disco|
+6|Macarena|Macarena|
+6|Floss|Floss|
+4|Rumba|Rumba|
+4|Foxtrot|Fox-trot|
+4|Jive|Jive|
+4|Swing|Swing|
+4|Twist|Twist|
+4|Moonwalk|Moonwalk|
+4|Dab|Dab|
+4|Belly dance|Danse du ventre|
+4|Contemporary/Contemporary dance|Danse contemporaine/Contemporain|
+3|Jazz dance/Modern jazz|Modern jazz/Danse jazz|
+3|Line dance/Line dancing|Line dance/Danse en ligne|
+4|Bachata|Bachata|
+3|Merengue|Merengue|
+4|Zumba|Zumba|
+3|Kizomba|Kizomba|
+3|Lindy hop|Lindy hop|
+4|Charleston|Charleston|
+3|Quickstep|Quickstep|
+3|Paso doble|Paso doble|
+4|Polka|Polka|
+4|Can-can/Cancan|French cancan/Cancan|
+4|Rock and roll/Rock'n'roll|Rock|
+4|Haka|Haka|
+4|Hula|Hula|
+3|Limbo|Limbo|
+3|Conga|Conga|
+3|Mambo|Mambo|
+3|Lambada|Lambada|
+3|Krump|Krump|
+3|Popping|Popping|
+2|Locking|Locking|
+3|Voguing/Vogue|Voguing|
+3|Twerk/Twerking|Twerk|
+3|Shuffle|Shuffle|
+3|Tecktonik/Electro dance|Tecktonik|
+3|Square dance|Square dance|
+3|Irish dance/Irish dancing/Riverdance|Danse irlandaise|
+2|Highland dance|Danse des Highlands|
+2|Morris dance|Danse morris|
+2|Clog dance/Clogging|Danse en sabots|
+3|Bollywood/Bollywood dance|Danse Bollywood|
+2|Bharatanatyam|Bharatanatyam|
+2|Kathak|Kathak|
+4|Capoeira|Capoeira|
+2|Forró|Forró|
+2|Cumbia|Cumbia|
+2|Reggaeton|Reggaeton|
+2|Dancehall|Dancehall|
+2|Afro dance/Afrobeats dance|Afro dance|
+2|Azonto|Azonto|
+2|Coupé-décalé|Coupé-décalé|
+3|Sirtaki|Sirtaki|
+2|Hora|Hora|
+2|Kazachok/Cossack dance|Danse cosaque|
+2|Bourrée|Bourrée|
+3|Farandole|Farandole|
+2|Gavotte|Gavotte|
+3|Minuet|Menuet|
+2|Quadrille|Quadrille|
+2|Mazurka|Mazurka|
+2|Polonaise|Polonaise|
+3|Tarantella|Tarentelle|
+2|Fandango|Fandango|
+2|Sardana|Sardane|
+3|Bolero|Boléro|
+2|Pole dance|Pole dance|
+3|Ballroom|Danse de salon|
+2|Folk dance|Danse folklorique|
+4|Gangnam Style|Gangnam Style|
+2|Harlem shake|Harlem shake|
+3|Chicken dance|Danse des canards|
+3|Robot|Robot|
+2|Running man|Running man|
+3|Worm|Chenille|
+2|Electric slide|Electric slide|
+2|Hustle|Hustle|
+2|Jitterbug|Jitterbug|
+2|Boogie-woogie|Boogie-woogie|
+2|Madison|Madison|
+2|Zouk|Zouk|
+3|Lion dance|Danse du lion|
+3|Dragon dance|Danse du dragon|
+0|Party|Fête|no
+0|Music|Musique|no
+
+@set sports
+9|Football/Soccer|Football/Foot|ball oly
+9|Basketball|Basket/Basket-ball|ball oly
+8|Tennis|Tennis|ball oly
+8|Swimming|Natation|oly
+8|Rugby|Rugby|ball oly
+7|Volleyball|Volley/Volley-ball|ball oly
+7|Baseball|Baseball|ball oly
+7|Golf|Golf|ball oly
+7|Cricket|Cricket|ball
+7|Boxing|Boxe|oly
+7|Cycling|Cyclisme/Vélo|oly
+7|Athletics/Track and field|Athlétisme|oly
+7|Ice hockey/Hockey|Hockey sur glace/Hockey|oly
+6|American football|Football américain|ball
+6|Handball|Handball|ball oly
+6|Table tennis/Ping pong|Tennis de table/Ping-pong|ball oly
+6|Badminton|Badminton|oly
+6|Gymnastics|Gymnastique|oly
+6|Skiing|Ski|oly
+6|Judo|Judo|oly
+6|Karate|Karaté|oly
+6|Surfing|Surf|oly
+6|Skateboarding|Skateboard/Skate|oly
+6|Snowboarding|Snowboard|oly
+6|Running|Course à pied|
+6|Horse riding/Equestrian|Équitation|oly
+6|Fencing|Escrime|oly
+3|Field hockey|Hockey sur gazon|ball oly
+3|Water polo|Water-polo|ball oly
+4|Rowing|Aviron|oly
+3|Canoeing/Kayaking|Canoë/Kayak/Canoë-kayak|oly
+4|Sailing|Voile|oly
+4|Diving|Plongeon|oly
+4|Archery|Tir à l'arc|oly
+3|Shooting|Tir|oly
+3|Weightlifting|Haltérophilie|oly
+4|Wrestling|Lutte|oly
+4|Taekwondo|Taekwondo|oly
+4|Triathlon|Triathlon|oly
+4|Climbing/Rock climbing/Bouldering|Escalade|oly
+4|Ice skating/Figure skating|Patinage/Patinage artistique|oly
+3|Speed skating|Patinage de vitesse|oly
+4|Bobsleigh/Bobsled|Bobsleigh|oly
+4|Curling|Curling|oly
+3|Biathlon|Biathlon|oly
+2|Luge|Luge|oly
+3|Ski jumping|Saut à ski|oly
+3|Pentathlon/Modern pentathlon|Pentathlon moderne|oly
+3|Decathlon|Décathlon|oly
+4|Marathon|Marathon|oly
+3|Breaking/Breakdancing|Breaking|oly
+4|BMX|BMX|oly
+4|Mountain biking|VTT|oly
+5|Formula 1/F1/Motor racing|Formule 1/F1/Course automobile|
+5|MMA/Mixed martial arts|MMA/Arts martiaux mixtes|
+4|Kickboxing|Kickboxing|
+3|Muay Thai/Thai boxing|Muay-thaï/Boxe thaï|
+4|Sumo|Sumo|
+4|Kung fu|Kung-fu|
+3|Aikido|Aïkido|
+3|Jiu-jitsu/Brazilian jiu-jitsu|Jiu-jitsu|
+4|Bowling|Bowling|ball
+4|Darts|Fléchettes|
+3|Snooker|Snooker|ball
+4|Billiards/Pool|Billard|ball
+4|Squash|Squash|ball
+4|Padel|Padel|ball
+3|Pickleball|Pickleball|ball
+3|Softball|Softball|ball oly
+2|Lacrosse|Crosse|ball
+2|Netball|Netball|ball
+4|Dodgeball|Balle aux prisonniers|ball
+2|Kickball||ball
+2|Gaelic football|Football gaélique|ball
+2|Hurling|Hurling|ball
+3|Australian rules football/Aussie rules/AFL|Football australien|ball
+2|Polo|Polo|ball
+3|Water skiing|Ski nautique|
+3|Wakeboarding|Wakeboard|
+3|Kitesurfing|Kitesurf|
+3|Windsurfing|Planche à voile|oly
+3|Paragliding|Parapente|
+3|Skydiving|Parachutisme|
+3|Bungee jumping|Saut à l'élastique|
+4|Motocross|Motocross|
+3|Rally|Rallye|
+4|Karting|Karting|
+3|NASCAR|NASCAR|
+3|Horse racing|Course hippique|
+3|Show jumping|Saut d'obstacles|oly
+3|Dressage|Dressage|oly
+4|Hiking|Randonnée|
+3|Mountaineering|Alpinisme|
+2|Orienteering|Course d'orientation|
+4|Parkour|Parkour|
+3|Cheerleading|Pom-pom girls/Cheerleading|
+3|Trampoline|Trampoline|oly
+3|Rhythmic gymnastics|Gymnastique rythmique|oly
+3|Synchronised swimming/Artistic swimming|Natation artistique/Natation synchronisée|oly
+4|Pétanque/Boules|Pétanque/Boules|ball
+2|Bocce|Bocce|ball
+2|Croquet|Croquet|ball
+4|Frisbee/Ultimate/Ultimate frisbee|Ultimate/Frisbee|
+2|Sepak takraw|Sepak takraw|ball
+2|Kabaddi|Kabaddi|
+2|Pelota/Basque pelota|Pelote basque|ball
+2|Teqball|Teqball|ball
+4|Futsal|Futsal|ball
+4|Beach volleyball|Beach-volley|ball oly
+3|Rugby league|Rugby à XIII|ball
+3|Rugby sevens|Rugby à sept|ball oly
+3|Sprint|Sprint|oly
+3|Long jump|Saut en longueur|oly
+3|High jump|Saut en hauteur|oly
+3|Pole vault|Saut à la perche|oly
+3|Triple jump|Triple saut|oly
+3|Javelin|Lancer du javelot/Javelot|oly
+3|Discus|Lancer du disque/Disque|oly
+3|Shot put|Lancer du poids|oly
+3|Hammer throw|Lancer du marteau|oly
+3|Hurdles|Haies|oly
+3|Relay|Relais|oly
+2|Race walking|Marche athlétique|oly
+4|Esports/E-sports|E-sport|
+4|Chess|Échecs|
+3|Arm wrestling|Bras de fer|
+3|Tug of war|Tir à la corde|
+2|Jousting|Joute|
+2|Rodeo|Rodéo|
+2|Bullfighting|Corrida|
+3|Cross-country skiing|Ski de fond|oly
+3|Alpine skiing|Ski alpin|oly
+3|Freestyle skiing|Ski acrobatique|oly
+3|Ice climbing|Escalade sur glace|
+2|Skeleton|Skeleton|oly
+2|Bandy|Bandy|
+2|Floorball|Floorball|
+2|Roller derby|Roller derby|
+3|Roller skating|Roller|
+3|Inline hockey/Roller hockey|Roller hockey|
+2|Spearfishing|Chasse sous-marine|
+4|Fishing|Pêche|
+2|Powerlifting|Force athlétique|
+3|Bodybuilding|Culturisme/Bodybuilding|
+3|CrossFit|CrossFit|
+4|Yoga|Yoga|
+3|Pilates|Pilates|
+2|Calisthenics|Callisthénie/Street workout|
+2|Sambo|Sambo|
+2|Savate/French boxing|Savate/Boxe française|
+3|Capoeira|Capoeira|
+2|Kendo|Kendo|
+2|Wushu|Wushu|
+0|Walking|Marche|no
+0|Ball|Ballon|no
+0|Sport|Sport|no
+0|Dance|Danse|no
+
+@set jobs
+9|Doctor|Médecin/Docteur|
+9|Teacher|Professeur/Enseignant/Prof|
+8|Police officer/Policeman/Cop|Policier/Gendarme|
+8|Firefighter/Fireman|Pompier|
+8|Nurse|Infirmier/Infirmière|
+7|Chef/Cook|Chef/Cuisinier|
+7|Lawyer|Avocat|
+7|Engineer|Ingénieur|
+7|Farmer|Agriculteur/Fermier|
+7|Pilot|Pilote|
+7|Astronaut|Astronaute|
+7|Dentist|Dentiste|
+7|Vet/Veterinarian|Vétérinaire|
+6|Actor/Actress|Acteur/Actrice/Comédien|
+6|Singer|Chanteur/Chanteuse|
+6|Artist|Artiste|
+6|Scientist|Scientifique|
+6|Builder|Maçon/Ouvrier du bâtiment|
+6|Baker|Boulanger|
+6|Butcher|Boucher|
+6|Plumber|Plombier|
+6|Electrician|Électricien|
+6|Mechanic|Mécanicien/Garagiste|
+6|Carpenter|Charpentier/Menuisier|
+6|Hairdresser/Barber|Coiffeur/Barbier|
+6|Waiter/Waitress|Serveur/Serveuse|
+6|Soldier|Soldat/Militaire|
+5|Footballer/Football player|Footballeur|
+6|Youtuber/YouTuber|Youtubeur|
+6|Streamer|Streamer|
+6|Programmer/Developer/Software developer|Programmeur/Développeur|
+6|Journalist|Journaliste|
+6|Architect|Architecte|
+6|Accountant|Comptable|
+6|Cashier|Caissier/Caissière|
+6|Postman/Mail carrier/Postal worker|Facteur|
+6|Taxi driver|Chauffeur de taxi|
+6|Bus driver|Chauffeur de bus|
+6|Truck driver/Lorry driver|Chauffeur routier/Routier|
+6|Lifeguard|Maître-nageur/Sauveteur|
+4|Pharmacist|Pharmacien|
+4|Surgeon|Chirurgien|
+4|Psychologist|Psychologue|
+4|Photographer|Photographe|
+4|Musician|Musicien|
+3|Dancer|Danseur/Danseuse|
+4|Writer/Author|Écrivain/Auteur|
+4|Painter|Peintre|
+4|Designer|Designer|
+3|Fashion designer|Styliste/Créateur de mode|
+4|Model|Mannequin|
+4|Judge|Juge|
+3|Politician|Homme politique/Politicien|
+4|President|Président|
+4|Mayor|Maire|
+4|Banker|Banquier|
+4|Shopkeeper|Commerçant|
+3|Salesperson/Salesman|Vendeur/Vendeuse|
+4|Secretary|Secrétaire|
+3|Receptionist|Réceptionniste|
+4|Librarian|Bibliothécaire|
+3|Cleaner/Janitor|Agent d'entretien/Concierge|
+4|Gardener|Jardinier|
+4|Fisherman|Pêcheur|
+3|Miner|Mineur|
+4|Sailor|Marin/Matelot|
+3|Captain|Capitaine|
+3|Flight attendant/Air hostess|Hôtesse de l'air/Steward|
+3|Air traffic controller|Contrôleur aérien|
+3|Train driver|Conducteur de train|
+3|Delivery driver|Livreur|
+3|Security guard|Agent de sécurité/Vigile|
+4|Detective|Détective|
+4|Spy|Espion|
+3|Paramedic|Ambulancier|
+3|Midwife|Sage-femme|
+3|Optician|Opticien|
+3|Physiotherapist|Kinésithérapeute/Kiné|
+3|Babysitter/Nanny|Baby-sitter/Nounou|
+4|Coach|Entraîneur/Coach|
+4|Referee|Arbitre|
+3|Athlete|Athlète|
+3|Tennis player|Joueur de tennis|
+3|Jockey|Jockey|
+3|Professor|Professeur d'université|
+3|Headteacher/Principal|Directeur d'école/Proviseur|
+3|Translator/Interpreter|Traducteur/Interprète|
+3|Tour guide|Guide touristique|
+3|Manager|Manager/Directeur|
+3|CEO/Boss|PDG/Patron|
+3|Entrepreneur|Entrepreneur|
+4|Influencer|Influenceur/Influenceuse|
+3|Gamer/Pro gamer|Joueur professionnel|
+4|DJ|DJ|
+4|Rapper|Rappeur|
+3|Comedian|Humoriste|
+4|Magician|Magicien|
+4|Clown|Clown|
+3|Film director/Director|Réalisateur|
+3|Producer|Producteur|
+3|Cameraman|Caméraman|
+3|Animator|Animateur|
+3|Illustrator|Illustrateur|
+3|Graphic designer|Graphiste|
+3|Web designer|Webdesigner|
+3|Data scientist|Data scientist|
+3|Mathematician|Mathématicien|
+3|Physicist|Physicien|
+3|Chemist|Chimiste|
+3|Biologist|Biologiste|
+3|Astronomer|Astronome|
+3|Archaeologist|Archéologue|
+3|Historian|Historien|
+3|Geologist|Géologue|
+3|Meteorologist/Weather forecaster|Météorologue/Présentateur météo|
+3|Economist|Économiste|
+3|Philosopher|Philosophe|
+3|Priest|Prêtre/Curé|
+3|Monk|Moine|
+3|Nun|Religieuse/Bonne sœur|
+3|Imam|Imam|
+3|Rabbi|Rabbin|
+3|Tailor|Tailleur/Couturier|
+3|Shoemaker/Cobbler|Cordonnier|
+3|Jeweller/Jeweler|Bijoutier|
+3|Watchmaker|Horloger|
+3|Blacksmith|Forgeron|
+3|Locksmith|Serrurier|
+3|Glazier|Vitrier|
+3|Roofer|Couvreur|
+3|Painter and decorator/Decorator|Peintre en bâtiment|
+3|Welder|Soudeur|
+3|Bricklayer|Briqueteur|
+3|Tiler|Carreleur|
+3|Florist|Fleuriste|
+3|Pastry chef|Pâtissier|
+3|Chocolatier|Chocolatier|
+3|Cheesemaker|Fromager|
+3|Fishmonger|Poissonnier|
+3|Greengrocer|Primeur/Marchand de fruits et légumes|
+3|Grocer|Épicier|
+3|Barista|Barista|
+3|Courier|Coursier|
+3|Warehouse worker|Magasinier|
+3|Factory worker|Ouvrier/Ouvrière|
+3|Beekeeper|Apiculteur|
+3|Shepherd|Berger|
+3|Forester/Lumberjack|Bûcheron/Forestier|
+3|Park ranger|Garde forestier|
+3|Zookeeper|Soigneur animalier/Gardien de zoo|
+3|Dog walker|Promeneur de chiens|
+3|Groomer|Toiletteur|
+3|Social worker|Assistant social/Travailleur social|
+3|Counsellor/Counselor|Conseiller|
+3|Therapist|Thérapeute|
+3|Optometrist|Optométriste|
+3|Radiologist|Radiologue|
+3|Dermatologist|Dermatologue|
+3|Cardiologist|Cardiologue|
+3|Paediatrician/Pediatrician|Pédiatre|
+3|Psychiatrist|Psychiatre|
+3|Orthodontist|Orthodontiste|
+3|Speech therapist|Orthophoniste|
+3|Diplomat|Diplomate|
+3|Ambassador|Ambassadeur|
+3|Civil servant|Fonctionnaire|
+3|Customs officer|Douanier|
+3|Prison guard|Gardien de prison|
+3|Bailiff|Huissier|
+3|Notary|Notaire|
+3|Estate agent/Real estate agent|Agent immobilier|
+3|Insurance agent|Assureur|
+3|Stockbroker/Trader|Trader/Courtier|
+3|Auditor|Auditeur|
+3|Consultant|Consultant|
+3|Recruiter|Recruteur|
+3|Teacher's assistant/Teaching assistant|Assistant d'éducation|
+3|Lecturer|Maître de conférences|
+3|Surveyor|Géomètre|
+3|Urban planner|Urbaniste|
+3|Stuntman/Stunt performer|Cascadeur|
+3|Acrobat|Acrobate|
+3|Juggler|Jongleur|
+3|Puppeteer|Marionnettiste|
+3|Ventriloquist|Ventriloque|
+3|Sculptor|Sculpteur|
+3|Potter|Potier|
+3|Composer|Compositeur|
+3|Conductor|Chef d'orchestre|
+3|Sound engineer|Ingénieur du son|
+3|Make-up artist|Maquilleur|
+3|Tattoo artist|Tatoueur|
+0|Student|Étudiant/Élève|no
+0|Unemployed|Chômeur|no
+0|Retired|Retraité|no
+0|Parent/Mum/Dad|Parent|no
+0|Kid/Child|Enfant|no
+
+@set clothing
+9|T-shirt/Tee|T-shirt/Tee-shirt|
+8|Trousers/Pants|Pantalon|
+8|Jeans|Jean|
+8|Dress|Robe|
+8|Shoes/Shoe|Chaussures/Chaussure|
+7|Shirt|Chemise|
+7|Skirt|Jupe|
+7|Jacket|Veste/Blouson|
+7|Coat|Manteau|
+7|Hat|Chapeau|
+7|Socks/Sock|Chaussettes/Chaussette|
+7|Jumper/Sweater/Pullover|Pull/Pull-over|
+7|Hoodie|Sweat à capuche/Hoodie|
+6|Shorts|Short|
+6|Scarf|Écharpe/Foulard|
+6|Gloves/Glove|Gants/Gant|
+6|Cap/Baseball cap|Casquette|
+6|Boots/Boot|Bottes/Botte|
+6|Trainers/Sneakers|Baskets/Sneakers|
+6|Tie|Cravate|
+6|Suit|Costume|
+6|Pyjamas/Pajamas|Pyjama|
+6|Belt|Ceinture|
+6|Sandals/Sandal|Sandales/Sandale|
+6|Flip-flops/Thongs|Tongs|
+6|Swimsuit/Swimming costume/Bathing suit|Maillot de bain|
+5|Bikini|Bikini|
+4|Blouse|Chemisier/Blouse|
+4|Cardigan|Cardigan/Gilet|
+4|Tank top/Vest top|Débardeur|
+4|Polo shirt/Polo|Polo|
+4|Leggings|Leggings/Legging|
+4|Tights|Collants|
+4|Beanie/Woolly hat|Bonnet|
+4|Raincoat|Imperméable/Ciré|
+4|Parka|Parka|
+3|Anorak|Anorak|
+3|Puffer jacket/Down jacket|Doudoune|
+4|Blazer|Blazer|
+4|Tuxedo|Smoking|
+4|Bow tie|Nœud papillon|
+4|Jumpsuit|Combinaison|
+4|Overalls/Dungarees|Salopette|
+4|Tracksuit|Survêtement/Jogging|
+3|Joggers/Sweatpants|Pantalon de jogging|
+4|Sweatshirt|Sweat/Sweat-shirt|
+4|Turtleneck/Polo neck|Col roulé|
+4|Crop top|Crop top|
+4|Uniform|Uniforme|
+4|Apron|Tablier|
+4|Dressing gown/Bathrobe|Peignoir/Robe de chambre|
+4|Slippers|Chaussons/Pantoufles|
+3|Nightgown/Nightie|Chemise de nuit|
+4|Bra|Soutien-gorge|
+3|Boxers/Boxer shorts|Caleçon/Boxer|
+4|Mittens|Moufles|
+3|Earmuffs|Cache-oreilles|
+3|Balaclava|Cagoule|
+4|Beret|Béret|
+3|Bowler hat|Chapeau melon|
+4|Top hat|Haut-de-forme|
+3|Cowboy hat|Chapeau de cowboy|
+4|Sombrero|Sombrero|
+3|Fedora|Fedora/Borsalino|
+3|Panama hat|Panama|
+3|Bucket hat|Bob|
+3|Headband|Bandeau|
+4|Helmet|Casque|
+3|Crown|Couronne|no
+3|Veil|Voile|
+4|Kimono|Kimono|
+3|Sari|Sari|
+4|Kilt|Kilt|
+4|Poncho|Poncho|
+4|Cape|Cape|
+3|Cloak|Cape longue/Pèlerine|
+3|Toga|Toge|
+3|Tunic|Tunique|
+3|Kaftan|Caftan|
+3|Djellaba|Djellaba|
+3|Abaya|Abaya|
+3|Hijab|Hijab/Foulard islamique|
+3|Turban|Turban|
+3|Kurta|Kurta|
+3|Hanbok|Hanbok|
+3|Lederhosen|Lederhosen/Culotte de peau|
+3|Dirndl|Dirndl|
+3|Sarong|Paréo/Sarong|
+3|Leotard|Justaucorps|
+3|Tutu|Tutu|
+3|Wetsuit|Combinaison de plongée|
+3|Ski suit|Combinaison de ski|
+3|Corset|Corset|
+3|Petticoat|Jupon|
+3|Stockings|Bas|
+3|Suspenders/Braces|Bretelles|
+3|Cufflinks|Boutons de manchette|
+3|Loafers|Mocassins|
+4|High heels/Heels|Talons/Talons hauts|
+3|Wellies/Wellington boots/Rain boots|Bottes de pluie/Bottes en caoutchouc|
+3|Clogs|Sabots|
+3|Espadrilles|Espadrilles|
+3|Ballet flats|Ballerines|
+3|Crocs|Crocs|
+3|Ugg boots/Uggs|Uggs|
+3|Trench coat|Trench|
+3|Duffle coat|Duffle-coat|
+3|Pea coat|Caban|
+3|Bodywarmer/Body warmer|Doudoune sans manches|
+3|Fleece|Polaire|
+3|Windbreaker|Coupe-vent|
+3|Hawaiian shirt|Chemise hawaïenne|
+3|Football shirt/Jersey|Maillot|
+3|Sports bra|Brassière|
+3|Cycling shorts|Cuissard|
+3|Bermuda shorts/Bermudas|Bermuda|
+3|Chinos|Chino|
+3|Cargo pants|Pantalon cargo|
+3|Culottes|Jupe-culotte|
+3|Miniskirt|Minijupe|
+3|Gown/Ball gown|Robe de bal|
+3|Wedding dress|Robe de mariée|
+3|Sundress|Robe d'été|
+3|Onesie|Grenouillère/Combinaison pyjama|
+3|Bib|Bavoir|
+0|Glasses/Sunglasses|Lunettes|no
+0|Watch|Montre|no
+0|Bag/Handbag|Sac|no
+0|Necklace|Collier|no
+0|Ring|Bague|no
+0|Earrings|Boucles d'oreilles|no
+0|Umbrella|Parapluie|no
+0|Clothes|Vêtements|no

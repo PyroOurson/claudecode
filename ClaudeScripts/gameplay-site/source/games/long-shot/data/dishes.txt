@@ -1,0 +1,360 @@
+@set dishes
+9|Pizza|Pizza|it
+8|Lasagne/Lasagna|Lasagnes/Lasagne|it
+8|Spaghetti bolognese/Bolognese/Spag bol|Spaghetti bolognaise/Bolognaise|it
+7|Carbonara/Spaghetti carbonara|Carbonara/Spaghetti carbonara|it
+7|Risotto|Risotto|it
+5|Tiramisu|Tiramisu|it
+6|Ravioli|Raviolis/Ravioli|it
+5|Gnocchi|Gnocchi|it
+5|Minestrone|Minestrone|it
+5|Pesto pasta/Pasta al pesto|Pâtes au pesto|it
+5|Bruschetta|Bruschetta|it
+5|Calzone|Calzone|it
+5|Focaccia|Focaccia|it
+3|Osso buco/Ossobuco|Osso buco|it
+4|Polenta|Polenta|it
+4|Arancini|Arancini|it
+4|Caprese salad/Caprese|Salade caprese/Caprese|it
+2|Vitello tonnato|Vitello tonnato|it
+2|Saltimbocca|Saltimbocca|it
+4|Carpaccio|Carpaccio|it
+4|Cannelloni|Cannellonis/Cannelloni|it
+5|Tortellini|Tortellini|it
+3|Penne arrabbiata/Arrabbiata|Penne all'arrabbiata/Arrabbiata|it
+3|Cacio e pepe|Cacio e pepe|it
+2|Amatriciana|Amatriciana|it
+2|Puttanesca|Puttanesca|it
+2|Aglio e olio|Aglio e olio|it
+3|Fettuccine Alfredo/Alfredo|Fettuccine Alfredo|it
+1|Panzanella|Panzanella|it
+1|Ribollita|Ribollita|it
+3|Parmigiana/Eggplant parmesan|Parmigiana/Aubergines à la parmesane|it
+1|Chicken parmesan/Chicken parm||it
+2|Piadina|Piadina|it
+4|Panini|Panini|it
+2|Antipasto|Antipasti|it
+3|Prosciutto|Prosciutto/Jambon de Parme|it
+3|Salami|Salami|it
+2|Mortadella|Mortadelle|it
+1|Bresaola|Bresaola|it
+3|Gelato|Gelato|it
+3|Cannoli|Cannoli|it
+3|Panna cotta|Panna cotta|it
+4|Pasta|Pâtes|it
+4|Spaghetti|Spaghetti|it
+4|Pizza Margherita/Margherita|Pizza Margherita/Margherita|it
+1|Stromboli|Stromboli|it
+2|Frittata|Frittata|it
+1|Supplì|Supplì|it
+2|Crostini|Crostini|it
+2|Risotto alla milanese|Risotto à la milanaise|it
+2|Cotoletta alla milanese/Milanese|Escalope milanaise|it
+1|Bollito misto|Bollito misto|it
+2|Porchetta|Porchetta|it
+1|Pasta e fagioli|Pasta e fagioli|it
+2|Spaghetti alle vongole/Vongole|Spaghetti aux palourdes/Vongole|it
+2|Tagliatelle al ragù/Ragù|Tagliatelles au ragù|it
+1|Zuppa inglese|Zuppa inglese|it
+1|Pizza quattro formaggi/Four cheese pizza|Pizza quatre fromages|it
+1|Pizza Napoletana/Neapolitan pizza|Pizza napolitaine|it
+8|Croissant|Croissant|fr
+8|Baguette|Baguette|fr
+7|Crêpe|Crêpe|fr
+7|Quiche/Quiche lorraine|Quiche/Quiche lorraine|fr
+7|Ratatouille|Ratatouille|fr
+6|Coq au vin|Coq au vin|fr
+6|Beef bourguignon/Bœuf bourguignon|Bœuf bourguignon/Bourguignon|fr
+7|Croque-monsieur/Croque monsieur|Croque-monsieur|fr
+6|Escargots/Snails|Escargots|fr
+6|Foie gras|Foie gras|fr
+5|Bouillabaisse|Bouillabaisse|fr
+6|Raclette|Raclette|fr
+5|Fondue/Cheese fondue|Fondue/Fondue savoyarde|fr
+5|Tartiflette|Tartiflette|fr
+5|Cassoulet|Cassoulet|fr
+5|French onion soup/Onion soup|Soupe à l'oignon|fr
+4|Pot-au-feu|Pot-au-feu|fr
+4|Blanquette de veau/Blanquette|Blanquette de veau/Blanquette|fr
+4|Duck confit/Confit de canard|Confit de canard|fr
+3|Magret de canard/Magret|Magret de canard/Magret|fr
+4|Steak frites|Steak frites/Steak-frites|fr
+4|Gratin dauphinois|Gratin dauphinois|fr
+4|Hachis parmentier|Hachis parmentier|fr
+4|Choucroute/Sauerkraut|Choucroute/Choucroute garnie|fr
+4|Salade niçoise/Niçoise salad|Salade niçoise|fr
+3|Croque-madame|Croque-madame|fr
+4|Galette/Buckwheat crêpe|Galette/Galette de sarrasin/Galette bretonne|fr
+4|Moules-frites/Moules marinières/Mussels|Moules-frites/Moules marinières|fr
+3|Quenelle|Quenelle|fr
+2|Andouillette|Andouillette|fr
+2|Tapenade|Tapenade|fr
+2|Pissaladière|Pissaladière|fr
+2|Socca|Socca|fr
+2|Brandade|Brandade/Brandade de morue|fr
+3|Aligot|Aligot|fr
+2|Truffade|Truffade|fr
+2|Potée|Potée|fr
+1|Garbure|Garbure|fr
+2|Piperade|Piperade|fr
+2|Poulet basquaise/Basque chicken|Poulet basquaise|fr
+2|Daube|Daube|fr
+1|Navarin|Navarin|fr
+1|Petit salé aux lentilles|Petit salé aux lentilles|fr
+1|Tête de veau|Tête de veau|fr
+3|Pâté|Pâté|fr
+3|Terrine|Terrine|fr
+3|Rillettes|Rillettes|fr
+4|Crème brûlée|Crème brûlée|fr
+4|Tarte Tatin|Tarte Tatin|fr
+3|Chocolate mousse|Mousse au chocolat|fr
+3|Profiteroles|Profiteroles|fr
+4|Macaron|Macaron|fr
+4|Éclair|Éclair|fr
+3|Madeleine|Madeleine|fr
+3|Soufflé|Soufflé|fr
+2|Vol-au-vent/Bouchée à la reine|Bouchée à la reine/Vol-au-vent|fr
+2|Coquilles Saint-Jacques|Coquilles Saint-Jacques|fr
+2|Sole meunière|Sole meunière|fr
+3|Steak tartare/Tartare|Steak tartare/Tartare|fr
+2|Œufs mimosa/Deviled eggs|Œufs mimosa|fr
+1|Œuf mayonnaise|Œuf mayonnaise|fr
+2|Vichyssoise|Vichyssoise|fr
+3|French toast/Pain perdu|Pain perdu|fr
+3|Tarte flambée/Flammekueche|Tarte flambée/Flammekueche|fr
+1|Kouign-amann|Kouign-amann|fr
+2|Far breton|Far breton|fr
+2|Clafoutis|Clafoutis|fr
+1|Panisse|Panisse|fr
+2|Pan bagnat|Pan bagnat|fr
+1|Salade lyonnaise|Salade lyonnaise|fr
+1|Gougère|Gougère|fr
+3|Jambon-beurre/Ham baguette|Jambon-beurre|fr
+3|French fries/Fries/Chips|Frites|fr
+3|Omelette|Omelette|fr
+2|Cordon bleu|Cordon bleu|fr
+2|Paris-Brest|Paris-Brest|fr
+3|Mille-feuille|Mille-feuille|fr
+1|Gratin de pâtes|Gratin de pâtes|fr
+2|Tomates farcies/Stuffed tomatoes|Tomates farcies|fr
+2|Endives au jambon|Endives au jambon|fr
+2|Galette des rois|Galette des rois|fr
+2|Bouillon|Bouillon|fr
+9|Sushi|Sushi/Sushis|jp
+8|Ramen|Ramen|jp
+6|Sashimi|Sashimi|jp
+6|Tempura|Tempura|jp
+6|Miso soup|Soupe miso|jp
+5|Udon|Udon|jp
+5|Teriyaki|Teriyaki|jp
+5|Onigiri|Onigiri|jp
+4|Yakitori|Yakitori|jp
+4|Tonkatsu|Tonkatsu|jp
+4|Japanese curry/Katsu curry/Kare raisu|Curry japonais/Katsu curry|jp
+5|Gyoza|Gyoza/Gyozas|jp
+4|Takoyaki|Takoyaki|jp
+4|Okonomiyaki|Okonomiyaki|jp
+4|Soba|Soba|jp
+4|Mochi|Mochi|jp
+3|Edamame|Edamame|jp
+3|Bento|Bento|jp
+2|Donburi|Donburi|jp
+2|Gyudon|Gyudon|jp
+2|Katsudon|Katsudon|jp
+1|Oyakodon|Oyakodon|jp
+4|Maki|Maki/Makis|jp
+3|Nigiri|Nigiri|jp
+2|Temaki|Temaki|jp
+3|Wagyu/Kobe beef|Wagyu/Bœuf de Kobe|jp
+2|Shabu-shabu|Shabu-shabu|jp
+2|Sukiyaki|Sukiyaki|jp
+3|Yakisoba|Yakisoba|jp
+2|Yakiniku|Yakiniku|jp
+3|Karaage|Karaage|jp
+2|Natto|Natto|jp
+2|Tamagoyaki|Tamagoyaki|jp
+1|Chawanmushi|Chawanmushi|jp
+2|Dorayaki|Dorayaki|jp
+2|Taiyaki|Taiyaki|jp
+2|Dango|Dango|jp
+3|Matcha|Matcha|jp
+2|Wasabi|Wasabi|jp
+3|Tofu|Tofu|jp
+2|Unagi|Unagi|jp
+2|Omurice|Omurice|jp
+1|Nikujaga|Nikujaga|jp
+1|Oden|Oden|jp
+1|Tsukemen|Tsukemen|jp
+1|Nabe|Nabe|jp
+1|Mentaiko|Mentaiko|jp
+1|Ikura|Ikura|jp
+1|Uni|Uni|jp
+1|Furikake|Furikake|jp
+3|California roll|California roll|jp
+2|Melonpan|Melonpan|jp
+1|Senbei|Senbei|jp
+2|Pocky|Pocky|jp
+1|Kakigori|Kakigori|jp
+2|Chirashi|Chirashi|jp
+9|Taco|Taco/Tacos|mx
+8|Burrito|Burrito|mx
+7|Nachos|Nachos|mx
+7|Quesadilla|Quesadilla|mx
+6|Guacamole|Guacamole|mx
+6|Enchilada|Enchilada|mx
+6|Fajitas|Fajitas|mx
+5|Chili con carne/Chili|Chili con carne|mx
+4|Tamale/Tamales|Tamal/Tamales|mx
+4|Churros|Churros|mx
+4|Salsa|Salsa|mx
+4|Tortilla|Tortilla|mx
+3|Mole|Mole|mx
+2|Pozole|Pozole|mx
+2|Chilaquiles|Chilaquiles|mx
+3|Tostada|Tostada|mx
+2|Elote|Elote|mx
+3|Pico de gallo|Pico de gallo|mx
+2|Refried beans|Haricots frits|mx
+2|Carnitas|Carnitas|mx
+3|Tacos al pastor/Al pastor|Tacos al pastor|mx
+2|Barbacoa|Barbacoa|mx
+2|Birria|Birria|mx
+1|Sopes|Sopes|mx
+1|Gorditas|Gorditas|mx
+2|Huevos rancheros|Huevos rancheros|mx
+2|Chimichanga|Chimichanga|mx
+2|Flautas/Taquitos|Flautas/Taquitos|mx
+2|Ceviche|Ceviche|mx
+1|Menudo|Menudo|mx
+2|Tres leches|Tres leches|mx
+2|Horchata|Horchata|mx
+1|Agua fresca|Agua fresca|mx
+1|Esquites|Esquites|mx
+2|Chiles rellenos|Chiles rellenos|mx
+1|Cochinita pibil|Cochinita pibil|mx
+1|Pambazo|Pambazo|mx
+1|Tlayuda|Tlayuda|mx
+1|Torta|Torta|mx
+1|Queso fundido|Queso fundido|mx
+1|Fish taco|Taco de poisson|mx
+3|Empanada|Empanada|mx
+2|Mexican rice/Arroz rojo|Riz mexicain|mx
+1|Frijoles|Frijoles|mx
+3|Tortilla chips/Totopos|Chips de tortilla/Tortillas chips|mx
+2|Carne asada|Carne asada|mx
+2|Chorizo|Chorizo|mx
+1|Champurrado|Champurrado|mx
+1|Conchas|Conchas|mx
+1|Pan de muerto|Pan de muerto|mx
+1|Paletas|Paletas|mx
+1|Burrito bowl||mx
+2|Queso dip/Chile con queso|Chile con queso|mx
+8|Curry|Curry|in
+7|Naan|Naan/Nan|in
+7|Chicken tikka masala/Tikka masala|Poulet tikka masala/Tikka masala|in
+6|Butter chicken|Poulet au beurre/Butter chicken|in
+6|Biryani|Biryani|in
+6|Samosa|Samoussa/Samosa|in
+5|Tandoori chicken/Tandoori|Poulet tandoori/Tandoori|in
+5|Dal/Dahl/Daal|Dal/Dhal|in
+4|Korma|Korma|in
+4|Vindaloo|Vindaloo|in
+4|Chapati/Roti|Chapati/Roti|in
+4|Pakora/Bhaji/Onion bhaji|Pakora/Bhaji|in
+3|Paneer|Paneer|in
+3|Palak paneer/Saag paneer|Palak paneer|in
+4|Dosa/Masala dosa|Dosa|in
+2|Idli|Idli|in
+3|Chutney|Chutney|in
+3|Raita|Raïta|in
+3|Lassi|Lassi|in
+3|Chai/Masala chai|Chaï/Thé masala|in
+2|Jalfrezi|Jalfrezi|in
+2|Rogan josh|Rogan josh|in
+2|Madras|Madras|in
+2|Balti|Balti|in
+1|Bhuna|Bhuna|in
+1|Dhansak|Dhansak|in
+2|Pilau/Pulao/Pilaf|Pilaf/Pulao|in
+3|Poppadom/Papadum|Papadum/Poppadom|in
+2|Paratha|Paratha|in
+1|Puri|Puri|in
+2|Chana masala|Chana masala|in
+2|Aloo gobi|Aloo gobi|in
+1|Bombay potatoes/Bombay aloo|Pommes de terre Bombay|in
+2|Kofta|Kofta|in
+2|Keema|Keema|in
+1|Seekh kebab|Seekh kebab|in
+2|Gulab jamun|Gulab jamun|in
+2|Jalebi|Jalebi|in
+2|Kulfi|Kulfi|in
+1|Kheer|Kheer|in
+1|Ladoo|Ladoo|in
+1|Barfi|Barfi|in
+2|Pani puri/Golgappa|Pani puri|in
+1|Bhel puri|Bhel puri|in
+2|Pav bhaji|Pav bhaji|in
+2|Vada pav|Vada pav|in
+1|Uttapam|Uttapam|in
+2|Sambar|Sambar|in
+1|Rasam|Rasam|in
+2|Thali|Thali|in
+2|Dal makhani|Dal makhani|in
+1|Malai kofta|Malai kofta|in
+1|Rajma|Rajma|in
+1|Upma|Upma|in
+1|Poha|Poha|in
+1|Halwa|Halwa|in
+2|Momos|Momos|in
+2|Tikka|Tikka|in
+1|Chole bhature|Chole bhature|in
+6|Dumplings|Raviolis chinois/Dumplings|cn
+6|Spring rolls|Rouleaux de printemps/Nems|cn
+6|Fried rice/Egg fried rice|Riz cantonais/Riz frit|cn
+5|Sweet and sour pork/Sweet and sour chicken|Porc aigre-doux/Poulet aigre-doux|cn
+6|Peking duck|Canard laqué/Canard de Pékin|cn
+5|Chow mein|Chow mein|cn
+4|Kung Pao chicken|Poulet kung pao|cn
+5|Dim sum|Dim sum|cn
+4|Wonton/Wonton soup|Wonton/Soupe won ton|cn
+3|Mapo tofu|Mapo tofu|cn
+3|Hot pot|Fondue chinoise/Hot pot|cn
+4|Bao/Bao buns/Baozi|Bao/Baozi|cn
+2|Char siu|Char siu|cn
+2|Chop suey|Chop suey|cn
+1|Scallion pancake|Galette à la ciboule|cn
+2|Dan dan noodles|Nouilles dan dan|cn
+2|Lo mein|Lo mein|cn
+2|Hot and sour soup|Soupe aigre-piquante|cn
+3|General Tso's chicken|Poulet du général Tao|cn
+2|Orange chicken|Poulet à l'orange|cn
+2|Egg roll|Egg roll|cn
+3|Xiaolongbao/Soup dumplings|Xiaolongbao|cn
+2|Siu mai/Shumai|Siu mai|cn
+1|Har gow|Har gow|cn
+2|Congee|Congee|cn
+1|Zongzi|Zongzi|cn
+2|Mooncake|Gâteau de lune|cn
+2|Fortune cookie|Biscuit chinois/Fortune cookie|cn
+1|Tea eggs|Œufs au thé|cn
+2|Jiaozi|Jiaozi|cn
+1|Lanzhou noodles|Nouilles de Lanzhou|cn
+1|Beef chow fun|Chow fun|cn
+1|Twice-cooked pork|Porc deux fois cuit|cn
+2|Crispy duck|Canard croustillant|cn
+2|Prawn crackers|Chips de crevettes|cn
+1|Sesame balls|Boules de sésame|cn
+2|Bubble tea|Bubble tea/Thé aux perles|cn
+1|Beef with broccoli|Bœuf aux brocolis|cn
+0|Rice|Riz|no
+0|Bread|Pain|no
+0|Burger/Hamburger|Burger/Hamburger|no
+0|Hot dog|Hot-dog|no
+0|Kebab|Kebab|no
+0|Paella|Paella|no
+0|Pho|Phở/Pho|no
+0|Pad thai|Pad thaï|no
+0|Kimchi|Kimchi|no
+0|Couscous|Couscous|no
+0|Fish and chips|Fish and chips|no
+0|Poutine|Poutine|no

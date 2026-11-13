@@ -199,6 +199,7 @@ ROWS = [
  ('golf-friends',"Golf With Your Friends",'Sports','so8',15,'golf with your friends mini golf putt courses','rn'),
  ('bowling',"Bowling",'Sports','so6',8,'bowling ten pin strike spare lane','rn'),
  ('caption-this',"Caption This",'Brain','so10',12,'caption this meme memes captions funny pictures vote rate party make it meme what do you meme','rn'),
+ ('long-shot',"Long Shot",'Brain','so16',8,'long shot krillion daily trivia rare answers rarity name a thing categories endless duel','rn'),
 ]
 DELETED = ['demon-halls', 'night-survivors', 'fire-water', 'bomb-blast', 'marble-chain', 'clicker', 'glide', 'jetpack', 'sky-jump', 'lights-out', 'deep-miner', 'fling-birds', 'candy-rope', 'racer', 'shooter', 'hill-climb', 'golf', 'asteroids', 'bowling-3d', 'kart-circuit', 'tower-defense', 'stick-bridge']
 

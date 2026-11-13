@@ -1,0 +1,739 @@
+# tags: mam bird fish rep amp ins ara crus mol inv; sea (lives in the sea); farm; af (wild in Africa); aus (Australia); arc (polar)
+@set animals
+@fuzzy 1
+9|Dog|Chien|mam
+9|Cat|Chat|mam
+9|Lion|Lion|mam af
+9|Elephant|Éléphant|mam af
+8|Tiger|Tigre|mam
+8|Giraffe|Girafe|mam af
+8|Monkey|Singe|mam
+8|Horse|Cheval/Chevaux|mam farm
+8|Cow|Vache|mam farm
+8|Bear|Ours|mam
+7|Pig|Cochon/Porc|mam farm
+7|Sheep|Mouton/Brebis|mam farm
+7|Zebra|Zèbre|mam af
+7|Wolf/Wolves|Loup|mam
+7|Fox/Foxes|Renard|mam
+7|Rabbit|Lapin|mam farm
+7|Kangaroo|Kangourou|mam aus
+7|Panda/Giant panda|Panda/Panda géant|mam
+7|Dolphin|Dauphin|mam sea
+7|Whale|Baleine|mam sea
+7|Gorilla|Gorille|mam af
+7|Hippopotamus/Hippo|Hippopotame|mam af
+7|Rhinoceros/Rhino|Rhinocéros|mam af
+7|Koala|Koala|mam aus
+6|Cheetah|Guépard|mam af
+6|Leopard|Léopard|mam af
+6|Goat|Chèvre/Bouc|mam farm
+6|Mouse/Mice|Souris|mam
+6|Rat|Rat|mam
+6|Squirrel|Écureuil|mam
+6|Deer|Cerf/Biche|mam
+6|Camel|Chameau|mam
+6|Chimpanzee/Chimp|Chimpanzé|mam af
+6|Polar bear|Ours polaire/Ours blanc|mam arc
+6|Bat|Chauve-souris|mam
+6|Hamster|Hamster|mam
+6|Donkey|Âne|mam farm
+6|Hedgehog|Hérisson|mam
+6|Otter|Loutre|mam
+6|Seal|Phoque|mam sea arc
+6|Sloth|Paresseux|mam
+6|Jaguar|Jaguar|mam
+6|Bull|Taureau|mam farm
+6|Orangutan|Orang-outan|mam
+5|Lynx|Lynx|mam
+5|Panther/Black panther|Panthère/Panthère noire|mam
+5|Puma/Cougar/Mountain lion|Puma/Couguar|mam
+5|Beaver|Castor|mam
+5|Raccoon|Raton laveur|mam
+5|Mole|Taupe|mam
+5|Badger|Blaireau|mam
+5|Weasel|Belette|mam
+5|Ferret|Furet|mam
+5|Guinea pig|Cochon d'Inde/Cobaye|mam
+5|Llama|Lama|mam farm
+5|Alpaca|Alpaga|mam farm
+5|Reindeer/Caribou|Renne/Caribou|mam arc
+5|Moose/Elk|Élan/Orignal|mam
+5|Buffalo|Buffle|mam af
+5|Bison|Bison|mam
+5|Yak|Yack/Yak|mam
+5|Ox/Oxen|Bœuf/Boeuf|mam farm
+5|Meerkat|Suricate|mam af
+5|Hyena|Hyène|mam af
+5|Walrus|Morse|mam sea arc
+5|Sea lion|Otarie/Lion de mer|mam sea
+5|Orca/Killer whale|Orque/Épaulard|mam sea
+5|Blue whale|Baleine bleue/Rorqual bleu|mam sea
+5|Humpback whale|Baleine à bosse/Mégaptère|mam sea
+5|Narwhal|Narval|mam sea arc
+5|Platypus|Ornithorynque|mam aus
+5|Wombat|Wombat|mam aus
+5|Armadillo|Tatou|mam
+5|Anteater|Fourmilier|mam
+5|Porcupine|Porc-épic|mam
+5|Skunk|Mouffette/Moufette|mam
+5|Lemur|Lémurien/Maki|mam af
+5|Baboon|Babouin|mam af
+5|Antelope|Antilope|mam af
+5|Gazelle|Gazelle|mam af
+5|Warthog|Phacochère|mam af
+5|Wild boar/Boar|Sanglier|mam
+5|Jackal|Chacal|mam af
+5|Coyote|Coyote|mam
+5|Hare|Lièvre|mam
+5|Chipmunk|Tamia|mam
+5|Gerbil|Gerbille|mam
+5|Shrew|Musaraigne|mam
+5|Dormouse|Loir|mam
+5|Marmot|Marmotte|mam
+5|Mongoose|Mangouste|mam af
+4|Okapi|Okapi|mam af
+4|Tapir|Tapir|mam
+4|Pangolin|Pangolin|mam af
+4|Aardvark|Oryctérope|mam af
+4|Wildebeest/Gnu|Gnou|mam af
+4|Impala|Impala|mam af
+4|Kudu|Koudou|mam af
+4|Eland|Éland|mam af
+4|Springbok|Springbok|mam af
+4|Oryx|Oryx|mam af
+4|Ibex|Bouquetin|mam
+4|Chamois|Chamois|mam
+4|Mouflon|Mouflon|mam
+4|Musk ox|Bœuf musqué|mam arc
+4|Arctic fox|Renard polaire/Renard arctique|mam arc
+4|Fennec/Fennec fox|Fennec|mam af
+4|Red panda|Panda roux|mam
+4|Snow leopard|Panthère des neiges/Léopard des neiges|mam
+4|Ocelot|Ocelot|mam
+4|Serval|Serval|mam af
+4|Caracal|Caracal|mam af
+4|Bobcat|Lynx roux|mam
+4|Wolverine|Glouton/Carcajou|mam arc
+4|Mink|Vison|mam
+4|Stoat/Ermine|Hermine|mam
+4|Marten/Pine marten|Martre|mam
+4|Polecat|Putois|mam
+4|Capybara|Capybara/Cabiai|mam
+4|Chinchilla|Chinchilla|mam
+4|Opossum/Possum|Opossum|mam
+4|Tasmanian devil|Diable de Tasmanie|mam aus
+4|Wallaby|Wallaby|mam aus
+4|Quokka|Quokka|mam aus
+4|Dingo|Dingo|mam aus
+4|Echidna|Échidné|mam aus
+4|Sugar glider|Phalanger volant|mam aus
+3|Numbat|Numbat|mam aus
+3|Bilby|Bilby|mam aus
+3|Quoll|Quoll|mam aus
+3|Bandicoot|Bandicoot|mam aus
+4|Manatee|Lamantin|mam sea
+4|Dugong|Dugong|mam sea aus
+4|Sperm whale|Cachalot|mam sea
+4|Beluga|Béluga|mam sea arc
+4|Porpoise|Marsouin|mam sea
+4|Elephant seal|Éléphant de mer|mam sea
+4|Sea otter|Loutre de mer|mam sea
+4|Gibbon|Gibbon|mam
+4|Mandrill|Mandrill|mam af
+4|Macaque|Macaque|mam
+4|Capuchin/Capuchin monkey|Capucin|mam
+4|Howler monkey|Singe hurleur/Hurleur|mam
+4|Marmoset|Ouistiti|mam
+4|Tamarin|Tamarin|mam
+4|Bonobo|Bonobo|mam af
+3|Aye-aye|Aye-aye|mam af
+3|Tarsier|Tarsier|mam
+3|Slow loris/Loris|Loris|mam
+3|Galago/Bushbaby|Galago|mam af
+3|Vicuña/Vicuna|Vigogne|mam
+3|Guanaco|Guanaco|mam
+4|Dromedary|Dromadaire|mam af
+3|Zebu|Zébu|mam farm
+3|Water buffalo|Buffle d'eau/Buffle d'Asie|mam farm
+3|Gaur|Gaur|mam
+4|Fallow deer|Daim|mam
+4|Roe deer|Chevreuil|mam
+3|Red deer|Cerf élaphe|mam
+3|Wapiti/American elk|Wapiti|mam
+3|Muntjac|Muntjac|mam
+3|Pygmy hippopotamus/Pygmy hippo|Hippopotame pygmée|mam af
+4|Honey badger|Ratel|mam af
+3|Civet|Civette|mam
+3|Genet|Genette|mam af
+3|Binturong|Binturong|mam
+3|Kinkajou|Kinkajou|mam
+3|Coati|Coati|mam
+3|Pika|Pika|mam
+3|Lemming|Lemming|mam arc
+3|Vole|Campagnol|mam
+3|Muskrat|Rat musqué|mam
+3|Prairie dog|Chien de prairie|mam
+3|Groundhog/Woodchuck|Marmotte d'Amérique|mam
+3|Flying squirrel|Écureuil volant|mam
+3|Jerboa|Gerboise|mam af
+3|Naked mole-rat|Rat-taupe nu|mam af
+3|Hyrax/Rock hyrax|Daman|mam af
+3|Elephant shrew|Musaraigne-éléphant|mam af
+3|Fossa|Fossa|mam af
+3|Dhole|Dhole|mam
+3|African wild dog|Lycaon|mam af
+3|Maned wolf|Loup à crinière|mam
+3|Raccoon dog|Chien viverrin|mam
+3|Spectacled bear|Ours à lunettes|mam
+3|Sun bear|Ours malais|mam
+3|Sloth bear|Ours lippu|mam
+4|Grizzly/Grizzly bear|Grizzly|mam
+4|Brown bear|Ours brun|mam
+4|Black bear|Ours noir|mam
+4|Mule|Mule|mam farm
+4|Pony|Poney|mam farm
+4|Lamb|Agneau|mam farm
+3|Calf|Veau|mam farm
+3|Piglet|Porcelet|mam farm
+3|Foal|Poulain|mam farm
+3|Kitten|Chaton|mam
+3|Puppy|Chiot|mam
+2|Saiga|Saïga|mam
+2|Takin|Takin|mam
+2|Markhor|Markhor|mam
+2|Gerenuk|Gérénuk|mam af
+2|Bongo|Bongo|mam af
+2|Dik-dik|Dik-dik|mam af
+2|Duiker|Céphalophe|mam af
+2|Topi|Topi|mam af
+2|Hartebeest|Bubale|mam af
+2|Nyala|Nyala|mam af
+2|Sable antelope|Hippotrague noir|mam af
+2|Addax|Addax|mam af
+2|Babirusa|Babiroussa|mam
+2|Peccary|Pécari|mam
+2|Agouti|Agouti|mam
+2|Paca|Paca|mam
+2|Mara|Mara|mam
+2|Viscacha|Viscache|mam
+2|Degu|Octodon/Dègue|mam
+2|Solenodon|Solénodonte|mam
+2|Tenrec|Tenrec|mam af
+2|Colugo/Flying lemur|Colugo|mam
+2|Proboscis monkey|Nasique|mam
+2|Gelada|Gélada|mam af
+2|Colobus|Colobe|mam af
+2|Siamang|Siamang|mam
+2|Uakari|Ouakari|mam
+2|Spider monkey|Atèle/Singe-araignée|mam
+2|Squirrel monkey|Saïmiri|mam
+3|Red fox|Renard roux|mam
+3|Grey wolf/Gray wolf|Loup gris|mam
+3|Arctic hare|Lièvre arctique|mam arc
+3|Bengal tiger|Tigre du Bengale|mam
+3|Siberian tiger|Tigre de Sibérie|mam
+2|Clouded leopard|Panthère nébuleuse|mam
+2|Margay|Margay|mam
+2|Sand cat|Chat des sables|mam af
+2|Wildcat|Chat sauvage/Chat forestier|mam
+2|Pallas's cat/Manul|Manul|mam
+2|Leopard seal|Léopard de mer|mam sea
+2|Minke whale|Petit rorqual|mam sea
+2|Fin whale|Rorqual commun|mam sea
+2|Grey whale/Gray whale|Baleine grise|mam sea
+2|Right whale|Baleine franche|mam sea
+2|Bowhead whale|Baleine boréale|mam sea arc
+2|Pilot whale|Globicéphale|mam sea
+3|Bottlenose dolphin|Grand dauphin|mam sea
+2|Vaquita|Vaquita/Marsouin du Pacifique|mam sea
+8|Eagle|Aigle|bird
+8|Parrot|Perroquet|bird
+8|Penguin|Manchot/Pingouin|bird sea arc
+8|Owl|Hibou/Chouette|bird
+8|Chicken/Hen|Poule/Poulet|bird farm
+7|Duck|Canard|bird farm
+7|Pigeon|Pigeon|bird
+7|Flamingo|Flamant/Flamant rose|bird
+7|Peacock/Peafowl|Paon|bird
+7|Swan|Cygne|bird
+7|Ostrich|Autruche|bird af
+7|Robin|Rouge-gorge|bird
+7|Sparrow|Moineau|bird
+7|Hummingbird|Colibri/Oiseau-mouche|bird
+7|Toucan|Toucan|bird
+6|Seagull/Gull|Mouette/Goéland|bird sea
+6|Goose/Geese|Oie|bird farm
+6|Turkey|Dinde/Dindon|bird farm
+6|Falcon|Faucon|bird
+6|Hawk||bird
+6|Woodpecker|Pic/Pivert|bird
+6|Stork|Cigogne|bird
+6|Pelican|Pélican|bird
+6|Vulture|Vautour|bird
+6|Blackbird|Merle|bird
+6|Canary|Canari|bird
+6|Raven|Grand corbeau/Corbeau|bird
+6|Crow|Corneille|bird
+6|Kiwi|Kiwi|bird
+6|Emu|Émeu|bird aus
+6|Swallow|Hirondelle|bird
+6|Heron|Héron|bird
+6|Puffin|Macareux|bird sea
+5|Magpie|Pie|bird
+5|Kingfisher|Martin-pêcheur|bird
+5|Budgerigar/Budgie/Parakeet|Perruche|bird aus
+5|Cockatoo|Cacatoès|bird aus
+5|Macaw|Ara|bird
+5|Albatross|Albatros|bird sea
+5|Condor|Condor|bird
+5|Crane|Grue|bird
+5|Pheasant|Faisan|bird
+5|Quail|Caille|bird
+5|Partridge|Perdrix|bird
+5|Dove|Colombe/Tourterelle|bird
+5|Starling|Étourneau|bird
+5|Finch|Pinson|bird
+4|Goldfinch|Chardonneret|bird
+5|Tit/Blue tit|Mésange|bird
+4|Wren|Troglodyte|bird
+5|Nightingale|Rossignol|bird
+4|Lark/Skylark|Alouette|bird
+5|Cuckoo|Coucou|bird
+4|Jay|Geai|bird
+4|Cardinal|Cardinal|bird
+4|Blue jay|Geai bleu|bird
+5|Bald eagle|Pygargue à tête blanche|bird
+4|Golden eagle|Aigle royal|bird
+4|Kestrel|Crécerelle/Faucon crécerelle|bird
+4|Buzzard|Buse|bird
+3|Kite|Milan|bird
+3|Osprey|Balbuzard|bird
+4|Barn owl|Effraie/Chouette effraie|bird
+4|Snowy owl|Harfang des neiges/Chouette harfang|bird arc
+3|Eagle owl|Grand-duc|bird
+4|Cormorant|Cormoran|bird sea
+3|Gannet|Fou de Bassan|bird sea
+4|Ibis|Ibis|bird af
+3|Spoonbill|Spatule|bird
+3|Egret|Aigrette|bird
+2|Bittern|Butor|bird
+2|Coot|Foulque|bird
+2|Moorhen|Poule d'eau|bird
+3|Mallard|Colvert|bird
+2|Teal|Sarcelle|bird
+3|Lovebird|Inséparable|bird af
+3|Cockatiel|Calopsitte|bird aus
+4|Kookaburra|Kookaburra|bird aus
+4|Cassowary|Casoar|bird aus
+3|Rhea|Nandou|bird
+5|Dodo|Dodo|bird
+4|Roadrunner|Géocoucou|bird
+3|Secretary bird|Messager sagittaire/Serpentaire|bird af
+3|Hornbill|Calao|bird
+3|Bird of paradise|Oiseau de paradis|bird
+3|Lyrebird|Oiseau-lyre|bird aus
+2|Weaver/Weaverbird|Tisserin|bird af
+3|Tern|Sterne|bird sea
+2|Petrel|Pétrel|bird sea
+2|Shearwater||bird sea
+2|Frigatebird|Frégate|bird sea
+2|Booby|Fou|bird sea
+2|Skua|Labbe|bird sea
+2|Razorbill/Auk|Petit pingouin|bird sea arc
+2|Oystercatcher|Huîtrier|bird
+2|Sandpiper|Bécasseau|bird
+2|Plover|Pluvier|bird
+2|Lapwing|Vanneau|bird
+2|Curlew|Courlis|bird
+2|Snipe|Bécassine|bird
+2|Woodcock|Bécasse|bird
+2|Avocet|Avocette|bird
+2|Grebe|Grèbe|bird
+2|Loon/Diver|Plongeon|bird
+3|Hoopoe|Huppe/Huppe fasciée|bird
+2|Bee-eater|Guêpier|bird
+2|Roller|Rollier|bird
+3|Swift|Martinet|bird
+2|Nightjar|Engoulevent|bird
+2|Wagtail|Bergeronnette|bird
+2|Warbler|Fauvette|bird
+3|Thrush|Grive|bird
+2|Nuthatch|Sittelle|bird
+2|Treecreeper|Grimpereau|bird
+2|Bullfinch|Bouvreuil|bird
+2|Greenfinch|Verdier|bird
+2|Siskin|Tarin|bird
+2|Linnet|Linotte|bird
+2|Bunting|Bruant|bird
+2|Shrike|Pie-grièche|bird
+2|Oriole|Loriot|bird
+2|Waxwing|Jaseur|bird
+2|Dipper|Cincle|bird
+2|Mockingbird|Moqueur|bird
+2|Chickadee||bird
+2|Grouse|Tétras|bird
+2|Ptarmigan|Lagopède|bird arc
+2|Capercaillie|Grand tétras|bird
+3|Guinea fowl|Pintade|bird farm af
+4|Rooster/Cockerel|Coq|bird farm
+3|Chick|Poussin|bird farm
+2|Duckling|Caneton|bird farm
+3|Harpy eagle|Harpie féroce|bird
+3|Peregrine falcon|Faucon pèlerin|bird
+2|Merlin|Faucon émerillon|bird
+2|Sparrowhawk|Épervier|bird
+2|Goshawk|Autour|bird
+2|Harrier|Busard|bird
+2|Marabou|Marabout|bird af
+3|Shoebill|Bec-en-sabot|bird af
+2|Hamerkop|Ombrette|bird af
+2|Jacana|Jacana|bird
+3|Quetzal|Quetzal|bird
+2|Oxpecker|Pique-bœuf|bird af
+2|Mynah/Myna|Mainate|bird
+2|Kakapo|Kakapo|bird
+2|Kea|Kéa|bird
+2|Moa|Moa|bird
+2|Great auk|Grand pingouin|bird sea
+2|Passenger pigeon|Pigeon migrateur|bird
+2|Turtle dove|Tourterelle des bois|bird
+8|Shark|Requin|fish sea
+7|Salmon|Saumon|fish
+7|Goldfish|Poisson rouge|fish
+7|Tuna|Thon|fish sea
+7|Clownfish|Poisson-clown|fish sea
+6|Trout|Truite|fish
+6|Cod|Cabillaud/Morue|fish sea
+6|Swordfish|Espadon|fish sea
+6|Great white shark/White shark|Grand requin blanc/Requin blanc|fish sea
+6|Piranha|Piranha|fish
+6|Carp|Carpe|fish
+6|Sardine|Sardine|fish sea
+6|Pufferfish/Blowfish/Puffer fish|Poisson-globe/Fugu|fish sea
+6|Eel|Anguille|fish
+6|Stingray/Ray|Raie|fish sea
+5|Hammerhead shark|Requin-marteau|fish sea
+5|Whale shark|Requin-baleine|fish sea
+4|Tiger shark|Requin-tigre|fish sea
+5|Mackerel|Maquereau|fish sea
+5|Herring|Hareng|fish sea
+5|Anchovy|Anchois|fish sea
+4|Sole|Sole|fish sea
+3|Plaice|Plie/Carrelet|fish sea
+3|Halibut|Flétan|fish sea
+3|Haddock|Églefin/Aiglefin|fish sea
+3|Hake|Merlu|fish sea
+4|Sea bass|Bar/Loup de mer|fish sea
+4|Sea bream|Daurade/Dorade|fish sea
+3|Monkfish|Lotte/Baudroie|fish sea
+4|Pike|Brochet|fish
+4|Perch|Perche|fish
+4|Catfish|Poisson-chat/Silure|fish
+5|Barracuda|Barracuda|fish sea
+4|Marlin|Marlin|fish sea
+3|Sailfish|Voilier/Espadon voilier|fish sea
+6|Seahorse|Hippocampe|fish sea
+4|Angelfish|Poisson-ange|fish
+4|Manta ray|Raie manta|fish sea
+4|Electric eel|Anguille électrique|fish
+4|Moray eel/Moray|Murène|fish sea
+4|Flying fish|Poisson volant/Exocet|fish sea
+4|Anglerfish|Baudroie abyssale|fish sea
+4|Lionfish|Poisson-scorpion/Rascasse volante|fish sea
+4|Guppy|Guppy|fish
+3|Betta/Siamese fighting fish|Combattant/Betta|fish
+3|Neon tetra/Tetra|Néon/Tétra|fish
+4|Koi|Carpe koï/Koï|fish
+3|Sturgeon|Esturgeon|fish
+3|Mullet|Mulet|fish sea
+3|Bass||fish
+3|Tilapia|Tilapia|fish
+2|Zander/Pikeperch|Sandre|fish
+2|Bream|Brème|fish
+2|Roach|Gardon|fish
+2|Tench|Tanche|fish
+2|Gudgeon|Goujon|fish
+2|Minnow|Vairon|fish
+2|Grayling|Ombre|fish
+2|Char/Arctic char|Omble/Omble chevalier|fish
+2|Pollock|Lieu/Colin|fish sea
+2|Whiting|Merlan|fish sea
+2|Turbot|Turbot|fish sea
+2|John Dory|Saint-Pierre|fish sea
+2|Red mullet|Rouget|fish sea
+2|Scorpionfish|Rascasse|fish sea
+2|Gurnard|Grondin|fish sea
+2|Conger eel/Conger|Congre|fish sea
+2|Skate||fish sea
+2|Mahi-mahi/Dorado|Coryphène|fish sea
+3|Bluefin tuna|Thon rouge|fish sea
+3|Sunfish/Ocean sunfish/Mola|Poisson-lune|fish sea
+2|Wrasse|Labre|fish sea
+3|Parrotfish|Poisson-perroquet|fish sea
+2|Surgeonfish/Tang/Blue tang|Poisson-chirurgien|fish sea
+2|Butterflyfish|Poisson-papillon|fish sea
+2|Triggerfish|Baliste|fish sea
+3|Grouper|Mérou|fish sea
+2|Snapper|Vivaneau|fish sea
+2|Cichlid|Cichlidé|fish
+2|Discus|Discus|fish
+2|Molly|Molly|fish
+2|Platy|Platy|fish
+2|Swordtail|Xipho|fish
+2|Danio/Zebrafish|Danio/Poisson-zèbre|fish
+2|Loach|Loche|fish
+2|Pleco|Pléco|fish
+2|Arowana|Arowana|fish
+2|Oscar|Oscar|fish
+3|Coelacanth|Cœlacanthe|fish sea
+2|Lungfish|Dipneuste|fish
+2|Lamprey|Lamproie|fish
+2|Hagfish|Myxine|fish sea
+2|Remora|Rémora|fish sea
+2|Barramundi|Barramundi|fish aus
+2|Snakehead|Tête de serpent|fish
+2|Bull shark|Requin bouledogue|fish sea
+2|Mako shark|Requin mako|fish sea
+2|Basking shark|Requin pèlerin|fish sea
+2|Nurse shark|Requin-nourrice|fish sea
+2|Blue shark|Requin bleu|fish sea
+2|Goblin shark|Requin-lutin|fish sea
+2|Greenland shark|Requin du Groenland|fish sea arc
+2|Megalodon|Mégalodon|no
+2|Sawfish|Poisson-scie|fish sea
+3|Stonefish|Poisson-pierre|fish sea
+2|Archerfish|Poisson-archer|fish
+2|Mudskipper|Périophtalme|fish
+2|Pipefish|Syngnathe|fish sea
+2|Sea dragon/Leafy seadragon|Dragon de mer|fish sea
+2|Viperfish|Poisson-vipère|fish sea
+2|Lanternfish|Poisson-lanterne|fish sea
+2|Oarfish|Régalec|fish sea
+8|Snake|Serpent|rep
+8|Crocodile|Crocodile|rep
+7|Turtle|Tortue|rep sea
+7|Lizard|Lézard|rep
+7|Alligator|Alligator|rep
+6|Chameleon|Caméléon|rep af
+6|Iguana|Iguane|rep
+6|Gecko|Gecko|rep
+6|Cobra|Cobra|rep
+6|Python|Python|rep
+6|Komodo dragon|Dragon de Komodo/Varan de Komodo|rep
+5|Tortoise|Tortue terrestre|rep
+5|Rattlesnake|Serpent à sonnette/Crotale|rep
+5|Anaconda|Anaconda|rep
+5|Boa/Boa constrictor|Boa|rep
+5|Viper|Vipère|rep
+4|Sea turtle|Tortue marine|rep sea
+4|Monitor lizard|Varan|rep
+4|Black mamba|Mamba noir|rep af
+4|Mamba|Mamba|rep af
+4|King cobra|Cobra royal|rep
+4|Caiman|Caïman|rep
+3|Gharial|Gavial|rep
+3|Leatherback turtle|Tortue luth|rep sea
+3|Grass snake|Couleuvre|rep
+3|Adder|Péliade|rep
+3|Slow worm|Orvet|rep
+3|Gila monster|Monstre de Gila|rep
+3|Bearded dragon|Pogona/Agame barbu|rep aus
+3|Frilled lizard|Lézard à collerette|rep aus
+3|Thorny devil|Diable cornu/Moloch|rep aus
+2|Basilisk|Basilic|rep
+2|Skink|Scinque|rep
+2|Anole|Anolis|rep
+2|Tuatara|Tuatara/Sphénodon|rep
+2|Horned lizard|Lézard cornu|rep
+2|Marine iguana|Iguane marin|rep sea
+3|Galápagos tortoise/Giant tortoise|Tortue des Galápagos/Tortue géante|rep
+2|Snapping turtle|Tortue serpentine|rep
+2|Box turtle|Tortue-boîte|rep
+2|Terrapin/Slider|Trachémyde/Tortue de Floride|rep
+2|Taipan|Taïpan|rep aus
+2|Coral snake|Serpent corail|rep
+2|Sea snake|Serpent de mer|rep sea
+2|Corn snake|Serpent des blés|rep
+2|Milk snake|Serpent-lait|rep
+2|Garter snake|Couleuvre rayée|rep
+2|Copperhead|Mocassin à tête cuivrée|rep
+2|Cottonmouth/Water moccasin|Mocassin d'eau|rep
+2|Asp|Aspic|rep
+2|Sidewinder|Crotale cornu|rep
+2|Puff adder|Vipère heurtante|rep af
+2|Boomslang|Boomslang|rep af
+2|Green mamba|Mamba vert|rep af
+2|Reticulated python|Python réticulé|rep
+2|Ball python/Royal python|Python royal|rep
+2|Saltwater crocodile|Crocodile marin|rep sea aus
+2|Nile crocodile|Crocodile du Nil|rep af
+8|Frog|Grenouille|amp
+7|Toad|Crapaud|amp
+6|Salamander|Salamandre|amp
+5|Newt|Triton|amp
+5|Axolotl|Axolotl|amp
+4|Tree frog|Rainette|amp
+4|Poison dart frog/Poison frog|Dendrobate/Grenouille venimeuse|amp
+3|Bullfrog|Ouaouaron/Grenouille-taureau|amp
+3|Cane toad|Crapaud buffle|amp aus
+2|Fire salamander|Salamandre tachetée|amp
+2|Caecilian|Cécilie|amp
+2|Mudpuppy|Necture|amp
+2|Olm|Protée|amp
+2|Hellbender|Ménopome|amp
+2|Giant salamander|Salamandre géante|amp
+2|Glass frog|Grenouille de verre|amp
+2|Goliath frog|Grenouille goliath|amp af
+2|Horned frog|Grenouille cornue|amp
+2|Natterjack toad|Crapaud calamite|amp
+2|Midwife toad|Alyte/Crapaud accoucheur|amp
+8|Bee|Abeille|ins
+8|Butterfly|Papillon|ins
+8|Ant|Fourmi|ins
+7|Fly|Mouche|ins
+7|Mosquito|Moustique|ins
+7|Ladybug/Ladybird|Coccinelle|ins
+7|Grasshopper|Sauterelle|ins
+7|Beetle|Scarabée/Coléoptère|ins
+6|Cricket|Grillon|ins
+6|Wasp|Guêpe|ins
+6|Dragonfly|Libellule|ins
+6|Cockroach|Cafard/Blatte|ins
+6|Moth|Papillon de nuit|ins
+6|Caterpillar|Chenille|ins
+6|Firefly|Luciole|ins
+5|Flea|Puce|ins
+5|Louse/Lice|Pou/Poux|ins
+5|Termite|Termite|ins
+5|Bumblebee|Bourdon|ins
+5|Hornet|Frelon|ins
+5|Praying mantis/Mantis|Mante religieuse/Mante|ins
+4|Stick insect|Phasme|ins
+5|Cicada|Cigale|ins
+4|Locust|Criquet|ins
+4|Earwig|Perce-oreille|ins
+3|Stag beetle|Lucane/Cerf-volant|ins
+3|Dung beetle|Bousier|ins
+3|Weevil|Charançon|ins
+3|Aphid|Puceron|ins
+3|Gnat|Moucheron|ins
+3|Horsefly|Taon|ins
+3|Bedbug/Bed bug|Punaise de lit|ins
+3|Stink bug/Shield bug|Punaise|ins
+3|Silverfish|Poisson d'argent|ins
+3|Monarch butterfly/Monarch|Monarque|ins
+2|Swallowtail|Machaon|ins
+3|Silkworm|Ver à soie|ins
+2|Mayfly|Éphémère|ins
+2|Damselfly|Demoiselle|ins
+2|Cockchafer/Maybug|Hanneton|ins
+2|Rhinoceros beetle|Scarabée rhinocéros|ins
+2|Goliath beetle|Goliath|ins af
+2|Hercules beetle|Dynaste Hercule|ins
+2|Colorado beetle/Potato beetle|Doryphore|ins
+2|Firebug|Gendarme|ins
+2|Water strider/Pond skater|Gerris/Araignée d'eau|ins
+2|Water boatman|Notonecte|ins
+2|Lacewing|Chrysope|ins
+2|Antlion|Fourmilion|ins
+2|Hoverfly|Syrphe|ins
+2|Fruit fly|Mouche du vinaigre/Drosophile|ins
+2|Tsetse fly|Mouche tsé-tsé|ins af
+2|Crane fly|Tipule|ins
+2|Bluebottle|Mouche bleue|ins
+2|Leafcutter ant|Fourmi coupe-feuille|ins
+2|Fire ant|Fourmi de feu|ins
+2|Army ant|Fourmi légionnaire|ins
+2|Carpenter bee|Abeille charpentière/Xylocope|ins
+2|Mole cricket|Courtilière|ins
+2|Scarab/Sacred scarab|Scarabée sacré|ins af
+2|Jewel beetle|Bupreste|ins
+2|Click beetle|Taupin|ins
+2|Longhorn beetle|Capricorne|ins
+2|Leaf insect|Phyllie|ins
+2|Atlas moth|Bombyx atlas/Papillon atlas|ins
+2|Hawk moth|Sphinx|ins
+2|Peacock butterfly|Paon-du-jour|ins
+2|Red admiral|Vulcain|ins
+2|Cabbage white|Piéride du chou|ins
+2|Morpho/Blue morpho|Morpho|ins
+2|Thrips|Thrips|ins
+2|Mealworm|Ver de farine|ins
+2|Scale insect|Cochenille|ins
+8|Spider|Araignée|ara
+6|Scorpion|Scorpion|ara
+5|Tarantula|Tarentule/Mygale|ara
+4|Black widow|Veuve noire|ara
+4|Tick|Tique|ara
+3|Mite|Acarien|ara
+3|Daddy longlegs/Harvestman|Faucheux|ara
+2|Wolf spider|Lycose|ara
+2|Jumping spider|Araignée sauteuse/Saltique|ara
+2|Funnel-web spider|Atrax|ara aus
+2|Redback spider|Veuve noire australienne|ara aus
+2|Camel spider|Solifuge|ara
+2|Brown recluse/Recluse|Recluse brune|ara
+2|Orb weaver|Épeire|ara
+8|Crab|Crabe|crus sea
+7|Lobster|Homard|crus sea
+7|Shrimp/Prawn|Crevette|crus sea
+4|Crayfish|Écrevisse|crus
+4|Krill|Krill|crus sea arc
+3|Barnacle|Bernacle/Anatife|crus sea
+4|Hermit crab|Bernard-l'ermite|crus sea
+3|King crab|Crabe royal|crus sea
+3|Spider crab|Araignée de mer|crus sea
+3|Spiny lobster|Langouste|crus sea
+3|Langoustine|Langoustine|crus sea
+4|Woodlouse|Cloporte|crus
+2|Coconut crab|Crabe de cocotier|crus
+2|Mantis shrimp|Crevette-mante/Squille|crus sea
+3|Horseshoe crab|Limule|inv sea
+8|Octopus|Pieuvre/Poulpe|mol sea
+6|Squid|Calmar/Calamar|mol sea
+7|Snail|Escargot|mol
+6|Slug|Limace|mol
+4|Clam|Palourde|mol sea
+5|Oyster|Huître|mol sea
+5|Mussel|Moule|mol sea
+4|Scallop|Coquille Saint-Jacques|mol sea
+4|Cuttlefish|Seiche|mol sea
+3|Nautilus|Nautile|mol sea
+3|Giant squid|Calmar géant|mol sea
+2|Sea slug/Nudibranch|Limace de mer/Nudibranche|mol sea
+2|Cockle|Coque|mol sea
+2|Whelk|Bulot|mol sea
+2|Limpet|Patelle|mol sea
+2|Abalone|Ormeau|mol sea
+7|Jellyfish|Méduse|inv sea
+7|Starfish/Sea star|Étoile de mer|inv sea
+5|Sea urchin|Oursin|inv sea
+4|Coral|Corail|inv sea
+4|Sea anemone|Anémone de mer|inv sea
+3|Sponge|Éponge|inv sea
+3|Sea cucumber|Concombre de mer/Holothurie|inv sea
+6|Worm/Earthworm|Ver de terre/Ver|inv
+4|Leech|Sangsue|inv
+4|Centipede|Scolopendre|inv
+4|Millipede|Mille-pattes|inv
+3|Portuguese man o' war|Galère portugaise|inv sea
+2|Box jellyfish|Cuboméduse|inv sea
+3|Tardigrade|Tardigrade|inv
+0|Unicorn|Licorne|no
+0|Dragon|Dragon|no
+0|Phoenix|Phénix|no
+0|Mermaid|Sirène|no
+0|Griffin|Griffon|no
+0|Yeti|Yéti|no
+0|Pegasus|Pégase|no
+0|Dinosaur|Dinosaure|no
+0|T-Rex/Tyrannosaurus|T-Rex/Tyrannosaure|no
+0|Mammoth|Mammouth|no
+0|Animal|Animal|no
+0|Bird|Oiseau|no
+0|Fish|Poisson|no
+0|Insect|Insecte|no
+0|Mammal|Mammifère|no
+0|Reptile|Reptile|no
+0|Human/Person|Humain/Homme|no

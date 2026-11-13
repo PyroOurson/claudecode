@@ -1,0 +1,704 @@
+@set colours
+9|Red|Rouge|
+9|Blue|Bleu|
+8|Green|Vert|
+8|Yellow|Jaune|
+7|Purple/Violet|Violet/Pourpre|
+7|Orange|Orange|
+7|Pink|Rose|
+7|Black|Noir|
+6|White|Blanc|
+6|Brown|Marron/Brun|
+5|Grey/Gray|Gris|
+5|Turquoise|Turquoise|
+5|Gold|Doré/Or|
+5|Silver|Argenté/Argent|
+5|Beige|Beige|
+4|Magenta|Magenta|
+4|Cyan|Cyan|
+4|Navy/Navy blue|Bleu marine/Marine|
+4|Maroon|Bordeaux|
+4|Lilac|Lilas|
+4|Lavender|Lavande|
+4|Indigo|Indigo|
+3|Crimson|Cramoisi|
+3|Scarlet|Écarlate|
+3|Burgundy||
+3|Teal|Bleu canard/Sarcelle|
+3|Aqua/Aquamarine|Aigue-marine|
+4|Sky blue|Bleu ciel|
+2|Royal blue|Bleu roi|
+3|Lime/Lime green|Vert citron|
+3|Olive|Olive/Vert olive|
+3|Khaki|Kaki|
+3|Mint/Mint green|Vert menthe|
+3|Emerald|Émeraude|
+2|Jade|Jade|
+3|Coral|Corail|
+3|Salmon|Saumon|
+3|Peach|Pêche|
+2|Apricot|Abricot|
+2|Mustard|Moutarde|
+2|Lemon|Jaune citron|
+3|Cream|Crème|
+3|Ivory|Ivoire|
+2|Off-white|Blanc cassé|
+3|Bronze|Bronze|
+2|Copper|Cuivré|
+2|Rust|Rouille|
+2|Ochre/Ocher|Ocre|
+2|Sepia|Sépia|
+2|Chocolate|Chocolat|
+2|Caramel|Caramel|
+2|Tan|Fauve|
+2|Taupe|Taupe|
+3|Fuchsia|Fuchsia|
+2|Hot pink|Rose vif|
+2|Ruby|Rubis|
+2|Cherry|Cerise|
+2|Raspberry|Framboise|
+2|Plum|Prune|
+3|Mauve|Mauve|
+2|Charcoal|Anthracite|
+2|Slate|Ardoise|
+3|Azure|Azur|
+2|Cobalt|Bleu cobalt|
+2|Sapphire|Saphir|
+2|Cerulean|Céruléen|
+2|Ultramarine|Outremer|
+2|Periwinkle|Pervenche|
+2|Chartreuse|Chartreuse|
+3|Amber|Ambre|
+2|Vermilion|Vermillon|
+2|Carmine|Carmin|
+2|Neon/Neon green|Vert fluo|
+2|Fluorescent yellow|Jaune fluo|
+2|Champagne|Champagne|
+2|Platinum|Platine|
+2|Pearl|Nacré/Perle|
+2|Sand|Sable|
+2|Mahogany|Acajou|
+2|Chestnut|Châtaigne|
+2|Hazel|Noisette|
+2|Auburn|Auburn|
+2|Blond/Blonde|Blond|
+2|Ginger|Roux|
+2|Wine/Wine red|Lie-de-vin|
+2|Cardinal red|Rouge cardinal|
+2|Brick red|Rouge brique|
+2|Forest green|Vert forêt|
+2|Bottle green|Vert bouteille|
+2|Sea green|Vert d'eau|
+2|Pistachio|Pistache|
+2|Apple green|Vert pomme|
+2|Sage green|Vert sauge|
+2|Electric blue|Bleu électrique|
+2|Midnight blue|Bleu nuit|
+2|Prussian blue|Bleu de Prusse|
+2|Klein blue/International Klein Blue|Bleu Klein|
+2|Baby blue|Bleu layette|
+2|Baby pink|Rose layette|
+2|Rose gold|Or rose|
+2|Eggshell|Coquille d'œuf|
+2|Rainbow|Arc-en-ciel|no
+2|Transparent/Clear|Transparent|no
+0|Light|Clair|no
+0|Dark|Foncé|no
+
+@set vehicles
+9|Car|Voiture/Auto|land
+8|Bus|Bus/Autobus|land
+8|Train|Train|land
+8|Plane/Aeroplane/Airplane|Avion|air
+8|Bicycle/Bike|Vélo/Bicyclette|land
+8|Boat|Bateau|sea
+7|Motorbike/Motorcycle|Moto/Motocyclette|land
+7|Truck/Lorry|Camion|land
+7|Helicopter|Hélicoptère|air
+7|Ship|Navire|sea
+6|Taxi|Taxi|land
+6|Tram/Tramway/Streetcar|Tram/Tramway|land
+6|Metro/Subway/Underground/Tube|Métro|land
+6|Scooter|Scooter|land
+6|Rocket|Fusée|air
+6|Submarine|Sous-marin|sea
+6|Van|Camionnette/Fourgon|land
+6|Tractor|Tracteur|land
+6|Ambulance|Ambulance|land
+6|Fire engine/Fire truck|Camion de pompiers|land
+6|Police car|Voiture de police|land
+6|Hot air balloon/Balloon|Montgolfière|air
+5|Skateboard|Skateboard/Planche à roulettes|land
+5|Kick scooter/Push scooter|Trottinette|land
+4|Electric scooter/E-scooter|Trottinette électrique|land
+4|Yacht|Yacht|sea
+4|Sailboat/Sailing boat|Voilier|sea
+4|Canoe|Canoë|sea
+4|Kayak|Kayak|sea
+4|Ferry|Ferry/Traversier|sea
+4|Cruise ship|Bateau de croisière/Paquebot|sea
+3|Speedboat|Hors-bord/Vedette|sea
+4|Jet ski|Jet-ski/Scooter des mers|sea
+4|Raft|Radeau|sea
+3|Gondola|Gondole|sea
+3|Rowing boat/Rowboat|Barque|sea
+3|Hovercraft|Aéroglisseur|sea
+3|Lifeboat|Canot de sauvetage|sea
+3|Tanker|Pétrolier|sea
+3|Cargo ship/Container ship|Porte-conteneurs/Cargo|sea
+3|Aircraft carrier|Porte-avions|sea
+3|Warship/Battleship|Navire de guerre/Cuirassé|sea
+3|Pirate ship|Bateau pirate|sea
+3|Galleon|Galion|sea
+3|Canal boat/Narrowboat|Péniche|sea
+3|Catamaran|Catamaran|sea
+3|Paddle board/Paddle|Paddle|sea
+3|Pedalo|Pédalo|sea
+4|Jet/Jet plane|Jet/Avion à réaction|air
+3|Glider|Planeur|air
+3|Airship/Blimp/Zeppelin|Dirigeable/Zeppelin|air
+4|Drone|Drone|air
+4|Space shuttle|Navette spatiale|air
+4|Spaceship/Spacecraft|Vaisseau spatial|air
+3|Seaplane|Hydravion|air
+3|Fighter jet|Avion de chasse|air
+3|Paraglider|Parapente|air
+3|Hang glider|Deltaplane|air
+4|Cable car|Téléphérique|land
+3|Chairlift|Télésiège|land
+3|Funicular|Funiculaire|land
+3|Monorail|Monorail|land
+4|High-speed train/TGV/Bullet train|TGV/Train à grande vitesse|land
+3|Steam train/Steam locomotive|Train à vapeur/Locomotive à vapeur|land
+3|Locomotive|Locomotive|land
+4|Coach|Autocar|land
+3|Double-decker bus/Double decker|Bus à impériale|land
+3|Minibus|Minibus|land
+3|School bus|Bus scolaire|land
+4|Limousine/Limo|Limousine|land
+4|Jeep|Jeep|land
+3|SUV|SUV/4x4|land
+3|Pickup truck/Pick-up|Pick-up|land
+4|Camper van/Motorhome/RV|Camping-car|land
+3|Caravan|Caravane|land
+4|Quad bike/Quad/ATV|Quad|land
+4|Go-kart/Kart|Kart|land
+3|Golf cart|Voiturette de golf|land
+4|Tank|Char/Tank|land
+4|Bulldozer|Bulldozer|land
+3|Excavator/Digger|Pelleteuse/Pelle mécanique|land
+3|Crane|Grue|land
+3|Forklift|Chariot élévateur|land
+3|Dump truck/Tipper truck|Camion benne/Tombereau|land
+3|Cement mixer/Concrete mixer|Bétonnière/Camion toupie|land
+3|Garbage truck/Bin lorry|Camion poubelle/Benne à ordures|land
+3|Tow truck|Dépanneuse|land
+3|Snowplough/Snowplow|Chasse-neige|land
+3|Snowmobile|Motoneige|land
+4|Sled/Sledge/Sleigh|Luge/Traîneau|land
+3|Dog sled|Traîneau à chiens|land
+3|Carriage/Horse and carriage|Calèche/Carrosse|land
+3|Chariot|Char romain|land
+3|Rickshaw/Tuk-tuk|Pousse-pousse/Tuk-tuk|land
+3|Segway|Segway/Gyropode|land
+4|Hoverboard|Hoverboard|land
+4|Unicycle|Monocycle|land
+4|Tricycle/Trike|Tricycle|land
+3|Tandem|Tandem|land
+3|Moped|Mobylette/Cyclomoteur|land
+4|Roller skates/Rollerblades|Rollers/Patins à roulettes|land
+3|Wheelchair|Fauteuil roulant|land
+3|Pram/Stroller/Buggy|Poussette/Landau|land
+4|Racing car/Race car/Formula 1 car|Voiture de course/Formule 1|land
+3|Convertible/Cabriolet|Cabriolet/Décapotable|land
+3|Electric car|Voiture électrique|land
+3|Lunar rover/Moon buggy|Rover lunaire|land
+3|Mars rover/Rover|Rover|land
+3|Armoured car|Véhicule blindé|land
+0|Foot/Walking|À pied|no
+0|Wheel|Roue|no
+
+@set cars
+@drop car cars voiture voitures motors
+9|Ferrari||
+8|Lamborghini||
+8|BMW||
+8|Mercedes/Mercedes-Benz||
+8|Tesla||
+8|Toyota||
+8|Audi||
+8|Porsche||
+7|Ford||
+7|Volkswagen/VW||
+7|Renault||
+7|Peugeot||
+7|Bugatti||
+7|Honda||
+6|Citroën/Citroen||
+6|Fiat||
+6|Nissan||
+6|Rolls-Royce/Rolls Royce||
+6|Bentley||
+6|McLaren||
+6|Aston Martin||
+6|Jaguar||
+6|Land Rover/Range Rover||
+6|Mini||
+6|Chevrolet/Chevy||
+6|Hyundai||
+6|Kia||
+6|Mazda||
+5|Volvo||
+4|Subaru||
+4|Mitsubishi||
+4|Suzuki||
+4|Lexus||
+5|Maserati||
+4|Alfa Romeo||
+4|Dacia||
+4|Skoda/Škoda||
+4|Seat/SEAT||
+4|Opel/Vauxhall||
+4|Smart||
+5|Jeep||
+4|Dodge||
+4|Cadillac||
+4|Lotus||
+4|Koenigsegg||
+4|Pagani||
+3|DS/DS Automobiles||
+3|Alpine||
+3|Cupra||
+3|Lancia||
+2|Abarth||
+3|BYD||
+3|Polestar||
+3|Rivian||
+2|Lucid||
+2|Genesis||
+3|Infiniti||
+3|Acura||
+2|Lincoln||
+2|Buick||
+2|GMC||
+3|Chrysler||
+2|Ram||
+3|Hummer||
+3|Pontiac||
+2|Saab||
+2|Rover||
+3|MG||
+2|Triumph||
+2|Morgan||
+2|TVR||
+3|Lada||
+2|Tata||
+2|Mahindra||
+2|Proton||
+2|Geely||
+2|Chery||
+2|Great Wall||
+2|NIO||
+2|Xpeng||
+2|Daewoo||
+2|SsangYong||
+2|Isuzu||
+2|Daihatsu||
+2|Simca||
+2|Talbot||
+2|Matra||
+2|Venturi||
+3|DeLorean||
+2|Trabant||
+2|Wartburg||
+2|Zastava||
+2|Datsun||
+2|Scion||
+2|Oldsmobile||
+2|Plymouth||
+2|Mercury||
+2|Saturn||
+2|Hispano-Suiza||
+3|Maybach||
+2|Spyker||
+3|Rimac||
+2|Hennessey||
+2|Noble||
+2|Caterham||
+2|Ariel||
+2|Ligier||
+2|Aixam||
+2|Microcar||
+2|Yamaha||no
+2|Ducati||no
+2|Harley-Davidson||no
+2|Kawasaki||no
+0|Uber||no
+0|Michelin||no
+
+@set kitchen
+9|Fork|Fourchette|
+9|Knife|Couteau|
+9|Spoon|Cuillère/Cuiller|
+8|Fridge/Refrigerator|Frigo/Réfrigérateur/Frigidaire|
+8|Oven|Four|
+8|Microwave|Micro-ondes|
+7|Plate|Assiette|
+7|Pan/Frying pan|Poêle|
+7|Pot/Saucepan|Casserole/Marmite|
+7|Toaster|Grille-pain|
+7|Kettle|Bouilloire|
+7|Cup|Tasse|
+7|Glass|Verre|
+7|Bowl|Bol/Saladier|
+5|Mug|Mug|
+5|Dishwasher|Lave-vaisselle|
+5|Blender|Mixeur/Blender|
+5|Whisk|Fouet|
+5|Spatula|Spatule|
+4|Ladle|Louche|
+5|Sink|Évier|
+5|Freezer|Congélateur|
+5|Cooker/Stove/Hob|Cuisinière/Plaque de cuisson|
+5|Coffee machine/Coffee maker|Machine à café|
+5|Chopsticks|Baguettes|
+4|Rolling pin|Rouleau à pâtisserie|
+4|Grater|Râpe|
+4|Peeler|Économe/Éplucheur|
+4|Can opener/Tin opener|Ouvre-boîte|
+4|Bottle opener|Décapsuleur|
+3|Corkscrew|Tire-bouchon|
+4|Cutting board/Chopping board|Planche à découper|
+4|Colander/Strainer|Passoire|
+3|Sieve|Tamis|
+4|Teapot|Théière|
+4|Jug/Pitcher|Carafe/Pichet|
+4|Tray|Plateau|
+4|Napkin|Serviette|
+3|Tablecloth|Nappe|
+3|Oven glove/Oven mitt|Gant de cuisine/Manique|
+3|Apron|Tablier|
+4|Tongs|Pince/Pince de cuisine|
+3|Food processor|Robot de cuisine/Robot ménager|
+4|Mixer/Stand mixer|Batteur/Robot pâtissier|
+4|Scales/Kitchen scales|Balance/Balance de cuisine|
+3|Measuring cup/Measuring jug|Verre doseur|
+3|Timer/Kitchen timer|Minuteur|
+4|Wok|Wok|
+3|Pressure cooker|Cocotte-minute/Autocuiseur|
+3|Slow cooker|Mijoteuse|
+4|Air fryer|Friteuse à air/Air fryer|
+3|Deep fryer|Friteuse|
+3|Rice cooker|Cuiseur à riz|
+3|Juicer|Centrifugeuse/Presse-agrumes|
+3|Mortar and pestle|Mortier et pilon/Mortier|
+3|Baking tin/Cake tin|Moule à gâteau/Moule|
+3|Casserole dish/Dutch oven|Cocotte|
+3|Lid|Couvercle|
+4|Teaspoon|Petite cuillère|
+3|Tablespoon|Cuillère à soupe|
+3|Bread knife|Couteau à pain|
+3|Cleaver|Couperet/Hachoir|
+3|Kitchen roll/Paper towel|Essuie-tout/Sopalin|
+3|Tea towel/Dish towel|Torchon|
+3|Sponge|Éponge|
+3|Bin/Trash can|Poubelle|
+4|Cupboard|Placard|
+3|Shelf|Étagère|
+4|Tap/Faucet|Robinet|
+3|Extractor fan/Cooker hood|Hotte|
+3|Ice cube tray|Bac à glaçons|
+3|Thermos/Flask|Thermos|
+3|Lunch box|Boîte à repas/Lunch box|
+3|Tupperware/Food container|Tupperware/Boîte hermétique|
+3|Cling film/Plastic wrap|Film alimentaire/Film étirable|
+3|Aluminium foil/Tin foil|Papier aluminium/Papier alu|
+3|Baking paper/Parchment paper|Papier cuisson|
+3|Funnel|Entonnoir|
+3|Piping bag|Poche à douille|
+3|Pastry brush|Pinceau de cuisine|
+3|Potato masher|Presse-purée|
+3|Garlic press|Presse-ail|
+3|Salad spinner|Essoreuse à salade|
+3|Egg cup|Coquetier|
+3|Salt shaker/Salt cellar|Salière|
+3|Pepper mill/Pepper grinder|Moulin à poivre/Poivrière|
+3|Sugar bowl|Sucrier|
+3|Butter dish|Beurrier|
+3|Bread bin|Boîte à pain|
+3|Cafetière/French press|Cafetière à piston|
+3|Espresso machine|Machine à expresso|
+3|Waffle iron/Waffle maker|Gaufrier|
+3|Crêpe pan/Crepe maker|Crêpière/Poêle à crêpes|
+3|Raclette grill/Raclette machine|Appareil à raclette|
+3|Fondue set|Service à fondue/Caquelon|
+4|Barbecue/BBQ/Grill|Barbecue|
+3|Ice cream maker|Sorbetière|
+3|Bread maker/Breadmaker|Machine à pain|
+3|Kitchen scissors|Ciseaux de cuisine|
+3|Skewer|Brochette/Pique|
+3|Meat thermometer|Thermomètre de cuisson|
+3|Zester|Zesteur|
+3|Mandoline|Mandoline|
+3|Melon baller|Cuillère parisienne|
+3|Pizza cutter|Roulette à pizza|
+3|Ice cream scoop|Cuillère à glace|
+3|Nutcracker|Casse-noix|
+0|Table|Table|no
+0|Chair|Chaise|no
+0|Food|Nourriture|no
+
+@set tools
+9|Hammer|Marteau|
+8|Screwdriver|Tournevis|
+8|Saw|Scie|
+7|Drill|Perceuse|
+7|Wrench/Spanner|Clé/Clé à molette|
+7|Pliers|Pince|
+6|Axe|Hache|
+6|Shovel/Spade|Pelle/Bêche|
+5|Ladder|Échelle|
+5|Tape measure/Measuring tape|Mètre ruban/Mètre|
+5|Screw|Vis|
+5|Nail|Clou|
+5|Rake|Râteau|
+5|Scissors|Ciseaux|
+4|Chisel|Ciseau à bois/Burin|
+4|Level/Spirit level|Niveau/Niveau à bulle|
+4|Sandpaper|Papier de verre|
+4|Paintbrush|Pinceau|
+3|Paint roller|Rouleau de peinture|
+3|Hoe|Binette/Houe|
+5|Pickaxe|Pioche|
+4|Crowbar|Pied-de-biche|
+4|Mallet|Maillet|
+4|Sledgehammer|Masse|
+3|Hacksaw|Scie à métaux|
+5|Chainsaw|Tronçonneuse|
+3|Jigsaw|Scie sauteuse|
+3|Circular saw|Scie circulaire|
+3|Sander|Ponceuse|
+3|Grinder/Angle grinder|Meuleuse/Disqueuse|
+3|Nail gun|Cloueuse|
+3|Staple gun|Agrafeuse murale/Agrafeuse|
+4|Glue gun/Hot glue gun|Pistolet à colle|
+3|Soldering iron|Fer à souder|
+3|Welding torch/Welder|Poste à souder/Chalumeau|
+3|Blowtorch|Lampe à souder|
+3|Vice/Vise|Étau|
+3|Clamp|Serre-joint|
+4|Allen key/Hex key|Clé Allen/Clé hexagonale|
+3|Socket wrench/Ratchet|Clé à cliquet/Cliquet|
+3|Pipe wrench|Clé à tube|
+3|Wire cutters|Pince coupante|
+3|Wire stripper|Pince à dénuder|
+4|Utility knife/Stanley knife/Box cutter|Cutter|
+4|Penknife/Pocket knife/Swiss Army knife|Couteau suisse/Canif|
+4|File|Lime|
+3|Rasp|Râpe à bois|
+3|Plane|Rabot|
+3|Awl|Poinçon/Alène|
+4|Trowel|Truelle|
+3|Square/Set square|Équerre|
+4|Ruler|Règle|
+3|Pencil|Crayon|
+3|Stud finder|Détecteur de montants|
+3|Multimeter|Multimètre|
+4|Torch/Flashlight|Lampe torche/Lampe de poche|
+4|Toolbox|Boîte à outils|
+3|Workbench|Établi|
+4|Wheelbarrow|Brouette|
+4|Pitchfork/Fork|Fourche|
+3|Shears/Hedge trimmer|Cisaille/Taille-haie|
+3|Secateurs/Pruning shears|Sécateur|
+4|Lawn mower/Lawnmower|Tondeuse|
+3|Strimmer/String trimmer|Débroussailleuse|
+3|Leaf blower|Souffleur de feuilles|
+4|Watering can|Arrosoir|
+3|Hose/Garden hose|Tuyau d'arrosage|
+3|Scythe|Faux|
+3|Sickle|Faucille|
+3|Machete|Machette|
+3|Jack/Car jack|Cric|
+3|Tyre lever|Démonte-pneu|
+3|Pump/Bike pump|Pompe/Pompe à vélo|
+3|Pressure washer|Nettoyeur haute pression/Kärcher|
+3|Paint sprayer/Spray gun|Pistolet à peinture|
+3|Caulking gun|Pistolet à mastic|
+3|Putty knife/Scraper|Couteau à enduire/Spatule de peintre|
+3|Bolt cutters|Coupe-boulons|
+3|Tin snips|Cisaille à tôle|
+3|Router|Défonceuse|
+3|Lathe|Tour|
+3|Anvil|Enclume|
+3|Bellows|Soufflet|
+3|Plumb line/Plumb bob|Fil à plomb|
+3|Chalk line|Cordeau à tracer|
+3|Rivet gun|Riveteuse|
+3|Tap and die|Taraud et filière|
+3|Feeler gauge|Jauge d'épaisseur|
+3|Calliper/Caliper|Pied à coulisse|
+4|Duct tape|Ruban adhésif/Scotch|
+4|Glue|Colle|
+3|Drill bit|Mèche|
+0|Hand|Main|no
+0|Robot|Robot|no
+
+@set furniture
+9|Chair|Chaise|
+9|Table|Table|
+9|Bed|Lit|
+8|Sofa/Couch/Settee|Canapé/Divan|
+7|Wardrobe/Closet|Armoire/Penderie|
+7|Desk|Bureau|
+7|Armchair|Fauteuil|
+7|Bookcase/Bookshelf|Bibliothèque/Étagère à livres|
+7|Shelf|Étagère|
+7|Lamp|Lampe|
+7|Stool|Tabouret|
+5|Chest of drawers/Dresser|Commode|
+5|Bench|Banc|
+5|Cupboard|Placard|
+4|Cabinet|Meuble/Armoire de rangement|
+5|Bunk bed|Lits superposés|
+5|Mirror|Miroir|
+5|Rug/Carpet|Tapis|
+5|Coffee table|Table basse|
+5|Bedside table/Nightstand|Table de chevet|
+3|Dining table|Table à manger|
+4|Rocking chair|Fauteuil à bascule/Rocking-chair|
+4|Office chair|Chaise de bureau/Fauteuil de bureau|
+4|Gaming chair|Chaise gaming|
+4|Beanbag|Pouf poire|
+4|Sofa bed|Canapé-lit/Clic-clac|
+3|Futon|Futon|
+4|Hammock|Hamac|
+4|Cot/Crib|Lit bébé/Berceau|
+4|High chair|Chaise haute|
+4|Deckchair|Transat|
+3|Sun lounger|Bain de soleil|
+3|Recliner|Fauteuil inclinable|
+3|Chaise longue|Méridienne|
+4|Throne|Trône|
+4|Sideboard|Buffet|
+3|Display cabinet/China cabinet|Vitrine/Vaisselier|
+3|TV stand/TV unit|Meuble télé|
+3|Shoe rack|Meuble à chaussures/Range-chaussures|
+3|Coat rack/Coat stand|Porte-manteau|
+3|Hall table/Console table|Console|
+3|Dressing table/Vanity|Coiffeuse|
+3|Trunk/Chest|Coffre/Malle|
+3|Filing cabinet|Classeur/Meuble à tiroirs|
+3|Folding chair|Chaise pliante|
+3|Bar stool|Tabouret de bar|
+3|Headboard|Tête de lit|
+4|Mattress|Matelas|
+3|Four-poster bed|Lit à baldaquin|
+3|Corner sofa|Canapé d'angle|
+3|Loveseat|Causeuse|
+3|Pouffe/Pouf|Pouf|
+4|Cushion|Coussin|
+4|Curtains/Curtain|Rideaux/Rideau|
+3|Blinds|Stores|
+3|Wall clock/Clock|Horloge/Pendule|
+3|Grandfather clock|Horloge comtoise|
+4|Chandelier|Lustre|
+3|Floor lamp/Standard lamp|Lampadaire|
+4|Fireplace|Cheminée|
+3|Radiator|Radiateur|
+3|Piano||no
+3|Television/TV|Télévision/Télé|no
+3|Bathtub/Bath|Baignoire|no
+3|Toilet|Toilettes|no
+0|Door|Porte|no
+0|Window|Fenêtre|no
+0|Wall|Mur|no
+
+@set boardgames
+9|Chess|Échecs|
+8|Monopoly||
+8|Scrabble||
+7|Checkers/Draughts|Dames/Jeu de dames|
+7|Cluedo/Clue||
+7|Connect Four/Connect 4|Puissance 4|
+7|Uno|UNO|
+7|Snakes and Ladders/Chutes and Ladders|Serpents et échelles|
+6|Ludo/Sorry!|Petits chevaux/Ludo|
+6|Battleship|Bataille navale|
+6|Risk|Risk|
+6|Trivial Pursuit||
+6|Jenga||
+6|Backgammon||
+6|Go||
+6|Mahjong||
+6|Catan/Settlers of Catan|Catan/Colons de Catane|
+6|Guess Who?/Guess Who|Qui est-ce ?/Qui est-ce|
+6|Operation|Docteur Maboul|
+6|Twister||
+6|Pictionary||
+6|Dominoes|Dominos|
+6|Mastermind||
+6|Yahtzee|Yahtzee/Yam's|
+4|Stratego||
+4|The Game of Life/Game of Life|Destins/Jeu de la vie|
+4|Mille Bornes||
+4|Dixit||
+4|Carcassonne||
+4|Ticket to Ride|Les Aventuriers du Rail|
+3|Pandemic|Pandémie|
+4|Codenames|Code Names|
+4|Exploding Kittens||
+4|Dobble/Spot it!|Dobble|
+4|Labyrinth|Labyrinthe|
+4|Hungry Hippos|Hippos gloutons|
+3|Mouse Trap|Attrape-souris|
+3|Kerplunk||
+4|Boggle||
+4|Taboo|Tabou|
+3|Blokus||
+4|Othello/Reversi||
+3|Chinese checkers/Chinese chequers|Dames chinoises|
+3|Mancala/Awale|Awalé/Mancala|
+3|Nine men's morris|Jeu du moulin|
+4|Tic-tac-toe/Noughts and crosses|Morpion|
+4|Dungeons & Dragons/D&D|Donjons et Dragons|
+4|Werewolf/Mafia|Loups-garous/Les Loups-garous de Thiercelieux|
+4|Skip-Bo||
+4|Rummikub||
+3|Azul||
+3|Splendor||
+3|7 Wonders||
+3|Kingdomino||
+3|Small World||
+3|Agricola||
+3|Terraforming Mars||
+3|Wingspan||
+3|Love Letter||
+3|Coup||
+3|Hanabi||
+3|Bang!||
+3|Munchkin||
+3|Gloomhaven||
+3|Cranium||
+3|Articulate||
+3|Bananagrams||
+3|Sequence||
+3|Crokinole||
+3|Shogi||
+3|Xiangqi/Chinese chess|Échecs chinois|
+3|Parcheesi/Pachisi||
+3|Cribbage||
+3|Halma||
+3|Diplomacy||
+3|Axis & Allies||
+3|6 nimmt!/6 qui prend|6 qui prend|
+4|Time's Up||
+4|Jungle Speed||
+4|Le Petit Bac/Scattergories|Petit Bac/Baccalauréat|
+4|Loto/Bingo|Loto|
+3|Belote||no
+3|Poker||no
+3|Tarot||no
+0|Solitaire||no
+0|Minecraft||no
+0|Fortnite||no
