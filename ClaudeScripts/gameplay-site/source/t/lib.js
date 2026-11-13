@@ -127,6 +127,7 @@ const user = { id: UID, aud: 'authenticated', role: 'authenticated', email: 'tes
 const session = () => ({ access_token: 'eyJhbGciOiJIUzI1NiJ9.' + b64({ sub: UID, role: 'authenticated', exp: exp() }) + '.sig', token_type: 'bearer', expires_in: 7200, expires_at: exp(), refresh_token: 'r', user });
 
 async function open(html, id, o = {}) {
+  const mockStats = {};
   const root = path.dirname(path.resolve(html)), main = path.basename(html);
   const srv = http.createServer((q, r) => {
     const u = decodeURIComponent(q.url.split(/[?#]/)[0]);
@@ -168,6 +169,17 @@ async function open(html, id, o = {}) {
     if (p.startsWith('/rest/v1/profiles')) return j(200, [{ id: UID, username: 'tester', display_name: 'Tester', avatar_url: null, created_at: new Date().toISOString() }]);
     if (p === '/rest/v1/rpc/diag_enabled') return j(200, o.diag !== false);
     if (p === '/rest/v1/rpc/diag_push') return j(200, 0);
+    if (p === '/rest/v1/rpc/sync_game_stats') {
+      let body = null; try { body = q.postDataJSON(); } catch (e) {}
+      (body && Array.isArray(body.p_rows) ? body.p_rows : []).forEach(r => {
+        if (!r || typeof r.game_id !== 'string') return;
+        const m = mockStats[r.game_id] || (mockStats[r.game_id] = { user_id: UID, game_id: r.game_id, plays: 0, seconds_played: 0, best_score: null, best_better: r.better === 'low' ? 'low' : 'high', last_played: null });
+        m.plays += +r.plays || 0; m.seconds_played += +r.seconds || 0;
+        if (typeof r.best === 'number') m.best_score = m.best_score == null ? r.best : (m.best_better === 'low' ? Math.min(m.best_score, r.best) : Math.max(m.best_score, r.best));
+        if (r.last_played) m.last_played = r.last_played;
+      });
+      return j(200, Object.values(mockStats));
+    }
     if (p.startsWith('/rest/v1/rpc/')) return j(200, null);
     return j(200, []);
   });
