@@ -2449,12 +2449,31 @@
     try { d = apiRef.load(); } catch (e) {}
     apiRef.save({ v: 1, F: F || (d && d.F) || null, SET });
   }
+  function validF(f) {
+    try {
+      const num = v => typeof v === 'number' && isFinite(v), obj = v => !!v && typeof v === 'object' && !Array.isArray(v);
+      if (!obj(f) || !Array.isArray(f.teams) || f.teams.length !== TEAMS.length) return false;
+      if (!f.teams.every(t => obj(t) && typeof t.city === 'string' && typeof t.name === 'string' && typeof t.ab === 'string' && typeof t.c1 === 'string' && typeof t.c2 === 'string' && [t.off, t.def, t.st, t.w, t.l, t.t, t.pf, t.pa, t.conf, t.div].every(num) && obj(t.nm))) return false;
+      if (!Number.isInteger(f.tid) || !f.teams[f.tid]) return false;
+      const pl = p => obj(p) && POS.includes(p.pos) && typeof p.n === 'string' && [p.id, p.ovr, p.sal, p.age, p.mor, p.spd, p.skl].every(num) && obj(p.st);
+      if (!Array.isArray(f.roster) || f.roster.length > 90 || !f.roster.every(pl)) return false;
+      if (!Array.isArray(f.fa) || f.fa.length > 300 || !f.fa.every(pl)) return false;
+      if (!Array.isArray(f.sched) || f.sched.length > 40 || !f.sched.every(w => Array.isArray(w) && w.every(g => obj(g) && f.teams[g.h] && f.teams[g.a]))) return false;
+      if (!['reg', 'po', 'end', 'resign', 'draft', 'fa'].includes(f.phase) || !Number.isInteger(f.week) || f.week < 1 || f.week > WEEKS + 1) return false;
+      if (!obj(f.fac) || !FAC.every(x => Number.isInteger(f.fac[x[0]]) && f.fac[x[0]] >= 1 && f.fac[x[0]] <= 5)) return false;
+      if (![f.credits, f.fan, f.owner, f.year].every(num) || !Array.isArray(f.news) || !Array.isArray(f.hist) || typeof f.coach !== 'string') return false;
+      if (f.phase === 'po' && !(obj(f.po) && Array.isArray(f.po.games) && Array.isArray(f.po.alive))) return false;
+      if (f.phase === 'draft' && !(obj(f.draft) && Array.isArray(f.draft.pros) && f.draft.pros.every(pl) && Array.isArray(f.draft.picks))) return false;
+      if (f.phase === 'resign' && !(Array.isArray(f.resign) && f.resign.every(r => obj(r) && pl(r.p) && Array.isArray(r.ask)))) return false;
+      return true;
+    } catch (e) { return false; }
+  }
   function loadSave() {
-    const d = apiRef.load();
-    if (!d || !d.F || !d.F.teams || !d.F.roster) return false;
-    if (!Array.isArray(d.F.teams) || !Array.isArray(d.F.roster) || !Array.isArray(d.F.fa) || !d.F.teams[d.F.tid] || !d.F.fac || typeof d.F.fac !== 'object') return false;
+    let d = null;
+    try { d = apiRef.load(); } catch (e) {}
+    if (!d || !validF(d.F)) return false;
     F = d.F;
-    if (d.SET && typeof d.SET === 'object') Object.assign(SET, d.SET);
+    if (d.SET && typeof d.SET === 'object' && !Array.isArray(d.SET)) ['ql', 'snd', 'diff', 'ring', 'vol'].forEach(k => { if (k in d.SET) SET[k] = d.SET[k]; });
     fixSet();
     let mx = 0;
     const scan = p => { if (p && p.id > mx) mx = p.id; };
@@ -2464,7 +2483,7 @@
     uid = mx + 1000;
     return true;
   }
-  const hasSave = () => { try { const d = apiRef.load(); return !!(d && d.F && d.F.teams); } catch (e) { return false; } };
+  const hasSave = () => { try { const d = apiRef.load(); return !!(d && validF(d.F)); } catch (e) { return false; } };
 
   function navHtml(cur) {
     const items = [['home', 'HOME'], ['roster', 'ROSTER'], ['fa', 'FREE AGENTS'], ['fac', 'FACILITIES'], ['stand', 'STANDINGS'], ['sched', 'SCHEDULE'], ['news', 'NEWS']];
@@ -3264,7 +3283,7 @@
       apiRef = api; root = rootEl;
       F = null; M = null; P = null; G = null; scene = 'title'; realF = null; PV = null;
       setupDom(api, rootEl);
-      try { const d = api.load(); if (d && d.SET && typeof d.SET === 'object') Object.assign(SET, d.SET); } catch (e) {}
+      try { const d = api.load(); if (d && d.SET && typeof d.SET === 'object' && !Array.isArray(d.SET)) ['ql', 'snd', 'diff', 'ring', 'vol'].forEach(k => { if (k in d.SET) SET[k] = d.SET[k]; }); } catch (e) {}
       fixSet();
       mutedFn = () => api.muted || !SET.snd;
       api.on(rootEl, 'click', e => {

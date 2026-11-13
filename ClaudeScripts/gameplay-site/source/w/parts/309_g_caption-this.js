@@ -52,7 +52,8 @@ const ctClean = s => {
   let t = String(s == null ? '' : s).normalize('NFC').replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, ' ');
   for (const r of LINKY) t = t.replace(r, m => (/^\s/.test(m) ? ' ' : '') + '***');
   t = t.replace(/(.)\1{5,}/g, '$1$1$1$1$1').replace(/\s+/g, ' ').trim().slice(0, 70);
-  return tame(t);
+  const join = m => { const j = m.replace(/[\s.\-_*,]+/g, ''); return tame(j) !== j ? j[0] + '*'.repeat(j.length - 1) : m; };
+  return tame(t).replace(/(^|\s)((?:\S[.\-_*,]?\s+){2,}\S)(?=\s|$)/g, (m, a, run) => a + join(run)).replace(/\b(?:[A-Za-z0-9][.\-_*,]){2,}[A-Za-z0-9]\b/g, join);
 };
 
 function makeSnd(api) {
@@ -1035,7 +1036,10 @@ ${g} .ct-conf{position:absolute;top:-12px;width:10px;height:14px;animation:ct-fa
 ${g} .ct-how{text-align:left}
 ${g} .ct-how li{margin:4px 0;font-size:14px;line-height:1.4;color:#e6defa}
 ${g} .port .ct-body{flex-direction:column;gap:10px;padding:0 10px 10px;justify-content:flex-start}
-${g} .port .ct-head{right:96px}
+${g} .port .ct-head{right:10px;left:52px;gap:5px}
+${g} .port .ct-chip{padding:6px 10px;font-size:13px}
+${g} .port .ct-skip{font-size:12px;padding:4px 9px;max-width:130px;overflow:hidden;text-overflow:ellipsis}
+${g} .port .ct-net{top:auto;bottom:6px;right:6px}
 ${g} .port .ct-side{width:100%}
 ${g} .port .ct-rates{gap:6px;flex-wrap:wrap}
 ${g} .port .ct-rates [data-c]{width:100%}
