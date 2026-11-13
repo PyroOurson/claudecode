@@ -1089,6 +1089,7 @@
     },
     lbl(sh, cls) { const d = mk('div', 'cg-lbl' + (cls ? ' ' + cls : '')); sh.uiEl.append(d); return d; },
     nm(sh, p) { return p === sh.mine() ? 'You' : sh.name(p); },
+    obj(sh, p) { return p === sh.mine() ? 'you' : sh.name(p); },
     vb(sh, p, a, b) { return p === sh.mine() ? a : b; }
   };
 
@@ -1415,7 +1416,7 @@
         sh.turn(e.p);
         sh.say(e.p, 'Got any ' + RNP[e.r] + '?', 1800);
         sh.arrow(e.p, e.q, 1300);
-        sh.log(KIT.nm(sh, e.p) + ' ask' + KIT.vb(sh, e.p, '', 's') + ' ' + KIT.nm(sh, e.q) + ' for ' + RNP[e.r]);
+        sh.log(KIT.nm(sh, e.p) + ' ask' + KIT.vb(sh, e.p, '', 's') + ' ' + KIT.obj(sh, e.q) + ' for ' + RNP[e.r]);
         snd('ping');
         if (e.q === m && e.p !== m) sh.tick(sh.name(e.p) + ' asks you for ' + RNP[e.r], 2000);
         await sh.wait(1000);
@@ -2405,7 +2406,7 @@
     }
     function showClaim(V) {
       if (V.phase === 'done') { setClaim('', ''); return; }
-      if (V.phase === 'call' && V.last) setClaim(sh.name(V.last.p) + ' says', chSay(V.last.n, V.last.r).replace(/^(\w+) /, '$1 '));
+      if (V.phase === 'call' && V.last) setClaim(V.last.p === sh.mine() ? 'You say' : sh.name(V.last.p) + ' says', chSay(V.last.n, V.last.r).replace(/^(\w+) /, '$1 '));
       else if (V.rank) setClaim('Play', RL[V.rank]);
       else setClaim('Starter picks', '?');
       if (V.phase === 'call' && V.last) claimEl.lastChild.style.fontSize = '24px'; else if (claimEl.lastChild) claimEl.lastChild.style.fontSize = '';
@@ -2444,7 +2445,7 @@
         Z.relay('pile', .5, .06); Z.relay(from, .35);
         snd('place');
         sh.say(p, chSay(k, e.r), 2200);
-        setClaim(sh.name(p) + ' says', chSay(k, e.r));
+        setClaim(p === sh.mine() ? 'You say' : sh.name(p) + ' says', chSay(k, e.r));
         claimEl.lastChild.style.fontSize = '24px';
         sh.log(KIT.nm(sh, p) + ' play' + KIT.vb(sh, p, '', 's') + ' ' + chSay(k, e.r).toLowerCase());
         setPile(S.pile + k);
@@ -2464,7 +2465,7 @@
         sh.mood(e.p, 'a', 2400); sh.mood(e.q, 'o', 2400);
         sh.banner('CHEAT!', 'red', 1300);
         snd('cheat');
-        sh.log(KIT.nm(sh, e.p) + ' call' + KIT.vb(sh, e.p, '', 's') + ' ' + KIT.nm(sh, e.q) + ' out');
+        sh.log(KIT.nm(sh, e.p) + ' call' + KIT.vb(sh, e.p, '', 's') + ' ' + KIT.obj(sh, e.q) + ' out');
         await sh.wait(1150);
         const l = Z.zone('pile').list, k = e.ids.length, sprs = [];
         for (let i = 0; i < k; i++) sprs.push(l[l.length - k + i] || Z.make(-1, pileAt()));
