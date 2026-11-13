@@ -297,7 +297,9 @@
 @@ .cg-av{position:relative;width:48px;height:48px;margin:0 auto;border-radius:50%;box-shadow:0 3px 8px rgba(0,0,0,.5);border:3px solid #fff;box-sizing:content-box;background:#fff}
 @@ .cg-av svg{display:block;width:100%;height:100%;border-radius:50%}
 @@ .cg-ring{position:absolute;left:50%;top:-3px;width:60px;height:60px;margin-left:-30px;border-radius:50%;border:3px solid transparent;pointer-events:none;transition:border-color .2s}
-@@ .cg-seat.turn .cg-ring{border-color:#ffd54a;box-shadow:0 0 0 3px rgba(255,213,74,.3),0 0 20px 6px rgba(255,213,74,.7);animation:cg-pulse .9s infinite alternate}
+@@ .cg-ring::after{content:'';position:absolute;inset:-3px;border-radius:50%;box-shadow:0 0 0 4px rgba(255,213,74,.4),0 0 26px 9px rgba(255,213,74,.85);opacity:0;will-change:opacity}
+@@ .cg-seat.turn .cg-ring{border-color:#ffd54a}
+@@ .cg-seat.turn .cg-ring::after{animation:cg-pulse .9s infinite alternate}
 @@ .cg-ar{position:absolute;left:50%;top:-24px;margin-left:-8px;border:8px solid transparent;border-top:11px solid #ffd54a;border-bottom:0;opacity:0;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
 @@ .cg-seat.turn .cg-ar{opacity:1;animation:cg-bob .6s infinite alternate}
 @@ .cg-nm{display:inline-block;margin-top:3px;max-width:112px;padding:2px 9px;border-radius:11px;background:rgba(0,0,0,.5);color:#fff;font:800 12px/1.3 var(--sans,system-ui);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top}
@@ -402,7 +404,7 @@
 @@ .cg-mini{display:inline-block;vertical-align:middle;margin:0 1px;padding:1px 4px;border-radius:4px;background:#fff;color:#17171c;font:800 12px Georgia,serif}
 @@ .cg-mini.r{color:#c8202f}
 @keyframes cg-arrow{0%{clip-path:inset(0 100% 0 0);opacity:1}45%{clip-path:inset(0 0 0 0);opacity:1}85%{opacity:1}100%{clip-path:inset(0 0 0 0);opacity:0}}
-@keyframes cg-pulse{from{box-shadow:0 0 0 3px rgba(255,213,74,.25),0 0 12px 3px rgba(255,213,74,.5)}to{box-shadow:0 0 0 4px rgba(255,213,74,.4),0 0 26px 9px rgba(255,213,74,.85)}}
+@keyframes cg-pulse{from{opacity:.5}to{opacity:1}}
 @keyframes cg-bob{from{transform:translateY(0)}to{transform:translateY(5px)}}
 @keyframes cg-dot{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(-4px);opacity:1}}
 @keyframes cg-throb2{from{transform:translateX(-50%) scale(1)}to{transform:translateX(-50%) scale(1.07)}}
