@@ -1,6 +1,6 @@
 # Gameplay Games overhaul: status ledger
 
-Branch `claude/platform-overhaul`. Nothing here is live: the production site, the production database and real users were not touched. Everything marked "verified" was exercised in a real browser against a private staging copy of the platform (a local Supabase stack with the site's full schema, and a build of this branch served locally).
+Live since 13 November 2026: the owner ran database rounds 16 to 19b, merged pull request #6 and deployed to Firebase; the live page was checked to be identical to the merged build and the new database functions were checked to exist. Everything marked "verified" below was exercised in a real browser against a private staging copy of the platform before release.
 
 Status words: **Done** (built and seen working), **Partly** (built, verification incomplete), **Not done**, **Blocked** (needs something only the owner can give), **Declined** (will not do, with the reason).
 

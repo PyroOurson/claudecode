@@ -22,6 +22,8 @@ ClaudeScripts/gameplay-site/COVER_SOURCES.md
 ClaudeScripts/gameplay-site/GAMES.md
 ClaudeScripts/gameplay-site/GOLIVE.md
 ClaudeScripts/gameplay-site/LEDGER.md
+ClaudeScripts/gameplay-site/NEXT_AI.md
+ClaudeScripts/gameplay-site/README.md
 ClaudeScripts/gameplay-site/__pycache__/deploy.cpython-313.pyc
 ClaudeScripts/gameplay-site/deploy.py
 ClaudeScripts/gameplay-site/server/README.md
@@ -874,8 +876,6 @@ gameplay/198a06db514a1ed3837a.bin
 gameplay/198a06db514a1ed3837a.json
 gameplay/19e232350a0e3c76d487.bin
 gameplay/19e232350a0e3c76d487.json
-gameplay/1a109ed69f40caccbc0c.bin
-gameplay/1a109ed69f40caccbc0c.json
 gameplay/1a557794f7a7258cb07e.bin
 gameplay/1a557794f7a7258cb07e.json
 gameplay/1bc95f9697a06c97748e.bin
@@ -1012,6 +1012,8 @@ gameplay/5ea64a62aca2f881b5c9.bin
 gameplay/5ea64a62aca2f881b5c9.json
 gameplay/5f4b8128d71f4efb43e4.bin
 gameplay/5f4b8128d71f4efb43e4.json
+gameplay/5fb98a888b21ee5ba08a.bin
+gameplay/5fb98a888b21ee5ba08a.json
 gameplay/6032ac00a4eb7f5f40c5.bin
 gameplay/6032ac00a4eb7f5f40c5.json
 gameplay/6108632d94907e183c8a.bin
