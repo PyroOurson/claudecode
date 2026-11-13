@@ -27,6 +27,14 @@ ClaudeScripts/gameplay-site/server/setup.py
 ClaudeScripts/gameplay-site/server/wrangler.toml
 ClaudeScripts/gameplay-site/source/.gitignore
 ClaudeScripts/gameplay-site/source/BUILD.md
+ClaudeScripts/gameplay-site/source/games/arena-shooters/build.py
+ClaudeScripts/gameplay-site/source/games/arena-shooters/src/bots.js
+ClaudeScripts/gameplay-site/source/games/arena-shooters/src/game.js
+ClaudeScripts/gameplay-site/source/games/arena-shooters/src/hopfire.js
+ClaudeScripts/gameplay-site/source/games/arena-shooters/src/maps.js
+ClaudeScripts/gameplay-site/source/games/arena-shooters/src/sim.js
+ClaudeScripts/gameplay-site/source/games/arena-shooters/src/view.js
+ClaudeScripts/gameplay-site/source/games/arena-shooters/src/yolk-ops.js
 ClaudeScripts/gameplay-site/source/games/long-shot/build.py
 ClaudeScripts/gameplay-site/source/games/long-shot/data/culture.txt
 ClaudeScripts/gameplay-site/source/games/long-shot/data/dishes.txt
@@ -125,6 +133,7 @@ ClaudeScripts/gameplay-site/source/notes/design/lobby.webp
 ClaudeScripts/gameplay-site/source/notes/design/party-lobby.html
 ClaudeScripts/gameplay-site/source/notes/element-lab.md
 ClaudeScripts/gameplay-site/source/notes/fps_report.md
+ClaudeScripts/gameplay-site/source/notes/hopfire.md
 ClaudeScripts/gameplay-site/source/notes/long-shot.md
 ClaudeScripts/gameplay-site/source/notes/one-life.md
 ClaudeScripts/gameplay-site/source/notes/order-up.md
@@ -141,6 +150,7 @@ ClaudeScripts/gameplay-site/source/notes/touchdown-dynasty.md
 ClaudeScripts/gameplay-site/source/notes/tower-of-peril.md
 ClaudeScripts/gameplay-site/source/notes/way-up.md
 ClaudeScripts/gameplay-site/source/notes/wobble-ride.md
+ClaudeScripts/gameplay-site/source/notes/yolk-ops.md
 ClaudeScripts/gameplay-site/source/t/lib.js
 ClaudeScripts/gameplay-site/source/t/pbuild.py
 ClaudeScripts/gameplay-site/source/t/sheet.py
@@ -245,6 +255,7 @@ ClaudeScripts/gameplay-site/source/w/covers/hearts.webp
 ClaudeScripts/gameplay-site/source/w/covers/helix-jump.webp
 ClaudeScripts/gameplay-site/source/w/covers/hole-io.webp
 ClaudeScripts/gameplay-site/source/w/covers/hoops-3d.webp
+ClaudeScripts/gameplay-site/source/w/covers/hopfire.webp
 ClaudeScripts/gameplay-site/source/w/covers/kahoot.webp
 ClaudeScripts/gameplay-site/source/w/covers/knife-hit.webp
 ClaudeScripts/gameplay-site/source/w/covers/long-shot.webp
@@ -396,6 +407,7 @@ ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_head-soccer.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_hearts.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_hole-city.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_hoop-flop.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_hopfire.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_kahoot.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_long-shot.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_ludo.js
@@ -466,6 +478,7 @@ ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_word-bomb.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_word-search.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_worms.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_yahtzee.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_yolk-ops.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/enc.py
 ClaudeScripts/gameplay-site/source/w/covers/tools/games.json
 ClaudeScripts/gameplay-site/source/w/covers/tools/kit.js
@@ -494,6 +507,7 @@ ClaudeScripts/gameplay-site/source/w/covers/word-search.webp
 ClaudeScripts/gameplay-site/source/w/covers/wordle.webp
 ClaudeScripts/gameplay-site/source/w/covers/worms.webp
 ClaudeScripts/gameplay-site/source/w/covers/yahtzee.webp
+ClaudeScripts/gameplay-site/source/w/covers/yolk-ops.webp
 ClaudeScripts/gameplay-site/source/w/gate2.js
 ClaudeScripts/gameplay-site/source/w/gate_slot.js
 ClaudeScripts/gameplay-site/source/w/meta2.js
@@ -525,6 +539,7 @@ ClaudeScripts/gameplay-site/source/w/new/i18n_b5.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b6.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b7.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b8.json
+ClaudeScripts/gameplay-site/source/w/new/i18n_b9.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_c_strategy_a.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_consent.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_ideas.json
@@ -648,6 +663,8 @@ ClaudeScripts/gameplay-site/source/w/parts/297_g_polytrack.js
 ClaudeScripts/gameplay-site/source/w/parts/305_g_the-quiet-house.js
 ClaudeScripts/gameplay-site/source/w/parts/307_g_long-shot.js
 ClaudeScripts/gameplay-site/source/w/parts/309_g_caption-this.js
+ClaudeScripts/gameplay-site/source/w/parts/311_g_hopfire.js
+ClaudeScripts/gameplay-site/source/w/parts/313_g_yolk-ops.js
 ClaudeScripts/gameplay-site/source/w/parts/315_g_build-brawl.js
 ClaudeScripts/gameplay-site/source/w/parts/317_g_bed-raiders.js
 ClaudeScripts/gameplay-site/source/w/parts/323_g_tower-of-peril.js
