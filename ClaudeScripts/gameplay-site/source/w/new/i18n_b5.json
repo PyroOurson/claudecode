@@ -10,7 +10,9 @@
 ["@swing-line|Difficulty", "Difficulté", "Dificultad", "Schwierigkeit", "Difficoltà", "Dificuldade"],
 ["@spike-run|Difficulty", "Difficulté", "Dificultad", "Schwierigkeit", "Difficoltà", "Dificuldade"],
 ["Easy", "Facile", "Fácil", "Leicht", "Facile", "Fácil"],
-["Normal", "Normal", "Normal", "Normal", "Normale", "Normal"],
+["@quiver-clash|Normal", "Normal", "Normal", "Normal", "Normale", "Normal"],
+["@swing-line|Normal", "Normal", "Normal", "Normal", "Normale", "Normal"],
+["@spike-run|Normal", "Normal", "Normal", "Normal", "Normale", "Normal"],
 ["Hard", "Difficile", "Difícil", "Schwer", "Difficile", "Difícil"],
 ["@quiver-clash|Hardest", "Le plus dur", "Lo más difícil", "Am schwersten", "Il più difficile", "O mais difícil"],
 ["@swing-line|Hardest", "Le plus dur", "Lo más difícil", "Am schwersten", "Il più difficile", "O mais difícil"],
@@ -264,8 +266,6 @@
 ["Waiting for the host to start…", "En attente du lancement par l'hôte…", "Esperando a que el anfitrión empiece…", "Warte, bis der Gastgeber startet…", "In attesa che l'host inizi…", "À espera que o anfitrião comece…"],
 ["The host removed you from the game.", "L'hôte t'a retiré de la partie.", "El anfitrión te quitó de la partida.", "Der Gastgeber hat dich aus dem Spiel entfernt.", "L'host ti ha rimosso dalla partita.", "O anfitrião retirou-te do jogo."],
 ["The connection to the host was lost.", "La connexion avec l'hôte a été perdue.", "Se perdió la conexión con el anfitrión.", "Die Verbindung zum Gastgeber ist abgebrochen.", "La connessione con l'host si è interrotta.", "A ligação ao anfitrião perdeu-se."],
-["You were removed", "Tu as été retiré", "Te han quitado", "Du wurdest entfernt", "Sei stato rimosso", "Foste retirado"],
-["The host left", "L'hôte est parti", "El anfitrión se fue", "Der Gastgeber ist gegangen", "L'host è uscito", "O anfitrião saiu"],
 ["Endless", "Sans fin", "Infinito", "Endlos", "Infinito", "Sem fim"],
 ["Spinners", "Tourniquets", "Molinillos", "Kreisel", "Girandole", "Moinhos"]
 ]

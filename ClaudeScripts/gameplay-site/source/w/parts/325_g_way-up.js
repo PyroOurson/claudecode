@@ -1013,8 +1013,8 @@ ${G} .lbl{min-width:6em;font-weight:800;color:#ffb4a0;font-size:.85em}
     }
     function finish() {
       phase = 'end'; endT = 0;
-      const t = runT, newBest = !practice && (!P.best || t < P.best);
-      if (!practice) {
+      const t = runT, newBest = !practice && !auto && (!P.best || t < P.best);
+      if (!practice && !auto) {
         P.climbs++; if (newBest) P.best = Math.round(t * 100) / 100; P.bestH = Math.max(P.bestH, LV.top); P.susp = null; persist();
         api.submit(Math.round(t)); api.score(Math.round(t));
         if (newBest && rec.length) { try { localStorage.setItem(GK, encG(Int16Array.from(rec))); } catch (e) {} loadGhost(); }

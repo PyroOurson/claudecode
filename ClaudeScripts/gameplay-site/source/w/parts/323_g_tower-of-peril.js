@@ -1437,12 +1437,12 @@ ${G} .tag{display:inline-block;font-size:.72em;font-weight:800;padding:.1em .45e
       const r = R, me = r.me.id === id;
       if (me) {
         r.me.fin = true;
-        const reward = r.md === MODES[2] ? 60 : r.md === MODES[0] ? 15 : 30;
-        r.coinsGot += reward; r.xpGot += 100; P.coins += reward; P.wins++; P.xp += 0;
+        const reward = r.auto ? 0 : r.md === MODES[2] ? 60 : r.md === MODES[0] ? 15 : 30;
+        r.coinsGot += reward; r.xpGot += 100; P.coins += reward; if (!r.auto) P.wins++; P.xp += 0;
         const mi = MODES.indexOf(r.md);
-        const newBest = !P.best[mi] || time < P.best[mi];
+        const newBest = !r.auto && (!P.best[mi] || time < P.best[mi]);
         if (newBest) P.best[mi] = Math.round(time * 100) / 100;
-        persist(); api.submit(P.wins);
+        persist(); if (!r.auto) api.submit(P.wins);
         audio.play('win');
         big(`${esc(tr('You beat the tower!'))}<small>${fmtT2(time)}${newBest ? ' · ' + esc(tr('New best')) : ''}</small>`, 4200);
         confetti();

@@ -11,7 +11,7 @@
 ["Choose a difficulty", "Choisis une difficulté", "Elige la dificultad", "Wähle einen Schwierigkeitsgrad", "Scegli la difficoltà", "Escolhe a dificuldade"],
 ["@the-quiet-house|Practice", "Entraînement", "Práctica", "Übung", "Allenamento", "Treino"],
 ["Easy", "Facile", "Fácil", "Leicht", "Facile", "Fácil"],
-["Normal", "Normal", "Normal", "Normal", "Normale", "Normal"],
+["@the-quiet-house|Normal", "Normal", "Normal", "Normal", "Normale", "Normal"],
 ["Hard", "Difficile", "Difícil", "Schwer", "Difficile", "Difícil"],
 ["@the-quiet-house|Hardest", "Très difficile", "Muy difícil", "Sehr schwer", "Difficilissimo", "Muito difícil"],
 ["No Keeper. Walk the house and learn where everything is.", "Pas de Gardien. Explore la maison et repère où tout se trouve.", "Sin Guardián. Recorre la casa y aprende dónde está todo.", "Kein Wächter. Erkunde das Haus und merk dir, wo alles liegt.", "Niente Custode. Esplora la casa e scopri dove si trova tutto.", "Sem Guardião. Percorre a casa e descobre onde está tudo."],
@@ -215,7 +215,9 @@
 ["RT or X", "RT ou X", "RT o X", "RT oder X", "RT o X", "RT ou X"],
 ["Building the house…", "Construction de la maison…", "Construyendo la casa…", "Das Haus wird gebaut…", "Costruzione della casa…", "A construir a casa…"],
 ["Best time", "Meilleur temps", "Mejor tiempo", "Bestzeit", "Miglior tempo", "Melhor tempo"],
-["Practice", "Entraînement", "Práctica", "Übung", "Allenamento", "Treino"],
 ["Fuel", "Carburant", "Combustible", "Benzin", "Carburante", "Combustível"],
-["Take", "Prendre", "Coger", "Nehmen", "Prendi", "Apanhar"]
+["Take", "Prendre", "Coger", "Nehmen", "Prendi", "Apanhar"],
+["Practice", "Entraînement", "Práctica", "Übung", "Allenamento", "Treino"],
+["Normal", "Normal", "Normal", "Normal", "Normale", "Normal"],
+["Hardest", "Très difficile", "Muy difícil", "Sehr schwer", "Difficilissimo", "Muito difícil"]
 ]
