@@ -114,7 +114,10 @@ ClaudeScripts/gameplay-site/source/games/subway-surfers/build.py
 ClaudeScripts/gameplay-site/source/games/subway-surfers/src/subway-surfers.js
 ClaudeScripts/gameplay-site/source/notes/admin-rating.md
 ClaudeScripts/gameplay-site/source/notes/analytics_audit_round19.md
+ClaudeScripts/gameplay-site/source/notes/ante-up.md
+ClaudeScripts/gameplay-site/source/notes/beat-duel.md
 ClaudeScripts/gameplay-site/source/notes/caption-this.md
+ClaudeScripts/gameplay-site/source/notes/click-beat.md
 ClaudeScripts/gameplay-site/source/notes/design/gameplay-home.html
 ClaudeScripts/gameplay-site/source/notes/design/lobby.webp
 ClaudeScripts/gameplay-site/source/notes/design/party-lobby.html
@@ -164,12 +167,14 @@ ClaudeScripts/gameplay-site/source/w/covers/agar-io.webp
 ClaudeScripts/gameplay-site/source/w/covers/aim-trainer.webp
 ClaudeScripts/gameplay-site/source/w/covers/air-hockey.webp
 ClaudeScripts/gameplay-site/source/w/covers/among-us.webp
+ClaudeScripts/gameplay-site/source/w/covers/ante-up.webp
 ClaudeScripts/gameplay-site/source/w/covers/archery.webp
 ClaudeScripts/gameplay-site/source/w/covers/asteroid-field.webp
 ClaudeScripts/gameplay-site/source/w/covers/backgammon.webp
 ClaudeScripts/gameplay-site/source/w/covers/basket-random.webp
 ClaudeScripts/gameplay-site/source/w/covers/basketball-legends.webp
 ClaudeScripts/gameplay-site/source/w/covers/battleship.webp
+ClaudeScripts/gameplay-site/source/w/covers/beat-duel.webp
 ClaudeScripts/gameplay-site/source/w/covers/bejeweled.webp
 ClaudeScripts/gameplay-site/source/w/covers/belote.webp
 ClaudeScripts/gameplay-site/source/w/covers/bingo.webp
@@ -190,6 +195,7 @@ ClaudeScripts/gameplay-site/source/w/covers/chess.webp
 ClaudeScripts/gameplay-site/source/w/covers/chimp-test.webp
 ClaudeScripts/gameplay-site/source/w/covers/chinese-checkers.webp
 ClaudeScripts/gameplay-site/source/w/covers/chrome-dino.webp
+ClaudeScripts/gameplay-site/source/w/covers/click-beat.webp
 ClaudeScripts/gameplay-site/source/w/covers/clue.webp
 ClaudeScripts/gameplay-site/source/w/covers/codenames.webp
 ClaudeScripts/gameplay-site/source/w/covers/color-switch.webp
@@ -323,9 +329,11 @@ ClaudeScripts/gameplay-site/source/w/covers/tools/art/c_batch.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/d_batch.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/e_batch.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_among-us.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_ante-up.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_backgammon.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_basketball-legends.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_bean-royale.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_beat-duel.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_belote.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_bingo.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_blackjack.js
@@ -341,6 +349,7 @@ ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_caption-this.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_catan.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_cheat.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_chinese-checkers.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_click-beat.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_clue.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_codenames.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_color-switch.js
@@ -494,6 +503,7 @@ ClaudeScripts/gameplay-site/source/w/new/i18n_b4.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b5.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b6.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b7.json
+ClaudeScripts/gameplay-site/source/w/new/i18n_b8.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_consent.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_ideas.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_p2.json
@@ -608,9 +618,9 @@ ClaudeScripts/gameplay-site/source/w/parts/279_g_tomb-of-the-mask+color-switch+e
 ClaudeScripts/gameplay-site/source/w/parts/281_g_bloons-td.js
 ClaudeScripts/gameplay-site/source/w/parts/283_g_order-up+reel-deep+quack-cup.js
 ClaudeScripts/gameplay-site/source/w/parts/285_g_touchdown-dynasty.js
-ClaudeScripts/gameplay-site/source/w/parts/287_g_friday-night-funkin+osu.js
+ClaudeScripts/gameplay-site/source/w/parts/287_g_beat-duel+click-beat.js
 ClaudeScripts/gameplay-site/source/w/parts/289_g_clash-royale.js
-ClaudeScripts/gameplay-site/source/w/parts/291_g_balatro.js
+ClaudeScripts/gameplay-site/source/w/parts/291_g_ante-up.js
 ClaudeScripts/gameplay-site/source/w/parts/293_g_element-lab+one-life.js
 ClaudeScripts/gameplay-site/source/w/parts/297_g_polytrack.js
 ClaudeScripts/gameplay-site/source/w/parts/307_g_long-shot.js
