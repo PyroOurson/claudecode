@@ -37,6 +37,19 @@ const PAUSE = { on: false };
 const SUPABASE_DIRECT = 'https://uafouyvtcijptspjbsqf.supabase.co';
 const SUPABASE_RELAYS = ['https://gameplay-api.vitalang.net'];
 const SUPABASE_URL = (typeof window.__gpSbUrl === 'string' && /^https:\/\//.test(window.__gpSbUrl) && window.__gpSbUrl) || SUPABASE_DIRECT;
+const SUPPORT_EMAIL = 'gabriel06401@gmail.com';
+const GP_DK = (() => {
+  try {
+    let k = localStorage.getItem('gameplay:dk');
+    if (!/^[A-Za-z0-9_-]{16,64}$/.test(k || '')) {
+      const a = new Uint8Array(18);
+      crypto.getRandomValues(a);
+      k = btoa(String.fromCharCode.apply(null, a)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      localStorage.setItem('gameplay:dk', k);
+    }
+    return k;
+  } catch (e) { return null; }
+})();
 const SBN = (() => {
   const K = 'gameplay:sb';
   const all = (window.__gpSbOnly ? [SUPABASE_URL] : [SUPABASE_URL, SUPABASE_DIRECT].concat(SUPABASE_RELAYS)).filter((x, i, a) => x && a.indexOf(x) === i);
@@ -54,6 +67,7 @@ const SBN = (() => {
     if (path == null) return fetch(input, init);
     if (pre) await pre;
     const o = Object.assign({}, init || {}), outer = o.signal;
+    if (GP_DK && /^\/(rest|functions)\/v1\//.test(path)) { const h = new Headers(o.headers || (input && input.headers) || {}); h.set('x-gp-device', GP_DK); o.headers = h; }
     const mth = String(o.method || 'GET').toUpperCase(), safe = mth === 'GET' || mth === 'HEAD' || mth === 'OPTIONS', extra = Math.min(285000, Math.round(bodySize(o.body) / 20));
     let last = null;
     for (const b of order()) {
@@ -65,6 +79,7 @@ const SBN = (() => {
         const r = await fetch(b + path, Object.assign({}, o, { signal: ctl.signal }));
         if (page(r)) { bad[b] = Date.now(); last = new TypeError('The network answered with a web page'); continue; }
         good(b);
+        if (r.status === 403 && /^\/rest\/v1\//.test(path) && typeof window.gpBlocked === 'function') r.clone().json().then(j => { if (j && j.hint === 'access_blocked') { let d = null; try { d = JSON.parse(j.details || 'null'); } catch (e) {} window.gpBlocked(d || {}); } }).catch(() => {});
         return r;
       } catch (e) {
         if (outer && outer.aborted) throw e;
@@ -93,3 +108,33 @@ const SUPABASE_ANON_KEY = 'sb_publishable_Lry5e9J350lXelAUPHU1rg_3YYvTuAf';
 const SUPABASE_JS_FILE = 'supabase-js-2.117.2.js';
 const SUPABASE_JS = ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js', 'https://unpkg.com/@supabase/supabase-js@2.117.2/dist/umd/supabase.js'];
 const SUPABASE_SRI = 'sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok';
+
+window.gpBlocked = function (d) {
+  if (document.getElementById('gpblock')) return;
+  const until = d && d.until ? new Date(d.until) : null, dev = d && d.kind === 'device';
+  const T = s => (window.gpI18n ? window.gpI18n.t(s) : s);
+  const when = until && !isNaN(until) ? T('until {d}').replace('{d}', until.toLocaleString(document.documentElement.lang || undefined, { dateStyle: 'long', timeStyle: 'short' })) : T('with no end date');
+  const el = document.createElement('div');
+  el.id = 'gpblock';
+  el.setAttribute('role', 'alertdialog');
+  el.setAttribute('aria-modal', 'true');
+  el.style.cssText = 'position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg,#f6f4ff);color:var(--fg,#1b1530);font:16px/1.5 Inter,system-ui,sans-serif';
+  const box = document.createElement('div');
+  box.style.cssText = 'max-width:520px;text-align:left';
+  const h = document.createElement('h1');
+  h.style.cssText = 'font:800 26px/1.2 "Plus Jakarta Sans",Inter,system-ui,sans-serif;margin:0 0 12px';
+  h.textContent = T('Access is blocked');
+  const p1 = document.createElement('p');
+  p1.textContent = T(dev ? 'Access to gameplay from this device is blocked {when}.' : 'Access to gameplay from this network is blocked {when}.').replace('{when}', when);
+  const p2 = document.createElement('p');
+  p2.textContent = T('If you think this is a mistake, write to support:') + ' ';
+  const a = document.createElement('a');
+  a.href = 'mailto:' + SUPPORT_EMAIL;
+  a.textContent = SUPPORT_EMAIL;
+  a.style.color = 'var(--accent,#6d4cf5)';
+  p2.append(a);
+  box.append(h, p1, p2);
+  el.append(box);
+  document.body.append(el);
+  try { document.documentElement.style.overflow = 'hidden'; } catch (e) {}
+};

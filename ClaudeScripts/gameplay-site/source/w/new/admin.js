@@ -167,7 +167,8 @@ function lvBar() {
   if (el.dataset.s !== st) { el.dataset.s = st; el.classList.toggle('bad', st === 'bad'); el.classList.toggle('live', st === 'live'); }
   const n = LV.d && LV.d.n ? +LV.d.n.all || 0 : 0;
   const txt = st === 'live' ? auT(n === 1 ? 'Live · 1 online' : 'Live · {n} online').replace('{n}', stN(n)) : st === 'wait' ? auT('Connecting…') : st === 'slow' ? auT('Updated {t}').replace('{t}', adAgoS(LV.at)) : st === 'old' ? (AD.ok ? auT('Updated {t}').replace('{t}', adAgoS(AD.ok)) : '') : st === 'idle' ? auT('Paused') : LV.at ? auT('Offline · updated {t}').replace('{t}', adAgoS(LV.at)) : auT('Offline');
-  adText(el.lastChild, txt);
+  const pk = LV.pk && LV.pk.peak;
+  adText(el.lastChild, pk && pk.n ? txt + ' · ' + auT('All-time peak {n} on {d}').replace('{n}', stN(pk.n)).replace('{d}', adDate(pk.at, 1)) : txt);
   el.title = auT(st === 'live' ? 'Live numbers refresh every second while this tab is open.' : st === 'old' ? 'Run round19_analytics.sql in the Supabase SQL editor to get live updates every second.' : st === 'bad' ? 'Could not reach the server. Trying again.' : 'Live updates pause while the tab is in the background.');
 }
 function lvErrHtml() {
@@ -179,6 +180,7 @@ function adTick() {
   if (view !== 'admin' || document.visibilityState === 'hidden') return;
   lvBar();
   if (!adIsAdmin()) return;
+  if (!LV.pkBusy && Date.now() - (LV.pkAt || 0) > 950) { LV.pkBusy = true; LV.pkAt = Date.now(); adRpc('admin_online', { p_range: '1m' }).then(r => { LV.pk = r; }).catch(() => {}).finally(() => { LV.pkBusy = false; }); }
   document.querySelectorAll('#vAdmin [data-ago]').forEach(adAgoPaint);
   document.querySelectorAll('#vAdmin [data-rt]').forEach(el => adText(el, adAgo(el.dataset.rt)));
   const tb = $('#adt tbody'), rows = tb ? tb.rows : [];
@@ -489,6 +491,7 @@ function adPanel(u, keep) {
   ['#adun', '#adrst', '#adso', '#adlock', '#addelb'].forEach(q => { $(q).closest('.apc-card').hidden = !can; });
   rc.hidden = !own;
   rc.closest('.apc-col').hidden = !can && !own;
+  if (!keep) p.querySelectorAll('.is-busy').forEach(x => x.classList.remove('is-busy'));
   p.querySelectorAll('[data-adrole]').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.adrole === u.role)); b.disabled = false; adUnconfirm(b); });
   const lb = $('#adlock');
   adUnconfirm(lb);
@@ -511,6 +514,7 @@ function adPanel(u, keep) {
     const eye = p.querySelector('.au-eye'); if (eye) auEye(eye, true);
     adGames(u);
     adDevices(u);
+    ipbLoad(u);
     alHist(u);
     achLoad(u);
     const was = p.hidden;
@@ -577,6 +581,52 @@ function adConfirm(b) {
   return false;
 }
 const adCur = () => (AD.users || []).find(x => x.id === AD.sel);
+const IPB = { pv: null, busy: 0 };
+async function ipbLoad(u) {
+  const box = $('#adips');
+  if (!box) return;
+  IPB.pv = null; $('#adipf').hidden = true;
+  box.innerHTML = '<i class="sk sk-td"></i>';
+  const my = ++IPB.busy;
+  let r;
+  try { r = await adRpc('admin_user_addresses', { p_uid: u.id }); }
+  catch (e) { if (my === IPB.busy) box.innerHTML = `<div class="adm-mut">${esc(auT('Could not load. Check your connection and try again.'))}</div>`; return; }
+  if (my !== IPB.busy || AD.sel !== u.id) return;
+  const L = r && Array.isArray(r.ips) ? r.ips : [];
+  $('#adudev').hidden = !(r && r.devices_banned);
+  $('#adbdev').textContent = auT(r && r.devices_banned ? 'Ban again with these settings' : 'Ban this account and its devices');
+  $('#adbdev').disabled = adStaff(u) || !!(SB.user && SB.user.id === u.id);
+  box.innerHTML = (r && r.devices ? `<p class="sx-note">${esc(auT(r.devices === 1 ? '1 device in the last 30 days' : '{n} devices in the last 30 days').replace('{n}', r.devices))}${r.devices_banned ? ' · ' + esc(auT('{n} banned').replace('{n}', r.devices_banned)) : ''}</p>` : '') + (L.length ? L.map(x => {
+    const v4 = /^\d+\.\d+\.\d+\.\d+$/.test(x.ip), r24 = v4 ? x.ip.replace(/\.\d+$/, '.0/24') : null;
+    return `<div class="ab-ip"><div><b translate="no">${esc(x.ip)}</b><small>${esc(auT('Last seen {t}').replace('{t}', adAgo(x.last)))}${x.others ? ' · ' + esc(auT(x.others === 1 ? '1 other account' : '{n} other accounts').replace('{n}', x.others)) : ''}</small></div>${x.ban ? `<span class="adm-pill bad">${esc(x.ban.until ? auT('Banned until {d}').replace('{d}', adDate(x.ban.until, 1)) : auT('Banned'))}</span><button class="btn2" type="button" data-abun="${+x.ban.id}">${esc(auT('Unban'))}</button>` : `<button class="btn2" type="button" data-abip="${esc(x.ip)}">${esc(auT('Ban address'))}</button>${r24 ? `<button class="btn2" type="button" data-abip="${esc(r24)}">${esc(auT('Ban range'))}</button>` : ''}`}</div>`;
+  }).join('') : `<div class="adm-mut">${esc(auT('No addresses in the last 30 days.'))}</div>`);
+}
+async function ipbPreview(net) {
+  const pv = $('#adipp');
+  pv.innerHTML = '<i class="sk sk-td"></i>';
+  try {
+    const r = await adRpc('admin_ip_preview', { p_net: net });
+    IPB.pv = { net };
+    const A = Array.isArray(r.accounts) ? r.accounts : [];
+    pv.innerHTML = `<p><b>${esc(auT(A.length === 1 ? '1 account used this address in the last 30 days.' : '{n} accounts used this address in the last 30 days.').replace('{n}', A.length))}</b> ${esc(auT('A shared network such as a school or a family puts everyone behind one address: all of them would be blocked.'))}</p>${A.length ? `<ul class="ab-acc">${A.slice(0, 30).map(a => `<li translate="no">${esc(a.username ? '@' + a.username : a.display || a.id)}${a.role !== 'user' ? ' · ' + esc(auT('staff, never blocked')) : ''}</li>`).join('')}${A.length > 30 ? `<li>${esc(auT('and {n} more').replace('{n}', A.length - 30))}</li>` : ''}</ul>` : ''}${r.mine ? `<p class="bad">${esc(auT('This range includes your own address, so it cannot be banned.'))}</p>` : ''}`;
+    $('#adipb').disabled = !!r.mine;
+  } catch (e) { IPB.pv = null; pv.innerHTML = `<p class="bad">${esc(adErr(e))}</p>`; }
+}
+document.addEventListener('click', async e => {
+  const t = e.target.closest && e.target.closest('[data-abip], [data-abun]');
+  if (!t || !t.closest('#adpanel')) return;
+  const u = adCur();
+  if (!u) return;
+  if (t.dataset.abip) { $('#adipf').hidden = false; $('#adipn').value = t.dataset.abip; $('#adipr').value = ''; IPB.pv = null; adUnconfirm($('#adipb')); await ipbPreview(t.dataset.abip); $('#adipr').focus({ preventScroll: true }); return; }
+  if (t.dataset.abun) {
+    if (!adConfirm(t)) return;
+    t.disabled = true; t.classList.add('is-busy');
+    try { await adRpc('admin_ip_unban', { p_id: +t.dataset.abun }); auMsg('adbann', 'Address unbanned.', 'ok'); track('admin', { act: 'ip_unban' }); }
+    catch (err) { auMsg('adbann', adErr(err), 'bad'); }
+    ipbLoad(u);
+  }
+});
+document.addEventListener('input', e => { if (e.target && e.target.id === 'adipn') { IPB.pv = null; $('#adipp').innerHTML = ''; adUnconfirm($('#adipb')); $('#adipb').disabled = false; } });
 async function adAct(k, b) {
   const u = adCur();
   if (!u || b.disabled || !(k === 'role' ? adIsOwner() : adCan(u))) return;
@@ -643,11 +693,42 @@ async function adAct(k, b) {
     b.disabled = true; b.classList.add('is-busy'); auMsg('addeln', '');
     try {
       await adRpc('admin_delete_user', { p_uid: u.id });
+      b.disabled = false; b.classList.remove('is-busy'); adUnconfirm(b);
       track('admin', { act: 'delete' });
       rtSend(u.id, { t: 'deleted' });
       AD.users = (AD.users || []).filter(x => x.id !== u.id);
       adPanelClose(); adTiles(); adDraw(); toast(auT('Account deleted'));
     } catch (e) { auMsg('addeln', /regular user first/i.test(e.message || '') ? 'Make this admin a regular user first.' : /own account/i.test(e.message || '') ? 'You cannot delete your own account here.' : adErr(e), 'bad'); b.disabled = false; b.classList.remove('is-busy'); }
+    return;
+  } else if (k === 'bandev') {
+    if (!adConfirm(b)) return;
+    b.disabled = true; b.classList.add('is-busy'); auMsg('adbann', '');
+    const hrs = +$('#adld').value || 0, until = hrs ? new Date(Date.now() + hrs * 3600e3).toISOString() : null;
+    try {
+      if (!u.locked) { await adRpc('admin_lock_until', { p_uid: u.id, p_reason: $('#adlr').value, p_until: until }); u.locked = true; u.locked_until = until; u.locked_reason = String($('#adlr').value).replace(/\s+/g, ' ').trim().slice(0, 500) || null; }
+      const n = await adRpc('admin_ban_devices', { p_uid: u.id, p_hours: hrs, p_reason: $('#adlr').value });
+      auMsg('adbann', auT(n === 1 ? 'Account locked and 1 device banned.' : 'Account locked and {n} devices banned.').replace('{n}', n), 'ok'); track('admin', { act: 'ban_devices', hrs }); rtSend(u.id, { t: 'status' });
+    } catch (e) { auMsg('adbann', adErr(e), 'bad'); }
+    finally { b.disabled = false; b.classList.remove('is-busy'); }
+    ipbLoad(u);
+  } else if (k === 'unbandev') {
+    b.disabled = true; b.classList.add('is-busy'); auMsg('adbann', '');
+    try { const n = await adRpc('admin_unban_devices', { p_uid: u.id }); auMsg('adbann', auT('Device bans lifted ({n}).').replace('{n}', n), 'ok'); track('admin', { act: 'unban_devices' }); }
+    catch (e) { auMsg('adbann', adErr(e), 'bad'); }
+    finally { b.disabled = false; b.classList.remove('is-busy'); }
+    ipbLoad(u);
+    return;
+  } else if (k === 'ipban') {
+    const net = $('#adipn').value.trim(), why = $('#adipr').value.trim();
+    if (!net) { auShake($('#adipn')); return; }
+    if (!why) { auMsg('adbann', 'Give a reason.', 'bad'); auShake($('#adipr')); return; }
+    if (!IPB.pv || IPB.pv.net !== net) { await ipbPreview(net); return; }
+    if (!adConfirm(b)) return;
+    b.disabled = true; b.classList.add('is-busy'); auMsg('adbann', '');
+    try { await adRpc('admin_ip_ban', { p_net: net, p_hours: +$('#adipd').value || 0, p_reason: why }); auMsg('adbann', auT('Address {a} banned.').replace('{a}', net), 'ok'); track('admin', { act: 'ip_ban', hrs: +$('#adipd').value || 0 }); $('#adipf').hidden = true; IPB.pv = null; }
+    catch (e) { auMsg('adbann', /own address/i.test(e.message || '') ? 'This range includes your own address.' : adErr(e), 'bad'); }
+    finally { b.disabled = false; b.classList.remove('is-busy'); }
+    ipbLoad(u);
     return;
   } else if (k === 'lock') {
     const on = !u.locked;

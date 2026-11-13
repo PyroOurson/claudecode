@@ -531,6 +531,8 @@ function soChatEl() {
     `<div class="so-cv"><div class="ch-h"><button class="x so-bk" type="button" data-ch="back" aria-label="${esc(auT('Back to chats'))}" title="${esc(auT('Back to chats'))}">${SO_ICO.back}<em hidden></em></button><span class="pic"></span><div class="ch-n"><b translate="no"></b><span class="ch-s"></span></div>${xb}</div><div class="ch-acts"></div><div class="ch-m" translate="no" aria-live="polite"></div><div class="so-ty" aria-live="polite" hidden></div><div class="note ch-note" role="status"></div><form class="ch-f" novalidate><button class="ch-ib" type="button" data-ch="img" aria-label="${esc(auT('Send a picture'))}" title="${esc(auT('Send a picture'))}">${SO_ICO.img}</button><button class="ch-ib" type="button" data-ch="file" aria-expanded="false" aria-controls="chfh" aria-label="${esc(auT('Send a file'))}" title="${esc(auT('Send a file'))}">${FX_ICO.clip}</button><input type="file" accept="image/*" hidden><input type="file" class="ch-fi" accept="${FX_ACCEPT}" hidden><div class="ch-fh" id="chfh" hidden><b>${esc(auT('Send a file'))}</b><p>${esc(auT(FX_LIMITS))}</p><p>${esc(auT('Only you and your friend can open it. Pictures are made smaller before they are sent.'))}</p><button class="btn2 pri" type="button" data-ch="pickf">${FX_ICO.clip}<span>${esc(auT('Choose a file'))}</span></button></div><textarea rows="1" maxlength="2000" aria-label="${esc(auT('Message'))}"></textarea><button class="ch-sb" type="submit" aria-label="${esc(auT('Send'))}">${SO_ICO.send}</button></form>` +
     `<div class="so-pk" hidden><div class="ch-h"><button class="x" type="button" data-ch="pkx" aria-label="${esc(auT('Back'))}">${SO_ICO.back}</button><div class="ch-n"><b class="so-pt"></b><span class="ch-s">${esc(auT('A party starts and your invite goes out with the code.'))}</span></div></div><div class="so-pl"></div></div></div><div class="so-dropn" aria-hidden="true"><span>${esc(auT('Drop a picture or a file to send it'))}<small>${esc(auT(FX_LIMITS))}</small></span></div>`;
   document.body.append(el);
+  ['pointerdown', 'wheel', 'keydown', 'touchstart'].forEach(k => el.addEventListener(k, () => { if (!DM.engaged) { DM.engaged = true; dmLater(); } }, { passive: true }));
+  el.querySelector('.ch-m').addEventListener('scroll', () => dmLater(), { passive: true });
   const ta = el.querySelector('textarea'), fi = el.querySelector('input[type=file]'), ff = el.querySelector('.ch-fi'), sr = el.querySelector('.so-sr input');
   el.addEventListener('click', e => { const b = e.target.closest('[data-ch]'); if (!(b && b.dataset.ch === 'file') && !e.target.closest('.ch-fh')) dmFileTip(false); if (b) { e.stopPropagation(); dmAct(b.dataset.ch, b); } const im = e.target.closest('.ch-pic img'); if (im && im.src) soLight(im.src); });
   el.addEventListener('submit', e => { e.preventDefault(); dmSendText(); });
@@ -601,8 +603,9 @@ function soList() {
   box.innerHTML = h;
   if (fid) { const g = box.querySelector(`.so-fr[data-id="${CSS.escape(fid)}"]`); if (g) g.focus({ preventScroll: true }); }
 }
-async function dmOpen(uid) {
+async function dmOpen(uid, auto) {
   if (!SB.user || !uid) return;
+  DM.engaged = !auto;
   if (!FR.list) await frLoad();
   if (!soFriend(uid)) { toast(auT('You can only chat with friends')); return; }
   const el = soChatEl();
@@ -613,7 +616,7 @@ async function dmOpen(uid) {
   soShow(true); soSave();
   DM.unread = DM.inbox.reduce((n, c) => n + (c.other_id === uid ? 0 : +c.unread || 0), 0); ntBadge();
   await dmThread();
-  if (!auCoarse() && DM.open === uid) el.querySelector('textarea').focus({ preventScroll: true });
+  if (!auto && !auCoarse() && DM.open === uid) el.querySelector('textarea').focus({ preventScroll: true });
   clearInterval(DM.t); DM.t = setInterval(() => { if (DM.open && document.visibilityState === 'visible') dmThread(); }, 5000);
 }
 function dmClose() {
@@ -772,7 +775,7 @@ async function dmThread() {
       const card = k => k === 'invite' || k === 'join';
       const grp = !s && p && p.mine === m.mine && !card(p.kind) && !card(m.kind) && Date.parse(m.created_at) - Date.parse(p.created_at) < 300000;
       DM.prev = m;
-      return s + dmRow(m, !first, grp);
+      return s + dmRow(m, !first, grp).replace('<div class="', '<div data-mid="' + (+m.id || 0) + '" class="');
     }).join(''));
     box.querySelectorAll('img[data-path]:not([src])').forEach(dmImg);
     soSeen(); soCdApply();
@@ -784,12 +787,31 @@ async function dmThread() {
   } catch (e) { auMsg2('Could not load the messages. Check your connection and try again.', 'bad'); }
   finally { DM.busy = false; if (DM.again) { DM.again = false; if (DM.open) dmThread(); } }
 }
-const dmSeeing = () => document.visibilityState === 'visible' && !!$('#chat') && !$('#chat').hidden;
+const dmSeeing = () => document.visibilityState === 'visible' && !!DM.engaged && !!$('#chat') && !$('#chat').hidden;
+function dmSeenIds() {
+  const box = $('#chat .ch-m'), ids = [];
+  if (!box) return ids;
+  const br = box.getBoundingClientRect();
+  for (const m of DM.msgs) {
+    if (m.mine || m.read_at) continue;
+    const el = box.querySelector('[data-mid="' + (+m.id || 0) + '"]');
+    if (!el) continue;
+    const r = el.getBoundingClientRect(), top = Math.max(r.top, br.top), bot = Math.min(r.bottom, br.bottom);
+    if (bot - top < Math.min(r.height * 0.6, 24)) continue;
+    const hit = document.elementFromPoint(r.left + Math.min(r.width / 2, 40), (top + bot) / 2);
+    if (hit && el.contains(hit)) ids.push(+m.id);
+  }
+  return ids;
+}
+function dmLater() { clearTimeout(DM.st); DM.st = setTimeout(() => { if (DM.open && DM.open === DM.unseen && dmSeeing()) dmRead(DM.open); }, 500); }
 async function dmRead(uid) {
-  DM.unseen = null;
-  await adRpc('dm_read', { p_with: uid }).catch(() => {});
+  const ids = dmSeenIds();
+  if (!ids.length) { DM.unseen = uid; return; }
+  DM.msgs.forEach(m => { if (!m.mine && !m.read_at && ids.indexOf(+m.id) >= 0) m.read_at = new Date().toISOString(); });
+  DM.unseen = DM.msgs.some(m => !m.mine && !m.read_at) ? uid : null;
+  await adRpc('dm_read', { p_with: uid, p_ids: ids.slice(0, 200) }).catch(() => {});
   rtLater('r:' + uid, () => { if (SB.user) rtSend(uid, { t: 'rd', f: SB.user.id }); }, 2000);
-  const c = DM.inbox.find(x => x.other_id === uid); if (c) c.unread = 0;
+  const c = DM.inbox.find(x => x.other_id === uid); if (c) c.unread = DM.msgs.filter(m => !m.mine && !m.read_at).length;
   DM.unread = DM.inbox.reduce((n, c) => n + (c.other_id === DM.open ? 0 : +c.unread || 0), 0); ntBadge();
 }
 function dmRow(m, anim, grp) {
@@ -968,7 +990,7 @@ function soStart() {
   soDockSync();
   frLoad().then(() => {
     ntBadge(); rtSync();
-    if (st && st.o && !auCoarse() && matchMedia('(min-width:761px)').matches && (!$('#chat') || $('#chat').hidden)) { if (SO.v === 'conv' && soFriend(SO.last)) dmOpen(SO.last); else { soView('list'); soShow(true); soList(); } }
+    if (st && st.o && !auCoarse() && matchMedia('(min-width:761px)').matches && (!$('#chat') || $('#chat').hidden)) { if (SO.v === 'conv' && soFriend(SO.last)) dmOpen(SO.last, true); else { soView('list'); soShow(true); soList(); } }
   });
   dmPoll();
 }
