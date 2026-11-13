@@ -198,6 +198,7 @@ ROWS = [
  ('madalin-stunt',"Madalin Stunt Cars",'Racing','so8',15,'madalin stunt cars free roam stunt ramps cars','rn'),
  ('golf-friends',"Golf With Your Friends",'Sports','so8',15,'golf with your friends mini golf putt courses','rn'),
  ('bowling',"Bowling",'Sports','so6',8,'bowling ten pin strike spare lane','rn'),
+ ('the-quiet-house',"The Quiet House",'Action,Puzzle','s',30,'granny horror scary escape house hide hiding keys puzzle stealth first person five days','rn'),
 ]
 DELETED = ['demon-halls', 'night-survivors', 'fire-water', 'bomb-blast', 'marble-chain', 'clicker', 'glide', 'jetpack', 'sky-jump', 'lights-out', 'deep-miner', 'fling-birds', 'candy-rope', 'racer', 'shooter', 'hill-climb', 'golf', 'asteroids', 'bowling-3d', 'kart-circuit', 'tower-defense', 'stick-bridge']
 
