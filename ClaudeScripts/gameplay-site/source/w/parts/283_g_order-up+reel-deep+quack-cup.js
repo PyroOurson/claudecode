@@ -18,6 +18,7 @@
     }
     return out;
   };
+  const svOnly = (def, s) => { for (const k of Object.keys(s)) if (!Object.prototype.hasOwnProperty.call(def, k)) delete s[k]; return s; };
   const lerp = (a, b, t) => a + (b - a) * t;
   const rnd = (a, b) => a + Math.random() * (b - a);
   const rint = (a, b) => Math.floor(rnd(a, b + 1));
@@ -482,8 +483,8 @@
   const mountFishing = (root, api) => {
     const W = 960, H = 600, S = makeStage(api, W, H), c = S.ctx, au = S.au;
     const music = makeMusic(au, { bpm: 92, root: 220, scale: [0, 2, 4, 7, 9], pat: [4, -1, 2, 4, 5, -1, 4, 2, 0, -1, 2, 4, 2, -1, -1, -1], bass: [0, 3, 4, 2], vol: .03 });
-    const defSave = { coins: 0, lv: { depth: 0, cap: 0, val: 0, reel: 0, off: 0 }, hold: [], dex: {}, auto: false, hasAuto: false, last: Date.now(), earned: 0, casts: 0, bestHaul: 0, deepest: 0, mk: {}, tut: 0, mus: true, sold: 0 };
-    const sv = svFix(defSave, api.load());
+    const defSave = { coins: 0, lv: { depth: 0, cap: 0, val: 0, reel: 0, off: 0 }, hold: [], dex: {}, auto: false, hasAuto: false, last: Date.now(), earned: 0, casts: 0, bestHaul: 0, deepest: 0, mk: {}, tut: 0, mus: true, sold: 0, mkT: 0 };
+    const sv = svOnly(defSave, svFix(defSave, api.load()));
     for (const k of Object.keys(defSave.lv)) sv.lv[k] = clamp(Math.floor(sv.lv[k]) || 0, 0, TF_UP[k].max);
     sv.hold = sv.hold.filter(h => h && typeof h === 'object' && FBY[h.id] && isFinite(h.v) && isFinite(h.size)).slice(0, 400);
     for (const k of Object.keys(sv.dex)) { const q = sv.dex[k]; if (!q || typeof q !== 'object' || Array.isArray(q) || !FBY[k]) delete sv.dex[k]; else sv.dex[k] = { n: clamp(Math.floor(+q.n || 0), 0, 1e9), best: clamp(+q.best || 0, 0, 10), gold: clamp(Math.floor(+q.gold || 0), 0, 1e9) }; }
@@ -2309,7 +2310,7 @@
     const KIDS = ['pizza', 'burger', 'shake'];
     const defR = () => ({ day: 1, ups: {}, deco: {}, bestDay: 0, served: 0 });
     const defSave = { v: 2, money: 0, pts: 0, served: 0, perfects: 0, tipsTotal: 0, earned: 0, lostTotal: 0, days: 0, tut: 0, mus: true, cur: 'pizza', R: { pizza: defR(), burger: defR(), shake: defR() } };
-    const sv = svFix(defSave, api.load());
+    const sv = svOnly(defSave, svFix(defSave, api.load()));
     const num = (v, a, b, d) => typeof v === 'number' && isFinite(v) ? clamp(v, a, b) : d;
     ['money', 'pts', 'served', 'perfects', 'tipsTotal', 'earned', 'lostTotal', 'days', 'tut'].forEach(k => { sv[k] = num(sv[k], 0, 1e12, 0); });
     if (!KIDS.includes(sv.cur)) sv.cur = 'pizza';
@@ -2334,8 +2335,9 @@
       go: id => { if (D.station !== id) { D.station = id; au.tone(600, .05, 'sine', .04); } }
     };
     const KITS = { pizza: pizzaKit(ctx), burger: burgerKit(ctx), shake: shakeKit(ctx) };
+    svOnly(defSave.R, sv.R);
     KIDS.forEach(k => {
-      const r = sv.R[k], ups = OU.SHARED.concat(KITS[k].ups);
+      const r = svOnly(defR(), sv.R[k]), ups = OU.SHARED.concat(KITS[k].ups);
       r.day = Math.floor(num(r.day, 1, 9999, 1)); r.bestDay = num(r.bestDay, 0, 1e9, 0); r.served = num(r.served, 0, 1e9, 0);
       if (!r.ups || typeof r.ups !== 'object' || Array.isArray(r.ups)) r.ups = {};
       if (!r.deco || typeof r.deco !== 'object' || Array.isArray(r.deco)) r.deco = {};
@@ -3008,7 +3010,7 @@
     const W = 960, H = 600, S = makeStage(api, W, H), c = S.ctx, au = S.au;
     const music = makeMusic(au, { bpm: 126, root: 293.66, scale: [0, 2, 4, 7, 9], pat: [0, 2, 4, 2, 5, 4, 2, -1, 3, 4, 5, 7, 5, 4, 2, 0], bass: [0, 3, 4, 2], vol: .026, wave: 'triangle' });
     const defSave = () => ({ name: 'Quackers', look: dkLook(), owned: {}, cols: { yellow: 1 }, st: { run: { lv: 1, xp: 0 }, swim: { lv: 1, xp: 0 }, fly: { lv: 1, xp: 0 }, climb: { lv: 1, xp: 0 } }, energy: 100, seeds: 6, money: 25, runs: [[], [], [], [], [], []], trophy: [0, 0, 0, 0, 0, 0], champ: false, nraces: 0, wins: 0, trains: 0, tut: 0, mus: true, bestM: { run: 0, swim: 0, fly: 0, climb: 0 } });
-    const sv = svFix(defSave(), api.load());
+    const sv = svOnly(defSave(), svFix(defSave(), api.load()));
     for (const sl of DK.SLOTS) if (sv.look[sl] != null && !(DK.IB[sv.look[sl]] && DK.IB[sv.look[sl]].slot === sl)) sv.look[sl] = null;
     if (!DK.CB[sv.look.col]) sv.look.col = 'yellow';
     { const st0 = {}; for (const d of DK.STATS) { const q = sv.st[d.id] && typeof sv.st[d.id] === 'object' ? sv.st[d.id] : { lv: 1, xp: 0 }; st0[d.id] = { lv: clamp(Math.floor(q.lv) || 1, 1, 40), xp: clamp(+q.xp || 0, 0, 1e6) }; } sv.st = st0; }
@@ -3522,7 +3524,7 @@
         S.text(i18('Lv {n}', { n: sv.st[k].lv }) + (bonus(k) ? ' +' + bonus(k) : ''), x + 70, y + 160, 20, '#2a2438');
         trainText(TXT[k], x + 130, y + 76, w - 160, 18);
         S.text('Your top speed grows with every level.', x + w / 2, y + 222, 15, '#6a5a7a', 'center', null, 800);
-        duckDraw(c, x + w / 2, y + 340, 2.2, { look: sv.look, t: S.t, pose: k, rot: k === 'climb' ? -.4 : 0 });
+        duckDraw(c, x + w / 2, y + (k === 'fly' ? 352 : 340), k === 'fly' ? 1.7 : 2.2, { look: sv.look, t: S.t, pose: k, rot: k === 'climb' ? -.4 : 0 });
         S.text(i18('Costs {a} energy   (you have {b})', { a: TCOST, b: Math.round(sv.energy) }), x + w / 2, y + 366, 15, sv.energy < TCOST ? '#c0392b' : '#6a5a7a', 'center', null, 800);
         if (S.btn(x + w / 2 - 110, y + 380, 220, 48, 'Start', { color: sv.energy >= TCOST ? '#3ecf6c' : '#b9b2c9', size: 24, enabled: sv.energy >= TCOST }) || (S.key('Enter') && sv.energy >= TCOST)) { beginPlay(); sfx.click(); }
         if (S.btn(x + 14, y + h - 56, 100, 40, 'Back', { color: '#e8584a', size: 16, r: 12 })) { scene = 'trainmenu'; sfx.click(); }
