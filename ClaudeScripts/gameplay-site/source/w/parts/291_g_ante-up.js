@@ -2912,7 +2912,15 @@
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
       const k = e.key, lk = k.length === 1 ? k.toLowerCase() : k;
       const stop = () => { e.preventDefault(); e.stopPropagation(); };
-      if (modal) { if (k === 'Enter' && modal.dataset.enter) { stop(); const b = modal.querySelector(modal.dataset.enter); if (b) b.click(); } return; }
+      if (modal) { if (k === 'Escape') { stop(); closeModal(); snd('tick'); } else if (k === 'Enter' && modal.dataset.enter) { stop(); const b = modal.querySelector(modal.dataset.enter); if (b) b.click(); } return; }
+      if (k === 'Escape') {
+        stop();
+        if (e.repeat) return;
+        if (uiPhase === 'menu') { if (ovl.querySelector('[data-n=go]')) { snd('tick'); showMenu(); } return; }
+        if (uiPhase === 'over' || uiPhase === 'win' || busy) return;
+        snd('tick'); openOptions();
+        return;
+      }
       if (uiPhase === 'menu') {
         if (k === 'Enter' && ovl.querySelector('[data-m=cont]')) { stop(); menuAct('cont'); }
         else if (k === 'Enter' && ovl.querySelector('[data-n=go]')) { stop(); newRunGo(); }
@@ -3007,7 +3015,7 @@
         pn.innerHTML = '';
         if (tab === 0) {
           const t = hnode('table', 'md-tab');
-          t.innerHTML = '<tr><th>Hand</th><th>Lvl</th><th>Chips</th><th></th><th>Mult</th><th>Played</th></tr>' + HORD.filter(knownHand).map(k => { const v = hv(k), l = R.hl[k]; return '<tr><td>' + HAND[k].n + '</td><td>' + l.lvl + '</td><td class="c">' + v.c + '</td><td>X</td><td class="m">' + v.m + '</td><td>' + l.played + '</td></tr>'; }).join('');
+          t.innerHTML = '<tr><th>Hand</th><th>Lvl</th><th>Chips</th><th></th><th>Mult</th><th>Times played</th></tr>' + HORD.filter(knownHand).map(k => { const v = hv(k), l = R.hl[k]; return '<tr><td>' + HAND[k].n + '</td><td>' + l.lvl + '</td><td class="c">' + v.c + '</td><td>X</td><td class="m">' + v.m + '</td><td>' + l.played + '</td></tr>'; }).join('');
           pn.append(t);
         } else if (tab === 1) {
           R.bl.forEach(b => { const boss = b.k === 'boss', nm = boss ? BK[b.boss].n : b.k === 'big' ? 'Big Blind' : 'Small Blind'; const r = hnode('div', 'md-r', '<b>' + esc(nm) + '</b><span>' + fmtS(blindTarget(b)) + '</span><i>' + (boss ? esc(BK[b.boss].d) : esc(TF('Skip tag: {t}', { t: TR(TGK[b.tag].n) }))) + '</i><em>' + (b.s === 'done' ? 'Defeated' : b.s === 'skip' ? 'Skipped' : b.s === 'cur' ? 'Current' : b.s === 'sel' ? 'Next' : 'Upcoming') + '</em>'); pn.append(r); });
@@ -3505,7 +3513,7 @@
 @media (prefers-reduced-motion:reduce){.gm-ante-up .bc-i,.gm-ante-up .m-logo span,.gm-ante-up .hb-top canvas,.gm-ante-up .bp-tok,.gm-ante-up .md-j,.gm-ante-up .nr-cv{animation:none!important}}
 `;
 
-  const HELP = '<kbd>Click</kbd> / tap cards to select, drag to reorder · <kbd>Space</kbd> select · <kbd>Enter</kbd> play hand · <kbd>D</kbd> discard · <kbd>R</kbd>/<kbd>T</kbd> sort · <kbd>1</kbd>-<kbd>9</kbd> pick cards · <kbd>U</kbd> use · <kbd>S</kbd> sell · <kbd>N</kbd> next round · <kbd>G</kbd> reroll · <kbd>I</kbd> run info · <kbd>V</kbd> deck';
+  const HELP = '<kbd>Click</kbd> / tap cards to select, drag to reorder · <kbd>Space</kbd> select · <kbd>Enter</kbd> play hand · <kbd>D</kbd> discard · <kbd>R</kbd>/<kbd>T</kbd> sort · <kbd>1</kbd>-<kbd>9</kbd> pick cards · <kbd>U</kbd> use · <kbd>S</kbd> sell · <kbd>N</kbd> next round · <kbd>G</kbd> reroll · <kbd>I</kbd> run info · <kbd>V</kbd> deck · <kbd>Esc</kbd> options';
 
   Ameplay.register({
     id: 'ante-up',
@@ -3516,6 +3524,7 @@
     help: HELP,
     better: 'high',
     width: 1000,
+    ownPause: true,
     format: v => v >= 1e11 ? fmtN(v) : Math.round(v).toLocaleString('en-US'),
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="14" width="24" height="34" rx="4" transform="rotate(-12 21 31)"/><rect x="26" y="10" width="24" height="34" rx="4" transform="rotate(9 38 27)"/><circle cx="38" cy="22" r="5"/><path d="M33 17l3 2M43 17l-3 2M34 33q4 3 8 0"/><path d="M14 54h36" /></svg>',
     css: CSS,
