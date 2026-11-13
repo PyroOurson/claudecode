@@ -141,6 +141,7 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
     side.append(chips, net, btns);
     main.append(board, side);
     const menu = h('div', 'gk-menu');
+    main.dataset.i18n = st.dataset.i18n = menu.dataset.i18n = '';
     root.append(main, st, menu);
     const K = { root, api, opt, main, board, side, chips, st, btns, menu, S, onBtn: null, onStart: null };
     const optRow = o => {
@@ -1953,6 +1954,7 @@ ${p} .gk-board canvas{cursor:pointer;touch-action:none}
         const sz = cvs.getBoundingClientRect().width / W * cell;
         flt = h('div', 'bk-float', miniSvg(oriCells, col(tci()), sz));
         flt.style.setProperty('--s', sz + 'px');
+        flt.dataset.i18n = '';
         root.append(flt);
       }
       function moveFloat(ev) {
