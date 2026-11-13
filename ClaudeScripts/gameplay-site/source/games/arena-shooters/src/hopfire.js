@@ -185,7 +185,7 @@
       dry: (A, D) => A.tone(1800, 1600, 0.03, 'square', 0.06, 0, D),
       jump: (A, D) => A.noise(0.08, 0.12, 800, 1, 0, 'lowpass', 300, D),
       land: (A, D, k) => { A.noise(0.08, 0.15 + (k || 0) * 0.3, 400, 1, 0, 'lowpass', 120, D); A.tone(90, 50, 0.08, 'sine', 0.1 + (k || 0) * 0.2, 0, D); },
-      step: (A, D) => A.noise(0.05, 0.09, 700, 1.2, 0, 'bandpass', 250, D),
+      step: (A, D, k) => A.noise(0.05, 0.09 * (k || 1), 700, 1.2, 0, 'bandpass', 250, D),
       slide: (A, D) => A.noise(0.5, 0.22, 600, 0.6, 0, 'bandpass', 1800, D),
       ric: (A, D) => { if (Math.random() < 0.5) A.tone(2400 + Math.random() * 1500, 900, 0.12, 'sine', 0.04, 0, D); A.noise(0.04, 0.15, 3500, 2, 0, 'bandpass', 0, D); },
       boom: (A, D) => { A.noise(0.9, 1, 600, 0.5, 0, 'lowpass', 60, D); A.tone(70, 28, 0.7, 'sine', 0.6, 0, D); A.noise(0.3, 0.5, 2000, 0.6, 0, 'bandpass', 300, D); },
@@ -238,7 +238,7 @@
     const Gdef = {
       id: 'hopfire', title: 'Hopfire', tint: '#ff7a1a',
       blurb: 'Fast low-poly arena shooter: slide, bunny hop and frag bots or friends online.',
-      help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · mouse look · click fire · right click aim · <kbd>Space</kbd> jump (hold to bunny hop) · <kbd>Shift</kbd> crouch, slide while running · <kbd>R</kbd> reload · <kbd>Q</kbd> or wheel swap · <kbd>V</kbd> knife · <kbd>Tab</kbd> scores · <kbd>Esc</kbd> menu · touch: stick, drag to look, buttons',
+      help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · mouse look · click fire · right click aim · <kbd>Space</kbd> jump (hold to bunny hop) · <kbd>Shift</kbd> crouch, slide while running · <kbd>R</kbd> reload · <kbd>Q</kbd> (<kbd>A</kbd> on AZERTY) or wheel swap · <kbd>V</kbd> knife · <kbd>Tab</kbd> scores · <kbd>Esc</kbd> menu · touch: stick, drag to look, buttons',
       icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="18"/><path d="M32 6v12M32 46v12M6 32h12M46 32h12"/><circle cx="32" cy="32" r="3" fill="currentColor"/></svg>',
       font: '"Trebuchet MS", system-ui, sans-serif', pixel: true, exposure: 1.0,
       phys: { g: 24, jumpV: 7.7, speed: 7.2, accel: 11, airAccel: 2.4, airCap: 1.1, fric: 7, stopSpeed: 2.5, crouchMul: 0.45, slideBoost: 1.5, slideTime: 0.75, slideFric: 0.75, slideMin: 0.6, slideSteer: 2.4, slideCd: 0.3, stepH: 0.5, H: 1.8, HC: 1.15, eye: 1.62, eyeC: 1.0, R: 0.34, maxFall: 40, autoHop: true, maxAir: 1.9, adsMul: 0.7 },
@@ -267,7 +267,7 @@
       streaks: null,
       pickup: () => false, pickupName: () => '',
       logo: () => `<div class="hf-logo"><span class="a">HOP</span><span class="b">FIRE</span></div><p class="hf-tag">${escH(T('Slide. Hop. Frag.'))}</p>`,
-      howHTML: (T, e) => `<ul class="fp-list"><li>${e(T('Move with W A S D (Z Q S D on French keyboards), look with the mouse, click to fire and right click to aim.'))}</li><li>${e(T('Hold Space to bunny hop: you keep your speed as long as you jump the moment you land.'))}</li><li>${e(T('Press Shift (or C) while running to slide. Jump out of a slide to keep its speed. Slides down ramps go even faster.'))}</li><li>${e(T('R reloads, Q or the mouse wheel swaps to your pistol, V swings the knife. Your health comes back after a few seconds out of the fight.'))}</li><li>${e(T('Free for all: first to 25 kills or the best score after 4 minutes. Team deathmatch: first team to 50. Hardpoint: hold the glowing zone; it moves every minute.'))}</li><li>${e(T('Pick a class before you spawn. Each class has its own gun, health and speed.'))}</li></ul>`,
+      howHTML: (T, e) => `<ul class="fp-list"><li>${e(T('Move with W A S D (Z Q S D on French keyboards), look with the mouse, click to fire and right click to aim.'))}</li><li>${e(T('Hold Space to bunny hop: you keep your speed as long as you jump the moment you land.'))}</li><li>${e(T('Press Shift (or C) while running to slide. Jump out of a slide to keep its speed. Slides down ramps go even faster.'))}</li><li>${e(T('R reloads, Q (A on AZERTY) or the mouse wheel swaps to your pistol, V swings the knife. Your health comes back after a few seconds out of the fight.'))}</li><li>${e(T('Free for all: first to 25 kills or the best score after 4 minutes. Team deathmatch: first team to 50. Hardpoint: hold the glowing zone; it moves every minute.'))}</li><li>${e(T('Pick a class before you spawn. Each class has its own gun, health and speed.'))}</li></ul>`,
       css: R => `
 ${R} .fp-wrap{--acc:#ff7a1a;--acc2:#2ad4c4;--pan:rgba(14,18,30,.86);font-family:"Trebuchet MS",system-ui,sans-serif;color:#fff}
 ${R} .fp-card{background:var(--pan);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:clamp(12px,2.2cqw,24px);box-shadow:0 20px 60px rgba(0,0,0,.45);backdrop-filter:blur(6px)}
@@ -414,7 +414,12 @@ ${R} .fp-scope::after{height:min(84cqw,84cqh);width:2px;transform:translate(-50%
         const far = [];
         let s2 = 99;
         const r2 = () => (s2 = (s2 * 16807) % 2147483647) / 2147483647;
-        for (let i = 0; i < 40; i++) { const a = i / 40 * TAU + r2() * 0.1, d = 110 + r2() * 40, h = 10 + r2() * 30, w = 8 + r2() * 14; far.push(['box', sky.snow ? '#c9d6e4' : sky.clouds ? '#8fa6c2' : '#d9b98a', [Math.cos(a) * d, h / 2 - 1, Math.sin(a) * d], [w, h, w], [0, a, 0]]); }
+        for (let i = 0; i < 40; i++) {
+          const a = i / 40 * TAU + r2() * 0.1, d = 110 + r2() * 40;
+          if (sky.snow) { const h = 22 + r2() * 30, w = 26 + r2() * 26; far.push(['cone4', '#9fb0c4', [Math.cos(a) * d * 1.3, h / 2 - 2, Math.sin(a) * d * 1.3], [w, h, w], [0, a, 0]], ['cone4', '#f4f8fc', [Math.cos(a) * d * 1.3, h * 0.78 - 2, Math.sin(a) * d * 1.3], [w * 0.44, h * 0.44, w * 0.44], [0, a, 0]]); }
+          else if (!sky.clouds) { if (i % 2) continue; const h = 8 + r2() * 14, w = 30 + r2() * 40; far.push(['box', i % 4 ? '#c98a56' : '#b87a4a', [Math.cos(a) * d * 1.2, h / 2 - 1, Math.sin(a) * d * 1.2], [w, h, w * 0.6], [0, a, 0]], ['box', '#d9a06a', [Math.cos(a) * d * 1.2, h - 1, Math.sin(a) * d * 1.2], [w * 1.05, 1.2, w * 0.63], [0, a, 0]]); }
+          else { const h = 10 + r2() * 30, w = 8 + r2() * 14; far.push(['box', '#8fa6c2', [Math.cos(a) * d, h / 2 - 1, Math.sin(a) * d], [w, h, w], [0, a, 0]]); for (let k = 1; k < h / 4; k++) far.push(['box', '#a8bcd4', [Math.cos(a) * (d - w / 2 - 0.05), k * 4, Math.sin(a) * (d - w / 2 - 0.05)], [w * 0.8, 0.8, 0.2], [0, a, 0]]); }
+        }
         const fm = new THREE.Mesh(kit.geo(far), kit.own(new THREE.MeshLambertMaterial({ vertexColors: true })));
         g.add(fm);
         return g;

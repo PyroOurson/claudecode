@@ -289,7 +289,7 @@
         if (B.burstT <= 0) { B.burst = B.burst ? 0 : 1; B.burstT = B.burst ? 0.18 + rr() * 0.15 : L.tap + rr() * 0.2; }
       } else B.burst = 1;
       const okSpread = d.pellets ? dist < (d.botRange || 8) * 1.8 : sp < rad * 4 + 0.02 || dist < 12;
-      if (ready && err < rad + (d.auto ? sp * 0.3 : 0) && B.burst && okSpread) I.fire = true;
+      if (ready && err < rad + (d.auto ? sp * 0.3 : 0) && B.burst && okSpread && (d.auto || !p.firePrev)) I.fire = true;
       if (d.kind === 'rocket' && dist < 3.5 && p.weps[1] && L.smart > 0.5) { I.slot = 1; I.slotN++; }
     }
     if (w && p.weps.length > 2 && L.smart > 0.5 && engage && w.mag === 0 && p.cur === 0 && p.weps[1] && p.weps[1].mag > 0 && (B.dist || 99) < 18) { I.slot = 1; I.slotN++; }

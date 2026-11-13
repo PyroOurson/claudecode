@@ -187,7 +187,7 @@
       dry: (A, D) => A.tone(1700, 1500, 0.03, 'square', 0.06, 0, D),
       jump: (A, D) => { A.tone(300, 520, 0.12, 'sine', 0.05, 0, D); },
       land: (A, D, k) => { A.tone(160, 80, 0.08, 'sine', 0.08 + (k || 0) * 0.15, 0, D); A.noise(0.05, 0.08 + (k || 0) * 0.15, 600, 1, 0, 'lowpass', 0, D); },
-      step: (A, D) => A.tone(200, 160, 0.04, 'sine', 0.05, 0, D),
+      step: (A, D, k) => { A.tone(200, 160, 0.04, 'sine', 0.05 * (k || 1), 0, D); A.noise(0.04, 0.05 * (k || 1), 900, 1, 0, 'bandpass', 0, D); },
       ric: (A, D) => { A.noise(0.04, 0.14, 3500, 2, 0, 'bandpass', 0, D); if (Math.random() < 0.4) A.tone(2600 + Math.random() * 1200, 1000, 0.1, 'sine', 0.03, 0, D); },
       boom: (A, D) => { A.noise(0.9, 1, 600, 0.5, 0, 'lowpass', 60, D); A.tone(80, 30, 0.7, 'sine', 0.55, 0, D); A.noise(0.25, 0.4, 2200, 0.7, 0, 'bandpass', 400, D); },
       die: (A, D) => { A.noise(0.18, 0.7, 4500, 2, 0, 'bandpass', 1500, D); A.noise(0.12, 0.5, 2500, 3, 0.07, 'bandpass', 900, D); A.noise(0.3, 0.3, 600, 0.8, 0.1, 'lowpass', 200, D); },
@@ -257,7 +257,7 @@
     const Gdef = {
       id: 'yolk-ops', title: 'Yolk Ops', tint: '#ffb020',
       blurb: 'Cartoon egg shooter: pick a weapon class, crack eggs, grab grenades and win the coop.',
-      help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · mouse look · click fire · right click or <kbd>Shift</kbd> aim · <kbd>Space</kbd> jump · <kbd>R</kbd> reload · <kbd>E</kbd> or wheel swap to pistol · <kbd>Q</kbd> grenade · <kbd>F</kbd> spatula · <kbd>Tab</kbd> scores · <kbd>Esc</kbd> menu · touch: stick, drag to look, buttons',
+      help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · mouse look · click fire · right click or <kbd>Shift</kbd> aim · <kbd>Space</kbd> jump · <kbd>R</kbd> reload · <kbd>E</kbd> or wheel swap to pistol · <kbd>Q</kbd> (<kbd>A</kbd> on AZERTY) or <kbd>G</kbd> grenade · <kbd>F</kbd> spatula · <kbd>Tab</kbd> scores · <kbd>Esc</kbd> menu · touch: stick, drag to look, buttons',
       icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M32 8c10 0 18 16 18 28a18 18 0 0 1-36 0C14 24 22 8 32 8z"/><path d="M22 34l5 4 5-6 5 6 5-4"/></svg>',
       font: '"Arial Rounded MT Bold","Nunito","Trebuchet MS",system-ui,sans-serif', pixel: false, exposure: 1.05, mapAO: 0.8,
       phys: { g: 17, jumpV: 8.0, speed: 5.7, accel: 10, airAccel: 2.6, airCap: 1.3, fric: 7, stopSpeed: 2, crouchMul: 1, slideBoost: 1, slideTime: 0, slideFric: 1, slideMin: 1, stepH: 0.45, H: 1.48, HC: 1.48, eye: 1.18, eyeC: 1.18, R: 0.42, maxFall: 30, autoHop: true, maxAir: 1.4, adsMul: 0.75 },
@@ -300,7 +300,7 @@
       },
       pickupName: k => k === 'n' ? '+1 Grenade' : '+Ammo',
       logo: () => `<div class="yo-logo"><span class="egg"></span><span class="a">YOLK</span><span class="b">OPS</span></div><p class="yo-tag">${escH(T('Crack or be cracked.'))}</p>`,
-      howHTML: (T, e) => `<ul class="fp-list"><li>${e(T('Move with W A S D (Z Q S D on French keyboards), look with the mouse, click to fire.'))}</li><li>${e(T('Right click or Shift to aim. Aim at the middle of the egg: yolk shots do much more damage.'))}</li><li>${e(T('Space jumps. Eggs jump high, so jump around corners and over cover to dodge.'))}</li><li>${e(T('R reloads, E or the mouse wheel swaps to the Peep 9 pistol, Q throws a grenade, F swings the spatula.'))}</li><li>${e(T('Ammo boxes and grenades lie around the map and come back after a while.'))}</li><li>${e(T('Kill streaks: 3 kills restore your health, 5 give you a hard shell, 8 refill your ammo and grenades.'))}</li><li>${e(T('Free for all: first to 25. Teams: first team to 40. King of the Coop: stand in the coop to score; it moves every 50 seconds.'))}</li></ul>`,
+      howHTML: (T, e) => `<ul class="fp-list"><li>${e(T('Move with W A S D (Z Q S D on French keyboards), look with the mouse, click to fire.'))}</li><li>${e(T('Right click or Shift to aim. Aim at the middle of the egg: yolk shots do much more damage.'))}</li><li>${e(T('Space jumps. Eggs jump high, so jump around corners and over cover to dodge.'))}</li><li>${e(T('R reloads, E or the mouse wheel swaps to the Peep 9 pistol, Q (A on AZERTY) or G throws a grenade, F swings the spatula.'))}</li><li>${e(T('Ammo boxes and grenades lie around the map and come back after a while.'))}</li><li>${e(T('Kill streaks: 3 kills restore your health, 5 give you a hard shell, 8 refill your ammo and grenades.'))}</li><li>${e(T('Free for all: first to 25. Teams: first team to 40. King of the Coop: stand in the coop to score; it moves every 50 seconds.'))}</li></ul>`,
       css: R => `
 ${R} .fp-wrap{--acc:#ffb020;--acc2:#38c6b8;--ink:#2a2340;font-family:"Arial Rounded MT Bold","Nunito","Trebuchet MS",system-ui,sans-serif;color:var(--ink)}
 ${R} .fp-card{background:#fff8ea;border:4px solid var(--ink);border-radius:22px;padding:clamp(12px,2.2cqw,24px);box-shadow:0 8px 0 var(--ink),0 20px 50px rgba(0,0,0,.35)}

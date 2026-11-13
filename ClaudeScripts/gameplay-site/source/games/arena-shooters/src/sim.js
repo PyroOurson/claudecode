@@ -494,7 +494,6 @@
     p.bloom = Math.min(d.bloomMax || 0.05, p.bloom + (d.bloom || 0));
     const rk = d.recoil * (1 - p.adsF * (d.adsRecoil == null ? 0.3 : d.adsRecoil));
     p.kick += rk; p.kickYaw += (rnd() - 0.5) * rk * 0.5;
-    if (d.punch && W.auth) { }
     if (d.kind !== 'rocket') hearShot(W, p);
   }
 

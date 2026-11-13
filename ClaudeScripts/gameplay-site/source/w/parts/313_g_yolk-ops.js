@@ -496,7 +496,6 @@
     p.bloom = Math.min(d.bloomMax || 0.05, p.bloom + (d.bloom || 0));
     const rk = d.recoil * (1 - p.adsF * (d.adsRecoil == null ? 0.3 : d.adsRecoil));
     p.kick += rk; p.kickYaw += (rnd() - 0.5) * rk * 0.5;
-    if (d.punch && W.auth) { }
     if (d.kind !== 'rocket') hearShot(W, p);
   }
 
@@ -995,7 +994,7 @@
         if (B.burstT <= 0) { B.burst = B.burst ? 0 : 1; B.burstT = B.burst ? 0.18 + rr() * 0.15 : L.tap + rr() * 0.2; }
       } else B.burst = 1;
       const okSpread = d.pellets ? dist < (d.botRange || 8) * 1.8 : sp < rad * 4 + 0.02 || dist < 12;
-      if (ready && err < rad + (d.auto ? sp * 0.3 : 0) && B.burst && okSpread) I.fire = true;
+      if (ready && err < rad + (d.auto ? sp * 0.3 : 0) && B.burst && okSpread && (d.auto || !p.firePrev)) I.fire = true;
       if (d.kind === 'rocket' && dist < 3.5 && p.weps[1] && L.smart > 0.5) { I.slot = 1; I.slotN++; }
     }
     if (w && p.weps.length > 2 && L.smart > 0.5 && engage && w.mag === 0 && p.cur === 0 && p.weps[1] && p.weps[1].mag > 0 && (B.dist || 99) < 18) { I.slot = 1; I.slotN++; }
@@ -1957,8 +1956,8 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
       else if (deathUI && (c === 'Space' || c === 'Enter') && deathUI.go) deathUI.go();
     });
     api.on(window, 'keyup', e => {
-      if (!e.isTrusted && padOn && e.code !== 'Escape') return;
       keys.delete(e.code);
+      if (!e.isTrusted && padOn && e.code !== 'Escape') return;
       if (has('sb', e.code) && sbOpen) { sbOpen = false; drawSB(); }
       if (has('ads', e.code)) inp.ads = false;
     });
@@ -2078,7 +2077,6 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
         if (edge(5)) { if (G.nade) me.in.nadeN++; else me.in.meleeN++; }
         if (edge(4)) me.in.meleeN++;
       }
-      if (edge(9)) { if (scr === 'play') { if (paused) closePause(); else openPause(); } }
       if (edge(8)) { sbOpen = !sbOpen; drawSB(); }
       if (scr === 'dead' && edge(0) && deathUI && deathUI.go) deathUI.go();
       for (let i = 0; i < bt.length; i++) PAD.prev[i] = pr(i);
@@ -2112,7 +2110,6 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
       if (!W) return [];
       return W.players.filter(p => p && p.inGame).slice().sort((a, b) => b.score - a.score || b.kills - a.kills || a.deaths - b.deaths);
     }
-    function pname(p) { return p.slot === (me && me.slot) ? p.name : p.name; }
     function drawSB() {
       SBD.hidden = !sbOpen || !W;
       if (SBD.hidden) return;
@@ -2438,7 +2435,6 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
             me.hp = e[5]; dmgFlash = Math.min(1, dmgFlash + e[3] / 60);
             if (a && a !== me) addDmgDir(a);
             audio.play('hurt');
-            if (e[7] && NET.role === 'guest') {}
           }
           if (a && a === me && v !== me) { hitMark(e[4] ? 2 : 1); audio.play(e[4] ? 'head' : 'hit'); if (e[4]) pop(T(G.headWord1 || 'Headshot'), 'hs', 0.6); }
           if (v && v !== me) v.hp = e[5];
@@ -2579,6 +2575,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
         c.fireT = (c.fireT == null ? 9 : c.fireT) + dt; c.relT = (c.relT == null ? 9 : c.relT) + dt; c.melT = (c.melT == null ? 9 : c.melT) + dt;
         const w = p.weps[p.cur];
         c.anim({ t: W.t, dt, spd: p.remote ? (c.lsp = damp(c.lsp || 0, Math.hypot(r.x - (c.lx || r.x), r.z - (c.lz || r.z)) / Math.max(1e-3, dt), 8, dt)) : sp, ground: p.onGround, crouch: p.crouch, slide: p.slide > 0, pitch: r.pitch, ads: p.adsF, fire: c.fireT, reload: c.relT, melee: c.melT, alive: p.alive, deadT: c.deadT, wk: w ? w.k : G.classes[p.cls].prim, shield: p.shield > 0, prot: p.spawnProt > 0 });
+        if (p.alive && p.onGround && !p.crouch) { const v = Math.hypot(r.x - (c.lx == null ? r.x : c.lx), r.z - (c.lz == null ? r.z : c.lz)); if (v < 1) { c.stepD = (c.stepD || 0) + v; if (c.stepD > 2.3) { c.stepD = 0; audio.play('step', r.x, r.y, r.z); } } }
         c.lx = r.x; c.lz = r.z;
         if (doTags) {
           let vis = false;
@@ -2670,7 +2667,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
     }
 
     let netAcc = 0;
-    let lastNow = 0;
+    let lastNow = 0, meStep = 0;
     function frame(dt0, now) {
       const dt = lastNow ? clamp((now - lastNow) / 1000, 0, 0.25) : dt0;
       lastNow = now;
@@ -2726,6 +2723,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
       camS.fov = SV.fov / zoom * (h => h > 1.2 ? 1.12 : 1)(wrap.clientHeight / Math.max(1, wrap.clientWidth));
       camS.vfov = 58 - me.adsF * 6;
       if (camO) { Object.assign(camS, camO); }
+      if (me.alive && me.onGround && !me.crouch && !me.slide) { meStep += Math.hypot(me.vx, me.vz) * dt; if (meStep > 2.4) { meStep = 0; audio.play('step', null, 0, 0, 0.5); } }
       fireT += dt;
       const showVm = !camO && me.alive && !(d && d.scope && me.adsF > 0.9) && scr === 'play';
       view.drawView({ show: showVm, wk: w ? w.k : '', ads: me.adsF, spd: Math.hypot(me.vx, me.vz), ground: me.onGround, slide: me.slide > 0, yaw: look.yaw, pitch: look.pitch, reload: me.reloadT > 0 && d ? 1 - me.reloadT / (d.reloadOne && w.mag > 0 ? d.reloadOne : d.reload) : -1, swap: me.swapT > 0 && d ? me.swapT / (d.swap || 0.35) : 0, melee: me.meleeT > 0 ? 1 - me.meleeT / G.weapons[G.melee].rate : -1, fireT, t: W.t, mag: w ? w.mag : 0 }, dt);
@@ -2741,7 +2739,6 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
     }
 
     function tick() {
-      if (me && me.alive && !me.remote && NET.role !== 'guest') { }
       stepWorld(W);
       const E = W.ev;
       if (E.length) {
@@ -2772,7 +2769,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
         chatOpen = false;
         const v = i.value.replace(/\s+/g, ' ').trim().slice(0, 120);
         i.remove(); uiT = performance.now();
-        if (send && v) { if (NET.role === 'host') { const e = ['ch', me.slot, v]; onEv(e, false); NET.pend.push(e); } else netSend({ t: 'ch', m: v }); }
+        if (send && v) { if (NET.role === 'host') { const e = ['ch', me.slot, cleanChat(v)]; onEv(e, false); NET.pend.push(e); } else netSend({ t: 'ch', m: v }); }
         if (scr === 'play' && !paused) lockMouse();
       };
       i.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') done(true); else if (e.key === 'Escape') { e.preventDefault(); done(false); } });
@@ -2929,10 +2926,12 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
         if (Array.isArray(m.E)) for (const e of m.E.slice(0, 12)) { if (!Array.isArray(e) || !['j', 'sl', 'ld', 'rl', 'sw', 'me', 'mm', 'nt'].includes(e[0])) continue; const x = [e[0], p.slot, +e[2] || 0]; onEv(x, false); NET.pend.push(x); }
       } else if (m.t === 'cl') { p.nextCls = clamp(m.c | 0, 0, G.classes.length - 1); }
       else if (m.t === 'rs') { if (typeof m.c === 'number') p.nextCls = clamp(m.c | 0, 0, G.classes.length - 1); p.wantSpawn = true; }
-      else if (m.t === 'ch') { const v = String(m.m || '').replace(/\s+/g, ' ').trim().slice(0, 120); if (!v || now() - (p.chatT || 0) < 700) return; p.chatT = now(); const e = ['ch', p.slot, v]; onEv(e, false); NET.pend.push(e); }
+      else if (m.t === 'ch') { const v = cleanChat(String(m.m || '').replace(/\s+/g, ' ').trim().slice(0, 120)); if (!v || now() - (p.chatT || 0) < 700) return; p.chatT = now(); const e = ['ch', p.slot, v]; onEv(e, false); NET.pend.push(e); }
       else if (m.t === 'pg') { api.net.sendTo(from, { t: 'po', c: m.c }); }
     }
     const now = () => performance.now();
+    const BADW = /\b(f+u+c+k+\w*|sh[i1]+t+\w*|b[i1]+tch\w*|c+u+n+t+\w*|d[i1]ck\w*|puss(y|ies)|a+ss+h[o0]le\w*|bastard\w*|slut\w*|wh[o0]re\w*|n[i1]gg\w*|fagg?\w*|merde\w*|putain\w*|connard\w*|connasse\w*|salope\w*|encul\w*|pute\w*|niqu\w*|batard\w*|mierda\w*|puta\w*|cabr[o0]n\w*|schei(ss|ß)\w*|arschloch\w*|cazz\w*|stronz\w*|vaffanculo\w*|caralh\w*|porra\w*)\b/gi;
+    const cleanChat = v => v.replace(BADW, w => w[0] + '*'.repeat(Math.max(2, w.length - 1)));
 
     function guestData(m) {
       if (m.t === 'cfg') { guestCfg(m); return; }
@@ -3004,7 +3003,6 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
             if (me.ai) me.ai.think(W, STEP);
             wishMove(W, me, STEP); physStep(W, me, STEP);
             NET.claimH = null;
-            const shots = me.shots;
             weaponStep(W, me, STEP);
             if (me.y < W.M.killY) me.vy = 0;
           }
@@ -3053,7 +3051,6 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
           p.hp = c[8];
         }
       }
-      const k = (tnow - (W.projs.length ? 0 : 0));
       for (const r of W.projs) { const t = clamp((tnow - r.at) / 50, 0, 1.5); r.px = r.x; r.py = r.y; r.pz = r.z; r.x = r.ox + (r.nx - r.ox) * t; r.y = r.oy + (r.ny - r.oy) * t; r.z = r.oz + (r.nz - r.oz) * t; }
     }
 
@@ -3066,7 +3063,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
       hidT = t;
       let n = Math.round(el / STEP);
       while (n-- > 0) tick();
-      lastRaf = t - 300;
+      lastRaf = t - 300; lastNow = t; simAcc = 0;
     }, 100);
 
     api.loop((dt, t) => frame(dt, t));
@@ -3271,7 +3268,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
       dry: (A, D) => A.tone(1700, 1500, 0.03, 'square', 0.06, 0, D),
       jump: (A, D) => { A.tone(300, 520, 0.12, 'sine', 0.05, 0, D); },
       land: (A, D, k) => { A.tone(160, 80, 0.08, 'sine', 0.08 + (k || 0) * 0.15, 0, D); A.noise(0.05, 0.08 + (k || 0) * 0.15, 600, 1, 0, 'lowpass', 0, D); },
-      step: (A, D) => A.tone(200, 160, 0.04, 'sine', 0.05, 0, D),
+      step: (A, D, k) => { A.tone(200, 160, 0.04, 'sine', 0.05 * (k || 1), 0, D); A.noise(0.04, 0.05 * (k || 1), 900, 1, 0, 'bandpass', 0, D); },
       ric: (A, D) => { A.noise(0.04, 0.14, 3500, 2, 0, 'bandpass', 0, D); if (Math.random() < 0.4) A.tone(2600 + Math.random() * 1200, 1000, 0.1, 'sine', 0.03, 0, D); },
       boom: (A, D) => { A.noise(0.9, 1, 600, 0.5, 0, 'lowpass', 60, D); A.tone(80, 30, 0.7, 'sine', 0.55, 0, D); A.noise(0.25, 0.4, 2200, 0.7, 0, 'bandpass', 400, D); },
       die: (A, D) => { A.noise(0.18, 0.7, 4500, 2, 0, 'bandpass', 1500, D); A.noise(0.12, 0.5, 2500, 3, 0.07, 'bandpass', 900, D); A.noise(0.3, 0.3, 600, 0.8, 0.1, 'lowpass', 200, D); },
@@ -3341,7 +3338,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
     const Gdef = {
       id: 'yolk-ops', title: 'Yolk Ops', tint: '#ffb020',
       blurb: 'Cartoon egg shooter: pick a weapon class, crack eggs, grab grenades and win the coop.',
-      help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · mouse look · click fire · right click or <kbd>Shift</kbd> aim · <kbd>Space</kbd> jump · <kbd>R</kbd> reload · <kbd>E</kbd> or wheel swap to pistol · <kbd>Q</kbd> grenade · <kbd>F</kbd> spatula · <kbd>Tab</kbd> scores · <kbd>Esc</kbd> menu · touch: stick, drag to look, buttons',
+      help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · mouse look · click fire · right click or <kbd>Shift</kbd> aim · <kbd>Space</kbd> jump · <kbd>R</kbd> reload · <kbd>E</kbd> or wheel swap to pistol · <kbd>Q</kbd> (<kbd>A</kbd> on AZERTY) or <kbd>G</kbd> grenade · <kbd>F</kbd> spatula · <kbd>Tab</kbd> scores · <kbd>Esc</kbd> menu · touch: stick, drag to look, buttons',
       icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M32 8c10 0 18 16 18 28a18 18 0 0 1-36 0C14 24 22 8 32 8z"/><path d="M22 34l5 4 5-6 5 6 5-4"/></svg>',
       font: '"Arial Rounded MT Bold","Nunito","Trebuchet MS",system-ui,sans-serif', pixel: false, exposure: 1.05, mapAO: 0.8,
       phys: { g: 17, jumpV: 8.0, speed: 5.7, accel: 10, airAccel: 2.6, airCap: 1.3, fric: 7, stopSpeed: 2, crouchMul: 1, slideBoost: 1, slideTime: 0, slideFric: 1, slideMin: 1, stepH: 0.45, H: 1.48, HC: 1.48, eye: 1.18, eyeC: 1.18, R: 0.42, maxFall: 30, autoHop: true, maxAir: 1.4, adsMul: 0.75 },
@@ -3384,7 +3381,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
       },
       pickupName: k => k === 'n' ? '+1 Grenade' : '+Ammo',
       logo: () => `<div class="yo-logo"><span class="egg"></span><span class="a">YOLK</span><span class="b">OPS</span></div><p class="yo-tag">${escH(T('Crack or be cracked.'))}</p>`,
-      howHTML: (T, e) => `<ul class="fp-list"><li>${e(T('Move with W A S D (Z Q S D on French keyboards), look with the mouse, click to fire.'))}</li><li>${e(T('Right click or Shift to aim. Aim at the middle of the egg: yolk shots do much more damage.'))}</li><li>${e(T('Space jumps. Eggs jump high, so jump around corners and over cover to dodge.'))}</li><li>${e(T('R reloads, E or the mouse wheel swaps to the Peep 9 pistol, Q throws a grenade, F swings the spatula.'))}</li><li>${e(T('Ammo boxes and grenades lie around the map and come back after a while.'))}</li><li>${e(T('Kill streaks: 3 kills restore your health, 5 give you a hard shell, 8 refill your ammo and grenades.'))}</li><li>${e(T('Free for all: first to 25. Teams: first team to 40. King of the Coop: stand in the coop to score; it moves every 50 seconds.'))}</li></ul>`,
+      howHTML: (T, e) => `<ul class="fp-list"><li>${e(T('Move with W A S D (Z Q S D on French keyboards), look with the mouse, click to fire.'))}</li><li>${e(T('Right click or Shift to aim. Aim at the middle of the egg: yolk shots do much more damage.'))}</li><li>${e(T('Space jumps. Eggs jump high, so jump around corners and over cover to dodge.'))}</li><li>${e(T('R reloads, E or the mouse wheel swaps to the Peep 9 pistol, Q (A on AZERTY) or G throws a grenade, F swings the spatula.'))}</li><li>${e(T('Ammo boxes and grenades lie around the map and come back after a while.'))}</li><li>${e(T('Kill streaks: 3 kills restore your health, 5 give you a hard shell, 8 refill your ammo and grenades.'))}</li><li>${e(T('Free for all: first to 25. Teams: first team to 40. King of the Coop: stand in the coop to score; it moves every 50 seconds.'))}</li></ul>`,
       css: R => `
 ${R} .fp-wrap{--acc:#ffb020;--acc2:#38c6b8;--ink:#2a2340;font-family:"Arial Rounded MT Bold","Nunito","Trebuchet MS",system-ui,sans-serif;color:var(--ink)}
 ${R} .fp-card{background:#fff8ea;border:4px solid var(--ink);border-radius:22px;padding:clamp(12px,2.2cqw,24px);box-shadow:0 8px 0 var(--ink),0 20px 50px rgba(0,0,0,.35)}

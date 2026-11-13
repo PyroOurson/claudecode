@@ -496,7 +496,6 @@
     p.bloom = Math.min(d.bloomMax || 0.05, p.bloom + (d.bloom || 0));
     const rk = d.recoil * (1 - p.adsF * (d.adsRecoil == null ? 0.3 : d.adsRecoil));
     p.kick += rk; p.kickYaw += (rnd() - 0.5) * rk * 0.5;
-    if (d.punch && W.auth) { }
     if (d.kind !== 'rocket') hearShot(W, p);
   }
 
@@ -995,7 +994,7 @@
         if (B.burstT <= 0) { B.burst = B.burst ? 0 : 1; B.burstT = B.burst ? 0.18 + rr() * 0.15 : L.tap + rr() * 0.2; }
       } else B.burst = 1;
       const okSpread = d.pellets ? dist < (d.botRange || 8) * 1.8 : sp < rad * 4 + 0.02 || dist < 12;
-      if (ready && err < rad + (d.auto ? sp * 0.3 : 0) && B.burst && okSpread) I.fire = true;
+      if (ready && err < rad + (d.auto ? sp * 0.3 : 0) && B.burst && okSpread && (d.auto || !p.firePrev)) I.fire = true;
       if (d.kind === 'rocket' && dist < 3.5 && p.weps[1] && L.smart > 0.5) { I.slot = 1; I.slotN++; }
     }
     if (w && p.weps.length > 2 && L.smart > 0.5 && engage && w.mag === 0 && p.cur === 0 && p.weps[1] && p.weps[1].mag > 0 && (B.dist || 99) < 18) { I.slot = 1; I.slotN++; }
@@ -1957,8 +1956,8 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
       else if (deathUI && (c === 'Space' || c === 'Enter') && deathUI.go) deathUI.go();
     });
     api.on(window, 'keyup', e => {
-      if (!e.isTrusted && padOn && e.code !== 'Escape') return;
       keys.delete(e.code);
+      if (!e.isTrusted && padOn && e.code !== 'Escape') return;
       if (has('sb', e.code) && sbOpen) { sbOpen = false; drawSB(); }
       if (has('ads', e.code)) inp.ads = false;
     });
@@ -2078,7 +2077,6 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
         if (edge(5)) { if (G.nade) me.in.nadeN++; else me.in.meleeN++; }
         if (edge(4)) me.in.meleeN++;
       }
-      if (edge(9)) { if (scr === 'play') { if (paused) closePause(); else openPause(); } }
       if (edge(8)) { sbOpen = !sbOpen; drawSB(); }
       if (scr === 'dead' && edge(0) && deathUI && deathUI.go) deathUI.go();
       for (let i = 0; i < bt.length; i++) PAD.prev[i] = pr(i);
@@ -2112,7 +2110,6 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
       if (!W) return [];
       return W.players.filter(p => p && p.inGame).slice().sort((a, b) => b.score - a.score || b.kills - a.kills || a.deaths - b.deaths);
     }
-    function pname(p) { return p.slot === (me && me.slot) ? p.name : p.name; }
     function drawSB() {
       SBD.hidden = !sbOpen || !W;
       if (SBD.hidden) return;
@@ -2438,7 +2435,6 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
             me.hp = e[5]; dmgFlash = Math.min(1, dmgFlash + e[3] / 60);
             if (a && a !== me) addDmgDir(a);
             audio.play('hurt');
-            if (e[7] && NET.role === 'guest') {}
           }
           if (a && a === me && v !== me) { hitMark(e[4] ? 2 : 1); audio.play(e[4] ? 'head' : 'hit'); if (e[4]) pop(T(G.headWord1 || 'Headshot'), 'hs', 0.6); }
           if (v && v !== me) v.hp = e[5];
@@ -2579,6 +2575,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
         c.fireT = (c.fireT == null ? 9 : c.fireT) + dt; c.relT = (c.relT == null ? 9 : c.relT) + dt; c.melT = (c.melT == null ? 9 : c.melT) + dt;
         const w = p.weps[p.cur];
         c.anim({ t: W.t, dt, spd: p.remote ? (c.lsp = damp(c.lsp || 0, Math.hypot(r.x - (c.lx || r.x), r.z - (c.lz || r.z)) / Math.max(1e-3, dt), 8, dt)) : sp, ground: p.onGround, crouch: p.crouch, slide: p.slide > 0, pitch: r.pitch, ads: p.adsF, fire: c.fireT, reload: c.relT, melee: c.melT, alive: p.alive, deadT: c.deadT, wk: w ? w.k : G.classes[p.cls].prim, shield: p.shield > 0, prot: p.spawnProt > 0 });
+        if (p.alive && p.onGround && !p.crouch) { const v = Math.hypot(r.x - (c.lx == null ? r.x : c.lx), r.z - (c.lz == null ? r.z : c.lz)); if (v < 1) { c.stepD = (c.stepD || 0) + v; if (c.stepD > 2.3) { c.stepD = 0; audio.play('step', r.x, r.y, r.z); } } }
         c.lx = r.x; c.lz = r.z;
         if (doTags) {
           let vis = false;
@@ -2670,7 +2667,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
     }
 
     let netAcc = 0;
-    let lastNow = 0;
+    let lastNow = 0, meStep = 0;
     function frame(dt0, now) {
       const dt = lastNow ? clamp((now - lastNow) / 1000, 0, 0.25) : dt0;
       lastNow = now;
@@ -2726,6 +2723,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
       camS.fov = SV.fov / zoom * (h => h > 1.2 ? 1.12 : 1)(wrap.clientHeight / Math.max(1, wrap.clientWidth));
       camS.vfov = 58 - me.adsF * 6;
       if (camO) { Object.assign(camS, camO); }
+      if (me.alive && me.onGround && !me.crouch && !me.slide) { meStep += Math.hypot(me.vx, me.vz) * dt; if (meStep > 2.4) { meStep = 0; audio.play('step', null, 0, 0, 0.5); } }
       fireT += dt;
       const showVm = !camO && me.alive && !(d && d.scope && me.adsF > 0.9) && scr === 'play';
       view.drawView({ show: showVm, wk: w ? w.k : '', ads: me.adsF, spd: Math.hypot(me.vx, me.vz), ground: me.onGround, slide: me.slide > 0, yaw: look.yaw, pitch: look.pitch, reload: me.reloadT > 0 && d ? 1 - me.reloadT / (d.reloadOne && w.mag > 0 ? d.reloadOne : d.reload) : -1, swap: me.swapT > 0 && d ? me.swapT / (d.swap || 0.35) : 0, melee: me.meleeT > 0 ? 1 - me.meleeT / G.weapons[G.melee].rate : -1, fireT, t: W.t, mag: w ? w.mag : 0 }, dt);
@@ -2741,7 +2739,6 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
     }
 
     function tick() {
-      if (me && me.alive && !me.remote && NET.role !== 'guest') { }
       stepWorld(W);
       const E = W.ev;
       if (E.length) {
@@ -2772,7 +2769,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
         chatOpen = false;
         const v = i.value.replace(/\s+/g, ' ').trim().slice(0, 120);
         i.remove(); uiT = performance.now();
-        if (send && v) { if (NET.role === 'host') { const e = ['ch', me.slot, v]; onEv(e, false); NET.pend.push(e); } else netSend({ t: 'ch', m: v }); }
+        if (send && v) { if (NET.role === 'host') { const e = ['ch', me.slot, cleanChat(v)]; onEv(e, false); NET.pend.push(e); } else netSend({ t: 'ch', m: v }); }
         if (scr === 'play' && !paused) lockMouse();
       };
       i.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') done(true); else if (e.key === 'Escape') { e.preventDefault(); done(false); } });
@@ -2929,10 +2926,12 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
         if (Array.isArray(m.E)) for (const e of m.E.slice(0, 12)) { if (!Array.isArray(e) || !['j', 'sl', 'ld', 'rl', 'sw', 'me', 'mm', 'nt'].includes(e[0])) continue; const x = [e[0], p.slot, +e[2] || 0]; onEv(x, false); NET.pend.push(x); }
       } else if (m.t === 'cl') { p.nextCls = clamp(m.c | 0, 0, G.classes.length - 1); }
       else if (m.t === 'rs') { if (typeof m.c === 'number') p.nextCls = clamp(m.c | 0, 0, G.classes.length - 1); p.wantSpawn = true; }
-      else if (m.t === 'ch') { const v = String(m.m || '').replace(/\s+/g, ' ').trim().slice(0, 120); if (!v || now() - (p.chatT || 0) < 700) return; p.chatT = now(); const e = ['ch', p.slot, v]; onEv(e, false); NET.pend.push(e); }
+      else if (m.t === 'ch') { const v = cleanChat(String(m.m || '').replace(/\s+/g, ' ').trim().slice(0, 120)); if (!v || now() - (p.chatT || 0) < 700) return; p.chatT = now(); const e = ['ch', p.slot, v]; onEv(e, false); NET.pend.push(e); }
       else if (m.t === 'pg') { api.net.sendTo(from, { t: 'po', c: m.c }); }
     }
     const now = () => performance.now();
+    const BADW = /\b(f+u+c+k+\w*|sh[i1]+t+\w*|b[i1]+tch\w*|c+u+n+t+\w*|d[i1]ck\w*|puss(y|ies)|a+ss+h[o0]le\w*|bastard\w*|slut\w*|wh[o0]re\w*|n[i1]gg\w*|fagg?\w*|merde\w*|putain\w*|connard\w*|connasse\w*|salope\w*|encul\w*|pute\w*|niqu\w*|batard\w*|mierda\w*|puta\w*|cabr[o0]n\w*|schei(ss|ß)\w*|arschloch\w*|cazz\w*|stronz\w*|vaffanculo\w*|caralh\w*|porra\w*)\b/gi;
+    const cleanChat = v => v.replace(BADW, w => w[0] + '*'.repeat(Math.max(2, w.length - 1)));
 
     function guestData(m) {
       if (m.t === 'cfg') { guestCfg(m); return; }
@@ -3004,7 +3003,6 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
             if (me.ai) me.ai.think(W, STEP);
             wishMove(W, me, STEP); physStep(W, me, STEP);
             NET.claimH = null;
-            const shots = me.shots;
             weaponStep(W, me, STEP);
             if (me.y < W.M.killY) me.vy = 0;
           }
@@ -3053,7 +3051,6 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
           p.hp = c[8];
         }
       }
-      const k = (tnow - (W.projs.length ? 0 : 0));
       for (const r of W.projs) { const t = clamp((tnow - r.at) / 50, 0, 1.5); r.px = r.x; r.py = r.y; r.pz = r.z; r.x = r.ox + (r.nx - r.ox) * t; r.y = r.oy + (r.ny - r.oy) * t; r.z = r.oz + (r.nz - r.oz) * t; }
     }
 
@@ -3066,7 +3063,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
       hidT = t;
       let n = Math.round(el / STEP);
       while (n-- > 0) tick();
-      lastRaf = t - 300;
+      lastRaf = t - 300; lastNow = t; simAcc = 0;
     }, 100);
 
     api.loop((dt, t) => frame(dt, t));
@@ -3269,7 +3266,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
       dry: (A, D) => A.tone(1800, 1600, 0.03, 'square', 0.06, 0, D),
       jump: (A, D) => A.noise(0.08, 0.12, 800, 1, 0, 'lowpass', 300, D),
       land: (A, D, k) => { A.noise(0.08, 0.15 + (k || 0) * 0.3, 400, 1, 0, 'lowpass', 120, D); A.tone(90, 50, 0.08, 'sine', 0.1 + (k || 0) * 0.2, 0, D); },
-      step: (A, D) => A.noise(0.05, 0.09, 700, 1.2, 0, 'bandpass', 250, D),
+      step: (A, D, k) => A.noise(0.05, 0.09 * (k || 1), 700, 1.2, 0, 'bandpass', 250, D),
       slide: (A, D) => A.noise(0.5, 0.22, 600, 0.6, 0, 'bandpass', 1800, D),
       ric: (A, D) => { if (Math.random() < 0.5) A.tone(2400 + Math.random() * 1500, 900, 0.12, 'sine', 0.04, 0, D); A.noise(0.04, 0.15, 3500, 2, 0, 'bandpass', 0, D); },
       boom: (A, D) => { A.noise(0.9, 1, 600, 0.5, 0, 'lowpass', 60, D); A.tone(70, 28, 0.7, 'sine', 0.6, 0, D); A.noise(0.3, 0.5, 2000, 0.6, 0, 'bandpass', 300, D); },
@@ -3322,7 +3319,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
     const Gdef = {
       id: 'hopfire', title: 'Hopfire', tint: '#ff7a1a',
       blurb: 'Fast low-poly arena shooter: slide, bunny hop and frag bots or friends online.',
-      help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · mouse look · click fire · right click aim · <kbd>Space</kbd> jump (hold to bunny hop) · <kbd>Shift</kbd> crouch, slide while running · <kbd>R</kbd> reload · <kbd>Q</kbd> or wheel swap · <kbd>V</kbd> knife · <kbd>Tab</kbd> scores · <kbd>Esc</kbd> menu · touch: stick, drag to look, buttons',
+      help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · mouse look · click fire · right click aim · <kbd>Space</kbd> jump (hold to bunny hop) · <kbd>Shift</kbd> crouch, slide while running · <kbd>R</kbd> reload · <kbd>Q</kbd> (<kbd>A</kbd> on AZERTY) or wheel swap · <kbd>V</kbd> knife · <kbd>Tab</kbd> scores · <kbd>Esc</kbd> menu · touch: stick, drag to look, buttons',
       icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="18"/><path d="M32 6v12M32 46v12M6 32h12M46 32h12"/><circle cx="32" cy="32" r="3" fill="currentColor"/></svg>',
       font: '"Trebuchet MS", system-ui, sans-serif', pixel: true, exposure: 1.0,
       phys: { g: 24, jumpV: 7.7, speed: 7.2, accel: 11, airAccel: 2.4, airCap: 1.1, fric: 7, stopSpeed: 2.5, crouchMul: 0.45, slideBoost: 1.5, slideTime: 0.75, slideFric: 0.75, slideMin: 0.6, slideSteer: 2.4, slideCd: 0.3, stepH: 0.5, H: 1.8, HC: 1.15, eye: 1.62, eyeC: 1.0, R: 0.34, maxFall: 40, autoHop: true, maxAir: 1.9, adsMul: 0.7 },
@@ -3351,7 +3348,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
       streaks: null,
       pickup: () => false, pickupName: () => '',
       logo: () => `<div class="hf-logo"><span class="a">HOP</span><span class="b">FIRE</span></div><p class="hf-tag">${escH(T('Slide. Hop. Frag.'))}</p>`,
-      howHTML: (T, e) => `<ul class="fp-list"><li>${e(T('Move with W A S D (Z Q S D on French keyboards), look with the mouse, click to fire and right click to aim.'))}</li><li>${e(T('Hold Space to bunny hop: you keep your speed as long as you jump the moment you land.'))}</li><li>${e(T('Press Shift (or C) while running to slide. Jump out of a slide to keep its speed. Slides down ramps go even faster.'))}</li><li>${e(T('R reloads, Q or the mouse wheel swaps to your pistol, V swings the knife. Your health comes back after a few seconds out of the fight.'))}</li><li>${e(T('Free for all: first to 25 kills or the best score after 4 minutes. Team deathmatch: first team to 50. Hardpoint: hold the glowing zone; it moves every minute.'))}</li><li>${e(T('Pick a class before you spawn. Each class has its own gun, health and speed.'))}</li></ul>`,
+      howHTML: (T, e) => `<ul class="fp-list"><li>${e(T('Move with W A S D (Z Q S D on French keyboards), look with the mouse, click to fire and right click to aim.'))}</li><li>${e(T('Hold Space to bunny hop: you keep your speed as long as you jump the moment you land.'))}</li><li>${e(T('Press Shift (or C) while running to slide. Jump out of a slide to keep its speed. Slides down ramps go even faster.'))}</li><li>${e(T('R reloads, Q (A on AZERTY) or the mouse wheel swaps to your pistol, V swings the knife. Your health comes back after a few seconds out of the fight.'))}</li><li>${e(T('Free for all: first to 25 kills or the best score after 4 minutes. Team deathmatch: first team to 50. Hardpoint: hold the glowing zone; it moves every minute.'))}</li><li>${e(T('Pick a class before you spawn. Each class has its own gun, health and speed.'))}</li></ul>`,
       css: R => `
 ${R} .fp-wrap{--acc:#ff7a1a;--acc2:#2ad4c4;--pan:rgba(14,18,30,.86);font-family:"Trebuchet MS",system-ui,sans-serif;color:#fff}
 ${R} .fp-card{background:var(--pan);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:clamp(12px,2.2cqw,24px);box-shadow:0 20px 60px rgba(0,0,0,.45);backdrop-filter:blur(6px)}
@@ -3498,7 +3495,12 @@ ${R} .fp-scope::after{height:min(84cqw,84cqh);width:2px;transform:translate(-50%
         const far = [];
         let s2 = 99;
         const r2 = () => (s2 = (s2 * 16807) % 2147483647) / 2147483647;
-        for (let i = 0; i < 40; i++) { const a = i / 40 * TAU + r2() * 0.1, d = 110 + r2() * 40, h = 10 + r2() * 30, w = 8 + r2() * 14; far.push(['box', sky.snow ? '#c9d6e4' : sky.clouds ? '#8fa6c2' : '#d9b98a', [Math.cos(a) * d, h / 2 - 1, Math.sin(a) * d], [w, h, w], [0, a, 0]]); }
+        for (let i = 0; i < 40; i++) {
+          const a = i / 40 * TAU + r2() * 0.1, d = 110 + r2() * 40;
+          if (sky.snow) { const h = 22 + r2() * 30, w = 26 + r2() * 26; far.push(['cone4', '#9fb0c4', [Math.cos(a) * d * 1.3, h / 2 - 2, Math.sin(a) * d * 1.3], [w, h, w], [0, a, 0]], ['cone4', '#f4f8fc', [Math.cos(a) * d * 1.3, h * 0.78 - 2, Math.sin(a) * d * 1.3], [w * 0.44, h * 0.44, w * 0.44], [0, a, 0]]); }
+          else if (!sky.clouds) { if (i % 2) continue; const h = 8 + r2() * 14, w = 30 + r2() * 40; far.push(['box', i % 4 ? '#c98a56' : '#b87a4a', [Math.cos(a) * d * 1.2, h / 2 - 1, Math.sin(a) * d * 1.2], [w, h, w * 0.6], [0, a, 0]], ['box', '#d9a06a', [Math.cos(a) * d * 1.2, h - 1, Math.sin(a) * d * 1.2], [w * 1.05, 1.2, w * 0.63], [0, a, 0]]); }
+          else { const h = 10 + r2() * 30, w = 8 + r2() * 14; far.push(['box', '#8fa6c2', [Math.cos(a) * d, h / 2 - 1, Math.sin(a) * d], [w, h, w], [0, a, 0]]); for (let k = 1; k < h / 4; k++) far.push(['box', '#a8bcd4', [Math.cos(a) * (d - w / 2 - 0.05), k * 4, Math.sin(a) * (d - w / 2 - 0.05)], [w * 0.8, 0.8, 0.2], [0, a, 0]]); }
+        }
         const fm = new THREE.Mesh(kit.geo(far), kit.own(new THREE.MeshLambertMaterial({ vertexColors: true })));
         g.add(fm);
         return g;
