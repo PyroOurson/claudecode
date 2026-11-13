@@ -9801,6 +9801,186 @@ notify pgrst, 'reload schema';
 -- ============================================================================
 -- 2026-11-13 Online players per second and all-time peaks (Part 17.1.4)
 -- ============================================================================
+create table if not exists private.online_sec (
+  at timestamptz primary key,
+  n integer not null default 0,
+  g jsonb not null default '{}'::jsonb
+);
+create table if not exists private.online_min (
+  at timestamptz primary key,
+  n integer not null default 0,
+  g jsonb not null default '{}'::jsonb
+);
+create table if not exists private.online_day (
+  day date primary key,
+  n integer not null default 0,
+  at timestamptz not null,
+  g jsonb not null default '{}'::jsonb
+);
+create table if not exists private.online_peak (
+  scope text primary key,
+  n integer not null,
+  at timestamptz not null
+);
+alter table private.online_sec enable row level security;
+alter table private.online_min enable row level security;
+alter table private.online_day enable row level security;
+alter table private.online_peak enable row level security;
+revoke all on table private.online_sec, private.online_min, private.online_day, private.online_peak from public, anon, authenticated;
+
+create or replace function private.online_gmax(p_a jsonb, p_b jsonb)
+returns jsonb
+language sql
+immutable
+set search_path = ''
+as $$
+  select coalesce(jsonb_object_agg(k, greatest(coalesce((p_a ->> k)::integer, 0), coalesce((p_b ->> k)::integer, 0))), '{}'::jsonb)
+  from (select jsonb_object_keys(coalesce(p_a, '{}'::jsonb)) as k union select jsonb_object_keys(coalesce(p_b, '{}'::jsonb))) x;
+$$;
+
+create or replace function private.online_dmax(p_old jsonb, p_g jsonb, p_at timestamptz)
+returns jsonb
+language sql
+immutable
+set search_path = ''
+as $$
+  select coalesce(jsonb_object_agg(k, case
+      when coalesce((p_g ->> k)::integer, 0) > coalesce((p_old -> k ->> 'n')::integer, 0) then jsonb_build_object('n', (p_g ->> k)::integer, 'at', p_at)
+      else p_old -> k end), '{}'::jsonb)
+  from (select jsonb_object_keys(coalesce(p_old, '{}'::jsonb)) as k union select jsonb_object_keys(coalesce(p_g, '{}'::jsonb))) x;
+$$;
+
+create or replace function private.online_tick()
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_s timestamptz := date_trunc('second', now());
+  v_day date := (now() at time zone 'Europe/Paris')::date;
+  v_n integer;
+  v_g jsonb;
+  v_k text;
+  v_v integer;
+begin
+  insert into private.online_sec (at) values (v_s) on conflict (at) do nothing;
+  if not found then
+    return;
+  end if;
+  select count(*) into v_n from private.presence_now x where x.at > now() - interval '100 seconds';
+  select coalesce(jsonb_object_agg(y.game, y.c), '{}'::jsonb) into v_g
+  from (select x.game, count(*)::integer as c from private.presence_now x where x.at > now() - interval '100 seconds' and x.game is not null group by x.game) y;
+  update private.online_sec set n = v_n, g = v_g where at = v_s;
+  insert into private.online_min as m (at, n, g) values (date_trunc('minute', v_s), v_n, v_g)
+    on conflict (at) do update set n = greatest(m.n, excluded.n), g = private.online_gmax(m.g, excluded.g);
+  insert into private.online_day as d (day, n, at, g) values (v_day, v_n, v_s, private.online_dmax('{}'::jsonb, v_g, v_s))
+    on conflict (day) do update set
+      at = case when excluded.n > d.n then excluded.at else d.at end,
+      n = greatest(d.n, excluded.n),
+      g = private.online_dmax(d.g, v_g, v_s);
+  insert into private.online_peak as p (scope, n, at) values ('site', v_n, v_s)
+    on conflict (scope) do update set n = excluded.n, at = excluded.at where excluded.n > p.n;
+  for v_k, v_v in select key, value::integer from jsonb_each_text(v_g) loop
+    insert into private.online_peak as p (scope, n, at) values ('g:' || v_k, v_v, v_s)
+      on conflict (scope) do update set n = excluded.n, at = excluded.at where excluded.n > p.n;
+  end loop;
+  insert into public.presence_samples as ps (at, online) values (to_timestamp(floor(extract(epoch from v_s) / 300) * 300), v_n)
+    on conflict (at) do update set online = greatest(ps.online, excluded.online);
+  if extract(second from v_s) < 1 and extract(minute from v_s)::integer % 10 = 0 then
+    delete from private.online_sec where at < now() - interval '48 hours';
+    delete from private.online_min where at < now() - interval '90 days';
+  end if;
+end;
+$$;
+revoke all on function private.online_tick() from public, anon, authenticated;
+revoke all on function private.online_gmax(jsonb, jsonb) from public, anon, authenticated;
+revoke all on function private.online_dmax(jsonb, jsonb, timestamptz) from public, anon, authenticated;
+
+create or replace function private.online_beat()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  perform private.online_tick();
+  return null;
+end;
+$$;
+revoke all on function private.online_beat() from public, anon, authenticated;
+drop trigger if exists online_beat on private.presence_now;
+create trigger online_beat after insert or update on private.presence_now
+  for each statement execute function private.online_beat();
+
+do $$
+begin
+  begin
+    create extension if not exists pg_cron;
+  exception when others then
+    raise notice 'pg_cron is not available here (%); online players are recorded on each heartbeat only', sqlerrm;
+  end;
+  if exists (select 1 from pg_extension where extname = 'pg_cron') then
+    perform cron.schedule('gp_online_tick', '1 seconds', 'select private.online_tick()');
+    perform cron.schedule('gp_cron_log_cleanup', '17 3 * * *', 'delete from cron.job_run_details where end_time < now() - interval ''1 day''');
+  end if;
+exception when others then
+  raise notice 'could not schedule the online players job: %', sqlerrm;
+end;
+$$;
+
+create or replace function public.admin_online(p_scope text default null, p_range text default '1h')
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_g text := nullif(lower(btrim(coalesce(p_scope, ''))), '');
+  v_now timestamptz := now();
+  v_today date := (now() at time zone 'Europe/Paris')::date;
+  v_series jsonb;
+  v_at timestamptz;
+  v_n integer;
+begin
+  if v_g is not null and v_g !~ '^[a-z0-9][a-z0-9-]{0,39}$' then
+    raise exception 'Unknown game' using errcode = '22023';
+  end if;
+  select s.at, case when v_g is null then s.n else coalesce((s.g ->> v_g)::integer, 0) end into v_at, v_n
+  from private.online_sec s where s.at > v_now - interval '10 seconds' order by s.at desc limit 1;
+  if p_range in ('1m', '1h') then
+    select coalesce(jsonb_agg(jsonb_build_array(extract(epoch from x.at)::bigint, x.n) order by x.at), '[]'::jsonb) into v_series
+    from (select s.at, case when v_g is null then s.n else coalesce((s.g ->> v_g)::integer, 0) end as n from private.online_sec s
+          where s.at > v_now - case when p_range = '1m' then interval '1 minute' else interval '1 hour' end) x;
+  elsif p_range = '48h' then
+    select coalesce(jsonb_agg(jsonb_build_array(extract(epoch from x.at)::bigint, x.n) order by x.at), '[]'::jsonb) into v_series
+    from (select m.at, case when v_g is null then m.n else coalesce((m.g ->> v_g)::integer, 0) end as n from private.online_min m where m.at > v_now - interval '48 hours') x;
+  elsif p_range = '90d' then
+    select coalesce(jsonb_agg(jsonb_build_array(extract(epoch from x.h)::bigint, x.n) order by x.h), '[]'::jsonb) into v_series
+    from (select date_trunc('hour', m.at) as h, max(case when v_g is null then m.n else coalesce((m.g ->> v_g)::integer, 0) end) as n
+          from private.online_min m where m.at > v_now - interval '90 days' group by 1) x;
+  elsif p_range = 'all' then
+    select coalesce(jsonb_agg(jsonb_build_array(d.day, case when v_g is null then d.n else coalesce((d.g -> v_g ->> 'n')::integer, 0) end) order by d.day), '[]'::jsonb) into v_series
+    from private.online_day d;
+  else
+    raise exception 'Unknown range' using errcode = '22023';
+  end if;
+  return jsonb_build_object(
+    'now', coalesce(v_n, 0),
+    'at', v_at,
+    'peak', (select jsonb_build_object('n', p.n, 'at', p.at) from private.online_peak p where p.scope = coalesce('g:' || v_g, 'site')),
+    'today', (select case when v_g is null then jsonb_build_object('n', d.n, 'at', d.at) else d.g -> v_g end from private.online_day d where d.day = v_today),
+    'series', v_series,
+    'games', coalesce((select s.g from private.online_sec s where s.at > v_now - interval '10 seconds' order by s.at desc limit 1), '{}'::jsonb),
+    'cron', exists (select 1 from pg_extension where extname = 'pg_cron')
+  );
+end;
+$$;
+revoke all on function public.admin_online(text, text) from public, anon, authenticated;
+grant execute on function public.admin_online(text, text) to authenticated;
 
 -- ============================================================================
 -- 2026-11-13 IP bans (Part 17.2)

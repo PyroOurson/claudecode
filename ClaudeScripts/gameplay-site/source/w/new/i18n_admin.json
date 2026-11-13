@@ -329,5 +329,6 @@
 ["30–60 min", "30–60 min", "30–60 min", "30–60 Min.", "30–60 min", "30–60 min"],
 ["Over 1 hour", "Plus de 1 heure", "Más de 1 hora", "Über 1 Stunde", "Più di 1 ora", "Mais de 1 hora"],
 ["Files sent per minute", "Fichiers envoyés par minute", "Archivos enviados por minuto", "Gesendete Dateien pro Minute", "File inviati al minuto", "Ficheiros enviados por minuto"],
-["Files sent per day", "Fichiers envoyés par jour", "Archivos enviados por día", "Gesendete Dateien pro Tag", "File inviati al giorno", "Ficheiros enviados por dia"]
+["Files sent per day", "Fichiers envoyés par jour", "Archivos enviados por día", "Gesendete Dateien pro Tag", "File inviati al giorno", "Ficheiros enviados por dia"],
+["All-time peak {n} on {d}", "Record absolu {n} le {d}", "Récord histórico {n} el {d}", "Allzeit-Rekord {n} am {d}", "Record assoluto {n} il {d}", "Recorde absoluto {n} em {d}"]
 ]

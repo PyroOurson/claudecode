@@ -167,7 +167,8 @@ function lvBar() {
   if (el.dataset.s !== st) { el.dataset.s = st; el.classList.toggle('bad', st === 'bad'); el.classList.toggle('live', st === 'live'); }
   const n = LV.d && LV.d.n ? +LV.d.n.all || 0 : 0;
   const txt = st === 'live' ? auT(n === 1 ? 'Live · 1 online' : 'Live · {n} online').replace('{n}', stN(n)) : st === 'wait' ? auT('Connecting…') : st === 'slow' ? auT('Updated {t}').replace('{t}', adAgoS(LV.at)) : st === 'old' ? (AD.ok ? auT('Updated {t}').replace('{t}', adAgoS(AD.ok)) : '') : st === 'idle' ? auT('Paused') : LV.at ? auT('Offline · updated {t}').replace('{t}', adAgoS(LV.at)) : auT('Offline');
-  adText(el.lastChild, txt);
+  const pk = LV.pk && LV.pk.peak;
+  adText(el.lastChild, pk && pk.n ? txt + ' · ' + auT('All-time peak {n} on {d}').replace('{n}', stN(pk.n)).replace('{d}', adDate(pk.at, 1)) : txt);
   el.title = auT(st === 'live' ? 'Live numbers refresh every second while this tab is open.' : st === 'old' ? 'Run round19_analytics.sql in the Supabase SQL editor to get live updates every second.' : st === 'bad' ? 'Could not reach the server. Trying again.' : 'Live updates pause while the tab is in the background.');
 }
 function lvErrHtml() {
@@ -179,6 +180,7 @@ function adTick() {
   if (view !== 'admin' || document.visibilityState === 'hidden') return;
   lvBar();
   if (!adIsAdmin()) return;
+  if (!LV.pkBusy && Date.now() - (LV.pkAt || 0) > 950) { LV.pkBusy = true; LV.pkAt = Date.now(); adRpc('admin_online', { p_range: '1m' }).then(r => { LV.pk = r; }).catch(() => {}).finally(() => { LV.pkBusy = false; }); }
   document.querySelectorAll('#vAdmin [data-ago]').forEach(adAgoPaint);
   document.querySelectorAll('#vAdmin [data-rt]').forEach(el => adText(el, adAgo(el.dataset.rt)));
   const tb = $('#adt tbody'), rows = tb ? tb.rows : [];
