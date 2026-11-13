@@ -14,4 +14,4 @@ Fifteen games in `w/parts/201` to `213`. Each exposes test hooks on its root ele
 - President, Cheat, Old Maid, Go Fish, Crazy Eights, War, Speed: standard family rules with the options shown in each menu.
 
 ## Hardest
-Belote, tarot, hearts, spades, euchre and crazy eights search in slices of a few milliseconds per frame during the bot's thinking time, so no frame freezes. Series results are in the agent report of round 21.
+Belote, tarot, hearts, spades, euchre and crazy eights search in slices of a few milliseconds per frame during the bot's thinking time, so no frame freezes; bidding simulations stop after a few milliseconds. Durak Hardest solves the endgame exactly once the deck is empty (up to 19 cards in play). Belote Hardest takes trump only with a clearly better chance; Euchre Hardest calls only when calling beats passing by a margin. Crazy Eights Hardest searches only with two players. Speed bots stay within human speed (Hardest first play about 0.25 to 0.47 s, then about 0.38 s per card). Go Fish, Old Maid and Hearts Hardest are about equal to Hard. Series results are in the agent report of round 21.
