@@ -21,4 +21,5 @@ Study of the best-known game of its kind (Madbox's stickman grappling game, 2018
 - 3 worlds of 10 handmade levels: hooks and pads, then walls, saws, moving hooks and boost rings, then crumbling hooks, wind and all of them together.
 - Stars: one for finishing, one for every gem of the level in one run, one for beating the target time. Gems buy original skins. Worlds open with stars.
 - Endless mode with generated hooks and a best distance.
+- Every level is checked by a search solver that plays the real game code; target times are about 1.5 times the solver's best plus 1.5 seconds.
 - Common beginner mistakes: letting go at the bottom (flies flat into the floor), holding too long (swings back), grabbing the hook behind. The highlight and the trail help here.

@@ -19,6 +19,7 @@ Study of the best-known stickman parkour series (Amazing Adam's acts series, fif
 - Menus: act select with best time, deaths and medal; settings.
 
 ## Our design
-- 6 acts plus a challenge set. Our own layouts and art: a clean stickman on dark blocks with bright hazards.
+- 5 handmade acts (Rooftops, Foundry, Deep Caves, The Lab, Summit), each split by four or five flags, three hidden stars per act, gold and silver medal times. Our own layouts and art: a clean stickman on simple blocks with bright hazards.
+- Every act is checked by a search solver that plays the real game code; an expert run takes 26 to 32 seconds, medals are set from those times. A challenge set like the original's is not built yet.
 - No gore: on death the stickman bursts into a few sticks and sparks.
 - Common beginner mistakes: holding jump into a wall instead of pressing away, rushing past flags, jumping too early onto moving platforms.
