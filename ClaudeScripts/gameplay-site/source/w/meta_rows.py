@@ -175,7 +175,7 @@ ROWS = [
  ('order-up',"Order Up",'Strategy,Skill','s',15,'cooking restaurant chef orders pizza burger ice cream sundae diner time management customers tips','n'),
  ('reel-deep',"Reel Deep",'Strategy,Arcade','s',10,'fishing fish hook line idle upgrades ocean deep sea catch','n'),
  ('quack-cup',"Quack Cup",'Racing,Strategy','s',20,'duck train training race racing running swimming flying climbing tournament','n'),
- ('retro-bowl',"Retro Bowl",'Sports,Strategy','s',25,'retro bowl american football nfl management pixel','rn'),
+ ('touchdown-dynasty',"Touchdown Dynasty",'Sports,Strategy','s',25,'american football gridiron touchdown quarterback franchise season draft management pixel retro bowl','rn'),
  ('fnf',"Friday Night Funkin'",'Skill,Arcade','so',10,'friday night funkin fnf rhythm arrows battle music','rn'),
  ('osu',"osu!",'Skill','s',10,'osu rhythm circles sliders spinners beatmap','rn'),
  ('clash-royale',"Clash Royale",'Strategy,Action','so',6,'clash royale cards elixir towers arena troops','rn'),
@@ -198,6 +198,7 @@ ROWS = [
  ('madalin-stunt',"Madalin Stunt Cars",'Racing','so8',15,'madalin stunt cars free roam stunt ramps cars','rn'),
  ('golf-friends',"Golf With Your Friends",'Sports','so8',15,'golf with your friends mini golf putt courses','rn'),
  ('bowling',"Bowling",'Sports','so6',8,'bowling ten pin strike spare lane','rn'),
+ ('caption-this',"Caption This",'Brain','so10',12,'caption this meme memes captions funny pictures vote rate party make it meme what do you meme','rn'),
 ]
 DELETED = ['demon-halls', 'night-survivors', 'fire-water', 'bomb-blast', 'marble-chain', 'clicker', 'glide', 'jetpack', 'sky-jump', 'lights-out', 'deep-miner', 'fling-birds', 'candy-rope', 'racer', 'shooter', 'hill-climb', 'golf', 'asteroids', 'bowling-3d', 'kart-circuit', 'tower-defense', 'stick-bridge']
 

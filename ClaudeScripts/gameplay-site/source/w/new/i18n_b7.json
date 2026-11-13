@@ -1,0 +1,3826 @@
+[
+[
+"Loading the picture…",
+"Chargement de l’image…",
+"Cargando la imagen…",
+"Bild wird geladen…",
+"Caricamento dell’immagine…",
+"A carregar a imagem…"
+],
+[
+"Menu",
+"Menu",
+"Menú",
+"Menü",
+"Menu",
+"Menu"
+],
+[
+"Party game · 3 to 10 players",
+"Jeu de soirée · 3 à 10 joueurs",
+"Juego de fiesta · 3 a 10 jugadores",
+"Partyspiel · 3 bis 10 Spieler",
+"Party game · da 3 a 10 giocatori",
+"Jogo de festa · 3 a 10 jogadores"
+],
+[
+"Everyone gets the same picture. Write the funniest caption, then rate everyone else’s memes.",
+"Tout le monde reçoit la même image. Écris la légende la plus drôle, puis note les mèmes des autres.",
+"Todos reciben la misma imagen. Escribe el texto más gracioso y luego puntúa los memes de los demás.",
+"Alle bekommen dasselbe Bild. Schreib den lustigsten Text und bewerte dann die Memes der anderen.",
+"Tutti ricevono la stessa immagine. Scrivi la didascalia più divertente, poi vota i meme degli altri.",
+"Todos recebem a mesma imagem. Escreve a legenda mais engraçada e depois avalia os memes dos outros."
+],
+[
+"Bots (solo)",
+"Bots (solo)",
+"Bots (solo)",
+"Bots (solo)",
+"Bot (da solo)",
+"Bots (sozinho)"
+],
+[
+"Rounds",
+"Manches",
+"Rondas",
+"Runden",
+"Round",
+"Rondas"
+],
+[
+"Writing time",
+"Temps d’écriture",
+"Tiempo para escribir",
+"Schreibzeit",
+"Tempo per scrivere",
+"Tempo para escrever"
+],
+[
+"Time per meme",
+"Temps par mème",
+"Tiempo por meme",
+"Zeit pro Meme",
+"Tempo per meme",
+"Tempo por meme"
+],
+[
+"Pictures",
+"Images",
+"Imágenes",
+"Bilder",
+"Immagini",
+"Imagens"
+],
+[
+"Ours",
+"Les nôtres",
+"Las nuestras",
+"Unsere",
+"Le nostre",
+"As nossas"
+],
+[
+"Mixed",
+"Mélangées",
+"Mezcladas",
+"Gemischt",
+"Miste",
+"Misturadas"
+],
+[
+"Only yours",
+"Seulement les tiennes",
+"Solo las tuyas",
+"Nur deine",
+"Solo le tue",
+"Só as tuas"
+],
+[
+"Play with bots",
+"Jouer avec des bots",
+"Jugar con bots",
+"Mit Bots spielen",
+"Gioca con i bot",
+"Jogar com bots"
+],
+[
+"You and {n} bots",
+"Toi et {n} bots",
+"Tú y {n} bots",
+"Du und {n} Bots",
+"Tu e {n} bot",
+"Tu e {n} bots"
+],
+[
+"Play online",
+"Jouer en ligne",
+"Jugar en línea",
+"Online spielen",
+"Gioca online",
+"Jogar online"
+],
+[
+"3 to 10 players, bots can fill empty seats",
+"3 à 10 joueurs, des bots peuvent remplir les places vides",
+"3 a 10 jugadores, los bots pueden ocupar los puestos libres",
+"3 bis 10 Spieler, Bots können freie Plätze füllen",
+"Da 3 a 10 giocatori, i bot possono occupare i posti vuoti",
+"3 a 10 jogadores, bots podem ocupar os lugares vazios"
+],
+[
+"Your pictures ({n})",
+"Tes images ({n})",
+"Tus imágenes ({n})",
+"Deine Bilder ({n})",
+"Le tue immagini ({n})",
+"As tuas imagens ({n})"
+],
+[
+"Add your pictures",
+"Ajouter tes images",
+"Añadir tus imágenes",
+"Eigene Bilder hinzufügen",
+"Aggiungi le tue immagini",
+"Adicionar as tuas imagens"
+],
+[
+"How to play",
+"Comment jouer",
+"Cómo se juega",
+"Spielanleitung",
+"Come si gioca",
+"Como jogar"
+],
+[
+"Games: {g} · Wins: {w} · Memes of the round: {t} · Best: {b} pts",
+"Parties : {g} · Victoires : {w} · Mèmes de la manche : {t} · Record : {b} pts",
+"Partidas: {g} · Victorias: {w} · Memes de la ronda: {t} · Récord: {b} pts",
+"Spiele: {g} · Siege: {w} · Memes der Runde: {t} · Rekord: {b} Pkt.",
+"Partite: {g} · Vittorie: {w} · Meme del round: {t} · Record: {b} pt",
+"Jogos: {g} · Vitórias: {w} · Memes da ronda: {t} · Recorde: {b} pts"
+],
+[
+"Each round, everyone gets the same picture.",
+"À chaque manche, tout le monde reçoit la même image.",
+"En cada ronda, todos reciben la misma imagen.",
+"In jeder Runde bekommen alle dasselbe Bild.",
+"A ogni round tutti ricevono la stessa immagine.",
+"Em cada ronda, todos recebem a mesma imagem."
+],
+[
+"Write a caption in the boxes. Your text appears on the picture as you type. Press Enter or Done to send it; you can edit it until the time runs out.",
+"Écris une légende dans les cases. Ton texte apparaît sur l’image pendant que tu tapes. Appuie sur Entrée ou Terminé pour l’envoyer ; tu peux le modifier jusqu’à la fin du temps.",
+"Escribe un texto en las casillas. Aparece sobre la imagen mientras escribes. Pulsa Intro o Listo para enviarlo; puedes editarlo hasta que se acabe el tiempo.",
+"Schreib einen Text in die Felder. Er erscheint beim Tippen auf dem Bild. Drück Enter oder Fertig zum Senden; bis die Zeit abläuft, kannst du ihn ändern.",
+"Scrivi una didascalia nei riquadri. Il testo appare sull’immagine mentre scrivi. Premi Invio o Fatto per inviarla; puoi modificarla finché c’è tempo.",
+"Escreve uma legenda nas caixas. O texto aparece na imagem enquanto escreves. Carrega em Enter ou Concluído para enviar; podes editá-la até acabar o tempo."
+],
+[
+"Then every meme is shown, without names. Rate each one from Nope to Legendary with a click or the keys 1 to 5. You cannot rate your own.",
+"Ensuite, chaque mème est montré sans nom. Note-les de Bof à Légendaire avec un clic ou les touches 1 à 5. Tu ne peux pas noter le tien.",
+"Después se muestra cada meme, sin nombres. Puntúa cada uno de Nah a Legendario con un clic o las teclas 1 a 5. No puedes puntuar el tuyo.",
+"Dann wird jedes Meme ohne Namen gezeigt. Bewerte jedes von Nö bis Legendär per Klick oder mit den Tasten 1 bis 5. Dein eigenes kannst du nicht bewerten.",
+"Poi ogni meme viene mostrato senza nomi. Vota ciascuno da Bocciato a Leggendario con un clic o i tasti da 1 a 5. Non puoi votare il tuo.",
+"Depois cada meme é mostrado, sem nomes. Avalia cada um de Nada a Lendário com um clique ou as teclas 1 a 5. Não podes avaliar o teu."
+],
+[
+"Each star is worth {p} points. The best meme of the round earns {b} more.",
+"Chaque étoile vaut {p} points. Le meilleur mème de la manche gagne {b} points de plus.",
+"Cada estrella vale {p} puntos. El mejor meme de la ronda gana {b} más.",
+"Jeder Stern bringt {p} Punkte. Das beste Meme der Runde bekommt {b} mehr.",
+"Ogni stella vale {p} punti. Il meme migliore del round ne guadagna altri {b}.",
+"Cada estrela vale {p} pontos. O melhor meme da ronda ganha mais {b}."
+],
+[
+"Rude words, links and phone numbers are blocked. The party leader can hide any caption.",
+"Les grossièretés, les liens et les numéros de téléphone sont bloqués. Le chef du groupe peut masquer n’importe quelle légende.",
+"Las palabrotas, los enlaces y los números de teléfono se bloquean. El líder del grupo puede ocultar cualquier texto.",
+"Schimpfwörter, Links und Telefonnummern werden blockiert. Der Gruppenleiter kann jeden Text ausblenden.",
+"Parolacce, link e numeri di telefono vengono bloccati. Il capo del gruppo può nascondere qualsiasi didascalia.",
+"Palavrões, links e números de telefone são bloqueados. O líder do grupo pode esconder qualquer legenda."
+],
+[
+"OK",
+"OK",
+"Vale",
+"OK",
+"OK",
+"OK"
+],
+[
+"Remove",
+"Retirer",
+"Quitar",
+"Entfernen",
+"Rimuovi",
+"Remover"
+],
+[
+"Your pictures",
+"Tes images",
+"Tus imágenes",
+"Deine Bilder",
+"Le tue immagini",
+"As tuas imagens"
+],
+[
+"Add your own pictures",
+"Ajoute tes propres images",
+"Añade tus propias imágenes",
+"Füge eigene Bilder hinzu",
+"Aggiungi le tue immagini",
+"Adiciona as tuas próprias imagens"
+],
+[
+"Up to {n} pictures. They are shrunk on this device, sent only to the players in your party, and never uploaded to a server or saved.",
+"Jusqu’à {n} images. Elles sont réduites sur cet appareil, envoyées uniquement aux joueurs de ton groupe, et ne sont jamais envoyées sur un serveur ni enregistrées.",
+"Hasta {n} imágenes. Se reducen en este dispositivo, se envían solo a los jugadores de tu grupo y nunca se suben a un servidor ni se guardan.",
+"Bis zu {n} Bilder. Sie werden auf diesem Gerät verkleinert, nur an die Spieler deiner Gruppe geschickt und nie auf einen Server hochgeladen oder gespeichert.",
+"Fino a {n} immagini. Vengono ridotte su questo dispositivo, inviate solo ai giocatori del tuo gruppo e mai caricate su un server o salvate.",
+"Até {n} imagens. São reduzidas neste dispositivo, enviadas só aos jogadores do teu grupo e nunca carregadas para um servidor nem guardadas."
+],
+[
+"Add pictures",
+"Ajouter des images",
+"Añadir imágenes",
+"Bilder hinzufügen",
+"Aggiungi immagini",
+"Adicionar imagens"
+],
+[
+"Done",
+"Terminé",
+"Listo",
+"Fertig",
+"Fatto",
+"Concluído"
+],
+[
+"Remove all",
+"Tout retirer",
+"Quitar todas",
+"Alle entfernen",
+"Rimuovi tutte",
+"Remover todas"
+],
+[
+"That file is not a picture.",
+"Ce fichier n’est pas une image.",
+"Ese archivo no es una imagen.",
+"Diese Datei ist kein Bild.",
+"Quel file non è un’immagine.",
+"Esse ficheiro não é uma imagem."
+],
+[
+"That picture is too big. Pick one under 25 MB.",
+"Cette image est trop grande. Choisis-en une de moins de 25 Mo.",
+"Esa imagen es demasiado grande. Elige una de menos de 25 MB.",
+"Dieses Bild ist zu groß. Wähle eines unter 25 MB.",
+"Quell’immagine è troppo grande. Scegline una sotto i 25 MB.",
+"Essa imagem é demasiado grande. Escolhe uma com menos de 25 MB."
+],
+[
+"This picture could not be opened.",
+"Impossible d’ouvrir cette image.",
+"No se pudo abrir esta imagen.",
+"Dieses Bild ließ sich nicht öffnen.",
+"Impossibile aprire questa immagine.",
+"Não foi possível abrir esta imagem."
+],
+[
+"This picture could not be made small enough.",
+"Impossible de réduire assez cette image.",
+"No se pudo reducir lo suficiente esta imagen.",
+"Dieses Bild ließ sich nicht klein genug machen.",
+"Impossibile ridurre abbastanza questa immagine.",
+"Não foi possível reduzir o suficiente esta imagem."
+],
+[
+"Preparing your pictures…",
+"Préparation de tes images…",
+"Preparando tus imágenes…",
+"Deine Bilder werden vorbereitet…",
+"Preparazione delle immagini…",
+"A preparar as tuas imagens…"
+],
+[
+"{n} pictures ready.",
+"{n} images prêtes.",
+"{n} imágenes listas.",
+"{n} Bilder bereit.",
+"{n} immagini pronte.",
+"{n} imagens prontas."
+],
+[
+"{n} waiting. Go back to the lobby to let them in.",
+"{n} en attente. Retourne au salon pour les faire entrer.",
+"{n} esperando. Vuelve a la sala para dejarlos entrar.",
+"{n} warten. Geh zurück in die Lobby, um sie reinzulassen.",
+"{n} in attesa. Torna alla lobby per farli entrare.",
+"{n} à espera. Volta ao lobby para os deixar entrar."
+],
+[
+"Online",
+"En ligne",
+"En línea",
+"Online",
+"Online",
+"Online"
+],
+[
+"Connected",
+"Connecté",
+"Conectado",
+"Verbunden",
+"Connesso",
+"Ligado"
+],
+[
+"Waiting for the host to start the game…",
+"En attente du lancement par l’hôte…",
+"Esperando a que el anfitrión empiece la partida…",
+"Warten, bis der Host das Spiel startet…",
+"In attesa che l’host avvii la partita…",
+"À espera que o anfitrião comece o jogo…"
+],
+[
+"Leave",
+"Quitter",
+"Salir",
+"Verlassen",
+"Esci",
+"Sair"
+],
+[
+"Game in progress",
+"Partie en cours",
+"Partida en curso",
+"Spiel läuft",
+"Partita in corso",
+"Jogo em curso"
+],
+[
+"Saved game: round {r} of {n}.",
+"Partie sauvegardée : manche {r} sur {n}.",
+"Partida guardada: ronda {r} de {n}.",
+"Gespeichertes Spiel: Runde {r} von {n}.",
+"Partita salvata: round {r} di {n}.",
+"Jogo guardado: ronda {r} de {n}."
+],
+[
+"{n} missing players will be replaced by bots.",
+"{n} joueurs absents seront remplacés par des bots.",
+"{n} jugadores ausentes serán sustituidos por bots.",
+"{n} fehlende Spieler werden durch Bots ersetzt.",
+"{n} giocatori assenti saranno sostituiti da bot.",
+"{n} jogadores em falta serão substituídos por bots."
+],
+[
+"Resume game",
+"Reprendre la partie",
+"Reanudar la partida",
+"Spiel fortsetzen",
+"Riprendi la partita",
+"Retomar o jogo"
+],
+[
+"New game",
+"Nouvelle partie",
+"Nueva partida",
+"Neues Spiel",
+"Nuova partita",
+"Novo jogo"
+],
+[
+"Not enough players",
+"Pas assez de joueurs",
+"No hay suficientes jugadores",
+"Nicht genug Spieler",
+"Giocatori insufficienti",
+"Jogadores insuficientes"
+],
+[
+"Caption This needs at least 3 players. Turn on bots in the lobby or invite friends.",
+"Caption This demande au moins 3 joueurs. Active les bots dans le salon ou invite des amis.",
+"Caption This necesita al menos 3 jugadores. Activa los bots en la sala o invita a amigos.",
+"Caption This braucht mindestens 3 Spieler. Schalte in der Lobby Bots ein oder lade Freunde ein.",
+"Caption This richiede almeno 3 giocatori. Attiva i bot nella lobby o invita degli amici.",
+"Caption This precisa de pelo menos 3 jogadores. Ativa os bots no lobby ou convida amigos."
+],
+[
+"Back to lobby",
+"Retour au salon",
+"Volver a la sala",
+"Zurück zur Lobby",
+"Torna alla lobby",
+"Voltar ao lobby"
+],
+[
+"Game resumed",
+"Partie reprise",
+"Partida reanudada",
+"Spiel fortgesetzt",
+"Partita ripresa",
+"Jogo retomado"
+],
+[
+"Resume",
+"Reprendre",
+"Reanudar",
+"Weiter",
+"Riprendi",
+"Continuar"
+],
+[
+"Restart",
+"Recommencer",
+"Reiniciar",
+"Neu starten",
+"Ricomincia",
+"Recomeçar"
+],
+[
+"Leave the party",
+"Quitter le groupe",
+"Salir del grupo",
+"Gruppe verlassen",
+"Lascia il gruppo",
+"Sair do grupo"
+],
+[
+"Quit to menu",
+"Retour au menu",
+"Volver al menú",
+"Zum Menü",
+"Torna al menu",
+"Voltar ao menu"
+],
+[
+"{name} left. A bot takes over.",
+"{name} est parti. Un bot prend sa place.",
+"{name} se fue. Un bot ocupa su lugar.",
+"{name} ist gegangen. Ein Bot übernimmt.",
+"{name} è uscito. Un bot prende il suo posto.",
+"{name} saiu. Um bot fica no lugar."
+],
+[
+"You were removed",
+"Tu as été retiré",
+"Te han expulsado",
+"Du wurdest entfernt",
+"Sei stato rimosso",
+"Foste removido"
+],
+[
+"The host left",
+"L’hôte est parti",
+"El anfitrión se fue",
+"Der Host ist gegangen",
+"L’host è uscito",
+"O anfitrião saiu"
+],
+[
+"Connection lost",
+"Connexion perdue",
+"Conexión perdida",
+"Verbindung verloren",
+"Connessione persa",
+"Ligação perdida"
+],
+[
+"The host removed you from the party.",
+"L’hôte t’a retiré du groupe.",
+"El anfitrión te expulsó del grupo.",
+"Der Host hat dich aus der Gruppe entfernt.",
+"L’host ti ha rimosso dal gruppo.",
+"O anfitrião removeu-te do grupo."
+],
+[
+"The host ended the game.",
+"L’hôte a terminé la partie.",
+"El anfitrión terminó la partida.",
+"Der Host hat das Spiel beendet.",
+"L’host ha chiuso la partita.",
+"O anfitrião terminou o jogo."
+],
+[
+"The connection to the host was lost.",
+"La connexion avec l’hôte a été perdue.",
+"Se perdió la conexión con el anfitrión.",
+"Die Verbindung zum Host ist abgebrochen.",
+"La connessione con l’host si è interrotta.",
+"A ligação ao anfitrião perdeu-se."
+],
+[
+"Online lobby",
+"Salon en ligne",
+"Sala en línea",
+"Online-Lobby",
+"Lobby online",
+"Lobby online"
+],
+[
+"Meme {k} of {n}",
+"Mème {k} sur {n}",
+"Meme {k} de {n}",
+"Meme {k} von {n}",
+"Meme {k} di {n}",
+"Meme {k} de {n}"
+],
+[
+"Final results",
+"Résultats finaux",
+"Resultados finales",
+"Endergebnis",
+"Risultati finali",
+"Resultados finais"
+],
+[
+"Round {r} of {n}",
+"Manche {r} sur {n}",
+"Ronda {r} de {n}",
+"Runde {r} von {n}",
+"Round {r} di {n}",
+"Ronda {r} de {n}"
+],
+[
+"{n} pts",
+"{n} pts",
+"{n} pts",
+"{n} Pkt.",
+"{n} pt",
+"{n} pts"
+],
+[
+"Show picture",
+"Afficher l’image",
+"Mostrar imagen",
+"Bild zeigen",
+"Mostra immagine",
+"Mostrar imagem"
+],
+[
+"Hide picture",
+"Masquer l’image",
+"Ocultar imagen",
+"Bild ausblenden",
+"Nascondi immagine",
+"Esconder imagem"
+],
+[
+"Get ready to write a caption",
+"Prépare-toi à écrire une légende",
+"Prepárate para escribir un texto",
+"Mach dich bereit, einen Text zu schreiben",
+"Preparati a scrivere una didascalia",
+"Prepara-te para escrever uma legenda"
+],
+[
+"Caption sent!",
+"Légende envoyée !",
+"¡Texto enviado!",
+"Text gesendet!",
+"Didascalia inviata!",
+"Legenda enviada!"
+],
+[
+"Edit my caption",
+"Modifier ma légende",
+"Editar mi texto",
+"Meinen Text ändern",
+"Modifica la mia didascalia",
+"Editar a minha legenda"
+],
+[
+"Write your caption",
+"Écris ta légende",
+"Escribe tu texto",
+"Schreib deinen Text",
+"Scrivi la tua didascalia",
+"Escreve a tua legenda"
+],
+[
+"Hide caption",
+"Masquer la légende",
+"Ocultar texto",
+"Text ausblenden",
+"Nascondi didascalia",
+"Esconder legenda"
+],
+[
+"This is your meme!",
+"C’est ton mème !",
+"¡Este es tu meme!",
+"Das ist dein Meme!",
+"Questo è il tuo meme!",
+"Este é o teu meme!"
+],
+[
+"Hide",
+"Masquer",
+"Ocultar",
+"Ausblenden",
+"Nascondi",
+"Esconder"
+],
+[
+"Hidden by the host",
+"Masqué par l’hôte",
+"Ocultado por el anfitrión",
+"Vom Host ausgeblendet",
+"Nascosto dall’host",
+"Escondido pelo anfitrião"
+],
+[
+"1 rating",
+"1 note",
+"1 voto",
+"1 Bewertung",
+"1 voto",
+"1 avaliação"
+],
+[
+"{n} ratings",
+"{n} notes",
+"{n} votos",
+"{n} Bewertungen",
+"{n} voti",
+"{n} avaliações"
+],
+[
+"No ratings",
+"Aucune note",
+"Sin votos",
+"Keine Bewertungen",
+"Nessun voto",
+"Sem avaliações"
+],
+[
+"Meme of the round",
+"Mème de la manche",
+"Meme de la ronda",
+"Meme der Runde",
+"Meme del round",
+"Meme da ronda"
+],
+[
+"Not enough memes to vote this round",
+"Pas assez de mèmes pour voter cette manche",
+"No hay suficientes memes para votar esta ronda",
+"Nicht genug Memes für eine Abstimmung in dieser Runde",
+"Non ci sono abbastanza meme da votare in questo round",
+"Não há memes suficientes para votar nesta ronda"
+],
+[
+"Nobody wrote a caption this round",
+"Personne n’a écrit de légende cette manche",
+"Nadie escribió un texto en esta ronda",
+"In dieser Runde hat niemand einen Text geschrieben",
+"Nessuno ha scritto una didascalia in questo round",
+"Ninguém escreveu uma legenda nesta ronda"
+],
+[
+"Scores after round {r}",
+"Scores après la manche {r}",
+"Puntuación tras la ronda {r}",
+"Punkte nach Runde {r}",
+"Punteggi dopo il round {r}",
+"Pontuação depois da ronda {r}"
+],
+[
+"Best memes",
+"Meilleurs mèmes",
+"Mejores memes",
+"Beste Memes",
+"Meme migliori",
+"Melhores memes"
+],
+[
+"Play again",
+"Rejouer",
+"Jugar otra vez",
+"Nochmal spielen",
+"Gioca ancora",
+"Jogar outra vez"
+],
+[
+"You won!",
+"Tu as gagné !",
+"¡Has ganado!",
+"Du hast gewonnen!",
+"Hai vinto!",
+"Ganhaste!"
+],
+[
+"You finished #{n}",
+"Tu as fini n° {n}",
+"Terminaste n.º {n}",
+"Du bist Platz {n}",
+"Sei arrivato {n}°",
+"Ficaste em {n}.º"
+],
+[
+"Memes of the round: {n}",
+"Mèmes de la manche : {n}",
+"Memes de la ronda: {n}",
+"Memes der Runde: {n}",
+"Meme del round: {n}",
+"Memes da ronda: {n}"
+],
+[
+"{n} of {m} players finished",
+"{n} joueurs sur {m} ont fini",
+"{n} de {m} jugadores han terminado",
+"{n} von {m} Spielern fertig",
+"{n} giocatori su {m} hanno finito",
+"{n} de {m} jogadores terminaram"
+],
+[
+"{n} of {m} rated",
+"{n} notes sur {m}",
+"{n} de {m} han votado",
+"{n} von {m} bewertet",
+"{n} voti su {m}",
+"{n} de {m} avaliaram"
+],
+[
+"Rating sent · {n} of {m} rated",
+"Note envoyée · {n} sur {m}",
+"Voto enviado · {n} de {m}",
+"Bewertung gesendet · {n} von {m}",
+"Voto inviato · {n} su {m}",
+"Avaliação enviada · {n} de {m}"
+],
+[
+"Hide this caption?",
+"Masquer cette légende ?",
+"¿Ocultar este texto?",
+"Diesen Text ausblenden?",
+"Nascondere questa didascalia?",
+"Esconder esta legenda?"
+],
+[
+"Everyone will see “Hidden by the host” instead, and it will score no points.",
+"Tout le monde verra « Masqué par l’hôte » à la place, et elle ne rapportera aucun point.",
+"Todos verán «Ocultado por el anfitrión» en su lugar y no sumará puntos.",
+"Alle sehen stattdessen „Vom Host ausgeblendet“, und er bringt keine Punkte.",
+"Tutti vedranno «Nascosto dall’host» al suo posto e non farà punti.",
+"Todos verão «Escondido pelo anfitrião» em vez dela, e não dará pontos."
+],
+[
+"Hide it",
+"La masquer",
+"Ocultarlo",
+"Ausblenden",
+"Nascondila",
+"Esconder"
+],
+[
+"Cancel",
+"Annuler",
+"Cancelar",
+"Abbrechen",
+"Annulla",
+"Cancelar"
+],
+[
+"Save picture",
+"Enregistrer l’image",
+"Guardar imagen",
+"Bild speichern",
+"Salva immagine",
+"Guardar imagem"
+],
+[
+"Close",
+"Fermer",
+"Cerrar",
+"Schließen",
+"Chiudi",
+"Fechar"
+],
+[
+"This picture cannot be saved.",
+"Impossible d’enregistrer cette image.",
+"No se puede guardar esta imagen.",
+"Dieses Bild kann nicht gespeichert werden.",
+"Impossibile salvare questa immagine.",
+"Não é possível guardar esta imagem."
+],
+[
+"Reconnecting…",
+"Reconnexion…",
+"Reconectando…",
+"Verbindung wird wiederhergestellt…",
+"Riconnessione…",
+"A ligar de novo…"
+],
+[
+"Online · {n} players",
+"En ligne · {n} joueurs",
+"En línea · {n} jugadores",
+"Online · {n} Spieler",
+"Online · {n} giocatori",
+"Online · {n} jogadores"
+],
+[
+"Top text",
+"Texte du haut",
+"Texto de arriba",
+"Text oben",
+"Testo in alto",
+"Texto de cima"
+],
+[
+"Bottom text",
+"Texte du bas",
+"Texto de abajo",
+"Text unten",
+"Testo in basso",
+"Texto de baixo"
+],
+[
+"Red button",
+"Bouton rouge",
+"Botón rojo",
+"Roter Knopf",
+"Pulsante rosso",
+"Botão vermelho"
+],
+[
+"Blue button",
+"Bouton bleu",
+"Botón azul",
+"Blauer Knopf",
+"Pulsante blu",
+"Botão azul"
+],
+[
+"Chalkboard",
+"Tableau",
+"Pizarra",
+"Tafel",
+"Lavagna",
+"Quadro"
+],
+[
+"Speech bubble",
+"Bulle",
+"Bocadillo",
+"Sprechblase",
+"Fumetto",
+"Balão de fala"
+],
+[
+"Start",
+"Commencer",
+"Empezar",
+"Start",
+"Inizia",
+"Começar"
+],
+[
+"End writing",
+"Fin de l’écriture",
+"Terminar de escribir",
+"Schreiben beenden",
+"Fine scrittura",
+"Terminar a escrita"
+],
+[
+"Next meme",
+"Mème suivant",
+"Siguiente meme",
+"Nächstes Meme",
+"Meme successivo",
+"Próximo meme"
+],
+[
+"Next",
+"Suivant",
+"Siguiente",
+"Weiter",
+"Avanti",
+"Seguinte"
+],
+[
+"Nope",
+"Bof",
+"Nah",
+"Nö",
+"Bocciato",
+"Nada"
+],
+[
+"Meh",
+"Moyen",
+"Meh",
+"Naja",
+"Così così",
+"Mais ou menos"
+],
+[
+"Okay",
+"Pas mal",
+"Bien",
+"Okay",
+"Carino",
+"Bom"
+],
+[
+"Funny",
+"Drôle",
+"Gracioso",
+"Lustig",
+"Divertente",
+"Engraçado"
+],
+[
+"Legendary",
+"Légendaire",
+"Legendario",
+"Legendär",
+"Leggendario",
+"Lendário"
+],
+[
+"The meme party game: everyone gets the same picture, writes the funniest caption, then rates everyone else’s memes. Play with friends online or with bots.",
+"Le jeu de soirée des mèmes : tout le monde reçoit la même image, écrit la légende la plus drôle, puis note les mèmes des autres. Joue en ligne avec tes amis ou avec des bots.",
+"El juego de fiesta de memes: todos reciben la misma imagen, escriben el texto más gracioso y luego puntúan los memes de los demás. Juega en línea con amigos o con bots.",
+"Das Meme-Partyspiel: Alle bekommen dasselbe Bild, schreiben den lustigsten Text und bewerten dann die Memes der anderen. Spiel online mit Freunden oder mit Bots.",
+"Il party game dei meme: tutti ricevono la stessa immagine, scrivono la didascalia più divertente e poi votano i meme degli altri. Gioca online con gli amici o con i bot.",
+"O jogo de festa dos memes: todos recebem a mesma imagem, escrevem a legenda mais engraçada e depois avaliam os memes dos outros. Joga online com amigos ou com bots."
+],
+[
+"Type your caption and press",
+"Tape ta légende et appuie sur",
+"Escribe tu texto y pulsa",
+"Tippe deinen Text und drück",
+"Scrivi la didascalia e premi",
+"Escreve a legenda e carrega em"
+],
+[
+"· rate memes with a click or",
+"· note les mèmes avec un clic ou",
+"· puntúa los memes con un clic o",
+"· bewerte Memes per Klick oder",
+"· vota i meme con un clic o",
+"· avalia os memes com um clique ou"
+],
+[
+"to",
+"à",
+"a",
+"bis",
+"a",
+"a"
+],
+[
+"· online 3 to 10 players, bots can fill empty seats · the host can add their own pictures",
+"· en ligne de 3 à 10 joueurs, des bots peuvent remplir les places vides · l’hôte peut ajouter ses propres images",
+"· en línea de 3 a 10 jugadores, los bots pueden ocupar los puestos libres · el anfitrión puede añadir sus propias imágenes",
+"· online 3 bis 10 Spieler, Bots können freie Plätze füllen · der Host kann eigene Bilder hinzufügen",
+"· online da 3 a 10 giocatori, i bot possono occupare i posti vuoti · l’host può aggiungere le sue immagini",
+"· online de 3 a 10 jogadores, bots podem ocupar lugares vazios · o anfitrião pode adicionar as suas imagens"
+],
+[
+"MENU",
+"MENU",
+"MENÚ",
+"MENÜ",
+"MENU",
+"MENU"
+],
+[
+"NEW FRANCHISE",
+"NOUVELLE FRANCHISE",
+"NUEVA FRANQUICIA",
+"NEUE FRANCHISE",
+"NUOVA FRANCHIGIA",
+"NOVA FRANQUIA"
+],
+[
+"CONTINUE FRANCHISE",
+"CONTINUER LA FRANCHISE",
+"CONTINUAR FRANQUICIA",
+"FRANCHISE FORTSETZEN",
+"CONTINUA LA FRANCHIGIA",
+"CONTINUAR FRANQUIA"
+],
+[
+"QUICK GAME",
+"MATCH RAPIDE",
+"PARTIDO RÁPIDO",
+"SCHNELLES SPIEL",
+"PARTITA VELOCE",
+"JOGO RÁPIDO"
+],
+[
+"SETTINGS",
+"RÉGLAGES",
+"AJUSTES",
+"EINSTELLUNGEN",
+"IMPOSTAZIONI",
+"DEFINIÇÕES"
+],
+[
+"HOW TO PLAY",
+"COMMENT JOUER",
+"CÓMO SE JUEGA",
+"SPIELANLEITUNG",
+"COME SI GIOCA",
+"COMO JOGAR"
+],
+[
+"CHOOSE YOUR TEAM",
+"CHOISIS TON ÉQUIPE",
+"ELIGE TU EQUIPO",
+"WÄHLE DEIN TEAM",
+"SCEGLI LA TUA SQUADRA",
+"ESCOLHE A TUA EQUIPA"
+],
+[
+"Ratings are random every new franchise. Pick a contender or build a dynasty from the bottom.",
+"Les notes changent à chaque nouvelle franchise. Prends un favori ou bâtis une dynastie en partant d’en bas.",
+"Las valoraciones cambian en cada franquicia nueva. Elige un aspirante o construye una dinastía desde abajo.",
+"Die Werte sind bei jeder neuen Franchise zufällig. Nimm einen Favoriten oder bau eine Dynastie von unten auf.",
+"I valori cambiano a ogni nuova franchigia. Scegli una favorita o costruisci una dinastia partendo dal basso.",
+"As classificações mudam em cada nova franquia. Escolhe um candidato ou constrói uma dinastia a partir do fundo."
+],
+[
+"{c} CONFERENCE",
+"CONFÉRENCE {c}",
+"CONFERENCIA {c}",
+"{c}-CONFERENCE",
+"CONFERENCE {c}",
+"CONFERÊNCIA {c}"
+],
+[
+"COACH",
+"ENTRAÎNEUR",
+"ENTRENADOR",
+"TRAINER",
+"ALLENATORE",
+"TREINADOR"
+],
+[
+"QUARTER LENGTH",
+"DURÉE DES QUART-TEMPS",
+"DURACIÓN DEL CUARTO",
+"VIERTELLÄNGE",
+"DURATA DEI QUARTI",
+"DURAÇÃO DOS PERÍODOS"
+],
+[
+"DIFFICULTY",
+"DIFFICULTÉ",
+"DIFICULTAD",
+"SCHWIERIGKEIT",
+"DIFFICOLTÀ",
+"DIFICULDADE"
+],
+[
+"Rookie",
+"Débutant",
+"Novato",
+"Rookie",
+"Esordiente",
+"Novato"
+],
+[
+"Pro",
+"Pro",
+"Pro",
+"Profi",
+"Pro",
+"Pro"
+],
+[
+"All-Pro",
+"All-Pro",
+"All-Pro",
+"All-Pro",
+"All-Pro",
+"All-Pro"
+],
+[
+"Hardest",
+"Hardest",
+"Hardest",
+"Hardest",
+"Hardest",
+"Hardest"
+],
+[
+"SOUND",
+"SON",
+"SONIDO",
+"TON",
+"AUDIO",
+"SOM"
+],
+[
+"ON",
+"ACTIVÉ",
+"SÍ",
+"AN",
+"SÌ",
+"LIGADO"
+],
+[
+"OFF",
+"DÉSACTIVÉ",
+"NO",
+"AUS",
+"NO",
+"DESLIGADO"
+],
+[
+"START FRANCHISE",
+"LANCER LA FRANCHISE",
+"EMPEZAR FRANQUICIA",
+"FRANCHISE STARTEN",
+"INIZIA LA FRANCHIGIA",
+"COMEÇAR FRANQUIA"
+],
+[
+"BACK",
+"RETOUR",
+"VOLVER",
+"ZURÜCK",
+"INDIETRO",
+"VOLTAR"
+],
+[
+"PLAY QUICK GAME",
+"JOUER UN MATCH RAPIDE",
+"JUGAR PARTIDO RÁPIDO",
+"SCHNELLES SPIEL STARTEN",
+"GIOCA UNA PARTITA VELOCE",
+"JOGAR JOGO RÁPIDO"
+],
+[
+"FANS",
+"FANS",
+"AFICIÓN",
+"FANS",
+"TIFOSI",
+"ADEPTOS"
+],
+[
+"OWNER",
+"PROPRIÉTAIRE",
+"DUEÑO",
+"BESITZER",
+"PROPRIETARIO",
+"DONO"
+],
+[
+"CREDITS",
+"CRÉDITS",
+"CRÉDITOS",
+"CREDITS",
+"CREDITI",
+"CRÉDITOS"
+],
+[
+"· PAYROLL",
+"· MASSE SALARIALE",
+"· NÓMINA",
+"· GEHÄLTER",
+"· MONTE INGAGGI",
+"· FOLHA SALARIAL"
+],
+[
+"HOME",
+"ACCUEIL",
+"INICIO",
+"START",
+"HOME",
+"INÍCIO"
+],
+[
+"ROSTER",
+"EFFECTIF",
+"PLANTILLA",
+"KADER",
+"ROSA",
+"PLANTEL"
+],
+[
+"FREE AGENTS",
+"AGENTS LIBRES",
+"AGENTES LIBRES",
+"FREE AGENTS",
+"SVINCOLATI",
+"AGENTES LIVRES"
+],
+[
+"FACILITIES",
+"INSTALLATIONS",
+"INSTALACIONES",
+"EINRICHTUNGEN",
+"STRUTTURE",
+"INSTALAÇÕES"
+],
+[
+"STANDINGS",
+"CLASSEMENT",
+"CLASIFICACIÓN",
+"TABELLE",
+"CLASSIFICA",
+"CLASSIFICAÇÃO"
+],
+[
+"SCHEDULE",
+"CALENDRIER",
+"CALENDARIO",
+"SPIELPLAN",
+"CALENDARIO",
+"CALENDÁRIO"
+],
+[
+"NEWS",
+"ACTUS",
+"NOTICIAS",
+"NEWS",
+"NOTIZIE",
+"NOTÍCIAS"
+],
+[
+"VS",
+"VS",
+"VS",
+"VS",
+"VS",
+"VS"
+],
+[
+"AT",
+"À",
+"EN",
+"BEI",
+"A",
+"EM"
+],
+[
+"PLAY GAME",
+"JOUER LE MATCH",
+"JUGAR PARTIDO",
+"SPIEL SPIELEN",
+"GIOCA LA PARTITA",
+"JOGAR"
+],
+[
+"SIM GAME",
+"SIMULER LE MATCH",
+"SIMULAR PARTIDO",
+"SPIEL SIMULIEREN",
+"SIMULA LA PARTITA",
+"SIMULAR JOGO"
+],
+[
+"SIM TO PLAYOFFS",
+"SIMULER JUSQU’AUX PLAYOFFS",
+"SIMULAR HASTA PLAYOFFS",
+"BIS ZU DEN PLAYOFFS SIMULIEREN",
+"SIMULA FINO AI PLAYOFF",
+"SIMULAR ATÉ AOS PLAYOFFS"
+],
+[
+"SIM SEASON",
+"SIMULER LA SAISON",
+"SIMULAR TEMPORADA",
+"SAISON SIMULIEREN",
+"SIMULA LA STAGIONE",
+"SIMULAR ÉPOCA"
+],
+[
+"SIM NEXT ROUND",
+"SIMULER LE TOUR SUIVANT",
+"SIMULAR SIGUIENTE RONDA",
+"NÄCHSTE RUNDE SIMULIEREN",
+"SIMULA IL TURNO SUCCESSIVO",
+"SIMULAR PRÓXIMA RONDA"
+],
+[
+"SIM TO THE END",
+"SIMULER JUSQU’À LA FIN",
+"SIMULAR HASTA EL FINAL",
+"BIS ZUM ENDE SIMULIEREN",
+"SIMULA FINO ALLA FINE",
+"SIMULAR ATÉ AO FIM"
+],
+[
+"TEAM",
+"ÉQUIPE",
+"EQUIPO",
+"TEAM",
+"SQUADRA",
+"EQUIPA"
+],
+[
+"OFFENSE",
+"ATTAQUE",
+"ATAQUE",
+"OFFENSE",
+"ATTACCO",
+"ATAQUE"
+],
+[
+"DEFENSE",
+"DÉFENSE",
+"DEFENSA",
+"DEFENSE",
+"DIFESA",
+"DEFESA"
+],
+[
+"SPECIAL TEAMS",
+"ÉQUIPES SPÉCIALES",
+"EQUIPOS ESPECIALES",
+"SPECIAL TEAMS",
+"SQUADRE SPECIALI",
+"EQUIPAS ESPECIAIS"
+],
+[
+"INJURED",
+"BLESSÉS",
+"LESIONADOS",
+"VERLETZT",
+"INFORTUNATI",
+"LESIONADOS"
+],
+[
+"STREAK",
+"SÉRIE",
+"RACHA",
+"SERIE",
+"SERIE",
+"SEQUÊNCIA"
+],
+[
+"TITLE SCREEN",
+"ÉCRAN TITRE",
+"PANTALLA DE TÍTULO",
+"TITELBILDSCHIRM",
+"SCHERMATA INIZIALE",
+"ECRÃ INICIAL"
+],
+[
+"ALL",
+"TOUS",
+"TODOS",
+"ALLE",
+"TUTTI",
+"TODOS"
+],
+[
+"NAME",
+"NOM",
+"NOMBRE",
+"NAME",
+"NOME",
+"NOME"
+],
+[
+"AGE",
+"ÂGE",
+"EDAD",
+"ALTER",
+"ETÀ",
+"IDADE"
+],
+[
+"RATING",
+"NOTE",
+"VALORACIÓN",
+"WERTUNG",
+"VALUTAZIONE",
+"AVALIAÇÃO"
+],
+[
+"SALARY",
+"SALAIRE",
+"SALARIO",
+"GEHALT",
+"STIPENDIO",
+"SALÁRIO"
+],
+[
+"MORALE",
+"MORAL",
+"MORAL",
+"MORAL",
+"MORALE",
+"MORAL"
+],
+[
+"STATUS",
+"STATUT",
+"ESTADO",
+"STATUS",
+"STATO",
+"ESTADO"
+],
+[
+"Happy",
+"Content",
+"Contento",
+"Glücklich",
+"Felice",
+"Feliz"
+],
+[
+"Fine",
+"Bien",
+"Bien",
+"Okay",
+"Bene",
+"Bem"
+],
+[
+"Upset",
+"Mécontent",
+"Molesto",
+"Verärgert",
+"Scontento",
+"Chateado"
+],
+[
+"Furious",
+"Furieux",
+"Furioso",
+"Wütend",
+"Furioso",
+"Furioso"
+],
+[
+"STARTER",
+"TITULAIRE",
+"TITULAR",
+"STARTER",
+"TITOLARE",
+"TITULAR"
+],
+[
+"BENCH",
+"REMPLAÇANT",
+"BANQUILLO",
+"BANK",
+"PANCHINA",
+"BANCO"
+],
+[
+"RELEASE",
+"LIBÉRER",
+"DESPEDIR",
+"ENTLASSEN",
+"SVINCOLA",
+"DISPENSAR"
+],
+[
+"Green marker = starter. Release players to fit under the cap. Low morale players may refuse to re-sign.",
+"Repère vert = titulaire. Libère des joueurs pour passer sous le plafond salarial. Les joueurs au moral bas peuvent refuser de prolonger.",
+"Marca verde = titular. Despide jugadores para quedar bajo el límite salarial. Los jugadores con la moral baja pueden negarse a renovar.",
+"Grüne Markierung = Starter. Entlasse Spieler, um unter die Gehaltsobergrenze zu kommen. Spieler mit schlechter Moral verlängern vielleicht nicht.",
+"Segno verde = titolare. Svincola giocatori per restare sotto il tetto salariale. I giocatori con morale basso possono rifiutare il rinnovo.",
+"Marca verde = titular. Dispensa jogadores para ficar abaixo do teto salarial. Jogadores com moral baixa podem recusar renovar."
+],
+[
+"ASK",
+"DEMANDE",
+"PIDE",
+"FORDERUNG",
+"RICHIESTA",
+"PEDE"
+],
+[
+"SIGN",
+"SIGNER",
+"FICHAR",
+"VERPFLICHTEN",
+"INGAGGIA",
+"CONTRATAR"
+],
+[
+"Training Complex",
+"Centre d’entraînement",
+"Centro de entrenamiento",
+"Trainingszentrum",
+"Centro di allenamento",
+"Centro de treino"
+],
+[
+"Players progress faster in the offseason",
+"Les joueurs progressent plus vite pendant l’intersaison",
+"Los jugadores mejoran más rápido en la pretemporada",
+"Spieler entwickeln sich in der Off-Season schneller",
+"I giocatori migliorano più in fretta nella pausa",
+"Os jogadores evoluem mais depressa na pré-época"
+],
+[
+"Medical Center",
+"Centre médical",
+"Centro médico",
+"Medizinzentrum",
+"Centro medico",
+"Centro médico"
+],
+[
+"Fewer injuries and faster recoveries",
+"Moins de blessures et des guérisons plus rapides",
+"Menos lesiones y recuperaciones más rápidas",
+"Weniger Verletzungen und schnellere Genesung",
+"Meno infortuni e recuperi più rapidi",
+"Menos lesões e recuperações mais rápidas"
+],
+[
+"Stadium",
+"Stade",
+"Estadio",
+"Stadion",
+"Stadio",
+"Estádio"
+],
+[
+"Fans grow faster and the salary cap rises",
+"Les fans augmentent plus vite et le plafond salarial monte",
+"La afición crece más rápido y sube el límite salarial",
+"Die Fanbasis wächst schneller und die Gehaltsobergrenze steigt",
+"I tifosi crescono più in fretta e il tetto salariale sale",
+"Os adeptos crescem mais depressa e o teto salarial sobe"
+],
+[
+"Scouting Department",
+"Service de recrutement",
+"Departamento de ojeadores",
+"Scouting-Abteilung",
+"Reparto osservatori",
+"Departamento de observação"
+],
+[
+"Draft prospect ratings are more accurate",
+"Les notes des espoirs de la draft sont plus précises",
+"Las valoraciones de los prospectos del draft son más precisas",
+"Die Werte der Draft-Talente sind genauer",
+"Le valutazioni dei prospetti del draft sono più precise",
+"As avaliações dos prospetos do draft são mais precisas"
+],
+[
+"Offensive Coach",
+"Coordinateur offensif",
+"Coordinador ofensivo",
+"Offensive Coordinator",
+"Coordinatore offensivo",
+"Coordenador ofensivo"
+],
+[
+"Boosts QB accuracy, hands and blocking",
+"Améliore la précision du QB, les mains et les blocages",
+"Mejora la precisión del QB, las manos y los bloqueos",
+"Verbessert QB-Genauigkeit, Hände und Blocken",
+"Migliora la precisione del QB, le mani e i blocchi",
+"Melhora a precisão do QB, as mãos e os bloqueios"
+],
+[
+"Defensive Coach",
+"Coordinateur défensif",
+"Coordinador defensivo",
+"Defensive Coordinator",
+"Coordinatore difensivo",
+"Coordenador defensivo"
+],
+[
+"Boosts your defense against opposing drives",
+"Renforce ta défense contre les attaques adverses",
+"Refuerza tu defensa contra los avances rivales",
+"Stärkt deine Defense gegen gegnerische Drives",
+"Rafforza la tua difesa contro gli attacchi avversari",
+"Reforça a tua defesa contra os ataques adversários"
+],
+[
+"Spend coaching credits (earned from every game) to upgrade your franchise. Level 1 to 5.",
+"Dépense tes crédits d’entraîneur (gagnés à chaque match) pour améliorer ta franchise. Niveau 1 à 5.",
+"Gasta créditos de entrenador (ganados en cada partido) para mejorar tu franquicia. Nivel 1 a 5.",
+"Gib Trainer-Credits (aus jedem Spiel) aus, um deine Franchise zu verbessern. Stufe 1 bis 5.",
+"Spendi i crediti allenatore (guadagnati a ogni partita) per migliorare la franchigia. Livello da 1 a 5.",
+"Gasta créditos de treinador (ganhos em cada jogo) para melhorar a tua franquia. Nível 1 a 5."
+],
+[
+"MAX LEVEL",
+"NIVEAU MAX",
+"NIVEL MÁXIMO",
+"MAX. STUFE",
+"LIVELLO MASSIMO",
+"NÍVEL MÁXIMO"
+],
+[
+"UPGRADE · {n} CREDITS",
+"AMÉLIORER · {n} CRÉDITS",
+"MEJORAR · {n} CRÉDITOS",
+"AUSBAUEN · {n} CREDITS",
+"MIGLIORA · {n} CREDITI",
+"MELHORAR · {n} CRÉDITOS"
+],
+[
+"North",
+"Nord",
+"Norte",
+"Nord",
+"Nord",
+"Norte"
+],
+[
+"South",
+"Sud",
+"Sur",
+"Süd",
+"Sud",
+"Sul"
+],
+[
+"East",
+"Est",
+"Este",
+"Ost",
+"Est",
+"Leste"
+],
+[
+"West",
+"Ouest",
+"Oeste",
+"West",
+"Ovest",
+"Oeste"
+],
+[
+"SEED",
+"TÊTE DE SÉRIE",
+"SEMBRADO",
+"SETZPLATZ",
+"TESTA DI SERIE",
+"CABEÇA DE SÉRIE"
+],
+[
+"WEEK",
+"SEMAINE",
+"SEMANA",
+"WOCHE",
+"SETTIMANA",
+"SEMANA"
+],
+[
+"OPPONENT",
+"ADVERSAIRE",
+"RIVAL",
+"GEGNER",
+"AVVERSARIO",
+"ADVERSÁRIO"
+],
+[
+"RESULT",
+"RÉSULTAT",
+"RESULTADO",
+"ERGEBNIS",
+"RISULTATO",
+"RESULTADO"
+],
+[
+"LATEST",
+"DERNIÈRES",
+"ÚLTIMAS",
+"NEUESTE",
+"ULTIME",
+"ÚLTIMAS"
+],
+[
+"Nothing yet.",
+"Rien pour l’instant.",
+"Nada todavía.",
+"Noch nichts.",
+"Ancora niente.",
+"Ainda nada."
+],
+[
+"SEASONS",
+"SAISONS",
+"TEMPORADAS",
+"SAISONS",
+"STAGIONI",
+"ÉPOCAS"
+],
+[
+"YEAR",
+"ANNÉE",
+"AÑO",
+"JAHR",
+"ANNO",
+"ANO"
+],
+[
+"RECORD",
+"BILAN",
+"RÉCORD",
+"BILANZ",
+"RECORD",
+"REGISTO"
+],
+[
+"CHAMPION",
+"CHAMPION",
+"CAMPEÓN",
+"MEISTER",
+"CAMPIONE",
+"CAMPEÃO"
+],
+[
+"POINTS",
+"POINTS",
+"PUNTOS",
+"PUNKTE",
+"PUNTI",
+"PONTOS"
+],
+[
+"Quarter length and difficulty apply to the next game you play. The Esc key pauses the game.",
+"La durée des quart-temps et la difficulté s’appliquent au prochain match. La touche Échap met le jeu en pause.",
+"La duración del cuarto y la dificultad se aplican al próximo partido. La tecla Esc pausa el juego.",
+"Viertellänge und Schwierigkeit gelten ab dem nächsten Spiel. Die Esc-Taste pausiert das Spiel.",
+"Durata dei quarti e difficoltà valgono dalla prossima partita. Il tasto Esc mette in pausa.",
+"A duração dos períodos e a dificuldade aplicam-se ao próximo jogo. A tecla Esc põe o jogo em pausa."
+],
+[
+"BACK TO FRANCHISE",
+"RETOUR À LA FRANCHISE",
+"VOLVER A LA FRANQUICIA",
+"ZURÜCK ZUR FRANCHISE",
+"TORNA ALLA FRANCHIGIA",
+"VOLTAR À FRANQUIA"
+],
+[
+"DELETE SAVED FRANCHISE",
+"SUPPRIMER LA FRANCHISE",
+"BORRAR LA FRANQUICIA",
+"GESPEICHERTE FRANCHISE LÖSCHEN",
+"ELIMINA LA FRANCHIGIA SALVATA",
+"APAGAR A FRANQUIA GUARDADA"
+],
+[
+"CALL A PLAY",
+"CHOISIR UN JEU",
+"ELIGE UNA JUGADA",
+"SPIELZUG WÄHLEN",
+"SCEGLI UNO SCHEMA",
+"ESCOLHE UMA JOGADA"
+],
+[
+"Pick a pass or run, then tap the field or press Space to snap. Fourth down: choose a field goal or punt.",
+"Choisis une passe ou une course, puis touche le terrain ou appuie sur Espace pour le snap. Au 4e essai : field goal ou punt.",
+"Elige un pase o una carrera y luego toca el campo o pulsa Espacio para el snap. En cuarta oportunidad: field goal o punt.",
+"Wähle Pass oder Lauf, dann tippe aufs Feld oder drück Leertaste für den Snap. Beim 4. Down: Field Goal oder Punt.",
+"Scegli un passaggio o una corsa, poi tocca il campo o premi Spazio per lo snap. Al quarto down: field goal o punt.",
+"Escolhe um passe ou uma corrida e depois toca no campo ou carrega em Espaço para o snap. No 4.º down: field goal ou punt."
+],
+[
+"PASSING",
+"PASSES",
+"PASES",
+"PASSEN",
+"PASSAGGI",
+"PASSES"
+],
+[
+"Receivers run their routes. Tap a receiver (or press 1 to 5) to throw to him. Drag to aim the throw: a trajectory arc and a lock-on box show where the ball goes. The bar over the QB is pass rush pressure; hold the ball too long and you are sacked. Drag from the QB, or use the arrow keys, to scramble.",
+"Les receveurs courent leurs tracés. Touche un receveur (ou appuie sur 1 à 5) pour lui lancer. Fais glisser pour viser : un arc et un cadre montrent où va le ballon. La barre au-dessus du QB est la pression ; garde le ballon trop longtemps et tu es plaqué. Fais glisser depuis le QB, ou utilise les flèches, pour courir.",
+"Los receptores corren sus rutas. Toca un receptor (o pulsa 1 a 5) para lanzarle. Arrastra para apuntar: un arco y un recuadro muestran adónde va el balón. La barra sobre el QB es la presión; si retienes demasiado el balón te capturan. Arrastra desde el QB, o usa las flechas, para escapar.",
+"Die Receiver laufen ihre Routen. Tippe einen Receiver an (oder drück 1 bis 5), um zu werfen. Zieh zum Zielen: Bogen und Zielrahmen zeigen, wohin der Ball fliegt. Der Balken über dem QB ist der Druck; hältst du den Ball zu lange, wirst du gesackt. Zieh vom QB weg oder nutze die Pfeiltasten, um zu scramblen.",
+"I ricevitori corrono le loro tracce. Tocca un ricevitore (o premi da 1 a 5) per lanciargli. Trascina per mirare: un arco e un riquadro mostrano dove va la palla. La barra sopra il QB è la pressione; se tieni la palla troppo subisci un sack. Trascina dal QB, o usa le frecce, per scappare.",
+"Os recetores correm as suas rotas. Toca num recetor (ou carrega de 1 a 5) para lhe passar. Arrasta para apontar: um arco e uma caixa mostram para onde vai a bola. A barra sobre o QB é a pressão; se seguras a bola demasiado sofres um sack. Arrasta a partir do QB, ou usa as setas, para fugir."
+],
+[
+"RUNNING",
+"COURSE",
+"CARRERA",
+"LAUFEN",
+"CORSA",
+"CORRIDA"
+],
+[
+"With the ball, hold the pointer or use the arrows to steer. Swipe (or press J) to juke defenders. Tap (or press Space) to dive for extra yards, but diving raises fumble risk.",
+"Avec le ballon, maintiens le pointeur ou utilise les flèches pour te diriger. Glisse (ou appuie sur J) pour feinter. Touche (ou appuie sur Espace) pour plonger et gagner des yards, mais plonger augmente le risque de fumble.",
+"Con el balón, mantén el puntero o usa las flechas para moverte. Desliza (o pulsa J) para regatear. Toca (o pulsa Espacio) para lanzarte y ganar yardas, pero lanzarse aumenta el riesgo de fumble.",
+"Mit dem Ball halte den Zeiger gedrückt oder lenke mit den Pfeiltasten. Wisch (oder drück J), um Verteidiger auszutricksen. Tippe (oder drück Leertaste) für einen Hechtsprung, aber das erhöht das Fumble-Risiko.",
+"Con la palla, tieni premuto il puntatore o usa le frecce per muoverti. Scorri (o premi J) per dribblare. Tocca (o premi Spazio) per tuffarti e guadagnare yard, ma il tuffo aumenta il rischio di fumble.",
+"Com a bola, mantém o ponteiro ou usa as setas para te mexeres. Desliza (ou carrega em J) para fintar. Toca (ou carrega em Espaço) para mergulhar e ganhar jardas, mas mergulhar aumenta o risco de fumble."
+],
+[
+"KICKING",
+"COUP DE PIED",
+"PATADA",
+"KICKEN",
+"CALCIO",
+"PONTAPÉ"
+],
+[
+"Drag up and release to kick. Drag length is power, drag sideways is aim. With keys: hold Space time to charge, arrows to aim, Space again to kick. Watch the wind.",
+"Fais glisser vers le haut et relâche pour taper. La longueur donne la puissance, le côté donne la visée. Au clavier : Espace pour charger, flèches pour viser, Espace pour taper. Attention au vent.",
+"Arrastra hacia arriba y suelta para patear. La longitud es la potencia y el lateral es la dirección. Con teclas: Espacio para cargar, flechas para apuntar, Espacio otra vez para patear. Ojo al viento.",
+"Nach oben ziehen und loslassen zum Kicken. Die Länge ist die Kraft, seitlich ist die Richtung. Mit Tasten: Leertaste zum Aufladen, Pfeile zum Zielen, nochmal Leertaste zum Kicken. Achte auf den Wind.",
+"Trascina in su e rilascia per calciare. La lunghezza è la potenza, di lato è la mira. Con i tasti: Spazio per caricare, frecce per mirare, Spazio di nuovo per calciare. Occhio al vento.",
+"Arrasta para cima e larga para chutar. O comprimento é a força e o lado é a pontaria. Com teclas: Espaço para carregar, setas para apontar, Espaço outra vez para chutar. Atenção ao vento."
+],
+[
+"FRANCHISE",
+"FRANCHISE",
+"FRANQUICIA",
+"FRANCHISE",
+"FRANCHIGIA",
+"FRANQUIA"
+],
+[
+"Win games to earn coaching credits and keep the fans and the owner happy. Upgrade facilities, manage the salary cap, re-sign stars, draft rookies and sign free agents. Win the Golden Bowl.",
+"Gagne des matchs pour obtenir des crédits et garder les fans et le propriétaire contents. Améliore les installations, gère le plafond salarial, prolonge tes stars, drafte des rookies et signe des agents libres. Remporte le Golden Bowl.",
+"Gana partidos para conseguir créditos y mantener contentos a la afición y al dueño. Mejora las instalaciones, gestiona el límite salarial, renueva a tus estrellas, elige novatos en el draft y ficha agentes libres. Gana el Golden Bowl.",
+"Gewinne Spiele für Trainer-Credits und halte Fans und Besitzer bei Laune. Baue Einrichtungen aus, achte auf die Gehaltsobergrenze, verlängere Stars, drafte Rookies und verpflichte Free Agents. Gewinne den Golden Bowl.",
+"Vinci partite per ottenere crediti e tenere contenti tifosi e proprietario. Migliora le strutture, gestisci il tetto salariale, rinnova le stelle, scegli rookie al draft e ingaggia svincolati. Vinci il Golden Bowl.",
+"Ganha jogos para obter créditos e manter os adeptos e o dono contentes. Melhora as instalações, gere o teto salarial, renova as estrelas, escolhe novatos no draft e contrata agentes livres. Vence o Golden Bowl."
+],
+[
+"Quick Slants",
+"Slants rapides",
+"Slants rápidos",
+"Schnelle Slants",
+"Slant rapidi",
+"Slants rápidos"
+],
+[
+"SHORT · Fast, safe throws. Low risk.",
+"COURT · Passes rapides et sûres. Peu de risque.",
+"CORTO · Pases rápidos y seguros. Poco riesgo.",
+"KURZ · Schnelle, sichere Würfe. Wenig Risiko.",
+"CORTO · Lanci rapidi e sicuri. Poco rischio.",
+"CURTO · Passes rápidos e seguros. Pouco risco."
+],
+[
+"Curl and Dig",
+"Curl et dig",
+"Curl y dig",
+"Curl und Dig",
+"Curl e dig",
+"Curl e dig"
+],
+[
+"MEDIUM · Balanced. Needs a clean pocket.",
+"MOYEN · Équilibré. Il faut une poche propre.",
+"MEDIO · Equilibrado. Necesita un pocket limpio.",
+"MITTEL · Ausgewogen. Braucht eine saubere Pocket.",
+"MEDIO · Equilibrato. Serve una tasca pulita.",
+"MÉDIO · Equilibrado. Precisa de um pocket limpo."
+],
+[
+"Four Verticals",
+"Quatre verticales",
+"Cuatro verticales",
+"Vier Verticals",
+"Quattro verticali",
+"Quatro verticais"
+],
+[
+"DEEP · Bombs away. Big plays, big risk.",
+"PROFOND · Les longues bombes. Gros jeux, gros risque.",
+"PROFUNDO · Bombazos. Grandes jugadas, gran riesgo.",
+"TIEF · Lange Bomben. Große Plays, großes Risiko.",
+"PROFONDO · Bombe lunghe. Grandi giocate, grande rischio.",
+"PROFUNDO · Bombas longas. Grandes jogadas, grande risco."
+],
+[
+"Inside Run",
+"Course intérieure",
+"Carrera interior",
+"Lauf innen",
+"Corsa centrale",
+"Corrida pelo meio"
+],
+[
+"RUN · Power up the middle.",
+"COURSE · En force par le centre.",
+"CARRERA · Con fuerza por el centro.",
+"LAUF · Mit Kraft durch die Mitte.",
+"CORSA · Di forza al centro.",
+"CORRIDA · Com força pelo meio."
+],
+[
+"Outside Run",
+"Course extérieure",
+"Carrera exterior",
+"Lauf außen",
+"Corsa esterna",
+"Corrida por fora"
+],
+[
+"RUN · Take it to the edge.",
+"COURSE · Vers l’extérieur.",
+"CARRERA · Hacia la banda.",
+"LAUF · Über die Außenseite.",
+"CORSA · Verso l’esterno.",
+"CORRIDA · Pela lateral."
+],
+[
+"QB Draw",
+"QB draw",
+"QB draw",
+"QB Draw",
+"QB draw",
+"QB draw"
+],
+[
+"RUN · Fake the pass and scramble.",
+"COURSE · Feinte de passe et course du QB.",
+"CARRERA · Finge el pase y corre.",
+"LAUF · Pass antäuschen und laufen.",
+"CORSA · Finta il passaggio e scappa.",
+"CORRIDA · Finge o passe e foge."
+],
+[
+"Field Goal",
+"Field goal",
+"Field goal",
+"Field Goal",
+"Field goal",
+"Field goal"
+],
+[
+"Punt",
+"Punt",
+"Punt",
+"Punt",
+"Punt",
+"Punt"
+],
+[
+"Give up the ball",
+"Rendre le ballon",
+"Ceder el balón",
+"Ball abgeben",
+"Cedi la palla",
+"Entregar a bola"
+],
+[
+"Spike",
+"Spike",
+"Spike",
+"Spike",
+"Spike",
+"Spike"
+],
+[
+"Stop the clock",
+"Arrêter le chrono",
+"Parar el reloj",
+"Uhr anhalten",
+"Ferma il cronometro",
+"Parar o relógio"
+],
+[
+"Kneel",
+"Genou à terre",
+"Arrodillarse",
+"Knien",
+"Inginocchiarsi",
+"Ajoelhar"
+],
+[
+"Run out the clock",
+"Faire tourner le chrono",
+"Agotar el reloj",
+"Die Uhr ablaufen lassen",
+"Fai scorrere il tempo",
+"Gastar o relógio"
+],
+[
+"CHANGE PLAY",
+"CHANGER DE JEU",
+"CAMBIAR JUGADA",
+"SPIELZUG ÄNDERN",
+"CAMBIA SCHEMA",
+"MUDAR JOGADA"
+],
+[
+"SNAP (SPACE)",
+"SNAP (ESPACE)",
+"SNAP (ESPACIO)",
+"SNAP (LEERTASTE)",
+"SNAP (SPAZIO)",
+"SNAP (ESPAÇO)"
+],
+[
+"AIM LEFT",
+"VISER À GAUCHE",
+"APUNTAR A LA IZQUIERDA",
+"LINKS ZIELEN",
+"MIRA A SINISTRA",
+"APONTAR À ESQUERDA"
+],
+[
+"AIM RIGHT",
+"VISER À DROITE",
+"APUNTAR A LA DERECHA",
+"RECHTS ZIELEN",
+"MIRA A DESTRA",
+"APONTAR À DIREITA"
+],
+[
+"KICK (SPACE)",
+"TAPER (ESPACE)",
+"PATEAR (ESPACIO)",
+"KICKEN (LEERTASTE)",
+"CALCIA (SPAZIO)",
+"CHUTAR (ESPAÇO)"
+],
+[
+"JUKE (J / SWIPE)",
+"FEINTE (J / GLISSER)",
+"REGATE (J / DESLIZAR)",
+"JUKE (J / WISCHEN)",
+"DRIBBLING (J / SCORRI)",
+"FINTA (J / DESLIZAR)"
+],
+[
+"DIVE (SPACE / TAP)",
+"PLONGER (ESPACE / TOUCHER)",
+"LANZARSE (ESPACIO / TOCAR)",
+"HECHTEN (LEERTASTE / TIPPEN)",
+"TUFFATI (SPAZIO / TOCCA)",
+"MERGULHAR (ESPAÇO / TOCAR)"
+],
+[
+"KICK EXTRA POINT (1)",
+"TRANSFORMATION AU PIED (1)",
+"PUNTO EXTRA (1)",
+"EXTRAPUNKT KICKEN (1)",
+"CALCIA L’EXTRA POINT (1)",
+"PONTO EXTRA (1)"
+],
+[
+"GO FOR 2: PASS (2)",
+"TENTER 2 PTS : PASSE (2)",
+"IR POR 2: PASE (2)",
+"2-PUNKTE-VERSUCH: PASS (2)",
+"TENTA 2 PUNTI: PASSAGGIO (2)",
+"TENTAR 2: PASSE (2)"
+],
+[
+"GO FOR 2: RUN (3)",
+"TENTER 2 PTS : COURSE (3)",
+"IR POR 2: CARRERA (3)",
+"2-PUNKTE-VERSUCH: LAUF (3)",
+"TENTA 2 PUNTI: CORSA (3)",
+"TENTAR 2: CORRIDA (3)"
+],
+[
+"GAME MENU",
+"MENU DU MATCH",
+"MENÚ DEL PARTIDO",
+"SPIELMENÜ",
+"MENU PARTITA",
+"MENU DO JOGO"
+],
+[
+"RESUME",
+"REPRENDRE",
+"REANUDAR",
+"WEITER",
+"RIPRENDI",
+"CONTINUAR"
+],
+[
+"SIM REST OF GAME",
+"SIMULER LA FIN DU MATCH",
+"SIMULAR EL RESTO",
+"REST SIMULIEREN",
+"SIMULA IL RESTO",
+"SIMULAR O RESTO"
+],
+[
+"QUIT",
+"QUITTER",
+"SALIR",
+"BEENDEN",
+"ESCI",
+"SAIR"
+],
+[
+"FINAL",
+"FINAL",
+"FINAL",
+"ENDSTAND",
+"FINALE",
+"FINAL"
+],
+[
+"YOU WIN!",
+"VICTOIRE !",
+"¡GANAS!",
+"SIEG!",
+"HAI VINTO!",
+"GANHASTE!"
+],
+[
+"YOU LOSE",
+"DÉFAITE",
+"PIERDES",
+"NIEDERLAGE",
+"HAI PERSO",
+"PERDESTE"
+],
+[
+"TIE GAME",
+"MATCH NUL",
+"EMPATE",
+"UNENTSCHIEDEN",
+"PAREGGIO",
+"EMPATE"
+],
+[
+"REST OF THE GAME SIMULATED",
+"FIN DU MATCH SIMULÉE",
+"RESTO DEL PARTIDO SIMULADO",
+"REST DES SPIELS SIMULIERT",
+"RESTO DELLA PARTITA SIMULATO",
+"RESTO DO JOGO SIMULADO"
+],
+[
+"YOUR PASS YDS",
+"TES YDS À LA PASSE",
+"TUS YDS DE PASE",
+"DEINE PASS-YDS",
+"TUE YDS SU PASSAGGIO",
+"AS TUAS YDS DE PASSE"
+],
+[
+"YOUR RUSH YDS",
+"TES YDS À LA COURSE",
+"TUS YDS DE CARRERA",
+"DEINE LAUF-YDS",
+"TUE YDS SU CORSA",
+"AS TUAS YDS DE CORRIDA"
+],
+[
+"YOUR TURNOVERS",
+"TES PERTES DE BALLE",
+"TUS PÉRDIDAS",
+"DEINE TURNOVER",
+"TUE PALLE PERSE",
+"AS TUAS PERDAS"
+],
+[
+"YOUR FIRST DOWNS",
+"TES PREMIERS ESSAIS",
+"TUS PRIMEROS DOWNS",
+"DEINE FIRST DOWNS",
+"TUOI PRIMI DOWN",
+"OS TEUS PRIMEIROS DOWNS"
+],
+[
+"OPP PASS YDS",
+"YDS À LA PASSE ADV.",
+"YDS DE PASE RIVAL",
+"GEGNER PASS-YDS",
+"YDS SU PASSAGGIO AVV.",
+"YDS DE PASSE ADV."
+],
+[
+"OPP RUSH YDS",
+"YDS À LA COURSE ADV.",
+"YDS DE CARRERA RIVAL",
+"GEGNER LAUF-YDS",
+"YDS SU CORSA AVV.",
+"YDS DE CORRIDA ADV."
+],
+[
+"OPP TURNOVERS",
+"PERTES DE BALLE ADV.",
+"PÉRDIDAS RIVALES",
+"GEGNER TURNOVER",
+"PALLE PERSE AVV.",
+"PERDAS ADV."
+],
+[
+"OPP FIRST DOWNS",
+"PREMIERS ESSAIS ADV.",
+"PRIMEROS DOWNS RIVALES",
+"GEGNER FIRST DOWNS",
+"PRIMI DOWN AVV.",
+"PRIMEIROS DOWNS ADV."
+],
+[
+"QUICK GAME: NOTHING IS SAVED",
+"MATCH RAPIDE : RIEN N’EST ENREGISTRÉ",
+"PARTIDO RÁPIDO: NO SE GUARDA NADA",
+"SCHNELLES SPIEL: NICHTS WIRD GESPEICHERT",
+"PARTITA VELOCE: NON SI SALVA NULLA",
+"JOGO RÁPIDO: NADA É GUARDADO"
+],
+[
+"CONTINUE (SPACE)",
+"CONTINUER (ESPACE)",
+"CONTINUAR (ESPACIO)",
+"WEITER (LEERTASTE)",
+"CONTINUA (SPAZIO)",
+"CONTINUAR (ESPAÇO)"
+],
+[
+"END OF THE QUARTER",
+"FIN DU QUART-TEMPS",
+"FIN DEL CUARTO",
+"ENDE DES VIERTELS",
+"FINE DEL QUARTO",
+"FIM DO PERÍODO"
+],
+[
+"Golden Bowl champions:",
+"Champions du Golden Bowl :",
+"Campeones del Golden Bowl:",
+"Golden-Bowl-Sieger:",
+"Campioni del Golden Bowl:",
+"Campeões do Golden Bowl:"
+],
+[
+"CONTINUE TO OFFSEASON",
+"PASSER À L’INTERSAISON",
+"IR A LA PRETEMPORADA",
+"WEITER ZUR OFF-SEASON",
+"VAI ALLA PAUSA ESTIVA",
+"IR PARA A PRÉ-ÉPOCA"
+],
+[
+"PLAYOFFS",
+"PLAYOFFS",
+"PLAYOFFS",
+"PLAYOFFS",
+"PLAYOFF",
+"PLAYOFFS"
+],
+[
+"ROUND",
+"TOUR",
+"RONDA",
+"RUNDE",
+"TURNO",
+"RONDA"
+],
+[
+"GAME",
+"MATCH",
+"PARTIDO",
+"SPIEL",
+"PARTITA",
+"JOGO"
+],
+[
+"SCORE",
+"SCORE",
+"MARCADOR",
+"ERGEBNIS",
+"PUNTEGGIO",
+"RESULTADO"
+],
+[
+"Wild Card",
+"Wild Card",
+"Wild Card",
+"Wild Card",
+"Wild Card",
+"Wild Card"
+],
+[
+"Divisional",
+"Tour de division",
+"Divisional",
+"Divisional Round",
+"Turno divisionale",
+"Divisional"
+],
+[
+"Conference Final",
+"Finale de conférence",
+"Final de conferencia",
+"Conference-Finale",
+"Finale di conference",
+"Final de conferência"
+],
+[
+"Golden Bowl",
+"Golden Bowl",
+"Golden Bowl",
+"Golden Bowl",
+"Golden Bowl",
+"Golden Bowl"
+],
+[
+"Missed the playoffs",
+"Playoffs manqués",
+"Fuera de playoffs",
+"Playoffs verpasst",
+"Fuori dai playoff",
+"Falhou os playoffs"
+],
+[
+"Season complete",
+"Saison terminée",
+"Temporada terminada",
+"Saison beendet",
+"Stagione conclusa",
+"Época terminada"
+],
+[
+"Re-sign players",
+"Prolongations",
+"Renovaciones",
+"Verträge verlängern",
+"Rinnovi",
+"Renovações"
+],
+[
+"The draft",
+"La draft",
+"El draft",
+"Der Draft",
+"Il draft",
+"O draft"
+],
+[
+"Free agency",
+"Agents libres",
+"Agencia libre",
+"Free Agency",
+"Mercato svincolati",
+"Agentes livres"
+],
+[
+"CONTRACTS EXPIRING",
+"CONTRATS QUI EXPIRENT",
+"CONTRATOS QUE VENCEN",
+"AUSLAUFENDE VERTRÄGE",
+"CONTRATTI IN SCADENZA",
+"CONTRATOS A TERMINAR"
+],
+[
+"Re-sign players before they hit free agency. Longer deals cost less per year.",
+"Prolonge tes joueurs avant qu’ils deviennent agents libres. Les contrats longs coûtent moins cher par an.",
+"Renueva a tus jugadores antes de que sean agentes libres. Los contratos largos cuestan menos al año.",
+"Verlängere Verträge, bevor die Spieler Free Agents werden. Längere Verträge kosten pro Jahr weniger.",
+"Rinnova i giocatori prima che diventino svincolati. I contratti lunghi costano meno all’anno.",
+"Renova os jogadores antes de ficarem livres. Contratos mais longos custam menos por ano."
+],
+[
+"OFFER",
+"OFFRE",
+"OFERTA",
+"ANGEBOT",
+"OFFERTA",
+"OFERTA"
+],
+[
+"GO TO THE DRAFT",
+"ALLER À LA DRAFT",
+"IR AL DRAFT",
+"ZUM DRAFT",
+"VAI AL DRAFT",
+"IR PARA O DRAFT"
+],
+[
+"Prospect ratings are estimates; a better Scouting Department makes them more accurate.",
+"Les notes des espoirs sont des estimations ; un meilleur service de recrutement les rend plus précises.",
+"Las valoraciones de los prospectos son estimaciones; un mejor departamento de ojeadores las hace más precisas.",
+"Die Werte der Talente sind Schätzungen; eine bessere Scouting-Abteilung macht sie genauer.",
+"Le valutazioni dei prospetti sono stime; un reparto osservatori migliore le rende più precise.",
+"As avaliações dos prospetos são estimativas; um melhor departamento de observação torna-as mais precisas."
+],
+[
+"{team} picks next.",
+"{team} choisit ensuite.",
+"{team} elige a continuación.",
+"{team} ist als Nächstes dran.",
+"Ora sceglie {team}.",
+"{team} escolhe a seguir."
+],
+[
+"ROUND {n}",
+"TOUR {n}",
+"RONDA {n}",
+"RUNDE {n}",
+"TURNO {n}",
+"RONDA {n}"
+],
+[
+"PICK {n}",
+"CHOIX {n}",
+"ELECCIÓN {n}",
+"PICK {n}",
+"SCELTA {n}",
+"ESCOLHA {n}"
+],
+[
+"YOU ARE ON THE CLOCK",
+"C’EST À TOI DE CHOISIR",
+"TE TOCA ELEGIR",
+"DU BIST DRAN",
+"TOCCA A TE",
+"É A TUA VEZ"
+],
+[
+"SIM TO MY PICK",
+"SIMULER JUSQU’À MON CHOIX",
+"SIMULAR HASTA MI TURNO",
+"BIS ZU MEINEM PICK SIMULIEREN",
+"SIMULA FINO ALLA MIA SCELTA",
+"SIMULAR ATÉ À MINHA ESCOLHA"
+],
+[
+"AUTO DRAFT THE REST",
+"DRAFT AUTOMATIQUE",
+"DRAFT AUTOMÁTICO DEL RESTO",
+"REST AUTOMATISCH DRAFTEN",
+"DRAFT AUTOMATICO DEL RESTO",
+"DRAFT AUTOMÁTICO DO RESTO"
+],
+[
+"EST OVR",
+"GÉN. EST.",
+"VAL. EST.",
+"GES. GESCH.",
+"VAL. STIM.",
+"AVAL. EST."
+],
+[
+"POTENTIAL",
+"POTENTIEL",
+"POTENCIAL",
+"POTENZIAL",
+"POTENZIALE",
+"POTENCIAL"
+],
+[
+"DRAFT",
+"DRAFTER",
+"ELEGIR",
+"DRAFTEN",
+"SCEGLI",
+"ESCOLHER"
+],
+[
+"LATEST PICKS",
+"DERNIERS CHOIX",
+"ÚLTIMAS ELECCIONES",
+"LETZTE PICKS",
+"ULTIME SCELTE",
+"ÚLTIMAS ESCOLHAS"
+],
+[
+"THE DRAFT IS OVER",
+"LA DRAFT EST TERMINÉE",
+"EL DRAFT HA TERMINADO",
+"DER DRAFT IST VORBEI",
+"IL DRAFT È FINITO",
+"O DRAFT TERMINOU"
+],
+[
+"Your rookies joined the roster. Next up: free agency.",
+"Tes rookies ont rejoint l’effectif. Ensuite : les agents libres.",
+"Tus novatos se unieron a la plantilla. Ahora: agencia libre.",
+"Deine Rookies sind im Kader. Als Nächstes: Free Agency.",
+"I tuoi rookie sono in rosa. Ora: mercato svincolati.",
+"Os teus novatos juntaram-se ao plantel. A seguir: agentes livres."
+],
+[
+"GO TO FREE AGENCY",
+"ALLER AUX AGENTS LIBRES",
+"IR A LA AGENCIA LIBRE",
+"ZUR FREE AGENCY",
+"VAI AL MERCATO SVINCOLATI",
+"IR PARA OS AGENTES LIVRES"
+],
+[
+"LAST PICKS",
+"DERNIERS CHOIX",
+"ÚLTIMAS ELECCIONES",
+"LETZTE PICKS",
+"ULTIME SCELTE",
+"ÚLTIMAS ESCOLHAS"
+],
+[
+"FILL ROSTER SPOTS",
+"COMPLÉTER L’EFFECTIF",
+"COMPLETAR LA PLANTILLA",
+"KADER AUFFÜLLEN",
+"COMPLETA LA ROSA",
+"COMPLETAR O PLANTEL"
+],
+[
+"START OVER",
+"RECOMMENCER",
+"EMPEZAR DE NUEVO",
+"NEU ANFANGEN",
+"RICOMINCIA",
+"RECOMEÇAR"
+],
+[
+"BYE WEEK",
+"SEMAINE DE REPOS",
+"SEMANA DE DESCANSO",
+"SPIELFREIE WOCHE",
+"SETTIMANA DI RIPOSO",
+"SEMANA DE FOLGA"
+],
+[
+"Your team has a first-round bye.",
+"Ton équipe est exemptée du premier tour.",
+"Tu equipo descansa en la primera ronda.",
+"Dein Team hat in der ersten Runde frei.",
+"La tua squadra salta il primo turno.",
+"A tua equipa folga na primeira ronda."
+],
+[
+"Your team is not playing this round.",
+"Ton équipe ne joue pas ce tour.",
+"Tu equipo no juega esta ronda.",
+"Dein Team spielt in dieser Runde nicht.",
+"La tua squadra non gioca questo turno.",
+"A tua equipa não joga esta ronda."
+],
+[
+"No game this week.",
+"Pas de match cette semaine.",
+"No hay partido esta semana.",
+"Diese Woche kein Spiel.",
+"Nessuna partita questa settimana.",
+"Sem jogo esta semana."
+],
+[
+"Week {n} of {m}",
+"Semaine {n} sur {m}",
+"Semana {n} de {m}",
+"Woche {n} von {m}",
+"Settimana {n} di {m}",
+"Semana {n} de {m}"
+],
+[
+"WEEK {n}",
+"SEMAINE {n}",
+"SEMANA {n}",
+"WOCHE {n}",
+"SETTIMANA {n}",
+"SEMANA {n}"
+],
+[
+"VS {team}",
+"VS {team}",
+"VS {team}",
+"GEGEN {team}",
+"VS {team}",
+"VS {team}"
+],
+[
+"AT {team}",
+"À {team}",
+"EN {team}",
+"BEI {team}",
+"A {team}",
+"EM {team}"
+],
+[
+"{n} / {m} PLAYERS",
+"{n} / {m} JOUEURS",
+"{n} / {m} JUGADORES",
+"{n} / {m} SPIELER",
+"{n} / {m} GIOCATORI",
+"{n} / {m} JOGADORES"
+],
+[
+"PAYROLL {a} OF {b} CAP",
+"MASSE SALARIALE {a} SUR {b} DE PLAFOND",
+"NÓMINA {a} DE {b} DE LÍMITE",
+"GEHÄLTER {a} VON {b} OBERGRENZE",
+"INGAGGI {a} SU {b} DI TETTO",
+"SALÁRIOS {a} DE {b} DE TETO"
+],
+[
+"OVER CAP",
+"AU-DESSUS DU PLAFOND",
+"SOBRE EL LÍMITE",
+"ÜBER DER GRENZE",
+"SOPRA IL TETTO",
+"ACIMA DO TETO"
+],
+[
+"CAP SPACE {a}",
+"MARGE SALARIALE {a}",
+"MARGEN SALARIAL {a}",
+"GEHALTSSPIELRAUM {a}",
+"SPAZIO SALARIALE {a}",
+"MARGEM SALARIAL {a}"
+],
+[
+"ROSTER {n} / {m}",
+"EFFECTIF {n} / {m}",
+"PLANTILLA {n} / {m}",
+"KADER {n} / {m}",
+"ROSA {n} / {m}",
+"PLANTEL {n} / {m}"
+],
+[
+"Roster is full. Release someone first.",
+"L’effectif est complet. Libère d’abord quelqu’un.",
+"La plantilla está llena. Despide a alguien primero.",
+"Der Kader ist voll. Entlasse zuerst jemanden.",
+"La rosa è piena. Prima svincola qualcuno.",
+"O plantel está cheio. Dispensa alguém primeiro."
+],
+[
+"Not enough cap space.",
+"Pas assez de marge salariale.",
+"No hay margen salarial suficiente.",
+"Nicht genug Gehaltsspielraum.",
+"Spazio salariale insufficiente.",
+"Margem salarial insuficiente."
+],
+[
+"Round simulated.",
+"Tour simulé.",
+"Ronda simulada.",
+"Runde simuliert.",
+"Turno simulato.",
+"Ronda simulada."
+],
+[
+"Season simulated.",
+"Saison simulée.",
+"Temporada simulada.",
+"Saison simuliert.",
+"Stagione simulata.",
+"Época simulada."
+],
+[
+"+{n} credits",
+"+{n} crédits",
+"+{n} créditos",
+"+{n} Credits",
+"+{n} crediti",
+"+{n} créditos"
+],
+[
+"WIN {a}-{b} vs {team}",
+"VICTOIRE {a}-{b} contre {team}",
+"VICTORIA {a}-{b} ante {team}",
+"SIEG {a}-{b} gegen {team}",
+"VITTORIA {a}-{b} contro {team}",
+"VITÓRIA {a}-{b} contra {team}"
+],
+[
+"LOSS {a}-{b} vs {team}",
+"DÉFAITE {a}-{b} contre {team}",
+"DERROTA {a}-{b} ante {team}",
+"NIEDERLAGE {a}-{b} gegen {team}",
+"SCONFITTA {a}-{b} contro {team}",
+"DERROTA {a}-{b} contra {team}"
+],
+[
+"TIE {a}-{b} vs {team}",
+"NUL {a}-{b} contre {team}",
+"EMPATE {a}-{b} ante {team}",
+"UNENTSCHIEDEN {a}-{b} gegen {team}",
+"PAREGGIO {a}-{b} contro {team}",
+"EMPATE {a}-{b} contra {team}"
+],
+[
+"{d} & {n}",
+"{d} & {n}",
+"{d} y {n}",
+"{d} & {n}",
+"{d} e {n}",
+"{d} e {n}"
+],
+[
+"1ST",
+"1ER",
+"1ª",
+"1.",
+"1°",
+"1.º"
+],
+[
+"2ND",
+"2E",
+"2ª",
+"2.",
+"2°",
+"2.º"
+],
+[
+"3RD",
+"3E",
+"3ª",
+"3.",
+"3°",
+"3.º"
+],
+[
+"4TH",
+"4E",
+"4ª",
+"4.",
+"4°",
+"4.º"
+],
+[
+"1st",
+"1er",
+"1ª",
+"1.",
+"1°",
+"1.º"
+],
+[
+"2nd",
+"2e",
+"2ª",
+"2.",
+"2°",
+"2.º"
+],
+[
+"3rd",
+"3e",
+"3ª",
+"3.",
+"3°",
+"3.º"
+],
+[
+"4th",
+"4e",
+"4ª",
+"4.",
+"4°",
+"4.º"
+],
+[
+"GOAL",
+"BUT",
+"GOL",
+"GOAL",
+"GOAL",
+"GOLO"
+],
+[
+"OWN {n}",
+"PROPRES {n}",
+"PROPIA {n}",
+"EIGENE {n}",
+"PROPRIE {n}",
+"PRÓPRIA {n}"
+],
+[
+"OPP {n}",
+"ADV {n}",
+"RIVAL {n}",
+"GEGNER {n}",
+"AVV {n}",
+"ADV {n}"
+],
+[
+"on {spot}",
+"sur {spot}",
+"en {spot}",
+"an {spot}",
+"sulle {spot}",
+"na {spot}"
+],
+[
+"their {n}",
+"leurs {n}",
+"sus {n}",
+"ihre {n}",
+"loro {n}",
+"suas {n}"
+],
+[
+"your {n}",
+"tes {n}",
+"tus {n}",
+"deine {n}",
+"tue {n}",
+"tuas {n}"
+],
+[
+"own {n}",
+"propres {n}",
+"propia {n}",
+"eigene {n}",
+"proprie {n}",
+"própria {n}"
+],
+[
+"opp {n}",
+"adv {n}",
+"rival {n}",
+"Gegner {n}",
+"avv {n}",
+"adv {n}"
+],
+[
+"the 50",
+"les 50",
+"la 50",
+"die 50",
+"le 50",
+"as 50"
+],
+[
+"{n} yards",
+"{n} yards",
+"{n} yardas",
+"{n} Yards",
+"{n} yard",
+"{n} jardas"
+],
+[
+"{n} yards.",
+"{n} yards.",
+"{n} yardas.",
+"{n} Yards.",
+"{n} yard.",
+"{n} jardas."
+],
+[
+"{team} DRIVE",
+"ATTAQUE DE {team}",
+"AVANCE DE {team}",
+"DRIVE VON {team}",
+"ATTACCO DI {team}",
+"ATAQUE DE {team}"
+],
+[
+"{n} PLAYS",
+"{n} JEUX",
+"{n} JUGADAS",
+"{n} SPIELZÜGE",
+"{n} GIOCATE",
+"{n} JOGADAS"
+],
+[
+"{n} YARDS",
+"{n} YARDS",
+"{n} YARDAS",
+"{n} YARDS",
+"{n} YARD",
+"{n} JARDAS"
+],
+[
+"KICKOFF",
+"COUP D’ENVOI",
+"PATADA INICIAL",
+"KICKOFF",
+"CALCIO D’INIZIO",
+"PONTAPÉ DE SAÍDA"
+],
+[
+"You receive the opening kick",
+"Tu reçois le coup d’envoi",
+"Recibes la patada inicial",
+"Du bekommst den Kickoff",
+"Ricevi il calcio d’inizio",
+"Recebes o pontapé de saída"
+],
+[
+"{team} receive the kick",
+"Les {team} reçoivent le coup d’envoi",
+"{team} recibe la patada",
+"{team} bekommen den Kickoff",
+"{team} ricevono il calcio",
+"{team} recebem o pontapé"
+],
+[
+"Home",
+"À domicile",
+"En casa",
+"Heimspiel",
+"In casa",
+"Em casa"
+],
+[
+"Away",
+"À l’extérieur",
+"Fuera",
+"Auswärts",
+"In trasferta",
+"Fora"
+],
+[
+"Neutral site",
+"Terrain neutre",
+"Campo neutral",
+"Neutraler Ort",
+"Campo neutro",
+"Campo neutro"
+],
+[
+"YOUR BALL",
+"BALLON À TOI",
+"TU BALÓN",
+"DEIN BALL",
+"PALLA TUA",
+"BOLA TUA"
+],
+[
+"OPPONENT BALL",
+"BALLON ADVERSE",
+"BALÓN RIVAL",
+"BALL FÜR DEN GEGNER",
+"PALLA AVVERSARIA",
+"BOLA DO ADVERSÁRIO"
+],
+[
+"Touchback",
+"Touchback",
+"Touchback",
+"Touchback",
+"Touchback",
+"Touchback"
+],
+[
+"Kick returned to the {n}",
+"Coup de pied retourné jusqu’aux {n}",
+"Patada devuelta hasta la {n}",
+"Kick bis zur {n} zurückgetragen",
+"Calcio ritornato fino alle {n}",
+"Pontapé devolvido até às {n}"
+],
+[
+"Free kick",
+"Coup de pied libre",
+"Patada libre",
+"Freistoß",
+"Calcio libero",
+"Pontapé livre"
+],
+[
+"END OF QUARTER {n}",
+"FIN DU QUART-TEMPS {n}",
+"FIN DEL CUARTO {n}",
+"ENDE DES {n}. VIERTELS",
+"FINE DEL QUARTO {n}",
+"FIM DO {n}.º PERÍODO"
+],
+[
+"HALFTIME",
+"MI-TEMPS",
+"DESCANSO",
+"HALBZEIT",
+"INTERVALLO",
+"INTERVALO"
+],
+[
+"OVERTIME",
+"PROLONGATION",
+"PRÓRROGA",
+"VERLÄNGERUNG",
+"SUPPLEMENTARI",
+"PROLONGAMENTO"
+],
+[
+"TAP THE FIELD OR PRESS SPACE TO SNAP",
+"TOUCHE LE TERRAIN OU APPUIE SUR ESPACE",
+"TOCA EL CAMPO O PULSA ESPACIO",
+"TIPPE AUFS FELD ODER DRÜCK LEERTASTE",
+"TOCCA IL CAMPO O PREMI SPAZIO",
+"TOCA NO CAMPO OU CARREGA EM ESPAÇO"
+],
+[
+"SNAP, THEN DRAG UP TO KICK",
+"SNAP, PUIS GLISSE VERS LE HAUT",
+"SNAP Y ARRASTRA HACIA ARRIBA",
+"SNAP, DANN NACH OBEN ZIEHEN",
+"SNAP, POI TRASCINA IN SU",
+"SNAP E ARRASTA PARA CIMA"
+],
+[
+"SNAP, THEN DRAG UP TO KICK OR HOLD SPACE",
+"SNAP, PUIS GLISSE OU MAINTIENS ESPACE",
+"SNAP Y ARRASTRA O MANTÉN ESPACIO",
+"SNAP, DANN ZIEHEN ODER LEERTASTE HALTEN",
+"SNAP, POI TRASCINA O TIENI SPAZIO",
+"SNAP E ARRASTA OU MANTÉM ESPAÇO"
+],
+[
+"SNAP, THEN DRAG UP TO PUNT",
+"SNAP, PUIS GLISSE POUR LE PUNT",
+"SNAP Y ARRASTRA PARA EL PUNT",
+"SNAP, DANN ZIEHEN ZUM PUNT",
+"SNAP, POI TRASCINA PER IL PUNT",
+"SNAP E ARRASTA PARA O PUNT"
+],
+[
+"TWO-POINT TRY: SNAP IT",
+"TENTATIVE À 2 POINTS : SNAP",
+"CONVERSIÓN DE 2: SNAP",
+"2-PUNKTE-VERSUCH: SNAP",
+"TENTATIVO DA 2: SNAP",
+"TENTATIVA DE 2: SNAP"
+],
+[
+"CATCH",
+"RÉCEPTION",
+"RECEPCIÓN",
+"GEFANGEN",
+"PRESA",
+"RECEÇÃO"
+],
+[
+"MISS",
+"RATÉ",
+"FALLO",
+"VERFEHLT",
+"MANCATO",
+"FALHOU"
+],
+[
+"BROKEN",
+"CASSÉ",
+"ROTO",
+"DURCH",
+"LIBERO",
+"ESCAPOU"
+],
+[
+"FIRST DOWN",
+"PREMIER ESSAI",
+"PRIMER DOWN",
+"FIRST DOWN",
+"PRIMO DOWN",
+"PRIMEIRO DOWN"
+],
+[
+"TOUCHDOWN!",
+"TOUCHDOWN !",
+"¡TOUCHDOWN!",
+"TOUCHDOWN!",
+"TOUCHDOWN!",
+"TOUCHDOWN!"
+],
+[
+"TOUCHDOWN",
+"TOUCHDOWN",
+"TOUCHDOWN",
+"TOUCHDOWN",
+"TOUCHDOWN",
+"TOUCHDOWN"
+],
+[
+"WIND",
+"VENT",
+"VIENTO",
+"WIND",
+"VENTO",
+"VENTO"
+],
+[
+"IT IS GOOD!",
+"C’EST BON !",
+"¡ES BUENO!",
+"ER IST DRIN!",
+"È BUONO!",
+"É BOM!"
+],
+[
+"NO GOOD!",
+"RATÉ !",
+"¡FALLADO!",
+"DANEBEN!",
+"SBAGLIATO!",
+"FALHADO!"
+],
+[
+"SHORT!",
+"TROP COURT !",
+"¡CORTO!",
+"ZU KURZ!",
+"CORTO!",
+"CURTO!"
+],
+[
+"EXTRA POINT GOOD",
+"TRANSFORMATION RÉUSSIE",
+"PUNTO EXTRA BUENO",
+"EXTRAPUNKT DRIN",
+"EXTRA POINT BUONO",
+"PONTO EXTRA BOM"
+],
+[
+"EXTRA POINT MISSED",
+"TRANSFORMATION RATÉE",
+"PUNTO EXTRA FALLADO",
+"EXTRAPUNKT VERFEHLT",
+"EXTRA POINT SBAGLIATO",
+"PONTO EXTRA FALHADO"
+],
+[
+"FIELD GOAL GOOD",
+"FIELD GOAL RÉUSSI",
+"FIELD GOAL BUENO",
+"FIELD GOAL DRIN",
+"FIELD GOAL BUONO",
+"FIELD GOAL BOM"
+],
+[
+"FIELD GOAL MISSED",
+"FIELD GOAL RATÉ",
+"FIELD GOAL FALLADO",
+"FIELD GOAL VERFEHLT",
+"FIELD GOAL SBAGLIATO",
+"FIELD GOAL FALHADO"
+],
+[
+"FIELD GOAL",
+"FIELD GOAL",
+"FIELD GOAL",
+"FIELD GOAL",
+"FIELD GOAL",
+"FIELD GOAL"
+],
+[
+"TWO-POINT GOOD",
+"2 POINTS RÉUSSIS",
+"CONVERSIÓN DE 2 BUENA",
+"2 PUNKTE GESCHAFFT",
+"2 PUNTI RIUSCITI",
+"2 PONTOS CONSEGUIDOS"
+],
+[
+"TWO-POINT FAILED",
+"2 POINTS RATÉS",
+"CONVERSIÓN DE 2 FALLIDA",
+"2-PUNKTE-VERSUCH GESCHEITERT",
+"2 PUNTI FALLITI",
+"2 PONTOS FALHADOS"
+],
+[
+"PUNT",
+"PUNT",
+"PUNT",
+"PUNT",
+"PUNT",
+"PUNT"
+],
+[
+"PUNT {n} YARDS",
+"PUNT DE {n} YARDS",
+"PUNT DE {n} YARDAS",
+"PUNT ÜBER {n} YARDS",
+"PUNT DA {n} YARD",
+"PUNT DE {n} JARDAS"
+],
+[
+"SACK {n}",
+"SACK {n}",
+"CAPTURA {n}",
+"SACK {n}",
+"SACK {n}",
+"SACK {n}"
+],
+[
+"SACKED",
+"PLAQUÉ",
+"CAPTURADO",
+"GESACKT",
+"SACK",
+"SACK"
+],
+[
+"Sacked",
+"Plaqué",
+"Capturado",
+"Gesackt",
+"Sack subito",
+"Sack sofrido"
+],
+[
+"INCOMPLETE",
+"INCOMPLÈTE",
+"INCOMPLETO",
+"UNVOLLSTÄNDIG",
+"INCOMPLETO",
+"INCOMPLETO"
+],
+[
+"DROPPED",
+"ÉCHAPPÉ",
+"SE LE CAE",
+"FALLEN GELASSEN",
+"SCIVOLATA",
+"DEIXOU CAIR"
+],
+[
+"Pass dropped",
+"Passe échappée",
+"Pase caído",
+"Pass fallen gelassen",
+"Passaggio lasciato cadere",
+"Passe deixado cair"
+],
+[
+"Pass incomplete",
+"Passe incomplète",
+"Pase incompleto",
+"Pass unvollständig",
+"Passaggio incompleto",
+"Passe incompleto"
+],
+[
+"INTERCEPTED",
+"INTERCEPTÉ",
+"INTERCEPTADO",
+"ABGEFANGEN",
+"INTERCETTATO",
+"INTERCETADO"
+],
+[
+"PICK SIX",
+"PICK SIX",
+"PICK SIX",
+"PICK SIX",
+"PICK SIX",
+"PICK SIX"
+],
+[
+"PICK SIX FOR YOU",
+"PICK SIX POUR TOI",
+"PICK SIX PARA TI",
+"PICK SIX FÜR DICH",
+"PICK SIX PER TE",
+"PICK SIX PARA TI"
+],
+[
+"FUMBLE",
+"FUMBLE",
+"FUMBLE",
+"FUMBLE",
+"FUMBLE",
+"FUMBLE"
+],
+[
+"FUMBLE LOST",
+"FUMBLE PERDU",
+"FUMBLE PERDIDO",
+"FUMBLE VERLOREN",
+"FUMBLE PERSO",
+"FUMBLE PERDIDO"
+],
+[
+"FUMBLE!",
+"FUMBLE !",
+"¡FUMBLE!",
+"FUMBLE!",
+"FUMBLE!",
+"FUMBLE!"
+],
+[
+"RECOVERED",
+"RÉCUPÉRÉ",
+"RECUPERADO",
+"GESICHERT",
+"RECUPERATO",
+"RECUPERADO"
+],
+[
+"LOST!",
+"PERDU !",
+"¡PERDIDO!",
+"VERLOREN!",
+"PERSO!",
+"PERDIDO!"
+],
+[
+"SAFETY",
+"SAFETY",
+"SAFETY",
+"SAFETY",
+"SAFETY",
+"SAFETY"
+],
+[
+"SAFETY FOR YOU",
+"SAFETY POUR TOI",
+"SAFETY PARA TI",
+"SAFETY FÜR DICH",
+"SAFETY PER TE",
+"SAFETY PARA TI"
+],
+[
+"SAFETY!",
+"SAFETY !",
+"¡SAFETY!",
+"SAFETY!",
+"SAFETY!",
+"SAFETY!"
+],
+[
+"OUT OF BOUNDS",
+"EN TOUCHE",
+"FUERA",
+"IM AUS",
+"FUORI",
+"FORA"
+],
+[
+"Out of bounds",
+"En touche",
+"Fuera del campo",
+"Im Aus",
+"Fuori campo",
+"Fora do campo"
+],
+[
+"Opponent takes over",
+"L’adversaire récupère le ballon",
+"El rival recupera el balón",
+"Der Gegner übernimmt",
+"L’avversario prende palla",
+"O adversário fica com a bola"
+],
+[
+"TURNOVER ON DOWNS",
+"BALLE PERDUE SUR ESSAIS",
+"PÉRDIDA POR DOWNS",
+"TURNOVER ON DOWNS",
+"PALLA PERSA SUI DOWN",
+"PERDA NOS DOWNS"
+],
+[
+"Spike on 4th down",
+"Spike au 4e essai",
+"Spike en cuarta oportunidad",
+"Spike beim 4. Down",
+"Spike al quarto down",
+"Spike no 4.º down"
+],
+[
+"SPIKE",
+"SPIKE",
+"SPIKE",
+"SPIKE",
+"SPIKE",
+"SPIKE"
+],
+[
+"Clock stopped",
+"Chrono arrêté",
+"Reloj parado",
+"Uhr gestoppt",
+"Cronometro fermo",
+"Relógio parado"
+],
+[
+"KNEEL",
+"GENOU À TERRE",
+"RODILLA",
+"KNIEN",
+"IN GINOCCHIO",
+"AJOELHAR"
+],
+[
+"Clock runs",
+"Le chrono tourne",
+"El reloj corre",
+"Die Uhr läuft",
+"Il tempo scorre",
+"O relógio corre"
+],
+[
+"Complete",
+"Complétée",
+"Completo",
+"Gefangen",
+"Completato",
+"Completo"
+],
+[
+"Run",
+"Course",
+"Carrera",
+"Lauf",
+"Corsa",
+"Corrida"
+],
+[
+"You",
+"Toi",
+"Tú",
+"Du",
+"Tu",
+"Tu"
+],
+[
+"Complete to {name}",
+"Passe complète vers {name}",
+"Pase completo a {name}",
+"Pass an {name} angekommen",
+"Passaggio completo per {name}",
+"Passe completo para {name}"
+],
+[
+"{name} carries",
+"{name} porte le ballon",
+"{name} corre con el balón",
+"{name} trägt den Ball",
+"{name} porta palla",
+"{name} leva a bola"
+],
+[
+"{name} is injured",
+"{name} est blessé",
+"{name} está lesionado",
+"{name} ist verletzt",
+"{name} è infortunato",
+"{name} está lesionado"
+],
+[
+"{name} hauls it in. {n} yards.",
+"{name} capte le ballon. {n} yards.",
+"{name} atrapa el balón. {n} yardas.",
+"{name} fängt ihn. {n} Yards.",
+"{name} la prende. {n} yard.",
+"{name} agarra a bola. {n} jardas."
+],
+[
+"{name} runs it in.",
+"{name} marque en courant.",
+"{name} entra corriendo.",
+"{name} läuft hinein.",
+"{name} entra di corsa.",
+"{name} entra a correr."
+],
+[
+"Returned {n} yards",
+"Retourné sur {n} yards",
+"Devuelto {n} yardas",
+"{n} Yards zurückgetragen",
+"Ritornato per {n} yard",
+"Devolvido {n} jardas"
+],
+[
+"Recovered by the {team}",
+"Récupéré par les {team}",
+"Recuperado por {team}",
+"Von den {team} gesichert",
+"Recuperato dai {team}",
+"Recuperado pelos {team}"
+],
+[
+"Interception returned for a touchdown. 7 for the {team}.",
+"Interception retournée en touchdown. 7 points pour les {team}.",
+"Intercepción devuelta para touchdown. 7 para {team}.",
+"Interception zum Touchdown zurückgetragen. 7 für die {team}.",
+"Intercetto riportato in touchdown. 7 per i {team}.",
+"Interceção devolvida para touchdown. 7 para os {team}."
+],
+[
+"Tackled in your own end zone. 2 points for the {team}.",
+"Plaqué dans ta propre zone d’en-but. 2 points pour les {team}.",
+"Placado en tu propia zona de anotación. 2 puntos para {team}.",
+"In der eigenen Endzone getackelt. 2 Punkte für die {team}.",
+"Placcato nella tua end zone. 2 punti per i {team}.",
+"Placado na tua própria end zone. 2 pontos para os {team}."
+],
+[
+"PASSING: {a}",
+"PASSES : {a}",
+"PASES: {a}",
+"PASSEN: {a}",
+"PASSAGGI: {a}",
+"PASSES: {a}"
+],
+[
+"RUSHING: {a}",
+"COURSE : {a}",
+"CARRERA: {a}",
+"LAUFEN: {a}",
+"CORSA: {a}",
+"CORRIDA: {a}"
+],
+[
+"RECEIVING: {a}",
+"RÉCEPTION : {a}",
+"RECEPCIÓN: {a}",
+"FANGEN: {a}",
+"RICEZIONE: {a}",
+"RECEÇÃO: {a}"
+],
+[
+"{name} {n} PASS YDS",
+"{name} {n} YDS À LA PASSE",
+"{name} {n} YDS DE PASE",
+"{name} {n} PASS-YDS",
+"{name} {n} YDS SU PASSAGGIO",
+"{name} {n} YDS DE PASSE"
+],
+[
+"{name} {n} RUSH YDS",
+"{name} {n} YDS À LA COURSE",
+"{name} {n} YDS DE CARRERA",
+"{name} {n} LAUF-YDS",
+"{name} {n} YDS SU CORSA",
+"{name} {n} YDS DE CORRIDA"
+],
+[
+"{name} {n} REC YDS",
+"{name} {n} YDS EN RÉCEPTION",
+"{name} {n} YDS DE RECEPCIÓN",
+"{name} {n} FANG-YDS",
+"{name} {n} YDS SU RICEZIONE",
+"{name} {n} YDS DE RECEÇÃO"
+],
+[
+"REWARDS: +{n} COACHING CREDITS",
+"RÉCOMPENSES : +{n} CRÉDITS",
+"RECOMPENSAS: +{n} CRÉDITOS",
+"BELOHNUNG: +{n} TRAINER-CREDITS",
+"PREMI: +{n} CREDITI",
+"RECOMPENSAS: +{n} CRÉDITOS"
+],
+[
+"FANS {n}",
+"FANS {n}",
+"AFICIÓN {n}",
+"FANS {n}",
+"TIFOSI {n}",
+"ADEPTOS {n}"
+],
+[
+"OWNER {n}",
+"PROPRIÉTAIRE {n}",
+"DUEÑO {n}",
+"BESITZER {n}",
+"PROPRIETARIO {n}",
+"DONO {n}"
+],
+[
+"INJURIES: {a}",
+"BLESSURES : {a}",
+"LESIONES: {a}",
+"VERLETZUNGEN: {a}",
+"INFORTUNI: {a}",
+"LESÕES: {a}"
+],
+[
+"{k} kicks a {n}-yard field goal. GOOD!",
+"{k} tente un field goal de {n} yards. RÉUSSI !",
+"{k} patea un field goal de {n} yardas. ¡BUENO!",
+"{k} kickt ein Field Goal aus {n} Yards. DRIN!",
+"{k} calcia un field goal da {n} yard. BUONO!",
+"{k} chuta um field goal de {n} jardas. BOM!"
+],
+[
+"{k} misses from {n} yards. No good!",
+"{k} rate de {n} yards. Raté !",
+"{k} falla desde {n} yardas. ¡Fallado!",
+"{k} verfehlt aus {n} Yards. Daneben!",
+"{k} sbaglia da {n} yard. Niente!",
+"{k} falha de {n} jardas. Falhado!"
+],
+[
+"{p} punts {n} yards, touchback.",
+"{p} botte un punt de {n} yards, touchback.",
+"{p} despeja {n} yardas, touchback.",
+"{p} puntet {n} Yards, Touchback.",
+"{p} calcia un punt da {n} yard, touchback.",
+"{p} faz um punt de {n} jardas, touchback."
+],
+[
+"{p} punts {n} yards, returned {r}.",
+"{p} botte un punt de {n} yards, retourné de {r}.",
+"{p} despeja {n} yardas, devuelto {r}.",
+"{p} puntet {n} Yards, {r} zurückgetragen.",
+"{p} calcia un punt da {n} yard, ritornato di {r}.",
+"{p} faz um punt de {n} jardas, devolvido {r}."
+],
+[
+"{p} punts {n} yards, fair catch.",
+"{p} botte un punt de {n} yards, arrêt de volée.",
+"{p} despeja {n} yardas, fair catch.",
+"{p} puntet {n} Yards, Fair Catch.",
+"{p} calcia un punt da {n} yard, fair catch.",
+"{p} faz um punt de {n} jardas, fair catch."
+],
+[
+"Sacked by {d} for a loss of {n}.",
+"Plaqué par {d} pour une perte de {n}.",
+"Capturado por {d} con pérdida de {n}.",
+"Von {d} gesackt, {n} Yards Verlust.",
+"Sack di {d} con perdita di {n}.",
+"Sack de {d} com perda de {n}."
+],
+[
+"FUMBLE! Recovered by your defense!",
+"FUMBLE ! Récupéré par ta défense !",
+"¡FUMBLE! ¡Lo recupera tu defensa!",
+"FUMBLE! Deine Defense sichert den Ball!",
+"FUMBLE! Recupera la tua difesa!",
+"FUMBLE! Recuperado pela tua defesa!"
+],
+[
+"{q} is intercepted by {d}. He takes it all the way back!",
+"{q} est intercepté par {d}, qui remonte tout le terrain !",
+"{q} es interceptado por {d}. ¡La devuelve hasta el final!",
+"{q} wird von {d} abgefangen. Er trägt ihn bis ganz zurück!",
+"{q} è intercettato da {d}. La riporta fino in fondo!",
+"{q} é intercetado por {d}. Leva-a até ao fim!"
+],
+[
+"{q} is intercepted by {d}! Returned {n} yards.",
+"{q} est intercepté par {d} ! Retour de {n} yards.",
+"¡{q} es interceptado por {d}! Devuelta {n} yardas.",
+"{q} wird von {d} abgefangen! {n} Yards zurückgetragen.",
+"{q} è intercettato da {d}! Ritornata di {n} yard.",
+"{q} é intercetado por {d}! Devolvida {n} jardas."
+],
+[
+"{q} pass to {r} complete for 1 yard.",
+"Passe de {q} vers {r} complète pour 1 yard.",
+"Pase de {q} a {r} completo por 1 yarda.",
+"Pass von {q} auf {r} angekommen, 1 Yard.",
+"Passaggio di {q} per {r} completo per 1 yard.",
+"Passe de {q} para {r} completo, 1 jarda."
+],
+[
+"{q} pass to {r} complete for {n} yards.",
+"Passe de {q} vers {r} complète pour {n} yards.",
+"Pase de {q} a {r} completo por {n} yardas.",
+"Pass von {q} auf {r} angekommen, {n} Yards.",
+"Passaggio di {q} per {r} completo per {n} yard.",
+"Passe de {q} para {r} completo, {n} jardas."
+],
+[
+"Tackle by {d}.",
+"Plaquage de {d}.",
+"Placaje de {d}.",
+"Tackle von {d}.",
+"Placcaggio di {d}.",
+"Placagem de {d}."
+],
+[
+"{q} pass intended for {r} is incomplete.",
+"La passe de {q} pour {r} est incomplète.",
+"El pase de {q} para {r} es incompleto.",
+"Der Pass von {q} für {r} kommt nicht an.",
+"Il passaggio di {q} per {r} è incompleto.",
+"O passe de {q} para {r} é incompleto."
+],
+[
+"{q} pass for {r} broken up by {d}.",
+"Passe de {q} pour {r} déviée par {d}.",
+"Pase de {q} para {r} desviado por {d}.",
+"Pass von {q} für {r}, abgewehrt von {d}.",
+"Passaggio di {q} per {r} deviato da {d}.",
+"Passe de {q} para {r} desviado por {d}."
+],
+[
+"up the middle",
+"par le centre",
+"por el centro",
+"durch die Mitte",
+"al centro",
+"pelo meio"
+],
+[
+"to the left",
+"à gauche",
+"por la izquierda",
+"nach links",
+"a sinistra",
+"pela esquerda"
+],
+[
+"to the right",
+"à droite",
+"por la derecha",
+"nach rechts",
+"a destra",
+"pela direita"
+],
+[
+"off tackle",
+"derrière le tackle",
+"junto al tackle",
+"neben dem Tackle",
+"a lato del tackle",
+"junto ao tackle"
+],
+[
+"{b} runs {dir} and FUMBLES! Your defense recovers.",
+"{b} court {dir} et FUMBLE ! Ta défense récupère.",
+"¡{b} corre {dir} y pierde el balón! Recupera tu defensa.",
+"{b} läuft {dir} und FUMBLED! Deine Defense sichert.",
+"{b} corre {dir} e perde palla! Recupera la tua difesa.",
+"{b} corre {dir} e faz FUMBLE! A tua defesa recupera."
+],
+[
+"{b} runs {dir} for {n} yard.",
+"{b} court {dir} pour {n} yard.",
+"{b} corre {dir} {n} yarda.",
+"{b} läuft {dir}, {n} Yard.",
+"{b} corre {dir} per {n} yard.",
+"{b} corre {dir}, {n} jarda."
+],
+[
+"{b} runs {dir} for {n} yards.",
+"{b} court {dir} pour {n} yards.",
+"{b} corre {dir} {n} yardas.",
+"{b} läuft {dir}, {n} Yards.",
+"{b} corre {dir} per {n} yard.",
+"{b} corre {dir}, {n} jardas."
+],
+[
+"First down.",
+"Premier essai.",
+"Primer down.",
+"First Down.",
+"Primo down.",
+"Primeiro down."
+],
+[
+"Turnover on downs!",
+"Balle perdue sur essais !",
+"¡Pérdida por downs!",
+"Turnover on Downs!",
+"Palla persa sui down!",
+"Perda nos downs!"
+],
+[
+"PIXEL FOOTBALL FRANCHISE",
+"FRANCHISE DE FOOTBALL EN PIXELS",
+"FRANQUICIA DE FÚTBOL EN PÍXELES",
+"PIXEL-FOOTBALL-FRANCHISE",
+"FRANCHIGIA DI FOOTBALL IN PIXEL",
+"FRANQUIA DE FUTEBOL EM PÍXEIS"
+],
+[
+"Pixel football and franchise management. Call plays, throw the ball, win the Golden Bowl.",
+"Football en pixels et gestion de franchise. Choisis tes jeux, lance le ballon, remporte le Golden Bowl.",
+"Fútbol americano en píxeles y gestión de franquicia. Elige jugadas, lanza el balón y gana el Golden Bowl.",
+"Pixel-Football und Franchise-Management. Spielzüge wählen, werfen, den Golden Bowl gewinnen.",
+"Football in pixel e gestione della franchigia. Scegli gli schemi, lancia la palla, vinci il Golden Bowl.",
+"Futebol americano em píxeis e gestão de franquia. Escolhe jogadas, lança a bola, vence o Golden Bowl."
+],
+[
+"Welcome, {coach}. Win games, earn coaching credits and build a champion.",
+"Bienvenue, {coach}. Gagne des matchs, obtiens des crédits et bâtis une équipe championne.",
+"Bienvenido, {coach}. Gana partidos, consigue créditos y construye un campeón.",
+"Willkommen, {coach}. Gewinne Spiele, sammle Trainer-Credits und bau einen Meister auf.",
+"Benvenuto, {coach}. Vinci partite, guadagna crediti e costruisci una squadra campione.",
+"Bem-vindo, {coach}. Ganha jogos, obtém créditos e constrói um campeão."
+],
+[
+"Pick a play ·",
+"Choisis un jeu ·",
+"Elige una jugada ·",
+"Spielzug wählen ·",
+"Scegli uno schema ·",
+"Escolhe uma jogada ·"
+],
+[
+"or tap to snap · tap a receiver or",
+"ou touche pour le snap · touche un receveur ou",
+"o toca para el snap · toca un receptor o",
+"oder tippen für den Snap · tippe einen Receiver an oder",
+"o tocca per lo snap · tocca un ricevitore o",
+"ou toca para o snap · toca num recetor ou"
+],
+[
+"to throw, drag to aim · arrows steer,",
+"pour lancer, glisse pour viser · flèches pour diriger,",
+"para lanzar, arrastra para apuntar · flechas para moverte,",
+"zum Werfen, ziehen zum Zielen · Pfeile zum Lenken,",
+"per lanciare, trascina per mirare · frecce per muoverti,",
+"para passar, arrasta para apontar · setas para te mexeres,"
+],
+[
+"or swipe to juke,",
+"ou glisse pour feinter,",
+"o desliza para regatear,",
+"oder wischen zum Juken,",
+"o scorri per dribblare,",
+"ou desliza para fintar,"
+],
+[
+"or tap to dive · drag up to kick",
+"ou touche pour plonger · glisse vers le haut pour taper",
+"o toca para lanzarte · arrastra hacia arriba para patear",
+"oder tippen zum Hechten · nach oben ziehen zum Kicken",
+"o tocca per tuffarti · trascina in su per calciare",
+"ou toca para mergulhar · arrasta para cima para chutar"
+]
+]
