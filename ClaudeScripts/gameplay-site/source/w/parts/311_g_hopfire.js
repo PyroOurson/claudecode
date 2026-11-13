@@ -2206,7 +2206,7 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
     }
     function openPause() {
       if (scr !== 'play' || paused) return;
-      paused = !online(); clearButtons(); resetTouch(); releaseMouse(); sbOpen = false; SBD.hidden = true;
+      paused = !online(); clearButtons(); resetTouch(); releaseMouse(); sbOpen = false; SBD.hidden = true; H.hint.hidden = true; hintT = 0;
       const el = itemsPanel(`<div class="fp-card fp-pause"><h3>${escH(T(online() ? 'Menu' : 'Paused'))}</h3><div class="fp-acts col"><button type="button" class="fp-btn big" data-a="res">${escH(T('Resume'))}</button><button type="button" class="fp-btn" data-a="cls">${escH(T('Change class'))}</button><button type="button" class="fp-btn ghost" data-a="set">${escH(T('Settings'))}</button><button type="button" class="fp-btn ghost" data-a="how">${escH(T('How to play'))}</button><button type="button" class="fp-btn ghost" data-a="quit">${escH(T(online() ? 'Leave game' : 'Quit match'))}</button></div>${online() ? `<p class="fp-note">${escH(T('The match keeps going while this menu is open.'))}</p>` : ''}</div>`, 'm-pause');
       paused = true;
       el.onclick = e => {
@@ -2376,6 +2376,8 @@ ${after > before ? `<p class="fp-lvup">${escH(T('Level up! You are now level {n}
 <div class="fp-tbl"><table><tr><th>#</th><th>${escH(T('Player'))}</th><th>${escH(T('Score'))}</th><th>${escH(T('Kills'))}</th><th>${escH(T('Deaths'))}</th></tr>${rows}</table></div>
 ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next match…'))}</p>` : ''}<div class="fp-acts">${btns}</div></div>`, 'm-over');
       over = { saved: true, at: performance.now(), back: guest ? null : host ? () => toLobby() : () => { W = null; me = null; menu(); } };
+      const mr = el.querySelector('.fp-tbl tr.me'), tb = el.querySelector('.fp-tbl');
+      if (mr && tb) tb.scrollTop = Math.max(0, mr.offsetTop - tb.clientHeight + mr.offsetHeight + 4);
       el.onclick = e => {
         const a = e.target.closest('[data-a]');
         if (!a || performance.now() - over.at < 700) return;
@@ -3408,7 +3410,7 @@ ${R} .fp-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:.4em;margin:
 ${R} .fp-stats div{background:rgba(255,255,255,.06);border-radius:8px;padding:.4em .2em;display:flex;flex-direction:column}
 ${R} .fp-stats b{font-size:clamp(15px,2.4cqw,24px);font-weight:900}${R} .fp-stats small{color:#9aa6bd;font-size:clamp(9px,1.2cqw,12px);text-transform:uppercase}
 ${R} .fp-lvup{color:var(--acc2);font-weight:900;margin:.3em 0}
-${R} .fp-tbl{max-height:30cqh;overflow:auto;margin-top:.4em}
+${R} .fp-tbl{max-height:44cqh;overflow:auto;margin-top:.4em}
 ${R} .fp-tbl table{width:100%;border-collapse:collapse;font-size:clamp(10px,1.4cqw,14px)}
 ${R} .fp-tbl td,${R} .fp-tbl th{padding:.3em .6em;text-align:right}${R} .fp-tbl td:nth-child(2),${R} .fp-tbl th:nth-child(2){text-align:left}
 ${R} .fp-tbl th,${R} .fp-sb th{color:#8b96ab;font-weight:800;text-transform:uppercase;font-size:.8em}

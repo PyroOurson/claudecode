@@ -358,7 +358,7 @@ ${R} .fp-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:.45em;margin
 ${R} .fp-stats div{background:#fff;border:2.5px solid var(--ink);border-radius:14px;padding:.4em .2em;display:flex;flex-direction:column}
 ${R} .fp-stats b{font-size:clamp(15px,2.4cqw,24px);font-weight:900}${R} .fp-stats small{color:#8a7a6a;font-size:clamp(9px,1.2cqw,12px)}
 ${R} .fp-lvup{color:#18a090;font-weight:900;margin:.3em 0}
-${R} .fp-tbl{max-height:30cqh;overflow:auto;margin-top:.4em}
+${R} .fp-tbl{max-height:44cqh;overflow:auto;margin-top:.4em}
 ${R} .fp-tbl table{width:100%;border-collapse:collapse;font-size:clamp(10px,1.4cqw,14px)}
 ${R} .fp-tbl td,${R} .fp-tbl th{padding:.3em .6em;text-align:right}${R} .fp-tbl td:nth-child(2),${R} .fp-tbl th:nth-child(2){text-align:left}
 ${R} .fp-tbl th,${R} .fp-sb th{color:#a08a6a;font-weight:900;font-size:.85em}
