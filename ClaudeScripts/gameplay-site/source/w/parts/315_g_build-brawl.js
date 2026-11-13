@@ -126,7 +126,7 @@ ${G} .dn{position:absolute;left:0;top:0;font-weight:900;font-size:1.35em;pointer
 ${G} .dn.h{color:#ffd84a;font-size:1.65em}${G} .dn.s{color:#8fe0ff}${G} .dn.p{color:#e8e8e8;font-size:1em}
 ${G} .tip{position:absolute;left:50%;bottom:16%;transform:translateX(-50%);padding:.35em .9em;border-radius:.4em;background:rgba(10,14,40,.6);font-weight:800;font-size:.9em;white-space:nowrap;opacity:0;transition:opacity .3s}
 ${G} .tip.on{opacity:1}
-${G} .tip kbd,${G} .pan kbd{display:inline-block;min-width:1.3em;padding:.05em .35em;border-radius:.3em;background:#fff;color:#14183a;font:900 .85em var(--sans);text-align:center;box-shadow:0 .12em 0 #7c84b8}
+${G} .tip kbd,${G} .pan kbd,${G} .pan .kk{font-style:normal;display:inline-block;min-width:1.3em;padding:.05em .35em;border-radius:.3em;background:#fff;color:#14183a;font:900 .85em var(--sans);text-align:center;box-shadow:0 .12em 0 #7c84b8}
 ${G} .flash{position:absolute;inset:0;background:radial-gradient(circle,transparent 45%,rgba(255,40,60,.55));opacity:0;transition:opacity .35s}
 ${G} .flash.s{background:radial-gradient(circle,transparent 45%,rgba(60,160,255,.5))}
 ${G} .scr{position:absolute;inset:0;pointer-events:auto;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,1.6cqw,16px)}
@@ -155,8 +155,8 @@ ${G} .optrow>span{font-weight:800}
 ${G} .optrow input[type=range]{width:min(14em,60%);accent-color:#ffd84a}
 ${G} .title{position:absolute;left:4%;top:6%;font-weight:900;font-style:italic;font-size:4.6em;line-height:.85;letter-spacing:-.03em;text-transform:uppercase;color:#ffd84a;transform:rotate(-3deg);transform-origin:0 0;pointer-events:none;${OL('#0a1030')}}
 ${G} .title small{display:block;color:#fff;font-size:.26em;letter-spacing:.24em;margin-top:.45em;font-style:normal}
-${G} .home{position:absolute;right:3.5%;top:50%;transform:translateY(-50%);width:min(46%,30em)}
-${G} .home .pan{width:100%}
+${G} .home{position:absolute;right:3.5%;top:3%;bottom:3%;display:flex;align-items:center;width:min(46%,30em)}
+${G} .home .pan{width:100%;max-height:100%}
 ${G} .stats{position:absolute;left:4%;bottom:6%;display:flex;gap:.5em;pointer-events:none}
 ${G} .stats div{padding:.35em .8em;border-radius:.5em;background:rgba(10,14,40,.55);font-weight:900;font-size:.9em;text-align:center}
 ${G} .stats b{display:block;font-size:1.5em;font-variant-numeric:tabular-nums}
@@ -191,7 +191,7 @@ ${G} .wait i{width:1em;height:1em;border-radius:50%;border:.2em solid rgba(255,2
 @keyframes bb-spin{to{transform:rotate(1turn)}}
 @container (max-width:620px){
 ${G} .title{font-size:2.6em;top:4%}
-${G} .home{right:auto;left:50%;top:auto;bottom:3%;transform:translateX(-50%);width:94%}
+${G} .home{right:auto;left:3%;top:auto;bottom:2%;width:94%;max-height:76%}
 ${G} .home .pan{padding:1em}
 ${G} .stats{display:none}
 ${G} .modes{grid-template-columns:1fr 1fr}
@@ -1763,15 +1763,15 @@ ${G} .pan h2{font-size:1.6em}
         <span>${k('KeyW')} ${k('KeyA')} ${k('KeyS')} ${k('KeyD')}</span><span>Move</span>
         <span><kbd>Space</kbd></span><span>Jump</span>
         <span><kbd>Shift</kbd></span><span>Crouch</span>
-        <span><kbd>Mouse</kbd></span><span>Aim · left click fires or places · right click aims down sights</span>
+        <span><i class="kk">Mouse</i></span><span>Aim · left click fires or places · right click aims down sights</span>
         <span>${k('KeyF')} <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></span><span>Pickaxe, assault rifle, shotgun, SMG, sniper</span>
         <span>${k('KeyZ')} ${k('KeyX')} ${k('KeyC')} ${k('KeyV')}</span><span>Wall, floor, ramp, cone</span>
         <span>${k('KeyQ')}</span><span>Switch between building and weapons</span>
-        <span><kbd>Right click</kbd></span><span>In build mode: change material (wood, stone, metal)</span>
+        <span><i class="kk">Right click</i></span><span>In build mode: change material (wood, stone, metal)</span>
         <span>${k('KeyR')}</span><span>Reload · in build mode: turn the ramp</span>
         <span>${k('KeyG')}</span><span>Edit the piece you look at: click or drag its tiles, then release or press edit again to confirm. Right click resets it.</span>
         <span><kbd>Esc</kbd> ${k('KeyP')}</span><span>Pause</span>
-        <span><kbd>Touch</kbd></span><span>Left stick moves, drag to look, buttons fire, jump, crouch, build, edit and reload</span>
+        <span><i class="kk">Touch</i></span><span>Left stick moves, drag to look, buttons fire, jump, crouch, build, edit and reload</span>
       </div><div class="btns"><button class="btn" data-a="${back}">Back</button></div></div>`;
     }
     function settingsHtml(back) {
@@ -2046,7 +2046,7 @@ ${G} .pan h2{font-size:1.6em}
       stats.shots = stats.hits = stats.builds = stats.dmg = 0;
       lock();
       if (cfg.mode === 'practice') flashTip(T('Practice: build freely, the targets do not shoot back'), 4);
-      else if (prefs.wins + prefs.losses < 2) flashTip(T('{a} wall · {b} floor · {c} ramp · {d} cone · {e} edit · {f} weapons', { a: keyLabel('KeyZ'), b: keyLabel('KeyX'), c: keyLabel('KeyC'), d: keyLabel('KeyV'), e: keyLabel('KeyG'), f: keyLabel('KeyQ') }), 5);
+      else if (prefs.wins + prefs.losses < 2 && !touchOn) flashTip(T('{a} wall · {b} floor · {c} ramp · {d} cone · {e} edit · {f} weapons', { a: keyLabel('KeyZ'), b: keyLabel('KeyX'), c: keyLabel('KeyC'), d: keyLabel('KeyV'), e: keyLabel('KeyG'), f: keyLabel('KeyQ') }), 5);
     }
     function leaveMatch() {
       if (online) { netLeave(); }
@@ -2739,7 +2739,7 @@ ${G} .pan h2{font-size:1.6em}
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><path d="M8 54h48M12 54V30h20v24M32 54 54 30M12 30l10-12 10 12"/></svg>',
     css: CSS,
     mount(root, api) {
-      const wrap = document.createElement('div'); wrap.className = 'stage'; root.append(wrap);
+      const wrap = document.createElement('div'); wrap.className = 'stage'; wrap.setAttribute('data-i18n', ''); root.append(wrap);
       let cleanup = null;
       const narrow = root.clientWidth && root.clientWidth < 560;
       api.gl(narrow ? 600 : 960, narrow ? 900 : 600).then(v => { if (v && api.alive) cleanup = run(root, wrap, api, v); }).catch(e => { console.error(e); if (api.alive) api.overlay({ kicker: '3D', title: 'WebGL unavailable', text: 'This game needs WebGL, which your browser could not start.', button: null }); });

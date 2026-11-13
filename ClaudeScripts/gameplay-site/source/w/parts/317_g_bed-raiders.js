@@ -60,7 +60,7 @@
     { n: 'Easy', react: 0.55, err: 0.2, turn: 4, cps: 4, bridge: 0.75, layers: 1, buy: 0.5, crit: 0, gap: 0, dia: 0, strafe: 0.3, wtap: 0, early: 45, clutch: 0, rushB: 16 },
     { n: 'Normal', react: 0.4, err: 0.13, turn: 6, cps: 6, bridge: 0.5, layers: 1, buy: 0.8, crit: 0.1, gap: 0.4, dia: 0.3, strafe: 0.6, wtap: 0.3, early: 32, clutch: 0, rushB: 20 },
     { n: 'Hard', react: 0.3, err: 0.085, turn: 8, cps: 8, bridge: 0.36, layers: 2, buy: 1, crit: 0.3, gap: 0.8, dia: 0.7, strafe: 0.85, wtap: 0.6, early: 26, clutch: 0.3, rushB: 24 },
-    { n: 'Hardest', react: 0.2, err: 0.05, turn: 11, cps: 10, bridge: 0.26, layers: 2, buy: 1, crit: 0.6, gap: 1, dia: 1, strafe: 1, wtap: 1, early: 24, clutch: 1, rushB: 28 }
+    { n: 'Hardest', react: 0.2, err: 0.05, turn: 11, cps: 10, bridge: 0.26, layers: 3, buy: 1, crit: 0.6, gap: 1, dia: 1, strafe: 1, wtap: 1, early: 24, clutch: 1, rushB: 28 }
   ];
   const EVENTS = [[300, 'dia2', 'Diamond II'], [480, 'eme2', 'Emerald II'], [660, 'dia3', 'Diamond III'], [840, 'eme3', 'Emerald III'], [1020, 'beds', 'Bed destruction'], [1260, 'sudden', 'Sudden death'], [1500, 'end', 'Game end']];
   const NAMES = ['Pebble', 'Mossy', 'Tinker', 'Clank', 'Fern', 'Bramble', 'Sootie', 'Dusk', 'Ember', 'Wisp', 'Quartz', 'Rusty', 'Juniper', 'Flick'];
@@ -158,7 +158,7 @@ ${G} .rr{display:flex;gap:1em;flex-wrap:wrap;margin:.4em 0;font-size:.95em}
 ${G} .rr span{display:flex;align-items:center;gap:.3em}
 ${G} .rr canvas{width:1.4em;height:1.4em;image-rendering:pixelated}
 ${G} .keys{display:grid;grid-template-columns:auto 1fr;gap:.3em .9em;align-items:center;font-size:.92em}
-${G} kbd{display:inline-block;min-width:1.2em;padding:.05em .3em;border:.12em solid #000;background:#eee;color:#222;font:inherit;text-align:center}
+${G} kbd,${G} .kk{font-style:normal;display:inline-block;min-width:1.2em;padding:.05em .3em;border:.12em solid #000;background:#eee;color:#222;font:inherit;text-align:center}
 ${G} .pz{position:absolute;left:.8%;top:1.2%;pointer-events:auto;width:2.6em;height:2.6em;min-width:40px;min-height:40px;border:.15em solid #000;background:rgba(80,80,80,.7);color:#fff;cursor:pointer;display:grid;place-items:center}
 ${G} .pz i{display:block;width:.8em;height:.9em;border-left:.26em solid #fff;border-right:.26em solid #fff;box-sizing:border-box}
 ${G} .shopb{position:absolute;left:50%;top:62%;transform:translateX(-50%);pointer-events:auto;padding:.4em 1em;border:.15em solid #000;background:rgba(60,140,60,.85);color:#fff;font:inherit;cursor:pointer;min-height:40px}
@@ -166,9 +166,9 @@ ${G} .tc{position:absolute;inset:0;pointer-events:none}
 ${G} .joy{position:absolute;width:116px;height:116px;margin:-58px 0 0 -58px;border-radius:50%;background:rgba(255,255,255,.15);box-shadow:inset 0 0 0 3px rgba(255,255,255,.45);opacity:0}
 ${G} .joy.on{opacity:1}${G} .joy.idle{left:88px;top:calc(100% - 150px);opacity:.4}
 ${G} .joy i{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:rgba(255,255,255,.8)}
-${G} .tb{position:absolute;pointer-events:auto;width:56px;height:56px;border:.15em solid rgba(0,0,0,.7);background:rgba(60,60,60,.55);color:#fff;font:inherit;font-size:11px;touch-action:none;cursor:pointer}
+${G} .tb{position:absolute;pointer-events:auto;width:50px;height:50px;border:.15em solid rgba(0,0,0,.7);background:rgba(60,60,60,.55);color:#fff;font:inherit;font-size:11px;touch-action:none;cursor:pointer}
 ${G} .tb.on{background:rgba(255,210,63,.7)}
-${G} .tb.big{width:72px;height:72px;font-size:12px}
+${G} .tb.big{width:62px;height:62px;font-size:12px}
 ${G} .stage.touch .hb{bottom:1%}
 ${G} .stage.touch .hs{width:2.7em;height:2.7em}
 ${G} .stage.touch .sb{top:2%;transform:none;font-size:.78em;min-width:10em}
@@ -886,7 +886,10 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
     for (const c of bed) for (const [a, b, d] of N) { const x = c[0] + a, y = c[1] + b, z = c[2] + d, k = x + ',' + y + ',' + z; if (set.has(k)) continue; set.add(k); l1.push([x, y, z]); }
     if (layer < 2) return l1;
     for (const c of l1) for (const [a, b, d] of N) { const x = c[0] + a, y = c[1] + b, z = c[2] + d, k = x + ',' + y + ',' + z; if (set.has(k)) continue; set.add(k); if (y >= BASE + 1) l2.push([x, y, z]); }
-    return l1.concat(l2);
+    if (layer < 3) return l1.concat(l2);
+    const l3 = [];
+    for (const c of l2) for (const [a, b, d] of N) { const x = c[0] + a, y = c[1] + b, z = c[2] + d, k = x + ',' + y + ',' + z; if (set.has(k)) continue; set.add(k); if (y >= BASE + 1) l3.push([x, y, z]); }
+    return l1.concat(l2, l3);
   }
   function nearestEnemy(S, p, r) {
     let best = null, bd = r;
@@ -898,6 +901,7 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
     const bl = blocksOf(S, p);
     if (bl < 32 && r[0] >= 4) out.push(['shop', 'wool']);
     if (L.layers >= 2 && S.gt < 60 && r[0] >= 12 && S.count(p, clayOf(p.team)) < 1 && bl >= 16 && p.ai.layer < 2) out.push(['shop', 'clay']);
+    if (L.layers >= 3 && S.gt < 150 && r[0] >= 24 && S.count(p, B.HARD) < 1 && p.ai.layer === 2) out.push(['shop', 'hard']);
     if (L.buy >= 0.8 && p.sword < 1 && r[0] >= 10 + (bl < 16 ? 4 : 0)) out.push(['shop', 'sw1']);
     if (L.buy >= 1 && !p.shears && r[0] >= 20 && p.armor >= 1) out.push(['shop', 'shears']);
     if (L.buy >= 0.8 && p.armor < 1 && r[0] >= 24) out.push(['shop', 'ar1']);
@@ -933,14 +937,19 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
       const q = nearestEnemy(S, p, 26);
       let vis = false;
       if (q) vis = Math.hypot(q.x - p.x, q.z - p.z) < 5 || S.los(p.x, ey, p.z, q.x, S.eyeY(q), q.z);
-      if (q && vis && q !== A.tgt) { A.tgt = q; A.reactT = S.t + L.react * (0.85 + Math.random() * 0.35); }
+      if (q && A.ign && A.ign[q.i] > S.t) vis = false;
+      if (q && vis && q !== A.tgt) { A.tgt = q; A.reactT = S.t + L.react * (0.85 + Math.random() * 0.35); A.tgtT = S.t; A.xT = S.t; }
       if (!vis) A.tgt = null;
+      if (A.tgt && (p.invT > 0 || A.tgt.invT > 0)) A.xT = S.t;
+      if (A.tgt && S.t - A.xT > 7) { A.ign = A.ign || {}; A.ign[A.tgt.i] = S.t + 12; A.tgt = null; vis = false; }
       A.vis = vis;
       const dq = q ? Math.hypot(q.x - p.x, q.y - p.y, q.z - p.z) : 99;
       const nearBed = q && tm.bed && Math.hypot(q.x - tm.bedF[0], q.z - tm.bedF[2]) < 12;
       const home = Math.hypot(p.x - tm.center[0], p.z - tm.center[1]) < 9;
       let plan = A.plan;
+      const raid = L.layers >= 3 && tm.bed && S.pl.some(x => x.alive && x.team !== p.team && Math.hypot(x.x - tm.bedF[0], x.z - tm.bedF[2]) < 10 && Math.abs(x.y - tm.bedF[1]) < 6) && Math.hypot(p.x - tm.bedF[0], p.z - tm.bedF[2]) < 34;
       if (q && vis && (dq < 9 + L.strafe * 4 || nearBed && dq < 30)) plan = 'fight';
+      else if (raid) plan = 'guard';
       else {
         const w = wants(S, p);
         if (home && w.length && S.t > A.buyT) { plan = 'shop'; A.shopKind = w[0][0]; }
@@ -1050,6 +1059,12 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
       const dx = q.x - p.x, dz = q.z - p.z, dh = Math.hypot(dx, dz) || 1;
       A.strafeT -= DT; if (A.strafeT <= 0) { A.strafeT = 0.4 + Math.random() * 0.7; A.strafe = Math.random() < 0.5 ? 1 : -1; }
       const fy = Math.floor(p.y + 0.01);
+      if (q.y - p.y > 2.2 && dh < 4.5 && p.onG !== null) {
+        const si = pickBlock(S, p), cx = Math.floor(p.x), cz = Math.floor(p.z);
+        setMove(p, (cx + 0.5 - p.x) * 1.5, (cz + 0.5 - p.z) * 1.5, true);
+        if (si >= 0 && !S.solidAt(cx, fy + 2, cz)) { if (p.onG) inp.jump = true; if (!p.onG && p.y > fy + 0.95 && S.t > A.placeT) { p.sel = si; A.lookAt = [cx + 0.5, fy + 0.5, cz + 0.5]; if (S.placeBlock(p, cx, fy, cz, p.hot[si].k)) A.placeT = S.t + 0.2; } }
+        return;
+      }
       if (dh > 3.6 || Math.abs(q.y - p.y) > 2.5) { const yaw0 = p.yaw; steer(S, p, q.x, q.y, q.z, { bridge: true, stop: 2.2 }); p.yaw = yaw0; }
       else {
         let fwd = dh > 2.4 ? 1 : dh < 1.6 ? -0.3 : 0.15;
@@ -1143,6 +1158,7 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
       route(S, p, g.x, g.y, g.z);
       return;
     }
+    if (A.plan === 'guard') { if (Math.hypot(tm.bedF[0] + 0.5 - p.x, tm.bedF[2] + 0.5 - p.z) < 3) { A.plan = 'farm'; return; } route(S, p, tm.bedF[0] + 0.5 - tm.f[0] * 2, BASE + 1, tm.bedF[2] + 0.5 - tm.f[1] * 2); return; }
     if (A.plan === 'home') { const [hx, hz] = tm.center; if (Math.hypot(hx - p.x, hz - p.z) < 3) { A.plan = 'farm'; return; } route(S, p, hx, BASE + 1, hz); return; }
     const [gx, gz] = tm.gen;
     if (Math.hypot(gx - p.x, gz - p.z) > 8) { route(S, p, gx, BASE + 1, gz); return; }
@@ -1708,7 +1724,7 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
     const tc = el('div', 'tc', wrap); tc.hidden = true;
     const joy = el('div', 'joy idle', tc, '<i></i>'), knob = joy.firstChild;
     const tb = (txt, r, b, cls) => { const e = el('button', 'tb ' + (cls || ''), tc, txt); e.style.right = r + 'px'; e.style.bottom = b + 'px'; return e; };
-    const tAtk = tb('Hit', 24, 150, 'big'), tUse = tb('Use', 108, 170, 'big'), tJump = tb('Jump', 30, 72), tSneak = tb('Sneak', 96, 72), tView = tb('View', 162, 72);
+    const tAtk = tb('Hit', 14, 116, 'big'), tUse = tb('Use', 82, 128, 'big'), tJump = tb('Jump', 14, 58), tSneak = tb('Sneak', 70, 58), tView = tb('View', 126, 58);
     const scr = el('div', 'scr', ui);
 
     let S = null, me = null, phase = 'home', paused = false, acc = 0, chars = [], npcChars = [], online = null, cfgM = null, endT = 0, view3 = false, shopOpen = '', shopTab = 0, spec = -1, lastHearts = '', camT = 0, homeT = 0, homeS = null;
@@ -1739,11 +1755,11 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
         <span>${k('KeyW')} ${k('KeyA')} ${k('KeyS')} ${k('KeyD')}</span><span>Move</span><span><kbd>Space</kbd></span><span>Jump</span>
         <span><kbd>Shift</kbd></span><span>Sneak: you cannot fall off edges while sneaking, which keeps you safe when bridging</span>
         <span><kbd>Ctrl</kbd></span><span>Sprint (or double tap forward)</span>
-        <span><kbd>Left click</kbd></span><span>Hit, or hold to break a block</span><span><kbd>Right click</kbd></span><span>Place a block, use an item, talk to a shopkeeper</span>
-        <span><kbd>1</kbd>-<kbd>9</kbd> <kbd>Wheel</kbd></span><span>Choose a hotbar slot</span>
+        <span><i class="kk">Left click</i></span><span>Hit, or hold to break a block</span><span><i class="kk">Right click</i></span><span>Place a block, use an item, talk to a shopkeeper</span>
+        <span><kbd>1</kbd>-<kbd>9</kbd> <i class="kk">Wheel</i></span><span>Choose a hotbar slot</span>
         <span>${k('KeyE')}</span><span>Open the shop when you stand near a shopkeeper</span>
         <span><kbd>F5</kbd> ${k('KeyV')}</span><span>First or third person</span><span><kbd>Esc</kbd></span><span>Pause</span>
-        <span><kbd>Touch</kbd></span><span>Left stick moves, drag to look, Hit and Use buttons, tap the hotbar</span>
+        <span><i class="kk">Touch</i></span><span>Left stick moves, drag to look, Hit and Use buttons, tap the hotbar</span>
       </div><div class="btns"><button class="btn go" data-a="${back}">Back</button></div></div>`;
     }
     function settingsHtml(back) {
@@ -2461,7 +2477,7 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><path d="M8 44V22M8 36h48v8M8 30h14v6M22 30h34v6"/></svg>',
     css: CSS,
     mount(root, api) {
-      const wrap = document.createElement('div'); wrap.className = 'stage'; root.append(wrap);
+      const wrap = document.createElement('div'); wrap.className = 'stage'; wrap.setAttribute('data-i18n', ''); root.append(wrap);
       let cleanup = null;
       const narrow = root.clientWidth && root.clientWidth < 560;
       api.gl(narrow ? 600 : 960, narrow ? 900 : 600, { antialias: false }).then(v => { if (v && api.alive) cleanup = run(root, wrap, api, v); }).catch(e => { console.error(e); if (api.alive) api.overlay({ kicker: '3D', title: 'WebGL unavailable', text: 'This game needs WebGL, which your browser could not start.', button: null }); });
