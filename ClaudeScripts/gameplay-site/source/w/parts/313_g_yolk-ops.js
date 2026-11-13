@@ -869,8 +869,8 @@
   const BOTL = [
     { react: [0.55, 0.8], turn: 3.4, k: 6, acq: 0.17, settle: 1.6, jitter: 0.05, head: 0.04, tol: 1.6, strafe: 0.2, hop: 0, smart: 0, track: 0.35, fov: 1.0, comp: 0.1, tap: 0.45, think: 0.25 },
     { react: [0.36, 0.5], turn: 6, k: 8, acq: 0.11, settle: 2.6, jitter: 0.03, head: 0.14, tol: 1.3, strafe: 0.5, hop: 0.25, smart: 0.35, track: 0.6, fov: 1.15, comp: 0.35, tap: 0.3, think: 0.18 },
-    { react: [0.25, 0.34], turn: 9.5, k: 11, acq: 0.065, settle: 3.6, jitter: 0.017, head: 0.33, tol: 1.1, strafe: 0.85, hop: 0.6, smart: 0.7, track: 0.8, fov: 1.25, comp: 0.6, tap: 0.18, think: 0.12 },
-    { react: [0.15, 0.25], turn: 14, k: 14, acq: 0.04, settle: 5, jitter: 0.009, head: 0.62, tol: 1.0, strafe: 1, hop: 1, smart: 1, track: 0.93, fov: 1.35, comp: 0.85, tap: 0.1, think: 0.08 }
+    { react: [0.3, 0.42], turn: 8.5, k: 10, acq: 0.075, settle: 3.2, jitter: 0.02, head: 0.25, tol: 1.15, strafe: 0.8, hop: 0.6, smart: 0.65, track: 0.75, fov: 1.25, comp: 0.5, tap: 0.2, think: 0.13 },
+    { react: [0.15, 0.25], turn: 15, k: 16, acq: 0.03, settle: 6, jitter: 0.0065, head: 0.8, tol: 0.95, strafe: 1, hop: 1, smart: 1, track: 0.95, fov: 1.35, comp: 0.9, tap: 0.1, think: 0.07 }
   ];
   const gauss = r => { let s = 0; for (let i = 0; i < 4; i++) s += r(); return (s - 2) / 0.58; };
 
@@ -965,6 +965,7 @@
       wantPit = 0;
       if (W.t - B.ht < 2.5 && L.smart > 0.3) { wantYaw = Math.atan2(-(B.hx - p.x), -(B.hz - p.z)); wantPit = Math.atan2(B.hy + 1 - ey, Math.hypot(B.hx - p.x, B.hz - p.z)); }
     }
+    if (!(tq && B.vis) && L.smart >= 0.9 && W.t - B.lt < 2 && B.t) { const hy = G.headY(G.phys.H); wantYaw = Math.atan2(-(B.lx - p.x), -(B.lz - p.z)); wantPit = Math.atan2(B.ly + hy - ey, Math.hypot(B.lx - p.x, B.lz - p.z)); }
     const allowAim = !tq || !B.vis || W.t >= B.react - 0.05;
     if (allowAim) {
       const ff = aimOn ? L.track : 0;
@@ -1059,6 +1060,10 @@
     const d = p.weps[p.cur] ? p.weps[p.cur].d : null;
     const pref = d ? (d.botRange || 18) : 18;
     let chase = true;
+    if (engage && L.smart >= 0.9 && p.hp < p.maxHp * 0.3 && tq.hp > p.hp * 1.5 && p.weps[p.cur] && p.weps[p.cur].d.kind !== 'melee' && Math.hypot(tq.x - p.x, tq.z - p.z) > 6) {
+      if (!B.flee || W.t - B.flee > 3) { B.flee = W.t; let best = -1, bd = -1; for (let k = 0; k < 8; k++) { const j = nav.good[Math.floor(rr() * nav.good.length)]; const d0 = Math.hypot(nav.X[j] - p.x, nav.Z[j] - p.z); if (d0 > 18 || d0 < 5) continue; const dq = Math.hypot(nav.X[j] - tq.x, nav.Z[j] - tq.z); if (dq > bd && !clearLine(W.M, nav.X[j], nav.Y[j] + 1.4, nav.Z[j], tq.x, tq.y + 1.4, tq.z)) { bd = dq; best = j; } } if (best >= 0) { B.goal = best; navPath(nav, navNear(nav, W.M, p.x, p.y, p.z), best, B.path); B.pi = 0; B.repath = 2.5; } }
+      engage = false;
+    }
     if (engage) {
       const dist = Math.hypot(tq.x - p.x, tq.z - p.z);
       chase = dist > pref * 1.35 || Math.abs(tq.y - p.y) > 3.5 && dist > 6;
@@ -2438,7 +2443,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
           const a = P[e[1]], v = P[e[2]];
           feed(a, v, e[3], e[4]);
           if (v) {
-            if (fromNet || !W.auth) { v.alive = false; v.hp = 0; v.deaths = fromNet ? v.deaths : v.deaths; v.killer = e[1]; v.killerW = e[3]; v.deathT = W.t; v.respawnT = G.respawn; if (v === me) { me.wantSpawn = !G.manualSpawn; } }
+            if (fromNet || !W.auth) { v.alive = false; v.hp = 0; v.evT = W.t; v.deaths = fromNet ? v.deaths : v.deaths; v.killer = e[1]; v.killerW = e[3]; v.deathT = W.t; v.respawnT = G.respawn; if (v === me) { me.wantSpawn = !G.manualSpawn; } }
             G.deathFx(view, v, e[7], e[8], e[9]);
             audio.play('die', e[7], e[8] + 1, e[9]);
           }
@@ -2457,7 +2462,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
           if (!p) break;
           if (fromNet || !W.auth) {
             if (p === me) { me.nextCls = e[6]; spawnPlayer(W, me, { x: e[2], y: e[3], z: e[4], yaw: e[5] }); W.ev.length = 0; }
-            else { p.x = p.px = e[2]; p.y = p.py = e[3]; p.z = p.pz = e[4]; p.yaw = e[5]; p.cls = e[6]; p.alive = true; p.hp = p.maxHp = G.classes[e[6]].hp; const r = rs[p.slot]; if (r) { r.x = e[2]; r.y = e[3]; r.z = e[4]; r.yaw = e[5]; } }
+            else { p.x = p.px = e[2]; p.y = p.py = e[3]; p.z = p.pz = e[4]; p.yaw = e[5]; p.cls = e[6]; p.alive = true; p.evT = W.t; p.holdT = W.t + 0.25; p.hp = p.maxHp = G.classes[e[6]].hp; const r = rs[p.slot]; if (r) { r.x = e[2]; r.y = e[3]; r.z = e[4]; r.yaw = e[5]; } }
           }
           if (p === me) { look.yaw = e[5]; look.pitch = 0; itemsPanel(null); deathUI = null; dmgFlash = 0; H.dmg.innerHTML = ''; if (scr === 'play' && !paused) lockMouse(); audio.play('spawn'); }
           const c = view.chars[p.slot]; if (c) c.deadT = -1;
@@ -3022,12 +3027,12 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
           const p = W.players[a[0]];
           if (!p || p === me) continue;
           const c = cm.get(a[0]) || a;
-          const wasAlive = p.alive;
-          p.x = lerp(a[1], c[1], al) / 100; p.y = lerp(a[2], c[2], al) / 100; p.z = lerp(a[3], c[3], al) / 100;
-          p.yaw = a[4] / 1000 + angD(c[4] / 1000, a[4] / 1000) * al; p.pitch = lerp(a[5], c[5], al) / 1000;
           const f = c[6];
-          if (!(f & 1) && wasAlive && p.deathT < W.t - 1) { p.alive = false; }
-          else if (f & 1) p.alive = true;
+          if (W.t - (p.evT || -9) > 1.2) p.alive = !!(f & 1);
+          if (W.t >= (p.holdT || 0)) {
+            p.x = lerp(a[1], c[1], al) / 100; p.y = lerp(a[2], c[2], al) / 100; p.z = lerp(a[3], c[3], al) / 100;
+            p.yaw = a[4] / 1000 + angD(c[4] / 1000, a[4] / 1000) * al; p.pitch = lerp(a[5], c[5], al) / 1000;
+          }
           p.onGround = !!(f & 2); p.crouch = !!(f & 4); p.slide = f & 8 ? 0.1 : 0; p.adsF = f & 16 ? 1 : 0; p.shield = f & 32 ? 1 : 0; p.spawnProt = f & 64 ? 1 : 0;
           p.vx = c[13] / 100; p.vz = c[14] / 100;
           if (p.cur !== c[7]) { p.cur = c[7]; }

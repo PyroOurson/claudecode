@@ -716,7 +716,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
           const a = P[e[1]], v = P[e[2]];
           feed(a, v, e[3], e[4]);
           if (v) {
-            if (fromNet || !W.auth) { v.alive = false; v.hp = 0; v.deaths = fromNet ? v.deaths : v.deaths; v.killer = e[1]; v.killerW = e[3]; v.deathT = W.t; v.respawnT = G.respawn; if (v === me) { me.wantSpawn = !G.manualSpawn; } }
+            if (fromNet || !W.auth) { v.alive = false; v.hp = 0; v.evT = W.t; v.deaths = fromNet ? v.deaths : v.deaths; v.killer = e[1]; v.killerW = e[3]; v.deathT = W.t; v.respawnT = G.respawn; if (v === me) { me.wantSpawn = !G.manualSpawn; } }
             G.deathFx(view, v, e[7], e[8], e[9]);
             audio.play('die', e[7], e[8] + 1, e[9]);
           }
@@ -735,7 +735,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
           if (!p) break;
           if (fromNet || !W.auth) {
             if (p === me) { me.nextCls = e[6]; spawnPlayer(W, me, { x: e[2], y: e[3], z: e[4], yaw: e[5] }); W.ev.length = 0; }
-            else { p.x = p.px = e[2]; p.y = p.py = e[3]; p.z = p.pz = e[4]; p.yaw = e[5]; p.cls = e[6]; p.alive = true; p.hp = p.maxHp = G.classes[e[6]].hp; const r = rs[p.slot]; if (r) { r.x = e[2]; r.y = e[3]; r.z = e[4]; r.yaw = e[5]; } }
+            else { p.x = p.px = e[2]; p.y = p.py = e[3]; p.z = p.pz = e[4]; p.yaw = e[5]; p.cls = e[6]; p.alive = true; p.evT = W.t; p.holdT = W.t + 0.25; p.hp = p.maxHp = G.classes[e[6]].hp; const r = rs[p.slot]; if (r) { r.x = e[2]; r.y = e[3]; r.z = e[4]; r.yaw = e[5]; } }
           }
           if (p === me) { look.yaw = e[5]; look.pitch = 0; itemsPanel(null); deathUI = null; dmgFlash = 0; H.dmg.innerHTML = ''; if (scr === 'play' && !paused) lockMouse(); audio.play('spawn'); }
           const c = view.chars[p.slot]; if (c) c.deadT = -1;
@@ -1300,12 +1300,12 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
           const p = W.players[a[0]];
           if (!p || p === me) continue;
           const c = cm.get(a[0]) || a;
-          const wasAlive = p.alive;
-          p.x = lerp(a[1], c[1], al) / 100; p.y = lerp(a[2], c[2], al) / 100; p.z = lerp(a[3], c[3], al) / 100;
-          p.yaw = a[4] / 1000 + angD(c[4] / 1000, a[4] / 1000) * al; p.pitch = lerp(a[5], c[5], al) / 1000;
           const f = c[6];
-          if (!(f & 1) && wasAlive && p.deathT < W.t - 1) { p.alive = false; }
-          else if (f & 1) p.alive = true;
+          if (W.t - (p.evT || -9) > 1.2) p.alive = !!(f & 1);
+          if (W.t >= (p.holdT || 0)) {
+            p.x = lerp(a[1], c[1], al) / 100; p.y = lerp(a[2], c[2], al) / 100; p.z = lerp(a[3], c[3], al) / 100;
+            p.yaw = a[4] / 1000 + angD(c[4] / 1000, a[4] / 1000) * al; p.pitch = lerp(a[5], c[5], al) / 1000;
+          }
           p.onGround = !!(f & 2); p.crouch = !!(f & 4); p.slide = f & 8 ? 0.1 : 0; p.adsF = f & 16 ? 1 : 0; p.shield = f & 32 ? 1 : 0; p.spawnProt = f & 64 ? 1 : 0;
           p.vx = c[13] / 100; p.vz = c[14] / 100;
           if (p.cur !== c[7]) { p.cur = c[7]; }

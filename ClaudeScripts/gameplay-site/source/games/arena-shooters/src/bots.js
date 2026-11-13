@@ -163,8 +163,8 @@
   const BOTL = [
     { react: [0.55, 0.8], turn: 3.4, k: 6, acq: 0.17, settle: 1.6, jitter: 0.05, head: 0.04, tol: 1.6, strafe: 0.2, hop: 0, smart: 0, track: 0.35, fov: 1.0, comp: 0.1, tap: 0.45, think: 0.25 },
     { react: [0.36, 0.5], turn: 6, k: 8, acq: 0.11, settle: 2.6, jitter: 0.03, head: 0.14, tol: 1.3, strafe: 0.5, hop: 0.25, smart: 0.35, track: 0.6, fov: 1.15, comp: 0.35, tap: 0.3, think: 0.18 },
-    { react: [0.25, 0.34], turn: 9.5, k: 11, acq: 0.065, settle: 3.6, jitter: 0.017, head: 0.33, tol: 1.1, strafe: 0.85, hop: 0.6, smart: 0.7, track: 0.8, fov: 1.25, comp: 0.6, tap: 0.18, think: 0.12 },
-    { react: [0.15, 0.25], turn: 14, k: 14, acq: 0.04, settle: 5, jitter: 0.009, head: 0.62, tol: 1.0, strafe: 1, hop: 1, smart: 1, track: 0.93, fov: 1.35, comp: 0.85, tap: 0.1, think: 0.08 }
+    { react: [0.3, 0.42], turn: 8.5, k: 10, acq: 0.075, settle: 3.2, jitter: 0.02, head: 0.25, tol: 1.15, strafe: 0.8, hop: 0.6, smart: 0.65, track: 0.75, fov: 1.25, comp: 0.5, tap: 0.2, think: 0.13 },
+    { react: [0.15, 0.25], turn: 15, k: 16, acq: 0.03, settle: 6, jitter: 0.0065, head: 0.8, tol: 0.95, strafe: 1, hop: 1, smart: 1, track: 0.95, fov: 1.35, comp: 0.9, tap: 0.1, think: 0.07 }
   ];
   const gauss = r => { let s = 0; for (let i = 0; i < 4; i++) s += r(); return (s - 2) / 0.58; };
 
@@ -259,6 +259,7 @@
       wantPit = 0;
       if (W.t - B.ht < 2.5 && L.smart > 0.3) { wantYaw = Math.atan2(-(B.hx - p.x), -(B.hz - p.z)); wantPit = Math.atan2(B.hy + 1 - ey, Math.hypot(B.hx - p.x, B.hz - p.z)); }
     }
+    if (!(tq && B.vis) && L.smart >= 0.9 && W.t - B.lt < 2 && B.t) { const hy = G.headY(G.phys.H); wantYaw = Math.atan2(-(B.lx - p.x), -(B.lz - p.z)); wantPit = Math.atan2(B.ly + hy - ey, Math.hypot(B.lx - p.x, B.lz - p.z)); }
     const allowAim = !tq || !B.vis || W.t >= B.react - 0.05;
     if (allowAim) {
       const ff = aimOn ? L.track : 0;
@@ -353,6 +354,10 @@
     const d = p.weps[p.cur] ? p.weps[p.cur].d : null;
     const pref = d ? (d.botRange || 18) : 18;
     let chase = true;
+    if (engage && L.smart >= 0.9 && p.hp < p.maxHp * 0.3 && tq.hp > p.hp * 1.5 && p.weps[p.cur] && p.weps[p.cur].d.kind !== 'melee' && Math.hypot(tq.x - p.x, tq.z - p.z) > 6) {
+      if (!B.flee || W.t - B.flee > 3) { B.flee = W.t; let best = -1, bd = -1; for (let k = 0; k < 8; k++) { const j = nav.good[Math.floor(rr() * nav.good.length)]; const d0 = Math.hypot(nav.X[j] - p.x, nav.Z[j] - p.z); if (d0 > 18 || d0 < 5) continue; const dq = Math.hypot(nav.X[j] - tq.x, nav.Z[j] - tq.z); if (dq > bd && !clearLine(W.M, nav.X[j], nav.Y[j] + 1.4, nav.Z[j], tq.x, tq.y + 1.4, tq.z)) { bd = dq; best = j; } } if (best >= 0) { B.goal = best; navPath(nav, navNear(nav, W.M, p.x, p.y, p.z), best, B.path); B.pi = 0; B.repath = 2.5; } }
+      engage = false;
+    }
     if (engage) {
       const dist = Math.hypot(tq.x - p.x, tq.z - p.z);
       chase = dist > pref * 1.35 || Math.abs(tq.y - p.y) > 3.5 && dist > 6;
