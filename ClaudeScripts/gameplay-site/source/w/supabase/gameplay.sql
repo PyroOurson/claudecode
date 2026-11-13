@@ -10880,6 +10880,111 @@ grant execute on function public.dm_read(uuid, bigint[]) to authenticated;
 -- ============================================================================
 
 -- ============================================================================
+-- 2026-11-13 Playtime kept across sync batches: time over the per-batch limit is carried to later batches
+-- ============================================================================
+create table if not exists private.sync_carry (
+  user_id uuid not null references auth.users (id) on delete cascade,
+  game_id text not null,
+  seconds double precision not null default 0,
+  primary key (user_id, game_id)
+);
+alter table private.sync_carry enable row level security;
+revoke all on table private.sync_carry from public, anon, authenticated;
+
+create or replace function public.sync_game_stats(p_batch uuid default null, p_rows jsonb default '[]'::jsonb)
+returns setof public.game_stats
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_row jsonb;
+  v_new integer := 0;
+  v_plays integer;
+  v_secs double precision;
+  v_best double precision;
+  v_better text;
+  v_last timestamptz;
+  v_prev timestamptz;
+  v_budget double precision;
+  v_pbudget integer := 20000;
+  v_req double precision;
+  v_take double precision;
+  v_c record;
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if p_rows is null or jsonb_typeof(p_rows) <> 'array' or jsonb_array_length(p_rows) > 300 then
+    raise exception 'p_rows must be an array of at most 300 rows' using errcode = '22023';
+  end if;
+  if jsonb_array_length(p_rows) > 0 then
+    if p_batch is null then
+      raise exception 'p_batch is required' using errcode = '22023';
+    end if;
+    perform private.rate_check('sync', 150, interval '10 minutes');
+    select max(b.created_at) into v_prev from private.sync_batches b where b.user_id = v_uid;
+    v_budget := case when v_prev is null then 604800 else least(604800, 3 * greatest(0, extract(epoch from (now() - v_prev))) + 3600) end;
+    insert into private.sync_batches (user_id, batch_id) values (v_uid, p_batch) on conflict do nothing;
+    get diagnostics v_new = row_count;
+    if v_new = 1 then
+      for v_c in select c.game_id, c.seconds from private.sync_carry c where c.user_id = v_uid order by c.game_id for update loop
+        exit when v_budget <= 0;
+        v_take := least(v_c.seconds, v_budget);
+        v_budget := v_budget - v_take;
+        insert into public.game_stats as s (user_id, game_id, plays, seconds_played) values (v_uid, v_c.game_id, 0, v_take)
+          on conflict (user_id, game_id) do update set seconds_played = least(s.seconds_played + excluded.seconds_played, 1000000000);
+        if v_c.seconds - v_take <= 0.5 then
+          delete from private.sync_carry where user_id = v_uid and game_id = v_c.game_id;
+        else
+          update private.sync_carry set seconds = v_c.seconds - v_take where user_id = v_uid and game_id = v_c.game_id;
+        end if;
+      end loop;
+      for v_row in select value from jsonb_array_elements(p_rows) loop
+        continue when jsonb_typeof(v_row) <> 'object';
+        continue when coalesce(v_row ->> 'game_id', '') !~ '^[a-z0-9][a-z0-9-]{0,39}$';
+        v_plays := case when jsonb_typeof(v_row -> 'plays') = 'number' then floor(least(greatest((v_row ->> 'plays')::numeric, 0), 5000))::integer else 0 end;
+        v_plays := least(v_plays, v_pbudget);
+        v_pbudget := v_pbudget - v_plays;
+        v_secs := case when jsonb_typeof(v_row -> 'seconds') = 'number' then least(greatest((v_row ->> 'seconds')::numeric, 0), 604800)::double precision else 0 end;
+        v_req := v_secs;
+        v_secs := least(v_secs, v_budget);
+        v_budget := v_budget - v_secs;
+        if v_req - v_secs > 0.5 then
+          insert into private.sync_carry as c (user_id, game_id, seconds) values (v_uid, v_row ->> 'game_id', v_req - v_secs)
+            on conflict (user_id, game_id) do update set seconds = least(c.seconds + excluded.seconds, 604800);
+        end if;
+        v_best := case when jsonb_typeof(v_row -> 'best') = 'number' and abs((v_row ->> 'best')::numeric) < 1e15 then (v_row ->> 'best')::double precision end;
+        v_better := case when v_row ->> 'better' = 'low' then 'low' else 'high' end;
+        v_last := case when jsonb_typeof(v_row -> 'last_played') = 'string' and (v_row ->> 'last_played') ~ '^\d{4}-\d{2}-\d{2}' then least(now(), (v_row ->> 'last_played')::timestamptz) end;
+        continue when v_plays = 0 and v_secs = 0 and v_best is null and v_last is null;
+        insert into public.game_stats as s (user_id, game_id, plays, seconds_played, best_score, best_better, last_played)
+        values (v_uid, v_row ->> 'game_id', v_plays, v_secs, v_best, v_better, v_last)
+        on conflict (user_id, game_id) do update set
+          plays = least(s.plays + excluded.plays, 10000000),
+          seconds_played = least(s.seconds_played + excluded.seconds_played, 1000000000),
+          best_better = excluded.best_better,
+          best_score = case
+            when excluded.best_score is null then s.best_score
+            when s.best_score is null then excluded.best_score
+            when excluded.best_better = 'low' then least(s.best_score, excluded.best_score)
+            else greatest(s.best_score, excluded.best_score)
+          end,
+          last_played = greatest(s.last_played, excluded.last_played);
+      end loop;
+    end if;
+    if random() < 0.02 then
+      delete from private.sync_batches where user_id = v_uid and created_at < now() - interval '60 days';
+    end if;
+  end if;
+  return query select * from public.game_stats where user_id = v_uid order by game_id;
+end;
+$$;
+revoke all on function public.sync_game_stats(uuid, jsonb) from public, anon, authenticated;
+grant execute on function public.sync_game_stats(uuid, jsonb) to authenticated;
+
+-- ============================================================================
 -- 2026-11-13 Game services
 -- ============================================================================
 
