@@ -200,6 +200,7 @@ ROWS = [
  ('bowling',"Bowling",'Sports','so6',8,'bowling ten pin strike spare lane','rn'),
  ('caption-this',"Caption This",'Brain','so10',12,'caption this meme memes captions funny pictures vote rate party make it meme what do you meme','rn'),
  ('long-shot',"Long Shot",'Brain','so16',8,'long shot krillion daily trivia rare answers rarity name a thing categories endless duel','rn'),
+ ('the-quiet-house',"The Quiet House",'Action,Puzzle','s',30,'granny horror scary escape house hide hiding keys puzzle stealth first person five days','rn'),
 ]
 DELETED = ['demon-halls', 'night-survivors', 'fire-water', 'bomb-blast', 'marble-chain', 'clicker', 'glide', 'jetpack', 'sky-jump', 'lights-out', 'deep-miner', 'fling-birds', 'candy-rope', 'racer', 'shooter', 'hill-climb', 'golf', 'asteroids', 'bowling-3d', 'kart-circuit', 'tower-defense', 'stick-bridge']
 
