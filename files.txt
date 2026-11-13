@@ -18,6 +18,7 @@ ClaudeScripts/acra/start.bat
 ClaudeScripts/acra/start.sh
 ClaudeScripts/acra/train.py
 ClaudeScripts/acra/watch.py
+ClaudeScripts/gameplay-site/admin_variants.html
 ClaudeScripts/gameplay-site/deploy.py
 ClaudeScripts/gameplay-site/prompt.txt
 ClaudeScripts/gameplay-site/server/README.md
@@ -88,6 +89,7 @@ ClaudeScripts/gameplay-site/source/games/rocket-league/tools/split.py
 ClaudeScripts/gameplay-site/source/games/rocket-league/tools/svgshot.js
 ClaudeScripts/gameplay-site/source/games/subway-surfers/build.py
 ClaudeScripts/gameplay-site/source/games/subway-surfers/src/subway-surfers.js
+ClaudeScripts/gameplay-site/source/notes/admin-rating.md
 ClaudeScripts/gameplay-site/source/notes/analytics_audit_round19.md
 ClaudeScripts/gameplay-site/source/notes/design/gameplay-home.html
 ClaudeScripts/gameplay-site/source/notes/design/lobby.webp
