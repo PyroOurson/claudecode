@@ -976,7 +976,8 @@
         if (sv.hold.length && S.btn(W / 2 - 220, H - 76, 200, 40, tr('Sell all {m}', { m: money(holdValue()) }), { color: '#ffb703', size: 16 })) { sellAll(); modal = null; }
         if (S.btn(W / 2 + 20, H - 76, 140, 40, 'Close', { color: '#e8734a', size: 18 })) modal = null;
       }
-      if (S.pressed && modal && modal.k !== 'welcome' && !S.inside(40, 50, W - 80, H - 90)) modal = null;
+      if (S.pressed && modal && modal.k !== 'welcome' && modal.seen && !S.inside(40, 50, W - 80, H - 90)) modal = null;
+      if (modal) modal.seen = true;
     };
 
     api.score(sv.coins);
