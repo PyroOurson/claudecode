@@ -1352,30 +1352,49 @@ ${p} [hidden]{display:none!important}
         else {
           const sc = n === 9 ? 1 : n === 13 ? 1.5 : 2.2;
           const so = { komi: g.cfg.komi, maxPlayouts: Math.round(pr.playouts * (n === 9 ? 1 : n === 13 ? .8 : .5)), maxMs: pr.ms * sc, passOk: g.moves.length >= n, oppPassed: lastPass(g), japanese: g.cfg.rules === 'J', canResign: lv >= 2 && g.moves.length > n * 2, early: !!pr.early };
-          const w = getWk(), id = ++wid;
-          const local = () => {
-            s = E.Search(root0, so);
+          const settle = cb => {
+            const e2 = E.Estimate(root0, { playouts: n === 9 ? 500 : n === 13 ? 350 : 250, maxMs: 1500 });
             const tick = () => {
               if (dead) return;
-              const fin = s.step(7);
-              info = 'Thinking… ' + s.playouts.toLocaleString('en-US') + ' playouts';
-              if (fin) { const r = s.result(); done(toAct(r.move)); } else tm(tick, 2);
+              if (!e2.step(8)) { info = 'Counting the board…'; tm(tick, 2); return; }
+              const tg = E.Game(g.cfg);
+              tg.rebuild(g.moves); tg.setDead(e2.dead());
+              const r = tg.score();
+              let open = 0;
+              for (let i = 0; i < tg.P.pts.length; i++) { const p = tg.P.pts[i]; if (!r.terr[p] && (tg.P.b[p] === 0 || tg.dead[p])) open++; }
+              cb(open <= 3 || g.moves.length > n * n * 2 || (r.winner !== col && open <= n));
             };
             tick();
           };
-          if (!w) local();
-          else {
+          const think = so => {
+            const w = getWk(), id = ++wid;
+            const got = mv => {
+              if (mv === -1 && so.passOk && so.oppPassed && so.japanese) settle(ok => { if (ok) done({ k: 'pass' }); else think({ ...so, passOk: false }); });
+              else done(toAct(mv));
+            };
+            const local = () => {
+              s = E.Search(root0, so);
+              const tick = () => {
+                if (dead) return;
+                const fin = s.step(7);
+                info = 'Thinking… ' + s.playouts.toLocaleString('en-US') + ' playouts';
+                if (fin) got(s.result().move); else tm(tick, 2);
+              };
+              tick();
+            };
+            if (!w) return local();
             info = 'Thinking…';
             w.onmessage = e => {
               const d = e.data;
               if (dead || d.id !== id) return;
-              if (d.res) { busy = false; done(toAct(d.res.move)); }
+              if (d.res) { busy = false; got(d.res.move); }
               else info = 'Thinking… ' + d.prog.toLocaleString('en-US') + ' playouts';
             };
             w.onerror = () => { busy = false; wk = false; if (!dead) local(); };
             busy = true;
             w.postMessage({ id, cfg: g.cfg, moves: g.moves.slice(), so });
-          }
+          };
+          think(so);
         }
       }
       return { cancel() { if (!dead && busy) killWk(); dead = true; }, info: () => info };
