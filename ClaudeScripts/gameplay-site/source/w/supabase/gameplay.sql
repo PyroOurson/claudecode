@@ -1,3 +1,11 @@
+-- Gameplay Games database: the one file for every Supabase project (a new empty project or production).
+-- Safe to run any number of times. It never deletes or rewrites user data, apart from the one-time clean-ups in
+-- the last section, each recorded in private.once_done so it runs once. Change this file only, and put the date
+-- of the change at the top of the section you change.
+
+-- ============================================================================
+-- 2026-11-13 Base schema: accounts, games, friends, messages, parties, admin, analytics (rounds 1 to 19)
+-- ============================================================================
 create schema if not exists private;
 create extension if not exists pgcrypto with schema extensions;
 create schema if not exists admin;
@@ -9776,4 +9784,73 @@ revoke all on function public.admin_diag_page(uuid, text, integer, integer, inte
 grant execute on function public.admin_diag_info(uuid, text) to authenticated;
 grant execute on function public.admin_diag_page(uuid, text, integer, integer, integer, text[], text, boolean) to authenticated;
 revoke all on all functions in schema private from public, anon, authenticated;
+notify pgrst, 'reload schema';
+
+-- ============================================================================
+-- 2026-11-13 Relay secret and trusted client address (Part 10.2)
+-- ============================================================================
+
+-- ============================================================================
+-- 2026-11-13 Party registry and private realtime channels (Part 10.1, 17.1.3)
+-- ============================================================================
+
+-- ============================================================================
+-- 2026-11-13 Sign-in and account security (Part 10.3 to 10.7)
+-- ============================================================================
+
+-- ============================================================================
+-- 2026-11-13 Online players per second and all-time peaks (Part 17.1.4)
+-- ============================================================================
+
+-- ============================================================================
+-- 2026-11-13 IP bans (Part 17.2)
+-- ============================================================================
+
+-- ============================================================================
+-- 2026-11-13 Read marks only by the recipient (Part 17.1.2)
+-- ============================================================================
+
+-- ============================================================================
+-- 2026-11-13 Data collection: 50 measures (Part 17.5)
+-- ============================================================================
+
+-- ============================================================================
+-- 2026-11-13 Game services
+-- ============================================================================
+
+-- ============================================================================
+-- 2026-11-13 One-time clean-ups (each runs once, recorded in private.once_done)
+-- ============================================================================
+create table if not exists private.once_done (
+  id text primary key,
+  at timestamptz not null default now()
+);
+alter table private.once_done enable row level security;
+revoke all on table private.once_done from public, anon, authenticated;
+
+do $$
+begin
+  if not exists (select 1 from private.once_done where id = '2026-11-13 analytics clean-up') then
+    if not coalesce((select h.retention from private.housekeep h where h.id = 1), false) then
+      perform set_config('statement_timeout', '0', true);
+      delete from public.analytics_events a using public.analytics_events b
+        where a.session_id = b.session_id and a.event = b.event and a.client_at = b.client_at and a.props = b.props and a.id > b.id;
+      update public.analytics_events e set props = e.props - array['lh', 'wd', 'asn', 'city', 'isp']
+        where e.event = 'env_geo' and e.props ?| array['lh', 'wd', 'asn', 'city', 'isp'];
+      update public.analytics_events e set props = e.props - array['sw', 'sh', 'aw', 'ah']
+        where e.event = 'env_scr' and e.props ?| array['sw', 'sh', 'aw', 'ah'];
+      update public.analytics_events e set props = (e.props - 'adb') || case when jsonb_typeof(e.props -> 'langs') = 'array' and jsonb_array_length(e.props -> 'langs') > 1 then jsonb_build_object('langs', jsonb_build_array(e.props -> 'langs' -> 0)) else '{}'::jsonb end
+        where e.event = 'env_dev' and (e.props ? 'adb' or (jsonb_typeof(e.props -> 'langs') = 'array' and jsonb_array_length(e.props -> 'langs') > 1));
+      update public.analytics_events e set props = e.props - array['mdist', 'wheel', 'scr', 'copy', 'rsz']
+        where e.event = 'sess_sum' and e.props ?| array['mdist', 'wheel', 'scr', 'copy', 'rsz'];
+      update public.analytics_events e set props = e.props - array['ck', 'dnt', 'gpc', 'pdf', 'sab', 'coi', 'swk', 'notif', 'vib', 'bt', 'usb', 'ser', 'hid', 'xr', 'midi', 'share', 'wl', 'voices', 'mic', 'cam', 'spk', 'sr', 'ach',
+          'h264', 'vp9', 'av1', 'hevc', 'mtex', 'glx', 'gpuv', 'quota', 'used', 'qb', 'pers', 'heap', 'bat', 'batb', 'chg', 'bench', 'benchb', 'loc', 'cal', 'num', 'hc', 'fdw', 'hist', 'plat', 'vend', 'ua']
+        where e.event = 'env_caps' and e.props ?| array['ua', 'bat', 'mic', 'cam', 'bench', 'quota', 'dnt', 'gpc', 'plat', 'vend', 'hist', 'loc', 'voices', 'heap', 'ck'];
+      update private.housekeep set retention = true where id = 1;
+    end if;
+    insert into private.once_done (id) values ('2026-11-13 analytics clean-up');
+  end if;
+end;
+$$;
+
 notify pgrst, 'reload schema';

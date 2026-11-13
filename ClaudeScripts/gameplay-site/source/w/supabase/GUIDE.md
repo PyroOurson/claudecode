@@ -114,7 +114,7 @@ Never paste the database password, the secret key or the service_role key.
 
 Claude runs one small script, `supabase/setup.py`, with your token. It:
 
-1. Creates the database tables, the security rules (Row Level Security) and the dashboard views from `supabase/schema.sql`. Running it again is safe: it never deletes data.
+1. Creates the database tables, the security rules (Row Level Security) and the dashboard views from `supabase/gameplay.sql`. Running it again is safe: it never deletes data.
 2. Sets up sign-in: the site address `https://gameplaygames.web.app`, the allowed return addresses (`https://gameplaygames.web.app/**`, `https://gameplaygames.firebaseapp.com/**`, `https://pyroourson.github.io/claudecode/**`), email and password sign-in with a minimum password length of 8, email confirmation, and Google sign-in with your client ID and secret.
 3. Reads the publishable key and puts the project URL and key into the website settings, then rebuilds the site. That is the moment accounts switch on.
 
@@ -125,7 +125,7 @@ When Claude says it is done, revoke the token:
 
 The website keeps working: it only uses the publishable key, which is designed to be public. Security comes from the Row Level Security rules in the database: each player can only read and change their own data.
 
-If you prefer not to create a token, you can do it by hand instead: open **SQL Editor** > **New query**, paste the whole content of `supabase/schema.sql`, click **Run**; then in **Authentication** set **URL Configuration** (Site URL and Redirect URLs as in step 2 above), **Sign In / Providers** > **Email** (enabled, confirm email on, minimum password length 8) and **Google** (enabled, paste the client ID and secret). Then give Claude only the project URL and publishable key.
+If you prefer not to create a token, you can do it by hand instead: open **SQL Editor** > **New query**, paste the whole content of `supabase/gameplay.sql`, click **Run**; then in **Authentication** set **URL Configuration** (Site URL and Redirect URLs as in step 2 above), **Sign In / Providers** > **Email** (enabled, confirm email on, minimum password length 8) and **Google** (enabled, paste the client ID and secret). Then give Claude only the project URL and publishable key.
 
 ## Part E. Where to see your data later
 
@@ -192,7 +192,7 @@ You can change the email texts in **Authentication > Emails > Templates**.
 
 Every account has a **role**: `user` (everyone, by default) or `admin`. Players can never change their own role: only you (in the SQL editor) or another admin (in the dashboard) can.
 
-**Make yourself admin** (once, after `schema.sql` has run):
+**Make yourself admin** (once, after `gameplay.sql` has run):
 
 1. On the website, create your account and choose your username (for example `dedpoul`).
 2. In Supabase, open **SQL Editor** > **New query**, paste this line with your own username, and click **Run**:
