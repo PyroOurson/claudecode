@@ -934,7 +934,10 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
     }
 
     let netAcc = 0;
-    function frame(dt, now) {
+    let lastNow = 0;
+    function frame(dt0, now) {
+      const dt = lastNow ? clamp((now - lastNow) / 1000, 0, 0.25) : dt0;
+      lastNow = now;
       lastRaf = now;
       if (!W) {
         if (previewM) {
@@ -955,14 +958,14 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
       } else localInput(dt);
       if (NET.role === 'guest') guestFrame(dt, now);
       else {
-        if (!paused) {
+        if (!paused || online()) {
           simAcc += dt;
           let n = 0;
-          while (simAcc >= STEP && n < 5) { simAcc -= STEP; n++; tick(); }
-          if (n === 5) simAcc = 0;
+          while (simAcc >= STEP && n < 16) { simAcc -= STEP; n++; tick(); }
+          if (n === 16) simAcc = 0;
         }
       }
-      const alpha = NET.role === 'guest' ? clamp(simAcc / STEP, 0, 1) : paused ? 1 : clamp(simAcc / STEP, 0, 1);
+      const alpha = paused && !online() ? 1 : clamp(simAcc / STEP, 0, 1);
       renderState(alpha, dt);
       const r = rs[me.slot] || me;
       const P = G.phys;
@@ -1254,12 +1257,13 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
       if (!me.alive) api.timeout(() => showDeath(), 300);
     }
     function guestFrame(dt, tnow) {
-      if (!paused) {
+      {
         simAcc += dt;
         let n = 0;
-        while (simAcc >= STEP && n < 5) {
+        while (simAcc >= STEP && n < 16) {
           simAcc -= STEP; n++;
           W.t += STEP; W.tick++;
+          if (!me.alive) me.respawnT -= STEP;
           if (me.alive && !W.over) {
             if (me.ai) me.ai.think(W, STEP);
             wishMove(W, me, STEP); physStep(W, me, STEP);
@@ -1287,7 +1291,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
           }
           if (W.tick % 60 === 0) netSend({ t: 'pg', c: performance.now() });
         }
-        if (n === 5) simAcc = 0;
+        if (n === 16) simAcc = 0;
       }
       const B = NET.buf;
       if (B.length) {

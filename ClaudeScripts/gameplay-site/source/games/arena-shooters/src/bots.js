@@ -322,7 +322,7 @@
     if (!nav.good.length) return -1;
     if (W.mode.zone && W.M.zones.length) {
       const z = W.M.zones[W.zone.i];
-      if (rr() < 0.85) { const a = rr() * TAU, r = rr() * z.r * 0.7; return navNear(nav, W.M, z.x + Math.cos(a) * r, z.y, z.z + Math.sin(a) * r, 2); }
+      if (rr() < 0.95) { const a = rr() * TAU, r = rr() * z.r * 0.6; const j = navNear(nav, W.M, z.x + Math.cos(a) * r, z.y, z.z + Math.sin(a) * r, 2); if (j >= 0) return j; }
     }
     if (W.t - B.ht < 4 && rr() < 0.5 + L.smart * 0.4) return navNear(nav, W.M, B.hx, B.hy, B.hz, 2);
     if (W.t - B.lt < 6 && rr() < 0.7) return navNear(nav, W.M, B.lx, B.ly, B.lz, 2);
@@ -358,9 +358,11 @@
       if (!B.flee || W.t - B.flee > 3) { B.flee = W.t; let best = -1, bd = -1; for (let k = 0; k < 8; k++) { const j = nav.good[Math.floor(rr() * nav.good.length)]; const d0 = Math.hypot(nav.X[j] - p.x, nav.Z[j] - p.z); if (d0 > 18 || d0 < 5) continue; const dq = Math.hypot(nav.X[j] - tq.x, nav.Z[j] - tq.z); if (dq > bd && !clearLine(W.M, nav.X[j], nav.Y[j] + 1.4, nav.Z[j], tq.x, tq.y + 1.4, tq.z)) { bd = dq; best = j; } } if (best >= 0) { B.goal = best; navPath(nav, navNear(nav, W.M, p.x, p.y, p.z), best, B.path); B.pi = 0; B.repath = 2.5; } }
       engage = false;
     }
+    const Z = W.mode.zone && W.M.zones.length ? W.M.zones[W.zone.i] : null, zd = Z ? Math.hypot(p.x - Z.x, p.z - Z.z) : 0;
     if (engage) {
       const dist = Math.hypot(tq.x - p.x, tq.z - p.z);
       chase = dist > pref * 1.35 || Math.abs(tq.y - p.y) > 3.5 && dist > 6;
+      if (Z) chase = zd > Z.r * 0.75;
       const fx = (tq.x - p.x) / Math.max(0.1, dist), fz = (tq.z - p.z) / Math.max(0.1, dist);
       if (!chase) {
         if (dist < pref * 0.55 && !(d && d.kind === 'melee')) { wx -= fx; wz -= fz; }
@@ -374,7 +376,7 @@
     }
     if (!engage || chase) {
       B.repath -= dt;
-      const want = engage ? navNear(nav, W.M, tq.x, tq.y, tq.z) : -2;
+      const want = engage ? (Z ? navNear(nav, W.M, Z.x, Z.y, Z.z, 2) : navNear(nav, W.M, tq.x, tq.y, tq.z)) : -2;
       if (B.repath <= 0 || B.pi >= B.path.length - 1 || (engage && want >= 0 && B.goal !== want && B.repath < 0.6)) {
         const a = navNear(nav, W.M, p.x, p.y, p.z);
         let g = engage ? want : (B.goal >= 0 && B.pi < B.path.length - 1 && B.repath > -4 ? B.goal : botGoal(W, p, B, L));
