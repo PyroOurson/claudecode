@@ -182,5 +182,9 @@
  ["gap", "gap_280"],
  ["script", "g_bloons-td"],
  ["gap", "gap_282"],
+ ["script", "g_hopfire"],
+ ["gap", "gap_312"],
+ ["script", "g_yolk-ops"],
+ ["gap", "gap_314"],
  ["gap", "gap_142"]
 ]
