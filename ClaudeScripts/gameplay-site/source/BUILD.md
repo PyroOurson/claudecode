@@ -77,8 +77,7 @@ Reseed after every change of `GATE_PASS`: the old slot unwraps a key that no lon
 - `w/supabase/`: database schema, setup script and guide.
 - `w/agents2/subway/src` + `build.py`, `w/agents2/minecraft/src` + `mk.py`: sources for Subway Surfers and Minecraft (they generate their part files).
 - `rl/seg/`: Rocket League code segments, `rl/models/`: 3D models, `rl/notes/`: design notes.
-- `../prompt.md` (the master brief), `t/GAMEPASS.md`, `t/PORTALPASS.md`, `w/agents_net/API.md`, `rl/RLBRIEF.md`: rules, multiplayer API and car soccer architecture.
-- `t/`: browser test tools (`play.js` opens one game with the backend mocked and reads errors, frame cost and diagnostics; `look.js` screenshots a game; `sweep.js` opens games and reports errors; `site.js`, `party_lib.js`, `stage_api.js` and `tests/` drive the real site on staging), `t/GAMEPASS.md` and `t/PORTALPASS.md` (shared briefs for game and portal work).
+- `../prompt.txt` (the single brief for any AI working on the site), `w/agents_net/API.md`, `rl/RLBRIEF.md`: rules, multiplayer API and car soccer architecture.
+- `t/`: browser test tools (`play.js` opens one game with the backend mocked and reads errors, frame cost and diagnostics; `look.js` screenshots a game; `sweep.js` opens games and reports errors; `site.js`, `party_lib.js`, `stage_api.js` and `tests/` drive the real site on staging); the rules for game and portal work are in `../prompt.txt`.
 - `w/new/diag.js`, `w/new/diagui.js`: the diagnostics recorder for test accounts. `w/new/i18n_*.json`: extra translation rows merged by `assemble.py`.
-- `../LEDGER.md`: what was changed in the last overhaul and how each item was verified.
 - `design/`: the owner's home page and party lobby designs.

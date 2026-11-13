@@ -18,15 +18,8 @@ ClaudeScripts/acra/start.bat
 ClaudeScripts/acra/start.sh
 ClaudeScripts/acra/train.py
 ClaudeScripts/acra/watch.py
-ClaudeScripts/gameplay-site/COVER_SOURCES.md
-ClaudeScripts/gameplay-site/GAMES.md
-ClaudeScripts/gameplay-site/GOLIVE.md
-ClaudeScripts/gameplay-site/LEDGER.md
-ClaudeScripts/gameplay-site/NEXT_AI.md
-ClaudeScripts/gameplay-site/README.md
 ClaudeScripts/gameplay-site/__pycache__/deploy.cpython-313.pyc
 ClaudeScripts/gameplay-site/deploy.py
-ClaudeScripts/gameplay-site/prompt.md
 ClaudeScripts/gameplay-site/server/README.md
 ClaudeScripts/gameplay-site/server/cloudflare-worker.js
 ClaudeScripts/gameplay-site/server/setup.py
@@ -109,8 +102,6 @@ ClaudeScripts/gameplay-site/source/rl/tools/rp.js
 ClaudeScripts/gameplay-site/source/rl/tools/split.py
 ClaudeScripts/gameplay-site/source/rl/tools/svgshot.js
 ClaudeScripts/gameplay-site/source/skfb/CREDITS.txt
-ClaudeScripts/gameplay-site/source/t/GAMEPASS.md
-ClaudeScripts/gameplay-site/source/t/PORTALPASS.md
 ClaudeScripts/gameplay-site/source/t/lib.js
 ClaudeScripts/gameplay-site/source/t/look.js
 ClaudeScripts/gameplay-site/source/t/package/build/three.min.js
