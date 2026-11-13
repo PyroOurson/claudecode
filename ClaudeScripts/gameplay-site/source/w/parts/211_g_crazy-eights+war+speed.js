@@ -1035,12 +1035,12 @@
       }
       function toastHint(V) {
         const top = V.top;
-        K.pop(tr('Match {suit} or {rank}', { suit: SG[V.suit], rank: RL[RK(top)] }), K.W / 2, L.disc.y + L.ch * .8, { size: 22, color: '#fff', life: 1.2 });
+        K.pop(tr('Match {suit} or {rank}', { suit: SG[V.suit], rank: RL[RK(top)] }), K.W / 2, L.P ? L.disc.y + L.ch / 2 + 66 : L.disc.y + L.ch * .8, { size: L.P ? 18 : 22, color: '#fff', life: 1.2 });
       }
       function tryDraw() {
         if (!canAct()) return;
         const V = view();
-        if (playable(V).length) { K.sfx('bad'); K.pop('You have a playable card', K.W / 2, L.stock.y + L.ch * .78, { size: 22, color: '#ffd23f', life: 1.2 }); return; }
+        if (playable(V).length) { K.sfx('bad'); K.pop('You have a playable card', K.W / 2, L.P ? L.stock.y + L.ch / 2 + 66 : L.stock.y + L.ch * .78, { size: L.P ? 18 : 22, color: '#ffd23f', life: 1.2 }); return; }
         if (V.drew) return;
         submit({ t: 'draw' });
       }
@@ -1639,8 +1639,8 @@ ${done ? (M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a=
               const ws = sideOf(e.w);
               D.lane[ws].glow = 1; D.lane[1 - ws].dim = 1;
               K.sfx('ding');
-              const up = upPos(ws, D.lane[ws].upX > L.upX0 + 1);
-              K.pop(ws === 0 ? 'You win!' : tr('{name} wins', { name: nm(1) }), up.x + K.cw * .5 + (L.P ? 54 : 84), up.y + 6, { size: L.P ? 18 : 24, color: ws === 0 ? '#9dffb0' : '#ffb0a0', life: .9 });
+              const up = upPos(ws, D.lane[ws].upX > L.upX0 + 1), wt = ws === 0 ? tr('You win!') : tr('{name} wins', { name: nm(1) }), off = K.cw * .5 + (L.P ? 12 : 18) + wt.length * (L.P ? 18 : 24) * .29;
+              K.pop(wt, up.x + off + wt.length * (L.P ? 18 : 24) * .29 < K.W - 4 ? up.x + off : up.x - off, up.y + 6, { size: L.P ? 18 : 24, color: ws === 0 ? '#9dffb0' : '#ffb0a0', life: .9 });
               return .55 * sp;
             }
             K.sfx('slap'); K.shake = 10; D.flash = .5;
@@ -2234,7 +2234,7 @@ ${M.mode === 'online' ? (canNext ? '<button class="cg-big green" data-a="again">
               K.fly({ id, x0: sp.x, y0: sp.y, x1: p.x, y1: p.y, s0: L.sideS, s1: 1, flip: true, fa: .1, fb: .7, lift: .25, dur: .55, delay: i * .05, done: () => land(i, id) });
             });
             D.sn = e.sn.slice();
-            K.pop('SPEED!', K.W / 2, L.cy + (L.P ? 96 : 110), { size: L.P ? 30 : 40, color: '#8be8ff', life: 1 });
+            K.pop('SPEED!', K.W / 2, L.cy - (L.P ? 84 : 104), { size: L.P ? 30 : 40, color: '#8be8ff', life: 1 });
             K.sfx('speed'); K.shake = Math.max(K.shake, 6);
             return;
           }

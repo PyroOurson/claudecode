@@ -3043,7 +3043,7 @@
       if (n === 5) sub += r.partner >= 0 ? ` · ${T('with', 'avec')} ${esc(M.names[r.partner] || '')} (${tl(r.called)})` : ` · ${T('alone', 'seul')} (${tl(r.called)})`;
       const row = (l, v, cls) => `<tr class="${cls || ''}"><td style="text-align:left" colspan="2">${l}</td><td>${v}</td></tr>`;
       let t = `<table class="tb-tbl">`;
-      t += row(`${T('Points taken', 'Points faits')} (${r.ou} ${T('oudler(s)', 'bout(s)')})`, `${r.pts} / ${r.need}`);
+      t += row(`${T('Points taken', 'Points faits')} (${r.ou} ${r.ou === 1 ? T('oudler', 'bout') : T('oudlers', 'bouts')})`, `${r.pts} / ${r.need}`);
       t += row(r.made ? T('Margin', 'Marge') : T('Short by', 'Chute de'), `${r.made ? '+' : '−'}${Math.abs(r.diff)}`);
       t += row(`(25 + ${r.margin}) × ${r.bid}`, signed(r.base));
       if (r.pgB) t += row(T('Poignée', 'Poignée'), signed(r.pgB));

@@ -1127,7 +1127,7 @@
       let evA = -9;
       if (lead && TOP(lvl)) evA = eSimCall(S, p, s, true, up, cfg.n, cfg.ms);
       const th = 0.22 - press;
-      if (lvl === 'Hardest') return Math.max(ev, evA) > eSimPass(S, p, cfg.n, cfg.ms) + 0.04 ? { t: 'order', alone: evA > ev + 0.2 } : { t: 'pass' };
+      if (lvl === 'Hardest') return Math.max(ev, evA) > eSimPass(S, p, cfg.n, cfg.ms) + 0.3 ? { t: 'order', alone: evA > ev + 0.2 } : { t: 'pass' };
       if (Math.max(ev, evA) > th + (S.score[me] >= S.o.target - 2 ? 0.05 : 0)) return { t: 'order', alone: evA > ev + 0.25 && evA > 0.45 };
       return { t: 'pass' };
     }
@@ -1153,7 +1153,7 @@
       const m = Math.max(ev, evA);
       if (m > bv) { bv = m; best = s; ba = evA > ev + 0.25 && evA > 0.45; }
     }
-    if (lvl === 'Hardest' && !stuck) return bv > eSimPass(S, p, cfg.n, cfg.ms) + 0.04 ? { t: 'call', s: best, alone: ba } : { t: 'pass' };
+    if (lvl === 'Hardest' && !stuck) return bv > eSimPass(S, p, cfg.n, cfg.ms) + 0.3 ? { t: 'call', s: best, alone: ba } : { t: 'pass' };
     if (bv > 0.1 - press || stuck) return { t: 'call', s: best, alone: ba };
     return { t: 'pass' };
   }

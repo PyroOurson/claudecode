@@ -7,6 +7,7 @@
   const SUITS = ['♠', '♥', '♦', '♣'];
   const HN = ['High Card', 'Pair', 'Two Pair', 'Three of a Kind', 'Straight', 'Flush', 'Full House', 'Four of a Kind', 'Straight Flush'];
   const TAU = Math.PI * 2;
+  const tr = (s, o) => { const g = typeof window !== 'undefined' && window.gpI18n; return g ? g.t(s, o) : o ? s.replace(/\{(\w+)\}/g, (m, k) => k in o ? o[k] : m) : s; };
   const rk = c => c % 13 + 2, su = c => (c / 13) | 0;
   const rn = r => RN[r - 2], rp = r => RP[r - 2];
   const cstr = c => RL[rk(c) - 2] + SUITS[su(c)];
@@ -1194,8 +1195,8 @@
       x.strokeStyle = 'rgba(255,255,255,.2)'; x.lineWidth = 1.6; x.setLineDash([2, 7]); x.beginPath(); x.ellipse(cx, cy, rx * .9, ry * .86, 0, 0, TAU); x.stroke(); x.setLineDash([]);
       x.strokeStyle = 'rgba(0,0,0,.35)'; x.lineWidth = 3; x.beginPath(); x.ellipse(cx, cy, rx, ry, 0, 0, TAU); x.stroke();
       x.fillStyle = 'rgba(255,255,255,.11)'; x.textAlign = 'center'; x.textBaseline = 'middle';
-      x.font = `900 ${PORT ? 17 : 26}px ${FONT}`; x.fillText("TEXAS HOLD'EM", cx, cy + (PORT ? 88 : 96));
-      x.font = `800 ${PORT ? 9 : 12}px ${FONT}`; x.fillText('NO LIMIT', cx, cy + (PORT ? 104 : 117));
+      x.font = `900 ${PORT ? 17 : 26}px ${FONT}`; x.fillText(tr("TEXAS HOLD'EM"), cx, cy + (PORT ? 88 : 96));
+      x.font = `800 ${PORT ? 9 : 12}px ${FONT}`; x.fillText(tr('NO LIMIT'), cx, cy + (PORT ? 104 : 117));
       tableC = c;
     }
     function fit(force) {
@@ -1419,20 +1420,20 @@
       const P = L.P, x0 = P ? 56 : 66;
       ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
       ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.font = `900 ${P ? 12 : 15}px ${FONT}`;
-      ctx.fillText('Blinds ' + fmtK(D.sbA) + ' / ' + fmtK(D.bbA), x0, P ? 18 : 22);
+      ctx.fillText(tr('Blinds {sb} / {bb}', { sb: fmtK(D.sbA), bb: fmtK(D.bbA) }), x0, P ? 18 : 22);
       ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = `800 ${P ? 10 : 12}px ${FONT}`;
       let sub;
       const left = D.hpl ? D.hpl - ((D.hand - 1) % D.hpl) : 0;
-      if (D.hpl && D.mode === 'sng') sub = P ? 'Lvl ' + (D.level + 1) + ' · ' + left + ' left' : 'Level ' + (D.level + 1) + ' · next in ' + left + (left === 1 ? ' hand' : ' hands');
-      else if (D.mode === 'sng') sub = 'Fixed blinds';
-      else sub = P ? 'Cash' + (D.limit ? ' · ' + D.hand + '/' + D.limit : '') : 'Cash game' + (D.limit ? ' · hand ' + D.hand + ' of ' + D.limit : '');
+      if (D.hpl && D.mode === 'sng') sub = P ? tr('Lvl {n} · {m} left', { n: D.level + 1, m: left }) : tr(left === 1 ? 'Level {n} · next in 1 hand' : 'Level {n} · next in {m} hands', { n: D.level + 1, m: left });
+      else if (D.mode === 'sng') sub = tr('Fixed blinds');
+      else sub = P ? tr('Cash') + (D.limit ? ' · ' + D.hand + '/' + D.limit : '') : D.limit ? tr('Cash game · hand {n} of {m}', { n: D.hand, m: D.limit }) : tr('Cash game');
       ctx.fillText(sub, x0, P ? 33 : 40);
       ctx.textAlign = 'right';
       const alive = D.seats.filter(s => !s.out).length;
       ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.font = `900 ${P ? 12 : 15}px ${FONT}`;
-      ctx.fillText('Hand #' + D.hand, W - 12, P ? 18 : 22);
+      ctx.fillText(tr('Hand #{n}', { n: D.hand }), W - 12, P ? 18 : 22);
       ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = `800 ${P ? 10 : 12}px ${FONT}`;
-      ctx.fillText(D.mode === 'sng' ? alive + (alive === 1 ? ' player left' : ' players left') : D.n + ' players', W - 12, P ? 33 : 40);
+      ctx.fillText(D.mode === 'sng' ? tr(alive === 1 ? '1 player left' : '{n} players left', { n: alive }) : tr('{n} players', { n: D.n }), W - 12, P ? 33 : 40);
     }
     function pill(x, y, w, h, fill, stroke) {
       rr(ctx, x - w / 2, y - h / 2, w, h, h / 2); ctx.fillStyle = fill; ctx.fill();
@@ -1454,7 +1455,7 @@
         const t = fmtN(a), w = Math.max(P ? 46 : 58, ctx.measureText(t).width + 14);
         pill(sp.x, py, w, P ? 26 : 32, 'rgba(0,0,0,.58)', win ? '#ffd34a' : 'rgba(255,255,255,.2)');
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillStyle = win ? '#ffd34a' : '#9fd9b4'; ctx.font = `900 ${P ? 7 : 8}px ${FONT}`; ctx.fillText(i ? 'SIDE ' + i : 'MAIN', sp.x, py - (P ? 6 : 7.5));
+        ctx.fillStyle = win ? '#ffd34a' : '#9fd9b4'; ctx.font = `900 ${P ? 7 : 8}px ${FONT}`; ctx.fillText(i ? tr('SIDE {n}', { n: i }) : tr('MAIN'), sp.x, py - (P ? 6 : 7.5));
         ctx.fillStyle = '#fff'; ctx.font = `900 ${P ? 11 : 13}px ${FONT}`; ctx.fillText(t, sp.x, py + (P ? 4.5 : 5));
       });
     }
@@ -1464,7 +1465,7 @@
       if (D.pots) return drawPots();
       const P = L.P, p = L.pot;
       ctx.font = `900 ${P ? 12 : 15}px ${FONT}`;
-      const txt = 'Pot ' + fmtN(total), w = ctx.measureText(txt).width + 24;
+      const txt = tr('Pot {n}', { n: fmtN(total) }), w = ctx.measureText(txt).width + 24;
       pill(p.x, p.y, w, P ? 22 : 28, 'rgba(0,0,0,.5)', 'rgba(255,255,255,.18)');
       ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, p.x, p.y + 1);
       if (D.pot > 0) drawPile(ctx, p.x - w / 2 - (P ? 16 : 22), p.y + (P ? 4 : 6), D.pot, P ? 8 : 11, 3);
@@ -1531,12 +1532,12 @@
       if (winning && S.tag) {
         ctx.fillStyle = '#ffd34a'; ctx.font = `900 ${P ? 9 : 12}px ${FONT}`; ctx.fillText(fitText(S.tag, pw - 8), x, py - ph * .2);
       } else if (lab && LBL[lab]) {
-        const c = LBL[lab], tw = Math.min(pw - 10, ctx.measureText(lab).width + 14);
-        pill(x, py - ph * .2, tw, ph * .42, c[0]); ctx.fillStyle = c[1]; ctx.font = `900 ${P ? 9 : 11}px ${FONT}`; ctx.fillText(lab, x, py - ph * .2 + .5);
-      } else { ctx.fillStyle = '#fff'; ctx.fillText(fitText(r === 0 && M.role !== 'spec' ? 'You' : S.name, pw - 10), x, py - ph * .2); }
+        const c = LBL[lab], lt = tr(lab), tw = Math.min(pw - 10, ctx.measureText(lt).width + 14);
+        pill(x, py - ph * .2, tw, ph * .42, c[0]); ctx.fillStyle = c[1]; ctx.font = `900 ${P ? 9 : 11}px ${FONT}`; ctx.fillText(lt, x, py - ph * .2 + .5);
+      } else { ctx.fillStyle = '#fff'; ctx.fillText(fitText(r === 0 && M.role !== 'spec' ? tr('You') : S.name, pw - 10), x, py - ph * .2); }
       ctx.font = `900 ${P ? 11 : 15}px ${FONT}`;
-      if (S.out) { ctx.fillStyle = '#9aa0b0'; ctx.fillText(S.place ? ordinal(S.place) + ' place' : 'OUT', x, py + ph * .24); }
-      else if (S.allin && S.stack === 0 && inH) { ctx.fillStyle = '#ff6a5a'; ctx.fillText('ALL-IN', x, py + ph * .24); }
+      if (S.out) { ctx.fillStyle = '#9aa0b0'; ctx.fillText(S.place ? tr(ordinal(S.place) + ' place') : tr('OUT'), x, py + ph * .24); }
+      else if (S.allin && S.stack === 0 && inH) { ctx.fillStyle = '#ff6a5a'; ctx.fillText(tr('ALL-IN'), x, py + ph * .24); }
       else { ctx.fillStyle = '#ffd34a'; ctx.fillText(fmtK(S.stack), x, py + ph * .24); }
       const av = avSpr(S.av);
       ctx.save();

@@ -536,7 +536,7 @@
     if (p == null) return .5;
     const key = dkKey(s), hit = st.tt.get(key);
     if (hit !== undefined) return hit;
-    if (++st.n > st.max) { st.cut = true; return .5; }
+    if (++st.n > st.max || ((st.n & 127) === 0 && st.dl && performance.now() > st.dl)) { st.cut = true; return .5; }
     const mx = g.rules.teams ? p % 2 === me % 2 : p === me;
     let best = mx ? -1 : 2;
     for (const m of dkMoves(g, p)) {
@@ -552,38 +552,56 @@
     return best;
   }
   function dkExact(V, mem, R, base) {
+    const ex = dkExactInit(V, mem, R, base, 15);
+    if (!ex) return null;
+    ex.run(9000, 0);
+    return ex.best;
+  }
+  function dkExactInit(V, mem, R, base, lim) {
     let alive = 0, cards = V.hand.length + V.table.length * 2;
     for (let q = 0; q < V.n; q++) if (q !== V.me && V.counts[q] > 0) { alive++; cards += V.counts[q]; }
-    if (V.deck > 0 || alive !== 1 || cards > 15) return null;
+    if (V.deck > 0 || alive !== 1 || cards > lim) return null;
     const g = determinize(V, mem, R);
     if (!g || g.need().ps[0] !== V.me) return null;
-    const st = { tt: new Map(), n: 0, max: 9000, cut: false }, bk = akey(base);
-    let best = null, bv = -1;
-    for (const m of dkMoves(g, V.me)) {
-      const c = dkClone(g, Math.random);
-      if (!c.act(V.me, m)) continue;
-      c.take();
-      const v = dkSolve(c, V.me, st) + (akey(m) === bk ? .001 : 0);
-      if (st.cut) return null;
-      if (v > bv) { bv = v; best = m; }
-    }
-    return best;
+    const st = { tt: new Map(), n: 0, max: 0, cut: false, dl: 0 }, bk = akey(base), moves = dkMoves(g, V.me);
+    const ex = {
+      done: false, best: null,
+      run(nodes, dl) {
+        if (ex.done) return true;
+        st.max = st.n + nodes; st.dl = dl; st.cut = false;
+        let best = null, bv = -1;
+        for (const m of moves) {
+          const c = dkClone(g, Math.random);
+          if (!c.act(V.me, m)) continue;
+          c.take();
+          const v = dkSolve(c, V.me, st) + (akey(m) === bk ? .001 : 0);
+          if (st.cut) return false;
+          if (v > bv) { bv = v; best = m; }
+        }
+        ex.done = true; ex.best = best;
+        return true;
+      },
+      get spent() { return st.n; }
+    };
+    return ex;
   }
   function mcSearch(V, mem, P, R) {
     const base = aiAct(V, mem, P, R);
     if (!base || V.phase === 'defend' && V.me !== V.def) return { base, step() {}, best: () => base };
-    if (P.top) {
-      const x = dkExact(V, mem, R, base);
-      if (x) { mem.plan = null; return { base, step() {}, best: () => x }; }
-    }
+    let ex = P.top ? dkExactInit(V, mem, R, base, 19) : null;
     const cands = mcCands(V, mem, P, R, base);
-    if (cands.length < 2) return { base, step() {}, best: () => base };
+    if (cands.length < 2 && !ex) return { base, step() {}, best: () => base };
     const tot = cands.map(() => 0), cnt = cands.map(() => 0);
     let i = 0, bad = 0, W = null;
     return {
       base,
       step(ms, cap) {
         const t0 = performance.now();
+        if (ex && !ex.done) {
+          if (ex.spent > 30000) ex = null;
+          else if (!ex.run(30000, t0 + ms)) return;
+        }
+        if (ex && ex.done) return;
         while (performance.now() - t0 < ms && i < (cap || 6000) && bad < 30) {
           const ci = i % cands.length; i++;
           if (P.top && !ci) W = determinize(V, mem, R);
@@ -595,9 +613,10 @@
         }
       },
       best() {
+        mem.plan = null;
+        if (ex && ex.done && ex.best) return ex.best;
         let bi = 0, bv = -1e9;
         cands.forEach((_, k) => { const v = cnt[k] ? tot[k] / cnt[k] + (k === 0 ? .03 : 0) : -1; if (v > bv) { bv = v; bi = k; } });
-        mem.plan = null;
         return cands[bi];
       }
     };

@@ -10,6 +10,7 @@
   const BET_MS = 22000, TURN_MS = 20000, INS_MS = 14000;
   const ACTS = ['hit', 'stand', 'double', 'split', 'surrender'];
 
+  const tr = (s, o) => { const g = typeof window !== 'undefined' && window.gpI18n; return g ? g.t(s, o) : o ? s.replace(/\{(\w+)\}/g, (m, k) => k in o ? o[k] : m) : s; };
   const pv = f => { const r = f % 13; return r === 0 ? 11 : r > 9 ? 10 : r + 1; };
   function tot(fs) {
     let t = 0, a = 0;
@@ -695,6 +696,7 @@
   }
   function hue(name) { let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360; return h; }
   function arcText(c, text, cx, cy, r, mid, font, fill, space) {
+    text = tr(text);
     c.font = font; c.fillStyle = fill; c.textAlign = 'center'; c.textBaseline = 'alphabetic';
     const ws = [...text].map(ch => c.measureText(ch).width + space);
     const sum = ws.reduce((a, b) => a + b, 0) - space;
@@ -998,7 +1000,7 @@
         c.fillStyle = '#a01822'; c.beginPath(); c.arc(cx, ty - 22 * k, 3.6 * k, 0, TAU); c.fill();
         const tagW = 52 * k, tagH = 16 * k;
         c.fillStyle = '#e1b84c'; c.beginPath(); c.roundRect(cx + 78 * k, ty - 20 * k, tagW, tagH, 3 * k); c.fill();
-        c.fillStyle = '#3a2a00'; c.font = `800 ${Math.max(8, 9.5 * k)}px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('DEALER', cx + 78 * k + tagW / 2, ty - 20 * k + tagH / 2 + 1);
+        c.fillStyle = '#3a2a00'; c.font = `800 ${Math.max(8, 9.5 * k)}px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(tr('DEALER'), cx + 78 * k + tagW / 2, ty - 20 * k + tagH / 2 + 1);
         const half = (rx, ry, up) => { c.beginPath(); c.moveTo(cx - rx, cy - up); c.lineTo(cx + rx, cy - up); c.lineTo(cx + rx, cy); c.ellipse(cx, cy, rx, ry, 0, 0, Math.PI); c.closePath(); };
         c.save();
         c.shadowColor = 'rgba(0,0,0,.6)'; c.shadowBlur = 24; c.shadowOffsetY = 8;
@@ -1119,6 +1121,7 @@
       }
       function pill(x, y, text, bg, fg, size, bd) {
         const f = Math.max(9, size);
+        text = tr(text);
         ctx.font = `800 ${f}px ${FONT}`;
         const w = ctx.measureText(text).width + f * 1.3, h = f * 1.65;
         ctx.beginPath(); ctx.roundRect(x - w / 2, y - h / 2, w, h, h / 2);
@@ -1127,6 +1130,7 @@
         ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x, y + 1);
       }
       function outText(text, x, y, size, fill, weight) {
+        text = tr(text);
         ctx.font = `${weight || 900} ${size}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.lineWidth = Math.max(2, size * .22); ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.lineJoin = 'round';
         ctx.strokeText(text, x, y); ctx.fillStyle = fill; ctx.fillText(text, x, y);
@@ -1138,7 +1142,7 @@
         if (h.st === 'bj') return ['BLACKJACK', '#e8b520', '#2a1c00'];
         if (v.t > 21) return ['BUST', '#b3261a', '#fff'];
         if (h.st === 'surr') return RESC.surr;
-        const txt = v.soft && v.t < 21 ? 'Soft ' + v.t : String(v.t);
+        const txt = v.soft && v.t < 21 ? tr('Soft {n}', { n: v.t }) : String(v.t);
         return [txt, 'rgba(8,10,8,.82)', '#fff'];
       }
       const money2 = v => money(Math.round(v * 100) / 100);
@@ -1167,7 +1171,7 @@
         }
         ctx.fillStyle = '#e1b84c'; ctx.fillRect(x - w / 2 + 6 * k, y + h / 2 - 11 * k, w - 12 * k, 3 * k);
         ctx.font = `900 ${Math.max(7, 8.5 * k)}px ${FONT}`; ctx.fillStyle = '#e1b84c'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('SHOE', x, y + h / 2 - 4.5 * k);
+        ctx.fillText(tr('SHOE'), x, y + h / 2 - 4.5 * k);
         ctx.fillStyle = '#0a0b0e'; ctx.fillRect(x - w / 2 - 3, y - 4 * k, 5, 12 * k);
         ctx.restore();
       }
@@ -1187,7 +1191,7 @@
         ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(210,235,245,.6)'; ctx.beginPath(); ctx.roundRect(x - w / 2, y - h / 2, w, h, 8 * k); ctx.stroke();
         ctx.fillStyle = 'rgba(210,235,245,.28)'; ctx.fillRect(x - w / 2 + 2, y + h / 2 - 22 * k, w - 4, 20 * k);
         ctx.font = `900 ${Math.max(7, 8.5 * k)}px ${FONT}`; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('DISCARDS', x, y - h / 2 - 8 * k);
+        ctx.fillText(tr('DISCARDS'), x, y - h / 2 - 8 * k);
         ctx.restore();
       }
       function drawShuffle(t) {
@@ -1235,7 +1239,7 @@
         }
       }
       function fxText(text, x, y, color, size, delay, dur) {
-        FXT.push({ text, x, y, color, size, t0: now() + (delay || 0), dur: dur || 1500 });
+        FXT.push({ text: tr(text), x, y, color, size, t0: now() + (delay || 0), dur: dur || 1500 });
       }
       function drawFx(t, dt) {
         for (let i = FXT.length - 1; i >= 0; i--) {
@@ -1338,7 +1342,7 @@
           if (hidden) tx = String(v.t);
           else if (v.t > 21) { tx = 'BUST'; bg = '#b3261a'; }
           else if (vis.length === 2 && v.t === 21) { tx = 'BLACKJACK'; bg = '#e8b520'; fg = '#2a1c00'; }
-          else tx = v.soft && v.t < 21 ? 'Soft ' + v.t : String(v.t);
+          else tx = v.soft && v.t < 21 ? tr('Soft {n}', { n: v.t }) : String(v.t);
           pill(G.dealer[0] + (S.d.length - 1) / 2 * G.dstep + CWB * k / 2 + 46 * k, G.dealer[1], tx, bg, fg, f + 1);
         }
         S.s.forEach((x, i) => {
@@ -1359,7 +1363,7 @@
             if (n > 1 || G.port) {
               const sh = { WIN: 'WIN', BLACKJACK: 'BJ', 'EVEN MONEY': 'EVEN', PUSH: 'PUSH', LOSE: 'LOSE', BUST: 'BUST', SURRENDER: 'SURR' };
               if (sh[lab[0]] && n > 1) lab = [sh[lab[0]], lab[1], lab[2]];
-              else if (n > 1) lab = [lab[0].replace('Soft ', ''), lab[1], lab[2]];
+              else if (n > 1) lab = [lab[0].replace(/^\D+/, ''), lab[1], lab[2]];
             }
             pill(L.px, L.py, lab[0], lab[1], lab[2], f * (n > 2 ? .88 : 1));
           });
@@ -1387,7 +1391,7 @@
         ctx.font = `800 ${f}px ${FONT}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
         ctx.fillStyle = x.h ? '#fff' : '#cdd6cf';
         ctx.fillText(fitStr(x.nm, P.w - f * 2.3 - tw), lx + f * .62, P.y - f * .72);
-        if (tag) { ctx.font = `800 ${f * .72}px ${FONT}`; ctx.textAlign = 'right'; ctx.fillStyle = tag === 'READY' || tag === 'INS' ? '#7dffa8' : '#f0c24a'; ctx.fillText(tag, P.x + P.w / 2 - f * .5, P.y - f * .72); }
+        if (tag) { ctx.font = `800 ${f * .72}px ${FONT}`; ctx.textAlign = 'right'; ctx.fillStyle = tag === 'READY' || tag === 'INS' ? '#7dffa8' : '#f0c24a'; ctx.fillText(tr(tag), P.x + P.w / 2 - f * .5, P.y - f * .72); }
         ctx.font = `900 ${f + 1.5}px ${FONT}`; ctx.textAlign = 'center'; ctx.fillStyle = '#ffe28a';
         ctx.fillText(money(Math.round(bv)), P.x, P.y + f * .82);
         if (S.tl) {
@@ -1436,26 +1440,26 @@
       function status() {
         if (M.mode === 'none' || !S) return '';
         const x = S.s[M.me], R = RU(), rem = S.tl ? Math.max(0, Math.ceil((SAT + S.tl - now()) / 1000)) : 0, sec = rem ? ' · ' + rem + 's' : '';
-        if (!x) return 'Spectating';
+        if (!x) return tr('Spectating');
         switch (S.ph) {
-          case 'shuf': return 'Shuffling the shoe';
-          case 'bet': return x.sit ? 'Sitting out this round' : x.rd ? 'Waiting for the table' + sec : (x.bt ? 'Press Deal when ready' : 'Place your bet · minimum ' + money(R.min)) + sec;
-          case 'deal': return 'Dealing';
-          case 'ins': return x.hs.length && x.an === -1 ? (x.hs[0].st === 'bj' ? 'Even money? Pays 1 to 1 now' : 'Insurance? Pays 2 to 1') + sec : 'Dealer shows an Ace';
-          case 'peek': return 'Dealer checks for blackjack';
+          case 'shuf': return tr('Shuffling the shoe');
+          case 'bet': return x.sit ? tr('Sitting out this round') : x.rd ? tr('Waiting for the table') + sec : (x.bt ? tr('Press Deal when ready') : tr('Place your bet · minimum {n}', { n: money(R.min) })) + sec;
+          case 'deal': return tr('Dealing');
+          case 'ins': return x.hs.length && x.an === -1 ? tr(x.hs[0].st === 'bj' ? 'Even money? Pays 1 to 1 now' : 'Insurance? Pays 2 to 1') + sec : tr('Dealer shows an Ace');
+          case 'peek': return tr('Dealer checks for blackjack');
           case 'play': {
             if (!S.t) return '';
             const o = S.s[S.t[0]], mine = S.t[0] === M.me;
-            return mine ? (x.hs.length > 1 ? `Your turn · hand ${S.t[1] + 1} of ${x.hs.length}` : 'Your turn') + sec : `${o.nm}'s turn`;
+            return mine ? (x.hs.length > 1 ? tr('Your turn · hand {n} of {m}', { n: S.t[1] + 1, m: x.hs.length }) : tr('Your turn')) + sec : tr('{name}’s turn', { name: o.nm });
           }
-          case 'dealer': return 'Dealer plays';
+          case 'dealer': return tr('Dealer plays');
           case 'pay': {
-            if (!x.hs.length) return 'Next round soon';
+            if (!x.hs.length) return tr('Next round soon');
             let net = x.hs.reduce((a, h) => a + h.nt, 0) + (x.inr === 'win' ? 2 * x.ins : x.inr === 'lose' ? -x.ins : 0);
             net = Math.round(net * 100) / 100;
-            const dv = tot(S.d.map(c => c & 63)), dn = dv.t > 21 ? ' · Dealer busts' : S.d.length === 2 && dv.t === 21 ? ' · Dealer blackjack' : '';
-            const bj = x.hs.some(h => h.r === 'bj') ? 'Blackjack! ' : '';
-            return bj + (net > 0 ? 'You win ' + money2(net) : net < 0 ? 'You lose ' + money2(-net) : 'Push') + dn + (S.sh[2] === 0 ? ' · Cut card reached' : '');
+            const dv = tot(S.d.map(c => c & 63)), dn = dv.t > 21 ? ' · ' + tr('Dealer busts') : S.d.length === 2 && dv.t === 21 ? ' · ' + tr('Dealer blackjack') : '';
+            const bj = x.hs.some(h => h.r === 'bj') ? tr('Blackjack!') + ' ' : '';
+            return bj + (net > 0 ? tr('You win {n}', { n: money2(net) }) : net < 0 ? tr('You lose {n}', { n: money2(-net) }) : tr('Push')) + dn + (S.sh[2] === 0 ? ' · ' + tr('Cut card reached') : '');
           }
         }
         return '';

@@ -544,8 +544,8 @@
 
     function calcL() {
       const n = Math.max(2, M.n || 2);
-      if (!port) L = { W, H, port, cx: 480, cy: 250, rx: 392, ry: 180, hand: { x: 500, y: 504, w: 600, s: .94 }, me: { x: 86, y: 528 }, btn: { x: 860, y: 520 }, btn2: { x: 860, y: 462 }, tickY: 14, hintY: 394, logX: 18 };
-      else L = { W, H, port, cx: 190, cy: 262, rx: 142, ry: 186, hand: { x: 190, y: 590, w: 330, s: .78 }, me: { x: 46, y: 486 }, btn: { x: 296, y: 492 }, btn2: { x: 296, y: 436 }, tickY: 14, hintY: 442, logX: 18 };
+      if (!port) L = { W, H, port, cx: 480, cy: 250, rx: 392, ry: 180, hand: { x: 490, y: 504, w: 560, s: .94 }, me: { x: 86, y: 528 }, btn: { x: 860, y: 520 }, btn2: { x: 860, y: 462 }, tickY: 14, hintY: 394, logX: 18 };
+      else L = { W, H, port, cx: 190, cy: 262, rx: 142, ry: 186, hand: { x: 190, y: 590, w: 280, s: .78 }, me: { x: 46, y: 486 }, btn: { x: 296, y: 492 }, btn2: { x: 296, y: 436 }, tickY: 14, hintY: 442, logX: 18 };
       L.seat = [L.me];
       for (let r = 1; r < n; r++) {
         const a = Math.PI / 2 + TAU * r / n;
@@ -885,6 +885,7 @@
       if (!M.eng || M.hold || busy || Q.length) return false;
       if (!M.eng.act(M.viewer, a)) return false;
       flush();
+      if (ui && M.V) ui.controls(M.V);
       return true;
     }
 
