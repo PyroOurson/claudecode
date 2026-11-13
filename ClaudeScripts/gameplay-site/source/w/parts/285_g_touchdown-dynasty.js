@@ -455,6 +455,7 @@
     return Math.max(1, Math.round((win ? 7 + (po ? 5 : 0) : 2) + Math.min(5, Math.floor(Math.abs(margin) / 7)) * (win ? 1 : 0) + tds * 0.5));
   }
   function postGame(F, M) {
+    if (M.hx) F.hx = { man: M.hx.man.map(v => Math.round(v * 10) / 10), zone: M.hx.zone.map(v => Math.round(v * 10) / 10), blitz: M.hx.blitz.map(v => Math.round(v * 10) / 10) };
     const [us, os] = M.sc, win = us > os, tie = us === os, margin = us - os, opp = M.opp;
     const mine = F.teams[F.tid];
     const strong = (opp.off + opp.def) / 2 > (mine.off + mine.def) / 2 + 3;
@@ -761,7 +762,7 @@
   const HX_K = ['man', 'zone', 'blitz'];
   function pickScheme() {
     if (SET.diff === 3) {
-      const h = M.hx || (M.hx = { man: [0, 0], zone: [0, 0], blitz: [0, 0] });
+      const h = M.hx || (M.hx = F && F.hx && HX_K.every(k => Array.isArray(F.hx[k]) && F.hx[k].length === 2 && F.hx[k].every(Number.isFinite)) ? { man: [F.hx.man[0] * 0.5, F.hx.man[1] * 0.5], zone: [F.hx.zone[0] * 0.5, F.hx.zone[1] * 0.5], blitz: [F.hx.blitz[0] * 0.5, F.hx.blitz[1] * 0.5] } : { man: [0, 0], zone: [0, 0], blitz: [0, 0] });
       const w = HX_K.map(k => Math.exp(-((h[k][0] + 14) / (h[k][1] + 2)) / 3));
       if (M.togo >= 8) { w[1] *= 1.35; w[2] *= 0.85; } else if (M.togo <= 3) { w[0] *= 1.25; w[2] *= 1.25; }
       return wsel(HX_K, w);
@@ -802,7 +803,8 @@
         R.S1.zone = [los + 17, CY - 11]; R.S2.zone = [los + 17, CY + 11]; R.S1.st = R.S2.st = 'zone';
         if (blz) { R.S1.cover = R.TE; R.S1.zone = null; R.S1.st = 'man'; R.S2.zone = [los + 17, CY]; }
       }
-      P.es.filter(e => e.side === 'd' && e.st === 'man').forEach(e => { e.lag = clamp(0.33 - (e.cov - 60) * 0.0042, 0.1, 0.4); });
+      if (SET.diff === 3) P.es.filter(e => e.side === 'd' && e.st !== 'rush').forEach(e => { e.hold = rnd(0.15, 0.25); });
+      P.es.filter(e => e.side === 'd' && e.st === 'man').forEach(e => { e.lag = SET.diff === 3 ? clamp(0.25 - (e.cov - 60) * 0.0028, 0.15, 0.25) : clamp(0.33 - (e.cov - 60) * 0.0042, 0.1, 0.4); });
     } else {
       P.es.filter(e => e.side === 'd' && !['rush'].includes(e.st)).forEach(e => { e.st = 'read'; e.readT = (e.role[0] === 'L' ? 0.38 : e.role[0] === 'S' ? 0.75 : 0.55) + rnd(0, 0.15) + (P.type === 'qbrun' ? 0.85 : 0); });
       const pairs = [[R.OL1, dl[0]], [R.OL2, dl[1]], [R.OL4, dl[2]], [R.OL5, dl[3]]];
@@ -1280,7 +1282,7 @@
         const c = P.carrier;
         if (e.role[0] === 'D' && e.role[1] === 'L' && e.block && !e.block.down && e.runBlock && !e.shed) { return; }
         const dd = Math.hypot(c.x - e.x, c.y - e.y);
-        const lead = clamp(dd / Math.max(e.spd, 5), 0, 1.1) * 0.85;
+        const lead = SET.diff === 3 ? clamp(dd / Math.max(e.spd, 5), 0, 1.4) : clamp(dd / Math.max(e.spd, 5), 0, 1.1) * 0.85;
         steer(e, c.x + c.vx * lead, c.y + c.vy * lead, e.role[0] === 'D' && e.role[1] === 'L' ? 0.94 : e.role[0] === 'S' || e.role[0] === 'C' ? 1.04 : 1, dt, 8);
         return;
       }
@@ -1289,10 +1291,12 @@
       const a = P.air;
       const d = Math.hypot(a.tx - e.x, a.ty - e.y);
       if (e.st === 'rush') { steer(e, P.qb.x, P.qb.y, 0.7, dt, 6); return; }
-      if (d < 16 && P.airT > 0.22) { steer(e, a.tx, a.ty, 1, dt, 9); return; }
+      if (SET.diff === 3 ? d < 22 && P.airT > 0.17 : d < 16 && P.airT > 0.22) { steer(e, a.tx, a.ty, 1, dt, 9); return; }
+      if (SET.diff === 3 && P.airT > 0.25 && e.st !== 'rush') { steer(e, a.tx + 4, a.ty, 0.92, dt, 8); return; }
     }
     if (pass && P.phase === 'hold') {
       if (e.st === 'rush') { rushMove(e, dt); return; }
+      if (e.hold > 0) { e.hold -= dt; accelTo(e, 0, 0, dt, 5); return; }
       if (e.st === 'man' && e.cover) {
         const r = e.cover;
         const h = histAt(r, P.t - e.lag);
@@ -1608,8 +1612,10 @@
       if (fgd <= 50 && !(trailLate && lead < -3 && togo <= 4 && goal > 20)) act = 'fg';
       else if (fgd <= 56 && lead < -3 && late) act = 'fg';
       else if (goal <= 42 && togo <= 2 && chance(0.55)) act = 'go';
+      else if (SET.diff === 3 && goal <= 55 && togo <= 3 && !(fgd <= 38 && togo > 1)) act = 'go';
       else if (trailLate && togo <= 8 && lead < 0 && goal < 70) act = 'go';
       else if (goal <= 22) act = 'fg';
+      if (SET.diff === 3 && goal <= 3 && togo <= 3 && !(late && lead >= -3 && lead < 0 && M.q === 4)) act = 'go';
       if (act === 'fg') {
         const good = oppFGgood(fgd);
         ev.kind = 'fg'; ev.burn = 4; ev.end = true;
@@ -1631,11 +1637,12 @@
       }
     }
     const trailing = lead < 0;
-    let passP = 0.46 + (togo > 7 ? 0.2 : 0) + (down >= 3 && togo > 3 ? 0.22 : 0) - (togo <= 2 ? 0.28 : 0) + (late && trailing ? 0.28 : 0) - (late && lead > 0 && M.q === 4 ? 0.34 : 0);
+    const iq = SET.diff === 3, mu = iq ? oppMatch() : 0;
+    let passP = (iq ? clamp(mu * 0.05, -0.18, 0.18) : 0) + 0.46 + (togo > 7 ? 0.2 : 0) + (down >= 3 && togo > 3 ? 0.22 : 0) - (togo <= 2 ? 0.28 : 0) + (late && trailing ? 0.28 : 0) - (late && lead > 0 && M.q === 4 ? 0.34 : 0);
     const pass = chance(clamp(passP, 0.1, 0.95));
     let yds = 0, kind = '';
     if (pass) {
-      const sackP = clamp(0.062 - diff * 0.0011, 0.02, 0.13), intP = clamp(0.026 - diff * 0.0004, 0.008, 0.06), comp = clamp(0.62 + diff * 0.0035, 0.45, 0.79);
+      const sackP = clamp(0.062 - diff * 0.0011, 0.02, 0.13) * (iq ? 0.8 : 1), intP = clamp(0.026 - diff * 0.0004, 0.008, 0.06) * (iq ? 0.75 : 1), comp = clamp(0.62 + diff * 0.0035 + (iq ? 0.035 + Math.max(0, mu) * 0.006 : 0), 0.45, 0.82);
       const r = Math.random();
       const wr = pick([nm.WR[0], nm.WR[0], nm.WR[1], nm.WR[2], nm.TE, nm.RB[0]]);
       if (r < sackP) {
@@ -1655,9 +1662,9 @@
         setPoss(0, uy);
         return ev;
       } else if (r < sackP + intP + (1 - sackP - intP) * comp) {
-        let g = Math.abs(gauss()) * 6.4 + 1.5 + diff * 0.05 + (chance(0.08) ? rnd(12, 36) : 0);
+        let g = Math.abs(gauss()) * 6.4 + 1.5 + diff * 0.05 + (iq ? 0.6 + Math.max(0, mu) * 0.08 : 0) + (chance(0.08) ? rnd(12, 36) : 0);
         yds = Math.round(clamp(g, 0, 98));
-        if (down === 3 && chance(0.1 + diff * 0.004)) yds = Math.max(yds, togo + ri(0, 4));
+        if (down >= 3 && chance(0.1 + diff * 0.004 + (iq ? 0.1 : 0))) yds = Math.max(yds, togo + ri(0, 4));
         kind = 'pass'; ev.burn = 9 + (yds > 20 ? 2 : 0);
         const who = chance(0.4) ? pickTkl() : null;
         ev.txt = nm.QB + ' pass to ' + wr + ' complete for ' + yds + ' yard' + (yds === 1 ? '' : 's') + (who ? '. Tackle by ' + who.n : '') + '.';
@@ -1669,7 +1676,7 @@
       }
       if (kind === 'sack') st.pass += yds;
     } else {
-      const g = Math.round(clamp(gauss() * 3.3 + 3.9 + diff * 0.045 + (chance(0.05) ? rnd(8, 30) : 0), -3, 80));
+      const g = Math.round(clamp(gauss() * 3.3 + 3.9 + diff * 0.045 + (iq ? 0.5 + Math.max(0, -mu) * 0.08 : 0) + (chance(0.05) ? rnd(8, 30) : 0), -3, 80));
       yds = g; kind = 'run'; ev.burn = 10;
       const rb = pick([nm.RB[0], nm.RB[0], nm.RB[1]]);
       const dir = pick(['up the middle', 'to the left', 'to the right', 'off tackle']);
@@ -1707,6 +1714,13 @@
     return ev;
   }
   const sackFlag = () => {};
+  function oppMatch() {
+    if (M.mu != null) return M.mu;
+    const L = M.L, top = (pos, n) => (L[pos] || []).slice(0, n);
+    const pd = avg(top('CB', 3).concat(top('S', 2), top('LB', 1))), rd = avg(top('DL', 4).concat(top('LB', 2)));
+    M.mu = clamp(rd - pd, -6, 6);
+    return M.mu;
+  }
 
   function burnClock(sec) {
     M.clock = Math.max(0, M.clock - sec);
@@ -1720,7 +1734,8 @@
       const y0 = M.yl, d0 = M.down, t0 = M.togo;
       const ev = simOppPlay(dr);
       dr.plays++;
-      burnClock(ev.burn * (0.9 + Math.random() * 0.2));
+      const lead = M.sc[1] - M.sc[0], late = M.q >= 4 && M.clock < Math.max(60, M.qlen * 0.4);
+      burnClock(ev.burn * (0.9 + Math.random() * 0.2) * (SET.diff === 3 && late ? (lead < 0 ? 0.6 : lead > 0 ? 1.25 : 1) : 1));
       dr.lines.push({ txt: ev.txt, yl: y0, down: d0, togo: t0, kind: ev.kind, first: ev.first, yds: ev.yds, td: ev.res === 'td' || ev.res === 'pick6', fg: ev.res === 'fg', bad: ['int', 'fum', 'downs', 'miss'].includes(ev.res), pts: ev.pts || 0, endYl: ev.end ? null : M.yl });
       if (ev.end) { dr.res = ev.res; dr.pts = ev.pts || 0; break; }
     }
@@ -1869,7 +1884,7 @@
       g.fillStyle = (y / 3) % 2 ? '#1f2a58' : '#18214a'; g.fillRect(0, y, 960, 3);
       for (let x = 0; x < 960; x += 3) if (rn() < 0.82) { g.fillStyle = CROWD[Math.floor(rn() * CROWD.length)]; g.fillRect(x, y, 2, 2); }
     }
-    const ads = [['RETRO', '#c2410c'], ['BOWL', '#1d4ed8'], ['PIXEL', '#15803d'], ['GRIDIRON', '#7e22ce'], ['TOUCH', '#b91c1c'], ['PLAYBOOK', '#0e7490']];
+    const ads = [['DYNASTY', '#c2410c'], ['HUDDLE', '#1d4ed8'], ['PIXEL', '#15803d'], ['GRIDIRON', '#7e22ce'], ['END ZONE', '#b91c1c'], ['PLAYBOOK', '#0e7490']];
     for (let i = 0; i < 16; i++) {
       const a = ads[i % ads.length], x = i * 60;
       g.fillStyle = a[1]; g.fillRect(x, 44, 59, 10);
@@ -1923,7 +1938,7 @@
     if (mx > -40 && mx < BW + 40) {
       b.fillStyle = 'rgba(0,0,0,.18)'; b.beginPath(); b.ellipse(mx, FY0 + CY * SY, 22, 17, 0, 0, 6.3); b.fill();
       b.fillStyle = 'rgba(255,255,255,.2)'; b.beginPath(); b.ellipse(mx, FY0 + CY * SY, 18, 13, 0, 0, 6.3); b.fill();
-      txt(b, 'RB', mx, FY0 + CY * SY - 6, 'rgba(255,255,255,.7)', 2, 'c');
+      txt(b, 'TD', mx, FY0 + CY * SY - 6, 'rgba(255,255,255,.7)', 2, 'c');
     }
     const ezTxt = (t, xc) => {
       const sx = Math.round(xc * SX - camX);
@@ -2272,10 +2287,10 @@
     b.save(); b.translate(Math.round(bx), Math.round(by)); b.rotate(u * 6.28 * 2 + 0.3);
     b.fillStyle = '#7a3b12'; b.beginPath(); b.ellipse(0, 0, 6, 3.4, 0, 0, 6.3); b.fill(); b.fillStyle = '#fff'; b.fillRect(-2, -1, 4, 2); b.restore();
     const ty = 36 + Math.round(Math.sin(t * 2) * 2);
-    txt(b, 'RETRO', 240, ty, '#fff', 6, 'c', '#1a1450');
-    txt(b, 'RETRO', 240, ty - 1, UI.gold, 6, 'c');
-    txt(b, 'BOWL', 240, ty + 52, '#fff', 8, 'c', '#1a1450');
-    txt(b, 'BOWL', 240, ty + 51, '#ff6a3d', 8, 'c');
+    txt(b, 'TOUCHDOWN', 240, ty + 4, '#fff', 5, 'c', '#1a1450');
+    txt(b, 'TOUCHDOWN', 240, ty + 3, UI.gold, 5, 'c');
+    txt(b, 'DYNASTY', 240, ty + 48, '#fff', 7, 'c', '#1a1450');
+    txt(b, 'DYNASTY', 240, ty + 47, '#ff6a3d', 7, 'c');
     txt(b, 'PIXEL FOOTBALL FRANCHISE', 240, ty + 112, '#ffe9b8', 1, 'c', '#1a1450');
   }
   function P_title(e, T, ball) {
@@ -3259,5 +3274,5 @@
       api.score(0);
     }
   });
-window.__rb={w2s:(x,y)=>{const r=view.canvas.getBoundingClientRect();return {x:r.left+((x*SX-camX)*2)*r.width/960,y:r.top+((FY0+y*SY)*2)*r.height/540}},PLAYS,setupPlay,snapPlay,tickPlay,tryJuke,tryDive,throwToRecv,beginGame,get P(){return P},get M(){return M},get G(){return G},get F(){return F},set F(v){F=v},get SET(){return SET},inp,openness,simSeason,go,startOffseason:()=>startOffseason(F),renderMenu,saveF,loadSave};
+window.__rb={w2s:(x,y)=>{const r=view.canvas.getBoundingClientRect();return {x:r.left+((x*SX-camX)*2)*r.width/960,y:r.top+((FY0+y*SY)*2)*r.height/540}},PLAYS,setupPlay,snapPlay,tickPlay,tryJuke,tryDive,throwToRecv,beginGame,get P(){return P},get M(){return M},get G(){return G},get F(){return F},set F(v){F=v},get SET(){return SET},inp,openness,simSeason,go,act,updateGame,newFranchise,mkTeam,TEAMS,kickRelease,leadFor,nearestDef,chooseCall,snap,doPat,afterDrive,get scene(){return scene},startOffseason:()=>startOffseason(F),renderMenu,saveF,loadSave};
 })();
