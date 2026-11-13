@@ -16,3 +16,5 @@ begin
     where e.event = 'env_caps' and e.props ?| array['ua', 'bat', 'mic', 'cam', 'bench', 'quota', 'dnt', 'gpc', 'plat', 'vend', 'hist', 'loc', 'voices', 'heap', 'ck'];
 end;
 $$;
+
+update private.housekeep set retention = true where id = 1;

@@ -12,6 +12,7 @@ Open the project at https://supabase.com/dashboard, **SQL Editor** > **New query
 | 2 | `round17_platform.sql` | Diagnostics for test accounts, role-based rate limits, online-status heartbeat, 4-character usernames |
 | 3 | `round18_ideas.sql` | Idea box, file attachments in ideas, messages and tickets (three private storage buckets with size and type limits) |
 | 4 | `round19_analytics.sql` | Dashboard live numbers, new analytics, duplicate protection for new events |
+| 5 | `round19b_analytics_cleanup.sql` | Approved by the owner on 13 November 2026: removes duplicate and no-longer-collected analytics data once, and switches on the daily deletion of old records |
 
 Keep this order. Some later files replace functions from earlier ones, so if you ever re-run one file, re-run the files after it too. All four were applied twice in this order on the staging copy without errors.
 
