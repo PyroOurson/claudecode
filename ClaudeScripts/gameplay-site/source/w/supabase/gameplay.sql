@@ -10337,7 +10337,9 @@ begin
     union all select 'm37.b:' || private.sd_bk(private.jnum(e.p, 'sec'), array[60, 300, 900, 1800, 3600]), coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'party_end' and private.jnum(e.p, 'sec') >= 0
     union all select 'm38.' || case when private.jnum(e.p, 'pub') = 1 then 'pub' else 'priv' end, coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'party_create'
     union all select 'm38.acc', coalesce(nullif(e.game, ''), '-'), e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'party_join' and private.jnum(e.p, 'inv') = 1
-    union all select 'm44.' || left(coalesce(nullif(g.m, ''), '?'), 12) || ':' || left(coalesce(nullif(g.st, ''), '?'), 12), '', g.cc, g.sdev, g.acct, 1, 0 from (select distinct e.session_id, e.p ->> 'm' as m, e.p ->> 's' as st, e.cc, e.sdev, e.acct from pg_temp.sd_e e where e.event = 'su_step') g
+    union all select 'm44.' || left(coalesce(nullif(g.m, ''), '?'), 12) || ':' || left(coalesce(nullif(g.st, ''), '?'), 12), '', g.cc, g.sdev, g.acct, 1, 0 from (select distinct e.session_id, e.p ->> 'm' as m, e.p ->> 's' as st, e.cc, e.sdev, e.acct from pg_temp.sd_e e where e.event = 'su_step'
+      and (not exists (select 1 from pg_temp.sd_e a where a.session_id = e.session_id and a.event = 'auth' and a.p ->> 'act' = 'signin')
+        or exists (select 1 from pg_temp.sd_e a where a.session_id = e.session_id and a.event = 'su_step' and a.p ->> 'm' = e.p ->> 'm' and a.p ->> 's' not in ('open', 'start')))) g
     union all select 'm49:' || left(coalesce(e.p ->> 'k', '?'), 20) || ':' || left(coalesce(e.p ->> 'old', '?'), 20) || '>' || left(coalesce(e.p ->> 'v', '?'), 20), '', e.cc, e.sdev, e.acct, 1, 0 from pg_temp.sd_e e where e.event = 'setting'
 
     union all select 'm38.inv', '', '*', '*', private.sd_acct(d.from_id), 1, 0 from public.dms d where d.kind = 'invite' and d.created_at >= v_t0 and d.created_at < v_t1
@@ -10354,7 +10356,7 @@ begin
     union all select 'm44.acct:' || left(coalesce(u.raw_app_meta_data ->> 'provider', 'email'), 12), '', '*', '*', private.sd_acct(u.id), 1, 0 from auth.users u where u.created_at >= v_t0 and u.created_at < v_t1
     union all select 'm45.' || q.method || ':' || case when q.ok then 'ok' else 'fail' end, '', q.cc, '*', private.sd_acct(q.uid), 1, 0 from private.sd_sec q where q.kind = 'login' and q.at >= v_t0 and q.at < v_t1
     union all select 'm45.code:' || coalesce(nullif(q.code, ''), '?'), '', q.cc, '*', private.sd_acct(q.uid), 1, 0 from private.sd_sec q where q.kind = 'login' and not q.ok and q.at >= v_t0 and q.at < v_t1
-    union all select 'm44.srv:' || q.method || ':' || case when q.ok then 'ok' else 'fail' end, '', q.cc, '*', private.sd_acct(q.uid), 1, 0 from private.sd_sec q where q.kind in ('signup', 'verify') and q.at >= v_t0 and q.at < v_t1
+    union all select 'm44.srv:' || q.kind || ':' || case when q.ok then 'ok' else 'fail' end, '', q.cc, '*', private.sd_acct(q.uid), 1, 0 from private.sd_sec q where q.kind in ('signup', 'verify') and q.at >= v_t0 and q.at < v_t1
     union all select 'm46.' || g.kind || ':' || coalesce(nullif(g.reason, ''), 'none'), '', '*', '*', g.acct, 1, coalesce(g.age_days, 0) from private.sd_gone g where g.at >= v_t0 and g.at < v_t1
     union all select 'm47:' || left(h.action, 30), '', '*', '*', private.sd_acct(h.uid), 1, case when h.full_hit then 1 else 0 end from private.rate_hits h where h.at >= v_t0 and h.at < v_t1
     union all select 'm50:' || private.sd_ban_kind(l.action, l.detail), '', '*', '*', private.sd_acct(l.target_user), 1, 0 from public.admin_log l where l.at >= v_t0 and l.at < v_t1 and private.sd_ban_kind(l.action, l.detail) is not null

@@ -853,7 +853,8 @@ async function auSignOut() {
 async function auDeleteAccount() {
   const b = $('#adelbtn'); b.disabled = true; b.classList.add('is-busy'); auMsg('adelnote', 'Deleting your account…');
   try {
-    const r = await sbRest('rpc/delete_my_account', { method: 'POST', body: {} });
+    const why = ($('#adelwhy') || {}).value || '';
+    const r = await sbRest(why ? 'rpc/delete_my_account_why' : 'rpc/delete_my_account', { method: 'POST', body: why ? { p_reason: why } : {} });
     syWipe();
     try { await SB.c.auth.signOut({ scope: 'local' }); } catch (e) {}
     $('#adelc').value = ''; b.classList.remove('is-busy');
