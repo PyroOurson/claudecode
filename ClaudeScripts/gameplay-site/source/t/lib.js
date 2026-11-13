@@ -3,8 +3,10 @@ const http = require('http'), fs = require('fs'), path = require('path'), os = r
 const BASE = process.env.SITE_URL || 'http://127.0.0.1:8080/';
 const ARGS = process.platform === 'win32' ? ['--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] : process.env.SITE_GL === 'swiftshader' ? ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] : ['--disable-gpu', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'];
 async function launch(o = {}) { return chromium.launch(Object.assign(process.platform === 'win32' && !process.env.PW_BUNDLED ? { channel: 'chrome' } : {}, { headless: o.headless !== false, args: ARGS.concat(o.args || []) })); }
+const NOPAD = () => { try { Object.defineProperty(navigator, 'getGamepads', { value: () => [], configurable: true }); } catch (e) {} };
 async function visitor(browser, o = {}) {
   const ctx = await browser.newContext(Object.assign({ viewport: o.viewport || { width: 1366, height: 768 }, deviceScaleFactor: o.dpr || 1, isMobile: !!o.mobile, hasTouch: !!o.mobile }, o.storageState ? { storageState: o.storageState } : {}));
+  if (!o.gamepad) await ctx.addInitScript(NOPAD);
   if (!o.gpuProbe) await ctx.addInitScript(() => { try { if (!localStorage.getItem('gameplay:gpu')) localStorage.setItem('gameplay:gpu', JSON.stringify({ r: 'test renderer', mtex: 8192, glx: 30, gv: '' })); } catch (e) {} });
   if (o.init) await ctx.addInitScript(o.init);
   const tune = p => { const wf = p.waitForFunction.bind(p); p.waitForFunction = (fn, arg, opt) => wf(fn, arg, Object.assign({ polling: 250 }, opt || {})); return p; };
@@ -140,6 +142,7 @@ async function open(html, id, o = {}) {
   const b = await chromium.launch(Object.assign({ headless: o.headless !== false }, GAME_LAUNCH));
   const vp = o.viewport || { width: 1280, height: 800 };
   const ctx = await b.newContext({ viewport: vp, deviceScaleFactor: o.dpr || 1, isMobile: !!o.mobile, hasTouch: !!o.mobile });
+  if (!o.gamepad) await ctx.addInitScript(NOPAD);
   await ctx.addInitScript(([s, muted, name]) => {
     try {
       if (name) localStorage.setItem('gameplay:profile', JSON.stringify({ username: name, displayName: name }));
@@ -215,6 +218,7 @@ const THREE = () => fs.readFileSync(path.join(__dirname, '..', 'w', 'vendor', 't
 async function launchCtx(opts = {}) {
   const b = await chromium.launch(CTX_LAUNCH);
   const ctx = await b.newContext({ viewport: opts.viewport || { width: 1280, height: 800 }, deviceScaleFactor: opts.dpr || 1, isMobile: !!opts.mobile, hasTouch: !!opts.mobile });
+  if (!opts.gamepad) await ctx.addInitScript(NOPAD);
   await ctx.route(/three(\.min)?\.js|peerjs/, r => {
     if (/three/.test(r.request().url())) r.fulfill({ status: 200, contentType: 'application/javascript', body: THREE() });
     else r.abort();
