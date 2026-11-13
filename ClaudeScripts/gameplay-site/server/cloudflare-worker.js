@@ -112,10 +112,12 @@ export default {
     headers.delete('X-GP-Relay');
     headers.delete('X-GP-IP');
     headers.delete('X-GP-Country');
+    headers.delete('X-GP-Region');
     if (env && env.RELAY_KEY && ip) {
       headers.set('X-GP-Relay', env.RELAY_KEY);
       headers.set('X-GP-IP', ip);
       if (request.cf && request.cf.country) headers.set('X-GP-Country', String(request.cf.country));
+      if (request.cf && request.cf.regionCode) headers.set('X-GP-Region', String(request.cf.regionCode).slice(0, 8));
       if (request.method !== 'OPTIONS' && /^\/(auth|storage)\/v1\//.test(url.pathname)) {
         const blocked = await banCheck(ip, request, env);
         if (blocked) {

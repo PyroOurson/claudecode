@@ -271,6 +271,7 @@ const netInit = n => {
   return (w.length > 1 ? w[0][0] + w[1][0] : w[0].slice(0, 2).join('')).toUpperCase();
 };
 const netHm = t => { const d = new Date(t), p = x => (x < 10 ? '0' : '') + x; return p(d.getHours()) + ':' + p(d.getMinutes()); };
+const netTurn = async c => { try { const pc = c && c.peerConnection; if (!pc || !pc.getStats) return 0; const st = await pc.getStats(); let pair = null; st.forEach(r => { if (r.type === 'transport' && r.selectedCandidatePairId) pair = st.get(r.selectedCandidatePairId) || pair; }); if (!pair) st.forEach(r => { if (r.type === 'candidate-pair' && r.state === 'succeeded' && (r.nominated || r.selected)) pair = r; }); if (!pair) return 0; const lc = st.get(pair.localCandidateId), rc = st.get(pair.remoteCandidateId); return (lc && lc.candidateType === 'relay') || (rc && rc.candidateType === 'relay') ? 1 : 0; } catch (e) { return 0; } };
 const netTrack = (ev, p) => { try { if (typeof Ameplay !== 'undefined' && Ameplay.analytics && typeof Ameplay.analytics.track === 'function') Ameplay.analytics.track(ev, p); } catch (e) {} };
 const NET_MAX = 16;
 const netSizes = o => {
@@ -1539,7 +1540,7 @@ function makeNet(g, add) {
           const ok = await roomJoin(code);
           if (done || my !== op || !ok) return;
           note = null; note0 = ''; phase = 'ready'; cache = {}; jst = { phase: 'idle', code: '', msg: '', who: '' };
-          netTrack('party_join', { game: g.id, via: rm.via, ms: Date.now() - jt0 });
+          { const ms = Date.now() - jt0, via = rm.via, c = rm.conn; Promise.race([netTurn(c), new Promise(r => setTimeout(() => r(0), 1500))]).then(turn => netTrack('party_join', { game: g.id, via, ms, turn })); }
           show('lobby'); fit();
         } catch (e) {
           const t = e && e.type;
@@ -1563,7 +1564,7 @@ function makeNet(g, add) {
         rm.go = { __go: out, size: rm.max, leader: lead, bots };
         rm.guests.forEach(gs => { if (gs.inGame) tx(gs.conn, rm.go); });
         pushList();
-        netTrack('party_play', { game: g.id, players: out.length, size: rm.max, bots });
+        netTrack('party_play', { game: g.id, players: out.length, size: rm.max, bots, pub: rm.pub ? 1 : 0, via: net.role === 'host' ? 'host' : rm.via });
         finish({ role: 'host', id: rm.me, players: out, size: rm.max, leader: lead, bots });
       };
       ui.play = play;
