@@ -138,6 +138,8 @@ ClaudeScripts/gameplay-site/source/notes/strategy_board_games_a.md
 ClaudeScripts/gameplay-site/source/notes/swing-line.md
 ClaudeScripts/gameplay-site/source/notes/the-quiet-house.md
 ClaudeScripts/gameplay-site/source/notes/touchdown-dynasty.md
+ClaudeScripts/gameplay-site/source/notes/tower-of-peril.md
+ClaudeScripts/gameplay-site/source/notes/way-up.md
 ClaudeScripts/gameplay-site/source/notes/wobble-ride.md
 ClaudeScripts/gameplay-site/source/t/lib.js
 ClaudeScripts/gameplay-site/source/t/pbuild.py
@@ -449,6 +451,7 @@ ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_terraria.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_the-quiet-house.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_tomb-of-the-mask.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_touchdown-dynasty.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_tower-of-peril.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_trivia-crack.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_typeracer.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_unblock-me.js
@@ -456,6 +459,7 @@ ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_undercover.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_war.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_water-sort.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_wavelength.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_way-up.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_werewolf.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_wobble-ride.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_word-bomb.js
@@ -467,6 +471,7 @@ ClaudeScripts/gameplay-site/source/w/covers/tools/games.json
 ClaudeScripts/gameplay-site/source/w/covers/tools/kit.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/render.js
 ClaudeScripts/gameplay-site/source/w/covers/touchdown-dynasty.webp
+ClaudeScripts/gameplay-site/source/w/covers/tower-of-peril.webp
 ClaudeScripts/gameplay-site/source/w/covers/traffic-racer.webp
 ClaudeScripts/gameplay-site/source/w/covers/trivia-crack.webp
 ClaudeScripts/gameplay-site/source/w/covers/trivia.webp
@@ -480,6 +485,7 @@ ClaudeScripts/gameplay-site/source/w/covers/uno.webp
 ClaudeScripts/gameplay-site/source/w/covers/war.webp
 ClaudeScripts/gameplay-site/source/w/covers/water-sort.webp
 ClaudeScripts/gameplay-site/source/w/covers/wavelength.webp
+ClaudeScripts/gameplay-site/source/w/covers/way-up.webp
 ClaudeScripts/gameplay-site/source/w/covers/werewolf.webp
 ClaudeScripts/gameplay-site/source/w/covers/whack-a-mole.webp
 ClaudeScripts/gameplay-site/source/w/covers/wobble-ride.webp
@@ -511,6 +517,7 @@ ClaudeScripts/gameplay-site/source/w/new/i18n_add.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_admin.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b1.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b10.json
+ClaudeScripts/gameplay-site/source/w/new/i18n_b12.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b2.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b3.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b4.json
@@ -643,6 +650,8 @@ ClaudeScripts/gameplay-site/source/w/parts/307_g_long-shot.js
 ClaudeScripts/gameplay-site/source/w/parts/309_g_caption-this.js
 ClaudeScripts/gameplay-site/source/w/parts/315_g_build-brawl.js
 ClaudeScripts/gameplay-site/source/w/parts/317_g_bed-raiders.js
+ClaudeScripts/gameplay-site/source/w/parts/323_g_tower-of-peril.js
+ClaudeScripts/gameplay-site/source/w/parts/325_g_way-up.js
 ClaudeScripts/gameplay-site/source/w/parts/_order.json
 ClaudeScripts/gameplay-site/source/w/parts_orig/000_pre_000.html
 ClaudeScripts/gameplay-site/source/w/parts_orig/001_portal.js
