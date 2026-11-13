@@ -297,7 +297,9 @@
 @@ .cg-av{position:relative;width:48px;height:48px;margin:0 auto;border-radius:50%;box-shadow:0 3px 8px rgba(0,0,0,.5);border:3px solid #fff;box-sizing:content-box;background:#fff}
 @@ .cg-av svg{display:block;width:100%;height:100%;border-radius:50%}
 @@ .cg-ring{position:absolute;left:50%;top:-3px;width:60px;height:60px;margin-left:-30px;border-radius:50%;border:3px solid transparent;pointer-events:none;transition:border-color .2s}
-@@ .cg-seat.turn .cg-ring{border-color:#ffd54a;box-shadow:0 0 0 3px rgba(255,213,74,.3),0 0 20px 6px rgba(255,213,74,.7);animation:cg-pulse .9s infinite alternate}
+@@ .cg-ring::after{content:'';position:absolute;inset:-3px;border-radius:50%;box-shadow:0 0 0 4px rgba(255,213,74,.4),0 0 26px 9px rgba(255,213,74,.85);opacity:0;will-change:opacity}
+@@ .cg-seat.turn .cg-ring{border-color:#ffd54a}
+@@ .cg-seat.turn .cg-ring::after{animation:cg-pulse .9s infinite alternate}
 @@ .cg-ar{position:absolute;left:50%;top:-24px;margin-left:-8px;border:8px solid transparent;border-top:11px solid #ffd54a;border-bottom:0;opacity:0;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
 @@ .cg-seat.turn .cg-ar{opacity:1;animation:cg-bob .6s infinite alternate}
 @@ .cg-nm{display:inline-block;margin-top:3px;max-width:112px;padding:2px 9px;border-radius:11px;background:rgba(0,0,0,.5);color:#fff;font:800 12px/1.3 var(--sans,system-ui);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top}
@@ -402,7 +404,7 @@
 @@ .cg-mini{display:inline-block;vertical-align:middle;margin:0 1px;padding:1px 4px;border-radius:4px;background:#fff;color:#17171c;font:800 12px Georgia,serif}
 @@ .cg-mini.r{color:#c8202f}
 @keyframes cg-arrow{0%{clip-path:inset(0 100% 0 0);opacity:1}45%{clip-path:inset(0 0 0 0);opacity:1}85%{opacity:1}100%{clip-path:inset(0 0 0 0);opacity:0}}
-@keyframes cg-pulse{from{box-shadow:0 0 0 3px rgba(255,213,74,.25),0 0 12px 3px rgba(255,213,74,.5)}to{box-shadow:0 0 0 4px rgba(255,213,74,.4),0 0 26px 9px rgba(255,213,74,.85)}}
+@keyframes cg-pulse{from{opacity:.5}to{opacity:1}}
 @keyframes cg-bob{from{transform:translateY(0)}to{transform:translateY(5px)}}
 @keyframes cg-dot{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(-4px);opacity:1}}
 @keyframes cg-throb2{from{transform:translateX(-50%) scale(1)}to{transform:translateX(-50%) scale(1.07)}}
@@ -423,6 +425,7 @@
   const THINK = { Easy: [900, 1700], Normal: [700, 1350], Hard: [560, 1100], Hardest: [450, 900] };
 
   function boot(mod, root, api) {
+    api.on(root, 'contextmenu', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
     MUTE = () => api.muted;
     const R = Math.random;
     const opt = Object.assign({ n: mod.n0, diff: 'Normal', felt: 'green', back: 'blue', timer: 0, v: 1 }, api.load() || {});
@@ -544,8 +547,8 @@
 
     function calcL() {
       const n = Math.max(2, M.n || 2);
-      if (!port) L = { W, H, port, cx: 480, cy: 250, rx: 392, ry: 180, hand: { x: 500, y: 504, w: 600, s: .94 }, me: { x: 86, y: 528 }, btn: { x: 860, y: 520 }, btn2: { x: 860, y: 462 }, tickY: 14, hintY: 394, logX: 18 };
-      else L = { W, H, port, cx: 190, cy: 262, rx: 142, ry: 186, hand: { x: 190, y: 590, w: 330, s: .78 }, me: { x: 46, y: 486 }, btn: { x: 296, y: 492 }, btn2: { x: 296, y: 436 }, tickY: 14, hintY: 442, logX: 18 };
+      if (!port) L = { W, H, port, cx: 480, cy: 250, rx: 392, ry: 180, hand: { x: 490, y: 504, w: 560, s: .94 }, me: { x: 86, y: 528 }, btn: { x: 860, y: 520 }, btn2: { x: 860, y: 462 }, tickY: 14, hintY: 394, logX: 18 };
+      else L = { W, H, port, cx: 190, cy: 262, rx: 142, ry: 186, hand: { x: 190, y: 590, w: 280, s: .78 }, me: { x: 46, y: 486 }, btn: { x: 296, y: 492 }, btn2: { x: 296, y: 436 }, tickY: 14, hintY: 442, logX: 18 };
       L.seat = [L.me];
       for (let r = 1; r < n; r++) {
         const a = Math.PI / 2 + TAU * r / n;
@@ -885,6 +888,7 @@
       if (!M.eng || M.hold || busy || Q.length) return false;
       if (!M.eng.act(M.viewer, a)) return false;
       flush();
+      if (ui && M.V) ui.controls(M.V);
       return true;
     }
 
@@ -1087,6 +1091,7 @@
     },
     lbl(sh, cls) { const d = mk('div', 'cg-lbl' + (cls ? ' ' + cls : '')); sh.uiEl.append(d); return d; },
     nm(sh, p) { return p === sh.mine() ? 'You' : sh.name(p); },
+    obj(sh, p) { return p === sh.mine() ? 'you' : sh.name(p); },
     vb(sh, p, a, b) { return p === sh.mine() ? a : b; }
   };
 
@@ -1413,7 +1418,7 @@
         sh.turn(e.p);
         sh.say(e.p, 'Got any ' + RNP[e.r] + '?', 1800);
         sh.arrow(e.p, e.q, 1300);
-        sh.log(KIT.nm(sh, e.p) + ' ask' + KIT.vb(sh, e.p, '', 's') + ' ' + KIT.nm(sh, e.q) + ' for ' + RNP[e.r]);
+        sh.log(KIT.nm(sh, e.p) + ' ask' + KIT.vb(sh, e.p, '', 's') + ' ' + KIT.obj(sh, e.q) + ' for ' + RNP[e.r]);
         snd('ping');
         if (e.q === m && e.p !== m) sh.tick(sh.name(e.p) + ' asks you for ' + RNP[e.r], 2000);
         await sh.wait(1000);
@@ -2403,7 +2408,7 @@
     }
     function showClaim(V) {
       if (V.phase === 'done') { setClaim('', ''); return; }
-      if (V.phase === 'call' && V.last) setClaim(sh.name(V.last.p) + ' says', chSay(V.last.n, V.last.r).replace(/^(\w+) /, '$1 '));
+      if (V.phase === 'call' && V.last) setClaim(V.last.p === sh.mine() ? 'You say' : sh.name(V.last.p) + ' says', chSay(V.last.n, V.last.r).replace(/^(\w+) /, '$1 '));
       else if (V.rank) setClaim('Play', RL[V.rank]);
       else setClaim('Starter picks', '?');
       if (V.phase === 'call' && V.last) claimEl.lastChild.style.fontSize = '24px'; else if (claimEl.lastChild) claimEl.lastChild.style.fontSize = '';
@@ -2442,7 +2447,7 @@
         Z.relay('pile', .5, .06); Z.relay(from, .35);
         snd('place');
         sh.say(p, chSay(k, e.r), 2200);
-        setClaim(sh.name(p) + ' says', chSay(k, e.r));
+        setClaim(p === sh.mine() ? 'You say' : sh.name(p) + ' says', chSay(k, e.r));
         claimEl.lastChild.style.fontSize = '24px';
         sh.log(KIT.nm(sh, p) + ' play' + KIT.vb(sh, p, '', 's') + ' ' + chSay(k, e.r).toLowerCase());
         setPile(S.pile + k);
@@ -2462,7 +2467,7 @@
         sh.mood(e.p, 'a', 2400); sh.mood(e.q, 'o', 2400);
         sh.banner('CHEAT!', 'red', 1300);
         snd('cheat');
-        sh.log(KIT.nm(sh, e.p) + ' call' + KIT.vb(sh, e.p, '', 's') + ' ' + KIT.nm(sh, e.q) + ' out');
+        sh.log(KIT.nm(sh, e.p) + ' call' + KIT.vb(sh, e.p, '', 's') + ' ' + KIT.obj(sh, e.q) + ' out');
         await sh.wait(1150);
         const l = Z.zone('pile').list, k = e.ids.length, sprs = [];
         for (let i = 0; i < k; i++) sprs.push(l[l.length - k + i] || Z.make(-1, pileAt()));
