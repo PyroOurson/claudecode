@@ -593,5 +593,20 @@
 "pickaxe-peak",
 "Pickaxe Peak",
 "Skill"
+],
+[
+"quiver-clash",
+"Quiver Clash",
+"Action,Skill"
+],
+[
+"swing-line",
+"Swing Line",
+"Skill,Arcade"
+],
+[
+"spike-run",
+"Spike Run",
+"Skill,Action"
 ]
 ]
