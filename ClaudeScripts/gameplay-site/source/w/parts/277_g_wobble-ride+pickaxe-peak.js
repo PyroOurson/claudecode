@@ -2887,14 +2887,14 @@
     return { destroy() { snd.destroy(); } };
   };
   Ameplay.register({
-    id: 'happy-wheels', title: 'Happy Wheels', category: 'Action', tint: '#ff5a3c',
+    id: 'wobble-ride', title: 'Wobble Ride', category: 'Action', tint: '#ff5a3c',
     blurb: 'Ragdoll vehicle chaos: wheelchair rockets, bike, segway, moped and pogo through 14 levels, plus your own level editor.',
     help: '<kbd>&uarr;</kbd> <kbd>W</kbd> gas / roll / hop &middot; <kbd>&darr;</kbd> <kbd>S</kbd> brake &middot; <kbd>&larr;</kbd> <kbd>&rarr;</kbd> lean &middot; <kbd>Shift</kbd> boost or special &middot; <kbd>Space</kbd> eject &middot; <kbd>R</kbd> restart &middot; touch: on-screen buttons &middot; build levels in the editor',
     better: 'high',
     width: 960,
     format: v => v + ' pts',
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="20" cy="46" r="10"/><circle cx="46" cy="50" r="5"/><path d="M20 46l8-18h12l6 22M28 28l-4-10"/><circle cx="26" cy="12" r="4"/><path d="M52 30l8-4M52 36l10 0"/></svg>',
-    css: '.gm-happy-wheels canvas{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;border-radius:14px}',
+    css: '.gm-wobble-ride canvas{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;border-radius:14px}',
     mount: (root, api) => HW.mount(root, api)
   });
 })();
