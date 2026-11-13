@@ -250,6 +250,9 @@ async function users() {
     if (test) sql("insert into public.test_accounts (user_id, email, password, note) values ('" + id + "', '" + email + "', 'x', 'staging') on conflict (user_id) do nothing"); if (test) sql("update public.test_accounts set diag = true where user_id = '" + id + "'");
     console.log(email, username, role, id);
   }
+  const pl = ['ann_player', 'bob_player', 'cat_player'].map(u => sql("select id from public.profiles where username = '" + u + "'")).filter(Boolean);
+  for (const x of pl) for (const y of pl) if (x !== y) sql("insert into public.friends (user_id, friend_id) values ('" + x + "', '" + y + "') on conflict do nothing");
+  console.log('friends:', pl.length, 'players');
 }
 module.exports = { chromium, BASE, launch, visitor, player, USERS, api, serve, open, launchCtx, users };
 if (require.main === module) {

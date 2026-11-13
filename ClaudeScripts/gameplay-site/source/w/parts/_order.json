@@ -182,16 +182,5 @@
  ["gap", "gap_280"],
  ["script", "g_bloons-td"],
  ["gap", "gap_282"],
- ["script", "covers_reaction"],
- ["gap", "gap_132"],
- ["script", "covers_shooter"],
- ["gap", "gap_134"],
- ["script", "covers_glide"],
- ["gap", "gap_136"],
- ["script", "covers_highway-3d"],
- ["gap", "gap_138"],
- ["script", "covers_stick-bridge"],
- ["gap", "gap_140"],
- ["script", "covers_deep-miner"],
  ["gap", "gap_142"]
 ]

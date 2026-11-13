@@ -61,6 +61,8 @@ def main():
     def fname(k, n):
         ext = 'js' if k == 'script' else 'html'
         c = sorted(f for f in have if re.fullmatch(r'\d{3}_' + re.escape(n) + r'\.' + ext, f))
+        if not c and k == 'gap' and n != names[-1][1]:
+            return None
         if not c:
             sys.exit('missing part ' + n)
         return c[0]
@@ -70,7 +72,7 @@ def main():
     portal = read(os.path.join(PARTS, files[1]))
     last = read(os.path.join(PARTS, files[-1]))
     for idx in range(2, len(names) - 1):
-        if names[idx][0] == 'gap':
+        if names[idx][0] == 'gap' and files[idx]:
             assert read(os.path.join(PARTS, files[idx])) == '</script>\n', files[idx]
     extra = re.findall(r'<script>\n?(.*?)</script>\n?', last, re.S)
     last = re.sub(r'<script>\n?.*?</script>\n?', '', last, flags=re.S)
@@ -161,6 +163,8 @@ def main():
         g['lazy'] = part_file[part]
         g['size'] = part_size[part]
         g.update(cv.get(g['id'], {}))
+        if g['id'] in cv:
+            g.pop('icon', None)
         body = js(g)
         if fmt:
             if re.search(r'</script|<!--', fmt, re.I):

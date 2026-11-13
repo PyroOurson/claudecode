@@ -2,14 +2,13 @@ import json, re, subprocess, sys, os
 HERE = os.path.dirname(os.path.abspath(__file__))
 os.chdir(HERE)
 sys.path.insert(0, HERE)
-from meta_rows import ROWS, DELETED, ids_of
-orig = open(os.path.join(HERE, 'orig_order.txt')).read().split()
+from meta_rows import ROWS, DELETED, ids_of, STAT, ORIG_ORDER
+orig = ORIG_ORDER
 new25 = ['slope-3d','tunnel-run','rocket-soccer','hole-city','demon-halls','bean-royale','block-roll','flap-bird','slither','cell-feast','paper-land','fling-birds','candy-rope','brick-bros','garden-defense','night-survivors','bomb-blast','last-card','fire-water','maze-tanks','hoop-flop','sea-battle','marble-chain','moto-stunts','cookie-baker']
 ids = [r[0] for r in ROWS]
 assert not set(ids) & set(DELETED), set(ids) & set(DELETED)
 newest = [x for x in new25 + [x for x in reversed(orig) if x not in new25] if x in ids]
 newest += [x for x in ids if x not in newest]
-STAT = json.load(open('stat.json')) if os.path.exists('stat.json') else {}
 
 def rep(s, old, new, count=1):
     assert s.count(old) == count, (old[:60], s.count(old))

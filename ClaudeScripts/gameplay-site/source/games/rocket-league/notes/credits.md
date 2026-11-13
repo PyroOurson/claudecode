@@ -19,3 +19,10 @@ Merc, Breakout, Venom and Paladin: no model with a clear redistributable licence
 - Printables "Rocket League Cars" / "Breakout" by BigBoyBob: ripped game files.
 - Sketchfab "Rocket League Car - Breakout" by ROCKET LABS: CC BY label but appears to be the game mesh and downloads need a login.
 - No Paladin or Venom model found under CC0 / CC BY / MIT.
+
+## Sketchfab credits text kept with the models
+
+    Octane - Rocket League Car by fairlight51, https://sketchfab.com/3d-models/octane-rocket-league-car-9910f0a5d158425bbc7deb60c7a81f69, CC BY 4.0
+    Fennec - Rocket League Car by fairlight51, https://sketchfab.com/3d-models/fennec-rocket-league-car-5b43b50b6eeb4a12a29671df3418f57a, CC BY 4.0
+    Dominus - Rocket League Car by fairlight51, https://sketchfab.com/3d-models/dominus-rocket-league-car-f592f249a65f41cd81a0e5aa3d418cb2, CC BY 4.0
+    Ball - Rocket League by fairlight51, https://sketchfab.com/3d-models/ball-rocket-league-2c8911aa1dcd4c53bad842f2d354dfe2, CC BY 4.0

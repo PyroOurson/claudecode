@@ -9,6 +9,8 @@ have = os.listdir(P)
 def fname(k, n):
     ext = 'js' if k == 'script' else 'html'
     c = sorted(f for f in have if re.fullmatch(r'\d{3}_' + re.escape(n) + r'\.' + ext, f))
+    if not c and k == 'gap' and n != names[-1][1]:
+        return None
     if not c:
         sys.exit('missing part ' + n)
     return os.path.join(P, c[0])
@@ -21,7 +23,8 @@ for idx, (k, n) in enumerate(names):
         skip = False
         continue
     skip = False
-    b = open(fname(k, n), encoding='utf-8', newline='').read()
+    fn = fname(k, n)
+    b = open(fn, encoding='utf-8', newline='').read() if fn else '</script>\n'
     if k == 'script' and n == 'portal' and os.path.exists(os.path.join(P, '002_legal.js')):
         b += '\n' + open(os.path.join(P, '002_legal.js'), encoding='utf-8', newline='').read()
     res.append('<script>\n' + b if k == 'script' else b)

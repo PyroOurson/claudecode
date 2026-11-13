@@ -43,7 +43,7 @@ for idx, (k, n) in enumerate(names):
         if idx != len(names) - 1:
             continue
     skip_gap = False
-    b = js if (k == 'script' and n == PART) else open(fn, encoding='utf-8', newline='').read()
+    b = js if (k == 'script' and n == PART) else open(fn, encoding='utf-8', newline='').read() if cand or k != 'gap' else '</script>\n'
     out.append('<script>\n' + b if k == 'script' else b)
 hp = os.path.join(od, 'rocket-league.html')
 open(hp, 'w', encoding='utf-8', newline='').write(''.join(out))
