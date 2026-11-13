@@ -292,7 +292,7 @@ Any part of the plan that changed, so the next session starts from an accurate b
 The start message at the top of this file, if it changed.
 Part 15. Open questions for the owner
 Whether the Debian relay is still wanted (Part 9).
-Which of the three dashboard designs to build (Part 17.4).
+What the new admin dashboard should look like: the owner rejected the three designs and will explain what they want (Part 17.4).
 ---
 Part 16. Final report
 Write it following Part 3.6, in this order: what is live now and what waits for the owner (with exact links and commands); done, with how each was checked; unfinished, with the reason; blocked, with what is needed; decisions for the owner; what could not be tested and why; the numbers (games in the catalogue, games passing Part 6.5, games with a proven `Hardest`, the party network matrix, frame rates on real hardware, top errors before and after).
@@ -320,6 +320,7 @@ Rate the current layout first. Before you change anything, write in "Current sta
 Player cards: reorder them so the most used information comes first: name, status, role, online state, ban state and quick actions (message, ban, change role, flag as test account) at the top; then activity (last seen, playtime, top games, recent sessions); then social (friends, recent reports against and by them, messages only when opened on purpose); then devices, addresses and diagnostics; account data and the danger zone (delete forever) last, apart from the rest. Apply the same thinking to every subtab: the order of cards and sections follows how often staff need them.
 Make it practical: every list has search, filters and paging; every action that cannot be undone asks for confirmation with the account name typed; keyboard shortcuts for moving between tabs; the selected tab, subtab and filters survive a reload; it works at phone size.
 17.4 Three designs to choose from
+On hold (owner's decision, 13 November 2026): the owner did not like any of the three designs in `admin\_variants.html` and will explain what they want later. Until then, do not build a new dashboard layout, do not restructure the tabs (Part 17.3) and do not build one of the three variants; keep the current dashboard, including the IP ban card and the Stats, Data subtab added this round. The rating of the current dashboard stays in `source/notes/admin-rating.md`.
 Before building the final dashboard, make one HTML page, `ClaudeScripts/gameplay-site/admin\_variants.html`, that shows three different, serious designs for the whole dashboard, with a switch at the top between Variant 1, 2 and 3. Each variant is fully working on its own: all three tabs (Users, Stats, Site) and every subtab, realistic sample data (fake usernames, generated numbers, never real user data), working search, filters, sorting, charts, player cards that open, and buttons that change the sample data. Each variant uses a different layout, not only different colours: for example a left sidebar with dense tables; a top bar with cards and a side panel for the selected player; a split view with a list on the left and details on the right. All three are designs you would be happy to ship; none is a weak option placed there to make another look better. They use the site's fonts and colours, light and dark.
 Put the page on GitHub and give the owner its link (`https://pyroourson.github.io/claudecode/ClaudeScripts/gameplay-site/admin\_variants.html` once merged), then ask which variant to build. Build the chosen one in the real dashboard; until the owner answers, continue with other parts.
 17.5 Collect much more data
@@ -496,6 +497,7 @@ As much data as possible, like Steam and the AI companies: 50 new measures (Part
 The relay set up in this round (Part 17.6).
 Files merged to be compact and easy to read on GitHub: one `.js` per game, one `.css` per area, and so on (Part 7.6). The AI always listens to what the owner asks and follows their directions (Part 3.4c).
 The five popular-game recreations on Claude Fable 5.2 at extra-high effort; the other existing games on Claude Opus 5.5 at extra-high effort; the lead session on Claude Opus 5.5 at extra-high effort.
+13 November 2026: none of the three dashboard designs; the dashboard redesign waits until the owner explains what they want.
 ---
 Current state (13 November 2026)
 This section replaces the old ledger, go-live and handoff files. Update it at the end of every session (Part 14).
