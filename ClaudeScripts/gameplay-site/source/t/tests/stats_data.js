@@ -7,6 +7,7 @@ const W = path.join(__dirname, '..', '..', 'w', 'new');
 const SHOTS = process.env.SHOT_DIR || path.join(require('os').tmpdir(), 'gp-stats-data');
 const R = Math.random().toString(36).slice(2, 8);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const NOPAD = () => { try { Object.defineProperty(navigator, 'getGamepads', { value: () => [], configurable: true }); } catch (e) {} };
 const sql = q => execFileSync('docker', ['exec', '-i', DBC, 'psql', '-U', 'postgres', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1', '-At', '-F', '|', '-c', q], { encoding: 'utf8' }).trim();
 const num = q => +(sql(q).split('\n').pop() || 0);
 const results = [];
@@ -34,7 +35,7 @@ const hide = p => p.evaluate(() => { Object.defineProperty(document, 'visibility
   const b = await lib.launch();
   const log = [];
   try {
-    const A = await lib.visitor(b);
+    const A = await lib.visitor(b, { init: NOPAD });
     const p = A.page;
     await A.goto('', 800);
     await A.consent();
@@ -81,6 +82,7 @@ const hide = p => p.evaluate(() => { Object.defineProperty(document, 'visibility
     const gq = q.filter(x => x[0] === 'game_quit');
     must(gq.length >= 2 && gq.every(x => x[1].rs >= 0 && x[1].ab != null) && gq[0][1].mo === 'solo' && gq[gq.length - 1][1].mo === 'online', 'game_quit carries rounds started, abandoned and the mode (alone, then online once a party started): ' + JSON.stringify(gq.map(x => [x[1].why, x[1].rs, x[1].ab, x[1].mo])));
     must(gq.some(x => x[1].why === 'restart'), 'restart recorded as the reason for leaving a round');
+    must(gq.every(x => !x[1].ip || x[1].ip === 0), 'no controller input leaks into the measures: ' + JSON.stringify(gq.map(x => x[1].ip)));
     must(q.some(x => x[0] === 'game_launch' && x[1].lt >= 0 && x[1].ttf > 0), 'game_launch has load time and time from arrival');
     const st = q.filter(x => x[0] === 'setting').map(x => x[1]);
     must(st.some(x => x.k === 'theater' && x.old === 'true' && x.v === false), 'theater change has its old value: ' + JSON.stringify(st));
@@ -94,7 +96,7 @@ const hide = p => p.evaluate(() => { Object.defineProperty(document, 'visibility
     await flush(p);
     log.push('A: test account session played');
 
-    const B = await lib.visitor(b);
+    const B = await lib.visitor(b, { init: NOPAD });
     const pb = B.page;
     await B.goto('', 800);
     await B.consent();
@@ -279,7 +281,7 @@ const hide = p => p.evaluate(() => { Object.defineProperty(document, 'visibility
     try { await api.rpc('admin_measures', {}, t1.token); } catch (e) { denied = /admins only/i.test(e.message); }
     must(denied, 'a player who is not staff cannot read the measures');
 
-    const V = await lib.player(b, 'dan', { viewport: { width: 1366, height: 900 } });
+    const V = await lib.player(b, 'dan', { viewport: { width: 1366, height: 900 }, init: NOPAD });
     await inject(V.page, dan.token);
     await V.page.evaluate(t => localStorage.setItem('gameplay:sd', JSON.stringify({ range: '1', acct: 'all' })), today);
     await V.page.evaluate(() => { const m = document.querySelector('main'); [...m.children].forEach(x => { x.hidden = true; }); const d = document.createElement('div'); d.id = 'sdx'; d.style.cssText = 'max-width:1240px;margin:0 auto;padding:16px'; m.append(d); Ameplay.statsData.render(d); });

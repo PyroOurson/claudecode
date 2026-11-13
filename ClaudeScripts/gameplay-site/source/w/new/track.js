@@ -78,6 +78,9 @@ function trAuthSeen(u, init, r) {
     TR_X.lu = performance.now();
     if (r && r.status === 429) trSec('login', 'username', false, 'rate_limited');
     else if (ok) r.clone().text().then(t => { if (!t || t === 'null' || t === '""') trSec('login', 'username', false, 'invalid_credentials'); }, () => {});
+  } else if (/\/functions\/v1\/login(\?|$)/.test(path)) {
+    TR_X.lu = performance.now();
+    code().then(c => trSec('login', 'username', ok, ok ? null : c));
   } else if (/\/auth\/v1\/token\?grant_type=password/.test(path)) {
     const by = performance.now() - TR_X.lu < 20000 ? 'username' : 'email';
     code().then(c => trSec('login', by, ok, ok ? null : c));
@@ -200,7 +203,7 @@ function trNet() {
     try {
       const u = typeof input === 'string' ? input : input instanceof URL ? input.href : input && input.url || '';
       if (hosts.some(b => u.indexOf(b + '/') === 0)) {
-        const t = performance.now(), init = arguments[1], au = /\/auth\/v1\/(token|signup|verify)|\/rpc\/login_email|\/rest\/v1\/profiles\?id=eq\./.test(u);
+        const t = performance.now(), init = arguments[1], au = /\/auth\/v1\/(token|signup|verify)|\/functions\/v1\/login(\?|$)|\/rpc\/login_email|\/rest\/v1\/profiles\?id=eq\./.test(u);
         p.then(r => { RQ.n++; RQ.t += performance.now() - t; if (r.status === 429) RQ.l++; else if (r.status >= 500) RQ.s5++; else if (r.status >= 400) RQ.s4++; if (au) { try { trAuthSeen(u, init, r); } catch (x) {} } }, e => { if (!(e && e.name === 'AbortError')) { RQ.n++; RQ.f++; } });
       }
     } catch (e) {}
