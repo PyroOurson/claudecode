@@ -742,6 +742,7 @@ function pauseBtn() {
   b.innerHTML = on ? '<svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg>';
 }
 const canPause = () => !!(cur && !cur.g.ownPause && !(cur.api && cur.api.online));
+const escOwn = () => { const f = cur && cur.api && cur.api.escOwn; try { return !!(typeof f === 'function' ? f() : f); } catch (e) { return false; } };
 function restartCurrent() {
   if (!cur) return;
   const g = cur.g;
@@ -1547,7 +1548,7 @@ function boot() {
       if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!e.repeat) setPause(false); }
       return;
     }
-    if (e.key === 'Escape' && !e.repeat && !isField(e.target) && canPause()) { e.preventDefault(); e.stopImmediatePropagation(); setPause(true); track('pause', { game: cur.g.id }); return; }
+    if (e.key === 'Escape' && !e.repeat && !isField(e.target) && canPause() && !escOwn()) { e.preventDefault(); e.stopImmediatePropagation(); setPause(true); track('pause', { game: cur.g.id }); return; }
     if (ov && (e.key === 'Enter' || e.key === ' ') && !isField(e.target) && !(e.target.closest && e.target.closest('.top, .side, .play-bar, .ckbar'))) {
       e.preventDefault(); e.stopImmediatePropagation();
       if (!e.repeat && performance.now() - ov.at > 600) ov.fire();

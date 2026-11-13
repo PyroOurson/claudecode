@@ -34,7 +34,7 @@ function fitStage() {
     const pad = 12, bar = gamebox.querySelector('.play-bar');
     const short = shortQuery.matches;
     const availH = short ? Math.max(150, innerHeight - (bar ? bar.offsetHeight : 50) - 2) : Math.max(380, innerHeight - 64 - 8 - (bar ? bar.offsetHeight : 60) - 30);
-    const minS = short ? 0.3 : root.querySelector('canvas') ? 0.55 : 1;
+    const minS = short ? 0.3 : root.querySelector('canvas') ? 0.55 : 0.7;
     s = Math.max(minS, Math.min((sw - pad * 2) / cw, (availH - pad * 2) / ch, 2.4));
     sh = short ? availH : Math.max(440, Math.ceil(ch * s + pad * 2));
     if (st.style.height !== sh + 'px') st.style.height = sh + 'px';

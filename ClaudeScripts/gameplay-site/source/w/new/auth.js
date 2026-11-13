@@ -1477,7 +1477,7 @@ Ameplay.account = {
   rpc(f, b) { if (typeof f !== 'string' || !GAME_RPC.test(f)) return Promise.reject(new Error('This call is not open to games')); return sbRest('rpc/' + f, { method: 'POST', body: b && typeof b === 'object' ? b : {} }); }
 };
 
-Ameplay.debug = { open: id => go(href(id), false), close: () => go(PATH_MODE ? '/' : '#/', false), games, fire: () => ov && ov.fire(), state, compute, q: t => { const o = state.q; state.q = t; const r = compute().list.map(g => g.id); state.q = o; return r; }, info: INFO, fit: () => fitStage(), pause: () => PAUSE.on };
+Ameplay.debug = { open: id => go(href(id), false), close: () => go(PATH_MODE ? '/' : '#/', false), games, fire: () => ov && ov.fire(), state, compute, q: t => { const o = state.q; state.q = t; const r = compute().list.map(g => g.id); state.q = o; return r; }, info: INFO, fit: () => fitStage(), pause: () => PAUSE.on, api: () => cur ? cur.api : null };
 Ameplay.debug.t = { PUB, FR, cardPills, pubStrip, host: id => { invite = { id, code: null, host: true }; restartCurrent(); } };
 document.addEventListener('DOMContentLoaded', boot);
 })();
