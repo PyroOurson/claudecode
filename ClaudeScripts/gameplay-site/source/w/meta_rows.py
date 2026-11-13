@@ -186,7 +186,7 @@ ROWS = [
  ('polytrack',"PolyTrack",'Racing','so8',10,'polytrack time trial low poly track editor racing ghosts','rn'),
  ('krunker',"Krunker",'Action','so8',10,'krunker fps shooter low poly slide hop classes','rn'),
  ('shell-shockers',"Shell Shockers",'Action','so8',10,'shell shockers egg fps shooter','rn'),
- ('1v1-lol',"1v1.LOL",'Action','so4',10,'1v1 lol build fight fortnite ramps walls shooter','rn'),
+ ('build-brawl',"Build Brawl",'Action','so4',10,'1v1 lol build fight box fight fortnite ramps walls floors cones edit shooter shotgun sniper duel 3d','rn'),
  ('smash-karts',"Smash Karts",'Racing,Action','so8',8,'smash karts kart battle arena weapons','rn'),
  ('bedwars',"Bedwars",'Action,Strategy','so8',15,'bedwars bed wars minecraft blocks shop bridge','rn'),
  ('tower-of-hell',"Tower of Hell",'Skill','so8',10,'tower of hell obby roblox parkour climb','rn'),
