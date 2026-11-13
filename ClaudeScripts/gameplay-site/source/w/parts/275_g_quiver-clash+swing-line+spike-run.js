@@ -1382,6 +1382,7 @@ ${q} .gx-pb.gold{background:#c78a07}
       const sh = { audio: A, me: 0, inp, opt, local: true, dpr: () => st.canvas.width / RW };
       let S = null, V = null, scr = 'menu', role = 'local', meta = null, acc = 0, rk = 0, seq = 0, lastC = '', lastCt = 0, snapT = 0, saveT = 0, lastScore = '', evq = [], off = 0, gK = -1, hooked = false, lobbying = false, typesKey = '', done = false, cfgBase = null, lastSnapMsg = null;
       const snaps = [];
+      root.gpState = () => S && { scr, role, mode: S.mode, phase: S.phase, wave: S.wave, rnd: S.rnd, score: S.score.slice(), hp: S.ar.map(q => Math.round(q.hp)), alive: S.ar.map(q => q.alive), over: S.over, win: S.win, coins: meta ? meta.coins : 0 };
       const RK = 'gameplay:ra-' + ID;
       A.bank = {
         click() { A.tone('sine', 660, 900, .05, .12); },
@@ -2816,11 +2817,11 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
     const SR_T = 32, SR_STEP = 1 / 120, SR_G = 2300, SR_RUN = 290, SR_JV = 720, SR_WJV = 700, SR_WJX = 310, SR_FALL = 980, SR_PW = 18, SR_PH = 42, SR_PC = 22;
     const SR_ACTS = [];
     const SR_TH = [
-      { n: 'Rooftops', sky: ['#1b2a4e', '#5a7fb8'], far: '#22355f', near: '#18264a', blk: ['#2d3550', '#3d4768', '#58648c'], acc: '#ffb23a' },
-      { n: 'Foundry', sky: ['#3a1f1a', '#c2603a'], far: '#5a2f24', near: '#3e1f18', blk: ['#3b3433', '#514746', '#76675f'], acc: '#ff6a2a' },
-      { n: 'Deep Caves', sky: ['#0c2a2e', '#2f7a78'], far: '#134044', near: '#0d3033', blk: ['#24403f', '#335a57', '#4f8580'], acc: '#4ff0c8' },
-      { n: 'The Lab', sky: ['#1a1238', '#5b3fa8'], far: '#2a1d58', near: '#1d1442', blk: ['#2e2a4a', '#403b66', '#6a62a8'], acc: '#ff4fd8' },
-      { n: 'Summit', sky: ['#4a1830', '#ff9a6a'], far: '#6a2a44', near: '#451b30', blk: ['#3a2e3c', '#524254', '#7a6480'], acc: '#ffd23a' }
+      { n: 'Rooftops', sky: ['#14203f', '#4a6aa2'], far: '#1c2b52', near: '#152142', blk: ['#565e7e', '#6c76a0', '#a4b0e0'], acc: '#ffb23a' },
+      { n: 'Foundry', sky: ['#3a1f1a', '#c2603a'], far: '#5a2f24', near: '#3e1f18', blk: ['#5e5450', '#756a64', '#a8968a'], acc: '#ff6a2a' },
+      { n: 'Deep Caves', sky: ['#0a2226', '#245e5c'], far: '#113a3d', near: '#0c2c2f', blk: ['#4a6a66', '#5c837e', '#8ac2b8'], acc: '#4ff0c8' },
+      { n: 'The Lab', sky: ['#1a1238', '#5b3fa8'], far: '#2a1d58', near: '#1d1442', blk: ['#4c4670', '#5f588a', '#9a90d8'], acc: '#ff4fd8' },
+      { n: 'Summit', sky: ['#4a1830', '#ff9a6a'], far: '#6a2a44', near: '#451b30', blk: ['#5a4a5c', '#705e74', '#b098b8'], acc: '#ffd23a' }
     ];
 
     const srAct = (gold, silver, ...secs) => {
@@ -2865,7 +2866,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       '                                               ',
       '                                               ',
       '              ##############                   ',
-      '              ##############          *        ',
+      '              ##############                   ',
       '              ##############       ######      ',
       '  C                                ######      ',
       '###############################^^^^##########  ',
@@ -2980,7 +2981,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       '     z                                       ',
       '                                             ',
       '                                             ',
-      '                    *                        ',
+      '                                             ',
       '                                 Z           ',
       '                               ####          ',
       '                               ####          ',
@@ -3372,6 +3373,10 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
 .gm-spike-run .sr-act i.s{background:radial-gradient(circle at 35% 35%,#ffffff,#b8c0d0 60%,#6a7488)}
 .gm-spike-run .sr-act i.b{background:radial-gradient(circle at 35% 35%,#ffd9b0,#c07a3a 60%,#7a4418)}
 .gm-spike-run .sr-act.next{border-color:var(--ac)}
+.gm-spike-run .sl-btns{position:absolute;top:10px;right:10px;z-index:2;display:flex;gap:8px;line-height:1}
+.gm-spike-run .sl-btns button{appearance:none;width:40px;height:40px;border-radius:12px;border:2px solid rgba(255,255,255,.35);background:rgba(10,16,40,.55);color:#fff;display:grid;place-items:center;cursor:pointer;padding:0}
+.gm-spike-run .sl-btns button:hover{background:rgba(10,16,40,.8)}
+.gm-spike-run .sl-btns svg{width:20px;height:20px}
 .gm-spike-run .sr-act span span,.gm-spike-run .sr-act em span{display:inline;font:inherit;opacity:1;margin:0}
 `;
 
@@ -3382,6 +3387,11 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
       const st = makeStage(root, api, ID, W, H, pad);
       st.audio = A;
       const ctx = st.ctx;
+      const btns = document.createElement('div');
+      btns.className = 'sl-btns';
+      btns.innerHTML = '<button type="button" data-b="acts" aria-label="Acts" title="Acts"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg></button><button type="button" data-b="flag" aria-label="Back to the last flag" title="Back to the last flag (R)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/></svg></button>';
+      st.stage.append(btns);
+      btns.addEventListener('click', e => { const b = e.target.closest('[data-b]'); if (!b || scr !== 'play') return; A.play('click'); if (b.dataset.b === 'flag') { if (S && !S.dead && !S.won) srKill(S, 'reset'); } else showMenu(); });
       const fresh = () => ({ v: 1, acts: {}, deaths: 0 });
       const P = (() => {
         const s = api.load(), f = fresh();
@@ -3530,7 +3540,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
           x.fillStyle = far ? th.far : th.near;
           for (let px = 0; px < w;) {
             const bw = 40 + R() * (far ? 90 : 60), bh = h * (far ? .35 + R() * .45 : .25 + R() * .35);
-            if (i === 2) { x.beginPath(); x.moveTo(px, h); x.lineTo(px + bw / 2, h - bh); x.lineTo(px + bw, h); x.fill(); x.beginPath(); x.moveTo(px + bw * .2, 0); x.lineTo(px + bw * .5, bh * .5); x.lineTo(px + bw * .8, 0); x.fill(); }
+            if (i === 2) { x.beginPath(); x.ellipse(px + bw / 2, h, bw * .7, bh, 0, Math.PI, 0); x.fill(); x.beginPath(); x.ellipse(px + bw / 2, 0, bw * .35, bh * .35, 0, 0, Math.PI); x.fill(); }
             else if (i === 4) { x.beginPath(); x.moveTo(px - bw * .3, h); x.lineTo(px + bw / 2, h - bh * 1.1); x.lineTo(px + bw * 1.3, h); x.fill(); }
             else { x.fillRect(px, h - bh, bw, bh); if (!far) { x.fillStyle = hex(th.acc, -.35); for (let k = 0; k < 5; k++) x.fillRect(px + 6 + R() * (bw - 14), h - bh + 10 + R() * (bh - 20), 4, 6); x.fillStyle = th.near; } }
             px += bw + (far ? 2 : 10 + R() * 24);
