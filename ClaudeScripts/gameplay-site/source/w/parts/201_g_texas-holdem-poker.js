@@ -1245,6 +1245,7 @@
     };
     const nm = p => p === viewer && M.role !== 'spec' ? 'You' : (D.seats[p] ? D.seats[p].name : 'Player');
     const verb = (p, a, b) => p === viewer ? a : b;
+    const say = (p, you, them, o) => tr(p === viewer && M.role !== 'spec' ? you : them, Object.assign({ name: nm(p) }, o || {}));
 
     function moveButton(p, snap) {
       D.button = p;
@@ -1285,8 +1286,8 @@
           D.seats.forEach((s, p) => { Object.assign(s, { stack: e.stacks[p], bet: 0, in: !!e.in[p], fold: false, allin: false, cards: [-1, -1], land: 0, flipAt: [Infinity, Infinity], lastA: '', win: 0, reveal: false, tag: '' }); });
           fly.length = 0; fx.length = 0;
           moveButton(e.button, D.hand === 1);
-          logH('Hand #' + e.hand + ' · blinds ' + fmtN(e.sbA) + '/' + fmtN(e.bbA), true);
-          logH('Dealer: ' + nm(e.button).replace('You', 'You'));
+          logH(tr('Hand #{n} · blinds {sb}/{bb}', { n: e.hand, sb: fmtN(e.sbA), bb: fmtN(e.bbA) }), true);
+          logH(tr('Dealer: {name}', { name: nm(e.button) }));
           sfx('shuf'); setScore();
           return .6 * sp;
         }
@@ -1307,7 +1308,7 @@
           S.stack -= e.amt; S.allin = e.allin;
           const spot = betSpot(e.p);
           chipFly(stackSpot(e.p), spot, e.amt, 0, .32 * sp, () => { S.bet += e.amt; sfx('chip', 2); });
-          logH(nm(e.p) + ' ' + verb(e.p, 'post', 'posts') + ' the ' + (e.kind === 'sb' ? 'small' : 'big') + ' blind ' + fmtN(e.amt) + (e.allin ? ' (all-in)' : ''));
+          logH(say(e.p, e.kind === 'sb' ? 'You post the small blind {n}' : 'You post the big blind {n}', e.kind === 'sb' ? '{name} posts the small blind {n}' : '{name} posts the big blind {n}', { n: fmtN(e.amt) }) + (e.allin ? ' ' + tr('(all-in)') : ''));
           return .4 * sp;
         }
         case 'turn':
@@ -1329,24 +1330,24 @@
             const c0 = holePos(e.p, 0), c1 = holePos(e.p, 1), cls = e.p === viewer ? 'H' : 'S';
             if (S.land) { cardFly(c0, L.deck, S.cards[0], 0, .4, { cls, rot0: c0.rot, rot1: -.4, fade: true, flip0: S.cards[0] >= 0 ? 1 : 0 }); cardFly(c1, L.deck, S.cards[1], .05, .4, { cls, rot0: c1.rot, rot1: .5, fade: true, flip0: S.cards[1] >= 0 ? 1 : 0 }); }
             S.cards = [-1, -1]; S.land = 0; sfx('fold');
-            txt = verb(e.p, 'fold', 'folds'); dur = .4;
+            txt = say(e.p, 'You fold', '{name} folds'); dur = .4;
             if (e.p === viewer) D.hint = '';
-          } else if (a === 'check') { sfx('check'); txt = verb(e.p, 'check', 'checks'); dur = .35; }
+          } else if (a === 'check') { sfx('check'); txt = say(e.p, 'You check', '{name} checks'); dur = .35; }
           else {
             S.stack -= e.amt; S.allin = !!e.allin;
             chipFly(stackSpot(e.p), betSpot(e.p), e.amt, 0, .34 * sp, () => { S.bet += e.amt; });
             sfx(e.allin ? 'allin' : 'chip', Math.ceil(Math.log10(e.amt + 10)));
-            txt = a === 'call' ? verb(e.p, 'call', 'calls') + ' ' + fmtN(e.amt) : a === 'bet' ? verb(e.p, 'bet', 'bets') + ' ' + fmtN(e.amt) : verb(e.p, 'raise', 'raises') + ' to ' + fmtN(e.to);
-            if (e.allin) txt += ' and ' + verb(e.p, 'are', 'is') + ' all-in';
+            txt = a === 'call' ? say(e.p, 'You call {n}', '{name} calls {n}', { n: fmtN(e.amt) }) : a === 'bet' ? say(e.p, 'You bet {n}', '{name} bets {n}', { n: fmtN(e.amt) }) : say(e.p, 'You raise to {n}', '{name} raises to {n}', { n: fmtN(e.to) });
+            if (e.allin) txt += ' ' + say(e.p, 'and are all-in', 'and is all-in');
             dur = .55;
           }
-          logH(nm(e.p) + ' ' + txt);
+          logH(txt);
           return dur * sp;
         }
         case 'return': {
           S.bet -= e.amt;
           chipFly(betSpot(e.p), stackSpot(e.p), e.amt, .05, .4 * sp, () => { S.stack += e.amt; sfx('chip', 2); });
-          logH('Uncalled bet of ' + fmtN(e.amt) + ' returned to ' + nm(e.p));
+          logH(tr('Uncalled bet of {n} returned to {name}', { n: fmtN(e.amt), name: nm(e.p) }));
           return .5 * sp;
         }
         case 'collect': {
@@ -1366,7 +1367,7 @@
             const slot = bslot(base + i);
             cardFly(L.deck, slot, -1, i * .13 * sp, .32 * sp, { cls: 'B', land: () => { D.board.push({ id, at: T }); sfx('flip'); updHint(); } });
           });
-          logH(['', 'Flop', 'Turn', 'River'][e.st] + ': ' + e.cards.map(cstr).join(' ') + (e.st > 1 ? '   [' + D.board.map(x => cstr(x.id)).concat(e.cards.map(cstr)).join(' ') + ']' : ''), false);
+          logH(tr(['', 'Flop', 'Turn', 'River'][e.st]) + ': ' + e.cards.map(cstr).join(' ') + (e.st > 1 ? '   [' + D.board.map(x => cstr(x.id)).concat(e.cards.map(cstr)).join(' ') + ']' : ''), false);
           return (e.cards.length * .13 + .55) * sp;
         }
         case 'reveal': {
@@ -1374,7 +1375,7 @@
             const s = D.seats[r.p];
             later(i * .4 * sp, () => { s.cards = r.cards.slice(); s.land = 2; s.reveal = true; s.flipAt = [T, T + .08]; sfx('flip'); });
             const all = r.cards.concat(D.board.map(b => b.id));
-            logH(nm(r.p) + ' ' + verb(r.p, 'show', 'shows') + ' ' + handStr(r.cards[0], r.cards[1]) + (all.length >= 7 ? ' (' + describe(score(all), false) + ')' : ''));
+            logH(say(r.p, 'You show {cards}', '{name} shows {cards}', { cards: handStr(r.cards[0], r.cards[1]) }) + (all.length >= 7 ? ' (' + describeT(score(all)) + ')' : ''));
           });
           return (e.list.length * .4 + .35) * sp;
         }
@@ -1401,18 +1402,18 @@
           return .15;
         case 'bust': {
           S.out = true; S.place = e.place;
-          logH(e.place ? nm(e.p) + ' ' + verb(e.p, 'finish', 'finishes') + ' in ' + ordinal(e.place) + ' place' : nm(e.p) + ' ' + verb(e.p, 'are', 'is') + ' out of chips');
+          logH(e.place ? say(e.p, 'You finish in {place}', '{name} finishes in {place}', { place: tr(ordinal(e.place) + ' place') }) : say(e.p, 'You are out of chips', '{name} is out of chips'));
           if (e.p === viewer && M.mode === 'sng') { M.myPlace = e.place; later(.9 * sp, () => { if (scene === 'game' && !M.over) showBust(e.place); }); sfx('lose'); }
           return .5 * sp;
         }
         case 'level':
           D.level = e.level; D.sbA = e.sb; D.bbA = e.bb;
-          D.banner = { t: 'Blinds up', s: fmtN(e.sb) + ' / ' + fmtN(e.bb), t0: T, dur: 2.2 };
-          logH('Blinds are now ' + fmtN(e.sb) + '/' + fmtN(e.bb), true); sfx('bell');
+          D.banner = { t: tr('Blinds up'), s: fmtN(e.sb) + ' / ' + fmtN(e.bb), t0: T, dur: 2.2 };
+          logH(tr('Blinds are now {sb}/{bb}', { sb: fmtN(e.sb), bb: fmtN(e.bb) }), true); sfx('bell');
           return .9 * sp;
         case 'rebuy':
           S.stack = e.amt; S.out = false; S.place = 0;
-          logH(nm(e.p) + ' ' + verb(e.p, 'rebuy', 'rebuys') + ' for ' + fmtN(e.amt));
+          logH(say(e.p, 'You rebuy for {n}', '{name} rebuys for {n}', { n: fmtN(e.amt) }));
           return .3;
         case 'over':
           M.over = true; M.res = e;
