@@ -564,7 +564,7 @@
       if (t === E_DOOR || t === E_ARCH || t === E_FRONT || t === E_ROLL) {
         const top = t === E_ARCH ? 2.36 : t === E_ROLL ? 2.4 : 2.22;
         faces(0, 1, top, WH);
-        if (t !== E_ROLL) { trimBox(lv, ax, X, J, 0.035, 0, top, 0.07, 'w', TRIM); trimBox(lv, ax, X, J, 0.965, 0, top, 0.07, 'w', TRIM); trimBox(lv, ax, X, J, 0.5, top - 0.02, 0.1, 1.08, 'w', TRIM); bx(-0.05, 0.06); bx(0.94, 1.05); }
+        if (t !== E_ROLL) { trimBox(lv, ax, X, J, 0.035, 0, top, 0.07, 'w', TRIM); trimBox(lv, ax, X, J, 0.965, 0, top, 0.07, 'w', TRIM); trimBox(lv, ax, X, J, 0.5, top - 0.02, 0.1, 1.08, 'w', TRIM); bx(-0.05, 0.06); bx(0.94, 1.05); } else bx(0, 1);
         if (t === E_DOOR || t === E_FRONT) DOORS.push({ lv, ax, X, J, t, info, ei, k: DOORS.length });
         return;
       }
@@ -852,7 +852,7 @@
       fuel: mk((b, cy) => { b(0, 0.17, 0, 0.3, 0.33, 0.14, '#a82018'); b(0, 0.17, 0.071, 0.22, 0.22, 0.003, '#8a1810'); b(-0.03, 0.36, 0, 0.16, 0.04, 0.03, '#a82018'); cy(0.11, 0.37, 0, 0.022, 0.07, '#2a2a2a'); }),
       plug: mk((b, cy) => { const s = 1.6; cy(0, 0.012 * s, 0, 0.011 * s, 0.05 * s, '#e8e4d8', 0, Math.PI / 2); cy(0.04 * s, 0.012 * s, 0, 0.013 * s, 0.02 * s, '#8a8a8e', 0, Math.PI / 2, 6); cy(0.06 * s, 0.012 * s, 0, 0.007 * s, 0.025 * s, '#a8a8aa', 0, Math.PI / 2); cy(-0.032 * s, 0.012 * s, 0, 0.004 * s, 0.02 * s, '#8a8a8e', 0, Math.PI / 2); }),
       fuse: mk((b, cy) => { const s = 1.8; cy(0, 0.012 * s, 0, 0.011 * s, 0.05 * s, '#c8e0e8', 0, Math.PI / 2); for (const x of [-0.03, 0.03]) cy(x * s, 0.012 * s, 0, 0.012 * s, 0.014 * s, '#b89a4a', 0, Math.PI / 2); cy(0, 0.012 * s, 0, 0.002 * s, 0.05 * s, '#5a4a2a', 0, Math.PI / 2, 6); }),
-      camera: mk((b, cy, sp) => { b(0, 0.055, 0, 0.16, 0.1, 0.09, '#1c1c1e'); b(0, 0.055, 0.0455, 0.13, 0.07, 0.002, '#2c2c2e'); cy(0, 0.055, 0.06, 0.03, 0.03, '#3a3a3e', Math.PI / 2); cy(0, 0.055, 0.076, 0.022, 0.004, '#20283a', Math.PI / 2); b(0.05, 0.115, -0.01, 0.03, 0.03, 0.03, '#8a8a8e'); cy(0.05, 0.16, 0.01, 0.06, 0.05, '#c8c8cc', Math.PI / 2.4, 0, 14, 0.3); b(-0.05, 0.11, 0, 0.02, 0.012, 0.02, '#8a8a8e'); }),
+      camera: mk((b, cy, sp) => { b(0, 0.055, 0, 0.16, 0.1, 0.09, '#1c1c1e'); b(0, 0.055, 0.0455, 0.13, 0.07, 0.002, '#2c2c2e'); cy(0, 0.055, 0.06, 0.03, 0.03, '#3a3a3e', Math.PI / 2); cy(0, 0.055, 0.076, 0.022, 0.004, '#20283a', Math.PI / 2); b(0.05, 0.115, -0.01, 0.03, 0.03, 0.03, '#8a8a8e'); cy(0.05, 0.15, 0.015, 0.042, 0.035, '#8a8a90', Math.PI / 2.3, 0, 14, 0.35); cy(0.05, 0.152, 0.03, 0.03, 0.004, '#e8e8e0', Math.PI / 2.3, 0, 12); b(-0.05, 0.11, 0, 0.02, 0.012, 0.02, '#8a8a8e'); }),
       bulb: mk((b, cy, sp) => { sp(0, 0.03, 0, 0.026, 0.03, 0.026, '#dce8f0'); cy(0, 0.006, 0, 0.012, 0.012, '#b89a4a'); }),
       bottle: mk((b, cy) => { cy(0, 0.1, 0, 0.034, 0.2, '#2a5a32', 0, 0, 10); cy(0, 0.22, 0, 0.034, 0.045, '#2a5a32', 0, 0, 10, 0.35); cy(0, 0.27, 0, 0.012, 0.06, '#2a5a32', 0, 0, 8); b(0, 0.1, 0.034, 0.04, 0.06, 0.002, '#c8b890'); })
     };
@@ -1125,7 +1125,8 @@
     const roofM = own(new THREE.MeshBasicMaterial({ color: 0x07080a }));
     { const r1 = new THREE.Mesh(own(new THREE.PlaneGeometry(6, 9)), roofM); r1.rotation.x = -Math.PI / 2; r1.position.set(3, 3.0, 9.5); scene.add(r1); const r2 = new THREE.Mesh(own(new THREE.PlaneGeometry(14.4, 14.4)), roofM); r2.rotation.x = -Math.PI / 2; r2.position.set(13, 6.0, 7); scene.add(r2); const gr = new THREE.Mesh(own(new THREE.PlaneGeometry(60, 30)), PM({ color: 0x101810 })); gr.rotation.x = -Math.PI / 2; gr.position.set(10, -0.02, 29); gr.material.userData.probe.value.setRGB(0.04, 0.05, 0.08); scene.add(gr); const trunk = own(new THREE.CylinderGeometry(0.18, 0.25, 6, 7)), crown = own(new THREE.ConeGeometry(1.6, 5, 8)), tm = PM({ color: 0x0c0e0c }); tm.userData.probe.value.setRGB(0.03, 0.035, 0.06); const R0 = mkRng(7); for (let i = 0; i < 26; i++) { const x = -6 + R0() * 32, z = 17.5 + R0() * 14; if ((Math.abs(x - 3) < 2.4 || Math.abs(x - 6.3) < 2 || Math.abs(x - 11.5) < 2.2) && z < 25) continue; const t = new THREE.Mesh(trunk, tm); t.position.set(x, 3, z); scene.add(t); const c = new THREE.Mesh(crown, tm); c.position.set(x, 6 + R0(), z); scene.add(c); } }
 
-    const CG = collGrid(H.COLL), NAV = makeNav(H.COLL, doorAtEdge);
+    const CG = collGrid(H.COLL), NAV = makeNav(H.COLL, doorAtEdge), VENTS = [];
+    H.COLL.forEach((l, lv) => l.forEach(b => { if (b.f & 8) VENTS.push({ lv, x0: b.x0, z0: b.z0, x1: b.x1, z1: b.z1 }); }));
     const stampA = H.COLL.map(l => new Int32Array(l.length)); let stampN = 0;
     function collide(lv, o, r, crouch, keeper) {
       const L = H.COLL[lv], G = CG[lv], st = stampA[lv];
@@ -1428,6 +1429,8 @@
       if (!R.noted.spot) { R.noted.spot = 1; say(T('He has seen you. Run and hide!'), 3); }
     }
     function startCatch(pulled) {
+      if (mode === 'code') { codeEl.hidden = true; mode = 'play'; }
+      journal(false);
       K.st = 'catch'; cut = { k: 'catch', t: 0, d: 2.6, pulled };
       if (P.hide) { const hs = P.hide; P.hide = null; P.x = hs.out.x; P.z = hs.out.z; P.lv = hs.lv; P.y = groundY(P.lv, P.x, P.z); if (hs.kind === 'ward') hs.open = 1; }
       P.trap = null; audio.play('caught'); releaseHeld(true);
@@ -1562,7 +1565,7 @@
     function stepWorld(h) {
       for (const d of DOORS) { if (d.a !== d.want) { d.a += clamp(d.want - d.a, -h * 2.4, h * 2.4); const e = d.a * d.a * (3 - 2 * d.a); d.g.rotation.y = d.thc + (d.tho - d.thc) * e; d.box.on = d.a < 0.5; d.obox.on = d.a >= 0.5; } }
       for (const dr of DRW) { if (dr.open !== dr.want) { dr.open += clamp(dr.want - dr.open, -h * 3, h * 3); const o = dr.open * 0.36; dr.g.position.set(dr.base.x + dr.dir.x * o, dr.base.y, dr.base.z + dr.dir.z * o); for (const it of dr.items) syncItem(it, false); } }
-      for (const hs of H.WARD) { const tgt = P.hide === hs ? 0 : 0; if (hs.open > tgt) { hs.open = Math.max(0, hs.open - h * (K.st === 'check' && K.checks[0] === hs ? 0 : 1.6)); } const e = Math.min(1, hs.open) * 1.3; hs.doors.forEach(dd => { dd.g.rotation.y = dd.th0 + dd.s * e; }); }
+      for (const hs of H.WARD) { if (hs.open > 0) hs.open = Math.max(0, hs.open - h * (K.st === 'check' && K.checks[0] === hs ? 0 : 1.6)); const e = Math.min(1, hs.open) * 1.3; hs.doors.forEach(dd => { dd.g.rotation.y = dd.th0 + dd.s * e; }); }
       for (const it of ITEMLIST) {
         if (!it.fly) continue;
         it.vy -= 9.8 * h; const o = { x: it.x + it.vx * h, z: it.z + it.vz * h }; collide(it.lv, o, 0.07, true, false);
@@ -1851,10 +1854,12 @@
       const x = lerp(P.ox, P.x, a), z = lerp(P.oz, P.z, a), y = lerp(P.oy, P.y, a);
       const amp = SV.opt.bob && !RM ? (P.run ? 1.3 : P.cr > 0.5 ? 0.5 : 1) : 0, bob = P.moving ? -Math.abs(Math.sin(P.bob)) * 0.045 * amp : 0;
       const tr = P.trap ? Math.sin(cnt * 0.6) * 0.004 : 0;
-      cam.position.set(x, y + lerp(EYE, CREYE, P.cr) + bob - (P.trap ? 0.25 : 0), z); cam.rotation.set(P.pitch + tr, P.yaw, P.moving ? Math.sin(P.bob) * 0.006 * amp : 0);
+      let nv = 0; if (P.cr > 0.5) for (const b of VENTS) if (b.lv === P.lv && x > b.x0 - 0.5 && x < b.x1 + 0.5 && z > b.z0 - 0.5 && z < b.z1 + 0.5) nv = 1;
+      P.vk = damp(P.vk || 0, nv, 10, dt);
+      cam.position.set(x, y + lerp(EYE, CREYE, P.cr) - P.vk * 0.45 + bob - (P.trap ? 0.25 : 0), z); cam.rotation.set(P.pitch + tr, P.yaw, P.moving ? Math.sin(P.bob) * 0.006 * amp : 0);
       return P.lv;
     }
-    const vScale = { padKey: 0.7, studyKey: 0.7, garageKey: 0.7, doorKey: 0.7, carKey: 0.7, fuse: 0.55, plug: 0.6, bulb: 0.7, camera: 0.75, battery: 0.8, fuel: 0.7 };
+    const vScale = { padKey: 0.7, studyKey: 0.7, garageKey: 0.7, doorKey: 0.7, carKey: 0.7, fuse: 0.55, plug: 0.6, bulb: 0.7, camera: 0.65, battery: 0.8, fuel: 0.7 };
     const vOff = { hammer: [0.2, -0.2, -0.42, 0.9, 1.75, 0.35], cutters: [0.2, -0.22, -0.48, 0.7, 1.7, 0.3], battery: [0.18, -0.3, -0.48, 0.15, 0.35, 0], fuel: [0.2, -0.34, -0.55, 0.1, 0.5, 0], camera: [0.17, -0.19, -0.36, 0.05, 0.12, 0], bottle: [0.17, -0.28, -0.38, 0.1, 0, 0.12], plug: [0.15, -0.15, -0.3, 0.6, 1.6, 0.2], fuse: [0.15, -0.15, -0.3, 0.6, 1.6, 0.2], bulb: [0.15, -0.16, -0.3, 0.2, 0, 0], carKey: [0.15, -0.15, -0.3, 0.9, 1.9, 0.3] };
     function render(dt, a) {
       const clv = cameraFrame(a, dt);
@@ -2037,7 +2042,7 @@
 .gm-${ID} .tb-drop{right:36%;bottom:12%}
 .gm-${ID} .tb-notes{right:3%;top:4%;border-radius:.6em;width:auto;height:auto;padding:.5em .8em}
 .gm-${ID} .tb-pause{right:3%;top:calc(4% + clamp(34px,7cqw,48px));border-radius:.6em;width:auto;height:auto;padding:.5em .9em}
-.gm-${ID} .stage.touchon .held{bottom:auto;top:13%}
+.gm-${ID} .stage.touchon .held{bottom:auto;top:3%;right:auto;left:50%;transform:translateX(-50%);text-align:center}
 .gm-${ID} .stage.touchon .noise{bottom:auto;top:9%}
 @container (max-width:520px){.gm-${ID} .journal .cols{grid-template-columns:1fr;gap:.4em}.gm-${ID} .panel{gap:.5em}}
 `;
