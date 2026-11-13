@@ -125,7 +125,7 @@
 ${p}{--bg:${th.bg};--pn:${th.pn};--pn2:${th.pn2};--ink:${th.ink};--mut:${th.mut};--acc:${th.acc};--acc2:${th.acc2};--ln:${th.ln};--good:#4fbf7a;--bad:#e5645a;gap:12px;padding:12px;border-radius:16px;background:var(--bg);color:var(--ink);font-family:var(--sans)}
 ${p} .main{display:flex;gap:16px;justify-content:center;align-items:stretch;width:100%}
 ${p} .main>canvas{flex:none;align-self:flex-start;width:min(620px,calc(100% - 244px),calc(100dvh - 190px));min-width:240px;border-radius:12px;background:${th.cv};box-shadow:0 22px 44px -24px rgba(0,0,0,.7),0 4px 10px -4px rgba(0,0,0,.4);cursor:pointer;touch-action:none}
-${p} .side{flex:1;max-width:228px;min-width:0;display:flex;flex-direction:column;gap:9px}
+${p} .side{flex:1;max-width:228px;min-width:0;display:flex;flex-direction:column;gap:9px;contain:size;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--pn2) transparent;padding-right:2px}
 ${p} .seg{display:flex;flex-wrap:wrap;padding:3px;gap:2px;border-radius:12px;background:var(--pn)}
 ${p} .seg button{flex:1 1 auto;min-width:0;border:0;background:none;padding:8px 6px;border-radius:9px;font:800 12.5px/1 var(--sans);color:var(--mut);cursor:pointer;white-space:nowrap;transition:background .2s,color .2s,box-shadow .2s}
 ${p} .seg button:hover{color:var(--ink)}
@@ -174,7 +174,7 @@ ${p} [hidden]{display:none!important}
 @media (max-width:760px){
   ${p} .main{flex-direction:column;align-items:center;gap:12px}
   ${p} .main>canvas{width:min(100%,620px);min-width:0}
-  ${p} .side{max-width:none;width:100%}
+  ${p} .side{max-width:none;width:100%;contain:none;overflow:visible;padding-right:0}
   ${p} .pcs{flex-direction:row}
   ${p} .pcs .pc{flex:1;min-width:0}
   ${p}{padding:8px}
@@ -186,12 +186,34 @@ ${p} [hidden]{display:none!important}
     let seed = (Math.random() * 4294967296) >>> 0 || 1;
     const rnd = () => { seed ^= seed << 13; seed >>>= 0; seed ^= seed >>> 17; seed ^= seed << 5; seed >>>= 0; return seed / 4294967296; };
     const clock = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    const PAT = new Uint8Array(65536);
+    (() => {
+      const src = [['XOX', '...', '???'], ['XO.', '...', '?.?'], ['XO?', 'X..', 'x.?'], ['XOO', '...', '?.?'], ['XO?', 'O.o', '?o?'], ['XO?', 'O.X', '???'], ['?X?', 'O.O', 'ooo'], ['OX?', 'o.O', '???'], ['X.?', 'O.?', '###'], ['OX?', 'X.O', '###'], ['?X?', 'x.O', '###'], ['?XO', 'x.x', '###'], ['?OX', 'X.O', '###']];
+      const cells = [[0, 0], [0, 1], [0, 2], [1, 0], [1, 2], [2, 0], [2, 1], [2, 2]], forms = [];
+      for (const p of src) for (let s = 0; s < 8; s++) {
+        const q = cells.map(([r, c]) => {
+          let y = r - 1, x = c - 1;
+          for (let k = 0; k < (s & 3); k++) { const ty = x; x = -y; y = ty; }
+          if (s & 4) x = -x;
+          return p[y + 1][x + 1];
+        });
+        forms.push(q, q.map(ch => ({ X: 'O', O: 'X', x: 'o', o: 'x' }[ch] || ch)));
+      }
+      const ok = (ch, v) => ch === '?' || (ch === '.' ? v === 0 : ch === '#' ? v === 3 : ch === 'X' ? v === 1 : ch === 'O' ? v === 2 : ch === 'x' ? v === 0 || v === 2 : ch === 'o' ? v === 0 || v === 1 : false);
+      for (let code = 0; code < 65536; code++) {
+        for (const q of forms) {
+          let m = true;
+          for (let k = 0; k < 8 && m; k++) if (!ok(q[k], (code >> (k * 2)) & 3)) m = false;
+          if (m) { PAT[code] = 1; break; }
+        }
+      }
+    })();
 
     function Pos(n) {
       const w = n + 2, S = w * w, D = [1, -1, w, -w], G = [w + 1, w - 1, 1 - w, -w - 1];
       const b = new Uint8Array(S), mS = new Int32Array(S), mL = new Int32Array(S), stk = new Int32Array(S), gp = new Int32Array(S);
       const el = new Int32Array(n * n), ep = new Int32Array(S).fill(-1), pts = new Int32Array(n * n);
-      const seq = new Int32Array(n * n * 4 + 16), cand = new Int32Array(10), mk = new Int32Array(S);
+      const seq = new Int32Array(n * n * 4 + 16), cand = new Int32Array(16), gb = new Int32Array(32), mk = new Int32Array(S), N8 = [-w - 1, -w, -w + 1, -1, 1, w - 1, w, w + 1];
       let st = 0, gn = 0, lastLib = -1, mst = 0;
       for (let r = 0, i = 0; r < n; r++) for (let c = 0; c < n; c++) pts[i++] = (r + 1) * w + c + 1;
       const P = { n, w, S, b, el, ep, pts, seq, ne: 0, ko: -1, last: -1, turn: BLK, caps: [0, 0, 0], num: 0, passes: 0, rec: null, sn: 0, log: false };
@@ -288,6 +310,18 @@ ${p} [hidden]{display:none!important}
         for (let k = 0; k < 4; k++) if (b[r + D[k]] === EMPTY && ++e > 1) return false;
         return groupInfo(r, 2) === 1;
       };
+      const pcode = q => { let c = 0; for (let k = 0; k < 8; k++) c |= b[q + N8[k]] << (k << 1); return c; };
+      const selfAtari = (q, c) => {
+        const e = 3 - c;
+        let ec = 0;
+        for (let k = 0; k < 4; k++) if (b[q + D[k]] === EMPTY && ++ec >= 2) return 0;
+        for (let k = 0; k < 4; k++) { const r = q + D[k]; if (b[r] === e && groupInfo(r, 2) === 1) return 0; }
+        b[q] = c;
+        const l = groupInfo(q, 2), sz = gn;
+        b[q] = EMPTY;
+        return l < 2 ? sz : 0;
+      };
+      P.selfAtari = selfAtari;
       const policy = () => {
         const c = P.turn, e = 3 - c, l = P.last;
         if (l >= 0) {
@@ -295,13 +329,30 @@ ${p} [hidden]{display:none!important}
           if (atari(l)) cand[nc++] = lastLib;
           for (let k = 0; k < 4; k++) {
             const r = l + D[k], v = b[r];
-            if ((v === e || v === c) && nc < 8 && atari(r)) cand[nc++] = lastLib;
+            if (v === e) { if (atari(r)) cand[nc++] = lastLib; }
+            else if (v === c && atari(r)) {
+              const q = lastLib;
+              if (!selfAtari(q, c)) cand[nc++] = q;
+              groupInfo(r, 0);
+              const gs = gn > 32 ? 32 : gn;
+              for (let j = 0; j < gs; j++) gb[j] = gp[j];
+              for (let j = 0; j < gs && nc < 14; j++) for (let h = 0; h < 4 && nc < 14; h++) { const u = gb[j] + D[h]; if (b[u] === e && atari(u)) cand[nc++] = lastLib; }
+            }
           }
-          if (nc && rnd() < 0.9) {
+          if (nc && rnd() < 0.96) {
             const s = (rnd() * nc) | 0;
             for (let t = 0; t < nc; t++) {
               const q = cand[(s + t) % nc];
               if (!isEye(q, c) && play(q, c)) return q;
+            }
+          }
+          nc = 0;
+          for (let k = 0; k < 8; k++) { const q = l + N8[k]; if (b[q] === EMPTY && q !== P.ko && PAT[pcode(q)]) cand[nc++] = q; }
+          if (nc && rnd() < 0.9) {
+            const s = (rnd() * nc) | 0;
+            for (let t = 0; t < nc; t++) {
+              const q = cand[(s + t) % nc];
+              if (!selfAtari(q, c) && play(q, c)) return q;
             }
           }
         }
@@ -311,9 +362,36 @@ ${p} [hidden]{display:none!important}
         for (let t = 0; t < ne; t++, i = i + 1 === ne ? 0 : i + 1) {
           const p = el[i];
           if (isEye(p, c)) continue;
+          const sa = selfAtari(p, c);
+          if (sa > 1 || (sa === 1 && rnd() < 0.6)) continue;
           if (play(p, c)) return p;
         }
         return -1;
+      };
+      P.prior = (p, c, last, early) => {
+        const e = 3 - c, r = P.row(p), cl = P.col(p), d = Math.min(r, cl, n - 1 - r, n - 1 - cl);
+        let v = 0.5, cap = 0, save = 0;
+        for (let k = 0; k < 4; k++) {
+          const q = p + D[k], u = b[q];
+          if (u === e && groupInfo(q, 2) === 1) cap += gn;
+          else if (u === c && groupInfo(q, 2) === 1) save += gn;
+        }
+        const sa = selfAtari(p, c);
+        if (cap) v = cap > 2 ? 0.85 : 0.76;
+        else if (save && !sa) v = save > 2 ? 0.8 : 0.7;
+        else if (sa > 1) v = 0.1;
+        else if (sa === 1) v = 0.3;
+        if (!sa && last >= 0) {
+          const dr = Math.abs(P.row(last) - r), dc = Math.abs(P.col(last) - cl);
+          if (dr <= 1 && dc <= 1 && PAT[pcode(p)]) v += 0.1;
+          else if (dr + dc <= 2) v += 0.03;
+        }
+        if (!cap && !save) {
+          if (d === 0) v -= early ? 0.25 : 0.12;
+          else if (d === 1 && early) v -= 0.08;
+          else if (early && (d === 2 || d === 3)) v += 0.06;
+        }
+        return v < 0.03 ? 0.03 : v > 0.95 ? 0.95 : v;
       };
       P.policy = policy;
       const area = own => {
@@ -358,13 +436,6 @@ ${p} [hidden]{display:none!important}
       P.reset();
       return P;
     }
-
-    const prior = (P, p, last) => {
-      const n = P.n, r = P.row(p), c = P.col(p), d = Math.min(r, c, n - 1 - r, n - 1 - c);
-      let v = d === 0 ? 0.22 : d === 1 ? 0.42 : 0.5;
-      if (last >= 0) { const m = Math.abs(P.row(last) - r) + Math.abs(P.col(last) - c); if (m <= 2) v += 0.12; }
-      return v;
-    };
 
     function nearStone(P, p, rad) {
       const n = P.n, r = P.row(p), c = P.col(p);
@@ -413,9 +484,9 @@ ${p} [hidden]{display:none!important}
     }
 
     function Search(root, o) {
-      const n = root.n, P = Pos(n), me = root.turn, komi = o.komi || 0;
+      const EXP = o.exp != null ? o.exp : 0.08, n = root.n, P = Pos(n), me = root.turn, komi = o.komi || 0;
       const sparse = n >= 13;
-      const R = { mv: -2, par: null, color: 3 - me, n: 0, w: 0, ch: null, rn: 0, rw: 0, prior: .5 };
+      const R = { mv: -2, par: null, color: 3 - me, n: 0, w: 0, ch: null, rn: 0, rw: 0, pn: 1, pw: .5 }, PN = 14, early = n * 1.2;
       const maxLen = n * n * 2;
       const passOk = !!o.passOk;
       let playouts = 0, t0 = clock(), done = false, wins = 0;
@@ -426,19 +497,19 @@ ${p} [hidden]{display:none!important}
           const p = P.el[i];
           if (p === P.ko || P.isEye(p, c) || (tm && tm[p])) continue;
           if (sparse && P.num > 0 && !nearStone(P, p, 2)) continue;
-          ch.push({ mv: p, par: node, color: c, n: 0, w: 0, ch: null, rn: 0, rw: 0, prior: prior(P, p, last) });
+          ch.push({ mv: p, par: node, color: c, n: 0, w: 0, ch: null, rn: 0, rw: 0, pn: PN, pw: PN * P.prior(p, c, last, P.num < early) });
         }
-        if (node === R && passOk) ch.push({ mv: -1, par: node, color: c, n: 0, w: 0, ch: null, rn: 0, rw: 0, prior: o.oppPassed ? .62 : .3 });
+        if (node === R && passOk) ch.push({ mv: -1, par: node, color: c, n: 0, w: 0, ch: null, rn: 0, rw: 0, pn: PN, pw: PN * (o.oppPassed ? .62 : .3) });
         node.ch = ch;
       };
       const select = node => {
-        const N = node.n + 1, beta = Math.sqrt(400 / (3 * N + 400)), lg = Math.log(N + 1);
+        const lg = Math.log(node.n + 2);
         let best = null, bv = -1;
         const ch = node.ch;
         for (let i = 0; i < ch.length; i++) {
-          const c = ch[i];
-          const q = c.n ? c.w / c.n : c.prior, rq = c.rn ? c.rw / c.rn : q;
-          const v = beta * rq + (1 - beta) * q + 0.1 * Math.sqrt(lg / (c.n + 1));
+          const c = ch[i], n0 = c.n + c.pn;
+          const q = (c.w + c.pw) / n0, rq = c.rn ? (c.rw + c.pw) / (c.rn + c.pn) : q, beta = c.rn / (c.rn + n0 + c.rn * n0 / 2500);
+          const v = beta * rq + (1 - beta) * q + EXP * Math.sqrt(lg / n0);
           if (v > bv) { bv = v; best = c; }
         }
         return best;
@@ -1235,9 +1306,20 @@ ${p} [hidden]{display:none!important}
       return sprs[key];
     };
     const lastPass = g => g.moves.length > 0 && g.moves[g.moves.length - 1] === -1;
+    let wk = null, wurl = '', wid = 0;
+    const killWk = () => { if (wk) { try { wk.terminate(); } catch (e) {} } wk = null; };
+    const getWk = () => {
+      if (wk === false) return null;
+      if (wk) return wk;
+      try {
+        if (!wurl) wurl = URL.createObjectURL(new Blob(['const GO_EMPTY=0,GO_B=1,GO_W=2,GO_WALL=3;const E=(' + goEngine.toString() + ')();onmessage=e=>{const d=e.data,g=E.Game(d.cfg);g.rebuild(d.moves);const r=E.Pos(d.cfg.n);r.copyFrom(g.P);const s=E.Search(r,d.so);let t=0;while(!s.step(100)){if(++t%3===0)postMessage({id:d.id,prog:s.playouts});}postMessage({id:d.id,res:s.result()});};'], { type: 'text/javascript' }));
+        wk = new Worker(wurl);
+      } catch (e) { wk = false; return null; }
+      return wk;
+    };
     function aiGo(model, col, opt, cb, sh) {
       const g = model.g, n = g.cfg.n, lv = +opt.level, pr = E.params[lv] || E.params[2];
-      let dead = false, s = null, est = null, info = '';
+      let dead = false, s = null, est = null, info = '', busy = false;
       const t0 = now(), tm = api.timeout;
       const root0 = E.Pos(n);
       root0.copyFrom(g.P);
@@ -1267,17 +1349,34 @@ ${p} [hidden]{display:none!important}
         if (bk >= 0 && g.legal(bk)) done({ k: 'p', p: bk });
         else {
           const sc = n === 9 ? 1 : n === 13 ? 1.5 : 2.2;
-          s = E.Search(root0, { komi: g.cfg.komi, maxPlayouts: Math.round(pr.playouts * (n === 9 ? 1 : n === 13 ? .8 : .5)), maxMs: pr.ms * sc, passOk: g.moves.length >= n, oppPassed: lastPass(g), japanese: g.cfg.rules === 'J', canResign: lv >= 2 && g.moves.length > n * 2, early: !!pr.early });
-          const tick = () => {
-            if (dead) return;
-            const fin = s.step(7);
-            info = 'Thinking… ' + s.playouts.toLocaleString('en-US') + ' playouts';
-            if (fin) { const r = s.result(); done(toAct(r.move)); } else tm(tick, 2);
+          const so = { komi: g.cfg.komi, maxPlayouts: Math.round(pr.playouts * (n === 9 ? 1 : n === 13 ? .8 : .5)), maxMs: pr.ms * sc, passOk: g.moves.length >= n, oppPassed: lastPass(g), japanese: g.cfg.rules === 'J', canResign: lv >= 2 && g.moves.length > n * 2, early: !!pr.early };
+          const w = getWk(), id = ++wid;
+          const local = () => {
+            s = E.Search(root0, so);
+            const tick = () => {
+              if (dead) return;
+              const fin = s.step(7);
+              info = 'Thinking… ' + s.playouts.toLocaleString('en-US') + ' playouts';
+              if (fin) { const r = s.result(); done(toAct(r.move)); } else tm(tick, 2);
+            };
+            tick();
           };
-          tick();
+          if (!w) local();
+          else {
+            info = 'Thinking…';
+            w.onmessage = e => {
+              const d = e.data;
+              if (dead || d.id !== id) return;
+              if (d.res) { busy = false; done(toAct(d.res.move)); }
+              else info = 'Thinking… ' + d.prog.toLocaleString('en-US') + ' playouts';
+            };
+            w.onerror = () => { busy = false; wk = false; if (!dead) local(); };
+            busy = true;
+            w.postMessage({ id, cfg: g.cfg, moves: g.moves.slice(), so });
+          }
         }
       }
-      return { cancel() { dead = true; }, info: () => info };
+      return { cancel() { if (!dead && busy) killWk(); dead = true; }, info: () => info };
     }
     function runEstimate(sh) {
       const g = sh.model.g, n = g.cfg.n, root0 = E.Pos(n);
@@ -1521,6 +1620,7 @@ ${p} [hidden]{display:none!important}
       }
     };
     stoneShell(root, api, SP).start();
+    return { destroy() { killWk(); if (wurl) URL.revokeObjectURL(wurl); } };
   }
   function gomokuEngine() {
     const N = 15, NN = 225, DR = [0, 1, 1, 1], DC = [1, 0, 1, -1], WIN = 1000000;
