@@ -1007,7 +1007,8 @@
     purple: ['#7a56c6', '#4c3490', '#241549', '#2d2a38']
   };
   const SPOT = ['#1b1e26', '#fff'];
-  const fmtN = v => Math.round(v).toLocaleString('en-US');
+  const NUMF = typeof Intl !== 'undefined' ? new Intl.NumberFormat('en-US') : null;
+  const fmtN = v => NUMF ? NUMF.format(Math.round(v)) : String(Math.round(v));
   const fmtK = v => v >= 1e6 ? (v / 1e6).toFixed(v >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'M' : v >= 1e4 ? (v / 1e3).toFixed(v >= 1e5 ? 0 : 1).replace(/\.0$/, '') + 'k' : fmtN(v);
   const ordinal = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10 > 3 ? 0 : n % 10]);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"'`]/g, c => '&#' + c.charCodeAt(0) + ';');

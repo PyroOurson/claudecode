@@ -18,7 +18,8 @@
     while (t > 21 && a) { t -= 10; a--; }
     return { t, soft: a > 0 };
   }
-  const money = v => '$' + (Number.isInteger(v) ? v.toLocaleString('en-US') : v.toFixed(2));
+  const NUMF = typeof Intl !== 'undefined' ? new Intl.NumberFormat('en-US') : null;
+  const money = v => '$' + (Number.isInteger(v) ? (NUMF ? NUMF.format(v) : String(v)) : v.toFixed(2));
 
   const put = (r, i, c) => r.slice(0, i) + c + r.slice(i + 1);
   function hardRow(t, R) {
