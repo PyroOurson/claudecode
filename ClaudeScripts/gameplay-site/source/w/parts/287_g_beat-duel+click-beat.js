@@ -15,6 +15,8 @@
     };
   };
   const hashStr = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+  const TR = s => window.gpI18n ? gpI18n.t(s) : s;
+  const TF = (s, o) => window.gpI18n ? gpI18n.t(s, o) : String(s).replace(/\{(\w+)\}/g, (m, k) => k in o ? o[k] : m);
   const pad2 = n => String(n).padStart(2, '0');
   const fmtTime = s => { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ':' + pad2(s % 60); };
   const fmtNum = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -1044,6 +1046,16 @@
       });
       ply.sort((a, b) => a.t - b.t);
     }
+    [opp, ply].forEach(list => list.forEach((n, i) => {
+      if (!n.len) return;
+      for (let j = i + 1; j < list.length; j++) {
+        const q = list[j];
+        if (q.lane !== n.lane) continue;
+        const room = q.t - n.t - 1.4 * st;
+        if (n.len > room) n.len = room >= 2 * st ? room : 0;
+        break;
+      }
+    }));
     ply.forEach((n, i) => { n.i = i; });
     return { opp, ply };
   }
@@ -1526,11 +1538,12 @@
 
 
   const JUDGE = [
-    { n: 'SICK', ms: 45, sc: 350, hp: 2.3, w: 1, col: '#47f0ff' },
-    { n: 'GOOD', ms: 90, sc: 200, hp: 1.4, w: .75, col: '#7dff9e' },
-    { n: 'BAD', ms: 135, sc: 100, hp: .5, w: .5, col: '#ffb347' },
-    { n: 'SHIT', ms: 160, sc: 50, hp: -1, w: .25, col: '#ff6a5c' }
+    { n: 'PERFECT', ms: 42, sc: 400, hp: 2.2, w: 1, col: '#47f0ff' },
+    { n: 'GREAT', ms: 84, sc: 240, hp: 1.5, w: .8, col: '#7dff9e' },
+    { n: 'GOOD', ms: 125, sc: 110, hp: .4, w: .45, col: '#ffb347' },
+    { n: 'SLOPPY', ms: 155, sc: 30, hp: -1.2, w: .15, col: '#ff6a5c' }
   ];
+  const HITW = JUDGE[3].ms / 1000;
   const FNF_RANKS = [[100, 'S+'], [95, 'S'], [90, 'A'], [80, 'B'], [70, 'C'], [60, 'D'], [0, 'F']];
   const rankOf = acc => { for (const r of FNF_RANKS) if (acc >= r[0]) return r[1]; return 'F'; };
   const rankCol = r => ({ 'S+': '#ffe14a', S: '#ffd23f', A: '#7dff9e', B: '#47f0ff', C: '#ffb347', D: '#ff8a5c', F: '#ff4d5e' }[r] || '#fff');
@@ -1654,66 +1667,66 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
   }
 
   const FNF_CSS = `
-.gm-fnf{touch-action:none;background:#0b0618}
-.gm-fnf .fo-wrap{position:relative;container-type:size;background:#0b0618;border-radius:10px;overflow:hidden;user-select:none;-webkit-user-select:none}
-.gm-fnf .fo-wrap>canvas{display:block;width:100%!important;height:100%!important;aspect-ratio:auto!important}
-.gm-fnf .fo-ui{position:absolute;inset:0;--u:1cqw;font-family:"Trebuchet MS",system-ui,sans-serif;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*1.2);overflow:hidden}
-.gm-fnf .por .fo-ui{--u:2.3cqw}
-.gm-fnf .fo-ui.off{pointer-events:none}
-.gm-fnf .fo-ui.dim{background:rgba(8,4,20,.62);backdrop-filter:blur(3px)}
-.gm-fnf .fo-col{display:flex;flex-direction:column;gap:calc(var(--u)*1.1);align-items:stretch}
-.gm-fnf .fo-logo{margin:0;text-align:center;font:900 calc(var(--u)*6)/.95 "Trebuchet MS",system-ui,sans-serif;color:#ffd23f;text-shadow:0 calc(var(--u)*.45) 0 #b3401a,0 calc(var(--u)*.9) 0 #1c1130,calc(var(--u)*.3) 0 0 #1c1130,calc(var(--u)*-.3) 0 0 #1c1130;letter-spacing:.01em;transform:rotate(-2deg)}
-.gm-fnf .fo-logo b{display:block;color:#ff5fa8;font-size:1.28em;text-shadow:0 calc(var(--u)*.45) 0 #7a1f55,0 calc(var(--u)*.9) 0 #1c1130,calc(var(--u)*.3) 0 0 #1c1130,calc(var(--u)*-.3) 0 0 #1c1130}
-.gm-fnf .fo-sub{font:700 calc(var(--u)*1.7)/1.3 system-ui,sans-serif;color:#e7e0ff;text-align:center;text-shadow:0 2px 0 #000}
-.gm-fnf .fo-press{font:900 calc(var(--u)*2.4)/1 "Trebuchet MS",system-ui,sans-serif;animation:fo-pulse 1.1s infinite alternate;text-shadow:0 calc(var(--u)*.3) 0 #000}
+.gm-beat-duel{touch-action:none;background:#0b0618}
+.gm-beat-duel .fo-wrap{position:relative;container-type:size;background:#0b0618;border-radius:10px;overflow:hidden;user-select:none;-webkit-user-select:none}
+.gm-beat-duel .fo-wrap>canvas{display:block;width:100%!important;height:100%!important;aspect-ratio:auto!important}
+.gm-beat-duel .fo-ui{position:absolute;inset:0;--u:1cqw;font-family:"Trebuchet MS",system-ui,sans-serif;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*1.2);overflow:hidden}
+.gm-beat-duel .por .fo-ui{--u:2.3cqw}
+.gm-beat-duel .fo-ui.off{pointer-events:none}
+.gm-beat-duel .fo-ui.dim{background:rgba(8,4,20,.62);backdrop-filter:blur(3px)}
+.gm-beat-duel .fo-col{display:flex;flex-direction:column;gap:calc(var(--u)*1.1);align-items:stretch}
+.gm-beat-duel .fo-logo{margin:0;text-align:center;font:900 calc(var(--u)*6)/.95 "Trebuchet MS",system-ui,sans-serif;color:#ffd23f;text-shadow:0 calc(var(--u)*.45) 0 #b3401a,0 calc(var(--u)*.9) 0 #1c1130,calc(var(--u)*.3) 0 0 #1c1130,calc(var(--u)*-.3) 0 0 #1c1130;letter-spacing:.01em;transform:rotate(-2deg)}
+.gm-beat-duel .fo-logo b{display:block;color:#ff5fa8;font-size:1.28em;text-shadow:0 calc(var(--u)*.45) 0 #7a1f55,0 calc(var(--u)*.9) 0 #1c1130,calc(var(--u)*.3) 0 0 #1c1130,calc(var(--u)*-.3) 0 0 #1c1130}
+.gm-beat-duel .fo-sub{font:700 calc(var(--u)*1.7)/1.3 system-ui,sans-serif;color:#e7e0ff;text-align:center;text-shadow:0 2px 0 #000}
+.gm-beat-duel .fo-press{font:900 calc(var(--u)*2.4)/1 "Trebuchet MS",system-ui,sans-serif;animation:fo-pulse 1.1s infinite alternate;text-shadow:0 calc(var(--u)*.3) 0 #000}
 @keyframes fo-pulse{from{opacity:.45;transform:scale(.97)}to{opacity:1;transform:scale(1.03)}}
-.gm-fnf .fo-head{position:absolute;top:calc(var(--u)*1.6);left:0;right:0;text-align:center;font:900 calc(var(--u)*3.2)/1 "Trebuchet MS",system-ui,sans-serif;text-shadow:0 calc(var(--u)*.3) 0 #000,0 0 calc(var(--u)*1.5) rgba(255,95,168,.6)}
-.gm-fnf .fo-foot{position:absolute;bottom:calc(var(--u)*1.4);left:0;right:0;display:flex;gap:calc(var(--u)*1);justify-content:center;flex-wrap:wrap}
-.gm-fnf .fo-weeks{display:flex;gap:calc(var(--u)*2);align-items:stretch;justify-content:center;margin-top:calc(var(--u)*3)}
-.gm-fnf .por .fo-weeks{flex-direction:column;gap:calc(var(--u)*1.2);width:90%}
-.gm-fnf .fo-wk{position:relative;display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.8);padding:calc(var(--u)*1.8);width:calc(var(--u)*26);border-radius:calc(var(--u)*1.6);border:calc(var(--u)*.3) solid #0f0720;background:linear-gradient(#2d2150,#1a1233);cursor:pointer;text-align:center;box-shadow:0 calc(var(--u)*.5) 0 #0f0720}
-.gm-fnf .por .fo-wk{width:auto;flex-direction:row;text-align:left;gap:calc(var(--u)*1.6)}
-.gm-fnf .fo-wk.on{outline:calc(var(--u)*.35) solid var(--c);filter:brightness(1.18)}
-.gm-fnf .fo-wk.lock{opacity:.45;filter:grayscale(.7);cursor:not-allowed}
-.gm-fnf .fo-wk canvas{width:calc(var(--u)*11);height:calc(var(--u)*11);flex:none;display:block}
-.gm-fnf .fo-wk h3{margin:0;font:900 calc(var(--u)*2.3)/1.05 "Trebuchet MS",system-ui,sans-serif;color:var(--c)}
-.gm-fnf .fo-wk p{margin:0;font:600 calc(var(--u)*1.35)/1.3 system-ui,sans-serif;color:#d6cfee}
-.gm-fnf .fo-wk ol{margin:0;padding:0 0 0 calc(var(--u)*2);font:700 calc(var(--u)*1.35)/1.5 system-ui,sans-serif;text-align:left}
-.gm-fnf .fo-diffs{display:flex;gap:calc(var(--u)*.9);justify-content:center}
-.gm-fnf .fo-diffs .fo-b{min-width:calc(var(--u)*9);padding:calc(var(--u)*.8) calc(var(--u)*1.4);font-size:calc(var(--u)*1.8)}
-.gm-fnf .fo-diffs .fo-b.sel{background:linear-gradient(var(--c,#ff5fa8),color-mix(in srgb,var(--c,#ff5fa8) 50%,#000));color:#0f0720;text-shadow:none}
-.gm-fnf .fo-free{display:flex;gap:calc(var(--u)*2);width:92%;height:68%;margin-top:calc(var(--u)*3.5);margin-bottom:calc(var(--u)*3)}
-.gm-fnf .por .fo-free{flex-direction:column;gap:calc(var(--u)*1);height:78%}
-.gm-fnf .fo-list{flex:1.1;display:flex;flex-direction:column;gap:calc(var(--u)*.7);overflow-y:auto;padding:calc(var(--u)*.6);scrollbar-width:thin}
-.gm-fnf .fo-list .fo-b{display:flex;justify-content:space-between;align-items:center;text-align:left;padding:calc(var(--u)*.7) calc(var(--u)*1.6);font-size:calc(var(--u)*1.9)}
-.gm-fnf .fo-list .fo-b small{font:700 calc(var(--u)*1.2)/1 system-ui,sans-serif;opacity:.8}
-.gm-fnf .fo-list .sep{font:900 calc(var(--u)*1.3)/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--c);padding:calc(var(--u)*.5) calc(var(--u)*.4) 0}
-.gm-fnf .fo-info{flex:.9;display:flex;flex-direction:column;gap:calc(var(--u)*1.1);align-items:center;justify-content:center;background:rgba(10,6,24,.6);border-radius:calc(var(--u)*1.6);padding:calc(var(--u)*1.6);border:calc(var(--u)*.25) solid #0f0720}
-.gm-fnf .fo-info h3{margin:0;font:900 calc(var(--u)*3)/1 "Trebuchet MS",system-ui,sans-serif;text-align:center}
-.gm-fnf .fo-info p{margin:0;font:700 calc(var(--u)*1.5)/1.4 system-ui,sans-serif;text-align:center;color:#d9d3f5}
-.gm-fnf .fo-rows{display:flex;flex-direction:column;gap:calc(var(--u)*.8);width:min(calc(var(--u)*56),92%);max-height:78%;overflow-y:auto;margin-top:calc(var(--u)*3);padding:calc(var(--u)*.5);scrollbar-width:thin}
-.gm-fnf .fo-b.row{display:flex;justify-content:space-between;align-items:center;gap:calc(var(--u)*1.4);padding:calc(var(--u)*.8) calc(var(--u)*1.6);font-size:calc(var(--u)*1.9);text-align:left}
-.gm-fnf .fo-b.row .v{display:flex;align-items:center;gap:calc(var(--u)*1);min-width:calc(var(--u)*15);justify-content:flex-end}
-.gm-fnf .fo-b.row .v i{font-style:normal;padding:0 calc(var(--u)*.7);opacity:.7;cursor:pointer}
-.gm-fnf .fo-b.row .v i:hover{opacity:1}
-.gm-fnf .fo-b.row .v b{min-width:calc(var(--u)*7);text-align:center;color:#ffd23f}
-.gm-fnf .fo-res{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.9);background:rgba(12,6,28,.82);border:calc(var(--u)*.3) solid #0f0720;border-radius:calc(var(--u)*2);padding:calc(var(--u)*2.2) calc(var(--u)*3.4);box-shadow:0 calc(var(--u)*.8) 0 #0f0720;max-width:92%}
-.gm-fnf .fo-res h2{margin:0;font:900 calc(var(--u)*3.4)/1 "Trebuchet MS",system-ui,sans-serif;text-align:center}
-.gm-fnf .fo-rank{font:900 calc(var(--u)*13)/1 "Trebuchet MS",system-ui,sans-serif;text-shadow:0 calc(var(--u)*.7) 0 #1c1130,0 0 calc(var(--u)*3) currentColor}
-.gm-fnf .fo-grid{display:grid;grid-template-columns:repeat(2,auto);gap:calc(var(--u)*.4) calc(var(--u)*3);font:800 calc(var(--u)*1.8)/1.3 "Trebuchet MS",system-ui,sans-serif}
-.gm-fnf .fo-grid span{opacity:.8;text-align:left}
-.gm-fnf .fo-grid b{text-align:right}
-.gm-fnf .fo-btns{display:flex;gap:calc(var(--u)*1);flex-wrap:wrap;justify-content:center;margin-top:calc(var(--u)*.6)}
-.gm-fnf .fo-pause{position:absolute;top:calc(var(--u)*1);right:calc(var(--u)*1);z-index:3;min-width:0!important;padding:calc(var(--u)*.6) calc(var(--u)*1.3)!important;font-size:calc(var(--u)*1.8)!important;opacity:.7}
-.gm-fnf .fo-cnt{font:900 calc(var(--u)*14)/1 "Trebuchet MS",system-ui,sans-serif;text-shadow:0 calc(var(--u)*.7) 0 #1c1130}
-.gm-fnf .fo-vs{display:flex;gap:calc(var(--u)*3);align-items:center;justify-content:center}
-.gm-fnf .fo-vs>div{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.4);min-width:calc(var(--u)*20)}
-.gm-fnf .fo-vs .n{font:900 calc(var(--u)*2.2)/1 "Trebuchet MS",system-ui,sans-serif}
-.gm-fnf .fo-vs .s{font:900 calc(var(--u)*4)/1 "Trebuchet MS",system-ui,sans-serif;color:#ffd23f}
-.gm-fnf .fo-vs .w{color:#7dff9e!important}
-.gm-fnf .fo-key{min-width:calc(var(--u)*9)!important}
-.gm-fnf .fo-hint{font:600 calc(var(--u)*1.3)/1.3 system-ui,sans-serif;color:#b9b0dd;text-align:center}
-` + SHARED_CSS('.gm-fnf', '#ff5fa8');
+.gm-beat-duel .fo-head{position:absolute;top:calc(var(--u)*1.6);left:0;right:0;text-align:center;font:900 calc(var(--u)*3.2)/1 "Trebuchet MS",system-ui,sans-serif;text-shadow:0 calc(var(--u)*.3) 0 #000,0 0 calc(var(--u)*1.5) rgba(255,95,168,.6)}
+.gm-beat-duel .fo-foot{position:absolute;bottom:calc(var(--u)*1.4);left:0;right:0;display:flex;gap:calc(var(--u)*1);justify-content:center;flex-wrap:wrap}
+.gm-beat-duel .fo-weeks{display:flex;gap:calc(var(--u)*2);align-items:stretch;justify-content:center;margin-top:calc(var(--u)*3)}
+.gm-beat-duel .por .fo-weeks{flex-direction:column;gap:calc(var(--u)*1.2);width:90%}
+.gm-beat-duel .fo-wk{position:relative;display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.8);padding:calc(var(--u)*1.8);width:calc(var(--u)*26);border-radius:calc(var(--u)*1.6);border:calc(var(--u)*.3) solid #0f0720;background:linear-gradient(#2d2150,#1a1233);cursor:pointer;text-align:center;box-shadow:0 calc(var(--u)*.5) 0 #0f0720}
+.gm-beat-duel .por .fo-wk{width:auto;flex-direction:row;text-align:left;gap:calc(var(--u)*1.6)}
+.gm-beat-duel .fo-wk.on{outline:calc(var(--u)*.35) solid var(--c);filter:brightness(1.18)}
+.gm-beat-duel .fo-wk.lock{opacity:.45;filter:grayscale(.7);cursor:not-allowed}
+.gm-beat-duel .fo-wk canvas{width:calc(var(--u)*11);height:calc(var(--u)*11);flex:none;display:block}
+.gm-beat-duel .fo-wk h3{margin:0;font:900 calc(var(--u)*2.3)/1.05 "Trebuchet MS",system-ui,sans-serif;color:var(--c)}
+.gm-beat-duel .fo-wk p{margin:0;font:600 calc(var(--u)*1.35)/1.3 system-ui,sans-serif;color:#d6cfee}
+.gm-beat-duel .fo-wk ol{margin:0;padding:0 0 0 calc(var(--u)*2);font:700 calc(var(--u)*1.35)/1.5 system-ui,sans-serif;text-align:left}
+.gm-beat-duel .fo-diffs{display:flex;gap:calc(var(--u)*.9);justify-content:center}
+.gm-beat-duel .fo-diffs .fo-b{min-width:calc(var(--u)*9);padding:calc(var(--u)*.8) calc(var(--u)*1.4);font-size:calc(var(--u)*1.8)}
+.gm-beat-duel .fo-diffs .fo-b.sel{background:linear-gradient(var(--c,#ff5fa8),color-mix(in srgb,var(--c,#ff5fa8) 50%,#000));color:#0f0720;text-shadow:none}
+.gm-beat-duel .fo-free{display:flex;gap:calc(var(--u)*2);width:92%;height:68%;margin-top:calc(var(--u)*3.5);margin-bottom:calc(var(--u)*3)}
+.gm-beat-duel .por .fo-free{flex-direction:column;gap:calc(var(--u)*1);height:78%}
+.gm-beat-duel .fo-list{flex:1.1;display:flex;flex-direction:column;gap:calc(var(--u)*.7);overflow-y:auto;padding:calc(var(--u)*.6);scrollbar-width:thin}
+.gm-beat-duel .fo-list .fo-b{display:flex;justify-content:space-between;align-items:center;text-align:left;padding:calc(var(--u)*.7) calc(var(--u)*1.6);font-size:calc(var(--u)*1.9)}
+.gm-beat-duel .fo-list .fo-b small{font:700 calc(var(--u)*1.2)/1 system-ui,sans-serif;opacity:.8}
+.gm-beat-duel .fo-list .sep{font:900 calc(var(--u)*1.3)/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--c);padding:calc(var(--u)*.5) calc(var(--u)*.4) 0}
+.gm-beat-duel .fo-info{flex:.9;display:flex;flex-direction:column;gap:calc(var(--u)*1.1);align-items:center;justify-content:center;background:rgba(10,6,24,.6);border-radius:calc(var(--u)*1.6);padding:calc(var(--u)*1.6);border:calc(var(--u)*.25) solid #0f0720}
+.gm-beat-duel .fo-info h3{margin:0;font:900 calc(var(--u)*3)/1 "Trebuchet MS",system-ui,sans-serif;text-align:center}
+.gm-beat-duel .fo-info p{margin:0;font:700 calc(var(--u)*1.5)/1.4 system-ui,sans-serif;text-align:center;color:#d9d3f5}
+.gm-beat-duel .fo-rows{display:flex;flex-direction:column;gap:calc(var(--u)*.8);width:min(calc(var(--u)*56),92%);max-height:calc(100% - var(--u)*15);overflow-y:auto;margin-top:calc(var(--u)*1.5);margin-bottom:calc(var(--u)*4);padding:calc(var(--u)*.5);scrollbar-width:thin}
+.gm-beat-duel .fo-b.row{display:flex;justify-content:space-between;align-items:center;gap:calc(var(--u)*1.4);padding:calc(var(--u)*.8) calc(var(--u)*1.6);font-size:calc(var(--u)*1.9);text-align:left}
+.gm-beat-duel .fo-b.row .v{display:flex;align-items:center;gap:calc(var(--u)*1);min-width:calc(var(--u)*15);justify-content:flex-end}
+.gm-beat-duel .fo-b.row .v i{font-style:normal;padding:0 calc(var(--u)*.7);opacity:.7;cursor:pointer}
+.gm-beat-duel .fo-b.row .v i:hover{opacity:1}
+.gm-beat-duel .fo-b.row .v b{min-width:calc(var(--u)*7);text-align:center;color:#ffd23f}
+.gm-beat-duel .fo-res{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.9);background:rgba(12,6,28,.82);border:calc(var(--u)*.3) solid #0f0720;border-radius:calc(var(--u)*2);padding:calc(var(--u)*2.2) calc(var(--u)*3.4);box-shadow:0 calc(var(--u)*.8) 0 #0f0720;max-width:92%}
+.gm-beat-duel .fo-res h2{margin:0;font:900 calc(var(--u)*3.4)/1 "Trebuchet MS",system-ui,sans-serif;text-align:center}
+.gm-beat-duel .fo-rank{font:900 calc(var(--u)*13)/1 "Trebuchet MS",system-ui,sans-serif;text-shadow:0 calc(var(--u)*.7) 0 #1c1130,0 0 calc(var(--u)*3) currentColor}
+.gm-beat-duel .fo-grid{display:grid;grid-template-columns:repeat(2,auto);gap:calc(var(--u)*.4) calc(var(--u)*3);font:800 calc(var(--u)*1.8)/1.3 "Trebuchet MS",system-ui,sans-serif}
+.gm-beat-duel .fo-grid span{opacity:.8;text-align:left}
+.gm-beat-duel .fo-grid b{text-align:right}
+.gm-beat-duel .fo-btns{display:flex;gap:calc(var(--u)*1);flex-wrap:wrap;justify-content:center;margin-top:calc(var(--u)*.6)}
+.gm-beat-duel .fo-pause{position:absolute;top:calc(var(--u)*1);right:calc(var(--u)*1);z-index:3;min-width:0!important;padding:calc(var(--u)*.6) calc(var(--u)*1.3)!important;font-size:calc(var(--u)*1.8)!important;opacity:.7}
+.gm-beat-duel .fo-cnt{font:900 calc(var(--u)*14)/1 "Trebuchet MS",system-ui,sans-serif;text-shadow:0 calc(var(--u)*.7) 0 #1c1130}
+.gm-beat-duel .fo-vs{display:flex;gap:calc(var(--u)*3);align-items:center;justify-content:center}
+.gm-beat-duel .fo-vs>div{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.4);min-width:calc(var(--u)*20)}
+.gm-beat-duel .fo-vs .n{font:900 calc(var(--u)*2.2)/1 "Trebuchet MS",system-ui,sans-serif}
+.gm-beat-duel .fo-vs .s{font:900 calc(var(--u)*4)/1 "Trebuchet MS",system-ui,sans-serif;color:#ffd23f}
+.gm-beat-duel .fo-vs .w{color:#7dff9e!important}
+.gm-beat-duel .fo-key{min-width:calc(var(--u)*9)!important}
+.gm-beat-duel .fo-hint{font:600 calc(var(--u)*1.3)/1.3 system-ui,sans-serif;color:#b9b0dd;text-align:center;text-shadow:0 1px 3px #000,0 0 6px rgba(0,0,0,.8)}
+` + SHARED_CSS('.gm-beat-duel', '#ff5fa8');
 
 
   function mountFnf(root, api) {
@@ -1721,6 +1734,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     const W = por ? 540 : 1280, H = por ? 960 : 720;
     const wrap = document.createElement('div');
     wrap.className = 'fo-wrap ' + (por ? 'por' : 'lan');
+    wrap.setAttribute('data-i18n', '');
     wrap.style.width = `min(100%,${W}px,calc((100dvh - var(--goff,250px))*${(W / H).toFixed(4)}))`;
     wrap.style.aspectRatio = W + ' / ' + H;
     root.append(wrap);
@@ -1777,9 +1791,9 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     const onoff = v => v ? 'On' : 'Off';
 
     const R = {
-      title: () => `<h1 class="fo-logo">FRIDAY NIGHT<b>FUNKIN'</b></h1><div class="fo-press">${por ? 'TAP TO START' : 'PRESS ENTER OR CLICK'}</div><div class="fo-sub">Original songs, original characters. Hit the arrows in time.</div>`,
-      menu: () => `<h1 class="fo-logo" style="font-size:calc(var(--u)*${por ? 4 : 4.4});margin-bottom:calc(var(--u)*1)">FRIDAY NIGHT<b>FUNKIN'</b></h1><div class="fo-col" style="min-width:calc(var(--u)*${por ? 28 : 24})"><button class="fo-b pri" data-a="story">Story Mode</button><button class="fo-b" data-a="free">Freeplay</button><button class="fo-b" data-a="online">Online Battle</button><button class="fo-b" data-a="opts">Options</button></div><div class="fo-hint">${por ? 'Tap the four lanes to hit notes' : 'Arrows or D F J K to play, Esc to pause'}</div>`,
-      story: () => `<div class="fo-head">Story Mode</div><div class="fo-weeks">${WEEKS.map((w, i) => `<div class="fo-wk ${i > sv.wk ? 'lock' : ''} ${i === S.wsel ? 'on' : ''}" style="--c:${w.col}" data-a="wk:${i}" data-f="wk:${i}"><canvas data-ic="${w.opp}" width="160" height="160"></canvas><div><h3>Week ${i + 1}: ${esc(w.name)}</h3><p>${i > sv.wk ? 'Locked. Clear the previous week.' : esc(w.tag)}</p><ol>${w.songs.map(s => `<li>${esc(SONGS[s].name)}</li>`).join('')}</ol></div></div>`).join('')}</div>${diffChips()}<div class="fo-foot"><button class="fo-b ghost" data-a="back">Back</button><button class="fo-b pri" data-a="storygo">Start week</button></div>`,
+      title: () => `<h1 class="fo-logo" translate="no" style="margin-bottom:calc(var(--u)*${por ? 5 : 2.5})">BEAT<b>DUEL</b></h1><div class="fo-press">${por ? 'TAP TO START' : 'PRESS ENTER OR CLICK'}</div><div class="fo-sub">Original songs, original characters. Hit the arrows in time.</div>`,
+      menu: () => `<h1 class="fo-logo" style="font-size:calc(var(--u)*${por ? 4 : 4.4});margin-bottom:calc(var(--u)*1)" translate="no">BEAT<b>DUEL</b></h1><div class="fo-col" style="min-width:calc(var(--u)*${por ? 28 : 24})"><button class="fo-b pri" data-a="story">Story Mode</button><button class="fo-b" data-a="free">Freeplay</button><button class="fo-b" data-a="online">Online Battle</button><button class="fo-b" data-a="opts">Options</button></div><div class="fo-hint">${por ? 'Tap the four lanes to hit notes' : 'Arrows or D F J K to play, Esc to pause'}</div>`,
+      story: () => `<div class="fo-head">Story Mode</div><div class="fo-weeks">${WEEKS.map((w, i) => `<div class="fo-wk ${i > sv.wk ? 'lock' : ''} ${i === S.wsel ? 'on' : ''}" style="--c:${w.col}" data-a="wk:${i}" data-f="wk:${i}"><canvas data-ic="${w.opp}" width="160" height="160"></canvas><div><h3>${esc(TF('Week {n}', { n: i + 1 }))}: <span>${esc(w.name)}</span></h3><p>${i > sv.wk ? 'Locked. Clear the previous week.' : esc(w.tag)}</p><ol>${w.songs.map(s => `<li>${esc(SONGS[s].name)}</li>`).join('')}</ol></div></div>`).join('')}</div>${diffChips()}<div class="fo-foot"><button class="fo-b ghost" data-a="back">Back</button><button class="fo-b pri" data-a="storygo">Start week</button></div>`,
       free: () => {
         let h = '<div class="fo-head">Freeplay</div><div class="fo-free"><div class="fo-list">';
         WEEKS.forEach((w, wi) => {
@@ -1789,17 +1803,17 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
         return h + `</div><div class="fo-info" id="fi"></div></div><div class="fo-foot"><button class="fo-b ghost" data-a="back">Back</button></div>`;
       },
       opts: () => `<div class="fo-head">Options</div><div class="fo-rows">${rowSt('Scroll speed', 'scroll', O.scroll.toFixed(1) + 'x')}${rowSt('Downscroll', 'down', onoff(O.down))}${rowSt('Ghost tapping', 'ghost', onoff(O.ghost))}${rowSt('Hit sound', 'hs', onoff(O.hs))}${rowSt('Volume', 'vol', Math.round(SHARED.vol * 100) + '%')}${rowSt('Audio offset', 'cal', (SHARED.cal > 0 ? '+' : '') + SHARED.cal + ' ms')}<div class="fo-b row" data-a="cal"><span>Calibrate offset</span><span class="v"><b>Tap to the beat</b></span></div><div class="fo-b row" data-a="keys"><span>Key bindings</span><span class="v"><b>${O.keys.map(k => keyName(k[0])).join(' ')}</b></span></div><div class="fo-b row" data-a="reset"><span>Reset progress</span><span class="v"><b>${S.d.rs ? 'Press again' : ''}</b></span></div></div><div class="fo-foot"><button class="fo-b ghost" data-a="back">Back</button></div>`,
-      keys: () => `<div class="fo-head">Key bindings</div><div class="fo-rows">${[0, 1, 2, 3].map(l => `<div class="fo-b row"><span>${LANE_ARROW[l]} Lane ${l + 1}</span><span class="v"><button class="fo-b sm fo-key ${capture && capture[0] === l && capture[1] === 0 ? 'on' : ''}" data-a="kb:${l}:0">${capture && capture[0] === l && capture[1] === 0 ? '...' : keyName(O.keys[l][0])}</button><button class="fo-b sm fo-key ${capture && capture[0] === l && capture[1] === 1 ? 'on' : ''}" data-a="kb:${l}:1">${capture && capture[0] === l && capture[1] === 1 ? '...' : keyName(O.keys[l][1])}</button></span></div>`).join('')}</div><div class="fo-hint">Click a key box, then press the new key. Esc cancels.</div><div class="fo-foot"><button class="fo-b ghost" data-a="kdef">Defaults</button><button class="fo-b" data-a="opts">Done</button></div>`,
+      keys: () => `<div class="fo-head">Key bindings</div><div class="fo-rows">${[0, 1, 2, 3].map(l => `<div class="fo-b row"><span>${LANE_ARROW[l]} ${esc(TF('Lane {n}', { n: l + 1 }))}</span><span class="v"><button class="fo-b sm fo-key ${capture && capture[0] === l && capture[1] === 0 ? 'on' : ''}" data-a="kb:${l}:0">${capture && capture[0] === l && capture[1] === 0 ? '...' : keyName(O.keys[l][0])}</button><button class="fo-b sm fo-key ${capture && capture[0] === l && capture[1] === 1 ? 'on' : ''}" data-a="kb:${l}:1">${capture && capture[0] === l && capture[1] === 1 ? '...' : keyName(O.keys[l][1])}</button></span></div>`).join('')}</div><div class="fo-hint">Click a key box, then press the new key. Esc cancels.</div><div class="fo-foot"><button class="fo-b ghost" data-a="kdef">Defaults</button><button class="fo-b" data-a="opts">Done</button></div>`,
       cal: () => '<div id="calhost"></div>',
       play: () => (onl ? '' : '<button class="fo-b ghost fo-pause" data-a="pause">II</button>'),
-      pause: () => `<div class="fo-res"><h2>Paused</h2><div class="fo-col"><button class="fo-b pri" data-a="resume">Resume</button><button class="fo-b" data-a="restart">Restart song</button><button class="fo-b ghost" data-a="quit">Quit to menu</button></div><div class="fo-hint">Offset ${SHARED.cal > 0 ? '+' : ''}${SHARED.cal} ms (change it in Options)</div></div>`,
+      pause: () => `<div class="fo-res"><h2>Paused</h2><div class="fo-col"><button class="fo-b pri" data-a="resume">Resume</button><button class="fo-b" data-a="restart">Restart song</button><button class="fo-b ghost" data-a="quit">Quit to menu</button></div><div class="fo-hint">${esc(TF('Offset {n} ms (change it in Options)', { n: (SHARED.cal > 0 ? '+' : '') + SHARED.cal }))}</div></div>`,
       resume: d => `<div class="fo-cnt">${d.n}</div>`,
       res: d => {
         const g = d.g, acc = accOf(g), rk = rankOf(acc), b = bestOf(g.id, g.diff);
-        return `<div class="fo-res"><h2>${esc(g.song.name)} <small style="opacity:.6;font-size:.55em">${DIFFS[g.diff]}</small></h2><div class="fo-rank" style="color:${rankCol(rk)}">${rk}</div><div class="fo-grid"><span>Score</span><b>${fmtNum(g.score)}</b><span>Accuracy</span><b>${acc.toFixed(2)}%</b><span>Sick / Good</span><b>${g.cnt[0]} / ${g.cnt[1]}</b><span>Bad / Shit</span><b>${g.cnt[2]} / ${g.cnt[3]}</b><span>Misses</span><b>${g.miss}</b><span>Max combo</span><b>${g.maxCombo}</b>${d.rec ? '<span>Record</span><b style="color:#ffd23f">NEW BEST</b>' : b ? `<span>Best</span><b>${fmtNum(b.score)}</b>` : ''}</div>${d.story ? `<div class="fo-hint">Week total ${fmtNum(d.story.score)}</div>` : ''}<div class="fo-btns">${d.next ? `<button class="fo-b pri" data-a="next">${d.last ? 'Finish week' : 'Next song'}</button>` : '<button class="fo-b pri" data-a="again">Play again</button>'}<button class="fo-b ghost" data-a="quit">${d.next ? 'Quit week' : 'Menu'}</button></div></div>`;
+        return `<div class="fo-res"><h2>${esc(g.song.name)} <small style="opacity:.6;font-size:.55em">${DIFFS[g.diff]}</small></h2><div class="fo-rank" style="color:${rankCol(rk)}">${rk}</div><div class="fo-grid"><span>Score</span><b>${fmtNum(g.score)}</b><span>Accuracy</span><b>${acc.toFixed(2)}%</b><span>Perfect / Great</span><b>${g.cnt[0]} / ${g.cnt[1]}</b><span>Good / Sloppy</span><b>${g.cnt[2]} / ${g.cnt[3]}</b><span>Misses</span><b>${g.miss}</b><span>Max combo</span><b>${g.maxCombo}</b>${d.rec ? '<span>Record</span><b style="color:#ffd23f">NEW BEST</b>' : b ? `<span>Best</span><b>${fmtNum(b.score)}</b>` : ''}</div>${d.story ? `<div class="fo-hint">${esc(TF('Week total {n}', { n: fmtNum(d.story.score) }))}</div>` : ''}<div class="fo-btns">${d.next ? `<button class="fo-b pri" data-a="next">${d.last ? 'Finish week' : 'Next song'}</button>` : '<button class="fo-b pri" data-a="again">Play again</button>'}<button class="fo-b ghost" data-a="quit">${d.next ? 'Quit week' : 'Menu'}</button></div></div>`;
       },
-      wkend: d => `<div class="fo-res"><h2>Week ${d.wk + 1} cleared</h2><div class="fo-rank" style="color:${WEEKS[d.wk].col};font-size:calc(var(--u)*6)">${esc(WEEKS[d.wk].name)}</div><div class="fo-grid"><span>Total score</span><b>${fmtNum(d.score)}</b><span>Misses</span><b>${d.miss}</b><span>Difficulty</span><b>${DIFFS[d.diff]}</b></div>${d.wk < 2 && sv.wk > d.wk ? `<div class="fo-hint">Week ${d.wk + 2} unlocked</div>` : ''}<div class="fo-btns"><button class="fo-b pri" data-a="story">Weeks</button><button class="fo-b ghost" data-a="menu">Menu</button></div></div>`,
-      over: d => `<div class="fo-res"><h2>You fainted</h2><div class="fo-sub">${esc(d.g.song.name)} on ${DIFFS[d.g.diff]}. The crowd wants an encore.</div><div class="fo-btns"><button class="fo-b pri" data-a="retry">Retry</button><button class="fo-b ghost" data-a="quit">Quit</button></div></div>`,
+      wkend: d => `<div class="fo-res"><h2>${esc(TF('Week {n} cleared', { n: d.wk + 1 }))}</h2><div class="fo-rank" style="color:${WEEKS[d.wk].col};font-size:calc(var(--u)*6)">${esc(WEEKS[d.wk].name)}</div><div class="fo-grid"><span>Total score</span><b>${fmtNum(d.score)}</b><span>Misses</span><b>${d.miss}</b><span>Difficulty</span><b>${DIFFS[d.diff]}</b></div>${d.wk < 2 && sv.wk > d.wk ? `<div class="fo-hint">${esc(TF('Week {n} unlocked', { n: d.wk + 2 }))}</div>` : ''}<div class="fo-btns"><button class="fo-b pri" data-a="story">Weeks</button><button class="fo-b ghost" data-a="menu">Menu</button></div></div>`,
+      over: d => `<div class="fo-res"><h2>You fainted</h2><div class="fo-sub">${esc(TF('{s} on {d}. The crowd wants an encore.', { s: d.g.song.name, d: TR(DIFFS[d.g.diff]) }))}</div><div class="fo-btns"><button class="fo-b pri" data-a="retry">Retry</button><button class="fo-b ghost" data-a="quit">Quit</button></div></div>`,
       oBusy: d => `<div class="fo-res"><h2>${esc(d.t || 'Online Battle')}</h2><div class="fo-sub">${esc(d.s || '')}</div><div class="fo-btns"><button class="fo-b ghost" data-a="oleave">Leave</button></div></div>`,
       oPick: () => {
         const sel = S.osel || 0;
@@ -1811,7 +1825,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       oRes: d => {
         const g = d.g, me = d.me, rv = d.rv, name = d.rvName;
         const win = d.win;
-        return `<div class="fo-res"><h2 style="color:${win === 1 ? '#7dff9e' : win === 0 ? '#ffd23f' : '#ff6a5c'}">${win === 1 ? 'You win!' : win === 0 ? 'Draw' : 'You lose'}</h2><div class="fo-vs"><div><span class="n">You</span><span class="s ${win === 1 ? 'w' : ''}">${fmtNum(me.s)}</span><span class="fo-hint">${me.a.toFixed(1)}% - ${me.m} misses${me.d ? ' - fainted' : ''}</span></div><div><span class="n">${esc(name)}</span><span class="s ${win === 2 ? 'w' : ''}">${rv ? fmtNum(rv.s) : '-'}</span><span class="fo-hint">${rv ? rv.a.toFixed(1) + '% - ' + rv.m + ' misses' + (rv.d ? ' - fainted' : '') : esc(d.note || '')}</span></div></div><div class="fo-sub">${esc(g.song.name)} (${DIFFS[g.diff]})${d.note && rv ? ' - ' + esc(d.note) : ''}</div><div class="fo-btns">${onl && onl.role === 'host' ? '<button class="fo-b pri" data-a="orematch">Rematch</button><button class="fo-b" data-a="olobby">Party lobby</button>' : '<button class="fo-b pri" data-a="oback" ' + (d.gone ? '' : 'disabled') + '>' + (d.gone ? 'Party lobby' : 'Waiting for the host') + '</button>'}<button class="fo-b ghost" data-a="oleave">Leave</button></div></div>`;
+        return `<div class="fo-res"><h2 style="color:${win === 1 ? '#7dff9e' : win === 0 ? '#ffd23f' : '#ff6a5c'}">${win === 1 ? 'You win!' : win === 0 ? 'Draw' : 'You lose'}</h2><div class="fo-vs"><div><span class="n">You</span><span class="s ${win === 1 ? 'w' : ''}">${fmtNum(me.s)}</span><span class="fo-hint">${me.a.toFixed(1)}% - ${esc(TF('{n} misses', { n: me.m }))}${me.d ? ' - ' + esc(TR('fainted')) : ''}</span></div><div><span class="n">${esc(name)}</span><span class="s ${win === 2 ? 'w' : ''}">${rv ? fmtNum(rv.s) : '-'}</span><span class="fo-hint">${rv ? rv.a.toFixed(1) + '% - ' + rv.m + ' misses' + (rv.d ? ' - fainted' : '') : esc(d.note || '')}</span></div></div><div class="fo-sub">${esc(g.song.name)} (${DIFFS[g.diff]})${d.note && rv ? ' - ' + esc(d.note) : ''}</div><div class="fo-btns">${onl && onl.role === 'host' ? '<button class="fo-b pri" data-a="orematch">Rematch</button><button class="fo-b" data-a="olobby">Party lobby</button>' : '<button class="fo-b pri" data-a="oback" ' + (d.gone ? '' : 'disabled') + '>' + (d.gone ? 'Party lobby' : 'Waiting for the host') + '</button>'}<button class="fo-b ghost" data-a="oleave">Leave</button></div></div>`;
       }
     };
 
@@ -1848,7 +1862,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       if (!el) return;
       const b = bestOf(id, S.diff), ch = fnfChart(s, S.diff);
       el.style.setProperty('--c', w.col);
-      el.innerHTML = `<canvas data-ic="${w.opp}" width="160" height="160" style="width:calc(var(--u)*10);height:calc(var(--u)*10)"></canvas><h3 style="color:${w.col}">${esc(s.name)}</h3><p>${esc(w.oppName)} - ${s.bpm} BPM - ${fmtTime(s.dur)}<br>${ch.ply.length} notes${b ? ` - best ${fmtNum(b.score)} (${b.rank})` : ''}</p>${diffChips()}${S.scr === 'free' ? '<button class="fo-b pri" data-a="fp:' + id + '">Play</button>' : ''}`;
+      el.innerHTML = `<canvas data-ic="${w.opp}" width="160" height="160" style="width:calc(var(--u)*10);height:calc(var(--u)*10)"></canvas><h3 style="color:${w.col}">${esc(s.name)}</h3><p><span translate="no">${esc(w.oppName)}</span> - ${s.bpm} BPM - ${fmtTime(s.dur)}<br>${esc(TF('{n} notes', { n: ch.ply.length }))}${b ? ' - ' + esc(TF('best {s} ({r})', { s: fmtNum(b.score), r: b.rank })) : ''}</p>${diffChips()}${S.scr === 'free' ? '<button class="fo-b pri" data-a="fp:' + id + '">Play</button>' : ''}`;
       el.querySelectorAll('.fo-diffs .fo-b').forEach(e => e.style.setProperty('--c', w.col));
       drawIcons();
       stage = w.stage; oppId = w.opp;
@@ -1974,7 +1988,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     }
     function missNote(g, n, lane) {
       n.st = 2;
-      g.miss++; g.combo = 0; g.score -= 10; g.hp = clamp(g.hp - 5, 0, 100);
+      g.miss++; g.combo = 0; g.score -= 20; g.hp = clamp(g.hp - 5, 0, 100);
       g.pops.push({ t: performance.now(), j: 4, c: 0 });
       audio.sfx('miss');
       audio.voiceMute('p', true); g.muted = 1;
@@ -1989,8 +2003,8 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       let hit = null;
       for (let i = g.pn; i < g.ply.length; i++) {
         const n = g.ply[i];
-        if (n.t > h + .16) break;
-        if (n.lane === lane && !n.st && Math.abs(n.t - h) <= .16) { hit = n; break; }
+        if (n.t > h + HITW) break;
+        if (n.lane === lane && !n.st && Math.abs(n.t - h) <= HITW) { hit = n; break; }
       }
       if (hit) judgeHit(g, hit, (h - hit.t) * 1000, lane);
       else {
@@ -2026,7 +2040,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       for (let i = g.pn; i < g.ply.length; i++) {
         const n = g.ply[i];
         if (n.t > T) break;
-        if (!n.st && T - n.t > .16) missNote(g, n, n.lane);
+        if (!n.st && T - n.t > HITW) missNote(g, n, n.lane);
       }
       while (g.pn < g.ply.length && (g.ply[g.pn].st === 2 || (g.ply[g.pn].st === 1 && !g.ply[g.pn].held))) g.pn++;
       for (let i = g.pn; i < g.ply.length; i++) {
@@ -2132,7 +2146,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       onl = onl || {};
       const wasG = G; G = null; void wasG;
       let r;
-      try { r = await api.net.room({ title: "Friday Night Funkin'", sizes: [2], defaultSize: 2, min: 2, max: 2 }); } catch (e) { r = null; }
+      try { r = await api.net.room({ title: 'Beat Duel', sizes: [2], defaultSize: 2, min: 2, max: 2 }); } catch (e) { r = null; }
       if (!r) { onl = null; show('menu'); menuMusic(); return; }
       onl = { role: r.role, me: r.id, rvName: 'Rival', phase: 'pick' };
       wireNet();
@@ -2270,15 +2284,15 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       drawIcon(c, oppId, px - sz * .38, hbY - 8, sz * (1 + ib), hp > .78 ? 1 : 0, false);
       drawIcon(c, 'zig', px + sz * .38, hbY - 8, sz * (1 + ib), hp < .22 ? 1 : hp > .78 ? 2 : 0, true);
       const acc = accOf(g);
-      txt(c, `Score ${fmtNum(g.score)}   Misses ${g.miss}   Accuracy ${acc.toFixed(1)}% (${rankOf(acc)})`, W / 2, hbY + (por ? 38 : 36), por ? 17 : 20, '#fff', 'center', 5);
+      txt(c, `${TR('Score')} ${fmtNum(g.score)}   ${TR('Misses')} ${g.miss}   ${TR('Accuracy')} ${acc.toFixed(1)}% (${rankOf(acc)})`, W / 2, hbY + (por ? 38 : 36), por ? 17 : 20, '#fff', 'center', 5);
       if (g.online) {
         const rv = g.rv;
         c.fillStyle = 'rgba(8,4,20,.62)'; c.beginPath(); c.roundRect(por ? 10 : W / 2 - 150, por ? 8 : (O.down ? H - 150 : 76), por ? 190 : 300, por ? 66 : 74, 12); c.fill();
         const rx = por ? 20 : W / 2 - 138, ry = por ? 22 : (O.down ? H - 136 : 90);
-        txt(c, onl ? onl.rvName : 'Rival', rx, ry, 17, '#ffb347', 'left', 4);
+        txt(c, onl ? onl.rvName : TR('Rival'), rx, ry, 17, '#ffb347', 'left', 4);
         txt(c, fmtNum(rv.s), rx + (por ? 168 : 276), ry, 22, '#fff', 'right', 5);
         c.fillStyle = OUT; c.fillRect(rx, ry + 14, por ? 168 : 276, 11); c.fillStyle = '#ffb347'; c.fillRect(rx + 2, ry + 16, (por ? 164 : 272) * clamp(rv.h, 0, 100) / 100, 7);
-        txt(c, 'You ' + fmtNum(g.score) + ' ' + (g.score >= rv.s ? '▲' : '▼'), rx, ry + 40, 16, g.score >= rv.s ? '#7dff9e' : '#ff8a8a', 'left', 4);
+        txt(c, TR('You') + ' ' + fmtNum(g.score) + ' ' + (g.score >= rv.s ? '▲' : '▼'), rx, ry + 40, 16, g.score >= rv.s ? '#7dff9e' : '#ff8a8a', 'left', 4);
       }
       const prog = clamp(T / (g.lastT || 1), 0, 1);
       c.fillStyle = 'rgba(0,0,0,.45)'; c.fillRect(W * .3, por ? LAY.stageH - 12 : H - 8, W * .4, 5);
@@ -2292,13 +2306,13 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
         c.save(); c.globalAlpha = al;
         const cx = por ? W / 2 : LAY.pX + LAY.lw * 2, cy = por ? LAY.stageH + 100 : H * .4 - age * 22;
         c.translate(cx, cy); c.scale(sc, sc);
-        txt(c, pj.n + (last.j === 0 ? '!' : ''), 0, 0, por ? 40 : 52, pj.col, 'center', 12);
-        if (last.c >= 5) txt(c, last.c + ' combo', 0, por ? 40 : 52, por ? 26 : 32, '#fff', 'center', 8);
+        txt(c, TR(pj.n) + (last.j === 0 ? '!' : ''), 0, 0, por ? 40 : 52, pj.col, 'center', 12);
+        if (last.c >= 5) txt(c, last.c + ' ' + TR('combo'), 0, por ? 40 : 52, por ? 26 : 32, '#fff', 'center', 8);
         c.restore();
       }
       if (g.state === 'count') {
         const k = Math.floor(-T / g.bs), labels = ['GO!', '1', '2', '3'], ph = ((-T / g.bs) % 1 + 1) % 1, num = k >= 0 && k < 4 ? labels[Math.min(3, k)] : '';
-        if (num) { c.save(); c.globalAlpha = clamp(1 - ph * .6, 0, 1); c.translate(W / 2, H * .38); const s2 = 1 + (1 - ph) * .25; c.scale(s2, s2); txt(c, num, 0, 0, por ? 120 : 150, num === 'GO!' ? '#7dff9e' : '#ffd23f', 'center', 20); c.restore(); }
+        if (num) { c.save(); c.globalAlpha = clamp(1 - ph * .6, 0, 1); c.translate(W / 2, H * .38); const s2 = 1 + (1 - ph) * .25; c.scale(s2, s2); txt(c, num === 'GO!' ? TR(num) : num, 0, 0, por ? 120 : 150, num === 'GO!' ? '#7dff9e' : '#ffd23f', 'center', 20); c.restore(); }
       }
     }
     function drawMenuBG(T) {
@@ -2390,11 +2404,11 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     const up = e => { if (!G) return; const l = G.pids[e.pointerId]; if (l != null) { delete G.pids[e.pointerId]; if (!Object.values(G.pids).includes(l)) release(l); } };
     api.on(canvas, 'pointerup', up);
     api.on(canvas, 'pointercancel', up);
-    const autoPause = () => { if (S.scr === 'play' && G && !onl && G.state !== 'dead' && G.state !== 'end') pauseGame(); };
+    const autoPause = () => { if (G) { G.down.fill(0); G.pids = {}; } if (S.scr === 'play' && G && !onl && G.state !== 'dead' && G.state !== 'end') pauseGame(); };
     api.on(window, 'blur', autoPause);
     api.on(document, 'visibilitychange', () => { if (document.hidden) autoPause(); });
 
-    (window.__gpdbg = window.__gpdbg || {}).fnf = { S: () => S, G: () => G, audio, sv, O, act, press, release, show };
+    (window.__gpdbg = window.__gpdbg || {}).bd = { S: () => S, G: () => G, audio, sv, O, act, press, release, show };
     if (api.net.invite) goOnline(); else show('title');
     return {
       destroy() {
@@ -2406,13 +2420,13 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
   }
 
 
-  Ameplay.covers.fnf = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="fo-sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2d2368"/><stop offset=".55" stop-color="#c2477a"/><stop offset="1" stop-color="#ffae5c"/></linearGradient><radialGradient id="fo-sn" cx=".5" cy=".62" r=".5"><stop offset="0" stop-color="#ffe6a0" stop-opacity=".9"/><stop offset="1" stop-color="#ffaa5a" stop-opacity="0"/></radialGradient></defs><rect width="400" height="300" fill="url(#fo-sk)"/><rect width="400" height="300" fill="url(#fo-sn)"/><g fill="#3a2360"><rect x="10" y="150" width="46" height="100"/><rect x="62" y="124" width="38" height="126"/><rect x="304" y="140" width="44" height="110"/><rect x="354" y="116" width="40" height="134"/></g><g fill="#ffd27a"><rect x="18" y="164" width="7" height="9"/><rect x="34" y="188" width="7" height="9"/><rect x="70" y="140" width="7" height="9"/><rect x="82" y="170" width="7" height="9"/><rect x="314" y="156" width="7" height="9"/><rect x="330" y="186" width="7" height="9"/><rect x="364" y="134" width="7" height="9"/><rect x="376" y="170" width="7" height="9"/></g><rect y="236" width="400" height="64" fill="#2a1a4a"/><rect y="236" width="400" height="5" fill="#8156c4"/><g stroke="#1c1130" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(112 236)"><ellipse cx="0" cy="2" rx="36" ry="7" fill="rgba(0,0,0,.3)" stroke="none"/><rect x="-24" y="-90" width="48" height="52" rx="10" fill="#2dc7b8"/><rect x="-26" y="-98" width="52" height="12" fill="#ff5fa8" stroke="none"/><path d="M-14 -38V-12M14 -38V-12" stroke="#ffd23f" stroke-width="12"/><ellipse cx="-14" cy="-8" rx="15" ry="8" fill="#2b2b4a"/><ellipse cx="14" cy="-8" rx="15" ry="8" fill="#2b2b4a"/><rect x="-44" y="-160" width="88" height="68" rx="16" fill="#ff5fa8"/><circle cx="-24" cy="-122" r="17" fill="#2b2140"/><circle cx="-24" cy="-122" r="10" fill="#ffd23f"/><circle cx="24" cy="-122" r="17" fill="#2b2140"/><circle cx="24" cy="-122" r="10" fill="#ffd23f"/><rect x="-18" y="-152" width="36" height="20" rx="5" fill="#2b2140"/><rect x="-12" y="-104" width="24" height="12" rx="5" fill="#14091f"/><path d="M-24 -70L-58 -112" stroke="#2dc7b8" stroke-width="12"/></g><g transform="translate(290 236)"><ellipse cx="0" cy="2" rx="34" ry="7" fill="rgba(0,0,0,.3)" stroke="none"/><rect x="-22" y="-96" width="44" height="58" rx="8" fill="#ff7b3a"/><path d="M-12 -38V-16M12 -38V-16" stroke="#3f4fae" stroke-width="12"/><ellipse cx="-12" cy="-10" rx="16" ry="8" fill="#f6f6fb"/><ellipse cx="12" cy="-10" rx="16" ry="8" fill="#f6f6fb"/><circle cx="0" cy="-130" r="38" fill="#f6caa4"/><path d="M-39 -134Q-34 -176 0 -174Q34 -176 39 -134Q0 -150 -39 -134Z" fill="#1fb6d4"/><circle cx="0" cy="-176" r="9" fill="#ff7b3a"/><ellipse cx="-14" cy="-124" rx="9" ry="12" fill="#fff"/><ellipse cx="14" cy="-124" rx="9" ry="12" fill="#fff"/><circle cx="-12" cy="-122" r="4.5" fill="#1c1130" stroke="none"/><circle cx="16" cy="-122" r="4.5" fill="#1c1130" stroke="none"/><ellipse cx="0" cy="-104" rx="12" ry="9" fill="#4d0f2c"/><path d="M22 -78L52 -138" stroke="#ff7b3a" stroke-width="12"/><circle cx="53" cy="-146" r="11" fill="#c9cfdd"/></g></g><g transform="translate(200 40)" stroke="#1c1130" stroke-width="4" stroke-linejoin="round"><g transform="translate(-72 0) rotate(-90)"><path d="M0 -22L22 2L9 2L9 22L-9 22L-9 2L-22 2Z" fill="#c64cf2"/></g><g transform="translate(-24 0) rotate(180)"><path d="M0 -22L22 2L9 2L9 22L-9 22L-9 2L-22 2Z" fill="#27c4ff"/></g><g transform="translate(24 0)"><path d="M0 -22L22 2L9 2L9 22L-9 22L-9 2L-22 2Z" fill="#3ee64f"/></g><g transform="translate(72 0) rotate(90)"><path d="M0 -22L22 2L9 2L9 22L-9 22L-9 2L-22 2Z" fill="#ff4d5e"/></g></g></svg>`;
+  Ameplay.covers['beat-duel'] = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="fo-sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2d2368"/><stop offset=".55" stop-color="#c2477a"/><stop offset="1" stop-color="#ffae5c"/></linearGradient><radialGradient id="fo-sn" cx=".5" cy=".62" r=".5"><stop offset="0" stop-color="#ffe6a0" stop-opacity=".9"/><stop offset="1" stop-color="#ffaa5a" stop-opacity="0"/></radialGradient></defs><rect width="400" height="300" fill="url(#fo-sk)"/><rect width="400" height="300" fill="url(#fo-sn)"/><g fill="#3a2360"><rect x="10" y="150" width="46" height="100"/><rect x="62" y="124" width="38" height="126"/><rect x="304" y="140" width="44" height="110"/><rect x="354" y="116" width="40" height="134"/></g><g fill="#ffd27a"><rect x="18" y="164" width="7" height="9"/><rect x="34" y="188" width="7" height="9"/><rect x="70" y="140" width="7" height="9"/><rect x="82" y="170" width="7" height="9"/><rect x="314" y="156" width="7" height="9"/><rect x="330" y="186" width="7" height="9"/><rect x="364" y="134" width="7" height="9"/><rect x="376" y="170" width="7" height="9"/></g><rect y="236" width="400" height="64" fill="#2a1a4a"/><rect y="236" width="400" height="5" fill="#8156c4"/><g stroke="#1c1130" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(112 236)"><ellipse cx="0" cy="2" rx="36" ry="7" fill="rgba(0,0,0,.3)" stroke="none"/><rect x="-24" y="-90" width="48" height="52" rx="10" fill="#2dc7b8"/><rect x="-26" y="-98" width="52" height="12" fill="#ff5fa8" stroke="none"/><path d="M-14 -38V-12M14 -38V-12" stroke="#ffd23f" stroke-width="12"/><ellipse cx="-14" cy="-8" rx="15" ry="8" fill="#2b2b4a"/><ellipse cx="14" cy="-8" rx="15" ry="8" fill="#2b2b4a"/><rect x="-44" y="-160" width="88" height="68" rx="16" fill="#ff5fa8"/><circle cx="-24" cy="-122" r="17" fill="#2b2140"/><circle cx="-24" cy="-122" r="10" fill="#ffd23f"/><circle cx="24" cy="-122" r="17" fill="#2b2140"/><circle cx="24" cy="-122" r="10" fill="#ffd23f"/><rect x="-18" y="-152" width="36" height="20" rx="5" fill="#2b2140"/><rect x="-12" y="-104" width="24" height="12" rx="5" fill="#14091f"/><path d="M-24 -70L-58 -112" stroke="#2dc7b8" stroke-width="12"/></g><g transform="translate(290 236)"><ellipse cx="0" cy="2" rx="34" ry="7" fill="rgba(0,0,0,.3)" stroke="none"/><rect x="-22" y="-96" width="44" height="58" rx="8" fill="#ff7b3a"/><path d="M-12 -38V-16M12 -38V-16" stroke="#3f4fae" stroke-width="12"/><ellipse cx="-12" cy="-10" rx="16" ry="8" fill="#f6f6fb"/><ellipse cx="12" cy="-10" rx="16" ry="8" fill="#f6f6fb"/><circle cx="0" cy="-130" r="38" fill="#f6caa4"/><path d="M-39 -134Q-34 -176 0 -174Q34 -176 39 -134Q0 -150 -39 -134Z" fill="#1fb6d4"/><circle cx="0" cy="-176" r="9" fill="#ff7b3a"/><ellipse cx="-14" cy="-124" rx="9" ry="12" fill="#fff"/><ellipse cx="14" cy="-124" rx="9" ry="12" fill="#fff"/><circle cx="-12" cy="-122" r="4.5" fill="#1c1130" stroke="none"/><circle cx="16" cy="-122" r="4.5" fill="#1c1130" stroke="none"/><ellipse cx="0" cy="-104" rx="12" ry="9" fill="#4d0f2c"/><path d="M22 -78L52 -138" stroke="#ff7b3a" stroke-width="12"/><circle cx="53" cy="-146" r="11" fill="#c9cfdd"/></g></g><g transform="translate(200 40)" stroke="#1c1130" stroke-width="4" stroke-linejoin="round"><g transform="translate(-72 0) rotate(-90)"><path d="M0 -22L22 2L9 2L9 22L-9 22L-9 2L-22 2Z" fill="#c64cf2"/></g><g transform="translate(-24 0) rotate(180)"><path d="M0 -22L22 2L9 2L9 22L-9 22L-9 2L-22 2Z" fill="#27c4ff"/></g><g transform="translate(24 0)"><path d="M0 -22L22 2L9 2L9 22L-9 22L-9 2L-22 2Z" fill="#3ee64f"/></g><g transform="translate(72 0) rotate(90)"><path d="M0 -22L22 2L9 2L9 22L-9 22L-9 2L-22 2Z" fill="#ff4d5e"/></g></g></svg>`;
 
   (window.__gpdbg = window.__gpdbg || {}).lib = { makeAudio, SONGS, fnfChart };
 
   Ameplay.register({
-    id: 'fnf',
-    title: "Friday Night Funkin'",
+    id: 'beat-duel',
+    title: 'Beat Duel',
     category: 'Skill',
     tint: '#ff5fa8',
     blurb: 'Hit the arrows in time to win the rap battle: three weeks of original songs, hold notes, a story mode, freeplay and an online 1v1 battle.',
@@ -2431,7 +2445,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     { n: 'Easy', cs: 3.6, ar: 3.5, od: 2, sk: 4, sl: 8, hp: 3, sm: 1.1, grid: 4, gap: 4, fill: 14, fgap: 8, slMin: 6, spMin: 18, ds: 62, mg: .5, dm: 2.3, col: '#8be34f' },
     { n: 'Normal', cs: 4, ar: 5, od: 4, sk: 4, sl: 6, hp: 4, sm: 1.3, grid: 2, gap: 2, fill: 9, fgap: 4, slMin: 6, spMin: 16, ds: 84, mg: .3, dm: 2, col: '#4fc3f7' },
     { n: 'Hard', cs: 4, ar: 7.5, od: 6.5, sk: 5, sl: 5, hp: 5, sm: 1.5, grid: 1, gap: 2, fill: 6, fgap: 3, slMin: 5, spMin: 14, ds: 108, mg: .19, dm: 1.7, col: '#ffb340' },
-    { n: 'Insane', cs: 4.2, ar: 9, od: 8, sk: 7, sl: 4, hp: 6, sm: 1.7, grid: 1, gap: 1, fill: 4, fgap: 2, slMin: 4, spMin: 14, ds: 128, mg: .11, dm: 1.3, col: '#ff5f8f' }
+    { n: 'Master', cs: 4.2, ar: 9, od: 8, sk: 7, sl: 4, hp: 6, sm: 1.7, grid: 1, gap: 1, fill: 4, fgap: 2, slMin: 4, spMin: 14, ds: 128, mg: .11, dm: 1.3, col: '#ff5f8f' }
   ];
   const OSU_PAL = {
     'paper-planes': 190, 'cherry-soda': 345, 'pixel-pursuit': 130, 'midnight-metro': 250, 'glass-garden': 165, 'turbo-tangerine': 25, 'lanterns-lake': 45, 'zero-gravity': 285
@@ -2596,27 +2610,27 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
 
 
   const OSU_MODS = [
-    { k: 'EZ', n: 'Easy', m: .5, d: 'Bigger circles, slower approach, gentler timing and health.' },
-    { k: 'HR', n: 'Hard Rock', m: 1.06, d: 'Flipped map, smaller circles, faster approach, strict timing.' },
-    { k: 'DT', n: 'Double Time', m: 1.12, d: 'Song and notes play at 1.5x speed.' },
-    { k: 'HD', n: 'Hidden', m: 1.06, d: 'Circles fade out before you hit them.' },
-    { k: 'NF', n: 'No Fail', m: .5, d: 'Health cannot run out.' },
-    { k: 'AT', n: 'Auto', m: 0, d: 'The computer plays. Scores are not saved.' }
+    { k: 'EZ', n: 'Relaxed', m: .6, d: 'Bigger circles, slower approach, gentler timing and health.' },
+    { k: 'HR', n: 'Strict', m: 1.1, d: 'Mirrored map, smaller circles, faster approach, strict timing.' },
+    { k: 'DT', n: 'Speed Up', m: 1.2, d: 'Song and notes play at 1.5x speed.' },
+    { k: 'HD', n: 'Fade Out', m: 1.08, d: 'Circles fade out before you hit them.' },
+    { k: 'NF', n: 'Safety Net', m: .6, d: 'Health cannot run out.' },
+    { k: 'AT', n: 'Autoplay', m: 0, d: 'The computer plays. Scores are not saved.' }
   ];
   const osuGradeCol = g => ({ SS: '#ffd23f', S: '#ffe58a', A: '#7dff9e', B: '#47c8ff', C: '#c58bff', D: '#ff6a5c' }[g] || '#fff');
-  const osuAccOf = n => { const t = n[0] + n[1] + n[2] + n[3]; return t ? 100 * (n[0] * 300 + n[1] * 100 + n[2] * 50) / (t * 300) : 100; };
+  const osuAccOf = n => { const t = n[0] + n[1] + n[2] + n[3]; return t ? 100 * (n[0] + n[1] * .45 + n[2] * .15) / t : 100; };
   function osuGrade(n) {
     const t = n[0] + n[1] + n[2] + n[3];
     if (!t) return 'D';
-    const p3 = n[0] / t, p5 = n[2] / t, nm = n[3];
+    const a = osuAccOf(n), nm = n[3];
     if (n[1] + n[2] + nm === 0) return 'SS';
-    if (p3 > .9 && p5 <= .01 && !nm) return 'S';
-    if ((p3 > .8 && !nm) || p3 > .9) return 'A';
-    if ((p3 > .7 && !nm) || p3 > .8) return 'B';
-    return p3 > .6 ? 'C' : 'D';
+    if (a >= 94 && !nm) return 'S';
+    if (a >= 88 || (a >= 84 && !nm)) return 'A';
+    if (a >= 78) return 'B';
+    return a >= 66 ? 'C' : 'D';
   }
   const osuModMult = m => OSU_MODS.reduce((a, o) => m[o.k] ? a * o.m : a, 1) || 1;
-  const osuModStr = m => OSU_MODS.filter(o => m[o.k]).map(o => o.k).join('') || 'None';
+  const osuModStr = m => OSU_MODS.filter(o => m[o.k]).map(o => o.n).join(', ') || 'None';
   const osuStarsAdj = (s, m) => s * (m.DT ? 1.4 : 1) * (m.HR ? 1.12 : 1) * (m.EZ ? .85 : 1) * (m.HD ? 1.05 : 1);
 
   function osuEff(map, mods) {
@@ -2650,46 +2664,46 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     return { objs, breaks, kiai };
   }
 
-  const OSU_CSS = FNF_CSS.replaceAll('.gm-fnf', '.gm-osu').replaceAll('#ff5fa8', '#ff66ab').replaceAll('255,95,168', '255,102,171') + `
-.gm-osu .fo-wrap{background:#0a0614}
-.gm-osu .fo-wrap.cur{cursor:none}
-.gm-osu .fo-logo{transform:none;font-size:calc(var(--u)*10);text-shadow:0 calc(var(--u)*.5) 0 #7a1f55,0 calc(var(--u)*1) 0 #1c1130,calc(var(--u)*.3) 0 0 #1c1130,calc(var(--u)*-.3) 0 0 #1c1130}
-.gm-osu .fo-logo b{font-size:1em;color:#fff}
-.gm-osu .fo-free{position:absolute;top:calc(var(--u)*6);bottom:calc(var(--u)*7);left:4%;right:4%;width:auto;height:auto;margin:0}
-.gm-osu .por .fo-ui{--u:2.6cqw}
-.gm-osu .por .fo-rows{max-height:70%;margin-top:calc(var(--u)*2)}
-.gm-osu .por .fo-b.row{font-size:calc(var(--u)*1.55);padding:calc(var(--u)*.6) calc(var(--u)*1.2)}
-.gm-osu .por .fo-free{top:calc(var(--u)*5);bottom:calc(var(--u)*7.5)}
-.gm-osu .por .fo-list{flex:.8}
-.gm-osu .por .fo-info{flex:1.2;padding:calc(var(--u)*1);gap:calc(var(--u)*.7)}
-.gm-osu .por .fo-info h3{font-size:calc(var(--u)*2.3)}
-.gm-osu .por .fo-info p{font-size:calc(var(--u)*1.3)}
-.gm-osu .por .os-st div{font-size:calc(var(--u)*1.2);padding:calc(var(--u)*.3)}
-.gm-osu .por .os-st b{font-size:calc(var(--u)*1.7)}
-.gm-osu .por .fo-diffs .fo-b{min-width:0;padding:calc(var(--u)*.5) calc(var(--u)*1);font-size:calc(var(--u)*1.6)}
-.gm-osu .por .os-mods .fo-b{font-size:calc(var(--u)*1.3);padding:calc(var(--u)*.45) calc(var(--u)*1)}
-.gm-osu .por .fo-list .fo-b{padding:calc(var(--u)*.6) calc(var(--u)*1.2);font-size:calc(var(--u)*1.7)}
-.gm-osu .por .fo-list .fo-b small{font-size:calc(var(--u)*1.1)}
-.gm-osu .fo-info{justify-content:flex-start;overflow-y:auto;gap:calc(var(--u)*.9);scrollbar-width:thin}
-.gm-osu .fo-info>*{flex:none}
-.gm-osu .fo-diffs{flex-wrap:wrap}
-.gm-osu .fo-diffs .fo-b{min-width:calc(var(--u)*8)}
-.gm-osu .fo-diffs .fo-b small{display:block;font:800 .62em/1 system-ui,sans-serif;opacity:.85;margin-top:calc(var(--u)*.25)}
-.gm-osu .os-st{display:grid;grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*.6);width:100%}
-.gm-osu .os-st div{background:rgba(255,255,255,.07);border-radius:calc(var(--u)*.8);padding:calc(var(--u)*.5);text-align:center;font:700 calc(var(--u)*1.05)/1.2 system-ui,sans-serif;color:#cfc8ee}
-.gm-osu .os-st b{display:block;font:900 calc(var(--u)*1.7)/1.15 "Trebuchet MS",system-ui,sans-serif;color:#fff}
-.gm-osu .os-mods{display:flex;flex-wrap:wrap;gap:calc(var(--u)*.6);justify-content:center}
-.gm-osu .os-mods .fo-b{min-width:0;padding:calc(var(--u)*.6) calc(var(--u)*1.2);font-size:calc(var(--u)*1.5)}
-.gm-osu .fo-list .fo-b.sel{box-shadow:0 calc(var(--u)*.4) 0 #0f0720,0 0 0 calc(var(--u)*.25) #ff66ab inset}
-.gm-osu .fo-b.act{background:linear-gradient(#ff66ab,#a8336f);color:#fff}
-.gm-osu .fo-pause{top:auto;bottom:calc(var(--u)*1)}
-.gm-osu .os-skip{position:absolute;right:calc(var(--u)*1.2);bottom:calc(var(--u)*5);z-index:3;min-width:0!important;padding:calc(var(--u)*.7) calc(var(--u)*1.8)!important;font-size:calc(var(--u)*1.8)!important}
-.gm-osu .por .os-skip{bottom:calc(var(--u)*6)}
-.gm-osu .os-hist{display:flex;align-items:flex-end;gap:2px;height:calc(var(--u)*4.5);width:calc(var(--u)*40);max-width:100%;border-bottom:2px solid rgba(255,255,255,.35)}
-.gm-osu .os-hist i{flex:1;background:#47c8ff;border-radius:2px 2px 0 0;min-height:1px}
-.gm-osu .os-hist i.m{background:#7dff9e}
-.gm-osu .os-hist i.s{background:#ffb347}
-.gm-osu .fo-res .fo-rank{font-size:calc(var(--u)*11)}
+  const OSU_CSS = FNF_CSS.replaceAll('.gm-beat-duel', '.gm-click-beat').replaceAll('#ff5fa8', '#ff66ab').replaceAll('255,95,168', '255,102,171') + `
+.gm-click-beat .fo-wrap{background:#0a0614}
+.gm-click-beat .fo-wrap.cur{cursor:none}
+.gm-click-beat .fo-logo{transform:none;font-size:calc(var(--u)*10);text-shadow:0 calc(var(--u)*.5) 0 #7a1f55,0 calc(var(--u)*1) 0 #1c1130,calc(var(--u)*.3) 0 0 #1c1130,calc(var(--u)*-.3) 0 0 #1c1130}
+.gm-click-beat .fo-logo b{font-size:1em;color:#fff}
+.gm-click-beat .fo-free{position:absolute;top:calc(var(--u)*6);bottom:calc(var(--u)*7);left:4%;right:4%;width:auto;height:auto;margin:0}
+.gm-click-beat .por .fo-ui{--u:2.6cqw}
+.gm-click-beat .por .fo-rows{max-height:70%;margin-top:calc(var(--u)*2)}
+.gm-click-beat .por .fo-b.row{font-size:calc(var(--u)*1.55);padding:calc(var(--u)*.6) calc(var(--u)*1.2)}
+.gm-click-beat .por .fo-free{top:calc(var(--u)*5);bottom:calc(var(--u)*7.5)}
+.gm-click-beat .por .fo-list{flex:.8}
+.gm-click-beat .por .fo-info{flex:1.2;padding:calc(var(--u)*1);gap:calc(var(--u)*.7)}
+.gm-click-beat .por .fo-info h3{font-size:calc(var(--u)*2.3)}
+.gm-click-beat .por .fo-info p{font-size:calc(var(--u)*1.3)}
+.gm-click-beat .por .os-st div{font-size:calc(var(--u)*1.2);padding:calc(var(--u)*.3)}
+.gm-click-beat .por .os-st b{font-size:calc(var(--u)*1.7)}
+.gm-click-beat .por .fo-diffs .fo-b{min-width:0;padding:calc(var(--u)*.5) calc(var(--u)*1);font-size:calc(var(--u)*1.6)}
+.gm-click-beat .por .os-mods .fo-b{font-size:calc(var(--u)*1.3);padding:calc(var(--u)*.45) calc(var(--u)*1)}
+.gm-click-beat .por .fo-list .fo-b{padding:calc(var(--u)*.6) calc(var(--u)*1.2);font-size:calc(var(--u)*1.7)}
+.gm-click-beat .por .fo-list .fo-b small{font-size:calc(var(--u)*1.1)}
+.gm-click-beat .fo-info{justify-content:flex-start;overflow-y:auto;gap:calc(var(--u)*.9);scrollbar-width:thin}
+.gm-click-beat .fo-info>*{flex:none}
+.gm-click-beat .fo-diffs{flex-wrap:wrap}
+.gm-click-beat .fo-diffs .fo-b{min-width:calc(var(--u)*8)}
+.gm-click-beat .fo-diffs .fo-b small{display:block;font:800 .62em/1 system-ui,sans-serif;opacity:.85;margin-top:calc(var(--u)*.25)}
+.gm-click-beat .os-st{display:grid;grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*.6);width:100%}
+.gm-click-beat .os-st div{background:rgba(255,255,255,.07);border-radius:calc(var(--u)*.8);padding:calc(var(--u)*.5);text-align:center;font:700 calc(var(--u)*1.05)/1.2 system-ui,sans-serif;color:#cfc8ee}
+.gm-click-beat .os-st b{display:block;font:900 calc(var(--u)*1.7)/1.15 "Trebuchet MS",system-ui,sans-serif;color:#fff}
+.gm-click-beat .os-mods{display:flex;flex-wrap:wrap;gap:calc(var(--u)*.6);justify-content:center}
+.gm-click-beat .os-mods .fo-b{min-width:0;padding:calc(var(--u)*.6) calc(var(--u)*1.2);font-size:calc(var(--u)*1.5)}
+.gm-click-beat .fo-list .fo-b.sel{box-shadow:0 calc(var(--u)*.4) 0 #0f0720,0 0 0 calc(var(--u)*.25) #ff66ab inset}
+.gm-click-beat .fo-b.act{background:linear-gradient(#ff66ab,#a8336f);color:#fff}
+.gm-click-beat .fo-pause{top:auto;bottom:calc(var(--u)*1)}
+.gm-click-beat .os-skip{position:absolute;right:calc(var(--u)*1.2);bottom:calc(var(--u)*5);z-index:3;min-width:0!important;padding:calc(var(--u)*.7) calc(var(--u)*1.8)!important;font-size:calc(var(--u)*1.8)!important}
+.gm-click-beat .por .os-skip{bottom:calc(var(--u)*6)}
+.gm-click-beat .os-hist{display:flex;align-items:flex-end;gap:2px;height:calc(var(--u)*4.5);width:calc(var(--u)*40);max-width:100%;border-bottom:2px solid rgba(255,255,255,.35)}
+.gm-click-beat .os-hist i{flex:1;background:#47c8ff;border-radius:2px 2px 0 0;min-height:1px}
+.gm-click-beat .os-hist i.m{background:#7dff9e}
+.gm-click-beat .os-hist i.s{background:#ffb347}
+.gm-click-beat .fo-res .fo-rank{font-size:calc(var(--u)*11)}
 `;
 
 
@@ -2710,7 +2724,8 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     x.lineWidth = R * .13; x.strokeStyle = '#fff'; x.beginPath(); x.arc(0, 0, R * .9, 0, 7); x.stroke();
     return circCache[key] = cv;
   }
-  const OSU_JV = [300, 100, 50];
+  const OSU_JV = [100, 40, 15];
+  const OSU_JN = ['Perfect', 'Good', 'Okay'];
   const OSU_JC = ['#6fd8ff', '#7dff9e', '#ffb347', '#ff4d5e'];
 
   function mountOsu(root, api) {
@@ -2718,6 +2733,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     const W = por ? 720 : 960, H = por ? 1040 : 720, SC = por ? 1.36 : 1.5, FX = (W - 512 * SC) / 2, FY = por ? 270 : 72;
     const wrap = document.createElement('div');
     wrap.className = 'fo-wrap ' + (por ? 'por' : 'lan');
+    wrap.setAttribute('data-i18n', '');
     wrap.style.width = `min(100%,${W}px,calc((100dvh - var(--goff,250px))*${(W / H).toFixed(4)}))`;
     wrap.style.aspectRatio = W + ' / ' + H;
     root.append(wrap);
@@ -2768,10 +2784,10 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     const rowSt = (label, key, val) => `<div class="fo-b row" data-a="o:${key}:1" data-l="o:${key}:-1" data-r="o:${key}:1"><span>${label}</span><span class="v"><i data-a="o:${key}:-1">&#9664;</i><b>${val}</b><i data-a="o:${key}:1">&#9654;</i></span></div>`;
     const onoff = v => v ? 'On' : 'Off';
     const bestKey = (id, d) => id + ':' + d;
-    const modChips = () => `<div class="os-mods">${OSU_MODS.map(m => `<button class="fo-b sm ${sv.mods[m.k] ? 'act' : ''}" data-a="mod:${m.k}" title="${esc(m.d)}">${m.k}</button>`).join('')}</div>`;
+    const modChips = () => `<div class="os-mods">${OSU_MODS.map(m => `<button class="fo-b sm ${sv.mods[m.k] ? 'act' : ''}" data-a="mod:${m.k}" title="${esc(m.d)}">${m.n}</button>`).join('')}</div>`;
 
     const R = {
-      menu: () => `<h1 class="fo-logo"><b>osu!</b></h1><div class="fo-sub">Click the circles to the beat.<br>Original songs and beatmaps.</div><div class="fo-col" style="min-width:calc(var(--u)*${por ? 28 : 24})"><button class="fo-b pri" data-a="play">Play</button><button class="fo-b" data-a="opts">Options</button></div><div class="fo-hint">${por ? 'Tap the circles. Drag along sliders. Spin on spinners.' : 'Move the mouse, click or press Z / X. Esc pauses.'}</div>`,
+      menu: () => `<h1 class="fo-logo" translate="no">CLICK<b>BEAT</b></h1><div class="fo-sub">Click the circles to the beat.<br>Original songs and maps.</div><div class="fo-col" style="min-width:calc(var(--u)*${por ? 28 : 24})"><button class="fo-b pri" data-a="play">Play</button><button class="fo-b" data-a="opts">Options</button></div><div class="fo-hint">${por ? 'Tap the circles. Drag along sliders. Spin on spinners.' : 'Move the mouse, click or press Z / X. Esc pauses.'}</div>`,
       sel: () => {
         let h = '<div class="fo-head">Song select</div><div class="fo-free"><div class="fo-list">';
         OSU_SONGS.forEach(id => { const s = SONGS[id], a = osuMap(id, 0).stars, b = osuMap(id, 3).stars, bs = [3, 2, 1, 0].map(d => sv.best[bestKey(id, d)]).find(Boolean); h += `<button class="fo-b ${id === curId() ? 'sel' : ''}" data-a="sp:${id}" data-f="ss:${id}" data-l="dd:-1" data-r="dd:1"><span>${esc(s.name)}</span><small>${a.toFixed(1)}-${b.toFixed(1)} &#9733;${bs ? ' ' + bs.grade : ''}</small></button>`; });
@@ -2780,9 +2796,9 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       opts: () => `<div class="fo-head">Options</div><div class="fo-rows">${rowSt('Volume', 'vol', Math.round(SHARED.vol * 100) + '%')}${rowSt('Audio offset', 'cal', (SHARED.cal > 0 ? '+' : '') + SHARED.cal + ' ms')}<div class="fo-b row" data-a="cal"><span>Calibrate offset</span><span class="v"><b>Tap to the beat</b></span></div>${rowSt('Cursor size', 'cur', O.cur.toFixed(1) + 'x')}${rowSt('Cursor trail', 'trail', onoff(O.trail))}${rowSt('Background effects', 'fx', onoff(O.fx))}${rowSt('Hit sounds', 'hs', onoff(O.hs))}<div class="fo-b row" data-a="reset"><span>Reset records</span><span class="v"><b>${S.d.rs ? 'Press again' : ''}</b></span></div></div><div class="fo-foot"><button class="fo-b ghost" data-a="back">Back</button></div>`,
       cal: () => '<div id="calhost"></div>',
       play: () => '<button class="fo-b ghost fo-pause" data-a="pause">II</button><button class="fo-b pri os-skip" data-a="skip" hidden>Skip</button>',
-      pause: () => `<div class="fo-res"><h2>Paused</h2><div class="fo-col"><button class="fo-b pri" data-a="resume">Resume</button><button class="fo-b" data-a="retry">Retry</button><button class="fo-b ghost" data-a="quit">Quit to songs</button></div><div class="fo-hint">Offset ${SHARED.cal > 0 ? '+' : ''}${SHARED.cal} ms (change it in Options)</div></div>`,
+      pause: () => `<div class="fo-res"><h2>Paused</h2><div class="fo-col"><button class="fo-b pri" data-a="resume">Resume</button><button class="fo-b" data-a="retry">Retry</button><button class="fo-b ghost" data-a="quit">Quit to songs</button></div><div class="fo-hint">${esc(TF('Offset {n} ms (change it in Options)', { n: (SHARED.cal > 0 ? '+' : '') + SHARED.cal }))}</div></div>`,
       resume: d => `<div class="fo-cnt">${d.n}</div>`,
-      fail: d => `<div class="fo-res"><h2 style="color:#ff6a5c">You failed</h2><div class="fo-sub">${esc(d.g.song.name)} (${OSU_DIFFS[d.g.di].n}) at ${Math.round(d.pct)}%. Try No Fail or an easier difficulty.</div><div class="fo-btns"><button class="fo-b pri" data-a="retry">Retry</button><button class="fo-b ghost" data-a="quit">Songs</button></div></div>`,
+      fail: d => `<div class="fo-res"><h2 style="color:#ff6a5c">You failed</h2><div class="fo-sub">${esc(TF('{s} ({d}) at {n}%. Try Safety Net or an easier difficulty.', { s: d.g.song.name, d: TR(OSU_DIFFS[d.g.di].n), n: Math.round(d.pct) }))}</div><div class="fo-btns"><button class="fo-b pri" data-a="retry">Retry</button><button class="fo-b ghost" data-a="quit">Songs</button></div></div>`,
       res: d => {
         const g = d.g, n = g.n, acc = osuAccOf(n), gr = d.grade, b = sv.best[bestKey(g.id, g.di)];
         const E = g.E, bk = 21, hist = new Array(bk).fill(0);
@@ -2790,7 +2806,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
         const mx = Math.max(1, ...hist);
         const avg = g.errs.length ? g.errs.reduce((a, v) => a + v, 0) / g.errs.length : 0;
         const ur = g.errs.length ? Math.sqrt(g.errs.reduce((a, v) => a + (v - avg) * (v - avg), 0) / g.errs.length) * 10 : 0;
-        return `<div class="fo-res"><h2>${esc(g.song.name)} <small style="opacity:.6;font-size:.55em">${OSU_DIFFS[g.di].n}${osuModStr(g.mods) !== 'None' ? ' +' + osuModStr(g.mods) : ''}</small></h2><div class="fo-rank" style="color:${osuGradeCol(gr)}">${gr}</div><div class="fo-grid"><span>Score</span><b>${fmtNum(g.score)}</b><span>Accuracy</span><b>${acc.toFixed(2)}%</b><span>300 / 100</span><b><i style="color:#6fd8ff;font-style:normal">${n[0]}</i> / <i style="color:#7dff9e;font-style:normal">${n[1]}</i></b><span>50 / Miss</span><b><i style="color:#ffb347;font-style:normal">${n[2]}</i> / <i style="color:#ff4d5e;font-style:normal">${n[3]}</i></b><span>Max combo</span><b>${g.maxCombo}x / ${g.totCombo}x</b><span>Avg error / UR</span><b>${avg >= 0 ? '+' : ''}${avg.toFixed(1)} ms / ${ur.toFixed(0)}</b>${d.rec ? '<span>Record</span><b style="color:#ffd23f">NEW BEST</b>' : b ? `<span>Best</span><b>${fmtNum(b.score)} ${b.grade}</b>` : ''}</div><div class="os-hist">${hist.map((v, i) => `<i class="${Math.abs(i - 10) * E.w5 * 100 > E.w1 * 1000 ? 's' : Math.abs(i - 10) * E.w5 * 100 > E.w3 * 1000 ? 'm' : ''}" style="height:${Math.round(100 * v / mx)}%"></i>`).join('')}</div><div class="fo-hint">Hit errors: early on the left, late on the right</div><div class="fo-btns"><button class="fo-b pri" data-a="retry">Retry</button><button class="fo-b ghost" data-a="quit">Songs</button></div></div>`;
+        return `<div class="fo-res"><h2>${esc(g.song.name)} <small style="opacity:.6;font-size:.55em">${OSU_DIFFS[g.di].n}${osuModStr(g.mods) !== 'None' ? ' + ' + osuModStr(g.mods) : ''}</small></h2><div class="fo-rank" style="color:${osuGradeCol(gr)}">${gr}</div><div class="fo-grid"><span>Score</span><b>${fmtNum(g.score)}</b><span>Accuracy</span><b>${acc.toFixed(2)}%</b><span>Perfect / Good</span><b><i style="color:#6fd8ff;font-style:normal">${n[0]}</i> / <i style="color:#7dff9e;font-style:normal">${n[1]}</i></b><span>Okay / Miss</span><b><i style="color:#ffb347;font-style:normal">${n[2]}</i> / <i style="color:#ff4d5e;font-style:normal">${n[3]}</i></b><span>Max combo</span><b>${g.maxCombo}x / ${g.totCombo}x</b><span>Average error / spread</span><b>${avg >= 0 ? '+' : ''}${avg.toFixed(1)} ms / ${ur.toFixed(0)}</b>${d.rec ? '<span>Record</span><b style="color:#ffd23f">NEW BEST</b>' : b ? `<span>Best</span><b>${fmtNum(b.score)} ${b.grade}</b>` : ''}</div><div class="os-hist">${hist.map((v, i) => `<i class="${Math.abs(i - 10) * E.w5 * 100 > E.w1 * 1000 ? 's' : Math.abs(i - 10) * E.w5 * 100 > E.w3 * 1000 ? 'm' : ''}" style="height:${Math.round(100 * v / mx)}%"></i>`).join('')}</div><div class="fo-hint">Hit errors: early on the left, late on the right</div><div class="fo-btns"><button class="fo-b pri" data-a="retry">Retry</button><button class="fo-b ghost" data-a="quit">Songs</button></div></div>`;
       }
     };
 
@@ -2828,7 +2844,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       const st = osuStarsAdj(m.stars, sv.mods), sl = m.objs.filter(o => o.type === 's').length, sp = m.objs.filter(o => o.type === 'p').length;
       const pr = E.pre / E.rate, arD = pr > 1.2 ? (1.8 - pr) / .12 : 5 + (1.2 - pr) / .15, odD = (80 - E.w3 * 1000 / E.rate) / 6;
       el.style.setProperty('--c', OSU_DIFFS[sv.di].col);
-      el.innerHTML = `<h3 style="color:${OSU_DIFFS[sv.di].col}">${esc(s.name)}</h3><p>${Math.round(s.bpm * E.rate)} BPM - ${fmtTime((s.dur) / E.rate)} - ${m.nObj} objects</p>${diffChips()}<div class="os-st"><div><b>${E.cs.toFixed(1)}</b>CS</div><div><b>${arD.toFixed(1)}</b>AR</div><div><b>${odD.toFixed(1)}</b>OD</div><div><b>${E.hp.toFixed(1)}</b>HP</div><div><b>${st.toFixed(2)}</b>Stars</div><div><b>${m.nObj - sl - sp}</b>Circles</div><div><b>${sl}</b>Sliders</div><div><b>${sp}</b>Spinners</div></div>${modChips()}<div class="fo-hint">${b ? `Best ${fmtNum(b.score)} - ${b.grade} - ${b.acc.toFixed(2)}%` : 'No record yet'} - score x${osuModMult(sv.mods).toFixed(2)}</div>`;
+      el.innerHTML = `<h3 style="color:${OSU_DIFFS[sv.di].col}">${esc(s.name)}</h3><p>${Math.round(s.bpm * E.rate)} BPM - ${fmtTime((s.dur) / E.rate)} - ${esc(TF('{n} objects', { n: m.nObj }))}</p>${diffChips()}<div class="os-st"><div><b>${E.cs.toFixed(1)}</b>Size</div><div><b>${arD.toFixed(1)}</b>Approach</div><div><b>${odD.toFixed(1)}</b>Timing</div><div><b>${E.hp.toFixed(1)}</b>Drain</div><div><b>${st.toFixed(2)}</b>Stars</div><div><b>${m.nObj - sl - sp}</b>Circles</div><div><b>${sl}</b>Sliders</div><div><b>${sp}</b>Spinners</div></div>${modChips()}<div class="fo-hint">${b ? esc(TF('Best {s} - {g} - {a}%', { s: fmtNum(b.score), g: b.grade, a: b.acc.toFixed(2) })) : esc(TR('No record yet'))} - ${esc(TF('score x{n}', { n: osuModMult(sv.mods).toFixed(2) }))}</div>`;
       el.querySelectorAll('.fo-diffs .fo-b').forEach(e => e.style.setProperty('--c', OSU_DIFFS[+e.dataset.a.split(':')[1]].col));
     }
     const refreshList = () => { if (S.scr !== 'sel') return; ui.querySelectorAll('.fo-list .fo-b').forEach(e => e.classList.toggle('sel', e.dataset.a === 'sp:' + curId())); };
@@ -2875,7 +2891,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     function begin(id, di) {
       const map = osuMap(id, di), mods = Object.assign({}, sv.mods), E = osuEff(map, mods), pr = osuPrep(map, E);
       calS = SHARED.cal / 1000;
-      const dm = Math.max(1, Math.round((map.hp + map.od + map.cs + clamp(map.nObj / Math.max(10, map.play) * 8, 0, 16)) / 38 * 5));
+      const dm = 1 + di * .15;
       let tc = 0;
       pr.objs.forEach(o => { tc += o.type === 's' ? 1 + o.ev.length + 1 : o.type === 'p' ? 0 : 1; });
       G = {
@@ -2926,7 +2942,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     const comboUp = g => { g.combo++; if (g.combo > g.maxCombo) g.maxCombo = g.combo; g.cpop = performance.now(); };
     const comboBreak = g => { if (g.combo >= 20) audio.sfx('sbreak'); g.combo = 0; };
     const popAt = (g, x, y, j) => g.pops.push({ x, y, j, t: performance.now() });
-    const addJ = (g, base) => { g.score += base + Math.round(base * Math.max(0, g.combo - 1) * g.dm * g.mm / 25); };
+    const addJ = (g, base) => { g.score += Math.round(base * (1 + Math.min(g.combo, 300) / 40) * g.dm * g.mm); };
     function judge(g, o, j, x, y) {
       g.n[j]++;
       if (j < 3) { addJ(g, OSU_JV[j]); gainHp(g, [.045, .022, .006][j]); } else gainHp(g, -(.06 + .012 * g.E.hp));
@@ -2940,7 +2956,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       g.bursts.push({ x: o.x, y: o.y, ci: o.ci, t: performance.now(), k: 0 });
       comboUp(g);
       if (o.type === 'c') judge(g, o, j, o.x, o.y);
-      else { o.got++; g.score += 30; gainHp(g, .012); }
+      else { o.got++; g.score += 12; gainHp(g, .012); }
     }
     function missHead(g, o) {
       o.hd = 1;
@@ -2996,8 +3012,8 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
               e.d = 1;
               if (o.trk) {
                 e.h = 1; o.got++; comboUp(g);
-                if (e.k === 't') { g.score += 10; gainHp(g, .01); if (O.hs) audio.sfx('tickS'); }
-                else { g.score += 30; gainHp(g, .015); if (e.k === 'r' && O.hs) audio.sfx('rev'); }
+                if (e.k === 't') { g.score += 4; gainHp(g, .01); if (O.hs) audio.sfx('tickS'); }
+                else { g.score += 12; gainHp(g, .015); if (e.k === 'r' && O.hs) audio.sfx('rev'); }
               } else { comboBreak(g); gainHp(g, -.02); if (e.k !== 'e') g.bursts.push({ x: e.x, y: e.y, ci: o.ci, t: performance.now(), k: 2 }); }
             }
             if (T >= o.et) {
@@ -3013,7 +3029,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
               if (o.la != null) { let d = a - o.la; if (d > Math.PI) d -= 6.2832; else if (d < -Math.PI) d += 6.2832; o.rot += Math.min(.4, Math.abs(d) / 6.2832); }
               o.la = a;
             }
-            while (o.rot >= o.fl + 1) { o.fl++; g.score += o.fl <= o.need ? 100 : 1000; gainHp(g, .008); audio.sfx('spin', o.fl % 8); }
+            while (o.rot >= o.fl + 1) { o.fl++; g.score += o.fl <= o.need ? 40 : 250; gainHp(g, .008); audio.sfx('spin', o.fl % 8); }
             if (!o.clr && o.rot >= o.need) { o.clr = 1; audio.sfx('spinOk'); }
           } else {
             const fr = o.rot / o.need, j = fr >= 1 ? 0 : fr >= .9 ? 1 : fr >= .75 ? 2 : 3;
@@ -3130,7 +3146,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       c.restore();
       if (live) {
         const rps = o.fl / Math.max(.4, (T - o.t) / g.E.rate);
-        txt(c, o.clr ? 'CLEAR!' : 'SPIN!', cx, cy + base * 1.18, por ? 40 : 46, o.clr ? '#7dff9e' : '#fff', 'center', 8);
+        txt(c, TR(o.clr ? 'CLEAR!' : 'SPIN!'), cx, cy + base * 1.18, por ? 40 : 46, o.clr ? '#7dff9e' : '#fff', 'center', 8);
         txt(c, Math.round(clamp(p, 0, 9.99) * 100) + '%   ' + (rps * 60 | 0) + ' rpm', cx, cy + base * 1.18 + (por ? 40 : 44), por ? 24 : 28, '#e7e0ff', 'center', 6);
       }
     }
@@ -3220,27 +3236,32 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       g.pops.forEach(p => {
         const age = (nowP - p.t) / 650, x = px(p.x), y = py(p.y) - R * 1.1 - age * 18;
         c.save(); c.globalAlpha = clamp(1.7 - age * 1.7, 0, 1) * (p.j === 0 ? .8 : 1);
-        txt(c, p.j === 3 ? 'X' : String(OSU_JV[p.j]), x, y, (por ? 28 : 30) * (p.j === 0 ? .8 : 1.1) * (1 + Math.max(0, .3 - age * 2)), OSU_JC[p.j], 'center', 7);
+        txt(c, p.j === 3 ? 'X' : TR(OSU_JN[p.j]), x, y, (por ? 28 : 30) * (p.j === 0 ? .8 : 1.1) * (1 + Math.max(0, .3 - age * 2)), OSU_JC[p.j], 'center', 7);
         c.restore();
       });
       c.restore();
       if (g.inBreak && T > 0) {
         const b = g.breaks.find(r => T >= r[0] && T <= r[1]);
-        if (b) { c.save(); c.globalAlpha = .9; txt(c, 'Break', W / 2, FY + 384 * SC * .45, por ? 60 : 70, '#fff', 'center', 12); txt(c, Math.ceil(b[1] - T + 1.2) + 's', W / 2, FY + 384 * SC * .45 + (por ? 54 : 62), por ? 30 : 34, '#e7e0ff', 'center', 8); c.restore(); }
+        if (b) { c.save(); c.globalAlpha = .9; txt(c, TR('Break'), W / 2, FY + 384 * SC * .45, por ? 60 : 70, '#fff', 'center', 12); txt(c, Math.ceil(b[1] - T + 1.2) + 's', W / 2, FY + 384 * SC * .45 + (por ? 54 : 62), por ? 30 : 34, '#e7e0ff', 'center', 8); c.restore(); }
       }
       cursor(g);
       hud(g, T);
       if (g.state === 'dead') { c.fillStyle = `rgba(255,40,70,${.28 * Math.max(0, 1 - (performance.now() - g.deadAt) / 1400)})`; c.fillRect(0, 0, W, H); }
     }
+    const TRL = Array.from({ length: 40 }, () => ({ x: 0, y: 0, t: -1e9 }));
+    let trH = 0;
     function cursor(g) {
       const now = performance.now();
       if (inp.touch && !inp.np && now - inp.seen > 350) return;
       const x = px(inp.x), y = py(inp.y), r = 15 * O.cur * (W / 960) * (down() ? 1.12 : 1);
       if (O.trail) {
-        g.trail.push({ x, y, t: now });
-        while (g.trail.length && now - g.trail[0].t > 190) g.trail.shift();
-        c.save(); c.lineCap = 'round';
-        for (let i = 1; i < g.trail.length; i++) { const a = g.trail[i], b = g.trail[i - 1], f = 1 - (now - a.t) / 190; c.globalAlpha = f * .55; c.strokeStyle = '#ff9fd0'; c.lineWidth = r * 1.5 * f; c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(a.x, a.y); c.stroke(); }
+        const q = TRL[trH]; q.x = x; q.y = y; q.t = now; trH = (trH + 1) % TRL.length;
+        c.save(); c.lineCap = 'round'; c.strokeStyle = '#ff9fd0';
+        for (let k = 1; k < TRL.length; k++) {
+          const b = TRL[(trH + k - 1) % TRL.length], a = TRL[(trH + k) % TRL.length];
+          if (now - b.t > 190) continue;
+          const f = 1 - (now - a.t) / 190; c.globalAlpha = f * .55; c.lineWidth = r * 1.5 * f; c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(a.x, a.y); c.stroke();
+        }
         c.restore();
       }
       c.save();
@@ -3265,9 +3286,9 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       txt(c, String(Math.round(g.score)).padStart(8, '0'), W - 28, por ? 106 : 38, por ? 70 : 52, '#fff', 'right', 8);
       txt(c, acc.toFixed(2) + '%', W - 28, por ? 164 : 90, por ? 36 : 30, '#e7e0ff', 'right', 6);
       txt(c, gr, W - 28 - (por ? 200 : 150), por ? 164 : 90, por ? 36 : 30, osuGradeCol(gr), 'right', 6);
-      const ms = OSU_MODS.filter(m => g.mods[m.k]).map(m => m.k).join(' ');
+      const ms = OSU_MODS.filter(m => g.mods[m.k]).map(m => TR(m.n)).join(' · ');
       if (ms) txt(c, ms, W - 28, por ? 210 : 128, por ? 26 : 22, '#ffd23f', 'right', 5);
-      if (g.auto) txt(c, 'AUTOPLAY', W / 2, por ? 70 : 24, 24, '#6fd8ff', 'center', 6);
+      if (g.auto) txt(c, TR('AUTOPLAY'), W / 2, por ? 70 : 24, 24, '#6fd8ff', 'center', 6);
       const cp = Math.max(0, 1 - (performance.now() - g.cpop) / 160);
       if (g.combo > 0) txt(c, g.combo + 'x', 30, H - (por ? 44 : 40), (por ? 64 : 60) * (1 + cp * .22), '#fff', 'left', 9);
       const ew = por ? 300 : 340, ex = W / 2, ey = H - (por ? 54 : 36), sc2 = ew / 2 / E.w5;
@@ -3352,7 +3373,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
     api.on(window, 'blur', autoPause);
     api.on(document, 'visibilitychange', () => { if (document.hidden) autoPause(); });
 
-    (window.__gpdbg = window.__gpdbg || {}).osu = { S: () => S, G: () => G, audio, sv, O, act, inp, click, show, W, H, SC, FX, FY, songT };
+    (window.__gpdbg = window.__gpdbg || {}).cb = { S: () => S, G: () => G, audio, sv, O, act, inp, click, show, W, H, SC, FX, FY, songT };
     show('menu');
     return {
       destroy() {
@@ -3363,17 +3384,17 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
   }
 
 
-  Ameplay.covers.osu = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="os-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a0f4e"/><stop offset=".6" stop-color="#8a2a82"/><stop offset="1" stop-color="#ff66ab"/></linearGradient><radialGradient id="os-c1" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#ffc2e0"/><stop offset=".6" stop-color="#ff66ab"/><stop offset="1" stop-color="#b3306f"/></radialGradient><radialGradient id="os-c2" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#c8f2ff"/><stop offset=".6" stop-color="#47c8ff"/><stop offset="1" stop-color="#1f7fb0"/></radialGradient><radialGradient id="os-c3" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#d8ffd0"/><stop offset=".6" stop-color="#7dff9e"/><stop offset="1" stop-color="#2f9a52"/></radialGradient></defs><rect width="400" height="300" fill="url(#os-bg)"/><g fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="3"><path d="M30 60l22 40H8z"/><circle cx="350" cy="50" r="26"/><rect x="330" y="200" width="46" height="46" transform="rotate(20 353 223)"/><circle cx="60" cy="240" r="20"/><path d="M200 20l16 28h-32z"/></g><path d="M200 210C250 150 300 250 340 170" fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-opacity=".95"/><path d="M200 210C250 150 300 250 340 170" fill="none" stroke="#1a0b36" stroke-width="40" stroke-linecap="round"/><path d="M200 210C250 150 300 250 340 170" fill="none" stroke="#47c8ff" stroke-opacity=".3" stroke-width="40" stroke-linecap="round"/><circle cx="272" cy="198" r="23" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="3"/><circle cx="272" cy="198" r="19" fill="url(#os-c2)" stroke="#fff" stroke-width="4"/><circle cx="200" cy="210" r="23" fill="url(#os-c2)" stroke="#fff" stroke-width="5"/><text x="200" y="219" text-anchor="middle" font-family="Trebuchet MS,Arial" font-weight="900" font-size="26" fill="#fff" stroke="#1c1130" stroke-width="2" paint-order="stroke">2</text><circle cx="110" cy="130" r="64" fill="none" stroke="#fff" stroke-width="5" stroke-opacity=".75"/><circle cx="110" cy="130" r="40" fill="url(#os-c1)" stroke="#fff" stroke-width="7"/><text x="110" y="145" text-anchor="middle" font-family="Trebuchet MS,Arial" font-weight="900" font-size="46" fill="#fff" stroke="#1c1130" stroke-width="3" paint-order="stroke">1</text><circle cx="318" cy="96" r="30" fill="url(#os-c3)" stroke="#fff" stroke-width="5"/><text x="318" y="108" text-anchor="middle" font-family="Trebuchet MS,Arial" font-weight="900" font-size="32" fill="#fff" stroke="#1c1130" stroke-width="2" paint-order="stroke">3</text><circle cx="318" cy="96" r="48" fill="none" stroke="#7dff9e" stroke-width="4" stroke-opacity=".8"/><g transform="translate(150 178)"><circle r="14" fill="#ff66ab" fill-opacity=".5" stroke="#fff" stroke-width="3"/><circle r="3" fill="#fff"/></g></svg>`;
+  Ameplay.covers['click-beat'] = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="os-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a0f4e"/><stop offset=".6" stop-color="#8a2a82"/><stop offset="1" stop-color="#ff66ab"/></linearGradient><radialGradient id="os-c1" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#ffc2e0"/><stop offset=".6" stop-color="#ff66ab"/><stop offset="1" stop-color="#b3306f"/></radialGradient><radialGradient id="os-c2" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#c8f2ff"/><stop offset=".6" stop-color="#47c8ff"/><stop offset="1" stop-color="#1f7fb0"/></radialGradient><radialGradient id="os-c3" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#d8ffd0"/><stop offset=".6" stop-color="#7dff9e"/><stop offset="1" stop-color="#2f9a52"/></radialGradient></defs><rect width="400" height="300" fill="url(#os-bg)"/><g fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="3"><path d="M30 60l22 40H8z"/><circle cx="350" cy="50" r="26"/><rect x="330" y="200" width="46" height="46" transform="rotate(20 353 223)"/><circle cx="60" cy="240" r="20"/><path d="M200 20l16 28h-32z"/></g><path d="M200 210C250 150 300 250 340 170" fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-opacity=".95"/><path d="M200 210C250 150 300 250 340 170" fill="none" stroke="#1a0b36" stroke-width="40" stroke-linecap="round"/><path d="M200 210C250 150 300 250 340 170" fill="none" stroke="#47c8ff" stroke-opacity=".3" stroke-width="40" stroke-linecap="round"/><circle cx="272" cy="198" r="23" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="3"/><circle cx="272" cy="198" r="19" fill="url(#os-c2)" stroke="#fff" stroke-width="4"/><circle cx="200" cy="210" r="23" fill="url(#os-c2)" stroke="#fff" stroke-width="5"/><text x="200" y="219" text-anchor="middle" font-family="Trebuchet MS,Arial" font-weight="900" font-size="26" fill="#fff" stroke="#1c1130" stroke-width="2" paint-order="stroke">2</text><circle cx="110" cy="130" r="64" fill="none" stroke="#fff" stroke-width="5" stroke-opacity=".75"/><circle cx="110" cy="130" r="40" fill="url(#os-c1)" stroke="#fff" stroke-width="7"/><text x="110" y="145" text-anchor="middle" font-family="Trebuchet MS,Arial" font-weight="900" font-size="46" fill="#fff" stroke="#1c1130" stroke-width="3" paint-order="stroke">1</text><circle cx="318" cy="96" r="30" fill="url(#os-c3)" stroke="#fff" stroke-width="5"/><text x="318" y="108" text-anchor="middle" font-family="Trebuchet MS,Arial" font-weight="900" font-size="32" fill="#fff" stroke="#1c1130" stroke-width="2" paint-order="stroke">3</text><circle cx="318" cy="96" r="48" fill="none" stroke="#7dff9e" stroke-width="4" stroke-opacity=".8"/><g transform="translate(150 178)"><circle r="14" fill="#ff66ab" fill-opacity=".5" stroke="#fff" stroke-width="3"/><circle r="3" fill="#fff"/></g></svg>`;
 
   (window.__gpdbg = window.__gpdbg || {}).olib = { osuMap, osuEff, osuPrep, OSU_SONGS };
 
   Ameplay.register({
-    id: 'osu',
-    title: 'osu!',
+    id: 'click-beat',
+    title: 'Click Beat',
     category: 'Skill',
     tint: '#ff66ab',
-    blurb: 'Click the circles to the beat: sliders, spinners, eight original beatmaps in four difficulties, mods and a hit-error meter.',
-    help: 'Move the mouse and click the circles with <kbd>Z</kbd> <kbd>X</kbd> or the mouse buttons · hold and follow sliders · spin the spinners · tap and drag on a phone · <kbd>Space</kbd> skip · <kbd>Esc</kbd> pause · mods EZ HR DT HD NF Auto on song select · calibrate the audio offset in Options',
+    blurb: 'Click the circles to the beat: sliders, spinners, eight original songs with maps in four difficulties, modifiers and a timing meter.',
+    help: 'Move the mouse and click the circles with <kbd>Z</kbd> <kbd>X</kbd> or the mouse buttons · hold and follow sliders · spin the spinners · tap and drag on a phone · <kbd>Space</kbd> skip · <kbd>Esc</kbd> pause · modifiers on song select (keys 1 to 6) · calibrate the audio offset in Options',
     better: 'high',
     width: 980,
     ownPause: true,

@@ -608,5 +608,20 @@
 "spike-run",
 "Spike Run",
 "Skill,Action"
+],
+[
+"beat-duel",
+"Beat Duel",
+"Skill,Arcade"
+],
+[
+"click-beat",
+"Click Beat",
+"Skill"
+],
+[
+"ante-up",
+"Ante Up",
+"Strategy,Board"
 ]
 ]
