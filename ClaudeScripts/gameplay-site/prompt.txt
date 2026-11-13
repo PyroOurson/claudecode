@@ -106,13 +106,13 @@ A private copy of the platform runs on this computer: a local Supabase stack in 
 
 ### 3.1 Repository rules (from `CLAUDE.md`; they come first)
 
-- Anything created from scratch goes in `ClaudeScripts/`, one folder per project. This project is `ClaudeScripts/gameplay-site/`.
-- `NaoiseGabi/` holds the owners' other projects. Do not touch it.
-- Everything the owner runs is Python that works with Python 3.9 on macOS (`/usr/bin/python3`) and needs only packages from `NaoiseGabi/requirements.txt`.
-- No comments inside code.
-- `index.html` stays at the repository root (GitHub Pages).
-- After adding, removing or renaming files, regenerate `files.txt` with `git ls-files > files.txt`.
-- No spaces or shell symbols such as `&` in file or folder names.
+- **Anything created from scratch goes in `ClaudeScripts/`, one folder per project. This project is `ClaudeScripts/gameplay-site/`.**
+- **`NaoiseGabi/` holds the owners' other projects. Do not touch it.**
+- **Everything the owner runs is Python that works with Python 3.9 on macOS (`/usr/bin/python3`) and needs only packages from `NaoiseGabi/requirements.txt`.**
+- **No comments inside code.**
+- **`index.html` stays at the repository root (GitHub Pages).**
+- **After adding, removing or renaming files, regenerate `files.txt` with `git ls-files > files.txt`.**
+- **No spaces or shell symbols such as `&` in file or folder names.**
 
 ### 3.2 Engineering rules for every game
 
@@ -145,7 +145,7 @@ The owner approved these in advance:
 - Edit any file in `ClaudeScripts/gameplay-site/`, the repository root `index.html`, `gameplay/` and `files.txt`; run builds, staging, tests and playtests; install development tools.
 - Create new games, assets and covers; rebuild existing games; add new games to the catalogue once they pass Part 6.
 - Delete files following Part 7 (reference check first, one separate commit, a list in the report).
-- Write the single database file (Part 8) and run it on staging as often as needed.
+- Write the single database file (Part 8), run it on staging as often as needed, and **run it on the production database without asking**, as often as needed, once it passes the three checks in Part 8.3. Use the Supabase command-line tool (`npx supabase link --project-ref uafouyvtcijptspjbsqf`, then `npx supabase db query --linked -f source/w/supabase/gameplay.sql` or `psql` with the connection string from the dashboard; if a database password is needed, ask the owner to enter it in the terminal, never in the chat). Say in your progress notes each time you run it.
 - Start the agents in Part 4 and create git worktrees for them.
 - Push branches, open pull requests, and merge pull requests into `mainbranch-claude-code` after the release check in Part 13 passes.
 - Deploy preview channels at any time, and deploy to the live site after the release check passes.
@@ -156,13 +156,12 @@ The owner approved these in advance:
 
 Ask the owner first, saying exactly what you will do and why, before:
 
-- **running SQL on the production database (show the file, the sections that change things, and confirm it is additive and safe to run twice);**
 - **deleting or rewriting any production data, analytics included;**
 - **weakening any security protection (passwords, e-mail confirmation, sign-in, admin access, rate limits on sensitive actions);**
 - **sending messages, e-mails or notifications to real users;**
 - **deleting anything outside `ClaudeScripts/gameplay-site/` and the repository's generated site files.**
 
-**Never sign out of the owner's accounts or change their credentials.** Treat the owner's e-mail address and personal details as private: never send them to outside services.
+**Never sign out of the owner's accounts or change their credentials.** **Treat the owner's e-mail address and personal details as private: never send them to outside services.**
 
 ### 3.5 Finishing work
 
@@ -184,7 +183,7 @@ Write for an intelligent but low-context reader. The owner has not seen your too
 | Five popular-game agents | Claude Fable 5.2 | xhigh | The recreations of the most popular games (Appendix A), one agent each |
 | All other agents | Claude Opus 5.5 | xhigh | The other new games (Appendix B) and the existing, less popular game groups (Appendix C) |
 
-When you start an agent with the Agent tool, set `model` and `effort` explicitly as in this table. Use only five Fable 5.2 agents in total.
+When you start an agent with the Agent tool, set `model` and `effort` explicitly as in this table. **Use only five Fable 5.2 agents in total.**
 
 ### 4.2 The five popular-game agents (Fable 5.2, xhigh)
 
@@ -207,7 +206,7 @@ Each agent finishes its first game completely (playable, playtested from start t
 ### 4.4 How to start an agent
 
 - Create a git worktree yourself from your working branch: `git worktree add ../wt-<name> -b work-<name> <your branch>`. Name its path in the brief. (A worktree created by the Agent tool starts from the default branch and misses your latest changes.)
-- Paste the game's brief from the appendix verbatim, then add: the worktree path; Parts 3.1 to 3.6, 5 and 6 of this prompt (or tell it to read them from `ClaudeScripts/gameplay-site/prompt.txt` in its worktree); and the line "Do not edit the portal, other agents' files, the repository root or the site build, and do not push. Commit to your branch when done."
+- Paste the game's brief from the appendix verbatim, then add: the worktree path; Parts 3.1 to 3.6, 5 and 6 of this prompt (or tell it to read them from `ClaudeScripts/gameplay-site/prompt.txt` in its worktree); and the line "**Do not edit the portal, other agents' files, the repository root or the site build, and do not push. Commit to your branch when done.**"
 - Tell each agent how long it may work. The popular-game agents have no fixed limit: their games must reach the standard of their brief. Other agents: aim for a few hours per game group.
 - Each agent ends with a report in the format of Part 6.6.
 
@@ -304,7 +303,7 @@ Every game with computer opponents has a top level labelled exactly `Hardest`, a
 ## Part 7. Clean up old and unwanted files
 
 1. List every tracked file under `ClaudeScripts/gameplay-site/` with its size and last commit.
-2. For each candidate, search the whole repository for references (file name, folder name, imports, build scripts, documentation). Delete it only if nothing in use refers to it, or update the reference at the same time.
+2. For each candidate, search the whole repository for references (file name, folder name, imports, build scripts, documentation). **Delete it only if nothing in use refers to it, or update the reference at the same time.**
 3. Candidates found at the end of the last round:
    - `ClaudeScripts/gameplay-site/__pycache__/` (a compiled Python file committed by mistake) and any other `__pycache__` in git;
    - `ClaudeScripts/gameplay-site/supabase/` (an old copy of the database files; move `GUIDE.md` and `setup.py` to `source/w/supabase/` first and point `setup.py` at the single database file);
@@ -321,11 +320,11 @@ Every game with computer opponents has a top level labelled exactly `Hardest`, a
 ## Part 8. One database file
 
 1. Create `source/w/supabase/gameplay.sql`: everything in `schema.sql` and every round file, in an order that works on a new empty project and on the current production database.
-2. It must be safe to run any number of times: `if not exists`, `create or replace`, `drop ... if exists` before a function whose return type changed, policies dropped and recreated, guarded `alter table`. It never deletes or rewrites user data; one-time clean-ups sit in a final, clearly marked section, each recorded in a small table so it runs once. It ends with `notify pgrst, 'reload schema';`. Every table has row level security; every function has explicit grants.
+2. It must be safe to run any number of times: `if not exists`, `create or replace`, `drop ... if exists` before a function whose return type changed, policies dropped and recreated, guarded `alter table`. **It never deletes or rewrites user data**; one-time clean-ups sit in a final, clearly marked section, each recorded in a small table so it runs once. It ends with `notify pgrst, 'reload schema';`. Every table has row level security; every function has explicit grants.
 3. Verify it three ways on staging: a fresh stack plus the whole test suite; the same stack run a second and third time without errors; a copy of the production schema (dump the schema only, no data, with the Supabase command-line tool while the owner is signed in), compared before and after so nothing disappears unintentionally.
 4. Put the security work of Part 10 in the same file.
 5. Delete `schema.sql` and the `roundNN_*.sql` files (they stay in git history). Update `setup.py`, `BUILD.md` and the setup guide to name only `gameplay.sql`. Future changes edit `gameplay.sql`, with a dated line at the top of each changed section.
-6. Running it on production needs the owner's go-ahead (Part 3.4). Prepare the exact link and a short description of what changes.
+6. Run it on production yourself once it passes step 3 (Part 3.4 allows it), then check the site and the test suite against production with the test account. **Any section that deletes or rewrites user data still needs the owner's go-ahead first.**
 
 ---
 
@@ -333,7 +332,7 @@ Every game with computer opponents has a top level labelled exactly `Hardest`, a
 
 1. Check `npx wrangler whoami`; if not signed in, ask the owner to run `npx wrangler login`.
 2. Create `server/wrangler.toml` for the existing worker `gameplay-api` and its domain `gameplay-api.vitalang.net`. Read the current settings first and keep them.
-3. In the Cloudflare dashboard (Realtime, TURN Server), create a TURN key named `gameplay`. Store its two values as worker secrets `TURN_KEY_ID` and `TURN_KEY_API_TOKEN` with `npx wrangler secret put`. Never print or commit them.
+3. In the Cloudflare dashboard (Realtime, TURN Server), create a TURN key named `gameplay`. Store its two values as worker secrets `TURN_KEY_ID` and `TURN_KEY_API_TOKEN` with `npx wrangler secret put`. **Never print or commit them.**
 4. Deploy `server/cloudflare-worker.js`. Check: `/health` answers `ok`; `/turn` refuses other origins; on the live site, signed in, `/check` shows "Relayed connections (site TURN 1): Works".
 5. Run a real relayed party: two devices, one on a network that blocks direct connections (a phone hotspot often does, or block UDP in the firewall for the test). Confirm in the diagnostics that the relay carried the connection.
 6. Ask the owner whether the Debian relay in `server/setup.py` is still wanted. If not, remove it from the code and the documentation.
@@ -357,7 +356,7 @@ The owner approved these. They strengthen protection. Implement each, test it on
 
 ## Part 11. Test data
 
-1. **Production test account**: create it in the admin dashboard (ask the owner to sign in to the owner account in the app's browser), switch Diagnostics on, use it for every check on the live site. Record no other account.
+1. **Production test account**: create it in the admin dashboard (ask the owner to sign in to the owner account in the app's browser), switch Diagnostics on, use it for every check on the live site. **Record no other account.**
 2. **Real-network party matrix**: host and join between two browsers here; this computer and a phone on the same Wi-Fi; this computer and a phone on mobile data; with a VPN on one side; and, with the owner's help, the school network. For each: the route used, time to join, chat, game start, refresh, leaving. Put the table in "Current state".
 3. **Frame rate on real hardware** for every 3D game and every busy 2D game: average, share of frames over 20 ms, longest frame, memory after ten minutes, at normal size, fullscreen and with four-times CPU throttling.
 4. **Load times**: first visit, return visit, signed-in return visit, normally and with "Fast 3G" throttling.
@@ -369,7 +368,7 @@ The owner approved these. They strengthen protection. Implement each, test it on
 
 ## Part 12. The portal and the covers
 
-**Portal.** Walk through the whole site as a student on a first visit, then as a regular player, then as the owner, at desktop and phone size, light and dark theme, English and French, and check the classes of Part 5: the password page, cookie notice, sign-up and log-in (Google button, username picker), home (grid, search, filters, favourites, continue playing, the sidebar's select-then-play behaviour, announcements, "What's new"), the game page (loading, play bar, pause, theater, fullscreen, the party window in every state), friends, messages (pictures, files, typing, read marks, blocking), notifications, the idea box, tickets, settings (every control persists after a reload and on another device), profile and statistics, data export, account deletion (staging only), the admin dashboard (every tab), the legal pages, keyboard-only use, screen reader labels, contrast, reduced motion, offline and slow networks. Keep the main layout, structure, navigation and design direction.
+**Portal.** Walk through the whole site as a student on a first visit, then as a regular player, then as the owner, at desktop and phone size, light and dark theme, English and French, and check the classes of Part 5: the password page, cookie notice, sign-up and log-in (Google button, username picker), home (grid, search, filters, favourites, continue playing, the sidebar's select-then-play behaviour, announcements, "What's new"), the game page (loading, play bar, pause, theater, fullscreen, the party window in every state), friends, messages (pictures, files, typing, read marks, blocking), notifications, the idea box, tickets, settings (every control persists after a reload and on another device), profile and statistics, data export, account deletion (staging only), the admin dashboard (every tab), the legal pages, keyboard-only use, screen reader labels, contrast, reduced motion, offline and slow networks. **Keep the main layout, structure, navigation and design direction.**
 
 **Covers.** Keep the existing covers. Every new or rebuilt game gets a cover in exactly the same style as the others (see `source/w/covers2/README.md`): a centred rounded icon box on a blurred, darkened background in the game's own colours, 960x600 WebP under 80 KB, the game name in the same title treatment. The icon shows the game's main object or character as it is drawn in the game, made with the site's cover tools (`source/w/agents2/covers/`). Render a contact sheet of all covers and look at it at full size: no new cover may stand out from the others in style, brightness or framing. Check covers at every size the site shows them.
 
@@ -382,7 +381,7 @@ The owner approved these. They strengthen protection. Implement each, test it on
 1. **Build**: `python3 source/w/assemble.py`, then the site build with the live key (Part 2.2) into `source/w/site/`; copy `index.html` and `gameplay/` to the repository root; `git ls-files > files.txt`. Only changed files may get new names in `gameplay/`.
 2. **Check**: the whole test suite on staging, plus the playtest harness over the catalogue, all passing.
 3. **Preview**: `python3 deploy.py <branch> --preview`. Open the preview on this computer and on a phone, play several games, host and join a party.
-4. **Database**: ask the owner to approve running `gameplay.sql` on production (or run it yourself once approved).
+4. **Database**: run `gameplay.sql` on production yourself (Part 3.4); ask first only if it contains a section that deletes or rewrites user data.
 5. **GitHub**: push the branch, open a pull request describing everything (use the repository's template if there is one), merge it into `mainbranch-claude-code` once the checks above pass. Everything related to Gameplay Games goes to GitHub: code, games, covers, the database file, the relay code and this file.
 6. **Live site**: `python3 deploy.py mainbranch-claude-code` on this computer if the Firebase tool is signed in, or in Google Cloud Shell: `curl -fsSL https://raw.githubusercontent.com/PyroOurson/claudecode/mainbranch-claude-code/ClaudeScripts/gameplay-site/deploy.py | python3 - mainbranch-claude-code`.
 7. **The owner's computer**: run `python3 ClaudeScripts/update.py` in the owner's local folder, so the local copy matches GitHub and files removed from the project are deleted. Then look for other, older copies of this project on this computer (old downloads, old unpacked builds, earlier clones), list them with their paths and dates, and delete them after showing the owner the list (Part 3.4 allows deleting copies of this project; ask if a folder might hold something else).
@@ -393,7 +392,7 @@ The owner approved these. They strengthen protection. Implement each, test it on
 
 ## Part 14. Handoff at the end of every session
 
-Every time a session ends, whether the work is complete or not, **update this file (`prompt.txt`) and push it to GitHub**. Do not create separate handoff, ledger or status files. Update:
+Every time a session ends, whether the work is complete or not, **update this file (`prompt.txt`) and push it to GitHub**. **Do not create separate handoff, ledger or status files.** Update:
 
 1. **Current state** (end of this file): what is live, what was done in this session with how each was checked, what is left as an ordered list, decisions waiting for the owner, numbers (games listed, games passing Part 6.5, games with a proven `Hardest`, party network results, frame rates).
 2. **Appendix D**: keep it unchanged and add anything new the owner asked for below it.
@@ -546,7 +545,7 @@ The groups ("Current state" at the end of this file says what the last round did
 Keep this section at every handoff (Part 14) and add new requests below it.
 
 - Bring the whole platform to an exceptionally high standard, as owner and long-term maintainer. Priorities: game quality, reliability, functionality, performance, user experience.
-- Keep the main layout, structure, navigation and design direction. Components may be substantially improved.
+- **Keep the main layout, structure, navigation and design direction.** Components may be substantially improved.
 - Parties must connect for everyone (same Wi-Fi, remote, school networks, proxies, VPNs, firewalls), with many fallbacks, never stuck; cancelling and refreshing must stop connection attempts.
 - A big search for hidden bugs; the kind of small details a real player notices (Part 5).
 - Announcements without replayed animations and not on the login and sign-up pages; a better username picker; a much more noticeable "Log in with Google"; usernames of at least four characters.
