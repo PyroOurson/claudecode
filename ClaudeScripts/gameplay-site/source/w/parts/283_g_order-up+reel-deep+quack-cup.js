@@ -1971,6 +1971,7 @@
       icon: (x, y, s) => { c.save(); c.translate(x, y); c.scale(s, s); const R = 50; c.beginPath(); c.arc(0, 4, R + 3, 0, TAU); c.fillStyle = 'rgba(0,0,0,.25)'; c.fill(); c.beginPath(); c.arc(0, 0, R, 0, TAU); c.fillStyle = '#e3a857'; c.fill(); c.lineWidth = 4; c.strokeStyle = '#7a4a1a'; c.stroke(); c.beginPath(); c.arc(0, 0, R * .84, 0, TAU); c.fillStyle = '#c8321e'; c.fill(); c.beginPath(); c.arc(0, 0, R * .8, 0, TAU); c.fillStyle = '#ffd96a'; c.fill(); for (let i = 0; i < 6; i++) { const a = i * 1.05 + .3, d = i === 5 ? 0 : R * .5; pzTop(c, i % 3 === 0 ? 'pep' : i % 3 === 1 ? 'mush' : 'olive', Math.cos(a) * d, Math.sin(a) * d, a, 1.1); } c.restore(); },
       floaty: t => { for (let i = 0; i < 14; i++) pzTop(c, ['pep', 'mush', 'olive', 'pepper', 'pine'][i % 5], (i * 137 + t * 18) % 1020 - 30, ((i * 89) % 520) + 40, i + t * .4, 2.2 + (i % 3) * .5); },
       gen, ticket, focus,
+      expect: o => 32 + 2.2 * o.tops.reduce((a, t) => a + t.q.length, 0) + o.bake + 1.5 * o.cuts,
       mini: (c2, x, y, tk) => pzMini(c2, x, y, 19, tk),
       stage: tk => ({ new: ['BUILD', '#9aa3ad', 'build'], building: ['BUILD', '#9aa3ad', 'build'], tray: ['BAKE', '#ffa94d', 'bake'], oven: ['OVEN', '#e63946', 'bake'], cut: ['CUT', '#4cc9f0', 'cut'], cutting: ['CUT', '#4cc9f0', 'cut'], serving: ['SERVE', '#3ecf6c', 'cut'] })[tk.state] || ['', '#9aa3ad', null],
       isSel: tk => !!((D.k.bld && D.k.bld.tk === tk) || (D.k.cut && D.k.cut.tk === tk)),
@@ -2284,6 +2285,7 @@
       icon: (x, y, s) => { c.save(); c.translate(x, y); c.scale(s, s); c.fillStyle = 'rgba(0,0,0,.2)'; c.beginPath(); c.ellipse(0, 44, 70, 10, 0, 0, TAU); c.fill(); bgStack(c, ['bunB', 'patty', 'cheese', 'lettuce', 'tomato', 'bunT'], 0, 42, 118); c.restore(); },
       floaty: t => { const ids = ['patty', 'cheese', 'tomato', 'lettuce', 'bunT', 'pickle']; for (let i = 0; i < 12; i++) { c.save(); c.translate((i * 151 + t * 20) % 1020 - 30, ((i * 97) % 520) + 40); c.rotate(Math.sin(t * .5 + i) * .3); bgIcon(c, ids[i % 6], 0, 0, 1.6); c.restore(); } },
       gen, ticket, focus,
+      expect: o => 22 + 3 * o.layers.length + 28 * BG.DB[o.done].v,
       mini: (c2, x, y, tk) => { bgStack(c2, tk.layers, x, y + 20, 40); },
       stage: tk => { if (tk.state === 'serving') return ['SERVE', '#3ecf6c', 'build']; if (tk.state !== 'new' && tk.state !== 'building') return ['', '#9aa3ad', null]; const want = tk.layers.filter(l => l === 'patty').length; return D.k.tray.length >= want || (D.k.bld && D.k.bld.tk === tk) ? ['BUILD', '#4cc9f0', 'build'] : ['GRILL', '#ffa94d', 'grill']; },
       isSel: tk => !!(D.k.bld && D.k.bld.tk === tk),
@@ -2680,6 +2682,7 @@
       icon: (x, y, s) => { c.save(); c.translate(x, y); c.scale(s, s); c.fillStyle = 'rgba(0,0,0,.2)'; c.beginPath(); c.ellipse(0, 46, 46, 8, 0, 0, TAU); c.fill(); const cup = shCup(c, 0, 46, 'm', { k: .62, fill: 1, col: '#f48fb1', mix: ['strawb'], blend: 1, seed: 4 }); shCream(c, 0, cup.top + 3, 52, 1, .62); shTopping(c, 'cherry', 0, cup.top - 34, 1.1); c.strokeStyle = '#e63946'; c.lineWidth = 5; c.beginPath(); c.moveTo(12, cup.top - 4); c.lineTo(26, cup.top - 50); c.stroke(); c.restore(); },
       floaty: t => { const ids = ['cherry', 'wafer', 'cookie', 'gummy', 'straw', 'choc']; for (let i = 0; i < 14; i++) shTopping(c, ids[i % 6], (i * 143 + t * 18) % 1020 - 30, ((i * 91) % 520) + 40, 1.8 + (i % 3) * .4); },
       gen, ticket, focus,
+      expect: o => 26 + 3 * (o.mix.length + o.tops.length) + 7 * SH.BLENDB[o.blend].v + (o.driz !== 'none' ? 3 : 0) + (o.spr !== 'none' ? 2 : 0),
       mini: (c2, x, y, tk) => shMini(c2, x, y, 1, tk),
       stage: tk => ({ new: ['BUILD', '#9aa3ad', 'build'], building: ['BUILD', '#9aa3ad', 'build'], tray: ['BLEND', '#ffa94d', 'blend'], blending: ['BLENDER', '#e63946', 'blend'], top: ['TOP', '#4cc9f0', 'top'], topping: ['TOP', '#4cc9f0', 'top'], serving: ['SERVE', '#3ecf6c', 'top'] })[tk.state] || ['', '#9aa3ad', null],
       isSel: tk => !!((D.k.bld && D.k.bld.tk === tk) || (D.k.top && D.k.top.tk === tk)),
@@ -2755,7 +2758,7 @@
 
     const pool = () => OU.CUST.filter(x => x.day <= worked());
     const startDay = () => {
-      const day = RS.day, N = Math.min(16, 6 + Math.floor(day * .9)), gap = Math.max(15, 25 - day * .55) * K.gap;
+      const day = RS.day, N = Math.min(15, 6 + Math.floor(day * .75)), gap = Math.max(20, 27 - day * .5) * K.gap;
       const sched = []; let tt = 2;
       for (let i = 0; i < N; i++) { sched.push(tt); tt += gap * rnd(.75, 1.25); }
       const ci = day >= 2 ? (day - 2 + KIDS.indexOf(K.id) * 3) % OU.CRITICS.length : -1;
@@ -2769,11 +2772,12 @@
       let L;
       if (critic) L = OU.CRITICS[D.critic];
       else { const recent = D.custs.slice(-2).map(x => x.L); const cand = D.pool.filter(x => !recent.includes(x)); L = pick(cand.length ? cand : D.pool); }
-      const pm = (L.pat || 1) * K.pat * (1 + .1 * up('chairs') + decoPat()) * (1 - Math.min(.3, RS.day * .012)) * (critic ? .85 : 1);
+      const pm = (L.pat || 1) * K.pat * (1 + .1 * up('chairs') + decoPat()) * (critic ? .85 : 1);
       const o = K.gen(RS.day, critic);
       if (critic) o.price = Math.round(o.price * 1.5 * 20) / 20;
-      const cu = { id: D.cid++, L, critic, state: 'enter', x: S.W + 70, pat: 0, patMax: 115 * pm, tk: null, order: o, talk: 0, t: rnd(0, 5), leave: 0, mood: 0, slot: 0, bob: 0 };
-      cu.pat = cu.patMax; D.custs.push(cu);
+      const exp = K.expect(o) * (1.35 - Math.min(.45, RS.day * .02)) * pm;
+      const cu = { id: D.cid++, L, critic, state: 'enter', x: S.W + 70, pat: 1, patMax: 1, wait: 0, qPat: 70 * pm, exp, tk: null, order: o, talk: 0, t: rnd(0, 5), leave: 0, mood: 0, slot: 0, bob: 0 };
+      D.custs.push(cu);
       au.tone(1318, .12, 'sine', .05); au.tone(1568, .2, 'sine', .05, 0, .1);
     };
     const QXL = [190, 300, 410, 520], BXL = [680, 760, 840, 915], QXP = [70, 180, 290, 400], BXP = [84, 188, 292, 396];
@@ -2792,8 +2796,8 @@
       if (K.onTicket) K.onTicket(tk);
     };
     const finishServe = tk => {
-      const cu = tk.cu, f = clamp(cu.pat / cu.patMax, 0, 1);
-      tk.sc.order = Math.round(40 + 60 * clamp(f / .45, 0, 1));
+      const cu = tk.cu;
+      tk.sc.order = Math.round(cu.wait <= cu.exp ? 100 : Math.max(30, 100 - 70 * (cu.wait - cu.exp) / (2 * cu.exp)));
       const keys = ['order'].concat(K.rows.map(r => r[1])), sc = tk.sc;
       const total = Math.round(keys.reduce((a, k) => a + (sc[k] || 0), 0) / keys.length);
       const tipMult = (cu.L.tip || 1) * (1 + .08 * up('tipjar')) * (1 + .02 * (rank() - 1));
@@ -2831,7 +2835,12 @@
       for (const cu of D.custs) {
         cu.t += dt;
         const active = ['enter', 'queue', 'ordering', 'toBench', 'bench'].includes(cu.state);
-        if (active) { cu.pat -= dt * (cu.tk && cu.tk.state === 'serving' ? 0 : 1); if (cu.pat <= 0) { customerLeaves(cu); continue; } }
+        if (active) {
+          if (!(cu.tk && cu.tk.state === 'serving')) cu.wait += dt;
+          const queued = cu.state === 'enter' || cu.state === 'queue';
+          cu.pat = queued ? clamp(1 - cu.wait / cu.qPat, 0, 1) : clamp(1 - cu.wait / (3 * cu.exp), 0, 1);
+          if (queued && cu.wait >= cu.qPat) { customerLeaves(cu); continue; }
+        }
         if (cu.state === 'enter' || cu.state === 'queue') {
           const tx = QX[Math.min(3, qi++)];
           if (cu.state === 'enter') { cu.x += (tx - cu.x) * Math.min(1, dt * 2.6); cu.bob = Math.sin(cu.t * 12) * 2; if (Math.abs(cu.x - tx) < 3) { cu.state = 'queue'; cu.bob = 0; } }
@@ -3061,7 +3070,7 @@
       S.panel(px, 28, pw, 470, { fill: '#fff8e7', r: 26, lw: 5, sh: 8 });
       S.text(tr(K.n), W / 2, 62, 22, K.th.tab, 'center', null, 900);
       S.text(tr('DAY {n}', { n: RS.day }), W / 2, 104, 50, '#c0392b', 'center', '#fff', 900);
-      const N = Math.min(16, 6 + Math.floor(RS.day * .9));
+      const N = Math.min(15, 6 + Math.floor(RS.day * .75));
       S.text(tr('About {n} customers today', { n: N }) + (RS.day >= 2 ? '  +  ' + tr('a food critic') : ''), W / 2, 144, 17, '#6a5a7a', 'center', null, 800);
       const items = K.newItems(RS.day), nc = OU.CUST.filter(x => x.day === worked());
       let yy = 172;
@@ -3263,7 +3272,7 @@
       S.panel(12, 16, PW - 24, PH - 106, { fill: '#fff8e7', r: 24, lw: 4, sh: 6 });
       S.text(tr(K.n), PW / 2, 46, 20, K.th.tab, 'center', null, 900);
       S.text(tr('DAY {n}', { n: RS.day }), PW / 2, 86, 46, '#c0392b', 'center', '#fff', 900);
-      const N = Math.min(16, 6 + Math.floor(RS.day * .9)), line = tr('About {n} customers today', { n: N }) + (RS.day >= 2 ? '  +  ' + tr('a food critic') : '');
+      const N = Math.min(15, 6 + Math.floor(RS.day * .75)), line = tr('About {n} customers today', { n: N }) + (RS.day >= 2 ? '  +  ' + tr('a food critic') : '');
       S.text(line, PW / 2, 124, S.fit(line, PW - 50, 16, 800), '#6a5a7a', 'center', null, 800);
       const items = K.newItems(RS.day).slice(0, 8), nc = OU.CUST.filter(x => x.day === worked()).slice(0, 4);
       let yy = 152;
@@ -3358,7 +3367,7 @@
       if (modal) modal.t = (modal.t || 0) + dt;
       if (scene === 'play' && D) { if (D.result) D.result.t += dt; else if (!modal) updateDay(dt); }
     };
-    root.__dbg = { sv, get D() { return D; }, get K() { return K; }, get scene() { return scene; }, get modal() { return modal; }, startDay, setKit, KITS, QX, BXS, tick, finishServe, data: { PZ, BG, SH } };
+    root.__dbg = { sv, get D() { return D; }, get K() { return K; }, get scene() { return scene; }, get modal() { return modal; }, startDay, setKit, KITS, tick, finishServe, takeOrder, data: { PZ, BG, SH } };
     api.score(Math.floor(sv.earned));
     api.loop(dt => {
       acc += dt; let n = 0;
