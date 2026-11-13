@@ -4813,7 +4813,7 @@ Kite: Paper+Wind, Bird+Paper
     }
     function readNew() { scr.querySelectorAll('input[data-f]').forEach(i => { const v = i.value.replace(/[<>]/g, '').trim().slice(0, 20); if (v) nf[i.dataset.f] = v; }); }
     function startLife(n) {
-      s = n; G.cur = s; sel = null; sub = null; tab = 'occ'; tq = []; nf = null;
+      s = n; G.cur = s; sel = null; sub = null; tab = n.me.age < 5 ? 'people' : 'occ'; tq = []; nf = null;
       scr.hidden = true; scr.innerHTML = '';
       fed = { n: -1, l: 0 };
       renderAll(); snap();
