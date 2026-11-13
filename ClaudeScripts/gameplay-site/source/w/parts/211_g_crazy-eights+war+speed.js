@@ -707,7 +707,7 @@
   function ceSearch(g, p, lacks) {
     const s = g.s, n = s.n, h = s.hands[p], HP = CE_AI.Hard, base = ceBot(g, p, HP, lacks), one = s.drew && g.rules.draw === 'one';
     const done = { step: () => true, best: () => base };
-    if (base.t !== 'play' && !one) return done;
+    if (n > 2 || (base.t !== 'play' && !one)) return done;
     const cands = [], cnt = [0, 0, 0, 0], seen = new Uint8Array(52), pool = [];
     for (const id of h) { seen[id] = 1; if (RK(id) !== 8) cnt[ST(id)]++; }
     for (const id of s.disc) seen[id] = 1;
