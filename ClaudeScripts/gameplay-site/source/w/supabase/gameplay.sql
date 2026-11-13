@@ -11968,6 +11968,156 @@ $$;
 revoke all on function public.long_shot_stats(text[]) from public, anon, authenticated;
 grant execute on function public.long_shot_stats(text[]) to anon, authenticated;
 
+create table if not exists private.level_codes (
+  code text primary key,
+  game text not null,
+  body text not null,
+  h text not null,
+  owner uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  used_at timestamptz not null default now(),
+  constraint level_codes_code_check check (code ~ '^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}$'),
+  constraint level_codes_body_check check (length(body) between 8 and 60000)
+);
+create unique index if not exists level_codes_owner_h on private.level_codes (owner, game, h);
+create index if not exists level_codes_used on private.level_codes (used_at);
+alter table private.level_codes enable row level security;
+revoke all on table private.level_codes from public, anon, authenticated;
+
+create or replace function private.level_game_ok(p_game text, p_body text)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select case p_game
+    when 'wobble-ride' then coalesce(length(p_body) between 8 and 60000 and p_body ~ '^WR[01][A-Za-z0-9_-]+$', false)
+    else false
+  end;
+$$;
+revoke all on function private.level_game_ok(text, text) from public, anon, authenticated;
+
+create or replace function public.level_share(p_game text, p_body text)
+returns text
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_h text;
+  v_code text;
+  v_n integer;
+  v_abc constant text := '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+begin
+  if v_uid is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if exists (select 1 from public.profiles where id = v_uid and locked) then
+    raise exception 'Account locked' using errcode = '42501';
+  end if;
+  if p_game is null or p_body is null or not private.level_game_ok(p_game, p_body) then
+    raise exception 'Bad level' using errcode = '22023';
+  end if;
+  v_h := md5(p_body);
+  update private.level_codes set used_at = now() where owner = v_uid and game = p_game and h = v_h returning code into v_code;
+  if v_code is not null then
+    return v_code;
+  end if;
+  perform private.rate_check('level_share', 30, interval '1 hour');
+  select count(*) into v_n from private.level_codes where owner = v_uid;
+  if v_n >= 300 then
+    delete from private.level_codes where code = (select c.code from private.level_codes c where c.owner = v_uid order by c.used_at limit 1);
+  end if;
+  loop
+    v_code := '';
+    for i in 1..6 loop
+      v_code := v_code || substr(v_abc, 1 + floor(random() * 31)::integer, 1);
+    end loop;
+    begin
+      insert into private.level_codes (code, game, body, h, owner) values (v_code, p_game, p_body, v_h, v_uid);
+      exit;
+    exception when unique_violation then
+      if exists (select 1 from private.level_codes where owner = v_uid and game = p_game and h = v_h) then
+        select c.code into v_code from private.level_codes c where c.owner = v_uid and c.game = p_game and c.h = v_h;
+        return v_code;
+      end if;
+    end;
+  end loop;
+  if random() < 0.01 then
+    delete from private.level_codes where used_at < now() - interval '365 days';
+  end if;
+  return v_code;
+end;
+$$;
+revoke all on function public.level_share(text, text) from public, anon, authenticated;
+grant execute on function public.level_share(text, text) to authenticated;
+
+create or replace function public.level_get(p_game text, p_code text)
+returns text
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_code text := upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g'));
+  v_body text;
+  v_used timestamptz;
+begin
+  if p_game is null or p_game !~ '^[a-z0-9-]{2,40}$' then
+    raise exception 'Bad game' using errcode = '22023';
+  end if;
+  if v_code !~ '^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}$' then
+    return null;
+  end if;
+  if auth.uid() is not null and exists (select 1 from public.profiles where id = auth.uid() and locked) then
+    raise exception 'Account locked' using errcode = '42501';
+  end if;
+  perform private.rate_check('level_get', 60, interval '10 minutes');
+  select c.body, c.used_at into v_body, v_used from private.level_codes c where c.code = v_code and c.game = p_game;
+  if v_body is not null and v_used < now() - interval '1 day' then
+    update private.level_codes set used_at = now() where code = v_code;
+  end if;
+  return v_body;
+end;
+$$;
+revoke all on function public.level_get(text, text) from public, anon, authenticated;
+grant execute on function public.level_get(text, text) to anon, authenticated;
+
+create or replace function public.export_my_data()
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if auth.uid() is null then
+    return null;
+  end if;
+  perform private.rate_check('export', 5, interval '1 hour');
+  return jsonb_build_object(
+    'exported_at', now(),
+    'account', (select jsonb_build_object('id', u.id, 'email', u.email, 'created_at', u.created_at, 'last_sign_in_at', u.last_sign_in_at, 'providers', u.raw_app_meta_data -> 'providers') from auth.users u where u.id = auth.uid()),
+    'profile', (select to_jsonb(p) from public.profiles p where p.id = auth.uid()),
+    'game_stats', coalesce((select jsonb_agg(to_jsonb(s) order by s.game_id) from public.game_stats s where s.user_id = auth.uid()), '[]'::jsonb),
+    'game_saves', coalesce((select jsonb_agg(to_jsonb(s) order by s.game_id) from public.game_saves s where s.user_id = auth.uid()), '[]'::jsonb),
+    'friends', coalesce((select jsonb_agg(to_jsonb(f)) from public.my_friends() f), '[]'::jsonb),
+    'friend_requests', coalesce((select jsonb_agg(to_jsonb(r)) from public.my_friend_requests() r), '[]'::jsonb),
+    'blocks', coalesce((select jsonb_agg(jsonb_build_object('blocked', b.blocked, 'created_at', b.created_at)) from public.user_blocks b where b.blocker = auth.uid()), '[]'::jsonb),
+    'analytics_events', coalesce((select jsonb_agg(to_jsonb(e) order by e.created_at) from (select created_at, session_id, event, game_id, props, device from public.analytics_events where user_id = auth.uid() order by created_at desc limit 20000) e), '[]'::jsonb),
+    'ideas', coalesce((select jsonb_agg(jsonb_build_object('id', i.id, 'kind', i.kind, 'title', i.title, 'body', i.body, 'game', i.game, 'context', i.ctx, 'attachments', i.attachments, 'status', i.status, 'reply', i.reply, 'reply_at', i.reply_at, 'created_at', i.created_at) order by i.id) from public.ideas i where i.user_id = auth.uid()), '[]'::jsonb),
+    'tickets', coalesce((select jsonb_agg(jsonb_build_object('id', t.id, 'subject', t.subject, 'status', t.status, 'created_at', t.created_at,
+      'messages', coalesce((select jsonb_agg(jsonb_build_object('from_staff', m.is_admin, 'body', m.body, 'attachments', m.attachments, 'created_at', m.created_at) order by m.id) from public.ticket_messages m where m.ticket_id = t.id), '[]'::jsonb)) order by t.id) from public.tickets t where t.user_id = auth.uid()), '[]'::jsonb),
+    'files', coalesce((select jsonb_agg(jsonb_build_object('bucket', o.bucket_id, 'path', o.name, 'size', o.metadata -> 'size', 'type', o.metadata -> 'mimetype', 'created_at', o.created_at) order by o.created_at) from storage.objects o where o.bucket_id in ('ideas', 'tickets', 'dm') and o.name like auth.uid()::text || '/%'), '[]'::jsonb),
+    'shared_levels', coalesce((select jsonb_agg(jsonb_build_object('code', c.code, 'game', c.game, 'level', c.body, 'created_at', c.created_at, 'last_used_at', c.used_at) order by c.created_at) from private.level_codes c where c.owner = auth.uid()), '[]'::jsonb)
+  );
+end;
+$$;
+revoke all on function public.export_my_data() from public, anon, authenticated;
+grant execute on function public.export_my_data() to authenticated;
+
 -- ============================================================================
 -- 2026-11-13 One-time clean-ups (each runs once, recorded in private.once_done)
 -- ============================================================================

@@ -1466,7 +1466,7 @@ function auBootDone() {
   clearTimeout(SB.bt);
   if (document.documentElement.getAttribute('data-boot')) document.documentElement.removeAttribute('data-boot');
 }
-const GAME_RPC = /^long_shot_(answer|stats)$/;
+const GAME_RPC = /^(long_shot_(answer|stats)|level_(share|get))$/;
 Ameplay.account = {
   get enabled() { return SB.on; },
   get signedIn() { return !!SB.user; },

@@ -2677,18 +2677,34 @@
       root.append(d); dlg = d;
       setTimeout(() => { if (dlg !== d) return; ta.focus({ preventScroll: true }); if (o.ro) ta.select(); }, 30);
     };
+    const SHORT = /^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}$/;
+    const acct = () => { const a = window.Ameplay && window.Ameplay.account; return a && a.enabled && typeof a.rpc === 'function' ? a : null; };
+    const shortOf = async code => { const a = acct(); if (!a || !a.signedIn) return null; try { const c = await a.rpc('level_share', { p_game: 'wobble-ride', p_body: code }); return typeof c === 'string' && SHORT.test(c) ? c.slice(0, 3) + '-' + c.slice(3) : null; } catch (e) { return null; } };
     const shareLevel = async i => {
       const L = sv.mine[i]; if (!L) return;
-      const code = await HW.codeOf(L);
-      if (!code) { api.toast(tr('This level cannot be shared yet. Open it in the editor and save it.')); return; }
-      openDlg({ title: 'Level code', text: 'Send this code to a friend. They paste it under Enter a code to play your level.', value: code, ro: true, ok: 'Copy', go: async (ta, say) => {
+      const long = await HW.codeOf(L);
+      if (!long) { api.toast(tr('This level cannot be shared yet. Open it in the editor and save it.')); return; }
+      const sc = await shortOf(long), code = sc || long;
+      if (!api.alive) return;
+      openDlg({ title: 'Level code', text: sc ? 'Send this code to a friend. They type it under Enter a code to play your level. It works for a year after it was last used.' : 'Send this code to a friend. They paste it under Enter a code to play your level.', value: code, ro: true, ok: 'Copy', go: async (ta, say) => {
         ta.select();
         try { await navigator.clipboard.writeText(code); say('Copied'); }
         catch (e) { let done = false; try { done = document.execCommand('copy'); } catch (e2) {} say(done ? 'Copied' : 'Select the code and copy it', !done); }
       } });
     };
-    const importCode = () => openDlg({ title: 'Enter a code', text: 'Paste a level code from a friend.', ph: 'Paste a level code', ok: 'Play level', go: async (ta, say) => {
-      const L = await HW.levelOf(ta.value);
+    const importCode = () => openDlg({ title: 'Enter a code', text: 'Type a 6-character code, or paste a long code from a friend.', ph: 'Type or paste a level code', ok: 'Play level', go: async (ta, say) => {
+      const raw = ta.value.trim(), sc = raw.length <= 12 ? raw.toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
+      let body = raw;
+      if (SHORT.test(sc)) {
+        const a = acct();
+        if (!a) { say('Short codes need a connection to the site. Ask your friend for the long code.', true); return; }
+        say('Looking up the code…');
+        try { body = await a.rpc('level_get', { p_game: 'wobble-ride', p_code: sc }); }
+        catch (e) { say('Could not reach the server. Try again, or ask for the long code.', true); return; }
+        if (!api.alive || !dlg) return;
+        if (typeof body !== 'string') { say('No level has this code. Check the letters and numbers.', true); return; }
+      }
+      const L = await HW.levelOf(body);
       if (!L) { say('That code does not work. Check that it was copied in full.', true); return; }
       const i = sv.mine.findIndex(q => !q);
       closeDlg();
