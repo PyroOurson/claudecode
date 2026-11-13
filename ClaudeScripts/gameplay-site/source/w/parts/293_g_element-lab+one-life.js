@@ -4,495 +4,573 @@
   const el = (tag, cls, html) => { const e = document.createElement(tag); e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const ICON = inner => `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
   const LA_RAW = `
-Mud: Water+Earth
+# nature
+Wind: Air+Air
 Steam: Water+Fire
-Dust: Air+Earth
-Energy: Air+Fire
-Mist: Air+Water
-Lava: Fire+Earth
-Pressure: Air+Air
+Mud: Water+Earth
+Lava: Earth+Fire
+Energy: Fire+Air
+Mist: Water+Air
+Dust: Earth+Air
 Sea: Water+Water
-Stone: Lava+Air, Earth+Pressure
-Cloud: Steam+Air, Mist+Pressure
-Rain: Cloud+Water
-Sky: Air+Cloud
-Wind: Air+Energy
-Storm: Rain+Wind
-Lightning: Cloud+Energy
-Thunder: Lightning+Air, Lightning+Sky
-Sun: Fire+Sky
-Rainbow: Rain+Sun
-Day: Sun+Sky
-Moon: Sky+Stone
-Night: Moon+Sky
-Star: Night+Fire
-Sand: Stone+Wind, Stone+Dust
-Glass: Sand+Fire
-Ocean: Sea+Sea
-Wave: Sea+Wind
-Earthquake: Earth+Energy
-Tsunami: Wave+Earthquake
 Hill: Earth+Earth
-Mountain: Hill+Hill, Hill+Stone
-Volcano: Mountain+Lava
-Island: Sea+Hill, Ocean+Earth
-Cold: Mist+Wind
-Ice: Water+Cold, Sea+Cold
-Snow: Cloud+Cold, Rain+Cold
-Glacier: Ice+Mountain
-Iceberg: Ice+Ocean, Glacier+Sea
-Hail: Storm+Ice
-Frost: Ice+Air
-Blizzard: Snow+Storm
-Desert: Sand+Sun
-Dune: Desert+Wind
-Oasis: Desert+Water
-Sandstorm: Sand+Storm
-Quicksand: Sand+Swamp
-Beach: Sand+Sea
-Salt: Sea+Sun
+Smoke: Fire+Dust, Campfire+Wind
+Stone: Lava+Water, Lava+Air
+Pressure: Stone+Stone, Earth+Mountain
+Sand: Stone+Water, Stone+Wind
 Clay: Mud+Sand
-Brick: Clay+Fire
-Kiln: Brick+Fire
-Pottery: Clay+Kiln
-Cave: Mountain+Water
-River: Water+Hill, Rain+Mountain
-Canyon: River+Desert
-Lake: River+Water
-Cliff: Mountain+Wave
+Cloud: Steam+Air, Mist+Mist
+Rain: Cloud+Water, Cloud+Pressure
+Sky: Cloud+Air, Air+Bird
+Sun: Sky+Fire, Star+Earth
+Day: Sun+Earth, Sun+Sky
+Moon: Stone+Sky
+Night: Moon+Day, Sky+Moon
+Star: Night+Spark, Night+Fire
+Spark: Fire+Stone
+Lightning: Cloud+Energy, Storm+Energy
+Thunder: Lightning+Air, Lightning+Cloud
+Storm: Rain+Wind, Cloud+Wind
+Rainbow: Rain+Sun, Light+Glass
+Cold: Air+Night, Wind+Mist
+Ice: Water+Cold, Sea+Cold
+Snow: Rain+Cold, Cloud+Ice
+Frost: Cold+Grass, Ice+Window
+Hail: Ice+Storm
+Blizzard: Snow+Wind, Snow+Storm
+Glacier: Ice+Mountain, Snow+Mountain
+Iceberg: Ice+Sea, Glacier+Ocean
+Mountain: Hill+Hill, Hill+Stone
+Volcano: Mountain+Lava, Mountain+Fire
+Ocean: Sea+Sea
+Island: Ocean+Volcano, Sea+Volcano
+Wave: Sea+Wind, Ocean+Wind
+Earthquake: Earth+Energy, Mountain+Energy
+Tsunami: Wave+Earthquake, Ocean+Earthquake
+Beach: Sea+Sand, Wave+Sand
+Desert: Sand+Sand, Sand+Sun
+Dune: Desert+Wind, Sand+Hill
+Oasis: Desert+Water, Desert+Tree
+Sandstorm: Desert+Storm, Sand+Storm
+Quicksand: Sand+Water, Sand+Swamp
+Swamp: Mud+Water, Mud+Grass
+Salt: Sea+Sun, Sea+Fire
+River: Water+Mountain, Rain+Hill
+Valley: Mountain+River, Hill+River
+Lake: River+Valley, Rain+Valley
+Pond: Water+Grass, Lake+Garden
+Cliff: Mountain+Wave, Hill+Wave
 Waterfall: River+Cliff
-Geyser: Steam+Pressure
-Hot Spring: Water+Geyser
-Valley: Hill+River
-Pond: Water+Grass
-Swamp: Mud+Water, Lake+Mud
-Life: Swamp+Energy
-Fog: Mist+Cloud
-Dew: Mist+Grass
-Tornado: Wind+Wind
-Hurricane: Storm+Ocean
-Flood: Rain+River
-Spark: Energy+Metal
-Smoke: Fire+Cloud
-Explosion: Fire+Pressure
+Canyon: River+Stone, River+Desert
+Hole: Earth+Shovel, Earth+Pickaxe
+Cave: Mountain+Hole, Stone+Hole
+Geyser: Steam+Earth, Volcano+Water
+Hot Spring: Lake+Volcano, Geyser+Pond
+Fog: Cloud+Earth, Mist+Cold
+Dew: Mist+Grass, Mist+Flower
+Tornado: Wind+Wind, Wind+Storm
+Hurricane: Storm+Ocean, Storm+Sea
+Flood: Rain+River, River+Storm
+Puddle: Rain+Earth, Rain+Road
 Eclipse: Sun+Moon
-Aurora: Light+Night
-Light: Energy+Sun
-Time: Day+Night
-Plant: Earth+Rain
-Moss: Plant+Stone
-Algae: Plant+Water
-Seaweed: Algae+Sea
-Grass: Plant+Earth
-Seed: Plant+Air
-Tree: Seed+Earth, Plant+Plant
-Flower: Plant+Sun
+Light: Sun+Energy, Fire+Glass
+Aurora: Night+Light, Sky+Magnet
+Time: Day+Night, Sand+Clock
+Spring: Flower+Time, Grass+Time
+Summer: Sun+Time, Beach+Time
+Autumn: Leaf+Time, Leaf+Wind
+Winter: Snow+Time, Cold+Time
+Heatwave: Sun+Summer, Summer+Desert
+Obsidian: Lava+Ice, Lava+Cold
+Wildfire: Forest+Fire, Grass+Lightning
+Ash: Campfire+Water, Wildfire+Rain
+# plants
+Life: Lightning+Sea, Energy+Swamp
+Algae: Life+Water, Life+Pond
+Plant: Life+Earth, Seed+Earth
+Seaweed: Algae+Sea, Plant+Sea
+Moss: Plant+Stone, Algae+Stone
+Grass: Plant+Hill, Plant+Earth
+Field: Grass+Grass, Earth+Plow
+Seed: Plant+Air, Fruit+Earth
+Tree: Plant+Time, Seed+Time
+Flower: Plant+Sun, Plant+Rainbow
+Rose: Flower+Love, Flower+Bush
+Sunflower: Flower+Sunlight, Flower+Summer
+Sunlight: Sun+Air, Sun+Window
+Bush: Plant+Plant, Plant+Grass
 Forest: Tree+Tree
-Jungle: Forest+Rain
-Bush: Plant+Tree
-Vine: Jungle+Plant
-Cactus: Desert+Plant
-Fern: Plant+Forest
-Mushroom: Mud+Forest
+Jungle: Forest+Rain, Forest+Heatwave
 Leaf: Tree+Wind
-Stick: Tree+Stone
-Rose: Flower+Bush
-Sunflower: Flower+Field
-Bamboo: Grass+Tree
-Palm Tree: Tree+Beach
-Coconut: Palm Tree+Fruit
-Pine: Tree+Mountain
-Hay: Grass+Wheat
-Garden: Flower+House
-Fruit: Tree+Flower
-Apple: Fruit+Tree
-Orchard: Apple+Forest
-Berry: Bush+Sun
-Banana: Fruit+Jungle
-Watermelon: Fruit+Water
-Grapes: Vine+Fruit
-Ore: Mountain+Pressure
-Metal: Ore+Fire
-Gold: Metal+Sun
-Silver: Metal+Moon
-Iron: Metal+Earth
-Copper: Metal+Lava
-Alloy: Metal+Metal
-Bronze: Copper+Alloy
-Coal: Wood+Pressure
-Steel: Iron+Coal
-Diamond: Coal+Pressure
-Crystal: Stone+Energy
-Gem: Crystal+Light
-Ruby: Gem+Fire
-Sapphire: Gem+Water
-Emerald: Gem+Plant
-Jewelry: Gold+Gem
-Ring: Gold+Diamond
-Necklace: Silver+Pearl
-Crown: Gold+King
-Chest: Wood+Metal
-Treasure: Chest+Gold
-Magnet: Iron+Energy
-Needle: Metal+Thread
-Compass: Magnet+Needle
-Electricity: Lightning+Metal
-Wire: Copper+Electricity
-Battery: Electricity+Metal
-Light Bulb: Glass+Electricity
-Lamp: Glass+Fire
-Candle: Wax+Fire
-Beehive: Bee+Tree
-Wax: Beehive+Fire
-Torch: Stick+Fire
-Campfire: Wood+Fire
-Ash: Campfire+Air
-Gunpowder: Coal+Explosion
-Bomb: Gunpowder+Metal
-Firework: Gunpowder+Sky
-Rocket: Firework+Metal
-Space: Star+Star
-Satellite: Space+Metal
-Planet: Earth+Space
-Meteor: Stone+Space
-Comet: Ice+Space
-Galaxy: Space+Star
-Black Hole: Star+Pressure
-Telescope: Glass+Star
-Alien: Life+Space
-UFO: Alien+Metal
-Astronaut: Human+Space
-Spaceship: Rocket+Space
-Human: Life+Clay
-Baby: Love+Life
-Love: Human+Human
-Family: Baby+Human
-Heart: Love+Energy
-Idea: Human+Light Bulb
-Brain: Human+Idea
-Sleep: Human+Night
-Dream: Sleep+Cloud
-Bone: Animal+Stone
-Skeleton: Bone+Human
-Fossil: Bone+Stone
-Dinosaur: Fossil+Life
-Ghost: Skeleton+Mist
-Tool: Human+Stone
-Wood: Tree+Tool
-Log: Tree+Axe
-Plank: Wood+Axe
-Axe: Tool+Metal
-Hammer: Wood+Iron
-Nail: Metal+Hammer
-Saw: Plank+Knife
-Knife: Metal+Stone
-Scissors: Knife+Knife
-Sword: Knife+Steel
-Shield: Plank+Steel
-Spear: Stick+Metal
-Pickaxe: Axe+Ore
-Shovel: Tool+Plank
-Plow: Metal+Field
-Gear: Metal+Wheel
-Machine: Gear+Engine
-Factory: Machine+House
-Engine: Steel+Energy
-Steam Engine: Steel+Steam
-Chain: Metal+Rope
-Rope: Thread+Plant
-Thread: Wool+Wheel
-Wheel: Wood+Tool
-Cart: Wheel+Wood
-Car: Engine+Wheel
-Bus: Car+Human
-Truck: Car+Cart
-Ambulance: Car+Doctor
-Fire Truck: Car+Water
-Bicycle: Wheel+Steel
-Motorcycle: Engine+Bicycle
-Skateboard: Plank+Wheel
-Rail: Steel+Wood
-Train: Steam Engine+Rail
-Airplane: Bird+Engine
-Helicopter: Airplane+Windmill
-Windmill: Wheel+Wind
-Balloon: Air+Cloth
-Hot Air Balloon: Balloon+Fire
-Parachute: Cloth+Sky
-Boat: Wood+Water
-Ship: Boat+Metal
-Sail: Cloth+Wind
-Sailboat: Boat+Sail
-Submarine: Ship+Ocean
-Raft: Log+River
-Anchor: Chain+Ship
-Lighthouse: Tower+Lamp
-Wall: Brick+Brick
-Tower: Wall+Wall
-Castle: Tower+Wall
-Palace: Castle+Gold
-Pyramid: Desert+Brick
-Statue: Stone+Hammer
-House: Wood+Brick
-Hut: Wood+Grass
-Village: House+Hut
-City: House+House
-Skyscraper: Tower+Glass
-Bridge: River+Plank
-Road: Stone+Field
-Well: Brick+Water
-Bucket: Well+Wood
-Barn: Plank+Farm
-Fence: Stick+Field
-Field: Grass+Tool
-Farm: Field+Animal
-Farmer: Human+Farm
-Window: Glass+House
-Door: Plank+House
-Key: Metal+Door
-Lock: Key+Chest
-Ladder: Stick+Plank
-Stairs: Brick+Ladder
-Table: Plank+Plank
-Chair: Plank+Human
-Bed: Plank+Wool
-School: Book+House
-Library: Book+Book
-Hospital: House+Doctor
-Shop: Money+House
-Bank: Money+Safe
-Safe: Steel+Chest
-Money: Coin+Paper
-Coin: Gold+Tool
-Wallet: Money+Leather
-Paper: Plank+Water
-Book: Paper+Paper
-Letter: Paper+Pen
-Pen: Feather+Ink
-Ink: Coal+Water
-Pencil: Stick+Coal
-Painting: Paint+Paper
-Paint: Rainbow+Water
-Artist: Human+Paint
-Map: Paper+Island
-Globe: Planet+Map
-Calendar: Time+Paper
-Clock: Time+Metal
-Hourglass: Sand+Time
-Kite: Paper+Wind
-Mirror: Glass+Silver
-Glasses: Glass+Human
-Camera: Glass+Light
-Photo: Camera+Human
-Microscope: Glass+Science
-Science: Book+Light
-Scientist: Human+Science
-Medicine: Plant+Science
-Doctor: Human+Medicine
-Teacher: Human+Book
-Student: Human+School
-Computer: Science+Electricity
-Internet: Computer+Computer
-Robot: Metal+Computer
-Phone: Wire+Sound
-Smartphone: Phone+Computer
-Radio: Electricity+Music
-TV: Radio+Glass
-Sound: Air+Pressure
-Music: Sound+Human
-Song: Music+Human
-Singer: Human+Song
-Bell: Metal+Sound
-Guitar: Music+Wood
-Violin: Guitar+Bow
-Piano: Guitar+Hammer
-Drum: Leather+Wood
-Flute: Stick+Music
-Trumpet: Metal+Music
-Orchestra: Violin+Piano
-Bow: Wood+Thread
-Arrow: Stick+Feather
-Archer: Human+Bow
-Feather: Bird+Wind
-Leather: Cow+Tool
-Wool: Sheep+Human
-Cloth: Thread+Thread
-Shirt: Cloth+Human
-Hat: Cloth+Sun
-Shoe: Leather+Human
-Boot: Shoe+Mud
-Glove: Cloth+Cold
-Scarf: Wool+Cold
-Coat: Cloth+Snow
-Dress: Cloth+Flower
-Umbrella: Cloth+Rain
-Backpack: Leather+Cloth
-Tent: Cloth+Stick
-Flag: Cloth+Mountain
-Armor: Steel+Cloth
-Knight: Human+Armor
-Helmet: Armor+Sky
-King: Human+Castle
-Queen: King+Love
-Army: Knight+Knight
-Pirate: Human+Ship
-Wizard: Human+Magic
-Magic: Rainbow+Energy
-Magic Wand: Stick+Magic
-Genie: Lamp+Magic
-Elf: Human+Forest
-Fairy: Butterfly+Human
-Unicorn: Horse+Rainbow
-Dragon: Lizard+Fire
-Phoenix: Bird+Fire
-Mermaid: Human+Fish
-Centaur: Human+Horse
-Pegasus: Horse+Bird
-Snowman: Snow+Human
-Ball: Leather+Air
-Soccer: Ball+Field
-Golf: Ball+Grass
-Racket: Stick+Thread
-Tennis: Ball+Racket
-Ski: Snow+Plank
-Sled: Snow+Wood
-Trophy: Gold+Ball
-Chess: Plank+Knight
-Cards: Paper+Heart
-Party: Music+Cake
-Birthday: Cake+Candle
-Spring: Flower+Time
-Summer: Sun+Time
-Autumn: Leaf+Time
-Winter: Snow+Time
-Animal: Life+Grass
-Fish: Animal+Water
-Shark: Fish+Ocean
-Whale: Shark+Ocean
-Dolphin: Fish+Wave
-Seal: Animal+Ice
-Shell: Animal+Beach
-Oyster: Shell+Water
-Pearl: Oyster+Sand
-Crab: Fish+Shell
-Lobster: Crab+Fire
-Starfish: Star+Sea
-Jellyfish: Fish+Cloud
-Octopus: Fish+Ink
-Coral: Life+Ocean
-Reef: Coral+Sea
-Bird: Animal+Sky
-Eagle: Bird+Mountain
-Owl: Bird+Night
-Chicken: Bird+Farm
-Nest: Bird+Tree
-Egg: Nest+Life
-Duck: Bird+Pond
-Penguin: Bird+Ice
-Parrot: Bird+Jungle
-Dove: Bird+Cloud
-Flamingo: Bird+Lake
-Peacock: Bird+Rainbow
-Seagull: Bird+Beach
-Crow: Bird+Field
-Bat: Mouse+Bird
-Cow: Animal+Grass
-Sheep: Animal+Hill
-Pig: Animal+Mud
-Horse: Animal+Wind
-Dog: Animal+Human
-Cat: Animal+Milk
-Mouse: Animal+Cheese
-Rabbit: Animal+Carrot
-Bear: Animal+Forest
-Wolf: Dog+Forest
-Fox: Dog+Autumn
-Lion: Cat+Desert
-Tiger: Cat+Jungle
-Elephant: Animal+Jungle
-Giraffe: Horse+Tree
-Monkey: Animal+Fruit
-Gorilla: Monkey+Mountain
-Zebra: Horse+Night
-Deer: Animal+Leaf
-Camel: Animal+Desert
-Kangaroo: Rabbit+Hill
-Koala: Bear+Leaf
+Fern: Forest+Plant, Moss+Forest
+Mushroom: Forest+Night, Mud+Tree
+Cactus: Plant+Desert, Plant+Sand
+Vine: Jungle+Plant, Plant+Wall
+Bamboo: Grass+Tree, Grass+Jungle
+Palm Tree: Tree+Beach, Tree+Island
+Pine: Tree+Snow, Tree+Mountain
+Stick: Tree+Storm, Wood+Knife
+Wood: Tree+Stone, Tree+Axe
+Log: Wood+Wood, Tree+Saw
+Plank: Log+Axe, Wood+Saw
+Hay: Grass+Sun, Wheat+Sun
+Wheat: Field+Seed, Grass+Farmer
+Fruit: Tree+Flower, Flower+Autumn
+Apple: Fruit+Tree, Fruit+Autumn
+Orchard: Apple+Field, Apple+Forest
+Berry: Bush+Fruit, Bush+Summer
+Banana: Fruit+Jungle, Fruit+Monkey
+Watermelon: Fruit+Water, Fruit+Summer
+Grapes: Fruit+Vine
+Coconut: Palm Tree+Fruit, Palm Tree+Beach
+Vegetable: Plant+Field, Plant+Farmer
+Potato: Vegetable+Earth, Vegetable+Mud
+Carrot: Vegetable+Garden
+Tomato: Fruit+Vegetable, Vegetable+Sun
+Corn: Vegetable+Field, Wheat+Summer
+Pumpkin: Vegetable+Autumn, Fruit+Field
+Sugarcane: Bamboo+Field, Grass+Sugar
+Garden: Flower+House, Plant+House
+Cocoa: Seed+Jungle, Tree+Chocolate
+Coffee: Seed+Energy
+Tea: Leaf+Steam, Leaf+Water
+Rice: Wheat+Water, Grass+Swamp
+Treehouse: Tree+House, Tree+Plank
+# animals
+Animal: Life+Plant, Life+Forest
+Fish: Animal+Sea, Life+Sea
+Bird: Animal+Air, Animal+Sky
+Egg: Bird+Bird, Life+Shell
+Nest: Bird+Tree, Bird+Stick
+Chicken: Bird+Farm, Egg+Farm
+Duck: Bird+Pond, Bird+Lake
+Penguin: Bird+Ice, Bird+Snow
+Owl: Bird+Night, Bird+Moon
+Eagle: Bird+Mountain, Bird+Cliff
+Parrot: Bird+Jungle, Bird+Paint
+Flamingo: Bird+Salt, Bird+Rose
+Peacock: Bird+Rainbow, Bird+Palace
+Seagull: Bird+Beach, Bird+Ocean
+Crow: Bird+Field, Bird+Scarecrow
+Scarecrow: Hay+Human, Hay+Shirt
+Dove: Bird+Love, Bird+Cloud
+Bat: Mouse+Bird, Animal+Cave
+Insect: Animal+Grass, Animal+Leaf
+Bee: Insect+Flower, Insect+Honey
+Beehive: Bee+Tree, Bee+House
+Caterpillar: Insect+Leaf, Insect+Bush
+Butterfly: Caterpillar+Time, Insect+Rainbow
+Moth: Butterfly+Night, Butterfly+Lamp
+Ant: Insect+Hill, Insect+Earth
+Spider: Insect+Insect
+Web: Spider+Tree, Spider+House
+Ladybug: Insect+Garden, Insect+Rose
+Mosquito: Insect+Swamp, Insect+Pond
+Fly: Insect+Air, Insect+Sky
+Dragonfly: Insect+Lake, Insect+River
+Firefly: Insect+Light, Insect+Night
+Scorpion: Insect+Desert, Spider+Desert
+Worm: Animal+Mud, Insect+Mud
+Snail: Worm+Shell, Animal+Moss
+Shell: Beach+Stone, Sea+Stone
+Reptile: Animal+Sun, Animal+Stone
+Lizard: Reptile+Desert, Reptile+Wall
+Snake: Reptile+Rope, Reptile+Grass
+Turtle: Reptile+Shell, Animal+Shell
+Crocodile: Reptile+River, Reptile+Swamp
+Frog: Animal+Pond, Animal+Swamp
+Chameleon: Lizard+Rainbow, Lizard+Paint
+Dinosaur: Reptile+Mountain, Fossil+Life
+Bone: Animal+Time, Dog+Meat
+Skeleton: Bone+Bone
+Fossil: Bone+Stone, Dinosaur+Time
+Cow: Animal+Field, Animal+Milk
+Pig: Animal+Farm, Animal+Puddle
+Sheep: Animal+Cloud, Animal+Wool
+Wool: Sheep+Scissors, Sheep+Farmer
+Horse: Animal+Barn, Animal+Wind
+Dog: Animal+Human, Wolf+Human
+Cat: Lion+House, Animal+Mouse
+Mouse: Animal+Cheese, Animal+Wheat
+Rabbit: Animal+Carrot, Animal+Spring
+Hedgehog: Animal+Cactus, Animal+Needle
+Squirrel: Animal+Tree, Animal+Pine
+Bear: Animal+Forest, Animal+Honey
+Polar Bear: Bear+Ice, Bear+Snow
 Panda: Bear+Bamboo
-Polar Bear: Bear+Ice
-Squirrel: Mouse+Tree
-Hedgehog: Mouse+Cactus
-Snail: Animal+Shell
-Worm: Insect+Mud
-Insect: Animal+Plant
-Bee: Insect+Flower
-Caterpillar: Insect+Leaf
-Butterfly: Caterpillar+Sky
-Ant: Insect+Earth
-Spider: Insect+Thread
-Web: Spider+Wind
-Ladybug: Insect+Ruby
-Mosquito: Insect+Swamp
-Fly: Insect+Air
-Dragonfly: Insect+Pond
-Firefly: Insect+Light
-Scorpion: Insect+Desert
-Reptile: Animal+Sand
-Lizard: Reptile+Stone
-Snake: Reptile+Grass
-Turtle: Reptile+Shell
-Crocodile: Reptile+River
-Frog: Animal+Pond
-Chameleon: Lizard+Rainbow
-Honey: Bee+Flower
-Milk: Cow+Human
-Cheese: Milk+Salt
-Butter: Milk+Pressure
-Ice Cream: Milk+Ice
-Sugarcane: Grass+Sun
-Sugar: Sugarcane+Stone
-Cocoa: Jungle+Seed
-Chocolate: Cocoa+Sugar
-Cake: Dough+Sugar
-Cookie: Dough+Chocolate
-Candy: Sugar+Fire
-Jam: Berry+Sugar
-Juice: Fruit+Pressure
-Wheat: Grass+Seed
-Flour: Wheat+Stone
+Koala: Bear+Tree, Animal+Palm Tree
+Wolf: Animal+Moon, Dog+Forest
+Fox: Animal+Autumn, Dog+Autumn
+Savanna: Grass+Desert, Field+Heatwave
+Lion: Animal+Savanna, Animal+Crown
+Tiger: Cat+Jungle, Lion+Jungle
+Elephant: Animal+Trumpet, Savanna+Water
+Giraffe: Horse+Tree, Animal+Ladder
+Zebra: Horse+Savanna
+Monkey: Animal+Jungle, Animal+Banana
+Gorilla: Monkey+Mountain, Monkey+Monkey
+Kangaroo: Animal+Backpack, Rabbit+Desert
+Camel: Horse+Desert, Animal+Oasis
+Deer: Horse+Forest
+Whale: Animal+Ocean, Fish+Ocean
+Dolphin: Whale+Wave, Fish+Brain
+Shark: Fish+Wolf, Fish+Knife
+Seal: Animal+Iceberg, Dog+Sea
+Octopus: Fish+Spider, Animal+Ink
+Jellyfish: Fish+Jam, Fish+Lightning
+Starfish: Fish+Star, Star+Sea
+Crab: Shell+Beach, Spider+Sea
+Lobster: Crab+Ocean, Crab+Fire
+Oyster: Shell+Sea, Shell+Ocean
+Pearl: Oyster+Sand, Oyster+Time
+Coral: Stone+Life, Ocean+Rainbow
+Reef: Coral+Coral, Coral+Sea
+Reef Fish: Fish+Reef, Fish+Coral
+Feather: Bird+Wind, Bird+Pillow
+Pillow: Cloth+Feather, Cloth+Cloud
+# people
+Human: Life+Clay, Animal+Tool
+Brain: Life+Energy
+Idea: Brain+Light, Brain+Spark
+Love: Human+Human, Heart+Heart
+Heart: Human+Energy, Love+Life
+Family: Love+House, Human+Baby
+Baby: Love+Time, Family+Time
+Child: Baby+Time, Baby+School
+Sleep: Human+Night, Human+Bed
+Dream: Sleep+Brain, Sleep+Idea
+Ghost: Human+Fog, Skeleton+Night
+Shadow: Light+Human, Sun+Human
+Farmer: Human+Field, Human+Farm
+Fisherman: Human+Fish, Human+Raft
+Baker: Human+Bread, Human+Dough
+Chef: Human+Soup, Human+Knife
+Firefighter: Human+Fire, Human+Fire Truck
+Doctor: Human+Medicine, Human+Hospital
+Teacher: Human+School, Human+Book
+Student: Human+Pencil, Child+Book
+Scientist: Human+Science, Human+Microscope
+Artist: Human+Paint, Human+Painting
+Singer: Human+Song, Human+Microphone
+Miner: Human+Pickaxe, Human+Cave
+Knight: Human+Armor, Human+Sword
+King: Human+Crown, Human+Castle
+Queen: King+Love, Human+Palace
+Princess: Queen+Child, King+Child
+Army: Knight+Knight, Tent+Knight
+Pirate: Human+Ship, Human+Treasure
+Wizard: Human+Magic, Human+Magic Wand
+Archer: Human+Bow, Human+Arrow
+Astronaut: Human+Rocket, Human+Space
+Snowman: Human+Snow, Snow+Carrot
+Explorer: Human+Map, Human+Compass
+Lumberjack: Human+Axe, Human+Log
+Gardener: Human+Garden, Human+Flower
+Pilot: Human+Airplane, Human+Helicopter
+Programmer: Human+Computer, Brain+Computer
+Gamer: Human+Video Game, Child+Video Game
+Athlete: Human+Trophy, Human+Stadium
+Musician: Human+Guitar, Human+Piano
+Dancer: Human+Music, Human+Party
+Writer: Human+Pen, Human+Letter
+Cowboy: Hat+Horse, Horse+Rope
+Ninja: Shadow+Sword, Shadow+Human
+Clown: Human+Circus, Human+Balloon
+Circus: Tent+Elephant, Tent+Party
+Vampire: Bat+Human
+Mermaid: Human+Ocean, Fish+Princess
+Centaur: Human+Horse
+Elf: Human+Forest, Child+Magic
+Fairy: Human+Butterfly, Elf+Flower
+Genie: Human+Lamp, Magic+Lamp
+# food
+Flour: Wheat+Stone, Wheat+Windmill
 Dough: Flour+Water
-Bread: Dough+Fire
-Sandwich: Bread+Cheese
-Pizza: Dough+Cheese
-Burger: Bread+Meat
-Pancake: Dough+Egg
-Pasta: Flour+Egg
-Meat: Animal+Tool
-Steak: Cow+Fire
-Sausage: Meat+Salt
-Bacon: Pig+Fire
-Vegetable: Field+Sun
-Potato: Field+Mud
-Carrot: Vegetable+Sun
-Tomato: Fruit+Vegetable
-Corn: Field+Wind
-Popcorn: Corn+Fire
-Salad: Vegetable+Vegetable
-Soup: Vegetable+Water
-Fries: Potato+Fire
-Rice: Field+Water
-Sushi: Rice+Fish
-Pumpkin: Field+Fruit
-Jack-o-Lantern: Pumpkin+Candle
-Tea: Leaf+Steam
-Coffee: Seed+Steam
-Chef: Human+Soup
-Baker: Human+Bread
-Fisherman: Boat+Fish
-Miner: Human+Cave
-Firefighter: Human+Fire
-Wildfire: Forest+Fire
-Reef Fish: Fish+Coral
+Bread: Dough+Fire, Dough+Oven
+Oven: Fire+Box, Stone+Campfire
+Toast: Bread+Fire, Bread+Oven
+Cake: Dough+Sugar, Bread+Sugar
+Cookie: Dough+Chocolate, Butter+Sugar
+Sugar: Sugarcane+Fire, Sugarcane+Pressure
+Chocolate: Cocoa+Sugar, Cocoa+Milk
+Candy: Sugar+Rainbow, Sugar+Sugar
+Marshmallow: Sugar+Cloud, Candy+Cloud
+Honey: Bee+Flower, Beehive+Bucket
+Milk: Cow+Bucket, Cow+Farmer
+Cheese: Milk+Time, Milk+Mouse
+Butter: Milk+Pressure, Milk+Energy
+Ice Cream: Milk+Ice, Milk+Snow
+Juice: Fruit+Pressure, Apple+Pressure
+Smoothie: Juice+Milk, Fruit+Milk
+Jam: Fruit+Sugar, Berry+Sugar
+Pancake: Milk+Flour, Dough+Butter
+Waffle: Dough+Iron, Pancake+Iron
+Donut: Dough+Ring, Dough+Hole
+Pie: Dough+Apple, Dough+Fruit
+Pizza: Dough+Tomato, Dough+Cheese
+Sandwich: Bread+Cheese, Bread+Vegetable
+Burger: Bread+Steak, Bread+Meat
+Hot Dog: Bread+Sausage, Sausage+Dog
+Pasta: Flour+Egg, Dough+Knife
+Meat: Cow+Chef, Pig+Chef
+Steak: Meat+Fire, Meat+Oven
+Sausage: Meat+Stick, Meat+Pressure
+Bacon: Pig+Fire, Meat+Smoke
+Omelette: Egg+Fire, Egg+Oven
+Salad: Vegetable+Vegetable, Tomato+Leaf
+Soup: Vegetable+Water, Vegetable+Steam
+Fries: Potato+Fire, Potato+Knife
+Popcorn: Corn+Fire, Corn+Explosion
+Sushi: Rice+Fish, Rice+Seaweed
+Jack-o-Lantern: Pumpkin+Candle, Pumpkin+Knife
+# materials
+Ore: Stone+Earth, Mountain+Stone
+Metal: Ore+Fire, Ore+Lava
+Iron: Metal+Stone, Ore+Pressure
+Gold: Metal+Sun, Metal+Sunlight
+Silver: Metal+Moon, Metal+Ice
+Copper: Metal+Earth, Metal+Clay
+Alloy: Metal+Metal
+Bronze: Copper+Alloy, Copper+Silver
+Steel: Iron+Coal, Iron+Fire
+Coal: Wood+Pressure, Campfire+Time
+Oil: Fossil+Pressure, Fossil+Ocean
+Plastic: Oil+Factory
+Rubber: Tree+Juice, Oil+Plastic
+Diamond: Coal+Pressure, Coal+Volcano
+Crystal: Stone+Light, Glass+Ice
+Gem: Crystal+Pressure, Crystal+Cave
+Ruby: Gem+Fire, Gem+Heart
+Sapphire: Gem+Sea, Gem+Sky
+Emerald: Gem+Forest, Gem+Grass
+Jewelry: Gem+Gold, Gold+Silver
+Ring: Gold+Diamond, Gold+Love
+Necklace: Pearl+Thread, Gold+Chain
+Crown: Gold+Jewelry, Gold+Hat
+Glass: Sand+Fire, Beach+Fire
+Brick: Clay+Fire, Mud+Sun
+Kiln: Brick+Fire, Brick+Oven
+Pottery: Clay+Kiln, Clay+Wheel
+Chest: Plank+Metal, Wood+Lock
+Treasure: Chest+Gold, Chest+Jewelry
+Magnet: Iron+Lightning, Iron+Electricity
+Needle: Metal+Thread, Iron+Stick
+Compass: Magnet+Needle, Magnet+Map
+Electricity: Lightning+Metal, Energy+Wire
+Wire: Copper+Thread, Copper+Rope
+Battery: Electricity+Stone, Electricity+Box
+Box: Plank+Nail, Wood+Hammer
+Light Bulb: Electricity+Glass, Idea+Electricity
+Lamp: Light Bulb+House, Candle+Glass
+Candle: Wax+Thread, Wax+Fire
+Wax: Beehive+Fire, Honey+Fire
+Torch: Stick+Fire, Stick+Campfire
+Campfire: Wood+Fire, Log+Fire
+Gunpowder: Coal+Salt, Ash+Spark
+Bomb: Gunpowder+Metal, Gunpowder+Ball
+Firework: Gunpowder+Sky, Rocket+Rainbow
+Explosion: Gunpowder+Fire, Bomb+Fire
+Tool: Stone+Stick, Metal+Wood
+Axe: Tool+Wood, Tool+Tree
+Hammer: Tool+Stone, Tool+Nail
+Nail: Iron+Tool, Metal+Hammer
+Saw: Axe+Steel, Tool+Log
+Knife: Tool+Metal, Steel+Stick
+Scissors: Knife+Knife
+Sword: Knife+Steel, Metal+Knight
+Shield: Wood+Armor, Iron+Plank
+Spear: Stick+Knife, Stick+Metal
+Pickaxe: Tool+Ore, Tool+Mountain
+Shovel: Tool+Earth, Tool+Sand
+Plow: Tool+Field, Horse+Tool
+Armor: Steel+Shirt, Metal+Cloth
+Helmet: Metal+Hat, Armor+Hat
+Bow: Stick+Rope, Wood+Thread
+Arrow: Stick+Feather, Bow+Stick
+Leather: Cow+Tool, Cow+Shirt
+Thread: Wool+Stick, Wool+Wheel
+Rope: Thread+Thread, Vine+Vine
+Chain: Metal+Rope, Ring+Ring
+Cloth: Thread+Needle, Wool+Wool
+Shirt: Cloth+Human, Cloth+Scissors
+Hat: Cloth+Sun, Cloth+Sunlight
+Shoe: Leather+Thread, Leather+Cloth
+Boot: Shoe+Mud, Shoe+Snow
+Glove: Leather+Winter, Wool+Cold
+Scarf: Wool+Winter, Cloth+Winter
+Coat: Cloth+Cold, Shirt+Winter
+Dress: Cloth+Party, Cloth+Flower
+Umbrella: Cloth+Rain, Stick+Rain
+Backpack: Cloth+Book, Leather+Book
+Tent: Cloth+Stick, Cloth+Campfire
+Flag: Cloth+Wind, Cloth+Castle
+Sail: Cloth+Boat, Cloth+Raft
+Paper: Wood+Water, Plank+Pressure
+Book: Paper+Paper, Paper+Ink
+Letter: Paper+Pen, Paper+Love
+Ink: Coal+Water, Octopus+Paper
+Pen: Ink+Feather, Ink+Stick
+Pencil: Wood+Coal, Stick+Coal
+Paint: Water+Rainbow, Ink+Rainbow
+Painting: Paint+Paper, Paint+Wall
+Map: Paper+Earth, Paper+Island
+Globe: Map+Ball, Earth+Ball
+Calendar: Paper+Time, Paper+Day
+Clock: Time+Gear, Gear+Day
+Hourglass: Sand+Glass, Sand+Time
+Mirror: Glass+Silver, Glass+Metal
+Glasses: Glass+Glass, Glass+Human
+Camera: Glass+Machine, Glass+Box
+Photo: Camera+Paper, Camera+Light
+Microscope: Glass+Science, Glasses+Insect
+Telescope: Glass+Star, Glasses+Sky
+Medicine: Plant+Science, Flower+Science
+Science: Idea+Book, Brain+Book
+# places
+Wall: Brick+Brick, Stone+Brick
+House: Wall+Wall, Brick+Wood
+Hut: Mud+Stick, Hay+Wood
+Igloo: Ice+House, Snow+House
+Village: House+House, Hut+Hut
+City: Village+Village, Village+Road
+Skyscraper: House+Sky, Steel+House
+Tower: Brick+Sky, Wall+Sky
+Castle: Wall+Tower, Stone+Knight
+Palace: Castle+Gold, Castle+Queen
+Pyramid: Stone+Desert, Desert+Brick
+Statue: Stone+Human, Stone+Artist
+Sandcastle: Sand+Castle, Beach+Castle
+Lighthouse: Tower+Light, Tower+Sea
+Bridge: River+Wood, River+Steel
+Road: Stone+City, Stone+Car
+Well: Water+Wall, Bucket+Rope
+Bucket: Metal+Water, Wood+Well
+Barn: Hay+House, Horse+House
+Fence: Wood+Field, Plank+Garden
+Farm: Field+House, Barn+Field
+Window: Glass+Wall, Glass+House
+Door: Wood+Wall, Plank+House
+Key: Metal+Door, Gold+Door
+Lock: Key+Chain, Key+Door
+Ladder: Stick+Stick, Plank+Rope
+Stairs: Ladder+House, Ladder+Stone
+Table: Plank+Plank, Wood+Plank
+Chair: Table+Human, Wood+Table
+Bed: Wood+Sleep, Table+Pillow
+School: House+Book, House+Teacher
+Library: Book+Book, Book+Wall
+Hospital: House+Medicine, House+Doctor
+Shop: House+Money, House+Coin
+Bank: Money+Safe, Money+Money
+Safe: Chest+Steel, Chest+Lock
+Money: Gold+Paper, Coin+Paper
+Coin: Gold+Hammer, Silver+Hammer
+Wallet: Leather+Money, Leather+Coin
+Museum: Fossil+House, Painting+House
+Zoo: Animal+Fence, Lion+Fence
+Aquarium: Fish+Glass, Fish+House
+Park: Garden+City, Tree+City
+Stadium: Football+City, Football+Wall
+Restaurant: Chef+House, Chef+Money
+Cinema: Film+House, Film+City
+Film: Photo+Time, Camera+Story
+Story: Book+Dream, Writer+Idea
+Factory: Machine+House, Machine+City
+Windmill: Wind+House, Wind+Tower
+# tech
+Wheel: Wood+Stone
+Cart: Wheel+Wood, Wheel+Box
+Gear: Metal+Wheel, Iron+Wheel
+Machine: Gear+Gear, Metal+Energy
+Engine: Machine+Explosion, Machine+Oil
+Steam Engine: Steam+Machine, Steam+Engine
+Car: Wheel+Engine, Cart+Engine
+Electric Car: Car+Battery, Car+Electricity
+Rail: Steel+Road, Iron+Road
+Train: Steam Engine+Rail, Engine+Rail
+Bus: Car+Car, Car+Village
+Truck: Car+Cart, Car+Barn
+Ambulance: Car+Hospital, Car+Doctor
+Fire Truck: Truck+Firefighter, Car+Firefighter
+Bicycle: Wheel+Wheel
+Motorcycle: Bicycle+Engine, Bicycle+Car
+Skateboard: Wheel+Plank, Wheel+Ski
+Airplane: Bird+Machine, Car+Sky
+Helicopter: Airplane+Windmill, Airplane+Tornado
+Drone: Helicopter+Robot, Helicopter+Smartphone
+Boat: Log+Water, Plank+Sea
+Raft: Log+Log, Log+River
+Ship: Boat+Boat, Boat+Steel
+Sailboat: Boat+Sail, Boat+Wind
+Submarine: Ship+Fish, Boat+Ocean
+Anchor: Chain+Ship, Iron+Boat
+Computer: Machine+Brain, Machine+Science
+Internet: Computer+Computer, Computer+Web
+Email: Letter+Internet, Letter+Computer
+Robot: Metal+Brain, Machine+Human
+Phone: Wire+Sound, Wire+Voice
+Voice: Human+Sound, Brain+Sound
+Smartphone: Phone+Computer, Phone+Internet
+Selfie: Smartphone+Photo, Smartphone+Human
+Radio: Electricity+Sound, Electricity+Music
+TV: Radio+Photo, Radio+Film
+Video Game: Computer+Toy, TV+Toy
+Toy: Plastic+Child, Wood+Child
+Teddy Bear: Bear+Cloth, Bear+Toy
+VR Headset: Glasses+Computer, Glasses+Video Game
+Fridge: Cold+Electricity, Ice+Box
+Solar Panel: Sun+Electricity, Sunlight+Battery
+Wind Turbine: Windmill+Electricity, Wind+Electricity
+Microphone: Voice+Metal, Voice+Electricity
+Sound: Air+Wave, Thunder+Air
+Music: Sound+Sound, Bird+Sound
+Song: Music+Voice, Music+Letter
+Bell: Metal+Sound, Bronze+Sound
+Guitar: Wire+Wood, Music+Wood
+Violin: Guitar+Bow, Wood+Bow
+Piano: Music+Table, Guitar+Table
+Drum: Leather+Music, Leather+Bucket
+Flute: Bamboo+Music, Bamboo+Wind
+Trumpet: Metal+Music, Gold+Music
+Orchestra: Music+Music, Violin+Piano
+# space
+Space: Sky+Star, Night+Star
+Planet: Earth+Space, Stone+Space
+Meteor: Fire+Space, Stone+Star
+Comet: Ice+Space, Meteor+Ice
+Galaxy: Star+Star, Space+Space
+Black Hole: Star+Pressure, Galaxy+Pressure
+Constellation: Star+Map, Star+Pencil
+Rocket: Firework+Metal, Engine+Space
+Spaceship: Rocket+Rocket, Airplane+Space
+Satellite: Space+Machine, Moon+Machine
+Alien: Life+Space, Human+Planet
+UFO: Alien+Machine, Alien+Spaceship
+# myths
+Magic: Rainbow+Energy, Star+Wish
+Wish: Star+Dream, Coin+Well
+Magic Wand: Magic+Stick, Wizard+Stick
+Unicorn: Horse+Rainbow, Horse+Magic
+Pegasus: Horse+Bird, Horse+Sky
+Dragon: Lizard+Fire, Dinosaur+Magic
+Phoenix: Bird+Fire, Bird+Lava
+# fun
+Ball: Leather+Air, Rubber+Air
+Football: Ball+Shoe, Ball+Field
+Golf: Ball+Stick, Ball+Hole
+Racket: Stick+Web, Wood+Web
+Tennis: Racket+Ball
+Ski: Plank+Snow, Stick+Snow
+Sled: Wood+Snow, Cart+Snow
+Trophy: Gold+Football, Gold+Tennis
+Chess: King+Queen, Knight+Castle
+Cards: Paper+King, Paper+Queen
+Party: Music+House, Cake+Human
+Birthday: Cake+Candle, Party+Cake
+Balloon: Party+Air, Rubber+Wind
+Hot Air Balloon: Balloon+Fire, Balloon+Hay
+Parachute: Cloth+Airplane, Umbrella+Sky
+Kite: Paper+Wind, Bird+Paper
 `;
   const IPAL = {
     k: '#34293a', w: '#ffffff', r: '#e8473f', R: '#a82d2d', o: '#f58a2d', y: '#f9cf3a', Y: '#fbeaa4', l: '#9bd13f', g: '#4cad48', G: '#2d7a3e',
@@ -1114,33 +1192,122 @@ Reef Fish: Fish+Coral
     'Wildfire': 'p O M2 62 Q-2 40 14 28 Q10 44 20 46 Q18 28 32 14 Q36 26 46 28 Q60 36 62 62Z;p r M10 62 Q8 48 18 40 Q18 52 24 52 Q22 38 32 28 Q36 38 44 40 Q54 46 54 62Z;p y M20 62 Q20 54 28 48 Q32 54 38 52 Q44 56 44 62Z;L G 3.6 M6 62 L6 40 M2 40 L10 40;L G 2.4 M58 62 L58 46',
     'Reef Fish': 'p o M6 32 Q18 10 40 16 Q50 20 54 32 Q50 44 40 48 Q18 54 6 32Z;p w M16 20 Q20 32 16 44 L24 44 Q28 32 24 18Z;p w M32 16 Q36 32 32 48 L38 46 Q42 32 38 16Z;p k M16 20 L24 18 M32 16 L38 16;p y M50 32 L64 16 L64 48Z;p y M26 12 Q32 6 40 14Z;c 14 30 3 w;c 14.5 30 1.5 k;l O 1.8 M4 32 L12 34;n W M12 24 Q20 18 30 18'
   });
+  Object.assign(LA_ICONS, {
+    'Hole': 'e 32 42 29 15 n;e 32 40 21 10 N;e 32 39 15 6 k;l f 2.4 M8 46 Q14 52 24 54;c 52 32 2.4 n;c 12 34 2 n',
+    'Puddle': 'e 32 46 28 11 b;e 30 44 20 7 q;n W M16 42 Q24 38 34 39;p b M44 8 Q48 18 44 24 Q40 18 44 8Z;p b M24 14 Q27 21 24 25 Q21 21 24 14Z;l w 1.6 M44 46 Q50 44 54 46',
+    'Heatwave': 'c 46 16 10 y;l d 3 M46 1 L46 4 M61 16 L58 16 M57 5 L54 8 M57 27 L54 24;r 12 6 14 42 w 7;r 16 12 6 34 r 3;c 19 50 10 r;n W M14 10 L17 10 L17 40 L14 40Z;l O 3 M32 56 Q37 50 42 56 Q47 62 52 56 Q56 51 60 55',
+    'Obsidian': '@gem k J;n V/40 M20 16 L30 16 L18 30Z;l W 2 M44 44 L50 38',
+    'Sunlight': 'c 32 13 10 y;p Y/70 M22 20 L6 62 L58 62 L42 20Z;l d 3 M32 0 L32 2 M16 5 L19 8 M48 5 L45 8 M10 15 L14 15 M54 15 L50 15;n W M26 9 Q28 5 33 5',
+    'Treehouse': 'r 28 34 8 28 n 2;c 16 30 12 g;c 48 30 12 g;c 32 20 15 G;p r M13 26 L32 11 L51 26Z;r 17 26 30 16 x 2;r 28 31 8 11 n 1;r 20 30 6 5 q 1;L N 2.2 M20 42 L20 62 M26 42 L26 62;l N 1.8 M20 48 L26 48 M20 55 L26 55',
+    'Scarecrow': 'L n 4 M32 22 L32 62;L n 4 M6 34 L58 34;p u M20 32 L44 32 L42 52 L22 52Z;l n 1.6 M26 36 L26 50 M38 36 L38 50;c 32 18 10 z;p n M18 12 L46 12 L40 2 L24 2Z;r 14 10 36 4 n 2;c 28 17 1.6 k;c 36 17 1.6 k;l k 1.4 M27 22 Q32 25 37 22;l d 2 M6 34 L2 38 M6 34 L3 30 M58 34 L62 38 M58 34 L61 30;l d 2 M24 52 L22 58 M40 52 L42 58',
+    'Moth': 'p n M32 30 Q6 4 4 20 Q2 34 30 36Z;p u M32 34 Q8 40 14 54 Q26 56 32 40Z;p n M32 30 Q58 4 60 20 Q62 34 34 36Z;p u M32 34 Q56 40 50 54 Q38 56 32 40Z;c 16 20 5 f;c 48 20 5 f;c 16 20 2 N;c 48 20 2 N;e 32 34 3.6 13 N;L N 1.8 M30 22 Q26 12 20 10;L N 1.8 M34 22 Q38 12 44 10',
+    'Savanna': 'c 48 16 8 o;p z M0 42 Q32 34 64 42 L64 62 Q32 64 0 62Z;L n 3 M22 44 L22 24;l n 2 M22 30 L14 26 M22 28 L30 24;p G M4 26 Q22 12 40 26 Q22 30 4 26Z;l d 2 M8 52 L10 46 M14 54 L16 48 M42 52 L44 46 M52 56 L54 50 M30 58 L32 52',
+    'Pillow': 'p w M6 20 Q4 10 14 12 Q32 18 50 12 Q60 10 58 20 Q54 32 58 44 Q60 54 50 52 Q32 46 14 52 Q4 54 6 44 Q10 32 6 20Z;l e 2 M14 22 Q32 27 50 22;n q/40 M12 40 Q32 45 52 40 L52 47 Q32 42 12 47Z;c 32 34 2 e',
+    'Child': '@bust #f2b632 s #5a3b1c sh 30 38 0.82;L a 1.2 M50 40 L52 20;e 52 13 7 8 r;n W M48 9 Q50 6 53 6',
+    'Shadow': 'c 52 10 6 y;e 36 58 24 5 K;p J M22 60 L24 32 Q24 24 32 24 Q40 24 40 32 L42 60Z;c 32 15 8 J;n W/30 M26 28 L30 28 L28 44Z',
+    'Princess': '@bust #f48fb1 s #d9b26a lg;p d M21 15 L23 6 L28 12 L32 4 L36 12 L41 6 L43 15Z;c 32 9 1.6 p;c 23 7 1.2 c;c 41 7 1.2 c',
+    'Explorer': '@bust #c9a45a s #5a3b1c sh;p u M6 16 Q32 8 58 16 Q32 21 6 16Z;p z M18 15 Q18 2 32 2 Q46 2 46 15Z;l n 2 M18 12 L46 12;c 44 52 4.4 A;c 54 52 4.4 A;c 44 52 2 c;c 54 52 2 c',
+    'Lumberjack': '@bust #c8352f s #6a3a1c sh;l R 2 M12 52 L50 52 M22 46 L22 62 M42 46 L42 62;p n M20 29 Q32 44 44 29 Q44 39 32 42 Q20 39 20 29Z;L n 3 M55 24 L55 62;p a M51 24 L62 20 L62 33 L51 31Z',
+    'Gardener': '@bust #4cad48 s #7a4a2a sh;p z M7 15 Q32 7 57 15 Q32 20 7 15Z;p f M20 14 Q20 3 32 3 Q44 3 44 14Z;l g 2 M20 11 L44 11;p t M40 46 L54 46 L54 60 L40 60Z;L t 2 M54 50 L62 42;c 10 52 4 p;c 6 50 2.6 y;c 14 49 2.6 y',
+    'Pilot': '@bust #24428f s #5a3b1c sh;p B M14 15 Q14 4 32 4 Q50 4 50 15Z;r 12 13 40 5 k 2;c 32 9 2.4 d;r 25 50 14 3 d 1;l d 1.6 M20 48 L28 52 M44 48 L36 52',
+    'Programmer': '@bust #5c6570 s #2a211e sh;L A 2.4 M17 24 Q17 8 32 8 Q47 8 47 24;r 13 20 7 10 k 3;r 44 20 7 10 k 3;r 14 46 36 15 a 2;r 17 49 30 10 b 1;l l 1.6 M20 52 L30 52 M20 55 L26 55 M33 55 L40 55',
+    'Gamer': '@bust #8a5ad6 s #7a4a2a sh;p k M14 50 Q14 44 22 44 L42 44 Q50 44 50 50 Q50 60 44 60 Q40 60 38 56 L26 56 Q24 60 20 60 Q14 60 14 50Z;l w 1.6 M20 50 L26 50 M23 47 L23 53;c 40 48 1.8 r;c 44 52 1.8 b',
+    'Athlete': '@bust #e8473f s #5a3b1c sh;r 17 14 30 4 w 2;L b 2.4 M24 44 L32 53 L40 44;c 32 56 5.4 d;c 32 56 2.4 y',
+    'Musician': '@bust #2bb3a3 s #3a2a1a lg;L n 4 M42 62 L58 40;c 44 56 8 n;c 40 52 6 n;c 44 56 2.4 k;l k 2 M52 6 L52 16 M52 6 L60 4 L60 14;c 50 16 2.4 k;c 58 14 2.4 k',
+    'Dancer': '@bust #e0469a s #2a211e lg;p d M10 8 L12 2 L14 8 L20 10 L14 12 L12 18 L10 12 L4 10Z;p d M52 28 L53 24 L54 28 L58 29 L54 30 L53 34 L52 30 L48 29Z;l m 2 M6 40 Q2 48 8 54 M58 42 Q62 50 56 56',
+    'Writer': '@bust #6d5bd0 s #9a6a3a sh;r 36 42 22 20 w 2;l a 1.4 M40 48 L54 48 M40 52 L54 52 M40 56 L50 56;L k 3 M30 62 L46 40;p y M45 41 L47 37 L49 40Z',
+    'Cowboy': '@bust #c97b4a s #7a4a2a sh;p n M3 14 Q8 21 32 18 Q56 21 61 14 Q57 23 32 23 Q7 23 3 14Z;p n M18 16 Q16 2 26 2 Q32 6 38 2 Q48 2 46 16Z;l N 2 M18 13 L46 13;p r M24 44 L32 52 L40 44 L36 42 L32 46 L28 42Z',
+    'Ninja': 'p k M10 62 Q10 42 32 40 Q54 42 54 62Z;c 32 24 16 k;r 16 19 32 9 s 4;c 26 23 2 k;c 38 23 2 k;l A 2 M40 12 L50 6 M42 14 L52 10;p a M48 52 L62 38 L60 36 L46 50Z;c 47 51 2.4 n',
+    'Clown': '@bust #f9cf3a s #e8473f sh;c 17 19 6 o;c 47 19 6 b;c 32 10 7 g;c 32 28 3.2 r;p r M24 46 L32 52 L40 46 L37 56 L27 56Z;c 32 52 2 y',
+    'Circus': 'p r M4 34 L32 6 L60 34Z;p w M17 34 L32 6 L25 34Z;p w M39 34 L32 6 L47 34Z;r 6 34 52 24 w 2;r 6 34 8 24 r;r 22 34 8 24 r;r 38 34 8 24 r;r 54 34 4 24 r;p k M26 58 L26 45 Q32 39 38 45 L38 58Z;L A 2 M32 6 L32 0;p y M32 0 L42 3 L32 6Z',
+    'Vampire': '@bust #2a2340 #e8e1ec #1e1e1e sh;p R M8 64 L12 42 L22 48 L32 58 L42 48 L52 42 L56 64Z;p k M5 44 L18 30 L22 48Z;p k M59 44 L46 30 L42 48Z;p w M28.5 31 L29.5 34 L30.5 31Z;p w M33.5 31 L34.5 34 L35.5 31Z',
+    'Oven': 'r 6 6 52 52 e 5;r 6 6 52 12 a 5;c 16 12 3 k;c 26 12 3 k;r 38 10 14 4 r 1;r 12 24 40 28 A 3;r 16 28 32 20 o/80 2;l y 1.6 M20 40 Q24 33 28 40 Q32 33 36 40 Q40 33 44 40;l w 3 M18 24 L46 24',
+    'Toast': 'p u M8 20 Q6 6 20 6 Q26 2 32 6 Q38 2 44 6 Q58 6 56 20 L54 58 L10 58Z;p f M14 22 Q12 12 22 12 Q32 8 42 12 Q52 12 50 22 L48 52 L16 52Z;p Y M24 28 L40 28 L40 38 L24 38Z;n W M14 16 Q18 10 26 10',
+    'Marshmallow': 'r 12 36 40 22 w 9;r 12 36 40 7 P 4;r 16 14 32 22 P 8;r 16 14 32 7 w 3;n W M20 18 L26 18 L22 32Z;L n 2.4 M58 2 L42 26',
+    'Smoothie': 'p p M16 16 L48 16 L44 60 L20 60Z;p P M16 16 L48 16 L47 24 L17 24Z;L r 3 M36 18 L44 2;c 25 36 3 m;c 37 46 3 m;c 30 52 2 m;n W M20 26 L24 26 L26 56 L22 56Z',
+    'Waffle': 'r 8 8 48 48 d 9;l D 3 M20 9 L20 55 M32 9 L32 55 M44 9 L44 55 M9 20 L55 20 M9 32 L55 32 M9 44 L55 44;p Y M25 25 L39 25 L39 37 L25 37Z;n W M12 12 L22 12 L12 22Z',
+    'Donut': 'L u 15 M32 13 Q51 13 51 32 Q51 51 32 51 Q13 51 13 32 Q13 13 32 13Z;l p 10 M32 15 Q49 15 49 32 Q49 47 32 49 Q15 47 15 32 Q15 15 32 15Z;l y 2 M24 18 L27 20 M40 19 L42 16 M46 33 L48 36 M19 39 L22 40 M36 46 L39 44 M18 26 L21 24',
+    'Pie': 'p d M4 34 Q32 22 60 34 L54 52 Q32 60 10 52Z;p u M4 34 Q32 22 60 34 Q32 46 4 34Z;l f 2 M16 30 L48 38 M16 38 L48 30 M32 26 L32 42;l w 2 M28 6 Q24 12 28 16 M36 4 Q32 10 36 14',
+    'Hot Dog': 'p u M4 34 Q2 22 14 24 L50 24 Q62 22 60 34 Q62 46 50 46 L14 46 Q2 46 4 34Z;r 6 28 52 10 R 5;l y 2.4 M10 31 Q16 27 22 31 Q28 35 34 31 Q40 27 46 31 Q52 35 56 31;p f M6 38 Q32 52 58 38 Q56 50 46 50 L18 50 Q8 50 6 38Z',
+    'Omelette': 'p w M8 34 Q4 16 22 14 Q30 4 44 10 Q60 14 58 30 Q62 48 46 52 Q32 60 18 52 Q4 48 8 34Z;c 32 32 11 y;c 32 32 7 d;n W M27 27 Q30 23 34 24',
+    'Oil': 'p k M32 4 Q34 16 46 30 Q56 43 46 53 Q40 59 32 59 Q24 59 18 53 Q8 43 18 30 Q30 16 32 4Z;n W M23 38 Q21 47 28 52 Q24 46 25 40Z;n v/50 M36 20 Q42 28 44 34 Q38 28 36 20Z',
+    'Plastic': 'p q/80 M24 14 L40 14 L42 20 Q50 24 50 34 L50 54 Q50 60 44 60 L20 60 Q14 60 14 54 L14 34 Q14 24 22 20Z;r 26 4 12 10 b 2;l w 2 M20 34 L44 34 M20 46 L44 46;n W M18 30 L22 30 L22 54 L18 54Z',
+    'Rubber': 'p P M6 36 L30 20 L58 30 L34 48Z;p p M6 36 L34 48 L34 58 L6 46Z;p m M34 48 L58 30 L58 40 L34 58Z;n W M14 34 L28 26 L32 28 L18 36Z',
+    'Box': 'p f M6 22 L32 12 L58 22 L32 32Z;p u M6 22 L32 32 L32 60 L6 50Z;p C M32 32 L58 22 L58 50 L32 60Z;l n 2 M19 17 L45 27 L45 36;n W M10 26 L14 27 L14 46 L10 45Z',
+    'Igloo': 'p w M4 56 Q4 18 32 18 Q60 18 60 56Z;l q 2 M6 46 L58 46 M10 36 L54 36 M16 27 L48 27 M20 56 L20 46 M44 56 L44 46 M30 46 L30 36 M38 36 L38 27 M24 36 L24 27;p k M24 56 L24 46 Q32 39 40 46 L40 56Z;p i M2 56 L62 56 L62 61 L2 61Z',
+    'Sandcastle': 'p z M6 58 L10 30 L18 30 L18 22 L24 22 L24 30 L40 30 L40 22 L46 22 L46 30 L54 30 L58 58Z;r 26 14 12 16 u 1;p f M22 58 L22 46 Q32 38 42 46 L42 58Z;L n 1.6 M32 14 L32 4;p r M32 4 L42 7 L32 10Z;l D 1.4 M10 44 L14 44 M48 40 L52 40',
+    'Museum': 'p e M4 22 L32 6 L60 22Z;r 6 22 52 6 a 1;r 10 30 6 22 w 1;r 22 30 6 22 w 1;r 36 30 6 22 w 1;r 48 30 6 22 w 1;r 4 52 56 8 a 2;c 32 15 3 d',
+    'Zoo': 'r 6 22 6 38 n 2;r 52 22 6 38 n 2;p g M4 22 Q32 2 60 22 L60 28 Q32 10 4 28Z;L N 2.4 M18 30 L18 60 M26 30 L26 60 M38 30 L38 60 M46 30 L46 60;c 32 45 9 d;c 32 45 6 y;c 29 43 1 k;c 35 43 1 k;l k 1.2 M30 48 Q32 50 34 48',
+    'Aquarium': 'r 4 12 56 44 q/70 5;r 4 12 56 8 b/50 4;p o M22 32 Q30 24 38 32 Q30 40 22 32Z;p o M38 32 L44 26 L44 38Z;c 26 31 1.4 k;p g M44 56 Q42 46 46 40 Q48 48 48 56Z;p g M14 56 Q12 48 16 44 Q18 50 18 56Z;c 16 22 1.6 w;c 20 18 1.2 w;r 2 54 60 6 a 2',
+    'Park': 'L n 4 M18 40 L18 58;c 18 26 14 g;c 12 30 8 G;L n 3 M32 50 L58 50 M35 50 L35 58 M55 50 L55 58;r 31 42 28 4 f 1;p l M0 58 L64 58 L64 64 L0 64Z;c 48 14 6 y',
+    'Stadium': 'e 32 38 30 18 a;e 32 36 26 14 e;e 32 38 20 9 g;l w 1.4 M32 30 L32 46 M18 38 L46 38;L k 2 M8 24 L8 10 M56 24 L56 10;p y M8 10 L16 14 L8 17Z;p r M56 10 L48 14 L56 17Z',
+    'Restaurant': 'c 32 34 22 w;c 32 34 15 e;c 32 34 12 w;L a 3 M6 12 L6 58;l a 1.6 M3 12 L3 24 M9 12 L9 24;L a 3 M58 12 L58 58;p a M58 12 Q64 22 58 34Z',
+    'Cinema': 'r 6 6 52 30 q 3;r 6 6 52 6 r 2;n W M10 14 L26 14 L10 30Z;p y M26 16 L40 22 L26 28Z;r 4 40 14 10 R 3;r 25 40 14 10 R 3;r 46 40 14 10 R 3;r 4 50 14 4 N 1;r 25 50 14 4 N 1;r 46 50 14 4 N 1',
+    'Film': 'c 30 30 26 a;c 30 30 22 A;c 30 16 6 e;c 44 30 6 e;c 30 44 6 e;c 16 30 6 e;c 30 30 4 a;p k M48 50 L62 56 L60 62 L46 54Z',
+    'Story': 'p w M4 18 Q18 12 32 20 Q46 12 60 18 L60 56 Q46 50 32 58 Q18 50 4 56Z;l a 2 M32 20 L32 58;l e 1.6 M10 28 L26 30 M10 36 L26 38 M38 30 L54 28 M38 38 L54 36;p y M20 2 L22 7 L28 8 L23 11 L25 17 L20 13 L15 17 L17 11 L12 8 L18 7Z;p d M46 2 L47 5 L50 6 L47 7 L46 10 L45 7 L42 6 L45 5Z',
+    'Electric Car': 'p l M2 44 L2 34 Q2 30 8 30 L16 28 L24 16 Q26 14 30 14 L42 14 Q46 14 48 18 L54 28 L60 30 Q62 32 62 36 L62 44Z;p q M24 18 L28 28 L40 28 L40 18Z;p q M44 18 L44 28 L52 28 L47 20Z;@wheel 17 46 9;@wheel 48 46 9;c 58 36 2.6 w;p y M33 30 L28 38 L32 38 L29 44 L37 35 L33 35 L36 30Z',
+    'Drone': 'r 18 26 28 10 A 4;L a 2.4 M18 28 L8 20 M46 28 L56 20 M18 34 L8 42 M46 34 L56 42;e 8 18 7 2 e;e 56 18 7 2 e;e 8 44 7 2 e;e 56 44 7 2 e;c 32 31 3 c;c 32 31 1.4 k',
+    'Email': 'r 4 14 50 34 w 4;p e M4 16 L29 36 L54 16Z;l a 2.2 M4 46 L22 30 M54 46 L36 30;c 48 46 11 b;l w 2.4 M51 46 Q51 42 48 42 Q44 42 44 46 Q44 50 48 50 Q51 50 51 46 L51 49 Q54 50 55 46 Q55 38 48 38 Q41 38 41 46 Q41 54 49 54',
+    'Voice': 'p w M6 12 L44 12 Q50 12 50 18 L50 34 Q50 40 44 40 L24 40 L14 50 L16 40 L12 40 Q6 40 6 34 L6 18 Q6 12 12 12Z;l b 3 M16 26 L16 26 M23 22 L23 30 M30 18 L30 34 M37 22 L37 30 M43 26 L43 26;l v 2.4 M54 20 Q58 26 54 32 M58 16 Q64 26 58 36',
+    'Selfie': 'r 16 3 32 58 k 6;r 20 9 24 40 q 2;c 32 29 9 s;c 29 27 1.3 k;c 35 27 1.3 k;l k 1.4 M28 32 Q32 35 36 32;p n M23 27 Q23 18 32 18 Q41 18 41 27 Q37 22 32 22 Q27 22 23 27Z;c 32 54 3 A;p y M51 8 L53 4 L55 8 L59 10 L55 12 L53 16 L51 12 L47 10Z',
+    'Video Game': 'p v M10 24 Q4 24 4 34 Q4 48 10 52 Q14 54 18 50 L24 42 L40 42 L46 50 Q50 54 54 52 Q60 48 60 34 Q60 24 54 24Z;l w 3 M14 34 L22 34 M18 30 L18 38;c 44 31 3 r;c 50 37 3 y;c 38 37 3 b;c 44 43 3 g;n W M10 28 L18 26 L12 34Z',
+    'Toy': 'r 6 34 24 24 r 3;r 34 34 24 24 b 3;r 20 10 24 24 y 3;l w 2.4 M12 52 L18 40 L24 52 M15 48 L21 48 M42 40 L50 40 L42 52 L50 52 M28 16 L36 16 L32 28Z',
+    'Teddy Bear': 'c 16 14 8 f;c 48 14 8 f;c 16 14 4 u;c 48 14 4 u;e 32 54 16 10 f;c 18 56 5 u;c 46 56 5 u;c 32 30 18 f;e 32 36 9 7 u;c 25 26 2.2 k;c 39 26 2.2 k;c 32 33 2.6 k;p r M24 46 L32 49 L40 46 L40 53 L32 49 L24 53Z',
+    'VR Headset': 'r 6 22 52 22 A 9;r 10 26 20 14 c 6;r 34 26 20 14 c 6;n W M12 28 L20 28 L12 36Z;L k 3 M6 30 L2 28 M58 30 L62 28;r 26 40 12 6 a 2',
+    'Fridge': 'r 14 4 36 56 w 5;l e 2 M14 24 L50 24;r 42 10 3 10 a 1;r 42 28 3 16 a 1;r 16 58 6 4 a 1;r 42 58 6 4 a 1;c 22 14 3 r;c 30 12 2.4 y',
+    'Solar Panel': 'p B M8 14 L56 14 L62 44 L2 44Z;l q 1.6 M24 14 L22 44 M40 14 L42 44 M5 29 L59 29;L a 3 M32 44 L32 58;r 22 56 20 6 a 2;c 54 6 5 y',
+    'Wind Turbine': 'L e 3 M32 30 L32 62;p w M32 30 L28 4 L35 5Z;p w M32 30 L56 44 L51 48Z;p w M32 30 L7 44 L10 38Z;c 32 30 4 a',
+    'Microphone': 'r 22 4 20 30 a 10;l A 1.6 M24 14 L40 14 M24 20 L40 20 M24 26 L40 26;L A 2.6 M14 26 Q14 42 32 42 Q50 42 50 26;L A 3 M32 42 L32 56;r 20 54 24 6 A 3',
+    'Constellation': 'l q 1.6 M10 50 L22 30 L36 36 L50 14 L56 32;p y M10 45 L12 49 L16 49 L13 52 L14 56 L10 54 L6 56 L7 52 L4 49 L8 49Z;c 22 30 3.6 y;c 36 36 3 y;p y M50 8 L52 13 L57 13 L53 16 L55 21 L50 18 L45 21 L47 16 L43 13 L48 13Z;c 56 32 3 y',
+    'Wish': 'l Y 4 M6 52 L30 28;l d 2 M10 57 L34 33;p y M40 8 L44 18 L55 19 L46 26 L49 37 L40 31 L31 37 L34 26 L25 19 L36 18Z;n W M36 20 L40 14 L40 22Z'
+  });
+  const LA_FR = 'Air|Terre|Feu|Eau|Vent|Vapeur|Boue|Lave|Énergie|Brume|Poussière|Mer|Colline|Fumée|Pierre|Pression|Sable|Argile|Nuage|Pluie|Ciel|Soleil|Jour|Lune|Nuit|Étoile|Étincelle|Éclair|Tonnerre|Orage|Arc-en-ciel|Froid|Glace|Neige|Givre|Grêle|Blizzard|Glacier|Iceberg|Montagne|Volcan|Océan|Île|Vague|Séisme|Tsunami|Plage|Désert|Dune|Oasis|Tempête de sable|Sables mouvants|Marais|Sel|Rivière|Vallée|Lac|Étang|Falaise|Cascade|Canyon|Trou|Grotte|Geyser|Source chaude|Brouillard|Rosée|Tornade|Ouragan|Inondation|Flaque|Éclipse|Lumière|Aurore boréale|Temps|Printemps|Été|Automne|Hiver|Canicule|Obsidienne|Feu de forêt|Cendre|Vie|Algue|Plante|Algue marine|Mousse|Herbe|Champ|Graine|Arbre|Fleur|Rose|Tournesol|Rayon de soleil|Buisson|Forêt|Jungle|Feuille|Fougère|Champignon|Cactus|Liane|Bambou|Palmier|Pin|Bâton|Bois|Rondin|Planche|Foin|Blé|Fruit|Pomme|Verger|Baie|Banane|Pastèque|Raisin|Noix de coco|Légume|Pomme de terre|Carotte|Tomate|Maïs|Citrouille|Canne à sucre|Jardin|Cacao|Café|Thé|Riz|Cabane dans les arbres|Animal|Poisson|Oiseau|Œuf|Nid|Poule|Canard|Manchot|Hibou|Aigle|Perroquet|Flamant rose|Paon|Mouette|Corbeau|Épouvantail|Colombe|Chauve-souris|Insecte|Abeille|Ruche|Chenille|Papillon|Papillon de nuit|Fourmi|Araignée|Toile|Coccinelle|Moustique|Mouche|Libellule|Luciole|Scorpion|Ver de terre|Escargot|Coquillage|Reptile|Lézard|Serpent|Tortue|Crocodile|Grenouille|Caméléon|Dinosaure|Os|Squelette|Fossile|Vache|Cochon|Mouton|Laine|Cheval|Chien|Chat|Souris|Lapin|Hérisson|Écureuil|Ours|Ours polaire|Panda|Koala|Loup|Renard|Savane|Lion|Tigre|Éléphant|Girafe|Zèbre|Singe|Gorille|Kangourou|Chameau|Cerf|Baleine|Dauphin|Requin|Phoque|Pieuvre|Méduse|Étoile de mer|Crabe|Homard|Huître|Perle|Corail|Récif|Poisson tropical|Plume|Oreiller|Humain|Cerveau|Idée|Amour|Cœur|Famille|Bébé|Enfant|Sommeil|Rêve|Fantôme|Ombre|Fermier|Pêcheur|Boulanger|Chef cuisinier|Pompier|Médecin|Professeur|Élève|Scientifique|Artiste|Chanteur|Mineur|Chevalier|Roi|Reine|Princesse|Armée|Pirate|Magicien|Archer|Astronaute|Bonhomme de neige|Explorateur|Bûcheron|Jardinier|Pilote|Programmeur|Joueur|Athlète|Musicien|Danseur|Écrivain|Cow-boy|Ninja|Clown|Cirque|Vampire|Sirène|Centaure|Elfe|Fée|Génie|Farine|Pâte|Pain|Four|Pain grillé|Gâteau|Cookie|Sucre|Chocolat|Bonbon|Guimauve|Miel|Lait|Fromage|Beurre|Glace à la vanille|Jus|Smoothie|Confiture|Crêpe|Gaufre|Beignet|Tarte|Pizza|Sandwich|Burger|Hot-dog|Pâtes|Viande|Steak|Saucisse|Bacon|Œuf au plat|Salade|Soupe|Frites|Pop-corn|Sushi|Citrouille d’Halloween|Minerai|Métal|Fer|Or|Argent|Cuivre|Alliage|Bronze|Acier|Charbon|Pétrole|Plastique|Caoutchouc|Diamant|Cristal|Pierre précieuse|Rubis|Saphir|Émeraude|Bijou|Bague|Collier|Couronne|Verre|Brique|Four à poterie|Poterie|Coffre|Trésor|Aimant|Aiguille|Boussole|Électricité|Fil électrique|Pile|Boîte|Ampoule|Lampe|Bougie|Cire|Torche|Feu de camp|Poudre à canon|Bombe|Feu d’artifice|Explosion|Outil|Hache|Marteau|Clou|Scie|Couteau|Ciseaux|Épée|Bouclier|Lance|Pioche|Pelle|Charrue|Armure|Casque|Arc|Flèche|Cuir|Fil|Corde|Chaîne|Tissu|Chemise|Chapeau|Chaussure|Botte|Gant|Écharpe|Manteau|Robe|Parapluie|Sac à dos|Tente|Drapeau|Voile|Papier|Livre|Lettre|Encre|Stylo|Crayon|Peinture|Tableau|Carte|Globe|Calendrier|Horloge|Sablier|Miroir|Lunettes|Appareil photo|Photo|Microscope|Télescope|Médicament|Science|Mur|Maison|Hutte|Igloo|Village|Ville|Gratte-ciel|Tour|Château|Palais|Pyramide|Statue|Château de sable|Phare|Pont|Route|Puits|Seau|Grange|Clôture|Ferme|Fenêtre|Porte|Clé|Cadenas|Échelle|Escalier|Table|Chaise|Lit|École|Bibliothèque|Hôpital|Magasin|Banque|Coffre-fort|Argent liquide|Pièce|Portefeuille|Musée|Zoo|Aquarium|Parc|Stade|Restaurant|Cinéma|Film|Histoire|Usine|Moulin à vent|Roue|Chariot|Engrenage|Machine|Moteur|Machine à vapeur|Voiture|Voiture électrique|Rail|Train|Bus|Camion|Ambulance|Camion de pompiers|Vélo|Moto|Skateboard|Avion|Hélicoptère|Drone|Barque|Radeau|Navire|Voilier|Sous-marin|Ancre|Ordinateur|Internet|E-mail|Robot|Téléphone|Voix|Smartphone|Selfie|Radio|Télévision|Jeu vidéo|Jouet|Ours en peluche|Casque de réalité virtuelle|Frigo|Panneau solaire|Éolienne|Micro|Son|Musique|Chanson|Cloche|Guitare|Violon|Piano|Tambour|Flûte|Trompette|Orchestre|Espace|Planète|Météore|Comète|Galaxie|Trou noir|Constellation|Fusée|Vaisseau spatial|Satellite|Extraterrestre|OVNI|Magie|Vœu|Baguette magique|Licorne|Pégase|Dragon|Phénix|Ballon|Football|Golf|Raquette|Tennis|Ski|Luge|Trophée|Échecs|Cartes à jouer|Fête|Anniversaire|Ballon de baudruche|Montgolfière|Parachute|Cerf-volant';
+  LA_ICONS['Football'] = LA_ICONS['Soccer'];
   const LA_BASE = ['Air', 'Earth', 'Fire', 'Water'];
+  const LA_CATS = ['nature', 'plants', 'animals', 'people', 'food', 'materials', 'places', 'tech', 'space', 'myths', 'fun'];
+  const LA_CATN = { nature: 'Nature', plants: 'Plants', animals: 'Animals', people: 'People', food: 'Food', materials: 'Things', places: 'Places', tech: 'Machines', space: 'Space', myths: 'Myths', fun: 'Fun' };
   const LA_KEY = (a, b) => a < b ? a * 1024 + b : b * 1024 + a;
   const LA = (() => {
-    const names = [...LA_BASE], id = {}, rec = [[], [], [], []], pair = new Map(), used = new Set();
-    const rows = LA_RAW.trim().split('\n').map(l => { const c = l.indexOf(':'); return [l.slice(0, c).trim(), l.slice(c + 1).split(',').map(s => s.split('+').map(x => x.trim()))]; });
+    const names = [...LA_BASE], id = {}, rec = [[], [], [], []], pair = new Map(), used = new Set(), cat = [0, 0, 0, 0], rows = [];
+    let c = 0;
+    LA_RAW.trim().split('\n').forEach(l => {
+      if (l[0] === '#') { c = Math.max(0, LA_CATS.indexOf(l.slice(1).trim())); return; }
+      const i = l.indexOf(':');
+      rows.push([l.slice(0, i).trim(), l.slice(i + 1).split(',').map(s => s.split('+').map(x => x.trim())), c]);
+    });
     names.forEach((n, i) => { id[n] = i; });
-    rows.forEach(([n]) => { id[n] = names.push(n) - 1; });
+    rows.forEach(([n, , k]) => { id[n] = names.push(n) - 1; cat.push(k); });
     rows.forEach(([n, rs]) => {
       const r = id[n];
       rec[r] = rs.map(p => p.map(x => id[x]));
       rec[r].forEach(([a, b]) => { pair.set(LA_KEY(a, b), r); used.add(a); used.add(b); });
     });
+    const fr = LA_FR.split('|');
     const finals = names.map((_, i) => i).filter(i => !used.has(i));
-    return { names, id, rec, pair, used, finals, n: names.length };
+    const makes = names.map(() => []);
+    rec.forEach((rs, r) => rs.forEach(([a, b]) => { if (!makes[a].includes(r)) makes[a].push(r); if (!makes[b].includes(r)) makes[b].push(r); }));
+    return { names, id, rec, pair, used, finals, makes, cat, fr, n: names.length };
   })();
-  const laIco = n => LA_ICONS[n] ? iconSvg(n, LA_ICONS[n]) : `<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="22" fill="#cfd6de"/><text x="32" y="40" text-anchor="middle" font-size="24" font-weight="800" fill="#5c6570">${n[0]}</text></svg>`;
+  const laLang = () => (window.gpI18n && gpI18n.lang) || 'en';
+  const laT = (s, o) => { let t = window.gpI18n && gpI18n.t ? gpI18n.t(s) : s; if (typeof t !== 'string') t = s; return o ? t.replace(/\{(\w+)\}/g, (m, k) => (k in o ? o[k] : m)) : t; };
+  const laNm = i => (laLang() === 'fr' && LA.fr[i]) || LA.names[i];
+  const laEsc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const laFold = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const laIco = n => iconSvg(n, LA_ICONS[n] || LA_ICONS.Energy);
   const laSvg = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
   const LA_I = {
     hint: laSvg('<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>'),
     book: laSvg('<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5M9 7h6"/>'),
     clear: laSvg('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'),
     sort: laSvg('<path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/>'),
-    x: laSvg('<path d="M6 6l12 12M18 6L6 18"/>')
+    x: laSvg('<path d="M6 6l12 12M18 6L6 18"/>'),
+    find: laSvg('<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>'),
+    eye: laSvg('<path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/>'),
+    eyeoff: laSvg('<path d="M3 3l18 18M10.6 5.6c.5-.1.9-.1 1.4-.1 6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-3 3.8M6.5 6.6C4 8.3 2.5 12 2.5 12s3.5 6.5 9.5 6.5c1.6 0 3-.4 4.3-1"/>')
   };
 
   const LA_CSS = `
-.gm-element-lab{--ink:#3b3447;--mut:#8a8499;--ac:#2f9e8f;--acd:#237d71;--line:#e4dfd2;--paper:#fffdf8;--ws:#f7f4ec;--iw:76px;--ih:90px;position:relative;align-items:stretch;justify-content:flex-start;gap:0;padding:0;overflow:hidden;border-radius:14px;background:var(--paper);color:var(--ink);font-family:var(--sans);height:clamp(500px,calc(100dvh - var(--goff,250px)),780px);min-height:0;touch-action:manipulation}
+.gm-element-lab{--ink:#3b3447;--mut:#8a8499;--ac:#2f9e8f;--acd:#237d71;--line:#e4dfd2;--paper:#fffdf8;--ws:#f7f4ec;--iw:76px;--ih:90px;position:relative;align-items:stretch;justify-content:flex-start;gap:0;padding:0;overflow:hidden;border-radius:14px;background:var(--paper);color:var(--ink);font-family:var(--sans);height:clamp(500px,calc(100dvh - max(var(--goff,250px),168px)),780px);min-height:0;touch-action:manipulation}
 .gm-element-lab [hidden]{display:none!important}
 .gm-element-lab button{font-family:inherit;color:inherit}
 .gm-element-lab .la-top{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--paper)}
@@ -1161,10 +1328,24 @@ Reef Fish: Fish+Coral
 .gm-element-lab .la-tip.gone{opacity:0}
 .gm-element-lab .la-lib{flex:none;width:276px;display:flex;flex-direction:column;border-left:1px solid var(--line);background:var(--paper);transition:background .2s}
 .gm-element-lab .la-lib.over{background:#ffe9e6}
-.gm-element-lab .la-lib.over::after{content:"Drop to remove";position:absolute;inset:0;display:grid;place-items:center;font:800 15px var(--sans);color:#c4473a;pointer-events:none}
-.gm-element-lab .la-lh{flex:none;display:flex;align-items:center;justify-content:space-between;padding:9px 12px;font:800 13px/1 var(--sans);color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
-.gm-element-lab .la-lh button{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border:1.5px solid var(--line);border-radius:99px;background:#fff;font:800 11px/1 var(--sans);cursor:pointer;letter-spacing:0;text-transform:none}
-.gm-element-lab .la-lh button svg{width:14px;height:14px}
+.gm-element-lab .la-lib{position:relative}
+.gm-element-lab .la-drop{position:absolute;inset:0;z-index:3;display:grid;place-items:center;padding:12px;text-align:center;font:800 15px var(--sans);color:#c4473a;pointer-events:none}
+.gm-element-lab .la-lib.over .la-grid,.gm-element-lab .la-lib.over .la-lh{opacity:.25}
+.gm-element-lab .la-lh{flex:none;display:flex;align-items:center;gap:6px;padding:8px 10px}
+.gm-element-lab .la-s{flex:1;min-width:0;display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;border:1.5px solid var(--line);border-radius:99px;background:#fff;color:var(--mut)}
+.gm-element-lab .la-s:focus-within{border-color:var(--ac)}
+.gm-element-lab .la-s svg{width:15px;height:15px;flex:none}
+.gm-element-lab .la-sq{flex:1;min-width:0;border:0;outline:0;background:none;font:700 13px var(--sans);color:var(--ink);padding:0}
+.gm-element-lab .la-sq::-webkit-search-cancel-button{cursor:pointer}
+.gm-element-lab .la-hb{flex:none;display:grid;place-items:center;width:32px;height:32px;border:1.5px solid var(--line);border-radius:50%;background:#fff;cursor:pointer;color:var(--mut);padding:0}
+.gm-element-lab .la-hb svg{width:16px;height:16px}
+.gm-element-lab .la-hb[aria-pressed="true"]{border-color:var(--ac);color:var(--ac);background:#f1fbf9}
+.gm-element-lab .la-none{margin:0;padding:18px 14px;text-align:center;font:700 13px/1.45 var(--sans);color:var(--mut)}
+.gm-element-lab .la-sb{flex:none;display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 10px;border:1.5px solid var(--line);border-radius:99px;background:#fff;font:800 11px/1 var(--sans);cursor:pointer;color:var(--ink)}
+.gm-element-lab .la-sb svg{width:14px;height:14px}
+.gm-element-lab .lt.fin::after{content:"";position:absolute;right:12px;top:5px;width:9px;height:9px;border-radius:50%;background:#f5c542;border:2px solid #fff;box-shadow:0 0 0 1px #d9a21f}
+.gm-element-lab .lt.dn .ic{opacity:.55}
+.gm-element-lab .lt.dn .nm{color:#9d97a8}
 .gm-element-lab .la-grid{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));grid-auto-rows:88px;gap:2px;padding:4px 8px 12px;align-content:start;touch-action:pan-y;overscroll-behavior:contain;scrollbar-width:thin}
 .gm-element-lab .lt{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;padding:6px 2px 2px;border:0;border-radius:12px;background:none;cursor:grab;touch-action:pan-y;min-width:0;-webkit-user-drag:none}
 .gm-element-lab .lt:hover{background:#f1ede1}
@@ -1196,6 +1377,7 @@ Reef Fish: Fish+Coral
 .gm-element-lab .la-new .ic{width:42px;height:42px}
 .gm-element-lab .la-new small{display:block;font:800 10.5px/1 var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--ac)}
 .gm-element-lab .la-new b{display:block;font:800 17px/1.2 var(--sans)}
+.gm-element-lab .la-new em{display:block;font:700 11.5px/1.3 var(--sans);font-style:normal;color:var(--mut)}
 @keyframes la-ban{0%{opacity:0;margin-top:-16px}12%{opacity:1;margin-top:0}85%{opacity:1}100%{opacity:0}}
 .gm-element-lab .la-book{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;background:var(--paper);animation:la-in .22s ease}
 @keyframes la-in{from{opacity:0;transform:translateY(12px)}}
@@ -1210,6 +1392,9 @@ Reef Fish: Fish+Coral
 .gm-element-lab .bk-tabs{display:inline-flex;padding:3px;border-radius:99px;background:#efeadc}
 .gm-element-lab .bk-tabs button{border:0;background:none;padding:7px 13px;border-radius:99px;font:800 12.5px/1 var(--sans);color:var(--mut);cursor:pointer;white-space:nowrap}
 .gm-element-lab .bk-tabs button[aria-pressed="true"]{background:#fff;color:var(--ac);box-shadow:0 1px 3px rgba(60,50,70,.2)}
+.gm-element-lab .la-cat{height:36px;padding:0 10px;border:1.5px solid var(--line);border-radius:99px;font:700 13px var(--sans);color:var(--ink);background:#fff;outline:0;max-width:170px}
+.gm-element-lab .la-cat:focus{border-color:var(--ac)}
+.gm-element-lab .tag.dn{background:#d9f5ef}
 .gm-element-lab .la-q{flex:1;min-width:130px;height:36px;padding:0 14px;border:1.5px solid var(--line);border-radius:99px;font:700 14px var(--sans);color:var(--ink);background:#fff;outline:0}
 .gm-element-lab .la-q:focus{border-color:var(--ac)}
 .gm-element-lab .bk-b{flex:1;min-height:0;display:flex;position:relative}
@@ -1250,7 +1435,8 @@ Reef Fish: Fish+Coral
 .gm-element-lab .la-b em{display:inline-block}
 .gm-element-lab .la-main{flex-direction:column}
 .gm-element-lab .la-lib{width:auto;height:196px;border-left:0;border-top:1px solid var(--line)}
-.gm-element-lab .la-lh{padding:6px 12px}
+.gm-element-lab .la-lh{padding:6px 10px}
+.gm-element-lab .la-sb span{display:none}
 .gm-element-lab .la-grid{display:grid;grid-template-columns:none;grid-template-rows:repeat(2,84px);grid-auto-flow:column;grid-auto-columns:68px;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;padding:2px 8px 6px}
 .gm-element-lab .lt{touch-action:pan-x}
 .gm-element-lab .la-new{top:52px}
@@ -1262,27 +1448,50 @@ Reef Fish: Fish+Coral
 `;
   const LA_ICON = ICON('<path d="M26 6h12M29 6v16L15 48a6 6 0 0 0 5.4 9h23.2A6 6 0 0 0 49 48L35 22V6"/><path d="M20 40h24" opacity=".6"/><circle cx="29" cy="48" r="2.4" fill="currentColor"/><circle cx="38" cy="44" r="1.8" fill="currentColor"/>');
 
-  function mountAlchemy(root, api) {
-    const { names, rec, pair, used, finals, n: N } = LA;
-    const sv = api.load() || {};
-    const found = new Set([0, 1, 2, 3]);
-    if (Array.isArray(sv.found)) sv.found.forEach(i => { if (Number.isInteger(i) && i >= 0 && i < N) found.add(i); });
-    const order = [...found];
-    let sort = sv.sort === 'az' ? 'az' : 'new';
-    const H = { c: Math.min(5, Math.max(0, Number.isFinite(sv.hc) ? sv.hc : 3)), t: Number.isFinite(sv.ht) ? sv.ht : Date.now(), g: Array.isArray(sv.hg) && sv.hg.length === 4 && sv.hg.every(Number.isInteger) ? sv.hg : null };
-    let done = !!sv.done;
+  function mountLab(root, api) {
+    const { names, rec, pair, used, finals, makes, cat, id: ID, n: N } = LA;
+    const raw = api.load();
+    const sv = raw && typeof raw === 'object' && !Array.isArray(raw) && raw.v === 2 ? raw : {};
+    const toId = x => (typeof x === 'string' && Object.prototype.hasOwnProperty.call(ID, x) ? ID[x] : -1);
+    const found = new Set([0, 1, 2, 3]), order = [0, 1, 2, 3];
+    if (Array.isArray(sv.found)) sv.found.slice(0, 4000).forEach(x => { const i = toId(x); if (i >= 0 && !found.has(i)) { found.add(i); order.push(i); } });
+    let sort = sv.sort === 'az' ? 'az' : 'new', hide = !!sv.hide, q = '';
+    const H = { c: Math.min(5, Math.max(0, Number.isFinite(sv.hc) ? Math.floor(sv.hc) : 3)), t: Number.isFinite(sv.ht) && sv.ht <= Date.now() ? sv.ht : Date.now(), g: null };
+    if (Array.isArray(sv.hg) && sv.hg.length === 4) { const g = [toId(sv.hg[0]), toId(sv.hg[1]), toId(sv.hg[2]), sv.hg[3] === 2 ? 2 : 1]; if (g[0] >= 0 && g[1] >= 0 && g[2] >= 0 && rec[g[0]].some(p => p.includes(g[1]) && p.includes(g[2]))) H.g = g; }
+    let done = !!sv.done || found.size >= N;
+    let lastLang = laLang();
 
     root.innerHTML = `
-<div class="la-top"><div class="la-prog"><b class="la-cnt"></b><span class="la-bar"><i></i></span></div><div class="la-btns"><button type="button" class="la-b" data-hint title="Hint (H)">${LA_I.hint}<span>Hint</span><em></em></button><button type="button" class="la-b" data-book title="Encyclopedia (B)">${LA_I.book}<span>Book</span></button><button type="button" class="la-b" data-clear title="Clear board (C)">${LA_I.clear}<span>Clear</span></button></div></div>
-<div class="la-main"><div class="la-ws"><p class="la-tip">Drag elements onto the board.<br>Drop one on another to combine them.</p></div><aside class="la-lib"><div class="la-lh"><span>Elements</span><button type="button" data-sort>${LA_I.sort}<span></span></button></div><div class="la-grid"></div></aside></div>
+<div class="la-top"><div class="la-prog"><b class="la-cnt"></b><span class="la-bar"><i></i></span></div><div class="la-btns"><button type="button" class="la-b" data-hint>${LA_I.hint}<span></span><em></em></button><button type="button" class="la-b" data-book>${LA_I.book}<span></span></button><button type="button" class="la-b" data-clear>${LA_I.clear}<span></span></button></div></div>
+<div class="la-main"><div class="la-ws"><p class="la-tip"></p></div><aside class="la-lib"><div class="la-lh"><label class="la-s">${LA_I.find}<input type="search" class="la-sq" autocomplete="off" spellcheck="false"></label><button type="button" class="la-hb" data-hide></button><button type="button" class="la-sb" data-sort>${LA_I.sort}<span></span></button></div><div class="la-grid"></div><p class="la-none" hidden></p><div class="la-drop" hidden></div></aside></div>
 <div class="la-layer"></div>
-<div class="la-book" hidden><div class="bk-h"><h3>Encyclopedia</h3><span class="sp"></span><div class="bk-st"></div><button type="button" class="bk-x" data-close aria-label="Close">${LA_I.x}</button></div><div class="bk-c"><div class="bk-tabs"><button type="button" data-tab="all" aria-pressed="true">All</button><button type="button" data-tab="found" aria-pressed="false">Found</button><button type="button" data-tab="missing" aria-pressed="false">Not found</button><button type="button" data-tab="final" aria-pressed="false">Final</button></div><input class="la-q" type="search" placeholder="Search discovered elements" aria-label="Search elements" autocomplete="off"></div><div class="bk-b"><div class="bk-g"></div><div class="bk-d" hidden></div></div></div>`;
+<div class="la-book" hidden><div class="bk-h"><h3></h3><span class="sp"></span><div class="bk-st"></div><button type="button" class="bk-x" data-close>${LA_I.x}</button></div><div class="bk-c"><div class="bk-tabs"><button type="button" data-tab="all" aria-pressed="true"></button><button type="button" data-tab="found" aria-pressed="false"></button><button type="button" data-tab="missing" aria-pressed="false"></button><button type="button" data-tab="final" aria-pressed="false"></button></div><select class="la-cat"></select><input class="la-q" type="search" autocomplete="off" spellcheck="false"></div><div class="bk-b"><div class="bk-g"></div><div class="bk-d" hidden></div></div></div>`;
     const $ = s => root.querySelector(s);
-    const ws = $('.la-ws'), lib = $('.la-lib'), grid = $('.la-grid'), layer = $('.la-layer'), tip = $('.la-tip');
-    const cnt = $('.la-cnt'), bar = $('.la-bar i'), hintB = $('[data-hint]'), hintE = hintB.querySelector('em'), sortB = $('[data-sort]');
-    const book = $('.la-book'), bkG = $('.bk-g'), bkD = $('.bk-d'), bkQ = $('.la-q'), bkSt = $('.bk-st');
+    const ws = $('.la-ws'), lib = $('.la-lib'), grid = $('.la-grid'), layer = $('.la-layer'), tip = $('.la-tip'), sq = $('.la-sq'), none = $('.la-none'), drop = $('.la-drop');
+    const cnt = $('.la-cnt'), bar = $('.la-bar i'), hintB = $('[data-hint]'), hintE = hintB.querySelector('em'), sortB = $('[data-sort]'), hideB = $('[data-hide]');
+    const book = $('.la-book'), bkG = $('.bk-g'), bkD = $('.bk-d'), bkQ = $('.la-q'), bkSt = $('.bk-st'), bkCat = $('.la-cat');
     const items = new Set(), tiles = new Map();
-    let IW = 76, IH = 90, z = 1, D = null, saveT = 0, tab = 'all', selBook = -1, lastTap = { it: null, t: 0 };
+    let IW = 76, IH = 90, z = 1, D = null, saveT = 0, tab = 'all', bcat = -1, selBook = -1, lastTap = { it: null, t: 0 };
+
+    function texts() {
+      hintB.title = laT('Hint (H)'); hintB.querySelector('span').textContent = laT('Hint');
+      const bb = $('[data-book]'); bb.title = laT('Encyclopedia (B)'); bb.querySelector('span').textContent = laT('Book');
+      const cb = $('[data-clear]'); cb.title = laT('Clear the board (C)'); cb.querySelector('span').textContent = laT('Clear');
+      tip.innerHTML = laEsc(laT('Drag elements onto the board.')) + '<br>' + laEsc(laT('Drop one on another to combine them.'));
+      sq.placeholder = laT('Search'); sq.setAttribute('aria-label', laT('Search your elements'));
+      drop.textContent = laT('Drop here to remove');
+      book.querySelector('h3').textContent = laT('Encyclopedia');
+      book.querySelector('[data-close]').setAttribute('aria-label', laT('Close'));
+      const tl = { all: 'All', found: 'Found', missing: 'Not found', final: 'Final' };
+      book.querySelectorAll('[data-tab]').forEach(b => { b.textContent = laT(tl[b.dataset.tab]); });
+      bkQ.placeholder = laT('Search discovered elements'); bkQ.setAttribute('aria-label', laT('Search elements'));
+      bkCat.setAttribute('aria-label', laT('Category'));
+      bkCat.innerHTML = `<option value="-1">${laEsc(laT('All categories'))}</option>` + LA_CATS.map((k, i) => `<option value="${i}"${i === bcat ? ' selected' : ''}>${laEsc(laT(LA_CATN[k]))}</option>`).join('');
+      hideB.title = hide ? laT('Show finished elements') : laT('Hide finished elements');
+      hideB.setAttribute('aria-label', hideB.title);
+      hideB.setAttribute('aria-pressed', String(hide));
+      hideB.innerHTML = hide ? LA_I.eyeoff : LA_I.eye;
+    }
 
     const kf = () => root.offsetWidth ? root.getBoundingClientRect().width / root.offsetWidth : 1;
     const lc = (cx, cy) => { const r = root.getBoundingClientRect(), k = kf(); return [(cx - r.left) / k, (cy - r.top) / k]; };
@@ -1293,15 +1502,20 @@ Reef Fish: Fish+Coral
       return [Math.min(b.x + b.w - mx, Math.max(b.x + mx, x)), Math.min(b.y + b.h - my, Math.max(b.y + my, y))];
     };
     const snap = () => {
+      clearTimeout(saveT);
       const b = box(ws);
-      if (b.w) api.save({ found: [...order], sort, hc: H.c, ht: H.t, hg: H.g, done, it: [...items].map(i => [i.id, +((i.x - b.x) / b.w).toFixed(4), +((i.y - b.y) / b.h).toFixed(4)]) });
+      const it = b.w ? [...items].slice(-120).map(i => [names[i.id], +((i.x - b.x) / b.w).toFixed(4), +((i.y - b.y) / b.h).toFixed(4)]) : (Array.isArray(sv.it) ? sv.it : []);
+      api.save({ v: 2, found: order.map(i => names[i]), sort, hide, hc: H.c, ht: H.t, hg: H.g ? [names[H.g[0]], names[H.g[1]], names[H.g[2]], H.g[3]] : null, done, it });
     };
     const persist = () => { clearTimeout(saveT); saveT = setTimeout(snap, 220); };
     api.on(window, 'pagehide', () => { snap(); api.submit(found.size); });
+    api.on(document, 'visibilitychange', () => { if (document.hidden) snap(); });
 
-    function mk(id, x, y, anim) {
-      const e = el('div', 'it' + (anim ? ' ' + anim : ''), `<span class="ic">${laIco(names[id])}</span><span class="nm">${names[id]}</span>`);
-      const it = { id, x, y, e };
+    const finished = i => found.has(i) && used.has(i) && makes[i].every(r => found.has(r));
+    const spent = i => finished(i) || (found.has(i) && !used.has(i));
+    function mk(i, x, y, anim) {
+      const e = el('div', 'it' + (anim ? ' ' + anim : ''), `<span class="ic">${laIco(names[i])}</span><span class="nm">${laEsc(laNm(i))}</span>`);
+      const it = { id: i, x, y, e };
       e._it = it; e.style.zIndex = ++z;
       place(it); layer.append(e); items.add(it);
       tip.classList.add('gone');
@@ -1310,6 +1524,7 @@ Reef Fish: Fish+Coral
     }
     function del(it, soft) {
       items.delete(it);
+      if (!items.size) tip.classList.remove('gone');
       if (!soft) { it.e.remove(); return; }
       it.e.classList.add('out');
       setTimeout(() => it.e.remove(), 240);
@@ -1319,7 +1534,9 @@ Reef Fish: Fish+Coral
       let x = 0, y = 0;
       for (let i = 0; i < 50; i++) {
         x = b.x + IW / 2 + 6 + Math.random() * Math.max(1, b.w - IW - 12); y = b.y + IH / 2 + 6 + Math.random() * Math.max(1, b.h - IH - 12);
-        if (![...items].some(o => Math.hypot(o.x - x, o.y - y) < IW * 1.05)) break;
+        let ok = true;
+        items.forEach(o => { if (Math.hypot(o.x - x, o.y - y) < IW * 1.05) ok = false; });
+        if (ok) break;
       }
       return [x, y];
     }
@@ -1330,16 +1547,33 @@ Reef Fish: Fish+Coral
       setTimeout(() => r.remove(), 600);
     }
 
-    function addTile(id, fresh) {
-      const t = el('button', 'lt' + (fresh ? ' fresh' : ''), `<span class="ic">${laIco(names[id])}</span><span class="nm">${names[id]}</span>`);
-      t.type = 'button'; t.dataset.i = id; t.title = names[id]; t.draggable = false;
-      tiles.set(id, t); grid.append(t);
+    function tileHtml(i) { return `<span class="ic">${laIco(names[i])}</span><span class="nm">${laEsc(laNm(i))}</span>`; }
+    function addTile(i, fresh) {
+      const t = el('button', 'lt' + (fresh ? ' fresh' : '') + (used.has(i) ? '' : ' fin'), tileHtml(i));
+      t.type = 'button'; t.dataset.i = i; t.title = laNm(i); t.draggable = false;
+      tiles.set(i, t); grid.append(t);
       if (fresh) setTimeout(() => t.classList.remove('fresh'), 3400);
     }
+    function relabel() { tiles.forEach((t, i) => { t.innerHTML = tileHtml(i); t.title = laNm(i); }); items.forEach(it => { it.e.querySelector('.nm').textContent = laNm(it.id); }); }
     function sortLib() {
-      const list = sort === 'az' ? [...order].sort((a, b) => names[a].localeCompare(names[b])) : order;
+      const list = sort === 'az' ? [...order].sort((a, b) => laNm(a).localeCompare(laNm(b), laLang())) : order;
       list.forEach(i => grid.append(tiles.get(i)));
-      sortB.lastChild.textContent = sort === 'az' ? 'A to Z' : 'Discovery';
+      sortB.lastChild.textContent = sort === 'az' ? laT('A to Z') : laT('Newest');
+      sortB.title = sort === 'az' ? laT('Sorted A to Z') : laT('Sorted by newest');
+      sortB.setAttribute('aria-label', sortB.title);
+      filterLib();
+    }
+    function filterLib() {
+      const f = laFold(q.trim());
+      let shown = 0;
+      tiles.forEach((t, i) => {
+        const vis = (!f || laFold(laNm(i)).includes(f) || laFold(names[i]).includes(f)) && !(hide && spent(i) && i > 3);
+        t.hidden = !vis;
+        t.classList.toggle('dn', finished(i));
+        if (vis) shown++;
+      });
+      none.hidden = shown > 0;
+      none.textContent = f ? laT('No element matches your search.') : laT('Every element here is finished. Show finished elements to see them again.');
     }
 
     function refill() {
@@ -1354,7 +1588,7 @@ Reef Fish: Fish+Coral
       refill();
       hintE.textContent = H.c;
       hintB.classList.toggle('off', H.c < 1 && !(H.g && H.g[3] < 2));
-      hintB.title = H.c >= 5 ? 'Hint (H)' : `Hint (H) · next charge in ${Math.max(1, Math.ceil((H.t + 90000 - Date.now()) / 1000))}s`;
+      hintB.title = H.c >= 5 ? laT('Hint (H)') : laT('Hint (H) · next one in {s} s', { s: Math.max(1, Math.ceil((H.t + 90000 - Date.now()) / 1000)) });
     }
     function applyHint() {
       tiles.forEach(t => t.classList.remove('hint'));
@@ -1362,7 +1596,7 @@ Reef Fish: Fish+Coral
       const [tg, a, b, s] = H.g;
       if (found.has(tg)) { H.g = null; return; }
       const show = [a, ...(s >= 2 ? [b] : [])];
-      show.forEach(i => { const t = tiles.get(i); if (t) t.classList.add('hint'); });
+      show.forEach(i => { const t = tiles.get(i); if (t) { t.classList.add('hint'); t.hidden = false; } });
       const first = tiles.get(a);
       if (first) first.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }
@@ -1371,47 +1605,50 @@ Reef Fish: Fish+Coral
       if (H.g && found.has(H.g[0])) H.g = null;
       if (H.g && H.g[3] < 2) H.g[3] = 2;
       else {
-        if (H.c < 1) { api.toast(`No hints left. Next one in ${Math.max(1, Math.ceil((H.t + 90000 - Date.now()) / 1000))}s`); hud(); return; }
+        if (H.c < 1) { api.toast(laT('No hints left. Next one in {s} s', { s: Math.max(1, Math.ceil((H.t + 90000 - Date.now()) / 1000)) })); hud(); return; }
         const cand = [];
         for (let r = 4; r < N; r++) {
           if (found.has(r)) continue;
           const ok = rec[r].filter(([a, b]) => found.has(a) && found.has(b));
           if (ok.length) cand.push([r, ok[Math.floor(Math.random() * ok.length)]]);
         }
-        if (!cand.length) { api.toast(found.size >= N ? 'You found everything!' : 'No hint available right now'); return; }
+        if (!cand.length) { api.toast(found.size >= N ? laT('You found everything!') : laT('No hint available right now')); return; }
         const [r, [a, b]] = cand[Math.floor(Math.random() * cand.length)];
         if (H.c >= 5) H.t = Date.now();
         H.c--;
         H.g = [r, a, b, 1];
       }
       const [, a, b, s] = H.g;
-      api.toast(s >= 2 ? `Hint: combine ${names[a]} with ${names[b]}` : `Hint: one ingredient is ${names[a]}. Press hint again for the other.`);
+      api.toast(s >= 2 ? laT('Hint: combine {a} with {b}', { a: laNm(a), b: laNm(b) }) : laT('Hint: one ingredient is {a}. Press hint again for the other.', { a: laNm(a) }));
       api.sfx('tap');
       applyHint(); hud(); persist();
     }
 
-    function banner(id) {
+    function banner(r, a, b) {
       const o = $('.la-new');
       if (o) o.remove();
-      const b = el('div', 'la-new', `<span class="ic">${laIco(names[id])}</span><div><small>New element</small><b>${names[id]}</b></div>`);
-      root.append(b);
-      setTimeout(() => b.remove(), 2450);
+      const bn = el('div', 'la-new', `<span class="ic">${laIco(names[r])}</span><div><small>${laEsc(laT('New element'))}</small><b>${laEsc(laNm(r))}</b><em>${laEsc(laNm(a))} + ${laEsc(laNm(b))}</em></div>`);
+      root.append(bn);
+      setTimeout(() => bn.remove(), 2450);
     }
-    function discover(r) {
+    function discover(r, a, b) {
       found.add(r); order.push(r);
       addTile(r, true);
-      if (sort === 'az') sortLib();
-      tiles.get(r).scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      if (sort === 'az') sortLib(); else filterLib();
+      const t = tiles.get(r);
+      if (t && !t.hidden) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
       api.score(found.size);
       if (found.size % 10 === 0 || found.size >= N) api.submit(found.size);
-      banner(r);
-      api.sfx('good');
+      banner(r, a, b);
+      const ms = found.size % 50 === 0 && found.size < N;
+      api.sfx(ms ? 'win' : 'good');
+      if (ms) api.timeout(() => api.toast(laT('Milestone: {n} elements discovered!', { n: found.size })), 900);
       if (H.g && H.g[0] === r) H.g = null;
       applyHint(); hud();
       if (!book.hidden) renderBook();
       if (found.size >= N && !done) {
         done = true;
-        api.timeout(() => api.overlay({ kicker: 'Complete', title: 'Master Alchemist', text: `You discovered all ${N} elements. Every recipe is in your book.`, button: 'Keep playing' }), 1400);
+        api.timeout(() => api.overlay({ kicker: laT('Complete'), title: laT('Master of the Lab'), text: laT('You discovered all {n} elements. Every recipe is in your book.', { n: N }), button: laT('Keep playing') }), 1400);
       }
     }
     function combine(a, b) {
@@ -1424,11 +1661,12 @@ Reef Fish: Fish+Coral
         api.sfx('hit');
         return;
       }
-      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, ia = a.id, ib = b.id;
       del(a); del(b);
       const [cx, cy] = clampPt(mx, my);
       mk(r, cx, cy, 'pop'); ring(cx, cy);
-      if (!found.has(r)) discover(r); else api.sfx('pop');
+      if (!found.has(r)) discover(r, ia, ib);
+      else { api.sfx('pop'); filterLib(); }
     }
     function target(it) {
       let best = null, bd = IW * .72;
@@ -1451,7 +1689,7 @@ Reef Fish: Fish+Coral
       api.sfx('tap');
     }
     function onDown(e) {
-      if (D || (e.pointerType === 'mouse' && e.button !== 0)) return;
+      if (D || !book.hidden || (e.pointerType === 'mouse' && e.button !== 0)) return;
       const t = e.target.closest('.it');
       if (!t) return;
       const it = t._it, [px, py] = lc(e.clientX, e.clientY);
@@ -1463,25 +1701,30 @@ Reef Fish: Fish+Coral
       if (D || (e.pointerType === 'mouse' && e.button !== 0)) return;
       const t = e.target.closest('.lt');
       if (!t) return;
-      D = { it: null, id: +t.dataset.i, lib: true, pid: e.pointerId, sx: e.clientX, sy: e.clientY, moved: false };
+      D = { it: null, id: +t.dataset.i, lib: true, pid: e.pointerId, sx: e.clientX, sy: e.clientY, moved: false, touch: e.pointerType !== 'mouse' };
       if (e.pointerType === 'mouse') e.preventDefault();
     }
     function onMove(e) {
       if (!D || e.pointerId !== D.pid) return;
-      if (!D.moved && Math.hypot(e.clientX - D.sx, e.clientY - D.sy) < 6) return;
+      if (!D.moved) {
+        const dx = e.clientX - D.sx, dy = e.clientY - D.sy;
+        if (Math.hypot(dx, dy) < 6) return;
+        if (D.lib && D.touch && root.classList.contains('la-narrow') && Math.abs(dx) > Math.abs(dy) * 1.2) { D = null; return; }
+      }
       D.moved = true;
       if (!D.it) startLibDrag(e);
       const [px, py] = lc(e.clientX, e.clientY);
       D.it.x = px + D.dx; D.it.y = py + D.dy;
       place(D.it);
-      lib.classList.toggle('over', inRect(lib.getBoundingClientRect(), e.clientX, e.clientY));
-      mark(target(D.it));
+      const over = inRect(lib.getBoundingClientRect(), e.clientX, e.clientY);
+      lib.classList.toggle('over', over); drop.hidden = !over;
+      mark(over ? null : target(D.it));
       e.preventDefault();
     }
     function onUp(e) {
       if (!D || e.pointerId !== D.pid) return;
       const d = D; D = null;
-      mark(null); lib.classList.remove('over');
+      mark(null); lib.classList.remove('over'); drop.hidden = true;
       if (!d.it) {
         if (d.moved || e.type === 'pointercancel') return;
         const [x, y] = freeSpot();
@@ -1511,7 +1754,9 @@ Reef Fish: Fish+Coral
     api.on(window, 'pointermove', onMove, { passive: false });
     api.on(window, 'pointerup', onUp);
     api.on(window, 'pointercancel', onUp);
+    api.on(window, 'blur', () => { if (D) onUp({ pointerId: D.pid, type: 'pointercancel', clientX: 0, clientY: 0 }); });
     api.on(grid, 'dragstart', e => e.preventDefault());
+    api.on(root, 'contextmenu', e => { if (e.target.closest('.it,.lt')) e.preventDefault(); });
     api.on(grid, 'keydown', e => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       const t = e.target.closest('.lt');
@@ -1520,46 +1765,53 @@ Reef Fish: Fish+Coral
       const [x, y] = freeSpot();
       mk(+t.dataset.i, x, y, 'pop'); api.sfx('tap'); persist();
     });
+    api.on(sq, 'input', () => { q = sq.value; filterLib(); });
+    api.on(sq, 'keydown', e => { if (e.key === 'Escape') { sq.value = ''; q = ''; filterLib(); sq.blur(); } });
 
     function clearAll() {
       if (!items.size) return;
       [...items].forEach(i => del(i, true));
       tip.classList.remove('gone');
+      api.sfx('tap');
       persist();
     }
 
     function layout() {
-      IW = root.offsetWidth < 720 ? 62 : 76; IH = IW + 14;
+      const w = root.offsetWidth;
+      root.classList.toggle('la-narrow', w > 0 && w < 720);
+      IW = w < 720 ? 62 : 76; IH = IW + 14;
       items.forEach(it => { [it.x, it.y] = clampPt(it.x, it.y); place(it); });
     }
     let wb = null;
     if (typeof ResizeObserver === 'function') {
       const ro = new ResizeObserver(() => {
         if (!api.alive) return ro.disconnect();
-        const n = box(ws);
-        if (!n.w) return;
-        if (wb && wb.w && wb.h) items.forEach(it => { it.x = n.x + (it.x - wb.x) / wb.w * n.w; it.y = n.y + (it.y - wb.y) / wb.h * n.h; });
-        wb = n;
+        const nb = box(ws);
+        if (!nb.w) return;
+        if (wb && wb.w && wb.h) items.forEach(it => { it.x = nb.x + (it.x - wb.x) / wb.w * nb.w; it.y = nb.y + (it.y - wb.y) / wb.h * nb.h; });
+        wb = nb;
         layout();
       });
       ro.observe(ws);
     }
 
     function chip(a) {
-      return found.has(a) ? `<button type="button" class="ch" data-i="${a}"><span class="ic">${laIco(names[a])}</span>${names[a]}</button>` : `<span class="ch sil"><span class="ic">${laIco(names[a])}</span>???</span>`;
+      return found.has(a) ? `<button type="button" class="ch" data-i="${a}"><span class="ic">${laIco(names[a])}</span>${laEsc(laNm(a))}</button>` : `<span class="ch sil"><span class="ic">${laIco(names[a])}</span>???</span>`;
     }
     function detail(i) {
       selBook = i;
       const f = found.has(i);
-      let h = `<button type="button" class="bk-x" data-dx aria-label="Close">${LA_I.x}</button><div class="bd-ic ${f ? '' : 'sil'}">${laIco(names[i])}</div><h4>${f ? names[i] : '???'}</h4>`;
-      const tags = [i < 4 ? '<span class="tag">Base element</span>' : '', f && !used.has(i) ? '<span class="tag fin">Final element</span>' : ''].join('');
-      if (tags) h += `<div class="tags">${tags}</div>`;
-      if (i < 4) h += '<p class="mut">One of the four elements everything starts from.</p>';
-      else if (!f) h += '<p class="mut">Not discovered yet. Keep combining elements to find it.</p>';
-      else h += '<h5>Made from</h5>' + rec[i].map(([a, b]) => `<div class="rc">${chip(a)}<b>+</b>${chip(b)}</div>`).join('');
+      let h = `<button type="button" class="bk-x" data-dx aria-label="${laEsc(laT('Close'))}">${LA_I.x}</button><div class="bd-ic ${f ? '' : 'sil'}">${laIco(names[i])}</div><h4>${f ? laEsc(laNm(i)) : '???'}</h4>`;
+      const tags = [`<span class="tag">${laEsc(laT(LA_CATN[LA_CATS[cat[i]]]))}</span>`, i < 4 ? `<span class="tag">${laEsc(laT('Starting element'))}</span>` : '', f && !used.has(i) ? `<span class="tag fin">${laEsc(laT('Final element'))}</span>` : '', f && used.has(i) && finished(i) ? `<span class="tag dn">${laEsc(laT('All recipes found'))}</span>` : ''].join('');
+      h += `<div class="tags">${tags}</div>`;
+      if (i < 4) h += `<p class="mut">${laEsc(laT('One of the four elements everything starts from.'))}</p>`;
+      else if (!f) h += `<p class="mut">${laEsc(laT('Not discovered yet. Keep combining elements to find it.'))}</p>`;
+      else h += `<h5>${laEsc(laT('Made from'))}</h5>` + rec[i].map(([a, b]) => `<div class="rc">${chip(a)}<b>+</b>${chip(b)}</div>`).join('');
       if (f) {
-        const made = order.filter(j => rec[j].some(p => p.includes(i)));
-        if (made.length) h += '<h5>Used to make</h5><div class="mk">' + made.slice(0, 48).map(j => `<button type="button" class="ch" data-i="${j}" title="${names[j]}"><span class="ic">${laIco(names[j])}</span></button>`).join('') + (made.length > 48 ? `<span class="mut">+${made.length - 48}</span>` : '') + '</div>';
+        const made = makes[i].filter(j => found.has(j));
+        const left = makes[i].length - made.length;
+        if (made.length) h += `<h5>${laEsc(laT('Used to make'))}</h5><div class="mk">` + made.slice(0, 60).map(j => `<button type="button" class="ch" data-i="${j}" title="${laEsc(laNm(j))}"><span class="ic">${laIco(names[j])}</span></button>`).join('') + '</div>';
+        if (left > 0) h += `<p class="mut">${laEsc(left === 1 ? laT('1 more element can be made with it.') : laT('{n} more elements can be made with it.', { n: left }))}</p>`;
       }
       bkD.innerHTML = h; bkD.hidden = false; bkD.scrollTop = 0;
       bkG.querySelectorAll('.bt.sel').forEach(x => x.classList.remove('sel'));
@@ -1567,20 +1819,21 @@ Reef Fish: Fish+Coral
       if (t) t.classList.add('sel');
     }
     function renderBook() {
-      const q = bkQ.value.trim().toLowerCase();
-      let ids = [];
+      const f = laFold(bkQ.value.trim());
+      const ids = [];
       for (let i = 0; i < N; i++) {
-        const f = found.has(i);
-        if (tab === 'found' && !f) continue;
-        if (tab === 'missing' && f) continue;
+        const fd = found.has(i);
+        if (tab === 'found' && !fd) continue;
+        if (tab === 'missing' && fd) continue;
         if (tab === 'final' && used.has(i)) continue;
-        if (q && !(f && names[i].toLowerCase().includes(q))) continue;
+        if (bcat >= 0 && cat[i] !== bcat) continue;
+        if (f && !(fd && (laFold(laNm(i)).includes(f) || laFold(names[i]).includes(f)))) continue;
         ids.push(i);
       }
-      if (q || tab === 'found' || tab === 'final') ids.sort((a, b) => (found.has(b) - found.has(a)) || names[a].localeCompare(names[b]));
-      bkG.innerHTML = ids.length ? ids.map(i => { const f = found.has(i); return `<button type="button" class="bt${f ? '' : ' sil'}${f && !used.has(i) ? ' fin' : ''}${i === selBook ? ' sel' : ''}" data-i="${i}"><span class="ic">${laIco(names[i])}</span><span class="nm">${f ? names[i] : '???'}</span></button>`; }).join('') : `<p class="bk-e">${q ? 'No discovered element matches. Search only looks at elements you have found.' : 'Nothing here yet.'}</p>`;
+      if (f || tab === 'found' || tab === 'final') ids.sort((a, b) => (found.has(b) - found.has(a)) || laNm(a).localeCompare(laNm(b), laLang()));
+      bkG.innerHTML = ids.length ? ids.map(i => { const fd = found.has(i); return `<button type="button" class="bt${fd ? '' : ' sil'}${fd && !used.has(i) ? ' fin' : ''}${i === selBook ? ' sel' : ''}" data-i="${i}"><span class="ic">${laIco(names[i])}</span><span class="nm">${fd ? laEsc(laNm(i)) : '???'}</span></button>`; }).join('') : `<p class="bk-e">${laEsc(laT('Nothing here yet.'))}</p>`;
       const ff = finals.filter(i => found.has(i)).length;
-      bkSt.innerHTML = `<b>${found.size}</b> of ${N} found (${Math.floor(found.size / N * 100)}%)<br>Final elements <b>${ff}</b> of ${finals.length}`;
+      bkSt.innerHTML = laEsc(laT('{a} of {b} found ({p}%)', { a: found.size, b: N, p: Math.floor(found.size / N * 100) })) + '<br>' + laEsc(laT('Final elements {a} of {b}', { a: ff, b: finals.length }));
     }
     function openBook() {
       if (!book.hidden) return;
@@ -1599,38 +1852,51 @@ Reef Fish: Fish+Coral
         renderBook();
         return;
       }
-      if (c.dataset.i !== undefined) detail(+c.dataset.i);
+      if (c.dataset.i !== undefined) { detail(+c.dataset.i); api.sfx('tap'); }
     });
     api.on(bkQ, 'input', renderBook);
+    api.on(bkCat, 'change', () => { bcat = +bkCat.value; renderBook(); });
     api.on(hintB, 'click', hint);
     api.on($('[data-book]'), 'click', () => (book.hidden ? openBook() : closeBook()));
     api.on($('[data-clear]'), 'click', clearAll);
-    api.on(sortB, 'click', () => { sort = sort === 'az' ? 'new' : 'az'; sortLib(); persist(); });
+    api.on(sortB, 'click', () => { sort = sort === 'az' ? 'new' : 'az'; sortLib(); api.sfx('tap'); persist(); });
+    api.on(hideB, 'click', () => { hide = !hide; texts(); filterLib(); api.sfx('tap'); persist(); });
     api.on(window, 'keydown', e => {
       if (e.ctrlKey || e.metaKey || e.altKey || e.repeat || api.paused || isFieldEl(e.target)) return;
+      if (!root.isConnected) return;
       const k = e.key.toLowerCase();
       if (k === 'h') hint();
       else if (k === 'b') (book.hidden ? openBook() : closeBook());
       else if (k === 'c' && book.hidden) clearAll();
+      else if (k === 'escape' && !book.hidden) closeBook();
+      else if (k === '/' && book.hidden) { e.preventDefault(); sq.focus(); }
     });
 
+    texts();
     order.forEach(i => addTile(i));
     sortLib();
     api.timeout(() => {
       layout();
       const b = box(ws);
       if (Array.isArray(sv.it)) sv.it.slice(0, 120).forEach(r => {
-        if (!Array.isArray(r) || !Number.isInteger(r[0]) || r[0] < 0 || r[0] >= N || !found.has(r[0])) return;
-        const [x, y] = clampPt(b.x + (+r[1] || 0) * b.w, b.y + (+r[2] || 0) * b.h);
-        mk(r[0], x, y);
+        if (!Array.isArray(r)) return;
+        const i = toId(r[0]);
+        if (i < 0 || !found.has(i)) return;
+        const fx = Number.isFinite(r[1]) ? Math.min(1, Math.max(0, r[1])) : 0.5, fy = Number.isFinite(r[2]) ? Math.min(1, Math.max(0, r[2])) : 0.5;
+        const [x, y] = clampPt(b.x + fx * b.w, b.y + fy * b.h);
+        mk(i, x, y);
       });
       applyHint();
     }, 0);
-    api.interval(hud, 1000);
+    api.interval(() => {
+      hud();
+      const l = laLang();
+      if (l !== lastLang) { lastLang = l; texts(); relabel(); sortLib(); hud(); if (!book.hidden) { renderBook(); if (selBook >= 0) detail(selBook); } }
+    }, 1000);
     api.score(found.size);
     hud();
   }
-  const isFieldEl = t => t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+  const isFieldEl = t => t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
 
   Ameplay.register({
     id: 'element-lab',
@@ -1638,11 +1904,11 @@ Reef Fish: Fish+Coral
     category: 'Puzzle',
     better: 'high',
     width: 1000,
-    blurb: 'Combine air, earth, fire and water into 493 elements, from mud and steam to dragons and pizza.',
-    help: 'Drag elements onto the board and drop one on another to combine · double-click to copy · drop on the list to remove · <kbd>H</kbd> hint · <kbd>B</kbd> book · <kbd>C</kbd> clear',
+    blurb: 'Start with air, earth, fire and water and combine them into 560 elements, from mud and steam to dragons, robots and pizza.',
+    help: 'Drag elements onto the board and drop one on another to combine them · double-click to copy · drop on the list to remove · <kbd>H</kbd> hint · <kbd>B</kbd> book · <kbd>C</kbd> clear · <kbd>/</kbd> search',
     icon: LA_ICON,
     css: LA_CSS,
-    mount: mountAlchemy
+    mount: mountLab
   });
 })();
 (() => {
@@ -2499,7 +2765,9 @@ Reef Fish: Fish+Coral
   const olC = (v, a = 0, b = 100) => (v < a ? a : v > b ? b : v);
   const olLang = () => (window.gpI18n && gpI18n.lang) || 'en';
   const olFr = () => olLang() === 'fr';
-  const L = (s, o) => { let t = window.gpI18n && gpI18n.t ? gpI18n.t(s) : s; if (typeof t !== 'string') t = s; return o ? t.replace(/\{(\w+)\}/g, (m, k) => (k in o ? o[k] : m)) : t; };
+  const OL_LT = { Health: ['Santé', 'Salud', 'Gesundheit', 'Salute', 'Saúde'], Children: ['Enfants', 'Hijos', 'Kinder', 'Figli', 'Filhos'] };
+  const OL_LI = { fr: 0, es: 1, de: 2, it: 3, pt: 4 };
+  const L = (s, o) => { const lo = OL_LT[s], li = OL_LI[olLang()]; let t = lo && li !== undefined ? lo[li] : window.gpI18n && gpI18n.t ? gpI18n.t(s) : s; if (typeof t !== 'string') t = s; return o ? t.replace(/\{(\w+)\}/g, (m, k) => (k in o ? o[k] : m)) : t; };
   const X = p => (p == null ? '' : typeof p === 'string' ? p : (olFr() && p[1]) || p[0]);
   const olEsc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const olW = (list, wf) => { let t = 0; const w = list.map(x => { const v = Math.max(0, wf(x)); t += v; return v; }); if (t <= 0) return null; let r = olR() * t; for (let i = 0; i < list.length; i++) { r -= w[i]; if (r < 0) return list[i]; } return list[list.length - 1]; };
@@ -2859,8 +3127,8 @@ Reef Fish: Fish+Coral
     if (me.age < d[2]) why.push(L('Minimum age {n}', { n: d[2] }));
     if (d[1] === 'p' && me.age > 25) why.push(L('For students and teenagers'));
     if (d[3] >= 1 && !me.edu.hs) why.push(L('Needs a high school diploma'));
-    if (d[3] === 2) { if (!me.edu.deg) why.push(L('Needs a university degree')); else if (Array.isArray(d[4]) && !d[4].includes(me.edu.deg)) why.push(L('Needs a degree in {x}', { x: d[4].filter(x => OL_MAJM[x]).map(x => X(OL_MAJM[x].slice(1, 3))).join(L(' or ')) })); }
-    if (d[3] === 3 && !(Array.isArray(d[4]) && d[4].includes(me.edu.grad))) why.push(L('Needs: {x}', { x: d[4].map(x => X(OL_GRADM[x].slice(1, 3))).join(L(' or ')) }));
+    if (d[3] === 2) { if (!me.edu.deg) why.push(L('Needs a university degree')); else if (Array.isArray(d[4]) && !d[4].includes(me.edu.deg)) why.push(L('Needs a degree in {x}', { x: d[4].filter(x => OL_MAJM[x]).map(x => X(OL_MAJM[x].slice(1, 3))).join(' ' + L('or') + ' ') })); }
+    if (d[3] === 3 && !(Array.isArray(d[4]) && d[4].includes(me.edu.grad))) why.push(L('Needs: {x}', { x: d[4].map(x => X(OL_GRADM[x].slice(1, 3))).join(' ' + L('or') + ' ') }));
     if (rq.H && me.st.H < rq.H) why.push(L('Needs better health'));
     if (rq.s && me.st.s < rq.s) why.push(L('Needs more smarts'));
     if (rq.l && me.st.l < rq.l) why.push(L('Needs better looks'));
