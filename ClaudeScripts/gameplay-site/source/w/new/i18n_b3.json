@@ -341,5 +341,6 @@
 ["Violin", "Violon", "Violín", "Geige", "Violino", "Violino"],
 ["Drums", "Batterie", "Batería", "Schlagzeug", "Batteria", "Bateria"],
 ["Singing", "Chant", "Canto", "Gesang", "Canto", "Canto"],
-["Trumpet", "Trompette", "Trompeta", "Trompete", "Tromba", "Trompete"]
+["Trumpet", "Trompette", "Trompeta", "Trompete", "Tromba", "Trompete"],
+["Elements", "Éléments", "Elementos", "Elemente", "Elementi", "Elementos"]
 ]

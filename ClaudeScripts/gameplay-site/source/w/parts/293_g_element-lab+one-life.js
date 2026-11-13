@@ -2886,7 +2886,7 @@ Kite: Paper+Wind, Bird+Paper
     me.lk.bd = 0;
     const pj = [['retail', 'clean', 'care', 'farm', 'wareh', 'call', 'post'], ['police', 'post', 'elec', 'teach', 'mech', 'nurse', 'driver', 'cook'], ['engin', 'acct', 'nurse', 'dev', 'archi', 'psych', 'teach', 'mkt'], ['doctor', 'lawyer', 'bank', 'dent', 'pilot', 'prof']][s.pw];
     const ma = olI(22, 40), da = olC(ma + olI(-3, 6), 22, 50);
-    const mk = (r, g2, age) => { const p = olPerson(s, r, g2, age, { ln, w: s.pw }); const jid = olP(pj), lv = Math.min(OL_JOBM[jid][6].length - 1, olI(age > 32 ? 1 : 0, 2)); p.job = olJobPair(jid, lv, g2); p.b = olI(70, 95); return p; };
+    const mk = (r, g2, age) => { const p = olPerson(s, r, g2, age, { ln, w: s.pw }); const jid = olP(pj), lv = Math.min(OL_JOBM[jid][6].length - 1, olI(age > 32 ? 1 : 0, 2)); p.job = olJobPair(jid, lv, g2); p.jid = jid; p.jl = lv; p.b = olI(70, 95); return p; };
     const mom = mk('mom', 'f', ma), dad = mk('dad', 'm', da);
     mom.lk.bd = 0;
     dad.lk.sk = mom.lk.sk = olC(me.lk.sk + olI(-1, 1), 0, 5);
@@ -3160,6 +3160,10 @@ Kite: Paper+Wind, Bird+Paper
         if (p.age >= p.ly) { p.al = 0; p.dz = p.age; olSayC(s, ['{Myrel} {p} passed away at the age of ' + p.age + '. I will always remember {him}.', '{Myrel} {p} nous a quittés à l’âge de ' + p.age + ' ans. Je ne l’oublierai jamais.'], { p }, 'b'); olGain(s, 'h', -6); }
         return;
       }
+      if (p.jid && OL_JOBM[p.jid]) {
+        if (p.age >= 67) { p.job = ['Retired', p.g === 'f' ? 'Retraitée' : 'Retraité']; p.jid = null; }
+        else if ((p.age === 31 || p.age === 39 || p.age === 47) && (p.jl | 0) < OL_JOBM[p.jid][6].length - 1 && olR() < 0.7) { p.jl = (p.jl | 0) + 1; p.job = olJobPair(p.jid, p.jl, p.g); }
+      }
       const dec = { friend: 4, love: 3, mom: 2, dad: 2, sib: 3, gp: 2, kid: 2, gkid: 2 }[p.r] || 2;
       p.b = olC(p.b - dec);
       if (p.r === 'love') p.yrs = (p.yrs || 0) + 1;
@@ -3185,7 +3189,7 @@ Kite: Paper+Wind, Bird+Paper
       if (p.r === 'love' && p.st === 'mar' && p.b < 12 && olR() < 0.3) { olDivorce(s, p, 1); return; }
       if (p.r === 'kid') {
         if (p.age === 18) olSayC(s, ['{Myrel} {p} turned 18 and moved out.', '{Myrel} {p} a eu 18 ans et a quitté la maison.'], { p }, 'm');
-        if (p.age === 23 && !p.job) { const jid = olP(['teach', 'nurse', 'dev', 'engin', 'cook', 'retail', 'police', 'design', 'acct', 'mech', 'lab', 'journ']); p.job = olJobPair(jid, 0, p.g); }
+        if (p.age === 23 && !p.job) { const jid = olP(['teach', 'nurse', 'dev', 'engin', 'cook', 'retail', 'police', 'design', 'acct', 'mech', 'lab', 'journ']); p.job = olJobPair(jid, 0, p.g); p.jid = jid; p.jl = 0; }
         const gk = s.pp.filter(q => q.r === 'gkid' && q.par === p.i).length;
         if (p.age >= 24 && p.age <= 42 && gk < 3 && olR() < 0.1) {
           const g = olP(['m', 'f']), k = olPerson(s, 'gkid', g, 0, { par: p.i });
@@ -3308,6 +3312,7 @@ Kite: Paper+Wind, Bird+Paper
     const me = s.me, j = me.job;
     if (!j) return;
     const d = OL_JOBM[j.id];
+    if (j.t === 'p' && me.age >= 25 && !olAt(s, 'uni', 'grad')) { olQuitJob(s, 'quit'); return; }
     j.yrs++; j.ly++;
     const sk = d[7], skv = sk ? (sk === 'a' ? me.a : me.sk[sk] || 0) : 50;
     j.perf = olC(j.perf + (50 - j.perf) * 0.18 + (olR() - 0.5) * 8 + (skv - 50) / 25 + (me.st.h - 50) / 40);
@@ -3357,9 +3362,17 @@ Kite: Paper+Wind, Bird+Paper
       }
     });
     if (me.debt > 0) { const pay = Math.min(me.debt, Math.max(0, inc - 25000) * 0.09); cost += pay; me.debt = Math.round((me.debt - pay) * 1.02); }
-    const delta = net + hh - cost;
+    const fixed = me.as.reduce((t, a) => t + (a.t === 'house' && a.lo > 0 ? a.lo * 0.04 + Math.max(0, a.pm - a.lo * 0.04) : 0), 0) + (me.debt > 0 ? Math.min(me.debt, Math.max(0, inc - 25000) * 0.09) : 0);
+    const flex = cost - fixed;
+    const ben = me.age >= 18 && !stu && net + hh < 12000 && me.m < 5000 ? 12000 - net - hh : 0;
+    let delta = net + hh + ben - cost;
+    if (delta < 0 && me.m + delta < 0) {
+      const cut = Math.min(flex * 0.45, -delta);
+      if (cut > 0) { delta += cut; if (olR() < 0.5) olSay(s, ['Money was tight, so I cut back on everything this year.', 'L’argent manquait, alors j’ai réduit toutes mes dépenses cette année.'], 'b'); olGain(s, 'h', -2); }
+    }
+    if (ben > 0 && !me.fl.ben) { me.fl.ben = 1; olSay(s, ['I started receiving income support while I look for better work.', 'J’ai commencé à toucher une aide le temps de trouver un meilleur emploi.'], ''); }
     me.m += delta;
-    if (me.m > 0) me.m *= 1.005; else me.m *= 1.07;
+    if (me.m > 0) me.m *= 1.005; else me.m *= 1.04;
     me.m = Math.round(me.m);
     s.net = Math.round(delta);
   }
@@ -3407,7 +3420,7 @@ Kite: Paper+Wind, Bird+Paper
     olDrift(s);
     olSchoolYear(s);
     olJobYear(s);
-    if (me.age >= 16 || me.mv) olMoneyYear(s);
+    if (me.age >= 16 || me.mv || me.job) olMoneyYear(s);
     olHealthYear(s);
     if (me.age === 18 && !me.edu.hs && !me.sch && !s.q.length) s.q.push({ k: 'after' });
     if (me.age === 66 && me.job && me.job.t === 'f') s.q.push({ k: 'retire' });
@@ -3480,9 +3493,13 @@ Kite: Paper+Wind, Bird+Paper
     if (kid.age >= 18) { nm.edu.hs = olR() < 0.9 ? 1 : 0; nm.mv = 1; nm.lic = olR() < 0.7 ? 1 : 0; }
     if (kid.age >= 22 && nm.edu.hs && olR() < 0.55) nm.edu.deg = olP(OL_MAJ)[0];
     if (kid.age >= 5 && kid.age < 18) olSchoolStart(n, kid.age < 11 ? 'pri' : kid.age < 15 ? 'mid' : 'high', kid.age < 11 ? 6 : kid.age < 15 ? 4 : 3, { y: kid.age < 11 ? kid.age - 5 : kid.age < 15 ? kid.age - 11 : kid.age - 15 });
-    if (kid.age >= 23 && kid.job) {
-      const pool = OL_JOB.filter(d => d[1] === 'f' && !olReqOk(n, d).length);
-      if (pool.length) { olStartJob(n, olP(pool)[0], Math.min(3, Math.floor((kid.age - 22) / 8))); nm.job.yrs = Math.max(0, kid.age - 23); }
+    if (kid.age >= 23 && kid.job && kid.jid && OL_JOBM[kid.jid]) {
+      const d = OL_JOBM[kid.jid];
+      if (d[3] >= 1) nm.edu.hs = 1;
+      if (d[3] >= 2 && !nm.edu.deg) nm.edu.deg = Array.isArray(d[4]) && OL_MAJM[d[4][0]] ? d[4][0] : olP(OL_MAJ)[0];
+      if (d[3] >= 3 && Array.isArray(d[4])) nm.edu.grad = d[4][0];
+      olStartJob(n, kid.jid, kid.jl | 0);
+      nm.job.yrs = Math.max(0, kid.age - 23);
     }
     if (kid.age >= 67) { nm.ret = 1; nm.pen = 12000; nm.job = null; }
     nm.m = share;
@@ -3850,7 +3867,7 @@ Kite: Paper+Wind, Bird+Paper
     me.al = me.al ? 1 : 0;
     const ids = new Set();
     c.pp = c.pp.filter(p => p && typeof p === 'object' && Number.isInteger(p.i) && !ids.has(p.i) && ids.add(p.i) && typeof p.n === 'string' && ['mom', 'dad', 'sib', 'gp', 'friend', 'love', 'kid', 'gkid', 'pet'].includes(p.r) && ok(p.age, 0, 130) && ok(p.b, 0, 100) && (p.r !== 'pet' || OL_PETM[p.sp]));
-    c.pp.forEach(p => { p.n = p.n.slice(0, 24); p.g = p.g === 'f' ? 'f' : 'm'; p.al = p.al ? 1 : 0; p.lk = olSanLook(p.lk); p.d = Array.isArray(p.d) ? p.d.filter(x => typeof x === 'string').slice(0, 20) : []; if (p.job && !(Array.isArray(p.job) && typeof p.job[0] === 'string')) p.job = null; if (p.r === 'love' && !['date', 'eng', 'mar'].includes(p.st)) p.st = 'date'; if (p.r === 'pet') p.ly = ok(p.ly, 1, 120) ? p.ly : 10; });
+    c.pp.forEach(p => { p.n = p.n.slice(0, 24); p.g = p.g === 'f' ? 'f' : 'm'; p.al = p.al ? 1 : 0; p.lk = olSanLook(p.lk); p.d = Array.isArray(p.d) ? p.d.filter(x => typeof x === 'string').slice(0, 20) : []; if (p.job && !(Array.isArray(p.job) && typeof p.job[0] === 'string')) p.job = null; if (p.r === 'love' && !['date', 'eng', 'mar'].includes(p.st)) p.st = 'date'; if (p.r === 'pet') p.ly = ok(p.ly, 1, 120) ? p.ly : 10; if (p.jid && !OL_JOBM[p.jid]) p.jid = null; p.jl = Number.isInteger(p.jl) && p.jl >= 0 && p.jl < 6 ? p.jl : 0; p.inc = ok(p.inc, 0, 1e7) ? p.inc : 0; });
     c.nid = Math.max(c.nid | 0, ...c.pp.map(p => p.i), 0);
     c.log = c.log.filter(b => b && ok(b.a, 0, 130) && Array.isArray(b.l)).map(b => ({ a: b.a, y: ok(b.y, -1e4, 1e5) ? b.y : 0, l: b.l.filter(x => Array.isArray(x) && typeof x[0] === 'string').slice(-40).map(x => [x[0].slice(0, 500), typeof x[1] === 'string' ? x[1].slice(0, 500) : x[0].slice(0, 500), ['g', 'b', 'm', ''].includes(x[2]) ? x[2] : '']) }));
     if (!c.log.length) c.log.push({ a: me.age, y: me.yr, l: [] });
@@ -4571,14 +4588,14 @@ Kite: Paper+Wind, Bird+Paper
       if (k === 'love') {
         if (m.age < 16 || m.dn.includes('love') || olLove(s)) return;
         const prefOf = () => G.pref || (m.g === 'f' ? 'm' : 'f');
-        const mkC = pref => [0, 1, 2].map(() => { const g = pref === 'a' ? olP(['m', 'f']) : pref; const t = olTemp(s, 0); t.g = g; t.n = olName(g); t.lk = olLook(g); t.age = m.age < 18 ? olI(16, 17) : olC(m.age + olI(-4, 4), 18, 110); t.l = olI(20, 95); t.tr = olP(OL_TRAIT); if (t.age >= 18) { const jid = olP(['teach', 'nurse', 'dev', 'engin', 'cook', 'retail', 'police', 'design', 'acct', 'mech', 'lab', 'journ', 'barista', 'farm', 'doctor', 'lawyer']); t.job = olJobPair(jid, Math.min(OL_JOBM[jid][6].length - 1, olI(0, 2)), g); } return t; });
+        const mkC = pref => [0, 1, 2].map(() => { const g = pref === 'a' ? olP(['m', 'f']) : pref; const t = olTemp(s, 0); t.g = g; t.n = olName(g); t.lk = olLook(g); t.age = m.age < 18 ? olI(16, 17) : olC(m.age + olI(-4, 4), 18, 110); t.l = olI(20, 95); t.tr = olP(OL_TRAIT); if (t.age >= 18) { const jid = olP(['teach', 'nurse', 'dev', 'engin', 'cook', 'retail', 'police', 'design', 'acct', 'mech', 'lab', 'journ', 'barista', 'farm', 'doctor', 'lawyer']); t.jid = jid; t.jl = Math.min(OL_JOBM[jid][6].length - 1, Math.max(0, Math.floor((t.age - 22) / 8))); t.job = olJobPair(jid, t.jl, g); t.inc = Math.round(OL_JOBM[jid][6][t.jl][2] / 1000) * 1000; } return t; });
         const build = () => {
           const pref = prefOf(), cs = mkC(pref);
           return { ic: 'heart', title: L('Find love'), html: `<div class="seg">${[['f', L('Girls')], ['m', L('Boys')], ['a', L('Everyone')]].map(([v, t]) => `<button type="button" data-pref="${v}" aria-pressed="${pref === v}">${t}</button>`).join('')}</div>`, ch: cs.map(t => ({ t: t.n + ', ' + t.age, s: L('Looks {n}%', { n: t.l }) + ' · ' + olTrait(t.tr, t.g, olFr() ? 1 : 0) + (t.job ? ' · ' + olEsc(X(t.job)) : ''), kb: false, fn: () => {
             m.dn.push('love');
             const ok = olR() * 100 < 42 + (m.st.l - t.l) / 2 + m.st.h / 10;
             const c = { p: t };
-            if (ok) { olMoveTemp(s, c, 'love', { st: 'date', yrs: 0, job: t.job || null }); c.p.b = olI(60, 80); const tx = olFP(['I asked {p} out and {he} said yes!', 'J’ai proposé à {p} de sortir avec moi et {il} a dit oui !'], c, s); olSay(s, tx, 'g'); olGain(s, 'h', 8); sfx('win'); tq.unshift(result(tx, { h: 8 }, 'g', null, olAv(c.p))); }
+            if (ok) { olMoveTemp(s, c, 'love', { st: 'date', yrs: 0, job: t.job || null, jid: t.jid || null, jl: t.jl | 0, inc: t.inc || 0 }); c.p.b = olI(60, 80); const tx = olFP(['I asked {p} out and {he} said yes!', 'J’ai proposé à {p} de sortir avec moi et {il} a dit oui !'], c, s); olSay(s, tx, 'g'); olGain(s, 'h', 8); sfx('win'); tq.unshift(result(tx, { h: 8 }, 'g', null, olAv(c.p))); }
             else { const tx = olFP(['I asked {p} out, but {he} said no.', 'J’ai proposé à {p} de sortir avec moi, mais {il} a refusé.'], c, s); olSay(s, tx, 'b'); olGain(s, 'h', -3); sfx('bad'); tq.unshift(result(tx, { h: -3 }, 'b', null, olAv(t))); }
             nextPop();
           } })).concat([{ t: L('Cancel'), cls: 'alt', kb: false, fn: () => nextPop() }]) };
@@ -4755,7 +4772,7 @@ Kite: Paper+Wind, Bird+Paper
         return;
       }
       if (!s) return;
-      if ((e.code === 'Space' || e.key === 'Enter') && !e.repeat && !(t && t.tagName === 'BUTTON' && root.contains(t))) { e.preventDefault(); ageUp(); }
+      if ((e.code === 'Space' || e.key === 'Enter') && !e.repeat && !(t && (t.tagName === 'BUTTON' || t.tagName === 'A') && t.matches(':focus-visible'))) { e.preventDefault(); ageUp(); }
       if (e.key === 'Escape' && narrow() && side.classList.contains('open')) closeSide();
     });
 
