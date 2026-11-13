@@ -307,3 +307,4 @@ html[data-boot="check"] body{overflow:hidden}
 #unmodal .au-lrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
 @keyframes auSpin{to{transform:rotate(360deg)}}
 #aumodal .au-or+.au-f{margin-top:0}
+.au-ts{display:flex;justify-content:center;margin-top:10px}.au-ts:empty{display:none}

@@ -325,6 +325,22 @@ const netB64 = u => btoa(String.fromCharCode.apply(null, new Uint8Array(u)));
 const netUnb = s => Uint8Array.from(atob(String(s)), c => c.charCodeAt(0));
 const netRtOk = () => !!(typeof SB !== 'undefined' && SB.on && !window.__gpSbDown && window.crypto && crypto.subtle && typeof sbClient === 'function');
 const netRtName = (gid, code, id) => 'gp:' + gid + ':' + code + (id ? ':' + id : '');
+const RTP = { p: null, uid: null };
+function rtPriv(sb) {
+  const uid = typeof SB !== 'undefined' && SB.user ? SB.user.id : null;
+  if (!uid || !sb) return Promise.resolve(false);
+  if (RTP.p && RTP.uid === uid) return RTP.p;
+  RTP.uid = uid;
+  RTP.p = new Promise(res => {
+    let done = false, ch = null;
+    const end = v => { if (done) return; done = true; clearTimeout(t); try { if (ch) sb.removeChannel(ch); } catch (e) {} if (typeof netDiag === 'function') netDiag('rt-private', { on: v }); res(v); };
+    const t = setTimeout(() => { RTP.p = null; end(false); }, 6000);
+    try { ch = sb.channel('probe', { config: { private: true } }); ch.subscribe(st => { if (st === 'SUBSCRIBED') end(true); else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT' || st === 'CLOSED') end(false); }); } catch (e) { end(false); }
+  });
+  return RTP.p;
+}
+window.gpRtPriv = rtPriv;
+const netReg = (fn, body) => { try { if (typeof SB === 'undefined' || !SB.user || typeof sbRest !== 'function') return Promise.resolve(null); return sbRest('rpc/' + fn, { method: 'POST', body }).catch(() => null); } catch (e) { return Promise.resolve(null); } };
 const netRtKeys = () => crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveBits']);
 const netRtPub = async k => netB64(await crypto.subtle.exportKey('raw', k.publicKey));
 const netRtShare = async (priv, pub) => {
@@ -431,7 +447,8 @@ function netRtLink(sb, name, role, o) {
   };
   L.start = async () => {
     try {
-      ch = sb.channel(name, { config: { broadcast: { self: false, ack: false } } });
+      const priv = await rtPriv(sb);
+      ch = sb.channel(name, { config: { private: priv, broadcast: { self: false, ack: false } } });
       ch.on('broadcast', { event: 'm' }, m => {
         const p = m && m.payload;
         if (dead || !p || !Array.isArray(p.b)) return;
@@ -472,7 +489,7 @@ async function netRtDoor(sb, gid, code, hubId, onLink) {
   const keys = await netRtKeys(), pub = await netRtPub(keys), key = 'hub:' + hubId, seen = new Map(), burst = [], t0 = Date.now();
   let dead = false, sync = null;
   const first = new Promise(r => { sync = r; });
-  const ch = sb.channel(netRtName(gid, code), { config: { broadcast: { self: false, ack: false }, presence: { key } } });
+  const ch = sb.channel(netRtName(gid, code), { config: { private: await rtPriv(sb), broadcast: { self: false, ack: false }, presence: { key } } });
   ch.on('presence', { event: 'sync' }, () => sync(ch.presenceState()));
   ch.on('broadcast', { event: 'k' }, async m => {
     const p = m && m.payload;
@@ -509,16 +526,18 @@ async function netRtDoor(sb, gid, code, hubId, onLink) {
   if (st) for (const k in st) { if (k.indexOf('hub:') === 0 && k !== key && (st[k] || []).some(x => (+x.t || 0) <= t0)) taken = true; }
   const close = () => { if (dead) return; dead = true; try { sb.removeChannel(ch); } catch (e) {} };
   if (taken) close();
-  return { taken, close };
+  return { taken, close, pub };
 }
 async function netRtDial(sb, gid, code, o, alive) {
   let sync = null, got = null;
   const first = new Promise(r => { sync = r; });
   const keys = await netRtKeys(), pub = await netRtPub(keys), n = netUid();
-  const ch = sb.channel(netRtName(gid, code), { config: { broadcast: { self: false, ack: false }, presence: { key: '' } } });
+  let regKey = null;
+  const regP = netReg('party_check', { p_game: gid, p_code: code }).then(r => { regKey = r && typeof r.key === 'string' ? r.key : null; return r; });
+  const ch = sb.channel(netRtName(gid, code), { config: { private: await rtPriv(sb), broadcast: { self: false, ack: false }, presence: { key: '' } } });
   const reply = new Promise(r => { got = r; });
   ch.on('presence', { event: 'sync' }, () => sync(ch.presenceState()));
-  ch.on('broadcast', { event: 'o' }, m => { const p = m && m.payload; if (p && p.n === n && typeof p.p === 'string') got(p.p); });
+  ch.on('broadcast', { event: 'o' }, m => { const p = m && m.payload; if (p && p.n === n && typeof p.p === 'string') { if (regKey && p.p !== regKey) { netDiag('rt-key-mismatch'); return; } got(p.p); } });
   const drop = () => { try { sb.removeChannel(ch); } catch (e) {} };
   let stopT = 0;
   const gone = new Promise((r, j) => { stopT = setInterval(() => { if (!alive()) j({ type: 'cancel' }); }, 150); });
@@ -529,6 +548,9 @@ async function netRtDial(sb, gid, code, o, alive) {
     const st = await or(Promise.race([first, new Promise(r => setTimeout(() => r(null), 3000))]));
     if (!alive()) throw { type: 'cancel' };
     if (st && !Object.keys(st).some(k => k.indexOf('hub:') === 0)) throw { type: 'peer-unavailable' };
+    const reg = await or(Promise.race([regP, new Promise(r => setTimeout(() => r(null), 2500))]));
+    if (reg && reg.state === 'ended' && !regKey) netDiag('rt-reg-ended');
+    netDiag('rt-verify', { key: !!regKey });
     let hp = null;
     for (let i = 0; i < 7 && !hp; i++) {
       try { const r = ch.send({ type: 'broadcast', event: 'k', payload: { n, p: pub } }); if (r && r.catch) r.catch(() => {}); } catch (e) {}
@@ -802,7 +824,10 @@ function makeNet(g, add) {
   const pubPush = () => {
     try { if (typeof window.gpPubSet === 'function') window.gpPubSet(g.id, mode === 'room' && net.role === 'host' && rm.pub && !rm.compat && net.code ? { g: g.id, c: String(net.code), n: hostPlayers().filter(p => !p.away).length, m: rm.max, h: rm.name, b: rm.state === 'game' ? 1 : 0, t: rm.pubT || (rm.pubT = Date.now()) } : null); } catch (e) {}
   };
+  const regBeat = () => { if (mode === 'room' && net.role === 'host' && net.code) { const n = hostPlayers().length; netReg('party_beat', { p_game: g.id, p_code: net.code, p_players: n, p_full: n >= rm.max, p_pub: !!rm.pub, p_size: rm.max, p_key: rm.door && rm.door.pub || null }); } };
+  const regSoon = () => { clearTimeout(rm.regS); rm.regS = setTimeout(regBeat, 800); };
   const pushList = () => {
+    regSoon();
     rm.list = hostPlayers();
     const m = { __pl: rm.list, busy: rm.state === 'game', min: rm.min, max: rm.max, sizes: rm.sizes, leader: leaderId(), bots: rm.bots, canBots: rm.botsOk, pub: rm.pub };
     txAll(m);
@@ -1123,7 +1148,8 @@ function makeNet(g, add) {
     keep = (keep && mode === 'room') || (mode === 'room' && !!invite && invite.id === g.id && !!invite.code && invite.code === net.code);
     if (keep) sesSave(); else { const o = netSes(); if (o && o.g === g.id) netSes(null); }
     if (mode || peer || rm.door) netDiag('shut', { mode, role: net.role, keep: !!keep, polite: !!polite });
-    gen++; clearInterval(hb); clearInterval(rm.hb);
+    if (mode === 'room' && net.role === 'host' && net.code && !keep) netReg('party_close', { p_game: g.id, p_code: net.code });
+    gen++; clearInterval(hb); clearInterval(rm.hb); clearInterval(rm.regT); clearTimeout(rm.regS);
     if (nudge) nudge();
     const c = conn, p = peer, gc = rm.conn, gs = [...rm.guests.values()], wasHost = mode === 'room' && net.role === 'host', door = rm.door;
     conn = null; peer = null; rm.conn = null; rm.reconn = false; rm.door = null; rm.via = '';
@@ -1191,7 +1217,7 @@ function makeNet(g, add) {
         if (!pr || !dr) { const both = await Promise.all([pP, dP]); if (my !== gen) { if (both[0].p) { try { both[0].p.destroy(); } catch (e) {} } if (both[1].d) both[1].d.close(); return null; } p = both[0].p || null; door = both[1].d && !both[1].d.taken ? both[1].d : null; pr = both[0]; }
         if (!p && !door) throw (pr && pr.e && pr.e.type && pr.e.type !== 'off' ? pr.e : { type: 'network' });
       }
-      if (!door && rtOk) dP.then(x => { if (x.d && !x.d.taken && my === gen && net.code === code && !rm.door) { rm.door = x.d; netDiag('host-door-late'); } else if (x.d) x.d.close(); });
+      if (!door && rtOk) dP.then(x => { if (x.d && !x.d.taken && my === gen && net.code === code && !rm.door) { rm.door = x.d; netDiag('host-door-late'); regSoon(); } else if (x.d) x.d.close(); });
       if (!p) { const c0 = code; pP.then(x => { if (x.p) { if (my === gen && net.code === c0 && !peer) { peer = x.p; x.p.on('connection', c => hostConn(c, my)); netDiag('host-peer-late', { n: 0 }); } else { try { x.p.destroy(); } catch (e) {} } } else setTimeout(() => adopt(c0, 1), 3000); }); }
       break;
     }
@@ -1204,6 +1230,9 @@ function makeNet(g, add) {
     early.splice(0).forEach(l => hostConn(l, my));
     clearInterval(rm.hb);
     rm.hb = setInterval(() => { if (my === gen) hostTick(); }, 1000);
+    netReg('party_open', { p_game: g.id, p_code: code, p_pub: !!rm.pub, p_key: door ? door.pub : null, p_size: rm.max }).then(ok => { if (ok === false) netDiag('reg-taken', { code }); });
+    clearInterval(rm.regT);
+    rm.regT = setInterval(() => { if (my === gen) regBeat(); }, 30000);
     netDiag('host-ready', { code, peer: !!p, rt: !!door, ms: now() - t0 });
     pushList();
     return code;

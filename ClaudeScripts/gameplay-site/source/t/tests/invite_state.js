@@ -1,0 +1,70 @@
+const lib = require('../lib.js');
+const { execFileSync } = require('child_process');
+const DBC = process.env.STAGE_DB || 'supabase_db_staging';
+const sql = q => execFileSync('docker', ['exec', '-i', DBC, 'psql', '-U', 'postgres', '-d', 'postgres', '-Atqc', q]).toString().trim();
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const GAME = process.env.PARTY_GAME || 'last-card';
+const hostParty = async (h, game) => { await h.toParty(game || GAME); await h.click('gohost'); await h.click('mkpriv'); await h.waitLobby(1); return (await h.lobby()).code; };
+const openChat = async (v, name) => {
+  await v.page.evaluate(() => { const c = document.querySelector('#chat'); if (!c || c.hidden) document.querySelector('#sodl').click(); });
+  await v.page.waitForSelector('#chat [data-ch="so"]', { timeout: 30000 });
+  await v.page.evaluate(n => { const r = [...document.querySelectorAll('#chat [data-ch="so"]')].find(x => x.innerText.indexOf(n) >= 0); if (!r) throw new Error('friend not listed: ' + n); r.click(); }, name);
+  await v.page.waitForFunction(() => { const t = document.querySelector('#chat textarea'); return !!t && t.getBoundingClientRect().width > 0; }, null, { timeout: 30000 });
+  await sleep(1200);
+};
+const joinCode = async (v, game, code) => { await v.toParty(game); await v.click('gojoin'); await v.page.fill('.g-lobby .gl-code-in', code); await v.tap('.g-lobby .gl-jbtn'); };
+const noDock = () => { try { Object.keys(localStorage).filter(k => k.indexOf('gameplay:dock:') === 0).forEach(k => localStorage.removeItem(k)); } catch (e) {} };
+(async () => {
+  const id = u => sql("select id from public.profiles where username = '" + u + "'");
+  const ann = id('ann_player'), bob = id('bob_player');
+  const b = await lib.launch();
+  const out = [], fail = [];
+  const must = (ok, m) => { (ok ? out : fail).push(m); };
+  const card = async (v, code) => v.page.evaluate(c => { const e = [...document.querySelectorAll('#chat .ch-card[data-inv]')].find(x => x.dataset.inv.split('|')[1] === c); if (!e) return null; const btn = e.querySelector('[data-ch="go"]'); return { off: e.classList.contains('inv-off'), text: e.innerText.replace(/\s+/g, ' '), canJoin: !!btn && !btn.hidden && getComputedStyle(btn).display !== 'none' }; }, code);
+  try {
+    const h = await lib.player(b, 'ann', { init: noDock });
+    const code = await hostParty(h);
+    must(/^[A-Z0-9]{4,8}$/.test(code || ''), 'ann hosts a party (' + code + ')');
+    await sleep(2500);
+    must(sql("select count(*) from private.parties where game = '" + GAME + "' and code = '" + code + "' and closed_at is null and host = '" + ann + "'") === '1', 'the party is in the server registry');
+    sql("insert into public.dms (from_id, to_id, kind, body, meta) values ('" + ann + "', '" + bob + "', 'invite', null, jsonb_build_object('game', '" + GAME + "', 'code', '" + code + "'))");
+    const g = await lib.player(b, 'bob', { init: noDock });
+    await openChat(g, 'ann');
+    await g.page.waitForFunction(c => [...document.querySelectorAll('#chat .ch-card[data-inv]')].some(x => x.dataset.inv.split('|')[1] === c), code, { timeout: 30000 });
+    await sleep(1500);
+    let c1 = await card(g, code);
+    must(c1 && !c1.off && c1.canJoin, 'while the party is open the invite can be joined: ' + JSON.stringify(c1));
+    await h.tap('.g-lobby .gl-leave');
+    await sleep(1500);
+    const t0 = Date.now();
+    let c2 = null;
+    while (Date.now() - t0 < 30000) { c2 = await card(g, code); if (c2 && c2.off) break; await sleep(1000); }
+    must(c2 && c2.off && !c2.canJoin && /Party ended/.test(c2.text), 'after the host leaves, the open conversation shows "Party ended" and no Join button within ' + Math.round((Date.now() - t0) / 1000) + ' s: ' + JSON.stringify(c2));
+    await g.page.reload();
+    await g.ready();
+    await openChat(g, 'ann');
+    await g.page.waitForFunction(c => [...document.querySelectorAll('#chat .ch-card[data-inv]')].some(x => x.dataset.inv.split('|')[1] === c && x.classList.contains('inv-off')), code, { timeout: 30000 }).catch(() => {});
+    const c3 = await card(g, code);
+    must(c3 && c3.off && /Party ended/.test(c3.text), 'opened again after a reload it still shows "Party ended": ' + JSON.stringify(c3));
+    const code2 = await hostParty(h);
+    await h.page.selectOption('.g-lobby select[data-n="sizesel"]', '2');
+    await sleep(800);
+    const cv = await lib.player(b, 'cat', { init: noDock });
+    await joinCode(cv, GAME, code2);
+    await cv.waitLobby(2); await h.waitLobby(2);
+    await sleep(2500);
+    must(sql("select is_full from private.parties where game = '" + GAME + "' and code = '" + code2 + "'") === 't', 'the registry marks the two-player party full once cat joins');
+    sql("insert into public.dms (from_id, to_id, kind, body, meta) values ('" + ann + "', '" + bob + "', 'invite', null, jsonb_build_object('game', '" + GAME + "', 'code', '" + code2 + "'))");
+    const t1 = Date.now();
+    let c4 = null;
+    while (Date.now() - t1 < 40000) { c4 = await card(g, code2); if (c4 && c4.off) break; await sleep(1000); }
+    must(c4 && c4.off && /Party full/.test(c4.text), 'a full party shows "Party full": ' + JSON.stringify(c4));
+    await h.close(); await g.close(); await cv.close();
+  } catch (e) { fail.push('error: ' + String(e && e.message || e).split('\n')[0]); }
+  sql("delete from public.dms where kind = 'invite' and from_id = '" + ann + "' and to_id = '" + bob + "'");
+  await b.close();
+  out.forEach(m => console.log('PASS ' + m));
+  fail.forEach(m => console.log('FAIL ' + m));
+  console.log(fail.length ? fail.length + ' failing' : 'all passing');
+  process.exit(fail.length ? 1 : 0);
+})();

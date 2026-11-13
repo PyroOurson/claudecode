@@ -40,10 +40,16 @@ Run it again at any time; it changes nothing that is already right.
 
 This one runs on Cloudflare's network, so it keeps working when the home connection or the Debian machine is off. It also uses Cloudflare addresses, which school filters almost never block. It is free (100,000 requests a day), and the site only uses it when the other routes fail.
 
-1. In the Cloudflare dashboard: **Workers & Pages** → **Create** → **Create Worker**, name it `gameplay-api`, press **Deploy**.
-2. **Edit code**: replace everything with the content of `cloudflare-worker.js` (in this folder), then press **Deploy**.
-3. **Settings** → **Domains & Routes** → **Add** → **Custom domain** → `gameplay-api.vitalang.net` → **Add domain**. Cloudflare creates the DNS record itself.
-4. Check: https://gameplay-api.vitalang.net/health shows `ok`, and on https://gameplaygames.web.app/check the "relay 1 (gameplay-api.vitalang.net)" lines say Works.
+Deploy it from this folder with Wrangler (`wrangler.toml` holds the name `gameplay-api` and the custom domain): `npx wrangler login` once, then `npx wrangler deploy`. On Windows PowerShell use `npx.cmd`, because script execution is turned off.
+
+Found on 13 November 2026: the name `gameplay-api.vitalang.net` had a plain DNS record (DNS only) pointing to the home address 176.146.110.90 instead of the Worker, so the relay did not answer (connection reset). Deploying with the custom domain needs that record removed first (Cloudflare dashboard, vitalang.net, DNS), then Cloudflare creates the right one itself.
+
+Secrets (`npx wrangler secret put NAME`, never in git):
+
+- `RELAY_KEY`: a long random value. The Worker sends it to the database with every request, together with the visitor's address (`X-GP-IP`) and country (`X-GP-Country`); the database trusts those only when the value matches the hash stored with `select private.set_relay_key('<the same value>');` in the SQL editor. Until a key is stored, the database keeps trusting the Worker's addresses as before. It also lets the Worker check address and device bans for sign-in, sign-up and uploads (the database checks every other request itself).
+- `TURN_KEY_ID` and `TURN_KEY_API_TOKEN`: see the TURN section below.
+
+Check: https://gameplay-api.vitalang.net/health shows `ok`, and on https://gameplaygames.web.app/check the "relay 1 (gameplay-api.vitalang.net)" lines say Works.
 
 ## TURN relay for online parties (same Worker, `/turn`)
 

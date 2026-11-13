@@ -18,11 +18,13 @@ ClaudeScripts/acra/start.bat
 ClaudeScripts/acra/start.sh
 ClaudeScripts/acra/train.py
 ClaudeScripts/acra/watch.py
+ClaudeScripts/gameplay-site/admin_variants.html
 ClaudeScripts/gameplay-site/deploy.py
 ClaudeScripts/gameplay-site/prompt.txt
 ClaudeScripts/gameplay-site/server/README.md
 ClaudeScripts/gameplay-site/server/cloudflare-worker.js
 ClaudeScripts/gameplay-site/server/setup.py
+ClaudeScripts/gameplay-site/server/wrangler.toml
 ClaudeScripts/gameplay-site/source/.gitignore
 ClaudeScripts/gameplay-site/source/BUILD.md
 ClaudeScripts/gameplay-site/source/games/minecraft/mk.py
@@ -87,6 +89,7 @@ ClaudeScripts/gameplay-site/source/games/rocket-league/tools/split.py
 ClaudeScripts/gameplay-site/source/games/rocket-league/tools/svgshot.js
 ClaudeScripts/gameplay-site/source/games/subway-surfers/build.py
 ClaudeScripts/gameplay-site/source/games/subway-surfers/src/subway-surfers.js
+ClaudeScripts/gameplay-site/source/notes/admin-rating.md
 ClaudeScripts/gameplay-site/source/notes/analytics_audit_round19.md
 ClaudeScripts/gameplay-site/source/notes/design/gameplay-home.html
 ClaudeScripts/gameplay-site/source/notes/design/lobby.webp
@@ -103,11 +106,14 @@ ClaudeScripts/gameplay-site/source/t/tests/announce.js
 ClaudeScripts/gameplay-site/source/t/tests/dm.js
 ClaudeScripts/gameplay-site/source/t/tests/fixes.js
 ClaudeScripts/gameplay-site/source/t/tests/gate_locked.js
+ClaudeScripts/gameplay-site/source/t/tests/invite_state.js
 ClaudeScripts/gameplay-site/source/t/tests/ipban.js
 ClaudeScripts/gameplay-site/source/t/tests/legal_pages.js
 ClaudeScripts/gameplay-site/source/t/tests/load_sequence.js
 ClaudeScripts/gameplay-site/source/t/tests/party.js
 ClaudeScripts/gameplay-site/source/t/tests/peak.js
+ClaudeScripts/gameplay-site/source/t/tests/rt_security.js
+ClaudeScripts/gameplay-site/source/t/tests/signin.js
 ClaudeScripts/gameplay-site/source/t/tests/smoke_all.js
 ClaudeScripts/gameplay-site/source/w/agents_net/API.md
 ClaudeScripts/gameplay-site/source/w/assemble.py
@@ -547,6 +553,7 @@ ClaudeScripts/gameplay-site/source/w/supabase/emails/magic_link.html
 ClaudeScripts/gameplay-site/source/w/supabase/emails/reauthentication.html
 ClaudeScripts/gameplay-site/source/w/supabase/emails/reset_password.html
 ClaudeScripts/gameplay-site/source/w/supabase/emails/subjects.txt
+ClaudeScripts/gameplay-site/source/w/supabase/functions/login/index.ts
 ClaudeScripts/gameplay-site/source/w/supabase/gameplay.sql
 ClaudeScripts/gameplay-site/source/w/supabase/setup.py
 ClaudeScripts/gameplay-site/source/w/vendor/peerjs-1.5.4.min.js
