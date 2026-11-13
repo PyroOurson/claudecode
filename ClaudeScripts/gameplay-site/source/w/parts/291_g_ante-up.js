@@ -8,7 +8,7 @@
   const RNAME = ['Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King', 'Ace'];
   const rlab = r => RL[r - 2];
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const cn = c => c.e === 'stone' ? 'Stone Card' : RNAME[c.r - 2] + ' of ' + SN[c.s];
+  const cn = c => c.e === 'stone' ? 'Brick Card' : RNAME[c.r - 2] + ' of ' + SN[c.s];
   const chipVal = c => c.e === 'stone' ? 0 : c.r === 14 ? 11 : c.r >= 11 ? 10 : c.r;
 
   let RS = 1;
@@ -28,18 +28,18 @@
   const mulb = a => () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 
   const HAND = {
-    flush5: { n: 'Flush Five', c: 160, m: 16, lc: 50, lm: 3, pl: 'Eris', sec: 1 },
-    flushh: { n: 'Flush House', c: 140, m: 14, lc: 40, lm: 4, pl: 'Ceres', sec: 1 },
-    five: { n: 'Five of a Kind', c: 120, m: 12, lc: 35, lm: 3, pl: 'Planet X', sec: 1 },
-    sflush: { n: 'Straight Flush', c: 100, m: 8, lc: 40, lm: 4, pl: 'Neptune' },
-    four: { n: 'Four of a Kind', c: 60, m: 7, lc: 30, lm: 3, pl: 'Mars' },
-    fh: { n: 'Full House', c: 40, m: 4, lc: 25, lm: 2, pl: 'Earth' },
-    flush: { n: 'Flush', c: 35, m: 4, lc: 15, lm: 2, pl: 'Jupiter' },
-    straight: { n: 'Straight', c: 30, m: 4, lc: 30, lm: 3, pl: 'Saturn' },
-    three: { n: 'Three of a Kind', c: 30, m: 3, lc: 20, lm: 2, pl: 'Venus' },
-    two: { n: 'Two Pair', c: 20, m: 2, lc: 20, lm: 1, pl: 'Uranus' },
-    pair: { n: 'Pair', c: 10, m: 2, lc: 15, lm: 1, pl: 'Mercury' },
-    high: { n: 'High Card', c: 5, m: 1, lc: 10, lm: 1, pl: 'Pluto' }
+    flush5: { n: 'Flush Five', c: 170, m: 15, lc: 52, lm: 3, pl: 'Moonstone', sec: 1 },
+    flushh: { n: 'Flush House', c: 150, m: 13, lc: 42, lm: 4, pl: 'Pearl', sec: 1 },
+    five: { n: 'Five of a Kind', c: 130, m: 12, lc: 38, lm: 3, pl: 'Onyx', sec: 1 },
+    sflush: { n: 'Straight Flush', c: 110, m: 8, lc: 42, lm: 4, pl: 'Opal' },
+    four: { n: 'Four of a Kind', c: 65, m: 7, lc: 32, lm: 3, pl: 'Emerald' },
+    fh: { n: 'Full House', c: 45, m: 4, lc: 26, lm: 2, pl: 'Ruby' },
+    flush: { n: 'Flush', c: 38, m: 4, lc: 18, lm: 2, pl: 'Sapphire' },
+    straight: { n: 'Straight', c: 34, m: 4, lc: 28, lm: 3, pl: 'Jade' },
+    three: { n: 'Three of a Kind', c: 32, m: 3, lc: 22, lm: 2, pl: 'Topaz' },
+    two: { n: 'Two Pair', c: 22, m: 2, lc: 22, lm: 1, pl: 'Amethyst' },
+    pair: { n: 'Pair', c: 12, m: 2, lc: 16, lm: 1, pl: 'Garnet' },
+    high: { n: 'High Card', c: 6, m: 1, lc: 12, lm: 1, pl: 'Quartz' }
   };
   const HORD = ['flush5', 'flushh', 'five', 'sflush', 'four', 'fh', 'flush', 'straight', 'three', 'two', 'pair', 'high'];
 
@@ -250,25 +250,26 @@
   function backArt(key) {
     const k = 'b' + key;
     if (cardCache.has(k)) return cardCache.get(k);
-    const [c, x] = mkc(71, 95), p = BACKS[key] || BACKS.red;
+    const [c, x] = mkc(71, 95), p = BACKS[key] || BACKS.club;
     cardFrame(x, p[0], '#20242c');
     px(x, 4, 4, 63, 87, p[1]);
-    for (let yy = 0; yy < 29; yy++) for (let xx = 0; xx < 21; xx++) {
-      if ((xx + yy) % 2 === 0) px(x, 5 + xx * 3, 5 + yy * 3 - 0, 3, 3, p[2]);
+    for (let yy = 0; yy < 87; yy++) for (let xx = 0; xx < 63; xx++) {
+      const u = (xx + 3) % 12 - 6, v = (yy + 2) % 16 - 8;
+      if (Math.abs(u) / 6 + Math.abs(v) / 8 < .62) px(x, 4 + xx, 4 + yy, 1, 1, p[2]);
     }
-    px(x, 9, 9, 53, 77, p[1]); px(x, 11, 11, 49, 73, p[0]);
-    px(x, 13, 13, 45, 69, p[1]);
-    disc(x, 35, 47, 14, p[0]); disc(x, 35, 47, 10, p[2]); disc(x, 35, 47, 6, p[0]);
-    px(x, 33, 45, 5, 5, p[1]);
+    px(x, 10, 10, 51, 75, p[0]); px(x, 12, 12, 47, 71, p[1]);
+    for (let j = 0; j < 22; j++) { const w = j < 11 ? j : 21 - j; px(x, 35 - w, 36 + j, w * 2 + 1, 1, p[0]); }
+    for (let j = 0; j < 16; j++) { const w = j < 8 ? j : 15 - j; px(x, 35 - w, 39 + j, w * 2 + 1, 1, p[2]); }
+    disc(x, 35, 47, 3, p[0]);
     cardCache.set(k, c);
     return c;
   }
   const BACKS = {
-    red: ['#e7d7c6', '#c3402f', '#e86a54'], blue: ['#dbe6f0', '#2f6fc4', '#5d96e6'], yellow: ['#f2e6c2', '#d6a722', '#f2cc55'],
-    green: ['#d6e8d2', '#2f9a52', '#5cc67e'], black: ['#cfcfd8', '#2e2e3a', '#5a5a6e'], magic: ['#e6d4ee', '#7a3fa8', '#a96fd6'],
-    nebula: ['#d0dcee', '#2a3f8e', '#5c78d0'], ghost: ['#e4e4ee', '#6b6f8a', '#a2a6c4'], abandoned: ['#e4d9c6', '#7a5e3a', '#a9885c'],
-    checkered: ['#eddede', '#8a2c3c', '#2c3c8a'], zodiac: ['#f0e0c6', '#a2562c', '#d68a4c'], painted: ['#f0d8e0', '#c23a7a', '#3a9ac2'],
-    anaglyph: ['#e0e0e0', '#c23a3a', '#3ac2c2'], plasma: ['#e4d6f0', '#c23ac2', '#3a9ac2'], erratic: ['#e0e8d8', '#6a8a2c', '#c26a2c']
+    club: ['#e9e1cc', '#1f6a4a', '#2f8a62'], steady: ['#dbe6f0', '#2f5fa4', '#4f86d0'], spare: ['#f0dcd6', '#a8402f', '#d06a54'],
+    silver: ['#eceef2', '#7a8494', '#a8b0be'], geo: ['#d8ecec', '#1f7a8a', '#3fa8b8'], magic: ['#e6d4ee', '#6a2f98', '#9a5fc6'],
+    wide: ['#f2e6c2', '#b8861a', '#e0b244'], crowd: ['#f0dce6', '#a83a6a', '#d0629a'], royal: ['#efe2c4', '#7a2a2a', '#c8a040'],
+    stamped: ['#e8e0d0', '#5a4a3a', '#8a7a5a'], roller: ['#e0f0d8', '#2a6a2a', '#e8c040'], jumble: ['#e0e8d8', '#6a8a2c', '#c26a2c'],
+    fortune: ['#dfe2f0', '#2a2f5a', '#6a74b8'], scholar: ['#ece4d2', '#4a3a2a', '#8a6a3a'], hidden: ['#cfcfd8', '#2e2e3a', '#5a5a6e']
   };
 
   function playArt(c) {
@@ -365,27 +366,41 @@
     return cv;
   }
 
-  const PLC = { Mercury: ['#b9b2a8', '#7a7468'], Venus: ['#e8c88a', '#b08a4a'], Earth: ['#4a8ae0', '#2a8a4a'], Mars: ['#d8603a', '#8a3a22'], Jupiter: ['#d8b890', '#a8704a'], Saturn: ['#e8d8a0', '#b8a060'], Uranus: ['#8ae0e8', '#4aa8b8'], Neptune: ['#4a6ae8', '#2a3aa8'], Pluto: ['#c8b8a8', '#8a7868'], 'Planet X': ['#e870e8', '#8a38a8'], Ceres: ['#a8a8a8', '#686868'], Eris: ['#f0f0f8', '#8a8aa8'] };
+  const GEMC = { Quartz: ['#eef0f8', '#9aa0c0'], Garnet: ['#d03044', '#6a0e1a'], Amethyst: ['#a868e8', '#4a2080'], Topaz: ['#f4b040', '#a05a10'], Jade: ['#48c488', '#14603a'], Sapphire: ['#4a78ec', '#142a80'], Ruby: ['#f03a58', '#801020'], Emerald: ['#38cc6a', '#0e6a2a'], Opal: ['#b8eef4', '#d890c8'], Onyx: ['#5a5a6c', '#101018'], Pearl: ['#f6f0e2', '#b8ac98'], Moonstone: ['#d0e0f4', '#6a7aa8'] };
   function planetArt(name) {
-    const k = 'pl' + name;
+    const k = 'gm' + name;
     if (cardCache.has(k)) return cardCache.get(k);
-    const [cv, x] = mkc(71, 95), R = mulb(hashStr(name)), pc = PLC[name] || PLC.Pluto;
-    cardFrame(x, '#10162e', '#20242c');
-    px(x, 3, 3, 65, 89, '#0c1028');
-    for (let i = 0; i < 40; i++) px(x, 4 + (R() * 62 | 0), 4 + (R() * 86 | 0), 1, 1, R() > .5 ? '#ffffff' : '#8aa8ff');
-    const cx = 35, cy = 46, r = 19;
-    if (name === 'Saturn' || name === 'Uranus' || name === 'Eris') ell(x, cx, cy, 31, 7, mix(pc[0], '#000000', .5));
-    disc(x, cx, cy, r, sh(pc[1], .6)); disc(x, cx, cy, r - 1, pc[1]);
-    for (let dy = -r; dy <= r; dy++) {
-      const w = Math.floor(Math.sqrt(r * r - dy * dy));
-      const band = (Math.floor((dy + r) / 4) + (R() > .93 ? 1 : 0)) % 2 === 0;
-      if (band || name === 'Earth') px(x, cx - w + 1, cy + dy, w * 2 - 1, 2, pc[0]);
+    const [cv, x] = mkc(71, 95), R = mulb(hashStr(name)), gc = GEMC[name] || GEMC.Quartz;
+    cardFrame(x, '#123a34', '#20242c');
+    for (let yy = 0; yy < 89; yy++) px(x, 3, 3 + yy, 65, 1, mix('#1a4a42', '#0a1e1c', yy / 88));
+    for (let yy = 3; yy < 92; yy += 3) for (let xx = 3 + (yy % 2); xx < 68; xx += 3) px(x, xx, yy, 1, 1, 'rgba(255,255,255,.05)');
+    for (let i = 0; i < 16; i++) px(x, 5 + (R() * 60 | 0), 5 + (R() * 84 | 0), 1, 1, 'rgba(255,255,255,.4)');
+    ell(x, 35, 70, 22, 5, 'rgba(0,0,0,.35)');
+    const cx = 35, lt = mix(gc[0], '#ffffff', .5), md = mix(gc[0], gc[1], .45), op = name === 'Opal';
+    const hwAt = y => y <= 40 ? Math.round(10 + (y - 28) * 1.05) : Math.round(22.6 * (68 - y) / 28);
+    for (let y = 27; y <= 69; y++) { const hw = hwAt(Math.max(28, Math.min(68, y))); px(x, cx - hw - 1, y, hw * 2 + 3, 1, '#14181e'); }
+    for (let y = 28; y <= 67; y++) {
+      const hw = hwAt(y) - 1;
+      for (let xx = -hw; xx <= hw; xx++) {
+        let col;
+        if (y <= 40) {
+          const t = (y - 28) / 12, ax = Math.abs(xx);
+          if (y <= 31 && ax <= 7) col = lt;
+          else if (ax < 7 + t * 6) col = xx < 0 ? gc[0] : lt;
+          else col = xx < 0 ? md : gc[0];
+        } else {
+          const f = Math.floor((xx + hw) / Math.max(1, hw * 2 + 1) * 5);
+          col = [md, gc[0], lt, gc[0], gc[1]][Math.min(4, f)];
+          if (y > 58) col = mix(col, gc[1], .5);
+        }
+        if (op && (xx * 3 + y * 2) % 11 === 0) col = ['#f8c0e0', '#c0f0c8', '#c8d0ff'][(xx + y + 99) % 3];
+        px(x, cx + xx, y, 1, 1, col);
+      }
     }
-    if (name === 'Earth') { disc(x, cx - 6, cy - 4, 6, '#3aa04a'); disc(x, cx + 7, cy + 7, 5, '#3aa04a'); }
-    disc(x, cx - 7, cy - 7, 5, 'rgba(255,255,255,.25)');
-    for (let dy = -r; dy <= r; dy++) { const w = Math.floor(Math.sqrt(r * r - dy * dy)); px(x, cx + Math.floor(w * .35), cy + dy, Math.ceil(w * .65), 1, 'rgba(0,0,20,.4)'); }
-    if (name === 'Saturn' || name === 'Uranus' || name === 'Eris') { ell(x, cx, cy + 1, 31, 7, 'rgba(0,0,0,0)'); for (let i = -30; i <= 30; i++) { const yy = Math.round(Math.sqrt(Math.max(0, 1 - i * i / 961)) * 7); if (yy > 0) { px(x, cx + i, cy + yy - 1, 1, 2, pc[0]); } } }
-    spr(x, SYM.star, 6, 80, '#ffe45a', 1); spr(x, SYM.star, 56, 6, '#ffe45a', 1);
+    px(x, cx - hwAt(40) + 1, 40, (hwAt(40) - 1) * 2 + 1, 1, mix(gc[1], '#000000', .2));
+    px(x, cx - 12, 32, 3, 1, '#ffffff'); px(x, cx - 11, 31, 1, 3, '#ffffff');
+    px(x, cx + 9, 52, 1, 1, '#ffffff');
+    spr(x, SYM.gem, 6, 80, '#7ae8d8', 1); spr(x, SYM.gem, 56, 6, '#7ae8d8', 1);
     cardCache.set(k, cv);
     return cv;
   }
@@ -412,7 +427,26 @@
     cards: x => { px(x, 18, 32, 24, 34, '#f4f0e6'); px(x, 28, 28, 24, 34, '#e8e0d0'); spr(x, SUIT9[1], 34, 38, '#e0453a', 1); },
     hole: x => { disc(x, 35, 46, 19, '#e8e8f8'); disc(x, 35, 46, 14, '#8a4ad8'); disc(x, 35, 46, 8, '#201040'); disc(x, 35, 46, 3, '#000'); },
     cart: x => { px(x, 20, 40, 32, 14, '#c88a4a'); disc(x, 26, 58, 5, '#3a2a1a'); disc(x, 46, 58, 5, '#3a2a1a'); px(x, 48, 30, 3, 12, '#e8c040'); },
-    leaf: x => { ell(x, 35, 46, 12, 20, '#4cc66a'); line(x, 35, 28, 35, 66, '#2a7a3a', 2); }
+    leaf: x => { ell(x, 35, 46, 12, 20, '#4cc66a'); line(x, 35, 28, 35, 66, '#2a7a3a', 2); },
+    hat: x => { px(x, 16, 58, 39, 5, '#1c1f2a'); px(x, 23, 28, 25, 31, '#1c1f2a'); px(x, 23, 50, 25, 5, '#c8303a'); px(x, 26, 31, 3, 17, '#3c4254'); line(x, 46, 26, 56, 18, '#f0e6c8', 2); px(x, 55, 16, 3, 3, '#ffffff'); },
+    quill: x => { for (let i = 0; i < 26; i++) { const a = 28 + i, b = 64 - i * 1.4; px(x, a - 6 + Math.floor(i / 5), Math.round(b) - 2, 8 - Math.floor(i / 4), 3, '#e8e8f4'); } line(x, 22, 70, 50, 28, '#8a8aa0', 1); px(x, 20, 68, 4, 6, '#2a2f3a'); },
+    mask: x => { ell(x, 35, 46, 22, 10, '#e8c040'); ell(x, 26, 45, 6, 4, '#2a1a3a'); ell(x, 44, 45, 6, 4, '#2a1a3a'); px(x, 33, 50, 4, 3, '#c89a2a'); line(x, 13, 44, 6, 38, '#e8c040', 2); line(x, 57, 44, 64, 38, '#e8c040', 2); },
+    brick: x => { for (let r = 0; r < 4; r++) for (let q = 0; q < 3; q++) { const o = r % 2 ? 7 : 0; px(x, 14 + o + q * 15, 30 + r * 10, 13, 8, r % 2 ? '#b8553a' : '#c8643f'); px(x, 14 + o + q * 15, 30 + r * 10, 13, 2, '#e08a62'); } },
+    coin: x => { disc(x, 35, 46, 18, '#8a6a1a'); disc(x, 35, 46, 16, '#f2c744'); disc(x, 35, 46, 12, '#e0a82a'); px(x, 33, 36, 4, 20, '#fff0a0'); px(x, 29, 40, 12, 3, '#fff0a0'); px(x, 29, 49, 12, 3, '#fff0a0'); },
+    up: x => { for (let j = 0; j < 14; j++) px(x, 35 - j, 26 + j, j * 2 + 1, 1, '#7ae87a'); px(x, 30, 40, 11, 26, '#7ae87a'); },
+    down: x => { for (let j = 0; j < 14; j++) px(x, 35 - j, 66 - j, j * 2 + 1, 1, '#f07a7a'); px(x, 30, 26, 11, 26, '#f07a7a'); },
+    mirror: x => { ell(x, 35, 40, 15, 18, '#c89a4a'); ell(x, 35, 40, 12, 15, '#bfe8f8'); line(x, 29, 32, 34, 27, '#ffffff', 2); px(x, 32, 57, 7, 14, '#c89a4a'); },
+    brush: x => { line(x, 22, 68, 42, 38, '#a8703a', 4); px(x, 40, 28, 12, 12, '#e8e0d0'); px(x, 44, 22, 8, 8, '#e84a6a'); },
+    saw: x => { px(x, 14, 38, 34, 14, '#c8ccd8'); for (let i = 0; i < 8; i++) px(x, 15 + i * 4, 52, 2, 3, '#c8ccd8'); px(x, 46, 34, 12, 20, '#a8582a'); px(x, 50, 39, 4, 9, '#5a2a10'); },
+    comet: x => { for (let i = 0; i < 5; i++) line(x, 40 - i * 2, 40 + i, 14 - i, 66 - i * 2, i % 2 ? '#8ac8ff' : '#ffffff', 1); disc(x, 44, 36, 8, '#ffe45a'); disc(x, 44, 36, 4, '#ffffff'); },
+    lamp: x => { ell(x, 33, 54, 16, 8, '#e8c040'); for (let i = 0; i < 10; i++) px(x, 46 + i, 52 - Math.floor(i / 2), 3, 3, '#e8c040'); ring(x, 18, 52, 6, '#e8c040'); px(x, 29, 44, 8, 4, '#e8c040'); disc(x, 33, 42, 3, '#e8c040'); for (let i = 0; i < 4; i++) disc(x, 56 + i, 44 - i * 6, 3 + i, 'rgba(200,180,255,.55)'); },
+    crow: x => { ell(x, 33, 52, 16, 11, '#1c1f2a'); disc(x, 46, 38, 8, '#1c1f2a'); for (let j = 0; j < 5; j++) px(x, 53 + j, 37 + Math.floor(j / 2), 1, 5 - j, '#e8a03a'); disc(x, 47, 36, 2, '#e8e8f0'); line(x, 18, 50, 8, 58, '#1c1f2a', 3); line(x, 30, 62, 28, 70, '#e8a03a', 1); line(x, 36, 62, 38, 70, '#e8a03a', 1); },
+    ladder: x => { px(x, 22, 24, 4, 48, '#c8903a'); px(x, 45, 24, 4, 48, '#c8903a'); for (let i = 0; i < 6; i++) px(x, 26, 28 + i * 8, 19, 3, '#e8b05a'); },
+    shoe: x => { ring(x, 35, 44, 17, '#c8ccd8'); px(x, 24, 50, 23, 20, 'rgba(0,0,0,0)'); x.globalCompositeOperation = 'destination-out'; px(x, 27, 50, 17, 20, '#000'); x.globalCompositeOperation = 'source-over'; [[22, 40], [48, 40], [24, 30], [46, 30]].forEach(p => px(x, p[0], p[1], 2, 2, '#4a4f5a')); },
+    bone: x => { line(x, 35, 34, 22, 66, '#f0e6d0', 4); line(x, 35, 34, 48, 66, '#f0e6d0', 4); disc(x, 35, 32, 5, '#f0e6d0'); disc(x, 22, 67, 3, '#f0e6d0'); disc(x, 48, 67, 3, '#f0e6d0'); },
+    bolt: x => { [[40, 22, 24, 48], [24, 48, 38, 48], [38, 48, 28, 72], [28, 72, 50, 42], [50, 42, 36, 42], [36, 42, 44, 22]].forEach(l => line(x, l[0], l[1], l[2], l[3], '#ffe45a', 3)); },
+    cloud: x => { disc(x, 26, 50, 10, '#dfe4ee'); disc(x, 38, 44, 13, '#dfe4ee'); disc(x, 48, 52, 9, '#dfe4ee'); px(x, 18, 52, 38, 9, '#dfe4ee'); px(x, 18, 58, 38, 3, '#a8b0c0'); },
+    wave: x => { for (let b = 0; b < 3; b++) for (let i = 0; i < 50; i++) { const y = 40 + b * 10 + Math.round(Math.sin(i / 50 * Math.PI * 3) * 3); px(x, 10 + i, y, 1, 4, b === 1 ? '#8ad8f0' : '#3a9ad8'); } }
   };
   function ring(x, cx, cy, r, col) { disc(x, cx, cy, r, col); disc(x, cx, cy, r - 3, 'rgba(0,0,0,0)'); x.globalCompositeOperation = 'destination-out'; disc(x, cx, cy, r - 3, '#000'); x.globalCompositeOperation = 'source-over'; }
 
@@ -461,30 +495,23 @@
   }
 
   let R = null, SINK = null;
+  const RUNV = 2;
   const JK = {}, JL = [], TK = {}, TL = [], SK = {}, SL = [], VK = {}, VL = [], BK = {}, BL = [], TGK = {}, TGL = [], PK = {};
   const PLK = {};
 
   const nid = () => R.uid++;
   const note = (id, text) => { (SINK || R.q).push({ id, t: 'msg', text }); };
-  const jOff = j => (j.per && j.pl <= 0) || R.hdis === j.id;
+  const jOff = j => R.hdis === j.id || (bossOn() && !!BK[R.cur.k].joff && BK[R.cur.k].joff(j));
   const jdef = j => JK[j.k];
   const flag = k => R.jokers.some(j => !jOff(j) && JK[j.k].f === k);
   const luck = (n, d) => rnd() < n * (flag('luck2') ? 2 : 1) / d;
   const vo = k => !!R.vo[k];
-  const bossOn = k => !!(R.cur && R.cur.boss && !R.bossOff && (!k || R.cur.k === k));
+  const bossOn = k => !!(R.cur && R.cur.boss && !R.bossOff && BK[R.cur.k] && (!k || R.cur.k === k));
+  const bossD = () => bossOn() ? BK[R.cur.k] : null;
 
   function deb(c) {
-    const b = bossOn() && R.cur.k;
-    if (!b) return false;
-    if (c.e === 'stone') return b === 'leaf' ? !R.leafOk : b === 'pillar' ? c.pa === R.ante : false;
-    if (b === 'club') return c.s === 2;
-    if (b === 'head') return c.s === 1;
-    if (b === 'goad') return c.s === 0;
-    if (b === 'window') return c.s === 3;
-    if (b === 'plant') return isFace(c);
-    if (b === 'pillar') return c.pa === R.ante;
-    if (b === 'leaf') return !R.leafOk;
-    return false;
+    const b = bossD();
+    return !!(b && b.deb && b.deb(c));
   }
   const isFace = c => c.e !== 'stone' && ((c.r >= 11 && c.r <= 13) || flag('pareid'));
   const suitIs = (c, s) => {
@@ -495,6 +522,9 @@
   };
   const isOdd = c => c.e !== 'stone' && [14, 9, 7, 5, 3].indexOf(c.r) >= 0;
   const isEven = c => c.e !== 'stone' && [10, 8, 6, 4, 2].indexOf(c.r) >= 0;
+  const rk = (c, l) => c.e !== 'stone' && l.indexOf(c.r) >= 0;
+  const isRed = c => c.e !== 'stone' && (c.e === 'wild' || c.s === 1 || c.s === 3);
+  const isBlack = c => c.e !== 'stone' && (c.e === 'wild' || c.s === 0 || c.s === 2);
 
   function pv(j, k) {
     const p = JK[j.k].p;
@@ -505,73 +535,70 @@
   const pass = k => R.jokers.reduce((a, j) => a + (jOff(j) ? 0 : pv(j, k)), 0);
   const negJ = () => R.jokers.filter(j => j.ed === 'neg').length;
   const negC = () => R.cons.filter(j => j.ed === 'neg').length;
-  const dk = () => R.dk;
-  const bossHs = () => bossOn('manacle') ? 1 : 0;
-  const hsz = () => 8 + R.m.hs + R.m.hst + pass('hs') + (vo('paint') ? 1 : 0) + (vo('palette') ? 1 : 0) + (dk() === 'painted' ? 2 : 0) - bossHs();
-  const hmax = () => 4 + R.m.h + pass('h') + (vo('grab') ? 1 : 0) + (vo('tongs') ? 1 : 0) + (dk() === 'blue' ? 1 : 0) + (dk() === 'black' ? -1 : 0);
-  const dmax = () => Math.max(0, 3 + R.m.d + pass('d') + (vo('waste') ? 1 : 0) + (vo('recycle') ? 1 : 0) + (dk() === 'red' ? 1 : 0) - (R.st >= 5 ? 1 : 0));
-  const jslots = () => 5 + R.m.js + (vo('void') ? 1 : 0) + (dk() === 'black' ? 1 : 0) - (dk() === 'painted' ? 1 : 0) + negJ();
-  const cslots = () => 2 + R.m.cs + (vo('pocket') ? 1 : 0) - (dk() === 'nebula' ? 1 : 0) + negC();
+  const DE = k => ((DECKS[R.dk] || DECKS.club)[2][k]) || 0;
+  const bossHs = () => { const b = bossD(); return b && b.hs ? b.hs : 0; };
+  const hsz = () => Math.max(1, 8 + R.m.hs + R.m.hst + pass('hs') + (vo('table') ? 1 : 0) + (vo('table2') ? 1 : 0) + DE('hs') + bossHs());
+  const hmax = () => Math.max(1, 4 + R.m.h + pass('h') + (vo('nerves') ? 1 : 0) + (vo('iron') ? 1 : 0) + DE('h'));
+  const dmax = () => Math.max(0, 3 + R.m.d + pass('d') + (vo('bin') ? 1 : 0) + (vo('shred') ? 1 : 0) + DE('d') - (R.st >= 4 ? 1 : 0));
+  const jslots = () => 5 + R.m.js + (vo('seat') ? 1 : 0) + DE('js') + negJ();
+  const cslots = () => 2 + R.m.cs + (vo('pocket') ? 1 : 0) + (vo('satchel') ? 1 : 0) + negC();
   const jfree = (neg) => jslots() + (neg ? 1 : 0) - R.jokers.length;
   const cfree = (neg) => cslots() + (neg ? 1 : 0) - R.cons.length;
   const debtLim = () => pass('debt');
-  const ilevel = () => 1 + pass('int');
-  const icap = () => vo('tree') ? 100 : vo('seed') ? 50 : 25;
+  const icapN = () => (vo('vault') ? 13 : vo('jar') ? 9 : 5) + pass('icap');
 
-  const sellBase = j => {
-    const d = JK[j.k], cost = d.$ + (j.ed === 'foil' ? 2 : j.ed === 'holo' ? 3 : j.ed === 'poly' ? 5 : j.ed === 'neg' ? 5 : 0);
-    return Math.max(1, Math.floor(cost / 2));
-  };
+  const EDC = { foil: 2, holo: 3, poly: 4, neg: 6 };
+  const sellBase = j => Math.max(1, Math.floor((JK[j.k].$ + (EDC[j.ed] || 0)) / 2));
   const sellVal = j => j.type ? Math.max(1, Math.floor(((TK[j.k] || SK[j.k] || PLK[j.k] || { $: 3 }).$ || 3) / 2)) + j.a : sellBase(j) + j.a;
 
-  const ANTE_AMT = [[100, 300, 800, 2000, 5000, 11000, 20000, 35000, 50000], [100, 300, 900, 2600, 8000, 20000, 36000, 60000, 100000], [100, 300, 1000, 3200, 9000, 25000, 60000, 110000, 200000]];
+  const ANTE_AMT = [[100, 280, 720, 1800, 4400, 10000, 20000, 35000, 54000], [100, 280, 820, 2400, 6800, 17000, 34000, 60000, 100000], [100, 280, 920, 3000, 8400, 22000, 52000, 105000, 190000]];
   function anteBase(a) {
     const tb = ANTE_AMT[R.st >= 6 ? 2 : R.st >= 3 ? 1 : 0];
     if (a < 1) return 100;
     if (a <= 8) return tb[a];
-    const c = a - 8, v = Math.floor(tb[8] * Math.pow(1.6 + Math.pow(.75 * c, 1 + .2 * c), c));
+    const c = a - 8, v = Math.floor(tb[8] * Math.pow(1.7, c) * Math.pow(1 + .3 * c, c));
+    if (!isFinite(v)) return Infinity;
     return v - v % Math.pow(10, Math.max(0, Math.floor(Math.log10(v)) - 1));
   }
   const blindTarget = b => {
-    let m = b.k === 'small' ? 1 : b.k === 'big' ? 1.5 : (BK[b.boss].mult || 2);
-    if (R.dk === 'plasma') m *= 2;
+    let m = b.k === 'small' ? 1 : b.k === 'big' ? 1.6 : (BK[b.boss].mult || 2.2) * (R.st >= 8 ? 1.25 : 1);
+    m *= DE('tX') || 1;
     return Math.floor(anteBase(R.ante) * m);
   };
   const blindName = b => b.k === 'small' ? 'Small Blind' : b.k === 'big' ? 'Big Blind' : BK[b.boss].n;
-  const blindRew = b => b.k === 'small' ? (R.st >= 2 ? 0 : 3) : b.k === 'big' ? 4 : 5;
+  const blindRew = b => Math.max(0, ((b.k === 'small' ? 3 : b.k === 'big' ? 4 : 6) - (R.st >= 2 ? 1 : 0) + DE('rew')) * (DE('rewX') || 1));
 
   function newCard(r, s, o) { return Object.assign({ id: nid(), r, s, e: null, ed: null, z: null, x: 0 }, o); }
   function stdDeck(k) {
-    const out = [];
+    const out = [], de = (DECKS[k] || DECKS.club)[2];
     for (let s = 0; s < 4; s++) for (let r = 2; r <= 14; r++) {
-      if (k === 'abandoned' && r >= 11 && r <= 13) continue;
-      let ss = s;
-      if (k === 'checkered') ss = s % 2 === 0 ? 0 : 1;
-      out.push(newCard(r, ss));
+      if (de.cut && de.cut.indexOf(r) >= 0) continue;
+      out.push(newCard(r, s));
     }
-    if (k === 'erratic') out.forEach(c => { c.r = 2 + rint(13); c.s = rint(4); });
+    if (de.jumble) out.forEach(c => { c.r = 2 + rint(13); });
+    if (de.stamps) shuffle(out.slice()).slice(0, de.stamps).forEach(c => { c.z = pick(['gold', 'red', 'blue', 'purple']); });
     return out;
   }
 
   function newRun(deck, stake, seed) {
+    if (!DECKS[deck]) deck = 'club';
     seed = seed || Array.from({ length: 7 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
     RS = hashStr(seed);
     R = {
-      v: 1, seed, dk: deck, st: stake, uid: 1, ante: 1, round: 0, bi: 0, ph: 'blinds', money: 4,
+      v: RUNV, seed, dk: deck, st: stake, uid: 1, ante: 1, round: 0, bi: 0, ph: 'blinds', money: 5,
       hands: 0, discards: 0, score: 0, cards: [], draw: [], hand: [], disc: [], play: [], jokers: [], cons: [],
       hl: {}, vo: {}, tags: [], q: [], skips: 0, m: { hs: 0, hst: 0, h: 0, d: 0, js: 0, cs: 0 },
-      shop: null, pack: null, cur: null, bl: [], boss: null, bossUsed: [], hpr: 0, dUsed: 0, hsr: {}, last: null,
-      planetsUsed: {}, ext: {}, tot: { h: 0, d: 0, bd: 0 }, lastCons: null, won: false, endless: false, cash: null,
-      bossOff: false, leafOk: false, hdis: null, bt: 0, back: null, vch: null, vAnte: 0, fs: true, sel: [], best: 0, bossBeat: 0,
+      shop: null, pack: null, cur: null, bl: [], boss: null, bossUsed: [], hpr: 0, dUsed: 0, hsr: {}, last: null, lastR: null,
+      ext: {}, tot: { h: 0, d: 0, bd: 0 }, won: false, endless: false, cash: null,
+      bossOff: false, hdis: null, bt: 0, back: null, vch: null, vAnte: 0, fs: true, sel: [], best: 0, bossBeat: 0,
       mostRound: 0, stats: { hands: 0, bestHand: 0, rerolls: 0, bought: 0, planets: 0, tarots: 0, spectrals: 0 }
     };
     HORD.forEach(k => { R.hl[k] = { lvl: 1, played: 0, pr: 0 }; });
     R.cards = stdDeck(deck);
-    if (deck === 'yellow') R.money += 10;
-    if (deck === 'magic') { R.vo.pocket = 1; addCons('tarot', 'fool'); addCons('tarot', 'fool'); }
-    if (deck === 'nebula') R.vo.scope = 1;
-    if (deck === 'ghost') addCons('spectral', 'hex2');
-    if (deck === 'zodiac') { R.vo.tmerch = 1; R.vo.pmerch = 1; R.vo.over = 1; }
+    const de = DECKS[deck][2];
+    R.money += de.money || 0;
+    (de.vo || []).forEach(k => { R.vo[k] = 1; });
+    (de.cons || []).forEach(t => { const d = rollCons(t, ['genie', 'comet']); addCons(t, d.k, null, { force: true }); });
     R.q = [];
     genBlinds();
     return R;
@@ -650,10 +677,11 @@
   }
   function copyTarget(j) {
     const d = JK[j.k], i = R.jokers.indexOf(j);
-    const t = d.copy === 'right' ? R.jokers[i + 1] : R.jokers[0];
+    const t = d.copy === 'right' ? R.jokers[i + 1] : R.jokers[R.jokers.length - 1];
     if (!t || t === j || jOff(t) || JK[t.k].copy) return null;
     return t;
   }
+  const SCOREH = { main: 1, card: 1, held: 1, rep: 1 };
   function call(j, hook, c) {
     if (jOff(j)) return;
     const d = JK[j.k];
@@ -662,7 +690,7 @@
       const t = copyTarget(j);
       if (!t) return;
       tj = t; td = JK[t.k];
-      if (td.nb || !td[hook]) return;
+      if (!td[hook] || (td.nb && !SCOREH[hook])) return;
       c.copy = true;
     } else { c.copy = false; if (!td[hook]) return; }
     c.j = tj; c.src = j;
@@ -687,40 +715,37 @@
     R.q.push({ id: card.id, t: 'spawn', from: to === 'hand' ? 'deck' : 'mid' });
     fire('add', { card });
   }
+  const ENHS = ['bonus', 'mult', 'wild', 'glass', 'steel', 'gold', 'lucky'];
   function randCard(o) {
     const c = newCard(2 + rint(13), rint(4));
     if (o && o.face) c.r = 11 + rint(3);
     if (o && o.ace) c.r = 14;
     if (o && o.num) c.r = 2 + rint(9);
-    if (o && o.enh) c.e = pick(['bonus', 'mult', 'wild', 'glass', 'steel', 'gold', 'lucky']);
+    if (o && o.enh) c.e = pick(ENHS);
+    if (o && o.e) c.e = o.e;
     return c;
   }
-  const rollEd = (mod, nopoly) => {
+  const rollEd = mod => {
     const p = rnd();
-    if (p > 1 - .003 * mod) return 'neg';
-    if (p > 1 - .006 * mod) return 'poly';
-    if (p > 1 - .02 * mod) return 'holo';
-    if (p > 1 - .04 * mod) return 'foil';
+    if (p > 1 - .0035 * mod) return 'neg';
+    if (p > 1 - .007 * mod) return 'poly';
+    if (p > 1 - .022 * mod) return 'holo';
+    if (p > 1 - .045 * mod) return 'foil';
     return null;
   };
-  const edMod = () => vo('lustre') ? 4 : vo('polish') ? 2 : 1;
+  const edMod = () => vo('loupe') ? 3 : vo('cloth') ? 2 : 1;
 
   function drawCards(n) {
-    const out = [];
+    const out = [], b = bossD();
     for (let i = 0; i < n && R.draw.length; i++) {
       const c = R.draw.pop();
-      c.fd = false;
-      if (bossOn('house') && R.hpr === 0 && R.dUsed === 0) c.fd = true;
-      else if (bossOn('wheel') && rnd() < 1 / 7) c.fd = true;
-      else if (bossOn('mark') && isFace(c)) c.fd = true;
-      else if (bossOn('fish') && R.hpr > 0) c.fd = true;
+      c.fd = !!(b && b.fd && b.fd(c));
       R.hand.push(c); out.push(c);
     }
     return out;
   }
   function drawToFull() {
-    const n = bossOn('serpent') && R.hpr > 0 || bossOn('serpent') && R.dUsed > 0 ? 3 : hsz() - R.hand.length;
-    return drawCards(Math.max(0, n));
+    return drawCards(Math.max(0, hsz() - R.hand.length));
   }
 
   function beginRound(bi) {
@@ -730,21 +755,18 @@
     if (b.k === 'boss' && BK[b.boss].mult) R.cur.big = true;
     R.round++;
     R.ph = 'round';
-    R.score = 0; R.hpr = 0; R.dUsed = 0; R.hsr = {}; R.bt = 0; R.hdis = null; R.leafOk = false;
+    R.score = 0; R.hpr = 0; R.dUsed = 0; R.hsr = {}; R.bt = 0; R.hdis = null; R.lastR = null;
     R.bossOff = false; R.mm = null;
-    R.bossOff = flag('nobosseff') && b.k === 'boss';
     HORD.forEach(k => { R.hl[k].pr = 0; });
     R.hands = hmax(); R.discards = dmax();
-    if (bossOn('water')) R.discards = 0;
-    if (bossOn('needle')) R.hands = 1;
+    const bd = bossD();
+    if (bd && bd.start) bd.start();
     R.draw = shuffle(R.cards.slice()); R.hand = []; R.disc = []; R.play = []; R.sel = [];
     R.pcount = {};
-    if (b.k === 'boss' && R.cur.k === 'acorn' && !R.bossOff) { shuffle(R.jokers); R.q.push({ t: 'shuf' }); }
+    R.forced = null;
     if (b.k !== 'boss') fire('bsel', { blind: R.cur });
     drawToFull();
-    if (bossOn('bell') && R.hand.length) R.forced = R.hand[rint(R.hand.length)].id; else R.forced = null;
     fire('bstart', { blind: R.cur });
-    if (R.cur.boss && R.cur.k === 'hook') R.bt = 0;
     return R.cur;
   }
 
@@ -765,29 +787,30 @@
     if (e.c) { S.chips += e.c; S.ev.push({ id, t: 'c', v: e.c, ch: S.chips, mu: S.mult }); }
     if (e.m) { S.mult += e.m; S.ev.push({ id, t: 'm', v: e.m, ch: S.chips, mu: S.mult }); }
     if (e.x && e.x !== 1) { S.mult *= e.x; S.ev.push({ id, t: 'x', v: e.x, ch: S.chips, mu: S.mult }); }
-    if (e.$) { R.money += e.$; S.ev.push({ id, t: '$', v: e.$, ch: S.chips, mu: S.mult }); }
+    if (e.$ && !(e.$ > 0 && bossOn('purse'))) { R.money += e.$; S.ev.push({ id, t: '$', v: e.$, ch: S.chips, mu: S.mult }); }
     if (e.msg) S.ev.push({ id, t: 'msg', text: e.msg, ch: S.chips, mu: S.mult });
   }
 
   function cardScore(S, cx, card, rep) {
     cx.card = card;
-    if (deb(card)) { S.ev.push({ id: card.id, t: 'msg', text: 'Debuffed', ch: S.chips, mu: S.mult }); R.bt = 1; return; }
-    appl(S, card.id, { c: (card.e === 'stone' ? 50 : chipVal(card)) + (card.x || 0) + (card.e === 'bonus' ? 30 : 0) });
-    if (card.e === 'mult') appl(S, card.id, { m: 4 });
-    if (card.e === 'glass') appl(S, card.id, { x: 2 });
+    if (deb(card)) { S.ev.push({ id: card.id, t: 'msg', text: 'Silenced', ch: S.chips, mu: S.mult }); R.bt = 1; return; }
+    appl(S, card.id, { c: (card.e === 'stone' ? 60 : chipVal(card)) + (card.x || 0) + (card.e === 'bonus' ? 35 : 0) });
+    if (card.e === 'mult') appl(S, card.id, { m: 5 });
+    if (card.e === 'glass') appl(S, card.id, { x: 1.8 });
     if (card.e === 'lucky') {
-      if (luck(1, 5)) { appl(S, card.id, { m: 20 }); S.lucky++; fire('lucky', {}); }
-      if (luck(1, 15)) { appl(S, card.id, { $: 20 }); S.lucky++; fire('lucky', {}); }
+      if (luck(1, 4)) { appl(S, card.id, { m: 12 }); S.lucky++; fire('lucky', {}); }
+      if (luck(1, 12)) { appl(S, card.id, { $: 10 }); S.lucky++; fire('lucky', {}); }
     }
-    if (card.z === 'gold') appl(S, card.id, { $: 3 });
-    if (card.ed === 'foil') appl(S, card.id, { c: 50 });
-    if (card.ed === 'holo') appl(S, card.id, { m: 10 });
-    if (card.ed === 'poly') appl(S, card.id, { x: 1.5 });
+    if (card.z === 'gold') appl(S, card.id, { $: 2 });
+    if (card.ed === 'foil') appl(S, card.id, { c: 40 });
+    if (card.ed === 'holo') appl(S, card.id, { m: 8 });
+    if (card.ed === 'poly') appl(S, card.id, { x: 1.6 });
     R.jokers.forEach(j => { if (!jOff(j)) appl(S, j.id, call(j, 'card', cx)); });
   }
   function repsOf(cx, card, zone) {
     cx.card = card; cx.zone = zone;
     const list = [];
+    if (bossOn('silence')) return list;
     if (card.z === 'red') list.push(card.id);
     R.jokers.forEach(j => {
       if (jOff(j)) return;
@@ -799,57 +822,54 @@
   function heldScore(S, cx, card) {
     cx.card = card;
     if (deb(card)) return;
-    if (card.e === 'steel') appl(S, card.id, { x: 1.5 });
+    if (card.e === 'steel') appl(S, card.id, { x: 1.4 });
     R.jokers.forEach(j => { if (!jOff(j)) appl(S, j.id, call(j, 'held', cx)); });
   }
+  const handFl = () => ({ four: flag('four'), short: flag('short'), smear: flag('smear'), splash: flag('splash') });
 
   function scoreHand(played, held) {
-    const fl = { four: flag('four'), short: flag('short'), smear: flag('smear'), splash: flag('splash') };
-    const h = evalHand(played, fl);
+    const h = evalHand(played, handFl());
     const S = { chips: 0, mult: 0, ev: [], dest: [], lucky: 0, tot: 0, hid: h.id, h, dis: false };
     SINK = S.ev;
     const cx = { R, S, h, played, sc: h.sc, held, has: h.has, card: null, zone: 'play' };
     cx.firstFace = h.sc.find(c => isFace(c) && !deb(c)) || null;
-    if (bossOn('psychic') && played.length < 5) S.dis = true;
-    if (bossOn('mouth') && R.last && R.last !== h.id) S.dis = true;
-    if (bossOn('eye') && R.hsr[h.id]) S.dis = true;
-    if (S.dis) { R.bt = 1; S.ev.push({ id: 0, t: 'msg', text: 'Not Allowed!', ch: 0, mu: 0 }); S.hid = h.id; SINK = null; return S; }
+    const bd = bossD();
+    if (bd && bd.no && bd.no(h, played)) S.dis = true;
+    if (S.dis) { R.bt = 1; S.ev.push({ id: 0, t: 'msg', text: 'Blocked!', ch: 0, mu: 0 }); S.hid = h.id; SINK = null; return S; }
     fire('before', cx);
-    if (bossOn('arm')) { levelHand(h.id, -1); R.bt = 1; }
-    const b = hv(h.id);
+    const b = bd && bd.lvl1 ? { c: HAND[h.id].c, m: HAND[h.id].m } : hv(h.id);
+    if (bd && bd.base) { bd.base(b); R.bt = 1; }
     S.chips = b.c; S.mult = b.m;
-    if (bossOn('flint')) { S.chips = Math.max(1, Math.floor(S.chips / 2 + .5)); S.mult = Math.max(1, Math.floor(S.mult / 2 + .5)); R.bt = 1; }
     S.ev.push({ id: 0, t: 'base', ch: S.chips, mu: S.mult });
     h.sc.forEach((card, i) => {
       cx.i = i; cx.zone = 'play';
       const reps = repsOf(cx, card, 'play');
       cardScore(S, cx, card);
-      reps.forEach(rid => { S.ev.push({ id: rid, t: 'msg', text: 'Again!', ch: S.chips, mu: S.mult }); cardScore(S, cx, card, true); });
+      reps.forEach(rid => { S.ev.push({ id: rid, t: 'msg', text: 'Encore!', ch: S.chips, mu: S.mult }); cardScore(S, cx, card, true); });
     });
     cx.zone = 'held';
     held.forEach(card => {
       const reps = repsOf(cx, card, 'held');
       heldScore(S, cx, card);
-      reps.forEach(rid => { S.ev.push({ id: rid, t: 'msg', text: 'Again!', ch: S.chips, mu: S.mult }); heldScore(S, cx, card); });
+      reps.forEach(rid => { S.ev.push({ id: rid, t: 'msg', text: 'Encore!', ch: S.chips, mu: S.mult }); heldScore(S, cx, card); });
     });
     cx.zone = 'play'; cx.card = null;
     R.jokers.slice().forEach(j => {
       if (jOff(j)) return;
-      if (j.ed === 'foil') appl(S, j.id, { c: 50 });
-      if (j.ed === 'holo') appl(S, j.id, { m: 10 });
+      if (j.ed === 'foil') appl(S, j.id, { c: 40 });
+      if (j.ed === 'holo') appl(S, j.id, { m: 8 });
       appl(S, j.id, call(j, 'main', cx));
-      R.jokers.forEach(k => { if (k !== j && !jOff(k)) { cx.o = j; appl(S, k.id, call(k, 'other', cx)); } });
-      if (j.ed === 'poly') appl(S, j.id, { x: 1.5 });
+      if (j.ed === 'poly') appl(S, j.id, { x: 1.6 });
     });
-    if (vo('obs')) R.cons.forEach(c => { if (c.k === 'pl_' + h.id) appl(S, c.id, { x: 1.5 }); });
-    if (R.dk === 'plasma') {
-      const v = (S.chips + S.mult) / 2;
-      S.chips = v; S.mult = v;
-      S.ev.push({ id: 0, t: 'bal', ch: v, mu: v });
+    if (vo('display')) R.cons.forEach(c => { if (c.type === 'planet') appl(S, c.id, { m: 4 }); });
+    if (bd && bd.half && bd.half(h, played)) {
+      S.mult = S.mult / 2; R.bt = 1;
+      S.ev.push({ id: 0, t: 'bal', ch: S.chips, mu: S.mult });
     }
     S.tot = Math.floor(S.chips * S.mult + 1e-6);
+    if (!isFinite(S.tot)) S.tot = Number.MAX_VALUE;
     fire('after', cx);
-    h.sc.forEach(c => { if (c.e === 'glass' && !deb(c) && luck(1, 4)) S.dest.push(c); });
+    h.sc.forEach(c => { if (c.e === 'glass' && !deb(c) && luck(1, 5)) S.dest.push(c); });
     SINK = null;
     return S;
   }
@@ -861,19 +881,14 @@
     R.hand = R.hand.filter(c => cards.indexOf(c) < 0);
     R.play = cards;
     cards.forEach(c => { c.fd = false; c.pa = R.ante; });
-    if (bossOn('tooth')) { R.money -= cards.length; R.bt = 1; }
-    const pre = evalHand(cards, { four: flag('four'), short: flag('short'), smear: flag('smear'), splash: flag('splash') });
-    if (bossOn('ox') && pre.id === mostPlayed()) { R.money = 0; R.bt = 1; }
-    if (bossOn('heart')) { const c = R.jokers.filter(j => !jOff(j)); R.hdis = c.length ? pick(c).id : null; if (R.hdis) R.q.push({ id: R.hdis, t: 'msg', text: 'Disabled' }); }
+    const pre = evalHand(cards, handFl());
+    const mp = mostPlayed(), bd = bossD();
+    if (bd && bd.play) bd.play(pre, mp);
     const hl = R.hl[pre.id];
     hl.played++; hl.pr++;
     const S = scoreHand(cards, R.hand.slice());
-    R.last = pre.id; R.hsr[pre.id] = true;
-    if (bossOn('hook')) {
-      const dis = shuffle(R.hand.slice()).slice(0, 2);
-      dis.forEach(c => { R.hand.splice(R.hand.indexOf(c), 1); R.disc.push(c); });
-      S.hooked = dis; R.bt = 1;
-    }
+    R.last = pre.id; R.lastR = pre.id; R.hsr[pre.id] = true;
+    if (bd && bd.after) { const x = bd.after(S); if (x) S.hooked = x; R.bt = 1; }
     S.cards = cards;
     S.finish = () => finishPlay(S);
     return S;
@@ -893,7 +908,7 @@
     if (!won) drawn = drawToFull();
     if (!won && R.hands <= 0) {
       const bones = R.jokers.find(j => !jOff(j) && JK[j.k].f === 'bones');
-      if (bones && R.score >= R.cur.target * .25) { killJoker(bones, 'melt'); R.q.push({ id: 0, t: 'saved' }); R.cur.saved = true; return { drawn, won: true, saved: true }; }
+      if (bones && R.score >= R.cur.target * .3) { killJoker(bones, 'melt'); R.q.push({ id: 0, t: 'saved' }); R.cur.saved = true; return { drawn, won: true, saved: true }; }
       return { drawn, lost: true };
     }
     return { drawn, won };
@@ -905,9 +920,14 @@
     R.discards--; R.dUsed++; R.tot.d++;
     R.hand = R.hand.filter(c => cards.indexOf(c) < 0);
     cards.forEach(c => { c.fd = false; R.disc.push(c); });
-    if (bossOn('goad2')) { }
-    fire('disc', { cards, first: R.dUsed === 1, h: evalHand(cards, { four: flag('four'), short: flag('short'), smear: flag('smear') }) });
-    cards.forEach(c => { if (c.z === 'purple') { const t = addCons('tarot', rollCons('tarot').k); if (t) R.q.push({ id: c.id, t: 'msg', text: 'Tarot!' }); } });
+    const bd = bossD();
+    if (bd && bd.disc) { bd.disc(cards); R.bt = 1; }
+    fire('disc', { cards, first: R.dUsed === 1, h: evalHand(cards, handFl()) });
+    cards.forEach(c => {
+      if (c.z !== 'purple') return;
+      R.money += 1; R.q.push({ id: c.id, t: '$', v: 1 });
+      if (luck(1, 3)) { const t = addCons('tarot', rollCons('tarot').k); if (t) R.q.push({ id: c.id, t: 'msg', text: 'Trick!' }); }
+    });
     const drawn = drawToFull();
     return { cards, drawn };
   }
@@ -923,33 +943,27 @@
     R.ph = 'cash';
     const sv = R.score;
     L.push({ l: b.n, v: b.rew, k: 'blind' });
-    if (R.dk === 'green') {
-      if (R.hands > 0) L.push({ l: R.hands + ' remaining hand' + (R.hands > 1 ? 's' : '') + ' ($2 each)', v: R.hands * 2 });
-      if (R.discards > 0) L.push({ l: R.discards + ' unused discard' + (R.discards > 1 ? 's' : '') + ' ($1 each)', v: R.discards });
-    } else {
-      if (R.hands > 0) L.push({ l: R.hands + ' remaining hand' + (R.hands > 1 ? 's' : ''), v: R.hands });
-      const i = Math.min(Math.floor(Math.min(Math.max(R.money, 0), icap()) / 5), icap() / 5) * ilevel();
-      if (i > 0) L.push({ l: 'Interest ($1 per $5)', v: i });
-    }
+    if (R.hands > 0) L.push({ l: R.hands === 1 ? '1 hand left' : R.hands + ' hands left', v: R.hands });
+    const i = Math.min(Math.floor(Math.max(R.money, 0) / 4), icapN());
+    if (i > 0) L.push({ l: 'Interest ($1 per $4)', v: i });
+    if (vo('tip')) L.push({ l: VK.tip.n, v: 1 });
     const gold = R.hand.filter(c => c.e === 'gold' && !deb(c)).length;
-    if (gold) L.push({ l: gold + ' gold card' + (gold > 1 ? 's' : '') + ' held', v: gold * 3 });
-    const bl = R.hand.filter(c => c.z === 'blue' && R.last);
-    bl.forEach(c => { const t = addCons('planet', 'pl_' + R.last); if (t) R.q.push({ id: c.id, t: 'msg', text: 'Planet!' }); });
+    if (gold) L.push({ l: gold === 1 ? '1 Gilded card held' : gold + ' Gilded cards held', v: gold * 2 });
+    const mp = mostPlayed();
+    R.hand.filter(c => c.z === 'blue').forEach(c => { if (R.hl[mp].played > 0 && luck(1, 2)) { const t = addCons('planet', 'pl_' + mp); if (t) R.q.push({ id: c.id, t: 'msg', text: 'Gem!' }); } });
     const ctx = { boss: b.boss, L };
     R.jokers.slice().forEach(j => {
-      if (jOff(j)) { if (j.per && j.pl > 0) j.pl--; return; }
+      if (jOff(j)) return;
       const e = call(j, 'rend', ctx);
       if (e && e.$) L.push({ l: JK[j.k].n, v: e.$, id: j.id });
       if (e && e.msg) note(j.id, e.msg);
     });
-    R.jokers.forEach(j => { if (j.per && j.pl > 0) { j.pl--; if (j.pl === 0) note(j.id, 'Debuffed'); } });
-    R.jokers.filter(j => j.rn).forEach(j => L.push({ l: 'Rental: ' + JK[j.k].n, v: -3, id: j.id }));
+    R.jokers.filter(j => j.rn).forEach(j => L.push({ l: 'Rented: ' + JK[j.k].n, v: -2, id: j.id }));
     if (b.boss) {
       R.bossBeat++;
-      const tg = R.tags.filter(t => t === 'invest');
-      tg.forEach(() => L.push({ l: 'Investment Tag', v: 25 }));
-      R.tags = R.tags.filter(t => t !== 'invest');
-      if (R.dk === 'anaglyph') giveTag('double');
+      R.tags.filter(t => t === 'bond').forEach(() => L.push({ l: TGK.bond.n, v: 20 }));
+      R.tags = R.tags.filter(t => t !== 'bond');
+      if (DE('scholar') && R.hl[mp].played > 0) { levelHand(mp, 1); R.q.push({ t: 'lvl', hid: mp }); }
     }
     R.cash = { lines: L, total: L.reduce((a, x) => a + x.v, 0), score: sv };
     R.m.hst = 0;
@@ -970,17 +984,17 @@
   }
 
   function giveTag(k) {
-    if (k === 'double') {
-      const last = R.tags.filter(t => t !== 'double').pop() || R.lastTag;
-      if (last && last !== 'double') { R.tags.push(last); R.tags.push(last); R.lastTag = last; }
-      else R.tags.push('double');
-      return;
+    if (k !== 'copy') {
+      const ci = R.tags.indexOf('copy');
+      if (ci >= 0) { R.tags.splice(ci, 1); applyTag(k); }
     }
-    R.tags.push(k); R.lastTag = k;
-    if (k === 'orbital') { const ks = HORD.filter(knownHand); R.orbHand = pick(ks); }
-    if (k === 'boss') { R.tags.pop(); R.boss = pickBoss(); R.bl[2].boss = R.boss; R.bossUsed.push(R.boss); }
-    if (k === 'orbital') { R.tags.pop(); levelHand(pick(HORD.filter(knownHand)), 3); }
-    if (k === 'juggle') { R.tags.pop(); R.m.hst += 3; }
+    applyTag(k);
+  }
+  function applyTag(k) {
+    const t = TGK[k];
+    R.lastTag = k;
+    if (t.now) { t.now(); R.q.push({ t: 'cash' }); return; }
+    R.tags.push(k);
   }
 
   const rollRar = () => { const p = rnd(); return p < .7 ? 1 : p < .95 ? 2 : 3; };
@@ -994,40 +1008,43 @@
     if (!pool.length) pool = JL.filter(d => d.r === rar && !d.need);
     return pick(pool);
   }
-  const PLANETS = HORD.map(k => 'pl_' + k);
   function rollCons(type, ex) {
-    const have = new Set((ex || []).concat(R.cons.map(c => c.k)));
+    const have = new Set((ex || []).concat(R ? R.cons.map(c => c.k) : []));
     if (type === 'tarot') {
-      let pool = TL.filter(t => flag('showman') || !have.has(t.k));
+      let pool = TL.filter(t => !have.has(t.k));
       if (!pool.length) pool = TL;
       return pick(pool);
     }
     if (type === 'planet') {
-      let pool = HORD.filter(knownHand).map(k => PLK['pl_' + k]).filter(t => flag('showman') || !have.has(t.k));
+      let pool = HORD.filter(knownHand).map(k => PLK['pl_' + k]).filter(t => !have.has(t.k));
       if (!pool.length) pool = HORD.filter(knownHand).map(k => PLK['pl_' + k]);
       return pick(pool);
     }
-    if (rnd() < .01 && !have.has('soul')) return SK.soul;
-    if (rnd() < .01 && !have.has('hole')) return SK.hole;
-    let pool = SL.filter(t => t.k !== 'soul' && t.k !== 'hole' && (flag('showman') || !have.has(t.k)));
-    if (!pool.length) pool = SL.filter(t => t.k !== 'soul' && t.k !== 'hole');
+    if (rnd() < .015 && !have.has('genie')) return SK.genie;
+    if (rnd() < .015 && !have.has('comet')) return SK.comet;
+    let pool = SL.filter(t => t.k !== 'genie' && t.k !== 'comet' && !have.has(t.k));
+    if (!pool.length) pool = SL.filter(t => t.k !== 'genie' && t.k !== 'comet');
     return pick(pool);
   }
-  const discF = () => vo('fire') ? .5 : vo('mark') ? .75 : 1;
+  const discF = () => vo('club') ? .6 : vo('coupon') ? .8 : 1;
   const priceOf = base => Math.max(1, Math.floor(base * discF()));
+  const UPG = 9;
   function jokerCost(j) {
-    const d = JK[j.k];
     if (j.rn) return 1;
-    return d.$ + (j.ed === 'foil' ? 2 : j.ed === 'holo' ? 3 : j.ed === 'poly' ? 5 : j.ed === 'neg' ? 5 : 0);
+    return JK[j.k].$ + (EDC[j.ed] || 0);
+  }
+  function consCost(kind, d) {
+    if (kind === 'tarot') return Math.max(1, d.$ - (vo('mshop2') ? 1 : 0));
+    if (kind === 'planet') return Math.max(1, d.$ - (vo('gstall2') ? 1 : 0));
+    return d.$;
   }
   function stickers(j) {
-    if (R.st >= 4 && rnd() < .3) j.et = 1;
-    else if (R.st >= 7 && rnd() < .3) { j.per = 1; j.pl = 5; }
-    if (R.st >= 8 && rnd() < .3) j.rn = 1;
+    if (R.st >= 5 && rnd() < .3) j.et = 1;
+    if (R.st >= 7 && rnd() < .3) j.rn = 1;
     return j;
   }
   function shopItem(free) {
-    const w = { joker: 20, tarot: 4 * (vo('ttycoon') ? 8 : vo('tmerch') ? 2.4 : 1), planet: 4 * (vo('ptycoon') ? 8 : vo('pmerch') ? 2.4 : 1), spectral: R.dk === 'ghost' ? 2 : 0, card: vo('illusion') || vo('trick') ? 4 : 0 };
+    const w = { joker: 20, tarot: 4 * (vo('mshop2') ? 3 : vo('mshop') ? 2 : 1), planet: 4 * (vo('gstall2') ? 3 : vo('gstall') ? 2 : 1), spectral: DE('omen') ? 2 : 0, card: vo('rack') ? 4 : 0 };
     let t = Object.values(w).reduce((a, b) => a + b, 0) * rnd(), kind = 'joker';
     for (const k in w) { t -= w[k]; if (t < 0) { kind = k; break; } }
     let obj, base;
@@ -1037,60 +1054,55 @@
       base = jokerCost(obj);
     } else if (kind === 'card') {
       obj = randCard();
-      if (vo('illusion')) { if (rnd() < .4) obj.e = pick(['bonus', 'mult', 'wild', 'glass', 'steel', 'gold', 'lucky']); obj.ed = rnd() < .2 ? pick(['foil', 'holo', 'poly']) : null; if (rnd() < .2) obj.z = pick(['gold', 'red', 'blue', 'purple']); }
-      base = 1;
+      if (vo('rack2')) { if (rnd() < .4) obj.e = pick(ENHS); obj.ed = rnd() < .2 ? pick(['foil', 'holo', 'poly']) : null; if (rnd() < .2) obj.z = pick(['gold', 'red', 'blue', 'purple']); }
+      base = 2;
     } else {
       const d = rollCons(kind);
       obj = newCons(kind, d.k, null);
-      if (kind === 'planet' && vo('planetarium')) obj.free = 1;
-      base = d.$;
+      base = consCost(kind, d);
     }
-    if (kind === 'planet' && flag('freeplanet')) base = 0;
-    return { kind, obj, price: free ? 0 : base === 0 ? 0 : kind === 'joker' && obj.rn ? 1 : priceOf(base) };
+    return { kind, obj, price: free ? 0 : kind === 'joker' && obj.rn ? 1 : priceOf(base) };
   }
   const PACKS = [
-    ['arcana', 'normal', 4, 3, 1], ['arcana', 'jumbo', 2, 5, 1], ['arcana', 'mega', .5, 5, 2],
-    ['cosmos', 'normal', 4, 3, 1], ['cosmos', 'jumbo', 2, 5, 1], ['cosmos', 'mega', .5, 5, 2],
-    ['standard', 'normal', 4, 3, 1], ['standard', 'jumbo', 2, 5, 1], ['standard', 'mega', .5, 5, 2],
-    ['jester', 'normal', 1.2, 2, 1], ['jester', 'jumbo', .6, 4, 1], ['jester', 'mega', .15, 4, 2],
-    ['specter', 'normal', .6, 2, 1], ['specter', 'jumbo', .3, 4, 1], ['specter', 'mega', .07, 4, 2]
+    ['arcana', 'normal', 4, 3, 1], ['arcana', 'jumbo', 2, 5, 1], ['arcana', 'mega', .5, 6, 2],
+    ['cosmos', 'normal', 4, 3, 1], ['cosmos', 'jumbo', 2, 5, 1], ['cosmos', 'mega', .5, 6, 2],
+    ['standard', 'normal', 4, 3, 1], ['standard', 'jumbo', 2, 5, 1], ['standard', 'mega', .5, 6, 2],
+    ['jester', 'normal', 1.2, 2, 1], ['jester', 'jumbo', .6, 3, 1], ['jester', 'mega', .15, 4, 2],
+    ['specter', 'normal', .5, 2, 1], ['specter', 'jumbo', .25, 3, 1], ['specter', 'mega', .06, 4, 2]
   ];
-  const packCost = sz => sz === 'normal' ? 4 : sz === 'jumbo' ? 6 : 8;
+  const packCost = sz => Math.max(1, (sz === 'normal' ? 4 : sz === 'jumbo' ? 6 : 9) - (vo('bulk2') ? 2 : 0));
   function rollPack(kind, size) {
     let p;
     if (kind) p = PACKS.find(x => x[0] === kind && x[1] === size);
     else {
-      let t = PACKS.reduce((a, x) => a + (x[0] === 'specter' && R.dk !== 'ghost' && false ? 0 : x[2]), 0) * rnd();
+      let t = PACKS.reduce((a, x) => a + x[2], 0) * rnd();
       for (const x of PACKS) { t -= x[2]; if (t < 0) { p = x; break; } }
       p = p || PACKS[0];
     }
-    return { id: nid(), kind: p[0], size: p[1], n: p[3], pick: p[4], price: priceOf(packCost(p[1])) };
+    return { id: nid(), kind: p[0], size: p[1], n: p[3] + (vo('bulk') ? 1 : 0), pick: p[4], price: priceOf(packCost(p[1])) };
   }
-  function pickVoucher() {
-    const have = Object.keys(R.vo);
-    const pool = VL.filter(v => !R.vo[v.k] && (!v.req || R.vo[v.req]));
+  function pickVoucher(not) {
+    const pool = VL.filter(v => !R.vo[v.k] && (!v.req || R.vo[v.req]) && (!not || not.indexOf(v.k) < 0));
     return pool.length ? pick(pool).k : null;
   }
+  const RR0 = () => Math.max(0, 4 - (vo('dice') ? 1 : 0));
   function enterShop() {
     R.ph = 'shop';
     const items = [];
-    R.shop = { items, packs: [], vouchers: [], rr: 0, rc: Math.max(0, 5 - (vo('rr1') ? 2 : 0) - (vo('rr2') ? 2 : 0)), free: false };
-    const n = 2 + (vo('over') ? 1 : 0) + (vo('over2') ? 1 : 0);
-    const coupon = R.tags.indexOf('coupon') >= 0;
-    for (let i = 0; i < n; i++) items.push(shopItem(coupon));
+    R.shop = { items, packs: [], vouchers: [], rr: 0, rc: RR0(), free3: vo('dice2') ? 1 : 0, free: false };
+    const n = 2 + (vo('shelf') ? 1 : 0) + (vo('shelf2') ? 1 : 0);
+    for (let i = 0; i < n; i++) items.push(shopItem(false));
     const packs = [];
     for (let i = 0; i < 2; i++) packs.push(rollPack());
     if (R.fs) { packs[0] = rollPack('jester', 'normal'); R.fs = false; }
-    if (coupon) packs.forEach(p => { p.price = 0; });
     R.shop.packs = packs;
     if (R.vAnte !== R.ante || !R.vch) { R.vch = pickVoucher(); R.vAnte = R.ante; R.vBought = false; }
-    if (R.vch && !R.vBought) R.shop.vouchers.push({ k: R.vch, price: coupon ? 0 : priceOf(10) });
+    if (R.vch && !R.vBought && !R.vo[R.vch]) R.shop.vouchers.push({ k: R.vch, price: priceOf(UPG) });
     R.q.push({ t: 'shopin' });
     const tg = R.tags.slice();
     R.tags = [];
     tg.forEach(t => TGK[t].shop && TGK[t].shop());
-    if (R.tags.indexOf('d6') >= 0) { }
-    if (tg.indexOf('d6') >= 0) R.shop.rc = 0;
+    if (R.shop.free3 > 0) R.shop.rc = 0;
     R.tags = R.tags.concat(tg.filter(t => TGK[t].keep));
     fire('shopin', {});
     return R.shop;
@@ -1099,7 +1111,9 @@
     const s = R.shop;
     if (!s || R.money - s.rc < -debtLim()) return false;
     R.money -= s.rc;
-    s.rc++; s.rr++; R.stats.rerolls++;
+    if (s.free3 > 0) { s.free3--; if (!s.free3) s.rc = RR0() + s.rr + 1; }
+    else s.rc++;
+    s.rr++; R.stats.rerolls++;
     const old = s.items.slice();
     old.forEach(i => R.q.push({ id: i.obj.id, t: 'gone', how: 'fade' }));
     s.items = [];
@@ -1134,7 +1148,7 @@
     R.money -= v.price;
     R.shop.vouchers.splice(idx, 1);
     redeem(v.k);
-    R.vBought = true;
+    if (v.k === R.vch) R.vBought = true;
     return true;
   }
   function redeem(k) {
@@ -1147,16 +1161,12 @@
     R.ph = 'pack';
     const items = [], kind = p.kind;
     const ex = [];
-    let tmp = [];
     for (let i = 0; i < p.n; i++) {
       let it;
-      if (kind === 'arcana') {
-        if (vo('omen') && rnd() < .2) { const d = rollCons('spectral', ex); it = { type: 'spectral', k: d.k }; }
-        else if (vo('scope') && false) { }
-        else { const d = rollCons('tarot', ex); it = { type: 'tarot', k: d.k }; }
-      } else if (kind === 'cosmos') {
+      if (kind === 'arcana') { const d = rollCons('tarot', ex); it = { type: 'tarot', k: d.k }; }
+      else if (kind === 'cosmos') {
         let d;
-        if (i === 0 && vo('scope') && R.hl[mostPlayed()].played > 0) d = PLK['pl_' + mostPlayed()];
+        if (i === 0 && vo('gemguide') && R.hl[mostPlayed()].played > 0) d = PLK['pl_' + mostPlayed()];
         else d = rollCons('planet', ex);
         it = { type: 'planet', k: d.k };
       } else if (kind === 'specter') { const d = rollCons('spectral', ex); it = { type: 'spectral', k: d.k }; }
@@ -1167,7 +1177,7 @@
         const q = rnd();
         c.ed = q > .988 ? 'poly' : q > .96 ? 'holo' : q > .92 ? 'foil' : null;
         if (rnd() < .2) c.z = pick(['gold', 'red', 'blue', 'purple']);
-        if (c.e === 'stone') { c.r = 2; }
+        if (c.e === 'stone') c.r = 2;
         it = { type: 'card', card: c };
       }
       if (it.k) ex.push(it.k);
@@ -1231,8 +1241,6 @@
     const meta = { id: c.id };
     d.use(sel, c);
     if (c.type === 'tarot') R.stats.tarots++; else if (c.type === 'planet') R.stats.planets++; else R.stats.spectrals++;
-    if ((c.type === 'tarot' || c.type === 'planet') && c.k !== 'fool') R.lastCons = { type: c.type, k: c.k };
-    if (c.type === 'planet') R.planetsUsed[c.k] = 1;
     fire('use', { cons: c });
     return true;
   }
@@ -1245,7 +1253,6 @@
       const d = JK[o.k];
       if (d.sell) d.sell({ R, j: o }, o);
       killJoker(o, 'sell');
-      if (bossOn('leaf')) R.leafOk = true;
     }
     fire('sold', { item: o });
     return v;
@@ -1262,12 +1269,13 @@
     }
     return beginRound(bi);
   }
+  const bossRrCost = () => vo('fixer') ? 3 : 8;
   function rerollBoss() {
-    const cost = vo('retcon') ? 0 : 10;
-    if (!vo('dcut') && !vo('retcon')) return false;
+    const cost = bossRrCost();
+    if (!vo('info') && !vo('fixer')) return false;
     if (R.bl[2].s !== 'up' && R.bl[2].s !== 'sel') return false;
     if (R.money - cost < -debtLim()) return false;
-    if (!vo('retcon') && R.bossRerolled === R.ante) return false;
+    if (!vo('fixer') && R.bossRerolled === R.ante) return false;
     R.money -= cost; R.bossRerolled = R.ante;
     R.bossUsed.push(R.boss);
     R.boss = pickBoss(); R.bl[2].boss = R.boss;
@@ -1296,7 +1304,31 @@
     if (o.pack) o.pack.hand = R.pack.hand.map(c => c.id);
     return o;
   }
+  const okCard = c => c && typeof c === 'object' && Number.isInteger(c.id) && Number.isInteger(c.r) && c.r >= 2 && c.r <= 14 && Number.isInteger(c.s) && c.s >= 0 && c.s <= 3 && (c.e == null || !!ENH[c.e]) && (c.ed == null || EDC[c.ed] != null) && (c.z == null || !!SEALC[c.z]) && (c.x == null || isFinite(c.x));
+  const okCons = c => c && typeof c === 'object' && Number.isInteger(c.id) && TYPN[c.type] && !!CONSDEF(c);
+  const okJok = j => j && typeof j === 'object' && Number.isInteger(j.id) && !!JK[j.k] && (j.ed == null || EDC[j.ed] != null) && isFinite(j.a || 0);
+  function validRun(o) {
+    if (!o || typeof o !== 'object' || o.v !== RUNV) return false;
+    if (!DECKS[o.dk] || !Number.isInteger(o.st) || o.st < 1 || o.st > STAKES.length || !Number.isInteger(o.ante) || o.ante < 1 || o.ante > 1000) return false;
+    if (!isFinite(o.money) || !Number.isInteger(o.uid) || !isFinite(o.rs)) return false;
+    if (!Array.isArray(o.cards) || o.cards.length > 600 || !o.cards.every(okCard)) return false;
+    if (!Array.isArray(o.jokers) || o.jokers.length > 60 || !o.jokers.every(okJok)) return false;
+    if (!Array.isArray(o.cons) || o.cons.length > 60 || !o.cons.every(okCons)) return false;
+    if (!o.hl || typeof o.hl !== 'object' || !HORD.every(k => o.hl[k] && Number.isInteger(o.hl[k].lvl) && isFinite(o.hl[k].played))) return false;
+    if (!o.vo || typeof o.vo !== 'object' || !Object.keys(o.vo).every(k => !!VK[k])) return false;
+    if (!Array.isArray(o.tags) || !o.tags.every(k => !!TGK[k])) return false;
+    if (!BK[o.boss] || !Array.isArray(o.bl) || o.bl.length !== 3 || !o.bl.every(b => b && (b.k === 'boss' ? !!BK[b.boss] : (b.k === 'small' || b.k === 'big') && !!TGK[b.tag]))) return false;
+    if (o.cur && (typeof o.cur !== 'object' || (o.cur.boss && !BK[o.cur.k]))) return false;
+    if (!o.m || typeof o.m !== 'object' || !['hs', 'hst', 'h', 'd', 'js', 'cs'].every(k => isFinite(o.m[k]))) return false;
+    if (o.shop && (!Array.isArray(o.shop.items) || !Array.isArray(o.shop.packs) || !Array.isArray(o.shop.vouchers) || !o.shop.items.every(i => i && (i.kind === 'joker' ? okJok(i.obj) : i.kind === 'card' ? okCard(i.obj) : okCons(i.obj)) && isFinite(i.price)) || !o.shop.vouchers.every(v => v && !!VK[v.k]) || !o.shop.packs.every(p => p && !!PKN[p.kind] && !!PKS.hasOwnProperty(p.size)))) return false;
+    if (o.pack && (!o.pack.p || !Array.isArray(o.pack.items) || !o.pack.items.every(i => i && (i.type === 'joker' ? okJok(i.obj) : i.type === 'card' ? okCard(i.obj) : okCons(i.obj))))) return false;
+    if (['blinds', 'round', 'shop', 'cash', 'pack', 'over', 'win'].indexOf(o.ph) < 0) return false;
+    if (o.ph === 'round' && !o.cur) return false;
+    if (o.ph === 'cash' && (!o.cash || !Array.isArray(o.cash.lines))) return false;
+    return true;
+  }
   function deser(o) {
+    if (!validRun(o)) throw new Error('bad run');
     R = o;
     RS = o.rs;
     const by = new Map(R.cards.map(c => [c.id, c]));
@@ -1308,45 +1340,55 @@
 
   const J = (k, n, r, $, d, o, th) => { const x = Object.assign({ k, n, r, $, d, th }, o || {}); JK[k] = x; JL.push(x); return x; };
   const T = (k, n, d, t, use, ok) => { const x = { k, n, d, t, use, ok, type: 'tarot', $: 3 }; TK[k] = x; TL.push(x); };
-  const SP = (k, n, d, t, use, ok) => { const x = { k, n, d, t, use, ok, type: 'spectral', $: 4 }; SK[k] = x; SL.push(x); };
+  const SP = (k, n, d, t, use, ok) => { const x = { k, n, d, t, use, ok, type: 'spectral', $: 5 }; SK[k] = x; SL.push(x); };
   const V = (k, n, d, req, on) => { const x = { k, n, d, req, on }; VK[k] = x; VL.push(x); };
   const B = (k, n, d, min, col, o) => { const x = Object.assign({ k, n, d, min, col }, o || {}); BK[k] = x; BL.push(x); };
   const TG = (k, n, d, col, shop, o) => { const x = Object.assign({ k, n, d, col, shop }, o || {}); TGK[k] = x; TGL.push(x); };
   const jq = id => R.q.push({ id, t: 'juice' });
-  const setE = (sel, e) => sel.forEach(c => { c.e = e; jq(c.id); });
-  const lowest = h => { let b = null; h.forEach(c => { if (c.e !== 'stone' && (!b || chipVal(c) <= chipVal(b))) b = c; }); return b; };
+  const cashQ = () => R.q.push({ t: 'cash' });
+  const setE = (sel, e) => sel.forEach(c => { c.e = e; if (e === 'stone') c.r = 2; jq(c.id); });
+  const setS = (sel, s) => sel.forEach(c => { if (c.e !== 'stone') { c.s = s; jq(c.id); } });
+  const stampS = (sel, z) => sel.forEach(c => { c.z = z; jq(c.id); });
+  const hasHand = () => R.hand.length > 0;
+  const inHand = sel => sel.slice().sort((a, b) => R.hand.indexOf(a) - R.hand.indexOf(b));
+  const cnt = (k, f) => R ? R.cards.filter(f).length : 0;
+  const LEG = ['kingpin', 'grandmaster', 'evergreen', 'dragon', 'wishmaker'];
 
-  const CONSN = n => n;
-  T('fool', 'The Fool', 'Creates the last Tarot or Planet card used during this run (The Fool excluded)', null, () => { if (R.lastCons) addCons(R.lastCons.type, R.lastCons.k); }, () => !!R.lastCons);
-  T('magician', 'The Magician', 'Enhances up to 2 selected cards to Lucky Cards', [1, 2], s => setE(s, 'lucky'));
-  T('priestess', 'The High Priestess', 'Creates up to 2 random Planet cards (must have room)', null, () => { for (let i = 0; i < 2; i++) if (cfree() > 0) addCons('planet', rollCons('planet').k); });
-  T('empress', 'The Empress', 'Enhances up to 2 selected cards to Mult Cards', [1, 2], s => setE(s, 'mult'));
-  T('emperor', 'The Emperor', 'Creates up to 2 random Tarot cards (must have room)', null, () => { for (let i = 0; i < 2; i++) if (cfree() > 0) addCons('tarot', rollCons('tarot').k); });
-  T('hierophant', 'The Hierophant', 'Enhances up to 2 selected cards to Bonus Cards', [1, 2], s => setE(s, 'bonus'));
-  T('lovers', 'The Lovers', 'Enhances 1 selected card into a Wild Card', [1, 1], s => setE(s, 'wild'));
-  T('chariot', 'The Chariot', 'Enhances 1 selected card into a Steel Card', [1, 1], s => setE(s, 'steel'));
-  T('justice', 'Justice', 'Enhances 1 selected card into a Glass Card', [1, 1], s => setE(s, 'glass'));
-  T('hermit', 'The Hermit', 'Doubles your money (max +$20)', null, () => { R.money += Math.min(20, Math.max(0, R.money)); R.q.push({ t: 'cash' }); });
-  T('wheel', 'Wheel of Fortune', '1 in 4 chance to add Foil, Holographic or Polychrome edition to a random Joker', null, () => {
-    const p = R.jokers.filter(j => !j.ed);
-    if (luck(1, 4) && p.length) { const j = pick(p), r = rnd(); j.ed = r < .5 ? 'foil' : r < .85 ? 'holo' : 'poly'; jq(j.id); }
-    else R.q.push({ id: 0, t: 'msg', text: 'Nope!' });
+  T('marked', 'Marked Deck', 'Up to 3 selected cards become Marked cards', [1, 3], s => setE(s, 'bonus'));
+  T('inkwell', 'Inkwell', 'Up to 2 selected cards become Inked cards', [1, 2], s => setE(s, 'mult'));
+  T('shape', 'Shapeshift', '1 selected card becomes a Wild card', [1, 1], s => setE(s, 'wild'));
+  T('glassact', 'Glass Act', '1 selected card becomes a Crystal card', [1, 1], s => setE(s, 'glass'));
+  T('grip', 'Iron Grip', '1 selected card becomes an Iron card', [1, 1], s => setE(s, 'steel'));
+  T('mason', 'Masonry', 'Up to 2 selected cards become Brick cards', [1, 2], s => setE(s, 'stone'));
+  T('gilding', 'Gilding', '1 selected card becomes a Gilded card', [1, 1], s => setE(s, 'gold'));
+  T('leaves', 'Four Leaves', 'Up to 2 selected cards become Clover cards', [1, 2], s => setE(s, 'lucky'));
+  T('velvet', 'Red Velvet', 'Up to 3 selected cards become Hearts', [1, 3], s => setS(s, 1));
+  T('sparkle', 'Sparkle', 'Up to 3 selected cards become Diamonds', [1, 3], s => setS(s, 3));
+  T('midnight', 'Midnight', 'Up to 3 selected cards become Spades', [1, 3], s => setS(s, 0));
+  T('greenhouse', 'Greenhouse', 'Up to 3 selected cards become Clubs', [1, 3], s => setS(s, 2));
+  T('promo', 'Promotion', 'Up to 3 selected cards go up one rank (an Ace becomes a 2)', [1, 3], s => s.forEach(c => { if (c.e !== 'stone') { c.r = c.r === 14 ? 2 : c.r + 1; jq(c.id); } }));
+  T('demo', 'Demotion', 'Up to 3 selected cards go down one rank (a 2 becomes an Ace)', [1, 3], s => s.forEach(c => { if (c.e !== 'stone') { c.r = c.r === 2 ? 14 : c.r - 1; jq(c.id); } }));
+  T('vanish', 'Vanishing Act', 'Destroy up to 2 selected cards and earn $2 for each', [1, 2], s => { R.money += 2 * s.length; destroyCards(s, 'destroy'); cashQ(); });
+  T('mirror', 'Mirror Trick', 'Select 2 cards: the right one becomes a copy of the left one', [2, 2], s => {
+    const o = inHand(s), a = o[0], b = o[1];
+    ['r', 's', 'e', 'ed', 'z', 'x'].forEach(k => { b[k] = a[k]; }); jq(b.id);
   });
-  T('strength', 'Strength', 'Increases rank of up to 2 selected cards by 1', [1, 2], s => s.forEach(c => { c.r = c.r === 14 ? 2 : c.r + 1; jq(c.id); }));
-  T('hanged', 'The Hanged Man', 'Destroys up to 2 selected cards', [1, 2], s => destroyCards(s, 'destroy'));
-  T('death', 'Death', 'Select 2 cards, convert the left card into the right card', [2, 2], s => {
-    const o = s.slice().sort((a, b) => R.hand.indexOf(a) - R.hand.indexOf(b));
-    const a = o[0], b = o[1];
-    ['r', 's', 'e', 'ed', 'z', 'x'].forEach(k => { a[k] = b[k]; }); jq(a.id);
+  T('lift', 'Double Lift', 'Add a copy of 1 selected card to your deck and hand', [1, 1], s => { addToDeck(Object.assign({}, s[0], { id: nid(), fd: false }), 'hand'); });
+  T('tophat', 'Top Hat', 'Create a random Common Joker (needs a free slot)', null, () => { addJoker(rollJoker(1).k); }, () => jfree() > 0);
+  T('spot', 'Spotlight', 'Level up your most played hand once', null, () => { const h = mostPlayed(); levelHand(h, 1); R.q.push({ t: 'lvl', hid: h }); });
+  T('varnish', 'Varnish', '1 in 2 chance to give a random edition to 1 selected card', [1, 1], s => {
+    if (luck(1, 2)) { const r = rnd(); s[0].ed = r < .5 ? 'foil' : r < .85 ? 'holo' : 'poly'; jq(s[0].id); }
+    else R.q.push({ id: 0, t: 'msg', text: 'Missed!' });
   });
-  T('temperance', 'Temperance', 'Gives the total sell value of all current Jokers (max $50)', null, () => { R.money += Math.min(50, R.jokers.reduce((a, j) => a + sellVal(j), 0)); R.q.push({ t: 'cash' }); });
-  T('devil', 'The Devil', 'Enhances 1 selected card into a Gold Card', [1, 1], s => setE(s, 'gold'));
-  T('tower', 'The Tower', 'Enhances 1 selected card into a Stone Card', [1, 1], s => setE(s, 'stone'));
-  T('star', 'The Star', 'Converts up to 3 selected cards to Diamonds', [1, 3], s => s.forEach(c => { c.s = 3; jq(c.id); }));
-  T('moon', 'The Moon', 'Converts up to 3 selected cards to Clubs', [1, 3], s => s.forEach(c => { c.s = 2; jq(c.id); }));
-  T('sun', 'The Sun', 'Converts up to 3 selected cards to Hearts', [1, 3], s => s.forEach(c => { c.s = 1; jq(c.id); }));
-  T('judgement', 'Judgement', 'Creates a random Joker card (must have room)', null, () => { const d = rollJoker(); addJoker(d.k, rollEd(edMod())); }, () => jfree() > 0);
-  T('world', 'The World', 'Converts up to 3 selected cards to Spades', [1, 3], s => s.forEach(c => { c.s = 0; jq(c.id); }));
+  T('saw', 'Sawn in Half', 'Destroy 1 selected card and add 2 cards of half its rank, same suit', [1, 1], s => {
+    const c = s[0];
+    if (c.e === 'stone') { destroyCards([c]); return; }
+    const r = Math.max(2, Math.ceil((c.r === 14 ? 14 : c.r) / 2)), su = c.s;
+    destroyCards([c]);
+    for (let i = 0; i < 2; i++) addToDeck(newCard(r, su), 'hand');
+  });
+  T('levitate', 'Levitation', 'Up to 2 selected cards permanently gain +15 Chips', [1, 2], s => s.forEach(c => { c.x = (c.x || 0) + 15; jq(c.id); }));
+  T('passhat', 'Pass the Hat', 'Earn $1 for every Trick card used before this one (max $12)', null, () => { R.money += Math.min(12, R.stats.tarots); cashQ(); });
 
   HORD.forEach(id => {
     const h = HAND[id];
@@ -1357,354 +1399,312 @@
     };
   });
 
-  const clone = (j) => {
-    const st = JSON.parse(JSON.stringify(j));
-    delete st.id; delete st.k; delete st.ed; delete st.et; delete st.per; delete st.rn;
-    return addJoker(j.k, j.ed, { st, force: true });
-  };
-  const killOthers = keep => R.jokers.slice().forEach(j => { if (j !== keep && !j.et) killJoker(j, 'destroy'); });
-  const addEnh = (n, o) => { for (let i = 0; i < n; i++) { const c = randCard(Object.assign({ enh: true }, o)); addToDeck(c, 'hand'); } };
-  const hasHand = () => R.hand.length > 0;
-  SP('ghoul', 'Ghoul Court', 'Destroy 1 random card in your hand, add 3 random enhanced face cards to your hand', null, () => { destroyCards([pick(R.hand)]); addEnh(3, { face: true }); }, hasHand);
-  SP('reaper', "Reaper's Due", 'Destroy 1 random card in your hand, add 2 random enhanced Aces to your hand', null, () => { destroyCards([pick(R.hand)]); addEnh(2, { ace: true }); }, hasHand);
-  SP('whisper', 'Whisper Rite', 'Destroy 1 random card in your hand, add 4 random enhanced numbered cards to your hand', null, () => { destroyCards([pick(R.hand)]); addEnh(4, { num: true }); }, hasHand);
-  SP('charm', 'Gilded Charm', 'Add a Gold Seal to 1 selected card', [1, 1], s => { s[0].z = 'gold'; jq(s[0].id); });
-  SP('stamp', 'Echo Stamp', 'Add a Red Seal to 1 selected card', [1, 1], s => { s[0].z = 'red'; jq(s[0].id); });
-  SP('blue', 'Azure Stamp', 'Add a Blue Seal to 1 selected card', [1, 1], s => { s[0].z = 'blue'; jq(s[0].id); });
-  SP('violet', 'Violet Stamp', 'Add a Purple Seal to 1 selected card', [1, 1], s => { s[0].z = 'purple'; jq(s[0].id); });
-  SP('halo', 'Halo Veil', 'Add a random Foil, Holographic or Polychrome edition to 1 selected card', [1, 1], s => { s[0].ed = pick(['foil', 'holo', 'poly']); jq(s[0].id); });
-  SP('thief', 'Pale Thief', 'Creates a random Rare Joker (must have room), sets money to $0', null, () => { addJoker(rollJoker(3).k, null); R.money = 0; }, () => jfree() > 0);
-  SP('sigil', 'Suit Sigil', 'Converts all cards in hand to a single random suit', null, () => { const s = rint(4); R.hand.forEach(c => { c.s = s; jq(c.id); }); }, hasHand);
-  SP('board', 'Rank Board', 'Converts all cards in hand to a single random rank, -1 hand size', null, () => { const r = 2 + rint(13); R.hand.forEach(c => { c.r = r; jq(c.id); }); R.m.hs--; }, hasHand);
-  SP('light', 'Ghost Light', 'Add Negative to a random Joker, -1 hand size', null, () => { const p = R.jokers.filter(j => !j.ed); const j = pick(p); j.ed = 'neg'; jq(j.id); R.m.hs--; }, () => R.jokers.some(j => !j.ed));
-  SP('pyre', 'Pyre', 'Destroys 5 random cards in your hand, gain $20', null, () => { destroyCards(shuffle(R.hand.slice()).slice(0, 5)); R.money += 20; R.q.push({ t: 'cash' }); }, hasHand);
-  SP('idol', 'Mirror Idol', 'Create a copy of a random Joker, destroy all other Jokers', null, () => { const j = pick(R.jokers); killOthers(j); clone(j); }, () => R.jokers.length > 0);
-  SP('hex2', 'Curse of Colors', 'Add Polychrome to a random Joker, destroy all other Jokers', null, () => { const p = R.jokers.filter(j => !j.ed), j = pick(p.length ? p : R.jokers); j.ed = 'poly'; jq(j.id); killOthers(j); }, () => R.jokers.length > 0);
-  SP('clone', 'Clone Rite', 'Create 2 copies of 1 selected card in your hand', [1, 1], s => { for (let i = 0; i < 2; i++) addToDeck(Object.assign({}, s[0], { id: nid() }), 'hand'); });
-  SP('soul', 'Lost Spirit', 'Creates a Legendary Joker (must have room)', null, () => { addJoker(pick(['kingsfool', 'canio', 'memento', 'bosswhisper', 'hoarder'])); }, () => jfree() > 0);
-  SP('hole', 'Void Core', 'Upgrade every poker hand by 1 level', null, () => { HORD.forEach(k => levelHand(k, 1)); R.q.push({ t: 'lvl' }); });
+  const addEnh = (n, o) => { for (let i = 0; i < n; i++) addToDeck(randCard(o), 'hand'); };
+  SP('comet', 'Comet', 'Level up every poker hand once', null, () => { HORD.forEach(k => levelHand(k, 1)); R.q.push({ t: 'lvl' }); });
+  SP('genie', 'Genie', 'Create a Legendary Joker (needs a free slot)', null, () => { addJoker(pick(LEG)); }, () => jfree() > 0);
+  SP('eclipse', 'Eclipse', 'Give Shadow to a random Joker. -1 discard every round from now on', null, () => { const j = pick(R.jokers.filter(k => !k.ed)); j.ed = 'neg'; jq(j.id); R.m.d--; }, () => R.jokers.some(j => !j.ed));
+  SP('crow', 'Crow', 'Destroy 1 random card in your hand, add 3 random Gilded cards to your hand', null, () => { destroyCards([pick(R.hand)]); addEnh(3, { e: 'gold' }); }, hasHand);
+  SP('broken', 'Broken Mirror', 'Destroy a random Joker, then create 2 random Uncommon Jokers', null, () => {
+    const v = R.jokers.filter(j => !j.et);
+    if (v.length) killJoker(pick(v), 'destroy');
+    for (let i = 0; i < 2; i++) if (jfree() > 0) addJoker(rollJoker(2).k);
+  }, () => R.jokers.some(j => !j.et));
+  SP('ladder', 'Under the Ladder', 'Every card in your hand goes up one rank. Lose $5', null, () => { R.hand.forEach(c => { if (c.e !== 'stone') { c.r = c.r === 14 ? 2 : c.r + 1; jq(c.id); } }); R.money -= 5; cashQ(); }, hasHand);
+  SP('horseshoe', 'Horseshoe', 'Add a Coin Stamp to up to 2 selected cards', [1, 2], s => stampS(s, 'gold'));
+  SP('wishbone', 'Wishbone', 'Add an Echo Stamp to 1 selected card', [1, 1], s => stampS(s, 'red'));
+  SP('falling', 'Falling Star', 'Add a Star Stamp to up to 2 selected cards', [1, 2], s => stampS(s, 'blue'));
+  SP('quill', 'Raven Quill', 'Add an Ink Stamp to up to 2 selected cards', [1, 2], s => stampS(s, 'purple'));
+  SP('fullmoon', 'Full Moon', 'Give Prism to 1 selected card, then destroy a random Joker', [1, 1], s => {
+    s[0].ed = 'poly'; jq(s[0].id);
+    const v = R.jokers.filter(j => !j.et);
+    if (v.length) killJoker(pick(v), 'destroy');
+  });
+  SP('storm', 'Thunderstorm', 'Destroy 4 random cards in your hand, earn $15', null, () => { destroyCards(shuffle(R.hand.slice()).slice(0, 4)); R.money += 15; cashQ(); }, hasHand);
+  SP('fog', 'Fog', 'Every card in your hand becomes Wild. -1 hand size from now on', null, () => { R.hand.forEach(c => { if (c.e !== 'stone') { c.e = 'wild'; jq(c.id); } }); R.m.hs--; }, hasHand);
+  SP('lowtide', 'Low Tide', '+2 hand size, -1 hand every round from now on', null, () => { R.m.hs += 2; R.m.h--; }, () => hmax() > 1);
+  SP('dust', 'Grave Dust', 'Destroy 1 random card in your hand, add 2 random enhanced face cards to your hand', null, () => { destroyCards([pick(R.hand)]); addEnh(2, { face: true, enh: true }); }, hasHand);
 
-  V('over', 'Wide Shelves', '+1 card slot available in the shop', null, () => { if (R.shop) R.shop.items.push(shopItem(false)); });
-  V('over2', 'Endless Shelves', '+1 more card slot available in the shop', 'over', () => { if (R.shop) R.shop.items.push(shopItem(false)); });
-  V('mark', 'Markdown', 'All cards and packs in the shop are 25% off', null, () => { if (R.shop) repriceShop(); });
-  V('fire', 'Fire Sale', 'All cards and packs in the shop are 50% off', 'mark', () => { if (R.shop) repriceShop(); });
-  V('polish', 'Polish', 'Foil, Holographic and Polychrome cards appear 2X more often', null);
-  V('lustre', 'Lustre', 'Foil, Holographic and Polychrome cards appear 4X more often', 'polish');
-  V('rr1', 'Reroll Coupon', 'Rerolls cost $2 less', null, () => { if (R.shop) R.shop.rc = Math.max(0, R.shop.rc - 2); });
-  V('rr2', 'Reroll Pass', 'Rerolls cost $2 less', 'rr1', () => { if (R.shop) R.shop.rc = Math.max(0, R.shop.rc - 2); });
-  V('pocket', 'Spare Pocket', '+1 consumable slot', null);
-  V('omen', 'Omen Pocket', 'Oracle Packs can contain Specter cards', 'pocket');
-  V('scope', 'Spyglass', 'Cosmos Packs always contain the Planet for your most played hand', null);
-  V('obs', 'Star Chart', 'Planet cards in your consumables give X1.5 Mult for their hand type', 'scope');
-  V('grab', 'Extra Grip', '+1 hand each round', null);
-  V('tongs', 'Long Tongs', '+1 hand each round', 'grab');
-  V('waste', 'Spendthrift', '+1 discard each round', null);
-  V('recycle', 'Recycler', '+1 discard each round', 'waste');
-  V('tmerch', 'Tarot Stand', 'Tarot cards appear 2X more frequently in the shop', null);
-  V('ttycoon', 'Tarot Empire', 'Tarot cards appear 4X more frequently in the shop', 'tmerch');
-  V('pmerch', 'Planet Stand', 'Planet cards appear 2X more frequently in the shop', null);
-  V('ptycoon', 'Planet Empire', 'Planet cards appear 4X more frequently in the shop', 'pmerch');
-  V('seed', 'Piggy Bank', 'Raise the interest cap to $50 (max $10 interest)', null);
-  V('tree', 'Money Orchard', 'Raise the interest cap to $100 (max $20 interest)', 'seed');
-  V('blank', 'Blank Slip', 'Does nothing?', null);
-  V('void', 'Void Slot', '+1 Joker slot', 'blank');
-  V('trick', 'Card Trick', 'Playing cards can appear in the shop', null);
-  V('illusion', 'Grand Illusion', 'Playing cards in the shop may have enhancements, editions and seals', 'trick');
-  V('warp', 'Time Warp', 'Permanently -1 Hand each round, -1 Ante', null, () => { R.m.h--; R.ante = Math.max(1, R.ante - 1); });
-  V('rewind', 'Rewind', 'Permanently -1 Discard each round, -1 Ante', 'warp', () => { R.m.d--; R.ante = Math.max(1, R.ante - 1); });
-  V('dcut', 'Boss Reroll', 'Reroll the Boss Blind once per Ante for $10', null);
-  V('retcon', 'Retcon', 'Reroll the Boss Blind as many times as you like for free', 'dcut');
-  V('paint', 'Wider Hand', '+1 hand size', null);
-  V('palette', 'Widest Hand', '+1 hand size', 'paint');
+  const reprice = () => { if (R.shop) repriceShop(); };
+  const addShopSlot = () => { if (R.shop) R.shop.items.push(shopItem(false)); };
+  V('shelf', 'Extra Shelf', '+1 card slot in the shop', null, addShopSlot);
+  V('shelf2', 'Back Room', '+1 more card slot in the shop', 'shelf', addShopSlot);
+  V('coupon', 'Coupon Book', 'Everything in the shop is 20% off', null, reprice);
+  V('club', "Members' Club", 'Everything in the shop is 40% off', 'coupon', reprice);
+  V('cloth', 'Polishing Cloth', 'Shiny, Glossy and Prism cards appear twice as often', null);
+  V('loupe', "Jeweller's Loupe", 'Shiny, Glossy and Prism cards appear three times as often', 'cloth');
+  V('dice', 'Loaded Dice', 'Rerolls cost $1 less', null, () => { if (R.shop) R.shop.rc = Math.max(0, R.shop.rc - 1); });
+  V('dice2', 'Weighted Dice', 'The first reroll in every shop is free', 'dice', () => { if (R.shop && !R.shop.rr && !R.shop.free3) { R.shop.free3 = 1; R.shop.rc = 0; } });
+  V('pocket', 'Coat Pocket', '+1 consumable slot', null);
+  V('satchel', 'Satchel', '+1 more consumable slot', 'pocket');
+  V('gemguide', 'Gem Guide', 'Gem Packs always include the Gem of your most played hand', null);
+  V('display', 'Display Case', 'Each Gem card you hold gives +4 Mult to every hand', 'gemguide');
+  V('nerves', 'Steady Nerves', '+1 hand every round', null);
+  V('iron', 'Iron Will', '+1 more hand every round', 'nerves');
+  V('bin', 'Waste Bin', '+1 discard every round', null);
+  V('shred', 'Shredder', '+1 more discard every round', 'bin');
+  V('mshop', 'Magic Shop', 'Trick cards appear twice as often in the shop', null);
+  V('mshop2', 'Grand Magic Shop', 'Trick cards appear three times as often and cost $1 less', 'mshop', reprice);
+  V('gstall', 'Gem Stall', 'Gem cards appear twice as often in the shop', null);
+  V('gstall2', 'Gem Market', 'Gem cards appear three times as often and cost $1 less', 'gstall', reprice);
+  V('jar', 'Savings Jar', 'Interest can reach $9 per round', null);
+  V('vault', 'Bank Vault', 'Interest can reach $13 per round', 'jar');
+  V('tip', 'Tip Jar', 'Earn $1 at the end of every round', null);
+  V('seat', 'Extra Seat', '+1 Joker slot', 'tip');
+  V('rack', 'Card Rack', 'Playing cards can appear in the shop', null);
+  V('rack2', 'Fancy Rack', 'Shop playing cards may have enhancements, editions and stamps', 'rack');
+  V('table', 'Bigger Table', '+1 hand size', null);
+  V('table2', 'Banquet Table', '+1 more hand size', 'table');
+  V('info', 'Inside Info', 'Reroll the Boss Blind once per Ante for $8', null);
+  V('fixer', 'The Fixer', 'Reroll the Boss Blind as often as you like for $3', 'info');
+  V('clock', 'Rewind Clock', 'Go back one Ante. -1 discard every round from now on', null, () => { R.m.d--; R.ante = Math.max(1, R.ante - 1); });
+  V('clock2', 'Time Loop', 'Go back one more Ante. -1 hand size from now on', 'clock', () => { R.m.hs--; R.ante = Math.max(1, R.ante - 1); });
+  V('bulk', 'Bulk Buyer', 'Booster Packs offer one extra card', null);
+  V('bulk2', 'Wholesale', 'Booster Packs cost $2 less', 'bulk', reprice);
   function repriceShop() {
-    R.shop.items.forEach(i => { if (i.price > 0) { const b = i.kind === 'joker' ? jokerCost(i.obj) : i.kind === 'card' ? 1 : (CONSDEF(i.obj).$); i.price = priceOf(b); } });
+    R.shop.items.forEach(i => { if (i.price > 0) { const b = i.kind === 'joker' ? jokerCost(i.obj) : i.kind === 'card' ? 2 : consCost(i.kind, CONSDEF(i.obj)); i.price = i.kind === 'joker' && i.obj.rn ? 1 : priceOf(b); } });
     R.shop.packs.forEach(p => { if (p.price > 0) p.price = priceOf(packCost(p.size)); });
-    R.shop.vouchers.forEach(v => { if (v.price > 0) v.price = priceOf(10); });
+    R.shop.vouchers.forEach(v => { if (v.price > 0) v.price = priceOf(UPG); });
   }
 
-  B('hook', 'Pickpocket', 'Discards 2 random cards from your hand after each hand played', 1, '#c43c3c');
-  B('ox', 'Bull', 'Playing your most played hand sets money to $0', 2, '#d9742a');
-  B('house', 'Closed Door', 'First hand is drawn face down', 2, '#6a5acd');
-  B('wall', 'Brick Wall', 'Extra large blind (4X)', 2, '#8a5a8a', { mult: 4 });
-  B('wheel', 'Roulette', '1 in 7 cards are drawn face down', 2, '#3aa86a');
-  B('arm', 'Weight', 'Decreases the level of the played poker hand by 1', 2, '#6a7acd');
-  B('club', 'Frost', 'All Clubs are debuffed', 1, '#2f8a6a');
-  B('head', 'Heartbreak', 'All Hearts are debuffed', 1, '#e0453a');
-  B('goad', 'Barbed', 'All Spades are debuffed', 1, '#4a5a8a');
-  B('window', 'Stained Glass', 'All Diamonds are debuffed', 1, '#e98a2e');
-  B('psychic', 'Mind Reader', 'Must play 5 cards', 1, '#d8b83a');
-  B('fish', 'Drifter', 'Cards are drawn face down after each hand played', 2, '#3a8ac8');
-  B('mouth', 'Mute', 'Only one hand type can be played this round', 2, '#a85a8a');
-  B('eye', 'Watcher', 'No repeat hand types this round', 3, '#4a8ae8');
-  B('plant', 'Overgrowth', 'All face cards are debuffed', 4, '#5a9a3a');
-  B('needle', 'Pinprick', 'Play only 1 hand', 2, '#6a8a2a');
-  B('water', 'Drought', 'Start with 0 discards', 2, '#4ab8d8');
-  B('manacle', 'Shackle', '-1 hand size', 1, '#8a8a8a');
-  B('flint', 'Cold Snap', 'Base Chips and Mult are halved', 2, '#d86a2a');
-  B('mark', 'Faceless', 'All face cards are drawn face down', 2, '#7a3a5a');
-  B('tooth', 'Toll', 'Lose $1 per card played', 3, '#c83a3a');
-  B('serpent', 'Hydra', 'After play or discard, always draw 3 cards', 5, '#3a6a3a');
-  B('pillar', 'Column', 'Cards played previously this ante are debuffed', 1, '#7a5a3a');
-  B('acorn', 'Shuffle Shell', 'Flips and shuffles all Jokers', 8, '#e8902a', { fin: 1, mult: 2 });
-  B('leaf', 'Wilted Leaf', 'All cards are debuffed until 1 Joker is sold', 8, '#4aa84a', { fin: 1, mult: 2 });
-  B('vessel', 'Royal Vessel', 'Extra extra large blind (6X)', 8, '#8a3ad8', { fin: 1, mult: 6 });
-  B('heart', 'Crimson Core', 'A random Joker is disabled every hand', 8, '#c8283a', { fin: 1, mult: 2 });
-  B('bell', 'Cerulean Toll', 'Forces 1 card to always be selected', 8, '#3a78d8', { fin: 1, mult: 2 });
+  B('clamp', 'The Clamp', '-2 hand size', 2, '#7a8496', { hs: -2 });
+  B('night', 'Night Shift', 'All Spades are silenced', 1, '#3a4a7a', { deb: c => c.e !== 'stone' && c.s === 0 });
+  B('cold', 'Cold Heart', 'All Hearts are silenced', 1, '#c8405a', { deb: c => c.e !== 'stone' && c.s === 1 });
+  B('weed', 'Weed Killer', 'All Clubs are silenced', 1, '#3a8a4a', { deb: c => c.e !== 'stone' && c.s === 2 });
+  B('pawn', 'Pawn Shop', 'All Diamonds are silenced', 1, '#d8802a', { deb: c => c.e !== 'stone' && c.s === 3 });
+  B('count', 'Full Count', 'Hands of fewer than 4 cards score nothing', 1, '#c8a83a', { no: (h, cards) => cards.length < 4 });
+  B('short', 'Short Order', 'Hands of more than 3 cards score half', 2, '#a8603a', { half: (h, cards) => cards.length > 3 });
+  B('fright', 'Stage Fright', 'All face cards are silenced', 3, '#8a3a6a', { deb: c => isFace(c) });
+  B('odds', 'Even Odds', 'Aces, 9s, 7s, 5s and 3s are silenced', 2, '#5a6ac8', { deb: c => isOdd(c) });
+  B('ceiling', 'Low Ceiling', 'The base Chips of every hand are halved', 1, '#6a7aa8', { base: b => { b.c = Math.max(1, Math.floor(b.c / 2)); } });
+  B('booth', 'Toll Booth', 'Every discard costs $2', 1, '#c8483a', { disc: () => { R.money -= 2; } });
+  B('fresh', 'Fresh Ideas', 'You cannot play the same hand type twice in a row', 2, '#3aa8a8', { no: h => R.lastR === h.id });
+  B('bucket', 'Leaky Bucket', 'Your discards are halved, rounded down', 1, '#4a9ad8', { start: () => { R.discards = Math.floor(R.discards / 2); } });
+  B('lastcall', 'Last Call', 'Only 2 hands this round', 2, '#6a4a2a', { start: () => { R.hands = Math.min(R.hands, 2); } });
+  B('shrink', 'Shrinking Table', '-1 hand size after every hand played', 2, '#8a6a4a', { after: () => { R.m.hst--; } });
+  B('dim', 'Dim Lights', '1 in 4 cards are drawn face down', 2, '#4a4a6a', { fd: () => rnd() < .25 });
+  B('sticky', 'Sticky Fingers', 'After every hand, 1 random card in your hand is discarded and you lose $1', 1, '#b84a8a', {
+    after: () => {
+      R.money -= 1;
+      const d = shuffle(R.hand.slice()).slice(0, 1);
+      d.forEach(c => { R.hand.splice(R.hand.indexOf(c), 1); R.disc.push(c); });
+      return d;
+    }
+  });
+  B('lead', 'Lead Weight', 'Playing your most played hand lowers its level by 1', 2, '#5a5a6a', { play: (pre, mp) => { if (pre.id === mp && R.hl[mp].played > 0) levelHand(mp, -1); } });
+  B('heavy', 'Heavy Hitter', 'A very large blind (3X)', 2, '#8a3a3a', { mult: 3 });
+  B('lockout', 'Lockout', 'Your leftmost Joker is disabled', 2, '#3a3a4a', { joff: j => R.jokers[0] === j });
+  B('silence', 'Silence', 'Cards never retrigger', 2, '#6a6a8a');
+  B('slate', 'Clean Slate', 'Every hand counts as level 1 this round', 3, '#5a9ab0', { lvl1: 1 });
+  B('tape', 'Red Tape', 'Cards with an enhancement or a stamp are silenced', 3, '#c84a3a', { deb: c => !!(c.e || c.z) });
+  B('purse', 'Tight Purse', 'Cards and Jokers earn no money while you play', 1, '#a8883a');
+  B('curtain', 'Velvet Curtain', 'An enormous blind (5X)', 8, '#8a2a5a', { fin: 1, mult: 5 });
+  B('mirrors', 'Hall of Mirrors', 'Your Jokers are shuffled after every hand', 8, '#6a8ac8', { fin: 1, mult: 2.2, after: () => { shuffle(R.jokers); R.q.push({ t: 'shuf' }); } });
+  B('thorns', 'Thorn Crown', 'Every hand played costs $3', 8, '#5a8a3a', { fin: 1, mult: 2.2, play: () => { R.money -= 3; R.bt = 1; } });
+  B('hourglass', 'Hourglass', 'Only 3 hands and 1 discard this round', 8, '#c8a03a', { fin: 1, mult: 2.2, start: () => { R.hands = Math.min(R.hands, 3); R.discards = Math.min(R.discards, 1); } });
+  B('total', 'Total Eclipse', 'Your two rightmost Jokers are disabled', 8, '#2a2a5a', { fin: 1, mult: 2.2, joff: j => R.jokers.indexOf(j) >= R.jokers.length - 2 });
 
   const shopPush = (kind, obj, price) => R.shop.items.unshift({ kind, obj, price });
   const edJ = ed => () => { const d = rollJoker(); shopPush('joker', mkJoker(d.k, ed), 0); };
   const freePack = (k, s) => () => { const p = rollPack(k, s); p.price = 0; R.shop.packs.unshift(p); };
-  TG('uncommon', 'Uncommon Tag', 'Shop has a free Uncommon Joker', '#6fcf86', () => { shopPush('joker', mkJoker(rollJoker(2).k), 0); });
-  TG('rare', 'Rare Tag', 'Shop has a free Rare Joker', '#f06a5a', () => { shopPush('joker', mkJoker(rollJoker(3).k), 0); }, { min: 2 });
-  TG('neg', 'Negative Tag', 'Shop has a free Negative Joker', '#222a3a', () => { const d = rollJoker(); shopPush('joker', mkJoker(d.k, 'neg'), 0); }, { min: 2 });
-  TG('foil', 'Foil Tag', 'Shop has a free Foil Joker', '#8fb2e8', edJ('foil'));
-  TG('holo', 'Holo Tag', 'Shop has a free Holographic Joker', '#e870c8', edJ('holo'));
-  TG('poly', 'Poly Tag', 'Shop has a free Polychrome Joker', '#c58aff', edJ('poly'));
-  TG('invest', 'Investment Tag', 'Gain $25 after defeating the next Boss Blind', '#3aa86a', null, { keep: 1 });
-  TG('voucher', 'Voucher Tag', 'Adds a Voucher to the next shop', '#e8c040', () => { const have = R.shop.vouchers.map(v => v.k), pool = VL.filter(v => !R.vo[v.k] && have.indexOf(v.k) < 0 && (!v.req || R.vo[v.req])); if (pool.length) R.shop.vouchers.push({ k: pick(pool).k, price: priceOf(10) }); });
-  TG('boss', 'Boss Tag', 'Rerolls the Boss Blind', '#8a5a8a', null);
-  TG('standard', 'Playing Tag', 'Free Mega Playing Pack in the next shop', '#c8402a', freePack('standard', 'mega'));
-  TG('charm', 'Charm Tag', 'Free Mega Oracle Pack in the next shop', '#a85ac8', freePack('arcana', 'mega'));
-  TG('meteor', 'Meteor Tag', 'Free Mega Cosmos Pack in the next shop', '#3a78d8', freePack('cosmos', 'mega'));
-  TG('buffoon', 'Jester Tag', 'Free Jumbo Jester Pack in the next shop', '#e8902a', freePack('jester', 'jumbo'));
-  TG('ethereal', 'Ethereal Tag', 'Free Specter Pack in the next shop', '#6a8ae8', freePack('specter', 'normal'));
-  TG('handy', 'Handy Tag', 'Gain $1 per hand played this run', '#e8a02a', () => { R.money += R.tot.h; }, { min: 2 });
-  TG('garbage', 'Garbage Tag', 'Gain $1 per unused discard this run', '#7a9a3a', () => { R.money += R.tot.ud || 0; }, { min: 2 });
-  TG('coupon', 'Coupon Tag', 'Initial shop items and packs are free', '#e85a5a', null, {});
-  TG('double', 'Double Tag', 'Gives a copy of the next Tag selected', '#3a9ac8', null, { keep: 1 });
-  TG('juggle', 'Juggle Tag', '+3 hand size next round', '#4ab8a8', null);
-  TG('d6', 'D6 Tag', 'Rerolls start at $0 in the next shop', '#6a8a9a', null);
-  TG('top', 'Top-up Tag', 'Create up to 2 Common Jokers', '#8a9ae8', () => { for (let i = 0; i < 2; i++) if (jfree() > 0) addJoker(rollJoker(1).k); });
-  TG('speed', 'Speed Tag', 'Gain $5 per blind skipped this run', '#e8d03a', () => { R.money += 5 * R.skips; });
-  TG('orbital', 'Orbital Tag', 'Upgrades a random poker hand by 3 levels', '#6a4ac8', null, { min: 2 });
-  TG('economy', 'Economy Tag', 'Doubles your money (max +$40)', '#e8c040', () => { R.money += Math.min(40, Math.max(0, R.money)); });
+  TG('unc', 'Uncommon Ticket', 'The next shop has a free Uncommon Joker', '#6fcf86', () => { shopPush('joker', mkJoker(rollJoker(2).k), 0); });
+  TG('rare', 'Rare Ticket', 'The next shop has a free Rare Joker', '#f06a5a', () => { shopPush('joker', mkJoker(rollJoker(3).k), 0); }, { min: 2 });
+  TG('shiny', 'Shiny Ticket', 'The next shop has a free Shiny Joker', '#8fb2e8', edJ('foil'));
+  TG('glossy', 'Glossy Ticket', 'The next shop has a free Glossy Joker', '#e870c8', edJ('holo'));
+  TG('prism', 'Prism Ticket', 'The next shop has a free Prism Joker', '#c58aff', edJ('poly'), { min: 2 });
+  TG('shadow', 'Shadow Ticket', 'The next shop has a free Shadow Joker', '#3a3f5a', edJ('neg'), { min: 3 });
+  TG('bond', 'Savings Bond', 'Earn $20 when you beat the next Boss Blind', '#3aa86a', null, { keep: 1 });
+  TG('prize', 'Cash Prize', 'Earn $8 right away', '#e8c040', null, { now: () => { R.money += 8; } });
+  TG('pass', 'Workshop Pass', 'The next shop offers one extra Upgrade', '#c8a040', () => { const k = pickVoucher(R.shop.vouchers.map(v => v.k).concat(R.vch ? [R.vch] : [])); if (k) R.shop.vouchers.push({ k, price: priceOf(UPG) }); });
+  TG('bribe', 'Bribe', 'Swap the Boss Blind of this Ante for another one', '#8a5a8a', null, { now: () => { R.bossUsed.push(R.boss); R.boss = pickBoss(); R.bl[2].boss = R.boss; } });
+  TG('magic', 'Magic Pass', 'The next shop has a free Giant Trick Pack', '#a85ac8', freePack('arcana', 'mega'));
+  TG('gems', 'Gem Pass', 'The next shop has a free Giant Gem Pack', '#3a78d8', freePack('cosmos', 'mega'));
+  TG('cards', 'Deck Pass', 'The next shop has a free Giant Card Pack', '#c8402a', freePack('standard', 'mega'));
+  TG('jokers', 'Joker Pass', 'The next shop has a free Big Joker Pack', '#e8902a', freePack('jester', 'jumbo'));
+  TG('omens', 'Omen Pass', 'The next shop has a free Omen Pack', '#4ab8a8', freePack('specter', 'normal'), { min: 2 });
+  TG('lunch', 'Free Lunch', 'The first card in the next shop is free', '#e85a5a', () => { if (R.shop.items[0]) R.shop.items[0].price = 0; });
+  TG('copy', 'Lucky Copy', 'You get the next tag twice', '#3a9ac8', null, { keep: 1 });
+  TG('big', 'Big Hands', '+2 hand size in the next round', '#4ab8a8', null, { now: () => { R.m.hst += 2; } });
+  TG('rolls', 'Free Rerolls', 'The first 3 rerolls in the next shop are free', '#6a8a9a', () => { R.shop.free3 += 3; R.shop.rc = 0; });
+  TG('study', 'Study Session', 'Level up your most played hand twice', '#6a4ac8', null, { now: () => { const h = mostPlayed(); levelHand(h, 2); R.q.push({ t: 'lvl', hid: h }); }, min: 2 });
+  TG('lane', 'Fast Lane', 'Earn $4 for every blind skipped this run', '#e8d03a', null, { now: () => { R.money += 4 * R.skips; } });
+  TG('busk', 'Busker', 'Earn $1 for every 2 hands played this run', '#e8a02a', null, { now: () => { R.money += Math.floor(R.tot.h / 2); }, min: 2 });
 
   const DECKS = {
-    red: ['Ruby Deck', '+1 discard every round'],
-    blue: ['Sapphire Deck', '+1 hand every round'],
-    yellow: ['Amber Deck', 'Start with extra $10'],
-    green: ['Emerald Deck', 'At end of round: $2 per remaining hand, $1 per remaining discard. Earn no interest'],
-    black: ['Onyx Deck', '+1 Joker slot, -1 hand every round'],
-    magic: ['Mystic Deck', 'Start with the Spare Pocket voucher and 2 copies of The Fool'],
-    nebula: ['Nebula Deck', 'Start with the Spyglass voucher, -1 consumable slot'],
-    ghost: ['Phantom Deck', 'Specter cards may appear in the shop. Start with a Curse of Colors card'],
-    abandoned: ['Hollow Deck', 'Start with no face cards in your deck'],
-    checkered: ['Checker Deck', 'Start with 26 Spades and 26 Hearts in deck'],
-    zodiac: ['Zodiac Deck', 'Start with Tarot Stand, Planet Stand and Wide Shelves'],
-    painted: ['Palette Deck', '+2 hand size, -1 Joker slot'],
-    anaglyph: ['Twin-Lens Deck', 'After defeating each Boss Blind, gain a Double Tag'],
-    plasma: ['Fusion Deck', 'Balances Chips and Mult when calculating score for played hand. X2 base Blind size'],
-    erratic: ['Chaos Deck', 'All ranks and suits in your starting deck are randomized']
+    club: ['Club House Deck', 'The standard 52 cards, no changes', {}],
+    steady: ['Steady Deck', '+1 hand every round', { h: 1 }],
+    spare: ['Spare Deck', '+1 discard every round', { d: 1 }],
+    silver: ['Silver Deck', 'Start with $8 more, and every blind pays $1 more', { money: 8, rew: 1 }],
+    geo: ['Geologist Deck', 'Start with the Gem Guide upgrade and 2 random Gem cards', { vo: ['gemguide'], cons: ['planet', 'planet'] }],
+    magic: ['Magician Deck', 'Start with the Coat Pocket upgrade and 2 random Trick cards', { vo: ['pocket'], cons: ['tarot', 'tarot'] }],
+    wide: ['Wide Deck', '+1 hand size, -1 hand every round', { hs: 1, h: -1 }],
+    crowd: ['Crowd Deck', '+1 Joker slot, -1 discard every round', { js: 1, d: -1 }],
+    royal: ['Royal Deck', 'No 2s, 3s, 4s or 5s: a 36-card deck', { cut: [2, 3, 4, 5] }],
+    stamped: ['Stamped Deck', '10 random cards start with a random stamp', { stamps: 10 }],
+    roller: ['High Roller Deck', 'Blinds pay double, but their targets are 30% higher', { rewX: 2, tX: 1.3 }],
+    jumble: ['Jumble Deck', 'Every card has a random rank (the suits stay even)', { jumble: 1 }],
+    fortune: ['Fortune Deck', 'Omen cards can appear in the shop. Start with a random Omen card', { omen: 1, cons: ['spectral'] }],
+    scholar: ['Scholar Deck', 'Your most played hand levels up whenever you beat a Boss Blind', { scholar: 1 }]
   };
   const DK = Object.keys(DECKS);
   const STAKES = [
-    ['Paper Stake', 'Base difficulty'],
-    ['Copper Stake', 'Small Blind gives no reward money'],
-    ['Jade Stake', 'Required score scales faster for each Ante'],
-    ['Obsidian Stake', 'Shop can have Eternal Jokers (cannot be sold or destroyed)'],
-    ['Sapphire Stake', '-1 discard every round'],
-    ['Amethyst Stake', 'Required score scales even faster for each Ante'],
-    ['Amber Stake', 'Shop can have Perishable Jokers (debuffed after 5 rounds)'],
-    ['Gilt Stake', 'Shop can have Rental Jokers (cost $3 per round)']
+    ['Penny Table', 'The base difficulty'],
+    ['Nickel Table', 'Every blind pays $1 less'],
+    ['Dime Table', 'Blind targets grow faster with each Ante'],
+    ['Quarter Table', '-1 discard every round'],
+    ['Dollar Table', 'Shop Jokers may be Glued: they cannot be sold or destroyed'],
+    ['Silver Table', 'Blind targets grow even faster with each Ante'],
+    ['Gold Table', 'Shop Jokers may be Rented: $1 to buy, then $2 at the end of every round'],
+    ['Diamond Table', 'Boss Blinds are 25% bigger']
   ];
-  const STCOL = ['#e8e8f0', '#e0453a', '#4cc66a', '#3a3a4a', '#3a78d8', '#9a4bd6', '#e98a2e', '#f2c744'];
+  const STCOL = ['#c9a26a', '#b8bcc4', '#9fb0c8', '#7fa0d8', '#6fb06a', '#dfe4ee', '#f2c744', '#7ad8f0'];
 
-  const cnt = (k, f) => R.cards.filter(f).length;
-  const nameR = r => RNAME[r - 2] + 's';
-  const mostPlayedCnt = () => Math.max.apply(null, HORD.map(k => R.hl[k].played));
-  const faceCt = c => c.sc.filter(k => isFace(k)).length;
+  J('grin', 'Grinning Jack', 1, 2, '+5 Mult', { main: () => ({ m: 5 }) }, 'plus');
+  J('redhot', 'Red Hot', 1, 5, 'Played Hearts give +4 Mult when scored', { card: c => suitIs(c.card, 1) && { m: 4 } }, 's1');
+  J('sparkler', 'Sparkler', 1, 5, 'Played Diamonds give +25 Chips when scored', { card: c => suitIs(c.card, 3) && { c: 25 } }, 's3');
+  J('nightowl', 'Night Owl', 1, 5, 'Played Spades give +4 Mult when scored', { card: c => suitIs(c.card, 0) && { m: 4 } }, 's0');
+  J('greenhorn', 'Greenhorn', 1, 5, 'Played Clubs give +25 Chips when scored', { card: c => suitIs(c.card, 2) && { c: 25 } }, 's2');
+  J('peas', 'Two Peas', 1, 4, '+20 Chips and +4 Mult if the hand contains a Pair', { main: c => c.has.pair && { c: 20, m: 4 } }, 'plus');
+  J('dates', 'Double Date', 1, 4, '+12 Mult if the hand contains Two Pair', { main: c => c.has.two && { m: 12 } }, 'plus');
+  J('trio', 'Trio Grande', 1, 5, '+60 Chips and +6 Mult if the hand contains Three of a Kind', { main: c => c.has.three && { c: 60, m: 6 } }, 'coin');
+  J('stepladder', 'Step Ladder', 1, 5, '+14 Mult if the hand contains a Straight', { main: c => c.has.straight && { m: 14 } }, 'plus');
+  J('hightide', 'High Tide', 1, 5, '+90 Chips if the hand contains a Flush', { main: c => c.has.flush && { c: 90 } }, 'coin');
+  J('openhouse', 'Open House', 1, 5, '+130 Chips if the hand contains a Full House', { main: c => c.has.fh && { c: 130 } }, 'coin');
+  J('lonewolf', 'Lone Wolf', 1, 4, '+25 Mult if the hand is a High Card', { main: c => c.h.id === 'high' && { m: 25 } }, 'skull');
+  J('tipjar', 'Tip Jar', 1, 6, 'Earn $3 at the end of every round', { rend: () => ({ $: 3 }) }, 'coin');
+  J('pig', 'Penny Pig', 1, 4, 'Its sell value goes up by $2 at the end of every round', { nb: 1, rend: (c, j) => { j.a += 2; return { msg: '+$2 value' }; } }, 'coin');
+  J('showboat', 'Showboat', 1, 4, 'Played face cards give +4 Mult when scored', { card: c => isFace(c.card) && { m: 4 } }, 'star');
+  J('brass', 'Brass Band', 1, 4, 'Played 2s, 3s and 4s give +18 Chips when scored', { card: c => rk(c.card, [2, 3, 4]) && { c: 18 } }, 'plus');
+  J('sevens', 'Lucky Sevens', 1, 5, 'Played 7s give +7 Mult when scored, with a 1 in 7 chance to earn $7', { card: c => rk(c.card, [7]) && (luck(1, 7) ? { m: 7, $: 7 } : { m: 7 }) }, 'dice');
+  J('acehole', 'Ace in the Hole', 1, 4, 'Played Aces give +30 Chips when scored', { card: c => rk(c.card, [14]) && { c: 30 } }, 'star');
+  J('minimal', 'Minimalist', 1, 5, '+18 Mult if the hand has 2 or fewer cards', { main: c => c.played.length <= 2 && { m: 18 } }, 'plus');
+  J('fulltable', 'Full Table', 1, 4, '+60 Chips if the hand has 5 cards', { main: c => c.played.length >= 5 && { c: 60 } }, 'coin');
+  J('change', 'Spare Change', 1, 5, 'Earn $1 at the end of the round for every unused discard', { rend: () => R.discards > 0 && { $: R.discards } }, 'coin');
+  J('allin', 'All In', 1, 5, '+20 Mult on the final hand of the round', { main: () => R.hands === 0 && { m: 20 } }, 'clock');
+  J('wilddice', 'Wild Dice', 1, 4, 'Rolls two dice and adds their total to Mult', { main: () => ({ m: 2 + rint(6) + rint(6) }) }, 'dice');
+  J('pokerface', 'Poker Face', 1, 5, 'Each face card held in hand gives +3 Mult', { held: c => isFace(c.card) && { m: 3 } }, 'skull');
+  J('credit', 'Credit Line', 1, 2, 'You can go up to $15 into debt', { p: { debt: 15 } }, 'coin');
+  J('bread', 'Fresh Bread', 1, 5, j => '+' + j.m + ' Mult, loses 2 Mult after every hand played', { init: () => ({ m: 16 }), nb: 1, main: (c, j) => j.m > 0 && { m: j.m }, after: (c, j) => { j.m -= 2; if (j.m <= 0) { killJoker(j, 'melt'); return { msg: 'Eaten!' }; } } }, 'plus');
+  J('ice', 'Ice Sculpture', 1, 5, j => '+' + j.c + ' Chips, melts by 15 Chips at the end of every round', { init: () => ({ c: 150 }), nb: 1, main: (c, j) => j.c > 0 && { c: j.c }, rend: (c, j) => { j.c -= 15; if (j.c <= 0) { killJoker(j, 'melt'); return { msg: 'Melted!' }; } return { msg: '-15' }; } }, 'gem');
+  J('counter', 'Card Counter', 1, 5, '+3 Chips for every card left in your draw pile', { main: () => R.draw.length > 0 && { c: 3 * R.draw.length } }, 'gem');
+  J('purse', 'Coin Purse', 1, 5, '+1 Mult for every $4 you have', { main: () => R.money >= 4 && { m: Math.floor(R.money / 4) } }, 'coin');
+  J('rainy', 'Rainy Day', 1, 4, '+50 Chips while you have $10 or less', { main: () => R.money <= 10 && { c: 50 } }, 'coin');
+  J('royalpay', 'Royal Pay', 1, 5, 'Played Kings earn $1 when scored', { card: c => rk(c.card, [13]) && { $: 1 } }, 'coin');
+  J('oddball', 'Oddball', 1, 4, 'Played Aces, 9s, 7s, 5s and 3s give +3 Mult when scored', { card: c => isOdd(c.card) && { m: 3 } }, 'plus');
+  J('evenhand', 'Evenhanded', 1, 4, 'Played 10s, 8s, 6s, 4s and 2s give +20 Chips when scored', { card: c => isEven(c.card) && { c: 20 } }, 'coin');
+  J('sapling', 'Sapling', 1, 5, j => 'Gains +2 Mult at the end of every round (now +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, main: (c, j) => j.m > 0 && { m: j.m }, rend: (c, j) => { j.m += 2; return { msg: '+2 Mult' }; } }, 'plus');
+  J('hotstreak', 'Hot Streak', 1, 5, j => 'Gains +2 Mult for each hand in a row that contains a Pair, resets otherwise (now +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, before: (c, j) => { if (c.has.pair) j.m += 2; else if (j.m) { j.m = 0; return { msg: 'Reset' }; } }, main: (c, j) => j.m > 0 && { m: j.m } }, 'plus');
+  J('shredder', 'Paper Shredder', 1, 5, j => 'Gains +2 Chips for every card you discard (now +' + j.c + ')', { init: () => ({ c: 0 }), nb: 1, disc: (c, j) => { j.c += 2 * c.cards.length; return { msg: '+' + 2 * c.cards.length + ' Chips' }; }, main: (c, j) => j.c > 0 && { c: j.c } }, 'coin');
+  J('tourist', 'Tourist', 1, 4, 'Earn $3 whenever you skip a blind', { skipb: () => ({ $: 3 }) }, 'coin');
+  J('stamps', 'Stamp Collector', 1, 5, 'Played cards with a stamp give +6 Mult when scored', { card: c => c.card.z && { m: 6 } }, 'star');
+  J('map', 'Treasure Map', 1, 4, 'Its sell value goes up by $5 every time you beat a Boss Blind', { nb: 1, rend: (c, j) => { if (c.boss) { j.a += 5; return { msg: '+$5 value' }; } } }, 'coin');
+  J('barker', 'Carnival Barker', 1, 4, '+1 hand size', { p: { hs: 1 } }, 'plus');
+  J('busy', 'Busy Hands', 1, 4, '+1 discard every round', { p: { d: 1 } }, 'plus');
+  J('scout', 'Scout', 1, 4, '+40 Chips and +4 Mult on the first hand of the round', { main: () => R.hpr === 1 && { c: 40, m: 4 } }, 'clock');
+  J('courtjester', 'Court Jester', 1, 5, '+3 Mult for every Joker you own', { main: () => ({ m: 3 * R.jokers.length }) }, 'plus');
+  J('underdog', 'Underdog', 1, 4, '+15 Mult while you have $5 or less', { main: () => R.money <= 5 && { m: 15 } }, 'skull');
+  J('raffle', 'Raffle Ticket', 1, 4, '1 in 4 chance to earn $3 after every hand played', { after: () => luck(1, 4) && { $: 3 } }, 'dice');
+  J('everyone', 'Everybody In', 1, 3, 'Every played card scores', { f: 'splash' }, 'star');
 
-  J('imp', 'Cheerful Imp', 1, 2, '+4 Mult', { main: () => ({ m: 4 }) }, 'plus');
-  J('sunbather', 'Sunbather', 1, 5, 'Played cards with Diamond suit give +3 Mult when scored', { card: c => suitIs(c.card, 3) && { m: 3 } }, 's3');
-  J('valentine', 'Valentine', 1, 5, 'Played cards with Heart suit give +3 Mult when scored', { card: c => suitIs(c.card, 1) && { m: 3 } }, 's1');
-  J('gravedigger', 'Gravedigger', 1, 5, 'Played cards with Spade suit give +3 Mult when scored', { card: c => suitIs(c.card, 0) && { m: 3 } }, 's0');
-  J('cloverkid', 'Clover Kid', 1, 5, 'Played cards with Club suit give +3 Mult when scored', { card: c => suitIs(c.card, 2) && { m: 3 } }, 's2');
-  J('pairwise', 'Pairwise', 1, 4, '+8 Mult if played hand contains a Pair', { main: c => c.has.pair && { m: 8 } }, 'plus');
-  J('twotimer', 'Two-Timer', 1, 4, '+10 Mult if played hand contains Two Pair', { main: c => c.has.two && { m: 10 } }, 'plus');
-  J('triplethreat', 'Triple Threat', 1, 4, '+12 Mult if played hand contains a Three of a Kind', { main: c => c.has.three && { m: 12 } }, 'plus');
-  J('longhaul', 'Long Haul', 1, 4, '+12 Mult if played hand contains a Straight', { main: c => c.has.straight && { m: 12 } }, 'plus');
-  J('tidepool', 'Tidepool', 1, 4, '+10 Mult if played hand contains a Flush', { main: c => c.has.flush && { m: 10 } }, 'plus');
-  J('pennypair', 'Penny Pair', 1, 3, '+50 Chips if played hand contains a Pair', { main: c => c.has.pair && { c: 50 } }, 'coin');
-  J('doubledime', 'Double Dime', 1, 4, '+80 Chips if played hand contains Two Pair', { main: c => c.has.two && { c: 80 } }, 'coin');
-  J('triplecrown', 'Triple Crown', 1, 5, '+100 Chips if played hand contains a Three of a Kind', { main: c => c.has.three && { c: 100 } }, 'coin');
-  J('highway', 'Highway Toll', 1, 4, '+100 Chips if played hand contains a Straight', { main: c => c.has.straight && { c: 100 } }, 'coin');
-  J('splashzone', 'Splash Zone', 1, 4, '+80 Chips if played hand contains a Flush', { main: c => c.has.flush && { c: 80 } }, 'coin');
-  J('goose', 'Gilded Goose', 1, 6, 'Earn $4 at end of round', { rend: () => ({ $: 4 }) }, 'coin');
-  J('nestegg', 'Nest Egg', 1, 4, 'Sell value of this card increases by $3 at end of round', { rend: (c, j) => { j.a += 3; return { msg: '+$3 value' }; } }, 'gem');
-  J('gigglebox', 'Giggle Box', 1, 4, 'Played face cards give +5 Mult when scored', { card: c => isFace(c.card) && { m: 5 } }, 'star');
-  J('gargoyle', 'Gargoyle', 1, 4, 'Played face cards give +30 Chips when scored', { card: c => isFace(c.card) && { c: 30 } }, 'skull');
-  J('radio', 'Radio Ten-Four', 1, 4, 'Played 10s or 4s give +10 Chips and +4 Mult when scored', { card: c => (c.card.r === 10 || c.card.r === 4) && c.card.e !== 'stone' && { c: 10, m: 4 } }, 'plus');
-  J('spiral', 'Spiral Shell', 1, 4, 'Played Aces, 2s, 3s, 5s and 8s give +8 Mult when scored', { card: c => [14, 2, 3, 5, 8].indexOf(c.card.r) >= 0 && c.card.e !== 'stone' && { m: 8 } }, 'star');
-  J('leftovers', 'Leftovers', 1, 5, '+30 Chips for each remaining discard', { main: () => R.discards > 0 && { c: 30 * R.discards } }, 'coin');
-  J('laststand', 'Last Stand', 1, 5, '+15 Mult when 0 discards remain', { main: () => R.discards === 0 && { m: 15 } }, 'plus');
-  J('halfmeasure', 'Half-Measure', 1, 5, '+20 Mult if played hand contains 3 or fewer cards', { main: c => c.played.length <= 3 && { m: 20 } }, 'plus');
-  J('glitch', 'Glitch', 1, 4, '+0 to +23 Mult at random', { main: () => ({ m: rint(24) }) }, 'dice');
-  J('lowball', 'Lowball', 1, 5, 'Adds double the rank of the lowest ranked card held in hand to Mult', { held: c => c.card === lowest(c.held) && { m: 2 * chipVal(c.card) } }, 'ex');
-  J('overdraft', 'Overdraft', 1, 1, 'Go up to -$20 in debt', { p: { debt: 20 } }, 'coin');
-  J('patience', 'Patience', 1, 4, 'Earn $2 per remaining discard at end of round if no discards were used', { rend: () => R.dUsed === 0 && R.discards > 0 && { $: 2 * R.discards } }, 'clock');
-  J('bribe', 'Bribe Envelope', 1, 4, 'Played face cards have a 1 in 2 chance to give $2 when scored', { card: c => isFace(c.card) && luck(1, 2) && { $: 2 } }, 'coin');
-  J('banana', 'Banana Split', 1, 6, '+15 Mult. 1 in 6 chance this card is destroyed at end of round', { main: () => ({ m: 15 }), rend: (c, j) => { if (luck(1, 6)) { killJoker(j, 'melt'); R.ext.banana = 1; return { msg: 'Extinct!' }; } } }, 'star');
-  J('melting', 'Melting Pop', 1, 5, '+100 Chips. -5 Chips for every hand played', { init: () => ({ c: 100 }), nb: 1, d: j => '+' + j.c + ' Chips. -5 Chips for every hand played', main: (c, j) => ({ c: j.c }), after: (c, j) => { if (c.copy) return; j.c -= 5; if (j.c <= 0) { killJoker(j, 'melt'); return { msg: 'Melted!' }; } } }, 'clock');
-  J('clouds', 'Head in Clouds', 1, 5, 'Earn $1 for each 9 in your full deck at end of round', { rend: () => { const n = cnt('', k => k.r === 9 && k.e !== 'stone'); return n > 0 && { $: n }; } }, 'star');
-  J('valet', 'Valet', 1, 6, 'Face cards held in hand have a 1 in 2 chance to give $1', { held: c => isFace(c.card) && luck(1, 2) && { $: 1 } }, 'coin');
-  J('returnslip', 'Return Slip', 1, 6, j => 'Earn $5 for each discarded ' + nameR(j.rk) + ' (rank changes every round)', { init: () => ({ rk: 2 + rint(13) }), disc: (c, j) => { const n = c.cards.filter(k => k.r === j.rk && k.e !== 'stone').length; return n > 0 && { $: 5 * n }; }, rend: (c, j) => { const k = R.cards.filter(x => x.e !== 'stone'); if (k.length) j.rk = pick(k).r; } }, 'ex');
-  J('chorechart', 'Chore Chart', 1, 4, j => 'Earn $4 if played hand is a ' + HAND[j.hid].n + ' (changes every round)', { init: () => ({ hid: pick(['pair', 'two', 'three', 'straight', 'flush', 'fh', 'four']) }), main: (c, j) => c.h.id === j.hid && { $: 4 }, rend: (c, j) => { j.hid = pick(HORD.filter(k => knownHand(k) && k !== j.hid)); } }, 'clock');
-  J('daydream', 'Daydream', 1, 4, '1 in 2 chance to create a Tarot card when any Booster Pack is opened', { pack: () => { if (luck(1, 2) && cfree() > 0) { addCons('tarot', rollCons('tarot').k); return { msg: 'Tarot!' }; } } }, 'star');
-  J('palmreader', 'Palm Reader', 1, 6, j => 'Gains +1 Mult when a Tarot card is used (Currently +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, main: (c, j) => j.m > 0 && { m: j.m }, use: (c, j) => { if (c.cons.type === 'tarot') j.m += 1; } }, 'star');
-  J('performer', 'Street Performer', 1, 4, '+1 hand size', { p: { hs: 1 } }, 'plus');
-  J('tipsy', 'Tipsy', 1, 4, '+1 discard each round', { p: { d: 1 } }, 'plus');
-  J('peapod', 'Pea Pod', 1, 5, j => 'Gains +1 Mult every hand played, -1 Mult for every discard (Currently +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, before: (c, j) => { if (!c.copy) j.m += 1; }, disc: (c, j) => { j.m = Math.max(0, j.m - 1); }, main: (c, j) => j.m > 0 && { m: j.m } }, 'plus');
-  J('echochamber', 'Echo Chamber', 1, 5, '+Mult equal to the number of times the played poker hand has been played this run', { main: c => ({ m: R.hl[c.h.id].played }) }, 'plus');
-  J('sprinter', 'Sprinter', 1, 5, j => 'Gains +15 Chips if played hand contains a Straight (Currently +' + j.c + ')', { init: () => ({ c: 0 }), nb: 1, before: (c, j) => { if (c.has.straight) j.c += 15; }, main: (c, j) => j.c > 0 && { c: j.c } }, 'ex');
-  J('foursquare', 'Four Square', 1, 4, j => 'Gains +4 Chips if played hand contains exactly 4 cards (Currently +' + j.c + ')', { init: () => ({ c: 0 }), nb: 1, before: (c, j) => { if (c.played.length === 4) j.c += 4; }, main: (c, j) => j.c > 0 && { c: j.c } }, 'dice');
-  J('commuter', 'Commuter', 1, 6, j => 'Gains +1 Mult per consecutive hand played without a scoring face card (Currently +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, before: (c, j) => { if (c.sc.some(k => isFace(k))) j.m = 0; else j.m += 1; }, main: (c, j) => j.m > 0 && { m: j.m } }, 'clock');
-  J('azurepile', 'Azure Pile', 1, 5, '+2 Chips for each remaining card in deck', { main: () => R.draw.length > 0 && { c: 2 * R.draw.length } }, 'gem');
-  J('blankstare', 'Blank Stare', 1, 4, 'Earn $5 if 3 or more face cards are discarded at once', { disc: c => c.cards.filter(k => isFace(k)).length >= 3 && { $: 5 } }, 'skull');
-  J('kettle', 'Kettle Corn', 1, 5, j => '+' + j.m + ' Mult. -4 Mult at end of every round', { init: () => ({ m: 20 }), main: (c, j) => ({ m: j.m }), rend: (c, j) => { j.m -= 4; if (j.m <= 0) { killJoker(j, 'melt'); return { msg: 'Eaten!' }; } } }, 'plus');
-  J('widesplash', 'Wide Splash', 1, 3, 'Every played card counts in scoring', { f: 'splash' }, 'star');
-  J('trailblazer', 'Trailblazer', 2, 5, 'Every played card permanently gains +5 Chips when scored', { card: c => { c.card.x = (c.card.x || 0) + 5; return { msg: 'Upgrade!' }; } }, 'plus');
-  J('tinytitan', 'Tiny Titan', 3, 8, j => 'Gains +8 Chips when each played 2 is scored (Currently +' + j.c + ')', { init: () => ({ c: 0 }), nb: 1, card: (c, j) => { if (c.card.r === 2 && c.card.e !== 'stone') { j.c += 8; return { msg: 'Upgrade!' }; } }, main: (c, j) => j.c > 0 && { c: j.c } }, 'plus');
-  J('nimble', 'Nimble Hands', 2, 7, 'Flushes and Straights can be made with 4 cards', { f: 'four' }, 'star');
-  J('backalley', 'Back Alley', 2, 7, 'Straights can be made with gaps of 1 rank', { f: 'short' }, 'ex');
-  J('blurred', 'Blurred Lines', 2, 7, 'Hearts count as Diamonds and Spades count as Clubs', { f: 'smear' }, 's1');
-  J('seeingfaces', 'Seeing Faces', 2, 5, 'All cards are considered face cards', { f: 'pareid' }, 'skull');
-  J('rerun', 'Rerun', 2, 6, 'Retrigger each played 2, 3, 4 or 5', { rep: c => c.zone === 'play' && [2, 3, 4, 5].indexOf(c.card.r) >= 0 && c.card.e !== 'stone' ? 1 : 0 }, 'clock');
-  J('maskduo', 'Mask Duo', 2, 6, 'Retrigger each played face card', { rep: c => c.zone === 'play' && isFace(c.card) ? 1 : 0 }, 'skull');
-  J('dangling', 'Dangling Thread', 2, 6, 'Retrigger the first played card 2 additional times', { rep: c => c.zone === 'play' && c.i === 0 ? 2 : 0 }, 'clock');
-  J('lastlight', 'Last Light', 2, 6, 'Retrigger all played cards on the final hand of the round', { rep: c => c.zone === 'play' && R.hands === 0 ? 1 : 0 }, 'clock');
-  J('fizzy', 'Fizzy', 2, 6, j => 'Retrigger all played cards (' + j.n + ' hands left)', { init: () => ({ n: 10 }), nb: 1, rep: c => c.zone === 'play' ? 1 : 0, after: (c, j) => { if (c.copy) return; j.n--; if (j.n <= 0) { killJoker(j, 'melt'); return { msg: 'Flat!' }; } } }, 'dice');
-  J('pantomime', 'Pantomime', 2, 6, 'Retrigger all card abilities held in hand', { rep: c => c.zone === 'held' ? 1 : 0 }, 'ex');
-  J('ironclad', 'Ironclad', 2, 7, j => 'Gives X0.2 Mult for each Steel Card in your full deck (Currently X' + (1 + .2 * cnt('', k => k.e === 'steel')).toFixed(1) + ')', { main: () => { const n = cnt('', k => k.e === 'steel'); return n > 0 && { x: 1 + .2 * n }; } }, 'gem');
-  J('pebble', 'Pebble', 2, 6, j => 'Gives +25 Chips for each Stone Card in your full deck (Currently +' + 25 * cnt('', k => k.e === 'stone') + ')', { main: () => { const n = cnt('', k => k.e === 'stone'); return n > 0 && { c: 25 * n }; } }, 'gem');
-  J('fourleafcat', 'Four-Leaf Cat', 2, 6, j => 'Gains X0.25 Mult every time a Lucky Card triggers (Currently X' + j.x.toFixed(2) + ')', { init: () => ({ x: 1 }), nb: 1, lucky: (c, j) => { j.x += .25; }, main: (c, j) => j.x > 1 && { x: j.x } }, 'star');
-  J('shatterpoint', 'Shatterpoint', 2, 6, j => 'Gains X0.75 Mult for every Glass Card destroyed (Currently X' + j.x.toFixed(2) + ')', { init: () => ({ x: 1 }), nb: 1, destroyed: (c, j) => { const n = c.cards.filter(k => k.e === 'glass').length; if (n) { j.x += .75 * n; return { msg: 'Upgrade!' }; } }, main: (c, j) => j.x > 1 && { x: j.x } }, 'gem');
-  J('nightfeeder', 'Night Feeder', 2, 7, j => 'Gains X0.1 Mult per scoring card with an Enhancement, removing it (Currently X' + j.x.toFixed(1) + ')', { init: () => ({ x: 1 }), nb: 1, before: (c, j) => { c.sc.forEach(k => { if (k.e && !deb(k)) { k.e = null; j.x += .1; jq(k.id); } }); }, main: (c, j) => j.x > 1 && { x: j.x } }, 'skull');
-  J('mirrorimage', 'Mirror Image', 2, 7, j => 'Gains X0.25 Mult for each playing card added to your deck (Currently X' + j.x.toFixed(2) + ')', { init: () => ({ x: 1 }), nb: 1, add: (c, j) => { j.x += .25; }, main: (c, j) => j.x > 1 && { x: j.x } }, 'gem');
-  J('starmap', 'Starmap', 2, 6, j => 'Gains X0.1 Mult every time a Planet card is used (Currently X' + j.x.toFixed(1) + ')', { init: () => ({ x: 1 }), nb: 1, use: (c, j) => { if (c.cons.type === 'planet') j.x += .1; }, main: (c, j) => j.x > 1 && { x: j.x } }, 'star');
-  J('bonfire', 'Bonfire', 2, 7, j => 'Gains X0.25 Mult for each card sold, resets when Boss Blind is defeated (Currently X' + j.x.toFixed(2) + ')', { init: () => ({ x: 1 }), nb: 1, sold: (c, j) => { if (c.item !== j) j.x += .25; }, rend: (c, j) => { if (c.boss) j.x = 1; }, main: (c, j) => j.x > 1 && { x: j.x } }, 'star');
-  J('monolith', 'Monolith', 3, 8, j => 'Gains X0.2 Mult per consecutive hand played that is not your most played hand (Currently X' + j.x.toFixed(1) + ')', { init: () => ({ x: 1 }), nb: 1, before: (c, j) => { if (R.hl[c.h.id].played >= mostPlayedCnt()) j.x = 1; else j.x += .2; }, main: (c, j) => j.x > 1 && { x: j.x } }, 'skull');
-  J('duke', 'Duke', 3, 8, 'Each King held in hand gives X1.5 Mult', { held: c => c.card.r === 13 && c.card.e !== 'stone' && { x: 1.5 } }, 'star');
-  J('chalkboard', 'Chalkboard', 2, 6, 'X3 Mult if all cards held in hand are Spades or Clubs', { main: c => c.held.every(k => suitIs(k, 0) || suitIs(k, 2)) && { x: 3 } }, 's0');
-  J('handshark', 'Hand Shark', 2, 6, 'X3 Mult if poker hand has already been played this round', { main: c => R.hl[c.h.id].pr > 1 && { x: 3 } }, 'ex');
-  J('pairbond', 'Pair Bond', 3, 8, 'X2 Mult if played hand contains a Pair', { main: c => c.has.pair && { x: 2 } }, 'ex');
-  J('triad', 'Triad', 3, 8, 'X3 Mult if played hand contains a Three of a Kind', { main: c => c.has.three && { x: 3 } }, 'ex');
-  J('quartet', 'Quartet', 3, 8, 'X4 Mult if played hand contains a Four of a Kind', { main: c => c.has.four && { x: 4 } }, 'ex');
-  J('staircase', 'Staircase', 3, 8, 'X3 Mult if played hand contains a Straight', { main: c => c.has.straight && { x: 3 } }, 'ex');
-  J('palette', 'Palette', 3, 8, 'X2 Mult if played hand contains a Flush', { main: c => c.has.flush && { x: 2 } }, 'ex');
-  J('lastgasp', 'Last Gasp', 2, 6, 'X3 Mult on the final hand of the round', { main: () => R.hands === 0 && { x: 3 } }, 'clock');
-  J('punch', 'Punch Card', 2, 5, j => 'X4 Mult every 6th hand played (' + (j.n % 6) + '/6)', { init: () => ({ n: 0 }), nb: 1, before: (c, j) => { j.n++; }, main: (c, j) => j.n % 6 === 0 && { x: 4 } }, 'clock');
-  J('noodle', 'Noodle Bowl', 1, 6, j => 'X' + j.x.toFixed(2) + ' Mult. Loses X0.01 Mult per card discarded', { init: () => ({ x: 2 }), nb: 1, disc: (c, j) => { j.x -= .01 * c.cards.length; if (j.x <= 1) { killJoker(j, 'melt'); return { msg: 'Eaten!' }; } }, main: (c, j) => ({ x: j.x }) }, 'star');
-  J('mirrorsuit', 'Mirror Suit', 2, 6, 'X2 Mult if played hand has a scoring Club and a scoring card of any other suit', { main: c => { const s = c.sc.filter(k => !deb(k) && k.e !== 'stone'); return s.some(k => suitIs(k, 2)) && s.some(k => k.s !== 2) && { x: 2 }; } }, 's2');
-  J('garden', 'Garden', 2, 6, 'X3 Mult if scoring hand contains a Diamond, Club, Heart and Spade', { main: c => { const h = [0, 0, 0, 0]; let w = 0; c.sc.forEach(k => { if (deb(k) || k.e === 'stone') return; if (k.e === 'wild') w++; else h[k.s] = 1; }); return h.filter(v => !v).length <= w && { x: 3 }; } }, 'star');
-  J('selfie', 'Selfie', 2, 5, 'First played face card gives X2 Mult when scored', { card: c => c.card === c.firstFace && { x: 2 } }, 'star');
-  J('rubystone', 'Rubystone', 2, 7, 'Played Heart cards have a 1 in 2 chance to give X1.5 Mult when scored', { card: c => suitIs(c.card, 1) && luck(1, 2) && { x: 1.5 } }, 's1');
-  J('flintpoint', 'Flint Point', 2, 7, 'Played Spade cards give +50 Chips when scored', { card: c => suitIs(c.card, 0) && { c: 50 } }, 's0');
-  J('blackpearl', 'Black Pearl', 2, 7, 'Played Club cards give +7 Mult when scored', { card: c => suitIs(c.card, 2) && { m: 7 } }, 's2');
-  J('rawdiamond', 'Raw Diamond', 2, 7, 'Played Diamond cards earn $1 when scored', { card: c => suitIs(c.card, 3) && { $: 1 } }, 's3');
-  J('wanderer', 'Wandering Suit', 3, 8, j => 'Each played card with ' + SN[j.s] + ' suit gives X1.5 Mult when scored (suit changes every round)', { init: () => ({ s: rint(4) }), card: (c, j) => suitIs(c.card, j.s) && { x: 1.5 }, rend: (c, j) => { j.s = (j.s + 1 + rint(3)) % 4; } }, 's0');
-  J('collector', 'Collector\'s Pick', 2, 6, j => 'Each played ' + RNAME[j.rk - 2] + ' of ' + SN[j.st] + ' gives X2 Mult when scored (card changes every round)', { init: () => ({ rk: 2 + rint(13), st: rint(4) }), card: (c, j) => c.card.r === j.rk && suitIs(c.card, j.st) && { x: 2 }, rend: (c, j) => { const k = R.cards.filter(x => x.e !== 'stone'); if (k.length) { const p = pick(k); j.rk = p.r; j.st = p.s; } } }, 'star');
-  J('kingsfool', "King's Fool", 4, 20, 'Played Kings and Queens each give X2 Mult when scored', { card: c => (c.card.r === 12 || c.card.r === 13) && c.card.e !== 'stone' && { x: 2 } }, 'star');
-  J('goldtouch', 'Gold Touch', 2, 7, 'Played face cards become Gold cards when scored', { before: c => { let n = 0; c.sc.forEach(k => { if (isFace(k)) { k.e = 'gold'; jq(k.id); n++; } }); return n > 0 && { msg: 'Gilded' }; } }, 'coin');
-  J('marblebust', 'Marble Bust', 2, 6, 'Adds one Stone card to your deck when Blind is selected', { bstart: () => { addToDeck(newCard(2 + rint(13), rint(4), { e: 'stone' })); return { msg: 'Stone!' }; } }, 'gem');
-  J('waxseal', 'Wax Seal', 2, 6, 'Adds a random seal card to your hand when a round begins', { bstart: () => { const k = randCard(); k.z = pick(['gold', 'red', 'blue', 'purple']); addToDeck(k, 'hand'); } }, 'gem');
-  J('genesplice', 'Gene Splice', 3, 8, 'If the first hand of the round has only 1 card, add a permanent copy to your deck and hand', { before: c => { if (R.hpr === 1 && c.played.length === 1) { addToDeck(Object.assign({}, c.played[0], { id: nid() }), 'hand'); return { msg: 'Copied!' }; } } }, 'skull');
-  J('rocketfuel', 'Rocket Fuel', 2, 5, '1 in 4 chance to upgrade the level of the played poker hand', { before: c => { if (luck(1, 4)) { levelHand(c.h.id, 1); return { msg: 'Level Up!' }; } } }, 'star');
-  J('scorched', 'Scorched', 3, 8, 'Upgrade the level of the first discarded poker hand each round', { disc: c => { if (c.first) { levelHand(c.h.id, 1); R.q.push({ t: 'lvl', hid: c.h.id }); return { msg: 'Level Up!' }; } } }, 'star');
-  J('sixtheye', 'Sixth Eye', 2, 6, 'If the first hand of round is a single 6, destroy it and create a Specter card', { before: c => { if (R.hpr === 1 && c.played.length === 1 && c.played[0].r === 6 && c.played[0].e !== 'stone') { destroyCards([c.played[0]]); addCons('spectral', rollCons('spectral').k); return { msg: 'Specter!' }; } } }, 'skull');
-  J('poolshark', 'Pool Shark', 1, 3, 'Played 8s have a 1 in 4 chance to create a Tarot card when scored (must have room)', { card: c => { if (c.card.r === 8 && c.card.e !== 'stone' && luck(1, 4) && cfree() > 0) { addCons('tarot', rollCons('tarot').k); return { msg: 'Tarot!' }; } } }, 'dice');
-  J('overlap', 'Overlap', 1, 4, 'Create a Tarot card if played hand contains an Ace and a Straight', { main: c => { if (c.has.straight && c.sc.some(k => k.r === 14) && cfree() > 0) { addCons('tarot', rollCons('tarot').k); return { msg: 'Tarot!' }; } } }, 'star');
-  J('hobo', 'Hobo', 2, 6, 'Create a Tarot card if played hand is played with $4 or less', { main: () => { if (R.money <= 4 && cfree() > 0) { addCons('tarot', rollCons('tarot').k); return { msg: 'Tarot!' }; } } }, 'coin');
-  J('cardreader', 'Card Reader', 2, 6, 'Creates a Tarot card when Blind is selected (must have room)', { bstart: () => { if (cfree() > 0) { addCons('tarot', rollCons('tarot').k); return { msg: 'Tarot!' }; } } }, 'star');
-  J('planetarium', 'Planetarium Guide', 2, 8, 'Planet cards in the shop are free', { f: 'freeplanet' }, 'star');
-  J('noisemaker', 'Noise Maker', 1, 6, 'Create 2 Common Jokers when Blind is selected (must have room)', { bstart: () => { let n = 0; for (let i = 0; i < 2; i++) if (jfree() > 0) { addJoker(rollJoker(1).k); n++; } return n > 0 && { msg: 'Jokers!' }; } }, 'dice');
-  J('catburglar', 'Cat Burglar', 2, 6, 'When Blind is selected, gain +3 Hands and lose all discards', { bstart: () => { R.hands += 3; R.discards = 0; return { msg: '+3 Hands' }; } }, 'skull');
-  J('mayhem', 'Merry Mayhem', 2, 7, '+3 discards each round, -1 hand size', { p: { d: 3, hs: -1 } }, 'plus');
-  J('minstrel', 'Minstrel', 2, 6, '+2 hand size, -1 hand each round', { p: { hs: 2, h: -1 } }, 'plus');
-  J('slowroller', 'Slow Roller', 2, 6, j => '+' + j.n + ' hand size, reduces by 1 every round', { init: () => ({ n: 5 }), p: j => ({ hs: j.n }), rend: (c, j) => { j.n--; if (j.n <= 0) { killJoker(j, 'melt'); return { msg: 'Gone!' }; } } }, 'clock');
-  J('strongman', 'Strongman', 2, 7, '+250 Chips, -2 hand size', { main: () => ({ c: 250 }), p: { hs: -2 } }, 'plus');
-  J('closecall', 'Close Call', 2, 5, 'Prevents Death if chips scored are at least 25% of required chips. Self destructs', { f: 'bones' }, 'skull');
-  J('bosswhisper', 'Boss Whisperer', 4, 20, 'Disables the effect of every Boss Blind', { f: 'nobosseff' }, 'skull');
-  J('wrestler', 'Masked Wrestler', 2, 5, 'Sell this card to disable the current Boss Blind', { sell: () => { if (R.cur && R.cur.boss) R.bossOff = true; } }, 'skull');
-  J('photocopy', 'Photocopy', 3, 10, 'Copies the ability of the Joker to the right', { copy: 'right' }, 'star');
-  J('echo', 'Echo', 3, 10, 'Copies the ability of the leftmost Joker', { copy: 'left' }, 'star');
-  J('ghostwriter', 'Ghost Writer', 3, 8, j => 'After 2 rounds, sell this card to duplicate a random Joker (' + Math.min(2, j.n) + '/2)', { init: () => ({ n: 0 }), rend: (c, j) => { j.n++; return j.n === 2 && { msg: 'Ready!' }; }, sell: (c, j) => { if (j.n >= 2) { const p = R.jokers.filter(k => k !== j); if (p.length) clone(pick(p)); } } }, 'skull');
-  J('fizzpop', 'Fizz Pop', 2, 6, 'Sell this card to create a free Double Tag', { sell: () => { giveTag('double'); } }, 'dice');
-  J('orbiter', 'Orbiter', 2, 6, 'Earn $1 per unique Planet card used this run at end of round', { rend: () => { const n = Object.keys(R.planetsUsed).length; return n > 0 && { $: n }; } }, 'star');
-  J('gildedstub', 'Gilded Stub', 2, 5, 'Played Gold cards earn $4 when scored', { card: c => c.card.e === 'gold' && { $: 4 } }, 'coin');
-  J('rocketfund', 'Rocket Fund', 2, 6, j => 'Earn $' + j.n + ' at end of round. Payout increases by $2 when a Boss Blind is defeated', { init: () => ({ n: 1 }), rend: (c, j) => { const v = j.n; if (c.boss) j.n += 2; return { $: v }; } }, 'star');
-  J('retrofit', 'Retrofit', 2, 6, 'X0.25 Mult for each Blind skipped this run', { main: () => R.skips > 0 && { x: 1 + .25 * R.skips } }, 'clock');
-  J('memento', 'Memento', 4, 20, j => 'Gains X1 Mult every 23 cards discarded (Currently X' + j.x + ')', { init: () => ({ x: 1, n: 0 }), nb: 1, disc: (c, j) => { j.n += c.cards.length; while (j.n >= 23) { j.n -= 23; j.x += 1; } }, main: (c, j) => j.x > 1 && { x: j.x } }, 'skull');
-  J('hitchhiker', 'Hitchhiker', 2, 6, j => 'Gains X0.5 Mult for every Jack discarded this round (Currently X' + j.x.toFixed(1) + ')', { init: () => ({ x: 1 }), nb: 1, disc: (c, j) => { const n = c.cards.filter(k => k.r === 11 && k.e !== 'stone').length; j.x += .5 * n; }, rend: (c, j) => { j.x = 1; }, main: (c, j) => j.x > 1 && { x: j.x } }, 'ex');
-  J('canio', 'Canio', 4, 20, j => 'Gains X1 Mult when a face card is destroyed (Currently X' + j.x + ')', { init: () => ({ x: 1 }), nb: 1, destroyed: (c, j) => { const n = c.cards.filter(k => isFace(k)).length; if (n) { j.x += n; return { msg: 'Upgrade!' }; } }, main: (c, j) => j.x > 1 && { x: j.x } }, 'skull');
-  J('smooth', 'Smooth Operator', 1, 4, 'X3 Mult. 1 in 1000 chance this card is destroyed at end of round', { need: () => R && R.ext.banana, main: () => ({ x: 3 }), rend: (c, j) => { if (luck(1, 1000)) { killJoker(j, 'melt'); return { msg: 'Extinct!' }; } } }, 'star');
-  J('hoarder', 'Hoarder', 4, 20, 'Creates a Negative copy of a random consumable card when leaving the shop', { shopout: () => { if (R.cons.length) { const t = pick(R.cons), n = newCons(t.type, t.k, 'neg'); R.cons.push(n); R.q.push({ id: n.id, t: 'spawn' }); return { msg: 'Copied!' }; } } }, 'gem');
-  J('encore', 'Encore', 2, 5, 'Joker, Tarot, Planet and Specter cards may appear multiple times', { f: 'showman' }, 'star');
-  J('luckystreak', 'Lucky Streak', 2, 4, 'All listed probabilities are doubled', { f: 'luck2' }, 'dice');
-  J('weartear', 'Wear and Tear', 2, 6, 'Gives +4 Mult for each card below the starting deck size in your full deck', { main: () => { const n = Math.max(0, (R.dk === 'abandoned' ? 40 : 52) - R.cards.length); return n > 0 && { m: 4 * n }; } }, 'skull');
-  J('piggy', 'Piggy Bank', 1, 6, 'Gives +2 Chips for each $1 you have', { main: () => R.money > 0 && { c: 2 * R.money } }, 'coin');
-  J('pullup', 'Pull Yourself Up', 2, 7, 'Gives +2 Mult for every $5 you have', { main: () => R.money >= 5 && { m: 2 * Math.floor(R.money / 5) } }, 'coin');
-  J('lunar', 'Lunar Loan', 1, 5, 'Earn an extra $1 of interest for every $5 you have at end of round', { p: { int: 1 } }, 'coin');
-  J('flashcam', 'Camera Flash', 1, 5, j => 'Gains +2 Mult per reroll in the shop (Currently +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, reroll: (c, j) => { j.m += 2; return { msg: '+2 Mult' }; }, main: (c, j) => j.m > 0 && { m: j.m } }, 'star');
-  J('skipstone', 'Skip Stone', 1, 5, j => 'Gains +3 Mult when any Booster Pack is skipped (Currently +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, skippk: (c, j) => { j.m += 3; return { msg: '+3 Mult' }; }, main: (c, j) => j.m > 0 && { m: j.m } }, 'ex');
-  J('fever', 'Fever Dream', 3, 8, j => 'Gains X0.5 Mult when a Small or Big Blind is selected, destroying a random Joker (Currently X' + j.x.toFixed(1) + ')', { init: () => ({ x: 1 }), nb: 1, bsel: (c, j) => { j.x += .5; const v = R.jokers.filter(k => k !== j && !k.et); if (v.length) killJoker(pick(v), 'destroy'); return { msg: '+X0.5' }; }, main: (c, j) => j.x > 1 && { x: j.x } }, 'skull');
-  J('wrapped', 'Wrapped Present', 1, 6, 'Adds $1 of sell value to every Joker and consumable at end of round', { rend: () => { R.jokers.concat(R.cons).forEach(k => { k.a += 1; }); return { msg: '+$1 value' }; } }, 'gem');
-  J('bullfighter', 'Bullfighter', 1, 4, 'Earn $8 if the played hand triggers the Boss Blind ability', { main: () => R.bt && { $: 8 } }, 'coin');
-  J('mediumrare', 'Medium Rare', 2, 6, 'Create a Specter card if played hand is a Straight Flush (must have room)', { main: c => { if (c.h.id === 'sflush' && cfree() > 0) { addCons('spectral', rollCons('spectral').k); return { msg: 'Specter!' }; } } }, 'skull');
-  J('swapmeet', 'Swap Meet', 2, 6, 'If first discard of round has only 1 card, destroy it and earn $3', { disc: c => { if (c.first && c.cards.length === 1) { destroyCards([c.cards[0]]); return { $: 3 }; } } }, 'coin');
-  J('stencil', 'Empty Seats', 2, 8, 'X1 Mult for each empty Joker slot. Empty Seats included', { main: () => { const x = jfree() + R.jokers.filter(k => k.k === 'stencil').length; return x > 1 && { x }; } }, 'ex');
-  J('collage', 'Collage', 1, 4, 'Gives +3 Mult for each Joker card', { main: () => ({ m: 3 * R.jokers.length }) }, 'plus');
-  J('pirate', "Pirate's Share", 2, 4, 'Adds the sell value of all other owned Jokers to Mult', { main: (c, j) => { const v = R.jokers.reduce((a, k) => a + (k === j ? 0 : sellVal(k)), 0); return v > 0 && { m: v }; } }, 'coin');
-  J('patchwork', 'Patchwork', 1, 5, j => 'Gains +2 Mult if played hand contains Two Pair (Currently +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, before: (c, j) => { if (c.has.two) j.m += 2; }, main: (c, j) => j.m > 0 && { m: j.m } }, 'plus');
-  J('bloodletter', 'Bloodletter', 2, 6, j => 'When Blind is selected, destroy the Joker to the right and permanently add double its sell value to this Mult (Currently +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, bstart: (c, j) => { const t = R.jokers[R.jokers.indexOf(j) + 1]; if (t && !t.et) { j.m += 2 * sellVal(t); killJoker(t, 'destroy'); return { msg: 'Sacrificed' }; } }, main: (c, j) => j.m > 0 && { m: j.m } }, 'skull');
-  J('acehunter', 'Ace Hunter', 1, 4, 'Played Aces give +20 Chips and +4 Mult when scored', { card: c => c.card.r === 14 && c.card.e !== 'stone' && { c: 20, m: 4 } }, 'star');
-  J('evenkeel', 'Even Keel', 1, 4, 'Played cards with even rank give +4 Mult when scored (10, 8, 6, 4, 2)', { card: c => isEven(c.card) && { m: 4 } }, 'plus');
-  J('oddduck', 'Odd Duck', 1, 4, 'Played cards with odd rank give +31 Chips when scored (A, 9, 7, 5, 3)', { card: c => isOdd(c.card) && { c: 31 } }, 'coin');
-  J('vaulter', 'Vaulter', 2, 6, 'Played cards that score give +1 Mult for every $10 you have', { card: () => R.money >= 10 && { m: Math.floor(R.money / 10) } }, 'coin');
-  J('grandslam', 'Grand Slam', 3, 9, 'X1.5 Mult for every scoring face card in a hand of 5 cards that has a Full House', { main: c => c.h.id === 'fh' || c.h.id === 'flushh' ? { x: 1 + .5 * faceCt(c) || 1 } : false }, 'ex');
-  J('stonecold', 'Stone Cold', 2, 6, 'Stone Cards in your hand held at end of round give $2', { rend: () => { const n = R.hand.filter(k => k.e === 'stone').length; return n > 0 && { $: 2 * n }; } }, 'gem');
-  J('curtaincall', 'Curtain Call', 3, 9, 'Retrigger all played cards when played hand is a Flush', { rep: c => c.zone === 'play' && c.has.flush ? 1 : 0 }, 'clock');
-  J('twinstar', 'Twin Star', 3, 8, 'Retrigger every scoring Ace and King', { rep: c => c.zone === 'play' && (c.card.r === 14 || c.card.r === 13) && c.card.e !== 'stone' ? 1 : 0 }, 'star');
+  J('replay', 'Instant Replay', 2, 6, 'Retrigger the last scored card twice', { rep: c => c.zone === 'play' && c.i === c.sc.length - 1 ? 2 : 0 }, 'clock');
+  J('queens', 'Royal Encore', 2, 6, 'Retrigger every scored Queen twice', { rep: c => c.zone === 'play' && rk(c.card, [12]) ? 2 : 0 }, 'star');
+  J('smallfry', 'Small Fry', 2, 6, 'Retrigger every scored 2, 3 and 4', { rep: c => c.zone === 'play' && rk(c.card, [2, 3, 4]) ? 1 : 0 }, 'clock');
+  J('surf', "Surf's Up", 2, 6, 'Retrigger the first 2 scored cards if the hand is a Flush', { rep: c => c.zone === 'play' && c.h.id === 'flush' && c.i < 2 ? 1 : 0 }, 'clock');
+  J('watch', 'Pocket Watch', 2, 5, 'Every card held in hand gives +2 Mult', { held: () => ({ m: 2 }) }, 'clock');
+  J('doubledown', 'Double Down', 2, 6, 'X2 Mult on the first hand of the round', { main: () => R.hpr === 1 && { x: 2 } }, 'ex');
+  J('flame', 'Twin Flame', 2, 6, 'X1.75 Mult if the hand is exactly a Pair', { main: c => c.h.id === 'pair' && { x: 1.75 } }, 'ex');
+  J('guard', 'Colour Guard', 2, 7, 'X1.8 Mult if the hand is a Flush', { main: c => c.h.id === 'flush' && { x: 1.8 } }, 'ex');
+  J('rally', 'Rally Race', 2, 7, 'X2 Mult if the hand is a Straight', { main: c => c.h.id === 'straight' && { x: 2 } }, 'ex');
+  J('hattrick', 'Hat Trick', 2, 7, 'X2.5 Mult if the hand is Three of a Kind', { main: c => c.h.id === 'three' && { x: 2.5 } }, 'ex');
+  J('pockets', 'Empty Pockets', 2, 6, 'X1.5 Mult while you hold no consumables', { main: () => !R.cons.length && { x: 1.5 } }, 'ex');
+  J('ironworks', 'Ironworks', 2, 7, j => 'X0.15 Mult for every Iron card in your full deck (now X' + (1 + .15 * cnt('', k => k.e === 'steel')).toFixed(2) + ')', { main: () => { const n = cnt('', k => k.e === 'steel'); return n > 0 && { x: 1 + .15 * n }; } }, 'ex');
+  J('quarry', 'Quarry', 2, 6, j => '+30 Chips for every Brick card in your full deck (now +' + 30 * cnt('', k => k.e === 'stone') + ')', { main: () => { const n = cnt('', k => k.e === 'stone'); return n > 0 && { c: 30 * n }; } }, 'coin');
+  J('blower', 'Glassblower', 2, 6, j => 'Gains X0.4 Mult every time a Crystal card shatters (now X' + j.x.toFixed(1) + ')', { init: () => ({ x: 1 }), nb: 1, destroyed: (c, j) => { const n = c.cards.filter(k => k.e === 'glass').length; if (n) { j.x += .4 * n; return { msg: 'Stronger!' }; } }, main: (c, j) => j.x > 1 && { x: j.x } }, 'gem');
+  J('goldsmith', 'Goldsmith', 2, 6, 'Played Gilded cards earn $2 when scored', { card: c => c.card.e === 'gold' && { $: 2 } }, 'coin');
+  J('fourleaf', 'Four-Leaf', 2, 6, j => 'Gains +3 Mult every time a Clover card triggers (now +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, lucky: (c, j) => { j.m += 3; }, main: (c, j) => j.m > 0 && { m: j.m } }, 'dice');
+  J('spirit', 'Free Spirit', 2, 6, 'Played Wild cards give +8 Mult when scored', { card: c => c.card.e === 'wild' && { m: 8 } }, 'star');
+  J('heirloom', 'Heirloom', 2, 6, 'Played cards with an enhancement give +10 Chips and +2 Mult when scored', { card: c => c.card.e && c.card.e !== 'stone' && { c: 10, m: 2 } }, 'gem');
+  J('curator', 'Curator', 2, 7, j => 'Gains X0.1 Mult for every playing card added to your deck (now X' + j.x.toFixed(1) + ')', { init: () => ({ x: 1 }), nb: 1, add: (c, j) => { j.x += .1; }, main: (c, j) => j.x > 1 && { x: j.x } }, 'gem');
+  J('gazer', 'Stargazer', 2, 6, j => 'Gains +2 Mult every time you use a Gem card (now +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, use: (c, j) => { if (c.cons.type === 'planet') { j.m += 2; return { msg: '+2 Mult' }; } }, main: (c, j) => j.m > 0 && { m: j.m } }, 'gem');
+  J('apprentice', 'Apprentice', 2, 6, j => 'Gains X0.1 Mult every time you use a Trick card (now X' + j.x.toFixed(1) + ')', { init: () => ({ x: 1 }), nb: 1, use: (c, j) => { if (c.cons.type === 'tarot') { j.x += .1; return { msg: 'Stronger!' }; } }, main: (c, j) => j.x > 1 && { x: j.x } }, 'star');
+  J('pawnbroker', 'Pawnbroker', 2, 6, j => 'Gains X0.15 Mult for every Joker you sell (now X' + j.x.toFixed(2) + ')', { init: () => ({ x: 1 }), nb: 1, sold: (c, j) => { if (!c.item.type && c.item !== j) { j.x += .15; return { msg: 'Stronger!' }; } }, main: (c, j) => j.x > 1 && { x: j.x } }, 'coin');
+  J('mono', 'Monotone', 2, 6, 'X2 Mult if every card held in hand is the same colour', { main: c => c.held.length > 0 && (c.held.every(k => isRed(k)) || c.held.every(k => isBlack(k))) && { x: 2 } }, 'ex');
+  J('habits', 'Old Habits', 2, 6, 'X1.5 Mult if your last hand was the same type', { main: c => R.last === c.h.id && { x: 1.5 } }, 'clock');
+  J('variety', 'Variety Show', 2, 6, 'X1.5 Mult if this hand type has not been played this round', { main: c => R.hl[c.h.id].pr <= 1 && { x: 1.5 } }, 'star');
+  J('fourth', 'Every Fourth', 2, 5, j => 'X2.5 Mult on every fourth hand played (' + (j.n % 4) + '/4)', { init: () => ({ n: 0 }), nb: 1, before: (c, j) => { j.n++; }, main: (c, j) => j.n % 4 === 0 && { x: 2.5 } }, 'clock');
+  J('gambler', 'Gambler', 2, 5, '1 in 3 chance for X3 Mult', { main: () => luck(1, 3) && { x: 3 } }, 'dice');
+  J('magnet', 'Coin Magnet', 2, 5, 'Earn $2 whenever 5 cards score', { main: c => c.sc.length >= 5 && { $: 2 } }, 'coin');
+  J('banker', 'Banker', 2, 6, 'Interest can reach $2 more per round', { p: { icap: 2 } }, 'coin');
+  J('window', 'Window Shopper', 2, 5, j => 'Gains +3 Mult for every reroll in the shop (now +' + j.m + ')', { init: () => ({ m: 0 }), nb: 1, reroll: (c, j) => { j.m += 3; return { msg: '+3 Mult' }; }, main: (c, j) => j.m > 0 && { m: j.m } }, 'dice');
+  J('skipper', 'Skipper', 2, 6, () => 'X0.3 Mult for every blind skipped this run (now X' + (1 + .3 * (R ? R.skips : 0)).toFixed(1) + ')', { main: () => R.skips > 0 && { x: 1 + .3 * R.skips } }, 'clock');
+  J('sellout', 'Sellout', 2, 5, 'Sell this Joker during a Boss Blind to cancel its rule', { sell: () => { if (R.cur && R.cur.boss) R.bossOff = true; } }, 'skull');
+  J('hopscotch', 'Hopscotch', 2, 6, 'Straights can skip one rank, like 3 5 6 7 9', { f: 'short' }, 'ex');
+  J('corners', 'Four Corners', 2, 7, 'Flushes and Straights can be made with 4 cards', { f: 'four' }, 'star');
+  J('colourblind', 'Colour Blind', 2, 7, 'Hearts and Diamonds count as one suit, and so do Spades and Clubs', { f: 'smear' }, 's1');
+  J('masquerade', 'Masquerade', 2, 5, 'Every card counts as a face card', { f: 'pareid' }, 'skull');
+  J('chance', 'Second Chance', 2, 5, 'If you lose a blind with at least 30% of its target, you survive and this Joker is destroyed', { f: 'bones' }, 'skull');
+  J('rabbit', "Rabbit's Foot", 2, 4, 'Every chance is doubled', { f: 'luck2' }, 'dice');
 
-  const TAGS_ED = { foil: 'Foil', holo: 'Holographic', poly: 'Polychrome', neg: 'Negative' };
-  const ED_D = { foil: '+50 Chips', holo: '+10 Mult', poly: 'X1.5 Mult', neg: '+1 slot' };
+  J('understudy', 'Understudy', 3, 10, 'Copies the ability of the Joker to its right', { copy: 'right' }, 'star');
+  J('mimic', 'Mimic', 3, 9, 'Copies the ability of your rightmost Joker', { copy: 'last' }, 'star');
+  J('phoenix', 'Phoenix', 3, 8, j => 'Gains X0.2 Mult for every playing card destroyed (now X' + j.x.toFixed(1) + ')', { init: () => ({ x: 1 }), nb: 1, destroyed: (c, j) => { j.x += .2 * c.cards.length; return { msg: 'Stronger!' }; }, main: (c, j) => j.x > 1 && { x: j.x } }, 'star');
+  J('tycoon', 'Tycoon', 3, 8, () => 'X0.1 Mult for every $5 you have (now X' + (1 + .1 * Math.floor(Math.max(0, R ? R.money : 0) / 5)).toFixed(1) + ')', { main: () => R.money >= 5 && { x: 1 + .1 * Math.floor(R.money / 5) } }, 'coin');
+  J('court', 'Royal Court', 3, 8, 'Played Kings and Queens give X1.4 Mult when scored', { card: c => rk(c.card, [12, 13]) && { x: 1.4 } }, 'star');
+  J('throne', 'Throne Room', 3, 8, 'Each King held in hand gives X1.3 Mult', { held: c => rk(c.card, [13]) && { x: 1.3 } }, 'star');
+  J('snowball', 'Snowball', 3, 8, j => 'Gains X0.1 Mult for every hand played, resets when you discard (now X' + j.x.toFixed(1) + ')', { init: () => ({ x: 1 }), nb: 1, before: (c, j) => { j.x += .1; }, disc: (c, j) => { if (j.x > 1) { j.x = 1; return { msg: 'Reset' }; } }, main: (c, j) => j.x > 1 && { x: j.x } }, 'gem');
+  J('squadron', 'Ace Squadron', 3, 8, 'Retrigger every scored Ace twice', { rep: c => c.zone === 'play' && rk(c.card, [14]) ? 2 : 0 }, 'star');
+  J('dynamo', 'Dynamo', 3, 9, 'X3 Mult if 5 cards score', { main: c => c.sc.length >= 5 && { x: 3 } }, 'ex');
+  J('alchemist', 'Alchemist', 3, 7, 'Played 7s become Gilded when scored', { before: c => { let n = 0; c.sc.forEach(k => { if (rk(k, [7]) && k.e !== 'gold' && !deb(k)) { k.e = 'gold'; jq(k.id); n++; } }); return n ? { msg: 'Gilded!' } : null; } }, 'coin');
+  J('architect', 'Architect', 3, 8, 'On the first hand of the round, every scored card permanently gains +10 Chips', { before: c => { if (R.hpr !== 1 || c.copy) return; c.sc.forEach(k => { if (!deb(k)) { k.x = (k.x || 0) + 10; jq(k.id); } }); return { msg: '+10 Chips' }; } }, 'plus');
+  J('professor', 'Professor', 3, 7, j => 'Levels up the played hand on every fifth hand played (' + (j.n % 5) + '/5)', { init: () => ({ n: 0 }), nb: 1, before: (c, j) => { j.n++; if (j.n % 5 === 0) { levelHand(c.h.id, 1); R.q.push({ t: 'lvl', hid: c.h.id }); return { msg: 'Level up!' }; } } }, 'star');
+  J('fusion', 'Fusion', 3, 8, 'X0.5 Mult for each different suit among scored cards after the first', { main: c => { const st = new Set(); c.sc.forEach(k => { if (k.e !== 'stone' && !deb(k)) st.add(k.e === 'wild' ? 'w' + k.id : k.s); }); const n = Math.min(4, st.size); return n > 1 && { x: 1 + .5 * (n - 1) }; } }, 's3');
+
+  J('kingpin', 'Kingpin', 4, 15, 'Played face cards give X1.5 Mult when scored', { card: c => isFace(c.card) && { x: 1.5 } }, 'star');
+  J('grandmaster', 'Grandmaster', 4, 15, 'X0.4 Mult for every Joker you own', { main: () => ({ x: 1 + .4 * R.jokers.length }) }, 'star');
+  J('evergreen', 'Evergreen', 4, 15, j => 'Gains X0.25 Mult at the end of every round (now X' + j.x.toFixed(2) + ')', { init: () => ({ x: 1 }), nb: 1, rend: (c, j) => { j.x += .25; return { msg: 'Stronger!' }; }, main: (c, j) => j.x > 1 && { x: j.x } }, 'gem');
+  J('dragon', 'Dragon', 4, 15, 'Retrigger every scored card', { rep: c => c.zone === 'play' ? 1 : 0 }, 'clock');
+  J('wishmaker', 'Wishmaker', 4, 15, 'Creates a Shadow Omen card (it needs no slot) every time you beat a Boss Blind', { nb: 1, rend: c => { if (c.boss) { addCons('spectral', rollCons('spectral', ['genie']).k, 'neg'); return { msg: 'Omen!' }; } } }, 'skull');
+
+  const TAGS_ED = { foil: 'Shiny', holo: 'Glossy', poly: 'Prism', neg: 'Shadow' };
+  const ED_D = { foil: '+40 Chips', holo: '+8 Mult', poly: 'X1.6 Mult', neg: '+1 slot' };
   const ENH_D = {
-    bonus: ['Bonus Card', '+30 extra chips'], mult: ['Mult Card', '+4 Mult'], wild: ['Wild Card', 'Counts as every suit'],
-    glass: ['Glass Card', 'X2 Mult, 1 in 4 chance to shatter when scored'], steel: ['Steel Card', 'X1.5 Mult while held in hand'],
-    stone: ['Stone Card', '+50 chips, no rank or suit'], gold: ['Gold Card', '$3 if held in hand at end of round'],
-    lucky: ['Lucky Card', '1 in 5 chance for +20 Mult, 1 in 15 chance for $20']
+    bonus: ['Marked Card', '+35 extra Chips'], mult: ['Inked Card', '+5 Mult'], wild: ['Wild Card', 'Counts as every suit'],
+    glass: ['Crystal Card', 'X1.8 Mult, 1 in 5 chance to shatter when scored'], steel: ['Iron Card', 'X1.4 Mult while held in hand'],
+    stone: ['Brick Card', '+60 Chips, no rank or suit, always scores'], gold: ['Gilded Card', 'Earn $2 if held in hand at the end of the round'],
+    lucky: ['Clover Card', '1 in 4 chance for +12 Mult, 1 in 12 chance to earn $10']
   };
   const SEAL_D = {
-    gold: ['Gold Seal', 'Earn $3 when this card is played and scores'], red: ['Red Seal', 'Retrigger this card 1 time'],
-    blue: ['Blue Seal', 'Creates the Planet card of the last played hand if held in hand at end of round'],
-    purple: ['Purple Seal', 'Creates a Tarot card when discarded']
+    gold: ['Coin Stamp', 'Earn $2 when this card scores'], red: ['Echo Stamp', 'This card triggers one more time'],
+    blue: ['Star Stamp', 'Held in hand at the end of the round: 1 in 2 chance to create the Gem of your most played hand'],
+    purple: ['Ink Stamp', 'When discarded: earn $1, with a 1 in 3 chance to create a Trick card']
   };
   const RAR_N = ['', 'Common', 'Uncommon', 'Rare', 'Legendary'];
-  const PKN = { arcana: 'Oracle', cosmos: 'Cosmos', standard: 'Playing', jester: 'Jester', specter: 'Specter' };
-  const PKS = { normal: '', jumbo: 'Jumbo ', mega: 'Mega ' };
+  const TYPN = { tarot: 'Trick', planet: 'Gem', spectral: 'Omen' };
+  const PKN = { arcana: 'Trick', cosmos: 'Gem', standard: 'Card', jester: 'Joker', specter: 'Omen' };
+  const PKS = { normal: '', jumbo: 'Big ', mega: 'Giant ' };
   const PKD = {
-    arcana: n => 'Choose %p of up to ' + n + ' Tarot cards to use immediately',
-    cosmos: n => 'Choose %p of up to ' + n + ' Planet cards to use immediately',
-    standard: n => 'Choose %p of up to ' + n + ' playing cards to add to your deck',
-    jester: n => 'Choose %p of up to ' + n + ' Joker cards',
-    specter: n => 'Choose %p of up to ' + n + ' Specter cards to use immediately'
+    arcana: n => 'Choose %p of ' + n + ' Trick cards to use right away',
+    cosmos: n => 'Choose %p of ' + n + ' Gem cards to use right away',
+    standard: n => 'Choose %p of ' + n + ' playing cards to add to your deck',
+    jester: n => 'Choose %p of ' + n + ' Jokers',
+    specter: n => 'Choose %p of ' + n + ' Omen cards to use right away'
   };
-  const PKC = { arcana: ['#7a3fc8', '#2a1a5e', 'eye'], cosmos: ['#3a78d8', '#101c4e', 'hole'], standard: ['#e0453a', '#5e1a1a', 'cards'], jester: ['#f2a23a', '#5e3a1a', 'crown'], specter: ['#4ac8b8', '#103a4e', 'skull'] };
-  const EMBS = { fool: 'cart', magician: 'infinity', priestess: 'eye', empress: 'heart', emperor: 'crown', hierophant: 'cross', lovers: 'hand', chariot: 'pillars', justice: 'scales', hermit: 'cup', wheel: 'wheel', strength: 'flame', hanged: 'ankh', death: 'skull', temperance: 'cup', devil: 'flame', tower: 'tower', star: 'star', moon: 'moon', sun: 'sun', judgement: 'eye', world: 'gem' };
-  const SPS = ['skull', 'hand', 'eye', 'flame', 'gem', 'hole', 'crown', 'ankh', 'infinity', 'star'];
-  const VSYM = ['cart', 'cup', 'gem', 'star', 'scales', 'leaf', 'ankh', 'crown', 'wheel', 'pillars'];
+  const PKC = { arcana: ['#7a3fc8', '#2a1a5e', 'hat'], cosmos: ['#2a9ab8', '#0e2a4e', 'gem'], standard: ['#c8402a', '#5e1a1a', 'cards'], jester: ['#e8a03a', '#5e3a1a', 'crown'], specter: ['#4a6a8a', '#101a2e', 'eye'] };
+  const EMBS = { marked: 'cards', inkwell: 'quill', shape: 'mask', glassact: 'gem', grip: 'hand', mason: 'brick', gilding: 'coin', leaves: 'leaf', velvet: 'heart', sparkle: 'star', midnight: 'moon', greenhouse: 'leaf', promo: 'up', demo: 'down', vanish: 'hat', mirror: 'mirror', lift: 'cards', tophat: 'hat', spot: 'sun', varnish: 'brush', saw: 'saw', levitate: 'up', passhat: 'hat' };
+  const SPEM = { comet: 'comet', genie: 'lamp', eclipse: 'moon', crow: 'crow', broken: 'mirror', ladder: 'ladder', horseshoe: 'shoe', wishbone: 'bone', falling: 'comet', quill: 'quill', fullmoon: 'moon', storm: 'bolt', fog: 'cloud', lowtide: 'wave', dust: 'skull' };
+  const SPS = ['skull', 'eye', 'flame', 'moon', 'star'];
+  const VSYM = ['cart', 'cup', 'gem', 'star', 'scales', 'leaf', 'coin', 'crown', 'wheel', 'pillars'];
   const TPAL = [['#6a2d9c', '#e070b0'], ['#1f4a8c', '#58c0e8'], ['#8c2d2d', '#f0a050'], ['#1f6b4a', '#7ae0a0'], ['#5a2d6e', '#a080f0'], ['#8c5a1f', '#f0d060']];
-  const TG_ICON = { uncommon: 'gem', rare: 'star', neg: 'skull', foil: 'gem', holo: 'star', poly: 'star' };
   const blit = src => { const c = document.createElement('canvas'); c.width = src.width; c.height = src.height; c.getContext('2d').drawImage(src, 0, 0); return c; };
   const esc = s => String(s).replace(/[&<>]/g, c => c === '&' ? '&amp;' : c === '<' ? '&lt;' : '&gt;');
   const fmtN = n => {
     n = Math.floor(n + 1e-9);
-    if (!isFinite(n)) return 'naneinf';
+    if (!isFinite(n)) return '\u221e';
     if (n < 1e11) return n.toLocaleString('en-US');
     const e = Math.floor(Math.log10(n));
     return (n / Math.pow(10, e)).toFixed(3) + 'e' + e;
   };
   const fmtS = n => n >= 1e6 ? (n >= 1e11 ? fmtN(n) : n.toLocaleString('en-US')) : n.toLocaleString('en-US');
-  const fmtM = x => { if (!isFinite(x)) return 'naneinf'; return x >= 1e6 ? fmtN(x) : (Math.abs(x - Math.round(x)) < 1e-6 ? String(Math.round(x)) : x.toFixed(2).replace(/0+$/, '').replace(/\.$/, '')); };
+  const fmtM = x => { if (!isFinite(x)) return '\u221e'; return x >= 1e6 ? fmtN(x) : (Math.abs(x - Math.round(x)) < 1e-6 ? String(Math.round(x)) : x.toFixed(2).replace(/0+$/, '').replace(/\.$/, '')); };
   const hnode = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const jdesc = (j, def) => { const d = def.d; return typeof d === 'function' ? d(j) : d; };
 
@@ -1713,8 +1713,8 @@
     if (c.type === 'planet') return planetArt(d.n);
     const hsh = hashStr(c.k);
     if (c.type === 'tarot') { const p = TPAL[hsh % TPAL.length]; return emblemArt(c.k, 't', EMBS[c.k] || 'star', ['#f1e6c8', p[0], p[1]]); }
-    const hu = [['#1a2a5e', '#8a4ad8'], ['#0e3a4e', '#4ad8c8'], ['#3a1a5e', '#e84a8a'], ['#1a3a5e', '#58a0f0'], ['#2a1a3e', '#c060e8']][hsh % 5];
-    return emblemArt(c.k, 's', SPS[hsh % SPS.length], ['#dfe6f2', hu[0], hu[1]]);
+    const hu = [['#141a2e', '#3a4a7a'], ['#0e2430', '#2a6a7a'], ['#1e1430', '#5a3a7a'], ['#102030', '#3a5a8a'], ['#1a1424', '#6a3a5a']][hsh % 5];
+    return emblemArt(c.k, 's', SPEM[c.k] || SPS[hsh % SPS.length], ['#d8dce8', hu[0], hu[1]]);
   }
   function voucherArt(k) {
     const hsh = hashStr(k), p = TPAL[(hsh >>> 3) % TPAL.length];
@@ -1731,14 +1731,14 @@
   }
   function cardTipHtml(c) {
     if (c.fd) return '<b>Face-down card</b><i>Its identity is hidden until played</i>';
-    const nm = c.e === 'stone' ? 'Stone Card' : cn(c);
+    const nm = cn(c);
     let s = '<b>' + nm + '</b>';
     if (c.e !== 'stone') s += '<i>+' + chipVal(c) + ' chips' + (c.x ? ' (+' + c.x + ' permanent)' : '') + '</i>';
     else if (c.x) s += '<i>+' + c.x + ' permanent chips</i>';
     if (c.e) { const d = ENH_D[c.e]; s += '<u>' + d[0] + '</u><i>' + d[1] + '</i>'; }
     if (c.ed) s += '<u class="ed-' + c.ed + '">' + TAGS_ED[c.ed] + '</u><i>' + ED_D[c.ed] + '</i>';
     if (c.z) { const d = SEAL_D[c.z]; s += '<u class="sl-' + c.z + '">' + d[0] + '</u><i>' + d[1] + '</i>'; }
-    if (R && deb(c) && R.ph === 'round') s += '<u class="dbf">Debuffed</u><i>Does nothing this round</i>';
+    if (R && deb(c) && R.ph === 'round') s += '<u class="dbf">Silenced</u><i>Does nothing this round</i>';
     return s;
   }
   function jokerTipHtml(j, shopMode) {
@@ -1746,27 +1746,26 @@
     let s = '<b>' + d.n + '</b><em class="rar r' + d.r + '">' + RAR_N[d.r] + '</em><i>' + esc(jdesc(j, d)) + '</i>';
     if (d.copy && !shopMode && R) { const t = copyTarget(j); s += '<u>' + (t ? 'Copying ' + JK[t.k].n : 'Incompatible') + '</u>'; }
     if (j.ed) s += '<u class="ed-' + j.ed + '">' + TAGS_ED[j.ed] + '</u><i>' + ED_D[j.ed] + '</i>';
-    if (j.et) s += '<u class="stk-e">Eternal</u><i>Cannot be sold or destroyed</i>';
-    if (j.per) s += '<u class="stk-p">Perishable</u><i>' + (j.pl > 0 ? 'Debuffed after ' + j.pl + ' more round' + (j.pl > 1 ? 's' : '') : 'Debuffed') + '</i>';
-    if (j.rn) s += '<u class="stk-r">Rental</u><i>Costs $3 at end of round</i>';
-    if (R && jOff(j) && !j.per) s += '<u class="dbf">Disabled</u>';
+    if (j.et) s += '<u class="stk-e">Glued</u><i>Cannot be sold or destroyed</i>';
+    if (j.rn) s += '<u class="stk-r">Rented</u><i>Costs $2 at the end of every round</i>';
+    if (R && R.jokers.indexOf(j) >= 0 && jOff(j)) s += '<u class="dbf">Disabled</u>';
     if (!shopMode) s += '<s>Sell value $' + sellVal(j) + '</s>';
     return s;
   }
   function consTipHtml(c, shopMode) {
-    const d = CONSDEF(c), tn = c.type === 'tarot' ? 'Tarot' : c.type === 'planet' ? 'Planet' : 'Specter';
+    const d = CONSDEF(c), tn = TYPN[c.type];
     let s = '<b>' + d.n + '</b><em class="rar t-' + c.type + '">' + tn + '</em><i>' + esc(consDesc(c)) + '</i>';
-    if (c.type === 'planet' && R) { const h = HAND[d.hid], l = R.hl[d.hid]; s += '<u>' + h.n + ' lvl.' + l.lvl + '</u><i>Currently ' + hv(d.hid).c + ' chips x ' + hv(d.hid).m + ' mult</i>'; }
+    if (c.type === 'planet' && R) { const h = HAND[d.hid], l = R.hl[d.hid]; s += '<u>' + h.n + ' level ' + l.lvl + '</u><i>Now ' + hv(d.hid).c + ' Chips x ' + hv(d.hid).m + ' Mult</i>'; }
     if (c.ed) s += '<u class="ed-' + c.ed + '">' + TAGS_ED[c.ed] + '</u><i>' + ED_D[c.ed] + '</i>';
     if (!shopMode && R) s += '<s>Sell value $' + sellVal(c) + '</s>';
     return s;
   }
   function voucherTipHtml(k) {
     const v = VK[k];
-    return '<b>' + v.n + '</b><em class="rar vch">Voucher</em><i>' + esc(v.d) + '</i>' + (v.req ? '<u>Requires ' + VK[v.req].n + '</u>' : '');
+    return '<b>' + v.n + '</b><em class="rar vch">Upgrade</em><i>' + esc(v.d) + '</i>' + (v.req ? '<u>Needs ' + VK[v.req].n + '</u>' : '');
   }
   function packTipHtml(p) {
-    return '<b>' + PKS[p.size] + PKN[p.kind] + ' Pack</b><em class="rar pk">Booster</em><i>' + PKD[p.kind](p.n).replace('%p', p.pick) + '</i>';
+    return '<b>' + PKS[p.size] + PKN[p.kind] + ' Pack</b><em class="rar pk">Booster Pack</em><i>' + PKD[p.kind](p.n).replace('%p', p.pick) + '</i>';
   }
   function tagTipHtml(k) { const t = TGK[k]; return '<b>' + t.n + '</b><em class="rar tg">Tag</em><i>' + esc(t.d) + '</i>'; }
   function bossTipHtml(k) { const b = BK[k]; return '<b>' + b.n + '</b><em class="rar bs">' + (b.fin ? 'Final Boss' : 'Boss Blind') + '</em><i>' + esc(b.d) + '</i>'; }
@@ -1858,7 +1857,7 @@
     const bslot = hnode('div', 'bl-blinds');
     const ovl = hnode('div', 'bl-ov');
     const shopLab = hnode('div', 'bl-slab');
-    shopLab.innerHTML = '<span class="sl-i">Shop</span><span class="sl-p">Booster Packs</span><span class="sl-v">Voucher</span>';
+    shopLab.innerHTML = '<span class="sl-i">Shop</span><span class="sl-p">Booster Packs</span><span class="sl-v">Upgrade</span>';
     stage.append(hud, zl, shopLab, bslot, deckEl, cardsLayer, btnRow, shopBtns, packBtns, note, sel2, pops, tipEl, ovl);
     const crt = hnode('div', 'bl-crt'); wrap.append(crt);
     root.append(wrap);
@@ -2002,11 +2001,18 @@
     function shake(a) { if (OPT.shake) shakeAmp = Math.max(shakeAmp, a); }
 
     const BGP = {
-      menu: ['#1b2a5e', '#c23a3a', '#2a1a3e'], blinds: ['#2a1a4e', '#c8403a', '#14234a'], round: ['#1f4a3a', '#2a6a8a', '#0e2230'],
-      boss: ['#3a0e1a', '#8a1a2a', '#14060a'], shop: ['#0f3a2a', '#c8903a', '#0a2018'], pack: ['#2a1a5a', '#6a3ad8', '#0e0a2a'], over: ['#1a1a1a', '#5a1a1a', '#080808'], win: ['#4a3a0e', '#e8b83a', '#1a1204']
+      menu: ['#1d5a44', '#52b07e', '#08201a'], blinds: ['#1d5a44', '#52b07e', '#08201a'], round: ['#1a5240', '#46a070', '#071a14'],
+      boss: ['#5a1a2a', '#b04a5a', '#16050a'], shop: ['#1a4a5a', '#4a9ab4', '#06142a'], pack: ['#3a2a5a', '#7a5ab4', '#100a22'], over: ['#2a2a2e', '#6a6a72', '#08080a'], win: ['#5a4a1a', '#e0b84a', '#181204']
     };
     let bgCur = BGP.menu.map(hex2), bgTgt = bgCur, bgAcc = 0, bgT = 0;
     const bgx = bg.getContext('2d'), bgI = bgx.createImageData(160, 100);
+    const bgL = new Float32Array(16000), bgW = new Float32Array(16000);
+    for (let y = 0; y < 100; y++) for (let x = 0; x < 160; x++) {
+      const i = y * 160 + x, dx = (x - 80) / 92, dy = (y - 16) / 78, d = Math.sqrt(dx * dx + dy * dy);
+      bgL[i] = clamp(1.08 - d, 0, 1);
+      const wv = ((x + y) % 9 === 0 || (x - y + 900) % 9 === 0) ? .05 : 0, gr = (((x * 73) ^ (y * 151) ^ (x * y)) & 15) / 15 * .05;
+      bgW[i] = wv + gr;
+    }
     function bgKey() {
       if (!R || uiPhase === 'menu') return 'menu';
       if (R.ph === 'shop') return 'shop';
@@ -2020,17 +2026,18 @@
     function drawBg(dt) {
       bgT += dt; bgAcc += dt;
       for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) bgCur[i][j] += (bgTgt[i][j] - bgCur[i][j]) * Math.min(1, dt * 2.2);
-      if (bgAcc < .045) return;
+      if (bgAcc < .06) return;
       bgAcc = 0;
-      const d = bgI.data, t = bgT * .35, c0 = bgCur[0], c1 = bgCur[1], c2 = bgCur[2];
+      const d = bgI.data, t = bgT, fl = .94 + .04 * Math.sin(t * 1.7) + .02 * Math.sin(t * 4.3), c0 = bgCur[0], c1 = bgCur[1], c2 = bgCur[2];
       for (let y = 0; y < 100; y++) for (let x = 0; x < 160; x++) {
-        const u = x / 160 * 3.2 - 1.6, v = y / 100 * 2 - 1;
-        let a = u, b = v;
-        for (let k = 1; k < 4; k++) { a += Math.sin(b * (1.3 + k * .4) + t * k) * .45 / k; b += Math.cos(a * (1.1 + k * .5) - t * (k + .5)) * .45 / k; }
-        const s = Math.sin(a * 2.2 + b * 1.7 + t) * .5 + .5, qv = Math.round(s * 4) / 4;
-        const m = qv < .5 ? qv * 2 : (qv - .5) * 2, A = qv < .5 ? c2 : c0, B = qv < .5 ? c0 : c1;
-        const i = (y * 160 + x) * 4;
-        d[i] = A[0] + (B[0] - A[0]) * m; d[i + 1] = A[1] + (B[1] - A[1]) * m; d[i + 2] = A[2] + (B[2] - A[2]) * m; d[i + 3] = 255;
+        const i = y * 160 + x, l = bgL[i] * fl, k = Math.min(1, .3 + l * 1.25), q = l * l * .5;
+        const sh = Math.sin(x * .035 + y * .02 - t * .25) * .025 + bgW[i];
+        const o = i * 4;
+        for (let ch = 0; ch < 3; ch++) {
+          const base = c2[ch] + (c0[ch] - c2[ch]) * k;
+          d[o + ch] = base + (c1[ch] - base) * q + 255 * sh * (.4 + l);
+        }
+        d[o + 3] = 255;
       }
       bgx.putImageData(bgI, 0, 0);
     }
@@ -2118,11 +2125,11 @@
       let cls = 'bc-i';
       if (en.kind !== 'pack' && en.kind !== 'voucher' && o.ed && !(en.kind === 'card' && o.fd)) cls += ' ed-' + o.ed;
       if (en.kind === 'card' && R && R.ph === 'round' && !o.fd && deb(o)) cls += ' dbf';
-      if (en.kind === 'joker' && R && R.jokers.indexOf(o) >= 0 && jOff(o) && (o.per || R.hdis === o.id)) cls += ' dbf';
+      if (en.kind === 'joker' && R && R.jokers.indexOf(o) >= 0 && jOff(o)) cls += ' dbf';
       if (en.kind === 'card' && o.fd) cls += ' fd';
       if (en.cls !== cls) { en.cls = cls; en.inner.className = cls + (en.idle || ''); }
       let st = '';
-      if (en.kind === 'joker') { if (o.et) st += '<i class="s-e">ETERNAL</i>'; if (o.per) st += '<i class="s-p">' + Math.max(0, o.pl) + '</i>'; if (o.rn) st += '<i class="s-r">$3</i>'; }
+      if (en.kind === 'joker') { if (o.et) st += '<i class="s-e">GLUED</i>'; if (o.rn) st += '<i class="s-r">$2</i>'; }
       if (st !== en.stH) { en.stk.innerHTML = st; en.stH = st; }
       const pr = en.price != null && (en.zone === 'shop' || en.zone === 'packs' || en.zone === 'vouch');
       const ptxt = pr ? (en.price === 0 ? 'FREE' : '$' + en.price) : '';
@@ -2303,9 +2310,9 @@
         else if (ev.t === 'msg') { if (ev.id) bumpEn(ev.id); pop(ev.id || 0, ev.text, 'msg'); }
         else if (ev.t === '$') { if (ev.id) bumpEn(ev.id); pop(ev.id || 'money', '$' + ev.v, 'cash'); snd('coin'); }
         else if (ev.t === 'lvl') { snd('level'); if (ev.hid) say(HAND[ev.hid].n + ' leveled up to lvl.' + R.hl[ev.hid].lvl, 1600); }
-        else if (ev.t === 'voucher') { snd('voucher'); banner('Voucher redeemed', VK[ev.k].n, '#e8c040'); }
+        else if (ev.t === 'voucher') { snd('voucher'); banner('Upgrade bought', VK[ev.k].n, '#e8c040'); }
         else if (ev.t === 'shuf') say('Jokers shuffled!', 1500);
-        else if (ev.t === 'saved') { say('Saved by Close Call!', 2200); banner('Saved!', 'Close Call kept you alive', '#6fcf86'); }
+        else if (ev.t === 'saved') { say('Saved by Second Chance!', 2200); banner('Saved!', 'Second Chance kept you alive', '#6fcf86'); }
         else if (ev.t === 'spawn') snd('spawn');
         else if (ev.t === 'gone') { if (ev.how === 'shatter') { snd('shatter'); shake(8); } else if (ev.how === 'sell') snd('sell'); else if (ev.how === 'destroy' || ev.how === 'melt') snd('thump', 0); }
       });
@@ -2767,7 +2774,7 @@
         if (b.s === 'sel') {
           h += '<button class="bbtn next" data-bp="play" data-i="' + i + '"><b>Select</b><kbd>Enter</kbd></button>';
           if (!boss) h += '<button class="bbtn rr" data-bp="skip" data-i="' + i + '"><b>Skip Blind</b><kbd>S</kbd></button>';
-          else if (vo('dcut') || vo('retcon')) h += '<button class="bbtn disc" data-bp="rboss"><b>Reroll Boss</b><span>' + (vo('retcon') ? 'free' : '$10') + '</span></button>';
+          else if (vo('info') || vo('fixer')) h += '<button class="bbtn disc" data-bp="rboss"><b>Reroll Boss</b><span>$' + bossRrCost() + '</span></button>';
         } else if (b.s === 'done') h += '<div class="bp-st ok">Defeated</div>';
         else if (b.s === 'skip') h += '<div class="bp-st">Skipped</div>';
         else if (b.s === 'up') h += '<div class="bp-st dim">Upcoming</div>';
@@ -2984,7 +2991,7 @@
 
     function openInfo() {
       if (!R) return;
-      const tabs = ['Hands', 'Blinds', 'Vouchers', 'Tags'];
+      const tabs = ['Hands', 'Blinds', 'Upgrades', 'Tags'];
       let tab = 0;
       const m = openModal('Run Info', '<div class="md-t"></div><div class="md-p"></div>', {});
       const tb = m.querySelector('.md-t'), pn = m.querySelector('.md-p');
@@ -3027,7 +3034,7 @@
       const rows = [
         ['speed', 'Game speed', ['1x', '2x', '4x'], [1, 2, 4]],
         ['shake', 'Screen shake', ['On', 'Off'], [true, false]],
-        ['crt', 'CRT filter', ['On', 'Off'], [true, false]],
+        ['crt', 'Lamp glow', ['On', 'Off'], [true, false]],
         ['flash', 'Flashes', ['On', 'Off'], [true, false]],
         ['sfx', 'Sound effects', ['On', 'Off'], [true, false]],
         ['music', 'Music', ['On', 'Off'], [true, false]],
@@ -3050,11 +3057,11 @@
       bb.addEventListener('click', e => { if (e.target.closest('[data-q=menu]')) { closeModal(true); persist(); showMenu(); } });
     }
     function openHelp() {
-      openModal('How to Play', '<div class="md-h2"><p><b>Goal.</b> Beat the score of every Blind in 8 Antes. Each Ante has a Small Blind, a Big Blind and a Boss Blind with a special rule. You can skip Small and Big Blinds for a Tag.</p><p><b>Each round.</b> Select up to 5 cards and Play Hand to score them as a poker hand: <b class="c">Chips</b> times <b class="m">Mult</b>. Discard to swap cards. Only scoring cards add their chips. Unused hands pay out $1 each and every $5 you hold earns $1 interest.</p><p><b>Shop.</b> Buy Jokers (up to 5), Planet cards to level up hands, Tarot and Specter cards to alter your deck, Booster Packs and one Voucher per Ante. Jokers score from left to right, so drag to reorder them.</p><p><b>Controls.</b> Click or tap cards to select, drag to reorder. Keyboard: arrows move, Space selects, Enter plays, D discards, R and T sort, 1-9 pick cards, U uses a consumable, S sells, N next round, G reroll, I run info, V deck.</p></div>', {});
+      openModal('How to Play', '<div class="md-h2"><p><b>Goal.</b> Beat the score of every Blind in 8 Antes. Each Ante has a Small Blind, a Big Blind and a Boss Blind with a special rule. You can skip Small and Big Blinds for a Tag.</p><p><b>Each round.</b> Select up to 5 cards and Play Hand to score them as a poker hand: <b class="c">Chips</b> times <b class="m">Mult</b>. Discard to swap cards. Only scoring cards add their chips. Unused hands pay out $1 each, and every $4 you hold earns $1 of interest (up to $5).</p><p><b>Shop.</b> Buy Jokers (up to 5), Gem cards to level up hands, Trick and Omen cards to change your deck, Booster Packs and one Upgrade per Ante. Jokers score from left to right, so drag them to change the order.</p><p><b>Controls.</b> Click or tap cards to select, drag to reorder. Keyboard: arrows move, Space selects, Enter plays, D discards, R and T sort, 1-9 pick cards, U uses a consumable, S sells, N next round, G reroll, I run info, V deck.</p></div>', {});
     }
 
     function openCollection(tab0) {
-      const tabs = [['Jokers', 'j'], ['Tarot', 't'], ['Planets', 'p'], ['Specters', 's'], ['Vouchers', 'v'], ['Bosses', 'b'], ['Tags', 'g'], ['Decks', 'd']];
+      const tabs = [['Jokers', 'j'], ['Tricks', 't'], ['Gems', 'p'], ['Omens', 's'], ['Upgrades', 'v'], ['Bosses', 'b'], ['Tags', 'g'], ['Decks', 'd']];
       let tab = tab0 || 0;
       const m = openModal('Collection', '<div class="md-t"></div><div class="md-p cg"></div>', {});
       const tb = m.querySelector('.md-t'), pn = m.querySelector('.md-p');
@@ -3065,10 +3072,10 @@
         const k = tabs[tab][1];
         if (k === 'j') {
           const seen = ST.jokersSeen || {};
-          JL.forEach(d => { const ok = seen[d.k]; const fake = Object.assign({ k: d.k, a: 0, ed: null }, d.init ? d.init() : {}); add(ok ? mkCanvasIn(jokerArt(d)) : mkCanvasIn(backArt('black')), ok ? d.n : '???', ok ? jokerTipHtml(fake, true) : '<b>Undiscovered</b><i>Find this Joker in a shop or pack</i>', !ok); });
+          JL.forEach(d => { const ok = seen[d.k]; const fake = Object.assign({ k: d.k, a: 0, ed: null }, d.init ? d.init() : {}); add(ok ? mkCanvasIn(jokerArt(d)) : mkCanvasIn(backArt('hidden')), ok ? d.n : '???', ok ? jokerTipHtml(fake, true) : '<b>Undiscovered</b><i>Find this Joker in a shop or pack</i>', !ok); });
           pn.prepend(hnode('p', 'md-note cg-h', 'Discovered ' + Object.keys(seen).filter(x => JK[x]).length + ' / ' + JL.length));
         } else if (k === 't') TL.forEach(d => { const c = { type: 'tarot', k: d.k }; add(mkCanvasIn(consArt(c)), d.n, consTipHtml(c, true)); });
-        else if (k === 'p') HORD.forEach(h => { const c = { type: 'planet', k: 'pl_' + h }; add(mkCanvasIn(consArt(c)), HAND[h].pl, '<b>' + HAND[h].pl + '</b><em class="rar t-planet">Planet</em><i>Levels up ' + HAND[h].n + ': +' + HAND[h].lc + ' Chips and +' + HAND[h].lm + ' Mult</i>'); });
+        else if (k === 'p') HORD.forEach(h => { const c = { type: 'planet', k: 'pl_' + h }; add(mkCanvasIn(consArt(c)), HAND[h].pl, '<b>' + HAND[h].pl + '</b><em class="rar t-planet">Gem</em><i>Levels up ' + HAND[h].n + ': +' + HAND[h].lc + ' Chips and +' + HAND[h].lm + ' Mult</i>'); });
         else if (k === 's') SL.forEach(d => { const c = { type: 'spectral', k: d.k }; add(mkCanvasIn(consArt(c)), d.n, consTipHtml(c, true)); });
         else if (k === 'v') VL.forEach(v => add(mkCanvasIn(voucherArt(v.k)), v.n, voucherTipHtml(v.k)));
         else if (k === 'b') BL.forEach(b => add(mkCanvasIn(tokenArt('bl' + b.col, b.col, mix(b.col, '#ffffff', .5), '#ffffff'), 68, 68), b.n, bossTipHtml(b.k)));
@@ -3085,12 +3092,12 @@
       const has = SV.run && SV.run.ante && SV.run.cards;
       ovl.className = 'bl-ov show menuov';
       const sum = has ? 'Ante ' + SV.run.ante + ' - Round ' + SV.run.round + ' - $' + SV.run.money + ' - ' + esc(DECKS[SV.run.dk] ? DECKS[SV.run.dk][0] : '') : '';
-      ovl.innerHTML = '<div class="m-menu"><div class="m-deco"></div><div class="m-logo"><span>BALATRO</span><small>a poker roguelike</small></div><div class="m-btns">' +
+      ovl.innerHTML = '<div class="m-menu"><div class="m-deco"></div><div class="m-logo"><span translate="no">ANTE UP</span><small>a poker roguelike</small></div><div class="m-btns">' +
         (has ? '<button class="mb big" data-m="cont"><b>Continue</b><small>' + sum + '</small></button>' : '') +
         '<button class="mb' + (has ? '' : ' big') + '" data-m="new"><b>New Run</b></button><button class="mb" data-m="col"><b>Collection</b></button><button class="mb" data-m="opt"><b>Options</b></button><button class="mb" data-m="help"><b>How to Play</b></button></div>' +
         '<div class="m-st">Runs ' + ST.runs + '  |  Wins ' + ST.wins + '  |  Best ante ' + ST.bestAnte + '  |  Best hand ' + fmtN(ST.bestHand) + '</div></div>';
       const dc = ovl.querySelector('.m-deco');
-      ['imp', 'photocopy', 'kingsfool', 'gigglebox', 'catburglar'].forEach((k, i) => { const w = hnode('div', 'md-j'); w.style.setProperty('--i', i); w.append(blit(jokerArt(JK[k]))); dc.append(w); });
+      ['grin', 'understudy', 'kingpin', 'showboat', 'gambler'].forEach((k, i) => { const w = hnode('div', 'md-j'); w.style.setProperty('--i', i); w.append(blit(jokerArt(JK[k]))); dc.append(w); });
       layout(); hudUpdate();
     }
     function nrStake(d) { nr.stake = Math.max(1, Math.min(8, nr.stake + d)); drawNR(); snd('tick'); }
@@ -3194,32 +3201,32 @@
   }
 
   const CSS = `
-.gm-ante-up{gap:0;--bf:ui-monospace,"Cascadia Mono","SF Mono",Consolas,"Liberation Mono",monospace;--pa:#26343b;--pb:#33464f;--pk:#0d1316}
+.gm-ante-up{gap:0;--bf:ui-monospace,"Cascadia Mono","SF Mono",Consolas,"Liberation Mono",monospace;--pa:#3b2a1f;--pb:#553d2a;--pk:#140c07}
 .gm-ante-up [hidden]{display:none!important}
 .gm-ante-up button{font-family:var(--bf);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;color:inherit}
 .gm-ante-up button:disabled{cursor:default}
 .gm-ante-up .bl-wrap{position:relative;max-width:100%;margin:0 auto;overflow:hidden;border-radius:14px;background:#0b0f18;box-shadow:0 10px 30px rgba(0,0,0,.45);-webkit-user-select:none;user-select:none;touch-action:manipulation;font-family:var(--bf);color:#fff}
 .gm-ante-up .bl-shk{position:absolute;inset:0}
 .gm-ante-up .bl-stage{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden;font-family:var(--bf)}
-.gm-ante-up .bl-bg{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;display:block}
-.gm-ante-up .bl-crt{position:absolute;inset:0;pointer-events:none;border-radius:14px;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px),radial-gradient(ellipse at center,transparent 58%,rgba(0,0,8,.6) 100%);z-index:50}
+.gm-ante-up .bl-bg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.gm-ante-up .bl-crt{position:absolute;inset:0;pointer-events:none;border-radius:14px;background:radial-gradient(ellipse at 50% 0%,rgba(255,226,160,.10),transparent 55%),radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.5) 100%);z-index:50}
 .gm-ante-up .bl-nocrt .bl-crt{display:none}
 .gm-ante-up .bl-stage.in-menu .bl-cards,.gm-ante-up .bl-stage.in-menu .bl-hud,.gm-ante-up .bl-stage.in-menu .bl-zlab,.gm-ante-up .bl-stage.in-menu .bl-deck,.gm-ante-up .bl-stage.in-menu .bl-btns,.gm-ante-up .bl-stage.in-menu .bl-slab{display:none!important}
 .gm-ante-up .hb{position:absolute;box-sizing:border-box;background:var(--pa);border:3px solid var(--pk);border-radius:9px;box-shadow:inset 0 0 0 2px var(--pb),0 4px 0 rgba(0,0,0,.45);text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;font-weight:900;overflow:hidden}
-.gm-ante-up .hb span{font-size:12px;color:#9fb3bd;letter-spacing:.03em}
+.gm-ante-up .hb span{font-size:12px;color:#cdb898;letter-spacing:.03em}
 .gm-ante-up .hb b{font-size:24px;line-height:1.05;text-shadow:0 2px 0 rgba(0,0,0,.5)}
 .gm-ante-up .hb small{font-size:.55em;opacity:.7}
 .gm-ante-up .hb-blind{align-items:stretch;justify-content:flex-start;padding:0;border-color:var(--bc,#445)}
 .gm-ante-up .hb-top{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bc,#445);color:#fff;border-bottom:3px solid var(--pk)}
 .gm-ante-up .hb-top canvas{width:34px;height:34px;image-rendering:pixelated;flex:none;animation:sway 3s ease-in-out infinite}
 .gm-ante-up .hb-top b{font-size:16px;text-align:left;text-shadow:0 2px 0 rgba(0,0,0,.55);line-height:1.1}
-.gm-ante-up .hb-sub{font-size:11px;color:#9fb3bd;margin-top:6px}
+.gm-ante-up .hb-sub{font-size:11px;color:#cdb898;margin-top:6px}
 .gm-ante-up .hb-tgt{font-size:25px;color:#ff6b5e;font-weight:900;text-shadow:0 2px 0 rgba(0,0,0,.55)}
 .gm-ante-up .hb-rew{font-size:15px;color:#f5b244;letter-spacing:.06em;padding-bottom:4px}
 .gm-ante-up .hb-rscore b{font-size:26px}
 .gm-ante-up .hb-mult{padding:4px 6px;gap:3px;justify-content:center}
 .gm-ante-up .hm-name{height:18px;font-size:14px;color:#fff;font-weight:900;line-height:18px;white-space:nowrap}
-.gm-ante-up .hm-name small{color:#9fb3bd;font-size:11px}
+.gm-ante-up .hm-name small{color:#cdb898;font-size:11px}
 .gm-ante-up .hm-row{display:flex;align-items:center;gap:5px;width:100%;justify-content:center}
 .gm-ante-up .hm-row i{font-style:normal;font-size:20px;color:#ff6b5e;font-weight:900}
 .gm-ante-up .hm-c,.gm-ante-up .hm-m{flex:1;min-width:0;border-radius:7px;padding:6px 2px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.28)}
@@ -3260,7 +3267,7 @@
 .gm-ante-up .bl-port .hb span{font-size:10px}
 .gm-ante-up .bl-port .hb-money b{font-size:19px}
 .gm-ante-up .bl-port .hbtn{font-size:13px;border-width:2px}
-.gm-ante-up .bl-zlab span{position:absolute;font-size:12px;font-weight:900;color:#c8d6dc;text-shadow:0 2px 0 rgba(0,0,0,.7);white-space:nowrap}
+.gm-ante-up .bl-zlab span{position:absolute;font-size:12px;font-weight:900;color:#ecdcc4;text-shadow:0 2px 0 rgba(0,0,0,.7);white-space:nowrap}
 .gm-ante-up .bl-zlab b{color:#fff}
 .gm-ante-up .bl-zlab i{position:absolute;box-sizing:border-box;border:2px dashed rgba(255,255,255,.16);background:rgba(0,0,0,.2);border-radius:12px;box-shadow:inset 0 0 20px rgba(0,0,0,.3)}
 .gm-ante-up .bl-slab span{position:absolute;width:100px;text-align:center;font-size:12px;font-weight:900;color:#f5d36a;text-shadow:0 2px 0 rgba(0,0,0,.7);letter-spacing:.06em;text-transform:uppercase}
@@ -3321,7 +3328,7 @@
 .gm-ante-up .bl-pop.msg{background:#4a5a68;font-size:16px}
 .gm-ante-up .bl-pop.tot{background:#ffe45a;color:#2a1700;font-size:34px;text-shadow:none;animation-duration:1.4s}
 @keyframes popup{0%{opacity:0;margin-top:14px;scale:.6}12%{opacity:1;margin-top:0;scale:1.18}22%{scale:1}75%{opacity:1}100%{opacity:0;margin-top:-34px}}
-.gm-ante-up .bl-tip{position:absolute;display:none;width:210px;z-index:80;background:#1c262b;border:3px solid #0d1316;border-radius:10px;box-shadow:inset 0 0 0 2px #3f5560,0 6px 0 rgba(0,0,0,.45);padding:8px 10px;pointer-events:none;text-align:left}
+.gm-ante-up .bl-tip{position:absolute;display:none;width:210px;z-index:80;background:#2a1d14;border:3px solid #140c07;border-radius:10px;box-shadow:inset 0 0 0 2px #7a5a32,0 6px 0 rgba(0,0,0,.45);padding:8px 10px;pointer-events:none;text-align:left}
 .gm-ante-up .bl-tip b{display:block;font-size:16px;font-weight:900;color:#fff;margin-bottom:3px}
 .gm-ante-up .bl-tip i{display:block;font-style:normal;font-size:12.5px;line-height:1.3;color:#d3e0e5;margin-bottom:3px}
 .gm-ante-up .bl-tip u{display:block;text-decoration:none;font-size:12px;font-weight:900;color:#ffd36b;margin-top:4px}
@@ -3345,7 +3352,7 @@
 .gm-ante-up .bbtn.sm{flex:.6;min-width:54px;font-size:14px;background:#ff9d3a;color:#2a1700;text-shadow:none;box-shadow:0 5px 0 #a6560f,0 7px 0 rgba(0,0,0,.4);padding:0 8px}
 .gm-ante-up .bbtn.sm.on{background:#ffd36b}
 .gm-ante-up .bl-shopb .bbtn.next{background:#f0a02a;box-shadow:0 5px 0 #a0640f,0 7px 0 rgba(0,0,0,.4)}
-.gm-ante-up .bl-note{position:absolute;left:50%;bottom:6px;transform:translateX(-50%) translateY(10px);background:rgba(10,14,18,.88);border:2px solid #3f5560;border-radius:8px;padding:5px 14px;font-weight:900;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:70;white-space:nowrap;max-width:96%;overflow:hidden;text-overflow:ellipsis}
+.gm-ante-up .bl-note{position:absolute;left:50%;bottom:6px;transform:translateX(-50%) translateY(10px);background:rgba(10,14,18,.88);border:2px solid #7a5a32;border-radius:8px;padding:5px 14px;font-weight:900;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:70;white-space:nowrap;max-width:96%;overflow:hidden;text-overflow:ellipsis}
 .gm-ante-up .bl-note.on{opacity:1;transform:translateX(-50%)}
 .gm-ante-up .bl-act{position:absolute;display:none;gap:6px;z-index:75}
 .gm-ante-up .bl-act button{height:34px;padding:0 12px;border:3px solid var(--pk);border-radius:9px;background:#ff9d3a;color:#2a1700;font-weight:900;font-size:14px;box-shadow:0 4px 0 #a6560f,0 6px 0 rgba(0,0,0,.4);white-space:nowrap}
@@ -3368,16 +3375,16 @@
 .gm-ante-up .bp-h b{font-size:18px;text-shadow:0 2px 0 rgba(0,0,0,.55)}
 .gm-ante-up .bp-b{flex:1;padding:8px 10px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center}
 .gm-ante-up .bp-tok{width:60px;height:60px;image-rendering:pixelated;animation:sway 3s ease-in-out infinite}
-.gm-ante-up .bp-t span{display:block;font-size:11px;color:#9fb3bd}
+.gm-ante-up .bp-t span{display:block;font-size:11px;color:#cdb898}
 .gm-ante-up .bp-t b{font-size:26px;color:#ff6b5e;text-shadow:0 2px 0 rgba(0,0,0,.55)}
-.gm-ante-up .bp-r{font-size:12px;color:#9fb3bd}
+.gm-ante-up .bp-r{font-size:12px;color:#cdb898}
 .gm-ante-up .bp-r b{color:#f5b244;font-size:15px;letter-spacing:.08em}
 .gm-ante-up .bp-d{font-size:12px;line-height:1.3;color:#fff;background:#10181c;border:2px solid var(--bc);border-radius:7px;padding:5px 7px;cursor:help}
 .gm-ante-up .bp-tag{display:flex;align-items:center;gap:6px;font-size:11px;color:#d3e0e5;background:#10181c;border-radius:7px;padding:4px 7px;cursor:help;font-weight:900}
 .gm-ante-up .bp-tag canvas{width:26px;height:26px;image-rendering:pixelated}
 .gm-ante-up .bp-f{padding:6px 10px 12px;display:flex;flex-direction:column;gap:9px}
 .gm-ante-up .bp-f .bbtn{width:100%;flex:none}
-.gm-ante-up .bp-st{text-align:center;font-weight:900;font-size:15px;padding:8px 0;color:#9fb3bd}
+.gm-ante-up .bp-st{text-align:center;font-weight:900;font-size:15px;padding:8px 0;color:#cdb898}
 .gm-ante-up .bp-st.ok{color:#6fcf86}.gm-ante-up .bp-st.dim{opacity:.6}
 .gm-ante-up .bl-blinds.port{flex-direction:column;gap:6px;padding:4px 2px 0;align-items:stretch}
 .gm-ante-up .bl-blinds.port .bp{flex:none;max-width:none;flex-direction:row;height:112px;transform:none}
@@ -3401,7 +3408,7 @@
 .gm-ante-up .bl-ov.menuov{background:radial-gradient(ellipse at center,rgba(8,10,28,.35),rgba(4,5,16,.78))}
 .gm-ante-up .bl-cash{width:min(330px,88%);background:var(--pa);border:3px solid var(--pk);border-radius:14px;box-shadow:inset 0 0 0 2px var(--pb),0 8px 0 rgba(0,0,0,.5);padding:14px 18px 16px;animation:bnr .3s cubic-bezier(.3,1.5,.5,1)}
 .gm-ante-up .bl-cash h3{margin:0 0 8px;text-align:center;font-size:22px;color:#6fcf86;text-shadow:0 2px 0 rgba(0,0,0,.5)}
-.gm-ante-up .cl-r{display:flex;justify-content:space-between;gap:10px;font-size:14px;font-weight:900;padding:5px 0;border-bottom:2px dashed #3f5560;transition:opacity .2s}
+.gm-ante-up .cl-r{display:flex;justify-content:space-between;gap:10px;font-size:14px;font-weight:900;padding:5px 0;border-bottom:2px dashed #7a5a32;transition:opacity .2s}
 .gm-ante-up .cl-r b{color:#f5b244}.gm-ante-up .cl-r b.neg{color:#ff6b5e}
 .gm-ante-up .cl-tot{display:flex;justify-content:space-between;align-items:center;margin:10px 0 12px;font-size:16px;font-weight:900}
 .gm-ante-up .cl-tot b{font-size:30px;color:#f5b244}
@@ -3411,8 +3418,8 @@
 .gm-ante-up .md-j{width:50px;height:67px;animation:sway 3s ease-in-out calc(var(--i)*-.6s) infinite}
 .gm-ante-up .md-j canvas{width:50px;height:67px;image-rendering:pixelated;display:block}
 .gm-ante-up .m-logo{text-align:center;line-height:1}
-.gm-ante-up .m-logo span{display:block;font-size:64px;font-weight:900;letter-spacing:.06em;color:#ff5a4a;text-shadow:0 4px 0 #8a1a10,0 8px 0 #1a0604,0 0 24px rgba(255,90,70,.6);animation:logo 3.2s ease-in-out infinite}
-.gm-ante-up .m-logo small{display:block;margin-top:6px;font-size:13px;color:#cfe0ff;letter-spacing:.25em;text-transform:uppercase}
+.gm-ante-up .m-logo span{display:block;font-size:64px;font-weight:900;letter-spacing:.06em;color:#f2c744;text-shadow:0 4px 0 #8a5a10,0 8px 0 #1a1004,0 0 24px rgba(242,199,68,.5);animation:logo 3.2s ease-in-out infinite}
+.gm-ante-up .m-logo small{display:block;margin-top:6px;font-size:13px;color:#f2e4cc;letter-spacing:.25em;text-transform:uppercase}
 @keyframes logo{0%,100%{transform:rotate(-1.2deg) scale(1)}50%{transform:rotate(1.2deg) scale(1.03)}}
 .gm-ante-up .m-btns{display:flex;flex-direction:column;gap:9px;width:min(280px,100%)}
 .gm-ante-up .mb{display:flex;flex-direction:column;align-items:center;justify-content:center;height:46px;border:3px solid var(--pk);border-radius:10px;background:#4a5a68;color:#fff;font-size:17px;font-weight:900;text-shadow:0 2px 0 rgba(0,0,0,.45);box-shadow:0 5px 0 #26323a,0 7px 0 rgba(0,0,0,.4);transition:transform .08s,filter .15s}
@@ -3430,45 +3437,45 @@
 .gm-ante-up .nr-dt b{display:block;font-size:19px;color:#ffd36b}
 .gm-ante-up .nr-dt span{display:block;font-size:13px;color:#e0ecf0;line-height:1.3;min-height:34px;text-shadow:0 2px 0 rgba(0,0,0,.6)}
 .gm-ante-up .nr-stk{display:flex;gap:6px}
-.gm-ante-up .nr-stk button{width:40px;height:44px;border:3px solid var(--pk);border-radius:9px;background:#26343b;font-weight:900;font-size:15px;color:#9fb3bd;position:relative;box-shadow:0 4px 0 rgba(0,0,0,.5)}
-.gm-ante-up .nr-stk button i{position:absolute;left:50%;top:5px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--sc);border:2px solid #0d1316}
+.gm-ante-up .nr-stk button{width:40px;height:44px;border:3px solid var(--pk);border-radius:9px;background:#3b2a1f;font-weight:900;font-size:15px;color:#cdb898;position:relative;box-shadow:0 4px 0 rgba(0,0,0,.5)}
+.gm-ante-up .nr-stk button i{position:absolute;left:50%;top:5px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--sc);border:2px solid #140c07}
 .gm-ante-up .nr-stk button span{position:absolute;left:0;right:0;bottom:3px}
-.gm-ante-up .nr-stk button.inc{background:#33464f;color:#d0e0e6}
+.gm-ante-up .nr-stk button.inc{background:#553d2a;color:#f2e4cc}
 .gm-ante-up .nr-stk button.on{background:var(--sc);color:#111;border-color:#fff;transform:translateY(-3px)}
 .gm-ante-up .nr-stk button.on span{color:#111}
 .gm-ante-up .nr-sd{margin:0;text-align:center;font-size:13px;line-height:1.35;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.6)}
-.gm-ante-up .nr-sd small{display:block;color:#9fb3bd;font-size:11px}
+.gm-ante-up .nr-sd small{display:block;color:#cdb898;font-size:11px}
 .gm-ante-up .nr-seed{font-size:13px;font-weight:900;display:flex;align-items:center;gap:8px}
-.gm-ante-up .nr-seed input{width:130px;height:30px;background:#10181c;border:2px solid #3f5560;border-radius:7px;color:#fff;font:900 14px var(--bf);padding:0 8px;text-transform:uppercase}
+.gm-ante-up .nr-seed input{width:130px;height:30px;background:#10181c;border:2px solid #7a5a32;border-radius:7px;color:#fff;font:900 14px var(--bf);padding:0 8px;text-transform:uppercase}
 .gm-ante-up .nr-b{display:flex;gap:12px;width:min(340px,100%)}
 .gm-ante-up .nr-b .bbtn{flex:1}
 .gm-ante-up .ov-card{width:min(400px,92%);background:var(--pa);border:3px solid var(--pk);border-radius:14px;box-shadow:inset 0 0 0 2px var(--pb),0 8px 0 rgba(0,0,0,.5);padding:16px 18px;text-align:center;animation:bnr .35s cubic-bezier(.3,1.5,.5,1);max-height:96%;overflow:auto}
 .gm-ante-up .ov-card h2{margin:0 0 4px;font-size:34px;text-shadow:0 3px 0 rgba(0,0,0,.55)}
 .gm-ante-up .ov-card.lose h2{color:#ff5a4a}.gm-ante-up .ov-card.win h2{color:#ffd36b}
 .gm-ante-up .ov-card p{margin:0 0 10px;font-size:14px;color:#d3e0e5}
-.gm-ante-up .ov-card p small{color:#9fb3bd}
+.gm-ante-up .ov-card p small{color:#cdb898}
 .gm-ante-up .ov-st{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;margin-bottom:12px;text-align:left}
 .gm-ante-up .ov-st div{display:flex;justify-content:space-between;gap:6px;font-size:12px;background:#10181c;border-radius:6px;padding:4px 8px}
-.gm-ante-up .ov-st span{color:#9fb3bd}.gm-ante-up .ov-st b{color:#fff;text-align:right;overflow:hidden;text-overflow:ellipsis}
+.gm-ante-up .ov-st span{color:#cdb898}.gm-ante-up .ov-st b{color:#fff;text-align:right;overflow:hidden;text-overflow:ellipsis}
 .gm-ante-up .ov-b{display:flex;gap:10px;flex-wrap:wrap}
 .gm-ante-up .ov-b .bbtn{flex:1;min-width:110px}
 .gm-ante-up .bl-modal{position:absolute;inset:0;background:rgba(4,6,10,.7);z-index:85;display:flex;align-items:center;justify-content:center}
 .gm-ante-up .md-c{width:min(640px,94%);max-height:92%;display:flex;flex-direction:column;background:var(--pa);border:3px solid var(--pk);border-radius:14px;box-shadow:inset 0 0 0 2px var(--pb),0 8px 0 rgba(0,0,0,.5);overflow:hidden}
 .gm-ante-up .md-h{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#10181c;border-bottom:3px solid var(--pk)}
 .gm-ante-up .md-h h3{margin:0;font-size:19px;color:#ffd36b}
-.gm-ante-up .md-h h3 small{color:#9fb3bd;font-size:12px}
+.gm-ante-up .md-h h3 small{color:#cdb898;font-size:12px}
 .gm-ante-up .md-x{width:34px;height:34px;border:3px solid var(--pk);border-radius:9px;background:#f0463a;color:#fff;font-weight:900;font-size:15px;box-shadow:0 3px 0 #9a261c}
 .gm-ante-up .md-b{padding:10px 12px;overflow:auto;display:flex;flex-direction:column;gap:8px}
 .gm-ante-up .md-t{display:flex;gap:5px;flex-wrap:wrap}
-.gm-ante-up .md-t button{height:30px;padding:0 11px;border:2px solid #0d1316;border-radius:8px;background:#33464f;color:#c8d6dc;font-weight:900;font-size:12px}
+.gm-ante-up .md-t button{height:30px;padding:0 11px;border:2px solid #140c07;border-radius:8px;background:#553d2a;color:#ecdcc4;font-weight:900;font-size:12px}
 .gm-ante-up .md-t button.on{background:#ff9d3a;color:#2a1700}
 .gm-ante-up .md-tab{width:100%;border-collapse:collapse;font-size:13px}
-.gm-ante-up .md-tab th{color:#9fb3bd;text-align:left;font-size:11px;padding:3px 6px}
-.gm-ante-up .md-tab td{padding:5px 6px;border-top:2px solid #33464f;font-weight:900}
+.gm-ante-up .md-tab th{color:#cdb898;text-align:left;font-size:11px;padding:3px 6px}
+.gm-ante-up .md-tab td{padding:5px 6px;border-top:2px solid #553d2a;font-weight:900}
 .gm-ante-up .md-tab td.c{color:#4fb4ff}.gm-ante-up .md-tab td.m{color:#ff6b5e}
 .gm-ante-up .md-r{display:grid;grid-template-columns:1fr auto;gap:2px 10px;background:#10181c;border-radius:8px;padding:7px 10px;font-size:12px}
 .gm-ante-up .md-r b{color:#fff;font-size:14px}.gm-ante-up .md-r span{color:#ff6b5e;font-weight:900;text-align:right}
-.gm-ante-up .md-r i{font-style:normal;color:#c8d6dc;grid-column:1/-1}.gm-ante-up .md-r em{font-style:normal;color:#9fb3bd;grid-column:1/-1}
+.gm-ante-up .md-r i{font-style:normal;color:#ecdcc4;grid-column:1/-1}.gm-ante-up .md-r em{font-style:normal;color:#cdb898;grid-column:1/-1}
 .gm-ante-up .md-note{margin:0;font-size:12px;color:#c0d0d8;line-height:1.4}
 .gm-ante-up .md-h2 p{font-size:13px;line-height:1.5;color:#d8e4e8;margin:0 0 10px}
 .gm-ante-up .md-h2 .c{color:#4fb4ff}.gm-ante-up .md-h2 .m{color:#ff6b5e}
@@ -3479,11 +3486,11 @@
 .gm-ante-up .cg-h{grid-column:1/-1}
 .gm-ante-up .cg-i{text-align:center;cursor:help}
 .gm-ante-up .cg-i canvas{width:71px;height:95px;image-rendering:pixelated;display:block;margin:0 auto}
-.gm-ante-up .cg-i span{display:block;font-size:10px;font-weight:900;color:#c8d6dc;margin-top:3px;line-height:1.15}
+.gm-ante-up .cg-i span{display:block;font-size:10px;font-weight:900;color:#ecdcc4;margin-top:3px;line-height:1.15}
 .gm-ante-up .cg-i.dim canvas{filter:grayscale(1) brightness(.5)}
-.gm-ante-up .op{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:2px solid #33464f;font-size:14px;font-weight:900}
+.gm-ante-up .op{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:2px solid #553d2a;font-size:14px;font-weight:900}
 .gm-ante-up .op div{display:flex;gap:5px}
-.gm-ante-up .op button{height:32px;min-width:52px;padding:0 10px;border:2px solid #0d1316;border-radius:8px;background:#33464f;color:#c8d6dc;font-weight:900;font-size:13px}
+.gm-ante-up .op button{height:32px;min-width:52px;padding:0 10px;border:2px solid #140c07;border-radius:8px;background:#553d2a;color:#ecdcc4;font-weight:900;font-size:13px}
 .gm-ante-up .op button.on{background:#3aa86a;color:#fff}
 .gm-ante-up .md-ob{display:flex;gap:10px;padding:0 12px 12px}
 .gm-ante-up .md-ob .bbtn{flex:1}
@@ -3508,5 +3515,5 @@
     mount(root, api) { return mountGame(root, api); }
   });
 
-  Ameplay.covers['ante-up'] = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="bac-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b2a5e"/><stop offset=".55" stop-color="#8a2a4a"/><stop offset="1" stop-color="#2a1030"/></linearGradient><radialGradient id="bac-r" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#ff6a50" stop-opacity=".55"/><stop offset="1" stop-color="#ff6a50" stop-opacity="0"/></radialGradient></defs><rect width="400" height="300" fill="url(#bac-g)"/><rect width="400" height="300" fill="url(#bac-r)"/><g opacity=".18" fill="#fff"><circle cx="40" cy="50" r="2"/><circle cx="350" cy="70" r="2"/><circle cx="320" cy="250" r="2"/><circle cx="70" cy="240" r="2"/><circle cx="200" cy="30" r="2"/></g><g transform="translate(110 150) rotate(-18)"><rect x="-38" y="-52" width="76" height="104" rx="7" fill="#f4f0e6" stroke="#20242c" stroke-width="4"/><text x="-28" y="-26" font-family="monospace" font-weight="900" font-size="24" fill="#e0453a">A</text><path d="M0-4c-8-14-26-4-14 10l14 14 14-14c12-14-6-24-14-10z" fill="#e0453a" transform="translate(0 4) scale(1.1)"/></g><g transform="translate(290 150) rotate(16)"><rect x="-38" y="-52" width="76" height="104" rx="7" fill="#f4f0e6" stroke="#20242c" stroke-width="4"/><text x="-28" y="-26" font-family="monospace" font-weight="900" font-size="24" fill="#38466a">K</text><path d="M0-20l9 18-9 6-9-6zM-12 6h24v18h-24z" fill="#38466a"/></g><g transform="translate(200 135)"><rect x="-42" y="-58" width="84" height="116" rx="8" fill="#3b2d6e" stroke="#20242c" stroke-width="4"/><rect x="-37" y="-53" width="74" height="106" rx="5" fill="#6a4fd6"/><circle cx="0" cy="6" r="21" fill="#f2c14e" stroke="#1c1f2a" stroke-width="4"/><rect x="-11" y="-2" width="6" height="8" fill="#1c1f2a"/><rect x="5" y="-2" width="6" height="8" fill="#1c1f2a"/><path d="M-10 14q10 8 20 0" stroke="#1c1f2a" stroke-width="3" fill="none"/><path d="M-24-22l8 12 8-14 8 14 8-12 8 14v8h-40z" fill="#e8574a" stroke="#1c1f2a" stroke-width="3"/><circle cx="-24" cy="-24" r="4" fill="#ffe45a"/><circle cx="24" cy="-24" r="4" fill="#ffe45a"/></g><g font-family="monospace" font-weight="900"><rect x="96" y="238" width="86" height="36" rx="7" fill="#0089e8" stroke="#0d1316" stroke-width="3"/><text x="139" y="264" font-size="22" fill="#fff" text-anchor="middle">210</text><text x="200" y="264" font-size="24" fill="#ff6b5e" text-anchor="middle">X</text><rect x="218" y="238" width="86" height="36" rx="7" fill="#f0463a" stroke="#0d1316" stroke-width="3"/><text x="261" y="264" font-size="22" fill="#fff" text-anchor="middle">36</text></g></svg>`;
+  Ameplay.covers['ante-up'] = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="bac-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b2a5e"/><stop offset=".55" stop-color="#8a2a4a"/><stop offset="1" stop-color="#2a1030"/></linearGradient><radialGradient id="bac-r" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#ff6a50" stop-opacity=".55"/><stop offset="1" stop-color="#ff6a50" stop-opacity="0"/></radialGradient></defs><rect width="400" height="300" fill="url(#bac-g)"/><rect width="400" height="300" fill="url(#bac-r)"/><g opacity=".18" fill="#fff"><circle cx="40" cy="50" r="2"/><circle cx="350" cy="70" r="2"/><circle cx="320" cy="250" r="2"/><circle cx="70" cy="240" r="2"/><circle cx="200" cy="30" r="2"/></g><g transform="translate(110 150) rotate(-18)"><rect x="-38" y="-52" width="76" height="104" rx="7" fill="#f4f0e6" stroke="#20242c" stroke-width="4"/><text x="-28" y="-26" font-family="monospace" font-weight="900" font-size="24" fill="#e0453a">A</text><path d="M0-4c-8-14-26-4-14 10l14 14 14-14c12-14-6-24-14-10z" fill="#e0453a" transform="translate(0 4) scale(1.1)"/></g><g transform="translate(290 150) rotate(16)"><rect x="-38" y="-52" width="76" height="104" rx="7" fill="#f4f0e6" stroke="#20242c" stroke-width="4"/><text x="-28" y="-26" font-family="monospace" font-weight="900" font-size="24" fill="#38466a">K</text><path d="M0-20l9 18-9 6-9-6zM-12 6h24v18h-24z" fill="#38466a"/></g><g transform="translate(200 135)"><rect x="-42" y="-58" width="84" height="116" rx="8" fill="#3b2d6e" stroke="#20242c" stroke-width="4"/><rect x="-37" y="-53" width="74" height="106" rx="5" fill="#6a4fd6"/><circle cx="0" cy="6" r="21" fill="#f2c14e" stroke="#1c1f2a" stroke-width="4"/><rect x="-11" y="-2" width="6" height="8" fill="#1c1f2a"/><rect x="5" y="-2" width="6" height="8" fill="#1c1f2a"/><path d="M-10 14q10 8 20 0" stroke="#1c1f2a" stroke-width="3" fill="none"/><path d="M-24-22l8 12 8-14 8 14 8-12 8 14v8h-40z" fill="#e8574a" stroke="#1c1f2a" stroke-width="3"/><circle cx="-24" cy="-24" r="4" fill="#ffe45a"/><circle cx="24" cy="-24" r="4" fill="#ffe45a"/></g><g font-family="monospace" font-weight="900"><rect x="96" y="238" width="86" height="36" rx="7" fill="#0089e8" stroke="#140c07" stroke-width="3"/><text x="139" y="264" font-size="22" fill="#fff" text-anchor="middle">210</text><text x="200" y="264" font-size="24" fill="#ff6b5e" text-anchor="middle">X</text><rect x="218" y="238" width="86" height="36" rx="7" fill="#f0463a" stroke="#140c07" stroke-width="3"/><text x="261" y="264" font-size="22" fill="#fff" text-anchor="middle">36</text></g></svg>`;
 })();
