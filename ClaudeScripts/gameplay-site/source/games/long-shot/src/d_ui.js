@@ -110,6 +110,8 @@ const LS_CSS = `
 .gm-long-shot .ls-it .x b{color:#fff}
 .gm-long-shot .ls-it .x em{font-style:normal;color:#ffd28a;font-weight:800}
 .gm-long-shot .ls-rv{width:100%;max-width:560px;max-height:100%;overflow:auto;padding:16px 18px;border-radius:22px;background:linear-gradient(rgba(24,30,72,.95),rgba(12,16,46,.95));border:1px solid rgba(150,170,255,.3);box-shadow:0 24px 70px -20px rgba(0,0,0,.85);animation:ls-in .3s}
+.gm-long-shot .ls-rv.two{max-width:860px}
+.gm-long-shot .ls-rv.two .ls-list{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
 .gm-long-shot .ls-rvq{font-size:13px;font-weight:900;color:#8fb6ff;text-transform:uppercase;letter-spacing:.08em;text-align:center}
 .gm-long-shot .ls-rvt{font-size:21px;font-weight:900;text-align:center;margin:2px 0 10px}
 .gm-long-shot .ls-pl{display:grid;grid-template-columns:28px 1fr auto 46px 54px;align-items:center;gap:8px;padding:7px 10px;border-radius:12px;background:rgba(255,255,255,.05);margin-top:5px;animation:ls-in .3s both}

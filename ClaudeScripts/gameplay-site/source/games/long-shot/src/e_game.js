@@ -278,7 +278,7 @@ function lsDuelReveal(G) {
   G.$lk.hidden = false;
   G.$lk.innerHTML = `<span class="ls-opp">${lsEsc(R.bot.name)}: ${b ? lsEsc(lsName(P, P.set.bySlug.get(b.k))) + ' · +' + b.pts : lsEsc(T('No answer'))}</span>`;
   G.$in.placeholder = T('Press Enter to continue.');
-  lsPane(G, `<div class="ls-rv"><div class="ls-rvq">${lsEsc(T('Prompt {i} of {n}', { i: R.i + 1, n: R.n }))}</div><div class="ls-rvt">${lsEsc(lsPromptText(P))}</div>${row(G.myName(), me, ' me', 0)}${row(R.bot.name, b, '', 1)}</div>`, { clear: true, low: true, key: 'rv', keep: true });
+  lsPane(G, `<div class="ls-rv solo"><div class="ls-rvq">${lsEsc(T('Prompt {i} of {n}', { i: R.i + 1, n: R.n }))}</div><div class="ls-rvt">${lsEsc(lsPromptText(P))}</div>${row(G.myName(), me, ' me', 0)}${row(R.bot.name, b, '', 1)}<p class="ls-note">${lsEsc(T('Press Enter to continue.'))}</p></div>`, { clear: true, low: true, key: 'rv', keep: true });
 }
 function lsEndRound(G) {
   const R = G.R;

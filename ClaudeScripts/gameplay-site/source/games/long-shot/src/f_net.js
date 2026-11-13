@@ -233,7 +233,8 @@ function lsClient(G, m) {
     const html = list.map((p, i) => { const x = p.last, r = x && x.k ? P.set.bySlug.get(x.k) : null; return `<div class="ls-pl${p.id === G.me ? ' me' : ''}" style="animation-delay:${Math.min(i, 12) * .06}s">${lsAv(p.name, C.pl.indexOf(p))}<div class="nm"><b>${lsEsc(p.name)}</b><span>${r ? lsEsc(lsName(P, r)) : lsEsc(T('No answer'))}</span></div>${r ? lsTierPill(x.t) : lsTierPill(-1)}<div class="pt">+${r ? x.pts : 0}</div><div class="tot">${lsFmt(p.tot)}</div></div>`; }).join('');
     G.$lk.hidden = true; G.$pass.hidden = true;
     G.$in.placeholder = T('Next prompt coming up…');
-    lsPane(G, `<div class="ls-rv"><div class="ls-rvq">${lsEsc(T('Prompt {i} of {n}', { i: C.i + 1, n: C.n }))}</div><div class="ls-rvt">${lsEsc(lsPromptText(P))}</div>${html}</div>`, { clear: true, low: true, key: 'rv', keep: true });
+    if (!G.port) G.$q.hidden = true;
+    lsPane(G, `<div class="ls-rv${!G.port && list.length > 7 ? ' two' : ''}"><div class="ls-rvq">${lsEsc(T('Prompt {i} of {n}', { i: C.i + 1, n: C.n }))}</div><div class="ls-rvt">${lsEsc(lsPromptText(P))}</div><div class="ls-list">${html}</div></div>`, { clear: true, low: G.port, key: 'rv', keep: true });
     return;
   }
   if (m.t === 'end') {

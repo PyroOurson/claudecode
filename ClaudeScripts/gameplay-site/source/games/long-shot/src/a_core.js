@@ -200,20 +200,26 @@ function lsPool() {
   return LS_POOL;
 }
 const LS_DAYC = new Map();
+function lsCycle(c) {
+  const pool = lsPool(), L = Math.max(1, Math.floor(pool.length / LS_N)), R = lsRng(lsHash('long-shot-cycle:' + c));
+  const fams = new Map();
+  lsShuffle(pool.slice(), R).forEach(id => { const f = lsPromptRaw(id)[1]; if (!fams.has(f)) fams.set(f, []); fams.get(f).push(id); });
+  const order = [...fams.values()].sort((a, b) => b.length - a.length);
+  const days = Array.from({ length: L }, () => ({ ids: [], f: new Set() }));
+  order.forEach(list => list.forEach(id => {
+    const f = lsPromptRaw(id)[1];
+    let best = null, bn = 99, br = 0;
+    days.forEach(d => { if (d.ids.length >= LS_N || d.f.has(f)) return; const r = R(); if (d.ids.length < bn || (d.ids.length === bn && r < br)) { best = d; bn = d.ids.length; br = r; } });
+    if (!best) days.forEach(d => { if (d.ids.length < LS_N && (!best || d.ids.length < best.ids.length)) best = d; });
+    if (best) { best.ids.push(id); best.f.add(f); }
+  }));
+  return { L, days: days.map(d => lsShuffle(d.ids, R)) };
+}
 function lsDaily(d) {
   if (LS_DAYC.has(d)) return LS_DAYC.get(d);
-  const pool = lsPool(), L = Math.max(1, Math.floor(pool.length / LS_N)), c = Math.floor(d / L), pos = d - c * L;
-  const deck = lsShuffle(pool.slice(), lsRng(lsHash('long-shot-cycle:' + c)));
-  let out = [];
-  for (let day = 0; day <= pos; day++) {
-    const pick = [], fams = new Set();
-    for (let j = 0; j < deck.length && pick.length < LS_N; j++) { const f = lsPromptRaw(deck[j])[1]; if (!fams.has(f)) { fams.add(f); pick.push(j); } }
-    for (let j = 0; j < deck.length && pick.length < LS_N; j++) if (!pick.includes(j)) pick.push(j);
-    out = pick.map(j => deck[j]);
-    pick.slice().sort((a, b) => b - a).forEach(j => deck.splice(j, 1));
-  }
-  LS_DAYC.set(d, out);
-  return out;
+  const L = Math.max(1, Math.floor(lsPool().length / LS_N)), c = Math.floor(d / L), cy = lsCycle(c);
+  cy.days.forEach((ids, i) => LS_DAYC.set(c * L + i, ids));
+  return LS_DAYC.get(d);
 }
 function lsRandomPrompts(n, seed, opt) {
   const o = opt || {}, R = lsRng(seed >>> 0), all = LS_PROMPTS.filter(p => (p[2].includes('d') || p[2].includes('e')) && !(o.solo === false && p[3].includes('='))).map(p => p[0]);
