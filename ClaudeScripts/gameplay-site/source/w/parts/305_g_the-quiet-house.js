@@ -1522,11 +1522,11 @@
     const JOY = { id: null, ox: 0, oy: 0, x: 0, y: 0 }, LOOK = { id: null, x: 0, y: 0 }, TBH = {};
     function stepPlayer(h) {
       const keys = api.keys;
-      let mx = 0, mz = 0, runK = false, crK = false, useK = false;
+      let mx = 0, mz = 0, runK = false, useK = false;
       if (mode === 'play') {
         if (keys.has('KeyW') || keys.has('ArrowUp')) mz += 1; if (keys.has('KeyS') || keys.has('ArrowDown')) mz -= 1;
         if (keys.has('KeyD') || keys.has('ArrowRight')) mx += 1; if (keys.has('KeyA') || keys.has('ArrowLeft')) mx -= 1;
-        runK = keys.has('ShiftLeft') || keys.has('ShiftRight') || !!TBH.run; crK = keys.has('ControlLeft') || keys.has('ControlRight'); useK = keys.has('KeyE') || keys.has('KeyF') || keys.has('Space') || !!TBH.use || P.mouseUse;
+        runK = keys.has('ShiftLeft') || keys.has('ShiftRight') || !!TBH.run; useK = keys.has('KeyE') || keys.has('KeyF') || keys.has('Space') || !!TBH.use || P.mouseUse;
         if (JOY.id != null) { mx += JOY.x; mz -= JOY.y; }
         if (DBG.input) { mx = DBG.input.mx; mz = DBG.input.mz; runK = !!DBG.input.run; }
       }
@@ -1538,7 +1538,7 @@
         P.moving = false; return;
       }
       if (P.hide) { P.moving = false; if (ml > 0.2 && P.rustleT <= 0) { P.rustleT = 0.9; audio.play('rustle'); noise(P.x, P.y, P.z, P.lv, 2.5, true); } return; }
-      const wantC = P.crTog || crK;
+      const wantC = P.crTog;
       P.cr = damp(P.cr, wantC ? 1 : 0, 9, h);
       const canRun = runK && !P.tired && mz > 0.3 && P.cr < 0.35;
       P.run = canRun && ml > 0.2;
@@ -1618,7 +1618,7 @@
     function showTitle() {
       mode = 'title'; R = null; hud.hidden = true; touch.hidden = true; dayEl.hidden = true; if (api.label) api.label('Score'); api.score(null); fade.classList.remove('on', 'card'); journal(false);
       const r = SV.run, esc0 = SV.st.esc.reduce((a, b) => a + b, 0);
-      showPanel(`<div class="tt"><h1>${esc(T('The Quiet House'))}</h1><p>${esc(T('Five days. One way out. Stay quiet.'))}</p></div><div class="bs">${r ? btn('cont', T('Continue') + ' · ' + T('Day {n}', { n: r.day }) + ' · ' + T(DIFFS[r.diff].n), 'pri') : ''}${btn('new', T('New game'), r ? '' : 'pri')}${btn('help', T('How to play'))}${btn('opts', T('Options'))}</div><p class="st">${esc(T('Escapes'))} <b>${esc0}</b>${SV.st.best.some(v => v) ? ' · ' + esc(T('Best time')) + ' <b>' + fmtT(Math.min(...SV.st.best.filter(v => v))) + '</b>' : ''}</p>`, 'title');
+      showPanel(`<div class="tt"><h1>${esc(T('The Quiet House'))}</h1><p>${esc(T('Five days. Find a way out. Stay quiet.'))}</p></div><div class="bs">${r ? btn('cont', T('Continue') + ' · ' + T('Day {n}', { n: r.day }) + ' · ' + T(DIFFS[r.diff].n), 'pri') : ''}${btn('new', T('New game'), r ? '' : 'pri')}${btn('help', T('How to play'))}${btn('opts', T('Options'))}</div><p class="st">${esc(T('Escapes'))} <b>${esc0}</b>${SV.st.best.some(v => v) ? ' · ' + esc(T('Best time')) + ' <b>' + fmtT(Math.min(...SV.st.best.filter(v => v))) + '</b>' : ''}</p>`, 'title');
     }
     function showDiff() {
       mode = 'diff';
@@ -1626,7 +1626,7 @@
     }
     function showHelp(back) {
       const prev = mode; mode = 'help'; menuStack.push(back || prev);
-      const kb = [['WASD / arrows', 'Move'], ['Mouse', 'Look around'], ['Shift', 'Run (noisy)'], ['C or Ctrl', 'Crouch (silent)'], ['E or click', 'Use, take, hide'], ['G', 'Drop the item you hold'], ['R or right click', 'Throw it'], ['Tab or J', 'Notes'], ['Esc', 'Pause']];
+      const kb = [['WASD / arrows', 'Move'], ['Mouse', 'Look around'], ['Shift', 'Run (noisy)'], ['C', 'Crouch (silent)'], ['E or click', 'Use, take, hide'], ['G', 'Drop the item you hold'], ['R or right click', 'Throw it'], ['Tab or J', 'Notes'], ['Esc', 'Pause']];
       const tc = [['Left stick', 'Move'], ['Drag right side', 'Look around'], ['Use', 'Use, take, hide'], ['Crouch · Run · Throw · Drop', 'The other buttons']];
       const gpad = [['Left stick', 'Move'], ['Right stick', 'Look around'], ['A or RB', 'Use, take, hide'], ['RT or X', 'Throw it'], ['B', 'Drop the item you hold'], ['Y', 'Crouch (silent)'], ['LT', 'Run (noisy)'], ['LB', 'Notes'], ['Start', 'Pause']];
       showPanel(`<h2>${esc(T('How to play'))}</h2><p class="lead">${esc(T('You have five days to escape. The Keeper hears every sound. If he catches you, the day ends and you wake up in your bed. Find the tools and keys to open the front door, or get the car going and drive out of the garage.'))}</p><div class="kt">${(PAD.on ? gpad : touchOn ? tc : kb).map(([k, v]) => `<div><kbd>${esc(T(k))}</kbd><span>${esc(T(v))}</span></div>`).join('')}</div><ul class="tips"><li>${esc(T('His footsteps, his keys and his lantern give him away.'))}</li><li>${esc(T('Hide under beds or in wardrobes. He finds you only if he saw you go in.'))}</li><li>${esc(T('Throw a bottle to lure him away. Crouch before dropping things.'))}</li><li>${esc(T('The flash camera blinds him for a few seconds.'))}</li></ul><div class="bs row">${btn('back', T('Back'))}</div>`, 'help');

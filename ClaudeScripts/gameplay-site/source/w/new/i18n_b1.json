@@ -1,6 +1,6 @@
 [
 ["The Quiet House", "The Quiet House", "The Quiet House", "The Quiet House", "The Quiet House", "The Quiet House"],
-["Five days. One way out. Stay quiet.", "Cinq jours. Une seule sortie. Pas un bruit.", "Cinco días. Una salida. Silencio.", "Fünf Tage. Ein Ausweg. Bleib leise.", "Cinque giorni. Una via d’uscita. Silenzio.", "Cinco dias. Uma saída. Silêncio."],
+["Five days. Find a way out. Stay quiet.", "Cinq jours. Trouve une sortie. Pas un bruit.", "Cinco días. Encuentra una salida. Silencio.", "Fünf Tage. Finde einen Ausweg. Bleib leise.", "Cinque giorni. Trova una via d’uscita. Silenzio.", "Cinco dias. Encontra uma saída. Silêncio."],
 ["New game", "Nouvelle partie", "Nueva partida", "Neues Spiel", "Nuova partita", "Novo jogo"],
 ["Continue", "Continuer", "Continuar", "Weiterspielen", "Continua", "Continuar"],
 ["How to play", "Comment jouer", "Cómo jugar", "Spielanleitung", "Come si gioca", "Como jogar"],
@@ -28,7 +28,6 @@
 ["Esc", "Échap", "Esc", "Esc", "Esc", "Esc"],
 ["Shift", "Maj", "Mayús", "Umschalt", "Maiusc", "Shift"],
 ["Run (noisy)", "Courir (bruyant)", "Correr (ruidoso)", "Rennen (laut)", "Correre (rumoroso)", "Correr (barulhento)"],
-["C or Ctrl", "C ou Ctrl", "C o Ctrl", "C oder Strg", "C o Ctrl", "C ou Ctrl"],
 ["Crouch (silent)", "S’accroupir (silencieux)", "Agacharse (silencioso)", "Ducken (leise)", "Accovacciarsi (silenzioso)", "Agachar (silencioso)"],
 ["E or click", "E ou clic", "E o clic", "E oder Klick", "E o clic", "E ou clique"],
 ["Use, take, hide", "Utiliser, prendre, se cacher", "Usar, coger, esconderse", "Benutzen, nehmen, verstecken", "Usare, prendere, nascondersi", "Usar, apanhar, esconder"],
