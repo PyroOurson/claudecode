@@ -231,7 +231,7 @@
   }
   const HG = { legal: hLegal, play: hPlay, over: hOver, policy: hPolicy, sample: hSample, clone: hClone, util: hUtil };
 
-  const H_LVL = { Easy: { n: 0, ms: 0 }, Normal: { n: 26, ms: 70 }, Hard: { n: 90, ms: 170 }, Hardest: { n: 240, ms: 150 } };
+  const H_LVL = { Easy: { n: 0, ms: 0 }, Normal: { n: 26, ms: 70 }, Hard: { n: 90, ms: 170 }, Hardest: { n: 240, ms: 220 } };
   function hBotPlay(S, p, lvl) {
     const L = hLegal(S, p);
     if (L.length === 1) return L[0];
@@ -287,7 +287,7 @@
     const off = dir === 0 ? 1 : dir === 1 ? 3 : 2, rest = FULL.filter(c => !h.includes(c)), tot = new Float64Array(tri.length), t0 = now();
     let n = 0;
     for (; n < 30; n++) {
-      if (n >= 8 && now() - t0 > 25) break;
+      if (n >= 8 && now() - t0 > 45) break;
       const d = shuf(rest.slice()), hands = [h, h, h, h], give = [null, null, null, null];
       let u = 0;
       for (let q = 0; q < 4; q++) if (q !== p) { hands[q] = d.slice(u, u + 13); u += 13; give[q] = hPassCards(hands[q], dir, 'Normal', S); }
@@ -622,7 +622,7 @@
     return rec(S.turn, 13 - S.tn, -1e9, 1e9, S.broken);
   }
   const BID_OFF = 0.1;
-  const S_LVL = { Easy: { n: 0, ms: 0 }, Normal: { n: 20, ms: 70 }, Hard: { n: 70, ms: 170 }, Hardest: { n: 200, ms: 150, inf: 1 } };
+  const S_LVL = { Easy: { n: 0, ms: 0 }, Normal: { n: 20, ms: 70 }, Hard: { n: 70, ms: 170 }, Hardest: { n: 200, ms: 220, inf: 1 } };
 
   function sBotPlay(S, p, lvl) {
     const L = sLegal(S, p);
