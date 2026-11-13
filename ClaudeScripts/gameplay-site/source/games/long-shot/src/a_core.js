@@ -38,7 +38,7 @@ function lsNorm(s, drop) {
   let t = lsPlain(s).split(/[^a-z0-9]+/).filter(Boolean).map(w => LS_SYN[w] || w);
   while (t.length > 1 && LS_ART.has(t[0])) t.shift();
   if (drop && drop.size) { const u = t.filter(w => !drop.has(w)); if (u.length) t = u; }
-  return t.join('');
+  return t.join('').replace(/ph/g, 'f');
 }
 const lsSlug = s => lsPlain(s).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
 const lsRude = s => LS_RUDE.test(lsPlain(String(s == null ? '' : s).replace(/[013457@$]/g, c => LS_LEET[c] || c)));
@@ -151,7 +151,16 @@ function lsOsa(a, b, max) {
   }
   return d[p1 + lb];
 }
-const lsTol = (len, z) => z <= 0 ? 0 : z >= 2 ? (len >= 7 ? 2 : len >= 4 ? 1 : 0) : (len >= 8 ? 2 : len >= 5 ? 1 : 0);
+const lsTol = (len, z) => z <= 0 ? 0 : z >= 2 ? (len >= 8 ? 2 : len >= 4 ? 1 : 0) : (len >= 9 ? 2 : len >= 5 ? 1 : 0);
+const LS_ALL = { keys: new Set(), todo: null };
+function lsAllStep() {
+  if (!LS_ALL.todo) LS_ALL.todo = Object.keys(LS_SETS);
+  const id = LS_ALL.todo.shift();
+  if (!id) return false;
+  lsSet(id).rows.forEach(r => r.names.forEach(x => { LS_ALL.keys.add(lsNorm(x.n)); LS_ALL.keys.add(x.k); }));
+  return LS_ALL.todo.length > 0;
+}
+function lsAll() { while (lsAllStep()) {} return LS_ALL.keys; }
 function lsMatch(P, text) {
   const t = String(text == null ? '' : text).trim();
   if (!t) return { ok: false, why: 'empty' };
@@ -160,12 +169,15 @@ function lsMatch(P, text) {
   const cands = [k];
   if (k.length > 4 && k.endsWith('es')) cands.push(k.slice(0, -2));
   if (k.length > 3 && /[sx]$/.test(k)) cands.push(k.slice(0, -1));
+  if (k.length > 4 && k.endsWith('ies')) cands.push(k.slice(0, -3) + 'y');
   for (const c of cands) {
     const r = P.keys.get(c) || P.stems.get(c);
     if (r) return { ok: true, row: r, exact: c === k };
   }
   if (lsRude(t)) return { ok: false, why: 'rude' };
   for (const c of cands) if (P.set.keys.has(c)) return { ok: false, why: 'fit' };
+  const all = lsAll(), k0 = lsNorm(t);
+  if (all.has(k0) || all.has(k)) return { ok: false, why: 'fit' };
   const tol = lsTol(k.length, P.set.z);
   if (tol > 0) {
     let best = null, bd = tol + 1;
@@ -176,6 +188,7 @@ function lsMatch(P, text) {
       if (d < bd || (d === bd && best && P.list[i + 1].w > best.w)) { bd = d; best = P.list[i + 1]; }
     }
     if (best && bd <= tol) return { ok: true, row: best, exact: false };
+    for (const key of P.set.keys.keys()) if (key[0] === k[0] && lsOsa(k, key, tol) <= tol) return { ok: false, why: 'fit' };
   }
   return { ok: false, why: 'none' };
 }
@@ -263,7 +276,7 @@ function lsClean(raw) {
       if (!d || typeof d !== 'object' || !Array.isArray(d.a)) return;
       const a = d.a.slice(0, LS_N).map(x => Array.isArray(x) ? [typeof x[0] === 'string' && /^[a-z0-9-]{1,40}$/.test(x[0]) ? x[0] : '', lsInt(x[1], 0, 100, 0), lsInt(x[2], -1, 5, -1), lsInt(x[3], 0, 120000, 0), typeof x[4] === 'number' && isFinite(x[4]) ? Math.max(0, Math.min(1, x[4])) : 0, x[5] ? 1 : 0] : ['', 0, -1, 0, 0, 0]);
       const ids = Array.isArray(d.p) ? d.p.slice(0, LS_N).filter(x => typeof x === 'string' && x.length < 60) : [];
-      s.days[k] = { a, p: ids, done: !!d.done && a.length >= LS_N, at: lsInt(d.at, 0, 4e12, 0) };
+      s.days[k] = { a, p: ids.length === LS_N && ids.every(id => LS_PROMPT_BY.has(id)) ? ids : [], done: !!d.done && a.length >= LS_N, at: lsInt(d.at, 0, 4e12, 0) };
     });
   }
   s.best = lsInt(raw.best, 0, 700, 0);

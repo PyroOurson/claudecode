@@ -42,7 +42,7 @@ function lsNorm(s, drop) {
   let t = lsPlain(s).split(/[^a-z0-9]+/).filter(Boolean).map(w => LS_SYN[w] || w);
   while (t.length > 1 && LS_ART.has(t[0])) t.shift();
   if (drop && drop.size) { const u = t.filter(w => !drop.has(w)); if (u.length) t = u; }
-  return t.join('');
+  return t.join('').replace(/ph/g, 'f');
 }
 const lsSlug = s => lsPlain(s).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
 const lsRude = s => LS_RUDE.test(lsPlain(String(s == null ? '' : s).replace(/[013457@$]/g, c => LS_LEET[c] || c)));
@@ -155,7 +155,16 @@ function lsOsa(a, b, max) {
   }
   return d[p1 + lb];
 }
-const lsTol = (len, z) => z <= 0 ? 0 : z >= 2 ? (len >= 7 ? 2 : len >= 4 ? 1 : 0) : (len >= 8 ? 2 : len >= 5 ? 1 : 0);
+const lsTol = (len, z) => z <= 0 ? 0 : z >= 2 ? (len >= 8 ? 2 : len >= 4 ? 1 : 0) : (len >= 9 ? 2 : len >= 5 ? 1 : 0);
+const LS_ALL = { keys: new Set(), todo: null };
+function lsAllStep() {
+  if (!LS_ALL.todo) LS_ALL.todo = Object.keys(LS_SETS);
+  const id = LS_ALL.todo.shift();
+  if (!id) return false;
+  lsSet(id).rows.forEach(r => r.names.forEach(x => { LS_ALL.keys.add(lsNorm(x.n)); LS_ALL.keys.add(x.k); }));
+  return LS_ALL.todo.length > 0;
+}
+function lsAll() { while (lsAllStep()) {} return LS_ALL.keys; }
 function lsMatch(P, text) {
   const t = String(text == null ? '' : text).trim();
   if (!t) return { ok: false, why: 'empty' };
@@ -164,12 +173,15 @@ function lsMatch(P, text) {
   const cands = [k];
   if (k.length > 4 && k.endsWith('es')) cands.push(k.slice(0, -2));
   if (k.length > 3 && /[sx]$/.test(k)) cands.push(k.slice(0, -1));
+  if (k.length > 4 && k.endsWith('ies')) cands.push(k.slice(0, -3) + 'y');
   for (const c of cands) {
     const r = P.keys.get(c) || P.stems.get(c);
     if (r) return { ok: true, row: r, exact: c === k };
   }
   if (lsRude(t)) return { ok: false, why: 'rude' };
   for (const c of cands) if (P.set.keys.has(c)) return { ok: false, why: 'fit' };
+  const all = lsAll(), k0 = lsNorm(t);
+  if (all.has(k0) || all.has(k)) return { ok: false, why: 'fit' };
   const tol = lsTol(k.length, P.set.z);
   if (tol > 0) {
     let best = null, bd = tol + 1;
@@ -180,6 +192,7 @@ function lsMatch(P, text) {
       if (d < bd || (d === bd && best && P.list[i + 1].w > best.w)) { bd = d; best = P.list[i + 1]; }
     }
     if (best && bd <= tol) return { ok: true, row: best, exact: false };
+    for (const key of P.set.keys.keys()) if (key[0] === k[0] && lsOsa(k, key, tol) <= tol) return { ok: false, why: 'fit' };
   }
   return { ok: false, why: 'none' };
 }
@@ -267,7 +280,7 @@ function lsClean(raw) {
       if (!d || typeof d !== 'object' || !Array.isArray(d.a)) return;
       const a = d.a.slice(0, LS_N).map(x => Array.isArray(x) ? [typeof x[0] === 'string' && /^[a-z0-9-]{1,40}$/.test(x[0]) ? x[0] : '', lsInt(x[1], 0, 100, 0), lsInt(x[2], -1, 5, -1), lsInt(x[3], 0, 120000, 0), typeof x[4] === 'number' && isFinite(x[4]) ? Math.max(0, Math.min(1, x[4])) : 0, x[5] ? 1 : 0] : ['', 0, -1, 0, 0, 0]);
       const ids = Array.isArray(d.p) ? d.p.slice(0, LS_N).filter(x => typeof x === 'string' && x.length < 60) : [];
-      s.days[k] = { a, p: ids, done: !!d.done && a.length >= LS_N, at: lsInt(d.at, 0, 4e12, 0) };
+      s.days[k] = { a, p: ids.length === LS_N && ids.every(id => LS_PROMPT_BY.has(id)) ? ids : [], done: !!d.done && a.length >= LS_N, at: lsInt(d.at, 0, 4e12, 0) };
     });
   }
   s.best = lsInt(raw.best, 0, 700, 0);
@@ -451,7 +464,7 @@ function lsScene(cv) {
     S.dirty = true;
   };
   S.px = () => S.W * (S.port ? .36 : .3);
-  S.py = () => S.H * (S.port ? .64 : .7);
+  S.py = () => S.port ? 300 + (S.H - 300) * .4 : S.H * .7;
   S.set = (pts, now) => { S.lnT = Math.log(lsAuOf(pts)); if (now) { S.lnau = S.lnT; S.speed = 0; } S.dirty = true; };
   S.boost = tier => {
     const tt = LS_TIERS[Math.max(0, Math.min(5, tier))];
@@ -858,18 +871,27 @@ function lsTexts(G) {
   G.scene.labels = L; G.scene.lang = lsLang(); G.scene.nextKey = '';
 }
 function lsFit(G, force) {
-  const port = (G.root.clientWidth || 800) < 640;
-  if (force || port !== G.port) {
-    G.port = port; G.W = port ? 400 : 960; G.H = port ? 720 : 600;
-    G.wrap.style.width = `min(100%, ${G.W}px, calc((100dvh - var(--goff, 250px)) * ${(G.W / G.H).toFixed(4)}))`;
-    G.wrap.style.aspectRatio = `${G.W} / ${G.H}`;
-    G.st.style.width = G.W + 'px'; G.st.style.height = G.H + 'px';
+  const rw = G.root.clientWidth || 800, port = rw < 640;
+  let sh = 600;
+  if (port) {
+    let goff = 250;
+    try { const v = parseFloat(getComputedStyle(G.wrap).getPropertyValue('--goff')); if (isFinite(v) && v >= 0) goff = v; } catch (e) {}
+    const ah = Math.max(300, (window.innerHeight || 700) - goff);
+    sh = Math.max(500, Math.min(720, Math.round(400 * ah / Math.max(260, rw) / 10) * 10));
+  }
+  if (force || port !== G.port || sh !== G.SH) {
+    G.port = port; G.SW = port ? 400 : 960; G.SH = sh;
+    G.wrap.style.width = `min(100%, ${G.SW}px, calc((100dvh - var(--goff, 250px)) * ${(G.SW / G.SH).toFixed(4)}))`;
+    G.wrap.style.aspectRatio = `${G.SW} / ${G.SH}`;
+    G.st.style.width = G.SW + 'px'; G.st.style.height = G.SH + 'px';
     G.st.classList.toggle('port', port);
   }
-  const w = G.wrap.clientWidth || G.W, s = w / G.W;
+  const w = G.wrap.clientWidth || G.SW, s = w / G.SW;
   G.st.style.transform = `scale(${s})`;
-  const k = Math.max(1, Math.min(2.5, s * (window.devicePixelRatio || 1)));
-  if (force || Math.abs(k - G.scene.k) > .05 || G.scene.W !== G.W || G.scene.H !== G.H || G.scene.port !== port) G.scene.resize(G.W, G.H, k, port);
+  let vis = s;
+  try { const r = G.wrap.getBoundingClientRect(); if (r.width > 0) vis = r.width / G.SW; } catch (e) {}
+  const k = Math.max(1, Math.min(3, vis * (window.devicePixelRatio || 1)));
+  if (force || Math.abs(k - G.scene.k) > .05 || G.scene.W !== G.SW || G.scene.H !== G.SH || G.scene.port !== port) G.scene.resize(G.SW, G.SH, k, port);
   G.scale = s;
 }
 function lsPane(G, html, opt) {
@@ -947,7 +969,7 @@ const LS_BOTS = [
   { n: 'Easy', miss: .3, pow: 1.15, t0: 6, t1: 18, r: 800 },
   { n: 'Medium', miss: .15, pow: .7, t0: 4.5, t1: 14, r: 1000 },
   { n: 'Hard', miss: .07, pow: .3, t0: 3.5, t1: 10, r: 1250 },
-  { n: 'Hardest', miss: .03, pow: -.3, t0: 2.5, t1: 7.5, r: 1550 }
+  { n: 'Hardest', miss: .02, pow: -.8, t0: 2.5, t1: 7, r: 1550 }
 ];
 const LS_BOTN = ['Nova', 'Orbit', 'Pulsar', 'Quasar', 'Vega', 'Lyra', 'Atlas', 'Cosmo', 'Halley', 'Kepler', 'Juno', 'Rigel', 'Sirius', 'Titan', 'Zenith'];
 function lsBotPick(P, lvl, R) {
@@ -1751,7 +1773,7 @@ function lsAct(G, a, el) {
   if (a === 'leave') { try { G.api.net.close(); } catch (e) {} G.ntok++; G.online = false; G.H = null; G.C = null; G.role = null; return lsMenu(G); }
 }
 function lsMount(root, api) {
-  const G = { api, root, alive: true, snd: lsSound(api), sv: lsClean(api.load()), ntok: 0, online: false, role: null, R: null, C: null, H: null, lang: lsLang(), paneKey: '', rerender: null, port: false, W: 960, H0: 600, scale: 1, lastSec: 0 };
+  const G = { api, root, alive: true, snd: lsSound(api), sv: lsClean(api.load()), ntok: 0, online: false, role: null, R: null, C: null, H: null, lang: lsLang(), paneKey: '', rerender: null, port: false, SW: 960, SH: 600, scale: 1, lastSec: 0 };
   G.myName = () => { try { const p = JSON.parse(localStorage.getItem('gameplay:profile') || 'null'); if (p && (p.username || p.displayName)) return String(p.username || p.displayName).replace(/[<>&"']/g, '').slice(0, 16); } catch (e) {} return T('You'); };
   G.onlineSubmit = auto => lsNetSubmit(G, auto);
   lsBuild(G);
@@ -1805,6 +1827,8 @@ function lsMount(root, api) {
       lsHud(G, !G.$hud.hidden);
     }
   }, 120);
+  const warm = () => api.timeout(() => { try { if (lsAllStep()) warm(); } catch (e) {} }, 25);
+  api.timeout(warm, 1200);
   let kind = 'room';
   try { kind = sessionStorage.getItem(LS_NK) || 'room'; } catch (e) {}
   if (api.net.invite) lsOnline(G, kind === 'duel' ? 'duel' : 'room');

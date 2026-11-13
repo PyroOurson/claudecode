@@ -58,7 +58,7 @@ const LS_BOTS = [
   { n: 'Easy', miss: .3, pow: 1.15, t0: 6, t1: 18, r: 800 },
   { n: 'Medium', miss: .15, pow: .7, t0: 4.5, t1: 14, r: 1000 },
   { n: 'Hard', miss: .07, pow: .3, t0: 3.5, t1: 10, r: 1250 },
-  { n: 'Hardest', miss: .03, pow: -.3, t0: 2.5, t1: 7.5, r: 1550 }
+  { n: 'Hardest', miss: .02, pow: -.8, t0: 2.5, t1: 7, r: 1550 }
 ];
 const LS_BOTN = ['Nova', 'Orbit', 'Pulsar', 'Quasar', 'Vega', 'Lyra', 'Atlas', 'Cosmo', 'Halley', 'Kepler', 'Juno', 'Rigel', 'Sirius', 'Titan', 'Zenith'];
 function lsBotPick(P, lvl, R) {

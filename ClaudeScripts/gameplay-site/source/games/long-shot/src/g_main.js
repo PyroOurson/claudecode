@@ -24,7 +24,7 @@ function lsAct(G, a, el) {
   if (a === 'leave') { try { G.api.net.close(); } catch (e) {} G.ntok++; G.online = false; G.H = null; G.C = null; G.role = null; return lsMenu(G); }
 }
 function lsMount(root, api) {
-  const G = { api, root, alive: true, snd: lsSound(api), sv: lsClean(api.load()), ntok: 0, online: false, role: null, R: null, C: null, H: null, lang: lsLang(), paneKey: '', rerender: null, port: false, W: 960, H0: 600, scale: 1, lastSec: 0 };
+  const G = { api, root, alive: true, snd: lsSound(api), sv: lsClean(api.load()), ntok: 0, online: false, role: null, R: null, C: null, H: null, lang: lsLang(), paneKey: '', rerender: null, port: false, SW: 960, SH: 600, scale: 1, lastSec: 0 };
   G.myName = () => { try { const p = JSON.parse(localStorage.getItem('gameplay:profile') || 'null'); if (p && (p.username || p.displayName)) return String(p.username || p.displayName).replace(/[<>&"']/g, '').slice(0, 16); } catch (e) {} return T('You'); };
   G.onlineSubmit = auto => lsNetSubmit(G, auto);
   lsBuild(G);
@@ -78,6 +78,8 @@ function lsMount(root, api) {
       lsHud(G, !G.$hud.hidden);
     }
   }, 120);
+  const warm = () => api.timeout(() => { try { if (lsAllStep()) warm(); } catch (e) {} }, 25);
+  api.timeout(warm, 1200);
   let kind = 'room';
   try { kind = sessionStorage.getItem(LS_NK) || 'room'; } catch (e) {}
   if (api.net.invite) lsOnline(G, kind === 'duel' ? 'duel' : 'room');

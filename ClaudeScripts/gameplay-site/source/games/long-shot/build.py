@@ -34,7 +34,7 @@ def norm(s, drop=()):
         u = [w for w in t if w not in drop]
         if u:
             t = u
-    return ''.join(t)
+    return ''.join(t).replace('ph', 'f')
 
 
 def slug(s):

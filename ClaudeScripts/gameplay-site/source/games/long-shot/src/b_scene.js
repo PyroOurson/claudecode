@@ -155,7 +155,7 @@ function lsScene(cv) {
     S.dirty = true;
   };
   S.px = () => S.W * (S.port ? .36 : .3);
-  S.py = () => S.H * (S.port ? .64 : .7);
+  S.py = () => S.port ? 300 + (S.H - 300) * .4 : S.H * .7;
   S.set = (pts, now) => { S.lnT = Math.log(lsAuOf(pts)); if (now) { S.lnau = S.lnT; S.speed = 0; } S.dirty = true; };
   S.boost = tier => {
     const tt = LS_TIERS[Math.max(0, Math.min(5, tier))];

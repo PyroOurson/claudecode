@@ -201,18 +201,27 @@ function lsTexts(G) {
   G.scene.labels = L; G.scene.lang = lsLang(); G.scene.nextKey = '';
 }
 function lsFit(G, force) {
-  const port = (G.root.clientWidth || 800) < 640;
-  if (force || port !== G.port) {
-    G.port = port; G.W = port ? 400 : 960; G.H = port ? 720 : 600;
-    G.wrap.style.width = `min(100%, ${G.W}px, calc((100dvh - var(--goff, 250px)) * ${(G.W / G.H).toFixed(4)}))`;
-    G.wrap.style.aspectRatio = `${G.W} / ${G.H}`;
-    G.st.style.width = G.W + 'px'; G.st.style.height = G.H + 'px';
+  const rw = G.root.clientWidth || 800, port = rw < 640;
+  let sh = 600;
+  if (port) {
+    let goff = 250;
+    try { const v = parseFloat(getComputedStyle(G.wrap).getPropertyValue('--goff')); if (isFinite(v) && v >= 0) goff = v; } catch (e) {}
+    const ah = Math.max(300, (window.innerHeight || 700) - goff);
+    sh = Math.max(500, Math.min(720, Math.round(400 * ah / Math.max(260, rw) / 10) * 10));
+  }
+  if (force || port !== G.port || sh !== G.SH) {
+    G.port = port; G.SW = port ? 400 : 960; G.SH = sh;
+    G.wrap.style.width = `min(100%, ${G.SW}px, calc((100dvh - var(--goff, 250px)) * ${(G.SW / G.SH).toFixed(4)}))`;
+    G.wrap.style.aspectRatio = `${G.SW} / ${G.SH}`;
+    G.st.style.width = G.SW + 'px'; G.st.style.height = G.SH + 'px';
     G.st.classList.toggle('port', port);
   }
-  const w = G.wrap.clientWidth || G.W, s = w / G.W;
+  const w = G.wrap.clientWidth || G.SW, s = w / G.SW;
   G.st.style.transform = `scale(${s})`;
-  const k = Math.max(1, Math.min(2.5, s * (window.devicePixelRatio || 1)));
-  if (force || Math.abs(k - G.scene.k) > .05 || G.scene.W !== G.W || G.scene.H !== G.H || G.scene.port !== port) G.scene.resize(G.W, G.H, k, port);
+  let vis = s;
+  try { const r = G.wrap.getBoundingClientRect(); if (r.width > 0) vis = r.width / G.SW; } catch (e) {}
+  const k = Math.max(1, Math.min(3, vis * (window.devicePixelRatio || 1)));
+  if (force || Math.abs(k - G.scene.k) > .05 || G.scene.W !== G.SW || G.scene.H !== G.SH || G.scene.port !== port) G.scene.resize(G.SW, G.SH, k, port);
   G.scale = s;
 }
 function lsPane(G, html, opt) {
