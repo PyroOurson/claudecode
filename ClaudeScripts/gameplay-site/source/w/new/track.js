@@ -12,11 +12,167 @@ const trVis = () => { const t = performance.now(); if (TRS.von) TRS.vis += t - T
 const trZoom = () => { if (!trMq('(pointer: fine)') || window.top !== window || !outerWidth || !innerWidth) return null; const z = outerWidth / innerWidth, s = [.25, .33, .5, .67, .75, .8, .9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5].reduce((a, b) => Math.abs(b - z) < Math.abs(a - z) ? b : a); return Math.abs(s - z) / s < .03 ? s : null; };
 const trVotes = () => { try { return JSON.parse(localStorage.getItem('gameplay:votes')) || {}; } catch (e) { return {}; } };
 const TR_TAG = { game_launch: 1, game_play: 1, game_time: 1, game_quit: 1, error: 1, restart: 1, pause: 1, fullscreen: 1 };
+const TR_ERR = { m: '', s: '', t: 0 };
+const TR_X = { op: null, l1: 0, set: null, inv: 0, pt: null, su: new Set(), lu: -1e9, ach: 0, mem: 0 };
+const trStk = s => String(s || '').split('\n').slice(0, 7).map(l => l.replace(/(?:https?|blob|file|chrome-extension|moz-extension):\/\/[^\s)]*\/([^/\s)?#]*)(?:[?#][^\s):]*)?/g, '$1').replace(/\s+/g, ' ').trim()).filter(Boolean).join(' | ').slice(0, 400);
+const trErrNote = (m, st) => { if (!st) return; TR_ERR.m = String(m || '').slice(0, 60); TR_ERR.s = trStk(st); TR_ERR.t = Date.now(); };
+addEventListener('error', e => { try { if (e && e.error && e.error.stack) trErrNote(e.message, e.error.stack); } catch (x) {} }, true);
+addEventListener('unhandledrejection', e => { try { const r = e && e.reason; if (r && r.stack) trErrNote(r.message || r, r.stack); } catch (x) {} }, true);
+function trSetSnap() {
+  const o = {};
+  try { Object.keys(S.prefs || {}).forEach(k => { const v = S.prefs[k]; if (v == null || typeof v !== 'object') o[k] = v; }); o.theater = S.theater !== false; o.lang = window.gpI18n && gpI18n.lang || document.documentElement.lang || ''; } catch (e) {}
+  return o;
+}
+function trPartyEnd(why) {
+  const P = TR_X.pt;
+  if (!P) return;
+  TR_X.pt = null;
+  track('party_end', { game: P.g, role: P.role, sec: Math.round((performance.now() - P.t) / 1000), drops: P.drops, backs: P.backs, players: P.n || null, pub: P.pub, via: P.via || null, why: String(why || '').slice(0, 16) });
+}
+function trOnline(id) { if (TR.g && TR.g.g.id === id) TR.g.onl = 1; }
 function trTag(e, p) {
   try {
+    const now = performance.now();
     if (TR_TAG[e] && TR.vis && p.game === TR.vis.game && p.v == null) p.v = TR.vis.id;
-    if (e === 'party_join' && TR.pj && performance.now() - TR.pj < 120000) { p.ms = Math.round(performance.now() - TR.pj); TR.pj = 0; }
+    if (e === 'party_join' && TR.pj && now - TR.pj < 120000) { p.ms = Math.round(now - TR.pj); TR.pj = 0; }
+    if (e === 'game_open') TR_X.op = { g: p.game, t: now };
+    else if (e === 'game_launch') {
+      if (TR_X.op && TR_X.op.g === p.game && now - TR_X.op.t < 600000) p.lt = Math.round(now - TR_X.op.t);
+      TR_X.op = null;
+      if (!TR_X.l1) { TR_X.l1 = 1; p.ttf = Math.round(now); }
+    } else if (e === 'error') {
+      if (!p.stk && TR_ERR.s && Date.now() - TR_ERR.t < 3000 && (!p.msg || String(p.msg).slice(0, 60) === TR_ERR.m || String(p.msg).indexOf(TR_ERR.m.slice(0, 30)) >= 0)) p.stk = TR_ERR.s;
+    } else if (e === 'setting' && p.k) {
+      if (!TR_X.set) TR_X.set = trSetSnap();
+      const o = TR_X.set[p.k];
+      if (o != null && typeof o !== 'object') p.old = String(o).slice(0, 40);
+      TR_X.set[p.k] = p.v;
+    } else if (e === 'party_create' || e === 'party_join') {
+      if (TR_X.pt) trPartyEnd('new');
+      TR_X.pt = { g: p.game, t: now, role: e === 'party_create' ? 'host' : 'guest', pub: p.pub ? 1 : 0, via: p.via || (p.rt ? 'site' : p.peer ? 'peerjs' : ''), drops: 0, backs: 0, n: 0 };
+      if (e === 'party_join' && TR_X.inv && now - TR_X.inv < 180000) { p.inv = 1; TR_X.inv = 0; }
+      trOnline(p.game);
+    } else if (e === 'party_play' || e === 'online_party') {
+      if (TR_X.pt && p.players) TR_X.pt.n = Math.max(TR_X.pt.n, +p.players || 0);
+      trOnline(p.game);
+    } else if (e === 'auth' && p.act === 'return' && p.kind === 'google') trSu('google', 'back');
   } catch (x) {}
+}
+function trSu(m, s) {
+  const k = m + ':' + s;
+  if (TR_X.su.has(k)) return;
+  TR_X.su.add(k);
+  track('su_step', { m, s });
+}
+function trSec(kind, method, ok, code) {
+  if (!SB.on) return;
+  try { sbRest('rpc/sec_note', { method: 'POST', body: { p_kind: kind, p_method: method, p_ok: !!ok, p_code: code ? String(code).slice(0, 40) : null }, auth: !!SB.user, keep: true }).catch(() => {}); } catch (e) {}
+}
+function trAuthSeen(u, init, r) {
+  const m = String(init && init.method || 'GET').toUpperCase();
+  if (m !== 'POST' && m !== 'PATCH') return;
+  const path = u.replace(/^[a-z]+:\/\/[^/]+/i, ''), st = r ? r.status : 0, ok = st >= 200 && st < 300;
+  const code = () => r && !ok && r.status !== 0 ? r.clone().json().then(j => j && (j.error_code || j.code || j.error) || 'http_' + r.status, () => 'http_' + r.status) : Promise.resolve(r ? 'http_' + r.status : 'network');
+  const body = init && typeof init.body === 'string' ? init.body : '';
+  if (/\/rpc\/login_email(\?|$)/.test(path)) {
+    TR_X.lu = performance.now();
+    if (r && r.status === 429) trSec('login', 'username', false, 'rate_limited');
+    else if (ok) r.clone().text().then(t => { if (!t || t === 'null' || t === '""') trSec('login', 'username', false, 'invalid_credentials'); }, () => {});
+  } else if (/\/auth\/v1\/token\?grant_type=password/.test(path)) {
+    const by = performance.now() - TR_X.lu < 20000 ? 'username' : 'email';
+    code().then(c => trSec('login', by, ok, ok ? null : c));
+  } else if (/\/auth\/v1\/token\?grant_type=id_token/.test(path)) {
+    code().then(c => trSec('login', 'google_relay', ok, ok ? null : c));
+    if (ok) trSu('google', 'back');
+  } else if (/\/auth\/v1\/token\?grant_type=pkce/.test(path)) {
+    const k = typeof SB_RET !== 'undefined' && SB_RET ? SB_RET.kind : '';
+    if (k === 'google') code().then(c => trSec('login', 'google', ok, ok ? null : c));
+  } else if (/\/auth\/v1\/signup(\?|$)/.test(path)) {
+    code().then(c => trSec('signup', 'email', ok, ok ? null : c));
+    if (ok) trSu('email', 'created');
+  } else if (/\/auth\/v1\/verify(\?|$)/.test(path)) {
+    const sig = /"type"\s*:\s*"signup"/.test(body);
+    code().then(c => trSec('verify', sig ? 'email' : '', ok, ok ? null : c));
+    if (ok && sig) trSu('email', 'verified');
+  } else if (m === 'PATCH' && ok && /\/rest\/v1\/profiles\?id=eq\./.test(path) && /"username"/.test(body)) {
+    let g = false;
+    try { g = sessionStorage.getItem('gameplay:su') === 'google'; } catch (e) {}
+    if (g) trSu('google', 'saved');
+  }
+}
+function trSuWatch() {
+  const am = document.getElementById('aumodal'), un = document.getElementById('unmodal');
+  if (!am || !window.MutationObserver) return;
+  let t = 0;
+  const look = () => {
+    if (!am.hidden && SB.view === 'main' && SB.mode === 'up') { trSu('email', 'open'); trSu('google', 'open'); }
+    if (un && !un.hidden) { let g = false; try { g = sessionStorage.getItem('gameplay:su') === 'google'; } catch (e) {} if (g) trSu('google', 'name'); }
+  };
+  const mo = new MutationObserver(() => { clearTimeout(t); t = setTimeout(look, 300); });
+  mo.observe(am, { attributes: true, attributeFilter: ['hidden', 'class', 'data-auv', 'data-aumode'], subtree: true });
+  if (un) mo.observe(un, { attributes: true, attributeFilter: ['hidden'] });
+  look();
+  document.addEventListener('focusin', e => { const f = e.target && e.target.closest && e.target.closest('#auupform'); if (f) trSu('email', 'start'); }, true);
+  document.addEventListener('submit', e => { if (e.target && e.target.id === 'auupform') trSu('email', 'submit'); }, true);
+  document.addEventListener('click', e => {
+    const t = e.target;
+    if (!(t instanceof Element)) return;
+    if (t.closest('#auupgo')) trSu('email', 'submit');
+    if (t.closest('[data-auth="google"]') && SB.mode === 'up') { trSu('google', 'click'); try { if (anOk()) sessionStorage.setItem('gameplay:su', 'google'); } catch (x) {} }
+    if (t.closest('[data-ch="go"]')) TR_X.inv = performance.now();
+  }, true);
+}
+function trDiag(k, d) {
+  if (k === 'track') return;
+  if (k === 'toast') {
+    if (typeof d === 'string' && TR.g && TR_X.ach < 30 && /achievement|unlocked|trophy|badge|milestone|succ[eè]s d[ée]bloqu/i.test(d)) { TR_X.ach++; track('milestone', { game: TR.g.g.id, k: 'ach' }); }
+    return;
+  }
+  if (k !== 'net' || !d || !TR_X.pt) return;
+  const a = d.a, P = TR_X.pt;
+  if (a === 'guest-lost' || a === 'guest-away' || (a === 'rt-link-end' && d.why && d.why !== 'closed' && d.why !== 'shut')) P.drops++;
+  else if (a === 'rt-door-rejoin' || (a === 'join-start' && d.resume)) P.backs++;
+  else if (a === 'shut') trPartyEnd(d.keep ? 'keep' : 'shut');
+}
+function trDiagHook() {
+  try {
+    if (typeof DIAG === 'undefined' || !DIAG || DIAG.__tr || typeof DIAG.ev !== 'function') return;
+    const ev0 = DIAG.ev;
+    DIAG.ev = function (k, d) { try { trDiag(k, d); } catch (e) {} return ev0.apply(this, arguments); };
+    DIAG.__tr = 1;
+  } catch (e) {}
+}
+function trMem() {
+  if (TR_X.mem) return;
+  TR_X.mem = 1;
+  const m = performance.memory;
+  if (!m || !m.usedJSHeapSize) return;
+  track('mem10', { mb: Math.round(m.usedJSHeapSize / 1048576), lim: m.jsHeapSizeLimit ? Math.round(m.jsHeapSizeLimit / 1048576) : null, game: TR.g ? TR.g.g.id : null });
+}
+const TR_DK = /^(diff|difficulty|skill|level|lvl|lv|ai|cpu|bots?|speed|hard)$/i, TR_MK = /^(mode|opp|opponent|vs|players|play)$/i;
+const TR_WIN = /\b(you win|you won|wins|win!|victory|victorious|winner|cleared|complete|completed|champion|escaped|solved)\b/i;
+const TR_LOSS = /\b(you lose|you lost|lost|game over|defeat|defeated|crashed|dead|died|wasted|busted|eliminated|time'?s up|out of (?:lives|moves|time)|no moves left|failed)\b/i;
+function trSegKey(b) { const h = b.closest('[data-k]'); return String(b.dataset.k || (h ? h.dataset.k : '') || '').toLowerCase(); }
+function trSegPick(G, b) {
+  const k = trSegKey(b), v = String(b.dataset.v == null ? '' : b.dataset.v).slice(0, 16);
+  if (!k || v === '') return;
+  if (TR_DK.test(k)) G.dif = (k + '=' + v).slice(0, 24);
+  else if (TR_MK.test(k)) G.mk = v;
+}
+function trSegScan(G) {
+  try {
+    const root = frame.querySelector('.g-root');
+    if (!root) return;
+    root.querySelectorAll('[data-k] [data-v].on, [data-k] [data-v][aria-checked="true"], [data-k] [data-v][aria-pressed="true"], [data-k][data-v].on').forEach(b => { const k = trSegKey(b); if ((TR_DK.test(k) && !G.dif) || (TR_MK.test(k) && !G.mk)) trSegPick(G, b); });
+  } catch (e) {}
+}
+function trMode(G) {
+  const m = String(G.mk || '').toLowerCase(), pl = G.g.info && G.g.info.pl || 's';
+  if (G.onl || /net|online/.test(m)) return 'online';
+  if (/(^|[^a-z])(ai|cpu|bots?|computer|solo)([^a-z]|$)/.test(m)) return 'bots';
+  if (/2p|pvp|local|duo|two|pass|hot|versus|friend/.test(m)) return 'local';
+  if (pl === 's') return 'solo';
+  return G.dif ? 'bots' : 'offline';
 }
 function trTake(G) {
   const b = S.best[G.g.id], o = { fr: G.pf, ft: G.pt, sl: G.ps, lf: G.pl, rn: G.rounds - G.r0, rec: b != null && b !== G.b0 ? 1 : 0 };
@@ -44,8 +200,8 @@ function trNet() {
     try {
       const u = typeof input === 'string' ? input : input instanceof URL ? input.href : input && input.url || '';
       if (hosts.some(b => u.indexOf(b + '/') === 0)) {
-        const t = performance.now();
-        p.then(r => { RQ.n++; RQ.t += performance.now() - t; if (r.status === 429) RQ.l++; else if (r.status >= 500) RQ.s5++; else if (r.status >= 400) RQ.s4++; }, e => { if (!(e && e.name === 'AbortError')) { RQ.n++; RQ.f++; } });
+        const t = performance.now(), init = arguments[1], au = /\/auth\/v1\/(token|signup|verify)|\/rpc\/login_email|\/rest\/v1\/profiles\?id=eq\./.test(u);
+        p.then(r => { RQ.n++; RQ.t += performance.now() - t; if (r.status === 429) RQ.l++; else if (r.status >= 500) RQ.s5++; else if (r.status >= 400) RQ.s4++; if (au) { try { trAuthSeen(u, init, r); } catch (x) {} } }, e => { if (!(e && e.name === 'AbortError')) { RQ.n++; RQ.f++; } });
       }
     } catch (e) {}
     return p;
@@ -89,7 +245,7 @@ function trBeat() {
 }
 function trStart(g, ctl) {
   TRS.games++; TRS.gset.add(g.id);
-  const t0 = performance.now(), A = ctl.api, G = { g, t0, why: 'exit', rounds: 0, sc: [], last: null, lv: null, fr: 0, ft: 0, fs: [], fh: new Uint32Array(4000), inp: { k: 0, m: 0, t: 0, p: 0 }, on: {}, pf: 0, pt: 0, ps: 0, pl: 0, r0: 0, b0: S.best[g.id] };
+  const t0 = performance.now(), A = ctl.api, G = { g, t0, why: 'exit', rounds: 0, sc: [], last: null, lv: null, fr: 0, ft: 0, fs: [], fh: new Uint32Array(4000), inp: { k: 0, m: 0, t: 0, p: 0 }, on: {}, pf: 0, pt: 0, ps: 0, pl: 0, r0: 0, b0: S.best[g.id], li: 0, fin: 0, w: 0, l: 0, dif: '', mk: '', onl: TR_X.pt && TR_X.pt.g === g.id ? 1 : 0 };
   if (TR.g) trEnd1(TR.g);
   if (!TR.vis || TR.vis.game !== g.id || TR.vis.done) TR.vis = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8), game: g.id, ms: 0, t: t0, on: false, sent: 0, st: t0, done: false };
   G.vis = TR.vis; G.a0 = TR.vis.ms;
@@ -99,8 +255,9 @@ function trStart(g, ctl) {
   A.score = v => { if (typeof v === 'number' && isFinite(v)) G.last = v; return sc(v); };
   A.submit = v => { if (typeof v === 'number' && isFinite(v) && G.sc.length < 40) G.sc.push(v); return sb(v); };
   A.overlay = (o = {}) => { const r = ov(o); if (o && o.stats && o.stats.length) trRound(G, o); else if (performance.now() - G.t0 > 90000) trAsk(G); return r; };
-  A.on(window, 'keydown', e => { if (!isField(e.target)) G.on.k = 1; }, true);
-  A.on(frame, 'pointerdown', e => { G.on[e.pointerType === 'touch' || e.pointerType === 'pen' ? 't' : 'm'] = 1; }, true);
+  A.on(window, 'keydown', e => { if (!isField(e.target)) { G.on.k = 1; G.li = performance.now(); } }, true);
+  A.on(frame, 'pointerdown', e => { G.on[e.pointerType === 'touch' || e.pointerType === 'pen' ? 't' : 'm'] = 1; G.li = performance.now(); }, true);
+  A.on(frame, 'click', e => { const b = e.target instanceof Element && e.target.closest('[data-v]'); if (b) trSegPick(G, b); }, true);
   ctl.add(() => trEnd1(G));
   let last = 0, s0 = 0, n = 0, k = 0;
   const step = t => {
@@ -128,6 +285,10 @@ function trLow(h, n) {
 }
 function trRound(G, o) {
   G.rounds++;
+  G.fin = performance.now();
+  const ttl = String((o.kicker || '') + ' ' + (o.title || '')).replace(/<[^>]*>/g, ' ');
+  if (TR_WIN.test(ttl)) G.w++; else if (TR_LOSS.test(ttl)) G.l++;
+  if (!G.dif || !G.mk) trSegScan(G);
   for (const [k, v] of o.stats) {
     if (!/^(level|wave|stage|floor|round|lap|world|chapter|zone|tier|night|day)s?\b/i.test(String(k))) continue;
     const n = parseFloat(String(v).replace(/<[^>]*>/g, '').replace(/[^\d.-]/g, ''));
@@ -172,8 +333,10 @@ function trEnd1(G) {
   TR.pf = { game: G.g.id, o: tk };
   if (G.why !== 'restart') { G.vis.done = true; trEmit(G.vis); }
   if (TR.idle) { TR.idle = false; trWake(); }
-  const fs = G.fs.slice().sort((a, b) => a - b), I = G.inp;
-  track('game_quit', { game: G.g.id, sec: Math.round((now - G.t0) / 1000), act: Math.round((G.vis.ms - G.a0) / 1000), why: G.why, rounds: G.rounds, sc: G.sc, last: G.last, lv: G.lv, fps: G.ft ? G.fr * 1000 / G.ft : null, fpsmin: fs.length ? fs[0] : null, fps5: fs.length ? fs[Math.floor(fs.length * .05)] : null, fps10: trLow(G.fh, G.fr), hz: TR.hz, ik: I.k, im: I.m, it: I.t, ip: I.p });
+  const fs = G.fs.slice().sort((a, b) => a - b), I = G.inp, act = Math.round((G.vis.ms - G.a0) / 1000);
+  if (!G.dif || !G.mk) trSegScan(G);
+  const ab = G.rounds ? (G.li > G.fin + 1500 ? 1 : 0) : (act >= 5 ? 1 : 0);
+  track('game_quit', { game: G.g.id, sec: Math.round((now - G.t0) / 1000), act, why: G.why, rounds: G.rounds, rs: G.rounds + ab, ab, w: G.w, l: G.l, dif: G.dif || null, mo: trMode(G), sc: G.sc, last: G.last, lv: G.lv, fps: G.ft ? G.fr * 1000 / G.ft : null, fpsmin: fs.length ? fs[0] : null, fps5: fs.length ? fs[Math.floor(fs.length * .05)] : null, fps10: trLow(G.fh, G.fr), hz: TR.hz, ik: I.k, im: I.m, it: I.t, ip: I.p });
 }
 function trView(from) {
   const now = performance.now();
@@ -206,8 +369,8 @@ function trDead(t) {
 function trVitalsSend() {
   if (TR.vsent) return;
   TR.vsent = true;
-  const n = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null, f = performance.getEntriesByName ? performance.getEntriesByName('first-contentful-paint')[0] : null;
-  track('vitals', { lcp: TR.vit.lcp, cls: Math.round(TR.vit.cls * 1000) / 1000, inp: TR.vit.inp || null, fcp: f ? f.startTime : null, ttfb: n ? n.responseStart : null, load: n && n.loadEventEnd ? n.loadEventEnd : null, rdy: TR.rdy, v: view });
+  const n = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null, f = performance.getEntriesByName ? performance.getEntriesByName('first-contentful-paint')[0] : null, fp = performance.getEntriesByName ? performance.getEntriesByName('first-paint')[0] : null;
+  track('vitals', { lcp: TR.vit.lcp, cls: Math.round(TR.vit.cls * 1000) / 1000, inp: TR.vit.inp || null, fp: fp ? fp.startTime : null, fcp: f ? f.startTime : null, ttfb: n ? n.responseStart : null, load: n && n.loadEventEnd ? n.loadEventEnd : null, rdy: TR.rdy, v: view });
 }
 function trHz() {
   return new Promise(r => {
@@ -329,6 +492,7 @@ function trSess(final) {
 function trHidden() { if (TR.g) { trTick(TR.g, performance.now()); trEmit(TR.g.vis); } trImpFlush(); trVitalsSend(); trSess(false); }
 function trEnd() {
   if (TR.g) { TR.g.why = 'close'; trEnd1(TR.g); }
+  trPartyEnd('close');
   trScroll(); trImpFlush(); trVitalsSend();
   track('page_time', { v: view, sec: Math.round((performance.now() - TR.v0) / 1000), exit: true });
   trSess(true);
@@ -337,6 +501,10 @@ function trBoot() {
   TR.v0 = performance.now();
   TR.rdy = Math.round(TR.v0);
   trNet();
+  trDiagHook();
+  TR_X.set = trSetSnap();
+  try { trSuWatch(); } catch (e) {}
+  setTimeout(trMem, Math.max(1000, 600000 - performance.now()));
   const ob = (type, fn, o) => { try { new PerformanceObserver(l => l.getEntries().forEach(fn)).observe(Object.assign({ type, buffered: true }, o)); } catch (e) {} };
   ob('layout-shift', e => { if (!e.hadRecentInput) TR.vit.cls += e.value; });
   ob('largest-contentful-paint', e => { TR.vit.lcp = e.startTime; });
