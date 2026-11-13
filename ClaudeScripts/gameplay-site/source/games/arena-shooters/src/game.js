@@ -179,9 +179,9 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
       if (locked()) { if (Math.abs(e.movementX) < 500 && Math.abs(e.movementY) < 500) lookBy(e.movementX, e.movementY); return; }
       if (freeMouse && scr === 'play' && !paused && (e.buttons & 3) && !touchMode) lookBy(e.movementX || 0, e.movementY || 0);
     });
-    canvas.addEventListener('contextmenu', e => e.preventDefault());
-    wrap.addEventListener('contextmenu', e => e.preventDefault());
-    wrap.addEventListener('mousedown', e => {
+    api.on(canvas, 'contextmenu', e => e.preventDefault());
+    api.on(wrap, 'contextmenu', e => e.preventDefault());
+    api.on(wrap, 'mousedown', e => {
       if (e.target.closest('.fp-ui button,.fp-ui input,.fp-ui select,.fp-ui a,.fp-chat input')) return;
       if (performance.now() - lastTouch < 800) return;
       if (touchMode) { touchMode = false; touchUI(); }
@@ -196,7 +196,7 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
     api.on(window, 'mouseup', e => { if (e.button === 0) inp.fire = false; if (e.button === 2) inp.ads = false; });
     api.on(window, 'blur', () => { clearButtons(); });
     api.on(document, 'visibilitychange', () => { if (document.hidden) clearButtons(); });
-    wrap.addEventListener('wheel', e => { if (scr === 'play' && !paused && !e.target.closest('.fp-card')) { e.preventDefault(); if (Math.abs(e.deltaY) > 2 && performance.now() - (inp.wheelT || 0) > 160) { inp.wheelT = performance.now(); pressN('swapN'); } } }, { passive: false });
+    api.on(wrap, 'wheel', e => { if (scr === 'play' && !paused && !e.target.closest('.fp-card')) { e.preventDefault(); if (Math.abs(e.deltaY) > 2 && performance.now() - (inp.wheelT || 0) > 160) { inp.wheelT = performance.now(); pressN('swapN'); } } }, { passive: false });
     const pressN = k => { if (me && scr === 'play' && !paused) me.in[k]++; };
     const KM = Object.assign({ fwd: ['KeyW', 'ArrowUp'], back: ['KeyS', 'ArrowDown'], left: ['KeyA', 'ArrowLeft'], right: ['KeyD', 'ArrowRight'], jump: ['Space'], crouch: ['ShiftLeft', 'KeyC', 'ControlLeft'], reload: ['KeyR'], swap: ['KeyQ'], melee: ['KeyV', 'KeyF'], nade: ['KeyG'], ads: [], sb: ['Tab'], chat: ['Enter', 'KeyT'] }, G.keys || {});
     const has = (k, c) => KM[k].includes(c);
@@ -318,10 +318,10 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
         if (s.b && s.k === 'ads') s.b.classList.toggle('on', inp.adsT);
       }
     }
-    wrap.addEventListener('touchstart', tStart, { passive: false });
-    wrap.addEventListener('touchmove', tMove, { passive: false });
-    wrap.addEventListener('touchend', tEnd);
-    wrap.addEventListener('touchcancel', tEnd);
+    api.on(wrap, 'touchstart', tStart, { passive: false });
+    api.on(wrap, 'touchmove', tMove, { passive: false });
+    api.on(wrap, 'touchend', tEnd);
+    api.on(wrap, 'touchcancel', tEnd);
     function resetTouch() { touches.clear(); stick = null; if (TB.stick) TB.stick.hidden = true; inp.mxT = inp.mzT = 0; inp.fireT = inp.jumpT = inp.crouchT = inp.adsT = false; for (const k in TB) if (TB[k].classList) TB[k].classList.remove('on'); }
 
     const PAD = { prev: [] };
@@ -1347,6 +1347,11 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
       audio.close();
       view.dispose();
       if (window.__fps) delete window.__fps[ID_OF(G)];
+      ui.querySelectorAll('*').forEach(x => { x.onclick = null; });
+      ui.textContent = ''; hud.textContent = ''; ui.remove(); hud.remove();
+      W = null; me = null; previewM = null; G.debug = null;
+      delete canvas.style.width; delete canvas.style.aspectRatio;
+      for (const k in G.mats) G.mats[k].mat = null;
     };
   }
   const ID_OF = G => G.id;
