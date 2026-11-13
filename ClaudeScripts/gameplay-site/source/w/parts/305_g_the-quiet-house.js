@@ -495,13 +495,16 @@
       sconce(p, ly, pw) { p.box(0, ly, 0.04, 0.1, 0.16, 0.06, 'm', '#6a5a3a'); p.cyl(0, ly + 0.1, 0.12, 0.08, 0.14, 10, 'g', '#e8b070', 0.6); p.lamp(0, ly + 0.1, 0.25, pw * 1.5, 6, '#ffb468', 1.1); return p; },
       candle(p, ly, pw) { p.cyl(0, ly + 0.02, 0, 0.07, 0.04, 10, 'm', '#8a7a4a'); for (const sx of [-0.1, 0, 0.1]) { p.cyl(sx, ly + 0.13 + (sx ? 0 : 0.05), 0, 0.018, 0.18 + (sx ? 0 : 0.1), 8, 'p', '#e8e0c8'); p.sph(sx, ly + 0.25 + (sx ? 0 : 0.1), 0, 0.012, 0.028, 0.012, 'g', '#ffd070'); } p.box(0, ly + 0.05, 0, 0.24, 0.015, 0.02, 'm', '#8a7a4a'); p.lamp(0, ly + 0.3, 0, pw * 1.6, 6.5, '#ffaa50', 1.2); return p; },
       car(p) {
-        const B = '#2e4436', CH = '#9a9a96', G = '#141a1e';
-        p.box(0, 0.55, 0, 1.78, 0.5, 4.3, 'p', B); p.box(0, 0.38, 0, 1.7, 0.12, 4.2, 'p', '#1a2620');
-        p.box(0, 1.03, 0.25, 1.62, 0.46, 2.0, 'p', B); p.box(0, 1.03, 0.25, 1.64, 0.36, 1.9, 'm', G);
-        p.box(0, 1.27, 0.25, 1.5, 0.04, 1.9, 'p', B);
-        for (const sz of [-1, 1]) p.box(0, 0.42, sz * 2.17, 1.8, 0.16, 0.1, 'm', CH);
-        for (const sx of [-1, 1]) { p.box(sx * 0.62, 0.64, -2.151, 0.28, 0.16, 0.01, 'g', '#a8a490'); p.box(sx * 0.7, 0.62, 2.151, 0.22, 0.1, 0.01, 'g', '#5a1414'); }
-        for (const sx of [-1, 1]) for (const sz of [-1, 1]) { p.cyl(sx * 0.82, 0.33, sz * 1.38, 0.33, 0.24, 16, 'm', '#141414', null, 0, Math.PI / 2); p.cyl(sx * 0.95, 0.33, sz * 1.38, 0.15, 0.02, 12, 'm', '#8a8a86', null, 0, Math.PI / 2); }
+        const B = '#2e4436', CH = '#a8a8a2', G = '#10161a';
+        const prof = (pts, k, w, col) => { const sh = new THREE.Shape(); pts.forEach(([z, y], i) => i ? sh.lineTo(z, y) : sh.moveTo(z, y)); const g = new THREE.ExtrudeGeometry(sh, { depth: w, bevelEnabled: false, curveSegments: 1 }); const [wx, wz] = p.tw(0, 0); addGeo(acc(p.lv, k), g, [wx + w / 2, p.y0, wz], [0, p.th - Math.PI / 2, 0], [1, 1, 1], tint(col), 1.6, 1); g.dispose(); };
+        prof([[-2.17, 0.3], [-2.2, 0.48], [-2.14, 0.7], [-1.6, 0.78], [-0.86, 0.83], [-0.74, 0.86], [-0.18, 1.33], [0.86, 1.33], [1.42, 0.88], [2.02, 0.84], [2.19, 0.72], [2.19, 0.3]], 'p', 1.76, B);
+        prof([[-0.69, 0.89], [-0.17, 1.3], [0.85, 1.3], [1.37, 0.91]], 'm', 1.775, G);
+        prof([[-2.205, 0.62], [-2.205, 0.42], [-1.95, 0.42], [-1.95, 0.62]], 'p', 1.0, '#141818');
+        for (const sx of [-1, 1]) { p.box(sx * 0.885, 1.08, 0.33, 0.012, 0.4, 0.1, 'p', B); p.box(sx * 0.885, 0.6, -0.15, 0.006, 0.42, 0.012, 'm', '#1a2420'); p.box(sx * 0.885, 0.6, 0.9, 0.006, 0.42, 0.012, 'm', '#1a2420'); p.box(sx * 0.9, 0.78, -0.05, 0.03, 0.03, 0.12, 'm', CH); p.box(sx * 0.93, 0.95, -0.66, 0.08, 0.06, 0.04, 'm', CH); p.box(sx * 0.885, 0.52, 0, 0.012, 0.05, 3.6, 'm', CH); }
+        for (const sz of [-1, 1]) p.box(0, 0.4, sz * 2.21, 1.84, 0.12, 0.08, 'm', CH);
+        for (const sx of [-1, 1]) { p.cyl(sx * 0.62, 0.6, -2.19, 0.09, 0.02, 12, 'g', '#d8d4b8', null, Math.PI / 2); p.box(sx * 0.66, 0.62, 2.196, 0.26, 0.1, 0.01, 'g', '#5a1010'); }
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) { p.cyl(sx * 0.8, 0.33, sz * 1.38, 0.33, 0.24, 16, 'm', '#121212', null, 0, Math.PI / 2); p.cyl(sx * 0.92, 0.33, sz * 1.38, 0.17, 0.02, 12, 'm', '#9a9a96', null, 0, Math.PI / 2); }
+        p.box(0, 0.25, 0, 1.6, 0.1, 3.9, 'p', '#0e1210');
         p.col(0, 0, 1.84, 4.36, 4);
         return p;
       }
@@ -639,7 +642,7 @@
     F.bench(pc(1, 5.62, 11.0, 3), 1.8); pc(1, 5.6, 11.4, 3).spot('gBench', 0, 0.9, 0);
     F.rack(pc(1, 4.6, 5.3, 0), 1.6, 1.9, 0.45); pc(1, 4.4, 5.3, 0).spot('gShelf', 0, 0.72, 0);
     F.rack(pc(1, 0.3, 7.0, 1), 1.4, 1.9, 0.45);
-    F.bulb(pc(1, 1.6, 12.4, 0), 2.35, 0.3);
+    F.bulb(pc(1, 1.6, 12.4, 0), 2.35, 0.45);
     { const p = pc(1, 0.55, 13.3, 0); for (let k = 0; k < 3; k++) { p.cyl(0, 0.11 + k * 0.22, 0, 0.34, 0.2, 16, 'm', '#161616'); p.cyl(0, 0.11 + k * 0.22, 0, 0.18, 0.205, 12, 'm', '#2a2a2a'); } p.col(0, 0, 0.7, 0.7); }
     F.washer(pc(1, 8.63, 9.6, 3)); F.rack(pc(1, 8.73, 7.6, 3), 0.9, 1.6, 0.4); pc(1, 8.73, 7.6, 3).spot('uShelf', 0, 0.62, 0);
     F.coat(pc(1, 8.6, 13.5, 0)); F.bulb(pc(1, 7.6, 10.5, 0), 2.3, 0.65);
@@ -1014,25 +1017,28 @@
     const sample = (lv, x, y, z, out) => bake(clamp(lv, 0, 2), x, y, z, 0, 1, 0, 1, out, true);
     const tmp3 = [0, 0, 0];
     const DOORS = H.DOORS.map(d => {
-      const lock = d.info.lock || null, front = d.t === E_FRONT, hg = d.info.hg || 0, s = d.info.s || 1;
-      const dir = hg ? -1 : 1, hx = d.ax === 'v' ? d.X : d.J + (hg ? 0.96 : 0.04), hz = d.ax === 'v' ? d.J + (hg ? 0.96 : 0.04) : d.X;
-      const thc = d.ax === 'v' ? (dir > 0 ? 0 : Math.PI) : (dir > 0 ? Math.PI / 2 : -Math.PI / 2), phi = 1.72;
+      const lock = d.info.lock || null, front = d.t === E_FRONT, s = d.info.s || 1;
+      const isW = t => t === E_WALL || t === E_WIN || t === E_VENT, sc = s > 0 ? d.X : d.X - 1;
+      const lowW = d.ax === 'v' ? isW(ehAt(d.lv, sc, d.J)) : isW(evAt(d.lv, d.J, sc)), highW = d.ax === 'v' ? isW(ehAt(d.lv, sc, d.J + 1)) : isW(evAt(d.lv, d.J + 1, sc));
+      const hg = highW && !lowW ? 1 : lowW && !highW ? 0 : (d.info.hg || 0);
+      const dir = hg ? -1 : 1, hx = d.ax === 'v' ? d.X : d.J + (hg ? 0.92 : 0.08), hz = d.ax === 'v' ? d.J + (hg ? 0.92 : 0.08) : d.X;
+      const thc = d.ax === 'v' ? (dir > 0 ? 0 : Math.PI) : (dir > 0 ? Math.PI / 2 : -Math.PI / 2), phi = 1.6;
       let tho = thc + phi; if ((d.ax === 'v' ? Math.sin(tho) : Math.cos(tho)) * s < 0) tho = thc - phi;
       const g = new THREE.Group(); g.position.set(hx, LY[d.lv], hz); g.rotation.y = thc;
       const a = { P: [], N: [], U: [], C: [], F: [] }, col = H.tint(front ? '#3a2a1e' : lock === 'studyKey' ? '#6a4a3a' : '#7a5a3c');
-      const bx = new THREE.BoxGeometry(0.045, 2.06, 0.92); bx.translate(0, 1.03, 0.46);
+      const bx = new THREE.BoxGeometry(0.045, 2.06, 0.85); bx.translate(0, 1.03, 0.425);
       const nb = bx.toNonIndexed(); bx.dispose();
       const P = nb.attributes.position, N = nb.attributes.normal, U = nb.attributes.uv;
       for (let i = 0; i < P.count; i++) { a.P.push(P.getX(i), P.getY(i), P.getZ(i)); a.N.push(N.getX(i), N.getY(i), N.getZ(i)); const nx = Math.abs(N.getX(i)); a.U.push(nx > 0.5 ? U.getX(i) : U.getX(i) * 0.1, U.getY(i)); a.C.push(col[0], col[1], col[2]); a.F.push(0); }
       nb.dispose();
-      for (const sd of [-1, 1]) { H.addGeo(a, H.GS, [sd * 0.055, 1.0, 0.8], [0, 0, 0], [0.028, 0.028, 0.028], H.tint('#a8904a'), 4, 1); H.addGeo(a, H.GB, [sd * 0.026, 1.0, 0.8], [0, 0, 0], [0.012, 0.18, 0.06], H.tint(lock === 'studyKey' ? '#b8322a' : lock === 'garageKey' ? '#2a5ab8' : '#6a5a3a'), 4, 1); }
+      for (const sd of [-1, 1]) { H.addGeo(a, H.GS, [sd * 0.055, 1.0, 0.75], [0, 0, 0], [0.028, 0.028, 0.028], H.tint('#a8904a'), 4, 1); H.addGeo(a, H.GB, [sd * 0.026, 1.0, 0.75], [0, 0, 0], [0.012, 0.18, 0.06], H.tint(lock === 'studyKey' ? '#b8322a' : lock === 'garageKey' ? '#2a5ab8' : '#6a5a3a'), 4, 1); }
       g.updateMatrixWorld(true);
       const geo = toGeo(THREE, a, bake, d.lv, g.matrixWorld); own(geo);
       const doorM = H.M.door || (H.M.door = H.bakeMat({ map: H.TX.door }));
       const mesh = new THREE.Mesh(geo, doorM); g.add(mesh); LG[d.lv].add(g);
       const box = { x0: 0, z0: 0, x1: 0, z1: 0, f: 1, on: true }, obox = { x0: 0, z0: 0, x1: 0, z1: 0, f: 1, on: false };
       if (d.ax === 'v') { box.x0 = d.X - 0.06; box.x1 = d.X + 0.06; box.z0 = d.J; box.z1 = d.J + 1; } else { box.z0 = d.X - 0.06; box.z1 = d.X + 0.06; box.x0 = d.J; box.x1 = d.J + 1; }
-      const ox = hx + Math.sin(tho) * 0.92, oz = hz + Math.cos(tho) * 0.92;
+      const ox = hx + Math.sin(tho) * 0.85, oz = hz + Math.cos(tho) * 0.85;
       obox.x0 = Math.min(hx, ox) - 0.04; obox.x1 = Math.max(hx, ox) + 0.04; obox.z0 = Math.min(hz, oz) - 0.04; obox.z1 = Math.max(hz, oz) + 0.04;
       H.COLL[d.lv].push(box, obox);
       const cx = d.ax === 'v' ? d.X : d.J + 0.5, cz = d.ax === 'v' ? d.J + 0.5 : d.X;
@@ -1057,7 +1063,7 @@
     }
     const PM = o => H.probeMat(o);
     const sbox = (geoW, geoH, geoD, col, matO) => own(new THREE.BoxGeometry(geoW, geoH, geoD));
-    const solid = (parent, geo, col, x, y, z, rx, ry, rz, mo) => { const m = new THREE.Mesh(geo, PM(Object.assign({ color: col }, mo || {}))); m.position.set(x, y, z); m.rotation.set(rx || 0, ry || 0, rz || 0); parent.add(m); return m; };
+    const solid = (parent, geo, col, x, y, z, rx, ry, rz, mo) => { const m = new THREE.Mesh(geo, PM(Object.assign({ color: col }, mo || {}))); m.position.set(x || 0, y || 0, z || 0); m.rotation.set(rx || 0, ry || 0, rz || 0); parent.add(m); return m; };
     const setProbe = (m, lv, x, y, z, add) => { sample(lv, x, y, z, tmp3); const p = m.material.userData.probe; if (p) p.value.setRGB(tmp3[0] + (add || 0), tmp3[1] + (add || 0), tmp3[2] + (add || 0)); };
     const FD = new THREE.Group(); LG[1].add(FD);
     const fz = 14 - WT - 0.03;
@@ -1084,11 +1090,11 @@
     const garBulb = new THREE.Mesh(own(new THREE.SphereGeometry(0.06, 10, 8)), own(new THREE.MeshBasicMaterial({ color: 0x3a3428 }))); garBulb.position.set(3, 2.6, 9.6); LG[1].add(garBulb);
     const CAR = new THREE.Group(); CAR.position.set(3.0, 0, 9.3); LG[1].add(CAR);
     { const p = H.pc(1, 0, 0, 0), saveAcc = H.ACC[1]; H.ACC[1] = {}; H.F.car(p); H.COLL[1].pop(); const carAcc = H.ACC[1]; H.ACC[1] = saveAcc; H.COLL[1].push({ x0: 3.0 - 0.92, x1: 3.0 + 0.92, z0: 9.3 - 2.18, z1: 9.3 + 2.18, f: 1 | 4 | 16, on: true }); CAR.updateMatrixWorld(true); for (const k in carAcc) { const geo = own(toGeo(THREE, carAcc[k], bake, 1, CAR.matrixWorld)); CAR.add(new THREE.Mesh(geo, H.M[k])); } }
-    const hood = new THREE.Group(); hood.position.set(0, 0.8, -0.88); CAR.add(hood);
-    { const m = solid(hood, sbox(1.72, 0.04, 1.28), 0x2e4436, 0, 0.02, -0.64, 0, 0, 0, { shininess: 30 }); setProbe(m, 1, 3, 1, 7.5, 0.01); }
-    { const m = solid(CAR, sbox(0.9, 0.1, 0.7), 0x2a2a2a, 0, 0.84, -1.6); setProbe(m, 1, 3, 1, 7.5); const t = solid(CAR, sbox(0.32, 0.05, 0.22), 0x1a1a1a, 0.5, 0.82, -1.25); setProbe(t, 1, 3, 1, 7.5); }
+    const hood = new THREE.Group(); hood.position.set(0, 0.84, -0.84); CAR.add(hood);
+    { const m = solid(hood, sbox(1.74, 0.03, 1.34), 0x2e4436, 0, 0.0, -0.67, -0.09, 0, 0, { shininess: 30 }); setProbe(m, 1, 3, 1, 7.5, 0.01); }
+    const bay = new THREE.Group(); CAR.add(bay); { const m = solid(bay, sbox(0.9, 0.14, 0.7), 0x2a2a2a, 0, 0.84, -1.6); setProbe(m, 1, 3, 1, 7.5); const t = solid(bay, sbox(0.32, 0.05, 0.22), 0x1a1a1a, 0.5, 0.82, -1.25); setProbe(t, 1, 3, 1, 7.5); for (let i = 0; i < 4; i++) { const c = solid(bay, own(new THREE.CylinderGeometry(0.02, 0.02, 0.05, 6)), 0x6a6a6a, -0.25 + i * 0.15, 0.93, -1.6); setProbe(c, 1, 3, 1, 7.5); } }
     const carBat = solid(CAR, sbox(0.27, 0.19, 0.17), 0x1e1e20, 0.5, 0.92, -1.25); carBat.visible = false; setProbe(carBat, 1, 3, 1, 7.5);
-    const carPlug = solid(CAR, own(new THREE.CylinderGeometry(0.015, 0.015, 0.08, 8)), 0xe8e4d8, -0.1, 0.94, -1.6); carPlug.visible = false; setProbe(carPlug, 1, 3, 1, 7.5);
+    const carPlug = solid(CAR, own(new THREE.CylinderGeometry(0.015, 0.015, 0.08, 8)), 0xe8e4d8, -0.1, 0.96, -1.6); carPlug.visible = false; setProbe(carPlug, 1, 3, 1, 7.5);
     const fuelCap = solid(CAR, own(new THREE.CylinderGeometry(0.045, 0.045, 0.02, 10)), 0x8a8a8a, -0.9, 0.72, 1.45, 0, 0, Math.PI / 2); setProbe(fuelCap, 1, 2.1, 0.7, 10.7, 0.02);
     const headL = [-1, 1].map(sx => { const m = new THREE.Mesh(own(new THREE.PlaneGeometry(0.26, 0.14)), own(new THREE.MeshBasicMaterial({ color: 0x2a2820 }))); m.position.set(sx * 0.62, 0.64, -2.16); m.rotation.y = Math.PI; CAR.add(m); return m; });
     const carLight = new THREE.SpotLight(0xfff0d0, 0, 18, 0.5, 0.5, 1.5); carLight.position.set(0, 0.7, -2.2); CAR.add(carLight); const clt = new THREE.Object3D(); clt.position.set(0, 0.2, -8); CAR.add(clt); carLight.target = clt;
@@ -1206,7 +1212,7 @@
     let msgQ = '';
     function say(s, dur) { msgEl.textContent = s; msgQ = s; msgEl.classList.remove('on'); void msgEl.offsetWidth; msgEl.classList.add('on'); msgT = dur || 2.6; }
     let labT = null;
-    function setLab(s, ok) { if (s === labT) return; labT = s; lab.textContent = s || ''; lab.classList.toggle('bad', !ok); xh.classList.toggle('on', !!s); if (touchOn) TB.use.textContent = s ? (ok ? T('Use') : T('Look')) : T('Use'); }
+    function setLab(s, ok, verb) { const key = (s || '') + '|' + (verb || '') + '|' + (ok ? 1 : 0) + (touchOn ? 't' : ''); if (key === labT) return; labT = key; lab.innerHTML = s ? (ok && !touchOn ? '<kbd>E</kbd>' : '') + '<b>' + esc(s) + '</b>' + (verb ? '<em>' + esc(verb) + '</em>' : '') : ''; lab.classList.toggle('bad', !ok); xh.classList.toggle('on', !!s); }
 
     function hearR(loud) { return loud * R.D.hear * (1 + 0.1 * (R.day - 1)); }
     function noise(x, y, z, lv, loud, mine) {
@@ -1278,7 +1284,7 @@
       planks.forEach((m, i) => { m.visible = i < R.locks.planks; });
       padlock.visible = hasp.visible = !R.locks.pad; codeLock.visible = codeLock.userData.hasp.visible = !R.locks.code; chain.visible = !R.locks.chain; keyhole.material.color.set(R.locks.key ? 0x5a5a5a : 0x9a8040);
       fuseIn.visible = R.fuse; lever.rotation.x = R.power ? 0.6 : 2.4; led.material.color.set(R.power ? 0x30ff60 : 0x5a1010); garBulb.material.color.set(R.power ? 0xfff0c8 : 0x3a3428); garL.intensity = R.power ? 1.1 : 0;
-      carBat.visible = R.car.bat; carPlug.visible = R.car.plug && R.D.plug; hood.rotation.x = R.car.hood ? -1.15 : 0;
+      bay.visible = R.car.hood; carBat.visible = R.car.bat && R.car.hood; carPlug.visible = R.car.plug && R.D.plug && R.car.hood; hood.rotation.x = R.car.hood ? 1.05 : 0;
       roller.scale.y = R.garage >= 2 ? 0.04 : 1;
     }
     function syncTraps() { trapPool.forEach((m, i) => { const t = R && R.traps[i]; m.visible = !!t; if (t) { m.geometry = t.sprung ? trapShutG : trapOpenG; m.position.set(t.x, LY[t.lv] + 0.002, t.z); m.rotation.y = t.i * 1.3; setProbe(m, t.lv, t.x, LY[t.lv] + 0.3, t.z, 0.03); } }); }
@@ -1340,7 +1346,7 @@
       if (!K.on || K.st === 'off' || K.st === 'catch') return;
       K.ox = K.x; K.oy = K.y; K.oz = K.z;
       if (K.st === 'stun') { K.t -= dt; if (K.t <= 0) { K.last = { x: P.x, z: P.z, lv: P.lv, t: R.t }; startSearch(); } return; }
-      if (K.st === 'wait') { K.t -= dt; if (K.t <= 0) { K.st = 'patrol'; K.path = null; } return; }
+      if (K.st === 'wait') { K.t -= dt; if (K.pend && K.pend.w >= 12) K.t = Math.min(K.t, 0.6); if (K.t <= 0) { K.st = 'patrol'; K.path = null; } return; }
       const vis = playerVisible(); K.sees = vis;
       const dP = Math.hypot(P.x - K.x, P.z - K.z);
       if (vis) {
@@ -1396,7 +1402,7 @@
       const want = Math.atan2(tx - K.x, tz - K.z); K.yaw += angDiff(K.yaw, want) * Math.min(1, dt * 7);
       if (d < 0.3) { K.pi++; if (q.lv !== K.lv && stairOf(K.lv, Math.floor(K.x), Math.floor(K.z)) === 0) K.lv = q.lv; }
       K.stuckT += dt;
-      if (K.stuckT > 1.6) { if (Math.hypot(K.x - K.sx, K.z - K.sz) < 0.25) { K.repath = 0; const goal = p[p.length - 1]; if (!goTo(goal, K.st, K.spd)) { K.path = null; } else if (Math.hypot(P.x - K.x, P.z - K.z) > 6 || P.lv !== K.lv) { const nq = NAV.pos(K.path[Math.min(1, K.path.length - 1)]); K.x = nq.x; K.z = nq.z; K.lv = nq.lv; } } K.stuckT = 0; K.sx = K.x; K.sz = K.z; }
+      if (K.stuckT > 1.4) { if (Math.hypot(K.x - K.sx, K.z - K.sz) < 0.25) { K.stuckN = (K.stuckN || 0) + 1; const goal = p[p.length - 1], st = K.st, sp = K.spd; if (K.stuckN >= 2 && !K.sees && K.pi < p.length) { const nq = NAV.pos(p[K.pi]); K.x = K.ox = nq.x; K.z = K.oz = nq.z; K.lv = nq.lv; K.stuckN = 0; } else if (!goTo(goal, st, sp)) K.path = null; } else K.stuckN = 0; K.stuckT = 0; K.sx = K.x; K.sz = K.z; }
     }
     function arrive() {
       K.path = null;
@@ -1436,8 +1442,8 @@
     const keyName = k => k === 'studyKey' ? T('red key') : T('blue key');
     const holding = k => P.held && P.held.k === k;
     const consume = () => { const it = P.held; if (it) { it.st = 'u'; P.held = null; } };
-    ITEMLIST.forEach(it => add({ kind: 'item', lv: () => it.lv, en: () => it.st === 'w' && !it.fly && (!it.dr || it.dr.open > 0.6), box: () => [it.mesh.position.x, it.mesh.position.y + it.cy, it.mesh.position.z, Math.max(it.size[0], it.size[2]), it.size[1], Math.max(it.size[0], it.size[2])], label: () => [holding('camera') && it.k === 'bulb' ? T('Load the flash bulb') : P.held ? T('Swap for the {item}', { item: iname(it.k) }) : T('Take the {item}', { item: iname(it.k) }), 1], act: () => pickup(it) }));
-    DOORS.filter(d => !d.front).forEach(d => add({ kind: 'door', lv: () => d.lv, en: () => true, box: () => { const th = d.thc + (d.tho - d.thc) * d.a, hx = d.g.position.x, hz = d.g.position.z, cx = hx + Math.sin(th) * 0.46, cz = hz + Math.cos(th) * 0.46; return [cx, LY[d.lv] + 1.05, cz, Math.abs(Math.sin(th)) * 0.46 + 0.05, 1.05, Math.abs(Math.cos(th)) * 0.46 + 0.05]; }, label: () => d.a > 0.5 ? [T('Close door'), 1] : d.locked ? (holding(d.lock) ? [T('Unlock the door'), 1] : [T('Locked ({key})', { key: keyName(d.lock) }), 0]) : [T('Open door'), 1], act: () => useDoor(d) }));
+    ITEMLIST.forEach(it => add({ kind: 'item', lv: () => it.lv, en: () => it.st === 'w' && !it.fly && (!it.dr || it.dr.open > 0.6), box: () => [it.mesh.position.x, it.mesh.position.y + it.cy, it.mesh.position.z, Math.max(it.size[0], it.size[2]), it.size[1], Math.max(it.size[0], it.size[2])], label: () => [iname(it.k), 1, holding('camera') && it.k === 'bulb' ? T('Load into the camera') : P.held ? T('Swap') : T('Take')], act: () => pickup(it) }));
+    DOORS.filter(d => !d.front).forEach(d => add({ kind: 'door', lv: () => d.lv, en: () => true, box: () => { const th = d.thc + (d.tho - d.thc) * d.a, hx = d.g.position.x, hz = d.g.position.z, cx = hx + Math.sin(th) * 0.43, cz = hz + Math.cos(th) * 0.43; return [cx, LY[d.lv] + 1.05, cz, Math.abs(Math.sin(th)) * 0.43 + 0.05, 1.05, Math.abs(Math.cos(th)) * 0.43 + 0.05]; }, label: () => d.a > 0.5 ? [T('Close door'), 1] : d.locked ? (holding(d.lock) ? [T('Unlock the door'), 1] : [T('Locked ({key})', { key: keyName(d.lock) }), 0]) : [T('Open door'), 1], act: () => useDoor(d) }));
     DRW.forEach(dr => add({ kind: 'drawer', lv: () => dr.lv, en: () => true, box: () => { const o = dr.open * 0.36, x = dr.base.x + dr.dir.x * o, z = dr.base.z + dr.dir.z * o, ax = Math.abs(dr.dir.x) > 0.5; return [x, dr.base.y, z, ax ? 0.06 : dr.w / 2, dr.dh / 2, ax ? dr.w / 2 : 0.06]; }, label: () => [dr.open > 0.5 ? T('Close drawer') : T('Open drawer'), 1], act: () => { dr.want = dr.want > 0.5 ? 0 : 1; audio.at('rustle', dr.base.x, dr.base.y, dr.base.z, 14000); audio.at('click', dr.base.x, dr.base.y, dr.base.z, 14000); noise(dr.base.x, dr.base.y, dr.base.z, dr.lv, 2.5, true); } }));
     H.HIDES.forEach(hs => add({ kind: 'hide', lv: () => hs.lv, en: () => true, box: () => hs.kind === 'bed' ? [hs.x, LY[hs.lv] + 0.42, hs.z, hs.hx, 0.42, hs.hz] : [hs.x, LY[hs.lv] + 1.0, hs.z, hs.hx, 1.0, hs.hz], label: () => [hs.kind === 'bed' ? T('Hide under the bed') : T('Hide in the wardrobe'), 1], act: () => enterHide(hs) }));
     const allDone = () => R.locks.planks === 0 && R.locks.pad && R.locks.code && R.locks.key && R.locks.chain;
@@ -1449,7 +1455,7 @@
     add({ kind: 'front', lv: () => 1, en: () => true, box: () => [11.5, 1.05, 14, 0.48, 1.05, 0.09], label: () => allDone() ? [T('Open the front door'), 1] : [T('The front door will not open'), 0], act: () => { if (allDone()) return escape('door'); audio.at('locked', 11.5, 1, 13.9, 14000); noise(11.5, 1, 13.9, 1, 6, true); const left = []; if (R.locks.planks) left.push(T('planks')); if (!R.locks.pad) left.push(T('padlock')); if (!R.locks.code) left.push(T('code lock')); if (!R.locks.chain) left.push(T('chain')); if (!R.locks.key) left.push(T('door lock')); say(T('Still in the way: {list}', { list: left.join(', ') }), 3.5); } });
     const carW = (lx, ly, lz) => [CAR.position.x + lx, ly, CAR.position.z + lz];
     const carReady = () => R.car.bat && R.car.fuel && R.car.plug;
-    add({ kind: 'hood', lv: () => 1, en: () => !cut, box: () => R.car.hood ? [...carW(0, 1.62, -1.05), 0.86, 0.4, 0.22] : [...carW(0, 0.95, -1.5), 0.86, 0.12, 0.66], label: () => [R.car.hood ? T('Close the hood') : T('Open the hood'), 1], act: () => { R.car.hood = !R.car.hood; audio.at('clunk', 3, 1, 7.8, 14000); noise(3, 1, 7.8, 1, 6, true); syncLocks(); } });
+    add({ kind: 'hood', lv: () => 1, en: () => !cut, box: () => R.car.hood ? [...carW(0, 1.72, -1.38), 0.86, 0.3, 0.16] : [...carW(0, 0.86, -1.5), 0.88, 0.1, 0.68], label: () => [R.car.hood ? T('Close the hood') : T('Open the hood'), 1], act: () => { R.car.hood = !R.car.hood; audio.at('clunk', 3, 1, 7.8, 14000); noise(3, 1, 7.8, 1, 6, true); syncLocks(); } });
     add({ kind: 'bat', lv: () => 1, en: () => R.car.hood && !R.car.bat, box: () => [...carW(0.5, 0.92, -1.25), 0.18, 0.12, 0.14], label: () => holding('battery') ? [T('Put in the battery'), 1] : [T('The battery is missing'), 0], act: () => { if (!holding('battery')) return deny(); consume(); R.car.bat = true; audio.at('clunk', 3.5, 1, 8, 14000); noise(3.5, 1, 8, 1, 6, true); syncLocks(); say(T('The battery is in.')); } });
     add({ kind: 'plug', lv: () => 1, en: () => R.car.hood && !R.car.plug, box: () => [...carW(-0.1, 0.95, -1.6), 0.09, 0.08, 0.09], label: () => holding('plug') ? [T('Fit the spark plug'), 1] : [T('A spark plug is missing'), 0], act: () => { if (!holding('plug')) return deny(); consume(); R.car.plug = true; audio.at('click', 2.9, 1, 7.7, 14000); syncLocks(); say(T('The spark plug is in.')); } });
     add({ kind: 'fuelcap', lv: () => 1, en: () => !R.car.fuel, box: () => [...carW(-0.92, 0.72, 1.45), 0.07, 0.09, 0.09], label: () => holding('fuel') ? [T('Fill the tank'), 1] : [T('The tank is empty'), 0], act: () => { if (!holding('fuel')) return deny(); consume(); R.car.fuel = true; audio.at('rustle', 2.1, 0.7, 10.7, 14000); audio.at('drop', 2.1, 0.7, 10.7, 14000, 'soft'); noise(2.1, 0.7, 10.7, 1, 6, true); say(T('The tank is full.')); } });
@@ -1800,7 +1806,7 @@
         if (bl < 1 && bl * t0 < t0 - 0.16) continue;
         best = t0; focus = t;
       }
-      if (focus) { const [s, ok] = focus.label(); setLab(s, ok); } else setLab('');
+      if (focus) { const [s, ok, verb] = focus.label(); setLab(s, ok, verb); } else setLab('');
     }
     const DBG = { cam: null };
     let cnt = 0, tvT = 0, tickT = 0, kyaw = 0;
@@ -1846,7 +1852,7 @@
       cam.position.set(x, y + lerp(EYE, CREYE, P.cr) + bob - (P.trap ? 0.25 : 0), z); cam.rotation.set(P.pitch + tr, P.yaw, P.moving ? Math.sin(P.bob) * 0.006 * amp : 0);
       return P.lv;
     }
-    const vOff = { hammer: [0.24, -0.22, -0.45, 0.3, -1.3, 0.2], cutters: [0.22, -0.24, -0.5, 0.2, -1.4, 0.1], battery: [0.2, -0.34, -0.5, 0, 0.3, 0], fuel: [0.24, -0.38, -0.5, 0, 0.4, 0], camera: [0.2, -0.2, -0.42, 0, 0, 0], bottle: [0.2, -0.32, -0.42, 0, 0, 0.1] };
+    const vOff = { hammer: [0.2, -0.2, -0.42, 0.9, 1.75, 0.35], cutters: [0.2, -0.22, -0.48, 0.7, 1.7, 0.3], battery: [0.18, -0.3, -0.48, 0.15, 0.35, 0], fuel: [0.2, -0.36, -0.5, 0.1, 0.5, 0], camera: [0.17, -0.19, -0.36, 0.05, 0.12, 0], bottle: [0.17, -0.28, -0.38, 0.1, 0, 0.12], plug: [0.15, -0.15, -0.3, 0.6, 1.6, 0.2], fuse: [0.15, -0.15, -0.3, 0.6, 1.6, 0.2], bulb: [0.15, -0.16, -0.3, 0.2, 0, 0], carKey: [0.15, -0.15, -0.3, 0.9, 1.9, 0.3] };
     function render(dt, a) {
       const clv = cameraFrame(a, dt);
       for (let lv = 0; lv < 3; lv++) LG[lv].visible = Math.abs(lv - clv) <= 1;
@@ -1855,7 +1861,7 @@
       const it = P.held;
       if (it && R && !cut && (mode === 'play' || mode === 'code' || mode === 'pause') && !P.hide) {
         for (const k in vItems) vItems[k].visible = k === it.k;
-        const m = vItems[it.k], o = vOff[it.k] || [0.2, -0.2, -0.38, -0.2, -0.4, 0.4], sw = P.moving ? Math.sin(P.bob) * 0.012 : 0;
+        const m = vItems[it.k], o = vOff[it.k] || [0.15, -0.15, -0.3, 0.9, 1.9, 0.3], sw = P.moving ? Math.sin(P.bob) * 0.012 : 0;
         vg.position.copy(cam.position); vg.quaternion.copy(cam.quaternion);
         m.position.set(o[0] + sw, o[1] + Math.abs(sw) * 0.6, o[2]); m.rotation.set(o[3], o[4], o[5]);
         sample(P.lv, P.x, P.y + 1.2, P.z, tmp3); const kd = K.on ? Math.max(0, 1 - Math.hypot(K.x - P.x, K.z - P.z) / 6) * (K.lv === P.lv ? 1 : 0) : 0;
@@ -1892,6 +1898,7 @@
       if (R && !paused && mode !== 'end') { acc += dt; let n = 0; while (acc >= STEP && n < 6) { step(STEP); acc -= STEP; n++; } if (n >= 6) acc = 0; }
       const a = clamp(acc / STEP, 0, 1);
       lightT -= dt; if (lightT <= 0) { lightT = 25 + Math.random() * 35; lightK = 0.5; audio.play('thunder'); } if (lightK > 0) { lightK -= dt; ambL.intensity = (lightK > 0.42 || (lightK > 0.22 && lightK < 0.3)) ? 0.55 : 0; } else ambL.intensity = 0;
+      if (cut && (cut.k === 'door' || cut.k === 'car')) { const k = sstep(0.4, 2.4, cut.t); ambL.intensity = Math.max(ambL.intensity, k * 0.45); fog.color.setRGB(0.016 + k * 0.03, 0.02 + k * 0.04, 0.03 + k * 0.07); } else fog.color.setRGB(0.016, 0.016, 0.024);
       tvT -= dt; if (tvT <= 0) { tvT = 0.07; const near = !R || (P.lv === 1 && Math.hypot(P.x - 19.3, P.z - 13.3) < 9); if (near) { paintStatic(tvTex.g, 64, 48); tvTex.t.needsUpdate = true; } }
       if (R && mode === 'play' && P.lv === 1) { tickT -= dt; if (tickT <= 0) { tickT = 1; if (Math.hypot(P.x - 14.24, P.z - 5.5) < 9) audio.at('tick', 14.4, 1.85, 5.5, occ(1, 14.4, 5.5)); } }
       render(dt, a);
@@ -1919,6 +1926,9 @@
 .gm-${ID} .xh.on{transform:scale(1.9);background:rgba(255,236,200,.95)}
 .gm-${ID} .lab{position:absolute;left:50%;top:calc(50% + clamp(16px,3.2cqw,30px));transform:translateX(-50%);max-width:80%;padding:.38em .8em;border-radius:.5em;background:rgba(8,6,6,.6);font:600 clamp(11px,1.75cqw,16px)/1.25 var(--sans);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity .12s}
 .gm-${ID} .lab:not(:empty){opacity:1}
+.gm-${ID} .lab kbd{display:inline-block;min-width:1.5em;margin-right:.5em;padding:.05em .35em;border-radius:.3em;background:rgba(242,208,138,.9);color:#1a1210;font:800 .85em/1.3 var(--sans);text-align:center}
+.gm-${ID} .lab b{font-weight:700}
+.gm-${ID} .lab em{margin-left:.5em;font-style:normal;font-weight:500;opacity:.75}
 .gm-${ID} .lab.bad{color:#cdb8a6;background:rgba(30,10,8,.6)}
 .gm-${ID} .held{position:absolute;right:2.2%;bottom:3.5%;text-align:right;opacity:0;transition:opacity .2s;text-shadow:0 2px 8px #000}
 .gm-${ID} .held.on{opacity:1}
