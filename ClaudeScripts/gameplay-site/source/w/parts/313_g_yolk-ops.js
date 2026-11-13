@@ -709,11 +709,12 @@
     const jumpH = P.jumpV * P.jumpV / (2 * P.g) - 0.12;
     const gx = Math.max(1, Math.floor((M.x1 - M.x0) / S)), gz = Math.max(1, Math.floor((M.z1 - M.z0) / S));
     const X = [], Y = [], Z = [], CI = [], cells = new Array(gx * gz);
-    const surf = (x, z) => {
+    const surf = (x, z, mg) => {
       const hs = [];
+      if (mg == null) mg = 0.05;
       if (M.def.floor !== null) hs.push(M.floorY);
-      const L = M.query(x - 0.01, z - 0.01, x + 0.01, z + 0.01);
-      for (let k = 0; k < L.length; k++) { const s = M.solids[L[k]]; if (x <= s.x0 + 0.05 || x >= s.x1 - 0.05 || z <= s.z0 + 0.05 || z >= s.z1 - 0.05) continue; hs.push(s.t === 1 ? rampH(s, x, z) : s.y1); }
+      const L = M.query(x - 0.1, z - 0.1, x + 0.1, z + 0.1);
+      for (let k = 0; k < L.length; k++) { const s = M.solids[L[k]]; if (x <= s.x0 + mg || x >= s.x1 - mg || z <= s.z0 + mg || z >= s.z1 - mg) continue; hs.push(s.t === 1 ? rampH(s, x, z) : s.y1); }
       return hs;
     };
     for (let ix = 0; ix < gx; ix++) for (let iz = 0; iz < gz; iz++) {
@@ -721,14 +722,14 @@
       let last = -1e9;
       for (const h of hs) {
         if (h - last < 0.3) continue;
-        if (overlapAt(M, x, h + 0.03, z, r * 0.85, H - 0.06, P.stepH)) continue;
+        if (overlapAt(M, x, h + 0.03, z, r * 0.6, H - 0.06, P.stepH)) continue;
         last = h;
         L.push(X.length); X.push(x); Y.push(h); Z.push(z); CI.push(ix + iz * gx);
       }
       cells[ix + iz * gx] = L;
     }
     const N = X.length, adj = Array.from({ length: N }, () => []);
-    const near = (x, z, y, tol) => { for (const h of surf(x, z)) if (Math.abs(h - y) <= tol) return true; return false; };
+    const near = (x, z, y, tol) => { for (const h of surf(x, z, -0.08)) if (Math.abs(h - y) <= tol) return true; return false; };
     for (let i = 0; i < N; i++) {
       const ci = CI[i], ix = ci % gx, iz = (ci - ix) / gx;
       for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
@@ -739,39 +740,77 @@
           const dy = Y[j] - Y[i];
           if (dy > jumpH || dy < -9) continue;
           const mx = (X[i] + X[j]) / 2, mz = (Z[i] + Z[j]) / 2, d = Math.hypot(X[j] - X[i], Z[j] - Z[i], dy * 0.5);
-          if (Math.abs(dy) <= P.stepH + 0.02) {
+          const slope = Math.abs(dy) <= 1.0 && Math.abs(dy) > P.stepH + 0.02 && near(mx, mz, (Y[i] + Y[j]) / 2, 0.12);
+          if (Math.abs(dy) <= P.stepH + 0.02 || slope) {
             if (!near(mx, mz, (Y[i] + Y[j]) / 2, P.stepH * 0.6 + 0.05)) continue;
-            let ob = overlapAt(M, mx, Math.max(Y[i], Y[j]) + 0.03, mz, r * 0.8, H - 0.1, P.stepH), extra = 0;
-            if (ob && ob.t === 0 && ob.y1 - Math.max(Y[i], Y[j]) <= P.stepH && !overlapAt(M, mx, ob.y1 + 0.03, mz, r * 0.8, H - 0.1, P.stepH)) { ob = null; extra = 0.3; }
+            let ob = overlapAt(M, mx, Math.max(Y[i], Y[j]) + 0.03, mz, r * 0.65, H - 0.1, P.stepH), extra = 0;
+            if (ob && ob.t === 0 && ob.y1 - Math.max(Y[i], Y[j]) <= P.stepH + 0.01 && !overlapAt(M, mx, ob.y1 + 0.03, mz, r * 0.65, H - 0.1, P.stepH)) { ob = null; extra = 0.3; }
             if (ob) continue;
             if (dx && dz && (overlapAt(M, X[i] + dx * S * 0.5, Y[i] + 0.03, Z[i], r * 0.7, H - 0.1, P.stepH) || overlapAt(M, X[i], Y[i] + 0.03, Z[i] + dz * S * 0.5, r * 0.7, H - 0.1, P.stepH))) continue;
             adj[i].push(j, d + extra, 0);
           } else if (dy > 0) {
             if (dx && dz) continue;
-            if (overlapAt(M, X[i], Y[j] + 0.08, Z[i], r * 0.8, H - 0.1, -1) || overlapAt(M, mx, Y[j] + 0.08, mz, r * 0.8, H - 0.1, -1)) continue;
+            if (overlapAt(M, X[i], Y[j] + 0.08, Z[i], r * 0.65, H - 0.1, 0.05) || overlapAt(M, mx, Y[j] + 0.08, mz, r * 0.65, H - 0.1, 0.05)) continue;
             adj[i].push(j, d + 1.2, 1);
           } else {
-            if (overlapAt(M, mx, Y[i] + 0.05, mz, r * 0.8, H - 0.1, P.stepH)) continue;
-            if (overlapAt(M, X[j], Y[j] + 0.05, Z[j], r * 0.8, Y[i] - Y[j] + H - 0.1, -1)) continue;
+            if (overlapAt(M, mx, Y[i] + 0.05, mz, r * 0.65, H - 0.1, P.stepH)) continue;
+            if (overlapAt(M, X[j], Y[j] + 0.1, Z[j], r * 0.65, Y[i] - Y[j] + H - 0.15, 0.05)) continue;
             adj[i].push(j, d + 0.4 + (-dy > 4 ? 1.5 : 0), 2);
           }
         }
       }
     }
+    const pass = (i, j) => {
+      const L = Math.hypot(X[j] - X[i], Z[j] - Z[i]), n = Math.ceil(L / 0.25);
+      let y = Y[i];
+      for (let k = 1; k < n; k++) {
+        const t = k / n, x = X[i] + (X[j] - X[i]) * t, z = Z[i] + (Z[j] - Z[i]) * t;
+        const base = y;
+        let ob = overlapAt(M, x, y + 0.03, z, r * 0.65, H - 0.1, P.stepH), st = 0;
+        while (ob && st++ < 4) { if (ob.t !== 0 || ob.y1 - base > P.stepH + 0.01) return false; y = ob.y1; ob = overlapAt(M, x, y + 0.03, z, r * 0.65, H - 0.1, P.stepH); }
+        if (ob) return false;
+        if (st) continue;
+        let sup = -1e9;
+        for (const h of surf(x, z, -0.08)) if (h <= y + P.stepH + 0.02 && h > sup) sup = h;
+        if (y - sup > 0.6) return false;
+        y = sup;
+      }
+      return Math.abs(y - Y[j]) <= P.stepH + 0.02;
+    };
+    for (let i = 0; i < N; i++) {
+      const ci = CI[i], ix = ci % gx, iz = (ci - ix) / gx;
+      for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const ax = ix + dx, az = iz + dz, bx = ix + 2 * dx, bz = iz + 2 * dz;
+        if (bx < 0 || bz < 0 || bx >= gx || bz >= gz) continue;
+        if (cells[ax + az * gx].some(j => Math.abs(Y[j] - Y[i]) < 1.2)) continue;
+        for (const j of cells[bx + bz * gx]) { if (Math.abs(Y[j] - Y[i]) > 1.6) continue; if (pass(i, j)) adj[i].push(j, S * 2 + 0.4, 0); }
+      }
+    }
     const reach = new Uint8Array(N), comp = new Int32Array(N).fill(-1);
     if (N) {
-      const und = Array.from({ length: N }, () => []);
-      for (let i = 0; i < N; i++) for (let k = 0; k < adj[i].length; k += 3) { und[i].push(adj[i][k]); und[adj[i][k]].push(i); }
-      let bestComp = null, cid = 0;
-      for (let s = 0; s < N; s++) {
-        if (comp[s] >= 0) continue;
-        const st = [s], mem = [];
-        comp[s] = cid;
-        while (st.length) { const i = st.pop(); mem.push(i); for (const j of und[i]) if (comp[j] < 0) { comp[j] = cid; st.push(j); } }
-        if (!bestComp || mem.length > bestComp.length) bestComp = mem;
+      const rev = Array.from({ length: N }, () => []);
+      for (let i = 0; i < N; i++) for (let k = 0; k < adj[i].length; k += 3) rev[adj[i][k]].push(i);
+      const flood = (s0, fw, mark) => { const st = [s0]; mark[s0] = 1; let n = 1; while (st.length) { const i = st.pop(); if (fw) { const A = adj[i]; for (let k = 0; k < A.length; k += 3) { const j = A[k]; if (!mark[j]) { mark[j] = 1; n++; st.push(j); } } } else for (const j of rev[i]) if (!mark[j]) { mark[j] = 1; n++; st.push(j); } } return n; };
+      const cx = (M.x0 + M.x1) / 2, cz = (M.z0 + M.z1) / 2;
+      const seeds = Array.from({ length: N }, (_, i) => i).sort((a, b) => Math.hypot(X[a] - cx, Z[a] - cz) + Y[a] * 2 - Math.hypot(X[b] - cx, Z[b] - cz) - Y[b] * 2);
+      let best = null, bn = 0;
+      for (let t = 0; t < Math.min(8, N); t++) {
+        const sd = seeds[Math.floor(t * N / 8)] != null ? seeds[Math.floor(t * N / 8)] : seeds[t];
+        if (best && best[sd]) continue;
+        const f = new Uint8Array(N), r2 = new Uint8Array(N);
+        flood(sd, true, f); flood(sd, false, r2);
+        let n = 0; for (let i = 0; i < N; i++) if (f[i] && r2[i]) { f[i] = 2; n++; }
+        if (n > bn) { bn = n; best = f; }
+        if (bn > N * 0.6) break;
+      }
+      let cid = 1;
+      for (let i = 0; i < N; i++) if (best[i] === 2) { reach[i] = 1; comp[i] = 0; }
+      for (let s0 = 0; s0 < N; s0++) {
+        if (comp[s0] >= 0) continue;
+        const st = [s0]; comp[s0] = cid;
+        while (st.length) { const i = st.pop(); const A = adj[i]; for (let k = 0; k < A.length; k += 3) { const j = A[k]; if (comp[j] < 0) { comp[j] = cid; st.push(j); } } for (const j of rev[i]) if (comp[j] < 0) { comp[j] = cid; st.push(j); } }
         cid++;
       }
-      for (const i of bestComp) reach[i] = 1;
     }
     const nav = { S, gx, gz, X, Y, Z, adj, cells, N, reach, comp, jumpH, g: new Float32Array(N), f: new Float32Array(N), came: new Int32Array(N), st: new Uint32Array(N), cl: new Uint32Array(N), sn: 0, heap: new Int32Array(N + 8) };
     nav.good = [];
@@ -799,7 +838,7 @@
     out.length = 0;
     if (a < 0 || b < 0) return out;
     if (a === b) { out.push(b); return out; }
-    if (nav.comp[a] !== nav.comp[b]) return out;
+    if (nav.comp[a] !== nav.comp[b] && nav.comp[b] !== 0) return out;
     const { X, Y, Z, adj, g, f, came, st, cl, heap } = nav;
     const sn = ++nav.sn;
     let hn = 0;
@@ -1136,7 +1175,7 @@
       for (const it of list) {
         const [shape, col, p = [0, 0, 0], k = [1, 1, 1], r = [0, 0, 0]] = it;
         const g = typeof shape === 'string' ? (G0[shape] || extra[shape]) : shape;
-        m4.compose(v.set(p[0], p[1], p[2]), q.setFromEuler(e.set(r[0], r[1], r[2])), sc.set(k[0], k[1], k[2]));
+        m4.compose(v.set(p[0], p[1], p[2]), q.setFromEuler(e.set(r[0], r[1], r[2], it[6] || 'XYZ')), sc.set(k[0], k[1], k[2]));
         nm.getNormalMatrix(m4);
         const pa = g.attributes.position.array, na = g.attributes.normal.array, c = lin(col);
         for (let i = 0; i < pa.length; i += 3) {
@@ -1158,7 +1197,8 @@
       m.castShadow = !(o && o.noShadow); m.receiveShadow = !!(o && o.recv);
       return m;
     }
-    return { THREE, lin, geo, mesh, G0, extra, matV, matVS, own };
+    const limb = (col, a, b, t, shape) => { const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], L = Math.hypot(dx, dy, dz); return [shape || 'box', col, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2], [t, t, L], [-Math.atan2(dy, Math.hypot(dx, dz)), Math.atan2(dx, dz), 0], 0, 'YXZ']; };
+    return { THREE, lin, geo, mesh, G0, extra, matV, matVS, own, limb };
   }
 
   function canvasTex(THREE, own, S, draw, o) {
@@ -1605,7 +1645,7 @@
       vmRoot.rotation.set(VS.kick * (m.kickRot || 0.6) + rDip * 0.5 + sDip * 0.8, VS.swayX * 2, VS.kickR + rDip * (m.reloadRoll || 0.6) + VS.sl * 0.35);
       if (m.anim) m.anim(s, dt, rl, me);
       vmFlash.visible = s.fireT < 0.05 && !m.noFlash;
-      if (vmFlash.visible) { m.muzzle.getWorldPosition(vmFlashP); vmFlash.position.copy(vmFlashP); vmFlash.material.rotation = Math.random() * TAU; const k = 0.16 + Math.random() * 0.1; vmFlash.scale.set(k * (m.flashS || 1), k * (m.flashS || 1), 1); vFlash.position.copy(vmFlashP); }
+      if (vmFlash.visible) { m.muzzle.getWorldPosition(vmFlashP); vmFlash.position.copy(vmFlashP); vmFlash.material.rotation = Math.random() * TAU; const k = 0.09 + Math.random() * 0.05; vmFlash.scale.set(k * (m.flashS || 1), k * (m.flashS || 1), 1); vFlash.position.copy(vmFlashP); }
     }
     function kickView(k, roll) { VS.kick += k; VS.kickR += (Math.random() - 0.5) * (roll || 0.05); vFlash.intensity = 2.5; }
     function landView(k) { VS.land += k; }
@@ -1656,7 +1696,7 @@
         B.box(cx, 0, (z0 + w0) / 2, sx, h, w0 - z0, m); B.box(cx, 0, (w1 + z1) / 2, sx, h, z1 - w1, m); B.box(cx, a.h, a.c, sx, h - a.h, a.w, m);
       }
     } else B.box(cx, 0, cz, sx, h, sz, m);
-    const tr = o.trim || 'trim', rim = o.rim == null ? 0.5 : o.rim;
+    const tr = o.trim || 'trim', rim = o.rim == null ? 0.3 : o.rim;
     if (rim) {
       B.box(cx, h, z0 + 0.15, sx, rim, 0.3, tr); B.box(cx, h, z1 - 0.15, sx, rim, 0.3, tr);
       B.box(x0 + 0.15, h, cz, 0.3, rim, sz - 0.6, tr); B.box(x1 - 0.15, h, cz, 0.3, rim, sz - 0.6, tr);
@@ -1703,7 +1743,7 @@
   function arenaGame(G) {
     G.mapCache = {};
     G.headY = G.headY || (h => h - 0.25);
-    G.engine = { mkWorld, mkPlayer, spawnPlayer, stepWorld, botClass, compileMap, BOTL };
+    G.engine = { mkWorld, mkPlayer, spawnPlayer, stepWorld, botClass, compileMap, BOTL, navNear, navPath };
     const ID = G.id, R = '.gm-' + ID;
     return {
       id: ID, title: G.title, category: '3D', tint: G.tint, ownPause: true, _def: G,
@@ -1759,6 +1799,7 @@ ${R} .fp-chat div{padding:.2cqw .6cqw;background:rgba(0,0,0,.4);color:#fff;borde
 ${R} .fp-chat input{pointer-events:auto;font:inherit;padding:.5cqw .8cqw;border-radius:6px;border:2px solid rgba(255,255,255,.5);background:rgba(0,0,0,.65);color:#fff;outline:0}
 ${R} .fp-hint{position:absolute;left:50%;bottom:22cqh;transform:translateX(-50%);font-size:clamp(11px,1.5cqw,15px);font-weight:800;padding:.4cqw 1cqw;border-radius:6px;background:rgba(0,0,0,.5);color:#fff;white-space:nowrap}
 ${R} .fp-touch{position:absolute;inset:0;pointer-events:none}
+${R} .fp-tm .fp-feed{top:calc(12cqmin + 1.4cqw)}
 ${R} .fp-touch .tb{position:absolute;pointer-events:auto;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.32);border:2px solid rgba(255,255,255,.55);color:#fff;font-weight:800;font-size:clamp(9px,2.6cqmin,13px);touch-action:none;user-select:none;-webkit-user-select:none}
 ${R} .fp-touch .tb.on{background:rgba(255,255,255,.35)}
 ${R} .fp-touch .tb svg{width:58%;height:58%}
@@ -1917,13 +1958,15 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
     let stick = null, lookT = null;
     function touchUI() {
       H.touch.hidden = !touchMode || scr !== 'play';
+      wrap.classList.toggle('fp-tm', touchMode);
       if (!touchMode) return;
       if (H.touch.childElementCount) return;
       const btn = (k, label, x, y, s) => { const b = document.createElement('div'); b.className = 'tb'; b.dataset.k = k; b.style.cssText = `right:${x}cqw;bottom:${y}cqh;width:${s}cqmin;height:${s}cqmin`; b.innerHTML = label; H.touch.append(b); TB[k] = b; return b; };
       const ic = G.touchIcons;
-      btn('fire', ic.fire, 6, 14, 19); btn('ads', ic.ads, 22, 30, 13); btn('jump', ic.jump, 3, 40, 14); btn('crouch', ic.crouch, 20, 6, 12);
-      btn('reload', ic.reload, 17, 52, 10); btn('swap', ic.swap, 3, 60, 10);
-      if (G.nade) btn('nade', ic.nade, 30, 52, 10); else btn('melee', ic.melee, 30, 52, 10);
+      btn('fire', ic.fire, 5, 24, 19); btn('ads', ic.ads, 23, 38, 13); btn('jump', ic.jump, 3, 50, 14);
+      if (G.phys.H !== G.phys.HC) btn('crouch', ic.crouch, 23, 19, 12);
+      btn('reload', ic.reload, 17, 62, 10); btn('swap', ic.swap, 3, 68, 10);
+      if (G.nade) { btn('nade', ic.nade, 31, 58, 10); btn('melee', ic.melee, 38, 44, 9); } else btn('melee', ic.melee, 31, 58, 10);
       const pb = document.createElement('div'); pb.className = 'tb'; pb.dataset.k = 'pause'; pb.style.cssText = 'right:1.5cqw;top:1.5cqw;width:9cqmin;height:9cqmin;border-radius:12px'; pb.innerHTML = ic.pause; H.touch.append(pb); TB.pause = pb;
       const sb = document.createElement('div'); sb.className = 'tb'; sb.dataset.k = 'sb'; sb.style.cssText = 'right:12cqmin;top:1.5cqw;width:9cqmin;height:9cqmin;border-radius:12px'; sb.innerHTML = ic.sb; H.touch.append(sb); TB.sb = sb;
       const st = document.createElement('div'); st.className = 'fp-stick'; st.innerHTML = '<i></i>'; st.hidden = true; H.touch.append(st); TB.stick = st;
@@ -2270,7 +2313,7 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
       const kn = k && k !== me ? k.name : '';
       const wk = me.killerW && G.weapons[me.killerW] ? T(G.weapons[me.killerW].name) : me.killerW === 'fall' ? T('the fall') : '';
       releaseMouse();
-      const el = itemsPanel(`<div class="fp-card fp-death"><p class="fp-kick">${escH(T(kn ? 'Eliminated by' : 'Eliminated'))}</p>${kn ? `<h3 translate="no">${escH(kn)}</h3>` : ''}${wk ? `<p class="fp-note">${escH(wk)}</p>` : ''}<p class="fp-rs" translate="no"></p>${classCards(me.nextCls, true)}<div class="fp-acts"><button type="button" class="fp-btn big" data-a="go" disabled>${escH(T('Respawn'))}</button></div></div>`, 'm-death');
+      const el = itemsPanel(`<div class="fp-card fp-death"><p class="fp-kick">${escH(T(kn ? 'Eliminated by' : 'Eliminated'))}</p>${kn ? `<h3 translate="no">${escH(kn)}</h3>` : ''}${wk ? `<p class="fp-note">${escH(wk)}</p>` : ''}<p class="fp-rs" translate="no"></p>${classCards(me.nextCls, true)}${G.manualSpawn ? `<div class="fp-acts"><button type="button" class="fp-btn big" data-a="go" disabled>${escH(T('Respawn'))}</button></div>` : `<p class="fp-note">${escH(T('Pick a class for your next life.'))}</p>`}</div>`, 'm-death');
       const go = el.querySelector('[data-a="go"]');
       deathUI = {
         el, go: null,
@@ -2278,8 +2321,8 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
         tick() {
           const left = Math.max(0, me.respawnT);
           const t = el.querySelector('.fp-rs');
-          if (left > 0) { setT(t, 'rs', T('Respawn in {n}', { n: Math.ceil(left) })); go.disabled = true; deathUI.go = null; }
-          else { setT(t, 'rs', G.manualSpawn ? T('Ready') : ''); go.disabled = false; deathUI.go = respawnNow; }
+          if (left > 0) { setT(t, 'rs', T('Respawn in {n}', { n: Math.ceil(left) })); if (go) go.disabled = true; deathUI.go = null; }
+          else { setT(t, 'rs', G.manualSpawn ? T('Ready') : ''); if (go) go.disabled = false; deathUI.go = respawnNow; }
         }
       };
       el.onclick = e => {
@@ -2450,7 +2493,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
         case 'gone': { const q = P[e[1]]; if (q) { q.inGame = false; q.alive = false; view.dropChar(e[1]); } break; }
       }
     }
-    let fireT = 9, dmgFlash = 0, shakeA = 0, thirdPerson = false, camO = null;
+    let fireT = 9, dmgFlash = 0, shakeA = 0, thirdPerson = false, camO = null, autoP = null;
     const shakeCam = k => { shakeA = Math.min(1, shakeA + k); };
     function hitMark(kind) {
       H.hm.classList.toggle('k', kind === 3);
@@ -2627,7 +2670,11 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
         }
         return;
       }
-      localInput(dt);
+      if (autoP && me) {
+        if (!me.ai) { me.ai = mkBrain(W, me); me.diff = autoP.diff; }
+        if (!me.alive && me.respawnT <= 0 && deathUI && deathUI.go) deathUI.go();
+        look.yaw = me.in.yaw; look.pitch = me.in.pitch;
+      } else localInput(dt);
       if (NET.role === 'guest') guestFrame(dt, now);
       else {
         if (!paused) {
@@ -2936,6 +2983,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
           simAcc -= STEP; n++;
           W.t += STEP; W.tick++;
           if (me.alive && !W.over) {
+            if (me.ai) me.ai.think(W, STEP);
             wishMove(W, me, STEP); physStep(W, me, STEP);
             NET.claimH = null;
             const shots = me.shots;
@@ -3005,7 +3053,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
 
     api.loop((dt, t) => frame(dt, t));
     if (api.net.invite) { previewWorld(); goOnline(); } else menu();
-    G.debug = { get W() { return W; }, get me() { return me; }, get scr() { return scr; }, get NET() { return NET; }, get paused() { return paused; }, look, view, SV, startOffline, menu, matchOver: () => { if (W) { W.time = 0; } }, PR, keys, inp, run: (n) => { for (let i = 0; i < n; i++) tick(); }, standings, cam: o => { camO = o; thirdPerson = !!o; } };
+    G.debug = { get W() { return W; }, get me() { return me; }, get scr() { return scr; }, get NET() { return NET; }, get paused() { return paused; }, look, view, SV, startOffline, menu, matchOver: () => { if (W) { W.time = 0; } }, PR, keys, inp, run: (n) => { for (let i = 0; i < n; i++) tick(); }, standings, cam: o => { camO = o; thirdPerson = !!o; }, auto: d => { autoP = d == null ? null : { diff: d }; if (me && d == null) me.ai = null; } };
     window.__fps = window.__fps || {}; window.__fps[ID_OF(G)] = G.debug;
     return () => {
       releaseMouse();
@@ -3081,7 +3129,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
           B.box(-15, 0, -21, 1.4, 1.2, 1.4, 'hay', { uv: 1 }); B.box(-15, 0, -29, 1.4, 1.2, 1.4, 'hay');
           B.cyl(-26, 0, -30, 3, 10, 'metal', { seg: 14 }); B.cyl(-26, 10, -30, 3, 1.6, 'roofR', { seg: 14, r2: 0.4, nc: 1 });
           B.cyl(-26, 0, -22, 2.4, 8, 'metal', { seg: 14 }); B.cyl(-26, 8, -22, 2.4, 1.3, 'roofR', { seg: 14, r2: 0.4, nc: 1 });
-          building(B, 14, 18, 30, 32, 5, 'white', { roof: 'roofR', trim: 'plank', wy: [1.3], wg: 3.4, rim: 0.4 });
+          building(B, 14, 18, 30, 32, 5, 'white', { roof: 'roofR', trim: 'plank', wy: [1.3], wg: 3.4, rim: 0.25 });
           B.ramp(10, 25, 8, 3, 0, 5, 0, 'plank');
           B.box(18, 5, 25, 4, 0.8, 2, 'brickY');
           B.box(-1, 0, 0, 74, 0.04, 6, 'water', { nc: 1, ns: 1 });
@@ -3092,14 +3140,14 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
           B.box(0, 0, 0, 7, 0.5, 9, 'plank'); B.ramp(0, -6.5, 7, 4, 0, 0.5, 2, 'plank'); B.ramp(0, 6.5, 7, 4, 0, 0.5, 3, 'plank');
           B.box(-3.3, 0.5, 0, 0.3, 0.9, 9, 'plank', { ns: 1 }); B.box(3.3, 0.5, 0, 0.3, 0.9, 9, 'plank', { ns: 1 });
           for (const [x, z, a] of [[20, -20, 0], [-20, 20, 0], [28, -10, 1], [-28, 12, 1]]) { if (a) B.box(x, 0, z, 0.3, 1.1, 8, 'plank', { ns: 1 }); else B.box(x, 0, z, 8, 1.1, 0.3, 'plank', { ns: 1 }); }
-          B.box(22, 0, -26, 8, 3, 6, 'plank'); B.box(22, 3, -26, 8.4, 0.3, 6.4, 'roofR'); B.ramp(22, -21.5, 3, 3, 0, 3, 3, 'plank');
-          B.box(-24, 0, 26, 6, 2, 6, 'stone'); B.ramp(-24, 21.5, 3, 3, 0, 2, 2, 'stone');
+          B.box(22, 0, -26, 8, 3, 6, 'plank'); B.box(22, 3, -26, 8.4, 0.3, 6.4, 'roofR'); B.ramp(22, -20.3, 3, 5, 0, 3.3, 3, 'plank');
+          B.box(-24, 0, 26, 6, 2, 6, 'stone'); B.ramp(-24, 21, 3, 4, 0, 2, 2, 'stone');
           for (const [x, z] of [[-34, -6], [34, 6], [-6, 34], [6, -34], [12, -14], [-12, 14]]) B.box(x, 0, z, 1.3, 1.3, 1.3, 'hay');
           B.cyl(30, 0, 0, 1.2, 1.6, 'stone', { seg: 10 });
-          const S = [[-33, 0, -33], [33, 0, -33], [-33, 0, 33], [33, 0, 33], [0, 0, -34], [0, 0, 34], [-34, 0, 0], [34, 0, 0], [-15, 3.1, -25], [22, 5, 25], [22, 3, -26], [-24, 2, 26], [-12, 0, -25], [10, 0, -30], [-10, 0, 30], [14, 0, 10]];
+          const S = [[-33, 0, -33], [33, 0, -33], [-33, 0, 33], [33, 0, 33], [0, 0, -34], [0, 0, 34], [-34, 0, 0], [34, 0, 0], [-15, 3.1, -25], [22, 5, 25], [22, 3.3, -26], [-24, 2, 26], [-12, 0, -25], [10, 0, -30], [-10, 0, 30], [14, 0, 10]];
           for (let i = 0; i < S.length; i++) B.spawn(S[i][0], S[i][1], S[i][2], S[i][0] + S[i][2] < 0 ? 0 : 1);
-          for (const [x, y, z, k] of [[-12, 0, -25, 'a'], [22, 5, 25, 'n'], [0, 0.5, 0, 'a'], [-24, 2, 26, 'n'], [22, 3, -26, 'a'], [30, 0, 12, 'n'], [-30, 0, -12, 'a'], [8, 0, -22, 'a'], [-8, 0, 22, 'a']]) B.pickup(x, y + 0.45, z, k);
-          B.zone(0, 0.5, 0, 5, 'The bridge'); B.zone(-12, 0, -25, 5, 'The barn'); B.zone(22, 5, 25, 5, 'Farmhouse roof'); B.zone(22, 3, -26, 4, 'The shed'); B.zone(-24, 2, 26, 4, 'The well');
+          for (const [x, y, z, k] of [[-12, 0, -25, 'a'], [22, 5, 25, 'n'], [0, 0.5, 0, 'a'], [-24, 2, 26, 'n'], [22, 3.3, -26, 'a'], [30, 0, 12, 'n'], [-30, 0, -12, 'a'], [8, 0, -22, 'a'], [-8, 0, 22, 'a']]) B.pickup(x, y + 0.45, z, k);
+          B.zone(0, 0.5, 0, 5, 'The bridge'); B.zone(-12, 0, -25, 5, 'The barn'); B.zone(22, 5, 25, 5, 'Farmhouse roof'); B.zone(22, 3.3, -26, 4, 'The shed'); B.zone(-24, 2, 26, 4, 'The well');
         },
       },
       {
@@ -3114,11 +3162,11 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
           cont(14, 0, 12, 0, CC[2]); cont(14, 2.6, 12, 0, CC[4]); cont(14, 0, 9.4, 0, CC[5]);
           cont(-6, 0, 16, 1, CC[3]); cont(6, 0, -16, 1, CC[0]); cont(-6, 2.6, 16, 1, CC[1]); cont(6, 2.6, -16, 1, CC[2]);
           cont(-28, 0, 10, 1, CC[4]); cont(28, 0, -10, 1, CC[5]); cont(-25.4, 0, 10, 1, CC[0]); cont(25.4, 0, -10, 1, CC[3]);
-          B.ramp(-14, -6.6, 6.2, 3, 0, 2.6, 3, 'metal'); B.ramp(14, 6.6, 6.2, 3, 0, 2.6, 2, 'metal');
+          B.ramp(-14, -5.6, 6.2, 5, 0, 2.6, 3, 'metal'); B.ramp(14, 5.6, 6.2, 5, 0, 2.6, 2, 'metal');
           B.ramp(-6, 21, 2.6, 3.8, 0, 2.6, 3, 'metal'); B.ramp(6, -21, 2.6, 3.8, 0, 2.6, 2, 'metal');
-          building(B, -36, -36, -20, -24, 6, 'brickY', { roof: 'tar', trim: 'white', wy: [1.4, 3.8], wg: 3.2, rim: 0.4 });
-          building(B, 20, 24, 36, 36, 6, 'brickY', { roof: 'tar', trim: 'white', wy: [1.4, 3.8], wg: 3.2, rim: 0.4 });
-          B.ramp(-18.5, -27, 3, 12, 0, 6, 3, 'metal'); B.ramp(18.5, 27, 3, 12, 0, 6, 2, 'metal');
+          building(B, -36, -36, -20, -24, 6, 'brickY', { roof: 'tar', trim: 'white', wy: [1.4, 3.8], wg: 3.2, rim: 0.25 });
+          building(B, 20, 24, 36, 36, 6, 'brickY', { roof: 'tar', trim: 'white', wy: [1.4, 3.8], wg: 3.2, rim: 0.25 });
+          B.ramp(-14, -30, 12, 3, 0, 6, 1, 'metal'); B.ramp(14, 30, 12, 3, 0, 6, 0, 'metal');
           B.box(0, 0, 0, 10, 2.2, 16, 'white'); B.box(0, 2.2, 0, 10.6, 0.3, 16.6, 'teal');
           B.ramp(0, -10, 4, 4, 0, 2.2, 2, 'plank'); B.ramp(0, 10, 4, 4, 0, 2.2, 3, 'plank');
           B.box(-3, 2.5, 4, 3, 2.4, 3, 'teal'); B.box(-3, 4.9, 4, 3.4, 0.25, 3.4, 'white');
@@ -3129,10 +3177,10 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
           for (const [x, z] of [[-24, -14], [24, 14], [-10, 30], [10, -30], [30, 24], [-30, -24], [-22, 2], [22, -2]]) B.box(x, 0, z, 1.3, 1.3, 1.3, 'plank');
           B.box(-22, 1.3, 2, 1.3, 1.3, 1.3, 'plank'); B.box(22, 1.3, -2, 1.3, 1.3, 1.3, 'plank');
           for (const [x, z] of [[-34, 4], [34, -4], [-4, 34], [4, -34]]) B.cyl(x, 0, z, 0.55, 1, 'dark', { seg: 8 });
-          const S = [[-34, 0, -16], [34, 0, 16], [-34, 0, 16], [34, 0, -16], [-16, 0, -34], [16, 0, 34], [-16, 0, 34], [16, 0, -34], [-28, 6, -30], [28, 6, 30], [-14, 2.6, -9.4], [14, 2.6, 9.4], [0, 2.2, -5], [0, 2.2, 5], [-30, 0, 0], [30, 0, 0]];
+          const S = [[-34, 0, -16], [34, 0, 16], [-34, 0, 16], [34, 0, -16], [-16, 0, -34], [16, 0, 34], [-16, 0, 34], [16, 0, -34], [-28, 6, -30], [28, 6, 30], [-14, 2.6, -9.4], [14, 2.6, 9.4], [0, 2.5, -5.5], [0, 2.5, 6.5], [-30, 0, 0], [30, 0, 0]];
           for (const s of S) B.spawn(s[0], s[1], s[2], s[0] - s[2] < 0 ? 0 : 1);
-          for (const [x, y, z, k] of [[0, 2.2, 0, 'n'], [-28, 6, -30, 'a'], [28, 6, 30, 'a'], [-14, 2.6, -9.4, 'a'], [14, 2.6, 9.4, 'a'], [-30, 0, 0, 'n'], [30, 0, 0, 'n'], [0, 0, -26, 'a'], [0, 0, 26, 'a']]) B.pickup(x, y + 0.45, z, k);
-          B.zone(0, 2.2, 0, 5, 'The deck'); B.zone(-28, 6, -30, 5, 'West warehouse'); B.zone(28, 6, 30, 5, 'East warehouse'); B.zone(-14, 0, -2, 4, 'Red stack'); B.zone(14, 0, 2, 4, 'Green stack');
+          for (const [x, y, z, k] of [[0, 2.5, 0, 'n'], [-28, 6, -30, 'a'], [28, 6, 30, 'a'], [-14, 2.6, -9.4, 'a'], [14, 2.6, 9.4, 'a'], [-30, 0, 0, 'n'], [30, 0, 0, 'n'], [0, 0, -26, 'a'], [0, 0, 26, 'a']]) B.pickup(x, y + 0.45, z, k);
+          B.zone(0, 2.5, 0, 5, 'The deck'); B.zone(-28, 6, -30, 5, 'West warehouse'); B.zone(28, 6, 30, 5, 'East warehouse'); B.zone(-14, 0, -2, 4, 'Red stack'); B.zone(14, 0, 2, 4, 'Green stack');
         }
       },
       {
@@ -3141,7 +3189,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
         build(B) {
           B.box(0, -1, 0, 80, 1, 80, 'tar');
           for (const [x, z, sx, sz] of [[0, -39, 78, 2], [0, 39, 78, 2], [-39, 0, 2, 78], [39, 0, 2, 78]]) B.box(x, 0, z, sx, 12, sz, 'brickY', { nb: 1 });
-          const roof = (x0, z0, x1, z1, h, m, o) => building(B, x0, z0, x1, z1, h, m, Object.assign({ roof: 'tar', trim: 'white', wy: [1.4, 3.8, 6.2], wg: 3.2, rim: 0.4 }, o));
+          const roof = (x0, z0, x1, z1, h, m, o) => building(B, x0, z0, x1, z1, h, m, Object.assign({ roof: 'tar', trim: 'white', wy: [1.4, 3.8, 6.2], wg: 3.2, rim: 0.25 }, o));
           roof(-38, -38, -16, -16, 8, 'brickY'); roof(16, 16, 38, 38, 8, 'brickY');
           roof(16, -38, 38, -16, 6, 'white', { trim: 'teal' }); roof(-38, 16, -16, 38, 6, 'white', { trim: 'teal' });
           roof(-8, -38, 8, -28, 7, 'tile', { trim: 'brickY' }); roof(-8, 28, 8, 38, 7, 'tile', { trim: 'brickY' });

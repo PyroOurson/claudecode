@@ -49,7 +49,7 @@
       for (const it of list) {
         const [shape, col, p = [0, 0, 0], k = [1, 1, 1], r = [0, 0, 0]] = it;
         const g = typeof shape === 'string' ? (G0[shape] || extra[shape]) : shape;
-        m4.compose(v.set(p[0], p[1], p[2]), q.setFromEuler(e.set(r[0], r[1], r[2])), sc.set(k[0], k[1], k[2]));
+        m4.compose(v.set(p[0], p[1], p[2]), q.setFromEuler(e.set(r[0], r[1], r[2], it[6] || 'XYZ')), sc.set(k[0], k[1], k[2]));
         nm.getNormalMatrix(m4);
         const pa = g.attributes.position.array, na = g.attributes.normal.array, c = lin(col);
         for (let i = 0; i < pa.length; i += 3) {
@@ -71,7 +71,8 @@
       m.castShadow = !(o && o.noShadow); m.receiveShadow = !!(o && o.recv);
       return m;
     }
-    return { THREE, lin, geo, mesh, G0, extra, matV, matVS, own };
+    const limb = (col, a, b, t, shape) => { const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], L = Math.hypot(dx, dy, dz); return [shape || 'box', col, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2], [t, t, L], [-Math.atan2(dy, Math.hypot(dx, dz)), Math.atan2(dx, dz), 0], 0, 'YXZ']; };
+    return { THREE, lin, geo, mesh, G0, extra, matV, matVS, own, limb };
   }
 
   function canvasTex(THREE, own, S, draw, o) {
@@ -518,7 +519,7 @@
       vmRoot.rotation.set(VS.kick * (m.kickRot || 0.6) + rDip * 0.5 + sDip * 0.8, VS.swayX * 2, VS.kickR + rDip * (m.reloadRoll || 0.6) + VS.sl * 0.35);
       if (m.anim) m.anim(s, dt, rl, me);
       vmFlash.visible = s.fireT < 0.05 && !m.noFlash;
-      if (vmFlash.visible) { m.muzzle.getWorldPosition(vmFlashP); vmFlash.position.copy(vmFlashP); vmFlash.material.rotation = Math.random() * TAU; const k = 0.16 + Math.random() * 0.1; vmFlash.scale.set(k * (m.flashS || 1), k * (m.flashS || 1), 1); vFlash.position.copy(vmFlashP); }
+      if (vmFlash.visible) { m.muzzle.getWorldPosition(vmFlashP); vmFlash.position.copy(vmFlashP); vmFlash.material.rotation = Math.random() * TAU; const k = 0.09 + Math.random() * 0.05; vmFlash.scale.set(k * (m.flashS || 1), k * (m.flashS || 1), 1); vFlash.position.copy(vmFlashP); }
     }
     function kickView(k, roll) { VS.kick += k; VS.kickR += (Math.random() - 0.5) * (roll || 0.05); vFlash.intensity = 2.5; }
     function landView(k) { VS.land += k; }

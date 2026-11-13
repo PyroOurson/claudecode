@@ -21,7 +21,7 @@
   function arenaGame(G) {
     G.mapCache = {};
     G.headY = G.headY || (h => h - 0.25);
-    G.engine = { mkWorld, mkPlayer, spawnPlayer, stepWorld, botClass, compileMap, BOTL };
+    G.engine = { mkWorld, mkPlayer, spawnPlayer, stepWorld, botClass, compileMap, BOTL, navNear, navPath };
     const ID = G.id, R = '.gm-' + ID;
     return {
       id: ID, title: G.title, category: '3D', tint: G.tint, ownPause: true, _def: G,
@@ -77,6 +77,7 @@ ${R} .fp-chat div{padding:.2cqw .6cqw;background:rgba(0,0,0,.4);color:#fff;borde
 ${R} .fp-chat input{pointer-events:auto;font:inherit;padding:.5cqw .8cqw;border-radius:6px;border:2px solid rgba(255,255,255,.5);background:rgba(0,0,0,.65);color:#fff;outline:0}
 ${R} .fp-hint{position:absolute;left:50%;bottom:22cqh;transform:translateX(-50%);font-size:clamp(11px,1.5cqw,15px);font-weight:800;padding:.4cqw 1cqw;border-radius:6px;background:rgba(0,0,0,.5);color:#fff;white-space:nowrap}
 ${R} .fp-touch{position:absolute;inset:0;pointer-events:none}
+${R} .fp-tm .fp-feed{top:calc(12cqmin + 1.4cqw)}
 ${R} .fp-touch .tb{position:absolute;pointer-events:auto;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.32);border:2px solid rgba(255,255,255,.55);color:#fff;font-weight:800;font-size:clamp(9px,2.6cqmin,13px);touch-action:none;user-select:none;-webkit-user-select:none}
 ${R} .fp-touch .tb.on{background:rgba(255,255,255,.35)}
 ${R} .fp-touch .tb svg{width:58%;height:58%}
@@ -235,13 +236,15 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
     let stick = null, lookT = null;
     function touchUI() {
       H.touch.hidden = !touchMode || scr !== 'play';
+      wrap.classList.toggle('fp-tm', touchMode);
       if (!touchMode) return;
       if (H.touch.childElementCount) return;
       const btn = (k, label, x, y, s) => { const b = document.createElement('div'); b.className = 'tb'; b.dataset.k = k; b.style.cssText = `right:${x}cqw;bottom:${y}cqh;width:${s}cqmin;height:${s}cqmin`; b.innerHTML = label; H.touch.append(b); TB[k] = b; return b; };
       const ic = G.touchIcons;
-      btn('fire', ic.fire, 6, 14, 19); btn('ads', ic.ads, 22, 30, 13); btn('jump', ic.jump, 3, 40, 14); btn('crouch', ic.crouch, 20, 6, 12);
-      btn('reload', ic.reload, 17, 52, 10); btn('swap', ic.swap, 3, 60, 10);
-      if (G.nade) btn('nade', ic.nade, 30, 52, 10); else btn('melee', ic.melee, 30, 52, 10);
+      btn('fire', ic.fire, 5, 24, 19); btn('ads', ic.ads, 23, 38, 13); btn('jump', ic.jump, 3, 50, 14);
+      if (G.phys.H !== G.phys.HC) btn('crouch', ic.crouch, 23, 19, 12);
+      btn('reload', ic.reload, 17, 62, 10); btn('swap', ic.swap, 3, 68, 10);
+      if (G.nade) { btn('nade', ic.nade, 31, 58, 10); btn('melee', ic.melee, 38, 44, 9); } else btn('melee', ic.melee, 31, 58, 10);
       const pb = document.createElement('div'); pb.className = 'tb'; pb.dataset.k = 'pause'; pb.style.cssText = 'right:1.5cqw;top:1.5cqw;width:9cqmin;height:9cqmin;border-radius:12px'; pb.innerHTML = ic.pause; H.touch.append(pb); TB.pause = pb;
       const sb = document.createElement('div'); sb.className = 'tb'; sb.dataset.k = 'sb'; sb.style.cssText = 'right:12cqmin;top:1.5cqw;width:9cqmin;height:9cqmin;border-radius:12px'; sb.innerHTML = ic.sb; H.touch.append(sb); TB.sb = sb;
       const st = document.createElement('div'); st.className = 'fp-stick'; st.innerHTML = '<i></i>'; st.hidden = true; H.touch.append(st); TB.stick = st;
@@ -588,7 +591,7 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
       const kn = k && k !== me ? k.name : '';
       const wk = me.killerW && G.weapons[me.killerW] ? T(G.weapons[me.killerW].name) : me.killerW === 'fall' ? T('the fall') : '';
       releaseMouse();
-      const el = itemsPanel(`<div class="fp-card fp-death"><p class="fp-kick">${escH(T(kn ? 'Eliminated by' : 'Eliminated'))}</p>${kn ? `<h3 translate="no">${escH(kn)}</h3>` : ''}${wk ? `<p class="fp-note">${escH(wk)}</p>` : ''}<p class="fp-rs" translate="no"></p>${classCards(me.nextCls, true)}<div class="fp-acts"><button type="button" class="fp-btn big" data-a="go" disabled>${escH(T('Respawn'))}</button></div></div>`, 'm-death');
+      const el = itemsPanel(`<div class="fp-card fp-death"><p class="fp-kick">${escH(T(kn ? 'Eliminated by' : 'Eliminated'))}</p>${kn ? `<h3 translate="no">${escH(kn)}</h3>` : ''}${wk ? `<p class="fp-note">${escH(wk)}</p>` : ''}<p class="fp-rs" translate="no"></p>${classCards(me.nextCls, true)}${G.manualSpawn ? `<div class="fp-acts"><button type="button" class="fp-btn big" data-a="go" disabled>${escH(T('Respawn'))}</button></div>` : `<p class="fp-note">${escH(T('Pick a class for your next life.'))}</p>`}</div>`, 'm-death');
       const go = el.querySelector('[data-a="go"]');
       deathUI = {
         el, go: null,
@@ -596,8 +599,8 @@ ${R} .fp-range input{flex:1;min-width:0;accent-color:var(--acc,#ffcf33)}
         tick() {
           const left = Math.max(0, me.respawnT);
           const t = el.querySelector('.fp-rs');
-          if (left > 0) { setT(t, 'rs', T('Respawn in {n}', { n: Math.ceil(left) })); go.disabled = true; deathUI.go = null; }
-          else { setT(t, 'rs', G.manualSpawn ? T('Ready') : ''); go.disabled = false; deathUI.go = respawnNow; }
+          if (left > 0) { setT(t, 'rs', T('Respawn in {n}', { n: Math.ceil(left) })); if (go) go.disabled = true; deathUI.go = null; }
+          else { setT(t, 'rs', G.manualSpawn ? T('Ready') : ''); if (go) go.disabled = false; deathUI.go = respawnNow; }
         }
       };
       el.onclick = e => {
@@ -768,7 +771,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
         case 'gone': { const q = P[e[1]]; if (q) { q.inGame = false; q.alive = false; view.dropChar(e[1]); } break; }
       }
     }
-    let fireT = 9, dmgFlash = 0, shakeA = 0, thirdPerson = false, camO = null;
+    let fireT = 9, dmgFlash = 0, shakeA = 0, thirdPerson = false, camO = null, autoP = null;
     const shakeCam = k => { shakeA = Math.min(1, shakeA + k); };
     function hitMark(kind) {
       H.hm.classList.toggle('k', kind === 3);
@@ -945,7 +948,11 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
         }
         return;
       }
-      localInput(dt);
+      if (autoP && me) {
+        if (!me.ai) { me.ai = mkBrain(W, me); me.diff = autoP.diff; }
+        if (!me.alive && me.respawnT <= 0 && deathUI && deathUI.go) deathUI.go();
+        look.yaw = me.in.yaw; look.pitch = me.in.pitch;
+      } else localInput(dt);
       if (NET.role === 'guest') guestFrame(dt, now);
       else {
         if (!paused) {
@@ -1254,6 +1261,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
           simAcc -= STEP; n++;
           W.t += STEP; W.tick++;
           if (me.alive && !W.over) {
+            if (me.ai) me.ai.think(W, STEP);
             wishMove(W, me, STEP); physStep(W, me, STEP);
             NET.claimH = null;
             const shots = me.shots;
@@ -1323,7 +1331,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
 
     api.loop((dt, t) => frame(dt, t));
     if (api.net.invite) { previewWorld(); goOnline(); } else menu();
-    G.debug = { get W() { return W; }, get me() { return me; }, get scr() { return scr; }, get NET() { return NET; }, get paused() { return paused; }, look, view, SV, startOffline, menu, matchOver: () => { if (W) { W.time = 0; } }, PR, keys, inp, run: (n) => { for (let i = 0; i < n; i++) tick(); }, standings, cam: o => { camO = o; thirdPerson = !!o; } };
+    G.debug = { get W() { return W; }, get me() { return me; }, get scr() { return scr; }, get NET() { return NET; }, get paused() { return paused; }, look, view, SV, startOffline, menu, matchOver: () => { if (W) { W.time = 0; } }, PR, keys, inp, run: (n) => { for (let i = 0; i < n; i++) tick(); }, standings, cam: o => { camO = o; thirdPerson = !!o; }, auto: d => { autoP = d == null ? null : { diff: d }; if (me && d == null) me.ai = null; } };
     window.__fps = window.__fps || {}; window.__fps[ID_OF(G)] = G.debug;
     return () => {
       releaseMouse();

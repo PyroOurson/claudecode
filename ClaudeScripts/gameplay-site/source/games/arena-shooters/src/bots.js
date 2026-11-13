@@ -3,11 +3,12 @@
     const jumpH = P.jumpV * P.jumpV / (2 * P.g) - 0.12;
     const gx = Math.max(1, Math.floor((M.x1 - M.x0) / S)), gz = Math.max(1, Math.floor((M.z1 - M.z0) / S));
     const X = [], Y = [], Z = [], CI = [], cells = new Array(gx * gz);
-    const surf = (x, z) => {
+    const surf = (x, z, mg) => {
       const hs = [];
+      if (mg == null) mg = 0.05;
       if (M.def.floor !== null) hs.push(M.floorY);
-      const L = M.query(x - 0.01, z - 0.01, x + 0.01, z + 0.01);
-      for (let k = 0; k < L.length; k++) { const s = M.solids[L[k]]; if (x <= s.x0 + 0.05 || x >= s.x1 - 0.05 || z <= s.z0 + 0.05 || z >= s.z1 - 0.05) continue; hs.push(s.t === 1 ? rampH(s, x, z) : s.y1); }
+      const L = M.query(x - 0.1, z - 0.1, x + 0.1, z + 0.1);
+      for (let k = 0; k < L.length; k++) { const s = M.solids[L[k]]; if (x <= s.x0 + mg || x >= s.x1 - mg || z <= s.z0 + mg || z >= s.z1 - mg) continue; hs.push(s.t === 1 ? rampH(s, x, z) : s.y1); }
       return hs;
     };
     for (let ix = 0; ix < gx; ix++) for (let iz = 0; iz < gz; iz++) {
@@ -15,14 +16,14 @@
       let last = -1e9;
       for (const h of hs) {
         if (h - last < 0.3) continue;
-        if (overlapAt(M, x, h + 0.03, z, r * 0.85, H - 0.06, P.stepH)) continue;
+        if (overlapAt(M, x, h + 0.03, z, r * 0.6, H - 0.06, P.stepH)) continue;
         last = h;
         L.push(X.length); X.push(x); Y.push(h); Z.push(z); CI.push(ix + iz * gx);
       }
       cells[ix + iz * gx] = L;
     }
     const N = X.length, adj = Array.from({ length: N }, () => []);
-    const near = (x, z, y, tol) => { for (const h of surf(x, z)) if (Math.abs(h - y) <= tol) return true; return false; };
+    const near = (x, z, y, tol) => { for (const h of surf(x, z, -0.08)) if (Math.abs(h - y) <= tol) return true; return false; };
     for (let i = 0; i < N; i++) {
       const ci = CI[i], ix = ci % gx, iz = (ci - ix) / gx;
       for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
@@ -33,39 +34,77 @@
           const dy = Y[j] - Y[i];
           if (dy > jumpH || dy < -9) continue;
           const mx = (X[i] + X[j]) / 2, mz = (Z[i] + Z[j]) / 2, d = Math.hypot(X[j] - X[i], Z[j] - Z[i], dy * 0.5);
-          if (Math.abs(dy) <= P.stepH + 0.02) {
+          const slope = Math.abs(dy) <= 1.0 && Math.abs(dy) > P.stepH + 0.02 && near(mx, mz, (Y[i] + Y[j]) / 2, 0.12);
+          if (Math.abs(dy) <= P.stepH + 0.02 || slope) {
             if (!near(mx, mz, (Y[i] + Y[j]) / 2, P.stepH * 0.6 + 0.05)) continue;
-            let ob = overlapAt(M, mx, Math.max(Y[i], Y[j]) + 0.03, mz, r * 0.8, H - 0.1, P.stepH), extra = 0;
-            if (ob && ob.t === 0 && ob.y1 - Math.max(Y[i], Y[j]) <= P.stepH && !overlapAt(M, mx, ob.y1 + 0.03, mz, r * 0.8, H - 0.1, P.stepH)) { ob = null; extra = 0.3; }
+            let ob = overlapAt(M, mx, Math.max(Y[i], Y[j]) + 0.03, mz, r * 0.65, H - 0.1, P.stepH), extra = 0;
+            if (ob && ob.t === 0 && ob.y1 - Math.max(Y[i], Y[j]) <= P.stepH + 0.01 && !overlapAt(M, mx, ob.y1 + 0.03, mz, r * 0.65, H - 0.1, P.stepH)) { ob = null; extra = 0.3; }
             if (ob) continue;
             if (dx && dz && (overlapAt(M, X[i] + dx * S * 0.5, Y[i] + 0.03, Z[i], r * 0.7, H - 0.1, P.stepH) || overlapAt(M, X[i], Y[i] + 0.03, Z[i] + dz * S * 0.5, r * 0.7, H - 0.1, P.stepH))) continue;
             adj[i].push(j, d + extra, 0);
           } else if (dy > 0) {
             if (dx && dz) continue;
-            if (overlapAt(M, X[i], Y[j] + 0.08, Z[i], r * 0.8, H - 0.1, -1) || overlapAt(M, mx, Y[j] + 0.08, mz, r * 0.8, H - 0.1, -1)) continue;
+            if (overlapAt(M, X[i], Y[j] + 0.08, Z[i], r * 0.65, H - 0.1, 0.05) || overlapAt(M, mx, Y[j] + 0.08, mz, r * 0.65, H - 0.1, 0.05)) continue;
             adj[i].push(j, d + 1.2, 1);
           } else {
-            if (overlapAt(M, mx, Y[i] + 0.05, mz, r * 0.8, H - 0.1, P.stepH)) continue;
-            if (overlapAt(M, X[j], Y[j] + 0.05, Z[j], r * 0.8, Y[i] - Y[j] + H - 0.1, -1)) continue;
+            if (overlapAt(M, mx, Y[i] + 0.05, mz, r * 0.65, H - 0.1, P.stepH)) continue;
+            if (overlapAt(M, X[j], Y[j] + 0.1, Z[j], r * 0.65, Y[i] - Y[j] + H - 0.15, 0.05)) continue;
             adj[i].push(j, d + 0.4 + (-dy > 4 ? 1.5 : 0), 2);
           }
         }
       }
     }
+    const pass = (i, j) => {
+      const L = Math.hypot(X[j] - X[i], Z[j] - Z[i]), n = Math.ceil(L / 0.25);
+      let y = Y[i];
+      for (let k = 1; k < n; k++) {
+        const t = k / n, x = X[i] + (X[j] - X[i]) * t, z = Z[i] + (Z[j] - Z[i]) * t;
+        const base = y;
+        let ob = overlapAt(M, x, y + 0.03, z, r * 0.65, H - 0.1, P.stepH), st = 0;
+        while (ob && st++ < 4) { if (ob.t !== 0 || ob.y1 - base > P.stepH + 0.01) return false; y = ob.y1; ob = overlapAt(M, x, y + 0.03, z, r * 0.65, H - 0.1, P.stepH); }
+        if (ob) return false;
+        if (st) continue;
+        let sup = -1e9;
+        for (const h of surf(x, z, -0.08)) if (h <= y + P.stepH + 0.02 && h > sup) sup = h;
+        if (y - sup > 0.6) return false;
+        y = sup;
+      }
+      return Math.abs(y - Y[j]) <= P.stepH + 0.02;
+    };
+    for (let i = 0; i < N; i++) {
+      const ci = CI[i], ix = ci % gx, iz = (ci - ix) / gx;
+      for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const ax = ix + dx, az = iz + dz, bx = ix + 2 * dx, bz = iz + 2 * dz;
+        if (bx < 0 || bz < 0 || bx >= gx || bz >= gz) continue;
+        if (cells[ax + az * gx].some(j => Math.abs(Y[j] - Y[i]) < 1.2)) continue;
+        for (const j of cells[bx + bz * gx]) { if (Math.abs(Y[j] - Y[i]) > 1.6) continue; if (pass(i, j)) adj[i].push(j, S * 2 + 0.4, 0); }
+      }
+    }
     const reach = new Uint8Array(N), comp = new Int32Array(N).fill(-1);
     if (N) {
-      const und = Array.from({ length: N }, () => []);
-      for (let i = 0; i < N; i++) for (let k = 0; k < adj[i].length; k += 3) { und[i].push(adj[i][k]); und[adj[i][k]].push(i); }
-      let bestComp = null, cid = 0;
-      for (let s = 0; s < N; s++) {
-        if (comp[s] >= 0) continue;
-        const st = [s], mem = [];
-        comp[s] = cid;
-        while (st.length) { const i = st.pop(); mem.push(i); for (const j of und[i]) if (comp[j] < 0) { comp[j] = cid; st.push(j); } }
-        if (!bestComp || mem.length > bestComp.length) bestComp = mem;
+      const rev = Array.from({ length: N }, () => []);
+      for (let i = 0; i < N; i++) for (let k = 0; k < adj[i].length; k += 3) rev[adj[i][k]].push(i);
+      const flood = (s0, fw, mark) => { const st = [s0]; mark[s0] = 1; let n = 1; while (st.length) { const i = st.pop(); if (fw) { const A = adj[i]; for (let k = 0; k < A.length; k += 3) { const j = A[k]; if (!mark[j]) { mark[j] = 1; n++; st.push(j); } } } else for (const j of rev[i]) if (!mark[j]) { mark[j] = 1; n++; st.push(j); } } return n; };
+      const cx = (M.x0 + M.x1) / 2, cz = (M.z0 + M.z1) / 2;
+      const seeds = Array.from({ length: N }, (_, i) => i).sort((a, b) => Math.hypot(X[a] - cx, Z[a] - cz) + Y[a] * 2 - Math.hypot(X[b] - cx, Z[b] - cz) - Y[b] * 2);
+      let best = null, bn = 0;
+      for (let t = 0; t < Math.min(8, N); t++) {
+        const sd = seeds[Math.floor(t * N / 8)] != null ? seeds[Math.floor(t * N / 8)] : seeds[t];
+        if (best && best[sd]) continue;
+        const f = new Uint8Array(N), r2 = new Uint8Array(N);
+        flood(sd, true, f); flood(sd, false, r2);
+        let n = 0; for (let i = 0; i < N; i++) if (f[i] && r2[i]) { f[i] = 2; n++; }
+        if (n > bn) { bn = n; best = f; }
+        if (bn > N * 0.6) break;
+      }
+      let cid = 1;
+      for (let i = 0; i < N; i++) if (best[i] === 2) { reach[i] = 1; comp[i] = 0; }
+      for (let s0 = 0; s0 < N; s0++) {
+        if (comp[s0] >= 0) continue;
+        const st = [s0]; comp[s0] = cid;
+        while (st.length) { const i = st.pop(); const A = adj[i]; for (let k = 0; k < A.length; k += 3) { const j = A[k]; if (comp[j] < 0) { comp[j] = cid; st.push(j); } } for (const j of rev[i]) if (comp[j] < 0) { comp[j] = cid; st.push(j); } }
         cid++;
       }
-      for (const i of bestComp) reach[i] = 1;
     }
     const nav = { S, gx, gz, X, Y, Z, adj, cells, N, reach, comp, jumpH, g: new Float32Array(N), f: new Float32Array(N), came: new Int32Array(N), st: new Uint32Array(N), cl: new Uint32Array(N), sn: 0, heap: new Int32Array(N + 8) };
     nav.good = [];
@@ -93,7 +132,7 @@
     out.length = 0;
     if (a < 0 || b < 0) return out;
     if (a === b) { out.push(b); return out; }
-    if (nav.comp[a] !== nav.comp[b]) return out;
+    if (nav.comp[a] !== nav.comp[b] && nav.comp[b] !== 0) return out;
     const { X, Y, Z, adj, g, f, came, st, cl, heap } = nav;
     const sn = ++nav.sn;
     let hn = 0;

@@ -61,12 +61,10 @@
           building(B, -7, 27, 7, 40, 6, 'stone', { roof: 'roof', wy: [1.4] });
           building(B, -40, -6, -28, 6, 4.5, 'wood', { roof: 'roof', trim: 'dark', wy: [1.4] });
           building(B, 28, -6, 40, 6, 4.5, 'wood', { roof: 'roof', trim: 'dark', wy: [1.4] });
-          B.ramp(-17.5, -27, 3, 14, 0, 6, 3, 'wood'); B.box(-17.5, 0, -19.6, 3, 0.2, 1.2, 'wood', { nc: 1 });
-          B.ramp(17.5, 27, 3, 14, 0, 6, 2, 'wood');
-          B.ramp(-27, 17.5, 14, 3, 0, 6, 1, 'wood');
-          B.ramp(27, -17.5, 14, 3, 0, 6, 0, 'wood');
-          B.ramp(-34, 7.5, 6, 3, 0, 4.5, 1, 'wood'); B.ramp(34, -7.5, 6, 3, 0, 4.5, 0, 'wood');
-          for (const [x0, x1, z] of [[-19, -7, -33.5], [7, 19, -33.5], [-19, -7, 33.5], [7, 19, 33.5]]) { B.box((x0 + x1) / 2, 5.6, z, x1 - x0, 0.4, 3, 'wood'); B.box((x0 + x1) / 2, 6, z - 1.45, x1 - x0, 0.9, 0.1, 'metal', { ns: 1 }); B.box((x0 + x1) / 2, 6, z + 1.45, x1 - x0, 0.9, 0.1, 'metal', { ns: 1 }); }
+          B.ramp(-25.5, -13.5, 3, 11, 0, 6, 3, 'wood'); B.ramp(25.5, 13.5, 3, 11, 0, 6, 2, 'wood');
+          B.ramp(13.5, -25.5, 11, 3, 0, 6, 0, 'wood'); B.ramp(-13.5, 25.5, 11, 3, 0, 6, 1, 'wood');
+          B.ramp(-23, 3, 10, 3, 0, 4.5, 1, 'wood'); B.ramp(23, -3, 10, 3, 0, 4.5, 0, 'wood');
+          for (const [x0, x1, z] of [[-19, -7, -33.5], [7, 19, -33.5], [-19, -7, 33.5], [7, 19, 33.5]]) { B.box((x0 + x1) / 2, 5.6, z, x1 - x0, 0.4, 3, 'wood'); for (const x of [x0 + 2, (x0 + x1) / 2, x1 - 2]) { B.box(x, 0, z - 1.2, 0.3, 5.6, 0.3, 'dark', { ns: 1 }); B.box(x, 0, z + 1.2, 0.3, 5.6, 0.3, 'dark', { ns: 1 }); } }
           for (const [z0, z1, x] of [[-19, -6, -34], [6, 19, -34], [-19, -6, 34], [6, 19, 34]]) { const top = 4.5, far = 6; B.ramp(x, (z0 + z1) / 2, 3, z1 - z0, top, far, z0 < 0 ? 3 : 2, 'wood', { base: top - 0.4 }); }
           B.box(0, 0, 0, 12, 1, 12, 'stone');
           B.ramp(0, -7.5, 4, 3, 0, 1, 2, 'stone'); B.ramp(0, 7.5, 4, 3, 0, 1, 3, 'stone'); B.ramp(-7.5, 0, 3, 4, 0, 1, 0, 'stone'); B.ramp(7.5, 0, 3, 4, 0, 1, 1, 'stone');
@@ -76,10 +74,10 @@
           crate(B, -11, 0, -12, 1.2); crate(B, -11, 0, -10.8, 1.2); crate(B, -11, 1.2, -11.4, 1.2);
           crate(B, 11, 0, 12, 1.2); crate(B, 11, 0, 10.8, 1.2); crate(B, 11, 1.2, 11.4, 1.2);
           crate(B, 12, 0, -11, 1.0); crate(B, -12, 0, 11, 1.0);
-          crate(B, -24, 0, 0, 1.2); crate(B, -24, 0, 1.2, 1.2); crate(B, 24, 0, 0, 1.2); crate(B, 24, 0, -1.2, 1.2);
+          crate(B, -22, 0, -2, 1.2); crate(B, -22, 0, -3.2, 1.2); crate(B, 22, 0, 2, 1.2); crate(B, 22, 0, 3.2, 1.2);
           crate(B, 0, 0, -22, 1.1); crate(B, 1.1, 0, -22, 1.1); crate(B, 0, 0, 22, 1.1); crate(B, -1.1, 0, 22, 1.1);
-          B.box(-13, 0, -24, 5, 1.1, 1.2, 'metal'); B.box(13, 0, 24, 5, 1.1, 1.2, 'metal');
-          B.box(-24, 0, -13, 1.2, 1.1, 5, 'metal'); B.box(24, 0, 13, 1.2, 1.1, 5, 'metal');
+          B.box(-13, 0, -21, 5, 1.1, 1.2, 'metal'); B.box(13, 0, 21, 5, 1.1, 1.2, 'metal');
+          B.box(-21.5, 0, -13, 1.2, 1.1, 5, 'metal'); B.box(21.5, 0, 13, 1.2, 1.1, 5, 'metal');
           for (const [x, z] of [[-15, -15], [15, -15], [-15, 15], [15, 15]]) { B.cyl(x, 0, z, 0.18, 4.2, 'dark', { seg: 6 }); B.box(x, 4.2, z, 0.5, 0.4, 0.5, 'lamp', { nc: 1, ns: 1 }); }
           B.box(-41.2, 0, -10, 1.4, 1.2, 4, 'wood'); B.box(41.2, 0, 10, 1.4, 1.2, 4, 'wood');
           B.box(-10, 0, 41.2, 4, 1.2, 1.4, 'wood'); B.box(10, 0, -41.2, 4, 1.2, 1.4, 'wood');
@@ -100,15 +98,15 @@
           cont(-12, 0, -14, 0, CC[0]); cont(-12, 2.6, -14, 0, CC[1]); cont(-4, 0, -14, 0, CC[2]);
           cont(12, 0, 14, 0, CC[3]); cont(12, 2.6, 14, 0, CC[0]); cont(4, 0, 14, 0, CC[4]);
           cont(-14, 0, 6, 1, CC[1]); cont(14, 0, -6, 1, CC[2]); cont(-14, 2.6, 6, 1, CC[3]); cont(14, 2.6, -6, 1, CC[4]);
-          cont(-26, 0, -30, 1, CC[3]); cont(-23, 0, -30, 1, CC[0]); cont(26, 0, 30, 1, CC[1]); cont(23, 0, 30, 1, CC[2]);
+          cont(-22, 0, -30, 1, CC[3]); cont(-19.4, 0, -30, 1, CC[0]); cont(22, 0, 30, 1, CC[1]); cont(19.4, 0, 30, 1, CC[2]);
           cont(-30, 0, 22, 0, CC[4]); cont(30, 0, -22, 0, CC[3]);
           building(B, -40, -40, -28, -18, 7, 'metal', { roof: 'roof', trim: 'dark', wy: [1.4, 4.2], wg: 3 });
           building(B, 28, 18, 40, 40, 7, 'metal', { roof: 'roof', trim: 'dark', wy: [1.4, 4.2], wg: 3 });
           building(B, -8, -40, 8, -30, 5, 'brick', { roof: 'roof', wy: [1.4] });
           building(B, -8, 30, 8, 40, 5, 'brick', { roof: 'roof', wy: [1.4] });
-          B.ramp(-26, -24, 4, 12, 0, 7, 3, 'metal'); B.ramp(26, 24, 4, 12, 0, 7, 2, 'metal');
-          B.ramp(-10.5, -27, 3, 6, 0, 2.6, 3, 'metal'); B.ramp(10.5, 27, 3, 6, 0, 2.6, 2, 'metal');
-          B.ramp(10, -35, 4, 6, 0, 5, 1, 'wood'); B.ramp(-10, 35, 4, 6, 0, 5, 0, 'wood');
+          B.ramp(-21, -22, 14, 3, 0, 7, 1, 'metal'); B.ramp(21, 22, 14, 3, 0, 7, 0, 'metal');
+          B.ramp(-4, -10.25, 6, 5, 0, 2.6, 3, 'metal'); B.ramp(4, 10.25, 6, 5, 0, 2.6, 2, 'metal');
+          B.ramp(13, -35, 10, 3, 0, 5, 1, 'wood'); B.ramp(-13, 35, 10, 3, 0, 5, 0, 'wood');
           B.box(0, 0, 0, 8, 4.2, 8, 'brick'); B.box(0, 4.2, 0, 8.6, 0.4, 8.6, 'trim');
           B.ramp(-6.5, 0, 5, 3, 0, 4.2, 0, 'metal'); B.ramp(6.5, 0, 5, 3, 0, 4.2, 1, 'metal');
           B.box(0, 4.6, -3.9, 8, 1, 0.3, 'metal', { ns: 1 }); B.box(0, 4.6, 3.9, 8, 1, 0.3, 'metal', { ns: 1 });
@@ -118,7 +116,7 @@
           crate(B, -30, 1.2, -5, 1.2); crate(B, 30, 1.2, 5, 1.2);
           B.box(0, 9, -20, 1, 1, 34, 'dark', { nc: 1 }); B.box(0, 0, -36, 1, 9, 1, 'dark', { nc: 1 }); B.box(0, 7, -6, 0.2, 2, 0.2, 'dark', { nc: 1, ns: 1 });
           for (const [x, z] of [[-36, 0], [36, 0]]) { B.cyl(x, 0, z, 2.2, 5, 'metal', { seg: 10 }); B.cyl(x, 5, z, 2.2, 0.8, 'snow', { seg: 10, r2: 0.6, nc: 1 }); }
-          const S = [[-38, 0, -8, 0], [-38, 0, 8, 0], [38, 0, -8, 1], [38, 0, 8, 1], [-20, 0, -38, 0], [20, 0, -38, 1], [-20, 0, 38, 0], [20, 0, 38, 1], [-34, 7, -29, 0], [34, 7, 29, 1], [0, 5, -35, 0], [0, 5, 35, 1], [-24, 0, 14, 0], [24, 0, -14, 1], [-12, 5.2, -14, 0], [12, 5.2, 14, 1]];
+          const S = [[-38, 0, -8, 0], [-38, 0, 8, 0], [38, 0, -8, 1], [38, 0, 8, 1], [-20, 0, -38, 0], [20, 0, -38, 1], [-20, 0, 38, 0], [20, 0, 38, 1], [-34, 7, -29, 0], [34, 7, 29, 1], [0, 5, -35, 0], [0, 5, 35, 1], [-24, 0, 14, 0], [24, 0, -14, 1], [-6, 2.6, -14, 0], [6, 2.6, 14, 1]];
           for (const s of S) B.spawn(s[0], s[1], s[2], s[3]);
           B.zone(0, 4.2, 0, 4.5, 'Pump house'); B.zone(-34, 7, -29, 5, 'West depot'); B.zone(34, 7, 29, 5, 'East depot'); B.zone(0, 0, -22, 6, 'North yard'); B.zone(0, 0, 22, 6, 'South yard');
         }
@@ -138,14 +136,14 @@
           for (const [x, z] of [[-9, -9], [9, -9], [-9, 9], [9, 9]]) { B.box(x, 0, z, 4, 2.6, 4, 'sandstone'); B.box(x, 2.6, z, 4.4, 0.25, 4.4, 'plaster'); }
           for (const [x, z, r] of [[-3.5, 0, 1], [3.5, 0, 1], [0, -3.5, 0], [0, 3.5, 0]]) B.box(x, 0, z, r ? 0.8 : 4, 1.1, r ? 4 : 0.8, 'sandstone');
           for (const [x, z, c] of [[-16, -6, 0xd8433a], [16, 6, 0x2f7fc8], [-6, 16, 0x3aa35a], [6, -16, 0xe0a030]]) { B.box(x, 0, z, 4, 0.9, 2, 'wood'); B.box(x, 2.4, z, 4.6, 0.12, 3, 'cloth', { c, nc: 1 }); for (const ox of [-2.1, 2.1]) B.box(x + ox, 0, z - 1.3, 0.15, 2.4, 0.15, 'wood', { nc: 1, ns: 1 }); }
-          B.ramp(-22, -32, 4, 10, 0, 5.5, 3, 'sandstone'); B.ramp(22, 32, 4, 10, 0, 5.5, 2, 'sandstone');
-          B.ramp(17, -30, 10, 3, 0, 3.8, 0, 'sandstone'); B.ramp(-17, 30, 10, 3, 0, 3.8, 1, 'sandstone');
-          B.ramp(-16, -36, 4, 6, 0, 3.8, 1, 'wood', {}); B.ramp(16, 36, 4, 6, 0, 3.8, 0, 'wood');
+          B.ramp(-19, -30, 10, 3, 0, 5.5, 1, 'sandstone'); B.ramp(19, 30, 10, 3, 0, 5.5, 0, 'sandstone');
+          B.ramp(19, -36, 10, 3, 0, 3.8, 1, 'sandstone'); B.ramp(-19, 36, 10, 3, 0, 3.8, 0, 'sandstone'); B.ramp(19, -29, 10, 3, 0, 4, 0, 'sandstone'); B.ramp(-19, 29, 10, 3, 0, 4, 1, 'sandstone');
+          B.ramp(-19, -36, 10, 3, 0, 3.8, 0, 'wood'); B.ramp(19, 36, 10, 3, 0, 3.8, 1, 'wood');
           for (const [x, z] of [[-30, -6], [30, 6], [-30, 8], [30, -8], [-6, -26], [6, 26]]) crate(B, x, 0, z, 1.2);
           crate(B, -30, 1.2, -6, 1.2); crate(B, 30, 1.2, 6, 1.2);
           for (const [x, z] of [[-34, 0], [34, 0], [0, -24], [0, 24]]) { B.cyl(x, 0, z, 0.35, 6, 'wood', { seg: 6 }); B.box(x, 6, z, 3.6, 0.2, 0.6, 'grass', { nc: 1, ns: 1 }); B.box(x, 6, z, 0.6, 0.2, 3.6, 'grass', { nc: 1, ns: 1 }); }
-          B.box(-36, 0, 14, 6, 1.5, 6, 'sandstone'); B.ramp(-36, 18.5, 4, 3, 0, 1.5, 3, 'sandstone');
-          B.box(36, 0, -14, 6, 1.5, 6, 'sandstone'); B.ramp(36, -18.5, 4, 3, 0, 1.5, 2, 'sandstone');
+          B.box(-36, 0, 14, 6, 1.5, 6, 'sandstone'); B.ramp(-36, 19, 4, 4, 0, 1.5, 3, 'sandstone');
+          B.box(36, 0, -14, 6, 1.5, 6, 'sandstone'); B.ramp(36, -19, 4, 4, 0, 1.5, 2, 'sandstone');
           const S = [[-41, 0, -12, 0], [-41, 0, 12, 0], [41, 0, -12, 1], [41, 0, 12, 1], [-20, 0, -41, 0], [20, 0, -20, 1], [-20, 0, 20, 0], [20, 0, 41, 1], [-32, 5.5, -32, 0], [32, 5.5, 32, 1], [0, 3.8, -36, 0], [0, 3.8, 36, 1], [-36, 1.5, 14, 0], [36, 1.5, -14, 1], [32, 4, -33, 1], [-32, 4, 33, 0]];
           for (const s of S) B.spawn(s[0], s[1], s[2], s[3]);
           B.zone(0, 0, 0, 6, 'Market'); B.zone(0, 3.8, -36, 5, 'North gate'); B.zone(0, 3.8, 36, 5, 'South gate'); B.zone(-32, 5.5, -32, 5, 'Watch house'); B.zone(32, 5.5, 32, 5, 'Store house');
@@ -498,15 +496,16 @@ ${R} .fp-scope::after{height:min(84cqw,84cqh);width:2px;transform:translate(-50%
         let mag = null;
         if (gp.mag) { mag = kit.mesh([['box', gp.mag[0], [0, 0, 0], gp.mag[2]]], { noShadow: true }); mag.position.set(...gp.mag[1]); root.add(mag); }
         const sl = '#2a3550', gl = '#f0c39a';
-        const arms = kit.mesh([['box', sl, [0.06, -0.14, 0.24], [0.09, 0.09, 0.36], [0.25, 0, 0]], ['box', gl, [0.02, -0.09, 0.07], [0.07, 0.07, 0.09]], ['box', sl, [-0.12, -0.16, -0.02], [0.08, 0.08, 0.4], [0.3, 0.45, 0]], ['box', gl, [-0.03, -0.06, -0.2], [0.065, 0.06, 0.08]]], { noShadow: true });
+        const rH = [0.015, -0.1, 0.07], lH = k === 'rocket' ? [-0.02, -0.05, -0.22] : [-0.01, -0.055, k === 'sniper' || k === 'lmg' ? -0.26 : -0.2];
+        const arms = kit.mesh([kit.limb(sl, [0.03, -0.13, 0.13], [0.14, -0.3, 0.46], 0.085), kit.limb('#1e2840', [0.02, -0.115, 0.1], [0.04, -0.15, 0.18], 0.095), ['box', gl, rH, [0.065, 0.075, 0.09]], kit.limb(sl, [lH[0] - 0.02, lH[1] - 0.04, lH[2] + 0.05], [-0.2, -0.32, 0.24], 0.08), ['box', gl, lH, [0.07, 0.055, 0.09]]], { noShadow: true });
         if (k !== 'knife' && k !== 'pistol' && k !== 'revolver') root.add(arms);
-        else root.add(kit.mesh([['box', sl, [0.04, -0.15, 0.24], [0.09, 0.09, 0.36], [0.3, 0, 0]], ['box', gl, [0.01, -0.08, 0.06], [0.07, 0.07, 0.09]]], { noShadow: true }));
+        else root.add(kit.mesh([kit.limb(sl, [0.03, -0.12, 0.12], [0.14, -0.3, 0.46], 0.085), ['box', gl, [0.01, -0.08, 0.05], [0.065, 0.075, 0.09]]], { noShadow: true }));
         const muzzle = new THREE.Object3D(); muzzle.position.set(0, 0.012, gp.mz); root.add(muzzle);
         const VS = 0.7;
         root.scale.setScalar(VS);
         const sightY = ({ rifle: 0.078, sniper: 0.09, smg: 0.078, shotgun: 0.06, revolver: 0.06, lmg: 0.125, rocket: 0.135, pistol: 0.058, knife: 0 }[k] || 0.07) * VS;
         const out = {
-          root, muzzle, hip: k === 'knife' ? [0.16, -0.15, -0.32] : k === 'rocket' ? [0.15, -0.15, -0.36] : k === 'pistol' || k === 'revolver' ? [0.12, -0.12, -0.3] : [0.12, -0.13, -0.38], aim: k === 'knife' ? [0.14, -0.14, -0.32] : [0, -sightY, k === 'sniper' ? -0.3 : k === 'pistol' || k === 'revolver' ? -0.26 : -0.32], kickZ: k === 'sniper' || k === 'shotgun' ? 0.1 : 0.06, kickRot: 0.5, reloadRoll: 0.7, flashS: k === 'shotgun' || k === 'lmg' ? 1.4 : k === 'pistol' ? 0.8 : 1, noFlash: k === 'knife' || k === 'rocket',
+          root, muzzle, hip: k === 'knife' ? [0.16, -0.15, -0.32] : k === 'rocket' ? [0.15, -0.15, -0.36] : k === 'pistol' || k === 'revolver' ? [0.12, -0.12, -0.3] : [0.12, -0.13, -0.38], aim: k === 'knife' ? [0.14, -0.14, -0.32] : [0, -sightY, k === 'sniper' ? -0.3 : k === 'pistol' || k === 'revolver' ? -0.3 : -0.4], kickZ: k === 'sniper' || k === 'shotgun' ? 0.1 : 0.06, kickRot: 0.5, reloadRoll: 0.7, flashS: k === 'shotgun' || k === 'lmg' ? 1.4 : k === 'pistol' ? 0.8 : 1, noFlash: k === 'knife' || k === 'rocket',
           anim(s, dt, rl, me) {
             if (mag) { const d = rl >= 0 ? Math.sin(Math.min(1, rl) * Math.PI) : 0; mag.position.y = gp.mag[1][1] - d * 0.25; mag.visible = !(rl > 0.35 && rl < 0.6); }
             if (k === 'knife') { const m = me >= 0 ? Math.sin(me * Math.PI) : 0; root.rotation.y += m * 0.9; root.rotation.x -= m * 0.4; root.position.z -= m * 0.12; root.position.x -= m * 0.12; }

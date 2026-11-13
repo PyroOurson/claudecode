@@ -19,7 +19,7 @@
         B.box(cx, 0, (z0 + w0) / 2, sx, h, w0 - z0, m); B.box(cx, 0, (w1 + z1) / 2, sx, h, z1 - w1, m); B.box(cx, a.h, a.c, sx, h - a.h, a.w, m);
       }
     } else B.box(cx, 0, cz, sx, h, sz, m);
-    const tr = o.trim || 'trim', rim = o.rim == null ? 0.5 : o.rim;
+    const tr = o.trim || 'trim', rim = o.rim == null ? 0.3 : o.rim;
     if (rim) {
       B.box(cx, h, z0 + 0.15, sx, rim, 0.3, tr); B.box(cx, h, z1 - 0.15, sx, rim, 0.3, tr);
       B.box(x0 + 0.15, h, cz, 0.3, rim, sz - 0.6, tr); B.box(x1 - 0.15, h, cz, 0.3, rim, sz - 0.6, tr);
