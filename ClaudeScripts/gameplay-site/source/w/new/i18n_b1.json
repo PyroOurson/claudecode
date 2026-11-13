@@ -9,7 +9,7 @@
 ["Escapes", "Évasions", "Fugas", "Fluchten", "Fughe", "Fugas"],
 ["@the-quiet-house|Best time", "Meilleur temps", "Mejor tiempo", "Bestzeit", "Miglior tempo", "Melhor tempo"],
 ["Choose a difficulty", "Choisis une difficulté", "Elige la dificultad", "Wähle einen Schwierigkeitsgrad", "Scegli la difficoltà", "Escolhe a dificuldade"],
-["Practice", "Entraînement", "Práctica", "Übung", "Allenamento", "Treino"],
+["@the-quiet-house|Practice", "Entraînement", "Práctica", "Übung", "Allenamento", "Treino"],
 ["Easy", "Facile", "Fácil", "Leicht", "Facile", "Fácil"],
 ["Normal", "Normal", "Normal", "Normal", "Normale", "Normal"],
 ["Hard", "Difficile", "Difícil", "Schwer", "Difficile", "Difícil"],
@@ -22,7 +22,7 @@
 ["Starting a new game replaces your saved game.", "Une nouvelle partie remplace ta partie sauvegardée.", "Empezar una partida nueva reemplaza tu partida guardada.", "Ein neues Spiel ersetzt deinen Spielstand.", "Una nuova partita sostituisce quella salvata.", "Um novo jogo substitui o jogo guardado."],
 ["You have five days to escape. The Keeper hears every sound. If he catches you, the day ends and you wake up in your bed. Find the tools and keys to open the front door, or get the car going and drive out of the garage.", "Tu as cinq jours pour t’échapper. Le Gardien entend le moindre bruit. S’il t’attrape, la journée se termine et tu te réveilles dans ton lit. Trouve les outils et les clés pour ouvrir la porte d’entrée, ou répare la voiture et sors du garage.", "Tienes cinco días para escapar. El Guardián oye cada ruido. Si te atrapa, el día termina y despiertas en tu cama. Encuentra las herramientas y llaves para abrir la puerta principal, o arranca el coche y sal del garaje.", "Du hast fünf Tage für die Flucht. Der Wächter hört jedes Geräusch. Wenn er dich fängt, endet der Tag und du wachst in deinem Bett auf. Finde Werkzeuge und Schlüssel für die Haustür oder bring das Auto zum Laufen und fahr aus der Garage.", "Hai cinque giorni per fuggire. Il Custode sente ogni rumore. Se ti prende, il giorno finisce e ti risvegli nel tuo letto. Trova gli attrezzi e le chiavi per aprire la porta d’ingresso, oppure fai partire l’auto ed esci dal garage.", "Tens cinco dias para fugir. O Guardião ouve todos os sons. Se te apanhar, o dia acaba e acordas na tua cama. Encontra as ferramentas e as chaves para abrir a porta da frente, ou põe o carro a funcionar e sai da garagem."],
 ["WASD / arrows", "ZQSD / flèches", "WASD / flechas", "WASD / Pfeiltasten", "WASD / frecce", "WASD / setas"],
-["Move", "Se déplacer", "Moverse", "Bewegen", "Muoversi", "Mover"],
+["@the-quiet-house|Move", "Se déplacer", "Moverse", "Bewegen", "Muoversi", "Mover"],
 ["Mouse", "Souris", "Ratón", "Maus", "Mouse", "Rato"],
 ["Look around", "Regarder autour", "Mirar alrededor", "Umsehen", "Guardarsi intorno", "Olhar à volta"],
 ["Esc", "Échap", "Esc", "Esc", "Esc", "Esc"],
@@ -213,5 +213,9 @@
 ["Right stick", "Joystick droit", "Joystick derecho", "Rechter Stick", "Levetta destra", "Joystick direito"],
 ["A or RB", "A ou RB", "A o RB", "A oder RB", "A o RB", "A ou RB"],
 ["RT or X", "RT ou X", "RT o X", "RT oder X", "RT o X", "RT ou X"],
-["Building the house…", "Construction de la maison…", "Construyendo la casa…", "Das Haus wird gebaut…", "Costruzione della casa…", "A construir a casa…"]
+["Building the house…", "Construction de la maison…", "Construyendo la casa…", "Das Haus wird gebaut…", "Costruzione della casa…", "A construir a casa…"],
+["Best time", "Meilleur temps", "Mejor tiempo", "Bestzeit", "Miglior tempo", "Melhor tempo"],
+["Practice", "Entraînement", "Práctica", "Übung", "Allenamento", "Treino"],
+["Fuel", "Carburant", "Combustible", "Benzin", "Carburante", "Combustível"],
+["Take", "Prendre", "Coger", "Nehmen", "Prendi", "Apanhar"]
 ]

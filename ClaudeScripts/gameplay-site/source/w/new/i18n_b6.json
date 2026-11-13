@@ -8,7 +8,7 @@
 ["Asteroid belt", "Ceinture d’astéroïdes", "Cinturón de asteroides", "Asteroidengürtel", "Fascia degli asteroidi", "Cinturão de asteroides"],
 ["@long-shot|Average", "Moyenne", "Media", "Durchschnitt", "Media", "Média"],
 ["@long-shot|Back", "Retour", "Atrás", "Zurück", "Indietro", "Voltar"],
-["Back to lobby", "Retour au salon", "Volver a la sala", "Zurück zur Lobby", "Torna alla lobby", "Voltar ao lobby"],
+["@long-shot|Back to lobby", "Retour au salon", "Volver a la sala", "Zurück zur Lobby", "Torna alla lobby", "Voltar ao lobby"],
 ["Best", "Record", "Récord", "Rekord", "Record", "Recorde"],
 ["Best day", "Meilleur jour", "Mejor día", "Bester Tag", "Giorno migliore", "Melhor dia"],
 ["Best streak", "Meilleure série", "Mejor racha", "Beste Serie", "Serie migliore", "Melhor sequência"],
@@ -98,7 +98,7 @@
 ["Rating", "Classement", "Clasificación", "Wertung", "Punteggio", "Ranking"],
 ["Rating {n}", "Classement {n}", "Clasificación {n}", "Wertung {n}", "Punteggio {n}", "Ranking {n}"],
 ["Ready for launch?", "Prêt pour le lancement ?", "¿Listo para el lanzamiento?", "Bereit zum Start?", "Pronto al lancio?", "Pronto para o lançamento?"],
-["Rematch", "Revanche", "Revancha", "Revanche", "Rivincita", "Revanche"],
+["@long-shot|Rematch", "Revanche", "Revancha", "Revanche", "Rivincita", "Revanche"],
 ["Room settings", "Réglages de la salle", "Ajustes de la sala", "Raumeinstellungen", "Impostazioni della stanza", "Configurações da sala"],
 ["Room wins", "Victoires en salle", "Victorias en sala", "Raumsiege", "Vittorie in stanza", "Vitórias em sala"],
 ["Same 7 prompts for everyone today", "Les mêmes 7 consignes pour tous aujourd’hui", "Las mismas 7 consignas para todos hoy", "Heute dieselben 7 Aufgaben für alle", "Le stesse 7 richieste per tutti oggi", "Os mesmos 7 desafios para todos hoje"],
@@ -266,5 +266,8 @@
 ["A word that rhymes with “light”", "Un mot qui finit par « -eau »", "Una palabra que rime con «light»", "Ein Wort, das sich auf „light“ reimt", "Una parola che fa rima con “light”", "Uma palavra que rime com “light”"],
 ["A word that rhymes with “day”", "Un mot qui finit par « -ette »", "Una palabra que rime con «day»", "Ein Wort, das sich auf „day“ reimt", "Una parola che fa rima con “day”", "Uma palavra que rime com “day”"],
 ["A word that rhymes with “cat”", "Un mot qui finit par « -oir »", "Una palabra que rime con «cat»", "Ein Wort, das sich auf „cat“ reimt", "Una parola che fa rima con “cat”", "Uma palavra que rime com “cat”"],
-["A word that rhymes with “cake”", "Un mot qui finit par « -age »", "Una palabra que rime con «cake»", "Ein Wort, das sich auf „cake“ reimt", "Una parola che fa rima con “cake”", "Uma palavra que rime com “cake”"]
+["A word that rhymes with “cake”", "Un mot qui finit par « -age »", "Una palabra que rime con «cake»", "Ein Wort, das sich auf „cake“ reimt", "Una parola che fa rima con “cake”", "Uma palavra que rime com “cake”"],
+["Connected", "Connecté", "Conectado", "Verbunden", "Connesso", "Conectado"],
+["Thinking…", "Réfléchit…", "Pensando…", "Denkt nach…", "Ci pensa…", "Pensando…"],
+["You finished #{n}", "Tu termines {n}e", "Terminaste en el puesto {n}", "Du bist auf Platz {n}", "Sei arrivato {n}º", "Você terminou em {n}º"]
 ]

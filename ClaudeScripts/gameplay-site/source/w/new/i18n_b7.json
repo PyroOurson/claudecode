@@ -60,7 +60,8 @@
 ["@touchdown-dynasty|New game", "Nouvelle partie", "Nueva partida", "Neues Spiel", "Nuova partita", "Novo jogo"],
 ["Not enough players", "Pas assez de joueurs", "No hay suficientes jugadores", "Nicht genug Spieler", "Giocatori insufficienti", "Jogadores insuficientes"],
 ["Caption This needs at least 3 players. Turn on bots in the lobby or invite friends.", "Caption This demande au moins 3 joueurs. Active les bots dans le salon ou invite des amis.", "Caption This necesita al menos 3 jugadores. Activa los bots en la sala o invita a amigos.", "Caption This braucht mindestens 3 Spieler. Schalte in der Lobby Bots ein oder lade Freunde ein.", "Caption This richiede almeno 3 giocatori. Attiva i bot nella lobby o invita degli amici.", "Caption This precisa de pelo menos 3 jogadores. Ativa os bots no lobby ou convida amigos."],
-["Back to lobby", "Retour au salon", "Volver a la sala", "Zurück zur Lobby", "Torna alla lobby", "Voltar ao lobby"],
+["@caption-this|Back to lobby", "Retour au salon", "Volver a la sala", "Zurück zur Lobby", "Torna alla lobby", "Voltar ao lobby"],
+["@touchdown-dynasty|Back to lobby", "Retour au salon", "Volver a la sala", "Zurück zur Lobby", "Torna alla lobby", "Voltar ao lobby"],
 ["Game resumed", "Partie reprise", "Partida reanudada", "Spiel fortgesetzt", "Partita ripresa", "Jogo retomado"],
 ["@caption-this|Resume", "Reprendre", "Reanudar", "Weiter", "Riprendi", "Continuar"],
 ["@touchdown-dynasty|Resume", "Reprendre", "Reanudar", "Weiter", "Riprendi", "Continuar"],
@@ -519,5 +520,9 @@
 ["or tap to snap · tap a receiver or", "ou touche pour le snap · touche un receveur ou", "o toca para el snap · toca un receptor o", "oder tippen für den Snap · tippe einen Receiver an oder", "o tocca per lo snap · tocca un ricevitore o", "ou toca para o snap · toca num recetor ou"],
 ["to throw, drag to aim · arrows steer,", "pour lancer, glisse pour viser · flèches pour diriger,", "para lanzar, arrastra para apuntar · flechas para moverte,", "zum Werfen, ziehen zum Zielen · Pfeile zum Lenken,", "per lanciare, trascina per mirare · frecce per muoverti,", "para passar, arrasta para apontar · setas para te mexeres,"],
 ["or swipe to juke,", "ou glisse pour feinter,", "o desliza para regatear,", "oder wischen zum Juken,", "o scorri per dribblare,", "ou desliza para fintar,"],
-["or tap to dive · drag up to kick", "ou touche pour plonger · glisse vers le haut pour taper", "o toca para lanzarte · arrastra hacia arriba para patear", "oder tippen zum Hechten · nach oben ziehen zum Kicken", "o tocca per tuffarti · trascina in su per calciare", "ou toca para mergulhar · arrasta para cima para chutar"]
+["or tap to dive · drag up to kick", "ou touche pour plonger · glisse vers le haut pour taper", "o toca para lanzarte · arrastra hacia arriba para patear", "oder tippen zum Hechten · nach oben ziehen zum Kicken", "o tocca per tuffarti · trascina in su per calciare", "ou toca para mergulhar · arrasta para cima para chutar"],
+["The host ended the game.", "L’hôte a terminé la partie.", "El anfitrión terminó la partida.", "Der Host hat das Spiel beendet.", "L’host ha chiuso la partita.", "O anfitrião terminou o jogo."],
+["Okay", "Pas mal", "Bien", "Okay", "Carino", "Bom"],
+["Wild Card", "Wild Card", "Wild Card", "Wild Card", "Wild Card", "Wild Card"],
+["MISS", "RATÉ", "FALLO", "VERFEHLT", "MANCATO", "FALHOU"]
 ]

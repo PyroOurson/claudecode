@@ -354,5 +354,7 @@
 ["Drums", "Batterie", "Batería", "Schlagzeug", "Batteria", "Bateria"],
 ["Singing", "Chant", "Canto", "Gesang", "Canto", "Canto"],
 ["Trumpet", "Trompette", "Trompeta", "Trompete", "Tromba", "Trompete"],
-["Elements", "Éléments", "Elementos", "Elemente", "Elementi", "Elementos"]
+["Elements", "Éléments", "Elementos", "Elemente", "Elementi", "Elementos"],
+["Not enough money", "Pas assez d’argent", "No hay suficiente dinero", "Nicht genug Geld", "Soldi insufficienti", "Dinheiro insuficiente"],
+["Complete", "Terminé", "Completado", "Geschafft", "Completato", "Concluído"]
 ]

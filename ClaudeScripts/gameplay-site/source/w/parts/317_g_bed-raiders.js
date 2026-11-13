@@ -45,7 +45,7 @@
     { k: 'Armor', items: [{ id: 'ar1', n: 'Chainmail Armor', c: [0, 24], d: 'Kept after death' }, { id: 'ar2', n: 'Iron Armor', c: [1, 12], d: 'Kept after death' }, { id: 'ar3', n: 'Diamond Armor', c: [3, 6], d: 'Kept after death' }] },
     { k: 'Tools', items: [{ id: 'pick', n: 'Pickaxe', c: null }, { id: 'axe', n: 'Axe', c: null }, { id: 'shears', n: 'Shears', c: [0, 20], d: 'Kept after death' }] },
     { k: 'Ranged', items: [{ id: 'bow', n: 'Bow', c: [1, 12] }, { id: 'bow2', n: 'Power Bow', c: [1, 20] }, { id: 'arrow', n: 'Arrows', q: 8, c: [1, 2] }] },
-    { k: 'Utility', items: [{ id: 'gapple', n: 'Golden Apple', c: [1, 3] }, { id: 'fire', n: 'Fireball', c: [0, 40] }, { id: 'tnt', n: 'TNT', c: [1, 4] }, { id: 'pearl', n: 'Ender Pearl', c: [3, 4] }, { id: 'egg', n: 'Bridge Egg', c: [3, 1] }] }
+    { k: 'Utility', items: [{ id: 'gapple', n: 'Golden Apple', c: [1, 3] }, { id: 'fire', n: 'Fireball', c: [0, 40] }, { id: 'tnt', n: 'TNT', c: [1, 4] }, { id: 'pearl', n: 'Warp Pearl', c: [3, 4] }, { id: 'egg', n: 'Bridge Egg', c: [3, 1] }] }
   ];
   const PICK_COST = [null, [0, 10], [0, 10], [1, 3], [1, 6]], AXE_COST = [null, [0, 10], [0, 10], [1, 3], [1, 6]];
   const UPG = [
@@ -1864,7 +1864,7 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
       if (!s) return ''; const k = s.k;
       if (k === 'sword') return T(SWORDS[me.sword].n); if (k === 'pick') return T(PICKS[me.pick].n); if (k === 'axe') return T(AXES[me.axe].n);
       if (typeof k === 'number') return T(BD[k].n);
-      return T({ shears: 'Shears', bow: me.bow === 2 ? 'Power Bow' : 'Bow', arrow: 'Arrows', gapple: 'Golden Apple', fire: 'Fireball', tnt: 'TNT', pearl: 'Ender Pearl', egg: 'Bridge Egg', kb: 'Knockback Stick' }[k] || k);
+      return T({ shears: 'Shears', bow: me.bow === 2 ? 'Power Bow' : 'Bow', arrow: 'Arrows', gapple: 'Golden Apple', fire: 'Fireball', tnt: 'TNT', pearl: 'Warp Pearl', egg: 'Bridge Egg', kb: 'Knockback Stick' }[k] || k);
     }
     api.on(window, 'keydown', e => {
       const c = e.code;
