@@ -9789,6 +9789,167 @@ notify pgrst, 'reload schema';
 -- ============================================================================
 -- 2026-11-13 Relay secret and trusted client address (Part 10.2)
 -- ============================================================================
+create table if not exists private.relay_key (
+  id integer primary key check (id = 1),
+  key_hash text not null,
+  at timestamptz not null default now()
+);
+alter table private.relay_key enable row level security;
+revoke all on table private.relay_key from public, anon, authenticated;
+
+create table if not exists private.ip_salt (
+  id integer primary key check (id = 1),
+  salt text not null
+);
+alter table private.ip_salt enable row level security;
+revoke all on table private.ip_salt from public, anon, authenticated;
+insert into private.ip_salt (id, salt) values (1, encode(extensions.gen_random_bytes(24), 'hex')) on conflict (id) do nothing;
+
+create or replace function private.set_relay_key(p_key text)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+begin
+  if p_key is null or length(p_key) < 32 then
+    raise exception 'The relay key must have at least 32 characters' using errcode = '22023';
+  end if;
+  insert into private.relay_key (id, key_hash) values (1, encode(extensions.digest(p_key, 'sha256'), 'hex'))
+    on conflict (id) do update set key_hash = excluded.key_hash, at = now();
+end;
+$$;
+revoke all on function private.set_relay_key(text) from public, anon, authenticated;
+
+create or replace function private.req_headers()
+returns json
+language plpgsql
+stable
+set search_path = ''
+as $$
+begin
+  return nullif(current_setting('request.headers', true), '')::json;
+exception when others then
+  return null;
+end;
+$$;
+revoke all on function private.req_headers() from public, anon, authenticated;
+
+create or replace function private.relay_ok(p_h json)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(p_h ->> 'x-gp-relay', '') <> ''
+    and exists (select 1 from private.relay_key k where k.id = 1 and k.key_hash = encode(extensions.digest(p_h ->> 'x-gp-relay', 'sha256'), 'hex'));
+$$;
+revoke all on function private.relay_ok(json) from public, anon, authenticated;
+
+create or replace function private.client_ip()
+returns text
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_h json := private.req_headers();
+  v_cf text;
+  v_xf text;
+begin
+  if v_h is null then
+    return '';
+  end if;
+  v_cf := btrim(coalesce(v_h ->> 'cf-connecting-ip', ''));
+  v_xf := btrim(split_part(coalesce(v_h ->> 'x-forwarded-for', ''), ',', 1));
+  if private.relay_ok(v_h) then
+    return left(coalesce(nullif(btrim(coalesce(v_h ->> 'x-gp-ip', '')), ''), nullif(v_xf, ''), v_cf), 64);
+  end if;
+  if v_cf like '2a06:98c0:3600:%' and not exists (select 1 from private.relay_key) then
+    return left(coalesce(nullif(v_xf, ''), v_cf), 64);
+  end if;
+  if v_cf <> '' then
+    return left(v_cf, 64);
+  end if;
+  return left(v_xf, 64);
+end;
+$$;
+revoke all on function private.client_ip() from public, anon, authenticated;
+
+create or replace function private.client_country()
+returns text
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_h json := private.req_headers();
+  v_c text;
+begin
+  if v_h is null then
+    return null;
+  end if;
+  v_c := upper(btrim(coalesce(case when private.relay_ok(v_h) then v_h ->> 'x-gp-country' end, v_h ->> 'cf-ipcountry', '')));
+  return case when v_c ~ '^[A-Z]{2}$' and v_c not in ('XX', 'T1') then v_c end;
+end;
+$$;
+revoke all on function private.client_country() from public, anon, authenticated;
+
+create or replace function private.ip_hash(p_ip text)
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select case when coalesce(p_ip, '') = '' then null else encode(extensions.digest((select s.salt from private.ip_salt s where s.id = 1) || '|' || p_ip, 'sha256'), 'hex') end;
+$$;
+revoke all on function private.ip_hash(text) from public, anon, authenticated;
+
+create or replace function private.rate_key(p_action text)
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select p_action || ':' || coalesce(auth.uid()::text, 'ip:' || coalesce(private.ip_hash(private.client_ip()), ''));
+$$;
+revoke all on function private.rate_key(text) from public, anon, authenticated;
+
+create or replace function private.rate_ok(p_action text, p_max integer, p_window interval, p_key text default null)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_k text := coalesce(p_key, private.rate_key(p_action));
+  v_max integer := private.rate_scale(p_action, p_max);
+  v_n integer;
+  v_ip text := nullif(private.client_ip(), '');
+begin
+  if auth.uid() is not null and not private.rate_sensitive(p_action) and private.is_staff(auth.uid()) then
+    return true;
+  end if;
+  perform pg_advisory_xact_lock(hashtextextended(v_k, 0));
+  select count(*) into v_n from private.rate_hits h where h.k = v_k and h.at > now() - p_window;
+  if v_n >= v_max then
+    return false;
+  end if;
+  insert into private.rate_hits (k, action, uid, ip, full_hit) values (v_k, p_action, auth.uid(), private.ip_hash(v_ip), v_max > 1 and v_n + 1 >= v_max);
+  if random() < 0.005 then
+    delete from private.rate_hits where at < now() - interval '8 days';
+  end if;
+  return true;
+end;
+$$;
+revoke all on function private.rate_ok(text, integer, interval, text) from public, anon, authenticated;
 
 -- ============================================================================
 -- 2026-11-13 Party registry and private realtime channels (Part 10.1, 17.1.3)
@@ -9985,6 +10146,415 @@ grant execute on function public.admin_online(text, text) to authenticated;
 -- ============================================================================
 -- 2026-11-13 IP bans (Part 17.2)
 -- ============================================================================
+create table if not exists private.ip_seen (
+  ip inet not null,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  first_at timestamptz not null default now(),
+  last_at timestamptz not null default now(),
+  primary key (ip, user_id)
+);
+create index if not exists ip_seen_user_idx on private.ip_seen (user_id, last_at desc);
+create index if not exists ip_seen_last_idx on private.ip_seen (last_at);
+create table if not exists private.device_seen (
+  dk text not null,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  first_at timestamptz not null default now(),
+  last_at timestamptz not null default now(),
+  primary key (dk, user_id)
+);
+create index if not exists device_seen_user_idx on private.device_seen (user_id, last_at desc);
+create index if not exists device_seen_last_idx on private.device_seen (last_at);
+create table if not exists private.ip_bans (
+  id bigint generated always as identity primary key,
+  net cidr not null,
+  until timestamptz,
+  reason text,
+  created_by uuid references auth.users (id) on delete set null,
+  created_at timestamptz not null default now(),
+  lifted_at timestamptz,
+  lifted_by uuid references auth.users (id) on delete set null
+);
+create index if not exists ip_bans_net_idx on private.ip_bans using gist (net inet_ops);
+create table if not exists private.device_bans (
+  id bigint generated always as identity primary key,
+  dk text not null,
+  user_id uuid references auth.users (id) on delete set null,
+  until timestamptz,
+  reason text,
+  created_by uuid references auth.users (id) on delete set null,
+  created_at timestamptz not null default now(),
+  lifted_at timestamptz,
+  lifted_by uuid references auth.users (id) on delete set null
+);
+create index if not exists device_bans_dk_idx on private.device_bans (dk) where lifted_at is null;
+alter table private.ip_seen enable row level security;
+alter table private.device_seen enable row level security;
+alter table private.ip_bans enable row level security;
+alter table private.device_bans enable row level security;
+revoke all on table private.ip_seen, private.device_seen, private.ip_bans, private.device_bans from public, anon, authenticated;
+
+create or replace function private.to_inet(p text)
+returns inet
+language plpgsql
+immutable
+set search_path = ''
+as $$
+begin
+  if coalesce(p, '') = '' then
+    return null;
+  end if;
+  return p::inet;
+exception when others then
+  return null;
+end;
+$$;
+
+create or replace function private.to_net(p text)
+returns cidr
+language plpgsql
+immutable
+set search_path = ''
+as $$
+declare
+  v cidr;
+begin
+  v := btrim(coalesce(p, ''))::cidr;
+  if (family(v) = 4 and masklen(v) < 16) or (family(v) = 6 and masklen(v) < 32) then
+    return null;
+  end if;
+  return v;
+exception when others then
+  return null;
+end;
+$$;
+
+create or replace function private.client_dk()
+returns text
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_k text := btrim(coalesce(private.req_headers() ->> 'x-gp-device', ''));
+begin
+  if v_k !~ '^[A-Za-z0-9_-]{16,64}$' then
+    return null;
+  end if;
+  return encode(extensions.digest('gp-device|' || v_k, 'sha256'), 'hex');
+end;
+$$;
+revoke all on function private.client_dk() from public, anon, authenticated;
+revoke all on function private.to_inet(text) from public, anon, authenticated;
+revoke all on function private.to_net(text) from public, anon, authenticated;
+
+create or replace function private.seen_record()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_ip inet := private.to_inet(private.client_ip());
+  v_dk text := private.client_dk();
+begin
+  if v_ip is not null then
+    insert into private.ip_seen as s (ip, user_id) values (v_ip, new.user_id)
+      on conflict (ip, user_id) do update set last_at = now() where s.last_at < now() - interval '5 minutes';
+  end if;
+  if v_dk is not null then
+    insert into private.device_seen as s (dk, user_id) values (v_dk, new.user_id)
+      on conflict (dk, user_id) do update set last_at = now() where s.last_at < now() - interval '5 minutes';
+  end if;
+  if random() < 0.001 then
+    delete from private.ip_seen where last_at < now() - interval '30 days';
+    delete from private.device_seen where last_at < now() - interval '30 days';
+  end if;
+  return null;
+end;
+$$;
+revoke all on function private.seen_record() from public, anon, authenticated;
+drop trigger if exists seen_record on private.presence_now;
+create trigger seen_record after insert or update on private.presence_now
+  for each row execute function private.seen_record();
+
+create or replace function private.access_block()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_ip inet;
+  v_dk text;
+  v_b record;
+begin
+  if not exists (select 1 from private.ip_bans b where b.lifted_at is null and (b.until is null or b.until > now()))
+    and not exists (select 1 from private.device_bans d where d.lifted_at is null and (d.until is null or d.until > now())) then
+    return null;
+  end if;
+  v_ip := private.to_inet(private.client_ip());
+  if v_ip is not null then
+    select b.id, b.until into v_b from private.ip_bans b
+    where b.lifted_at is null and (b.until is null or b.until > now()) and v_ip <<= b.net
+    order by b.until desc nulls first limit 1;
+    if found then
+      if auth.uid() is not null and private.is_staff(auth.uid()) then
+        return null;
+      end if;
+      return jsonb_build_object('kind', 'ip', 'until', v_b.until);
+    end if;
+  end if;
+  v_dk := private.client_dk();
+  if v_dk is not null then
+    select d.id, d.until into v_b from private.device_bans d
+    where d.dk = v_dk and d.lifted_at is null and (d.until is null or d.until > now())
+    order by d.until desc nulls first limit 1;
+    if found then
+      if auth.uid() is not null and private.is_staff(auth.uid()) then
+        return null;
+      end if;
+      return jsonb_build_object('kind', 'device', 'until', v_b.until);
+    end if;
+  end if;
+  return null;
+end;
+$$;
+revoke all on function private.access_block() from public, anon, authenticated;
+
+create or replace function public.gp_pre_request()
+returns void
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_b jsonb;
+begin
+  if coalesce(current_setting('request.path', true), '') in ('/rpc/access_status', '/rpc/gp_pre_request', '/rpc/get_gate_slot') then
+    return;
+  end if;
+  v_b := private.access_block();
+  if v_b is not null then
+    raise sqlstate 'PT403' using message = 'Access blocked', detail = v_b::text, hint = 'access_blocked';
+  end if;
+end;
+$$;
+revoke all on function public.gp_pre_request() from public;
+grant execute on function public.gp_pre_request() to anon, authenticated, service_role;
+
+create or replace function public.access_status()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_b jsonb := private.access_block();
+begin
+  return jsonb_build_object('blocked', v_b is not null, 'kind', v_b ->> 'kind', 'until', v_b -> 'until');
+end;
+$$;
+revoke all on function public.access_status() from public;
+grant execute on function public.access_status() to anon, authenticated, service_role;
+
+do $$
+begin
+  execute 'alter role authenticator set pgrst.db_pre_request to ''public.gp_pre_request''';
+exception when others then
+  raise notice 'could not set the request check: %', sqlerrm;
+end;
+$$;
+notify pgrst, 'reload config';
+
+create or replace function public.admin_ip_preview(p_net text)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_net cidr := private.to_net(p_net);
+  v_mine inet := private.to_inet(private.client_ip());
+begin
+  if v_net is null then
+    raise exception 'Enter one address or a range such as 203.0.113.0/24 (at most /16 for IPv4, /32 for IPv6)' using errcode = '22023';
+  end if;
+  return jsonb_build_object(
+    'net', v_net::text,
+    'size', case when family(v_net) = 4 then power(2, 32 - masklen(v_net))::bigint else null end,
+    'mine', v_mine is not null and v_mine <<= v_net,
+    'accounts', coalesce((
+      select jsonb_agg(jsonb_build_object('id', a.user_id, 'username', p.username, 'display', p.display_name, 'role', p.role, 'last', a.last_at, 'ips', a.ips) order by a.last_at desc)
+      from (select s.user_id, max(s.last_at) as last_at, count(*) as ips from private.ip_seen s where s.ip <<= v_net and s.last_at > now() - interval '30 days' group by s.user_id) a
+      left join public.profiles p on p.id = a.user_id), '[]'::jsonb),
+    'staff', (select count(distinct s.user_id) from private.ip_seen s join public.profiles p on p.id = s.user_id where s.ip <<= v_net and s.last_at > now() - interval '30 days' and p.role in ('admin', 'owner'))
+  );
+end;
+$$;
+
+create or replace function public.admin_ip_ban(p_net text, p_hours integer, p_reason text)
+returns bigint
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_net cidr := private.to_net(p_net);
+  v_mine inet := private.to_inet(private.client_ip());
+  v_id bigint;
+  v_until timestamptz := case when coalesce(p_hours, 0) > 0 then now() + make_interval(hours => least(p_hours, 24 * 3650)) end;
+  v_reason text := nullif(left(regexp_replace(btrim(coalesce(p_reason, '')), '\s+', ' ', 'g'), 500), '');
+begin
+  if v_net is null then
+    raise exception 'Enter one address or a range such as 203.0.113.0/24 (at most /16 for IPv4, /32 for IPv6)' using errcode = '22023';
+  end if;
+  if v_mine is not null and v_mine <<= v_net then
+    raise exception 'This range includes your own address' using errcode = '42501';
+  end if;
+  if v_reason is null then
+    raise exception 'Give a reason' using errcode = '22023';
+  end if;
+  insert into private.ip_bans (net, until, reason, created_by) values (v_net, v_until, v_reason, v_me) returning id into v_id;
+  perform private.admin_log('ip_ban', null, jsonb_build_object('id', v_id, 'net', v_net::text, 'until', v_until, 'reason', v_reason));
+  return v_id;
+end;
+$$;
+
+create or replace function public.admin_ip_unban(p_id bigint)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_net cidr;
+begin
+  update private.ip_bans set lifted_at = now(), lifted_by = v_me where id = p_id and lifted_at is null returning net into v_net;
+  if not found then
+    return false;
+  end if;
+  perform private.admin_log('ip_unban', null, jsonb_build_object('id', p_id, 'net', v_net::text));
+  return true;
+end;
+$$;
+
+create or replace function public.admin_bans(p_all boolean default false)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+begin
+  return jsonb_build_object(
+    'ip', coalesce((select jsonb_agg(jsonb_build_object('id', b.id, 'net', b.net::text, 'until', b.until, 'reason', b.reason, 'at', b.created_at, 'by', pb.username, 'lifted', b.lifted_at, 'lifted_by', pl.username,
+        'active', b.lifted_at is null and (b.until is null or b.until > now())) order by b.created_at desc)
+      from private.ip_bans b left join public.profiles pb on pb.id = b.created_by left join public.profiles pl on pl.id = b.lifted_by
+      where coalesce(p_all, false) or (b.lifted_at is null and (b.until is null or b.until > now()))), '[]'::jsonb),
+    'device', coalesce((select jsonb_agg(jsonb_build_object('user', x.user_id, 'username', p.username, 'n', x.n, 'until', x.until, 'reason', x.reason, 'at', x.at) order by x.at desc)
+      from (select d.user_id, count(*) as n, max(d.until) as until, max(d.reason) as reason, max(d.created_at) as at from private.device_bans d
+            where coalesce(p_all, false) or (d.lifted_at is null and (d.until is null or d.until > now())) group by d.user_id) x
+      left join public.profiles p on p.id = x.user_id), '[]'::jsonb)
+  );
+end;
+$$;
+
+create or replace function public.admin_user_addresses(p_uid uuid)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+begin
+  return jsonb_build_object(
+    'ips', coalesce((select jsonb_agg(jsonb_build_object('ip', host(s.ip), 'first', s.first_at, 'last', s.last_at,
+        'others', (select count(distinct o.user_id) from private.ip_seen o where o.ip = s.ip and o.user_id <> p_uid and o.last_at > now() - interval '30 days'),
+        'ban', (select jsonb_build_object('id', b.id, 'net', b.net::text, 'until', b.until) from private.ip_bans b where b.lifted_at is null and (b.until is null or b.until > now()) and s.ip <<= b.net order by b.id desc limit 1)) order by s.last_at desc)
+      from private.ip_seen s where s.user_id = p_uid and s.last_at > now() - interval '30 days'), '[]'::jsonb),
+    'devices', (select count(*) from private.device_seen d where d.user_id = p_uid and d.last_at > now() - interval '30 days'),
+    'devices_banned', (select count(*) from private.device_bans b where b.user_id = p_uid and b.lifted_at is null and (b.until is null or b.until > now()))
+  );
+end;
+$$;
+
+create or replace function public.admin_ban_devices(p_uid uuid, p_hours integer, p_reason text)
+returns integer
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_until timestamptz := case when coalesce(p_hours, 0) > 0 then now() + make_interval(hours => least(p_hours, 24 * 3650)) end;
+  v_reason text := nullif(left(regexp_replace(btrim(coalesce(p_reason, '')), '\s+', ' ', 'g'), 500), '');
+  v_n integer;
+begin
+  if private.is_staff(p_uid) then
+    raise exception 'Make this admin a regular user first' using errcode = '42501';
+  end if;
+  if p_uid = v_me then
+    raise exception 'You cannot ban your own account' using errcode = '42501';
+  end if;
+  insert into private.device_bans (dk, user_id, until, reason, created_by)
+  select d.dk, p_uid, v_until, v_reason, v_me from private.device_seen d
+  where d.user_id = p_uid and d.last_at > now() - interval '30 days'
+    and not exists (select 1 from private.device_seen o join public.profiles p on p.id = o.user_id where o.dk = d.dk and p.role in ('admin', 'owner'));
+  get diagnostics v_n = row_count;
+  perform private.admin_log('device_ban', p_uid, jsonb_build_object('devices', v_n, 'until', v_until, 'reason', v_reason));
+  return v_n;
+end;
+$$;
+
+create or replace function public.admin_unban_devices(p_uid uuid)
+returns integer
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := private.need_admin();
+  v_n integer;
+begin
+  update private.device_bans set lifted_at = now(), lifted_by = v_me where user_id = p_uid and lifted_at is null;
+  get diagnostics v_n = row_count;
+  if v_n > 0 then
+    perform private.admin_log('device_unban', p_uid, jsonb_build_object('devices', v_n));
+  end if;
+  return v_n;
+end;
+$$;
+
+revoke all on function public.admin_ip_preview(text) from public, anon, authenticated;
+revoke all on function public.admin_ip_ban(text, integer, text) from public, anon, authenticated;
+revoke all on function public.admin_ip_unban(bigint) from public, anon, authenticated;
+revoke all on function public.admin_bans(boolean) from public, anon, authenticated;
+revoke all on function public.admin_user_addresses(uuid) from public, anon, authenticated;
+revoke all on function public.admin_ban_devices(uuid, integer, text) from public, anon, authenticated;
+revoke all on function public.admin_unban_devices(uuid) from public, anon, authenticated;
+grant execute on function public.admin_ip_preview(text) to authenticated;
+grant execute on function public.admin_ip_ban(text, integer, text) to authenticated;
+grant execute on function public.admin_ip_unban(bigint) to authenticated;
+grant execute on function public.admin_bans(boolean) to authenticated;
+grant execute on function public.admin_user_addresses(uuid) to authenticated;
+grant execute on function public.admin_ban_devices(uuid, integer, text) to authenticated;
+grant execute on function public.admin_unban_devices(uuid) to authenticated;
 
 -- ============================================================================
 -- 2026-11-13 Read marks only by the recipient (Part 17.1.2)

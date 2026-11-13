@@ -63,6 +63,27 @@ async function turn(request, env) {
   }
 }
 
+const bans = new Map();
+
+async function banCheck(ip, request, env) {
+  const now = Date.now(), c = bans.get(ip);
+  if (c && c.until > now) return c.blocked;
+  let blocked = null;
+  try {
+    const key = request.headers.get('apikey') || env.ANON_KEY || '';
+    if (key) {
+      const r = await fetch('https://' + UPSTREAM + '/rest/v1/rpc/access_status', { method: 'POST', headers: { apikey: key, 'Content-Type': 'application/json', 'X-GP-Relay': env.RELAY_KEY, 'X-GP-IP': ip, 'X-Forwarded-For': ip }, body: '{}' });
+      if (r.ok) {
+        const j = await r.json();
+        if (j && j.blocked) blocked = { kind: j.kind, until: j.until };
+      }
+    }
+  } catch (e) {}
+  if (bans.size > 20000) bans.clear();
+  bans.set(ip, { blocked, until: now + 60000 });
+  return blocked;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -88,6 +109,21 @@ export default {
     headers.delete('Forwarded');
     const ip = request.headers.get('CF-Connecting-IP');
     if (ip) headers.set('X-Forwarded-For', ip); else headers.delete('X-Forwarded-For');
+    headers.delete('X-GP-Relay');
+    headers.delete('X-GP-IP');
+    headers.delete('X-GP-Country');
+    if (env && env.RELAY_KEY && ip) {
+      headers.set('X-GP-Relay', env.RELAY_KEY);
+      headers.set('X-GP-IP', ip);
+      if (request.cf && request.cf.country) headers.set('X-GP-Country', String(request.cf.country));
+      if (request.method !== 'OPTIONS' && /^\/(auth|storage)\/v1\//.test(url.pathname)) {
+        const blocked = await banCheck(ip, request, env);
+        if (blocked) {
+          const origin = request.headers.get('Origin') || '';
+          return new Response(JSON.stringify({ message: 'Access blocked', hint: 'access_blocked', details: JSON.stringify(blocked), error: 'access_blocked', msg: 'Access blocked' }), { status: 403, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': ORIGINS.has(origin) ? origin : 'https://gameplaygames.web.app', 'Vary': 'Origin', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
+        }
+      }
+    }
     const init = { method: request.method, headers, redirect: 'manual' };
     if (request.method !== 'GET' && request.method !== 'HEAD') init.body = request.body;
     return fetch(new Request(url.toString(), init));

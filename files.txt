@@ -103,9 +103,11 @@ ClaudeScripts/gameplay-site/source/t/tests/announce.js
 ClaudeScripts/gameplay-site/source/t/tests/dm.js
 ClaudeScripts/gameplay-site/source/t/tests/fixes.js
 ClaudeScripts/gameplay-site/source/t/tests/gate_locked.js
+ClaudeScripts/gameplay-site/source/t/tests/ipban.js
 ClaudeScripts/gameplay-site/source/t/tests/legal_pages.js
 ClaudeScripts/gameplay-site/source/t/tests/load_sequence.js
 ClaudeScripts/gameplay-site/source/t/tests/party.js
+ClaudeScripts/gameplay-site/source/t/tests/peak.js
 ClaudeScripts/gameplay-site/source/t/tests/smoke_all.js
 ClaudeScripts/gameplay-site/source/w/agents_net/API.md
 ClaudeScripts/gameplay-site/source/w/assemble.py

@@ -929,3 +929,4 @@ html.rm .adm-upd.live i,html.rm .mx-upd.busy i{animation:none}
 .st-tiles{grid-template-columns:repeat(auto-fit,minmax(138px,1fr))}
 .mx-none .sx-ch{margin-bottom:8px}
 .dg-list{max-height:min(48vh,520px)}
+.ab-ips{display:grid;gap:8px;margin:10px 0}.ab-ip{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:12px}.ab-ip>div{flex:1 1 160px;min-width:0}.ab-ip b{display:block;font-family:'JetBrains Mono',monospace;font-size:13px;overflow-wrap:anywhere}.ab-ip small{color:var(--muted)}.ab-f{display:grid;gap:6px;margin-top:8px}.ab-pv p{margin:6px 0}.ab-pv .bad{color:var(--danger)}.ab-acc{margin:4px 0 8px;padding-left:18px;max-height:160px;overflow:auto;font-size:13px}#adbanc .btn2+.btn2{margin-left:6px}
