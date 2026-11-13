@@ -125,8 +125,11 @@ ClaudeScripts/gameplay-site/source/notes/one-life.md
 ClaudeScripts/gameplay-site/source/notes/order-up.md
 ClaudeScripts/gameplay-site/source/notes/pickaxe-peak.md
 ClaudeScripts/gameplay-site/source/notes/quack-cup.md
+ClaudeScripts/gameplay-site/source/notes/quiver-clash.md
 ClaudeScripts/gameplay-site/source/notes/reel-deep.md
+ClaudeScripts/gameplay-site/source/notes/spike-run.md
 ClaudeScripts/gameplay-site/source/notes/stats_audit.md
+ClaudeScripts/gameplay-site/source/notes/swing-line.md
 ClaudeScripts/gameplay-site/source/notes/touchdown-dynasty.md
 ClaudeScripts/gameplay-site/source/notes/wobble-ride.md
 ClaudeScripts/gameplay-site/source/t/lib.js
@@ -265,6 +268,7 @@ ClaudeScripts/gameplay-site/source/w/covers/pulse.webp
 ClaudeScripts/gameplay-site/source/w/covers/pyramid-solitaire.webp
 ClaudeScripts/gameplay-site/source/w/covers/quack-cup.webp
 ClaudeScripts/gameplay-site/source/w/covers/quiplash.webp
+ClaudeScripts/gameplay-site/source/w/covers/quiver-clash.webp
 ClaudeScripts/gameplay-site/source/w/covers/quoridor.webp
 ClaudeScripts/gameplay-site/source/w/covers/reaction.webp
 ClaudeScripts/gameplay-site/source/w/covers/reel-deep.webp
@@ -293,6 +297,7 @@ ClaudeScripts/gameplay-site/source/w/covers/spades.webp
 ClaudeScripts/gameplay-site/source/w/covers/speed.webp
 ClaudeScripts/gameplay-site/source/w/covers/spelling-bee.webp
 ClaudeScripts/gameplay-site/source/w/covers/spider-solitaire.webp
+ClaudeScripts/gameplay-site/source/w/covers/spike-run.webp
 ClaudeScripts/gameplay-site/source/w/covers/spyfall.webp
 ClaudeScripts/gameplay-site/source/w/covers/stack.webp
 ClaudeScripts/gameplay-site/source/w/covers/starve-io.webp
@@ -303,6 +308,7 @@ ClaudeScripts/gameplay-site/source/w/covers/sudoku.webp
 ClaudeScripts/gameplay-site/source/w/covers/super-mario-bros.webp
 ClaudeScripts/gameplay-site/source/w/covers/super-smash-bros.webp
 ClaudeScripts/gameplay-site/source/w/covers/surviv-io.webp
+ClaudeScripts/gameplay-site/source/w/covers/swing-line.webp
 ClaudeScripts/gameplay-site/source/w/covers/tank-arena.webp
 ClaudeScripts/gameplay-site/source/w/covers/tank-trouble.webp
 ClaudeScripts/gameplay-site/source/w/covers/target-range.webp
@@ -392,6 +398,7 @@ ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_president.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_pyramid-solitaire.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_quack-cup.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_quiplash.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_quiver-clash.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_quoridor.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_reel-deep.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_risk.js
@@ -411,11 +418,13 @@ ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_spades.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_speed.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_spelling-bee.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_spider-solitaire.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_spike-run.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_spyfall.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_starve.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_stick-fight.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_stratego.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_surviv.js
+ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_swing-line.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_terraria.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_tomb-of-the-mask.js
 ClaudeScripts/gameplay-site/source/w/covers/tools/art/g_touchdown-dynasty.js
@@ -482,6 +491,7 @@ ClaudeScripts/gameplay-site/source/w/new/i18n_admin.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b2.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b3.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b4.json
+ClaudeScripts/gameplay-site/source/w/new/i18n_b5.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b6.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_b7.json
 ClaudeScripts/gameplay-site/source/w/new/i18n_consent.json
@@ -592,7 +602,7 @@ ClaudeScripts/gameplay-site/source/w/parts/267_g_brawl-stars.js
 ClaudeScripts/gameplay-site/source/w/parts/269_g_surviv-io+diep-io.js
 ClaudeScripts/gameplay-site/source/w/parts/271_g_bonk-io+starve-io.js
 ClaudeScripts/gameplay-site/source/w/parts/273_g_head-soccer+slime-volleyball+basketball-legends.js
-ClaudeScripts/gameplay-site/source/w/parts/275_g_ragdoll-archers+stickman-hook+vex-5.js
+ClaudeScripts/gameplay-site/source/w/parts/275_g_quiver-clash+swing-line+spike-run.js
 ClaudeScripts/gameplay-site/source/w/parts/277_g_wobble-ride+pickaxe-peak.js
 ClaudeScripts/gameplay-site/source/w/parts/279_g_tomb-of-the-mask+color-switch+eggy-car+drift-boss.js
 ClaudeScripts/gameplay-site/source/w/parts/281_g_bloons-td.js

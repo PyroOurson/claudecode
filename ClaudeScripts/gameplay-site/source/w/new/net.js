@@ -1539,14 +1539,22 @@ function makeNet(g, add) {
         try {
           const ok = await roomJoin(code);
           if (done || my !== op || !ok) return;
-          note = null; note0 = ''; phase = 'ready'; cache = {}; jst = { phase: 'idle', code: '', msg: '', who: '' };
+          note = null; note0 = ''; phase = 'ready'; cache = {}; jst = { phase: 'idle', code: '', msg: '', who: '' }; rm.rejoinN = 0;
           { const ms = Date.now() - jt0, via = rm.via, c = rm.conn; Promise.race([netTurn(c), new Promise(r => setTimeout(() => r(0), 1500))]).then(turn => netTrack('party_join', { game: g.id, via, ms, turn })); }
           show('lobby'); fit();
         } catch (e) {
           const t = e && e.type;
           if (done || my !== op || t === 'cancel') return;
           note = null;
-          if (resume && t === 'peer-unavailable') return ui.ended('host-left');
+          if (resume && t === 'peer-unavailable') {
+            const st = await netReg('party_check', { p_game: g.id, p_code: code });
+            if (done || my !== op) return;
+            rm.rejoinN = (rm.rejoinN || 0) + 1;
+            netDiag('rejoin-retry', { n: rm.rejoinN, state: st && st.state || 'none' });
+            if (!(st && st.state === 'ended') && rm.rejoinN <= 4) { await sleepMs(1200 * rm.rejoinN); if (!done && my === op) return fn(); return; }
+            rm.rejoinN = 0;
+            return ui.ended('host-left');
+          }
           fail(t === 'room-full' ? T('Party {code} is full.').replace('{code}', code) : netWhy(e, rm.pub || jst.who ? '' : code), fn);
         }
       };
