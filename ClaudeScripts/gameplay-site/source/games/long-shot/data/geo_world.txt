@@ -1,0 +1,756 @@
+@set rivers
+@drop river fleuve riviere
+9|Nile|Nil|af
+9|Amazon|Amazone|sa
+8|Mississippi||na
+7|Thames|Tamise|eu
+7|Seine||eu fr
+6|Danube||eu
+6|Rhine|Rhin|eu fr
+6|Yangtze/Yangtze River/Chang Jiang|Yangzi Jiang/Yangtsé/Yang-Tsé-Kiang|as
+6|Ganges/Ganga|Gange|as
+5|Loire||eu fr
+5|Rhône/Rhone||eu fr
+5|Volga||eu
+5|Mekong|Mékong|as
+5|Colorado||na
+5|Missouri||na
+4|Hudson||na
+4|Tiber|Tibre|eu
+4|Congo|Congo|af
+4|Niger||af
+4|Zambezi|Zambèze|af
+4|Jordan|Jourdain|as
+4|Euphrates|Euphrate|as
+4|Tigris|Tigre|as
+4|Yellow River/Huang He|Fleuve Jaune/Huang He|as
+4|Indus||as
+4|Garonne||eu fr
+4|Rio Grande/Rio Bravo||na
+4|St. Lawrence/Saint Lawrence|Saint-Laurent|na
+3|Ohio||na
+3|Yukon||na
+3|Columbia||na
+3|Mackenzie||na
+3|Elbe||eu
+3|Oder|Oder/Odra|eu
+3|Vistula|Vistule|eu
+3|Po|Pô|eu
+3|Ebro|Èbre|eu
+3|Tagus|Tage|eu
+3|Douro|Douro/Duero|eu
+3|Guadalquivir||eu
+3|Dnieper|Dniepr|eu
+3|Don||eu
+3|Ural||eu as
+3|Ob||as
+3|Yenisei|Ienisseï|as
+3|Lena||as
+3|Amur|Amour|as
+3|Brahmaputra|Brahmapoutre|as
+3|Irrawaddy||as
+3|Orinoco|Orénoque|sa
+3|Paraná||sa
+3|Paraguay||sa
+3|Uruguay||sa
+3|Murray||oc
+3|Darling||oc
+3|Orange||af
+3|Limpopo||af
+3|Senegal|Sénégal|af
+3|Dordogne||eu fr
+3|Moselle||eu fr
+3|Meuse||eu fr
+3|Marne||eu fr
+3|Somme||eu fr
+3|Lot||eu fr
+3|Tarn||eu fr
+2|Durance||eu fr
+2|Isère||eu fr
+2|Saône||eu fr
+2|Allier||eu fr
+2|Cher||eu fr
+2|Vienne||eu fr
+2|Charente||eu fr
+2|Oise||eu fr
+2|Aisne||eu fr
+2|Yonne||eu fr
+2|Adour||eu fr
+2|Vilaine||eu fr
+2|Var||eu fr
+2|Aude||eu fr
+2|Hérault||eu fr
+2|Indre||eu fr
+2|Orne||eu fr
+2|Escaut/Scheldt|Escaut|eu fr
+2|Doubs||eu fr
+1|Ariège||eu fr
+1|Gard||eu fr
+1|Ain||eu fr
+1|Eure||eu fr
+1|Mayenne||eu fr
+1|Sarthe||eu fr
+1|Creuse||eu fr
+1|Vézère||eu fr
+1|Ardèche||eu fr
+1|Verdon||eu fr
+1|Aveyron||eu fr
+1|Lys||eu fr
+1|Sambre||eu fr
+1|Ill||eu fr
+2|Severn||eu
+2|Trent||eu
+2|Mersey||eu
+2|Tyne||eu
+2|Avon||eu
+2|Clyde||eu
+2|Shannon||eu
+2|Liffey||eu
+2|Arno||eu
+2|Adige||eu
+2|Main||eu
+2|Neckar||eu
+2|Weser||eu
+2|Inn||eu
+2|Dniester|Dniestr|eu
+2|Neva|Neva/Néva|eu
+2|Daugava/Western Dvina||eu
+2|Kama||eu
+2|Pechora|Petchora|eu
+2|Thjórsá||eu
+2|Glomma||eu
+2|Kemijoki||eu
+1|Tisza|Tisza/Tisa|eu
+1|Drava|Drave|eu
+1|Sava|Save|eu
+1|Morava||eu
+1|Vltava/Moldau|Vltava|eu
+1|Maritsa/Evros|Maritsa|eu
+1|Guadiana||eu
+1|Miño/Minho|Minho|eu
+1|Mondego||eu
+1|Ticino/Tessin|Tessin|eu
+1|Aare|Aar|eu
+1|Piave||eu
+1|Rubicon|Rubicon|eu
+2|Okavango||af
+2|Kasai||af
+2|Ubangi|Oubangui|af
+2|Blue Nile|Nil Bleu|af
+2|White Nile|Nil Blanc|af
+2|Volta||af
+2|Gambia|Gambie|af
+1|Juba||af
+1|Rufiji||af
+1|Cuanza/Kwanza||af
+2|Salween||as
+2|Chao Phraya||as
+2|Pearl River/Zhujiang|Rivière des Perles|as
+2|Syr Darya|Syr-Daria|as
+2|Amu Darya|Amou-Daria|as
+2|Yamuna||as
+2|Godavari||as
+2|Krishna||as
+1|Kolyma||as
+1|Irtysh|Irtych|as
+1|Han||as
+1|Red River|Fleuve Rouge|as
+2|Arkansas||na
+2|Tennessee||na
+2|Snake||na
+2|Potomac||na
+2|Delaware||na
+2|Hudson Bay||no
+2|Niagara||na
+2|Fraser||na
+2|Nelson||na
+2|Madeira||sa
+2|São Francisco||sa
+2|Magdalena||sa
+2|Rio Negro/Negro||sa
+1|Xingu||sa
+1|Tocantins||sa
+1|Araguaia||sa
+1|Putumayo||sa
+1|Ucayali||sa
+1|Marañón||sa
+1|Murrumbidgee||oc
+1|Waikato||oc
+1|Clutha||oc
+1|Fly||oc
+1|Sepik||oc
+1|Swan||oc
+0|Atlantic|Atlantique|no
+0|Pacific|Pacifique|no
+0|Mediterranean|Méditerranée|no
+
+@set seas
+@drop sea ocean mer oceans seas mers of du de des d
+9|Pacific Ocean/Pacific|Océan Pacifique/Pacifique|ocean
+9|Atlantic Ocean/Atlantic|Océan Atlantique/Atlantique|ocean
+7|Indian Ocean|Océan Indien|ocean
+6|Arctic Ocean|Océan Arctique|ocean
+5|Southern Ocean/Antarctic Ocean|Océan Austral/Océan Antarctique|ocean
+8|Mediterranean Sea/Mediterranean|Mer Méditerranée/Méditerranée|sea
+6|Red Sea|Mer Rouge|sea
+6|Dead Sea|Mer Morte|sea
+6|Black Sea|Mer Noire|sea
+6|Caribbean Sea/Caribbean|Mer des Caraïbes/Mer des Antilles|sea
+5|North Sea|Mer du Nord|sea
+5|Baltic Sea|Mer Baltique|sea
+5|Caspian Sea|Mer Caspienne|sea
+4|Adriatic Sea|Mer Adriatique|sea
+4|Aegean Sea|Mer Égée|sea
+3|Ionian Sea|Mer Ionienne|sea
+3|Tyrrhenian Sea|Mer Tyrrhénienne|sea
+3|Ligurian Sea|Mer Ligure|sea
+3|Irish Sea|Mer d'Irlande|sea
+4|English Channel/Channel|Manche|sea
+3|Celtic Sea|Mer Celtique|sea
+3|Norwegian Sea|Mer de Norvège|sea
+3|Barents Sea|Mer de Barents|sea
+3|White Sea|Mer Blanche|sea
+3|Sea of Azov|Mer d'Azov|sea
+3|Sea of Marmara|Mer de Marmara|sea
+3|Arabian Sea|Mer d'Oman/Mer d'Arabie|sea
+3|South China Sea|Mer de Chine méridionale|sea
+3|East China Sea|Mer de Chine orientale|sea
+3|Yellow Sea|Mer Jaune|sea
+3|Sea of Japan/East Sea|Mer du Japon|sea
+3|Coral Sea|Mer de Corail|sea
+3|Tasman Sea|Mer de Tasman|sea
+3|Bering Sea|Mer de Béring|sea
+3|Sargasso Sea|Mer des Sargasses|sea
+3|Aral Sea|Mer d'Aral|sea
+2|Sea of Okhotsk|Mer d'Okhotsk|sea
+2|Philippine Sea|Mer des Philippines|sea
+2|Java Sea|Mer de Java|sea
+2|Banda Sea|Mer de Banda|sea
+2|Celebes Sea|Mer de Célèbes|sea
+2|Sulu Sea|Mer de Sulu|sea
+2|Andaman Sea|Mer d'Andaman|sea
+2|Timor Sea|Mer de Timor|sea
+2|Arafura Sea|Mer d'Arafura|sea
+2|Solomon Sea|Mer des Salomon|sea
+2|Weddell Sea|Mer de Weddell|sea
+2|Ross Sea|Mer de Ross|sea
+2|Labrador Sea|Mer du Labrador|sea
+2|Greenland Sea|Mer du Groenland|sea
+2|Kara Sea|Mer de Kara|sea
+2|Laptev Sea|Mer de Laptev|sea
+2|Beaufort Sea|Mer de Beaufort|sea
+2|Chukchi Sea|Mer des Tchouktches|sea
+2|East Siberian Sea|Mer de Sibérie orientale|sea
+2|Balearic Sea|Mer des Baléares|sea
+2|Alboran Sea|Mer d'Alboran|sea
+1|Wadden Sea|Mer des Wadden|sea
+1|Bismarck Sea|Mer de Bismarck|sea
+1|Scotia Sea|Mer de Scotia|sea
+1|Amundsen Sea|Mer d'Amundsen|sea
+1|Sea of Galilee|Mer de Galilée/Lac de Tibériade|sea
+1|Salton Sea||sea
+1|Seto Inland Sea|Mer intérieure de Seto|sea
+1|Bellingshausen Sea|Mer de Bellingshausen|sea
+1|Libyan Sea|Mer de Libye|sea
+1|Sea of Crete|Mer de Crète|sea
+1|Iroise Sea|Mer d'Iroise|sea
+1|Bothnian Sea|Mer de Botnie|sea
+1|Molucca Sea|Mer des Moluques|sea
+1|Flores Sea|Mer de Flores|sea
+1|Savu Sea|Mer de Savu|sea
+1|Halmahera Sea|Mer d'Halmahera|sea
+1|Lincoln Sea|Mer de Lincoln|sea
+1|Pechora Sea|Mer de Petchora|sea
+0|Gulf of Mexico|Golfe du Mexique|no
+0|Persian Gulf|Golfe Persique|no
+0|Bay of Biscay|Golfe de Gascogne|no
+0|Bay of Bengal|Golfe du Bengale|no
+0|Hudson Bay|Baie d'Hudson|no
+0|Lake Victoria|Lac Victoria|no
+0|Great Lakes|Grands Lacs|no
+0|Nile|Nil|no
+0|Amazon|Amazone|no
+
+@set islands
+@drop island islands isle isles ile iles isla islas of du de des d
+8|Madagascar||
+8|Greenland|Groenland|
+8|Iceland|Islande|
+7|Sicily|Sicile|
+7|Corsica|Corse|
+7|Hawaii/Big Island|Hawaï|
+7|Bali||
+7|Jamaica|Jamaïque|
+7|Cuba||
+6|Ireland|Irlande|
+6|Great Britain|Grande-Bretagne|
+6|Sardinia|Sardaigne|
+6|Crete|Crète|
+6|Cyprus|Chypre|
+6|Malta|Malte|
+6|Tahiti||
+6|Mallorca/Majorca|Majorque|
+6|Ibiza||
+6|Sri Lanka/Ceylon|Sri Lanka/Ceylan|
+6|Tasmania|Tasmanie|
+5|Borneo|Bornéo|
+5|Sumatra||
+5|Java||
+5|New Guinea|Nouvelle-Guinée|
+5|Honshu||
+5|Taiwan/Formosa|Taïwan/Formose|
+5|Singapore|Singapour|
+5|Santorini/Thira|Santorin|
+5|Mykonos||
+5|Capri||
+5|Zanzibar||
+5|Mauritius|Île Maurice/Maurice|
+5|Réunion/Reunion|La Réunion|
+5|Martinique||
+5|Guadeloupe||
+5|Easter Island/Rapa Nui|Île de Pâques/Rapa Nui|
+5|Galápagos/Galapagos Islands/Galapagos|Galápagos/Îles Galápagos|
+5|Canary Islands/Canaries|Îles Canaries/Canaries|
+5|Tenerife||
+5|Gran Canaria||
+5|Isle of Man|Île de Man|
+5|Jersey||
+5|Guernsey|Guernesey|
+5|Puerto Rico|Porto Rico|
+5|Bahamas||
+5|Barbados|Barbade|
+5|Phuket||
+5|Maldives||
+5|Seychelles||
+4|Fiji|Fidji|
+2|Samoa||
+4|Bora Bora||
+3|New Caledonia|Nouvelle-Calédonie|
+3|Mayotte||
+3|Newfoundland|Terre-Neuve|
+2|Vancouver Island|Île de Vancouver|
+2|Baffin Island|Terre de Baffin|
+2|Ellesmere Island|Île d'Ellesmere|
+2|Victoria Island|Île Victoria|
+3|Long Island||
+4|Manhattan||
+3|Alcatraz||
+3|Rhodes|Rhodes|
+3|Corfu|Corfou|
+2|Lesbos|Lesbos|
+3|Elba|Île d'Elbe/Elbe|
+3|Menorca/Minorca|Minorque|
+3|Lanzarote||
+2|Fuerteventura||
+3|Madeira|Madère|
+3|Azores|Açores|
+3|Faroe Islands/Faroes|Îles Féroé/Féroé|
+3|Svalbard/Spitsbergen||
+2|Gotland||
+2|Zealand/Sjælland|Seeland|
+3|Skye/Isle of Skye|Skye|
+2|Anglesey||
+3|Isle of Wight|Île de Wight|
+2|Orkney/Orkney Islands|Orcades|
+2|Shetland/Shetland Islands|Shetland|
+2|Hebrides|Hébrides|
+3|Belle-Île/Belle Île||
+3|Île de Ré/Ile de Re/Ré|Île de Ré/Ré|
+3|Oléron|Île d'Oléron/Oléron|
+2|Noirmoutier||
+2|Ouessant/Ushant|Ouessant|
+2|Porquerolles||
+2|Mont-Saint-Michel||
+3|Saint-Martin/Saint Martin/Sint Maarten||
+3|Saint Barthélemy/St Barts/Saint-Barth|Saint-Barthélemy/Saint-Barth|
+3|Saint Helena|Sainte-Hélène|
+2|Saint Lucia|Sainte-Lucie|
+2|Trinidad|Trinité|
+2|Tobago||
+3|Aruba||
+2|Curaçao/Curacao||
+3|Bermuda|Bermudes|
+2|Cayman Islands|Îles Caïmans|
+3|Falkland Islands/Falklands|Îles Malouines/Malouines|
+2|Tierra del Fuego|Terre de Feu|
+3|Hokkaido||
+2|Kyushu||
+2|Shikoku||
+3|Okinawa||
+2|Hainan||
+2|Hong Kong Island||
+2|Luzon||
+2|Mindanao||
+2|Sulawesi/Celebes|Célèbes/Sulawesi|
+2|Lombok||
+2|Komodo||
+2|Timor||
+2|Sakhalin|Sakhaline|
+2|Kodiak||
+2|Nantucket||
+1|Martha's Vineyard||
+2|Prince Edward Island|Île-du-Prince-Édouard|
+1|Cape Breton Island|Île du Cap-Breton|
+1|Anticosti||
+1|Iona||
+1|Lewis/Lewis and Harris|Lewis et Harris|
+1|Mull||
+1|Islay||
+1|Arran||
+1|Achill||
+2|Ischia||
+2|Lampedusa||
+1|Stromboli||
+2|Naxos||
+1|Paros||
+2|Kos||
+2|Zakynthos/Zante|Zante|
+1|Kefalonia/Cephalonia|Céphalonie|
+2|Ithaca|Ithaque|
+1|Hvar||
+1|Krk||
+1|Bornholm||
+1|Öland||
+1|Saaremaa||
+1|Heligoland|Heligoland|
+1|Sylt||
+1|Rügen||
+1|Texel||
+1|Socotra||
+1|Pemba||
+1|Bioko||
+1|Cape Verde/Cabo Verde|Cap-Vert|
+1|Comoros|Comores|
+1|Andaman Islands|Îles Andaman|
+2|Phi Phi/Koh Phi Phi||
+2|Koh Samui/Ko Samui||
+1|Langkawi||
+1|Penang||
+1|Palawan||
+1|Cebu||
+1|Boracay||
+2|Jeju||
+2|Guam||
+1|Saipan||
+1|Tonga||
+1|Vanuatu||
+1|Nauru||
+1|Kiribati||
+2|Marquesas|Îles Marquises/Marquises|
+2|Moorea||
+1|Wallis||
+1|Futuna||
+1|Pitcairn||
+1|Norfolk Island|Île Norfolk|
+1|Lord Howe Island|Île Lord Howe|
+1|Fraser Island/K'gari||
+1|Kangaroo Island|Île Kangourou|
+2|North Island|Île du Nord|
+2|South Island|Île du Sud|
+1|Stewart Island||
+1|Chatham Islands|Îles Chatham|
+1|Bougainville||
+1|Guadalcanal||
+1|Tristan da Cunha||
+1|Ascension Island|Île de l'Ascension|
+1|South Georgia|Géorgie du Sud|
+2|Kerguelen|Îles Kerguelen|
+1|Saint-Pierre/Saint-Pierre-et-Miquelon|Saint-Pierre-et-Miquelon|
+1|Clipperton||
+1|Wrangel Island|Île Wrangel|
+1|Novaya Zemlya|Nouvelle-Zemble|
+1|Franz Josef Land|Terre François-Joseph|
+1|Jan Mayen||
+1|Lofoten/Lofoten Islands|Îles Lofoten|
+2|Ellis Island||
+2|Staten Island||
+2|Key West||
+1|Aldabra||
+0|Australia|Australie|no
+0|Antarctica|Antarctique|no
+0|Atlantis|Atlantide|no
+
+@set mountains
+@drop mount mountain mountains mont monts montagne montagnes massif of du de des d la
+9|Everest/Mount Everest/Qomolangma|Everest/Mont Everest|peak
+8|Mont Blanc/Mount Blanc||peak
+8|Alps|Alpes|range
+8|Himalayas/Himalaya|Himalaya|range
+7|Kilimanjaro/Mount Kilimanjaro||peak
+7|Andes|Andes/Cordillère des Andes|range
+7|Rocky Mountains/Rockies|Montagnes Rocheuses/Rocheuses|range
+7|Mount Fuji/Fuji/Fujiyama|Mont Fuji/Fuji|peak
+7|Pyrenees|Pyrénées|range
+6|K2||peak
+6|Matterhorn/Cervino|Cervin|peak
+6|Vesuvius|Vésuve|peak
+6|Etna/Mount Etna||peak
+6|Olympus/Mount Olympus|Olympe/Mont Olympe|peak
+6|Urals/Ural Mountains|Oural/Monts Oural|range
+6|Appalachians/Appalachian Mountains|Appalaches|range
+5|Kangchenjunga||peak
+5|Denali/Mount McKinley||peak
+5|Aconcagua||peak
+5|Elbrus/Mount Elbrus||peak
+5|Mont Ventoux/Ventoux||peak
+5|Vosges||range
+5|Jura||range
+5|Massif Central|Massif central|range
+5|Carpathians/Carpathian Mountains|Carpates|range
+5|Atlas Mountains/Atlas|Atlas|range
+5|Caucasus|Caucase|range
+5|Apennines|Apennins|range
+5|Dolomites||range
+5|Mount Sinai/Sinai|Mont Sinaï/Sinaï|peak
+5|Table Mountain|Montagne de la Table|peak
+5|Mount Rushmore||peak
+5|Puy de Dôme||peak
+5|Mont Saint-Michel||no
+3|Lhotse||peak
+2|Makalu||peak
+2|Cho Oyu||peak
+3|Annapurna||peak
+2|Nanga Parbat||peak
+2|Dhaulagiri||peak
+2|Manaslu||peak
+2|Shishapangma||peak
+2|Gasherbrum||peak
+2|Broad Peak||peak
+3|Mount Kenya|Mont Kenya|peak
+3|Mount Cook/Aoraki|Mont Cook/Aoraki|peak
+3|Mount Kosciuszko/Kosciuszko||peak
+3|Mount Rainier/Rainier||peak
+3|Mount St. Helens/Saint Helens|Mont Saint Helens|peak
+2|Mount Whitney/Whitney||peak
+2|Mount Logan/Logan||peak
+3|Popocatépetl||peak
+2|Chimborazo||peak
+2|Cotopaxi||peak
+2|Huascarán||peak
+2|Ojos del Salado||peak
+3|Mount Ararat/Ararat|Mont Ararat/Ararat|peak
+2|Mount Elgon/Elgon||peak
+2|Rwenzori||range
+2|Mont Aiguille||peak
+3|Aiguille du Midi||peak
+3|Eiger||peak
+3|Jungfrau||peak
+2|Monte Rosa|Mont Rose|peak
+2|Grossglockner||peak
+3|Zugspitze||peak
+3|Ben Nevis||peak
+3|Snowdon/Yr Wyddfa||peak
+2|Scafell Pike||peak
+3|Mount Teide/Teide|Teide|peak
+2|Pico de Orizaba/Citlaltépetl||peak
+3|Mauna Kea||peak
+2|Mauna Loa||peak
+2|Kilauea||peak
+2|Mount Vinson/Vinson Massif|Mont Vinson|peak
+2|Mount Erebus|Mont Erebus|peak
+3|Stromboli||peak
+2|Mount Pelée/Pelée|Montagne Pelée|peak
+2|Piton des Neiges||peak
+2|Piton de la Fournaise||peak
+2|Mount Kinabalu/Kinabalu||peak
+2|Mount Hood||peak
+2|Mount Shasta||peak
+2|Pikes Peak||peak
+2|Mont Aigoual/Aigoual||peak
+2|Canigou/Pic du Canigou|Canigou|peak
+2|Mont Cinto/Cinto||peak
+2|Vignemale||peak
+2|Aneto||peak
+2|Mulhacén||peak
+2|Triglav||peak
+2|Musala||peak
+2|Mount Athos/Athos|Mont Athos|peak
+2|Mount Pilatus/Pilatus||peak
+2|Mount Hermon|Mont Hermon|peak
+2|Kailash/Mount Kailash||peak
+3|Krakatoa|Krakatoa|peak
+2|Mount Tambora/Tambora||peak
+2|Mount Pinatubo/Pinatubo||peak
+2|Mount Merapi/Merapi||peak
+3|Eyjafjallajökull||peak
+2|Hekla||peak
+3|Sierra Nevada||range
+2|Cascades/Cascade Range|Chaîne des Cascades|range
+2|Sierra Madre||range
+2|Tian Shan|Tian Shan/Tianshan|range
+2|Hindu Kush||range
+2|Karakoram||range
+2|Pamir/Pamirs|Pamir|range
+2|Altai|Altaï|range
+2|Zagros||range
+2|Taurus Mountains|Taurus|range
+2|Balkan Mountains|Grand Balkan|range
+3|Black Forest|Forêt-Noire|range
+2|Harz||range
+2|Scandinavian Mountains|Alpes scandinaves|range
+2|Great Dividing Range|Cordillère australienne|range
+2|Drakensberg||range
+2|Ethiopian Highlands|Hauts plateaux d'Éthiopie|range
+2|Ahaggar/Hoggar|Hoggar|range
+2|Tibesti||range
+2|Brooks Range|Chaîne Brooks|range
+2|Alaska Range|Chaîne d'Alaska|range
+2|Adirondacks||range
+2|Ozarks||range
+2|Blue Ridge Mountains|Blue Ridge|range
+2|Smoky Mountains/Great Smoky Mountains||range
+2|Chartreuse||range
+2|Mercantour||range
+2|Écrins/Ecrins|Écrins|range
+2|Vercors||range
+2|Morvan||range
+3|Cévennes/Cevennes||range
+2|Sierra Morena||range
+2|Picos de Europa||range
+2|Tatra Mountains/Tatras|Tatras|range
+2|Sudetes|Sudètes|range
+2|Pennines|Pennines|range
+2|Grampians|Monts Grampians|range
+0|Grand Canyon||no
+0|Niagara Falls|Chutes du Niagara|no
+
+@set deserts
+@drop desert deserts desierto of du de des d
+9|Sahara||hot
+7|Gobi||cold
+6|Kalahari||hot
+6|Atacama||hot
+6|Antarctic Desert/Antarctica|Désert antarctique/Antarctique|cold
+5|Arabian Desert|Désert d'Arabie|hot
+5|Mojave/Mojave Desert|Mojave|hot
+5|Namib||hot
+5|Sonoran|Sonora|hot
+4|Death Valley|Vallée de la Mort|hot
+4|Great Victoria Desert|Grand désert de Victoria|hot
+4|Thar||hot
+4|Taklamakan/Taklimakan||cold
+4|Great Basin|Grand Bassin|cold
+4|Chihuahuan|Chihuahua|hot
+4|Arctic Desert/Arctic|Désert arctique/Arctique|cold
+3|Rub' al Khali/Empty Quarter|Rub al-Khali|hot
+1|Syrian Desert|Désert de Syrie|hot
+3|Negev|Néguev|hot
+3|Sinai|Sinaï|hot
+2|Libyan Desert|Désert libyque|hot
+2|Nubian Desert|Désert de Nubie|hot
+2|Danakil||hot
+2|Karakum|Karakoum|cold
+1|Kyzylkum|Kyzylkoum|cold
+1|Dasht-e Kavir|Dasht-e Kavir|hot
+1|Dasht-e Lut/Lut|Dasht-e Lut|hot
+2|Great Sandy Desert|Grand désert de sable|hot
+1|Gibson Desert|Désert de Gibson|hot
+2|Simpson Desert|Désert de Simpson|hot
+1|Tanami||hot
+2|Patagonian Desert/Patagonia|Désert de Patagonie|cold
+2|Painted Desert|Désert peint|hot
+1|Colorado Desert|Désert du Colorado|hot
+1|Black Rock Desert||cold
+2|Wadi Rum||hot
+2|Ténéré/Tenere||hot
+1|Ogaden||hot
+1|Chalbi||hot
+2|Judaean Desert/Judean Desert|Désert de Judée|hot
+1|Sechura||hot
+1|Monte Desert|Monte|hot
+1|Tabernas/Tabernas Desert|Désert de Tabernas|hot
+1|Bardenas Reales||hot
+1|Accona||hot
+1|Deliblato Sands|Sables de Deliblato|cold
+1|Ordos||cold
+1|Badain Jaran||cold
+1|Tengger||cold
+1|Cholistan||hot
+1|Lençóis Maranhenses||hot
+1|Strzelecki||hot
+1|Little Sandy Desert|Petit désert de sable|hot
+1|Great Salt Lake Desert||cold
+1|Owyhee||cold
+1|Red Desert|Désert rouge|cold
+0|Grand Canyon||no
+0|Sahel||no
+0|Savanna|Savane|no
+
+@set lakes
+@drop lake lakes lac lacs loch lago of du de des d
+6|Lake Victoria/Victoria|Lac Victoria/Victoria|af
+6|Lake Geneva/Lac Léman/Leman|Lac Léman/Léman/Lac de Genève|eu fr
+6|Lake Superior/Superior|Lac Supérieur/Supérieur|na
+6|Loch Ness/Ness|Loch Ness/Ness|eu
+6|Lake Baikal/Baikal|Lac Baïkal/Baïkal|as
+6|Lake Titicaca/Titicaca|Lac Titicaca/Titicaca|sa
+5|Lake Michigan/Michigan|Lac Michigan|na
+5|Lake Huron/Huron|Lac Huron|na
+5|Lake Erie/Erie|Lac Érié/Érié|na
+5|Lake Ontario/Ontario|Lac Ontario|na
+5|Lake Tanganyika/Tanganyika|Lac Tanganyika|af
+5|Lake Malawi/Lake Nyasa/Malawi|Lac Malawi/Lac Nyassa|af
+5|Lake Como/Como|Lac de Côme/Côme|eu
+5|Lake Garda/Garda|Lac de Garde/Garde|eu
+5|Lake Constance/Bodensee|Lac de Constance/Constance|eu
+5|Lake Annecy/Annecy|Lac d'Annecy/Annecy|eu fr
+5|Lake Tahoe/Tahoe|Lac Tahoe|na
+5|Great Salt Lake|Grand Lac Salé|na
+5|Lake Chad/Chad|Lac Tchad/Tchad|af
+3|Lake Ladoga/Ladoga|Lac Ladoga|eu
+2|Lake Onega/Onega|Lac Onega|eu
+3|Lake Balaton/Balaton|Lac Balaton|eu
+3|Lake Maggiore/Maggiore|Lac Majeur/Majeur|eu
+3|Lake Lucerne/Lucerne|Lac des Quatre-Cantons/Lucerne|eu
+3|Lake Zurich/Zurich|Lac de Zurich|eu
+2|Lake Neuchâtel/Neuchatel|Lac de Neuchâtel|eu
+3|Lake Bourget/Bourget|Lac du Bourget/Bourget|eu fr
+2|Lake Serre-Ponçon/Serre-Ponçon|Lac de Serre-Ponçon|eu fr
+3|Lake Bled/Bled|Lac de Bled|eu
+2|Lake Ohrid/Ohrid|Lac d'Ohrid|eu
+2|Lough Neagh/Neagh||eu
+3|Windermere/Lake Windermere||eu
+3|Loch Lomond/Lomond||eu
+2|Lake Vänern/Vänern|Lac Vänern|eu
+2|Lake Vättern/Vättern|Lac Vättern|eu
+2|Lake Saimaa/Saimaa|Lac Saimaa|eu
+2|Lake Peipus/Peipus|Lac Peïpous|eu
+2|Lake Prespa/Prespa|Lac Prespa|eu
+2|Lake Hallstatt/Hallstätter See||eu
+2|Lake Starnberg/Starnberg||eu
+3|Lake Winnipeg/Winnipeg|Lac Winnipeg|na
+2|Great Bear Lake|Grand lac de l'Ours|na
+2|Great Slave Lake|Grand lac des Esclaves|na
+3|Lake Louise/Louise|Lac Louise|na
+2|Lake Champlain/Champlain|Lac Champlain|na
+2|Lake Okeechobee/Okeechobee|Lac Okeechobee|na
+3|Lake Mead/Mead|Lac Mead|na
+2|Lake Powell/Powell|Lac Powell|na
+3|Crater Lake|Crater Lake|na
+2|Lake Nicaragua/Nicaragua|Lac Nicaragua|na
+2|Lake Atitlán/Atitlan|Lac Atitlán|na
+2|Lake Maracaibo/Maracaibo|Lac Maracaibo|sa
+3|Lake Turkana/Turkana|Lac Turkana|af
+2|Lake Volta/Volta|Lac Volta|af
+2|Lake Kariba/Kariba|Lac Kariba|af
+3|Lake Nasser/Nasser|Lac Nasser|af
+2|Lake Tana/Tana|Lac Tana|af
+2|Lake Kivu/Kivu|Lac Kivu|af
+2|Lake Albert/Albert|Lac Albert|af
+3|Lake Retba/Lac Rose|Lac Rose/Lac Retba|af
+2|Lake Balkhash/Balkhash|Lac Balkhach|as
+2|Lake Issyk-Kul/Issyk-Kul|Lac Issyk-Koul|as
+2|Lake Van/Van|Lac de Van|as
+2|Lake Urmia/Urmia|Lac d'Ourmia|as
+2|Lake Toba/Toba|Lac Toba|as
+2|Lake Biwa/Biwa|Lac Biwa|as
+2|Qinghai Lake/Qinghai|Lac Qinghai|as
+2|Tonlé Sap||as
+2|Dal Lake|Lac Dal|as
+3|Lake Eyre/Kati Thanda|Lac Eyre|oc
+3|Lake Taupō/Taupo|Lac Taupo|oc
+2|Lake Tekapo/Tekapo|Lac Tekapo|oc
+2|Lake Wakatipu/Wakatipu|Lac Wakatipu|oc
+0|Caspian Sea|Mer Caspienne|no
+0|Dead Sea|Mer Morte|no
+0|Aral Sea|Mer d'Aral|no

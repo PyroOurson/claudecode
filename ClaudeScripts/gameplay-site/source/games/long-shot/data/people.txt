@@ -1,0 +1,829 @@
+@set us_presidents
+@drop president
+4|George Washington/Washington||
+2|John Adams||
+5|Thomas Jefferson/Jefferson||
+2|James Madison/Madison||
+2|James Monroe/Monroe||
+1|John Quincy Adams||
+3|Andrew Jackson/Jackson||
+1|Martin Van Buren/Van Buren||
+1|William Henry Harrison||
+1|John Tyler/Tyler||
+1|James K. Polk/James Polk/Polk||
+1|Zachary Taylor||
+1|Millard Fillmore/Fillmore||
+1|Franklin Pierce/Pierce||
+1|James Buchanan/Buchanan||
+6|Abraham Lincoln/Lincoln/Abe Lincoln||
+1|Andrew Johnson||
+2|Ulysses S. Grant/Ulysses Grant/Grant||
+1|Rutherford B. Hayes/Hayes||
+1|James A. Garfield/James Garfield/Garfield||
+1|Chester A. Arthur/Chester Arthur||
+1|Grover Cleveland/Cleveland||
+1|Benjamin Harrison||
+1|William McKinley/McKinley||
+3|Theodore Roosevelt/Teddy Roosevelt||
+1|William Howard Taft/Taft||
+2|Woodrow Wilson/Wilson||
+1|Warren G. Harding/Harding||
+1|Calvin Coolidge/Coolidge||
+1|Herbert Hoover/Hoover||
+3|Franklin D. Roosevelt/Franklin Roosevelt/FDR/Roosevelt||
+2|Harry S. Truman/Harry Truman/Truman||
+2|Dwight D. Eisenhower/Dwight Eisenhower/Eisenhower/Ike||
+5|John F. Kennedy/John Kennedy/JFK/Kennedy||
+1|Lyndon B. Johnson/Lyndon Johnson/LBJ||
+3|Richard Nixon/Nixon||
+1|Gerald Ford/Ford||
+2|Jimmy Carter/Carter||
+3|Ronald Reagan/Reagan||
+1|George H. W. Bush/George Bush Senior||
+3|Bill Clinton/Clinton||
+3|George W. Bush/George Bush/Bush||
+7|Barack Obama/Obama||
+7|Donald Trump/Trump||
+5|Joe Biden/Biden||
+0|Kamala Harris||no
+0|Hillary Clinton||no
+0|Benjamin Franklin/Franklin||no
+0|Alexander Hamilton/Hamilton||no
+0|Martin Luther King||no
+
+@set fr_presidents
+@drop president
+7|Emmanuel Macron/Macron||
+6|Charles de Gaulle/De Gaulle/Gaulle||
+5|François Hollande/Hollande||
+5|Nicolas Sarkozy/Sarkozy||
+5|Jacques Chirac/Chirac||
+4|François Mitterrand/Mitterrand||
+3|Valéry Giscard d'Estaing/Giscard d'Estaing/Giscard/VGE||
+3|Georges Pompidou/Pompidou||
+2|Alain Poher/Poher||
+1|René Coty/Coty||
+1|Vincent Auriol/Auriol||
+1|Albert Lebrun/Lebrun||
+1|Paul Doumer/Doumer||
+1|Gaston Doumergue/Doumergue||
+1|Alexandre Millerand/Millerand||
+1|Paul Deschanel/Deschanel||
+1|Raymond Poincaré/Poincaré||
+1|Armand Fallières/Fallières||
+1|Émile Loubet/Loubet||
+1|Félix Faure||
+1|Jean Casimir-Perier/Casimir-Perier||
+1|Sadi Carnot/Carnot||
+1|Jules Grévy/Grévy||
+1|Patrice de Mac Mahon/Mac Mahon/MacMahon||
+1|Adolphe Thiers/Thiers||
+2|Louis-Napoléon Bonaparte/Louis-Napoléon||
+0|Napoléon/Napoleon Bonaparte|Napoléon/Napoléon Bonaparte|no
+0|Marine Le Pen/Le Pen||no
+0|Louis XIV||no
+0|Jean-Luc Mélenchon/Mélenchon||no
+0|Gabriel Attal/Attal||no
+0|Édouard Philippe||no
+
+@set scientists
+9|Albert Einstein/Einstein||
+8|Isaac Newton/Newton||
+7|Marie Curie/Marie Skłodowska-Curie/Curie||
+7|Charles Darwin/Darwin||
+6|Galileo/Galileo Galilei/Galilée|Galilée|
+6|Nikola Tesla/Tesla||
+6|Stephen Hawking/Hawking||
+5|Thomas Edison/Edison||
+5|Louis Pasteur/Pasteur||
+5|Archimedes/Archimède|Archimède|
+5|Leonardo da Vinci/Da Vinci/Leonardo|Léonard de Vinci/De Vinci|
+5|Nicolaus Copernicus/Copernicus|Nicolas Copernic/Copernic|
+5|Pythagoras|Pythagore|
+5|Alexander Graham Bell/Graham Bell||
+4|Johannes Kepler/Kepler||
+3|Michael Faraday/Faraday||
+2|James Clerk Maxwell/Maxwell||
+3|Max Planck/Planck||
+3|Niels Bohr/Bohr||
+3|Ernest Rutherford/Rutherford||
+3|Richard Feynman/Feynman||
+4|Alan Turing/Turing||
+4|Ada Lovelace/Lovelace||
+3|Gregor Mendel/Mendel||
+4|Alexander Fleming/Fleming||
+3|Dmitri Mendeleev/Mendeleev|Dmitri Mendeleïev/Mendeleïev|
+3|Euclid|Euclide|
+4|Aristotle|Aristote|
+3|Hippocrates|Hippocrate|
+4|Robert Oppenheimer/J. Robert Oppenheimer/Oppenheimer||
+3|Pierre Curie||
+4|Benjamin Franklin/Franklin||
+3|Carl Sagan/Sagan||
+2|Neil deGrasse Tyson||
+3|Jane Goodall/Goodall||
+3|Rosalind Franklin||
+3|Edwin Hubble/Hubble||
+2|Werner Heisenberg/Heisenberg||
+3|Erwin Schrödinger/Schrödinger/Schrodinger||
+2|Enrico Fermi/Fermi||
+3|Alfred Nobel/Nobel||
+3|Antoine Lavoisier/Lavoisier||
+3|Blaise Pascal/Pascal||
+3|René Descartes/Descartes||
+2|Pierre de Fermat/Fermat||
+2|Leonhard Euler/Euler||
+2|Carl Friedrich Gauss/Gauss||
+2|Gottfried Leibniz/Leibniz||
+2|Robert Hooke/Hooke||
+2|Robert Boyle/Boyle||
+2|Edmond Halley/Halley||
+2|Tycho Brahe/Brahe||
+2|Christiaan Huygens/Huygens||
+3|Alessandro Volta/Volta||
+2|André-Marie Ampère/Ampère||
+2|Georg Ohm/Ohm||
+3|James Watt/Watt||
+2|Heinrich Hertz/Hertz||
+2|Guglielmo Marconi/Marconi||
+2|Wilhelm Röntgen/Röntgen/Roentgen||
+2|Henri Becquerel/Becquerel||
+2|Irène Joliot-Curie||
+2|Lise Meitner/Meitner||
+2|Paul Dirac/Dirac||
+2|Wolfgang Pauli/Pauli||
+2|Max Born||
+2|Louis de Broglie/De Broglie||
+2|Peter Higgs/Higgs||
+2|Edward Jenner/Jenner||
+2|Joseph Lister/Lister||
+2|Robert Koch/Koch||
+3|Florence Nightingale||
+4|Sigmund Freud/Freud||
+3|Ivan Pavlov/Pavlov||
+2|Carl Linnaeus/Linnaeus|Carl von Linné/Linné|
+2|Jean-Baptiste Lamarck/Lamarck||
+2|Georges Cuvier/Cuvier||
+2|Alfred Russel Wallace||
+2|James Watson||
+2|Francis Crick/Crick||
+2|Barbara McClintock/McClintock||
+2|Rachel Carson||
+2|Alexander von Humboldt/Humboldt||
+2|Dian Fossey/Fossey||
+3|Jacques Cousteau/Cousteau|Jacques-Yves Cousteau/Cousteau|
+2|Katherine Johnson||
+2|Hedy Lamarr||
+2|Grace Hopper||
+3|Tim Berners-Lee/Berners-Lee||
+2|John von Neumann/Von Neumann||
+2|Claude Shannon/Shannon||
+2|Srinivasa Ramanujan/Ramanujan||
+2|Emmy Noether/Noether||
+2|Sophie Germain||
+2|Hypatia/Hypatie|Hypatie|
+2|Ptolemy|Ptolémée|
+2|Eratosthenes|Ératosthène|
+2|Avicenna/Ibn Sina|Avicenne/Ibn Sina|
+2|Al-Khwarizmi||
+2|Ibn al-Haytham/Alhazen||
+2|Omar Khayyam||
+2|Zhang Heng||
+2|Shen Kuo||
+2|Joseph Fourier/Fourier||
+2|Pierre-Simon Laplace/Laplace||
+2|Joseph-Louis Lagrange/Lagrange||
+2|Évariste Galois/Galois||
+2|Henri Poincaré/Poincaré||
+2|Augustin Fresnel/Fresnel||
+2|Léon Foucault/Foucault||
+3|Gustave Eiffel/Eiffel||
+2|Claude Bernard||
+2|Urbain Le Verrier/Le Verrier||
+2|Charles Messier/Messier||
+2|Jean-François Champollion/Champollion||
+2|Hubert Reeves||
+0|Elon Musk||no
+0|Bill Gates||no
+0|Steve Jobs||no
+
+@set painters
+9|Leonardo da Vinci/Da Vinci/Leonardo|Léonard de Vinci/De Vinci|
+8|Pablo Picasso/Picasso||
+8|Vincent van Gogh/Van Gogh||
+7|Claude Monet/Monet||
+7|Michelangelo|Michel-Ange|
+6|Salvador Dalí/Dali/Dalí||
+6|Rembrandt||
+6|Frida Kahlo/Kahlo||
+6|Andy Warhol/Warhol||
+5|Raphael|Raphaël|
+5|Pierre-Auguste Renoir/Renoir||
+5|Paul Cézanne/Cézanne/Cezanne||
+5|Édouard Manet/Manet||
+5|Edgar Degas/Degas||
+5|Henri Matisse/Matisse||
+5|Johannes Vermeer/Vermeer||
+5|Gustav Klimt/Klimt||
+5|Edvard Munch/Munch||
+5|Banksy||
+5|Paul Gauguin/Gauguin||
+5|Jackson Pollock/Pollock||
+4|Sandro Botticelli/Botticelli||
+4|Caravaggio|Le Caravage/Caravage|
+3|Titian|Titien/Le Titien|
+4|Donatello||
+3|Diego Velázquez/Velázquez/Velazquez||
+3|Francisco Goya/Goya||
+3|El Greco|Le Greco|
+3|Peter Paul Rubens/Rubens||
+3|Jan van Eyck/Van Eyck||
+3|Hieronymus Bosch/Bosch|Jérôme Bosch/Bosch|
+3|Pieter Bruegel/Bruegel/Brueghel||
+3|Albrecht Dürer/Dürer/Durer||
+3|J. M. W. Turner/William Turner/Turner||
+2|John Constable/Constable||
+2|Caspar David Friedrich||
+4|Eugène Delacroix/Delacroix||
+2|Jacques-Louis David||
+2|Jean-Auguste-Dominique Ingres/Ingres||
+3|Gustave Courbet/Courbet||
+2|Jean-François Millet/Millet||
+3|Camille Pissarro/Pissarro||
+2|Alfred Sisley/Sisley||
+2|Berthe Morisot/Morisot||
+2|Mary Cassatt/Cassatt||
+3|Georges Seurat/Seurat||
+3|Henri de Toulouse-Lautrec/Toulouse-Lautrec||
+2|Gustave Caillebotte/Caillebotte||
+2|Henri Rousseau/Le Douanier Rousseau||
+4|Wassily Kandinsky/Kandinsky||
+3|Piet Mondrian/Mondrian||
+3|Paul Klee/Klee||
+3|Joan Miró/Miró/Miro||
+4|René Magritte/Magritte||
+3|Marc Chagall/Chagall||
+3|Amedeo Modigliani/Modigliani||
+2|Georges Braque/Braque||
+2|Fernand Léger/Léger||
+2|Marcel Duchamp/Duchamp||
+3|Egon Schiele/Schiele||
+3|Mark Rothko/Rothko||
+3|Roy Lichtenstein/Lichtenstein||
+3|Keith Haring/Haring||
+4|Jean-Michel Basquiat/Basquiat||
+3|David Hockney/Hockney||
+3|Edward Hopper/Hopper||
+2|Georgia O'Keeffe/O'Keeffe||
+2|Norman Rockwell/Rockwell||
+3|Yves Klein||
+3|Pierre Soulages/Soulages||
+2|Nicolas de Staël/De Staël||
+2|Bernard Buffet/Buffet||
+2|Jean Dubuffet/Dubuffet||
+3|Yayoi Kusama/Kusama||
+3|Katsushika Hokusai/Hokusai||
+2|Utagawa Hiroshige/Hiroshige||
+3|Diego Rivera/Rivera||
+3|Fernando Botero/Botero||
+2|Tamara de Lempicka/Lempicka||
+2|Artemisia Gentileschi/Gentileschi||
+2|Élisabeth Vigée Le Brun/Vigée Le Brun||
+3|Giotto||
+2|Fra Angelico||
+2|Piero della Francesca||
+2|Andrea Mantegna/Mantegna||
+2|Giovanni Bellini/Bellini||
+2|Tintoretto|Le Tintoret/Tintoret|
+2|Paolo Veronese/Veronese|Véronèse|
+2|Canaletto||
+2|Nicolas Poussin/Poussin||
+2|Claude Lorrain/Lorrain||
+2|Georges de La Tour||
+2|Antoine Watteau/Watteau||
+2|Jean-Honoré Fragonard/Fragonard||
+2|François Boucher/Boucher||
+2|Jean-Baptiste-Siméon Chardin/Chardin||
+2|Théodore Géricault/Géricault||
+2|William Blake/Blake||
+2|Dante Gabriel Rossetti/Rossetti||
+2|John Everett Millais/Millais||
+2|James McNeill Whistler/Whistler||
+2|John Singer Sargent/Sargent||
+3|Alphonse Mucha/Mucha||
+2|Odilon Redon/Redon||
+2|Gustave Moreau/Moreau||
+2|Paul Signac/Signac||
+2|Raoul Dufy/Dufy||
+2|André Derain/Derain||
+2|Maurice de Vlaminck/Vlaminck||
+2|Maurice Utrillo/Utrillo||
+2|Suzanne Valadon/Valadon||
+2|Francis Bacon||
+2|Lucian Freud||
+2|Gerhard Richter/Richter||
+2|Ai Weiwei||
+3|Jeff Koons/Koons||
+3|Damien Hirst/Hirst||
+4|Bob Ross||
+0|Auguste Rodin/Rodin||no
+0|Leonardo DiCaprio/DiCaprio||no
+
+@set composers
+9|Wolfgang Amadeus Mozart/Mozart||
+9|Ludwig van Beethoven/Beethoven||
+8|Johann Sebastian Bach/Bach/J. S. Bach||
+7|Frédéric Chopin/Chopin||
+6|Antonio Vivaldi/Vivaldi||
+6|Pyotr Ilyich Tchaikovsky/Tchaikovsky|Piotr Ilitch Tchaïkovski/Tchaïkovski|
+5|Johannes Brahms/Brahms||
+5|Joseph Haydn/Haydn||
+5|George Frideric Handel/Handel|Georg Friedrich Haendel/Haendel|
+5|Franz Schubert/Schubert||
+5|Richard Wagner/Wagner||
+5|Giuseppe Verdi/Verdi||
+5|Claude Debussy/Debussy||
+5|Maurice Ravel/Ravel||
+5|Antonín Dvořák/Dvorak/Dvořák||
+5|Franz Liszt/Liszt||
+5|Felix Mendelssohn/Mendelssohn||
+5|Robert Schumann/Schumann||
+5|Giacomo Puccini/Puccini||
+5|Erik Satie/Satie||
+5|Johann Strauss/Strauss||
+5|Hans Zimmer/Zimmer||
+5|John Williams||
+4|Igor Stravinsky/Stravinsky|Igor Stravinski/Stravinski|
+4|Sergei Rachmaninoff/Rachmaninoff/Rachmaninov|Sergueï Rachmaninov/Rachmaninov|
+3|Sergei Prokofiev/Prokofiev|Sergueï Prokofiev|
+2|Dmitri Shostakovich/Shostakovich|Dmitri Chostakovitch/Chostakovitch|
+3|Gustav Mahler/Mahler||
+2|Richard Strauss||
+3|Camille Saint-Saëns/Saint-Saëns/Saint-Saens||
+4|Georges Bizet/Bizet||
+3|Hector Berlioz/Berlioz||
+3|Gabriel Fauré/Fauré||
+2|Jules Massenet/Massenet||
+2|Charles Gounod/Gounod||
+3|Jacques Offenbach/Offenbach||
+2|Léo Delibes/Delibes||
+2|César Franck/Franck||
+2|Francis Poulenc/Poulenc||
+2|Darius Milhaud/Milhaud||
+2|Olivier Messiaen/Messiaen||
+2|Pierre Boulez/Boulez||
+3|Jean-Philippe Rameau/Rameau||
+3|Jean-Baptiste Lully/Lully||
+2|François Couperin/Couperin||
+2|Marc-Antoine Charpentier||
+3|Claudio Monteverdi/Monteverdi||
+2|Henry Purcell/Purcell||
+4|Gioachino Rossini/Rossini||
+2|Gaetano Donizetti/Donizetti||
+2|Vincenzo Bellini||
+3|Niccolò Paganini/Paganini||
+2|Arcangelo Corelli/Corelli||
+2|Domenico Scarlatti/Scarlatti||
+2|Tomaso Albinoni/Albinoni||
+3|Johann Pachelbel/Pachelbel||
+2|Georg Philipp Telemann/Telemann||
+2|Christoph Willibald Gluck/Gluck||
+2|Anton Bruckner/Bruckner||
+3|Edvard Grieg/Grieg||
+2|Jean Sibelius/Sibelius||
+2|Carl Nielsen/Nielsen||
+2|Bedřich Smetana/Smetana||
+2|Leoš Janáček/Janacek||
+2|Béla Bartók/Bartok/Bartók||
+2|Zoltán Kodály/Kodaly||
+3|Modest Mussorgsky/Mussorgsky|Modeste Moussorgski/Moussorgski|
+3|Nikolai Rimsky-Korsakov/Rimsky-Korsakov|Nikolaï Rimski-Korsakov/Rimski-Korsakov|
+2|Alexander Borodin/Borodin|Alexandre Borodine/Borodine|
+2|Mikhail Glinka/Glinka||
+2|Aram Khachaturian/Khachaturian|Aram Khatchatourian|
+3|Edward Elgar/Elgar||
+3|Gustav Holst/Holst||
+2|Ralph Vaughan Williams/Vaughan Williams||
+2|Benjamin Britten/Britten||
+3|George Gershwin/Gershwin||
+3|Leonard Bernstein/Bernstein||
+2|Aaron Copland/Copland||
+2|Samuel Barber/Barber||
+3|Philip Glass||
+2|Steve Reich||
+2|John Cage/Cage||
+2|Arnold Schoenberg/Schoenberg|Arnold Schönberg/Schönberg|
+2|Alban Berg||
+2|Anton Webern/Webern||
+2|Isaac Albéniz/Albéniz||
+2|Manuel de Falla/De Falla||
+2|Joaquín Rodrigo/Rodrigo||
+2|Enrique Granados/Granados||
+2|Heitor Villa-Lobos/Villa-Lobos||
+2|Astor Piazzolla/Piazzolla||
+2|Hildegard of Bingen|Hildegarde de Bingen|
+2|Clara Schumann||
+2|Fanny Mendelssohn||
+2|Lili Boulanger||
+4|Ennio Morricone/Morricone||
+3|Joe Hisaishi/Hisaishi||
+3|Howard Shore||
+3|Danny Elfman/Elfman||
+4|Ludovico Einaudi/Einaudi||
+3|Yann Tiersen/Tiersen||
+2|Max Richter||
+2|Arvo Pärt/Arvo Part||
+2|Karl Jenkins||
+3|Michel Legrand/Legrand||
+2|Vladimir Cosma/Cosma||
+3|Koji Kondo||
+0|Elvis Presley||no
+0|Michael Jackson||no
+0|Taylor Swift||no
+
+@set explorers
+8|Christopher Columbus/Columbus|Christophe Colomb/Colomb|
+6|Marco Polo||
+6|Neil Armstrong/Armstrong||
+5|Ferdinand Magellan/Magellan|Fernand de Magellan/Magellan|
+5|Vasco da Gama/Da Gama|Vasco de Gama|
+5|James Cook/Captain Cook/Cook||
+5|Yuri Gagarin/Gagarin|Youri Gagarine/Gagarine|
+5|Roald Amundsen/Amundsen||
+4|Ernest Shackleton/Shackleton||
+3|Robert Falcon Scott/Captain Scott||
+4|Edmund Hillary/Hillary||
+3|Tenzing Norgay/Tenzing||
+4|Amerigo Vespucci/Vespucci|Amerigo Vespucci/Améric Vespuce|
+3|Leif Erikson/Leif Eriksson|Leif Erikson|
+3|Erik the Red|Érik le Rouge|
+3|Hernán Cortés/Cortés/Cortez|Hernan Cortés/Cortès|
+3|Francisco Pizarro/Pizarro|François Pizarre/Pizarre|
+4|Jacques Cartier/Cartier||
+3|Samuel de Champlain/Champlain||
+3|Henry Hudson/Hudson||
+2|John Cabot/Cabot|Jean Cabot|
+3|Bartolomeu Dias/Dias|Bartolomeu Dias/Barthélemy Dias|
+3|Ibn Battuta||
+3|Zheng He||
+3|Lewis and Clark/Meriwether Lewis/William Clark||
+3|David Livingstone/Livingstone||
+2|Henry Morton Stanley/Stanley||
+3|Sir Francis Drake/Francis Drake/Drake||
+2|Walter Raleigh/Raleigh||
+3|Abel Tasman/Tasman||
+2|Louis-Antoine de Bougainville/Bougainville||
+3|Jean-François de La Pérouse/La Pérouse/Lapérouse||
+2|Jules Dumont d'Urville/Dumont d'Urville||
+2|René-Robert Cavelier de La Salle/La Salle||
+3|Robert Peary/Peary||
+2|Matthew Henson/Henson||
+2|Fridtjof Nansen/Nansen||
+2|Vitus Bering/Bering||
+2|Juan Ponce de León/Ponce de León||
+2|Vasco Núñez de Balboa/Balboa||
+2|Pedro Álvares Cabral/Cabral||
+2|Hernando de Soto/De Soto||
+2|Francisco de Orellana/Orellana||
+2|Alexander von Humboldt/Humboldt||
+2|Mungo Park||
+2|Richard Francis Burton/Richard Burton||
+2|John Hanning Speke/Speke||
+2|Gertrude Bell||
+2|Isabella Bird||
+2|Freya Stark||
+2|Alexandra David-Néel/David-Néel||
+4|Jacques Cousteau/Cousteau|Jacques-Yves Cousteau|
+3|Thor Heyerdahl/Heyerdahl||
+2|Paul-Émile Victor||
+4|Buzz Aldrin/Aldrin||
+3|Valentina Tereshkova/Tereshkova|Valentina Terechkova|
+2|Sally Ride||
+4|Thomas Pesquet/Pesquet||
+2|Jean-Loup Chrétien||
+4|Amelia Earhart/Earhart||
+3|Charles Lindbergh/Lindbergh||
+3|Louis Blériot/Blériot||
+3|Bertrand Piccard/Piccard||
+2|Auguste Piccard||
+2|Reinhold Messner/Messner||
+3|Bear Grylls||
+2|Hiram Bingham/Bingham||
+3|Howard Carter||
+2|Heinrich Schliemann/Schliemann||
+2|Ranulph Fiennes/Fiennes||
+3|Mike Horn||
+0|Indiana Jones||no
+0|Dora||no
+
+@set emperors
+9|Julius Caesar/Caesar|Jules César/César|
+8|Augustus/Octavian|Auguste/Octave|
+7|Nero|Néron|
+6|Caligula||
+5|Marcus Aurelius|Marc Aurèle/Marc-Aurèle|
+5|Constantine/Constantine the Great|Constantin/Constantin Ier|
+5|Hadrian|Hadrien|
+5|Trajan||
+5|Tiberius|Tibère|
+5|Claudius|Claude|
+4|Commodus|Commode|
+3|Vespasian|Vespasien|
+3|Titus||
+3|Domitian|Domitien|
+3|Caracalla||
+3|Diocletian|Dioclétien|
+3|Septimius Severus/Severus|Septime Sévère|
+3|Antoninus Pius|Antonin le Pieux|
+2|Galba||
+2|Otho|Othon|
+2|Vitellius||
+2|Nerva||
+2|Lucius Verus|Lucius Vérus|
+2|Pertinax||
+2|Didius Julianus|Didius Julien|
+2|Geta||
+2|Macrinus|Macrin|
+2|Elagabalus/Heliogabalus|Élagabal/Héliogabale|
+2|Severus Alexander|Sévère Alexandre|
+2|Maximinus Thrax|Maximin le Thrace|
+2|Gordian III|Gordien III|
+2|Philip the Arab|Philippe l'Arabe|
+2|Decius|Dèce|
+2|Valerian|Valérien|
+2|Gallienus|Gallien|
+2|Claudius Gothicus|Claude le Gothique|
+2|Aurelian|Aurélien|
+2|Probus||
+2|Carus||
+2|Maximian|Maximien|
+2|Galerius|Galère|
+2|Constantius Chlorus/Constantius I|Constance Chlore|
+2|Maxentius|Maxence|
+2|Licinius||
+2|Constantius II|Constance II|
+2|Julian/Julian the Apostate|Julien/Julien l'Apostat|
+2|Jovian|Jovien|
+2|Valentinian I|Valentinien Ier|
+2|Valens||
+2|Gratian|Gratien|
+2|Theodosius I/Theodosius the Great|Théodose Ier/Théodose|
+2|Honorius||
+2|Arcadius||
+3|Romulus Augustulus|Romulus Augustule|
+3|Justinian|Justinien|
+2|Charlemagne||no
+2|Napoleon|Napoléon|no
+2|Pompey|Pompée|no
+2|Mark Antony|Marc Antoine|no
+2|Cleopatra|Cléopâtre|no
+2|Brutus||no
+
+@set fr_kings
+@drop roi king
+5|Louis XIV/Sun King|Louis XIV/Roi-Soleil|
+5|Louis XVI||
+4|Charlemagne||
+4|Clovis/Clovis I|Clovis/Clovis Ier|
+4|Henri IV/Henry IV||
+4|François I/Francis I|François Ier/François Premier|
+3|Louis XIII||
+4|Louis XV||
+4|Saint Louis/Louis IX|Saint Louis/Louis IX|
+3|Philippe le Bel/Philip IV|Philippe IV le Bel/Philippe le Bel|
+3|Louis XVIII||
+3|Charles X||
+3|Louis-Philippe/Louis Philippe I|Louis-Philippe Ier|
+3|Hugues Capet/Hugh Capet|Hugues Capet|
+3|Philippe Auguste/Philip II Augustus|Philippe II Auguste/Philippe Auguste|
+2|Charles VII||
+2|Louis XI||
+2|Charles VIII||
+2|Louis XII||
+2|Henri II/Henry II||
+2|François II/Francis II||
+2|Charles IX||
+2|Henri III/Henry III||
+2|Jean II le Bon/John II|Jean le Bon|
+2|Charles V le Sage/Charles V|Charles V|
+2|Charles VI||
+2|Philippe VI||
+2|Louis X||
+2|Philippe V||
+2|Charles IV le Bel/Charles IV|Charles IV|
+2|Louis VIII||
+2|Louis VII||
+2|Louis VI||
+2|Philippe I||
+2|Henri I||
+2|Robert II/Robert the Pious|Robert le Pieux|
+2|Louis I/Louis the Pious|Louis le Pieux|
+2|Charles the Bald/Charles II|Charles le Chauve|
+2|Pepin the Short|Pépin le Bref|
+3|Dagobert/Dagobert I|Dagobert Ier|
+2|Charles Martel||no
+2|Napoléon I/Napoleon|Napoléon Ier/Napoléon|no
+2|Napoléon III||no
+2|Louis XVII||
+2|Marie-Antoinette||no
+
+@set mythology
+8|Zeus||greek
+7|Poseidon|Poséidon|greek
+7|Hades|Hadès|greek
+7|Athena|Athéna|greek
+7|Hercules/Heracles|Hercule/Héraclès|greek
+7|Aphrodite||greek
+6|Apollo|Apollon|greek
+6|Ares|Arès|greek
+6|Hermes|Hermès|greek
+6|Artemis|Artémis|greek
+6|Hera|Héra|greek
+6|Medusa|Méduse|greek
+6|Achilles|Achille|greek
+5|Dionysus|Dionysos|greek
+5|Hephaestus|Héphaïstos|greek
+5|Demeter|Déméter|greek
+5|Persephone|Perséphone|greek
+5|Kronos/Cronus|Cronos|greek
+5|Gaia|Gaïa|greek
+5|Prometheus|Prométhée|greek
+5|Pegasus|Pégase|greek
+5|Minotaur|Minotaure|greek
+5|Odysseus/Ulysses|Ulysse|greek
+5|Perseus|Persée|greek
+5|Theseus|Thésée|greek
+5|Pandora|Pandore|greek
+5|Cyclops/Polyphemus|Cyclope/Polyphème|greek
+5|Narcissus|Narcisse|greek
+5|Icarus|Icare|greek
+5|Atlas||greek
+5|Eros|Éros|greek
+5|Nike||greek
+5|Hydra|Hydre|greek
+5|Cerberus|Cerbère|greek
+5|Helen of Troy/Helen|Hélène de Troie/Hélène|greek
+5|Jason||greek
+5|Orpheus|Orphée|greek
+5|Hestia||greek
+5|Uranus|Ouranos|greek
+5|Rhea|Rhéa|greek
+4|Pan||greek
+3|Nemesis|Némésis|greek
+3|Hypnos||greek
+2|Thanatos||greek
+3|Morpheus|Morphée|greek
+3|Helios|Hélios|greek
+2|Selene|Séléné|greek
+2|Eos|Éos|greek
+3|Hecate|Hécate|greek
+2|Tyche|Tyché|greek
+3|Nyx||greek
+2|Chaos||greek
+2|Oceanus|Océanos|greek
+2|Tethys|Téthys|greek
+2|Hyperion|Hypérion|greek
+2|Themis|Thémis|greek
+2|Mnemosyne|Mnémosyne|greek
+3|Iris||greek
+2|Hebe|Hébé|greek
+2|Asclepius|Asclépios|greek
+3|Charon||greek
+3|The Muses/Muses|Les Muses/Muses|greek
+2|Calliope||greek
+2|Clio||greek
+3|Echo|Écho|greek
+3|Ajax||greek
+3|Hector||greek
+3|Paris|Pâris|greek
+3|Agamemnon||greek
+2|Menelaus|Ménélas|greek
+2|Priam||greek
+3|Cassandra|Cassandre|greek
+3|Penelope|Pénélope|greek
+2|Telemachus|Télémaque|greek
+3|Oedipus|Œdipe|greek
+2|Antigone||greek
+3|Ariadne|Ariane|greek
+3|Daedalus|Dédale|greek
+3|Midas||greek
+3|Sisyphus|Sisyphe|greek
+2|Tantalus|Tantale|greek
+2|Bellerophon|Bellérophon|greek
+3|Chimera|Chimère|greek
+3|Sphinx||greek
+3|Centaur|Centaure|greek
+2|Satyr|Satyre|greek
+3|Sirens|Sirènes|greek
+2|Scylla||greek
+2|Charybdis|Charybde|greek
+3|Harpy|Harpie|greek
+3|Gorgon|Gorgone|greek
+3|Titans|Titans|greek
+2|Typhon||greek
+2|Adonis||greek
+3|Psyche|Psyché|greek
+2|Europa|Europe|greek
+2|Leda|Léda|greek
+2|Danae|Danaé|greek
+2|Io||greek
+2|Ganymede|Ganymède|greek
+2|Castor||greek
+2|Pollux||greek
+2|Atalanta|Atalante|greek
+3|Circe|Circé|greek
+2|Calypso||greek
+3|Medea|Médée|greek
+2|Electra|Électre|greek
+3|Orion||greek
+2|Hyacinth|Hyacinthe|greek
+2|Arachne|Arachné|greek
+2|Phaethon|Phaéton|greek
+5|Jupiter||roman
+5|Mars||roman
+5|Venus|Vénus|roman
+5|Neptune||roman
+5|Mercury|Mercure|roman
+5|Juno|Junon|roman
+5|Minerva|Minerve|roman
+5|Pluto|Pluton|roman
+5|Saturn|Saturne|roman
+5|Cupid|Cupidon|roman
+5|Vulcan|Vulcain|roman
+5|Diana|Diane|roman
+5|Bacchus||roman
+5|Janus||roman
+5|Vesta||roman
+5|Ceres|Cérès|roman
+4|Romulus||roman
+4|Remus/Rémus|Rémus|roman
+3|Aeneas|Énée|roman
+2|Faunus/Faun|Faune|roman
+3|Aurora|Aurore|roman
+2|Fortuna||roman
+2|Proserpina|Proserpine|roman
+2|Sol||roman
+2|Luna||roman
+2|Quirinus||roman
+2|Bellona|Bellone|roman
+2|Flora|Flore|roman
+2|Victoria||roman
+2|Terminus||roman
+6|Thor||norse
+6|Odin||norse
+6|Loki||norse
+5|Freya/Freyja|Freyja|norse
+5|Frigg/Frigga|Frigg|norse
+5|Baldur/Balder|Baldr|norse
+5|Tyr|Tyr|norse
+5|Heimdall||norse
+5|Valkyries/Valkyrie|Valkyries/Walkyrie|norse
+5|Fenrir||norse
+5|Jörmungandr/Midgard Serpent|Jörmungand/Serpent de Midgard|norse
+5|Hel||norse
+5|Freyr/Frey||norse
+5|Njord/Njörðr||norse
+5|Idun/Iðunn|Idunn|norse
+5|Bragi||norse
+5|Sif||norse
+5|Vidar||norse
+5|Vali||norse
+5|Ymir||norse
+5|Sleipnir||norse
+5|Yggdrasil||norse
+5|Mjölnir/Mjolnir||norse
+5|Ragnarök/Ragnarok||norse
+5|Valhalla|Valhalla/Walhalla|norse
+5|Asgard||norse
+5|Surtr||norse
+5|Huginn and Muninn/Huginn/Muninn||norse
+6|Ra/Re|Râ/Rê|egypt
+5|Osiris||egypt
+5|Isis||egypt
+5|Anubis||egypt
+5|Horus||egypt
+5|Set/Seth|Seth|egypt
+5|Thoth||egypt
+5|Bastet||egypt
+5|Hathor||egypt
+5|Amun/Amon/Amun-Ra|Amon/Amon-Rê|egypt
+5|Ptah||egypt
+5|Sekhmet||egypt
+5|Sobek||egypt
+5|Nut||egypt
+5|Geb||egypt
+5|Shu||egypt
+5|Tefnut||egypt
+5|Maat||egypt
+5|Nephthys||egypt
+5|Khnum||egypt
+5|Aten/Aton|Aton|egypt
+5|Bes||egypt
+5|Taweret|Thouéris|egypt
+5|Apophis/Apep||egypt
+5|Khepri||egypt
+5|Hapi||egypt
+0|Jesus|Jésus|no
+0|God|Dieu|no
+0|Buddha|Bouddha|no
+0|Superman||no

@@ -1,0 +1,792 @@
+@set constellations
+@drop constellation
+9|Orion||
+8|Ursa Major/Great Bear/Big Dipper/Plough|Grande Ourse|
+6|Ursa Minor/Little Bear/Little Dipper|Petite Ourse|
+6|Cassiopeia|Cassiopée|
+6|Andromeda|Andromède|
+7|Leo|Lion|zod
+7|Scorpius/Scorpio|Scorpion|zod
+7|Gemini|Gémeaux|zod
+7|Taurus|Taureau|zod
+6|Aries|Bélier|zod
+6|Cancer|Cancer|zod
+6|Virgo|Vierge|zod
+6|Libra|Balance|zod
+6|Sagittarius|Sagittaire|zod
+6|Capricornus/Capricorn|Capricorne|zod
+6|Aquarius|Verseau|zod
+6|Pisces|Poissons|zod
+5|Crux/Southern Cross|Croix du Sud|
+5|Pegasus|Pégase|
+5|Draco/Dragon|Dragon|
+5|Cygnus/Swan|Cygne|
+5|Perseus|Persée|
+5|Hercules|Hercule|
+5|Canis Major/Great Dog|Grand Chien|
+4|Canis Minor/Little Dog|Petit Chien|
+4|Lyra|Lyre|
+4|Aquila/Eagle|Aigle|
+4|Centaurus/Centaur|Centaure|
+4|Phoenix|Phénix|
+4|Hydra|Hydre|
+4|Ophiuchus|Ophiuchus/Serpentaire|
+4|Boötes/Bootes|Bouvier|
+4|Auriga|Cocher|
+4|Cepheus|Céphée|
+3|Lupus/Wolf|Loup|
+3|Lynx|Lynx|
+3|Monoceros/Unicorn|Licorne|
+3|Delphinus/Dolphin|Dauphin|
+3|Corona Borealis/Northern Crown|Couronne boréale|
+3|Corona Australis/Southern Crown|Couronne australe|
+3|Eridanus|Éridan|
+3|Cetus/Whale|Baleine|
+3|Lepus/Hare|Lièvre|
+3|Corvus/Crow|Corbeau|
+3|Serpens/Serpent|Serpent|
+3|Sagitta/Arrow|Flèche|
+3|Columba/Dove|Colombe|
+3|Pavo/Peacock|Paon|
+3|Tucana/Toucan|Toucan|
+3|Carina|Carène|
+3|Vela|Voiles|
+3|Puppis|Poupe|
+2|Antlia|Machine pneumatique|
+2|Apus|Oiseau de paradis|
+2|Ara|Autel|
+2|Caelum|Burin|
+2|Camelopardalis|Girafe|
+2|Canes Venatici|Chiens de chasse|
+2|Chamaeleon|Caméléon|
+2|Circinus|Compas|
+2|Coma Berenices|Chevelure de Bérénice|
+2|Crater|Coupe|
+2|Dorado|Dorade|
+2|Equuleus|Petit Cheval|
+2|Fornax|Fourneau|
+2|Grus|Grue|
+2|Horologium|Horloge|
+2|Hydrus|Hydre mâle|
+2|Indus|Indien|
+2|Lacerta|Lézard|
+2|Leo Minor|Petit Lion|
+2|Mensa|Table|
+2|Microscopium|Microscope|
+2|Musca|Mouche|
+2|Norma|Règle|
+2|Octans|Octant|
+2|Pictor|Peintre|
+2|Piscis Austrinus|Poisson austral|
+2|Pyxis|Boussole|
+2|Reticulum|Réticule|
+2|Sculptor|Sculpteur|
+2|Scutum|Écu de Sobieski|
+2|Sextans|Sextant|
+2|Telescopium|Télescope|
+2|Triangulum|Triangle|
+2|Triangulum Australe|Triangle austral|
+2|Volans|Poisson volant|
+2|Vulpecula|Petit Renard|
+0|Pleiades|Pléiades|no
+0|Milky Way|Voie lactée|no
+0|Sun|Soleil|no
+
+@set stars
+@drop star etoile
+9|Sirius||
+8|Polaris/North Star/Pole Star|Étoile polaire/Polaris|
+7|Betelgeuse|Bételgeuse|
+6|Rigel||
+6|Vega|Véga|
+6|Alpha Centauri/Rigil Kentaurus|Alpha du Centaure/Alpha Centauri|
+6|Proxima Centauri/Proxima|Proxima du Centaure/Proxima Centauri|
+5|Antares|Antarès|
+5|Aldebaran|Aldébaran|
+5|Arcturus||
+5|Capella||
+5|Procyon||
+5|Altair||
+5|Deneb||
+5|Spica|Épi/Spica|
+5|Pollux||
+5|Castor||
+5|Regulus|Régulus|
+5|Canopus||
+4|Fomalhaut||
+4|Achernar||
+4|Bellatrix||
+4|Mintaka||
+4|Alnitak||
+4|Alnilam||
+4|Algol||
+4|Mira||
+4|Mizar||
+4|Alcor||
+4|Barnard's Star|Étoile de Barnard|
+4|Tau Ceti||
+4|Sirius B||
+4|VY Canis Majoris||
+4|UY Scuti||
+4|Eta Carinae|Êta Carinae|
+3|Saiph||
+3|Dubhe||
+3|Merak||
+3|Alioth||
+3|Alkaid||
+3|Thuban||
+3|Epsilon Eridani||
+3|Wolf 359||
+3|Shaula||
+3|Hadar||
+3|Mimosa||
+3|Acrux||
+3|Gacrux||
+3|Alhena||
+3|Elnath||
+3|Hamal||
+3|Kochab||
+3|Schedar||
+3|Caph||
+3|Mirach||
+3|Almach||
+3|Alpheratz||
+3|Markab||
+3|Enif||
+3|Sadr||
+3|Albireo||
+3|Rasalhague||
+3|Nunki||
+3|Kaus Australis||
+3|Atria||
+3|Avior||
+3|Miaplacidus||
+3|Suhail||
+3|Wezen||
+3|Adhara||
+3|Mirzam||
+3|Alphard||
+3|Denebola||
+3|Zosma||
+3|Algieba||
+3|Cor Caroli||
+3|Vindemiatrix||
+3|Izar||
+3|Alphecca||
+3|Eltanin||
+3|Rastaban||
+3|Menkar||
+3|Diphda||
+3|Ankaa||
+3|Pistol Star|Étoile du Pistolet|
+3|Rho Cassiopeiae||
+3|Luyten's Star|Étoile de Luyten|
+3|Ross 128||
+3|Gliese 581||
+3|TRAPPIST-1||
+3|Kepler-452||
+3|Tabby's Star/Boyajian's Star|Étoile de Tabby|
+0|Sun|Soleil|no
+0|Moon|Lune|no
+0|Venus/Morning Star/Evening Star|Vénus/Étoile du berger|no
+0|Mars||no
+0|Jupiter||no
+0|Pleiades|Pléiades|no
+0|Orion||no
+
+@set moons
+@fuzzy 2
+9|Moon/The Moon/Luna|Lune/La Lune/Luna|earth
+6|Phobos||mars
+6|Deimos||mars
+8|Europa|Europe|jup
+7|Io||jup
+8|Ganymede|Ganymède|jup
+7|Callisto||jup
+4|Amalthea|Amalthée|jup
+3|Himalia||jup
+3|Thebe|Thébé|jup
+3|Metis|Métis|jup
+3|Adrastea|Adrastée|jup
+2|Elara||jup
+2|Pasiphae|Pasiphaé|jup
+2|Sinope||jup
+2|Lysithea||jup
+2|Carme||jup
+2|Ananke||jup
+2|Leda|Léda|jup
+1|Callirrhoe||jup
+1|Themisto||jup
+1|Megaclite||jup
+1|Taygete||jup
+1|Chaldene||jup
+1|Harpalyke||jup
+1|Kalyke||jup
+1|Iocaste||jup
+1|Erinome||jup
+1|Isonoe||jup
+1|Praxidike||jup
+1|Autonoe||jup
+1|Thyone||jup
+1|Hermippe||jup
+1|Aitne||jup
+1|Eurydome||jup
+1|Euanthe||jup
+1|Euporie||jup
+1|Orthosie||jup
+1|Sponde||jup
+1|Kale||jup
+1|Pasithee||jup
+1|Hegemone||jup
+1|Mneme||jup
+1|Aoede||jup
+1|Thelxinoe||jup
+1|Arche||jup
+1|Kallichore||jup
+1|Helike||jup
+1|Carpo||jup
+1|Eukelade||jup
+1|Cyllene||jup
+1|Kore||jup
+1|Herse||jup
+1|Dia||jup
+1|Eupheme||jup
+1|Valetudo||jup
+1|Pandia||jup
+1|Ersa||jup
+1|Philophrosyne||jup
+9|Titan||sat
+6|Enceladus|Encelade|sat
+5|Mimas||sat
+5|Rhea|Rhéa|sat
+5|Iapetus|Japet|sat
+5|Dione|Dioné|sat
+5|Tethys|Téthys|sat
+4|Hyperion|Hypérion|sat
+4|Phoebe|Phœbé|sat
+3|Janus||sat
+3|Epimetheus|Épiméthée|sat
+3|Pandora|Pandore|sat
+3|Prometheus|Prométhée|sat
+3|Atlas||sat
+3|Pan||sat
+2|Helene|Hélène|sat
+2|Telesto|Télesto|sat
+2|Calypso||sat
+2|Daphnis||sat
+2|Methone|Méthone|sat
+2|Pallene|Pallène|sat
+2|Polydeuces|Pollux|sat
+2|Anthe||sat
+2|Aegaeon||sat
+1|Ymir||sat
+1|Paaliaq||sat
+1|Tarvos||sat
+1|Ijiraq||sat
+1|Suttungr||sat
+1|Kiviuq||sat
+1|Mundilfari||sat
+1|Albiorix||sat
+1|Skathi||sat
+1|Erriapus||sat
+1|Siarnaq||sat
+1|Thrymr||sat
+1|Narvi||sat
+1|Aegir||sat
+1|Bebhionn||sat
+1|Bergelmir||sat
+1|Bestla||sat
+1|Farbauti||sat
+1|Fenrir||sat
+1|Fornjot||sat
+1|Hati||sat
+1|Hyrrokkin||sat
+1|Kari||sat
+1|Loge||sat
+1|Skoll||sat
+1|Surtur||sat
+1|Jarnsaxa||sat
+1|Greip||sat
+1|Tarqeq||sat
+1|Gridr||sat
+1|Angrboda||sat
+1|Skrymir||sat
+1|Gerd||sat
+1|Eggther||sat
+1|Beli||sat
+1|Gunnlod||sat
+1|Thiazzi||sat
+1|Alvaldi||sat
+1|Geirrod||sat
+6|Miranda||ura
+5|Titania||ura
+5|Oberon|Obéron|ura
+4|Ariel||ura
+4|Umbriel||ura
+3|Puck||ura
+2|Cordelia|Cordélia|ura
+2|Ophelia|Ophélie|ura
+2|Bianca||ura
+2|Cressida||ura
+2|Desdemona|Desdémone|ura
+2|Juliet|Juliette|ura
+2|Portia||ura
+2|Rosalind|Rosalinde|ura
+2|Belinda||ura
+2|Perdita||ura
+2|Mab||ura
+2|Cupid|Cupidon|ura
+2|Caliban||ura
+2|Sycorax||ura
+1|Prospero||ura
+1|Setebos||ura
+1|Stephano||ura
+1|Trinculo||ura
+1|Francisco||ura
+1|Margaret||ura
+1|Ferdinand||ura
+7|Triton||nep
+4|Nereid|Néréide|nep
+3|Proteus|Protée|nep
+2|Larissa||nep
+2|Naiad|Naïade|nep
+2|Thalassa||nep
+2|Despina||nep
+2|Galatea|Galatée|nep
+2|Halimede||nep
+2|Psamathe||nep
+2|Sao||nep
+2|Laomedeia||nep
+2|Neso||nep
+2|Hippocamp||nep
+6|Charon||dwarf
+3|Nix||dwarf
+3|Hydra||dwarf
+2|Kerberos||dwarf
+2|Styx||dwarf
+2|Dysnomia||dwarf
+2|Hi'iaka||dwarf
+2|Namaka||dwarf
+2|Weywot||dwarf
+2|Vanth||dwarf
+2|Actaea||dwarf
+2|Ilmarë/Ilmare||dwarf
+2|MK2||dwarf
+0|Pluto|Pluton|no
+0|Mars||no
+0|Jupiter||no
+0|Saturn|Saturne|no
+0|Venus|Vénus|no
+0|Mercury|Mercure|no
+0|Uranus||no
+0|Neptune||no
+0|Earth|Terre|no
+0|Ceres|Cérès|no
+0|Sun|Soleil|no
+0|Halley's Comet|Comète de Halley|no
+
+@set elements
+5|Hydrogen/H|Hydrogène|gas nm
+5|Helium/He|Hélium|gas noble
+4|Lithium/Li|Lithium|metal
+3|Beryllium/Be|Béryllium|metal
+3|Boron/B|Bore|nm
+6|Carbon/C|Carbone|nm
+5|Nitrogen/N|Azote|gas nm
+7|Oxygen/O|Oxygène|gas nm
+4|Fluorine/F|Fluor|gas hal
+4|Neon/Ne|Néon|gas noble
+5|Sodium/Na|Sodium|metal
+4|Magnesium/Mg|Magnésium|metal
+5|Aluminium/Aluminum/Al|Aluminium|metal
+4|Silicon/Si|Silicium|nm
+3|Phosphorus/P|Phosphore|nm
+4|Sulfur/Sulphur/S|Soufre|nm
+4|Chlorine/Cl|Chlore|gas hal
+3|Argon/Ar|Argon|gas noble
+4|Potassium/K|Potassium|metal
+5|Calcium/Ca|Calcium|metal
+2|Scandium/Sc|Scandium|metal
+4|Titanium/Ti|Titane|metal
+2|Vanadium/V|Vanadium|metal
+3|Chromium/Cr|Chrome|metal
+2|Manganese/Mn|Manganèse|metal
+7|Iron/Fe|Fer|metal
+3|Cobalt/Co|Cobalt|metal
+4|Nickel/Ni|Nickel|metal
+6|Copper/Cu|Cuivre|metal
+4|Zinc/Zn|Zinc|metal
+2|Gallium/Ga|Gallium|metal
+2|Germanium/Ge|Germanium|nm
+3|Arsenic/As|Arsenic|nm
+2|Selenium/Se|Sélénium|nm
+3|Bromine/Br|Brome|hal
+3|Krypton/Kr|Krypton|gas noble
+2|Rubidium/Rb|Rubidium|metal
+2|Strontium/Sr|Strontium|metal
+2|Yttrium/Y|Yttrium|metal
+2|Zirconium/Zr|Zirconium|metal
+2|Niobium/Nb|Niobium|metal
+2|Molybdenum/Mo|Molybdène|metal
+2|Technetium/Tc|Technétium|metal
+2|Ruthenium/Ru|Ruthénium|metal
+2|Rhodium/Rh|Rhodium|metal
+2|Palladium/Pd|Palladium|metal
+7|Silver/Ag|Argent|metal
+2|Cadmium/Cd|Cadmium|metal
+2|Indium/In|Indium|metal
+4|Tin/Sn|Étain|metal
+2|Antimony/Sb|Antimoine|nm
+2|Tellurium/Te|Tellure|nm
+3|Iodine/I|Iode|hal
+3|Xenon/Xe|Xénon|gas noble
+2|Caesium/Cesium/Cs|Césium|metal
+2|Barium/Ba|Baryum|metal
+2|Lanthanum/La|Lanthane|metal
+2|Cerium/Ce|Cérium|metal
+1|Praseodymium/Pr|Praséodyme|metal
+2|Neodymium/Nd|Néodyme|metal
+1|Promethium/Pm|Prométhium|metal
+1|Samarium/Sm|Samarium|metal
+1|Europium/Eu|Europium|metal
+1|Gadolinium/Gd|Gadolinium|metal
+1|Terbium/Tb|Terbium|metal
+1|Dysprosium/Dy|Dysprosium|metal
+1|Holmium/Ho|Holmium|metal
+1|Erbium/Er|Erbium|metal
+1|Thulium/Tm|Thulium|metal
+1|Ytterbium/Yb|Ytterbium|metal
+1|Lutetium/Lu|Lutécium/Lutétium|metal
+1|Hafnium/Hf|Hafnium|metal
+2|Tantalum/Ta|Tantale|metal
+3|Tungsten/Wolfram/W|Tungstène|metal
+1|Rhenium/Re|Rhénium|metal
+2|Osmium/Os|Osmium|metal
+2|Iridium/Ir|Iridium|metal
+5|Platinum/Pt|Platine|metal
+9|Gold/Au|Or|metal
+5|Mercury/Hg|Mercure|metal
+2|Thallium/Tl|Thallium|metal
+5|Lead/Pb|Plomb|metal
+2|Bismuth/Bi|Bismuth|metal
+3|Polonium/Po|Polonium|metal
+1|Astatine/At|Astate|hal
+3|Radon/Rn|Radon|gas noble
+2|Francium/Fr|Francium|metal
+3|Radium/Ra|Radium|metal
+1|Actinium/Ac|Actinium|metal
+2|Thorium/Th|Thorium|metal
+1|Protactinium/Pa|Protactinium|metal
+6|Uranium/U|Uranium|metal
+2|Neptunium/Np|Neptunium|metal
+4|Plutonium/Pu|Plutonium|metal
+1|Americium/Am|Américium|metal
+1|Curium/Cm|Curium|metal
+1|Berkelium/Bk|Berkélium|metal
+2|Californium/Cf|Californium|metal
+1|Einsteinium/Es|Einsteinium|metal
+1|Fermium/Fm|Fermium|metal
+1|Mendelevium/Md|Mendélévium|metal
+1|Nobelium/No|Nobélium|metal
+1|Lawrencium/Lr|Lawrencium|metal
+1|Rutherfordium/Rf|Rutherfordium|metal
+1|Dubnium/Db|Dubnium|metal
+1|Seaborgium/Sg|Seaborgium|metal
+1|Bohrium/Bh|Bohrium|metal
+1|Hassium/Hs|Hassium|metal
+1|Meitnerium/Mt|Meitnérium|metal
+1|Darmstadtium/Ds|Darmstadtium|metal
+1|Roentgenium/Rg|Roentgenium|metal
+1|Copernicium/Cn|Copernicium|metal
+1|Nihonium/Nh|Nihonium|metal
+1|Flerovium/Fl|Flérovium|metal
+1|Moscovium/Mc|Moscovium|metal
+1|Livermorium/Lv|Livermorium|metal
+1|Tennessine/Ts|Tennesse|hal
+1|Oganesson/Og|Oganesson|noble
+0|Water|Eau|no
+0|Steel|Acier|no
+0|Bronze|Bronze|no
+0|Brass|Laiton|no
+0|Diamond|Diamant|no
+0|Air|Air|no
+0|Fire|Feu|no
+0|Earth|Terre|no
+0|Salt|Sel|no
+0|Plastic|Plastique|no
+0|Kryptonite|Kryptonite|no
+0|Vibranium|Vibranium|no
+0|Adamantium|Adamantium|no
+0|Mithril|Mithril|no
+
+@set body
+9|Heart|Cœur/Coeur|org
+9|Brain|Cerveau|org
+8|Hand|Main|
+8|Head|Tête|
+8|Eye/Eyes|Œil/Yeux/Oeil|
+8|Foot/Feet|Pied|
+8|Arm|Bras|
+8|Leg|Jambe|
+7|Nose|Nez|
+7|Ear|Oreille|
+7|Mouth|Bouche|
+7|Finger|Doigt|
+7|Lungs/Lung|Poumon|org
+7|Liver|Foie|org
+7|Stomach|Estomac|org
+6|Kidney|Rein|org
+6|Skin|Peau|org
+6|Toe|Orteil|
+6|Knee|Genou|
+6|Elbow|Coude|
+6|Shoulder|Épaule|
+6|Neck|Cou|
+6|Back|Dos|
+6|Teeth/Tooth|Dent|
+6|Tongue|Langue|org
+6|Hair|Cheveux/Cheveu/Poils|
+5|Belly/Tummy|Ventre|
+5|Lips/Lip|Lèvre|
+5|Chin|Menton|
+5|Cheek|Joue|
+5|Forehead|Front|
+5|Eyebrow|Sourcil|
+5|Eyelash|Cil|
+5|Eyelid|Paupière|
+5|Thumb|Pouce|
+5|Wrist|Poignet|
+5|Ankle|Cheville|
+5|Heel|Talon|
+5|Hip|Hanche|
+5|Waist|Taille|
+5|Chest|Poitrine/Torse|
+5|Bottom/Buttocks/Bum/Butt|Fesses|
+5|Thigh|Cuisse|
+4|Calf|Mollet|
+3|Shin||
+5|Nail/Fingernail|Ongle|
+4|Palm|Paume|
+4|Belly button/Navel|Nombril|
+5|Jaw|Mâchoire|
+5|Throat|Gorge|
+6|Skull|Crâne|bone
+6|Spine/Backbone|Colonne vertébrale|bone
+5|Ribs/Rib|Côte|bone
+6|Muscle|Muscle|
+5|Blood|Sang|
+4|Vein|Veine|
+4|Artery|Artère|
+4|Nerve|Nerf|
+4|Bladder|Vessie|org
+5|Intestines/Intestine/Gut/Bowel|Intestin|org
+3|Small intestine|Intestin grêle|org
+3|Large intestine/Colon|Gros intestin/Côlon|org
+4|Pancreas|Pancréas|org
+4|Spleen|Rate|org
+3|Gallbladder|Vésicule biliaire|org
+4|Appendix|Appendice|org
+3|Thyroid|Thyroïde|org
+3|Tonsils|Amygdales|org
+3|Uvula|Luette|
+3|Larynx|Larynx|org
+3|Pharynx|Pharynx|org
+3|Trachea/Windpipe|Trachée|org
+3|Oesophagus/Esophagus/Gullet|Œsophage|org
+3|Diaphragm|Diaphragme|
+3|Gums/Gum|Gencive|
+3|Nostril|Narine|
+3|Earlobe|Lobe de l'oreille|
+3|Eardrum|Tympan|
+3|Pupil|Pupille|
+3|Iris|Iris|
+3|Retina|Rétine|
+3|Cornea|Cornée|
+3|Temple|Tempe|
+4|Armpit|Aisselle|
+4|Forearm|Avant-bras|
+3|Knuckle||
+3|Sole|Plante du pied|
+3|Abdomen|Abdomen|
+3|Pelvis|Bassin|bone
+3|Nape|Nuque|
+4|Collarbone/Clavicle|Clavicule|bone
+3|Shoulder blade/Scapula|Omoplate|bone
+4|Kneecap/Patella|Rotule|bone
+5|Femur/Thighbone|Fémur|bone
+3|Humerus|Humérus|bone
+3|Radius|Radius|bone
+3|Ulna|Cubitus/Ulna|bone
+4|Tibia/Shinbone|Tibia|bone
+3|Fibula|Péroné/Fibula|bone
+3|Sternum/Breastbone|Sternum|bone
+3|Vertebra/Vertebrae|Vertèbre|bone
+3|Coccyx/Tailbone|Coccyx|bone
+2|Sacrum|Sacrum|bone
+3|Mandible/Jawbone|Mandibule|bone
+2|Maxilla|Maxillaire|bone
+3|Phalanges/Phalanx|Phalange|bone
+2|Metacarpals/Metacarpal|Métacarpe/Métacarpien|bone
+2|Carpals/Carpal|Carpe|bone
+2|Tarsals/Tarsal|Tarse|bone
+2|Metatarsals/Metatarsal|Métatarse/Métatarsien|bone
+3|Stapes/Stirrup|Étrier|bone
+2|Incus/Anvil|Enclume|bone
+2|Malleus/Hammer|Marteau|bone
+2|Hyoid|Os hyoïde|bone
+2|Ilium|Ilion/Ilium|bone
+2|Ischium|Ischion|bone
+2|Pubis|Pubis|bone
+2|Calcaneus/Heel bone|Calcanéum|bone
+2|Talus|Astragale/Talus|bone
+2|Cuboid|Cuboïde|bone
+2|Navicular|Naviculaire|bone
+2|Scaphoid|Scaphoïde|bone
+2|Lunate|Semi-lunaire/Lunatum|bone
+2|Trapezium|Trapèze|bone
+2|Hamate|Hamatum/Os crochu|bone
+2|Pisiform|Pisiforme|bone
+2|Capitate|Capitatum/Grand os|bone
+2|Trapezoid|Trapézoïde|bone
+2|Cuneiform|Cunéiforme|bone
+2|Zygomatic/Cheekbone|Zygomatique/Pommette|bone
+2|Frontal bone|Os frontal|bone
+2|Parietal bone|Os pariétal|bone
+2|Temporal bone|Os temporal|bone
+2|Occipital bone|Os occipital|bone
+2|Sphenoid|Sphénoïde|bone
+2|Ethmoid|Ethmoïde|bone
+2|Nasal bone|Os nasal|bone
+2|Vomer|Vomer|bone
+2|Lacrimal bone|Os lacrymal|bone
+2|Palatine bone|Os palatin|bone
+2|Atlas|Atlas|bone
+2|Axis|Axis|bone
+4|Biceps|Biceps|
+3|Triceps|Triceps|
+3|Abs/Abdominals|Abdominaux|
+3|Pecs/Pectorals|Pectoraux|
+3|Quadriceps/Quads|Quadriceps|
+3|Hamstring|Ischio-jambiers|
+3|Glutes/Gluteus|Fessiers|
+2|Deltoid|Deltoïde|
+2|Trapezius||
+3|Achilles tendon|Tendon d'Achille|
+3|Cartilage|Cartilage|
+3|Ligament|Ligament|
+3|Tendon|Tendon|
+2|Bone marrow|Moelle osseuse|
+3|Spinal cord|Moelle épinière|
+2|Cerebellum|Cervelet|org
+2|Hippocampus|Hippocampe|
+2|Hypothalamus|Hypothalamus|
+2|Pituitary gland|Hypophyse|org
+2|Adrenal glands/Adrenal gland|Glandes surrénales/Surrénales|org
+3|Molar|Molaire|
+3|Incisor|Incisive|
+3|Canine|Canine|
+3|Wisdom tooth|Dent de sagesse|
+0|Soul|Âme|no
+0|Bone|Os|no
+0|Body|Corps|no
+0|Tail|Queue|no
+0|Wing|Aile|no
+0|Paw|Patte|no
+
+@set gems
+@drop stone pierre
+8|Diamond|Diamant|gem
+7|Ruby|Rubis|gem
+7|Emerald|Émeraude|gem
+7|Sapphire|Saphir|gem
+6|Amethyst|Améthyste|gem
+5|Topaz|Topaze|gem
+5|Opal|Opale|gem
+5|Pearl|Perle|gem
+5|Jade|Jade|gem
+5|Garnet|Grenat|gem
+5|Aquamarine|Aigue-marine|gem
+5|Turquoise|Turquoise|gem
+5|Quartz|Quartz|min
+4|Onyx|Onyx|gem
+4|Rose quartz|Quartz rose|gem
+4|Citrine|Citrine|gem
+4|Peridot|Péridot|gem
+4|Tourmaline|Tourmaline|gem
+4|Lapis lazuli|Lapis-lazuli/Lazurite|gem
+4|Moonstone|Pierre de lune|gem
+5|Obsidian|Obsidienne|rock
+5|Amber|Ambre|gem
+3|Jasper|Jaspe|gem
+4|Agate|Agate|gem
+3|Malachite|Malachite|gem
+3|Tanzanite|Tanzanite|gem
+3|Tiger's eye/Tigers eye|Œil-de-tigre|gem
+3|Zircon|Zircon|gem
+2|Spinel|Spinelle|gem
+2|Alexandrite|Alexandrite|gem
+3|Beryl|Béryl|gem
+2|Carnelian|Cornaline|gem
+5|Granite|Granit/Granite|rock
+5|Marble|Marbre|rock
+4|Basalt|Basalte|rock
+4|Limestone|Calcaire|rock
+4|Sandstone|Grès|rock
+4|Slate|Ardoise|rock
+4|Flint|Silex|rock
+4|Chalk|Craie|rock
+3|Pumice|Pierre ponce|rock
+3|Coal|Charbon|rock
+3|Halite/Rock salt|Halite/Sel gemme|min
+3|Pyrite/Fool's gold|Pyrite/Or des fous|min
+3|Hematite|Hématite|min
+3|Fluorite|Fluorine/Fluorite|min
+3|Calcite|Calcite|min
+3|Mica|Mica|min
+3|Feldspar|Feldspath|min
+3|Gypsum|Gypse|min
+3|Talc|Talc|min
+3|Graphite|Graphite|min
+2|Bauxite|Bauxite|min
+2|Magnetite|Magnétite|min
+2|Galena|Galène|min
+2|Cinnabar|Cinabre|min
+2|Azurite|Azurite|min
+2|Rhodochrosite|Rhodochrosite|gem
+2|Labradorite|Labradorite|gem
+2|Moissanite|Moissanite|gem
+2|Kunzite|Kunzite|gem
+2|Morganite|Morganite|gem
+2|Chrysoberyl|Chrysobéryl|gem
+2|Iolite|Iolite/Cordiérite|gem
+2|Sunstone|Pierre de soleil|gem
+2|Bloodstone|Héliotrope|gem
+2|Jet|Jais/Jayet|gem
+2|Serpentine|Serpentine|min
+2|Soapstone|Stéatite|rock
+2|Kyanite|Cyanite/Disthène|min
+2|Gneiss|Gneiss|rock
+2|Schist|Schiste|rock
+2|Shale|Schiste argileux|rock
+2|Quartzite|Quartzite|rock
+2|Gabbro|Gabbro|rock
+2|Andesite|Andésite|rock
+2|Tuff|Tuf|rock
+2|Dolomite|Dolomie/Dolomite|rock
+2|Travertine|Travertin|rock
+2|Mother of pearl/Nacre|Nacre|gem
+2|Coral|Corail|gem
+2|Chalcedony|Calcédoine|gem
+2|Chrysocolla|Chrysocolle|min
+2|Sodalite|Sodalite|min
+2|Selenite|Sélénite|min
+2|Celestine|Célestine|min
+2|Apatite|Apatite|min
+2|Corundum|Corindon|min
+0|Gold|Or|no
+0|Silver|Argent|no
+0|Iron|Fer|no
+0|Kryptonite|Kryptonite|no
+0|Crystal|Cristal|no
+0|Glass|Verre|no
+0|Rock|Roche/Rocher|no

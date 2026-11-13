@@ -1,0 +1,544 @@
+# fame|English names|French names|tags   (af as eu na sa oc continents, ll landlocked, isl island country, no = known but never valid)
+@set countries
+6|Algeria|Algérie|af
+4|Angola||af
+3|Benin|Bénin|af
+4|Botswana||af ll
+3|Burkina Faso||af ll
+3|Burundi||af ll
+2|Cape Verde/Cabo Verde|Cap-Vert|af isl
+5|Cameroon|Cameroun|af
+2|Central African Republic/CAR|République centrafricaine/Centrafrique|af ll
+3|Chad|Tchad|af ll
+2|Comoros|Comores|af isl
+4|Republic of the Congo/Congo/Congo-Brazzaville/Congo Republic|République du Congo/Congo/Congo-Brazzaville|af
+4|DR Congo/Democratic Republic of the Congo/DRC/Congo-Kinshasa/Zaire|République démocratique du Congo/RDC/RD Congo/Congo-Kinshasa/Zaïre|af
+3|Djibouti||af
+9|Egypt|Égypte|af
+2|Equatorial Guinea|Guinée équatoriale|af
+2|Eritrea|Érythrée|af
+2|Eswatini/Swaziland||af ll
+5|Ethiopia|Éthiopie|af ll
+3|Gabon||af
+3|Gambia/The Gambia|Gambie|af
+6|Ghana||af
+3|Guinea|Guinée|af
+2|Guinea-Bissau|Guinée-Bissau|af
+5|Ivory Coast/Côte d'Ivoire|Côte d'Ivoire|af
+7|Kenya||af
+2|Lesotho||af ll
+3|Liberia|Libéria|af
+5|Libya|Libye|af
+6|Madagascar||af isl
+3|Malawi||af ll
+5|Mali||af ll
+3|Mauritania|Mauritanie|af
+3|Mauritius|Maurice/Île Maurice|af isl
+7|Morocco|Maroc|af
+4|Mozambique||af
+4|Namibia|Namibie|af
+4|Niger||af ll
+8|Nigeria|Nigéria|af
+4|Rwanda||af ll
+1|Sao Tome and Principe/São Tomé and Príncipe|Sao Tomé-et-Principe/São Tomé-et-Príncipe|af isl
+6|Senegal|Sénégal|af
+3|Seychelles||af isl
+3|Sierra Leone||af
+5|Somalia|Somalie|af
+8|South Africa|Afrique du Sud|af
+3|South Sudan|Soudan du Sud|af ll
+5|Sudan|Soudan|af
+5|Tanzania|Tanzanie|af
+3|Togo||af
+6|Tunisia|Tunisie|af
+5|Uganda|Ouganda|af ll
+4|Zambia|Zambie|af ll
+5|Zimbabwe||af ll
+6|Afghanistan||as ll
+4|Armenia|Arménie|as eu ll
+4|Azerbaijan|Azerbaïdjan|as eu ll
+3|Bahrain|Bahreïn|as isl
+5|Bangladesh||as
+3|Bhutan|Bhoutan|as ll
+2|Brunei||as
+4|Cambodia|Cambodge|as
+9|China|Chine|as
+4|Cyprus|Chypre|as eu isl
+4|Georgia|Géorgie|as eu
+9|India|Inde|as
+6|Indonesia|Indonésie|as isl
+6|Iran||as
+6|Iraq|Irak|as
+6|Israel|Israël|as
+9|Japan|Japon|as isl
+5|Jordan|Jordanie|as
+5|Kazakhstan||as eu ll
+4|Kuwait|Koweït|as
+3|Kyrgyzstan/Kirghizstan|Kirghizistan/Kirghizstan|as ll
+3|Laos||as ll
+5|Lebanon|Liban|as
+5|Malaysia|Malaisie|as
+4|Maldives||as isl
+5|Mongolia|Mongolie|as ll
+4|Myanmar/Burma|Myanmar/Birmanie|as
+5|Nepal|Népal|as ll
+6|North Korea|Corée du Nord|as
+4|Oman||as
+6|Pakistan||as
+4|Palestine|Palestine/État de Palestine|as
+6|Philippines||as isl
+5|Qatar||as
+8|Russia|Russie|as eu
+6|Saudi Arabia|Arabie saoudite|as
+5|Singapore|Singapour|as isl
+7|South Korea/Korea|Corée du Sud/Corée|as
+5|Sri Lanka||as isl
+5|Syria|Syrie|as
+5|Taiwan|Taïwan|as isl
+3|Tajikistan|Tadjikistan|as ll
+6|Thailand|Thaïlande|as
+2|East Timor/Timor-Leste|Timor oriental/Timor-Leste|as isl
+7|Turkey/Türkiye|Turquie|as eu
+3|Turkmenistan|Turkménistan|as ll
+5|United Arab Emirates/UAE/Emirates|Émirats arabes unis/EAU/Émirats|as
+3|Uzbekistan|Ouzbékistan|as ll
+6|Vietnam/Viet Nam|Viêt Nam/Vietnam|as
+4|Yemen|Yémen|as
+4|Albania|Albanie|eu
+4|Andorra|Andorre|eu ll
+6|Austria|Autriche|eu ll
+4|Belarus|Biélorussie/Bélarus|eu ll
+7|Belgium|Belgique|eu
+4|Bosnia and Herzegovina/Bosnia|Bosnie-Herzégovine/Bosnie|eu
+5|Bulgaria|Bulgarie|eu
+6|Croatia|Croatie|eu
+5|Czechia/Czech Republic|Tchéquie/République tchèque|eu ll
+6|Denmark|Danemark|eu
+4|Estonia|Estonie|eu
+6|Finland|Finlande|eu
+9|France||eu
+9|Germany|Allemagne|eu
+7|Greece|Grèce|eu
+5|Hungary|Hongrie|eu ll
+6|Iceland|Islande|eu isl
+6|Ireland|Irlande|eu isl
+9|Italy|Italie|eu
+3|Kosovo||eu ll
+4|Latvia|Lettonie|eu
+3|Liechtenstein||eu ll
+4|Lithuania|Lituanie|eu
+5|Luxembourg||eu ll
+4|Malta|Malte|eu isl
+3|Moldova|Moldavie|eu ll
+5|Monaco||eu
+3|Montenegro|Monténégro|eu
+7|Netherlands/Holland|Pays-Bas/Hollande|eu
+3|North Macedonia/Macedonia|Macédoine du Nord/Macédoine|eu ll
+7|Norway|Norvège|eu
+7|Poland|Pologne|eu
+7|Portugal||eu
+5|Romania|Roumanie|eu
+3|San Marino|Saint-Marin|eu ll
+5|Serbia|Serbie|eu ll
+4|Slovakia|Slovaquie|eu ll
+4|Slovenia|Slovénie|eu
+9|Spain|Espagne|eu
+7|Sweden|Suède|eu
+7|Switzerland|Suisse|eu ll
+7|Ukraine||eu
+8|United Kingdom/UK/Great Britain/Britain|Royaume-Uni/Grande-Bretagne|eu isl
+4|Vatican City/Vatican/Holy See|Vatican/Cité du Vatican/Saint-Siège|eu ll
+7|England|Angleterre|eu
+6|Scotland|Écosse|eu
+5|Wales|Pays de Galles|eu
+4|Northern Ireland|Irlande du Nord|eu
+2|Antigua and Barbuda/Antigua|Antigua-et-Barbuda|na isl
+4|Bahamas/The Bahamas||na isl
+3|Barbados|Barbade|na isl
+3|Belize||na
+9|Canada||na
+5|Costa Rica||na
+6|Cuba||na isl
+2|Dominica|Dominique|na isl
+4|Dominican Republic|République dominicaine|na isl
+3|El Salvador|Salvador|na
+2|Grenada|Grenade|na isl
+4|Guatemala||na
+5|Haiti|Haïti|na isl
+4|Honduras||na
+6|Jamaica|Jamaïque|na isl
+8|Mexico|Mexique|na
+4|Nicaragua||na
+5|Panama||na
+1|Saint Kitts and Nevis/St Kitts and Nevis|Saint-Christophe-et-Niévès/Saint-Kitts-et-Nevis|na isl
+2|Saint Lucia/St Lucia|Sainte-Lucie|na isl
+1|Saint Vincent and the Grenadines|Saint-Vincent-et-les-Grenadines|na isl
+3|Trinidad and Tobago/Trinidad|Trinité-et-Tobago|na isl
+9|United States/USA/US/United States of America/America|États-Unis/Etats-Unis d'Amérique/Amérique|na
+8|Argentina|Argentine|sa
+5|Bolivia|Bolivie|sa ll
+9|Brazil|Brésil|sa
+6|Chile|Chili|sa
+6|Colombia|Colombie|sa
+5|Ecuador|Équateur|sa
+3|Guyana||sa
+4|Paraguay||sa ll
+6|Peru|Pérou|sa
+3|Suriname/Surinam||sa
+5|Uruguay||sa
+6|Venezuela||sa
+9|Australia|Australie|oc
+4|Fiji|Fidji|oc isl
+2|Kiribati||oc isl
+2|Marshall Islands|Îles Marshall|oc isl
+2|Micronesia|Micronésie|oc isl
+2|Nauru||oc isl
+7|New Zealand|Nouvelle-Zélande|oc isl
+2|Palau|Palaos|oc isl
+4|Papua New Guinea|Papouasie-Nouvelle-Guinée|oc isl
+3|Samoa||oc isl
+2|Solomon Islands|Îles Salomon|oc isl
+3|Tonga||oc isl
+2|Tuvalu||oc isl
+2|Vanuatu||oc isl
+0|Greenland|Groenland|no
+0|Puerto Rico|Porto Rico|no
+0|Hong Kong||no
+0|Antarctica|Antarctique|no
+0|Africa|Afrique|no
+0|Europe||no
+0|Asia|Asie|no
+0|South America|Amérique du Sud|no
+0|North America|Amérique du Nord|no
+0|Oceania|Océanie|no
+0|Yugoslavia|Yougoslavie|no
+0|Soviet Union/USSR|Union soviétique/URSS|no
+0|Czechoslovakia|Tchécoslovaquie|no
+0|Tibet||no
+0|Siberia|Sibérie|no
+0|French Guiana|Guyane/Guyane française|no
+0|Corsica|Corse|no
+0|Tahiti||no
+0|New Caledonia|Nouvelle-Calédonie|no
+0|Bermuda|Bermudes|no
+0|Gibraltar||no
+0|Western Sahara|Sahara occidental|no
+0|Persia|Perse|no
+0|Prussia|Prusse|no
+0|Catalonia|Catalogne|no
+0|Hawaii|Hawaï|no
+0|Bali||no
+0|Zanzibar||no
+
+@set capitals
+5|Algiers|Alger|af
+3|Luanda||af
+1|Porto-Novo||af
+2|Gaborone||af
+3|Ouagadougou||af
+1|Gitega||af
+1|Praia||af
+3|Yaoundé||af
+2|Bangui||af
+2|N'Djamena||af
+1|Moroni||af
+3|Brazzaville||af
+5|Kinshasa||af
+2|Djibouti/Djibouti City|Djibouti/Djibouti-ville|af
+8|Cairo|Le Caire|af
+1|Malabo||af
+1|Asmara||af
+1|Mbabane/Lobamba||af
+5|Addis Ababa|Addis-Abeba|af
+2|Libreville||af
+1|Banjul||af
+4|Accra||af
+2|Conakry||af
+1|Bissau||af
+2|Yamoussoukro||af
+6|Nairobi||af
+1|Maseru||af
+2|Monrovia||af
+4|Tripoli||af
+3|Antananarivo|Antananarivo/Tananarive|af
+2|Lilongwe||af
+3|Bamako||af
+2|Nouakchott||af
+2|Port Louis||af
+5|Rabat||af
+3|Maputo||af
+2|Windhoek||af
+2|Niamey||af
+4|Abuja||af
+3|Kigali||af
+1|São Tomé/Sao Tome||af
+5|Dakar||af
+2|Victoria||af
+2|Freetown||af
+3|Mogadishu|Mogadiscio|af
+5|Pretoria||af
+5|Cape Town|Le Cap|af
+2|Bloemfontein||af
+2|Juba||af
+3|Khartoum||af
+2|Dodoma||af
+2|Lomé||af
+5|Tunis||af
+3|Kampala||af
+2|Lusaka||af
+3|Harare||af
+4|Kabul|Kaboul|as
+3|Yerevan|Erevan|as eu
+3|Baku|Bakou|as eu
+2|Manama||as
+3|Dhaka||as
+2|Thimphu||as
+1|Bandar Seri Begawan||as
+3|Phnom Penh||as
+8|Beijing/Peking|Pékin/Beijing|as
+3|Nicosia|Nicosie|as eu
+3|Tbilisi||as eu
+7|New Delhi/Delhi||as
+5|Jakarta||as
+5|Tehran|Téhéran|as
+5|Baghdad|Bagdad|as
+5|Jerusalem|Jérusalem|as
+3|Amman||as
+3|Astana/Nur-Sultan||as eu
+2|Kuwait City|Koweït/Koweït City|as
+2|Bishkek|Bichkek|as
+2|Vientiane||as
+4|Beirut|Beyrouth|as
+5|Kuala Lumpur||as
+2|Malé||as
+3|Ulaanbaatar/Ulan Bator|Oulan-Bator|as
+2|Naypyidaw/Nay Pyi Taw||as
+4|Kathmandu|Katmandou|as
+5|Pyongyang||as
+2|Muscat|Mascate|as
+4|Islamabad||as
+2|Ramallah||as
+4|Doha||as
+8|Moscow|Moscou|as eu
+4|Riyadh|Riyad|as
+4|Singapore|Singapour|as
+7|Seoul|Séoul|as
+1|Sri Jayawardenepura Kotte/Kotte||as
+4|Damascus|Damas|as
+4|Taipei|Taipei/Taïpei|as
+2|Dushanbe|Douchanbé|as
+6|Bangkok||as
+1|Dili||as
+5|Ankara||as eu
+2|Ashgabat|Achgabat|as
+4|Abu Dhabi|Abou Dabi|as
+3|Tashkent|Tachkent|as
+5|Hanoi|Hanoï|as
+2|Sanaa/Sana'a||as
+9|Tokyo||as
+4|Manila|Manille|as
+3|Tirana||eu
+2|Andorra la Vella||eu
+6|Vienna|Vienne|eu
+3|Minsk||eu
+6|Brussels|Bruxelles|eu
+3|Sarajevo||eu
+4|Sofia||eu
+4|Zagreb||eu
+6|Prague||eu
+5|Copenhagen|Copenhague|eu
+3|Tallinn||eu
+5|Helsinki||eu
+9|Paris||eu
+8|Berlin||eu
+6|Athens|Athènes|eu
+6|Budapest||eu
+5|Reykjavik|Reykjavik|eu
+6|Dublin||eu
+8|Rome||eu
+2|Pristina|Pristina|eu
+3|Riga||eu
+2|Vaduz||eu
+3|Vilnius||eu
+3|Luxembourg/Luxembourg City|Luxembourg|eu
+2|Valletta|La Valette|eu
+2|Chișinău/Chisinau|Chișinău/Chisinau|eu
+3|Monaco||eu
+2|Podgorica||eu
+7|Amsterdam||eu
+2|Skopje||eu
+5|Oslo||eu
+5|Warsaw|Varsovie|eu
+6|Lisbon|Lisbonne|eu
+4|Bucharest|Bucarest|eu
+2|San Marino/City of San Marino|Saint-Marin|eu
+4|Belgrade||eu
+3|Bratislava||eu
+3|Ljubljana||eu
+8|Madrid||eu
+6|Stockholm||eu
+4|Bern/Berne|Berne|eu
+6|Kyiv/Kiev|Kiev/Kyiv|eu
+9|London|Londres|eu
+2|Vatican City/Vatican|Vatican/Cité du Vatican|eu
+5|Edinburgh|Édimbourg|eu
+3|Cardiff||eu
+3|Belfast||eu
+1|Saint John's/St. John's||na
+2|Nassau||na
+1|Bridgetown||na
+1|Belmopan||na
+6|Ottawa||na
+2|San José||na
+5|Havana|La Havane|na
+1|Roseau||na
+2|Santo Domingo|Saint-Domingue|na
+2|San Salvador||na
+1|Saint George's/St. George's||na
+2|Guatemala City|Guatemala/Ciudad de Guatemala|na
+3|Port-au-Prince||na
+2|Tegucigalpa||na
+3|Kingston||na
+6|Mexico City|Mexico|na
+2|Managua||na
+2|Panama City|Panama|na
+1|Basseterre||na
+1|Castries||na
+1|Kingstown||na
+2|Port of Spain|Port-d'Espagne|na
+8|Washington D.C./Washington/Washington DC||na
+7|Buenos Aires||sa
+3|Sucre||sa
+4|La Paz||sa
+5|Brasília||sa
+5|Santiago/Santiago de Chile||sa
+5|Bogotá||sa
+3|Quito||sa
+2|Georgetown||sa
+2|Asunción||sa
+5|Lima||sa
+1|Paramaribo||sa
+3|Montevideo||sa
+4|Caracas||sa
+6|Canberra||oc
+2|Suva||oc
+1|Tarawa/South Tarawa||oc
+1|Majuro||oc
+1|Palikir||oc
+1|Yaren||oc
+5|Wellington||oc
+1|Ngerulmud/Melekeok||oc
+2|Port Moresby||oc
+1|Apia||oc
+1|Honiara||oc
+1|Nuku'alofa||oc
+1|Funafuti||oc
+1|Port Vila||oc
+0|Sydney||no
+0|Melbourne||no
+0|Auckland||no
+0|Rio de Janeiro/Rio||no
+0|São Paulo/Sao Paulo||no
+0|New York/New York City/NYC||no
+0|Los Angeles||no
+0|Chicago||no
+0|Toronto||no
+0|Montreal|Montréal|no
+0|Vancouver||no
+0|Istanbul||no
+0|Dubai|Dubaï|no
+0|Mumbai/Bombay||no
+0|Shanghai||no
+0|Hong Kong||no
+0|Osaka||no
+0|Kyoto||no
+0|Barcelona|Barcelone|no
+0|Milan||no
+0|Venice|Venise|no
+0|Geneva|Genève|no
+0|Zurich||no
+0|Munich||no
+0|Marseille||no
+0|Lyon||no
+0|Nice||no
+0|Saint Petersburg|Saint-Pétersbourg|no
+0|Casablanca||no
+0|Lagos||no
+0|Johannesburg||no
+0|Alexandria|Alexandrie|no
+0|Karachi||no
+0|Almaty||no
+0|Dar es Salaam||no
+0|Abidjan||no
+0|Bujumbura||no
+0|Colombo||no
+0|Tel Aviv||no
+0|The Hague|La Haye|no
+0|Rotterdam||no
+0|Antwerp|Anvers|no
+0|Porto||no
+0|Kraków/Krakow|Cracovie|no
+0|Glasgow||no
+0|Manchester||no
+0|Seville|Séville|no
+
+@set us_states
+5|Alabama||
+7|Alaska||
+5|Arizona||
+4|Arkansas||
+9|California|Californie|
+5|Colorado||
+3|Connecticut||
+3|Delaware||
+8|Florida|Floride|
+5|Georgia|Géorgie|
+7|Hawaii|Hawaï|
+3|Idaho||
+5|Illinois||
+4|Indiana||
+3|Iowa||
+4|Kansas||
+4|Kentucky||
+5|Louisiana|Louisiane|
+3|Maine||
+3|Maryland||
+5|Massachusetts||
+5|Michigan||
+4|Minnesota||
+4|Mississippi||
+4|Missouri||
+4|Montana||
+3|Nebraska||
+6|Nevada||
+3|New Hampshire||
+4|New Jersey||
+4|New Mexico|Nouveau-Mexique|
+8|New York/New York State|New York/État de New York|
+4|North Carolina|Caroline du Nord|
+3|North Dakota|Dakota du Nord|
+5|Ohio||
+4|Oklahoma||
+4|Oregon||
+4|Pennsylvania|Pennsylvanie|
+3|Rhode Island||
+3|South Carolina|Caroline du Sud|
+3|South Dakota|Dakota du Sud|
+4|Tennessee||
+9|Texas||
+4|Utah||
+3|Vermont||
+4|Virginia|Virginie|
+6|Washington/Washington State|Washington/État de Washington|
+3|West Virginia|Virginie-Occidentale|
+3|Wisconsin||
+3|Wyoming||
+0|Puerto Rico|Porto Rico|no
+0|District of Columbia/DC/Washington DC||no
+0|Guam||no
+0|Los Angeles||no
+0|Chicago||no
+0|Miami||no
+0|Las Vegas||no
+0|Dakota||no
+0|Carolina|Caroline|no

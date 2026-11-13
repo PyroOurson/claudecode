@@ -1,0 +1,778 @@
+@set fruits
+9|Apple|Pomme|
+9|Banana|Banane|
+8|Orange|Orange|
+8|Strawberry|Fraise|
+7|Grape|Raisin|
+7|Watermelon|Pastèque|
+7|Pineapple|Ananas|
+7|Mango|Mangue|
+7|Cherry|Cerise|
+7|Pear|Poire|
+7|Peach|Pêche|
+7|Lemon|Citron|
+6|Kiwi|Kiwi|
+6|Blueberry|Myrtille/Bleuet|
+6|Raspberry|Framboise|
+6|Melon|Melon|
+6|Coconut|Noix de coco/Coco|
+6|Plum/Prune|Prune|
+6|Apricot|Abricot|
+6|Lime|Citron vert|
+6|Grapefruit|Pamplemousse|
+5|Pomegranate|Grenade|
+5|Avocado|Avocat|
+5|Papaya|Papaye|
+5|Fig|Figue|
+5|Blackberry|Mûre|
+5|Passion fruit|Fruit de la passion/Maracuja|
+5|Lychee/Litchi|Litchi|
+5|Dragon fruit/Pitaya|Fruit du dragon/Pitaya|
+5|Tangerine/Mandarin|Mandarine|
+5|Clementine|Clémentine|
+5|Nectarine|Nectarine/Brugnon|
+4|Cranberry|Canneberge/Cranberry|
+5|Date|Datte|
+4|Tomato|Tomate|
+4|Redcurrant/Currant|Groseille|
+4|Blackcurrant|Cassis|
+3|Gooseberry|Groseille à maquereau|
+4|Guava|Goyave|
+4|Persimmon/Kaki|Kaki/Plaquemine|
+3|Quince|Coing|
+3|Kumquat|Kumquat|
+3|Star fruit/Carambola|Carambole|
+3|Jackfruit|Jacque|
+3|Durian|Durian|
+3|Rambutan|Ramboutan|
+3|Mangosteen|Mangoustan|
+2|Physalis/Cape gooseberry|Physalis/Amour en cage|
+2|Elderberry|Baie de sureau|
+2|Mulberry||
+3|Olive|Olive|
+3|Cantaloupe|Cantaloup|
+2|Honeydew/Honeydew melon|Melon miel|
+3|Plantain|Banane plantain|
+2|Lingonberry|Airelle|
+2|Cloudberry|Plaquebière|
+1|Boysenberry||
+1|Loganberry||
+1|Huckleberry||
+3|Açaí/Acai|Açaï|
+2|Goji/Goji berry|Baie de goji/Goji|
+1|Feijoa||
+2|Tamarind|Tamarin|
+1|Sapodilla|Sapotille|
+2|Soursop/Guanabana|Corossol|
+2|Cherimoya/Custard apple|Chérimole/Pomme cannelle|
+1|Longan|Longane|
+1|Salak/Snake fruit|Salak|
+1|Ugli fruit/Ugli||
+2|Yuzu|Yuzu|
+2|Pomelo|Pomélo|
+2|Bergamot|Bergamote|
+2|Blood orange|Orange sanguine|
+1|Satsuma||
+1|Medlar|Nèfle|
+1|Sloe|Prunelle|
+1|Rosehip|Cynorhodon|
+1|Damson||
+2|Greengage|Reine-claude|
+2|Mirabelle|Mirabelle|
+1|Kiwano/Horned melon|Kiwano/Melon à cornes|
+1|Breadfruit|Fruit à pain|
+1|Ackee|Akée|
+1|Lucuma||
+1|Jabuticaba||
+1|Miracle fruit|Fruit miracle|
+1|Pawpaw|Asimine|
+2|Prickly pear|Figue de Barbarie|
+2|Rhubarb|Rhubarbe|
+2|Wild strawberry|Fraise des bois|
+1|Marula||
+1|Jujube|Jujube|
+1|Loquat|Nèfle du Japon/Bibasse|
+1|Carob|Caroube|
+1|Bilberry||
+2|Nashi/Asian pear|Nashi/Poire asiatique|
+1|Pitanga/Surinam cherry|Pitanga|
+1|Mamey||
+0|Berry|Baie|no
+0|Fruit salad|Salade de fruits|no
+0|Carrot|Carotte|no
+0|Potato|Pomme de terre|no
+0|Nut|Noix|no
+
+@set vegetables
+9|Carrot|Carotte|
+9|Potato|Pomme de terre/Patate|
+8|Tomato|Tomate|
+8|Broccoli|Brocoli|
+7|Onion|Oignon|
+7|Lettuce|Laitue/Salade|
+7|Cucumber|Concombre|
+7|Pepper/Bell pepper/Capsicum|Poivron|
+7|Spinach|Épinard/Épinards|
+6|Cabbage|Chou|
+6|Cauliflower|Chou-fleur|
+6|Pea/Peas|Petit pois/Pois|
+6|Corn/Sweetcorn/Maize|Maïs|
+6|Garlic|Ail|
+6|Mushroom|Champignon|
+6|Zucchini/Courgette|Courgette|
+6|Aubergine/Eggplant|Aubergine|
+6|Pumpkin|Citrouille/Potiron|
+6|Green bean/French bean|Haricot vert|
+5|Bean|Haricot|
+5|Leek|Poireau|
+5|Celery|Céleri|
+5|Asparagus|Asperge|
+5|Beetroot/Beet|Betterave|
+5|Radish|Radis|
+5|Sweet potato|Patate douce|
+4|Kale|Chou kale/Kale|
+5|Brussels sprout|Chou de Bruxelles|
+5|Artichoke|Artichaut|
+4|Turnip|Navet|
+3|Parsnip|Panais|
+4|Shallot|Échalote|
+4|Fennel|Fenouil|
+4|Chilli/Chili/Chili pepper|Piment|
+3|Squash|Courge|
+3|Butternut squash/Butternut|Butternut/Courge butternut|
+3|Okra|Gombo|
+4|Lentil|Lentille|
+4|Chickpea|Pois chiche|
+3|Endive/Chicory|Endive/Chicorée|
+3|Rocket/Arugula|Roquette|
+3|Watercress|Cresson|
+3|Swiss chard/Chard|Blette/Bette|
+2|Celeriac|Céleri-rave|
+2|Kohlrabi|Chou-rave|
+2|Rutabaga/Swede|Rutabaga|
+2|Jerusalem artichoke|Topinambour|
+2|Salsify|Salsifis|
+2|Bok choy/Pak choi|Pak-choï/Bok choy|
+2|Lamb's lettuce/Corn salad|Mâche|
+3|Spring onion/Scallion/Green onion|Oignon vert/Ciboule|
+2|Radicchio|Trévise|
+2|Romanesco|Chou romanesco/Romanesco|
+2|Snow pea/Mangetout|Pois mange-tout|
+3|Broad bean/Fava bean|Fève|
+3|Soybean/Soya/Edamame|Soja/Edamame|
+2|Yam|Igname|
+2|Cassava/Manioc|Manioc|
+2|Taro|Taro|
+2|Ginger|Gingembre|
+2|Horseradish|Raifort|
+2|Daikon|Radis blanc/Daikon|
+1|Lotus root|Racine de lotus|
+2|Bamboo shoot|Pousse de bambou|
+2|Bean sprouts|Germes de soja|
+1|Water chestnut|Châtaigne d'eau|
+1|Jicama||
+1|Tomatillo||
+1|Seaweed|Algue|
+1|Samphire|Salicorne|
+1|Sorrel|Oseille|
+1|Purslane|Pourpier|
+1|Nettle|Ortie|
+1|Cardoon|Cardon|
+1|Chayote|Christophine/Chayote|
+1|Courgette flower|Fleur de courgette|
+3|Gherkin/Pickle|Cornichon|
+2|Olive|Olive|
+2|Iceberg lettuce|Iceberg|
+2|Romaine|Romaine|
+2|Cherry tomato|Tomate cerise|
+2|Red cabbage|Chou rouge|
+1|Savoy cabbage|Chou de Milan|
+1|Black radish|Radis noir|
+1|Morel|Morille|
+2|Truffle|Truffe|
+1|Chanterelle|Girolle|
+2|Porcini/Cep|Cèpe|
+1|Shiitake|Shiitaké|
+1|Oyster mushroom|Pleurote|
+2|Button mushroom|Champignon de Paris|
+2|Kidney bean|Haricot rouge|
+1|Black bean|Haricot noir|
+1|Mung bean|Haricot mungo|
+1|Lima bean|Haricot de Lima|
+1|Pinto bean||
+1|White bean/Navy bean|Haricot blanc/Lingot|
+1|Flageolet|Flageolet|
+1|Split pea|Pois cassé|
+2|Jalapeño/Jalapeno|Jalapeño|
+1|Habanero||
+1|Pea shoots|Pousses de pois|
+0|Apple|Pomme|no
+0|Banana|Banane|no
+0|Rice|Riz|no
+0|Salad (dish)||no
+
+@set cheeses
+@drop cheese cheeses fromage fromages
+9|Cheddar|Cheddar|
+8|Mozzarella|Mozzarella|
+8|Brie|Brie|
+8|Camembert|Camembert|
+8|Parmesan/Parmigiano Reggiano/Parmigiano|Parmesan/Parmigiano Reggiano|
+7|Feta|Feta|
+7|Gouda|Gouda|
+7|Roquefort|Roquefort|
+7|Emmental/Emmentaler/Swiss cheese|Emmental|
+7|Comté|Comté|
+6|Raclette|Raclette|
+6|Reblochon|Reblochon|
+6|Goat cheese/Chèvre|Fromage de chèvre/Chèvre|
+6|Mascarpone|Mascarpone|
+6|Ricotta|Ricotta|
+6|Gorgonzola|Gorgonzola|
+6|Edam|Édam/Edam|
+6|Halloumi|Halloumi|
+5|Cream cheese|Fromage à la crème/Fromage frais|
+5|Cottage cheese|Cottage cheese/Cottage|
+6|Gruyère|Gruyère|
+5|Beaufort|Beaufort|
+5|Cantal|Cantal|
+5|Munster/Muenster|Munster|
+4|Morbier|Morbier|
+4|Saint-Nectaire|Saint-Nectaire|
+5|Tomme/Tomme de Savoie|Tomme/Tomme de Savoie|
+3|Pont-l'Évêque|Pont-l'Évêque|
+3|Livarot|Livarot|
+2|Neufchâtel|Neufchâtel|
+3|Coulommiers|Coulommiers|
+2|Chaource|Chaource|
+3|Époisses|Époisses|
+2|Langres|Langres|
+4|Maroilles|Maroilles|
+4|Mimolette|Mimolette|
+3|Ossau-Iraty|Ossau-Iraty|
+3|Fourme d'Ambert|Fourme d'Ambert|
+3|Bleu d'Auvergne|Bleu d'Auvergne|
+2|Bleu de Gex|Bleu de Gex|
+2|Salers|Salers|
+2|Laguiole|Laguiole|
+2|Abondance|Abondance|
+3|Mont d'Or/Vacherin Mont-d'Or|Mont-d'Or/Vacherin du Haut-Doubs|
+3|Crottin de Chavignol/Crottin|Crottin de Chavignol/Crottin|
+2|Sainte-Maure/Sainte-Maure de Touraine|Sainte-Maure-de-Touraine|
+2|Valençay|Valençay|
+2|Rocamadour|Rocamadour|
+2|Banon|Banon|
+2|Brocciu|Brocciu|
+4|Boursin|Boursin|
+2|Saint-Marcellin|Saint-Marcellin|
+2|Cancoillotte|Cancoillotte|
+3|Fromage blanc|Fromage blanc|
+2|Petit-suisse|Petit-suisse|
+5|Burrata|Burrata|
+5|Pecorino|Pecorino|
+4|Provolone|Provolone|
+3|Taleggio|Taleggio|
+3|Fontina|Fontina|
+3|Asiago|Asiago|
+3|Grana Padano|Grana Padano|
+2|Stracchino|Stracchino|
+2|Scamorza|Scamorza|
+1|Bel Paese|Bel Paese|
+5|Manchego|Manchego|
+4|Stilton|Stilton|
+3|Red Leicester|Red Leicester|
+2|Double Gloucester|Double Gloucester|
+3|Wensleydale|Wensleydale|
+2|Cheshire|Cheshire|
+1|Lancashire|Lancashire|
+1|Caerphilly|Caerphilly|
+1|Shropshire Blue|Shropshire Blue|
+3|Monterey Jack|Monterey Jack|
+2|Colby|Colby|
+3|American cheese|American cheese|
+2|Pepper Jack|Pepper Jack|
+4|Paneer|Paneer|
+2|Queso fresco|Queso fresco|
+1|Cotija|Cotija|
+1|Oaxaca|Oaxaca|
+2|Havarti|Havarti|
+2|Danish Blue|Bleu danois|
+2|Jarlsberg|Jarlsberg|
+1|Brunost/Brown cheese|Brunost|
+3|Leerdammer|Leerdammer|
+1|Maasdam|Maasdam|
+2|Limburger|Limbourg|
+2|Appenzeller|Appenzeller|
+2|Tête de Moine|Tête de Moine|
+1|Vacherin Fribourgeois|Vacherin fribourgeois|
+1|Sbrinz|Sbrinz|
+1|Kefalotyri|Kefalotyri|
+1|Kasseri|Kasseri|
+2|Labneh|Labneh|
+2|Quark||
+1|Boursault|Boursault|
+2|Cabrales|Cabrales|
+1|Idiazabal|Idiazabal|
+1|Mahón|Mahón|
+1|Torta del Casar|Torta del Casar|
+1|Serra da Estrela|Serra da Estrela|
+2|Buffalo mozzarella/Mozzarella di bufala|Mozzarella di bufala|
+1|String cheese||
+1|Velveeta|Velveeta|
+3|Babybel/Mini Babybel|Babybel|
+3|Laughing Cow/La Vache qui rit|La Vache qui rit/Vache qui rit|
+2|Kiri|Kiri|
+3|Philadelphia|Philadelphia|
+2|Saint Agur|Saint Agur|
+2|Bleu des Causses|Bleu des Causses|
+2|Rigotte de Condrieu|Rigotte de Condrieu|
+2|Pélardon|Pélardon|
+2|Picodon|Picodon|
+2|Chabichou|Chabichou|
+2|Selles-sur-Cher|Selles-sur-Cher|
+2|Pouligny-Saint-Pierre|Pouligny-Saint-Pierre|
+2|Tomme de brebis|Tomme de brebis|
+2|Brillat-Savarin|Brillat-Savarin|
+2|Caprice des Dieux|Caprice des Dieux|
+2|Carré de l'Est|Carré de l'Est|
+2|Saint-Félicien|Saint-Félicien|
+0|Butter|Beurre|no
+0|Yogurt/Yoghurt|Yaourt|no
+0|Milk|Lait|no
+
+@set spices
+9|Pepper/Black pepper|Poivre/Poivre noir|
+8|Cinnamon|Cannelle|
+7|Basil|Basilic|
+6|Paprika|Paprika|
+6|Curry/Curry powder|Curry|
+6|Ginger|Gingembre|
+6|Garlic|Ail|
+6|Oregano|Origan|
+6|Thyme|Thym|
+6|Rosemary|Romarin|
+6|Mint|Menthe|
+6|Parsley|Persil|
+6|Vanilla|Vanille|
+5|Nutmeg|Noix de muscade/Muscade|
+5|Cumin|Cumin|
+5|Turmeric|Curcuma|
+5|Saffron|Safran|
+5|Chili/Chilli/Chili powder|Piment|
+4|Cayenne/Cayenne pepper|Piment de Cayenne|
+5|Clove/Cloves|Clou de girofle/Girofle|
+5|Coriander/Cilantro|Coriandre|
+4|Dill|Aneth|
+5|Chives|Ciboulette|
+4|Sage|Sauge|
+4|Bay leaf/Bay|Laurier/Feuille de laurier|
+4|Tarragon|Estragon|
+4|Cardamom|Cardamome|
+3|Star anise|Anis étoilé/Badiane|
+3|Anise/Aniseed|Anis|
+2|Fennel seed|Graine de fenouil|
+2|Mustard seed|Graine de moutarde|
+2|Allspice|Piment de la Jamaïque|
+2|Chervil|Cerfeuil|
+2|Marjoram|Marjolaine|
+3|Lemongrass|Citronnelle|
+2|Sumac|Sumac|
+2|Za'atar|Zaatar|
+2|Garam masala|Garam masala|
+4|Herbes de Provence|Herbes de Provence|
+2|Five-spice/Chinese five-spice|Cinq-épices|
+2|Ras el hanout|Ras el hanout|
+3|Harissa|Harissa|
+3|Wasabi|Wasabi|
+2|Horseradish|Raifort|
+2|Juniper/Juniper berry|Genièvre/Baie de genièvre|
+3|Sesame|Sésame|
+2|Poppy seed|Graine de pavot/Pavot|
+2|Caraway|Carvi|
+1|Fenugreek|Fenugrec|
+1|Asafoetida|Asa-fœtida|
+1|Mace|Macis|
+1|Lovage|Livèche|
+1|Savory|Sarriette|
+1|Sorrel|Oseille|
+1|Lemon balm|Mélisse|
+2|Pink peppercorn|Baies roses|
+2|Sichuan pepper|Poivre du Sichuan|
+2|White pepper|Poivre blanc|
+2|Smoked paprika|Paprika fumé|
+3|Espelette pepper|Piment d'Espelette|
+1|Nigella|Nigelle|
+1|Kaffir lime leaf/Makrut lime|Combava|
+1|Galangal|Galanga|
+1|Shiso|Shiso|
+2|Lavender|Lavande|
+1|Borage|Bourrache|
+1|Angelica|Angélique|
+1|Hyssop|Hysope|
+2|Licorice/Liquorice|Réglisse|
+2|Quatre épices|Quatre-épices|
+1|Annatto|Roucou|
+1|Long pepper|Poivre long|
+1|Curry leaf|Feuille de curry/Kaloupilé|
+1|Celery seed|Graine de céleri|
+1|Dried chilli flakes/Chilli flakes|Piment en flocons|
+1|Mahlab|Mahaleb|
+0|Salt|Sel|no
+0|Sugar|Sucre|no
+0|Ketchup|Ketchup|no
+0|Mustard|Moutarde|no
+
+@set desserts
+9|Ice cream|Glace/Crème glacée|
+8|Cake|Gâteau|
+7|Chocolate cake|Gâteau au chocolat|
+7|Cheesecake|Cheesecake/Gâteau au fromage|
+7|Brownie|Brownie|
+7|Tiramisu|Tiramisu|
+7|Crêpe|Crêpe|
+4|Pancake|Pancake|
+6|Waffle|Gaufre|
+6|Apple pie|Tarte aux pommes|
+6|Cupcake|Cupcake|
+5|Muffin|Muffin|
+6|Cookie/Biscuit|Cookie/Biscuit|
+6|Donut/Doughnut|Donut/Beignet|
+6|Macaron|Macaron|
+6|Crème brûlée|Crème brûlée|
+6|Chocolate mousse/Mousse|Mousse au chocolat|
+5|Pudding|Pudding|
+3|Jelly/Jello|Gelée|
+5|Panna cotta|Panna cotta|
+5|Profiteroles|Profiteroles|
+6|Éclair|Éclair|
+5|Mille-feuille/Napoleon|Mille-feuille|
+5|Tarte Tatin|Tarte Tatin|
+5|Lava cake/Molten chocolate cake/Fondant|Fondant au chocolat/Moelleux au chocolat|
+5|Crumble/Apple crumble|Crumble|
+3|Trifle|Trifle|
+5|Sorbet|Sorbet|
+3|Sundae|Sundae/Coupe glacée|
+3|Banana split|Banana split|
+4|Milkshake|Milkshake|
+5|Churros|Churros|
+4|Baklava|Baklava|
+2|Gulab jamun|Gulab jamun|
+4|Mochi|Mochi|
+5|Flan/Crème caramel|Flan/Crème caramel|
+4|Clafoutis|Clafoutis|
+2|Far breton|Far breton|
+2|Kouign-amann|Kouign-amann|
+3|Paris-Brest|Paris-Brest|
+2|Saint-Honoré|Saint-Honoré|
+2|Opéra|Opéra|
+3|Black Forest cake|Forêt-noire|
+3|Yule log/Bûche de Noël|Bûche de Noël|
+3|King cake/Galette des rois|Galette des rois|
+4|Madeleine|Madeleine|
+2|Financier|Financier|
+3|Canelé|Canelé|
+2|Calisson|Calisson|
+3|Nougat|Nougat|
+4|Meringue|Meringue|
+3|Pavlova|Pavlova|
+3|Floating island/Île flottante|Île flottante|
+2|Croquembouche|Croquembouche/Pièce montée|
+3|Charlotte|Charlotte|
+2|Fraisier|Fraisier|
+4|Lemon tart/Lemon meringue pie|Tarte au citron/Tarte au citron meringuée|
+2|Pecan pie|Tarte aux noix de pécan|
+2|Pumpkin pie|Tarte à la citrouille|
+2|Key lime pie|Key lime pie|
+3|Carrot cake|Gâteau aux carottes/Carrot cake|
+3|Red velvet/Red velvet cake|Red velvet|
+1|Angel food cake|Gâteau des anges|
+3|Pound cake|Quatre-quarts|
+2|Sponge cake|Génoise|
+2|Swiss roll|Gâteau roulé/Biscuit roulé|
+2|Victoria sponge|Victoria sponge|
+2|Banoffee pie|Banoffee|
+2|Sticky toffee pudding|Sticky toffee pudding|
+1|Bread and butter pudding|Pudding au pain|
+3|Rice pudding|Riz au lait|
+3|Cannoli|Cannoli|
+3|Gelato|Gelato|
+1|Zabaglione/Sabayon|Sabayon|
+1|Semifreddo|Semifreddo|
+2|Affogato|Affogato|
+3|Panettone|Panettone|
+3|Strudel/Apple strudel|Strudel/Strudel aux pommes|
+2|Sachertorte/Sacher torte|Sachertorte|
+1|Kaiserschmarrn|Kaiserschmarrn|
+1|Linzer torte|Linzertorte|
+3|Fudge|Fudge|
+4|Caramel/Toffee|Caramel|
+3|Marshmallow|Guimauve/Chamallow|
+2|S'mores|S'mores|
+1|Brigadeiro|Brigadeiro|
+2|Tres leches|Tres leches|
+1|Arroz con leche|Arroz con leche|
+2|Alfajor|Alfajor|
+2|Dulce de leche|Confiture de lait|
+1|Halva|Halva|
+1|Kulfi|Kulfi|
+1|Kheer|Kheer|
+1|Jalebi|Jalebi|
+1|Loukoumades|Loukoumades|
+2|Turkish delight/Lokum|Loukoum|
+2|Knafeh/Kunafa|Knafeh|
+1|Basbousa|Basboussa|
+2|Ice lolly/Popsicle|Glace à l'eau/Esquimau|
+2|Frozen yogurt/Froyo|Yaourt glacé|
+1|Granita|Granité|
+1|Bingsu|Bingsu|
+1|Dango|Dango|
+1|Dorayaki|Dorayaki|
+1|Taiyaki|Taiyaki|
+1|Daifuku|Daifuku|
+2|Pastel de nata/Egg tart|Pastel de nata|
+1|Crema catalana|Crème catalane|
+1|Tarta de Santiago|Tarta de Santiago|
+1|Turrón|Touron/Turrón|
+2|Chocolate fondue|Fondue au chocolat|
+3|Soufflé|Soufflé|
+1|Bavarian cream/Bavarois|Bavarois|
+2|Parfait|Parfait|
+1|Blancmange|Blanc-manger|
+1|Petit four|Petit four|
+2|Crêpe Suzette|Crêpe Suzette|
+3|Apple turnover|Chausson aux pommes|
+2|Tarte aux fraises/Strawberry tart|Tarte aux fraises|
+2|Fruit salad|Salade de fruits|
+2|Lemon drizzle cake||
+2|Banana bread|Cake à la banane|
+2|Cinnamon roll|Roulé à la cannelle|
+2|Gingerbread|Pain d'épices|
+2|Shortbread|Sablé écossais|
+1|Mont Blanc|Mont-Blanc|
+1|Religieuse|Religieuse|
+1|Tarte au sucre|Tarte au sucre|
+1|Bugnes/Merveilles|Bugnes|
+1|Gâteau basque|Gâteau basque|
+0|Chocolate|Chocolat|no
+0|Candy/Sweets|Bonbon|no
+0|Fruit|Fruit|no
+0|Bread|Pain|no
+
+@set pasta
+@drop pasta pates
+9|Spaghetti|Spaghetti/Spaghettis|
+8|Penne|Penne|
+7|Macaroni|Macaroni/Macaronis|
+7|Lasagne/Lasagna|Lasagne/Lasagnes|
+7|Fusilli|Fusilli/Torsades|
+6|Tagliatelle|Tagliatelle/Tagliatelles|
+6|Ravioli|Ravioli/Raviolis|
+6|Farfalle/Bow ties/Bowtie pasta|Farfalle/Papillons|
+5|Linguine|Linguine|
+5|Fettuccine|Fettuccine|
+5|Tortellini|Tortellini|
+5|Rigatoni|Rigatoni|
+5|Gnocchi|Gnocchi|
+4|Cannelloni|Cannelloni|
+4|Conchiglie/Shells/Pasta shells|Conchiglie/Coquillettes|
+3|Orzo/Risoni|Orzo/Risoni|
+3|Pappardelle|Pappardelle|
+4|Vermicelli|Vermicelle/Vermicelles|
+3|Orecchiette|Orecchiette|
+2|Ziti|Ziti|
+3|Capellini/Angel hair|Capellini/Cheveux d'ange|
+2|Bucatini|Bucatini|
+1|Tortiglioni|Tortiglioni|
+1|Cavatappi|Cavatappi|
+2|Rotini|Rotini|
+1|Gemelli|Gemelli|
+1|Ditalini|Ditalini|
+2|Paccheri|Paccheri|
+1|Mafaldine|Mafaldine|
+1|Strozzapreti|Strozzapreti|
+1|Trofie|Trofie|
+1|Pici|Pici|
+1|Agnolotti|Agnolotti|
+1|Tortelloni|Tortelloni|
+1|Cappelletti|Cappelletti|
+1|Anelli|Anelli|
+1|Stelline|Stelline|
+1|Radiatori|Radiatori|
+1|Campanelle|Campanelle|
+1|Casarecce|Casarecce|
+1|Fregola|Fregola|
+1|Lumaconi|Lumaconi|
+1|Manicotti|Manicotti|
+1|Mezze maniche|Mezze maniche|
+1|Garganelli|Garganelli|
+1|Fideo/Fideos|Fideos|
+2|Spätzle/Spaetzle|Spätzle|
+2|Couscous|Couscous|
+1|Spaghettini|Spaghettini|
+1|Bigoli|Bigoli|
+1|Crozets|Crozets|
+1|Alphabet pasta|Pâtes alphabet|
+1|Tagliolini|Tagliolini|
+1|Malloreddus|Malloreddus|
+0|Noodles|Nouilles|no
+0|Ramen|Ramen|no
+0|Udon|Udon|no
+0|Rice|Riz|no
+
+@set breads
+@drop bread breads pain
+9|Baguette|Baguette|
+7|Croissant|Croissant|
+6|Brioche|Brioche|
+6|Naan|Naan/Nan|
+6|Pita/Pitta|Pita|
+6|Bagel|Bagel|
+5|Ciabatta|Ciabatta|
+5|Focaccia|Focaccia|
+5|Sourdough|Pain au levain/Levain|
+5|Tortilla|Tortilla|
+4|Toast|Pain grillé|
+5|Sliced bread/Sandwich bread|Pain de mie|
+4|Country bread/Pain de campagne|Pain de campagne/Campagne|
+4|Rye bread|Pain de seigle/Seigle|
+4|Wholemeal bread/Whole wheat bread|Pain complet/Complet|
+5|Pretzel|Bretzel|
+6|Pain au chocolat/Chocolatine|Pain au chocolat/Chocolatine|
+3|Pain aux raisins|Pain aux raisins|
+4|Chapati|Chapati|
+3|Roti|Roti|
+2|Paratha|Paratha|
+3|Cornbread|Pain de maïs|
+2|Soda bread|Soda bread|
+2|Challah|Hallah/Challah|
+2|Pumpernickel|Pumpernickel|
+2|Matzo/Matzah|Matsa/Pain azyme|
+1|Lavash|Lavash|
+1|Injera|Injera|
+2|Arepa|Arepa|
+2|Grissini/Breadsticks|Gressins/Grissini|
+3|Panettone|Panettone|
+2|Stollen|Stollen|
+3|Bun/Bread roll|Petit pain|
+2|Crumpet|Crumpet|
+2|English muffin|Muffin anglais|
+3|Scone|Scone|
+3|Fougasse|Fougasse|
+2|Gingerbread/Pain d'épices|Pain d'épices|
+2|Ficelle|Ficelle|
+1|Bâtard|Bâtard|
+2|Boule|Boule|
+2|Pain viennois|Pain viennois|
+1|Kaiser roll|Kaiser|
+1|Bialy|Bialy|
+1|Babka|Babka|
+1|Kouign-amann|Kouign-amann|
+1|Pão de queijo|Pão de queijo|
+2|Bao/Steamed bun|Bao/Brioche vapeur|
+1|Mantou|Mantou|
+1|Melonpan|Melonpan|
+1|Simit|Simit|
+1|Khachapuri|Khachapuri|
+1|Pane carasau|Pane carasau|
+2|Flatbread|Pain plat/Galette|
+2|Garlic bread|Pain à l'ail|
+2|Hot cross bun|Hot cross bun|
+2|Multigrain bread|Pain aux céréales/Pain multicéréale|
+2|Milk bread|Pain au lait|
+1|Spelt bread|Pain d'épeautre|
+1|Puri|Puri|
+1|Pandoro|Pandoro|
+1|Piadina|Piadina|
+1|Brötchen|Brötchen|
+1|Pide|Pide|
+0|Cake|Gâteau|no
+0|Biscuit|Biscuit|no
+0|Cracker|Cracker|no
+
+@set sauces
+@drop sauce sauces
+9|Ketchup|Ketchup|
+8|Mayonnaise/Mayo|Mayonnaise/Mayo|
+7|Mustard|Moutarde|
+6|Barbecue sauce/BBQ sauce/Barbecue/BBQ|Sauce barbecue/Barbecue|
+6|Pesto|Pesto|
+6|Soy sauce/Soy|Sauce soja/Soja|
+6|Tomato sauce|Sauce tomate/Coulis de tomate|
+6|Béchamel/White sauce|Béchamel|
+5|Hollandaise|Hollandaise|
+5|Béarnaise|Béarnaise|
+5|Vinaigrette/French dressing|Vinaigrette|
+5|Salsa|Salsa|
+5|Guacamole|Guacamole|
+4|Hummus|Houmous/Hummus|
+4|Gravy|Gravy/Jus|
+4|Sriracha|Sriracha|
+5|Hot sauce/Tabasco|Sauce piquante/Tabasco|
+3|Worcestershire sauce/Worcestershire|Sauce Worcestershire|
+4|Aioli/Aïoli|Aïoli|
+4|Tartar sauce/Tartare sauce|Sauce tartare/Tartare|
+4|Teriyaki|Teriyaki|
+3|Sweet chilli sauce/Sweet chili sauce|Sauce chili douce|
+2|Hoisin|Hoisin|
+2|Oyster sauce|Sauce d'huître|
+2|Fish sauce/Nuoc mam|Sauce de poisson/Nuoc-mâm|
+3|Ranch|Ranch|
+2|Thousand Island|Mille-îles|
+2|Caesar dressing|Sauce César|
+3|Tzatziki|Tzatziki|
+3|Harissa|Harissa|
+2|Chimichurri|Chimichurri|
+2|Mole|Mole|
+2|Tahini|Tahini/Tahina|
+4|Samurai sauce/Samouraï|Samouraï/Sauce samouraï|
+4|Algerian sauce/Algérienne|Algérienne/Sauce algérienne|
+3|Andalouse|Andalouse|
+3|Cocktail sauce/Marie Rose|Sauce cocktail|
+3|Curry sauce|Sauce curry|
+3|Pepper sauce/Peppercorn sauce|Sauce au poivre|
+2|Mushroom sauce|Sauce aux champignons|
+2|Beurre blanc|Beurre blanc|
+1|Velouté|Velouté|
+1|Espagnole|Espagnole|
+1|Demi-glace|Demi-glace|
+1|Bordelaise|Bordelaise|
+1|Gribiche|Gribiche|
+1|Ravigote|Ravigote|
+2|Rouille|Rouille|
+2|Pistou|Pistou|
+2|Tapenade|Tapenade|
+1|Romesco|Romesco|
+3|Bolognese|Bolognaise|
+2|Arrabbiata|Arrabbiata|
+2|Alfredo|Alfredo|
+2|Carbonara|Carbonara|
+2|Marinara|Marinara|
+1|Puttanesca|Puttanesca|
+2|Cranberry sauce|Sauce aux canneberges|
+2|Mint sauce|Sauce à la menthe|
+1|Apple sauce|Compote de pommes|
+2|Brown sauce/HP sauce|Brown sauce/Sauce HP|
+1|Piccalilli|Piccalilli|
+2|Relish|Relish|
+2|Wasabi|Wasabi|
+1|Ponzu|Ponzu|
+2|Gochujang|Gochujang|
+1|Sambal|Sambal|
+2|Peanut sauce/Satay sauce|Sauce satay/Sauce cacahuète|
+1|Raita|Raïta|
+2|Mango chutney/Chutney|Chutney|
+1|Ajvar|Ajvar|
+2|Caramel sauce|Sauce caramel|
+2|Chocolate sauce|Sauce chocolat|
+3|Custard|Crème anglaise|
+1|Honey mustard|Moutarde au miel|
+3|Sauce blanche/Garlic sauce|Sauce blanche/Sauce à l'ail|
+2|Sweet and sour sauce|Sauce aigre-douce|
+2|Buffalo sauce|Sauce Buffalo|
+1|Mornay|Mornay|
+1|Bourguignonne|Bourguignonne|
+1|Sauce vierge|Sauce vierge|
+0|Salt|Sel|no
+0|Butter|Beurre|no
+0|Oil/Olive oil|Huile/Huile d'olive|no
+0|Vinegar|Vinaigre|no

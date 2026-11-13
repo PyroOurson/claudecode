@@ -1,0 +1,535 @@
+@set cities
+9|Paris||fr
+8|Marseille/Marseilles||fr
+8|Lyon/Lyons||fr
+7|Toulouse||fr
+7|Nice||fr
+6|Nantes||fr
+6|Strasbourg||fr
+6|Montpellier||fr
+6|Bordeaux||fr
+6|Lille||fr
+5|Rennes||fr
+4|Reims||fr
+4|Le Havre||fr
+4|Saint-Étienne/Saint Etienne||fr
+4|Toulon||fr
+4|Grenoble||fr
+4|Dijon||fr
+4|Angers||fr
+3|Nîmes||fr
+3|Villeurbanne||fr
+3|Clermont-Ferrand||fr
+3|Le Mans||fr
+4|Aix-en-Provence||fr
+4|Brest||fr
+3|Tours||fr
+3|Amiens||fr
+3|Limoges||fr
+3|Annecy||fr
+3|Perpignan||fr
+3|Boulogne-Billancourt||fr
+3|Metz||fr
+3|Besançon||fr
+3|Orléans||fr
+2|Saint-Denis||fr
+2|Argenteuil||fr
+4|Rouen||fr
+3|Mulhouse||fr
+3|Caen||fr
+3|Nancy||fr
+2|Montreuil||fr
+2|Roubaix||fr
+2|Tourcoing||fr
+2|Nanterre||fr
+2|Vitry-sur-Seine||fr
+2|Créteil||fr
+4|Avignon||fr
+2|Poitiers||fr
+2|Aubervilliers||fr
+2|Versailles||fr
+5|Cannes||fr
+3|Antibes||fr
+2|Colombes||fr
+2|Asnières-sur-Seine||fr
+2|Courbevoie||fr
+2|Pau||fr
+3|La Rochelle||fr
+2|Calais||fr
+2|Dunkirk|Dunkerque|fr
+2|Béziers||fr
+2|Bourges||fr
+2|Saint-Malo||fr
+3|Ajaccio||fr
+2|Bastia||fr
+3|Biarritz||fr
+2|Bayonne||fr
+2|Lorient||fr
+2|Vannes||fr
+2|Quimper||fr
+2|Valence||fr
+2|Troyes||fr
+2|Chartres||fr
+2|Colmar||fr
+2|Arles||fr
+2|Carcassonne||fr
+2|Lourdes||fr
+2|Chamonix||fr
+2|Saint-Tropez||fr
+2|Menton||fr
+2|Cherbourg||fr
+2|Angoulême||fr
+2|Niort||fr
+2|Laval||fr ca
+2|Le Mont-Saint-Michel/Mont-Saint-Michel||fr
+1|Saint-Nazaire||fr
+1|Saint-Quentin||fr
+1|Beauvais||fr
+1|Cholet||fr
+1|Chambéry||fr
+1|Montauban||fr
+1|Narbonne||fr
+1|Sète||fr
+1|Fréjus||fr
+1|Hyères||fr
+1|Cayenne||fr
+1|Fort-de-France||fr
+1|Pointe-à-Pitre||fr
+1|Nouméa||fr
+1|Papeete||fr
+1|Vichy||fr
+1|Épinal||fr
+1|Auxerre||fr
+1|Évian-les-Bains/Evian||fr
+1|Deauville||fr
+1|Lens||fr
+1|Arras||fr
+1|Mâcon||fr
+1|Albi||fr
+1|Rodez||fr
+1|Périgueux||fr
+1|Agen||fr
+1|Tarbes||fr
+1|Gap||fr
+1|Sedan||fr
+1|Verdun||fr
+9|New York/New York City/NYC||us
+8|Los Angeles/LA||us
+7|Chicago||us
+6|Houston||us
+5|Phoenix||us
+5|Philadelphia|Philadelphie|us
+4|San Antonio||us
+5|San Diego||us
+5|Dallas||us
+4|San Jose||us
+3|Austin||us
+3|Jacksonville||us
+3|Fort Worth||us
+3|Columbus||us
+3|Charlotte||us
+7|San Francisco||us
+5|Seattle||us
+4|Denver||us
+7|Washington/Washington DC/Washington D.C.||us
+5|Boston||us
+4|Nashville||us
+5|Detroit||us
+3|Oklahoma City||us
+3|Portland||us
+7|Las Vegas||us
+3|Memphis||us
+3|Louisville||us
+3|Baltimore||us
+3|Milwaukee||us
+3|Albuquerque||us
+3|Tucson||us
+2|Fresno||us
+2|Sacramento||us
+2|Kansas City||us
+6|Miami||us
+6|Atlanta||us
+2|Omaha||us
+2|Raleigh||us
+2|Minneapolis||us
+2|Cleveland||us
+2|Tulsa||us
+2|Arlington||us
+4|New Orleans|La Nouvelle-Orléans|us
+2|Wichita||us
+3|Tampa||us
+3|Honolulu||us
+3|Anchorage||us
+3|Orlando||us
+3|Pittsburgh||us
+3|Cincinnati||us
+2|St. Louis/Saint Louis||us
+2|Salt Lake City||us
+2|Buffalo||us
+2|Indianapolis||us
+2|Richmond||us
+2|Boise||us
+2|Spokane||us
+2|Des Moines||us
+2|Birmingham||us uk
+2|Rochester||us
+2|Madison||us
+2|Reno||us
+2|Savannah||us
+2|Charleston||us
+2|Hartford||us
+2|Providence||us
+2|Santa Fe||us
+2|Dayton||us
+2|Toledo||us es
+2|Akron||us
+2|Little Rock||us
+2|Montgomery||us
+1|Juneau||us
+2|Hollywood||us
+2|Malibu||us
+2|Beverly Hills||us
+2|Palm Springs||us
+1|Key West||us
+1|Fort Lauderdale||us
+1|Jersey City||us
+1|Newark||us
+1|Oakland||us
+1|Long Beach||us
+1|Santa Barbara||us
+1|Berkeley||us
+1|Pasadena||us
+1|Anaheim||us
+1|El Paso||us
+1|Corpus Christi||us
+1|Lexington||us
+1|Knoxville||us
+1|Chattanooga||us
+1|Albany||us
+1|Annapolis||us
+1|Topeka||us
+1|Lincoln||us
+1|Cheyenne||us
+1|Fargo||us
+1|Bismarck||us
+1|Helena||us
+1|Olympia||us
+1|Burlington||us
+1|Augusta||us
+1|Trenton||us
+1|Dover||us uk
+9|London|Londres|uk
+6|Manchester||uk
+5|Liverpool||uk
+5|Edinburgh|Édimbourg|uk
+5|Glasgow||uk
+4|Leeds||uk
+3|Sheffield||uk
+3|Bristol||uk
+4|Cardiff||uk
+3|Belfast||uk
+3|Newcastle/Newcastle upon Tyne||uk
+4|Oxford||uk
+4|Cambridge||uk
+2|Nottingham||uk
+2|Leicester||uk
+2|Coventry||uk
+2|Bradford||uk
+2|Southampton||uk
+2|Portsmouth||uk
+3|Brighton||uk
+2|Plymouth||uk
+2|Aberdeen||uk
+2|Dundee||uk
+2|Swansea||uk
+2|York||uk
+3|Bath||uk
+2|Canterbury||uk
+2|Norwich||uk
+2|Exeter||uk
+2|Reading||uk
+2|Stoke-on-Trent||uk
+2|Wolverhampton||uk
+2|Derby||uk
+2|Sunderland||uk
+2|Hull/Kingston upon Hull||uk
+2|Blackpool||uk
+1|Inverness||uk
+1|Stirling||uk
+1|Perth||uk
+1|Derry/Londonderry||uk
+1|Chester||uk
+1|Durham||uk
+1|Lancaster||uk
+1|Preston||uk
+1|Bolton||uk
+1|Middlesbrough||uk
+1|Luton||uk
+1|Milton Keynes||uk
+1|Ipswich||uk
+1|Peterborough||uk
+1|Gloucester||uk
+1|Worcester||uk
+1|Salisbury||uk
+1|Winchester||uk
+1|Bournemouth||uk
+1|Swindon||uk
+1|Northampton||uk
+1|Wigan||uk
+1|Watford||uk
+1|Stratford-upon-Avon||uk
+9|Rome||it
+8|Milan|Milan|it
+7|Venice|Venise|it
+7|Florence|Florence|it
+6|Naples|Naples|it
+5|Turin|Turin|it
+4|Pisa|Pise|it
+4|Bologna|Bologne|it
+4|Genoa|Gênes|it
+4|Palermo|Palerme|it
+4|Verona|Vérone|it
+3|Bari||it
+3|Catania|Catane|it
+2|Messina|Messine|it
+2|Padua|Padoue|it
+2|Trieste||it
+2|Brescia||it
+2|Parma|Parme|it
+2|Modena|Modène|it
+2|Perugia|Pérouse|it
+2|Cagliari||it
+2|Livorno/Leghorn|Livourne|it
+2|Siena|Sienne|it
+2|Bergamo|Bergame|it
+2|Como|Côme|it
+2|Lucca|Lucques|it
+2|Ravenna|Ravenne|it
+2|Rimini||it
+2|Salerno|Salerne|it
+2|Sorrento|Sorrente|it
+2|Amalfi||it
+1|Assisi|Assise|it
+1|Mantua|Mantoue|it
+1|Ferrara|Ferrare|it
+1|Pompeii|Pompéi|it
+1|Syracuse/Siracusa||it us
+1|Taranto|Tarente|it
+1|Reggio Calabria/Reggio di Calabria|Reggio de Calabre|it
+1|Ancona|Ancône|it
+1|Pescara||it
+1|Trento|Trente|it
+1|Bolzano||it
+1|Udine||it
+1|Vicenza|Vicence|it
+1|Treviso|Trévise|it
+1|Lecce||it
+1|Matera||it
+1|Sanremo/San Remo||it
+1|Piacenza|Plaisance|it
+1|Reggio Emilia||it
+1|Cremona|Crémone|it
+1|Aosta|Aoste|it
+1|Urbino||it
+1|Pavia|Pavie|it
+1|Novara|Novare|it
+1|Monza||it
+1|Foggia||it
+1|Capri||it
+9|Madrid||es
+8|Barcelona|Barcelone|es
+6|Seville|Séville|es
+6|Valencia||es
+4|Málaga||es
+4|Bilbao||es
+4|Granada|Grenade|es
+3|Zaragoza|Saragosse|es
+3|Palma/Palma de Mallorca||es
+3|Ibiza||es
+3|San Sebastián/Donostia|Saint-Sébastien|es
+3|Córdoba/Cordoba|Cordoue|es
+2|Alicante||es
+2|Murcia|Murcie|es
+2|Valladolid||es
+2|Vigo||es
+2|Gijón||es
+2|A Coruña/La Coruña/Corunna|La Corogne|es
+2|Pamplona|Pampelune|es
+2|Santander||es
+2|Salamanca|Salamanque|es
+2|Santiago de Compostela|Saint-Jacques-de-Compostelle|es
+2|Cádiz/Cadiz|Cadix|es
+2|Marbella||es
+2|Benidorm||es
+2|Las Palmas/Las Palmas de Gran Canaria||es
+1|Santa Cruz de Tenerife||es
+1|Segovia|Ségovie|es
+1|Burgos||es
+1|León||es
+1|Oviedo||es
+1|Tarragona|Tarragone|es
+1|Girona/Gerona|Gérone|es
+1|Lleida/Lérida||es
+1|Almería||es
+1|Huelva||es
+1|Jerez/Jerez de la Frontera|Xérès|es
+1|Mérida||es
+1|Cáceres||es
+1|Badajoz||es
+1|Logroño||es
+1|Vitoria/Vitoria-Gasteiz||es
+1|Albacete||es
+1|Elche||es
+1|Cartagena|Carthagène|es
+1|Ávila||es
+1|Cuenca||es
+1|Ronda||es
+9|Berlin||de
+8|Munich/München|Munich|de
+6|Hamburg|Hambourg|de
+6|Frankfurt|Francfort|de
+5|Cologne/Köln|Cologne|de
+4|Stuttgart||de
+4|Düsseldorf||de
+4|Dortmund||de
+3|Leipzig||de
+3|Dresden|Dresde|de
+3|Bremen|Brême|de
+3|Hanover/Hannover|Hanovre|de
+3|Nuremberg/Nürnberg|Nuremberg|de
+2|Essen||de
+2|Duisburg||de
+2|Bochum||de
+2|Wuppertal||de
+2|Bonn||de
+2|Bielefeld||de
+2|Mannheim||de
+2|Karlsruhe||de
+2|Münster||de
+2|Augsburg|Augsbourg|de
+2|Wiesbaden||de
+2|Gelsenkirchen||de
+2|Mönchengladbach||de
+2|Aachen|Aix-la-Chapelle|de
+2|Kiel||de
+2|Freiburg/Freiburg im Breisgau|Fribourg-en-Brisgau|de
+2|Heidelberg||de
+2|Mainz|Mayence|de
+2|Rostock||de
+2|Potsdam||de
+2|Lübeck||de
+2|Kassel||de
+2|Erfurt||de
+1|Magdeburg|Magdebourg|de
+1|Halle||de
+1|Chemnitz||de
+1|Brunswick/Braunschweig|Brunswick|de
+1|Saarbrücken|Sarrebruck|de
+1|Trier|Trèves|de
+1|Koblenz|Coblence|de
+1|Regensburg|Ratisbonne|de
+1|Würzburg||de
+1|Ulm||de
+1|Wolfsburg||de
+1|Ingolstadt||de
+1|Leverkusen||de
+1|Oldenburg||de
+1|Osnabrück||de
+1|Göttingen||de
+1|Darmstadt||de
+1|Jena/Iéna|Iéna|de
+1|Weimar||de
+1|Bamberg||de
+1|Baden-Baden||de
+1|Garmisch-Partenkirchen||de
+9|Tokyo||jp
+8|Kyoto||jp
+7|Osaka||jp
+6|Hiroshima||jp
+5|Nagasaki||jp
+4|Yokohama||jp
+4|Nagoya||jp
+4|Sapporo||jp
+4|Kobe||jp
+3|Fukuoka||jp
+3|Nara||jp
+3|Kawasaki||jp
+3|Sendai||jp
+2|Okinawa/Naha||jp
+2|Kagoshima||jp
+2|Kitakyushu||jp
+2|Saitama||jp
+2|Chiba||jp
+2|Niigata||jp
+2|Shizuoka||jp
+2|Kumamoto||jp
+2|Okayama||jp
+2|Kanazawa||jp
+2|Nikko||jp
+2|Hakone||jp
+1|Matsuyama||jp
+1|Hakodate||jp
+1|Nagano||jp
+1|Kamakura||jp
+1|Himeji||jp
+1|Takayama||jp
+1|Gifu||jp
+1|Wakayama||jp
+1|Toyota||jp
+1|Kochi||jp
+1|Akita||jp
+1|Aomori||jp
+1|Fukushima||jp
+1|Hamamatsu||jp
+1|Utsunomiya||jp
+8|Toronto||ca
+8|Montreal|Montréal|ca
+7|Vancouver||ca
+6|Ottawa||ca
+6|Quebec City/Quebec|Québec|ca
+5|Calgary||ca
+4|Edmonton||ca
+3|Winnipeg||ca
+3|Halifax||ca
+3|Victoria||ca
+2|Hamilton||ca
+2|Regina||ca
+2|Saskatoon||ca
+2|Mississauga||ca
+2|Kitchener||ca
+2|Gatineau||ca
+2|Sherbrooke||ca
+2|Trois-Rivières||ca
+2|Moncton||ca
+2|Fredericton||ca
+2|Charlottetown||ca
+2|St. John's/Saint John's||ca
+1|Whitehorse||ca
+1|Yellowknife||ca
+1|Iqaluit||ca
+1|Thunder Bay||ca
+1|Kelowna||ca
+1|Banff||ca
+1|Niagara Falls||ca
+1|Windsor||ca
+1|Kingston||ca
+1|Sudbury||ca
+1|Saguenay||ca
+1|Lévis||ca
+1|Burnaby||ca
+1|Surrey||ca
+1|Brampton||ca
+1|Markham||ca
+1|Oshawa||ca
+1|Barrie||ca
+1|Saint John||ca
+0|Sydney||no
+0|Dubai|Dubaï|no
+0|Moscow|Moscou|no
+0|Beijing|Pékin|no
+0|Amsterdam||no
+0|Brussels|Bruxelles|no
+0|Geneva|Genève|no
+0|Monaco||no
+0|Lisbon|Lisbonne|no
+0|Vienna|Vienne|no
