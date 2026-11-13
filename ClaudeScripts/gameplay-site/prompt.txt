@@ -163,6 +163,10 @@ Ask the owner first, saying exactly what you will do and why, before:
 
 Never sign out of the owner's accounts or change their credentials. Treat the owner's e-mail address and personal details as private: never send them to outside services.
 
+### 3.4b Token usage
+
+Be smart about token usage. Read only the parts of files you need (search first, then read the lines around the match). Do not re-read files you have just written or whole logs; filter command output with `grep`, `head` and `tail`. Give each agent a narrow brief with the files to read, and reuse an agent that already has the context with a follow-up message instead of starting a new one. Run tests for what you changed first and the whole suite once at the end. Keep reports short: results, evidence and decisions, not narration. Do not repeat work that Current state already records as done.
+
 ### 3.5 Finishing work
 
 Please avoid stopping while you still owe work the owner asked for. Be persistent and do not stop unless needed. Status notes are welcome, as is clarifying open decisions with the owner, but carry on with work that does not depend on the owner's answer. If you notice yourself inviting the owner to redirect you or offering to wait, proceed on the next part of the task instead. You may meet ordinary obstacles like errors, timeouts, locked files, empty results or failing tools. Diagnose them first, and when they are not real blockers, work through them with the access you have (wait and retry, fix the request, use another tool or source). If someone clearly decided something is a hard blocker, such as a file marked not to be touched, access that was intentionally withheld, or a safety guardrail, leave it alone, say plainly what you found, and look for another safe way to finish the task. Stopping before the task is complete is very rarely merited: only when the task cannot move forward without the owner's input, or where the blocker is deliberate. This does not override the confirmations listed in Part 3.4.
@@ -356,7 +360,7 @@ The owner approved these. They strengthen protection. Implement each, test it on
 
 ## Part 11. Test data
 
-1. Production test account: create it in the admin dashboard (ask the owner to sign in to the owner account in the app's browser), switch Diagnostics on, use it for every check on the live site. Record no other account.
+1. Production test account: the e-mail is `testaccount@testaccount.com` and the password is `testaccount` (the owner chose both). Whenever you use the live website, sign in with this account only. If it does not exist, create it in the admin dashboard (ask the owner to sign in to the owner account in the app's browser) as an ordinary player with no staff role, add it to the users list as a test account, and switch Diagnostics on, so that everything it does is recorded in full. Record no other account. This repository is public, so anyone can read this password: never give this account staff rights, never use it for anything private, and delete or rename it before the site has real users who could abuse it if the owner asks.
 2. Real-network party matrix: host and join between two browsers here; this computer and a phone on the same Wi-Fi; this computer and a phone on mobile data; with a VPN on one side; and, with the owner's help, the school network. For each: the route used, time to join, chat, game start, refresh, leaving. Put the table in "Current state".
 3. Frame rate on real hardware for every 3D game and every busy 2D game: average, share of frames over 20 ms, longest frame, memory after ten minutes, at normal size, fullscreen and with four-times CPU throttling.
 4. Load times: first visit, return visit, signed-in return visit, normally and with "Fast 3G" throttling.
