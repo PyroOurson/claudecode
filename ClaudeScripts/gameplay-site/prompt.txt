@@ -23,7 +23,7 @@ You are the lead of this round. You are the owner and long-term maintainer of th
 
 Before you change anything, read `ClaudeScripts/gameplay-site/source/BUILD.md` (build and staging steps), `source/w/agents_net/API.md` (online play) and the section "Current state" at the end of this file. Then run `git log --oneline -30` and `git status`. Work from the latest `mainbranch-claude-code`.
 
-Create your working branch from `mainbranch-claude-code` (for example `claude/round-21`). Start staging (Part 2.4) and run the whole test suite once, so you know what passes before you change anything.
+Create your working branch from `mainbranch-claude-code` (for example `claude/round-21`). Start staging (Part 2.4) and run the whole test suite once, so you know what passes before you change anything. Part 17 holds the owner's newest requests (dashboard bugs, IP bans, the new admin dashboard, more data, the relay): start it early, alongside the game agents.
 
 Before you start, say in a line what you are about to do. Brief updates while you work help the owner follow along. Every few tool calls, give a one-line update on where things stand.
 
@@ -402,12 +402,128 @@ Every time a session ends, whether the work is complete or not, update this file
 ## Part 15. Open questions for the owner
 
 1. Whether the Debian relay is still wanted (Part 9).
+2. Which of the three dashboard designs to build (Part 17.4).
 
 ---
 
 ## Part 16. Final report
 
 Write it following Part 3.6, in this order: what is live now and what waits for the owner (with exact links and commands); done, with how each was checked; unfinished, with the reason; blocked, with what is needed; decisions for the owner; what could not be tested and why; the numbers (games in the catalogue, games passing Part 6.5, games with a proven `Hardest`, the party network matrix, frame rates on real hardware, top errors before and after).
+
+---
+
+## Part 17. Accounts, messages, admin dashboard and data (owner's requests of 13 November 2026)
+
+Do this part early in the round. Everything here is approved by the owner. Fix each bug with a test in `source/t/tests/` that fails before the fix and passes after it.
+
+### 17.1 Bugs to fix
+
+1. Deleting an account forever in the admin dashboard, then opening another player's card: the loading animation never stops, so nothing else can be deleted or changed until the page is reloaded. Find the state that the deletion leaves behind (a pending request flag, a stale selected-user id, a promise that never settles, an overlay never removed) and fix the cause. After a permanent deletion the dashboard returns to the user list, the deleted account disappears from it, and any other card opens normally. Test: delete three accounts in a row on staging without reloading.
+2. Opening a player card in the admin dashboard and scrolling it marks that player's messages as read. Staff viewing a card must never change read marks. Messages are marked read only when the recipient themselves has the conversation open, the tab is visible and the message has been on screen. Check every other place that writes `read_at` for the same mistake. Test: a staff account scrolls a card with unread messages; the database still shows them unread.
+3. Party invites sent in messages: once the party has expired or closed, the invite turns grey, shows "Party ended" (or "Party full" when full), and cannot be clicked. This must update live while the conversation is open, not only after a reload, and must be correct when the conversation is opened later. Use the server-side party registry of Part 10.1 to know whether a party is still open.
+4. Peak concurrent players is not saved: the site reached 13 players online at once, its highest ever, and the dashboard did not keep it. The server itself must record concurrency, not a dashboard tab that happens to be open. Each heartbeat (or a database job running every second; `pg_cron` accepts intervals in seconds) counts players online and stores, in a table, the count per second for the last 48 hours, per minute for 90 days, and the daily peak, the all-time peak and the time each happened, per site and per game. The dashboard reads these tables, updates every second, and shows the all-time peak with its date. Test: open 15 staging browsers, close the dashboard, close the browsers, reopen the dashboard; the peak shows 15 with the right time.
+5. Rate each fix by how sure you are that the cause is found, and say how it was proven.
+
+### 17.2 IP bans
+
+Add banning by IP address to the admin dashboard, next to the existing account bans.
+
+- Ban one address or a range (for example `203.0.113.0/24`), for a set time or permanently, with a reason. Show before confirming how many accounts used that address in the last 30 days and which ones, because a school or a family shares one address: a ban there blocks everyone on that network. Offer "ban this account and its devices" as the usual choice and the IP ban as the stronger one.
+- Enforce it on the server: in the Cloudflare worker and in the database functions for sign-up, log-in, messages, parties and uploads, using the client address the relay passes with the shared secret of Part 10.2. A banned visitor sees a plain page saying access is blocked, with the end date and a way to contact support.
+- Owners and admins can never be blocked by an IP ban, and the owner's current address cannot be banned by mistake.
+- Keep full addresses only where bans need them; store addresses elsewhere as salted hashes. Record every ban and unban in the admin log. Update the Privacy Policy to say addresses are used for bans and abuse prevention and for how long they are kept.
+
+### 17.3 The admin dashboard: three tabs
+
+The dashboard ends up with only three top-level tabs: **Users**, **Stats** and **Site**. Everything that exists now moves into one of them as a subtab or a section; nothing that works is lost.
+
+- Users: the user list with search and filters, player cards, bans (account, device, IP), roles, test accounts and diagnostics, deletions, messages and reports needing review, tickets.
+- Stats: only two subtabs. Overview: the few numbers that matter today (online now, all-time peak, today's players, new accounts, plays, top games, errors), each with a small trend. Data: everything collected (Part 17.5), with filters for date range, game, country, device and account type, sortable tables, charts, and export to CSV.
+- Site: announcements, "What's new", the idea box, error logs and performance, party health and the relay, rate limits, the site password, settings, the admin log.
+
+Rate the current layout first. Before you change anything, write in "Current state" a score out of 10 for the current dashboard as a whole, for the player card, and for each current tab, with the main reasons (what is hard to find, what is repeated, what takes too many clicks, what is missing). After the change, score the new layout the same way.
+
+Player cards: reorder them so the most used information comes first: name, status, role, online state, ban state and quick actions (message, ban, change role, flag as test account) at the top; then activity (last seen, playtime, top games, recent sessions); then social (friends, recent reports against and by them, messages only when opened on purpose); then devices, addresses and diagnostics; account data and the danger zone (delete forever) last, apart from the rest. Apply the same thinking to every subtab: the order of cards and sections follows how often staff need them.
+
+Make it practical: every list has search, filters and paging; every action that cannot be undone asks for confirmation with the account name typed; keyboard shortcuts for moving between tabs; the selected tab, subtab and filters survive a reload; it works at phone size.
+
+### 17.4 Three designs to choose from
+
+Before building the final dashboard, make one HTML page, `ClaudeScripts/gameplay-site/admin_variants.html`, that shows three different, serious designs for the whole dashboard, with a switch at the top between Variant 1, 2 and 3. Each variant is fully working on its own: all three tabs (Users, Stats, Site) and every subtab, realistic sample data (fake usernames, generated numbers, never real user data), working search, filters, sorting, charts, player cards that open, and buttons that change the sample data. Each variant uses a different layout, not only different colours: for example a left sidebar with dense tables; a top bar with cards and a side panel for the selected player; a split view with a list on the left and details on the right. All three are designs you would be happy to ship; none is a weak option placed there to make another look better. They use the site's fonts and colours, light and dark.
+
+Put the page on GitHub and give the owner its link (`https://pyroourson.github.io/claudecode/ClaudeScripts/gameplay-site/admin_variants.html` once merged), then ask which variant to build. Build the chosen one in the real dashboard; until the owner answers, continue with other parts.
+
+### 17.5 Collect much more data
+
+The owner wants as much useful data as possible, like the large game platforms and the AI companies do: Steam records playtime per game, concurrent players, hardware and achievements; AI products record usage per session, retention, errors, latency and abuse signals. Add the 50 measures below, record them on the server, and show them in Stats, Data. Analytics events follow the existing analytics consent switch, except security and abuse records, which are needed to run the site. Never record message text, typed keystrokes, precise location or anything not listed in the Privacy Policy; update the policy and its retention periods for every new measure, and add new points to the lawyer list.
+
+Activity and retention:
+1. Daily, weekly and monthly active players.
+2. Retention after 1, 7 and 30 days, by week of sign-up.
+3. Session start, end and length.
+4. Screens visited per session, entry screen and exit screen.
+5. Activity by hour of day and day of week.
+6. Peak concurrent players per second, minute and day, all time, per game (17.1.4).
+7. Where visitors came from (referring site or direct).
+8. Time from arriving to the first game started.
+
+Games:
+9. Game opened compared with game actually started (failed loads).
+10. Load time per game.
+11. Playtime per game per session.
+12. Rounds or matches started, finished and abandoned.
+13. Where players quit: level, wave or score at the moment of leaving.
+14. Difficulty chosen and win rate per difficulty.
+15. Score distribution per game.
+16. Games played alone, against bots and online.
+17. Restarts within a session.
+18. Cover shown compared with cover clicked on the home page.
+19. Use of "Continue playing", favourites, search and categories.
+20. Search terms, and searches with no result.
+21. Fullscreen and theater use.
+22. Achievements or milestones reached, where a game has them.
+
+Devices and performance:
+23. Browser and version.
+24. Operating system.
+25. Device type, screen size and pixel density.
+26. Graphics renderer family (coarse: vendor and tier, not the full string).
+27. Processor cores and device memory (rounded).
+28. Average frame rate and share of slow frames per game.
+29. Memory use after ten minutes, where the browser reports it.
+30. Page load timings: time to first byte, first paint, largest paint.
+31. Connection type and rough speed.
+32. Script errors per game, with stack and browser.
+
+Multiplayer:
+33. Parties created, joined and failed, per connection route.
+34. Time to join a party.
+35. Route used: direct, relayed through the site, TURN.
+36. Disconnects and reconnects per match.
+37. Party size and duration.
+38. Public compared with private parties, and invites sent by message and accepted.
+
+Social and support:
+39. Friend requests sent and accepted.
+40. Messages sent per day (counts only).
+41. Blocks and reports, with reason.
+42. Tickets opened, time to first staff reply and time to resolution.
+43. Ideas submitted and votes.
+
+Accounts and safety:
+44. Sign-up funnel: step reached and step abandoned, per method (Google, username).
+45. Log-in successes and failures, per method.
+46. Account deletions, with the optional reason.
+47. Rate-limit hits per action.
+48. Country and region (from the address on the server, never precise location).
+49. Settings changed: which setting, old and new value; language and theme in use.
+50. Bans by type (account, device, IP) and repeat offences.
+
+Check every measure against hand-written SQL on staging before it counts as done, and keep the collection light: batch events, send them with the existing sync, and never slow a game down.
+
+### 17.6 The relay
+
+Set up the relay and TURN service in this round (Part 9). The owner asked for it again; it is not optional.
 
 ---
 
@@ -561,6 +677,11 @@ Keep this section at every handoff (Part 14) and add new requests below it.
 - Every game playtested from start to end, in parallel, capturing everything a real player would notice.
 - One merged SQL file; old and unwanted files deleted; the relay and TURN service deployed; the security work finished; real test data gathered.
 - Everything related to Gameplay Games on GitHub; the owner's local copy updated and old copies deleted; this master prompt on GitHub; a handoff with an overview and a follow-up prompt at the end of every session.
+- Fix: permanent account deletion leaving the admin dashboard stuck loading; staff scrolling a player card marking messages read; party invites in messages staying clickable after the party ends; the all-time peak of concurrent players (13) not saved. The server records concurrency every second (Part 17.1).
+- IP bans in the admin dashboard (Part 17.2).
+- An admin dashboard with only three tabs, Users, Stats (Overview and Data) and Site, better ordered player cards and subtabs, the current layout rated before and after, and three serious, fully working designs in one HTML page to choose from (Parts 17.3 and 17.4).
+- As much data as possible, like Steam and the AI companies: 50 new measures (Part 17.5).
+- The relay set up in this round (Part 17.6).
 - The five popular-game recreations on Claude Fable 5.2 at extra-high effort; the other existing games on Claude Opus 5.5 at extra-high effort; the lead session on Claude Opus 5.5 at extra-high effort.
 
 ---
@@ -586,6 +707,7 @@ This section replaces the old ledger, go-live and handoff files. Update it at th
 6. Not yet tested on real conditions: school firewalls, VPNs, TURN; Safari, Firefox, real phones; frame rates on a graphics card; Google sign-in end to end.
 7. Twelve finished games are in the repository but not in the build list (`275`, `277`, `283`, `285`, `287`, `289`, `291`, `293`, `297`): see Appendices A and B.
 8. The catalogue has 168 games; the goal is at least 200.
+9. Part 17: the four account, message and dashboard bugs, IP bans, the three-tab dashboard and its three designs, the 50 new measures. Not started.
 
 ## What the last round did per game group (short)
 
