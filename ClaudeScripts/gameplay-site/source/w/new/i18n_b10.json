@@ -107,7 +107,8 @@
 ["Too far to edit", "Trop loin pour modifier", "Demasiado lejos para editar", "Zu weit zum Bearbeiten", "Troppo lontano per modificare", "Demasiado longe para editar"],
 ["@build-brawl|Target", "Cible", "Objetivo", "Ziel", "Bersaglio", "Alvo"],
 ["@bed-raiders|Target", "Cible", "Objetivo", "Ziel", "Bersaglio", "Alvo"],
-["Eliminated", "Éliminé", "Eliminado", "Eliminiert", "Eliminato", "Eliminado"],
+["@build-brawl|Eliminated", "Éliminé", "Eliminado", "Eliminiert", "Eliminato", "Eliminado"],
+["@bed-raiders|Eliminated", "Éliminé", "Eliminado", "Eliminiert", "Eliminato", "Eliminado"],
 ["by {n}", "par {n}", "por {n}", "von {n}", "da {n}", "por {n}"],
 ["Round {n}", "Manche {n}", "Ronda {n}", "Runde {n}", "Round {n}", "Ronda {n}"],
 ["New loadout", "Nouvel équipement", "Nuevo equipo", "Neue Ausrüstung", "Nuovo equipaggiamento", "Novo equipamento"],
@@ -151,7 +152,8 @@
 ["First or third person", "Première ou troisième personne", "Primera o tercera persona", "Erste oder dritte Person", "Prima o terza persona", "Primeira ou terceira pessoa"],
 ["Left stick moves, drag to look, Hit and Use buttons, tap the hotbar", "Joystick gauche pour bouger, glisse pour regarder, boutons Frapper et Utiliser, touche la barre", "El joystick izquierdo mueve, arrastra para mirar, botones Golpear y Usar, toca la barra", "Linker Stick bewegt, ziehen zum Umsehen, Tasten Schlagen und Benutzen, Hotbar antippen", "La levetta sinistra muove, trascina per guardare, pulsanti Colpisci e Usa, tocca la barra", "O joystick esquerdo move, arrasta para olhar, botões Bater e Usar, toca na barra"],
 ["Mouse sensitivity", "Sensibilité de la souris", "Sensibilidad del ratón", "Mausempfindlichkeit", "Sensibilità del mouse", "Sensibilidade do rato"],
-["Invert mouse", "Inverser la souris", "Invertir el ratón", "Maus umkehren", "Inverti il mouse", "Inverter o rato"],
+["@build-brawl|Invert mouse", "Inverser la souris", "Invertir el ratón", "Maus umkehren", "Inverti il mouse", "Inverter o rato"],
+["@bed-raiders|Invert mouse", "Inverser la souris", "Invertir el ratón", "Maus umkehren", "Inverti il mouse", "Inverter o rato"],
 ["Auto sprint", "Sprint automatique", "Correr automático", "Automatisch sprinten", "Scatto automatico", "Correr automático"],
 ["View bobbing", "Balancement de la vue", "Balanceo de la vista", "Kamerawackeln", "Oscillazione della visuale", "Balanço da vista"],
 ["Game menu", "Menu du jeu", "Menú del juego", "Spielmenü", "Menu di gioco", "Menu do jogo"],
@@ -297,5 +299,7 @@
 ["Target", "Cible", "Objetivo", "Ziel", "Bersaglio", "Alvo"],
 ["Owned", "Possédé", "En posesión", "Im Besitz", "Posseduto", "Na posse"],
 ["Time is up!", "Le temps est écoulé !", "¡Se acabó el tiempo!", "Die Zeit ist um!", "Tempo scaduto!", "O tempo acabou!"],
-["Shop", "Boutique", "Tienda", "Laden", "Negozio", "Loja"]
+["Shop", "Boutique", "Tienda", "Laden", "Negozio", "Loja"],
+["Eliminated", "Éliminé", "Eliminado", "Eliminiert", "Eliminato", "Eliminado"],
+["Invert mouse", "Inverser la souris", "Invertir el ratón", "Maus umkehren", "Inverti il mouse", "Inverter o rato"]
 ]

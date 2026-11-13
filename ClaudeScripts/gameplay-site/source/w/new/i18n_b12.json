@@ -233,12 +233,12 @@
 ["@way-up|Pause", "Pause", "Pausa", "Pause", "Pausa", "Pausa"],
 ["Next round", "Prochaine manche", "Próxima ronda", "Nächste Runde", "Prossimo round", "Próxima ronda"],
 ["Wear", "Porter", "Ponerse", "Tragen", "Indossa", "Usar"],
-["You were removed", "Tu as été retiré", "Te han expulsado", "Du wurdest entfernt", "Sei stato rimosso", "Foste removido"],
 ["The host left", "L’hôte est parti", "El anfitrión se fue", "Der Host ist gegangen", "L’host è uscito", "O anfitrião saiu"],
 ["Climb again", "Grimper encore", "Escalar otra vez", "Nochmal klettern", "Scala di nuovo", "Subir outra vez"],
 ["Keep it", "La garder", "Conservarla", "Behalten", "Tienila", "Manter"],
 ["Bounce House", "Maison des rebonds", "Casa de rebotes", "Hüpfhaus", "Casa dei rimbalzi", "Casa dos saltos"],
 ["Party Hat", "Chapeau de fête", "Gorro de fiesta", "Partyhut", "Cappello da festa", "Chapéu de festa"],
 ["JUMP", "SAUT", "SALTO", "SPRUNG", "SALTO", "SALTAR"],
-["RUN", "COURIR", "CORRER", "RENNEN", "CORRI", "CORRER"]
+["RUN", "COURIR", "CORRER", "RENNEN", "CORRI", "CORRER"],
+["You were removed", "Tu as été retiré", "Te han expulsado", "Du wurdest entfernt", "Sei stato rimosso", "Foste removido"]
 ]

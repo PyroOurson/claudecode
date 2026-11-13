@@ -267,7 +267,7 @@
 ["A word that rhymes with “day”", "Un mot qui finit par « -ette »", "Una palabra que rime con «day»", "Ein Wort, das sich auf „day“ reimt", "Una parola che fa rima con “day”", "Uma palavra que rime com “day”"],
 ["A word that rhymes with “cat”", "Un mot qui finit par « -oir »", "Una palabra que rime con «cat»", "Ein Wort, das sich auf „cat“ reimt", "Una parola che fa rima con “cat”", "Uma palavra que rime com “cat”"],
 ["A word that rhymes with “cake”", "Un mot qui finit par « -age »", "Una palabra que rime con «cake»", "Ein Wort, das sich auf „cake“ reimt", "Una parola che fa rima con “cake”", "Uma palavra que rime com “cake”"],
-["Connected", "Connecté", "Conectado", "Verbunden", "Connesso", "Conectado"],
 ["Thinking…", "Réfléchit…", "Pensando…", "Denkt nach…", "Ci pensa…", "Pensando…"],
-["You finished #{n}", "Tu termines {n}e", "Terminaste en el puesto {n}", "Du bist auf Platz {n}", "Sei arrivato {n}º", "Você terminou em {n}º"]
+["You finished #{n}", "Tu termines {n}e", "Terminaste en el puesto {n}", "Du bist auf Platz {n}", "Sei arrivato {n}º", "Você terminou em {n}º"],
+["Connected", "Connecté", "Conectado", "Verbunden", "Connesso", "Conectado"]
 ]

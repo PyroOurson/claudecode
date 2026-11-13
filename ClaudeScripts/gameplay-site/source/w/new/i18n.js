@@ -1658,6 +1658,10 @@ const P = [
   [/^Best (\d[^·]*)$/, 'Record $t1', 'Récord $t1', 'Rekord $t1', 'Record $t1', 'Recorde $t1'],
   [/^(\d[\d.,\s]*) pts$/, '$1 pts', '$1 pts', '$1 Pkt.', '$1 pt', '$1 pts'],
   [/^(\d[\d.,\s]*) wins?$/, m => m[1] + pl(m[1], ' victoire', ' victoires'), m => m[1] + pl(m[1], ' victoria', ' victorias'), m => m[1] + pl(m[1], ' Sieg', ' Siege'), m => m[1] + pl(m[1], ' vittoria', ' vittorie'), m => m[1] + pl(m[1], ' vitória', ' vitórias')],
+  [/^(\d[\d.,\s]*) kills?$/, m => m[1] + pl(m[1], ' élimination', ' éliminations'), m => m[1] + pl(m[1], ' eliminación', ' eliminaciones'), m => m[1] + pl(m[1], ' Abschuss', ' Abschüsse'), m => m[1] + pl(m[1], ' eliminazione', ' eliminazioni'), m => m[1] + pl(m[1], ' eliminação', ' eliminações')],
+  [/^(\d[\d.,\s]*) moves?$/, m => m[1] + pl(m[1], ' coup', ' coups'), m => m[1] + pl(m[1], ' movimiento', ' movimientos'), m => m[1] + pl(m[1], ' Zug', ' Züge'), m => m[1] + pl(m[1], ' mossa', ' mosse'), m => m[1] + pl(m[1], ' jogada', ' jogadas')],
+  [/^(\d[\d.,\s]*) troph(?:y|ies)$/, m => m[1] + pl(m[1], ' trophée', ' trophées'), m => m[1] + pl(m[1], ' trofeo', ' trofeos'), m => m[1] + pl(m[1], ' Trophäe', ' Trophäen'), m => m[1] + pl(m[1], ' trofeo', ' trofei'), m => m[1] + pl(m[1], ' troféu', ' troféus')],
+  [/^(\d[\d.,\s]*) solved$/, m => m[1] + pl(m[1], ' résolu', ' résolus'), m => m[1] + pl(m[1], ' resuelto', ' resueltos'), m => m[1] + pl(m[1], ' gelöst', ' gelöst'), m => m[1] + pl(m[1], ' risolto', ' risolti'), m => m[1] + pl(m[1], ' resolvido', ' resolvidos')],
 ];
 let lang = 'en';
 try { const v = localStorage.getItem(LKEY); if (NAMES[v]) lang = v; } catch (e) {}

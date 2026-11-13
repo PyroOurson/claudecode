@@ -67,7 +67,9 @@
 ["Original songs, original characters. Hit the arrows in time.", "Chansons et personnages originaux. Touche les flèches en rythme.", "Canciones y personajes originales. Acierta las flechas a tiempo.", "Eigene Songs, eigene Figuren. Triff die Pfeile im Takt.", "Canzoni e personaggi originali. Colpisci le frecce a tempo.", "Músicas e personagens originais. Acerta nas setas a tempo."],
 ["PRESS ENTER OR CLICK", "APPUIE SUR ENTRÉE OU CLIQUE", "PULSA ENTER O HAZ CLIC", "ENTER DRÜCKEN ODER KLICKEN", "PREMI INVIO O CLICCA", "CARREGA EM ENTER OU CLICA"],
 ["TAP TO START", "TOUCHE POUR COMMENCER", "TOCA PARA EMPEZAR", "TIPPEN ZUM STARTEN", "TOCCA PER INIZIARE", "TOCA PARA COMEÇAR"],
-["Party lobby", "Salon du groupe", "Sala del grupo", "Gruppenlobby", "Sala del gruppo", "Sala do grupo"],
+["@beat-duel|Party lobby", "Salon du groupe", "Sala del grupo", "Gruppenlobby", "Sala del gruppo", "Sala do grupo"],
+["@click-beat|Party lobby", "Salon du groupe", "Sala del grupo", "Gruppenlobby", "Sala del gruppo", "Sala do grupo"],
+["@ante-up|Party lobby", "Salon du groupe", "Sala del grupo", "Gruppenlobby", "Sala del gruppo", "Sala do grupo"],
 ["Pick the battle song", "Choisis la chanson du duel", "Elige la canción de la batalla", "Wähle den Song für das Duell", "Scegli la canzone della sfida", "Escolhe a música da batalha"],
 ["Press Space, Enter or tap the circle on every tick. The median error of your last taps is your offset. Positive means you hit late.", "Appuie sur Espace, Entrée ou touche le cercle à chaque tic. L’écart médian de tes dernières frappes est ton décalage. Positif signifie que tu frappes en retard.", "Pulsa Espacio, Enter o toca el círculo en cada tic. El error mediano de tus últimos toques es tu desfase. Positivo significa que vas tarde.", "Drücke Leertaste, Enter oder tippe bei jedem Tick auf den Kreis. Die mittlere Abweichung deiner letzten Tipps ist dein Versatz. Positiv heißt, du bist zu spät.", "Premi Spazio, Invio o tocca il cerchio a ogni tic. L’errore mediano degli ultimi tocchi è il tuo ritardo. Positivo significa che colpisci in ritardo.", "Carrega em Espaço, Enter ou toca no círculo a cada tique. O erro mediano dos últimos toques é o teu desfasamento. Positivo significa que acertas tarde."],
 ["@beat-duel|Quit to menu", "Retour au menu", "Volver al menú", "Zum Menü", "Torna al menu", "Voltar ao menu"],
@@ -952,5 +954,6 @@
 ["Use", "Utiliser", "Usar", "Benutzen", "Usa", "Usar"],
 ["Buy & Use", "Acheter et utiliser", "Comprar y usar", "Kaufen und benutzen", "Compra e usa", "Comprar e usar"],
 ["Add to deck", "Ajouter au paquet", "Añadir al mazo", "Zum Deck hinzufügen", "Aggiungi al mazzo", "Juntar ao baralho"],
-["Times played", "Fois jouée", "Veces jugada", "Mal gespielt", "Volte giocata", "Vezes jogada"]
+["Times played", "Fois jouée", "Veces jugada", "Mal gespielt", "Volte giocata", "Vezes jogada"],
+["Party lobby", "Salon du groupe", "Sala del grupo", "Gruppenlobby", "Sala del gruppo", "Sala do grupo"]
 ]

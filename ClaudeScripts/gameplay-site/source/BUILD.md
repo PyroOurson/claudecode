@@ -9,7 +9,7 @@ Everything needed to rebuild `index.html` and `gameplay/` at the repo root lives
 
 ## Build
 
-1. Generated games (their part files are committed; rebuild one after editing its source): Rocket League `python3 -I games/rocket-league/tools/join.py` (joins `src/*.js` and `models/*.json` into `w/parts/115_g_rocket-league.js` and writes a standalone test page to `games/rocket-league/build/`), Minecraft `python3 games/minecraft/mk.py`, Subway Surfers `python3 games/subway-surfers/build.py`.
+1. Generated games (their part files are committed; rebuild one after editing its source): Rocket League `python3 -I games/rocket-league/tools/join.py` (joins `src/*.js` and `models/*.json` into `w/parts/115_g_rocket-league.js` and writes a standalone test page to `games/rocket-league/build/`), Minecraft `python3 games/minecraft/mk.py`, Subway Surfers `python3 games/subway-surfers/build.py`, Hopfire and Yolk Ops `python3 games/arena-shooters/build.py` (writes `w/parts/311_g_hopfire.js` and `w/parts/313_g_yolk-ops.js` from the shared `src/*.js`).
 2. Portal (from `w/parts_orig` + `w/new/*`): `python3 w/assemble.py`. It writes `w/parts/000_pre_000.html` and `w/parts/001_portal.js`. These two files are generated and are not kept in git, so run this step after every checkout.
 3. Encrypted site: `cd w && GATE_PASS="$(cat ~/.gameplay/gate_secret.txt)" python3 build2.py parts site` (see "Site password" below)
 4. Copy `w/site/index.html` to the repo root and replace the repo's `gameplay/` folder with `w/site/gameplay/`, then `git ls-files > files.txt`.

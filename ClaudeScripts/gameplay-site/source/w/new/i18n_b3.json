@@ -229,7 +229,8 @@
 ["Drop out?", "Abandonner tes études ?", "¿Dejar los estudios?", "Studium abbrechen?", "Abbandonare gli studi?", "Desistir dos estudos?"],
 ["Many jobs need a diploma. Are you sure?", "Beaucoup de métiers demandent un diplôme. Tu es sûr ?", "Muchos trabajos piden un título. ¿Seguro?", "Viele Jobs brauchen einen Abschluss. Bist du sicher?", "Molti lavori richiedono un diploma. Sei sicuro?", "Muitos trabalhos pedem um diploma. Tens a certeza?"],
 ["Yes, leave", "Oui, partir", "Sí, dejarlo", "Ja, verlassen", "Sì, lascia", "Sim, sair"],
-["Stay", "Rester", "Quedarse", "Bleiben", "Restare", "Ficar"],
+["@one-life|Stay", "Rester", "Quedarse", "Bleiben", "Restare", "Ficar"],
+["@element-lab|Stay", "Rester", "Quedarse", "Bleiben", "Restare", "Ficar"],
 ["Quit your job?", "Démissionner ?", "¿Dejar tu trabajo?", "Job kündigen?", "Lasciare il lavoro?", "Despedir-te?"],
 ["Yes, quit", "Oui, démissionner", "Sí, dejarlo", "Ja, kündigen", "Sì, mi licenzio", "Sim, despedir"],
 ["Retire now?", "Prendre ta retraite maintenant ?", "¿Jubilarte ahora?", "Jetzt in Rente gehen?", "Andare in pensione ora?", "Reformar-te agora?"],
@@ -268,7 +269,8 @@
 ["Last name", "Nom", "Apellido", "Nachname", "Cognome", "Apelido"],
 ["Girl", "Fille", "Niña", "Mädchen", "Femmina", "Menina"],
 ["Boy", "Garçon", "Niño", "Junge", "Maschio", "Menino"],
-["Random", "Au hasard", "Al azar", "Zufällig", "A caso", "Aleatório"],
+["@one-life|Random", "Au hasard", "Al azar", "Zufällig", "A caso", "Aleatório"],
+["@element-lab|Random", "Au hasard", "Al azar", "Zufällig", "A caso", "Aleatório"],
 ["Born in {c}", "Né à {c}", "Nacido en {c}", "Geboren in {c}", "Nato a {c}", "Nascido em {c}"],
 ["Start life", "Commencer la vie", "Empezar la vida", "Leben beginnen", "Inizia la vita", "Começar a vida"],
 ["Back to my life", "Retour à ma vie", "Volver a mi vida", "Zurück zu meinem Leben", "Torna alla mia vita", "Voltar à minha vida"],
@@ -357,5 +359,7 @@
 ["Trumpet", "Trompette", "Trompeta", "Trompete", "Tromba", "Trompete"],
 ["Elements", "Éléments", "Elementos", "Elemente", "Elementi", "Elementos"],
 ["Not enough money", "Pas assez d’argent", "No hay suficiente dinero", "Nicht genug Geld", "Soldi insufficienti", "Dinheiro insuficiente"],
-["Complete", "Terminé", "Completado", "Geschafft", "Completato", "Concluído"]
+["Complete", "Terminé", "Completado", "Geschafft", "Completato", "Concluído"],
+["Stay", "Rester", "Quedarse", "Bleiben", "Restare", "Ficar"],
+["Random", "Au hasard", "Al azar", "Zufällig", "A caso", "Aleatório"]
 ]
