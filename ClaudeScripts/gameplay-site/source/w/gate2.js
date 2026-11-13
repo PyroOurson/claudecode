@@ -114,7 +114,18 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
   const rd = () => { let o = {}; try { o = JSON.parse(localStorage.getItem(K) || '{}') || {}; } catch (e) {} const ck = (document.cookie.match(/gpgate=(\\d+)/) || [])[1]; if (ck && +ck > (o.f || 0)) o.f = +ck; if (!o.k) { const kc = (document.cookie.match(/(?:^|; )gpk=([^;]+)/) || [])[1]; if (kc) { try { o.k = decodeURIComponent(kc); } catch (e) {} } } return o; };
   const wr = o => { try { localStorage.setItem(K, JSON.stringify(o)); } catch (e) {} try { document.cookie = 'gpgate=' + (o.f || 0) + CK; document.cookie = o.k ? 'gpk=' + encodeURIComponent(o.k) + CK : 'gpk=;max-age=0;path=/'; } catch (e) {} };
   let st = rd();
-  const lock = () => { $('h').textContent = 'Locked'; $('t').textContent = 'Too many wrong passwords on this computer.'; $('p').remove(); $('b').remove(); $('m').textContent = ''; };
+  const WAITS = [30, 120, 600, 3600], H0 = $('h').textContent;
+  const waitFor = f => f < MAX ? 0 : WAITS[Math.min(f - MAX, WAITS.length - 1)] * 1000;
+  if ((st.f || 0) >= MAX && !(st.u > 0)) st.u = Date.now() + waitFor(st.f);
+  let tick = 0;
+  const lock = () => {
+    const ms = (st.u || 0) - Date.now();
+    if (ms <= 0) { clearInterval(tick); tick = 0; $('p').disabled = false; $('b').disabled = false; $('b').classList.remove('bz'); $('h').textContent = H0; $('m').className = 'm'; $('m').textContent = 'You can try again now.'; $('p').focus(); return; }
+    $('p').disabled = true; $('b').disabled = true; $('h').textContent = 'Too many tries';
+    const s = Math.ceil(ms / 1000), mm = Math.floor(s / 60), ss = s % 60;
+    $('m').className = 'm b'; $('m').textContent = 'Too many wrong passwords on this computer. Try again in ' + mm + ':' + (ss < 10 ? '0' : '') + ss + '.';
+    if (!tick) tick = setInterval(lock, 1000);
+  };
   const warm = () => {
     if (window.__gpPre) return;
     let paths = false;
@@ -171,18 +182,18 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
   $('p').addEventListener('select', e => { const n = e.target.value.length; e.target.setSelectionRange(n, n); });
   const ok = !!(window.crypto && crypto.subtle && window.DecompressionStream);
   if (!ok) { $('t').textContent = 'Please update your browser to open this site.'; $('p').remove(); $('b').remove(); return; }
-  const left = () => { const n = MAX - (st.f || 0); return n + (n === 1 ? ' try' : ' tries') + ' left'; };
+  const left = () => { const n = MAX - (st.f || 0); return n > 0 ? n + (n === 1 ? ' try' : ' tries') + ' left' : 'Next wrong password: wait ' + Math.round(waitFor((st.f || 0) + 1) / 60000 || 1) + ' min'; };
   if (st.f && st.f < MAX) $('m').textContent = left();
   let signed = false;
   try { signed = !!localStorage.getItem('sb-gameplay-auth') && !/[?&]gpauth=/.test(location.search); } catch (e) {}
   const view = on => { const f = $('f'); f.style.visibility = on ? '' : 'hidden'; $('sp').hidden = on || signed; $('sps').hidden = on || !signed; if (on) { f.style.animation = 'none'; void f.offsetWidth; f.style.animation = ''; } };
   let asked = false;
-  const ask = () => { if (asked) return; asked = true; mark('form'); view(true); if ((st.f || 0) >= MAX) lock(); else $('p').focus(); };
+  const ask = () => { if (asked) return; asked = true; mark('form'); view(true); if ((st.f || 0) >= MAX && (st.u || 0) > Date.now()) lock(); else $('p').focus(); };
   const opened = async o => {
     if (!o || typeof o.o !== 'string' || o.o.length !== 44) return false;
     let raw, txt;
     try { raw = b64(o.o); if (raw.length !== 32) return false; txt = await show(raw); } catch (x) { return false; }
-    st = rd(); st.f = 0; st.k = o.o; wr(st); warm(); view(false); mark('path', 'open'); mark('show');
+    st = rd(); st.f = 0; st.u = 0; st.k = o.o; wr(st); warm(); view(false); mark('path', 'open'); mark('show');
     requestAnimationFrame(() => put(txt, raw));
     return true;
   };
@@ -211,10 +222,10 @@ button.bz{position:relative;color:transparent}button.bz::after{content:"";positi
       try { txt = await show(raw); } catch (x) { txt = null; }
       if (txt == null) { soft('Could not open the site. Try again later.'); return; }
     }
-    if (txt != null) { st.f = 0; st.k = enc(raw); wr(st); warm(); view(false); mark('path', 'password'); mark('show'); requestAnimationFrame(() => put(txt, raw)); return; }
+    if (txt != null) { st.f = 0; st.u = 0; st.k = enc(raw); wr(st); warm(); view(false); mark('path', 'password'); mark('show'); requestAnimationFrame(() => put(txt, raw)); return; }
     $('b').classList.remove('bz');
     {
-      st = rd(); st.f = (st.f || 0) + 1; delete st.k; wr(st);
+      st = rd(); st.f = (st.f || 0) + 1; delete st.k; st.u = st.f >= MAX ? Date.now() + waitFor(st.f) : 0; wr(st);
       if (st.f >= MAX) { lock(); return; }
       $('b').disabled = false; $('p').focus();
       $('m').className = 'm b'; $('m').textContent = 'Wrong password · ' + left();

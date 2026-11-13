@@ -85,7 +85,11 @@ async function sfLoad(force) {
 }
 function sfRt() {
   if (SF.ch || !SB.c) return;
-  try { SF.ch = SB.c.channel('site').on('broadcast', { event: 'n' }, () => { if (SF.nt) return; SF.nt = setTimeout(() => { SF.nt = 0; sfLoad(Date.now() - SF.at > 15000); }, Math.max(0, SF.at + 15000 - Date.now()) + 500 + Math.random() * 2500); }).subscribe(); } catch (e) {}
+  const c0 = SB.c;
+  (window.gpRtPriv ? window.gpRtPriv(c0) : Promise.resolve(false)).catch(() => false).then(priv => {
+  if (SF.ch || SB.c !== c0) return;
+  try { SF.ch = SB.c.channel('site', { config: { private: !!priv } }).on('broadcast', { event: 'n' }, () => { if (SF.nt) return; SF.nt = setTimeout(() => { SF.nt = 0; sfLoad(Date.now() - SF.at > 15000); }, Math.max(0, SF.at + 15000 - Date.now()) + 500 + Math.random() * 2500); }).subscribe(); } catch (e) {}
+  });
 }
 function sfNudge() {
   sfRt();

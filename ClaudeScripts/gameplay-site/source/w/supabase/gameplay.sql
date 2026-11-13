@@ -9954,10 +9954,296 @@ revoke all on function private.rate_ok(text, integer, interval, text) from publi
 -- ============================================================================
 -- 2026-11-13 Party registry and private realtime channels (Part 10.1, 17.1.3)
 -- ============================================================================
+create table if not exists private.parties (
+  game text not null,
+  code text not null,
+  host uuid not null references auth.users (id) on delete cascade,
+  pub boolean not null default false,
+  door_key text,
+  size integer not null default 2,
+  players integer not null default 1,
+  is_full boolean not null default false,
+  created_at timestamptz not null default now(),
+  last_seen timestamptz not null default now(),
+  closed_at timestamptz,
+  primary key (game, code)
+);
+create index if not exists parties_seen_idx on private.parties (last_seen);
+create index if not exists parties_host_idx on private.parties (host);
+alter table private.parties enable row level security;
+revoke all on table private.parties from public, anon, authenticated;
+
+create or replace function private.party_ok(p_game text, p_code text)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select coalesce(p_game, '') ~ '^[a-z0-9][a-z0-9-]{0,39}$' and coalesce(p_code, '') ~ '^[A-Z0-9]{4,8}$';
+$$;
+revoke all on function private.party_ok(text, text) from public, anon, authenticated;
+
+create or replace function public.party_open(p_game text, p_code text, p_pub boolean default false, p_key text default null, p_size integer default 2)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := auth.uid();
+  v_row private.parties%rowtype;
+begin
+  if v_me is null then
+    raise exception 'Not signed in' using errcode = '28000';
+  end if;
+  if not private.party_ok(p_game, p_code) or (p_key is not null and (length(p_key) > 200 or p_key !~ '^[A-Za-z0-9+/=_-]+$')) then
+    raise exception 'Bad party' using errcode = '22023';
+  end if;
+  perform private.rate_check('party_open', 30, interval '10 minutes');
+  select * into v_row from private.parties where game = p_game and code = p_code for update;
+  if found and v_row.host <> v_me and v_row.closed_at is null and v_row.last_seen > now() - interval '90 seconds' then
+    return false;
+  end if;
+  insert into private.parties as x (game, code, host, pub, door_key, size, players, is_full, created_at, last_seen, closed_at)
+  values (p_game, p_code, v_me, coalesce(p_pub, false), p_key, greatest(2, least(coalesce(p_size, 2), 16)), 1, false, now(), now(), null)
+  on conflict (game, code) do update set host = excluded.host, pub = excluded.pub, door_key = coalesce(excluded.door_key, case when x.host = excluded.host then x.door_key end),
+    size = excluded.size, players = 1, is_full = false, created_at = case when x.host = excluded.host and x.closed_at is null then x.created_at else now() end, last_seen = now(), closed_at = null;
+  if random() < 0.01 then
+    delete from private.parties where last_seen < now() - interval '7 days';
+  end if;
+  return true;
+end;
+$$;
+
+create or replace function public.party_beat(p_game text, p_code text, p_players integer default null, p_full boolean default null, p_pub boolean default null, p_size integer default null, p_key text default null)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := auth.uid();
+begin
+  if v_me is null or not private.party_ok(p_game, p_code) then
+    return false;
+  end if;
+  if private.over('pbt:' || v_me::text, date_trunc('minute', now()), 30) then
+    return false;
+  end if;
+  update private.parties set last_seen = now(), closed_at = null,
+    players = greatest(1, least(coalesce(p_players, players), 16)),
+    is_full = coalesce(p_full, is_full), pub = coalesce(p_pub, pub),
+    size = greatest(2, least(coalesce(p_size, size), 16)),
+    door_key = case when p_key is not null and length(p_key) <= 200 and p_key ~ '^[A-Za-z0-9+/=_-]+$' then p_key else door_key end
+  where game = p_game and code = p_code and host = v_me;
+  return found;
+end;
+$$;
+
+create or replace function public.party_close(p_game text, p_code text)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+begin
+  if auth.uid() is null or not private.party_ok(p_game, p_code) then
+    return false;
+  end if;
+  update private.parties set closed_at = now() where game = p_game and code = p_code and host = auth.uid() and closed_at is null;
+  return found;
+end;
+$$;
+
+create or replace function public.party_check(p_game text, p_code text)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_row private.parties%rowtype;
+begin
+  if auth.uid() is null or not private.party_ok(p_game, p_code) then
+    return jsonb_build_object('state', 'unknown');
+  end if;
+  select * into v_row from private.parties where game = p_game and code = p_code;
+  if not found then
+    return jsonb_build_object('state', 'unknown');
+  end if;
+  return jsonb_build_object(
+    'state', case when v_row.closed_at is not null or v_row.last_seen < now() - interval '90 seconds' then 'ended' when v_row.is_full then 'full' else 'open' end,
+    'key', case when v_row.closed_at is null and v_row.last_seen > now() - interval '90 seconds' then v_row.door_key end,
+    'pub', v_row.pub);
+end;
+$$;
+
+create or replace function public.party_states(p_list jsonb)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if auth.uid() is null or jsonb_typeof(p_list) is distinct from 'array' or jsonb_array_length(p_list) > 60 then
+    return '[]'::jsonb;
+  end if;
+  return coalesce((
+    select jsonb_agg(jsonb_build_object('g', i ->> 'g', 'c', i ->> 'c', 's',
+      case when p.game is null then 'unknown'
+           when p.closed_at is not null or p.last_seen < now() - interval '90 seconds' then 'ended'
+           when p.is_full then 'full' else 'open' end))
+    from jsonb_array_elements(p_list) i
+    left join private.parties p on p.game = i ->> 'g' and p.code = i ->> 'c'
+    where private.party_ok(i ->> 'g', i ->> 'c')), '[]'::jsonb);
+end;
+$$;
+
+revoke all on function public.party_open(text, text, boolean, text, integer) from public, anon, authenticated;
+revoke all on function public.party_beat(text, text, integer, boolean, boolean, integer, text) from public, anon, authenticated;
+revoke all on function public.party_close(text, text) from public, anon, authenticated;
+revoke all on function public.party_check(text, text) from public, anon, authenticated;
+revoke all on function public.party_states(jsonb) from public, anon, authenticated;
+grant execute on function public.party_open(text, text, boolean, text, integer) to authenticated;
+grant execute on function public.party_beat(text, text, integer, boolean, boolean, integer, text) to authenticated;
+grant execute on function public.party_close(text, text) to authenticated;
+grant execute on function public.party_check(text, text) to authenticated;
+grant execute on function public.party_states(jsonb) to authenticated;
+
+create or replace function public.rt_topic_ok(p_topic text, p_send boolean)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := auth.uid();
+  v_to uuid;
+begin
+  if v_me is null or p_topic is null then
+    return false;
+  end if;
+  if p_topic like 'u:%' then
+    begin
+      v_to := substr(p_topic, 3)::uuid;
+    exception when others then
+      return false;
+    end;
+    if v_to = v_me then
+      return true;
+    end if;
+    return p_send and (private.is_staff(v_me) or exists (select 1 from public.friends f where f.user_id = v_me and f.friend_id = v_to));
+  end if;
+  if p_topic = 'parties' then
+    return true;
+  end if;
+  if p_topic = 'site' then
+    return not p_send or private.is_staff(v_me);
+  end if;
+  if p_topic ~ '^gp:[a-z0-9][a-z0-9-]{0,39}:[A-Z0-9]{4,8}(:[a-z0-9]{8,64})?$' then
+    return true;
+  end if;
+  return false;
+end;
+$$;
+revoke all on function public.rt_topic_ok(text, boolean) from public, anon, authenticated;
+grant execute on function public.rt_topic_ok(text, boolean) to authenticated;
+
+do $$
+begin
+  if exists (select 1 from information_schema.tables where table_schema = 'realtime' and table_name = 'messages') then
+    execute 'drop policy if exists "gameplay: join allowed channels" on realtime.messages';
+    execute 'create policy "gameplay: join allowed channels" on realtime.messages for select to authenticated using (public.rt_topic_ok(realtime.topic(), false))';
+    execute 'drop policy if exists "gameplay: send to allowed channels" on realtime.messages';
+    execute 'create policy "gameplay: send to allowed channels" on realtime.messages for insert to authenticated with check (public.rt_topic_ok(realtime.topic(), true))';
+  end if;
+exception when others then
+  raise notice 'could not set the realtime channel policies: %', sqlerrm;
+end;
+$$;
 
 -- ============================================================================
 -- 2026-11-13 Sign-in and account security (Part 10.3 to 10.7)
 -- ============================================================================
+create or replace function public.login_gate(p_login text, p_ip text)
+returns text
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_key text := lower(btrim(coalesce(p_login, '')));
+  v_ip inet := private.to_inet(p_ip);
+  v_h text := private.ip_hash(nullif(btrim(coalesce(p_ip, '')), ''));
+  v_n integer;
+  v_email text;
+begin
+  if coalesce(nullif(current_setting('request.jwt.claims', true), '')::json ->> 'role', '') <> 'service_role' then
+    raise exception 'Not allowed' using errcode = '42501';
+  end if;
+  if v_key !~ '^[a-z0-9_.]{3,20}$' then
+    return null;
+  end if;
+  if v_ip is not null and exists (select 1 from private.ip_bans b where b.lifted_at is null and (b.until is null or b.until > now()) and v_ip <<= b.net) then
+    raise exception 'Access blocked' using errcode = '42501', detail = jsonb_build_object('kind', 'ip')::text;
+  end if;
+  insert into private.analytics_rate as r (k, w, n) values ('lg:' || v_key, date_trunc('hour', now()) + floor(extract(minute from now()) / 15) * interval '15 minutes', 1)
+    on conflict (k, w) do update set n = r.n + 1
+    returning r.n into v_n;
+  if v_n > 6 then
+    raise exception 'Too many attempts' using errcode = '54000';
+  end if;
+  if v_h is not null then
+    insert into private.analytics_rate as r (k, w, n) values ('lgi:' || v_h, date_trunc('hour', now()), 1)
+      on conflict (k, w) do update set n = r.n + 1
+      returning r.n into v_n;
+    if v_n > 30 then
+      raise exception 'Too many attempts' using errcode = '54000';
+    end if;
+  end if;
+  select u.email into v_email
+  from public.profiles p
+  join auth.users u on u.id = p.id
+  where lower(p.username) = v_key and u.deleted_at is null and coalesce(u.encrypted_password, '') <> '';
+  return v_email;
+end;
+$$;
+revoke all on function public.login_gate(text, text) from public, anon, authenticated;
+grant execute on function public.login_gate(text, text) to service_role;
+
+create or replace function public.login_email(p_login text, p_password text)
+returns text
+language sql
+volatile
+security definer
+set search_path = ''
+as $$
+  select null::text;
+$$;
+revoke all on function public.login_email(text, text) from public, anon, authenticated;
+grant execute on function public.login_email(text, text) to anon, authenticated;
+
+create or replace function private.test_account_nopw()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.password := '';
+  return new;
+end;
+$$;
+revoke all on function private.test_account_nopw() from public, anon, authenticated;
+drop trigger if exists test_account_nopw on public.test_accounts;
+create trigger test_account_nopw before insert or update of password on public.test_accounts
+  for each row when (new.password is distinct from '') execute function private.test_account_nopw();
 
 -- ============================================================================
 -- 2026-11-13 Online players per second and all-time peaks (Part 17.1.4)
@@ -10628,6 +10914,16 @@ begin
       update private.housekeep set retention = true where id = 1;
     end if;
     insert into private.once_done (id) values ('2026-11-13 analytics clean-up');
+  end if;
+end;
+$$;
+
+do $$
+begin
+  if coalesce(current_setting('gameplay.wipe_test_passwords', true), '') = 'yes'
+    and not exists (select 1 from private.once_done where id = '2026-11-13 test account password copies') then
+    update public.test_accounts set password = '' where password <> '';
+    insert into private.once_done (id) values ('2026-11-13 test account password copies');
   end if;
 end;
 $$;

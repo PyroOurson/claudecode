@@ -179,7 +179,8 @@ function rtStart() {
   if (!SB.c || !SB.user || RT.me === SB.user.id) return;
   rtStop();
   const me = RT.me = SB.user.id;
-  try { RT.ch = SB.c.channel('u:' + me).on('broadcast', { event: 'n' }, m => rtNudge(m && m.payload || {})).subscribe(); } catch (e) {}
+  const go = priv => { if (RT.me !== me || RT.ch || !SB.c) return; try { RT.ch = SB.c.channel('u:' + me, { config: { private: !!priv } }).on('broadcast', { event: 'n' }, m => rtNudge(m && m.payload || {})).subscribe(); } catch (e) {} };
+  (window.gpRtPriv ? window.gpRtPriv(SB.c) : Promise.resolve(false)).then(go, () => go(false));
 }
 function rtStop() {
   clearTimeout(RT.tt);
@@ -214,13 +215,15 @@ function rtSend(uid, p) {
 }
 function rtSend1(uid, p) {
   if (!SB.c || !uid) return Promise.resolve();
-  return new Promise(res => {
+  return (window.gpRtPriv ? window.gpRtPriv(SB.c) : Promise.resolve(false)).catch(() => false).then(priv => new Promise(res => {
     let done = false;
-    const ch = SB.c.channel('u:' + uid);
+    if (!SB.c) { res(); return; }
+    const ch = SB.c.channel('u:' + uid, { config: { private: !!priv } });
     const fin = () => { if (done) return; done = true; let r = null; try { r = SB.c.removeChannel(ch); } catch (e) {} Promise.resolve(r).then(res, res); };
+    if (priv && typeof ch.httpSend === 'function') { Promise.resolve().then(() => ch.httpSend('n', p)).then(fin, fin); setTimeout(fin, 6000); return; }
     try { ch.subscribe(s => { if (s === 'SUBSCRIBED') ch.send({ type: 'broadcast', event: 'n', payload: p }).then(fin, fin); else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT') fin(); }); } catch (e) { fin(); }
     setTimeout(fin, 6000);
-  });
+  }));
 }
 function rtNudge(p) {
   const t = p && p.t;
@@ -534,7 +537,7 @@ function soChatEl() {
   ['pointerdown', 'wheel', 'keydown', 'touchstart'].forEach(k => el.addEventListener(k, () => { if (!DM.engaged) { DM.engaged = true; dmLater(); } }, { passive: true }));
   el.querySelector('.ch-m').addEventListener('scroll', () => dmLater(), { passive: true });
   const ta = el.querySelector('textarea'), fi = el.querySelector('input[type=file]'), ff = el.querySelector('.ch-fi'), sr = el.querySelector('.so-sr input');
-  el.addEventListener('click', e => { const b = e.target.closest('[data-ch]'); if (!(b && b.dataset.ch === 'file') && !e.target.closest('.ch-fh')) dmFileTip(false); if (b) { e.stopPropagation(); dmAct(b.dataset.ch, b); } const im = e.target.closest('.ch-pic img'); if (im && im.src) soLight(im.src); });
+  el.addEventListener('click', e => { const b = e.target.closest('[data-ch]'); if (b && b.dataset.ch === 'go' && b.closest('.inv-off')) return; if (!(b && b.dataset.ch === 'file') && !e.target.closest('.ch-fh')) dmFileTip(false); if (b) { e.stopPropagation(); dmAct(b.dataset.ch, b); } const im = e.target.closest('.ch-pic img'); if (im && im.src) soLight(im.src); });
   el.addEventListener('submit', e => { e.preventDefault(); dmSendText(); });
   el.addEventListener('keydown', e => {
     e.stopPropagation();
@@ -778,7 +781,7 @@ async function dmThread() {
       return s + dmRow(m, !first, grp).replace('<div class="', '<div data-mid="' + (+m.id || 0) + '" class="');
     }).join(''));
     box.querySelectorAll('img[data-path]:not([src])').forEach(dmImg);
-    soSeen(); soCdApply();
+    soSeen(); soCdApply(); dmInv();
     const nw = first && box.querySelector('#soNew');
     if (nw) box.scrollTop = Math.max(0, nw.offsetTop - 12);
     else if (near || add.some(m => m.mine)) box.scrollTop = box.scrollHeight;
@@ -787,6 +790,31 @@ async function dmThread() {
   } catch (e) { auMsg2('Could not load the messages. Check your connection and try again.', 'bad'); }
   finally { DM.busy = false; if (DM.again) { DM.again = false; if (DM.open) dmThread(); } }
 }
+async function dmInv() {
+  const box = $('#chat .ch-m');
+  if (!box || !SB.user) return;
+  const els = [...box.querySelectorAll('.ch-card[data-inv]')].filter(e => /^[a-z0-9][a-z0-9-]*\|[A-Z0-9]{4,8}$/.test(e.dataset.inv));
+  if (!els.length) return;
+  const L = [...new Set(els.map(e => e.dataset.inv))].slice(-40).map(k => { const [g, c] = k.split('|'); return { g, c }; });
+  let r;
+  try { r = await sbRest('rpc/party_states', { method: 'POST', body: { p_list: L } }); } catch (e) { return; }
+  const S = {};
+  (Array.isArray(r) ? r : []).forEach(x => { S[x.g + '|' + x.c] = x.s; });
+  els.forEach(e => {
+    const s = S[e.dataset.inv];
+    if (!s || s === 'unknown' || !e.isConnected) return;
+    const off = s === 'ended' || s === 'full', b = e.querySelector('[data-ch="go"]');
+    let st = e.querySelector('.ch-ist');
+    e.classList.toggle('inv-off', off);
+    if (off) {
+      if (b) b.hidden = true;
+      if (!st) { st = document.createElement('span'); st.className = 'ch-ist'; e.append(st); }
+      st.textContent = auT(s === 'full' ? 'Party full' : 'Party ended');
+      e.setAttribute('aria-disabled', 'true');
+    } else { if (b) b.hidden = false; if (st) st.remove(); e.removeAttribute('aria-disabled'); }
+  });
+}
+setInterval(() => { if (DM.open && document.visibilityState === 'visible' && $('#chat') && !$('#chat').hidden) dmInv(); }, 10000);
 const dmSeeing = () => document.visibilityState === 'visible' && !!DM.engaged && !!$('#chat') && !$('#chat').hidden;
 function dmSeenIds() {
   const box = $('#chat .ch-m'), ids = [];
@@ -819,7 +847,7 @@ function dmRow(m, anim, grp) {
   const cls = 'ch-r' + (m.mine ? ' me' : '') + (anim ? ' new' : '') + (grp ? ' so-g' : ''), t = grp ? '' : `<small>${esc(hm)}</small>`, g = m.meta || {}, name = soName(DM.open), tt = ` title="${esc(d.toLocaleString())}"`;
   if (m.kind === 'image') return `<div class="${cls}"${tt}><div class="ch-pic" data-fxb="dm"><img data-path="${esc(g.path || '')}" alt="${esc(auT('Picture'))}" width="${+g.w || 320}" height="${+g.h || 240}" loading="lazy">${m.mine && g.path ? fxDelBtn(g.path) : ''}</div>${t}</div>`;
   if (m.kind === 'file') return `<div class="${cls}"${tt}><div class="ch-file fx-v" data-fxb="dm">${fxCard({ path: g.path || '', name: g.name || m.body || '', size: g.size }, m.mine && !!g.path)}</div>${t}</div>`;
-  if (m.kind === 'invite') return `<div class="${cls}"${tt}><div class="ch-card">${SO_ICO.pad}<div><b>${esc(m.mine ? auT('You invited {u} to your party').replace('{u}', name) : auT('{u} invited you to their party').replace('{u}', name))}</b><span>${esc(soGameName(g.game))} · ${esc(auT('Code {c}').replace('{c}', g.code || ''))}</span></div>${m.mine ? '' : `<button class="btn2 pri" type="button" data-ch="go" data-g="${esc(g.game || '')}" data-c="${esc(g.code || '')}">${esc(auT('Join'))}</button>`}</div>${t}</div>`;
+  if (m.kind === 'invite') return `<div class="${cls}"${tt}><div class="ch-card" data-inv="${esc((g.game || '') + '|' + (g.code || ''))}">${SO_ICO.pad}<div><b>${esc(m.mine ? auT('You invited {u} to your party').replace('{u}', name) : auT('{u} invited you to their party').replace('{u}', name))}</b><span>${esc(soGameName(g.game))} · ${esc(auT('Code {c}').replace('{c}', g.code || ''))}</span></div>${m.mine ? '' : `<button class="btn2 pri" type="button" data-ch="go" data-g="${esc(g.game || '')}" data-c="${esc(g.code || '')}">${esc(auT('Join'))}</button>`}</div>${t}</div>`;
   if (m.kind === 'join') return `<div class="${cls}"${tt}><div class="ch-card">${SO_ICO.pad}<div><b>${esc(m.mine ? auT('You asked to join {u}').replace('{u}', name) : auT('{u} wants to join your party').replace('{u}', name))}</b><span>${esc(soGameName(g.game))}</span></div>${m.mine ? '' : `<button class="btn2 pri" type="button" data-ch="invite" data-g="${esc(g.game || '')}">${esc(auT('Invite'))}</button>`}</div>${t}</div>`;
   return `<div class="${cls}"${tt}><div class="ch-b">${esc(m.body || '')}</div>${t}</div>`;
 }
@@ -1085,10 +1113,12 @@ const PUB = { ch: null, me: 'p' + Math.random().toString(36).slice(2, 12), list:
 function pubStart() {
   if (PUB.st) return;
   PUB.st = true;
-  sbClient().then(c => {
+  sbClient().then(async c => {
+    if (PUB.ch) return;
+    const priv = await (window.gpRtPriv ? window.gpRtPriv(c) : Promise.resolve(false)).catch(() => false);
     if (PUB.ch) return;
     prDrop(PUB.pr);
-    const ch = PUB.ch = c.channel('parties', { config: { presence: { key: PUB.me } } });
+    const ch = PUB.ch = c.channel('parties', { config: { private: !!priv, presence: { key: PUB.me } } });
     ch.on('presence', { event: 'sync' }, pubSync).subscribe(s => {
       if (PUB.ch !== ch) return;
       if (s === 'SUBSCRIBED') { PUB.rn = 0; PUB.pr.last = null; pubTrack(true); }

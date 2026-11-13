@@ -38,6 +38,7 @@ const SUPABASE_DIRECT = 'https://uafouyvtcijptspjbsqf.supabase.co';
 const SUPABASE_RELAYS = ['https://gameplay-api.vitalang.net'];
 const SUPABASE_URL = (typeof window.__gpSbUrl === 'string' && /^https:\/\//.test(window.__gpSbUrl) && window.__gpSbUrl) || SUPABASE_DIRECT;
 const SUPPORT_EMAIL = 'gabriel06401@gmail.com';
+const TURNSTILE_SITE_KEY = '';
 const GP_DK = (() => {
   try {
     let k = localStorage.getItem('gameplay:dk');

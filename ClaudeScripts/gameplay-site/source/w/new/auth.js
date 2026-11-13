@@ -383,6 +383,7 @@ function auRender() {
     $('#auwho').textContent = u.email || 'Signed in';
     $('#auvia').textContent = provs.includes('google') ? (provs.includes('email') ? 'Google and email password' : 'Signed in with Google') : 'Signed in with email';
     if (document.activeElement !== $('#auem2')) $('#auem2').value = u.email || '';
+    if ($('#aucurf')) $('#aucurf').hidden = !auHasPw(u);
     $('#aupwl').textContent = provs.includes('email') ? 'New password' : 'Set a password';
     auSyncNote();
   }
@@ -669,6 +670,42 @@ function unWire() {
   if (window.MutationObserver) new MutationObserver(() => { if (!$('#unmodal').hidden) unLive(UN_MO); }).observe($('#unmodal'), { attributes: true, attributeFilter: ['hidden'] });
 }
 function auUserCheck() { unLive(UN_UP); }
+const TS = { p: null, id: null, el: null };
+function auChallenge() {
+  if (!TURNSTILE_SITE_KEY) return Promise.resolve('');
+  const load = TS.p || (TS.p = new Promise((res, rej) => {
+    if (window.turnstile) { res(window.turnstile); return; }
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    s.async = true;
+    s.onload = () => window.turnstile ? res(window.turnstile) : rej(new Error('challenge'));
+    s.onerror = () => { TS.p = null; rej(new Error('challenge')); };
+    document.head.append(s);
+  }));
+  return load.then(t => new Promise(res => {
+    const done = v => { clearTimeout(tm); res(v || ''); };
+    const tm = setTimeout(() => done(''), 20000);
+    if (!TS.el) { TS.el = document.createElement('div'); TS.el.className = 'au-ts'; const f = $('#auform'); (f || document.body).append(TS.el); }
+    try {
+      if (TS.id != null) { try { t.remove(TS.id); } catch (e) {} TS.id = null; }
+      TS.id = t.render(TS.el, { sitekey: TURNSTILE_SITE_KEY, appearance: 'interaction-only', execution: 'render', language: (document.documentElement.lang || 'auto'), callback: done, 'error-callback': () => done(''), 'expired-callback': () => done('') });
+    } catch (e) { done(''); }
+  }), () => '');
+}
+async function auUserLogin(un, pw) {
+  const challenge = await auChallenge();
+  const r = await SBN.fetch(SBN.url('/functions/v1/login'), { method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ login: un, password: pw, challenge }), credentials: 'omit', cache: 'no-store' });
+  let j = null;
+  try { j = await r.json(); } catch (e) {}
+  if (r.ok && j && j.session && j.session.access_token) return j.session;
+  const code = j && j.error;
+  if (code === 'access_blocked' && typeof window.gpBlocked === 'function') { let d = null; try { d = JSON.parse(j.details || 'null'); } catch (e) {} window.gpBlocked(d || {}); }
+  if (code === 'too_many_attempts' || r.status === 429) throw { code: 'over_request_rate_limit', message: 'Too many attempts' };
+  if (code === 'email_not_confirmed') throw { code: 'username_not_confirmed' };
+  if (code === 'challenge_failed') throw { code: 'challenge_failed' };
+  if (code === 'invalid_credentials' || r.status === 400) throw { code: 'invalid_credentials' };
+  throw { code: 'network', message: 'network' };
+}
 async function auLogin() {
   if (!SB.on) return;
   const id = $('#auemail').value.trim(), pw = $('#aupass').value;
@@ -682,18 +719,24 @@ async function auLogin() {
     const c = await sbClient();
     if (!id.includes('@')) {
       const un = id.toLowerCase().replace(/^@/, '');
-      email = UN_RE.test(un) ? await sbRest('rpc/login_email', { method: 'POST', body: { p_login: un, p_password: pw }, auth: false }) : null;
-      if (!email) throw { code: 'invalid_credentials' };
+      if (!UN_RE.test(un)) throw { code: 'invalid_credentials' };
+      const ses = await auUserLogin(un, pw);
+      SB.loud = true;
+      const r = await c.auth.setSession({ access_token: ses.access_token, refresh_token: ses.refresh_token });
+      if (r.error) throw r.error;
+    } else {
+      SB.loud = true;
+      const r = await c.auth.signInWithPassword({ email, password: pw });
+      if (r.error) throw r.error;
     }
-    SB.loud = true;
-    const r = await c.auth.signInWithPassword({ email, password: pw });
-    if (r.error) throw r.error;
     track('auth', { act: 'signin', by: id.includes('@') ? 'email' : 'username' });
     auWait(true);
     $('#aupass').value = ''; closeAll();
   } catch (e) {
     SB.loud = false;
-    if (e && (e.code === 'email_not_confirmed' || /email not confirmed/i.test(e.message || ''))) { auCheck(email, 'signup', false); auMsg('acnote', 'Confirm your email first: type the code we sent you, or send a new one.', 'bad'); }
+    if (e && e.code === 'username_not_confirmed') auMsg('aunote', 'Confirm your email first: log in with your email address to get a new code.', 'bad');
+    else if (e && e.code === 'challenge_failed') auMsg('aunote', 'The safety check did not pass. Try again.', 'bad');
+    else if (e && (e.code === 'email_not_confirmed' || /email not confirmed/i.test(e.message || ''))) { auCheck(email, 'signup', false); auMsg('acnote', 'Confirm your email first: type the code we sent you, or send a new one.', 'bad'); }
     else auMsg('aunote', auErrText(e), 'bad');
   }
   finally { auBusy(false); }
@@ -818,12 +861,35 @@ async function auNewPass() {
   } catch (e) { auMsg('annote', auErrText(e), 'bad'); }
   finally { auBusy(false); }
 }
+const auHasPw = u => !!u && (((u.app_metadata && u.app_metadata.providers) || []).indexOf('email') >= 0 || (u.identities || []).some(i => i && i.provider === 'email'));
+async function auVerifyCur(note) {
+  const u = SB.user;
+  if (!u || !SB.c) return false;
+  if (!auHasPw(u)) {
+    if (Date.now() - Date.parse(u.last_sign_in_at || 0) < 15 * 60000) return true;
+    auMsg(note, 'For safety, sign in again with Google first, then change it within 15 minutes.', 'bad');
+    return false;
+  }
+  const cur = $('#aucur').value;
+  if (!cur) { auMsg(note, 'Enter your current password first.', 'bad'); auShake($('#aucur')); $('#aucur').focus(); return false; }
+  try {
+    const { error } = await SB.c.auth.signInWithPassword({ email: u.email, password: cur });
+    if (error) throw error;
+    $('#aucur').value = '';
+    return true;
+  } catch (e) {
+    auMsg(note, /invalid|credentials/i.test(e && e.message || '') ? 'Your current password is not right.' : auErrText(e), 'bad');
+    auShake($('#aucur'));
+    return false;
+  }
+}
 async function auChangeEmail() {
   const email = $('#auem2').value.trim();
   if (!EMAIL_RE.test(email)) { auMsg('auemnote', 'Enter a valid email address.', 'bad'); return; }
   if (SB.user && email.toLowerCase() === String(SB.user.email || '').toLowerCase()) { auMsg('auemnote', 'That is already your email address.', 'bad'); return; }
   const b = $('#auemsave'); b.disabled = true; b.classList.add('is-busy'); auMsg('auemnote', 'Sending…');
   try {
+    if (!(await auVerifyCur('auemnote'))) return;
     const { error } = await SB.c.auth.updateUser({ email }, { emailRedirectTo: sbRedirect('email') });
     if (error) throw error;
     auMsg('auemnote', 'Check your inbox to confirm the change.', 'ok');
@@ -835,6 +901,7 @@ async function auChangePass() {
   if (pw.length < 8) { auMsg('aupwnote', 'Use at least 8 characters.', 'bad'); return; }
   const b = $('#aupwsave'); b.disabled = true; b.classList.add('is-busy'); auMsg('aupwnote', 'Saving…');
   try {
+    if (!(await auVerifyCur('aupwnote'))) return;
     const { error } = await SB.c.auth.updateUser({ password: pw });
     if (error) throw error;
     $('#aupw2').value = '';
