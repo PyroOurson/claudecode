@@ -76,6 +76,7 @@ Over the party connection (the hub relays and stamps the time). Last 100 message
 Heartbeat every second on wall-clock time; a visible peer silent for 7 s is treated as dropped (about 3 min if hidden). Guests auto-reconnect with backoff for about 45 s (up to 10 min while hidden), the hub keeps their seat 12 s (60 s hidden). Max 16 players.
 
 ## Translation (i18n agent)
+Translation rows are keyed by the English text and shared by the whole site. A word that means something else in one game ("Medium" as a steak doneness, "Rare", "White" in chess) gets a row keyed `@<game id>|<English text>`: inside that game's root, and for `gpI18n.t` calls while that game is open, the scoped row wins over the global one. The lead's merge step scopes game rows that clash with the site's table automatically.
 Every GUI string goes through `gpI18n.t(s)` when `window.gpI18n` exists (falls back to English). Strings with values use placeholders that must stay in the translation: `{n}`, `{m}`, `{code}`, `{name}`:
 `{n} / {m} joined`, `{n} players`, `Waiting for {n} more players…`, `Waiting for 1 more player…`, `Joining party {code}…`, `Party {code}`, `Party {code} is full.`, `Party {code} not found. Check the code and try again.`, `Server busy, trying again ({n}/3)…`, `{name} joined the party`, `{name} left the party`, `{name} was removed from the party`, `{name} is now the host`.
 Also `Restoring party {code}…` and `Party {code} is not open yet, trying again…`.

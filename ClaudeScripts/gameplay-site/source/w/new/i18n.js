@@ -1695,9 +1695,11 @@ function tx(n) {
   C.set(n, v);
   return v;
 }
+function gScope(el) { const r = el && el.closest ? el.closest('.g-root') : null, m = r && /(?:^|\s)gm-([a-z0-9-]+)/.exec(r.className); return m ? m[1] : null; }
+function curGame() { const r = document.querySelector('#frame .g-root'); return r ? gScope(r) : null; }
 function T(s, o) {
   let v = s;
-  if (li > 0 && typeof s === 'string' && ABC.test(s)) { const n = sp(s); if (!isTitle(n)) { const x = tx(n); if (x != null) v = x; } }
+  if (li > 0 && typeof s === 'string' && ABC.test(s)) { const n = sp(s); if (!isTitle(n)) { const g = curGame(), x = (g && dict().get('@' + g + '|' + n)) || tx(n); if (x != null) v = x; } }
   return o && typeof v === 'string' ? v.replace(/\{(\w+)\}/g, (m, k) => k in o ? o[k] : m) : v;
 }
 function txt(n) {
@@ -1707,7 +1709,7 @@ function txt(n) {
     const p = n.parentElement, c = sp(en);
     if (p && (PH.has(c) || !p.closest(SKIP))) {
       if (!isTitle(c)) {
-        const t = (p.id && dict().get('#' + p.id + '|' + c)) || tx(c);
+        const g = gScope(p), t = (g && dict().get('@' + g + '|' + c)) || (p.id && dict().get('#' + p.id + '|' + c)) || tx(c);
         if (t != null) { o = en.match(/^\s*/)[0] + t + en.match(/\s*$/)[0]; if (p.tagName === 'OPTION' && !p.hasAttribute('value')) p.setAttribute('value', c); }
       }
     }
@@ -1721,7 +1723,7 @@ function att(el, a) {
   let m = AN.get(el);
   const r = m && m[a], en = r && v === r.o ? r.e : v;
   let o = en;
-  if (li > 0 && ABC.test(en) && !el.closest('[translate="no"]')) { const c = sp(en); if (!isTitle(c)) { const t = tx(c); if (t != null) o = t; } }
+  if (li > 0 && ABC.test(en) && !el.closest('[translate="no"]')) { const c = sp(en); if (!isTitle(c)) { const g = gScope(el), t = (g && dict().get('@' + g + '|' + c)) || tx(c); if (t != null) o = t; } }
   if (o === en) { if (r) delete m[a]; } else { if (!m) AN.set(el, m = {}); m[a] = { e: en, o }; }
   if (v !== o) el.setAttribute(a, o);
 }
