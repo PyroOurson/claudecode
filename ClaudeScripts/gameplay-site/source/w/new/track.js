@@ -13,7 +13,7 @@ const trZoom = () => { if (!trMq('(pointer: fine)') || window.top !== window || 
 const trVotes = () => { try { return JSON.parse(localStorage.getItem('gameplay:votes')) || {}; } catch (e) { return {}; } };
 const TR_TAG = { game_launch: 1, game_play: 1, game_time: 1, game_quit: 1, error: 1, restart: 1, pause: 1, fullscreen: 1 };
 const TR_ERR = { m: '', s: '', t: 0 };
-const TR_X = { op: null, l1: 0, set: null, inv: 0, pt: null, su: new Set(), lu: 0, ach: 0, mem: 0 };
+const TR_X = { op: null, l1: 0, set: null, inv: 0, pt: null, su: new Set(), lu: -1e9, ach: 0, mem: 0 };
 const trStk = s => String(s || '').split('\n').slice(0, 7).map(l => l.replace(/(?:https?|blob|file|chrome-extension|moz-extension):\/\/[^\s)]*\/([^/\s)?#]*)(?:[?#][^\s):]*)?/g, '$1').replace(/\s+/g, ' ').trim()).filter(Boolean).join(' | ').slice(0, 400);
 const trErrNote = (m, st) => { if (!st) return; TR_ERR.m = String(m || '').slice(0, 60); TR_ERR.s = trStk(st); TR_ERR.t = Date.now(); };
 addEventListener('error', e => { try { if (e && e.error && e.error.stack) trErrNote(e.message, e.error.stack); } catch (x) {} }, true);
@@ -118,7 +118,7 @@ function trSuWatch() {
     const t = e.target;
     if (!(t instanceof Element)) return;
     if (t.closest('#auupgo')) trSu('email', 'submit');
-    if (t.closest('[data-auth="google"]') && SB.mode === 'up') { trSu('google', 'click'); try { sessionStorage.setItem('gameplay:su', 'google'); } catch (x) {} }
+    if (t.closest('[data-auth="google"]') && SB.mode === 'up') { trSu('google', 'click'); try { if (anOk()) sessionStorage.setItem('gameplay:su', 'google'); } catch (x) {} }
     if (t.closest('[data-ch="go"]')) TR_X.inv = performance.now();
   }, true);
 }

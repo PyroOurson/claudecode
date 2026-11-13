@@ -10626,33 +10626,15 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_h json;
-  v_cc text := '';
+  v_h json := private.req_headers();
+  v_cc text := coalesce(private.client_country(), '');
   v_rg text := '';
 begin
-  begin
-    v_h := nullif(current_setting('request.headers', true), '')::json;
-  exception when others then
-    return array['', ''];
-  end;
-  if v_h is null then
-    return array['', ''];
+  if v_h is null or v_cc = '' then
+    return array[v_cc, ''];
   end if;
-  if coalesce(v_h ->> 'cf-connecting-ip', '') like '2a06:98c0:3600:%' then
-    v_cc := upper(btrim(coalesce(v_h ->> 'x-gp-cc', '')));
-    v_rg := btrim(coalesce(v_h ->> 'x-gp-region', ''));
-  end if;
-  if v_cc = '' then
-    v_cc := upper(btrim(coalesce(v_h ->> 'cf-ipcountry', '')));
-  end if;
-  if v_rg = '' then
-    v_rg := btrim(coalesce(v_h ->> 'cf-region-code', v_h ->> 'cf-region', ''));
-  end if;
-  if v_cc !~ '^[A-Z][A-Z0-9]$' or v_cc = 'XX' then
-    v_cc := '';
-  end if;
-  v_rg := left(regexp_replace(v_rg, '[^A-Za-z0-9 .''-]', '', 'g'), 40);
-  return array[v_cc, case when v_cc = '' then '' else v_rg end];
+  v_rg := btrim(coalesce(case when private.relay_ok(v_h) then v_h ->> 'x-gp-region' end, v_h ->> 'cf-region-code', v_h ->> 'cf-region', ''));
+  return array[v_cc, left(regexp_replace(v_rg, '[^A-Za-z0-9 .''-]', '', 'g'), 40)];
 end;
 $$;
 revoke all on function private.sd_geo() from public, anon, authenticated;
@@ -10733,8 +10715,7 @@ create table if not exists private.sd_sess (
   first_at timestamptz not null default now(),
   last_at timestamptz not null default now(),
   cc text not null default '',
-  region text not null default '',
-  ip_h text
+  region text not null default ''
 );
 create index if not exists sd_sess_first_idx on private.sd_sess (first_at);
 alter table private.sd_sess enable row level security;
@@ -10748,16 +10729,13 @@ set search_path = ''
 as $$
 declare
   v_g text[];
-  v_ip text;
 begin
   v_g := private.sd_geo();
-  v_ip := private.sd_hash(nullif(private.client_ip(), ''));
-  insert into private.sd_sess as s (session_id, cc, region, ip_h)
-    select distinct n.session_id, v_g[1], v_g[2], v_ip from new_rows n
+  insert into private.sd_sess as s (session_id, cc, region)
+    select distinct n.session_id, v_g[1], v_g[2] from new_rows n
     on conflict (session_id) do update set last_at = now(),
       cc = case when s.cc = '' then excluded.cc else s.cc end,
-      region = case when s.region = '' then excluded.region else s.region end,
-      ip_h = coalesce(s.ip_h, excluded.ip_h);
+      region = case when s.region = '' then excluded.region else s.region end;
   return null;
 exception when others then
   return null;
@@ -10805,7 +10783,7 @@ begin
   end if;
   v_g := private.sd_geo();
   insert into private.sd_sec (kind, method, ok, code, uid, ip_h, cc)
-  values (v_k, v_m, p_ok, left(regexp_replace(lower(coalesce(p_code, '')), '[^a-z0-9_]', '', 'g'), 40), auth.uid(), private.sd_hash(v_ip), v_g[1]);
+  values (v_k, v_m, p_ok, left(regexp_replace(lower(coalesce(p_code, '')), '[^a-z0-9_]', '', 'g'), 40), auth.uid(), private.ip_hash(v_ip), v_g[1]);
   return true;
 end;
 $$;
@@ -11142,7 +11120,7 @@ begin
     union all select 'm50.rep:' || private.sd_ban_kind(l.action, l.detail), '', '*', '*', private.sd_acct(l.target_user), 1, 0 from public.admin_log l
       where l.at >= v_t0 and l.at < v_t1 and private.sd_ban_kind(l.action, l.detail) in ('account', 'device', 'ip')
         and exists (select 1 from public.admin_log o where o.at < l.at and private.sd_ban_kind(o.action, o.detail) in ('account', 'device', 'ip')
-          and ((l.target_user is not null and o.target_user = l.target_user) or (l.target_user is null and coalesce(l.detail ->> 'cidr', l.detail ->> 'ip', '') <> '' and coalesce(o.detail ->> 'cidr', o.detail ->> 'ip', '') = coalesce(l.detail ->> 'cidr', l.detail ->> 'ip'))))
+          and ((l.target_user is not null and o.target_user = l.target_user) or (l.target_user is null and coalesce(l.detail ->> 'net', '') <> '' and o.detail ->> 'net' = l.detail ->> 'net')))
   ) u
   where u.k is not null and u.s is not null
   group by u.k, u.game, u.cc, u.dev, u.acct;
@@ -11184,7 +11162,7 @@ set search_path = ''
 as $$
 begin
   delete from private.sd_sess where first_at < now() - interval '400 days';
-  update private.sd_sess set ip_h = null where ip_h is not null and first_at < now() - interval '30 days';
+  update private.sd_sec set ip_h = null where ip_h is not null and at < now() - interval '30 days';
   delete from private.sd_sec where at < now() - interval '90 days';
   delete from private.sd_act where day < (now() at time zone 'Europe/Paris')::date - 730;
   delete from private.sd_roll where day < (now() at time zone 'Europe/Paris')::date - 1096;
@@ -11273,30 +11251,32 @@ security definer
 set search_path = ''
 as $$
 declare
+  v_g text := nullif(btrim(coalesce(p_game, '')), '');
   r jsonb;
 begin
-  with t as (
-    select pt.at, count(distinct pt.user_id) as n
-    from private.presence_ticks pt
-    where private.an_level(pt.user_id) = 0
-    group by pt.at
+  with s48 as (
+    select s.at, case when v_g is null then s.n else coalesce((s.g ->> v_g)::integer, 0) end as n
+    from private.online_sec s where s.at > now() - interval '48 hours'
+  ), m48 as (
+    select m.at, case when v_g is null then m.n else coalesce((m.g ->> v_g)::integer, 0) end as n
+    from private.online_min m where m.at > now() - interval '48 hours'
   )
   select jsonb_build_object(
-    'src', 'ticks5',
-    'now', (select count(*) from private.presence_now n where n.at > now() - interval '100 seconds' and (p_game is null or n.game = p_game) and private.an_level(n.user_id) = 0),
-    'best', (select jsonb_build_object('n', t.n, 'at', t.at) from t order by t.n desc, t.at limit 1),
+    'src', 'sec',
+    'now', coalesce((select x.n from s48 x where x.at > now() - interval '10 seconds' order by x.at desc limit 1), 0),
+    'best', (select jsonb_build_object('n', p.n, 'at', p.at) from private.online_peak p where p.scope = coalesce('g:' || v_g, 'site')),
+    'sec', (select jsonb_build_object('n', x.n, 'at', x.at) from s48 x order by x.n desc, x.at desc limit 1),
+    'min', (select jsonb_build_object('n', x.n, 'at', x.at) from m48 x order by x.n desc, x.at desc limit 1),
+    'h1', coalesce((select jsonb_agg(jsonb_build_array(extract(epoch from x.at)::bigint, x.n) order by x.at) from m48 x where x.at > now() - interval '1 hour'), '[]'::jsonb),
     'days', coalesce((
-      select jsonb_agg(jsonb_build_object('d', d.day, 'n', d.n, 'at', d.at) order by d.day)
-      from (
-        select distinct on ((t.at at time zone 'Europe/Paris')::date) (t.at at time zone 'Europe/Paris')::date as day, t.n, t.at
-        from t
-        where t.at >= (p_from::timestamp at time zone 'Europe/Paris') and t.at < ((p_to + 1)::timestamp at time zone 'Europe/Paris')
-        order by (t.at at time zone 'Europe/Paris')::date, t.n desc, t.at
-      ) d
+      select jsonb_agg(jsonb_build_object('d', d.day, 'n', case when v_g is null then d.n else coalesce((d.g -> v_g ->> 'n')::integer, 0) end,
+        'at', case when v_g is null then d.at else (d.g -> v_g ->> 'at')::timestamptz end) order by d.day)
+      from private.online_day d where d.day between p_from and p_to
     ), '[]'::jsonb),
     'games', coalesce((
-      select jsonb_agg(jsonb_build_object('g', g.game, 'n', g.n) order by g.n desc)
-      from (select n.game, count(*) as n from private.presence_now n where n.at > now() - interval '100 seconds' and n.game is not null and private.an_level(n.user_id) = 0 group by n.game) g
+      select jsonb_agg(jsonb_build_object('g', k.key, 'n', k.value::integer) order by k.value::integer desc)
+      from (select s.g from private.online_sec s where s.at > now() - interval '10 seconds' order by s.at desc limit 1) z, jsonb_each_text(z.g) k
+      where k.value ~ '^[0-9]+$' and k.value::integer > 0
     ), '[]'::jsonb)
   ) into r;
   return r;
@@ -11304,7 +11284,8 @@ end;
 $$;
 revoke all on function private.sd_m6(date, date, text) from public, anon, authenticated;
 
-create or replace function public.admin_measures(p_from date default null, p_to date default null, p_game text default null, p_cc text default null, p_dev text default null, p_acct text default 'players')
+drop function if exists public.admin_measures(date, date, text, text, text, text);
+create or replace function public.admin_measures(p_from date default null, p_to date default null, p_game text default null, p_cc text default null, p_dev text default null, p_acct text default 'players', p_fresh boolean default false)
 returns jsonb
 language plpgsql
 volatile
@@ -11333,6 +11314,9 @@ begin
     when 'staff' then array['staff']
     when 'test' then array['test']
     else array['anon', 'user'] end;
+  if coalesce(p_fresh, false) and v_to = v_today then
+    perform private.sd_roll_day(v_today);
+  end if;
   perform private.sd_roll_due(greatest(v_from - 30, v_today - 400), v_to, 45);
   select count(*) into v_pend
   from generate_series(greatest(v_from - 30, v_today - 400), v_to, interval '1 day') g(d)
@@ -11436,8 +11420,8 @@ begin
   return r;
 end;
 $$;
-revoke all on function public.admin_measures(date, date, text, text, text, text) from public, anon, authenticated;
-grant execute on function public.admin_measures(date, date, text, text, text, text) to authenticated;
+revoke all on function public.admin_measures(date, date, text, text, text, text, boolean) from public, anon, authenticated;
+grant execute on function public.admin_measures(date, date, text, text, text, text, boolean) to authenticated;
 
 create or replace function public.admin_measures_dims()
 returns jsonb

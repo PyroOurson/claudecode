@@ -81,7 +81,7 @@ function sdBars(items, o = {}) {
 function sdCols(items, o = {}) {
   const L = items.slice(0, 30);
   if (!L.length || !L.some(x => x.v > 0)) return '';
-  const W = 640, H = o.h || 150, P = { l: 8, r: 8, t: 14, b: 32 }, n = L.length, bw = (W - P.l - P.r) / n, max = Math.max(1, ...L.map(x => x.v));
+  const W = o.w || 640, H = o.h || (o.w ? 130 : 150), n = L.length, bw = Math.min(64, (W - 16) / n), P = { l: (W - bw * n) / 2, r: 8, t: 14, b: 32 }, max = Math.max(1, ...L.map(x => x.v));
   const bars = L.map((x, i) => { const h = (x.v / max) * (H - P.t - P.b), X = P.l + i * bw + bw * .12; return `<rect x="${X.toFixed(1)}" y="${(H - P.b - h).toFixed(1)}" width="${(bw * .76).toFixed(1)}" height="${Math.max(0, h).toFixed(1)}" rx="3" class="sd-col"><title>${sdEsc(x.l + ': ' + (o.fmt ? o.fmt(x.v) : sdNum(x.v)))}</title></rect>${x.v && n <= 16 ? `<text x="${(X + bw * .38).toFixed(1)}" y="${(H - P.b - h - 3).toFixed(1)}" class="sd-ax" text-anchor="middle">${sdEsc(sdNum(x.v))}</text>` : ''}`; }).join('');
   const tick = Math.max(1, Math.ceil(n / 12)), lab = L.map((x, i) => i % tick === 0 ? `<text x="${(P.l + i * bw + bw / 2).toFixed(1)}" y="${H - 12}" class="sd-ax" text-anchor="middle">${sdEsc(String(x.l).slice(0, 12))}</text>` : '').join('');
   return `<figure class="sd-fig"><svg viewBox="0 0 ${W} ${H}" class="sd-svg" role="img" aria-label="${sdEsc(o.label || '')}">${bars}${lab}</svg></figure>`;
@@ -100,8 +100,7 @@ function sdFunnel(steps) {
 const sdKpis = list => `<div class="sd-kpis">${list.map(k => `<div class="sd-kpi"><span>${sdEsc(k[0])}</span><b>${sdEsc(k[1])}</b>${k[2] ? `<em>${sdEsc(k[2])}</em>` : ''}</div>`).join('')}</div>`;
 function sdTableHtml(id, t) {
   const so = SD.sort[id] || { k: t.sort || (t.cols.find(c => c.num) || t.cols[0]).k, d: t.sort ? (t.dir || -1) : -1 };
-  const col = t.cols.find(c => c.k === so.k) || t.cols[0];
-  const rows = t.rows.slice().sort((a, b) => { const x = a[col.k], y = b[col.k]; const r = typeof x === 'number' || typeof y === 'number' ? (+x || 0) - (+y || 0) : String(x == null ? '' : x).localeCompare(String(y == null ? '' : y), sdLang()); return r * so.d; });
+  const rows = t.rows.slice().sort((a, b) => { const x = a[so.k], y = b[so.k]; const r = typeof x === 'number' || typeof y === 'number' ? (+x || 0) - (+y || 0) : String(x == null ? '' : x).localeCompare(String(y == null ? '' : y), sdLang()); return r * so.d; });
   const lim = SD.open[id] ? rows.length : Math.min(rows.length, t.lim || 15);
   const body = rows.slice(0, lim).map(r => `<tr>${t.cols.map(c => `<td class="${c.num ? 'sd-n' : ''}">${c.html ? c.html(r) : sdEsc(c.f ? c.f(r[c.k], r) : r[c.k] == null ? '–' : r[c.k])}</td>`).join('')}</tr>`).join('');
   const more = rows.length > lim ? `<button type="button" class="sd-more" data-sdm="${sdEsc(id)}">${sdEsc(sdTf('Show all {n} rows', { n: sdNum(rows.length) }))}</button>` : '';
@@ -136,8 +135,8 @@ def(2, 'act', 'Retention after 1, 7 and 30 days', 'For each week of sign-up (fir
 });
 def(3, 'act', 'Session start, end and length', 'A session is one visit: from the first to the last event, or the length the browser reported, whichever is longer.', ['game'], I => {
   const t = I.tot('m3.n'), hrs = [...Array(24).keys()].map(h => ({ l: String(h).padStart(2, '0'), v: I.val('m3.h0', String(h)).n, e: I.val('m3.h1', String(h)).n }));
-  return { html: sdKpis([[sdT('Sessions'), sdNum(t.n)], [sdT('Average length'), sdDur(sdAvg(t.s, t.n))], [sdT('Half are shorter than'), sdBk(bkPct(I, 'm3.b', .5) || '?', 'sec')], [sdT('Total time on the site'), sdDur(t.s)]]) + sdLine([{ t: sdT('Sessions'), v: I.day('m3.n').map(x => x.n) }], dayLab(I)) + `<div class="sd-two"><div><h4 class="sd-tt">${sdEsc(sdT('Length'))}</h4>${sdCols(bkItems(I, 'm3.b', 'sec'))}</div><div><h4 class="sd-tt">${sdEsc(sdT('Start hour'))}</h4>${sdCols(hrs, { label: sdT('Start hour') })}</div></div>`,
-    tables: [bkTable(I, 'm3.b', 'sec', sdT('Length')), { title: sdT('Start and end hour'), cols: [cS('l', 'Hour'), cN('v', 'Sessions started'), cN('e', 'Sessions ended')], sort: 'l', dir: 1, rows: hrs }] };
+  return { html: sdKpis([[sdT('Sessions'), sdNum(t.n)], [sdT('Average length'), sdDur(sdAvg(t.s, t.n))], [sdT('Half are shorter than'), sdBk(bkPct(I, 'm3.b', .5) || '?', 'sec')], [sdT('Total time on the site'), sdDur(t.s)]]) + sdLine([{ t: sdT('Sessions'), v: I.day('m3.n').map(x => x.n) }], dayLab(I)) + `<div class="sd-two"><div><h4 class="sd-tt">${sdEsc(sdT('Length'))}</h4>${sdCols(bkItems(I, 'm3.b', 'sec'), { w: 320 })}</div><div><h4 class="sd-tt">${sdEsc(sdT('Start hour'))}</h4>${sdCols(hrs, { label: sdT('Start hour'), w: 320 })}</div></div>`,
+    tables: [bkTable(I, 'm3.b', 'sec', sdT('Length')), { title: sdT('Start and end hour'), cols: [cS('l', 'Hour'), cN('v', 'Sessions started'), cN('e', 'Sessions ended')], sort: 'l', dir: 1, rows: hrs.filter(x => x.v || x.e) }] };
 });
 def(4, 'act', 'Screens per session, entry and exit screen', 'Screens are the home page, a game, the legal pages and the dashboard.', ['game'], I => {
   const t = I.tot('m4.scr'), lab = v => ({ home: sdT('Home'), game: sdT('Game'), legal: sdT('Legal pages'), admin: sdT('Dashboard'), '?': sdT('Unknown') }[v] || v);
@@ -146,12 +145,12 @@ def(4, 'act', 'Screens per session, entry and exit screen', 'Screens are the hom
 });
 def(5, 'act', 'Activity by hour of day and day of week', 'Average number of distinct players active in each hour (Paris time).', [], I => {
   const H = I.d.heat || [], rows = H.map(([d, h, v]) => ({ d: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(sdT)[d], o: d * 24 + h, h: String(h).padStart(2, '0') + ':00', v: +v }));
-  return { html: sdHeat(H), tables: [{ cols: [cS('d', 'Day'), cS('h', 'Hour'), cN('v', 'Average players', v => sdNum(v, 2))], rows }] };
+  return { html: sdHeat(H), tables: [{ cols: [cS('d', 'Day'), cS('h', 'Hour'), cN('v', 'Average players', v => sdNum(v, 2))], sort: 'v', rows: rows.filter(r => r.v > 0) }] };
 });
-def(6, 'act', 'Peak concurrent players', 'Players online at the same time. All-time and daily peaks, with their time, and players online now per game.', ['cc', 'dev', 'acct'], I => {
-  const m = I.d.m6 || {}, D = m.days || [], by = new Map(D.map(x => [x.d, x]));
-  const lab = { ticks5: sdT('Counted every 5 minutes until per-second counts are available.') }[m.src] || '';
-  return { html: sdKpis([[sdT('Online now'), sdNum(m.now || 0)], [sdT('All-time peak'), m.best ? sdNum(m.best.n) : '–', m.best ? new Date(m.best.at).toLocaleString(sdLang()) : ''], [sdT('Highest in this period'), sdNum(Math.max(0, ...D.map(x => x.n)))]]) + sdLine([{ t: sdT('Daily peak'), v: I.days.map(d => (by.get(d) || {}).n || 0) }], dayLab(I)) + (lab ? `<p class="sd-note">${sdEsc(lab)}</p>` : ''),
+def(6, 'act', 'Peak concurrent players', 'Players online at the same time, counted by the server every second: now, the highest second and minute of the last 48 hours, each day and of all time, per game when a game is chosen.', ['cc', 'dev', 'acct'], I => {
+  const m = I.d.m6 || {}, D = m.days || [], by = new Map(D.map(x => [x.d, x])), tm = t => t ? new Date(t).toLocaleString(sdLang()) : '';
+  const h1 = (m.h1 || []).map(([t, n]) => ({ t: new Date(t * 1000).toLocaleTimeString(sdLang(), { hour: '2-digit', minute: '2-digit' }), n }));
+  return { html: sdKpis([[sdT('Online now'), sdNum(m.now || 0)], [sdT('All-time peak'), m.best ? sdNum(m.best.n) : '–', m.best ? tm(m.best.at) : ''], [sdT('Highest second, 48 h'), m.sec ? sdNum(m.sec.n) : '–', m.sec ? tm(m.sec.at) : ''], [sdT('Highest minute, 48 h'), m.min ? sdNum(m.min.n) : '–', m.min ? tm(m.min.at) : ''], [sdT('Highest day in this period'), sdNum(Math.max(0, ...D.map(x => x.n)))]]) + sdLine([{ t: sdT('Daily peak'), v: I.days.map(d => (by.get(d) || {}).n || 0) }], dayLab(I)) + (h1.length ? `<h4 class="sd-tt">${sdEsc(sdT('Last hour, per minute'))}</h4>` + sdLine([{ t: sdT('Players'), v: h1.map(x => x.n) }], h1.map(x => x.t), { h: 130 }) : ''),
     tables: [{ title: sdT('Daily peak'), cols: [cS('d', 'Day'), cN('n', 'Players'), cS('t', 'Time')], sort: 'd', dir: -1, rows: D.map(x => ({ d: x.d, n: x.n, t: x.at ? new Date(x.at).toLocaleTimeString(sdLang(), { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '' })) }, { title: sdT('Online now per game'), cols: [cG, cN('n', 'Players')], rows: (m.games || []).map(x => ({ game: x.g, n: x.n })) }] };
 });
 def(7, 'act', 'Where visitors came from', 'The website that linked to the site, or direct when there was none.', ['game'], I => {
@@ -257,7 +256,7 @@ def(26, 'dev', 'Graphics card family', 'Vendor and broad tier only, worked out o
   const R = vRows(I, 'm26').map(x => { const [v, t] = String(x.raw).split('|'); return Object.assign(x, { ven: v, tier: tier[t] || t }); });
   return { html: sdBars(R.map(x => ({ l: x.ven + ' · ' + x.tier, v: x.n }))), tables: [{ cols: [cS('ven', 'Vendor'), cS('tier', 'Tier'), cN('n', 'Sessions'), shCol], rows: R }] };
 });
-def(27, 'dev', 'Processor cores and device memory', 'Cores in groups, memory as the browser rounds it (at most 8 GB).', ['game'], I => {
+def(27, 'dev', 'Processor cores and device memory', 'Cores in groups, and memory as the browser rounds it.', ['game'], I => {
   const cl = v => ({ '<3': '1–2', '<5': '3–4', '<9': '5–8', '<17': '9–16', '>=17': '17+', '?': sdT('Unknown') }[v] || v);
   return { html: '', tables: [{ title: sdT('Processor cores'), cols: [cS('v', 'Cores'), cN('n', 'Sessions'), shCol], rows: vRows(I, 'm27.c', cl) }, { title: sdT('Device memory'), cols: [cS('v', 'Memory'), cN('n', 'Sessions'), shCol], rows: vRows(I, 'm27.m', v => v === '?' ? sdT('Unknown') : v + ' GB') }] };
 });
@@ -308,7 +307,7 @@ def(36, 'multi', 'Disconnects and reconnects per match', 'A match runs from crea
 });
 def(37, 'multi', 'Party size and duration', 'Players when the match started, and how long the party lasted.', [], I => {
   const t = I.tot('m37.dur'), sz = I.byV('m37.size').sort((a, b) => +a.v - +b.v);
-  return { html: sdKpis([[sdT('Average duration'), sdDur(sdAvg(t.s, t.n))], [sdT('Parties'), sdNum(t.n)]]) + `<div class="sd-two"><div><h4 class="sd-tt">${sdEsc(sdT('Players'))}</h4>${sdCols(sz.map(x => ({ l: x.v, v: x.n })))}</div><div><h4 class="sd-tt">${sdEsc(sdT('Duration'))}</h4>${sdCols(bkItems(I, 'm37.b', 'sec'))}</div></div>`,
+  return { html: sdKpis([[sdT('Average duration'), sdDur(sdAvg(t.s, t.n))], [sdT('Parties'), sdNum(t.n)]]) + `<div class="sd-two"><div><h4 class="sd-tt">${sdEsc(sdT('Players'))}</h4>${sdCols(sz.map(x => ({ l: x.v, v: x.n })), { w: 320 })}</div><div><h4 class="sd-tt">${sdEsc(sdT('Duration'))}</h4>${sdCols(bkItems(I, 'm37.b', 'sec'), { w: 320 })}</div></div>`,
     tables: [{ title: sdT('Players'), cols: [cS('v', 'Players'), cN('n', 'Matches'), shCol], rows: vRows(I, 'm37.size') }, bkTable(I, 'm37.b', 'sec', sdT('Duration'))] };
 });
 def(38, 'multi', 'Public and private parties, invites by message', 'Invites sent are counted on the server from party invite messages; accepted means the player joined from the invite card.', [], I => {
@@ -406,7 +405,7 @@ function sdBar() {
   const st = SD.st, sp = sdSpan(), gl = sdGames().slice().sort((a, b) => String(a.title).localeCompare(String(b.title), sdLang()));
   const opt = (v, t, cur) => `<option value="${sdEsc(v)}"${v === cur ? ' selected' : ''}>${sdEsc(t)}</option>`;
   const cc = (SD.dims && SD.dims.cc) || [];
-  return `<div class="sd-bar" role="search"><label class="sd-f"><span>${sdEsc(sdT('Period'))}</span><select data-sdf="range">${SD_RANGES.map(([v, t]) => opt(v, sdT(t), st.range)).join('')}</select></label>
+  return `<div class="sd-filt" role="search"><label class="sd-f"><span>${sdEsc(sdT('Period'))}</span><select data-sdf="range">${SD_RANGES.map(([v, t]) => opt(v, sdT(t), st.range)).join('')}</select></label>
 <label class="sd-f sd-fd"${st.range === 'c' ? '' : ' hidden'}><span>${sdEsc(sdT('From'))}</span><input type="date" data-sdf="from" value="${sdEsc(st.from || sp.from)}"></label>
 <label class="sd-f sd-fd"${st.range === 'c' ? '' : ' hidden'}><span>${sdEsc(sdT('To'))}</span><input type="date" data-sdf="to" value="${sdEsc(st.to || sp.to)}"></label>
 <label class="sd-f"><span>${sdEsc(sdT('Game'))}</span><select data-sdf="game">${opt('', sdT('All games'), st.game)}${gl.map(g => opt(g.id, g.title, st.game)).join('')}</select></label>
@@ -436,12 +435,12 @@ function sdMsg() {
   m.textContent = t.join(' · ');
   m.classList.toggle('bad', !!SD.err);
 }
-async function sdFetch() {
+async function sdFetch(fresh) {
   const my = ++SD.seq, sp = sdSpan(), st = SD.st;
   SD.busy = true; SD.err = ''; sdMsg();
   try {
     if (!SD.dims) sdRpc('admin_measures_dims', {}).then(x => { if (x && my === SD.seq) { SD.dims = x; const b = SD.el && SD.el.querySelector('.sd-top'); if (b) { b.innerHTML = sdBar(); } } }).catch(() => {});
-    const d = await sdRpc('admin_measures', { p_from: sp.from, p_to: sp.to, p_game: st.game || null, p_cc: st.cc || null, p_dev: st.dev || null, p_acct: st.acct });
+    const d = await sdRpc('admin_measures', { p_from: sp.from, p_to: sp.to, p_game: st.game || null, p_cc: st.cc || null, p_dev: st.dev || null, p_acct: st.acct, p_fresh: fresh === true });
     if (my !== SD.seq) return;
     SD.d = d; SD.busy = false;
     sdDraw();
@@ -468,7 +467,7 @@ function sdWire(el) {
     const t = e.target;
     if (!(t instanceof Element)) return;
     const a = t.closest('[data-sda]');
-    if (a) { if (a.dataset.sda === 'reload') sdFetch(); else if (SD.d) sdDownload(sdName(0), M.map(sdCsvOf).join('\r\n')); return; }
+    if (a) { if (a.dataset.sda === 'reload') sdFetch(true); else if (SD.d) sdDownload(sdName(0), M.map(sdCsvOf).join('\r\n')); return; }
     const c = t.closest('[data-sdcsv]');
     if (c) { const m = M.find(x => x.n === +c.dataset.sdcsv); if (m) sdDownload(sdName(m.n), sdCsvOf(m)); return; }
     const g = t.closest('[data-sdg]');
@@ -493,5 +492,6 @@ function render(el) {
   sdFetch();
 }
 window.Ameplay = window.Ameplay || {};
-Ameplay.statsData = Object.assign(Ameplay.statsData || {}, { render, refresh: () => sdFetch(), measures: () => M.map(m => ({ n: m.n, group: m.g, title: m.t })), csv: () => M.map(sdCsvOf).join('\r\n'), get data() { return SD.d; } });
+Ameplay.statsData = Object.assign(Ameplay.statsData || {}, { render, refresh: () => sdFetch(true), measures: () => M.map(m => ({ n: m.n, group: m.g, title: m.t })), csv: () => M.map(sdCsvOf).join('\r\n') });
+Object.defineProperty(Ameplay.statsData, 'data', { configurable: true, get: () => SD.d });
 })();

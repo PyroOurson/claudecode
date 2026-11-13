@@ -2,7 +2,7 @@
 :root[data-theme="dark"] .sd{--sd-c1:#f07a45;--sd-c2:#2bc48b;--sd-c3:#f2b636;--sd-c4:#ef8fb3;--sd-c5:#5aa7ee;--sd-ok:#4fd6a2}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .sd{--sd-c1:#f07a45;--sd-c2:#2bc48b;--sd-c3:#f2b636;--sd-c4:#ef8fb3;--sd-c5:#5aa7ee;--sd-ok:#4fd6a2}}
 .sd-top{position:sticky;top:calc(var(--top,64px) + env(safe-area-inset-top,0px));z-index:5;display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:var(--r,16px);background:color-mix(in srgb,var(--surface) 92%,transparent);border:1px solid var(--line);box-shadow:var(--shadow-sm);backdrop-filter:blur(10px)}
-.sd-bar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 10px}
+.sd-filt{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 10px}
 .sd-f{display:flex;flex-direction:column;gap:3px;min-width:0;flex:0 1 auto}
 .sd-f[hidden]{display:none}
 .sd-f span{font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.01em}
