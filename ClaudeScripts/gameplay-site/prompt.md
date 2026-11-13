@@ -1,28 +1,49 @@
-# Gameplay Games: master prompt for the next round
+# Gameplay Games: master prompt
 
-This file is a complete brief for Claude (Fable 5.2) running in the Claude Code app on the owner's computer. Paste it as the first message of a new session, or tell Claude: "Read `ClaudeScripts/gameplay-site/prompt.md` and do everything in it."
+This is the complete brief for the next round of work on Gameplay Games (https://gameplaygames.web.app). It runs in the Claude Code app on the owner's computer. It is kept on GitHub at `ClaudeScripts/gameplay-site/prompt.md`, so any new session can start from it.
 
-**Owner, before you run it:** read Part 3.4 (what Claude may do without asking) and change anything you disagree with. Sign in, in the Claude Code app's browser or in a terminal, to the accounts Part 6 lists, so Claude can work on them. Answer the one open question in Part 15.11 ("Krillion"), or let Claude ask you.
+## How to start a session with this prompt
+
+1. Open the Claude Code app in the folder that holds your clone of `PyroOurson/claudecode`.
+2. Choose **Claude Fable 5.2** with **high** effort for this lead session (`/model` and `/effort` in the app).
+3. Send: *"Read `ClaudeScripts/gameplay-site/prompt.md` and do everything in it. Start with Part 0."*
+
+Owner checklist before you send it:
+
+- Read Part 3.4 (what the lead may do without asking you). Change any line you disagree with.
+- Be signed in on this computer to GitHub (`gh auth login`), Firebase (`npx firebase-tools login`), Supabase (`npx supabase login`), Cloudflare (`npx wrangler login`) and, if you publish from Cloud Shell, Google Cloud. The lead will check and ask for what is missing. Never paste passwords or tokens into the chat.
+- Answer Part 15, question 1 ("Krillion") when the lead asks.
 
 ---
 
-## Part 1. Who you are and what this is
+## Part 0. Read first
 
-You are the lead engineer, designer, tester and maintainer of **Gameplay Games** (https://gameplaygames.web.app), a free browser game portal. Its players are mostly students, many of them minors, on school laptops, Chromebooks, home computers and phones, often on school networks that filter traffic. The owner is a student who built the site and wants it to be excellent.
+You are the lead of this round. You are the owner and long-term maintainer of the Gameplay Games code base, and its design is up to you, within the rules in Part 3.
 
-The owner's priorities, in this order when they conflict: **game quality**, reliability, functionality, performance, user experience. All five are in scope.
+Before you change anything, read these files in `ClaudeScripts/gameplay-site/`: `README.md`, `NEXT_AI.md`, `LEDGER.md`, `GOLIVE.md`, `source/BUILD.md`, `source/t/GAMEPASS.md`, `source/t/PORTALPASS.md`. Then run `git log --oneline -30` and `git status`. Make sure pull request #7 (voxel sandbox fixes and documentation) is merged into `mainbranch-claude-code`; if it is still open, merge it into your working branch.
 
-You are running on the owner's own computer, through the Claude Code app. That is different from earlier rounds, which ran in a cloud sandbox with no graphics card, no direct network and an overloaded processor. Here you have:
+Create your working branch from `mainbranch-claude-code` (for example `claude/round-21`). Start staging (Part 2.3) and run the whole test suite once, so you know what passes before you change anything.
 
-- a real graphics card, so 3D games can be judged at their real frame rate and smoothness;
-- a real home network, a browser the owner may already be signed in to, and the owner's command-line logins (Google Cloud, Firebase, Supabase, Cloudflare, GitHub) if the owner set them up;
-- the owner nearby, who can test on a phone, another computer or the school network when you ask.
+Before you start, say in a line what you are about to do. Brief updates while you work help the owner follow along. Every few tool calls, give a one-line update on where things stand.
 
-Use these. Most of the bugs the previous rounds missed were missed because nobody could see the games running normally. That excuse is gone.
+---
 
-The previous round (November 2026, pull requests #6 and #7) was a large platform overhaul. It is live. Read `ClaudeScripts/gameplay-site/LEDGER.md`, `NEXT_AI.md`, `GOLIVE.md`, `README.md` and `source/BUILD.md` before changing anything. They say what exists, how it was tested and what is unfinished.
+## Part 1. The mission
 
-This round has eleven workstreams (Parts 7 to 17). Do all of them. Do not stop while work is owed. When something is blocked, say exactly what blocks it and what you need, then carry on with everything else.
+Gameplay Games is a free browser game portal: about 170 games, accounts, friends, direct messages, online parties, an idea box and an admin dashboard. Its players are mostly students, many of them minors, on school laptops, Chromebooks, home computers and phones, often on filtered school networks. The owner is a student who built it and wants every game to feel like the work of a professional game studio.
+
+The owner's priorities, in this order when they conflict: **game quality**, reliability, functionality, performance, user experience.
+
+This round has these goals:
+
+1. Rebuild the most popular games so that they play like the famous games they are based on, as a professional team would build them (Part 4 and Appendix A).
+2. Add the new games the owner asked for, each with its own full brief (Appendix B).
+3. Playtest every game from start to end, all in parallel, with a real player's eye for small details, and fix everything found (Parts 5 and 6).
+4. Bring every other existing game up to the same standard (Appendix C).
+5. Merge every SQL file into one, delete old and unwanted files, deploy the relay and the TURN service, finish the security work, gather test data (Parts 7 to 11).
+6. Update GitHub, the owner's local copy and the live site (Part 13), then write a handoff for the next session (Part 14).
+
+Do all of it. The previous round ran in a cloud sandbox without a graphics card, which is why it missed visual bugs. This computer has a real graphics card, a real network and the owner nearby. Use them.
 
 ---
 
@@ -33,514 +54,493 @@ This round has eleven workstreams (Parts 7 to 17). Do all of them. Do not stop w
 | Thing | Value |
 |---|---|
 | Live site | https://gameplaygames.web.app (Firebase Hosting, project `claudecode-7e172`, site `gameplaygames`) |
-| GitHub Pages copy | https://pyroourson.github.io/claudecode/ (served from the repository root: `index.html` and `gameplay/`) |
-| Repository | `PyroOurson/claudecode`, default branch `mainbranch-claude-code` |
-| Project folder | `ClaudeScripts/gameplay-site/` |
-| Database and accounts | Supabase project `uafouyvtcijptspjbsqf` (dashboard: https://supabase.com/dashboard/project/uafouyvtcijptspjbsqf) |
-| Relay for filtered networks | Cloudflare Worker `gameplay-api` at https://gameplay-api.vitalang.net (code: `server/cloudflare-worker.js`) |
-| Second relay (not in use) | `server/setup.py`, a Debian home server at `gameplaygames.vitalang.net` |
+| GitHub Pages copy | https://pyroourson.github.io/claudecode/ (the repository root: `index.html` and `gameplay/`) |
+| Repository | `PyroOurson/claudecode`, default branch `mainbranch-claude-code`; this project lives in `ClaudeScripts/gameplay-site/` |
+| Database and accounts | Supabase project `uafouyvtcijptspjbsqf`; SQL editor: https://supabase.com/dashboard/project/uafouyvtcijptspjbsqf/sql/new |
+| Relay for filtered networks | Cloudflare Worker `gameplay-api` at https://gameplay-api.vitalang.net (code: `server/cloudflare-worker.js`, notes: `server/README.md`) |
 | Network self-test page | https://gameplaygames.web.app/check |
-| Publishing | `deploy.py` (downloads a branch from GitHub and deploys it with the Firebase command-line tool; `--preview` gives a temporary address) |
+| Publishing | `deploy.py <branch>` (live) or `deploy.py <branch> --preview` (temporary address) |
+| Owner's local update script | `ClaudeScripts/update.py`: downloads every file listed in `files.txt` from `mainbranch-claude-code` into the local folder and removes files that left the list |
 
 ### 2.2 How the code is organised
 
-- `source/w/new/` is the portal: `body.html`, the CSS files, and the scripts `diag.js`, `consts.js`, `legal.js`, `tail.js` (home page, game page, settings, analytics queue), `auth.js` (accounts and sync), `admin.js` (dashboard), `social.js` (friends, messages, presence, notifications), `ideas.js` (idea box and attachments), `input.js` (controls and gamepads), `track.js` (analytics), `site.js` (site switches, announcements, favourites), `net.js` (party lobby and connections), `changelog.js`, `diagui.js`, `i18n.js` and the `i18n_*.json` translation files (six languages: English, French, Spanish, German, Italian, Portuguese).
-- `source/w/assemble.py` splices `source/w/parts_orig/001_portal.js` and `source/w/new/*` into `source/w/parts/001_portal.js` and `000_pre_000.html` (generated, not in git) and writes the legal texts to `source/w/parts/002_legal.js` (also generated), which loads only when a legal page opens.
-- Games are part files `source/w/parts/NNN_g_<id>[+<id>...].js`. Each calls `Ameplay.register({ id, title, mount(root, api) { ... } })`. The game API (`api.loop`, `api.save`, `api.load`, `api.best`, `api.sfx`, `api.gl`, `api.net`, `api.timeout`, `api.on` and more) is in `source/w/parts_orig/001_portal.js` (`makeApi`); online play is described in `source/w/agents_net/API.md`. Only files listed in `source/w/parts/_order.json` are built into the site.
-- Generated games: the voxel sandbox (`blockcraft-3d`) comes from `source/w/agents2/minecraft/src/*.js` via `python3 source/w/agents2/minecraft/mk.py`; the endless runner (`sky-runner`) from `source/w/agents2/subway/src/*.js` via its `build.py`; car soccer (`rocket-soccer`) from `source/rl/seg/*.js` via `python3 -I tools/join.py lead all` in `source/rl`, then copied to `source/w/parts/115_g_rocket-soccer.js` with line endings converted to LF.
-- Covers: `source/w/covers2/<id>.webp`, 960x600. The flat-style art the site uses for its own cover style is drawn by code in `source/w/agents2/covers/flat/art/`.
-- The site build: `source/w/build2.py` encrypts the site behind a password gate (`source/w/gate2.js`). The build needs the site key: while the site password is switched off, an anonymous call to `rpc/get_gate_slot` on the Supabase REST API returns it in the field `o`. Use it as `GATE_KEY` and the whole JSON answer as `GATE_SLOT`. Builds with the same key keep visitors unlocked; only changed files get new names.
-- Database: `source/w/supabase/schema.sql` holds everything up to round 19 and can be run again on an up-to-date database. Round files `round16_moderation.sql` to `round19b_analytics_cleanup.sql` were applied to production on 13 November 2026. There is also an older copy under `ClaudeScripts/gameplay-site/supabase/` (see Part 7).
-- Tests: `source/t/` holds the staging tools (`stage.py`, `serve.js`, `site.js`, `party_lib.js`, `stage_api.js`), the game harness (`play.js`, used with `source/w/minibuild.py`) and browser tests in `source/t/tests/`: `load_sequence.js`, `gate_locked.js`, `party.js` (12 two-browser scenarios), `fixes.js` (13 scenarios), `dm.js`, `announce.js`, `legal_pages.js`, `smoke_all.js` (opens and starts every game). They all passed at the end of the last round.
-- Shared briefs for game work: `source/t/GAMEPASS.md` (game rules, harness, report format) and `source/t/PORTALPASS.md` (portal rules).
+- **Portal**: `source/w/new/` (`body.html`, CSS files, and the scripts `diag.js`, `consts.js`, `legal.js`, `tail.js`, `auth.js`, `admin.js`, `social.js`, `ideas.js`, `input.js`, `track.js`, `site.js`, `net.js`, `changelog.js`, `diagui.js`, `i18n.js`, plus `i18n_*.json` translations in English, French, Spanish, German, Italian and Portuguese). `source/w/assemble.py` builds `source/w/parts/001_portal.js`, `000_pre_000.html` and `002_legal.js` from them (generated, not in git).
+- **Games**: part files `source/w/parts/NNN_g_<id>[+<id>...].js`, each calling `Ameplay.register({ id, title, mount(root, api) })`. The game API (`api.loop`, `api.save`, `api.load`, `api.best`, `api.sfx`, `api.gl`, `api.net`, `api.timeout`, `api.on` and more) is in `source/w/parts_orig/001_portal.js` (`makeApi`); online play is in `source/w/agents_net/API.md`. Only files listed in `source/w/parts/_order.json` are built into the site.
+- **Generated games**: the voxel sandbox from `source/w/agents2/minecraft/src/*.js` (`python3 source/w/agents2/minecraft/mk.py`); the endless runner from `source/w/agents2/subway/src/*.js` (its `build.py`); car soccer from `source/rl/seg/*.js` (`python3 -I tools/join.py lead all` in `source/rl`, then copy `build/lead_all.js` to `source/w/parts/115_g_rocket-soccer.js` with LF line endings).
+- **Covers**: `source/w/covers2/<id>.webp`, 960x600, drawn by the cover tools in `source/w/agents2/covers/`.
+- **Site build**: `source/w/build2.py` encrypts the site behind the password gate (`gate2.js`). The build needs the site key: while the site password is off, an anonymous POST to `rpc/get_gate_slot` on the Supabase REST API returns it in the field `o`. Use it as `GATE_KEY`, and the whole JSON answer as `GATE_SLOT`. With the same key, only changed files get new names and visitors stay unlocked.
+- **Database**: `source/w/supabase/schema.sql` (everything up to round 19) and the round files up to `round19b_analytics_cleanup.sql`, all applied to production on 13 November 2026. An older copy sits in `ClaudeScripts/gameplay-site/supabase/`.
+- **Tests**: `source/t/` holds staging tools (`stage.py`, `serve.js`, `site.js`, `party_lib.js`, `stage_api.js`), the game harness (`play.js` with `source/w/minibuild.py`) and browser tests in `source/t/tests/`: `load_sequence.js`, `gate_locked.js`, `party.js`, `fixes.js`, `dm.js`, `announce.js`, `legal_pages.js`, `smoke_all.js`. All passed at the end of the last round.
 
 ### 2.3 Staging
 
-A private copy of the whole platform runs on one computer: a local Supabase stack in Docker plus a build of the site that talks to it. `source/BUILD.md` ("Staging") explains how to start it: `npx supabase start`, load `schema.sql`, `python3 t/stage.py open`, `node t/serve.js w/site_stage 8080`. All portal changes are tested there before anything goes near production. The tests create and use the accounts `gp_tester`, `gp_tester2` (diagnostics on), `ann_player`, `bob_player`, `cat_player`, `adm_dan`, `adm_eve` and the owner account `tester_one`; recreate them if the stack is new (see `t/party_lib.js` for the e-mail addresses and passwords used on staging).
+A private copy of the platform runs on this computer: a local Supabase stack in Docker plus a build of the site that talks to it. `source/BUILD.md` ("Staging") explains it: `npx supabase start`, load the database file, `python3 t/stage.py open`, `node t/serve.js w/site_stage 8080`. Test portal changes there before anything goes near production. The tests use the accounts named in `source/t/party_lib.js`; create them if the stack is new.
 
 ---
 
-## Part 3. Ground rules
+## Part 3. Rules
 
-### 3.1 Repository rules (from `CLAUDE.md`, they override everything else)
+### 3.1 Repository rules (from `CLAUDE.md`; they come first)
 
-- Put anything you create from scratch in `ClaudeScripts/`, one subfolder per project. This project lives in `ClaudeScripts/gameplay-site/`.
+- Anything created from scratch goes in `ClaudeScripts/`, one folder per project. This project is `ClaudeScripts/gameplay-site/`.
 - `NaoiseGabi/` holds the owners' other projects. Do not touch it.
-- Everything the owner runs must be Python that works with Python 3.9 on macOS (`/usr/bin/python3`) and needs only packages from `NaoiseGabi/requirements.txt`.
-- Never add comments inside code.
-- Keep `index.html` at the repository root: it is the GitHub Pages page.
-- After adding, removing or renaming files, regenerate `files.txt` with `git ls-files > files.txt` (it is what `ClaudeScripts/update.py` downloads).
-- Never use spaces or shell symbols such as `&` in file or folder names.
+- Everything the owner runs is Python that works with Python 3.9 on macOS (`/usr/bin/python3`) and needs only packages from `NaoiseGabi/requirements.txt`.
+- No comments inside code.
+- `index.html` stays at the repository root (GitHub Pages).
+- After adding, removing or renaming files, regenerate `files.txt` with `git ls-files > files.txt`.
+- No spaces or shell symbols such as `&` in file or folder names.
 
-### 3.2 Code rules
+### 3.2 Engineering rules for every game
 
-- Match the style of the surrounding code: no comments, compact functions, the same helpers (`$`, `esc`, `toast`, `track`, `sbRest`, `auT`, `SB`, `S.prefs`, `setOpen`, `vis` and so on, all in one scope).
-- No new external network dependencies in games. Art, sound and models are made in code or stored as files in the repository.
-- Every visible string goes through the translation layer and gets a row in an `i18n_*.json` file with all six languages.
-- Never call `WEBGL_lose_context.loseContext()` or `renderer.forceContextLoss()`, and never create throwaway WebGL contexts. On machines without a graphics card each one froze the page for seconds to minutes; the last round removed all of them.
-- Every game loop steps time by measured elapsed time with a fixed simulation step and an accumulator, clamps long frames, and gives the same outcome at 30, 60 and 144 frames per second.
-- Every save is validated on load: wrong types, missing fields, old versions, absurd sizes. A bad save never stops a game from starting and never overwrites a good save.
-- An online host never simulates only on animation frames: a hidden host tab must not freeze the match for everyone (step from a timer using elapsed time when no animation frame has run for about 300 ms, and never step twice).
-- Nothing a player must not see (other hands, hidden roles, the draw pile, fog of war) is ever sent to that player, including in snapshots.
+- A fixed simulation step with an accumulator, using measured elapsed time, with long frames clamped. The same inputs give the same outcome at 30, 60 and 144 frames per second.
+- Every save validated on load (wrong types, missing fields, old versions, absurd sizes). A bad save never stops the game from starting and never overwrites a good one.
+- An online host keeps simulating when its tab is hidden: step from a timer using elapsed time when no animation frame has run for about 300 ms, and never step twice for the same time.
+- Nothing hidden from a player (other hands, roles, fog of war, the draw pile) is ever sent to that player.
+- No `loseContext()`, no `forceContextLoss()`, no throwaway WebGL contexts. They freeze pages on weak machines.
+- No allocations inside the frame loop; no work for things off screen; adaptive quality in 3D games (the shared helper from the last round lowers resolution and effects when frames run long, and raises them again).
+- Every visible string goes through the translation layer, with a row in an `i18n_*.json` file in all six languages.
+- No new external network dependencies in games. Art, sound, music and models are made in code or stored in the repository.
+- Match the style of the surrounding code.
 
-### 3.3 Faithfulness and originality: where the line is
+### 3.3 Faithful gameplay, original assets
 
-The owner's position, which this brief follows: **the idea of a game is free to use; copying a game's actual assets without permission is not.** In practice:
+The owner's position, which this brief follows: **the idea of a game is free to use, and copying its actual assets is not.** In practice:
 
-- **Make every game play like the best games of its kind.** Mechanics, rules, controls, physics, movement, game feel, difficulty curves, menus that work the way players expect, inventory and interface conventions, scoring, progression systems, AI behaviour, online modes. A player who loves the genre should feel at home within ten seconds. Study how the well-known games of each genre behave, from your own knowledge and from public documentation such as rule books, wikis and manuals, and match that behaviour closely.
-- **Make the identity original.** Names, characters, logos, artwork, textures, 3D models, sound effects, music, maps and level layouts, story text and item or card wording are your own. Never download, trace, copy or embed assets from a commercial game, its store pages, its wiki images, game portals or fan sites. Draw everything in code or create it yourself.
-- **This applies to the games you add and to the content you touch.** When you find copied assets in existing files (downloaded cover art, copied texts, copied map layouts), replace them with original ones and record what you replaced.
-- **Catalogue titles** of existing games are the owner's choice and stay as they are unless the owner asks you to change them. New games get their own titles.
+- **Make each game play like the famous game of its kind.** Rules, systems, controls, movement speeds, jump heights, gravity, physics, character proportions, camera, world generation behaviour, progression, economy, difficulty curves, menus and interface conventions, sounds at the right moments, online modes. A regular player of the original should feel at home within ten seconds. Use your own knowledge and public documentation (manuals, rule books, wikis, published values) to match these closely.
+- **Make every asset original.** Textures, 3D models, character designs, artwork, logos, sound effects, music, map and level geometry, story text, and the wording of items, cards and abilities are made by you. Never download, trace or embed assets from a commercial game, its store pages, its wiki images, game portals or fan sites.
+- **Names**: generic, real-world things keep their real names (stone, iron, oak, wolf, zombie, rifle, pistol, bomb, tower). Things the original game invented (its own creatures, materials, dimensions, characters, card and ability names, map names) get original names and designs that fill the same role in play.
+- **Maps and levels** follow the same proven design principles as the original (for example, in a tactical shooter: two bomb sites, a middle area, connectors, rotation times, sight lines), with original layouts and themes. Do not rebuild a famous map.
+- The catalogue titles of existing games stay as the owner set them. New games get the titles in their briefs, which the owner may change.
+- When you find copied assets in existing files (downloaded cover art, copied texts, copied layouts), replace them with original ones of at least the same quality and record what you replaced.
 
-### 3.4 What you may do without asking, and what needs the owner first
+### 3.4 What the lead and the agents may do without asking
 
-The owner has approved these in advance:
+The owner approved these in advance:
 
-- Edit any code and file in `ClaudeScripts/gameplay-site/`; run builds, staging and tests; install development tools; create test accounts on staging.
-- Create new games and assets; rework existing games; add the twelve finished but unlisted games to the catalogue once they meet Part 13 and Part 15.
-- Delete obsolete files inside `ClaudeScripts/gameplay-site/` following Part 7 (reference check, one separate commit, a list in the report).
-- Write the single database file of Part 8 and run it on staging as often as needed.
-- Use subagents and git worktrees as described in Part 18.
-- Push branches and open pull requests on `PyroOurson/claudecode`.
-- Deploy **preview** channels with `deploy.py <branch> --preview` at any time.
-- Deploy the relay worker and add its secrets (Part 9) once the owner is signed in to Cloudflare.
-- Create a test account on production through the admin dashboard and switch Diagnostics on for it (Part 11).
+- Edit any file in `ClaudeScripts/gameplay-site/`, the repository root `index.html`, `gameplay/` and `files.txt`; run builds, staging, tests and playtests; install development tools.
+- Create new games, assets and covers; rebuild existing games; add new games to the catalogue once they pass Part 6.
+- Delete files following Part 7 (reference check first, one separate commit, a list in the report).
+- Write the single database file (Part 8) and run it on staging as often as needed.
+- Start the agents in Part 4 and create git worktrees for them.
+- Push branches, open pull requests, and merge pull requests into `mainbranch-claude-code` after the release check in Part 13 passes.
+- Deploy preview channels at any time, and deploy to the live site after the release check passes.
+- Deploy the relay worker and set its secrets (Part 9).
+- Create test accounts on staging; create one test account on production through the admin dashboard and switch Diagnostics on for it (Part 11).
+- Run `ClaudeScripts/update.py` and delete old copies of this project on this computer (Part 13).
+- Retry any command or request that is safe to repeat, wait and retry after timeouts, and restart local servers and browsers.
 
-Ask the owner first, and say exactly what you want to do, before:
+Ask the owner first, saying exactly what you will do and why, before:
 
-- running SQL on the **production** database (show the exact file and what it changes; it must be additive and safe to run twice);
-- merging into `mainbranch-claude-code` and deploying to the **live** site (only after the full release check of Part 19 passes);
-- deleting or rewriting any production data, including analytics;
+- running SQL on the production database (show the file, the sections that change things, and confirm it is additive and safe to run twice);
+- deleting or rewriting any production data, analytics included;
 - weakening any security protection (passwords, e-mail confirmation, sign-in, admin access, rate limits on sensitive actions);
 - sending messages, e-mails or notifications to real users;
-- anything outside `ClaudeScripts/gameplay-site/`, the repository root `index.html`, `gameplay/` and `files.txt`.
+- deleting anything outside `ClaudeScripts/gameplay-site/` and the repository's generated site files.
 
-Never sign out of the owner's accounts, change their credentials, or act on an account beyond what the task needs. Treat the owner's e-mail address and personal details as private: never send them to outside services.
+Never sign out of the owner's accounts or change their credentials. Treat the owner's e-mail address and personal details as private: never send them to outside services.
 
----
+### 3.5 Finishing work
 
-## Part 4. How to work
+Please avoid stopping while you still owe work the owner asked for. Be persistent and do not stop unless needed. Status notes are welcome, as is clarifying open decisions with the owner, but carry on with work that does not depend on the owner's answer. If you notice yourself inviting the owner to redirect you or offering to wait, proceed on the next part of the task instead. You may meet ordinary obstacles like errors, timeouts, locked files, empty results or failing tools. Diagnose them first, and when they are not real blockers, work through them with the access you have (wait and retry, fix the request, use another tool or source). If someone clearly decided something is a hard blocker, such as a file marked not to be touched, access that was intentionally withheld, or a safety guardrail, leave it alone, say plainly what you found, and look for another safe way to finish the task. Stopping before the task is complete is very rarely merited: only when the task cannot move forward without the owner's input, or where the blocker is deliberate. This does not override the confirmations listed in Part 3.4.
 
-1. **Orient first.** Read the documents listed in Part 1. Run `git log --oneline -30`. Start staging and run the whole test suite once, so you know what passes before you change anything.
-2. **Keep a ledger.** Update `LEDGER.md` as you go: for every item, the status (Done, Partly, Not done, Blocked, Declined) and how it was checked. Never mark something done on a code change alone: it is done when you saw it work.
-3. **Play, do not just read.** For every game and every page, use it the way a picky player would, on this computer with a real graphics card, at desktop size and at phone size with touch, and look closely at the screen. The previous rounds proved logic with headless simulations; that found many bugs but missed the kind described in Part 5. Both are needed.
-4. **Test multiplayer for real.** Two or more browsers on this computer, then a second device on the same Wi-Fi, then a phone on mobile data, then (with the owner's help) the school network and a VPN. Record which combinations you tested and which you could not.
-5. **Fix, then verify by doing it again.** A fix counts when the original steps no longer show the bug and nothing nearby broke. Add an automated test where the bug could come back.
-6. **Use the diagnostics recorder.** Test accounts with Diagnostics on record errors, requests, websocket frames, WebRTC events, party steps, inputs and frame rate (`Ameplay.diag.dump()` in the page, and the Diagnostics tab of the admin dashboard). Use it to find the cause of every networking or timing bug instead of guessing.
-7. **Report in plain words.** Short progress notes while you work. A final report that stands on its own (Part 20). No invented abbreviations.
+### 3.6 Communicating clearly
+
+Write for an intelligent but low-context reader. The owner has not seen your tool calls, your reasoning or the files you opened, and may be switching in from other work. Messages should be self-contained. Put the key points in the first few sentences. Use plain words and full sentences. Do not use a term or abbreviation you made up during the work: say what the thing is. Use short sentences, active voice, and the same word for the same thing. Use prose where ideas connect and bullets for lists of separate items.
 
 ---
 
-## Part 5. The bugs that were missed, and how to find them
+## Part 4. The team
 
-On 13 November 2026, right after the overhaul went live, the owner found three bugs in the voxel sandbox within minutes. All the automated tests had passed. They show what to look for.
+### 4.1 Models and effort
 
-### 5.1 The three examples
+| Who | Model | Effort | Work |
+|---|---|---|---|
+| Lead (this session) | Claude Fable 5.2 | high | Orchestration, networking, accounts, security, database, relay, the portal, merging, release, handoff |
+| Five popular-game agents | Claude Fable 5.2 | xhigh | The recreations of the most popular games (Appendix A), one agent each |
+| All other agents | Claude Opus 5.5 | xhigh | The other new games (Appendix B) and the existing, less popular game groups (Appendix C) |
 
-1. **The player was missing a leg in the inventory screen.** The 3D player model and the small 2D preview in the inventory read the player's skin image from different places. The 3D model took the left leg from one region of the skin image; the preview took it from another region that the skin painter never filled. The result was a transparent leg. No error, no crash, nothing for a test to catch: only visible by looking.
-2. **Dragging a stack across slots gave uneven amounts.** Dragging 64 blocks over four slots should give 16 each. It gave 10, 20, 20 and 10. The code that remembers which slots the drag has already passed compared slot objects, but the list of slots is rebuilt every frame, so the same slot counted as new on every mouse movement. Reading the code, the logic looked right. Only real mouse movement, with many move events per slot, showed it.
-3. **Stack counts were half hidden.** Each slot was drawn with its background and then its item and count, one slot after the other, so the next slot's background covered the last digit of the previous count. Again: visible only by looking closely.
+When you start an agent with the Agent tool, set `model` and `effort` explicitly as in this table. Use only five Fable 5.2 agents in total.
 
-### 5.2 The classes of bugs to hunt in every game and page
+### 4.2 The five popular-game agents (Fable 5.2, xhigh)
 
-Go through this list for every game and every screen. Each line is a class of bug that tests usually miss.
+| Agent | Games, in order | Brief |
+|---|---|---|
+| F1 | The voxel sandbox (`blockcraft-3d`, listed as Minecraft), then the 2D mining sandbox (`terraria`) | Appendix A.1 |
+| F2 | The new 3D tactical 5v5 shooter, then the new fast arena shooter | Appendix A.2 |
+| F3 | The real-time card tower duel (from the unlisted `289_g_clash-royale.js`), then the tower defence game (`bloons-td`) | Appendix A.3 |
+| F4 | The arena brawler (`brawl-stars`), then the social deduction game (`among-us`) | Appendix A.4 |
+| F5 | The endless runner (`sky-runner`), then car soccer (`rocket-soccer`), then the low-poly track racer (from the unlisted `297_g_polytrack.js`) | Appendix A.5 |
 
-1. **Two drawings of the same thing that disagree**: a model and its preview, a minimap and the world, a card in hand and the same card on the table, the cover and the title screen, the player in first person and in third person, the item icon and the item in hand.
-2. **Draw order and clipping**: text covered by the next element, outlines cut off, shadows drawn over the object they belong to, transparent parts sorted wrongly in 3D, tooltips under other panels, numbers overflowing their box.
-3. **Identity and stale state**: objects rebuilt each frame or each render but compared by identity; references kept to old objects after a restart; listeners registered twice after reopening; a value cached from a previous round, level or game.
-4. **Interaction conventions of the genre that are missing or wrong**: everything a regular player of the genre does without thinking (Part 13 lists them per genre). If a player of the genre would try it and it does nothing or something odd, it is a bug.
-5. **Input edge cases**: holding two keys, releasing a key while the tab loses focus, a mouse button released outside the canvas, right-click opening the browser menu, the wheel scrolling the page instead of the game, keys still held after pausing, touch with two fingers, a gamepad plugged in mid-game, key repeat, keyboard layouts other than QWERTY (AZERTY is common for French players).
-6. **Animation and timing**: animations that replay when they should not, jerky interpolation, things that move faster at high frame rates, timers that keep running while paused or in a background tab, sounds that play twice or keep playing after closing the game, a countdown that skips a number.
-7. **Off-by-one and rounding**: a score that shows 99 when it should be 100, a health bar empty at 1 point, a level counter starting at 0, percentages that do not add up, a timer that shows 0:60.
-8. **Layout and sizes**: phone portrait and landscape, small laptop screens (1366x768), large screens, browser zoom at 125 and 150 percent, the site's theater and fullscreen modes, long translated strings (German and French are longer), long player names.
-9. **Visual consistency**: different fonts, colours, button styles or icon styles between screens of the same game; low-resolution or blurry art next to sharp art; a placeholder shape left in; a missing texture showing magenta or black.
-10. **Feedback**: actions with no sound or animation, buttons that give no sign they were pressed, no indication of whose turn it is, no warning before something irreversible, a loading wait with nothing on screen.
-11. **Restart and repeat**: play, lose, restart five times, close the game, reopen it, switch to another game and back. Look for leaked timers, growing memory, doubled sounds, stale scores, music that stacks.
-12. **Saves and progress**: progress lost when the tab closes during a save, a best score that saves the wrong value, a save from an old version that breaks the new one, progress that differs between two devices of the same account.
-13. **Online play**: a guest who joins late, refreshes, leaves, comes back, or has a slow connection; the host's tab in the background; two players doing the same thing at the same moment; rematch and back to lobby; chat during the game.
-14. **AI behaviour**: bots that get stuck on walls, walk in circles, never use part of their kit, react instantly (unfair), or cheat by reading hidden information.
+Each agent finishes its first game completely (playable, playtested from start to end, bugs fixed, committed) before it starts the next.
 
-### 5.3 Method
+### 4.3 The Opus 5.5 agents (xhigh)
 
-- For each game, write a short checklist before playing: the genre conventions from Part 13 plus anything the game's own help or menus promise. Then play through it and tick each line, with notes.
-- Record a few seconds of video or a sequence of screenshots when something looks wrong, and keep them in your scratch folder for the report.
-- Look at screenshots at full size. Zoom into areas with text, numbers, icons and edges.
-- When a bug class shows up in one game, search all the other games for the same pattern in the code (for example, all places where slot or card objects are compared by identity, or all places where a list is drawn item by item with backgrounds).
+- One agent per new game in Appendix B (one agent may take two small ones).
+- One agent per existing game group in Appendix C.
+- Start as many at once as this computer handles comfortably. Watch the processor and memory; if the machine slows, start fewer at a time. Each agent runs its own browser tests one at a time.
 
----
+### 4.4 How to start an agent
 
-## Part 6. Set-up on this computer
+- Create a git worktree yourself from your working branch: `git worktree add ../wt-<name> -b work-<name> <your branch>`. Name its path in the brief. (A worktree created by the Agent tool starts from the default branch and misses your latest changes.)
+- Paste the game's brief from the appendix verbatim, then add: the worktree path; Parts 3.1 to 3.6, 5 and 6 of this prompt (or tell it to read them from `ClaudeScripts/gameplay-site/prompt.md` in its worktree); and the line "Do not edit the portal, other agents' files, the repository root or the site build, and do not push. Commit to your branch when done."
+- Tell each agent how long it may work. The popular-game agents have no fixed limit: their games must reach the standard of their brief. Other agents: aim for a few hours per game group.
+- Each agent ends with a report in the format of Part 6.6.
 
-1. Find out the operating system and what is installed: Git, Node.js 18 or later, Python 3.9 or later, Docker, Playwright with Chromium (`npm i -g playwright` then `npx playwright install chromium`), the Supabase command-line tool (`npx supabase`), the Firebase command-line tool (`npx firebase-tools`), Wrangler for Cloudflare (`npx wrangler`), and the GitHub command-line tool `gh`. Install what is missing for development; tell the owner what you installed.
-2. Check which accounts are signed in: `gh auth status`, `npx firebase-tools login:list`, `npx supabase projects list`, `npx wrangler whoami`, `gcloud auth list`. For anything missing, ask the owner to sign in (in a terminal or in the app's browser) and wait. Never ask for passwords or tokens in the chat.
-3. Clone or update the repository, create a working branch from `mainbranch-claude-code` (for example `claude/round-21`), and start staging (Part 2.3).
-4. Measure the machine: run one 3D game and record its frame rate, so you know what "smooth on this computer" means. School Chromebooks are much weaker: also test with the browser's CPU throttling (four times slower) and a capped window size, and use the games' own adaptive quality.
-5. Keep large temporary files (screenshots, recordings, builds) in a scratch folder outside the repository.
+### 4.5 Reviewing agents' work
+
+Read every report critically. Before you merge a branch, open each changed game yourself, play it from start to end, look at the screenshots and recordings the agent captured, and run `smoke_all.js`. If an agent stopped early or something does not meet its brief, send it back with a precise list.
 
 ---
 
-## Part 7. Workstream 1: clean up the project
+## Part 5. The details a real player notices
 
-The project folder holds files from earlier rounds that are no longer used. Remove them so the next person finds only what matters.
+On 13 November 2026, right after the last round went live, the owner found three bugs in the voxel sandbox within minutes. Every automated test had passed. They show what to look for.
 
-1. List every tracked file under `ClaudeScripts/gameplay-site/` with its size and the last commit that touched it.
-2. For each candidate below, search the whole repository for references (file name, folder name, imports, build scripts, documentation). Delete it only if nothing that is still used refers to it, or update the reference at the same time.
-3. Candidates found at the end of the last round (check each one; do not delete blindly):
-   - `ClaudeScripts/gameplay-site/__pycache__/deploy.cpython-313.pyc` (a compiled Python file committed by mistake) and any other `__pycache__` folders in git.
-   - `ClaudeScripts/gameplay-site/supabase/` (an older copy of `schema.sql`, `GUIDE.md` and `setup.py`; the current database files are in `source/w/supabase/`). Move whatever is still useful (the setup guide, `setup.py`) to the current location, make `setup.py` use the single file of Part 8, then delete the old folder.
-   - Old briefs from earlier rounds in `source/w/`: `MASTER.md`, `NETBRIEF.md`, `ROUND3.md`, and anything else that describes a finished round. Keep their useful facts by moving them into `BUILD.md` or `README.md` first.
-   - The old build path: `source/w/build.py`, `source/w/gate.js`, `source/w/meta2.js`, `source/w/meta_rows.py`, `source/w/split.py`, `source/w/stat.json`, `source/w/orig_order.txt`. Some are still read by `assemble.py`, `build2.py` or `t/pbuild.py`: keep those or remove the dependency.
-   - `source/w/agents_perf/`, `source/design/`, `source/notes/`, `source/skfb/`: keep what documents something current, move it to one `notes/` folder, delete the rest.
-   - `COVER_SOURCES.md`: it lists covers made from downloaded official artwork. Once Part 16 has replaced those covers, delete it.
-   - Unused vendor files in `source/w/vendor/`, unused cover files in `source/w/covers2/` (covers of games that no longer exist), and game part files whose games are deleted and not coming back (for example the leftover code of `lights-out`, `clicker`, `golf`, `stick-bridge`, `kart-circuit` inside larger files: remove the dead code, keep the live games in the same file working).
-   - Generated folders must never be in git: `w/site/`, `w/site_plain/`, `w/site_stage*/`, `w/parts_stage*/`, `w/parts/000_pre_000.html`, `w/parts/001_portal.js`, `w/parts/002_legal.js`, `rl/build/`. Check `source/.gitignore` covers them.
-   - Old files in the repository root `gameplay/` folder that the current build no longer produces (the build replaces the whole folder; check nothing else links to them).
-4. Do all deletions in one commit with the message "remove obsolete files" and the full list in the commit message, so it can be reverted in one step.
-5. Regenerate `files.txt`. Run the full build and the whole test suite afterwards to prove nothing needed was removed.
+1. **The player had no left leg in the inventory screen.** The 3D model and the small 2D preview read the skin image from different regions; the region the preview used was never painted. No error, nothing for a test to catch.
+2. **Dragging a stack across slots gave uneven amounts** (64 over four slots gave 10, 20, 20 and 10, not 16 each). The code compared slot objects, but the list of slots was rebuilt every frame, so the same slot counted again on every mouse movement. The code looked right on reading.
+3. **Stack counts were half hidden**, because each slot's background was drawn over the previous slot's number.
 
----
+The owner also asked for checks like these: hands and held items drawn with the right texture and proportions; movement and camera that feel smooth; and no input accepted behind an end screen (for example, a game that can still be played while its "Game over" or "Back" panel is shown).
 
-## Part 8. Workstream 2: one database file
+Hunt these classes of bugs in every game and every screen:
 
-The owner wants a single SQL file that sets up or updates the whole database.
+1. **Two drawings of the same thing that disagree**: model and preview, first and third person, the held item and its icon, the minimap and the world, the cover and the game.
+2. **Draw order and clipping**: text covered by the next element, outlines cut off, shadows over their object, transparent parts sorted wrongly, tooltips under panels, numbers overflowing their box.
+3. **Identity and stale state**: objects rebuilt every frame but compared by identity; references to old objects after a restart; listeners added twice after reopening; values left over from the previous round.
+4. **Missing genre conventions**: anything a regular player of the original would try without thinking (the briefs list them). If it does nothing or something odd, it is a bug.
+5. **Input edge cases**: two keys held, a key released while the tab loses focus, a mouse button released outside the canvas, right-click opening the browser menu, the wheel scrolling the page instead of the game, keys still held after pausing, two-finger touch, a gamepad connected mid-game, key repeat, AZERTY keyboards (many players are French).
+6. **Input in the wrong state**: the game still reacting behind a pause menu, an end screen, a dialog, a chat box or the party lobby; menus reacting to game keys; a button that works twice when clicked twice quickly.
+7. **Animation and timing**: animations that replay when they should not, jerky interpolation, speed that changes with frame rate, timers running while paused or in a background tab, sounds that play twice or keep playing after closing, countdowns that skip a number.
+8. **Off-by-one and rounding**: 99 instead of 100, an empty health bar at 1 point, a timer showing 0:60, percentages that do not add up.
+9. **Layout and sizes**: phone portrait and landscape, 1366x768 laptops, large screens, browser zoom at 125 and 150 percent, the site's theater and fullscreen modes, long German and French strings, long player names.
+10. **Visual consistency**: different fonts, colours or icon styles between screens of one game; blurry art next to sharp art; a placeholder shape; a missing texture; seams and gaps between tiles or blocks; z-fighting; pop-in.
+11. **Feedback**: actions without sound or animation, no sign whose turn it is, no warning before something irreversible, a wait with nothing on screen.
+12. **Restart and repeat**: lose and restart five times, close and reopen, switch games and come back. Look for leaked timers, growing memory, doubled sounds, stale scores, stacked music.
+13. **Saves and progress**: progress lost when the tab closes mid-save, a best score saved wrongly, an old save breaking the new version, two devices of one account disagreeing.
+14. **Online play**: late joiners, refreshes, leaving and coming back, slow connections, the host's tab in the background, two players acting at the same instant, rematch, back to lobby, chat during play.
+15. **AI behaviour**: bots stuck on walls, walking in circles, never using part of their kit, reacting instantly, or reading hidden information.
 
-1. Create `source/w/supabase/gameplay.sql`: everything in `schema.sql` plus `round19b_analytics_cleanup.sql`, in an order that works on a **new** empty project and on the **current production** database.
-2. Rules for the file:
-   - Safe to run any number of times: `create ... if not exists`, `create or replace`, `drop ... if exists` before a function whose return type changed, policies dropped and recreated, guarded `alter table` statements.
-   - Never deletes or rewrites user data. One-time clean-ups go in a clearly separate section at the end, each guarded so it runs once (record completion in a small table) and never touches accounts, profiles, saves, stats, friends, messages, ideas, tickets or files.
-   - Ends with `notify pgrst, 'reload schema';`.
-   - Grants and revokes for every function, and row level security on every table.
-3. Verify on staging three ways, and record the results:
-   - a fresh Supabase stack: run the file, then run the whole test suite;
-   - the same stack: run the file a second and third time without errors;
-   - a copy of the production schema: with the owner signed in to the Supabase command-line tool, dump the production schema only (no data) and load it into a fresh local database, then run the file on it. Compare the list of tables, columns, functions, policies and indexes before and after; nothing may disappear except what you intended.
-4. Add the security work of Part 10 to this file (as later sections), so there is still one file.
-5. Delete `schema.sql` and the `roundNN_*.sql` files once `gameplay.sql` replaces them (they stay in git history). Update `setup.py`, `BUILD.md`, `GOLIVE.md`, `README.md` and the setup guide to name only `gameplay.sql`. Future changes edit `gameplay.sql` directly and note the date in a short line at the top of each section.
-6. Running it on production needs the owner's go-ahead (Part 3.4). Prepare the exact link (`https://supabase.com/dashboard/project/uafouyvtcijptspjbsqf/sql/new`) and a short description of what changes.
+When a bug class shows up in one game, search every other game's code for the same pattern and fix it everywhere.
 
 ---
 
-## Part 9. Workstream 3: the relay and the TURN service
+## Part 6. Playtesting every game, all at once
 
-The site reaches its database through the Cloudflare Worker `gameplay-api` when a school network blocks the database's own address, and online parties need a TURN relay on networks that block direct connections. The new worker code (`server/cloudflare-worker.js`, with a `/turn` endpoint) is written but not yet deployed.
+### 6.1 The goal
 
-1. Ask the owner to sign in to Cloudflare (`npx wrangler login`) if they have not.
-2. Create `server/wrangler.toml` for the existing worker name `gameplay-api` and its custom domain `gameplay-api.vitalang.net` (read the current settings first with Wrangler or the dashboard, and keep them).
-3. In the Cloudflare dashboard (Realtime, TURN Server), create a TURN key named `gameplay`, then store its two values as worker secrets `TURN_KEY_ID` and `TURN_KEY_API_TOKEN` with `npx wrangler secret put`. Never print them, never commit them.
-4. Deploy the worker. Check: `https://gameplay-api.vitalang.net/health` answers `ok`; a request to `/turn` from another origin is refused; from the live site while signed in, `https://gameplaygames.web.app/check` shows "Relayed connections (site TURN 1): Works".
-5. Run a real relayed party: two devices, one of them on a network that blocks direct connections (a phone hotspot often does; or block UDP in the operating system firewall for the test), and confirm in the diagnostics that the connection used the relay.
-6. Decide whether the Debian relay (`server/setup.py`) is still wanted. If the owner does not run that machine, remove the address from the code and documentation; if they do, set it up with them and add it to `SUPABASE_RELAYS` in `source/w/new/consts.js`.
-7. Document the final set-up in `server/README.md`.
+Every game in the catalogue, every new game and every rebuilt game is played from start to end: first screen, every menu and option, a full session to a win and to a loss, the end screen, restart, and back to the site. The owner wants this done in parallel so it does not take ages.
+
+### 6.2 How to run it in parallel
+
+- **Every agent playtests its own games** at the same time as the others, during and after its work.
+- **The lead runs a playtest harness** over the whole catalogue in batches: a script in `source/t/` (for example `playtest_all.js`) that opens several games at once in separate browser contexts (start with eight and adjust to what the computer handles), plays each one with scripted inputs suited to its genre, and records everything in 6.3. Run it at desktop size and at phone size with touch.
+- Use the real graphics card. Run the 3D games one or two at a time for frame-rate measurements, since parallel runs share the card.
+- Repeat the harness after each merge wave, so regressions show up the same day.
+
+### 6.3 What to capture, like a real player
+
+For every game and run:
+
+- a video of the whole session (Playwright `recordVideo`) and screenshots at every screen change, at full resolution;
+- every console message, page error and failed request;
+- the inputs sent and the time of each;
+- frame timing: average frames per second, the share of frames over 20 ms, the longest frame, memory at the start and after ten minutes;
+- for online games, the diagnostics recorder's events (`Ameplay.diag.dump()`) from every player;
+- the game's own state where it exposes it (score, lives, level), checked against what the screen shows.
+
+Store captures in a scratch folder outside the repository, one folder per game, and keep a short `findings.md` per game.
+
+### 6.4 Looking at the captures
+
+Automated checks find crashes; a person finds the rest. After each run, look at the screenshots and skim the videos yourself (or have the game's agent do it), zoomed in on text, numbers, icons, hands, characters, edges and seams, and go through the classes in Part 5. Write down every oddity, however small. Then fix it, re-run, and look again.
+
+### 6.5 The checklist for each game
+
+Before playing, write a checklist from the game's brief (the conventions of its genre and everything its own menus promise). Tick every line during the playtest with a note. A game passes when:
+
+- every line of its checklist works;
+- a full session to a win and a loss ran without errors on desktop and phone;
+- restart five times, close and reopen left nothing behind;
+- the frame timing meets its brief (60 fps on this computer, playable with four-times CPU throttling in the browser's developer tools);
+- the online modes worked with two and more real browsers;
+- 15 corrupt saves all started cleanly;
+- `Hardest` (where the game has computer opponents) is proven by a match series (Part 6.7).
+
+### 6.6 Report format for every agent
+
+Per game: what was played and how (devices, sizes, players); the checklist with results; bugs found and fixed (one line each); performance before and after; `Hardest` results with sample sizes; original assets made and copied content replaced; what is left and why; the branch and commit hash. Report only what was verified by running the game. Write it following Part 3.6.
+
+### 6.7 Hardest
+
+Every game with computer opponents has a top level labelled exactly `Hardest`, almost unbeatable for a strong human, by playing well under the same rules and limits as the player: reaction time of 150 to 250 ms, the same speed, aim and resource limits, no hidden information. Prove it with a series against the previous top level, sides swapped, with enough matches for the result to mean something, and give the numbers. Where it is only somewhat stronger, say so plainly.
 
 ---
 
-## Part 10. Workstream 4: finish the security work
+## Part 7. Clean up old and unwanted files
 
-The owner approved the security decisions left open last round. They strengthen protection and none weakens it. Implement each one, test it on staging, put the database part in `gameplay.sql`:
-
-1. **Private realtime channels.** Today anyone who knows a party code can listen and answer on the party's channel, and typing or read marks between friends can be faked. Move the per-user channels, the public party directory and the party doors to private realtime channels with authorisation policies; add a server-side party registry (host, game, code, public or private, created, last seen) that the host writes and guests read; let guests check the host's public key against the registry before trusting a party channel.
-2. **A secret between the relay and the database.** The database trusts a client address header the relay sets. Add a shared secret header the worker sends and the database checks before trusting that address (used by rate limits).
-3. **Username sign-in through a server function.** Signing in with a username today calls a database function that can be used to test passwords. Move it behind a Supabase Edge Function with a challenge (for example a free invisible captcha such as Cloudflare Turnstile) and a strict rate limit per address and per account.
-4. **Current password before a password change**, and before changing the e-mail address.
-5. **The site-password page.** After five wrong passwords it locks the browser for good. Replace that with growing waiting times (for example 30 seconds, then 2, 10 and 60 minutes), which keeps brute force impossible without locking students out forever.
-6. **Staff password copies.** Accounts created in the dashboard keep a readable copy of their password so the owner can hand it out. Keep that for ordinary player accounts only if the owner still wants it; remove existing copies for staff accounts with a guarded statement in the clean-up section (ask before running it on production, it deletes data).
-7. Re-run the security review of the last round (it found no privilege escalation) on the new code: every function that is `security definer` checks who is calling, every table has row level security, no secret is shipped to the browser, no user text is inserted into the page without escaping.
+1. List every tracked file under `ClaudeScripts/gameplay-site/` with its size and last commit.
+2. For each candidate, search the whole repository for references (file name, folder name, imports, build scripts, documentation). Delete it only if nothing in use refers to it, or update the reference at the same time.
+3. Candidates found at the end of the last round:
+   - `ClaudeScripts/gameplay-site/__pycache__/` (a compiled Python file committed by mistake) and any other `__pycache__` in git;
+   - `ClaudeScripts/gameplay-site/supabase/` (an old copy of the database files; move `GUIDE.md` and `setup.py` to `source/w/supabase/` first and point `setup.py` at the single database file);
+   - old round briefs in `source/w/`: `MASTER.md`, `NETBRIEF.md`, `ROUND3.md` (keep any useful fact by moving it to `BUILD.md`);
+   - the old build path: `source/w/build.py`, `gate.js`, `meta2.js`, `meta_rows.py`, `split.py`, `stat.json`, `orig_order.txt` (some are still read by `assemble.py`, `build2.py` or `t/pbuild.py`: keep those or remove the dependency);
+   - `source/w/agents_perf/`, `source/design/`, `source/notes/`, `source/skfb/` (keep what documents something current in one `notes/` folder);
+   - `COVER_SOURCES.md`, once Part 12 has replaced the covers it lists;
+   - unused vendor files, covers of games that no longer exist, and dead code of removed games inside live part files (`lights-out`, `clicker`, `golf`, `stick-bridge`, `kart-circuit`);
+   - leftover worktrees and branches from finished agent work (`git worktree prune`, and delete merged `work-*` branches).
+4. Generated folders never belong in git: `w/site/`, `w/site_plain/`, `w/site_stage*/`, `w/parts_stage*/`, `w/parts/000_pre_000.html`, `w/parts/001_portal.js`, `w/parts/002_legal.js`, `rl/build/`. Check `source/.gitignore` covers them.
+5. Make all deletions in one commit named "remove obsolete files", with the list in the commit message. Regenerate `files.txt`. Run the build and the whole test suite to prove nothing needed was removed.
 
 ---
 
-## Part 11. Workstream 5: gather test data
+## Part 8. One database file
 
-1. **A production test account.** Create one in the admin dashboard (owner account needed; ask the owner to sign in in the app's browser), switch Diagnostics on for it, and use it for every check on the live site. Never record any other account.
-2. **The real-network party matrix.** For the live site and for a preview build, test hosting and joining between: two browsers on this computer; this computer and a phone on the same Wi-Fi; this computer and a phone on mobile data; with a VPN on one side; with the owner on the school network (ask them to test when they can, and give them a two-line instruction). For each: which route connected (direct, second route, relayed), how long joining took, whether chat, game start, refresh and leaving worked. Put the table in the ledger.
-3. **Frame rate and smoothness on real hardware.** For every 3D game and every busy 2D game: average frame rate, the share of frames over 20 ms, the longest frame, memory after 10 minutes, at the site's normal size, in fullscreen and with four-times CPU throttling. Put the table in the ledger. Fix the worst first (Part 13).
-4. **Load times.** First visit, return visit, and a signed-in return visit: time to the first meaningful screen and to "ready", on this network and with the browser's "Fast 3G" throttling.
-5. **Analytics accuracy.** Play a few known sessions with the test account and compare the admin dashboard's figures with what you did (the last round compared 37 figures with hand-written SQL on staging: repeat a subset on production).
-6. **Error inventory.** Read the dashboard's Errors tab for real users' errors (the owner's account can see it). List the top errors by count, fix them, and confirm the counts drop after release.
+1. Create `source/w/supabase/gameplay.sql`: everything in `schema.sql` and every round file, in an order that works on a new empty project and on the current production database.
+2. It must be safe to run any number of times: `if not exists`, `create or replace`, `drop ... if exists` before a function whose return type changed, policies dropped and recreated, guarded `alter table`. It never deletes or rewrites user data; one-time clean-ups sit in a final, clearly marked section, each recorded in a small table so it runs once. It ends with `notify pgrst, 'reload schema';`. Every table has row level security; every function has explicit grants.
+3. Verify it three ways on staging: a fresh stack plus the whole test suite; the same stack run a second and third time without errors; a copy of the production schema (dump the schema only, no data, with the Supabase command-line tool while the owner is signed in), compared before and after so nothing disappears unintentionally.
+4. Put the security work of Part 10 in the same file.
+5. Delete `schema.sql` and the `roundNN_*.sql` files (they stay in git history). Update `setup.py`, `BUILD.md`, `GOLIVE.md`, `README.md` and the setup guide to name only `gameplay.sql`. Future changes edit `gameplay.sql`, with a dated line at the top of each changed section.
+6. Running it on production needs the owner's go-ahead (Part 3.4). Prepare the exact link and a short description of what changes.
+
+---
+
+## Part 9. The relay and the TURN service
+
+1. Check `npx wrangler whoami`; if not signed in, ask the owner to run `npx wrangler login`.
+2. Create `server/wrangler.toml` for the existing worker `gameplay-api` and its domain `gameplay-api.vitalang.net`. Read the current settings first and keep them.
+3. In the Cloudflare dashboard (Realtime, TURN Server), create a TURN key named `gameplay`. Store its two values as worker secrets `TURN_KEY_ID` and `TURN_KEY_API_TOKEN` with `npx wrangler secret put`. Never print or commit them.
+4. Deploy `server/cloudflare-worker.js`. Check: `/health` answers `ok`; `/turn` refuses other origins; on the live site, signed in, `/check` shows "Relayed connections (site TURN 1): Works".
+5. Run a real relayed party: two devices, one on a network that blocks direct connections (a phone hotspot often does, or block UDP in the firewall for the test). Confirm in the diagnostics that the relay carried the connection.
+6. Ask the owner whether the Debian relay in `server/setup.py` is still wanted. If not, remove it from the code and the documentation.
+7. Update `server/README.md`.
+
+---
+
+## Part 10. Security work
+
+The owner approved these. They strengthen protection. Implement each, test it on staging, and put the database part in `gameplay.sql`:
+
+1. Private realtime channels with authorisation policies for the per-user channels, the public party list and the party doors; a server-side party registry (host, game, code, public or private, last seen); guests check the host's public key against the registry before trusting a party.
+2. A shared secret header between the relay and the database, checked before the client address the relay sends is trusted for rate limits.
+3. Username sign-in through a Supabase Edge Function with a challenge (for example Cloudflare Turnstile) and strict rate limits per address and per account, instead of the database function that can be used to test passwords.
+4. The current password required before a password or e-mail change.
+5. The site-password page: replace the permanent lock after five mistakes with growing waits (30 seconds, then 2, 10 and 60 minutes).
+6. Readable password copies kept for staff accounts created in the dashboard: stop keeping them; removing existing copies deletes data, so ask before running that statement on production.
+7. Review again: every `security definer` function checks the caller, every table has row level security, no secret reaches the browser, no user text reaches the page unescaped.
+
+---
+
+## Part 11. Test data
+
+1. **Production test account**: create it in the admin dashboard (ask the owner to sign in to the owner account in the app's browser), switch Diagnostics on, use it for every check on the live site. Record no other account.
+2. **Real-network party matrix**: host and join between two browsers here; this computer and a phone on the same Wi-Fi; this computer and a phone on mobile data; with a VPN on one side; and, with the owner's help, the school network. For each: the route used, time to join, chat, game start, refresh, leaving. Put the table in the ledger.
+3. **Frame rate on real hardware** for every 3D game and every busy 2D game: average, share of frames over 20 ms, longest frame, memory after ten minutes, at normal size, fullscreen and with four-times CPU throttling.
+4. **Load times**: first visit, return visit, signed-in return visit, normally and with "Fast 3G" throttling.
+5. **Analytics accuracy**: play known sessions with the test account and compare the dashboard's figures.
+6. **Error inventory**: the dashboard's Errors tab; fix the most frequent errors and check the counts drop after release.
 7. Keep every measurement script in `source/t/` so the next round can repeat it.
 
 ---
 
-## Part 12. Workstream 6: the portal, page by page
+## Part 12. The portal and the covers
 
-Walk through the whole site as a student who has just arrived, then as a regular player, then as the owner. For each page and state, check the classes of Part 5.2 and the points below, at desktop and phone size, light and dark theme, English and French.
+**Portal.** Walk through the whole site as a student on a first visit, then as a regular player, then as the owner, at desktop and phone size, light and dark theme, English and French, and check the classes of Part 5: the password page, cookie notice, sign-up and log-in (Google button, username picker), home (grid, search, filters, favourites, continue playing, the sidebar's select-then-play behaviour, announcements, "What's new"), the game page (loading, play bar, pause, theater, fullscreen, the party window in every state), friends, messages (pictures, files, typing, read marks, blocking), notifications, the idea box, tickets, settings (every control persists after a reload and on another device), profile and statistics, data export, account deletion (staging only), the admin dashboard (every tab), the legal pages, keyboard-only use, screen reader labels, contrast, reduced motion, offline and slow networks. Keep the main layout, structure, navigation and design direction.
 
-1. **First visit**: password page (if switched on), cookie notice, sign-up and log-in pages (Google button first, username picker, error messages, password rules), e-mail confirmation return, Google sign-in return.
-2. **Home**: game grid, search, filters, favourites, "Continue playing", the sidebar list and its two-step select-then-play behaviour, "Surprise me", announcements, the "What's new" window, the top bar (notifications, friends, idea box, settings, profile).
-3. **Game page**: the loading skeleton, the play bar (score, best, favourite, pause, controls, restart, sound, theater, fullscreen), the information strip, "More like this", pause with Esc, the online party window (Host a party, Join a party, public and private, code, invite, bots, party size, chat, play, leave, refresh, closing the tab).
-4. **Social**: friends list, friend requests, online status, direct messages (text, pictures, files, typing, read marks, blocking, reporting), notifications, the chat dock.
-5. **Idea box and support tickets**: every type, attachments, limits, "My ideas", staff replies.
-6. **Settings**: every switch and choice does what it says and persists after a reload and on another device of the same account; the search box finds every setting; danger zone confirmations.
-7. **Profile, statistics, data export, account deletion** (on a staging account only for deletion).
-8. **Admin dashboard** (owner account): every tab, the live figures every second, filters, user actions, site switches, announcements, the diagnostics viewer, the ideas tab.
-9. **Legal pages**: Terms, Privacy, Cookies; links from the cookie notice and the footer; they load on demand.
-10. **Accessibility**: keyboard only (Tab order, visible focus, Esc closes, Enter activates), screen reader labels on icon buttons, colour contrast, reduced motion respected, text readable at 200 percent zoom.
-11. **Errors and slow networks**: the site offline, the database unreachable (block it in the browser to see the relay take over), a slow network, a full browser storage.
+**Covers.** Every cover uses the same composition: one central icon on a darkened, blurred background in the game's own colours, 960x600 WebP, the same title treatment. The icon shows the game's main object or character as it looks in the game. `COVER_SOURCES.md` lists covers made from artwork downloaded from game stores, game portals and encyclopaedia pages: redraw every one of them, and any other cover that copies outside artwork, with the site's cover tools, then delete that file. Render a contact sheet of all covers before and after and look at it at full size; check covers at every size the site shows them.
 
-Fix everything you find. Keep the main layout, structure, navigation and design direction.
+**Policies.** After all changes, re-check the Terms, Privacy Policy and Cookie Policy (`source/w/new/legal.js`) against the code: every statement true, nothing that claims a protection that does not exist, their length kept. Keep the list of points for a lawyer in `LEDGER.md` current.
 
 ---
 
-## Part 13. Workstream 7: every game
+## Part 13. Release, GitHub and the owner's computer
 
-There are 168 games in the catalogue, plus 12 finished but unlisted ones and the new ones of Part 15. Appendix A maps every file to its games. Every game gets the full treatment below. The previous round's results per game are in `LEDGER.md` (Section 7): start from there and do not redo proven work, but do not trust "verified" on anything that was only simulated: play it.
-
-### 13.1 Protocol for every game
-
-1. **Play it for real on this computer**: start, every mode and menu, win, lose, restart five times, pause, mute, resize, theater, fullscreen, phone size with touch, a gamepad if the game supports one. Write the checklist first (Part 5.3).
-2. **Compare with the best games of its genre** (13.3). Every convention a regular player expects must work.
-3. **Fix every bug**, visual or technical, in the classes of Part 5.2.
-4. **Feel and presentation**: responsive controls, clear feedback, smooth animation, proper sound effects and music made in code, readable text, a real start screen and end screen, consistent art style within the game.
-5. **Performance**: smooth on this computer and acceptable with four-times CPU throttling; adaptive quality for 3D games (the shared helper added last round); no allocations inside the loop; no work for things off screen.
-6. **Hardest AI** for every game with computer opponents: a top level labelled exactly `Hardest`, almost unbeatable for a strong human, by playing well under the same rules and limits as the player (human reaction time of 150 to 250 ms, the same speed and accuracy limits, no hidden information). Prove it with a series of matches against the previous top level (sides swapped, enough matches for the result to mean something) and report the numbers. Where it is only somewhat stronger, say so. Games still without an honest `Hardest` at the end of the last round: basketball, the shooter arena, the platform fighter, Go, the hole arena, zombie and spider packs in the voxel sandbox, the dial-guessing party game.
-7. **Online play** (games using `api.net`): test with two and more real browsers; check every point of Part 5.2 item 13; host-authoritative; hidden information never sent.
-8. **Saves**: feed 15 corrupt or old saves; the game must start every time.
-9. **Record** what you did, what you measured and what is left, per game, in the ledger.
-
-### 13.2 Content that copies an original
-
-While you work on a game, check its content against Part 3.3. Replace copied names of characters, items, weapons, modes, rooms, cards and levels, copied map layouts and copied texts with original ones of the same quality, and record them. Known places from the last round: the voxel sandbox (mob, block and item names, recipes and the inventory layout follow the original closely; only the title screen's lines were replaced), the mining sandbox (item and boss names), the tower defence game (tower and enemy names), the social deduction game's map layout, the worm artillery game's weapon list. Keep save compatibility: change display names, keep internal ids, or migrate saves.
-
-### 13.3 Genre conventions to match
-
-These are the behaviours players expect. Match them closely; give them your own names and look.
-
-**Voxel sandbox (survival and creative building).** Inventory: left click picks up or places a whole stack; right click picks up half or places one; left drag splits evenly, right drag places one per slot, passing back over a slot adds nothing; shift-click moves a stack between inventory and hotbar or container; double-click gathers matching items; number keys swap the hovered slot with that hotbar slot; Q drops one, Ctrl+Q drops the stack; F swaps with the off-hand; middle click picks a block in creative; shift-click on a crafting result crafts as many as possible; the cursor stack goes back to the inventory when the screen closes; a recipe book. World and player: jump of about 1.25 blocks, sprint and sprint-jump, sneak that stops you falling off edges, swimming and drowning, fall damage from 4 blocks, hunger and regeneration, break times that depend on the tool and its material, tools that wear out, day and night of about 20 minutes, monsters that spawn in darkness, crops that grow, water and lava flow, sleeping to skip the night, a death screen and respawn, chests, furnaces with fuel and smelting times. Look: both legs, arms that swing, the held item in hand in first and third person, a matching preview in the inventory, clouds, sunrise colours, block breaking cracks, particles.
-
-**Tactical 5v5 shooter** (new, Part 15.1). Buy phase and economy with loss bonus; round timer; bomb plant and defuse with sounds and a defuse kit; one life per round; first to a fixed number of rounds with a side switch at half time; recoil patterns that can be learned, first-shot accuracy, running inaccuracy, crouch and walk; armour and helmets; grenades (flash, smoke, explosive, fire) with physics; footstep sounds that give away position; a minimap and a scoreboard; bots that hold angles, use cover, trade kills and play the objective.
-
-**Top-down arena brawler.** Twin-stick movement and aim, auto-aim on tap for phones, ammo bars that recharge, a super ability charged by hits, bushes that hide, walls that block shots, knockback, respawn timers, several team modes and a free-for-all.
-
-**Racing (karts, time trials, highway, drifting).** Throttle and brake curves, drift with a boost on release, a lap counter, a minimap, a ghost of the best lap, a countdown, a results screen, collision that never sends a car through a wall, controls that feel the same at every frame rate, a track editor where a game has one with save and share.
-
-**Platformers and runners.** Coyote time (a jump still works a moment after leaving an edge), jump buffering (a jump pressed just before landing still counts), variable jump height, consistent hit boxes slightly smaller than the sprite, checkpoints, no unfair deaths off screen, speed that grows smoothly in endless runners, swipe controls on phones.
-
-**Shooters and arenas (top-down, 2D, 3D).** Hit feedback (sound, flash, damage numbers where the genre has them), screen shake within reason, enemy waves that build up, pickups that are visible, no bullets passing through walls at high speed.
-
-**Fighting and physics brawlers.** Frame-consistent hit boxes, hit stun, combos, blocking, edge recovery, ring-outs, clear damage display, the same result at every frame rate.
-
-**Sports (soccer, basketball, volleyball, bowling, pool, golf, penalty, hockey).** Real rules where they apply (fouls, scoring, turns), believable ball physics, aim guides where the genre has them, AI that plays positions.
-
-**Card games.** The real rules of each traditional game, including the edge cases (side pots and all-in in poker; split, double and insurance in blackjack; trump and transfers in Durak; bidding and announcements in belote and tarot; shooting the moon in hearts; nil bids and bags in spades; bowers and going alone in euchre). Dealing and playing animations, cards that can be dragged and clicked, a clear indication of legal moves, a score sheet, undo where the game allows it.
-
-**Board games.** The real rules (en passant, castling, promotion, repetition and the 50-move rule in chess; forced captures and multi-jumps in checkers; passes in reversi; ko and scoring in Go), move highlights, last-move marker, undo against the computer, clocks where the genre has them, notation or history where it helps.
-
-**Puzzles.** Every generated puzzle solvable (and with one solution where the genre requires it), hints that are right, undo and restart, a move counter, star ratings or par, level select that remembers progress.
-
-**Word and quiz games.** Large, correct word lists for each language offered, no offensive words, accented letters handled for French, a timer that is fair, answers checked without being fooled by capital letters or spaces.
-
-**Party games (online, 3 to 16 players).** Late joiners wait for the next round, a refresh returns to the same seat, a player who leaves never stalls a round, the host leaving ends cleanly, timers on every phase, moderation of typed text, rematch and back to lobby.
-
-**Idle and clicker games.** Big number formatting, offline progress with a cap, no exploit from changing the clock, upgrades that show their effect, saves every few seconds.
-
-**Rhythm games.** Timing judged against the audio clock, an input offset setting with calibration, no drift over a long song, original songs and charts made for the site.
-
-**Tower defence.** Tower placement grid that shows range, upgrade paths, a speed toggle, waves that grow fairly, enemies that follow the path exactly at every speed.
-
-**Life simulation and management games.** Clear choices with visible consequences, a save that survives a refresh, events that do not repeat too often, text written for a school audience.
-
-### 13.4 Game groups for subagents
-
-Use the groups of the last round (they are a sensible split; see Part 18): small classics; puzzle and arcade classics; arcade and sports 2D; 3D arcade and physics platformers; action and multiplayer 2D; simulation and skill games; card games A; card and board games B; strategy board games; word and party games; the four flagship games (Part 14); the new games (Part 15).
+1. **Build**: `python3 source/w/assemble.py`, then the site build with the live key (Part 2.2) into `source/w/site/`; copy `index.html` and `gameplay/` to the repository root; `git ls-files > files.txt`. Only changed files may get new names in `gameplay/`.
+2. **Check**: the whole test suite on staging, plus the playtest harness over the catalogue, all passing.
+3. **Preview**: `python3 deploy.py <branch> --preview`. Open the preview on this computer and on a phone, play several games, host and join a party.
+4. **Database**: ask the owner to approve running `gameplay.sql` on production (or run it yourself once approved).
+5. **GitHub**: push the branch, open a pull request describing everything (use the repository's template if there is one), merge it into `mainbranch-claude-code` once the checks above pass. Everything related to Gameplay Games goes to GitHub: code, games, covers, the database file, the relay code, the documentation, this prompt and the handoff.
+6. **Live site**: `python3 deploy.py mainbranch-claude-code` on this computer if the Firebase tool is signed in, or in Google Cloud Shell: `curl -fsSL https://raw.githubusercontent.com/PyroOurson/claudecode/mainbranch-claude-code/ClaudeScripts/gameplay-site/deploy.py | python3 - mainbranch-claude-code`.
+7. **The owner's computer**: run `python3 ClaudeScripts/update.py` in the owner's local folder, so the local copy matches GitHub and files removed from the project are deleted. Then look for other, older copies of this project on this computer (old downloads, old unpacked builds, earlier clones), list them with their paths and dates, and delete them after showing the owner the list (Part 3.4 allows deleting copies of this project; ask if a folder might hold something else).
+8. **After release**: open the live site as a new visitor and as the test account; check `/check`; host and join a party across two networks; watch the Errors tab for an hour; fix anything new with a follow-up release.
+9. **Rollback**: if something is badly wrong, redeploy the previous commit of `mainbranch-claude-code`. Database changes are additive and can stay.
 
 ---
 
-## Part 14. Workstream 8: the four flagship games
+## Part 14. Handoff at the end of every session
 
-These get one agent each.
+Every time a session ends, whether the work is complete or not, write `ClaudeScripts/gameplay-site/NEXT_AI.md` and push it to GitHub. It contains:
 
-1. **Voxel sandbox (`blockcraft-3d`, listed as Minecraft).** Everything in the voxel section of 13.3. On this computer measure real frame rate while flying over new terrain and in a busy base; fix stutters (chunk meshing per frame is capped at 2 to 4 ms, check it holds). Make zombie and spider packs genuinely stronger at `Hardest`. Online: two real browsers, building together, a guest refresh, the host's tab in the background. Replace copied names and texts (13.2) with original ones of the same quality, migrating saves.
-2. **Arena brawler (`brawl-stars`).** Real two-browser matches in every mode on the live site with test accounts. Make `Hardest` win mirror duels with every character (it still lost with five of twelve). Look at the predicted guest shots on screen: no visible jump when the host's version arrives. Check the original names introduced last round read well in all six languages.
-3. **Endless runner (`sky-runner`).** Play 30 minutes on this computer and on a phone. Lane changes, jumps, rolls, power-ups, collisions with train corners, the daily goals, the shop, the score multiplier. Smoothness on real hardware.
-4. **Car soccer (`rocket-soccer`).** On real hardware: frame rate in 3v3 with six `Hardest` bots, aerial controls, boost pads, kickoffs, replays, the end screen. The `Hardest` bots won 40 of 40 matches against the old top level: check they still behave believably (no jitter, no impossible touches).
+1. **What the owner asked for**: copy Appendix D unchanged, then add anything new the owner asked during this session.
+2. **What was done**, with how each was checked (short, details in `LEDGER.md`).
+3. **What is left**, as an ordered list.
+4. **Decisions waiting for the owner.**
+5. **A follow-up prompt**: the exact message the owner should send to start the next session, naming this file and `prompt.md`, and any changes to the plan.
 
----
-
-## Part 15. Workstream 9: grow the catalogue to 200 games
-
-The catalogue has 168 games. Reach at least 200 with games of high quality, each one passing Part 13 before it is listed. Each new game gets an original title, original art and an original cover (Part 16), and a genre and description in the catalogue. Build each new game as its own part file and add it to `source/w/parts/_order.json`, the catalogue metadata and the translations.
-
-1. **A 3D tactical 5v5 shooter** in the style of the best-known team shooters: two teams, attack and defence, plant and defuse, buy phase with an economy, rounds, side switch, learnable recoil, grenades, two or three original maps with clear lanes and sites, bots on four levels up to `Hardest`, online play through the party system (up to 10 players, bots filling empty seats). Performance on Chromebooks matters: low-poly art, baked lighting, adaptive quality.
-2. **A real-time card duel with towers** (two lanes, three towers each, a resource bar that fills over time, decks of eight cards with a rotating hand, troops, spells and buildings, sudden death). Start from the unlisted file `289_g_clash-royale.js`: audit and replace any copied card names, art or numbers, give it an original title, then list it.
-3. **A low-poly time-trial racer with a track editor and shared track codes.** Start from `297_g_polytrack.js` the same way.
-4. **A first-person horror escape** (a house to escape within a few in-game days, an antagonist who hears noise and patrols, hiding places, items and puzzles, several difficulty levels). Original setting and antagonist; scary for teenagers, not gory.
-5. **A fast first-person arena shooter** with dash, slide, wall-jump, a style meter, weapon swapping and alternate fire, waves of original enemies, a parry move, and ranked levels.
-6. **A cooking and restaurant time-management game** (orders, stations, timing, customer patience, upgrades, days). Start from the cooking part of `283_g_papas-pizzeria+tiny-fishing+duck-life.js` if it is close; that file also holds a fishing game and a duck training game to bring in.
-7. **A life simulation** (a life from birth to old age through yearly choices, school, jobs, relationships, health, money, random events), written for a school audience.
-8. **A ragdoll physics obstacle course** (vehicles and characters with joints, hazards, a level editor if time allows). Start from `277_g_happy-wheels+getting-over-it.js`.
-9. **A rope-swing momentum game** (tap to grab, release to fly, collect, reach the goal).
-10. **An online meme-caption party game** (players write captions for pictures made in code or uploaded by the host, vote, score; moderation of text; uploads go through the existing file limits and are visible only within the party).
-11. **"Krillion"**: the owner named this game; it is not clear which game is meant. Ask the owner. If the owner means the browser shooter with a similar-sounding name, item 5 already covers that style: discuss with the owner whether a second one is wanted.
-12. **The other unlisted files**: `275` (ragdoll archery duel), `283` (fishing, duck training), `285` (American football management and play), `287` (two rhythm games), `291` (a poker-hand building card game), `293` (element combining). For each: audit and replace copied content (Part 3.3), give it an original title and cover, pass Part 13, list it.
-13. **The rest up to 200 and beyond**: pick from the idea pool in `GAMES.md` (games 169 to 200 of "Wave 1"), favouring online multiplayer, genres the catalogue lacks, and games students ask for in the idea box (read the ideas in the admin dashboard). The same rules apply.
+Also rewrite this file (`prompt.md`) where the plan changed, so the next session starts from an accurate brief.
 
 ---
 
-## Part 16. Workstream 10: covers
+## Part 15. Open questions for the owner
 
-The owner wants every cover to match: the same composition (one central icon on a darkened, blurred background of the game's own colours), the same size (960x600 WebP), the same quality, and an icon that shows what the game is. They must also be the site's own art: `COVER_SOURCES.md` lists covers made from artwork downloaded from game stores, game portals and encyclopaedia pages. Replace every one of those, and any other cover that copies outside artwork, with original art drawn by the site's cover tools (`source/w/agents2/covers/`), then delete `COVER_SOURCES.md`.
-
-1. Render a contact sheet of all covers (every game in one image, grouped by genre) before and after. Look at it at full size: same icon style, same background treatment, same title treatment, no cover that stands out.
-2. Every new game gets its cover the same way.
-3. The cover must agree with the game: the icon shows the game's own main object or character as it looks in the game.
-4. Check the covers at the sizes the site shows them (grid, sidebar, rail, game page, favourites) on a phone and on a large screen.
+1. **"Krillion"**: the owner asked for a game with this name; it is not clear which game is meant. Ask. If it is the fast browser shooter with a similar name, F2's second game covers that style.
+2. Whether the Debian relay is still wanted (Part 9).
 
 ---
 
-## Part 17. Workstream 11: policies and documentation
+## Part 16. Final report
 
-1. **Legal pages.** After all changes, re-check the Terms, Privacy Policy and Cookie Policy (`source/w/new/legal.js`) against what the code does: new games, new data collected or not, the relay and TURN service, private channels, the username sign-in function, retention. Every statement true of the code; nothing that claims a protection that does not exist. Keep their length. Keep the list of points for a lawyer in `LEDGER.md` up to date; the owner must have a lawyer look at it.
-2. **Documentation.** Update `README.md`, `BUILD.md`, `GOLIVE.md` (or replace it by a short "Release" section in `README.md` once there is one SQL file), `LEDGER.md` and `NEXT_AI.md`, and rewrite this file (`prompt.md`) for the round after yours, with what you learned.
-
----
-
-## Part 18. Subagents
-
-Delegate where it clearly helps, keep the risky parts yourself.
-
-- **Keep in your own hands**: networking (`net.js`, the relay, TURN), accounts and sign-in, the load sequence, rate limits and security (Part 10), the database file (Part 8), merging, releases.
-- **One agent per game group** of 13.4 and one per flagship game (Part 14), each running Fable 5.2 at extra-high effort, each in its own git worktree that you create yourself from your working branch (`git worktree add ../wt-<group> -b work-<group> <your branch>`) and name in the brief. Worktrees created by the agent tool itself start from the repository's default branch and miss your latest changes.
-- **One agent per new game** of Part 15, or one for two small ones.
-- Brief each agent like a peer: give it `source/t/GAMEPASS.md` to read first, the list of its files, the protocol of 13.1, the genre conventions of 13.3, the originality rule of 3.3, the bug classes of Part 5, a time budget, and the report format (what was played and tested, bugs fixed, performance before and after, `Hardest` results with sample sizes, what is left, the commit hash). Tell it plainly not to edit the portal, other groups' files, the repository root or the build, and not to push.
-- Run at most as many agents at once as the computer handles comfortably (watch the processor and memory; the last round's sandbox stalled with too many). Each agent runs its browser tests one at a time.
-- Read every agent's report critically. Merge only what you checked yourself: open the game, play the changed parts, run `smoke_all.js`. When an agent stops early, send it back with a precise list.
+Write it following Part 3.6, in this order: what is live now and what waits for the owner (with exact links and commands); done, with how each was checked; unfinished, with the reason; blocked, with what is needed; decisions for the owner; what could not be tested and why; the numbers (games in the catalogue, games passing Part 6.5, games with a proven `Hardest`, the party network matrix, frame rates on real hardware, top errors before and after).
 
 ---
 
-## Part 19. Release
+# Appendix A. Briefs for the five popular-game agents (Claude Fable 5.2, xhigh)
 
-1. On your branch: `python3 source/w/assemble.py`, then the site build with the live key (Part 2.2) into `source/w/site/`, then copy `index.html` and `gameplay/` to the repository root and regenerate `files.txt`. Compare the new `gameplay/` file names with the old ones: only changed files may get new names.
-2. The whole test suite on staging: `load_sequence.js`, `gate_locked.js`, `party.js`, `fixes.js`, `dm.js`, `announce.js`, `legal_pages.js`, `smoke_all.js`, plus every test you added. All must pass.
-3. A preview deploy: `python3 deploy.py <branch> --preview` (or the Cloud Shell form in `README.md`). Open the preview address on this computer and on a phone; play a few games; host and join a party.
-4. Ask the owner for the go-ahead with a short summary: what changed, the database file to run (if changed), the test results, the preview address.
-5. Once approved: the owner (or you, if approved and signed in) runs `gameplay.sql` on production, then merge the pull request into `mainbranch-claude-code`, then deploy: `curl -fsSL https://raw.githubusercontent.com/PyroOurson/claudecode/mainbranch-claude-code/ClaudeScripts/gameplay-site/deploy.py | python3 - mainbranch-claude-code` in Google Cloud Shell, or `python3 deploy.py mainbranch-claude-code` on this computer if the Firebase tool is signed in.
-6. After release: open the live site as a new visitor and as the test account; check `/check`; host and join a party across two networks; watch the dashboard's Errors tab for an hour; fix anything new with a follow-up release.
-7. If something is badly wrong: redeploy the previous commit of `mainbranch-claude-code`. Database changes are additive and can stay.
+Paste the brief for the agent's games verbatim, followed by the items listed in Part 4.4.
+
+## A.1 Agent F1: the voxel sandbox, then the 2D mining sandbox
+
+You are the owner and long-term maintainer of the voxel sandbox `blockcraft-3d` on Gameplay Games, a browser game portal used by students on laptops, Chromebooks and phones. Its design is up to you. Your job is to make it play like the most famous voxel survival and building game, as a professional studio would build it, with every asset your own.
+
+The code is in `source/w/agents2/minecraft/src/*.js`; `python3 source/w/agents2/minecraft/mk.py` builds `source/w/parts/057_g_blockcraft-3d.js`. Read `source/w/agents2/minecraft/notes.txt` and the ledger's notes on this game first. The last round fixed three bugs the owner found (Part 5 of the master prompt); find the rest of that kind.
+
+**Match these exactly in behaviour:**
+
+- **Player**: 1.8 blocks tall, 0.6 wide, eyes at 1.62; walking about 4.3 blocks per second, sprinting about 5.6, sneaking about 1.3; jump height about 1.25 blocks; gravity and terminal fall speed as in the original; sprint-jumping, sneaking that stops you walking off edges, swimming, climbing ladders and vines, fall damage from beyond 3 blocks, drowning, lava and fire damage, hunger with saturation and natural regeneration, experience levels.
+- **World generation**: endless worlds from a seed, the same kinds of terrain (plains, forests of several tree types, birch and dark forests, taiga, snowy biomes, deserts, savannas, jungles, badlands, swamps, mountains and peaks, beaches, rivers, deep and frozen oceans, mushroom islands), smooth biome transitions, caves of several kinds (tunnels, large caverns, aquifers, underground lakes, lava at depth), ravines, ore veins at the right depths and frequencies, bedrock at the bottom, villages and other structures of your own design with loot, the day and night cycle of 20 minutes with sunrise and sunset colours, weather (rain, snow, thunderstorms), and the moon phases.
+- **Blocks and items**: every category the original offers, with the same gameplay roles: natural blocks, wood types and their planks, slabs, stairs, fences, doors and trapdoors; stone types and their crafted forms; ores and metal blocks; glass, wool and dyes; crops and farming; circuit logic with an original conductive material (wires, switches, buttons, pressure plates, pistons, lamps, repeaters, comparators, hoppers, droppers); rails and minecarts; boats; beds; chests, barrels and portable storage boxes of your own design; furnaces, smokers and blast furnaces; crafting table; anvils; enchanting with an original enchantment system of the same depth; brewing with original potions of the same roles; tools and armour of each material with durability; bows, crossbows, tridents and shields; food; music discs with original music. Generic real things keep real names (stone, iron, diamond, oak, wheat); invented signature materials, creatures and dimensions get original names and designs that fill the same role.
+- **Mobs**: passive animals (pig, cow, sheep with shearing and dyes, chicken, horse with taming and saddles, wolf with taming, cat, fish, squid and more), villagers with trading of your own design, hostile mobs at night and in darkness (zombie, skeleton archer, spider, slime, underwater zombies, and original equivalents of the original's own signature monsters, such as an exploding stalker and a teleporting tall creature, with original looks and names), bosses of your own design, spawning by light level and biome, mob AI with pathfinding, despawning rules.
+- **Dimensions**: an original fiery underworld reached through a portal of your own design, and an original far dimension with a final boss, each with its own blocks, mobs and structures.
+- **Inventory and interface**: left click picks up or places a stack, right click picks up half or places one, left drag splits evenly, right drag places one per slot, passing back over a slot adds nothing, shift-click moves stacks between inventory, hotbar and containers, double-click gathers, number keys swap with the hotbar, Q drops one, Ctrl+Q drops the stack, F swaps with the off-hand, middle click picks a block in creative, shift-click on a crafting result crafts the maximum, a recipe book, the cursor stack returns to the inventory when a screen closes, tooltips, the creative inventory with tabs and search, the survival 2x2 crafting grid and the 3x3 table, the hotbar with scrolling, the health, hunger, armour, air and experience bars, the debug screen, the pause menu, chat and commands.
+- **Look and feel**: original textures at the same pixel density, drawn by you; both legs, arms that swing, held items in first and third person with correct texture and proportions, a matching inventory preview, the hand and arm in first person, block breaking cracks, particles, clouds, fog, water and lava that flow and look right, smooth lighting, shadows under mobs, view bobbing, the third-person camera, sounds for every block, step and mob, original ambient music.
+- **Modes**: survival, creative, hardcore, adventure, spectator; difficulty levels including `Hardest` (smarter mobs by decision quality: flanking, retreating, pathing around obstacles, never by seeing through walls); online play through the site's party system with a shared world.
+
+**Quality bar**: smooth on this computer at a render distance of at least 12 chunks; playable on a school Chromebook through adaptive quality; no stutter when crossing chunk borders; saves that survive closing the tab and corrupt data. Playtest from a new world through to defeating the final boss with scripted and hand play, capturing everything in Part 6.3, and check every line above.
+
+**Then the 2D mining sandbox (`terraria`, file `259_g_terraria.js`)**: make it play like the most famous 2D mining and adventure sandbox (digging, building, crafting stations, biomes, events, bosses, NPCs who move in, classes of weapons and accessories, multiplayer), with original names for invented items, bosses and biomes (the last round found item and boss ids copied from the original: give them original display names and migrate saves). Same quality bar and playtest.
+
+## A.2 Agent F2: the 3D tactical 5v5 shooter, then the fast arena shooter
+
+You are the owner and long-term maintainer of a new game for Gameplay Games, a browser portal used by students on laptops, Chromebooks and phones. Its design is up to you. Build a 3D tactical team shooter that plays like the most famous competitive 5v5 bomb-defusal shooter, as a professional studio would build it, with every asset your own. Working title: **Breach Point** (the owner may rename it).
+
+**Match these in behaviour:**
+
+- **Rules**: two teams of five, attackers and defenders; attackers plant a bomb at one of two sites, defenders prevent or defuse it; one life per round; round time about 1 minute 55 seconds, bomb timer 40 seconds, defuse 10 seconds (5 with a kit); first to 13 rounds with sides switched after 12; overtime; a short freeze time at round start; a buy phase with a buy menu and buy zones.
+- **Economy**: money for kills (by weapon class), plants, defuses and round wins, a growing loss bonus, a money cap, dropping weapons for teammates, saving rounds.
+- **Weapons and equipment**: pistols, shotguns, submachine guns, rifles for each side, a scoped rifle, a bolt-action sniper, machine guns; original names and models built in code; armour and helmets; grenades with real arcs and bounces (flash, smoke that blocks sight, explosive, fire that spreads on the floor and is put out by smoke), a defuse kit.
+- **Gunplay**: first-shot accuracy, inaccuracy while moving, jumping and on ladders, crouch and walk for accuracy and silence, learnable recoil patterns per weapon, spray control, armour penetration, damage by body part with head shots, wall penetration through thin materials, tagging (slowdown when hit), weapon switch and reload times, a crosshair editor.
+- **Movement**: acceleration and friction that feel the same as the original genre, crouch-jumping onto boxes, ladders, footstep sounds that carry by distance and surface, walking silently.
+- **Maps**: at least three original maps built on the same proven principles as the genre's classic maps (two bomb sites, a middle area, connectors, spawn-to-site timings that make rotations matter, sight lines, boxes and cover, a clear visual theme), with callout names, a minimap and an overview. Do not rebuild a famous map.
+- **Interface**: health, armour and ammo display, money, the round timer and score, the kill feed, a scoreboard on Tab, the minimap with teammates, the radio commands, the buy menu, the spectator view after death, end-of-round and end-of-match screens with statistics.
+- **Bots**: four levels up to `Hardest`; they hold angles, check corners, use cover, rotate on information, trade kills, plant and defuse, use grenades, follow the economy, and react in 150 to 250 ms with human-like aim (never aimbot accuracy, never wall-hacks).
+- **Online**: up to ten players through the site's party system, host-authoritative, bots filling empty seats, lag compensation for hits, interpolation, the host's tab in the background not freezing the match, spectators.
+
+**Quality bar**: low-poly art with baked lighting and adaptive quality so it runs at 60 fps on this computer and stays playable on a school Chromebook; sound that tells you where enemies are; no unfair deaths through walls. Playtest full matches against bots and online with real browsers, capturing everything in Part 6.3.
+
+**Then the fast arena shooter** (working title **Overdrive**): a fast first-person action shooter in the style of the best-known modern high-speed retro shooters: dashing, sliding, wall-jumping, a style meter that rewards variety, several weapons with alternate fire and weapon swapping combos, a parry move that reflects projectiles, healing by close-range kills, waves and levels with original enemies and bosses, ranks for each level. Original art, music and enemies; the same quality bar and playtest.
+
+## A.3 Agent F3: the real-time card tower duel, then the tower defence game
+
+You are the owner and long-term maintainer of the real-time card tower duel on Gameplay Games, a browser portal used by students. Its design is up to you. Start from the finished but unlisted file `source/w/parts/289_g_clash-royale.js`. Make it play like the most famous real-time card battle game with towers, as a professional studio would build it, with every asset your own. Working title: **Crown Lanes** (the owner may rename it).
+
+**Match these in behaviour:**
+
+- **Arena**: two lanes divided by a river with bridges; each side has two princess-style towers and a central king-style tower that wakes when damaged; destroying the central tower wins at once; three minutes plus overtime with double resource speed, then sudden death; a crown count.
+- **Resource**: a bar from 0 to 10 that fills at a fixed rate, doubled near the end.
+- **Cards**: decks of eight with a rotating hand of four and a preview of the next card; troops (melee, ranged, air, swarms, tanks, splash), spells (damage, freeze, push, area effects), buildings (defensive and spawners); targeting rules (air or ground, buildings only), deploy time, placement only on your side except some cards, counters and synergies; at least 60 original cards with original names, art and balanced numbers; levels and an upgrade path that never gives one side unfair stats in a match.
+- **Progression**: trophies and arenas, chests or rewards of your own design without real-money elements, a card collection, deck building with saved decks, emotes of your own design.
+- **Bots**: four levels up to `Hardest`, which counter-plays, tracks the opponent's cycle from cards seen, manages the resource, defends and counter-pushes, never reads the opponent's hand.
+- **Online**: one against one through the party system, host-authoritative, the opponent's hand never sent.
+
+**Quality bar**: troop animations, death effects, tower damage effects, sound for every card; smooth with 40 troops on screen; fair matchmaking against bots. Audit the existing file for copied names and numbers and replace them before listing the game. Playtest full matches, capturing everything in Part 6.3.
+
+**Then the tower defence game (`bloons-td`, file `281_g_bloons-td.js`)**: make it play like the most famous balloon-popping tower defence game (towers with three upgrade paths, camo and armoured enemies, abilities, heroes of your own design, many tracks, difficulty modes, speed toggle), with original tower and enemy names and art (the last round found copied names). Same quality bar and playtest.
+
+## A.4 Agent F4: the arena brawler, then the social deduction game
+
+You are the owner and long-term maintainer of the arena brawler `brawl-stars` (file `source/w/parts/267_g_brawl-stars.js`) on Gameplay Games, a browser portal used by students. Its design is up to you. Make it play like the most famous mobile top-down team brawler, as a professional studio would build it, with every asset your own.
+
+**Match these in behaviour:**
+
+- **Controls**: twin-stick movement and aim on touch, auto-aim on tap, keyboard and mouse on desktop; ammo bars that recharge; a super ability charged by hitting enemies; a gadget and a passive per character; bushes that hide; walls that block and can be destroyed by some attacks; knockback; respawn timers.
+- **Modes**: the gem-collecting mode, the ball mode, the bounty mode, the heist mode, the solo and duo survival mode with a closing storm and power-ups, the boss and robot modes; original names for each; map rotation with original maps built for each mode.
+- **Characters**: at least 24 original characters across roles (damage, tank, support, assassin, thrower, sniper, controller) with original designs, animations, supers and voice-like sounds, balanced so no character dominates.
+- **Progression**: trophies, character levels, unlocks without real-money elements.
+- **Bots**: `Hardest` must win mirror duels with every character (the last round's version still lost with five of twelve) by decision quality, reacting in 150 to 250 ms.
+- **Online**: up to ten players, predicted guest shots with the host rewinding by measured delay (built last round: check on screen that there is no visible jump), spectating.
+
+**Quality bar**: smooth 60 fps with ten players and all effects; clear readable art on a phone. Playtest every mode online with real browsers and against bots, capturing everything in Part 6.3.
+
+**Then the social deduction game (`among-us`, file `261_g_among-us.js`)**: make it play like the most famous spaceship social deduction game (tasks, sabotages, vents, emergency meetings, voting, ghosts who finish tasks, roles, several maps of your own design), with original names for rooms, tasks and roles (partly done last round) and an original map layout instead of the original's. Hidden information audited (last round fixed visibility through walls). Same quality bar and playtest with at least five real browsers.
+
+## A.5 Agent F5: the endless runner, car soccer, then the low-poly track racer
+
+You are the owner and long-term maintainer of three speed games on Gameplay Games, a browser portal used by students. Their design is up to you. Make each play like the most famous game of its kind, as a professional studio would build it, with every asset your own.
+
+**The endless runner (`sky-runner`, source in `source/w/agents2/subway/src/`)**, in the style of the most famous train-surfing endless runner: three lanes, swipe or arrow controls with input buffering, jump, roll, lane changes that feel instant, trains (moving and parked), ramps onto train roofs, barriers high and low, a chaser who catches you after a stumble, coins, power-ups (magnet, jetpack, super sneakers, score multiplier, hoverboard that saves you once), missions and daily challenges, a score multiplier that grows, an original world and characters, a shop for original outfits and boards without real-money elements. Smooth speed growth, no unfair deaths, 60 fps on a phone.
+
+**Car soccer (`rocket-soccer`, source in `source/rl/`)**, in the style of the most famous rocket-car football game: car physics with boost, jumps, double jumps, flips and dodges, aerials, air roll, wall and ceiling driving, boost pads big and small, kickoffs, demolitions, a ball with the right weight and bounce, replays after goals, overtime, 1v1 to 4v4, `Hardest` bots (strong already: check they behave believably), online play.
+
+**The low-poly track racer** (from the unlisted `297_g_polytrack.js`; working title **Low Lap**), in the style of the popular low-poly time-trial racer with a track editor: precise driving, checkpoints and laps, a ghost of the best run, medals, a track editor with shared track codes, original tracks.
+
+**Quality bar for all three**: smooth on this computer and on a phone; the same result at every frame rate. Playtest each from start to end, capturing everything in Part 6.3.
 
 ---
 
-## Part 20. Final report
+# Appendix B. Briefs for the other new games (Claude Opus 5.5, xhigh)
 
-Write it so it stands on its own for someone who did not follow the session. Plain words, no invented abbreviations. In this order:
+Each brief starts the same way: *"You are the owner and long-term maintainer of this new game on Gameplay Games, a browser portal used by students on laptops, Chromebooks and phones. Its design is up to you. Make it play like the most famous game of its kind, as a professional studio would build it, with every asset your own (Part 3.3 of `prompt.md`). Then playtest it from start to end, capturing everything in Part 6.3, and report as in Part 6.6."* Then the specifics:
 
-1. What is live now, and what is waiting for the owner (with exact links and commands).
-2. Done, with how each was checked (one line each, details in the ledger).
-3. Unfinished, with the reason.
-4. Blocked, with exactly what is needed.
-5. Decisions for the owner.
-6. Things that could not be tested, and why.
-7. The numbers: games in the catalogue, games with an honest `Hardest`, the party network matrix, frame rates on real hardware, top errors before and after.
+1. **First-person horror escape** (working title **The Quiet House**): a house to escape within five in-game days; an original antagonist who hears noise and patrols, with a smarter pattern each day; hiding places (beds, wardrobes), items and keys, locked doors, puzzles, traps, a car or boat escape route, sound design that builds tension; difficulty levels including one where the antagonist moves faster; scary for teenagers, not gory.
+2. **Cooking and restaurant time management** (start from the cooking part of the unlisted `283_g_papas-pizzeria+tiny-fishing+duck-life.js`; working title **Order Up**): taking orders, several stations (preparing, cooking with timing, toppings or assembly, serving), customer patience and tips, days with rising difficulty, upgrades and decorations, several restaurant types unlocked over time. Also bring in the fishing and duck-training games from the same file with original identities.
+3. **Life simulation** (working title **One Life**): a life from birth to old age through yearly choices and random events, school and exams, jobs and careers, relationships, health, happiness, money, assets, activities, a family tree and replay with descendants; text written for a school audience.
+4. **Ragdoll physics obstacle course** (start from the unlisted `277_g_happy-wheels+getting-over-it.js`; working title **Wobble Ride**): characters on vehicles with joints that break, hazards, many levels, a level editor with shared level codes, original characters; gore replaced by cartoon effects.
+5. **Rope-swing momentum game** (working title **Swing Line**): tap or click to grab the nearest hook, release to fly, momentum that feels right, levels with obstacles, collectibles and stars.
+6. **Online meme-caption party game** (working title **Caption This**): 3 to 10 players through the party system; each round shows a picture (made in code from an original template set, or uploaded by the host within the existing file limits and visible only to the party); players write captions; everyone votes; scores; moderation of typed text.
+7. **The other unlisted games**: the ragdoll archery duel (`275`), the American football game (`285`), the two rhythm games (`287`), the poker-hand roguelike (`291`), the element-combining game (`293`): audit and replace copied content, give each an original title and cover, bring it to the quality bar, list it.
+8. **More games to reach at least 200**: pick from the idea pool in `GAMES.md` and from students' requests in the idea box (admin dashboard), favouring online multiplayer and genres the catalogue lacks. Same rules.
 
 ---
 
-## Appendix A. Files and the games they hold
+# Appendix C. Brief for the existing, less popular game groups (Claude Opus 5.5, xhigh)
 
-Games listed in the build (in `_order.json`) unless marked "unlisted". Some files also hold code of games that are no longer listed (Part 7). Titles as the catalogue shows them.
+Give each group agent this brief with its group's file list:
 
-- `003`: Reaction, Aim Trainer, Whack-a-Mole
-- `005`: Perfect Stop, Stack, Pulse (rhythm)
-- `007`: Breakout, Pong
-- `011`: 2048, Slide 15
-- `013`: Tic-Tac-Toe, Connect Four (and dead code of Lights Out)
-- `015`: Pairs, Sequence, Number Memory
-- `017`: Trivia, Math Sprint, Five Letters (word guess)
-- `019`: Typing Test (and dead code of Clicker and Golf)
-- `021`: Knife Throw (and dead code of Stick Bridge)
-- `025`: Pinball, Air Hockey, Archery
-- `027`: 8-Ball Pool, Piano Tiles, CPS Test
-- `031`: Chimp Test (and dead code of Kart Circuit)
-- `033`: Tetra Blocks, Bubble Pop, Gem Swap
-- `035`: Box Pusher, Pipe Connect, Sudoku
-- `037`: Chess, Checkers, Reversi
-- `039`: Solitaire, Hangman, True or False
-- `041`: Marble Roll
-- `043`: Highway 3D, Sky Pilot
-- `045`: Hoops 3D
-- `047`: Penalty Kick, Target Range
-- `049`: Maze Escape 3D, Tank Arena
-- `051`: Asteroid Field (and the cube puzzle)
-- `053`: the obstacle-course party game (`bean-royale`)
-- `055`: Block Roll
-- `057`: the voxel sandbox (`blockcraft-3d`), generated from `agents2/minecraft`
-- `061`: the side-scrolling platformer (`brick-bros`)
-- `065`: Cell Feast
-- `067`: the idle cookie game (`cookie-baker`)
-- `069`: Geometry Rush (`dash-cube`)
-- `073`: Dino Run
-- `077`: Flap Bird
-- `081`: the fruit slicing game (`fruit-slice`)
-- `083`: Garden Defense
-- `085`: the helix drop game (`helix-3d`)
-- `089`: the hole arena (`hole-city`)
-- `091`: the basketball flick game (`hoop-flop`)
-- `093`: Invaders
-- `097`: Last Card
-- `101`: Maze Muncher
-- `103`: the tank duel (`maze-tanks`)
-- `105`: Minesweeper
-- `107`: Moto Stunts
-- `111`: Paper Land
-- `113`: the road crossing game (`road-hopper`)
-- `115`: car soccer (`rocket-soccer`), generated from `source/rl`
-- `117`: Sea Battle
-- `121`: the endless runner (`sky-runner`), generated from `agents2/subway`
-- `123`: Slither
-- `125`: the slope runner (`slope-3d`)
-- `127`: Snake
-- `129`: the tunnel runner (`tunnel-run`)
-- `201` to `213`: Texas Hold, Blackjack, Durak, Belote, French Tarot, Go Fish, Old Maid, Cheat, President, Crazy Eights, War, Speed, Hearts, Spades, Euchre
-- `215`: Gin Rummy, Rummikub, Phase 10
-- `217`: Skip-Bo, Exploding Kittens, Coup
-- `219`: Spider Solitaire, FreeCell, Pyramid Solitaire, Cribbage
-- `221`: Mahjong Solitaire, Riichi Mahjong
-- `223`: Ludo, Snakes and Ladders, Sorry!
-- `225`: Monopoly
-- `227`: Backgammon, Mancala, Nine Men's Morris
-- `229`: Go, Gomoku, Dots and Boxes
-- `231`: Chinese Checkers, Blokus, Quoridor
-- `233`: Dominoes, Yahtzee, Mastermind
-- `235`: Scrabble, Boggle
-- `237`: Stratego, Guess Who, Clue
-- `239`: Catan
-- `241`: Risk
-- `243`: Word Search, Mini Crossword, Spelling Bee, Connections
-- `245`: Nonogram, Flow Free, Water Sort, Unblock Me
-- `247`: Gartic Phone, Skribbl.io
-- `249`: Werewolf
-- `251`: Codenames, Spyfall, Undercover
-- `253`: Word Bomb, Kahoot, Quiplash
-- `255`: Wavelength, Petit Bac, Bingo
-- `257`: Typeracer, Trivia Crack
-- `259`: Terraria (the mining sandbox)
-- `261`: Among Us (the social deduction game)
-- `263`: the worm artillery game
-- `265`: Stick Fight, Super Smash Bros. (the platform fighter)
-- `267`: Brawl Stars (the arena brawler)
-- `269`: Surviv.io (the shooter arena), Diep.io (the tank arena)
-- `271`: the physics pushing arena and the survival crafting game
-- `273`: head soccer, slime volleyball, basketball
-- `275` (unlisted): ragdoll archery duel (the swing game and the precision platformer named in the file name are not registered)
-- `277` (unlisted): physics obstacle course (the climbing game in the file name is not registered)
-- `279`: Tomb of the Mask, Color Switch, Eggy Car, Drift Boss
-- `281`: Bloons TD (the tower defence game)
-- `283` (unlisted): cooking game, Tiny Fishing, Duck Life
-- `285` (unlisted): American football game
-- `287` (unlisted): two rhythm games
-- `289` (unlisted): real-time card duel
-- `291` (unlisted): poker-hand roguelike
-- `293` (unlisted): Little Alchemy 2 (element combining; the life simulation in the file name is not registered)
-- `297` (unlisted): low-poly track racer with editor
+*"You are the owner and long-term maintainer of these games on Gameplay Games, a browser portal used by students on laptops, Chromebooks and phones. Their design is up to you. Read `source/t/GAMEPASS.md` and Parts 3, 5 and 6 of `ClaudeScripts/gameplay-site/prompt.md` first. For each game: write a checklist of everything a regular player of the best-known game of its kind expects (rules, controls, physics, menus, feedback, modes); play it from start to end on this computer at desktop and phone size, capturing everything in Part 6.3; fix every bug in the classes of Part 5, visual or technical; bring its look, sound and feel to the level of a professional release with original assets; make it smooth (60 fps here, playable with four-times CPU throttling); add or prove `Hardest` where it has computer opponents; check its online mode with real browsers where it has one; replace any copied names, texts or layouts. Report as in Part 6.6."*
 
-## Appendix B. Open items carried over from the last round
+The groups (use `LEDGER.md` Section 7 for what the last round did and what it left):
 
-From `LEDGER.md` and `NEXT_AI.md` at the end of November 2026:
+1. **Small classics**: reaction, aim trainer, whack-a-mole, perfect stop, stack, pulse, breakout, pong, 2048, slide 15, pairs, sequence, number memory, typing test, knife throw, chimp test, tetra blocks, bubble pop, gem swap, box pusher, pipe connect, sudoku, dino run, flap bird, invaders, maze muncher, minesweeper, snake.
+2. **Arcade and sports 2D**: pinball, air hockey, archery, 8-ball pool, piano tiles, CPS test, cell feast, slither, paper land, sea battle, fruit slice, hoop flop, road hopper, tunnel run, geometry rush, last card, the tank duel, the hole arena, the cookie game. Known gaps: no `Hardest` in the hole arena; real playthroughs and restarts not done in nine games.
+3. **3D arcade and platformers**: marble roll, highway 3D, sky pilot, hoops 3D, penalty kick, target range, maze escape 3D, tank arena, asteroid field, the cube puzzle, block roll, helix drop, slope runner, moto stunts, the side-scrolling platformer, the obstacle-course party game.
+4. **Action and multiplayer 2D**: the worm artillery game, stick fight, the platform fighter, the shooter arena, the tank arena, the physics pushing arena, the survival crafting game, head soccer, slime volleyball, basketball, garden defense. Known gaps: no honest `Hardest` in basketball, the shooter arena and the platform fighter.
+5. **Simulation and skill**: tomb of the mask, color switch, eggy car, drift boss and anything left from the unlisted files after Appendix B.
+6. **Card games A**: Texas hold'em, blackjack, Durak, belote, French tarot, president, cheat, old maid, go fish, crazy eights, war, speed, hearts, spades, euchre.
+7. **Card and board games B**: gin rummy, Rummikub, Phase 10, Skip-Bo, Exploding Kittens, Coup, cribbage, spider solitaire, FreeCell, pyramid solitaire, mahjong solitaire, riichi mahjong, Ludo, snakes and ladders, Sorry!, Monopoly, backgammon, mancala, nine men's morris. Known gaps: rule audits, the solitaires, mahjong and Monopoly were not reached last round.
+8. **Strategy board games**: chess, checkers, reversi, tic-tac-toe, connect four, Go, gomoku, dots and boxes, Chinese checkers, Blokus, Quoridor, dominoes, Yahtzee, Mastermind, Scrabble, Boggle, Stratego, Guess Who, Clue, Catan, Risk. Known gaps: Go and several top levels were only relabelled.
+9. **Word and party games**: word search, mini crossword, spelling bee, connections, nonogram, flow puzzles, water sort, unblock, the drawing games, werewolf, codenames, spyfall, undercover, word bomb, the quiz game, the caption-voting game, wavelength, petit bac, bingo, typeracer, trivia crack, trivia, math sprint, five letters, solitaire, hangman, true or false. Known gaps: a refreshed guest returned to the lobby instead of the running game in real browsers; the dial-guessing game has no honest `Hardest`.
 
-1. The relay worker update and its TURN secrets (Part 9).
-2. A production test account and checks on the real site (Part 11).
-3. The security items (Part 10).
-4. Code review fixes changed but not exercised by a test: timed-out writes not replayed through the relay (13), the favourites race (15), picture links after an hour (16), the public parties channel retry (23), stats details (24). Not fixed: long offline play can lose playtime because the server caps one batch at about an hour (17). Write tests for the first five; fix the sixth by mirroring the server's cap in the client and keeping the remainder for later batches.
-5. Games without an honest `Hardest` (Part 13.1 item 6).
-6. Not yet tested: real school firewalls, VPNs and TURN; Safari, Firefox, real phones; real frame rates on a graphics card; Google sign-in end to end. On this computer most of these become testable: do them.
-7. The lawyer review of the legal pages (owner).
-8. The twelve unlisted games and the new games (Part 15).
-9. Copied content inside games (Part 13.2) and copied cover art (Part 16).
-10. The three voxel sandbox bugs of Part 5.1 are fixed in pull request #7: make sure it is merged and deployed before you start, or merge it into your branch.
+---
+
+# Appendix D. What the owner has asked for (overview for every handoff)
+
+Copy this section unchanged into `NEXT_AI.md` at every handoff (Part 14), then add new requests below it.
+
+- Bring the whole platform to an exceptionally high standard, as owner and long-term maintainer. Priorities: game quality, reliability, functionality, performance, user experience.
+- Keep the main layout, structure, navigation and design direction. Components may be substantially improved.
+- Parties must connect for everyone (same Wi-Fi, remote, school networks, proxies, VPNs, firewalls), with many fallbacks, never stuck; cancelling and refreshing must stop connection attempts.
+- A big search for hidden bugs; the kind of small details a real player notices (Part 5).
+- Announcements without replayed animations and not on the login and sign-up pages; a better username picker; a much more noticeable "Log in with Google"; usernames of at least four characters.
+- Public parties without a four-letter code and without a second public/private switch; "Join a party" lists all available parties; online users shown online.
+- The admin dashboard updates every second; more and accurate analytics; a dedicated test account with full diagnostics recorded only for it.
+- Higher rate limits except security-sensitive ones; owners and admins exempt, enforced on the server by role.
+- A load sequence that checks the password and login first and shows only the right page, with skeleton screens for slow loads.
+- An idea box with picture and file uploads; files in messages elsewhere with sensible limits; a much better settings page with useless controls removed; no "How to play" under games.
+- Terms, Privacy Policy and Cookie Policy about three times longer, meaningful, honest, considering minors, with a list of points for a lawyer.
+- Every game improved: graphics, gameplay, variety, animations, sound, frame rate; the popular games playing like the famous originals, with original assets; `Hardest` levels almost unbeatable without unfair advantages.
+- Consistent game covers (same icon style and darkened background), made of original art.
+- At least 200 games, including a 3D voxel game, a 3D 5v5 tactical shooter, a real-time card tower duel, a low-poly track racer, a horror escape, a fast arena shooter, cooking games, a life simulation, a ragdoll physics game, a rope-swing game, a meme-caption party game and the game the owner called "Krillion".
+- Every game playtested from start to end, in parallel, capturing everything a real player would notice.
+- One merged SQL file; old and unwanted files deleted; the relay and TURN service deployed; the security work finished; real test data gathered.
+- Everything related to Gameplay Games on GitHub; the owner's local copy updated and old copies deleted; this master prompt on GitHub; a handoff with an overview and a follow-up prompt at the end of every session.
+- The five popular-game recreations on Claude Fable 5.2 at extra-high effort; the other existing games on Claude Opus 5.5 at extra-high effort; the lead session on Claude Fable 5.2 at high effort.

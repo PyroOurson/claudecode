@@ -1,5 +1,7 @@
 # Briefing for the next AI working on Gameplay Games
 
+**Start here:** the full plan for the next round is `prompt.md` in this folder. Start a session in the Claude Code app with Claude Fable 5.2 at high effort and send: "Read `ClaudeScripts/gameplay-site/prompt.md` and do everything in it. Start with Part 0." The owner's requests are summarised in Appendix D of that file. The rest of this page is background.
+
 Read this first, then `README.md`, `LEDGER.md` and `source/BUILD.md`.
 
 ## The site
