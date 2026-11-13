@@ -423,6 +423,7 @@
   const THINK = { Easy: [900, 1700], Normal: [700, 1350], Hard: [560, 1100], Hardest: [450, 900] };
 
   function boot(mod, root, api) {
+    api.on(root, 'contextmenu', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
     MUTE = () => api.muted;
     const R = Math.random;
     const opt = Object.assign({ n: mod.n0, diff: 'Normal', felt: 'green', back: 'blue', timer: 0, v: 1 }, api.load() || {});

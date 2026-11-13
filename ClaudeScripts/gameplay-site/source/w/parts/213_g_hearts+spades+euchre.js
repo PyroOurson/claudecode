@@ -287,7 +287,7 @@
     const off = dir === 0 ? 1 : dir === 1 ? 3 : 2, rest = FULL.filter(c => !h.includes(c)), tot = new Float64Array(tri.length), t0 = now();
     let n = 0;
     for (; n < 30; n++) {
-      if (n >= 8 && now() - t0 > 45) break;
+      if (n >= 8 && now() - t0 > 25) break;
       const d = shuf(rest.slice()), hands = [h, h, h, h], give = [null, null, null, null];
       let u = 0;
       for (let q = 0; q < 4; q++) if (q !== p) { hands[q] = d.slice(u, u + 13); u += 13; give[q] = hPassCards(hands[q], dir, 'Normal', S); }
@@ -1008,7 +1008,7 @@
       if (Math.random() < 0.1) return L[(Math.random() * L.length) | 0];
       return ePolicy(S, p);
     }
-    const r = pimc(EG, S, p, { n: cfg.n, ms: cfg.ms, eps: 0.02, dd: cfg.dd ? eDD : null });
+    const r = pimc(EG, S, p, { n: cfg.n, ms: cfg.ms, eps: 0.02, dd: cfg.dd && S.tn >= 1 ? eDD : null });
     if (r.close.length > 1) {
       const pol = ePolicy(S, p);
       if (r.close.includes(pol)) return pol;
@@ -1852,6 +1852,7 @@
   const BUBBLE_OFF = 52;
 
   function mountCards(gid, root, api) {
+    api.on(root, 'contextmenu', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
     const C = CFG[gid], isH = gid === 'hearts', isS = gid === 'spades', isE = gid === 'euchre';
     const saved = api.load() || {};
     const opt = Object.assign({ diff: 'Normal', felt: 0, back: 'blue', speed: 1, hints: true, wins: 0, games: 0 }, saved);
@@ -3096,7 +3097,7 @@ ${host ? `<button class="cg-big blue" data-a="restart">${online ? 'Restart for e
       const cp = nd.filter(x => M.cpu[x.p]);
       if (cp.length && T >= M.botAt) {
         for (const x of cp) {
-          PACC = M.acc && M.acc.ver === M.ver && M.acc.p === x.p ? Object.assign(M.acc, { ms: 0, min: 3 }) : null;
+          PACC = M.acc && M.acc.ver === M.ver && M.acc.p === x.p ? Object.assign(M.acc, { ms: 0, min: 1 }) : null;
           const ev = actFor(x.p, x.k, M.diff);
           PACC = null;
           if (ev) feed(ev);
@@ -3152,6 +3153,9 @@ ${host ? `<button class="cg-big blue" data-a="restart">${online ? 'Restart for e
     if (window.ResizeObserver) { ro = new ResizeObserver(() => rescale()); ro.observe(wrap); }
     SND.setMuted(() => api.muted);
     applyFelt(); fit(true);
+    const warmList = (gid === 'euchre' ? EDECK : FULL).filter(c => !SPR.faces.has(c));
+    const warm = () => { for (let k = 0; k < 2 && warmList.length; k++) faceUrl(warmList.shift()); if (warmList.length) api.timeout(warm, 40); };
+    api.timeout(warm, 300);
     root._cg = { M, D, Q, opt, view, send, get T() { return T; }, get viewer() { return viewer; }, get scene() { return scene; }, ents: () => ents, hand: () => myHand().map(e => e.c), pane: () => paneKind(), idle: () => canAct(), geo: () => GE, dbg: () => ({ paused, busy: Math.round(busy - T), q: Q.map(e => e.k), idleDone, ver: M.ver, botVer: M.botVer, sched: sched.length }) };
     api.score(opt.wins);
     if (api.net.invite) startOnline(); else titlePane();

@@ -156,6 +156,7 @@
   }
 
   function Core(root, api, c) {
+    api.on(root, 'contextmenu', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
     const K = { api, root, W: c.W, H: c.H, port: false, dpr: 1, t: 0, cw: 84, ch: 118, shake: 0, frame: null, onFit: null, back: c.back || ['#2457b8', '#102e6b'] };
     const wrap = document.createElement('div'); wrap.className = 'cg-wrap';
     const cv = document.createElement('canvas');

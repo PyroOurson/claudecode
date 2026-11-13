@@ -846,6 +846,7 @@
     css: CSS,
     _t: { Table, advice, adviceCount, tot, legalHand, hardRow, softRow, pairRow, chipsOf },
     mount(root, api) {
+      api.on(root, 'contextmenu', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
       const SV = Object.assign({ bank: 0 }, api.load() || {});
       SV.st = Object.assign({ h: 0, w: 0, l: 0, p: 0, b: 0 }, SV.st || {});
       const OP = Object.assign({ decks: 6, h17: false, pay: 1.5, surr: true, das: true, rsa: false, dbl: 'any', min: 5, start: 1000, bots: 2, botlvl: 'Mixed', hint: false, fast: false }, SV.op || {});

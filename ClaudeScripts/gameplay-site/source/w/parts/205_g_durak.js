@@ -914,6 +914,7 @@
 .gm-durak .dk-stamp{display:inline-block;margin:4px 0 8px;padding:4px 16px;border:4px solid #ff5b4b;border-radius:10px;color:#ff5b4b;font:900 30px var(--sans);letter-spacing:3px;transform:rotate(-7deg);text-transform:uppercase}
 `,
     mount(root, api) {
+      api.on(root, 'contextmenu', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
       const opt = Object.assign({ mode: 'cpu', bots: 3, diff: 'Normal', deck: 36, variant: 'throw', teams: false, neigh: false, first5: true, timer: 0, felt: 'green', back: 'blue', match: 0, seen: false, stats: { w: 0, g: 0, f: 0 } }, api.load() || {});
       if (opt.mode !== 'cpu' && opt.mode !== 'online') opt.mode = 'cpu';
       if (opt.diff === 'Expert') opt.diff = 'Hardest';

@@ -1020,6 +1020,7 @@
   const ICON_HIST = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M4 10h16M4 15h10M4 20h7"/></svg>';
 
   function mountPoker(root, api) {
+    api.on(root, 'contextmenu', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
     const opt = Object.assign({ mode: 'sng', bots: 5, skill: 'Mixed', stack: 1500, lv: 8, stakes: 1, buyin: 100, hands: 50, timer: 30, fast: false, four: false, felt: 'green', hint: true, v: 1 }, api.load() || {});
     opt.bots = Math.max(1, Math.min(7, +opt.bots || 5));
     if (!FELTS[opt.felt]) opt.felt = 'green';

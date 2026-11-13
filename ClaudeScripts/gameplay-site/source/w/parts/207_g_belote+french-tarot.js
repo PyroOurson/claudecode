@@ -846,7 +846,7 @@
     const L = bLegal(S.hands[seat], S.trick, S.trump, S.cls, seat);
     if (L.length < 2) return null;
     const sr = bTopSearch(g, seat, L);
-    return { step: ms => sr.step(ms, 0), done: () => { sr.step(0, 16); return { k: 'play', id: sr.best() }; } };
+    return { step: ms => sr.step(ms, 0), done: () => ({ k: 'play', id: sr.best() }) };
   }
   function bBot(g, seat, lvl) {
     const S = g.S;
@@ -860,7 +860,7 @@
         const r = bBidEval(S, seat, su, N);
         if (r.succ / r.n > bp) { bp = r.succ / r.n; best = su; }
       }
-      const thr = (S.phase === 'bid1' ? .56 : .5) + (lvl === 'Easy' ? (Math.random() - .5) * .3 : 0);
+      const thr = (S.phase === 'bid1' ? .56 : .5) + (lvl === 'Easy' ? (Math.random() - .5) * .3 : lvl === 'Hardest' ? .1 : 0);
       if (best >= 0 && bp >= thr + noisy * 0) return { k: 'take', suit: best };
       return { k: 'pass' };
     }
@@ -1405,8 +1405,9 @@
     let tot = 0;
     for (let q = 0; q < n; q++) tot += need[q];
     const ne = seat !== S.taker && S.bid <= 2 ? Math.max(0, unk.length - tot) : 0, atk = seat === S.taker || seat === S.partner, sums = new Float64Array(L.length);
-    let k = 0;
-    const one = () => {
+    let k = 0, ci = 0, base = null;
+    const cnt = new Float64Array(L.length);
+    const prep = () => {
       let pool = unk;
       if (ne) {
         const el = shuffle(unk.filter(i => i < 56 && i % 14 !== 13 && !fix.has(i))).slice(0, ne);
@@ -1414,7 +1415,7 @@
       }
       const hs = tSample(need, pool, S.voids, known, null);
       hs[seat] = mine.slice();
-      const base = tSyncPoints(S, tRSfromS(S, seat));
+      base = tSyncPoints(S, tRSfromS(S, seat));
       base.h = hs;
       const camp = base.camp.slice();
       if (n === 5 && !S.partnerShown && seat !== S.partner && S.called >= 0 && !tAlone(S, seat)) {
@@ -1423,24 +1424,27 @@
         for (let q = 0; q < n; q++) camp[q] = q === S.taker || q === partner ? 0 : 1;
       }
       base.camp = camp;
-      for (let i = 0; i < L.length; i++) {
-        const R = tCloneR(base);
-        R.h[seat] = mine.slice();
-        tApplyR(R, seat, L[i]);
-        tRoll(R, 0);
-        const d = R.tp - T_NEED[Math.min(3, R.to)], v = d / 2 + (d >= 0 ? 25 : -25);
-        sums[i] += atk ? v : -v;
-      }
+    };
+    const cand = () => {
+      if (!ci) prep();
+      const R = tCloneR(base);
+      R.h[seat] = mine.slice();
+      tApplyR(R, seat, L[ci]);
+      tRoll(R, 0);
+      const d = R.tp - T_NEED[Math.min(3, R.to)], v = d / 2 + (d >= 0 ? 25 : -25);
+      sums[ci] += atk ? v : -v; cnt[ci]++;
+      if (++ci === L.length) { ci = 0; k++; }
     };
     return {
       step(ms, min) {
         const t0 = performance.now();
-        while (k < 120 && (k < (min || 0) || performance.now() - t0 < ms)) { one(); k++; }
+        while (k < 120 && (k < (min || 0) || performance.now() - t0 < ms)) cand();
         return k >= 120;
       },
       best() {
+        if (!k) return tPolicy(tSyncPoints(S, tRSfromS(S, seat)), seat, 0);
         let bi = 0;
-        for (let i = 1; i < L.length; i++) if (sums[i] > sums[bi]) bi = i;
+        for (let i = 1; i < L.length; i++) if (sums[i] / cnt[i] > sums[bi] / cnt[bi]) bi = i;
         return L[bi];
       }
     };
@@ -1462,7 +1466,7 @@
     const L = tLegal(S.hands[seat], S.trick, fr);
     if (L.length < 2) return null;
     const sr = tTopSearch(g, seat, L);
-    return { step: ms => sr.step(ms, 0), done: () => { sr.step(0, 6); return { k: 'play', id: sr.best() }; } };
+    return { step: ms => sr.step(ms, 0), done: () => ({ k: 'play', id: sr.best() }) };
   }
   function tBot(g, seat, lvl) {
     const S = g.S;
@@ -1879,6 +1883,7 @@
   function paneHtml(inner, cls) { return `<div class="box ${cls || ''}">${inner}</div>`; }
 
   function Table(root, api, A) {
+    api.on(root, 'contextmenu', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
     const kind = A.kind, CR = kind === 'b' ? 100 / 140 : 100 / 172;
     const opt = A.defaults(), sv0 = api.load();
     if (sv0 && typeof sv0 === 'object' && !Array.isArray(sv0)) for (const k in opt) if (sv0[k] != null && (opt[k] == null || typeof sv0[k] === typeof opt[k])) opt[k] = sv0[k];
