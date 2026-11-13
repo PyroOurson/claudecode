@@ -1117,7 +1117,7 @@
     const vscene = new THREE.Scene(), vg = new THREE.Group(); vscene.add(vg);
     const vItems = {}; for (const k in IG) { const m = new THREE.Mesh(IG[k], PM({ vertexColors: true, shininess: 40 })); m.visible = false; vg.add(m); vItems[k] = m; }
     const faceC = document.createElement('canvas'); faceC.width = faceC.height = 256; paintFace(faceC.getContext('2d'), 256); const faceT = own(new THREE.CanvasTexture(faceC)); faceT.encoding = THREE.sRGBEncoding;
-    const KM = keeperModel(THREE, H, own, faceT); scene.add(KM.root); KM.root.visible = false;
+    const KM = keeperModel(THREE, H, own, faceT); scene.add(KM.root);
     const tvTex = (() => { const c = document.createElement('canvas'); c.width = 64; c.height = 48; const t = own(new THREE.CanvasTexture(c)); return { c, g: c.getContext('2d'), t }; })();
     const tvScreen = new THREE.Mesh(own(new THREE.PlaneGeometry(0.5, 0.4)), own(new THREE.MeshBasicMaterial({ map: tvTex.t, color: 0x8090a0 }))); tvScreen.position.set(19.35, 0.8, 13.62 - 0.258); tvScreen.rotation.y = Math.PI; LG[1].add(tvScreen);
     const roofM = own(new THREE.MeshBasicMaterial({ color: 0x07080a }));
@@ -1272,7 +1272,7 @@
       wireMesh.forEach((m, i) => { m.visible = R.wires.includes(i); });
       syncLocks(); syncTraps();
       H.bakeU.value = R.D.dark * SV.opt.bright; fog.density = 0.11 / R.D.dark;
-      K.on = !!R.D.keeper; KM.root.visible = K.on;
+      K.on = !!R.D.keeper;
     }
     function applyRun(s) {
       Object.assign(R, { day: s.day, t: s.t, code: s.code.slice(), clues: s.clues.slice(), found: s.found.slice(), creaks: s.creaks.slice(), wires: s.wires.slice(), locks: Object.assign({}, s.locks), car: Object.assign({}, s.car), power: s.power, fuse: s.fuse, garage: s.garage, flashes: s.flashes, caught: s.caught });
@@ -1320,7 +1320,7 @@
         if (k === 'g' && DOORS.find(d => d.lock === 'garageKey').locked) w = 0.4;
         if (R.day >= 2) for (const m of K.mem) if (roomKey(m.lv, Math.floor(m.x), Math.floor(m.z)) === k && R.t - m.t < 150) w += 2.5;
         if (R.day >= 2 && K.last && roomKey(K.last.lv, Math.floor(K.last.x), Math.floor(K.last.z)) === k && R.t - K.last.t < 200) w += 3;
-        if (R.day >= 4) { const fp = (2 - R.locks.planks) + R.locks.pad + R.locks.key + (R.D.chain ? R.locks.chain : 0) + (R.D.code ? R.locks.code : 0), cp = R.car.bat + R.car.fuel + R.power + R.car.plug; if (k === 'h' && fp >= cp && fp > 0) w += 4; if ((k === 'g' || k === 'u') && cp > fp) w += 4; }
+        if (R.day >= 4) { const fp = (2 - R.locks.planks) + R.locks.pad + R.locks.key + (R.D.chain ? R.locks.chain : 0) + (R.D.code ? R.locks.code : 0), cp = R.car.bat + R.car.fuel + R.power + R.car.plug; if (k === 'h' && fp >= cp && fp > 0) w += 9; if ((k === 'g' || k === 'u') && cp > fp) w += 7; }
         if (k === roomKey(K.lv, Math.floor(K.x), Math.floor(K.z))) w *= 0.25;
         return w;
       });
@@ -1407,7 +1407,7 @@
     }
     function arrive() {
       K.path = null;
-      if (K.st === 'patrol') { K.st = R.day >= 5 && R.rng() < 0.35 ? 'listen' : 'look'; K.t = K.st === 'listen' ? 4 + R.rng() * 3 : 1.5 + R.rng() * 2.5; }
+      if (K.st === 'patrol') { const rk = roomKey(K.lv, Math.floor(K.x), Math.floor(K.z)), guard = R.day >= 4 && (rk === 'h' || rk === 'g' || rk === 'u'); K.st = R.rng() < (guard ? 0.8 : R.day >= 5 ? 0.5 : R.diff >= 4 && R.day >= 3 ? 0.3 : 0) ? 'listen' : 'look'; K.t = K.st === 'listen' ? 4 + R.rng() * 3 : 1.5 + R.rng() * 2.5; }
       else if (K.st === 'goto') { K.st = 'look'; K.t = 2.5 + R.rng() * 2.5; if (R.day >= R.D.checkFrom && K.goal) planChecks(K.goal.x, K.goal.z, K.goal.lv); }
       else if (K.st === 'search') { K.st = 'look'; K.t = 2 + R.rng() * 2; if (R.day >= R.D.checkFrom && K.last) planChecks(K.last.x, K.last.z, K.last.lv); }
       else if (K.st === 'check') { K.t = 1.4; }
@@ -1813,8 +1813,7 @@
     let cnt = 0, tvT = 0, tickT = 0, kyaw = 0;
     const kp = new THREE.Vector3();
     function poseKeeper(a, dt) {
-      if (!K.on && mode !== 'title') { KM.root.visible = false; return; }
-      KM.root.visible = true;
+      if (!K.on && mode !== 'title') { KM.root.position.set(10, -60, 7); KM.light.intensity = 0; return; }
       const x = lerp(K.ox, K.x, a), y = lerp(K.oy, K.y, a), z = lerp(K.oz, K.z, a);
       const sp = Math.hypot(K.x - K.ox, K.z - K.oz) / STEP;
       KM.root.position.set(x, y, z); kyaw += angDiff(kyaw, K.yaw) * Math.min(1, dt * 10); KM.root.rotation.y = kyaw;
@@ -1908,6 +1907,7 @@
     });
     api.on(window, 'resize', () => { journal(journalOpen); });
     root.__qh = { TG, DBG, scene, cam, THREE, audio, enterHide, exitHide, spot, useDoor, edgeDoor(a, b) { const p = NAV.pos(a), q2 = NAV.pos(b); if (p.lv !== q2.lv) { const L = NAV.links.get(a); return L ? doorAtEdge(L.lv, L.ax, L.x, L.z) : null; } if (Math.abs(p.x - q2.x) + Math.abs(p.z - q2.z) !== 1) return null; const ax = p.x !== q2.x ? 'v' : 'h'; return ax === 'v' ? doorAtEdge(p.lv, 'v', Math.max(p.x, q2.x) - 0.5, Math.floor(p.z)) : doorAtEdge(p.lv, 'h', Math.floor(p.x), Math.max(p.z, q2.z) - 0.5); }, tryLoad(str) { try { localStorage.setItem('gameplay:save:' + ID, str); } catch (e) {} SV = loadSave(); showTitle(); return { opt: SV.opt, st: SV.st, run: !!SV.run }; }, sim(n) { for (let i = 0; i < n; i++) step(STEP); }, pick(nx, ny) { const rc = new THREE.Raycaster(); rc.setFromCamera({ x: nx || 0, y: ny || 0 }, cam); const hits = rc.intersectObjects(scene.children, true).filter(h => h.object.visible && h.object.parent && h.object.parent.visible !== false); return hits.slice(0, 4).map(h => { const m = h.object.material; let key = null; for (const k in H.M) if (H.M[k] === m) key = k; return [key || (m.type), +h.distance.toFixed(2), h.point.x.toFixed(2), h.point.y.toFixed(2), h.point.z.toFixed(2), h.face ? [h.face.normal.x, h.face.normal.y, h.face.normal.z].map(v => v.toFixed(2)).join(',') : '']; }); }, aim(x, y, z) { const ey = P.y + lerp(EYE, CREYE, P.cr), dx = x - P.x, dz = z - P.z; P.yaw = Math.atan2(-dx, -dz); P.pitch = Math.atan2(y - ey, Math.hypot(dx, dz)); }, get R() { return R; }, P, K, get mode() { return mode; }, get focus() { return focus && focus.kind; }, NAV, H, DOORS, ITEMLIST, start: (d, from) => start(d, from || null), tp(x, z, lv) { P.x = P.ox = x; P.z = P.oz = z; P.lv = lv; P.y = P.oy = groundY(lv, x, z); }, give(k) { const it = ITEMLIST.find(i => i.k === k && i.st !== 'h'); if (!it) return false; freeItem(it); if (P.held) releaseHeld(true); it.st = 'h'; P.held = it; syncItem(it); return true; }, use, drop: dropHeld, throwIt: throwHeld, noise: (l) => noise(P.x, P.y, P.z, P.lv, l, true), snapshot, staticTris: () => staticTris, keeperTo(x, z, lv) { K.x = K.ox = x; K.z = K.oz = z; K.lv = lv; K.y = K.oy = groundY(lv, x, z); K.path = null; K.st = 'patrol'; }, pause: openPause, resume, escape, setDay(n) { R.day = n; }, quality: () => PRQ.lvl };
+    try { renderer.compile(scene, cam); renderer.compile(vscene, cam); } catch (e) {}
     showTitle();
     return () => { persist(); unlockPtr(); audio.close(); for (const o of bin) { try { o.dispose(); } catch (e) {} } bin.length = 0; delete root.__qh; };
   }
@@ -2051,7 +2051,7 @@
       const wrap = el('div', 'stage', root);
       let cleanup = null;
       const narrow = root.clientWidth && root.clientWidth < 560;
-      api.gl(narrow ? 600 : 960, narrow ? 900 : 600).then(v => { if (v && api.alive) cleanup = run(root, wrap, api, v); }, () => { if (api.alive) api.overlay(NO_GL); });
+      api.gl(narrow ? 600 : 960, narrow ? 900 : 600).then(v => { if (!v || !api.alive) return; const ld = el('div', 'g-loading', root, '<i></i><span>' + esc(T('Building the house…')) + '</span>'); requestAnimationFrame(() => api.timeout(() => { ld.remove(); if (api.alive) cleanup = run(root, wrap, api, v); }, 30)); }, () => { if (api.alive) api.overlay(NO_GL); });
       return { destroy() { if (cleanup) cleanup(); } };
     }
   });
