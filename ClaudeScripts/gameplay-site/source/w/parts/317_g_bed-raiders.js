@@ -2006,7 +2006,7 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
       if (sbT <= 0) {
         sbT = 0.25;
         const ev = S.nextEv < EVENTS.length ? EVENTS[S.nextEv] : null, rem = ev ? Math.max(0, ev[0] - S.gt) : 0;
-        const tl = ev ? `${T(ev[2])} ${T('in')} <b>${((rem / 60) | 0)}:${String((rem | 0) % 60).padStart(2, '0')}</b>` : '';
+        const tl = ev ? `${esc(T('{e} in', { e: T(ev[2]) }))} <b>${((rem / 60) | 0)}:${String((rem | 0) % 60).padStart(2, '0')}</b>` : '';
         const rows = S.teams.map(tm => { const al = S.pl.filter(q => q.team === tm.i && q.alive).length; const st = tm.bed ? '<em class="g">✓</em>' : al ? `<em class="x">${al}</em>` : '<em class="x">✗</em>'; return `<div class="r${tm.i === me.team ? ' me' : ''}"><span style="color:${TEAMS[tm.i].c}">${TEAMS[tm.i].k}</span> <span>${T(TEAMS[tm.i].n)}${tm.i === me.team ? ' ' + T('(you)') : ''}</span>${st}</div>`; }).join('');
         const html = `<h4>BED RAIDERS</h4><div class="r">${tl}</div><br>${rows}<br><div class="r"><span>${T('Kills')}</span><b>${p.kills}</b></div><div class="r"><span>${T('Final kills')}</span><b>${p.finals}</b></div><div class="r"><span>${T('Beds broken')}</span><b>${p.beds}</b></div>`;
         if (hudC.get('sb') !== html) { hudC.set('sb', html); sb.innerHTML = html; }
@@ -2235,7 +2235,7 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
     }
     function netRematch() { if (online && online.role === 'host') hostStart(online.r); }
     function hostStart(r) {
-      const total = Math.max(r.size, r.players.length);
+      const total = r.bots ? Math.max(r.size, r.players.length) : r.players.length;
       const nT = clamp(total <= 2 ? 2 : total <= 3 ? 3 : total <= 4 ? Math.min(4, prefs.teams === 2 && total === 4 ? 2 : 4) : Math.ceil(total / 2) > 4 ? 4 : Math.ceil(total / 2), 2, 4);
       const per = Math.ceil(total / nT);
       const pls = r.players.map((p, i) => ({ name: String(p.name || 'Player').slice(0, 16), team: i % nT, hero: p.id === api.net.id ? prefs.hero : (i * 2 + 1) % HEROES.length, human: true, pid: p.id }));

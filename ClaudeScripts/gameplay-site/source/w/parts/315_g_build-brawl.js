@@ -1769,7 +1769,7 @@ ${G} .pan h2{font-size:1.6em}
         <span>${k('KeyQ')}</span><span>Switch between building and weapons</span>
         <span><kbd>Right click</kbd></span><span>In build mode: change material (wood, stone, metal)</span>
         <span>${k('KeyR')}</span><span>Reload · in build mode: turn the ramp</span>
-        <span>${k('KeyG')}</span><span>Edit the piece you look at: click or drag tiles, release or press ${k('KeyG')} again to confirm, right click resets</span>
+        <span>${k('KeyG')}</span><span>Edit the piece you look at: click or drag its tiles, then release or press edit again to confirm. Right click resets it.</span>
         <span><kbd>Esc</kbd> ${k('KeyP')}</span><span>Pause</span>
         <span><kbd>Touch</kbd></span><span>Left stick moves, drag to look, buttons fire, jump, crouch, build, edit and reload</span>
       </div><div class="btns"><button class="btn" data-a="${back}">Back</button></div></div>`;
