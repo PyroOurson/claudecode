@@ -1342,7 +1342,10 @@ Kite: Paper+Wind, Bird+Paper
 .gm-element-lab .la-hb[aria-pressed="true"]{border-color:var(--ac);color:var(--ac);background:#f1fbf9}
 .gm-element-lab .la-none{margin:0;padding:18px 14px;text-align:center;font:700 13px/1.45 var(--sans);color:var(--mut)}
 .gm-element-lab .la-sb{flex:none;display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 10px;border:1.5px solid var(--line);border-radius:99px;background:#fff;font:800 11px/1 var(--sans);cursor:pointer;color:var(--ink)}
-.gm-element-lab .la-sb svg{width:14px;height:14px}
+.gm-element-lab .la-sb svg{width:15px;height:15px}
+.gm-element-lab .la-sb span{display:none}
+.gm-element-lab .la-new small{white-space:nowrap}
+.gm-element-lab .lt,.gm-element-lab .bt{content-visibility:auto;contain-intrinsic-size:auto 88px}
 .gm-element-lab .lt.fin::after{content:"";position:absolute;right:12px;top:5px;width:9px;height:9px;border-radius:50%;background:#f5c542;border:2px solid #fff;box-shadow:0 0 0 1px #d9a21f}
 .gm-element-lab .lt.dn .ic{opacity:.55}
 .gm-element-lab .lt.dn .nm{color:#9d97a8}
@@ -3081,8 +3084,8 @@ Kite: Paper+Wind, Bird+Paper
   function olDeathP(age, H) {
     if (age >= 118) return 1;
     if (age < 40) return H < 6 ? 0.2 : 0.00025;
-    const base = 0.00003 * Math.exp(0.094 * age);
-    return Math.min(0.95, base * Math.pow(Math.max(0.2, 1.7 - H / 80), 2) + (H < 6 ? 0.3 : 0));
+    const base = 0.00004 * Math.exp(0.094 * age);
+    return Math.min(0.95, base * Math.pow(1.25 - H / 160, 2) + (H < 6 ? 0.3 : 0));
   }
 
   function olPromote(s) {
@@ -3229,7 +3232,8 @@ Kite: Paper+Wind, Bird+Paper
     if (a < 25) st.H = olC(st.H + (90 - st.H) * 0.12 + (olR() - 0.5) * 2);
     else if (a < 50) st.H = olC(st.H - 0.2 - olR() * 0.4);
     else if (a < 70) st.H = olC(st.H - 0.5 - olR() * 0.8);
-    else st.H = olC(st.H - 0.9 - olR() * 1.1);
+    else if (a < 80) st.H = olC(st.H - 0.9 - olR() * 1.1);
+    else st.H = olC(st.H - 1.6 - olR() * 2);
     if (a < 12) st.l = olC(st.l + (olR() - 0.5) * 2);
     else if (a < 20) st.l = olC(st.l + olI(-2, 3));
     else if (a < 36) st.l = olC(st.l + (olR() - 0.55) * 2);
@@ -3864,7 +3868,7 @@ Kite: Paper+Wind, Bird+Paper
     me.pen = ok(me.pen, 0, 1e7) ? me.pen : 0;
     me.inst = Number.isInteger(me.inst) && OL_INST[me.inst] ? me.inst : -1;
     me.spt = Number.isInteger(me.spt) && OL_SPORT[me.spt] ? me.spt : -1;
-    me.al = me.al ? 1 : 0;
+    me.al = me.al === 0 ? 0 : 1;
     const ids = new Set();
     c.pp = c.pp.filter(p => p && typeof p === 'object' && Number.isInteger(p.i) && !ids.has(p.i) && ids.add(p.i) && typeof p.n === 'string' && ['mom', 'dad', 'sib', 'gp', 'friend', 'love', 'kid', 'gkid', 'pet'].includes(p.r) && ok(p.age, 0, 130) && ok(p.b, 0, 100) && (p.r !== 'pet' || OL_PETM[p.sp]));
     c.pp.forEach(p => { p.n = p.n.slice(0, 24); p.g = p.g === 'f' ? 'f' : 'm'; p.al = p.al ? 1 : 0; p.lk = olSanLook(p.lk); p.d = Array.isArray(p.d) ? p.d.filter(x => typeof x === 'string').slice(0, 20) : []; if (p.job && !(Array.isArray(p.job) && typeof p.job[0] === 'string')) p.job = null; if (p.r === 'love' && !['date', 'eng', 'mar'].includes(p.st)) p.st = 'date'; if (p.r === 'pet') p.ly = ok(p.ly, 1, 120) ? p.ly : 10; if (p.jid && !OL_JOBM[p.jid]) p.jid = null; p.jl = Number.isInteger(p.jl) && p.jl >= 0 && p.jl < 6 ? p.jl : 0; p.inc = ok(p.inc, 0, 1e7) ? p.inc : 0; });
@@ -4372,7 +4376,7 @@ Kite: Paper+Wind, Bird+Paper
         case 'games': return fin(say(olP([['I played video games all afternoon.', 'J’ai joué aux jeux vidéo tout l’après-midi.'], ['I finally beat a level I had been stuck on for weeks.', 'J’ai enfin réussi un niveau sur lequel je bloquais depuis des semaines.']]), `h+${r(3, 6)} s+${r(0, 1)}`));
         case 'library': m.cnt.lib = (m.cnt.lib || 0) + 1; return fin(say(['I spent the afternoon studying at the library.', 'J’ai passé l’après-midi à étudier à la bibliothèque.'], `s+${r(3, 6)} p+3`));
         case 'run': if (olR() < 0.05) { olAddIll(s, 'ankle'); return fin(say(['I went for a run and twisted my ankle.', 'Je suis allé' + (m.g === 'f' ? 'e' : '') + ' courir et je me suis tordu la cheville.'], 'h-2', 'b'), 'b'); } return fin(say(['I went for a run around the park.', 'Je suis allé' + (m.g === 'f' ? 'e' : '') + ' courir autour du parc.'], `H+${r(2, 4)} a+${r(2, 4)} h+1`));
-        case 'gym': return fin(say(['I worked out at the gym.', 'Je me suis entraîné' + (m.g === 'f' ? 'e' : '') + ' à la salle de sport.'], `H+${r(3, 5)} l+${r(1, 2)} a+${r(3, 5)}`));
+        case 'gym': return fin(say(['I worked out at the gym.', 'Je me suis entraîné' + (m.g === 'f' ? 'e' : '') + ' à la salle de sport.'], m.age < 60 ? `H+${r(3, 5)} l+${r(1, 2)} a+${r(3, 5)}` : `H+${r(1, 3)} a+${r(1, 3)}`));
         case 'meditate': return fin(say(['I meditated for twenty minutes every morning.', 'J’ai médité vingt minutes chaque matin.'], `h+${r(3, 6)} H+1`));
         case 'doctor': {
           if (!m.ill.length) return fin(say(['The doctor said I am in good health.', 'Le médecin a dit que j’étais en bonne santé.'], 'H+1'), 'g');
