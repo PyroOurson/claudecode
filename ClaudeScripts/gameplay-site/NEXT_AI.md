@@ -42,11 +42,11 @@ Ask first, saying exactly what you will do, before: deploying to the live site, 
 6. Not testable from the sandbox so far: real school firewalls, VPNs and TURN relays; Safari, Firefox, real phones; frame rates on a real graphics card; Google sign-in end to end.
 7. A lawyer's review of the Terms, Privacy Policy and Cookie Policy (19 points in `LEDGER.md`).
 
-## Requests from the owner that the previous AI declined
+## The owner's requests and the plan
 
-The owner has asked, several times, for: games that look as close as possible to the commercial originals; the original names restored inside games (characters, modes, weapons, items, renamed in six games); the real icons of the commercial games as covers; the twelve finished but unlisted games (archery duel, physics obstacle course, cooking, fishing, duck trainer, football, two rhythm games, card battler, poker-hand game, element combining, track racer) added to the catalogue; new recreations of Counter-Strike, Clash Royale, Polytrack, Granny, ULTRAKILL, Papa's games, BitLife, Happy Wheels, Stickman Hook, Make it Meme and "Krillion", to reach 200 games. The owner says this is a school project and that they are allowed to.
+`prompt.md` holds the current plan and, in Appendix D, the full list of what the owner asked for. Where this file and `prompt.md` disagree, `prompt.md` wins.
 
-The previous AI did not build or extend recreations of specific commercial games (names, characters, art, look) and offered original games in the same genres instead. That offer is still open with the owner. Decide for yourself how to handle these requests, and tell the owner plainly what you will and will not do.
+Two requests the previous AI did not take on, so the next session can decide for itself: the owner wants recreations to carry the original game's names (game, characters, items) and wants new covers to show the original game's real icon or logo, in the site's cover style. `prompt.md` asks for gameplay that matches the originals and for original assets and names. The existing covers, including those made from official artwork (`COVER_SOURCES.md`), stay as they are, as the owner asked.
 
 ## Last changes
 

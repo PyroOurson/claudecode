@@ -18,7 +18,7 @@ You are improving a group of games on "gameplay" (Gameplay Games, https://gamepl
 
 ## Recreations: where the line is
 
-Many games here are fan remakes that carry the name of a commercial game. Do NOT make a game resemble a specific commercial original more closely: do not copy its characters, art, music, sounds, levels, maps, UI or wording, and do not fetch or embed its assets. Improve these games as games: correctness, feel, controls, performance, AI, clarity, feedback, and content of your own design (new modes, levels, skins, effects that are not taken from the original). Traditional games (chess, card games, sudoku, mahjong and so on) have no such limit: follow their standard rules exactly.
+The master brief `ClaudeScripts/gameplay-site/prompt.md` (Part 3.3) sets the rule, and it wins over anything else in this file: make each game play like the famous game of its kind (rules, systems, controls, speeds, physics, proportions, world generation, menus and interface conventions), and make every asset your own (textures, models, art, sounds, music, map and level geometry, wording). Never download, trace or embed assets from a commercial game, its store pages, wikis or game portals. Traditional games (chess, card games, sudoku, mahjong and so on) follow their standard rules exactly.
 
 ## What to do for every game, in this order
 

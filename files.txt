@@ -26,6 +26,7 @@ ClaudeScripts/gameplay-site/NEXT_AI.md
 ClaudeScripts/gameplay-site/README.md
 ClaudeScripts/gameplay-site/__pycache__/deploy.cpython-313.pyc
 ClaudeScripts/gameplay-site/deploy.py
+ClaudeScripts/gameplay-site/prompt.md
 ClaudeScripts/gameplay-site/server/README.md
 ClaudeScripts/gameplay-site/server/cloudflare-worker.js
 ClaudeScripts/gameplay-site/server/setup.py
@@ -109,10 +110,7 @@ ClaudeScripts/gameplay-site/source/rl/tools/split.py
 ClaudeScripts/gameplay-site/source/rl/tools/svgshot.js
 ClaudeScripts/gameplay-site/source/skfb/CREDITS.txt
 ClaudeScripts/gameplay-site/source/t/GAMEPASS.md
-ClaudeScripts/gameplay-site/source/t/NEWGAME.md
-ClaudeScripts/gameplay-site/source/t/PLAYTEST.md
 ClaudeScripts/gameplay-site/source/t/PORTALPASS.md
-ClaudeScripts/gameplay-site/source/t/gamecreation.md
 ClaudeScripts/gameplay-site/source/t/lib.js
 ClaudeScripts/gameplay-site/source/t/look.js
 ClaudeScripts/gameplay-site/source/t/package/build/three.min.js
@@ -133,9 +131,6 @@ ClaudeScripts/gameplay-site/source/t/tests/legal_pages.js
 ClaudeScripts/gameplay-site/source/t/tests/load_sequence.js
 ClaudeScripts/gameplay-site/source/t/tests/party.js
 ClaudeScripts/gameplay-site/source/t/tests/smoke_all.js
-ClaudeScripts/gameplay-site/source/w/MASTER.md
-ClaudeScripts/gameplay-site/source/w/NETBRIEF.md
-ClaudeScripts/gameplay-site/source/w/ROUND3.md
 ClaudeScripts/gameplay-site/source/w/agents2/covers/balls_tex.py
 ClaudeScripts/gameplay-site/source/w/agents2/covers/cards3d.py
 ClaudeScripts/gameplay-site/source/w/agents2/covers/cards_tex.py

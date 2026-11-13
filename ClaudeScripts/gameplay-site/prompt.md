@@ -4,6 +4,8 @@ This is the complete brief for the next round of work on Gameplay Games (https:/
 
 ## How to start a session with this prompt
 
+This prompt is complete on its own: paste it, or point to it, in any new Claude Code session on the owner's computer and it says everything needed. It needs a session that can run commands and edit files (the Claude Code app), not a plain chat. If the repository is not yet on the computer, the lead clones it first: `gh repo clone PyroOurson/claudecode` (or `git clone https://github.com/PyroOurson/claudecode.git`), then works inside that folder.
+
 1. Open the Claude Code app in the folder that holds your clone of `PyroOurson/claudecode`.
 2. Choose **Claude Fable 5.2** with **high** effort for this lead session (`/model` and `/effort` in the app).
 3. Send: *"Read `ClaudeScripts/gameplay-site/prompt.md` and do everything in it. Start with Part 0."*
@@ -12,7 +14,6 @@ Owner checklist before you send it:
 
 - Read Part 3.4 (what the lead may do without asking you). Change any line you disagree with.
 - Be signed in on this computer to GitHub (`gh auth login`), Firebase (`npx firebase-tools login`), Supabase (`npx supabase login`), Cloudflare (`npx wrangler login`) and, if you publish from Cloud Shell, Google Cloud. The lead will check and ask for what is missing. Never paste passwords or tokens into the chat.
-- Answer Part 15, question 1 ("Krillion") when the lead asks.
 
 ---
 
@@ -111,7 +112,8 @@ The owner's position, which this brief follows: **the idea of a game is free to 
 - **Names**: generic, real-world things keep their real names (stone, iron, oak, wolf, zombie, rifle, pistol, bomb, tower). Things the original game invented (its own creatures, materials, dimensions, characters, card and ability names, map names) get original names and designs that fill the same role in play.
 - **Maps and levels** follow the same proven design principles as the original (for example, in a tactical shooter: two bomb sites, a middle area, connectors, rotation times, sight lines), with original layouts and themes. Do not rebuild a famous map.
 - The catalogue titles of existing games stay as the owner set them. New games get the titles in their briefs, which the owner may change.
-- When you find copied assets in existing files (downloaded cover art, copied texts, copied layouts), replace them with original ones of at least the same quality and record what you replaced.
+- The existing covers stay as they are, including those listed in `COVER_SOURCES.md`; the owner decided this. Every new cover follows the site's cover style (Part 12).
+- When you find copied assets inside game files (copied texts, sprites, sounds, level layouts), replace them with original ones of at least the same quality and record what you replaced.
 
 ### 3.4 What the lead and the agents may do without asking
 
@@ -283,10 +285,9 @@ Every game with computer opponents has a top level labelled exactly `Hardest`, a
 3. Candidates found at the end of the last round:
    - `ClaudeScripts/gameplay-site/__pycache__/` (a compiled Python file committed by mistake) and any other `__pycache__` in git;
    - `ClaudeScripts/gameplay-site/supabase/` (an old copy of the database files; move `GUIDE.md` and `setup.py` to `source/w/supabase/` first and point `setup.py` at the single database file);
-   - old round briefs in `source/w/`: `MASTER.md`, `NETBRIEF.md`, `ROUND3.md` (keep any useful fact by moving it to `BUILD.md`);
+   - any other document that gives instructions contradicting this prompt (old round briefs in `source/w/MASTER.md`, `NETBRIEF.md`, `ROUND3.md`, `source/t/NEWGAME.md`, `PLAYTEST.md` and `gamecreation.md` were already deleted on 13 November 2026; `source/t/GAMEPASS.md` and `PORTALPASS.md` were aligned with this prompt);
    - the old build path: `source/w/build.py`, `gate.js`, `meta2.js`, `meta_rows.py`, `split.py`, `stat.json`, `orig_order.txt` (some are still read by `assemble.py`, `build2.py` or `t/pbuild.py`: keep those or remove the dependency);
    - `source/w/agents_perf/`, `source/design/`, `source/notes/`, `source/skfb/` (keep what documents something current in one `notes/` folder);
-   - `COVER_SOURCES.md`, once Part 12 has replaced the covers it lists;
    - unused vendor files, covers of games that no longer exist, and dead code of removed games inside live part files (`lights-out`, `clicker`, `golf`, `stick-bridge`, `kart-circuit`);
    - leftover worktrees and branches from finished agent work (`git worktree prune`, and delete merged `work-*` branches).
 4. Generated folders never belong in git: `w/site/`, `w/site_plain/`, `w/site_stage*/`, `w/parts_stage*/`, `w/parts/000_pre_000.html`, `w/parts/001_portal.js`, `w/parts/002_legal.js`, `rl/build/`. Check `source/.gitignore` covers them.
@@ -347,7 +348,7 @@ The owner approved these. They strengthen protection. Implement each, test it on
 
 **Portal.** Walk through the whole site as a student on a first visit, then as a regular player, then as the owner, at desktop and phone size, light and dark theme, English and French, and check the classes of Part 5: the password page, cookie notice, sign-up and log-in (Google button, username picker), home (grid, search, filters, favourites, continue playing, the sidebar's select-then-play behaviour, announcements, "What's new"), the game page (loading, play bar, pause, theater, fullscreen, the party window in every state), friends, messages (pictures, files, typing, read marks, blocking), notifications, the idea box, tickets, settings (every control persists after a reload and on another device), profile and statistics, data export, account deletion (staging only), the admin dashboard (every tab), the legal pages, keyboard-only use, screen reader labels, contrast, reduced motion, offline and slow networks. Keep the main layout, structure, navigation and design direction.
 
-**Covers.** Every cover uses the same composition: one central icon on a darkened, blurred background in the game's own colours, 960x600 WebP, the same title treatment. The icon shows the game's main object or character as it looks in the game. `COVER_SOURCES.md` lists covers made from artwork downloaded from game stores, game portals and encyclopaedia pages: redraw every one of them, and any other cover that copies outside artwork, with the site's cover tools, then delete that file. Render a contact sheet of all covers before and after and look at it at full size; check covers at every size the site shows them.
+**Covers.** Keep the existing covers. Every new or rebuilt game gets a cover in exactly the same style as the others (see `source/w/covers2/README.md`): a centred rounded icon box on a blurred, darkened background in the game's own colours, 960x600 WebP under 80 KB, the game name in the same title treatment. The icon shows the game's main object or character as it is drawn in the game, made with the site's cover tools (`source/w/agents2/covers/`). Render a contact sheet of all covers and look at it at full size: no new cover may stand out from the others in style, brightness or framing. Check covers at every size the site shows them.
 
 **Policies.** After all changes, re-check the Terms, Privacy Policy and Cookie Policy (`source/w/new/legal.js`) against the code: every statement true, nothing that claims a protection that does not exist, their length kept. Keep the list of points for a lawyer in `LEDGER.md` current.
 
@@ -383,8 +384,7 @@ Also rewrite this file (`prompt.md`) where the plan changed, so the next session
 
 ## Part 15. Open questions for the owner
 
-1. **"Krillion"**: the owner asked for a game with this name; it is not clear which game is meant. Ask. If it is the fast browser shooter with a similar name, F2's second game covers that style.
-2. Whether the Debian relay is still wanted (Part 9).
+1. Whether the Debian relay is still wanted (Part 9).
 
 ---
 
@@ -496,9 +496,10 @@ Each brief starts the same way: *"You are the owner and long-term maintainer of 
 3. **Life simulation** (working title **One Life**): a life from birth to old age through yearly choices and random events, school and exams, jobs and careers, relationships, health, happiness, money, assets, activities, a family tree and replay with descendants; text written for a school audience.
 4. **Ragdoll physics obstacle course** (start from the unlisted `277_g_happy-wheels+getting-over-it.js`; working title **Wobble Ride**): characters on vehicles with joints that break, hazards, many levels, a level editor with shared level codes, original characters; gore replaced by cartoon effects.
 5. **Rope-swing momentum game** (working title **Swing Line**): tap or click to grab the nearest hook, release to fly, momentum that feels right, levels with obstacles, collectibles and stars.
-6. **Online meme-caption party game** (working title **Caption This**): 3 to 10 players through the party system; each round shows a picture (made in code from an original template set, or uploaded by the host within the existing file limits and visible only to the party); players write captions; everyone votes; scores; moderation of typed text.
-7. **The other unlisted games**: the ragdoll archery duel (`275`), the American football game (`285`), the two rhythm games (`287`), the poker-hand roguelike (`291`), the element-combining game (`293`): audit and replace copied content, give each an original title and cover, bring it to the quality bar, list it.
-8. **More games to reach at least 200**: pick from the idea pool in `GAMES.md` and from students' requests in the idea box (admin dashboard), favouring online multiplayer and genres the catalogue lacks. Same rules.
+6. **Rarity-scored daily trivia** (the style of the unblocked browser game the owner called "Krillion"; working title **Long Shot**): every day all players get the same seven prompts (for example "a country in Africa", "a word that rhymes with light", "a planet's moon"), with 25 seconds each; the player types one answer; a valid answer locks in the prompt and scores more the rarer it is among all players' answers; invalid answers score nothing; points turn into a distance shown on an original theme of your own (not an ocean dive); modes: the daily round, an endless mode, live rooms of up to 40 players through the party system, and one-against-one matches with a rating. Answer checking needs large, curated lists of valid answers per prompt in English and French, with spelling tolerance and alias handling; answer counts for rarity are stored on the server (ask the lead for the database part, which goes into `gameplay.sql`), seeded from the curated lists until enough players have answered. Moderation of typed text. A clear results screen with the rarity of each answer, and a share card.
+7. **Online meme-caption party game** (working title **Caption This**): 3 to 10 players through the party system; each round shows a picture (made in code from an original template set, or uploaded by the host within the existing file limits and visible only to the party); players write captions; everyone votes; scores; moderation of typed text.
+8. **The other unlisted games**: the ragdoll archery duel (`275`), the American football game (`285`), the two rhythm games (`287`), the poker-hand roguelike (`291`), the element-combining game (`293`): audit and replace copied content, give each an original title and cover, bring it to the quality bar, list it.
+9. **More games to reach at least 200**: pick from the idea pool in `GAMES.md` and from students' requests in the idea box (admin dashboard), favouring online multiplayer and genres the catalogue lacks. Same rules.
 
 ---
 
@@ -538,8 +539,8 @@ Copy this section unchanged into `NEXT_AI.md` at every handoff (Part 14), then a
 - An idea box with picture and file uploads; files in messages elsewhere with sensible limits; a much better settings page with useless controls removed; no "How to play" under games.
 - Terms, Privacy Policy and Cookie Policy about three times longer, meaningful, honest, considering minors, with a list of points for a lawyer.
 - Every game improved: graphics, gameplay, variety, animations, sound, frame rate; the popular games playing like the famous originals, with original assets; `Hardest` levels almost unbeatable without unfair advantages.
-- Consistent game covers (same icon style and darkened background), made of original art.
-- At least 200 games, including a 3D voxel game, a 3D 5v5 tactical shooter, a real-time card tower duel, a low-poly track racer, a horror escape, a fast arena shooter, cooking games, a life simulation, a ragdoll physics game, a rope-swing game, a meme-caption party game and the game the owner called "Krillion".
+- Consistent game covers (same icon style and darkened background); the existing covers stay as they are.
+- At least 200 games, including a 3D voxel game, a 3D 5v5 tactical shooter, a real-time card tower duel, a low-poly track racer, a horror escape, a fast arena shooter, cooking games, a life simulation, a ragdoll physics game, a rope-swing game, a meme-caption party game and a rarity-scored daily trivia game like "Krillion".
 - Every game playtested from start to end, in parallel, capturing everything a real player would notice.
 - One merged SQL file; old and unwanted files deleted; the relay and TURN service deployed; the security work finished; real test data gathered.
 - Everything related to Gameplay Games on GitHub; the owner's local copy updated and old copies deleted; this master prompt on GitHub; a handoff with an overview and a follow-up prompt at the end of every session.
