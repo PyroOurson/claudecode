@@ -145,6 +145,7 @@ ClaudeScripts/gameplay-site/source/t/tests/admin_delete.js
 ClaudeScripts/gameplay-site/source/t/tests/admin_read.js
 ClaudeScripts/gameplay-site/source/t/tests/announce.js
 ClaudeScripts/gameplay-site/source/t/tests/dm.js
+ClaudeScripts/gameplay-site/source/t/tests/esc_own.js
 ClaudeScripts/gameplay-site/source/t/tests/fixes.js
 ClaudeScripts/gameplay-site/source/t/tests/gate_locked.js
 ClaudeScripts/gameplay-site/source/t/tests/invite_state.js
