@@ -1279,9 +1279,7 @@
     else if (id === 'arcade') { c.translate(104, 408); c.fillStyle = '#5a3fd0'; c.beginPath(); c.moveTo(-30, 0); c.lineTo(-30, -120); c.lineTo(30, -120); c.lineTo(30, 0); c.closePath(); c.fill(); c.stroke(); rrp(c, -22, -106, 44, 36, 4); c.fillStyle = '#14141a'; c.fill(); c.stroke(); c.fillStyle = ['#80ed99', '#ffd23f', '#ff6b6b'][Math.floor(t * 2) % 3]; c.fillRect(-14 + (t * 30) % 22, -94, 6, 6); c.fillStyle = '#ffd23f'; c.fillRect(-26, -64, 52, 12); c.fillStyle = '#e63946'; c.beginPath(); c.arc(-8, -58, 4, 0, TAU); c.fill(); c.fillStyle = '#4cc9f0'; c.beginPath(); c.arc(8, -58, 4, 0, TAU); c.fill(); }
     c.restore();
   };
-  const QN = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
   const QUADS = [[0, 1], [2, 3], [0, 2], [1, 3]];
-  const HALFN = ['top half', 'bottom half', 'left half', 'right half'];
 
   const pzTop = (c, id, x, y, rot, s = 1, sd = 0) => {
     c.save(); c.translate(x, y); c.rotate(rot); c.scale(s, s); c.lineJoin = 'round'; c.lineCap = 'round'; c.lineWidth = 1.8;
