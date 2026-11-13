@@ -1466,13 +1466,15 @@ function auBootDone() {
   clearTimeout(SB.bt);
   if (document.documentElement.getAttribute('data-boot')) document.documentElement.removeAttribute('data-boot');
 }
+const GAME_RPC = /^long_shot_(answer|stats)$/;
 Ameplay.account = {
   get enabled() { return SB.on; },
   get signedIn() { return !!SB.user; },
   get id() { return SB.user ? SB.user.id : null; },
   get username() { return SB.prof && SB.prof.username || null; },
   signIn() { auOpen('main', '', '', 'in'); },
-  sync() { return sySync(); }
+  sync() { return sySync(); },
+  rpc(f, b) { if (typeof f !== 'string' || !GAME_RPC.test(f)) return Promise.reject(new Error('This call is not open to games')); return sbRest('rpc/' + f, { method: 'POST', body: b && typeof b === 'object' ? b : {} }); }
 };
 
 Ameplay.debug = { open: id => go(href(id), false), close: () => go(PATH_MODE ? '/' : '#/', false), games, fire: () => ov && ov.fire(), state, compute, q: t => { const o = state.q; state.q = t; const r = compute().list.map(g => g.id); state.q = o; return r; }, info: INFO, fit: () => fitStage(), pause: () => PAUSE.on };

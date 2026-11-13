@@ -11,7 +11,7 @@ Star topology through PeerJS; the party creator's device is the connection hub a
 - No first screen: opening online play creates the party at once (the code box pulses until the code exists) and shows the party GUI.
 - Header: game name, Leave, party code with Hide/Show (remembered on the device) and invite link button (share sheet, else copy).
 - Players: initials avatar, HOST badge + crown on the party leader, "Party leader · You" / "Member", crown button = make that player the host, kick button, empty seats listed up to the party size ("Empty seat", or "Bot" when bots are on). Your own name has a pencil: click to rename (Enter / blur saves, Esc cancels).
-- "N / M joined" pill = party size selector (leader only), sizes from the game's list (2..16). The player list holds up to 8 rows and then scrolls; on phones the stacked list is capped at 312 px and scrolls.
+- "N / M joined" pill = party size selector (leader only), sizes from the game's list (2..40). The player list holds up to 8 rows and then scrolls; on phones the stacked list is capped at 312 px and scrolls.
 - "Fill empty seats with bots" switch (default off), only when the game passes `bots: true`. Leader can toggle, others see its state.
 - Live chat, footer: Play for the leader ("Waiting for N more players…" hint), "Waiting for the host…" for everyone else, and a "Join with a code" box (leaves the current party and joins that one).
 - Errors (server busy, bad code, full party) show in the footer with "Try again" and, after a failed join, "Create my own party". Kicked / host left / lost: a message screen with "New party", the join box and Close.
@@ -24,7 +24,7 @@ Star topology through PeerJS; the party creator's device is the connection hub a
 `const r = await api.net.room({ title, sizes, defaultSize, min = 2, max, bots, name })`
 
 The party window opens on a first screen with two choices, "Host a party" and "Join a party". Host leads to a choice between Private (a 4-character code to share) and Public (listed for everyone, no code shown). Join shows the public parties that are open for this game, each with a Join button, and a box for a private code. Pass `intent: 'host'` or `intent: 'join'` to skip the first screen. Connections use two independent routes (the PeerJS signalling server, and the site's own realtime backend with a relayed fallback when WebRTC is not possible); the game does not need to know which one is in use. A relayed party is slower: `fast` messages are thinned for it, so keep sending state in a way that tolerates dropped fast messages.
-- `sizes`: party sizes the leader can pick, e.g. `[2, 3, 4]` (2..16). Without `sizes`: every size from `min` to `max` (default `max` 4, up to 16). A 16 seat game (Werewolf, Kahoot) passes `sizes` or `max` up to 16 and the selector follows. `defaultSize`: preselected size (default: the largest; the last size picked for this game is remembered).
+- `sizes`: party sizes the leader can pick, e.g. `[2, 3, 4]` (2..40). Without `sizes`: every size from `min` to `max` (default `max` 4, up to 40). A 16 seat game (Werewolf, Kahoot) passes `sizes` or `max` up to 16 and the selector follows. `defaultSize`: preselected size (default: the largest; the last size picked for this game is remembered).
 - `min`: players needed before Play is enabled (default 2). With bots on, Play is enabled with any number of players (the leader alone too).
 - `bots: true`: the game can fill empty seats with bots, so the GUI shows the bots switch (default off).
 - `title`/`text` are accepted; the header always shows the game's catalogue name. `name` is only a fallback when no username exists.
@@ -83,3 +83,6 @@ Plain strings: Leave, Close, Party code, Hide, Show, Hide party code, Show party
 
 ## Analytics
 If `Ameplay.analytics.track` exists the lobby sends `party_create {game,size}`, `party_join {game}`, `party_play {game,players,size,bots}`.
+
+## Server functions for games
+`Ameplay.account.rpc(name, args)` calls one of the database functions a game is allowed to use (the list is `GAME_RPC` in `new/auth.js`; today Long Shot's `long_shot_answer` and `long_shot_stats`). It returns a promise with the result and rejects when the name is not on the list, when the player is offline or when the server refuses. A game that needs a server function asks the lead, who adds it to `gameplay.sql` (section Game services) and to the list.

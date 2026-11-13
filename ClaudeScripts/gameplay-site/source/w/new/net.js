@@ -273,7 +273,7 @@ const netInit = n => {
 const netHm = t => { const d = new Date(t), p = x => (x < 10 ? '0' : '') + x; return p(d.getHours()) + ':' + p(d.getMinutes()); };
 const netTurn = async c => { try { const pc = c && c.peerConnection; if (!pc || !pc.getStats) return 0; const st = await pc.getStats(); let pair = null; st.forEach(r => { if (r.type === 'transport' && r.selectedCandidatePairId) pair = st.get(r.selectedCandidatePairId) || pair; }); if (!pair) st.forEach(r => { if (r.type === 'candidate-pair' && r.state === 'succeeded' && (r.nominated || r.selected)) pair = r; }); if (!pair) return 0; const lc = st.get(pair.localCandidateId), rc = st.get(pair.remoteCandidateId); return (lc && lc.candidateType === 'relay') || (rc && rc.candidateType === 'relay') ? 1 : 0; } catch (e) { return 0; } };
 const netTrack = (ev, p) => { try { if (typeof Ameplay !== 'undefined' && Ameplay.analytics && typeof Ameplay.analytics.track === 'function') Ameplay.analytics.track(ev, p); } catch (e) {} };
-const NET_MAX = 16;
+const NET_MAX = 40;
 const netSizes = o => {
   const mn = Math.max(2, Math.min(NET_MAX, Math.round(+o.min) || 2));
   let s = (Array.isArray(o.sizes) ? o.sizes : []).map(n => Math.round(+n)).filter(n => n >= 2 && n <= NET_MAX);
