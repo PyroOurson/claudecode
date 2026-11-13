@@ -672,7 +672,7 @@
     });
   }
   function plain(id, e) {
-    if (e.$) { R.money += e.$; R.q.push({ id, t: '$', v: e.$ }); }
+    if (e.$ && !(e.$ > 0 && R.ph === 'round' && bossOn('purse'))) { R.money += e.$; R.q.push({ id, t: '$', v: e.$ }); }
     if (e.msg) note(id, e.msg);
   }
   function copyTarget(j) {
@@ -2227,7 +2227,7 @@
         const sl = shopLab;
         sl.querySelector('.sl-i').style.cssText = 'left:' + (G.shop.cx - 50) + 'px;top:' + (G.shop.cy - 47.5 * G.shop.s - 28) + 'px';
         sl.querySelector('.sl-p').style.cssText = 'left:' + (G.packs.cx - 50) + 'px;top:' + (G.packs.cy - 47.5 * G.packs.s - 26) + 'px';
-        sl.querySelector('.sl-v').style.cssText = 'left:' + (G.vouch.cx - 40) + 'px;top:' + (G.vouch.cy - 47.5 * G.vouch.s - 28) + 'px';
+        sl.querySelector('.sl-v').style.cssText = 'left:' + (G.vouch.cx - 50) + 'px;top:' + (G.vouch.cy - 47.5 * G.vouch.s - 28) + 'px';
       }
       updateBtns();
     }
@@ -2416,17 +2416,17 @@
     }
     function actList(en) {
       const o = en.obj, b = [];
-      if (en.zone === 'jok') { if (!o.et) b.push(['sell', 'Sell $' + sellVal(o), 1]); }
+      if (en.zone === 'jok') { if (!o.et) b.push(['sell', TF('Sell ${n}', { n: sellVal(o) }), 1]); }
       else if (en.zone === 'cons') {
         b.push(['use', 'Use', usableNow(o)]);
-        b.push(['sell', 'Sell $' + sellVal(o), 1]);
+        b.push(['sell', TF('Sell ${n}', { n: sellVal(o) }), 1]);
       } else if (en.zone === 'shop') {
         const slotOk = en.kind === 'joker' ? jfree(o.ed === 'neg') > 0 : en.kind === 'card' ? true : cfree(o.ed === 'neg') > 0;
         const okp = canAfford(en.price);
-        b.push(['buy', (en.price ? 'Buy $' + en.price : 'Take'), okp && slotOk]);
+        b.push(['buy', (en.price ? TF('Buy ${n}', { n: en.price }) : 'Take'), okp && slotOk]);
         if (en.kind === 'cons' && !CONSDEF(o).t && (!CONSDEF(o).ok || CONSDEF(o).ok([], o)) && (R.ph === 'shop')) b.push(['buyuse', 'Buy & Use', okp && canUse(o, [], false)]);
-      } else if (en.zone === 'vouch') b.push(['redeem', (en.price ? 'Redeem $' + en.price : 'Redeem'), canAfford(en.price)]);
-      else if (en.zone === 'packs') b.push(['open', (en.price ? 'Open $' + en.price : 'Open'), canAfford(en.price)]);
+      } else if (en.zone === 'vouch') b.push(['redeem', (en.price ? TF('Buy ${n}', { n: en.price }) : 'Take'), canAfford(en.price)]);
+      else if (en.zone === 'packs') b.push(['open', (en.price ? TF('Open ${n}', { n: en.price }) : 'Open'), canAfford(en.price)]);
       else if (en.zone === 'pk') {
         if (en.kind === 'cons') b.push(['take', 'Use', usableNow(o)]);
         else if (en.kind === 'joker') b.push(['take', 'Take', jfree(o.ed === 'neg') > 0]);
@@ -3193,6 +3193,7 @@
     on(window, 'pointerup', onUp);
     on(window, 'pointercancel', onUp);
     on(window, 'keydown', onKey, true);
+    (window.__gpdbg = window.__gpdbg || {}).au = { zone: zoneEntries, ui: () => uiPhase, busy: () => busy };
     on(stage, 'pointerdown', e => { if (!e.target.closest('.bc, .bl-act, .bl-modal, button')) { if (selEn) { selEn = null; hideAct(); hideTip(); layout(); } } });
     on(stage, 'contextmenu', e => e.preventDefault());
 
@@ -3278,7 +3279,7 @@
 .gm-ante-up .bl-zlab span{position:absolute;font-size:12px;font-weight:900;color:#ecdcc4;text-shadow:0 2px 0 rgba(0,0,0,.7);white-space:nowrap}
 .gm-ante-up .bl-zlab b{color:#fff}
 .gm-ante-up .bl-zlab i{position:absolute;box-sizing:border-box;border:2px dashed rgba(255,255,255,.16);background:rgba(0,0,0,.2);border-radius:12px;box-shadow:inset 0 0 20px rgba(0,0,0,.3)}
-.gm-ante-up .bl-slab span{position:absolute;width:100px;text-align:center;font-size:12px;font-weight:900;color:#f5d36a;text-shadow:0 2px 0 rgba(0,0,0,.7);letter-spacing:.06em;text-transform:uppercase}
+.gm-ante-up .bl-slab span{position:absolute;width:220px;margin-left:-60px;white-space:nowrap;text-align:center;font-size:12px;font-weight:900;color:#f5d36a;text-shadow:0 2px 0 rgba(0,0,0,.7);letter-spacing:.06em;text-transform:uppercase}
 .gm-ante-up .bl-deck{position:absolute;width:71px;height:95px;cursor:pointer}
 .gm-ante-up .bl-deck canvas{position:absolute;left:0;top:0;width:71px;height:95px;image-rendering:pixelated}
 .gm-ante-up .bl-deck canvas:nth-child(1){transform:translate(-4px,4px);filter:brightness(.7)}

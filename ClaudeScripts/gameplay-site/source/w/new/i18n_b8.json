@@ -887,5 +887,13 @@
 ["Hard", "Difficile", "Difícil", "Schwer", "Difficile", "Difícil"],
 ["Sound effects", "Effets sonores", "Efectos de sonido", "Soundeffekte", "Effetti sonori", "Efeitos sonoros"],
 ["Most played", "Main la plus jouée", "Más jugada", "Meistgespielt", "Più giocata", "Mais jogada"],
-["Rounds", "Manches", "Rondas", "Runden", "Round", "Rondas"]
+["Rounds", "Manches", "Rondas", "Runden", "Round", "Rondas"],
+["Sell ${n}", "Vendre {n} $", "Vender {n} $", "Verkaufen {n} $", "Vendi {n} $", "Vender {n} $"],
+["Buy ${n}", "Acheter {n} $", "Comprar {n} $", "Kaufen {n} $", "Compra {n} $", "Comprar {n} $"],
+["Open ${n}", "Ouvrir {n} $", "Abrir {n} $", "Öffnen {n} $", "Apri {n} $", "Abrir {n} $"],
+["Open", "Ouvrir", "Abrir", "Öffnen", "Apri", "Abrir"],
+["Take", "Prendre", "Coger", "Nehmen", "Prendi", "Levar"],
+["Use", "Utiliser", "Usar", "Benutzen", "Usa", "Usar"],
+["Buy & Use", "Acheter et utiliser", "Comprar y usar", "Kaufen und benutzen", "Compra e usa", "Comprar e usar"],
+["Add to deck", "Ajouter au paquet", "Añadir al mazo", "Zum Deck hinzufügen", "Aggiungi al mazzo", "Juntar ao baralho"]
 ]
