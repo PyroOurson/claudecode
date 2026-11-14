@@ -1,0 +1,562 @@
+@set dogs
+@drop dog dogs chien chiens
+9|Labrador/Labrador Retriever|Labrador|
+8|German Shepherd/Alsatian|Berger allemand|
+8|Golden Retriever|Golden Retriever|
+8|Poodle|Caniche|
+8|Bulldog/English Bulldog|Bulldog/Bouledogue anglais|
+8|Chihuahua||
+7|Husky/Siberian Husky|Husky/Husky sibérien|
+7|Dalmatian|Dalmatien|
+7|Beagle||
+7|Pug|Carlin|
+7|French Bulldog|Bouledogue français|
+7|Rottweiler||
+7|Yorkshire Terrier/Yorkie|Yorkshire/Yorkshire Terrier|
+6|Dachshund/Sausage dog|Teckel|
+6|Border Collie||
+6|Doberman/Dobermann||
+6|Great Dane|Dogue allemand|
+6|Shih Tzu||
+6|Boxer||
+6|Cocker Spaniel|Cocker|
+6|Pomeranian/Pom|Loulou de Poméranie/Spitz nain|
+6|Pit Bull/Pitbull|Pit-bull/Pitbull|
+6|Saint Bernard|Saint-Bernard|
+6|Greyhound|Lévrier/Greyhound|
+6|Jack Russell/Jack Russell Terrier||
+5|Corgi/Welsh Corgi|Corgi|
+5|Collie/Rough Collie|Colley|
+5|Maltese|Bichon maltais|
+5|Bichon Frise|Bichon frisé|
+5|Cavalier King Charles Spaniel/Cavalier King Charles|Cavalier King Charles|
+5|Shiba Inu||
+5|Akita/Akita Inu||
+5|Samoyed|Samoyède|
+5|Malamute/Alaskan Malamute||
+5|Bernese Mountain Dog|Bouvier bernois|
+5|Newfoundland|Terre-neuve|
+5|Bloodhound|Chien de Saint-Hubert|
+5|Basset Hound/Basset||
+5|Shar Pei||
+5|Chow Chow||
+5|Lhasa Apso||
+5|Pekingese|Pékinois|
+5|Schnauzer||
+5|Weimaraner|Braque de Weimar|
+5|Australian Shepherd|Berger australien|
+5|Belgian Malinois/Malinois|Malinois/Berger belge malinois|
+5|Bull Terrier||
+5|Staffordshire Bull Terrier/Staffie|Staffordshire/Staffie|
+5|Whippet||
+5|West Highland Terrier/Westie|Westie|
+5|Scottish Terrier/Scottie||
+5|Afghan Hound|Lévrier afghan|
+5|Mastiff|Mâtin/Dogue|
+3|Cane Corso||
+3|Bullmastiff||
+3|Dogue de Bordeaux|Dogue de Bordeaux|
+2|Rhodesian Ridgeback||
+2|Vizsla||
+3|Pointer|Pointer|
+2|English Setter/Setter|Setter anglais|
+3|Irish Setter|Setter irlandais|
+3|Springer Spaniel|Springer|
+3|Brittany/Brittany Spaniel|Épagneul breton|
+3|Papillon|Papillon/Épagneul nain|
+2|Havanese|Bichon havanais|
+3|Shetland Sheepdog/Sheltie|Berger des Shetland|
+3|Old English Sheepdog/Bobtail|Bobtail|
+3|Airedale Terrier/Airedale||
+3|Fox Terrier||
+2|Cairn Terrier||
+3|Boston Terrier||
+3|Miniature Schnauzer|Schnauzer nain|
+2|Italian Greyhound|Petit lévrier italien|
+2|Saluki||
+3|Borzoi|Barzoï|
+3|Irish Wolfhound|Lévrier irlandais|
+2|Leonberger||
+3|Great Pyrenees/Pyrenean Mountain Dog|Montagne des Pyrénées/Patou|
+2|Pyrenean Shepherd|Berger des Pyrénées|
+3|Beauceron/Berger de Beauce|Beauceron/Berger de Beauce|
+2|Briard/Berger de Brie|Briard/Berger de Brie|
+2|Belgian Shepherd/Groenendael|Berger belge/Groenendael|
+2|Tervuren||
+3|Basenji||
+3|Dingo||
+3|Xoloitzcuintli/Mexican Hairless Dog|Xoloitzcuintle/Chien nu du Mexique|
+3|Chinese Crested|Chien chinois à crête|
+2|Pharaoh Hound|Chien du pharaon|
+2|Komondor||
+2|Puli||
+2|Kuvasz||
+2|Anatolian Shepherd/Kangal|Berger d'Anatolie/Kangal|
+3|Tibetan Mastiff|Dogue du Tibet|
+2|Tibetan Terrier|Terrier tibétain|
+2|Keeshond||
+3|Spitz/German Spitz|Spitz/Spitz allemand|
+2|Japanese Spitz|Spitz japonais|
+2|Alaskan Klee Kai||
+3|Labradoodle||
+3|Cockapoo||
+3|Goldendoodle||
+2|Pomsky||
+2|Maltipoo||
+2|Coton de Tulear|Coton de Tuléar|
+2|Bolognese|Bichon bolonais|
+2|Affenpinscher||
+2|Miniature Pinscher/Min Pin|Pinscher nain|
+2|Brussels Griffon/Griffon|Griffon bruxellois|
+2|Norfolk Terrier||
+2|Norwich Terrier||
+2|Border Terrier||
+2|Bedlington Terrier||
+2|Kerry Blue Terrier||
+2|Wheaten Terrier/Soft-coated Wheaten Terrier||
+2|Dandie Dinmont Terrier||
+2|Skye Terrier||
+2|Sealyham Terrier||
+2|Lakeland Terrier||
+2|Welsh Terrier||
+2|Manchester Terrier||
+2|Rat Terrier||
+3|American Staffordshire Terrier/AmStaff|American Staffordshire/Amstaff|
+2|American Bully||
+3|Dogo Argentino|Dogue argentin|
+2|Fila Brasileiro||
+2|Presa Canario/Dogo Canario||
+2|Boerboel||
+2|Neapolitan Mastiff|Mâtin napolitain|
+2|Tosa/Tosa Inu||
+2|Hokkaido/Hokkaido Inu||
+2|Kishu||
+2|Jindo/Korean Jindo||
+2|Thai Ridgeback||
+2|Chinook||
+2|Coonhound||
+2|Foxhound||
+2|Harrier||
+2|Otterhound||
+2|Bluetick Coonhound||
+2|Plott Hound||
+2|Catahoula||
+3|Australian Cattle Dog/Blue Heeler/Heeler|Bouvier australien|
+2|Kelpie/Australian Kelpie||
+2|Bouvier des Flandres|Bouvier des Flandres|
+2|Entlebucher||
+2|Appenzeller||
+2|Greater Swiss Mountain Dog|Grand bouvier suisse|
+2|Hovawart||
+2|Eurasier||
+2|Landseer||
+2|Flat-coated Retriever|Retriever à poil plat|
+2|Chesapeake Bay Retriever||
+2|Nova Scotia Duck Tolling Retriever/Toller||
+2|Curly-coated Retriever||
+2|Clumber Spaniel||
+2|Sussex Spaniel||
+2|Field Spaniel||
+2|Welsh Springer Spaniel||
+2|Irish Water Spaniel||
+3|German Shorthaired Pointer|Braque allemand|
+2|Bracco Italiano|Braque italien|
+2|Spinone Italiano||
+2|Lagotto Romagnolo||
+2|Portuguese Water Dog|Chien d'eau portugais|
+2|Spanish Water Dog|Chien d'eau espagnol|
+2|Barbet||
+2|Griffon Korthals/Wirehaired Pointing Griffon|Griffon Korthals|
+2|Braque d'Auvergne||
+2|Braque Français||
+2|Grand Bleu de Gascogne||
+2|Petit Basset Griffon Vendéen||
+0|Mongrel/Mutt|Bâtard|no
+0|Wolf|Loup|no
+0|Fox|Renard|no
+
+@set prehistoric
+9|Tyrannosaurus/Tyrannosaurus rex/T. rex/T-Rex/T rex|Tyrannosaure/T-Rex/Tyrannosaurus|dino
+8|Triceratops||dino
+8|Velociraptor/Raptor||dino
+8|Stegosaurus|Stégosaure|dino
+8|Brachiosaurus|Brachiosaure|dino
+7|Diplodocus||dino
+7|Pterodactyl/Pterodactylus|Ptérodactyle|fly
+7|Spinosaurus|Spinosaure|dino
+6|Ankylosaurus|Ankylosaure|dino
+6|Brontosaurus|Brontosaure|dino
+6|Mammoth/Woolly mammoth|Mammouth/Mammouth laineux|mam
+6|Megalodon|Mégalodon|sea
+6|Sabre-toothed tiger/Saber-toothed tiger/Smilodon/Saber-tooth|Tigre à dents de sabre/Smilodon|mam
+6|Pteranodon|Ptéranodon|fly
+6|Allosaurus|Allosaure|dino
+6|Iguanodon||dino
+6|Parasaurolophus||dino
+5|Apatosaurus|Apatosaure|dino
+5|Pachycephalosaurus|Pachycéphalosaure|dino
+5|Archaeopteryx|Archéoptéryx|dino
+5|Dilophosaurus|Dilophosaure|dino
+5|Carnotaurus||dino
+5|Giganotosaurus|Giganotosaure|dino
+5|Mosasaurus|Mosasaure|sea
+5|Plesiosaurus/Plesiosaur|Plésiosaure|sea
+5|Ichthyosaurus/Ichthyosaur|Ichtyosaure|sea
+5|Argentinosaurus|Argentinosaure|dino
+5|Compsognathus||dino
+5|Oviraptor||dino
+5|Gallimimus||dino
+5|Baryonyx||dino
+5|Therizinosaurus|Thérizinosaure|dino
+5|Dimetrodon||other
+5|Trilobite||other
+5|Dodo||no
+3|Deinonychus||dino
+3|Utahraptor||dino
+3|Microraptor||dino
+3|Protoceratops||dino
+3|Styracosaurus|Styracosaure|dino
+2|Pachyrhinosaurus||dino
+2|Centrosaurus||dino
+2|Torosaurus||dino
+3|Edmontosaurus|Edmontosaure|dino
+2|Maiasaura||dino
+2|Corythosaurus||dino
+2|Lambeosaurus||dino
+2|Hadrosaurus|Hadrosaure|dino
+2|Shantungosaurus||dino
+2|Euoplocephalus||dino
+2|Nodosaurus||dino
+2|Kentrosaurus||dino
+2|Camarasaurus||dino
+2|Mamenchisaurus||dino
+2|Supersaurus||dino
+2|Titanosaurus/Titanosaur|Titanosaure|dino
+2|Dreadnoughtus||dino
+2|Patagotitan||dino
+2|Plateosaurus||dino
+3|Coelophysis||dino
+2|Herrerasaurus||dino
+2|Eoraptor||dino
+2|Ceratosaurus||dino
+3|Megalosaurus|Mégalosaure|dino
+3|Albertosaurus||dino
+2|Gorgosaurus||dino
+2|Daspletosaurus||dino
+2|Tarbosaurus||dino
+2|Yutyrannus||dino
+2|Carcharodontosaurus||dino
+2|Acrocanthosaurus||dino
+2|Suchomimus||dino
+2|Irritator||dino
+2|Troodon||dino
+2|Struthiomimus||dino
+2|Ornithomimus||dino
+2|Deinocheirus||dino
+2|Psittacosaurus||dino
+2|Minmi||dino
+2|Leaellynasaura||dino
+2|Muttaburrasaurus||dino
+2|Amargasaurus||dino
+2|Nigersaurus||dino
+2|Ouranosaurus||dino
+2|Sauropelta||dino
+2|Gastonia||dino
+2|Borealopelta||dino
+2|Concavenator||dino
+2|Majungasaurus||dino
+2|Abelisaurus||dino
+3|Quetzalcoatlus||fly
+2|Rhamphorhynchus||fly
+2|Dimorphodon||fly
+3|Elasmosaurus||sea
+3|Liopleurodon||sea
+2|Kronosaurus||sea
+2|Shonisaurus||sea
+2|Tylosaurus||sea
+3|Dunkleosteus||sea
+2|Anomalocaris||sea
+3|Ammonite||sea
+2|Helicoprion||sea
+2|Basilosaurus||sea
+2|Archelon||sea
+3|Megatherium/Giant ground sloth|Mégathérium/Paresseux géant|mam
+3|Woolly rhinoceros/Woolly rhino|Rhinocéros laineux|mam
+3|Mastodon|Mastodonte|mam
+3|Cave bear|Ours des cavernes|mam
+2|Cave lion|Lion des cavernes|mam
+2|Irish elk/Megaloceros|Mégacéros|mam
+2|Glyptodon|Glyptodon|mam
+2|Paraceratherium/Indricotherium||mam
+2|Deinotherium||mam
+2|Andrewsarchus||mam
+2|Diprotodon||mam
+3|Thylacine/Tasmanian tiger|Thylacine/Tigre de Tasmanie|mam
+2|Megalania||other
+2|Sarcosuchus||other
+2|Deinosuchus||other
+3|Titanoboa||other
+2|Meganeura||other
+2|Arthropleura||other
+2|Gigantopithecus||mam
+2|Phorusrhacos/Terror bird|Oiseau-terreur|other
+2|Gastornis/Diatryma||other
+3|Moa||other
+2|Elephant bird|Oiseau-éléphant/Æpyornis|other
+2|Haast's eagle|Aigle de Haast|other
+2|Tiktaalik||other
+2|Ichthyostega||other
+2|Lystrosaurus||other
+2|Edaphosaurus||other
+2|Postosuchus||other
+2|Placodus||sea
+2|Nothosaurus||sea
+2|Eurypterid/Sea scorpion|Euryptéride|sea
+0|Dragon||no
+0|Godzilla||no
+0|Crocodile||no
+0|Shark|Requin|no
+
+@set trees
+@drop tree trees arbre arbres
+8|Oak|Chêne|
+7|Pine|Pin|conifer
+7|Palm/Palm tree|Palmier|
+7|Apple tree|Pommier|fruit
+6|Birch|Bouleau|
+6|Maple|Érable|
+6|Willow/Weeping willow|Saule/Saule pleureur|
+6|Fir|Sapin|conifer
+6|Christmas tree|Sapin de Noël|conifer
+6|Cherry tree/Cherry blossom|Cerisier|fruit
+6|Baobab||
+6|Beech|Hêtre|
+6|Spruce|Épicéa|conifer
+6|Olive tree|Olivier|fruit
+6|Redwood/Sequoia/Giant sequoia|Séquoia|conifer
+5|Ash|Frêne|
+5|Elm|Orme|
+5|Poplar|Peuplier|
+5|Chestnut/Sweet chestnut|Châtaignier|
+5|Horse chestnut|Marronnier|
+5|Cedar|Cèdre|conifer
+5|Cypress|Cyprès|conifer
+5|Yew|If|conifer
+5|Larch|Mélèze|conifer
+5|Eucalyptus||
+5|Bamboo|Bambou|no
+5|Lemon tree|Citronnier|fruit
+5|Orange tree|Oranger|fruit
+5|Pear tree|Poirier|fruit
+5|Plum tree|Prunier|fruit
+5|Peach tree|Pêcher|fruit
+5|Walnut/Walnut tree|Noyer|fruit
+5|Coconut palm/Coconut tree|Cocotier|fruit
+5|Fig tree|Figuier|fruit
+5|Banana tree|Bananier|fruit
+5|Mango tree|Manguier|fruit
+5|Magnolia||
+5|Lime/Linden|Tilleul|
+5|Plane tree|Platane|
+5|Sycamore|Sycomore|
+5|Hazel|Noisetier|fruit
+5|Holly|Houx|
+5|Acacia||
+5|Mimosa||
+5|Jacaranda||
+5|Bonsai|Bonsaï|no
+3|Hornbeam|Charme|
+3|Alder|Aulne|
+3|Rowan/Mountain ash|Sorbier|
+3|Hawthorn|Aubépine|
+3|Juniper|Genévrier|conifer
+3|Douglas fir|Douglas/Sapin de Douglas|conifer
+2|Scots pine|Pin sylvestre|conifer
+2|Umbrella pine/Stone pine|Pin parasol|conifer
+3|Monkey puzzle/Monkey puzzle tree|Désespoir des singes/Araucaria|conifer
+3|Ginkgo/Ginkgo biloba||
+3|Teak|Teck|
+3|Mahogany|Acajou|
+3|Ebony|Ébène/Ébénier|
+2|Rosewood|Palissandre|
+2|Sandalwood|Santal|
+3|Balsa||
+3|Cork oak|Chêne-liège|
+2|Holm oak|Chêne vert|
+3|Aspen|Tremble|
+2|Cottonwood||
+2|Hickory|Caryer|
+2|Pecan|Pacanier|fruit
+3|Almond tree|Amandier|fruit
+3|Apricot tree|Abricotier|fruit
+3|Avocado tree|Avocatier|fruit
+3|Cocoa tree/Cacao|Cacaoyer/Cacaotier|fruit
+2|Coffee tree|Caféier|fruit
+3|Rubber tree|Hévéa|
+2|Kapok/Ceiba|Fromager/Kapokier|
+3|Mangrove|Palétuvier/Mangrove|
+3|Banyan|Banian|
+3|Date palm|Palmier dattier|fruit
+3|Joshua tree|Arbre de Josué|
+2|Dragon tree|Dragonnier|
+2|Bottle tree||
+2|Tulip tree|Tulipier|
+2|Dogwood|Cornouiller|
+3|Elder/Elderberry|Sureau|
+3|Laurel/Bay tree|Laurier|
+2|Myrtle|Myrte|
+2|Tamarind|Tamarinier|fruit
+2|Pomegranate tree|Grenadier|fruit
+2|Quince tree|Cognassier|fruit
+2|Medlar|Néflier|fruit
+3|Mulberry|Mûrier|fruit
+2|Catalpa||
+2|Paulownia||
+2|Wisteria|Glycine|no
+3|Box/Boxwood|Buis|
+2|Tamarisk|Tamaris|
+2|Hemlock|Pruche|conifer
+2|Atlas cedar|Cèdre de l'Atlas|conifer
+2|Cedar of Lebanon|Cèdre du Liban|conifer
+2|Thuja/Arborvitae|Thuya|conifer
+2|Wollemi pine||conifer
+2|Bristlecone pine||conifer
+2|Baldcypress/Bald cypress|Cyprès chauve|conifer
+2|Metasequoia/Dawn redwood|Métaséquoia|conifer
+2|Japanese maple|Érable du Japon|
+2|Cinnamon tree|Cannelier|
+2|Clove tree|Giroflier|
+2|Nutmeg tree|Muscadier|
+2|Breadfruit|Arbre à pain|fruit
+2|Jackfruit tree|Jacquier|fruit
+2|Lychee tree|Litchi|fruit
+2|Neem|Neem/Margousier|
+2|Sal||
+2|Peepal/Sacred fig/Bodhi tree|Figuier des pagodes|
+2|Camphor tree|Camphrier|
+0|Rose|Rose|no
+0|Sunflower|Tournesol|no
+
+@set flowers
+@drop flower flowers fleur fleurs
+9|Rose||
+8|Tulip|Tulipe|
+8|Sunflower|Tournesol|
+7|Daisy|Marguerite/Pâquerette|
+7|Lily|Lys/Lis|
+7|Orchid|Orchidée|
+7|Daffodil|Jonquille/Narcisse|
+6|Lavender|Lavande|
+6|Poppy|Coquelicot/Pavot|
+6|Lotus||
+6|Dandelion|Pissenlit|
+6|Carnation|Œillet|
+6|Violet|Violette|
+6|Hibiscus||
+6|Cherry blossom/Sakura|Fleur de cerisier/Sakura|
+5|Jasmine|Jasmin|
+5|Peony|Pivoine|
+5|Iris||
+5|Lilac|Lilas|
+5|Chrysanthemum|Chrysanthème|
+5|Hydrangea|Hortensia|
+5|Magnolia||
+5|Gerbera|Gerbera|
+5|Marigold|Souci/Œillet d'Inde|
+5|Geranium|Géranium|
+5|Pansy|Pensée|
+5|Forget-me-not|Myosotis|
+5|Lily of the valley|Muguet|
+5|Bluebell|Jacinthe des bois|
+5|Hyacinth|Jacinthe|
+5|Crocus||
+5|Snowdrop|Perce-neige|
+5|Begonia|Bégonia|
+5|Petunia|Pétunia|
+5|Dahlia||
+5|Camellia|Camélia|
+5|Gardenia|Gardénia|
+5|Azalea|Azalée|
+5|Rhododendron||
+5|Buttercup|Bouton d'or|
+5|Clover|Trèfle|
+5|Cornflower|Bleuet|
+5|Edelweiss||
+5|Water lily|Nénuphar|
+5|Bird of paradise/Strelitzia|Oiseau de paradis/Strelitzia|
+5|Cactus flower|Fleur de cactus|no
+3|Zinnia||
+3|Cosmos||
+3|Aster||
+3|Anemone|Anémone|
+3|Ranunculus|Renoncule|
+3|Freesia||
+3|Gladiolus|Glaïeul|
+3|Amaryllis||
+3|Calla lily|Arum/Calla|
+3|Anthurium||
+3|Protea||
+3|Bougainvillea|Bougainvillier|
+3|Wisteria|Glycine|
+3|Honeysuckle|Chèvrefeuille|
+3|Foxglove|Digitale|
+3|Snapdragon|Muflier/Gueule-de-loup|
+3|Sweet pea|Pois de senteur|
+3|Lupin|Lupin|
+3|Delphinium/Larkspur|Delphinium/Pied-d'alouette|
+3|Hollyhock|Rose trémière|
+3|Primrose|Primevère|
+3|Cyclamen||
+3|Fuchsia||
+3|Impatiens/Busy Lizzie|Impatiens|
+3|Lobelia|Lobélie|
+3|Verbena|Verveine|
+3|Heather|Bruyère|
+3|Gorse|Ajonc|
+3|Broom|Genêt|
+3|Thistle|Chardon|
+3|Gentian|Gentiane|
+3|Columbine|Ancolie|
+3|Bellflower/Campanula|Campanule|
+3|Morning glory|Volubilis/Ipomée|
+3|Passion flower|Passiflore|
+3|Plumeria/Frangipani|Frangipanier|
+3|Oleander|Laurier-rose|
+3|Mimosa||
+3|Jacaranda||
+3|Lantana||
+3|Salvia|Sauge|
+3|Nasturtium|Capucine|
+3|Periwinkle|Pervenche|
+3|Stock|Giroflée|
+3|Wallflower|Giroflée des murailles|
+3|Aubrieta|Aubriète|
+3|Allium||
+3|Agapanthus|Agapanthe|
+3|Alstroemeria|Alstroemère|
+3|Statice||
+3|Gypsophila/Baby's breath|Gypsophile|
+3|Celosia|Célosie|
+3|Clematis|Clématite|
+3|Rafflesia||
+3|Corpse flower/Titan arum|Arum titan|
+3|Venus flytrap|Dionée/Attrape-mouche|
+3|Orange blossom|Fleur d'oranger|
+3|Apple blossom|Fleur de pommier|
+3|Poinsettia|Poinsettia/Étoile de Noël|
+3|Saffron crocus|Crocus à safran|
+3|Chamomile|Camomille|
+3|Elderflower|Fleur de sureau|
+3|Hellebore/Christmas rose|Hellébore/Rose de Noël|
+3|Tuberose|Tubéreuse|
+3|Peace lily|Spathiphyllum|
+3|Moonflower||
+3|Black-eyed Susan/Rudbeckia|Rudbeckia|
+3|Coneflower/Echinacea|Échinacée|
+3|Yarrow|Achillée|
+3|Evening primrose|Onagre|
+3|Bleeding heart|Cœur-de-Marie|
+3|Sea holly|Panicaut|
+3|Tansy|Tanaisie|
+0|Tree|Arbre|no
+0|Grass|Herbe|no

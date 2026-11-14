@@ -1,5 +1,5 @@
-const lib = require('../party_lib.js');
-const { visitor } = require('../site.js');
+const lib = require('../lib.js');
+const { visitor } = lib;
 const must = (c, m) => { if (!c) throw new Error(m); };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {

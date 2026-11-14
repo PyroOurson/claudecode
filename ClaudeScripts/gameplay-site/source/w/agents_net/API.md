@@ -11,7 +11,7 @@ Star topology through PeerJS; the party creator's device is the connection hub a
 - No first screen: opening online play creates the party at once (the code box pulses until the code exists) and shows the party GUI.
 - Header: game name, Leave, party code with Hide/Show (remembered on the device) and invite link button (share sheet, else copy).
 - Players: initials avatar, HOST badge + crown on the party leader, "Party leader · You" / "Member", crown button = make that player the host, kick button, empty seats listed up to the party size ("Empty seat", or "Bot" when bots are on). Your own name has a pencil: click to rename (Enter / blur saves, Esc cancels).
-- "N / M joined" pill = party size selector (leader only), sizes from the game's list (2..16). The player list holds up to 8 rows and then scrolls; on phones the stacked list is capped at 312 px and scrolls.
+- "N / M joined" pill = party size selector (leader only), sizes from the game's list (2..40). The player list holds up to 8 rows and then scrolls; on phones the stacked list is capped at 312 px and scrolls.
 - "Fill empty seats with bots" switch (default off), only when the game passes `bots: true`. Leader can toggle, others see its state.
 - Live chat, footer: Play for the leader ("Waiting for N more players…" hint), "Waiting for the host…" for everyone else, and a "Join with a code" box (leaves the current party and joins that one).
 - Errors (server busy, bad code, full party) show in the footer with "Try again" and, after a failed join, "Create my own party". Kicked / host left / lost: a message screen with "New party", the join box and Close.
@@ -24,7 +24,7 @@ Star topology through PeerJS; the party creator's device is the connection hub a
 `const r = await api.net.room({ title, sizes, defaultSize, min = 2, max, bots, name })`
 
 The party window opens on a first screen with two choices, "Host a party" and "Join a party". Host leads to a choice between Private (a 4-character code to share) and Public (listed for everyone, no code shown). Join shows the public parties that are open for this game, each with a Join button, and a box for a private code. Pass `intent: 'host'` or `intent: 'join'` to skip the first screen. Connections use two independent routes (the PeerJS signalling server, and the site's own realtime backend with a relayed fallback when WebRTC is not possible); the game does not need to know which one is in use. A relayed party is slower: `fast` messages are thinned for it, so keep sending state in a way that tolerates dropped fast messages.
-- `sizes`: party sizes the leader can pick, e.g. `[2, 3, 4]` (2..16). Without `sizes`: every size from `min` to `max` (default `max` 4, up to 16). A 16 seat game (Werewolf, Kahoot) passes `sizes` or `max` up to 16 and the selector follows. `defaultSize`: preselected size (default: the largest; the last size picked for this game is remembered).
+- `sizes`: party sizes the leader can pick, e.g. `[2, 3, 4]` (2..40). Without `sizes`: every size from `min` to `max` (default `max` 4, up to 40). A 16 seat game (Werewolf, Kahoot) passes `sizes` or `max` up to 16 and the selector follows. `defaultSize`: preselected size (default: the largest; the last size picked for this game is remembered).
 - `min`: players needed before Play is enabled (default 2). With bots on, Play is enabled with any number of players (the leader alone too).
 - `bots: true`: the game can fill empty seats with bots, so the GUI shows the bots switch (default off).
 - `title`/`text` are accepted; the header always shows the game's catalogue name. `name` is only a fallback when no username exists.
@@ -75,7 +75,14 @@ Over the party connection (the hub relays and stamps the time). Last 100 message
 
 Heartbeat every second on wall-clock time; a visible peer silent for 7 s is treated as dropped (about 3 min if hidden). Guests auto-reconnect with backoff for about 45 s (up to 10 min while hidden), the hub keeps their seat 12 s (60 s hidden). Max 16 players.
 
+## Escape and pausing
+
+The site pauses a game when the player presses Esc. A game that runs its own pause menu sets `ownPause: true` in its register call: the site never pauses it, and the pause button in the bar sends Esc to the game.
+
+A game that keeps the site pause but has its own windows (an inventory, a shop, a map) sets `api.escOwn` while such a window is open, either to `true`/`false` or to a function returning whether Esc belongs to the game right now (`api.escOwn = () => !!openWindow`). While it is true, Esc reaches the game instead of pausing the site; the pause button in the bar still pauses.
+
 ## Translation (i18n agent)
+Translation rows are keyed by the English text and shared by the whole site. A word that means something else in one game ("Medium" as a steak doneness, "Rare", "White" in chess) gets a row keyed `@<game id>|<English text>`: inside that game's root, and for `gpI18n.t` calls while that game is open, the scoped row wins over the global one. The lead's merge step scopes game rows that clash with the site's table automatically.
 Every GUI string goes through `gpI18n.t(s)` when `window.gpI18n` exists (falls back to English). Strings with values use placeholders that must stay in the translation: `{n}`, `{m}`, `{code}`, `{name}`:
 `{n} / {m} joined`, `{n} players`, `Waiting for {n} more players…`, `Waiting for 1 more player…`, `Joining party {code}…`, `Party {code}`, `Party {code} is full.`, `Party {code} not found. Check the code and try again.`, `Server busy, trying again ({n}/3)…`, `{name} joined the party`, `{name} left the party`, `{name} was removed from the party`, `{name} is now the host`.
 Also `Restoring party {code}…` and `Party {code} is not open yet, trying again…`.
@@ -83,3 +90,8 @@ Plain strings: Leave, Close, Party code, Hide, Show, Hide party code, Show party
 
 ## Analytics
 If `Ameplay.analytics.track` exists the lobby sends `party_create {game,size}`, `party_join {game}`, `party_play {game,players,size,bots}`.
+
+## Server functions for games
+`Ameplay.account.rpc(name, args)` calls one of the database functions a game is allowed to use (the list is `GAME_RPC` in `new/auth.js`; today Long Shot's `long_shot_answer` and `long_shot_stats`, and the level codes `level_share` and `level_get`). It returns a promise with the result and rejects when the name is not on the list, when the player is offline or when the server refuses. A game that needs a server function asks the lead, who adds it to `gameplay.sql` (section Game services) and to the list.
+
+Level codes: `level_share({ p_game, p_body })` (signed-in players only) stores a level text and returns a 6-character code from `23456789ABCDEFGHJKMNPQRSTUVWXYZ`; sharing the same text again returns the same code. `level_get({ p_game, p_code })` returns the text or `null` (anyone; spaces and dashes in the code are ignored). The database accepts a game only when `private.level_game_ok` knows its text format (today `wobble-ride`, texts starting with `WR0` or `WR1`, at most 60000 characters); 30 shares per hour, 300 levels per account (the oldest is replaced), codes expire a year after their last use. The game must still check every level it loads.

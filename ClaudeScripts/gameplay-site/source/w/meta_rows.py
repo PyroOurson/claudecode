@@ -162,35 +162,35 @@ ROWS = [
  ('head-soccer',"Head Soccer",'Sports','so',5,'head soccer football big heads power shots','rn'),
  ('slime-volley',"Slime Volleyball",'Sports','so4',5,'slime volleyball volley classic','rn'),
  ('basketball-legends',"Basketball Legends",'Sports','so4',6,'basketball legends 1v1 hoops dunk powers','rn'),
- ('ragdoll-archers',"Ragdoll Archers",'Action,Skill','so',6,'ragdoll archers bow arrow physics duel','rn'),
- ('stickman-hook',"Stickman Hook",'Skill,Arcade','s',8,'stickman hook swing rope grapple levels','rn'),
- ('vex',"Vex 5",'Skill,Action','s',20,'vex 5 parkour platformer stickman acts','rn'),
- ('happy-wheels',"Happy Wheels",'Skill,Action','s',15,'happy wheels ragdoll obstacle course bike wheelchair','rn'),
- ('getting-over-it',"Getting Over It",'Skill','s',30,'getting over it hammer pot climbing bennett foddy','rn'),
+ ('wobble-ride',"Happy Wheels",'Skill,Action','s',15,'wobble ride ragdoll physics obstacle course bike wheelchair scooter levels editor crash','rn'),
+ ('pickaxe-peak',"Getting Over It",'Skill','s',30,'pickaxe peak climbing climb hammer bucket mole mountain hard rage physics','rn'),
+ ('quiver-clash',"Ragdoll Archers",'Action,Skill','so',6,'archery archers bow arrow arrows ragdoll physics duel stickman headshot versus 1v1 waves quiver clash','rn'),
+ ('swing-line',"Stickman Hook",'Skill,Arcade','s',8,'swing swinging rope grapple hook stickman momentum flip levels stars swing line','rn'),
+ ('spike-run',"Vex",'Skill,Action','s',20,'parkour platformer stickman acts spikes saws wall jump checkpoints speedrun spike run','rn'),
  ('tomb-of-the-mask',"Tomb of the Mask",'Arcade,Skill','s',8,'tomb of the mask maze dash retro','rn'),
  ('color-switch',"Color Switch",'Arcade,Skill','s',4,'color switch colour gates tap ball','rn'),
  ('eggy-car',"Eggy Car",'Skill,Racing','s',5,'eggy car egg balance drive hills','rn'),
  ('drift-boss',"Drift Boss",'Skill,Racing','s',4,'drift boss one button drifting platforms','rn'),
  ('bloons-td',"Bloons TD",'Strategy','s',25,'bloons td tower defense monkeys balloons darts','rn'),
- ('papas-pizzeria',"Papa's Pizzeria",'Strategy,Skill','s',15,'papas pizzeria restaurant orders pizza cooking','rn'),
- ('tiny-fishing',"Tiny Fishing",'Strategy,Arcade','s',10,'tiny fishing idle upgrades fish hook','rn'),
- ('duck-life',"Duck Life",'Racing,Strategy','s',20,'duck life train race duck running swimming flying','rn'),
- ('retro-bowl',"Retro Bowl",'Sports,Strategy','s',25,'retro bowl american football nfl management pixel','rn'),
- ('fnf',"Friday Night Funkin'",'Skill,Arcade','so',10,'friday night funkin fnf rhythm arrows battle music','rn'),
- ('osu',"osu!",'Skill','s',10,'osu rhythm circles sliders spinners beatmap','rn'),
+ ('order-up',"Papa's Pizzeria",'Strategy,Skill','s',15,'cooking restaurant chef orders pizza burger ice cream sundae diner time management customers tips order up','n'),
+ ('reel-deep',"Tiny Fishing",'Strategy,Arcade','s',10,'fishing fish hook line idle upgrades ocean deep sea catch reel deep','n'),
+ ('quack-cup',"Duck Life",'Racing,Strategy','s',20,'duck train training race racing running swimming flying climbing tournament quack cup','n'),
+ ('touchdown-dynasty',"Retro Bowl",'Sports,Strategy','s',25,'american football gridiron touchdown quarterback franchise season draft management pixel retro bowl touchdown dynasty','rn'),
  ('clash-royale',"Clash Royale",'Strategy,Action','so',6,'clash royale cards elixir towers arena troops','rn'),
- ('balatro',"Balatro",'Strategy,Board','s',30,'balatro poker roguelike jokers deck builder','rn'),
- ('little-alchemy',"Little Alchemy 2",'Puzzle,Brain','s',20,'little alchemy combine elements discover','rn'),
- ('bitlife',"BitLife",'Strategy','s',20,'bitlife life simulator choices age career','rn'),
+ ('element-lab',"Little Alchemy",'Puzzle,Brain','s',20,'element lab alchemy combine combining elements mix craft discover recipes little alchemy infinite craft','rn'),
+ ('one-life',"BitLife",'Strategy','s',20,'one life simulator simulation choices age career school family job money bitlife','rn'),
+ ('beat-duel',"Friday Night Funkin'",'Skill,Arcade','so',10,'rhythm arrows arrow lanes battle music sing singing duel notes beat dance story week beat duel','rn'),
+ ('click-beat',"osu!",'Skill','s',10,'rhythm circles click clicking tap aim sliders spinners music beat mouse click beat','rn'),
+ ('ante-up',"Balatro",'Strategy,Board','s',30,'poker hands roguelike jokers deck builder cards chips mult blinds ante shop ante up','rn'),
  ('counter-strike',"Counter-Strike 2",'Action','so10',20,'counter strike cs2 csgo fps shooter dust 2 bomb defuse terrorists','rn'),
  ('polytrack',"PolyTrack",'Racing','so8',10,'polytrack time trial low poly track editor racing ghosts','rn'),
- ('krunker',"Krunker",'Action','so8',10,'krunker fps shooter low poly slide hop classes','rn'),
- ('shell-shockers',"Shell Shockers",'Action','so8',10,'shell shockers egg fps shooter','rn'),
- ('1v1-lol',"1v1.LOL",'Action','so4',10,'1v1 lol build fight fortnite ramps walls shooter','rn'),
+ ('build-brawl',"1v1.LOL",'Action','so4',10,'1v1 lol build fight box fight fortnite ramps walls floors cones edit shooter shotgun sniper duel 3d build brawl','rn'),
+ ('hopfire',"Krunker",'Action','so8',10,'krunker fps first person shooter low poly slide bunny hop classes sniper rifle arena guns bots hopfire','rn'),
+ ('yolk-ops',"Shell Shockers",'Action','so8',10,'shell shockers egg eggs fps first person shooter cartoon crack yolk grenade sniper shotgun bots yolk ops','rn'),
  ('smash-karts',"Smash Karts",'Racing,Action','so8',8,'smash karts kart battle arena weapons','rn'),
- ('bedwars',"Bedwars",'Action,Strategy','so8',15,'bedwars bed wars minecraft blocks shop bridge','rn'),
- ('tower-of-hell',"Tower of Hell",'Skill','so8',10,'tower of hell obby roblox parkour climb','rn'),
- ('only-up',"Only Up",'Skill','so8',30,'only up climbing parkour 3d','rn'),
+ ('bed-raiders',"Bedwars",'Action,Strategy','so8',15,'bedwars bed wars minecraft blocks bridge bridging shop generators diamonds emeralds teams islands void pvp bed raiders','rn'),
+ ('tower-of-peril',"Tower of Hell",'Skill,Action','so8',10,'tower of hell obby obstacle course parkour climb kill bricks timer race 3d roblox tower of peril','rn'),
+ ('way-up',"Only Up",'Skill','s',30,'only up climb climbing parkour 3d jump ledge rope sky balloon no checkpoints ghost way up','rn'),
  ('murder-mystery',"Murder Mystery 2",'Action','o12',8,'murder mystery 2 mm2 roblox murderer sheriff innocent','rn'),
  ('temple-run',"Temple Run",'Runner','s',5,'temple run endless runner swipe idol monkeys','rn'),
  ('snow-rider',"Snow Rider 3D",'Runner,Racing','s',4,'snow rider 3d sled downhill obstacles','rn'),
@@ -198,5 +198,25 @@ ROWS = [
  ('madalin-stunt',"Madalin Stunt Cars",'Racing','so8',15,'madalin stunt cars free roam stunt ramps cars','rn'),
  ('golf-friends',"Golf With Your Friends",'Sports','so8',15,'golf with your friends mini golf putt courses','rn'),
  ('bowling',"Bowling",'Sports','so6',8,'bowling ten pin strike spare lane','rn'),
+ ('caption-this',"Make It Meme",'Brain','so10',12,'caption this meme memes captions funny pictures vote rate party make it meme what do you meme','rn'),
+ ('long-shot',"Krillion",'Brain','so16',8,'long shot krillion daily trivia rare answers rarity name a thing categories endless duel','rn'),
+ ('the-quiet-house',"Granny",'Action,Puzzle','s',30,'granny horror scary escape house hide hiding keys puzzle stealth first person five days the quiet house','rn'),
 ]
 DELETED = ['demon-halls', 'night-survivors', 'fire-water', 'bomb-blast', 'marble-chain', 'clicker', 'glide', 'jetpack', 'sky-jump', 'lights-out', 'deep-miner', 'fling-birds', 'candy-rope', 'racer', 'shooter', 'hill-climb', 'golf', 'asteroids', 'bowling-3d', 'kart-circuit', 'tower-defense', 'stick-bridge']
+
+STAT = {"block-roll": "Stages", "tunnel-run": "Distance", "reaction": "Last", "minesweeper": "Time", "sudoku": "Time", "solitaire": "Time", "marble-3d": "Time", "maze-3d": "Time", "slide": "Moves", "cube-3d": "Moves", "pairs": "Moves", "chess": "Wins", "checkers": "Wins", "reversi": "Wins", "connect-four": "Wins", "tictactoe": "Wins", "pool": "Wins", "word-guess": "Streak", "hangman": "Streak", "true-false": "Score", "moto-stunts": "Stars", "garden-defense": "Stage", "paper-land": "Territory", "slither": "Length", "cell-feast": "Mass", "highway-3d": "Distance", "dash-cube": "Progress", "sea-battle": "Shots", "chimp-test": "Level", "piano-tiles": "Tiles", "element-lab": "Elements", "one-life": "Age"}
+ORIG_ORDER = ["reaction", "aim", "whack", "perfect-stop", "stack", "rhythm", "snake", "breakout", "pong", "racer", "shooter", "glide", "2048", "minesweeper", "slide", "tictactoe", "connect-four", "lights-out", "pairs", "sequence", "number-memory", "trivia", "math-sprint", "word-guess", "clicker", "typing", "golf", "dino-run", "dash-cube", "jetpack", "sky-jump", "stick-bridge", "knife-throw", "asteroids", "invaders", "maze-muncher", "pinball", "air-hockey", "archery", "pool", "piano-tiles", "cps-test", "tower-defense", "fruit-slice", "deep-miner", "hill-climb", "kart-circuit", "chimp-test", "tetra", "bubble-pop", "gem-swap", "box-pusher", "pipe-connect", "sudoku", "chess", "checkers", "reversi", "solitaire", "hangman", "true-false", "sky-runner", "road-hopper", "helix-3d", "marble-3d", "highway-3d", "sky-pilot", "hoops-3d", "bowling-3d", "penalty-3d", "target-range-3d", "maze-3d", "tanks-3d", "cube-3d", "asteroids-3d", "blockcraft-3d"]
+
+
+def slug(title):
+    import re
+    s = title.lower().replace('&', ' and ').replace("'", '').replace('.', ' ')
+    return re.sub(r'[^a-z0-9]+', '-', s).strip('-')
+
+
+SLUG = {r[0]: slug(r[1]) for r in ROWS}
+ID_OF = {v: k for k, v in SLUG.items()}
+
+
+def ids_of(part):
+    return [ID_OF.get(x, x) for x in part[2:].split('+')]

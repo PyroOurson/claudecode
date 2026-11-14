@@ -36,5 +36,10 @@
 ["Try a different word.", "Essayez un autre mot.", "Prueba otra palabra.", "Versuche ein anderes Wort.", "Prova un’altra parola.", "Tente outra palavra."],
 ["Saved", "Enregistré", "Guardado", "Gespeichert", "Salvato", "Salvo"],
 ["About this game", "À propos de ce jeu", "Sobre este juego", "Über dieses Spiel", "Informazioni sul gioco", "Sobre este jogo"],
-["Clears this browser.", "Vide ce navigateur.", "Borra este navegador.", "Leert diesen Browser.", "Svuota questo browser.", "Limpa este navegador."]
+["Clears this browser.", "Vide ce navigateur.", "Borra este navegador.", "Leert diesen Browser.", "Svuota questo browser.", "Limpa este navegador."],
+["Current password", "Mot de passe actuel", "Contraseña actual", "Aktuelles Passwort", "Password attuale", "Palavra-passe atual"],
+["Needed to change your email or your password.", "Nécessaire pour changer ton e-mail ou ton mot de passe.", "Necesaria para cambiar tu correo o tu contraseña.", "Nötig, um deine E-Mail oder dein Passwort zu ändern.", "Serve per cambiare email o password.", "Necessária para mudar o teu email ou a tua palavra-passe."],
+["Enter your current password first.", "Saisis d’abord ton mot de passe actuel.", "Escribe primero tu contraseña actual.", "Gib zuerst dein aktuelles Passwort ein.", "Inserisci prima la password attuale.", "Escreve primeiro a tua palavra-passe atual."],
+["Your current password is not right.", "Ton mot de passe actuel n’est pas correct.", "Tu contraseña actual no es correcta.", "Dein aktuelles Passwort stimmt nicht.", "La password attuale non è corretta.", "A tua palavra-passe atual não está certa."],
+["For safety, sign in again with Google first, then change it within 15 minutes.", "Par sécurité, reconnecte-toi d’abord avec Google, puis fais le changement dans les 15 minutes.", "Por seguridad, vuelve a entrar con Google y haz el cambio en los 15 minutos siguientes.", "Melde dich zur Sicherheit zuerst erneut mit Google an und ändere es dann innerhalb von 15 Minuten.", "Per sicurezza, accedi di nuovo con Google e poi fai la modifica entro 15 minuti.", "Por segurança, entra outra vez com o Google e faz a alteração nos 15 minutos seguintes."]
 ]

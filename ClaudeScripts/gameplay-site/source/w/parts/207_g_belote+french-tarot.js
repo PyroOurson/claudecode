@@ -267,18 +267,18 @@
     return T('You must trump (couper): your partner is not master.', 'Vous devez couper : votre partenaire n’est pas maître.');
   }
   const bRound10 = x => Math.round(x / 10) * 10;
-  function bScoreHand(cls, ctr, tp, won, belSeat) {
+  function bScoreHand(cls, ctr, tp, won, belSeat, ann) {
     const c = ctr.s & 1, d = 1 - c;
-    const bel = [0, 0];
+    const bel = [0, 0], an = cls && ann ? ann.slice() : [0, 0];
     if (belSeat >= 0) bel[belSeat & 1] = 20;
-    const out = { pts: [0, 0], score: [0, 0], made: false, litige: false, capot: won[0] === 8 ? 0 : won[1] === 8 ? 1 : -1, bel: bel.slice(), carry: 0 };
-    const T0 = [tp[0] + bel[0], tp[1] + bel[1]];
+    const out = { pts: [0, 0], score: [0, 0], made: false, litige: false, capot: won[0] === 8 ? 0 : won[1] === 8 ? 1 : -1, bel: bel.slice(), ann: an.slice(), carry: 0 };
+    const T0 = [tp[0] + bel[0] + an[0], tp[1] + bel[1] + an[1]];
     if (cls) {
-      if (out.capot >= 0) { const t = out.capot; T0[t] = 252 + bel[t]; T0[1 - t] = bel[1 - t]; }
+      if (out.capot >= 0) { const t = out.capot; T0[t] = 252 + bel[t] + an[t]; T0[1 - t] = bel[1 - t] + an[1 - t]; }
       out.pts = T0;
       if (T0[c] > T0[d]) { out.made = true; out.score = T0.slice(); }
       else if (T0[c] === T0[d]) { out.litige = true; out.score[d] = T0[d]; out.carry = T0[c]; }
-      else { out.score[c] = bel[c]; out.score[d] = (out.capot === d ? 252 : 162) + bel[d]; }
+      else { out.score[c] = bel[c]; out.score[d] = (out.capot === d ? 252 : 162) + bel[d] + an[0] + an[1]; }
       return out;
     }
     const cap = ctr.pts === 250, m = ctr.mult;
@@ -301,6 +301,29 @@
       out.score[c] = bel[c];
     }
     return out;
+  }
+
+  function bAnnOf(h, tr) {
+    const out = [];
+    for (let s = 0; s < 4; s++) {
+      let run = [];
+      for (let r = 0; r <= 8; r++) {
+        if (r < 8 && h.indexOf(s * 8 + r) >= 0) { run.push(s * 8 + r); continue; }
+        const k = run.length;
+        if (k >= 3) { const pts = k >= 5 ? 100 : k === 4 ? 50 : 20; out.push({ t: k >= 5 ? 'c' : k === 4 ? 'f' : 't', pts, ids: run.slice(), key: pts * 100 + (run[k - 1] & 7) * 2 + (s === tr ? 1 : 0) }); }
+        run = [];
+      }
+    }
+    for (const [r, pts] of [[4, 200], [2, 150], [7, 100], [3, 100], [6, 100], [5, 100]]) {
+      if (h.indexOf(r) >= 0 && h.indexOf(8 + r) >= 0 && h.indexOf(16 + r) >= 0 && h.indexOf(24 + r) >= 0) out.push({ t: 'q', r, pts, ids: [r, 8 + r, 16 + r, 24 + r], key: pts * 100 + 50 + B_PPW[r] });
+    }
+    return out.sort((a, b) => b.key - a.key);
+  }
+  function bAnnName(a) {
+    if (a.t === 't') return T('Tierce', 'Tierce');
+    if (a.t === 'f') return T('Fifty', 'Cinquante');
+    if (a.t === 'c') return T('Hundred', 'Cent');
+    return [null, null, T('Four Nines', 'Carré de 9'), T('Four Tens', 'Carré de 10'), T('Four Jacks', 'Carré de valets'), T('Four Queens', 'Carré de dames'), T('Four Kings', 'Carré de rois'), T('Four Aces', 'Carré d’as')][a.r];
   }
 
   function bApply(RS, s, id) {
@@ -407,9 +430,11 @@
       hands: [[], [], [], []], rest: [], turned: -1, trump: -1, contract: null, hi: null, passes: 0, coinche: 0, round: 1,
       bids: [null, null, null, null], trick: [], trickWin: -1, last: null, nt: 0, won: [0, 0], tp: [0, 0], belSeat: -1, belN: 0,
       played: new Uint8Array(32), voids: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], hist: [], result: null, winner: -1,
-      ready: [false, false, false, false], seq: 0, ev: [], ex: {}, hints: [null, null, null, null], surQ: [], over: false
+      ready: [false, false, false, false], seq: 0, ev: [], ex: {}, hints: [null, null, null, null], surQ: [], over: false,
+      annOn: cls && opt.ann !== false, ann: [[], [], [], []], annPts: [0, 0], annW: -1, annShow: []
     };
     if (opt.state) { Object.assign(S, opt.state); S.played = Uint8Array.from(opt.state.played); S.humans = (opt.humans || S.humans).slice(); }
+    if (!Array.isArray(S.ann) || S.ann.length !== 4) { S.ann = [[], [], [], []]; S.annPts = [0, 0]; S.annW = -1; S.annShow = []; }
     if (!S.inf) S.inf = { vt: [0, 0, 0, 0], cap: [9, 9, 9, 9] };
     const E = (k, o) => { S.seq++; S.ev.push(Object.assign({ k, n: S.seq }, o || {})); if (S.ev.length > 16) S.ev.shift(); };
     const nx = s => (s + 1) & 3;
@@ -421,6 +446,7 @@
       S.belSeat = -1; S.belN = 0; S.played = new Uint8Array(32); S.voids = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
       S.result = null; S.ex = {}; S.hints = [null, null, null, null]; S.surQ = []; S.ready = [false, false, false, false]; S.turned = -1; S.rest = [];
       S.inf = { vt: [0, 0, 0, 0], cap: [9, 9, 9, 9] };
+      S.ann = [[], [], [], []]; S.annPts = [0, 0]; S.annW = -1; S.annShow = [];
       const first = nx(S.dealer);
       if (cls) {
         let p = 0;
@@ -437,6 +463,7 @@
     }
     function startPlay() {
       S.belSeat = bBelOf(S.hands, S.trump);
+      S.ann = [0, 1, 2, 3].map(q => S.annOn ? bAnnOf(S.hands[q], S.trump) : []);
       S.phase = 'play'; S.leader = S.turn = nx(S.dealer); S.trick = [];
       E('play-start', { trump: S.trump });
     }
@@ -528,6 +555,7 @@
       }
       S.trick.push({ s: seat, id });
       E('card', { s: seat, id });
+      if (S.nt === 0 && S.ann[seat].length) E('ann', { s: seat, t: S.ann[seat].map(a => ({ t: a.t, r: a.r })) });
       if (seat === S.belSeat && (id === S.trump * 8 + 6 || id === S.trump * 8 + 5)) {
         S.belN++;
         E('belote', { s: seat, n: S.belN });
@@ -549,11 +577,22 @@
       S.tp[w & 1] += p; S.won[w & 1]++;
       S.last = { cards: S.trick.slice(), w, p };
       S.trick = []; S.trickWin = -1;
+      if (S.nt === 1 && S.annOn) {
+        const bk = [0, 0];
+        for (let q = 0; q < 4; q++) for (const a of S.ann[q]) bk[q & 1] = Math.max(bk[q & 1], a.key);
+        const aw = bk[0] > bk[1] ? 0 : bk[1] > bk[0] ? 1 : -1;
+        if (aw >= 0) {
+          S.annW = aw;
+          S.annShow = [aw, aw + 2].reduce((l, q) => l.concat(S.ann[q].map(a => ({ s: q, t: a.t, r: a.r, pts: a.pts, ids: a.ids.slice() }))), []);
+          S.annPts[aw] = S.annShow.reduce((x, a) => x + a.pts, 0);
+          E('ann-win', { w: aw, pts: S.annPts[aw], list: S.annShow });
+        } else if (bk[0]) E('ann-tie');
+      }
       if (S.nt === 8) return endHand();
       S.leader = S.turn = w; S.phase = 'play';
     }
     function endHand() {
-      const res = bScoreHand(cls, S.contract, S.tp, S.won, S.belSeat);
+      const res = bScoreHand(cls, S.contract, S.tp, S.won, S.belSeat, S.annPts);
       const c = S.contract.s & 1;
       let add = [res.score[0], res.score[1]];
       if (cls) {
@@ -618,7 +657,7 @@
           turned: S.phase === 'bid1' || S.phase === 'bid2' ? S.turned : -1, contract: S.contract, hi: S.hi, bids: S.bids.map(x => x && Object.assign({}, x)), coinche: S.coinche,
           scores: S.scores.slice(), target: S.target, carry: S.carry, won: S.won.slice(), nt: S.nt, last: S.last, hist: S.hist, result: S.result,
           winner: S.winner, ready: S.ready.slice(), ev: S.ev.slice(), ex: Object.assign({}, S.ex), seq: S.seq, round: S.round, belSeat: S.belN ? S.belSeat : -1, belN: S.belN,
-          legal: api.legal(seat), leader: S.leader, surQ: S.surQ.slice()
+          legal: api.legal(seat), leader: S.leader, surQ: S.surQ.slice(), annOn: S.annOn, annShow: S.annShow.slice(), annPts: S.annPts.slice()
         };
         if (S.phase === 'hand' || S.phase === 'over') { V.reveal = null; }
         if (S.phase === 'bid1' || S.phase === 'bid2') V.turnedSuit = S.turned >> 3;
@@ -703,7 +742,7 @@
     return out;
   }
   function bDD(RS, S, me, a, b) {
-    if (RS.done) { const r = bScoreHand(S.cls, S.contract, RS.tp, RS.won, S.belSeat); return r.score[me] - r.score[1 - me]; }
+    if (RS.done) { const r = bScoreHand(S.cls, S.contract, RS.tp, RS.won, S.belSeat, S.annW >= 0 ? S.annPts : null); return r.score[me] - r.score[1 - me]; }
     const s = RS.turn, L = bLegal(RS.h[s], RS.trick, RS.tr, RS.cls, s), mx = (s & 1) === me;
     let best = mx ? -1e9 : 1e9;
     for (const id of L) {
@@ -716,13 +755,17 @@
     return best;
   }
   function bTopMove(g, seat, L) {
-    const S = g.S, tr = S.trump, unk = bUnknown(S, seat), need = [0, 0, 0, 0], me = seat & 1, inf = S.inf, t0 = performance.now();
+    const sr = bTopSearch(g, seat, L);
+    sr.step(110, 16);
+    return sr.best();
+  }
+  function bTopSearch(g, seat, L) {
+    const S = g.S, tr = S.trump, unk = bUnknown(S, seat), need = [0, 0, 0, 0], me = seat & 1, inf = S.inf;
     for (let q = 0; q < 4; q++) if (q !== seat) need[q] = S.hands[q].length;
     const known = bKnown(S, seat), plaus = bPlaus(S), vo = S.voids.map((v, q) => inf.vt[q] ? v.map((x, i) => i === tr ? 1 : x) : v);
-    const dd = 8 - S.nt <= 3, N = dd ? 140 : 360, sums = new Float64Array(L.length);
+    const dd = 8 - S.nt <= 3, N = dd ? 140 : 360, sums = new Float64Array(L.length), ann = S.annW >= 0 ? S.annPts : null;
     let n = 0;
-    for (; n < N; n++) {
-      if (n >= 16 && n % 8 === 0 && performance.now() - t0 > 110) break;
+    const one = () => {
       const hs = bSampleH(need, unk, vo, inf.cap, known, plaus, tr);
       hs[seat] = S.hands[seat].slice();
       const base = bNewRS(hs, tr, S.cls, bAtk(S), S.turn);
@@ -733,17 +776,26 @@
         bApply(RS, seat, L[i]);
         if (dd) { sums[i] += bDD(RS, S, me, -1e9, 1e9); continue; }
         bRoll(RS, 0);
-        const r = bScoreHand(S.cls, S.contract, RS.tp, RS.won, S.belSeat);
+        const r = bScoreHand(S.cls, S.contract, RS.tp, RS.won, S.belSeat, ann);
         sums[i] += r.score[me] - r.score[1 - me];
       }
-    }
-    const RS = bNewRS(S.hands, tr, S.cls, bAtk(S), S.turn);
-    RS.P = S.played; RS.trick = S.trick.slice(); RS.v = S.voids;
-    const pol = bPolicy(RS, seat, 0);
-    let bi = 0;
-    for (let i = 1; i < L.length; i++) if (sums[i] > sums[bi]) bi = i;
-    const pi = L.indexOf(pol);
-    return pi >= 0 && sums[pi] >= sums[bi] - n * .5 ? pol : L[bi];
+    };
+    return {
+      step(ms, min) {
+        const t0 = performance.now();
+        while (n < N && (n < (min || 0) || performance.now() - t0 < ms)) { one(); n++; }
+        return n >= N;
+      },
+      best() {
+        const RS = bNewRS(S.hands, tr, S.cls, bAtk(S), S.turn);
+        RS.P = S.played; RS.trick = S.trick.slice(); RS.v = S.voids;
+        const pol = bPolicy(RS, seat, 0);
+        let bi = 0;
+        for (let i = 1; i < L.length; i++) if (sums[i] > sums[bi]) bi = i;
+        const pi = L.indexOf(pol);
+        return pi >= 0 && sums[pi] >= sums[bi] - n * .5 ? pol : L[bi];
+      }
+    };
   }
   function bBidEval(S, seat, suit, N, opts) {
     const unk = [];
@@ -752,8 +804,9 @@
     const cls = S.cls, tr = suit, res = { n: 0, pts: [], succ: 0, avg: 0, cap: 0 };
     const need = [0, 0, 0, 0], plaus = cls ? null : bPlaus(S);
     for (let q = 0; q < 4; q++) if (q !== seat) need[q] = cls ? 8 : 8;
-    const me = seat & 1;
+    const me = seat & 1, t0 = performance.now();
     for (let n = 0; n < N; n++) {
+      if (n >= 24 && performance.now() - t0 > 12) break;
       let pool = unk;
       if (cls) pool = unk.filter(i => i !== S.turned);
       const known = [[], [], [], []];
@@ -787,6 +840,14 @@
     RS.P = S.played; RS.trick = S.trick.slice(); RS.v = S.voids;
     return bPolicy(RS, seat, lvl === 'Easy' ? .35 : 0);
   }
+  function bThink(g, seat, lvl) {
+    const S = g.S;
+    if (lvl !== 'Hardest' || S.phase !== 'play' || S.turn !== seat || S.nt >= 8) return null;
+    const L = bLegal(S.hands[seat], S.trick, S.trump, S.cls, seat);
+    if (L.length < 2) return null;
+    const sr = bTopSearch(g, seat, L);
+    return { step: ms => sr.step(ms, 0), done: () => ({ k: 'play', id: sr.best() }) };
+  }
   function bBot(g, seat, lvl) {
     const S = g.S;
     if (S.phase === 'play') return { k: 'play', id: bPlayCard(g, seat, lvl) };
@@ -799,7 +860,7 @@
         const r = bBidEval(S, seat, su, N);
         if (r.succ / r.n > bp) { bp = r.succ / r.n; best = su; }
       }
-      const thr = (S.phase === 'bid1' ? .56 : .5) + (lvl === 'Easy' ? (Math.random() - .5) * .3 : 0);
+      const thr = (S.phase === 'bid1' ? .56 : .5) + (lvl === 'Easy' ? (Math.random() - .5) * .3 : lvl === 'Hardest' ? .1 : 0);
       if (best >= 0 && bp >= thr + noisy * 0) return { k: 'take', suit: best };
       return { k: 'pass' };
     }
@@ -811,7 +872,9 @@
         for (let q = 0; q < 4; q++) if (q !== seat) need[q] = 8;
         const plaus = bPlaus(S);
         let fail = 0, n = 0;
+        const t0 = performance.now();
         for (let i = 0; i < Math.floor(N * .8); i++) {
+          if (i >= 24 && performance.now() - t0 > 12) break;
           const hs = bSample(need, unk, null, [[], [], [], []], plaus);
           hs[seat] = S.hands[seat].slice();
           const base = bNewRS(hs, S.hi.suit, false, S.hi.s & 1, nx4(S.dealer));
@@ -1220,8 +1283,9 @@
     const need = new Array(n).fill(cfg.hs);
     need[seat] = 0;
     let sum = 0, made = 0, chel = 0, cnt = 0;
-    const known = new Array(n).fill(0).map(() => []);
+    const known = new Array(n).fill(0).map(() => []), t0 = performance.now();
     for (let k = 0; k < N; k++) {
+      if (k >= 10 && performance.now() - t0 > 12) break;
       const hs = tSample(need, unk, null, known, null);
       const chien = hs.rest.slice(0, cfg.cs);
       let H = hand.slice(), xT = [];
@@ -1327,7 +1391,12 @@
     return L[bi];
   }
   function tTopMove(g, seat, L) {
-    const S = g.S, n = S.n, unk = [], need = new Array(n).fill(0), known = new Array(n).fill(0).map(() => []), fix = new Set(), t0 = performance.now();
+    const sr = tTopSearch(g, seat, L);
+    sr.step(150, 6);
+    return sr.best();
+  }
+  function tTopSearch(g, seat, L) {
+    const S = g.S, n = S.n, unk = [], need = new Array(n).fill(0), known = new Array(n).fill(0).map(() => []), fix = new Set();
     const mine = S.hands[seat], own = seat === S.taker && S.bid <= 2 ? S.pileT : S.ecartTr;
     for (let q = 0; q < n; q++) if (q !== seat) need[q] = S.hands[q].length;
     if (seat !== S.taker && S.chienSeen) for (const id of S.chienSeen) if (!S.played[id] && S.ecartTr.indexOf(id) < 0 && (id >= 56 || id % 14 === 13)) { known[S.taker].push(id); fix.add(id); }
@@ -1336,9 +1405,9 @@
     let tot = 0;
     for (let q = 0; q < n; q++) tot += need[q];
     const ne = seat !== S.taker && S.bid <= 2 ? Math.max(0, unk.length - tot) : 0, atk = seat === S.taker || seat === S.partner, sums = new Float64Array(L.length);
-    let k = 0;
-    for (; k < 120; k++) {
-      if (k >= 6 && k % 2 === 0 && performance.now() - t0 > 150) break;
+    let k = 0, ci = 0, base = null;
+    const cnt = new Float64Array(L.length);
+    const prep = () => {
       let pool = unk;
       if (ne) {
         const el = shuffle(unk.filter(i => i < 56 && i % 14 !== 13 && !fix.has(i))).slice(0, ne);
@@ -1346,7 +1415,7 @@
       }
       const hs = tSample(need, pool, S.voids, known, null);
       hs[seat] = mine.slice();
-      const base = tSyncPoints(S, tRSfromS(S, seat));
+      base = tSyncPoints(S, tRSfromS(S, seat));
       base.h = hs;
       const camp = base.camp.slice();
       if (n === 5 && !S.partnerShown && seat !== S.partner && S.called >= 0 && !tAlone(S, seat)) {
@@ -1355,18 +1424,30 @@
         for (let q = 0; q < n; q++) camp[q] = q === S.taker || q === partner ? 0 : 1;
       }
       base.camp = camp;
-      for (let i = 0; i < L.length; i++) {
-        const R = tCloneR(base);
-        R.h[seat] = mine.slice();
-        tApplyR(R, seat, L[i]);
-        tRoll(R, 0);
-        const d = R.tp - T_NEED[Math.min(3, R.to)], v = d / 2 + (d >= 0 ? 25 : -25);
-        sums[i] += atk ? v : -v;
+    };
+    const cand = () => {
+      if (!ci) prep();
+      const R = tCloneR(base);
+      R.h[seat] = mine.slice();
+      tApplyR(R, seat, L[ci]);
+      tRoll(R, 0);
+      const d = R.tp - T_NEED[Math.min(3, R.to)], v = d / 2 + (d >= 0 ? 25 : -25);
+      sums[ci] += atk ? v : -v; cnt[ci]++;
+      if (++ci === L.length) { ci = 0; k++; }
+    };
+    return {
+      step(ms, min) {
+        const t0 = performance.now();
+        while (k < 120 && (k < (min || 0) || performance.now() - t0 < ms)) cand();
+        return k >= 120;
+      },
+      best() {
+        if (!k) return tPolicy(tSyncPoints(S, tRSfromS(S, seat)), seat, 0);
+        let bi = 0;
+        for (let i = 1; i < L.length; i++) if (sums[i] / cnt[i] > sums[bi] / cnt[bi]) bi = i;
+        return L[bi];
       }
-    }
-    let bi = 0;
-    for (let i = 1; i < L.length; i++) if (sums[i] > sums[bi]) bi = i;
-    return L[bi];
+    };
   }
   function tPlayCard(g, seat, lvl) {
     const S = g.S;
@@ -1377,6 +1458,15 @@
     if (lvl === 'Hard' && S.nt < S.nT - 1) return tHardMove(g, seat, L, S.nt >= 8 ? 14 : 22);
     const R = tSyncPoints(S, tRSfromS(S, seat));
     return tPolicy(R, seat, lvl === 'Easy' ? .3 : 0);
+  }
+  function tThink(g, seat, lvl) {
+    const S = g.S;
+    if (lvl !== 'Hardest' || S.phase !== 'play' || S.turn !== seat || S.nt >= S.nT - 1) return null;
+    const fr = S.called >= 0 && S.nt === 0 && seat === S.taker ? { suit: TS[S.called], id: S.called } : null;
+    const L = tLegal(S.hands[seat], S.trick, fr);
+    if (L.length < 2) return null;
+    const sr = tTopSearch(g, seat, L);
+    return { step: ms => sr.step(ms, 0), done: () => ({ k: 'play', id: sr.best() }) };
   }
   function tBot(g, seat, lvl) {
     const S = g.S;
@@ -1679,7 +1769,7 @@
 @@ .ib:hover{background:rgba(255,255,255,.14)}
 @@ .ib:focus-visible,@@ .bt:focus-visible{outline:.18em solid #fff;outline-offset:.1em}
 @@ .ib svg{width:1.3em;height:1.3em}
-@@ .stl{position:absolute;left:50%;top:3.6em;transform:translateX(-50%);padding:.3em 1em;border-radius:1em;background:rgba(6,18,12,.55);font:800 .9em var(--sans);white-space:nowrap;z-index:590;max-width:92%;overflow:hidden;text-overflow:ellipsis;pointer-events:none;transition:opacity .25s}
+@@ .stl{position:absolute;left:50%;top:3.6em;transform:translateX(-50%);padding:.3em 1em;border-radius:1em;background:rgba(6,18,12,.55);font:800 .9em var(--sans);white-space:nowrap;z-index:555;max-width:92%;overflow:hidden;text-overflow:ellipsis;pointer-events:none;transition:opacity .25s}
 @@ .ap{position:absolute;left:50%;transform:translateX(-50%);bottom:var(--ab,10em);display:flex;flex-wrap:wrap;gap:.5em;justify-content:center;align-items:center;padding:.7em .9em;border-radius:1.1em;background:rgba(6,22,14,.8);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);border:.12em solid rgba(255,255,255,.18);max-width:94%;z-index:560;box-shadow:0 .5em 1.6em rgba(0,0,0,.4);animation:tbin .28s cubic-bezier(.2,1.3,.4,1)}
 @@ .ap .ln{flex:1 0 100%;display:flex;flex-wrap:wrap;gap:.4em;justify-content:center;align-items:center}
 @@ .ap .tx{flex:1 0 100%;text-align:center;font:800 .95em var(--sans);opacity:.92}
@@ -1793,8 +1883,12 @@
   function paneHtml(inner, cls) { return `<div class="box ${cls || ''}">${inner}</div>`; }
 
   function Table(root, api, A) {
+    api.on(root, 'contextmenu', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
     const kind = A.kind, CR = kind === 'b' ? 100 / 140 : 100 / 172;
-    const opt = Object.assign(A.defaults(), api.load() || {});
+    const opt = A.defaults(), sv0 = api.load();
+    if (sv0 && typeof sv0 === 'object' && !Array.isArray(sv0)) for (const k in opt) if (sv0[k] != null && (opt[k] == null || typeof sv0[k] === typeof opt[k])) opt[k] = sv0[k];
+    if (!['Easy', 'Normal', 'Hard', 'Hardest'].includes(opt.diff)) opt.diff = 'Normal';
+    if (A.fix) A.fix(opt);
     if (opt.lang === 'fr' || opt.lang === 'en') LANG = opt.lang;
     const save = () => { try { api.save(opt); } catch (e) {} };
     SND.muted = () => !!api.muted;
@@ -2047,7 +2141,7 @@
     }
     function updateStatus(V) {
       const t = ap ? '' : A.status ? A.status(V, M) : '';
-      stl.textContent = t || '';
+      if (t) stl.textContent = t;
       stl.style.opacity = t ? 1 : 0;
       const top = (G.handTop || G.H * .72) - 2.4 * parseFloat(tbl.style.fontSize);
       stl.style.top = 'auto'; stl.style.bottom = (G.H - top) + 'px';
@@ -2093,6 +2187,7 @@
     }
     function showHint(text) {
       hint.textContent = text; hint.classList.add('on');
+      hint.style.bottom = ap && ap.isConnected ? (parseFloat(tbl.style.getPropertyValue('--ab')) || 0) + ap.offsetHeight + .5 * parseFloat(tbl.style.fontSize) + 'px' : '';
       clearTimeout(M.hintT); M.hintT = setTimeout(() => hint.classList.remove('on'), 2000);
     }
     const CTX = { banner: bannerShow, bubble, snd: sfx, hint: showHint, rel, M, G, platePos, opt };
@@ -2159,22 +2254,28 @@
         if (M.human[q]) {
           if (!online) return;
           M.sched = { t: 75, tok, fn: () => { api.toast(T('Auto-play for an idle player', 'Jeu automatique pour un joueur inactif')); botMove(q); } };
-        } else M.sched = { t: (A.botDelay(e.S.phase) + extra) / 1000, tok, fn: () => botMove(q) };
+        } else {
+          let th = null;
+          try { th = A.think ? A.think(e, q, M.lvl) : null; } catch (err) { th = null; }
+          M.sched = { t: (A.botDelay(e.S.phase) + extra) / 1000, tok, th, fn: () => botMove(q, th) };
+        }
       } else if (w.kind === 'ready') {
         if (online) M.sched = { t: 40, tok, fn: () => { for (let q = 0; q < M.n; q++) if (M.human[q] && q !== M.seat) e.act(q, { k: 'ready' }); publish(); } };
       }
     }
-    function botMove(q) {
+    function botMove(q, th) {
       const e = M.eng;
       if (!e) return;
       let a = null;
-      try { a = A.bot(e, q, M.lvl); } catch (err) { a = null; }
+      try { a = th ? th.done() : null; } catch (err) { a = null; }
+      if (!a) try { a = A.bot(e, q, M.lvl); } catch (err) { a = null; }
       if (!a || !e.act(q, a)) { const fb = A.fallback(e, q); if (fb) e.act(q, fb); }
       publish();
     }
     api.loop(dt => {
       const s = M.sched;
       if (!s || s.tok !== M.tok) return;
+      if (s.th && !s.full) { try { s.full = s.th.step(5); } catch (err) { s.th = null; } }
       s.t -= dt;
       if (s.t <= 0) { M.sched = null; s.fn(); }
     });
@@ -2539,15 +2640,17 @@
 
   const BELOTE_A = {
     id: 'belote', cls: 'belote', kind: 'b', title: 'Belote', n: 4,
-    defaults: () => ({ variant: 'classic', target: 1000, diff: 'Normal', lang: null }),
+    defaults: () => ({ variant: 'classic', target: 1000, diff: 'Normal', ann: 'on', lang: null }),
+    fix: o => { if (o.variant !== 'coinche') o.variant = 'classic'; if (![1000, 1500, 2000].includes(o.target)) o.target = 1000; if (o.ann !== 'off') o.ann = 'on'; },
     soloN: () => 4,
     onlineN: () => 4,
     seatOrder: (n, k) => [0, 2, 1, 3].slice(0, k),
     room: () => ({ title: 'Belote', sizes: [4], defaultSize: 4, min: 4, max: 4, bots: true }),
-    shareOpt: o => ({ variant: o.variant, target: o.target, diff: o.diff }),
-    applyShared: (o, d) => { o.variant = d.variant; o.target = d.target; o.diff = d.diff; },
-    newEngine: (o, n, humans, state) => BeloteGame({ variant: o.variant, target: o.target, humans, state }),
+    shareOpt: o => ({ variant: o.variant, target: o.target, diff: o.diff, ann: o.ann }),
+    applyShared: (o, d) => { o.variant = d.variant; o.target = d.target; o.diff = d.diff; o.ann = d.ann === 'off' ? 'off' : 'on'; },
+    newEngine: (o, n, humans, state) => BeloteGame({ variant: o.variant, target: o.target, ann: o.ann !== 'off', humans, state }),
     bot: (g, seat, lvl) => bBot(g, seat, lvl),
+    think: (g, seat, lvl) => bThink(g, seat, lvl),
     botDelay: ph => ph === 'play' ? 620 + Math.random() * 520 : 820 + Math.random() * 600,
     fallback: (g, seat) => g.S.phase === 'play' ? { k: 'play', id: g.legal(seat)[0] } : { k: 'pass' },
     scoreOf: (V, me) => V.scores[me & 1],
@@ -2652,6 +2755,14 @@
         case 'sur': C.banner('SURCOINCHE !', nm(e.s) || '', '#ff5c4d'); C.snd('coinche'); break;
         case 'play-start': C.banner(`${SUIT_SYM[e.trump]} ${T('Trump', 'Atout')}`, V.cls ? '' : `${ptsTxt(V.contract.pts)} · ${nm(V.contract.s) || ''}`, e.trump & 1 ? '#ff7a6b' : '#ffffff'); C.snd('turn'); break;
         case 'belote': C.bubble(e.s, e.n === 1 ? 'Belote !' : 'Rebelote !', 'hot'); C.snd('announce'); break;
+        case 'ann': C.bubble(e.s, e.t.map(bAnnName).join(' + ') + ' !', 'hot'); C.snd('announce'); break;
+        case 'ann-win': {
+          const us = e.w === (C.M.seat & 1);
+          C.banner(`${T('Announcements', 'Annonces')} · ${us ? T('Us', 'Nous') : T('Them', 'Eux')} +${e.pts}`, e.list.map(a => `${esc(nm(a.s) || '')}: ${bAnnName(a)}${a.t === 'q' ? '' : ' ' + a.ids.map(id => cardLabel('b', id).split(' ')[0]).join('-') + ' ' + SUIT_SYM[a.ids[0] >> 3]}`).join(' · '), us ? '#7be58f' : '#ff8b7d');
+          C.snd(us ? 'good' : 'bad');
+          break;
+        }
+        case 'ann-tie': C.banner(T('Announcements', 'Annonces'), T('Equal announcements: nobody scores them', 'Annonces égales : personne ne les marque')); break;
         case 'der': C.bubble(e.s, T('Dix de der +10', 'Dix de der +10'), 'hot'); C.snd('good'); break;
         case 'redeal': C.banner(T('New deal', 'Nouvelle donne')); break;
         case 'hand-end': {
@@ -2673,6 +2784,7 @@
       let t = `<table class="tb-tbl"><tr><th></th><th>${T('Us', 'Nous')}</th><th>${T('Them', 'Eux')}</th></tr>`;
       t += row(T('Trick points (incl. dix de der)', 'Points des plis (dix de der inclus)'), r.tp[m], r.tp[o]);
       if (r.bel[0] || r.bel[1]) t += row('Belote – Rebelote', r.bel[m] || '–', r.bel[o] || '–');
+      if (r.ann && (r.ann[0] || r.ann[1])) t += row(T('Announcements', 'Annonces'), r.ann[m] || '–', r.ann[o] || '–');
       if (r.capot >= 0) t += row('Capot', r.capot === m ? '✔' : '–', r.capot === o ? '✔' : '–');
       t += row(T('Points', 'Points'), r.pts[m], r.pts[o], '');
       t += row(T('Hand score', 'Marque de la donne'), r.score[m], r.score[o], 'sum');
@@ -2708,6 +2820,7 @@
       return paneHtml(`<div class="cards">${[11, 22, 7, 20, 29].map((id, i) => `<i style="background-image:${faceUrl('b', id)};--r:${(i - 2) * 9}deg;--y:${Math.abs(i - 2) * .3}em"></i>`).join('')}</div><div class="logo">Belote<small>${T('The French trick-taking classic', 'Le classique français')}</small></div>` +
         `<div class="opt"><span>${T('Game', 'Jeu')}</span>${seg('variant', ['classic', 'coinche'], [T('Classic', 'Classique'), T('Contrée (Coinche)', 'Contrée (Coinche)')])}</div>` +
         `<div class="opt"><span>${T('Match to', 'Partie en')}</span>${seg('target', [1000, 1500, 2000])}</div>` +
+        (opt.variant === 'coinche' ? '' : `<div class="opt"><span>${T('Announcements', 'Annonces')}</span>${seg('ann', ['on', 'off'], [T('On', 'Oui'), T('Off', 'Non')])}</div>`) +
         `<div class="opt"><span>${T('CPU level', 'Niveau CPU')}</span>${seg('diff', ['Easy', 'Normal', 'Hard', 'Hardest'], [T('Easy', 'Facile'), T('Normal', 'Normal'), T('Hard', 'Difficile'), 'Hardest'])}</div>` +
         `<div class="opt"><span>${T('Language', 'Langue')}</span><div class="seg"><button class="${LANG === 'en' ? 'on' : ''}" ${LANG === 'en' ? '' : 'data-a="lang"'}>English</button><button class="${LANG === 'fr' ? 'on' : ''}" ${LANG === 'fr' ? '' : 'data-a="lang"'}>Français</button></div></div>` +
         `<button class="bt go big" data-a="solo">${T('Play with a CPU partner', 'Jouer (partenaire CPU)')}</button><button class="bt blue big" data-a="online">${T('Play online', 'Jouer en ligne')}</button><div class="row"><button class="bt" data-a="rules">${T('Rules', 'Règles')}</button></div>`);
@@ -2719,6 +2832,7 @@
 <h4>Contrée (Coinche) bidding</h4><p>All 8 cards are dealt. Bid a contract from 80 to 160 points (or Capot, all tricks) with a trump suit; each bid must beat the last. An opponent can Coinche (×2) and the bidding side can answer Surcoinche (×4). Bidding ends after three passes.</p>
 <h4>Playing</h4><p>Play goes counterclockwise; the player on the dealer's right leads. You must: follow suit; if the lead is trump, play a higher trump if you can; if you cannot follow, cut with a trump unless your partner currently wins the trick, and over-trump an opponent's trump if you can. In the classic game, if you cannot over-trump you must still play a lower trump (contrée lets you discard instead).</p>
 <h4>Belote and Rebelote</h4><p>Holding both King and Queen of trump gives 20 points. Say "Belote" when you play the first and "Rebelote" with the second. It is always scored, even on a failed contract.</p>
+<h4>Announcements (classic game)</h4><p>Combinations in your 8 cards are announced with your first card and scored by the team holding the best one: tierce (3 in a row in a suit, order 7-8-9-10-J-Q-K-A) 20, fifty (4 in a row) 50, hundred (5 or more) 100, four Jacks 200, four Nines 150, four Aces, Tens, Kings or Queens 100. A four of a kind beats a run of the same value; between equal runs the higher top card wins, then the trump run; otherwise nobody scores. The winning team shows its cards after the first trick and scores all its announcements. They count towards the contract and go to the defenders if it fails.</p>
 <h4>Scoring, classic</h4><p>The taking team needs strictly more points than the opponents, belote included. Otherwise it fails (chute): the opponents score 162 and the takers only their belote. At an exact tie (81-81) the opponents score their points and the takers' points are held for the next hand's winner (litige). Capot (all 8 tricks) scores 252.</p>
 <h4>Scoring, contrée</h4><p>The contract is made when the team's points (belote counts) reach the bid. Made: each team scores its points rounded to 10, plus the contract for the bidders. Failed: the defenders score 160 plus the contract, the bidders nothing. Coinche doubles and surcoinche quadruples that total for the winners. Capot not announced: 250 + contract; announced and made: 500. Belote is always added.</p>
 <h4>Controls</h4><p>Click a card to play it (on a touch screen tap once to select and again to play). <kbd>←</kbd> <kbd>→</kbd> choose a card, <kbd>Enter</kbd> plays, <kbd>P</kbd> passes.</p>`,
@@ -2728,6 +2842,7 @@
 <h4>Enchères à la contrée (coinche)</h4><p>Les 8 cartes sont distribuées d’un coup. On annonce un contrat de 80 à 160 points (ou Capot, tous les plis) avec une couleur d’atout ; chaque annonce doit dépasser la précédente. Un adversaire peut coincher (×2) et l’équipe qui a annoncé peut surcoincher (×4). Les enchères s’arrêtent après trois « passe ».</p>
 <h4>Le jeu de la carte</h4><p>On joue dans le sens inverse des aiguilles d’une montre ; le joueur à droite du donneur entame. Il faut : fournir à la couleur ; si l’entame est à l’atout, monter si on le peut ; à défaut de la couleur, couper sauf si son partenaire est maître, et surcouper l’atout d’un adversaire si on le peut. À la belote classique, si on ne peut pas surcouper il faut quand même jouer un atout plus faible (la contrée autorise à se défausser).</p>
 <h4>Belote et Rebelote</h4><p>Détenir le Roi et la Dame d’atout rapporte 20 points. On dit « Belote » en jouant la première carte et « Rebelote » avec la seconde. Ces points sont toujours marqués, même si le contrat chute.</p>
+<h4>Annonces (belote classique)</h4><p>Les combinaisons de vos 8 cartes s’annoncent avec votre première carte ; seule l’équipe qui a la meilleure annonce marque : tierce (3 cartes qui se suivent dans une couleur, ordre 7-8-9-10-V-D-R-A) 20, cinquante (4 cartes) 50, cent (5 cartes ou plus) 100, carré de valets 200, carré de 9 150, carré d’as, de 10, de rois ou de dames 100. Un carré bat une suite de même valeur ; entre deux suites égales, la plus haute l’emporte, puis celle à l’atout ; sinon personne ne marque. L’équipe gagnante montre ses cartes après le premier pli et marque toutes ses annonces. Elles comptent pour le contrat et passent à la défense en cas de chute.</p>
 <h4>Marque, belote classique</h4><p>L’équipe preneuse doit faire strictement plus de points que ses adversaires, belote comprise. Sinon elle chute : les adversaires marquent 162 et les preneurs seulement leur belote. En cas d’égalité exacte (81-81), les adversaires marquent leurs points et ceux des preneurs sont mis en suspens pour le vainqueur de la donne suivante (litige). Le capot (8 plis) vaut 252.</p>
 <h4>Marque, contrée</h4><p>Le contrat est rempli quand les points de l’équipe (belote comprise) atteignent l’annonce. Réussi : chaque équipe marque ses points arrondis à la dizaine, plus le contrat pour les annonceurs. Chuté : les défenseurs marquent 160 plus le contrat, les annonceurs rien. La coinche double et la surcoinche quadruple ce total pour les gagnants. Capot non annoncé : 250 + contrat ; annoncé et réussi : 500. La belote s’ajoute toujours.</p>
 <h4>Commandes</h4><p>Cliquez sur une carte pour la jouer (sur écran tactile, touchez une fois pour la choisir, une seconde fois pour la jouer). <kbd>←</kbd> <kbd>→</kbd> pour choisir, <kbd>Entrée</kbd> pour jouer, <kbd>P</kbd> pour passer.</p>`);
@@ -2779,6 +2894,7 @@
   const TAROT_A = {
     id: 'french-tarot', cls: 'tarot', kind: 't', title: 'French Tarot', n: 4,
     defaults: () => ({ n: 4, target: 5, diff: 'Normal', lang: null }),
+    fix: o => { if (![3, 4, 5].includes(o.n)) o.n = 4; if (![5, 10, 15, 20, 0].includes(o.target)) o.target = 5; },
     soloN: o => o.n,
     onlineN: (r, k) => r.bots ? r.size : Math.max(3, Math.min(5, k)),
     seatOrder: (n, k) => Array.from({ length: k }, (x, i) => Math.floor(i * n / k)),
@@ -2787,6 +2903,7 @@
     applyShared: (o, d) => { o.target = d.target; o.diff = d.diff; },
     newEngine: (o, n, humans, state) => TarotGame({ n, target: o.target, humans, state }),
     bot: (g, seat, lvl) => tBot(g, seat, lvl),
+    think: (g, seat, lvl) => tThink(g, seat, lvl),
     botDelay: ph => ph === 'play' ? 600 + Math.random() * 500 : ph === 'bid' ? 800 + Math.random() * 700 : 1100 + Math.random() * 700,
     fallback(g, seat) {
       const S = g.S;
@@ -2935,7 +3052,7 @@
       if (n === 5) sub += r.partner >= 0 ? ` · ${T('with', 'avec')} ${esc(M.names[r.partner] || '')} (${tl(r.called)})` : ` · ${T('alone', 'seul')} (${tl(r.called)})`;
       const row = (l, v, cls) => `<tr class="${cls || ''}"><td style="text-align:left" colspan="2">${l}</td><td>${v}</td></tr>`;
       let t = `<table class="tb-tbl">`;
-      t += row(`${T('Points taken', 'Points faits')} (${r.ou} ${T('oudler(s)', 'bout(s)')})`, `${r.pts} / ${r.need}`);
+      t += row(`${T('Points taken', 'Points faits')} (${r.ou} ${r.ou === 1 ? T('oudler', 'bout') : T('oudlers', 'bouts')})`, `${r.pts} / ${r.need}`);
       t += row(r.made ? T('Margin', 'Marge') : T('Short by', 'Chute de'), `${r.made ? '+' : '−'}${Math.abs(r.diff)}`);
       t += row(`(25 + ${r.margin}) × ${r.bid}`, signed(r.base));
       if (r.pgB) t += row(T('Poignée', 'Poignée'), signed(r.pgB));

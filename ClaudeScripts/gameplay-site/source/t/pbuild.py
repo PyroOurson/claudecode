@@ -13,7 +13,7 @@ def main():
     want = sys.argv[2:] or ['snake', '2048', 'chess', 'last-card', 'poker']
     w = os.path.join(out, 'w')
     os.makedirs(w, exist_ok=True)
-    for f in ('assemble.py', 'meta_rows.py', 'stat.json', 'minibuild.py'):
+    for f in ('assemble.py', 'meta_rows.py', 'minibuild.py'):
         if os.path.exists(os.path.join(SRC, f)):
             shutil.copy2(os.path.join(SRC, f), os.path.join(w, f))
     for d in ('new', 'parts_orig'):

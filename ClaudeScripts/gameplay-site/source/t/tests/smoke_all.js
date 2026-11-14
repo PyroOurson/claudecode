@@ -1,4 +1,4 @@
-const lib = require('../party_lib.js');
+const lib = require('../lib.js');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const only = (process.env.ONLY || '').split(',').filter(Boolean);
 (async () => {

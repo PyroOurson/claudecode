@@ -52,11 +52,11 @@ def sql(token, ref, query, label):
 
 
 def run_schema(token, ref):
-    path = os.path.join(HERE, 'schema.sql')
+    path = os.path.join(HERE, 'gameplay.sql')
     with open(path, encoding='utf-8') as f:
         text = f.read()
-    print('Running schema.sql (%d KB)...' % (len(text) // 1024))
-    sql(token, ref, text, 'schema.sql')
+    print('Running gameplay.sql (%d KB)...' % (len(text) // 1024))
+    sql(token, ref, text, 'gameplay.sql')
     sql(token, ref, "notify pgrst, 'reload schema';", 'schema reload')
     rows = sql(token, ref, "select c.relname as name, c.relrowsecurity as rls from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' order by 1;", 'table check') or []
     for r in rows:

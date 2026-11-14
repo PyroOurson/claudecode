@@ -2,14 +2,13 @@ import json, re, subprocess, sys, os
 HERE = os.path.dirname(os.path.abspath(__file__))
 os.chdir(HERE)
 sys.path.insert(0, HERE)
-from meta_rows import ROWS, DELETED
-orig = open(os.path.join(HERE, 'orig_order.txt')).read().split()
+from meta_rows import ROWS, DELETED, ids_of, STAT, ORIG_ORDER
+orig = ORIG_ORDER
 new25 = ['slope-3d','tunnel-run','rocket-soccer','hole-city','demon-halls','bean-royale','block-roll','flap-bird','slither','cell-feast','paper-land','fling-birds','candy-rope','brick-bros','garden-defense','night-survivors','bomb-blast','last-card','fire-water','maze-tanks','hoop-flop','sea-battle','marble-chain','moto-stunts','cookie-baker']
 ids = [r[0] for r in ROWS]
 assert not set(ids) & set(DELETED), set(ids) & set(DELETED)
 newest = [x for x in new25 + [x for x in reversed(orig) if x not in new25] if x in ids]
 newest += [x for x in ids if x not in newest]
-STAT = json.load(open('stat.json')) if os.path.exists('stat.json') else {}
 
 def rep(s, old, new, count=1):
     assert s.count(old) == count, (old[:60], s.count(old))
@@ -18,7 +17,7 @@ def rep(s, old, new, count=1):
 def i18n_js():
     s = open('new/i18n.js', encoding='utf-8').read()
     extra = []
-    for fn in sorted(f for f in os.listdir('new') if re.fullmatch(r'i18n_[a-z0-9]+\.json', f)):
+    for fn in sorted(f for f in os.listdir('new') if re.fullmatch(r'i18n_[a-z0-9_]+\.json', f)):
         extra += json.load(open(os.path.join('new', fn), encoding='utf-8'))
     head = 'const R = [\n'
     assert s.count(head) == 1
@@ -78,7 +77,7 @@ old = rep(old, "    get net() { return net || (net = makeNet(g, add)); },", "   
 old = rep(old, "      add(() => { try { renderer.dispose(); renderer.forceContextLoss(); } catch (e) {} c.remove(); });", "      add(() => { try { renderer.dispose(); } catch (e) {} c.remove(); });")
 ca = old.index("const coverCache = new Map();")
 open('parts/002_legal.js', 'w', encoding='utf-8', newline='').write('(function () {\n' + open('new/legal.js', encoding='utf-8').read() + '\nAmeplay.legalSet(LEGAL);\n})();\n')
-old = old[:ca] + 'const LEGAL = {};\n' + open('new/tail.js', encoding='utf-8').read() + open('new/auth.js', encoding='utf-8').read().replace(chr(10) + 'Ameplay.debug = ', chr(10) + open('new/admin.js', encoding='utf-8').read() + chr(10) + open('new/social.js', encoding='utf-8').read() + chr(10) + open('new/input.js', encoding='utf-8').read() + chr(10) + open('new/track.js', encoding='utf-8').read() + chr(10) + open('new/changelog.js', encoding='utf-8').read() + chr(10) + open('new/site.js', encoding='utf-8').read() + chr(10) + open('new/ideas.js', encoding='utf-8').read() + chr(10) + open('new/diagui.js', encoding='utf-8').read() + chr(10) + 'Ameplay.debug = ', 1) + chr(10) + i18n_js()
+old = old[:ca] + 'const LEGAL = {};\n' + open('new/tail.js', encoding='utf-8').read() + open('new/auth.js', encoding='utf-8').read().replace(chr(10) + 'Ameplay.debug = ', chr(10) + open('new/admin.js', encoding='utf-8').read() + chr(10) + open('new/stats_data.js', encoding='utf-8').read() + chr(10) + open('new/social.js', encoding='utf-8').read() + chr(10) + open('new/input.js', encoding='utf-8').read() + chr(10) + open('new/track.js', encoding='utf-8').read() + chr(10) + open('new/changelog.js', encoding='utf-8').read() + chr(10) + open('new/site.js', encoding='utf-8').read() + chr(10) + open('new/ideas.js', encoding='utf-8').read() + chr(10) + open('new/diagui.js', encoding='utf-8').read() + chr(10) + 'Ameplay.debug = ', 1) + chr(10) + i18n_js()
 open('parts/001_portal.js', 'w', encoding='utf-8', newline='').write(old)
 
 SC = ':where(:not(.g-root *))'
@@ -124,10 +123,10 @@ am = scope(open('new/am.css', encoding='utf-8').read())
 gcss = open('new/gcss.css', encoding='utf-8').read()
 toast = open('new/toast.css', encoding='utf-8').read()
 media = scope(open('new/media.css', encoding='utf-8').read())
-media += chr(10) + open('new/auth.css', encoding='utf-8').read() + chr(10) + open('new/admin.css', encoding='utf-8').read() + chr(10) + scope(open('new/social.css', encoding='utf-8').read()) + chr(10) + scope(open('new/site.css', encoding='utf-8').read()) + chr(10) + scope(open('new/ideas.css', encoding='utf-8').read()) + chr(10) + open('new/diag.css', encoding='utf-8').read()
+media += chr(10) + open('new/auth.css', encoding='utf-8').read() + chr(10) + open('new/admin.css', encoding='utf-8').read() + chr(10) + open('new/stats_data.css', encoding='utf-8').read() + chr(10) + scope(open('new/social.css', encoding='utf-8').read()) + chr(10) + scope(open('new/site.css', encoding='utf-8').read()) + chr(10) + scope(open('new/ideas.css', encoding='utf-8').read()) + chr(10) + open('new/diag.css', encoding='utf-8').read()
 _ord = json.load(open('parts/_order.json'))
 _have = os.listdir('parts')
-_built = set(i for k, n in _ord if k == 'script' and n.startswith('g_') and any(re.fullmatch(r'\d{3}_' + re.escape(n) + r'\.js', f) for f in _have) for i in n[2:].split('+'))
+_built = set(i for k, n in _ord if k == 'script' and n.startswith('g_') and any(re.fullmatch(r'\d{3}_' + re.escape(n) + r'\.js', f) for f in _have) for i in ids_of(n))
 count = len([r for r in ROWS if r[0] in _built])
 desc = f'gameplay: {count} free browser games. Famous remakes, 3D, arcade, racing, puzzles, sports and online multiplayer games. No downloads, just click and play.'
 nos = '<noscript><div style="max-width:900px;margin:0 auto;padding:24px;font-family:system-ui,sans-serif"><h1>gameplay: ' + str(count) + ' free browser games</h1><p>gameplay needs JavaScript to run the games. Turn it on and reload this page.</p><ul>' + ''.join('<li><a href="/%s">%s</a></li>' % (r[0], r[1].replace('&', '&amp;')) for r in ROWS) + '</ul></div></noscript>\n'

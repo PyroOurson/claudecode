@@ -346,3 +346,4 @@ html.rm .onl i::after,html.rm .adm-dot::after,html.rm .fr-dot.on::after{animatio
 .pubc-t small{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pubc i{font-style:normal;font-weight:700;font-size:13px;color:#fff;background:var(--accent);border-radius:10px;padding:6px 11px}
 .srow.haspub::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:auto;flex:none;box-shadow:0 0 0 3px var(--accent-soft)}
+.ch-card.inv-off{opacity:.6;filter:grayscale(1)}.ch-card.inv-off [data-ch="go"]{display:none}.ch-ist{flex:none;margin-left:auto;font-weight:700;font-size:13px;color:var(--muted);white-space:nowrap}

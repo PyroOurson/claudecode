@@ -13,6 +13,7 @@
   const circ = (cx, cy, r) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0Z`;
   const ell = (cx, cy, rx, ry) => `M${cx - rx} ${cy}a${rx} ${ry} 0 1 0 ${2 * rx} 0a${rx} ${ry} 0 1 0 ${-2 * rx} 0Z`;
   const winsFmt = v => v + (v === 1 ? ' win' : ' wins');
+  const tr = (s, o) => window.gpI18n ? gpI18n.t(s, o) : o ? s.replace(/\{(\w+)\}/g, (m, k) => k in o ? o[k] : m) : s;
   const HELP = 'Tap or drag pieces · arrows + <kbd>Enter</kbd> · <kbd>U</kbd> undo · <kbd>N</kbd> new game';
 
   function deepen(T, ms, o, make, unmake, ab) {
@@ -45,26 +46,36 @@
   function chessCore() {
     const INF = 1e9, WIN = 100000, now = () => performance.now();
     const rng = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
-    const CV = [0, 100, 320, 330, 500, 900, 0], PHASE = [0, 0, 1, 1, 2, 4, 0];
+    const CV = [0, 100, 320, 330, 500, 900, 0], PHASE = [0, 0, 1, 1, 2, 4, 0], SEEV = [0, 100, 320, 330, 500, 900, 20000];
+    const MGV = [0, 86, 325, 345, 480, 1000, 0], EGV = [0, 110, 292, 312, 528, 955, 0];
     const KN = [-33, -31, -18, -14, 14, 18, 31, 33], KG = [-17, -16, -15, -1, 1, 15, 16, 17], DG = [-17, -15, 15, 17], OR = [-16, -1, 1, 16];
     const CM = new Uint8Array(128).fill(15); CM[0] = 13; CM[7] = 14; CM[4] = 12; CM[112] = 7; CM[119] = 11; CM[116] = 3;
-    const PST = [null,
-      [0, 0, 0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50, 50, 50, 50, 10, 10, 20, 30, 30, 20, 10, 10, 5, 5, 10, 25, 25, 10, 5, 5, 0, 0, 0, 20, 20, 0, 0, 0, 5, -5, -10, 0, 0, -10, -5, 5, 5, 10, 10, -20, -20, 10, 10, 5, 0, 0, 0, 0, 0, 0, 0, 0],
-      [-50, -40, -30, -30, -30, -30, -40, -50, -40, -20, 0, 0, 0, 0, -20, -40, -30, 0, 10, 15, 15, 10, 0, -30, -30, 5, 15, 20, 20, 15, 5, -30, -30, 0, 15, 20, 20, 15, 0, -30, -30, 5, 10, 15, 15, 10, 5, -30, -40, -20, 0, 5, 5, 0, -20, -40, -50, -40, -30, -30, -30, -30, -40, -50],
-      [-20, -10, -10, -10, -10, -10, -10, -20, -10, 0, 0, 0, 0, 0, 0, -10, -10, 0, 5, 10, 10, 5, 0, -10, -10, 5, 5, 10, 10, 5, 5, -10, -10, 0, 10, 10, 10, 10, 0, -10, -10, 10, 10, 10, 10, 10, 10, -10, -10, 5, 0, 0, 0, 0, 5, -10, -20, -10, -10, -10, -10, -10, -10, -20],
-      [0, 0, 0, 0, 0, 0, 0, 0, 5, 10, 10, 10, 10, 10, 10, 5, -5, 0, 0, 0, 0, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0, -5, 0, 0, 0, 5, 5, 0, 0, 0],
-      [-20, -10, -10, -5, -5, -10, -10, -20, -10, 0, 0, 0, 0, 0, 0, -10, -10, 0, 5, 5, 5, 5, 0, -10, -5, 0, 5, 5, 5, 5, 0, -5, 0, 0, 5, 5, 5, 5, 0, -5, -10, 5, 5, 5, 5, 5, 0, -10, -10, 0, 5, 0, 0, 0, 0, -10, -20, -10, -10, -5, -5, -10, -10, -20]];
-    const K_MID = [-30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30, -20, -30, -30, -40, -40, -30, -30, -20, -10, -20, -20, -20, -20, -20, -20, -10, 20, 20, 0, 0, 0, 0, 20, 20, 20, 30, 10, 0, 0, 10, 30, 20];
-    const K_END = [-50, -40, -30, -20, -20, -30, -40, -50, -30, -20, -10, 0, 0, -10, -20, -30, -30, -10, 20, 30, 30, 20, -10, -30, -30, -10, 30, 40, 40, 30, -10, -30, -30, -10, 30, 40, 40, 30, -10, -30, -30, -10, 20, 30, 30, 20, -10, -30, -30, -30, 0, 0, 0, 0, -30, -30, -50, -30, -30, -30, -30, -30, -30, -50];
-    const PASSED = [0, 10, 14, 22, 38, 62, 95, 0], MOBW = [0, 0, 4, 4, 2, 1], MOB0 = [0, 0, 4, 6, 6, 13], KATW = [0, 0, 5, 5, 8, 12];
-    const TBL = [];
-    for (let p = -5; p <= 5; p++) {
-      const t = new Int16Array(128);
-      if (p) for (let sq = 0; sq < 120; sq++) { if (sq & 0x88) { sq += 7; continue; } const a = Math.abs(p), r = sq >> 4, f = sq & 7; t[sq] = Math.sign(p) * (CV[a] + PST[a][p > 0 ? (7 - r) * 8 + f : r * 8 + f]); }
-      TBL[p + 6] = t;
+    const MGT = [null,
+      [0, 0, 0, 0, 0, 0, 0, 0, 42, 46, 46, 50, 50, 46, 46, 42, 10, 14, 20, 30, 30, 20, 14, 10, 0, 4, 9, 22, 22, 9, 4, 0, -4, 0, 5, 18, 18, 5, 0, -4, -4, -2, 2, 6, 6, 0, 0, -4, -6, 0, 0, -14, -14, 6, 10, -4, 0, 0, 0, 0, 0, 0, 0, 0],
+      [-60, -30, -20, -15, -15, -20, -30, -60, -30, -15, 0, 5, 5, 0, -15, -30, -20, 5, 15, 20, 20, 15, 5, -20, -15, 10, 20, 28, 28, 20, 10, -15, -15, 5, 18, 24, 24, 18, 5, -15, -20, 0, 12, 14, 14, 12, 0, -20, -30, -15, 0, 5, 5, 0, -15, -30, -55, -25, -20, -15, -15, -20, -25, -55],
+      [-20, -8, -10, -10, -10, -10, -8, -20, -10, 5, 0, 0, 0, 0, 5, -10, -6, 8, 10, 10, 10, 10, 8, -6, -4, 4, 12, 14, 14, 12, 4, -4, -4, 10, 10, 14, 14, 10, 10, -4, 0, 10, 10, 10, 10, 10, 10, 0, -4, 15, 4, 4, 4, 4, 15, -4, -20, -6, -12, -8, -8, -12, -6, -20],
+      [5, 10, 10, 12, 12, 10, 10, 5, 20, 25, 25, 25, 25, 25, 25, 20, -5, 0, 0, 0, 0, 0, 0, -5, -8, -4, 0, 0, 0, 0, -4, -8, -10, -5, 0, 0, 0, 0, -5, -10, -10, -5, 0, 0, 0, 0, -5, -10, -12, -6, 0, 2, 2, 0, -6, -12, -4, -2, 4, 8, 8, 6, -6, -6],
+      [-15, -10, -5, 0, 0, -5, -10, -15, -10, -10, 0, 0, 0, 0, -10, -10, -8, 0, 4, 4, 4, 4, 0, -8, -4, 0, 4, 6, 6, 4, 0, -4, -4, 0, 4, 6, 6, 4, 0, -4, -8, 2, 4, 4, 4, 4, 0, -8, -10, 0, 4, 2, 2, 0, -2, -10, -18, -12, -8, 0, -4, -12, -12, -18],
+      [-60, -70, -70, -80, -80, -70, -70, -60, -50, -60, -60, -70, -70, -60, -60, -50, -40, -50, -50, -60, -60, -50, -50, -40, -30, -40, -40, -50, -50, -40, -40, -30, -20, -30, -30, -40, -40, -30, -30, -20, -10, -20, -20, -25, -25, -20, -20, -10, 10, 10, -5, -15, -15, -10, 12, 10, 15, 30, 8, -15, -5, -10, 32, 18]];
+    const EGT = [null,
+      [0, 0, 0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50, 50, 50, 50, 30, 30, 30, 30, 30, 30, 30, 30, 15, 15, 15, 15, 15, 15, 15, 15, 6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [-40, -25, -15, -10, -10, -15, -25, -40, -25, -10, 0, 4, 4, 0, -10, -25, -15, 2, 10, 14, 14, 10, 2, -15, -10, 6, 14, 18, 18, 14, 6, -10, -10, 4, 12, 16, 16, 12, 4, -10, -15, 0, 6, 10, 10, 6, 0, -15, -25, -10, 0, 2, 2, 0, -10, -25, -40, -25, -15, -10, -10, -15, -25, -40],
+      [-15, -8, -6, -4, -4, -6, -8, -15, -8, 0, 2, 4, 4, 2, 0, -8, -6, 2, 6, 8, 8, 6, 2, -6, -4, 4, 8, 10, 10, 8, 4, -4, -4, 4, 8, 10, 10, 8, 4, -4, -6, 2, 6, 8, 8, 6, 2, -6, -8, 0, 2, 4, 4, 2, 0, -8, -15, -8, -6, -4, -4, -6, -8, -15],
+      [6, 6, 8, 8, 8, 8, 6, 6, 14, 16, 16, 16, 16, 16, 16, 14, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, -2, -2, -2, -2, -2, -2, -2, -2, -4, -4, -4, -4, -4, -4, -4, -4, -6, -4, -2, 0, 0, -2, -4, -6],
+      [-20, -12, -8, -5, -5, -8, -12, -20, -12, -4, 4, 8, 8, 4, -4, -12, -8, 4, 12, 16, 16, 12, 4, -8, -5, 8, 16, 22, 22, 16, 8, -5, -5, 8, 16, 22, 22, 16, 8, -5, -8, 4, 12, 16, 16, 12, 4, -8, -12, -4, 4, 8, 8, 4, -4, -12, -20, -12, -8, -5, -5, -8, -12, -20],
+      [-50, -35, -25, -20, -20, -25, -35, -50, -30, -12, 0, 5, 5, 0, -12, -30, -25, 0, 18, 25, 25, 18, 0, -25, -20, 5, 25, 35, 35, 25, 5, -20, -20, 5, 25, 35, 35, 25, 5, -20, -25, 0, 18, 25, 25, 18, 0, -25, -30, -15, 0, 5, 5, 0, -15, -30, -50, -35, -25, -20, -20, -25, -35, -50]];
+    const TMG = [], TEG = [];
+    for (let p = -6; p <= 6; p++) {
+      const m = new Int16Array(128), e = new Int16Array(128);
+      if (p) for (let sq = 0; sq < 120; sq++) { if (sq & 0x88) { sq += 7; continue; } const a = Math.abs(p), r = sq >> 4, f = sq & 7, i = p > 0 ? (7 - r) * 8 + f : r * 8 + f, s = Math.sign(p); m[sq] = s * (MGV[a] + MGT[a][i]); e[sq] = s * (EGV[a] + EGT[a][i]); }
+      TMG[p + 6] = m; TEG[p + 6] = e;
     }
-    const ktab = raw => { const w = new Int16Array(128), b = new Int16Array(128); for (let sq = 0; sq < 120; sq++) { if (sq & 0x88) { sq += 7; continue; } w[sq] = raw[(7 - (sq >> 4)) * 8 + (sq & 7)]; b[sq] = raw[(sq >> 4) * 8 + (sq & 7)]; } return [w, b]; };
-    const [KMW, KMB] = ktab(K_MID), [KEW, KEB] = ktab(K_END);
+    const PPM = [0, 0, 4, 10, 20, 34, 54, 0], PPE = [0, 0, 10, 18, 34, 58, 96, 0];
+    const MOBM = [0, 0, 4, 5, 2, 1], MOBE = [0, 0, 4, 5, 4, 2], MOB0 = [0, 0, 4, 6, 6, 12], KATW = [0, 0, 2, 2, 3, 5];
+    const SAFE = new Int16Array(100);
+    for (let i = 0; i < 100; i++) SAFE[i] = Math.min(480, i * i / 4 | 0);
+    const LMR = new Int8Array(64 * 64);
+    for (let d = 1; d < 64; d++) for (let n = 1; n < 64; n++) LMR[d * 64 + n] = Math.floor(.75 + Math.log(d) * Math.log(n) / 2.25);
     const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
     const FILES = 'abcdefgh', PCH = 'kqrbnp.PNBRQK';
     const sqName = sq => FILES[sq & 7] + ((sq >> 4) + 1);
@@ -120,13 +131,13 @@
     ].map(l => l.split(' '));
     const uciSq = s => (s.charCodeAt(1) - 49) * 16 + s.charCodeAt(0) - 97;
 
-    function chessEngine() {
+    function chessEngine(tb) {
       const b = new Int8Array(128);
       let side = 1, cast = 0, ep = -1, half = 0, kw = 4, kb = 116, sp = 0, hA = 0, hB = 0;
       const U = 4096, uM = new Int32Array(U), uC = new Int8Array(U), uCa = new Uint8Array(U), uEp = new Int16Array(U), uH = new Int16Array(U), uHA = new Int32Array(U), uHB = new Int32Array(U);
-      const T = {}, killers = new Int32Array(512), histT = new Int32Array(128 * 128), MB = [], SB = [];
-      for (let i = 0; i < 160; i++) { MB.push([]); SB.push([]); }
-      const TS = 1 << 19, TMASK = TS - 1, TK = new Int32Array(TS), TV = new Int32Array(TS), TMv = new Int32Array(TS), TD = new Int8Array(TS), TF = new Int8Array(TS);
+      const T = {}, killers = new Int32Array(512), hist = new Int32Array(13 * 128), cmv = new Int32Array(13 * 128), evs = new Int32Array(256), MB = [], SB = [], QB = [];
+      for (let i = 0; i < 160; i++) { MB.push([]); SB.push([]); QB.push([]); }
+      const TS = 1 << (tb || 19), TMASK = TS - 1, TK = new Int32Array(TS), TV = new Int32Array(TS), TMv = new Int32Array(TS), TD = new Int8Array(TS), TF = new Int8Array(TS);
       const game = [];
 
       function rehash() {
@@ -159,6 +170,38 @@
         for (let i = 0; i < 4; i++) { const d = DG[i]; let s = sq + d; while (!(s & 0x88)) { const q = b[s]; if (q) { if (q === 3 * by || q === 5 * by) return true; break; } s += d; } }
         for (let i = 0; i < 4; i++) { const d = OR[i]; let s = sq + d; while (!(s & 0x88)) { const q = b[s]; if (q) { if (q === 4 * by || q === 5 * by) return true; break; } s += d; } }
         return false;
+      }
+      function lva(sq, by) {
+        const pd = sq - 16 * by;
+        if (!((pd - 1) & 0x88) && b[pd - 1] === by) return pd - 1;
+        if (!((pd + 1) & 0x88) && b[pd + 1] === by) return pd + 1;
+        for (let i = 0; i < 8; i++) { const s = sq + KN[i]; if (!(s & 0x88) && b[s] === 2 * by) return s; }
+        let qq = -1, rq = -1;
+        for (let i = 0; i < 4; i++) { const d = DG[i]; let s = sq + d; while (!(s & 0x88)) { const q = b[s]; if (q) { if (q === 3 * by) return s; if (q === 5 * by && qq < 0) qq = s; break; } s += d; } }
+        for (let i = 0; i < 4; i++) { const d = OR[i]; let s = sq + d; while (!(s & 0x88)) { const q = b[s]; if (q) { if (q === 4 * by && rq < 0) rq = s; if (q === 5 * by && qq < 0) qq = s; break; } s += d; } }
+        if (rq >= 0) return rq;
+        if (qq >= 0) return qq;
+        for (let i = 0; i < 8; i++) { const s = sq + KG[i]; if (!(s & 0x88) && b[s] === 6 * by) return s; }
+        return -1;
+      }
+      const sw = new Int32Array(40), sR = new Int16Array(40), sP = new Int8Array(40);
+      function see(m) {
+        const from = m & 127, to = m >> 7 & 127;
+        let n = 0, d = 0, s = b[from] > 0 ? 1 : -1, fq = from, av = SEEV[b[from] < 0 ? -b[from] : b[from]];
+        sw[0] = m >> 17 === 2 ? 100 : SEEV[b[to] < 0 ? -b[to] : b[to]];
+        for (;;) {
+          d++;
+          sw[d] = av - sw[d - 1];
+          if (Math.max(-sw[d - 1], sw[d]) < 0) break;
+          sR[n] = fq; sP[n++] = b[fq]; b[fq] = 0;
+          s = -s;
+          fq = lva(to, s);
+          if (fq < 0) break;
+          av = SEEV[b[fq] < 0 ? -b[fq] : b[fq]];
+        }
+        while (--d) sw[d - 1] = -Math.max(-sw[d - 1], sw[d]);
+        for (let i = 0; i < n; i++) b[sR[i]] = sP[i];
+        return sw[0];
       }
       function gen(out, caps) {
         const us = side;
@@ -275,71 +318,75 @@
         for (const m of ms) { make(m); if (!illegal()) n += d === 1 ? 1 : perft(d - 1); unmake(); }
         return n;
       }
-      const wpf = new Int8Array(8), bpf = new Int8Array(8), wMin = new Int8Array(8), wMax = new Int8Array(8), bMin = new Int8Array(8), bMax = new Int8Array(8);
+      const wpf = new Int8Array(8), bpf = new Int8Array(8), wMin = new Int8Array(8), wMax = new Int8Array(8), bMin = new Int8Array(8), bMax = new Int8Array(8), wPA = new Uint8Array(128), bPA = new Uint8Array(128);
+      const cnt = new Int32Array(14);
+      const dist = (a, c) => Math.max(Math.abs((a & 7) - (c & 7)), Math.abs((a >> 4) - (c >> 4)));
       function evaluate() {
-        let s = 0, ph = 0, mw = 0, mb = 0, wb = 0, bbp = 0;
-        wpf.fill(0); bpf.fill(0); wMin.fill(9); bMin.fill(9); wMax.fill(-1); bMax.fill(-1);
+        let mg = 0, eg = 0, ph = 0, npw = 0, npb = 0, wbc = 0, bbc = 0;
+        wpf.fill(0); bpf.fill(0); wMin.fill(9); bMin.fill(9); wMax.fill(-1); bMax.fill(-1); wPA.fill(0); bPA.fill(0); cnt.fill(0);
         for (let sq = 0; sq < 120; sq++) {
           if (sq & 0x88) { sq += 7; continue; }
           const p = b[sq];
-          if (!p || p === 6 || p === -6) continue;
-          s += TBL[p + 6][sq];
+          if (!p) continue;
+          mg += TMG[p + 6][sq]; eg += TEG[p + 6][sq];
+          cnt[p + 6]++;
           const f = sq & 7, r = sq >> 4;
-          if (p > 0) { ph += PHASE[p]; mw += CV[p]; if (p === 3) wb++; if (p === 1) { wpf[f]++; if (r < wMin[f]) wMin[f] = r; if (r > wMax[f]) wMax[f] = r; } }
-          else { ph += PHASE[-p]; mb += CV[-p]; if (p === -3) bbp++; if (p === -1) { bpf[f]++; if (r < bMin[f]) bMin[f] = r; if (r > bMax[f]) bMax[f] = r; } }
+          if (p === 1) { wpf[f]++; if (r < wMin[f]) wMin[f] = r; if (r > wMax[f]) wMax[f] = r; if (!((sq + 15) & 0x88)) wPA[sq + 15] = 1; if (!((sq + 17) & 0x88)) wPA[sq + 17] = 1; }
+          else if (p === -1) { bpf[f]++; if (r < bMin[f]) bMin[f] = r; if (r > bMax[f]) bMax[f] = r; if (!((sq - 15) & 0x88)) bPA[sq - 15] = 1; if (!((sq - 17) & 0x88)) bPA[sq - 17] = 1; }
+          else if (p > 0) { if (p < 6) { ph += PHASE[p]; npw += CV[p]; if (p === 3) wbc |= 1 << ((r + f) & 1); } }
+          else if (p > -6) { ph += PHASE[-p]; npb += CV[-p]; if (p === -3) bbc |= 1 << ((r + f) & 1); }
         }
         if (ph > 24) ph = 24;
-        const eg = 24 - ph;
-        s += ((KMW[kw] - KMB[kb]) * ph + (KEW[kw] - KEB[kb]) * eg) / 24 | 0;
-        if (wb >= 2) s += 30;
-        if (bbp >= 2) s -= 30;
+        if (cnt[9] >= 2) { mg += 30; eg += 50; }
+        if (cnt[3] >= 2) { mg -= 30; eg -= 50; }
         for (let f = 0; f < 8; f++) {
-          if (wpf[f] > 1) s -= 12 * (wpf[f] - 1);
-          if (bpf[f] > 1) s += 12 * (bpf[f] - 1);
+          const wn = wpf[f], bn = bpf[f];
+          if (wn > 1) { mg -= 10 * (wn - 1); eg -= 20 * (wn - 1); }
+          if (bn > 1) { mg += 10 * (bn - 1); eg += 20 * (bn - 1); }
           const lw = f > 0 ? wpf[f - 1] : 0, rw = f < 7 ? wpf[f + 1] : 0, lb = f > 0 ? bpf[f - 1] : 0, rb = f < 7 ? bpf[f + 1] : 0;
-          if (wpf[f] && !lw && !rw) s -= 11 * wpf[f];
-          if (bpf[f] && !lb && !rb) s += 11 * bpf[f];
-          if (wpf[f]) {
-            const r = wMax[f]; let free = true;
-            for (let g = Math.max(0, f - 1); g <= Math.min(7, f + 1) && free; g++) if (bpf[g] && bMax[g] > r) free = false;
-            if (free) s += (PASSED[r] * (12 + eg)) / 24 | 0;
+          if (wn && !lw && !rw) { mg -= 10 * wn; eg -= 12 * wn; }
+          if (bn && !lb && !rb) { mg += 10 * bn; eg += 12 * bn; }
+          if (wn) {
+            const r = wMax[f];
+            let free = true;
+            for (let g = f > 0 ? f - 1 : 0; g <= (f < 7 ? f + 1 : 7) && free; g++) if (bpf[g] && bMax[g] > r) free = false;
+            if (free) {
+              const sq = r * 16 + f, fr = sq + 16;
+              let e = PPE[r];
+              if (r >= 3) e += (dist(kb, fr) * 4 - dist(kw, fr) * 2) * (r - 2);
+              if (b[fr]) e -= PPE[r] / 3 | 0;
+              else if (!npb && r >= 3) { const pr = 112 + f, dd = 7 - r + (side < 0 ? 1 : 0); if (dist(kb, pr) > dd) e += 300; }
+              mg += PPM[r]; eg += e;
+            }
           }
-          if (bpf[f]) {
-            const r = bMin[f]; let free = true;
-            for (let g = Math.max(0, f - 1); g <= Math.min(7, f + 1) && free; g++) if (wpf[g] && wMin[g] < r) free = false;
-            if (free) s -= (PASSED[7 - r] * (12 + eg)) / 24 | 0;
+          if (bn) {
+            const r = bMin[f], rr = 7 - r;
+            let free = true;
+            for (let g = f > 0 ? f - 1 : 0; g <= (f < 7 ? f + 1 : 7) && free; g++) if (wpf[g] && wMin[g] < r) free = false;
+            if (free) {
+              const sq = r * 16 + f, fr = sq - 16;
+              let e = PPE[rr];
+              if (rr >= 3) e += (dist(kw, fr) * 4 - dist(kb, fr) * 2) * (rr - 2);
+              if (b[fr]) e -= PPE[rr] / 3 | 0;
+              else if (!npw && rr >= 3) { const pr = f, dd = 7 - rr + (side > 0 ? 1 : 0); if (dist(kw, pr) > dd) e += 300; }
+              mg -= PPM[rr]; eg -= e;
+            }
           }
-        }
-        for (let sq = 0; sq < 120; sq++) {
-          if (sq & 0x88) { sq += 7; continue; }
-          const p = b[sq];
-          if (p === 4 || p === -4) {
-            const f = sq & 7, own = p > 0 ? wpf[f] : bpf[f], opp = p > 0 ? bpf[f] : wpf[f];
-            const v = !own ? (!opp ? 18 : 9) : 0;
-            s += p > 0 ? v : -v;
-          }
-        }
-        if (ph > 8) {
-          const shield = (k, dir, pawn) => { let n = 0; const f = k & 7; for (let df = -1; df <= 1; df++) { const ff = f + df; if (ff < 0 || ff > 7) continue; const s1 = k + dir + df, s2 = k + 2 * dir + df; if (!(s1 & 0x88) && b[s1] === pawn) n += 2; else if (!(s2 & 0x88) && b[s2] === pawn) n += 1; } return n; };
-          const kwf = kw & 7, kbf = kb & 7;
-          let ks = 0;
-          if ((kwf <= 2 || kwf >= 5) && (kw >> 4) <= 1) ks += shield(kw, 16, 1) * 6;
-          if ((kbf <= 2 || kbf >= 5) && (kb >> 4) >= 6) ks -= shield(kb, -16, -1) * 6;
-          s += (ks * ph) / 24 | 0;
         }
         if (T.xe) {
-          let mob = 0, kat = 0;
+          let attW = 0, unW = 0, attB = 0, unB = 0;
+          const wkf = kw & 7, wkr = kw >> 4, bkf = kb & 7, bkr = kb >> 4;
           for (let sq = 0; sq < 120; sq++) {
             if (sq & 0x88) { sq += 7; continue; }
             const p = b[sq], a = p < 0 ? -p : p;
             if (a < 2 || a > 5) continue;
-            const us = p > 0 ? 1 : -1, ek = us > 0 ? kb : kw, ef = ek & 7, er = ek >> 4;
-            let cnt = 0, hit = 0;
+            const us = p > 0 ? 1 : -1, pa = us > 0 ? bPA : wPA, ef = us > 0 ? bkf : wkf, er = us > 0 ? bkr : wkr;
+            let c = 0, hit = 0;
             if (a === 2) {
               for (let i = 0; i < 8; i++) {
                 const to = sq + KN[i];
                 if (to & 0x88 || b[to] * us > 0) continue;
-                cnt++;
+                if (!pa[to]) c++;
                 const df = (to & 7) - ef, dr = (to >> 4) - er;
                 if (df * df < 2 && dr * dr < 2) hit++;
               }
@@ -351,25 +398,54 @@
                 while (!(to & 0x88)) {
                   const q = b[to];
                   if (q * us > 0) break;
-                  cnt++;
+                  if (!pa[to]) c++;
                   const df = (to & 7) - ef, dr = (to >> 4) - er;
                   if (df * df < 2 && dr * dr < 2) hit++;
                   if (q) break;
                   to += dd;
                 }
               }
+              if (a === 4) {
+                const f = sq & 7, own = us > 0 ? wpf[f] : bpf[f], opp = us > 0 ? bpf[f] : wpf[f];
+                if (!own) { if (!opp) { mg += 25 * us; eg += 10 * us; } else { mg += 12 * us; eg += 6 * us; } }
+              }
             }
-            mob += us * MOBW[a] * (cnt - MOB0[a]);
-            kat += us * hit * KATW[a];
+            mg += us * MOBM[a] * (c - MOB0[a]); eg += us * MOBE[a] * (c - MOB0[a]);
+            if (hit) { if (us > 0) { attW++; unW += KATW[a] * hit + (a === 5 ? 2 : 0); } else { attB++; unB += KATW[a] * hit + (a === 5 ? 2 : 0); } }
           }
-          s += mob + (kat * ph / 24 | 0);
+          if (attW >= 2 && cnt[11]) mg += SAFE[unW > 99 ? 99 : unW];
+          if (attB >= 2 && cnt[1]) mg -= SAFE[unB > 99 ? 99 : unB];
         }
-        if (ph < 10 && Math.abs(mw - mb) >= 200) {
-          const w = mw > mb ? 1 : -1, lk = w === 1 ? kb : kw, lf = lk & 7, lr = lk >> 4;
+        if (ph > 6) {
+          const shield = (k, dir, pawn, pf) => {
+            let n = 0;
+            const f = k & 7;
+            for (let df = -1; df <= 1; df++) {
+              const ff = f + df;
+              if (ff < 0 || ff > 7) continue;
+              const s1 = k + dir + df, s2 = k + 2 * dir + df;
+              if (!(s1 & 0x88) && b[s1] === pawn) n += 12; else if (!(s2 & 0x88) && b[s2] === pawn) n += 6; else n -= 8;
+              if (!pf[ff]) n -= 10;
+            }
+            return n;
+          };
+          if ((kw >> 4) <= 1) mg += shield(kw, 16, 1, wpf);
+          else mg -= 20;
+          if ((kb >> 4) >= 6) mg -= shield(kb, -16, -1, bpf);
+          else mg += 20;
+        }
+        mg += 12 * side;
+        let s = (mg * ph + eg * (24 - ph)) / 24 | 0;
+        const wP = cnt[7], bP = cnt[5];
+        if (ph < 10 && Math.abs(npw + 100 * wP - npb - 100 * bP) >= 300) {
+          const w = npw + 100 * wP > npb + 100 * bP ? 1 : -1, lk = w === 1 ? kb : kw, lf = lk & 7, lr = lk >> 4;
           const kd = Math.abs((kw & 7) - (kb & 7)) + Math.abs((kw >> 4) - (kb >> 4));
-          s += w * ((Math.max(3 - lf, lf - 4) + Math.max(3 - lr, lr - 4)) * 12 + (14 - kd) * 5);
+          s += w * ((Math.max(3 - lf, lf - 4) + Math.max(3 - lr, lr - 4)) * 14 + (14 - kd) * 6);
         }
-        return s * side + 10;
+        if (s > 0 && !wP && npw - npb < 400) s = npw < 400 ? 0 : s / 8 | 0;
+        else if (s < 0 && !bP && npb - npw < 400) s = npb < 400 ? 0 : s / 8 | 0;
+        else if (cnt[9] === 1 && cnt[3] === 1 && npw === 330 && npb === 330 && wbc !== bbc) s = s / 2 | 0;
+        return s * side;
       }
       function key() {
         let s = '';
@@ -389,6 +465,21 @@
           if (p === 2) knights++; else bc |= 1 << (((sq >> 4) + (sq & 7)) & 1);
         }
         return minors <= 1 || (!knights && bc !== 3);
+      }
+      function canMate(s) {
+        let n = 0, kn = 0, bc = 0, opp = 0;
+        for (let sq = 0; sq < 120; sq++) {
+          if (sq & 0x88) { sq += 7; continue; }
+          const p = b[sq] * s;
+          if (!p || p === 6 || p === -6) continue;
+          if (p < 0) { opp++; continue; }
+          if (p === 1 || p === 4 || p === 5) return true;
+          n++;
+          if (p === 2) kn++; else bc |= 1 << (((sq >> 4) + (sq & 7)) & 1);
+        }
+        if (!n) return false;
+        if (n >= 2) return kn > 0 || bc === 3;
+        return opp > 0;
       }
       function san(m, ms) {
         const from = m & 127, to = m >> 7 & 127, pr = m >> 14 & 7, fl = m >> 17, p = Math.abs(b[from]);
@@ -413,11 +504,20 @@
       }
       function order(ms, ss, ply, ttm) {
         ss.length = ms.length;
+        const k1 = killers[ply * 2], k2 = killers[ply * 2 + 1], lm = sp ? uM[sp - 1] : 0, cm = lm ? cmv[(b[lm >> 7 & 127] + 6) * 128 + (lm >> 7 & 127)] : 0;
         for (let i = 0; i < ms.length; i++) {
-          const m = ms[i], from = m & 127, to = m >> 7 & 127, cap = b[to];
-          ss[i] = m === ttm ? 4e6 : cap ? 1e6 + CV[cap < 0 ? -cap : cap] * 10 - (b[from] < 0 ? -b[from] : b[from])
-            : m >> 14 & 7 ? 9e5 + (m >> 14 & 7) : m >> 17 === 2 ? 1e6 + 999
-              : m === killers[ply * 2] ? 8e5 : m === killers[ply * 2 + 1] ? 7e5 : histT[from * 128 + to];
+          const m = ms[i], from = m & 127, to = m >> 7 & 127, cap = b[to], pr = m >> 14 & 7;
+          if (m === ttm) ss[i] = 4e6;
+          else if (cap) {
+            const vv = CV[cap < 0 ? -cap : cap], av = CV[b[from] < 0 ? -b[from] : b[from]];
+            ss[i] = (vv >= av || see(m) >= 0 ? 2e6 : -1e6) + vv * 10 - (av >> 4) + (pr === 5 ? 9000 : 0);
+          }
+          else if (pr) ss[i] = pr === 5 ? 1.9e6 : -1.5e6 + pr;
+          else if (m >> 17 === 2) ss[i] = 2e6 + 999;
+          else if (m === k1) ss[i] = 1.5e6;
+          else if (m === k2) ss[i] = 1.4e6;
+          else if (m === cm) ss[i] = 1.3e6;
+          else ss[i] = hist[(b[from] + 6) * 128 + to];
         }
       }
       function pick(ms, ss, i) {
@@ -432,75 +532,119 @@
         return false;
       }
       const hasPieces = s => { for (let sq = 0; sq < 120; sq++) { if (sq & 0x88) { sq += 7; continue; } const p = b[sq] * s; if (p > 1 && p < 6) return true; } return false; };
-      function qs(alpha, beta, ply) {
+      const hb = (i, v) => { hist[i] += v - (hist[i] * (v < 0 ? -v : v) / 16384 | 0); };
+      function qs(alpha, beta, ply, qd) {
         if (tick()) return 0;
+        if (ply > 120) return evaluate();
+        const chk = qd < 2 && inCheck(), ms = MB[ply], ss = SB[ply];
+        let best;
+        if (chk) {
+          best = -WIN + ply;
+          ms.length = 0; gen(ms, false); order(ms, ss, ply, 0);
+          for (let i = 0; i < ms.length; i++) {
+            const m = pick(ms, ss, i);
+            make(m);
+            if (illegal()) { unmake(); continue; }
+            const v = -qs(-beta, -alpha, ply + 1, qd + 1);
+            unmake();
+            if (T.stop) return 0;
+            if (v > best) { best = v; if (v > alpha) { alpha = v; if (v >= beta) return v; } }
+          }
+          return best;
+        }
         const sp0 = evaluate();
-        if (sp0 >= beta || ply > 120) return sp0;
+        if (sp0 >= beta) return sp0;
         if (sp0 > alpha) alpha = sp0;
-        const ms = MB[ply], ss = SB[ply];
+        best = sp0;
         ms.length = 0; gen(ms, true); order(ms, ss, ply, 0);
         for (let i = 0; i < ms.length; i++) {
-          const m = pick(ms, ss, i), cp = b[m >> 7 & 127];
-          if (cp && sp0 + CV[cp < 0 ? -cp : cp] + 200 < alpha && !(m >> 14 & 7)) continue;
+          const m = pick(ms, ss, i);
+          if (ss[i] < 0) break;
+          const cp = b[m >> 7 & 127];
+          if (!(m >> 14 & 7) && sp0 + CV[cp < 0 ? -cp : cp] + 180 < alpha) continue;
           make(m);
           if (illegal()) { unmake(); continue; }
-          const v = -qs(-beta, -alpha, ply + 1);
+          const v = -qs(-beta, -alpha, ply + 1, qd + 1);
           unmake();
           if (T.stop) return 0;
-          if (v >= beta) return v;
-          if (v > alpha) alpha = v;
+          if (v > best) { best = v; if (v > alpha) { alpha = v; if (v >= beta) return v; } }
         }
-        return alpha;
+        return best;
       }
       function ab(d, alpha, beta, ply, nullOk) {
         if (tick()) return 0;
-        if (ply && (half >= 100 || rep())) return 0;
+        const pv = beta - alpha > 1;
+        if (ply) {
+          if (half >= 100 || rep()) return 0;
+          const ma = -WIN + ply, mb = WIN - ply - 1;
+          if (alpha < ma) alpha = ma;
+          if (beta > mb) beta = mb;
+          if (alpha >= beta) return alpha;
+        }
         const chk = inCheck();
-        if (chk && ply < 2 * T.rootD + 6) d++;
-        if (d <= 0 || ply > 120) return qs(alpha, beta, ply);
+        if (chk && ply < 2 * T.rootD + 8) d++;
+        if (d <= 0) return qs(alpha, beta, ply, 0);
+        if (ply >= 120) return evaluate();
         const ti = hA & TMASK;
-        let ttm = 0;
+        let ttm = 0, ttv = 0, ttf = -1;
         if (TK[ti] === hB) {
           ttm = TMv[ti];
-          if (ply && TD[ti] >= d) {
-            let v = TV[ti];
-            if (v > WIN / 2) v -= ply; else if (v < -WIN / 2) v += ply;
-            const f = TF[ti];
-            if (f === 0 || (f === 1 && v >= beta) || (f === 2 && v <= alpha)) return v;
-          }
+          let v = TV[ti];
+          if (v > WIN / 2) v -= ply; else if (v < -WIN / 2) v += ply;
+          ttv = v; ttf = TF[ti];
+          if (ply && !pv && TD[ti] >= d && (ttf === 0 || (ttf === 1 && v >= beta) || (ttf === 2 && v <= alpha))) return v;
         }
-        const pv = beta - alpha > 1, X = T.x && !pv && !chk && Math.abs(beta) < WIN / 2;
-        let st = 0;
-        if (X) {
-          st = evaluate();
-          if (d <= 6 && st - 85 * d >= beta) return st;
-          if (!ttm && d >= 5) d--;
-        }
-        if (!pv && !chk && nullOk && d >= 3 && Math.abs(beta) < WIN / 2 && hasPieces(side)) {
-          if (!X) st = evaluate();
-          if (st >= beta) {
+        const X = T.x;
+        let st = chk ? -INF : evaluate();
+        if (!chk && ttf >= 0 && (ttf === 0 || (ttf === 1 && ttv > st) || (ttf === 2 && ttv < st)) && Math.abs(ttv) < WIN / 2) st = ttv;
+        evs[ply] = chk ? (ply >= 2 ? evs[ply - 2] : 0) : st;
+        const improving = !chk && ply >= 2 && st > evs[ply - 2];
+        if (!pv && !chk && Math.abs(beta) < WIN / 2) {
+          if (X && d <= 7 && st - (82 * d - (improving ? 50 : 0)) >= beta) return st;
+          if (X && d <= 2 && st + 260 * d < alpha) { const v = qs(alpha, alpha + 1, ply, 0); if (T.stop) return 0; if (v <= alpha) return v; }
+          if (nullOk && d >= 3 && st >= beta && hasPieces(side)) {
+            const R = 3 + (d >> 2) + Math.min(3, (st - beta) / 200 | 0);
             makeNull();
-            const v = -ab(d - 1 - (d > 6 ? 3 : 2), -beta, -beta + 1, ply + 1, false);
+            const v = -ab(d - 1 - R, -beta, -beta + 1, ply + 1, false);
             unmakeNull();
             if (T.stop) return 0;
-            if (v >= beta) return beta;
+            if (v >= beta) return v >= WIN / 2 ? beta : v;
           }
         }
-        const ms = MB[ply], ss = SB[ply];
-        ms.length = 0; gen(ms, false); order(ms, ss, ply, ttm);
+        if (!ttm && d >= 4) d--;
+        const ms = MB[ply], ss = SB[ply], qt = QB[ply];
+        ms.length = 0; qt.length = 0; gen(ms, false); order(ms, ss, ply, ttm);
         let n = 0, best = -INF, bm = 0;
-        const a0 = alpha;
+        const a0 = alpha, k1 = killers[ply * 2], k2 = killers[ply * 2 + 1];
         for (let i = 0; i < ms.length; i++) {
-          const m = pick(ms, ss, i);
+          const m = pick(ms, ss, i), sc = ss[i], to = m >> 7 & 127, hi = (b[m & 127] + 6) * 128 + to;
+          const quiet = !b[to] && !(m >> 14 & 7) && m >> 17 !== 2;
           make(m);
           if (illegal()) { unmake(); continue; }
           n++;
-          const quiet = !uC[sp - 1] && !(m >> 14 & 7), gc = inCheck();
-          if (X && quiet && !gc && n > 1 && d <= 3 && best > -WIN / 2 && (n > 5 + 3 * d * d || st + 110 * d + 60 <= alpha)) { unmake(); continue; }
+          const gc = inCheck();
+          if (X && !pv && !chk && !gc && n > 1 && best > -WIN / 2) {
+            if (quiet && m !== k1 && m !== k2) {
+              if (d <= 5 && n > (improving ? 4 + d * d : 2 + (d * d >> 1))) { unmake(); continue; }
+              if (d <= 5 && st + 90 + 100 * d <= alpha) { unmake(); continue; }
+              if (d <= 3 && hist[hi] < -3000 * d) { unmake(); continue; }
+            } else if (!quiet && sc < 0 && sc > -1.4e6 && d <= 4) { unmake(); continue; }
+          }
           let v;
           if (n === 1) v = -ab(d - 1, -beta, -alpha, ply + 1, true);
           else {
-            const r = d >= 3 && n > 3 && quiet && !chk && !gc ? (T.x ? (n > 14 && d > 6 ? 3 : n > 6 ? 2 : 1) : n > 9 ? 2 : 1) : 0;
+            let r = 0;
+            if (d >= 3 && n > (pv ? 3 : 2) && (quiet || sc < 0)) {
+              r = LMR[(d < 63 ? d : 63) * 64 + (n < 63 ? n : 63)];
+              if (!X) r = r > 2 ? 2 : r;
+              if (pv) r--;
+              if (!improving) r++;
+              if (m === k1 || m === k2) r--;
+              if (gc || chk) r--;
+              if (quiet) r -= hist[hi] / 6000 | 0;
+              if (r > d - 2) r = d - 2;
+              if (r < 0) r = 0;
+            }
             v = -ab(d - 1 - r, -alpha - 1, -alpha, ply + 1, true);
             if (v > alpha && r) v = -ab(d - 1, -alpha - 1, -alpha, ply + 1, true);
             if (v > alpha && v < beta) v = -ab(d - 1, -beta, -alpha, ply + 1, true);
@@ -511,19 +655,24 @@
             best = v; bm = m;
             if (v > alpha) {
               alpha = v;
+              if (!ply) T.rootBest = m;
               if (v >= beta) {
                 if (quiet) {
-                  if (killers[ply * 2] !== m) { killers[ply * 2 + 1] = killers[ply * 2]; killers[ply * 2] = m; }
-                  const hi = (m & 127) * 128 + (m >> 7 & 127);
-                  histT[hi] = Math.min(6e5, histT[hi] + d * d);
+                  if (k1 !== m) { killers[ply * 2 + 1] = k1; killers[ply * 2] = m; }
+                  const bon = Math.min(1600, 16 * d * d);
+                  hb(hi, bon);
+                  for (let j = 0; j < qt.length; j++) hb(qt[j], -bon);
+                  const lm = sp ? uM[sp - 1] : 0;
+                  if (lm) cmv[(b[lm >> 7 & 127] + 6) * 128 + (lm >> 7 & 127)] = m;
                 }
                 break;
               }
             }
           }
+          if (quiet) qt.push(hi);
         }
         if (!n) return chk ? -WIN + ply : 0;
-        if (TK[ti] !== hB || TD[ti] <= d) {
+        if (TK[ti] !== hB || TD[ti] <= d || best >= beta) {
           TK[ti] = hB; TD[ti] = d; TMv[ti] = bm;
           TV[ti] = best > WIN / 2 ? best + ply : best < -WIN / 2 ? best - ply : best;
           TF[ti] = best >= beta ? 1 : best > a0 ? 0 : 2;
@@ -548,39 +697,60 @@
       }
       function think(o) {
         killers.fill(0);
-        for (let i = 0; i < histT.length; i++) histT[i] >>= 2;
+        for (let i = 0; i < hist.length; i++) hist[i] = hist[i] / 2 | 0;
         const ms = legal();
         if (!ms.length) return null;
         if (o.book) { const bm = bookMove(ms); if (bm) { T.depth = 0; T.book = true; return bm; } }
         T.book = false;
-        if (ms.length === 1) return ms[0];
+        if (ms.length === 1) { T.depth = 0; return ms[0]; }
         if (o.blunder && Math.random() < o.blunder) return ms[Math.random() * ms.length | 0];
-        T.t0 = now(); T.stop = false; T.nodes = 0; T.depth = 0; T.tl = o.time; T.max = o.nodes || 4e7; T.x = !!o.x; T.xe = !!o.xe;
-        const ss = [], ti = hA & TMASK;
-        order(ms, ss, 0, TK[ti] === hB ? TMv[ti] : 0);
+        T.t0 = now(); T.stop = false; T.nodes = 0; T.depth = 0; T.tl = o.time; T.max = o.nodes || 4e7; T.x = !!o.x; T.xe = !!o.xe; T.rootBest = 0; T.score = 0;
+        const ti = hA & TMASK, ttm = TK[ti] === hB ? TMv[ti] : 0;
+        let best = ms.includes(ttm) ? ttm : ms[0];
+        if (!o.noise) {
+          let prev = 0;
+          for (let d = 1; d <= o.depth; d++) {
+            T.rootD = d;
+            let delta = 22, a = -INF, bt = INF, v = 0;
+            if (d >= 5) { a = prev - delta; bt = prev + delta; }
+            for (;;) {
+              v = ab(d, a, bt, 0, false);
+              if (T.stop) break;
+              if (v <= a) { bt = (a + bt) / 2 | 0; a = Math.max(-INF, v - delta); }
+              else if (v >= bt) bt = Math.min(INF, v + delta);
+              else break;
+              delta += delta;
+              if (delta > 700) { a = -INF; bt = INF; }
+            }
+            if (T.rootBest && ms.includes(T.rootBest)) best = T.rootBest;
+            if (T.stop) break;
+            T.depth = d; T.score = v; prev = v;
+            if (Math.abs(v) > WIN / 2 && d >= 8) break;
+            if (now() - T.t0 > T.tl * .5) break;
+          }
+          return best;
+        }
+        const ss = [];
+        order(ms, ss, 0, ttm);
         const idx = ms.map((_, i) => i).sort((a, c) => ss[c] - ss[a]), root = idx.map(i => ms[i]), rs = root.map(() => -INF);
-        let best = root[0];
+        best = root[0];
         for (let d = 1; d <= o.depth; d++) {
           let alpha = -INF, cur = 0, curV = -INF, done = 0;
           T.rootD = d;
           for (let i = 0; i < root.length; i++) {
             make(root[i]);
-            let v;
-            if (o.noise) v = -ab(d - 1, -INF, INF, 1, true);
-            else if (i === 0) v = -ab(d - 1, -INF, -alpha, 1, true);
-            else { v = -ab(d - 1, -alpha - 1, -alpha, 1, true); if (v > alpha && !T.stop) v = -ab(d - 1, -INF, -alpha, 1, true); }
+            const v0 = -ab(d - 1, -INF, INF, 1, true);
             unmake();
             if (T.stop) break;
             done++;
-            if (o.noise) v += (Math.random() - .5) * 2 * o.noise;
+            const v = v0 + (Math.random() - .5) * 2 * o.noise;
             rs[i] = v;
             if (v > curV) { curV = v; cur = root[i]; if (v > alpha) alpha = v; }
           }
-          if (T.stop) { if (cur && !o.noise && done && cur !== root[0] && curV > rs[0] - 1e6) best = cur; break; }
+          if (T.stop) break;
           best = cur; T.depth = d; T.score = curV;
           const bi = root.indexOf(cur);
           if (bi > 0) { root.splice(bi, 1); root.unshift(cur); const v = rs.splice(bi, 1)[0]; rs.unshift(v); }
-          if (Math.abs(curV) > WIN / 2 && !o.noise) break;
           if (now() - T.t0 > T.tl * .55) break;
         }
         return best;
@@ -588,7 +758,7 @@
       function push(m) { game.push(sqName(m & 127) + sqName(m >> 7 & 127) + (m >> 14 & 7 ? 'qrbn'[5 - (m >> 14 & 7)] : '')); make(m); }
       function pop() { game.pop(); unmake(); }
       load(START);
-      return { load, perft, legal, make: push, unmake: pop, inCheck, key, san, insufficient, think, evaluate, T, at: sq => b[sq], king: s => s === 1 ? kw : kb, get side() { return side; }, get half() { return half; } };
+      return { load, perft, legal, make: push, unmake: pop, inCheck, key, san, insufficient, canMate, think, evaluate, see, T, at: sq => b[sq], king: s => s === 1 ? kw : kb, get side() { return side; }, get half() { return half; } };
     }
     return { chessEngine, START, FILES, sqName };
   }
@@ -1164,7 +1334,7 @@ ${p} .main{display:flex;gap:16px;justify-content:center;align-items:stretch;widt
 ${p} .main>canvas{flex:none;align-self:flex-start;width:min(560px,calc(100% - 200px),calc(100dvh - 250px));min-width:240px;border-radius:14px;background:#3a2213;box-shadow:0 22px 44px -24px rgba(31,29,43,.7),0 4px 10px -4px rgba(31,29,43,.3);cursor:pointer}
 ${p} .side{flex:1;max-width:184px;min-width:0;display:flex;flex-direction:column;gap:8px}
 ${p} .seg{display:flex;padding:3px;border-radius:999px;background:var(--sunk)}
-${p} .seg button{flex:1;min-width:0;border:0;background:none;padding:8px 4px;border-radius:999px;font:800 12.5px/1 var(--sans);color:var(--muted);cursor:pointer;white-space:nowrap;transition:background .2s,color .2s,box-shadow .2s}
+${p} .seg button{flex:1;min-width:0;border:0;background:none;padding:8px 4px;border-radius:999px;font:800 12.5px/1.1 var(--sans);color:var(--muted);cursor:pointer;overflow-wrap:anywhere;hyphens:auto;transition:background .2s,color .2s,box-shadow .2s}
 ${p} .seg button:hover{color:var(--ink)}
 ${p} .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(31,29,43,.08),0 4px 10px -4px rgba(31,29,43,.3)}
 ${p} .seg[data-k="diff"] button{padding:8px 1px;font-size:11.5px;letter-spacing:-.2px}
@@ -1194,7 +1364,7 @@ ${p} .hist span{flex:1;min-width:0;white-space:nowrap}
 ${p} .hist .cur{color:var(--accent)}
 ${p} .hist .none{color:var(--soft);font-family:var(--sans)}
 ${p} .btns{display:flex;flex-wrap:wrap;gap:6px}
-${p} .btns .g-btn{flex:1 1 40%;min-width:0;padding:0 8px}
+${p} .btns .g-btn{flex:1 1 40%;min-width:0;padding:4px 8px;height:auto;min-height:36px;line-height:1.1;white-space:normal}
 ${p} [hidden]{display:none!important}
 ${p} .seg button.tb{display:none}
 ${p}.touch .seg button.tb{display:block}
@@ -1203,7 +1373,8 @@ ${p} .elo-h{display:flex;justify-content:space-between;align-items:baseline;gap:
 ${p} .elo-h span{white-space:nowrap}
 ${p} .elo-h b{font-size:12.5px;font-weight:900;color:var(--ink);white-space:nowrap}
 ${p} .elo input{width:100%;accent-color:var(--accent);margin:2px 0;cursor:pointer}
-${p} .elo-s{display:flex;justify-content:space-between;font-size:9.5px;font-weight:800;color:var(--soft)}
+${p} .elo-s{display:flex;flex-wrap:wrap;justify-content:space-between;column-gap:6px;font-size:9.5px;font-weight:800;color:var(--soft)}
+${p} .elo-s i{white-space:nowrap}
 ${p} .elo-s i{font-style:normal}
 ${p} .cn{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:800;color:var(--muted)}
 ${p} .cn i{width:8px;height:8px;border-radius:50%;background:var(--bad)}
@@ -1226,6 +1397,11 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
   ${p} .pcs{flex-direction:row}
   ${p} .pcs .pc{flex:1;min-width:0}
   ${p} .hist{flex:none;min-height:0;max-height:60px}
+  ${p} .side>.pcs{order:-6}
+  ${p} .side>.st{order:-5}
+  ${p} .side>.btns{order:-4}
+  ${p} .side>.hist{order:-3}
+  ${p} .side>.tools{order:-2}
 }
 @media (pointer:coarse){${p} .side{gap:6px}${p} .seg{padding:1px}${p} .seg button{min-height:40px}${p} .btns .g-btn{height:40px}}`;
 
@@ -1239,6 +1415,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     opt.view = 'Fixed';
     if (o.elo) opt.elo = Number.isFinite(saved.elo) ? Math.max(400, Math.min(2400, Math.round(saved.elo / 50) * 50)) : 1200;
     const main = el('div', 'main'), p2 = el('div', 'p2bar', '<i class="chip"></i><b></b>');
+    p2.dataset.i18n = main.dataset.i18n = '';
     root.append(p2, main);
     const cv = api.canvas(SZ, SZ, main), cvs = cv.canvas;
     cvs.style.width = '';
@@ -1313,6 +1490,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       if (over) return;
       over = true; gen++; drag = null; N.mine = N.theirs = N.sure = false;
       const md = opt.mode, res = !w ? 'draw' : md === '2P' ? 'two' : w === me ? 'win' : 'loss', who = w ? (res === 'two' ? S[w][0] : label(w)) : '';
+      if (o.ended) o.ended(w, why);
       let best = false;
       if (md === 'CPU') { if (res === 'win') { streak++; best = api.submit(streak); } else if (res === 'loss') streak = 0; api.score(streak); }
       turn(null); p2.classList.remove('on');
@@ -1327,7 +1505,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
         api.overlay({
           kicker: best ? 'New best!' : res === 'win' ? 'Victory' : res === 'loss' ? 'Defeat' : res === 'two' ? '2 Players' : 'Draw',
           title: res === 'win' ? 'You win!' : res === 'loss' ? (md === 'CPU' ? 'AI wins' : 'Your friend wins') : res === 'two' ? who + ' wins!' : 'Draw game',
-          text: why + '.' + (md !== 'CPU' ? '' : res === 'win' ? ` Win streak: ${winsFmt(streak)}.` : res === 'loss' ? ' Your win streak resets.' : ' Your win streak is safe.'),
+          text: why.split(' · ').map(s => tr(s)).join(' · ') + '.' + (md !== 'CPU' ? '' : ' ' + (res === 'win' ? tr('Win streak: {n}.', { n: tr(winsFmt(streak)) }) : res === 'loss' ? tr('Your win streak resets.') : tr('Your win streak is safe.'))),
           stats: md === 'CPU' ? [...stats, ['Streak', streak]] : stats,
           button: md === 'Online' ? 'Rematch' : 'Play again', onAction: () => { ovUp = false; if (online()) rematch(); else newGame(); },
           secondary: 'View board', onSecondary: () => { ovUp = false; }
@@ -1374,11 +1552,11 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       });
       api.interval(() => { if (online()) conn(); }, 1000);
     }
-    const sync = () => ({ t: 'sync', r: N.round, me: -me, ms: o.list() });
+    const sync = () => ({ t: 'sync', r: N.round, me: -me, ms: o.list(), x: o.extra ? o.extra() : null });
     function startRound() {
       N.round++; N.live = true;
       const hs = N.round % 2 ? 1 : -1;
-      send({ t: 'new', r: N.round, me: -hs });
+      send({ t: 'new', r: N.round, me: -hs, x: o.extra ? o.extra() : null });
       newGame(hs);
     }
     function rematch() {
@@ -1391,15 +1569,16 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       if (!online() || !N.role || !d) return;
       const host = N.role === 'host';
       if (d.t === 'hi') { if (host) { if (N.live) send(sync()); else startRound(); } }
-      else if (d.t === 'new' || d.t === 'sync') { if (!host) { N.round = d.r; N.live = true; newGame(d.me); if (d.ms) o.load(d.ms); } }
+      else if (d.t === 'new' || d.t === 'sync') { if (!host) { N.round = d.r; N.live = true; if (o.sync) o.sync(d.x, 0); newGame(d.me); if (d.ms) o.load(d.ms); if (o.sync) o.sync(d.x, 1); } }
       else if (d.t === 'sync?') { if (host) send(sync()); }
-      else if (d.t === 'mv') { if (d.r === N.round && N.live && !over && !o.remote(d.n, d.m)) send(host ? sync() : { t: 'sync?' }); }
+      else if (d.t === 'mv') { if (d.r === N.round && N.live && !over && !o.remote(d.n, d.m, d)) send(host ? sync() : { t: 'sync?' }); }
       else if (d.t === 'resign') { if (N.live) end(me, 'Your friend resigned'); }
       else if (d.t === 'draw?') { if (N.live && !over) { N.theirs = true; status('Your friend offers a draw', 'warn'); api.sfx('pop'); btns(); } }
       else if (d.t === 'draw-') { if (N.mine && !over) { N.mine = false; api.toast('Draw declined'); btns(); } }
       else if (d.t === 'draw!') { if (host && N.mine && !over) { send({ t: 'end', w: 0, why: 'Draw agreed' }); end(0, 'Draw agreed'); } }
       else if (d.t === 'end') { if (!host) end(d.w, d.why); }
       else if (d.t === 're') { if (N.live) N.theirRe = true; if (N.live && over) { if (host && N.myRe) startRound(); else { status(N.myRe ? 'Starting…' : 'Your friend wants a rematch', 'turn'); api.sfx('pop'); btns(); } } }
+      else if (o.data && d.r === N.round && N.live) o.data(d, host);
     }
     const undo = () => { if (!online() && canUndo && !over && !ovUp) o.undo(); };
     function act(a) {
@@ -1472,6 +1651,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     };
     cvs.addEventListener('pointerup', up);
     cvs.addEventListener('pointercancel', up);
+    cvs.addEventListener('contextmenu', e => e.preventDefault());
     api.on(window, 'keydown', e => {
       if (ovUp || (e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) return;
       const dir = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.code];
@@ -1489,20 +1669,24 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     api.loop(() => { if (dirtyF || o.busy()) { dirtyF = false; o.draw(); } });
     const k = {
       ctx: cv.ctx, opt, turnTo, end, status, turn, label,
-      get over() { return over; }, get drag() { return drag; }, get me() { return me; }, get mode() { return opt.mode; },
+      get over() { return over; }, get drag() { return drag; }, get me() { return me; }, get mode() { return opt.mode; }, get role() { return N.role; }, get round() { return N.round; }, get live() { return N.live; },
+      restart: () => newGame(), send, paint,
       local: s => opt.mode === '2P' || (s === me && (opt.mode === 'CPU' || N.live)),
       has(s) { const l = label(s); return l === 'You' ? 'You have' : (l === 'AI' ? 'The AI' : l === 'Friend' ? 'Your friend' : l) + ' has'; },
-      moved(n, m, remote) { if (online() && N.live && (!remote || N.role === 'host')) send({ t: 'mv', r: N.round, n, m }); },
+      moved(n, m, remote, x) { if (online() && N.live && (!remote || N.role === 'host')) send({ t: 'mv', r: N.round, n, m, ...(x || {}) }); },
       dirty() { dirtyF = true; },
       bump() { gen++; },
       later(fn, ms) { const g = gen; api.timeout(() => { if (g === gen && !over) fn(); }, ms); },
       info(s, html) { card(s).querySelector('small').innerHTML = html; },
       setUndo(v) { canUndo = !!v; btns(); },
-      hist(list) {
+      hist(list, at) {
         let h = '';
-        for (let i = 0; i < list.length; i += 2) h += `<p><em>${i / 2 + 1}.</em><span${i === list.length - 1 ? ' class="cur"' : ''}>${list[i]}</span><span${i + 1 === list.length - 1 ? ' class="cur"' : ''}>${list[i + 1] || ''}</span></p>`;
+        const c = at == null ? list.length - 1 : at;
+        for (let i = 0; i < list.length; i += 2) h += `<p><em>${i / 2 + 1}.</em><span data-i="${i}"${i === c ? ' class="cur"' : ''}>${list[i]}</span><span data-i="${i + 1}"${i + 1 === c ? ' class="cur"' : ''}>${list[i + 1] || ''}</span></p>`;
         histEl.innerHTML = h || '<p class="none">No moves yet</p>';
-        histEl.scrollTop = histEl.scrollHeight;
+        const ce = histEl.querySelector('.cur');
+        if (at == null || !ce) histEl.scrollTop = histEl.scrollHeight;
+        else if (ce.offsetTop < histEl.scrollTop || ce.offsetTop > histEl.scrollTop + histEl.clientHeight - 20) histEl.scrollTop = ce.offsetTop - histEl.clientHeight / 2;
       },
       drawCursor() {
         if (!cursor) return;
@@ -1617,10 +1801,10 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     x.fillStyle = white ? line : '#f9f9f9'; (def.dots || []).forEach(q => x.fill(new Path2D(q)));
     return c;
   }
-  const CC_L = '#ebecd0', CC_D = '#779556';
+  const CC_L = '#e6e8cf', CC_D = '#6d935a';
   function greenTex(flip) {
     const d = dprOf(), c = cnv(SZ * d, SZ * d), x = c.getContext('2d');
-    x.scale(d, d); x.fillStyle = '#312e2b'; x.fillRect(0, 0, SZ, SZ);
+    x.scale(d, d); x.fillStyle = '#22262e'; x.fillRect(0, 0, SZ, SZ);
     for (let r = 0; r < 8; r++) for (let q = 0; q < 8; q++) { x.fillStyle = (r + q) & 1 ? CC_D : CC_L; x.fillRect(FR + q * SQ, FR + r * SQ, SQ, SQ); }
     x.font = '800 15px Nunito, system-ui, sans-serif';
     for (let i = 0; i < 8; i++) {
@@ -1671,7 +1855,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     Marble: marbleSquares(['#f2efe8', '#d9d4ca', '#7d776d'], ['#4d5a58', '#2f3a39', '#c9d2cf']),
     Green: flatSquares('#eeeed2', '#769656')
   };
-  const ELO_PTS = [[400, 1, 320, .3, 250], [800, 2, 160, .12, 350], [1200, 3, 70, .045, 500], [1600, 4, 28, .012, 800], [2000, 7, 9, 0, 1400], [2400, 40, 0, 0, 2600]];
+  const ELO_PTS = [[400, 1, 320, .3, 250], [800, 2, 160, .12, 350], [1200, 3, 70, .045, 500], [1600, 4, 28, .012, 800], [2000, 7, 9, 0, 1400], [2400, 64, 0, 0, 2600]];
   function eloCfg(e) {
     let i = 0;
     while (i < ELO_PTS.length - 2 && e > ELO_PTS[i + 1][0]) i++;
@@ -1682,12 +1866,16 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
   const CHIP_W = 'radial-gradient(circle at 35% 30%,#fff,#efe5d0 55%,#a38d68)', CHIP_B = 'radial-gradient(circle at 35% 30%,#77707f,#2e2a33 55%,#0b0a0d)';
   const MAT = [0, 1, 3, 3, 5, 9, 0];
 
+  const TCS = { None: [0, 0], '3+2': [180, 2], '5+0': [300, 0], '10+0': [600, 0], '15+10': [900, 10] };
+  const TC_TXT = { None: '∞', '3+2': '3+2', '5+0': '5+0', '10+0': '10+0', '15+10': '15+10' };
+  const TC_TIP = { None: 'No clock', '3+2': '3 minutes + 2 seconds per move', '5+0': '5 minutes', '10+0': '10 minutes', '15+10': '15 minutes + 10 seconds per move' };
   function mountChess(root, api) {
-    const E = chessEngine(), d = dprOf(), sets = {}, texs = [null, null];
+    const E = chessEngine(16), V = chessEngine(8), d = dprOf(), sets = {}, texs = [null, null];
     let spr = null, img = {};
     const useSet = neo => { const key = neo ? 'n' : 's'; if (!sets[key]) { const o2 = {}, mk = neo ? neoSprite : stauntonSprite; for (let t = 1; t <= 6; t++) { o2[t] = mk(t, true, Math.round(SQ * d * 1.25)); o2[-t] = mk(t, false, Math.round(SQ * d * 1.25)); } sets[key] = o2; } if (spr !== sets[key]) { spr = sets[key]; img = {}; } };
     const imgOf = p => img[p] || (img[p] = spr[p].toDataURL());
-    let flip = false, hist = [], keys = [], sel = -1, targets = [], legalNow = [], promo = null, anims = [], last = null, thinking = false, aiTok = 0, worker = null, wurl = '';
+    let flip = false, hist = [], keys = [], sel = -1, targets = [], legalNow = [], promo = null, anims = [], last = null, thinking = false, aiTok = 0, worker = null, wurl = '', aiScore = 0;
+    let view = -1, vLast = null, manFlip = false, tcCur = 'None', tcMs = 0, tcInc = 0, resTag = '*', endWhy = '', started = new Date();
     const pend = new Map();
     let ac = null, nz = null;
     const audio = () => {
@@ -1698,48 +1886,114 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
         return ac;
       } catch (e) { return null; }
     };
-    const clack = (cap, chk) => {
+    const tone = (a, t, f, v, len, type) => { const o = a.createOscillator(), g = a.createGain(); o.type = type || 'sine'; o.frequency.value = f; g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + len); o.connect(g).connect(a.destination); o.start(t); o.stop(t + len + .05); };
+    const clack = (cap, chk, castle, promoted) => {
       const a = audio(); if (!a) return;
       const t = a.currentTime + .005;
       const hit = (dt, f, v) => { const s = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain(); s.buffer = nz; bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = 1.6; g.gain.value = v; s.connect(bp).connect(g).connect(a.destination); s.start(t + dt); };
       const thump = (dt, f, v) => { const o = a.createOscillator(), g = a.createGain(); o.frequency.setValueAtTime(f, t + dt); o.frequency.exponentialRampToValueAtTime(f * .55, t + dt + .08); g.gain.setValueAtTime(v, t + dt); g.gain.exponentialRampToValueAtTime(.0001, t + dt + .1); o.connect(g).connect(a.destination); o.start(t + dt); o.stop(t + dt + .12); };
       hit(0, 1900, .5); thump(0, 210, .22);
       if (cap) { hit(.045, 1300, .55); thump(.045, 160, .25); }
-      if (chk) { const o = a.createOscillator(), g = a.createGain(); o.type = 'sine'; o.frequency.value = 880; g.gain.setValueAtTime(.0001, t + .08); g.gain.exponentialRampToValueAtTime(.06, t + .1); g.gain.exponentialRampToValueAtTime(.0001, t + .45); o.connect(g).connect(a.destination); o.start(t + .08); o.stop(t + .5); }
+      if (castle) { hit(.11, 1700, .42); thump(.11, 190, .2); }
+      if (promoted) { tone(a, t + .1, 660, .05, .18); tone(a, t + .2, 990, .05, .3); }
+      if (chk) tone(a, t + .08, 880, .06, .37);
     };
+    const lowBeep = () => { const a = audio(); if (!a) return; const t = a.currentTime + .005; tone(a, t, 1180, .07, .09, 'square'); tone(a, t + .16, 1180, .07, .09, 'square'); };
     const getWorker = () => {
       if (worker !== null) return worker;
       try {
-        const src = 'const C=(' + chessCore.toString() + ')(),E=C.chessEngine();onmessage=e=>{const d=e.data;E.load(C.START);for(const m of d.moves)E.make(m);const m=E.think(d.cfg);postMessage({id:d.id,m,depth:E.T.depth,book:!!E.T.book});};';
+        const src = 'const C=(' + chessCore.toString() + ')(),E=C.chessEngine();onmessage=e=>{const d=e.data;E.load(C.START);for(const m of d.moves)E.make(m);const m=E.think(d.cfg);postMessage({id:d.id,m,depth:E.T.depth,score:E.T.score||0,book:!!E.T.book});};';
         wurl = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
         worker = new Worker(wurl);
-        worker.onmessage = e => { const f = pend.get(e.data.id); pend.delete(e.data.id); if (f) f(e.data.m); };
+        worker.onmessage = e => { const f = pend.get(e.data.id); pend.delete(e.data.id); if (f) f(e.data.m, e.data); };
         worker.onerror = () => { const w = worker; worker = false; try { w.terminate(); } catch (er) {} const list = [...pend.values()]; pend.clear(); list.forEach(f => f(undefined)); };
       } catch (e) { worker = false; }
       return worker;
     };
     const k = kit(root, api, {
-      title: 'Chess', elo: eloName, keep: ['board'], onOpt: () => { texs[0] = texs[1] = null; useSet(k.opt.board === 'Green'); refresh(); },
-      segs: [{ key: 'side', opts: ['White', 'Black'], only: 'CPU', txt: { White: 'Play White', Black: 'Play Black' } }, { key: 'board', opts: ['Green', 'Wood', 'Marble'] }],
+      title: 'Chess', elo: eloName, keep: ['board', 'tc'], onOpt: key => { if (key === 'tc') return tcChanged(); texs[0] = texs[1] = null; useSet(k.opt.board === 'Green'); refresh(); },
+      segs: [{ key: 'tc', opts: Object.keys(TCS), txt: TC_TXT }, { key: 'side', opts: ['White', 'Black'], only: 'CPU', txt: { White: 'Play White', Black: 'Play Black' } }, { key: 'board', opts: ['Green', 'Wood', 'Marble'] }],
       sides: { 1: ['White', CHIP_W], '-1': ['Black', CHIP_B] }, cpuSide: () => k.opt.side === 'Black' ? -1 : 1,
-      flip: f => { if (flip !== f) { flip = f; k.dirty(); } },
+      flip: f => { f = f !== manFlip; if (flip !== f) { flip = f; k.dirty(); } },
       newGame, undo, draw, down, drop, remote, load, ai: aiTurn, ply: () => hist.length, list: () => hist.map(h => h.m),
       busy: () => anims.length > 0, started: () => hist.some(h => h.by === k.me),
       stats: () => [['Moves', Math.ceil(hist.length / 2)]],
+      ended: (w, why) => { resTag = w === 1 ? '1-0' : w === -1 ? '0-1' : '1/2-1/2'; endWhy = why; view = -1; clkShow(); },
+      extra: () => k.over ? { tc: k.opt.tc in TCS ? k.opt.tc : tcCur } : { tc: tcCur, c: [Math.round(clk[1]), Math.round(clk[-1])] },
+      sync: (x, phase) => {
+        if (!x || !TCS[x.tc]) return;
+        if (!phase) { tcCur = k.opt.tc = x.tc; return; }
+        if (hist.length && Array.isArray(x.c) && x.c.length === 2 && x.c.every(Number.isFinite)) { clk[1] = x.c[0]; clk[-1] = x.c[1]; clkT = now(); }
+        clkShow();
+      },
+      data: (dd, host) => {
+        if (dd.t === 'flag' && (dd.s === 1 || dd.s === -1) && !k.over && tcMs && hist.length >= 2 && E.side === dd.s) { clk[dd.s] = 0; flagged(dd.s); }
+        else if (dd.t === 'tc' && !host && TCS[dd.v] && !hist.length) { tcCur = dd.v; resetClock(); api.toast(TC_TIP[dd.v]); }
+      },
       offer: () => {
         if (hist.length < 20) return 'AI: too early for a draw';
-        const sum = s => hist.filter(h => h.by === s && h.cap).reduce((t, h) => t + MAT[Math.abs(h.cap)], 0);
-        return sum(-k.me) > sum(k.me) ? 'AI declines the draw' : '';
+        if (aiScore > -40 && !(Math.abs(aiScore) < 30 && hist.length > 120)) return 'AI declines the draw';
+        return '';
       }
     });
-    const ctx = k.ctx, hide = new Uint8Array(128);
+    const ctx = k.ctx, hide = new Uint8Array(128), side = root.querySelector('.side'), histEl = root.querySelector('.hist');
     useSet(k.opt.board === 'Green');
-    const clk = { 1: 0, '-1': 0 }, clkEl = {};
+    root.querySelectorAll('.seg[data-k="tc"] button').forEach(bt => { bt.title = TC_TIP[bt.dataset.v]; bt.setAttribute('aria-label', TC_TIP[bt.dataset.v]); });
+    const ic = p => `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="${p}"/></svg>`;
+    const tools = el('div', 'tools', `<button data-c="first" title="First move" aria-label="First move">${ic('M3 3h2v10H3zM13 3v10L6 8z')}</button><button data-c="prev" title="Previous move" aria-label="Previous move">${ic('M11 3v10L4 8z')}</button><button data-c="next" title="Next move" aria-label="Next move">${ic('M5 3v10l7-5z')}</button><button data-c="live" title="Back to the game" aria-label="Back to the game">${ic('M11 3h2v10h-2zM3 3v10l7-5z')}</button><button data-c="flip" title="Flip board (F)" aria-label="Flip board">${ic('M5 1.5l3.2 4H6v8.5H4V5.5H1.8zM11 14.5l-3.2-4H10V2h2v8.5h2.2z')}</button><button data-c="pgn" title="Copy the game as PGN">PGN</button>`);
+    histEl.after(tools);
+    const clk = { 1: 0, '-1': 0 }, clkEl = {}, low = { 1: false, '-1': false };
     let clkT = now();
-    for (const [w, s] of [['you', 1], ['ai', -1]]) { const pcEl = root.querySelector('.pc.' + w), sp = document.createElement('span'); sp.className = 'clk'; pcEl.append(sp); clkEl[w] = sp; }
-    const fmtT = ms => { const t = Math.floor(ms / 1000); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
-    const clkShow = () => { clkEl.you.textContent = fmtT(clk[k.me]); clkEl.ai.textContent = fmtT(clk[-k.me]); clkEl.you.classList.toggle('run', !k.over && E.side === k.me && hist.length > 0); clkEl.ai.classList.toggle('run', !k.over && E.side === -k.me && hist.length > 0); };
-    api.interval(() => { const t = now(); if (!k.over && hist.length) clk[E.side] += t - clkT; clkT = t; clkShow(); }, 250);
+    for (const w of ['you', 'ai']) { const pcEl = root.querySelector('.pc.' + w), sp = document.createElement('span'); sp.className = 'clk'; pcEl.append(sp); clkEl[w] = sp; }
+    const fmtT = ms => {
+      if (tcMs) {
+        if (ms <= 0) return '0:00';
+        if (ms < 10000) { const t = Math.floor(ms / 100); return '0:0' + Math.floor(t / 10) + '.' + t % 10; }
+        const t = Math.ceil(ms / 1000); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
+      }
+      const t = Math.floor(ms / 1000); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
+    };
+    const running = s => !k.over && E.side === s && hist.length >= (tcMs ? 2 : 1);
+    const clkShow = () => {
+      for (const [w, s] of [['you', k.me], ['ai', -k.me]]) {
+        const c = clkEl[w];
+        c.textContent = fmtT(clk[s]);
+        c.classList.toggle('run', running(s));
+        c.classList.toggle('low', !!tcMs && clk[s] < 20000);
+      }
+    };
+    const resetClock = () => { [tcMs, tcInc] = TCS[tcCur].map(v => v * 1000); clk[1] = clk[-1] = tcMs; low[1] = low[-1] = false; clkT = now(); clkShow(); };
+    function tcChanged() {
+      if (k.mode === 'CPU') return k.restart();
+      if (k.role === 'host' && k.live && !hist.length && !k.over) { tcCur = k.opt.tc; resetClock(); k.send({ t: 'tc', r: k.round, v: tcCur }); }
+      else if (k.role === 'guest') { k.opt.tc = tcCur; k.paint(); api.toast('The host chooses the clock'); }
+      else api.toast('The new clock starts with the next game');
+    }
+    function flagged(s) {
+      if (k.over) return;
+      aiTok++; thinking = false; sel = -1; targets = []; promo = null;
+      const w = E.canMate(-s) ? -s : 0, who = s === 1 ? 'White' : 'Black';
+      k.end(w, w ? who + ' ran out of time' : 'Time out · not enough material to mate', [['Moves', Math.ceil(hist.length / 2)]]);
+      refresh();
+    }
+    api.interval(() => {
+      const t = now(), dt = t - clkT;
+      clkT = t;
+      if (!k.over && !(api.paused && k.mode !== 'Online')) {
+        const s = E.side;
+        if (tcMs) {
+          if (hist.length >= 2) {
+            clk[s] -= dt;
+            if (clk[s] < 10000 && !low[s] && k.local(s)) { low[s] = true; lowBeep(); }
+            if (clk[s] <= 0 && (k.mode !== 'Online' || k.local(s) || clk[s] < -3000)) {
+              if (k.mode === 'Online') k.send({ t: 'flag', r: k.round, s });
+              clk[s] = 0; flagged(s);
+            }
+          }
+        } else if (hist.length) clk[s] += dt;
+      }
+      clkShow();
+    }, 100);
     const ccDot = (x, y, cap) => {
       ctx.fillStyle = 'rgba(0,0,0,.14)'; ctx.strokeStyle = 'rgba(0,0,0,.14)';
       if (cap) { ctx.lineWidth = SQ * .09; ctx.beginPath(); ctx.arc(x + SQ / 2, y + SQ / 2, SQ / 2 - SQ * .045, 0, 7); ctx.stroke(); }
@@ -1748,60 +2002,140 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     const sx = sq => FR + (flip ? 7 - (sq & 7) : sq & 7) * SQ;
     const sy = sq => FR + (flip ? sq >> 4 : 7 - (sq >> 4)) * SQ;
     const sqOf = cell => flip ? cell.r * 16 + 7 - cell.c : (7 - cell.r) * 16 + cell.c;
-    const myTurn = () => !k.over && !thinking && k.local(E.side);
+    const myTurn = () => !k.over && !thinking && view < 0 && k.local(E.side);
     const makeTex = () => k.opt.board === 'Green' ? greenTex(flip) : frameTex(7, BOARDS[k.opt.board] || BOARDS.Wood, x => {
       for (let i = 0; i < 8; i++) { x.fillText(FILES[flip ? 7 - i : i], FR + i * SQ + SQ / 2, SZ - FR / 2 + 1); x.fillText(String(flip ? i + 1 : 8 - i), FR / 2, FR + i * SQ + SQ / 2); }
     });
     const tex = () => texs[+flip] || (texs[+flip] = makeTex());
+    const nameOf = s => {
+      if (k.mode === 'CPU' && s !== k.me) return 'Gameplay AI (' + k.opt.elo + ')';
+      if (s === k.me) { try { const p = JSON.parse(localStorage.getItem('gameplay:profile') || '{}'); if (p && (p.username || p.displayName)) return String(p.username || p.displayName).replace(/["\\]/g, ''); } catch (e) {} return 'You'; }
+      const o = (api.net.players || []).find(p => p.id !== api.net.id);
+      return o && o.name ? String(o.name).replace(/["\\]/g, '') : 'Friend';
+    };
+    function pgn() {
+      const p2 = n => String(n).padStart(2, '0'), dt = started, tag = (n, v) => `[${n} "${v}"]\n`;
+      const res = k.over ? resTag : '*';
+      let s = tag('Event', k.mode === 'CPU' ? 'Game against the computer' : 'Online game') + tag('Site', 'Gameplay Games') + tag('Date', dt.getFullYear() + '.' + p2(dt.getMonth() + 1) + '.' + p2(dt.getDate())) + tag('Round', '-') + tag('White', nameOf(1)) + tag('Black', nameOf(-1)) + tag('Result', res);
+      if (tcMs) s += tag('TimeControl', tcMs / 1000 + '+' + tcInc / 1000);
+      if (k.over && endWhy) s += tag('Termination', endWhy);
+      s += '\n';
+      let line = '';
+      const out = [];
+      hist.forEach((h, i) => {
+        const w = (i % 2 ? '' : i / 2 + 1 + '. ') + h.san;
+        if (line.length + w.length + 1 > 79) { out.push(line); line = w; } else line += (line ? ' ' : '') + w;
+      });
+      if (line.length + res.length + 1 > 79) { out.push(line); line = res; } else line += (line ? ' ' : '') + res;
+      out.push(line);
+      return s + out.join('\n') + '\n';
+    }
+    function copyPgn() {
+      const txt = pgn(), ok = () => { api.toast('PGN copied'); api.sfx('tick'); }, fall = () => {
+        try { const ta = document.createElement('textarea'); ta.value = txt; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;opacity:0;left:-9999px'; document.body.append(ta); ta.select(); const r = document.execCommand('copy'); ta.remove(); if (r) return ok(); } catch (e) {}
+        api.toast('Copy failed');
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, fall); else fall();
+    }
+    function setView(n) {
+      n = Math.max(0, Math.min(hist.length, n));
+      if (n >= hist.length) { if (view < 0) return; view = -1; }
+      else {
+        view = n;
+        V.load(START);
+        for (let i = 0; i < n; i++) V.make(hist[i].m);
+        const h = hist[n - 1];
+        vLast = h ? { from: h.m & 127, to: h.m >> 7 & 127 } : null;
+        sel = -1; targets = []; promo = null; anims = [];
+      }
+      api.sfx('tick');
+      refresh();
+    }
+    tools.addEventListener('mousedown', e => { if (e.target.closest('button')) e.preventDefault(); });
+    tools.addEventListener('click', e => {
+      const bt = e.target.closest('button');
+      if (!bt) return;
+      const c = bt.dataset.c, cur = view < 0 ? hist.length : view;
+      if (c === 'first') setView(0);
+      else if (c === 'prev') setView(cur - 1);
+      else if (c === 'next') setView(cur + 1);
+      else if (c === 'live') setView(hist.length);
+      else if (c === 'flip') { manFlip = !manFlip; flip = !flip; api.sfx('tick'); k.dirty(); }
+      else if (c === 'pgn') copyPgn();
+    });
+    histEl.addEventListener('click', e => { const s = e.target.closest('span[data-i]'); if (s && s.textContent) setView(+s.dataset.i + 1); });
+    api.on(window, 'keydown', e => {
+      if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+      if (e.code === 'KeyF' && !e.repeat && !e.ctrlKey && !e.metaKey) { manFlip = !manFlip; flip = !flip; k.dirty(); }
+      else if ((e.code === 'Home' || e.code === 'End' || e.code === 'PageUp' || e.code === 'PageDown') && hist.length) {
+        e.preventDefault();
+        const cur = view < 0 ? hist.length : view;
+        setView(e.code === 'Home' ? 0 : e.code === 'End' ? hist.length : e.code === 'PageUp' ? cur - 1 : cur + 1);
+      }
+    });
 
     function newGame(me) {
       E.load(START); aiTok++;
-      hist = []; keys = [E.key()]; sel = -1; targets = []; promo = null; anims = []; last = null; thinking = false;
-      clk[1] = clk[-1] = 0; clkT = now();
+      hist = []; keys = [E.key()]; sel = -1; targets = []; promo = null; anims = []; last = null; thinking = false; view = -1; resTag = '*'; endWhy = ''; started = new Date(); aiScore = 0;
+      if (!(k.mode === 'Online' && k.role === 'guest')) tcCur = k.opt.tc in TCS ? k.opt.tc : 'None';
+      resetClock();
       k.turnTo(E.side, k.mode === 'CPU' ? 'you play ' + (me === 1 ? 'White' : 'Black') : '');
       refresh();
     }
     function refresh() {
-      k.hist(hist.map(h => h.san));
-      const caps = s => hist.filter(h => h.by === s && h.cap).map(h => h.cap).sort((a, b) => Math.abs(b) - Math.abs(a));
-      const w = caps(1), b = caps(-1), sum = a => a.reduce((t, p) => t + MAT[Math.abs(p)], 0), diff = sum(w) - sum(b);
+      k.hist(hist.map(h => h.san), view < 0 ? null : view - 1);
+      const upTo = view < 0 ? hist.length : view, hs = hist.slice(0, upTo);
+      const caps = s => hs.filter(h => h.by === s && h.cap).map(h => h.cap).sort((a, b) => Math.abs(b) - Math.abs(a));
+      const w = caps(1), b = caps(-1), sum = a => a.reduce((t, p) => t + MAT[Math.abs(p)], 0), prom = s => hs.filter(h => h.by === s && (h.m >> 14 & 7)).reduce((t, h) => t + MAT[h.m >> 14 & 7] - 1, 0);
+      const diff = sum(w) + prom(1) - sum(b) - prom(-1);
       const html = (a, adv) => a.map(p => `<img src="${imgOf(p)}" alt="">`).join('') + (adv > 0 ? `<em>+${adv}</em>` : '') || 'No captures';
       k.info(1, html(w, diff));
       k.info(-1, html(b, -diff));
       k.setUndo(k.mode === '2P' ? hist.length > 0 : hist.some(h => h.by === k.me));
+      root.classList.toggle('review', view >= 0);
+      tools.querySelector('[data-c="first"]').disabled = tools.querySelector('[data-c="prev"]').disabled = !hist.length || view === 0;
+      tools.querySelector('[data-c="next"]').disabled = tools.querySelector('[data-c="live"]').disabled = view < 0;
       k.dirty();
     }
     function aiTurn() {
       thinking = true; k.turn(-k.me, true); k.status('AI is thinking…');
       const tok = ++aiTok, t0 = now(), cfg = eloCfg(k.opt.elo), moves = hist.map(h => h.m);
-      const done = m => {
+      if (tcMs) cfg.time = Math.max(60, Math.min(cfg.time, (clk[-k.me] - 400) / 30 + tcInc * .7));
+      const minWait = tcMs ? 160 : 420;
+      const done = (m, info) => {
         if (tok !== aiTok || !thinking || k.over) return;
         if (m === undefined) { k.later(() => { if (tok === aiTok && thinking) done(E.think(cfg)); }, 30); return; }
-        api.timeout(() => {
+        if (info && Number.isFinite(info.score)) aiScore = info.score;
+        const go = () => {
           if (tok !== aiTok || !thinking || k.over) return;
+          if (api.paused) { api.timeout(go, 200); return; }
           thinking = false;
+          if (view >= 0) { view = -1; }
           if (m && E.legal().includes(m)) play(m, null);
-        }, Math.max(0, 420 - (now() - t0)));
+        };
+        api.timeout(go, Math.max(0, minWait - (now() - t0)));
       };
       const w = getWorker();
       if (w) { pend.set(tok, done); w.postMessage({ id: tok, moves, cfg }); }
-      else k.later(() => { if (tok === aiTok && thinking) done(E.think(cfg)); }, 120);
+      else k.later(() => { if (tok === aiTok && thinking) { const m = E.think(cfg); done(m, { score: E.T.score }); } }, 120);
     }
     function play(m, dr, remote, quiet) {
       const from = m & 127, to = m >> 7 & 127, fl = m >> 17, by = E.side, p = E.at(from), san = E.san(m, E.legal()), n = hist.length;
       const capSq = fl === 2 ? to - 16 * by : to, cap = E.at(capSq);
+      if (view >= 0) view = -1;
       E.make(m);
+      if (tcMs && n >= 2 && !quiet) clk[by] += tcInc;
       if (!quiet) {
         const t0 = now(), dur = dr ? 110 : k.local(by) ? 200 : 300;
         if (cap) anims.push({ p: cap, x0: sx(capSq), y0: sy(capSq), x1: sx(capSq), y1: sy(capSq), t0: t0 + dur * .55, d: 170, fade: true });
         anims.push({ p, x0: dr ? dr.x - SQ / 2 : sx(from), y0: dr ? dr.y - SQ * .7 : sy(from), x1: sx(to), y1: sy(to), t0, d: dur, hide: to });
         if (fl === 3) { const rf = to > from ? from + 3 : from - 4, rt = to > from ? from + 1 : from - 1; anims.push({ p: 4 * by, x0: sx(rf), y0: sy(rf), x1: sx(rt), y1: sy(rt), t0: t0 + 70, d: dur + 40, hide: rt }); }
-        clack(!!cap, /[+#]/.test(san));
+        clack(!!cap, /[+#]/.test(san), fl === 3, !!(m >> 14 & 7));
       }
       hist.push({ m, san, by, cap });
       keys.push(E.key());
       last = { from, to }; sel = -1; targets = []; promo = null;
-      k.moved(n, m, remote);
+      k.moved(n, m, remote, tcMs ? { c: Math.round(clk[by]) } : null);
       if (!checkEnd(by)) k.turnTo(E.side, E.inCheck() ? 'check!' : '');
       refresh();
     }
@@ -1815,10 +2149,12 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       k.end(w, why, [['Moves', Math.ceil(hist.length / 2)]]);
       return true;
     }
-    function remote(n, m) {
+    function remote(n, m, dd) {
       if (n < hist.length) return hist[n].m === m;
       if (n !== hist.length || thinking || k.local(E.side) || !E.legal().includes(m)) return false;
+      const by = E.side;
       play(m, null, true);
+      if (dd && Number.isFinite(dd.c) && tcMs) { clk[by] = dd.c; clkShow(); }
       return true;
     }
     function load(list) {
@@ -1827,7 +2163,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     function undo() {
       const two = k.mode === '2P';
       if (k.over || k.mode === 'Online' || !(two ? hist.length : hist.some(h => h.by === k.me))) return;
-      k.bump(); thinking = false; aiTok++;
+      k.bump(); thinking = false; aiTok++; view = -1;
       while (hist.length) { const h = hist.pop(); keys.pop(); E.unmake(); if (two || h.by === k.me) break; }
       const lh = hist[hist.length - 1];
       last = lh ? { from: lh.m & 127, to: lh.m >> 7 & 127 } : null;
@@ -1842,6 +2178,10 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       targets = [...new Set(legalNow.filter(m => (m & 127) === sq).map(m => m >> 7 & 127))];
       api.sfx('tick');
     }
+    const castleVia = sq => {
+      if (sel < 0 || sq < 0 || Math.abs(E.at(sel)) !== 6 || E.at(sq) !== 4 * E.side) return 0;
+      return legalNow.find(m => (m & 127) === sel && m >> 17 === 3 && ((m >> 7 & 127) > sel) === (sq > sel)) || 0;
+    };
     function moveTo(sq, dr) {
       const ms = legalNow.filter(m => (m & 127) === sel && (m >> 7 & 127) === sq);
       if (!ms.length) return;
@@ -1849,6 +2189,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       play(ms[0], dr);
     }
     function down(cell) {
+      if (view >= 0) { setView(hist.length); return 0; }
       if (promo) {
         const pr = promo, top = sy(pr.sq) < SZ / 2, i = cell ? (top ? cell.r : 7 - cell.r) : -1;
         promo = null;
@@ -1859,6 +2200,8 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       if (!cell || !myTurn()) { sel = -1; targets = []; return 0; }
       const sq = sqOf(cell);
       if (sel >= 0 && targets.includes(sq)) { moveTo(sq, null); return 0; }
+      const cm = castleVia(sq);
+      if (cm) { play(cm, null); return 0; }
       const p = E.at(sq);
       if (p && Math.sign(p) === E.side) { const again = sq === sel; select(sq); return again ? 2 : 1; }
       sel = -1; targets = [];
@@ -1866,8 +2209,9 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     }
     function drop(cell, dr) {
       if (sel < 0 || !myTurn()) return;
-      const sq = cell ? sqOf(cell) : -1;
+      const sq = cell ? sqOf(cell) : -1, cm = castleVia(sq);
       if (targets.includes(sq)) moveTo(sq, dr);
+      else if (cm) play(cm, dr);
       else anims.push({ p: E.at(sel), x0: dr.x - SQ / 2, y0: dr.y - SQ * .7, x1: sx(sel), y1: sy(sel), t0: now(), d: 150, hide: sel });
     }
     function drawPiece(p, x, y, s, a) {
@@ -1877,12 +2221,12 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       ctx.globalAlpha = 1;
     }
     function draw() {
-      const t = now();
+      const t = now(), B = view >= 0 ? V : E, lm = view >= 0 ? vLast : last;
       ctx.drawImage(tex(), 0, 0, SZ, SZ);
-      if (last) { k.shade(sx(last.from), sy(last.from), 'rgba(255,255,51,.5)'); k.shade(sx(last.to), sy(last.to), 'rgba(255,255,51,.5)'); }
-      if (sel >= 0 && !(last && (sel === last.to || sel === last.from))) k.shade(sx(sel), sy(sel), 'rgba(255,255,51,.5)');
-      if (E.inCheck()) {
-        const kq = E.king(E.side), cx = sx(kq) + SQ / 2, cy = sy(kq) + SQ / 2, g = ctx.createRadialGradient(cx, cy, 4, cx, cy, SQ * .62);
+      if (lm) { k.shade(sx(lm.from), sy(lm.from), 'rgba(255,236,92,.46)'); k.shade(sx(lm.to), sy(lm.to), 'rgba(255,236,92,.46)'); }
+      if (sel >= 0 && !(last && (sel === last.to || sel === last.from))) k.shade(sx(sel), sy(sel), 'rgba(255,236,92,.46)');
+      if (B.inCheck()) {
+        const kq = B.king(B.side), cx = sx(kq) + SQ / 2, cy = sy(kq) + SQ / 2, g = ctx.createRadialGradient(cx, cy, 4, cx, cy, SQ * .62);
         g.addColorStop(0, 'rgba(255,30,30,.95)'); g.addColorStop(.55, 'rgba(255,40,40,.5)'); g.addColorStop(1, 'rgba(255,40,40,0)');
         ctx.fillStyle = g; ctx.fillRect(sx(kq), sy(kq), SQ, SQ);
       }
@@ -1893,14 +2237,14 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       for (const q of targets) if (E.at(q)) ccDot(sx(q), sy(q), true);
       for (let sq = 0; sq < 120; sq++) {
         if (sq & 0x88) { sq += 7; continue; }
-        const p = E.at(sq);
+        const p = B.at(sq);
         if (p && !hide[sq]) drawPiece(p, sx(sq), sy(sq), 1, 1);
       }
       if (dg) {
         const p = E.at(sel);
         if (p) drawPiece(p, sx(sel), sy(sel), 1, .3);
         const hc = { c: Math.floor((dg.x - FR) / SQ), r: Math.floor((dg.y - FR) / SQ) };
-        if (hc.c >= 0 && hc.c < 8 && hc.r >= 0 && hc.r < 8 && targets.includes(sqOf(hc))) { ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.strokeRect(FR + hc.c * SQ + 2, FR + hc.r * SQ + 2, SQ - 4, SQ - 4); }
+        if (hc.c >= 0 && hc.c < 8 && hc.r >= 0 && hc.r < 8 && (targets.includes(sqOf(hc)) || castleVia(sqOf(hc)))) { ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.strokeRect(FR + hc.c * SQ + 2, FR + hc.r * SQ + 2, SQ - 4, SQ - 4); }
       }
       for (const q of targets) if (!E.at(q)) ccDot(sx(q), sy(q), false);
       let done = 0;
@@ -1912,6 +2256,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
       }
       if (done) anims = anims.filter(a => !a.done);
       if (dg) drawPiece(E.at(sel), dg.x - SQ / 2, dg.y - SQ * .7, 1.15, 1);
+      if (view >= 0) { ctx.fillStyle = 'rgba(20,24,32,.16)'; ctx.fillRect(FR, FR, SQ * 8, SQ * 8); }
       if (promo) {
         ctx.fillStyle = 'rgba(24,16,8,.5)'; ctx.fillRect(0, 0, SZ, SZ);
         const x = sx(promo.sq), top = sy(promo.sq) < SZ / 2;
@@ -2243,37 +2588,49 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     engine: { chessEngine, START },
     icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 56h28M21 50h22"/><path d="M23 50c0-7 3-12 8-16-4 1-9 2-12-1-2-2-1-5 1-7 4-4 7-9 9-14l1-6 4 5c9 2 14 10 14 22 0 6-1 11-2 17"/><circle cx="30" cy="20" r="1.6" fill="currentColor"/></svg>',
     css: kitCss('.gm-chess') + `
-.gm-chess{padding:12px;border-radius:16px;background:#312e2b;color:#fff}
-.gm-chess .main>canvas{background:#312e2b;box-shadow:none;border-radius:6px}
-.gm-chess .seg,.gm-chess .elo,.gm-chess .hist,.gm-chess .pc{background:#262421}
-.gm-chess .seg button{color:#bababa}
+.gm-chess{padding:12px;border-radius:16px;background:#22262e;color:#eef1f6}
+.gm-chess .main>canvas{background:#22262e;box-shadow:none;border-radius:6px}
+.gm-chess .seg,.gm-chess .elo,.gm-chess .hist,.gm-chess .pc{background:#191c22}
+.gm-chess .seg button{color:#a7aebb}
 .gm-chess .seg button:hover{color:#fff}
-.gm-chess .seg button.on{background:#454240;color:#fff;box-shadow:none}
-.gm-chess .elo-h{color:#bababa}
+.gm-chess .seg button.on{background:#353b47;color:#fff;box-shadow:none}
+.gm-chess .seg[data-k="tc"] button{padding:8px 1px;font-size:11.5px;letter-spacing:-.2px}
+.gm-chess .elo-h{color:#a7aebb}
 .gm-chess .elo-h b{color:#fff}
-.gm-chess .elo-s{color:#8b8987}
-.gm-chess .elo input{accent-color:#81b64c}
+.gm-chess .elo-s{color:#7f8796}
+.gm-chess .elo input{accent-color:#e0ae46}
 .gm-chess .pc{border-radius:8px;border-color:transparent}
-.gm-chess .pc.on{background:#262421;border-color:#81b64c;box-shadow:none}
+.gm-chess .pc.on{background:#191c22;border-color:#e0ae46;box-shadow:none}
 .gm-chess .pc b{color:#fff}
-.gm-chess .pc small{color:#989795}
-.gm-chess .pc small em{color:#bababa}
+.gm-chess .pc small{color:#959cab}
+.gm-chess .pc small em{color:#c9ced8}
 .gm-chess .chip{border-radius:4px}
-.gm-chess .dots i{background:#81b64c}
-.gm-chess .clk{flex:none;margin-left:auto;padding:5px 8px;border-radius:4px;background:#2b2926;color:#7c7b79;font:800 15px/1 var(--mono);box-shadow:inset 0 0 0 1px #3c3a37}
-.gm-chess .clk.run{background:#fff;color:#262421;box-shadow:none}
+.gm-chess .dots i{background:#e0ae46}
+.gm-chess .clk{flex:none;margin-left:auto;padding:5px 8px;border-radius:4px;background:#23272f;color:#7f8796;font:800 15px/1 var(--mono);box-shadow:inset 0 0 0 1px #363b46;font-variant-numeric:tabular-nums}
+.gm-chess .clk.run{background:#f4f1e8;color:#1b1e24;box-shadow:none}
+.gm-chess .clk.low{color:#ff8b7d}
+.gm-chess .clk.run.low{background:#ffd8d1;color:#9c1608}
 .gm-chess .st{color:#fff}
-.gm-chess .st.turn{background:#81b64c;box-shadow:0 4px 0 #45753c}
-.gm-chess .st.warn{color:#ffb347}
-.gm-chess .hist{color:#c3c2c1}
-.gm-chess .hist em{color:#8b8987}
-.gm-chess .hist .cur{color:#fff;background:#454240;border-radius:3px}
-.gm-chess .hist .none{color:#8b8987}
-.gm-chess .btns .g-btn{background:#81b64c;color:#fff;border:0;box-shadow:0 4px 0 #45753c}
-.gm-chess .btns .g-btn.ghost{background:#454240;color:#fff;box-shadow:0 4px 0 #2b2926}
+.gm-chess .st.turn{background:#e0ae46;color:#2a1c06;box-shadow:0 4px 0 #a37a26}
+.gm-chess .st.warn{color:#ffc061}
+.gm-chess .hist{color:#c9ced8}
+.gm-chess .hist em{color:#7f8796}
+.gm-chess .hist span[data-i]{cursor:pointer;border-radius:3px;padding:0 3px;margin:0 -3px}
+.gm-chess .hist span[data-i]:hover{background:#2a2f39}
+.gm-chess .hist .cur{color:#fff;background:#353b47}
+.gm-chess .hist .none{color:#7f8796}
+.gm-chess .tools{display:flex;gap:4px}
+.gm-chess .tools button{flex:1;min-width:0;height:30px;display:flex;align-items:center;justify-content:center;border:0;border-radius:6px;background:#191c22;color:#c9ced8;font:900 11.5px/1 var(--sans);letter-spacing:.3px;cursor:pointer;transition:background .15s,color .15s}
+.gm-chess .tools button svg{width:14px;height:14px;fill:currentColor}
+.gm-chess .tools button:hover:not(:disabled){background:#353b47;color:#fff}
+.gm-chess .tools button:disabled{opacity:.35;cursor:default}
+.gm-chess.review .tools [data-c="live"]{background:#e0ae46;color:#2a1c06;opacity:1}
+.gm-chess .btns .g-btn{background:#e0ae46;color:#2a1c06;border:0;box-shadow:0 4px 0 #a37a26}
+.gm-chess .btns .g-btn.ghost{background:#353b47;color:#fff;box-shadow:0 4px 0 #191c22}
 .gm-chess .btns .g-btn:disabled{opacity:.45}
-.gm-chess .cn{color:#bababa}
-@media (max-width:760px){.gm-chess{padding:8px}.gm-chess .clk{font-size:12px;padding:4px 5px}.gm-chess .pc{gap:6px;padding:6px 7px}}`,
+.gm-chess .cn{color:#a7aebb}
+@media (max-width:760px){.gm-chess{padding:8px}.gm-chess .clk{font-size:12px;padding:4px 5px}.gm-chess .pc{gap:6px;padding:6px 7px}}
+@media (pointer:coarse){.gm-chess .tools button{height:38px}}`,
     mount: mountChess
   });
   Ameplay.register({
@@ -2294,7 +2651,7 @@ ${p}.tbl .pc.ai{transform:rotate(180deg)}
     id: 'reversi',
     title: 'Reversi',
     category: 'Board',
-    blurb: 'Flank and flip discs to own the board in classic Othello.',
+    blurb: 'Flank and flip discs to own the board in classic Reversi.',
     help: 'Tap a dot to place a disc · arrows + <kbd>Enter</kbd> · <kbd>U</kbd> undo · <kbd>N</kbd> new game',
     better: 'high',
     format: winsFmt,

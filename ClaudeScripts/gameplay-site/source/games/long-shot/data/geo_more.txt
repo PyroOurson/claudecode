@@ -1,0 +1,496 @@
+@set landmarks
+9|Eiffel Tower|Tour Eiffel|
+8|Statue of Liberty|Statue de la Liberté|
+8|Great Wall of China/Great Wall|Grande Muraille de Chine/Grande Muraille/Muraille de Chine|
+8|Pyramids of Giza/Great Pyramid/Pyramids/Great Pyramid of Giza|Pyramides de Gizeh/Grande Pyramide/Pyramides/Pyramide de Khéops|
+8|Colosseum/Coliseum|Colisée|
+8|Big Ben/Elizabeth Tower||
+8|Taj Mahal||
+7|Leaning Tower of Pisa/Tower of Pisa|Tour de Pise/Tour penchée de Pise|
+7|Machu Picchu||
+7|Christ the Redeemer|Christ Rédempteur|
+7|Sydney Opera House|Opéra de Sydney|
+7|Arc de Triomphe|Arc de Triomphe|
+7|Stonehenge||
+6|Louvre/Louvre Museum|Louvre/Musée du Louvre|
+6|Notre-Dame/Notre-Dame de Paris/Notre Dame|Notre-Dame/Notre-Dame de Paris|
+6|Golden Gate Bridge/Golden Gate|Pont du Golden Gate/Golden Gate|
+6|Empire State Building|Empire State Building|
+6|Mount Rushmore|Mont Rushmore|
+6|Burj Khalifa||
+6|Sagrada Família/Sagrada Familia||
+6|Acropolis|Acropole|
+6|Parthenon|Parthénon|
+6|Petra|Pétra|
+6|Chichen Itza||
+6|Angkor Wat||
+6|Kremlin||
+6|Red Square|Place Rouge|
+6|Tower Bridge||
+6|Tower of London|Tour de Londres|
+6|Buckingham Palace|Palais de Buckingham|
+6|Palace of Versailles/Versailles|Château de Versailles/Versailles|
+6|Mont-Saint-Michel/Mont Saint-Michel||
+6|Sphinx/Great Sphinx|Sphinx/Grand Sphinx|
+5|Neuschwanstein/Neuschwanstein Castle|Château de Neuschwanstein|
+5|Brandenburg Gate|Porte de Brandebourg|
+5|Berlin Wall|Mur de Berlin|
+5|Alhambra||
+5|Hagia Sophia|Sainte-Sophie/Basilique Sainte-Sophie|
+5|Blue Mosque|Mosquée bleue|
+5|Trevi Fountain|Fontaine de Trevi|
+5|St. Peter's Basilica/Saint Peter's Basilica|Basilique Saint-Pierre|
+5|Sistine Chapel|Chapelle Sixtine|
+5|Pantheon|Panthéon|
+5|Forbidden City|Cité interdite|
+5|Terracotta Army|Armée de terre cuite|
+5|Easter Island statues/Moai|Moaï/Statues de l'île de Pâques|
+5|London Eye||
+5|Westminster Abbey|Abbaye de Westminster|
+5|Times Square||
+5|Central Park||
+5|White House|Maison-Blanche|
+5|Hollywood Sign|Panneau Hollywood|
+5|Space Needle||
+5|CN Tower|Tour CN|
+5|Niagara Falls|Chutes du Niagara|
+5|Grand Canyon||
+5|Golden Temple|Temple d'or|
+5|Petronas Towers|Tours Petronas|
+5|Marina Bay Sands||
+5|Burj Al Arab||
+5|Kaaba||
+5|Western Wall/Wailing Wall|Mur des Lamentations|
+5|Dome of the Rock|Dôme du Rocher|
+5|Abu Simbel||
+5|Valley of the Kings|Vallée des Rois|
+3|Atomium||
+3|Manneken Pis||
+3|Little Mermaid|Petite Sirène|
+2|Charles Bridge|Pont Charles|
+2|Rialto Bridge|Pont du Rialto|
+2|St. Mark's Basilica/Saint Mark's Basilica|Basilique Saint-Marc|
+2|Doge's Palace|Palais des Doges|
+2|Duomo/Florence Cathedral|Duomo/Cathédrale de Florence|
+2|Milan Cathedral|Cathédrale de Milan/Duomo de Milan|
+2|Ponte Vecchio||
+4|Pompeii|Pompéi|
+2|Château de Chambord/Chambord||
+4|Sacré-Cœur/Sacre Coeur|Sacré-Cœur/Basilique du Sacré-Cœur|
+3|Pont du Gard||
+3|Centre Pompidou/Pompidou Centre|Centre Pompidou/Beaubourg|
+2|Musée d'Orsay/Orsay Museum|Musée d'Orsay|
+2|Grand Palais||
+2|Opéra Garnier/Palais Garnier|Opéra Garnier/Palais Garnier|
+2|Les Invalides|Les Invalides/Hôtel des Invalides|
+2|La Défense||
+4|Champs-Élysées/Champs Elysees||
+3|Carcassonne/Cité de Carcassonne|Cité de Carcassonne|
+3|Millau Viaduct|Viaduc de Millau|
+3|Edinburgh Castle|Château d'Édimbourg|
+2|Windsor Castle|Château de Windsor|
+3|Hadrian's Wall|Mur d'Hadrien|
+3|Giant's Causeway|Chaussée des Géants|
+2|Cliffs of Moher|Falaises de Moher|
+2|Cologne Cathedral|Cathédrale de Cologne|
+2|Belém Tower/Tower of Belém|Tour de Belém|
+2|Park Güell/Parc Güell|Parc Güell|
+2|Guggenheim Museum/Guggenheim|Musée Guggenheim/Guggenheim|
+2|Prado/Prado Museum|Musée du Prado/Prado|
+2|Meteora|Météores|
+2|Delphi|Delphes|
+2|Knossos|Cnossos|
+2|Ephesus|Éphèse|
+2|Cappadocia|Cappadoce|
+2|Saint Basil's Cathedral/St. Basil's Cathedral|Cathédrale Saint-Basile|
+2|Hermitage Museum/Hermitage|Musée de l'Ermitage/Ermitage|
+2|Peterhof||
+2|Hallgrímskirkja||
+3|Mount Fuji|Mont Fuji|
+2|Tokyo Tower|Tour de Tokyo|
+2|Tokyo Skytree||
+2|Itsukushima Shrine/Floating Torii|Sanctuaire d'Itsukushima|
+2|Fushimi Inari||
+2|Himeji Castle|Château de Himeji|
+2|Kinkaku-ji/Golden Pavilion|Kinkaku-ji/Pavillon d'or|
+2|Potala Palace|Palais du Potala|
+2|Summer Palace|Palais d'été|
+2|Temple of Heaven|Temple du Ciel|
+2|Oriental Pearl Tower|Perle de l'Orient|
+2|Borobudur||
+2|Gateway of India|Porte de l'Inde|
+2|Red Fort|Fort Rouge|
+2|Lotus Temple|Temple du Lotus|
+2|Hampi||
+2|Sigiriya||
+2|Shwedagon Pagoda|Pagode Shwedagon|
+2|Bagan||
+3|Ha Long Bay/Halong Bay|Baie d'Along/Baie d'Ha Long|
+2|Wat Arun||
+2|Grand Palace|Grand Palais de Bangkok|
+2|Sheikh Zayed Mosque/Sheikh Zayed Grand Mosque|Grande mosquée Sheikh Zayed|
+2|Persepolis|Persépolis|
+2|Baalbek||
+2|Göbekli Tepe||
+3|Table Mountain|Montagne de la Table|
+4|Victoria Falls|Chutes Victoria|
+2|Great Mosque of Djenné/Djenné|Grande mosquée de Djenné|
+2|Hassan II Mosque|Mosquée Hassan-II|
+2|Carthage||
+2|Timbuktu|Tombouctou|
+2|Great Zimbabwe|Grand Zimbabwe|
+2|Lalibela||
+3|Kilimanjaro||
+4|Uluru/Ayers Rock||
+3|Sydney Harbour Bridge|Harbour Bridge|
+4|Great Barrier Reef|Grande Barrière de corail|
+2|Hobbiton||
+2|Lincoln Memorial|Lincoln Memorial|
+3|Washington Monument||
+3|Capitol/United States Capitol|Capitole|
+3|Pentagon|Pentagone|
+3|Alcatraz||
+3|Brooklyn Bridge|Pont de Brooklyn|
+2|Chrysler Building||
+2|One World Trade Center/Freedom Tower||
+2|Rockefeller Center||
+2|Gateway Arch||
+3|Hoover Dam|Barrage Hoover|
+3|Yellowstone||
+2|Yosemite||
+2|Las Vegas Strip/The Strip||
+2|Walk of Fame|Hollywood Walk of Fame|
+4|Disneyland||
+2|Chateau Frontenac/Château Frontenac|Château Frontenac|
+2|Teotihuacan|Teotihuacán|
+2|Tikal||
+3|Panama Canal|Canal de Panama|
+3|Iguazu Falls|Chutes d'Iguazú|
+2|Angel Falls|Salto Ángel|
+2|Sugarloaf Mountain|Pain de Sucre|
+2|Copacabana||
+3|Nazca Lines|Lignes de Nazca|
+2|Galápagos||
+3|Suez Canal|Canal de Suez|
+3|Channel Tunnel|Tunnel sous la Manche|
+3|Matterhorn|Cervin|
+2|Château de Chenonceau/Chenonceau|Chenonceau|
+3|Lascaux||
+3|Hall of Mirrors|Galerie des Glaces|
+2|Place de la Concorde||
+2|Luxor Temple|Temple de Louxor|
+2|Karnak||
+2|Rock of Gibraltar|Rocher de Gibraltar|
+2|Kinderdijk||
+3|Rijksmuseum||
+3|Anne Frank House|Maison d'Anne Frank|
+2|Alcázar of Seville|Alcazar de Séville|
+2|Plaza Mayor||
+2|Royal Palace of Madrid|Palais royal de Madrid|
+2|Schönbrunn Palace|Château de Schönbrunn|
+2|St. Stephen's Cathedral|Cathédrale Saint-Étienne de Vienne|
+2|Hungarian Parliament|Parlement hongrois|
+2|Wawel Castle|Château du Wawel|
+3|Auschwitz||
+2|Bran Castle|Château de Bran|
+2|Dubrovnik Old Town/Dubrovnik|Dubrovnik|
+2|Plitvice Lakes|Lacs de Plitvice|
+2|Blue Lagoon|Lagon bleu|
+0|Paris||no
+0|London|Londres|no
+
+@set languages
+9|English|Anglais|
+9|French|Français|
+9|Spanish|Espagnol|
+8|Chinese/Mandarin/Mandarin Chinese|Chinois/Mandarin|
+8|German|Allemand|
+8|Italian|Italien|
+8|Arabic|Arabe|
+8|Japanese|Japonais|
+7|Portuguese|Portugais|
+7|Russian|Russe|
+6|Hindi||
+6|Korean|Coréen|
+5|Dutch|Néerlandais/Hollandais|
+5|Greek|Grec|
+5|Latin||
+5|Turkish|Turc|
+5|Swedish|Suédois|
+5|Polish|Polonais|
+5|Hebrew|Hébreu|
+4|Norwegian|Norvégien|
+4|Danish|Danois|
+4|Finnish|Finnois|
+4|Cantonese|Cantonais|
+4|Bengali||
+4|Urdu|Ourdou|
+4|Persian/Farsi|Persan/Farsi|
+4|Vietnamese|Vietnamien|
+4|Thai|Thaï|
+4|Indonesian|Indonésien|
+4|Swahili||
+4|Ukrainian|Ukrainien|
+4|Romanian|Roumain|
+4|Hungarian|Hongrois|
+4|Czech|Tchèque|
+4|Irish/Irish Gaelic/Gaelic|Irlandais/Gaélique|
+4|Welsh|Gallois|
+4|Esperanto|Espéranto|
+4|Breton||
+4|Basque||
+4|Catalan||
+4|Corsican|Corse|
+4|Occitan||
+4|Alsatian|Alsacien|
+3|Scottish Gaelic|Gaélique écossais|
+3|Icelandic|Islandais|
+3|Croatian|Croate|
+3|Serbian|Serbe|
+3|Bulgarian|Bulgare|
+3|Slovak|Slovaque|
+3|Slovenian|Slovène|
+3|Lithuanian|Lituanien|
+3|Latvian|Letton|
+3|Estonian|Estonien|
+3|Albanian|Albanais|
+3|Macedonian|Macédonien|
+3|Bosnian|Bosnien|
+3|Maltese|Maltais|
+3|Luxembourgish|Luxembourgeois|
+3|Galician|Galicien|
+3|Flemish|Flamand|
+3|Afrikaans||
+3|Zulu|Zoulou|
+3|Xhosa||
+3|Yoruba||
+3|Igbo||
+3|Hausa|Haoussa|
+3|Amharic|Amharique|
+3|Somali|Somali|
+3|Berber/Tamazight|Berbère/Tamazight|
+3|Wolof||
+3|Lingala||
+3|Malagasy|Malgache|
+3|Tamil|Tamoul|
+3|Telugu|Télougou|
+3|Punjabi|Pendjabi|
+3|Marathi||
+3|Gujarati|Goudjarati|
+3|Kannada||
+3|Malayalam||
+3|Nepali|Népalais|
+3|Sanskrit||
+3|Tagalog/Filipino|Tagalog/Filipino|
+3|Malay|Malais|
+3|Khmer||
+3|Lao|Lao/Laotien|
+3|Burmese|Birman|
+3|Mongolian|Mongol|
+3|Tibetan|Tibétain|
+3|Uyghur|Ouïghour|
+3|Kazakh|Kazakh|
+3|Uzbek|Ouzbek|
+3|Armenian|Arménien|
+3|Georgian|Géorgien|
+3|Azerbaijani|Azéri|
+3|Kurdish|Kurde|
+3|Pashto|Pachto|
+3|Yiddish||
+3|Hawaiian|Hawaïen|
+3|Maori|Maori|
+3|Samoan|Samoan|
+3|Tongan|Tongien|
+3|Fijian|Fidjien|
+3|Quechua||
+3|Guarani||
+3|Aymara||
+3|Nahuatl||
+3|Mayan/Maya|Maya|
+3|Navajo||
+3|Cherokee||
+3|Inuktitut||
+3|Greenlandic|Groenlandais|
+3|Sami|Same|
+3|Faroese|Féroïen|
+3|Creole/Haitian Creole|Créole/Créole haïtien|
+3|Sign language/British Sign Language/American Sign Language|Langue des signes|
+2|Cornish|Cornique|
+2|Manx|Mannois|
+2|Frisian|Frison|
+2|Sardinian|Sarde|
+2|Sicilian|Sicilien|
+2|Romansh|Romanche|
+2|Provençal|Provençal|
+2|Picard||
+2|Walloon|Wallon|
+2|Ladino||
+2|Belarusian|Biélorusse|
+2|Moldovan|Moldave|
+2|Chechen|Tchétchène|
+2|Tatar||
+2|Ossetian|Ossète|
+2|Aramaic|Araméen|
+2|Coptic|Copte|
+2|Ancient Egyptian/Egyptian hieroglyphs|Égyptien ancien|
+2|Sumerian|Sumérien|
+2|Akkadian|Akkadien|
+2|Old Norse|Vieux norrois|
+2|Old English/Anglo-Saxon|Vieil anglais|
+2|Gothic|Gotique|
+2|Etruscan|Étrusque|
+2|Tigrinya|Tigrigna|
+2|Oromo||
+2|Kinyarwanda||
+2|Kirundi||
+2|Shona||
+2|Sesotho/Sotho||
+2|Tswana/Setswana||
+2|Fula/Fulani|Peul|
+2|Bambara||
+2|Twi/Akan|Twi/Akan|
+2|Ewe|Éwé|
+2|Sinhala|Cinghalais|
+2|Dhivehi|Divehi|
+2|Javanese|Javanais|
+2|Sundanese|Soundanais|
+2|Balinese|Balinais|
+2|Cebuano||
+2|Hmong||
+2|Dzongkha||
+2|Tajik|Tadjik|
+2|Turkmen|Turkmène|
+2|Kyrgyz|Kirghiz|
+2|Klingon||
+2|Elvish/Sindarin/Quenya|Elfique|
+2|Tok Pisin||
+2|Bislama||
+2|Papiamento||
+2|Hokkien||
+2|Wu/Shanghainese|Wu/Shanghaïen|
+2|Hakka||
+2|Ainu/Aïnou|Aïnou|
+0|Latin American|Latino|no
+0|American|Américain|no
+0|Mexican|Mexicain|no
+0|Brazilian|Brésilien|no
+0|Indian|Indien|no
+0|Swiss|Suisse|no
+0|Belgian|Belge|no
+0|Austrian|Autrichien|no
+0|Canadian|Canadien|no
+0|Australian|Australien|no
+0|Python||no
+0|JavaScript||no
+
+@set currencies
+9|Euro||
+9|Dollar/US Dollar|Dollar/Dollar américain|
+8|Pound/Pound sterling/British pound|Livre/Livre sterling|
+8|Yen|Yen|
+6|Swiss franc|Franc suisse|
+6|Franc|Franc|
+6|Ruble/Rouble|Rouble|
+6|Yuan/Renminbi|Yuan/Renminbi|
+6|Rupee/Indian rupee|Roupie/Roupie indienne|
+5|Canadian dollar|Dollar canadien|
+5|Australian dollar|Dollar australien|
+5|Peso|Peso|
+5|Mexican peso|Peso mexicain|
+5|Real/Brazilian real|Réal/Réal brésilien|
+5|Won|Won|
+5|Krone/Krona/Crown|Couronne|
+5|Lira/Turkish lira|Livre turque|
+5|Dirham||
+5|Dinar||
+5|Riyal/Rial||
+5|Bitcoin||
+5|Italian lira|Lire/Lire italienne|
+4|Mark/Deutsche Mark/Deutschmark|Mark/Deutsche Mark|
+4|Peseta||
+3|Drachma|Drachme|
+3|Escudo||
+3|Guilder/Florin|Florin|
+3|Shekel/New shekel|Shekel/Nouveau shekel|
+3|Rand||
+3|Naira||
+3|Shilling||
+3|Zloty/Złoty||
+3|Forint||
+3|Koruna/Czech koruna|Couronne tchèque|
+2|Leu|Leu|
+2|Lev|Lev|
+2|Hryvnia|Hryvnia|
+2|Kuna||
+3|Baht||
+3|Ringgit||
+3|Rupiah|Roupie indonésienne|
+3|Dong||
+2|Taka||
+2|Kip||
+2|Riel||
+2|Kyat||
+2|Tugrik/Tögrög|Tugrik|
+2|Tenge||
+2|Som||
+2|Manat||
+2|Lari||
+2|Dram||
+2|Afghani||
+2|Iranian rial|Rial iranien|
+2|Egyptian pound|Livre égyptienne|
+3|CFA franc/West African CFA franc|Franc CFA|
+2|CFP franc|Franc CFP|
+2|Cedi||
+2|Birr||
+2|Kwacha||
+2|Kwanza||
+2|Ariary||
+2|Pula||
+2|Loti||
+2|Lilangeni||
+2|Dalasi||
+2|Leone||
+2|Ouguiya||
+2|Nakfa||
+3|Bolívar/Bolivar|Bolivar|
+2|Boliviano||
+3|Sol/Nuevo sol|Sol|
+2|Guaraní|Guarani|
+2|Colón/Colon|Colón|
+2|Quetzal||
+2|Lempira||
+2|Córdoba/Cordoba|Córdoba|
+2|Balboa||
+2|Gourde||
+3|New Zealand dollar/Kiwi dollar|Dollar néo-zélandais|
+3|Singapore dollar|Dollar de Singapour|
+3|Hong Kong dollar|Dollar de Hong Kong|
+2|Taiwan dollar/New Taiwan dollar|Dollar de Taïwan|
+2|Kina||
+2|Pa'anga/Paanga||
+2|Tala||
+2|Vatu||
+2|Rufiyaa||
+2|Ngultrum||
+2|Denar||
+2|Convertible mark|Mark convertible|
+3|Ecu/ECU|Écu|
+3|Louis d'or||
+3|Sestertius|Sesterce|
+3|Denarius|Denier|
+3|Ducat|Ducat|
+3|Doubloon|Doublon|
+3|Ethereum/Ether||
+3|Dogecoin||
+2|Sou||
+2|Livre tournois||
+2|Thaler/Taler|Thaler|
+2|Groat||
+2|Farthing||
+2|Guinea|Guinée|
+0|Cent|Centime|no
+0|Penny|Penny|no
+0|Coin|Pièce|no
+0|Money|Argent|no
+0|Gold|Or|no

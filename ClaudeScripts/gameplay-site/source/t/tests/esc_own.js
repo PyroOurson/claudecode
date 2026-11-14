@@ -1,0 +1,43 @@
+const lib = require('../lib.js');
+const html = process.argv[2] || 'C:/tmp/gp/lead/mini.html';
+const game = process.argv[3] || 'snake';
+(async () => {
+  const g = await lib.open(html, game);
+  const out = [], fail = [];
+  const must = (ok, m) => { (ok ? out : fail).push(m); };
+  try {
+    await g.start();
+    await g.page.waitForTimeout(800);
+    const paused = () => g.page.evaluate(() => !!document.querySelector('#frame .g-pause'));
+    await g.page.evaluate(() => { window.__esc = 0; document.addEventListener('keydown', e => { if (e.key === 'Escape') window.__esc++; }); });
+    await g.page.keyboard.press('Escape');
+    await g.page.waitForTimeout(400);
+    must(await paused(), 'Esc pauses a game by default');
+    await g.page.keyboard.press('Escape');
+    await g.page.waitForTimeout(400);
+    must(!(await paused()), 'Esc again resumes');
+    const set = await g.page.evaluate(() => { const a = Ameplay.debug.api(); if (!a) return false; window.__win = true; a.escOwn = () => window.__win; return true; });
+    must(set, 'the game api can carry escOwn');
+    const before = await g.page.evaluate(() => window.__esc);
+    await g.page.keyboard.press('Escape');
+    await g.page.waitForTimeout(400);
+    const got = await g.page.evaluate(() => window.__esc);
+    must(!(await paused()) && got === before + 1, 'with a game window open Esc reaches the game and does not pause (paused: ' + (await paused()) + ', game saw: ' + (got - before) + ')');
+    await g.page.evaluate(() => { window.__win = false; });
+    await g.page.keyboard.press('Escape');
+    await g.page.waitForTimeout(400);
+    must(await paused(), 'with the window closed Esc pauses again');
+    await g.page.keyboard.press('Escape');
+    await g.page.waitForTimeout(300);
+    await g.page.evaluate(() => { window.__win = true; });
+    await g.page.click('#pPause');
+    await g.page.waitForTimeout(400);
+    must(await paused(), 'the pause button still pauses while the game owns Esc');
+    must(!g.errs.length, 'no page errors (' + g.errs.slice(0, 2).join(' | ') + ')');
+  } catch (e) { fail.push('error: ' + String(e && e.message || e).split('\n')[0]); }
+  await g.close();
+  out.forEach(m => console.log('PASS ' + m));
+  fail.forEach(m => console.log('FAIL ' + m));
+  console.log(fail.length ? fail.length + ' failing' : 'all passing');
+  process.exit(fail.length ? 1 : 0);
+})();

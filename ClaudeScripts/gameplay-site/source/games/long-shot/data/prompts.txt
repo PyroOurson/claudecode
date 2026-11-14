@@ -1,0 +1,115 @@
+# id|family|flags (d = daily and endless, e = endless and rooms only)|answer source|en|fr|es|de|it|pt
+# source: set, set:tag, set:tag1,tag2 (either), set:tag1+tag2 (both), set:!tag, set:*~suffix, set:*@LETTERS (one prompt per letter), en=set;fr=set (per language)
+country-any|country|d|countries:*|A country|Un pays|Un país|Ein Land|Un paese|Um país
+country-af|country|d|countries:af|A country in Africa|Un pays d’Afrique|Un país de África|Ein Land in Afrika|Un paese dell’Africa|Um país da África
+country-as|country|d|countries:as|A country in Asia|Un pays d’Asie|Un país de Asia|Ein Land in Asien|Un paese dell’Asia|Um país da Ásia
+country-eu|country|d|countries:eu|A country in Europe|Un pays d’Europe|Un país de Europa|Ein Land in Europa|Un paese d’Europa|Um país da Europa
+country-na|country|d|countries:na|A country in North or Central America|Un pays d’Amérique du Nord ou centrale|Un país de América del Norte o Central|Ein Land in Nord- oder Mittelamerika|Un paese del Nord o del Centro America|Um país da América do Norte ou Central
+country-sa|country|e|countries:sa|A country in South America|Un pays d’Amérique du Sud|Un país de América del Sur|Ein Land in Südamerika|Un paese del Sud America|Um país da América do Sul
+country-oc|country|e|countries:oc|A country in Oceania|Un pays d’Océanie|Un país de Oceanía|Ein Land in Ozeanien|Un paese dell’Oceania|Um país da Oceania
+country-ll|country|d|countries:ll|A landlocked country|Un pays sans accès à la mer|Un país sin salida al mar|Ein Binnenstaat ohne Meerzugang|Un paese senza sbocco sul mare|Um país sem saída para o mar
+country-isl|country|d|countries:isl|An island country|Un pays insulaire|Un país insular|Ein Inselstaat|Uno stato insulare|Um país insular
+country-letter|country|d|countries:*@ABCMST|A country starting with {x}|Un pays qui commence par {x}|Un país que empieza por {x}|Ein Land, das mit {x} beginnt|Un paese che inizia con {x}|Um país que começa com {x}
+country-letter2|country|e|countries:*@GNP|A country starting with {x}|Un pays qui commence par {x}|Un país que empieza por {x}|Ein Land, das mit {x} beginnt|Un paese che inizia con {x}|Um país que começa com {x}
+capital-any|capital|d|capitals:*|A capital city|Une capitale|Una capital|Eine Hauptstadt|Una capitale|Uma capital
+capital-eu|capital|d|capitals:eu|A capital city in Europe|Une capitale européenne|Una capital europea|Eine Hauptstadt in Europa|Una capitale europea|Uma capital europeia
+capital-as|capital|d|capitals:as|A capital city in Asia|Une capitale asiatique|Una capital asiática|Eine Hauptstadt in Asien|Una capitale asiatica|Uma capital asiática
+capital-af|capital|d|capitals:af|A capital city in Africa|Une capitale africaine|Una capital africana|Eine Hauptstadt in Afrika|Una capitale africana|Uma capital africana
+capital-am|capital|d|capitals:na,sa|A capital city in the Americas|Une capitale du continent américain|Una capital de América|Eine Hauptstadt in Amerika|Una capitale delle Americhe|Uma capital das Américas
+us-state|capital|d|us_states:*|A US state|Un État des États-Unis|Un estado de EE. UU.|Ein US-Bundesstaat|Uno stato degli Stati Uniti|Um estado dos EUA
+us-state-letter|capital|e|us_states:*@MN|A US state starting with {x}|Un État américain qui commence par {x}|Un estado de EE. UU. que empieza por {x}|Ein US-Bundesstaat, der mit {x} beginnt|Uno stato degli USA che inizia con {x}|Um estado dos EUA que começa com {x}
+city-fr|places|d|cities:fr|A city in France|Une ville de France|Una ciudad de Francia|Eine Stadt in Frankreich|Una città della Francia|Uma cidade da França
+city-us|places|d|cities:us|A city in the United States|Une ville des États-Unis|Una ciudad de Estados Unidos|Eine Stadt in den USA|Una città degli Stati Uniti|Uma cidade dos Estados Unidos
+city-uk|places|d|cities:uk|A city in the United Kingdom|Une ville du Royaume-Uni|Una ciudad del Reino Unido|Eine Stadt im Vereinigten Königreich|Una città del Regno Unito|Uma cidade do Reino Unido
+city-it|places|d|cities:it|A city in Italy|Une ville d’Italie|Una ciudad de Italia|Eine Stadt in Italien|Una città d’Italia|Uma cidade da Itália
+city-es|places|d|cities:es|A city in Spain|Une ville d’Espagne|Una ciudad de España|Eine Stadt in Spanien|Una città della Spagna|Uma cidade da Espanha
+city-de|places|d|cities:de|A city in Germany|Une ville d’Allemagne|Una ciudad de Alemania|Eine Stadt in Deutschland|Una città della Germania|Uma cidade da Alemanha
+city-jp|places|d|cities:jp|A city in Japan|Une ville du Japon|Una ciudad de Japón|Eine Stadt in Japan|Una città del Giappone|Uma cidade do Japão
+city-ca|places|e|cities:ca|A city in Canada|Une ville du Canada|Una ciudad de Canadá|Eine Stadt in Kanada|Una città del Canada|Uma cidade do Canadá
+river|places|d|rivers:*|A river|Un fleuve ou une rivière|Un río|Ein Fluss|Un fiume|Um rio
+river-eu|places|d|rivers:eu|A river in Europe|Un fleuve ou une rivière d’Europe|Un río de Europa|Ein Fluss in Europa|Un fiume d’Europa|Um rio da Europa
+river-fr|places|e|rivers:fr|A river in France|Un fleuve ou une rivière de France|Un río de Francia|Ein Fluss in Frankreich|Un fiume della Francia|Um rio da França
+sea|places|d|seas:*|A sea or ocean|Une mer ou un océan|Un mar u océano|Ein Meer oder Ozean|Un mare o un oceano|Um mar ou oceano
+island|places|d|islands:*|An island|Une île|Una isla|Eine Insel|Un’isola|Uma ilha
+mountain|places|d|mountains:*|A mountain or mountain range|Une montagne ou un massif|Una montaña o cordillera|Ein Berg oder Gebirge|Una montagna o catena montuosa|Uma montanha ou cordilheira
+desert|places|d|deserts:*|A desert|Un désert|Un desierto|Eine Wüste|Un deserto|Um deserto
+lake|places|d|lakes:*|A lake|Un lac|Un lago|Ein See|Un lago|Um lago
+landmark|places|d|landmarks:*|A famous landmark or monument|Un monument ou un lieu célèbre|Un monumento o lugar famoso|Ein berühmtes Wahrzeichen oder Bauwerk|Un monumento o luogo famoso|Um monumento ou lugar famoso
+animal|animals|d|animals:*|An animal|Un animal|Un animal|Ein Tier|Un animale|Um animal
+mammal|animals|d|animals:mam|A mammal|Un mammifère|Un mamífero|Ein Säugetier|Un mammifero|Um mamífero
+bird|animals|d|animals:bird|A bird|Un oiseau|Un ave|Ein Vogel|Un uccello|Uma ave
+fish|animals|d|animals:fish|A fish|Un poisson|Un pez|Ein Fisch|Un pesce|Um peixe
+reptile|animals|d|animals:rep,amp|A reptile or amphibian|Un reptile ou un amphibien|Un reptil o un anfibio|Ein Reptil oder Amphibium|Un rettile o un anfibio|Um réptil ou anfíbio
+insect|animals|d|animals:ins|An insect|Un insecte|Un insecto|Ein Insekt|Un insetto|Um inseto
+sea-creature|animals|d|animals:sea|A sea creature|Un animal marin|Un animal marino|Ein Meerestier|Un animale marino|Um animal marinho
+farm-animal|animals|d|animals:farm|A farm animal|Un animal de la ferme|Un animal de granja|Ein Bauernhoftier|Un animale da fattoria|Um animal de fazenda
+african-animal|animals|d|animals:af|An animal that lives wild in Africa|Un animal sauvage d’Afrique|Un animal salvaje de África|Ein Wildtier aus Afrika|Un animale selvatico dell’Africa|Um animal selvagem da África
+aus-animal|animals|e|animals:aus|An animal that lives in Australia|Un animal d’Australie|Un animal de Australia|Ein Tier aus Australien|Un animale dell’Australia|Um animal da Austrália
+polar-animal|animals|e|animals:arc|An animal of the polar regions|Un animal des régions polaires|Un animal de las regiones polares|Ein Tier der Polargebiete|Un animale delle regioni polari|Um animal das regiões polares
+animal-letter|animals|d|animals:*@BCMST|An animal starting with {x}|Un animal qui commence par {x}|Un animal que empieza por {x}|Ein Tier, das mit {x} beginnt|Un animale che inizia con {x}|Um animal que começa com {x}
+animal-letter2|animals|e|animals:*@GP|An animal starting with {x}|Un animal qui commence par {x}|Un animal que empieza por {x}|Ein Tier, das mit {x} beginnt|Un animale che inizia con {x}|Um animal que começa com {x}
+dog-breed|animals|d|dogs:*|A dog breed|Une race de chien|Una raza de perro|Eine Hunderasse|Una razza di cane|Uma raça de cachorro
+dinosaur|nature|d|prehistoric:*|A dinosaur or prehistoric creature|Un dinosaure ou un animal préhistorique|Un dinosaurio o animal prehistórico|Ein Dinosaurier oder Urzeittier|Un dinosauro o animale preistorico|Um dinossauro ou animal pré-histórico
+tree|nature|d|trees:*|A tree|Un arbre|Un árbol|Ein Baum|Un albero|Uma árvore
+flower|nature|d|flowers:*|A flower|Une fleur|Una flor|Eine Blume|Un fiore|Uma flor
+gem|nature|d|gems:*|A gemstone, rock or mineral|Une pierre précieuse, une roche ou un minéral|Una piedra preciosa, roca o mineral|Ein Edelstein, Gestein oder Mineral|Una pietra preziosa, roccia o minerale|Uma pedra preciosa, rocha ou mineral
+moon-planet|space|d|moons:earth,mars,jup,sat,ura,nep|A planet’s moon|Une lune d’une planète|Una luna de un planeta|Ein Mond eines Planeten|Una luna di un pianeta|Uma lua de um planeta
+moon-solar|space|d|moons:*|A moon in our Solar System|Une lune du Système solaire|Una luna del sistema solar|Ein Mond in unserem Sonnensystem|Una luna del Sistema solare|Uma lua do Sistema Solar
+moon-jupiter|space|e|moons:jup|A moon of Jupiter|Une lune de Jupiter|Una luna de Júpiter|Ein Jupitermond|Una luna di Giove|Uma lua de Júpiter
+moon-saturn|space|e|moons:sat|A moon of Saturn|Une lune de Saturne|Una luna de Saturno|Ein Saturnmond|Una luna di Saturno|Uma lua de Saturno
+constellation|space|d|constellations:*|A constellation|Une constellation|Una constelación|Ein Sternbild|Una costellazione|Uma constelação
+star|space|d|stars:*|A star other than the Sun|Une étoile autre que le Soleil|Una estrella que no sea el Sol|Ein Stern außer der Sonne|Una stella diversa dal Sole|Uma estrela que não seja o Sol
+element|science|d|elements:*|A chemical element|Un élément chimique|Un elemento químico|Ein chemisches Element|Un elemento chimico|Um elemento químico
+metal|science|d|elements:metal|A metal from the periodic table|Un métal du tableau périodique|Un metal de la tabla periódica|Ein Metall aus dem Periodensystem|Un metallo della tavola periodica|Um metal da tabela periódica
+element-ium|science|d|elements:*~ium|A chemical element ending in “-ium”|Un élément chimique qui finit par « -ium »|Un elemento químico que termina en «-ium»|Ein chemisches Element, das auf „-ium“ endet|Un elemento chimico che finisce in “-ium”|Um elemento químico terminado em “-ium”
+body-part|science|d|body:*|A part of the human body|Une partie du corps humain|Una parte del cuerpo humano|Ein Teil des menschlichen Körpers|Una parte del corpo umano|Uma parte do corpo humano
+bone|science|d|body:bone|A bone in the human body|Un os du corps humain|Un hueso del cuerpo humano|Ein Knochen des menschlichen Körpers|Un osso del corpo umano|Um osso do corpo humano
+organ|science|e|body:org|An organ of the human body|Un organe du corps humain|Un órgano del cuerpo humano|Ein Organ des menschlichen Körpers|Un organo del corpo umano|Um órgão do corpo humano
+fruit|food|d|fruits:*|A fruit|Un fruit|Una fruta|Eine Frucht|Un frutto|Uma fruta
+vegetable|food|d|vegetables:*|A vegetable|Un légume|Una verdura|Ein Gemüse|Una verdura|Um legume
+cheese|food|d|cheeses:*|A cheese|Un fromage|Un queso|Ein Käse|Un formaggio|Um queijo
+spice|food|d|spices:*|A herb or spice|Une herbe aromatique ou une épice|Una hierba aromática o una especia|Ein Küchenkraut oder Gewürz|Un’erba aromatica o una spezia|Uma erva aromática ou especiaria
+dessert|food|d|desserts:*|A dessert|Un dessert|Un postre|Ein Dessert|Un dolce|Uma sobremesa
+dish-it|food|d|dishes:it|An Italian dish|Un plat italien|Un plato italiano|Ein italienisches Gericht|Un piatto italiano|Um prato italiano
+dish-fr|food|d|dishes:fr|A French dish|Un plat français|Un plato francés|Ein französisches Gericht|Un piatto francese|Um prato francês
+dish-jp|food|d|dishes:jp|A Japanese dish|Un plat japonais|Un plato japonés|Ein japanisches Gericht|Un piatto giapponese|Um prato japonês
+dish-mx|food|d|dishes:mx|A Mexican dish|Un plat mexicain|Un plato mexicano|Ein mexikanisches Gericht|Un piatto messicano|Um prato mexicano
+dish-in|food|d|dishes:in|An Indian dish|Un plat indien|Un plato indio|Ein indisches Gericht|Un piatto indiano|Um prato indiano
+dish-cn|food|d|dishes:cn|A Chinese dish|Un plat chinois|Un plato chino|Ein chinesisches Gericht|Un piatto cinese|Um prato chinês
+pasta|food|d|pasta:*|A type of pasta|Une sorte de pâtes|Un tipo de pasta|Eine Nudelsorte|Un tipo di pasta|Um tipo de massa
+bread|food|d|breads:*|A type of bread or pastry|Un pain ou une viennoiserie|Un tipo de pan o bollería|Eine Brot- oder Gebäcksorte|Un tipo di pane o di brioche|Um tipo de pão ou de massa folhada
+sauce|food|d|sauces:*|A sauce or dip|Une sauce|Una salsa|Eine Soße oder ein Dip|Una salsa|Um molho
+instrument|culture|d|instruments:*|A musical instrument|Un instrument de musique|Un instrumento musical|Ein Musikinstrument|Uno strumento musicale|Um instrumento musical
+string-instrument|culture|e|instruments:str|A string instrument|Un instrument à cordes|Un instrumento de cuerda|Ein Saiteninstrument|Uno strumento a corda|Um instrumento de cordas
+wind-instrument|culture|e|instruments:wind|A wind instrument|Un instrument à vent|Un instrumento de viento|Ein Blasinstrument|Uno strumento a fiato|Um instrumento de sopro
+genre|culture|d|genres:*|A music genre|Un genre musical|Un género musical|Ein Musikgenre|Un genere musicale|Um gênero musical
+dance|culture|d|dances:*|A dance|Une danse|Un baile|Ein Tanz|Un ballo|Uma dança
+language|culture|d|languages:*|A language|Une langue|Un idioma|Eine Sprache|Una lingua|Um idioma
+board-game|culture|d|boardgames:*|A board game|Un jeu de société|Un juego de mesa|Ein Brettspiel|Un gioco da tavolo|Um jogo de tabuleiro
+myth-greek|culture|d|mythology:greek|A figure from Greek mythology|Un personnage de la mythologie grecque|Una figura de la mitología griega|Eine Gestalt der griechischen Mythologie|Una figura della mitologia greca|Uma figura da mitologia grega
+myth-other|culture|d|mythology:roman,norse,egypt|A Roman, Norse or Egyptian god or legend|Un dieu ou une légende romaine, nordique ou égyptienne|Un dios o leyenda romana, nórdica o egipcia|Ein römischer, nordischer oder ägyptischer Gott oder Mythos|Un dio o una leggenda romana, norrena o egizia|Um deus ou lenda romana, nórdica ou egípcia
+us-president|people|d|us_presidents:*|A president of the United States|Un président des États-Unis|Un presidente de Estados Unidos|Ein Präsident der USA|Un presidente degli Stati Uniti|Um presidente dos Estados Unidos
+fr-president|people|d|fr_presidents:*|A president of France|Un président de la République française|Un presidente de Francia|Ein Präsident Frankreichs|Un presidente della Francia|Um presidente da França
+scientist|people|d|scientists:*|A famous scientist|Un scientifique célèbre|Un científico famoso|Ein berühmter Wissenschaftler|Uno scienziato famoso|Um cientista famoso
+painter|people|d|painters:*|A famous painter or artist|Un peintre ou artiste célèbre|Un pintor o artista famoso|Ein berühmter Maler oder Künstler|Un pittore o artista famoso|Um pintor ou artista famoso
+composer|people|d|composers:*|A composer of classical or film music|Un compositeur de musique classique ou de film|Un compositor de música clásica o de cine|Ein Komponist klassischer oder Filmmusik|Un compositore di musica classica o da film|Um compositor de música clássica ou de cinema
+explorer|people|d|explorers:*|A famous explorer, aviator or astronaut|Un explorateur, aviateur ou astronaute célèbre|Un explorador, aviador o astronauta famoso|Ein berühmter Entdecker, Flieger oder Astronaut|Un esploratore, aviatore o astronauta famoso|Um explorador, aviador ou astronauta famoso
+emperor|people|d|emperors:*|A Roman emperor|Un empereur romain|Un emperador romano|Ein römischer Kaiser|Un imperatore romano|Um imperador romano
+fr-king|people|d|fr_kings:*|A king of France|Un roi de France|Un rey de Francia|Ein König von Frankreich|Un re di Francia|Um rei da França
+sport|sport|d|sports:*|A sport|Un sport|Un deporte|Eine Sportart|Uno sport|Um esporte
+olympic|sport|d|sports:oly|An Olympic sport or event|Un sport ou une épreuve olympique|Un deporte o prueba olímpica|Eine olympische Sportart oder Disziplin|Uno sport o una gara olimpica|Um esporte ou prova olímpica
+ball-sport|sport|d|sports:ball|A sport played with a ball|Un sport de balle ou de ballon|Un deporte que se juega con pelota|Eine Ballsportart|Uno sport con la palla|Um esporte com bola
+job|things|d|jobs:*|A job|Un métier|Una profesión|Ein Beruf|Un mestiere|Uma profissão
+clothing|things|d|clothing:*|An item of clothing|Un vêtement|Una prenda de ropa|Ein Kleidungsstück|Un capo d’abbigliamento|Uma peça de roupa
+colour|things|d|colours:*|A colour|Une couleur|Un color|Eine Farbe|Un colore|Uma cor
+vehicle|things|d|vehicles:*|A vehicle or way to travel|Un véhicule ou un moyen de transport|Un vehículo o medio de transporte|Ein Fahrzeug oder Verkehrsmittel|Un veicolo o mezzo di trasporto|Um veículo ou meio de transporte
+vehicle-water|things|e|vehicles:sea|Something that travels on or under water|Un moyen de transport sur ou sous l’eau|Algo que viaja sobre o bajo el agua|Etwas, das auf oder unter Wasser fährt|Qualcosa che viaggia sopra o sotto l’acqua|Algo que viaja sobre ou sob a água
+car-brand|things|d|cars:*|A car brand|Une marque de voiture|Una marca de coches|Eine Automarke|Una marca di automobili|Uma marca de carro
+kitchen|things|d|kitchen:*|Something you find in a kitchen|Un ustensile ou appareil de cuisine|Algo que hay en una cocina|Etwas, das man in einer Küche findet|Qualcosa che si trova in cucina|Algo que se encontra em uma cozinha
+tool|things|d|tools:*|A tool|Un outil|Una herramienta|Ein Werkzeug|Un attrezzo|Uma ferramenta
+furniture|things|d|furniture:*|A piece of furniture|Un meuble|Un mueble|Ein Möbelstück|Un mobile|Um móvel
+currency|things|d|currencies:*|A currency, past or present|Une monnaie, ancienne ou actuelle|Una moneda, antigua o actual|Eine Währung, alt oder aktuell|Una valuta, antica o attuale|Uma moeda, antiga ou atual
+w-light|words|d|en=rhyme_light;fr=fin_eau|A word that rhymes with “light”|Un mot qui finit par « -eau »|Una palabra que rime con «light»|Ein Wort, das sich auf „light“ reimt|Una parola che fa rima con “light”|Uma palavra que rime com “light”
+w-day|words|d|en=rhyme_day;fr=fin_ette|A word that rhymes with “day”|Un mot qui finit par « -ette »|Una palabra que rime con «day»|Ein Wort, das sich auf „day“ reimt|Una parola che fa rima con “day”|Uma palavra que rime com “day”
+w-cat|words|d|en=rhyme_cat;fr=fin_oir|A word that rhymes with “cat”|Un mot qui finit par « -oir »|Una palabra que rime con «cat»|Ein Wort, das sich auf „cat“ reimt|Una parola che fa rima con “cat”|Uma palavra que rime com “cat”
+w-cake|words|d|en=rhyme_cake;fr=fin_age|A word that rhymes with “cake”|Un mot qui finit par « -age »|Una palabra que rime con «cake»|Ein Wort, das sich auf „cake“ reimt|Una parola che fa rima con “cake”|Uma palavra que rime com “cake”
