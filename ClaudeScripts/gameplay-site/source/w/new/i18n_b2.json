@@ -586,7 +586,9 @@
 ["Pond Paddle", "Traversée de la mare", "Remada en el estanque", "Teichpaddeln", "Nuotata nello stagno", "Remada no lago"],
 ["Barnyard Dash", "Course de la basse-cour", "Carrera del corral", "Hofrennen", "Corsa nell’aia", "Corrida do quintal"],
 ["Riverbank Cup", "Coupe de la Rive", "Copa de la Ribera", "Uferpokal", "Coppa della Riva", "Taça da Margem"],
-["River", "Rive", "Ribera", "Ufer", "Riva", "Margem"],
+["@order-up|River", "Rive", "Ribera", "Ufer", "Riva", "Margem"],
+["@reel-deep|River", "Rive", "Ribera", "Ufer", "Riva", "Margem"],
+["@quack-cup|River", "Rive", "Ribera", "Ufer", "Riva", "Margem"],
 ["Rivers, rapids and the first steep banks. Time to learn how to climb.", "Rivières, rapides et premières berges raides. Il est temps d’apprendre à grimper.", "Ríos, rápidos y las primeras orillas empinadas. Toca aprender a escalar.", "Flüsse, Stromschnellen und die ersten steilen Ufer. Zeit, Klettern zu lernen.", "Fiumi, rapide e le prime rive ripide. È ora di imparare ad arrampicare.", "Rios, rápidos e as primeiras margens íngremes. Hora de aprender a escalar."],
 ["Bank Scramble", "Escalade de la berge", "Subida a la orilla", "Uferkraxeln", "Scalata della riva", "Subida da margem"],
 ["Rapids Run", "Course des rapides", "Carrera de rápidos", "Stromschnellenlauf", "Corsa delle rapide", "Corrida dos rápidos"],
@@ -720,5 +722,6 @@
 ["@order-up|Music: off", "Musique : non", "Música: no", "Musik: aus", "Musica: no", "Música: desligada"],
 ["@reel-deep|Music: off", "Musique : non", "Música: no", "Musik: aus", "Musica: no", "Música: desligada"],
 ["@quack-cup|Music: off", "Musique : non", "Música: no", "Musik: aus", "Musica: no", "Música: desligada"],
-["{n} layers", "{n} couches", "{n} capas", "{n} Schichten", "{n} strati", "{n} camadas"]
+["{n} layers", "{n} couches", "{n} capas", "{n} Schichten", "{n} strati", "{n} camadas"],
+["River", "Rive", "Ribera", "Ufer", "Riva", "Margem"]
 ]

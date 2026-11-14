@@ -226,7 +226,8 @@
 ["@wobble-ride|Start", "Départ", "Salida", "Start", "Via", "Partida"],
 ["@pickaxe-peak|Start", "Départ", "Salida", "Start", "Via", "Partida"],
 ["Finish", "Arrivée", "Meta", "Ziel", "Traguardo", "Meta"],
-["Turn", "Rotation", "Giro", "Drehen", "Ruota", "Rodar"],
+["@wobble-ride|Turn", "Rotation", "Giro", "Drehen", "Ruota", "Rodar"],
+["@pickaxe-peak|Turn", "Rotation", "Giro", "Drehen", "Ruota", "Rodar"],
 ["Style", "Style", "Estilo", "Stil", "Stile", "Estilo"],
 ["@wobble-ride|Flip", "Retourner", "Voltear", "Spiegeln", "Capovolgi", "Inverter"],
 ["@pickaxe-peak|Flip", "Retourner", "Voltear", "Spiegeln", "Capovolgi", "Inverter"],
@@ -378,5 +379,6 @@
 ["Screen shake", "Tremblement de l'écran", "Vibración de pantalla", "Bildschirmwackeln", "Scossa dello schermo", "Tremor do ecrã"],
 ["Flip", "Retourner", "Voltear", "Spiegeln", "Capovolgi", "Inverter"],
 ["Select", "Choisir", "Elegir", "Auswählen", "Seleziona", "Escolher"],
-["Total score", "Score total", "Puntuación total", "Gesamtpunkte", "Punteggio totale", "Pontuação total"]
+["Total score", "Score total", "Puntuación total", "Gesamtpunkte", "Punteggio totale", "Pontuação total"],
+["Turn", "Rotation", "Giro", "Drehen", "Ruota", "Rodar"]
 ]
