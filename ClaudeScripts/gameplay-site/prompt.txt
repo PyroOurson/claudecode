@@ -498,39 +498,27 @@ The relay set up in this round (Part 17.6).
 Files merged to be compact and easy to read on GitHub: one `.js` per game, one `.css` per area, and so on (Part 7.6). The AI always listens to what the owner asks and follows their directions (Part 3.4c).
 The five popular-game recreations on Claude Fable 5.2 at extra-high effort; the other existing games on Claude Opus 5.5 at extra-high effort; the lead session on Claude Opus 5.5 at extra-high effort.
 13 November 2026: none of the three dashboard designs; the dashboard redesign waits until the owner explains what they want.
+14 November 2026: release the site as it is now; for now, list the remade games under the real game names (Happy Wheels, Krunker, Bedwars, ...) so they are easy to find.
 ---
-Current state (13 November 2026)
+Current state (14 November 2026)
 This section replaces the old ledger, go-live and handoff files. Update it at the end of every session (Part 14).
 Live now
-The platform overhaul (GitHub pull requests #6 and #7) is merged into `mainbranch-claude-code`. Database rounds 16 to 19b ran on production on 13 November 2026, and the site was deployed to Firebase the same day.
-Pull request #7 (voxel sandbox fixes: the missing left leg in the inventory preview, the uneven drag split, half-hidden stack counts) is merged but was not yet deployed when this was written. Deploy it first if the live site does not show it.
-Built and verified on staging in the last round: a second party route and a relayed fallback; join cancellation and refresh handling; public parties without a code; the "Join a party" list; a load sequence without password or login flashes; skeleton screens; a prominent Google button, live username picker and four-character minimum; online status from a server heartbeat; announcements that do not replay; an admin dashboard updated every second with errors, parties, performance, ideas and diagnostics tabs; tripled rate limits with staff exempt; diagnostics only for flagged test accounts; the idea box with attachments; files in messages and tickets; the settings redesign; "How to play" removed; consistent covers for all 168 games; legal pages three times longer and matched to the code; legal pages loaded on demand.
-Tests in `source/t/tests/` that passed on the final build: `load\_sequence.js`, `gate\_locked.js`, `party.js` (12 two-browser scenarios), `fixes.js` (13 scenarios), `dm.js`, `announce.js`, `legal\_pages.js`, `smoke\_all.js` (168 of 168 games open and start without errors).
-Open items
-The relay worker update and its TURN secrets (Part 9). Parties work without them.
-A production test account with Diagnostics on, and checks on the real site (Part 11).
-The security work (Part 10).
-Fixes from the last code review that are changed but not covered by a test: timed-out writes not replayed through the relay, the favourites race, picture links after an hour, the public parties channel retry, stats details. Not fixed: long offline play can lose playtime, because the server caps one sync batch at about an hour (mirror the cap in the client and keep the rest for later batches).
-Games without an honest `Hardest`: basketball, the shooter arena, the platform fighter, Go, the hole arena, zombie and spider packs in the voxel sandbox, the dial-guessing party game. Several other `Hardest` levels are only somewhat stronger than the old top level.
-Not yet tested on real conditions: school firewalls, VPNs, TURN; Safari, Firefox, real phones; frame rates on a graphics card; Google sign-in end to end.
-Twelve finished games are in the repository but not in the build list (`275`, `277`, `283`, `285`, `287`, `289`, `291`, `293`, `297`): see Appendices A and B.
-The catalogue has 168 games; the goal is at least 200.
-Part 17: the four account, message and dashboard bugs, IP bans, the three-tab dashboard and its three designs, the 50 new measures. Not started.
-What the last round did per game group (short)
-Voxel sandbox: hidden terrain no longer meshed, lighting off the main thread, start-up sliced (longest page stall from about 4 s to 0.5 s), meshing capped per frame, adaptive quality, online fixes (hidden host, guest refresh), corrupt saves handled, a mob that never died fixed, touch controls complete. Zombie and spider packs not stronger at `Hardest`.
-Arena brawler: real two-browser matches in all modes; predicted guest shots with host rewind; `Hardest` wins 85 percent in team modes, 71 percent in free-for-all, 62 percent of duels (loses mirror duels with five of twelve characters).
-Endless runner: ten bugs fixed, draw calls down about 60 percent, input buffering and swipes.
-Car soccer: `Hardest` won 40 of 40 matches in 1v1 against the old top level.
-Card games A: `Hardest` in 14 games without reading hidden cards; hidden-information leaks fixed in spades, tarot and euchre.
-Card and board games B: `Hardest` proven in mancala and nine men's morris; rule audits, solitaires, mahjong and Monopoly not reached.
-Strategy board games: strong new engines in connect four, reversi, checkers, quoridor, blokus, Chinese checkers, tic-tac-toe, Scrabble; chess only a trend; Go and several others only relabelled.
-Word and party games: refresh, background-host and stalled-round fixes; message rates cut; text filter; a refreshed guest still returned to the lobby in real browsers.
-Small classics: six bugs fixed; Pong `Hardest`; puzzles proven solvable by program.
-Arcade and sports 2D: `Hardest` in eight games (stronger, not unbeatable); none for the hole arena; no real playthroughs.
-Action and multiplayer 2D: hidden host no longer freezes eleven games; social deduction no longer sends players through walls; `Hardest` in head soccer, volleyball and the tank arena.
-3D arcade: resolution matched to the screen with adaptive quality; draw calls cut; closing a 3D game no longer blocks the page; marble physics independent of frame rate; track racer fixes.
-Simulation and skill: corrupt saves no longer crash six games; fixed-step physics in three; `Hardest` in the card battler, archery duel and football defence.
+Round 21 (branch `claude/round-21`) is merged into `mainbranch-claude-code` with the site build at the repository root (191 games). It goes live when the owner runs the deploy (Part 13): the Firebase tool on this computer is signed in as an account without access to the project, so the deploy runs in Google Cloud Shell or after `firebase login` with the owner's account.
+The production database has not had this round's `gameplay.sql` sections yet (it needs `supabase login` and the database password from the owner). The client was checked against the live database and falls back where the new server side is missing: username sign-in uses the old lookup until the `login` function is deployed, account deletion with a reason falls back to plain deletion, the party registry and private realtime channels switch themselves off, and the new admin cards (IP bans, peak, Data) show errors until the SQL runs. Deploy order after the SQL: run `gameplay.sql`, then deploy the `login` function the same day (the SQL turns the old lookup off).
+Remade games are listed under the real names for now (owner's request): Granny, Papa's Pizzeria, Tiny Fishing, Duck Life, BitLife, Little Alchemy, Happy Wheels, Getting Over It, Ragdoll Archers, Stickman Hook, Vex, Krillion, Make It Meme, Retro Bowl, Friday Night Funkin', osu!, Balatro, 1v1.LOL, Krunker, Shell Shockers, Bedwars, Tower of Hell, Only Up. Ids, part files and in-game art keep the original names; covers were re-rendered with the new names; the old names are search keywords.
+Done this round (checked on staging unless said otherwise)
+Part 17.1 bugs, IP and device bans, the server-recorded peak, private realtime channels with a party registry and door keys, safer username sign-in through an Edge Function, growing gate waits, playtime carried across sync batches, the 50 measures and the Stats Data view: each has a test in `source/t/tests/` (`admin_delete`, `admin_read`, `peak`, `ipban`, `invite_state`, `rt_security`, `signin`, `login_fallback`), all passing.
+Portal: games can keep Esc for their own windows (`api.escOwn`, test `esc_own.js`); tall page games shrink to fit the large view; game-scoped translations (`@<id>|text` rows); unit patterns for kills, moves, trophies, solved; short level codes for Happy Wheels (`level_share`, `level_get`, test `level_codes.js`, privacy policy 20.14).
+New games merged: Granny, Papa's Pizzeria, Tiny Fishing, Duck Life, BitLife, Little Alchemy, Happy Wheels, Getting Over It, Ragdoll Archers, Stickman Hook, Vex, Krillion, Retro Bowl, Friday Night Funkin', osu!, Balatro, 1v1.LOL, Bedwars, Tower of Hell, Only Up, Krunker, Shell Shockers (each agent's report: played start to end on desktop and phone, `Hardest` series where there are bots).
+Existing groups merged: strategy board games A (chess and Go engines), card games A (rules, smoother bots, `Hardest` series, no hidden-card leaks).
+Release check: the whole suite on staging and `smoke_all.js` (191 games open without errors) on the release build.
+Left, in order
+1. Owner: deploy (Cloud Shell command in Part 13), `supabase login` and the database password for `gameplay.sql`, then the `login` function; `wrangler login` for the relay and TURN; the production test account; Turnstile keys; the dashboard design.
+2. Agents stopped when the session ended, with partial work on their branches (merge after checking): action and multiplayer 2D (`work-c-action-2d`), strategy board games B (`work-c-strategy-b`), card games B1 (`work-c-cards-b1`), card and board games B2 (`work-c-cards-b2`), word puzzles (`work-c-word-puzzles`), party games (`work-c-party`). Still running or unreported at the end: B7 (more work on Make It Meme and Retro Bowl), B11 to B15, small classics A and B, arcade 2D A and B, 3D A and B, the Super Mario Bros. levels, the P4 playtest harness. Not started: simulation and skill (279).
+3. The five popular-game recreations (Fable) stopped at the Fable limit with uncommitted work in their worktrees; the owner has not said whether to continue them on Opus.
+4. Catalogue: 191 games built; the goal is 200.
 Facts a new session needs
-Build key: while the site password is off, `rpc/get\_gate\_slot` returns it (Part 2.2).
-Test accounts on staging: see `source/t/party\_lib.js`.
-The owner deploys from Google Cloud Shell or lets the lead deploy with the Firebase tool on this computer (Part 13).
+Build key: while the site password is off, `rpc/get\_gate\_slot` returns it (Part 2.2). Live build: `GATE_PASS="$(cat ~/.gameplay/gate_secret.txt)" python3 build2.py parts site` in `source/w`, then copy `site/index.html` and `site/gameplay/` to the repository root.
+Staging: Docker project `staging`, API 54321, site on 8090 (`node t/lib.js serve w/site_stage 8090`); restart `supabase_edge_runtime_staging` after Docker restarts.
+Test accounts on staging: see `source/t/lib.js` (`USERS`).
+Translation scoping and merges: the lead's helper scripts live outside the repository; after merging a game's translation file, rows that clash with other games are keyed `@<id>|text`.
