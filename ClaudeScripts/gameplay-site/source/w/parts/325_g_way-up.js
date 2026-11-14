@@ -1249,7 +1249,7 @@ ${G} .lbl{min-width:6em;font-weight:800;color:#ffb4a0;font-size:.85em}
   }
 
   Ameplay.register({
-    id: ID, title: 'Way Up', category: '3D', tint: '#e8302e',
+    id: ID, title: "Only Up", category: '3D', tint: '#e8302e',
     blurb: 'One long climb into the sky after a red balloon. Rooftops, scrap, giant snacks, floating books and stars. No checkpoints: every fall costs you.',
     help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · <kbd>Shift</kbd> sprint · <kbd>Space</kbd> jump · jump at ledges and ropes to grab · <kbd>S</kbd>/<kbd>Ctrl</kbd> let go · click to steer the camera with the mouse · <kbd>Esc</kbd> pause · touch: stick, JUMP, RUN, drag to look',
     better: 'low', width: 960, ownPause: true,

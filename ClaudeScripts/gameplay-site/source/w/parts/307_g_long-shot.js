@@ -1843,7 +1843,7 @@ function lsMount(root, api) {
 }
 Ameplay.register({
   id: LS_ID,
-  title: 'Long Shot',
+  title: "Krillion",
   category: 'Brain',
   tint: '#3a3f9a',
   blurb: 'Name the answer nobody else thinks of. Rare answers fly your probe further.',

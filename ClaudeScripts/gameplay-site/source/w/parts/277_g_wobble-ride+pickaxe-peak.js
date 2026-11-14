@@ -3071,7 +3071,7 @@
     return { destroy() { snd.destroy(); } };
   };
   Ameplay.register({
-    id: 'wobble-ride', title: 'Wobble Ride', category: 'Action', tint: '#ff5a3c',
+    id: 'wobble-ride', title: "Happy Wheels", category: 'Action', tint: '#ff5a3c',
     blurb: 'Wobbly ragdoll riders on a rocket wheelchair, a bike, a gyro board, a moped and a pogo stick. Hand-made levels, joints that pop, and a level editor with codes to share.',
     help: '<kbd>&uarr;</kbd> <kbd>W</kbd> gas / bounce &middot; <kbd>&darr;</kbd> <kbd>S</kbd> brake &middot; <kbd>&larr;</kbd> <kbd>&rarr;</kbd> lean &middot; <kbd>Space</kbd> rockets, sprint, hop or turbo &middot; <kbd>Shift</kbd> drop the passenger &middot; <kbd>Ctrl</kbd> bell or horn &middot; <kbd>Z</kbd> eject &middot; <kbd>R</kbd> restart &middot; touch: on-screen buttons &middot; build and share levels in the editor',
     better: 'high',
@@ -4016,7 +4016,7 @@
     return { destroy() { saveNow(); if (document.pointerLockElement === canvas) try { document.exitPointerLock(); } catch (e) {} snd.destroy(); } };
   };
   Ameplay.register({
-    id: 'pickaxe-peak', title: 'Pickaxe Peak', category: 'Skill', tint: '#e08a4e',
+    id: 'pickaxe-peak', title: "Getting Over It", category: 'Skill', tint: '#e08a4e',
     blurb: 'Pip the mole climbs a mountain in a copper bucket with nothing but a pickaxe. One long climb, no checkpoints.',
     help: 'Move the mouse to move the pickaxe (click to grab it) &middot; push it against the ground to lift yourself &middot; hook edges and pull &middot; touch: drag anywhere &middot; arrow keys or a gamepad stick also work &middot; your climb is saved',
     better: 'low',

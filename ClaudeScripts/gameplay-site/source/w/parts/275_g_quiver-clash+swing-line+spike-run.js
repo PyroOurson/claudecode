@@ -1965,7 +1965,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
         hook(); lobbying = true; role = 'local'; S = null; st.hideOv();
         scr = 'lobby';
         st.showMenu('<h2 class="gx-logo">Online <b>Duel</b></h2><p class="gx-tag">Opening the party…</p>');
-        const r = await net.room({ title: 'Quiver Clash', sizes: [2], defaultSize: 2, min: 2, max: 2, bots: true });
+        const r = await net.room({ title: "Ragdoll Archers", sizes: [2], defaultSize: 2, min: 2, max: 2, bots: true });
         lobbying = false;
         if (!api.alive) return;
         if (!r) { toMenu(); return; }
@@ -2010,7 +2010,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
 
     Ameplay.register({
       id: 'quiver-clash',
-      title: 'Quiver Clash',
+      title: "Ragdoll Archers",
       category: 'Action',
       tint: '#3b82f6',
       blurb: 'Pull back, aim and knock wobbly stickman archers off their cliffs. Headshots, fire, ice, bomb, triple and storm arrows. Endless waves, duels against the computer and online 1v1.',
@@ -2868,7 +2868,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
 
     Ameplay.register({
       id: 'swing-line',
-      title: 'Swing Line',
+      title: "Stickman Hook",
       category: 'Skill',
       tint: '#ff4f8a',
       blurb: 'Hold to grab the nearest hook, let go to fly. Keep your momentum through 30 handmade levels of bounce pads, saws, boost rings and crumbling hooks, then see how far you get in Endless.',
@@ -3767,7 +3767,7 @@ ${st.orow('Aim style', st.chips('aim', [['pull', 'Pull back'], ['push', 'Drag to
 
     Ameplay.register({
       id: 'spike-run',
-      title: 'Spike Run',
+      title: "Vex",
       category: 'Skill',
       tint: '#ffb23a',
       blurb: 'A stickman parkour run through five handmade acts. Run, jump, slide under saws, kick off walls, ride zip lines and dodge lasers. Flags save your progress, medals reward fast runs.',

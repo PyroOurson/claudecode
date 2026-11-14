@@ -3270,7 +3270,7 @@
 
   Ameplay.register({
     id: ID,
-    title: 'Touchdown Dynasty',
+    title: "Retro Bowl",
     category: 'Sports',
     tint: '#e8a317',
     blurb: 'Pixel football and franchise management. Call plays, throw the ball, win the Golden Bowl.',

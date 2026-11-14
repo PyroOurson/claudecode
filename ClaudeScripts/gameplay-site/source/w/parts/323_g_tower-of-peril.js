@@ -1781,7 +1781,7 @@ ${G} .tag{display:inline-block;font-size:.72em;font-weight:800;padding:.1em .45e
       phase = 'net'; hideScr(); showHud(false);
       if (!R || !R.o.demo) startDemo();
       phase = 'net';
-      api.net.room({ title: 'Tower of Peril', sizes: [2, 3, 4, 5, 6, 7, 8], defaultSize: 8, min: 2, max: 8, bots: true }).then(r => {
+      api.net.room({ title: "Tower of Hell", sizes: [2, 3, 4, 5, 6, 7, 8], defaultSize: 8, min: 2, max: 8, bots: true }).then(r => {
         if (!api.alive) return;
         if (!r) { if (phase === 'net') showMenu(); return; }
         net = { role: r.role, players: r.players.slice(), bots: !!r.bots, size: +r.size || r.players.length, rd: 0, muts: new Set(P.mut) };
@@ -1924,7 +1924,7 @@ ${G} .tag{display:inline-block;font-size:.72em;font-weight:800;padding:.1em .45e
   }
 
   Ameplay.register({
-    id: ID, title: 'Tower of Peril', category: '3D', tint: '#ff7a2a',
+    id: ID, title: "Tower of Hell", category: '3D', tint: '#ff7a2a',
     blurb: 'Race up a tower of random obstacle sections before the clock runs out. No checkpoints, kill bricks, gear, mutators and online races for up to 8.',
     help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · <kbd>Space</kbd> jump (hold to keep jumping) · drag to turn the camera, wheel zoom · <kbd>Shift</kbd> shift lock · <kbd>R</kbd> reset · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> gear · <kbd>Esc</kbd> pause · touch: stick, Jump, drag to look',
     better: 'high', width: 960, ownPause: true,

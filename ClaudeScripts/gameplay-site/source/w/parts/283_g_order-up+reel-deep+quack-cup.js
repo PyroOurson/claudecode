@@ -1020,7 +1020,7 @@
   };
 
   Ameplay.register({
-    id: 'reel-deep', title: 'Reel Deep', category: 'Arcade', tint: '#2fa3de',
+    id: 'reel-deep', title: "Tiny Fishing", category: 'Arcade', tint: '#2fa3de',
     blurb: 'Cast your hook, dodge the fish on the way down and scoop up a big haul on the way back. Sell your catch, upgrade your line, strength and offline earnings, and discover 18 species from the shallows to the deepest trench.',
     help: 'Tap, click or <kbd>Space</kbd> to cast · move the mouse, drag a finger or <kbd>A</kbd>/<kbd>D</kbd> (<kbd>←</kbd>/<kbd>→</kbd>) to steer · avoid fish going down, catch them coming up · <kbd>E</kbd> sells · <kbd>M</kbd> music',
     better: 'high', width: 960, format: v => '$' + short(v),
@@ -3405,7 +3405,7 @@
   };
 
   Ameplay.register({
-    id: 'order-up', title: 'Order Up', category: 'Strategy', tint: '#e8584a',
+    id: 'order-up', title: "Papa's Pizzeria", category: 'Strategy', tint: '#e8584a',
     blurb: 'Run three restaurants. Take orders at the counter, then build, cook and finish every order at its stations: bake and slice pizzas, grill and stack burgers, blend and top shakes. Keep customers happy for bigger tips, rank up, unlock new restaurants, upgrades and decorations.',
     help: '<kbd>1</kbd>-<kbd>4</kbd> switch stations · click or <kbd>Space</kbd> to take an order · drag and click to build · <kbd>Enter</kbd> confirms · watch the timers: the bell means ready',
     better: 'high', width: 960, format: v => '$' + short(v),
@@ -4879,7 +4879,7 @@
   };
 
   Ameplay.register({
-    id: 'quack-cup', title: 'Quack Cup', category: 'Racing', tint: '#ffb703',
+    id: 'quack-cup', title: "Duck Life", category: 'Racing', tint: '#ffb703',
     blurb: 'Raise a racing duck. Train running, swimming, flying and climbing, feed it seeds, dress it up, then race rival ducks across six tournaments on real mixed terrain until you win the Grand Championship.',
     help: '<kbd>A</kbd> <kbd>D</kbd> or <kbd>←</kbd> <kbd>→</kbd> alternate to run, swim and climb · <kbd>Space</kbd> / <kbd>↑</kbd> jump and flap · <kbd>↑</kbd> <kbd>↓</kbd> steer in water · <kbd>E</kbd> eat a seed · on touch tap the on-screen buttons and drag to swim',
     better: 'high', width: 960, format: v => short(v),

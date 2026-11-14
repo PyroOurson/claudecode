@@ -2146,7 +2146,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
       onl = onl || {};
       const wasG = G; G = null; void wasG;
       let r;
-      try { r = await api.net.room({ title: 'Beat Duel', sizes: [2], defaultSize: 2, min: 2, max: 2 }); } catch (e) { r = null; }
+      try { r = await api.net.room({ title: "Friday Night Funkin'", sizes: [2], defaultSize: 2, min: 2, max: 2 }); } catch (e) { r = null; }
       if (!r) { onl = null; show('menu'); menuMusic(); return; }
       onl = { role: r.role, me: r.id, rvName: 'Rival', phase: 'pick' };
       wireNet();
@@ -2426,7 +2426,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
 
   Ameplay.register({
     id: 'beat-duel',
-    title: 'Beat Duel',
+    title: "Friday Night Funkin'",
     category: 'Skill',
     tint: '#ff5fa8',
     blurb: 'Hit the arrows in time to win the rap battle: three weeks of original songs, hold notes, a story mode, freeplay and an online 1v1 battle.',
@@ -3390,7 +3390,7 @@ ${p} .cal-row{display:flex;gap:calc(var(--u)*.9);flex-wrap:wrap;justify-content:
 
   Ameplay.register({
     id: 'click-beat',
-    title: 'Click Beat',
+    title: "osu!",
     category: 'Skill',
     tint: '#ff66ab',
     blurb: 'Click the circles to the beat: sliders, spinners, eight original songs with maps in four difficulties, modifiers and a timing meter.',

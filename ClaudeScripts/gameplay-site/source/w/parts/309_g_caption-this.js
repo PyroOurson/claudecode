@@ -1351,7 +1351,7 @@ ${list ? `<div class="ct-pics">${list}</div>` : ''}${msg ? `<p class="${msg[1] ?
     const tok = ++K.tok;
     hook();
     K.mode = 'online'; K.role = null;
-    const r = await api.net.room({ title: 'Caption This', sizes: SIZES, defaultSize: 6, min: 3, max: 10, bots: true });
+    const r = await api.net.room({ title: "Make It Meme", sizes: SIZES, defaultSize: 6, min: 3, max: 10, bots: true });
     if (!api.alive || tok !== K.tok) return;
     if (!r) { K.mode = 'menu'; K.role = 'local'; return showMenu(); }
     K.role = r.role; K.players = r.players; K.size = +r.size || r.players.length; K.botsOn = !!r.bots;
@@ -1735,7 +1735,7 @@ ${list ? `<div class="ct-pics">${list}</div>` : ''}${msg ? `<p class="${msg[1] ?
 
 const ICON = '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="12" width="48" height="40" rx="6"/><path d="M14 22h36M18 44h28"/><circle cx="24" cy="32" r="3"/><circle cx="40" cy="32" r="3"/></svg>';
 Ameplay.register({
-  id: ID, title: 'Caption This', category: 'Brain', tint: '#8a3fd0',
+  id: ID, title: "Make It Meme", category: 'Brain', tint: '#8a3fd0',
   blurb: 'The meme party game: everyone gets the same picture, writes the funniest caption, then rates everyone else’s memes. Play with friends online or with bots.',
   help: 'Type your caption and press <kbd>Enter</kbd> · rate memes with a click or <kbd>1</kbd> to <kbd>5</kbd> · online 3 to 10 players, bots can fill empty seats · the host can add their own pictures',
   width: 960, format: v => fmt(v) + ' pts', icon: ICON, css: ctCss(),

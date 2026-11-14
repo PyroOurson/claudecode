@@ -694,10 +694,13 @@ function auChallenge() {
 }
 async function auUserLogin(un, pw) {
   const challenge = await auChallenge();
-  const r = await SBN.fetch(SBN.url('/functions/v1/login'), { method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ login: un, password: pw, challenge }), credentials: 'omit', cache: 'no-store' });
+  let r;
+  try { r = await SBN.fetch(SBN.url('/functions/v1/login'), { method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ login: un, password: pw, challenge }), credentials: 'omit', cache: 'no-store' }); }
+  catch (e) { throw { code: 'no_login_fn' }; }
   let j = null;
   try { j = await r.json(); } catch (e) {}
   if (r.ok && j && j.session && j.session.access_token) return j.session;
+  if ((r.status === 404 || r.status >= 500) && !(j && j.error)) throw { code: 'no_login_fn' };
   const code = j && j.error;
   if (code === 'access_blocked' && typeof window.gpBlocked === 'function') { let d = null; try { d = JSON.parse(j.details || 'null'); } catch (e) {} window.gpBlocked(d || {}); }
   if (code === 'too_many_attempts' || r.status === 429) throw { code: 'over_request_rate_limit', message: 'Too many attempts' };
@@ -720,9 +723,15 @@ async function auLogin() {
     if (!id.includes('@')) {
       const un = id.toLowerCase().replace(/^@/, '');
       if (!UN_RE.test(un)) throw { code: 'invalid_credentials' };
-      const ses = await auUserLogin(un, pw);
+      let ses = null;
+      try { ses = await auUserLogin(un, pw); }
+      catch (e) {
+        if (!e || e.code !== 'no_login_fn') throw e;
+        email = await sbRest('rpc/login_email', { method: 'POST', body: { p_login: un, p_password: pw }, auth: false });
+        if (!email || typeof email !== 'string') throw { code: 'invalid_credentials' };
+      }
       SB.loud = true;
-      const r = await c.auth.setSession({ access_token: ses.access_token, refresh_token: ses.refresh_token });
+      const r = ses ? await c.auth.setSession({ access_token: ses.access_token, refresh_token: ses.refresh_token }) : await c.auth.signInWithPassword({ email, password: pw });
       if (r.error) throw r.error;
     } else {
       SB.loud = true;
@@ -921,7 +930,9 @@ async function auDeleteAccount() {
   const b = $('#adelbtn'); b.disabled = true; b.classList.add('is-busy'); auMsg('adelnote', 'Deleting your account…');
   try {
     const why = ($('#adelwhy') || {}).value || '';
-    const r = await sbRest(why ? 'rpc/delete_my_account_why' : 'rpc/delete_my_account', { method: 'POST', body: why ? { p_reason: why } : {} });
+    let r;
+    try { r = await sbRest(why ? 'rpc/delete_my_account_why' : 'rpc/delete_my_account', { method: 'POST', body: why ? { p_reason: why } : {} }); }
+    catch (e) { if (!why || !sbMissing(e)) throw e; r = await sbRest('rpc/delete_my_account', { method: 'POST', body: {} }); }
     syWipe();
     try { await SB.c.auth.signOut({ scope: 'local' }); } catch (e) {}
     $('#adelc').value = ''; b.classList.remove('is-busy');

@@ -2220,7 +2220,7 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
     api.on(document, 'visibilitychange', () => { if (document.hidden && phase === 'play' && !online && !paused) setPause(true); if (online) netVis(); });
 
     let netEvIdx = 0, netBound = false, bgW = null, bgI = 0, bgT = 0;
-    const NET_O = { title: 'Bed Raiders', sizes: [2, 3, 4, 5, 6, 7, 8], defaultSize: 4, min: 2, max: 8, bots: true };
+    const NET_O = { title: "Bedwars", sizes: [2, 3, 4, 5, 6, 7, 8], defaultSize: 4, min: 2, max: 8, bots: true };
     const PH = ['count', 'play', 'over'];
     const r2 = v => Math.round(v * 100) / 100;
     const nsend = (m, fast) => { try { api.net.send(m, fast); } catch (e) {} };
@@ -2478,7 +2478,7 @@ ${G} .stat{width:24em}${G} .hearts,${G} .armr{width:11.5em}${G} .hearts i,${G} .
   }
 
   Ameplay.register({
-    id: ID, title: 'Bed Raiders', category: '3D', tint: '#e8453c',
+    id: ID, title: "Bedwars", category: '3D', tint: '#e8453c',
     blurb: 'Guard your bed, bridge across the void and break the other teams’ beds. Last team standing wins.',
     help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · <kbd>Space</kbd> jump · <kbd>Shift</kbd> sneak · left click hit or break · right click place, use or shop · <kbd>1</kbd>-<kbd>9</kbd> hotbar · <kbd>Esc</kbd> pause',
     better: 'high', width: 960, ownPause: true,

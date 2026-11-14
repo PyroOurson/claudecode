@@ -2389,7 +2389,7 @@ ${G} .pan h2{font-size:1.6em}
     api.on(document, 'visibilitychange', () => { if (document.hidden && phase === 'play' && !online && !paused) setPause(true); if (online) netVis(); });
 
     let netEvIdx = 0, netBound = false, bgW = null, bgI = 0, bgT = 0;
-    const NET_O = { title: 'Build Brawl', sizes: [2, 3, 4], defaultSize: 2, min: 2, max: 4, bots: true };
+    const NET_O = { title: "1v1.LOL", sizes: [2, 3, 4], defaultSize: 2, min: 2, max: 4, bots: true };
     const PH = ['count', 'fight', 'round', 'over'];
     const r2 = v => Math.round(v * 100) / 100;
     const nsend = (m, fast) => { try { api.net.send(m, fast); } catch (e) {} };
@@ -2733,7 +2733,7 @@ ${G} .pan h2{font-size:1.6em}
   }
 
   Ameplay.register({
-    id: ID, title: 'Build Brawl', category: '3D', tint: '#3fa7ff',
+    id: ID, title: "1v1.LOL", category: '3D', tint: '#3fa7ff',
     blurb: 'Build walls, ramps, floors and cones in an instant and outplay your rival in build fights and box fights.',
     help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · <kbd>Space</kbd> jump · mouse aim and fire · <kbd>1</kbd>-<kbd>4</kbd> weapons · <kbd>Z</kbd><kbd>X</kbd><kbd>C</kbd><kbd>V</kbd> wall, floor, ramp, cone · <kbd>G</kbd> edit · <kbd>R</kbd> reload · <kbd>Esc</kbd> pause',
     better: 'high', width: 960, ownPause: true,

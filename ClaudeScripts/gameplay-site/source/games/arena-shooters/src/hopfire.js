@@ -236,7 +236,7 @@
     }
 
     const Gdef = {
-      id: 'hopfire', title: 'Hopfire', tint: '#ff7a1a',
+      id: 'hopfire', title: "Krunker", tint: '#ff7a1a',
       blurb: 'Fast low-poly arena shooter: slide, bunny hop and frag bots or friends online.',
       help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · mouse look · click fire · right click aim · <kbd>Space</kbd> jump (hold to bunny hop) · <kbd>Shift</kbd> crouch, slide while running · <kbd>R</kbd> reload · <kbd>Q</kbd> (<kbd>A</kbd> on AZERTY) or wheel swap · <kbd>V</kbd> knife · <kbd>Tab</kbd> scores · <kbd>Esc</kbd> menu · touch: stick, drag to look, buttons',
       icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="18"/><path d="M32 6v12M32 46v12M6 32h12M46 32h12"/><circle cx="32" cy="32" r="3" fill="currentColor"/></svg>',

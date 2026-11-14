@@ -2048,7 +2048,7 @@
 `;
   const NO_GL = { kicker: '3D', title: '3D unavailable', text: 'Your browser could not start WebGL. Try another browser or turn on hardware acceleration.', button: null };
   Ameplay.register({
-    id: ID, title: 'The Quiet House', category: '3D', tint: '#3b2a33',
+    id: ID, title: "Granny", category: '3D', tint: '#3b2a33',
     blurb: 'Escape a silent old house within five days while the Keeper listens for every sound.',
     help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · mouse look · <kbd>Shift</kbd> run · <kbd>C</kbd> crouch · <kbd>E</kbd> or click use, take, hide · <kbd>G</kbd> drop · <kbd>R</kbd> or right click throw · <kbd>Tab</kbd> notes · <kbd>Esc</kbd> pause · controller: right stick looks · touch: stick, drag to look, buttons',
     better: 'low', width: 960, ownPause: true,

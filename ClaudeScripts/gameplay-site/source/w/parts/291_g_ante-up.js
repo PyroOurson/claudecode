@@ -3517,7 +3517,7 @@
 
   Ameplay.register({
     id: 'ante-up',
-    title: 'Ante Up',
+    title: "Balatro",
     category: 'Strategy',
     tint: '#c23a3a',
     blurb: 'A poker roguelike: play hands for chips and mult, build a joker engine, beat eight antes of blinds and bosses, then keep going in endless mode.',

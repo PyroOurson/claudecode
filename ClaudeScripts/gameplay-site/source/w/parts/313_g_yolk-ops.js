@@ -3343,7 +3343,7 @@ ${guest ? `<p class="fp-note">${escH(T('Waiting for the host to start the next m
     }
 
     const Gdef = {
-      id: 'yolk-ops', title: 'Yolk Ops', tint: '#ffb020',
+      id: 'yolk-ops', title: "Shell Shockers", tint: '#ffb020',
       blurb: 'Cartoon egg shooter: pick a weapon class, crack eggs, grab grenades and win the coop.',
       help: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · mouse look · click fire · right click or <kbd>Shift</kbd> aim · <kbd>Space</kbd> jump · <kbd>R</kbd> reload · <kbd>E</kbd> or wheel swap to pistol · <kbd>Q</kbd> (<kbd>A</kbd> on AZERTY) or <kbd>G</kbd> grenade · <kbd>F</kbd> spatula · <kbd>Tab</kbd> scores · <kbd>Esc</kbd> menu · touch: stick, drag to look, buttons',
       icon: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M32 8c10 0 18 16 18 28a18 18 0 0 1-36 0C14 24 22 8 32 8z"/><path d="M22 34l5 4 5-6 5 6 5-4"/></svg>',

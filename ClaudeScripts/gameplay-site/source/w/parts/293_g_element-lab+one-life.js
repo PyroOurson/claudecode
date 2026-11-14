@@ -1904,7 +1904,7 @@ Kite: Paper+Wind, Bird+Paper
 
   Ameplay.register({
     id: 'element-lab',
-    title: 'Element Lab',
+    title: "Little Alchemy",
     category: 'Puzzle',
     better: 'high',
     width: 1000,
@@ -4897,7 +4897,7 @@ Kite: Paper+Wind, Bird+Paper
 
   Ameplay.register({
     id: 'one-life',
-    title: 'One Life',
+    title: "BitLife",
     category: 'Strategy',
     better: 'high',
     width: 1060,
